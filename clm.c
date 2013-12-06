@@ -4182,6 +4182,9 @@ mus_float_t mus_tap(mus_any *ptr, mus_float_t loc)
   int taploc;
   if (gen->zdly)
     {
+      /* this is almost always linear */
+      if (gen->type == MUS_INTERP_LINEAR)
+	return(mus_array_interp(gen->line, gen->zloc - loc, gen->zsize));
       gen->yn1 = mus_interpolate(gen->type, gen->zloc - loc, gen->line, gen->zsize, gen->yn1);
       return(gen->yn1);
     }
@@ -13207,6 +13210,7 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
   i = 0;
   while (i <= n4)
     {
+      /* adding code to avoid this loop saves essentially nothing */
       c_in_data[i] = rl[i] + _Complex_I * im[i];
       i++;
       c_in_data[i] = rl[i] + _Complex_I * im[i];
@@ -14932,6 +14936,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
     i = 0;
     while (i <= N4)
       {
+	/* float here, rather than double, is slower */
 	amp[i] += panc[i];
 	if (amp[i] != 0.0)
 	  sum += (amp[i] * sin(ph[i])); 

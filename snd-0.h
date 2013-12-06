@@ -74,7 +74,6 @@
 #else
   #define DEFAULT_OUTPUT_DATA_FORMAT MUS_BFLOAT
 #endif
-/* it's a bit faster to use doubles here */
 
 #define NO_COMPLETER -1
 #define NO_SELECTION -1

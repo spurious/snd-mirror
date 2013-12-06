@@ -10543,14 +10543,64 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer *els;
       double x;
+      bool is_delay = true;
       
       fs = (mus_any **)malloc(len * sizeof(mus_any *));
       els = s7_vector_elements(vec);
       for (i = 0; i < len; i++)
-	fs[i] = XEN_TO_MUS_ANY(els[i]);
-      
-      /* fprintf(stderr, "run %lld %s %d\n", end - pos, DISPLAY(val), len); */
-      
+	{
+	  fs[i] = XEN_TO_MUS_ANY(els[i]);
+	  if (!mus_delay_p(fs[i]))
+	    is_delay = false;
+	}
+      /* here len=1 or 2, out_any is safe, all delays I think
+       */
+
+      if ((mus_out_any_is_safe(clm_output_gen)) && 
+	  (is_delay) && 
+	  (len == 2) &&
+	  (mus_channels(clm_output_gen) >= 2))
+	{
+	  mus_float_t **ob;
+	  mus_long_t dstart, dend, dpos, dlen = 0;
+
+	  ob = mus_out_any_buffers(clm_output_gen);
+	  dlen = mus_file_buffer_size();
+
+	  {
+	    mus_float_t *buf1, *buf2;
+	    mus_any *dly1, *dly2;
+	    buf1 = ob[0];
+	    dly1 = fs[0];
+	    buf2 = ob[1];
+	    dly2 = fs[1];
+
+	    for (; pos < end;)
+	      {
+		(*step) = pos;
+		x = gf1->func(gf1);
+		mus_safe_out_any_to_file(pos, mus_delay_unmodulated_noz(dly1, x), 0, clm_output_gen);
+		mus_safe_out_any_to_file(pos, mus_delay_unmodulated_noz(dly2, x), 1, clm_output_gen);
+		pos++;
+		dstart = mus_out_any_data_start(clm_output_gen);
+		dend = mus_out_any_data_end(clm_output_gen);
+		if (dend > end)
+		  dlen = end - dstart;
+		for (dpos = pos - dstart; dpos < dlen; dpos++)
+		  {
+		    (*step) = pos;
+		    x = gf1->func(gf1);
+		    mus_safe_out_any_to_file(pos, mus_delay_unmodulated_noz(dly1, x), 0, clm_output_gen);
+		    mus_safe_out_any_to_file(pos, mus_delay_unmodulated_noz(dly2, x), 1, clm_output_gen);
+		    pos++;
+		  }
+		mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
+	      }
+
+	    return(args);
+	  }
+	}
+
       for (; pos < end; pos++)
 	{
 	  (*step) = pos;
@@ -13052,6 +13102,54 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 	}
     }
 
+  /* here is_delay is normally true, 1 or 2 chans, output to vct or sound_data */
+  if (is_delay)
+    {
+      if ((out_any_2 == out_any_2_to_vct) && (size == 1))
+	{
+	  mus_long_t len;
+	  mus_float_t *vdata;
+	  mus_any *dly;
+
+	  dly = outs[0];
+	  len = mus_vct_length(clm_output_vct);
+	  if (end > len) end = len;
+	  vdata = mus_vct_data(clm_output_vct);
+
+	  for (; pos < end; pos++)
+	    vdata[pos] += mus_delay_unmodulated_noz(dly, vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0))));
+	  return(args);
+	}
+
+      if (out_any_2 == out_any_2_to_sound_data)
+	{
+	  mus_long_t pos2;
+	  mus_any *dly1, *dly2;
+
+	  dly1 = outs[0];
+	  if (end > clm_output_sd_offset)
+	    end = clm_output_sd_offset;
+	  if (size == 1)
+	    {
+	      for (; pos < end; pos++)
+		clm_output_sd_data[pos] += mus_delay_unmodulated_noz(dly1, vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0))));
+	      return(args);
+	    }
+	  if ((size == 2) && (clm_output_sd_chans > 1))
+	    {
+	      pos2 = clm_output_sd_offset + pos;
+	      dly2 = outs[1];
+	      for (; pos < end; pos++, pos2++)
+		{
+		  x = vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0)));
+		  clm_output_sd_data[pos] += mus_delay_unmodulated_noz(dly1, x);
+		  clm_output_sd_data[pos2] += mus_delay_unmodulated_noz(dly2, x);
+		}
+	      return(args);
+	    }
+	}
+    }
+
   for (; pos < end; pos++)
     {
       (*step) = pos;
@@ -13375,32 +13473,53 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 #define OUT_LOOP(Chan, Call)						\
   if ((pos >= 0) && (end >= pos))                                       \
     {                                                                   \
-  if (mus_out_any_is_safe(clm_output_gen))				\
-    {									\
-      for (; pos < end;)						\
-        {								\
-          mus_safe_out_any_to_file(pos++, Call, Chan, clm_output_gen);	\
-          dstart = mus_out_any_data_start(clm_output_gen);		\
-          dend = mus_out_any_data_end(clm_output_gen);			\
-          if (dend > end)						\
-	    dlen = end - dstart;					\
-          for (dpos = pos - dstart; dpos < dlen; dpos++)		\
-	    {								\
-	      (*step) = pos++;						\
-	      buf[dpos] += (Call);					\
-	    }								\
-          mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);\
-        }								\
-    }									\
-  else									\
-    {									\
-      for (; pos < end; pos++)						\
+      if (mus_out_any_is_safe(clm_output_gen))				\
 	{								\
-	  (*step) = pos;						\
-	  out_any_2(pos, Call, Chan, "outa");				\
+	  for (; pos < end;)						\
+	    {								\
+	      mus_safe_out_any_to_file(pos++, Call, Chan, clm_output_gen); \
+	      dstart = mus_out_any_data_start(clm_output_gen);		\
+	      dend = mus_out_any_data_end(clm_output_gen);		\
+	      if (dend > end)						\
+		dlen = end - dstart;					\
+	      for (dpos = pos - dstart; dpos < dlen; dpos++)		\
+		{							\
+		  (*step) = pos++;					\
+		  buf[dpos] += (Call);					\
+		}							\
+	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end); \
+	    }								\
 	}								\
-    }}
+      else								\
+	{								\
+	  for (; pos < end; pos++)					\
+	    {								\
+	      (*step) = pos;						\
+	      out_any_2(pos, Call, Chan, "outa");			\
+	    }								\
+	}}
 #define OUTA_LOOP(Call) OUT_LOOP(0, Call)
+
+#if 0
+/* currently this doesn't save much */
+      if ((out_any_2 == out_any_2_to_vct) && (Chan == 0))		
+	{								
+	  mus_long_t len;						
+	  mus_float_t *vdata;						
+	  len = mus_vct_length(clm_output_vct);				
+	  if (end > len) end = len;					
+	  vdata = mus_vct_data(clm_output_vct);				
+	  for (; pos < end; pos++)					
+	    {								
+	      (*step) = pos;						
+	      vdata[pos] += (Call);					
+	    }								
+	}								
+      else								
+	{
+	}
+#endif
+
 
 
 /* -------------------------------------------------------------------------------- */

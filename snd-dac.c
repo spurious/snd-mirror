@@ -1689,8 +1689,28 @@ static int fill_dac_buffers(int write_ok)
 		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (mus_float_t)(frames);
 		  if ((sr != 0.0) || (sincr != 0.0))
 		    {
-		      for (j = 0; j < frames; j++, amp += incr, sr += sincr) 
-			buf[j] += (amp * speed(dp, sr));
+		      if (dp->src)
+			{
+			  if ((amp == 1.0) && (incr == 0.0) && (sincr == 0.0))
+			    {
+			      mus_set_increment(dp->src, sr);
+			      for (j = 0; j < frames; j++)
+				buf[j] += mus_src(dp->src, 0.0, &dac_src_input_as_needed);
+			    }
+			  else
+			    {
+			      for (j = 0; j < frames; j++, amp += incr, sr += sincr) 
+				{
+				  mus_set_increment(dp->src, sr);
+				  buf[j] += (amp * mus_src(dp->src, 0.0, &dac_src_input_as_needed));
+				}
+			    }
+			}
+		      else
+			{
+			  for (j = 0; j < frames; j++, amp += incr, sr += sincr) 
+			    buf[j] += (amp * speed(dp, sr));
+			}
 		    }
 		  dp->cur_srate = sr;
 		  dp->cur_amp = amp;

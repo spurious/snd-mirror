@@ -9163,69 +9163,93 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       if (name[2] == 0)                             /* the most common case: #\a */
 	return(chars[(unsigned char)(name[1])]);
       /* not unsigned int here!  (unsigned int)255 (as a char) returns -1!! */
-
-      if (strings_are_equal(name + 1, "space")) 
-	return(chars[' ']);
-
-      if ((strings_are_equal(name + 1, "newline")) || 
-	  (strings_are_equal(name + 1, "linefeed")))
-	return(chars['\n']);
-
-      if (strings_are_equal(name + 1, "return")) 
-	return(chars['\r']);
-
-      if (strings_are_equal(name + 1, "tab")) 
-	return(chars['\t']);
-
-      if ((strings_are_equal(name + 1, "null")) || 
-	  (strings_are_equal(name + 1, "nul")))
-	return(chars[0]);
-
-      /* the next 4 are for r7rs */
-      if (strings_are_equal(name + 1, "alarm")) 
-	return(chars[7]);
-
-      if (strings_are_equal(name + 1, "backspace")) 
-	return(chars[8]);
-
-      if (strings_are_equal(name + 1, "escape")) 
-	return(chars[0x1b]);
-
-      if (strings_are_equal(name + 1, "delete")) 
-	return(chars[0x7f]);
-
-      if (name[1] == 'x')     /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e -- Guile doesn't have this
-			       *
-			       * r7rs has 2/3/4-byte "characters" of the form #\xcebb but this is not compatible with
-			       *   make-string, string-length, and so on.  We'd either have to have 2-byte chars
-			       *   so (string-length (make-string 3 #\xcebb)) = 3, or accept 6 here for number of chars.
-			       *   Then substring and string-set! and so on have to use utf8 encoding throughout or
-			       *   risk changing the string length unexpectedly.
-			       */
+      switch (name[1])
 	{
-	  /* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
-	   *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
-	   *   an even lower level.
-	   *
-	   * another problem: #\xbdca2cbec overflows so lval is -593310740 -> segfault unless caught
-	   */
-	  bool happy = true;
-	  char *tmp;
-	  int lval = 0;
+	case 'n':
+	  if ((strings_are_equal(name + 1, "null")) || 
+	      (strings_are_equal(name + 1, "nul")))
+	    return(chars[0]);
 
-	  tmp = (char *)(name + 2);
-	  while ((*tmp) && (happy) && (lval >= 0))
-	    {
-	      int dig;
-	      dig = digits[(int)(*tmp++)];
-	      if (dig < 16)
-		lval = dig + (lval * 16);
-	      else happy = false;
-	    }
-	  if ((happy) &&
-	      (lval < 256) &&
-	      (lval >= 0))
-	    return(chars[lval]);
+	  if (strings_are_equal(name + 1, "newline"))
+	    return(chars['\n']);
+	  break;
+
+	case 's':
+	  if (strings_are_equal(name + 1, "space")) 
+	    return(chars[' ']);
+	  break;
+
+	case 'r':
+	  if (strings_are_equal(name + 1, "return")) 
+	    return(chars['\r']);
+	  break;
+
+	case 'l':
+	  if (strings_are_equal(name + 1, "linefeed"))
+	    return(chars['\n']);
+	  break;
+
+	case 't':
+	  if (strings_are_equal(name + 1, "tab")) 
+	    return(chars['\t']);
+	  break;
+	  
+	case 'a':
+	  /* the next 4 are for r7rs */
+	  if (strings_are_equal(name + 1, "alarm")) 
+	    return(chars[7]);
+	  break;
+
+	case 'b':
+	  if (strings_are_equal(name + 1, "backspace")) 
+	    return(chars[8]);
+	  break;
+
+	case 'e':
+	  if (strings_are_equal(name + 1, "escape")) 
+	    return(chars[0x1b]);
+	  break;
+
+	case 'd':
+	  if (strings_are_equal(name + 1, "delete")) 
+	    return(chars[0x7f]);
+	  break;
+
+	case 'x':
+	  /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e -- Guile doesn't have this
+	   *
+	   * r7rs has 2/3/4-byte "characters" of the form #\xcebb but this is not compatible with
+	   *   make-string, string-length, and so on.  We'd either have to have 2-byte chars
+	   *   so (string-length (make-string 3 #\xcebb)) = 3, or accept 6 here for number of chars.
+	   *   Then substring and string-set! and so on have to use utf8 encoding throughout or
+	   *   risk changing the string length unexpectedly.
+	   */
+	  {
+	    /* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
+	     *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
+	     *   an even lower level.
+	     *
+	     * another problem: #\xbdca2cbec overflows so lval is -593310740 -> segfault unless caught
+	     */
+	    bool happy = true;
+	    char *tmp;
+	    int lval = 0;
+	    
+	    tmp = (char *)(name + 2);
+	    while ((*tmp) && (happy) && (lval >= 0))
+	      {
+		int dig;
+		dig = digits[(int)(*tmp++)];
+		if (dig < 16)
+		  lval = dig + (lval * 16);
+		else happy = false;
+	      }
+	    if ((happy) &&
+		(lval < 256) &&
+		(lval >= 0))
+	      return(chars[lval]);
+	  }
+	  break;
 	}
     }
   return(sc->NIL);
@@ -68609,7 +68633,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.5
- * calls         |   275  207  175  115   89   71   53   53|  54   52.4
+ * calls         |   275  207  175  115   89   71   53   53|  54   52.1
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))

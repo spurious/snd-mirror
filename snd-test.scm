@@ -9837,7 +9837,7 @@ EDITS: 2
 	  (set! (speed-control ind) -1.0)
 	  (apply-controls)
 	  (if (not (= (edit-position ind) 1))
-	      (snd-display #__line__ ";apply-controls with srate -1.0: ~A ~A" (edits ind) (edit-tree ind)))
+	      (snd-display #__line__ ";apply-controls with srate -1.0: ~A ~A ~A" (edit-position ind) (edits ind) (edit-tree ind)))
 	  (if (> (abs (- (frames ind 0) (frames ind 0 0))) 2)
 	      (snd-display #__line__ ";apply-controls srate -1.0 lengths: ~A ~A" (frames ind 0) (frames ind 0 0)))
 	  (if (or (fneq (maxamp) .147)
@@ -38962,7 +38962,7 @@ EDITS: 1
 	    (if (not (= (channels ind) 2)) (snd-display #__line__ ";default chans in ws: ~A ~A" (channels ind) *clm-channels*))
 	    (if (not (= (data-format ind) mus-mulaw)) (snd-display #__line__ ";default format in ws: ~A ~A" (data-format ind) *clm-data-format*))
 	    (if (not (= (header-type ind) mus-riff)) (snd-display #__line__ ";default type in ws: ~A ~A" (header-type ind) *clm-header-type*))
-	    (if (not (= (frames ind) 88200)) (snd-display #__line__ ";reverb+1 sec out in ws: ~A" (frames ind)))
+	    (if (> (abs (- (frames ind) 88200)) 1) (snd-display #__line__ ";reverb+1 sec out in ws: ~A" (frames ind)))
 	    (if (file-exists? "test.rev") (snd-display #__line__ ";perhaps reverb not deleted in ws?"))
 	    (close-sound ind))))
     
@@ -46492,25 +46492,25 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-4-Dec-13:
-52,432,605,292
-6,521,299,329  s7.c:eval [/home/bil/gtk-snd/snd]
-6,513,808,237  ???:sin [/lib64/libm-2.12.so]
-2,455,958,329  ???:cos [/lib64/libm-2.12.so]
-2,252,705,235  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
-2,180,512,376  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,270,468,186  s7.c:gc [/home/bil/gtk-snd/snd]
-1,194,355,455  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-1,119,516,772  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  917,553,337  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+5-Dec-13:
+52,123,855,932
+6,516,839,748  s7.c:eval [/home/bil/gtk-snd/snd]
+6,512,995,265  ???:sin [/lib64/libm-2.12.so]
+2,434,885,575  ???:cos [/lib64/libm-2.12.so]
+2,251,180,135  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+2,178,768,943  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,268,120,361  s7.c:gc [/home/bil/gtk-snd/snd]
+1,194,638,708  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,119,500,082  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  915,473,000  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
   911,248,552  clm.c:fir_8 [/home/bil/gtk-snd/snd]
-  885,196,084  ???:t2_32 [/home/bil/gtk-snd/snd]
+  885,305,312  ???:t2_32 [/home/bil/gtk-snd/snd]
   877,841,154  clm.c:mus_formant_bank [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
-  723,790,167  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
+  705,442,889  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  616,017,486  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
-  503,589,615  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
+  566,475,313  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
+  503,941,949  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
  
 |#
 
