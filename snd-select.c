@@ -1213,7 +1213,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
       for (k = 0; k < chans; k++)
 	{
 	  if (ioff <= ends[k]) 
-	    data[k][j] = read_sample_to_mus_sample(sfs[k]);
+	    data[k][j] = read_sample(sfs[k]);
 	  else data[k][j] = 0.0;
 	}
       j++;

@@ -694,8 +694,10 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
   data1[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
   idata0 = data0[0];
   idata1 = data1[0];
-  c0 = init_sample_read_any(beg, cp0, READ_FORWARD, pos0);
-  c1 = init_sample_read_any(beg, cp1, READ_FORWARD, pos1);
+  c0 = init_sample_read_any_with_bufsize(beg, cp0, READ_FORWARD, pos0, (dur > REPORTING_SIZE) ? REPORTING_SIZE : dur);
+  c1 = init_sample_read_any_with_bufsize(beg, cp1, READ_FORWARD, pos1, (dur > REPORTING_SIZE) ? REPORTING_SIZE : dur);
+  sampler_set_safe(c0, dur);
+  sampler_set_safe(c1, dur);
 
   if (temp_file)
     {
@@ -703,8 +705,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
       j = 0;
       for (k = 0; k < dur; k++)
 	{
-	  idata0[j] = read_sample_to_mus_sample(c1);
-	  idata1[j] = read_sample_to_mus_sample(c0);
+	  idata0[j] = read_sample(c1);
+	  idata1[j] = read_sample(c0);
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
@@ -756,8 +758,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
     {
       for (k = 0; k < dur; k++)
 	{
-	  idata0[k] = read_sample_to_mus_sample(c1);
-	  idata1[k] = read_sample_to_mus_sample(c0);
+	  idata0[k] = read_sample(c1);
+	  idata1[k] = read_sample(c0);
 	}
       change_samples(beg, dur, data0[0], cp0, S_swap_channels, cp0->edit_ctr, -1.0);
       change_samples(beg, dur, data1[0], cp1, S_swap_channels, cp1->edit_ctr, -1.0);
@@ -1452,6 +1454,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL)
     return(mus_format("%s can't read %s[%d] channel data!", S_clm_channel, sp->short_filename, cp->chan));
+  sampler_set_safe(sf, dur + overlap);
 
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
@@ -2273,10 +2276,9 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 
   if (temp_file)
     {
-      j = 0;
-      for (k = 0; k < dur; k++)
+      for (j = 0, k = 0; k < dur; k++)
 	{
-	  idata[j++] = read_sample_to_mus_sample(sf);
+	  idata[j++] = read_sample(sf);
 	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -2297,7 +2299,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
   else 
     {
       for (k = 0; k < dur; k++)
-	idata[k] = read_sample_to_mus_sample(sf);
+	idata[k] = read_sample(sf);
       change_samples(beg, dur, idata, cp, origin, edpos, -1.0);
     }
   if (ep) cp->edits[cp->edit_ctr]->peak_env = ep;
@@ -2343,7 +2345,7 @@ void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos)
 	      sfs[i] = free_snd_fd(sfs[i]); 
 	      continue;
 	    }
-
+	  
 	  errmsg = reverse_channel(cp, sfs[i], si->begs[i], dur, edpos, caller, arg_pos);
 
 	  sfs[i] = free_snd_fd(sfs[i]);
@@ -4134,9 +4136,10 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  pos = cp->edit_ctr;
 	}
 
-      sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+      sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, (num > REPORTING_SIZE) ? REPORTING_SIZE : num);
       if (sf == NULL) 
 	return(XEN_TRUE);
+      sampler_set_safe(sf, num);
 
       temp_file = (num > MAX_BUFFER_SIZE);
       if (temp_file)
@@ -4203,8 +4206,9 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
     }
   num = end - beg + 1;
   if (num <= 0) return(XEN_FALSE);
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, (num < REPORTING_SIZE) ? REPORTING_SIZE : num);
   if (sf == NULL) return(XEN_TRUE);
+  sampler_set_safe(sf, num);
 
 #if HAVE_SCHEME
   {
@@ -4252,7 +4256,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	      s7_Double *ry;
 	      int len;
 
-	      if (s7_function_choice_is_direct(s7, res))
+	      if (s7_function_choice_is_direct(s7, res)) /* global HOP_SAFE_C_C in s7 */
 		{
 		  s7_pointer olde;
 
@@ -4284,15 +4288,27 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		}
 	      else
 		{
+		  /* res: (> y .1) or whatever */
+		  s7_pointer s;
+		  bool abs_case = false;
+		  s = s7_cadr(res);
+		  
 		  len = s7_list_length(s7, res);
-		  if ((s7_cadr(res) == arg) &&
-		      ((len == 2) || 
-		       ((len == 3) &&
-			(s7_caddr(res) != arg) &&
-			(!s7_is_pair(s7_caddr(res))))))
+		  if (((s == arg) &&
+		       ((len == 2) ||                /* (f s) */
+			((len == 3) &&               /* (f s c) */
+			 (s7_caddr(res) != arg) &&   /* not (f s s) or whatever */
+			 (!s7_is_pair(s7_caddr(res)))))) ||
+		      ((len == 3) &&                 /* (f (abs s) c) */
+		       (s7_is_pair(s)) &&
+		       (s7_list_length(s7, s) == 2) &&
+		       (s7_cadr(s) == arg) &&
+		       (s7_caddr(res) != arg) &&
+		       (!s7_is_pair(s7_caddr(res))) &&
+		       (s7_car(s) == s7_make_symbol(s7, "abs"))))
 		    {
 		      /* not direct, so we're making the arg list, so no env is needed */
-
+		      abs_case = s7_is_pair(s);
 		      y = s7_make_mutable_real(s7, 1.5);
 		      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 		      if (len == 2)
@@ -4316,7 +4332,9 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		      gc_loc = s7_gc_protect(s7, args);
 		      for (kp = 0; kp < num; kp++)
 			{
-			  (*ry) = read_sample(sf);
+			  if (abs_case)
+			    (*ry) = fabs(read_sample(sf));
+			  else (*ry) = read_sample(sf);
 			  val = f(s7, args);
 			  if (val != xen_false)
 			    {
@@ -4337,7 +4355,8 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	    }
 	}
 #endif
-      /* (> (abs y) .1) (fneq y 1.0)
+      /* (fneq y 1.0)?
+       * 400000: (or (> n3 0.1) (not|begin (set! samp (+ samp 1))[ #f]))
        */
       e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
@@ -4352,12 +4371,13 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
     }
   else
     {
+      /* is this for built-in funcs? */
       arg_list = XEN_LIST_1(XEN_FALSE);
       gc_loc = s7_gc_protect(s7, arg_list);
       use_apply = true;
     }
 
-  /* fprintf(stderr, "body: %s, %d %d\n", s7_object_to_c_string(s7, body), s7_function_choice_is_direct(s7, body), s7_function_choice_is_indirect(s7, body)); */
+  /* fprintf(stderr, "%lld: body: %s\n", num, s7_object_to_c_string(s7, body)); */
 
   reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(cp);

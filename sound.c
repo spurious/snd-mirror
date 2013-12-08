@@ -264,15 +264,11 @@ static int sound_file_hash_index(const char *name)
   return((s[0] + s[1] + s[2] + s[3]) % NUM_SOUND_TABLES);
 }
 
-#define SF_PRINT 0
 
 static void free_sound_file(sound_file *sf)
 {
   if (sf)
     {
-#if SF_PRINT
-      fprintf(stderr, "free %s %p %d %d\n", sf->file_name, sf, sf->table_index, sf->table_pos);
-#endif
       sound_tables[sf->table_index][sf->table_pos] = NULL;
       if (sf->aux_comment_start) free(sf->aux_comment_start);
       if (sf->aux_comment_end) free(sf->aux_comment_end);
@@ -308,10 +304,6 @@ static sound_file *add_to_sound_table(const char *name)
 	break;
       }
 
-#if SF_PRINT
-  fprintf(stderr, "add %s (%d, %d)\n", name, pos, index);
-#endif
-
   if (pos == -1)
     {
       pos = sound_table_size;
@@ -327,9 +319,6 @@ static sound_file *add_to_sound_table(const char *name)
 	}
       sound_tables[index] = sound_table;
       sound_table_sizes[index] = sound_table_size;
-#if SF_PRINT
-      fprintf(stderr, "    resized %d to %d\n", index, sound_table_size);
-#endif
     }
 
   sound_table[pos] = (sound_file *)calloc(1, sizeof(sound_file));
@@ -348,10 +337,6 @@ int mus_sound_prune(void)
 {
   int i, j, pruned = 0, sound_table_size;
   sound_file **sound_table;
-
-#if SF_PRINT
-  fprintf(stderr, "pruning\n");
-#endif
 
   for (j = 0; j < NUM_SOUND_TABLES; j++)
     {
@@ -382,10 +367,6 @@ int mus_sound_forget(const char *name)
   int sound_table_size, index;
   char c;
 
-#if SF_PRINT
-  fprintf(stderr, "forget %s\n", name);
-#endif
-
   if (name == NULL) return(MUS_ERROR);
   len = strlen(name);
   if (len > 6)
@@ -411,10 +392,6 @@ int mus_sound_forget(const char *name)
   sound_table = sound_tables[index];
   sound_table_size = sound_table_sizes[index];
 
-#if SF_PRINT
-  fprintf(stderr, "    index: %d, len: %d\n", index, len);
-#endif
-  
   for (i = 0; i < sound_table_size; i++)
     if ((sound_table[i]) &&
 	(sound_table[i]->file_name_length == len) &&
@@ -423,9 +400,6 @@ int mus_sound_forget(const char *name)
       {
 	free_sound_file(sound_table[i]);
 	sound_table[i] = NULL;
-#if SF_PRINT
-	fprintf(stderr, "    found it at %d\n", i);
-#endif
       }
   
   if (short_name)
@@ -439,10 +413,6 @@ int mus_sound_forget(const char *name)
       sound_table = sound_tables[index];
       sound_table_size = sound_table_sizes[index];
 
-#if SF_PRINT
-      fprintf(stderr, "    try short: %s %d %d\n", short_name, short_len, index);
-#endif
-      
       for (i = 0; i < sound_table_size; i++)
 	if ((sound_table[i]) &&
 	    (sound_table[i]->file_name_length == short_len) &&
@@ -451,9 +421,6 @@ int mus_sound_forget(const char *name)
 	  {
 	    free_sound_file(sound_table[i]);
 	    sound_table[i] = NULL;
-#if SF_PRINT
-	    fprintf(stderr, "    found it at %d\n", i);
-#endif
 	  }
     }
   
@@ -464,21 +431,14 @@ int mus_sound_forget(const char *name)
 
 static sound_file *check_write_date(const char *name, sound_file *sf)
 {
-#if SF_PRINT
-  fprintf(stderr, "check write date %s %p\n", name, sf);
-#endif
   if (sf)
     {
       time_t date;
       date = local_file_write_date(name);
 
       if (date == sf->write_date)
-	{
-#if SF_PRINT
-	  fprintf(stderr, "    it's ok\n");
-#endif
 	return(sf);
-	}
+
       if ((sf->header_type == MUS_RAW) && (mus_header_no_header(name)))
 	{
 	  int chan;
@@ -494,15 +454,9 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 	  sf->samples = mus_bytes_to_samples(sf->data_format, data_size);
 	  CLOSE(chan, name);  
 
-#if SF_PRINT
-	  fprintf(stderr, "    raw header\n");
-#endif
 	  return(sf);
 	}
       /* otherwise our data base is out-of-date, so clear it out */
-#if SF_PRINT
-      fprintf(stderr, "    bad date -- freeing\n");
-#endif
       free_sound_file(sf);
     }
   return(NULL);
@@ -517,11 +471,7 @@ static sound_file *find_sound_file(const char *name)
   int sound_table_size, index;
   char c;
 
-#if SF_PRINT
-  fprintf(stderr, "find sound file %s\n", name);
-#endif
   if (!name) return(NULL);
-
   len = strlen(name);
   if (len > 6)
     len2 = len - 6; /* the names probably all start with '/' and end with ".snd", so try to find a changing character... */
@@ -532,10 +482,6 @@ static sound_file *find_sound_file(const char *name)
   sound_table = sound_tables[index];
   sound_table_size = sound_table_sizes[index];
 
-#if SF_PRINT
-  fprintf(stderr, "    index; %d, len: %d\n", index, len);
-#endif
-
   for (i = 0; i < sound_table_size; i++)  
     {
       sf = sound_table[i];
@@ -545,9 +491,6 @@ static sound_file *find_sound_file(const char *name)
 	  (strcmp(name, sf->file_name) == 0))
 	return(check_write_date(name, sf));
     }
-#if SF_PRINT
-  fprintf(stderr, "not found\n");
-#endif
   return(NULL);
 }
 

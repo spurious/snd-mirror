@@ -1012,7 +1012,7 @@ is: (filter-sound (make-formant 2400 .99))"
 	(menv (make-env move :length (frames))))
     (lambda (x)
       (let ((val (formant frm x)))
-	(set! (mus-frequency frm) (env menv))
+	(mus-set-formant-frequency frm (env menv))
 	val))))
 
 
@@ -1053,7 +1053,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 	       (let ((val (formant-bank frms1 x)))
 		 (do ((i 0 (+ i 1)))
 		     ((= i len))
-		   (set! (mus-frequency (vector-ref frms i))
+		   (mus-set-formant-frequency (vector-ref frms i)
 			 (+ (bases i)
 			    (* (amounts i) 
 			       (oscil (oscs i))))))

@@ -6774,7 +6774,7 @@ void mus_set_formant_radius_and_frequency(mus_any *ptr, mus_float_t radius, mus_
 
 static mus_float_t formant_frequency(mus_any *ptr) {return(mus_radians_to_hz(((frm *)ptr)->frequency));}
 
-static mus_float_t formant_set_frequency(mus_any *ptr, mus_float_t freq_in_hz)
+mus_float_t mus_set_formant_frequency(mus_any *ptr, mus_float_t freq_in_hz)
 {
   frm *gen = (frm *)ptr;
   mus_float_t fw;
@@ -6811,7 +6811,7 @@ static mus_any_class FORMANT_CLASS = {
   &frm_equalp,
   0, 0,
   &two_length, 0,
-  &formant_frequency, &formant_set_frequency,
+  &formant_frequency, &mus_set_formant_frequency,
   0, 0,
   &formant_radius, &formant_set_radius,
   0, 0,

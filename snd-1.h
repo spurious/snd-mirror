@@ -149,6 +149,7 @@ typedef struct snd_fd {
   mus_long_t frag_pos;
   int edit_ctr, region;
   reader_t type;
+  bool safe;
   void *ramps, *mixes;
 } snd_fd;
 
@@ -1068,9 +1069,9 @@ snd_fd *init_sample_read(mus_long_t samp, chan_info *cp, read_direction_t direct
 snd_fd *init_sample_read_any(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position);
 snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize);
 void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
+void sampler_set_safe(snd_fd *sf, mus_long_t dur); 
 bool unrampable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos, bool is_xramp);
 bool sound_fragments_in_use(chan_info *cp, int pos);
-#define read_sample_to_mus_sample(Sf) ((*((Sf)->runf))(Sf))
 #define read_sample(Sf) (*((Sf)->runf))(Sf)
 mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, mus_long_t *maxpos);
 bool undo_edit_with_sync(chan_info *cp, int count);

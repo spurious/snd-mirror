@@ -1564,6 +1564,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
        */
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       if (sf == NULL) return(0);
+
       incr = (double)1.0 / cur_srate;
       grfpts = (int)(ap->hisamp - ap->losamp + 1);
       if (cp->printing)
@@ -1626,6 +1627,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	    }
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
 	  if (sf == NULL) return(0);
+
 	  j = 0;      /* graph point counter */
 	  x = ap->x0;
 	  xi = local_grf_x(x, ap);
@@ -1783,6 +1785,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
     {
       int grfpts;
       sf = init_sample_read(beg, cp, READ_FORWARD);
+
       incr = (double)1.0 / cur_srate;
       grfpts = (int)(end - beg + 1);
 
@@ -1906,6 +1909,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t h
       data_size = (int)samps;
       sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
       if (sf == NULL) return(XEN_FALSE); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
+
       data = (mus_float_t *)malloc(data_size * sizeof(mus_float_t));
       for (i = 0; i < data_size; i++)
 	data[i] = read_sample(sf);
@@ -1959,6 +1963,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t h
 	  data_size = pixels + 1;
 	  sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
 	  if (sf == NULL) return(XEN_FALSE);
+
 	  data = (mus_float_t *)calloc(data_size, sizeof(mus_float_t));
 	  data1 = (mus_float_t *)calloc(data_size, sizeof(mus_float_t));
 	  j = 0;      /* graph point counter */

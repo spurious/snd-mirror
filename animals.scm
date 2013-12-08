@@ -1029,7 +1029,7 @@
 	    ((= i stop))
 	  (let ((frq (+ (env frqf)
 			(rand-interp rnd1))))
-	    (set! (mus-frequency frm2) (env intrpf))
+	    (mus-set-formant-frequency frm2 (env intrpf))
 	    (outa i (formant-bank fb (* (env ampf)
 					(+ .8 (rand-interp rnd))
 					(+          (rxyk!cos f1 (* 2.0 frq))

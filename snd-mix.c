@@ -13,7 +13,7 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
   for (i = 0; i < len; i++)
-    data[i] = read_sample_to_mus_sample(sf) + (vdata[i]);
+    data[i] = read_sample(sf) + (vdata[i]);
   sf = free_snd_fd(sf);
 
   result = change_samples(beg, len, data, cp, origin, cp->edit_ctr, -1.0); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
@@ -105,7 +105,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
 	  j = 0;
 	  if (err != MUS_NO_ERROR) break;
 	}
-      chandata[j] += read_sample_to_mus_sample(sf);
+      chandata[j] += read_sample(sf);
       j++;
     }
   if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);

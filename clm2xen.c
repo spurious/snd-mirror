@@ -4321,8 +4321,8 @@ static XEN g_formant_p(XEN os)
 
 static XEN g_set_formant_radius_and_frequency(XEN gen, XEN rad, XEN frq)
 {
-  #define H_mus_set_formant_radius_and_frequency  "(" S_mus_set_formant_radius_and_frequency  " gen radius frequency): set (" S_formant " \
-generator) gen's radius and frequency"
+  #define H_mus_set_formant_radius_and_frequency  "(" S_mus_set_formant_radius_and_frequency  " gen radius frequency): set " S_formant " \
+generator gen's radius and frequency"
   mus_any *g = NULL;
   mus_float_t radius = 0.0, frequency = 0.0;
   mus_xen *gn;
@@ -4334,6 +4334,21 @@ generator) gen's radius and frequency"
 
   mus_set_formant_radius_and_frequency(g, radius, frequency);
   return(rad);
+}
+
+
+static XEN g_set_formant_frequency(XEN gen, XEN frq)
+{
+  #define H_mus_set_formant_frequency  "(" S_mus_set_formant_frequency  " gen frequency): set " S_formant " generator gen's frequency"
+  mus_any *g = NULL;
+  mus_float_t frequency = 0.0;
+  mus_xen *gn;
+
+  XEN_TO_C_GENERATOR(gen, gn, g, mus_formant_p, S_mus_set_formant_frequency, "a formant generator");
+  XEN_TO_C_DOUBLE_OR_ERROR(frq, frequency, S_mus_set_formant_frequency, 2);
+
+  mus_set_formant_frequency(g, frequency);
+  return(frq);
 }
 
 
@@ -18626,6 +18641,7 @@ XEN_NARGIFY_1(g_one_pole_all_pass_p_w, g_one_pole_all_pass_p)
 XEN_NARGIFY_2(g_make_one_pole_all_pass_w, g_make_one_pole_all_pass)
 XEN_ARGIFY_2(g_one_pole_all_pass_w, g_one_pole_all_pass)
 
+XEN_NARGIFY_2(g_set_formant_frequency_w, g_set_formant_frequency)
 XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
 XEN_VARGIFY(g_make_frame_w, g_make_frame)
 XEN_VARGIFY(g_make_frame_unchecked_w, g_make_frame_unchecked)
@@ -19204,6 +19220,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_make_one_pole_all_pass, g_make_one_pole_all_pass_w, 2, 0, 0, H_make_one_pole_all_pass);
   XEN_DEFINE_REAL_PROCEDURE(S_one_pole_all_pass,    g_one_pole_all_pass_w,     1, 1, 0, H_one_pole_all_pass);
 
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_set_formant_frequency, g_set_formant_frequency_w, 2, 0, 0, H_mus_set_formant_frequency);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 
 

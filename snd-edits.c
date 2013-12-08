@@ -605,6 +605,21 @@ static mus_float_t next_sample_value(snd_fd *sf)
   else return(sf->data[sf->loc++] * sf->fscaler);
 }
 
+
+#define SF_UNSAFE 0
+
+static mus_float_t next_sample_value_unchecked(snd_fd *sf) 
+{
+#if SF_UNSAFE
+  if (sf->loc > sf->last) 
+    {
+      fprintf(stderr, "ran off end somehow\n");
+      abort();
+    }
+#endif
+  return(sf->data[sf->loc++] * sf->fscaler);
+}
+
 static mus_float_t previous_sample_value(snd_fd *sf) 
 {
   if (sf->loc < sf->first) 
@@ -618,6 +633,19 @@ static mus_float_t next_sample_value_unscaled(snd_fd *sf)
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(sf->data[sf->loc++]);
+}
+
+
+static mus_float_t next_sample_value_unscaled_and_unchecked(snd_fd *sf) 
+{
+#if SF_UNSAFE
+  if (sf->loc > sf->last) 
+    {
+      fprintf(stderr, "ran off end somehow\n");
+      abort();
+    }
+#endif
+  return(sf->data[sf->loc++]);
 }
 
 static mus_float_t previous_sample_value_unscaled(snd_fd *sf) 
@@ -654,6 +682,21 @@ static mus_float_t next_ramp1(snd_fd *sf)
       READER_VAL(sf, 0) += READER_INCR(sf, 0);
       return(val);
     }
+}
+
+static mus_float_t next_ramp1_unchecked(snd_fd *sf)
+{
+  mus_float_t val;
+#if SF_UNSAFE
+  if (sf->loc > sf->last) 
+    {
+      fprintf(stderr, "ran off end somehow\n");
+      abort();
+    }
+#endif
+  val = sf->data[sf->loc++] * READER_VAL(sf, 0);
+  READER_VAL(sf, 0) += READER_INCR(sf, 0);
+  return(val);
 }
 
 static mus_float_t previous_ramp1(snd_fd *sf)
@@ -739,6 +782,7 @@ static mus_float_t read_mix_list_samples(snd_fd *sf)
   int i;
   mus_float_t sum = 0.0;
   m = (reader_mixes *)(sf->mixes);
+  sampler_set_safe(sf, m->size);
   for (i = 0; i < m->size; i++) /* unrolled no faster */
     sum += read_sample(m->sfs[i]);
   return(sum);
@@ -1614,7 +1658,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	{
 	  for (len = 0; len < length; len++)
 	    {
-	      buf[j] = read_sample_to_mus_sample(sf);
+	      buf[j] = read_sample(sf);
 	      j++;
 	      if (j == alloc_len)
 		{
@@ -1636,17 +1680,17 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	  len = 0;
 	  while (len <= len8)
 	    {
-	      buf[len++] = read_sample_to_mus_sample(sf);
-	      buf[len++] = read_sample_to_mus_sample(sf);
-	      buf[len++] = read_sample_to_mus_sample(sf);
-	      buf[len++] = read_sample_to_mus_sample(sf);
-	      buf[len++] = read_sample_to_mus_sample(sf);
-	      buf[len++] = read_sample_to_mus_sample(sf);
-	      buf[len++] = read_sample_to_mus_sample(sf);
-	      buf[len++] = read_sample_to_mus_sample(sf);
+	      buf[len++] = read_sample(sf);
+	      buf[len++] = read_sample(sf);
+	      buf[len++] = read_sample(sf);
+	      buf[len++] = read_sample(sf);
+	      buf[len++] = read_sample(sf);
+	      buf[len++] = read_sample(sf);
+	      buf[len++] = read_sample(sf);
+	      buf[len++] = read_sample(sf);
 	    }
 	  for (; len < length; len++)
-	    buf[len] = read_sample_to_mus_sample(sf);
+	    buf[len] = read_sample(sf);
 	  j = (int)length;
 	}
     }
@@ -1657,7 +1701,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	  for (len = 0; len < length; len++)
 	    {
 	      for (i = 0; i < chans; i++)
-		obufs[i][j] = read_sample_to_mus_sample(sfs[i]);
+		obufs[i][j] = read_sample(sfs[i]);
 	      j++;
 	      if (j == alloc_len)
 		{
@@ -1686,17 +1730,17 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	      len = 0;
 	      while (len <= len8)
 		{
-		  buf[len++] = read_sample_to_mus_sample(sf);
-		  buf[len++] = read_sample_to_mus_sample(sf);
-		  buf[len++] = read_sample_to_mus_sample(sf);
-		  buf[len++] = read_sample_to_mus_sample(sf);
-		  buf[len++] = read_sample_to_mus_sample(sf);
-		  buf[len++] = read_sample_to_mus_sample(sf);
-		  buf[len++] = read_sample_to_mus_sample(sf);
-		  buf[len++] = read_sample_to_mus_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
 		}
 	      for (; len < length; len++)
-		buf[len] = read_sample_to_mus_sample(sf);
+		buf[len] = read_sample(sf);
 	    }
 	  j = (int)length;
 	}
@@ -1731,7 +1775,8 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
   io_error_t err = IO_NO_ERROR;
   sp = cp->sound;
   sf = (snd_fd **)malloc(sizeof(snd_fd *));
-  sf[0] = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+  sf[0] = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, len);
+  sampler_set_safe(sf[0], len);
   if (sf[0] == NULL)
     {
       free(sf);
@@ -3757,6 +3802,7 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 	  new_len = ed->samples;
 	  
 	  sf = init_sample_read_any_with_bufsize(0, cp, READ_FORWARD, cp->edit_ctr, new_len + 1); /* read current samps */
+	  sampler_set_safe(sf, new_len);
 	  mx = fabs(read_sample(sf));
 	  for (i = 1; i < new_len; i++)
 	    {
@@ -3778,9 +3824,6 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 
       if (backup)
 	backup_edit_list(cp);
-
-	
-
       return(true);
     }
   return(false);
@@ -4449,6 +4492,7 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 		      int i, loc = 0;
 		      snd_fd *sf;
 		      sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, old_pos, num + 1);
+		      sampler_set_safe(sf, num - 1);
 		      mx = fabs(read_sample(sf));
 		      for (i = 1; i < num; i++)
 			{
@@ -4705,6 +4749,7 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 		  snd_fd *sf;
 		  x = rstart;
 		  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, old_pos, num + 1);
+		  sampler_set_safe(sf, num - 1);
 		  mx = fabs(x * read_sample(sf));
 		  for (i = 1; i < num; i++)
 		    {
@@ -4899,6 +4944,56 @@ mus_long_t current_location(snd_fd *sf)
 }
 
 
+void sampler_set_safe(snd_fd *sf, mus_long_t dur)
+{
+  sf->safe = true;
+#if SF_UNSAFE
+  if ((sf->runf == next_sample_value_unscaled) ||
+      (sf->runf == next_sample_value) ||
+      (sf->runf == next_ramp1))
+    fprintf(stderr, "loc: %lld, last: %lld (%lld), dur: %lld\n", 
+	    sf->loc, sf->last, sf->last - sf->loc, dur);
+#endif
+  /* tricky because we currently assume the reader protects against reading off the end by returning 0.0,
+   *  perhaps pass in dur (= number of samples we will be reading), and if last-loc+1>=dur, we're safe?
+   *  dur here has to match the number of samples we will read! 
+   * 
+   * sf->safe not currently used, but presumably this check will work in next_sound as well
+   *   but we need to keep and fixup dur?  
+   */
+  if ((sf->last - sf->loc + 1) >= dur) /* two kinds of counter here: last is sample number, dur is how many samples */
+    {
+      if (sf->runf == next_sample_value_unscaled)
+	{
+#if SF_UNSAFE
+	  fprintf(stderr, "unscaled reset to unchecked\n");
+#endif
+	  sf->runf = next_sample_value_unscaled_and_unchecked;
+	}
+      else
+	{
+	  if (sf->runf == next_sample_value)
+	    {
+#if SF_UNSAFE
+	      fprintf(stderr, "scaled reset to unchecked\n");
+#endif
+	      sf->runf = next_sample_value_unchecked;
+	    }
+	  else
+	    {
+	      if (sf->runf == next_ramp1)
+		{
+#if SF_UNSAFE
+		  fprintf(stderr, "ramp1 reset to unchecked\n");
+#endif
+		  sf->runf = next_ramp1_unchecked;
+		}
+	    }
+	}
+    }
+}
+
+
 snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
 {
   snd_fd *sf;
@@ -4952,6 +5047,7 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
   sf->direction = direction;
   sf->current_state = ed;
   sf->edit_ctr = edit_position;
+  sf->safe = false;
 
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
@@ -4960,6 +5056,10 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
 
   if (samp >= curlen) samp = curlen - 1;
   len = ed->size;
+
+  /* if len=2 and edit_position=0, can there be any edits?  If data fits in core, and we pass in a flag saying "this 
+   *   access is safe", we can forego the constant loc>last checks in next_sample_value_unscaled.
+   */
 
   for (i = 0; i < len; i++)
     {
@@ -6247,6 +6347,8 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, mus_long_t beg, mus_long_t len, i
   sf->edit_ctr = 0;
   first_snd = cp->sounds[index];
   sf->frag_pos = 0;
+  sf->safe = false;
+
   ind0 = 0;
   indx = beg;
   ind1 = len - 1; /* ind1 (LOCAL_END...) is a sample number, not a length */
@@ -6785,7 +6887,7 @@ static XEN g_sampler_at_end(XEN obj)
 /* can sampler-position be settable? 
  *   this requires that we find the fragment that holds the new position (as at the start of init_sample_read_any_with_bufsize 6892)
  *   set the fragment bounds (ind0, ind1), call file_buffers_forward|backward
- *   also check for reader_at_end complications, etc
+ *   also check for reader_out_of_data complications, etc
  *   so, it's simpler and just as fast to require that the user make a new reader or use random access (channel->vct)
  *   (the only thing we avoid is choose_accessor)
  */
@@ -7606,8 +7708,9 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 
   /* fprintf(stderr, "max edpos %d: %lld %lld %s %d\n", edpos, beg, num, cp->sound->filename, cp->chan); */
 
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, (num > REPORTING_SIZE) ? REPORTING_SIZE : num);
   if (sf == NULL) return(0.0);
+  sampler_set_safe(sf, num);
 
   if (num > (1 << 30))
     {
@@ -7641,8 +7744,11 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
       jnum = (int)num;
       jnum4 = jnum - 4;
 
+      /* TODO: finish this in the new form */
       if (((sf->runf == next_sample_value_unscaled) ||
-	   (sf->runf == next_sample_value)) &&
+	   (sf->runf == next_sample_value_unscaled_and_unchecked) ||
+	   (sf->runf == next_sample_value) ||
+	   (sf->runf == next_sample_value_unchecked)) &&
 	  (ED_LOCAL_POSITION(sf->cb) == 0) &&
 	  (ED_LOCAL_END(sf->cb) >= (num - 1)))              /* so accessor won't change? */
 	{
@@ -7652,7 +7758,8 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	  last = sf->last;
 	  dat = sf->data;
 
-	  if (sf->runf == next_sample_value_unscaled)
+	  if ((sf->runf == next_sample_value_unscaled) ||
+	      (sf->runf == next_sample_value_unscaled_and_unchecked))
 	    {
 	      /* loc: 0 last: 22049 jnum: 22050 and the like */
 	      if ((loc == 0) &&
@@ -8209,15 +8316,13 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
 vct *run_samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
 {
   snd_fd *sf;
-  int num_to_read = MIX_FILE_BUFFER_SIZE;
   vct *v = NULL;
 
-  if (len < num_to_read) num_to_read = (int)len; /* we often want fewer than 2048 samps (MIX_FILE_BUFFER_SIZE) */
-                                                 /* but this has less effect than I thought -- affects only copy case */
-  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, num_to_read);
+  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, len);
   if (sf)
     {
       mus_float_t *fvals;
+      sampler_set_safe(sf, len);
       v = mus_vct_make(len);
       fvals = mus_vct_data(v);
 
@@ -8225,15 +8330,26 @@ vct *run_samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
 	{
 	  int j, jnum;
 	  jnum = (int)len;
-	  if ((sf->runf == next_sample_value_unscaled) && /* not also next_sample_value because next_sound embeds the scaler multiply */
+	  if (((sf->runf == next_sample_value_unscaled) ||                /* not also next_sample_value because next_sound embeds the scaler multiply */
+	       (sf->runf == next_sample_value_unscaled_and_unchecked)) && /* TODO this loop is not ideal */
 	      (ED_LOCAL_POSITION(sf->cb) == 0) &&
 	      (ED_LOCAL_END(sf->cb) >= (len - 1)))
 	    {
-	      for (j = 0; j < jnum; j++)
+	      if (sf->runf == next_sample_value_unscaled)
 		{
-		  if (sf->loc > sf->last)
-		    fvals[j] = next_sound(sf); 
-		  else fvals[j] = sf->data[sf->loc++];
+		  for (j = 0; j < jnum; j++)
+		    {
+		      if (sf->loc > sf->last)
+			fvals[j] = next_sound(sf); 
+		      else fvals[j] = sf->data[sf->loc++];
+		    }
+		}
+	      else
+		{
+		  /* assuming mus_float_t is the same as s7_Double, but this assumption is made in vct.c already */
+		  memmove((void *)fvals, (const void *)(sf->data + sf->loc), jnum * sizeof(mus_float_t));
+		  /* for (j = 0, k = sf->loc; j < jnum; j++, k++) fvals[j] = sf->data[k];
+		   */
 		}
 	    }
 	  else

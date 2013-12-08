@@ -237,6 +237,7 @@
 #define S_mus_reset                  "mus-reset"
 #define S_mus_run                    "mus-run"
 #define S_mus_scaler                 "mus-scaler"
+#define S_mus_set_formant_frequency  "mus-set-formant-frequency"
 #define S_mus_set_formant_radius_and_frequency "mus-set-formant-radius-and-frequency"
 #define S_mus_srate                  "mus-srate"
 #define S_mus_type                   "mus-type"

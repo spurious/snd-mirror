@@ -2302,7 +2302,7 @@
 		 (curfrq frq (+ curfrq frq)))
 		((= i num-formants))
 	      (if (< curfrq sr2)
-		  (set! (mus-frequency (frms i)) curfrq)))))))))
+		  (mus-set-formant-frequency (frms i) curfrq)))))))))
 
 (define (test-filter flt)
   (let ((osc (make-oscil 0.0))

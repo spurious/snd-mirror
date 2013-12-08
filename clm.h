@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 17
-#define MUS_DATE "29-Nov-13"
+#define MUS_REVISION 18
+#define MUS_DATE "7-Dec-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -324,6 +324,7 @@ MUS_EXPORT bool mus_one_pole_all_pass_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_formant(mus_any *ptr, mus_float_t input); 
 MUS_EXPORT mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius);
 MUS_EXPORT bool mus_formant_p(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_set_formant_frequency(mus_any *ptr, mus_float_t freq_in_hz);
 MUS_EXPORT void mus_set_formant_radius_and_frequency(mus_any *ptr, mus_float_t radius, mus_float_t frequency);
 MUS_EXPORT mus_float_t mus_formant_with_frequency(mus_any *ptr, mus_float_t input, mus_float_t freq_in_radians);
 
@@ -599,6 +600,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 7-Dec:      mus_set_formant_frequency.
  * 29-Nov:     mus_make_polywave_tu.
  * 11-Oct:     mus_vector_to_file, mus_vector_mix.
  * 19-Apr:     rxyk!cos and rxyk!sin from generators.scm.

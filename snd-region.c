@@ -358,6 +358,7 @@ static void region_samples(int reg, int chn, mus_long_t beg, mus_long_t num, mus
 	    {
 	    case REGION_FILE:
 	      sf = init_region_read(beg, reg, chn, READ_FORWARD);
+	      sampler_set_safe(sf, num);
 	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
 		data[j] = read_sample(sf);
 	      free_snd_fd(sf);
@@ -365,7 +366,8 @@ static void region_samples(int reg, int chn, mus_long_t beg, mus_long_t num, mus
 
 	    case REGION_DEFERRED:
 	      drp = r->dr;
-	      sf = init_sample_read_any(beg + r->begs[chn], drp->cps[chn], READ_FORWARD, drp->edpos[chn]);
+	      sf = init_sample_read_any_with_bufsize(beg + r->begs[chn], drp->cps[chn], READ_FORWARD, drp->edpos[chn], num);
+	      sampler_set_safe(sf, num);
 	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
 		data[j] = read_sample(sf);
 	      free_snd_fd(sf);
@@ -926,6 +928,7 @@ static void deferred_region_to_temp_file(region *r)
 	  for (i = 0; i < r->chans; i++)
 	    {
 	      sfs[i] = init_sample_read_any(r->begs[i], drp->cps[i], READ_FORWARD, drp->edpos[i]);
+	      sampler_set_safe(sfs[i], len);
 	      data[i] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t));
 	    }
 
@@ -940,7 +943,7 @@ static void deferred_region_to_temp_file(region *r)
 	      if (len < MAX_BUFFER_SIZE)
 		{
 		  for (k = 0; k < len; k++) 
-		    d[k] = read_sample_to_mus_sample(sf);
+		    d[k] = read_sample(sf);
 		}
 	      else
 		{
@@ -952,7 +955,7 @@ static void deferred_region_to_temp_file(region *r)
 			  k = 0;
 			  if (err != MUS_NO_ERROR) break;
 			}
-		      d[k] = read_sample_to_mus_sample(sf);
+		      d[k] = read_sample(sf);
 		    }
 		}
 	    }
@@ -979,15 +982,15 @@ static void deferred_region_to_temp_file(region *r)
 			{
 			  for (k = 0; k < len; k++) 
 			    {
-			      data[0][k] = read_sample_to_mus_sample(sfs[0]);
-			      data[1][k] = read_sample_to_mus_sample(sfs[1]);
+			      data[0][k] = read_sample(sfs[0]);
+			      data[1][k] = read_sample(sfs[1]);
 			    }
 			}
 		      else
 			{
 			  for (k = 0; k < len; k++) 
 			    for (i = 0; i < r->chans; i++)
-			      data[i][k] = read_sample_to_mus_sample(sfs[i]);
+			      data[i][k] = read_sample(sfs[i]);
 			}
 		    }
 		  else
@@ -1007,14 +1010,14 @@ static void deferred_region_to_temp_file(region *r)
 				  for (k = 0; k < MAX_BUFFER_SIZE;) 
 				    {
 				      /* we're assuming MAX_BUFFER_SIZE is divisible by 8 */
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
 				  }
 				}
 			      err = mus_file_write(ofd, 0, k - 1, r->chans, data);
@@ -1028,7 +1031,7 @@ static void deferred_region_to_temp_file(region *r)
 				  buf = data[i];
 				  p = sfs[i];
 				  for (k = 0; k < nlen; k++) 
-				    buf[k] = read_sample_to_mus_sample(p);
+				    buf[k] = read_sample(p);
 				}
 			      k = nlen;
 			    }
@@ -1062,14 +1065,14 @@ static void deferred_region_to_temp_file(region *r)
 				  for (k = 0; k < MAX_BUFFER_SIZE;) 
 				    {
 				      /* we're assuming MAX_BUFFER_SIZE is divisible by 8 */
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
-				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
+				      buf[k++] = read_sample(p);
 				    }
 				}
 			      else
@@ -1077,7 +1080,7 @@ static void deferred_region_to_temp_file(region *r)
 				  nlen++; /* weird.  drp->len == len is r->lens[max]+1? */
 				  if (klen < nlen) klen = nlen;
 				  for (k = 0; k < nlen; k++)
-				    buf[k] = read_sample_to_mus_sample(p);
+				    buf[k] = read_sample(p);
 				  for (; k < MAX_BUFFER_SIZE; k++)
 				    buf[k] = 0.0;
 				}
