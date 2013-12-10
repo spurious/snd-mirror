@@ -8536,8 +8536,8 @@
 (CFNC-3.10 "void gtk_widget_init_template GtkWidget* widget")
 ;;; (CFNC-3.10 "GObject* gtk_widget_get_automated_child GtkWidget* widget GType widget_type gchar* name" 'const)
 ;;; GObject* is apparently the problem here
-(CFNC-3.10 "void gtk_widget_class_set_template GtkWidgetClass* widget_class GBytes* template_bytes")
-(CFNC-3.10 "void gtk_widget_class_set_template_from_resource GtkWidgetClass* widget_class gchar* resource_name" 'const)
+;(CFNC-3.10 "void gtk_widget_class_set_template GtkWidgetClass* widget_class GBytes* template_bytes")
+;(CFNC-3.10 "void gtk_widget_class_set_template_from_resource GtkWidgetClass* widget_class gchar* resource_name" 'const)
 ;;; (CFNC-3.10 "void gtk_widget_class_declare_callback GtkWidgetClass* widget_class gchar* callback_name GCallback callback_symbol" 'const)
 ;;; (CFNC-3.10 "void gtk_widget_class_automate_child GtkWidgetClass* widget_class gchar* name gboolean internal_child gssize struct_offset" 'const)
 (CFNC-3.10 "void gtk_window_set_titlebar GtkWindow* window GtkWidget* titlebar")

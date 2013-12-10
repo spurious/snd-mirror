@@ -1816,12 +1816,17 @@
   
   (environment-set! gen 'fm fm)
   (with-environment gen
-    (let (;(gen (current-environment)) ; !
-	   (x angle)
-	   (y (* angle ratio)))
+    (let ((x angle)
+	  (y (* angle ratio)))
       (set! angle (+ angle fm frequency))
-      (if (not (= fm 0.0))
-	  (set! r (clamp-rxycos-r (current-environment) fm)))
+
+      (if (not (= fm 0.0))  ;(set! r (clamp-rxycos-r (current-environment) fm))
+	  (let* ((x (radians->hz (+ frequency fm))) ; undo the earlier hz->radians
+		 (maxr (expt cutoff (/ 1.0 (floor (/ (- (/ *clm-srate* 3) x) (* x ratio)))))))
+	    (if (>= r 0.0)
+		(set! r (min r maxr))
+		(set! r (max r (- maxr))))))
+
       (* (/ (- (cos x)
 	       (* r (cos (- x y))))
 	    (+ 1.0 

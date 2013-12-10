@@ -882,15 +882,14 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
   if (!(editable_p(cp))) return(NULL); /* edit hook result perhaps */
 
   sr = make_src(ratio, sf, egen);  /* ratio is 0.0 if egen because the envelope is the srate, but it's passed as the "sr-change" arg */
-  if ((egen) &&
-      (mus_phase(egen) < 0.0))
-    sr->dir = -1;
-
   if (sr == NULL) 
     {
       (*clm_err) = true;
       return(mus_format("invalid src ratio: %f\n", ratio));
     }
+  if ((egen) &&
+      (mus_phase(egen) < 0.0))
+    sr->dir = -1;
 
   full_chan = ((beg == 0) && (dur == cp->edits[sf->edit_ctr]->samples)); /* not CURRENT_SAMPLES here! */
 
@@ -926,7 +925,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 
 	  for (k = 0; sr->sample < dur; k++)
 	    {
-	      idata[j] = srcf(sr->gen, &src_input_as_needed);
+	      idata[j] = srcf(sr->gen, &src_input_as_needed_unchanged);
 	      j++;
 	      if (j == MAX_BUFFER_SIZE)
 		{
@@ -1446,6 +1445,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   mus_float_t *idata;
   char *ofile = NULL;
   snd_fd *sf;
+  mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
 
   if ((beg < 0) || ((dur + overlap) <= 0)) return(NULL);
   sp = cp->sound;
@@ -1455,6 +1455,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   if (sf == NULL)
     return(mus_format("%s can't read %s[%d] channel data!", S_clm_channel, sp->short_filename, cp->chan));
   sampler_set_safe(sf, dur + overlap);
+  runf = mus_run_function(gen);
 
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
@@ -1482,7 +1483,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
       j = 0;
       for (k = 0; k < dur; k++)
 	{
-	  idata[j++] = (mus_apply(gen, read_sample(sf), 0.0));
+	  idata[j++] = runf(gen, read_sample(sf), 0.0);
 	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1494,12 +1495,12 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   else
     {
       for (k = 0; k < dur; k++)
-	idata[k] = (mus_apply(gen, read_sample(sf), 0.0));
+	idata[k] = runf(gen, read_sample(sf), 0.0);
       j = (int)dur;
     }
   for (k = 0; k < overlap; k++)
     {
-      idata[j++] = (mus_apply(gen, 0.0, 0.0) + read_sample(sf));
+      idata[j++] = runf(gen, 0.0, 0.0) + read_sample(sf);
       if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	{
 	  err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -2062,7 +2063,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e,
   if ((!e) && (!ur_a) && (!gen)) 
     return(NULL);
 
-  if ((gen) && (!(mus_run_exists(gen))))
+  if ((gen) && (!(mus_run_function(gen))))
     {
       (*clm_error) = true;
       return(mus_format("%s: can't handle %s generators",
@@ -4154,6 +4155,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   return(res);
 }
 
+mus_float_t next_sample_value_unscaled_and_unchecked(snd_fd *sf);
 
 static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 		     const char *caller, bool counting, XEN edpos, int arg_pos, XEN s_dur)
@@ -4330,17 +4332,54 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 			  args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
 			}
 		      gc_loc = s7_gc_protect(s7, args);
-		      for (kp = 0; kp < num; kp++)
+		      if (abs_case)
 			{
-			  if (abs_case)
-			    (*ry) = fabs(read_sample(sf));
-			  else (*ry) = read_sample(sf);
-			  val = f(s7, args);
-			  if (val != xen_false)
+			  for (kp = 0; kp < num; kp++)
 			    {
-			      if ((counting) && (val == xen_true))
-				counts++;
-			      else break;
+			      (*ry) = fabs(read_sample(sf));
+			      val = f(s7, args);
+			      if (val != xen_false)
+				{
+				  if ((counting) && (val == xen_true))
+				    counts++;
+				  else break;
+				}
+			    }
+			}
+		      else
+			{
+			  if ((sf->runf == next_sample_value_unscaled_and_unchecked) &&
+			      (s7_car(res) == s7_make_symbol(s7, ">")))
+			    {
+			      mus_long_t offset, lim;
+			      mus_float_t z;
+			      mus_float_t *data;
+			      offset = sf->loc;
+			      lim = offset + num;
+			      z = s7_number_to_real(s7, s7_cadr(args));
+			      data = sf->data;
+			      for (kp = offset; kp < lim; kp++)
+			        if (data[kp] > z)
+				  {
+				    if (counting) 
+				      counts++; 
+				    else break;
+				  }
+			      kp -= offset;
+			    }
+			  else
+			    {
+			      for (kp = 0; kp < num; kp++)
+				{
+				  (*ry) = read_sample(sf);
+				  val = f(s7, args);
+				  if (val != xen_false)
+				    {
+				      if ((counting) && (val == xen_true))
+					counts++;
+				      else break;
+				    }
+				}
 			    }
 			}
 		      sf = free_snd_fd(sf);
@@ -5797,7 +5836,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 
   if (((egen) && (mus_phase(egen) >= 0.0)) ||
       ((!egen) && (ratio >= 0.0))) /* ratio == 0.0 if env in use because env is the srate (as change arg) */
-    sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+    sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, (!egen) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
 
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, S_src_channel, OVER_SOUND, &clm_err);

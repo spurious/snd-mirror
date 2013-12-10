@@ -108,6 +108,8 @@
 
 	"GtkLevelBar*" "GtkMenuButton*" "GNormalizeMode"
 ;	"GIcon*"
+
+	"GBytes" "GtkPlacesSidebar*" "GtkStackSwitcher*" "GtkRevealer*" "GtkHeaderBar*" "GtkListBox*" "GtkSearchBar*"
 	))
 
 (define no-xen-p 

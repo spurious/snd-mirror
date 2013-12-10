@@ -635,8 +635,8 @@ static mus_float_t next_sample_value_unscaled(snd_fd *sf)
   else return(sf->data[sf->loc++]);
 }
 
-
-static mus_float_t next_sample_value_unscaled_and_unchecked(snd_fd *sf) 
+mus_float_t next_sample_value_unscaled_and_unchecked(snd_fd *sf);
+mus_float_t next_sample_value_unscaled_and_unchecked(snd_fd *sf) 
 {
 #if SF_UNSAFE
   if (sf->loc > sf->last) 
@@ -782,7 +782,6 @@ static mus_float_t read_mix_list_samples(snd_fd *sf)
   int i;
   mus_float_t sum = 0.0;
   m = (reader_mixes *)(sf->mixes);
-  sampler_set_safe(sf, m->size);
   for (i = 0; i < m->size; i++) /* unrolled no faster */
     sum += read_sample(m->sfs[i]);
   return(sum);
@@ -1675,23 +1674,33 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	}
       else
 	{
-	  mus_long_t len8;
-	  len8 = length - 8;
-	  len = 0;
-	  while (len <= len8)
+	  if (sf->runf == next_sample_value_unscaled_and_unchecked)
 	    {
-	      buf[len++] = read_sample(sf);
-	      buf[len++] = read_sample(sf);
-	      buf[len++] = read_sample(sf);
-	      buf[len++] = read_sample(sf);
-	      buf[len++] = read_sample(sf);
-	      buf[len++] = read_sample(sf);
-	      buf[len++] = read_sample(sf);
-	      buf[len++] = read_sample(sf);
+	      memmove((void *)buf, (const void *)(sf->data + sf->loc), length * sizeof(mus_float_t));
+	      j = (int)length;
+	      len = j;
 	    }
-	  for (; len < length; len++)
-	    buf[len] = read_sample(sf);
-	  j = (int)length;
+	  else
+	    {
+	      mus_long_t len8;
+
+	      len8 = length - 8;
+	      len = 0;
+	      while (len <= len8)
+		{
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		  buf[len++] = read_sample(sf);
+		}
+	      for (; len < length; len++)
+		buf[len] = read_sample(sf);
+	      j = (int)length;
+	    }
 	}
     }
   else
@@ -1775,8 +1784,10 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
   io_error_t err = IO_NO_ERROR;
   sp = cp->sound;
   sf = (snd_fd **)malloc(sizeof(snd_fd *));
+  
   sf[0] = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, len);
   sampler_set_safe(sf[0], len);
+
   if (sf[0] == NULL)
     {
       free(sf);
@@ -4492,7 +4503,7 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 		      int i, loc = 0;
 		      snd_fd *sf;
 		      sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, old_pos, num + 1);
-		      sampler_set_safe(sf, num - 1);
+		      sampler_set_safe(sf, num);
 		      mx = fabs(read_sample(sf));
 		      for (i = 1; i < num; i++)
 			{
@@ -4749,7 +4760,7 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 		  snd_fd *sf;
 		  x = rstart;
 		  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, old_pos, num + 1);
-		  sampler_set_safe(sf, num - 1);
+		  sampler_set_safe(sf, num);
 		  mx = fabs(x * read_sample(sf));
 		  for (i = 1; i < num; i++)
 		    {
@@ -4951,7 +4962,8 @@ void sampler_set_safe(snd_fd *sf, mus_long_t dur)
   if ((sf->runf == next_sample_value_unscaled) ||
       (sf->runf == next_sample_value) ||
       (sf->runf == next_ramp1))
-    fprintf(stderr, "loc: %lld, last: %lld (%lld), dur: %lld\n", 
+    fprintf(stderr, "%p %p loc: %lld, last: %lld (%lld), dur: %lld\n",
+	    sf->cb, sf->current_sound,
 	    sf->loc, sf->last, sf->last - sf->loc, dur);
 #endif
   /* tricky because we currently assume the reader protects against reading off the end by returning 0.0,
@@ -5002,6 +5014,7 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
   int len, i;
   mus_long_t curlen;
   snd_data *first_snd = NULL;
+  /* bufsize might be ignored here except in the copied buffer case -- we use the pre-exisiting buffer? */
 
   if (cp->active < CHANNEL_HAS_EDIT_LIST) return(NULL);
   if ((edit_position < 0) || (edit_position >= cp->edit_size)) return(NULL); /* was ">" not ">=": 6-Jan-05 */
@@ -5097,10 +5110,11 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
 	       * samplers (they trust their snd_fd indices); we wouldn't want to be
 	       * constantly jumping around and re-reading data buffers (in the worst case
 	       * many times per sample) anyway, so we copy the IO buffer, allocate a relatively
-	       * small data buffer, and then free all the copied snd_data stuff as soon as
+	       * small(?? -- is this obsolete) data buffer, and then free all the copied snd_data stuff as soon as
 	       * the current reader is done.
 	       */
-	      if (first_snd->inuse)
+	      if ((first_snd->inuse) ||
+		  (bufsize > FILE_BUFFER_SIZE))
 		{
 		  first_snd = copy_snd_data(first_snd, samp, bufsize);
 		  if (!first_snd)
@@ -7653,10 +7667,12 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
   if (edpos == 0)
     {
       snd_data *sd;
+      snd_info *sp;
       
-      if (mus_sound_channel_maxamp_exists(cp->sound->filename, cp->chan))
+      sp = cp->sound;
+      if (mus_sound_channel_maxamp_exists(sp->filename, cp->chan))
 	{
-	  ymax = mus_sound_channel_maxamp(cp->sound->filename, cp->chan, &mpos);
+	  ymax = mus_sound_channel_maxamp(sp->filename, cp->chan, &mpos);
 	  if ((mpos >= beg) &&
 	      (mpos < beg + num))
 	    {
@@ -7693,11 +7709,10 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		}
 	    }
 
-	  if ((edpos == 0) &&
-	      (beg == 0) &&
+	  if ((beg == 0) &&
 	      (num = cp->edits[0]->samples))
 	    {
-	      mus_sound_channel_set_maxamp(cp->sound->filename, cp->chan, ymax, jpos - start);
+	      mus_sound_channel_set_maxamp(sp->filename, cp->chan, ymax, jpos - start);
 	    }
 
 	  /* fprintf(stderr, "actually use %f %d\n", ymax, jpos - start); */
@@ -7705,8 +7720,6 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	  return(ymax);
 	}
     }
-
-  /* fprintf(stderr, "max edpos %d: %lld %lld %s %d\n", edpos, beg, num, cp->sound->filename, cp->chan); */
 
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, (num > REPORTING_SIZE) ? REPORTING_SIZE : num);
   if (sf == NULL) return(0.0);
@@ -7744,7 +7757,6 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
       jnum = (int)num;
       jnum4 = jnum - 4;
 
-      /* TODO: finish this in the new form */
       if (((sf->runf == next_sample_value_unscaled) ||
 	   (sf->runf == next_sample_value_unscaled_and_unchecked) ||
 	   (sf->runf == next_sample_value) ||
@@ -7766,10 +7778,52 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		  (last == (jnum - 1)))
 		{
 		  int jnum2;
-		  jnum2 = jnum - 2;
+		  jnum2 = jnum - 8;
 		  j = 0;
 		  while (j <= jnum2)
 		    {
+		      mval = fabs(dat[j]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
+		      j++;
+		      mval = fabs(dat[j]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
+		      j++;
+		      mval = fabs(dat[j]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
+		      j++;
+		      mval = fabs(dat[j]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
+		      j++;
+		      mval = fabs(dat[j]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
+		      j++;
+		      mval = fabs(dat[j]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
+		      j++;
 		      mval = fabs(dat[j]);
 		      if (mval > ymax) 
 			{
@@ -7805,11 +7859,39 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		  while (j < jnum)
 		    {
 		      /* fprintf(stderr, "j: %d, loc: %lld, last: %lld, nlen: %lld\n", j, loc, last, nlen); */
-		      last4 = last - 4;
+		      last4 = last - 8;
 		      k = loc;
 		      /* we're going from loc to last in the current data buffer */
 		      while (k <= last4)
 			{
+			  mval = fabs(dat[k]);
+			  if (mval > ymax) 
+			    {
+			      ymax = mval;
+			      jpos = j + k - loc;
+			    }
+			  k++;
+			  mval = fabs(dat[k]);
+			  if (mval > ymax) 
+			    {
+			      ymax = mval;
+			      jpos = j + k - loc;
+			    }
+			  k++;
+			  mval = fabs(dat[k]);
+			  if (mval > ymax) 
+			    {
+			      ymax = mval;
+			      jpos = j + k - loc;
+			    }
+			  k++;
+			  mval = fabs(dat[k]);
+			  if (mval > ymax) 
+			    {
+			      ymax = mval;
+			      jpos = j + k - loc;
+			    }
+			  k++;
 			  mval = fabs(dat[k]);
 			  if (mval > ymax) 
 			    {
@@ -8313,7 +8395,7 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
 }
 
 
-vct *run_samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
+static vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
 {
   snd_fd *sf;
   vct *v = NULL;
@@ -8330,27 +8412,14 @@ vct *run_samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
 	{
 	  int j, jnum;
 	  jnum = (int)len;
-	  if (((sf->runf == next_sample_value_unscaled) ||                /* not also next_sample_value because next_sound embeds the scaler multiply */
-	       (sf->runf == next_sample_value_unscaled_and_unchecked)) && /* TODO this loop is not ideal */
-	      (ED_LOCAL_POSITION(sf->cb) == 0) &&
-	      (ED_LOCAL_END(sf->cb) >= (len - 1)))
+	  if (sf->runf == next_sample_value_unscaled_and_unchecked)
 	    {
-	      if (sf->runf == next_sample_value_unscaled)
-		{
-		  for (j = 0; j < jnum; j++)
-		    {
-		      if (sf->loc > sf->last)
-			fvals[j] = next_sound(sf); 
-		      else fvals[j] = sf->data[sf->loc++];
-		    }
-		}
-	      else
-		{
-		  /* assuming mus_float_t is the same as s7_Double, but this assumption is made in vct.c already */
-		  memmove((void *)fvals, (const void *)(sf->data + sf->loc), jnum * sizeof(mus_float_t));
-		  /* for (j = 0, k = sf->loc; j < jnum; j++, k++) fvals[j] = sf->data[k];
-		   */
-		}
+	      /* assuming mus_float_t is the same as s7_Double, but this assumption is made in vct.c already.
+	       *   it would be faster to simply grab the array, but then gc becomes tricky (it is shared in io struct)
+	       */
+	      memmove((void *)fvals, (const void *)(sf->data + sf->loc), jnum * sizeof(mus_float_t));
+	      /* for (j = 0, k = sf->loc; j < jnum; j++, k++) fvals[j] = sf->data[k];
+	       */
 	    }
 	  else
 	    {
@@ -8397,7 +8466,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos
   len = dur_to_samples(samps, beg, cp, pos, 2, caller);
   if (len == 0) return(XEN_FALSE); /* empty file (channel) possibility */
 
-  return(vct_to_xen(run_samples_to_vct(beg, len, cp, pos)));
+  return(vct_to_xen(samples_to_vct(beg, len, cp, pos)));
 }
 
 

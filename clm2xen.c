@@ -10576,18 +10576,12 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
 	  (len == 2) &&
 	  (mus_channels(clm_output_gen) >= 2))
 	{
-	  mus_float_t **ob;
 	  mus_long_t dstart, dend, dpos, dlen = 0;
-
-	  ob = mus_out_any_buffers(clm_output_gen);
 	  dlen = mus_file_buffer_size();
 
 	  {
-	    mus_float_t *buf1, *buf2;
 	    mus_any *dly1, *dly2;
-	    buf1 = ob[0];
 	    dly1 = fs[0];
-	    buf2 = ob[1];
 	    dly2 = fs[1];
 
 	    for (; pos < end;)

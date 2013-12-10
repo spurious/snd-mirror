@@ -4097,6 +4097,7 @@ typedef struct {
   mus_float_t xscl, yscl, yn1;
   mus_interp_t type;
   mus_any *filt;
+  mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
 } dly;
 
 
@@ -5307,15 +5308,15 @@ mus_float_t mus_filtered_comb(mus_any *ptr, mus_float_t input, mus_float_t pm)
   if (fc->zdly)
     return(mus_delay(ptr,
 		     input + (fc->yscl * 
-			      mus_run(fc->filt, 
-				      mus_tap(ptr, pm), 
-				      0.0)), 
+			      fc->runf(fc->filt, 
+				       mus_tap(ptr, pm), 
+				       0.0)), 
 		     pm)); 
   else return(mus_delay_unmodulated(ptr,
 				    input + (fc->yscl * 
-					     mus_run(fc->filt, 
-						     fc->line[fc->loc], 
-						     0.0))));
+					     fc->runf(fc->filt, 
+						      fc->line[fc->loc], 
+						      0.0))));
 }
 
 
@@ -5371,6 +5372,7 @@ mus_any *mus_make_filtered_comb(mus_float_t scaler, int size, mus_float_t *line,
 	  fc->filt = mus_make_one_zero(1.0, 0.0);
 	  fc->filt_allocated = true;
 	}
+      fc->runf = mus_run_function(fc->filt);
       return((mus_any *)fc);
     }
   else return(NULL);
@@ -15667,9 +15669,11 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 
 /* ---------------- mus-apply ---------------- */
 
-bool mus_run_exists(mus_any *gen)
+mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_float_t arg2)
 {
-  return(gen->core->run != NULL);
+  if (g)
+    return(g->core->run);
+  return(NULL);
 }
 
 mus_float_t mus_apply(mus_any *gen, mus_float_t f1, mus_float_t f2)

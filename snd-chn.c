@@ -7605,7 +7605,7 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
 	    }
 	if (save_maxamp)
 	  {
-	    /* fprintf(stderr, "save g_maxamp for %s (%d)\n", sp->filename, mus_sound_maxamp_exists(sp->filename)); */
+	    /* fprintf(stderr, "save g_maxamp for %s (%d %lld)\n", sp->filename, mus_sound_maxamp_exists(sp->filename), sp->chans[0]->edits[0]->samples); */
 	    vals = (mus_float_t *)calloc(sp->nchans, sizeof(mus_float_t));
 	    times = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
 	    for (i = 0; i < sp->nchans; i++)

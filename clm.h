@@ -116,7 +116,7 @@ MUS_EXPORT bool mus_interp_type_p(int val);
 MUS_EXPORT bool mus_fft_window_p(int val);
 
 MUS_EXPORT int mus_data_format_zero(int format);
-MUS_EXPORT bool mus_run_exists(mus_any *gen);
+MUS_EXPORT mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
 
 
 /* -------- generic functions -------- */
