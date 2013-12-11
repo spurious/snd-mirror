@@ -2556,7 +2556,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -58722,6 +58722,19 @@ OP_LET1: 75475 (4.677476)
       /* --------------- */
     case OP_SET_SYMBOL_SAFE_SS:
       {
+	/*
+406703: (st (float-vector-ref s cell))
+396898: (frm0 (/ frm frq))
+271568: (odd-amp (- frm0 frm-int))
+191476: (even-amp (- frm0 frm-int))
+167755: (sp (vector-ref spectr rk))
+160326: (even-freq (* frm-int frq1))
+160326: (odd-freq (+ even-freq frq1))
+111242: (even-freq (* frm-int rfrq))
+104272: (even-freq (+ odd-freq frq1))
+104272: (odd-freq (* frm-int frq1))
+101675: (y (* A gain))
+	 */
 	s7_pointer sym, code;
 	code = sc->code;
 	sym = find_symbol(sc, car(code));
@@ -68633,7 +68646,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.5
- * calls         |   275  207  175  115   89   71   53   53|  54   52.1
+ * calls         |   275  207  175  115   89   71   53   53|  54   51.8
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))

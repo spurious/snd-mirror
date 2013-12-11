@@ -12646,145 +12646,124 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 
 /* it was a cold, rainy day...
  *   and on an even colder day, I changed this to use a circular data buffer, rather than memmove 
+ *   then changed yet again to use straight buffers
  */
 
-mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direction))
+mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum;
-  int lim, lim2, i, loc;
-  int stop;
+  int lim, i, j, width, wid1, wid10, xs, xi;
+  mus_long_t k, dur2;
+  mus_float_t *out_data, *ldata, *coeffs;
+  
+  out_data = (mus_float_t *)calloc(dur / 2 + 2, sizeof(mus_float_t));
 
   lim = srp->lim; /* 2 * width so it's even */
-  loc = srp->start;
-  if (srp->x > 0.0)
+  width = srp->width;
+
+  coeffs = (mus_float_t *)malloc(lim * sizeof(mus_float_t));
+  if ((width & 1) != 0)
+    xs = (int)((2 + width) * (SRC_SINC_DENSITY / 2)) + 4; /* Humph -- looks like crap -- maybe if odd width use the real one above, or insist on even width */
+  else xs = (int)((1 + width) * (SRC_SINC_DENSITY / 2)) + 4;
+  xi = SRC_SINC_DENSITY; /* skip a location (coeff=0.0) */
+
+  for (i = 0; i < width; i++, xs += xi)
+    coeffs[i] = srp->sinc_table[xs];
+
+  for (i = 0; i < lim; i++)
+    in_data[i] = srp->data[i];
+
+  ldata = (mus_float_t *)in_data;
+  dur2 = dur / 2 + 1;
+  if ((dur && 1) != 0) dur2++;
+  wid10 = width - 10;
+  wid1 = width - 1;
+
+  for (k = 0; k < dur2; k++, ldata += 2)
     {
-      mus_float_t (*sr_input)(void *arg, int direction) = input;
-      if (sr_input == NULL) sr_input = srp->feeder;
-
-      if (input) srp->feeder = input;
-      srp->data[loc] = srp->feeder(srp->closure, 1);
-      srp->data[loc + 1] = srp->feeder(srp->closure, 1);
-
-      loc += 2; /* start of data */
-      
-      srp->start = loc;
-      i = srp->start + srp->width - 1;
-      if (i >= lim) i -= lim;
-      sum = srp->data[i]; 
-
-      if (srp->start == lim)
-	srp->start = 0;
-    }
-  else
-    {
-      /* first sample */
-      int xs, xi;
-      /* fixup the "centering" at init time */
-      srp->x = 2.0;
-      sum = srp->data[srp->width - 1];
-
-      srp->coeffs = (mus_float_t *)malloc(lim * sizeof(mus_float_t));
-      if ((srp->width & 1) != 0)
-	xs = (int)((2 + srp->width) * (SRC_SINC_DENSITY / 2)) + 4; /* Humph -- looks like crap -- maybe if odd width use the real one above, or insist on even width */
-      else xs = (int)((1 + srp->width) * (SRC_SINC_DENSITY / 2)) + 4;
-      xi = SRC_SINC_DENSITY; /* skip a location (coeff=0.0) */
-      for (i = 0; i < srp->width; i++, xs += xi)
-	srp->coeffs[i] = srp->sinc_table[xs];
+      sum = ldata[wid1];
+      i = 0;
+      j = 0;
+      while (i <= wid10)
+	{
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	  sum += (ldata[j] * coeffs[i++]); j += 2;
+	}
+      for (; i < width; i++, j += 2)
+	sum += (ldata[j] * coeffs[i]);
+      out_data[k] = sum * 0.5;
     }
 
-  stop = loc;
-  lim2 = lim - 4;
-  i = 0;
-  while (loc <= lim2)
-    {
-      sum += (srp->data[loc] * srp->coeffs[i++]);
-      loc += 2;
-      sum += (srp->data[loc] * srp->coeffs[i++]);
-      loc += 2;
-    }
-  if (loc < lim)
-    sum += (srp->data[loc] * srp->coeffs[i++]);
-  lim2 = stop - 4;
-  loc = 0;
-  while (loc <= lim2)
-    {
-      sum += (srp->data[loc] * srp->coeffs[i++]);
-      loc += 2;
-      sum += (srp->data[loc] * srp->coeffs[i++]);
-      loc += 2;
-    }
-  if (loc < stop)
-    sum += (srp->data[loc] * srp->coeffs[i]);
-
-  return(sum * 0.5);
+  free(coeffs);
+  return(out_data);
 }
 
 
-mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direction))
+mus_float_t *mus_src_05(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum;
-  int lim, lim2, i, loc, stop;
+  int lim, i, width, wid1, wid10, xs, xi;
+  mus_long_t k, dur2;
+  mus_float_t *out_data, *ldata, *coeffs;
+  
+  out_data = (mus_float_t *)calloc(dur * 2 + 2, sizeof(mus_float_t));
 
-  lim = srp->lim; 
-  loc = srp->start;
-  if (srp->x >= 1.0)
+  lim = srp->lim;
+  width = srp->width;
+
+  coeffs = (mus_float_t *)malloc(lim * sizeof(mus_float_t));
+  xs = (SRC_SINC_DENSITY / 2) + 4;
+  xi = SRC_SINC_DENSITY;
+
+  for (i = 0; i < lim; i++, xs += xi)
+    coeffs[i] = srp->sinc_table[xs];
+
+  for (i = 0; i < lim; i++)
+    in_data[i] = srp->data[i];
+
+  ldata = (mus_float_t *)in_data;
+  dur2 = dur * 2;
+  wid10 = lim - 10;
+  wid1 = width - 1;
+
+  for (k = 0; k < dur2; k += 2)
     {
-      if (input) srp->feeder = input;
-      srp->data[loc] = srp->feeder(srp->closure, 1);
+      out_data[k] = ldata[wid1];
 
-      srp->x = 0.5;
-      srp->start++;
-
-      i = srp->start + srp->width - 1;
-      if (i >= lim) i -= lim;
-      if (srp->start == lim)
-	srp->start = 0;
-
-      return(srp->data[i]);
-    }
-  else
-    {
-      if (srp->x == 0.0)
+      sum = 0.0;
+      i = 0;
+      while (i <= wid10)
 	{
-	  /* first sample */
-	  int xs, xi;
-	  srp->coeffs = (mus_float_t *)malloc(lim * sizeof(mus_float_t));
-
-	  xs = (SRC_SINC_DENSITY / 2) + 4;
-	  xi = SRC_SINC_DENSITY;
-	  for (i = 0; i < lim; i++, xs += xi)
-	    srp->coeffs[i] = srp->sinc_table[xs];
-
-	  srp->x = 0.5;
-	  return(srp->data[srp->width - 1]);
+	  sum += (ldata[i] * coeffs[i]); i++;
+	  sum += (ldata[i] * coeffs[i]); i++;
+	  sum += (ldata[i] * coeffs[i]); i++;
+	  sum += (ldata[i] * coeffs[i]); i++;
+	  sum += (ldata[i] * coeffs[i]); i++;
+	  sum += (ldata[i] * coeffs[i]); i++;
+	  sum += (ldata[i] * coeffs[i]); i++;
+	  sum += (ldata[i] * coeffs[i]); i++;
+	  sum += (ldata[i] * coeffs[i]); i++;
+	  sum += (ldata[i] * coeffs[i]); i++;
 	}
+      for (; i < lim; i++)
+	sum += (ldata[i] * coeffs[i]);
+      out_data[k + 1] = sum;
+
+      ldata++;
     }
 
-  stop = loc;
-  lim2 = lim - 2;
-  i = 0;
-  sum = 0.0;
-  while (loc <= lim2)
-    {
-      sum += (srp->data[loc++] * srp->coeffs[i++]);
-      sum += (srp->data[loc++] * srp->coeffs[i++]);
-    }
-  if (loc < lim)
-    sum += (srp->data[loc] * srp->coeffs[i++]);
-  lim2 = stop - 2;
-  loc = 0;
-  while (loc <= lim2)
-    {
-      sum += (srp->data[loc++] * srp->coeffs[i++]);
-      sum += (srp->data[loc++] * srp->coeffs[i++]);
-    }
-  if (loc < stop)
-    sum += (srp->data[loc] * srp->coeffs[i]);
-
-  srp->x += 0.5;
-  return(sum);
+  free(coeffs);
+  return(out_data);
 }
 
 

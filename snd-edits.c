@@ -1786,8 +1786,6 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
   sf = (snd_fd **)malloc(sizeof(snd_fd *));
   
   sf[0] = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, len);
-  sampler_set_safe(sf[0], len);
-
   if (sf[0] == NULL)
     {
       free(sf);
@@ -1800,6 +1798,7 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
     }
   else
     {
+      sampler_set_safe(sf[0], len);
       err = snd_make_file(ofile, 1, hdr, sf, len, report_ok);
       free_snd_fd(sf[0]);
       free(sf);
@@ -4957,7 +4956,6 @@ mus_long_t current_location(snd_fd *sf)
 
 void sampler_set_safe(snd_fd *sf, mus_long_t dur)
 {
-  sf->safe = true;
 #if SF_UNSAFE
   if ((sf->runf == next_sample_value_unscaled) ||
       (sf->runf == next_sample_value) ||
@@ -4969,9 +4967,6 @@ void sampler_set_safe(snd_fd *sf, mus_long_t dur)
   /* tricky because we currently assume the reader protects against reading off the end by returning 0.0,
    *  perhaps pass in dur (= number of samples we will be reading), and if last-loc+1>=dur, we're safe?
    *  dur here has to match the number of samples we will read! 
-   * 
-   * sf->safe not currently used, but presumably this check will work in next_sound as well
-   *   but we need to keep and fixup dur?  
    */
   if ((sf->last - sf->loc + 1) >= dur) /* two kinds of counter here: last is sample number, dur is how many samples */
     {
@@ -5060,7 +5055,6 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
   sf->direction = direction;
   sf->current_state = ed;
   sf->edit_ctr = edit_position;
-  sf->safe = false;
 
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
@@ -6361,7 +6355,6 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, mus_long_t beg, mus_long_t len, i
   sf->edit_ctr = 0;
   first_snd = cp->sounds[index];
   sf->frag_pos = 0;
-  sf->safe = false;
 
   ind0 = 0;
   indx = beg;

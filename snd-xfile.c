@@ -2485,10 +2485,7 @@ static void file_data_auto_comment_callback(Widget w, XtPointer context, XtPoint
 
 
 #define PANEL_COMMENT_SPACE 16
-
-#define WITH_AUTO_COMMENT true
 #define WITHOUT_AUTO_COMMENT false
-
 #define WITH_SRATE true
 #define WITHOUT_SRATE false
 

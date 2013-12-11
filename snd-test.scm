@@ -32199,6 +32199,209 @@ EDITS: 1
 	    (close-sound ind)
 	    (close-sound ind1)))
 	
+	(let ((old-width (sinc-width)))
+	  (set! (sinc-width) 10)
+	  
+	  (let ((res (new-sound :size 10)))
+	    (set! (sample 3) .5)
+	    (src-channel 2.0)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector -0.05016523320247118 0.1581800948824515 0.1581800948824515 
+						-0.05016523320247118 0.02716944826115516 -0.01652926966015632)))
+		  (snd-display #__line__ ";src 2, 10 3 10: ~A" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 10)))
+	    (set! (sample 2) .5)
+	    (src-channel 2.0)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.0 0.25 0.0 0.0 0.0 0.0)))
+		  (snd-display #__line__ ";src 2, 10 2 10: ~A" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 10)))
+	    (set! (sample 0) .5)
+	    (src-channel 2.0)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.25 0.0 0.0 0.0 0.0 0.0)))
+		  (snd-display #__line__ ";src 2, 10 0 10: ~A" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 11)))
+	    (set! (sample 3) .5)
+	    (src-channel 2.0)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector -0.05016523320247118 0.1581800948824515 0.1581800948824515 
+						-0.05016523320247118 0.02716944826115516 -0.01652926966015632 0.01022512563738671)))
+		  (snd-display #__line__ ";src 2, 11 3 10: ~A" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 11)))
+	    (set! (sample 2) .5)
+	    (src-channel 2.0)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.0 0.25 0.0 0.0 0.0 0.0 0.0)))
+		  (snd-display #__line__ ";src 2, 11 2 10: ~A" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 11)))
+	    (set! (sample 0) .5)
+	    (src-channel 2.0)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.25 0.0 0.0 0.0 0.0 0.0 0.0)))
+		  (snd-display #__line__ ";src 2, 11 0 10: ~A" v)))
+	    (close-sound res))
+
+	  (let ((res (new-sound :size 40)))
+	    (do ((i 0 (+ i 1)))
+		((= i 20))
+	      (set! (sample i) (* i .05))
+	      (set! (sample (- 39 i)) (* i .05)))
+	    (src-channel 2.0)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.01198528796961999 0.1035793306415383 0.2059748594814547 0.3060708098272395 0.4072307780331241 
+						0.5077603318367317 0.6062448605128621 0.7086656575233007 0.8045885470214085 0.9128440616541418 
+						0.9536620711423869 0.8562080426776515 0.7579855746854125 0.6566287955350736 0.5575138524566664 
+						0.4569842986530586 0.3574772574131896 0.2546643622412894 0.1572853567216201 0.04987330456145658 -0.0009027286222166014)))
+		  (format *stderr* "src 2, 40 0 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  (set! (sinc-width) 11)
+	  
+	  (let ((res (new-sound :size 15)))
+	    (set! (sample 3) .5)
+	    (src-channel 2.0)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector -0.05103248958541851 0.1584755057631961 0.1584755057631961 
+						-0.05103248958541851 0.02854464095499105 -0.01828991864619797 0.01222560572178551 -0.008180460967128276 0.0)))
+		  (snd-display #__line__ ";src 2, 15 3 11: ~A" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 15)))
+	    (set! (sample 0) .5)
+	    (src-channel 2.0)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.25 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
+		  (snd-display #__line__ ";src 2, 15 0 11: ~A" v)))
+	    (close-sound res))
+	  
+	  (set! (sinc-width) old-width))
+
+
+	(let ((old-width (sinc-width)))
+	  (set! (sinc-width) 10)
+	  
+	  (let ((res (new-sound :size 10)))
+	    (set! (sample 3) .5)
+	    (src-channel 0.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.0 0.05433889652231032 0.0 -0.1003304664049424 0.0 0.316360189764903 0.5 
+						0.316360189764903 0.0 -0.1003304664049424 0.0 0.05433889652231032 0.0 -0.03305853932031265 0.0 
+						0.02045025127477342 0.0 -0.01220523861007159 0.0 0.006688908032246622 0.0)))
+		  (format *stderr* "src 1/2, 10 3 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 10)))
+	    (set! (sample 2) .5)
+	    (src-channel 0.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.0 -0.1003304664049424 0.0 0.316360189764903 0.5 0.316360189764903 0.0 -0.1003304664049424 
+						0.0 0.05433889652231032 0.0 -0.03305853932031265 0.0 0.02045025127477342 0.0 
+						-0.01220523861007159 0.0 0.006688908032246622 0.0 -0.003110640428161881 0.0)))
+		  (format *stderr* "src 1/2, 10 2 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 10)))
+	    (set! (sample 0) .5)
+	    (src-channel 0.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.5 0.316360189764903 0.0 -0.1003304664049424 0.0 0.05433889652231032 0.0 -0.03305853932031265 
+						0.0 0.02045025127477342 0.0 -0.01220523861007159 0.0 0.006688908032246622 0.0 
+						-0.003110640428161881 0.0 0.001022072692939124 0.0 -0.000103644775079492 0.0)))
+		  (format *stderr* "src 1/2, 10 0 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  
+	  (let ((res (new-sound :size 11)))
+	    (set! (sample 3) .5)
+	    (src-channel 0.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.0 0.05433889652231032 0.0 -0.1003304664049424 0.0 0.316360189764903 0.5 0.316360189764903 
+						0.0 -0.1003304664049424 0.0 0.05433889652231032 0.0 -0.03305853932031265 0.0 0.02045025127477342 
+						0.0 -0.01220523861007159 0.0 0.006688908032246622 0.0 -0.003110640428161881 0.0)))
+		  (format *stderr* "src 1/2, 11 3 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 11)))
+	    (set! (sample 2) .5)
+	    (src-channel 0.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.0 -0.1003304664049424 0.0 0.316360189764903 0.5 0.316360189764903 0.0 -0.1003304664049424 
+						0.0 0.05433889652231032 0.0 -0.03305853932031265 0.0 0.02045025127477342 0.0 -0.01220523861007159 
+						0.0 0.006688908032246622 0.0 -0.003110640428161881 0.0 0.001022072692939124 0.0)))
+		  (format *stderr* "src 1/2, 11 2 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 11)))
+	    (set! (sample 0) .5)
+	    (src-channel 0.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.5 0.316360189764903 0.0 -0.1003304664049424 0.0 0.05433889652231032 0.0 -0.03305853932031265 
+						0.0 0.02045025127477342 0.0 -0.01220523861007159 0.0 0.006688908032246622 0.0 
+						-0.003110640428161881 0.0 0.001022072692939124 0.0 -0.000103644775079492 0.0 0.0 0.0)))
+		  (format *stderr* "src 1/2, 11 0 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  
+	  (let ((res (new-sound :size 40)))
+	    (do ((i 0 (+ i 1)))
+		((= i 20))
+	      (set! (sample i) (* i .05))
+	      (set! (sample (- 39 i)) (* i .05)))
+	    (src-channel 0.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.0 0.02056010532402247 0.05 0.07720130317537323 0.1 0.1238094543862298 0.15 0.1758514952493174 
+						0.2 0.2245876821803736 0.25 0.2753688942389073 0.3 0.3249295824364337 0.35 0.3751591614371849 
+						0.4 0.4250776763951197 0.45 0.4750983986223486 0.5 0.5251191208495776 0.55 0.5750480002850203 
+						0.6000000000000001 0.6251857364939857 0.65 0.6749656459425423 0.7000000000000001 0.7252971884488815 
+						0.75 0.7748042296887507 0.8 0.8255720997331736 0.8500000000000001 0.8742119340573964 0.9 
+						0.9274509253698831 0.9500000000000001 0.9590869443463733 0.9500000000000001 0.9274509253698828 
+						0.9 0.8742119340573966 0.8500000000000001 0.8255720997331734 0.8 0.7748042296887506 0.75 
+						0.7252971884488812 0.7000000000000001 0.6749656459425423 0.65 0.6251857364939858 
+						0.6000000000000001 0.5750480002850203 0.55 0.5251191208495776 0.5 0.4750983986223486 
+						0.45 0.4250776763951198 0.4 0.3751591614371849 0.35 0.3249295824364337 0.3
+						0.2753688942389073 0.25 0.2245876821803736 0.2 0.1758514952493173 0.15 0.1238094543862298
+						0.1 0.07720130317537324 0.05 0.02056010532402247 0.0 -0.004445073550837984 0.0)))
+		  (format *stderr* "src 1/2, 40 0 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  
+	  (set! (sinc-width) 11)
+	  
+	  (let ((res (new-sound :size 15)))
+	    (set! (sample 3) .5)
+	    (src-channel 0.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.0 0.05588873297652781 0.0 -0.1013169884822853 0.0 0.3166955736757819 0.5 0.3166955736757819 
+						0.0 -0.1013169884822853 0.0 0.05588873297652781 0.0 -0.03503207135776369 0.0 0.02267085373675465 
+						0.0 -0.01446863119016991 0.0 0.008794782253203336 0.0 -0.004875864375201019 0.0 0.002288656235197179
+						0.0 -0.0007570986863940245 0.0 7.729542250127452e-05 0.0 0.0 0.0)))
+		  (format *stderr* "src 1/2, 15 3 11: ~A~%" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 15)))
+	    (set! (sample 0) .5)
+	    (src-channel 0.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 0.5 0.3166955736757819 0.0 -0.1013169884822853 0.0 0.05588873297652781 0.0 -0.03503207135776369 0.0 
+						0.02267085373675465 0.0 -0.01446863119016991 0.0 0.008794782253203336 0.0 -0.004875864375201019 0.0 
+						0.002288656235197179 0.0 -0.0007570986863940245 0.0 7.729542250127452e-05 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
+		  (format *stderr* "src 1/2, 15 0 11: ~A~%" v)))
+	    (close-sound res))
+	  
+	  
+	  (set! (sinc-width) old-width))
+	
 	(let ((ind (new-sound "test.snd" :size 40000)))
 	  (let ((gen (make-triangle-wave 10.0 0.5)))
 	    (clm-channel gen)
@@ -46485,26 +46688,26 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-5-Dec-13:
-52,123,855,932
-6,516,839,748  s7.c:eval [/home/bil/gtk-snd/snd]
-6,512,995,265  ???:sin [/lib64/libm-2.12.so]
-2,434,885,575  ???:cos [/lib64/libm-2.12.so]
-2,251,180,135  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
-2,178,768,943  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,268,120,361  s7.c:gc [/home/bil/gtk-snd/snd]
-1,194,638,708  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-1,119,500,082  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  915,473,000  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+10-Dec-13:
+51,826,921,909
+6,513,743,260  ???:sin [/lib64/libm-2.12.so]
+6,468,486,445  s7.c:eval [/home/bil/gtk-snd/snd]
+2,432,714,416  ???:cos [/lib64/libm-2.12.so]
+2,246,702,232  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+2,183,313,253  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,261,357,196  s7.c:gc [/home/bil/gtk-snd/snd]
+1,195,020,023  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,119,507,832  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+1,025,883,354  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
   911,248,552  clm.c:fir_8 [/home/bil/gtk-snd/snd]
-  885,305,312  ???:t2_32 [/home/bil/gtk-snd/snd]
+  885,141,448  ???:t2_32 [/home/bil/gtk-snd/snd]
   877,841,154  clm.c:mus_formant_bank [/home/bil/gtk-snd/snd]
   782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
-  705,442,889  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  566,475,313  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
-  503,941,949  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
- 
+  681,983,751  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  619,165,009  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
+  503,908,683  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
+
 |#
 
 

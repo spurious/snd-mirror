@@ -149,7 +149,6 @@ typedef struct snd_fd {
   mus_long_t frag_pos;
   int edit_ctr, region;
   reader_t type;
-  bool safe;
   void *ramps, *mixes;
 } snd_fd;
 

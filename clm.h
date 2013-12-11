@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 18
-#define MUS_DATE "7-Dec-13"
+#define MUS_REVISION 19
+#define MUS_DATE "11-Dec-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -517,8 +517,8 @@ MUS_EXPORT mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction),
 MUS_EXPORT mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure, void (*init)(void *p, mus_any *g));
 MUS_EXPORT mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(void *arg, int direction));
 MUS_EXPORT bool mus_src_p(mus_any *ptr);
-MUS_EXPORT mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direction));
-MUS_EXPORT mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direction));
+MUS_EXPORT mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur);
+MUS_EXPORT mus_float_t *mus_src_05(mus_any *srptr, mus_float_t *in_data, mus_long_t dur);
 
 MUS_EXPORT bool mus_convolve_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direction));
@@ -600,7 +600,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
- * 7-Dec:      mus_set_formant_frequency.
+ * 7-Dec:      mus_set_formant_frequency, mus_src_20 and mus_src_05 changed.
  * 29-Nov:     mus_make_polywave_tu.
  * 11-Oct:     mus_vector_to_file, mus_vector_mix.
  * 19-Apr:     rxyk!cos and rxyk!sin from generators.scm.

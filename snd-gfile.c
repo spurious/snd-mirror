@@ -1542,8 +1542,6 @@ static void file_data_src_callback(GtkWidget *w, gpointer context)
 
 #define WITH_SRATE_FIELD true
 #define WITHOUT_SRATE_FIELD false
-
-#define WITH_AUTO_COMMENT true
 #define WITHOUT_AUTO_COMMENT false
 
 
