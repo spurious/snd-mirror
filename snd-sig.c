@@ -810,6 +810,13 @@ static mus_float_t src_input_as_needed_unchanged(void *arg, int direction)
 }
 
 
+static mus_float_t read_sample_input(void *arg, int direction) 
+{
+  src_state *sr = (src_state *)arg;
+  return(read_sample(sr->sf));
+}
+
+
 static src_state *make_src(mus_float_t srate, snd_fd *sf, bool src_change)
 {
   src_state *sr;
@@ -849,7 +856,6 @@ static int mus_long_t_compare(const void *a, const void *b)
 
 static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long_t dur, XEN edp, const char *caller, int arg_pos);
 mus_float_t next_sample_value_unscaled_and_unchecked(snd_fd *sf);
-
 
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long_t dur, mus_float_t ratio, mus_any *egen, 
 				    const char *origin, bool over_selection,
@@ -916,11 +922,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 
   if (egen == NULL)
     {
-      if (ratio == 0.5)
+      if ((ratio == 0.5) && (dur < (1 << 22)))
 	{
 	  mus_long_t m, in_dur;
 	  mus_float_t *in_data;
-	      
+
 	  in_dur = dur + 2 + 2 * sinc_width(ss);
 	  in_data = (mus_float_t *)malloc(in_dur * sizeof(mus_float_t));
 	  for (m = 2 * sinc_width(ss); m < in_dur; m++)
@@ -933,13 +939,13 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	}
       else
 	{
-	  if (ratio == 2.0)
+	  if ((ratio == 2.0) && (dur < (1 << 23)))
 	    {
 	      /* make and fill input data, make output data, pass mus_src_20 the input data array, new dur, and sr->gen
 	       */
 	      mus_long_t m, in_dur;
 	      mus_float_t *in_data;
-	      
+
 	      in_dur = dur + 2 + 2 * sinc_width(ss);
 	      in_data = (mus_float_t *)malloc(in_dur * sizeof(mus_float_t));
 	      for (m = 2 * sinc_width(ss); m < in_dur; m++)
@@ -953,29 +959,33 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	    }
 	  else
 	    {
+	      mus_long_t out_dur, kdur;
+
 	      data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
 	      idata = data[0];
-	      for (k = 0; sr->sample < dur; k++) /* sr->sample tracks input location -- produce output until input exhausted */
+	      out_dur = ceil(dur / fabs(ratio)) + 1;
+
+	      for (k = 0; k < out_dur; k += MAX_BUFFER_SIZE)
 		{
-		  idata[j] = mus_src(sr->gen, 0.0, &src_input_as_needed_unchanged);
-		  j++;
-		  if (j == MAX_BUFFER_SIZE)
+		  kdur = out_dur - k;
+		  if (kdur > MAX_BUFFER_SIZE) kdur = MAX_BUFFER_SIZE;
+		  mus_src_to_buffer(sr->gen, &read_sample_input, idata, kdur);
+
+		  err = mus_file_write(ofd, 0, kdur - 1, 1, data);
+		  if (err != MUS_NO_ERROR) break;
+		  if (reporting) 
 		    {
-		      err = mus_file_write(ofd, 0, j - 1, 1, data);
-		      j = 0;
-		      if (err != MUS_NO_ERROR) break;
-		      if (reporting) 
+		      progress_report(cp, (mus_float_t)((double)(sr->sample) / (double)dur));
+		      if (ss->stopped_explicitly) break;
+		      if (!(sp->active))
 			{
-			  progress_report(cp, (mus_float_t)((double)(sr->sample) / (double)dur));
-			  if (ss->stopped_explicitly) break;
-			  if (!(sp->active))
-			    {
-			      ss->stopped_explicitly = true;
-			      break;
-			    }
+			  ss->stopped_explicitly = true;
+			  break;
 			}
 		    }
 		}
+	      j = 0;
+	      k = out_dur;
 	    }
 	}
     }

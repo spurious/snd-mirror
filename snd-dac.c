@@ -1694,8 +1694,7 @@ static int fill_dac_buffers(int write_ok)
 			  if ((amp == 1.0) && (incr == 0.0) && (sincr == 0.0))
 			    {
 			      mus_set_increment(dp->src, sr);
-			      for (j = 0; j < frames; j++)
-				buf[j] += mus_src(dp->src, 0.0, &dac_src_input_as_needed);
+			      mus_src_to_buffer(dp->src, &dac_src_input_as_needed, buf, frames);
 			    }
 			  else
 			    {

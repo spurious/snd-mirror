@@ -46688,25 +46688,27 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-10-Dec-13:
-51,826,921,909
-6,513,743,260  ???:sin [/lib64/libm-2.12.so]
-6,468,486,445  s7.c:eval [/home/bil/gtk-snd/snd]
-2,432,714,416  ???:cos [/lib64/libm-2.12.so]
-2,246,702,232  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
-2,183,313,253  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,261,357,196  s7.c:gc [/home/bil/gtk-snd/snd]
-1,195,020,023  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-1,119,507,832  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-1,025,883,354  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+12-Dec-13:
+51,637,204,156
+6,529,972,936  s7.c:eval [/home/bil/gtk-snd/snd]
+6,511,311,234  ???:sin [/lib64/libm-2.12.so]
+2,459,200,243  ???:cos [/lib64/libm-2.12.so]
+2,273,629,985  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+1,285,133,144  s7.c:gc [/home/bil/gtk-snd/snd]
+1,259,600,071  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,144,102,332  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,119,510,309  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  946,982,147  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
   911,248,552  clm.c:fir_8 [/home/bil/gtk-snd/snd]
-  885,141,448  ???:t2_32 [/home/bil/gtk-snd/snd]
+  885,250,676  ???:t2_32 [/home/bil/gtk-snd/snd]
   877,841,154  clm.c:mus_formant_bank [/home/bil/gtk-snd/snd]
-  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+  723,962,493  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  681,983,751  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  619,165,009  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
-  503,908,683  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
+  620,967,202  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  620,554,525  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
+  522,935,829  clm.c:mus_src_20 [/home/bil/gtk-snd/snd]
+  510,664,385  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
 
 |#
 

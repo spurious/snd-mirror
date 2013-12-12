@@ -12525,7 +12525,7 @@ mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), 
 	  srp->start = 0;
 	  srp->len = wid * SRC_SINC_DENSITY;
 	  srp->width_1 = 1.0 - wid;
-	  srp->data = (mus_float_t *)calloc(srp->lim + 1, sizeof(mus_float_t));
+	  srp->data = (mus_float_t *)calloc(2 * srp->lim + 1, sizeof(mus_float_t));
 	  loc = init_sinc_table(wid);
 	  srp->sinc_table = sinc_tables[loc];
 	  srp->coeffs = NULL;
@@ -12538,7 +12538,10 @@ mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), 
 	      int i, dir = 1;
 	      if (srate < 0.0) dir = -1;
 	      for (i = wid - 1; i < srp->lim; i++) 
-		srp->data[i] = srp->feeder(closure, dir);
+		{
+		  srp->data[i] = srp->feeder(closure, dir);
+		  srp->data[i + srp->lim] = srp->data[i];
+		}
 	      /* was i = 0 here but we want the incoming data centered */
 	    }
 	  return((mus_any *)srp);
@@ -12556,7 +12559,7 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum = 0.0, x, zf, srx, factor;
-  int lim, i, loc, xi, xs, stop;
+  int lim, i, loc, xi, xs;
   bool int_ok = false;
 
   lim = srp->lim;
@@ -12582,7 +12585,12 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
       if (input) srp->feeder = input;
       for (i = 0; i < fsx; i++)
 	{
-	  srp->data[loc++] = srp->feeder(srp->closure, dir);
+	  /* there are two copies of the circular data buffer back-to-back so that we can
+	   *   run the convolution below without worrying about the buffer end.
+	   */
+	  srp->data[loc] = srp->feeder(srp->closure, dir);
+	  srp->data[loc + lim] = srp->data[loc];
+	  loc++;
 	  if (loc == lim) loc = 0;
 	}
       srp->start = loc; /* next time around we start here */
@@ -12610,37 +12618,194 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
       int_ok = true;
     }
 
-  stop = loc;
   if (int_ok)
     {
-      /* unrolled is slower here */
-      int sinc_loc, sinc_incr;
+      int sinc_loc, sinc_incr, last, last10;
+      mus_float_t *data, *sinc_table;
+      
+      data = srp->data;
+      sinc_table = srp->sinc_table;
 
       xs = (int)(zf * (srp->width_1 - srp->x));
       sinc_loc = xs + srp->width * SRC_SINC_DENSITY + 4;
       sinc_incr = xi;
+      last = loc + lim;
+      last10 = last - 10;
 
-      for (; loc < lim; loc++, sinc_loc += sinc_incr)
-	sum += (srp->data[loc] * srp->sinc_table[sinc_loc]);
-      for (loc = 0; loc < stop; loc++, sinc_loc += sinc_incr)
-	sum += (srp->data[loc] * srp->sinc_table[sinc_loc]);
+      while (loc <= last10)
+	{
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	}
+      for (; loc < last; loc++, sinc_loc += sinc_incr)
+	sum += data[loc] * sinc_table[sinc_loc];
     }
   else
     {
       mus_float_t sinc_loc, sinc_incr;
+      int last, last10;
+      mus_float_t *data, *sinc_table;
+
+      data = srp->data;
+      sinc_table = srp->sinc_table;
 
       x = zf * (srp->width_1 - srp->x);
       sinc_loc = x + srp->width * SRC_SINC_DENSITY + 4;
       sinc_incr = zf;
+      last = loc + lim;
 
-      for (; loc < lim; loc++, sinc_loc += sinc_incr)
-	sum += (srp->data[loc] * srp->sinc_table[(int)sinc_loc]);
-      for (loc = 0; loc < stop; loc++, sinc_loc += sinc_incr)
-	sum += (srp->data[loc] * srp->sinc_table[(int)sinc_loc]);
+      last10 = last - 10;
+
+      while (loc <= last10)
+	{
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	  sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	}
+      for (; loc < last; loc++, sinc_loc += sinc_incr)
+	sum += data[loc] * sinc_table[(int)sinc_loc];
     }
 
   srp->x += srx;
   return(sum * factor);
+}
+
+
+void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direction), mus_float_t *out_data, mus_long_t dur)
+{
+  /* sr_change = 0.0
+   */
+  sr *srp = (sr *)srptr;
+  mus_float_t sum = 0.0, x, zf, srx, factor, sincx, srpx;
+  int lim, i, loc, xi, xs, sinc4, dir = 1;
+  bool int_ok = false;
+  mus_long_t k;
+  mus_float_t *data, *sinc_table;
+
+  lim = srp->lim;
+  sincx = (mus_float_t)SRC_SINC_DENSITY; 
+  sinc4 = srp->width * SRC_SINC_DENSITY + 4;
+  data = srp->data;
+  sinc_table = srp->sinc_table;
+  srx = srp->incr;
+  srpx = srp->x;
+  if (srx < 0.0) 
+    {
+      dir = -1;
+      srx = -srx;
+    }
+  if (srx > 1.0) 
+    {
+      factor = 1.0 / srx;
+      /* this is not exact since we're sampling the sinc and so on, but it's close over a wide range */
+      zf = factor * sincx;
+      xi = (int)zf;
+      int_ok = ((zf - xi) < .001);
+    }
+  else 
+    {
+      factor = 1.0;
+      zf = sincx;
+      xi = SRC_SINC_DENSITY;
+      int_ok = true;
+    }
+
+  for (k = 0; k < dur; k++)
+    {
+      loc = srp->start;
+      if (srpx >= 1.0)
+	{
+	  int fsx;
+	  fsx = (int)srpx;
+	  srpx -= fsx;
+	  
+	  for (i = 0; i < fsx; i++)
+	    {
+	      /* there are two copies of the circular data buffer back-to-back so that we can
+	       *   run the convolution below without worrying about the buffer end.
+	       */
+	      data[loc] = input(srp->closure, dir);
+	      data[loc + lim] = data[loc];
+	      loc++;
+	      if (loc == lim) loc = 0;
+	    }
+	  srp->start = loc; /* next time around we start here */
+	}
+      
+      sum = 0.0;
+      if (int_ok)
+	{
+	  int sinc_loc, sinc_incr, last, last10;
+	  
+	  xs = (int)(zf * (srp->width_1 - srpx));
+	  sinc_loc = xs + sinc4;
+	  sinc_incr = xi;
+	  last = loc + lim;
+	  last10 = last - 10;
+	  
+	  while (loc <= last10)
+	    {
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[sinc_loc]; sinc_loc += sinc_incr;
+	    }
+	  for (; loc < last; loc++, sinc_loc += sinc_incr)
+	    sum += data[loc] * sinc_table[sinc_loc];
+	}
+      else
+	{
+	  mus_float_t sinc_loc, sinc_incr;
+	  int last, last10;
+	  
+	  x = zf * (srp->width_1 - srpx);
+	  sinc_loc = x + sinc4;
+	  sinc_incr = zf;
+	  last = loc + lim;
+	  
+	  last10 = last - 10;
+	  
+	  while (loc <= last10)
+	    {
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	      sum += data[loc++] * sinc_table[(int)sinc_loc]; sinc_loc += sinc_incr;
+	    }
+	  for (; loc < last; loc++, sinc_loc += sinc_incr)
+	    sum += data[loc] * sinc_table[(int)sinc_loc];
+	}
+      srpx += srx;
+      out_data[k] = sum * factor;
+    }
+  srp->x = srpx;
 }
 
 

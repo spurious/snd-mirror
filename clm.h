@@ -519,6 +519,7 @@ MUS_EXPORT mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_
 MUS_EXPORT bool mus_src_p(mus_any *ptr);
 MUS_EXPORT mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur);
 MUS_EXPORT mus_float_t *mus_src_05(mus_any *srptr, mus_float_t *in_data, mus_long_t dur);
+MUS_EXPORT void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direction), mus_float_t *out_data, mus_long_t dur);
 
 MUS_EXPORT bool mus_convolve_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direction));

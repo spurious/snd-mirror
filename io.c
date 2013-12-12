@@ -449,9 +449,13 @@ unsigned int mus_char_to_ulint(const unsigned char *inp)
     #define big_endian_unsigned_short(n)         (mus_char_to_ubshort(n))
   #endif
 
-  #define big_endian_float(n)                    (mus_char_to_bfloat(n))
-  #define big_endian_double(n)                   (mus_char_to_bdouble(n))
-  /* why doesn't bswap work in this case? */
+#if __GNUC__ && HAVE_BYTESWAP_H
+    #define big_endian_float(n)                  ({unsigned int x; x = bswap_32((*((unsigned int *)n))); (*((float *)&x));})
+    #define big_endian_double(n)                 ({unsigned long long int x; x = bswap_64((*((unsigned long long int *)n))); (*((double *)&x));})
+#else
+    #define big_endian_float(n)                  (mus_char_to_bfloat(n))
+    #define big_endian_double(n)                 (mus_char_to_bdouble(n))
+#endif
 
   #define little_endian_short(n)                 (*((short *)n))
   #define little_endian_int(n)                   (*((int *)n))
@@ -515,8 +519,14 @@ unsigned int mus_char_to_ulint(const unsigned char *inp)
     #define little_endian_int(n)                 (mus_char_to_lint(n))
     #define little_endian_unsigned_short(n)      (mus_char_to_ulshort(n))
   #endif
-  #define little_endian_float(n)                 (mus_char_to_lfloat(n))
-  #define little_endian_double(n)                (mus_char_to_ldouble(n))
+
+#if __GNUC__ && HAVE_BYTESWAP_H
+    #define little_endian_float(n)               ({unsigned int x; x = bswap_32((*((unsigned int *)n))); (*((float *)&x));})
+    #define little_endian_double(n)              ({unsigned long long int x; x = bswap_64((*((unsigned long long int *)n))); (*((double *)&x));})
+#else
+    #define little_endian_float(n)               (mus_char_to_lfloat(n))
+    #define little_endian_double(n)              (mus_char_to_ldouble(n))
+#endif
 
   #if HAVE_BYTESWAP_H
     #define set_little_endian_short(n, x)        (*((short *)n)) = ((short)(bswap_16(x)))
@@ -1733,36 +1743,36 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 	      if (clip_checker) clip_checker();
 	      if (mus_clip_handler)
 		{
-		  while (bufnow < bufend)
-		    {
-		      sample = (*bufnow);
-		      if ((sample > 0.99999) || (sample < -1.0))
-			(*bufnow) = (*mus_clip_handler)(sample);
-		      bufnow++;
-		      
-		      sample = (*bufnow);
-		      if ((sample > 0.99999) || (sample < -1.0))
-			(*bufnow) = (*mus_clip_handler)(sample);
-		      bufnow++;
-		    }
 		  for (; bufnow <= bufend; bufnow++)
 		    {
 		      sample = (*bufnow);
-		      if ((sample > 0.99999) ||
-			  (sample < -1.0))
-			(*bufnow) = (*mus_clip_handler)(sample);
+		      if ((sample >= 1.0) || (sample < -1.0)) (*bufnow) = (*mus_clip_handler)(sample);
 		    }
 		}
 	      else
 		{
+		  while (bufnow <= bufend4)
+		    {
+		      sample = (*bufnow);
+		      if (sample >= 1.0) (*bufnow) = 0.99999; else if (sample < -1.0) (*bufnow) = -1.0;
+		      bufnow++;
+
+		      sample = (*bufnow);
+		      if (sample >= 1.0) (*bufnow) = 0.99999; else if (sample < -1.0) (*bufnow) = -1.0;
+		      bufnow++;
+
+		      sample = (*bufnow);
+		      if (sample >= 1.0) (*bufnow) = 0.99999; else if (sample < -1.0) (*bufnow) = -1.0;
+		      bufnow++;
+
+		      sample = (*bufnow);
+		      if (sample >= 1.0) (*bufnow) = 0.99999; else if (sample < -1.0) (*bufnow) = -1.0;
+		      bufnow++;
+		    }
 		  for (; bufnow <= bufend; bufnow++)
 		    {
 		      sample = (*bufnow);
-		      if (sample > 0.99999)
-			(*bufnow) = 0.99999;
-		      else
-			if (sample < -1.0)
-			  (*bufnow) = -1.0;
+		      if (sample >= 1.0) (*bufnow) = 0.99999; else if (sample < -1.0) (*bufnow) = -1.0;
 		    }
 		}
 	    }

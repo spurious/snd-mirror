@@ -68646,7 +68646,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.5
- * calls         |   275  207  175  115   89   71   53   53|  54   51.8
+ * calls         |   275  207  175  115   89   71   53   53|  54   51.6
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
@@ -68665,4 +68665,5 @@ int main(int argc, char **argv)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  * TODO: doc/test mus-set-formant-frequency (the -and-radius part is also not documented or tested or even used??)
+ * PERHAPS: (reverse real/int) -> bswap?, (reverse char) -> bit reverse?
  */
