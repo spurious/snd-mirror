@@ -1130,8 +1130,7 @@ mus_float_t mus_array_interp(mus_float_t *wave, mus_float_t phase, mus_long_t si
       if (phase < 0.0) phase += size;
     }
 
-#if (!HAVE_SINCOS) /* I guess if we have sincos, we probably have modf */
-  int_part = (mus_long_t)floor(phase);
+  int_part = (mus_long_t)phase; /* (mus_long_t)floor(phase); */
   frac_part = phase - int_part;
   if (int_part == size) int_part = 0;
 
@@ -1144,26 +1143,6 @@ mus_float_t mus_array_interp(mus_float_t *wave, mus_float_t phase, mus_long_t si
       if (inx >= size) inx = 0;
       return(wave[int_part] + (frac_part * (wave[inx] - wave[int_part])));
     }
-#else
-  {
-    mus_float_t n;
-    frac_part = modf(phase, &n);
-    if (frac_part == 0.0)
-      {
-	if (n >= size)
-	  return(wave[0]);
-	return(wave[(mus_long_t)n]);
-      }
-    else 
-      {
-	mus_long_t inx;
-	int_part = (mus_long_t)n;
-	inx = int_part + 1;
-	if (inx >= size) inx = 0;
-	return(wave[int_part] + (frac_part * (wave[inx] - wave[int_part])));
-      }
-  }
-#endif
 }
 
 
@@ -2753,15 +2732,12 @@ mus_float_t mus_table_lookup(mus_any *ptr, mus_float_t fm)
       /* we're checking already for out-of-range indices, so mus_array_interp is more than we need */
       mus_long_t int_part;
       mus_float_t frac_part, f1;
-#if (!HAVE_SINCOS)
-      int_part = (mus_long_t)floor(gen->phase);
+
+      int_part = (mus_long_t)(gen->phase); /* floor(gen->phase) -- slow! modf is even worse */
       frac_part = gen->phase - int_part;
-#else
-      frac_part = modf(gen->phase, &f1);
-      int_part = (mus_long_t)f1;
-#endif
       f1 = gen->table[int_part];
       int_part++;
+
       if (int_part == gen->table_size)
 	gen->yn1 = f1 + frac_part * (gen->table[0] - f1);
       else gen->yn1 = f1 + frac_part * (gen->table[int_part] - f1);
@@ -2787,15 +2763,12 @@ mus_float_t mus_table_lookup_unmodulated(mus_any *ptr)
       /* see above */
       mus_long_t int_part;
       mus_float_t frac_part, f1;
-#if (!HAVE_SINCOS)
-      int_part = (mus_long_t)floor(gen->phase);
+
+      int_part = (mus_long_t)(gen->phase);
       frac_part = gen->phase - int_part;
-#else
-      frac_part = modf(gen->phase, &f1);
-      int_part = (mus_long_t)f1;
-#endif
       f1 = gen->table[int_part];
       int_part++;
+
       if (int_part == gen->table_size)
 	gen->yn1 = f1 + frac_part * (gen->table[0] - f1);
       else gen->yn1 = f1 + frac_part * (gen->table[int_part] - f1);
@@ -3236,7 +3209,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t i
 
   /* Tn calc */
   b = tn[n - 1];
-  for (i = n - 2; i >= 0;)
+  for (i = n - 2; i > 0;)
     {
       b2 = b1;
       b1 = b;
@@ -3260,7 +3233,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_3(mus_float_t x, mus_float_t i
 
   /* Tn calc */
   b = tn[n - 1];
-  for (i = n - 2; i >= 0;)
+  for (i = n - 2; i > 0;)
     {
       b2 = b1;
       b1 = b;
@@ -3288,7 +3261,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_5(mus_float_t x, mus_float_t i
 
   /* Tn calc */
   b = tn[n - 1];
-  for (i = n - 2; i >= 0;)
+  for (i = n - 2; i > 0;) /* this was >= ?? (also cases above) -- presumably a copy-and-paste typo? */
     {
       b2 = b1;
       b1 = b;
@@ -3401,24 +3374,19 @@ static mus_float_t polyw_first_5(mus_any *ptr, mus_float_t fm)
   pw *gen = (pw *)ptr;
   mus_float_t x;
   mus_float_t *tn;
+  double x2, b, b1, b2, cx;
 
   x = gen->phase;
   tn = gen->coeffs;
   gen->phase += (gen->freq + fm);
 
-  {
-    double x2, b, b1, b2, cx;
-  
-    cx = cos(x);
-    x2 = 2.0 * cx;
-    b1 = tn[4];
-    b = x2 * b1 + tn[3];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[2];
+  cx = cos(x);
+  x2 = 2.0 * cx;
+  b1 = tn[4];
+  b = x2 * b1 + tn[3]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[2];
 
-    return((x2 * b - b1 + tn[1]) * cx - b);
-  }
+  return((x2 * b - b1 + tn[1]) * cx - b);
 }
 
 
@@ -3427,27 +3395,47 @@ static mus_float_t polyw_first_6(mus_any *ptr, mus_float_t fm)
   pw *gen = (pw *)ptr;
   mus_float_t x;
   mus_float_t *tn;
+  double x2, b, b1, b2, cx;
 
   x = gen->phase;
   tn = gen->coeffs;
   gen->phase += (gen->freq + fm);
 
-  {
-    double x2, b, b1, b2, cx;
-  
-    cx = cos(x);
-    x2 = 2.0 * cx;
-    b1 = tn[5];
-    b = x2 * b1 + tn[4];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[3];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[2];
+  cx = cos(x);
+  x2 = 2.0 * cx;
+  b1 = tn[5];
+  b = x2 * b1 + tn[4]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[3]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[2];
 
-    return((x2 * b - b1 + tn[1]) * cx - b);
-  }
+  return((x2 * b - b1 + tn[1]) * cx - b);
+}
+
+
+static mus_float_t polyw_first_11(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t x;
+  mus_float_t *tn;
+  double x2, b, b1, b2, cx;
+
+  x = gen->phase;
+  tn = gen->coeffs;
+  gen->phase += (gen->freq + fm);
+
+  cx = cos(x);
+  x2 = 2.0 * cx;
+  b1 = tn[10];
+  b = x2 * b1 + tn[9]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[8]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[7]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[6]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[5]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[4]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[3]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[2];
+
+  return((x2 * b - b1 + tn[1]) * cx - b);
 }
 
 
@@ -3662,17 +3650,22 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
 			    gen->polyw = polyw_first_6;
 			  else 
 			    {
-			      if (((n - 1) % 5) == 0)
-				gen->polyw = polyw_f5;
-			      else
+			      if (n == 11) /* a common case oddly enough */
+				gen->polyw = polyw_first_11;
+			      else 
 				{
-				  if (((n - 1) % 3) == 0)
-				    gen->polyw = polyw_f3;
+				  if (((n - 1) % 5) == 0)
+				    gen->polyw = polyw_f5;
 				  else
 				    {
-				      if (((n - 1) % 2) == 0)
-					gen->polyw = polyw_f2;
-				      else gen->polyw = polyw_first;
+				      if (((n - 1) % 3) == 0)
+					gen->polyw = polyw_f3;
+				      else
+					{
+					  if (((n - 1) % 2) == 0)
+					    gen->polyw = polyw_f2;
+					  else gen->polyw = polyw_first;
+					}
 				    }
 				}
 			    }
@@ -5312,11 +5305,9 @@ mus_float_t mus_filtered_comb(mus_any *ptr, mus_float_t input, mus_float_t pm)
 				       mus_tap(ptr, pm), 
 				       0.0)), 
 		     pm)); 
-  else return(mus_delay_unmodulated(ptr,
-				    input + (fc->yscl * 
-					     fc->runf(fc->filt, 
-						      fc->line[fc->loc], 
-						      0.0))));
+  return(mus_delay_unmodulated(ptr,
+			       input + (fc->yscl * 
+					fc->runf(fc->filt, fc->line[fc->loc], 0.0))));
 }
 
 
@@ -5325,7 +5316,7 @@ mus_float_t mus_filtered_comb_unmodulated(mus_any *ptr, mus_float_t input)
   dly *fc = (dly *)ptr;
   return(mus_delay_unmodulated(ptr,
 			       input + (fc->yscl * 
-					((*(fc->filt->core->run))(fc->filt, fc->line[fc->loc], 0.0)))));
+					fc->runf(fc->filt, fc->line[fc->loc], 0.0))));
 }
 
 
@@ -11534,9 +11525,7 @@ static void mus_locsig_fill(mus_float_t *arr, int chans, mus_float_t degree, mus
       mus_float_t deg, pos, frac, degs_per_chan, ldeg, c, s;
       int left, right;
       /* this used to check for degree < 0.0 first, but as Michael Klingbeil noticed, that
-       *   means that in the stereo case, the location can jump to 90 => click.  It was also
-       *   possible for a negative degree to leak through, causing a segfault in the Scheme
-       *   version if "run" was in use.
+       *   means that in the stereo case, the location can jump to 90 => click.
        */
       if (chans == 2)
 	{
@@ -11564,7 +11553,7 @@ static void mus_locsig_fill(mus_float_t *arr, int chans, mus_float_t degree, mus
 	  degs_per_chan = 360.0 / chans;
 	}
       pos = deg / degs_per_chan;
-      left = (int)floor(pos);
+      left = (int)pos; /* floor(pos) */
       right = left + 1;
       if (right >= chans) right = 0;
       frac = pos - left;
@@ -11965,12 +11954,19 @@ void mus_move_locsig(mus_any *ptr, mus_float_t degree, mus_float_t distance)
 {
   locs *gen = (locs *)ptr;
   mus_float_t dist;
-  mus_reset(ptr); /* clear old state, if any */
+
   if (distance > 1.0)
     dist = 1.0 / distance;
   else dist = 1.0;
+
   if (gen->rev_chans > 0)
-    mus_locsig_fill(gen->revn, gen->rev_chans, degree, (gen->reverb * sqrt(dist)), gen->type);
+    {
+      if (gen->rev_chans > 2)
+	mus_clear_array(gen->revn, gen->rev_chans);
+      mus_locsig_fill(gen->revn, gen->rev_chans, degree, (gen->reverb * sqrt(dist)), gen->type);
+    }
+  if (gen->chans > 2)
+    mus_clear_array(gen->outn, gen->chans);
   mus_locsig_fill(gen->outn, gen->chans, degree, dist, gen->type);
 }
 
@@ -12280,7 +12276,7 @@ typedef struct {
   mus_float_t (*feeder)(void *arg, int direction);
   mus_float_t x;
   mus_float_t incr, width_1;
-  int width, lim, start;
+  int width, lim, start, sinc4;
   int len;
   mus_float_t *data, *sinc_table, *coeffs;
   void *closure;
@@ -12525,6 +12521,7 @@ mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), 
 	  srp->start = 0;
 	  srp->len = wid * SRC_SINC_DENSITY;
 	  srp->width_1 = 1.0 - wid;
+	  srp->sinc4 = srp->width * SRC_SINC_DENSITY + 4;
 	  srp->data = (mus_float_t *)calloc(2 * srp->lim + 1, sizeof(mus_float_t));
 	  loc = init_sinc_table(wid);
 	  srp->sinc_table = sinc_tables[loc];
@@ -12558,12 +12555,15 @@ mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_
 mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(void *arg, int direction))
 {
   sr *srp = (sr *)srptr;
-  mus_float_t sum = 0.0, x, zf, srx, factor;
+  mus_float_t sum, x, zf, srx, factor;
   int lim, i, loc, xi, xs;
-  bool int_ok = false;
+  bool int_ok;
+  mus_float_t *data, *sinc_table;
 
   lim = srp->lim;
   loc = srp->start;
+  data = srp->data;
+  sinc_table = srp->sinc_table;
 
   if (sr_change > MUS_MAX_CLM_SRC) 
     sr_change = MUS_MAX_CLM_SRC;
@@ -12583,13 +12583,19 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
       srp->x -= fsx;
 
       if (input) srp->feeder = input;
-      for (i = 0; i < fsx; i++)
+
+      data[loc] = srp->feeder(srp->closure, dir);
+      data[loc + lim] = data[loc];
+      loc++;
+      if (loc == lim) loc = 0;
+      
+      for (i = 1; i < fsx; i++)
 	{
 	  /* there are two copies of the circular data buffer back-to-back so that we can
 	   *   run the convolution below without worrying about the buffer end.
 	   */
-	  srp->data[loc] = srp->feeder(srp->closure, dir);
-	  srp->data[loc + lim] = srp->data[loc];
+	  data[loc] = srp->feeder(srp->closure, dir);
+	  data[loc + lim] = data[loc];
 	  loc++;
 	  if (loc == lim) loc = 0;
 	}
@@ -12600,15 +12606,17 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 
   /* if (srx == 0.0) srx = 0.01; */ /* can't decide about this ... */
   if (srx < 0.0) srx = -srx;
-  /* tedious timing tests indicate that precalculating this block in the sr_change=0 case saves no time at all */
-
   if (srx > 1.0) 
     {
       factor = 1.0 / srx;
       /* this is not exact since we're sampling the sinc and so on, but it's close over a wide range */
       zf = factor * (mus_float_t)SRC_SINC_DENSITY; 
-      xi = (int)zf;
-      int_ok = ((zf - xi) < .001);
+      xi = (int)(zf + 0.5);
+
+      /* (let ((e (make-env '(0 1 1 1.1) :length 11))) (src-channel e))
+       */
+      /* we're comparing adding xi lim times to zf and if there's no difference, using the int case */
+      if (fabs((xi - zf) * lim) > 2.0) int_ok = false; else int_ok = true;
     }
   else 
     {
@@ -12618,16 +12626,13 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
       int_ok = true;
     }
 
+  sum = 0.0;
   if (int_ok)
     {
       int sinc_loc, sinc_incr, last, last10;
-      mus_float_t *data, *sinc_table;
       
-      data = srp->data;
-      sinc_table = srp->sinc_table;
-
       xs = (int)(zf * (srp->width_1 - srp->x));
-      sinc_loc = xs + srp->width * SRC_SINC_DENSITY + 4;
+      sinc_loc = xs + srp->sinc4;
       sinc_incr = xi;
       last = loc + lim;
       last10 = last - 10;
@@ -12652,13 +12657,9 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
     {
       mus_float_t sinc_loc, sinc_incr;
       int last, last10;
-      mus_float_t *data, *sinc_table;
-
-      data = srp->data;
-      sinc_table = srp->sinc_table;
 
       x = zf * (srp->width_1 - srp->x);
-      sinc_loc = x + srp->width * SRC_SINC_DENSITY + 4;
+      sinc_loc = x + srp->sinc4;
       sinc_incr = zf;
       last = loc + lim;
 
@@ -12691,15 +12692,14 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
   /* sr_change = 0.0
    */
   sr *srp = (sr *)srptr;
-  mus_float_t sum = 0.0, x, zf, srx, factor, sincx, srpx;
-  int lim, i, loc, xi, xs, sinc4, dir = 1;
-  bool int_ok = false;
+  mus_float_t sum, x, zf, srx, factor, sincx, srpx;
+  int lim, i, loc, xi, xs, dir = 1;
+  bool int_ok;
   mus_long_t k;
   mus_float_t *data, *sinc_table;
 
   lim = srp->lim;
   sincx = (mus_float_t)SRC_SINC_DENSITY; 
-  sinc4 = srp->width * SRC_SINC_DENSITY + 4;
   data = srp->data;
   sinc_table = srp->sinc_table;
   srx = srp->incr;
@@ -12715,7 +12715,7 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
       /* this is not exact since we're sampling the sinc and so on, but it's close over a wide range */
       zf = factor * sincx;
       xi = (int)zf;
-      int_ok = ((zf - xi) < .001);
+      if (fabs((xi - zf) * lim) > 2.0) int_ok = false; else int_ok = true;
     }
   else 
     {
@@ -12731,10 +12731,16 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
       if (srpx >= 1.0)
 	{
 	  int fsx;
+	  /* modf here is very slow??! */
 	  fsx = (int)srpx;
-	  srpx -= fsx;
-	  
-	  for (i = 0; i < fsx; i++)
+ 	  srpx -= fsx;
+
+	  data[loc] = input(srp->closure, dir);
+	  data[loc + lim] = data[loc];
+	  loc++;
+	  if (loc == lim) loc = 0;
+
+	  for (i = 1; i < fsx; i++)
 	    {
 	      /* there are two copies of the circular data buffer back-to-back so that we can
 	       *   run the convolution below without worrying about the buffer end.
@@ -12753,7 +12759,7 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 	  int sinc_loc, sinc_incr, last, last10;
 	  
 	  xs = (int)(zf * (srp->width_1 - srpx));
-	  sinc_loc = xs + sinc4;
+	  sinc_loc = xs + srp->sinc4;
 	  sinc_incr = xi;
 	  last = loc + lim;
 	  last10 = last - 10;
@@ -12780,7 +12786,7 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 	  int last, last10;
 	  
 	  x = zf * (srp->width_1 - srpx);
-	  sinc_loc = x + sinc4;
+	  sinc_loc = x + srp->sinc4;
 	  sinc_incr = zf;
 	  last = loc + lim;
 	  

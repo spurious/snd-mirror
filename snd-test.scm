@@ -32375,7 +32375,6 @@ EDITS: 1
 		  (format *stderr* "src 1/2, 40 0 10: ~A~%" v)))
 	    (close-sound res))
 	  
-	  
 	  (set! (sinc-width) 11)
 	  
 	  (let ((res (new-sound :size 15)))
@@ -32399,8 +32398,46 @@ EDITS: 1
 		  (format *stderr* "src 1/2, 15 0 11: ~A~%" v)))
 	    (close-sound res))
 	  
+	  (set! (sinc-width) 10)
+
+	  (let ((res (new-sound :size 10)))
+	    (set! (sample 2) .5)
+	    (src-channel 1.5)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector -0.0659173000292574 0.2750218141864232 0.1361775290259087 -0.05140008051946586 0.02873817799080515 
+						-0.01761592377597271 0.01086818222156537 -0.006418849681280971)))
+		  (format *stderr* "src 1.5, 10 0 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 10)))
+	    (set! (sample 2) .5)
+	    (src-channel 0.3)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector -2.309626927862667e-14 -0.07046687722856798 -0.1029821798386912 -0.04339187529883121 
+						0.1151049838606023 0.316360189764903 0.4672831482919799 0.4916944808321784 0.3769307110649516 
+						0.1817344234767786 1.953289539319582e-14 -0.09498013189693179 -0.08875244041152466 
+						-0.0236470298331755 0.03764309466867966 0.05433889652231032 0.02735343920407904 
+						-0.01239124709348501 -0.03298325840652785 -0.02431019463203471 4.869902458307762e-14 
+						0.01823801988763548 0.01851483195191724 0.005176164589977362 -0.008430282938941011 
+						-0.01220523861007159 -0.006058987580643592 0.002667220356124145 0.006794601943645224 
+						0.004720812682785585 -3.100277189828097e-14 -0.002989527299513507 -0.002701674743876624 
+						-0.0006539461337230524 0.0008891857488267552)))
+		  (format *stderr* "src 0.3, 10 0 10: ~A~%" v)))
+	    (close-sound res))
+	  
+	  (let ((res (new-sound :size 10))
+		(e (make-env '(0 1 1 2) :length 11)))
+	    (set! (sample 1) .5)
+	    (set! (sample 8) .5)
+	    (src-channel e)
+	    (let ((v (channel->vct)))
+	      (if (not (vvequal v (float-vector 3.511360236100833e-14 0.499999999999969 0.03245693012152732 -0.04426423670248926
+						0.05693627592759216 -0.06869987735399859 0.1364034106143399 0.2654607053632132 -0.04771168369895742)))
+		  (format *stderr* "src e, 10 0 10: ~A~%" v)))
+	    (close-sound res))
 	  
 	  (set! (sinc-width) old-width))
+	
 	
 	(let ((ind (new-sound "test.snd" :size 40000)))
 	  (let ((gen (make-triangle-wave 10.0 0.5)))
@@ -46572,6 +46609,32 @@ EDITS: 1
 |#
 
 (s7-version)
+
+#|
+(let ((table (symbol-table)))
+  (let ((counts (make-vector 100 0)))
+    (do ((i 0 (+ i 1)))
+	((= i (length table)))
+      (let ((len (length (table i))))
+	(if (>= len 100) (set! len 99))
+	(set! (counts len) (+ (counts len) 1))))
+    (do ((i 0 (+ i 1)))
+	((= i 100))
+      (format *stderr* "~D ~D~%" i (counts i)))))
+0 8581
+1 6358
+2 2687
+3 989
+4 317
+5 167
+6 73
+7 45
+8 27
+9 8
+10 6
+11 1
+|#
+
 (if with-exit (exit))
 
 ;;; ---------------- test the end
@@ -46688,28 +46751,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-12-Dec-13:
-51,637,204,156
-6,529,972,936  s7.c:eval [/home/bil/gtk-snd/snd]
-6,511,311,234  ???:sin [/lib64/libm-2.12.so]
-2,459,200,243  ???:cos [/lib64/libm-2.12.so]
-2,273,629,985  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
-1,285,133,144  s7.c:gc [/home/bil/gtk-snd/snd]
-1,259,600,071  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-1,144,102,332  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,119,510,309  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  946,982,147  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+13-Dec-13:
+50,649,882,282
+6,515,162,048  ???:sin [/lib64/libm-2.12.so]
+6,457,526,341  s7.c:eval [/home/bil/gtk-snd/snd]
+2,439,592,201  ???:cos [/lib64/libm-2.12.so]
+2,232,543,711  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+1,254,398,880  s7.c:gc [/home/bil/gtk-snd/snd]
+1,195,083,977  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,129,180,164  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,119,510,351  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
   911,248,552  clm.c:fir_8 [/home/bil/gtk-snd/snd]
+  903,052,809  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
   885,250,676  ???:t2_32 [/home/bil/gtk-snd/snd]
   877,841,154  clm.c:mus_formant_bank [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
-  723,962,493  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  785,726,072  ???:t2_64 [/home/bil/gtk-snd/snd]
+  743,944,281  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  620,967,202  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  620,554,525  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
-  522,935,829  clm.c:mus_src_20 [/home/bil/gtk-snd/snd]
-  510,664,385  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
-
+  624,940,543  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  567,249,112  ???:memset [/lib64/ld-2.12.so]
+  534,612,422  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
+  500,613,735  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
+ 
 |#
 
 

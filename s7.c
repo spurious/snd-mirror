@@ -1042,6 +1042,7 @@ typedef struct s7_cell {
       bool needs_free;
 
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
+      unsigned int tag;
       s7_pointer initial_slot;
       char *documentation;
     } string;
@@ -2083,6 +2084,7 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define local_slot(p)                 (p)->object.sym.local_slot
 #define keyword_symbol(p)             (p)->object.sym.ext.ksym
 #define symbol_help(p)                (symbol_name_cell(p))->object.string.documentation
+#define symbol_tag(p)                 (symbol_name_cell(p))->object.string.tag
 #define symbol_has_help(p)            (is_documented(symbol_name_cell(p)))
 #define symbol_set_has_help(p)        set_documented(symbol_name_cell(p))
 
@@ -2556,7 +2558,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
+#if 1
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -2585,7 +2587,7 @@ static void report_counts(s7_scheme *sc)
       if (mx > 0)
 	{
 	  /* if (mx > total/100) */
-	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
+	    fprintf(stderr, "%s: %d (%f)\n", real_op_names[mxi], mx, 100.0*mx/(float)total);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -4422,6 +4424,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_accessor(x) = -1;
+  symbol_tag(x) = 0;
 
   if (symbol_name_length(x) > 1)                           /* not 0, otherwise : is a keyword */
     {
@@ -12004,6 +12007,7 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 	    (z < -REAL_TO_INT_LIMIT))
 	  return(simple_out_of_range(sc, sc->FLOOR, x, "argument is too large"));
 	return(make_integer(sc, (s7_Int)floor(real(x)))); 
+	/* floor here rounds down, whereas a straight int<=real coercion apparently rounds towards 0 */
       }
 
     case T_COMPLEX:
@@ -24428,11 +24432,12 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 static void write_macro_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
   s7_pointer arglist, body, expr;
-  bool starred;
+  bool starred = false;
 
   body = cadar(closure_body(obj));
   arglist = cadr(body);
-  starred = (car(body) == sc->LAMBDA_STAR);
+  if ((car(body) == sc->LAMBDA_STAR) || (car(body) == sc->LAMBDA_STAR_UNCHECKED))
+    starred = true;
   body = cddr(body);
 
   port_write_string(port)(sc, "(symbol->value (define-", 23, port);
@@ -33257,9 +33262,13 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 
     case T_MACRO:
     case T_BACRO:
-      if (car(cadr(car(closure_body(x)))) == sc->LAMBDA)
-	return(closure_arity_to_cons(sc, x, cadr(cadr(car(closure_body(x))))));
-      return(closure_star_arity_to_cons(sc, x, cadr(cadr(car(closure_body(x))))));
+      {
+	s7_pointer op;
+	op = cadar(closure_body(x));
+	if ((car(op) == sc->LAMBDA) || (car(op) == sc->LAMBDA_UNCHECKED))
+	  return(closure_arity_to_cons(sc, x, cadr(op)));
+	return(closure_star_arity_to_cons(sc, x, cadr(op)));
+      }
 
     case T_GOTO:
     case T_CONTINUATION:
@@ -33408,14 +33417,18 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 
     case T_MACRO:
     case T_BACRO:
-      /* we need to look at the embedded lambda to choose between closure and closure_star 
-       *   closure_body here is of the form: ((apply (lambda (a b) ...) (cdr {defmac}-14)))
-       *   so car is                          (apply (lambda (a b) ...) (cdr {defmac}-14))
-       *      cadr(car) is                           (lambda (a b) ...)
-       */
-      if (car(cadr(car(closure_body(x)))) == sc->LAMBDA)
-	return(closure_is_aritable(sc, x, cadr(cadr(car(closure_body(x)))), args));
-      return(closure_star_is_aritable(sc, x, cadr(cadr(car(closure_body(x)))), args));
+      {
+	s7_pointer op;
+	op = cadar(closure_body(x));
+	/* we need to look at the embedded lambda to choose between closure and closure_star 
+	 *   closure_body here is of the form: ((apply (lambda (a b) ...) (cdr {defmac}-14)))
+	 *   so car is                          (apply (lambda (a b) ...) (cdr {defmac}-14))
+	 *      cadr(car) is                           (lambda (a b) ...)
+	 */
+	if ((car(op) == sc->LAMBDA) || (car(op) == sc->LAMBDA_UNCHECKED))
+	  return(closure_is_aritable(sc, x, cadr(op), args));
+	return(closure_star_is_aritable(sc, x, cadr(op), args));
+      }
 
     case T_GOTO:
     case T_CONTINUATION:
@@ -39458,6 +39471,24 @@ static bool direct_memq(s7_pointer symbol, s7_pointer symbols)
 }
 
 
+static int syms_tag = 0;
+static s7_pointer add_sym_to_list(s7_pointer sym) {symbol_tag(sym) = syms_tag; return(sym);}
+static void clear_syms_in_list(void) {syms_tag++;}
+
+static bool rdirect_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
+{
+  s7_pointer x;
+  if (symbol_tag(symbol) != syms_tag)
+    return(false);
+  for (x = symbols; is_pair(x); x = cdr(x))
+    {
+      if (car(x) == symbol)
+	return(true);
+    }
+  return(false);
+}
+
+
 bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
 {
   if (is_null(tree))
@@ -42037,13 +42068,13 @@ static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e
     {
       if ((is_symbol(car(p))) &&
 	  (global_slot(car(p)) != sc->NIL))
-	sc->w = cons(sc, car(p), sc->w);
+	sc->w = cons(sc, add_sym_to_list(car(p)), sc->w);
       else
 	{
 	  if ((is_pair(car(p))) &&
 	      (is_symbol(caar(p))) &&
 	      (global_slot(caar(p)) != sc->NIL))
-	    sc->w = cons(sc, caar(p), sc->w);
+	    sc->w = cons(sc, add_sym_to_list(caar(p)), sc->w);
 	}
     }
   return(sc->w);
@@ -44243,7 +44274,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
        * and similar define* cases
        */
       if ((!is_global(caar(x))) ||
-	  (direct_memq(caar(x), e)))
+	  (rdirect_memq(sc, caar(x), e)))
 	hop = 0;
       /* this is very tricky!  See s7test for some cases.  Basically, we need to protect a recursive call
        *   of the current function being optimized from being confused with some previous definition
@@ -44335,7 +44366,7 @@ static s7_pointer check_for_global_set(s7_scheme *sc, s7_pointer tree, s7_pointe
 	      (is_pair(cdr(tree))) &&
 	      (is_symbol(cadr(tree))) &&
 	      (is_global(cadr(tree))))
-	    return(cons(sc, cadr(tree), e));
+	    return(cons(sc, add_sym_to_list(cadr(tree)), e));
 	  
 	  if (is_pair(car(tree)))
 	    e = check_for_global_set(sc, car(tree), e);
@@ -44370,7 +44401,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       if (is_symbol(cadr(p)))
 	{
 	  if (global_slot(cadr(p)) != sc->NIL)
-	    sc->w = cons(sc, cadr(p), sc->w);
+	    sc->w = cons(sc, add_sym_to_list(cadr(p)), sc->w);
 	  sc->w = collect_collisions(sc, caddr(p), sc->w);
 	}
       else sc->w = collect_collisions(sc, cadr(p), sc->w);
@@ -44388,19 +44419,19 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       if (is_symbol(cadr(p))) /* (lambda args ...) */
 	{
 	  if (global_slot(cadr(p)) != sc->NIL)
-	    sc->w = cons(sc, cadr(p), sc->w);
+	    sc->w = cons(sc, add_sym_to_list(cadr(p)), sc->w);
 	}
       else sc->w = collect_collisions(sc, cadr(p), sc->w);
 
       if ((op == OP_DEFINE) &&
 	  (is_pair(cadr(p))))
-	sc->w = cons(sc, p, sc->w);
+	sc->w = cons(sc, add_sym_to_list(p), sc->w);
       break;
 
     case OP_SET:
       if ((is_symbol(cadr(p))) &&
 	  (global_slot(cadr(p)) != sc->NIL))
-	sc->w = cons(sc, cadr(p), sc->w);
+	sc->w = cons(sc, add_sym_to_list(cadr(p)), sc->w);
       break;
 
     case OP_DO:
@@ -44548,7 +44579,7 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_po
   s7_pointer x;
   long long int id;
 
-  if (direct_memq(hdl, e))
+  if (rdirect_memq(sc, hdl, e))
     return(sc->NIL);
 
   if (is_global(hdl))
@@ -46687,8 +46718,10 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
   if (len > 0)  /* i.e. not circular */
     {
       bool bad_set = false;
-      optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, x)));
-      
+
+      clear_syms_in_list();
+      optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(x))));
+
       /* if the body is safe, we can optimize the calling sequence */
       if ((is_proper_list(sc, args)) &&
 	  (!arglist_has_accessed_symbol(args)))
@@ -48575,6 +48608,7 @@ static s7_pointer check_do(s7_scheme *sc)
 static s7_pointer check_define_macro(s7_scheme *sc)
 {
   s7_pointer x;
+
   if (!is_pair(sc->code))                                               /* (define-macro . 1) */
     return(eval_error_with_name(sc, "~A name missing (stray dot?): ~A", sc->code));
   if (!is_pair(car(sc->code)))                                          /* (define-macro a ...) */
@@ -48604,8 +48638,32 @@ static s7_pointer check_define_macro(s7_scheme *sc)
       return(s7_error(sc, sc->SYNTAX_ERROR,                                    /* (define-macro (mac 1) ...) */
 		      list_3(sc, make_protected_string(sc, "define-macro ~A argument name is not a symbol: ~S"), x, sc->y)));
 
-  optimize_lambda(sc, (sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO), x, cdar(sc->code), cdr(sc->code));
+  if ((sc->op == OP_DEFINE_MACRO_STAR) || (sc->op == OP_DEFINE_BACRO_STAR))
+    check_lambda_star_args(sc, cdar(sc->code), NULL);
+  else check_lambda_args(sc, cdar(sc->code), NULL);
+
+  /* optimize_lambda(sc, (sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO), x, cdar(sc->code), cdr(sc->code)); */
+
   return(sc->code);
+}
+
+
+static void fixup_macro_overlay(s7_scheme *sc, s7_pointer p)
+{
+  if ((is_pair(p)) &&
+      (!is_overlaid(sc->code)))
+    {
+      if (is_pair(cdr(p)))
+	{
+	  if (is_symbol(car(p)))
+	    {
+	      set_ecdr(cdr(p), p);
+	      set_overlay(cdr(p));
+	    }
+	  fixup_macro_overlay(sc, cdr(p));
+	}
+      fixup_macro_overlay(sc, car(p));
+    }
 }
 
 
@@ -61473,6 +61531,8 @@ h_safe_c_aa: 125602 (2.498356)
       sc->y = sc->NIL;
       sc->z = sc->NIL;
 
+      fixup_macro_overlay(sc, closure_body(sc->value));
+
       /* symbol? macro name has already been checked */
       /* find name in environment, and define it */
       sc->x = find_local_symbol(sc, sc->envir, sc->code); 
@@ -61494,8 +61554,8 @@ h_safe_c_aa: 125602 (2.498356)
 	    }
 	  else set_type(sc->value, T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
 	}
+      optimize(sc, closure_body(sc->value), 0, sc->NIL);
 
-      /* optimize here seems to be a no-op? */
       sc->value = sc->code;
       goto START;
       
@@ -61512,12 +61572,14 @@ h_safe_c_aa: 125602 (2.498356)
 	if ((!is_pair(code)) ||
 	    (!is_pair(body)))                               /* (lambda) or (lambda #f) or (lambda . 1) */
 	  eval_error(sc, "lambda: no args or no body? ~A", code);
-	check_lambda_args(sc, car(code), NULL);
 	
 	/* in many cases, this is a no-op -- we already checked at define */
 
+
 	/* why can't we optimize hop=1 here? 
 	 */
+	check_lambda_args(sc, car(code), NULL);
+	clear_syms_in_list();
 	optimize(sc, body, 0, sc->NIL);
 
 	if ((is_overlaid(code)) &&
@@ -61536,8 +61598,11 @@ h_safe_c_aa: 125602 (2.498356)
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
 	eval_error(sc, "lambda*: no args or no body? ~A", sc->code);
+      
       car(sc->code) = check_lambda_star_args(sc, car(sc->code), NULL);
+      clear_syms_in_list();
       optimize(sc, cdr(sc->code), 0, sc->NIL);
+
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
 	set_syntax_op(sc->code, sc->LAMBDA_STAR_UNCHECKED);
@@ -68646,7 +68711,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.5
- * calls         |   275  207  175  115   89   71   53   53|  54   51.6
+ * calls         |   275  207  175  115   89   71   53   53|  54   50.6
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
@@ -68665,5 +68730,5 @@ int main(int argc, char **argv)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  * TODO: doc/test mus-set-formant-frequency (the -and-radius part is also not documented or tested or even used??)
- * PERHAPS: (reverse real/int) -> bswap?, (reverse char) -> bit reverse?
+ * (reverse real/int) -> bswap?, (reverse char) -> bit reverse?
  */

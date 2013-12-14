@@ -1336,15 +1336,16 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  break;
 		  
 		case MUS_B24INT:
+                  #define BINT24_TO_SAMPLE(n) ((mus_float_t)(big_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
 		  while (bufnow <= bufend4)
 		    {
-		      (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[0] << 24) | (jchar[1] << 16) | (jchar[2] << 8)) >> 8));
+		      (*bufnow++) = BINT24_TO_SAMPLE(jchar);
 		      jchar += 3;
-		      (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[0] << 24) | (jchar[1] << 16) | (jchar[2] << 8)) >> 8));
+		      (*bufnow++) = BINT24_TO_SAMPLE(jchar);
 		      jchar += 3;
-		      (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[0] << 24) | (jchar[1] << 16) | (jchar[2] << 8)) >> 8));
+		      (*bufnow++) = BINT24_TO_SAMPLE(jchar);
 		      jchar += 3;
-		      (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[0] << 24) | (jchar[1] << 16) | (jchar[2] << 8)) >> 8));
+		      (*bufnow++) = BINT24_TO_SAMPLE(jchar);
 		      jchar += 3;
 		    }
 		  for (; bufnow <= bufend; jchar += 3) 
@@ -1352,17 +1353,22 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  break;
 		  
 		case MUS_L24INT:  
-		  while (bufnow <= bufend4)
+                  #define INT24_TO_SAMPLE(n) ((mus_float_t)(little_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
+		  (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
+		  jchar += 2;
+		  while (bufnow < bufend4)
 		    {
-		      (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
+		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
 		      jchar += 3;
-		      (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
+		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
 		      jchar += 3;
-		      (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
+		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
 		      jchar += 3;
-		      (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
+		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
 		      jchar += 3;
 		    }
+		  jchar++;
+
 		  for (; bufnow <= bufend; jchar += 3) 
 		    (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
 		  break;
