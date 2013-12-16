@@ -62,13 +62,8 @@
 (define (selection-rms)
   "(selection-rms) -> rms of selection data using samplers"
   (if (selection?)
-      (let ((reader (make-sampler (selection-position)))
-	    (len (selection-frames))
-	    (sum 0.0))
-	(do ((i 0 (+ i 1))) 
-	    ((= i len) (sqrt (/ sum len)))
-	  (let ((val (next-sample reader)))
-	    (set! sum (+ sum (* val val))))))
+      (let ((data (samples (selection-position) (selection-frames))))
+	(sqrt (/ (dot-product data data) (selection-frames))))
       (error 'no-active-selection (list "selection-rms-1"))))
 
 
@@ -1746,15 +1741,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 
 ;;; -------- file->floats and a sort of cue-list, I think
 
-(define (file->floats file)
-  "(file->floats file) returns a float-vector with file's data"
-  (let* ((len (frames file))
-	 (reader (make-sampler 0 file))
-	 (data (make-float-vector len)))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (set! (data i) (next-sample reader)))
-    data))
+(define (file->floats file) (samples 0 (frames file) file))
 
 
 (define* (add-notes notes snd chn)
@@ -2142,12 +2129,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	      (reverse! files))))))
 
   (define (segment-maxamp name beg dur)
-    (let ((mx 0.0)
-	  (rd (make-sampler beg name)))
-       (do ((i 0 (+ i 1)))
-	   ((= i dur))
-	 (set! mx (max mx (abs (next-sample rd)))))
-      mx))
+    (float-vector-peak (samples beg dur name)))
 
   (define (segment-sound name high low)
     (let* ((end (frames name))

@@ -881,7 +881,7 @@ static void deferred_region_to_temp_file(region *r)
 	    {
 	      mus_long_t data_size;
 	      lseek(fdi, sp0->hdr->data_location + r->chans * datumb * r->begs[0], SEEK_SET);
-	      buffer = (char *)calloc(MAX_BUFFER_SIZE, sizeof(char));
+	      buffer = (char *)malloc(MAX_BUFFER_SIZE * sizeof(char));
 	      data_size = drp->len * r->chans * datumb;
 	      for (j = 0; j < data_size; j += MAX_BUFFER_SIZE)
 		{
@@ -929,7 +929,7 @@ static void deferred_region_to_temp_file(region *r)
 	    {
 	      sfs[i] = init_sample_read_any(r->begs[i], drp->cps[i], READ_FORWARD, drp->edpos[i]);
 	      sampler_set_safe(sfs[i], len);
-	      data[i] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t));
+	      data[i] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
 	    }
 
 	  if ((r->chans == 1) &&
@@ -2115,7 +2115,7 @@ static XEN g_region_sample(XEN reg_n, XEN samp_n, XEN chn_n)
 }
 
 
-static XEN g_region_to_vct(XEN reg_n, XEN beg_n, XEN num, XEN chn_n, XEN v)
+XEN g_region_to_vct(XEN reg_n, XEN beg_n, XEN num, XEN chn_n, XEN v)
 {
   #define H_region_to_vct "(" S_region_to_vct " region :optional (beg 0) samps (chan 0) v): \
 write region's samples starting at beg for samps in channel chan to vct v; return v (or create a new one)"

@@ -60,7 +60,8 @@
        #f))))
 
 
-(define (mix->float-vector id)
+(define (mix->float-vector id) (samples 0 (mix-length id) id))
+#|
   "(mix->float-vector mix) returns mix's data in float-vector"
   (if (mix? id)
       (let* ((len (frames id))
@@ -72,14 +73,15 @@
 	(free-sampler reader)
 	v)
       (error 'no-such-mix (list "mix->float-vector" id))))
-
+|#
 (define mix->vct mix->float-vector)
 
 
 ;;; 12-Nov-09: moved save-mix to C (snd-mix.c)
 
 
-(define (mix-maxamp id)
+(define (mix-maxamp id) (float-vector-peak (mix->float-vector id)))
+#|
   "(mix-maxamp mix) returns the max amp in the given mix"
   (if (mix? id)
       (let ((len (frames id))
@@ -94,6 +96,7 @@
 	(free-sampler reader)
 	peak)
       (error 'no-such-mix (list "mix-maxamp" id))))
+|#
 	  
 
 ;;; -------- snap dragged mix(es) to the nearest beat

@@ -10513,7 +10513,7 @@ static void flush_buffers(rdout *gen)
 	       *   the OS to deal with it, then the next allocation returns null.
 	       *   So, here we go...
 	       */
-	      addbufs[i] = (mus_float_t *)calloc(clm_file_buffer_size, sizeof(mus_float_t));
+	      addbufs[i] = (mus_float_t *)malloc(clm_file_buffer_size * sizeof(mus_float_t));
 	      if (addbufs[i])
 		addbufs[i][0] = 0.0;
 	      else
@@ -15674,11 +15674,11 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
       /* highly optimizable cases */
       obufs = (mus_float_t **)malloc(out_chans * sizeof(mus_float_t *));
       for (i = 0; i < out_chans; i++) 
-	obufs[i] = (mus_float_t *)calloc(clm_file_buffer_size, sizeof(mus_float_t));
+	obufs[i] = (mus_float_t *)malloc(clm_file_buffer_size * sizeof(mus_float_t));
 
       ibufs = (mus_float_t **)malloc(in_chans * sizeof(mus_float_t *));
       for (i = 0; i < in_chans; i++) 
-	ibufs[i] = (mus_float_t *)calloc(clm_file_buffer_size, sizeof(mus_float_t));
+	ibufs[i] = (mus_float_t *)malloc(clm_file_buffer_size * sizeof(mus_float_t));
 
       ifd = mus_sound_open_input(infile);
       mus_file_seek_frame(ifd, in_start);

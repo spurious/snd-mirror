@@ -3620,8 +3620,7 @@ XEN g_copy_mix_sampler(XEN obj)
 {
   mix_fd *mf;
   mf = XEN_TO_MIX_SAMPLER(obj);
-  return(g_make_mix_sampler(new_xen_mix(mf->md->id),
-				  C_TO_XEN_LONG_LONG(current_location(mf->sf))));
+  return(g_make_mix_sampler(new_xen_mix(mf->md->id), C_TO_XEN_LONG_LONG(current_location(mf->sf))));
 }
 
 
@@ -3862,6 +3861,55 @@ bool play_mix_from_id(int mix_id)
   if (md)
     return(play_mix(md, 0, true));
   return(false);
+}
+
+
+#define S_mix_to_vct "mix->vct"
+XEN g_mix_to_vct(XEN mix_n, XEN beg_n, XEN num)
+{
+  mus_float_t *data;
+  mix_info *md;
+  mus_long_t beg, len;
+  mus_long_t i;
+  mix_fd *mf = NULL;
+  mix_state *ms;
+
+  XEN_ASSERT_TYPE(XEN_MIX_P(mix_n), mix_n, 1, S_mix_to_vct, "a mix");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg_n), beg_n, 2, S_mix_to_vct, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, 3, S_mix_to_vct, "an integer");
+
+  md = md_from_id(XEN_MIX_TO_C_INT(mix_n));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_mix_to_vct, mix_n));
+  ms = current_mix_state(md);
+
+  if (XEN_INTEGER_P(num)) 
+    {
+      len = XEN_TO_C_LONG_LONG(num);
+      if (len < 0)
+	XEN_OUT_OF_RANGE_ERROR(S_mix_to_vct, 2, num, "length < 0?");
+      if (len > mix_length_from_id(md->id))
+	len = mix_length_from_id(md->id);
+    }
+  else len = mix_length_from_id(md->id);
+
+  beg = beg_to_sample(beg_n, S_mix_to_vct);
+  if (beg >= len)
+    return(XEN_FALSE);
+
+  mf = (mix_fd *)calloc(1, sizeof(mix_fd));
+  mf->md = md;
+  mf->sf = make_virtual_mix_reader(md->cp, beg, ms->len, ms->index, ms->scaler, READ_FORWARD);
+  mf->sf->region = md->id;
+
+  data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
+  for (i = 0; i < len; i++)
+    data[i] = read_sample(mf->sf);
+
+  free_snd_fd(mf->sf);
+  free(mf);
+
+  return(xen_make_vct(len, data));
 }
 
 

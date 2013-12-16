@@ -689,9 +689,9 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
   else temp_file = false;
 
   data0 = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  data0[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+  data0[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
   data1 = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  data1[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+  data1[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
   idata0 = data0[0];
   idata1 = data1[0];
   c0 = init_sample_read_any_with_bufsize(beg, cp0, READ_FORWARD, pos0, (dur > REPORTING_SIZE) ? REPORTING_SIZE : dur);
@@ -961,7 +961,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	    {
 	      mus_long_t out_dur, kdur;
 
-	      data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+	      data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
 	      idata = data[0];
 	      out_dur = ceil(dur / fabs(ratio)) + 1;
 
@@ -996,7 +996,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
       int cur_mark = 0, cur_new_mark = 0;
       mus_float_t env_val;
 
-      data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+      data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
       idata = data[0];
 
       cur_mark_sample = -1;
@@ -1499,7 +1499,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
     }
   else temp_file = false;
   data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
   idata = data[0];
   if (temp_file)
     {
@@ -1628,7 +1628,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 
       j = 0;
       data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-      data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+      data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
       idata = data[0];
       if (reporting) start_progress_report(cp);
       ss->stopped_explicitly = false;
@@ -1771,7 +1771,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   else temp_file = false;
 
   data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
   idata = data[0];
   if (precalculated_coeffs)
     a = precalculated_coeffs;
@@ -2286,7 +2286,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
     }
 
   data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
   idata = data[0];
 #if HAVE_FORTH
   if (dur == cp->edits[edpos]->samples)
@@ -2645,8 +2645,8 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
       for (i = 0; i < si->chans; i++) 
 	{
 	  if (temp_file)
-	    data[i] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
-	  else data[i] = (mus_float_t *)calloc(dur, sizeof(mus_float_t)); 
+	    data[i] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
+	  else data[i] = (mus_float_t *)malloc(dur * sizeof(mus_float_t)); 
 	}
       j = 0;
       reporting = ((dur > REPORTING_SIZE) && (!(cp->squelch_update)));
@@ -3207,7 +3207,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
   datumb = mus_bytes_per_sample(hdr->format);
   data = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
-    data[i] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+    data[i] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
 
   if (!(snd_feq(speed, 1.0)))
     {
@@ -3671,8 +3671,8 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	}
 #endif
       
-      data = (mus_float_t **)calloc(1, sizeof(mus_float_t *));
-      data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t));
+      data = (mus_float_t **)malloc(1 * sizeof(mus_float_t *));
+      data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
       ss->stopped_explicitly = false;
       
       /* fprintf(stderr, "%d, %lld %s\n", __LINE__, num, DISPLAY(body)); */
@@ -5477,7 +5477,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	    ramp_channel(cp, seg0, (seg1 - seg0) / (double)(samps - 1), samp, samps, pos, NOT_IN_AS_ONE_EDIT);
 	  else
 	    {
-	      data = (mus_float_t *)calloc(4, sizeof(mus_float_t));
+	      data = (mus_float_t *)malloc(4 * sizeof(mus_float_t));
 	      data[0] = 0.0;
 	      data[1] = seg0;
 	      data[2] = 1.0;

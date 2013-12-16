@@ -509,15 +509,7 @@ read, even if not playing.  'files' is a list of files to be played."
 
 
 (define (old-file->float-vector file)
-  "(file->float-vector file) returns a float-vector with file's data (channel 0)"
-  (let* ((len (frames file))
-	 (reader (make-sampler 0 file))
-	 (data (make-float-vector len)))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (set! (data i) (next-sample reader)))
-    (free-sampler reader)
-    data))
+  (samples 0 (frames file) file))
 
 (define file->vct old-file->float-vector)
 

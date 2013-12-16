@@ -1160,7 +1160,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	    {
 	      iloc = mus_sound_data_location(sp->filename);
 	      lseek(fdi, iloc + chans * bps * si->begs[0], SEEK_SET);
-	      buffer = (char *)calloc(MAX_BUFFER_SIZE, sizeof(char));
+	      buffer = (char *)malloc(MAX_BUFFER_SIZE * sizeof(char));
 	      for (j = 0; j < num; j += MAX_BUFFER_SIZE)
 		{
 		  ssize_t n;

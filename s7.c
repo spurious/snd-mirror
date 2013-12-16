@@ -23204,7 +23204,7 @@ static char *slashify_string(s7_scheme *sc, const char *p, int len, bool quoted,
       sc->slash_str_size = size;
       sc->slash_str = (char *)malloc(size);
     }
-  memset((void *)sc->slash_str, 0, size);
+  /* memset((void *)sc->slash_str, 0, size); */
   s = sc->slash_str;
 
   if (quoted) s[j++] = '"';
@@ -23255,15 +23255,16 @@ static char *slashify_string(s7_scheme *sc, const char *p, int len, bool quoted,
       else s[j++] = *pcur;
       if (j >= cur_size) /* even with 256 extra, we can overflow (for example, inordinately many tabs in ALSA output) */
 	{
-	  int k;
+	  /* int k; */
 	  cur_size *= 2;
 	  size = cur_size + 2;
 	  sc->slash_str = (char *)realloc(sc->slash_str, size * sizeof(char));
 	  s = sc->slash_str;
-	  for (k = j; k < size; k++) s[k] = 0;
+	  /* for (k = j; k < size; k++) s[k] = 0; */
 	}
     }
   if (quoted) s[j++] = '"';
+  s[j] = '\0';
   (*nlen) = j;
   return(s);
 }
@@ -33722,7 +33723,10 @@ static void set_safe_do_level(s7_scheme *sc, int new_val)
 {
   if (new_val < -10)
     finder = find_safe_do_symbol_or_bust; 
-  /* this never happens of course, but by including this crazy code, we get about 10% speed up overall in gcc 4.4 and 4.7 */
+  /* this never happens of course, but by including this crazy code, we get about 10% speed up overall in gcc 4.4 and 4.7
+   *   all the added time valgrind reports in find_symbol_or_bust (2G to 5G).  The actual call counts are the same!  It looks
+   *   like this line makes it possible for gcc to inline the calls.  TODO: check this in 4.8.
+   */
   else finder = find_symbol_or_bust;
 }
 
@@ -68720,7 +68724,7 @@ int main(int argc, char **argv)
  * all_x in snd-sig? all_x_c_aa|a?
  * letrec* built-in (not macro), perhaps also when and unless
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
- * remove-duplicates could use the collected bit (also set intersection/difference, if eq)
+ * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
  * check apply mac/bac (there's an extra eval -- see t737.scm -- surely this is not a problem!)

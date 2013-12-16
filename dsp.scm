@@ -1405,21 +1405,11 @@ the era when computers were human beings"
 |#
 (define* (channel-distance (s1 0) (c1 0) (s2 1) (c2 0))    ; sqrt(<f - g, f - g>)
   "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
-  (let ((r1 (make-sampler 0 s1 c1))
-	(r2 (make-sampler 0 s2 c2))
-	(N (min (frames s1 c1) (frames s2 c2)))
-	(data1 #f)
-	(data2 #f))
-    (set! data1 (make-float-vector N))
-    (set! data2 (make-float-vector N))
-    (do ((i 0 (+ i 1)))
-	((= i N))
-      (float-vector-set! data1 i (next-sample r1)))
-    (do ((i 0 (+ i 1)))
-	((= i N))
-      (float-vector-set! data2 i (next-sample r2)))
-    (float-vector-subtract! data1 data2)
-    (sqrt (dot-product data1 data1))))
+  (let ((N (min (frames s1 c1) (frames s2 c2))))
+    (let ((data1 (samples 0 N s1 c1))
+	  (data2 (samples 0 N s2 c2)))
+      (float-vector-subtract! data1 data2)
+      (sqrt (dot-product data1 data1)))))
 
 
 (define (periodogram N)
