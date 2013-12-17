@@ -2215,6 +2215,8 @@ void apply_filter(chan_info *ncp, int order, env *e,
     }
 }
 
+/* PERHAPS: read forward, writing buffer backward -- sampler_set_safe might be faster?
+ */
 
 static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long_t dur, XEN edp, const char *caller, int arg_pos)
 {

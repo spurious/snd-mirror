@@ -4024,13 +4024,9 @@
 	  (let ((reg (select-all)))
 	    (save-selection "tmp1.snd" mus-next mus-l24int)
 	    (let ((ind1 (open-sound "tmp1.snd")))
-	      (let ((incr (/ 1.0 (frames)))
-		    (reader (make-sampler 0 ind1)))
-		(let ((v0 (make-float-vector 100000))
+	      (let ((incr (/ 1.0 (frames))))
+		(let ((v0 (samples 0 100000 ind1 0))
 		      (v1 (make-float-vector 100000)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i 100000))
-		    (float-vector-set! v0 i (read-sample reader)))
 		  (do ((i 0 (+ i 1))
 		       (x -0.5 (+ x incr)))
 		      ((= i 100000))
@@ -4041,13 +4037,9 @@
 
 	    (save-selection "tmp1.snd" mus-aifc mus-l24int)
 	    (let ((ind1 (open-sound "tmp1.snd")))
-	      (let ((incr (/ 1.0 (frames)))
-		    (reader (make-sampler 0 ind1)))
-		(let ((v0 (make-float-vector 100000))
+	      (let ((incr (/ 1.0 (frames))))
+		(let ((v0 (samples 0 100000 ind1 0))
 		      (v1 (make-float-vector 100000)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i 100000))
-		    (float-vector-set! v0 i (read-sample reader)))
 		  (do ((i 0 (+ i 1))
 		       (x -0.5 (+ x incr)))
 		      ((= i 100000))
@@ -4058,13 +4050,9 @@
 
 	    (save-region reg "tmp1.snd" mus-next mus-l24int)
 	    (let ((ind1 (open-sound "tmp1.snd")))
-	      (let ((incr (/ 1.0 (frames)))
-		    (reader (make-sampler 0 ind1)))
-		(let ((v0 (make-float-vector 100000))
+	      (let ((incr (/ 1.0 (frames))))
+		(let ((v0 (samples 0 100000 ind1 0))
 		      (v1 (make-float-vector 100000)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i 100000))
-		    (float-vector-set! v0 i (read-sample reader)))
 		  (do ((i 0 (+ i 1))
 		       (x -0.5 (+ x incr)))
 		      ((= i 100000))
@@ -8449,16 +8437,12 @@ EDITS: 5
 	       (if (not (= (sampler-position reader) (- (frames) 1))) (snd-display #__line__ ";sampler-position: ~A" (sampler-position reader)))
 	       (map-channel (lambda (y) (read-sample reader))))
 	     (let ((e (make-env '(0 0 1 1 2 0) :length (+ 1 dur)))
-		   (new-reader (make-sampler 0 ind 0))
 		   (len (frames)))
 	       (let ((v0 (make-float-vector len))
-		     (v1 (make-float-vector len)))
+		     (v1 (samples 0 len ind 0)))
 		 (do ((i 0 (+ i 1)))
 		     ((= i len))
 		   (float-vector-set! v0 i (env e)))
-		 (do ((i 0 (+ i 1)))
-		     ((= i len))
-		   (float-vector-set! v1 i (read-sample new-reader)))
 		 (if (not (vequal v0 v1))
 		     (snd-display #__line__ "~%;trouble in reverse read ~A ~A" v0 v1))))
 	     (revert-sound))
@@ -8511,17 +8495,9 @@ EDITS: 5
 		(map-channel (lambda (y) (read-sample reader))))
 	      (let ((reader (make-sampler (- (frames) 1) ind 0 -1)))
 		(map-channel (lambda (y) (read-sample reader))))
-	      (let ((old-reader (make-sampler 0 ind 0 1 (- (edit-position ind 0) 2)))
-		    (new-reader (make-sampler 0 ind 0))
-		    (len (frames)))
-		(let ((v0 (make-float-vector len))
-		      (v1 (make-float-vector len)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i len))
-		    (float-vector-set! v0 i (read-sample old-reader)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i len))
-		    (float-vector-set! v1 i (read-sample new-reader)))
+	      (let ((len (frames)))
+		(let ((v0 (samples 0 len ind 0 (- (edit-position ind 0) 2)))
+		      (v1 (samples 0 len ind 0)))
 		  (if (not (vequal v0 v1))
 		      (snd-display #__line__ "~%;trouble in reverse read ~A ~A" v0 v1))))
 	      (set! (edit-position ind 0) edpos)))
@@ -26574,8 +26550,7 @@ EDITS: 2
 				       (fill! v 0.0)
 				       (do ((i 0 (+ i 1)))
 					   ((= i len) v)
-					 (let* ((val (abs (next-sample fd)))
-						(bin (round (* val 16.0))))
+					 (let ((bin (round (* 16.0 (abs (next-sample fd))))))
 					   (if (< bin steps)
 					       (do ((j 0 (+ j 1)))
 						   ((= j steps))
@@ -28952,37 +28927,21 @@ EDITS: 2
 	  #f)))
   
   (define* (edit-difference s1 c1 e1 e2 (offset 0))
-    (let* ((r1 (make-sampler 0 s1 c1 1 e1))
-	   (r2 (make-sampler offset s1 c1 1 e2))
-	   (max-diff 0.0)
+    (let* ((max-diff 0.0)
 	   (max-loc 0)
 	   (N (frames s1 c1 e1))
-	   (d1 (make-float-vector N))
-	   (d2 (make-float-vector N)))
-      (do ((i 0 (+ i 1)))
-	  ((= i N))
-	(float-vector-set! d1 i (read-sample r1)))
-      (do ((i 0 (+ i 1)))
-	  ((= i N))
-	(float-vector-set! d2 i (read-sample r2)))
+	   (d1 (samples 0 N s1 c1 e1))
+	   (d2 (samples 0 N s1 c1 e2)))
       (float-vector-subtract! d1 d2)
       (let ((diffs (float-vector-peak-and-location d1)))
 	(and (> (car diffs) 0.0)
 	     diffs))))
   
   (define* (edit-distance s1 c1 e1 e2 (offset 0))
-    (let* ((r1 (make-sampler 0 s1 c1 1 e1))
-	   (r2 (make-sampler offset s1 c1 1 e2))
-	   (sum 0.0)
+    (let* ((sum 0.0)
 	   (N (frames s1 c1 e1))
-	   (d1 (make-float-vector N))
-	   (d2 (make-float-vector N)))
-      (do ((i 0 (+ i 1)))
-	  ((= i N))
-	(float-vector-set! d1 i (read-sample r1)))
-      (do ((i 0 (+ i 1)))
-	  ((= i N))
-	(float-vector-set! d2 i (read-sample r2)))
+	   (d1 (samples 0 N s1 c1 e1))
+	   (d2 (samples 0 N s1 c1 e2)))
       (float-vector-multiply! d1 d1)
       (float-vector-multiply! d2 d2)
       (float-vector-subtract! d1 d2)
@@ -37155,20 +37114,15 @@ EDITS: 1
       (if (file-exists? "test.snd") (delete-file "test.snd"))
       (let* ((ind (open-sound "oboe.snd"))
 	     (data (channel->float-vector))
-	     (len (frames ind))
-	     (d2 (make-float-vector len)))
+	     (len (frames ind)))
 	(do ((i 0 (+ i 1)))
 	    ((= i 5))
 	  (array->file "test.snd" data len 22050 1)
 	  (file->array "test.snd" 0 0 len data)
-	  (let ((rd (make-sampler 0 ind 0)))
-	    (do ((k 0 (+ k 1)))
-		((= k len))
-	      (float-vector-set! d2 k (read-sample rd)))
-	    (free-sampler rd))
-	  (float-vector-subtract! d2 data)
-	  (let ((diff (float-vector-peak d2)))
-	    (if (fneq diff 0.0) (snd-display #__line__ ";arr->file->array overall max diff: ~A" diff))))
+	  (let ((d2 (samples 0 len ind 0)))
+	    (float-vector-subtract! d2 data)
+	    (let ((diff (float-vector-peak d2)))
+	      (if (fneq diff 0.0) (snd-display #__line__ ";arr->file->array overall max diff: ~A" diff)))))
 	
 	;; now clear sono bins if possible 
 	(set! (colormap-size) 16)
@@ -46721,27 +46675,24 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-13-Dec-13:
-50,649,882,282
-6,515,162,048  ???:sin [/lib64/libm-2.12.so]
-6,457,526,341  s7.c:eval [/home/bil/gtk-snd/snd]
-2,439,592,201  ???:cos [/lib64/libm-2.12.so]
-2,232,543,711  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
-1,254,398,880  s7.c:gc [/home/bil/gtk-snd/snd]
-1,195,083,977  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,129,180,164  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-1,119,510,351  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+50,325,854,835
+6,514,067,989  ???:sin [/lib64/libm-2.12.so]
+6,328,167,616  s7.c:eval [/home/bil/gtk-snd/snd]
+2,435,986,272  ???:cos [/lib64/libm-2.12.so]
+2,206,197,239  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+1,273,418,333  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,223,430,489  s7.c:gc [/home/bil/gtk-snd/snd]
+1,148,267,137  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,119,515,502  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
   911,248,552  clm.c:fir_8 [/home/bil/gtk-snd/snd]
-  903,052,809  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  885,250,676  ???:t2_32 [/home/bil/gtk-snd/snd]
+  899,229,132  ???:t2_32 [/home/bil/gtk-snd/snd]
   877,841,154  clm.c:mus_formant_bank [/home/bil/gtk-snd/snd]
-  785,726,072  ???:t2_64 [/home/bil/gtk-snd/snd]
-  743,944,281  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  870,548,635  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  804,615,892  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  624,940,543  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  567,249,112  ???:memset [/lib64/ld-2.12.so]
-  534,612,422  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
-  500,613,735  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
+  631,932,445  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  535,057,316  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
  
 |#
 

@@ -1311,6 +1311,9 @@ the era when computers were human beings"
     (/ sum N)))
 
 (define* (channel-total-energy snd chn)    ; <f, f>
+  (let ((data (samples 0 (frames snd chn) snd chn)))
+    (dot-product data data)))
+#|
   "(channel-total-energy snd chn) returns the sum of the squares of all the samples in the given channel: <f,f>"
   (let ((sum 0.0)
 	(N (frames snd chn))
@@ -1320,6 +1323,7 @@ the era when computers were human beings"
       (let ((y (next-sample reader)))
 	(set! sum (+ sum (* y y)))))
     sum))
+|#
 
 (define* (channel-average-power snd chn)   ; <f, f> / n
   "(channel-average-power snd chn) returns the average power in the given channel: <f,f>/n"
@@ -1350,7 +1354,8 @@ the era when computers were human beings"
       (set! sum (+ sum (expt (abs (next-sample reader)) p))))
     (expt sum (/ 1.0 p))))
 
-(define* (channel-lp-inf snd chn)
+(define channel-lp-inf maxamp)
+#|
   "(channel-lp-inf snd chn) returns the maxamp in the given channel (the name is just math jargon for maxamp)"
   (let ((mx 0.0)
 	(N (frames snd chn))
@@ -1359,8 +1364,11 @@ the era when computers were human beings"
 	((= i N))
       (set! mx (max mx (abs (next-sample reader)))))
     mx))
+|#
 
 (define (channel2-inner-product s1 c1 s2 c2)         ; <f, g>
+  (dot-product (samples 0 (frames s1 c1) s1 c1) (samples 0 (frames s1 c1) s2 c2)))
+#|
   "(channel2-inner-product s1 c1 s2 c2) returns the inner-product of the two channels: <f,g>"
   (let ((N (frames s1 c1))
 	(sum 0.0)
@@ -1370,6 +1378,7 @@ the era when computers were human beings"
 	 ((= i N))
        (set! sum (+ sum (* (r1) (r2)))))
     sum))
+|#
 
 (define (channel2-angle s1 c1 s2 c2)                 ; acos(<f, g> / (sqrt(<f, f>) * sqrt(<g, g>)))
   "(channel2-angle s1 c1 s2 c2) treats the two channels as vectors, returning the 'angle' between them: acos(<f,g>/(sqrt(<f,f>)*sqrt(<g,g>)))"

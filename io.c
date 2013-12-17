@@ -450,8 +450,15 @@ unsigned int mus_char_to_ulint(const unsigned char *inp)
   #endif
 
 #if __GNUC__ && HAVE_BYTESWAP_H
-    #define big_endian_float(n)                  ({unsigned int x; x = bswap_32((*((unsigned int *)n))); (*((float *)&x));})
-    #define big_endian_double(n)                 ({unsigned long long int x; x = bswap_64((*((unsigned long long int *)n))); (*((double *)&x));})
+    /* these work, but newer versions of gcc complain about strict aliasing rules
+     *   #define big_endian_float(n)             ({unsigned int x; x = bswap_32((*((unsigned int *)n))); (*((float *)&x));})
+     *   #define big_endian_double(n)            ({unsigned long long int x; x = bswap_64((*((unsigned long long int *)n))); (*((double *)&x));})
+     */
+    typedef struct {union {unsigned int i; float f;} u;} uiflt;
+    typedef struct {union {unsigned long long int l; double d;} u;} uidbl;
+
+    #define big_endian_float(n)                  ({uiflt x; x.u.i = bswap_32((*((unsigned int *)n))); x.u.f;})
+    #define big_endian_double(n)                 ({uidbl x; x.u.l = bswap_64((*((unsigned long long int *)n))); x.u.d;})
 #else
     #define big_endian_float(n)                  (mus_char_to_bfloat(n))
     #define big_endian_double(n)                 (mus_char_to_bdouble(n))

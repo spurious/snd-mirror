@@ -846,12 +846,10 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 static mus_float_t wrapped_vct_ref(void *p)
 {
   gf *g = (gf *)p;
-  s7_pointer v;
   s7_Int k;
-  v = (s7_pointer)(g->gen);
   k = s7_cell_integer(s7_cell_slot_value(g->s1));
-  if ((k >= 0) && (k < s7_vector_length(v)))
-    return(s7_float_vector_elements(v)[k]);
+  if ((k >= 0) && (k < g->i1))
+    return(g->rx1[k]);
   return(0.0);
 }
 
@@ -870,6 +868,10 @@ static gf *fixup_vct_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	  g->func = wrapped_vct_ref;
 	  g->gen = obj;
 	  g->s1 = s7_slot(sc, caddr(expr));
+
+	  g->rx1 = s7_float_vector_elements(obj);
+	  g->i1 = s7_vector_length(obj);
+
 	  return(g);
 	}
     }

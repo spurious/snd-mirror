@@ -2089,7 +2089,7 @@
 	  (set! (mus-scaler r) pulse-amp)
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
-	    (outa k (one-zero oz (* (env pulsef) (rand r))))) ;(mus-random pulse-amp)))))
+	    (outa k (one-zero oz (* (env pulsef) (rand r)))))
 	  (mus-reset pulsef))))))
 
 ;; (with-sound (:play #t :statistics #t) (marsh-meadow-grasshopper 0 .3))

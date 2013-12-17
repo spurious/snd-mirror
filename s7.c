@@ -39475,7 +39475,7 @@ static bool direct_memq(s7_pointer symbol, s7_pointer symbols)
 }
 
 
-static int syms_tag = 0;
+static unsigned int syms_tag = 0;
 static s7_pointer add_sym_to_list(s7_pointer sym) {symbol_tag(sym) = syms_tag; return(sym);}
 static void clear_syms_in_list(void) {syms_tag++;}
 
@@ -68710,12 +68710,12 @@ int main(int argc, char **argv)
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2 14.3
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220 4157
- * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1377
- * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  986
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1371
+ * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
- * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.5
- * calls         |   275  207  175  115   89   71   53   53|  54   50.6
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4
+ * calls         |   275  207  175  115   89   71   53   53|  54   50.3
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))

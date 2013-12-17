@@ -6707,10 +6707,10 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	    }
 #endif
 	  npts = len / 2;
-	  brkpts = (mus_float_t *)calloc(len, sizeof(mus_float_t));
+	  brkpts = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	  if (brkpts == NULL)
 	    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list"));
-	  odata = (mus_float_t *)calloc(len, sizeof(mus_float_t));
+	  odata = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	  if (odata == NULL)
 	    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env copy"));
 
@@ -8155,7 +8155,8 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     {
       gn = (mus_xen *)calloc(1, sizeof(mus_xen));
 
-      if ((XEN_BOUND_P(ov)) || (XEN_BOUND_P(rv)))
+      if (((XEN_BOUND_P(ov)) && (!XEN_FALSE_P(ov))) || 
+	  ((XEN_BOUND_P(rv)) && (!XEN_FALSE_P(rv))))
 	gn->nvcts = 4;
       else gn->nvcts = 2;
       gn->vcts = make_vcts(gn->nvcts);
@@ -8392,7 +8393,8 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   if (ge)
     {
       gn = (mus_xen *)calloc(1, sizeof(mus_xen));
-      if ((XEN_BOUND_P(ov)) || (XEN_BOUND_P(rv)))
+      if (((XEN_BOUND_P(ov)) && (!XEN_FALSE_P(ov))) || 
+	  ((XEN_BOUND_P(rv)) && (!XEN_FALSE_P(rv))))
 	gn->nvcts = 4;
       else gn->nvcts = 1;
       gn->vcts = make_vcts(gn->nvcts);
@@ -14167,6 +14169,20 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 	}
       if (gf1->func)
 	{
+	  if (gf1->func == gf_2_g1)
+	    {
+	      gf *g1;
+	      mus_float_t (*func_2)(void *p, mus_float_t x);
+	      mus_float_t (*func)(void *p);
+
+	      g1 = (gf *)(gf1->g1);
+	      func_2 = gf1->func_2;
+	      func = g1->func;
+
+	      OUTA_LOOP(mus_env(e) * func_2(gf1->gen, func(g1)));
+	      gf_free(gf1);
+	      return(args);
+	    }
 	  OUTA_LOOP(mus_env(e) * gf1->func(gf1));
 	  gf_free(gf1);
 	  return(args);
@@ -16957,12 +16973,15 @@ static s7_pointer polynomial_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	  if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
 	      (s7_function_returns_temp(sc, caddr(expr))))
 	    {
+	      /* this is not currently used anywhere */
 	      s7_function_choice_set_direct(sc, expr);
 	      return(polynomial_temp);
 	    }
 	  if ((car(caddr(expr)) == cos_symbol) &&
 	      (s7_is_symbol(cadr(caddr(expr)))))
 	    {
+	      /* aimed, I think, at (polynomial coeffs (cos x)) which is now built-in, so this is not used
+	       */
 	      s7_function_choice_set_direct(sc, expr);
 	      return(polynomial_cos);
 	    }
