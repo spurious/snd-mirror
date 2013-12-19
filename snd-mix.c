@@ -95,13 +95,13 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
   
   lseek(ofd, ohdr->data_location, SEEK_SET);
   lseek(ifd, ihdr->data_location, SEEK_SET);
-  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, data);
+  mus_file_read_chans(ifd, 0, size, in_chans, data, data);
   for (i = 0, j = 0; i < num; i++)
     {
       if (j == size)
 	{
 	  err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
-	  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, data);
+	  mus_file_read_chans(ifd, i, size, in_chans, data, data);
 	  j = 0;
 	  if (err != MUS_NO_ERROR) break;
 	}

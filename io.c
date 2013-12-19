@@ -562,6 +562,11 @@ typedef struct {
   int data_format, bytes_per_sample, chans, header_type;
   bool clipping;
   mus_long_t data_location;
+#if WITH_PRELOAD
+  bool saved;
+  mus_long_t frames;
+  mus_float_t **saved_data;
+#endif
 } io_fd;
 
 static int io_fd_size = 0;
@@ -602,6 +607,10 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	  fd->clipping = clipping_default;
 	  fd->header_type = type;
 	  fd->chans = chans;
+#if WITH_PRELOAD
+ 	  fd->saved = false;
+ 	  fd->saved_data = NULL;
+#endif
 	  if (name)
 	    {
 	      fd->name = (char *)calloc(strlen(name) + 1, sizeof(char));
@@ -613,6 +622,31 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
   else err = MUS_MEMORY_ALLOCATION_FAILED;
   return(err);
 }
+
+
+#if WITH_PRELOAD
+void scan_io_fds_for_saved_data(mus_float_t **data);
+void scan_io_fds_for_saved_data(mus_float_t **data)
+{
+  if ((io_fds) &&
+      (io_fd_size > 0))
+    {
+      int i;
+      for (i = 0; i < io_fd_size; i++)
+	{
+	  io_fd *fd;
+	  fd = io_fds[i];
+	  if ((fd) &&
+	      (fd->saved) &&
+	      (fd->saved_data == data))
+	    {
+	      fd->saved = false;
+	      fd->saved_data = NULL;
+	    }
+	}
+    }
+}
+#endif
 
 
 bool mus_file_clipping(int tfd)
@@ -670,6 +704,24 @@ int mus_file_set_chans(int tfd, int chans)
   fd->chans = chans;
   return(MUS_NO_ERROR);
 }
+
+
+#if WITH_PRELOAD
+void mus_file_save_data(int tfd, mus_long_t frames, mus_float_t **data)
+{
+  io_fd *fd;
+  fd = io_fds[tfd];
+  if (!fd->saved)
+    {
+      /* fprintf(stderr, "mus_file_save_data %d\n", tfd); */
+
+      fd->saved = true;
+      fd->frames = frames;
+      fd->saved_data = data;
+    }
+}
+#endif
+
 
 
 /* ---------------- open, creat, close ---------------- */
@@ -975,6 +1027,13 @@ static void initialize_swapped_shorts(void)
 
 static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, mus_float_t **cm, char *inbuf)
 {
+  /* beg no longer means buffer-relative start point (that is assumed to be 0): changed 18-Dec-13
+   * beg is now the starting frame number in the file data (first frame = 0)
+   * so old form 
+   *   mus_read_any_1(f, 0, ...)
+   * is now
+   *   mus_read_any_1(f, frame, ...)
+   */
   int format, siz, siz_chans;
   mus_long_t bytes, lim, leftover, total_read, k, loc, oldloc, buflim;
   unsigned char *jchar;
@@ -998,8 +1057,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
       format = fd->data_format;
       siz = fd->bytes_per_sample;
       if ((format == MUS_OUT_FORMAT) && 
-	  (chans == 1) && 
-	  (beg == 0))
+	  (chans == 1))
+	/* (beg == 0)) */
 	{
 	  ssize_t total;
 
@@ -1011,14 +1070,46 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		memset((void *)(bufs[0]), 0, bytes);
 	      else
 		{
-		  int i, last;
-		  last = beg + nints;
-		  for (i = total / siz; i < last; i++)
+		  int i;
+		  for (i = total / siz; i < nints; i++)
 		    bufs[0][i] = 0.0;
 		}
 	    }
 	  return(total / siz);
 	}
+
+#if WITH_PRELOAD
+      if (fd->saved)
+	{
+	  /* fprintf(stderr, "mus_read_any_1 %d use saved data\n", tfd); */
+
+	  lim = nints;
+	  if (lim > fd->frames)
+	    lim = fd->frames;
+	  bytes = lim * sizeof(mus_float_t);
+
+	  if ((chans == 1) &&
+	      ((!cm) || (cm[0])))
+	    {
+	      buffer = (mus_float_t *)(bufs[0]);
+	      memcpy((void *)buffer, (void *)(fd->saved_data[0] + beg), bytes);
+	      if (lim < nints)
+		memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
+	    }
+	  else
+	    {
+	      for (k = 0; k < chans; k++)
+		if ((cm == NULL) || (cm[k]))
+		  {
+		    buffer = (mus_float_t *)(bufs[k]);
+		    memcpy((void *)buffer, (void *)(fd->saved_data[k] + beg), bytes);
+		    if (lim < nints)
+		      memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
+		  }
+	    }
+	  return(lim);
+	}
+#endif
 
       if (ur_charbuf == NULL) 
 	ur_charbuf = (char *)malloc(BUFLIM * sizeof(char)); 
@@ -1038,7 +1129,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
     buflim = (BUFLIM) - k;
   else buflim = BUFLIM;
   total_read = 0;
-  loc = beg;
+  loc = 0;
 
 #if MUS_LITTLE_ENDIAN
   if ((format == MUS_BSHORT) && (!swapped_shorts))
@@ -1069,14 +1160,13 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	    {
 	      /* zero out trailing section (some callers don't check the returned value) -- this added 9-May-99 */
 
-	      lim = beg + nints;
-	      if (loc < lim)
+	      if (loc < nints)
 		for (k = 0; k < chans; k++)
 		  if ((cm == NULL) || (cm[k]))
 		    {
 		      mus_float_t *p;
 		      p = bufs[k];
-		      memset((void *)(p + loc), 0, (lim - loc) * sizeof(mus_float_t));
+		      memset((void *)(p + loc), 0, (nints - loc) * sizeof(mus_float_t));
 		    }
 	      return(total_read);
 	    }
@@ -1562,6 +1652,7 @@ mus_long_t mus_file_read_any(int tfd, mus_long_t beg, int chans, mus_long_t nint
 
 mus_long_t mus_file_read_file(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs)
 {
+  /* not currently used anywhere */
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, NULL, NULL));
 }
 
@@ -1572,33 +1663,39 @@ mus_long_t mus_file_read_buffer(int charbuf_data_format, mus_long_t beg, int cha
 }
 
 
-mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs)
+/* the next two were changed 19-Dec-13 (sndlib.h version 23.1)
+ *   "end" is now actually "dur" -- the number of samples to read, not the end point in the buffer
+ *   "beg" is the frame number to start at in the data, not the buffer location
+ * so old form
+ *    mus_file_read(f, 0, 99...)
+ * is now
+ *    mus_file_read(f, frame, 100...)
+ */
+mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t num, int chans, mus_float_t **bufs)
 {
-  mus_long_t num, rtn, k;
-  num = (end - beg + 1);
+  mus_long_t rtn, k;
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, NULL, NULL);
+  /* fprintf(stderr, "mus_file_read %lld for %lld -> %lld\n", beg, num, rtn); */
   if (rtn == MUS_ERROR) return(MUS_ERROR);
   if (rtn < num) 
     /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
     for (k = 0; k < chans; k++)
       {
-	mus_long_t i;
 	mus_float_t *buffer;
 	buffer = bufs[k];
-	i = rtn + beg;
 	/* this happens routinely in mus_outa + initial write (reads ahead in effect) */
-	memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_float_t));
+	/* fprintf(stderr, "clear from %lld for %lld\n", rtn, num-rtn); */
+	memset((void *)(buffer + rtn), 0, (num - rtn) * sizeof(mus_float_t));
       }
   return(num);
 }
 
 
-mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, mus_float_t **cm)
+mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t num, int chans, mus_float_t **bufs, mus_float_t **cm)
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
-  mus_long_t num, rtn, k;
+  mus_long_t rtn, k;
 
-  num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, cm, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
 
@@ -1606,11 +1703,9 @@ mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t end, int chan
     for (k = 0; k < chans; k++)
       if ((cm == NULL) || (cm[k]))
 	{
-	  mus_long_t i;
 	  mus_float_t *buffer;
 	  buffer = bufs[k];
-	  i = rtn + beg;
-	  memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_float_t));
+	  memset((void *)(buffer + rtn), 0, (num - rtn) * sizeof(mus_float_t));
 	}
 
   return(num);

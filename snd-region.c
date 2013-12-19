@@ -1408,7 +1408,6 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 					chans,
 					mus_sound_header_type(r->filename));
 	      lseek(ifd, iloc, SEEK_SET);
-
 	      bufs = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
 	      for (i = 0; i < chans; i++) bufs[i] = (mus_float_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_float_t));
 
@@ -1422,7 +1421,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 		  if ((ioff + FILE_BUFFER_SIZE) < frames) 
 		    cursamples = FILE_BUFFER_SIZE; 
 		  else cursamples = (frames - ioff);
-		  mus_file_read(ifd, 0, cursamples - 1, chans, bufs);
+		  mus_file_read(ifd, ioff, cursamples, chans, bufs);
 		  err = mus_file_write(ofd, 0, cursamples - 1, chans, bufs);
 		  if (err != MUS_NO_ERROR) 
 		    {
@@ -1437,6 +1436,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	      if (err != 0)
 		snd_warning("can't close %s input!", S_save_region);
 	      err = mus_file_close(ofd);
+
 	      if (ss->file_monitor_ok)
 		{
 		  if (err != 0)

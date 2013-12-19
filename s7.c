@@ -667,6 +667,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opCq_opSSq, HOP_SAFE_C_opCq_opSSq, 
       OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, 
       OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C, OP_SAFE_C_S_op_opSSq_opSSqq, HOP_SAFE_C_S_op_opSSq_opSSqq, 
+      OP_SAFE_C_opSSq_op_opSSq_q, HOP_SAFE_C_opSSq_op_opSSq_q,
       
       OP_THUNK, HOP_THUNK, 
       OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_Sp, HOP_CLOSURE_Sp, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
@@ -776,6 +777,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_opscq_c", "h_safe_c_opscq_c", "safe_c_opcq_opssq", "h_safe_c_opcq_opssq",
       "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", 
       "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c", "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq", 
+      "safe_c_opssq_op_opssq_q", "h_safe_c_opssq_op_opssq_q",
       
       "thunk", "h_thunk", 
       "closure_s", "h_closure_s", "closure_sp", "h_closure_sp", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
@@ -1271,7 +1273,8 @@ struct s7_scheme {
   s7_pointer CHAR_WHITESPACEP, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, COMPLEXP, CONS, CONSTANTP, CONTINUATIONP, COPY, COS, COSH, C_POINTER, C_POINTERP;
   s7_pointer DEFINEDP, DENOMINATOR, DISPLAY, DYNAMIC_WIND, ENVIRONMENTP, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_TO_LIST;
   s7_pointer EOF_OBJECTP, EQP, EQUALP, EQVP, ERROR, EVAL, EVAL_STRING, EVENP, EXACTP;
-  s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, FLOAT_VECTORP, FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
+  s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, FLOAT_VECTORP, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
+  s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
   s7_pointer HASH_TABLEP, HASH_TABLE_ITERATORP, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HELP, IMAG_PART, INEXACTP, INEXACT_TO_EXACT;
   s7_pointer INFINITEP, INPUT_PORTP, INTEGERP, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, KEYWORDP, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, LISTP, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBITP, LOGIOR, LOGNOT, LOGXOR;
@@ -2558,7 +2561,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -29794,9 +29797,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 
 static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
 {
-  #define H_vector_ref "(vector-ref v ... i) returns the i-th element of vector v.  If v \
-is a multidimensional vector, you can also use (vector-ref v ...) where the trailing args \
-are the indices, or omit 'vector-ref': (v ...)."
+  #define H_vector_ref "(vector-ref v ... i) returns the i-th element of vector v."
 
   s7_pointer vec;
 
@@ -29966,9 +29967,7 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 {
-  #define H_vector_set "(vector-set! v i ... value) sets the i-th element of vector v to value.  If 'v' is \
-multidimensional you can also use (vector-set! v ... val) where the ellipsis refers to the indices.  You \
-can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this form much easier to read."
+  #define H_vector_set "(vector-set! v i ... value) sets the i-th element of vector v to value."
 
   s7_pointer vec, val;
   s7_Int index;
@@ -30534,6 +30533,118 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
     }
   return(v);
 }
+
+#if 0
+static g_float_vector_ref(s7_scheme *sc, s7_pointer args)
+{
+  #define H_float_vector_ref "(float-vector-ref v ...) returns an element of the float vector v."
+
+  s7_pointer v, index;
+  s7_Int ind;
+
+  v = car(args);
+  if (!is_float_vector(v))
+    return(s7_wrong_type_arg_error(sc, "float-vector-ref", 1, v, "a float vector")); 
+
+  if (vector_rank(v) == 1)
+    {
+      index = cadr(args);
+      if (!s7_is_integer(index))
+	return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_REF, 2, index, T_INTEGER)); 
+      ind = s7_integer(index);
+      if ((ind < 0) || (ind > vector_length(v)))
+	return(simple_out_of_range(sc, sc->FLOAT_VECTOR_REF, index, "between 0 and the vector length"));
+      if (!is_null(cddr(args)))
+	return(out_of_range(sc, sc->FLOAT_VECTOR_REF, small_int(2), cdr(args), "too many indices"));
+    }
+  else
+    {
+      unsigned int i;
+      s7_pointer x;
+      int = 0;
+      for (x = cdr(args), i = 0; (is_not_null(x)) && (i < vector_ndims(v)); x = cdr(x), i++)
+	{
+	  s7_Int n;
+	  if (!s7_is_integer(car(x)))
+	    return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_REF, i + 2, car(x), T_INTEGER));
+
+	  n = s7_integer(car(x));
+	  if ((n < 0) || 
+	      (n >= vector_dimension(v, i)))
+	    return(out_of_range(sc, sc->FLOAT_VECTOR_REF, make_integer(sc, i + 2), car(x), "index should be between 0 and the dimension size"));
+
+	  ind += n * vector_offset(v, i);
+	}
+      if (is_not_null(x))
+	return(out_of_range(sc, sc->FLOAT_VECTOR_REF, small_int(2), cdr(args), "too many indices"));
+
+      /* if not enough indices, return a shared vector covering whatever is left */
+      if (i < vector_ndims(v))
+	return(make_shared_vector(sc, v, i, ind));
+    }
+  return(make_real(float_vector_element(v, ind)));
+}
+
+
+static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
+{
+  #define H_float_vector_set "(float-vector-set! v i ... value) sets the i-th element of the float vector v to value."
+
+  s7_pointer vec, val;
+  s7_Int index;
+
+  vec = car(args);
+  if (!is_float_vector(vec))
+    {
+      CHECK_METHOD(sc, vec, sc->FLOAT_VECTOR_SET, args);
+      return(wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, small_int(1), vec, T_FLOAT_VECTOR));
+    }
+  
+  if (vector_rank(vec) > 1)
+    {
+      unsigned int i;
+      s7_pointer x;
+      index = 0;
+      for (x = cdr(args), i = 0; (is_not_null(cdr(x))) && (i < vector_ndims(vec)); x = cdr(x), i++)
+	{
+	  s7_Int n;
+	  if (!s7_is_integer(car(x)))
+	    return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_SET, i + 2, car(x), T_INTEGER));
+
+	  n = s7_integer(car(x));
+	  if ((n < 0) || 
+	      (n >= vector_dimension(vec, i)))
+	    return(out_of_range(sc, sc->FLOAT_VECTOR_SET, make_integer(sc, i + 2), car(x), "index should be between 0 and the dimension size"));
+
+	  index += n * vector_offset(vec, i);
+	}
+
+      if (is_not_null(cdr(x)))
+	return(s7_wrong_number_of_args_error(sc, "too many args for float-vector-set!: ~S", args));
+      if (i != vector_ndims(vec))
+	return(s7_wrong_number_of_args_error(sc, "not enough args for float-vector-set!: ~S", args));
+
+      val = car(x);
+    }
+  else
+    {
+      if (!s7_is_integer(cadr(args)))
+	return(wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, small_int(2), cadr(args), T_INTEGER));
+
+      index = s7_integer(cadr(args));
+      if ((index < 0) ||
+	  (index >= vector_length(vec)))
+	return(out_of_range(sc, sc->FLOAT_VECTOR_SET, small_int(2), cadr(args), "should be between 0 and the vector length"));
+
+      if (is_not_null(cdddr(args)))
+	return(s7_wrong_number_of_args_error(sc, "too many args for float-vector-set!: ~S", args));
+      val = caddr(args);
+    }
+  
+  float_vector_element(vec, index) = s7_number_to_real(sc, val);
+  return(val);
+}
+#endif
 
 /* need float_vector_set_direct_looped[s7_function_set_looped=c_function_looped] (both vct/sound-data) -- does this require float-vector-set!?
  *       there's vector_set_ssc_looped which can handle float-vectors (see vector_set_chooser)
@@ -42737,6 +42848,11 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	    return(OP_SAFE_C_opSSq_opSSq);
 	  if (optimize_data_match(e1, OP_SAFE_C_S))
 	    return(OP_SAFE_C_opSq_opSSq);
+	  break;
+
+	case OP_SAFE_C_opSSq:
+	  if (optimize_data_match(e1, OP_SAFE_C_SS))
+	    return(OP_SAFE_C_opSSq_op_opSSq_q);
 	  break;
 	}
       return(OP_SAFE_C_ZZ);
@@ -55991,7 +56107,38 @@ OP_LET1: 75475 (4.677476)
 		sc->value = c_call(code)(sc, sc->T2_1);        
 		goto START;
 	      }
+
+
+	    case OP_SAFE_C_opSSq_op_opSSq_q:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, cadr(code)))
+		break;
+	      if (!c_function_is_ok(sc, caddr(code)))
+		break;
 	      
+	    case HOP_SAFE_C_opSSq_op_opSSq_q:
+	      {
+		/* (op (f1 a b) (f2 (f3 c d))) */
+		s7_pointer op1, op2, op3, val1;
+		op1 = cadr(code);
+		op2 = caddr(code);
+		op3 = cadr(op2);
+		
+		car(sc->T2_1) = finder(sc, cadr(op1));
+		car(sc->T2_2) = finder(sc, caddr(op1));
+		val1 = c_call(op1)(sc, sc->T2_1);
+		
+		car(sc->T2_1) = finder(sc, cadr(op3));
+		car(sc->T2_2) = finder(sc, caddr(op3));			    /* perhaps: this is normally already ok (b == d) */
+		car(sc->T1_1) = c_call(op3)(sc, sc->T2_1);
+		
+		car(sc->T2_2) = c_call(op2)(sc, sc->T1_1);
+		car(sc->T2_1) = val1;
+		sc->value = c_call(code)(sc, sc->T2_1);
+		goto START;
+	      }
+
 
 	    case OP_SAFE_C_opSCq_S:
 	      if (!c_function_is_ok(sc, code))
@@ -68715,13 +68862,10 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4
- * calls         |   275  207  175  115   89   71   53   53|  54   50.3
+ * calls         |   275  207  175  115   89   71   53   53|  54   49.8
  */
 
-/* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
- *   for cos et al, if arg is multiply_2 et al, this could be directed to multiply_2_rc (not rational) which would return a temp
- *   this gains very little (old/cos-s7.c)
- * all_x in snd-sig? all_x_c_aa|a?
+/* all_x in snd-sig? all_x_c_aa|a?
  * letrec* built-in (not macro), perhaps also when and unless
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
@@ -68734,5 +68878,5 @@ int main(int argc, char **argv)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  * TODO: doc/test mus-set-formant-frequency (the -and-radius part is also not documented or tested or even used??)
- * (reverse real/int) -> bswap?, (reverse char) -> bit reverse?
+ * TODO: doc mus-sound-preload
  */

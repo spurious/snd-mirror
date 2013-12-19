@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 23
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "2-Sep-13"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "19-Dec-13"
 
 #include <stdio.h>
 /* need FILE */
@@ -234,6 +234,12 @@ MUS_EXPORT int mus_array_to_file(const char *filename, mus_float_t *ddata, mus_l
 MUS_EXPORT const char *mus_array_to_file_with_error(const char *filename, mus_float_t *ddata, mus_long_t len, int srate, int channels);
 MUS_EXPORT mus_long_t mus_file_to_float_array(const char *filename, int chan, mus_long_t start, mus_long_t samples, mus_float_t *array);
 MUS_EXPORT int mus_float_array_to_file(const char *filename, mus_float_t *ddata, mus_long_t len, int srate, int channels);
+
+#if WITH_PRELOAD
+MUS_EXPORT mus_float_t **mus_sound_saved_data(const char *arg);
+MUS_EXPORT void mus_sound_set_saved_data(const char *arg, mus_float_t **data);
+MUS_EXPORT void mus_file_save_data(int tfd, mus_long_t frames, mus_float_t **data);
+#endif
 
 
 

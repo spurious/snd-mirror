@@ -212,7 +212,7 @@ static void reposition_file_buffers_1(mus_long_t loc, snd_io *io)
       mus_file_seek_frame(io->fd, loc);
       io->beg = loc;
       mus_file_read_chans(io->fd,
-			  0, frames - 1,
+			  loc, frames,
 			  io->chans,
 			  io->arrays,
 			  io->arrays);
@@ -396,6 +396,7 @@ int snd_open_read(const char *arg)
 int snd_reopen_write(const char *arg)
 {
   int fd;
+
   fd = OPEN(arg, O_RDWR, 0);
   if ((fd == -1) && 
       (errno == EMFILE))
@@ -457,6 +458,10 @@ int snd_file_open_descriptors(int fd, const char *name, int format, mus_long_t l
   sl_err = mus_file_open_descriptors(fd, name, format, mus_bytes_per_sample(format), location, chans, type);
   if (sl_err != MUS_NO_ERROR)
     snd_warning("%s: open file descriptors: %s", name, mus_error_type_to_string(sl_err));
+#if WITH_PRELOAD
+  if (mus_sound_saved_data(name))
+    mus_file_save_data(fd, mus_sound_frames(name), mus_sound_saved_data(name));
+#endif
   return(sl_err);
 }
 
@@ -794,6 +799,7 @@ io_error_t close_temp_file(const char *filename, int ofd, int type, mus_long_t b
       local_mus_error = MUS_NO_ERROR;
       old_error_handler = mus_error_set_handler(local_mus_error_to_snd);
       mus_header_change_data_size(filename, type, bytes);
+      mus_sound_forget(filename);
       mus_error_set_handler(old_error_handler);
       return(sndlib_error_to_snd(local_mus_error));
     }

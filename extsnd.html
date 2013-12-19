@@ -4889,11 +4889,11 @@ for use with <a href="#mussoundwrite">mus-sound-write</a> and <a href="#mussound
 
 <!-- mus-sound-read -->
 <pre class="indented">
-<em class=def id="mussoundread">mus-sound-read</em> fd beg end chans sd
+<em class=def id="mussoundread">mus-sound-read</em> fd beg-in-file num-to-read chans sd
 </pre>
 
-<p>mus-sound-read reads data from the sound file 'fd', loading the float-vector 'sd' from 'beg'
-to 'end'. 
+<p>mus-sound-read reads data from the sound file 'fd', starting at frame 'beg-in-file' (frame 0 is the first),
+loading num-to-read samples into the float-vector 'sd' starting from 0 in that vector.
 </p>
 <div class="spacer"></div>
 

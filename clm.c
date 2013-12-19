@@ -3412,6 +3412,30 @@ static mus_float_t polyw_first_6(mus_any *ptr, mus_float_t fm)
 }
 
 
+static mus_float_t polyw_first_8(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t x;
+  mus_float_t *tn;
+  double x2, b, b1, b2, cx;
+
+  x = gen->phase;
+  tn = gen->coeffs;
+  gen->phase += (gen->freq + fm);
+
+  cx = cos(x);
+  x2 = 2.0 * cx;
+  b1 = tn[7];
+  b = x2 * b1 + tn[6]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[5]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[4]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[3]; 
+  b2 = b1; b1 = b; b = x2 * b1 - b2 + tn[2];
+
+  return((x2 * b - b1 + tn[1]) * cx - b);
+}
+
+
 static mus_float_t polyw_first_11(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
@@ -3650,21 +3674,30 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
 			    gen->polyw = polyw_first_6;
 			  else 
 			    {
-			      if (n == 11) /* a common case oddly enough */
-				gen->polyw = polyw_first_11;
+			      if (n == 8)
+				gen->polyw = polyw_first_8;
 			      else 
 				{
-				  if (((n - 1) % 5) == 0)
-				    gen->polyw = polyw_f5;
-				  else
+				  if (n == 11) /* a common case oddly enough */
+				    gen->polyw = polyw_first_11;
+				  else 
 				    {
-				      if (((n - 1) % 3) == 0)
-					gen->polyw = polyw_f3;
+				      if (((n - 1) % 5) == 0)
+					gen->polyw = polyw_f5;
 				      else
 					{
-					  if (((n - 1) % 2) == 0)
-					    gen->polyw = polyw_f2;
-					  else gen->polyw = polyw_first;
+					  if (((n - 1) % 3) == 0)
+					    gen->polyw = polyw_f3;
+					  else
+					    {
+					      if (((n - 1) % 2) == 0)
+						gen->polyw = polyw_f2;
+					      else 
+						{
+						  /* lots of n=8 here */
+						  gen->polyw = polyw_first;
+						}
+					    }
 					}
 				    }
 				}
@@ -6837,6 +6870,9 @@ typedef struct {
   mus_any_class *core;
   int size;
   mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *rr, *fdbk, *gain;
+  mus_float_t c1, c2;
+  mus_float_t (*one_input)(mus_any *fbank, mus_float_t inval);
+  mus_float_t (*many_inputs)(mus_any *fbank, mus_float_t *inval);
 } frm_bank;
 
 
@@ -6919,98 +6955,17 @@ static char *describe_formant_bank(mus_any *ptr)
 mus_float_t mus_formant_bank(mus_any *fbank, mus_float_t inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
-  int i, size4;
-  mus_float_t sum = 0.0;
-  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *rr, *fdbk, *gain;
-
-  x0 = bank->x0;
-  x1 = bank->x1;
-  x2 = bank->x2;
-  y0 = bank->y0;
-  y1 = bank->y1;
-  y2 = bank->y2;
-  rr = bank->rr;
-  fdbk = bank->fdbk;
-  gain = bank->gain;
-  amps = bank->amps;
-  size4 = bank->size - 4;
-
-  i = 0;
-  if (amps)
-    {
-      while (i <= size4)
-	{
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	  i++;
-	}
-      for (; i < bank->size; i++)
-	{
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	}
-    }
-  else
-    {
-      while (i <= size4)
-	{
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	  i++;
-	}
-      for (; i < bank->size; i++)
-	{
-	  x0[i] = gain[i] * inval;
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	}
-    }
-
-  bank->x2 = x1;
-  bank->x1 = x0;
-  bank->x0 = x2;
-
-  bank->y2 = y1;
-  bank->y1 = y0;
-  bank->y0 = y2;
-
-  return(sum);
+  return(bank->one_input(fbank, inval));
 }
 
 mus_float_t mus_formant_bank_with_inputs(mus_any *fbank, mus_float_t *inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  return(bank->many_inputs(fbank, inval));
+}
+
+
+static mus_float_t fb_one_with_amps(mus_any *fbank, mus_float_t inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
   int i, size4;
@@ -7030,67 +6985,33 @@ mus_float_t mus_formant_bank_with_inputs(mus_any *fbank, mus_float_t *inval)
   size4 = bank->size - 4;
 
   i = 0;
-  if (amps)
+  while (i <= size4)
     {
-      while (i <= size4)
-	{
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	  i++;
-	}
-      for (; i < bank->size; i++)
-	{
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += amps[i] * y0[i];
-	}
+      x0[i] = gain[i] * inval;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+      
+      x0[i] = gain[i] * inval;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+      
+      x0[i] = gain[i] * inval;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+      
+      x0[i] = gain[i] * inval;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
     }
-  else
+  for (; i < bank->size; i++)
     {
-      while (i <= size4)
-	{
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	  i++;
-
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	  i++;
-	}
-      for (; i < bank->size; i++)
-	{
-	  x0[i] = gain[i] * inval[i];
-	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
-	  sum += y0[i];
-	}
+      x0[i] = gain[i] * inval;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
+      sum += amps[i] * y0[i];
     }
 
   bank->x2 = x1;
@@ -7103,6 +7024,356 @@ mus_float_t mus_formant_bank_with_inputs(mus_any *fbank, mus_float_t *inval)
 
   return(sum);
 }
+
+static mus_float_t fb_one_without_amps(mus_any *fbank, mus_float_t inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i;
+  mus_float_t sum = 0.0;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *rr, *fdbk, *gain;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  rr = bank->rr;
+  fdbk = bank->fdbk;
+  gain = bank->gain;
+
+  for (i = 0; i < bank->size; i++)
+    {
+      x0[i] = gain[i] * inval;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
+      sum += y0[i];
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
+static mus_float_t fb_many_with_amps(mus_any *fbank, mus_float_t *inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i;
+  mus_float_t sum = 0.0;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *rr, *fdbk, *gain;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  rr = bank->rr;
+  fdbk = bank->fdbk;
+  gain = bank->gain;
+  amps = bank->amps;
+
+  for (i = 0; i < bank->size; i++)
+    {
+      x0[i] = gain[i] * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
+      sum += amps[i] * y0[i];
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
+static mus_float_t fb_many_without_amps(mus_any *fbank, mus_float_t *inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i;
+  mus_float_t sum = 0.0;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *rr, *fdbk, *gain;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  rr = bank->rr;
+  fdbk = bank->fdbk;
+  gain = bank->gain;
+
+  for (i = 0; i < bank->size; i++)
+    {
+      x0[i] = gain[i] * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
+      sum += y0[i];
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
+static mus_float_t fb_one_with_amps_c1_c2(mus_any *fbank, mus_float_t inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i, size4;
+  mus_float_t sum = 0.0, rr, gain;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *fdbk;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  fdbk = bank->fdbk;
+  amps = bank->amps;
+  size4 = bank->size - 4;
+
+  rr = bank->c1;
+  gain = (bank->c2 * inval);
+
+  i = 0;
+  while (i <= size4)
+    {
+      x0[i] = gain;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+      
+      x0[i] = gain;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+      
+      x0[i] = gain;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+      
+      x0[i] = gain;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+    }
+  for (; i < bank->size; i++)
+    {
+      x0[i] = gain;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
+static mus_float_t fb_one_without_amps_c1_c2(mus_any *fbank, mus_float_t inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i, size4;
+  mus_float_t sum = 0.0, rr, gain;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *fdbk;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  fdbk = bank->fdbk;
+  size4 = bank->size - 4;
+
+  rr = bank->c1;
+  gain = (bank->c2 * inval);
+
+  i = 0;
+  while (i <= size4)
+    {
+      x0[i] = gain;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+      i++;
+      
+      x0[i] = gain;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+      i++;
+      
+      x0[i] = gain;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+      i++;
+      
+      x0[i] = gain;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+      i++;
+    }
+  for (; i < bank->size; i++)
+    {
+      x0[i] = gain * inval;
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
+
+static mus_float_t fb_many_with_amps_c1_c2(mus_any *fbank, mus_float_t *inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i, size4;
+  mus_float_t sum = 0.0, rr, gain;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *fdbk;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  fdbk = bank->fdbk;
+  amps = bank->amps;
+  size4 = bank->size - 4;
+
+  rr = bank->c1;
+  gain = bank->c2;
+
+  i = 0;
+  while (i <= size4)
+    {
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+      
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+      
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+      
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+      i++;
+    }
+  for (; i < bank->size; i++)
+    {
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += amps[i] * y0[i];
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
+static mus_float_t fb_many_without_amps_c1_c2(mus_any *fbank, mus_float_t *inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i, size4;
+  mus_float_t sum = 0.0, rr, gain;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *fdbk;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  fdbk = bank->fdbk;
+  size4 = bank->size - 4;
+
+  rr = bank->c1;
+  gain = bank->c2;
+
+  i = 0;
+  while (i <= size4)
+    {
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+      i++;
+      
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+      i++;
+      
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+      i++;
+      
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+      i++;
+    }
+  for (; i < bank->size; i++)
+    {
+      x0[i] = gain * inval[i];
+      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      sum += y0[i];
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
 
 static mus_any_class FORMANT_BANK_CLASS = {
   MUS_FORMANT_BANK,
@@ -7149,6 +7420,17 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
   gen->rr = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->fdbk = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->gain = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+
+  if (amps)
+    {
+      gen->one_input = fb_one_with_amps;
+      gen->many_inputs = fb_many_with_amps;
+    }
+  else
+    {
+      gen->one_input = fb_one_without_amps;
+      gen->many_inputs = fb_many_without_amps;
+    }
   
   for (i = 0; i < size; i++)
     {
@@ -7157,7 +7439,28 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
       gen->rr[i] = g->rr;
       gen->fdbk[i] = g->fdbk;
       gen->gain[i] = g->gain;
+      /* one case: 1.0 val 0.0 throughout
+       * also c1 x c2
+       */
     }
+  gen->c1 = gen->rr[0];
+  gen->c2 = gen->gain[0];
+  for (i = 1; i < size; i++)
+    if ((gen->rr[i] != gen->c1) ||
+	(gen->gain[i] != gen->c2))
+      return((mus_any *)gen);
+
+  if (amps)
+    {
+      gen->one_input = fb_one_with_amps_c1_c2;
+      gen->many_inputs = fb_many_with_amps_c1_c2;
+    }
+  else
+    {
+      gen->one_input = fb_one_without_amps_c1_c2;
+      gen->many_inputs = fb_many_without_amps_c1_c2;
+    }
+
   return((mus_any *)gen);
 }
 
@@ -10023,8 +10326,8 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 	  mus_file_seek_frame(fd, gen->data_start);
 
 	  if ((gen->data_start + gen->file_buffer_size) >= gen->file_end)
-	    mus_file_read_chans(fd, 0, gen->file_end - gen->data_start - 1, gen->chans, gen->ibufs, gen->ibufs);
-	  else mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, gen->ibufs);
+	    mus_file_read_chans(fd, gen->data_start, gen->file_end - gen->data_start, gen->chans, gen->ibufs, gen->ibufs);
+	  else mus_file_read_chans(fd, gen->data_start, gen->file_buffer_size, gen->chans, gen->ibufs, gen->ibufs);
 	  
 	  /* we have to check file_end here because chunked files can have trailing chunks containing
 	   *   comments or whatever.  io.c (mus_file_read_*) merely calls read, and translates bytes --
@@ -10572,7 +10875,7 @@ static void flush_buffers(rdout *gen)
       if (addbufs)
 	{
 	  mus_file_seek_frame(fd, gen->data_start);
-	  mus_file_read(fd, 0, frames_to_add, gen->chans, addbufs);
+	  mus_file_read(fd, gen->data_start, frames_to_add + 1, gen->chans, addbufs);
 	}
       mus_sound_close_input(fd); /* close previous mus_sound_open_input */
 
@@ -15682,7 +15985,7 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 
       ifd = mus_sound_open_input(infile);
       mus_file_seek_frame(ifd, in_start);
-      mus_file_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
+      mus_file_read(ifd, in_start, clm_file_buffer_size, in_chans, ibufs);
       ofd = mus_sound_reopen_output(outfile, 
 				    out_chans, 
 				    mus_sound_data_format(outfile), 
@@ -15690,7 +15993,7 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 				    mus_sound_data_location(outfile));
       curoutframes = mus_sound_frames(outfile);
       mus_file_seek_frame(ofd, out_start);
-      mus_file_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
+      mus_file_read(ofd, out_start, clm_file_buffer_size, out_chans, obufs);
       mus_file_seek_frame(ofd, out_start);
 
       switch (mixtype)
@@ -15703,9 +16006,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      obufs[0][j] += ibufs[0][j];
 	    }
@@ -15719,9 +16022,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      for (i = 0; i < min_chans; i++)
 		obufs[i][j] += ibufs[i][j];
@@ -15737,9 +16040,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      obufs[0][j] += (mus_float_t)(scaler * ibufs[0][j]);
 	    }
@@ -15753,9 +16056,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ofd, 0, clm_file_buffer_size- 1 , out_chans, obufs);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size , out_chans, obufs);
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      for (i = 0; i < min_chans; i++)
 		for (m = 0; m < in_chans; m++)
@@ -15772,9 +16075,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      obufs[0][j] += (mus_float_t)(mus_env(e) * ibufs[0][j]);
 	    }
@@ -15789,9 +16092,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
 		  mus_file_seek_frame(ofd, out_start + offk);
-		  mus_file_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      scaler = mus_env(e);
 	      for (i = 0; i < min_chans; i++)

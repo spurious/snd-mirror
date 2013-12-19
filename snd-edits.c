@@ -1637,7 +1637,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 
   obufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
-    obufs[i] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t));
+    obufs[i] = (mus_float_t *)malloc(alloc_len * sizeof(mus_float_t));
   j = 0;
 
   reporting = ((report_ok) && (length > alloc_len));
@@ -1676,7 +1676,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	{
 	  if (sf->runf == next_sample_value_unscaled_and_unchecked)
 	    {
-	      memmove((void *)buf, (const void *)(sf->data + sf->loc), length * sizeof(mus_float_t));
+	      memcpy((void *)buf, (void *)(sf->data + sf->loc), length * sizeof(mus_float_t));
 	      j = (int)length;
 	      len = j;
 	    }
@@ -8410,7 +8410,7 @@ static vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int po
 	      /* assuming mus_float_t is the same as s7_Double, but this assumption is made in vct.c already.
 	       *   it would be faster to simply grab the array, but then gc becomes tricky (it is shared in io struct)
 	       */
-	      memmove((void *)fvals, (const void *)(sf->data + sf->loc), jnum * sizeof(mus_float_t));
+	      memcpy((void *)fvals, (void *)(sf->data + sf->loc), jnum * sizeof(mus_float_t));
 	      /* for (j = 0, k = sf->loc; j < jnum; j++, k++) fvals[j] = sf->data[k];
 	       */
 	    }
@@ -8475,10 +8475,77 @@ return a vct containing snd channel chn's data starting at beg for dur samps"
 static XEN g_samples(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos)
 {
   #define H_samples "(" S_samples " :optional (start-samp 0) (samps len) snd chn edpos): \
-return a vct containing snd channel chn's samples starting a start-samp for samps samples; edpos is the edit \
-history position to read (defaults to current position)."
+return a vct containing snd channel chn's samples starting at start-samp for samps samples; edpos is the edit \
+history position to read (defaults to current position). snd can be a filename, a mix, a region, or a sound index number."
 
-  return(samples_to_vct_1(samp_0, samps, snd, chn_n, edpos, S_samples));
+  /* TODO: doc/test samples extension, add mix case, change *.scm
+   *   build in mix->vct
+   */
+  chan_info *cp;
+  mus_long_t beg, len;
+  int pos;
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_0) || XEN_FALSE_P(samp_0), samp_0, 1, S_samples, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samps) || XEN_FALSE_P(samps), samps, 2, S_samples, "an integer");
+  beg = beg_to_sample(samp_0, S_samples);
+
+  /* -------- a file -------- */
+  if (XEN_STRING_P(snd))
+    {
+      snd_info *loc_sp = NULL;
+      int chan = 0;
+      const char *filename;
+      mus_float_t *fvals;
+      vct *v;
+
+      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn_n), chn_n, 4, S_samples, "an integer");
+      if (XEN_INTEGER_P(chn_n)) chan = XEN_TO_C_INT(chn_n);
+      if (chan < 0) return(snd_no_such_channel_error(S_samples, snd, chn_n));	
+
+      filename = XEN_TO_C_STRING(snd);
+      if (XEN_INTEGER_P(samps))
+	len = XEN_TO_C_INT(samps);
+      else len = mus_sound_frames(filename);
+      if (len <= 0) return(XEN_FALSE);
+
+      if (mus_file_probe(filename))
+	loc_sp = make_sound_readable(filename, false);
+      else return(snd_no_such_file_error(S_make_sampler, snd));
+
+      if (chan >= loc_sp->nchans)
+	{
+	  completely_free_snd_info(loc_sp);
+	  return(snd_no_such_channel_error(S_samples, snd, chn_n));	
+	}
+      cp = loc_sp->chans[chan];
+      
+      v = mus_vct_make(len);
+      fvals = mus_vct_data(v);
+      mus_file_to_array(filename, chan, beg, len, fvals);
+
+      return(v);
+    }
+
+  /* -------- a mix -------- */
+  if (XEN_MIX_P(snd))
+    return(g_mix_to_vct(snd, samp_0, samps));
+
+
+  /* -------- a region -------- */
+  if (XEN_REGION_P(snd))
+    return(g_region_to_vct(snd, samp_0, samps, chn_n, XEN_FALSE));
+
+
+  /* -------- a sound -------- */
+  ASSERT_CHANNEL(S_samples, snd, chn_n, 3);
+  cp = get_cp(snd, chn_n, S_samples);
+  if (!cp) return(XEN_FALSE);
+
+  pos = to_c_edit_position(cp, edpos, S_samples, 5);
+  len = dur_to_samples(samps, beg, cp, pos, 2, S_samples);
+  if (len == 0) return(XEN_FALSE);
+
+  return(vct_to_xen(samples_to_vct(beg, len, cp, pos)));
 }
 
 

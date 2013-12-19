@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 	  if ((m + buffer_size) <= frames)
 	    curframes = buffer_size;
 	  else curframes = frames - m;
-	  mus_file_read(fd, 0, curframes - 1, chans, bufs); 
+	  mus_file_read(fd, start + m, curframes, chans, bufs); 
 	  /* some systems are happier if we read the file before opening the dac */
 	  /* at this point the data is in separate arrays of mus_sample_t's */
 
