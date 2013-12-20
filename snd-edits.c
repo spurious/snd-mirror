@@ -8523,7 +8523,7 @@ history position to read (defaults to current position). snd can be a filename, 
       fvals = mus_vct_data(v);
       mus_file_to_array(filename, chan, beg, len, fvals);
 
-      return(v);
+      return(vct_to_xen(v));
     }
 
   /* -------- a mix -------- */

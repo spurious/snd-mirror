@@ -825,15 +825,15 @@ spectral envelopes) following interp (an env between 0 and 1)"
 	((= i len))
       (let ((pan (env e)))
 	(set! (new-data i) 
-	      (+ (* (- 1.0 pan) (data1 i))
-		 (* pan (data2 i))))))
+	      (+ (* (- 1.0 pan) (float-vector-ref data1 i))
+		 (* pan (float-vector-ref data2 i))))))
     (float-vector->channel new-data 0 (- len 1) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
 
 
 (define* (filter-fft flt (normalize #t) snd chn)
   "(filter-fft flt normalize snd chn) gets the spectrum of all the data in the given channel, \
 applies the function 'flt' to it, then inverse ffts.  'flt' should take one argument, the \
-current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is like fft-squelch."
+current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 y))) is like fft-squelch."
   (let* ((len (frames snd chn))
 	 (mx (maxamp snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))

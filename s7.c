@@ -58601,6 +58601,67 @@ OP_LET1: 75475 (4.677476)
 	
 	
       SET_PAIR_P_3:
+	/*
+452009: ((f-out c) (filtered-comb-bank (fcmb-c c) (delay (predelays c) (f-in c))))
+452009: ((f-out c) (all-pass-bank (allp-c c) (f-out c)))
+382346: ((n arg1) arg2)
+196616: ((rdata i) (* val (rdata i)))
+196616: ((rdata j) (* val (rdata j)))
+196616: ((idata i) (* val (idata i)))
+196616: ((idata j) (* val (idata j)))
+194106: ((out-data i) (let ((val (granulate gr))) (set! (mus-increment gr) (env ge))...
+193164: ((wk2 j) (- (wk2 (+ j 1)) (* (wkm k) (wk1 (+ j 1)))))
+193164: ((wk1 j) (- (wk1 j) (* (wkm k) (wk2 j))))
+171391: ((inputs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))
+171138: ((spectr rk) sp)
+160255: ((amp-incs j) (* (fft-window i) (data i)))
+134390: ((gen 0) (min size (max 0 (+ ctr (if up 1 -1)))))
+134358: ((rl ctr) (read-sample read-ahead))
+131067: ((rl i) rval)
+131067: ((rl k) rval)
+131067: ((im i) ival)
+131067: ((im k) (- ival))
+130332: ((rdata i) 0.0)
+130332: ((rdata j) 0.0)
+130332: ((idata i) 0.0)
+130332: ((idata j) 0.0)
+110248: ((dline2 j) (+ x (* (coeffs j) (- (dline1 k) x))))
+110248: ((dline1 k) temp1)
+105847: ((coeffs j) (/ (- tk tj) (+ tk tj)))
+105568: ((out-data j) (src rd (rand-interp rn)))
+101887: ((freqs k) (* 0.5 (+ (* pscl phasediff) (* k kscl))))
+101655: ((out-data i) (src sr (* osamp (oscil os))))
+101655: ((new-data i) (+ (* (- 1.0 pan) (float-vector-ref data1 i)) (* pan...
+98300: ((im i) (func (im i)))
+98300: ((im j) (- (im i)))
+94927: ((out-data j) (formant-bank formants (ncos pulse)))
+88239: ((grain k) (comb-bank cs (original-grain k)))
+80127: ((new-freq-incs i) (+ (* diff scl) ks))
+79871: ((x0 i) (+ (* p1 (x1 i)) (* p2 (+ (circle-ref x1 (- i 1)) (circle-ref x1 (+ i...
+72877: ((out-data i) (convolve cnv))
+67427: ((d i) (- (wkm i) (* (d k) (wkm (- k i 1)))))
+55124: ((mus-length exA) sl)
+54548: ((frame2 k) (read-sample input2))
+54548: ((frame1 k) (read-sample input1))
+51034: ((vals i) (* (vals i) (env e)))
+50943: ((average-data k) (+ (average-data k) (* (rl k) (rl k)) (* (im k) (im k))))
+50943: ((rl k) (rd))
+50836: ((data 0) y)
+50828: ((v1 0) n)
+50828: ((v1 1) (* n 3))
+50827: ((vect 0) (* y 2))
+50827: ((vect 1) (* y 2))
+50827: ((bins bin) (+ (bins bin) 1))
+49999: ((data loc) (* val short->float))
+40352: ((cur 0) a2)
+40352: ((cur 1) a0)
+40352: ((cur 1) a2)
+40352: ((cur 1) a1)
+32705: ((rdata i) (* scl (rdata i)))
+32705: ((rdata j) (* scl (rdata j)))
+32705: ((idata i) (* scl (idata i)))
+32705: ((idata j) (* scl (idata j)))
+	 */
 	switch (type(obj))
 	  {
 	  case T_C_OBJECT:
@@ -68862,7 +68923,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4
- * calls         |   275  207  175  115   89   71   53   53|  54   49.8
+ * calls         |   275  207  175  115   89   71   53   53|  54   49.3
  */
 
 /* all_x in snd-sig? all_x_c_aa|a?
@@ -68878,5 +68939,13 @@ int main(int argc, char **argv)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  * TODO: doc/test mus-set-formant-frequency (the -and-radius part is also not documented or tested or even used??)
- * TODO: doc mus-sound-preload
+ * TODO: doc mus-sound-preload, test the gc process, check preload in forth/ruby
+ * TODO: track down the nco2|4|nrcos peak bugs:
+ *    40005: ;noddcos max: 1.004013843008269
+ *    40014: ;noddssb max: 1.002747510305872
+ *    40083: ;nrcos with scaler max: 4.771335953920193
+ *    40092: ;ncos2 max: 1.002540239164211
+ *    40101: ;ncos4 max: 1.005086931143433
+ *    40110: ;npcos max: 1.002540239164211
+ *    40470: ;nxycos max: 1.002529880470634
  */

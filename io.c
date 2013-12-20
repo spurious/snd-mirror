@@ -1595,6 +1595,17 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  break;
 			  
 			case MUS_LFLOAT:
+			  while (bufnow <= bufend4)
+			    {
+			      (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
+			      jchar += siz_chans;
+			      (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
+			      jchar += siz_chans;
+			      (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
+			      jchar += siz_chans;
+			      (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
+			      jchar += siz_chans;
+			    }
 			  for (; bufnow <= bufend; jchar += siz_chans) 
 			    (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
 			  break;
@@ -1605,6 +1616,17 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  break;
 			  
 			case MUS_LDOUBLE:   
+			  while (bufnow <= bufend4)
+			    {
+			      (*bufnow++) = (mus_float_t)(little_endian_double(jchar));
+			      jchar += siz_chans;
+			      (*bufnow++) = (mus_float_t)(little_endian_double(jchar));
+			      jchar += siz_chans;
+			      (*bufnow++) = (mus_float_t)(little_endian_double(jchar));
+			      jchar += siz_chans;
+			      (*bufnow++) = (mus_float_t)(little_endian_double(jchar));
+			      jchar += siz_chans;
+			    }
 			  for (; bufnow <= bufend; jchar += siz_chans) 
 			    (*bufnow++) = (mus_float_t)(little_endian_double(jchar));
 			  break;

@@ -39162,7 +39162,7 @@ EDITS: 1
     (set! *clm-verbose* #f)
     (set! *clm-statistics* old-stats)
     (set! *clm-play* #f)
-    (set! *clm-data-format* mus-bshort)
+    (set! *clm-data-format* mus-ldouble)
     (set! *clm-header-type* mus-next)
     (set! *clm-delete-reverb* #f)
     (set! *clm-reverb* #f)
@@ -46697,26 +46697,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-17-Dec-13:
-50,213,485,974
-6,514,947,435  ???:sin [/lib64/libm-2.12.so]
-6,333,025,848  s7.c:eval [/home/bil/gtk-snd/snd]
-2,433,131,291  ???:cos [/lib64/libm-2.12.so]
-2,206,284,889  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
-1,273,912,625  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,223,417,598  s7.c:gc [/home/bil/gtk-snd/snd]
-1,148,093,161  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-1,119,509,085  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+20-Dec-13:
+49,348,988,293
+6,512,817,842  ???:sin [/lib64/libm-2.12.so]
+6,284,450,417  s7.c:eval [/home/bil/gtk-snd/snd]
+2,434,097,879  ???:cos [/lib64/libm-2.12.so]
+2,196,906,090  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+1,207,554,593  s7.c:gc [/home/bil/gtk-snd/snd]
+1,134,917,074  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,119,515,381  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+1,114,745,394  s7.c:eval'2 [/home/bil/gtk-snd/snd]
   911,248,552  clm.c:fir_8 [/home/bil/gtk-snd/snd]
-  900,921,572  ???:t2_32 [/home/bil/gtk-snd/snd]
-  877,841,154  clm.c:mus_formant_bank [/home/bil/gtk-snd/snd]
-  836,542,600  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  805,011,513  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
-  785,726,072  ???:t2_64 [/home/bil/gtk-snd/snd]
+  890,437,180  ???:t2_32 [/home/bil/gtk-snd/snd]
+  782,408,943  ???:t2_64 [/home/bil/gtk-snd/snd]
+  774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  716,120,071  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  610,053,812  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  530,205,685  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
- 
+  641,850,595  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  600,078,902  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  487,174,957  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
+  449,776,264  ???:n1_64 [/home/bil/gtk-snd/snd]
+  446,218,353  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+
 |#
 
 
