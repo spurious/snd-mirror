@@ -8531,6 +8531,7 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 		      arg = s7_caadar(source);
 		      if (s7_is_pair(res))
 			{
+#if USE_SND
 			  if ((arg == s7_caddr(res)) &&
 			      (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
 			    {
@@ -8539,6 +8540,7 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 			      mus_generator_set_feeder(gn->gen, as_needed_input_sampler_with_direction);
 			      return(read_sample_with_direction((snd_fd *)(gn->vcts[MUS_INPUT_DATA]), direction));
 			    }
+#endif
 			  if (!s7_tree_memq(s7, arg, res))
 			    {
 			      gf *g;
@@ -17627,17 +17629,7 @@ static s7_pointer clm_make_function_no_choice(s7_scheme *sc, const char *name, s
   s7_pointer fin;
   fin = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
   s7_function_set_class(fin, base_f);
-  s7_function_set_returns_temp(fin);
-  return(fin);
-}
-
-static s7_pointer clm_make_function_not_temp(s7_scheme *sc, const char *name, s7_function f, 
-					     int required_args, int optional_args, bool rest_arg, const char *doc,
-					     s7_pointer base_f)
-{		
-  s7_pointer fin;
-  fin = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
-  s7_function_set_class(fin, base_f);
+  /* s7_function_set_returns_temp(fin); */ /* mul_s_temp etc -- not necessarily a temp, adding this makes only a small difference in speed */
   return(fin);
 }
 
@@ -18463,9 +18455,9 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "move-sound");
   s7_function_set_chooser(sc, f, move_sound_chooser);
-  indirect_move_sound_3 = clm_make_function_not_temp(sc, "move-sound", g_indirect_move_sound_3, 3, 0, false, "move-sound optimization", f);
+  indirect_move_sound_3 = clm_make_function_no_choice(sc, "move-sound", g_indirect_move_sound_3, 3, 0, false, "move-sound optimization", f);
 #if (!WITH_GMP)
-  indirect_move_sound_3_looped = clm_make_function_not_temp(sc, "move-sound", g_indirect_move_sound_3_looped, 3, 0, false, "move-sound optimization", f);
+  indirect_move_sound_3_looped = clm_make_function_no_choice(sc, "move-sound", g_indirect_move_sound_3_looped, 3, 0, false, "move-sound optimization", f);
   s7_function_set_looped(indirect_move_sound_3, indirect_move_sound_3_looped);
 #endif
 
@@ -18475,18 +18467,18 @@ static void init_choosers(s7_scheme *sc)
 
   fm_violin_2 = clm_make_function_no_choice(sc, "locsig", g_fm_violin_2, 3, 0, false, "fm-violin optimization", f);
   fm_violin_4 = clm_make_function_no_choice(sc, "locsig", g_fm_violin_4, 3, 0, false, "fm-violin optimization", f);
-  indirect_locsig_3 = clm_make_function_not_temp(sc, "locsig", g_indirect_locsig_3, 3, 0, false, "locsig optimization", f);
+  indirect_locsig_3 = clm_make_function_no_choice(sc, "locsig", g_indirect_locsig_3, 3, 0, false, "locsig optimization", f);
 
 #if (!WITH_GMP)
-  indirect_locsig_3_looped = clm_make_function_not_temp(sc, "locsig", g_indirect_locsig_3_looped, 3, 0, false, "locsig optimization", f);
+  indirect_locsig_3_looped = clm_make_function_no_choice(sc, "locsig", g_indirect_locsig_3_looped, 3, 0, false, "locsig optimization", f);
   s7_function_set_looped(indirect_locsig_3, indirect_locsig_3_looped);
 
-  fm_violin_2_looped = clm_make_function_not_temp(sc, "locsig", g_fm_violin_2_looped, 3, 0, false, "fm-violin optimization", f);
+  fm_violin_2_looped = clm_make_function_no_choice(sc, "locsig", g_fm_violin_2_looped, 3, 0, false, "fm-violin optimization", f);
   s7_function_set_let_looped(fm_violin_2, fm_violin_2_looped);
-  fm_violin_4_looped = clm_make_function_not_temp(sc, "locsig", g_fm_violin_4_looped, 3, 0, false, "fm-violin optimization", f);
+  fm_violin_4_looped = clm_make_function_no_choice(sc, "locsig", g_fm_violin_4_looped, 3, 0, false, "fm-violin optimization", f);
   s7_function_set_let_looped(fm_violin_4, fm_violin_4_looped);
 
-  locsig_let_looped = clm_make_function_not_temp(sc, "locsig", g_locsig_let_looped, 3, 0, false, "locsig optimization", f);
+  locsig_let_looped = clm_make_function_no_choice(sc, "locsig", g_locsig_let_looped, 3, 0, false, "locsig optimization", f);
   s7_function_set_let_looped(indirect_locsig_3, locsig_let_looped);
 #endif
 
@@ -18495,12 +18487,12 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_chooser(sc, f, out_bank_chooser);
 
   
-  jc_reverb_out = clm_make_function_not_temp(sc, "out-bank", g_jc_reverb_out, 3, 0, false, "out-bank optimization", f);
-  nrev_out = clm_make_function_not_temp(sc, "out-bank", g_nrev_out, 3, 0, false, "out-bank optimization", f);
+  jc_reverb_out = clm_make_function_no_choice(sc, "out-bank", g_jc_reverb_out, 3, 0, false, "out-bank optimization", f);
+  nrev_out = clm_make_function_no_choice(sc, "out-bank", g_nrev_out, 3, 0, false, "out-bank optimization", f);
 #if (!WITH_GMP)
-  jc_reverb_out_looped = clm_make_function_not_temp(sc, "out-bank", g_jc_reverb_out_looped, 3, 0, false, "out-bank optimization", f);
+  jc_reverb_out_looped = clm_make_function_no_choice(sc, "out-bank", g_jc_reverb_out_looped, 3, 0, false, "out-bank optimization", f);
   s7_function_set_looped(jc_reverb_out, jc_reverb_out_looped);
-  nrev_out_looped = clm_make_function_not_temp(sc, "out-bank", g_nrev_out_looped, 3, 0, false, "out-bank optimization", f);
+  nrev_out_looped = clm_make_function_no_choice(sc, "out-bank", g_nrev_out_looped, 3, 0, false, "out-bank optimization", f);
   s7_function_set_looped(nrev_out, nrev_out_looped);
 #endif
 
@@ -18509,46 +18501,46 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_ex_parser(f, outa_ex_parser);
   s7_function_set_step_safe(f);
 
-  outa_mul_s_delay = clm_make_function_not_temp(sc, "outa", g_outa_mul_s_delay, 2, 0, false, "outa optimization", f);
-  outa_mul_s_env = clm_make_function_not_temp(sc, "outa", g_outa_mul_s_env, 2, 0, false, "outa optimization", f);
-  outa_env_polywave_env = clm_make_function_not_temp(sc, "outa", g_outa_env_polywave_env, 2, 0, false, "outa optimization", f);
-  outa_env_polywave_env_ri = clm_make_function_not_temp(sc, "outa", g_outa_env_polywave_env_ri, 2, 0, false, "outa optimization", f);
-  outa_env_oscil_env = clm_make_function_not_temp(sc, "outa", g_outa_env_oscil_env, 2, 0, false, "outa optimization", f);
+  outa_mul_s_delay = clm_make_function_no_choice(sc, "outa", g_outa_mul_s_delay, 2, 0, false, "outa optimization", f);
+  outa_mul_s_env = clm_make_function_no_choice(sc, "outa", g_outa_mul_s_env, 2, 0, false, "outa optimization", f);
+  outa_env_polywave_env = clm_make_function_no_choice(sc, "outa", g_outa_env_polywave_env, 2, 0, false, "outa optimization", f);
+  outa_env_polywave_env_ri = clm_make_function_no_choice(sc, "outa", g_outa_env_polywave_env_ri, 2, 0, false, "outa optimization", f);
+  outa_env_oscil_env = clm_make_function_no_choice(sc, "outa", g_outa_env_oscil_env, 2, 0, false, "outa optimization", f);
 
-  outa_two = clm_make_function_not_temp(sc, "outa", g_outa_two, 2, 0, false, "outa optimization", f);
-  indirect_outa_add_2 = clm_make_function_not_temp(sc, "outa", g_indirect_outa_add_2, 2, 0, false, "outa optimization", f);
-  indirect_outa_sub_2 = clm_make_function_not_temp(sc, "outa", g_indirect_outa_sub_2, 2, 0, false, "outa optimization", f);
-  indirect_outa_ss = clm_make_function_not_temp(sc, "outa", g_indirect_outa_ss, 2, 0, false, "outa optimization", f);
+  outa_two = clm_make_function_no_choice(sc, "outa", g_outa_two, 2, 0, false, "outa optimization", f);
+  indirect_outa_add_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_add_2, 2, 0, false, "outa optimization", f);
+  indirect_outa_sub_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_sub_2, 2, 0, false, "outa optimization", f);
+  indirect_outa_ss = clm_make_function_no_choice(sc, "outa", g_indirect_outa_ss, 2, 0, false, "outa optimization", f);
 
-  outa_ss = clm_make_function_not_temp(sc, "outa", g_outa_ss, 2, 0, false, "outa optimization", f);
-  indirect_outa_2 = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2, 2, 0, false, "outa optimization", f);
-  indirect_outa_2_temp = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp, 2, 0, false, "outa optimization", f);
-  indirect_outa_2_env = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_env, 2, 0, false, "outa optimization", f);
-  outa_2_temp_simple = clm_make_function_not_temp(sc, "outa", g_outa_2_temp_simple, 3, 0, false, "outa optimization", f);
-  outa_2_temp_sg = clm_make_function_not_temp(sc, "outa", g_outa_2_temp_sg, 3, 0, false, "outa optimization", f);
-  outa_2_temp_eg = clm_make_function_not_temp(sc, "outa", g_outa_2_temp_eg, 3, 0, false, "outa optimization", f);
+  outa_ss = clm_make_function_no_choice(sc, "outa", g_outa_ss, 2, 0, false, "outa optimization", f);
+  indirect_outa_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2, 2, 0, false, "outa optimization", f);
+  indirect_outa_2_temp = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2_temp, 2, 0, false, "outa optimization", f);
+  indirect_outa_2_env = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2_env, 2, 0, false, "outa optimization", f);
+  outa_2_temp_simple = clm_make_function_no_choice(sc, "outa", g_outa_2_temp_simple, 3, 0, false, "outa optimization", f);
+  outa_2_temp_sg = clm_make_function_no_choice(sc, "outa", g_outa_2_temp_sg, 3, 0, false, "outa optimization", f);
+  outa_2_temp_eg = clm_make_function_no_choice(sc, "outa", g_outa_2_temp_eg, 3, 0, false, "outa optimization", f);
 
 #if (!WITH_GMP)
-  indirect_outa_2_env_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_env_looped, 2, 0, false, "outa optimization", f);
+  indirect_outa_2_env_looped = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2_env_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(indirect_outa_2_env, indirect_outa_2_env_looped);
-  indirect_outa_2_env_let_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_env_let_looped, 3, 0, false, "outa optimization", f);
+  indirect_outa_2_env_let_looped = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2_env_let_looped, 3, 0, false, "outa optimization", f);
   s7_function_set_let_looped(indirect_outa_2_env, indirect_outa_2_env_let_looped);
 
-  indirect_outa_2_temp_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp_looped, 2, 0, false, "outa optimization", f);
+  indirect_outa_2_temp_looped = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2_temp_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(indirect_outa_2_temp, indirect_outa_2_temp_looped);
-  indirect_outa_2_temp_let_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp_let_looped, 3, 0, false, "outa optimization", f);
+  indirect_outa_2_temp_let_looped = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2_temp_let_looped, 3, 0, false, "outa optimization", f);
   s7_function_set_let_looped(indirect_outa_2_temp, indirect_outa_2_temp_let_looped);
 
-  indirect_outa_two_let_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_two_let_looped, 3, 0, false, "outa optimization", f);
+  indirect_outa_two_let_looped = clm_make_function_no_choice(sc, "outa", g_indirect_outa_two_let_looped, 3, 0, false, "outa optimization", f);
   s7_function_set_let_looped(outa_two, indirect_outa_two_let_looped);
-  indirect_outa_two_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_two_looped, 3, 0, false, "outa optimization", f);
+  indirect_outa_two_looped = clm_make_function_no_choice(sc, "outa", g_indirect_outa_two_looped, 3, 0, false, "outa optimization", f);
   s7_function_set_looped(outa_two, indirect_outa_two_looped);
 
-  outa_env_oscil_env_looped = clm_make_function_not_temp(sc, "outa", g_outa_env_oscil_env_looped, 2, 0, false, "outa optimization", f);
+  outa_env_oscil_env_looped = clm_make_function_no_choice(sc, "outa", g_outa_env_oscil_env_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(outa_env_oscil_env, outa_env_oscil_env_looped);
-  outa_env_polywave_env_looped = clm_make_function_not_temp(sc, "outa", g_outa_env_polywave_env_looped, 2, 0, false, "outa optimization", f);
+  outa_env_polywave_env_looped = clm_make_function_no_choice(sc, "outa", g_outa_env_polywave_env_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(outa_env_polywave_env, outa_env_polywave_env_looped);
-  outa_env_polywave_env_ri_looped = clm_make_function_not_temp(sc, "outa", g_outa_env_polywave_env_ri_looped, 2, 0, false, "outa optimization", f);
+  outa_env_polywave_env_ri_looped = clm_make_function_no_choice(sc, "outa", g_outa_env_polywave_env_ri_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(outa_env_polywave_env_ri, outa_env_polywave_env_ri_looped);
 #endif  
 
@@ -18556,10 +18548,10 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "outb");
   s7_function_set_chooser(sc, f, outb_chooser);
 
-  outb_mul_s_delay = clm_make_function_not_temp(sc, "outb", g_outb_mul_s_delay, 2, 0, false, "outb optimization", f);
-  outb_two = clm_make_function_not_temp(sc, "outb", g_outb_two, 2, 0, false, "outb optimization", f);
+  outb_mul_s_delay = clm_make_function_no_choice(sc, "outb", g_outb_mul_s_delay, 2, 0, false, "outb optimization", f);
+  outb_two = clm_make_function_no_choice(sc, "outb", g_outb_two, 2, 0, false, "outb optimization", f);
 #if (!WITH_GMP)
-  indirect_outb_two_looped = clm_make_function_not_temp(sc, "outb", g_indirect_outb_two_looped, 3, 0, false, "outb optimization", f);
+  indirect_outb_two_looped = clm_make_function_no_choice(sc, "outb", g_indirect_outb_two_looped, 3, 0, false, "outb optimization", f);
   s7_function_set_looped(outb_two, indirect_outb_two_looped);
 #endif
 

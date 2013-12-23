@@ -13508,7 +13508,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer subtract_1, subtract_s1, subtract_cs1, subtract_2, subtract_csn, subtract_ran;
+static s7_pointer subtract_1, subtract_s1, subtract_cs1, subtract_2, subtract_csn;
 
 static s7_pointer g_subtract_1(s7_scheme *sc, s7_pointer args)
 {
@@ -13689,15 +13689,6 @@ static s7_pointer g_subtract_csn(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
-static double next_random(s7_rng_t *r);
-static s7_pointer g_subtract_ran(s7_scheme *sc, s7_pointer args)
-{
-  s7_Double x, y;
-  x = real(cadr(args));
-  y = real(cadr(car(args)));
-  return(make_real(sc, (y * next_random(sc->default_rng)) - x));
-}
-
 static s7_pointer subtract_sf;
 static s7_pointer g_subtract_sf(s7_scheme *sc, s7_pointer args)
 {
@@ -13768,6 +13759,13 @@ static s7_pointer g_subtract_sf_f(s7_scheme *sc, s7_pointer args)
   return(s);
 }
 
+static s7_pointer subtract_2_temp;
+static s7_pointer g_subtract_2_temp(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer arg1;
+  arg1 = car(args);
+  return(s7_remake_real(sc, arg1, real(arg1) - real(cadr(args))));
+}
 
 
 
@@ -14849,6 +14847,23 @@ static s7_pointer g_divide_1r(s7_scheme *sc, s7_pointer args)
       if (rl == 0.0)
 	return(division_by_zero_error(sc, sc->DIVIDE, args));
       return(make_real(sc, 1.0 / rl));
+    }
+  return(g_divide(sc, args));
+}
+
+
+static s7_pointer divide_temp_s;
+static s7_pointer g_divide_temp_s(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer arg1, arg2;
+
+  arg1 = car(args);
+  arg2 = cadr(args);
+  if (is_simple_real(arg2))
+    {
+      if (real(arg2) == 0.0)
+	return(division_by_zero_error(sc, sc->DIVIDE, args));
+      return(s7_remake_real(sc, arg1, real(arg1) / real(arg2)));
     }
   return(g_divide(sc, args));
 }
@@ -40862,6 +40877,7 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
   if (args > 2)
     {
       s7_pointer arg1;
+
       arg1 = cadr(expr);
       if ((is_pair(arg1)) &&
 	  (is_optimized(arg1)) &&
@@ -40928,16 +40944,14 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(subtract_csn);
 	}
-      if ((type(arg2) == T_REAL) &&
-	  (is_pair(arg1)) &&
+
+      if ((is_pair(arg1)) &&
 	  (is_optimized(arg1)) &&
-	  (optimize_data(arg1) == HOP_SAFE_C_C) &&
-	  (car(arg1) == sc->RANDOM) &&
-	  (type(cadr(arg1)) == T_REAL))
-	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(subtract_ran);
-	}
+	  (is_pair(arg2)) &&
+	  (is_optimized(arg2)) &&
+	  (s7_function_returns_temp(sc, arg1)) &&
+	  (s7_function_returns_temp(sc, arg2)))
+	return(subtract_2_temp);
 
       /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
       return(subtract_2);
@@ -40962,12 +40976,20 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
       if ((type(arg1) == T_REAL) &&
 	  (real(arg1) == 1.0))
 	return(divide_1r);
+
+      if ((is_pair(arg1)) &&
+	  (is_optimized(arg1)) &&
+	  (s7_function_returns_temp(sc, arg1)))
+	return(divide_temp_s); /* "s" = anything */
+      /*
+      fprintf(stderr, "%d %s\n", 
+	      ((is_pair(arg1)) &&
+	       (is_optimized(arg1)) &&
+	       (s7_function_returns_temp(sc, arg1))),
+	      DISPLAY_80(expr));
+      */
     }
 
-  /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
-  /* si sf ii ff fs -- c as div case? */
-  /*
-   */
   return(f);
 }
 #endif
@@ -41726,10 +41748,10 @@ static void init_choosers(s7_scheme *sc)
   subtract_s1 = make_function_with_class(sc, f, "-", g_subtract_s1, 2, 0, false, "- optimization");
   subtract_cs1 = make_function_with_class(sc, f, "-", g_subtract_cs1, 2, 0, false, "- optimization");
   subtract_csn = make_function_with_class(sc, f, "-", g_subtract_csn, 2, 0, false, "- optimization");
-  subtract_ran = make_temp_function_with_class(sc, f, "-", g_subtract_ran, 2, 0, false, "- optimization");
   subtract_sf = make_function_with_class(sc, f, "-", g_subtract_sf, 2, 0, false, "- optimization");
   subtract_fs = make_function_with_class(sc, f, "-", g_subtract_fs, 2, 0, false, "- optimization");
   subtract_sf_f = make_function_with_class(sc, f, "-", g_subtract_sf_f, 2, 0, false, "- optimization");
+  subtract_2_temp = make_temp_function_with_class(sc, f, "-", g_subtract_2_temp, 2, 0, false, "- optimization");
 
 
   /* * */
@@ -41760,6 +41782,7 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->DIVIDE, divide_chooser);
   invert_1 = make_function_with_class(sc, f, "/", g_invert_1, 1, 0, false, "/ optimization");
   divide_1r = make_function_with_class(sc, f, "/", g_divide_1r, 2, 0, false, "/ optimization");
+  divide_temp_s = make_temp_function_with_class(sc, f, "/", g_divide_temp_s, 2, 0, false, "/ optimization");
 #endif
 
 
@@ -51845,7 +51868,7 @@ OP_SAFE_IF_IS_SYMBOL_P: 30 (0.000020)
       if (is_optimized(sc->code)) 
 	{
 	  s7_pointer code;
-	  
+
 	OPT_EVAL:
 	  code = sc->code;
 	  sc->cur_code = code;
@@ -68924,6 +68947,7 @@ int main(int argc, char **argv)
 
 /* all_x in snd-sig? all_x_c_aa|a?
  * letrec* built-in (not macro), perhaps also when and unless
+ * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
@@ -68932,7 +68956,6 @@ int main(int argc, char **argv)
  * TODO: snd-test read-sample-with-direction
  * TODO: safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
- * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  * TODO: test mus-set-formant-frequency 
  * the outa_loop stuff could be procedurized etc
  */

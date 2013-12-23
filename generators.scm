@@ -4356,6 +4356,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'dc) (bes-i0 (g 'r)))
 			       (set! (g 'norm) (- (exp (g 'r)) (g 'dc)))
+			       (set! (g 'inorm) (/ (g 'norm)))
 			       g)
 	       :methods (list
 			 (cons 'mus-scaler
@@ -4365,9 +4366,10 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (g 'r) val)
 				 (set! (g 'dc) (bes-i0 val))
 				 (set! (g 'norm) (- (exp val) (g 'dc)))
+				 (set! (g 'inorm) (/ (g 'norm)))
 				 val)))))
   (frequency *clm-default-frequency*) (r 1.0) (angle 0.0)
-  (dc 0.0) (norm 1.0) fm)
+  (dc 0.0) (norm 1.0) inorm fm)
 
 
 (define* (izcos gen (fm 0.0))
@@ -4380,9 +4382,7 @@ index 10 (so 10/2 is the bes-jn arg):
       (set! angle (+ angle fm frequency))
       (if (< (abs norm) nearly-zero)
 	  1.0
-	  (/ (- (exp (* r (cos x)))
-		dc)
-	     norm)))))
+	  (* (- (exp (* r (cos x))) dc) inorm)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -6442,6 +6442,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (out1 #f) (out2 #f) (outloc 0)
   (ri #f) samp input)
 
+(define 1/sqrt2 (/ 1.0 (sqrt 2.0)))
 
 (define (flocsig gen samp input)
   ;; signal position and per-channel-delay depends on rand-interp
@@ -6452,10 +6453,10 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (pos (min (max (+ rpos offset) (- amplitude)) amplitude))
 	   (amp1 (if (<= pos -1.0) 1.0
 		     (if (>= pos 1.0) 0.0
-			 (/ (sqrt (- 1.0 pos)) (sqrt 2.0)))))
+			 (* (sqrt (- 1.0 pos)) 1/sqrt2))))
 	   (amp2 (if (<= pos -1.0) 0.0
 		     (if (>= pos 1.0) 1.0
-			 (/ (sqrt (+ 1.0 pos)) (sqrt 2.0)))))
+			 (* (sqrt (+ 1.0 pos)) 1/sqrt2))))
 	   (dly1 (abs (min 0.0 pos)))
 	   (frac1 (- dly1 (floor dly1)))
 	   (dly2 (max 0.0 pos))
