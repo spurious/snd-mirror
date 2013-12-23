@@ -242,9 +242,7 @@ typedef struct {
   mus_float_t *maxamps;
   mus_long_t *maxtimes;
   int maxamps_size; /* we can't depend on sf->chans here because the user could set chans to some bogus value */
-#if WITH_PRELOAD
   mus_float_t **saved_data;
-#endif
 } sound_file;
 
 static int *sound_table_sizes = NULL;
@@ -268,10 +266,7 @@ static int sound_file_hash_index(const char *name)
 }
 
 
-#if WITH_PRELOAD
 void scan_io_fds_for_saved_data(mus_float_t **data);
-#endif
-
 static void free_sound_file(sound_file *sf)
 {
   if (sf)
@@ -288,7 +283,6 @@ static void free_sound_file(sound_file *sf)
       if (sf->maxamps) free(sf->maxamps);
       if (sf->maxtimes) free(sf->maxtimes);
       sf->maxamps_size = 0;
-#if WITH_PRELOAD
       if (sf->saved_data)
 	{
 	  int i;
@@ -299,7 +293,6 @@ static void free_sound_file(sound_file *sf)
 	  free(sf->saved_data);
 	  sf->saved_data = NULL;
 	}
-#endif
       free(sf);
     }
 }
@@ -344,12 +337,11 @@ static sound_file *add_to_sound_table(const char *name)
   sf = sound_table[pos];
   sf->table_pos = pos;
   sf->table_index = index;
-  sf->file_name = (char *)calloc(len + 1, sizeof(char));
+  sf->file_name = (char *)malloc((len + 1) * sizeof(char));
   strcpy(sf->file_name, name);
+  sf->file_name[len] = 0;
   sf->file_name_length = len;
-#if WITH_PRELOAD
   sf->saved_data = NULL;
-#endif
   return(sf);
 }
 
@@ -858,7 +850,6 @@ float mus_sound_duration(const char *arg)
 }
 
 
-#if WITH_PRELOAD
 mus_float_t **mus_sound_saved_data(const char *arg) 
 {
   /* slightly tricky -- we don't want to trigger a sound_file table entry here!
@@ -876,7 +867,6 @@ void mus_sound_set_saved_data(const char *arg, mus_float_t **data)
   if (sf)
     sf->saved_data = data;
 }
-#endif
 
 
 int *mus_sound_loop_info(const char *arg)
@@ -1050,10 +1040,8 @@ int mus_sound_open_input(const char *arg)
 	    {
 	      mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);
 	      lseek(fd, sf->data_location, SEEK_SET);
-#if WITH_PRELOAD
 	      if (sf->saved_data)
 		mus_file_save_data(fd, sf->samples / sf->chans, sf->saved_data);
-#endif
 	    }
 	}
     }

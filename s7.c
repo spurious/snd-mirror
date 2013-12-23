@@ -406,7 +406,7 @@ enum {OP_NO_OP,
       OP_SET_SYMBOL_UNKNOWN_S,
       OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA, OP_SET_PAIR_UNKNOWN_S,
       OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
-      OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
+      OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE, OP_SET_FV_SCALED,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
       OP_DEFINE_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
@@ -503,7 +503,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "quote", "lambda", "let", "case", 
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
    "lambda*", "do", "define", "define*", "define",
    "define", "define-macro",
@@ -589,7 +589,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SET_SYMBOL_UNKNOWN_S",
   "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_A", "OP_SET_PAIR_P", "OP_SET_PAIR_ZA", "OP_SET_PAIR_UNKNOWN_S",
   "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_ENV_S", "OP_SET_ENV_ALL_X",
-  "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE",
+  "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE", "OP_SET_FV_SCALED",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", "OP_DEFINE_FUNCHECKED",
   "OP_DEFINE_WITH_ACCESSOR", "OP_DEFINE_MACRO_WITH_ACCESSOR",
@@ -1319,7 +1319,7 @@ struct s7_scheme {
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_ALL_X;
   s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_UNKNOWN_S;
-  s7_pointer SET_SYMBOL_SAFE_C, SET_PAIR_UNKNOWN_S;
+  s7_pointer SET_SYMBOL_SAFE_C, SET_PAIR_UNKNOWN_S, SET_FV_SCALED;
   s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_ZA, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
@@ -19039,8 +19039,9 @@ static char *make_permanent_string(const char *str)
   char *x;
   int len;
   len = safe_strlen(str);
-  x = (char *)calloc(len + 1, sizeof(char)); 
+  x = (char *)malloc((len + 1) * sizeof(char)); 
   memcpy((void *)x, (void *)str, len);
+  x[len] = 0;
   return(x);
 }
 
@@ -19054,9 +19055,12 @@ s7_pointer s7_make_permanent_string(const char *str)
   set_type(x, T_STRING | T_IMMUTABLE);
   if (str)
     {
-      string_length(x) = safe_strlen(str);
-      string_value(x) = (char *)calloc(string_length(x) + 1, sizeof(char)); 
-      memcpy((void *)string_value(x), (void *)str, string_length(x)); 
+      unsigned int len;
+      len = safe_strlen(str);
+      string_length(x) = len;
+      string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
+      memcpy((void *)string_value(x), (void *)str, len);
+      string_value(x)[len] = 0;
     }
   else 
     {
@@ -22838,7 +22842,7 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
 	{
 	  int i;
 	  sc->autoload_names_top *= 2;
-	  sc->autoload_names = (const char ***)realloc(sc->autoload_names, sc->autoload_names_top * sizeof(const char *));
+	  sc->autoload_names = (const char ***)realloc(sc->autoload_names, sc->autoload_names_top * sizeof(const char **));
 	  sc->autoload_names_sizes = (int *)realloc(sc->autoload_names_sizes, sc->autoload_names_top * sizeof(int));
 	  sc->autoloaded_already = (bool **)realloc(sc->autoloaded_already, sc->autoload_names_top * sizeof(bool *));
 	  for (i = sc->autoload_names_loc; i < sc->autoload_names_top; i++)
@@ -33836,7 +33840,8 @@ static void set_safe_do_level(s7_scheme *sc, int new_val)
     finder = find_safe_do_symbol_or_bust; 
   /* this never happens of course, but by including this crazy code, we get about 10% speed up overall in gcc 4.4 and 4.7
    *   all the added time valgrind reports in find_symbol_or_bust (2G to 5G).  The actual call counts are the same!  It looks
-   *   like this line makes it possible for gcc to inline the calls.  TODO: check this in 4.8.
+   *   like this line makes it possible for gcc to inline the calls.  If virtualbox/fc20/gcc4.8 can be trusted, this
+   *   no longer matters (the two cases are the same).
    */
   else finder = find_symbol_or_bust;
 }
@@ -47167,6 +47172,7 @@ static s7_pointer check_set(s7_scheme *sc)
     {
       if (is_pair(car(sc->code)))
 	{
+	  /* here we have (set! (...) ...) */
 	  s7_pointer inner, value;
 	  inner = car(sc->code);
 	  value = cadr(sc->code);
@@ -47187,6 +47193,7 @@ static s7_pointer check_set(s7_scheme *sc)
 		    {
 		      if (!is_pair(cadr(inner)))
 			{
+			  /* (set! (f s) ...) */
 			  if (!is_pair(value))
 			    set_syntax_op(sc->code, sc->SET_PAIR);
 			  else 
@@ -47209,10 +47216,21 @@ static s7_pointer check_set(s7_scheme *sc)
 					}
 				    }
 				}
-			      if ((is_optimized(value)) &&
-				  (optimize_data(value) == HOP_UNKNOWN_S))
+			      
+			      /* e.g. (set! (f s) ...) where f is unknown to optimizer */
+
+			      if (is_optimized(value))
 				{
-				  set_syntax_op(sc->code, sc->SET_PAIR_UNKNOWN_S);
+				  if (optimize_data(value) == HOP_UNKNOWN_S)
+				    set_syntax_op(sc->code, sc->SET_PAIR_UNKNOWN_S);
+				  else
+				    {
+				      if ((optimize_data(value) == HOP_SAFE_C_S_opVSq) &&
+					  (car(value) == sc->MULTIPLY) &&
+					  (car(inner) == caaddr(value)) &&
+					  (cadr(inner) == cadr(caddr(value))))
+					set_syntax_op(sc->code, sc->SET_FV_SCALED);
+				    }
 				}
 
 			      /* else if (is_optimized(value)) fprintf(stderr, "%s %s\n", opt_names[optimize_data(value)], DISPLAY(sc->code)); */
@@ -58402,6 +58420,44 @@ OP_LET1: 75475 (4.677476)
       
       /* -------------------------------- SET! -------------------------------- */
 
+    case OP_SET_FV_SCALED:
+      /* (set! (fv i) (* s (fv i))) -- if not float-vector, change to use set_pair_p
+       */
+      {
+	s7_pointer f1, settee, ind1, scl;
+	settee = car(sc->code);
+	f1 = find_symbol_or_bust(sc, car(settee));
+	if ((is_float_vector(f1)) &&
+	    (vector_rank(f1) == 1))
+	  {
+	    ind1 = find_symbol_or_bust(sc, cadr(settee));
+	    if (is_integer(ind1))
+	      {
+		s7_Int ind;
+		ind = integer(ind1);
+		if ((ind < 0) ||
+		    (ind >= vector_length(f1)))
+		  out_of_range(sc, sc->VECTOR_REF, small_int(2), ind1, "between 0 and vector length");	
+		else
+		  {
+		    scl = find_symbol_or_bust(sc, cadr(cadr(sc->code)));
+		    if (is_real(scl))
+		      {
+			float_vector_element(f1, ind) *= s7_number_to_real(sc, scl);
+			/* what value here?? we want to avoid the make-real allocation! */
+			if (main_stack_op(sc) == OP_BEGIN1) goto POP_BEGIN;
+			sc->value = make_real(sc, float_vector_element(f1, ind));
+			goto START;
+		      }
+		  }
+	      }
+	  }
+	/* back out of the initial guess */
+	set_syntax_op(sc->code, sc->SET_PAIR_P);
+	goto PAIR_P;
+      }
+
+
     case OP_SET_PAIR_UNKNOWN_S:
       /* look for (set! (fv1 s1) (fv2 s2)) with no complications.  If not that case, drop into SET_PAIR_P
        *
@@ -58415,10 +58471,10 @@ OP_LET1: 75475 (4.677476)
 	ind1 = find_symbol_or_bust(sc, cadr(settee));
 	f2 = find_symbol_or_bust(sc, car(value));
 	ind2 = find_symbol_or_bust(sc, cadr(value));
-	if ((type(f1) == T_FLOAT_VECTOR) &&
-	    (type(f2) == T_FLOAT_VECTOR) &&
-	    (type(ind1) == T_INTEGER) &&
-	    (type(ind2) == T_INTEGER) &&
+	if ((is_float_vector(f1)) &&
+	    (is_float_vector(f2)) &&
+	    (is_integer(ind1)) &&
+	    (is_integer(ind2)) &&
 	    (vector_rank(f1) == 1) &&
 	    (vector_rank(f2) == 1))
 	  {
@@ -58440,7 +58496,7 @@ OP_LET1: 75475 (4.677476)
 	/* fall through */
       }
       
-      
+    PAIR_P:
     case OP_SET_PAIR_P:
       /* ([set!] (car a) (cadr a)) */
       /* here the pair can't generate multiple values, or if it does, it's an error (caught below) 
@@ -58601,67 +58657,6 @@ OP_LET1: 75475 (4.677476)
 	
 	
       SET_PAIR_P_3:
-	/*
-452009: ((f-out c) (filtered-comb-bank (fcmb-c c) (delay (predelays c) (f-in c))))
-452009: ((f-out c) (all-pass-bank (allp-c c) (f-out c)))
-382346: ((n arg1) arg2)
-196616: ((rdata i) (* val (rdata i)))
-196616: ((rdata j) (* val (rdata j)))
-196616: ((idata i) (* val (idata i)))
-196616: ((idata j) (* val (idata j)))
-194106: ((out-data i) (let ((val (granulate gr))) (set! (mus-increment gr) (env ge))...
-193164: ((wk2 j) (- (wk2 (+ j 1)) (* (wkm k) (wk1 (+ j 1)))))
-193164: ((wk1 j) (- (wk1 j) (* (wkm k) (wk2 j))))
-171391: ((inputs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))
-171138: ((spectr rk) sp)
-160255: ((amp-incs j) (* (fft-window i) (data i)))
-134390: ((gen 0) (min size (max 0 (+ ctr (if up 1 -1)))))
-134358: ((rl ctr) (read-sample read-ahead))
-131067: ((rl i) rval)
-131067: ((rl k) rval)
-131067: ((im i) ival)
-131067: ((im k) (- ival))
-130332: ((rdata i) 0.0)
-130332: ((rdata j) 0.0)
-130332: ((idata i) 0.0)
-130332: ((idata j) 0.0)
-110248: ((dline2 j) (+ x (* (coeffs j) (- (dline1 k) x))))
-110248: ((dline1 k) temp1)
-105847: ((coeffs j) (/ (- tk tj) (+ tk tj)))
-105568: ((out-data j) (src rd (rand-interp rn)))
-101887: ((freqs k) (* 0.5 (+ (* pscl phasediff) (* k kscl))))
-101655: ((out-data i) (src sr (* osamp (oscil os))))
-101655: ((new-data i) (+ (* (- 1.0 pan) (float-vector-ref data1 i)) (* pan...
-98300: ((im i) (func (im i)))
-98300: ((im j) (- (im i)))
-94927: ((out-data j) (formant-bank formants (ncos pulse)))
-88239: ((grain k) (comb-bank cs (original-grain k)))
-80127: ((new-freq-incs i) (+ (* diff scl) ks))
-79871: ((x0 i) (+ (* p1 (x1 i)) (* p2 (+ (circle-ref x1 (- i 1)) (circle-ref x1 (+ i...
-72877: ((out-data i) (convolve cnv))
-67427: ((d i) (- (wkm i) (* (d k) (wkm (- k i 1)))))
-55124: ((mus-length exA) sl)
-54548: ((frame2 k) (read-sample input2))
-54548: ((frame1 k) (read-sample input1))
-51034: ((vals i) (* (vals i) (env e)))
-50943: ((average-data k) (+ (average-data k) (* (rl k) (rl k)) (* (im k) (im k))))
-50943: ((rl k) (rd))
-50836: ((data 0) y)
-50828: ((v1 0) n)
-50828: ((v1 1) (* n 3))
-50827: ((vect 0) (* y 2))
-50827: ((vect 1) (* y 2))
-50827: ((bins bin) (+ (bins bin) 1))
-49999: ((data loc) (* val short->float))
-40352: ((cur 0) a2)
-40352: ((cur 1) a0)
-40352: ((cur 1) a2)
-40352: ((cur 1) a1)
-32705: ((rdata i) (* scl (rdata i)))
-32705: ((rdata j) (* scl (rdata j)))
-32705: ((idata i) (* scl (idata i)))
-32705: ((idata j) (* scl (idata j)))
-	 */
 	switch (type(obj))
 	  {
 	  case T_C_OBJECT:
@@ -67676,6 +67671,7 @@ s7_scheme *s7_init(void)
   sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_Z);  
   sc->SET_SYMBOL_UNKNOWN_S =  assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_UNKNOWN_S);  
   sc->SET_SYMBOL_ALL_X =      assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_ALL_X);  
+  sc->SET_FV_SCALED =         assign_internal_syntax(sc, "set!",    OP_SET_FV_SCALED);  
   sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",    OP_CASE_UNCHECKED);  
   sc->CASE_SIMPLE =           assign_internal_syntax(sc, "case",    OP_CASE_SIMPLE);  
   sc->CASE_SIMPLER =          assign_internal_syntax(sc, "case",    OP_CASE_SIMPLER);  
@@ -68922,7 +68918,7 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
- * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.3
  * calls         |   275  207  175  115   89   71   53   53|  54   49.3
  */
 
@@ -68932,20 +68928,11 @@ int main(int argc, char **argv)
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
- * check apply mac/bac (there's an extra eval -- see t737.scm -- surely this is not a problem!)
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
  * TODO: snd-test read-sample-with-direction
  * TODO: safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
- * TODO: doc/test mus-set-formant-frequency (the -and-radius part is also not documented or tested or even used??)
- * TODO: doc mus-sound-preload, test the gc process, check preload in forth/ruby
- * TODO: track down the nco2|4|nrcos peak bugs:
- *    40005: ;noddcos max: 1.004013843008269
- *    40014: ;noddssb max: 1.002747510305872
- *    40083: ;nrcos with scaler max: 4.771335953920193
- *    40092: ;ncos2 max: 1.002540239164211
- *    40101: ;ncos4 max: 1.005086931143433
- *    40110: ;npcos max: 1.002540239164211
- *    40470: ;nxycos max: 1.002529880470634
+ * TODO: test mus-set-formant-frequency 
+ * the outa_loop stuff could be procedurized etc
  */

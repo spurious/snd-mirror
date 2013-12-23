@@ -19,7 +19,7 @@ static void wavelet_transform(mus_float_t *data, mus_long_t num, mus_float_t *cc
   mus_float_t *cr = NULL;
   mus_long_t i, j, n, n1, nmod, nh, joff, ii, ni, k, jf;
 
-  cr = (mus_float_t *)calloc(cc_size, sizeof(mus_float_t));
+  cr = (mus_float_t *)malloc(cc_size * sizeof(mus_float_t));
 
   for (i = 0, j = cc_size - 1; i < cc_size; i++, j--)
     {

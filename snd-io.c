@@ -454,14 +454,15 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
 
 int snd_file_open_descriptors(int fd, const char *name, int format, mus_long_t location, int chans, int type)
 {
-  int sl_err = MUS_NO_ERROR;
+  int sl_err;
+
   sl_err = mus_file_open_descriptors(fd, name, format, mus_bytes_per_sample(format), location, chans, type);
   if (sl_err != MUS_NO_ERROR)
     snd_warning("%s: open file descriptors: %s", name, mus_error_type_to_string(sl_err));
-#if WITH_PRELOAD
+
   if (mus_sound_saved_data(name))
     mus_file_save_data(fd, mus_sound_frames(name), mus_sound_saved_data(name));
-#endif
+
   return(sl_err);
 }
 

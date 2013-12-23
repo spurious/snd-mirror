@@ -1108,7 +1108,6 @@ to the frame offset"
 }
 
 
-#if WITH_PRELOAD
 #define S_mus_sound_preload "mus-sound-preload"
 static XEN g_mus_sound_preload(XEN file)
 {
@@ -1142,8 +1141,6 @@ static XEN g_mus_sound_preload(XEN file)
     }
   return(file);
 }
-#endif
-
 
 
 /* since mus-audio-read|write assume sound-data vectors communicating with Scheme,
@@ -2494,9 +2491,7 @@ XEN_NARGIFY_2(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
 XEN_NARGIFY_1(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
 XEN_NARGIFY_1(g_mus_sound_open_input_w, g_mus_sound_open_input)
 XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
-#if WITH_PRELOAD
 XEN_NARGIFY_1(g_mus_sound_preload_w, g_mus_sound_preload)
-#endif
 
 XEN_NARGIFY_1(g_mus_audio_close_w, g_mus_audio_close)
 XEN_ARGIFY_4(g_mus_audio_write_w, g_mus_audio_write)
@@ -2732,9 +2727,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_array_to_file,            g_array_to_file_w,              5, 0, 0, H_array_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_to_array,            g_file_to_array_w,              5, 0, 0, H_file_to_array);
 
-#if WITH_PRELOAD
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_preload,        g_mus_sound_preload_w,          1, 0, 0, H_mus_sound_preload);
-#endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
 				   S_setB S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0);

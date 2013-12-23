@@ -10,7 +10,7 @@
 ;;;   the explicit call style: (((gen 'embedded-gen) 'shared-method) ...)
 
 
-(define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
+(define nearly-zero 1.0e-10) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
 
 ;;; --------------------------------------------------------------------------------
 

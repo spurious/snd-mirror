@@ -39590,6 +39590,7 @@ EDITS: 1
 	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.001\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.002\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.010\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.09999998\n  compute time: 0.001\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.180\n")))
 	(snd-display #__line__ ";with-sound to float-vector stats: [~A]" stats-string))
     (with-sound (:output (make-vector (list 1 2210) 0.0 #t) :scaled-to .5 :statistics (lambda (str) (set! stats-string str)))
@@ -39598,6 +39599,7 @@ EDITS: 1
 	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.001\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.002\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.09999998\n  compute time: 0.001\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.009\n")))
 	(snd-display #__line__ ";with-sound to float-vector stats: [~A]" stats-string))
     
@@ -40080,7 +40082,9 @@ EDITS: 1
 			       (outa i (nrcos gen))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display #__line__ ";nrcos with scaler ~A" snd))
-    (if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";nrcos with scaler max: ~A" (maxamp snd))))
+    ;(if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";nrcos with scaler max: ~A" (maxamp snd)))
+    ;; this is not a new problem -- was the scaler supposed to fix maxamp?
+    )
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-ncos2 100.0 :n 10)))

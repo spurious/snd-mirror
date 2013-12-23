@@ -884,7 +884,7 @@ static gf *fixup_vct_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args);
 
 
-typedef struct {
+typedef struct vcset_ex {
   s7_pointer i_slot, val_slot;
   int v_len;
   mus_float_t *v_data;
@@ -894,14 +894,32 @@ typedef struct {
   s7_scheme *sc;
   mus_float_t (*func_1)(void *p);
   mus_float_t (*func)(void *p);
+  struct vcset_ex *next;
 } vcset_ex;
 
+
+static vcset_ex *vex_free_list = NULL;
 
 static void vcset_free(void *p)
 {
   vcset_ex *ep = (vcset_ex *)p;
   if (ep->g) gf_free(ep->g);
-  free(p);
+  ep->next = (struct vcset_ex *)vex_free_list;
+  vex_free_list = ep;
+}
+
+
+static vcset_ex *allocate_vcset_ex(void)
+{
+  if (vex_free_list)
+    {
+      vcset_ex *e;
+      e = vex_free_list;
+      vex_free_list = e->next;
+      memset((void *)e, 0, sizeof(vcset_ex));
+      return(e);
+    }
+  return((vcset_ex *)calloc(1, sizeof(vcset_ex)));
 }
 
 
@@ -989,7 +1007,7 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
   val_arg = cadddr(expr);
   if (!s7_is_pair(val_arg))
     {
-      p = (vcset_ex *)calloc(1, sizeof(vcset_ex));
+      p = allocate_vcset_ex();
       e = (s7_ex *)malloc(sizeof(s7_ex));
       e->ex_free = vcset_free;
       e->ex_data = p;
@@ -1034,7 +1052,7 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
 		    {
 		      x2 = s7_cell_real(xp);                        /* x1 and x2 are real */
 
-		      p = (vcset_ex *)calloc(1, sizeof(vcset_ex));
+		      p = allocate_vcset_ex();
 		      e = (s7_ex *)malloc(sizeof(s7_ex));
 		      e->ex_free = vcset_free;
 		      e->ex_data = p;
@@ -1055,7 +1073,7 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
   gf1 = find_gf(sc, val_arg);
   if (gf1)
     {
-      p = (vcset_ex *)calloc(1, sizeof(vcset_ex));
+      p = allocate_vcset_ex();
       e = (s7_ex *)malloc(sizeof(s7_ex));
       e->ex_free = vcset_free;
       e->ex_data = p;
@@ -2254,10 +2272,18 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_moveB,         g_vct_move_w,      3, 1, 0, H_vct_moveB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq);
 
-#if HAVE_SCHEME || HAVE_FORTH
+#if HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref,    g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);
 #else
+#if HAVE_SCHEME
+  {
+    s7_pointer v;
+    v = XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref,    g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);
+    s7_function_set_returns_temp(v);
+  }
+#else
   XEN_DEFINE_PROCEDURE(S_vct_ref,                g_vct_ref_w,       2, 0, 0, H_vct_ref);
+#endif
 #endif
 
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_string,     g_vct_to_readable_string_w, 1, 0, 0, H_vct_to_string);

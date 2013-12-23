@@ -562,11 +562,9 @@ typedef struct {
   int data_format, bytes_per_sample, chans, header_type;
   bool clipping;
   mus_long_t data_location;
-#if WITH_PRELOAD
   bool saved;
   mus_long_t frames;
   mus_float_t **saved_data;
-#endif
 } io_fd;
 
 static int io_fd_size = 0;
@@ -607,14 +605,15 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	  fd->clipping = clipping_default;
 	  fd->header_type = type;
 	  fd->chans = chans;
-#if WITH_PRELOAD
  	  fd->saved = false;
  	  fd->saved_data = NULL;
-#endif
 	  if (name)
 	    {
-	      fd->name = (char *)calloc(strlen(name) + 1, sizeof(char));
+	      int len;
+	      len = strlen(name);
+	      fd->name = (char *)malloc((len + 1) * sizeof(char));
 	      strcpy(fd->name, name);
+	      fd->name[len] = 0;
 	    }
 	}
       else err = MUS_MEMORY_ALLOCATION_FAILED;
@@ -624,7 +623,6 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 }
 
 
-#if WITH_PRELOAD
 void scan_io_fds_for_saved_data(mus_float_t **data);
 void scan_io_fds_for_saved_data(mus_float_t **data)
 {
@@ -646,7 +644,6 @@ void scan_io_fds_for_saved_data(mus_float_t **data)
 	}
     }
 }
-#endif
 
 
 bool mus_file_clipping(int tfd)
@@ -706,7 +703,6 @@ int mus_file_set_chans(int tfd, int chans)
 }
 
 
-#if WITH_PRELOAD
 void mus_file_save_data(int tfd, mus_long_t frames, mus_float_t **data)
 {
   io_fd *fd;
@@ -720,7 +716,6 @@ void mus_file_save_data(int tfd, mus_long_t frames, mus_float_t **data)
       fd->saved_data = data;
     }
 }
-#endif
 
 
 
@@ -1078,7 +1073,6 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	  return(total / siz);
 	}
 
-#if WITH_PRELOAD
       if (fd->saved)
 	{
 	  /* fprintf(stderr, "mus_read_any_1 %d use saved data\n", tfd); */
@@ -1109,7 +1103,6 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	    }
 	  return(lim);
 	}
-#endif
 
       if (ur_charbuf == NULL) 
 	ur_charbuf = (char *)malloc(BUFLIM * sizeof(char)); 

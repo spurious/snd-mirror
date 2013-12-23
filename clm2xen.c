@@ -10110,6 +10110,16 @@ static s7_pointer g_src_one(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
+static s7_pointer src_3;
+static s7_pointer g_src_3(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *o;
+  GET_GENERATOR(args, src, o); 
+  return(s7_make_real(sc, mus_src_simple(o)));
+}
+
+
+
 
 static s7_pointer asymmetric_fm_3;
 static s7_pointer g_asymmetric_fm_3(s7_scheme *sc, s7_pointer args)
@@ -10708,6 +10718,9 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer u_args)
   fm_args = cdadr(fm_args);
   GET_REAL(fm_args, *, fm3_rat);
 
+  /* this is called a zillion times (test 9 gui-based waltz display)
+   * all safe, chans 1 rev 0
+   */
   for (; pos < end; pos++)
     {
       vibrato = mus_env(f) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);			
@@ -10863,34 +10876,36 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		  revp = mus_locsig_rev_writer(lc);
 		  buf2 = ob[1];
 
-	      for (; pos < end;)
-		{
-		  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-		  x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
-		  mus_safe_out_any_to_file(pos, f1 * x, 0, outp);
-		  mus_safe_out_any_to_file(pos, f2 * x, 1, outp);
-		  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
-		  pos++;
-		  
-		  dstart = mus_out_any_data_start(outp);
-		  dend = mus_out_any_data_end(outp);
-		  if (dend > end)
-		    dlen = end - dstart;
-		  for (dpos = pos - dstart; dpos < dlen; dpos++)
+		  for (; pos < end;)
 		    {
 		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
 		      x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
-		      buf[dpos] += f1 * x;
-		      buf2[dpos] += f2 * x;
+		      mus_safe_out_any_to_file(pos, f1 * x, 0, outp);
+		      mus_safe_out_any_to_file(pos, f2 * x, 1, outp);
 		      mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
 		      pos++;
+		      
+		      dstart = mus_out_any_data_start(outp);
+		      dend = mus_out_any_data_end(outp);
+		      if (dend > end)
+			dlen = end - dstart;
+		      for (dpos = pos - dstart; dpos < dlen; dpos++)
+			{
+			  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
+			  x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+			  buf[dpos] += f1 * x;
+			  buf2[dpos] += f2 * x;
+			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
+			  pos++;
+			}
+		      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
 		    }
-		  mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
-		}
-
+		  
 		}
 	      else
 		{
+		  /* this is used for 20 secs of 2/0 and 40 of 1/1 in t502, but splitting out theses cases saves (say) 20 or 30
+		   */
 		  for (; pos < end; pos++)
 		    {
 		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
@@ -10916,7 +10931,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
       GET_GENERATOR_CADAR(vargs, triangle_wave, t);
       vargs = cdr(vargs);
       GET_GENERATOR_CADAR(vargs, rand_interp, r);
-  
+
       for (; pos < end; pos++)
 	{
 	  vibrato = mus_env(f) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);			
@@ -12772,6 +12787,8 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
 	}
       if (topgf->func)
 	{
+	  /* called a lot with locsig -- here all safe, 2 chans, 1 rev mostly (some 4 chans, 0 rev)
+	   */
 	  for (; pos < end; pos++) 
 	    mover(locs, pos, topgf->func(topgf));
 	  (*step) = end;
@@ -13511,6 +13528,76 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 	}}
 #define OUTA_LOOP(Call) OUT_LOOP(0, Call)
 
+#define OUT_LOOP_RY(Chan, Ry_Call, Out_Call)				\
+  if ((pos >= 0) && (end >= pos))                                       \
+    {                                                                   \
+      if (mus_out_any_is_safe(clm_output_gen))				\
+	{								\
+	  for (; pos < end;)						\
+	    {								\
+	      (*ry) = (Ry_Call);					\
+	      mus_safe_out_any_to_file(pos++, Out_Call, Chan, clm_output_gen); \
+	      dstart = mus_out_any_data_start(clm_output_gen);		\
+	      dend = mus_out_any_data_end(clm_output_gen);		\
+	      if (dend > end)						\
+		dlen = end - dstart;					\
+	      for (dpos = pos - dstart; dpos < dlen; dpos++)		\
+		{							\
+		  (*step) = pos++;					\
+		  (*ry) = (Ry_Call);					\
+		  buf[dpos] += (Out_Call);				\
+		}							\
+	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end); \
+	    }								\
+	}								\
+      else								\
+	{								\
+	  for (; pos < end; pos++)					\
+	    {								\
+	      (*step) = pos;						\
+	      (*ry) = (Ry_Call);					\
+	      out_any_2(pos, Out_Call, Chan, "outa");			\
+	    }								\
+	}}
+#define OUTA_LOOP_RY(Ry_Call, Out_Call) OUT_LOOP_RY(0, Ry_Call, Out_Call)
+
+#define OUT_LOOP_RX(Chan, Rx1_Call, Rx2_Call, Out_Call)			\
+  if ((pos >= 0) && (end >= pos))                                       \
+    {                                                                   \
+      if (mus_out_any_is_safe(clm_output_gen))				\
+	{								\
+	  for (; pos < end;)						\
+	    {								\
+	      (*x1r) = (Rx1_Call);					\
+	      (*x2r) = (Rx2_Call);					\
+	      mus_safe_out_any_to_file(pos++, Out_Call, Chan, clm_output_gen); \
+	      dstart = mus_out_any_data_start(clm_output_gen);		\
+	      dend = mus_out_any_data_end(clm_output_gen);		\
+	      if (dend > end)						\
+		dlen = end - dstart;					\
+	      for (dpos = pos - dstart; dpos < dlen; dpos++)		\
+		{							\
+		  (*step) = pos++;					\
+		  (*x1r) = (Rx1_Call);					\
+		  (*x2r) = (Rx2_Call);					\
+		  buf[dpos] += (Out_Call);				\
+		}							\
+	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end); \
+	    }								\
+	}								\
+      else								\
+	{								\
+	  for (; pos < end; pos++)					\
+	    {								\
+	      (*step) = pos;						\
+	      (*x1r) = (Rx1_Call);					\
+	      (*x2r) = (Rx2_Call);					\
+	      out_any_2(pos, Out_Call, Chan, "outa");			\
+	    }								\
+	}}
+#define OUTA_LOOP_RX(Rx1_Call, Rx2_Call, Out_Call) OUT_LOOP_RX(0, Rx1_Call, Rx2_Call, Out_Call)
+
+
 #if 0
 /* currently this doesn't save much */
       if ((out_any_2 == out_any_2_to_vct) && (Chan == 0))		
@@ -13820,6 +13907,18 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
 	    }
 	  else
 	    {
+	      mus_float_t **ob;
+	      mus_float_t *buf = NULL;
+	      mus_long_t dstart, dend, dpos, dlen = 0;
+	  
+	      if (mus_out_any_is_safe(clm_output_gen))
+		{
+		  ob = mus_out_any_buffers(clm_output_gen);
+		  buf = ob[0];
+		  dlen = mus_file_buffer_size();
+		}
+	      OUTA_LOOP_RX(lf1->func(lf1), lf2->func(lf2), bg->func(bg));
+#if 0
 	      for (; pos < end; pos++)
 		{
 		  (*step) = pos;
@@ -13827,6 +13926,7 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
 		  (*x2r) = lf2->func(lf2);
 		  out_any_2(pos, bg->func(bg), 0, "outa");
 		}
+#endif
 	    }
 	  gf_free(lf1);
 	  gf_free(lf2);
@@ -13864,12 +13964,25 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
     if ((lg) && (bg) &&
 	(lg->func) && (bg->func))
       {
+	mus_float_t **ob;
+	mus_float_t *buf = NULL;
+	mus_long_t dstart, dend, dpos, dlen = 0;
+	  
+	if (mus_out_any_is_safe(clm_output_gen))
+	  {
+	    ob = mus_out_any_buffers(clm_output_gen);
+	    buf = ob[0];
+	    dlen = mus_file_buffer_size();
+	  }
+	OUTA_LOOP_RY(lg->func(lg), bg->func(bg));
+#if 0
 	for (; pos < end; pos++)
 	  {
 	    (*step) = pos;
 	    (*ry) = lg->func(lg);
 	    out_any_2(pos, bg->func(bg), 0, "outa");
 	  }
+#endif
 	gf_free(lg);
 	gf_free(bg);
 	return(args);
@@ -13944,6 +14057,7 @@ static s7_pointer out_looped(s7_scheme *sc, s7_pointer args, int out_chan)
       gf_free(gf1);
     }
   /* ---------------------------------------- */
+
   return(NULL);
 }
 
@@ -14022,6 +14136,18 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
       if ((lf1) && (lf2) && (bg) &&
 	  (lf1->func) && (lf2->func) && (bg->func))
 	{
+	  mus_float_t **ob;
+	  mus_float_t *buf = NULL;
+	  mus_long_t dstart, dend, dpos, dlen = 0;
+	  
+	  if (mus_out_any_is_safe(clm_output_gen))
+	    {
+	      ob = mus_out_any_buffers(clm_output_gen);
+	      buf = ob[0];
+	      dlen = mus_file_buffer_size();
+	    }
+	  OUTA_LOOP_RX(lf1->func(lf1), lf2->func(lf2), bg->func(bg));
+#if 0
 	  for (; pos < end; pos++)
 	    {
 	      (*step) = pos;
@@ -14029,6 +14155,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 	      (*x2r) = lf2->func(lf2);
 	      out_any_2(pos, bg->func(bg), 0, "outa");
 	    }
+#endif
 	  gf_free(lf1);
 	  gf_free(lf2);
 	  gf_free(bg);
@@ -14062,12 +14189,25 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
     if ((lg) && (bg) &&
 	(lg->func) && (bg->func))
       {
+	mus_float_t **ob;
+	mus_float_t *buf = NULL;
+	mus_long_t dstart, dend, dpos, dlen = 0;
+	  
+	if (mus_out_any_is_safe(clm_output_gen))
+	  {
+	    ob = mus_out_any_buffers(clm_output_gen);
+	    buf = ob[0];
+	    dlen = mus_file_buffer_size();
+	  }
+	OUTA_LOOP_RY(lg->func(lg), bg->func(bg));
+#if 0
 	for (; pos < end; pos++)
 	  {
 	    (*step) = pos;
 	    (*ry) = lg->func(lg);
 	    out_any_2(pos, bg->func(bg), 0, "outa");
 	  }
+#endif
 	gf_free(lg);
 	gf_free(bg);
 	return(args);
@@ -14169,20 +14309,6 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 	}
       if (gf1->func)
 	{
-	  if (gf1->func == gf_2_g1)
-	    {
-	      gf *g1;
-	      mus_float_t (*func_2)(void *p, mus_float_t x);
-	      mus_float_t (*func)(void *p);
-
-	      g1 = (gf *)(gf1->g1);
-	      func_2 = gf1->func_2;
-	      func = g1->func;
-
-	      OUTA_LOOP(mus_env(e) * func_2(gf1->gen, func(g1)));
-	      gf_free(gf1);
-	      return(args);
-	    }
 	  OUTA_LOOP(mus_env(e) * gf1->func(gf1));
 	  gf_free(gf1);
 	  return(args);
@@ -14278,6 +14404,18 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 	  (lf1->func) && (lf2->func) && (bg->func))
 	{
 	  /* fprintf(stderr, "%d hit %lld: (let %s %s)\n", __LINE__, end - pos, DISPLAY(vars), DISPLAY(callee)); */
+	  mus_float_t **ob;
+	  mus_float_t *buf = NULL;
+	  mus_long_t dstart, dend, dpos, dlen = 0;
+	  
+	  if (mus_out_any_is_safe(clm_output_gen))
+	    {
+	      ob = mus_out_any_buffers(clm_output_gen);
+	      buf = ob[0];
+	      dlen = mus_file_buffer_size();
+	    }
+	  OUTA_LOOP_RX(lf1->func(lf1), lf2->func(lf2), mus_env(e) * bg->func(bg));
+#if 0
 	  for (; pos < end; pos++)
 	    {
 	      (*step) = pos;
@@ -14285,6 +14423,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 	      (*x2r) = lf2->func(lf2);
 	      out_any_2(pos, mus_env(e) * bg->func(bg), 0, "outa");
 	    }
+#endif
 	  gf_free(lf1);
 	  gf_free(lf2);
 	  gf_free(bg);
@@ -14313,12 +14452,20 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 	(lg->func) && (bg->func))
       {
 	/* fprintf(stderr, "%d hit %lld: %s %s\n", __LINE__, end - pos, DISPLAY(letp), DISPLAY(callee)); */
-	for (; pos < end; pos++)
-	  {
-	    (*step) = pos;
-	    (*ry) = lg->func(lg);
-	    out_any_2(pos, mus_env(e) * bg->func(bg), 0, "outa");
-	  }
+
+	{
+	  mus_float_t **ob;
+	  mus_float_t *buf = NULL;
+	  mus_long_t dstart, dend, dpos, dlen = 0;
+	  
+	  if (mus_out_any_is_safe(clm_output_gen))
+	    {
+	      ob = mus_out_any_buffers(clm_output_gen);
+	      buf = ob[0];
+	      dlen = mus_file_buffer_size();
+	    }
+	  OUTA_LOOP_RY(lg->func(lg), mus_env(e) * bg->func(bg));
+	}
 
 	gf_free(lg);
 	gf_free(bg);
@@ -16134,6 +16281,17 @@ static s7_pointer src_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	    }
 	}
     }
+  if ((args >= 2) && 
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_real(caddr(expr))) &&
+      (s7_real(caddr(expr)) == 0.0) &&
+      ((args == 2) ||
+       ((args == 3) && 
+	(cadddr(expr) == xen_false))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(src_3);
+    }
   return(f);
 }
 
@@ -17886,12 +18044,10 @@ static void init_choosers(s7_scheme *sc)
   src_1 = clm_make_function(sc, "src", g_src_1, 1, 0, false, "src optimization", f, NULL, NULL, NULL, mul_c_src_1, mul_s_src_1, env_src_1);
   src_one = clm_make_function(sc, "src", g_src_one, 1, 0, false, "src optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
-  src_2 = clm_make_function(sc, "src", g_src_2, 2, 0, false, "src optimization", f,
-				   mul_c_src_2, mul_s_src_2, env_src_2, NULL, NULL, NULL);
-  direct_src_2 = clm_make_function(sc, "src", g_direct_src_2, 2, 0, false, "src optimization", f,
-					  NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_src_2 = clm_make_function(sc, "src", g_indirect_src_2, 2, 0, false, "src optimization", f,
-					  NULL, NULL, NULL, NULL, NULL, NULL);
+  src_2 = clm_make_function(sc, "src", g_src_2, 2, 0, false, "src optimization", f, mul_c_src_2, mul_s_src_2, env_src_2, NULL, NULL, NULL);
+  direct_src_2 = clm_make_function(sc, "src", g_direct_src_2, 2, 0, false, "src optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_src_2 = clm_make_function(sc, "src", g_indirect_src_2, 2, 0, false, "src optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  src_3 = clm_make_function(sc, "src", g_src_3, 3, 1, false, "src optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   /* phase_vocoder */

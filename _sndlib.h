@@ -82,8 +82,6 @@
 #define MUS_OSS_API 1
 #define MUS_JACK_API 2
 
-#define WITH_PRELOAD 1
-
 #include "sndlib.h"
 #include "xen.h"
 #include "vct.h"

@@ -408,7 +408,7 @@ mus_float_t *sample_linear_env(env *e, int order)
   if (!got_local_error)
     {
       int i, j;
-      data = (mus_float_t *)calloc(order, sizeof(mus_float_t));
+      data = (mus_float_t *)malloc(order * sizeof(mus_float_t));
       for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
 	data[i] = mus_env_interp(x, ge);
       for (j = order / 2 - 1, i = order / 2; (i < order) && (j >= 0); i++, j--) 

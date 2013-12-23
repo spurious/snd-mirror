@@ -331,6 +331,7 @@ typedef struct ed_fragment {               /* this name is necessary even in str
   mus_float_t scl;                               /* segment scaler */
   ed_ramps *ramps;
   ed_mixes *mixes; 
+  struct ed_fragment *next;
 } ed_fragment;
 
 
@@ -2628,8 +2629,18 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 }
 
 
+static ed_fragment *fragment_free_list = NULL;
+
 static ed_fragment *make_ed_fragment(void)
 {
+  if (fragment_free_list)
+    {
+      ed_fragment *e;
+      e = fragment_free_list;
+      fragment_free_list = (ed_fragment *)(fragment_free_list->next);
+      memset((void *)e, 0, sizeof(ed_fragment));
+      return(e);
+    }
   return((ed_fragment *)calloc(1, sizeof(ed_fragment)));
 }
 
@@ -2731,7 +2742,8 @@ static ed_fragment *free_ed_fragment(ed_fragment *ed)
   if (ed)
     {
       clear_ed_fragment(ed);
-      free(ed);
+      ed->next = (struct ed_fragment *)fragment_free_list;
+      fragment_free_list = ed;
     }
   return(NULL);
 }
@@ -2885,11 +2897,13 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 }
 
 
-void backup_edit_list(chan_info *cp)
+static void backup_edit_list_1(chan_info *cp, bool freeing)
 {
   int cur, i;
   ed_list *old_ed, *new_ed;
   mus_long_t old_end, new_end;
+  ed_fragment *top;
+
   cur = cp->edit_ctr;
   if (cur <= 0) return;
   new_ed = cp->edits[cur];
@@ -2903,7 +2917,20 @@ void backup_edit_list(chan_info *cp)
   if (old_ed->beg < new_ed->beg) new_ed->beg = old_ed->beg;
   new_ed->len = new_end - new_ed->beg + 1;
 
+  if (freeing)
+    top = fragment_free_list;
   old_ed = free_ed_list(old_ed, cp);
+  if (freeing)
+    {
+      while ((fragment_free_list) && (fragment_free_list != top))
+	{
+	  ed_fragment *e;
+	  e = fragment_free_list;
+	  fragment_free_list = e->next;
+	  free(e);
+	}
+    }
+
   cp->edits[cur - 1] = new_ed;
   cp->edits[cur] = NULL;
   if (cp->sounds) /* protect from release_pending_sounds upon edit after undo after as-one-edit or whatever */
@@ -2917,6 +2944,11 @@ void backup_edit_list(chan_info *cp)
   reflect_edit_history_change(cp);
 }
 
+
+void backup_edit_list(chan_info *cp)
+{
+  backup_edit_list_1(cp, false);
+}
 
 void free_edit_list(chan_info *cp)
 {
@@ -5063,10 +5095,6 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
 
   if (samp >= curlen) samp = curlen - 1;
   len = ed->size;
-
-  /* if len=2 and edit_position=0, can there be any edits?  If data fits in core, and we pass in a flag saying "this 
-   *   access is safe", we can forego the constant loc>last checks in next_sample_value_unscaled.
-   */
 
   for (i = 0; i < len; i++)
     {
@@ -7408,7 +7436,8 @@ void as_one_edit(chan_info *cp, int one_edit)
     {
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, one_edit - 1);
-      while (cp->edit_ctr > one_edit) backup_edit_list(cp);
+      while (cp->edit_ctr > one_edit) 
+	backup_edit_list_1(cp, true); /* i.e. free all the fragments */
       if (need_backup) prune_edits(cp, cp->edit_ctr + 1);
     }
 }
