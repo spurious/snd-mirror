@@ -7242,7 +7242,7 @@ static double in_any_2_to_mus_xen(mus_long_t pos, int chn)
 
 static double safe_in_any_2_to_mus_xen(mus_long_t pos, int chn)
 {
-  return(mus_in_any_from_file(clm_input_gen, pos, chn));
+  return(mus_file_to_sample(clm_input_gen, pos, chn));
 }
 
 static double in_any_2_to_vct(mus_long_t pos, int chn)
@@ -7797,6 +7797,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   keys[4] = kw_size;
 
   buffer_size = mus_file_buffer_size();
+  /* this is only 8192! (clm.h MUS_DEFAULT_FILE_BUFFER_SIZE) */
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
@@ -7843,9 +7844,6 @@ return a new readin (file input) generator reading the sound file 'file' startin
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);
 }
-
-
-
 
 
 /* ---------------- locsig ---------------- */
@@ -8455,12 +8453,12 @@ static mus_float_t as_needed_input_f1(void *ptr, int direction)
 
 static mus_float_t as_needed_input_generator(void *ptr, int direction)
 {
-  mus_xen *x = (mus_xen *)ptr;
-  XEN v;
-  v = x->vcts[MUS_INPUT_FUNCTION];
-  return(mus_apply(XEN_TO_MUS_ANY(v), 0.0, 0.0));
+#if HAVE_EXTENSION_LANGUAGE
+  return(mus_apply((mus_any *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA]), 0.0, 0.0));
+#else
+  return(0.0);
+#endif
 }
-
 
 static mus_float_t as_needed_input_readin(void *ptr, int direction)
 {
@@ -8594,6 +8592,25 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 }
 
 
+static mus_float_t (*as_needed_input_choice(XEN obj, mus_xen *gn))(void *ptr, int direction)
+{
+  if (MUS_XEN_P(obj))
+    {
+      mus_any *p;
+      p = XEN_TO_MUS_ANY(obj);
+      if (p) 
+	{
+#if HAVE_EXTENSION_LANGUAGE
+	  gn->vcts[MUS_INPUT_DATA] = (XEN)p;
+#endif
+	  if (mus_readin_p(p))
+	    return(as_needed_input_readin);
+	  return(as_needed_input_generator);
+	}
+    }
+  return(as_needed_input_func);
+}
+
 
 static XEN g_mus_clear_sincs(void)
 {
@@ -8699,14 +8716,15 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
       {
 	mus_any *p;
 	p = XEN_TO_MUS_ANY(in_obj);
-	if ((p) && (mus_readin_p(p)))
+	if (p) 
 	  {
 #if HAVE_EXTENSION_LANGUAGE
 	    gn->vcts[MUS_INPUT_DATA] = (XEN)p;
 #endif
-	    ge = mus_make_src(as_needed_input_readin, srate, wid, gn);
+	    if (mus_readin_p(p))
+	      ge = mus_make_src(as_needed_input_readin, srate, wid, gn);
+	    else ge = mus_make_src(as_needed_input_generator, srate, wid, gn);
 	  }
-	else ge = mus_make_src(as_needed_input_generator, srate, wid, gn);
       }
     else ge = mus_make_src_with_init(as_needed_input_func, srate, wid, gn, set_gn_gen);
     mus_error_set_handler(old_error_handler);
@@ -8860,19 +8878,21 @@ The edit function, if any, should return the length in samples of the grain, or 
     }
 
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+  gn->nvcts = MUS_MAX_VCTS;
+  gn->vcts = make_vcts(gn->nvcts);
+
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_granulate((MUS_XEN_P(in_obj)) ? as_needed_input_generator : as_needed_input_func, 
+    ge = mus_make_granulate(as_needed_input_choice(in_obj, gn),
 			    expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
 			    (XEN_NOT_BOUND_P(edit_obj) ? NULL : grnedit),
 			    (void *)gn);
     mus_error_set_handler(old_error_handler);
   }
+
   if (ge)
     {
-      gn->nvcts = MUS_MAX_VCTS;
-      gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
       gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
@@ -8881,6 +8901,8 @@ The edit function, if any, should return the length in samples of the grain, or 
       gn->vcts[MUS_SELF_WRAPPER] = grn_obj;
       return(grn_obj);
     }
+
+  free(gn->vcts);
   free(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
@@ -8971,17 +8993,19 @@ return a new convolution generator which convolves its input with the impulse re
   if (fft_size < fftlen) fft_size = fftlen;
 
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+  gn->nvcts = MUS_MAX_VCTS;
+  gn->vcts = make_vcts(gn->nvcts);
+
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_convolve((MUS_XEN_P(in_obj)) ? as_needed_input_generator : as_needed_input_func, mus_vct_data(filter), fft_size, mus_vct_length(filter), gn);
+    ge = mus_make_convolve(as_needed_input_choice(in_obj, gn), mus_vct_data(filter), fft_size, mus_vct_length(filter), gn);
     mus_error_set_handler(old_error_handler);
   }
+
   if (ge)
     {
       XEN c_obj;
-      gn->nvcts = MUS_MAX_VCTS;
-      gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
       gn->vcts[2] = filt; /* why is this here? GC protection? (might be a locally-allocated vct as from file->vct) */
       gn->gen = ge;
@@ -8989,6 +9013,8 @@ return a new convolution generator which convolves its input with the impulse re
       gn->vcts[MUS_SELF_WRAPPER] = c_obj;
       return(c_obj);
     }
+
+  free(gn->vcts);
   free(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
@@ -9218,10 +9244,13 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
     }
 
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+  gn->nvcts = MUS_MAX_VCTS;
+  gn->vcts = make_vcts(gn->nvcts);
+
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_phase_vocoder((MUS_XEN_P(in_obj)) ? as_needed_input_generator : as_needed_input_func,
+    ge = mus_make_phase_vocoder(as_needed_input_choice(in_obj, gn),
 				fft_size, overlap, interp, pitch,
 				(XEN_NOT_BOUND_P(analyze_obj) ? NULL : pvanalyze),
 				(XEN_NOT_BOUND_P(edit_obj) ? NULL : pvedit),
@@ -9229,10 +9258,9 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
 				(void *)gn);
     mus_error_set_handler(old_error_handler);
   }
+
   if (ge)
     {
-      gn->nvcts = MUS_MAX_VCTS;
-      gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
       gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
       gn->vcts[MUS_ANALYZE_FUNCTION] = analyze_obj;
@@ -9243,6 +9271,8 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
       gn->vcts[MUS_SELF_WRAPPER] = pv_obj;
       return(pv_obj);
     }
+
+  free(gn->vcts);
   free(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
@@ -15851,6 +15881,8 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  return(mul_direct_any);
 	}
     }
+
+  /* fprintf(stderr, "%s\n", DISPLAY(expr)); */
 
   return((*initial_multiply_chooser)(sc, f, args, expr));
 }

@@ -453,12 +453,12 @@
 	(outa i (* (env ampf) (wave-train wt0 (* (env vibenv) (oscil vibr)))))))))
 
 (define (simple-amb beg dur freq amp)
-  "(simple-amb beg dur freq amp) test instrument for osc?+rand"
+  "(simple-amb beg dur freq amp) test instrument for osc+rand"
   (let ((os (if (> freq 1) (make-oscil freq) (make-rand freq)))
 	(start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur))))
     (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (if (oscil? os) (oscil os) (rand os)))))))
+      (outa i (* amp (os))))))
 
 (define (simple-rd beg dur amp file)
   "(simple-rd beg dur amp file) test instrument for readin"
@@ -1648,7 +1648,7 @@
 	(let ((sum 0.0))
 	  (do ((k 0 (+ k 1)))
 	      ((= k n))
-	    (set! sum (+ sum (* (fm-indices k) (oscil (modulators k))))))
+	    (set! sum (+ sum (* (float-vector-ref fm-indices k) (oscil (vector-ref modulators k))))))
 	  (outa i (* amp (oscil cr sum))))))))
 
 (define (fmdoc-violin beg dur frequency amplitude fm-index)
@@ -1711,7 +1711,7 @@
 	(car-os (make-oscil 0))
 	(evens (make-vector 3))
 	(odds (make-vector 3))
-	(amps (apply vector formant-amps))
+	(amps (apply float-vector formant-amps))
 	(ampf (make-env '(0 0 25 1 75 1 100 0) :scaler amp :duration dur))
 	(frmfs (make-vector 3))
 	(indices (apply float-vector indexes))
@@ -1736,7 +1736,7 @@
       (set! sum 0.0)
       (do ((k 0 (+ k 1)))
 	  ((= k 3))
-	(set! frm (env (frmfs k)))
+	(set! frm (env (vector-ref frmfs k)))
 	(set! frm0 (/ frm frq))
 	(set! frm-int (floor frm0))
 	(if (even? frm-int)
@@ -1751,7 +1751,7 @@
 	      (set! even-amp (- frm0 frm-int))
 	      (set! odd-amp (- 1.0 even-amp))))
 	(let ((val (* (float-vector-ref indices k) carg)))
-	  (set! sum (+ sum (* (amps k) 
+	  (set! sum (+ sum (* (float-vector-ref amps k) 
 			      (+ (* even-amp (oscil (vector-ref evens k) (+ even-freq val)))
 				 (* odd-amp (oscil (vector-ref odds k) (+ odd-freq val)))))))))
       (outa i (* (env ampf) sum)))))

@@ -777,6 +777,8 @@ static mus_float_t previous_xramp(snd_fd *sf)
 
 /* mix readers */
 
+/* TODO: how often is there just one entry in this list? */
+
 static mus_float_t read_mix_list_samples(snd_fd *sf)
 {
   reader_mixes *m;
@@ -6024,7 +6026,7 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 
 /* -------------------- virtual mixes -------------------- */
 
-/* ramp on mix is techically possible, but ambiguous -- currently if we mix, then ramp elsewhere, then drag the mix
+/* ramp on mix is technically possible, but ambiguous -- currently if we mix, then ramp elsewhere, then drag the mix
  *   to the ramped portion, the mix treats the ramp as prior data (adding);  if we had ramp_mix, it would want to
  *   treat that ramp as an envelope on the mix if the ramp happened after the mix was established but as data if before.
  *   Too tricky.  (We'd also need ED_RAMP_ZERO to make clean fixups upon drag and so on).

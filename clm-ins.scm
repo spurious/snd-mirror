@@ -152,7 +152,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	  (set! sum 0.0)
 	  (do ((k 0 (+ k 1))) 
 	      ((= k fs))
-	    (set! frm0 (/ (env (frmfs k)) frq))
+	    (set! frm0 (/ (env (vector-ref frmfs k)) frq)) ; currently (Dec-13) this is faster than the implicit case
 	    (set! frm-int (floor frm0))
 	    (if (even? frm-int)
 		(begin
@@ -369,7 +369,7 @@ vocal sounds using phase quadrature waveshaping"
 		(sum 0.0))
 	    (do ((k 0 (+ k 1)))
 		((= k fs))
-	      (let* ((frm0 (/ (env (frmfs k)) frq))
+	      (let* ((frm0 (/ (env (vector-ref frmfs k)) frq))
 		     (frm-int (floor frm0)))
 		(if (even? frm-int)
 		    (begin

@@ -439,7 +439,6 @@ MUS_EXPORT bool mus_file_to_sample_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_file_to_sample(const char *filename);
 MUS_EXPORT mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long_t buffer_size);
 MUS_EXPORT mus_float_t mus_file_to_sample(mus_any *ptr, mus_long_t samp, int chan);
-MUS_EXPORT mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan);
 
 MUS_EXPORT mus_float_t mus_readin(mus_any *rd);
 MUS_EXPORT mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_long_t start, int direction, mus_long_t buffer_size);
@@ -601,7 +600,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
- * 7-Dec:      mus_set_formant_frequency, mus_src_20 and mus_src_05 changed.
+ * 7-Dec:      mus_set_formant_frequency, mus_src_20 and mus_src_05 changed.  Removed mus_in_any_from_file.
  * 29-Nov:     mus_make_polywave_tu.
  * 11-Oct:     mus_vector_to_file, mus_vector_mix.
  * 19-Apr:     rxyk!cos and rxyk!sin from generators.scm.

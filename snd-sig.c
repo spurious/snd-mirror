@@ -1076,7 +1076,8 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 		    cur_mark_sample = old_marks[cur_mark];
 		  else cur_mark_sample = -1;
 		}
-	      for (jj = 0; jj < idiff; jj++) 
+	      env_val = mus_env(egen);
+	      for (jj = 1; jj < idiff; jj++) 
 		env_val = mus_env(egen);
 	    }
 	}
@@ -1563,6 +1564,8 @@ static mus_float_t convolve_next_sample(void *ptr, int dir)
 {
   return(read_sample(((snd_fd *)ptr)));
 }
+/* PERHAPS: since this is always unchecked/unscaled, convolve_[to_]buffer?
+ */
 
 
 static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_long_t beg, mus_long_t dur, 
@@ -2302,15 +2305,17 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 
   if (temp_file)
     {
-      for (j = 0, k = 0; k < dur; k++)
+      for (j = 0, k = 0; k < dur; k += MAX_BUFFER_SIZE)
 	{
-	  idata[j++] = read_sample(sf);
-	  if (j == MAX_BUFFER_SIZE)
-	    {
-	      err = mus_file_write(ofd, 0, j - 1, 1, data);
-	      j = 0;
-	      if (err != MUS_NO_ERROR) break;
-	    }
+	  mus_long_t kp, kdur;
+	  kdur = dur - k;
+	  if (kdur > MAX_BUFFER_SIZE)
+	    kdur = MAX_BUFFER_SIZE;
+	  for (kp = 0; kp < kdur; kp++)
+	    idata[j++] = read_sample(sf);
+	  err = mus_file_write(ofd, 0, j - 1, 1, data);
+	  j = 0;
+	  if (err != MUS_NO_ERROR) break;
 	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb);

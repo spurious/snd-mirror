@@ -6105,19 +6105,25 @@ index 10 (so 10/2 is the bes-jn arg):
 	(sv (make-moving-spectrum (make-readin "oboe.snd"))))
     (let ((pv-amps (phase-vocoder-amps pv))
 	  (pv-incrs (phase-vocoder-phase-increments pv)))
-      (do ((k 0 (+ k 1)))
-	  ((= k 20))
-	(do ((i 0 (+ i 1))) 
-	    ((= i 2000)) 
-	  (phase-vocoder pv) 
-	  (moving-spectrum sv))
-	(do ((i 0 (+ i 1)))
-	    ((= i 256))
-	  (if (fneq ((sv 'amps) i) (pv-amps i))
-	      (format #t ";~D amps: ~A ~A" i ((sv 'amps) i) (pv-amps i)))
-	  (if (fneq ((sv 'freqs) i) (pv-incrs i))
-	      (format #t ";~D freqs: ~A ~A" i ((sv 'freqs) i) (pv-incrs i))))))))
-
+      (call-with-exit
+       (lambda (quit)
+	 (do ((k 0 (+ k 1)))
+	     ((= k 20))
+	   (do ((i 0 (+ i 1))) 
+	       ((= i 2000)) 
+	     (phase-vocoder pv) 
+	     (moving-spectrum sv))
+	   (do ((i 0 (+ i 1)))
+	       ((= i 256))
+	     (if (fneq ((sv 'amps) i) (pv-amps i))
+		 (begin
+		   (format *stderr* ";test-sv (generators) ~D amps: ~A ~A" i ((sv 'amps) i) (pv-amps i))
+		   (quit)))
+	     (if (fneq ((sv 'freqs) i) (pv-incrs i))
+		 (begin
+		   (format *stderr* ";test-sv (generators) ~D freqs: ~A ~A" i ((sv 'freqs) i) (pv-incrs i))
+		   (quit))))))))))
+    
 #|
 (define* (sine-bank amps phases size)
   (let ((len (or size (length amps)))

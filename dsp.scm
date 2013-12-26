@@ -567,6 +567,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define* (hilbert-transform-via-fft snd chn)
   ;; same as FIR version but use FFT and change phases by hand
+  ;; see snd-test.scm test 18 for a faster version
   (let* ((size (frames snd chn))
 	 (len (expt 2 (ceiling (log size 2.0))))
 	 (rl (make-float-vector len))

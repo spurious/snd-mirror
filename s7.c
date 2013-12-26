@@ -7642,7 +7642,7 @@ s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error)
   s7_Int numer = 0, denom = 1;
   if (c_rationalize(x, error, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
-  return(s7_make_real(sc, x));
+  return(make_real(sc, x));
 }
 
 
@@ -7717,6 +7717,7 @@ static s7_pointer make_permanent_integer(s7_Int i)
 s7_pointer s7_make_real(s7_scheme *sc, s7_Double n) 
 {
   s7_pointer x;
+  /* in snd-test this is called about 40000000 times, primarily test 8/18/22 */
 
   if (n == 0.0)
     return(real_zero);
@@ -13079,7 +13080,7 @@ static s7_pointer g_add_f_sqr(s7_scheme *sc, s7_pointer args)
   switch (type(x))
     {
     case T_INTEGER: return(make_real(sc, y + (integer(x) * integer(x))));
-    case T_RATIO:   return(s7_make_real(sc, y + (fraction(x) * fraction(x))));
+    case T_RATIO:   return(make_real(sc, y + (fraction(x) * fraction(x))));
     case T_REAL:    return(make_real(sc, y + (real(x) * real(x))));
     case T_COMPLEX: return(s7_make_complex(sc, y + real_part(x) * real_part(x) - imag_part(x) * imag_part(x), 2.0 * real_part(x) * imag_part(x)));
     default:        
@@ -28902,7 +28903,7 @@ static s7_pointer float_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc,
 
 static s7_pointer float_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc) 
 {
-  return(s7_make_real(sc, float_vector_element(vec, loc)));
+  return(make_real(sc, float_vector_element(vec, loc)));
 }
 
 
@@ -42883,6 +42884,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	    return(OP_SAFE_C_opSSq_op_opSSq_q);
 	  break;
 	}
+
+      /* see comment under OP_SAFE_C_ZZ */
       return(OP_SAFE_C_ZZ);
       break;
 
@@ -54614,6 +54617,34 @@ OP_EVAL: 1065372 (1.542659)
 	    case HOP_VECTOR_S:
 	      {
 		s7_pointer v, ind; 
+		/*
+463050: (frmfs k) -- (env (frmfs k)) in all cases (clm23.scm, vox.scm, clm-ins.scm)
+452100: (fcmb-c c) -- freeverb -- also of the form (gen (vref s)...)
+264600: (amps k) -- clm23.scm fmdoc-vox, vox.scm
+196603: (im i)
+193165: (wkm k)
+193165: (wk1 j)
+164254: (v i)
+160786: (ramps k)
+110250: (dline1 k)
+110250: (coeffs j)
+105848: (radii j)
+101656: (in-data i)
+88200: (dsp-chain i)
+76251: (vals i)
+70563: (ampfs k)
+70560: (carriers k)
+67428: (wkm i)
+67428: (d k)
+62252: (data j)
+55288: (v1 i)
+52660: (frame0 frame-loc)
+50944: (average-data k)
+50828: (bins bin)
+50828: (buffer position)
+50827: (samps2 i)
+50827: (samps1 i)
+		 */
 		v = find_symbol_or_bust(sc, car(code));
 		ind = find_symbol_or_bust(sc, cadr(code));
 		if ((!s7_is_vector(v)) ||
@@ -55274,6 +55305,9 @@ OP_LET1: 75475 (4.677476)
 		break;
 	      
 	    case HOP_SAFE_C_ZZ:
+	      /* most of the component Z's here are very complex:
+	       *    264600: (+ (* even-amp (oscil (vector-ref evens k) (+ even-freq val))) (* odd-amp...
+	       */
 	      push_stack(sc, OP_SAFE_C_ZZ_1, sc->NIL, code);
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;

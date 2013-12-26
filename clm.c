@@ -8411,11 +8411,14 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
 	  qj = q * (am - j);
 	  for (i = 1, x = qj; i < m; i++, x += qj)
 	    xt += (envl[i] * cos(x));
+	  /* TODO: a bazillion repetitive cos here -- aren't these all the same set? n cos stored should do it 
+	   *   we start at 0, then in the loop increment by n-1 n-3 .. 9, 7, 5, 3, 1 of pi/n
+	   */
 	  a[j] = xt * scl;
 	  a[jj] = a[j];
 	}
     }
-  else /* use fft if it's easy to match -- there must be a way to handle odd orders here 
+  else /* use fft if it's easy to match -- there must be a way to handle non-power-of-2 orders here 
 	*   stretch envl to a power of 2, fft, subsample?
 	*/
     {
@@ -10177,9 +10180,11 @@ typedef struct {
   mus_long_t loc;
   char *file_name;
   int chans;
-  mus_float_t **ibufs;
+  mus_float_t **ibufs, **saved_data;
+  mus_float_t *sbuf;
   mus_long_t data_start, data_end, file_end;
   mus_long_t file_buffer_size;
+  mus_float_t (*reader)(mus_any *ptr);
 } rdin;
 
 
@@ -10235,42 +10240,7 @@ static char *file_to_sample_file_name(mus_any *ptr) {return(((rdin *)ptr)->file_
 
 static void no_reset(mus_any *ptr) {}
 
-static int file_to_sample_end(mus_any *ptr);
-
-static mus_float_t run_file_to_sample(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) {return(mus_in_any_from_file(ptr, (int)arg1, (int)arg2));} /* mus_read_sample here? */
-
-
-static mus_any_class FILE_TO_SAMPLE_CLASS = {
-  MUS_FILE_TO_SAMPLE,
-  (char *)S_file_to_sample,
-  &free_file_to_sample,
-  &describe_file_to_sample,
-  &rdin_equalp,
-  0, 0, 
-  &file_to_sample_length, 0,
-  0, 0, 0, 0,
-  0, 0,
-  &file_to_sample_increment, 
-  &file_to_sample_set_increment,
-  &run_file_to_sample,
-  MUS_INPUT,
-  NULL,
-  &file_to_sample_channels,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  &mus_in_any_from_file,
-  0,
-  &file_to_sample_file_name,
-  &file_to_sample_end,
-  0, /* location */
-  0, /* set_location */
-  0, /* channel */
-  0, 0, 0, 0, 0,
-  &no_reset,
-  0
-};
-
-
-mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
+static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 {
   /* check in-core buffer bounds,
    * if needed read new buffer (taking into account dir)
@@ -10344,9 +10314,48 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
       
       return((mus_float_t)(gen->ibufs[chan][samp - gen->data_start]));
     }
+  
   return(0.0);
 }
 
+
+static mus_float_t run_file_to_sample(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) {return(mus_in_any_from_file(ptr, (int)arg1, (int)arg2));} /* mus_read_sample here? */
+
+#if 0
+static mus_float_t saved_file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
+{
+  rdin *rd = (rdin *)ptr;
+  if ((loc <= rd->file_end) &&
+      (loc >= 0))
+    return(rd->saved_data[chan][loc]);
+  return(0.0);
+}
+
+static mus_float_t safe_file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
+{
+  rdin *rd = (rdin *)ptr;
+  if ((loc <= rd->file_end) &&
+      (loc >= 0))
+    return(rd->ibufs[chan][loc]);
+  return(0.0);
+}
+
+static mus_float_t file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
+{
+  rdin *rd = (rdin *)ptr;
+
+  if ((loc < 0) ||
+      (loc > rd->file_end) ||
+      (chan < 0) ||
+      (chan > rd->chans))
+    return(0.0);
+
+  if ((loc <= rd->data_end) &&
+      (loc >= rd->data_start))
+    return(rd->ibufs[chan][loc - rd->data_start]);
+  return(mus_in_any_from_file(ptr, loc, chan));
+}
+#endif
 
 static int file_to_sample_end(mus_any *ptr)
 {
@@ -10361,10 +10370,41 @@ static int file_to_sample_end(mus_any *ptr)
 	      free(gen->ibufs[i]);
 	  free(gen->ibufs);
 	  gen->ibufs = NULL;
+	  gen->sbuf = NULL;
 	}
     }
   return(0);
 }
+
+
+static mus_any_class FILE_TO_SAMPLE_CLASS = {
+  MUS_FILE_TO_SAMPLE,
+  (char *)S_file_to_sample,
+  &free_file_to_sample,
+  &describe_file_to_sample,
+  &rdin_equalp,
+  0, 0, 
+  &file_to_sample_length, 0,
+  0, 0, 0, 0,
+  0, 0,
+  &file_to_sample_increment, 
+  &file_to_sample_set_increment,
+  &run_file_to_sample,
+  MUS_INPUT,
+  NULL,
+  &file_to_sample_channels,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  &mus_in_any_from_file,
+  0,
+  &file_to_sample_file_name,
+  &file_to_sample_end,
+  0, /* location */
+  0, /* set_location */
+  0, /* channel */
+  0, 0, 0, 0, 0,
+  &no_reset,
+  0
+};
 
 
 bool mus_file_to_sample_p(mus_any *ptr) 
@@ -10412,6 +10452,10 @@ mus_any *mus_make_file_to_sample(const char *filename)
 
 mus_float_t mus_file_to_sample(mus_any *ptr, mus_long_t samp, int chan)
 {
+  rdin *gen = (rdin *)ptr;
+  if ((samp < 0) &&
+      (samp >= gen->file_end))
+    return(0.0);
   return(mus_in_any_from_file(ptr, samp, chan));
 }
 
@@ -10447,7 +10491,8 @@ static int free_readin(mus_any *p)
   return(0);
 }
 
-static mus_float_t run_readin(mus_any *ptr, mus_float_t unused1, mus_float_t unused2) {return(mus_readin(ptr));}
+static mus_float_t run_readin(mus_any *ptr, mus_float_t unused1, mus_float_t unused2) {return(((rdin *)ptr)->reader(ptr));}
+static mus_float_t readin_to_sample(mus_any *ptr, mus_long_t samp, int chan) {return(((rdin *)ptr)->reader(ptr));}
 
 static mus_float_t rd_increment(mus_any *ptr) {return((mus_float_t)(((rdin *)ptr)->dir));}
 static mus_float_t rd_set_increment(mus_any *ptr, mus_float_t val) {((rdin *)ptr)->dir = (int)val; return(val);}
@@ -10474,7 +10519,7 @@ static mus_any_class READIN_CLASS = {
   NULL,
   &file_to_sample_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  &mus_in_any_from_file,
+  &readin_to_sample,
   0,
   &file_to_sample_file_name,
   &file_to_sample_end,
@@ -10494,42 +10539,103 @@ bool mus_readin_p(mus_any *ptr)
 }
 
 
-mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_long_t start, int direction, mus_long_t buffer_size)
+mus_float_t mus_readin(mus_any *ptr)
 {
-  rdin *gen;
-  if (chan >= mus_sound_chans(filename))
-    mus_error(MUS_NO_SUCH_CHANNEL, "make-readin %s, chan: %d, but chans: %d", filename, chan, mus_sound_chans(filename));
-
-  gen = (rdin *)mus_make_file_to_sample(filename);
-  if (gen)
-    {
-      gen->core = &READIN_CLASS;
-      gen->loc = start;
-      gen->dir = direction;
-      gen->chan = chan;
-      gen->file_buffer_size = buffer_size;
-      gen->ibufs = (mus_float_t **)calloc(gen->chans, sizeof(mus_float_t *));
-      gen->ibufs[chan] = (mus_float_t *)calloc(gen->file_buffer_size, sizeof(mus_float_t));
-
-      return((mus_any *)gen);
-    }
-  return(NULL);
+  return(((rdin *)ptr)->reader(ptr));
 }
 
 
-mus_float_t mus_readin(mus_any *ptr)
+static mus_float_t safe_readin(mus_any *ptr)
+{
+  mus_float_t res;
+  rdin *rd = (rdin *)ptr;
+
+  if ((rd->loc <= rd->file_end) &&
+      (rd->loc >= 0))
+    res = rd->sbuf[rd->loc];
+  else res = 0.0;
+  rd->loc += rd->dir;
+  return(res);
+}
+
+
+static mus_float_t readin(mus_any *ptr)
 {
   mus_float_t res;
   rdin *rd = (rdin *)ptr;
 
   if ((rd->loc <= rd->data_end) &&
       (rd->loc >= rd->data_start))
-    res = rd->ibufs[rd->chan][rd->loc - rd->data_start];
-  else res = mus_in_any_from_file(ptr, rd->loc, rd->chan);
+    res = rd->sbuf[rd->loc - rd->data_start];
+  else 
+    {
+      if ((rd->loc < 0) || (rd->loc > rd->file_end))
+	res = 0.0;
+      else res = mus_in_any_from_file(ptr, rd->loc, rd->chan);
+    }
 
   rd->loc += rd->dir;
   return(res);
 }
+
+
+mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_long_t start, int direction, mus_long_t buffer_size)
+{
+  rdin *gen;
+  if (chan >= mus_sound_chans(filename))
+    mus_error(MUS_NO_SUCH_CHANNEL, "make-readin %s, chan: %d, but chans: %d", filename, chan, mus_sound_chans(filename));
+  
+  gen = (rdin *)mus_make_file_to_sample(filename);
+  if (gen)
+    {
+      mus_float_t **saved_data = NULL;
+      gen->core = &READIN_CLASS;
+      gen->loc = start;
+      gen->dir = direction;
+      gen->chan = chan;
+      gen->saved_data = mus_sound_saved_data(filename);
+      if (!saved_data)
+	{
+	  char *str;
+	  str = mus_expand_filename(filename);
+	  if (str)
+	    {
+	      gen->saved_data = mus_sound_saved_data(str);
+	      free(str);
+	    }
+	}
+      if (gen->saved_data)
+	{
+	  gen->file_buffer_size = gen->file_end + 1;
+	  gen->sbuf = gen->saved_data[chan];
+	  gen->reader = safe_readin;
+	  gen->data_start = 0;
+	  gen->data_end = gen->file_end;
+	}
+      else
+	{
+	  gen->ibufs = (mus_float_t **)calloc(gen->chans, sizeof(mus_float_t *));
+	  if (buffer_size > gen->file_end)
+	    {
+	      gen->file_buffer_size = gen->file_end + 1;
+	      gen->reader = safe_readin;
+	      gen->ibufs[chan] = (mus_float_t *)malloc(gen->file_buffer_size * sizeof(mus_float_t));
+	      mus_in_any_from_file((mus_any *)gen, 0, chan);
+	    }
+	  else
+	    {
+	      gen->file_buffer_size = buffer_size;
+	      gen->reader = readin;
+	      gen->ibufs[chan] = (mus_float_t *)calloc(gen->file_buffer_size, sizeof(mus_float_t));
+	    }
+	  gen->sbuf = gen->ibufs[chan];
+	}
+      return((mus_any *)gen);
+    }
+  return(NULL);
+}
+
+
 
 
 mus_long_t mus_set_location(mus_any *gen, mus_long_t loc)
@@ -10554,7 +10660,9 @@ mus_float_t mus_in_any(mus_long_t samp, int chan, mus_any *IO)
 bool mus_in_any_is_safe(mus_any *ptr)
 {
   rdin *gen = (rdin *)ptr;
-  return((gen) && (gen->core->read_sample == mus_in_any_from_file));
+  return((gen) && 
+	 ((gen->core->read_sample == mus_in_any_from_file) ||
+	  (gen->core->read_sample == readin_to_sample)));
 }
 
 
@@ -10659,8 +10767,17 @@ mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *uf)
     }
   else
     {
-      for (i = 0; i < gen->chans; i++) 
-	f->vals[i] = mus_in_any_from_file(ptr, samp, i);
+      if ((samp < 0) ||
+	  (samp > gen->file_end))
+	{
+	  for (i = 0; i < gen->chans; i++) 
+	    f->vals[i] = 0.0;
+	}
+      else
+	{
+	  for (i = 0; i < gen->chans; i++) 
+	    f->vals[i] = mus_in_any_from_file(ptr, samp, i);
+	}
     }
   return((mus_any *)f);
 }
