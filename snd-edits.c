@@ -305,9 +305,8 @@ typedef struct {
 } xramp_state;
 
 typedef struct {
-  short ramps;
+  int ramps, xramps;
   ramp_state *ramp_list;
-  short xramps;
   xramp_state *xramp_list;
 } ed_ramps;
 
@@ -315,16 +314,16 @@ typedef struct {
 /* fragment mix info */
 
 typedef struct {
-  short size;                              /* size of mix_list, but some entries can be empty */
+  int size;                              /* size of mix_list, but some entries can be empty */
   mix_state **mix_list;
 } ed_mixes;
 
 
 /* ed list fragment */
 
-typedef struct ed_fragment {               /* this name is necessary even in straight C */
-  short typ,                               /* code for accessor choice (ED_SIMPLE etc) */
-        snd;                               /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
+typedef struct ed_fragment {             /* this name is necessary even in straight C */
+  int typ,                               /* code for accessor choice (ED_SIMPLE etc) */
+      snd;                               /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
   mus_long_t out,                               /* running segment location within current overall edited data */
         beg,                               /* index into the associated data => start point of data used in current segment */
         end;                               /* index into the associated data => end point of data used in current segment */
@@ -339,9 +338,8 @@ typedef struct ed_fragment {               /* this name is necessary even in str
 /* reader ramp info */
 
 typedef struct {
-  short ramps;
+  int ramps, xramps;
   double *incrs, *vals;
-  short xramps;
   double *xincrs, *xvals;
   mus_float_t (*rampf)(struct snd_fd *sf);
   mus_float_t (*rev_rampf)(struct snd_fd *sf);
@@ -512,9 +510,11 @@ static mus_float_t previous_ramp2_value(snd_fd *sf)
 
 static mus_float_t next_ramp_value(snd_fd *sf)
 {
-  mus_float_t val = 1.0;
+  mus_float_t val;
   int i;
-  for (i = 0; i < READER_RAMPS(sf); i++)
+  val = READER_VAL(sf, 0);
+  READER_VAL(sf, 0) += READER_INCR(sf, 0);
+  for (i = 1; i < READER_RAMPS(sf); i++)
     {
       val *= READER_VAL(sf, i);
       READER_VAL(sf, i) += READER_INCR(sf, i);
@@ -524,9 +524,11 @@ static mus_float_t next_ramp_value(snd_fd *sf)
 
 static mus_float_t previous_ramp_value(snd_fd *sf)
 {
-  mus_float_t val = 1.0;
+  mus_float_t val;
   int i;
-  for (i = 0; i < READER_RAMPS(sf); i++)
+  val = READER_VAL(sf, 0);
+  READER_VAL(sf, 0) -= READER_INCR(sf, 0);
+  for (i = 1; i < READER_RAMPS(sf); i++)
     {
       val *= READER_VAL(sf, i);
       READER_VAL(sf, i) -= READER_INCR(sf, i);
@@ -559,8 +561,10 @@ static mus_float_t previous_xramp1_value(snd_fd *sf)
 static mus_float_t next_xramp_value(snd_fd *sf)
 {
   int i;
-  mus_float_t val = 1.0;
-  for (i = 0; i < READER_XRAMPS(sf); i++)
+  mus_float_t val;
+  val = (READER_XRAMP_OFFSET(sf, 0) + (READER_XRAMP_SCALER(sf, 0) * READER_XVAL(sf, 0)));
+  READER_XVAL(sf, 0) *= READER_XINCR(sf, 0);
+  for (i = 1; i < READER_XRAMPS(sf); i++)
     {
       val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
       READER_XVAL(sf, i) *= READER_XINCR(sf, i);
@@ -777,15 +781,17 @@ static mus_float_t previous_xramp(snd_fd *sf)
 
 /* mix readers */
 
-/* TODO: how often is there just one entry in this list? */
-
 static mus_float_t read_mix_list_samples(snd_fd *sf)
 {
   reader_mixes *m;
   int i;
-  mus_float_t sum = 0.0;
+  mus_float_t sum;
+
   m = (reader_mixes *)(sf->mixes);
-  for (i = 0; i < m->size; i++) /* unrolled no faster */
+  if (m->size == 0) return(0.0); /* this is apparently possible?? */
+
+  sum = read_sample(m->sfs[0]);
+  for (i = 1; i < m->size; i++)
     sum += read_sample(m->sfs[i]);
   return(sum);
 }

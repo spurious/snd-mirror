@@ -26911,6 +26911,28 @@ static s7_pointer reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer li
 }
 
 
+static s7_pointer reverse_in_place_unchecked(s7_scheme *sc, s7_pointer term, s7_pointer list) 
+{
+  s7_pointer p = list, result = term, q;
+
+  while (is_not_null(p))
+    {
+      q = cdr(p);
+      cdr(p) = result;
+      result = p;
+      p = q;
+
+      if (is_null(p)) break;
+      q = cdr(p);
+      cdr(p) = result;
+      result = p;
+      p = q;
+    }
+
+  return(result);
+}
+
+
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe" here means we guarantee this list is unproblematic */
 {
   s7_pointer p = list, result, q;
@@ -26972,13 +26994,18 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
 {
-  /* the non-recursive version of this is only slightly faster 
-   *   but isn't the recursive version slightly dangerous in regard to the GC? 
-   */
   s7_pointer p;
   sc->w = sc->NIL;
   for (p = lst; is_pair(p); p = cdr(p))
-    sc->w = cons(sc, car(p), sc->w);
+    {
+      sc->w = cons(sc, car(p), sc->w);
+      p = cdr(p);
+      if (!is_pair(p)) break;
+      sc->w = cons_unchecked(sc, car(p), sc->w);
+      p = cdr(p);
+      if (!is_pair(p)) break;
+      sc->w = cons_unchecked(sc, car(p), sc->w);
+    }
   return(safe_reverse_in_place(sc, sc->w));
 }
 
@@ -28817,14 +28844,14 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
       /* the original version used s7_append but that copies the arguments too many times if there are 3 or more lists */
       s7_pointer p;
       if (is_null(cdr(y)))
-	return(reverse_in_place(sc, car(y), x)); /* i.e. tack car(y) onto end of x copied and reversed */
+	return(reverse_in_place_unchecked(sc, car(y), x)); /* i.e. tack car(y) onto end of x copied and reversed */
 
       p = car(y);
       if (!is_proper_list(sc, p))
 	return(wrong_type_argument_n_with_type(sc, sc->APPEND, position_of(y, args), p, A_PROPER_LIST));
       /* is this error correct?
        *   (append '(3) '(1 . 2))
-       *   '(3 1 . 2)
+       *   '(3 1 . 2) ; (old) guile also returns this
        * but
        *   (append '(1 . 2) '(3))
        *   gives this error
@@ -28832,6 +28859,10 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
       while (is_not_null(p))
 	{
 	  x = cons(sc, car(p), x);
+	  p = cdr(p);
+
+	  if (is_null(p)) break;
+	  x = cons_unchecked(sc, car(p), x);
 	  p = cdr(p);
 	}
     }
@@ -68975,8 +69006,8 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
- * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.3
- * calls         |   275  207  175  115   89   71   53   53|  54   49.3
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4
+ * calls         |   275  207  175  115   89   71   53   53|  54   49.5
  */
 
 /* all_x in snd-sig? all_x_c_aa|a?
@@ -68987,9 +69018,11 @@ int main(int argc, char **argv)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
- * TODO: snd-test read-sample-with-direction
  * TODO: safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
- * TODO: test mus-set-formant-frequency 
+ *
+ * TODO: snd-test read-sample-with-direction, mus-set-formant-frequency 
  * the outa_loop stuff could be procedurized etc
+ * mothballs! POA?
+ * file_to_sample|frame folded into readin changes
  */

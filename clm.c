@@ -49,26 +49,6 @@
   #define HAVE_SINCOS 0
 #endif
 
-#if 0
-/* if you're running a truly ancient system, set that switch to 1 */
-static void *memmove (char *dest, const char *source, unsigned int length)
-{ /* from libit */
-  char *d0 = dest;
-  if (source < dest)
-    /* Moving from low mem to hi mem; start at end.  */
-    for (source += length, dest += length; length; --length)
-      *--dest = *--source;
-  else 
-    if (source != dest)
-      {
-	/* Moving from hi mem to low mem; start at beginning.  */
-	for (; length; --length)
-	  *dest++ = *source++;
-      }
-  return((void *)d0);
-}
-#endif
-
 
 struct mus_any_class {
   int type;
@@ -8411,9 +8391,6 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
 	  qj = q * (am - j);
 	  for (i = 1, x = qj; i < m; i++, x += qj)
 	    xt += (envl[i] * cos(x));
-	  /* TODO: a bazillion repetitive cos here -- aren't these all the same set? n cos stored should do it 
-	   *   we start at 0, then in the loop increment by n-1 n-3 .. 9, 7, 5, 3, 1 of pi/n
-	   */
 	  a[j] = xt * scl;
 	  a[jj] = a[j];
 	}
@@ -9952,8 +9929,8 @@ static mus_any *frame_to_frame_left(mus_any *arg1, mus_any *arg2, mus_any *arg_o
   for (i = 0; i < out_chans; i++)
     {
       int j;
-      out->vals[i] = 0.0;
-      for (j = 0; j < in_chans; j++)
+      out->vals[i] = (mix->vals[i][0] * frame->vals[0]);
+      for (j = 1; j < in_chans; j++)
 	out->vals[i] += (mix->vals[i][j] * frame->vals[j]);
     }
   return((mus_any *)out);
@@ -10762,7 +10739,8 @@ mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *uf)
     {
       mus_long_t pos;
       pos = samp - gen->data_start;
-      for (i = 0; i < gen->chans; i++) 
+      f->vals[0] = gen->ibufs[0][pos];
+      for (i = 1; i < gen->chans; i++) 
 	f->vals[i] = gen->ibufs[i][pos];
     }
   else
@@ -10775,7 +10753,8 @@ mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *uf)
 	}
       else
 	{
-	  for (i = 0; i < gen->chans; i++) 
+	  f->vals[0] = mus_in_any_from_file(ptr, samp, 0);
+	  for (i = 1; i < gen->chans; i++) 
 	    f->vals[i] = mus_in_any_from_file(ptr, samp, i);
 	}
     }

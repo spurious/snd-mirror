@@ -488,11 +488,13 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
     }
   else
     {
+      mus_long_t len;
       if (ni < 0)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index < 0?");
       if (nj < 0)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index < 0?");
-      for (i = ni, j = nj; (j < mus_vct_length(v)) && (i < mus_vct_length(v)); i++, j++) 
+      len = mus_vct_length(v);
+      for (i = ni, j = nj; (j < len) && (i < len); i++, j++) 
 	d[i] = d[j];
     }
   return(obj);
