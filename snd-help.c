@@ -407,11 +407,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+4-Jan:  Snd 14.3.\n\
+22-Nov: Snd 14.2.\n\
 15-Oct: Snd 14.1.\n\
-11-Oct: removed frame.scm and mixer.scm: frames and mixers are obsolete in the scheme version of Snd.\n\
-11-Sep: Snd 14.0.  Homogenous vectors, write readably, libc.scm, libgsl.scm.\n\
-5-Sep:  removed kmenu.scm and oscope.scm.\n\
-9-Aug:  write.scm, removed pretty-print.scm.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

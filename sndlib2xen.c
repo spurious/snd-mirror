@@ -1127,7 +1127,7 @@ static XEN g_mus_sound_preload(XEN file)
       if (ifd != MUS_ERROR)
 	{
 	  chans = mus_sound_chans(str);
-	  frames = mus_sound_frames(str);
+	  frames = mus_sound_frames(str) + 8; /* + 8 for readers than wander off the end */
 	  bufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
 	  for (i = 0; i < chans; i++)
 	    bufs[i] = (mus_float_t *)malloc(frames * sizeof(mus_float_t));

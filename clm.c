@@ -10302,7 +10302,7 @@ static mus_float_t run_file_to_sample(mus_any *ptr, mus_float_t arg1, mus_float_
 static mus_float_t saved_file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
 {
   rdin *rd = (rdin *)ptr;
-  if ((loc <= rd->file_end) &&
+  if ((loc < rd->file_end) &&
       (loc >= 0))
     return(rd->saved_data[chan][loc]);
   return(0.0);
@@ -10311,7 +10311,7 @@ static mus_float_t saved_file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
 static mus_float_t safe_file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
 {
   rdin *rd = (rdin *)ptr;
-  if ((loc <= rd->file_end) &&
+  if ((loc < rd->file_end) &&
       (loc >= 0))
     return(rd->ibufs[chan][loc]);
   return(0.0);
@@ -10322,7 +10322,7 @@ static mus_float_t file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
   rdin *rd = (rdin *)ptr;
 
   if ((loc < 0) ||
-      (loc > rd->file_end) ||
+      (loc >= rd->file_end) ||
       (chan < 0) ||
       (chan > rd->chans))
     return(0.0);
@@ -10527,7 +10527,7 @@ static mus_float_t safe_readin(mus_any *ptr)
   mus_float_t res;
   rdin *rd = (rdin *)ptr;
 
-  if ((rd->loc <= rd->file_end) &&
+  if ((rd->loc < rd->file_end) &&
       (rd->loc >= 0))
     res = rd->sbuf[rd->loc];
   else res = 0.0;
@@ -10546,7 +10546,7 @@ static mus_float_t readin(mus_any *ptr)
     res = rd->sbuf[rd->loc - rd->data_start];
   else 
     {
-      if ((rd->loc < 0) || (rd->loc > rd->file_end))
+      if ((rd->loc < 0) || (rd->loc >= rd->file_end))
 	res = 0.0;
       else res = mus_in_any_from_file(ptr, rd->loc, rd->chan);
     }
@@ -10746,7 +10746,7 @@ mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *uf)
   else
     {
       if ((samp < 0) ||
-	  (samp > gen->file_end))
+	  (samp >= gen->file_end))
 	{
 	  for (i = 0; i < gen->chans; i++) 
 	    f->vals[i] = 0.0;

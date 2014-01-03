@@ -22844,6 +22844,7 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
    * in the xg case, there's no savings in delaying the defines
    *
    */
+
   if (sc->autoload_names == NULL)
     {
       sc->autoload_names = (const char ***)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(const char **));
@@ -22872,7 +22873,7 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
      
   sc->autoload_names[sc->autoload_names_loc] = names;
   sc->autoload_names_sizes[sc->autoload_names_loc] = size;
-  sc->autoloaded_already[sc->autoload_names_loc] = (bool *)calloc(size, sizeof(bool));
+  sc->autoloaded_already[sc->autoload_names_loc] = (bool *)calloc(size * 2, sizeof(bool)); /* see below */
   sc->autoload_names_loc++;
 }
 
@@ -22900,7 +22901,7 @@ static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol, bool *al
 	  if (comp == 0)
 	    {
 	      int loc;
-	      loc = pos * 2 + 1;
+	      loc = pos * 2 + 1; /* TODO: why this? (ie why *2 and then why +1??) */
 	      *already_loaded = sc->autoloaded_already[lib][loc];
 	      sc->autoloaded_already[lib][loc] = true;
 	      return(names[loc]);
@@ -69023,6 +69024,5 @@ int main(int argc, char **argv)
  *
  * TODO: snd-test read-sample-with-direction, mus-set-formant-frequency 
  * the outa_loop stuff could be procedurized etc
- * mothballs! POA?
  * file_to_sample|frame folded into readin changes
  */

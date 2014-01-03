@@ -924,12 +924,15 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
     {
       if ((ratio == 0.5) && (dur < (1 << 22)))
 	{
-	  mus_long_t m, in_dur;
+	  mus_long_t m, in_dur, swid2;
 	  mus_float_t *in_data;
 
-	  in_dur = dur + 2 + 2 * sinc_width(ss);
+	  swid2 = 2 * sinc_width(ss);
+	  in_dur = dur + 4 + swid2;
 	  in_data = (mus_float_t *)malloc(in_dur * sizeof(mus_float_t));
-	  for (m = 2 * sinc_width(ss); m < in_dur; m++)
+	  for (m = 0; m < swid2; m++)
+	    in_data[m] = 0.0;
+	  for (m = swid2; m < in_dur; m++)
 	    in_data[m] = read_sample(sf);
 	  data[0] = mus_src_05(sr->gen, in_data, dur);
 
@@ -943,12 +946,15 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	    {
 	      /* make and fill input data, make output data, pass mus_src_20 the input data array, new dur, and sr->gen
 	       */
-	      mus_long_t m, in_dur;
+	      mus_long_t m, in_dur, swid2;
 	      mus_float_t *in_data;
 
-	      in_dur = dur + 2 + 2 * sinc_width(ss);
+	      swid2 = 2 * sinc_width(ss);
+	      in_dur = dur + 4 + swid2;
 	      in_data = (mus_float_t *)malloc(in_dur * sizeof(mus_float_t));
-	      for (m = 2 * sinc_width(ss); m < in_dur; m++)
+	      for (m = 0; m < swid2; m++)
+		in_data[m] = 0.0;
+	      for (m = swid2; m < in_dur; m++)
 		in_data[m] = read_sample(sf);
 	      data[0] = mus_src_20(sr->gen, in_data, dur);
 

@@ -8675,7 +8675,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 
   XEN in_obj = XEN_UNDEFINED;
   mus_xen *gn;
-  mus_any *ge;
+  mus_any *ge = NULL;
   int vals, wid = 0; /* 0 here picks up the current default width in clm.c */
   XEN args[6]; 
   XEN keys[3];

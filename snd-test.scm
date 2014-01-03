@@ -39,8 +39,6 @@
 (if (<= tests 0) (set! tests 1))
 ;(set! *gc-stats* #t)
 
-(for-each mus-sound-preload (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd" "storm.snd" "1.snd" "cardinal.snd" "2a.snd"))
-
 (set! *#readers* 
       (cons (cons #\_ (lambda (str)
 			(if (string=? str "__line__")
@@ -221,6 +219,9 @@
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
 	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.cl" "trumpet.snd" "1234.snd")))
+
+(for-each mus-sound-preload (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd" "storm.snd" "1.snd" "cardinal.snd" "2a.snd"))
+
 
 
 ;;(setlocale LC_ALL "de_DE")
