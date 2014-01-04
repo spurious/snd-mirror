@@ -7903,6 +7903,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 {
   mus_any *outfr = NULL, *revfr = NULL;
   XEN output, reverb;
+  if (pos < 0) return;
 
   if (from_locsig)
     {

@@ -1081,14 +1081,18 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	  if (lim > fd->frames)
 	    lim = fd->frames;
 	  bytes = lim * sizeof(mus_float_t);
+	  if (beg < 0) beg = 0;
 
 	  if ((chans == 1) &&
 	      ((!cm) || (cm[0])))
 	    {
 	      buffer = (mus_float_t *)(bufs[0]);
-	      memcpy((void *)buffer, (void *)(fd->saved_data[0] + beg), bytes);
-	      if (lim < nints)
-		memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
+	      if (buffer)
+		{
+		  memcpy((void *)buffer, (void *)(fd->saved_data[0] + beg), bytes);
+		  if (lim < nints)
+		    memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
+		}
 	    }
 	  else
 	    {
@@ -1096,9 +1100,12 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		if ((cm == NULL) || (cm[k]))
 		  {
 		    buffer = (mus_float_t *)(bufs[k]);
-		    memcpy((void *)buffer, (void *)(fd->saved_data[k] + beg), bytes);
-		    if (lim < nints)
-		      memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
+		    if (buffer)
+		      {
+			memcpy((void *)buffer, (void *)(fd->saved_data[k] + beg), bytes);
+			if (lim < nints)
+			  memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
+		      }
 		  }
 	    }
 	  return(lim);
@@ -2546,7 +2553,7 @@ static void min_max_ints(unsigned char *data, int bytes, int chan, int chans, mu
 
   sbuf = (int *)data;
   len = bytes / INT_BYTES;
-  len2 = len - 2;
+  len2 = len - 2 *chans;
 
   cur_min = sbuf[chan];
   cur_max = cur_min;
@@ -2651,7 +2658,7 @@ static void min_max_floats(unsigned char *data, int bytes, int chan, int chans, 
 
   sbuf = (float *)data;
   len = bytes / FLOAT_BYTES;
-  len2 = len - 2;
+  len2 = len - 2 *chans;
 
   cur_min = sbuf[chan];
   cur_max = cur_min;
@@ -2759,7 +2766,7 @@ static void min_max_doubles(unsigned char *data, int bytes, int chan, int chans,
 
   sbuf = (double *)data;
   len = bytes / DOUBLE_BYTES;
-  len2 = len - 2;
+  len2 = len - 2 * chans;
 
   cur_min = sbuf[chan];
   cur_max = cur_min;
@@ -2866,7 +2873,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
 
   bytes_per_frame = chans * THREE_BYTES;
   len = bytes / bytes_per_frame;
-  len2 = len - 2;
+  len2 = len - 2 * bytes_per_frame;
   offset = chan * THREE_BYTES;
 
   k = offset;
@@ -2945,7 +2952,7 @@ static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, m
   cur_max = cur_min;
 
   i = chan;
-  b2 = bytes - 2;
+  b2 = bytes - 2 * chans;
   while (i <= b2)
     {
       mus_float_t val;
@@ -2977,7 +2984,7 @@ static void min_max_alaw(unsigned char *data, int bytes, int chan, int chans, mu
   cur_max = cur_min;
 
   i = chan;
-  b2 = bytes - 2;
+  b2 = bytes - 2 * chans;
   while (i <= b2)
     {
       mus_float_t val;
@@ -3009,7 +3016,7 @@ static void min_max_bytes(unsigned char *data, int bytes, int chan, int chans, m
   cur_max = cur_min;
 
   i = chan;
-  b2 = bytes - 2;
+  b2 = bytes - 2 * chans;
   while (i <= b2)
     {
       signed char val;
@@ -3041,7 +3048,7 @@ static void min_max_ubytes(unsigned char *data, int bytes, int chan, int chans, 
   cur_max = cur_min;
 
   i = chan;
-  b2 = bytes - 2;
+  b2 = bytes - 2 * chans;
   while (i <= b2)
     {
       if (data[i] < cur_min) cur_min = data[i]; else if (data[i] > cur_max) cur_max = data[i];

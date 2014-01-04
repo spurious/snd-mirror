@@ -106,6 +106,30 @@ echo ' -------------------------------- that was valgrind --with-motif? --------
 echo ' '
 echo ' '
 
+echo ' -------------------------------- motif + gl -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+./configure --quiet --with-gl --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test 24
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was motif? and gl -------------------------------- '
+echo ' '
+echo ' '
+
+valgrind ./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was valgrind --with-motif and gl -------------------------------- '
+echo ' '
+echo ' '
+
 make allclean
 rm -f snd
 rm -f config.cache

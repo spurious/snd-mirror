@@ -69024,5 +69024,11 @@ int main(int argc, char **argv)
  *
  * TODO: snd-test read-sample-with-direction, mus-set-formant-frequency 
  * the outa_loop stuff could be procedurized etc
- * file_to_sample|frame folded into readin changes
+ * file_to_sample|frame folded into readin changes, also max overall diff>1.0 test 20, also gtk test 13 in valgrind
+ * need some better way (than make-shared-vector) to initialize multidimensional vectors (and s7.html section)
+ *    (make-shared-vector (vector 1 1 1 2 2 2 3 3 3) '(3 3))
+ *    #2D((1 1 1) (2 2 2) (3 3 3))
+ *    (make-shared-vector (apply vector (append '(1 1 1) '(2 2 2) '(3 3 3))) '(3 3))
+ *    #2D((1 1 1) (2 2 2) (3 3 3))
  */
+
