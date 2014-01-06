@@ -1,17 +1,9 @@
-Snd 14.2:
-
-added *show-indices* etc (the old procedure-with-setter globals 
-  can now be accessed as normal variables -- there are about
-  200 of them).
-
-with-tracking-cursor changed again! (added :track-and-stay to
-  make the cursor stay where the play stops).
-
-removed (obsolete) trap-segfault.
-
-s7: bignum-precision is now a variable: *bignum-precision*.
-    added *maximum-stack-size* to catch infinite recursion.
-
-checked: gtk 3.10.2|11.0|2, OSX 10.9, sbcl 1.1.13
-
-Thanks!: Ray Rashif, Robert Komar
+Snd 14.3
+read-sample-with-direction
+make-float-vector
+mus-set-formant-frequency
+make-polywave additional args xcoeffs ycoeffs
+mus_file_read* changed and mus-sound-read
+mus-sound-preload
+checked: sbcl-1.1.14, FC 20
+Thanks!: Mike Scholz, Dave Phillips.

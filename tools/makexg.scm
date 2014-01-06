@@ -694,7 +694,7 @@
 	(cons "GtkStateType" "INT")
 	(cons "GtkStateFlags" "INT")
 	(cons "GtkImageType" "INT")
-	(cons "GtkIconSize" "INT")
+;	(cons "GtkIconSize" "INT")
 	(cons "GtkJustification" "INT")
 	(cons "GtkMessageType" "INT")
 	(cons "GtkButtonsType" "INT")

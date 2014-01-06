@@ -69001,7 +69001,7 @@ int main(int argc, char **argv)
 /* -------------------------------------------------------------------------------- */
 
 /*
- * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2 14.3
+ * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2 14.3 14.4
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220 4157
  * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1371
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957
@@ -69014,6 +69014,7 @@ int main(int argc, char **argv)
 /* all_x in snd-sig? all_x_c_aa|a?
  * letrec* built-in (not macro), perhaps also when and unless
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
+ *   (and=> expr func) or (if=> ...)
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)

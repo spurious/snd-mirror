@@ -8722,7 +8722,7 @@
 (CFNC-3.10 "GdkCursor* gdk_cursor_new_from_surface GdkDisplay* display cairo_surface_t* surface gdouble x gdouble y")
 (CFNC-3.10 "cairo_surface_t* gdk_cursor_get_surface GdkCursor* cursor gdouble* [x_hot] gdouble* [y_hot]")
 (CFNC-3.10 "GdkEventType gdk_event_get_event_type GdkEvent* event" 'const)
-(CFNC-3.10 "GtkWidget* gtk_button_new_from_icon_name gchar* icon_name GtkIconSize size" 'const)
+;;; (CFNC-3.10 "GtkWidget* gtk_button_new_from_icon_name gchar* icon_name GtkIconSize size" 'const)
 (CFNC-3.10 "void gtk_entry_set_tabs GtkEntry* entry PangoTabArray* tabs")
 (CFNC-3.10 "PangoTabArray* gtk_entry_get_tabs GtkEntry* entry")
 (CFNC-3.10 "gboolean gtk_header_bar_get_show_close_button GtkHeaderBar* bar")
