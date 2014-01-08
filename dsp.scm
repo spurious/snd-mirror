@@ -721,7 +721,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
       (let ((k (+ i len)))
 	(if (= i 0)
 	    (set! (arr k) 0.0)
-	    (set! (arr k) (* (- (/ (cos (* pi i)) i) (/ (sin (* pi i)) (* pi i i))) 
+	    (set! (arr k) (* (/ (cos (* pi i)) i)
 			     (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 

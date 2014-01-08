@@ -674,8 +674,9 @@ You can use
 
 <p>Here the argument "a" defaults to #f, "b" to 32, etc.
 When the function is called, 
-the argument names are bound to their default values, then the function's
-current argument list is scanned.  Any name that occurs as a keyword, :arg for example where the parameter name is arg,
+the argument names are set from the values passed the function,
+then any unset arguments are bound to their default values, evaluated in left-to-right order.
+As the current argument list is scanned,  any name that occurs as a keyword, :arg for example where the parameter name is arg,
 sets that argument's new value.  Otherwise, as values occur, they
 are plugged into the actual argument list based on their position, counting a keyword/value pair as one argument.
 This is called an optional-key list in CLM.  So, taking the function
@@ -731,14 +732,21 @@ already set in left-to-right order, and as each parameter is set to its default 
 the binding is added to the default value expression environment (just as if it were a let*).
 </p>
 
+<p>In CL, keyword default values are handled in the same way:
+</p>
+
 <pre class="indented">
-(define* (f1 (a 1) (b 2) (c (+ b 1))) ; b in (+ b 1) is the argument b = 2
-  (+ a b c
-     (let ()
-       (set! b -123)
-       (if (&gt; a 0) (f1 (- a 1)) 0))))
-&gt; (f1)
-11
+&gt; (defun foo (&key (a 0) (b (+ a 4)) (c (+ a 7))) (list a b c)) 
+FOO 
+&gt; (foo :b 2 :a 60) 
+(60 2 67) 
+</pre>
+
+<p>In s7, we'd use:
+</p>
+
+<pre class="indented">
+(define* (foo (a 0) (b (+ a 4)) (c (+ a 7))) (list a b c))
 </pre>
 
 </div>
@@ -782,36 +790,6 @@ hi
 
 </div>
 
-
-<div class="indented">
-
-<p>If a define* argument's default value is an expression, it is evaluated in the definition environment at
-the time of the procedure call:
-</p>
-
-<pre class="indented">
-(let ((c 1))
-  (define* (a (b (+ c 1))) b)
-  (set! c 2)
-  (let ((c 123))
-    (a))) ; (+ c 1) here is (+ 2 1) so this returns 3
-</pre>
-
-<p>Since the expression is not evaluated until the procedure is called, it is ok
-to use variables that are undefined at the definition point:
-</p>
-
-<pre class="indented">
-&gt; (define* (a (b c)) b)
-a
-&gt; c
-;c: unbound variable
-&gt; (define c 123)
-c
-&gt; (a)
-123
-</pre>
-</div>
 
 <div class="indented">
 

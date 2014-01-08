@@ -268,7 +268,7 @@
 ;;   this implementation is based on the r7rs spec
 (define-macro (delay-force expr) 
   `(make-promise #f (lambda () ,expr)))
-(define-macro (delay expr) 
+(define-macro (r7rs-delay expr) ; "delay" is taken damn it
   `(delay-force (make-promise #t (lambda () ,expr))))
 (define (make-promise done? proc) 
   (list (cons done? proc)))

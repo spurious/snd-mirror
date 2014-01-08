@@ -45399,7 +45399,7 @@ EDITS: 1
 					     (not (eq? tag 'arg-error)))
 					(snd-display #__line__ ";clm ~A: tag: ~A arg: ~A" n tag arg))))
 				(list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average moving-max
-				      degrees->radians delay env formant firmant frame->list granulate hz->radians linear->db
+				      degrees->radians delay env formant firmant granulate hz->radians linear->db
 				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
 				      make-file->float-vector make-file->sample make-filter make-fir-filter make-formant make-firmant 
 				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero

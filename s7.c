@@ -433,7 +433,7 @@ enum {OP_NO_OP,
       OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_O_A,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
       OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P,
-      OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_P, 
+      OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_P, OP_SAFE_IF_NOT_S_P,
       OP_IF_Z_P, OP_IF_Z_P_P, OP_IF_A_P, OP_IF_A_P_P, OP_IF_GT_P,
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
       OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
@@ -516,7 +516,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", 
-   "if", "if", "if", "if", "if", "if",
+   "if", "if", "if", "if", "if", "if", "if",
 
    "and", "and", "and", "or", "or", "or", 
 
@@ -616,7 +616,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_CSS_X_P", "OP_SAFE_IF_CSC_X_P", "OP_SAFE_IF_CSC_X_O_A",
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
   "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P", 
-  "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_P", 
+  "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_P", "OP_SAFE_IF_NOT_S_P",
   "OP_IF_Z_P", "OP_IF_Z_P_P", "OP_IF_A_P", "OP_IF_A_P_P", "OP_IF_GT_P",
   "OP_SAFE_C_P_1", "OP_SAFE_C_PP_1", "OP_SAFE_C_PP_2", "OP_SAFE_C_PP_3", "OP_SAFE_C_PP_4", "OP_SAFE_C_PP_5", "OP_SAFE_C_PP_6", 
   "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_1_MV", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_2_MV", 
@@ -1336,7 +1336,7 @@ struct s7_scheme {
   s7_pointer SAFE_IF_CSS_X_P, SAFE_IF_CSC_X_P, SAFE_IF_CSC_X_O_A;
   s7_pointer SAFE_IF_CSQ_P, SAFE_IF_CSQ_P_P, SAFE_IF_CSS_P, SAFE_IF_CSS_P_P, SAFE_IF_CSC_P, SAFE_IF_CSC_P_P;
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P;
-  s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_P;
+  s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_P, SAFE_IF_NOT_S_P;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, INCREMENT_SS, INCREMENT_SSS, INCREMENT_S_opCq, INCREMENT_SZ, INCREMENT_C_TEMP;
   s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_Z_P, LET_O_O, LET_Z_O, LET_R_P, LET_CAR_P;
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_A, SAFE_DO;
@@ -22566,7 +22566,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   bool old_longjmp;
   s7_pointer port;
   FILE *fp;
-  
+
   fp = fopen(filename, "r");
   if (!fp)
     fp = search_load_path(sc, filename);
@@ -46681,7 +46681,12 @@ static s7_pointer check_if(s7_scheme *sc)
 				    {
 				      if (car(test) == sc->SYMBOLP)
 					set_syntax_op(sc->code, sc->SAFE_IF_IS_SYMBOL_P);
-				      else set_syntax_op(sc->code, sc->SAFE_IF_CS_P); 
+				      else 
+					{
+					  if (car(test) == sc->NOT)
+					    set_syntax_op(sc->code, sc->SAFE_IF_NOT_S_P);
+					  else set_syntax_op(sc->code, sc->SAFE_IF_CS_P); 
+					}
 				      set_fcdr(sc->code, cadr(test));
 				    }
 				}
@@ -58040,68 +58045,99 @@ OP_LET1: 75475 (4.677476)
 	  
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
-	    s7_pointer z;
+	    s7_pointer z, top, nxt;
 	    CHECK_STACK_SIZE(sc);
 	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
-	    /* get default values, which may involve evaluation 
-	     */
-	    push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code); /* op is just a placeholder (don't use OP_BARRIER here) */
-	    sc->args = closure_args(sc->code);
 	    
-	  LAMBDA_STAR_DEFAULT:
-	    z = sc->args;
-	    if (is_pair(z))
+	    /* to check for and fixup unset args from defaults, we need to traverse the slots in left-to-right order
+	     *   but they are stored backwards in the environment, so use pending_value as a back-pointer.
+	     * We have to build the environment before calling lambda_star_set_args because keywords can
+	     *   cause any arg to be set at any point in the arg list.
+	     *
+	     * TODO: is define-macro* different enough to cause confusion?
+	     */
+	    top = NULL;
+	    for (z = closure_args(sc->code); is_pair(z); z = cdr(z))
 	      {
-		/* bind all the args to something (default value or #f or maybe #undefined) */
-		if (car(z) != sc->KEY_ALLOW_OTHER_KEYS)
+		if (is_pair(car(z)))
 		  {
-		    if (car(z) == sc->KEY_REST)
+		    s7_pointer y;
+		    y = add_slot(sc, caar(z), sc->UNDEFINED);
+		    slot_expression(y) = cadar(z);
+		    slot_pending_value(y) = sc->NIL;
+		    if (!top)
 		      {
-			add_slot(sc, cadr(z), sc->NIL);       /* set :rest arg to sc->NIL, not sc->F */
-			sc->args = cdr(sc->args);
+			top = y;
+			nxt = top;
 		      }
 		    else
 		      {
-			if (is_pair(car(z)))                 /* (define* (hi (a mus-next)) a) */
-			  {                                  /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
-			    /* if default val is an expression, it needs to be evaluated in the definition environment
-			     *   (let ((c 1)) (define* (a (b (+ c 1))) b) (set! c 2) (a)) -> 3
-			     */
-			    s7_pointer val;
-			    val = cadar(z);
-			    if (is_symbol(val))
-			      add_slot(sc, caar(z), finder(sc, val));
-			    else
-			      {
-				if (is_pair(val))
-				  {
-				    if (car(val) == sc->QUOTE)
-				      add_slot(sc, caar(z), cadr(val));
-				    else
-				      {
-					push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code);
-					sc->code = cadar(z);
-					goto EVAL; 
-				      }
-				  }
-				else add_slot(sc, caar(z), val);
-			      }
-			  }
-			else add_slot(sc, car(z), sc->F);
+			slot_pending_value(nxt) = y;
+			nxt = y;
 		      }
 		  }
-		sc->args = cdr(sc->args);
-		goto LAMBDA_STAR_DEFAULT;
+		else
+		  {
+		    if (!is_keyword(car(z)))
+		      add_slot(sc, car(z), sc->F);
+		    else
+		      {
+			if (car(z) == sc->KEY_REST)
+			  {
+			    add_slot(sc, cadr(z), sc->NIL);
+			    z = cdr(z);
+			  }
+		      }
+		  }
 	      }
-	    else
+	    if (is_symbol(z))
+	      add_slot(sc, z, sc->NIL);
+
+	    lambda_star_set_args(sc);                     /* load up current arg vals */	    
+
+	    if (top)
 	      {
-		if (is_symbol(z))                      /* dotted (last) arg? -- make sure its name exists in the current environment */
-		  add_slot(sc, z, sc->NIL); 
-	      }
-	    /* end of default arg evaluations */
+		/* get default values, which may involve evaluation 
+		 */
+		push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code); /* op is just a placeholder (don't use OP_BARRIER here) */
+		sc->args = top;
 	    
-	    pop_stack_no_op(sc);                          /* get original args and code back */
-	    lambda_star_set_args(sc);                     /* load up current arg vals */
+	      LAMBDA_STAR_DEFAULT:
+		z = sc->args;
+		if (is_slot(z))
+		  {
+		    if (slot_value(z) == sc->UNDEFINED)
+		      {
+			s7_pointer val;
+			val = slot_expression(z);
+			if (is_symbol(val))
+			  {
+			    slot_set_value(z, finder(sc, val));
+			    if (slot_value(z) == sc->UNDEFINED)
+			      return(eval_error(sc, "~A: unbound variable", slot_symbol(z)));
+			    /* but #f is default if no expr, so there's some inconsistency here */
+			  }
+			else
+			  {
+			    if (is_pair(val))
+			      {
+				if (car(val) == sc->QUOTE)
+				  slot_set_value(z, cadr(val));
+				else
+				  {
+				    push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code);
+				    sc->code = val;
+				    goto EVAL; 
+				  }
+			      }
+			    else slot_set_value(z, val);
+			  }
+		      }
+		    sc->args = slot_pending_value(z);
+		    goto LAMBDA_STAR_DEFAULT;
+		  }
+		pop_stack_no_op(sc);                          /* get original args and code back */
+	      }
 	    sc->code = closure_body(sc->code);            /* evaluate the function body */
 	    if (is_pair(cdr(sc->code)))
 	      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
@@ -58230,8 +58266,8 @@ OP_LET1: 75475 (4.677476)
     case OP_LAMBDA_STAR_DEFAULT:
       /* sc->args is the current closure arg list position, sc->value is the default expression's value
        */
-      add_slot(sc, caar(sc->args), sc->value);
-      sc->args = cdr(sc->args);
+      slot_set_value(sc->args, sc->value);
+      sc->args = slot_pending_value(sc->args);
       goto LAMBDA_STAR_DEFAULT;
       
       
@@ -60493,6 +60529,17 @@ h_safe_c_aa: 125602 (2.498356)
     case OP_SAFE_IF_CS_P:
       car(sc->T1_1) = finder(sc, fcdr(sc->code));
       if (is_true(sc, c_call(car(sc->code))(sc, sc->T1_1)))
+	{
+	  sc->code = cadr(sc->code);
+	  goto EVAL; 
+	}
+      sc->value = sc->UNSPECIFIED;
+      goto START;
+      
+      
+      /* --------------- */
+    case OP_SAFE_IF_NOT_S_P:
+      if (is_false(sc, finder(sc, fcdr(sc->code))))
 	{
 	  sc->code = cadr(sc->code);
 	  goto EVAL; 
@@ -67840,6 +67887,7 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_IS_PAIR_P_P =   assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_PAIR_P_P);  
   sc->SAFE_IF_IS_SYMBOL_P =   assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_SYMBOL_P);  
   sc->SAFE_IF_IS_SYMBOL_P_P = assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_SYMBOL_P_P);  
+  sc->SAFE_IF_NOT_S_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_NOT_S_P);  
   sc->LET_R =                 assign_internal_syntax(sc, "let",     OP_LET_R);  
   sc->LET_R_P =               assign_internal_syntax(sc, "let",     OP_LET_R_P);  
   sc->LET_CAR_P =             assign_internal_syntax(sc, "let",     OP_LET_CAR_P);  
@@ -69000,12 +69048,12 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2 14.3 14.4
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220 4157
- * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1371
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220 4157 4115
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1371 1369
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
- * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.5
  * calls         |   275  207  175  115   89   71   53   53|  54   49.5
  */
 
