@@ -3009,6 +3009,22 @@ static char *snd_finder(const char *name, bool got_help)
 #endif
 
   is_defined = XEN_DEFINED_P(name);
+
+#if HAVE_SCHEME
+  {
+    s7_pointer help;
+    fgrep = mus_format("(*autoload* '%s)", name);
+    help = s7_eval_c_string(s7, fgrep);
+    free(fgrep);
+    fgrep = NULL;
+    if (help != xen_false)
+      {
+	command = mus_format("%s is defined in %s", name, s7_object_to_c_string(s7, help));
+	return(command);
+      }
+  }
+#endif
+
   url = snd_url(name);
   tempfile = snd_tempnam(); /* this will have a .snd extension */
   dirs = XEN_LOAD_PATH;
@@ -3034,8 +3050,6 @@ static char *snd_finder(const char *name, bool got_help)
     }
   snd_remove(tempfile, IGNORE_CACHE);
   free(tempfile);
-
-  /* TODO: if name is autoloadable, use the autoload file name? */
 
   if (url)
     {

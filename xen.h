@@ -10,11 +10,13 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 20
-#define XEN_VERSION "3.20"
+#define XEN_MINOR_VERSION 21
+#define XEN_VERSION "3.21"
 
 /* HISTORY:
  *
+ *  7-Jan-14:  in s7, C_TO_XEN_STRING and XEN_TO_C_STRING now treat a null string as a string (not #f).
+ *  --------
  *  9-Nov:     removed XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER.
  *  11-Oct:    removed XEN_EXACT_P.
  *  23-Sep:    removed *_OR_ELSE, XEN_ARG_*, and OFF_T* macros; added XEN_ARGIFY* to the Forth section.
@@ -1010,7 +1012,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_TRUE                                   xen_true
 #define XEN_TRUE_P(Arg)                            ((Arg) == XEN_TRUE)  /* not scheme-wise, but Snd-wise (#t as special arg) */
 #define XEN_FALSE_P(Arg)                           ((Arg) == XEN_FALSE)
-#define XEN_BOOLEAN_P(Arg)                         (((Arg) == XEN_TRUE) || ((Arg) == XEN_FALSE))
+#define XEN_BOOLEAN_P(Arg)                         s7_is_boolean(Arg)
 #define C_TO_XEN_BOOLEAN(Arg)                      ((Arg) ? XEN_TRUE : XEN_FALSE)
 #define XEN_TO_C_BOOLEAN(Arg)                      ((XEN_TRUE_P(Arg)) ? true : false)
 
@@ -1022,7 +1024,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 
 #define XEN_CONS_P(Arg)                            s7_cons_p(Arg)
 #define XEN_CONS(Arg1, Arg2)                       s7_cons(s7, Arg1, Arg2)
-#define XEN_CONS_2(Arg1, Arg2, Arg3)               s7_cons(s7, Arg1, XEN_CONS(Arg2, Arg3))
+#define XEN_CONS_2(Arg1, Arg2, Arg3)               s7_cons(s7, Arg1, s7_cons(s7, Arg2, Arg3))
 #define XEN_PAIR_P(Arg)                            s7_is_pair(Arg)
 #define XEN_CAR(Arg)                               s7_car(Arg)
 #define XEN_CDR(Arg)                               s7_cdr(Arg)
@@ -1057,7 +1059,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_NAME_AS_C_STRING_TO_VALUE(Arg)         s7_name_to_value(s7, Arg)
 #define XEN_TO_C_STRING(Str)                       s7_string(Str)
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define C_TO_XEN_STRING(Str)                     ({ const char *a = Str; (a) ? s7_make_string(s7, a) : XEN_FALSE; })
+  #define C_TO_XEN_STRING(Str)                     s7_make_string(s7, Str)
 #else
   #define C_TO_XEN_STRING(Arg)                     xen_s7_c_to_xen_string(Arg)
 #endif

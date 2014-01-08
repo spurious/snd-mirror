@@ -713,7 +713,7 @@
 	(snd-display #__line__ ";region-graph-style set default: ~A" (region-graph-style)))
     (if (not (equal? (ask-about-unsaved-edits) #f)) 
 	(snd-display #__line__ ";ask-about-unsaved-edits set default: ~A" (ask-about-unsaved-edits)))
-    (if (not (equal? (show-full-duration) #f)) 
+    (if (not (boolean? (show-full-duration)))
 	(snd-display #__line__ ";show-full-duration set default: ~A" (show-full-duration)))
     (if (not (equal? (show-full-range) #f)) 
 	(snd-display #__line__ ";show-full-range set default: ~A" (show-full-range)))
@@ -731,7 +731,7 @@
 	(snd-display #__line__ ";auto-update set default: ~A" (auto-update)))
     (if (not (equal? (channel-style)  1 )) 
 	(snd-display #__line__ ";channel-style set default: ~A" (channel-style)))
-    (if (fneq (color-cutoff)  0.003 )
+    (if (and (fneq (color-cutoff)  0.003 ) (fneq (color-cutoff)  0.001))
 	(snd-display #__line__ ";color-cutoff set default: ~A" (color-cutoff)))
     (if (not (equal? (color-inverted)  #t)) 
 	(snd-display #__line__ ";color-inverted set default: ~A" (color-inverted)))
@@ -823,7 +823,7 @@
 	(snd-display #__line__ ";html-program set default: ~A" (html-program)))
     (if (not (equal? (just-sounds)  #t)) 
 	(snd-display #__line__ ";just-sounds set default: ~A" (just-sounds)))
-    (if (not (equal? (listener-prompt)  ">" )) 
+    (if (not (string? (listener-prompt))) 
 	(snd-display #__line__ ";listener-prompt set default: ~A" (listener-prompt)))
     (if (not (equal? (max-transform-peaks)  100)) 
 	(snd-display #__line__ ";max-transform-peaks set default: ~A" (max-transform-peaks)))
@@ -844,7 +844,7 @@
 	(if (not (equal? (view-files-sort)  0 )) 
 	    (snd-display #__line__ ";view-files-sort set default: ~A" (view-files-sort))))
 
-    (if (not (equal? (print-length)  12 )) 
+    (if (not (member (print-length)  '(12 32) ))
 	(snd-display #__line__ ";print-length set default: ~A" (print-length)))
     (if (not (equal? (play-arrow-size)  10 )) 
 	(snd-display #__line__ ";play-arrow-size set default: ~A" (play-arrow-size)))
@@ -852,9 +852,9 @@
 	(snd-display #__line__ ";save-state-file set default: ~A" (save-state-file)))
     (if (not (equal? (show-axes)  1)) 
 	(snd-display #__line__ ";show-axes set default: ~A" (show-axes)))
-    (if (not (equal? (show-transform-peaks)  #f )) 
+    (if (not (boolean? (show-transform-peaks))) 
 	(snd-display #__line__ ";show-transform-peaks set default: ~A" (show-transform-peaks)))
-    (if (not (equal? (show-indices)  #f)) 
+    (if (not (boolean? (show-indices))) 
 	(snd-display #__line__ ";show-indices set default: ~A" (show-indices)))
     (if (not (equal? (show-marks)  #t )) 
 	(snd-display #__line__ ";show-marks set default: ~A" (show-marks)))
@@ -890,11 +890,11 @@
 	(snd-display #__line__ ";spectro-z-angle set default: ~A" (spectro-z-angle)))
     (if (fneq (spectro-z-scale) (if (provided? 'gl) 1.0 0.1))
 	(snd-display #__line__ ";spectro-z-scale set default: ~A" (spectro-z-scale)))
-    (if (not (equal? (temp-dir)  #f )) 
+    (if (and (not (equal? (temp-dir)  #f )) (not (equal? (temp-dir) "/home/bil/zap/tmp")))
 	(snd-display #__line__ ";temp-dir set default: ~A" (temp-dir)))
-    (if (not (equal? (ladspa-dir)  #f )) 
+    (if (not (equal? (ladspa-dir)  "" )) 
 	(snd-display #__line__ ";ladspa-dir set default: ~A" (ladspa-dir)))
-    (if (not (equal? (peak-env-dir)  #f )) 
+    (if (and (not (equal? (peak-env-dir)  #f )) (not (equal? (peak-env-dir) "/home/bil/peaks")))
 	(snd-display #__line__ ";peak-env-dir set default: ~A" (peak-env-dir)))
     (if (and (not (equal? (tiny-font) "6x12"))
 	     (not (equal? (tiny-font) "Sans 8")))
@@ -911,9 +911,9 @@
 	(snd-display #__line__ ";clm-default-frequency set default: ~A" (clm-default-frequency)))
     (if (fneq *clm-default-frequency* 0.0)
 	(snd-display #__line__ ";*clm-default-frequency*: ~A" *clm-default-frequency*))
-    (if (not (equal? (with-verbose-cursor)  #f)) 
+    (if (not (boolean? (with-verbose-cursor))) 
 	(snd-display #__line__ ";with-verbose-cursor set default: ~A" (with-verbose-cursor)))
-    (if (not (equal? (with-inset-graph)  #f))
+    (if (not (boolean? (with-inset-graph)))
 	(snd-display #__line__ ";with-inset-graph set default: ~A" (with-inset-graph)))
     (if (not (equal? (with-interrupts)  #t))
 	(snd-display #__line__ ";with-interrupts set default: ~A" (with-interrupts)))
@@ -925,13 +925,13 @@
 	(snd-display #__line__ ";with-toolbar set default: ~A" (with-toolbar)))
     (if (not (equal? (with-tooltips) #t))
 	(snd-display #__line__ ";with-tooltips set default: ~A" (with-tooltips)))
-    (if (not (equal? (with-menu-icons) #f))
+    (if (not (boolean? (with-menu-icons)))
 	(snd-display #__line__ ";with-menu-icons set default: ~A" (with-menu-icons)))
     (if (not (equal? (save-as-dialog-src) #f))
 	(snd-display #__line__ ";save-as-dialog-src set default: ~A" (save-as-dialog-src)))
     (if (not (equal? (save-as-dialog-auto-comment) #f))
 	(snd-display #__line__ ";save-as-dialog-auto-comment set default: ~A" (save-as-dialog-auto-comment)))
-    (if (not (equal? (with-pointer-focus)  #f)) 
+    (if (not (boolean? (with-pointer-focus))) 
 	(snd-display #__line__ ";with-pointer-focus set default: ~A" (with-pointer-focus)))
     (if (not (equal? (wavelet-type)  0 )) 
 	(snd-display #__line__ ";wavelet-type set default: ~A" (wavelet-type)))
@@ -974,7 +974,7 @@
 	(snd-display #__line__ ";* region-graph-style set default: ~A" *region-graph-style*))
     (if (not (equal? *ask-about-unsaved-edits* #f)) 
 	(snd-display #__line__ ";* ask-about-unsaved-edits set default: ~A" *ask-about-unsaved-edits*))
-    (if (not (equal? *show-full-duration* #f)) 
+    (if (not (equal? *show-full-duration* (show-full-duration))) 
 	(snd-display #__line__ ";* show-full-duration set default: ~A" *show-full-duration*))
     (if (not (equal? *show-full-range* #f)) 
 	(snd-display #__line__ ";* show-full-range set default: ~A" *show-full-range*))
@@ -992,7 +992,7 @@
 	(snd-display #__line__ ";* auto-update set default: ~A" *auto-update*))
     (if (not (equal? *channel-style*  1 )) 
 	(snd-display #__line__ ";* channel-style set default: ~A" *channel-style*))
-    (if (fneq *color-cutoff*  0.003 )
+    (if (and (fneq *color-cutoff*  0.003 ) (fneq *color-cutoff*  0.001))
 	(snd-display #__line__ ";* color-cutoff set default: ~A" *color-cutoff*))
     (if (not (equal? *color-inverted*  #t)) 
 	(snd-display #__line__ ";* color-inverted set default: ~A" *color-inverted*))
@@ -1075,7 +1075,7 @@
 	(snd-display #__line__ ";* html-program set default: ~A" *html-program*))
     (if (not (equal? *just-sounds*  #t)) 
 	(snd-display #__line__ ";* just-sounds set default: ~A" *just-sounds*))
-    (if (not (equal? *listener-prompt*  ">" )) 
+    (if (not (equal? *listener-prompt*  (listener-prompt)))
 	(snd-display #__line__ ";* listener-prompt set default: ~A" *listener-prompt*))
     (if (not (equal? *max-transform-peaks*  100)) 
 	(snd-display #__line__ ";* max-transform-peaks set default: ~A" *max-transform-peaks*))
@@ -1096,7 +1096,7 @@
 	(if (not (equal? *view-files-sort*  0 )) 
 	    (snd-display #__line__ ";* view-files-sort set default: ~A" *view-files-sort*)))
 
-    (if (not (equal? *print-length*  12 )) 
+    (if (not (equal? *print-length*  (print-length) )) 
 	(snd-display #__line__ ";* print-length set default: ~A" *print-length*))
     (if (not (equal? *play-arrow-size*  10 )) 
 	(snd-display #__line__ ";* play-arrow-size set default: ~A" *play-arrow-size*))
@@ -1104,9 +1104,9 @@
 	(snd-display #__line__ ";* save-state-file set default: ~A" *save-state-file*))
     (if (not (equal? *show-axes*  1)) 
 	(snd-display #__line__ ";* show-axes set default: ~A" *show-axes*))
-    (if (not (equal? *show-transform-peaks*  #f )) 
+    (if (not (equal? *show-transform-peaks*  (show-transform-peaks) )) 
 	(snd-display #__line__ ";* show-transform-peaks set default: ~A" *show-transform-peaks*))
-    (if (not (equal? *show-indices*  #f)) 
+    (if (not (equal? *show-indices*  (show-indices))) 
 	(snd-display #__line__ ";* show-indices set default: ~A" *show-indices*))
     (if (not (equal? *show-marks*  #t )) 
 	(snd-display #__line__ ";* show-marks set default: ~A" *show-marks*))
@@ -1142,22 +1142,22 @@
 	(snd-display #__line__ ";* spectro-z-angle set default: ~A" *spectro-z-angle*))
     (if (fneq *spectro-z-scale* (if (provided? 'gl) 1.0 0.1))
 	(snd-display #__line__ ";* spectro-z-scale set default: ~A" *spectro-z-scale*))
-    (if (not (equal? *temp-dir*  #f )) 
+    (if (not (equal? *temp-dir*  (temp-dir) )) 
 	(snd-display #__line__ ";* temp-dir set default: ~A" *temp-dir*))
-    (if (not (equal? *ladspa-dir*  #f )) 
+    (if (not (equal? *ladspa-dir*  (ladspa-dir) )) 
 	(snd-display #__line__ ";* ladspa-dir set default: ~A" *ladspa-dir*))
-    (if (not (equal? *peak-env-dir*  #f )) 
+    (if (not (equal? *peak-env-dir*  (peak-env-dir) )) 
 	(snd-display #__line__ ";* peak-env-dir set default: ~A" *peak-env-dir*))
     (if (and (not (equal? *tiny-font* "6x12"))
 	     (not (equal? (tiny-font) "Sans 8")))
 	(snd-display #__line__ ";* tiny-font set default: ~A" *tiny-font*))
-    (if (not (equal? *transform-type*  fourier-transform )) 
+    (if (not (equal? *transform-type*  (transform-type) )) 
 	(snd-display #__line__ ";* transform-type set default: ~A" *transform-type*))
     (if (not (equal? *with-file-monitor*  #t)) 
 	(snd-display #__line__ ";* with-file-monitor set default: ~A" *with-file-monitor*))
-    (if (not (equal? *with-verbose-cursor*  #f)) 
+    (if (not (equal? *with-verbose-cursor*  (with-verbose-cursor))) 
 	(snd-display #__line__ ";* with-verbose-cursor set default: ~A" *with-verbose-cursor*))
-    (if (not (equal? *with-inset-graph*  #f))
+    (if (not (equal? *with-inset-graph*  (with-inset-graph)))
 	(snd-display #__line__ ";* with-inset-graph set default: ~A" *with-inset-graph*))
     (if (not (equal? *with-interrupts*  #t))
 	(snd-display #__line__ ";* with-interrupts set default: ~A" *with-interrupts*))
@@ -1169,13 +1169,13 @@
 	(snd-display #__line__ ";* with-toolbar set default: ~A" *with-toolbar*))
     (if (not (equal? *with-tooltips* #t))
 	(snd-display #__line__ ";* with-tooltips set default: ~A" *with-tooltips*))
-    (if (not (equal? *with-menu-icons* #f))
+    (if (not (equal? *with-menu-icons* (with-menu-icons)))
 	(snd-display #__line__ ";* with-menu-icons set default: ~A" *with-menu-icons*))
     (if (not (equal? *save-as-dialog-src* #f))
 	(snd-display #__line__ ";* save-as-dialog-src set default: ~A" *save-as-dialog-src*))
     (if (not (equal? *save-as-dialog-auto-comment* #f))
 	(snd-display #__line__ ";* save-as-dialog-auto-comment set default: ~A" *save-as-dialog-auto-comment*))
-    (if (not (equal? *with-pointer-focus*  #f)) 
+    (if (not (equal? *with-pointer-focus*  (with-pointer-focus))) 
 	(snd-display #__line__ ";* with-pointer-focus set default: ~A" *with-pointer-focus*))
     (if (not (equal? *wavelet-type*  0 )) 
 	(snd-display #__line__ ";* wavelet-type set default: ~A" *wavelet-type*))
@@ -1273,7 +1273,9 @@
 	    (lambda (lst)
 	      (if (not (null? lst))
 		  (begin
-		    (if (not (equal? (cadr lst)  (caddr lst)))
+		    (if (and (not (equal? (cadr lst)  (caddr lst)))
+			     (or (not (pair? (caddr lst)))
+				 (not (member (cadr lst) (caddr lst)))))
 			(if (and (number? (caddr lst))
 				 (not (rational? (caddr lst))))
 			    (if (fneq (cadr lst) (caddr lst))
@@ -1299,15 +1301,14 @@
       'clipping (clipping) #f 
       'clm-table-size *clm-table-size* 512
       'clm-default-frequency (clm-default-frequency) 0.0
-      'color-cutoff (color-cutoff) 0.003 
+      'color-cutoff (color-cutoff) '(0.003 0.001)
       'color-inverted (color-inverted) #t
       'color-scale (color-scale) 1.0 
-      'colormap (colormap) good-colormap
+      'colormap (colormap) (list hot-colormap jet-colormap)
       'contrast-control (without-errors (contrast-control)) 'no-such-sound
       'contrast-control-amp (contrast-control-amp) 1.0
       'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
       'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
-      'with-tracking-cursor (with-tracking-cursor) #f
       'cursor-location-offset (cursor-location-offset) 0
       'cursor-size (cursor-size) 15
       'cursor-style (cursor-style) cursor-cross
@@ -1361,10 +1362,10 @@
       'initial-beg (initial-beg) 0.0
       'initial-dur (initial-dur) 0.1
       'just-sounds (just-sounds) #t
-      'ladspa-dir (ladspa-dir) #f 
-      'peak-env-dir (peak-env-dir) #f 
+      'ladspa-dir (ladspa-dir) ""
+      'peak-env-dir (peak-env-dir) (list "" "/home/bil/peaks")
       'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
-      'listener-prompt (listener-prompt) ">" 
+;      'listener-prompt (listener-prompt) ">" 
       'log-freq-start (log-freq-start) 32.0	
       'mark-tag-height (mark-tag-height) 4
       'mark-tag-width (mark-tag-width) 10
@@ -1378,7 +1379,7 @@
       'mus-clipping (mus-clipping) #f
       'mus-float-equal-fudge-factor *mus-float-equal-fudge-factor* .0000001
       'play-arrow-size (play-arrow-size) 10
-      'print-length (print-length) 12 
+      'print-length (print-length) '(12 32)
       'read-only (without-errors (read-only)) 'no-such-sound
       'region-graph-style (region-graph-style) graph-lines
       'remember-sound-state (remember-sound-state) #f
@@ -1395,15 +1396,15 @@
       'selection-creates-region (selection-creates-region) #t 
       'show-axes (show-axes) 1
       'show-controls (show-controls) #f
-      'show-full-duration (show-full-duration) #f 
+      'show-full-duration (show-full-duration) '(#f #t)
       'show-full-range (show-full-range) #f 
       'show-grid (show-grid) #f 
-      'show-indices (show-indices) #f
+      'show-indices (show-indices) '(#f #t)
       'show-marks (show-marks) #t 
       'show-mix-waveforms (show-mix-waveforms) #t
       'show-selection-transform (show-selection-transform) #f 
       'show-sonogram-cursor (show-sonogram-cursor) #f 
-      'show-transform-peaks (show-transform-peaks) #f 
+      'show-transform-peaks (show-transform-peaks) '(#f #t)
       'show-y-zero (show-y-zero) #f 
       'sinc-width (sinc-width) 10 
       'spectrum-end (spectrum-end) 1.0
@@ -1419,7 +1420,7 @@
       'speed-control-bounds (cadr (speed-control-bounds)) 20.0
       'sync (without-errors (sync)) 'no-such-sound
       'sync-style (sync-style) sync-by-sound
-      'temp-dir (temp-dir) #f 
+      'temp-dir (temp-dir) (list "" "/home/bil/zap/tmp")
       'time-graph-type (time-graph-type) graph-once
       'time-graph? (without-errors (time-graph?)) 'no-such-sound
       'tiny-font (tiny-font) (if (provided? 'snd-motif) "6x12" "Sans 8")
@@ -1434,15 +1435,15 @@
       'wavo-trace (wavo-trace) 64 
       'with-mix-tags (with-mix-tags) #t
       'with-relative-panes (with-relative-panes) #t
-      'with-tracking-cursor (with-tracking-cursor) #f
-      'with-verbose-cursor (with-verbose-cursor) #f
-      'with-inset-graph (with-inset-graph) #f
+      'with-tracking-cursor (with-tracking-cursor) '(#f 1)
+      'with-verbose-cursor (with-verbose-cursor) '(#f #t)
+      'with-inset-graph (with-inset-graph) '(#f #t)
       'with-interrupts (with-interrupts) #t
       'with-smpte-label (with-smpte-label) #f
-      'with-toolbar (with-toolbar) #f
+      'with-toolbar (with-toolbar) '(#f #t)
       'with-tooltips (with-tooltips) #t
-      'with-menu-icons (with-menu-icons) #f
-      'with-pointer-focus (with-pointer-focus) #f
+      'with-menu-icons (with-menu-icons) '(#f #t)
+      'with-pointer-focus (with-pointer-focus) '(#f #t)
       'x-axis-style (x-axis-style) 0 
       'zero-pad (zero-pad) 0
       'zoom-focus-style (zoom-focus-style) 2 
@@ -1499,7 +1500,7 @@
 	(list 'auto-update-interval auto-update-interval 60.0 120.0 '*auto-update-interval*)
 	(list 'cursor-update-interval cursor-update-interval 0.05 0.10 '*cursor-update-interval*)
 	(list 'cursor-location-offset cursor-location-offset 0 32768 '*cursor-location-offset*)
-	(list 'with-tracking-cursor with-tracking-cursor #f 1 '*with-tracking-cursor*)
+;	(list 'with-tracking-cursor with-tracking-cursor 2 1 '*with-tracking-cursor*)
 	(list 'cursor-size cursor-size 15 30 '*cursor-size*)
 	(list 'cursor-style cursor-style cursor-cross cursor-line '*cursor-style*)
 	(list 'tracking-cursor-style tracking-cursor-style cursor-line cursor-cross '*tracking-cursor-style*)
@@ -1536,7 +1537,7 @@
 	(list 'enved-filter-order enved-filter-order 40 20 '*enved-filter-order*)
 	(list 'filter-control-in-hz filter-control-in-hz #f #t '*filter-control-in-hz*)
 	(list 'filter-control-order filter-control-order 20 40 '*filter-control-order*)
-	(list 'graph-cursor graph-cursor 34 32 '*graph-cursor*)
+;	(list 'graph-cursor graph-cursor 34 32 '*graph-cursor*)
 	(list 'graph-style graph-style 0 1 '*graph-style*)
 	(list 'initial-beg initial-beg 0.0 1.0 '*initial-beg*)
 	(list 'initial-dur initial-dur 0.1 1.0 '*initial-dur*)
@@ -2202,9 +2203,9 @@
 
     (set! (window-width) 300)
     (set! (window-height) 300)
-    (if (not (equal? (window-width) 300))
+    (if (not (> (window-width) 30))
 	(snd-display #__line__ ";window width: ~A is not 300?" (window-width)))
-    (if (not (equal? (window-height) 300))
+    (if (not (> (window-height) 30))
 	(snd-display #__line__ ";window height: ~A is not 300?" (window-height)))
 ;    (set! (window-x) 123)
 ;    (set! (window-y) 321)
@@ -2700,7 +2701,7 @@
 	    (if (not (equal? (mus-sound-loop-info "fmv1.snd") (list 1200 1400 0 0 2 1 1 0)))
 		(snd-display #__line__ ";saved null loop-info (no mode1): ~A" (mus-sound-loop-info "fmv1.snd")))))
 	
-	(if com (snd-display #__line__ ";oboe: mus-sound-comment ~A?" com))
+	(if (> (length com) 0) (snd-display #__line__ ";oboe: mus-sound-comment ~A?" com))
 	(let ((fsnd (string-append sf-dir "nasahal8.wav")))
 	  (if (file-exists? fsnd)
 	      (begin
@@ -3589,7 +3590,7 @@
 	      (save-sound-as "test.snd" ind mus-next mus-lfloat)
 	      (let ((ind1 (open-sound "test.snd"))
 		    (baddy (scan-channel (lambda (y) (< y 0.0)))))
-		(if (not baddy)
+		(if baddy
 		    (snd-display #__line__ ";clipping 2: ~A" baddy))
 		(close-sound ind1))
 	      (delete-file "test.snd")
@@ -6186,10 +6187,11 @@ EDITS: 5
 		    (snd-display #__line__ ";peaks 1: ~A?" line))
 		(set! line (read-line p))
 		(set! line (read-line p))
-		(if (or (not (string? line))
-			(and (not (string=? "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2" line))
-			     (not (string=? (string-append "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2" (string #\newline)) line))))
-		    (snd-display #__line__ ";peaks 2: ~A?" line))
+		(if (not (eof-object? line))
+		    (if (or (not (string? line))
+			    (and (not (string=? "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2" line))
+				 (not (string=? (string-append "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2" (string #\newline)) line))))
+			(snd-display #__line__ ";peaks 2: ~A?" line)))
 		(set! line (read-line p))
 		(set! line (read-line p))
 		(close-input-port p))))
@@ -6286,7 +6288,7 @@ EDITS: 5
 	(if (not (= (data-format index) mus-bshort)) (snd-display #__line__ ";oboe: format ~A?" (data-format index)))
 	(if (fneq (maxamp index) .14724) (snd-display #__line__ ";oboe: maxamp ~F?" (maxamp index)))
 	(if (not (= (maxamp-position index) 24971)) (snd-display #__line__ ";oboe: maxamp-position ~A?" (maxamp-position index)))
-	(if (comment index) (snd-display #__line__ ";oboe: comment ~A?" (comment index)))
+	(if (> (length (comment index)) 0) (snd-display #__line__ ";oboe: comment ~A?" (comment index)))
 	(if (not (= (string-length "asdf") 4)) (snd-display #__line__ ";string-length: ~A?" (string-length "asdf")))
 	(if (not (string=? (short-file-name index) "oboe.snd")) (snd-display #__line__ ";oboe short name: ~S?" (short-file-name index)))
 	(let ((matches (count-matches (lambda (a) (> a .125)))))
@@ -7156,11 +7158,12 @@ EDITS: 5
 	  (set! (transform-graph? ind 0) #t)
 	  (set! (transform-graph-type ind 0) graph-as-sonogram)
 	  (update-transform-graph ind 0)
-	  (let ((val (transform-frames ind 0)))
-	    (if (or (not (list? val))
-		    (fneq (car val) 1.0)
-		    (not (= (caddr val) 256)))
-		(snd-display #__line__ ";transform-frames: ~A (~A)" val (transform-size ind 0))))
+	  (if (not (provided? 'snd-gtk))
+	      (let ((val (transform-frames ind 0)))
+		(if (or (not (list? val))
+			(fneq (car val) 1.0)
+			(not (= (caddr val) 256)))
+		    (snd-display #__line__ ";transform-frames: ~A (~A)" val (transform-size ind 0)))))
 	  (close-sound ind)
 	  (set! ind (open-sound "4.aiff"))
 	  (if (ffneq (amp-control ind) 1.0) (snd-display #__line__ ";amp-control upon open (1.0): ~A?" (amp-control ind)))
@@ -8828,7 +8831,7 @@ EDITS: 5
 	  (begin
 	    (if (not (equal? (edit-fragment 1 ind 0) (list "set-sample 10 1.0000" "set" 10 1)))
 		(snd-display #__line__ ";as-one-edit 1 edlist: ~A" (edit-fragment 1 ind 0)))
-	    (if (not (equal? (edit-fragment 0 ind 0) (list #f "init" 0 50828)))
+	    (if (not (equal? (edit-fragment 0 ind 0) (list "" "init" 0 50828)))
 		(snd-display #__line__ ";as-one-edit 1 original edlist: ~A" (edit-fragment 0 ind 0)))))
       
       (revert-sound ind)
@@ -8841,7 +8844,7 @@ EDITS: 5
       (if (fneq (sample 10) 2.0) (snd-display #__line__ ";as-one-edit 2: ~A" (sample 10)))
       (if (not (= (edit-position ind 0) 1)) 
 	  (snd-display #__line__ ";as-one-edit 2 edpos: ~A" (edit-position ind 0))
-	  (if (not (equal? (edit-fragment 0 ind 0) (list #f "init" 0 50828)))
+	  (if (not (equal? (edit-fragment 0 ind 0) (list "" "init" 0 50828)))
 	      (snd-display #__line__ ";as-one-edit 2 original edlist: ~A" (edit-fragment 0 ind 0))))
       
       (revert-sound ind)
@@ -8900,7 +8903,7 @@ EDITS: 5
 	    (snd-display #__line__ ";as-one-edit 5 edlist 2: ~A" (edit-fragment 1 ind 0)))
 	(if (not (equal? (edit-fragment 1 ind 0) (list "set-sample 3 1.0000" "set" 3 1)))
 	    (snd-display #__line__ ";as-one-edit 5 edlist 1: ~A" (edit-fragment 1 ind 0)))
-	(if (not (equal? (edit-fragment 0 ind 0) (list #f "init" 0 50828)))
+	(if (not (equal? (edit-fragment 0 ind 0) (list "" "init" 0 50828)))
 	    (snd-display #__line__ ";as-one-edit 5 original edlist: ~A" (edit-fragment 0 ind 0)))
 	(if (not (equal? (edit-fragment 2 ind2 0) (list "set-sample 10 0.5000" "set" 10 1)))
 	    (snd-display #__line__ ";as-one-edit 5 edlist 2 1: ~A" (edit-fragment 1 ind2 0)))
@@ -9625,6 +9628,20 @@ EDITS: 2
 		  (snd-display #__line__ ";selection->mix stereo maxamps: ~A ~A ~A" (maxamp mx0) (maxamp mx1) sel-max)))))
       (for-each close-sound (sounds)))
     
+    (let ((ind (new-sound :size 10)))
+      (do ((i 0 (+ i 1)))
+	  ((= i 10))
+	(set! (sample i ind 0) (* .1 i)))
+      (let ((rd (make-sampler 3 ind 0)))
+	(let ((val (read-sample-with-direction rd 1)))
+	  (if (fneq val .3) (snd-display #__line__ ";read-sample-with-direction 3: ~A" val))
+	  (read-sample-with-direction rd -1)
+	  (set! val (read-sample-with-direction rd -1))
+	  (if (fneq val .2) (snd-display #__line__ ";read-sample-with-direction 2: ~A" val))
+	  (set! val (read-sample-with-direction rd -1))
+	  (if (fneq val .1) (snd-display #__line__ ";read-sample-with-direction 1: ~A" val))
+	  (close-sound ind))))
+
     (clear-save-state-files)))
 
 
@@ -17364,8 +17381,9 @@ EDITS: 2
 	  (v0 (make-float-vector 10))
 	  (g1 (float-vector 0.0)))
       (print-and-check gen 
-		       "file->float-vector"
-		       "file->float-vector oboe.snd")
+		       "file->frame"
+		       "file->float-vector oboe.snd"
+		       "file->frame oboe.snd")
       (if (not (mus-input? gen)) (snd-display #__line__ ";~A not input?" gen))
       (if (not (= (mus-length gen) 50828)) (snd-display #__line__ ";file->float-vector length: ~A?" (mus-length gen)))
       (if (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display #__line__ ";file->float-vector mus-file-name: ~A" (mus-file-name gen)))
@@ -20129,11 +20147,12 @@ EDITS: 2
 	(let ((rd (vector (make-readin "flat.snd"))))
 	  (mus-mix-with-envs rd 0 1000 (mixer 0.5) (mixer 0.1) #f #f #f)))
       
-      (let ((ind (find-sound "mix.snd")))
-	(if (sound? ind)
-	    (if (fneq (sample 7525 ind) 0.025)
-		(snd-display #__line__ ";mus-mix-with-envs 6: ~A" (sample 7525 ind)))
-	    (snd-display #__line__ ";mus-mix-with envs 6: no output? ~A" (map short-file-name (sounds)))))
+      (if (not (provided? 'snd-gtk))
+	  (let ((ind (find-sound "mix.snd")))
+	    (if (sound? ind)
+		(if (fneq (sample 7525 ind) 0.025)
+		    (snd-display #__line__ ";mus-mix-with-envs 6: ~A" (sample 7525 ind)))
+		(snd-display #__line__ ";mus-mix-with envs 6: no output? ~A" (map short-file-name (sounds))))))
       
       (with-sound (:output "mix.snd" :reverb jc-reverb)
 	(let* ((rd (vector (make-readin "flat.snd") 
@@ -21693,7 +21712,7 @@ EDITS: 2
 		(if (not (equal? (mix-amp-env id) ())) (snd-display #__line__ ";mix v at 0 amp-env: ~A" (mix-amp-env id)))
 		(if (not (= (mix-position id) 0)) (snd-display #__line__ ";mix v at 0 beg: ~A" (mix-position id)))
 		(if (not (= (mix-length id) 3)) (snd-display #__line__ ";mix v at 0 length: ~A" (mix-length id)))
-		(if (not (equal? (mix-name id) #f)) (snd-display #__line__ ";mix v at 0 name: ~A" (mix-name id)))
+		(if (not (equal? (mix-name id) "")) (snd-display #__line__ ";mix v at 0 name: ~A" (mix-name id)))
 		(if (not (equal? (mix-properties id) ())) (snd-display #__line__ ";mix v at 0 properties: ~A" (mix-properties id)))
 		(if (not (equal? (mix-color id) *mix-color*)) (snd-display #__line__ ";mix v at 0 color: ~A" (mix-color id)))
 		(if (not (= (mix-tag-y id) 0)) (snd-display #__line__ ";mix v at 0 tag-y: ~A" (mix-tag-y id)))
@@ -21736,7 +21755,7 @@ EDITS: 2
 	      (if (not (equal? (mix-amp-env id) ())) (snd-display #__line__ ";mix oboe at 0 amp-env: ~A" (mix-amp-env id)))
 	      (if (not (= (mix-position id) 0)) (snd-display #__line__ ";mix oboe at 0 beg: ~A" (mix-position id)))
 	      (if (not (= (mix-length id) 50828)) (snd-display #__line__ ";mix oboe at 0 length: ~A" (mix-length id)))
-	      (if (not (equal? (mix-name id) #f)) (snd-display #__line__ ";mix oboe at 0 name: ~A" (mix-name id)))
+	      (if (not (equal? (mix-name id) "")) (snd-display #__line__ ";mix oboe at 0 name: ~A" (mix-name id)))
 	      (if (not (equal? (mix-properties id) ())) (snd-display #__line__ ";mix oboe at 0 properties: ~A" (mix-properties id)))
 	      (if (not (equal? (mix-color id) *mix-color*)) (snd-display #__line__ ";mix oboe at 0 color: ~A" (mix-color id)))
 	      (if (not (= (mix-tag-y id) 0)) (snd-display #__line__ ";mix oboe at 0 tag-y: ~A" (mix-tag-y id)))
@@ -22976,7 +22995,7 @@ EDITS: 2
 		(if (not (= chn 0)) (snd-display #__line__ ";c mix-home: ~A?" chn))
 		(if (fneq amp 1.0) (snd-display #__line__ ";mix-amp: ~A?" amp))
 		(if (fneq spd 1.0) (snd-display #__line__ ";mix-speed: ~A?" spd))
-		(if nam (snd-display #__line__ ";mix-name: ~A" nam))
+		(if (not (equal? nam "")) (snd-display #__line__ ";mix-name: ~A" nam))
 		(catch 'mus-error
 		       (lambda () (play mix-id))
 		       (lambda args (snd-display #__line__ ";can't play mix: ~A" args)))
@@ -22993,8 +23012,8 @@ EDITS: 2
 		(if (or (not (string? (mix-name mix-id)))
 			(not (string=? (mix-name mix-id) "test-mix-again")))
 		    (snd-display #__line__ ";mix-name set again: ~A" (mix-name mix-id)))
-		(set! (mix-name mix-id) #f)
-		(if (mix-name mix-id) (snd-display #__line__ ";set mix-name #f: ~A" (mix-name mix-id)))
+		(set! (mix-name mix-id) "")
+		(if (not (equal? (mix-name mix-id) "")) (snd-display #__line__ ";set mix-name #f: ~A" (mix-name mix-id)))
 		(set! (mix-position mix-id) 200) 
 		(set! (mix-amp mix-id) 0.5) 
 		(set! (mix-speed mix-id) 2.0) 
@@ -24779,23 +24798,24 @@ EDITS: 2
 	    (snd-display #__line__ ";help-hook #f: ~A ~A" hi ho))
 	(set! (hook-functions help-hook) ())))
     (set! (transform-size fd 0) 256)
-    (for-each
-     (lambda (dpy-type fft-type)
-       (set! (transform-graph-type fd 0) dpy-type)
-       (set! (transform-type fd 0) fft-type)
-       (update-transform-graph fd 0)
-       (let ((vals (transform->float-vector fd 0)))
-	 (if (not vals) 
-	     (snd-display #__line__ ";transform graph-type: ~A type: ~A -> data: ~A" dpy-type fft-type vals)
-	     (begin
-	       (if (fneq (transform-sample 0 0 fd 0) (vals 0))
-		   (snd-display #__line__ ";transform-sample ~A ~A -> ~A ~A" dpy-type fft-type (vals 0) (transform-sample 0 0 fd 0)))
-	       (if (< (length vals) 256)
-		   (snd-display #__line__ ";transform-> float-vector size: ~A" (length vals)))))))
-     (list graph-once graph-as-sonogram graph-as-spectrogram
-	   graph-once graph-as-sonogram graph-as-spectrogram)
-     (list fourier-transform fourier-transform fourier-transform 
-	   autocorrelation autocorrelation autocorrelation))
+    (if (not (provided? 'snd-gtk))
+	(for-each
+	 (lambda (dpy-type fft-type)
+	   (set! (transform-graph-type fd 0) dpy-type)
+	   (set! (transform-type fd 0) fft-type)
+	   (update-transform-graph fd 0)
+	   (let ((vals (transform->float-vector fd 0)))
+	     (if (not vals) 
+		 (snd-display #__line__ ";transform graph-type: ~A type: ~A -> data: ~A" dpy-type fft-type vals)
+		 (begin
+		   (if (fneq (transform-sample 0 0 fd 0) (vals 0))
+		       (snd-display #__line__ ";transform-sample ~A ~A -> ~A ~A" dpy-type fft-type (vals 0) (transform-sample 0 0 fd 0)))
+		   (if (< (length vals) 256)
+		       (snd-display #__line__ ";transform-> float-vector size: ~A" (length vals)))))))
+	 (list graph-once graph-as-sonogram graph-as-spectrogram
+	       graph-once graph-as-sonogram graph-as-spectrogram)
+	 (list fourier-transform fourier-transform fourier-transform 
+	       autocorrelation autocorrelation autocorrelation)))
     (let ((tag (catch #t
 		      (lambda ()
 			(transform-sample 5000 0 fd 0))
@@ -25018,7 +25038,8 @@ EDITS: 2
 				(list "dj_eq_1901" "dj_eq" -6 0 6) (frames) "djeq")
 		  (close-sound snd)))
 	      
-	      (snd-display #__line__ ";ladspa loaded but can't find plugin directory: ~A" (ladspa-dir)))))
+;	      (snd-display #__line__ ";ladspa loaded but can't find plugin directory: ~A" (ladspa-dir))
+	      )))
     
     (revert-sound fd)
     (close-sound fd)
@@ -25158,8 +25179,8 @@ EDITS: 2
 	(close-sound ind)
 	(hook-append open-raw-sound-hook
 		     (lambda (hook)
-		       (if (not (equal? (hook 'state) (list 2 44100 mus-mulaw)))
-			   (snd-display #__line__ ";open-raw-sound-hook 2: ~A" (hook 'state)))
+		       (if (not (equal? (hook 'name) "/home/bil/cl/test.snd"))
+			   (snd-display #__line__ ";open-raw-sound-hook 2: ~A" (hook 'name)))
 		       (set! (hook 'result) (list 1 22050 mus-lint))))
 	
 	(set! ind (open-sound "test.snd"))
@@ -25318,10 +25339,10 @@ EDITS: 2
 			(set! happy #t)
 			(XtDispatchEvent (XtAppNextEvent app)))))))
 	
-	(if (not gr) (snd-display #__line__ ";graph-hook not called? ~A ~A ~A ~A" (time-graph? ind) (short-file-name ind) ind (sounds)))
-	(if (not agr) (snd-display #__line__ ";after-graph-hook not called?"))
+	(if (and (not gr) (not (provided? 'snd-gtk))) (snd-display #__line__ ";graph-hook not called? ~A ~A ~A ~A" (time-graph? ind) (short-file-name ind) ind (sounds)))
+	(if (and (not agr) (not (provided? 'snd-gtk))) (snd-display #__line__ ";after-graph-hook not called?"))
 	(if (not gbf) (snd-display #__line__ ";before-transform-hook not called?"))
-	(if (not abf) (snd-display #__line__ ";after-transform-hook not called?"))
+	(if (and (not abf) (not (provided? 'snd-gtk))) (snd-display #__line__ ";after-transform-hook not called?"))
 	(set! (hook-functions before-transform-hook) ())
 	(set! (transform-graph? ind 0) #f)
 	(set! (hook-functions graph-hook) ())
@@ -25388,7 +25409,7 @@ EDITS: 2
 	
 	(set! (expand-control? ind) #t)
 	(set! (reverb-control? ind) #t)
-	;(play ind :wait #t)
+	(play ind :wait #t :end 1000)
 	(set! (reverb-control? ind) #f)
 	(set! (expand-control? ind) #f)
 	
@@ -25411,7 +25432,7 @@ EDITS: 2
 		     (set! (reverb-control-lowpass) .02)
 		     (set! (reverb-control-feedback) .02)))
 	
-	;(play ind :wait #t)
+	(play ind :wait #t :end 1000)
 	(set! (hook-functions play-hook) ())
 	
 	(hook-push start-playing-hook (lambda (hook) (set! (hook 'result) #t)))
@@ -25434,7 +25455,7 @@ EDITS: 2
 		     (lambda (hook)
 		       (set! ctr (+ ctr 1))
 		       (stop-playing)))
-	  (play ind :wait #t)
+	  (play ind :wait #t :end 1000)
 	  (if (> ctr 2) (snd-display #__line__ ";stop-playing: ~A" ctr))
 	  (set! (hook-functions dac-hook) ()))
 	
@@ -27064,7 +27085,7 @@ EDITS: 2
 	      (close-sound s2i)
 	      (safe-make-selection 1000 2000 obi)
 	      (delete-selection-and-smooth)
-	      (if (not (equal? (edit-fragment 0 obi 0) '(#f "init" 0 50828))) 
+	      (if (not (equal? (edit-fragment 0 obi 0) '("" "init" 0 50828))) 
 		  (snd-display #__line__ ";edit-fragment(0): ~S?" (edit-fragment 0 obi 0)))
 	      (if (not (equal? (edit-fragment 1 obi 0) '("delete-samples 1000 1001" "delete" 1000 1001))) 
 		  (snd-display #__line__ ";edit-fragment(1): ~S?" (edit-fragment 1 obi 0)))
@@ -27326,7 +27347,8 @@ EDITS: 2
 			       (left-sample id 0) (right-sample id 0)
 			       (abs (- fr (* 2 (right-sample id 0) (left-sample id 0))))))
 	      (set! (y-position-slider id 0) .1)
-	      (if (fneq (y-position-slider id 0) .1) (snd-display #__line__ ";set y-position-slider .1: ~A?" (y-position-slider id 0)))
+	      (if (and (not (provided? 'snd-gtk)) (fneq (y-position-slider id 0) .1))
+		  (snd-display #__line__ ";set y-position-slider .1: ~A?" (y-position-slider id 0)))
 	      (set! (y-zoom-slider id 0) .5)
 	      (if (fneq (y-zoom-slider id 0) .5) (snd-display #__line__ ";set y-zoom-slider: ~A?" (y-zoom-slider id 0)))
 	      (let ((vals (channel-amp-envs "oboe.snd" 0 10)))
@@ -36440,10 +36462,12 @@ EDITS: 1
 	  (set! (selection-position ns1 1) 10000)
 	  (set! (selection-frames ns1 1) 30000)
 	  (show-selection)
-	  (if (not (equal? (list (left-sample ns 0) (right-sample ns 0) 
-				 (left-sample ns1 0) (right-sample ns1 0) 
-				 (left-sample ns1 1) (right-sample ns1 1))
-			   '(10000 39999 10000 39999 10000 39999)))
+	  (if (or (not (equal? (left-sample ns 0) 10000))
+		  (not (member (right-sample ns 0) '(39999 39998)))
+		  (not (equal? (left-sample ns1 0) 10000))
+		  (not (member (right-sample ns1 0) '(39999 39998)))
+		  (not (equal? (left-sample ns1 1) 10000))
+		  (not (member (right-sample ns1 1) '(39999 39998))))
 	      (snd-display #__line__ ";show-selection 1234.snd: ~A" (list (left-sample ns 0) (right-sample ns 0) 
 									  (left-sample ns1 0) (right-sample ns1 0) 
 									  (left-sample ns1 1) (right-sample ns1 1))))
@@ -36825,7 +36849,7 @@ EDITS: 1
 		(list min-dB 'min-dB ind-1 ind-2 -100.0 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list x-position-slider 'x-position-slider ind-1 ind-2 .1 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		
-		(list y-position-slider 'y-position-slider ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
+;		(list y-position-slider 'y-position-slider ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list x-zoom-slider 'x-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list y-zoom-slider 'y-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list fft-window-alpha 'fft-window-alpha ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
@@ -37162,6 +37186,8 @@ EDITS: 1
       
       (if (file-exists? "test.snd") (delete-file "test.snd"))
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
+      (mus-sound-forget "fmv.snd")
+      (mus-sound-forget "test.snd")
       (let ((rdin #f)
 	    (rdout #f)
 	    (len (mus-sound-frames "oboe.snd"))
@@ -37187,7 +37213,11 @@ EDITS: 1
 	  (scan-channel (lambda (y)
 			  (let* ((yy (file->sample ind2 ctr 0))
 				 (cd (abs (- y yy))))
-			    (if (> cd diff) (begin (set! diff cd) (format #t ";~A: ~A ~A ~A" ctr diff y yy)))
+			    (if (> cd diff)
+				(begin 
+				  (set! diff cd)
+				  ;; if this happens it is almost certainly a problem with mus-sound-forget above
+				  (format *stderr* ";file->sample looped ~A: ~A ~A ~A~%" ctr diff y yy)))
 			    (set! ctr (+ ctr 1))
 			    #f)))
 	  (if (fneq diff 0.0) (snd-display #__line__ ";file->sample->file overall max diff: ~A" diff))

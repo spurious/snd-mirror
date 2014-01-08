@@ -344,11 +344,11 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_grid "*) (list #f (lambda (s v) (set! (" S_show_grid ") v)) #f))");
   s7_symbol_set_documentation(s7, ss->show_grid_symbol, "*show-grid*: #t if Snd should display a background grid in the graphs");
 
-  ss->fft_log_frequency_symbol = s7_define_variable(s7, "*" S_fft_log_frequency "*", s7_make_real(s7, DEFAULT_FFT_LOG_FREQUENCY));
+  ss->fft_log_frequency_symbol = s7_define_variable(s7, "*" S_fft_log_frequency "*", s7_make_boolean(s7, DEFAULT_FFT_LOG_FREQUENCY));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_fft_log_frequency "*) (list #f (lambda (s v) (set! (" S_fft_log_frequency ") v)) #f))");
   s7_symbol_set_documentation(s7, ss->fft_log_frequency_symbol, "*fft-log-frequency*: #t if fft displays use log on the frequency axis");
 
-  ss->fft_log_magnitude_symbol = s7_define_variable(s7, "*" S_fft_log_magnitude "*", s7_make_real(s7, DEFAULT_FFT_LOG_MAGNITUDE));
+  ss->fft_log_magnitude_symbol = s7_define_variable(s7, "*" S_fft_log_magnitude "*", s7_make_boolean(s7, DEFAULT_FFT_LOG_MAGNITUDE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_fft_log_magnitude "*) (list #f (lambda (s v) (set! (" S_fft_log_magnitude ") v)) #f))");
   s7_symbol_set_documentation(s7, ss->fft_log_magnitude_symbol, "*fft-log-magnitude*: #t if fft displays use dB");
 
@@ -522,10 +522,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->wavelet_type_symbol = s7_define_variable(s7, "*" S_wavelet_type "*", s7_make_integer(s7, DEFAULT_WAVELET_TYPE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_wavelet_type "*) (list #f (lambda (s v) (set! (" S_wavelet_type ") v)) #f))");
   s7_symbol_set_documentation(s7, ss->wavelet_type_symbol, "*wavelet-type*: wavelet used in wavelet-transform (0)");
-
-  ss->transform_type_symbol = s7_define_variable(s7, "*" S_transform_type "*", s7_make_integer(s7, DEFAULT_TRANSFORM_TYPE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_transform_type "*) (list #f (lambda (s v) (set! (" S_transform_type ") v)) #f))");
-  s7_symbol_set_documentation(s7, ss->transform_type_symbol, "*transform-type*: transform type (fourier-transform etc)");
 
   ss->dot_size_symbol = s7_define_variable(s7, "*" S_dot_size "*", s7_make_integer(s7, DEFAULT_DOT_SIZE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_dot_size "*) (list #f (lambda (s v) (set! (" S_dot_size ") v)) #f))");
@@ -826,7 +822,7 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_filter_control_in_hz "*) (list #f (lambda (s v) (set! (" S_filter_control_in_hz ") v)) #f))");
   s7_symbol_set_documentation(s7, ss->filter_control_in_hz_symbol, "*filter-control-in-hz*: #t if snd's filter envelope x axis should be in hz (control panel filter)");
 
-  ss->show_sonogram_cursor_symbol = s7_define_variable(s7, "*" S_show_sonogram_cursor "*", s7_make_integer(s7, DEFAULT_SHOW_SONOGRAM_CURSOR));
+  ss->show_sonogram_cursor_symbol = s7_define_variable(s7, "*" S_show_sonogram_cursor "*", s7_make_boolean(s7, DEFAULT_SHOW_SONOGRAM_CURSOR));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_sonogram_cursor "*) (list #f (lambda (s v) (set! (" S_show_sonogram_cursor ") v)) #f))");
   s7_symbol_set_documentation(s7, ss->show_sonogram_cursor_symbol, "*show-sonogram-cursor*: #t if Snd should display a cursor in the sonogram");
 

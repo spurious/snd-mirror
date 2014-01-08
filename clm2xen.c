@@ -6087,13 +6087,16 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
       
       if (!(XEN_KEYWORD_P(keys[4])))
 	{
+	  /* make-polyoid in generators.scm */
+	  int yn;
 	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[4]), keys[4], orig_arg[4], S_make_polywave, "a vct");
 	  orig_y = keys[4];
 	  v = XEN_TO_VCT(orig_y);
-	  n = mus_vct_length(v);
+	  yn = mus_vct_length(v);
+	  if ((n == 0) || (yn < n))
+	    n = yn;
 	  ycoeffs = mus_vct_data(v);
 	}
-      /* TODO: various error checks, doc new args, test gc etc */
     }
 
   if (!xcoeffs)
@@ -6107,7 +6110,6 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
       n = 2; 
       orig_x = xen_make_vct(n, xcoeffs);
     }
-
 
   if (ycoeffs)
     {
@@ -8534,7 +8536,6 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 			  if ((arg == s7_caddr(res)) &&
 			      (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
 			    {
-			      /* TODO: need sampler check here and original read-sample-with-direction */
 			      gn->vcts[MUS_INPUT_DATA] = (XEN)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_cdr(source)));
 			      mus_generator_set_feeder(gn->gen, as_needed_input_sampler_with_direction);
 			      return(read_sample_with_direction((snd_fd *)(gn->vcts[MUS_INPUT_DATA]), direction));

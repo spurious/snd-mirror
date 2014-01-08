@@ -2451,6 +2451,12 @@ of a moving mark:\n\
   s7_define_constant(s7, S_cepstrum,          C_INT_TO_XEN_TRANSFORM(CEPSTRUM));
   s7_define_constant(s7, S_walsh_transform,   C_INT_TO_XEN_TRANSFORM(WALSH));
   s7_define_constant(s7, S_autocorrelation,   C_INT_TO_XEN_TRANSFORM(AUTOCORRELATION));
+
+  /* *transform-type* is #<transform Fourier> by default */
+  ss->transform_type_symbol = s7_define_variable(s7, "*" S_transform_type "*", s7_name_to_value(s7, S_fourier_transform));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_transform_type "*) (list #f (lambda (s v) (set! (" S_transform_type ") v)) #f))");
+  s7_symbol_set_documentation(s7, ss->transform_type_symbol, "*transform-type*: transform type (fourier-transform etc)");
+
 #else
   XEN_DEFINE_VARIABLE(S_fourier_transform, transform_temp[0], C_INT_TO_XEN_TRANSFORM(FOURIER));
   XEN_DEFINE_VARIABLE(S_wavelet_transform, transform_temp[1], C_INT_TO_XEN_TRANSFORM(WAVELET));

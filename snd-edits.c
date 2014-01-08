@@ -8515,9 +8515,6 @@ static XEN g_samples(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos)
 return a vct containing snd channel chn's samples starting at start-samp for samps samples; edpos is the edit \
 history position to read (defaults to current position). snd can be a filename, a mix, a region, or a sound index number."
 
-  /* TODO: doc/test samples extension, add mix case, change *.scm
-   *   build in mix->vct
-   */
   chan_info *cp;
   mus_long_t beg, len;
   int pos;

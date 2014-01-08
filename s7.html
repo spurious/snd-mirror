@@ -2092,6 +2092,17 @@ vector-dimensions returns a list of the dimensions.
 6
 </pre>
 
+<p>This function initializes each element of a multidimensional vector:
+</p>
+
+<pre class="indented">
+(define (make-array dims . inits)
+  (make-shared-vector (apply vector (flatten inits)) dims))
+
+&gt; (make-array '(3 3) '(1 1 1) '(2 2 2) '(3 3 3))
+#2D((1 1 1) (2 2 2) (3 3 3))
+</pre>
+
 <p>make-vector also takes an optional fourth argument.  If it is #t, and the initial-value
 is either an integer or a real, make-vector produces a homogenous vector, a vector that
 can only hold elements of the same type as the initial value (either s7_Int or s7_Double

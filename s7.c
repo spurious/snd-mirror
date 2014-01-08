@@ -19040,7 +19040,9 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
 
 s7_pointer s7_make_string(s7_scheme *sc, const char *str) 
 {
-  return(s7_make_string_with_length(sc, str, safe_strlen(str)));
+  if (str)
+    return(s7_make_string_with_length(sc, str, safe_strlen(str)));
+  return(make_empty_string(sc, 0, '\0'));
 }
 
 
@@ -22873,12 +22875,12 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
      
   sc->autoload_names[sc->autoload_names_loc] = names;
   sc->autoload_names_sizes[sc->autoload_names_loc] = size;
-  sc->autoloaded_already[sc->autoload_names_loc] = (bool *)calloc(size * 2, sizeof(bool)); /* see below */
+  sc->autoloaded_already[sc->autoload_names_loc] = (bool *)calloc(size, sizeof(bool));
   sc->autoload_names_loc++;
 }
 
 
-static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol, bool *already_loaded)
+static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol, bool *already_loaded, bool loading)
 {
   int l = 0, u, pos = -1, comp, lib, libs;
   const char *name, *this_name;
@@ -22900,11 +22902,9 @@ static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol, bool *al
 	  comp = strcmp(this_name, name);
 	  if (comp == 0)
 	    {
-	      int loc;
-	      loc = pos * 2 + 1; /* TODO: why this? (ie why *2 and then why +1??) */
-	      *already_loaded = sc->autoloaded_already[lib][loc];
-	      sc->autoloaded_already[lib][loc] = true;
-	      return(names[loc]);
+	      *already_loaded = sc->autoloaded_already[lib][pos];
+	      if (loading) sc->autoloaded_already[lib][pos] = true;
+	      return(names[pos * 2 + 1]);             /* file name given func name */
 	    }
 	  if (comp < 0) 
 	    l = pos + 1;
@@ -22975,7 +22975,7 @@ static s7_pointer g_autoloader(s7_scheme *sc, s7_pointer args)
     {
       const char *file;
       bool loaded = false;
-      file = find_autoload_name(sc, sym, &loaded);
+      file = find_autoload_name(sc, sym, &loaded, false);
       if (file)
 	return(s7_make_string(sc, file));
     }
@@ -39486,7 +39486,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	{
 	  const char *file;
 	  bool loaded = false;
-	  file = find_autoload_name(sc, sym, &loaded);
+	  file = find_autoload_name(sc, sym, &loaded, true);
 	  if ((file) && (!loaded))
 	    {
 	      s7_pointer e;
@@ -52666,7 +52666,7 @@ OP_EVAL: 1065372 (1.542659)
 			sym = slot_symbol(p);
 			symbol_set_local(sym, environment_number, p);
 			if (sym == arg2)
-			  slot_set_value(p, real_zero); /* PERHAPS: if this doesn't happen -- error? (currently environment-set! does not throw one) */
+			  slot_set_value(p, real_zero);          /* if this doesn't happen should we raise an error? (currently environment-set! does not) */
 		      }
 		  }
 		body = cddr(cadr(body));
@@ -58549,8 +58549,6 @@ OP_LET1: 75475 (4.677476)
 
     case OP_SET_PAIR_UNKNOWN_S:
       /* look for (set! (fv1 s1) (fv2 s2)) with no complications.  If not that case, drop into SET_PAIR_P
-       *
-       * PERHAPS: use type==type and assign direct
        */
       {
 	s7_pointer f1, f2, settee, value, ind1, ind2;
@@ -69015,21 +69013,12 @@ int main(int argc, char **argv)
  * letrec* built-in (not macro), perhaps also when and unless
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  *   (and=> expr func) or (if=> ...)
- * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
- * TODO: safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
+ * safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
- *
- * TODO: snd-test read-sample-with-direction, mus-set-formant-frequency 
- * the outa_loop stuff could be procedurized etc
- * file_to_sample|frame folded into readin changes, also max overall diff>1.0 test 20, also gtk test 13 in valgrind
- * need some better way (than make-shared-vector) to initialize multidimensional vectors (and s7.html section)
- *    (make-shared-vector (vector 1 1 1 2 2 2 3 3 3) '(3 3))
- *    #2D((1 1 1) (2 2 2) (3 3 3))
- *    (make-shared-vector (apply vector (append '(1 1 1) '(2 2 2) '(3 3 3))) '(3 3))
- *    #2D((1 1 1) (2 2 2) (3 3 3))
+ * file_to_sample|frame folded into readin changes
  */
 
