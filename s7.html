@@ -5434,7 +5434,6 @@ This should be named define-reader-macro.
 <li>remove the exact/inexact distinction including #i and #e
 <li>remove #d and #o (who uses octal anymore?)
 <li>remove `#(...) support (quasiquoted vector constants)
-<li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>remove call-with-values and its friends
 <li>remove char-ready?
 <li>change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
@@ -5442,7 +5441,6 @@ This should be named define-reader-macro.
 <li>change make-rectangular to make-complex, and remove make-polar.
 <li>remove unquote (the name, not the functionality).
 <li>remove cond-expand and letrec*.
-<li>add <code>(if expr =&gt; f)</code> mimicking <code>(cond (expr =&gt; f)...)</code>
 </ul>
 
 <p>and perhaps:
@@ -5457,6 +5455,8 @@ This should be named define-reader-macro.
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy).
 <li>add typeq? and perhaps make null? generic.
+<li>add <code>(if expr =&gt; f)</code> mimicking <code>(cond (expr =&gt; f)...)</code>
+<li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 </ul>
 
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,

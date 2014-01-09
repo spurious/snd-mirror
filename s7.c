@@ -50801,9 +50801,26 @@ OP_SAFE_IF_IS_SYMBOL_P: 30 (0.000020)
 	    
 	    if (func)
 	      {
+		s7_pointer a1 = NULL, a2, a3;
+		s7_function f1;
+		if (func == all_x_c_sss)
+		  {
+		    a1 = find_symbol(sc, cadr(body));
+		    a2 = find_symbol(sc, caddr(body));
+		    a3 = find_symbol(sc, cadddr(body));
+		    f1 = c_call(body);
+		  }
+
 		while (true)
 		  {
-		    func(sc, body);
+		    if (a1)
+		      {
+			car(sc->A3_1) = slot_value(a1);
+			car(sc->A3_2) = slot_value(a2);
+			car(sc->A3_3) = slot_value(a3);
+			f1(sc, sc->A3_1);
+		      }
+		    else func(sc, body);
 		    
 		    car(sc->T2_1) = slot_value(ctr);
 		    car(sc->T2_2) = step_var;
@@ -58054,26 +58071,34 @@ OP_LET1: 75475 (4.677476)
 	     * We have to build the environment before calling lambda_star_set_args because keywords can
 	     *   cause any arg to be set at any point in the arg list.
 	     *
-	     * TODO: is define-macro* different enough to cause confusion?
+	     * the frame-making step below could be precalculated, but where to store it?
 	     */
 	    top = NULL;
 	    for (z = closure_args(sc->code); is_pair(z); z = cdr(z))
 	      {
-		if (is_pair(car(z)))
+		if (is_pair(car(z)))           /* arg has a default value of some sort */
 		  {
-		    s7_pointer y;
-		    y = add_slot(sc, caar(z), sc->UNDEFINED);
-		    slot_expression(y) = cadar(z);
-		    slot_pending_value(y) = sc->NIL;
-		    if (!top)
-		      {
-			top = y;
-			nxt = top;
-		      }
+		    s7_pointer val;
+		    val = cadar(z);
+		    if ((!is_pair(val)) && 
+			(!is_symbol(val)))
+		      add_slot(sc, caar(z), val);
 		    else
 		      {
-			slot_pending_value(nxt) = y;
-			nxt = y;
+			s7_pointer y;
+			y = add_slot(sc, caar(z), sc->UNDEFINED);
+			slot_expression(y) = cadar(z);
+			slot_pending_value(y) = sc->NIL;
+			if (!top)
+			  {
+			    top = y;
+			    nxt = top;
+			  }
+			else
+			  {
+			    slot_pending_value(nxt) = y;
+			    nxt = y;
+			  }
 		      }
 		  }
 		else
@@ -69048,17 +69073,21 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2 14.3 14.4
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220 4157 4115
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220 4157 4022
  * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1371 1369
- * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957
- * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5
- * lat        229|    63   52   47   42   40   34   31   29|  29   29.4
+ * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957  976
+ * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
+ * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.5
  * calls         |   275  207  175  115   89   71   53   53|  54   49.5
  */
 
 /* all_x in snd-sig? all_x_c_aa|a?
  * letrec* built-in (not macro), perhaps also when and unless
+ *   when is (say) 6 times slower than equivalent if+begin and cancels most optimization (macro not safe)
+ *   would need s7test coverage, and check that current macro form can safely override built-in
+ *   wait on this until Rick has new cm running
+ *   even better: expand macros during optimization pass, and replace the old procedure source (is this consistent?)
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  *   (and=> expr func) or (if=> ...)
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
@@ -69067,6 +69096,6 @@ int main(int argc, char **argv)
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
  * safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
- * file_to_sample|frame folded into readin changes
+ * file_to_sample|frame folded into readin changes (does this matter anywhere?)
  */
 
