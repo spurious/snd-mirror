@@ -2479,16 +2479,28 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("fmod",           g_fmod_w,          2, 0, 0, "C's fmod");
 #endif
 
+#if HAVE_SCHEME && (!HAVE_GSL)
+#define XEN_DEFINE_REAL_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  do { \
+  s7_pointer sym, f;							\
+  sym = s7_define_safe_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc); \
+  f = s7_value(s7, sym); \
+  s7_function_set_returns_temp(f);\
+  } while (0)
+#else
+#define XEN_DEFINE_REAL_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#endif
+
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_j1, g_j1_w,     1, 0, 0, H_j1);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_jn, g_jn_w,     2, 0, 0, H_jn);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_y0, g_y0_w,     1, 0, 0, H_y0);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_y1, g_y1_w,     1, 0, 0, H_y1);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_yn, g_yn_w,     2, 0, 0, H_yn);
-  XEN_DEFINE_SAFE_PROCEDURE("erf",    g_erf_w,    1, 0, 0, H_erf);
-  XEN_DEFINE_SAFE_PROCEDURE("erfc",   g_erfc_w,   1, 0, 0, H_erfc);
-  XEN_DEFINE_SAFE_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
+  XEN_DEFINE_REAL_PROCEDURE(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);
+  XEN_DEFINE_REAL_PROCEDURE(S_bes_j1, g_j1_w,     1, 0, 0, H_j1);
+  XEN_DEFINE_REAL_PROCEDURE(S_bes_jn, g_jn_w,     2, 0, 0, H_jn);
+  XEN_DEFINE_REAL_PROCEDURE(S_bes_y0, g_y0_w,     1, 0, 0, H_y0);
+  XEN_DEFINE_REAL_PROCEDURE(S_bes_y1, g_y1_w,     1, 0, 0, H_y1);
+  XEN_DEFINE_REAL_PROCEDURE(S_bes_yn, g_yn_w,     2, 0, 0, H_yn);
+  XEN_DEFINE_REAL_PROCEDURE("erf",    g_erf_w,    1, 0, 0, H_erf);
+  XEN_DEFINE_REAL_PROCEDURE("erfc",   g_erfc_w,   1, 0, 0, H_erfc);
+  XEN_DEFINE_REAL_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);

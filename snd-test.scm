@@ -24822,12 +24822,6 @@ EDITS: 2
 		      (lambda args (car args)))))
       (if (not (eq? tag 'no-such-sample))
 	  (snd-display #__line__ ";access invalid (bin) transform sample: ~A" tag)))
-    (let ((tag (catch #t
-		      (lambda ()
-			(transform-sample 0 5000 fd 0))
-		      (lambda args (car args)))))
-      (if (not (eq? tag 'no-such-sample))
-	  (snd-display #__line__ ";access invalid (slice) transform sample: ~A" tag)))
     (close-sound fd)
     (set! (transform-type) fourier-transform)
     

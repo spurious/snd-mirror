@@ -73,10 +73,7 @@
 	(else (find-if pred (cdr l)))))
 
 (define (string-downcase str)
-  (let ((len (length str)))
-    (do ((i 0 (+ i 1)))
-	((= i len) str)
-      (string-set! str i (char-downcase (string-ref str i))))))
+  (apply string (map char-downcase str)))
 
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))
@@ -88,10 +85,6 @@
 (define (ind-general obj) (vector-ref obj 4))
 (define ind-indexed       (make-procedure-with-setter (lambda (obj) (vector-ref obj 5)) (lambda (obj val) (vector-set! obj 5 val))))
 (define (ind-char obj)    (vector-ref obj 6))
-
-
-(define (write-line line file)
-  (format file "~A~%" line))
 
 
 (define (html-length str)
@@ -1052,20 +1045,12 @@
 		    )
 		 
 		 (format sfil "~%~%#if HAVE_SCHEME~%")
+		 )))
 
-		 ;(run-indexer)
+	   (system "cat indexer.data >> test.c") 
+	   (system "echo '#endif\n\n' >> test.c")
 
-		 (call-with-input-file "indexer.data"
-		   (lambda (pfil)
-		     (let line-loop ((line (read-line pfil)))
-		       (if (not (eof-object? line))
-			   (begin
-			     (write-line line sfil)
-			     (line-loop (read-line pfil)))))))
-			     
-		 (format sfil "#endif~%~%")
-		 ))
-	     ))))))
+	   )))))
 
 
 ;;; --------------------------------------------------------------------------------

@@ -19154,7 +19154,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_db_to_linear,         g_db_to_linear_w,         1, 0, 0, H_db_to_linear);
   XEN_DEFINE_REAL_PROCEDURE(S_linear_to_db,         g_linear_to_db_w,         1, 0, 0, H_linear_to_db);
   XEN_DEFINE_SAFE_PROCEDURE(S_seconds_to_samples,   g_seconds_to_samples_w,   1, 0, 0, H_seconds_to_samples);
-  XEN_DEFINE_SAFE_PROCEDURE(S_samples_to_seconds,   g_samples_to_seconds_w,   1, 0, 0, H_samples_to_seconds);
+  XEN_DEFINE_REAL_PROCEDURE(S_samples_to_seconds,   g_samples_to_seconds_w,   1, 0, 0, H_samples_to_seconds);
   XEN_DEFINE_REAL_PROCEDURE(S_ring_modulate,        g_ring_modulate_w,        2, 0, 0, H_ring_modulate);
   XEN_DEFINE_REAL_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
   XEN_DEFINE_REAL_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 1, 1, 0, H_contrast_enhancement);
@@ -19268,8 +19268,8 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_comb,                 g_comb_w,                  1, 2, 0, H_comb);
   XEN_DEFINE_REAL_PROCEDURE(S_filtered_comb,        g_filtered_comb_w,         1, 2, 0, H_filtered_comb);
   XEN_DEFINE_REAL_PROCEDURE(S_all_pass,             g_all_pass_w,              1, 2, 0, H_all_pass);
-  XEN_DEFINE_SAFE_PROCEDURE(S_moving_average,       g_moving_average_w,        1, 1, 0, H_moving_average);
-  XEN_DEFINE_SAFE_PROCEDURE(S_moving_max,           g_moving_max_w,            1, 1, 0, H_moving_max);
+  XEN_DEFINE_REAL_PROCEDURE(S_moving_average,       g_moving_average_w,        1, 1, 0, H_moving_average);
+  XEN_DEFINE_REAL_PROCEDURE(S_moving_max,           g_moving_max_w,            1, 1, 0, H_moving_max);
   XEN_DEFINE_SAFE_PROCEDURE(S_tap_p,                g_tap_p_w,                 1, 0, 0, H_tap_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_delay_p,              g_delay_p_w,               1, 0, 0, H_delay_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_notch_p,              g_notch_p_w,               1, 0, 0, H_notch_p);
@@ -19393,7 +19393,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mixer_ref,                 g_mixer_ref_w,             3, 0, 0, H_mixer_ref);
 #endif
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_set,            g_mixer_set_w,             4, 0, 0, H_mixer_set);
-  XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_sample,      g_frame_to_sample_w,       2, 0, 0, H_frame_to_sample);
+  XEN_DEFINE_REAL_PROCEDURE(S_frame_to_sample,      g_frame_to_sample_w,       2, 0, 0, H_frame_to_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_list,        g_frame_to_list_w,         1, 0, 0, H_frame_to_list);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_frame,       g_frame_to_frame_w,        2, 1, 0, H_frame_to_frame);
   XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_frame,      g_sample_to_frame_w,       2, 1, 0, H_sample_to_frame);
@@ -19463,7 +19463,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_env_p,                g_env_p_w,                 1, 0, 0, H_env_p);
   XEN_DEFINE_REAL_PROCEDURE(S_env,                  g_env_w,                   1, 0, 0, H_env);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_env,             g_make_env_w,              0, 0, 1, H_make_env);
-  XEN_DEFINE_SAFE_PROCEDURE(S_env_interp,           g_env_interp_w,            2, 0, 0, H_env_interp);
+  XEN_DEFINE_REAL_PROCEDURE(S_env_interp,           g_env_interp_w,            2, 0, 0, H_env_interp);
   XEN_DEFINE_SAFE_PROCEDURE(S_envelope_interp,      g_envelope_interp_w,       2, 1, 0, H_envelope_interp);
   XEN_DEFINE_PROCEDURE(S_env_any,                   g_env_any_w,               2, 0, 0, H_env_any);
 

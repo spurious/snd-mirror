@@ -736,7 +736,7 @@ the binding is added to the default value expression environment (just as if it 
 </p>
 
 <pre class="indented">
-&gt; (defun foo (&key (a 0) (b (+ a 4)) (c (+ a 7))) (list a b c)) 
+&gt; (defun foo (&amp;key (a 0) (b (+ a 4)) (c (+ a 7))) (list a b c)) 
 FOO 
 &gt; (foo :b 2 :a 60) 
 (60 2 67) 

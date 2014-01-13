@@ -7562,9 +7562,13 @@ mus_any *mus_make_firmant(mus_float_t frequency, mus_float_t radius)
 
 /* ---------------- filter ---------------- */
 
+/* TODO: all filters and run_hilbert below can use doubled delays to avoid any data movements 
+ *   perhaps wave_train can also use this trick
+ */
+
 typedef struct {
   mus_any_class *core;
-  int order, allocated_size;
+  int order, allocated_size, loc;
   bool state_allocated;
   mus_float_t *x, *y, *state;
   mus_float_t (*filtw)(mus_any *ptr, mus_float_t fm);
@@ -7745,6 +7749,8 @@ static mus_float_t fir_9(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
   flt *gen = (flt *)ptr;
+
+#if 0
   mus_float_t *ap, *dp, *d, *dprev;
 
   ap = (mus_float_t *)(gen->x + gen->order - 1);
@@ -7791,6 +7797,36 @@ static mus_float_t fir_9(mus_any *ptr, mus_float_t input)
       (*dprev) = (*dp);
     }
   return(xout + (input * (*ap)));
+#endif
+
+  mus_float_t *state, *ts, *x;
+
+  x = (mus_float_t *)(gen->x);
+  state = (mus_float_t *)(gen->state + gen->loc);
+  ts = (mus_float_t *)(state + gen->order);
+
+  (*state) = input;
+  (*ts) = input;
+  state++;
+
+  while (ts > state)
+    {
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+    }
+  
+  gen->loc++;
+  if (gen->loc == gen->order)
+    gen->loc = 0;
+
+  return(xout + ((*ts) * (*x)));
 }
   
 
@@ -7867,6 +7903,7 @@ static mus_float_t fir_8(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
   flt *gen = (flt *)ptr;
+#if 0
   mus_float_t *ap, *dp, *d, *dprev;
 
   ap = (mus_float_t *)(gen->x + gen->order - 1);
@@ -7909,6 +7946,34 @@ static mus_float_t fir_8(mus_any *ptr, mus_float_t input)
       (*dprev) = (*dp);
     }
   return(xout + (input * (*ap)));
+#endif
+  mus_float_t *state, *ts, *x;
+
+  x = (mus_float_t *)(gen->x);
+  state = (mus_float_t *)(gen->state + gen->loc);
+  ts = (mus_float_t *)(state + gen->order);
+
+  (*state) = input;
+  (*ts) = input;
+  state++;
+
+  while (ts > state)
+    {
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+    }
+  
+  gen->loc++;
+  if (gen->loc == gen->order)
+    gen->loc = 0;
+
+  return(xout + ((*ts) * (*x)));
 }
 
 
@@ -7916,24 +7981,45 @@ static mus_float_t fir_2(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
   flt *gen = (flt *)ptr;
-  mus_float_t *ap, *dp, *d, *dprev;
 
-  ap = (mus_float_t *)(gen->x + gen->order - 1);
-  dp = (mus_float_t *)(gen->state + gen->order - 1);
-  d = gen->state;
+#if 0
+  int i, k;
+  
+  k = gen->loc;
+  gen->state[k] = input;
+  gen->state[k + gen->order] = input;
 
-  (*d) = input;
-  while (dp > d)
+  for (i = 0, k = gen->loc + gen->order; i < gen->order; i++, k--)
+    xout += gen->state[k] * gen->x[i];
+
+  gen->loc++;
+  if (gen->loc == gen->order)
+    gen->loc = 0;
+
+  return(xout);
+#endif
+
+  mus_float_t *state, *ts, *x;
+
+  x = (mus_float_t *)(gen->x);
+  state = (mus_float_t *)(gen->state + gen->loc);
+  ts = (mus_float_t *)(state + gen->order);
+
+  (*state) = input;
+  (*ts) = input;
+  state++;
+
+  while (ts > state)
     {
-      xout += (*dp) * (*ap--);
-      dprev = dp--;
-      (*dprev) = (*dp);
-      
-      xout += (*dp) * (*ap--);
-      dprev = dp--;
-      (*dprev) = (*dp);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
     }
-  return(xout + (input * (*ap)));
+  
+  gen->loc++;
+  if (gen->loc == gen->order)
+    gen->loc = 0;
+
+  return(xout + ((*ts) * (*x)));
 }
 
 
@@ -8043,7 +8129,7 @@ int mus_filter_set_order(mus_any *ptr, int order)
     {
       int i;
       gen->allocated_size = order;
-      gen->state = (mus_float_t *)realloc(gen->state, order * sizeof(mus_float_t));
+      gen->state = (mus_float_t *)realloc(gen->state, order * 2 * sizeof(mus_float_t));
       for (i = old_order; i < order; i++)
 	gen->state[i] = 0.0; /* try to minimize click */
     }
@@ -8177,7 +8263,7 @@ static char *describe_iir_filter(mus_any *ptr)
 static void filter_reset(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
-  mus_clear_array(gen->state, gen->allocated_size);
+  mus_clear_array(gen->state, gen->allocated_size * 2);
 }
 
 
@@ -8260,8 +8346,10 @@ static mus_any_class IIR_FILTER_CLASS = {
 };
 
 
-static mus_any *make_filter(mus_any_class *cls, const char *name, int order, mus_float_t *xcoeffs, mus_float_t *ycoeffs, mus_float_t *state) /* if state null, allocated locally */
+static mus_any *make_filter(mus_any_class *cls, const char *name, int order, mus_float_t *xcoeffs, mus_float_t *ycoeffs, mus_float_t *state) 
 {
+  /* if state is null, it is allocated locally, otherwise it's size should be at least 2 * order.
+   */
   if (order <= 0)
     mus_error(MUS_ARG_OUT_OF_RANGE, "%s order = %d?", name, order);
   else
@@ -8269,12 +8357,16 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, mus
       flt *gen;
       gen = (flt *)calloc(1, sizeof(flt));
       if (state)
+	{
+	  fprintf(stderr, "state incoming %s\n", name);
 	gen->state = state;
+	}
       else 
 	{
-	  gen->state = (mus_float_t *)calloc(order, sizeof(mus_float_t));
+	  gen->state = (mus_float_t *)calloc(order * 2, sizeof(mus_float_t));
 	  gen->state_allocated = true;
 	}
+      gen->loc = 0;
 
       if (cls == &FILTER_CLASS)
 	{
@@ -8313,25 +8405,19 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, mus
 	{
 	  if (cls == &FIR_FILTER_CLASS)
 	    {
+	      gen->filtw = fir_n;
 	      if ((order & 1) == 0)
 		{
-		  if ((order & 2) == 0)
-		    {
-		      if ((order & 4) == 0)
-			gen->filtw = fir_8;
-		      else gen->filtw = fir_2;
-		    }
-		  else gen->filtw = fir_2;
+		  gen->filtw = fir_2;
+		  if ((order & 6) == 0)
+		    gen->filtw = fir_8;
 		}
 	      else
 		{
 		  if ((order % 3) == 0)
-		    {
-		      if ((order % 9) == 0)
-			gen->filtw = fir_9;
-		      else gen->filtw = fir_3;
-		    }
-		  else gen->filtw = fir_n;
+		    gen->filtw = fir_3;
+		  if ((order % 9) == 0)
+		    gen->filtw = fir_9;
 		}
 	    }
 	  else
@@ -15897,8 +15983,9 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 	gen->coeffs[k] = 0.0;
       else gen->coeffs[k] = (num / denom) * (0.54 + (0.46 * cos(denom / order)));
     }
-  gen->hilbert = mus_make_fir_filter(flen, gen->coeffs, NULL);
+  /* so odd numbered coeffs are zero */
 
+  gen->hilbert = mus_make_fir_filter(flen, gen->coeffs, NULL);
   return((mus_any *)gen);
 }
 
