@@ -1752,7 +1752,9 @@ static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)
 static XEN g_j0(XEN x)
 {
   #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function value J0(x)"
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_j0, " a number");
+#endif
 
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -1767,7 +1769,9 @@ static XEN g_j0(XEN x)
 static XEN g_j1(XEN x)
 {
   #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function value J1(x)"
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_j1, " a number");
+#endif
 
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -1783,7 +1787,9 @@ static XEN g_jn(XEN order, XEN x)
 {
   #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function value Jn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, 1, S_bes_jn, " an int");
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_bes_jn, " a number");
+#endif
 
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&

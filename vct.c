@@ -552,7 +552,9 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
       val = caddr(args);
+#if (!HAVE_SCHEME)
       XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_vct_setB, "a real number");
+#endif
       
       d = mus_vct_data(v);
       d[loc] = XEN_TO_C_DOUBLE(val);

@@ -68996,7 +68996,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.5
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 49.3
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 48.7
  *            153 with run macro (eval_ptree)
  */
 
@@ -69013,9 +69013,6 @@ int main(int argc, char **argv)
  * safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc (check if_* too)
  * file_to_sample|frame folded into readin changes (does this matter anywhere?)
- * in clm2xen many of the asserts for number_p and int_p are redundant -- s7_number_to_real|integer already check
- *   perhaps a version that includes the caller's info?
- * run_hilbert would not need data moves if direct from buffer -- all filters could use double-delay -- add a new gen
- * also filter_to_buffer, also in-place filters in snd-sig
+ * filters:  fixup set order, use new case in snd-sig/clm, also filter_to_buffer, also in-place filters in snd-sig
  */
 

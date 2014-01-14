@@ -1818,8 +1818,10 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	}
       else
 	{
-	  /* splitting out symmetric case did not speed up this loop appreciably */
-	  /* and using memmove for the "state" changes slowed it down by a factor of 2! */
+	  /* splitting out symmetric case did not speed up this loop appreciably.
+	  * and using memmove for the "state" changes slowed it down by a factor of 2!
+	  * but using doubled input buffers is faster -- need to double "d" above and set doubled input etc
+	  */
 	  for (j = 0; j < dur; j++)
 	    {
 	      mus_float_t *ap, *dp, *dprev, *d4;

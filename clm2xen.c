@@ -1069,7 +1069,9 @@ static XEN g_polynomial(XEN arr, XEN x)
   #define H_polynomial "(" S_polynomial " coeffs x): evaluate a polynomial at x.  coeffs are in order \
 of degree, so coeff[0] is the constant term."
 
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_polynomial, "a number");
+#endif
   if (MUS_VCT_P(arr))
     {
       vct *v;
@@ -1104,7 +1106,9 @@ taking into account wrap-around (size is size of data), with linear interpolatio
   vct *v;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, 1, S_array_interp, "a vct");
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(phase), phase, 2, S_array_interp, "a number");
+#endif
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, 3, S_array_interp, "an integer");
 
   v = XEN_TO_VCT(obj);
@@ -2831,7 +2835,9 @@ static XEN g_comb_bank(XEN gens, XEN inp)
   mus_any *bank = NULL;
   mus_xen *gn;
 
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, 2, S_comb_bank, "a number");
+#endif
   XEN_TO_C_GENERATOR(gens, gn, bank, mus_comb_bank_p, S_comb_bank, "a comb-bank generator");
 
   return(C_TO_XEN_DOUBLE(mus_comb_bank(bank, XEN_TO_C_DOUBLE(inp))));
@@ -2903,7 +2909,9 @@ static XEN g_filtered_comb_bank(XEN gens, XEN inp)
   mus_any *bank = NULL;
   mus_xen *gn;
 
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, 2, S_filtered_comb_bank, "a number");
+#endif
   XEN_TO_C_GENERATOR(gens, gn, bank, mus_filtered_comb_bank_p, S_filtered_comb_bank, "a filtered-comb-bank generator");
 
   return(C_TO_XEN_DOUBLE(mus_filtered_comb_bank(bank, XEN_TO_C_DOUBLE(inp))));
@@ -2975,7 +2983,9 @@ static XEN g_all_pass_bank(XEN gens, XEN inp)
   mus_any *bank = NULL;
   mus_xen *gn;
 
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, 2, S_all_pass_bank, "a number");
+#endif
   XEN_TO_C_GENERATOR(gens, gn, bank, mus_all_pass_bank_p, S_all_pass_bank, "an all-pass-bank generator");
 
   return(C_TO_XEN_DOUBLE(mus_all_pass_bank(bank, XEN_TO_C_DOUBLE(inp))));
@@ -4435,7 +4445,9 @@ static XEN g_make_one_pole_all_pass(XEN arg1, XEN arg2)
   mus_float_t coeff;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, S_make_one_pole_all_pass, "an integer");
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(arg2), arg2, 2, S_make_one_pole_all_pass, "a number");
+#endif
 
   size = XEN_TO_C_INT(arg1);
   if (size == 0) return(XEN_FALSE);
@@ -6396,7 +6408,9 @@ static XEN g_filter(XEN obj, XEN input)
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_filter_p, S_filter, "a filter");
 
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, 2, S_filter, "a number");
+#endif
   return(C_TO_XEN_DOUBLE(mus_filter(g, XEN_TO_C_DOUBLE(input))));
 }
 
@@ -6409,7 +6423,9 @@ static XEN g_fir_filter(XEN obj, XEN input)
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_fir_filter_p, S_fir_filter, "an FIR filter");
 
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, 2, S_fir_filter, "a number");
+#endif
   return(C_TO_XEN_DOUBLE(mus_fir_filter(g, XEN_TO_C_DOUBLE(input))));
 }
 
@@ -6422,7 +6438,9 @@ static XEN g_iir_filter(XEN obj, XEN input)
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_iir_filter_p, S_iir_filter, "an IIR filter");
 
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, 2, S_iir_filter, "a number");
+#endif
   return(C_TO_XEN_DOUBLE(mus_iir_filter(g, XEN_TO_C_DOUBLE(input))));
 }
 
@@ -7864,7 +7882,9 @@ static XEN g_locsig_set(XEN obj, XEN chan, XEN val)
   #define H_locsig_set "(" S_locsig_set " gen chan val): set the locsig generator's channel 'chan' scaler to 'val'"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_locsig_p(XEN_TO_MUS_ANY(obj))), obj, 1, S_locsig_set, "a locsig generator");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 2, S_locsig_set, "an integer");
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_locsig_set, "a number");
+#endif
   return(C_TO_XEN_DOUBLE(mus_locsig_set(XEN_TO_MUS_ANY(obj),
 					XEN_TO_C_INT(chan),
 					XEN_TO_C_DOUBLE(val))));
@@ -7885,7 +7905,9 @@ static XEN g_locsig_reverb_set(XEN obj, XEN chan, XEN val)
   #define H_locsig_reverb_set "(" S_locsig_reverb_set " gen chan val): set the locsig reverb channel 'chan' scaler to 'val'"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_locsig_p(XEN_TO_MUS_ANY(obj))), obj, 1, S_locsig_reverb_set, "a locsig generator");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 2, S_locsig_reverb_set, "an integer");
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_locsig_reverb_set, "a number");
+#endif
   return(C_TO_XEN_DOUBLE(mus_locsig_reverb_set(XEN_TO_MUS_ANY(obj),
 					       XEN_TO_C_INT(chan),
 					       XEN_TO_C_DOUBLE(val))));
@@ -7990,7 +8012,9 @@ static XEN g_locsig(XEN xobj, XEN xpos, XEN xval)
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(S_locsig, 2, xpos, "must be >= 0");    
 
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(xval), xval, 3, S_locsig, "a number");
+#endif
   fval = XEN_TO_C_DOUBLE(xval);
 
   mus_locsig(loc_gen, pos, fval);
@@ -8189,8 +8213,10 @@ static XEN g_move_locsig(XEN obj, XEN degree, XEN distance)
 {
   #define H_move_locsig "(" S_move_locsig " gen degree distance): move locsig gen to reflect degree and distance"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_locsig_p(XEN_TO_MUS_ANY(obj))), obj, 1, S_move_locsig, "a locsig generator");
+#if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(degree), degree, 2, S_move_locsig, "a number in degrees");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(distance), distance, 3, S_move_locsig, "a number > 1.0");
+#endif
   mus_move_locsig(XEN_TO_MUS_ANY(obj),
 		  XEN_TO_C_DOUBLE(degree),
 		  XEN_TO_C_DOUBLE(distance));
