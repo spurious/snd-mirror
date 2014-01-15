@@ -8452,7 +8452,7 @@ static XEN xen_one, xen_minus_one;
  */
 
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, polywave_symbol, triangle_wave_symbol;
-static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
+static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol, outa_symbol;
 static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol, readin_symbol, abs_symbol;
 static s7_pointer comb_bank_symbol, all_pass_bank_symbol, one_pole_symbol, vct_ref_symbol;
 
@@ -13688,6 +13688,7 @@ typedef struct {
   void *gen;
   gf *g;
   s7_scheme *sc;
+  int chan;
   mus_float_t (*func_1)(void *p);
   mus_float_t (*func)(void *p);
 } outa_ex;
@@ -13706,7 +13707,7 @@ static void outa_0(void *p)
   outa_ex *ep = (outa_ex *)p;
   mus_long_t pos;
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  out_any_2(pos, ep->x1, 0, "outa");
+  out_any_2(pos, ep->x1, ep->chan, "outa");
 }
 
 
@@ -13715,7 +13716,7 @@ static void outa_s(void *p)
   outa_ex *ep = (outa_ex *)p;
   mus_long_t pos;
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  out_any_2(pos, s7_number_to_real(ep->sc, s7_cell_slot_value(ep->val_slot)), 0, "outa");
+  out_any_2(pos, s7_number_to_real(ep->sc, s7_cell_slot_value(ep->val_slot)), ep->chan, "outa");
 }
 
 
@@ -13724,7 +13725,7 @@ static void outa_1(void *p)
   outa_ex *ep = (outa_ex *)p;
   mus_long_t pos;
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  out_any_2(pos, ep->func_1(ep->gen), 0, "outa");
+  out_any_2(pos, ep->func_1(ep->gen), ep->chan, "outa");
 }
 
 
@@ -13733,7 +13734,7 @@ static void outa_2(void *p)
   outa_ex *ep = (outa_ex *)p;
   mus_long_t pos;
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  out_any_2(pos, ep->func(ep->g), 0, "outa");
+  out_any_2(pos, ep->func(ep->g), ep->chan, "outa");
 }
 
 
@@ -13763,6 +13764,9 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
       e->ex_data = p;
       p->i_slot = i_slot;
       p->sc = sc;
+      if (car(expr) == outa_symbol)
+	p->chan = 0;
+      else p->chan = 1;
       if (s7_is_symbol(val_arg))
 	{
 	  p->val_slot = s7_slot(sc, val_arg);
@@ -13784,6 +13788,9 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
       e->ex_free = outa_ex_free;
       e->ex_data = p;
       p->i_slot = i_slot;
+      if (car(expr) == outa_symbol)
+	p->chan = 0;
+      else p->chan = 1;
 
       if (gf1->func_1)
 	{
@@ -17714,6 +17721,7 @@ static void init_choosers(s7_scheme *sc)
   multiply_symbol = s7_make_symbol(sc, "*");
   reverb_symbol = s7_make_symbol(sc, "*reverb*");
   output_symbol = s7_make_symbol(sc, "*output*");
+  outa_symbol = s7_make_symbol(sc, "outa");
   quote_symbol = s7_make_symbol(sc, "quote");
   sin_symbol = s7_make_symbol(sc, "sin");
   cos_symbol = s7_make_symbol(sc, "cos");
@@ -18607,6 +18615,7 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "outb");
   s7_function_set_chooser(sc, f, outb_chooser);
+  s7_function_set_ex_parser(f, outa_ex_parser);
 
   outb_mul_s_delay = clm_make_function_no_choice(sc, "outb", g_outb_mul_s_delay, 2, 0, false, "outb optimization", f);
   outb_two = clm_make_function_no_choice(sc, "outb", g_outb_two, 2, 0, false, "outb optimization", f);

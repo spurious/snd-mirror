@@ -1739,8 +1739,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 			   const char *origin, bool truncate,
 			   bool over_selection, mus_any *gen, mus_float_t *precalculated_coeffs)
 {
-  mus_float_t *a = NULL, *d = NULL;
-  mus_float_t x = 0.0;
+  mus_float_t *a = NULL;
   snd_info *sp;
   bool reporting = false;
   int m;
@@ -1753,6 +1752,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   mus_float_t *idata;
   char *ofile = NULL;
   io_error_t io_err = IO_NO_ERROR;
+  mus_any *g = NULL;
   
   if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
@@ -1782,6 +1782,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   data = (mus_float_t **)malloc(sizeof(mus_float_t *));
   data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
   idata = data[0];
+
   if (precalculated_coeffs)
     a = precalculated_coeffs;
   else 
@@ -1789,12 +1790,15 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       if (order & 1) order++;
       a = get_filter_coeffs(order, e);
     }
-  d = (mus_float_t *)calloc(order, sizeof(mus_float_t));
+
   if (gen)
-    mus_reset(gen);
+    {
+      mus_reset(gen);
+      g = gen;
+    }
   else
     {
-      for (m = 0; m < order; m++) d[m] = 0.0;
+      g = mus_make_fir_filter(order, a, NULL);
       if (over_selection)
 	{
 	  mus_long_t prebeg = 0;
@@ -1804,106 +1808,22 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	  else prebeg = beg;
 	  if (prebeg > 0)
 	    for (m = (int)prebeg; m > 0; m--)
-	      d[m] = read_sample(sf);
+	      mus_fir_filter(g, read_sample(sf));
 	}
     }
   if ((over_selection) && (!truncate))
     dur -= order;
+
   if (!temp_file)
     {
-      if (gen)
-	{
-	  for (j = 0; j < dur; j++)
-	    idata[j] = (mus_apply(gen, read_sample(sf), 0.0));
-	}
-      else
-	{
-	  /* splitting out symmetric case did not speed up this loop appreciably.
-	  * and using memmove for the "state" changes slowed it down by a factor of 2!
-	  * but using doubled input buffers is faster -- need to double "d" above and set doubled input etc
-	  */
-	  for (j = 0; j < dur; j++)
-	    {
-	      mus_float_t *ap, *dp, *dprev, *d4;
-
-	      ap = (mus_float_t *)(a + order - 1);
-	      dp = (mus_float_t *)(d + order - 1);
-	      d4 = (mus_float_t *)(d + 4);
-
-	      d[0] = read_sample(sf);
-	      x = d[0] * a[0]; 
-
-	      while (dp > d4)
-		{
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-		}
-	      while (dp > d)
-		{
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-		}
-	      idata[j] = x;
-	    }
-	}
+      for (j = 0; j < dur; j++)
+	idata[j] = mus_apply(g, read_sample(sf), 0.0);
     }
   else
     {
       for (offk = 0; offk < dur; offk++)
 	{
-	  if (gen)
-	    x = mus_apply(gen, read_sample(sf), 0.0);
-	  else
-	    {
-	      mus_float_t *ap, *dp, *dprev, *d4;
-
-	      ap = (mus_float_t *)(a + order - 1);
-	      dp = (mus_float_t *)(d + order - 1);
-	      d4 = (mus_float_t *)(d + 4);
-
-	      d[0] = read_sample(sf);
-	      x = d[0] * a[0]; 
-
-	      while (dp > d4)
-		{
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-		}
-	      while (dp > d)
-		{
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-		}
-	    }
-	  idata[j] = x;
+	  idata[j] = mus_apply(g, read_sample(sf), 0.0);
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
@@ -1930,45 +1850,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       sfold = init_sample_read_any(beg + dur, cp, READ_FORWARD, sf->edit_ctr);
       for (offk = 0; offk < order; offk++)
 	{
-	  if (gen)
-	    x = mus_apply(gen, read_sample(sf), 0.0);
-	  else
-	    {
-	      mus_float_t *ap, *dp, *dprev, *d4;
-
-	      ap = (mus_float_t *)(a + order - 1);
-	      dp = (mus_float_t *)(d + order - 1);
-	      d4 = (mus_float_t *)(d + 4);
-
-	      d[0] = read_sample(sf);
-	      x = d[0] * a[0];
-
-	      while (dp > d4)
-		{
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-		}
-	      while (dp > d)
-		{
-		  x += (*dp) * (*ap--);
-		  dprev = dp--;
-		  (*dprev) = (*dp);
-		}
-	    }
-	  idata[j] = (x + read_sample(sfold));
+	  idata[j] = mus_apply(g, read_sample(sf), 0.0) + read_sample(sfold);
 	  j++;
 	  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	    {
@@ -2047,7 +1929,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 
   free(data[0]);
   free(data);
-  if (d) free(d);
+  if (!gen) mus_free(g);
   if ((a) && (!precalculated_coeffs)) free(a);
   return(NULL);
 }

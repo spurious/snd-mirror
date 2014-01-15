@@ -68996,7 +68996,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.5
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 48.7
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 48.6
  *            153 with run macro (eval_ptree)
  */
 
@@ -69009,10 +69009,12 @@ int main(int argc, char **argv)
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
+ *
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
  * safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc (check if_* too)
  * file_to_sample|frame folded into readin changes (does this matter anywhere?)
- * filters:  fixup set order, use new case in snd-sig/clm, also filter_to_buffer, also in-place filters in snd-sig
+ * it would be nice if TAB completion could complete keyword args correctly
+ *   look back to "(", car->lambda*, complete based on arglist
  */
 

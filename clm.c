@@ -7562,9 +7562,6 @@ mus_any *mus_make_firmant(mus_float_t frequency, mus_float_t radius)
 
 /* ---------------- filter ---------------- */
 
-/* TODO: all (full)filters below can use doubled delays to avoid any data movements 
- */
-
 typedef struct {
   mus_any_class *core;
   int order, allocated_size, loc;
@@ -7573,7 +7570,6 @@ typedef struct {
   mus_float_t (*filtw)(mus_any *ptr, mus_float_t fm);
 } flt;
 
-/* handling symmetric coeffs to reduce multiplies was actually slower than the normal form */
 
 mus_float_t mus_filter(mus_any *ptr, mus_float_t input)
 {
@@ -7584,157 +7580,187 @@ mus_float_t mus_filter(mus_any *ptr, mus_float_t input)
 static mus_float_t filter_eight(mus_any *ptr, mus_float_t input)
 {
   flt *gen = (flt *)ptr;
-  mus_float_t xout = 0.0;
-  mus_float_t *xp, *yp, *dp, *d, *dprev;
+  mus_float_t xout;
+  mus_float_t *state, *ts, *ts1, *y, *x;
 
-  xp = (mus_float_t *)(gen->x + gen->order - 1);
-  yp = (mus_float_t *)(gen->y + gen->order - 1);
-  dp = (mus_float_t *)(gen->state + gen->order - 1);
-  d = gen->state;
+  x = (mus_float_t *)(gen->x);
+  y = (mus_float_t *)(gen->y + 1); /* assume y[0] = 1.0 I think */
+  state = (mus_float_t *)(gen->state + gen->loc);
+  ts = (mus_float_t *)(state + gen->order - 1);
+  ts1 = (mus_float_t *)(state + gen->order);
 
-  d[0] = input;
+  gen->loc++;
+  if (gen->loc == gen->order)
+    gen->loc = 0;
 
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
+  /* these could be combined (saving the ts--): I think it's the first x case that needs input -- skip and pick up at end?
+   */
 
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts) * (*y));
 
-  return(xout + (d[0] * (*xp)));
+  state[0] = input;
+  state[gen->order] = input;
+
+  xout = (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  return(xout + ((*ts1) * (*x)));
 }
 
 
 static mus_float_t filter_four(mus_any *ptr, mus_float_t input)
 {
   flt *gen = (flt *)ptr;
-  mus_float_t xout = 0.0;
-  mus_float_t *xp, *yp, *dp, *d, *dprev;
+  mus_float_t xout;
+  mus_float_t *state, *ts, *ts1, *y, *x;
 
-  xp = (mus_float_t *)(gen->x + gen->order - 1);
-  yp = (mus_float_t *)(gen->y + gen->order - 1);
-  dp = (mus_float_t *)(gen->state + gen->order - 1);
-  d = gen->state;
+  x = (mus_float_t *)(gen->x);
+  y = (mus_float_t *)(gen->y + 1);
+  state = (mus_float_t *)(gen->state + gen->loc);
+  ts = (mus_float_t *)(state + gen->order - 1);
+  ts1 = (mus_float_t *)(state + gen->order);
 
-  d[0] = input;
+  gen->loc++;
+  if (gen->loc == gen->order)
+    gen->loc = 0;
 
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  return(xout + (d[0] * (*xp)));
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts--) * (*y++));
+  input -= ((*ts) * (*y));
+
+  state[0] = input;
+  state[gen->order] = input;
+
+  xout = (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  xout += (*ts1--) * (*x++);
+  return(xout + ((*ts1) * (*x)));
 }
 
 
 static mus_float_t filter_two(mus_any *ptr, mus_float_t input)
 {
+  /* here the double-delay form is not faster, but use it for consistency */
   flt *gen = (flt *)ptr;
-  mus_float_t xout = 0.0;
-  mus_float_t *xp, *yp, *dp, *d, *dprev;
+  mus_float_t *state, *ts, *y, *x;
 
-  xp = (mus_float_t *)(gen->x + gen->order - 1);
-  yp = (mus_float_t *)(gen->y + gen->order - 1);
-  dp = (mus_float_t *)(gen->state + gen->order - 1);
-  d = gen->state;
+  x = gen->x;
+  y = gen->y;
+  state = (mus_float_t *)(gen->state + gen->loc);
+  ts = (mus_float_t *)(state + gen->order - 2);
 
-  d[0] = input;
+  gen->loc++;
+  if (gen->loc == gen->order)
+    gen->loc = 0;
 
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
-  
-  xout += (*dp) * (*xp--);
-  d[0] -= (*dp) * (*yp--);
-  dprev = dp--;
-  (*dprev) = (*dp);
+  state[0] = input - ((ts[1] * y[1]) + (ts[0] * y[2]));
+  state[gen->order] = state[0];
 
-  return(xout + (d[0] * (*xp)));
+  return((ts[0] * x[2]) + (ts[1] * x[1]) + (ts[2] * x[0]));
 }
 
 
-static mus_float_t filter_n(mus_any *ptr, mus_float_t input)
+static mus_float_t filter_lt_10(mus_any *ptr, mus_float_t input)
 {
   flt *gen = (flt *)ptr;
   mus_float_t xout = 0.0;
-  mus_float_t *xp, *yp, *dp, *d, *dprev, *d2;
+  mus_float_t *state, *state1, *ts, *y, *x;
 
-  xp = (mus_float_t *)(gen->x + gen->order - 1);
-  yp = (mus_float_t *)(gen->y + gen->order - 1);
-  dp = (mus_float_t *)(gen->state + gen->order - 1);
-  d = gen->state;
-  d2 = (mus_float_t *)(d + 2);
+  x = (mus_float_t *)(gen->x);
+  y = (mus_float_t *)(gen->y + 1); /* assume y[0] = 1.0 I think */
+  state = (mus_float_t *)(gen->state + gen->loc);
+  state1 = (mus_float_t *)(state + 1);
+  ts = (mus_float_t *)(state + gen->order - 1);
 
-  d[0] = input;
-  while (dp >= d2)
+  while (ts > state1)
+    input -= ((*ts--) * (*y++));
+  input -= ((*ts) * (*y));
+
+  state[0] = input;
+  state[gen->order] = input;
+
+  ts = (mus_float_t *)(state + gen->order);
+
+  while (ts > state1)
+    xout += (*ts--) * (*x++);
+
+  gen->loc++;
+  if (gen->loc == gen->order)
+    gen->loc = 0;
+
+  return(xout + ((*ts) * (*x)));
+}
+
+
+static mus_float_t filter_ge_10(mus_any *ptr, mus_float_t input)
+{
+  flt *gen = (flt *)ptr;
+  mus_float_t xout = 0.0;
+  mus_float_t *state, *state1, *state11, *ts, *y, *x;
+
+  x = (mus_float_t *)(gen->x);
+  y = (mus_float_t *)(gen->y + 1); /* assume y[0] = 1.0 I think */
+  state = (mus_float_t *)(gen->state + gen->loc);
+  state1 = (mus_float_t *)(state + 1);
+  state11 = (mus_float_t *)(state + 11);
+  ts = (mus_float_t *)(state + gen->order - 1);
+
+  while (ts >= state11)
     {
-      xout += (*dp) * (*xp--);
-      d[0] -= (*dp) * (*yp--);
-      dprev = dp--;
-      (*dprev) = (*dp);
+      input -= ((*ts--) * (*y++));
+      input -= ((*ts--) * (*y++));
+      input -= ((*ts--) * (*y++));
+      input -= ((*ts--) * (*y++));
+      input -= ((*ts--) * (*y++));
+      input -= ((*ts--) * (*y++));
+      input -= ((*ts--) * (*y++));
+      input -= ((*ts--) * (*y++));
+      input -= ((*ts--) * (*y++));
+      input -= ((*ts--) * (*y++));
+    }
+  while (ts > state1)
+    input -= ((*ts--) * (*y++));
+  input -= ((*ts) * (*y));
 
-      xout += (*dp) * (*xp--);
-      d[0] -= (*dp) * (*yp--);
-      dprev = dp--;
-      (*dprev) = (*dp);
-    }
-  if (dp > d)
+  state[0] = input;
+  state[gen->order] = input;
+
+  ts = (mus_float_t *)(state + gen->order);
+  while (ts >= state11)
     {
-      xout += (*dp) * (*xp--);
-      d[0] -= (*dp) * (*yp--);
-      dprev = dp--;
-      (*dprev) = (*dp);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
+      xout += (*ts--) * (*x++);
     }
-  return(xout + (d[0] * (*xp)));
+  while (ts > state1)
+    xout += (*ts--) * (*x++);
+
+  gen->loc++;
+  if (gen->loc == gen->order)
+    gen->loc = 0;
+
+  return(xout + ((*ts) * (*x)));
 }
 
 
@@ -7944,10 +7970,7 @@ static mus_float_t iir_n(mus_any *ptr, mus_float_t input)
 }
 
 
-static mus_float_t run_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_filter(ptr, input));}
-static mus_float_t run_fir_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_fir_filter(ptr, input));}
-static mus_float_t run_iir_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_iir_filter(ptr, input));}
-
+static mus_float_t run_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) {return((((flt *)ptr)->filtw)(ptr, input));}
 
 bool mus_filter_p(mus_any *ptr) 
 {
@@ -8207,7 +8230,7 @@ static mus_any_class FIR_FILTER_CLASS = {
   0, 0, 0, 0,
   0, 0,
   0, 0,
-  &run_fir_filter,
+  &run_filter,
   MUS_FULL_FILTER, 
   NULL, 0,
   0, 0, 0, 0, 
@@ -8233,7 +8256,7 @@ static mus_any_class IIR_FILTER_CLASS = {
   0, 0, 0, 0,
   0, 0,
   0, 0,
-  &run_iir_filter,
+  &run_filter,
   MUS_FULL_FILTER, 
   NULL, 0,
   0, 0, 0, 0, 
@@ -8264,7 +8287,12 @@ static void set_filter_function(flt *gen)
 	    {
 	      if (order == 4)
 		gen->filtw = filter_four;
-	      else gen->filtw = filter_n;
+	      else 
+		{
+		  if (order >= 10)
+		    gen->filtw = filter_ge_10;
+		  else gen->filtw = filter_lt_10;
+		}
 	    }
 	}
     }
