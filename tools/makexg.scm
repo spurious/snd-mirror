@@ -8,7 +8,7 @@
 (define (heyc arg)
   (display arg xg-file))
 
-(define names ())
+(define names (make-hash-table))
 (define types ())
 (define ints ())
 (define dbls ())
@@ -953,7 +953,7 @@
        (define* (,cfnc data spec)         ; CFNC-2.12
 	 (let ((name (cadr-str data))
 	       (args (caddr-str data)))
-	   (if (assoc name names)
+	   (if (hash-table-ref names name)
 	       (format #t "~A: ~A ~A~%" ',cfnc name data)
 	       (let ((type (car-str data)))
 		 (if (not (member type all-types))
@@ -964,7 +964,7 @@
 		   (if spec
 		       (set! ,funcs (cons (list name type strs args spec) ,funcs))
 		       (set! ,funcs (cons (list name type strs args) ,funcs)))
-		   (set! names (cons (cons name (func-type strs)) names)))))))
+		   (hash-table-set! names name (func-type strs)))))))
 
        (define (,strfnc name)            ; CSTR-2.12
 	 (if (assoc name ,names)
@@ -975,25 +975,25 @@
 
        (define* (,intfnc name type)      ; CINT-2.12
 	 (save-declared-type type)
-	 (if (assoc name names)
+	 (if (hash-table-ref names name)
 	     (format #t "~A ~A~%" name ',intfnc)
 	     (begin
 	       (set! ,ints (cons name ,ints))
-	       (set! names (cons (cons name 'int) names)))))
+	       (hash-table-set! names name 'int))))
 
        (define (,castfnc name type)      ; CCAST-2.12
-	 (if (assoc name names)
+	 (if (hash-table-ref names name)
 	     (format #t "~A ~A~%" name ',castfnc)
 	     (begin
 	       (set! ,casts (cons (list name type) ,casts))
-	       (set! names (cons (cons name 'def) names)))))
+	       (hash-table-set! names name 'def))))
 
        (define (,chkfnc name type)       ; CCHK-2.12
-	 (if (assoc name names)
+	 (if (hash-table-ref names name)
 	     (format #t "~A ~A~%" name ',chkfnc)
 	     (begin
 	       (set! ,checks (cons (list name type) ,checks))
-	       (set! names (cons (cons name 'def) names)))))
+	       (hash-table-set! names name 'def))))
 
        (define (,withfnc dpy thunk)      ; with-2.12
 	 (dpy (string-append "#if GTK_CHECK_VERSION(" (substring ,vname 0 1) ", " (substring ,vname 2) ", 0)~%"))
@@ -1041,7 +1041,7 @@
 (define* (CFNC data spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
-    (if (assoc name names)
+    (if (hash-table-ref names name)
 	(no-way "~A CFNC~%" name)
 	(let ((type (car-str data)))
 	  (if (not (member type all-types)) (set! all-types (cons type all-types)))
@@ -1051,7 +1051,7 @@
 	    (if spec
 		(set! funcs (cons (list name type strs args spec spec-data) funcs))
 		(set! funcs (cons (list name type strs args) funcs)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+	    (hash-table-set! names name (func-type strs)))))))
 
 (define (CFNC-PA data min-len max-len types)
   (CFNC data 'etc (list min-len max-len types)))
@@ -1062,7 +1062,7 @@
 (define* (CAIRO-FUNC data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
-    (if (assoc name names)
+    (if (hash-table-ref names name)
 	(no-way "CAIRO-FUNC: ~A~%" (list name data))
 	(let ((type (car-str data)))
 	  (if (not (member type all-types))
@@ -1073,12 +1073,12 @@
 	    (if spec
 		(set! cairo-funcs (cons (list name type strs args spec) cairo-funcs))
 		(set! cairo-funcs (cons (list name type strs args) cairo-funcs)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+	    (hash-table-set! names name (func-type strs)))))))
 
 (define* (CAIRO-PNG-FUNC data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
-    (if (assoc name names)
+    (if (hash-table-ref names name)
 	(no-way "CAIRO-PNG-FUNC: ~A~%" (list name data))
 	(let ((type (car-str data)))
 	  (if (not (member type all-types))
@@ -1089,12 +1089,12 @@
 	    (if spec
 		(set! cairo-png-funcs (cons (list name type strs args spec) cairo-png-funcs))
 		(set! cairo-png-funcs (cons (list name type strs args) cairo-png-funcs)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+	    (hash-table-set! names name (func-type strs)))))))
 
 (define* (CAIRO-FUNC-810 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
-    (if (assoc name names)
+    (if (hash-table-ref names name)
 	(no-way "CAIRO-FUNC-810: ~A~%" (list name data))
 	(let ((type (car-str data)))
 	  (if (not (member type all-types))
@@ -1105,12 +1105,12 @@
 	    (if spec
 		(set! cairo-funcs-810 (cons (list name type strs args spec) cairo-funcs-810))
 		(set! cairo-funcs-810 (cons (list name type strs args) cairo-funcs-810)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+	    (hash-table-set! names name (func-type strs)))))))
 
 (define* (CAIRO-FUNC-912 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
-    (if (assoc name names)
+    (if (hash-table-ref names name)
 	(no-way "CAIRO-FUNC-912: ~A~%" (list name data))
 	(let ((type (car-str data)))
 	  (if (not (member type all-types))
@@ -1121,7 +1121,7 @@
 	    (if spec
 		(set! cairo-funcs-912 (cons (list name type strs args spec) cairo-funcs-912))
 		(set! cairo-funcs-912 (cons (list name type strs args) cairo-funcs-912)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+	    (hash-table-set! names name (func-type strs)))))))
 
 
 (define (helpify name type args)
@@ -1156,27 +1156,27 @@
     (hey ")\"~%")))
 
 (define (CATOM name)
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CATOM~%" name)
       (begin
 	(set! atoms (cons name atoms))
-	(set! names (cons (cons name 'atom) names)))))
+	(hash-table-set! names name 'atom))))
 
 
 (define (CSTR name)
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CSTR~%" name)
       (begin
 	(set! strings (cons name strings))
-	(set! names (cons (cons name 'string) names)))))
+	(hash-table-set! names name 'string))))
 
 
 (define (CDBL name)
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CDBL~%" name)
       (begin
 	(set! dbls (cons name dbls))
-	(set! names (cons (cons name 'dbl) names)))))
+	(hash-table-set! names name 'dbl))))
 
 (define declared-types ())
 (define (save-declared-type type)
@@ -1186,67 +1186,67 @@
 
 (define* (CINT name type)
   (save-declared-type type)
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CINT~%" name)
       (begin
 	(set! ints (cons name ints))
-	(set! names (cons (cons name 'int) names)))))
+	(hash-table-set! names name 'int))))
 
 
 (define* (CAIRO-INT name type)
   (save-declared-type type)
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CAIRO-INT~%" name)
       (begin
 	(set! cairo-ints (cons name cairo-ints))
-	(set! names (cons (cons name 'int) names)))))
+	(hash-table-set! names name 'int))))
 
 (define* (CAIRO-INT-810 name type)
   (save-declared-type type)
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CAIRO-INT-810~%" name)
       (begin
 	(set! cairo-ints-810 (cons name cairo-ints-810))
-	(set! names (cons (cons name 'int) names)))))
+	(hash-table-set! names name 'int))))
 
 (define* (CAIRO-INT-912 name type)
   (save-declared-type type)
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CAIRO-INT-912~%" name)
       (begin
 	(set! cairo-ints-912 (cons name cairo-ints-912))
-	(set! names (cons (cons name 'int) names)))))
+	(hash-table-set! names name 'int))))
 
 (define (CAIRO-STRING-912 name)
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CAIRO-STRING-912~%" name)
       (begin
 	(set! cairo-strings-912 (cons name cairo-strings-912))
-	(set! names (cons (cons name 'string) names)))))
+	(hash-table-set! names name 'string))))
 
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CCAST~%" name)
       (begin
 	;;(if (not (member type types))
 	;;    (set! types (cons type types)))
 	(set! casts (cons (list name type) casts))
-	(set! names (cons (cons name 'def) names)))))
+	(hash-table-set! names name 'def))))
 
 
 (define (CCHK name type)
-  (if (assoc name names)
+  (if (hash-table-ref names name)
       (no-way "~A CCHK~%" name)
       (begin
 	(set! checks (cons (list name type) checks))
-	(set! names (cons (cons name 'def) names)))))
+	(hash-table-set! names name 'def))))
 
 
 (define (STRUCT data)
   (let ((name (car-str data)) ; struct name (type)
 	(args (cdr-str data)))
-    (if (assoc name names)
+    (if (hash-table-ref names name)
 	(no-way "~A STRUCT~%" name)
 	(let ((strs (parse-args args 'ok))
 	      (type-name (string-append name "*")))
@@ -1908,7 +1908,7 @@
 	   (refargs (ref-args args))
 	   (xgargs (- cargs refargs))
 	   (argstr (cadddr data))
-	   (lambda-type (cdr (assoc name names)))
+	   (lambda-type (hash-table-ref names name))
 	   (callback-data (and (not (eq? lambda-type 'fnc))
 			       (find-callback 
 				(lambda (func)

@@ -1390,22 +1390,14 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
       i = 0;
       while (i <= lim8)
 	{
-	  d1[i] += d2[i];
-	  i++;
-	  d1[i] += d2[i];
-	  i++;
-	  d1[i] += d2[i];
-	  i++;
-	  d1[i] += d2[i];
-	  i++;
-	  d1[i] += d2[i];
-	  i++;
-	  d1[i] += d2[i];
-	  i++;
-	  d1[i] += d2[i];
-	  i++;
-	  d1[i] += d2[i];
-	  i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
 	}
       for (; i < lim; i++) 
 	d1[i] += d2[i];
@@ -1434,14 +1426,10 @@ static XEN g_vct_subtract(XEN obj1, XEN obj2)
   i = 0;
   while (i <= lim4)
     {
-      d1[i] -= d2[i];
-      i++;
-      d1[i] -= d2[i];
-      i++;
-      d1[i] -= d2[i];
-      i++;
-      d1[i] -= d2[i];
-      i++;
+      d1[i] -= d2[i]; i++;
+      d1[i] -= d2[i]; i++;
+      d1[i] -= d2[i]; i++;
+      d1[i] -= d2[i]; i++;
     }
   for (; i < lim; i++) 
     d1[i] -= d2[i];
@@ -1567,10 +1555,12 @@ double mus_vct_peak(vct *v)
 {
   mus_float_t val = 0.0, absv;
   mus_float_t *d;
-  mus_long_t i, lim4;
+  mus_long_t i, lim4, len;
 
-  if (mus_vct_length(v) == 0) return(0.0);
-  lim4 = mus_vct_length(v) - 4;
+  len = mus_vct_length(v);
+
+  if (len == 0) return(0.0);
+  lim4 = len - 4;
   i = 1;
   d = mus_vct_data(v);
   val = fabs(d[0]);
@@ -1586,12 +1576,12 @@ double mus_vct_peak(vct *v)
       absv = fabs(d[i++]);
       if (absv > val) val = absv;
     }
-  for (; i < mus_vct_length(v); i++)
+
+  for (; i < len; i++)
     {
       absv = fabs(d[i]);
       if (absv > val) val = absv;
     }
-
   return(val);
 }
 

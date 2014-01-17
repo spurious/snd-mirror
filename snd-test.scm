@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [547]
-;;;  test 1: defaults                           [1253]
-;;;  test 2: headers                            [1616]
-;;;  test 3: variables                          [1931]
-;;;  test 4: sndlib                             [2497]
-;;;  test 5: simple overall checks              [4856]
-;;;  test 6: float-vectors                      [9619]
-;;;  test 7: colors                             [9913]
-;;;  test 8: clm                                [10432]
-;;;  test 9: mix                                [21390]
-;;;  test 10: marks                             [23179]
-;;;  test 11: dialogs                           [24138]
-;;;  test 12: extensions                        [24312]
-;;;  test 13: menus, edit lists, hooks, etc     [24578]
-;;;  test 14: all together now                  [25952]
-;;;  test 15: chan-local vars                   [26830]
-;;;  test 16: regularized funcs                 [28588]
-;;;  test 17: dialogs and graphics              [32199]
-;;;  test 18: save and restore                  [32312]
-;;;  test 19: transforms                        [33934]
-;;;  test 20: new stuff                         [36049]
-;;;  test 21: optimizer                         [37255]
-;;;  test 22: with-sound                        [37779]
-;;;  test 23: X/Xt/Xm                           [40725]
-;;;  test 24: GL                                [44407]
-;;;  test 25: errors                            [44531]
-;;;  test 26: s7                                [46065]
-;;;  test all done                              [46131]
-;;;  test the end                               [46314]
+;;;  test 0: constants                          [542]
+;;;  test 1: defaults                           [1248]
+;;;  test 2: headers                            [1612]
+;;;  test 3: variables                          [1927]
+;;;  test 4: sndlib                             [2493]
+;;;  test 5: simple overall checks              [4861]
+;;;  test 6: float-vectors                      [9648]
+;;;  test 7: colors                             [9942]
+;;;  test 8: clm                                [10461]
+;;;  test 9: mix                                [21628]
+;;;  test 10: marks                             [23417]
+;;;  test 11: dialogs                           [24365]
+;;;  test 12: extensions                        [24539]
+;;;  test 13: menus, edit lists, hooks, etc     [24805]
+;;;  test 14: all together now                  [26175]
+;;;  test 15: chan-local vars                   [27052]
+;;;  test 16: regularized funcs                 [28805]
+;;;  test 17: dialogs and graphics              [32640]
+;;;  test 18: save and restore                  [32753]
+;;;  test 19: transforms                        [34371]
+;;;  test 20: new stuff                         [36483]
+;;;  test 21: optimizer                         [37690]
+;;;  test 22: with-sound                        [38214]
+;;;  test 23: X/Xt/Xm                           [41207]
+;;;  test 24: GL                                [44889]
+;;;  test 25: errors                            [45013]
+;;;  test 26: s7                                [46546]
+;;;  test all done                              [46612]
+;;;  test the end                               [46821]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -5762,6 +5762,7 @@ EDITS: 5
 "))
 	      (snd-display #__line__ ";xramp 7: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 0)
+	  ;; TODO: try readin here: (lambda (y) (fneq y (* 0.5 (readin rd))))
 	  (let ((baddy (scan-channel (lambda (y) (if (fneq y (* 0.5 (vals ctr))) #t (begin (set! ctr (+ ctr 1)) #f))))))
 	    (if baddy (snd-display #__line__ ";trouble in xramp 7: ~A" baddy)))
 	  (undo)
@@ -14786,6 +14787,30 @@ EDITS: 2
 		(format *stderr* "~,6f " (v i)))
 	      (format *stderr* "~%")))))
     
+    (let ((x (make-float-vector 9))
+	  (y (make-float-vector 9)))
+      (do ((i 0 (+ i 1)))
+	  ((= i 9))
+	(set! (x i) (expt 1.2 (- i)))
+	(set! (y i) (expt 1.5 (- i))))
+      
+      (let ((f (make-filter 9 x y))
+	    (v (make-float-vector 30)))
+	(set! (v 0) (f 1.0))
+	(do ((i 1 (+ i 1)))
+	    ((= i 30))
+	  (set! (v i) (f 0.0)))
+	(if (not (mus-arrays-equal? v (float-vector 1.000000 0.166667 0.138889 0.115741 0.096451 0.080376 0.066980 0.055816 0.046514 
+						    -0.129033 0.004335 0.003613 0.003011 0.002509 0.002091 0.001742 0.001452 0.001210 
+						    -0.003356 0.000113 0.000094 0.000078 0.000065 0.000054 0.000045 0.000038 0.000031
+						    -0.000087 0.000003 0.000002)))
+	    (begin
+	      (format *stderr* ";g9e: ")
+	      (do ((i 0 (+ i 1)))
+		  ((= i 30))
+		(format *stderr* "~,6f " (v i)))
+	      (format *stderr* "~%")))))
+
     (let ((x (make-float-vector 8))
 	  (y (make-float-vector 8)))
       (do ((i 0 (+ i 1)))
@@ -17215,6 +17240,29 @@ EDITS: 2
 			    (snd-display #__line__ ";polywave set mus-data at ~A: ~A ~A" i val1 val2))))))))))
       (set! *clm-srate* old-srate))
     
+    ;; check dc 
+    (do ((i 2 (+ i 1)))
+	((= i 7))
+      (let ((cfs (make-list (* 2 i) 0.1)))
+	(do ((k 0 (+ k 2)))
+	    ((>= k (length cfs)))
+	  (set! (cfs k) (/ k 2)))
+	(let ((p (make-polywave 100.0 cfs mus-chebyshev-second-kind)))
+	  (let ((val (polywave p)))
+	    (if (fneq val 0.1)
+		(snd-display #__line__ ";polywave ~D order 2nd 0-coeff: ~A" i val))))))
+    
+    (do ((i 2 (+ i 1)))
+	((= i 7))
+      (let ((cfs (make-list (* 2 i) 0.1)))
+	(do ((k 0 (+ k 2)))
+	    ((>= k (length cfs)))
+	  (set! (cfs k) (/ k 2)))
+	(let ((p (make-polywave 100.0 cfs mus-chebyshev-first-kind)))
+	  (let ((val (polywave p)))
+	    (if (fneq val (* 0.1 i))
+		(snd-display #__line__ ";polywave ~D order 1st 0-coeff: ~A" i val))))))
+
     (let ((var (catch #t (lambda () (make-polywave 440.0 3.14)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
 	  (snd-display #__line__ ";make-polywave bad coeffs: ~A" var)))

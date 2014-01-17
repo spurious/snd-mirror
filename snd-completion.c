@@ -265,7 +265,6 @@ void preload_best_completions(void)
   /* set up the array with some reasonable first choices */
   int n = 0;
   best_completions[n++] = mus_strdup(S_open_sound);
-  best_completions[n++] = mus_strdup(S_auto_resize);
   best_completions[n++] = mus_strdup(S_channels);
   best_completions[n++] = mus_strdup(S_close_sound);
   best_completions[n++] = mus_strdup(S_cursor);
@@ -283,7 +282,6 @@ void preload_best_completions(void)
   best_completions[n++] = mus_strdup("*output*");
   best_completions[n++] = mus_strdup("lambda");
   best_completions[n++] = mus_strdup("define");
-  best_completions[n++] = mus_strdup("vct-length");
 }
 
 

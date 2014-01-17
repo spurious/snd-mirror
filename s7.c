@@ -4836,11 +4836,11 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
  */
 #define ADD_SLOT(Frame, Symbol, Value) \
   do { \
-    s7_pointer _slot_, _sym_;			\
-    _sym_ = Symbol; \
+    s7_pointer _slot_, _sym_, _val_;			\
+    _sym_ = Symbol; _val_ = Value;			\
     NEW_CELL_NO_CHECK(sc, _slot_);\
     slot_symbol(_slot_) = _sym_;\
-    slot_set_value(_slot_, Value);	\
+    slot_set_value(_slot_, _val_);	\
     symbol_set_local(_sym_, environment_id(Frame), _slot_); \
     set_type(_slot_, T_SLOT | T_IMMUTABLE);\
     next_slot(_slot_) = environment_slots(Frame);\
@@ -4850,11 +4850,10 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
 /* no set_local here -- presumably done earlier in check_* 
  */
 
-
 #define NEW_FRAME_WITH_SLOT(Sc, Old_Env, New_Env, Symbol, Value) \
   do {                                   \
-      s7_pointer _x_, _slot_, _sym_;		   \
-      _sym_ = Symbol; \
+    s7_pointer _x_, _slot_, _sym_, _val_;	 \
+      _sym_ = Symbol; _val_ = Value;		 \
       NEW_CELL(Sc, _x_);                   \
       environment_id(_x_) = ++environment_number; \
       next_environment(_x_) = Old_Env;		         \
@@ -4862,7 +4861,7 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
       New_Env = _x_;		   \
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = _sym_;\
-      slot_set_value(_slot_, Value);	\
+      slot_set_value(_slot_, _val_);	\
       symbol_set_local(_sym_, environment_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
@@ -4872,24 +4871,24 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
 
 #define NEW_FRAME_WITH_TWO_SLOTS(Sc, Old_Env, New_Env, Symbol1, Value1, Symbol2, Value2) \
   do {                                   \
-      s7_pointer _x_, _slot_, _sym_;		   \
+    s7_pointer _x_, _slot_, _sym1_, _val1_, _sym2_, _val2_;	\
+      _sym1_ = Symbol1; _val1_ = Value1;				\
+      _sym2_ = Symbol2; _val2_ = Value2;				\
       NEW_CELL(Sc, _x_);                   \
       environment_id(_x_) = ++environment_number; \
       next_environment(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
       NEW_CELL_NO_CHECK(Sc, _slot_);\
-      _sym_ = Symbol1; \
-      slot_symbol(_slot_) = _sym_;\
-      slot_set_value(_slot_, Value1);	\
-      symbol_set_local(_sym_, environment_number, _slot_); \
+      slot_symbol(_slot_) = _sym1_;\
+      slot_set_value(_slot_, _val1_);	\
+      symbol_set_local(_sym1_, environment_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       environment_slots(_x_) = _slot_;\
       NEW_CELL_NO_CHECK(Sc, _x_);\
-      _sym_ = Symbol2; \
-      slot_symbol(_x_) = _sym_;\
-      slot_set_value(_x_, Value2);	\
-      symbol_set_local(_sym_, environment_number, _x_); \
+      slot_symbol(_x_) = _sym2_;\
+      slot_set_value(_x_, _val2_);	\
+      symbol_set_local(_sym2_, environment_number, _x_); \
       set_type(_x_, T_SLOT | T_IMMUTABLE);\
       next_slot(_x_) = sc->NIL;\
       next_slot(_slot_) = _x_;\
@@ -4898,8 +4897,8 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
 
 #define NEW_FRAME_WITH_CHECKED_SLOT(Sc, Old_Env, New_Env, Symbol, Value) \
   do {                                   \
-      s7_pointer _x_, _slot_, _sym_;		   \
-      _sym_ = Symbol; \
+    s7_pointer _x_, _slot_, _sym_, _val_;	 \
+      _sym_ = Symbol; _val_ = Value;		 \
       NEW_CELL(Sc, _x_);                   \
       environment_id(_x_) = ++environment_number; \
       next_environment(_x_) = Old_Env;		         \
@@ -4908,8 +4907,8 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = _sym_;\
       if (symbol_has_accessor(_sym_)) \
-        slot_set_value(_slot_, call_symbol_bind(Sc, _sym_, Value)); \
-      else slot_set_value(_slot_, Value);		\
+        slot_set_value(_slot_, call_symbol_bind(Sc, _sym_, _val_)); \
+      else slot_set_value(_slot_, _val_);		\
       symbol_set_local(_sym_, environment_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
@@ -4919,18 +4918,19 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
 
 #define ADD_CHECKED_SLOT(Frame, Symbol, Value) \
   do {\
-    s7_pointer _slot_, _sym_;				\
-    _sym_ = Symbol; \
+    s7_pointer _slot_, _sym_, _val_;			\
+    _sym_ = Symbol; _val_ = Value;			\
     NEW_CELL_NO_CHECK(sc, _slot_);\
     slot_symbol(_slot_) = _sym_;\
     if (symbol_has_accessor(_sym_)) \
-      slot_set_value(_slot_, call_symbol_bind(sc, _sym_, Value)); \
-    else slot_set_value(_slot_, Value);		\
+      slot_set_value(_slot_, call_symbol_bind(sc, _sym_, _val_)); \
+    else slot_set_value(_slot_, _val_);		\
     symbol_set_local(_sym_, environment_id(Frame), _slot_); \
     set_type(_slot_, T_SLOT | T_IMMUTABLE);\
     next_slot(_slot_) = environment_slots(Frame);\
     environment_slots(Frame) = _slot_;\
   } while (0)
+
 
 
 static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
@@ -11539,6 +11539,23 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
    */
   return(s7_from_c_complex(sc, cpow(s7_complex(n), s7_complex(pw))));
 }
+
+
+#if (!HAVE_GMP)
+static s7_pointer expt_temp_s;
+static s7_pointer g_expt_temp_s(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer arg1, arg2;
+
+  arg1 = car(args);
+  arg2 = cadr(args);
+  if ((is_simple_real(arg2)) &&
+      (real(arg1) > 0.0))
+    return(s7_remake_real(sc, arg1, pow(real(arg1), real(arg2))));
+  
+  return(g_expt(sc, args));
+}
+#endif
 
 
 static s7_Int c_lcm(s7_Int a, s7_Int b)
@@ -28561,7 +28578,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
    *    (member #\a "123123abnfc" char=?) -> "abnfc"
    *    (member "abc" "123abc321" string=?) -> "abc321" but there's the string length complication
    *    (member 1 #(0 1 2) =) ? -- for c_objects (ffi) we would need a substring equivalent
-   *      and what would it do for a hash-table? or an environment?
+   *      and what would it do for a hash-table? -- maybe return whether obj exists as a key, or an environment?
    * also the 3 arg version can implement position, find, etc
    *
    * the third arg can be weird: (member #f (list #t) cons) -> (#t)
@@ -41074,6 +41091,21 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 
   return(f);
 }
+
+
+static s7_pointer expt_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      s7_pointer arg1;
+      arg1 = cadr(expr);
+      if ((is_pair(arg1)) &&
+	  (is_optimized(arg1)) &&
+	  (s7_function_returns_temp(sc, arg1)))
+	return(expt_temp_s);
+    }
+  return(f);
+}
 #endif
 
 
@@ -41870,6 +41902,10 @@ static void init_choosers(s7_scheme *sc)
   /* abs */
   f = set_function_chooser(sc, sc->ABS, abs_chooser);
   abs_direct = make_temp_function_with_class(sc, f, "abs", g_abs_direct, 1, 0, false, "abs optimization");
+
+  /* expt */
+  f = set_function_chooser(sc, sc->EXPT, expt_chooser);
+  expt_temp_s = make_temp_function_with_class(sc, f, "expt", g_expt_temp_s, 2, 0, false, "expt optimization");
 #endif
 
 
@@ -68995,17 +69031,19 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957  974
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
- * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.5
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 48.6
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.4
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 48.2
  *            153 with run macro (eval_ptree)
  */
 
-/* all_x in snd-sig? all_x_c_aa|a?
+/* all_x in snd-sig? all_x_c_aa|a? -- would need export is_all_x_safe(?)+all_x_eval, (or access to s7_function at fcdr (after annotate_arg)?)
  * letrec* built-in (not macro), perhaps also when and unless
  *   when is (say) 6 times slower than equivalent if+begin and cancels most optimization (macro not safe)
  *   would need s7test coverage, and check that current macro form can safely override built-in
+ *
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  *   (and=> expr func) or (if=> ...)
+ * (member x hash-table) -> x exists as key in hash-table?
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
@@ -69015,6 +69053,7 @@ int main(int argc, char **argv)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc (check if_* too)
  * file_to_sample|frame folded into readin changes (does this matter anywhere?)
  * it would be nice if TAB completion could complete keyword args correctly
- *   look back to "(", car->lambda*, complete based on arglist
+ *   look back to "(", car->lambda*, complete based on arglist (why didn't this work in ws?)
+ *   argnames as keywords are implicit, not in the symbol table, so this completion fails only the first time
  */
 

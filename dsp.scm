@@ -875,11 +875,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     gen))
 
 (define (eliminate-hum gen x0)
-  (let ((val x0))
-    (do ((i 0 (+ i 1)))
-	((= i (length gen)))
-      (set! val (filter (vector-ref gen i) val))) ; "cascade" n filters
-    val))
+  (do ((i 0 (+ i 1)))
+      ((= i (length gen)) x0)
+    (set! x0 (filter (vector-ref gen i) x0)))) ; "cascade" n filters
 
 ;;; (let ((hummer (make-eliminate-hum))) (map-channel (lambda (x) (eliminate-hum hummer x))))
 

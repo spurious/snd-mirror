@@ -8805,8 +8805,8 @@
 
 (CFNC-3.12 "void gdk_window_set_event_compression GdkWindow* window gboolean event_compression")
 (CFNC-3.12 "gboolean gdk_window_get_event_compression GdkWindow* window")
-(CFNC-3.12 "gboolean gtk_header_bar_get_show_fallback_app_menu GtkHeaderBar* bar")
-(CFNC-3.12 "void gtk_header_bar_set_show_fallback_app_menu GtkHeaderBar* bar gboolean setting")
+;;; (CFNC-3.12 "gboolean gtk_header_bar_get_show_fallback_app_menu GtkHeaderBar* bar")
+;;; (CFNC-3.12 "void gtk_header_bar_set_show_fallback_app_menu GtkHeaderBar* bar gboolean setting")
 (CFNC-3.12 "void gtk_places_sidebar_set_local_only GtkPlacesSidebar* sidebar gboolean local_only")
 (CFNC-3.12 "gboolean gtk_places_sidebar_get_local_only GtkPlacesSidebar* sidebar")
 (CFNC-3.12 "gboolean gtk_stack_get_transition_running GtkStack* stack")
@@ -8815,6 +8815,25 @@
 (CFNC-3.12 "gint gtk_widget_get_margin_end GtkWidget* widget")
 (CFNC-3.12 "void gtk_widget_set_margin_end GtkWidget* widget gint margin")
 
+;;; 3.11.4
+
+(CCAST-3.12 "GTK_ACTION_BAR" "GtkActionBar*")
+(CCHK-3.12 "GTK_IS_ACTION_BAR" "GtkActionBar*")
+(CFNC-3.12 "void gtk_accel_label_get_accel GtkAccelLabel* accel_label guint* [accelerator_key] GdkModifierType* [accelerator_mods]")
+(CFNC-3.12 "void gdk_window_set_shadow_width GdkWindow* window gint left gint right gint top gint bottom")
+(CFNC-3.12 "GtkWidget* gtk_action_bar_new void")
+(CFNC-3.12 "GtkWidget* gtk_action_bar_get_center_widget GtkActionBar* bar")
+(CFNC-3.12 "void gtk_action_bar_set_center_widget GtkActionBar* bar GtkWidget* center_widget")
+(CFNC-3.12 "void gtk_action_bar_pack_start GtkActionBar* bar GtkWidget* child")
+(CFNC-3.12 "void gtk_action_bar_pack_end GtkActionBar* bar GtkWidget* child")
+(CFNC-3.12 "void gtk_header_bar_set_has_subtitle GtkHeaderBar* bar gboolean setting")
+(CFNC-3.12 "gboolean gtk_header_bar_get_has_subtitle GtkHeaderBar* bar")
+(CFNC-3.12 "void gtk_header_bar_set_decoration_layout GtkHeaderBar* bar const gchar* layout")
+(CFNC-3.12 "gchar* gtk_header_bar_get_decoration_layout GtkHeaderBar* bar" 'const)
+(CFNC-3.12 "gboolean gtk_icon_info_is_symbolic GtkIconInfo* icon_info")
+(CFNC-3.12 "GtkTextDirection gtk_get_locale_direction void")
+;(CFNC-3.12 "GtkTreePath* gtk_tree_path_new_from_indicesv gint* indices gsize length")
+(CFNC-3.12 "gboolean gtk_window_is_maximized GtkWindow* window")
 
 
 

@@ -2538,22 +2538,20 @@
 	  (pitch-env (make-env freqf :scaler (/ gliss freq) :duration dur))
 	  (slant (make-moving-average (seconds->samples pitch-time)))
 	  (vib (make-oscil 5))
-	  (vib-index (hz->radians 4.0)))
+	  (vib-index (hz->radians 4.0))
+	  (harmfrq 0.0)
+	  (harmonic 0)
+	  (dist 0.0))
       (set! (mus-increment slant) (* (hz->radians freq) (mus-increment slant)))
       (do ((i start (+ i 1)))
 	  ((= i end))
-	(let* ((harmfrq (env pitch-env))
-	       (harmonic (floor harmfrq))
-	       (dist (abs (- harmfrq harmonic))))
-	  (set! (mus-scaler gen) (* 20.0
-				    (if (< dist amp-time)
-					dist
-					(if (> dist 0.9)
-					    (- 1.0 dist)
-					    amp-time))))
-	  (outa i (* (env amp-env)
-		     (rxyk!cos gen (+ (moving-average slant harmonic)
-				      (* vib-index (oscil vib)))))))))))
+	(set! harmfrq (env pitch-env))
+	(set! harmonic (floor harmfrq))
+	(set! dist (abs (- harmfrq harmonic)))
+	(set! (mus-scaler gen) (* 20.0 (min amp-time dist (- 1.0 dist))))
+	(outa i (* (env amp-env)
+		   (rxyk!cos gen (+ (moving-average slant harmonic)
+				    (* vib-index (oscil vib))))))))))
 #|
 (with-sound (:statistics #t :play #t)
   (brassy 0 4 50 .05 '(0 0 1 1 10 1 11 0) '(0 1 1 0) 1000))
@@ -2573,7 +2571,11 @@
 
 (defgenerator (r2k!cos
 	       :make-wrapper (lambda (g)
-			       (set! (g 'osc) (make-oscil (g 'frequency)))
+			       (set! (g 'rr1) (+ 1.0 (* (g 'r) (g 'r))))
+			       (set! (g 'r2) (* 2.0 (abs (g 'r))))
+			       (set! (g 'norm) (expt (- (g 'rr1) (g 'r2)) (g 'k)))
+			       (set! (g 'osc) (make-polywave (g 'frequency) (list 0 (g 'rr1) 1 (- (g 'r2))) mus-chebyshev-second-kind))
+			       (set! (g 'k) (- (g 'k)))
 			       g)
 	       :methods (list
 			 (cons 'mus-frequency
@@ -2584,15 +2586,19 @@
 			       (make-procedure-with-setter
 				(lambda (g) (mus-phase (g 'osc)))
 				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
-  (frequency *clm-default-frequency*) (r 0.5) (k 0.0) fm
+  (frequency *clm-default-frequency*) (r 0.5) (k 0.0) rr1 r2 norm fm
   (osc #f))
 
 
 (define* (r2k!cos gen (fm 0.0))
 ;;  "(make-2rk!cos frequency (r 0.5) (k 0.0)) creates an r2k!cos generator.\n\
 ;;   (r2k!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude too messy to write down."
-  
   (environment-set! gen 'fm fm)
+  (with-environment gen
+    (* (expt (polywave osc fm) k) norm)))
+
+#|
+  ;;; old form
   (with-environment gen
     (let ((rr1 (+ 1.0 (* r r)))
 	  (r2 (* 2 (abs r)))) ; abs for negative r
@@ -2600,6 +2606,7 @@
 		  (* r2 (oscil osc fm)))
 	       (- k))
 	 (expt (- rr1 r2) k))))) ; amplitude normalization
+|#
 
 ;;; there is still noticable DC offset if r != 0.5 -- could precompute it and subtract (and there's lots of DC anyway)
 
@@ -2629,11 +2636,8 @@
       (outa i (* (env ampf)
 		 (r2k!cos gen))))))
 
-#|
-(with-sound (:statistics #t :play #t :clipped #f)
-  (pianoy 0 3 100 .5))
+;;; (with-sound (:statistics #t :play #t :clipped #f) (pianoy 0 3 100 .5))
 ;;; this can be combined with bouncy-like changes to get an evolving sound
-|#
 
 (definstrument (pianoy1 beg dur freq amp (bounce-freq 5) (bounce-amp 20))
   (let ((gen (make-r2k!cos freq :r 0.5 :k 3.0)) 
@@ -6063,10 +6067,15 @@ index 10 (so 10/2 is the bes-jn arg):
 	    (fill! new-freq-incs 0.0)
 	    (do ((i 0 (+ i 1))
 		 (j dataloc (+ j 1)))
-		((= i n))
-	      (if (= j n) (set! j 0))
-	      (set! (amp-incs j) (* (fft-window i)
-				    (data i))))
+		((= j n))
+	      (float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i))))
+
+	    (if (> dataloc 0)
+		(do ((i (- n dataloc) (+ i 1))
+		     (j 0 (+ j 1)))
+		    ((= j dataloc))
+		  (float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i)))))
+
 	    (set! dataloc (+ dataloc hop))
 	    
 	    (mus-fft amp-incs new-freq-incs n 1)
@@ -6104,24 +6113,28 @@ index 10 (so 10/2 is the bes-jn arg):
   (let ((pv (make-phase-vocoder (make-readin "oboe.snd") ))
 	(sv (make-moving-spectrum (make-readin "oboe.snd"))))
     (let ((pv-amps (phase-vocoder-amps pv))
-	  (pv-incrs (phase-vocoder-phase-increments pv)))
+	  (pv-incrs (phase-vocoder-phase-increments pv))
+	  (sv-amps (sv 'amps))
+	  (sv-freqs (sv 'freqs)))
       (call-with-exit
        (lambda (quit)
 	 (do ((k 0 (+ k 1)))
 	     ((= k 20))
 	   (do ((i 0 (+ i 1))) 
 	       ((= i 2000)) 
-	     (phase-vocoder pv) 
+	     (phase-vocoder pv))
+	   (do ((i 0 (+ i 1))) 
+	       ((= i 2000)) 
 	     (moving-spectrum sv))
 	   (do ((i 0 (+ i 1)))
 	       ((= i 256))
-	     (if (fneq ((sv 'amps) i) (pv-amps i))
+	     (if (fneq (sv-amps i) (pv-amps i))
 		 (begin
-		   (format *stderr* ";test-sv (generators) ~D amps: ~A ~A" i ((sv 'amps) i) (pv-amps i))
+		   (format *stderr* ";test-sv (generators) ~D amps: ~A ~A" i (sv-amps i) (pv-amps i))
 		   (quit)))
-	     (if (fneq ((sv 'freqs) i) (pv-incrs i))
+	     (if (fneq (sv-freqs i) (pv-incrs i))
 		 (begin
-		   (format *stderr* ";test-sv (generators) ~D freqs: ~A ~A" i ((sv 'freqs) i) (pv-incrs i))
+		   (format *stderr* ";test-sv (generators) ~D freqs: ~A ~A" i (sv-freqs i) (pv-incrs i))
 		   (quit))))))))))
     
 #|

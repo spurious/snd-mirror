@@ -964,8 +964,10 @@
 	  (pulse-samps (seconds->samples (/ 1.0 pulse-pitch)))
 	  (frqf (make-env '(0 .1 .2 -.02 .5 0 .65 0 1 1) :scaler (hz->radians mid-pitch-change) :duration dur))
 	  (vib (make-rand-interp 100 (hz->radians 10.0)))
-	  (fm (make-oscil pulse-pitch))
-	  (index (hz->radians (* 1.0 pulse-pitch)))
+	  (fm (make-polywave pulse-pitch (list 1 (hz->radians pulse-pitch)) mus-chebyshev-second-kind))
+	  ;; cheb2 is needed here to match the original code which used (* index (oscil fm))
+	  ;; if cheb1, the main sideband is below rather than above, giving the frog a deeper call
+	  ;; does this make any sense?!?
 	  (poly1 (make-polywave mid-pitch (normalize-partials '(2 1.2  4 .1  7 0.75  8 .1       10 .5))))
 	  (poly2 (make-polywave mid-pitch (normalize-partials '(2 1.0        7 .5         9 .7        12 .01))))
 	  (interpf (make-env '(0 0 2 0 5 1 7 1) :duration dur))
@@ -980,15 +982,16 @@
 	      ((= k reset-stop))
 	    (let ((frq (+ (env frqf)
 			  (rand-interp vib)
-			  (* index (oscil fm)))))
+			  (polywave fm))))
 	      (outa k (* (env pulsef)
 			 (+ (* (env interpf-1) (polywave poly1 frq))
 			    (* (env interpf) (polywave poly2 frq))))))))))))
 
+
 ;;; pulsed-env here was basically the same speed as using the nested do loop
 ;;;   pulsed-env doesn't buy us anything if there's no run-time modulation
 
-;; (with-sound (:play #t) (river-frog 0 .5))
+;; (with-sound (:play #t :statistics #t) (river-frog 0 .5))
 
 
 ;;; --------------------------------------------------------------------------------

@@ -3284,7 +3284,20 @@ static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t ind
       b = x2 * b1 - b2 + un[i];
     }
 
-  return((mus_float_t)(sin(x) * b));
+  return((mus_float_t)(sin(x) * b + un[0]));  /* don't drop the constant, 16-Jan-14 */
+}
+
+/* (with-sound () (let ((p (make-polywave 100 (list 0 0.5 1 -.2) mus-chebyshev-second-kind))) (do ((i 0 (+ i 1))) ((= i 1000)) (outa i (polywave p)))))
+ */
+
+static mus_float_t polyw_second_2(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t x;
+
+  x = gen->phase; /* this order (as opposed to saving the full expr below) is much faster?! */
+  gen->phase += (gen->freq + fm);
+  return(gen->coeffs[1] * sin(x) + gen->coeffs[0]);
 }
 
 
@@ -3706,12 +3719,18 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
     }
   else 
     {
-      if (n == 5)
+      if ((n == 5) && 
+	  (coeffs[0] == 0.0))
 	{
 	  gen->polyw = polyw_second_5;
 	  gen->index = coeffs[2] - coeffs[4];
 	}
-      else gen->polyw = polyw_second;
+      else 
+	{
+	  if (n == 2)
+	    gen->polyw = polyw_second_2;
+	  else gen->polyw = polyw_second;
+	}
     }
   return((mus_any *)gen);
 }
@@ -7579,6 +7598,8 @@ mus_float_t mus_filter(mus_any *ptr, mus_float_t input)
 
 static mus_float_t filter_eight(mus_any *ptr, mus_float_t input)
 {
+  /* oddly enough, this separated form is faster than the interleaved version below, or is valgrind confused?
+   */
   flt *gen = (flt *)ptr;
   mus_float_t xout;
   mus_float_t *state, *ts, *ts1, *y, *x;
@@ -7592,9 +7613,6 @@ static mus_float_t filter_eight(mus_any *ptr, mus_float_t input)
   gen->loc++;
   if (gen->loc == gen->order)
     gen->loc = 0;
-
-  /* these could be combined (saving the ts--): I think it's the first x case that needs input -- skip and pick up at end?
-   */
 
   input -= ((*ts--) * (*y++));
   input -= ((*ts--) * (*y++));
@@ -7617,6 +7635,42 @@ static mus_float_t filter_eight(mus_any *ptr, mus_float_t input)
   xout += (*ts1--) * (*x++);
   xout += (*ts1--) * (*x++);
   return(xout + ((*ts1) * (*x)));
+
+  /*
+   *    flt *gen = (flt *)ptr;
+   *    mus_float_t xout;
+   *    mus_float_t *state, *ts, *y, *x;
+   *    
+   *    x = (mus_float_t *)(gen->x + 1);
+   *    y = (mus_float_t *)(gen->y + 1);
+   *    state = (mus_float_t *)(gen->state + gen->loc);
+   *    ts = (mus_float_t *)(state + gen->order - 1);
+   *    
+   *    gen->loc++;
+   *    if (gen->loc == gen->order)
+   *    gen->loc = 0;
+   *    
+   *    xout = (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x);
+   *    input -= ((*ts--) * (*y));
+   *    
+   *    state[0] = input;
+   *    state[gen->order] = input;
+   *    return(xout + ((*ts) * gen->x[0]));
+   */
 }
 
 
@@ -7649,6 +7703,34 @@ static mus_float_t filter_four(mus_any *ptr, mus_float_t input)
   xout += (*ts1--) * (*x++);
   xout += (*ts1--) * (*x++);
   return(xout + ((*ts1) * (*x)));
+
+  /*
+   *    flt *gen = (flt *)ptr;
+   *    mus_float_t xout;
+   *    mus_float_t *state, *ts, *y, *x;
+   *    
+   *    x = (mus_float_t *)(gen->x + 1);
+   *    y = (mus_float_t *)(gen->y + 1);
+   *    state = (mus_float_t *)(gen->state + gen->loc);
+   *    ts = (mus_float_t *)(state + gen->order - 1);
+   *    
+   *    gen->loc++;
+   *    if (gen->loc == gen->order)
+   *    gen->loc = 0;
+   *    
+   *    xout = (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    xout += (*ts) * (*x++);
+   *    input -= ((*ts--) * (*y++));
+   *    
+   *    state[0] = input;
+   *    state[gen->order] = input;
+   *    return(xout + ((*ts) * gen->x[0]));
+   */
 }
 
 
