@@ -2714,7 +2714,7 @@ static void report_counts(s7_scheme *sc)
 	data[loc++] = new_datum(s7_integer(cdar(x)), caar(x));
     }
   qsort((void *)data, loc, sizeof(datum *), sort_data);
-  if (loc > 200) loc = 200;
+  if (loc > 400) loc = 400;
   for (i = 0; i < loc; i++)
     if (data[i]->count > 0)
       fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY_80(data[i]->expr));
@@ -11810,7 +11810,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 {
-  #define H_remainder "(remainder x1 x2) returns the integer remainder of x1 and x2; (remainder 10 3) = 1"
+  #define H_remainder "(remainder x1 x2) returns the remainder of x1/x2; (remainder 10 3) = 1"
   /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib 
    */
   s7_pointer x, y;
@@ -13715,6 +13715,27 @@ static s7_pointer g_subtract_sf(s7_scheme *sc, s7_pointer args)
   s7_Double n;
 
   x = finder(sc, car(args));
+  n = real(cadr(args));
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_real(sc, integer(x) - n));
+    case T_RATIO:   return(make_real(sc, fraction(x) - n));
+    case T_REAL:    return(make_real(sc, real(x) - n));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - n, imag_part(x)));
+    default:        
+      CHECK_METHOD(sc, x, sc->MINUS, args);
+      return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(1), x, A_NUMBER));
+    }
+  return(x);
+}
+
+static s7_pointer subtract_2f;
+static s7_pointer g_subtract_2f(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Double n;
+
+  x = car(args);
   n = real(cadr(args));
   switch (type(x))
     {
@@ -41040,17 +41061,21 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 
       if ((is_pair(arg1)) &&
 	  (is_optimized(arg1)) &&
-	  (is_pair(arg2)) &&
-	  (is_optimized(arg2)) &&
 	  (s7_function_returns_temp(sc, arg1)) &&
-	  (s7_function_returns_temp(sc, arg2)))
-	return(subtract_2_temp);
+	  ((type(arg2) == T_REAL) ||
+	   ((is_pair(arg2)) &&
+	    (is_optimized(arg2)) &&
+	    (s7_function_returns_temp(sc, arg2)))))
+	return(subtract_2_temp); /* this only cares that arg2 is known to be T_REAL */
+
+      if (type(arg2) == T_REAL)
+	return(subtract_2f);
 
       /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
       return(subtract_2);
     }
 #endif
-  /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
+  /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr));  */
   return(f);
 }
 
@@ -41856,6 +41881,7 @@ static void init_choosers(s7_scheme *sc)
   subtract_cs1 = make_function_with_class(sc, f, "-", g_subtract_cs1, 2, 0, false, "- optimization");
   subtract_csn = make_function_with_class(sc, f, "-", g_subtract_csn, 2, 0, false, "- optimization");
   subtract_sf = make_function_with_class(sc, f, "-", g_subtract_sf, 2, 0, false, "- optimization");
+  subtract_2f = make_function_with_class(sc, f, "-", g_subtract_2f, 2, 0, false, "- optimization");
   subtract_fs = make_function_with_class(sc, f, "-", g_subtract_fs, 2, 0, false, "- optimization");
   subtract_sf_f = make_function_with_class(sc, f, "-", g_subtract_sf_f, 2, 0, false, "- optimization");
   subtract_2_temp = make_temp_function_with_class(sc, f, "-", g_subtract_2_temp, 2, 0, false, "- optimization");
@@ -69031,8 +69057,8 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957  974
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
- * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.4
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 48.2
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.3
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 46.9
  *            153 with run macro (eval_ptree)
  */
 
@@ -69055,5 +69081,10 @@ int main(int argc, char **argv)
  * it would be nice if TAB completion could complete keyword args correctly
  *   look back to "(", car->lambda*, complete based on arglist (why didn't this work in ws?)
  *   argnames as keywords are implicit, not in the symbol table, so this completion fails only the first time
+ * map/for-each all_x? with-env? etc (member) -- is_all_x_safe for lambda 1/2 args -- safe_closure_s_z -> a? or a loop (safe_dotimes_c_a 50142 48175 -- is_all_x_op)
+ * for-each over sound(etc) -> sampler, similarly member/map
+ * [indirect_]outa_ss_looped?
+ * use copy! (see down-oct)
+ * check autoload both for collisions and missing stuff
  */
 

@@ -5762,7 +5762,6 @@ EDITS: 5
 "))
 	      (snd-display #__line__ ";xramp 7: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 0)
-	  ;; TODO: try readin here: (lambda (y) (fneq y (* 0.5 (readin rd))))
 	  (let ((baddy (scan-channel (lambda (y) (if (fneq y (* 0.5 (vals ctr))) #t (begin (set! ctr (+ ctr 1)) #f))))))
 	    (if baddy (snd-display #__line__ ";trouble in xramp 7: ~A" baddy)))
 	  (undo)
@@ -16907,17 +16906,17 @@ EDITS: 2
     (for-each 
      (lambda (amps name)
        (let ((n (length amps))
-	      (angle 0.0)
 	      (incr (hz->radians 1.0))
 	      (happy #t))
-	 (do ((i 0 (+ i 1)))
+	 (do ((i 0 (+ i 1))
+	      (angle 0.0 (+ angle incr)))
 	     ((or (not happy) (= i 100)))
 	   (let ((sum (amps 0))
 		 (cval (mus-chebyshev-t-sum angle amps)))
-	     (do ((k 1 (+ k 1)))
+	     (do ((k 1 (+ k 1))
+		  (ka angle (+ ka angle)))
 		 ((= k n))
-	       (set! sum (+ sum (* (float-vector-ref amps k) (cos (* angle k))))))
-	     (set! angle (+ angle incr))
+	       (set! sum (+ sum (* (float-vector-ref amps k) (cos ka)))))
 	     (if (fneq cval sum)
 		 (begin
 		   (snd-display #__line__ ";cheb-t-sum ~A: [~D] ~A ~A" name i cval sum)
@@ -16934,17 +16933,17 @@ EDITS: 2
     (for-each 
      (lambda (amps name)
        (let ((n (length amps))
-	      (angle 0.0)
 	      (incr (hz->radians 1.0))
 	      (happy #t))
-	 (do ((i 0 (+ i 1)))
+	 (do ((i 0 (+ i 1))
+	      (angle 0.0 (+ angle incr)))
 	     ((or (not happy) (= i 100)))
 	   (let ((sum 0.0)
 		 (cval (mus-chebyshev-u-sum angle amps))) ; * sin is embedded in func
-	     (do ((k 1 (+ k 1)))
+	     (do ((k 1 (+ k 1))
+		  (ka angle (+ ka angle)))
 		 ((= k n))
-	       (set! sum (+ sum (* (float-vector-ref amps k) (sin (* angle k))))))
-	     (set! angle (+ angle incr))
+	       (set! sum (+ sum (* (float-vector-ref amps k) (sin ka)))))
 	     (if (fneq cval sum)
 		 (begin
 		   (snd-display #__line__ ";cheb-u-sum ~A: [~D] ~A ~A" name i cval sum)
@@ -16961,10 +16960,10 @@ EDITS: 2
     (for-each 
      (lambda (camps samps name)
        (let ((n (length camps))
-	      (angle 0.0)
 	      (incr (hz->radians 1.0))
 	      (happy #t))
-	 (do ((i 0 (+ i 1)))
+	 (do ((i 0 (+ i 1))
+	      (angle 0.0 (+ angle incr)))
 	     ((or (not happy) (= i 100)))
 	   (let ((sum (float-vector-ref camps 0))
 		 (cval (mus-chebyshev-tu-sum angle camps samps)))
@@ -16974,7 +16973,6 @@ EDITS: 2
 	       (set! sum (+ sum
 			    (* (float-vector-ref samps k) (sin ka))
 			    (* (float-vector-ref camps k) (cos ka)))))
-	     (set! angle (+ angle incr))
 	     (if (fneq cval sum)
 		 (begin
 		   (snd-display #__line__ ";cheb-tu-sum ~A: [~D] ~A ~A" name i cval sum)
@@ -20464,14 +20462,9 @@ EDITS: 2
 					       (kscl (/ pi2 N)))
 					   (do ((k 0 (+ k 1)))
 					       ((= k N2))
-					     (let ((phasediff (remainder (- (freqs k) (lastphases k)) pi2)))
-					       (set! (lastphases k) (freqs k))
-					       (if (> phasediff pi) (set! phasediff (- phasediff pi2))
-						   (if (< phasediff (- pi)) (set! phasediff (+ phasediff pi2))))
-					       (set! (freqs k) 
-						     (* 0.5
-							(+ (* pscl phasediff)
-							   (* k kscl)))))))
+					     (let ((phasediff (remainder (- (float-vector-ref freqs k) (float-vector-ref lastphases k)) pi2)))
+					       (float-vector-set! lastphases k (float-vector-ref freqs k))
+					       (float-vector-set! freqs k (* 0.5 (+ (* pscl phasediff) (* k kscl)))))))
 					 #f))
 				     #f ; no change to synthesis
 				     ))
@@ -38464,10 +38457,10 @@ EDITS: 1
       (mix tmp-sound start #t #f #f (with-mix-tags) #t)))
   
   (definstrument (defopt-simp beg dur (frequency 440.0) (amplitude 0.1))
-    (let ((os (make-oscil frequency)))
-       (do ((i 0 (+ i 1))) ((= i dur))
-	 (outa (+ i beg) (* amplitude (oscil os))))))
-  
+    (let ((os (make-oscil frequency))
+	  (end (+ beg dur)))
+       (do ((i beg (+ i 1))) ((= i end))
+	 (outa i (* amplitude (oscil os))))))
   
   (definstrument (jcrev2)
     (let ((allpass11 (make-all-pass -0.700 0.700 1051))
@@ -40226,6 +40219,7 @@ EDITS: 1
 				    ((= i 20000))
 				  (set! r (env t-env))
 				  (set! cosh-t (cosh r))
+				  (set! ((mus-data osc) 0) cosh-t)
 				  (let ((exp-t (exp (- r))))
 				    (set! offset (/ (- 1.0 exp-t) (* 2.0 exp-t)))
 				    (set! scaler (* (sinh r) offset)))
@@ -40583,11 +40577,10 @@ EDITS: 1
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-nkssb 1000.0 0.1 5))
-				(vib (make-oscil 5.0))
-				(vibamp (hz->radians 50.0)))
+				(vib (make-polywave 5.0 (list 1 (hz->radians 50.0))  mus-chebyshev-second-kind)))
 			     (do ((i 0 (+ i 1)))
 				 ((= i 30000))
-			       (outa i (nkssb gen (* vibamp (oscil vib))))))))
+			       (outa i (nkssb gen (polywave vib)))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display #__line__ ";nkssb 1 ~A" snd))
     (if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";nkssb 1 max: ~A" (maxamp snd))))
@@ -40595,11 +40588,10 @@ EDITS: 1
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-nkssb 1000.0 0.1 5))
 				(move (make-env '(0 1 1 -1) :length 30000))
-				(vib (make-oscil 5.0))
-				(vibamp (hz->radians 50.0)))
+				(vib (make-polywave 5.0 (list 1 (hz->radians 50.0)) mus-chebyshev-second-kind)))
 			     (do ((i 0 (+ i 1)))
 				 ((= i 30000))
-			       (outa i (nkssb-interp gen (* vibamp (oscil vib)) (env move)))))))
+			       (outa i (nkssb-interp gen (polywave vib) (env move)))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display #__line__ ";nkssb 2 ~A" snd))
     (if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";nkssb 2 max: ~A" (maxamp snd))))
@@ -46956,28 +46948,26 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-20-Dec-13:
-49,348,988,293
-6,512,817,842  ???:sin [/lib64/libm-2.12.so]
-6,284,450,417  s7.c:eval [/home/bil/gtk-snd/snd]
-2,434,097,879  ???:cos [/lib64/libm-2.12.so]
-2,196,906,090  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
-1,207,554,593  s7.c:gc [/home/bil/gtk-snd/snd]
-1,134,917,074  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,119,515,381  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-1,114,745,394  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  911,248,552  clm.c:fir_8 [/home/bil/gtk-snd/snd]
-  890,437,180  ???:t2_32 [/home/bil/gtk-snd/snd]
-  782,408,943  ???:t2_64 [/home/bil/gtk-snd/snd]
+18-Jan-14:
+46,983,404,403
+6,470,733,733  ???:sin [/lib64/libm-2.12.so]
+5,579,414,304  s7.c:eval [/home/bil/gtk-snd/snd]
+2,382,781,319  ???:cos [/lib64/libm-2.12.so]
+1,941,766,575  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+1,274,736,277  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,119,511,612  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+1,085,068,922  s7.c:gc [/home/bil/gtk-snd/snd]
+  978,492,405  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  899,447,632  ???:t2_32 [/home/bil/gtk-snd/snd]
+  804,462,497  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  716,120,071  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
-  693,360,038  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  641,850,595  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  600,078,902  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  487,174,957  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
-  449,776,264  ???:n1_64 [/home/bil/gtk-snd/snd]
-  446,218,353  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-
+  670,856,959  clm.c:fir_20 [/home/bil/gtk-snd/snd]
+  623,200,533  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  567,864,022  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
+  446,777,543  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+ 
 |#
 
 

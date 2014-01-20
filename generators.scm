@@ -1058,23 +1058,23 @@
   
   (environment-set! gen 'fm fm)
   (with-environment gen
-    (let* ((x (* angle ratio))
-	   (cxx (- angle x))
-	   (sx2 (sin (* 0.5 x)))
-	   (sx22 (* 2 sx2))
-	   (sxsx (* 4 sx2 sx2))
-	   (nx (* n x))
-	   (nx2 (* 0.5 (- (* 2 n) 1) x)))
-      (set! angle (+ angle fm frequency))
-      (if (< (abs sx2) 1.0e-8)
-	  -1.0
-	  (let ((s1 (- (/ (sin nx) sxsx)
-		       (/ (* n (cos nx2)) sx22)))
-		(c1 (- (/ (* n (sin nx2)) sx22)
-		       (/ (- 1.0 (cos nx)) sxsx))))
-	    (/ (- (* (sin cxx) s1)
-		  (* (cos cxx) c1))
-	       (* 0.5 n (- n 1)))))))) ; normalization, nominal n is off by 1
+    (let ((x (* angle ratio)))
+      (let ((cxx (- angle x))
+	    (sx2 (sin (* 0.5 x)))
+	    (nx (* n x))
+	    (nx2 (* 0.5 (- (* 2 n) 1) x)))
+	(let ((sx22 (* 2 sx2))
+	      (sxsx (* 4 sx2 sx2)))
+	  (set! angle (+ angle fm frequency))
+	  (if (< (abs sx2) 1.0e-8)
+	      -1.0
+	      (let ((s1 (- (/ (sin nx) sxsx)
+			   (/ (* n (cos nx2)) sx22)))
+		    (c1 (- (/ (* n (sin nx2)) sx22)
+			   (/ (- 1.0 (cos nx)) sxsx))))
+		(/ (- (* (sin cxx) s1)
+		      (* (cos cxx) c1))
+		   (* 0.5 n (- n 1)))))))))) ; normalization, nominal n is off by 1
 
 
 (define (nkssb-interp gen fm interp)
@@ -1124,14 +1124,13 @@
 	 (stop (seconds->samples (+ beg dur)))
 	 (gen (make-nkssb freq (/ mfreq freq) n))
 	 (move (make-env '(0 1 1 -1) :duration dur))
-	 (vib (make-oscil vibfreq))
-	 (vibamp (hz->radians (* (/ freq mfreq) 5.0)))
+	 (vib (make-polywave vibfreq (list 1 (hz->radians (* (/ freq mfreq) 5.0))) mus-chebyshev-second-kind))
 	 (ampf (make-env '(0 0 1 1 5 1 6 0) :scaler amp :duration dur)))
     (do ((i start (+ i 1)))
 	((= i stop))
       (outa i (* (env ampf)
 		 (nkssb-interp gen 
-			       (* vibamp (oscil vib))
+			       (polywave vib)
 			       (env move))) ; interp env
 	    ))))
 
@@ -1688,14 +1687,19 @@
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
+			       (set! (g 'r2) (* -2.0 (g 'r)))
+			       (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r))))
 			       g)
 	       :methods (list
 			 (cons 'mus-scaler
 			       (make-procedure-with-setter
 				(lambda (g) (g 'r))
-				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+				(lambda (g val) 
+				  (set! (g 'r) (generator-clamp-r val))
+				  (set! (g 'r2) (* -2.0 (g 'r)))
+				  (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r)))))))))
   
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm rr r2)
 
 
 (define* (rxysin gen (fm 0.0))
@@ -1709,9 +1713,7 @@
       (set! angle (+ angle fm frequency))
       (/ (- (sin x)
 	    (* r (sin (- x y))))
-	 (+ 1.0 
-	    (* -2.0 r (cos y))
-	    (* r r))))))
+	 (+ rr (* r2 (cos y)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
@@ -1726,7 +1728,8 @@
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
-			       (set! (g 'rr) (* (g 'r) (g 'r)))
+			       (set! (g 'r2) (* -2.0 (g 'r)))
+			       (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r))))
 			       (set! (g 'norm) (- 1.0 (abs (g 'r)))) ; abs for negative r
 			       g)
 	       :methods (list
@@ -1735,9 +1738,10 @@
 				(lambda (g) (g 'r))
 				(lambda (g val) 
 				  (set! (g 'r) (generator-clamp-r val))
-				  (set! (g 'rr) (* (g 'r) (g 'r)))
+				  (set! (g 'r2) (* -2.0 (g 'r)))
+				  (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r))))
 				  (set! (g 'norm) (- 1.0 (abs (g 'r)))))))))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm norm rr)
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm norm rr r2)
 
 
 (define* (rxycos gen (fm 0.0))
@@ -1752,8 +1756,7 @@
       (set! angle (+ angle fm frequency))
       (* (/ (- (cos x)
 	       (* r (cos (- x y))))
-	    (+ 1.0 rr
-	       (* -2.0 r (cos y))))
+	    (+ rr (* r2 (cos y))))
 	 norm))))
 
 #|
@@ -1853,9 +1856,9 @@
 
 (defgenerator (ercos
 	       :make-wrapper (lambda (g)
-			       (set! (g 'osc) (make-oscil (g 'frequency)))
 			       (if (<= (g 'r) 0.0) (set! (g 'r) 0.00001))
 			       (set! (g 'cosh-t) (cosh (g 'r)))
+			       (set! (g 'osc) (make-polywave (g 'frequency) (list 0 (g 'cosh-t) 1 -1.0) mus-chebyshev-second-kind))
 			       (let ((exp-t (exp (- (g 'r)))))
 				 (set! (g 'offset) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
 				 (set! (g 'scaler) (* (sinh (g 'r)) (g 'offset))))
@@ -1880,11 +1883,14 @@
   
   (environment-set! gen 'fm fm)
   (with-environment gen
+    (- (/ scaler (polywave osc fm)) offset)))
+
+#|
+  (with-environment gen
     (- (/ scaler 
 	  (- cosh-t (oscil osc fm)))
        offset)))
 
-#|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-ercos 100 :r 1.0)))
     (do ((i 0 (+ i 1)))
@@ -1897,15 +1903,37 @@
 	 (stop (seconds->samples (+ beg dur)))
 	 (gen (make-ercos freq :r r))
 	 (t-env (make-env '(0 .1 1 2) :duration dur)))
+    (with-environment
+	(augment-environment! gen 
+	  (cons 'start start) (cons 'stop stop) (cons 'amp amp) (cons 't-env t-env) (cons 'gen gen))
+      (do ((i start (+ i 1)))
+	  ((= i stop))
+	(set! r (env t-env))
+	(set! cosh-t (cosh r))
+	(set! ((mus-data osc) 0) cosh-t)
+	(let ((exp-t (exp (- r))))
+	  (set! offset (/ (- 1.0 exp-t) (* 2.0 exp-t)))
+	  (set! scaler (* (sinh r) offset)))
+	(outa i (* amp (ercos gen)))))))
+
+#|
+;;; same, but slightly slower
+(definstrument (ercoser beg dur freq amp r)
+  (let ((start (seconds->samples beg))
+	 (stop (seconds->samples (+ beg dur)))
+	 (gen (make-ercos freq :r r))
+	 (t-env (make-env '(0 .1 1 2) :duration dur)))
     (do ((i start (+ i 1)))
 	((= i stop))
       (let ((r (env t-env)))
 	(set! (gen 'r) r)
 	(set! (gen 'cosh-t) (cosh r))
+	(set! ((mus-data (gen 'osc)) 0) (gen 'cosh-t))
 	(let ((exp-t (exp (- r))))
 	  (set! (gen 'offset) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
 	  (set! (gen 'scaler) (* (sinh r) (gen 'offset))))
       (outa i (* amp (ercos gen)))))))
+|#
 
 #|
 ;; change "t" during note -- smoothly changing sum-of-cosines spectra (damped "lute-stop" effect)
@@ -2537,8 +2565,7 @@
 	  (amp-env (make-env ampf :duration dur :scaler amp))
 	  (pitch-env (make-env freqf :scaler (/ gliss freq) :duration dur))
 	  (slant (make-moving-average (seconds->samples pitch-time)))
-	  (vib (make-oscil 5))
-	  (vib-index (hz->radians 4.0))
+	  (vib (make-polywave 5 (list 1 (hz->radians 4.0)) mus-chebyshev-second-kind))
 	  (harmfrq 0.0)
 	  (harmonic 0)
 	  (dist 0.0))
@@ -2551,7 +2578,7 @@
 	(set! (mus-scaler gen) (* 20.0 (min amp-time dist (- 1.0 dist))))
 	(outa i (* (env amp-env)
 		   (rxyk!cos gen (+ (moving-average slant harmonic)
-				    (* vib-index (oscil vib))))))))))
+				    (polywave vib)))))))))
 #|
 (with-sound (:statistics #t :play #t)
   (brassy 0 4 50 .05 '(0 0 1 1 10 1 11 0) '(0 1 1 0) 1000))
@@ -2829,14 +2856,19 @@
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
+			       (set! (g 'rr1) (+ 1.0 (* (g 'r) (g 'r))))
+			       (set! (g 'norm) (/ 1.0 (- (log (+ 1.0 (g 'r))) (log (- 1.0 (g 'r))))))
 			       g)
 	       
 	       :methods (list
 			 (cons 'mus-scaler
 			       (make-procedure-with-setter
 				(lambda (g) (g 'r))
-				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
+				(lambda (g val) 
+				  (set! (g 'r) (generator-clamp-r val))
+				  (set! (g 'rr1) (+ 1.0 (* (g 'r) (g 'r))))
+				  (set! (g 'norm) (/ 1.0 (- (log (+ 1.0 (g 'r))) (log (- 1.0 (g 'r)))))))))))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm rr1 norm)
 
 
 (define* (rkoddssb gen (fm 0.0))
@@ -2847,18 +2879,16 @@
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
-	   (cxx (- cx mx)))
+	   (cxx (- cx mx))
+	   (cmx (* 2.0 r (cos mx))))
       (set! angle (+ angle fm frequency))
-      (/ (- (* (cos cxx)
+      (* (- (* (cos cxx)
 	       0.5
-	       (log (/ (+ 1.0 (* 2.0 r (cos mx)) (* r r))
-		       (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
+	       (log (/ (+ rr1 cmx) (- rr1 cmx))))
 	    (* (sin cxx)
 	       (atan (* 2.0 r (sin mx))
 		     (- 1.0 (* r r)))))
-	 (- (log (+ 1 r))    ; normalization (r^k/k for odd k)
-	    (log (- 1 r)))))))
-
+	 norm))))
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rkoddssb 1000.0 0.1 0.5)))

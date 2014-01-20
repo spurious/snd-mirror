@@ -13526,33 +13526,6 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos;
   s7_Double x;
-  /* 9-Apr
-[100000: (granulate exA)]? -- was unsafe
-88200: (formant-bank fs inputs) -- fade.scm
-[88200: (* amp (oscil g))]
-88200: (* (env ampf) (wave-train grains gliss)) -- when? clm23 (if in loop)
-81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))) -- if in loop
-50828: (formant-bank frms1 x)
-[44100: (delay outdel11 (comb-bank combs1 (all-pass-bank allpasses1 (ina i *reverb*))))]
-44100: (* amp (formant-bank fs1 inputs))
-44100: (* ampa (ina i *reverb*)) -- twice in clm23.scm -- maybe this is the if case -- looks like a bug
-44100: (* amp (oscil cr sum)) -- clm23.scm
-40000: (nrxycos gen) -- mus-scaler in loop
-24600: (src s incr)
-23813: (+ (* 0.75 val1) (formant-bank fb (* val1 (rand-interp rnd))))
-22050: (oscil-bank obank) -- clm-ins + 2 vct-add calls
-22050: (* amp (formant-bank fs inval))
-22050: (* amp (sin y))
-22050: (* amp (ina ctr fil))
-17640: (* amp (oscil os))
-6394: (* (env ampf) (+ 0.5 (abs (rand-interp rnd1))) (+ (oscil gen1 (* 2.0 frq)) (polywave gens0 frq) (nrxycos gens (* 6.0 frq))))
-4410: (oscil os)
-4410: (* amp (+ (* bank1 outval) (* (- 1.0 bank1) inval)))
-4410: (* amp (+ (* bank2 outval) (* (- 1.0 bank2) inval)))
-4410: (* amp (filter flt (oscil os)))
-4410: (* (env ampf) (oscil-bank obank))
-2205: (* sndamp (one-zero oz (two-pole tz input)))
-   */
   GET_INTEGER(args, outa, pos);
   x = s7_call_direct_to_real_and_free(sc, cadr(args));
   return(out_any_2(pos, x, 0, "outa"));
@@ -13820,6 +13793,63 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
 
 
 #if (!WITH_GMP)
+
+static s7_pointer indirect_outa_2_looped;
+static s7_pointer g_indirect_outa_2_looped(s7_scheme *sc, s7_pointer args)
+{
+  /* here we have (outa i (...)) where expr might be easy (* amp (oscil...)) for example */
+  s7_Int pos, end;
+  s7_pointer stepper, callee, outer_callee, locsym;
+  s7_Int *step, *stop;
+  gf *gf1;
+
+  mus_float_t **ob;
+  mus_float_t *buf = NULL;
+  mus_long_t dstart, dend, dpos, dlen = 0;
+			  
+  stepper = car(args);
+  locsym = cadr(args);
+  if (!s7_is_symbol(locsym))
+    return(NULL);
+  callee = s7_slot(sc, locsym);
+  if (s7_cell_slot_value(callee) != stepper)
+    return(NULL);
+
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  pos = (*step);
+  end = (*stop);
+
+  callee = caddr(args);
+  outer_callee = callee;
+
+  if (mus_out_any_is_safe(clm_output_gen))
+    {
+      ob = mus_out_any_buffers(clm_output_gen);
+      buf = ob[0];
+      dlen = mus_file_buffer_size();
+    }
+
+  gf1 = find_gf(sc, callee);
+  if (gf1)
+    {
+      if (gf1->func_1)
+	{
+	  OUTA_LOOP(gf1->func_1(gf1->gen));             /* (gen g) */
+	  gf_free(gf1);
+	  return(args);
+	}
+      if (gf1->func)
+	{
+	  OUTA_LOOP(gf1->func(gf1));
+	  gf_free(gf1); 
+	  return(args);
+	}
+      gf_free(gf1);
+    }
+
+  return(NULL);
+}
 
 static s7_pointer indirect_outa_2_temp_looped;
 static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
@@ -15077,36 +15107,6 @@ static s7_pointer g_add_direct_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer y;
   double x;
-  /* t502:
-   * 180810: ((polywave gen1 (env frqf)) (* (env rndf) (oscil gen2 (rand-interp rnd))))
-   * 171362: ((polywave gen2) (rand-interp rnd))
-   * 132300: ((* 0.95 (oscil gen1 noise)) (* 0.05 (oscil gen4 noise)))
-   * 104751: ((polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)))
-   * 88200: ((polywave gp buzz) (* (env indf) (polywave gb buzz)))
-   * 88200: ((* (env intrpf) (polywave gen1 frq)) (* (env intrpf-1) (oscil gen2 frq)))
-   * 81585: ((* (env interpf-1) (polywave poly1 frq)) (* (env interpf) (polywave poly2 frq)))
-   * 81365: ((* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))
-   * 81050: ((* 0.1 (oscil md)) (* 0.2 (oscil md1)))
-   * snd-test:
-   * 264600: ((filter lp y) (filter hp y))
-   * 180810: ((polywave gen1 (env frqf)) (* (env rndf) (oscil gen2 (rand-interp rnd))))
-   * 170396: ((polywave gen2) (rand-interp rnd))
-   * 132300: ((abs (* (env bouncef) (oscil gen1))) (env rf))
-   * 132300: ((* 0.95 (oscil gen1 noise)) (* 0.05 (oscil gen4 noise)))
-   * 106006: ((polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)))
-   * 88200: ((moving-average slant harmonic) (* vib-index (oscil vib)))
-   * 88200: ((polywave gp buzz) (* (env indf) (polywave gb buzz)))
-   * 88200: ((* (env intrpf) (polywave gen1 frq)) (* (env intrpf-1) (oscil gen2 frq)))
-   * 81585: ((* (env interpf-1) (polywave poly1 frq)) (* (env interpf) (polywave poly2 frq)))
-   * 81365: ((* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))
-   * 81050: ((* 0.1 (oscil md)) (* 0.2 (oscil md1)))
-   * 72765: ((* (env gr-int-env) (table-lookup gr-env-end)) (* (env gr-int-env-1) (table-lookup gr-env)))
-   * 66150: ((polywave gen1 (+ (* 2.0 frq) (polywave gen4 frq))) (polywave gen2 (+ (* 8.0 frq) (polywave gen3 frq))))
-   * 60480: ((* 0.9 (oscil gen1 (rand-interp rnd1))) (* 0.1 (oscil gen2 (rand-interp rnd2))))
-   * 57330: ((oscil vib) (rand-interp vibr))
-   * 56007: ((* hz7 (oscil vib)) (rand-interp rnd))
-   */
-
   x = s7_call_direct_to_real_and_free(sc, car(args));
   y = s7_call_direct(sc, cadr(args));
   return(s7_remake_real(sc, y, x + s7_cell_real(y)));
@@ -18589,6 +18589,9 @@ static void init_choosers(s7_scheme *sc)
   outa_2_temp_eg = clm_make_function_no_choice(sc, "outa", g_outa_2_temp_eg, 3, 0, false, "outa optimization", f);
 
 #if (!WITH_GMP)
+  indirect_outa_2_looped = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2_looped, 2, 0, false, "outa optimization", f);
+  s7_function_set_looped(indirect_outa_2, indirect_outa_2_looped);
+
   indirect_outa_2_env_looped = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2_env_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(indirect_outa_2_env, indirect_outa_2_env_looped);
   indirect_outa_2_env_let_looped = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2_env_let_looped, 3, 0, false, "outa optimization", f);

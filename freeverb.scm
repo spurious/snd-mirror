@@ -161,19 +161,18 @@
 		(if (> in-chans 1)
 		    (do ((c 0 (+ c 1)))
 			((= c out-chans))
-		      (set! (f-out c) (filtered-comb-bank (fcmb-c c) (delay (predelays c) (f-in c)))))
+		      (float-vector-set! f-out c (filtered-comb-bank (vector-ref fcmb-c c) (delay (vector-ref predelays c) (float-vector-ref f-in c)))))
 		    (let ((val (delay (predelays 0) (f-in 0))))
 		      (do ((c 0 (+ c 1)))
 			  ((= c out-chans))
-			(set! (f-out c) (filtered-comb-bank (fcmb-c c) val)))))
+			(float-vector-set! f-out c (filtered-comb-bank (vector-ref fcmb-c c) val)))))
 		
 		(do ((c 0 (+ 1 c)))
 		    ((= c out-chans))
-		  (set! (f-out c) (all-pass-bank (allp-c c) (f-out c))))
+		  (float-vector-set! f-out c (all-pass-bank (vector-ref allp-c c) (float-vector-ref f-out c))))
 		
 		(float-vector->file *output* i (float-vector-mix f-out out-mix out-buf)))))))))
   
 ;;; (with-sound (:statistics #t :reverb freeverb :reverb-data '(:output-gain 3.0)) (outa 0 .5 *reverb*))
 ;;; (with-sound (:channels 2 :reverb-channels 2 :statistics #t :reverb freeverb :reverb-data '(:output-gain 3.0)) (outa 0 .5 *reverb*) (outb 0 .1 *reverb*))
-
 

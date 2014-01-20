@@ -425,7 +425,7 @@ read an ASCII sound file"
 		 (float-vector->channel data frame bufsize out-fd 0)
 		 (set! frame (+ frame bufsize))
 		 (set! loc 0)))
-	   (set! (data loc) (* val short->float))))))
+	   (float-vector-set! data loc (* val short->float))))))
     (close-input-port in-fd)
     out-fd))
 
@@ -755,11 +755,10 @@ then inverse ffts."
 	 (ctr 0)
 	 (in-vowel #f))
     (do ((i 0 (+ i 1)))
-	((= i (- fft-size 1)))
-      (set! (rl i) (read-ahead)))
+	((= i fft-size))
+      (float-vector-set! rl i (read-sample read-ahead)))
     (set! ctr (- fft-size 1))
     (map-channel (lambda (y)
-		   (set! (rl ctr) (read-sample read-ahead))
 		   (set! ctr (+ ctr 1))
 		   (if (= ctr fft-size)
 		       (begin
@@ -771,6 +770,9 @@ then inverse ffts."
 			 ;; fancier version checked here ratio of this sum and
 			 ;;   sum of all rl vals, returned vowel if > 0.5
 			 (set! ctr 0)
+			 (do ((i 0 (+ i 1)))
+			     ((= i fft-size))
+			   (float-vector-set! rl i (read-sample read-ahead)))
 			 (fill! im 0.0)))
 		   (let ((rval (- 1.0 (ramp ramper in-vowel))))
 		     ; squelch consonants if just ramp value (not 1.0-val)
@@ -1380,7 +1382,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (out-data (make-float-vector total-len)))
     (do ((i 0 (+ i 1)))
 	((= i total-len))
-      (set! (out-data i) (convolve cnv)))
+      (float-vector-set! out-data i (convolve cnv)))
     (float-vector-scale! out-data amp)
     (let ((max-samp (float-vector-peak out-data)))
       (float-vector->channel out-data 0 total-len snd1)
@@ -1447,10 +1449,9 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
     (lambda (loc)
       (array-interp data loc size))))
 
-(define sound-interp ;make it look like a clm generator
-  (lambda (func loc) 
-    "(sound-interp func loc) -> sample at loc (interpolated if necessary) from func created by make-sound-interp"
-    (func loc)))
+(define (sound-interp func loc) ;make it look like a clm generator
+  "(sound-interp func loc) -> sample at loc (interpolated if necessary) from func created by make-sound-interp"
+  (func loc))
 
 #|
 (define test-interp
