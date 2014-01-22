@@ -3253,7 +3253,7 @@ static ed_list *insert_section_into_list(mus_long_t samp, mus_long_t num, ed_lis
   ed_list *new_state;
   if (num <= 0) return(NULL);
   cur_len = current_state->size;
-  new_state = make_ed_list(cur_len + 2); /* leave room for possible split */
+  new_state = make_ed_list(cur_len + 3); /* leave room for possible split */
   for (cur_i = 0, new_i = 0; cur_i < cur_len; cur_i++, new_i++)
     {
       cur_f = FRAGMENT(current_state, cur_i);
@@ -3703,7 +3703,7 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
   if (num <= 0) return(NULL);
   cur_len = current_state->size;
   end = beg + num;
-  new_state = make_ed_list(cur_len + 2); /* leave room for possible splits */
+  new_state = make_ed_list(cur_len + 3); /* leave room for possible splits */
   for (cur_i = 0, new_i = 0; cur_i < cur_len; cur_i++)
     {
       cur_f = FRAGMENT(current_state, cur_i);

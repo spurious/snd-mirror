@@ -5499,19 +5499,32 @@ static mus_any_class FILTERED_COMB_BANK_CLASS = {
 };
 
 
+static mus_float_t filtered_comb_one_zero(mus_any *ptr, mus_float_t input)
+{
+  dly *gen = (dly *)ptr;
+  mus_float_t result;
+  result = gen->line[gen->loc];
+  gen->line[gen->loc] = input + (gen->yscl * mus_one_zero(gen->filt, result));
+  gen->loc++;
+  if (gen->loc >= gen->size) 
+    gen->loc = 0;
+  return(result);
+}
+
+
 static mus_float_t filtered_comb_bank_8(mus_any *combs, mus_float_t inval)
 {
   fltcmb_bank *c = (fltcmb_bank *)combs;
   mus_any **gs;
   gs = c->gens;
-  return(mus_filtered_comb_unmodulated(gs[0], inval) +
-	 mus_filtered_comb_unmodulated(gs[1], inval) +
-	 mus_filtered_comb_unmodulated(gs[2], inval) +
-	 mus_filtered_comb_unmodulated(gs[3], inval) +
-	 mus_filtered_comb_unmodulated(gs[4], inval) +
-	 mus_filtered_comb_unmodulated(gs[5], inval) +
-	 mus_filtered_comb_unmodulated(gs[6], inval) +
-	 mus_filtered_comb_unmodulated(gs[7], inval));
+  return(filtered_comb_one_zero(gs[0], inval) +
+	 filtered_comb_one_zero(gs[1], inval) +
+	 filtered_comb_one_zero(gs[2], inval) +
+	 filtered_comb_one_zero(gs[3], inval) +
+	 filtered_comb_one_zero(gs[4], inval) +
+	 filtered_comb_one_zero(gs[5], inval) +
+	 filtered_comb_one_zero(gs[6], inval) +
+	 filtered_comb_one_zero(gs[7], inval));
 }
 
 static mus_float_t filtered_comb_bank_any(mus_any *filtered_combs, mus_float_t inval)
@@ -5529,6 +5542,7 @@ mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
 {
   fltcmb_bank *gen;
   int i;
+  bool zdly = false, oz = true;
 
   gen = (fltcmb_bank *)calloc(1, sizeof(fltcmb_bank));
   gen->core = &FILTERED_COMB_BANK_CLASS;
@@ -5536,9 +5550,15 @@ mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
 
   gen->gens = (mus_any **)malloc(size * sizeof(mus_any *));
   for (i = 0; i < size; i++)
-    gen->gens[i] = filtered_combs[i];
+    {
+      gen->gens[i] = filtered_combs[i];
+      zdly = (zdly) || (((dly *)(filtered_combs[i]))->zdly);
+      oz = (oz) && (mus_one_zero_p(((dly *)(filtered_combs[i]))->filt));
+    }
 
-  if (size == 8)
+  if ((size == 8) &&
+      (oz) &&
+      (!zdly))
     gen->cmbf = filtered_comb_bank_8;
   else gen->cmbf = filtered_comb_bank_any;
 
@@ -15541,6 +15561,12 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	      pv->freqs[i] = pv->pitch * (diff * pscl + ks);
 	    }
 	}
+      /* it's possible to build the endpoint waveforms here and interpolate, but there is no savings.
+       *   other pvocs use ifft rather than sin-bank, but then they have to make excuses.
+       *   Something I didn't expect -- the algorithm above focusses on the active frequency!  
+       *   For example, the 4 or so bins around a given peak all tighten
+       *   to 4 bins running at almost exactly the same frequency (the center).
+       */
       
       scl = 1.0 / (mus_float_t)(pv->interp);
       for (i = 0; i < N2; i++)
@@ -15548,7 +15574,6 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	  pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
 	  pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
 	}
-
     }
   
   pv->outctr++;
@@ -15588,24 +15613,26 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
     i = 0;
     while (i <= N4)
       {
-	/* float here, rather than double, is slower */
+	/* float here, rather than double, is slower 
+	 * amps can be negative here due to rounding troubles
+	 */
 	amp[i] += panc[i];
-	if (amp[i] != 0.0)
+	if (amp[i] > 1e-6) /* this check is much faster (just as a check) than (amp[i] != 0.0) */
 	  sum += (amp[i] * sin(ph[i])); 
 	i++;
 	
 	amp[i] += panc[i];
-	if (amp[i] != 0.0)
+	if (amp[i] > 1e-6)
 	  sum += (amp[i] * sin(ph[i])); 
 	i++;
 	
 	amp[i] += panc[i];
-	if (amp[i] != 0.0)
+	if (amp[i] > 1e-6)
 	  sum += (amp[i] * sin(ph[i])); 
 	i++;
 	
 	amp[i] += panc[i];
-	if (amp[i] != 0.0)
+	if (amp[i] > 1e-6)
 	  sum += (amp[i] * sin(ph[i])); 
 	i++;
       }
@@ -15615,7 +15642,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	pinc[i] += frq[i];
 	ph[i] += pinc[i];
 	amp[i] += panc[i];
-	if (amp[i] != 0.0)
+	if (amp[i] > 1e-6)
 	  sum += (amp[i] * sin(ph[i])); 
       }
   }
@@ -16030,8 +16057,9 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
 {
   int in_chans, out_chans, mix_chans, mixtype;
   mus_mixer *mx = (mus_mixer *)umx;
-  mus_long_t inc, outc, offi;
+  mus_long_t inc, outc, out_end;
   mus_frame *frin, *frthru = NULL;
+  mus_float_t *val0;
 
   out_chans = mus_channels(outf);
   if (out_chans <= 0) 
@@ -16043,6 +16071,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
   if (out_chans > in_chans) 
     mix_chans = out_chans; 
   else mix_chans = in_chans;
+  out_end = out_start + out_frames;
 
   mixtype = mix_type(out_chans, in_chans, umx, envs);
   frin = (mus_frame *)mus_make_empty_frame(mix_chans);
@@ -16051,12 +16080,16 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
   switch (mixtype)
     {
     case ENVELOPED_MONO_MIX:
-      for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
-	{
-	  mus_file_to_frame(inf, inc, (mus_any *)frin);
-	  frin->vals[0] *= mus_env(envs[0][0]);
-	  mus_frame_to_file(outf, outc, (mus_any *)frin);
-	}
+      {
+	mus_any *e;
+	val0 = frin->vals;
+	e = envs[0][0];
+	for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
+	  {
+	    mus_file_to_frame(inf, inc, (mus_any *)frin);
+	    mus_outa_to_file(outf, outc, (*val0) * mus_env(e));
+	  }
+      }
       break;
 
     case ENVELOPED_MIX:
@@ -16065,7 +16098,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
 
     case ALL_MIX:
       /* the general case -- possible envs/scalers on every mixer cell */
-      for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
+      for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	{
 	  int j, k;
 	  for (j = 0; j < in_chans; j++)
@@ -16081,15 +16114,35 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
       if (umx == NULL) mus_free((mus_any *)mx);
       break;
 
-    case IDENTITY_MIX:
     case IDENTITY_MONO_MIX:
-      for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
+      val0 = frin->vals;
+      for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
+	{
+	  mus_file_to_frame(inf, inc, (mus_any *)frin);
+	  mus_outa_to_file(outf, outc, *val0);
+	}
+      break;
+
+    case IDENTITY_MIX:
+      for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	mus_frame_to_file(outf, outc, mus_file_to_frame(inf, inc, (mus_any *)frin));
       break;
 
     case SCALED_MONO_MIX:
+      {
+	mus_float_t scl;
+	scl = mx->vals[0][0];
+	val0 = frin->vals;
+	for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
+	  {
+	    mus_file_to_frame(inf, inc, (mus_any *)frin);
+	    mus_outa_to_file(outf, outc, scl * (*val0));
+	  }
+      }
+      break;
+
     case SCALED_MIX:
-      for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
+      for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	mus_frame_to_file(outf, 
 			  outc, 
 			  mus_frame_to_frame(mus_file_to_frame(inf, inc, (mus_any *)frin), 

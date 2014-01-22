@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.3"
-#define S7_DATE "9-Nov-13"
+#define S7_VERSION "3.4"
+#define S7_DATE "22-Jan-14"
 
 
 typedef long long int s7_Int;
@@ -711,6 +711,7 @@ bool s7_is_object(s7_pointer p);
 int s7_object_type(s7_pointer obj);
 void *s7_object_value(s7_pointer obj);
 void *s7_object_value_checked(s7_pointer obj, int type);
+void *s7_vector_ref_object_value_checked(s7_scheme *sc, s7_pointer args, int type);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
 s7_pointer s7_object_environment(s7_pointer obj);
@@ -868,6 +869,8 @@ bool s7_is_valid_pointer(s7_pointer arg);
  * 
  *        s7 changes
  *		
+ * 22-Jan:    s7_vector_ref_object_value_checked.
+ * --------
  * 8-Nov:     s7_symbol_documentation, s7_define_constant_with_documentation.
  * 17-Oct:    bignum-precision (procedure-with-setter) is now an integer variable named *bignum-precision*.
  * 28-Aug:    s7_int|float_vector_elements (homogenous vectors), libc.scm.

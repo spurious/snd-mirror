@@ -146,7 +146,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 
 	  (do ((k 0 (+ k 1))) 
 	      ((= k fs))
-	    (set! frm0 (/ (env (vector-ref frmfs k)) frq)) ; currently (Dec-13) this is faster than the implicit case
+	    (set! frm0 (/ (env (vector-ref frmfs k)) frq)) ; currently (21-Jan-14) this is faster than the implicit case
 	    (set! frm-int (floor frm0))
 	    (set! frac (- frm0 frm-int))
 	    (set! fracf (+ (* (float-vector-ref indices k) carrier) (* frm-int rfrq)))
@@ -158,7 +158,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 				 (+ (* frac (oscil (vector-ref evens k) (+ fracf rfrq)))
 				    (* (- 1.0 frac) (oscil (vector-ref odds k) fracf))))))))))))
 
-;;; (with-sound () (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1))
+;;; (with-sound (:statistics #t) (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1))
 ;;; (with-sound () (vox 0 2 300 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) '(.8 .15 .05) '(.05 .0125 .025) .02 .1))
 ;;; (with-sound () (vox 0 5 600 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) '(.8 .16 .04) '(.01 .01 .1) .01 .1))
   
@@ -999,10 +999,10 @@ is a physical model of a flute:
 	 (do ((k 0 (+ k 1)))
 	     ((= k numformants))
 	   (set! outsum (+ outsum
-			   (* (env (ampfs k))
+			   (* (env (vector-ref ampfs k))
 			      (oscil (carriers k) 
 				     (+ (* vib (c-rats k))
-					(* (env (indfs k)) modsig)))))))
+					(* (env (vector-ref indfs k)) modsig)))))))
 	 (locsig loc i outsum)))))
 
 ;; (reson 0 1.0 440 .1 2 '(0 0 100 1) '(0 0 100 1) .1 .1 .1 5 .01 5 .01 0 1.0 0.01 '(((0 0 100 1) 1200 .5 .1 .1 0 1.0 .1 .1) ((0 1 100 0) 2400 .5 .1 .1 0 1.0 .1 .1)))
@@ -2330,7 +2330,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	      ((= i nd))
 	    (do ((k 0 (+ k 1)))
 		((= k half-list))
-	      (set! (gains k) (env (env-size k))))
+	      (float-vector-set! gains k (env (vector-ref env-size k))))
 	    (outa i (* (env ampenv) (formant-bank frm-size (readin RdA)))))
 	  (do ((i st (+ i 1)))
 	      ((= i nd))

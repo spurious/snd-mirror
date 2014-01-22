@@ -107,7 +107,7 @@
     (set! (arr 2) (make-oscil (* freq 2)))
     (do ((i start (+ i 1))) 
 	((= i end))
-      (outa i (* (env (arr 1))
+      (outa i (* (env (vector-ref arr 1))
 		 (oscil (arr 0)
 			(* .1 (oscil (arr 2)))))))))
 

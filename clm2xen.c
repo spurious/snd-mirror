@@ -9698,6 +9698,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define caddr(E)  s7_caddr(E)
 #define cadddr(E) s7_cadddr(E)
 #define cddr(E)   s7_cddr(E)
+#define cdddr(E)  s7_cdddr(E)
 #define cdar(E)   s7_cdar(E)
 #define cdaddr(E) s7_cdaddr(E)
 #define cdadr(E)  s7_cdadr(E)
@@ -11007,28 +11008,30 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 static s7_pointer env_vss;
 static s7_pointer g_env_vss(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer vec, ind, e, arg;
-  s7_Int index;
-  mus_any *g = NULL;
   mus_xen *gn;
-  /* args is ((vector-ref v i))" */
-  arg = cdar(args);
-  vec = s7_car_value(s7, arg);
-  if ((!s7_is_vector(vec)) ||
-      (s7_vector_rank(vec) != 1))
-    XEN_WRONG_TYPE_ARG_ERROR("vector-ref", 1, car(arg), "a simple vector");
-  
-  ind = s7_cadr_value(s7, arg);
-  if (!s7_is_integer(ind))
-    XEN_WRONG_TYPE_ARG_ERROR("vector-ref", 2, cadr(arg), "an integer");
-  index = s7_integer(ind);
-  if ((index < 0) ||
-      (index >= s7_vector_length(vec)))
-    XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, ind, "should be between 0 and the vector length");
+  mus_any *g = NULL;
 
-  e = s7_vector_elements(vec)[index];
-  XEN_TO_C_GENERATOR(e, gn, g, mus_env_p, S_env, "an env generator");
+  /* args is ((vector-ref v i))" */
+  gn = (mus_xen *)s7_vector_ref_object_value_checked(sc, cdar(args), mus_xen_tag);
+  if (gn) g = MUS_XEN_TO_MUS_ANY(gn);
+  XEN_ASSERT_TYPE((g) && (mus_env_p(g)), cdar(args), 1, S_env, "an env generator");
+
   return(C_TO_XEN_DOUBLE(mus_env(g)));
+}
+
+static s7_pointer oscil_vss_s;
+static s7_pointer g_oscil_vss_s(s7_scheme *sc, s7_pointer args)
+{
+  double x;
+  mus_xen *gn;
+  mus_any *g = NULL;
+
+  GET_REAL_CADR(args, oscil, x);
+  gn = (mus_xen *)s7_vector_ref_object_value_checked(sc, cdar(args), mus_xen_tag);
+  if (gn) g = MUS_XEN_TO_MUS_ANY(gn);
+  XEN_ASSERT_TYPE((g) && (mus_oscil_p(g)), cdar(args), 1, S_oscil, "an env generator");
+
+  return(C_TO_XEN_DOUBLE(mus_oscil_fm(g, x)));
 }
 
 
@@ -15969,11 +15972,13 @@ static s7_pointer clm_abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
 static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  s7_pointer arg1, arg2, arg3;
   /* fprintf(stderr, "oscil: %s\n", DISPLAY(expr)); */
 
+  arg1 = cadr(expr);
   if (args == 1)
     {
-      if (s7_is_symbol(cadr(expr)))
+      if (s7_is_symbol(arg1))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(oscil_1);
@@ -15983,47 +15988,48 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 
   if (args == 2)
     {
-      if (s7_is_symbol(cadr(expr)))
+      arg2 = caddr(expr);
+      if (s7_is_symbol(arg1))
 	{
-	  if (s7_is_symbol(caddr(expr)))
+	  if (s7_is_symbol(arg2))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
 	      return(oscil_2);
 	    }
-	  if (s7_is_pair(caddr(expr)))
+	  if (s7_is_pair(arg2))
 	    {
-	      if (s7_function_choice(sc, caddr(expr)) == g_fm_violin_modulation)
+	      if (s7_function_choice(sc, arg2) == g_fm_violin_modulation)
 		{
 		  s7_function_choice_set_direct(sc, expr);
 		  return(fm_violin_with_modulation);
 		}
 
-	      if (s7_function_choice(sc, caddr(expr)) == g_fm_violin_rats)
+	      if (s7_function_choice(sc, arg2) == g_fm_violin_rats)
 		{
 		  s7_function_choice_set_direct(sc, expr);
 		  return(fm_violin_with_rats);
 		}
 	      
-	      if (s7_list_length(sc, caddr(expr)) == 3)
+	      if (s7_list_length(sc, arg2) == 3)
 		{
 		  if (s7_caaddr(expr) == multiply_symbol)
 		    {
-		      if ((s7_is_real(cadr(caddr(expr)))) &&
-			  (s7_is_symbol(caddr(caddr(expr)))))
+		      if ((s7_is_real(cadr(arg2))) &&
+			  (s7_is_symbol(caddr(arg2))))
 			{
 			  s7_function_choice_set_direct(sc, expr);
 			  return(oscil_mul_c_s);
 			}
 	      
-		      if ((s7_is_real(caddr(caddr(expr)))) &&
-			  (s7_is_symbol(cadr(caddr(expr)))))
+		      if ((s7_is_real(caddr(arg2))) &&
+			  (s7_is_symbol(cadr(arg2))))
 			{
 			  s7_function_choice_set_direct(sc, expr);
 			  return(oscil_mul_s_c);
 			}
 
-		      if ((s7_is_symbol(cadr(caddr(expr)))) &&
-			  (s7_is_symbol(caddr(caddr(expr)))))
+		      if ((s7_is_symbol(cadr(arg2))) &&
+			  (s7_is_symbol(caddr(arg2))))
 			{
 			  s7_function_choice_set_direct(sc, expr);
 			  return(oscil_mul_ss);
@@ -16031,15 +16037,14 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 		    }
 		  else
 		    {
-		      s7_pointer p;
-		      p = caddr(expr);
 		      /* handle (oscil fmosc1 (+ (* fm1-rat vib) fuzz)) */
-		      if ((car(p) == add_symbol) &&
-			  (s7_is_pair(cadr(p))) &&
-			  (s7_is_symbol(caddr(p))) &&
-			  (s7_list_length(sc, cadr(p)) == 3))
+		      if ((car(arg2) == add_symbol) &&
+			  (s7_is_pair(cadr(arg2))) &&
+			  (s7_is_symbol(caddr(arg2))) &&
+			  (s7_list_length(sc, cadr(arg2)) == 3))
 			{
-			  p = cadr(p);
+			  s7_pointer p;
+			  p = cadr(arg2);
 			  if ((car(p) == multiply_symbol) &&
 			      (s7_is_symbol(cadr(p))) &&
 			      (s7_is_symbol(caddr(p))))
@@ -16051,15 +16056,26 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 		    }
 		}
 
-	      if (s7_function_choice_is_direct(sc, caddr(expr)))
+	      if (s7_function_choice_is_direct(sc, arg2))
 		{
 		  s7_function_choice_set_direct(sc, expr);
-		  if (s7_function_returns_temp(sc, caddr(expr))) 
+		  if (s7_function_returns_temp(sc, arg2)) 
 		    return(direct_oscil_2);
 		  return(indirect_oscil_2);
 		}
 	    }
 	}
+      if ((s7_is_symbol(arg2)) &&
+	  (s7_is_pair(arg1)) &&
+	  (car(arg1) == vector_ref_symbol) &&
+	  (s7_is_symbol(cadr(arg1))) &&
+	  (s7_is_symbol(caddr(arg1))) &&
+	  (s7_is_null(s7, s7_cdddr(arg1))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(oscil_vss_s);
+	}
+
       /*
       fprintf(stderr, "oscil_two: %s %d %d\n", DISPLAY(expr),
 	      (s7_is_pair(cadr(expr))) && (s7_function_choice_is_direct(sc, cadr(expr))),
@@ -16069,25 +16085,27 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
     }
   if (args == 3)
     {
-      if ((s7_is_real(caddr(expr))) &&
-	  (s7_number_to_real(sc, caddr(expr)) == 0.0) &&
-	  (s7_is_pair(cadddr(expr))) &&
-	  (s7_function_choice_is_direct_to_real(sc, cadddr(expr))))
+      arg2 = caddr(expr);
+      arg3 = cadddr(expr);
+      if ((s7_is_real(arg2)) &&
+	  (s7_number_to_real(sc, arg2) == 0.0) &&
+	  (s7_is_pair(arg3)) &&
+	  (s7_function_choice_is_direct_to_real(sc, arg3)))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(oscil_pm_direct);
 	}
-      if ((s7_is_symbol(caddr(expr))) &&
-	  (s7_is_pair(cadddr(expr))) &&
-	  (s7_function_choice_is_direct_to_real(sc, cadddr(expr))))
+      if ((s7_is_symbol(arg2)) &&
+	  (s7_is_pair(arg3)) &&
+	  (s7_function_choice_is_direct_to_real(sc, arg3)))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(oscil_ss3_direct);
 	}
-      if ((s7_is_pair(caddr(expr))) &&
-	  (s7_function_choice_is_direct_to_real(sc, caddr(expr))) &&
-	  (s7_is_pair(cadddr(expr))) &&
-	  (s7_function_choice_is_direct_to_real(sc, cadddr(expr))))
+      if ((s7_is_pair(arg2)) &&
+	  (s7_function_choice_is_direct_to_real(sc, arg2)) &&
+	  (s7_is_pair(arg3)) &&
+	  (s7_function_choice_is_direct_to_real(sc, arg3)))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(oscil_3_direct);
@@ -16575,7 +16593,8 @@ static s7_pointer env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
       if ((s7_is_pair(arg)) &&
 	  (car(arg) == vector_ref_symbol) &&
 	  (s7_is_symbol(cadr(arg))) &&
-	  (s7_is_symbol(caddr(arg))))
+	  (s7_is_symbol(caddr(arg))) &&
+	  (s7_is_null(s7, s7_cdddr(arg))))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(env_vss);
@@ -18050,6 +18069,7 @@ static void init_choosers(s7_scheme *sc)
   oscil_mul_ss = clm_make_function(sc, "oscil", g_oscil_mul_ss, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_ss, NULL, NULL, NULL);
   env_oscil_mul_s_v = clm_make_function(sc, "*", g_env_oscil_mul_s_v, 2, 0, false, "* optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
   oscil_mul_s_v = clm_make_function(sc, "oscil", g_oscil_mul_s_v, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_s_v, NULL, NULL, NULL);
+  oscil_vss_s = clm_make_function(sc, "oscil", g_oscil_vss_s, 2, 0, false, "oscil optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   GEN_F1("oscil-bank", oscil_bank);

@@ -1234,7 +1234,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
   "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound object) and the currently 
 selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
   (let* ((freq-inc (/ fftsize 2))
-	 (fdr (make-float-vector fftsize))
+	 (fdr #f)
 	 (fdi (make-float-vector fftsize))
 	 (spectr (make-float-vector freq-inc))
 	 (inctr 0)
@@ -1255,13 +1255,12 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 
     (lambda (inval)
       (if (= ctr freq-inc)
-	  (let ((fdtmp (channel->float-vector inctr fftsize cross-snd 0)))
+	  (begin
+	    (set! fdr (channel->float-vector inctr fftsize cross-snd 0))
 	    (set! inctr (+ inctr freq-inc))
-	    (spectrum fdtmp fdi #f 2)
-	    (float-vector-subtract! fdtmp spectr)
-	    (float-vector-scale! fdtmp (/ 1.0 freq-inc))
-	    (float-vector-scale! fdr 0.0)
-	    (float-vector-add! fdr fdtmp)
+	    (spectrum fdr fdi #f 2)
+	    (float-vector-subtract! fdr spectr)
+	    (float-vector-scale! fdr (/ 1.0 freq-inc))
 	    (set! ctr 0)))
       (set! ctr (+ ctr 1))
       (float-vector-add! spectr fdr)
@@ -1274,7 +1273,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 (define* (voiced->unvoiced amp fftsize r tempo snd chn)
   "(voiced->unvoiced amp fftsize r tempo snd chn) turns a vocal sound into whispering: (voiced->unvoiced 1.0 256 2.0 2.0)"
   (let* ((freq-inc (/ fftsize 2))
-	 (fdr (make-float-vector fftsize))
+	 (fdr #f)
 	 (fdi (make-float-vector fftsize))
 	 (spectr (make-float-vector freq-inc))
 	 (noi (make-rand (/ (srate snd) 3)))
@@ -1298,21 +1297,20 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	((>= i outlen))
       (set! ctr (min (- outlen i) freq-inc))
 
-      (let ((fdtmp (channel->float-vector inctr fftsize snd chn)))
-	(let ((pk (float-vector-peak fdtmp)))
-	  (if (> pk old-peak-amp) (set! old-peak-amp pk)))
-	(spectrum fdtmp fdi #f 2)
-	(set! inctr (+ hop inctr))
-	(float-vector-subtract! fdtmp spectr)
-	(float-vector-scale! fdtmp (/ 1.0 freq-inc))
-	(float-vector-scale! fdr 0.0)
-	(float-vector-add! fdr fdtmp))
+      (set! fdr (channel->float-vector inctr fftsize snd chn))
+      (let ((pk (float-vector-peak fdr)))
+	(if (> pk old-peak-amp) (set! old-peak-amp pk)))
+      (spectrum fdr fdi #f 2)
+      (float-vector-subtract! fdr spectr)
+      (float-vector-scale! fdr (/ 2.0 freq-inc))
+      (set! inctr (+ hop inctr))
 
-      (do ((k 0 (+ k 1))
-	   (j i (+ j 1)))
-	  ((= k ctr))
+      (do ((k 0 (+ k 2))
+	   (j i (+ j 2)))
+	  ((>= k ctr))
 	(float-vector-add! spectr fdr)
-	(float-vector-set! out-data j (formant-bank formants (rand noi)))))
+	(float-vector-set! out-data j (formant-bank formants (rand noi)))
+	(float-vector-set! out-data (+ j 1) (formant-bank formants (rand noi)))))
 
     (float-vector-scale! out-data (* amp (/ old-peak-amp (float-vector-peak out-data))))
     (float-vector->channel out-data 0 (max len outlen) snd chn)))
@@ -1323,7 +1321,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 (define* (pulse-voice cosines (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn)
   "(pulse-voice cosines (freq 440) (amp 1.0) (fftsize 256) (r 2.0) snd chn) uses ncos to manipulate speech sounds"
   (let* ((freq-inc (/ fftsize 2))
-	 (fdr (make-float-vector fftsize))
+	 (fdr #f)
 	 (fdi (make-float-vector fftsize))
 	 (spectr (make-float-vector freq-inc))
 	 (pulse (make-ncos freq cosines))
@@ -1345,15 +1343,13 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	((>= i len))
       (set! ctr (min (- len i) freq-inc))
 
-      (let ((fdtmp (channel->float-vector inctr fftsize snd chn)))
-	(let ((pk (float-vector-peak fdtmp)))
-	  (if (> pk old-peak-amp) (set! old-peak-amp pk)))
-	(spectrum fdtmp fdi #f 2)
-	(set! inctr (+ freq-inc inctr))
-	(float-vector-subtract! fdtmp spectr)
-	(float-vector-scale! fdtmp (/ 1.0 freq-inc))
-	(float-vector-scale! fdr 0.0)
-	(float-vector-add! fdr fdtmp))
+      (set! fdr (channel->float-vector inctr fftsize snd chn))
+      (let ((pk (float-vector-peak fdr)))
+	(if (> pk old-peak-amp) (set! old-peak-amp pk)))
+      (spectrum fdr fdi #f 2)
+      (float-vector-subtract! fdr spectr)
+      (float-vector-scale! fdr (/ 1.0 freq-inc))
+      (set! inctr (+ freq-inc inctr))
 
       (do ((k 0 (+ k 1))
 	   (j i (+ j 1)))
@@ -1406,12 +1402,12 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	    (xcof (mus-xcoeffs flt)))
 	(do ((i 0 (+ i 1)))
 	    ((= i 8))
-	  (set! (xcof i) (env (es i))))
+	  (float-vector-set! xcof i (env (vector-ref es i))))
 	val))))
 
 ;;; for something this simple (like a notch filter), we can use a two-zero filter:
 ;
-;(define flt (make-zpolar .99 550.0))
+;(define flt (make-two-zero 550.0 .99))
 ;
 ;;; this is a strong notch filter centered at 550 Hz
 ;

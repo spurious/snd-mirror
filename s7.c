@@ -32962,6 +32962,31 @@ void *s7_object_value_checked(s7_pointer obj, int type)
 }
 
 
+void *s7_vector_ref_object_value_checked(s7_scheme *sc, s7_pointer args, int type)
+{
+  s7_pointer vec, obj, i;
+  s7_Int index;
+
+  vec = finder(sc, car(args));
+  if ((!s7_is_vector(vec)) ||
+      (vector_rank(vec) != 1))
+    return(wrong_type_argument_n(sc, sc->VECTOR_REF, 1, car(args), T_VECTOR));
+  
+  i = finder(sc, cadr(args));
+  if (!s7_is_integer(i))
+    return(wrong_type_argument_n(sc, sc->VECTOR_REF, 2, cadr(args), T_INTEGER));
+
+  index = s7_integer(i);
+  if (index < 0)
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), make_integer(sc, index), "should not be negative"));
+  if (index >= vector_length(vec))
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), make_integer(sc, index), "should be less than the vector length"));
+
+  obj = vector_element(vec, index);
+  return(s7_object_value_checked(obj, type));
+}
+
+
 void s7_set_object_print_readably(int type, char *(*printer)(s7_scheme *sc, void *val))
 {
   object_types[type]->print_readably = printer;
@@ -69058,7 +69083,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.3
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 46.9
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 46.4
  *            153 with run macro (eval_ptree)
  */
 
@@ -69073,6 +69098,7 @@ int main(int argc, char **argv)
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
+ * for-each over sound(etc) -> sampler, similarly member/map
  *
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
  * safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
@@ -69082,9 +69108,9 @@ int main(int argc, char **argv)
  *   look back to "(", car->lambda*, complete based on arglist (why didn't this work in ws?)
  *   argnames as keywords are implicit, not in the symbol table, so this completion fails only the first time
  * map/for-each all_x? with-env? etc (member) -- is_all_x_safe for lambda 1/2 args -- safe_closure_s_z -> a? or a loop (safe_dotimes_c_a 50142 48175 -- is_all_x_op)
- * for-each over sound(etc) -> sampler, similarly member/map
+ *
  * [indirect_]outa_ss_looped?
- * use copy! (see down-oct)
- * check autoload both for collisions and missing stuff
+ * help info for *-float-vector-* still uses vct
+ * html checker should watch for -- in comments
  */
 

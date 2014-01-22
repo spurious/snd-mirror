@@ -53,8 +53,7 @@
 	(sum 0.0))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (set! sum (+ sum (* (amps i)
-			  (sin (phases i))))))
+      (set! sum (+ sum (* (amps i) (sin (phases i))))))
     sum))
 
 
