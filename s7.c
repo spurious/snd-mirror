@@ -54735,6 +54735,33 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_VECTOR_S:
 	      {
 		s7_pointer v, ind; 
+
+		/*
+196603: (im i)  set both or set_opvsq_opSopvsq etc or set_opvsq_c|s|opsq
+193165: (wk2 j1) both from (- (wk2 j1) (* scl (wk1 k))) essentially -- op_safe_c_opvsq_opSopvsqq? 
+193165: (wk1 j)
+161700: (ramps k) set_s_opvsq or set_opvsq_opvsq
+110250: (dline1 k)
+110250: (coeffs j) 
+105848: (radii j) if_op_opvsq 
+101656: (in-data i) could be explicit fvref
+100128: (buffer position) let_opvsq
+88200: (dsp-chain i)
+76251: (vals i)
+70560: (carriers k) -- organish in generators -- changed code
+55288: (v1 i)
+52660: (frame0 frame-loc) zip -- changed
+50828: (bins bin)
+50827: (samps2 i)
+50827: (samps1 i)
+47028: (last-peak-amps j)
+41879: (v inctr)
+39245: (data i)
+33674: (channel-gains i)
+32767: (spect i)
+27517: (data j)
+		 */
+
 		v = find_symbol_or_bust(sc, car(code));
 		ind = find_symbol_or_bust(sc, cadr(code));
 		if ((!s7_is_vector(v)) ||
@@ -54890,6 +54917,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_PAIR_C:
 	    case HOP_PAIR_C:
 	      {
+		/* 6768: (a 4) dlocsig (etc...) */
 		s7_pointer s;
 		s = find_symbol_or_bust(sc, car(code));
 		if (!is_pair(s))
@@ -69083,7 +69111,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.3
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 46.4
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 43.0
  *            153 with run macro (eval_ptree)
  */
 
@@ -69103,7 +69131,7 @@ int main(int argc, char **argv)
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
  * safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc (check if_* too)
- * file_to_sample|frame folded into readin changes (does this matter anywhere?)
+ *
  * it would be nice if TAB completion could complete keyword args correctly
  *   look back to "(", car->lambda*, complete based on arglist (why didn't this work in ws?)
  *   argnames as keywords are implicit, not in the symbol table, so this completion fails only the first time
@@ -69111,6 +69139,5 @@ int main(int argc, char **argv)
  *
  * [indirect_]outa_ss_looped?
  * help info for *-float-vector-* still uses vct
- * html checker should watch for -- in comments
  */
 

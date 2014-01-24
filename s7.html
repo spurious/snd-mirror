@@ -5946,7 +5946,7 @@ These symbols are not just an optimization of string comparison:
 3
 
 (define-macro (symbol-set! var val) ; like CL's set
-  `(apply set! ,var ',val ()))      ; trailing nil is just to make apply happy -- apply*?
+  `(apply set! ,var ',val ()))      ; trailing nil is just to make apply happy &mdash; apply*?
 
 (define-macro (progv vars vals . body)
  `(apply (apply lambda ,vars ',body) ,vals))

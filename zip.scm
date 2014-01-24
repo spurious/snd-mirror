@@ -89,7 +89,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 			    (let ((y0 (float-vector-ref frame1 ictr))
 				  (y1 (float-vector-ref frame1 (+ ictr 1))))
 			      (float-vector-set! frame0 k (+ y0 (* (- y1 y0) (- start-ctr ictr))))))))))
-		(let ((result (frame0 frame-loc)))
+		(let ((result (float-vector-ref frame0 frame-loc)))
 		  (set! frame-loc (+ frame-loc 1))
 		result)))))))
 

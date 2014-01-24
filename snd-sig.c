@@ -1753,6 +1753,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   char *ofile = NULL;
   io_error_t io_err = IO_NO_ERROR;
   mus_any *g = NULL;
+  mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
   
   if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
@@ -1814,16 +1815,18 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   if ((over_selection) && (!truncate))
     dur -= order;
 
+  runf = mus_run_function(g);
+
   if (!temp_file)
     {
       for (j = 0; j < dur; j++)
-	idata[j] = mus_apply(g, read_sample(sf), 0.0);
+	idata[j] = runf(g, read_sample(sf), 0.0);
     }
   else
     {
       for (offk = 0; offk < dur; offk++)
 	{
-	  idata[j] = mus_apply(g, read_sample(sf), 0.0);
+	  idata[j] = runf(g, read_sample(sf), 0.0);
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
@@ -1850,7 +1853,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       sfold = init_sample_read_any(beg + dur, cp, READ_FORWARD, sf->edit_ctr);
       for (offk = 0; offk < order; offk++)
 	{
-	  idata[j] = mus_apply(g, read_sample(sf), 0.0) + read_sample(sfold);
+	  idata[j] = runf(g, read_sample(sf), 0.0) + read_sample(sfold);
 	  j++;
 	  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	    {

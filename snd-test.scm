@@ -805,7 +805,7 @@
 	(snd-display #__line__ ";fft-log-magnitude set default: ~A" (fft-log-magnitude)))
     (if (not (equal? (fft-with-phases)  #f )) 
 	(snd-display #__line__ ";fft-with-phases set default: ~A" (fft-with-phases)))
-    (if (not (equal? (transform-size) 1024)) 
+    (if (not (member (transform-size) (list 1024 4096)))
 	(snd-display #__line__ ";transform-size set default: ~A" (transform-size)))
     (if (not (equal? (transform-graph-type) graph-once))
 	(snd-display #__line__ ";transform-graph-type set default: ~A" (transform-graph-type)))
@@ -1057,7 +1057,7 @@
 	(snd-display #__line__ ";* fft-log-magnitude set default: ~A" *fft-log-magnitude*))
     (if (not (equal? *fft-with-phases*  #f )) 
 	(snd-display #__line__ ";* fft-with-phases set default: ~A" *fft-with-phases*))
-    (if (not (equal? *transform-size* 1024)) 
+    (if (not (member *transform-size* (list 1024 4096)))
 	(snd-display #__line__ ";* transform-size set default: ~A" *transform-size*))
     (if (not (equal? *transform-graph-type* graph-once))
 	(snd-display #__line__ ";* transform-graph-type set default: ~A" *transform-graph-type*))
@@ -6703,8 +6703,10 @@ EDITS: 5
 
 	  (float-vector->channel v0)
 	  (select-all) 
-	  (set! (sinc-width) 40)
-	  (src-selection 0.5) 
+	  (let ((old-wid (sinc-width)))
+	    (set! (sinc-width) 40)
+	    (src-selection 0.5) 
+	    (set! (sinc-width) old-wid))
 	  (set! v0 (channel->float-vector 0 128 index 0))
 	  (if (or (fneq (sample 20) .5) (fneq (sample 30) 0.0) (fneq (sample 17) -.1057) )
 	      (snd-display #__line__ ";src-selection: ~A?" v0))
@@ -20073,10 +20075,12 @@ EDITS: 2
       (if (or (fneq (sample 50) .5) (fneq (sample 30) 0.20608) (fneq (sample 90) 0.9755))
 	  (snd-display #__line__ ";smooth: ~A ~A ~A?" (sample 50) (sample 30) (sample 90)))
       (undo) 
-      (set! (sinc-width) 40) 
-      (set! (sample 100) 0.5) 
-      (if (fneq (sample 100) 0.5) (snd-display #__line__ ";set-sample 100: ~A?" (sample 100)))
-      (src-sound .1) 
+      (let ((old-wid (sinc-width)))
+	(set! (sinc-width) 40) 
+	(set! (sample 100) 0.5) 
+	(if (fneq (sample 100) 0.5) (snd-display #__line__ ";set-sample 100: ~A?" (sample 100)))
+	(src-sound .1) 
+	(set! (sinc-width) old-wid))
       (if (or (fneq (sample 1000) 0.5) (fneq (sample 1024) 0.0625) (fneq (sample 1010) 0.0))
 	  (snd-display #__line__ ";src-sound: ~A ~A ~A?" (sample 1000) (sample 1024) (sample 1010)))
       (revert-sound)
@@ -27037,6 +27041,7 @@ EDITS: 2
 		(set! (transform-graph? #t #t) #f)
 		(set! (transform-size) (min (transform-size) 128))))
 	  )))
+    (set! (sinc-width) 10)
     (if open-files (for-each close-sound open-files))
     (set! (sync-style) sync-none)
     (set! open-files ())
@@ -46948,26 +46953,25 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-18-Jan-14:
-46,983,404,403
-6,470,733,733  ???:sin [/lib64/libm-2.12.so]
-5,579,414,304  s7.c:eval [/home/bil/gtk-snd/snd]
-2,382,781,319  ???:cos [/lib64/libm-2.12.so]
-1,941,766,575  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
-1,274,736,277  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,119,511,612  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-1,085,068,922  s7.c:gc [/home/bil/gtk-snd/snd]
-  978,492,405  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  899,447,632  ???:t2_32 [/home/bil/gtk-snd/snd]
-  804,462,497  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+23-Jan-14:
+42,953,442,471
+5,446,525,790  s7.c:eval [/home/bil/gtk-snd/snd]
+3,428,850,114  ???:sin [/lib64/libm-2.12.so]
+2,378,586,259  ???:cos [/lib64/libm-2.12.so]
+1,947,394,457  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+1,335,711,872  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+1,259,841,925  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
+1,074,869,488  s7.c:gc [/home/bil/gtk-snd/snd]
+1,062,482,089  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,050,835,858  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  885,469,176  ???:t2_32 [/home/bil/gtk-snd/snd]
+  785,981,295  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  670,856,959  clm.c:fir_20 [/home/bil/gtk-snd/snd]
-  623,200,533  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  567,864,022  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
-  446,777,543  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
- 
+  621,613,690  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  568,211,294  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,626,184  ???:n1_64 [/home/bil/gtk-snd/snd]
+  428,466,087  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  411,794,636  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
 |#
 
 

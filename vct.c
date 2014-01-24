@@ -1386,10 +1386,18 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
   else
     {
       mus_long_t lim8;
-      lim8 = lim - 8;
+      lim8 = lim - 16;
       i = 0;
       while (i <= lim8)
 	{
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
+	  d1[i] += d2[i]; i++;
 	  d1[i] += d2[i]; i++;
 	  d1[i] += d2[i]; i++;
 	  d1[i] += d2[i]; i++;

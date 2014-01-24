@@ -7169,11 +7169,10 @@ static mus_float_t fb_one_with_amps_c1_c2(mus_any *fbank, mus_float_t inval)
 
   rr = bank->c1;
   gain = (bank->c2 * inval);
-
   i = 0;
   while (i <= size4)
     {
-      x0[i] = gain;
+      x0[i] = gain;    
       y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += amps[i] * y0[i];
       i++;
@@ -7872,70 +7871,6 @@ mus_float_t mus_fir_filter(mus_any *ptr, mus_float_t input)
 }
 
 
-static mus_float_t fir_9(mus_any *ptr, mus_float_t input)
-{
-  mus_float_t xout = 0.0;
-  flt *gen = (flt *)ptr;
-  mus_float_t *state, *ts, *x;
-
-  x = (mus_float_t *)(gen->x);
-  state = (mus_float_t *)(gen->state + gen->loc);
-  ts = (mus_float_t *)(state + gen->order);
-
-  (*state) = input;
-  (*ts) = input;
-  state++;
-
-  while (ts > state)
-    {
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-    }
-  
-  gen->loc++;
-  if (gen->loc == gen->order)
-    gen->loc = 0;
-
-  return(xout + ((*ts) * (*x)));
-}
-  
-
-static mus_float_t fir_3(mus_any *ptr, mus_float_t input)
-{
-  mus_float_t xout = 0.0;
-  flt *gen = (flt *)ptr;
-  mus_float_t *state, *ts, *x;
-
-  x = (mus_float_t *)(gen->x);
-  state = (mus_float_t *)(gen->state + gen->loc);
-  ts = (mus_float_t *)(state + gen->order);
-
-  (*state) = input;
-  (*ts) = input;
-  state++;
-
-  while (ts > state)
-    {
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-    }
-  
-  gen->loc++;
-  if (gen->loc == gen->order)
-    gen->loc = 0;
-
-  return(xout + ((*ts) * (*x)));
-}
-
-
 static mus_float_t fir_n(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
@@ -7969,21 +7904,22 @@ static mus_float_t fir_n(mus_any *ptr, mus_float_t input)
 }
  
 
-static mus_float_t fir_20(mus_any *ptr, mus_float_t input)
+static mus_float_t fir_ge_20(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
   flt *gen = (flt *)ptr;
-  mus_float_t *state, *ts, *x;
+  mus_float_t *state, *ts, *x, *end;
 
   x = (mus_float_t *)(gen->x);
   state = (mus_float_t *)(gen->state + gen->loc);
   ts = (mus_float_t *)(state + gen->order);
+  end = (mus_float_t *)(state + 20);
 
   (*state) = input;
   (*ts) = input;
   state++;
 
-  while (ts > state)
+  while (ts >= end)
     {
       xout += (*ts--) * (*x++);
       xout += (*ts--) * (*x++);
@@ -8006,34 +7942,8 @@ static mus_float_t fir_20(mus_any *ptr, mus_float_t input)
       xout += (*ts--) * (*x++);
       xout += (*ts--) * (*x++);
     }
-  
-  gen->loc++;
-  if (gen->loc == gen->order)
-    gen->loc = 0;
-
-  return(xout + ((*ts) * (*x)));
-}
-
-
-static mus_float_t fir_2(mus_any *ptr, mus_float_t input)
-{
-  mus_float_t xout = 0.0;
-  flt *gen = (flt *)ptr;
-  mus_float_t *state, *ts, *x;
-
-  x = (mus_float_t *)(gen->x);
-  state = (mus_float_t *)(gen->state + gen->loc);
-  ts = (mus_float_t *)(state + gen->order);
-
-  (*state) = input;
-  (*ts) = input;
-  state++;
-
   while (ts > state)
-    {
-      xout += (*ts--) * (*x++);
-      xout += (*ts--) * (*x++);
-    }
+    xout += (*ts--) * (*x++);
   
   gen->loc++;
   if (gen->loc == gen->order)
@@ -8402,25 +8312,11 @@ static void set_filter_function(flt *gen)
     {
       if (gen->core == &FIR_FILTER_CLASS)
 	{
-	  gen->filtw = fir_n;
-	  if ((order & 1) == 0)
-	    {
-	      gen->filtw = fir_2;
-	      if ((order % 20) == 0)
-		gen->filtw = fir_20;
-	    }
-	  else
-	    {
-	      if ((order % 3) == 0)
-		gen->filtw = fir_3;
-	      if ((order % 9) == 0)
-		gen->filtw = fir_9;
-	    }
+	  if (order >= 20)
+	    gen->filtw = fir_ge_20;
+	  else gen->filtw = fir_n;
 	}
-      else
-	{
-	  gen->filtw = iir_n;
-	}
+      else gen->filtw = iir_n;
     }
 }
 
@@ -8802,6 +8698,9 @@ static mus_float_t mus_env_linear(mus_any *ptr)
   val = gen->current_value;
   if (gen->loc == 0)
     {
+      /* we can save about 10% total env time by checking here that we're on the last segment,
+       *   and setting gen->env_func to a version of mus_env_linear that does not watch gen->loc.
+       */
       gen->index++;
       gen->loc = gen->locs[gen->index] - gen->locs[gen->index - 1];
       gen->rate = gen->rates[gen->index];
@@ -10021,11 +9920,24 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
 
   for (i = 0; i < out_chans; i++)
     {
-      out->vals[i] = 0.0;
-      for (j = 0; j < in_chans; j++)
+      out->vals[i] = (frame->vals[0] * mix->vals[0][i]);
+      for (j = 1; j < in_chans; j++)
 	out->vals[i] += (frame->vals[j] * mix->vals[j][i]);
     }
   return((mus_any *)out); /* not arg_out since out may be allocated above, and clm2xen.c expects this to be legit */
+}
+
+
+static mus_any *safe_frame_to_frame(mus_frame *f1, mus_mixer *mx, mus_frame *f2, int in_chans, int out_chans)
+{
+  int i, j;
+  for (i = 0; i < out_chans; i++)
+    {
+      f2->vals[i] = f1->vals[0] * mx->vals[0][i];
+      for (j = 1; j < in_chans; j++)
+	f2->vals[i] += f1->vals[j] * mx->vals[j][i];
+    }
+  return((mus_any *)f2);
 }
 
 
@@ -10419,42 +10331,6 @@ static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 
 static mus_float_t run_file_to_sample(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) {return(mus_in_any_from_file(ptr, (int)arg1, (int)arg2));} /* mus_read_sample here? */
 
-#if 0
-static mus_float_t saved_file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
-{
-  rdin *rd = (rdin *)ptr;
-  if ((loc < rd->file_end) &&
-      (loc >= 0))
-    return(rd->saved_data[chan][loc]);
-  return(0.0);
-}
-
-static mus_float_t safe_file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
-{
-  rdin *rd = (rdin *)ptr;
-  if ((loc < rd->file_end) &&
-      (loc >= 0))
-    return(rd->ibufs[chan][loc]);
-  return(0.0);
-}
-
-static mus_float_t file_to_sample(mus_any *ptr, mus_long_t loc, int chan)
-{
-  rdin *rd = (rdin *)ptr;
-
-  if ((loc < 0) ||
-      (loc >= rd->file_end) ||
-      (chan < 0) ||
-      (chan > rd->chans))
-    return(0.0);
-
-  if ((loc <= rd->data_end) &&
-      (loc >= rd->data_start))
-    return(rd->ibufs[chan][loc - rd->data_start]);
-  return(mus_in_any_from_file(ptr, loc, chan));
-}
-#endif
-
 static int file_to_sample_end(mus_any *ptr)
 {
   rdin *gen = (rdin *)ptr;
@@ -10691,6 +10567,7 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
       gen->loc = start;
       gen->dir = direction;
       gen->chan = chan;
+      /* the saved data option does not save us anything in file_to_sample above */
       gen->saved_data = mus_sound_saved_data(filename);
       if (!saved_data)
 	{
@@ -13762,27 +13639,36 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 
       /* create current grain */
       {
-	int lim, steady_end, curstart, j;
+	int lim, steady_end, curstart, j, up_end;
+
 	lim = spd->grain_len;
 	curstart = grn_irandom(spd, spd->s20); /* start location in input buffer */
 	if ((curstart + spd->grain_len) > spd->in_data_len)
 	  lim = (spd->in_data_len - curstart);
 	if (lim > spd->grain_len)
 	  lim = spd->grain_len;
+
 	mus_clear_array(spd->grain, spd->grain_len);
+
 	if (spd->rmp > 0)
 	  {
 	    mus_float_t amp = 0.0, incr;
 	    steady_end = (spd->grain_len - spd->rmp);
 	    incr = (mus_float_t)(spd->amp) / (mus_float_t)(spd->rmp);
-	    for (i = 0, j = curstart; i < lim; i++, j++)
+	    up_end = spd->rmp;
+	    if (up_end > lim) up_end = lim;
+	    for (i = 0, j = curstart; i < up_end; i++, j++)
 	      {
 		spd->grain[i] = (amp * spd->in_data[j]);
-		if (i < spd->rmp) 
-		  amp += incr; 
-		else 
-		  if (i >= steady_end) /* was >, but that truncates the envelope */
-		    amp -= incr;
+		amp += incr; 
+	      }
+	    if (steady_end > lim) steady_end = lim;
+	    for (; i < steady_end; i++, j++)
+	      spd->grain[i] = (amp * spd->in_data[j]);
+	    for (; i < lim; i++, j++)
+	      {
+		spd->grain[i] = (amp * spd->in_data[j]);
+		amp -= incr; 
 	      }
 	  }
 	else
@@ -15318,6 +15204,12 @@ typedef struct {
   mus_float_t (*synthesize)(void *arg);
   int outctr, interp, filptr, N, D;
   mus_float_t *win, *ampinc, *amps, *freqs, *phases, *phaseinc, *lastphase, *in_data;
+
+  mus_float_t sum1;
+  bool calc;
+#if HAVE_SINCOS
+  mus_float_t *cs, *sn;
+#endif
 } pv_info;
 
 
@@ -15359,6 +15251,10 @@ static int free_phase_vocoder(mus_any *ptr)
       if (gen->phaseinc) free(gen->phaseinc);
       if (gen->lastphase) free(gen->lastphase);
       if (gen->ampinc) free(gen->ampinc);
+#if HAVE_SINCOS
+      if (gen->sn) free(gen->sn);
+      if (gen->cs) free(gen->cs);
+#endif
       free(gen);
     }
   return(0);
@@ -15486,6 +15382,14 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
     for (i = 0; i < fftsize; i++) 
       pv->win[i] *= scl;
 
+#if HAVE_SINCOS
+  /* in some cases, sincos is slower than sin+cos? Callgrind is seriously confused by it!
+   *   in Linux at least, sincos is faster than sin+sin.
+   */
+  pv->calc = true;
+  pv->cs = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
+  pv->sn = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
+#endif
   return((mus_any *)pv);
 }
 
@@ -15498,7 +15402,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 {
   pv_info *pv = (pv_info *)ptr;
   int N2, i, N4;
-  mus_float_t sum = 0.0;
+  mus_float_t sum, sum1;
   mus_float_t (*pv_synthesize)(void *arg) = synthesize;
 
   if (pv_synthesize == NULL) pv_synthesize = pv->synthesize;
@@ -15571,6 +15475,12 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       scl = 1.0 / (mus_float_t)(pv->interp);
       for (i = 0; i < N2; i++)
 	{
+#if HAVE_SINCOS
+	  double s, c;
+	  sincos((pv->freqs[i] + pv->phaseinc[i]) * 0.5, &s, &c);
+	  pv->sn[i] = s;
+	  pv->cs[i] = c;
+#endif
 	  pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
 	  pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
 	}
@@ -15581,72 +15491,73 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
   if (pv_synthesize) 
     return((*pv_synthesize)(pv->closure));
 
-  {
-    mus_float_t *pinc, *frq, *ph, *amp, *panc;
-    pinc = pv->phaseinc;
-    frq = pv->freqs;
-    ph = pv->phases;
-    amp = pv->amps;
-    panc = pv->ampinc;
+  if (pv->calc)
+    {
+      mus_float_t *pinc, *frq, *ph, *amp, *panc;
+      pinc = pv->phaseinc;
+      frq = pv->freqs;
+      ph = pv->phases;
+      amp = pv->amps;
+      panc = pv->ampinc;
+      
+      N4 = N2 - 4;
+      i = 0;
+      sum = 0.0;
+      sum1 = 0.0;
+      /* float here, rather than double, is slower 
+       * amps can be negative here due to rounding troubles
+       * sincos is faster (using shell time command) except in virtualbox running linux on a mac? 
+       *   (callgrind does not handle sincos correctly).
+       *
+       * this version (22-Jan-14) is slower if no sincos;
+       *   if sincos, we use sin(a + b) = sin(a)cos(b) + cos(a)sin(b)
+       *   since sin(b) and cos(b) are constant through the pv->interp (implicit) loop, they are calculated once above.
+       *   Then here we calculate 2 samples on each run through this loop.  I wonder if we could center the true case,
+       *   and get 3 samples?  If 2, the difference is very small (we're taking the midpoint of the phase increment change,
+       *   so the two are not quite the same).  In tests, 10000 samples, channel-distance is ca .15.
+       */
+      
+      for (;i < N2; i++)
+	{
+#if HAVE_SINCOS
+	  double sx, cx;
+#endif
+	  
+	  pinc[i] += frq[i];
+	  ph[i] += pinc[i];
+	  amp[i] += panc[i];
+	  
+#if HAVE_SINCOS
+	  sincos(ph[i], &sx, &cx);
+	  if (amp[i] > 1e-6)
+	    sum += (amp[i] * sx);
+#else
+	  if (amp[i] > 1e-6)
+	    sum += amp[i] * sin(ph[i]);
+#endif
+	  
+	  pinc[i] += frq[i];
+	  ph[i] += pinc[i];
+	  amp[i] += panc[i];
+	  
+#if HAVE_SINCOS
+	  if (amp[i] > 1e-6)
+	    sum1 += amp[i] * (sx * pv->cs[i] + cx * pv->sn[i]);
+#else
+	  if (amp[i] > 1e-6)
+	    sum1 += amp[i] * sin(ph[i]);
+#endif
 
-    N4 = N2 - 4;
-    i = 0;
-    /* splitting this loop in 2 saves far more than the extra bounds check and increments cost */
-    while (i <= N4)
-      {
-	pinc[i] += frq[i];
-	ph[i] += pinc[i];
-	i++;
-	
-	pinc[i] += frq[i];
-	ph[i] += pinc[i];
-	i++;
-	
-	pinc[i] += frq[i];
-	ph[i] += pinc[i];
-	i++;
-	
-	pinc[i] += frq[i];
-	ph[i] += pinc[i];
-	i++;
-      }
-    i = 0;
-    while (i <= N4)
-      {
-	/* float here, rather than double, is slower 
-	 * amps can be negative here due to rounding troubles
-	 */
-	amp[i] += panc[i];
-	if (amp[i] > 1e-6) /* this check is much faster (just as a check) than (amp[i] != 0.0) */
-	  sum += (amp[i] * sin(ph[i])); 
-	i++;
-	
-	amp[i] += panc[i];
-	if (amp[i] > 1e-6)
-	  sum += (amp[i] * sin(ph[i])); 
-	i++;
-	
-	amp[i] += panc[i];
-	if (amp[i] > 1e-6)
-	  sum += (amp[i] * sin(ph[i])); 
-	i++;
-	
-	amp[i] += panc[i];
-	if (amp[i] > 1e-6)
-	  sum += (amp[i] * sin(ph[i])); 
-	i++;
-      }
-
-    for (; i < N2; i++)
-      {
-	pinc[i] += frq[i];
-	ph[i] += pinc[i];
-	amp[i] += panc[i];
-	if (amp[i] > 1e-6)
-	  sum += (amp[i] * sin(ph[i])); 
-      }
-  }
-  return(sum);
+	  /* unrolled is not faster */
+	}
+      
+      pv->sum1 = sum1;
+      pv->calc = false;
+      return(sum);
+    }
+  
+  pv->calc = true;
+  return(pv->sum1);
 }
     
 
@@ -16107,9 +16018,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
 		mx->vals[j][k] = mus_env(envs[j][k]);
 	  mus_frame_to_file(outf, 
 			    outc, 
-			    mus_frame_to_frame(mus_file_to_frame(inf, inc, (mus_any *)frin), 
-					       (mus_any *)mx, 
-					       (mus_any *)frthru));
+			    safe_frame_to_frame((mus_frame *)mus_file_to_frame(inf, inc, (mus_any *)frin), mx, frthru, in_chans, out_chans));
 	}
       if (umx == NULL) mus_free((mus_any *)mx);
       break;
@@ -16145,9 +16054,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
       for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	mus_frame_to_file(outf, 
 			  outc, 
-			  mus_frame_to_frame(mus_file_to_frame(inf, inc, (mus_any *)frin), 
-					     (mus_any *)mx, 
-					     (mus_any *)frthru));
+			  safe_frame_to_frame((mus_frame *)mus_file_to_frame(inf, inc, (mus_any *)frin), mx, frthru, in_chans, out_chans));
       break;
 
     }

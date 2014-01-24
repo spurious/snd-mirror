@@ -1307,7 +1307,12 @@
 		     (let* ((len (length line))
 			    (opos (and line 
 				       (positive? len)
-				       (char-position "<>\"(){}&" line))))
+				       (char-position "<>\"(){}&" line)))
+			    (cpos (and (not opos)
+				       in-comment
+				       (string-position " -- " line))))
+		       (when cpos
+			 (format #t "~A[~D]: possible -- in comment: ~A~%" file linectr line))
 		       (when opos
 			 ;; open/close html entities
 			 (do ((i opos (or (char-position "<>\"(){}&" line (+ i 1)) len)))
