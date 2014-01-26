@@ -29004,7 +29004,6 @@ EDITS: 2
 		(ramp-channel (- (random 2.0) 1.0) (- (random 2.0) 1.0) beg (+ 10 (random 100)) cursnd curchn)))
 	
 	((12) (let* ((pts (+ 1 (random 8)))
-		     (maxpt 0.0)
 		     (e (let ((e1 ())
 			      (x 0.0)
 			      (y 0.0))
@@ -29014,7 +29013,6 @@ EDITS: 2
 			    (if (> (random 3) 0)
 				(set! y (mus-random 1.0)))
 			    (set! e1 (cons y e1))
-			    (if (> (abs y) maxpt) (set! maxpt (abs y)))
 			    (set! x (+ x .01 (random 1.0))))
 			  (reverse e1)))
 		     (beg (random (- (frames cursnd curchn) 300)))
@@ -29042,7 +29040,6 @@ EDITS: 2
 	
 	;; env-channel
 	((2) (let* ((pts (+ 1 (random 6)))
-		    (maxpt 0.0)
 		    (e (let ((e1 ())
 			     (x 0.0)
 			     (y 0.0))
@@ -29052,7 +29049,6 @@ EDITS: 2
 			   (if (> (random 3) 0)
 			       (set! y (mus-random 1.0)))
 			   (set! e1 (cons y e1))
-			   (if (> (abs y) maxpt) (set! maxpt (abs y)))
 			   (set! x (+ x .01 (random 1.0))))
 			 (reverse e1))))
 	       (if (undo-env cursnd curchn)
@@ -29069,10 +29065,6 @@ EDITS: 2
 		   (snd-display #__line__ ";env-channel ~A[~A] edit pos: ~A ~A" (short-file-name cursnd) curchn (edit-position cursnd curchn) cur-edit))
 	       (if (not (= (frames cursnd curchn) cur-frame))
 		   (snd-display #__line__ ";env-channel ~A[~A] frames: ~A ~A" (short-file-name cursnd) curchn (frames cursnd curchn) cur-frame))
-	       (if (> (- (maxamp cursnd curchn) .01) (* maxpt cur-amp))
-		   (begin
-		     (snd-display #__line__ ";env-channel ~A[~A] maxamp: ~A ~A from ~A" (short-file-name cursnd) curchn (maxamp cursnd curchn) (* maxpt cur-amp) e)
-		     (error 'mus-error)))
 	       (for-each
 		(lambda (s c amp ed fr)
 		  (if (not (and (equal? s cursnd)
@@ -29092,7 +29084,6 @@ EDITS: 2
 	
 	;; env-sound
 	((3) (let* ((pts (+ 1 (random 6)))
-		    (maxpt 0.0)
 		    (recalc #f)
 		    (e (let ((e1 ())
 			     (x 0.0)
@@ -29103,7 +29094,6 @@ EDITS: 2
 			   (if (> (random 3) 0)
 			       (set! y (mus-random 1.0)))
 			   (set! e1 (cons y e1))
-			   (if (> (abs y) maxpt) (set! maxpt (abs y)))
 			   (set! x (+ x .01 (random 1.0))))
 			 (reverse e1)))
 		    (end (apply min cur-frames)) ; env-sound can lengthen a shorter sound if syncd+multichannel
@@ -46953,24 +46943,24 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-25-Jan-14:
-42,668,516,559
-5,450,384,210  s7.c:eval [/home/bil/gtk-snd/snd]
-3,429,474,549  ???:sin [/lib64/libm-2.12.so]
-2,375,405,855  ???:cos [/lib64/libm-2.12.so]
-1,939,033,055  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+26-Jan-14:
+42,491,733,207
+5,436,186,791  s7.c:eval [/home/bil/gtk-snd/snd]
+3,427,543,308  ???:sin [/lib64/libm-2.12.so]
+2,375,299,622  ???:cos [/lib64/libm-2.12.so]
+1,929,038,724  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
 1,335,711,872  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,096,800,699  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,069,699,652  s7.c:gc [/home/bil/gtk-snd/snd]
-1,003,476,352  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  899,447,588  ???:t2_32 [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+1,096,758,263  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,063,491,593  s7.c:gc [/home/bil/gtk-snd/snd]
+  971,353,172  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  899,447,632  ???:t2_32 [/home/bil/gtk-snd/snd]
+  781,898,497  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  624,429,580  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  571,373,090  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,355,496  ???:n1_64 [/home/bil/gtk-snd/snd]
-  454,119,343  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  627,596,267  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  571,033,487  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,430,536  ???:n1_64 [/home/bil/gtk-snd/snd]
+  443,847,268  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   411,794,636  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
 |#
 

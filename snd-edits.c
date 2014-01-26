@@ -632,6 +632,11 @@ static mus_float_t previous_sample_value(snd_fd *sf)
   else return(sf->data[sf->loc--] * sf->fscaler);
 }
 
+static mus_float_t previous_sample_value_unchecked(snd_fd *sf) 
+{
+  return(sf->data[sf->loc--] * sf->fscaler);
+}
+
 
 static mus_float_t next_sample_value_unscaled(snd_fd *sf) 
 {
@@ -658,6 +663,13 @@ static mus_float_t previous_sample_value_unscaled(snd_fd *sf)
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
   else return(sf->data[sf->loc--]);
+}
+
+
+mus_float_t previous_sample_value_unscaled_and_unchecked(snd_fd *sf);
+mus_float_t previous_sample_value_unscaled_and_unchecked(snd_fd *sf) 
+{
+  return(sf->data[sf->loc--]);
 }
 
 
@@ -4967,45 +4979,38 @@ mus_long_t current_location(snd_fd *sf)
 
 void sampler_set_safe(snd_fd *sf, mus_long_t dur)
 {
-#if SF_UNSAFE
-  if ((sf->runf == next_sample_value_unscaled) ||
-      (sf->runf == next_sample_value) ||
-      (sf->runf == next_ramp1))
-    fprintf(stderr, "%p %p loc: %lld, last: %lld (%lld), dur: %lld\n",
-	    sf->cb, sf->current_sound,
-	    sf->loc, sf->last, sf->last - sf->loc, dur);
-#endif
   /* tricky because we currently assume the reader protects against reading off the end by returning 0.0,
    *  perhaps pass in dur (= number of samples we will be reading), and if last-loc+1>=dur, we're safe?
    *  dur here has to match the number of samples we will read! 
    */
+  
+  /* fprintf(stderr, "%lld %lld %lld: %lld\n", sf->first, sf->loc, sf->last, dur); */
+
   if ((sf->last - sf->loc + 1) >= dur) /* two kinds of counter here: last is sample number, dur is how many samples */
     {
       if (sf->runf == next_sample_value_unscaled)
-	{
-#if SF_UNSAFE
-	  fprintf(stderr, "unscaled reset to unchecked\n");
-#endif
-	  sf->runf = next_sample_value_unscaled_and_unchecked;
-	}
+	sf->runf = next_sample_value_unscaled_and_unchecked;
       else
 	{
 	  if (sf->runf == next_sample_value)
-	    {
-#if SF_UNSAFE
-	      fprintf(stderr, "scaled reset to unchecked\n");
-#endif
-	      sf->runf = next_sample_value_unchecked;
-	    }
+	    sf->runf = next_sample_value_unchecked;
 	  else
 	    {
 	      if (sf->runf == next_ramp1)
-		{
-#if SF_UNSAFE
-		  fprintf(stderr, "ramp1 reset to unchecked\n");
-#endif
-		  sf->runf = next_ramp1_unchecked;
-		}
+		sf->runf = next_ramp1_unchecked;
+	    }
+	}
+    }
+  else
+    {
+      if (sf->loc - sf->first + 1 >= dur)
+	{
+	  if (sf->runf == previous_sample_value_unscaled)
+	    sf->runf = previous_sample_value_unscaled_and_unchecked;
+	  else
+	    {
+	      if (sf->runf == previous_sample_value)
+		sf->runf = previous_sample_value_unchecked;
 	    }
 	}
     }

@@ -1,6 +1,6 @@
 /* sndins.c -- Sndins for Snd/CLM
  *
- * Copyright (c) 2003-2012 Michael Scholz <mi-scholz@users.sourceforge.net>
+ * Copyright (c) 2003-2014 Michael Scholz <mi-scholz@users.sourceforge.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,10 +24,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Commentary:
- *
- * helper functions
- * fcomb functions
+ * @(#)sndins.c	1.8 1/25/14
+ */
+
+/*
  * instruments: fm-violin, jc-reverb, nrev, freeverb
  *
  * mus_any *mus_make_fcomb(mus_float_t scaler, int size,
@@ -46,9 +46,7 @@
 #if HAVE_CONFIG_H
 #include <mus-config.h>
 #endif
-#if HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,18 +72,17 @@
 #else
 #define XEN_PROVIDED_P(feature)	false
 #endif
-#endif				/* !XEN_PROVIDED */
+#endif /* XEN_PROVIDED */
 
 #define INS_NO_MEMORY	XEN_ERROR_TYPE("sndins-no-memory-error")
 #define INS_MISC	XEN_ERROR_TYPE("sndins-misc-error")
 
-#define INS_ERROR(error, caller, msg)					\
-	XEN_ERROR(error, XEN_LIST_2(C_TO_XEN_STRING(caller),		\
-	    C_TO_XEN_STRING(msg)))
-#define INS_MISC_ERROR(caller, msg)					\
-	INS_ERROR(INS_MISC, caller, msg)
-#define INS_NO_MEMORY_ERROR()						\
-	INS_ERROR(INS_NO_MEMORY, c__FUNCTION__, "cannot allocate memory")
+#define INS_ERROR(Error, Caller, Msg)					\
+	XEN_ERROR(Error, 						\
+	    XEN_LIST_2(C_TO_XEN_STRING(Caller), C_TO_XEN_STRING(Msg)))
+#define INS_MISC_ERROR(Caller, Msg)	INS_ERROR(INS_MISC, Caller, Msg)
+#define INS_NO_MEMORY_ERROR(Caller)					\
+	INS_ERROR(INS_NO_MEMORY, Caller, "cannot allocate memory")
 
 #define SC_startime			"startime"
 #define SC_duration			"duration"
@@ -148,7 +145,7 @@
 #define SC_offset_room_decay		"offset_room_decay"
 #define SC_scale_damping		"scale_dumping"
 #define SC_stereo_spread		"stereo_spread"
-#else				/* !HAVE_RUBY */
+#else	/* !HAVE_RUBY */
 #define SC_amp_env			"amp-env"
 #define SC_fm_index			"fm-index"
 #define SC_reverb_amount		"reverb-amount"
@@ -187,7 +184,7 @@
 #define SC_offset_room_decay		"offset-room-decay"
 #define SC_scale_damping		"scale-dumping"
 #define SC_stereo_spread		"stereo-spread"
-#endif				/* !HAVE_RUBY */
+#endif	/* HAVE_RUBY */
 
 enum {
 	C_startime,
@@ -357,17 +354,11 @@ static mus_float_t *xen_list2array(XEN list);
 static int     *xen_list2iarray(XEN list);
 
 /* fcomb generator */
-static mus_float_t *fcomb_data(mus_any *ptr);
 static char    *fcomb_describe(mus_any *ptr);
 static bool	fcomb_equal_p(mus_any *p1, mus_any *p2);
 static int	fcomb_free(mus_any *ptr);
 static mus_long_t fcomb_length(mus_any *ptr);
-static void	fcomb_reset(mus_any *ptr);
 static mus_float_t fcomb_scaler(mus_any *ptr);
-static mus_float_t fcomb_xcoeff(mus_any *ptr, int index);
-static mus_float_t *fcomb_xcoeffs(mus_any *ptr);
-static mus_float_t set_fcomb_scaler(mus_any *ptr, mus_float_t val);
-static mus_float_t set_fcomb_xcoeff(mus_any *ptr, int index, mus_float_t val);
 
 /* XEN fcomb */
 static XEN	c_fcomb(XEN gen, XEN input);
@@ -464,15 +455,14 @@ xen_list2array(XEN list)
 	len = XEN_LIST_LENGTH(list);
 	if (len == 0)
 		return (NULL);
-
 	flist = malloc(len * sizeof(mus_float_t));
 	if (flist == NULL) {
-		INS_NO_MEMORY_ERROR();
+		INS_NO_MEMORY_ERROR("xen_list2array");
 		/* NOTREACHED */
 		return (NULL);
 	}
 	for (i = 0, lst = XEN_COPY_ARG(list); i < len; i++, lst = XEN_CDR(lst))
-		flist[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+		flist[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	return (flist);
 }
 
@@ -490,15 +480,14 @@ xen_list2iarray(XEN list)
 	len = XEN_LIST_LENGTH(list);
 	if (len == 0)
 		return (NULL);
-
 	ilist = malloc(len * sizeof(int));
 	if (ilist == NULL) {
-		INS_NO_MEMORY_ERROR();
+		INS_NO_MEMORY_ERROR("xen_list2iarray");
 		/* NOTREACHED */
 		return (NULL);
 	}
 	for (i = 0, lst = XEN_COPY_ARG(list); i < len; i++, lst = XEN_CDR(lst))
-		ilist[i] = XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0);
+		ilist[i] = XEN_TO_C_INT(XEN_CAR(lst));
 	return (ilist);
 }
 
@@ -514,10 +503,9 @@ array2array(mus_float_t *list, int len)
 
 	if (len == 0)
 		return (NULL);
-
 	flist = malloc(len * sizeof(mus_float_t));
 	if (flist == NULL) {
-		INS_NO_MEMORY_ERROR();
+		INS_NO_MEMORY_ERROR("array2array");
 		/* NOTREACHED */
 		return (NULL);
 	}
@@ -538,10 +526,9 @@ int_array2array(int *list, int len)
 
 	if (len == 0)
 		return (NULL);
-
 	ilist = malloc(len * sizeof(int));
 	if (ilist == NULL) {
-		INS_NO_MEMORY_ERROR();
+		INS_NO_MEMORY_ERROR("int_array2array");
 		/* NOTREACHED */
 		return (NULL);
 	}
@@ -581,24 +568,23 @@ ins_message(const char *fmt,...)
 {
 	int len, result;
 	va_list ap;
-	char *str;
+	char *s;
 
 	len = strlen(fmt) + 128;
-	str = malloc(len * sizeof(char));
-	if (str == NULL) {
-		INS_NO_MEMORY_ERROR();
+	s = malloc(len * sizeof(char));
+	if (s == NULL) {
+		INS_NO_MEMORY_ERROR("ins_message");
 		/* NOTREACHED */
 		return (-1);
 	}
 	va_start(ap, fmt);
-	result = vsnprintf(str, len, fmt, ap);
+	result = vsnprintf(s, len, fmt, ap);
 	va_end(ap);
-
 	if (XEN_PROVIDED_P("snd") && !XEN_PROVIDED_P("snd-nogui"))
-		mus_print(INS_COMMENT_STRING " %s", str);
+		mus_print(INS_COMMENT_STRING " %s", s);
 	else
-		fprintf(stdout, INS_COMMENT_STRING " %s", str);
-	free(str);
+		fprintf(stdout, INS_COMMENT_STRING " %s", s);
+	free(s);
 	return (result);
 }
 
@@ -614,7 +600,7 @@ prime_p(int x)
 	if (x == 2)
 		return (true);
 	if (x % 2) {
-		int i = 0;
+		int i;
 
 		for (i = 3; i < sqrt(x); i += 2)
 			if ((x % i) == 0)
@@ -629,39 +615,31 @@ prime_p(int x)
 static char *
 format_array(mus_float_t *line, int size)
 {
-	int i, lim = size;
-	char *str = NULL;
+	int i, lim;
+	char *s, *t;
 
+	lim = size;
+	s = NULL;
 	if (lim > mus_array_print_length())
 		lim = mus_array_print_length();
-
-	str = calloc(INS_FMT_SIZE * lim * 2, sizeof(char));
-	if (str == NULL) {
-		INS_NO_MEMORY_ERROR();
+	s = calloc(INS_FMT_SIZE * lim * 2, sizeof(char));
+	if (s == NULL) {
+		INS_NO_MEMORY_ERROR("format_array");
 		/* NOTREACHED */
 		return (NULL);
 	}
-	if (line != NULL) {
-		char *tmp;
-
-		tmp = calloc(INS_FMT_SIZE, sizeof(char));
-		if (tmp == NULL) {
-			INS_NO_MEMORY_ERROR();
-			/* NOTREACHED */
-			return (NULL);
-		}
-		strcpy(str, "[");
-		for (i = 0; i < lim - 1; i++) {
-			mus_snprintf(tmp, INS_FMT_SIZE, "%.3f ", line[i]);
-			strcat(str, tmp);
-		}
-		mus_snprintf(tmp, INS_FMT_SIZE, "%.3f%s]",
-		    line[i], (size > lim) ? "..." : "");
-		strcat(str, tmp);
-		free(tmp);
-	} else
-		strcpy(str, "nil");
-	return (str);
+	if (line == NULL)
+		return (strcpy(s, "nil"));
+	strcpy(s, "[");
+	for (i = 0; i < lim - 1; i++) {
+		t = mus_format("%.3f ", line[i]);
+		strcat(s, t);
+		free(t);
+	}
+	t = mus_format("%.3f%s]", line[i], (size > lim) ? "..." : "");
+	strcat(s, t);
+	free(t);
+	return (s);
 }
 
 /* --- fcomb --- */
@@ -671,7 +649,7 @@ typedef struct {
 	int		loc;
 	int		size;	/* mus_length(gen) */
 	mus_float_t    *line;	/* mus_data(gen) */
-	mus_float_t	xs  [2];/* a0, a1; mus_xcoeff(gen, 0 or 1) */
+	mus_float_t	xs[2];	/* a0, a1; mus_xcoeff(gen, 0 or 1) */
 	mus_float_t	xscl;	/* mus_scaler(gen) */
 	mus_float_t	x1;
 } fcomb;
@@ -685,39 +663,29 @@ mus_fcomb_p(mus_any *ptr)
 }
 
 #define INS_DESCRIBE_SIZE 2048
-#define FC_DESC								\
-	"fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, x1: %.3f, line[%d]: %s"
 
 static char *
 fcomb_describe(mus_any *ptr)
 {
-	char *desc;
-	fcomb *gen = (fcomb *)ptr;
+	char *s, *t;
+	fcomb *gen;
 
-	desc = calloc(INS_DESCRIBE_SIZE, sizeof(char));
-	if (desc == NULL) {
-		INS_NO_MEMORY_ERROR();
-		/* NOTREACHED */
-		return (NULL);
-	}
-	if (mus_fcomb_p(ptr)) {
-		char *s;
-
-		s = format_array(gen->line, gen->size);
-		mus_snprintf(desc, INS_DESCRIBE_SIZE, FC_DESC,
-		    gen->xscl, gen->xs[0], gen->xs[1], gen->x1, gen->size, s);
-		free(s);
-	} else
-		mus_snprintf(desc, INS_DESCRIBE_SIZE, "not an fcomb gen");
-	return (desc);
+	gen = (fcomb *)ptr;
+	t = format_array(gen->line, gen->size);
+	s = mus_format("fcomb: scaler: "
+	    "%.3f, a0: %.3f, a1: %.3f, x1: %.3f, line[%d]: %s",
+	    gen->xscl, gen->xs[0], gen->xs[1], gen->x1, gen->size, t);
+	free(t);
+	return (s);
 }
 
 static bool
 fcomb_equal_p(mus_any *p1, mus_any *p2)
 {
-	fcomb *g1 = (fcomb *)p1;
-	fcomb *g2 = (fcomb *)p2;
+	fcomb *g1, *g2;
 
+	g1 = (fcomb *)p1;
+	g2 = (fcomb *)p2;
 	return (mus_fcomb_p(p1) && ((p1 == p2) ||
 	    (mus_fcomb_p(p2) &&
 	    g1->xs[0] == g2->xs[0] &&
@@ -728,78 +696,27 @@ fcomb_equal_p(mus_any *p1, mus_any *p2)
 static mus_long_t
 fcomb_length(mus_any *ptr)
 {
-	fcomb *gen = (fcomb *)ptr;
+	fcomb *gen;
 
+	gen = (fcomb *)ptr;
 	return ((mus_long_t)(gen->size));
-}
-
-static mus_float_t *
-fcomb_data(mus_any *ptr)
-{
-	fcomb *gen = (fcomb *)ptr;
-
-	return (gen->line);
 }
 
 static mus_float_t
 fcomb_scaler(mus_any *ptr)
 {
-	fcomb *gen = (fcomb *)ptr;
+	fcomb *gen;
 
+	gen = (fcomb *)ptr;
 	return (gen->xscl);
-}
-
-static mus_float_t
-set_fcomb_scaler(mus_any *ptr, mus_float_t val)
-{
-	fcomb *gen = (fcomb *)ptr;
-
-	gen->xscl = val;
-	return (val);
-}
-
-static mus_float_t
-fcomb_xcoeff(mus_any *ptr, int index)
-{
-	fcomb *gen = (fcomb *)ptr;
-
-	if (index < 0 || index > 1)
-		index = 0;
-	return (gen->xs[index]);
-}
-
-static mus_float_t
-set_fcomb_xcoeff(mus_any *ptr, int index, mus_float_t val)
-{
-	fcomb *gen = (fcomb *)ptr;
-
-	if (index < 0 || index > 1)
-		index = 0;
-	gen->xs[index] = val;
-	return (val);
-}
-
-static mus_float_t *
-fcomb_xcoeffs(mus_any *ptr)
-{
-	fcomb *gen = (fcomb *)ptr;
-
-	return (gen->xs);
-}
-
-static void
-fcomb_reset(mus_any *ptr)
-{
-	fcomb *gen = (fcomb *)ptr;
-
-	gen->x1 = 0.0;
 }
 
 static int
 fcomb_free(mus_any *ptr)
 {
-	fcomb *gen = (fcomb *)ptr;
+	fcomb *gen;
 
+	gen = (fcomb *)ptr;
 	if (gen != NULL) {
 		if (gen->line != NULL)
 			free(gen->line);
@@ -817,9 +734,10 @@ mus_float_t
 mus_fcomb(mus_any *ptr, mus_float_t input,
     mus_float_t ignored __attribute__((unused)))
 {
-	fcomb *gen = (fcomb *)ptr;
+	fcomb *gen;
 	mus_float_t tap_result, filter_result;
 
+	gen = (fcomb *)ptr;
 	tap_result = gen->line[gen->loc];
 	filter_result = (gen->xs[0] * tap_result) + (gen->xs[1] * gen->x1);
 	gen->x1 = tap_result;
@@ -837,30 +755,27 @@ mus_any        *
 mus_make_fcomb(mus_float_t scaler, int size, mus_float_t a0, mus_float_t a1)
 {
 	fcomb *gen;
+	int i;
 
 	gen = calloc(1, sizeof(fcomb));
 	if (gen == NULL) {
-		INS_NO_MEMORY_ERROR();
+		INS_NO_MEMORY_ERROR("mus_make_fcomb");
 		/* NOTREACHED */
 		return (NULL);
 	}
 	gen->line = calloc(size, sizeof(mus_float_t));
 	if (gen->line == NULL) {
-		INS_NO_MEMORY_ERROR();
+		INS_NO_MEMORY_ERROR("mus_make_fcomb");
 		/* NOTREACHED */
 		return (NULL);
-	} else {
-		int i;
-
-		for (i = 0; i < size; i++)
-			gen->line[i] = 0.0;
 	}
-
+	for (i = 0; i < size; i++)
+		gen->line[i] = 0.0;
 	MUS_FCOMB = mus_make_generator_type();
-	gen->core = mus_make_generator(MUS_FCOMB, "fcomb", fcomb_free,
-	    fcomb_describe, fcomb_equal_p);
+	gen->core = mus_make_generator(MUS_FCOMB, "fcomb",
+	    fcomb_free, fcomb_describe, fcomb_equal_p);
 	if (gen->core == NULL) {
-		INS_NO_MEMORY_ERROR();
+		INS_NO_MEMORY_ERROR("mus_make_fcomb");
 		/* NOTREACHED */
 		return (NULL);
 	}
@@ -870,14 +785,8 @@ mus_make_fcomb(mus_float_t scaler, int size, mus_float_t a0, mus_float_t a1)
 	gen->xs[0] = a0;
 	gen->xs[1] = a1;
 	gen->size = size;
-	mus_generator_set_data(gen->core, fcomb_data);
 	mus_generator_set_length(gen->core, fcomb_length);
-	mus_generator_set_reset(gen->core, fcomb_reset);
 	mus_generator_set_scaler(gen->core, fcomb_scaler);
-	mus_generator_set_set_scaler(gen->core, set_fcomb_scaler);
-	mus_generator_set_xcoeff(gen->core, fcomb_xcoeff);
-	mus_generator_set_set_xcoeff(gen->core, set_fcomb_xcoeff);
-	mus_generator_set_xcoeffs(gen->core, fcomb_xcoeffs);
 	return ((mus_any *)gen);
 }
 
@@ -930,12 +839,10 @@ c_make_fcomb(XEN args)
 	keys[argn++] = allkeys[C_size];
 	keys[argn++] = allkeys[C_a0];
 	keys[argn++] = allkeys[C_a1];
-
 	for (i = 0; i < FCOMB_LAST_KEY * 2; i++)
 		kargs[i] = XEN_UNDEFINED;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = XEN_LIST_REF(args, i);
-
 	vals = mus_optkey_unscramble(S_make_fcomb, argn, keys, kargs, orig_arg);
 	if (vals > 0) {
 		keyn = 0;
@@ -959,10 +866,16 @@ c_make_fcomb(XEN args)
 	}
 	ge = mus_make_fcomb(scaler, size, a0, a1);
 	if (ge) {
-		fcomb *g = (fcomb *)ge;
+		fcomb *g;
+		mus_xen *fc;
+		XEN v1, v2;
 
-		return (mus_xen_to_object(mus_any_to_mus_xen_with_two_vcts(ge,
-		    xen_make_vct(size, g->line), xen_make_vct(2, g->xs))));
+		g = (fcomb *)ge;
+		/* wrapper set v->dont_free = true */
+		v1 = xen_make_vct_wrapper(size, g->line);
+		v2 = xen_make_vct_wrapper(2, g->xs);
+		fc = mus_any_to_mus_xen_with_two_vcts(ge, v1, v2);
+		return (mus_xen_to_object(fc));
 	}
 	return (XEN_FALSE);
 }
@@ -1003,10 +916,11 @@ static XEN
 c_fcomb(XEN gen, XEN input)
 {
 	mus_any *ge;
-	mus_float_t fm = 0.0;
+	mus_float_t fm;
 
+	fm = 0.0;
 	ge = XEN_TO_MUS_ANY(gen);
-	XEN_ASSERT_TYPE(mus_fcomb_p(ge), gen, XEN_ARG_1, S_fcomb, "an fcomb");
+	XEN_ASSERT_TYPE(mus_fcomb_p(ge), gen, 1, S_fcomb, "an fcomb");
 	if (XEN_BOUND_P(input))
 		fm = XEN_TO_C_DOUBLE(input);
 	return (C_TO_XEN_DOUBLE(mus_fcomb(ge, fm, 0.0)));
@@ -1067,7 +981,6 @@ ins_fm_violin(mus_float_t start, mus_float_t dur, mus_float_t freq,
 	logfrq = log(freq);
 	sqrtfrq = sqrt(freq);
 	vln = index_type;	/* true: violin, false: cello */
-
 	if (fm1_index != 0.0)
 		index1 = fm1_index;
 	else {
@@ -1105,7 +1018,6 @@ ins_fm_violin(mus_float_t start, mus_float_t dur, mus_float_t freq,
 	else
 		norm = index1;
 	carrier = mus_make_oscil(freq, 0.0);
-
 	if (modulate) {
 		if (easy_case) {
 			int nparts;
@@ -1159,7 +1071,6 @@ ins_fm_violin(mus_float_t start, mus_float_t dur, mus_float_t freq,
 		rev_chans = mus_channels(rev);
 	loc = mus_make_locsig(degree, distance, reverb_amount,
 	    out_chans, out, rev_chans, rev, mode);
-
 	for (i = beg; i < len; i++) {
 		if (fm_noi)
 			fuzz = mus_rand(fm_noi, 0.0);
@@ -1184,7 +1095,6 @@ ins_fm_violin(mus_float_t start, mus_float_t dur, mus_float_t freq,
 		mus_locsig(loc, i, mus_env(ampf) * amp_fuzz *
 		    mus_oscil(carrier, vib + ind_fuzz * mod, 0.0));
 	}
-
 	mus_free(pervib);
 	mus_free(ranvib);
 	mus_free(carrier);
@@ -1236,13 +1146,11 @@ ins_jc_reverb(mus_float_t start, mus_float_t dur, mus_float_t volume,
 	delA = delB = 0.0;
 	allpass_sum = comb_sum = comb_sum_1 = comb_sum_2 = all_sums = 0.0;
 	beg = mus_seconds_to_samples(start);
-
 	if (dur > 0.0)
 		len = beg + mus_seconds_to_samples(dur);
 	else
 		len = beg + mus_seconds_to_samples(1.0) +
 		    mus_sound_frames(mus_file_name(rev));
-
 	chans = mus_channels(out);
 	rev_chans = mus_channels(rev);
 	allpass1 = mus_make_all_pass(-0.7, 0.7, 1051, NULL, 1051,
@@ -1281,14 +1189,12 @@ ins_jc_reverb(mus_float_t start, mus_float_t dur, mus_float_t volume,
 		    dur, 0, NULL);
 	if (doubled && chan4)
 		INS_MISC_ERROR(S_jc_reverb, JC_WARN);
-
 	for (i = beg; i < len; i++) {
 		int j;
 		mus_float_t ho;
 
 		for (j = 0, ho = 0.0; j < rev_chans; j++)
 			ho += mus_in_any(i, j, rev);
-
 		allpass_sum = mus_all_pass_unmodulated(allpass3,
 		    mus_all_pass_unmodulated(allpass2,
 		    mus_all_pass_unmodulated(allpass1, ho)));
@@ -1298,32 +1204,23 @@ ins_jc_reverb(mus_float_t start, mus_float_t dur, mus_float_t volume,
 		    mus_comb_unmodulated(comb2, allpass_sum) +
 		    mus_comb_unmodulated(comb3, allpass_sum) +
 		    mus_comb_unmodulated(comb4, allpass_sum);
-
 		if (low_pass)
 			all_sums = 0.25 * (comb_sum + comb_sum_2) +
 			    0.5 * comb_sum_1;
 		else
 			all_sums = comb_sum;
-
 		delA = mus_delay_unmodulated(outdel1, all_sums);
-
 		if (doubled)
 			delA += mus_delay_unmodulated(outdel3, all_sums);
-
 		if (env_a)
 			volume = mus_env(env_a);
-
 		mus_out_any(i, delA * volume, 0, out);
-
 		if (chan2) {
 			delB = mus_delay_unmodulated(outdel2, all_sums);
-
 			if (doubled)
 				delB += mus_delay_unmodulated(outdel4,
 				    all_sums);
-
 			mus_out_any(i, delB * volume, 1, out);
-
 			if (chan4) {
 				mus_out_any(i, volume *
 				    mus_delay_unmodulated(outdel3, all_sums),
@@ -1448,7 +1345,6 @@ ins_nrev(mus_float_t start, mus_float_t dur, mus_float_t reverb_factor,
 
 		for (j = 0, ho = 0.0; j < rev_chans; j++)
 			ho += mus_in_any(i, j, rev);
-
 		inrev = volume * mus_env(env_a) * ho;
 		outrev = mus_all_pass_unmodulated(allpass4,
 		    mus_one_pole(low, mus_all_pass_unmodulated(allpass3,
@@ -1468,7 +1364,6 @@ ins_nrev(mus_float_t start, mus_float_t dur, mus_float_t reverb_factor,
 		    mus_all_pass_unmodulated(allpass7, outrev));
 		sample_d = output_scale * mus_one_pole(low_d,
 		    mus_all_pass_unmodulated(allpass8, outrev));
-
 		if (chans == 2)
 			mus_out_any(i, (sample_a + sample_d) / 2.0, 0, out);
 		else
@@ -1530,29 +1425,23 @@ ins_freeverb(mus_float_t start, mus_float_t dur, mus_float_t room_decay,
 	srate_scale = mus_srate() / 44100.0;
 	local_gain = global_gain = 0.0;
 	beg = mus_seconds_to_samples(start);
-
 	if (dur > 0.0)
 		len = beg + mus_seconds_to_samples(dur);
 	else
 		len = beg + mus_seconds_to_samples(1.0) +
 		    mus_sound_frames(mus_file_name(rev));
-
 	out_chans = mus_channels(out);
 	in_chans = mus_channels(rev);
 	if (in_chans > 1 && in_chans != out_chans)
 		INS_MISC_ERROR(S_freeverb, FV_WARN);
-
 	out_buf = mus_make_empty_frame(out_chans);
 	f_out = mus_make_empty_frame(out_chans);
 	f_in = mus_make_empty_frame(in_chans);
 	local_gain = (1.0 - global)*(1.0 - 1.0 / out_chans) + 1.0 / out_chans;
-
 	tmp = (out_chans * out_chans - out_chans);
 	if (tmp < 1.0)
 		tmp = 1.0;
-
 	global_gain = (out_chans - local_gain * out_chans) / tmp;
-
 	if (mus_mixer_p(output_mixer))
 		out_mix = output_mixer;
 	else {
@@ -1573,23 +1462,22 @@ ins_freeverb(mus_float_t start, mus_float_t dur, mus_float_t room_decay,
 
 		predelays = malloc(in_chans * sizeof(mus_any *));
 		if (predelays == NULL)
-			INS_NO_MEMORY_ERROR();
+			INS_NO_MEMORY_ERROR("ins_freeverb");
 		allpasses = malloc(out_chans * sizeof(mus_any **));
 		if (allpasses == NULL)
-			INS_NO_MEMORY_ERROR();
+			INS_NO_MEMORY_ERROR("ins_freeverb");
 		combs = malloc(out_chans * sizeof(mus_any **));
 		if (combs == NULL)
-			INS_NO_MEMORY_ERROR();
+			INS_NO_MEMORY_ERROR("ins_freeverb");
 		room_decay_val = room_decay * scale_room_decay +
 		    offset_room_decay;
-
 		for (i = 0; i < out_chans; i++) {
 			allpasses[i] = malloc(all_len * sizeof(mus_any *));
 			if (allpasses[i] == NULL)
-				INS_NO_MEMORY_ERROR();
+				INS_NO_MEMORY_ERROR("ins_freeverb");
 			combs[i] = malloc(comb_len * sizeof(mus_any *));
 			if (combs[i] == NULL)
-				INS_NO_MEMORY_ERROR();
+				INS_NO_MEMORY_ERROR("ins_freeverb");
 		}
 		/* predelays */
 		for (i = 0; i < in_chans; i++) {
@@ -1838,12 +1726,10 @@ c_fm_violin(XEN args)
 	keys[i++] = allkeys[C_reverb_amount];
 	keys[i++] = allkeys[C_index_type];
 	keys[i++] = allkeys[C_no_waveshaping];
-
 	for (i = 0; i < V_LAST_KEY * 2; i++)
 		kargs[i] = XEN_UNDEFINED;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = XEN_LIST_REF(args, i);
-
 	vals = mus_optkey_unscramble(S_fm_violin, V_LAST_KEY, keys, kargs,
 	    orig_arg);
 	if (vals > 0) {
@@ -2004,7 +1890,6 @@ c_fm_violin(XEN args)
 		INS_MISC_ERROR(S_fm_violin, "needs an output generator");
 	rev = get_global_mus_gen(INS_REVERB);
 	mode = get_global_int(INS_LOCSIG_TYPE, MUS_INTERP_LINEAR);
-
 	result = ins_fm_violin(start, dur, freq, amp, fm_index,
 	    amp_env, amp_len, periodic_vibrato_rate, periodic_vibrato_amp,
 	    random_vibrato_rate, random_vibrato_amp, noise_freq, noise_amount,
@@ -2013,7 +1898,6 @@ c_fm_violin(XEN args)
 	    fm2_env, fm2_len, fm3_env, fm3_len, fm1_rat, fm2_rat, fm3_rat,
 	    fm1_index, fm2_index, fm3_index, base, degree, distance,
 	    reverb_amount, index_type, no_waveshaping, out, rev, mode);
-
 	if (amp_del)
 		free(amp_env);
 	if (gls_del)
@@ -2102,12 +1986,10 @@ c_jc_reverb(XEN args)
 	keys[i++] = allkeys[C_delay3];
 	keys[i++] = allkeys[C_delay4];
 	keys[i++] = allkeys[C_amp_env];
-
 	for (i = 0; i < JC_LAST_KEY * 2; i++)
 		kargs[i] = XEN_UNDEFINED;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = XEN_LIST_REF(args, i);
-
 	vals = mus_optkey_unscramble(S_jc_reverb, JC_LAST_KEY, keys, kargs,
 	    orig_arg);
 	if (vals > 0) {
@@ -2152,7 +2034,6 @@ c_jc_reverb(XEN args)
 		INS_MISC_ERROR(S_jc_reverb, "needs an input generator");
 	if (get_global_boolean(INS_VERBOSE, false))
 		INS_REV_MSG(S_jc_reverb, mus_channels(rev), mus_channels(out));
-
 	result = ins_jc_reverb(0.0, INS_REV_DUR(rev), volume, low_pass,
 	    doubled, delay1, delay2, delay3, delay4, amp_env, amp_len,
 	    out, rev);
@@ -2225,12 +2106,10 @@ c_nrev(XEN args)
 	keys[i++] = allkeys[C_output_scale];
 	keys[i++] = allkeys[C_amp_env];
 	keys[i++] = allkeys[C_volume];
-
 	for (i = 0; i < N_LAST_KEY * 2; i++)
 		kargs[i] = XEN_UNDEFINED;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = XEN_LIST_REF(args, i);
-
 	vals = mus_optkey_unscramble(S_nrev, N_LAST_KEY, keys, kargs, orig_arg);
 	if (vals > 0) {
 		i = 0;
@@ -2266,10 +2145,8 @@ c_nrev(XEN args)
 		INS_MISC_ERROR(S_nrev, "needs an input generator");
 	if (get_global_boolean(INS_VERBOSE, false))
 		INS_REV_MSG(S_nrev, mus_channels(rev), mus_channels(out));
-
 	result = ins_nrev(0.0, INS_REV_DUR(rev), reverb_factor, lp_coeff,
 	    lp_out_coeff, output_scale, volume, amp_env, amp_len, out, rev);
-
 	if (amp_del)
 		free(amp_env);
 #if !HAVE_FORTH
@@ -2361,12 +2238,10 @@ c_freeverb(XEN args)
 	keys[i++] = allkeys[C_allpasstuning];
 	keys[i++] = allkeys[C_scale_damping];
 	keys[i++] = allkeys[C_stereo_spread];
-
 	for (i = 0; i < F_LAST_KEY * 2; i++)
 		kargs[i] = XEN_UNDEFINED;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = XEN_LIST_REF(args, i);
-
 	vals = mus_optkey_unscramble(S_freeverb, F_LAST_KEY, keys, kargs,
 	    orig_arg);
 	if (vals > 0) {
@@ -2429,12 +2304,10 @@ c_freeverb(XEN args)
 		INS_MISC_ERROR(S_freeverb, "needs an input generator");
 	if (get_global_boolean(INS_VERBOSE, false))
 		INS_REV_MSG(S_freeverb, mus_channels(rev), mus_channels(out));
-
 	result = ins_freeverb(0.0, INS_REV_DUR(rev), room_decay, damping,
 	    global, predelay, output_gain, scale_room_decay, offset_room_decay,
 	    scale_damping, stereo_spread, combtuning, numcombs, allpasstuning,
 	    numallpasses, output_mixer, out, rev);
-
 	if (comb_del)
 		free(combtuning);
 	if (allpass_del)
@@ -2448,11 +2321,19 @@ c_freeverb(XEN args)
 XEN_VARGIFY(x_make_fcomb, c_make_fcomb)
 XEN_ARGIFY_2(x_fcomb, c_fcomb)
 XEN_NARGIFY_1(x_fcomb_p, c_fcomb_p)
+#if defined(HAVE_FORTH)
+/* these are void functions */
+#define x_fm_violin 		c_fm_violin
+#define x_jc_reverb		c_jc_reverb
+#define x_nrev			c_nrev
+#define x_freeverb		c_freeverb
+#else
 XEN_VARGIFY(x_fm_violin, c_fm_violin)
 XEN_VARGIFY(x_jc_reverb, c_jc_reverb)
 XEN_VARGIFY(x_nrev, c_nrev)
 XEN_VARGIFY(x_freeverb, c_freeverb)
-#else				/* !XEN_ARGIFY_1 */
+#endif
+#else	/* !XEN_ARGIFY_1 */
 #define x_make_fcomb		c_make_fcomb
 #define x_fcomb			c_fcomb
 #define x_fcomb_p 		c_fcomb_p
@@ -2460,7 +2341,7 @@ XEN_VARGIFY(x_freeverb, c_freeverb)
 #define x_jc_reverb		c_jc_reverb
 #define x_nrev			c_nrev
 #define x_freeverb		c_freeverb
-#endif				/* XEN_ARGIFY_1 */
+#endif	/* XEN_ARGIFY_1 */
 
 void
 Init_sndins(void)
@@ -2470,12 +2351,12 @@ Init_sndins(void)
 	XEN_DEFINE_PROCEDURE(S_fcomb, x_fcomb, 1, 1, 0, H_fcomb);
 	XEN_DEFINE_PROCEDURE(S_fcomb_p, x_fcomb_p, 1, 0, 0, H_fcomb_p);
 #if HAVE_FORTH
-	fth_define_void_procedure(S_fm_violin, x_fm_violin, 0, 0, 1,
-	    H_fm_violin);
-	fth_define_void_procedure(S_jc_reverb, x_jc_reverb, 0, 0, 1,
-	    H_jc_reverb);
-	fth_define_void_procedure(S_nrev, x_nrev, 0, 0, 1, H_nrev);
-	fth_define_void_procedure(S_freeverb, x_freeverb, 0, 0, 1, H_freeverb);
+#define XEN_DEFINE_VOID_PROC(Name, Func, Req, Opt, Rest, Help)		\
+	fth_define_void_procedure(Name, Func, Req, Opt, Rest, Help)
+	XEN_DEFINE_VOID_PROC(S_fm_violin, x_fm_violin, 0, 0, 1, H_fm_violin);
+	XEN_DEFINE_VOID_PROC(S_jc_reverb, x_jc_reverb, 0, 0, 1, H_jc_reverb);
+	XEN_DEFINE_VOID_PROC(S_nrev, x_nrev, 0, 0, 1, H_nrev);
+	XEN_DEFINE_VOID_PROC(S_freeverb, x_freeverb, 0, 0, 1, H_freeverb);
 #else
 	XEN_DEFINE_PROCEDURE(S_fm_violin, x_fm_violin, 0, 0, 1, H_fm_violin);
 	XEN_DEFINE_PROCEDURE(S_jc_reverb, x_jc_reverb, 0, 0, 1, H_jc_reverb);

@@ -12,8 +12,8 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *
   data = (mus_float_t *)calloc(len, sizeof(mus_float_t)); /* don't add into v->data! */
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
-  for (i = 0; i < len; i++)
-    data[i] = read_sample(sf) + (vdata[i]);
+  samples_to_vct_with_reader(len, data, sf);
+  for (i = 0; i < len; i++) data[i] += vdata[i];
   sf = free_snd_fd(sf);
 
   result = change_samples(beg, len, data, cp, origin, cp->edit_ctr, -1.0); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
@@ -93,6 +93,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
   data[in_chan] = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   chandata = data[in_chan];
   
+  sampler_set_safe(sf, num);
   lseek(ofd, ohdr->data_location, SEEK_SET);
   lseek(ifd, ihdr->data_location, SEEK_SET);
   mus_file_read_chans(ifd, 0, size, in_chans, data, data);
