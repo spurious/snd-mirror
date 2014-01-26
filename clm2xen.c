@@ -13802,7 +13802,7 @@ static s7_pointer g_indirect_outa_2_looped(s7_scheme *sc, s7_pointer args)
 {
   /* here we have (outa i (...)) where expr might be easy (* amp (oscil...)) for example */
   s7_Int pos, end;
-  s7_pointer stepper, callee, outer_callee, locsym;
+  s7_pointer stepper, callee, locsym;
   s7_Int *step, *stop;
   gf *gf1;
 
@@ -13822,9 +13822,7 @@ static s7_pointer g_indirect_outa_2_looped(s7_scheme *sc, s7_pointer args)
   stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
-
   callee = caddr(args);
-  outer_callee = callee;
 
   if (mus_out_any_is_safe(clm_output_gen))
     {

@@ -352,31 +352,21 @@ static void region_samples(int reg, int chn, mus_long_t beg, mus_long_t num, mus
       if ((beg < r->frames) && (chn < r->chans))
 	{
 	  snd_fd *sf;
-	  mus_long_t i, j = 0;
 	  deferred_region *drp;
 	  switch (r->use_temp_file)
 	    {
 	    case REGION_FILE:
 	      sf = init_region_read(beg, reg, chn, READ_FORWARD);
-	      sampler_set_safe(sf, num);
-	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
-		data[j] = read_sample(sf);
+	      samples_to_vct_with_reader(num, data, sf);
 	      free_snd_fd(sf);
 	      break;
 
 	    case REGION_DEFERRED:
 	      drp = r->dr;
 	      sf = init_sample_read_any_with_bufsize(beg + r->begs[chn], drp->cps[chn], READ_FORWARD, drp->edpos[chn], num);
-	      sampler_set_safe(sf, num);
-	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
-		data[j] = read_sample(sf);
+	      samples_to_vct_with_reader(num, data, sf);
 	      free_snd_fd(sf);
 	      break;
-	    }
-	  if (j < num)
-	    {
-	      memset((void *)(data + j), 0, (num - j) * sizeof(mus_float_t));
-	      /* for (; j < num; j++)  data[j] = 0.0; */
 	    }
 	}
     }
@@ -822,7 +812,7 @@ static void deferred_region_to_temp_file(region *r)
 {
   int i, k = 0, ofd = 0, datumb = 0, err = 0;
   bool copy_ok;
-  mus_long_t j, len = 0;
+  mus_long_t j, alloc_len, len = 0;
   snd_fd **sfs = NULL;
   snd_info *sp0;
   file_info *hdr = NULL;
@@ -880,27 +870,30 @@ static void deferred_region_to_temp_file(region *r)
 	  else
 	    {
 	      mus_long_t data_size;
+
 	      lseek(fdi, sp0->hdr->data_location + r->chans * datumb * r->begs[0], SEEK_SET);
-	      buffer = (char *)malloc(MAX_BUFFER_SIZE * sizeof(char));
 	      data_size = drp->len * r->chans * datumb;
-	      for (j = 0; j < data_size; j += MAX_BUFFER_SIZE)
+	      if (data_size > REPORTING_SIZE)
+		alloc_len = REPORTING_SIZE;
+	      else alloc_len = data_size;
+	      buffer = (char *)malloc(alloc_len * sizeof(char));
+	      for (j = 0; j < data_size; j += alloc_len)
 		{
 		  ssize_t n;
 		  bytes = data_size - j;
-		  if (bytes > MAX_BUFFER_SIZE) 
-		    bytes = MAX_BUFFER_SIZE;
-		  if (bytes > 0)
+		  if (bytes > alloc_len)
+		    bytes = alloc_len;
+
+		  /* read and write return 0 to indicate end of file, apparently */
+		  n = read(fdi, buffer, bytes);
+
+		  if (n < 0)
+		    fprintf(stderr, "IO error while reading region temp file: %d %s\n", (int)n, strerror(errno));
+		  if (n > 0)
 		    {
-		      /* read and write return 0 to indicate end of file, apparently */
-		      n = read(fdi, buffer, bytes);
+		      n = write(fdo, buffer, bytes);
 		      if (n < 0)
-			fprintf(stderr, "IO error while reading region temp file: %d %s\n", (int)n, strerror(errno));
-		      if (n > 0)
-			{
-			  n = write(fdo, buffer, bytes);
-			  if (n < 0)
-			    fprintf(stderr, "IO error while writing region temp file: %d %s\n", (int)n, strerror(errno));
-			}
+			fprintf(stderr, "IO error while writing region temp file: %d %s\n", (int)n, strerror(errno));
 		    }
 		}
 	      free(buffer);
@@ -912,6 +905,7 @@ static void deferred_region_to_temp_file(region *r)
   else
     {
       io_error_t io_err = IO_NO_ERROR;
+
       hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)__func__);
       ofd = open_temp_file(r->filename, r->chans, hdr, &io_err);
       if (ofd == -1)
@@ -925,11 +919,15 @@ static void deferred_region_to_temp_file(region *r)
 	  data = (mus_float_t **)calloc(r->chans, sizeof(mus_float_t *));
 	  datumb = mus_bytes_per_sample(hdr->format);
 	  /* here if peak_envs, maxamp exists */
+
+	  alloc_len = len;
+	  if (alloc_len > REPORTING_SIZE)
+	    alloc_len = REPORTING_SIZE;
+
 	  for (i = 0; i < r->chans; i++)
 	    {
 	      sfs[i] = init_sample_read_any(r->begs[i], drp->cps[i], READ_FORWARD, drp->edpos[i]);
-	      sampler_set_safe(sfs[i], len);
-	      data[i] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
+	      data[i] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t));
 	    }
 
 	  if ((r->chans == 1) &&
@@ -940,160 +938,58 @@ static void deferred_region_to_temp_file(region *r)
 
 	      sf = sfs[0];
 	      d = data[0];
-	      if (len < MAX_BUFFER_SIZE)
+	      if (len <= REPORTING_SIZE)
 		{
-		  for (k = 0; k < len; k++) 
-		    d[k] = read_sample(sf);
+		  samples_to_vct_with_reader(len, d, sf);
+		  mus_file_write(ofd, 0, len - 1, 1, data);
 		}
 	      else
 		{
-		  for (j = 0, k = 0; j < len; j++, k++) 
+		  sampler_set_safe(sf, len);
+		  for (k = 0; k < len; k += alloc_len) 
 		    {
-		      if (k == MAX_BUFFER_SIZE)
-			{
-			  err = mus_file_write(ofd, 0, k - 1, 1, data);
-			  k = 0;
-			  if (err != MUS_NO_ERROR) break;
-			}
-		      d[k] = read_sample(sf);
+		      mus_long_t kdur, n;
+		      kdur = len - k;
+		      if (kdur > alloc_len) kdur = alloc_len;
+		      for (n = 0; n < kdur; n++)
+			d[n] = read_sample(sf);
+		      err = mus_file_write(ofd, 0, kdur - 1, 1, data);
+		      if (err != MUS_NO_ERROR) break;
 		    }
 		}
 	    }
 	  else
 	    {
-	      bool same_lens = true;
-	      mus_long_t len0;
-
-	      len0 = r->lens[0];
-	      for (i = 1; i < r->chans; i++)
-		if (r->lens[i] != len0)
-		  {
-		    same_lens = false;
-		    break;
-		  }
-
-	      if (same_lens)
+	      if (len <= REPORTING_SIZE)
 		{
-		  if (len > len0)
-		    len = len0 + 1;
-		  if (len < MAX_BUFFER_SIZE)
-		    {
-		      if (r->chans == 2)
-			{
-			  for (k = 0; k < len; k++) 
-			    {
-			      data[0][k] = read_sample(sfs[0]);
-			      data[1][k] = read_sample(sfs[1]);
-			    }
-			}
-		      else
-			{
-			  for (k = 0; k < len; k++) 
-			    for (i = 0; i < r->chans; i++)
-			      data[i][k] = read_sample(sfs[i]);
-			}
-		    }
-		  else
-		    {
-		      for (j = 0; j < len; j += MAX_BUFFER_SIZE)
-			{
-			  int nlen;
-			  mus_float_t *buf;
-			  snd_fd *p;
-			  nlen = len - j;
-			  if (nlen >= MAX_BUFFER_SIZE)
-			    {
-			      for (i = 0; i < r->chans; i++)
-				{
-				  buf = data[i];
-				  p = sfs[i];
-				  for (k = 0; k < MAX_BUFFER_SIZE;) 
-				    {
-				      /* we're assuming MAX_BUFFER_SIZE is divisible by 8 */
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				  }
-				}
-			      err = mus_file_write(ofd, 0, k - 1, r->chans, data);
-			      k = 0;
-			      if (err != MUS_NO_ERROR) break;
-			    }
-			  else
-			    {
-			      for (i = 0; i < r->chans; i++)
-				{
-				  buf = data[i];
-				  p = sfs[i];
-				  for (k = 0; k < nlen; k++) 
-				    buf[k] = read_sample(p);
-				}
-			      k = nlen;
-			    }
-			}
-		    }
+		  for (i = 0; i < r->chans; i++)
+		    samples_to_vct_with_reader(len, data[i], sfs[i]);
+		  mus_file_write(ofd, 0, len - 1, r->chans, data);
 		}
 	      else
 		{
-		  /* perverse stuff here:
-		   *   7: 22050 22050 844798 844798 844798 844798 50827
-		   *   5: 844798 844798 844798 844798 50827
-		   */
-		  for (j = 0; j < len; j += MAX_BUFFER_SIZE)
+		  for (i = 0; i < r->chans; i++)
+		    sampler_set_safe(sfs[i], len);
+		  for (k = 0; k < len; k += alloc_len) 
 		    {
-		      int nlen, klen = 0;
+		      mus_long_t kdur, n;
 		      mus_float_t *buf;
 		      snd_fd *p;
 		      
+		      kdur = len - k;
+		      if (kdur > alloc_len) kdur = alloc_len;
 		      for (i = 0; i < r->chans; i++)
 			{
 			  buf = data[i];
 			  p = sfs[i];
-			  if (j > r->lens[i])
-			    memset(buf, 0, MAX_BUFFER_SIZE * sizeof(mus_float_t));
-			  else
-			    {
-			      nlen = r->lens[i] - j;
-			      if (nlen > MAX_BUFFER_SIZE)
-				{
-				  klen = MAX_BUFFER_SIZE;
-				  for (k = 0; k < MAX_BUFFER_SIZE;) 
-				    {
-				      /* we're assuming MAX_BUFFER_SIZE is divisible by 8 */
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				      buf[k++] = read_sample(p);
-				    }
-				}
-			      else
-				{
-				  nlen++; /* weird.  drp->len == len is r->lens[max]+1? */
-				  if (klen < nlen) klen = nlen;
-				  for (k = 0; k < nlen; k++)
-				    buf[k] = read_sample(p);
-				  for (; k < MAX_BUFFER_SIZE; k++)
-				    buf[k] = 0.0;
-				}
-			    }
+			  for (n = 0; n < kdur; n++)
+			    buf[n] = read_sample(p);
 			}
-		      err = mus_file_write(ofd, 0, klen - 1, r->chans, data);
-		      k = 0;
+		      err = mus_file_write(ofd, 0, kdur - 1, r->chans, data);
 		      if (err != MUS_NO_ERROR) break;
 		    }
 		}
 	    }
-	  if (k > 0) 
-	    mus_file_write(ofd, 0, k - 1, r->chans, data);
 
 	  close_temp_file(r->filename, ofd, hdr->type, len * r->chans * datumb);
 	  for (i = 0; i < r->chans; i++) free(data[i]);

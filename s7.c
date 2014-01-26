@@ -69111,7 +69111,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.3
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 43.0
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 42.6
  *            153 with run macro (eval_ptree)
  */
 
@@ -69139,5 +69139,9 @@ int main(int argc, char **argv)
  *
  * [indirect_]outa_ss_looped?
  * help info for *-float-vector-* still uses vct
+ *
+ * why is default data little-endian-float? snd-0.h sets this
+ * all malloc(MAX_BUF...) should be dur if less
+ * set sampler safe if not samples_to_vct, memset+malloc/calloc, memcheck again, clm-test
  */
 

@@ -1061,7 +1061,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   /* type and format have already been checked */
   int ofd, bps;
   io_error_t io_err = IO_NO_ERROR;
-  mus_long_t oloc;
+  mus_long_t oloc, alloc_len;
   sync_info *si = NULL;
   mus_long_t *ends;
   int i, j, k, chans;
@@ -1188,11 +1188,13 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   ends = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
   sfs = (snd_fd **)calloc(chans, sizeof(snd_fd *));
   if (chan == SAVE_ALL_CHANS)
-    for (i = 0; i < chans; i++) 
-      {
-	ends[i] = selection_end(si->cps[i]);
-	sfs[i] = init_sample_read(selection_beg(si->cps[i]), si->cps[i], READ_FORWARD);
-      }
+    {
+      for (i = 0; i < chans; i++) 
+	{
+	  ends[i] = selection_end(si->cps[i]);
+	  sfs[i] = init_sample_read(selection_beg(si->cps[i]), si->cps[i], READ_FORWARD);
+	}
+    }
   else
     {
       ends[0] = selection_end(si->cps[chan]);
@@ -1203,24 +1205,43 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   mus_file_set_clipping(ofd, clipping(ss));
   lseek(ofd, oloc, SEEK_SET);
   data = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
-  for (i = 0; i < chans; i++) 
-    data[i] = (mus_float_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_float_t)); 
 
-  j = 0;
-  ss->stopped_explicitly = false;
-  for (ioff = 0; ioff < dur; ioff++)
+  if (dur > REPORTING_SIZE)
+    alloc_len = REPORTING_SIZE;
+  else alloc_len = dur;
+
+  for (i = 0; i < chans; i++) 
+    data[i] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t)); 
+
+  if (alloc_len == dur)
     {
       for (k = 0; k < chans; k++)
+	samples_to_vct_with_reader(dur, data[k], sfs[k]);
+      mus_file_write(ofd, 0, dur - 1, chans, data);
+    }
+  else
+    {
+      ss->stopped_explicitly = false;
+      for (k = 0; k < chans; k++)
+	sampler_set_safe(sfs[k], ends[k]);
+
+      for (ioff = 0; ioff < dur; ioff += alloc_len)
 	{
-	  if (ioff <= ends[k]) 
-	    data[k][j] = read_sample(sfs[k]);
-	  else data[k][j] = 0.0;
-	}
-      j++;
-      if (j == FILE_BUFFER_SIZE)
-	{
+	  mus_long_t kdur;
+
+	  kdur = dur - ioff;
+	  if (kdur > alloc_len) kdur = alloc_len;
+
+	  for (j = 0; j < kdur; j++)
+	    {
+	      for (k = 0; k < chans; k++)
+		{
+		  if ((ioff + j) <= ends[k]) 
+		    data[k][j] = read_sample(sfs[k]);
+		  else data[k][j] = 0.0;
+		}
+	    }
 	  io_err = sndlib_error_to_snd(mus_file_write(ofd, 0, j - 1, chans, data));
-	  j = 0;
 	  if (io_err != IO_NO_ERROR)
 	    {
 	      snd_warning("%s %s: %s",
@@ -1238,8 +1259,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	    }
 	}
     }
-  if ((io_err == IO_NO_ERROR) && (j > 0)) 
-    mus_file_write(ofd, 0, j - 1, chans, data);
+
   for (i = 0; i < chans; i++)
     {
       free_snd_fd(sfs[i]);
@@ -1249,12 +1269,14 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   free(data);
   si = free_sync_info(si);
   free(ends);
+
   if (mus_file_close(ofd) != 0)
     return(IO_CANT_CLOSE_FILE);
 #if USE_MOTIF
   if (!(ss->file_monitor_ok))
     alert_new_file();
 #endif
+
   return(io_err);
 }
 

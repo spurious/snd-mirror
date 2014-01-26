@@ -1588,7 +1588,6 @@ static void display_edits(chan_info *cp, FILE *outp)
 static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, mus_long_t length, bool report_ok)
 {
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
-  #define MAKE_FILE_MAX_BUFFER_SIZE 1048576
   int ofd;
   int i, j, datumb;
   bool reporting = false;
@@ -1603,8 +1602,8 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   if (ofd == -1) 
     return(io_err);
   alloc_len = length;
-  if (alloc_len > MAKE_FILE_MAX_BUFFER_SIZE)
-    alloc_len = MAKE_FILE_MAX_BUFFER_SIZE;
+  if (alloc_len > REPORTING_SIZE)
+    alloc_len = REPORTING_SIZE;
 
   need_clipping = clipping(ss);
   if (need_clipping)
@@ -1646,7 +1645,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 
   obufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
-    obufs[i] = (mus_float_t *)malloc(alloc_len * sizeof(mus_float_t));
+    obufs[i] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t));
   j = 0;
 
   reporting = ((report_ok) && (length > alloc_len));
@@ -1664,102 +1663,75 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
       sf = sfs[0];
       if (length > alloc_len)
 	{
-	  for (len = 0; len < length; len++)
+	  sampler_set_safe(sf, length);
+	  for (len = 0; len < length; )
 	    {
-	      buf[j] = read_sample(sf);
-	      j++;
-	      if (j == alloc_len)
+	      int k, kdur;
+
+	      kdur = length - len;
+	      if (kdur > alloc_len) kdur = alloc_len;
+
+	      for (k = 0; k < kdur; k++)
+		buf[k] = read_sample(sf);
+
+	      sl_err = mus_file_write(ofd, 0, kdur - 1, 1, obufs);
+	      j = 0;
+	      if (sl_err != MUS_NO_ERROR) break;
+	      if (reporting)
 		{
-		  sl_err = mus_file_write(ofd, 0, j - 1, 1, obufs);
-		  j = 0;
-		  if (sl_err != MUS_NO_ERROR) break;
-		  if (reporting)
-		    {
-		      total += alloc_len;
-		      progress_report(cp, (mus_float_t)((double)total / (double)length));
-		    }
+		  total += kdur;
+		  progress_report(cp, (mus_float_t)((double)total / (double)length));
 		}
+	      len += kdur;
 	    }
 	}
       else
 	{
-	  if (sf->runf == next_sample_value_unscaled_and_unchecked)
-	    {
-	      memcpy((void *)buf, (void *)(sf->data + sf->loc), length * sizeof(mus_float_t));
-	      j = (int)length;
-	      len = j;
-	    }
-	  else
-	    {
-	      mus_long_t len8;
-
-	      len8 = length - 8;
-	      len = 0;
-	      while (len <= len8)
-		{
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		}
-	      for (; len < length; len++)
-		buf[len] = read_sample(sf);
-	      j = (int)length;
-	    }
+	  samples_to_vct_with_reader(length, buf, sf);
+	  len = length;
+	  j = (int)length;
 	}
     }
   else
     {
       if (length > alloc_len)
 	{
-	  for (len = 0; len < length; len++)
+	  mus_float_t *buf;
+	  snd_fd *sf;
+
+	  for (i = 0; i < chans; i++)
+	    sampler_set_safe(sfs[i], length);
+
+	  for (len = 0; len < length;)
 	    {
+	      int k, kdur;
+	      kdur = length - len;
+	      if (kdur > alloc_len) kdur = alloc_len;
+	      
 	      for (i = 0; i < chans; i++)
-		obufs[i][j] = read_sample(sfs[i]);
-	      j++;
-	      if (j == alloc_len)
 		{
-		  sl_err = mus_file_write(ofd, 0, j - 1, chans, obufs);
-		  j = 0;
-		  if (sl_err != MUS_NO_ERROR) break;
-		  if (reporting)
-		    {
-		      total += alloc_len;
-		      progress_report(cp, (mus_float_t)((double)total / (double)length));
-		    }
+		  buf = obufs[i];
+		  sf = sfs[i];
+		  for (k = 0; k < kdur; k++)
+		    buf[k] = read_sample(sf);
 		}
+
+	      sl_err = mus_file_write(ofd, 0, kdur - 1, chans, obufs);
+	      j = 0;
+	      if (sl_err != MUS_NO_ERROR) break;
+	      if (reporting)
+		{
+		  total += kdur;
+		  progress_report(cp, (mus_float_t)((double)total / (double)length));
+		}
+	      len += kdur;
 	    }
 	}
       else
 	{
-	  mus_long_t len8;
-	  len8 = length - 8;
 	  for (i = 0; i < chans; i++)
-	    {
-	      mus_float_t *buf;
-	      snd_fd *sf;
-	      buf = obufs[i];
-	      sf = sfs[i];
-	      
-	      len = 0;
-	      while (len <= len8)
-		{
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		  buf[len++] = read_sample(sf);
-		}
-	      for (; len < length; len++)
-		buf[len] = read_sample(sf);
-	    }
+	    samples_to_vct_with_reader(length, obufs[i], sfs[i]);
+	  len = length;
 	  j = (int)length;
 	}
     }
@@ -1807,7 +1779,6 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
     }
   else
     {
-      sampler_set_safe(sf[0], len);
       err = snd_make_file(ofile, 1, hdr, sf, len, report_ok);
       free_snd_fd(sf[0]);
       free(sf);
@@ -7685,377 +7656,163 @@ mus_long_t channel_maxamp_position(chan_info *cp, int edpos)
 }
 
 
-/* static int total_calcs = 0; */
-
 mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, mus_long_t *maxpos)
 {
   snd_fd *sf;
-  mus_float_t ymax = 0.0, mval;
-  mus_long_t mpos = -1;
-  int j = 0, jpos = -1;
+  mus_float_t ymax, x;
+  mus_float_t *d;
+  mus_long_t i, k, lim8, kend, mpos;
 
-  if (edpos == 0)
-    {
-      snd_data *sd;
-      snd_info *sp;
-      
-      sp = cp->sound;
-      if (mus_sound_channel_maxamp_exists(sp->filename, cp->chan))
-	{
-	  ymax = mus_sound_channel_maxamp(sp->filename, cp->chan, &mpos);
-	  if ((mpos >= beg) &&
-	      (mpos < beg + num))
-	    {
-	      if (maxpos) (*maxpos) = mpos - beg;
-	      /* fprintf(stderr, "perhaps use saved %f %lld (%lld)\n", ymax, mpos - beg, beg); */
-	      return(ymax);
-	    }
-	  ymax = 0.0;
-	  mpos = -1;
-	}
-	  
-      sd = cp->sounds[0];
-      if ((sd) && 
-	  (sd->io) && 
-	  (io_beg(sd->io) <= beg) && 
-	  (io_end(sd->io) >= (beg + num)))
-	{
-	  /* use the in-core data directly */
-	  int start, end;
-
-	  start = beg - io_beg(sd->io);
-	  jpos = start;
-	  end = beg + num - io_beg(sd->io);
-
-	  /* fprintf(stderr, "%d to %d\n", start, end); */
-	  
-	  for (j = start; j < end; j++)
-	    {
-	      mval = fabs(sd->buffered_data[j]);
-	      if (mval > ymax) 
-		{
-		  ymax = mval;
-		  jpos = j;
-		}
-	    }
-
-	  if ((beg == 0) &&
-	      (num = cp->edits[0]->samples))
-	    {
-	      mus_sound_channel_set_maxamp(sp->filename, cp->chan, ymax, jpos - start);
-	    }
-
-	  /* fprintf(stderr, "actually use %f %d\n", ymax, jpos - start); */
-	  if (maxpos) (*maxpos) = jpos - start;
-	  return(ymax);
-	}
-    }
-
-  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, (num > REPORTING_SIZE) ? REPORTING_SIZE : num);
+  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, (num > MAX_BUFFER_SIZE) ? MAX_BUFFER_SIZE : num);
   if (sf == NULL) return(0.0);
-  sampler_set_safe(sf, num);
+  
+  ymax = 0.0;
+  mpos = -1;
+  i = 0;
 
-  if (num > (1 << 30))
+  while (true)
     {
-      mus_long_t i;
-      ss->stopped_explicitly = false;
-      for (i = 0; i < num; i++)
+      mus_long_t dur, left;
+      
+      dur = sf->last - sf->loc + 1; /* current fragment, we're always reading forward here */
+      left = num - i;
+      if (dur > left) dur = left;
+      
+      if (sf->runf == next_sample_value_unscaled)
 	{
-	  mval = fabs(read_sample(sf));
-	  if (mval > ymax) 
-	    {
-	      ymax = mval;
-	      mpos = i;
-	    }
-	  j++;
-	  if (j > 1000000)
-	    {
-	      check_for_event();
-	      if ((ss->stopped_explicitly) || (cp->active < CHANNEL_HAS_EDIT_LIST))
-		{
-		  ss->stopped_explicitly = false;
-		  set_status(cp->sound, "maxamp check interrupted...", false);
-		  break;
-		}
-	      j = 0;
-	    }
-	}
-    }
-  else
-    {
-      int jnum, jnum4;
-      jnum = (int)num;
-      jnum4 = jnum - 4;
+	  kend = sf->loc + dur;
+	  lim8 = kend - 8;
+	  k = sf->loc;
+	  d = sf->data;
 
-      if (((sf->runf == next_sample_value_unscaled) ||
-	   (sf->runf == next_sample_value_unscaled_and_unchecked) ||
-	   (sf->runf == next_sample_value) ||
-	   (sf->runf == next_sample_value_unchecked)) &&
-	  (ED_LOCAL_POSITION(sf->cb) == 0) &&
-	  (ED_LOCAL_END(sf->cb) >= (num - 1)))              /* so accessor won't change? */
-	{
-	  mus_float_t *dat;
-	  mus_long_t loc, last;
-	  loc = sf->loc;
-	  last = sf->last;
-	  dat = sf->data;
-
-	  if ((sf->runf == next_sample_value_unscaled) ||
-	      (sf->runf == next_sample_value_unscaled_and_unchecked))
+	  while (k <= lim8)
 	    {
-	      /* loc: 0 last: 22049 jnum: 22050 and the like */
-	      if ((loc == 0) &&
-		  (last == (jnum - 1)))
-		{
-		  int jnum2;
-		  jnum2 = jnum - 8;
-		  j = 0;
-		  while (j <= jnum2)
-		    {
-		      mval = fabs(dat[j]);
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-		      j++;
-		      mval = fabs(dat[j]);
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-		      j++;
-		      mval = fabs(dat[j]);
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-		      j++;
-		      mval = fabs(dat[j]);
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-		      j++;
-		      mval = fabs(dat[j]);
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-		      j++;
-		      mval = fabs(dat[j]);
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-		      j++;
-		      mval = fabs(dat[j]);
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-		      j++;
-		      mval = fabs(dat[j]);
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-		      j++;
-		    }
-		  if (j < jnum)
-		    {
-		      mval = fabs(dat[j]);
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-		    }
-		}
-	      else
-		{
-		  int k, nlen, last4;
-		  j = 0;
-		  nlen = last - loc + 1;
-		  if (nlen > jnum) nlen = jnum;
-
-		  while (j < jnum)
-		    {
-		      /* fprintf(stderr, "j: %d, loc: %lld, last: %lld, nlen: %lld\n", j, loc, last, nlen); */
-		      last4 = last - 8;
-		      k = loc;
-		      /* we're going from loc to last in the current data buffer */
-		      while (k <= last4)
-			{
-			  mval = fabs(dat[k]);
-			  if (mval > ymax) 
-			    {
-			      ymax = mval;
-			      jpos = j + k - loc;
-			    }
-			  k++;
-			  mval = fabs(dat[k]);
-			  if (mval > ymax) 
-			    {
-			      ymax = mval;
-			      jpos = j + k - loc;
-			    }
-			  k++;
-			  mval = fabs(dat[k]);
-			  if (mval > ymax) 
-			    {
-			      ymax = mval;
-			      jpos = j + k - loc;
-			    }
-			  k++;
-			  mval = fabs(dat[k]);
-			  if (mval > ymax) 
-			    {
-			      ymax = mval;
-			      jpos = j + k - loc;
-			    }
-			  k++;
-			  mval = fabs(dat[k]);
-			  if (mval > ymax) 
-			    {
-			      ymax = mval;
-			      jpos = j + k - loc;
-			    }
-			  k++;
-			  mval = fabs(dat[k]);
-			  if (mval > ymax) 
-			    {
-			      ymax = mval;
-			      jpos = j + k - loc;
-			    }
-			  k++;
-			  mval = fabs(dat[k]);
-			  if (mval > ymax) 
-			    {
-			      ymax = mval;
-			      jpos = j + k - loc;
-			    }
-			  k++;
-			  mval = fabs(dat[k]);
-			  if (mval > ymax) 
-			    {
-			      ymax = mval;
-			      jpos = j + k - loc;
-			    }
-			  k++;
-			}
-		      for (; k <= last; k++)
-			{
-			  mval = fabs(dat[k]);
-			  if (mval > ymax) 
-			    {
-			      ymax = mval;
-			      jpos = j + k - loc;
-			    }
-			}
-		      j += nlen;
-		      if (j >= jnum) break;
-		      mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
-		      j++;
-		      if (mval > ymax) 
-			{
-			  ymax = mval;
-			  jpos = j;
-			}
-
-		      loc = sf->loc; 
-		      last = sf->last;
-		      dat = sf->data;
-		      nlen = last - loc + 1;
-		      if ((j + nlen) > jnum) nlen = (jnum - j);
-		    }
-		}
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
 	    }
-	  else
+	  while (k < kend)
 	    {
-	      mus_float_t fscaler;
-	      fscaler = sf->fscaler;
-	      for (j = 0; j < jnum; j++)
-		{
-		  if (loc > last) 
-		    {
-		      mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
-		      fscaler = sf->fscaler;                /* why is this needed? */
-		      loc = sf->loc;
-		      last = sf->last;
-		      dat = sf->data;
-		    }
-		  else mval = fabs(dat[loc++] * fscaler);
-		  if (mval > ymax) 
-		    {
-		      ymax = mval;
-		      jpos = j;
-		    }
-		}
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
 	    }
+	  i += dur;
 	}
       else
 	{
-	  while (j <= jnum4)
+	  if (sf->runf == next_sample_value)
 	    {
-	      mval = fabs(read_sample(sf));
-	      if (mval > ymax) 
+	      mus_float_t scl, lmax;
+	      mus_long_t lpos;
+
+	      scl = fabs(sf->fscaler);
+	      lpos = -1;
+	      lmax = 0.0;
+	      kend = sf->loc + dur;
+	      lim8 = kend - 8;
+	      d = sf->data;
+
+	      k = sf->loc;
+	      while (k <= lim8)
 		{
-		  ymax = mval;
-		  jpos = j;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
 		}
-	      j++;
-	      mval = fabs(read_sample(sf));
-	      if (mval > ymax) 
+	      while (k < kend)
 		{
-		  ymax = mval;
-		  jpos = j;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
 		}
-	      j++;
-	      mval = fabs(read_sample(sf));
-	      if (mval > ymax) 
+	      if (lmax * scl > ymax)
 		{
-		  ymax = mval;
-		  jpos = j;
+		  ymax = lmax * scl;
+		  mpos = i + lpos - sf->loc;
 		}
-	      j++;
-	      mval = fabs(read_sample(sf));
-	      if (mval > ymax) 
-		{
-		  ymax = mval;
-		  jpos = j;
-		}
-	      j++;
+	      i += dur;
 	    }
-	  for (; j < jnum; j++)
+	  else
 	    {
-	      mval = fabs(read_sample(sf));
-	      if (mval > ymax) 
+	      if (sf->runf == next_ramp1)
 		{
-		  ymax = mval;
-		  jpos = j;
+		  mus_float_t amp, incr;
+		  mus_long_t j;
+		  
+		  amp = READER_VAL(sf, 0);
+		  incr = READER_INCR(sf, 0);
+		  kend = sf->loc + dur;
+		  d = sf->data;
+
+		  for (j = sf->loc; j < kend; j++) 
+		    {
+		      x = fabs(amp * d[j]); if (x > ymax) {ymax = x; mpos = i + j - sf->loc;}
+		      amp += incr;
+		    }
+		  READER_VAL(sf, 0) = amp;
+		  i += dur;
+		}
+	      else
+		{
+		  if (sf->runf == end_sample_value)
+		    break;
+		  if (sf->runf == next_zero)
+		    i += dur;
+		  else
+		    {
+		      if (sf->runf == next_xramp1)
+			{
+			  mus_float_t offset, scaler, xval, scl, incr;
+			  mus_long_t j;
+
+			  offset = READER_XRAMP_OFFSET(sf, 0);
+			  scl = READER_SCALER(sf);
+			  scaler = READER_XRAMP_SCALER(sf, 0);
+			  xval = READER_XVAL(sf, 0);
+			  incr = READER_XINCR(sf, 0);
+			  
+			  d = sf->data;
+			  kend = sf->loc + dur;
+			  offset *= scl;
+			  scaler *= scl;
+
+			  for (j = sf->loc; j < kend; j++) 
+			    {
+			      x = fabs(d[j] * (offset + scaler * xval)); if (x > ymax) {ymax = x; mpos = i + j - sf->loc;}
+			      xval *= incr;
+			    }
+			  READER_XVAL(sf, 0) = xval;
+			  i += dur;
+			}
+		      else
+			{
+			  left = i + dur;
+			  for (; i < left; i++) 
+			    {
+			      x = fabs(read_sample(sf)); if (x > ymax) {ymax = x; mpos = i;}
+			    }
+			}
+		    }
 		}
 	    }
 	}
-      mpos = (mus_long_t)jpos;
-
+      if (i >= num) break;
+      next_sound_1(sf);
     }
-
+  
   /* fprintf(stderr, "use %f %lld\n", ymax, mpos); */
   if ((edpos == 0) &&
       (beg == 0) &&
       (num = cp->edits[0]->samples))
-    {
-      mus_sound_channel_set_maxamp(cp->sound->filename, cp->chan, ymax, mpos);
-    }
-
+    mus_sound_channel_set_maxamp(cp->sound->filename, cp->chan, ymax, mpos);
+  
   if (maxpos) (*maxpos) = mpos;
   free_snd_fd(sf);
 
@@ -8425,56 +8182,120 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
 }
 
 
-static vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
+vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_float_t *buf, snd_fd *reader)
 {
+  /* if reader, beg, cp, and pos are ignored */
   snd_fd *sf;
   vct *v = NULL;
 
-  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, len);
+  if (!reader)
+    sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, len);
+  else sf = reader;
+
   if (sf)
     {
+      mus_long_t i;
       mus_float_t *fvals;
-      sampler_set_safe(sf, len);
-      v = mus_vct_make(len);
-      fvals = mus_vct_data(v);
 
-      if (len < (1 << 30))
+      if (!buf)
 	{
-	  int j, jnum;
-	  jnum = (int)len;
-	  if (sf->runf == next_sample_value_unscaled_and_unchecked)
-	    {
-	      /* assuming mus_float_t is the same as s7_Double, but this assumption is made in vct.c already.
-	       *   it would be faster to simply grab the array, but then gc becomes tricky (it is shared in io struct)
-	       */
-	      memcpy((void *)fvals, (void *)(sf->data + sf->loc), jnum * sizeof(mus_float_t));
-	      /* for (j = 0, k = sf->loc; j < jnum; j++, k++) fvals[j] = sf->data[k];
-	       */
-	    }
-	  else
-	    {
-	      int jnum2;
-	      jnum2 = jnum - 2;
-	      j = 0;
-	      while (j <= jnum2)
-		{
-		  fvals[j++] = read_sample(sf);
-		  fvals[j++] = read_sample(sf);
-		}
-	      if (j < jnum)
-		fvals[j] = read_sample(sf);
-	    }
+	  v = mus_vct_make(len);
+	  fvals = mus_vct_data(v);
 	}
       else
 	{
-	  mus_long_t i;
-	  for (i = 0; i < len; i++) 
-	    fvals[i] = read_sample(sf);
+	  v = mus_vct_wrap(len, buf);
+	  fvals = buf;
 	}
-      free_snd_fd(sf);
+      i = 0;
+      while (true)
+	{
+	  mus_long_t dur, left;
+	  dur = sf->last - sf->loc + 1; /* current fragment, we're always reading forward here */
+	  left = len - i;
+	  if (dur > left) dur = left;
+
+	  if (sf->runf == next_sample_value_unscaled)
+	    {
+	      memcpy((void *)(fvals + i), (void *)(sf->data + sf->loc), dur * sizeof(mus_float_t));
+	      i += dur;
+	    }
+	  else
+	    {
+	      if (sf->runf == next_sample_value)
+		{
+		  mus_float_t scl;
+		  scl = sf->fscaler;
+		  memcpy((void *)(fvals + i), (void *)(sf->data + sf->loc), dur * sizeof(mus_float_t));
+		  left = i + dur;
+		  for (; i < left; i++) fvals[i] *= scl;
+		}
+	      else
+		{
+		  if (sf->runf == next_ramp1)
+		    {
+		      mus_float_t amp, incr;
+		      mus_long_t j;
+		      amp = READER_VAL(sf, 0);
+		      incr = READER_INCR(sf, 0);
+		      left = i + dur;
+		      for (j = sf->loc; i < left; i++, j++) 
+			{
+			  fvals[i] = amp * sf->data[j];
+			  amp += incr;
+			}
+		      READER_VAL(sf, 0) = amp;
+		    }
+		  else
+		    {
+		      if (sf->runf == end_sample_value)
+			break;
+		      if (sf->runf == next_zero)
+			i += dur;
+		      else
+			{
+			  if (sf->runf == next_xramp1)
+			    {
+			      mus_float_t offset, scaler, xval, scl, incr;
+			      mus_long_t j;
+			      offset = READER_XRAMP_OFFSET(sf, 0);
+			      scl = READER_SCALER(sf);
+			      scaler = READER_XRAMP_SCALER(sf, 0);
+			      xval = READER_XVAL(sf, 0);
+			      incr = READER_XINCR(sf, 0);
+
+			      left = i + dur;
+			      offset *= scl;
+			      scaler *= scl;
+			      for (j = sf->loc; i < left; i++, j++) 
+				{
+				  fvals[i] = sf->data[j] * (offset + scaler * xval);
+				  xval *= incr;
+				}
+			      READER_XVAL(sf, 0) = xval;
+			    }
+			  else
+			    {
+			      left = i + dur;
+			      for (; i < left; i++) fvals[i] = read_sample(sf);
+			    }
+			}
+		    }
+		}
+	    }
+	  if (i >= len) break;
+	  next_sound_1(sf);
+	}
+      if (!reader)
+	free_snd_fd(sf);
     }
-  
   return(v);
+}
+
+
+vct *samples_to_vct_with_reader(mus_long_t len, mus_float_t *buf, snd_fd *reader)
+{
+  return(samples_to_vct(0, len, NULL, -1, buf, reader));
 }
 
 
@@ -8496,7 +8317,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos
   len = dur_to_samples(samps, beg, cp, pos, 2, caller);
   if (len == 0) return(XEN_FALSE); /* empty file (channel) possibility */
 
-  return(vct_to_xen(samples_to_vct(beg, len, cp, pos)));
+  return(vct_to_xen(samples_to_vct(beg, len, cp, pos, NULL, NULL)));
 }
 
 
@@ -8579,7 +8400,7 @@ history position to read (defaults to current position). snd can be a filename, 
   len = dur_to_samples(samps, beg, cp, pos, 2, S_samples);
   if (len == 0) return(XEN_FALSE);
 
-  return(vct_to_xen(samples_to_vct(beg, len, cp, pos)));
+  return(vct_to_xen(samples_to_vct(beg, len, cp, pos, NULL, NULL)));
 }
 
 

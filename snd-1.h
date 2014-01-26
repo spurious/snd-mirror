@@ -1112,6 +1112,8 @@ void end_mix_op(chan_info *cp, mus_long_t old_beg, mus_long_t old_len);
 void prepare_sound_list(chan_info *cp);
 XEN g_sampler_file_name(XEN obj);
 char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos);
+vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_float_t *buf, snd_fd *reader);
+vct *samples_to_vct_with_reader(mus_long_t len, mus_float_t *buf, snd_fd *reader);
 
 
 

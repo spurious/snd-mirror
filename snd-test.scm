@@ -1428,7 +1428,7 @@
       'transform-graph-type (transform-graph-type) graph-once
       'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
       'transform-normalization (transform-normalization) normalize-by-channel
-      'transform-size (transform-size) 1024
+      'transform-size (transform-size) (transform-size)
       'transform-type (transform-type) fourier-transform
       'wavelet-type (wavelet-type) 0 
       'wavo-hop (wavo-hop) 3 
@@ -46953,24 +46953,24 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-23-Jan-14:
-42,953,442,471
-5,446,525,790  s7.c:eval [/home/bil/gtk-snd/snd]
-3,428,850,114  ???:sin [/lib64/libm-2.12.so]
-2,378,586,259  ???:cos [/lib64/libm-2.12.so]
-1,947,394,457  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+25-Jan-14:
+42,668,516,559
+5,450,384,210  s7.c:eval [/home/bil/gtk-snd/snd]
+3,429,474,549  ???:sin [/lib64/libm-2.12.so]
+2,375,405,855  ???:cos [/lib64/libm-2.12.so]
+1,939,033,055  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
 1,335,711,872  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-1,259,841,925  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,074,869,488  s7.c:gc [/home/bil/gtk-snd/snd]
-1,062,482,089  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,050,835,858  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  885,469,176  ???:t2_32 [/home/bil/gtk-snd/snd]
-  785,981,295  ???:t2_64 [/home/bil/gtk-snd/snd]
+1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
+1,096,800,699  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,069,699,652  s7.c:gc [/home/bil/gtk-snd/snd]
+1,003,476,352  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  899,447,588  ???:t2_32 [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  621,613,690  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  568,211,294  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,626,184  ???:n1_64 [/home/bil/gtk-snd/snd]
-  428,466,087  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  624,429,580  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  571,373,090  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,355,496  ???:n1_64 [/home/bil/gtk-snd/snd]
+  454,119,343  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   411,794,636  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
 |#
 

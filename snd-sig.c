@@ -641,7 +641,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
   file_info *hdr0 = NULL, *hdr1 = NULL;
   int j, ofd0 = 0, ofd1 = 0, datumb = 0;
   bool temp_file;
-  mus_long_t k;
+  mus_long_t k, alloc_len;
   mus_float_t **data0, **data1;
   mus_float_t *idata0, *idata1;
   bool reporting = false;
@@ -654,8 +654,9 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
   reporting = ((sp0) && (dur > REPORTING_SIZE) && (!(cp0->squelch_update)));
   if (reporting) start_progress_report(cp0);
 
-  if (dur > MAX_BUFFER_SIZE)
+  if (dur > REPORTING_SIZE)
     {
+      alloc_len = REPORTING_SIZE;
       temp_file = true; 
       ofile0 = snd_tempnam();
       hdr0 = make_temp_header(ofile0, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
@@ -686,54 +687,52 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 	  return;
 	}
     }
-  else temp_file = false;
+  else 
+    {
+      temp_file = false;
+      alloc_len = dur;
+    }
 
   data0 = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  data0[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
+  data0[0] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t)); 
   data1 = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  data1[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
+  data1[0] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t)); 
   idata0 = data0[0];
   idata1 = data1[0];
-  c0 = init_sample_read_any_with_bufsize(beg, cp0, READ_FORWARD, pos0, (dur > REPORTING_SIZE) ? REPORTING_SIZE : dur);
-  c1 = init_sample_read_any_with_bufsize(beg, cp1, READ_FORWARD, pos1, (dur > REPORTING_SIZE) ? REPORTING_SIZE : dur);
-  sampler_set_safe(c0, dur);
-  sampler_set_safe(c1, dur);
+  c0 = init_sample_read_any_with_bufsize(beg, cp0, READ_FORWARD, pos0, alloc_len);
+  c1 = init_sample_read_any_with_bufsize(beg, cp1, READ_FORWARD, pos1, alloc_len);
 
   if (temp_file)
     {
+      int err;
       ss->stopped_explicitly = false;
-      j = 0;
-      for (k = 0; k < dur; k++)
+      sampler_set_safe(c0, dur);
+      sampler_set_safe(c1, dur);
+      for (k = 0; k < dur; k += alloc_len)
 	{
-	  idata0[j] = read_sample(c1);
-	  idata1[j] = read_sample(c0);
-	  j++;
-	  if (j == MAX_BUFFER_SIZE)
+	  int n;
+	  j = dur - k;
+	  if (j > alloc_len) j = alloc_len;
+
+	  for (n = 0; n < j; n++)
 	    {
-	      int err;
-	      err = mus_file_write(ofd0, 0, j - 1, 1, data0);
-	      err = mus_file_write(ofd1, 0, j - 1, 1, data1);
-	      j = 0;
-	      if (err != MUS_NO_ERROR) break;
-	      if (reporting) 
-		{
-		  progress_report(cp0, (mus_float_t)((double)k / (double)dur));
-		  if (ss->stopped_explicitly) break;
-		  if ((cp0->active < CHANNEL_HAS_EDIT_LIST) || 
-		      (cp1->active < CHANNEL_HAS_EDIT_LIST))
-		    {
-		      ss->stopped_explicitly = true;
-		      break;
-		    }
-		}
+	      idata0[j] = read_sample(c1);
+	      idata1[j] = read_sample(c0);
 	    }
-	}
-      if (!(ss->stopped_explicitly))
-	{
-	  if (j > 0) 
+	  err = mus_file_write(ofd0, 0, j - 1, 1, data0);
+	  err = mus_file_write(ofd1, 0, j - 1, 1, data1);
+
+	  if (err != MUS_NO_ERROR) break;
+	  if (reporting) 
 	    {
-	      mus_file_write(ofd0, 0, j - 1, 1, data0);
-	      mus_file_write(ofd1, 0, j - 1, 1, data1);
+	      progress_report(cp0, (mus_float_t)((double)k / (double)dur));
+	      if (ss->stopped_explicitly) break;
+	      if ((cp0->active < CHANNEL_HAS_EDIT_LIST) || 
+		  (cp1->active < CHANNEL_HAS_EDIT_LIST))
+		{
+		  ss->stopped_explicitly = true;
+		  break;
+		}
 	    }
 	}
       close_temp_file(ofile0, ofd0, hdr0->type, dur * datumb);
@@ -756,11 +755,9 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
     }
   else 
     {
-      for (k = 0; k < dur; k++)
-	{
-	  idata0[k] = read_sample(c1);
-	  idata1[k] = read_sample(c0);
-	}
+      samples_to_vct_with_reader(dur, idata0, c1);
+      samples_to_vct_with_reader(dur, idata1, c0);
+
       change_samples(beg, dur, data0[0], cp0, S_swap_channels, cp0->edit_ctr, -1.0);
       change_samples(beg, dur, data1[0], cp1, S_swap_channels, cp1->edit_ctr, -1.0);
     }
@@ -929,13 +926,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 
 	  swid2 = 2 * sinc_width(ss);
 	  in_dur = dur + 4 + swid2;
-	  in_data = (mus_float_t *)malloc(in_dur * sizeof(mus_float_t));
+	  in_data = (mus_float_t *)calloc(in_dur, sizeof(mus_float_t));
 	  for (m = 0; m < swid2; m++)
 	    in_data[m] = 0.0;
-	  for (m = swid2; m < in_dur; m++)
-	    in_data[m] = read_sample(sf);
+	  samples_to_vct_with_reader(in_dur - swid2, (mus_float_t *)(in_data + swid2), sf);
 	  data[0] = mus_src_05(sr->gen, in_data, dur);
-
 	  k = dur * 2 + 1;
 	  j = k;
 	  free(in_data);
@@ -951,13 +946,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 
 	      swid2 = 2 * sinc_width(ss);
 	      in_dur = dur + 4 + swid2;
-	      in_data = (mus_float_t *)malloc(in_dur * sizeof(mus_float_t));
+	      in_data = (mus_float_t *)calloc(in_dur, sizeof(mus_float_t));
 	      for (m = 0; m < swid2; m++)
 		in_data[m] = 0.0;
-	      for (m = swid2; m < in_dur; m++)
-		in_data[m] = read_sample(sf);
+	      samples_to_vct_with_reader(in_dur - swid2, (mus_float_t *)(in_data + swid2), sf);
 	      data[0] = mus_src_20(sr->gen, in_data, dur);
-
 	      k = dur / 2 + 1;
 	      if ((dur & 1) != 0) k++; /* ?? */
 	      j = k;
@@ -1395,7 +1388,7 @@ static mus_float_t *get_filter_coeffs(int order, env *e)
   /* get the frequency envelope and design the FIR filter */
   fdata = sample_linear_env(e, order);
   if (!fdata) return(NULL);
-  a = (mus_float_t *)calloc(order, sizeof(mus_float_t));
+  a = (mus_float_t *)calloc(order + 1, sizeof(mus_float_t));
 
   mus_make_fir_coeffs(order, fdata, a);
 
@@ -1470,7 +1463,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   file_info *hdr = NULL;
   int j, ofd = 0, datumb = 0, err = 0;
   bool temp_file;
-  mus_long_t k;
+  mus_long_t k, alloc_len;
   mus_float_t **data;
   mus_float_t *idata;
   char *ofile = NULL;
@@ -1484,12 +1477,12 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL)
     return(mus_format("%s can't read %s[%d] channel data!", S_clm_channel, sp->short_filename, cp->chan));
-  sampler_set_safe(sf, dur + overlap);
   runf = mus_run_function(gen);
 
-  if ((dur + overlap) > MAX_BUFFER_SIZE)
+  if ((dur + overlap) > REPORTING_SIZE)
     {
       io_error_t io_err = IO_NO_ERROR;
+      alloc_len = REPORTING_SIZE;
       temp_file = true; 
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, S_clm_channel);
@@ -1504,42 +1497,53 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
-  else temp_file = false;
+  else 
+    {
+      temp_file = false;
+      alloc_len = dur + overlap;
+    }
+
   data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
+  data[0] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t)); 
   idata = data[0];
+
   if (temp_file)
     {
-      j = 0;
-      for (k = 0; k < dur; k++)
+      sampler_set_safe(sf, dur);
+      for (k = 0; k < dur; k += alloc_len)
 	{
-	  idata[j++] = runf(gen, read_sample(sf), 0.0);
-	  if (j == MAX_BUFFER_SIZE)
-	    {
-	      err = mus_file_write(ofd, 0, j - 1, 1, data);
-	      j = 0;
-	      if (err != MUS_NO_ERROR) break;
-	    }
-	}
-    }
-  else
-    {
-      for (k = 0; k < dur; k++)
-	idata[k] = runf(gen, read_sample(sf), 0.0);
-      j = (int)dur;
-    }
-  for (k = 0; k < overlap; k++)
-    {
-      idata[j++] = runf(gen, 0.0, 0.0) + read_sample(sf);
-      if ((temp_file) && (j == MAX_BUFFER_SIZE))
-	{
+	  int n;
+	  j = dur - k;
+	  if (j > alloc_len) j = alloc_len;
+
+	  for (n = 0; n < j; n++)
+	    idata[n] = runf(gen, read_sample(sf), 0.0);
+
 	  err = mus_file_write(ofd, 0, j - 1, 1, data);
 	  j = 0;
 	  if (err != MUS_NO_ERROR) break;
 	}
     }
-  dur += overlap;
+  else
+    {
+      samples_to_vct_with_reader(dur, idata, sf);
+      for (k = 0; k < dur; k++)
+	idata[k] = runf(gen, idata[k], 0.0);
+      j = (int)dur;
+    }
+
+  if (overlap > 0)
+    {
+      snd_fd *fd;
+      fd = init_sample_read_any_with_bufsize(beg + dur, cp, READ_FORWARD, edpos, overlap);
+      for (k = 0; k < overlap; k++)
+	idata[j++] = runf(gen, 0.0, 0.0) + read_sample(fd);
+      free_snd_fd(fd);
+      dur += overlap;
+    }
+
   sf = free_snd_fd(sf);
+
   if (temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1698,9 +1702,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	  sndrdat = (mus_float_t *)calloc(fsize, sizeof(mus_float_t));
 	  sndidat = (mus_float_t *)calloc(fsize, sizeof(mus_float_t));
 
-	  for (k = 0; k < dur; k++) 
-	    sndrdat[k] = (mus_float_t)(read_sample(sf));
-
+	  samples_to_vct_with_reader(dur, sndrdat, sf);
 	  mus_fft(sndrdat, sndidat, fsize, 1);
 	  scale = 1.0 / (mus_float_t)fsize;
 	  for (k = 0; k < fsize; k++)
@@ -1734,7 +1736,211 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
   return(NULL);
 }
 
+#if 0
+static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_long_t beg, mus_long_t dur, 
+			   const char *origin, bool truncate,
+			   bool over_selection, mus_any *gen, mus_float_t *precalculated_coeffs)
+{
+  mus_float_t *a = NULL;
+  snd_info *sp;
+  bool reporting = false;
+  int m;
+  mus_long_t offk, alloc_len, total_dur;
+  file_info *hdr = NULL;
+  int j = 0, ofd = 0, datumb = 0, err = 0;
+  bool temp_file;
+  char *new_origin = NULL;
+  mus_float_t **data;
+  mus_float_t *idata;
+  char *ofile = NULL;
+  io_error_t io_err = IO_NO_ERROR;
+  mus_any *g = NULL;
+  mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
+  
+  if (!(editable_p(cp))) return(NULL);
+  sp = cp->sound;
 
+  total_dur = dur;
+  if ((!over_selection) || (!truncate))
+    total_dur += order;
+  /* if over-selection this causes it to clobber samples beyond the selection end -- maybe mix? */
+
+  reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
+  if (reporting) start_progress_report(cp);
+
+  if (total_dur > REPORTING_SIZE)
+    {
+      alloc_len = REPORTING_SIZE;
+      temp_file = true; 
+      ofile = snd_tempnam();
+      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, total_dur, (char *)origin);
+      ofd = open_temp_file(ofile, 1, hdr, &io_err);
+      if (ofd == -1)
+	{
+	  return(mus_format("%s %s temp file %s: %s\n", 
+			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			    origin, ofile, 
+			    snd_open_strerror()));
+	}
+      datumb = mus_bytes_per_sample(hdr->format);
+    }
+  else
+    {
+      alloc_len = total_dur;
+      temp_file = false;
+    }
+
+  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+  data[0] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t)); 
+  idata = data[0];
+
+  if (precalculated_coeffs)
+    a = precalculated_coeffs;
+  else 
+    {
+      if (order & 1) order++;
+      a = get_filter_coeffs(order, e);
+    }
+
+  if (gen)
+    {
+      mus_reset(gen);
+      g = gen;
+    }
+  else
+    {
+      g = mus_make_fir_filter(order, a, NULL);
+      if (over_selection)
+	{
+	  mus_long_t prebeg = 0;
+	  /* see if there's data to pre-load the filter */
+	  if (beg >= order)
+	    prebeg = order - 1;
+	  else prebeg = beg;
+	  if (prebeg > 0)
+	    for (m = (int)prebeg; m > 0; m--)
+	      mus_fir_filter(g, read_sample(sf));
+	}
+    }
+
+  runf = mus_run_function(g);
+
+  if (!temp_file)
+    {
+      for (j = 0; j < dur; j++)
+	idata[j] = runf(g, read_sample(sf), 0.0);
+    }
+  else
+    {
+      j = 0;
+      for (offk = 0; offk < dur; offk += alloc_len)
+	{
+	  int k, kdur;
+	  kdur = dur = offk;
+	  if (kdur > alloc_len) kdur = alloc_len;
+	  
+	  for (k = 0; k < kdur; k++)
+	    idata[k] = runf(g, read_sample(sf), 0.0);
+
+	  err = mus_file_write(ofd, 0, kdur - 1, 1, data);
+	  if (err != MUS_NO_ERROR) break;
+	  if (reporting) 
+	    {
+	      progress_report(cp, (mus_float_t)((double)offk / (double)dur));
+	      if (ss->stopped_explicitly) return(NULL);
+	      if (!(sp->active))
+		{
+		  ss->stopped_explicitly = true;
+		  break;
+		}
+	    }
+	}
+    }
+
+  if ((over_selection) && (!truncate))
+    {
+      snd_fd *sfold;
+      sfold = init_sample_read_any(beg + dur, cp, READ_FORWARD, sf->edit_ctr);
+      for (offk = 0; offk < order; offk++, j++)
+	idata[j] = runf(g, read_sample(sf), 0.0) + read_sample(sfold); 
+      if (temp_file)
+	{
+	  mus_file_write(ofd, 0, j - 1, 1, data);
+	  j = 0;
+	}
+      free_snd_fd(sfold);
+    }
+
+  if (reporting) finish_progress_report(cp);
+  if (origin)
+    new_origin = mus_strdup(origin);
+  else
+    {
+      if (precalculated_coeffs)
+	{
+	  vct *v;
+	  char *vstr = NULL;
+
+	  v = mus_vct_wrap(order, precalculated_coeffs);
+	  vstr = mus_vct_to_readable_string(v);
+
+#if HAVE_FORTH
+	  if (total_dur == (order + cp->edits[sf->edit_ctr]->samples))
+	    new_origin = mus_format("%s %d %lld" PROC_SEP PROC_FALSE " %s", vstr, order, beg, S_filter_channel);
+	  else new_origin = mus_format("%s %d %lld" PROC_SEP "%lld %s", vstr, order, beg, dur, S_filter_channel);
+#else
+	  if (total_dur == (order + cp->edits[sf->edit_ctr]->samples))
+	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
+				    TO_PROC_NAME(S_filter_channel), vstr, order, beg);
+	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP "%lld", 
+				       TO_PROC_NAME(S_filter_channel), vstr, order, beg, dur);
+#endif
+
+	  if (vstr) free(vstr);
+#if (!HAVE_SCHEME)
+	  mus_vct_free(v);
+#endif
+	}
+      else
+	{
+	  /* new_origin = filter-channel + envelope */
+	  char *envstr;
+	  envstr = env_to_string(e);
+
+#if HAVE_FORTH
+	  if (total_dur == (order + cp->edits[sf->edit_ctr]->samples))
+	    new_origin = mus_format("%s %d %lld" PROC_SEP PROC_FALSE " %s", envstr, order, beg, S_filter_channel);
+	  else new_origin = mus_format("%s %d %lld" PROC_SEP "%lld %s", envstr, order, beg, dur, S_filter_channel);
+#else
+	  if (total_dur == (order + cp->edits[sf->edit_ctr]->samples))
+	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
+				    TO_PROC_NAME(S_filter_channel), envstr, order, beg);
+	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP "%lld", 
+				       TO_PROC_NAME(S_filter_channel), envstr, order, beg, dur);
+#endif
+	  if (envstr) free(envstr);
+	}
+    }
+
+  if (temp_file)
+    {
+      close_temp_file(ofile, ofd, hdr->type, total_dur * datumb);
+      hdr = free_file_info(hdr);
+      file_change_samples(beg, total_dur, ofile, cp, 0, DELETE_ME, new_origin, sf->edit_ctr);
+      if (ofile) {free(ofile); ofile = NULL;}
+    }
+  else change_samples(beg, total_dur, data[0], cp, new_origin, sf->edit_ctr, -1.0);
+  if (new_origin) free(new_origin);
+
+  update_graph(cp); 
+
+  free(data[0]);
+  free(data);
+  if (!gen) mus_free(g);
+  if ((a) && (!precalculated_coeffs)) free(a);
+  return(NULL);
+}
+#else
 static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_long_t beg, mus_long_t dur, 
 			   const char *origin, bool truncate,
 			   bool over_selection, mus_any *gen, mus_float_t *precalculated_coeffs)
@@ -1936,6 +2142,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   if ((a) && (!precalculated_coeffs)) free(a);
   return(NULL);
 }
+#endif
 
 
 static char *filter_channel(chan_info *cp, int order, env *e, mus_long_t beg, mus_long_t dur, int edpos, const char *origin, bool truncate, mus_float_t *coeffs)

@@ -7949,7 +7949,7 @@ static mus_float_t fir_ge_20(mus_any *ptr, mus_float_t input)
   if (gen->loc == gen->order)
     gen->loc = 0;
 
-  return(xout + ((*ts) * (*x)));
+  return((ts == state) ? (xout + ((*ts) * (*x))) : xout); 
 }
 
 
@@ -8391,7 +8391,7 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
   if (n <= 0) return(aa);
   if (aa) 
     a = aa;
-  else a = (mus_float_t *)calloc(order, sizeof(mus_float_t));
+  else a = (mus_float_t *)calloc(order + 1, sizeof(mus_float_t));
   if (!a) return(NULL);
   if (!(POWER_OF_2_P(order)))
     {
@@ -8454,6 +8454,7 @@ typedef struct {
   int size;
   mus_float_t coeff;
   mus_float_t *x, *y;
+  mus_float_t (*f)(mus_any *ptr, mus_float_t input);
 } onepall;
 
 
@@ -8472,7 +8473,7 @@ static int free_onepall(mus_any *ptr)
 
 static mus_float_t run_onepall(mus_any *ptr, mus_float_t input, mus_float_t unused) 
 {
-  return(mus_one_pole_all_pass(ptr, input));
+  return((((onepall *)ptr)->f)(ptr, input));
 }
 
 
@@ -8519,37 +8520,61 @@ static char *describe_onepall(mus_any *ptr)
 }
 
 
-mus_float_t mus_one_pole_all_pass(mus_any *f, mus_float_t input)
+mus_float_t mus_one_pole_all_pass(mus_any *ptr, mus_float_t input)
+{
+  return((((onepall *)ptr)->f)(ptr, input));
+}
+
+static mus_float_t one_pole_all_pass_n(mus_any *f, mus_float_t input)
 {
   onepall *p = (onepall *)f;
-  int i, size2;
+  int i;
   mus_float_t coeff, y0;
   mus_float_t *x, *y;
+
   x = p->x;
   y = p->y;
   coeff = p->coeff;
-  i = 0;
-  size2 = p->size - 2;
-  y0 = input;
-  while (i <= size2)
-    {
-      y[i] = x[i] + (coeff * (y0 - y[i]));
-      x[i] = y0;
-      y0 = y[i];
-      i++;
 
-      y[i] = x[i] + (coeff * (y0 - y[i]));
-      x[i] = y0;
-      y0 = y[i];
-      i++;
-    }
-  if (i < p->size)
+  y0 = input;
+  for (i = 0; i < p->size; i++)
     {
       y[i] = x[i] + (coeff * (y0 - y[i]));
       x[i] = y0;
       y0 = y[i];
     }
   return(y0);
+}
+
+static mus_float_t one_pole_all_pass_8(mus_any *f, mus_float_t input)
+{
+  onepall *p = (onepall *)f;
+  mus_float_t coeff;
+  mus_float_t *x, *y;
+
+  x = p->x;
+  y = p->y;
+  coeff = p->coeff;
+
+  y[0] = x[0] + (coeff * (input - y[0])); x[0] = input;
+  y[1] = x[1] + (coeff * (y[0] - y[1])); x[1] = y[0]; 
+  y[2] = x[2] + (coeff * (y[1] - y[2])); x[2] = y[1]; 
+  y[3] = x[3] + (coeff * (y[2] - y[3])); x[3] = y[2]; 
+  y[4] = x[4] + (coeff * (y[3] - y[4])); x[4] = y[3]; 
+  y[5] = x[5] + (coeff * (y[4] - y[5])); x[5] = y[4]; 
+  y[6] = x[6] + (coeff * (y[5] - y[6])); x[6] = y[5]; 
+  y[7] = x[7] + (coeff * (y[6] - y[7])); x[7] = y[6];
+
+  return(y[7]);
+}
+
+static mus_float_t one_pole_all_pass_1(mus_any *f, mus_float_t input)
+{
+  onepall *p = (onepall *)f;
+
+  p->y[0] = p->x[0] + (p->coeff * (input - p->y[0]));
+  p->x[0] = input;
+  return(p->y[0]);
 }
 
 
@@ -8589,6 +8614,15 @@ mus_any *mus_make_one_pole_all_pass(int size, mus_float_t coeff)
   gen->x = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->y = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->coeff = coeff;
+
+  if (size == 1)
+    gen->f = one_pole_all_pass_1;
+  else
+    {
+      if (size == 8)
+	gen->f = one_pole_all_pass_8;
+      else gen->f = one_pole_all_pass_n;
+    }
 
   return((mus_any *)gen);
 }
@@ -9931,6 +9965,13 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
 static mus_any *safe_frame_to_frame(mus_frame *f1, mus_mixer *mx, mus_frame *f2, int in_chans, int out_chans)
 {
   int i, j;
+
+#if 0
+  if (f2->chans < out_chans) {fprintf(stderr, "out chans: %d %d\n", out_chans, f2->chans); abort();}
+  if (f1->chans < in_chans) {fprintf(stderr, "in chans: %d %d\n", in_chans, f1->chans); abort();}
+  if ((mx->chans < out_chans) || (mx->chans < in_chans)) {fprintf(stderr, "mx chans: %d %d %d\n", in_chans, out_chans, mx->chans); abort();}
+#endif
+ 
   for (i = 0; i < out_chans; i++)
     {
       f2->vals[i] = f1->vals[0] * mx->vals[0][i];
@@ -15401,7 +15442,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 					   mus_float_t (*synthesize)(void *arg))
 {
   pv_info *pv = (pv_info *)ptr;
-  int N2, i, N4;
+  int N2, i;
   mus_float_t sum, sum1;
   mus_float_t (*pv_synthesize)(void *arg) = synthesize;
 
@@ -15500,7 +15541,6 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       amp = pv->amps;
       panc = pv->ampinc;
       
-      N4 = N2 - 4;
       i = 0;
       sum = 0.0;
       sum1 = 0.0;
@@ -15602,7 +15642,7 @@ typedef struct {
 #if (!HAVE_SINCOS)
   mus_any *sin_osc, *cos_osc;
 #else
-  mus_float_t phase, freq;
+  mus_float_t phase, freq, sign;
 #endif
 } ssbam;
 
@@ -15671,7 +15711,7 @@ mus_float_t mus_ssb_am_unmodulated(mus_any *ptr, mus_float_t insig)
   sincos(gen->phase, &sx, &cx);
   gen->phase += gen->freq;
   return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +
-         (((gen->shift_up) ? -sx : sx) * run_hilbert((flt *)(gen->hilbert), insig)));
+         (sx * gen->sign * run_hilbert((flt *)(gen->hilbert), insig)));
 #endif
 }
 
@@ -15687,7 +15727,7 @@ mus_float_t mus_ssb_am(mus_any *ptr, mus_float_t insig, mus_float_t fm)
   sincos(gen->phase, &sx, &cx);
   gen->phase += (fm + gen->freq);
   return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +
-         (((gen->shift_up) ? -sx : sx) * run_hilbert((flt *)(gen->hilbert), insig)));
+         (sx * gen->sign * run_hilbert((flt *)(gen->hilbert), insig)));
 #endif
 }
 
@@ -15883,6 +15923,7 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
   gen->sin_osc = mus_make_oscil(fabs(freq), (gen->shift_up) ? M_PI : 0.0);
   gen->cos_osc = mus_make_oscil(fabs(freq), M_PI * 0.5);
 #else
+  if (gen->shift_up) gen->sign = -1.0; else gen->sign = 1.0;
   gen->freq = mus_hz_to_radians(fabs(freq));
   gen->phase = 0.0;
 #endif
@@ -15979,9 +16020,20 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
   in_chans = mus_channels(inf);
   if (in_chans <= 0) 
     mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(inf), in_chans);
-  if (out_chans > in_chans) 
-    mix_chans = out_chans; 
-  else mix_chans = in_chans;
+
+  if (umx)
+    {
+      mix_chans = mus_channels(umx);
+      if (in_chans > mix_chans) in_chans = mix_chans;
+      if (out_chans > mix_chans) out_chans = mix_chans;
+    }
+  else
+    {
+      if (out_chans > in_chans) 
+	mix_chans = out_chans; 
+      else mix_chans = in_chans;
+    }
+
   out_end = out_start + out_frames;
 
   mixtype = mix_type(out_chans, in_chans, umx, envs);
