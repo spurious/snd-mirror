@@ -50899,8 +50899,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    if (func)
 	      {
-		s7_pointer a1 = NULL, a2, a3;
-		s7_function f1;
+		s7_pointer a1 = NULL, a2 = NULL, a3 = NULL;
+		s7_function f1 = NULL;
 		if (func == all_x_c_sss)
 		  {
 		    a1 = find_symbol(sc, cadr(body));
@@ -58092,7 +58092,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
-	    s7_pointer z, top, nxt;
+	    s7_pointer z, top, nxt = NULL;
 	    CHECK_STACK_SIZE(sc);
 	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
 	    
@@ -69110,8 +69110,8 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957  974
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
- * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 14.3
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 42.5
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 13.8
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 42.4
  *            153 with run macro (eval_ptree)
  */
 

@@ -1315,9 +1315,9 @@ mus_float_t mus_oscil(mus_any *ptr, mus_float_t fm, mus_float_t pm)
 {
   osc *gen = (osc *)ptr;
   mus_float_t result;
-  result = sin(gen->phase + pm);
+  result = gen->phase + pm;
   gen->phase += (gen->freq + fm);
-  return(result);
+  return(sin(result));
 }
 
 
@@ -1325,9 +1325,9 @@ mus_float_t mus_oscil_unmodulated(mus_any *ptr)
 {
   osc *gen = (osc *)ptr;
   mus_float_t result;
-  result = sin(gen->phase);
+  result = gen->phase;
   gen->phase += gen->freq;
-  return(result);
+  return(sin(result));
 }
 
 
@@ -1335,9 +1335,9 @@ mus_float_t mus_oscil_fm(mus_any *ptr, mus_float_t fm)
 {
   osc *gen = (osc *)ptr;
   mus_float_t result;
-  result = sin(gen->phase);
+  result = gen->phase;
   gen->phase += (gen->freq + fm);
-  return(result);
+  return(sin(result));
 }
 
 
@@ -1345,9 +1345,9 @@ mus_float_t mus_oscil_pm(mus_any *ptr, mus_float_t pm)
 {
   mus_float_t result;
   osc *gen = (osc *)ptr;
-  result = sin(gen->phase + pm);
+  result = gen->phase + pm;
   gen->phase += gen->freq;
-  return(result);
+  return(sin(result));
 }
 
 
@@ -6015,10 +6015,11 @@ mus_any *mus_make_pulse_train(mus_float_t freq, mus_float_t amp, mus_float_t pha
 
 typedef struct {
   mus_any_class *core;
-  double freq, phase, base, incr;
+  double freq, phase, base, incr, norm;
   mus_float_t output;
   mus_float_t *distribution;
   int distribution_size;
+  mus_float_t (*ran_unmod)(mus_any *ptr);
 } noi;
 
 
@@ -6118,7 +6119,14 @@ mus_float_t mus_rand_interp(mus_any *ptr, mus_float_t fm)
   return(gen->output);
 }
 
+
 mus_float_t mus_rand_interp_unmodulated(mus_any *ptr)
+{
+  return(((noi *)ptr)->ran_unmod(ptr));
+}
+
+
+static mus_float_t rand_interp_unmodulated_with_distribution(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
   gen->output += gen->incr;
@@ -6128,6 +6136,21 @@ mus_float_t mus_rand_interp_unmodulated(mus_any *ptr)
       gen->incr = (random_any(gen) - gen->output) / (ceil(TWO_PI / gen->freq));
     }
   gen->phase += gen->freq;
+  return(gen->output);
+}
+
+
+static mus_float_t rand_interp_unmodulated(mus_any *ptr)
+{
+  noi *gen = (noi *)ptr;
+  gen->output += gen->incr;
+  gen->phase += gen->freq;
+  if (gen->phase >= TWO_PI)
+    {
+      gen->phase -= TWO_PI;
+      randx = randx * 1103515245 + 12345;
+      gen->incr = ((gen->base * ((mus_float_t)((unsigned int)(randx >> 16) & 32767) * INVERSE_MAX_RAND - 1.0)) - gen->output) * gen->norm;
+    }
   return(gen->output);
 }
 
@@ -6152,7 +6175,21 @@ bool mus_rand_interp_p(mus_any *ptr)
 static int free_noi(mus_any *ptr) {if (ptr) free(ptr); return(0);}
 
 static mus_float_t noi_freq(mus_any *ptr) {return(mus_radians_to_hz(((noi *)ptr)->freq));}
-static mus_float_t noi_set_freq(mus_any *ptr, mus_float_t val) {if (val < 0.0) val = -val; ((noi *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+static mus_float_t noi_set_freq(mus_any *ptr, mus_float_t val) 
+{
+  if (val < 0.0) val = -val; 
+  ((noi *)ptr)->freq = mus_hz_to_radians(val); 
+  return(val);
+}
+
+static mus_float_t interp_noi_set_freq(mus_any *ptr, mus_float_t val) 
+{
+  noi *gen = (noi *)ptr;
+  if (val < 0.0) val = -val; 
+  gen->freq = mus_hz_to_radians(val); 
+  gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
+  return(val);
+}
 
 static mus_float_t noi_increment(mus_any *ptr) {return(((noi *)ptr)->freq);}
 static mus_float_t noi_set_increment(mus_any *ptr, mus_float_t val) {((noi *)ptr)->freq = val; return(val);}
@@ -6229,7 +6266,7 @@ static mus_any_class RAND_INTERP_CLASS = {
   &noi_data, 0, 
   &noi_length, 0,
   &noi_freq,
-  &noi_set_freq,
+  &interp_noi_set_freq,
   &noi_phase,
   &noi_set_phase,
   &noi_scaler,
@@ -6300,6 +6337,8 @@ mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base)
   gen->base = base;
   gen->incr =  mus_random(base) * freq / sampling_rate;
   gen->output = 0.0;
+  gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
+  gen->ran_unmod = rand_interp_unmodulated;
   return((mus_any *)gen);
 }
 
@@ -6321,6 +6360,7 @@ mus_any *mus_make_rand_interp_with_distribution(mus_float_t freq, mus_float_t ba
   gen = (noi *)mus_make_rand_interp(freq, base);
   gen->distribution = distribution;
   gen->distribution_size = distribution_size;
+  gen->ran_unmod = rand_interp_unmodulated_with_distribution;
   return((mus_any *)gen);
 }
 
@@ -8711,8 +8751,8 @@ static mus_float_t mus_env_step(mus_any *ptr)
       gen->index++;
       gen->loc = gen->locs[gen->index] - gen->locs[gen->index - 1];
       gen->rate = gen->rates[gen->index];
+      gen->current_value = gen->rate; 
     }
-  gen->current_value = gen->rate; 
   gen->loc--;
   return(val);
 }
@@ -8734,6 +8774,7 @@ static mus_float_t mus_env_linear(mus_any *ptr)
     {
       /* we can save about 10% total env time by checking here that we're on the last segment,
        *   and setting gen->env_func to a version of mus_env_linear that does not watch gen->loc.
+       * In any case, this code is strange -- change anything and it is 20% slower, sez callgrind.
        */
       gen->index++;
       gen->loc = gen->locs[gen->index] - gen->locs[gen->index - 1];

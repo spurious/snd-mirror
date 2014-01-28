@@ -637,7 +637,7 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
 
       if (s7_is_int_vector(vec))
 	{
-	  mus_long_t *ints;
+	  s7_Int *ints;
 	  ints = s7_int_vector_elements(vec);
 	  
 	  dist = end - 4;
@@ -847,7 +847,8 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 
 /* static bool wrapped_vct_p(s7_pointer obj) {return(mus_vct_p(obj));} */
 
-static mus_float_t wrapped_vct_ref(void *p)
+mus_float_t wrapped_vct_ref(void *p);
+mus_float_t wrapped_vct_ref(void *p)
 {
   gf *g = (gf *)p;
   s7_Int k;

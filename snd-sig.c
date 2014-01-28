@@ -784,7 +784,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
   snd_info *sp;
   peak_env_info *ep = NULL;
   file_info *hdr = NULL;
-  int i, j, ofd = 0, datumb = 0, err = 0, edpos = 0;
+  int i, ofd = 0, datumb = 0, err = 0, edpos = 0;
   bool section = false, temp_file;
   mus_long_t k, alloc_len;
   char *origin = NULL;
@@ -829,7 +829,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
     ep = peak_env_copy(cp, true, edpos); /* true -> reversed */
   else 
     {
-      int sbin, ebin;
+      int j, sbin, ebin;
       mus_float_t min1, max1;
       ep = peak_env_copy(cp, false, edpos);
       if (ep) 
@@ -870,18 +870,16 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 
   if (temp_file)
     {
-      for (j = 0, k = 0; k < dur; k += alloc_len)
+      for (k = 0; k < dur; k += alloc_len)
 	{
 	  mus_long_t kp, kdur;
 	  kdur = dur - k;
 	  if (kdur > alloc_len) kdur = alloc_len;
 	  for (kp = 0; kp < kdur; kp++)
-	    idata[j++] = read_sample(sf);
-	  err = mus_file_write(ofd, 0, j - 1, 1, data);
-	  j = 0;
+	    idata[kp] = read_sample(sf);
+	  err = mus_file_write(ofd, 0, kdur - 1, 1, data);
 	  if (err != MUS_NO_ERROR) break;
 	}
-      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb);
       hdr = free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, origin, edpos);
@@ -1887,8 +1885,6 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	    }
 	}
       if (reporting) finish_progress_report(cp);
-      if ((j > 0) && (!(ss->stopped_explicitly)))
-
       close_temp_file(ofile, ofd, hdr->type, dur * datumb);
       if (!(ss->stopped_explicitly))
 	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, origin, sf->edit_ctr);

@@ -10906,6 +10906,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 	  if ((chans == 1) &&
 	      (rev_chans == 0))
 	    {
+	      mus_long_t dlen2;
 	      for (; pos < end;)
 		{
 		  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
@@ -10916,10 +10917,21 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		  dend = mus_out_any_data_end(outp);
 		  if (dend > end)
 		    dlen = end - dstart;
-		  for (dpos = pos - dstart; dpos < dlen; dpos++)
+		  dlen2 = dlen - 2;
+		  dpos = pos - dstart;
+		  while (dpos < dlen2)
 		    {
 		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-		      buf[dpos] += f1 * mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+		      buf[dpos++] += f1 * mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+		      pos++;
+		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
+		      buf[dpos++] += f1 * mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+		      pos++;
+		    }
+		  while (dpos < dlen)
+		    {
+		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
+		      buf[dpos++] += f1 * mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
 		      pos++;
 		    }
 		  mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
@@ -10932,6 +10944,8 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		  (rev_chans == 1))
 		{
 		  mus_float_t x;
+		  mus_long_t dlen2;
+
 		  f2 = mus_locsig_ref(lc, 1);
 		  r1 = mus_locsig_reverb_ref(lc, 0);
 		  revp = mus_locsig_rev_writer(lc);
@@ -10950,12 +10964,29 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		      dend = mus_out_any_data_end(outp);
 		      if (dend > end)
 			dlen = end - dstart;
-		      for (dpos = pos - dstart; dpos < dlen; dpos++)
+		      dlen2 = dlen - 2;
+		      dpos = pos - dstart;
+		      while (dpos < dlen2)
 			{
 			  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
 			  x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
 			  buf[dpos] += f1 * x;
-			  buf2[dpos] += f2 * x;
+			  buf2[dpos++] += f2 * x;
+			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
+			  pos++;
+			  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
+			  x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+			  buf[dpos] += f1 * x;
+			  buf2[dpos++] += f2 * x;
+			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
+			  pos++;
+			}
+		      while (dpos < dlen)
+			{
+			  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
+			  x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+			  buf[dpos] += f1 * x;
+			  buf2[dpos++] += f2 * x;
 			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
 			  pos++;
 			}
@@ -11348,19 +11379,42 @@ static gf *fixup_max(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
 /* -------- hz->radians -------- */
 
+static mus_float_t gf_hz_to_radians_1(void *p) {gf *g = (gf *)p; return(mus_hz_to_radians(g->f1(g->gen)));}
+static mus_float_t gf_hz_to_radians(void *p) {gf *g = (gf *)p; return(mus_hz_to_radians(g->f1(g->g1)));}
+
 static gf *fixup_hz_to_radians(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  s7_pointer x;
-  gf *g;
+  gf *g, *g1 = NULL;
+  int typ;
+  double x;
+  double *rx;
+  s7_pointer s;
 
-  x = cadr(expr);
-  if (s7_is_real(x))
+  typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
+  switch (typ)
     {
+    case GF_X:
       g = gf_alloc();
       g->func = gf_constant;
-      g->x1 = mus_hz_to_radians(s7_number_to_real(sc, x));
+      g->x1 = mus_hz_to_radians(x);
+      return(g);
+
+    case GF_G:
+      if (g1->func_1)
+	{
+	  g1->f1 = g1->func_1;
+	  g1->func = gf_hz_to_radians_1;
+	  g1->func_1 = NULL;
+	  return(g1);
+	}
+      g = gf_alloc();
+      g->func = gf_hz_to_radians;
+      g->g1 = g1;
+      g->f1 = g1->func;
       return(g);
     }
+
+  if (g1) gf_free(g1);
   return(NULL);
 }
 
@@ -11784,6 +11838,49 @@ static mus_float_t gf_multiply_rx1_rx2(void *p) {gf *g = (gf *)p; return((*(g->r
 static mus_float_t gf_add_s1_s2(void *p)        {gf *g = (gf *)p; return(s7_cell_s1_to_real(g) + s7_cell_s2_to_real(g));}
 static mus_float_t gf_multiply_s1_s2(void *p)   {gf *g = (gf *)p; return(s7_cell_s1_to_real(g) * s7_cell_s2_to_real(g));}
 
+static mus_float_t gf_add_g1_op2g1q(void *p)   
+{
+  gf *g = (gf *)p; 
+  gf *g2 = (gf *)(g->g2);
+  return(g->f1(g->g1) + g2->func_2(g2->gen, ((gf *)(g2->g1))->func(g2->g1))); /* g2=>gf_2_g1 */
+}
+static mus_float_t gf_multiply_g1_op2g1q(void *p)   
+{
+  gf *g = (gf *)p; 
+  gf *g2 = (gf *)(g->g2);
+  return(g->f1(g->g1) * g2->func_2(g2->gen, ((gf *)(g2->g1))->func(g2->g1))); /* g2=>gf_2_g1 */
+}
+static mus_float_t gf_multiply_op2g1q_x1(void *p)   
+{
+  gf *g = (gf *)p; 
+  gf *g1 = (gf *)(g->g1);
+  return(g->x1 * g1->func_2(g1->gen, ((gf *)(g1->g1))->func(g1->g1))); /* g1=>gf_2_g1 */
+}
+static mus_float_t gf_add_op2g1q_g2_g3(void *p)   
+{
+  gf *g = (gf *)p; 
+  gf *g1 = (gf *)(g->g1);
+  return(g1->func_2(g1->gen, ((gf *)(g1->g1))->func(g1->g1)) + g->f2(g->g2) + g->f3(g->g3)); /* g1=>gf_2_g1 */
+}
+static mus_float_t gf_multiply_g1_g2_op2g1q(void *p)   
+{
+  gf *g = (gf *)p; 
+  gf *g3 = (gf *)(g->g3);
+  return(g->f1(g->g1) * g->f2(g->g2) * g3->func_2(g3->gen, ((gf *)(g3->g1))->func(g3->g1))); /* g3=>gf_2_g1 */
+}
+
+static mus_float_t gf_multiply_v1_v2(void *p)   
+{
+  gf *g = (gf *)p; 
+  gf *g1 = (gf *)(g->g1);
+  gf *g2 = (gf *)(g->g2);
+  s7_Int k;
+
+  k = s7_cell_integer(s7_cell_slot_value(g1->s1));
+  if ((k >= 0) && (k < g1->i1) && (k < g2->i1))
+    return(g1->rx1[k] * g2->rx1[k]);
+  return(0.0);
+}
 
 static mus_float_t gf_add_3(void *p)                {gf *g = (gf *)p; return(g->f1(g->gen1) + g->f2(g->gen2) + g->f3(g->gen3));}
 static mus_float_t gf_multiply_3(void *p)           {gf *g = (gf *)p; return(g->f1(g->gen1) * g->f2(g->gen2) * g->f3(g->gen3));}
@@ -11812,8 +11909,13 @@ static mus_float_t gf_multiply_x1_g1_g2_g3(void *p) {gf *g = (gf *)p; return(g->
 static mus_float_t gf_add_g1_g2_g3_g4_g5(void *p)      {gf *g = (gf *)p; return(g->f1(g->g1) + g->f2(g->g2) + g->f3(g->g3) + g->f4(g->g4) + g->f5(g->g5));}
 static mus_float_t gf_multiply_g1_g2_g3_g4_g5(void *p) {gf *g = (gf *)p; return(g->f1(g->g1) * g->f2(g->g2) * g->f3(g->g3) * g->f4(g->g4) * g->f5(g->g5));}
 
+static mus_float_t gf_env_1(void *p)            {return(mus_env(((mus_xen *)p)->gen));}
+static mus_float_t gf_rand_interp_1(void *p)    {return(mus_rand_interp_unmodulated(((mus_xen *)p)->gen));}
+static mus_float_t gf_polywave_1(void *p)       {return(mus_polywave_unmodulated(((mus_xen *)p)->gen));}
 
 #define PRINTING 0
+static mus_float_t gf_2_g1(void *p);
+mus_float_t wrapped_vct_ref(void *p);
 
 static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer locals, bool its_add)
 {
@@ -11864,6 +11966,14 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
 		  g->gen1 = g1->gen;
 		  g->gen2 = g2->gen;
 		  g->func = (its_add) ? gf_add_2 : gf_multiply_2;
+
+ 		  if (g->f1 == (mus_float_t (*)(void *p))wrapped_env_1)
+ 		    g->f1 = gf_env_1;
+ 		  if (g->f2 == (mus_float_t (*)(void *p))wrapped_rand_interp_1)
+ 		    g->f2 = gf_rand_interp_1;
+ 		  if (g->f2 == (mus_float_t (*)(void *p))wrapped_polywave_1)
+ 		    g->f2 = gf_polywave_1;
+
 		  g->func_1 = NULL;
 		  gf_free(g1); 
 		  gf_free(g2);
@@ -11876,6 +11986,15 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
 		  g->g2 = g2;
 		  g->func = (its_add) ? gf_add_g1_g2 : gf_multiply_g1_g2;
 		  g->func_2 = NULL;
+
+		  if (g->f2 == gf_2_g1)
+		    g->func = (its_add) ? gf_add_g1_op2g1q : gf_multiply_g1_op2g1q;
+
+		  if ((!its_add) &&
+		      (g->f1 == g->f2) &&
+		      (g->f1 == wrapped_vct_ref) &&
+		      (caddr(cadr(expr)) == caddr(caddr(expr))))
+		    g->func = gf_multiply_v1_v2;
 		}
 	      return(g);
 
@@ -11895,6 +12014,7 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
 	      g->func = (its_add) ? gf_add_g1_s1 : gf_multiply_g1_s1;
 	      return(g);
 	    }
+
 	case GF_X:
 	  g->x1 = x1;
 	  switch (typ2)
@@ -11903,6 +12023,8 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
 	      g->f1 = g2->func;
 	      g->g1 = g2;
 	      g->func = (its_add) ? gf_add_g1_x1 : gf_multiply_g1_x1;
+	      if ((!its_add) && (g->f1 == gf_2_g1))
+		g->func = gf_multiply_op2g1q_x1;
 	      return(g);
 
 	    case GF_X:
@@ -12040,6 +12162,10 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
 		      g->f3 = g3->func;
 		      g->g3 = g3;
 		      g->func = (its_add) ? gf_add_g1_g2_g3 : gf_multiply_g1_g2_g3;
+		      if ((g->func == gf_multiply_g1_g2_g3) && (g->f3 == gf_2_g1))
+			g->func = gf_multiply_g1_g2_op2g1q;
+		      if ((g->func == gf_add_g1_g2_g3) && (g->f1 == gf_2_g1))
+			g->func = gf_add_op2g1q_g2_g3;
 		    }
 		  return(g);
 		  
@@ -12340,6 +12466,7 @@ static gf *fixup_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
 
 static mus_float_t gf_1(void *p)        {gf *g = (gf *)p; return(g->func_1(g->gen));}
+static mus_float_t gf_env(void *p)      {gf *g = (gf *)p; return(mus_env(((mus_xen *)(g->gen))->gen));}
 
 static mus_float_t gf_2_g1(void *p)     {gf *g = (gf *)p; return(g->func_2(g->gen, ((gf *)(g->g1))->func(g->g1)));}
 static mus_float_t gf_2_x1(void *p)     {gf *g = (gf *)p; return(g->func_2(g->gen, g->x1));}
@@ -12443,6 +12570,13 @@ gf *find_gf(s7_scheme *sc, s7_pointer expr)
 }
 
 
+#define return_null(Arg) return(NULL) /* {fprintf(stderr, "%d %s\n", __LINE__, DISPLAY(Arg)); return(NULL);} */
+
+/* TODO: according to callgrind, lots of overhead here -- need to embed gf_2_g1 for example
+ *   also maybe contrast_enhancement, hz->radians [fixup_hz_to_radians tree arg], expt, (/ i 5)??
+ *   ina in-any file->sample move-sound 
+ */
+
 gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
   s7_pointer *choices;
@@ -12452,7 +12586,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
   if ((!s7_is_pair(expr)) ||
       (!s7_is_symbol(car(expr))))
-    return(NULL);
+    return_null(expr);
 
   op = s7_car_value(sc, expr);
   choices = (s7_pointer *)s7_function_chooser_data_direct(op);
@@ -12470,10 +12604,13 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
       fixup_gf = (gf* (*)(s7_scheme *sc, s7_pointer p, s7_pointer locals))(choices[GEN_DIRECT_FIXUP]);
       if (fixup_gf)
-	return(fixup_gf(sc, expr, locals));
-
+	{
+	  p = fixup_gf(sc, expr, locals);
+	  if (!p) return_null(expr);
+	  return(p);
+	}
       is_gen = (bool (*)(s7_pointer p))choices[GEN_DIRECT_CHECKER];
-      if (!is_gen) return(NULL);
+      if (!is_gen) return_null(expr);
 
       obj = cadr(expr);
       if (s7_is_pair(obj)) 
@@ -12499,13 +12636,13 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		    }
 		}
 	    }
-	  if (its_gf) return(NULL);
+	  if (its_gf) return_null(expr);
 	}
 
       if (s7_is_symbol(obj))
 	obj = s7_value(sc, obj);
       if (!is_gen(obj)) 
-	return(NULL);
+	return_null(expr);
 
       len = s7_list_length(sc, expr);
       if (len == 2)
@@ -12513,7 +12650,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	  mus_float_t (*gen1)(void *p);
 
 	  gen1 = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
-	  if (!gen1) return(NULL);
+	  if (!gen1) return_null(expr);
 
 	  p = gf_alloc();            /* (gen g) */
 	  p->func_1 = gen1;
@@ -12523,6 +12660,8 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	      if (s7_is_object(obj))
 		p->gen = s7_object_value(obj);
 	      else p->gen = (void *)obj;
+	      if (gen1 == (mus_float_t (*)(void *p))wrapped_env_1)
+		p->func = gf_env;
 	    }
 	  else
 	    {
@@ -12546,7 +12685,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	  gf *g1 = NULL;
 
 	  gen2 = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
-	  if (!gen2) return(NULL);
+	  if (!gen2) return_null(expr);
 
 	  p = gf_alloc();
 	  p->func_2 = gen2;
@@ -12611,7 +12750,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	    }
 
 	  if (p) gf_free(p);
-	  return(NULL);
+	  return_null(expr);
 	}
 
       if (len == 4)
@@ -12624,7 +12763,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	  mus_float_t (*gen3)(void *p, mus_float_t x, mus_float_t y);
 
 	  gen3 = (mus_float_t (*)(void *p, mus_float_t x, mus_float_t y))(choices[GEN_DIRECT_3]);
-	  if (!gen3) return(NULL);
+	  if (!gen3) return_null(expr);
 
 	  arg1 = caddr(expr);
 	  arg2 = cadddr(expr);
@@ -12636,7 +12775,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	    {
 	      if (g1) gf_free(g1);
 	      if (g2) gf_free(g2);
-	      return(NULL);
+	      return_null(expr);
 	    }
 
 	  p = gf_alloc();
@@ -12779,7 +12918,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	    }
 	  
 	  if (p) gf_free(p);
-	  return(NULL);
+	  return_null(expr);
 	}
     }
   /* else not choices, so maybe op is not a function?
@@ -12803,7 +12942,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
       return(p);
     }
 
-  return(NULL);
+  return_null(expr);
 }
 
 
@@ -13164,6 +13303,8 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 	    {
 	      mus_float_t *buf1, *buf2;
 	      mus_any *dly1, *dly2;
+	      mus_long_t dlen2;
+
 	      buf1 = ob[0];
 	      dly1 = outs[0];
 	      buf2 = ob[1];
@@ -13179,11 +13320,22 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 		  dend = mus_out_any_data_end(clm_output_gen);
 		  if (dend > end)
 		    dlen = end - dstart;
-		  for (dpos = pos - dstart; dpos < dlen; dpos++)
+		  dlen2 = dlen - 2;
+		  dpos = pos - dstart;
+		  while (dpos < dlen2)
 		    {
 		      x = vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos++, 0)));
 		      buf1[dpos] += mus_delay_unmodulated_noz(dly1, x);
-		      buf2[dpos] += mus_delay_unmodulated_noz(dly2, x);
+		      buf2[dpos++] += mus_delay_unmodulated_noz(dly2, x);
+		      x = vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos++, 0)));
+		      buf1[dpos] += mus_delay_unmodulated_noz(dly1, x);
+		      buf2[dpos++] += mus_delay_unmodulated_noz(dly2, x);
+		    }
+		  while (dpos < dlen)
+		    {
+		      x = vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos++, 0)));
+		      buf1[dpos] += mus_delay_unmodulated_noz(dly1, x);
+		      buf2[dpos++] += mus_delay_unmodulated_noz(dly2, x);
 		    }
 		  mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
 		}
@@ -13539,6 +13691,7 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
     {                                                                   \
       if (mus_out_any_is_safe(clm_output_gen))				\
 	{								\
+	  mus_long_t dlen2;						\
 	  for (; pos < end;)						\
 	    {								\
 	      mus_safe_out_any_to_file(pos++, Call, Chan, clm_output_gen); \
@@ -13546,10 +13699,19 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 	      dend = mus_out_any_data_end(clm_output_gen);		\
 	      if (dend > end)						\
 		dlen = end - dstart;					\
-	      for (dpos = pos - dstart; dpos < dlen; dpos++)		\
+	      dlen2 = dlen - 2;						\
+	      dpos = pos - dstart;					\
+	      while (dpos < dlen2)					\
 		{							\
 		  (*step) = pos++;					\
-		  buf[dpos] += (Call);					\
+		  buf[dpos++] += (Call);				\
+		  (*step) = pos++;					\
+		  buf[dpos++] += (Call);				\
+		}							\
+	      while (dpos < dlen)					\
+		{							\
+		  (*step) = pos++;					\
+		  buf[dpos++] += (Call);				\
 		}							\
 	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end); \
 	    }								\
