@@ -8454,7 +8454,7 @@ static XEN xen_one, xen_minus_one;
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, polywave_symbol, triangle_wave_symbol;
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol, outa_symbol;
 static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol, readin_symbol, abs_symbol;
-static s7_pointer comb_bank_symbol, all_pass_bank_symbol, one_pole_symbol, vct_ref_symbol;
+static s7_pointer comb_bank_symbol, all_pass_bank_symbol, one_pole_symbol, float_vector_ref_symbol;
 
 static mus_float_t as_needed_input_float(void *ptr, int direction)
 {
@@ -10486,6 +10486,17 @@ static s7_pointer g_abs_triangle_wave(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer fir_filter_vref;
+static s7_pointer g_fir_filter_vref(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *g;
+  s7_pointer arg2;
+  mus_xen *gn;
+  XEN_TO_C_GENERATOR(car(args), gn, g, mus_fir_filter_p, S_fir_filter, "an FIR filter");
+  arg2 = cadr(args);
+  return(s7_remake_real(sc, arg2, mus_fir_filter(g, s7_real(arg2))));
+}
+
 static s7_pointer env_polywave;
 static s7_pointer g_env_polywave(s7_scheme *sc, s7_pointer args)
 {
@@ -10822,6 +10833,8 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
 
 
 #if (!WITH_GMP)
+mus_float_t (*mus_rand_interp_unmodulated_function(mus_any *g))(mus_any *gen);
+
 static s7_pointer fm_violin_2_looped;
 static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 {
@@ -10831,6 +10844,11 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
   s7_Int *step, *stop;
   mus_any *e, *t, *m, *r, *o, *a, *lc, *f;
   s7_Double vibrato;
+  mus_float_t (*ef)(mus_any *gen);
+  mus_float_t (*af)(mus_any *gen);
+  mus_float_t (*ff)(mus_any *gen);
+  mus_float_t (*pf)(mus_any *gen, mus_float_t fm);
+  mus_float_t (*rf)(mus_any *gen);
 
   /* incoming args: 
      (0 
@@ -10874,12 +10892,18 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
   vargs = cdadr(vargs);
   GET_GENERATOR(vargs, polywave, m);
 
+  ef = mus_env_function(e);
+  af = mus_env_function(a);
+  pf = mus_polywave_function(m);
+
   if (vibf == g_fm_violin_vibrato_no_env)
     {
       vargs = cdr(vib);
       GET_GENERATOR_CADAR(vargs, triangle_wave, t);
       vargs = cdr(vargs);
       GET_GENERATOR_CADAR(vargs, rand_interp, r);
+
+      rf = mus_rand_interp_unmodulated_function(r);
       
       if (mus_locsig_output_is_safe(lc))
 	{
@@ -10909,8 +10933,8 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 	      mus_long_t dlen2;
 	      for (; pos < end;)
 		{
-		  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-		  mus_safe_out_any_to_file(pos, f1 * mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato))), 0, outp);
+		  vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+		  mus_safe_out_any_to_file(pos, f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))), 0, outp);
 		  pos++;
 		  
 		  dstart = mus_out_any_data_start(outp);
@@ -10921,17 +10945,17 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		  dpos = pos - dstart;
 		  while (dpos < dlen2)
 		    {
-		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-		      buf[dpos++] += f1 * mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+		      vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+		      buf[dpos++] += f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 		      pos++;
-		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-		      buf[dpos++] += f1 * mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+		      vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+		      buf[dpos++] += f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 		      pos++;
 		    }
 		  while (dpos < dlen)
 		    {
-		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-		      buf[dpos++] += f1 * mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+		      vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+		      buf[dpos++] += f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 		      pos++;
 		    }
 		  mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
@@ -10953,8 +10977,8 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 
 		  for (; pos < end;)
 		    {
-		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-		      x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+		      vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+		      x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 		      mus_safe_out_any_to_file(pos, f1 * x, 0, outp);
 		      mus_safe_out_any_to_file(pos, f2 * x, 1, outp);
 		      mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
@@ -10968,14 +10992,14 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		      dpos = pos - dstart;
 		      while (dpos < dlen2)
 			{
-			  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-			  x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+			  vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  buf[dpos] += f1 * x;
 			  buf2[dpos++] += f2 * x;
 			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
 			  pos++;
-			  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-			  x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+			  vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  buf[dpos] += f1 * x;
 			  buf2[dpos++] += f2 * x;
 			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
@@ -10983,8 +11007,8 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 			}
 		      while (dpos < dlen)
 			{
-			  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-			  x = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato)));
+			  vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  buf[dpos] += f1 * x;
 			  buf2[dpos++] += f2 * x;
 			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
@@ -11000,8 +11024,8 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		   */
 		  for (; pos < end; pos++)
 		    {
-		      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-		      mus_locsig(lc, pos, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato))));	  
+		      vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+		      mus_locsig(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
 		    }
 		}
 	    }
@@ -11010,8 +11034,8 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 	{
 	  for (; pos < end; pos++)
 	    {
-	      vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
-	      mus_locsig(lc, pos, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato))));	  
+	      vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
+	      mus_locsig(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
 	    }
 	}
     }
@@ -11024,10 +11048,13 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
       vargs = cdr(vargs);
       GET_GENERATOR_CADAR(vargs, rand_interp, r);
 
+      rf = mus_rand_interp_unmodulated_function(r);
+      ff = mus_env_function(f);
+
       for (; pos < end; pos++)
 	{
-	  vibrato = mus_env(f) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);			
-      	  mus_locsig(lc, pos, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato))));	  
+	  vibrato = ff(f) + mus_triangle_wave_unmodulated(t) + rf(r);			
+      	  mus_locsig(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
 	}
     }
   (*step) = end;
@@ -12466,7 +12493,8 @@ static gf *fixup_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
 
 static mus_float_t gf_1(void *p)        {gf *g = (gf *)p; return(g->func_1(g->gen));}
-static mus_float_t gf_env(void *p)      {gf *g = (gf *)p; return(mus_env(((mus_xen *)(g->gen))->gen));}
+static mus_float_t gf_env(void *p)      {gf *g = (gf *)p; return(mus_env((mus_any *)(g->gen)));}
+static mus_float_t gf_oscil(void *p)    {gf *g = (gf *)p; return(mus_oscil_unmodulated((mus_any *)(g->gen)));}
 
 static mus_float_t gf_2_g1(void *p)     {gf *g = (gf *)p; return(g->func_2(g->gen, ((gf *)(g->g1))->func(g->g1)));}
 static mus_float_t gf_2_x1(void *p)     {gf *g = (gf *)p; return(g->func_2(g->gen, g->x1));}
@@ -12661,7 +12689,17 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		p->gen = s7_object_value(obj);
 	      else p->gen = (void *)obj;
 	      if (gen1 == (mus_float_t (*)(void *p))wrapped_env_1)
-		p->func = gf_env;
+		{
+		  p->gen = ((mus_xen *)(p->gen))->gen;
+		  p->func = gf_env;
+		  p->func_1 = NULL;
+		}
+	      if (gen1 == (mus_float_t (*)(void *p))wrapped_oscil_1)
+		{
+		  p->gen = ((mus_xen *)(p->gen))->gen;
+		  p->func = gf_oscil;
+		  p->func_1 = NULL;
+		}
 	    }
 	  else
 	    {
@@ -14532,6 +14570,7 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
   mus_float_t *buf = NULL;
   mus_long_t dstart, dend, dpos, dlen = 0;
   gf *gf1;
+  mus_float_t (*ef)(mus_any *g);
 
   stepper = car(args);
   locsym = cadr(args);
@@ -14549,6 +14588,7 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
   args = cdaddr(args);
   callee = cadr(args);
   GET_GENERATOR_CADAR(args, env, e);
+  ef = mus_env_function(e);
 
   if (mus_out_any_is_safe(clm_output_gen))
     {
@@ -14563,13 +14603,13 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
     {
       if (gf1->func_1)
 	{
-	  OUTA_LOOP(mus_env(e) * gf1->func_1(gf1->gen));
+	  OUTA_LOOP(ef(e) * gf1->func_1(gf1->gen));
 	  gf_free(gf1);
 	  return(args);
 	}
       if (gf1->func)
 	{
-	  OUTA_LOOP(mus_env(e) * gf1->func(gf1));
+	  OUTA_LOOP(ef(e) * gf1->func(gf1));
 	  gf_free(gf1);
 	  return(args);
 	}
@@ -14583,7 +14623,7 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 
   if (s7_function_choice_is_direct_to_real(sc, callee))
     {
-      OUTA_LOOP(mus_env(e) * s7_call_direct_to_real_and_free(sc, callee));
+      OUTA_LOOP(ef(e) * s7_call_direct_to_real_and_free(sc, callee));
       return(args);
     }
   return(NULL);
@@ -14602,6 +14642,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 
   s7_Double *ry;
   s7_pointer y;
+  mus_float_t (*ef)(mus_any *gen);
 
   /* fprintf(stderr, "(outa_2_env) %s\n", DISPLAY(args)); */
   /* args: (0 ((frq (env frqf))) (outa i (* (env ampf) (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq))))))
@@ -14636,6 +14677,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   callee = cadr(args);
 
   GET_GENERATOR_CADAR(args, env, e);
+  ef = mus_env_function(e);
   
   if (num_vars == 2)
     {
@@ -14674,14 +14716,14 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 	      buf = ob[0];
 	      dlen = mus_file_buffer_size();
 	    }
-	  OUTA_LOOP_RX(lf1->func(lf1), lf2->func(lf2), mus_env(e) * bg->func(bg));
+	  OUTA_LOOP_RX(lf1->func(lf1), lf2->func(lf2), ef(e) * bg->func(bg));
 #if 0
 	  for (; pos < end; pos++)
 	    {
 	      (*step) = pos;
 	      (*x1r) = lf1->func(lf1);
 	      (*x2r) = lf2->func(lf2);
-	      out_any_2(pos, mus_env(e) * bg->func(bg), 0, "outa");
+	      out_any_2(pos, ef(e) * bg->func(bg), 0, "outa");
 	    }
 #endif
 	  gf_free(lf1);
@@ -14724,7 +14766,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 	      buf = ob[0];
 	      dlen = mus_file_buffer_size();
 	    }
-	  OUTA_LOOP_RY(lg->func(lg), mus_env(e) * bg->func(bg));
+	  OUTA_LOOP_RY(lg->func(lg), ef(e) * bg->func(bg));
 	}
 
 	gf_free(lg);
@@ -14749,7 +14791,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 	  (*step) = pos;
 	  s7_slot_set_value(sc, lets, letf(sc, letp));
 	  x = s7_call_direct_to_real_and_free(sc, callee);
-	  out_any_2(pos, mus_env(e) * x, 0, "outa");
+	  out_any_2(pos, ef(e) * x, 0, "outa");
 	}
       return(args);
     }
@@ -14937,6 +14979,9 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
   s7_pointer stepper, callee;
   s7_Int *step, *stop;
   mus_any *ampe = NULL, *carg = NULL, *mode = NULL;
+  mus_float_t (*ef)(mus_any *g);
+  mus_float_t (*mf)(mus_any *g);
+  mus_float_t (*pf)(mus_any *g, mus_float_t fm);
 
   stepper = car(args);
   if (!s7_is_symbol(cadr(args)))
@@ -14957,6 +15002,10 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
   args = caddr(args);
   GET_GENERATOR_CADR(args, env, mode);
 
+  ef = mus_env_function(ampe);
+  mf = mus_env_function(mode);
+  pf = mus_polywave_function(carg);
+
   {
     mus_float_t **ob;
     mus_float_t *buf = NULL;
@@ -14968,7 +15017,7 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
 	buf = ob[0];
 	dlen = mus_file_buffer_size();
       }
-    OUTA_LOOP(mus_env(ampe) * mus_polywave(carg, mus_env(mode)));
+    OUTA_LOOP(ef(ampe) * pf(carg, mf(mode)));
   }
   return(args);
 }
@@ -14980,6 +15029,9 @@ static s7_pointer g_outa_env_polywave_env_ri_looped(s7_scheme *sc, s7_pointer ar
   s7_pointer stepper, callee;
   s7_Int *step, *stop;
   mus_any *ampe = NULL, *carg = NULL, *mode = NULL, *ri = NULL;
+  mus_float_t (*ef)(mus_any *g);
+  mus_float_t (*mf)(mus_any *g);
+  mus_float_t (*pf)(mus_any *g, mus_float_t fm);
 
   stepper = car(args);
   if (!s7_is_symbol(cadr(args)))
@@ -15002,6 +15054,10 @@ static s7_pointer g_outa_env_polywave_env_ri_looped(s7_scheme *sc, s7_pointer ar
   args = cadr(args);
   GET_GENERATOR_CADR(args, rand-interp, ri);
 
+  ef = mus_env_function(ampe);
+  mf = mus_env_function(mode);
+  pf = mus_polywave_function(carg);
+
   {
     mus_float_t **ob;
     mus_float_t *buf = NULL;
@@ -15013,7 +15069,7 @@ static s7_pointer g_outa_env_polywave_env_ri_looped(s7_scheme *sc, s7_pointer ar
 	buf = ob[0];
 	dlen = mus_file_buffer_size();
       }
-    OUTA_LOOP(mus_env(ampe) * mus_polywave(carg, mus_env(mode) + mus_rand_interp_unmodulated(ri)));
+    OUTA_LOOP(ef(ampe) * pf(carg, mf(mode) + mus_rand_interp_unmodulated(ri)));
   }
   return(args);
 }
@@ -15025,6 +15081,8 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
   s7_pointer stepper, callee;
   s7_Int *step, *stop;
   mus_any *ampe = NULL, *carg = NULL, *mode = NULL;
+  mus_float_t (*ef)(mus_any *gen);
+  mus_float_t (*mf)(mus_any *gen);
 
   stepper = car(args);
   if (!s7_is_symbol(cadr(args)))
@@ -15040,10 +15098,12 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
 
   args = cdr(caddr(args));
   GET_GENERATOR_CADAR(args, env, ampe);
+  ef = mus_env_function(ampe);
   args = cadr(args);
   GET_GENERATOR_CADR(args, oscil, carg);
   args = caddr(args);
   GET_GENERATOR_CADR(args, env, mode);
+  mf = mus_env_function(mode);
 
   {
     mus_float_t **ob;
@@ -15056,7 +15116,7 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
 	buf = ob[0];
 	dlen = mus_file_buffer_size();
       }
-    OUTA_LOOP(mus_env(ampe) * mus_oscil_fm(carg, mus_env(mode)));
+    OUTA_LOOP(ef(ampe) * mus_oscil_fm(carg, mf(mode)));
   }
   return(args);
 }
@@ -17116,22 +17176,41 @@ static s7_pointer filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 
 static s7_pointer fir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  s7_pointer arg1;
+  arg1 = cadr(expr);
   if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))))
+      (s7_is_symbol(arg1)))
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(fir_filter_2);
+      s7_pointer arg2;
+      arg2 = caddr(expr);
+      if (s7_is_symbol(arg2))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(fir_filter_2);
+	}
+
+      if (s7_is_pair(arg2))
+	{
+	  if (s7_function_choice_is_direct(sc, arg2))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_fir_filter_2);
+	      return(indirect_fir_filter_2);
+	    }
+	  if (car(arg2) == float_vector_ref_symbol)
+	    return(fir_filter_vref);
+	}
     }
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_pair(caddr(expr))) &&
-      (s7_function_choice_is_direct(sc, caddr(expr))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_fir_filter_2);
-      return(indirect_fir_filter_2);
-    }
+
+  /* fprintf(stderr, "filter: %s\n", DISPLAY(expr)); */
+
+  /* (fir-filter flt (* scaler (+ (tap del) inval)))
+     (hilbert-transform (gen 'hlb) y)
+     (fir-filter gen 1.0)
+     (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0))))
+     (bandpass (vector-ref bands i) input)
+     (fir-filter flt (data i))
+  */
   return(f);
 }
 
@@ -17907,7 +17986,7 @@ static void init_choosers(s7_scheme *sc)
   readin_symbol = s7_make_symbol(sc, "readin");
   comb_bank_symbol = s7_make_symbol(sc, "comb-bank");                   
   all_pass_bank_symbol = s7_make_symbol(sc, "all-pass-bank");
-  vct_ref_symbol = s7_make_symbol(sc, "vct-ref");
+  float_vector_ref_symbol = s7_make_symbol(sc, "float-vector-ref");
 
   sym_frequency = s7_make_symbol(sc, S_mus_frequency);
   sym_phase = s7_make_symbol(sc, S_mus_phase);
@@ -18481,6 +18560,7 @@ static void init_choosers(s7_scheme *sc)
   direct_filter_2 = clm_make_function(sc, "filter", g_direct_filter_2, 2, 0, false, "filter optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_filter_2 = clm_make_function(sc, "filter", g_indirect_filter_2, 2, 0, false, "filter optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
+
   GEN_F2("fir-filter", fir_filter);
 
   fir_filter_2 = clm_make_function(sc, "fir-filter", g_fir_filter_2, 2, 0, false, "fir-filter optimization", f,
@@ -18489,6 +18569,8 @@ static void init_choosers(s7_scheme *sc)
 					  NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_fir_filter_2 = clm_make_function(sc, "fir-filter", g_indirect_fir_filter_2, 2, 0, false, "fir-filter optimization", f,
 					  NULL, NULL, NULL, NULL, NULL, NULL);
+  fir_filter_vref = clm_make_function(sc, "fir-filter", g_fir_filter_vref, 2, 0, false, "fir-filter optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+
 
   GEN_F2("iir-filter", iir_filter);
 

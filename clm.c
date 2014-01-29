@@ -2655,6 +2655,8 @@ typedef struct {
   mus_interp_t type;
   bool table_allocated;
   mus_float_t yn1;
+  mus_float_t (*tbl_look)(mus_any *ptr, mus_float_t fm);
+  mus_float_t (*tbl_look_unmod)(mus_any *ptr);
 } tbl;
 
 
@@ -2706,28 +2708,48 @@ mus_float_t *mus_phase_partials_to_wave(mus_float_t *partial_data, int partials,
 
 mus_float_t mus_table_lookup(mus_any *ptr, mus_float_t fm)
 {
+  return(((tbl *)ptr)->tbl_look(ptr, fm));  
+}
+
+static mus_float_t table_look_linear(mus_any *ptr, mus_float_t fm)
+{
   tbl *gen = (tbl *)ptr;
-  if (gen->type == MUS_INTERP_LINEAR)
-    {
-      /* we're checking already for out-of-range indices, so mus_array_interp is more than we need */
-      mus_long_t int_part;
-      mus_float_t frac_part, f1;
 
-      int_part = (mus_long_t)(gen->phase); /* floor(gen->phase) -- slow! modf is even worse */
-      frac_part = gen->phase - int_part;
-      f1 = gen->table[int_part];
-      int_part++;
+  /* we're checking already for out-of-range indices, so mus_array_interp is more than we need */
+  mus_long_t int_part;
+  mus_float_t frac_part, f1;
+  
+  int_part = (mus_long_t)(gen->phase); /* floor(gen->phase) -- slow! modf is even worse */
+  frac_part = gen->phase - int_part;
+  f1 = gen->table[int_part];
+  int_part++;
+  
+  if (int_part == gen->table_size)
+    gen->yn1 = f1 + frac_part * (gen->table[0] - f1);
+  else gen->yn1 = f1 + frac_part * (gen->table[int_part] - f1);
 
-      if (int_part == gen->table_size)
-	gen->yn1 = f1 + frac_part * (gen->table[0] - f1);
-      else gen->yn1 = f1 + frac_part * (gen->table[int_part] - f1);
-    }
-  else gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
   gen->phase += (gen->freq + (fm * gen->internal_mag));
   if ((gen->phase >= gen->table_size) || 
       (gen->phase < 0.0))
     {
-      gen->phase = fmod(gen->phase, (double)(gen->table_size));
+      gen->phase = fmod(gen->phase, gen->table_size);
+      if (gen->phase < 0.0) 
+	gen->phase += gen->table_size;
+    }
+  return(gen->yn1);
+}
+
+
+static mus_float_t table_look_any(mus_any *ptr, mus_float_t fm)
+{
+  tbl *gen = (tbl *)ptr;
+
+  gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
+  gen->phase += (gen->freq + (fm * gen->internal_mag));
+  if ((gen->phase >= gen->table_size) || 
+      (gen->phase < 0.0))
+    {
+      gen->phase = fmod(gen->phase, gen->table_size);
       if (gen->phase < 0.0) 
 	gen->phase += gen->table_size;
     }
@@ -2737,28 +2759,46 @@ mus_float_t mus_table_lookup(mus_any *ptr, mus_float_t fm)
 
 mus_float_t mus_table_lookup_unmodulated(mus_any *ptr)
 {
+  return(((tbl *)ptr)->tbl_look_unmod(ptr));  
+}
+
+static mus_float_t table_look_unmodulated_linear(mus_any *ptr)
+{
   tbl *gen = (tbl *)ptr;
-  if (gen->type == MUS_INTERP_LINEAR)
-    {
-      /* see above */
-      mus_long_t int_part;
-      mus_float_t frac_part, f1;
+  mus_long_t int_part;
+  mus_float_t frac_part, f1;
+  
+  int_part = (mus_long_t)(gen->phase);
+  frac_part = gen->phase - int_part;
+  f1 = gen->table[int_part];
+  int_part++;
+  
+  if (int_part == gen->table_size)
+    f1 += frac_part * (gen->table[0] - f1);
+  else f1 += frac_part * (gen->table[int_part] - f1);
 
-      int_part = (mus_long_t)(gen->phase);
-      frac_part = gen->phase - int_part;
-      f1 = gen->table[int_part];
-      int_part++;
-
-      if (int_part == gen->table_size)
-	gen->yn1 = f1 + frac_part * (gen->table[0] - f1);
-      else gen->yn1 = f1 + frac_part * (gen->table[int_part] - f1);
-    }
-  else gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
   gen->phase += gen->freq;
   if ((gen->phase >= gen->table_size) || 
       (gen->phase < 0.0))
     {
-      gen->phase = fmod(gen->phase, (double)(gen->table_size));
+      gen->phase = fmod(gen->phase, gen->table_size);
+      if (gen->phase < 0.0) 
+	gen->phase += gen->table_size;
+    }
+  return(f1);
+}
+
+
+static mus_float_t table_look_unmodulated_any(mus_any *ptr)
+{
+  tbl *gen = (tbl *)ptr;
+
+  gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
+  gen->phase += gen->freq;
+  if ((gen->phase >= gen->table_size) || 
+      (gen->phase < 0.0))
+    {
+      gen->phase = fmod(gen->phase, gen->table_size);
       if (gen->phase < 0.0) 
 	gen->phase += gen->table_size;
     }
@@ -2766,7 +2806,7 @@ mus_float_t mus_table_lookup_unmodulated(mus_any *ptr)
 }
 
 
-static mus_float_t run_table_lookup(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(mus_table_lookup(ptr, fm));}
+static mus_float_t run_table_lookup(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(((tbl *)ptr)->tbl_look(ptr, fm)); }
 
 bool mus_table_lookup_p(mus_any *ptr) 
 {
@@ -2777,7 +2817,7 @@ bool mus_table_lookup_p(mus_any *ptr)
 static mus_long_t table_lookup_length(mus_any *ptr) {return(((tbl *)ptr)->table_size);}
 static mus_float_t *table_lookup_data(mus_any *ptr) {return(((tbl *)ptr)->table);}
 
-static mus_float_t table_lookup_freq(mus_any *ptr) {return((((tbl *)ptr)->freq * sampling_rate) / (mus_float_t)(((tbl *)ptr)->table_size));}
+static mus_float_t table_lookup_freq(mus_any *ptr) {return((((tbl *)ptr)->freq * sampling_rate) / (((tbl *)ptr)->table_size));}
 static mus_float_t table_lookup_set_freq(mus_any *ptr, mus_float_t val) {((tbl *)ptr)->freq = (val * ((tbl *)ptr)->table_size) / sampling_rate; return(val);}
 
 static mus_float_t table_lookup_increment(mus_any *ptr) {return(((tbl *)ptr)->freq);}
@@ -2877,10 +2917,20 @@ mus_any *mus_make_table_lookup(mus_float_t freq, mus_float_t phase, mus_float_t 
   gen = (tbl *)calloc(1, sizeof(tbl));
   gen->core = &TABLE_LOOKUP_CLASS;
   gen->table_size = table_size;
-  gen->internal_mag = (mus_float_t)table_size / TWO_PI;
+  gen->internal_mag = table_size / TWO_PI;
   gen->freq = (freq * table_size) / sampling_rate;
   gen->phase = (fmod(phase, TWO_PI) * table_size) / TWO_PI;
   gen->type = type;
+  if (type == MUS_INTERP_LINEAR)
+    {
+      gen->tbl_look = table_look_linear;
+      gen->tbl_look_unmod = table_look_unmodulated_linear;
+    }
+  else
+    {
+      gen->tbl_look = table_look_any;
+      gen->tbl_look_unmod = table_look_unmodulated_any;
+    }
   gen->yn1 = 0.0;
   if (table)
     {
@@ -2980,6 +3030,13 @@ typedef struct {
   mus_float_t (*polyw)(mus_any *ptr, mus_float_t fm);
 } pw;
 
+
+mus_float_t (*mus_polywave_function(mus_any *g))(mus_any *gen, mus_float_t fm)
+{
+  if (mus_polywave_p(g))
+    return(((pw *)g)->polyw);
+  return(NULL);
+}
 
 static int free_pw(mus_any *pt) 
 {
@@ -6126,6 +6183,14 @@ mus_float_t mus_rand_interp_unmodulated(mus_any *ptr)
 }
 
 
+mus_float_t (*mus_rand_interp_unmodulated_function(mus_any *g))(mus_any *gen);
+mus_float_t (*mus_rand_interp_unmodulated_function(mus_any *g))(mus_any *gen)
+{
+  if (mus_rand_interp_p(g))
+    return(((noi *)g)->ran_unmod);
+  return(NULL);
+}
+
 static mus_float_t rand_interp_unmodulated_with_distribution(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
@@ -8738,6 +8803,14 @@ mus_float_t mus_env(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   return((*(gen->env_func))(ptr));
+}
+
+
+mus_float_t (*mus_env_function(mus_any *g))(mus_any *gen)
+{
+  if (mus_env_p(g))
+    return(((seg *)g)->env_func);
+  return(NULL);
 }
 
 

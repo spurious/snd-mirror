@@ -386,6 +386,7 @@ MUS_EXPORT mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT mus_float_t mus_chebyshev_t_sum(mus_float_t x, int n, mus_float_t *tn);
 MUS_EXPORT mus_float_t mus_chebyshev_u_sum(mus_float_t x, int n, mus_float_t *un);
 MUS_EXPORT mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_float_t *un);
+MUS_EXPORT mus_float_t (*mus_polywave_function(mus_any *g))(mus_any *gen, mus_float_t fm);
 
 MUS_EXPORT mus_float_t mus_env(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offset, double base, double duration, mus_long_t end, mus_float_t *odata);
@@ -399,6 +400,7 @@ MUS_EXPORT double mus_env_initial_power(mus_any *gen); /* for Snd */
 MUS_EXPORT int mus_env_breakpoints(mus_any *gen);      /* for Snd */
 MUS_EXPORT mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t val));
 #define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
+MUS_EXPORT mus_float_t (*mus_env_function(mus_any *g))(mus_any *gen);
 
 MUS_EXPORT mus_any *mus_make_pulsed_env(mus_any *e, mus_any *p);
 MUS_EXPORT bool mus_pulsed_env_p(mus_any *ptr);

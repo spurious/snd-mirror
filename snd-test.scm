@@ -46943,24 +46943,24 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-26-Jan-14:
-42,491,733,207
-5,436,186,791  s7.c:eval [/home/bil/gtk-snd/snd]
-3,427,543,308  ???:sin [/lib64/libm-2.12.so]
-2,375,299,622  ???:cos [/lib64/libm-2.12.so]
-1,929,038,724  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+28-Jan-14:
+42,047,238,768
+5,431,602,593  s7.c:eval [/home/bil/gtk-snd/snd]
+3,425,084,764  ???:sin [/lib64/libm-2.12.so]
+2,374,159,220  ???:cos [/lib64/libm-2.12.so]
+1,929,102,692  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
 1,335,711,872  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,096,758,263  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,063,491,593  s7.c:gc [/home/bil/gtk-snd/snd]
-  971,353,172  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  899,447,632  ???:t2_32 [/home/bil/gtk-snd/snd]
-  781,898,497  ???:t2_64 [/home/bil/gtk-snd/snd]
+1,065,635,126  s7.c:gc [/home/bil/gtk-snd/snd]
+1,037,182,025  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  970,865,130  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  885,414,540  ???:t2_32 [/home/bil/gtk-snd/snd]
+  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  627,596,267  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  571,033,487  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,430,536  ???:n1_64 [/home/bil/gtk-snd/snd]
-  443,847,268  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  601,925,525  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  571,185,944  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,776,292  ???:n1_64 [/home/bil/gtk-snd/snd]
+  415,443,540  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   411,794,636  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
 |#
 
