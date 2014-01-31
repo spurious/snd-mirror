@@ -10079,13 +10079,6 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
 static mus_any *safe_frame_to_frame(mus_frame *f1, mus_mixer *mx, mus_frame *f2, int in_chans, int out_chans)
 {
   int i, j;
-
-#if 0
-  if (f2->chans < out_chans) {fprintf(stderr, "out chans: %d %d\n", out_chans, f2->chans); abort();}
-  if (f1->chans < in_chans) {fprintf(stderr, "in chans: %d %d\n", in_chans, f1->chans); abort();}
-  if ((mx->chans < out_chans) || (mx->chans < in_chans)) {fprintf(stderr, "mx chans: %d %d %d\n", in_chans, out_chans, mx->chans); abort();}
-#endif
- 
   for (i = 0; i < out_chans; i++)
     {
       f2->vals[i] = f1->vals[0] * mx->vals[0][i];
@@ -10582,9 +10575,15 @@ mus_any *mus_make_file_to_sample(const char *filename)
 mus_float_t mus_file_to_sample(mus_any *ptr, mus_long_t samp, int chan)
 {
   rdin *gen = (rdin *)ptr;
-  if ((samp < 0) &&
-      (samp >= gen->file_end))
+
+  if (chan >= gen->chans)
     return(0.0);
+
+  /* redundant in a sense, but saves the call overhead of mus_in_any_from_file */
+  if ((samp <= gen->data_end) &&
+      (samp >= gen->data_start))
+    return((mus_float_t)(gen->ibufs[chan][samp - gen->data_start]));
+
   return(mus_in_any_from_file(ptr, samp, chan));
 }
 
@@ -11562,6 +11561,23 @@ mus_float_t mus_out_any(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 }
 
 
+bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO);
+bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
+{
+  rdout *gen = (rdout *)IO;
+  if ((chan < gen->chans) &&
+      (samp <= gen->data_end) &&
+      (samp >= gen->data_start))
+    {
+      gen->obufs[chan][samp - gen->data_start] += val;
+      if (samp > gen->out_end) 
+	gen->out_end = samp;
+      return(true);
+    }
+  return(false);
+}
+
+
 mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 {
   rdout *gen = (rdout *)IO;
@@ -11721,16 +11737,18 @@ mus_float_t mus_vector_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *vals,
   return(vals[0]);
 }
 
+
 mus_float_t *mus_vector_mix(int chans, mus_float_t *data, mus_float_t *mix, mus_float_t *result)
 {
   /* data * mix -> result (matrix multiply) */
   int i, j, ji;
 
-  memset((void *)result, 0, chans * sizeof(mus_float_t));
   for (i = 0; i < chans; i++)
-    for (j = 0, ji = i; j < chans; j++, ji += chans)
-      result[i] += (data[j] * mix[ji]);
-
+    {
+      result[i] = data[0] * mix[i];
+      for (j = 1, ji = i + chans; j < chans; j++, ji += chans)
+	result[i] += (data[j] * mix[ji]);
+    }
   return(result);
 }
 
@@ -13923,7 +13941,10 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
   i = 0;
   while (i <= n4)
     {
-      /* adding code to avoid this loop saves essentially nothing */
+      /* adding code to avoid this loop saves essentially nothing, mainly because the great majority of the calls
+       *   are actually handling two real arrays at once -- the imag=0 case is 1/10 of the total.  In the zero case,
+       *   the savings here is about 10%, but that is swamped by the fft itself (say 5-10 in c*).
+       */
       c_in_data[i] = rl[i] + _Complex_I * im[i];
       i++;
       c_in_data[i] = rl[i] + _Complex_I * im[i];

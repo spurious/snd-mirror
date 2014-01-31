@@ -7154,9 +7154,12 @@ static XEN out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, const 
   return(xen_zero);
 }
 
+bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO);
+
 static XEN safe_out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
-  mus_safe_out_any_to_file(pos, inv, chn, clm_output_gen);
+  if (!mus_simple_out_any_to_file(pos, inv, chn, clm_output_gen))
+    mus_safe_out_any_to_file(pos, inv, chn, clm_output_gen);
   return(xen_zero);
 }
 
@@ -8454,7 +8457,7 @@ static XEN xen_one, xen_minus_one;
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, polywave_symbol, triangle_wave_symbol;
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol, outa_symbol;
 static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol, readin_symbol, abs_symbol;
-static s7_pointer comb_bank_symbol, all_pass_bank_symbol, one_pole_symbol, float_vector_ref_symbol;
+static s7_pointer comb_bank_symbol, all_pass_bank_symbol, one_pole_symbol;
 
 static mus_float_t as_needed_input_float(void *ptr, int direction)
 {
@@ -9702,6 +9705,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define cdar(E)   s7_cdar(E)
 #define cdaddr(E) s7_cdaddr(E)
 #define cdadr(E)  s7_cdadr(E)
+#define cadadr(E) s7_cadadr(E)
 #define caadr(E)  s7_caadr(E)
 #define cadddr(E) s7_cadddr(E)
 
@@ -10136,6 +10140,7 @@ static s7_pointer g_indirect_ssb_am_3(s7_scheme *sc, s7_pointer args)
   return(s7_make_real(sc, mus_ssb_am(_o_, _a1_, _a2_)));	
 }
 
+
 static s7_pointer outa_two;
 static s7_pointer g_outa_two(s7_scheme *sc, s7_pointer args)
 {
@@ -10486,15 +10491,15 @@ static s7_pointer g_abs_triangle_wave(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer fir_filter_vref;
-static s7_pointer g_fir_filter_vref(s7_scheme *sc, s7_pointer args)
+static s7_pointer fir_filter_temp;
+static s7_pointer g_fir_filter_temp(s7_scheme *sc, s7_pointer args)
 {
-  mus_any *g;
+  mus_any *g = NULL;
   s7_pointer arg2;
   mus_xen *gn;
   XEN_TO_C_GENERATOR(car(args), gn, g, mus_fir_filter_p, S_fir_filter, "an FIR filter");
   arg2 = cadr(args);
-  return(s7_remake_real(sc, arg2, mus_fir_filter(g, s7_real(arg2))));
+  return(s7_remake_real(sc, arg2, mus_fir_filter(g, s7_number_to_real(sc, arg2))));
 }
 
 static s7_pointer env_polywave;
@@ -10996,13 +11001,15 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  buf[dpos] += f1 * x;
 			  buf2[dpos++] += f2 * x;
-			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
+			  if (!mus_simple_out_any_to_file(pos, r1 * x, 0, revp))
+			    mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
 			  pos++;
 			  vibrato = mus_triangle_wave_unmodulated(t) + rf(r);
 			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  buf[dpos] += f1 * x;
 			  buf2[dpos++] += f2 * x;
-			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
+			  if (!mus_simple_out_any_to_file(pos, r1 * x, 0, revp))
+			    mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
 			  pos++;
 			}
 		      while (dpos < dlen)
@@ -11011,12 +11018,12 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  buf[dpos] += f1 * x;
 			  buf2[dpos++] += f2 * x;
-			  mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
+			  if (!mus_simple_out_any_to_file(pos, r1 * x, 0, revp))
+			    mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
 			  pos++;
 			}
 		      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
 		    }
-		  
 		}
 	      else
 		{
@@ -11486,13 +11493,15 @@ static mus_float_t gf_array_interp_x1_g1_i1(void *p) {gf *g = (gf *)p; return(mu
 
 static gf *fixup_array_interp(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
+  /* (env-sound-interp '(0 0 1 1 2 0) 2.0)
+   */
   if (s7_list_length(sc, expr) == 4)
     {
       s7_pointer arg1, arg2, arg3;
       arg1 = cadr(expr);
       arg2 = caddr(expr);
       arg3 = cadddr(expr);
-      if ((s7_is_integer(arg3)) &&
+      if (((s7_is_integer(arg3)) || ((s7_is_symbol(arg3)) && (!s7_is_local_variable(sc, arg3, locals)))) &&
 	  (s7_is_symbol(arg1)) &&
 	  (!s7_is_local_variable(sc, arg1, locals)))
 	{
@@ -11512,8 +11521,10 @@ static gf *fixup_array_interp(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		  vct *v;
 		  v = (vct *)obj;
 		  g = gf_alloc();
-		  g->i1 = s7_integer(arg3);
 		  g->gen = (void *)(mus_vct_data(v));
+		  if (s7_is_integer(arg3))
+		    g->i1 = s7_integer(arg3);
+		  else g->i1 = s7_number_to_integer(sc, s7_symbol_value(sc, arg3));
 		  g->func = gf_array_interp_x1_g1_i1;
 		  g->g1 = g1;
 		  g->f1 = g1->func;
@@ -12493,8 +12504,8 @@ static gf *fixup_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
 
 static mus_float_t gf_1(void *p)        {gf *g = (gf *)p; return(g->func_1(g->gen));}
-static mus_float_t gf_env(void *p)      {gf *g = (gf *)p; return(mus_env((mus_any *)(g->gen)));}
-static mus_float_t gf_oscil(void *p)    {gf *g = (gf *)p; return(mus_oscil_unmodulated((mus_any *)(g->gen)));}
+static mus_float_t gf_env(void *p)      {gf *g = (gf *)p; return((g->f5)(g->gen));}
+static mus_float_t gf_oscil_1(void *p)  {gf *g = (gf *)p; return(mus_oscil_unmodulated((mus_any *)(g->gen)));}
 
 static mus_float_t gf_2_g1(void *p)     {gf *g = (gf *)p; return(g->func_2(g->gen, ((gf *)(g->g1))->func(g->g1)));}
 static mus_float_t gf_2_x1(void *p)     {gf *g = (gf *)p; return(g->func_2(g->gen, g->x1));}
@@ -12692,12 +12703,13 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		{
 		  p->gen = ((mus_xen *)(p->gen))->gen;
 		  p->func = gf_env;
+		  p->f5 = (mus_float_t (*)(void *e))mus_env_function((mus_any *)(p->gen));
 		  p->func_1 = NULL;
 		}
 	      if (gen1 == (mus_float_t (*)(void *p))wrapped_oscil_1)
 		{
 		  p->gen = ((mus_xen *)(p->gen))->gen;
-		  p->func = gf_oscil;
+		  p->func = gf_oscil_1;
 		  p->func_1 = NULL;
 		}
 	    }
@@ -15585,32 +15597,6 @@ static s7_pointer g_mul_1s_direct(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer mul_s_sin_s, mul_s_cos_s;
-static s7_pointer g_mul_s_sin_s(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer x, y;
-  x = s7_symbol_value(sc, car(args));
-  y = s7_symbol_value(sc, cadr(cadr(args)));
-
-  if ((s7_is_real(x)) && (s7_is_real(y)))
-    return(s7_make_real(sc, s7_number_to_real(sc, x) * sin(s7_number_to_real(sc, y))));
-
-  return(s7_multiply_2(sc, x, s7_sin(sc, y)));
-}
-
-static s7_pointer g_mul_s_cos_s(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer x, y;
-  x = s7_symbol_value(sc, car(args));
-  y = s7_symbol_value(sc, cadr(cadr(args)));
-
-  if ((s7_is_real(x)) && (s7_is_real(y)))
-    return(s7_make_real(sc, s7_number_to_real(sc, x) * cos(s7_number_to_real(sc, y))));
-
-  return(s7_multiply_2(sc, x, s7_cos(sc, y)));
-}
-
-
 static s7_pointer add_1s_direct;
 static s7_pointer g_add_1s_direct(s7_scheme *sc, s7_pointer args)
 {
@@ -16030,23 +16016,6 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	    }
 	}
 	  
-      if ((s7_is_symbol(cadr(expr))) &&
-	  (s7_is_pair(caddr(expr))) &&
-	  (s7_is_pair(cdr(caddr(expr)))) &&  /* hmmm -- I thought junk like (* quote ((x . 1) . 2)) was trapped earlier */
-	  (s7_is_symbol(cadr(caddr(expr)))))
-	{
-	  if (car(caddr(expr)) == sin_symbol)
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(mul_s_sin_s);
-	    }
-	  if (car(caddr(expr)) == cos_symbol)
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(mul_s_cos_s);
-	    }
-	}
-
       if (s7_is_pair(cadr(expr)))
 	{
 	  if (caadr(expr) == env_symbol)
@@ -17197,8 +17166,8 @@ static s7_pointer fir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_fir_filter_2);
 	      return(indirect_fir_filter_2);
 	    }
-	  if (car(arg2) == float_vector_ref_symbol)
-	    return(fir_filter_vref);
+	  if (s7_function_returns_temp(sc, arg2))
+	    return(fir_filter_temp);
 	}
     }
 
@@ -17934,15 +17903,26 @@ static s7_pointer frame_to_file_chooser(s7_scheme *sc, s7_pointer f, int args, s
 
 
 
-static s7_pointer clm_make_function(s7_scheme *sc, const char *name, s7_function f, 
-				    int required_args, int optional_args, bool rest_arg, const char *doc,
-				    s7_pointer base_f,
-				    s7_pointer mul_c, s7_pointer mul_s, s7_pointer e, s7_pointer mul_c1, s7_pointer mul_s1, s7_pointer e1)
+static s7_pointer clm_make_temp_function(s7_scheme *sc, const char *name, s7_function f, 
+					 int required_args, int optional_args, bool rest_arg, const char *doc,
+					 s7_pointer base_f,
+					 s7_pointer mul_c, s7_pointer mul_s, s7_pointer e, s7_pointer mul_c1, s7_pointer mul_s1, s7_pointer e1)
 {		
   s7_pointer fin;
   fin = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
   s7_function_set_class(fin, base_f);
   s7_function_chooser_set_data(sc, fin, (void *)make_choices(mul_c, mul_s, e, mul_c1, mul_s1, e1));
+  s7_function_set_returns_temp(fin);
+  return(fin);
+}
+
+static s7_pointer clm_make_temp_function_no_choice(s7_scheme *sc, const char *name, s7_function f, 
+						   int required_args, int optional_args, bool rest_arg, const char *doc,
+						   s7_pointer base_f)
+{		
+  s7_pointer fin;
+  fin = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
+  s7_function_set_class(fin, base_f);
   s7_function_set_returns_temp(fin);
   return(fin);
 }
@@ -17986,7 +17966,6 @@ static void init_choosers(s7_scheme *sc)
   readin_symbol = s7_make_symbol(sc, "readin");
   comb_bank_symbol = s7_make_symbol(sc, "comb-bank");                   
   all_pass_bank_symbol = s7_make_symbol(sc, "all-pass-bank");
-  float_vector_ref_symbol = s7_make_symbol(sc, "float-vector-ref");
 
   sym_frequency = s7_make_symbol(sc, S_mus_frequency);
   sym_phase = s7_make_symbol(sc, S_mus_phase);
@@ -18001,88 +17980,86 @@ static void init_choosers(s7_scheme *sc)
   initial_multiply_chooser = s7_function_chooser(sc, f);
   s7_function_set_chooser(sc, f, clm_multiply_chooser);
 
-  fm_violin_1 = clm_make_function(sc, "*", g_fm_violin_1, 2, 0, false, "fm-violin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  fm_violin_3 = clm_make_function(sc, "*", g_fm_violin_3, 2, 0, false, "fm-violin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_polywave = clm_make_function(sc, "*", g_env_polywave, 2, 0, false, "fm-violin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_direct_2 = clm_make_function(sc, "*", g_mul_direct_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_direct_any = clm_make_function(sc, "*", g_mul_direct_any, 3, 0, true, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_env_direct_any = clm_make_function(sc, "*", g_mul_env_direct_any, 3, 0, true, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_direct = clm_make_function(sc, "*", g_mul_c_direct, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_oscil_mul_c_s = clm_make_function(sc, "*", g_mul_c_oscil_mul_c_s, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  fm_violin_1 = clm_make_temp_function_no_choice(sc, "*", g_fm_violin_1, 2, 0, false, "fm-violin optimization", f);
+  fm_violin_3 = clm_make_temp_function_no_choice(sc, "*", g_fm_violin_3, 2, 0, false, "fm-violin optimization", f);
+  env_polywave = clm_make_temp_function_no_choice(sc, "*", g_env_polywave, 2, 0, false, "fm-violin optimization", f);
+  mul_direct_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_direct_2, 2, 0, false, "* optimization", f);
+  mul_direct_any = clm_make_temp_function_no_choice(sc, "*", g_mul_direct_any, 3, 0, true, "* optimization", f);
+  mul_env_direct_any = clm_make_temp_function_no_choice(sc, "*", g_mul_env_direct_any, 3, 0, true, "* optimization", f);
+  mul_c_direct = clm_make_temp_function_no_choice(sc, "*", g_mul_c_direct, 2, 0, false, "* optimization", f);
+  mul_c_oscil_mul_c_s = clm_make_temp_function_no_choice(sc, "*", g_mul_c_oscil_mul_c_s, 2, 0, false, "* optimization", f);
   mul_1s_direct = clm_make_function_no_choice(sc, "*", g_mul_1s_direct, 2, 0, false, "* optimization", f);
-  mul_s_sin_s = clm_make_function_no_choice(sc, "*", g_mul_s_sin_s, 2, 0, false, "* optimization", f);
-  mul_s_cos_s = clm_make_function_no_choice(sc, "*", g_mul_s_cos_s, 2, 0, false, "* optimization", f);
-  mul_env_direct = clm_make_function(sc, "*", g_mul_env_direct, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_direct_s2 = clm_make_function(sc, "*", g_mul_direct_s2, 3, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_s_env_2 = clm_make_function(sc, "*", g_mul_s_env_2, 3, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_oscil_env = clm_make_function(sc, "*", g_env_oscil_env, 2, 0, false, "animals optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_polywave_env = clm_make_function(sc, "*", g_env_polywave_env, 2, 0, false, "animals optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_polywave_env_ri = clm_make_function(sc, "*", g_env_polywave_env_ri, 2, 0, false, "animals optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_oscil_2 = clm_make_function(sc, "*", g_mul_c_oscil_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_oscil_1 = clm_make_function(sc, "*", g_mul_c_oscil_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_oscil_bank_1 = clm_make_function(sc, "*", g_mul_c_oscil_bank_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_env_1 = clm_make_function(sc, "*", g_mul_c_env_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_readin_1 = clm_make_function(sc, "*", g_mul_c_readin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_polywave_2 = clm_make_function(sc, "*", g_mul_c_polywave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_polywave_1 = clm_make_function(sc, "*", g_mul_c_polywave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_table_lookup_2 = clm_make_function(sc, "*", g_mul_c_table_lookup_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_table_lookup_1 = clm_make_function(sc, "*", g_mul_c_table_lookup_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_wave_train_2 = clm_make_function(sc, "*", g_mul_c_wave_train_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_wave_train_1 = clm_make_function(sc, "*", g_mul_c_wave_train_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_src_1 = clm_make_function(sc, "*", g_mul_c_src_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_src_2 = clm_make_function(sc, "*", g_mul_c_src_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_phase_vocoder_1 = clm_make_function(sc, "*", g_mul_c_phase_vocoder_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_convolve_1 = clm_make_function(sc, "*", g_mul_c_convolve_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_granulate_1 = clm_make_function(sc, "*", g_mul_c_granulate_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_comb_2 = clm_make_function(sc, "*", g_mul_c_comb_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_comb_bank_2 = clm_make_function(sc, "*", g_mul_c_comb_bank_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_notch_2 = clm_make_function(sc, "*", g_mul_c_notch_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_all_pass_2 = clm_make_function(sc, "*", g_mul_c_all_pass_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_all_pass_bank_2 = clm_make_function(sc, "*", g_mul_c_all_pass_bank_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_one_pole_all_pass_2 = clm_make_function(sc, "*", g_mul_c_one_pole_all_pass_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_delay_2 = clm_make_function(sc, "*", g_mul_c_delay_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_moving_average_2 = clm_make_function(sc, "*", g_mul_c_moving_average_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_moving_max_2 = clm_make_function(sc, "*", g_mul_c_moving_max_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_rand_2 = clm_make_function(sc, "*", g_mul_c_rand_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_rand_1 = clm_make_function(sc, "*", g_mul_c_rand_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_rand_interp_2 = clm_make_function(sc, "*", g_mul_c_rand_interp_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_rand_interp_1 = clm_make_function(sc, "*", g_mul_c_rand_interp_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_ncos_2 = clm_make_function(sc, "*", g_mul_c_ncos_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_ncos_1 = clm_make_function(sc, "*", g_mul_c_ncos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_nsin_2 = clm_make_function(sc, "*", g_mul_c_nsin_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_nsin_1 = clm_make_function(sc, "*", g_mul_c_nsin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_sawtooth_wave_2 = clm_make_function(sc, "*", g_mul_c_sawtooth_wave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_sawtooth_wave_1 = clm_make_function(sc, "*", g_mul_c_sawtooth_wave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_pulse_train_2 = clm_make_function(sc, "*", g_mul_c_pulse_train_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_pulse_train_1 = clm_make_function(sc, "*", g_mul_c_pulse_train_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_pulsed_env_2 = clm_make_function(sc, "*", g_mul_c_pulsed_env_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_pulsed_env_1 = clm_make_function(sc, "*", g_mul_c_pulsed_env_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_square_wave_2 = clm_make_function(sc, "*", g_mul_c_square_wave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_square_wave_1 = clm_make_function(sc, "*", g_mul_c_square_wave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_triangle_wave_2 = clm_make_function(sc, "*", g_mul_c_triangle_wave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_triangle_wave_1 = clm_make_function(sc, "*", g_mul_c_triangle_wave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_nrxysin_2 = clm_make_function(sc, "*", g_mul_c_nrxysin_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_nrxysin_1 = clm_make_function(sc, "*", g_mul_c_nrxysin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_nrxycos_2 = clm_make_function(sc, "*", g_mul_c_nrxycos_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_nrxycos_1 = clm_make_function(sc, "*", g_mul_c_nrxycos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_rxyksin_2 = clm_make_function(sc, "*", g_mul_c_rxyksin_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_rxyksin_1 = clm_make_function(sc, "*", g_mul_c_rxyksin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_rxykcos_2 = clm_make_function(sc, "*", g_mul_c_rxykcos_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_rxykcos_1 = clm_make_function(sc, "*", g_mul_c_rxykcos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_one_zero_2 = clm_make_function(sc, "*", g_mul_c_one_zero_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_one_pole_2 = clm_make_function(sc, "*", g_mul_c_one_pole_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_two_zero_2 = clm_make_function(sc, "*", g_mul_c_two_zero_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_two_pole_2 = clm_make_function(sc, "*", g_mul_c_two_pole_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_filter_2 = clm_make_function(sc, "*", g_mul_c_filter_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_fir_filter_2 = clm_make_function(sc, "*", g_mul_c_fir_filter_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_iir_filter_2 = clm_make_function(sc, "*", g_mul_c_iir_filter_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_formant_2 = clm_make_function(sc, "*", g_mul_c_formant_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_firmant_2 = clm_make_function(sc, "*", g_mul_c_firmant_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_polyshape_2 = clm_make_function(sc, "*", g_mul_c_polyshape_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_filtered_comb_2 = clm_make_function(sc, "*", g_mul_c_filtered_comb_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_filtered_comb_bank_2 = clm_make_function(sc, "*", g_mul_c_filtered_comb_bank_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_asymmetric_fm_2 = clm_make_function(sc, "*", g_mul_c_asymmetric_fm_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_c_ssb_am_2 = clm_make_function(sc, "*", g_mul_c_ssb_am_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_env_direct = clm_make_temp_function_no_choice(sc, "*", g_mul_env_direct, 2, 0, false, "* optimization", f);
+  mul_direct_s2 = clm_make_temp_function_no_choice(sc, "*", g_mul_direct_s2, 3, 0, false, "* optimization", f);
+  mul_s_env_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_s_env_2, 3, 0, false, "* optimization", f);
+  env_oscil_env = clm_make_temp_function_no_choice(sc, "*", g_env_oscil_env, 2, 0, false, "animals optimization", f);
+  env_polywave_env = clm_make_temp_function_no_choice(sc, "*", g_env_polywave_env, 2, 0, false, "animals optimization", f);
+  env_polywave_env_ri = clm_make_temp_function_no_choice(sc, "*", g_env_polywave_env_ri, 2, 0, false, "animals optimization", f);
+  mul_c_oscil_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_oscil_2, 2, 0, false, "* optimization", f);
+  mul_c_oscil_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_oscil_1, 1, 0, false, "* optimization", f);
+  mul_c_oscil_bank_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_oscil_bank_1, 1, 0, false, "* optimization", f);
+  mul_c_env_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_env_1, 1, 0, false, "* optimization", f);
+  mul_c_readin_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_readin_1, 1, 0, false, "* optimization", f);
+  mul_c_polywave_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_polywave_2, 2, 0, false, "* optimization", f);
+  mul_c_polywave_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_polywave_1, 1, 0, false, "* optimization", f);
+  mul_c_table_lookup_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_table_lookup_2, 2, 0, false, "* optimization", f);
+  mul_c_table_lookup_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_table_lookup_1, 1, 0, false, "* optimization", f);
+  mul_c_wave_train_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_wave_train_2, 2, 0, false, "* optimization", f);
+  mul_c_wave_train_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_wave_train_1, 1, 0, false, "* optimization", f);
+  mul_c_src_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_src_1, 1, 0, false, "* optimization", f);
+  mul_c_src_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_src_2, 2, 0, false, "* optimization", f);
+  mul_c_phase_vocoder_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_phase_vocoder_1, 1, 0, false, "* optimization", f);
+  mul_c_convolve_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_convolve_1, 1, 0, false, "* optimization", f);
+  mul_c_granulate_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_granulate_1, 1, 0, false, "* optimization", f);
+  mul_c_comb_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_comb_2, 2, 0, false, "* optimization", f);
+  mul_c_comb_bank_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_comb_bank_2, 2, 0, false, "* optimization", f);
+  mul_c_notch_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_notch_2, 2, 0, false, "* optimization", f);
+  mul_c_all_pass_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_all_pass_2, 2, 0, false, "* optimization", f);
+  mul_c_all_pass_bank_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_all_pass_bank_2, 2, 0, false, "* optimization", f);
+  mul_c_one_pole_all_pass_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_one_pole_all_pass_2, 2, 0, false, "* optimization", f);
+  mul_c_delay_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_delay_2, 2, 0, false, "* optimization", f);
+  mul_c_moving_average_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_moving_average_2, 2, 0, false, "* optimization", f);
+  mul_c_moving_max_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_moving_max_2, 2, 0, false, "* optimization", f);
+  mul_c_rand_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rand_2, 2, 0, false, "* optimization", f);
+  mul_c_rand_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rand_1, 1, 0, false, "* optimization", f);
+  mul_c_rand_interp_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rand_interp_2, 2, 0, false, "* optimization", f);
+  mul_c_rand_interp_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rand_interp_1, 1, 0, false, "* optimization", f);
+  mul_c_ncos_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_ncos_2, 2, 0, false, "* optimization", f);
+  mul_c_ncos_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_ncos_1, 1, 0, false, "* optimization", f);
+  mul_c_nsin_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_nsin_2, 2, 0, false, "* optimization", f);
+  mul_c_nsin_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_nsin_1, 1, 0, false, "* optimization", f);
+  mul_c_sawtooth_wave_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_sawtooth_wave_2, 2, 0, false, "* optimization", f);
+  mul_c_sawtooth_wave_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_sawtooth_wave_1, 1, 0, false, "* optimization", f);
+  mul_c_pulse_train_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_pulse_train_2, 2, 0, false, "* optimization", f);
+  mul_c_pulse_train_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_pulse_train_1, 1, 0, false, "* optimization", f);
+  mul_c_pulsed_env_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_pulsed_env_2, 2, 0, false, "* optimization", f);
+  mul_c_pulsed_env_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_pulsed_env_1, 1, 0, false, "* optimization", f);
+  mul_c_square_wave_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_square_wave_2, 2, 0, false, "* optimization", f);
+  mul_c_square_wave_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_square_wave_1, 1, 0, false, "* optimization", f);
+  mul_c_triangle_wave_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_triangle_wave_2, 2, 0, false, "* optimization", f);
+  mul_c_triangle_wave_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_triangle_wave_1, 1, 0, false, "* optimization", f);
+  mul_c_nrxysin_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_nrxysin_2, 2, 0, false, "* optimization", f);
+  mul_c_nrxysin_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_nrxysin_1, 1, 0, false, "* optimization", f);
+  mul_c_nrxycos_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_nrxycos_2, 2, 0, false, "* optimization", f);
+  mul_c_nrxycos_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_nrxycos_1, 1, 0, false, "* optimization", f);
+  mul_c_rxyksin_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rxyksin_2, 2, 0, false, "* optimization", f);
+  mul_c_rxyksin_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rxyksin_1, 1, 0, false, "* optimization", f);
+  mul_c_rxykcos_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rxykcos_2, 2, 0, false, "* optimization", f);
+  mul_c_rxykcos_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rxykcos_1, 1, 0, false, "* optimization", f);
+  mul_c_one_zero_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_one_zero_2, 2, 0, false, "* optimization", f);
+  mul_c_one_pole_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_one_pole_2, 2, 0, false, "* optimization", f);
+  mul_c_two_zero_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_two_zero_2, 2, 0, false, "* optimization", f);
+  mul_c_two_pole_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_two_pole_2, 2, 0, false, "* optimization", f);
+  mul_c_filter_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_filter_2, 2, 0, false, "* optimization", f);
+  mul_c_fir_filter_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_fir_filter_2, 2, 0, false, "* optimization", f);
+  mul_c_iir_filter_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_iir_filter_2, 2, 0, false, "* optimization", f);
+  mul_c_formant_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_formant_2, 2, 0, false, "* optimization", f);
+  mul_c_firmant_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_firmant_2, 2, 0, false, "* optimization", f);
+  mul_c_polyshape_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_polyshape_2, 2, 0, false, "* optimization", f);
+  mul_c_filtered_comb_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_filtered_comb_2, 2, 0, false, "* optimization", f);
+  mul_c_filtered_comb_bank_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_filtered_comb_bank_2, 2, 0, false, "* optimization", f);
+  mul_c_asymmetric_fm_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_asymmetric_fm_2, 2, 0, false, "* optimization", f);
+  mul_c_ssb_am_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_ssb_am_2, 2, 0, false, "* optimization", f);
 
   mul_s_oscil_2 = clm_make_function_no_choice(sc, "*", g_mul_s_oscil_2, 2, 0, false, "* optimization", f);
   mul_s_oscil_1 = clm_make_function_no_choice(sc, "*", g_mul_s_oscil_1, 1, 0, false, "* optimization", f);
@@ -18150,71 +18127,71 @@ static void init_choosers(s7_scheme *sc)
   mul_s_filtered_comb_bank_2 = clm_make_function_no_choice(sc, "*", g_mul_s_filtered_comb_bank_2, 2, 0, false, "* optimization", f);
   mul_s_asymmetric_fm_2 = clm_make_function_no_choice(sc, "*", g_mul_s_asymmetric_fm_2, 2, 0, false, "* optimization", f);
 
-  env_oscil_2 = clm_make_function(sc, "*", g_env_oscil_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_oscil_1 = clm_make_function(sc, "*", g_env_oscil_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_oscil_bank_1 = clm_make_function(sc, "*", g_env_oscil_bank_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_env_1 = clm_make_function(sc, "*", g_env_env_1, 1, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_readin_1 = clm_make_function(sc, "*", g_env_readin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_polywave_2 = clm_make_function(sc, "*", g_env_polywave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_polywave_1 = clm_make_function(sc, "*", g_env_polywave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_table_lookup_2 = clm_make_function(sc, "*", g_env_table_lookup_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_table_lookup_1 = clm_make_function(sc, "*", g_env_table_lookup_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_src_2 = clm_make_function(sc, "*", g_env_src_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_wave_train_2 = clm_make_function(sc, "*", g_env_wave_train_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_wave_train_1 = clm_make_function(sc, "*", g_env_wave_train_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_src_1 = clm_make_function(sc, "*", g_env_src_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_phase_vocoder_1 = clm_make_function(sc, "*", g_env_phase_vocoder_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_convolve_1 = clm_make_function(sc, "*", g_env_convolve_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_granulate_1 = clm_make_function(sc, "*", g_env_granulate_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_comb_2 = clm_make_function(sc, "*", g_env_comb_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_comb_bank_2 = clm_make_function(sc, "*", g_env_comb_bank_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_notch_2 = clm_make_function(sc, "*", g_env_notch_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_all_pass_2 = clm_make_function(sc, "*", g_env_all_pass_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_all_pass_bank_2 = clm_make_function(sc, "*", g_env_all_pass_bank_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_one_pole_all_pass_2 = clm_make_function(sc, "*", g_env_one_pole_all_pass_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_delay_2 = clm_make_function(sc, "*", g_env_delay_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_moving_average_2 = clm_make_function(sc, "*", g_env_moving_average_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_moving_max_2 = clm_make_function(sc, "*", g_env_moving_max_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_rand_2 = clm_make_function(sc, "*", g_env_rand_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_rand_1 = clm_make_function(sc, "*", g_env_rand_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_rand_interp_2 = clm_make_function(sc, "*", g_env_rand_interp_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_rand_interp_1 = clm_make_function(sc, "*", g_env_rand_interp_1, 1, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_ncos_2 = clm_make_function(sc, "*", g_env_ncos_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_ncos_1 = clm_make_function(sc, "*", g_env_ncos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_nsin_2 = clm_make_function(sc, "*", g_env_nsin_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_nsin_1 = clm_make_function(sc, "*", g_env_nsin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_sawtooth_wave_2 = clm_make_function(sc, "*", g_env_sawtooth_wave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_sawtooth_wave_1 = clm_make_function(sc, "*", g_env_sawtooth_wave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_pulse_train_2 = clm_make_function(sc, "*", g_env_pulse_train_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_pulse_train_1 = clm_make_function(sc, "*", g_env_pulse_train_1, 1, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_pulsed_env_2 = clm_make_function(sc, "*", g_env_pulsed_env_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_pulsed_env_1 = clm_make_function(sc, "*", g_env_pulsed_env_1, 1, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_square_wave_2 = clm_make_function(sc, "*", g_env_square_wave_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_square_wave_1 = clm_make_function(sc, "*", g_env_square_wave_1, 1, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_triangle_wave_2 = clm_make_function(sc, "*", g_env_triangle_wave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_triangle_wave_1 = clm_make_function(sc, "*", g_env_triangle_wave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_nrxysin_2 = clm_make_function(sc, "*", g_env_nrxysin_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_nrxysin_1 = clm_make_function(sc, "*", g_env_nrxysin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_nrxycos_2 = clm_make_function(sc, "*", g_env_nrxycos_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_nrxycos_1 = clm_make_function(sc, "*", g_env_nrxycos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_rxyksin_2 = clm_make_function(sc, "*", g_env_rxyksin_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_rxyksin_1 = clm_make_function(sc, "*", g_env_rxyksin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_rxykcos_2 = clm_make_function(sc, "*", g_env_rxykcos_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_rxykcos_1 = clm_make_function(sc, "*", g_env_rxykcos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_one_zero_2 = clm_make_function(sc, "*", g_env_one_zero_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_one_pole_2 = clm_make_function(sc, "*", g_env_one_pole_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_two_zero_2 = clm_make_function(sc, "*", g_env_two_zero_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_two_pole_2 = clm_make_function(sc, "*", g_env_two_pole_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_filter_2 = clm_make_function(sc, "*", g_env_filter_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_fir_filter_2 = clm_make_function(sc, "*", g_env_fir_filter_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_iir_filter_2 = clm_make_function(sc, "*", g_env_iir_filter_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_formant_2 = clm_make_function(sc, "*", g_env_formant_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
-  env_firmant_2 = clm_make_function(sc, "*", g_env_firmant_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_polyshape_2 = clm_make_function(sc, "*", g_env_polyshape_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_ssb_am_2 = clm_make_function(sc, "*", g_env_ssb_am_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_asymmetric_fm_2 = clm_make_function(sc, "*", g_env_asymmetric_fm_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_filtered_comb_2 = clm_make_function(sc, "*", g_env_filtered_comb_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  env_filtered_comb_bank_2 = clm_make_function(sc, "*", g_env_filtered_comb_bank_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_oscil_2 = clm_make_temp_function_no_choice(sc, "*", g_env_oscil_2, 2, 0, false, "* optimization", f);
+  env_oscil_1 = clm_make_temp_function_no_choice(sc, "*", g_env_oscil_1, 1, 0, false, "* optimization", f);
+  env_oscil_bank_1 = clm_make_temp_function_no_choice(sc, "*", g_env_oscil_bank_1, 1, 0, false, "* optimization", f);
+  env_env_1 = clm_make_temp_function_no_choice(sc, "*", g_env_env_1, 1, 0, false, "* optimization", f);
+  env_readin_1 = clm_make_temp_function_no_choice(sc, "*", g_env_readin_1, 1, 0, false, "* optimization", f);
+  env_polywave_2 = clm_make_temp_function_no_choice(sc, "*", g_env_polywave_2, 2, 0, false, "* optimization", f);
+  env_polywave_1 = clm_make_temp_function_no_choice(sc, "*", g_env_polywave_1, 1, 0, false, "* optimization", f);
+  env_table_lookup_2 = clm_make_temp_function_no_choice(sc, "*", g_env_table_lookup_2, 2, 0, false, "* optimization", f);
+  env_table_lookup_1 = clm_make_temp_function_no_choice(sc, "*", g_env_table_lookup_1, 1, 0, false, "* optimization", f);
+  env_src_2 = clm_make_temp_function_no_choice(sc, "*", g_env_src_2, 2, 0, false, "* optimization", f);
+  env_wave_train_2 = clm_make_temp_function_no_choice(sc, "*", g_env_wave_train_2, 2, 0, false, "* optimization", f);
+  env_wave_train_1 = clm_make_temp_function_no_choice(sc, "*", g_env_wave_train_1, 1, 0, false, "* optimization", f);
+  env_src_1 = clm_make_temp_function_no_choice(sc, "*", g_env_src_1, 1, 0, false, "* optimization", f);
+  env_phase_vocoder_1 = clm_make_temp_function_no_choice(sc, "*", g_env_phase_vocoder_1, 1, 0, false, "* optimization", f);
+  env_convolve_1 = clm_make_temp_function_no_choice(sc, "*", g_env_convolve_1, 1, 0, false, "* optimization", f);
+  env_granulate_1 = clm_make_temp_function_no_choice(sc, "*", g_env_granulate_1, 1, 0, false, "* optimization", f);
+  env_comb_2 = clm_make_temp_function_no_choice(sc, "*", g_env_comb_2, 2, 0, false, "* optimization", f);
+  env_comb_bank_2 = clm_make_temp_function_no_choice(sc, "*", g_env_comb_bank_2, 2, 0, false, "* optimization", f);
+  env_notch_2 = clm_make_temp_function_no_choice(sc, "*", g_env_notch_2, 2, 0, false, "* optimization", f);
+  env_all_pass_2 = clm_make_temp_function_no_choice(sc, "*", g_env_all_pass_2, 2, 0, false, "* optimization", f);
+  env_all_pass_bank_2 = clm_make_temp_function_no_choice(sc, "*", g_env_all_pass_bank_2, 2, 0, false, "* optimization", f);
+  env_one_pole_all_pass_2 = clm_make_temp_function_no_choice(sc, "*", g_env_one_pole_all_pass_2, 2, 0, false, "* optimization", f);
+  env_delay_2 = clm_make_temp_function_no_choice(sc, "*", g_env_delay_2, 2, 0, false, "* optimization", f);
+  env_moving_average_2 = clm_make_temp_function_no_choice(sc, "*", g_env_moving_average_2, 2, 0, false, "* optimization", f);
+  env_moving_max_2 = clm_make_temp_function_no_choice(sc, "*", g_env_moving_max_2, 2, 0, false, "* optimization", f);
+  env_rand_2 = clm_make_temp_function_no_choice(sc, "*", g_env_rand_2, 2, 0, false, "* optimization", f);
+  env_rand_1 = clm_make_temp_function_no_choice(sc, "*", g_env_rand_1, 1, 0, false, "* optimization", f);
+  env_rand_interp_2 = clm_make_temp_function_no_choice(sc, "*", g_env_rand_interp_2, 2, 0, false, "* optimization", f);
+  env_rand_interp_1 = clm_make_temp_function_no_choice(sc, "*", g_env_rand_interp_1, 1, 0, false, "* optimization", f);
+  env_ncos_2 = clm_make_temp_function_no_choice(sc, "*", g_env_ncos_2, 2, 0, false, "* optimization", f);
+  env_ncos_1 = clm_make_temp_function_no_choice(sc, "*", g_env_ncos_1, 1, 0, false, "* optimization", f);
+  env_nsin_2 = clm_make_temp_function_no_choice(sc, "*", g_env_nsin_2, 2, 0, false, "* optimization", f);
+  env_nsin_1 = clm_make_temp_function_no_choice(sc, "*", g_env_nsin_1, 1, 0, false, "* optimization", f);
+  env_sawtooth_wave_2 = clm_make_temp_function_no_choice(sc, "*", g_env_sawtooth_wave_2, 2, 0, false, "* optimization", f);
+  env_sawtooth_wave_1 = clm_make_temp_function_no_choice(sc, "*", g_env_sawtooth_wave_1, 1, 0, false, "* optimization", f);
+  env_pulse_train_2 = clm_make_temp_function_no_choice(sc, "*", g_env_pulse_train_2, 2, 0, false, "* optimization", f);
+  env_pulse_train_1 = clm_make_temp_function_no_choice(sc, "*", g_env_pulse_train_1, 1, 0, false, "* optimization", f);
+  env_pulsed_env_2 = clm_make_temp_function_no_choice(sc, "*", g_env_pulsed_env_2, 2, 0, false, "* optimization", f);
+  env_pulsed_env_1 = clm_make_temp_function_no_choice(sc, "*", g_env_pulsed_env_1, 1, 0, false, "* optimization", f);
+  env_square_wave_2 = clm_make_temp_function_no_choice(sc, "*", g_env_square_wave_2, 2, 0, false, "* optimization", f);
+  env_square_wave_1 = clm_make_temp_function_no_choice(sc, "*", g_env_square_wave_1, 1, 0, false, "* optimization", f);
+  env_triangle_wave_2 = clm_make_temp_function_no_choice(sc, "*", g_env_triangle_wave_2, 2, 0, false, "* optimization", f);
+  env_triangle_wave_1 = clm_make_temp_function_no_choice(sc, "*", g_env_triangle_wave_1, 1, 0, false, "* optimization", f);
+  env_nrxysin_2 = clm_make_temp_function_no_choice(sc, "*", g_env_nrxysin_2, 2, 0, false, "* optimization", f);
+  env_nrxysin_1 = clm_make_temp_function_no_choice(sc, "*", g_env_nrxysin_1, 1, 0, false, "* optimization", f);
+  env_nrxycos_2 = clm_make_temp_function_no_choice(sc, "*", g_env_nrxycos_2, 2, 0, false, "* optimization", f);
+  env_nrxycos_1 = clm_make_temp_function_no_choice(sc, "*", g_env_nrxycos_1, 1, 0, false, "* optimization", f);
+  env_rxyksin_2 = clm_make_temp_function_no_choice(sc, "*", g_env_rxyksin_2, 2, 0, false, "* optimization", f);
+  env_rxyksin_1 = clm_make_temp_function_no_choice(sc, "*", g_env_rxyksin_1, 1, 0, false, "* optimization", f);
+  env_rxykcos_2 = clm_make_temp_function_no_choice(sc, "*", g_env_rxykcos_2, 2, 0, false, "* optimization", f);
+  env_rxykcos_1 = clm_make_temp_function_no_choice(sc, "*", g_env_rxykcos_1, 1, 0, false, "* optimization", f);
+  env_one_zero_2 = clm_make_temp_function_no_choice(sc, "*", g_env_one_zero_2, 2, 0, false, "* optimization", f);
+  env_one_pole_2 = clm_make_temp_function_no_choice(sc, "*", g_env_one_pole_2, 2, 0, false, "* optimization", f);
+  env_two_zero_2 = clm_make_temp_function_no_choice(sc, "*", g_env_two_zero_2, 2, 0, false, "* optimization", f);
+  env_two_pole_2 = clm_make_temp_function_no_choice(sc, "*", g_env_two_pole_2, 2, 0, false, "* optimization", f);
+  env_filter_2 = clm_make_temp_function_no_choice(sc, "*", g_env_filter_2, 2, 0, false, "* optimization", f);
+  env_fir_filter_2 = clm_make_temp_function_no_choice(sc, "*", g_env_fir_filter_2, 2, 0, false, "* optimization", f);
+  env_iir_filter_2 = clm_make_temp_function_no_choice(sc, "*", g_env_iir_filter_2, 2, 0, false, "* optimization", f);
+  env_formant_2 = clm_make_temp_function_no_choice(sc, "*", g_env_formant_2, 2, 0, false, "* optimization", f);
+  env_firmant_2 = clm_make_temp_function_no_choice(sc, "*", g_env_firmant_2, 2, 0, false, "* optimization", f);
+  env_polyshape_2 = clm_make_temp_function_no_choice(sc, "*", g_env_polyshape_2, 2, 0, false, "* optimization", f);
+  env_ssb_am_2 = clm_make_temp_function_no_choice(sc, "*", g_env_ssb_am_2, 2, 0, false, "* optimization", f);
+  env_asymmetric_fm_2 = clm_make_temp_function_no_choice(sc, "*", g_env_asymmetric_fm_2, 2, 0, false, "* optimization", f);
+  env_filtered_comb_2 = clm_make_temp_function_no_choice(sc, "*", g_env_filtered_comb_2, 2, 0, false, "* optimization", f);
+  env_filtered_comb_bank_2 = clm_make_temp_function_no_choice(sc, "*", g_env_filtered_comb_bank_2, 2, 0, false, "* optimization", f);
 
   store_gf_fixup(s7, f, fixup_multiply);
 
@@ -18223,21 +18200,21 @@ static void init_choosers(s7_scheme *sc)
   initial_add_chooser = s7_function_chooser(sc, f);
   s7_function_set_chooser(sc, f, clm_add_chooser);
 
-  fm_violin_vibrato = clm_make_function(sc, "+", g_fm_violin_vibrato, 3, 0, false, "fm-violin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  fm_violin_vibrato_no_env = clm_make_function(sc, "+", g_fm_violin_vibrato_no_env, 2, 0, false, "fm-violin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  fm_violin_rats = clm_make_function(sc, "+", g_fm_violin_rats, 4, 0, false, "fm-violin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  fm_violin_modulation = clm_make_function(sc, "+", g_fm_violin_modulation, 2, 0, false, "fm-violin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_direct_2 = clm_make_function(sc, "+", g_add_direct_2, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_direct_3 = clm_make_function(sc, "+", g_add_direct_3, 3, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_env_s = clm_make_function(sc, "+", g_add_env_s, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_env_direct_2 = clm_make_function(sc, "+", g_add_env_direct_2, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_env_direct_3 = clm_make_function(sc, "+", g_add_env_direct_3, 3, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_direct_s2 = clm_make_function(sc, "+", g_add_direct_s2, 3, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_direct_any = clm_make_function(sc, "+", g_add_direct_any, 3, 0, true, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_env_direct_any = clm_make_function(sc, "+", g_add_env_direct_any, 3, 0, true, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_c_direct = clm_make_function(sc, "+", g_add_c_direct, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_c_rand_interp = clm_make_function(sc, "+", g_add_c_rand_interp, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  add_c_abs_rand_interp = clm_make_function(sc, "+", g_add_c_abs_rand_interp, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  fm_violin_vibrato = clm_make_temp_function_no_choice(sc, "+", g_fm_violin_vibrato, 3, 0, false, "fm-violin optimization", f);
+  fm_violin_vibrato_no_env = clm_make_temp_function_no_choice(sc, "+", g_fm_violin_vibrato_no_env, 2, 0, false, "fm-violin optimization", f);
+  fm_violin_rats = clm_make_temp_function_no_choice(sc, "+", g_fm_violin_rats, 4, 0, false, "fm-violin optimization", f);
+  fm_violin_modulation = clm_make_temp_function_no_choice(sc, "+", g_fm_violin_modulation, 2, 0, false, "fm-violin optimization", f);
+  add_direct_2 = clm_make_temp_function_no_choice(sc, "+", g_add_direct_2, 2, 0, false, "+ optimization", f);
+  add_direct_3 = clm_make_temp_function_no_choice(sc, "+", g_add_direct_3, 3, 0, false, "+ optimization", f);
+  add_env_s = clm_make_temp_function_no_choice(sc, "+", g_add_env_s, 2, 0, false, "+ optimization", f);
+  add_env_direct_2 = clm_make_temp_function_no_choice(sc, "+", g_add_env_direct_2, 2, 0, false, "+ optimization", f);
+  add_env_direct_3 = clm_make_temp_function_no_choice(sc, "+", g_add_env_direct_3, 3, 0, false, "+ optimization", f);
+  add_direct_s2 = clm_make_temp_function_no_choice(sc, "+", g_add_direct_s2, 3, 0, false, "+ optimization", f);
+  add_direct_any = clm_make_temp_function_no_choice(sc, "+", g_add_direct_any, 3, 0, true, "+ optimization", f);
+  add_env_direct_any = clm_make_temp_function_no_choice(sc, "+", g_add_env_direct_any, 3, 0, true, "+ optimization", f);
+  add_c_direct = clm_make_temp_function_no_choice(sc, "+", g_add_c_direct, 2, 0, false, "+ optimization", f);
+  add_c_rand_interp = clm_make_temp_function_no_choice(sc, "+", g_add_c_rand_interp, 2, 0, false, "+ optimization", f);
+  add_c_abs_rand_interp = clm_make_temp_function_no_choice(sc, "+", g_add_c_abs_rand_interp, 2, 0, false, "+ optimization", f);
   add_1s_direct = clm_make_function_no_choice(sc, "+", g_add_1s_direct, 2, 0, false, "+ optimization", f);
   add_cs_direct = clm_make_function_no_choice(sc, "+", g_add_cs_direct, 2, 0, false, "+ optimization", f);
 
@@ -18252,9 +18229,9 @@ static void init_choosers(s7_scheme *sc)
   initial_abs_chooser = s7_function_chooser(sc, f);
   s7_function_set_chooser(sc, f, clm_abs_chooser);
 
-  abs_rand_interp = clm_make_function(sc, "abs", g_abs_rand_interp, 1, 0, false, "abs optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  abs_oscil = clm_make_function(sc, "abs", g_abs_oscil, 1, 0, false, "abs optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  abs_triangle_wave = clm_make_function(sc, "abs", g_abs_triangle_wave, 1, 0, false, "abs optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  abs_rand_interp = clm_make_temp_function_no_choice(sc, "abs", g_abs_rand_interp, 1, 0, false, "abs optimization", f);
+  abs_oscil = clm_make_temp_function_no_choice(sc, "abs", g_abs_oscil, 1, 0, false, "abs optimization", f);
+  abs_triangle_wave = clm_make_temp_function_no_choice(sc, "abs", g_abs_triangle_wave, 1, 0, false, "abs optimization", f);
 
   store_gf_fixup(s7, f, fixup_abs);
 
@@ -18288,189 +18265,177 @@ static void init_choosers(s7_scheme *sc)
   /* oscil */
   GEN_F3("oscil", oscil);
 
-  oscil_1 = clm_make_function(sc, "oscil", g_oscil_1, 1, 0, false, "oscil optimization", f,  NULL, NULL, NULL, mul_c_oscil_1, mul_s_oscil_1, env_oscil_1);
-  oscil_2 = clm_make_function(sc, "oscil", g_oscil_2, 2, 0, false, "oscil optimization", f, 
-			      mul_c_oscil_2, mul_s_oscil_2, env_oscil_2, NULL, NULL, NULL);
+  oscil_1 = clm_make_temp_function(sc, "oscil", g_oscil_1, 1, 0, false, "oscil optimization", f, NULL, NULL, NULL, mul_c_oscil_1, mul_s_oscil_1, env_oscil_1);
+  oscil_2 = clm_make_temp_function(sc, "oscil", g_oscil_2, 2, 0, false, "oscil optimization", f, mul_c_oscil_2, mul_s_oscil_2, env_oscil_2, NULL, NULL, NULL);
 
-  direct_oscil_2 = clm_make_function(sc, "oscil", g_direct_oscil_2, 2, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_oscil_2 = clm_make_function(sc, "oscil", g_indirect_oscil_2, 2, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_pm_direct = clm_make_function(sc, "oscil", g_oscil_pm_direct, 3, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_3_direct = clm_make_function(sc, "oscil", g_oscil_3_direct, 3, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_ss3_direct = clm_make_function(sc, "oscil", g_oscil_ss3_direct, 3, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_one = clm_make_function(sc, "oscil", g_oscil_one, 1, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_two = clm_make_function(sc, "oscil", g_oscil_two, 2, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_three = clm_make_function(sc, "oscil", g_oscil_three, 3, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  fm_violin_with_modulation = clm_make_function(sc, "oscil", g_fm_violin_with_modulation, 2, 0, false, "fm-violin optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  fm_violin_with_rats = clm_make_function(sc, "oscil", g_fm_violin_with_rats, 2, 0, false, "fm-violin optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_mul_c_s = clm_make_function(sc, "oscil", g_oscil_mul_c_s, 2, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_mul_s_c = clm_make_function(sc, "oscil", g_oscil_mul_s_c, 2, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  env_oscil_mul_ss = clm_make_function(sc, "*", g_env_oscil_mul_ss, 2, 0, false, "* optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_mul_ss = clm_make_function(sc, "oscil", g_oscil_mul_ss, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_ss, NULL, NULL, NULL);
-  env_oscil_mul_s_v = clm_make_function(sc, "*", g_env_oscil_mul_s_v, 2, 0, false, "* optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
-  oscil_mul_s_v = clm_make_function(sc, "oscil", g_oscil_mul_s_v, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_s_v, NULL, NULL, NULL);
-  oscil_vss_s = clm_make_function(sc, "oscil", g_oscil_vss_s, 2, 0, false, "oscil optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_oscil_2 = clm_make_temp_function_no_choice(sc, "oscil", g_direct_oscil_2, 2, 0, false, "oscil optimization", f);
+  indirect_oscil_2 = clm_make_temp_function_no_choice(sc, "oscil", g_indirect_oscil_2, 2, 0, false, "oscil optimization", f);
+  oscil_pm_direct = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_pm_direct, 3, 0, false, "oscil optimization", f);
+  oscil_3_direct = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_3_direct, 3, 0, false, "oscil optimization", f);
+  oscil_ss3_direct = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_ss3_direct, 3, 0, false, "oscil optimization", f);
+  oscil_one = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_one, 1, 0, false, "oscil optimization", f);
+  oscil_two = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_two, 2, 0, false, "oscil optimization", f);
+  oscil_three = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_three, 3, 0, false, "oscil optimization", f);
+  fm_violin_with_modulation = clm_make_temp_function_no_choice(sc, "oscil", g_fm_violin_with_modulation, 2, 0, false, "fm-violin optimization", f);
+  fm_violin_with_rats = clm_make_temp_function_no_choice(sc, "oscil", g_fm_violin_with_rats, 2, 0, false, "fm-violin optimization", f);
+  oscil_mul_c_s = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_mul_c_s, 2, 0, false, "oscil optimization", f);
+  oscil_mul_s_c = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_mul_s_c, 2, 0, false, "oscil optimization", f);
+  env_oscil_mul_ss = clm_make_temp_function_no_choice(sc, "*", g_env_oscil_mul_ss, 2, 0, false, "* optimization", f);
+  oscil_mul_ss = clm_make_temp_function(sc, "oscil", g_oscil_mul_ss, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_ss, NULL, NULL, NULL);
+  env_oscil_mul_s_v = clm_make_temp_function_no_choice(sc, "*", g_env_oscil_mul_s_v, 2, 0, false, "* optimization", f);
+  oscil_mul_s_v = clm_make_temp_function(sc, "oscil", g_oscil_mul_s_v, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_s_v, NULL, NULL, NULL);
+  oscil_vss_s = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_vss_s, 2, 0, false, "oscil optimization", f);
 
 
   GEN_F1("oscil-bank", oscil_bank);
-  oscil_bank_1 = clm_make_function(sc, "oscil-bank", g_oscil_bank_1, 1, 0, false, "oscil-bank optimization", f,  
+  oscil_bank_1 = clm_make_temp_function(sc, "oscil-bank", g_oscil_bank_1, 1, 0, false, "oscil-bank optimization", f,  
 				   NULL, NULL, NULL, mul_c_oscil_bank_1, mul_s_oscil_bank_1, env_oscil_bank_1);
 
 
   /* polywave */
   GEN_F("polywave", polywave);
 
-  polywave_1 = clm_make_function(sc, "polywave", g_polywave_1, 1, 0, false, "polywave optimization", f,
+  polywave_1 = clm_make_temp_function(sc, "polywave", g_polywave_1, 1, 0, false, "polywave optimization", f,
 				 NULL, NULL, NULL, mul_c_polywave_1, mul_s_polywave_1, env_polywave_1);
-  polywave_2 = clm_make_function(sc, "polywave", g_polywave_2, 2, 0, false, "polywave optimization", f,
+  polywave_2 = clm_make_temp_function(sc, "polywave", g_polywave_2, 2, 0, false, "polywave optimization", f,
 				 mul_c_polywave_2, mul_s_polywave_2, env_polywave_2, NULL, NULL, NULL);
 
-  direct_polywave_2 = clm_make_function(sc, "polywave", g_direct_polywave_2, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_polywave_2 = clm_make_function(sc, "polywave", g_indirect_polywave_2, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  polywave_mul_c_s = clm_make_function(sc, "polywave", g_polywave_mul_c_s, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  polywave_add_cs_ss = clm_make_function(sc, "polywave", g_polywave_add_cs_ss, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  polywave_add_cs_ssr = clm_make_function(sc, "polywave", g_polywave_add_cs_ssr, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_polywave_2 = clm_make_temp_function_no_choice(sc, "polywave", g_direct_polywave_2, 2, 0, false, "polywave optimization", f);
+  indirect_polywave_2 = clm_make_temp_function_no_choice(sc, "polywave", g_indirect_polywave_2, 2, 0, false, "polywave optimization", f);
+  polywave_mul_c_s = clm_make_temp_function_no_choice(sc, "polywave", g_polywave_mul_c_s, 2, 0, false, "polywave optimization", f);
+  polywave_add_cs_ss = clm_make_temp_function_no_choice(sc, "polywave", g_polywave_add_cs_ss, 2, 0, false, "polywave optimization", f);
+  polywave_add_cs_ssr = clm_make_temp_function_no_choice(sc, "polywave", g_polywave_add_cs_ssr, 2, 0, false, "polywave optimization", f);
 
 
   /* table-lookup */
   GEN_F("table-lookup", table_lookup);
 
-  table_lookup_1 = clm_make_function(sc, "table-lookup", g_table_lookup_1, 1, 0, false, "table-lookup optimization", f,
+  table_lookup_1 = clm_make_temp_function(sc, "table-lookup", g_table_lookup_1, 1, 0, false, "table-lookup optimization", f,
 				     NULL, NULL, NULL, mul_c_table_lookup_1, mul_s_table_lookup_1, env_table_lookup_1);
-  table_lookup_2 = clm_make_function(sc, "table-lookup", g_table_lookup_2, 2, 0, false, "table-lookup optimization", f,
+  table_lookup_2 = clm_make_temp_function(sc, "table-lookup", g_table_lookup_2, 2, 0, false, "table-lookup optimization", f,
 				     mul_c_table_lookup_2, mul_s_table_lookup_2, env_table_lookup_2, NULL, NULL, NULL);
-  direct_table_lookup_2 = clm_make_function(sc, "table-lookup", g_direct_table_lookup_2, 2, 0, false, "table-lookup optimization", f,
-					    NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_table_lookup_2 = clm_make_function(sc, "table-lookup", g_indirect_table_lookup_2, 2, 0, false, "table-lookup optimization", f,
-					    NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_table_lookup_2 = clm_make_temp_function_no_choice(sc, "table-lookup", g_direct_table_lookup_2, 2, 0, false, "table-lookup optimization", f);
+  indirect_table_lookup_2 = clm_make_temp_function_no_choice(sc, "table-lookup", g_indirect_table_lookup_2, 2, 0, false, "table-lookup optimization", f);
 
 
   /* wave-train */
   GEN_F("wave-train", wave_train);
 
-  wave_train_1 = clm_make_function(sc, "wave-train", g_wave_train_1, 1, 0, false, "wave-train optimization", f,
+  wave_train_1 = clm_make_temp_function(sc, "wave-train", g_wave_train_1, 1, 0, false, "wave-train optimization", f,
 				   NULL, NULL, NULL, mul_c_wave_train_1, mul_s_wave_train_1, env_wave_train_1);
-  wave_train_2 = clm_make_function(sc, "wave-train", g_wave_train_2, 2, 0, false, "wave-train optimization", f,
+  wave_train_2 = clm_make_temp_function(sc, "wave-train", g_wave_train_2, 2, 0, false, "wave-train optimization", f,
 				   mul_c_wave_train_2, mul_s_wave_train_2, env_wave_train_2, NULL, NULL, NULL);
-  direct_wave_train_2 = clm_make_function(sc, "wave-train", g_direct_wave_train_2, 2, 0, false, "wave-train optimization", f,
-					  NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_wave_train_2 = clm_make_function(sc, "wave-train", g_indirect_wave_train_2, 2, 0, false, "wave-train optimization", f,
-					  NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_wave_train_2 = clm_make_temp_function_no_choice(sc, "wave-train", g_direct_wave_train_2, 2, 0, false, "wave-train optimization", f);
+  indirect_wave_train_2 = clm_make_temp_function_no_choice(sc, "wave-train", g_indirect_wave_train_2, 2, 0, false, "wave-train optimization", f);
 
 
   /* src */
   GEN_F("src", src);
 
-  src_1 = clm_make_function(sc, "src", g_src_1, 1, 0, false, "src optimization", f, NULL, NULL, NULL, mul_c_src_1, mul_s_src_1, env_src_1);
-  src_one = clm_make_function(sc, "src", g_src_one, 1, 0, false, "src optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  src_1 = clm_make_temp_function(sc, "src", g_src_1, 1, 0, false, "src optimization", f, NULL, NULL, NULL, mul_c_src_1, mul_s_src_1, env_src_1);
+  src_one = clm_make_temp_function_no_choice(sc, "src", g_src_one, 1, 0, false, "src optimization", f);
 
-  src_2 = clm_make_function(sc, "src", g_src_2, 2, 0, false, "src optimization", f, mul_c_src_2, mul_s_src_2, env_src_2, NULL, NULL, NULL);
-  direct_src_2 = clm_make_function(sc, "src", g_direct_src_2, 2, 0, false, "src optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_src_2 = clm_make_function(sc, "src", g_indirect_src_2, 2, 0, false, "src optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  src_3 = clm_make_function(sc, "src", g_src_3, 3, 1, false, "src optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
+  src_2 = clm_make_temp_function(sc, "src", g_src_2, 2, 0, false, "src optimization", f, mul_c_src_2, mul_s_src_2, env_src_2, NULL, NULL, NULL);
+  direct_src_2 = clm_make_temp_function_no_choice(sc, "src", g_direct_src_2, 2, 0, false, "src optimization", f);
+  indirect_src_2 = clm_make_temp_function_no_choice(sc, "src", g_indirect_src_2, 2, 0, false, "src optimization", f);
+  src_3 = clm_make_temp_function_no_choice(sc, "src", g_src_3, 3, 1, false, "src optimization", f);
 
 
   /* phase_vocoder */
   GEN_F1("phase-vocoder", phase_vocoder);
 
-  phase_vocoder_1 = clm_make_function(sc, "phase-vocoder", g_phase_vocoder_1, 1, 0, false, "phase-vocoder optimization", f,
+  phase_vocoder_1 = clm_make_temp_function(sc, "phase-vocoder", g_phase_vocoder_1, 1, 0, false, "phase-vocoder optimization", f,
 				   NULL, NULL, NULL, mul_c_phase_vocoder_1, mul_s_phase_vocoder_1, env_phase_vocoder_1);
 
 
   /* convolve */
   GEN_F1("convolve", convolve);
 
-  convolve_1 = clm_make_function(sc, "convolve", g_convolve_1, 1, 0, false, "convolve optimization", f,
+  convolve_1 = clm_make_temp_function(sc, "convolve", g_convolve_1, 1, 0, false, "convolve optimization", f,
 				   NULL, NULL, NULL, mul_c_convolve_1, mul_s_convolve_1, env_convolve_1);
 
 
   /* granulate */
   GEN_F1("granulate", granulate);
 
-  granulate_1 = clm_make_function(sc, "granulate", g_granulate_1, 1, 0, false, "granulate optimization", f,
+  granulate_1 = clm_make_temp_function(sc, "granulate", g_granulate_1, 1, 0, false, "granulate optimization", f,
 				   NULL, NULL, NULL, mul_c_granulate_1, mul_s_granulate_1, env_granulate_1);
 
 
   GEN_F("nsin", nsin);
 
-  nsin_2 = clm_make_function(sc, "nsin", g_nsin_2, 2, 0, false, "nsin optimization", f,
-			     mul_c_nsin_2, mul_s_nsin_2, env_nsin_2, NULL, NULL, NULL);
-  nsin_1 = clm_make_function(sc, "nsin", g_nsin_1, 1, 0, false, "nsin optimization", f,
-			     NULL, NULL, NULL, mul_c_nsin_1, mul_s_nsin_1, env_nsin_1);			     
-  direct_nsin_2 = clm_make_function(sc, "nsin", g_direct_nsin_2, 2, 0, false, "nsin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_nsin_2 = clm_make_function(sc, "nsin", g_indirect_nsin_2, 2, 0, false, "nsin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  nsin_2 = clm_make_temp_function(sc, "nsin", g_nsin_2, 2, 0, false, "nsin optimization", f, mul_c_nsin_2, mul_s_nsin_2, env_nsin_2, NULL, NULL, NULL);
+  nsin_1 = clm_make_temp_function(sc, "nsin", g_nsin_1, 1, 0, false, "nsin optimization", f, NULL, NULL, NULL, mul_c_nsin_1, mul_s_nsin_1, env_nsin_1);			     
+  direct_nsin_2 = clm_make_temp_function_no_choice(sc, "nsin", g_direct_nsin_2, 2, 0, false, "nsin optimization", f);
+  indirect_nsin_2 = clm_make_temp_function_no_choice(sc, "nsin", g_indirect_nsin_2, 2, 0, false, "nsin optimization", f);
 
 
   GEN_F("ncos", ncos);
 
-  ncos_2 = clm_make_function(sc, "ncos", g_ncos_2, 2, 0, false, "ncos optimization", f,
-			     mul_c_ncos_2, mul_s_ncos_2, env_ncos_2, NULL, NULL, NULL);
-  direct_ncos_2 = clm_make_function(sc, "ncos", g_direct_ncos_2, 2, 0, false, "ncos optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_ncos_2 = clm_make_function(sc, "ncos", g_indirect_ncos_2, 2, 0, false, "ncos optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  ncos_1 = clm_make_function(sc, "ncos", g_ncos_1, 1, 0, false, "ncos optimization", f,
-			     NULL, NULL, NULL, mul_c_ncos_1, mul_s_ncos_1, env_ncos_1);
+  ncos_2 = clm_make_temp_function(sc, "ncos", g_ncos_2, 2, 0, false, "ncos optimization", f, mul_c_ncos_2, mul_s_ncos_2, env_ncos_2, NULL, NULL, NULL);
+  direct_ncos_2 = clm_make_temp_function_no_choice(sc, "ncos", g_direct_ncos_2, 2, 0, false, "ncos optimization", f);
+  indirect_ncos_2 = clm_make_temp_function_no_choice(sc, "ncos", g_indirect_ncos_2, 2, 0, false, "ncos optimization", f);
+  ncos_1 = clm_make_temp_function(sc, "ncos", g_ncos_1, 1, 0, false, "ncos optimization", f, NULL, NULL, NULL, mul_c_ncos_1, mul_s_ncos_1, env_ncos_1);
 
 
   GEN_F("nrxysin", nrxysin);
 
-  nrxysin_2 = clm_make_function(sc, "nrxysin", g_nrxysin_2, 2, 0, false, "nrxysin optimization", f,
+  nrxysin_2 = clm_make_temp_function(sc, "nrxysin", g_nrxysin_2, 2, 0, false, "nrxysin optimization", f,
 				mul_c_nrxysin_2, mul_s_nrxysin_2, env_nrxysin_2, NULL, NULL, NULL);
-  direct_nrxysin_2 = clm_make_function(sc, "nrxysin", g_direct_nrxysin_2, 2, 0, false, "nrxysin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_nrxysin_2 = clm_make_function(sc, "nrxysin", g_indirect_nrxysin_2, 2, 0, false, "nrxysin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  nrxysin_1 = clm_make_function(sc, "nrxysin", g_nrxysin_1, 1, 0, false, "nrxysin optimization", f,
+  direct_nrxysin_2 = clm_make_temp_function_no_choice(sc, "nrxysin", g_direct_nrxysin_2, 2, 0, false, "nrxysin optimization", f);
+  indirect_nrxysin_2 = clm_make_temp_function_no_choice(sc, "nrxysin", g_indirect_nrxysin_2, 2, 0, false, "nrxysin optimization", f);
+  nrxysin_1 = clm_make_temp_function(sc, "nrxysin", g_nrxysin_1, 1, 0, false, "nrxysin optimization", f,
 				NULL, NULL, NULL, mul_c_nrxysin_1, mul_s_nrxysin_1, env_nrxysin_1);
-  nrxysin_mul_c_s = clm_make_function(sc, "nrxysin", g_nrxysin_mul_c_s, 2, 0, false, "nrxysin optimization", f,  
-				      NULL, NULL, NULL, NULL, NULL, NULL);
+  nrxysin_mul_c_s = clm_make_temp_function_no_choice(sc, "nrxysin", g_nrxysin_mul_c_s, 2, 0, false, "nrxysin optimization", f);
 
 
   GEN_F("nrxycos", nrxycos);
 
-  nrxycos_2 = clm_make_function(sc, "nrxycos", g_nrxycos_2, 2, 0, false, "nrxycos optimization", f,
+  nrxycos_2 = clm_make_temp_function(sc, "nrxycos", g_nrxycos_2, 2, 0, false, "nrxycos optimization", f,
 				mul_c_nrxycos_2, mul_s_nrxycos_2, env_nrxycos_2, NULL, NULL, NULL);
-  direct_nrxycos_2 = clm_make_function(sc, "nrxycos", g_direct_nrxycos_2, 2, 0, false, "nrxycos optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_nrxycos_2 = clm_make_function(sc, "nrxycos", g_indirect_nrxycos_2, 2, 0, false, "nrxycos optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  nrxycos_1 = clm_make_function(sc, "nrxycos", g_nrxycos_1, 1, 0, false, "nrxycos optimization", f,
+  direct_nrxycos_2 = clm_make_temp_function_no_choice(sc, "nrxycos", g_direct_nrxycos_2, 2, 0, false, "nrxycos optimization", f);
+  indirect_nrxycos_2 = clm_make_temp_function_no_choice(sc, "nrxycos", g_indirect_nrxycos_2, 2, 0, false, "nrxycos optimization", f);
+  nrxycos_1 = clm_make_temp_function(sc, "nrxycos", g_nrxycos_1, 1, 0, false, "nrxycos optimization", f,
 				NULL, NULL, NULL, mul_c_nrxycos_1, mul_s_nrxycos_1, env_nrxycos_1);
 
 
   GEN_F("rxyk!sin", rxyksin);
 
-  rxyksin_2 = clm_make_function(sc, "rxyk!sin", g_rxyksin_2, 2, 0, false, "rxyk!sin optimization", f,
+  rxyksin_2 = clm_make_temp_function(sc, "rxyk!sin", g_rxyksin_2, 2, 0, false, "rxyk!sin optimization", f,
 				mul_c_rxyksin_2, mul_s_rxyksin_2, env_rxyksin_2, NULL, NULL, NULL);
-  direct_rxyksin_2 = clm_make_function(sc, "rxyk!sin", g_direct_rxyksin_2, 2, 0, false, "rxyk!sin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_rxyksin_2 = clm_make_function(sc, "rxyk!sin", g_indirect_rxyksin_2, 2, 0, false, "rxyk!sin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  rxyksin_1 = clm_make_function(sc, "rxyk!sin", g_rxyksin_1, 1, 0, false, "rxyk!sin optimization", f,
+  direct_rxyksin_2 = clm_make_temp_function_no_choice(sc, "rxyk!sin", g_direct_rxyksin_2, 2, 0, false, "rxyk!sin optimization", f);
+  indirect_rxyksin_2 = clm_make_temp_function_no_choice(sc, "rxyk!sin", g_indirect_rxyksin_2, 2, 0, false, "rxyk!sin optimization", f);
+  rxyksin_1 = clm_make_temp_function(sc, "rxyk!sin", g_rxyksin_1, 1, 0, false, "rxyk!sin optimization", f,
 				NULL, NULL, NULL, mul_c_rxyksin_1, mul_s_rxyksin_1, env_rxyksin_1);
 
 
   GEN_F("rxyk!cos", rxykcos);
 
-  rxykcos_2 = clm_make_function(sc, "rxyk!cos", g_rxykcos_2, 2, 0, false, "rxykcos optimization", f,
+  rxykcos_2 = clm_make_temp_function(sc, "rxyk!cos", g_rxykcos_2, 2, 0, false, "rxykcos optimization", f,
 				mul_c_rxykcos_2, mul_s_rxykcos_2, env_rxykcos_2, NULL, NULL, NULL);
-  direct_rxykcos_2 = clm_make_function(sc, "rxyk!cos", g_direct_rxykcos_2, 2, 0, false, "rxyk!cos optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_rxykcos_2 = clm_make_function(sc, "rxyk!cos", g_indirect_rxykcos_2, 2, 0, false, "rxyk!cos optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  rxykcos_1 = clm_make_function(sc, "rxyk!cos", g_rxykcos_1, 1, 0, false, "rxyk!cos optimization", f,
+  direct_rxykcos_2 = clm_make_temp_function_no_choice(sc, "rxyk!cos", g_direct_rxykcos_2, 2, 0, false, "rxyk!cos optimization", f);
+  indirect_rxykcos_2 = clm_make_temp_function_no_choice(sc, "rxyk!cos", g_indirect_rxykcos_2, 2, 0, false, "rxyk!cos optimization", f);
+  rxykcos_1 = clm_make_temp_function(sc, "rxyk!cos", g_rxykcos_1, 1, 0, false, "rxyk!cos optimization", f,
 				NULL, NULL, NULL, mul_c_rxykcos_1, mul_s_rxykcos_1, env_rxykcos_1);
 
 
   GEN_F1("env", env);
   store_choices(sc, f, (s7_pointer)wrapped_env_1, NULL, NULL, (s7_pointer)wrapped_env_p);
-  env_1 = clm_make_function(sc, "env", g_env_1, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
-  env_vss = clm_make_function(sc, "env", g_env_vss, 1, 0, false, "env optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_1 = clm_make_temp_function(sc, "env", g_env_1, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
+  env_vss = clm_make_temp_function_no_choice(sc, "env", g_env_vss, 1, 0, false, "env optimization", f);
 
 
   GEN_F1("readin", readin);
   store_choices(sc, f, (s7_pointer)wrapped_readin_1, NULL, NULL, (s7_pointer)wrapped_readin_p);
-  readin_1 = clm_make_function(sc, "readin", g_readin_1, 1, 0, false, "readin optimization", f,
+  readin_1 = clm_make_temp_function(sc, "readin", g_readin_1, 1, 0, false, "readin optimization", f,
 			       NULL, NULL, NULL, mul_c_readin_1, mul_s_readin_1, env_readin_1);
 
 
   f = s7_name_to_value(sc, "sample->file");
   s7_function_set_chooser(sc, f, sample_to_file_chooser);
-  sample_to_file_four = clm_make_function(sc, "sample->file", g_sample_to_file_four, 4, 0, false, "sample->file optimization", f, 
-					  NULL, NULL, NULL, NULL, NULL, NULL);
+  sample_to_file_four = clm_make_temp_function_no_choice(sc, "sample->file", g_sample_to_file_four, 4, 0, false, "sample->file optimization", f);
 #if (!WITH_GMP)
-  sample_to_file_four_looped = clm_make_function(sc, "sample->file", g_sample_to_file_four_looped, 4, 0, false, "sample->file optimization", f, 
-						 NULL, NULL, NULL, NULL, NULL, NULL);
+  sample_to_file_four_looped = clm_make_temp_function_no_choice(sc, "sample->file", g_sample_to_file_four_looped, 4, 0, false, "sample->file optimization", f);
   s7_function_set_looped(sample_to_file_four, sample_to_file_four_looped);
 #endif
 
@@ -18481,234 +18446,211 @@ static void init_choosers(s7_scheme *sc)
 
   GEN_F2_3("comb", comb);
 
-  comb_2 = clm_make_function(sc, "comb", g_comb_2, 2, 0, false, "comb optimization", f, mul_c_comb_2, mul_s_comb_2, env_comb_2, NULL, NULL, NULL);
-  direct_comb_2 = clm_make_function(sc, "comb", g_direct_comb_2, 2, 0, false, "comb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_comb_2 = clm_make_function(sc, "comb", g_indirect_comb_2, 2, 0, false, "comb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  comb_2 = clm_make_temp_function(sc, "comb", g_comb_2, 2, 0, false, "comb optimization", f, mul_c_comb_2, mul_s_comb_2, env_comb_2, NULL, NULL, NULL);
+  direct_comb_2 = clm_make_temp_function_no_choice(sc, "comb", g_direct_comb_2, 2, 0, false, "comb optimization", f);
+  indirect_comb_2 = clm_make_temp_function_no_choice(sc, "comb", g_indirect_comb_2, 2, 0, false, "comb optimization", f);
 
 
   GEN_F2("comb-bank", comb_bank);
 
-  comb_bank_2 = clm_make_function(sc, "comb-bank", g_comb_bank_2, 2, 0, false, "comb-bank optimization", f, 
+  comb_bank_2 = clm_make_temp_function(sc, "comb-bank", g_comb_bank_2, 2, 0, false, "comb-bank optimization", f, 
 				  mul_c_comb_bank_2, mul_s_comb_bank_2, env_comb_bank_2, NULL, NULL, NULL);
-  direct_comb_bank_2 = clm_make_function(sc, "comb-bank", g_direct_comb_bank_2, 2, 0, false, "comb-bank optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_comb_bank_2 = clm_make_function(sc, "comb-bank", g_indirect_comb_bank_2, 2, 0, false, "comb-bank optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_comb_bank_2 = clm_make_temp_function_no_choice(sc, "comb-bank", g_direct_comb_bank_2, 2, 0, false, "comb-bank optimization", f);
+  indirect_comb_bank_2 = clm_make_temp_function_no_choice(sc, "comb-bank", g_indirect_comb_bank_2, 2, 0, false, "comb-bank optimization", f);
 
 
   GEN_F2_3("notch", notch);
 
-  notch_2 = clm_make_function(sc, "notch", g_notch_2, 2, 0, false, "notch optimization", f, mul_c_notch_2, mul_s_notch_2, env_notch_2, NULL, NULL, NULL);
-  direct_notch_2 = clm_make_function(sc, "notch", g_direct_notch_2, 2, 0, false, "notch optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_notch_2 = clm_make_function(sc, "notch", g_indirect_notch_2, 2, 0, false, "notch optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  notch_2 = clm_make_temp_function(sc, "notch", g_notch_2, 2, 0, false, "notch optimization", f, mul_c_notch_2, mul_s_notch_2, env_notch_2, NULL, NULL, NULL);
+  direct_notch_2 = clm_make_temp_function_no_choice(sc, "notch", g_direct_notch_2, 2, 0, false, "notch optimization", f);
+  indirect_notch_2 = clm_make_temp_function_no_choice(sc, "notch", g_indirect_notch_2, 2, 0, false, "notch optimization", f);
 
   GEN_F2("one-pole", one_pole);
 
-  one_pole_2 = clm_make_function(sc, "one-pole", g_one_pole_2, 2, 0, false, "one-pole optimization", f,
+  one_pole_2 = clm_make_temp_function(sc, "one-pole", g_one_pole_2, 2, 0, false, "one-pole optimization", f,
 				 mul_c_one_pole_2, mul_s_one_pole_2, env_one_pole_2, NULL, NULL, NULL);
-  direct_one_pole_2 = clm_make_function(sc, "one-pole", g_direct_one_pole_2, 2, 0, false, "one-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_one_pole_2 = clm_make_function(sc, "one-pole", g_indirect_one_pole_2, 2, 0, false, "one-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_one_pole_2 = clm_make_temp_function_no_choice(sc, "one-pole", g_direct_one_pole_2, 2, 0, false, "one-pole optimization", f);
+  indirect_one_pole_2 = clm_make_temp_function_no_choice(sc, "one-pole", g_indirect_one_pole_2, 2, 0, false, "one-pole optimization", f);
 
 
   GEN_F2("two-pole", two_pole);
 
-  two_pole_2 = clm_make_function(sc, "two-pole", g_two_pole_2, 2, 0, false, "two-pole optimization", f,
+  two_pole_2 = clm_make_temp_function(sc, "two-pole", g_two_pole_2, 2, 0, false, "two-pole optimization", f,
 				 mul_c_two_pole_2, mul_s_two_pole_2, env_two_pole_2, NULL, NULL, NULL);
-  direct_two_pole_2 = clm_make_function(sc, "two-pole", g_direct_two_pole_2, 2, 0, false, "two-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_two_pole_2 = clm_make_function(sc, "two-pole", g_indirect_two_pole_2, 2, 0, false, "two-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_two_pole_2 = clm_make_temp_function_no_choice(sc, "two-pole", g_direct_two_pole_2, 2, 0, false, "two-pole optimization", f);
+  indirect_two_pole_2 = clm_make_temp_function_no_choice(sc, "two-pole", g_indirect_two_pole_2, 2, 0, false, "two-pole optimization", f);
 #if (!WITH_GMP)
-  direct_two_pole_2_looped = clm_make_function(sc, "two-pole", g_direct_two_pole_2_looped, 2, 0, false, "two-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_two_pole_2_looped = clm_make_temp_function_no_choice(sc, "two-pole", g_direct_two_pole_2_looped, 2, 0, false, "two-pole optimization", f);
   s7_function_set_looped(direct_two_pole_2, direct_two_pole_2_looped);
 #endif
 
 
   GEN_F2("one-zero", one_zero);
 
-  one_zero_2 = clm_make_function(sc, "one-zero", g_one_zero_2, 2, 0, false, "one-zero optimization", f,
+  one_zero_2 = clm_make_temp_function(sc, "one-zero", g_one_zero_2, 2, 0, false, "one-zero optimization", f,
 				 mul_c_one_zero_2, mul_s_one_zero_2, env_one_zero_2, NULL, NULL, NULL);
-  direct_one_zero_2 = clm_make_function(sc, "one-zero", g_direct_one_zero_2, 2, 0, false, "one-zero optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_one_zero_2 = clm_make_function(sc, "one-zero", g_indirect_one_zero_2, 2, 0, false, "one-zero optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_one_zero_2 = clm_make_temp_function_no_choice(sc, "one-zero", g_direct_one_zero_2, 2, 0, false, "one-zero optimization", f);
+  indirect_one_zero_2 = clm_make_temp_function_no_choice(sc, "one-zero", g_indirect_one_zero_2, 2, 0, false, "one-zero optimization", f);
 
 
   GEN_F2("two-zero", two_zero);
 
-  two_zero_2 = clm_make_function(sc, "two-zero", g_two_zero_2, 2, 0, false, "two-zero optimization", f,
+  two_zero_2 = clm_make_temp_function(sc, "two-zero", g_two_zero_2, 2, 0, false, "two-zero optimization", f,
 				 mul_c_two_zero_2, mul_s_two_zero_2, env_two_zero_2, NULL, NULL, NULL);
-  direct_two_zero_2 = clm_make_function(sc, "two-zero", g_direct_two_zero_2, 2, 0, false, "two-zero optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_two_zero_2 = clm_make_function(sc, "two-zero", g_indirect_two_zero_2, 2, 0, false, "two-zero optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_two_zero_2 = clm_make_temp_function_no_choice(sc, "two-zero", g_direct_two_zero_2, 2, 0, false, "two-zero optimization", f);
+  indirect_two_zero_2 = clm_make_temp_function_no_choice(sc, "two-zero", g_indirect_two_zero_2, 2, 0, false, "two-zero optimization", f);
 
   GEN_F2("moving-average", moving_average);
 
-  moving_average_2 = clm_make_function(sc, "moving-average", g_moving_average_2, 2, 0, false, "moving-average optimization", f,
+  moving_average_2 = clm_make_temp_function(sc, "moving-average", g_moving_average_2, 2, 0, false, "moving-average optimization", f,
 				       mul_c_moving_average_2, mul_s_moving_average_2, env_moving_average_2, NULL, NULL, NULL);
-  direct_moving_average_2 = clm_make_function(sc, "moving-average", g_direct_moving_average_2, 2, 0, false, "moving-average optimization", f, 
-					      NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_moving_average_2 = clm_make_function(sc, "moving-average", g_indirect_moving_average_2, 2, 0, false, "moving-average optimization", f, 
-						NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_moving_average_2 = clm_make_temp_function_no_choice(sc, "moving-average", g_direct_moving_average_2, 2, 0, false, "moving-average optimization", f);
+  indirect_moving_average_2 = clm_make_temp_function_no_choice(sc, "moving-average", g_indirect_moving_average_2, 2, 0, false, "moving-average optimization", f);
 
   GEN_F2("moving-max", moving_max);
 
-  moving_max_2 = clm_make_function(sc, "moving-max", g_moving_max_2, 2, 0, false, "moving-max optimization", f,
+  moving_max_2 = clm_make_temp_function(sc, "moving-max", g_moving_max_2, 2, 0, false, "moving-max optimization", f,
 				       mul_c_moving_max_2, mul_s_moving_max_2, env_moving_max_2, NULL, NULL, NULL);
-  direct_moving_max_2 = clm_make_function(sc, "moving-max", g_direct_moving_max_2, 2, 0, false, "moving-max optimization", f, 
-					      NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_moving_max_2 = clm_make_function(sc, "moving-max", g_indirect_moving_max_2, 2, 0, false, "moving-max optimization", f, 
-						NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_moving_max_2 = clm_make_temp_function_no_choice(sc, "moving-max", g_direct_moving_max_2, 2, 0, false, "moving-max optimization", f);
+  indirect_moving_max_2 = clm_make_temp_function_no_choice(sc, "moving-max", g_indirect_moving_max_2, 2, 0, false, "moving-max optimization", f);
 
   GEN_F2("filter", filter);
 
-  filter_2 = clm_make_function(sc, "filter", g_filter_2, 2, 0, false, "filter optimization", f,
+  filter_2 = clm_make_temp_function(sc, "filter", g_filter_2, 2, 0, false, "filter optimization", f,
 			       mul_c_filter_2, mul_s_filter_2, env_filter_2, NULL, NULL, NULL);
-  direct_filter_2 = clm_make_function(sc, "filter", g_direct_filter_2, 2, 0, false, "filter optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_filter_2 = clm_make_function(sc, "filter", g_indirect_filter_2, 2, 0, false, "filter optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_filter_2 = clm_make_temp_function_no_choice(sc, "filter", g_direct_filter_2, 2, 0, false, "filter optimization", f);
+  indirect_filter_2 = clm_make_temp_function_no_choice(sc, "filter", g_indirect_filter_2, 2, 0, false, "filter optimization", f);
 
 
   GEN_F2("fir-filter", fir_filter);
 
-  fir_filter_2 = clm_make_function(sc, "fir-filter", g_fir_filter_2, 2, 0, false, "fir-filter optimization", f,
+  fir_filter_2 = clm_make_temp_function(sc, "fir-filter", g_fir_filter_2, 2, 0, false, "fir-filter optimization", f,
 				   mul_c_fir_filter_2, mul_s_fir_filter_2, env_fir_filter_2, NULL, NULL, NULL);
-  direct_fir_filter_2 = clm_make_function(sc, "fir-filter", g_direct_fir_filter_2, 2, 0, false, "fir-filter optimization", f,
-					  NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_fir_filter_2 = clm_make_function(sc, "fir-filter", g_indirect_fir_filter_2, 2, 0, false, "fir-filter optimization", f,
-					  NULL, NULL, NULL, NULL, NULL, NULL);
-  fir_filter_vref = clm_make_function(sc, "fir-filter", g_fir_filter_vref, 2, 0, false, "fir-filter optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_fir_filter_2 = clm_make_temp_function_no_choice(sc, "fir-filter", g_direct_fir_filter_2, 2, 0, false, "fir-filter optimization", f);
+  indirect_fir_filter_2 = clm_make_temp_function_no_choice(sc, "fir-filter", g_indirect_fir_filter_2, 2, 0, false, "fir-filter optimization", f);
+  fir_filter_temp = clm_make_temp_function_no_choice(sc, "fir-filter", g_fir_filter_temp, 2, 0, false, "fir-filter optimization", f);
 
 
   GEN_F2("iir-filter", iir_filter);
 
-  iir_filter_2 = clm_make_function(sc, "iir-filter", g_iir_filter_2, 2, 0, false, "iir-filter optimization", f,
+  iir_filter_2 = clm_make_temp_function(sc, "iir-filter", g_iir_filter_2, 2, 0, false, "iir-filter optimization", f,
 				   mul_c_iir_filter_2, mul_s_iir_filter_2, env_iir_filter_2, NULL, NULL, NULL);
-  direct_iir_filter_2 = clm_make_function(sc, "iir-filter", g_direct_iir_filter_2, 2, 0, false, "iir-filter optimization", f,
-					  NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_iir_filter_2 = clm_make_function(sc, "iir-filter", g_indirect_iir_filter_2, 2, 0, false, "iir-filter optimization", f,
-					  NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_iir_filter_2 = clm_make_temp_function_no_choice(sc, "iir-filter", g_direct_iir_filter_2, 2, 0, false, "iir-filter optimization", f);
+  indirect_iir_filter_2 = clm_make_temp_function_no_choice(sc, "iir-filter", g_indirect_iir_filter_2, 2, 0, false, "iir-filter optimization", f);
 
   GEN_F("triangle-wave", triangle_wave);
 
-  triangle_wave_2 = clm_make_function(sc, "triangle-wave", g_triangle_wave_2, 2, 0, false, "triangle-wave optimization", f,
+  triangle_wave_2 = clm_make_temp_function(sc, "triangle-wave", g_triangle_wave_2, 2, 0, false, "triangle-wave optimization", f,
 				      mul_c_triangle_wave_2, mul_s_triangle_wave_2, env_triangle_wave_2, NULL, NULL, NULL);
-  direct_triangle_wave_2 = clm_make_function(sc, "triangle-wave", g_direct_triangle_wave_2, 2, 0, false, "triangle-wave optimization", f,
-					     NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_triangle_wave_2 = clm_make_function(sc, "triangle-wave", g_indirect_triangle_wave_2, 2, 0, false, "triangle-wave optimization", f,
-					     NULL, NULL, NULL, NULL, NULL, NULL);
-  triangle_wave_1 = clm_make_function(sc, "triangle-wave", g_triangle_wave_1, 1, 0, false, "triangle-wave optimization", f,
+  direct_triangle_wave_2 = clm_make_temp_function_no_choice(sc, "triangle-wave", g_direct_triangle_wave_2, 2, 0, false, "triangle-wave optimization", f);
+  indirect_triangle_wave_2 = clm_make_temp_function_no_choice(sc, "triangle-wave", g_indirect_triangle_wave_2, 2, 0, false, "triangle-wave optimization", f);
+  triangle_wave_1 = clm_make_temp_function(sc, "triangle-wave", g_triangle_wave_1, 1, 0, false, "triangle-wave optimization", f,
 				      NULL, NULL, NULL, mul_c_triangle_wave_1, mul_s_triangle_wave_1, env_triangle_wave_1);
 
   GEN_F("sawtooth-wave", sawtooth_wave);
 
-  sawtooth_wave_2 = clm_make_function(sc, "sawtooth-wave", g_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization", f,
+  sawtooth_wave_2 = clm_make_temp_function(sc, "sawtooth-wave", g_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization", f,
 				      mul_c_sawtooth_wave_2, mul_s_sawtooth_wave_2, env_sawtooth_wave_2, NULL, NULL, NULL);
-  direct_sawtooth_wave_2 = clm_make_function(sc, "sawtooth-wave", g_direct_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization", f,
-					     NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_sawtooth_wave_2 = clm_make_function(sc, "sawtooth-wave", g_indirect_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization", f,
-					     NULL, NULL, NULL, NULL, NULL, NULL);
-  sawtooth_wave_1 = clm_make_function(sc, "sawtooth-wave", g_sawtooth_wave_1, 1, 0, false, "sawtooth-wave optimization", f,
+  direct_sawtooth_wave_2 = clm_make_temp_function_no_choice(sc, "sawtooth-wave", g_direct_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization", f);
+  indirect_sawtooth_wave_2 = clm_make_temp_function_no_choice(sc, "sawtooth-wave", g_indirect_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization", f);
+  sawtooth_wave_1 = clm_make_temp_function(sc, "sawtooth-wave", g_sawtooth_wave_1, 1, 0, false, "sawtooth-wave optimization", f,
 				      NULL, NULL, NULL, mul_c_sawtooth_wave_1, mul_s_sawtooth_wave_1, env_sawtooth_wave_1);
 
   GEN_F("square-wave", square_wave);
 
-  square_wave_2 = clm_make_function(sc, "square-wave", g_square_wave_2, 2, 0, false, "square-wave optimization", f,
+  square_wave_2 = clm_make_temp_function(sc, "square-wave", g_square_wave_2, 2, 0, false, "square-wave optimization", f,
 				    mul_c_square_wave_2, mul_s_square_wave_2, env_square_wave_2, NULL, NULL, NULL);
-  direct_square_wave_2 = clm_make_function(sc, "square-wave", g_direct_square_wave_2, 2, 0, false, "square-wave optimization", f,
-					   NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_square_wave_2 = clm_make_function(sc, "square-wave", g_indirect_square_wave_2, 2, 0, false, "square-wave optimization", f,
-					   NULL, NULL, NULL, NULL, NULL, NULL);
-  square_wave_1 = clm_make_function(sc, "square-wave", g_square_wave_1, 1, 0, false, "square-wave optimization", f,
+  direct_square_wave_2 = clm_make_temp_function_no_choice(sc, "square-wave", g_direct_square_wave_2, 2, 0, false, "square-wave optimization", f);
+  indirect_square_wave_2 = clm_make_temp_function_no_choice(sc, "square-wave", g_indirect_square_wave_2, 2, 0, false, "square-wave optimization", f);
+  square_wave_1 = clm_make_temp_function(sc, "square-wave", g_square_wave_1, 1, 0, false, "square-wave optimization", f,
 				    NULL, NULL, NULL, mul_c_square_wave_1, mul_s_square_wave_1, env_square_wave_1);
 
   GEN_F("pulse-train", pulse_train);
 
-  pulse_train_2 = clm_make_function(sc, "pulse-train", g_pulse_train_2, 2, 0, false, "pulse-train optimization", f,
+  pulse_train_2 = clm_make_temp_function(sc, "pulse-train", g_pulse_train_2, 2, 0, false, "pulse-train optimization", f,
 				    mul_c_pulse_train_2, mul_s_pulse_train_2, env_pulse_train_2, NULL, NULL, NULL);
-  direct_pulse_train_2 = clm_make_function(sc, "pulse-train", g_direct_pulse_train_2, 2, 0, false, "pulse-train optimization", f,
-					   NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_pulse_train_2 = clm_make_function(sc, "pulse-train", g_indirect_pulse_train_2, 2, 0, false, "pulse-train optimization", f,
-					   NULL, NULL, NULL, NULL, NULL, NULL);
-  pulse_train_1 = clm_make_function(sc, "pulse-train", g_pulse_train_1, 1, 0, false, "pulse-train optimization", f,
+  direct_pulse_train_2 = clm_make_temp_function_no_choice(sc, "pulse-train", g_direct_pulse_train_2, 2, 0, false, "pulse-train optimization", f);
+  indirect_pulse_train_2 = clm_make_temp_function_no_choice(sc, "pulse-train", g_indirect_pulse_train_2, 2, 0, false, "pulse-train optimization", f);
+  pulse_train_1 = clm_make_temp_function(sc, "pulse-train", g_pulse_train_1, 1, 0, false, "pulse-train optimization", f,
 				    NULL, NULL, NULL, mul_c_pulse_train_1, mul_s_pulse_train_1, env_pulse_train_1);
 
 
   f = s7_name_to_value(sc, "mus-random");
   s7_function_set_chooser(sc, f, mus_random_chooser);
-  mus_random_c = clm_make_function(sc, "mus-random", g_mus_random_c, 1, 0, false, "mus-random optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  mus_random_c = clm_make_temp_function_no_choice(sc, "mus-random", g_mus_random_c, 1, 0, false, "mus-random optimization", f);
   direct_choice_1(sc, f, (s7_pointer)wrapped_mus_random_1, (s7_pointer)wrapped_mus_random_p);
 
 
   GEN_F("rand", rand);
 
-  rand_1 = clm_make_function(sc, "rand", g_rand_1, 1, 0, false, "rand optimization", f,
+  rand_1 = clm_make_temp_function(sc, "rand", g_rand_1, 1, 0, false, "rand optimization", f,
 			     NULL, NULL, NULL, mul_c_rand_1, mul_s_rand_1, env_rand_1);
-  rand_2 = clm_make_function(sc, "rand", g_rand_2, 2, 0, false, "rand optimization", f,
+  rand_2 = clm_make_temp_function(sc, "rand", g_rand_2, 2, 0, false, "rand optimization", f,
 			     mul_c_rand_2, mul_s_rand_2, env_rand_2, NULL, NULL, NULL);
-  direct_rand_2 = clm_make_function(sc, "rand", g_direct_rand_2, 2, 0, false, "rand optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_rand_2 = clm_make_function(sc, "rand", g_indirect_rand_2, 2, 0, false, "rand optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_rand_2 = clm_make_temp_function_no_choice(sc, "rand", g_direct_rand_2, 2, 0, false, "rand optimization", f);
+  indirect_rand_2 = clm_make_temp_function_no_choice(sc, "rand", g_indirect_rand_2, 2, 0, false, "rand optimization", f);
 
   GEN_F("rand-interp", rand_interp);
 
-  rand_interp_1 = clm_make_function(sc, "rand-interp", g_rand_interp_1, 1, 0, false, "rand-interp optimization", f,
+  rand_interp_1 = clm_make_temp_function(sc, "rand-interp", g_rand_interp_1, 1, 0, false, "rand-interp optimization", f,
 				    NULL, NULL, NULL, mul_c_rand_interp_1, mul_s_rand_interp_1, env_rand_interp_1);
-  rand_interp_2 = clm_make_function(sc, "rand-interp", g_rand_interp_2, 2, 0, false, "rand-interp optimization", f,
+  rand_interp_2 = clm_make_temp_function(sc, "rand-interp", g_rand_interp_2, 2, 0, false, "rand-interp optimization", f,
 				    mul_c_rand_interp_2, mul_s_rand_interp_2, env_rand_interp_2, NULL, NULL, NULL);
-  direct_rand_interp_2 = clm_make_function(sc, "rand-interp", g_direct_rand_interp_2, 2, 0, false, "rand-interp optimization", f,
-					   NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_rand_interp_2 = clm_make_function(sc, "rand-interp", g_indirect_rand_interp_2, 2, 0, false, "rand-interp optimization", f,
-					   NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_rand_interp_2 = clm_make_temp_function_no_choice(sc, "rand-interp", g_direct_rand_interp_2, 2, 0, false, "rand-interp optimization", f);
+  indirect_rand_interp_2 = clm_make_temp_function_no_choice(sc, "rand-interp", g_indirect_rand_interp_2, 2, 0, false, "rand-interp optimization", f);
 
 
   GEN_F2_3("formant", formant);
 
-  formant_2 = clm_make_function(sc, "formant", g_formant_2, 2, 0, false, "formant optimization", f,
+  formant_2 = clm_make_temp_function(sc, "formant", g_formant_2, 2, 0, false, "formant optimization", f,
 				mul_c_formant_2, mul_s_formant_2, env_formant_2, NULL, NULL, NULL);
-  formant_two = clm_make_function(sc, "formant", g_formant_two, 2, 0, false, "formant optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  direct_formant_2 = clm_make_function(sc, "formant", g_direct_formant_2, 2, 0, false, "formant optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_formant_2 = clm_make_function(sc, "formant", g_indirect_formant_2, 2, 0, false, "formant optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  formant_two = clm_make_temp_function_no_choice(sc, "formant", g_formant_two, 2, 0, false, "formant optimization", f);
+  direct_formant_2 = clm_make_temp_function_no_choice(sc, "formant", g_direct_formant_2, 2, 0, false, "formant optimization", f);
+  indirect_formant_2 = clm_make_temp_function_no_choice(sc, "formant", g_indirect_formant_2, 2, 0, false, "formant optimization", f);
 
 
   f = s7_name_to_value(sc, "formant-bank");
   s7_function_set_chooser(sc, f, formant_bank_chooser);
   direct_choice_2(sc, f, (s7_pointer)wrapped_formant_bank_2, (s7_pointer)wrapped_formant_bank_p);
-  formant_bank_ss = clm_make_function(sc, "formant", g_formant_bank_ss, 3, 0, false, "formant-bank optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  formant_bank_sz = clm_make_function(sc, "formant", g_formant_bank_sz, 3, 0, false, "formant-bank optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  formant_bank_ss = clm_make_temp_function_no_choice(sc, "formant", g_formant_bank_ss, 3, 0, false, "formant-bank optimization", f);
+  formant_bank_sz = clm_make_temp_function_no_choice(sc, "formant", g_formant_bank_sz, 3, 0, false, "formant-bank optimization", f);
 
 
   GEN_F2_3("firmant", firmant);
 
-  firmant_2 = clm_make_function(sc, "firmant", g_firmant_2, 2, 0, false, "firmant optimization", f,
-				mul_c_firmant_2, mul_s_firmant_2, env_firmant_2, NULL, NULL, NULL);
-  direct_firmant_2 = clm_make_function(sc, "firmant", g_direct_firmant_2, 2, 0, false, "firmant optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_firmant_2 = clm_make_function(sc, "firmant", g_indirect_firmant_2, 2, 0, false, "firmant optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  firmant_2 = clm_make_temp_function(sc, "firmant", g_firmant_2, 2, 0, false, "firmant optimization", f, mul_c_firmant_2, mul_s_firmant_2, env_firmant_2, NULL, NULL, NULL);
+  direct_firmant_2 = clm_make_temp_function_no_choice(sc, "firmant", g_direct_firmant_2, 2, 0, false, "firmant optimization", f);
+  indirect_firmant_2 = clm_make_temp_function_no_choice(sc, "firmant", g_indirect_firmant_2, 2, 0, false, "firmant optimization", f);
 
 
   GEN_F2_3("all-pass", all_pass);
 
-  all_pass_2 = clm_make_function(sc, "all-pass", g_all_pass_2, 2, 0, false, "all-pass optimization", f, mul_c_all_pass_2, mul_s_all_pass_2, env_all_pass_2, NULL, NULL, NULL);
-  direct_all_pass_2 = clm_make_function(sc, "all-pass", g_direct_all_pass_2, 2, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_all_pass_2 = clm_make_function(sc, "all-pass", g_indirect_all_pass_2, 2, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  all_pass_2 = clm_make_temp_function(sc, "all-pass", g_all_pass_2, 2, 0, false, "all-pass optimization", f, mul_c_all_pass_2, mul_s_all_pass_2, env_all_pass_2, NULL, NULL, NULL);
+  direct_all_pass_2 = clm_make_temp_function_no_choice(sc, "all-pass", g_direct_all_pass_2, 2, 0, false, "all-pass optimization", f);
+  indirect_all_pass_2 = clm_make_temp_function_no_choice(sc, "all-pass", g_indirect_all_pass_2, 2, 0, false, "all-pass optimization", f);
 
 
   GEN_F2("all-pass-bank", all_pass_bank);
 
-  all_pass_bank_2 = clm_make_function(sc, "all-pass-bank", g_all_pass_bank_2, 2, 0, false, "all-pass-bank optimization", f, 
+  all_pass_bank_2 = clm_make_temp_function(sc, "all-pass-bank", g_all_pass_bank_2, 2, 0, false, "all-pass-bank optimization", f, 
 				      mul_c_all_pass_bank_2, mul_s_all_pass_bank_2, env_all_pass_bank_2, NULL, NULL, NULL);
-  direct_all_pass_bank_2 = clm_make_function(sc, "all-pass-bank", g_direct_all_pass_bank_2, 2, 0, false, "all-pass-bank optimization", f, 
-					     NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_all_pass_bank_2 = clm_make_function(sc, "all-pass-bank", g_indirect_all_pass_bank_2, 2, 0, false, "all-pass-bank optimization", f, 
-					       NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_all_pass_bank_2 = clm_make_temp_function_no_choice(sc, "all-pass-bank", g_direct_all_pass_bank_2, 2, 0, false, "all-pass-bank optimization", f);
+  indirect_all_pass_bank_2 = clm_make_temp_function_no_choice(sc, "all-pass-bank", g_indirect_all_pass_bank_2, 2, 0, false, "all-pass-bank optimization", f);
 
 
   GEN_F2("one-pole-all-pass", one_pole_all_pass);
-  one_pole_all_pass_2 = clm_make_function(sc, "one-pole-all-pass", g_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass optimization", f, 
+  one_pole_all_pass_2 = clm_make_temp_function(sc, "one-pole-all-pass", g_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass optimization", f, 
 					  mul_c_one_pole_all_pass_2, mul_s_one_pole_all_pass_2, env_one_pole_all_pass_2, NULL, NULL, NULL);
-  direct_one_pole_all_pass_2 = clm_make_function(sc, "one-pole-all-pass", g_direct_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass optimization", f, 
-						 NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_one_pole_all_pass_2 = clm_make_function(sc, "one-pole-all-pass", g_indirect_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass optimization", f, 
-						   NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_one_pole_all_pass_2 = clm_make_temp_function_no_choice(sc, "one-pole-all-pass", g_direct_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass optimization", f);
+  indirect_one_pole_all_pass_2 = clm_make_temp_function_no_choice(sc, "one-pole-all-pass", g_indirect_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass optimization", f);
 
 
   GEN_F2_3("delay", delay);
 
-  delay_2 = clm_make_function(sc, "delay", g_delay_2, 2, 0, false, "delay optimization", f,
+  delay_2 = clm_make_temp_function(sc, "delay", g_delay_2, 2, 0, false, "delay optimization", f,
 			      mul_c_delay_2, mul_s_delay_2, env_delay_2, NULL, NULL, NULL);
-  direct_delay_2 = clm_make_function(sc, "delay", g_direct_delay_2, 2, 0, false, "delay optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_delay_2 = clm_make_function(sc, "delay", g_indirect_delay_2, 2, 0, false, "delay optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_delay_2 = clm_make_temp_function_no_choice(sc, "delay", g_direct_delay_2, 2, 0, false, "delay optimization", f);
+  indirect_delay_2 = clm_make_temp_function_no_choice(sc, "delay", g_indirect_delay_2, 2, 0, false, "delay optimization", f);
 
 
   f = s7_name_to_value(sc, "polynomial");
@@ -18720,63 +18662,54 @@ static void init_choosers(s7_scheme *sc)
 
   GEN_F2("polyshape", polyshape);
 
-  polyshape_2 = clm_make_function(sc, "polyshape", g_polyshape_2, 2, 0, false, "polyshape optimization", f,
+  polyshape_2 = clm_make_temp_function(sc, "polyshape", g_polyshape_2, 2, 0, false, "polyshape optimization", f,
 				mul_c_polyshape_2, mul_s_polyshape_2, env_polyshape_2, NULL, NULL, NULL);
-  direct_polyshape_2 = clm_make_function(sc, "polyshape", g_direct_polyshape_2, 2, 0, false, "polyshape optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_polyshape_2 = clm_make_function(sc, "polyshape", g_indirect_polyshape_2, 2, 0, false, "polyshape optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  polyshape_three = clm_make_function(sc, "polyshape", g_polyshape_three, 3, 0, false, "polyshape optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_polyshape_2 = clm_make_temp_function_no_choice(sc, "polyshape", g_direct_polyshape_2, 2, 0, false, "polyshape optimization", f);
+  indirect_polyshape_2 = clm_make_temp_function_no_choice(sc, "polyshape", g_indirect_polyshape_2, 2, 0, false, "polyshape optimization", f);
+  polyshape_three = clm_make_temp_function_no_choice(sc, "polyshape", g_polyshape_three, 3, 0, false, "polyshape optimization", f);
 
 
   GEN_F("pulsed-env", pulsed_env);
 
-  pulsed_env_2 = clm_make_function(sc, "pulsed-env", g_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f,
+  pulsed_env_2 = clm_make_temp_function(sc, "pulsed-env", g_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f,
 				    mul_c_pulsed_env_2, mul_s_pulsed_env_2, env_pulsed_env_2, NULL, NULL, NULL);
-  direct_pulsed_env_2 = clm_make_function(sc, "pulsed-env", g_direct_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f,
-					   NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_pulsed_env_2 = clm_make_function(sc, "pulsed-env", g_indirect_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f,
-					   NULL, NULL, NULL, NULL, NULL, NULL);
-  pulsed_env_1 = clm_make_function(sc, "pulsed-env", g_pulsed_env_1, 1, 0, false, "pulsed-env optimization", f,
+  direct_pulsed_env_2 = clm_make_temp_function_no_choice(sc, "pulsed-env", g_direct_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f);
+  indirect_pulsed_env_2 = clm_make_temp_function_no_choice(sc, "pulsed-env", g_indirect_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f);
+  pulsed_env_1 = clm_make_temp_function(sc, "pulsed-env", g_pulsed_env_1, 1, 0, false, "pulsed-env optimization", f,
 				    NULL, NULL, NULL, mul_c_pulsed_env_1, mul_s_pulsed_env_1, env_pulsed_env_1);
 
 
   GEN_F3("ssb-am", ssb_am);
 
-  ssb_am_2 = clm_make_function(sc, "ssb-am", g_ssb_am_2, 2, 0, false, "ssb-am optimization", f,
+  ssb_am_2 = clm_make_temp_function(sc, "ssb-am", g_ssb_am_2, 2, 0, false, "ssb-am optimization", f,
 				mul_c_ssb_am_2, mul_s_ssb_am_2, env_ssb_am_2, NULL, NULL, NULL);
-  direct_ssb_am_2 = clm_make_function(sc, "ssb-am", g_direct_ssb_am_2, 2, 0, false, "ssb-am optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_ssb_am_2 = clm_make_function(sc, "ssb-am", g_indirect_ssb_am_2, 2, 0, false, "ssb-am optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_ssb_am_3 = clm_make_function(sc, "ssb-am", g_indirect_ssb_am_3, 3, 0, false, "ssb-am optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  ssb_am_3 = clm_make_function(sc, "ssb-am", g_ssb_am_3, 3, 0, false, "ssb-am optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_ssb_am_2 = clm_make_temp_function_no_choice(sc, "ssb-am", g_direct_ssb_am_2, 2, 0, false, "ssb-am optimization", f);
+  indirect_ssb_am_2 = clm_make_temp_function_no_choice(sc, "ssb-am", g_indirect_ssb_am_2, 2, 0, false, "ssb-am optimization", f);
+  indirect_ssb_am_3 = clm_make_temp_function_no_choice(sc, "ssb-am", g_indirect_ssb_am_3, 3, 0, false, "ssb-am optimization", f);
+  ssb_am_3 = clm_make_temp_function_no_choice(sc, "ssb-am", g_ssb_am_3, 3, 0, false, "ssb-am optimization", f);
 
 
   GEN_F2_3("asymmetric-fm", asymmetric_fm);
 
-  asymmetric_fm_2 = clm_make_function(sc, "asymmetric-fm", g_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", f,
+  asymmetric_fm_2 = clm_make_temp_function(sc, "asymmetric-fm", g_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", f,
 				mul_c_asymmetric_fm_2, mul_s_asymmetric_fm_2, env_asymmetric_fm_2, NULL, NULL, NULL);
-  direct_asymmetric_fm_2 = clm_make_function(sc, "asymmetric-fm", g_direct_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", f,
-				       NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_asymmetric_fm_2 = clm_make_function(sc, "asymmetric-fm", g_indirect_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", f,
-				       NULL, NULL, NULL, NULL, NULL, NULL);
-  asymmetric_fm_3 = clm_make_function(sc, "asymmetric-fm", g_asymmetric_fm_3, 3, 0, false, "asymmetric-fm optimization", f,
-				       NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_asymmetric_fm_2 = clm_make_temp_function_no_choice(sc, "asymmetric-fm", g_direct_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", f);
+  indirect_asymmetric_fm_2 = clm_make_temp_function_no_choice(sc, "asymmetric-fm", g_indirect_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", f);
+  asymmetric_fm_3 = clm_make_temp_function_no_choice(sc, "asymmetric-fm", g_asymmetric_fm_3, 3, 0, false, "asymmetric-fm optimization", f);
 
   GEN_F2_3("filtered-comb", filtered_comb);
 
-  filtered_comb_2 = clm_make_function(sc, "filtered-comb", g_filtered_comb_2, 2, 0, false, "filtered-comb optimization", f,
+  filtered_comb_2 = clm_make_temp_function(sc, "filtered-comb", g_filtered_comb_2, 2, 0, false, "filtered-comb optimization", f,
 				mul_c_filtered_comb_2, mul_s_filtered_comb_2, env_filtered_comb_2, NULL, NULL, NULL);
-  direct_filtered_comb_2 = clm_make_function(sc, "filtered-comb", g_direct_filtered_comb_2, 2, 0, false, "filtered-comb optimization", f,
-				       NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_filtered_comb_2 = clm_make_function(sc, "filtered-comb", g_indirect_filtered_comb_2, 2, 0, false, "filtered-comb optimization", f,
-				       NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_filtered_comb_2 = clm_make_temp_function_no_choice(sc, "filtered-comb", g_direct_filtered_comb_2, 2, 0, false, "filtered-comb optimization", f);
+  indirect_filtered_comb_2 = clm_make_temp_function_no_choice(sc, "filtered-comb", g_indirect_filtered_comb_2, 2, 0, false, "filtered-comb optimization", f);
 
   GEN_F2("filtered-comb-bank", filtered_comb_bank);
 
-  filtered_comb_bank_2 = clm_make_function(sc, "filtered-comb-bank", g_filtered_comb_bank_2, 2, 0, false, "filtered-comb-bank optimization", f,
+  filtered_comb_bank_2 = clm_make_temp_function(sc, "filtered-comb-bank", g_filtered_comb_bank_2, 2, 0, false, "filtered-comb-bank optimization", f,
 				mul_c_filtered_comb_bank_2, mul_s_filtered_comb_bank_2, env_filtered_comb_bank_2, NULL, NULL, NULL);
-  direct_filtered_comb_bank_2 = clm_make_function(sc, "filtered-comb-bank", g_direct_filtered_comb_bank_2, 2, 0, false, "filtered-comb-bank optimization", f,
-				       NULL, NULL, NULL, NULL, NULL, NULL);
-  indirect_filtered_comb_bank_2 = clm_make_function(sc, "filtered-comb-bank", g_indirect_filtered_comb_bank_2, 2, 0, false, "filtered-comb-bank optimization", f,
-				       NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_filtered_comb_bank_2 = clm_make_temp_function_no_choice(sc, "filtered-comb-bank", g_direct_filtered_comb_bank_2, 2, 0, false, "filtered-comb-bank optimization", f);
+  indirect_filtered_comb_bank_2 = clm_make_temp_function_no_choice(sc, "filtered-comb-bank", g_indirect_filtered_comb_bank_2, 2, 0, false, "filtered-comb-bank optimization", f);
 
 
   f = s7_name_to_value(sc, "frame->frame");

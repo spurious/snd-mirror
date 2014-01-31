@@ -17941,6 +17941,20 @@ EDITS: 2
       (delete-file "fmv.snd")
       (mus-sound-forget "fmv.snd"))
     
+    (let ((f1 (float-vector 1.0 1.0))
+	  (f2 (float-vector 0.0 0.0))
+	  (m1 (float-vector .5 .25 .125 1.0)))
+      (let ((result (float-vector-mix f1 m1 f2)))
+	(if (not (equal? result (float-vector 0.625 1.25)))
+	  (snd-display #__line__ ";float-vector-mix: ~A" result))))
+
+    (let ((f1 (float-vector 1.0 2.0 3.0))
+	  (f2 (float-vector 0.0 0.0 0.0))
+	  (m1 (float-vector 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0)))
+      (let ((result (float-vector-mix f1 m1 f2)))
+	(if (not (equal? result (float-vector 30.0 36.0 42.0)))
+	  (snd-display #__line__ ";float-vector-mix 1: ~A" result))))
+
     (let ((sf (make-float-vector->file "fmv.snd" 2 mus-lfloat mus-riff "this is a comment")))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
@@ -23425,12 +23439,14 @@ EDITS: 2
 			    (snd-display #__line__ ";copy mix at ~A: ~A ~A ~A" i x1 x2 (* i .001))))))))))
 	  (close-sound snd))
 	
-	(let ((ind (make-waltz)))
-	  ;; mix.scm stuff...
-	  (close-sound ind))
+	(if all-args
+	    (begin
+	      (let ((ind (make-waltz)))
+		;; mix.scm stuff...
+		(close-sound ind))
 	
-	(let ((ind (make-bagatelle)))
-	  (close-sound ind))
+	      (let ((ind (make-bagatelle)))
+		(close-sound ind))))
 	
 	)))
 
@@ -34413,7 +34429,7 @@ EDITS: 1
 					(* y (+ 0.7621095161e-6
 						(* y -0.934945152e-7))))))))))
 	  (* (sqrt (/ 0.636619772 ax))
-	     (- (* (cos xx) ans1)
+	     (- (* ans1 (cos xx))
 		(* z (sin xx) ans2))))))
   
   (define (test-j0)
@@ -34462,7 +34478,7 @@ EDITS: 1
 						(* y 0.105787412e-6))))))))))
 	  (* (signum x)
 	     (sqrt (/ 0.636619772 ax))
-	     (- (* (cos xx) ans1)
+	     (- (* ans1 (cos xx))
 		(* z (sin xx) ans2))))))
   
   (define (test-j1)
@@ -34566,7 +34582,7 @@ EDITS: 1
 				(* y (+ -0.6911147651e-5
 					(* y (+ 0.7621095161e-6
 						(* y -0.934945152e-7)))))))))
-	       (ans (+ (* (sin xx) ans1) (* z (cos xx) ans2))))
+	       (ans (+ (* ans1 (sin xx)) (* z (cos xx) ans2))))
 	  (* (sqrt (/ 0.636619772 x)) ans))))
   
   (define (test-y0)
@@ -34612,7 +34628,7 @@ EDITS: 1
 				    (* y (+ 0.8449199096e-5
 					    (* y (+ -0.88228987e-6
 						    (* y 0.105787412e-6))))))))))
-	      (* (sqrt (/ 0.636619772 x)) (+ (* (sin xx) ans1) (* z (cos xx) ans2)))))))
+	      (* (sqrt (/ 0.636619772 x)) (+ (* ans1 (sin xx)) (* z (cos xx) ans2)))))))
   
   (define (test-y1)
     (for-each 

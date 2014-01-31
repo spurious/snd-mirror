@@ -1040,13 +1040,16 @@
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'n) (+ 1 (g 'n))) ; sum goes 1 to n-1
+			       (set! (g 'norm) (/ (* 0.5 (g 'n) (- (g 'n) 1))))
 			       g)
 	       :methods (list
 			 (cons 'mus-order
 			       (make-procedure-with-setter
 				(lambda (g) (- (g 'n) 1))
-				(lambda (g val) (set! (g 'n) (+ 1 val)) val)))))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm interp)
+				(lambda (g val) 
+				  (set! (g 'n) (+ 1 val))
+				  (set! (g 'norm) (/ (* 0.5 val (- val 1))))))))) ; nominal n is off by 1
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm interp norm)
 
 
 (define* (nkssb gen (fm 0.0))
@@ -1069,9 +1072,9 @@
 			   (/ (* n (cos nx2)) sx22)))
 		    (c1 (- (/ (* n (sin nx2)) sx22)
 			   (/ (- 1.0 (cos nx)) sxsx))))
-		(/ (- (* (sin cxx) s1)
-		      (* (cos cxx) c1))
-		   (* 0.5 n (- n 1)))))))))) ; normalization, nominal n is off by 1
+		(* (- (* s1 (sin cxx))
+		      (* c1 (cos cxx)))
+		   norm))))))))
 
 
 (define (nkssb-interp gen fm interp)
@@ -1096,9 +1099,9 @@
 			   (/ (* n (cos nx2)) sx22)))
 		    (c1 (- (/ (* n (sin nx2)) sx22)
 			   (/ (- 1.0 (cos nx)) sxsx))))
-		(/ (- (* (cos cxx) c1)
+		(* (- (* c1 (cos cxx))
 		      (* interp (sin cxx) s1))
-		   (* 0.5 n (- n 1)))))))))) ; normalization, nominal n is off by 1, peak seems to be solid right through the interpolation
+		   norm))))))))                              ; peak seems to be solid right through the interpolation
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)

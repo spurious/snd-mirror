@@ -2665,6 +2665,7 @@ void add_expr(s7_scheme *sc, s7_pointer expr);
 void add_expr(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer val;
+  /* expr = sc->cur_code; */
   val = s7_hash_table_ref(sc, hashes, expr);
   if (val == sc->F)
     {
@@ -14467,6 +14468,37 @@ static s7_pointer g_multiply_cs_cos(s7_scheme *sc, s7_pointer args)
     return(make_real(sc, real(car(args)) * s7_number_to_real(sc, r) * cos(s7_number_to_real(sc, x))));
   return(g_multiply(sc, list_3(sc, car(args), r, g_cos(sc, list_1(sc, x)))));
 }
+
+static s7_pointer mul_s_sin_s, mul_s_cos_s;
+static s7_pointer g_mul_s_sin_s(s7_scheme *sc, s7_pointer args)
+{
+  /* (* s (sin s)) */
+  s7_pointer x, y;
+
+  x = find_symbol_checked(sc, car(args));
+  y = find_symbol_checked(sc, cadadr(args));
+
+  if ((is_real(x)) && (is_real(y)))
+    return(make_real(sc, s7_number_to_real(sc, x) * sin(s7_number_to_real(sc, y))));
+
+  return(g_multiply(sc, list_2(sc, x, g_sin(sc, list_1(sc, y)))));
+}
+
+static s7_pointer g_mul_s_cos_s(s7_scheme *sc, s7_pointer args)
+{
+  /* (* s (cos s)) */
+  s7_pointer x, y;
+
+  x = find_symbol_checked(sc, car(args));
+  y = find_symbol_checked(sc, cadadr(args));
+
+  if ((is_real(x)) && (is_real(y)))
+    return(make_real(sc, s7_number_to_real(sc, x) * cos(s7_number_to_real(sc, y))));
+
+  return(g_multiply(sc, list_2(sc, x, g_cos(sc, list_1(sc, y)))));
+}
+
+
 #endif
 
 
@@ -38348,7 +38380,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
       for (i = 0; i < len; i++)
 	{
-	  car(sc->T1_1) = chars[(unsigned int)(str[i])];
+	  car(sc->T1_1) = chars[(unsigned int)((unsigned char)(str[i]))]; /* idiotic casts are necessary: str="ÿ" */
 	  sc->x = cons(sc, (*func)(sc, sc->T1_1), sc->x);
 	}
       p = safe_reverse_in_place(sc, sc->x);
@@ -40952,8 +40984,19 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  (s7_function_returns_temp(sc, arg1)))
 	return(multiply_temp_s);
 
+      if ((is_symbol(arg1)) &&
+	  (is_pair(arg2)) &&
+	  (is_optimized(arg2)) &&
+	  ((car(arg2) == sc->SIN) || (car(arg2) == sc->COS)) &&
+	  (is_symbol(cadr(arg2))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  if (car(arg2) == sc->SIN)
+	    return(mul_s_sin_s);
+	  return(mul_s_cos_s);
+	}
+
       /* (* c c) -- types are manifest (as is the result...)
-       * (* s (sin|cos s))
        * (* 1.0 x) -> float(x)
        * (* pi x) special too
        * (* 2 (frames)) -- we know both are ints
@@ -41910,6 +41953,8 @@ static void init_choosers(s7_scheme *sc)
   sqr_ss = make_function_with_class(sc, f, "*", g_sqr_ss, 2, 0, false, "* optimization");
   mul_1ss = make_function_with_class(sc, f, "*", g_mul_1ss, 2, 0, false, "* optimization");
   multiply_cs_cos = make_function_with_class(sc, f, "*", g_multiply_cs_cos, 3, 0, false, "* optimization");
+  mul_s_sin_s = make_function_with_class(sc, f, "*", g_mul_s_sin_s, 2, 0, false, "* optimization");
+  mul_s_cos_s = make_function_with_class(sc, f, "*", g_mul_s_cos_s, 2, 0, false, "* optimization");
 #endif
 
 
@@ -55477,6 +55522,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_AA:
+	      /*
+416229: (ssb-am (vector-ref ssbs i) (bandpass (vector-ref bands i) input))
+264600: (+ (* (float-vector-ref indices k) carg) (* frm-int frq1))
+264197: (- (+ sum-of-squares (* y y)) (* old-y old-y))
+132300: (+ (* (float-vector-ref indices k) carrier) (* frm-int rfrq))
+131072: (/ (+ (* a c1) b) (+ (* c c1) d))
+92008: (- (/ (sin nx) sxsx) (/ (* n (cos nx2)) sx22))
+54999: (* (exp (* r (cos x))) (cos (* r (sin x))))
+--------------------------------
+416229: (ssb-am (vector-ref ssbs i) (bandpass (vector-ref bands i) input))
+264600: (+ (* (float-vector-ref indices k) carg) (* frm-int frq1))
+132300: (+ (* (float-vector-ref indices k) carrier) (* frm-int rfrq))
+131072: (/ (+ (* a c1) b) (+ (* c c1) d))
+92008: (- (/ (sin nx) sxsx) (/ (* n (cos nx2)) sx22))
+54999: (* (exp (* r (cos x))) (cos (* r (sin x))))
+50828: (- (+ sum-of-squares (* y y)) (* old-y old-y))
+
+--- so callgrind is confused, 
+SAFE_C_op_opSSq_Sq_opSSq, SAFE_C_opSSq_op_opSS2q_Sq, SAFE_C_op_opSSq_Sq_op_opSSq_Sq
+maybe check other A cases as well -- Z also possible here [combiner for PZ -> AA etc] -- also 2ndS's match often
+	       */
 	      car(sc->A2_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      car(sc->A2_2) = ((s7_function)fcdr(cddr(code)))(sc, caddr(code));
 	      sc->value = c_call(code)(sc, sc->A2_1);
@@ -57358,6 +57424,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SAFE_C_SZ_SZ:
+      /* S_opSZq actually, in (nominal second, only actual) SZ, S=args, Z=value,
+       *   SZ from the SP combiner for SZ
+       */
       car(sc->T2_1) = sc->args;
       car(sc->T2_2) = sc->value;
       car(sc->T2_2) = c_call(caddr(sc->code))(sc, sc->T2_1);
@@ -68854,8 +68923,8 @@ s7_scheme *s7_init(void)
   sc->error_hook = s7_eval_c_string(sc, "(make-hook 'type 'data)");
   s7_define_constant_with_documentation(sc, "*error-hook*", sc->error_hook, "*error-hook* functions are called in the error handler, passed (hook 'type) and (hook 'data).");
   
-  /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
-  /* 64 bit machine: size: 48, max op: 321 [size 72 if gmp] */
+  /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
+  /* 64 bit machine: size: 48 [size 72 if gmp], op: 324, opt: 430 */
 
 #if DEBUGGING
   if (strcmp(op_names[OP_DEFINE_BACRO_STAR], "define-bacro*") != 0)
@@ -69028,12 +69097,12 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2 14.3 14.4
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220 4157 4022
- * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1371 1333
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220 4157 4110
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1371 1378
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  957  974
- * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.3
- * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 29.4
- * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 13.7
+ * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.5
+ * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 30.4
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 13.6
  * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 42.4
  *            153 with run macro (eval_ptree)
  */
@@ -69052,15 +69121,12 @@ int main(int argc, char **argv)
  * for-each over sound(etc) -> sampler, similarly member/map
  *
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
- * safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
- *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc (check if_* too)
- *
  * it would be nice if TAB completion could complete keyword args correctly
  *   look back to "(", car->lambda*, complete based on arglist (why didn't this work in ws?)
  *   argnames as keywords are implicit, not in the symbol table, so this completion fails only the first time
  * map/for-each all_x? with-env? etc (member) -- is_all_x_safe for lambda 1/2 args -- safe_closure_s_z -> a? or a loop (safe_dotimes_c_a 50142 48175 -- is_all_x_op)
- *
  * [indirect_]outa_ss_looped?
  * help info for *-float-vector-* still uses vct
+ * (type(_x_) == T_REAL) ? real(_x_) : s7_number_to_real(sc, _x>) here and somehow in clm2xen
  */
 

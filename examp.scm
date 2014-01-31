@@ -725,23 +725,25 @@ then inverse ffts."
 ;;; same idea but used to distinguish vowels (steady-state) from consonants
 
 (define (ramp gen up)
-;;  "(ramp gen up) is a kind of CLM generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes"
+  ;;  "(ramp gen up) is a kind of CLM generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes"
   ;; gen is list: ctr size
   ;;  the idea here is that we want to ramp in or out a portion of a sound based on some
   ;;  factor of the sound data -- the ramp gen produces a ramp up when 'up' is #t, sticking
   ;;  at 1.0, and a ramp down when 'up' is #f, sticking at 0.0
   ;;
   ;; this could use the moving-average generator, though the resultant envelopes would be slightly less bumpy
-  (let* ((ctr (gen 0))
-	 (size (gen 1))
-	 (val (/ ctr size)))
-    (set! (gen 0) (min size (max 0 (+ ctr (if up 1 -1)))))
-    val))
+
+  (set! (gen 'up) (if up 1 -1))
+  (with-environment gen
+    (let ((val (* 1.0 (/ ctr size))))
+      (set! ctr (min size (max 0 (+ ctr up))))
+      val)))
 
 (define* (make-ramp (size 128))
   "(make-ramp (size 128)) returns a ramp generator"
-  (float-vector 0.0 size))
+  (environment (cons 'ctr 0) (cons 'size size) (cons 'up 1)))
 
+;;; (let ((r (make-ramp))) (map-channel (lambda (y) (* y (ramp r (> (random 1.0) 0.5))))))
 
 (define* (squelch-vowels snd chn)
   "(squelch-vowels snd chn) suppresses portions of a sound that look like steady-state"
@@ -1489,17 +1491,15 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 
   (let* ((len (frames snd chn))
 	 (newlen (floor (* time-scale len))))
-    (let ((reader (make-sound-interp 0 snd chn))
-	  (read-env (make-env envelope :length (+ 1 newlen) :scaler len)))
-
-      (let ((new-snd (with-sound (:output (snd-tempnam) :to-snd #f :srate (srate snd))
+    (let ((new-snd (with-sound (:output (snd-tempnam) :to-snd #f :srate (srate snd))
+		     (let ((data (channel->float-vector 0 #f snd chn))
+			   (read-env (make-env envelope :length (+ 1 newlen) :scaler len)))
 		       (do ((i 0 (+ i 1)))
 			   ((= i newlen))
-			 (outa i (reader (env read-env)))))))
-
+			 (outa i (array-interp data (env read-env) len)))))))
 	(set-samples 0 newlen new-snd snd chn #t
 		     (format #f "env-sound-interp '~A ~A" envelope time-scale)
-		     0 current-edit-position #t)))))
+		     0 current-edit-position #t))))
 
 
 ;;; (env-sound-interp '(0 0 1 1 2 0) 2.0)
