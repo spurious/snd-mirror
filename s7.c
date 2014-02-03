@@ -376,7 +376,7 @@ enum {OP_NO_OP,
       OP_READ_INTERNAL, OP_EVAL, 
       OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
       OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
-      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2,
+      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_WHEN, OP_WHEN1, OP_UNLESS, OP_UNLESS1, OP_SET, OP_SET1, OP_SET2,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
       OP_LETREC, OP_LETREC1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
       OP_AND, OP_AND1, OP_OR, OP_OR1, 
@@ -399,7 +399,7 @@ enum {OP_NO_OP,
       OP_EVAL_STRING_1, OP_EVAL_STRING_2, 
       OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
       
-      OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, 
+      OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, OP_WHEN_UNCHECKED, OP_UNLESS_UNCHECKED,
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_A,
       OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, 
       OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, 
@@ -418,7 +418,7 @@ enum {OP_NO_OP,
       OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X_X, 
       OP_IF_B_P, OP_IF_B_P_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
       OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, OP_IF_PXX, 
-      OP_IF_S_P_P, OP_IF_S_P, OP_IF_S_P_X, OP_IF_S_X_P, OP_IF_P_FEED, OP_IF_P_FEED_1,
+      OP_IF_S_P_P, OP_IF_S_P, OP_IF_S_P_X, OP_IF_S_X_P, OP_IF_P_FEED, OP_IF_P_FEED_1, OP_WHEN_S, OP_UNLESS_S,
       OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
       
       OP_SAFE_IF_Z_Z, 
@@ -479,7 +479,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "read-internal", "eval", 
    "eval-args", "eval-args1", "eval-args2", "eval-args3", "eval-args4", "eval-args5",
    "apply", "eval-macro", "lambda", "quote", 
-   "define", "define", "begin", "begin", "if", "if", "set!", "set!", "set!", 
+   "define", "define", "begin", "begin", "if", "if", "when", "when", "unless", "unless", "set!", "set!", "set!", 
    "let", "let", "let*", "let*", "let*",
    "letrec", "letrec", "cond", "cond", "cond", "cond",
    "and", "and", "or", "or", 
@@ -500,7 +500,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "eval-string", "eval-string", 
    "member", "assoc", "member", "assoc",
    
-   "quote", "lambda", "let", "case", 
+   "quote", "lambda", "let", "case", "when", "unless",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
@@ -516,7 +516,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", 
-   "if", "if", "if", "if", "if", "if", "if",
+   "if", "if", "if", "if", "if", "if", "if", "when", "unless",
 
    "and", "and", "and", "or", "or", "or", 
 
@@ -559,7 +559,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_READ_INTERNAL", "OP_EVAL", 
   "OP_EVAL_ARGS", "OP_EVAL_ARGS1", "OP_EVAL_ARGS2", "OP_EVAL_ARGS3", "OP_EVAL_ARGS4", "OP_EVAL_ARGS5",
   "OP_APPLY", "OP_EVAL_MACRO", "OP_LAMBDA", "OP_QUOTE", 
-  "OP_DEFINE", "OP_DEFINE1", "OP_BEGIN", "OP_BEGIN1", "OP_IF", "OP_IF1", "OP_SET", "OP_SET1", "OP_SET2",
+  "OP_DEFINE", "OP_DEFINE1", "OP_BEGIN", "OP_BEGIN1", "OP_IF", "OP_IF1", "OP_WHEN", "OP_WHEN1", "OP_UNLESS", "OP_UNLESS1", "OP_SET", "OP_SET1", "OP_SET2",
   "OP_LET", "OP_LET1", "OP_LET_STAR", "OP_LET_STAR1", "OP_LET_STAR2", 
   "OP_LETREC", "OP_LETREC1", "OP_COND", "OP_COND1", "OP_COND_SIMPLE", "OP_COND1_SIMPLE",
   "OP_AND", "OP_AND1", "OP_OR", "OP_OR1", 
@@ -582,7 +582,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_EVAL_STRING_1", "OP_EVAL_STRING_2", 
   "OP_MEMBER_IF", "OP_ASSOC_IF", "OP_MEMBER_IF1", "OP_ASSOC_IF1",
   
-  "OP_QUOTE_UNCHECKED", "OP_LAMBDA_UNCHECKED", "OP_LET_UNCHECKED", "OP_CASE_UNCHECKED", 
+  "OP_QUOTE_UNCHECKED", "OP_LAMBDA_UNCHECKED", "OP_LET_UNCHECKED", "OP_CASE_UNCHECKED", "OP_WHEN_UNCHECKED", "OP_UNLESS_UNCHECKED",
   "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_Z", "OP_SET_SYMBOL_A",
   "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", 
   "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_SSS",
@@ -601,7 +601,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_IF_P_P_P", "OP_IF_P_P", "OP_IF_P_P_X", "OP_IF_P_X_P", "OP_IF_P_X_X", 
   "OP_IF_B_P", "OP_IF_B_P_P", "OP_IF_ANDP_P", "OP_IF_ANDP_P_P", "OP_IF_ORP_P", "OP_IF_ORP_P_P", 
   "OP_IF_PPP", "OP_IF_PP", "OP_IF_PPX", "OP_IF_PXP", "OP_IF_PXX", 
-  "OP_IF_S_P_P", "OP_IF_S_P", "OP_IF_S_P_X", "OP_IF_S_X_P", "OP_IF_P_FEED", "OP_IF_P_FEED_1",
+  "OP_IF_S_P_P", "OP_IF_S_P", "OP_IF_S_P_X", "OP_IF_S_X_P", "OP_IF_P_FEED", "OP_IF_P_FEED_1", "OP_WHEN_S", "OP_UNLESS_S",
   "OP_AND_UNCHECKED", "OP_AND_P", "OP_AND_P1", "OP_OR_UNCHECKED", "OP_OR_P", "OP_OR_P1",
   
   "OP_SAFE_IF_Z_Z", 
@@ -1328,7 +1328,7 @@ struct s7_scheme {
   s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq, LET_C_P, LET_S_P;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
   s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_B_P_P, IF_P_P_X, IF_P_X_P, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_P_FEED;
-  s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_GT_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P;
+  s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_GT_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P, WHEN_UNCHECKED, UNLESS_UNCHECKED, WHEN_S, UNLESS_S;
 
   s7_pointer COND_ALL_X;
   s7_pointer SAFE_IF_Z_Z, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P;
@@ -2353,10 +2353,23 @@ static void set_print_name(s7_pointer p, const char *name, int len)
 #define make_real(Sc, X) \
   ({ s7_Double _N_ = X; ((_N_ == 0.0) ? real_zero : ({ s7_pointer _X_; NEW_CELL(Sc, _X_); set_type(_X_, T_REAL); real(_X_) = _N_; _X_;}) ); })
                      /* the x == 0.0 check saves more than it costs */
+
+#define remake_real(Sc, R, X) ({ s7_Double _x_; _x_ = X; ((is_simple_real(R)) ? ({real(R) = _x_; R;}) : make_real(Sc, _x_)); })
+
+#define real_to_double(Sc, X) ({ s7_pointer _x_; _x_ = X; ((type(_x_) == T_REAL) ? real(_x_) : s7_number_to_real(sc, _x_)); })
+#define rational_to_double(Sc, X) ({ s7_pointer _x_; _x_ = X; ((type(_x_) == T_INTEGER) ? (s7_Double)integer(_x_) : fraction(_x_)); })
+#define number_to_double(Sc, X) ({ s7_pointer _x_; _x_ = X; ((type(_x_) == T_REAL) ? real(_x_) : s7_number_to_real(sc, _x_)); })
+
 #else
-#define make_integer(Sc, N)           s7_make_integer(Sc, N)
-#define make_real(Sc, X)              s7_make_real(Sc, X)
+
+#define make_integer(Sc, N)          s7_make_integer(Sc, N)
+#define make_real(Sc, X)             s7_make_real(Sc, X)
+#define remake_real(Sc, R, X)        s7_remake_real(Sc, R, X)
+#define real_to_double(Sc, X)        s7_number_to_real(Sc, X)
+#define rational_to_double(Sc, X)    s7_number_to_real(Sc, X)
+#define number_to_double(Sc, X)      s7_number_to_real(Sc, X)
 #endif
+
 
 #if WITH_GMP
   #define big_integer(p)             (p->object.number.big_integer)
@@ -7644,20 +7657,6 @@ s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error)
 
 
 
-#if (!WITH_GCC)
-static s7_Double number_to_real(s7_pointer n)
-{
-  if (type(n) >= T_REAL)
-    return(real(n));
-  if (type(n) == T_INTEGER)
-    return((s7_Double)integer(n));
-  return(fraction(n));
-}
-#else
-#define number_to_real(_n_) ({ s7_pointer N; N = _n_; ((type(N) >= T_REAL) ? real(N) : ((type(N) == T_INTEGER) ? ((s7_Double)integer(N)) : (s7_Double)(fraction(N)))); })
-#endif
-
-
 static s7_Int number_to_numerator(s7_pointer n)
 {
   if (type(n) == T_RATIO)
@@ -7769,12 +7768,6 @@ s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n)
     }
   return(make_real(sc, n));
 }
-
-#if WITH_GCC
-#define remake_real(Sc, R, X) ({ s7_Double _x_; _x_ = X; ((is_simple_real(R)) ? ({real(R) = _x_; R;}) : make_real(Sc, _x_)); })
-#else
-#define remake_real(Sc, R, X) s7_remake_real(Sc, R, X)
-#endif
 
 
 s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
@@ -7971,7 +7964,7 @@ s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x)
 #endif
     }
 
-  s7_wrong_type_arg_error(sc, "s7_number_to_real", 0, x, "a real number"); 
+  s7_wrong_type_arg_error(sc, "number_to_double", 0, x, "a real number"); 
   return(0.0);
 }
 
@@ -10308,7 +10301,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 	  CHECK_METHOD(sc, ex, sc->RATIONALIZE, args);
 	  return(wrong_type_argument(sc, sc->RATIONALIZE, small_int(2), ex, T_REAL));
 	}
-      err = s7_number_to_real(sc, ex);
+      err = number_to_double(sc, ex);
       if (is_NaN(err))
 	return(out_of_range(sc, sc->RATIONALIZE, small_int(2), cadr(args), "error term is NaN"));
       if (err < 0.0) err = -err;
@@ -10341,7 +10334,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 	s7_Double rat;
 	s7_Int numer = 0, denom = 1;
 
-	rat = s7_number_to_real(sc, x);
+	rat = number_to_double(sc, x);
 
 	if ((is_NaN(rat)) || (is_inf(rat)))
 	  return(wrong_type_argument_with_type(sc, sc->RATIONALIZE, small_int(1), x, A_NORMAL_REAL));
@@ -10658,7 +10651,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	    }
 	  if ((s7_is_real(x)) &&
 	      (s7_is_positive(x)))
-	    return(make_real(sc, log(number_to_real(x)) * LOG_2));
+	    return(make_real(sc, log(real_to_double(sc, x)) * LOG_2));
 	  return(s7_from_c_complex(sc, clog(s7_complex(x)) * LOG_2));
 	}
 
@@ -10691,13 +10684,13 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	    {
 	      s7_Double res;
 	      s7_Int ires;
-	      res = log(number_to_real(x)) / log(number_to_real(y));
+	      res = log(rational_to_double(sc, x)) / log(rational_to_double(sc, y));
 	      ires = (s7_Int)res;
 	      if (res - ires == 0.0)
 		return(make_integer(sc, ires));   /* (log 8 2) -> 3 or (log 1/8 2) -> -3 */
 	      return(make_real(sc, res));         /* perhaps use rationalize here? (log 2 8) -> 1/3 */
 	    }
-	  return(make_real(sc, log(number_to_real(x)) / log(number_to_real(y))));
+	  return(make_real(sc, log(real_to_double(sc, x)) / log(real_to_double(sc, y))));
 	}
       return(s7_from_c_complex(sc, clog(s7_complex(x)) / clog(s7_complex(y))));
     }
@@ -10705,8 +10698,8 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   if (s7_is_real(x))
     {
       if (s7_is_positive(x))
-	return(make_real(sc, log(number_to_real(x))));
-      return(s7_make_complex(sc, log(-number_to_real(x)), M_PI));
+	return(make_real(sc, log(real_to_double(sc, x))));
+      return(s7_make_complex(sc, log(-real_to_double(sc, x)), M_PI));
     }
 
   return(s7_from_c_complex(sc, clog(s7_complex(x))));
@@ -10889,7 +10882,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
       {
 	s7_Double x, absx, recip;
 	s7_Complex result;
-	x = number_to_real(n);
+	x = real_to_double(sc, n);
 	absx = fabs(x);
 	if (absx <= 1.0)
 	  return(make_real(sc, asin(x)));
@@ -10947,7 +10940,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
       {
 	s7_Double x, absx, recip;
 	s7_Complex result;
-	x = number_to_real(n);
+	x = real_to_double(sc, n);
 	absx = fabs(x);
 	if (absx <= 1.0)
 	  return(make_real(sc, acos(x)));
@@ -11005,7 +10998,7 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
 	  
 	case T_REAL:
 	case T_RATIO:
-	  return(make_real(sc, atan(number_to_real(x))));
+	  return(make_real(sc, atan(real_to_double(sc, x))));
 
 	case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
@@ -11031,7 +11024,7 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, y, sc->ATAN, args);
       return(wrong_type_argument(sc, sc->ATAN, small_int(2), y, T_REAL));
     }
-  return(make_real(sc, atan2(number_to_real(x), number_to_real(y))));
+  return(make_real(sc, atan2(real_to_double(sc, x), real_to_double(sc, y))));
 }  
 
 
@@ -11048,7 +11041,7 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
 
     case T_REAL:
     case T_RATIO:
-      return(make_real(sc, sinh(number_to_real(x))));
+      return(make_real(sc, sinh(real_to_double(sc, x))));
 
     case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
@@ -11085,7 +11078,7 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
        * :(cosh 0)
        * 1
        */
-      return(make_real(sc, cosh(number_to_real(x))));
+      return(make_real(sc, cosh(real_to_double(sc, x))));
 
     case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
@@ -11114,7 +11107,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
 
     case T_REAL:
     case T_RATIO:
-      return(make_real(sc, tanh(number_to_real(x))));
+      return(make_real(sc, tanh(real_to_double(sc, x))));
 
     case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
@@ -11147,7 +11140,7 @@ static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
 
     case T_REAL:
     case T_RATIO:
-      return(make_real(sc, asinh(number_to_real(x))));
+      return(make_real(sc, asinh(real_to_double(sc, x))));
 
     case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
@@ -11176,8 +11169,8 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
 
     case T_REAL:
     case T_RATIO:
-      if (number_to_real(x) >= 1.0)
-	return(make_real(sc, acosh(number_to_real(x))));
+      if (real_to_double(sc, x) >= 1.0)
+	return(make_real(sc, acosh(real_to_double(sc, x))));
 
     case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
@@ -11207,8 +11200,8 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
 
     case T_REAL:
     case T_RATIO:
-      if (fabs(number_to_real(x)) < 1.0)
-	return(make_real(sc, atanh(number_to_real(x))));
+      if (fabs(real_to_double(sc, x)) < 1.0)
+	return(make_real(sc, atanh(real_to_double(sc, x))));
 
       /* if we can't distinguish x from 1.0 even with long doubles, we'll get inf.0:
        *    (atanh 9223372036854775/9223372036854776) -> 18.714973875119
@@ -11390,7 +11383,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       if (s7_is_integer(pw))
 	return(n);
       if (is_rational(n))
-	return(make_real(sc, number_to_real(n)));
+	return(make_real(sc, rational_to_double(sc, n)));
       return(n);
     }
   
@@ -11519,15 +11512,15 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  if (denominator(pw) == 2)
 	    return(g_sqrt(sc, args));
 	  if (denominator(pw) == 3)
-	    return(make_real(sc, cbrt(number_to_real(n)))); /* (expt 27 1/3) should be 3, not 3.0... */
+	    return(make_real(sc, cbrt(real_to_double(sc, n)))); /* (expt 27 1/3) should be 3, not 3.0... */
  
 	  /* but: (expt 512/729 1/3) -> 0.88888888888889
 	   */
 	  /* and 4 -> sqrt(sqrt...) etc? */
 	}
 
-      x = number_to_real(n);
-      y = number_to_real(pw);
+      x = real_to_double(sc, n);
+      y = real_to_double(sc, pw);
 
       if (is_NaN(x)) return(n);
       if (is_NaN(y)) return(pw);
@@ -13132,7 +13125,7 @@ s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
   if ((is_real(s1)) &&
       (is_real(s2)) &&
       (is_real(s3)))
-    return(make_real(sc, (s7_number_to_real(sc, s1) * s7_number_to_real(sc, s2))  + ((1.0 - s7_number_to_real(sc, s1)) * s7_number_to_real(sc, s3))));
+    return(make_real(sc, (number_to_double(sc, s1) * number_to_double(sc, s2))  + ((1.0 - number_to_double(sc, s1)) * number_to_double(sc, s3))));
 
   {
     s7_Double r1, r2, r3, rs1, i1, i2, i3, is1;
@@ -14438,7 +14431,7 @@ static s7_pointer g_mul_1ss(s7_scheme *sc, s7_pointer args)
 
   if ((is_real(x)) &&
       (is_real(y)))
-    return(make_real(sc, s7_number_to_real(sc, y) * (1.0 - s7_number_to_real(sc, x))));
+    return(make_real(sc, number_to_double(sc, y) * (1.0 - number_to_double(sc, x))));
   else
     {
       s7_Double r1, r2, i1, i2;
@@ -14465,7 +14458,7 @@ static s7_pointer g_multiply_cs_cos(s7_scheme *sc, s7_pointer args)
 
   if ((is_real(r)) &&
       (is_real(x)))
-    return(make_real(sc, real(car(args)) * s7_number_to_real(sc, r) * cos(s7_number_to_real(sc, x))));
+    return(make_real(sc, real(car(args)) * number_to_double(sc, r) * cos(number_to_double(sc, x))));
   return(g_multiply(sc, list_3(sc, car(args), r, g_cos(sc, list_1(sc, x)))));
 }
 
@@ -14479,7 +14472,7 @@ static s7_pointer g_mul_s_sin_s(s7_scheme *sc, s7_pointer args)
   y = find_symbol_checked(sc, cadadr(args));
 
   if ((is_real(x)) && (is_real(y)))
-    return(make_real(sc, s7_number_to_real(sc, x) * sin(s7_number_to_real(sc, y))));
+    return(make_real(sc, number_to_double(sc, x) * sin(number_to_double(sc, y))));
 
   return(g_multiply(sc, list_2(sc, x, g_sin(sc, list_1(sc, y)))));
 }
@@ -14493,7 +14486,7 @@ static s7_pointer g_mul_s_cos_s(s7_scheme *sc, s7_pointer args)
   y = find_symbol_checked(sc, cadadr(args));
 
   if ((is_real(x)) && (is_real(y)))
-    return(make_real(sc, s7_number_to_real(sc, x) * cos(s7_number_to_real(sc, y))));
+    return(make_real(sc, number_to_double(sc, x) * cos(number_to_double(sc, y))));
 
   return(g_multiply(sc, list_2(sc, x, g_cos(sc, list_1(sc, y)))));
 }
@@ -14919,7 +14912,7 @@ static s7_pointer g_divide_1r(s7_scheme *sc, s7_pointer args)
   s7_Double rl;
   if (s7_is_real(cadr(args)))
     {
-      rl = s7_number_to_real(sc, cadr(args));
+      rl = number_to_double(sc, cadr(args));
       if (rl == 0.0)
 	return(division_by_zero_error(sc, sc->DIVIDE, args));
       return(make_real(sc, 1.0 / rl));
@@ -15197,7 +15190,7 @@ static s7_pointer g_max_f2(s7_scheme *sc, s7_pointer args)
   if (is_simple_real(y))
     return((real(x) >= real(y)) ? x : y);
   if (is_real(y))
-    return((real(x) >= s7_number_to_real(sc, y)) ? x : y);
+    return((real(x) >= number_to_double(sc, y)) ? x : y);
   return(wrong_type_argument(sc, sc->MAX, small_int(2), y, T_REAL));
 }
 
@@ -15409,7 +15402,7 @@ static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
   if (is_simple_real(y))
     return((real(x) <= real(y)) ? x : y);
   if (is_real(y))
-    return((real(x) <= s7_number_to_real(sc, y)) ? x : y);
+    return((real(x) <= number_to_double(sc, y)) ? x : y);
   return(wrong_type_argument(sc, sc->MIN, small_int(2), y, T_REAL));
 }
 
@@ -17822,7 +17815,7 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
     case T_BIG_REAL:
       {
 	decode_float_t num;
-	num.value.real_value = s7_number_to_real(sc, x);
+	num.value.real_value = number_to_double(sc, x);
 	if ((is_NaN(num.value.real_value)) || (is_inf(num.value.real_value)))   /* (integer-decode-float (bignum "1e310")) */
 	  return(simple_out_of_range(sc, sc->INTEGER_DECODE_FLOAT, x, "a real that s7_Double can handle"));
 	ix = num.value.integer_value;
@@ -29020,7 +29013,7 @@ static s7_pointer int_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc)
 
 static s7_pointer float_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val)
 {
-  float_vector_element(vec, loc) = s7_number_to_real(sc, val);
+  float_vector_element(vec, loc) = number_to_double(sc, val);
   return(val);
 }
 
@@ -29227,7 +29220,7 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
       else
 	{
 	  s7_Double x;
-	  x = s7_number_to_real(sc, obj);
+	  x = number_to_double(sc, obj);
 	  if (x == 0.0)
 	    memset((void *)float_vector_elements(vec), 0, len * sizeof(s7_Double));
 	  else
@@ -29364,7 +29357,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 		  else
 		    {
 		      s7_Double y;
-		      y = s7_number_to_real(sc, fill);
+		      y = number_to_double(sc, fill);
 		      if (y == 0.0)
 			memset((void *)(float_vector_elements(x) + start), 0, (end - start) * sizeof(s7_Double));
 		      else
@@ -29722,7 +29715,7 @@ static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
   for (x = args, i = 0; is_pair(x); x = cdr(x), i++) 
     {
       if (s7_is_real(car(x))) /* bignum is ok here */
-	float_vector_element(vec, i) = s7_number_to_real(sc, car(x));
+	float_vector_element(vec, i) = number_to_double(sc, car(x));
       else return(simple_wrong_type_argument(sc, sc->FLOAT_VECTOR, car(x), T_REAL));
     }
   return(vec);
@@ -29805,17 +29798,17 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
 
 static s7_pointer g_make_shared_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_shared_vector "(make-shared-vector original-vector new-dimensions) returns \
+  #define H_make_shared_vector "(make-shared-vector original-vector new-dimensions (offset 0)) returns \
 a vector that points to the same elements as the original-vector but with different dimensional info."
 
   /* (let ((v1 #2d((1 2 3) (4 5 6)))) (let ((v2 (make-shared-vector v1 '(6)))) v2)) -> #(1 2 3 4 5 6)
    * (let ((v1 #(1 2 3 4 5 6))) (let ((v2 (make-shared-vector v1 '(3 2)))) v2)) -> #2D((1 2) (3 4) (5 6))
    * this is most useful in generic functions -- they can still use (v n) as the accessor.
    */
-  s7_pointer orig, dims, y, x;
+  s7_pointer orig, dims, y, x, off;
   s7_vdims_t *v;
   int i;
-  s7_Int offset = 1, orig_len;
+  s7_Int new_len = 1, orig_len, offset = 0;
 
   orig = car(args);
   if (!s7_is_vector(orig))
@@ -29824,6 +29817,18 @@ a vector that points to the same elements as the original-vector but with differ
       return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(1), orig, T_VECTOR));
     }
   orig_len = vector_length(orig);
+
+  if (!is_null(cddr(args)))
+    {
+      off = caddr(args);
+      if (s7_is_integer(off))
+	{
+	  offset = s7_integer(off);
+	  if (offset < 0)
+	    return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, "a non-negative integer"));
+	}
+      else return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, T_INTEGER));
+    }
 
   dims = cadr(args);
   if ((is_null(dims)) ||
@@ -29848,11 +29853,11 @@ a vector that points to the same elements as the original-vector but with differ
 
   for (i = v->ndims - 1; i >= 0; i--)
     {
-      v->offsets[i] = offset;
-      offset *= v->dims[i];
+      v->offsets[i] = new_len;
+      new_len *= v->dims[i];
     }
 
-  if ((offset < 0) || (offset > vector_length(orig)))
+  if ((new_len < 0) || ((new_len + offset) > vector_length(orig)))
     {
       free(v->dims);
       free(v->offsets);
@@ -29863,16 +29868,17 @@ a vector that points to the same elements as the original-vector but with differ
   NEW_CELL(sc, x);
   set_type(x, type(orig) | T_SAFE_PROCEDURE);
   vector_dimension_info(x) = v;
-  vector_length(x) = offset;                 /* might be less than original length */
+  vector_length(x) = new_len;                 /* might be less than original length */
   vector_getter(x) = vector_getter(orig);
   vector_setter(x) = vector_setter(orig);
+
   if (is_int_vector(orig))
-    int_vector_elements(x) = int_vector_elements(orig);
+    int_vector_elements(x) = (s7_Int *)(int_vector_elements(orig) + offset);
   else
     {
       if (is_float_vector(orig))
-	float_vector_elements(x) = float_vector_elements(orig);
-      else vector_elements(x) = vector_elements(orig);
+	float_vector_elements(x) = (s7_Double *)(float_vector_elements(orig) + offset);
+      else vector_elements(x) = (s7_pointer *)(vector_elements(orig) + offset);
     }
   add_vector(sc, x);
 
@@ -30304,7 +30310,7 @@ static s7_pointer g_vector_set_ssc_looped(s7_scheme *sc, s7_pointer args)
       if (is_float_vector(vec))
 	{
 	  s7_Double x;
-	  x = s7_number_to_real(sc, val);
+	  x = number_to_double(sc, val);
 	  for (; pos < end; pos++)
 	    float_vector_element(vec, pos) = x;
 	}
@@ -30650,7 +30656,7 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
 
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "float-vector-scale", 0, x, "a real number")); 
-  scl = s7_number_to_real(sc, x);
+  scl = number_to_double(sc, x);
   if (scl == 1.0) return(v);
 
   len = vector_length(v);
@@ -30784,7 +30790,7 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
       val = caddr(args);
     }
   
-  float_vector_element(vec, index) = s7_number_to_real(sc, val);
+  float_vector_element(vec, index) = number_to_double(sc, val);
   return(val);
 }
 #endif
@@ -32686,6 +32692,12 @@ const char *s7_help(s7_scheme *sc, s7_pointer obj)
 	  return("(if expr true-stuff optional-false-stuff) evaluates expr, then \
 if it is true, evaluates true-stuff; otherwise, if optional-false-stuff exists, it is evaluated.");
 	  
+	case OP_WHEN:
+	  return("(when expr ...) evaluates expr, and if it is true, evaluates each form in its body, returning the value of the last");
+	  
+	case OP_UNLESS:
+	  return("(unless expr ...) evaluates expr, and if it is false, evaluates each form in its body, returning the value of the last");
+	  
 	case OP_BEGIN:
 	  return("(begin ...) evaluates each form in its body, returning the value of the last one");
 
@@ -33592,6 +33604,8 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 	case OP_WITH_ENV:
 	  return(s7_cons(sc, small_int(1), s7_make_integer(sc, MAX_ARITY)));
 
+	case OP_WHEN:
+	case OP_UNLESS:
 	case OP_LET:
 	case OP_LET_STAR:
 	case OP_LETREC:
@@ -33747,7 +33761,9 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	case OP_COND:
 	case OP_WITH_ENV:
 	  return(args > 0);
-
+	  
+	case OP_WHEN:
+	case OP_UNLESS:
 	case OP_LET:
 	case OP_LET_STAR:
 	case OP_LETREC:
@@ -42417,6 +42433,7 @@ static bool is_all_x_safe(s7_scheme *sc, s7_pointer p)
       ((car(p) == sc->QUOTE) &&
        (is_pair(cdr(p)))))   /* (if #t (quote . -1)) */
     return(true);
+  /* fprintf(stderr, "%s: %d %s %d\n", DISPLAY(p), is_optimized(p), opt_name(p), is_all_x_op(optimize_data(p))); */
   if (!is_optimized(p))
     return(false);
   return(is_all_x_op(optimize_data(p)));
@@ -45215,7 +45232,9 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 {
   s7_pointer x;
   bool happy = true;
-  /* fprintf(stderr, "optimize %s %d\n", DISPLAY_80(code), hop); */
+
+  /* fprintf(stderr, "optimize %s %d %s\n", DISPLAY_80(code), hop, DISPLAY_80(e)); */
+
   for (x = code; is_pair(x) && (!is_checked(x)); x = cdr(x))
     {
       set_checked(x);
@@ -45358,16 +45377,19 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  break;
 	  
 	case OP_IF:
-	  {
-	    bool t, e1, e2;
-	    if (!is_pair(cdr(x))) return(false); /* (if) ! */
-	    t = ((!is_pair(cadr(x))) || (form_is_safe(sc, func, args, cadr(x), false, bad_set)));
-	    e1 = ((!is_pair(caddr(x))) || (form_is_safe(sc, func, args, caddr(x), at_end, bad_set)));
-	    e2 = ((!is_pair(cdddr(x))) || (!is_pair(cadddr(x))) || (form_is_safe(sc, func, args, cadddr(x), at_end, bad_set)));
-	    return((t) && (e1) && (e2));
-	  }
+	  if (!is_pair(cdr(x))) return(false); /* (if) ! */
+	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, args, cadr(x), false, bad_set)))) return(false);
+	  if (!((!is_pair(caddr(x))) || (form_is_safe(sc, func, args, caddr(x), at_end, bad_set)))) return(false);
+	  if (!((!is_pair(cdddr(x))) || (!is_pair(cadddr(x))) || (form_is_safe(sc, func, args, cadddr(x), at_end, bad_set)))) return(false);
 	  break;
-	  
+
+	case OP_WHEN:
+	case OP_UNLESS:
+	  if (!is_pair(cdr(x))) return(false); /* (when) */
+	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, args, cadr(x), false, bad_set)))) return(false);
+	  if (!body_is_safe(sc, func, args, cddr(x), at_end, bad_set)) return(false);
+	  break;
+
 	case OP_COND:
 	  {
 	    s7_pointer p;
@@ -45807,6 +45829,42 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
 
   if (arity) (*arity) = i;
   return(top);
+}
+
+
+static s7_pointer check_when(s7_scheme *sc)
+{
+  if (!is_pair(sc->code))                                            /* (when) or (when . 1) */
+    return(eval_error(sc, "when has no expression or body:  ~A", sc->code));
+  if (!is_pair(cdr(sc->code)))                                       /* (when 1) or (when 1 . 1) */
+    return(eval_error(sc, "when has no body?:  ~A", sc->code));
+
+  if ((is_overlaid(sc->code)) &&
+      (cdr(ecdr(sc->code)) == sc->code))
+    set_syntax_op(sc->code, sc->WHEN_UNCHECKED);
+
+  if (is_symbol(car(sc->code)))
+        set_syntax_op(sc->code, sc->WHEN_S);
+
+  return(sc->code);
+}
+
+
+static s7_pointer check_unless(s7_scheme *sc)
+{
+  if (!is_pair(sc->code))                                            /* (unless) or (unless . 1) */
+    return(eval_error(sc, "unless has no expression or body:  ~A", sc->code));
+  if (!is_pair(cdr(sc->code)))                                       /* (unless 1) or (unless 1 . 1) */
+    return(eval_error(sc, "unless has no body?:  ~A", sc->code));
+
+  if ((is_overlaid(sc->code)) &&
+      (cdr(ecdr(sc->code)) == sc->code))
+    set_syntax_op(sc->code, sc->UNLESS_UNCHECKED);
+
+  if (is_symbol(car(sc->code)))
+        set_syntax_op(sc->code, sc->UNLESS_S);
+
+  return(sc->code);
 }
 
 
@@ -47050,7 +47108,7 @@ static s7_pointer check_if(s7_scheme *sc)
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body)
 {
   int len;
-  /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(args), DISPLAY(body)); */
+  /* fprintf(stderr, "optimize_lambda: %s %s\n", DISPLAY(args), DISPLAY(body)); */
 
   len = s7_list_length(sc, body);
   if (len < 0)                                                               /* (define (hi) 1 . 2) */
@@ -47141,6 +47199,8 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
     {
       switch (syntax_opcode(car(expr)))
 	{
+	case OP_WHEN:
+	case OP_UNLESS:
 	case OP_IF:
 	  /* an experiment in combining various all_x* was not a big win */
 
@@ -47788,6 +47848,8 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		      break;
 		      
 		    case OP_IF:
+		    case OP_WHEN:
+		    case OP_UNLESS:
 		    case OP_COND:
 		    case OP_CASE:
 		    case OP_AND:
@@ -50589,7 +50651,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					if (is_float_vector(obj))
 					  {
 					    s7_Double x;
-					    x = s7_number_to_real(sc, new_val);
+					    x = number_to_double(sc, new_val);
 					    for (i = start; i < lim; i++)
 					      float_vector_element(obj, i) = x;
 					  }
@@ -50630,7 +50692,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				(cadr(val) == caaar(code)) &&
 				(is_real(caddr(val))))
 			      {
-				slot_set_value(slot, make_real(sc, (integer(end_val) - 1) * s7_number_to_real(sc, caddr(val))));
+				slot_set_value(slot, make_real(sc, (integer(end_val) - 1) * number_to_double(sc, caddr(val))));
 				goto SAFE_DO_DONE;
 			      }
 
@@ -52728,6 +52790,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_pair(cdr(body)))
 		  push_stack_no_args(sc, OP_BEGIN1, cdr(body));
 		sc->code = car(body);
+		/* mostly let and let* here */
 		goto EVAL;
 	      }
 	      
@@ -55522,32 +55585,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_AA:
-	      /*
-416229: (ssb-am (vector-ref ssbs i) (bandpass (vector-ref bands i) input))
-264600: (+ (* (float-vector-ref indices k) carg) (* frm-int frq1))
-264197: (- (+ sum-of-squares (* y y)) (* old-y old-y))
-132300: (+ (* (float-vector-ref indices k) carrier) (* frm-int rfrq))
-131072: (/ (+ (* a c1) b) (+ (* c c1) d))
-92008: (- (/ (sin nx) sxsx) (/ (* n (cos nx2)) sx22))
-54999: (* (exp (* r (cos x))) (cos (* r (sin x))))
---------------------------------
-416229: (ssb-am (vector-ref ssbs i) (bandpass (vector-ref bands i) input))
-264600: (+ (* (float-vector-ref indices k) carg) (* frm-int frq1))
-132300: (+ (* (float-vector-ref indices k) carrier) (* frm-int rfrq))
-131072: (/ (+ (* a c1) b) (+ (* c c1) d))
-92008: (- (/ (sin nx) sxsx) (/ (* n (cos nx2)) sx22))
-54999: (* (exp (* r (cos x))) (cos (* r (sin x))))
-50828: (- (+ sum-of-squares (* y y)) (* old-y old-y))
-
---- so callgrind is confused, 
-SAFE_C_op_opSSq_Sq_opSSq, SAFE_C_opSSq_op_opSS2q_Sq, SAFE_C_op_opSSq_Sq_op_opSSq_Sq
-maybe check other A cases as well -- Z also possible here [combiner for PZ -> AA etc] -- also 2ndS's match often
-	       */
 	      car(sc->A2_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      car(sc->A2_2) = ((s7_function)fcdr(cddr(code)))(sc, caddr(code));
 	      sc->value = c_call(code)(sc, sc->A2_1);
-	      /* op_set_safe from set_symbol_z?
-	       */
 	      goto START;
 
 
@@ -55663,7 +55703,7 @@ maybe check other A cases as well -- Z also possible here [combiner for PZ -> AA
 	      
 	    case HOP_SAFE_C_SQS:
 	      {
-		/* (environment-set! gen 'fm fm) */
+		/* (environment-set! gen 'fm fm);  many of these are handled in safe_closure_star_s0 */
 		s7_pointer val1, args;
 		args = cdr(code);
 		
@@ -58617,7 +58657,7 @@ maybe check other A cases as well -- Z also possible here [combiner for PZ -> AA
 		    scl = find_symbol_checked(sc, cadr(cadr(sc->code)));
 		    if (is_real(scl))
 		      {
-			float_vector_element(f1, ind) *= s7_number_to_real(sc, scl);
+			float_vector_element(f1, ind) *= number_to_double(sc, scl);
 			/* what value here?? we want to avoid the make-real allocation! */
 			if (main_stack_op(sc) == OP_BEGIN1) goto POP_BEGIN;
 			sc->value = make_real(sc, float_vector_element(f1, ind));
@@ -60163,7 +60203,7 @@ maybe check other A cases as well -- Z also possible here [combiner for PZ -> AA
 	    car(sc->T2_1) = val1;
 	    car(sc->T2_2) = val2;
 	    car(sc->T1_1) = g_subtract_2(sc, sc->T2_1);
-	    x = s7_number_to_real(sc, g_magnitude(sc, sc->T1_1)); /* or maybe c_call here to get abs? */
+	    x = number_to_double(sc, g_magnitude(sc, sc->T1_1)); /* or maybe c_call here to get abs? */
 	    happy = (x > real(caddar(sc->code)));
 	  }
 	if (happy)
@@ -60707,7 +60747,76 @@ maybe check other A cases as well -- Z also possible here [combiner for PZ -> AA
 	sc->value = sc->UNSPECIFIED;
 	goto START;
       }
+
+
+      /* ---------------- */
+    case OP_WHEN:
+      check_when(sc);
       
+      /* --------------- */
+    case OP_WHEN_UNCHECKED:
+      push_stack_no_args(sc, OP_WHEN1, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL; 
+
+    case OP_WHEN1:
+      if (is_true(sc, sc->value))
+	{
+	  if (is_pair(cdr(sc->code)))
+	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	  sc->code = car(sc->code);
+	  goto EVAL;
+	}
+      else sc->value = sc->UNSPECIFIED;
+      goto START;
+
+    case OP_WHEN_S:
+      if (is_true(sc, find_symbol_checked(sc, car(sc->code))))
+	{
+	  if (is_pair(cdr(sc->code)))
+	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	  sc->code = car(sc->code);
+	  goto EVAL;
+	}
+      else sc->value = sc->UNSPECIFIED;
+      goto START;
+	
+
+      
+
+      /* ---------------- */
+    case OP_UNLESS:
+      check_unless(sc);
+      
+      /* --------------- */
+    case OP_UNLESS_UNCHECKED:
+      push_stack_no_args(sc, OP_UNLESS1, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL; 
+
+    case OP_UNLESS1:
+      if (is_false(sc, sc->value))
+	{
+	  if (is_pair(cdr(sc->code)))
+	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	  sc->code = car(sc->code);
+	  goto EVAL;
+	}
+      else sc->value = sc->UNSPECIFIED;
+      goto START;
+      
+    case OP_UNLESS_S:
+      if (is_false(sc, find_symbol_checked(sc, car(sc->code))))
+	{
+	  if (is_pair(cdr(sc->code)))
+	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	  sc->code = car(sc->code);
+	  goto EVAL;
+	}
+      else sc->value = sc->UNSPECIFIED;
+      goto START;
+
+
       
       /* --------------- */
     case OP_SAFE_C_P_1:
@@ -61963,9 +62072,10 @@ maybe check other A cases as well -- Z also possible here [combiner for PZ -> AA
 	  eval_error(sc, "lambda: no args or no body? ~A", code);
 	
 	/* in many cases, this is a no-op -- we already checked at define */
-
-
-	/* why can't we optimize hop=1 here? 
+	/* why can't we optimize hop=1 here?  
+	 *    First because *safety* might be checking sort functions for infinite loops.
+	 *    Second because the body might not be at top level, so optimizations might interpose global for local functions.
+	 *    Third because something is broken in the optimizer: ((sc->safety == 0) && (sc->envir == sc->NIL)) should be sufficient!
 	 */
 	check_lambda_args(sc, car(code), NULL);
 	clear_syms_in_list();
@@ -66021,7 +66131,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 	}
       if (is_big_number(p1))
 	mpfr_init_set(error, big_real(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
-      else mpfr_init_set_d(error, s7_number_to_real(sc, p1), GMP_RNDN);
+      else mpfr_init_set_d(error, number_to_double(sc, p1), GMP_RNDN);
 
       err_x = mpfr_get_d(error, GMP_RNDN);
       if (is_NaN(err_x))
@@ -66040,7 +66150,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
   
   if (is_big_number(p0))
     mpfr_init_set(ux, big_real(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
-  else mpfr_init_set_d(ux, s7_number_to_real(sc, p0), GMP_RNDN);
+  else mpfr_init_set_d(ux, number_to_double(sc, p0), GMP_RNDN);
 
   xx = mpfr_get_d(ux, GMP_RNDN);  
   if (is_NaN(xx))
@@ -67792,6 +67902,8 @@ s7_scheme *s7_init(void)
 
   assign_syntax(sc, "quote",             OP_QUOTE);
   assign_syntax(sc, "if",                OP_IF);
+  assign_syntax(sc, "when",              OP_WHEN);
+  assign_syntax(sc, "unless",            OP_UNLESS);
   assign_syntax(sc, "begin",             OP_BEGIN);
   assign_syntax(sc, "set!",              OP_SET);
   assign_syntax(sc, "let",               OP_LET);
@@ -67886,6 +67998,9 @@ s7_scheme *s7_init(void)
   sc->OR_UNCHECKED =          assign_internal_syntax(sc, "or",      OP_OR_UNCHECKED);
   sc->OR_P =                  assign_internal_syntax(sc, "or",      OP_OR_P);
 
+  sc->WHEN_UNCHECKED =        assign_internal_syntax(sc, "when",    OP_WHEN_UNCHECKED);
+  sc->UNLESS_UNCHECKED =      assign_internal_syntax(sc, "unless",  OP_UNLESS_UNCHECKED);
+
   sc->IF_P_P_P =              assign_internal_syntax(sc, "if",      OP_IF_P_P_P);
   sc->IF_P_P =                assign_internal_syntax(sc, "if",      OP_IF_P_P);
   sc->IF_ANDP_P =             assign_internal_syntax(sc, "if",      OP_IF_ANDP_P);
@@ -67934,6 +68049,10 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_IS_SYMBOL_P =   assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_SYMBOL_P);  
   sc->SAFE_IF_IS_SYMBOL_P_P = assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_SYMBOL_P_P);  
   sc->SAFE_IF_NOT_S_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_NOT_S_P);  
+
+  sc->WHEN_S =                assign_internal_syntax(sc, "when",    OP_WHEN_S);
+  sc->UNLESS_S =              assign_internal_syntax(sc, "unless",  OP_UNLESS_S);
+
   sc->LET_R =                 assign_internal_syntax(sc, "let",     OP_LET_R);  
   sc->LET_R_P =               assign_internal_syntax(sc, "let",     OP_LET_R_P);  
   sc->LET_CAR_P =             assign_internal_syntax(sc, "let",     OP_LET_CAR_P);  
@@ -68402,7 +68521,7 @@ s7_scheme *s7_init(void)
   sc->VECTOR_SET =            s7_define_safe_function(sc, "vector-set!",             g_vector_set,             3, 0, true,  H_vector_set);
   sc->VECTOR_DIMENSIONS =     s7_define_safe_function(sc, "vector-dimensions",       g_vector_dimensions,      1, 0, false, H_vector_dimensions);
   sc->MAKE_VECTOR =           s7_define_safe_function(sc, "make-vector",             g_make_vector,            1, 2, false, H_make_vector);
-  sc->MAKE_SHARED_VECTOR =    s7_define_safe_function(sc, "make-shared-vector",      g_make_shared_vector,     2, 0, false, H_make_shared_vector);
+  sc->MAKE_SHARED_VECTOR =    s7_define_safe_function(sc, "make-shared-vector",      g_make_shared_vector,     2, 1, false, H_make_shared_vector);
   sc->VECTOR =                s7_define_safe_function(sc, "vector",                  g_vector,                 0, 0, true,  H_vector);
   set_setter(sc->VECTOR); /* ?? */
   sc->Vector = s7_symbol_value(sc, sc->VECTOR);
@@ -68793,11 +68912,6 @@ s7_scheme *s7_init(void)
   
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
-  s7_eval_c_string(sc, "(define-macro (when test . forms) `(if ,test (begin ,@forms)))");         /* or `(cond (,test ,@forms))     */
-  s7_eval_c_string(sc, "(define-macro (unless test . forms) `(if (not ,test) (begin ,@forms)))"); /*    `(or ,test (begin ,@forms)) */
-  /* but those aren't quite right: (when #t) -> ()!
-   */
-
 
   /* call-with-values is almost a no-op in this context 
    */
@@ -69103,15 +69217,11 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 30.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 13.6
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 42.4
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 41.8
  *            153 with run macro (eval_ptree)
  */
 
-/* all_x in snd-sig? all_x_c_aa|a? -- would need export is_all_x_safe(?)+all_x_eval, (or access to s7_function at fcdr (after annotate_arg)?)
- * letrec* built-in (not macro), perhaps also when and unless
- *   when is (say) 6 times slower than equivalent if+begin and cancels most optimization (macro not safe)
- *   would need s7test coverage, and check that current macro form can safely override built-in
- *
+/* letrec* built-in (not macro)
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
  *   (and=> expr func) or (if=> ...)
  * (member x hash-table) -> x exists as key in hash-table?
@@ -69124,9 +69234,7 @@ int main(int argc, char **argv)
  * it would be nice if TAB completion could complete keyword args correctly
  *   look back to "(", car->lambda*, complete based on arglist (why didn't this work in ws?)
  *   argnames as keywords are implicit, not in the symbol table, so this completion fails only the first time
- * map/for-each all_x? with-env? etc (member) -- is_all_x_safe for lambda 1/2 args -- safe_closure_s_z -> a? or a loop (safe_dotimes_c_a 50142 48175 -- is_all_x_op)
- * [indirect_]outa_ss_looped?
  * help info for *-float-vector-* still uses vct
- * (type(_x_) == T_REAL) ? real(_x_) : s7_number_to_real(sc, _x>) here and somehow in clm2xen
+ * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
  */
 

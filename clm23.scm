@@ -2310,11 +2310,11 @@
 (define (test-filter flt)
   (let ((osc (make-oscil 0.0))
 	(samps (seconds->samples 0.5)))
-    (let ((ramp (make-env '(0 0 1 1) :scaler (hz->radians samps) :length samps)))
+    (let ((rmp (make-env '(0 0 1 1) :scaler (hz->radians samps) :length samps)))
       (with-sound ()
 	(do ((i 0 (+ i 1)))
 	    ((= i samps))
-	  (outa i (flt (oscil osc (env ramp)))))))))
+	  (outa i (flt (oscil osc (env rmp)))))))))
 
 (definstrument (flux start-time file frequency combs0 combs1 (scaler 0.99) (comb-len 32))
   (let ((beg (seconds->samples start-time))

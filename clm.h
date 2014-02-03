@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 19
-#define MUS_DATE "11-Dec-13"
+#define MUS_REVISION 20
+#define MUS_DATE "1-Feb-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -471,7 +471,6 @@ MUS_EXPORT bool mus_out_any_is_safe(mus_any *IO);
 MUS_EXPORT mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val);
 MUS_EXPORT mus_long_t mus_out_any_data_start(mus_any *IO);
 MUS_EXPORT mus_long_t mus_out_any_data_end(mus_any *IO);
-MUS_EXPORT int mus_out_any_channels(mus_any *IO);
 MUS_EXPORT mus_float_t **mus_out_any_buffers(mus_any *IO);
 MUS_EXPORT void mus_out_any_set_end(mus_any *IO, mus_long_t end);
 

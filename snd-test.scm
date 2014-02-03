@@ -6,29 +6,29 @@
 ;;;  test 3: variables                          [1927]
 ;;;  test 4: sndlib                             [2493]
 ;;;  test 5: simple overall checks              [4861]
-;;;  test 6: float-vectors                      [9648]
-;;;  test 7: colors                             [9942]
-;;;  test 8: clm                                [10461]
-;;;  test 9: mix                                [21628]
-;;;  test 10: marks                             [23417]
-;;;  test 11: dialogs                           [24365]
-;;;  test 12: extensions                        [24539]
-;;;  test 13: menus, edit lists, hooks, etc     [24805]
-;;;  test 14: all together now                  [26175]
-;;;  test 15: chan-local vars                   [27052]
-;;;  test 16: regularized funcs                 [28805]
-;;;  test 17: dialogs and graphics              [32640]
-;;;  test 18: save and restore                  [32753]
-;;;  test 19: transforms                        [34371]
-;;;  test 20: new stuff                         [36483]
-;;;  test 21: optimizer                         [37690]
-;;;  test 22: with-sound                        [38214]
-;;;  test 23: X/Xt/Xm                           [41207]
-;;;  test 24: GL                                [44889]
-;;;  test 25: errors                            [45013]
-;;;  test 26: s7                                [46546]
-;;;  test all done                              [46612]
-;;;  test the end                               [46821]
+;;;  test 6: float-vectors                      [9650]
+;;;  test 7: colors                             [9944]
+;;;  test 8: clm                                [10463]
+;;;  test 9: mix                                [21691]
+;;;  test 10: marks                             [23482]
+;;;  test 11: dialogs                           [24430]
+;;;  test 12: extensions                        [24604]
+;;;  test 13: menus, edit lists, hooks, etc     [24870]
+;;;  test 14: all together now                  [26240]
+;;;  test 15: chan-local vars                   [27118]
+;;;  test 16: regularized funcs                 [28871]
+;;;  test 17: dialogs and graphics              [32696]
+;;;  test 18: save and restore                  [32809]
+;;;  test 19: transforms                        [34427]
+;;;  test 20: new stuff                         [36539]
+;;;  test 21: optimizer                         [37746]
+;;;  test 22: with-sound                        [38270]
+;;;  test 23: X/Xt/Xm                           [41262]
+;;;  test 24: GL                                [44944]
+;;;  test 25: errors                            [45068]
+;;;  test 26: s7                                [46601]
+;;;  test all done                              [46667]
+;;;  test the end                               [46876]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -94,9 +94,7 @@
 
 (define* (fft! rl im n (dir 1))
   (if (not im)
-      (let ((clear (copy rl)))
-	(fill! clear 0.0)
-	(set! im clear)))
+      (set! im (make-float-vector (length rl))))
   (if (not n)
       (set! n (length rl)))
   (do ((i 0 (+ i 1))
@@ -220,7 +218,8 @@
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
 	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.cl" "trumpet.snd" "1234.snd")))
 
-(for-each mus-sound-preload (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd" "storm.snd" "1.snd" "cardinal.snd" "2a.snd"))
+(for-each mus-sound-preload (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" 
+				  "fyow.snd" "storm.snd" "1.snd" "cardinal.snd" "2a.snd"))
 
 
 
@@ -263,11 +262,12 @@
 (set! (window-y) 10)
 
 
-(define-expansion (fneq a b) 
-  `(> (magnitude (- ,a ,b)) .001))
+(define-expansion (fneq a b)
+  `(> (abs (- ,a ,b)) .001))
 
 (define-expansion (ffneq a b)
   `(> (abs (- ,a ,b)) .01))
+
 
 (define-expansion (fffneq a b) 
   `(> (abs (- ,a ,b)) .1))
@@ -2323,9 +2323,10 @@
 		       'ina 'inb 'info-dialog 'info-popup-hook 'init-ladspa 'initial-graph-hook
 		       'insert-file-dialog 'insert-region 'insert-sample 'insert-samples 'insert-samples-with-origin
 		       'insert-selection 'insert-silence 'insert-sound 'just-sounds 'kaiser-window
-		       'key 'key-binding 'key-press-hook 'keyboard-no-action 'ladspa-activate
-		       'ladspa-cleanup 'ladspa-connect-port 'ladspa-deactivate 'ladspa-descriptor 'ladspa-dir 'peak-env-dir
-		       'ladspa-instantiate 'ladspa-run 'ladspa-run-adding 'ladspa-set-run-adding-gain 'left-sample
+		       'key 'key-binding 'key-press-hook 'keyboard-no-action  'peak-env-dir
+;		       'ladspa-activate 'ladspa-cleanup 'ladspa-connect-port 'ladspa-deactivate 'ladspa-descriptor 'ladspa-dir
+;		       'ladspa-instantiate 'ladspa-run 'ladspa-run-adding 'ladspa-set-run-adding-gain 
+		       'left-sample
 		       'linear->db 'lisp-graph 'lisp-graph-hook 'lisp-graph-style 'lisp-graph?
 		       'list-ladspa 'listener-click-hook 'listener-color 'listener-font
 		       'listener-prompt 'listener-selection 'listener-text-color 'little-endian? 'locsig
@@ -10714,8 +10715,8 @@ EDITS: 2
 	     (x 0.0 (+ x incr)))
 	    ((= i n) data) 
 	  (float-vector-set! data i (+ (sin x)
-			    (* .25 (sin (* 2.0 x)))
-			    (* .125 (sin (* 4.0 x))))))))
+				       (* .25 (sin (* 2.0 x)))
+				       (* .125 (sin (* 4.0 x))))))))
     
     (let ((vals (lpc-predict (float-vector 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (float-vector 0 1 2 3 4 5 6 7) 8 4) 4 2)))
       (if (not (vequal vals (float-vector 7.906 8.557)))
@@ -10999,6 +11000,8 @@ EDITS: 2
   ;; ----------------
   (define (analog-filter-tests)
     
+    (define v (make-vct 1000))
+
     (define (sweep->bins flt bins)
       (let ((ind (open-sound "sweep.snd")))
 	(if (mus-generator? flt)
@@ -11006,21 +11009,20 @@ EDITS: 2
 	    (map-channel flt))
 	(let ((mx (maxamp))
 	      (resp (make-float-vector bins))
-	      (size (round (/ 22050 bins))))
+	      (size (round (/ 22050 bins)))
+	      (data (channel->float-vector)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i bins))
-	    (let ((data (channel->float-vector (* i size) size)))
-	      (set! (resp i) (float-vector-peak data))))
+	    (float-vector-set! resp i (float-vector-peak (make-shared-vector data (list size) (* i size)))))
 	  (close-sound ind)
 	  (list mx resp))))
     
     (define (filter-response-max f1)
-      (let ((mx 0.0))
-	(set! mx (abs (f1 1.0)))
-	(do ((i 0 (+ i 1)))
-	    ((= i 1000))
-	  (set! mx (max mx (abs (f1 0.0)))))
-	mx))
+      (set! (v 0) (f1 1.0))
+      (do ((i 1 (+ i 1)))
+	  ((= i 1000))
+	(float-vector-set! v i (filter f1 0.0)))
+      (float-vector-peak v))
     
     (define (filter-equal? f1 f2) ; equalp in clm2xen is too restrictive
       (and (= (mus-order f1) (mus-order f2))
@@ -16907,22 +16909,32 @@ EDITS: 2
     
     (for-each 
      (lambda (amps name)
-       (let ((n (length amps))
-	      (incr (hz->radians 1.0))
-	      (happy #t))
+       (let ((data1 (make-float-vector 100))
+	     (data2 (make-float-vector 100))
+	     (data3 (make-float-vector 100))
+	     (n (length amps))
+	     (incr (hz->radians 1.0)))
 	 (do ((i 0 (+ i 1))
 	      (angle 0.0 (+ angle incr)))
-	     ((or (not happy) (= i 100)))
-	   (let ((sum (amps 0))
-		 (cval (mus-chebyshev-t-sum angle amps)))
-	     (do ((k 1 (+ k 1))
-		  (ka angle (+ ka angle)))
-		 ((= k n))
-	       (set! sum (+ sum (* (float-vector-ref amps k) (cos ka)))))
-	     (if (fneq cval sum)
-		 (begin
-		   (snd-display #__line__ ";cheb-t-sum ~A: [~D] ~A ~A" name i cval sum)
-		   (set! happy #f)))))))
+	     ((= i 100))
+	   (float-vector-set! data1 i (mus-chebyshev-t-sum angle amps)))
+	 
+	 (do ((k 0 (+ k 1))
+	      (kincr 0.0 (+ kincr incr)))
+	     ((= k n))
+	   (do ((i 0 (+ i 1))
+		(angle 0.0 (+ angle kincr)))
+	       ((= i 100))
+	     (float-vector-set! data3 i (cos angle)))
+	   (float-vector-scale! data3 (vector-ref amps k))
+	   (float-vector-add! data2 data3))
+
+	 (let ((fudge *mus-float-equal-fudge-factor*))
+	   (set! *mus-float-equal-fudge-factor* .0001)
+	   (if (not (mus-arrays-equal? data1 data2))
+	       (snd-display #__line__ "~A: ~A~%~A~%" name data1 data2))
+	   (set! *mus-float-equal-fudge-factor* fudge))))
+
      (list (float-vector 0.0 1.0)
 	   (float-vector 0.0 0.5 0.25 0.25)
 	   (make-float-vector 100 0.01)
@@ -16931,54 +16943,78 @@ EDITS: 2
 	   'three-cos
 	   'hundred-cos
 	   'thousand-cos))
-    
+
     (for-each 
      (lambda (amps name)
-       (let ((n (length amps))
-	      (incr (hz->radians 1.0))
-	      (happy #t))
+       (let ((data1 (make-float-vector 100))
+	     (data2 (make-float-vector 100))
+	     (data3 (make-float-vector 100))
+	     (n (length amps))
+	     (incr (hz->radians 1.0)))
 	 (do ((i 0 (+ i 1))
 	      (angle 0.0 (+ angle incr)))
-	     ((or (not happy) (= i 100)))
-	   (let ((sum 0.0)
-		 (cval (mus-chebyshev-u-sum angle amps))) ; * sin is embedded in func
-	     (do ((k 1 (+ k 1))
-		  (ka angle (+ ka angle)))
-		 ((= k n))
-	       (set! sum (+ sum (* (float-vector-ref amps k) (sin ka)))))
-	     (if (fneq cval sum)
-		 (begin
-		   (snd-display #__line__ ";cheb-u-sum ~A: [~D] ~A ~A" name i cval sum)
-		   (set! happy #f)))))))
+	     ((= i 100))
+	   (float-vector-set! data1 i (mus-chebyshev-u-sum angle amps)))
+	 
+	 (do ((k 0 (+ k 1))
+	      (kincr 0.0 (+ kincr incr)))
+	     ((= k n))
+	   (do ((i 0 (+ i 1))
+		(angle 0.0 (+ angle kincr)))
+	       ((= i 100))
+	     (float-vector-set! data3 i (sin angle)))
+	   (float-vector-scale! data3 (vector-ref amps k))
+	   (float-vector-add! data2 data3))
+
+	 (let ((fudge *mus-float-equal-fudge-factor*))
+	   (set! *mus-float-equal-fudge-factor* .0001)
+	   (if (not (mus-arrays-equal? data1 data2))
+	       (snd-display #__line__ "~A: ~A~%~A~%" name data1 data2))
+	   (set! *mus-float-equal-fudge-factor* fudge))))
+
      (list (float-vector 0.0 1.0)
 	   (float-vector 0.0 0.5 0.25 0.25)
 	   (make-float-vector 100 0.01)
 	   (make-float-vector 1000 0.001))
-     (list 'one-cos
-	   'three-cos
-	   'hundred-cos
-	   'thousand-cos))
-    
+     (list 'one-sin
+	   'three-sin
+	   'hundred-sin
+	   'thousand-sin))
+
     (for-each 
      (lambda (camps samps name)
-       (let ((n (length camps))
-	      (incr (hz->radians 1.0))
-	      (happy #t))
+       (let ((data1 (make-float-vector 100))
+	     (data2 (make-float-vector 100))
+	     (data3 (make-float-vector 100))
+	     (n (length camps))
+	     (incr (hz->radians 1.0)))
 	 (do ((i 0 (+ i 1))
 	      (angle 0.0 (+ angle incr)))
-	     ((or (not happy) (= i 100)))
-	   (let ((sum (float-vector-ref camps 0))
-		 (cval (mus-chebyshev-tu-sum angle camps samps)))
-	     (do ((k 1 (+ k 1))
-		  (ka angle (+ ka angle)))
-		 ((= k n))
-	       (set! sum (+ sum
-			    (* (float-vector-ref samps k) (sin ka))
-			    (* (float-vector-ref camps k) (cos ka)))))
-	     (if (fneq cval sum)
-		 (begin
-		   (snd-display #__line__ ";cheb-tu-sum ~A: [~D] ~A ~A" name i cval sum)
-		   (set! happy #f)))))))
+	     ((= i 100))
+	   (float-vector-set! data1 i (mus-chebyshev-tu-sum angle camps samps)))
+	 
+	 (do ((k 0 (+ k 1))
+	      (kincr 0.0 (+ kincr incr)))
+	     ((= k n))
+	   (do ((i 0 (+ i 1))
+		(angle 0.0 (+ angle kincr)))
+	       ((= i 100))
+	     (float-vector-set! data3 i (sin angle)))
+	   (float-vector-scale! data3 (vector-ref samps k))
+	   (float-vector-add! data2 data3)
+	   (do ((i 0 (+ i 1))
+		(angle 0.0 (+ angle kincr)))
+	       ((= i 100))
+	     (float-vector-set! data3 i (cos angle)))
+	   (float-vector-scale! data3 (vector-ref camps k))
+	   (float-vector-add! data2 data3))
+
+	 (let ((fudge *mus-float-equal-fudge-factor*))
+	   (set! *mus-float-equal-fudge-factor* .0001)
+	   (if (not (mus-arrays-equal? data1 data2))
+	       (snd-display "~A: ~A~%~A~%" name data1 data2))
+	   (set! *mus-float-equal-fudge-factor* fudge))))
+
      (list (float-vector 0.0 1.0)
 	   (float-vector 0.0 0.25 0.0 0.25)
 	   (make-float-vector 100 .004)
@@ -16991,13 +17027,6 @@ EDITS: 2
 	   'three-tu
 	   'hundred-tu
 	   'thousand-tu))
-    
-    (for-each
-     (lambda (n)
-       (let ((distance (test-polyoid n)))
-	 (if (fneq distance 0.0)
-	     (snd-display #__line__ ";test polyoid ~A ~A" n distance))))
-     (list 1 3 10))
     
     ;; polywave
     (let ((gen0 (make-polywave 440.0 '(1 1)))
@@ -20559,7 +20588,7 @@ EDITS: 2
       (let ((gen (make-moog-filter 500.0 .1)))
 	(if (fneq 500.0 (moog-frequency gen)) (snd-display #__line__ ";moog freq: ~A" (moog-frequency gen))) ; moog-frequency is a separate function
 	(if (fneq .1 (gen 'Q)) (snd-display #__line__ ";moog Q: ~A" (gen 'Q)))
-	(if (not (float-vector? (gen 's))) (snd-display #__line__ ";moog state: ~A" (gen 's)))
+;	(if (not (float-vector? (gen 's))) (snd-display #__line__ ";moog state: ~A" (gen 's)))
 	(if (fneq 0.0 (gen 'y)) (snd-display #__line__ ";moog A? ~A" (gen 'y)))
 	(if (fneq -0.861 (gen 'fc)) (snd-display #__line__ ";moog freqtable: ~A" (gen 'fc)))
 	(let ((vals (make-float-vector 20)))
@@ -46959,25 +46988,24 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-28-Jan-14:
-42,047,238,768
-5,431,602,593  s7.c:eval [/home/bil/gtk-snd/snd]
-3,425,084,764  ???:sin [/lib64/libm-2.12.so]
-2,374,159,220  ???:cos [/lib64/libm-2.12.so]
-1,929,102,692  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+1-Feb-14:
+41,758,772,196
+6,534,177,372  s7.c:eval [/home/bil/gtk-snd/snd]
+3,257,807,523  ???:sin [/lib64/libm-2.12.so]
+2,376,442,081  ???:cos [/lib64/libm-2.12.so]
 1,335,711,872  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,065,635,126  s7.c:gc [/home/bil/gtk-snd/snd]
-1,037,182,025  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  970,865,130  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  885,414,540  ???:t2_32 [/home/bil/gtk-snd/snd]
-  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
+1,131,425,309  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,096,742,255  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,039,540,868  s7.c:gc [/home/bil/gtk-snd/snd]
+  899,392,996  ???:t2_32 [/home/bil/gtk-snd/snd]
+  781,898,497  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  601,925,525  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  571,185,944  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,776,292  ???:n1_64 [/home/bil/gtk-snd/snd]
-  415,443,540  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
-  411,794,636  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-|#
+  621,988,829  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  569,398,400  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,430,536  ???:n1_64 [/home/bil/gtk-snd/snd]
+  443,204,981  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  413,652,716  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+ |#
 
 

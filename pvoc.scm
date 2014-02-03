@@ -350,7 +350,7 @@
 	;; loop over the partials interpolate frequency and amplitude
 	(float-vector-add! lastamp ampinc)
 	(float-vector-add! lastfreq freqinc)
-	(set! (out-data i) (oscil-bank obank))
+	(float-vector-set! out-data i (oscil-bank obank))
 	(set! output (+ 1 output)))
       (float-vector->channel out-data 0 (max len outlen)))))
 

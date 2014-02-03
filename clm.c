@@ -11527,12 +11527,6 @@ mus_long_t mus_out_any_data_end(mus_any *IO)
   return(gen->data_end);
 }
 
-int mus_out_any_channels(mus_any *IO)
-{
-  rdout *gen = (rdout *)IO;
-  return(gen->chans);
-}
-
 mus_float_t **mus_out_any_buffers(mus_any *IO)
 {
   rdout *gen = (rdout *)IO;

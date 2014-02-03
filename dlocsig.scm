@@ -199,8 +199,9 @@
   "(cis a) returns e^(ia)"
   (exp (* 0.0+1.0i a)))
 
-(define-macro (when test . forms)
-  `(if ,test (begin ,@forms)))
+; built-in 1-Feb-14
+;(define-macro (when test . forms)
+;  `(if ,test (begin ,@forms)))
 
 (define (third a) 
   "(third lst) returns the 3rd element of 'lst'"

@@ -4565,6 +4565,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
       use_apply = false;
+
       if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  eval = s7_eval_form;

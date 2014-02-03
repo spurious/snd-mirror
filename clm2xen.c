@@ -9701,7 +9701,6 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define caddr(E)  s7_caddr(E)
 #define cadddr(E) s7_cadddr(E)
 #define cddr(E)   s7_cddr(E)
-#define cdddr(E)  s7_cdddr(E)
 #define cdar(E)   s7_cdar(E)
 #define cdaddr(E) s7_cdaddr(E)
 #define cdadr(E)  s7_cdadr(E)
@@ -12783,18 +12782,6 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		{
 		  p->func = (its_gf) ? gf_2_g1 : vf_2_g1;
 		  p->g1 = (void *)g1;
-#if 0
-		  /* doesn't seem to speed up computation -- needs fn_2 in clm2xen.h gf struct */
-		  if ((its_gf) && (g1->func == gf_2_g1) && (((gf *)(g1->g1))->func_1))
-		    {
-		      p->func = gf_2_f2_f1_g1;
-		      p->fn_2 = g1->func_2;
-		      p->gen1 = g1->gen;
-		      g1 = (gf *)(g1->g1);
-		      p->fn_1 = g1->func_1;
-		      p->gen2 = g1->gen;
-		    }
-#endif
 		}
 	      return(p);
 	    }
@@ -13041,8 +13028,26 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
 	{
 	  /* called a lot with locsig -- here all safe, 2 chans, 1 rev mostly (some 4 chans, 0 rev)
 	   */
-	  for (; pos < end; pos++) 
-	    mover(locs, pos, topgf->func(topgf));
+	  if (topgf->func == gf_multiply_g1_g2_g3)
+	    {
+	        mus_float_t (*f1)(void *p);
+		mus_float_t (*f2)(void *p);
+		mus_float_t (*f3)(void *p);
+		gf *g1, *g2, *g3;
+		f1 = topgf->f1;
+		f2 = topgf->f2;
+		f3 = topgf->f3;
+		g1 = (gf *)(topgf->g1);
+		g2 = (gf *)(topgf->g2);
+		g3 = (gf *)(topgf->g3);
+		for (; pos < end; pos++) 
+		  mover(locs, pos, f1(g1) * f2(g2) * f3(g3));
+	    }
+	  else
+	    {
+	      for (; pos < end; pos++) 
+		mover(locs, pos, topgf->func(topgf));
+	    }
 	  (*step) = end;
 	  gf_free(topgf);
 	  return(args);
@@ -14113,6 +14118,25 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 	}
       if (gf1->func)
 	{
+	  if (gf1->func == gf_multiply_op2g1q_x1)
+	    {
+	      gf *g1, *g11, *gen;
+	      mus_float_t x1;
+	      mus_float_t (*func_2)(void *p, mus_float_t x);
+	      mus_float_t (*func)(void *p);
+
+	      x1 = gf1->x1;
+	      g1 = (gf *)(gf1->g1);
+	      g11 = (gf *)(g1->g1);
+	      gen = g1->gen;
+	      func = g11->func;
+	      func_2 = g1->func_2;
+
+	      OUTA_LOOP(x1 * func_2(gen, func(g11)));
+	      gf_free(gf1); 
+	      return(args);
+	    }
+	  
 	  OUTA_LOOP(gf1->func(gf1));
 	  gf_free(gf1); 
 	  return(args);
@@ -14621,6 +14645,39 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 	}
       if (gf1->func)
 	{
+	  if (gf1->func == gf_2_g1)
+	    {
+	      /* (with-sound (:play #t) (white-eyed-vireo 0 .5)) */
+	      gf *g1, *gen;
+	      mus_float_t (*func_2)(void *p, mus_float_t x);
+	      mus_float_t (*func)(void *p);
+	      
+	      gen = (gf *)(gf1->gen);
+	      g1 = (gf *)(gf1->g1);
+	      func = g1->func;
+	      func_2 = gf1->func_2;
+
+	      if (func == gf_multiply_g1_g2)
+		{
+		  mus_float_t (*f11)(void *p);
+		  mus_float_t (*f12)(void *p);
+		  gf *g11, *g12;
+
+		  f11 = g1->f1;
+		  f12 = g1->f2;
+		  g11 = (gf *)(g1->g1);
+		  g12 = (gf *)(g1->g2);
+
+		  OUTA_LOOP(ef(e) * func_2(gen, f11(g11) * f12(g12)));
+		  gf_free(gf1);
+		  return(args);
+		}
+
+	      OUTA_LOOP(ef(e) * func_2(gen, func(g1)));
+	      gf_free(gf1);
+	      return(args);
+	    }
+
 	  OUTA_LOOP(ef(e) * gf1->func(gf1));
 	  gf_free(gf1);
 	  return(args);
@@ -15811,7 +15868,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
   if ((args == 3) &&
       (s7_is_pair(cadr(expr))) &&
       (caadr(expr) == env_symbol) &&
-      (s7_is_symbol(cadr(cadr(expr)))) &&
+      (s7_is_symbol(cadadr(expr))) &&
       (s7_is_pair(caddr(expr))) &&
       (cddr(caddr(expr)) == s7_nil(sc)) &&
       (car(caddr(expr)) == triangle_wave_symbol) &&
@@ -15891,7 +15948,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
     {
       if ((s7_is_pair(cadr(expr))) &&
 	  (caadr(expr) == env_symbol) &&
-	  (s7_is_symbol(cadr(cadr(expr)))) &&
+	  (s7_is_symbol(cadadr(expr))) &&
 	  (s7_is_pair(caddr(expr))))
 	{
 	  if (s7_function_choice(sc, caddr(expr)) == g_fm_violin_with_modulation)
@@ -16047,9 +16104,9 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  
 	  if ((caadr(expr) == subtract_symbol) &&
 	      (s7_list_length(sc, cadr(expr)) == 3) &&
-	      (s7_is_real(cadr(cadr(expr)))) &&
+	      (s7_is_real(cadadr(expr))) &&
 	      (s7_is_symbol(caddr(cadr(expr)))) &&
-	      (s7_number_to_real(sc, cadr(cadr(expr))) == 1.0) &&
+	      (s7_number_to_real(sc, cadadr(expr)) == 1.0) &&
 	      (s7_function_choice_is_direct_to_real(sc, caddr(expr))))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
@@ -17811,7 +17868,7 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       if ((s7_is_pair(cadr(expr))) &&
 	  (caadr(expr) == add_symbol) &&
 	  (s7_list_length(sc, cadr(expr)) == 3) &&
-	  (s7_is_symbol(cadr(cadr(expr)))) &&
+	  (s7_is_symbol(cadadr(expr))) &&
 	  (s7_is_symbol(caddr(cadr(expr)))) &&
 	  (s7_is_pair(caddr(expr))) &&
 	  (s7_function_choice_is_direct(sc, caddr(expr))))

@@ -70,9 +70,8 @@
 ;;;       I prefered to translate Hz into the internal parameter rather than controlling
 ;;;       the cutoff frequency in terms of a number that goes between -1 and 1. 
 
-
+#|
 (defgenerator moog freq Q s y fc gain sig)
-
 
 (define (make-moog-filter frequency Q)
 
@@ -117,4 +116,88 @@
 
 
 ;;; (let ((gen (make-moog-filter 500.0 .1))) (map-channel (lambda (y) (moog-filter gen y))))
+
+|#
+
+;;; faster version?
+
+(defgenerator moog freq Q s0 s1 s2 s3 y fc gain sig)
+
+(define (make-moog-filter frequency Q)
+
+  "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
+'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"
+
+  (let ((frq (envelope-interp (/ frequency (* *clm-srate* 0.5)) moog-freqtable)))
+    (make-moog :freq frequency 
+	       :Q Q 
+	       :y 0.0 :s0 0.0 :s1 0.0 :s2 0.0 :s3 0.0
+	       :fc frq
+	       :gain (* Q (array-interp moog-gaintable (+ 99.0 (* frq 99.0)))))))
+
+
+(define moog-frequency
+  (make-procedure-with-setter
+   (lambda (gen)
+     "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"
+     (gen 'freq))
+   (lambda (gen frq)
+     (let ((fr (envelope-interp (/ frq (* *clm-srate* 0.5)) moog-freqtable)))
+       (set! (gen 'freq) frq)
+       (set! (gen 'fc) fr)
+       (set! (gen 'gain) (* (gen 'Q) (array-interp moog-gaintable (+ 99.0 (* fr 99.0)))))))))
+
+
+(define (moog-filter m sig)
+  ;"(moog-filter m sig) is the generator associated with make-moog-filter"
+  ;  see below for the "saturate" option
+  (environment-set! m 'sig sig)
+  (with-environment m
+    (let ((A (* 0.25 (- sig y)))
+	  (st 0.0))
+
+	(set! st s0)
+	(set! s0 (+ A (* fc (- A st))))
+	(set! A (+ s0 st))
+
+	(set! st s1)
+	(set! s1 (+ A (* fc (- A st))))
+	(set! A (+ s1 st))
+
+	(set! st s2)
+	(set! s2 (+ A (* fc (- A st))))
+	(set! A (+ s2 st))
+
+	(set! st s3)
+	(set! s3 (+ A (* fc (- A st))))
+	(set! A (+ s3 st))
+
+	(set! y (* A gain))
+	A)))
+
+(define (moog-filter-saturated m sig)
+  ;"(moog-filter-saturated m sig) is the generator associated with make-moog-filter with internal saturation"
+  (environment-set! m 'sig sig)
+  (with-environment m
+    (let ((A (* 0.25 (- sig y)))
+	  (st 0.0))
+
+	(set! st s0)
+	(set! s0 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
+	(set! A (min 0.95 (max -0.95 (+ s0 st))))
+
+	(set! st s1)
+	(set! s1 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
+	(set! A (min 0.95 (max -0.95 (+ s1 st))))
+
+	(set! st s2)
+	(set! s2 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
+	(set! A (min 0.95 (max -0.95 (+ s2 st))))
+
+	(set! st s3)
+	(set! s3 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
+	(set! A (min 0.95 (max -0.95 (+ s3 st))))
+
+	(set! y (* A gain))
+	A)))
 

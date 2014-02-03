@@ -2095,7 +2095,7 @@ homogenous float vector functions are currently built-in:
 </pre>
 
 <p>To access a vector's elements with different dimensions than the original had, use 
-<code>(make-shared-vector original-vector new-dimensions)</code>:
+<code>(make-shared-vector original-vector new-dimensions (offset 0))</code>:
 </p>
 
 <pre class="indented">
@@ -2109,8 +2109,6 @@ homogenous float vector functions are currently built-in:
       v2))
 #2D((1 2) (3 4) (5 6))
 </pre>
-
-
 <blockquote>
 
 <div class="indented">
@@ -5416,6 +5414,7 @@ This should be named define-reader-macro.
 <li>case accepts =&gt; much like cond (the function argument is the selector).
 <li>if WITH_SYSTEM_EXTRAS is 1, the following are built-in: directory?, file-exists?, delete-file, system, directory-&gt;list, getenv.
 <li>s7 is case sensitive.
+<li>when and unless (for r7rs), returning the value of the last form.
 </ul>
 
 </div>
