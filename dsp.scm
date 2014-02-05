@@ -1750,11 +1750,13 @@ and replaces it with the spectrum given in coeffs"
 	(pcoeffs (partials->polynomial coeffs))
 	(avgs (make-vector pairs))
 	(peaks (make-vector pairs))
+	(peaks2 (make-vector pairs))
 	(flt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.9)))
 	(old-mx (maxamp))
 	(startup 40)
 	(len (- (or dur (frames snd chn edpos)) beg)))
     (let ((adder (make-float-vector len))
+	  (divider (make-float-vector len))
 	  (summer (make-float-vector len))
 	  (indata (channel->float-vector beg len snd chn edpos)))
       
@@ -1763,6 +1765,7 @@ and replaces it with the spectrum given in coeffs"
 	(let ((aff (* (+ i 1) freq))
 	      (bwf (* bw (+ 1.0 (/ (+ i 1) (* 2 pairs))))))
 	  (set! (peaks i) (make-moving-max 128))
+	  (set! (peaks2 i) (make-moving-max 128))
 	  (set! (avgs i) (make-moving-average 128))
 	  (set! (bands i) (make-bandpass (hz->2pi (- aff bwf)) 
 					 (hz->2pi (+ aff bwf)) 
@@ -1782,15 +1785,25 @@ and replaces it with the spectrum given in coeffs"
 	  ((= pair pairs))
 	(let ((bp (vector-ref bands pair))
 	      (pk (vector-ref peaks pair))
-	      (avg (vector-ref avgs pair))
-	      (sig 0.0)
-	      (mx 0.0))
-	  (fill! adder 0.0)
+	      (pk2 (vector-ref peaks2 pair))
+	      (avg (vector-ref avgs pair)))
+
 	  (do ((k startup (+ k 1)))
 	      ((= k len))
-	    (set! sig (bandpass bp (float-vector-ref indata k)))
-	    (set! mx (moving-max pk sig))
-	    (float-vector-set! adder k (* mx (polynomial pcoeffs (/ sig (moving-average avg (max 0.01 mx)))))))
+	    (float-vector-set! adder k (bandpass bp (float-vector-ref indata k))))
+
+	  (do ((k startup (+ k 1)))
+	      ((= k len))
+	    (float-vector-set! adder k (* (moving-max pk (float-vector-ref adder k)) 
+					  (polynomial pcoeffs (/ (float-vector-ref adder k)
+								 (moving-average avg (max .01 (moving-max pk2 (float-vector-ref adder k)))))))))
+	  ;; TODO: moving-normalize generator
+	  ;; we're normalizing the polynomial input so its "index" is 1.0
+	  ;;   this might work better with len=256, max .1 -- we're assuming a well-behaved signal 
+	  ;;
+	  ;; (define* (make-moving-normalize (len 128) (mx 100.0)) (vector (make-moving-max len) (make-moving-average len) mx))
+	  ;; (define (moving-normalize gen sig) (/ sig (moving-average (gen 1) (moving-max (gen 0) (max (/ (gen 2)) sig)))))
+
 	  (float-vector-add! summer adder)))
 
       (do ((k startup (+ k 1)))
@@ -2138,49 +2151,48 @@ is assumed to be outside -1.0 to 1.0."
 (define* (unclip-channel snd chn)
   "(unclip-channel snd chn) looks for clipped portions and tries to reconstruct the original using LPC"
   (let ((clips 0)                              ; number of clipped portions * 2
-	(unclipped-max 0.0))
+	(unclipped-max 0.0)
+	(len (frames snd chn))
+	(data (channel->float-vector 0 #f snd chn)))
 
     ;; count clipped portions
-    (let ((in-clip #f)
-	  (len (frames snd chn))
-	  (reader (make-sampler 0 snd chn)))
+    (let ((in-clip #f))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(let ((absy (abs (next-sample reader))))
-	  (if (> absy .9999)                    ; this sample is clipped
-	      (if (not in-clip)
-		  (set! in-clip #t))
-	      (begin                            ; not clipped
-		(set! unclipped-max (max unclipped-max absy))
-		(if in-clip
-		    (begin
-		      (set! in-clip #f)
-		      (set! clips (+ clips 2)))))))))
+	(float-vector-set! data i (abs (vector-ref data i))))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(if (> (float-vector-ref data i) .9999)                    ; this sample is clipped
+	    (if (not in-clip)
+		(set! in-clip #t))
+	    (begin                            ; not clipped
+	      (set! unclipped-max (max unclipped-max (float-vector-ref data i)))
+	      (if in-clip
+		  (begin
+		    (set! in-clip #f)
+		    (set! clips (+ clips 2))))))))
 
     (if (> clips 0)                             ; we did find clipped portions
 	(let ((clip-data (make-vector clips 0))  ; clipped portion begin and end points
 	      (clip-beg 0)
 	      (in-clip #f)
 	      (cur-clip 0)
-	      (samp 0)
-	      (len (frames snd chn))
-	      (reader (make-sampler 0 snd chn)))
+	      (samp 0))
 	  (do ((i 0 (+ i 1)))
 	      ((= i len))
-	    (let ((absy (abs (next-sample reader))))
-	      (if (> absy .9999)
-		  (if (not in-clip)
-		      (begin
-			(set! in-clip #t)
-			(set! clip-beg samp)))
-		  (begin                            ; not clipped
-		    (if in-clip                     ; if we were in a clipped portion
-			(begin                      ;   save the bounds in clip-data
-			  (set! in-clip #f)
-			  (set! (clip-data cur-clip) clip-beg)
-			  (set! (clip-data (+ 1 cur-clip)) (- samp 1))
-			  (set! cur-clip (+ cur-clip 2))))))
-	      (set! samp (+ samp 1))))
+	    (if (> (float-vector-ref data i) .9999)
+		(if (not in-clip)
+		    (begin
+		      (set! in-clip #t)
+		      (set! clip-beg samp)))
+		(begin                            ; not clipped
+		  (if in-clip                     ; if we were in a clipped portion
+		      (begin                      ;   save the bounds in clip-data
+			(set! in-clip #f)
+			(set! (clip-data cur-clip) clip-beg)
+			(set! (clip-data (+ 1 cur-clip)) (- samp 1))
+			(set! cur-clip (+ cur-clip 2))))))
+	    (set! samp (+ samp 1)))
 	  
 	  ;; try to restore clipped portions
 	  

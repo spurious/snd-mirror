@@ -13,7 +13,7 @@
  * Currently supported read-only (in selected data formats):
  *      8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, CSL, snack "SMP", PVF,
  *      Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION alaw, MAUD, 
- *      Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF, NVF, quicktime, sox,
+ *      Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF, quicktime, sox,
  *      Sonic Foundry (w64), SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
  *      Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85 and SY99 (buggy), Yamaha TX16W, 
  *      Covox v8, AVI, Kurzweil 2000, Paris Ensoniq, Impulse tracker, Korg, Akai type 4, Maui,
@@ -156,7 +156,9 @@ static const unsigned char I_IMPS[4] = {'I','M','P','S'};  /* Impulse Tracker */
 static const unsigned char I_SMP1[4] = {'S','M','P','1'};  /* Korg */
 static const unsigned char I_Maui[4] = {'M','a','u','i'};  /* Turtle Beach */
 static const unsigned char I_SDIF[4] = {'S','D','I','F'};  /* IRCAM sdif */
+#if G7XX
 static const unsigned char I_NVF_[4] = {'N','V','F',' '};  /* Nomad II Creative NVF */
+#endif
 static const unsigned char I_ajkg[4] = {'a','j','k','g'};  /* shorten */
 static const unsigned char I_RF64[4] = {'R','F','6','4'};  /* EBU RF64 */
 static const unsigned char I_ds64[4] = {'d','s','6','4'};  /* EBU RF64 */
@@ -412,7 +414,9 @@ const char *mus_header_type_name(int type)
     case MUS_SOUNDFORGE:       return("SoundForge");              break;
     case MUS_TWINVQ:           return("TwinVQ");                  break;
     case MUS_SDIF:             return("IRCAM sdif");              break;
+#if G7XX
     case MUS_NVF:              return("Creative NVF");            break;
+#endif
     case MUS_OGG:              return("Ogg Vorbis");              break;
     case MUS_FLAC:             return("Flac");                    break;
     case MUS_SPEEX:            return("Speex");                   break;
@@ -3527,6 +3531,7 @@ static int read_sdif_header(const char *filename, int fd)
 }
 
 
+#if G7XX
 /* ------------------------------------ NVF ------------------------------------ 
  */
 
@@ -3567,6 +3572,7 @@ static int read_nvf_header(const char *filename, int fd)
   if (data_size < 0) return(mus_error(MUS_HEADER_READ_FAILED, "%s: data_size = %lld?", filename, data_size));
   return(MUS_NO_ERROR);
 }
+#endif
 
 
 
@@ -5992,11 +5998,13 @@ static int mus_header_read_1(const char *filename, int fd)
       return(read_sdif_header(filename, fd));
     }
 
+#if G7XX
   if (match_four_chars((unsigned char *)hdrbuf, I_NVF_))
     {
       header_type = MUS_NVF;
       return(read_nvf_header(filename, fd));
     }
+#endif
 
   if (match_four_chars((unsigned char *)hdrbuf, I_TWIN))
     {
@@ -6983,8 +6991,11 @@ bool mus_header_no_header(const char *filename)
 	  (match_four_chars((unsigned char *)hdrbuf, I_SMP1)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_Maui)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_SDIF)) ||
-	  (match_four_chars((unsigned char *)hdrbuf, I_ajkg)) ||
-	  (match_four_chars((unsigned char *)hdrbuf, I_NVF_)));
+	  (match_four_chars((unsigned char *)hdrbuf, I_ajkg)) 
+#if G7XX
+	  || (match_four_chars((unsigned char *)hdrbuf, I_NVF_))
+#endif
+	  );
   return(!ok);
 }
 
@@ -7025,9 +7036,12 @@ bool mus_header_type_p(int n)
     case MUS_YAMAHA_SY85: case MUS_YAMAHA_TX16W: case MUS_DIGIPLAYER: case MUS_COVOX: case MUS_AVI:
     case MUS_OMF: case MUS_QUICKTIME: case MUS_ASF: case MUS_YAMAHA_SY99: case MUS_KURZWEIL_2000: 
     case MUS_AIFF: case MUS_PAF: case MUS_CSL: case MUS_FILE_SAMP: case MUS_PVF: case MUS_SOUNDFORGE: 
-    case MUS_TWINVQ: case MUS_AKAI4: case MUS_IMPULSETRACKER: case MUS_KORG: case MUS_NVF: case MUS_CAFF: 
+    case MUS_TWINVQ: case MUS_AKAI4: case MUS_IMPULSETRACKER: case MUS_KORG: case MUS_CAFF: 
     case MUS_MAUI: case MUS_SDIF: case MUS_OGG: case MUS_FLAC: case MUS_SPEEX: case MUS_MPEG: 
     case MUS_SHORTEN: case MUS_TTA: case MUS_WAVPACK:  
+#if G7XX
+    case MUS_NVF: 
+#endif
       return(true);
       break;
     }

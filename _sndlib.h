@@ -82,6 +82,8 @@
 #define MUS_OSS_API 1
 #define MUS_JACK_API 2
 
+#define G7XX 0
+
 #include "sndlib.h"
 #include "xen.h"
 #include "vct.h"

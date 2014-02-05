@@ -2750,8 +2750,9 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
       sfs = sc->sfs;
       if (dur > MAX_BUFFER_SIZE)
 	{
-	  alloc_len = MAX_BUFFER_SIZE;
 	  io_error_t io_err = IO_NO_ERROR;
+
+	  alloc_len = MAX_BUFFER_SIZE;
 	  temp_file = true; 
 	  ofile = snd_tempnam(); 
 	  hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur, (char *)origin);
@@ -3973,10 +3974,11 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
   /* not temp_file -- use resizable buffer */
   int i, data_pos = 0, kp;
   mus_long_t cur_size;
-  mus_float_t *data = NULL, *in_data;
+  mus_float_t *data = NULL;
   XEN res = XEN_FALSE;
 
 #if HAVE_SCHEME
+  mus_float_t *in_data;
   int gc_loc;
   bool use_apply;
   s7_pointer arg_list, source, arg, body, e, slot;

@@ -1,5 +1,6 @@
 /* translate various special case sound files to something we can edit 
- * 
+ *   (this code is going away...)
+ *
  * I'm ignoring proprietary or licensed schemes even where the code is publicly available (Rockwell ADPCM, etc)
  *
  * currently supported:
@@ -12,7 +13,6 @@
  *   Oki (Dialogic) ADPCM (RIFF)
  *   IBM ADPCM (as per Perry Cook)
  *   Yamaha TX-16 12-bit
- *   NeXT/Sun G721, G723 3 and 5 bit versions (also RIFF) (AIFC cases could be handled if they exist)
  *
  *   libavcodec has an amazing number of decoders -- are these useful in this context?
  *   also libmpcodecs (available with MPlayer)
@@ -821,7 +821,7 @@ static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
 
 /* -------------------------------- Intel ADPCM --------------------------------
  *
- * described in detail Microsoft RIFF docs.  This code assumes bits = 4.
+ * described in detail in the Microsoft RIFF docs.  This code assumes bits = 4.
  * in 'wave' file, these are stored as block_align sized blocks, each with a
  * header storing the current state.  These can be multi-channel, but we're handling
  * only mono until someone complains.  See also Apple Tech note 1081 by Mark Cookson.
@@ -1070,6 +1070,7 @@ static int read_12bit(const char *oldname, const char *newname, char *hdr)
 }
 
 
+#if G7XX
 /*  -------------------------------- G721 and G723 from Sun --------------------------------
  * code boiled down considerably here since I have no love of compression schemes.
  */
@@ -1478,6 +1479,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
   if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
 }
+#endif
 
 
 
@@ -1485,16 +1487,20 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
 
 #define RIFF_Intel_ADPCM 0x11
 #define RIFF_Oki_ADPCM 0x10
+#define RIFF_MS_ADPCM 2
+#define RIFF_IBM_ADPCM 0x103
+
+#if G7XX
 #define RIFF_G723 0x14
 #define RIFF_MS_G723 0x42
 #define RIFF_Lucent_G723 0x59
 #define RIFF_Vivo_G723 0x111
 #define RIFF_G721 0x40
-#define RIFF_MS_ADPCM 2
-#define RIFF_IBM_ADPCM 0x103
+
 #define NeXT_G721 23
 #define NeXT_G723 25
 #define NeXT_G723_5 26
+#endif
 
 static int MUS_CANT_TRANSLATE = 0;
 
@@ -1550,9 +1556,11 @@ int snd_translate(const char *oldname, const char *newname, int type)
       err = read_12bit(oldname, newname, hdr); 
       break;
 
+#if G7XX
     case MUS_NVF: 
       err = read_g72x_adpcm(oldname, newname, hdr, 0); 
       break;
+#endif
 
     case MUS_RF64:
     case MUS_RIFF:
@@ -1570,6 +1578,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
 	  err = read_oki_adpcm(oldname, newname, hdr); 
 	  break;
 
+#if G7XX
 	case RIFF_G721: 
 	  err = read_g72x_adpcm(oldname, newname, hdr, 0); 
 	  break; /* untested */
@@ -1581,6 +1590,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
 	    if (mus_sound_bits_per_sample(oldname) == 5)
 	      err = read_g72x_adpcm(oldname, newname, hdr, 2);
 	  break;
+#endif
 	}
       break;
 
@@ -1589,6 +1599,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
 	err = read_nist_shortpack(oldname, newname, hdr); 
       break;
 
+#if G7XX
     case MUS_NEXT:
       switch (mus_sound_original_format(oldname))
 	{
@@ -1597,6 +1608,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
 	case NeXT_G723_5: err = read_g72x_adpcm(oldname, newname, hdr, 2); break;
 	}
       break;
+#endif
 
     case MUS_AIFC:
       if (mus_sound_original_format(oldname) == MUS_AIFF_IMA_ADPCM) 

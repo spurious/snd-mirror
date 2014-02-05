@@ -540,7 +540,7 @@ static s7_pointer vct_set_three;
 static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
 {
   vct *v;
-  v = (vct *)car(args);
+  v = (vct *)car(args); /* TODO: this is not right! all of these forget the vct_tag check. */
   if (v)
     {
       mus_long_t loc;
@@ -552,10 +552,6 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
       val = caddr(args);
-#if (!HAVE_SCHEME)
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_vct_setB, "a real number");
-#endif
-      
       d = mus_vct_data(v);
       d[loc] = XEN_TO_C_DOUBLE(val);
       return(val);
@@ -739,7 +735,7 @@ static s7_pointer g_vct_set_temp(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer multiply_symbol, vector_ref_symbol, env_symbol;
 
-
+mus_float_t gf_2_g1(void *p);
 static s7_pointer vct_set_direct_looped;
 static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -790,9 +786,9 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
       gf1 = find_gf(sc, val);
       if (gf1)
 	{
+	  mus_long_t dist;
 	  if (gf1->func_1)
 	    {
-	      mus_long_t dist;
 	      void *gen;
 	      mus_float_t (*func)(void *p);
 	      gen = gf1->gen;
@@ -813,10 +809,33 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	    }
 	  if (gf1->func)
 	    {
+	      mus_float_t (*func)(void *p);
+
+	      if (gf1->func == gf_2_g1)
+		{
+		  gf *g1, *gen;
+		  mus_float_t (*func_2)(void *p, mus_float_t x);
+	      
+		  gen = (gf *)(gf1->gen);
+		  g1 = (gf *)(gf1->g1);
+		  func = g1->func;
+		  func_2 = gf1->func_2;
+
+		  for (; pos < end; pos++)
+		    {
+		      (*step) = pos;
+		      d[pos] = func_2(gen, func(g1));
+		    }
+		  (*step) = end;
+		  gf_free(gf1);
+		  return(args);
+		}
+
+	      func = gf1->func;
 	      for (; pos < end; pos++)
 		{
 		  (*step) = pos;
-		  d[pos] = gf1->func(gf1);
+		  d[pos] = func(gf1);
 		}
 	      (*step) = end;
 	      gf_free(gf1);

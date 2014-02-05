@@ -69217,7 +69217,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   9    8.5  8.5
  * lat        229|    63   52   47   42   40   34   31   29|  29   29.4 30.4
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.4 13.6
- * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 41.8
+ * calls      359|   275  207  175  115   89   71   53   53|  54   49.5 41.1
  *            153 with run macro (eval_ptree)
  */
 
@@ -69230,11 +69230,13 @@ int main(int argc, char **argv)
  * cmn->scm+gtk?
  * for-each over sound(etc) -> sampler, similarly member/map
  *
- * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
  * it would be nice if TAB completion could complete keyword args correctly
  *   look back to "(", car->lambda*, complete based on arglist (why didn't this work in ws?)
  *   argnames as keywords are implicit, not in the symbol table, so this completion fails only the first time
  * help info for *-float-vector-* still uses vct
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
+ * snd-trans.c could be folded into sound.c or somewhere.
+ * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
+ *  (file->sample fil ctr 0), (ina i invals)
  */
 

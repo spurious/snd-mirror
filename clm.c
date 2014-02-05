@@ -5238,7 +5238,8 @@ mus_any *mus_make_moving_average(int size, mus_float_t *line)
 }
 
 
-/* moving-max */
+/* -------- moving-max -------- */
+
 bool mus_moving_max_p(mus_any *ptr) 
 {
   return((ptr) && 
@@ -13924,7 +13925,7 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
 	  fftw_destroy_plan(c_r_plan); 
 	  fftw_destroy_plan(c_i_plan);
 	}
-      c_in_data = (fftw_complex *)fftw_malloc(n * sizeof(fftw_complex));
+      c_in_data = (fftw_complex *)fftw_malloc(n * sizeof(fftw_complex)); /* rl/im data is double */
       c_out_data = (fftw_complex *)fftw_malloc(n * sizeof(fftw_complex));
       c_r_plan = fftw_plan_dft_1d(n, c_in_data, c_out_data, FFTW_FORWARD, FFTW_ESTIMATE); 
       c_i_plan = fftw_plan_dft_1d(n, c_in_data, c_out_data, FFTW_BACKWARD, FFTW_ESTIMATE);
@@ -13938,6 +13939,7 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
       /* adding code to avoid this loop saves essentially nothing, mainly because the great majority of the calls
        *   are actually handling two real arrays at once -- the imag=0 case is 1/10 of the total.  In the zero case,
        *   the savings here is about 10%, but that is swamped by the fft itself (say 5-10 in c*).
+       * using the new split array code (see below) saves essentially nothing -- perhaps 1 to 2% overall.
        */
       c_in_data[i] = rl[i] + _Complex_I * im[i];
       i++;
@@ -13977,6 +13979,53 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
       im[i] = cimag(c_out_data[i]);
     }
 }
+
+
+#if 0
+/* here is the new (fftw3) form -- there is still a scaling issue somewhere, 
+ * but I didn't chase it because the savings is not large enough to matter 
+ */
+static double *rdata, *idata;
+static fftw_plan r_plan, i_plan;  
+static int last_c_fft_size = 0;  
+static fftw_iodim dims[1];
+
+static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
+{
+  if (n != last_c_fft_size)
+    {
+      dims[0].n = n;
+      dims[0].is = 1;
+      dims[0].os = 1;
+      if (rdata) 
+	{
+	  fftw_free(rdata); 
+	  fftw_free(idata); 
+	  fftw_destroy_plan(r_plan); 
+	}
+      rdata = (double *)fftw_malloc(n * sizeof(double));
+      idata = (double *)fftw_malloc(n * sizeof(double));
+      r_plan = fftw_plan_guru_split_dft(1, (const fftw_iodim *)dims, 0, NULL, rdata, idata, rdata, idata, FFTW_ESTIMATE); 
+      last_c_fft_size = n;
+    }
+  if (dir == 1)
+    {
+      memcpy((void *)rdata, (void *)rl, n * sizeof(double));
+      memcpy((void *)idata, (void *)im, n * sizeof(double));
+      fftw_execute_split_dft(r_plan, rdata, idata, rdata, idata);
+      memcpy((void *)rl, (void *)rdata, n * sizeof(double));
+      memcpy((void *)im, (void *)idata, n * sizeof(double));
+    }
+  else 
+    {
+      memcpy((void *)idata, (void *)rl, n * sizeof(double));
+      memcpy((void *)rdata, (void *)im, n * sizeof(double));
+      fftw_execute_split_dft(r_plan, rdata, idata, rdata, idata);
+      memcpy((void *)rl, (void *)idata, n * sizeof(double));
+      memcpy((void *)im, (void *)rdata, n * sizeof(double));
+    }
+}
+#endif
 
 
 void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
@@ -15794,10 +15843,12 @@ static mus_float_t run_hilbert(flt *gen, mus_float_t input)
   (*state) = input;
   (*ts) = input;
   state += 2;
-  end = (mus_float_t *)(state + 16);
+  end = (mus_float_t *)(state + 20);
 
   while (ts > end)
     {
+      xout += (*ts) * (*x); ts -= 2; x += 2;
+      xout += (*ts) * (*x); ts -= 2; x += 2;
       xout += (*ts) * (*x); ts -= 2; x += 2;
       xout += (*ts) * (*x); ts -= 2; x += 2;
       xout += (*ts) * (*x); ts -= 2; x += 2;

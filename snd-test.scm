@@ -1738,8 +1738,8 @@
 	  (list "digit0v0.aiff" 1 8000 0.560000002384186 "AIFC" "big endian short (16 bits)")
 	  (list "esps-16.snd" 1 8000 3.09737491607666 "ESPS" "big endian short (16 bits)")
 	  (list "forest.aiff" 2 44100 3.907143 "AIFF" "big endian short (16 bits)" 24981 144332)
-	  (list "g721.au" 1 11025 4.35328817367554 "Sun/Next" "unknown")
-	  (list "g722.aifc" 1 44100 0.0184353739023209 "AIFC" "unknown")
+;	  (list "g721.au" 1 11025 4.35328817367554 "Sun/Next" "unknown")
+;	  (list "g722.aifc" 1 44100 0.0184353739023209 "AIFC" "unknown")
 	  (list "gong.wve" 1 8000 3.96799993515015 "PSION" "alaw (8 bits)")
 	  (list "gsm610.wav" 1 11025 1.7687075138092 "RIFF" "unknown")
 	  (list "inrs-16.snd" 1 8000 2.46399998664856 "INRS" "little endian short (16 bits)")
@@ -1788,11 +1788,11 @@
 	  (list "o2.wave" 1 44100 0.0367800444364548 "RIFF" "little endian short (16 bits)")
 	  (list "o2_12bit.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian short (16 bits)")
 	  (list "o2_18bit.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian int (24 bits)")
-	  (list "o2_711u.wave" 1 44100 0.0367800444364548 "RIFF" "mulaw (8 bits)")
-	  (list "o2_722.snd" 1 44100 0.0183900222182274 "Sun/Next" "unknown")
-	  (list "o2_726.aiff" 1 8000 0.0367499999701977 "AIFC" "unknown")
-	  (list "o2_726.snd" 1 44100 0.0230158735066652 "Sun/Next" "unknown")
-	  (list "o2_728.aiff" 1 8000 0.0367499999701977 "AIFC" "unknown")
+;	  (list "o2_711u.wave" 1 44100 0.0367800444364548 "RIFF" "mulaw (8 bits)")
+;	  (list "o2_722.snd" 1 44100 0.0183900222182274 "Sun/Next" "unknown")
+;	  (list "o2_726.aiff" 1 8000 0.0367499999701977 "AIFC" "unknown")
+;	  (list "o2_726.snd" 1 44100 0.0230158735066652 "Sun/Next" "unknown")
+;	  (list "o2_728.aiff" 1 8000 0.0367499999701977 "AIFC" "unknown")
 	  (list "o2_8.iff" 1 44100 0.0367800444364548 "SVX8" "signed byte (8 bits)")
 	  (list "o2_8.voc" 1 44100 0.0370294786989689 "VOC" "unsigned byte (8 bits)")
 	  (list "o2_dvi.wave" 1 44100 0.0232199542224407 "RIFF" "unknown")
@@ -1801,9 +1801,9 @@
 	  (list "o2_u8.avr" 1 44100 0.0367800444364548 "AVR" "unsigned byte (8 bits)")
 	  (list "o2_u8.wave" 1 44100 0.0367800444364548 "RIFF" "unsigned byte (8 bits)")
 	  (list "o28.mpc" 1 44100 0.036780 "AKAI 4" "little endian short (16 bits)")
-	  (list "oboe.g721" 1 22050 1.15287983417511 "Sun/Next" "unknown")
-	  (list "oboe.g723_24" 1 22050 0.864761888980865 "Sun/Next" "unknown")
-	  (list "oboe.g723_40" 1 22050 1.44126987457275 "Sun/Next" "unknown")
+;	  (list "oboe.g721" 1 22050 1.15287983417511 "Sun/Next" "unknown")
+;	  (list "oboe.g723_24" 1 22050 0.864761888980865 "Sun/Next" "unknown")
+;	  (list "oboe.g723_40" 1 22050 1.44126987457275 "Sun/Next" "unknown")
 	  (list "oboe.kts" 1 22050 2.305125 "Korg" "big endian short (16 bits)")
 	  (list "oboe.its" 1 22050 2.305125 "Impulse Tracker" "little endian short (16 bits)")
 	  (list "oboe.sf2" 1 22050 2.30512475967407 "SoundFont" "little endian short (16 bits)")
@@ -1816,7 +1816,7 @@
 	  (list "oboe-lf32.caf" 1 22050 2.305125 "caff" "little endian float (32 bits)")
 	  (list "oboe-ulaw.caf" 1 22050 2.305125 "caff" "mulaw (8 bits)")
 	  (list "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)")
-	  (list "oboe.nvf" 1 8000 6.353500 "Creative NVF" "unknown")
+;	  (list "oboe.nvf" 1 8000 6.353500 "Creative NVF" "unknown")
 	  (list "oboe-ulaw.voc" 1 22050 2.305669 "VOC" "mulaw (8 bits)")
 	  (list "oboe-lf32.sf" 1 22050 2.305669 "IRCAM" "little endian float (32 bits)")
 	  (list "oboe.wfp" 1 22050 2.305125 "Turtle Beach" "little endian short (16 bits)")
@@ -2253,8 +2253,8 @@
 		       'add-player 'add-sound-file-extension 'add-source-file-extension 'add-to-main-menu 'add-to-menu
 		       'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
 		       'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
-		       'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate 'analyse-ladspa
-		       'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit 'ask-about-unsaved-edits
+		       'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate
+		       'apply-controls 'array->file 'array-interp 'as-one-edit 'ask-about-unsaved-edits
 		       'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
 		       'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 'autocorrelation
 		       'axis-color 'axis-info 'axis-label-font 'axis-numbers-font
@@ -2320,15 +2320,15 @@
 		       'hann-poisson-window 'hann-window 'header-type 'help-dialog
 		       'help-hook 'hide-widget 'highlight-color 'html-dir 'html-program
 		       'hz->radians 'iir-filter 'iir-filter? 'in 'in-any
-		       'ina 'inb 'info-dialog 'info-popup-hook 'init-ladspa 'initial-graph-hook
+		       'ina 'inb 'info-dialog 'info-popup-hook 'initial-graph-hook
 		       'insert-file-dialog 'insert-region 'insert-sample 'insert-samples 'insert-samples-with-origin
 		       'insert-selection 'insert-silence 'insert-sound 'just-sounds 'kaiser-window
 		       'key 'key-binding 'key-press-hook 'keyboard-no-action  'peak-env-dir
 ;		       'ladspa-activate 'ladspa-cleanup 'ladspa-connect-port 'ladspa-deactivate 'ladspa-descriptor 'ladspa-dir
-;		       'ladspa-instantiate 'ladspa-run 'ladspa-run-adding 'ladspa-set-run-adding-gain 
+;		       'ladspa-instantiate 'ladspa-run 'ladspa-run-adding 'ladspa-set-run-adding-gain 'list-ladspa 'init-ladspa 'apply-ladspa 'analyse-ladspa
 		       'left-sample
 		       'linear->db 'lisp-graph 'lisp-graph-hook 'lisp-graph-style 'lisp-graph?
-		       'list-ladspa 'listener-click-hook 'listener-color 'listener-font
+		       'listener-click-hook 'listener-color 'listener-font
 		       'listener-prompt 'listener-selection 'listener-text-color 'little-endian? 'locsig
 		       'locsig-ref 'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
 		       'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
@@ -3217,7 +3217,7 @@
 			(fneq (sample 8000 ind 1) 0.021))
 		    (snd-display #__line__ ";aifc fl64 trouble: ~A ~A" (sample 8000 ind 0) (sample 8000 ind 1)))
 		(close-sound ind))))
-	
+
 	(for-each (lambda (n vals)
 		    (let ((val (catch #t (lambda () 
 					   (list (mus-sound-chans n)
@@ -3407,7 +3407,7 @@
 	      (snd-display #__line__ ";fill! sd chan 1: ~A" (sd 1)))
 	  (let ((sd1 (copy sd)))
 	    (if (not (equal? sd sd1)) (snd-display #__line__ ";copy sd: ~A ~A" sd sd1))))
-	
+
 	(for-each
 	 (lambda (file)
 	   (let ((tag (catch #t
@@ -3446,7 +3446,7 @@
 				(vector-set! sd1 1 2 2.0)
 				sd1)))
 	      (snd-display #__line__ ";vector2 set (3) not equal: ~A" sd)))
-	
+
 	(for-each 
 	 (lambda (chans)
 	   (for-each 
@@ -3813,8 +3813,8 @@
 	  
 	  (test-data (string-append sf-dir "nist-shortpack.wav") 10000 10 (float-vector 0.021 0.018 0.014 0.009 0.004 -0.001 -0.004 -0.006 -0.007 -0.008))
 	  (test-data (string-append sf-dir "wood.sds") 1000 10 (float-vector -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
-	  (test-data (string-append sf-dir "oboe.g721") 1000 10 (float-vector -0.037 -0.040 -0.040 -0.041 -0.042 -0.038 -0.028 -0.015 -0.005 0.002))
-	  (test-data (string-append sf-dir "oboe.g723_40") 1000 10 (float-vector -0.037 -0.040 -0.041 -0.041 -0.041 -0.038 -0.028 -0.015 -0.005 0.003))
+;	  (test-data (string-append sf-dir "oboe.g721") 1000 10 (float-vector -0.037 -0.040 -0.040 -0.041 -0.042 -0.038 -0.028 -0.015 -0.005 0.002))
+;	  (test-data (string-append sf-dir "oboe.g723_40") 1000 10 (float-vector -0.037 -0.040 -0.041 -0.041 -0.041 -0.038 -0.028 -0.015 -0.005 0.003))
 	  (test-data (string-append sf-dir "mus10.snd") 10000 10 (float-vector 0.004 0.001 0.005 0.009 0.017 0.015 0.008 0.011 0.009 0.012))
 	  (test-data (string-append sf-dir "ieee-text-16.snd") 1000 10 (float-vector -0.052 -0.056 -0.069 -0.077 -0.065 -0.049 -0.054 -0.062 -0.066 -0.074))
 	  (test-data (string-append sf-dir "hcom-16.snd") 10000 10 (float-vector 0.000 0.000 0.000 0.008 0.000 -0.016 -0.016 -0.016 -0.008 0.000))
@@ -4096,7 +4096,7 @@
 	      (snd-display #__line__ ";ramp env by .1: ~A" (channel->float-vector)))
 	  (close-sound ind))
 	))
-    
+
     (set! (hook-functions open-raw-sound-hook) ())
     (hook-push open-raw-sound-hook (lambda (hook) (set! (hook 'result) #t)))
     (set! (hook-functions bad-header-hook) ())
@@ -4113,7 +4113,7 @@
 			      "SND " "SNIN" "SNDT" "DDSF" "FSMu" "UWFD" "LM89" "SY80" "SY85" "SCRS" "DSPL"
 			      "AVI " "strf" "movi" "PRAM" " paf" "fap " "DS16" "HEDR" "HDR8" "SDA_" "SDAB"
 			      "SD_B" "NOTE" "file" "=sam" "SU7M" "SU7R" "PVF1" "PVF2" "AUTH" "riff" "TWIN"
-			      "IMPS" "SMP1" "Maui" "SDIF" "NVF "))
+			      "IMPS" "SMP1" "Maui" "SDIF"))
 	   (len (length magic-words))
 	   (ctr 0))
       (for-each
@@ -4182,6 +4182,7 @@
     (if (file-exists? "test.snd") (delete-file "test.snd"))
     (mus-sound-forget "test.snd")
     
+
     (with-output-to-file "test.snd"
       (lambda ()
 	(display ".snd")
@@ -4219,30 +4220,7 @@
 	    (close-sound tag))))
     (delete-file "test.snd")
     (mus-sound-forget "test.snd")
-    (with-output-to-file "test.snd"
-      (lambda ()
-	(display ".snd")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o034) ; location
-	(write-byte #o000) (write-byte #o001) (write-byte #o215) (write-byte #o030) ; nominal size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o122) ; format
-	(write-byte #o000) (write-byte #o000) (write-byte #o126) (write-byte #o042) ; srate
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o001) ; chans
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; comment
-	(write-byte #o000) (write-byte #o001) ; samp 1
-	))
-    
-    (let ((tag (catch #t
-		      (lambda ()
-			(open-sound "test.snd"))
-		      (lambda args (car args)))))
-      (if (and (number? tag)
-	       (sound? tag))
-	  (begin
-	    (snd-display #__line__ ";open-sound next bad format ~A: ~A?" (data-format tag) tag)
-	    (close-sound tag))))
-    (delete-file "test.snd")
-    (mus-sound-forget "test.snd")
-    
+
     (letrec ((make-aifc-file 
 	      (lambda (len auth-lo bits)
 		(with-output-to-file "test.aif"
@@ -4278,6 +4256,7 @@
       (mus-sound-forget "test.aif")
       ;;correct (make-aifc-file #o002 #o004 #o020)
       (make-aifc-file #o102 #o004 #o020)
+
       (catch #t
 	     (lambda ()
 	       (let ((ind (open-sound "test.aif")))
@@ -4299,6 +4278,7 @@
       (delete-file "test.aif")
       (mus-sound-forget "test.aif")
       (make-aifc-file #o002 #o000 #o020)
+
       (let ((tag (catch #t
 			(lambda ()
 			  (open-sound "test.aif"))
@@ -4322,6 +4302,7 @@
 	      (close-sound tag))))
       (delete-file "test.aif")
       (mus-sound-forget "test.aif"))
+
     (with-output-to-file "test.aif"
       (lambda ()
 	(display "FORM")
@@ -4393,6 +4374,7 @@
 	(display "bil")
 	(write-byte #o000)
 	))
+
     (catch #t
 	   (lambda ()
 	     (if (not (string=? (substring (mus-sound-comment "test.aif") 0 3) "bil"))
@@ -4484,6 +4466,7 @@
 	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
 	(write-byte #o000) (write-byte #o101) (write-byte #o000) (write-byte #o100) ; two samples
 	))
+
     (let ((tag (catch #t
 		      (lambda ()
 			(open-sound "test.aif"))
@@ -4578,7 +4561,7 @@
 	   (lambda args (snd-display #__line__ ";~S" args)))
     (delete-file "test.aif")
     (mus-sound-forget "test.aif")
-    
+
     (with-output-to-file "test.aif"
       (lambda ()
 					;write AIFC with trailing chunks to try to confuse file->sample
@@ -4678,7 +4661,7 @@
 	   (lambda args (snd-display #__line__ ";~S" args)))
     (delete-file "test.aif")
     (mus-sound-forget "test.aif")
-    
+
     (let ((files (sound-files-in-directory cwd)))
       (if (null? files) (snd-display #__line__ ";no sound files in ~A?" cwd))
       (let ((files1 (sound-files-in-directory)))
@@ -10655,7 +10638,7 @@ EDITS: 2
       (let ((r (make-sampler 0 snd chn 1 curpos))
 	    (mx 0.0))
 	(scan-channel (lambda (y) 
-			(set! mx (max mx (abs (- y (r))))))
+			(set! mx (max mx (abs (- y (next-sample r))))))
 		      0 #f snd chn)
 	mx)))
   
@@ -11899,6 +11882,20 @@ EDITS: 2
 	     (* csin yh)))))
   
   ;; ----------------
+#|
+  (define (rough-spectrum ind)
+    (let ((r (make-sampler 0 ind 0))
+	  (spect (make-float-vector 10)))
+      (do ((i 0 (+ i 1)))
+	  ((= i 10))
+	(let ((g (make-moving-average 1001)))
+	  (set! (mus-increment g) 1.0)
+	  (do ((j 0 (+ j 1))
+	       (x (read-sample r) (read-sample r)))
+	      ((= j 999) (float-vector-set! spect i (moving-average g (* x x))))
+	    (moving-average g (* x x)))))
+      (float-vector-scale! spect (/ 1.0 (float-vector-peak spect)))))
+|#
   (define (rough-spectrum ind)
     (let ((r (make-sampler 0 ind 0))
 	  (spect (make-float-vector 10)))
@@ -11907,7 +11904,7 @@ EDITS: 2
 	(let ((sum 0.0))
 	  (do ((j 0 (+ j 1)))
 	      ((= j 1000))
-	    (let ((val (r)))
+	    (let ((val (next-sample r)))
 	      (set! sum (+ sum (* val val)))))
 	  (set! (spect i) sum)))
       (float-vector-scale! spect (/ 1.0 (float-vector-peak spect)))))
@@ -14665,7 +14662,7 @@ EDITS: 2
 	(do ((i 1 (+ i 1)))
 	    ((= i 256))
 	  (if (< (abs (- 1.0 (spectr1 i))) .01) (set! s1-loc i)))
-	(if (not (= s2-loc s1-loc)) (snd-print (format #f "asymmetric-fm set r peaks: ~A ~A" s1-loc s2-loc)))
+	(if (not (= s2-loc s1-loc)) (snd-display #__line__ ";asymmetric-fm set r peaks: ~A ~A" s1-loc s2-loc))
 	(do ((i 0 (+ i 1)))
 	    ((= i 2048))
 	  (set! (float-vector0 i) (asymmetric-fm gen3 2.0 0.0)))
@@ -14673,7 +14670,7 @@ EDITS: 2
 	(do ((i 1 (+ i 1)))
 	    ((= i 256))
 	  (if (< (abs (- 1.0 (float-vector0 i))) .01) (set! s1-loc i)))
-	(if (not (= s2-loc s1-loc)) (snd-print (format #f "asymmetric-fm set r in place peaks: ~A ~A" s1-loc s2-loc)))))
+	(if (not (= s2-loc s1-loc)) (snd-display #__line__ "asymmetric-fm set r in place peaks: ~A ~A" s1-loc s2-loc))))
     
     (let ((gen (make-asyfm :frequency 2000 :ratio .1))) 
       (asyfm-I gen 0.0))
@@ -24719,9 +24716,9 @@ EDITS: 2
 		  (close-sound fd))
 		
 		(set! (hook-functions bad-header-hook) ())
-		(time (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_24") 20.0))
-		(test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_40") 3.0)
-		(test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g721") 6.0)
+;		(time (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_24") 20.0))
+;		(test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_40") 3.0)
+;		(test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g721") 6.0)
 		(test-spectral-difference (string-append sf-dir "o2.wave") (string-append sf-dir "o2_dvi.wave") 10.0)
 		(test-spectral-difference (string-append sf-dir "wood.riff") (string-append sf-dir "wood.sds") 4.0)
 		(test-spectral-difference (string-append sf-dir "nist-10.wav") (string-append sf-dir "nist-shortpack.wav") 1.0)
@@ -26881,29 +26878,23 @@ EDITS: 2
 		(hook-remove graph-hook display-correlation)))
 	  (set! (lisp-graph?) #f)
 	  (map-chan 
-	   (let ((sum-of-squares 0.0)
-		 (buffer (make-float-vector 128 0.0))
-		 (position 0)
+	   (let ((buffer (make-delay 128))
+		 (gen (make-moving-average 128))
 		 (current-sample 0)
 		 (chan-samples (frames)))
+	     (set! (mus-feedback gen) 1.0)
 	     (lambda (y)
-	       (let ((old-y (buffer position)))
-		 (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
-		 (set! (buffer position) y)
-		 (set! position (+ 1 position))
-		 (if (= position 128) (set! position 0))
+	       (let ((old-y (delay buffer y)))
 		 (set! current-sample (+ 1 current-sample))
-		 (if (> sum-of-squares .01)
+		 (if (> (moving-average gen (* y y)) .01)
 		     (if (= current-sample chan-samples)
 			 ;; at end return trailing samples as long as it looks like sound
-			 (let ((temp-buffer (make-float-vector 128 0.0)))
-			   (do ((i 0 (+ i 1)))
-			       ((= i 128) temp-buffer)
-			     (let ((final-y (buffer position)))
-			       (set! (temp-buffer i) (if (> sum-of-squares .01) final-y 0.0))
-			       (set! sum-of-squares (- sum-of-squares (* final-y final-y)))
-			       (set! position (+ 1 position))
-			       (if (= position 128) (set! position 0)))))
+			 (let ((temp-buffer (make-delay 128)))
+			   (do ((i 0 (+ i 1))
+				(fy (delay buffer 0.0) (delay buffer 0.0)))
+			       ((= i 128) 
+				(mus-data temp-buffer))
+			     (delay temp-buffer (if (> (moving-average gen 0.0) .01) fy 0.0))))
 			 old-y)
 		     #f)))))
 	  
@@ -30193,7 +30184,7 @@ EDITS: 2
 			   vals "map-channel 3 14")
 	  (map-channel (let ((reader (make-sampler 50)))
 			 (lambda (y)
-			   (- y (reader))))
+			   (- y (next-sample reader))))
 		       0 25)
 	  (do ((i 0 (+ i 1))
 	       (j 50 (+ j 1)))
@@ -42456,7 +42447,7 @@ EDITS: 1
 					(snd-display #__line__ ";XtWarning: ~A" n))))
 	  (XtAppSetWarningMsgHandler (car (main-widgets)) 
 				     (lambda (name type klass def pars num)
-				       (snd-print (format #f ";ignore: ~A ~A ~A~%" name def pars))))
+				       (snd-display #__line__ ";ignore: ~A ~A ~A~%" name def pars)))
 	  
 	  (let ((listener ((main-widgets) 4)))
 	    (XtCallActionProc listener "text-transpose" (XEvent) #f 0)
@@ -45478,8 +45469,7 @@ EDITS: 1
 					   (lambda ()
 					     (n arg))
 					   (lambda args (car args)))))
-				    (if (and with-gui
-					     (not (eq? tag 'wrong-type-arg))
+				    (if (and (not (eq? tag 'wrong-type-arg))
 					     (not (eq? tag 'mus-error)))
 					(snd-display #__line__ ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
 				(list amp-control apply-controls close-sound comment contrast-control 
@@ -45502,8 +45492,7 @@ EDITS: 1
 					   (lambda ()
 					     (set! (n arg) 0))
 					   (lambda args (car args)))))
-				    (if (and with-gui
-					     (not (eq? tag 'wrong-type-arg))
+				    (if (and (not (eq? tag 'wrong-type-arg))
 					     (not (eq? tag 'syntax-error))
 					     (not (eq? tag 'error)))
 					(snd-display #__line__ ";snd set wrong-type-arg: ~A: ~A ~A" n tag arg))))
@@ -45526,7 +45515,7 @@ EDITS: 1
 					     (lambda ()
 					       (set! (n index) arg))
 					     (lambda args (car args)))))
-				      (if (and with-gui (not (eq? tag 'wrong-type-arg)))
+				      (if (not (eq? tag 'wrong-type-arg))
 					  (snd-display #__line__ ";snd safe set wrong-type-arg: ~A ~A ~A" n tag arg))))
 				  (list amp-control contrast-control contrast-control-amp contrast-control? expand-control 
 					amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
@@ -46057,8 +46046,7 @@ EDITS: 1
 			       (lambda ()
 				 (set! (n) float-vector-5))
 			       (lambda args (car args)))))
-			(if (and with-gui
-				 (not (eq? tag 'wrong-type-arg))
+			(if (and (not (eq? tag 'wrong-type-arg))
 				 (not (eq? tag 'syntax-error))
 				 (not (eq? tag 'error)))
 			    (snd-display #__line__ "; misc procs ~A: ~A" n tag))))
@@ -46482,7 +46470,7 @@ EDITS: 1
 			  (lambda ()
 			    (n))
 			  (lambda args (car args)))))
-	       (if (and with-gui (eq? err 'wrong-number-of-args))
+	       (if (eq? err 'wrong-number-of-args)
 		   (snd-display #__line__ ";procs0: ~A ~A" err (procedure-documentation n)))))
 	   procs0)
 	  (dismiss-all-dialogs)
@@ -46510,7 +46498,7 @@ EDITS: 1
 		  (let ((err (catch #t
 			       (lambda () (n arg))
 			       (lambda args (car args)))))
-		    (if (and with-gui (eq? err 'wrong-number-of-args))
+		    (if (eq? err 'wrong-number-of-args)
 			(snd-display #__line__ ";procs1 wna: ~A ~A" err (procedure-documentation n)))))
 		procs1))
 	     main-args)
@@ -46526,7 +46514,7 @@ EDITS: 1
 		     (let ((err (catch #t
 				  (lambda () (n arg1 arg2))
 				  (lambda args (car args)))))
-		       (if (and with-gui (eq? err 'wrong-number-of-args))
+		       (if (eq? err 'wrong-number-of-args)
 			   (snd-display #__line__ ";procs2: ~A ~A" err (procedure-documentation n)))))
 		   procs2))
 		main-args))
@@ -46541,7 +46529,7 @@ EDITS: 1
 		  (let ((err (catch #t
 			       (lambda () (set! (n) arg))
 			       (lambda args (car args)))))
-		    (if (and with-gui (eq? err 'wrong-number-of-args))
+		    (if (eq? err 'wrong-number-of-args)
 			(snd-display #__line__ ";set-procs0: ~A ~A" err (procedure-documentation n)))))
 		set-procs0))
 	     main-args)
@@ -46557,7 +46545,7 @@ EDITS: 1
 		     (let ((err (catch #t
 				  (lambda () (set! (n arg1) arg2))
 				  (lambda args (car args)))))
-		       (if (and with-gui (eq? err 'wrong-number-of-args))
+		       (if (eq? err 'wrong-number-of-args)
 			   (snd-display #__line__ ";set-procs1: ~A ~A" err (procedure-documentation n)))))
 		   set-procs1))
 		main-args))
@@ -46577,7 +46565,7 @@ EDITS: 1
 			(let ((err (catch #t
 				     (lambda () (set! (n arg1 arg2) arg3))
 				     (lambda args (car args)))))
-			  (if (and with-gui (eq? err 'wrong-number-of-args))
+			  (if (eq? err 'wrong-number-of-args)
 			      (snd-display #__line__ ";set-procs2: ~A ~A" err (procedure-documentation n)))))
 		      set-procs2))
 		   less-args))
@@ -46805,9 +46793,9 @@ EDITS: 1
   (string-append sf-dir "nasahal.avi.snd")
   (string-append sf-dir "hcom-16.snd.snd")
   (string-append sf-dir "ce-c3.w02.snd")
-  (string-append sf-dir "oboe.g723_24.snd")
-  (string-append sf-dir "oboe.g723_40.snd")
-  (string-append sf-dir "oboe.g721.snd")
+;  (string-append sf-dir "oboe.g723_24.snd")
+;  (string-append sf-dir "oboe.g723_40.snd")
+;  (string-append sf-dir "oboe.g721.snd")
   (string-append sf-dir "wood.sds.snd")
   (string-append sf-dir "o2_dvi.wave.snd")
   (string-append sf-dir "nist-shortpack.wav.snd")
@@ -46988,24 +46976,29 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-1-Feb-14:
-41,758,772,196
-6,534,177,372  s7.c:eval [/home/bil/gtk-snd/snd]
-3,257,807,523  ???:sin [/lib64/libm-2.12.so]
-2,376,442,081  ???:cos [/lib64/libm-2.12.so]
+4-Feb-14:
+41,136,912,009
+6,243,035,665  s7.c:eval [/home/bil/gtk-snd/snd]
+3,258,610,028  ???:sin [/lib64/libm-2.12.so]
+2,373,861,498  ???:cos [/lib64/libm-2.12.so]
 1,335,711,872  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,131,425,309  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-1,096,742,255  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,039,540,868  s7.c:gc [/home/bil/gtk-snd/snd]
-  899,392,996  ???:t2_32 [/home/bil/gtk-snd/snd]
+1,119,303,728  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,097,340,875  clm.c:mus_src [/home/bil/gtk-snd/snd]
+1,012,033,642  s7.c:gc [/home/bil/gtk-snd/snd]
+  904,634,092  ???:t2_32 [/home/bil/gtk-snd/snd]
   781,898,497  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  621,988,829  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  569,398,400  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  627,090,971  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,447,380  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
   454,430,536  ???:n1_64 [/home/bil/gtk-snd/snd]
-  443,204,981  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  442,917,218  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,652,716  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+  389,174,382  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  352,080,567  ???:sincos [/lib64/libm-2.12.so]
+  338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
+  326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  308,748,060  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
  |#
 
 
