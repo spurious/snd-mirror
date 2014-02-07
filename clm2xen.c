@@ -11694,6 +11694,7 @@ static gf *fixup_frame_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 }
 
 
+
 /* -------- divide -------- */
 
 static mus_float_t gf_divide(void *p)       {gf *g = (gf *)p; return(1.0 / g->f1(g->g1));}
@@ -12781,7 +12782,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
       if (s7_is_symbol(obj))
 	obj = s7_value(sc, obj);
-      if (!is_gen(obj)) 
+      if ((!obj) || (!is_gen(obj))) /* obj == NULL if symbol is undefined and we're not checking in s7 */
 	return_null(expr);
 
       len = s7_list_length(sc, expr);

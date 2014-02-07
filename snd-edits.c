@@ -9005,6 +9005,7 @@ static s7_pointer g_next_sample_s(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer obj;
   obj = s7_car_value(s7, args);
+
   if (SAMPLER_P(obj))
     return(C_TO_XEN_DOUBLE(protected_next_sample((snd_fd *)XEN_OBJECT_REF(obj))));
   if (mix_sampler_p(obj))

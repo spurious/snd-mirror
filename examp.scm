@@ -2110,7 +2110,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	    (scan-channel (lambda (y) (>= (abs y) 0.9999)) (+ pos 1) #f snd chn)))
       ((or (not pos)
 	   (>= (abs (sample (+ pos 1) snd chn)) 0.9999))
-       pos)))
+       pos))) ; or (and pos (+ pos 1)) to mimic the old version
 
 
 ;;; -------- sync-everything

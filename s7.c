@@ -5969,19 +5969,19 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
 
 s7_pointer s7_value(s7_scheme *sc, s7_pointer sym)
 {
-  return(find_symbol_unchecked(sc, sym));
+  return(find_symbol_checked(sc, sym));
 }
 
 
 s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst)
 {
-  return(find_symbol_unchecked(sc, car(lst)));
+  return(find_symbol_checked(sc, car(lst)));
 }
 
 
 s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst)
 {
-  return(find_symbol_unchecked(sc, cadr(lst)));
+  return(find_symbol_checked(sc, cadr(lst)));
 }
 
 
@@ -6005,7 +6005,7 @@ size_t s7_denominator_offset(s7_scheme *sc)
 
 s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst)
 {
-  return(find_symbol_unchecked(sc, cadar(lst)));
+  return(find_symbol_checked(sc, cadar(lst)));
 }
 
 
@@ -29826,6 +29826,8 @@ a vector that points to the same elements as the original-vector but with differ
 	  offset = s7_integer(off);
 	  if (offset < 0)
 	    return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, "a non-negative integer"));
+	  if (offset >= orig_len)  /* we need this if, for example, offset == 9223372036854775807 */
+	    return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, "less than the original vector length"));
 	}
       else return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, T_INTEGER));
     }
@@ -33015,12 +33017,12 @@ void *s7_vector_ref_object_value_checked(s7_scheme *sc, s7_pointer args, int typ
   s7_pointer vec, obj, i;
   s7_Int index;
 
-  vec = find_symbol_unchecked(sc, car(args));
+  vec = find_symbol_checked(sc, car(args));
   if ((!s7_is_vector(vec)) ||
       (vector_rank(vec) != 1))
     return(wrong_type_argument_n(sc, sc->VECTOR_REF, 1, car(args), T_VECTOR));
   
-  i = find_symbol_unchecked(sc, cadr(args));
+  i = find_symbol_checked(sc, cadr(args));
   if (!s7_is_integer(i))
     return(wrong_type_argument_n(sc, sc->VECTOR_REF, 2, cadr(args), T_INTEGER));
 
@@ -69217,7 +69219,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  8.5
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 40.2
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.9
  *            153 with run macro (eval_ptree)
  */
 

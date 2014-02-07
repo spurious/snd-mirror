@@ -15428,6 +15428,7 @@ typedef struct {
   bool calc;
 #if HAVE_SINCOS
   mus_float_t *cs, *sn;
+  bool *sc_safe, *amp_zero;
 #endif
 } pv_info;
 
@@ -15473,6 +15474,8 @@ static int free_phase_vocoder(mus_any *ptr)
 #if HAVE_SINCOS
       if (gen->sn) free(gen->sn);
       if (gen->cs) free(gen->cs);
+      if (gen->sc_safe) free(gen->sc_safe);
+      if (gen->amp_zero) free(gen->amp_zero);
 #endif
       free(gen);
     }
@@ -15608,6 +15611,8 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv->calc = true;
   pv->cs = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
   pv->sn = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
+  pv->sc_safe = (bool *)calloc(fftsize, sizeof(bool));
+  pv->amp_zero = (bool *)calloc(fftsize, sizeof(bool));
 #endif
   return((mus_any *)pv);
 }
@@ -15690,18 +15695,32 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
        *   For example, the 4 or so bins around a given peak all tighten
        *   to 4 bins running at almost exactly the same frequency (the center).
        */
-      
+
       scl = 1.0 / (mus_float_t)(pv->interp);
       for (i = 0; i < N2; i++)
 	{
 #if HAVE_SINCOS
 	  double s, c;
-	  sincos((pv->freqs[i] + pv->phaseinc[i]) * 0.5, &s, &c);
-	  pv->sn[i] = s;
-	  pv->cs[i] = c;
+	  
+	  pv->sc_safe[i] = (fabs(pv->freqs[i] - pv->phaseinc[i]) < 0.02); /* .5 is too big, .01 and .03 ok by tests */
+	  if (pv->sc_safe[i])
+	    {
+	      sincos((pv->freqs[i] + pv->phaseinc[i]) * 0.5, &s, &c);
+	      pv->sn[i] = s;
+	      pv->cs[i] = c;
+	    }
 #endif
-	  pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
-	  pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
+	  pv->amp_zero[i] = ((pv->amps[i] < 1e-7) && (pv->ampinc[i] == 0.0));
+	  if ((!(pv->synthesize)) && (pv->amp_zero[i]))
+	    {
+	      pv->phases[i] += (pv->interp * (pv->freqs[i] + pv->phaseinc[i]) * 0.5);
+	      pv->phaseinc[i] = pv->freqs[i];
+	    }
+	  else
+	    {
+	      pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
+	      pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
+	    }
 	}
     }
   
@@ -15719,9 +15738,9 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       amp = pv->amps;
       panc = pv->ampinc;
       
-      i = 0;
       sum = 0.0;
       sum1 = 0.0;
+
       /* float here, rather than double, is slower 
        * amps can be negative here due to rounding troubles
        * sincos is faster (using shell time command) except in virtualbox running linux on a mac? 
@@ -15733,47 +15752,46 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
        *   Then here we calculate 2 samples on each run through this loop.  I wonder if we could center the true case,
        *   and get 3 samples?  If 2, the difference is very small (we're taking the midpoint of the phase increment change,
        *   so the two are not quite the same).  In tests, 10000 samples, channel-distance is ca .15.
+       *
+       * If the amp_zero phase is off (incorrectly incremented above), the effect is a sort of low-pass filter??
+       *   Are we getting cancellation from the overlap?
        */
       
-      for (;i < N2; i++)
+      for (i = 0; i < N2; i++)
 	{
+	  if (!(pv->amp_zero[i]))
+	    {
 #if HAVE_SINCOS
-	  double sx, cx;
+	      double sx, cx;
 #endif
-	  
-	  pinc[i] += frq[i];
-	  ph[i] += pinc[i];
-	  amp[i] += panc[i];
-	  
+	      pinc[i] += frq[i];
+	      ph[i] += pinc[i];
+	      amp[i] += panc[i];
+	      
 #if HAVE_SINCOS
-	  sincos(ph[i], &sx, &cx);
-	  if (amp[i] > 1e-6)
-	    sum += (amp[i] * sx);
+	      sincos(ph[i], &sx, &cx);
+	      sum += (amp[i] * sx);
 #else
-	  if (amp[i] > 1e-6)
-	    sum += amp[i] * sin(ph[i]);
+	      sum += amp[i] * sin(ph[i]);
 #endif
-	  
-	  pinc[i] += frq[i];
-	  ph[i] += pinc[i];
-	  amp[i] += panc[i];
-	  
+	      pinc[i] += frq[i];
+	      ph[i] += pinc[i];
+	      amp[i] += panc[i];
+	      
 #if HAVE_SINCOS
-	  if (amp[i] > 1e-6)
-	    sum1 += amp[i] * (sx * pv->cs[i] + cx * pv->sn[i]);
+	      if (pv->sc_safe[i]) 
+		sum1 += amp[i] * (sx * pv->cs[i] + cx * pv->sn[i]);
+	      else sum1 += amp[i] * sin(ph[i]);
 #else
-	  if (amp[i] > 1e-6)
-	    sum1 += amp[i] * sin(ph[i]);
+	      sum1 += amp[i] * sin(ph[i]);
 #endif
-
-	  /* unrolled is not faster */
+	      /* unrolled is not faster */
+	    }
 	}
-      
       pv->sum1 = sum1;
       pv->calc = false;
       return(sum);
     }
-  
   pv->calc = true;
   return(pv->sum1);
 }

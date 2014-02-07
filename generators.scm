@@ -6071,7 +6071,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (input #f) (n 512) (hop 128) 
   (outctr 0)
   (amps #f) (phases #f) 
-  (amp-incs #f) (freqs #f) (freq-incs #f) (new-freq-incs #f) 
+  (amp-incs #f) (freqs #f) (freq-incs #f) (new-freq-incs #f)
   (fft-window #f)
   (data #f) (dataloc 0))
 
@@ -6079,7 +6079,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (with-environment gen
     (let ((n2 (/ n 2)))
       (if (>= outctr hop)
-	  (begin
+	  (let ((two-pi (* 2.0 pi)))
 	    (if (> outctr n) ; must be first time through -- fill data array
 		(begin
 		  (do ((i 0 (+ i 1)))
@@ -6112,14 +6112,14 @@ index 10 (so 10/2 is the bes-jn arg):
 	    (rectangular->polar amp-incs new-freq-incs)
 	    
 	    (let ((scl (/ 1.0 hop))
-		  (kscl (/ (* 2 pi) n)))
+		  (kscl (/ two-pi n)))
 	      (float-vector-subtract! amp-incs amps)
 	      (float-vector-scale! amp-incs scl)
 	      
 	      (do ((i 0 (+ i 1))
 		   (ks 0.0 (+ ks kscl)))
 		  ((= i n2))
-		(let ((diff (modulo (- (new-freq-incs i) (freq-incs i)) (* 2 pi))))
+		(let ((diff (modulo (- (new-freq-incs i) (freq-incs i)) two-pi)))
 		  (set! (freq-incs i) (new-freq-incs i))
 		  (if (> diff pi) (set! diff (- diff (* 2 pi))))
 		  (if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
@@ -6162,7 +6162,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		 (begin
 		   (format *stderr* ";test-sv (generators) ~D amps: ~A ~A" i (sv-amps i) (pv-amps i))
 		   (quit)))
-	     (if (fneq (sv-freqs i) (pv-incrs i))
+	     (if (> (abs (- (sv-freqs i) (pv-incrs i))) .25)
 		 (begin
 		   (format *stderr* ";test-sv (generators) ~D freqs: ~A ~A" i (sv-freqs i) (pv-incrs i))
 		   (quit))))))))))

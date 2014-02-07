@@ -4,31 +4,31 @@
 ;;;  test 1: defaults                           [1248]
 ;;;  test 2: headers                            [1612]
 ;;;  test 3: variables                          [1927]
-;;;  test 4: sndlib                             [2493]
-;;;  test 5: simple overall checks              [4861]
-;;;  test 6: float-vectors                      [9650]
-;;;  test 7: colors                             [9944]
-;;;  test 8: clm                                [10463]
-;;;  test 9: mix                                [21691]
-;;;  test 10: marks                             [23482]
-;;;  test 11: dialogs                           [24430]
-;;;  test 12: extensions                        [24604]
-;;;  test 13: menus, edit lists, hooks, etc     [24870]
-;;;  test 14: all together now                  [26240]
-;;;  test 15: chan-local vars                   [27118]
-;;;  test 16: regularized funcs                 [28871]
-;;;  test 17: dialogs and graphics              [32696]
-;;;  test 18: save and restore                  [32809]
-;;;  test 19: transforms                        [34427]
-;;;  test 20: new stuff                         [36539]
-;;;  test 21: optimizer                         [37746]
-;;;  test 22: with-sound                        [38270]
-;;;  test 23: X/Xt/Xm                           [41262]
-;;;  test 24: GL                                [44944]
-;;;  test 25: errors                            [45068]
-;;;  test 26: s7                                [46601]
-;;;  test all done                              [46667]
-;;;  test the end                               [46876]
+;;;  test 4: sndlib                             [2494]
+;;;  test 5: simple overall checks              [4845]
+;;;  test 6: float-vectors                      [9593]
+;;;  test 7: colors                             [9887]
+;;;  test 8: clm                                [10406]
+;;;  test 9: mix                                [21731]
+;;;  test 10: marks                             [23522]
+;;;  test 11: dialogs                           [24470]
+;;;  test 12: extensions                        [24644]
+;;;  test 13: menus, edit lists, hooks, etc     [24910]
+;;;  test 14: all together now                  [26280]
+;;;  test 15: chan-local vars                   [27153]
+;;;  test 16: regularized funcs                 [28906]
+;;;  test 17: dialogs and graphics              [32731]
+;;;  test 18: save and restore                  [32844]
+;;;  test 19: transforms                        [34496]
+;;;  test 20: new stuff                         [36608]
+;;;  test 21: optimizer                         [37815]
+;;;  test 22: with-sound                        [38339]
+;;;  test 23: X/Xt/Xm                           [41331]
+;;;  test 24: GL                                [45013]
+;;;  test 25: errors                            [45137]
+;;;  test 26: s7                                [46667]
+;;;  test all done                              [46733]
+;;;  test the end                               [46942]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -9427,18 +9427,10 @@ EDITS: 2
 	      (if (not (= (srate s1) (srate s2))) (snd-display #__line__ ";copy sounds srates: ~A ~A" (srate s1) (srate s2)))
 	      (if (not (= (frames s1) (frames s2))) (snd-display #__line__ ";copy sounds frames: ~A ~A" (frames s1) (frames s2)))
 	      (if (not (= (chans s1) (chans s2) 1)) (snd-display #__line__ ";copy sounds chans: ~A ~A" (chans s1) (chans s2)))
-	      (let ((r1 (make-sampler 0 s1))
-		    (r2 (make-sampler 0 s2))
-		    (happy #t))
-		(do ((i 0 (+ i 1)))
-		    ((or (not happy)
-			 (= i len)))
-		  (let ((v1 (r1))
-			(v2 (r2)))
-		    (if (> (abs (- v1 v2)) .0001)
-			(begin
-			  (set! happy #f)
-			  (snd-display #__line__ ";copied sound not equal? pos: ~A, ~A ~A" i v1 v2))))))
+	      (let ((d1 (channel->float-vector 0 #f s1))
+		    (d2 (channel->float-vector 0 #f s2)))
+		(if (not (vequal d1 d2))
+		    (snd-display #__line__ ";copied sound not equal? ~A?" (float-vector-peak (float-vector-subtract! d0 d1)))))
 	      (close-sound s2))))
       (fill! s1 0.0)
       (if (fneq (maxamp s1) 0.0) (snd-display #__line__ ";fill 1 with 0: ~A" (maxamp s1)))
@@ -9455,26 +9447,14 @@ EDITS: 2
 	      (if (not (= (srate s1) (srate s2))) (snd-display #__line__ ";copy sounds srates 2: ~A ~A" (srate s1) (srate s2)))
 	      (if (not (= (frames s1) (frames s2))) (snd-display #__line__ ";copy sounds frames 2: ~A ~A" (frames s1) (frames s2)))
 	      (if (not (= (chans s1) (chans s2) 2)) (snd-display #__line__ ";copy sounds chans 2: ~A ~A" (chans s1) (chans s2)))
-	      (let ((r10 (make-sampler 0 s1 0))
-		    (r11 (make-sampler 0 s1 1))
-		    (r20 (make-sampler 0 s2 0))
-		    (r21 (make-sampler 0 s2 1))
-		    (happy #t))
-		(do ((i 0 (+ i 1)))
-		    ((or (not happy)
-			 (= i len)))
-		  (let ((v1 (r10))
-			(v2 (r20)))
-		    (if (> (abs (- v1 v2)) .0001)
-			(begin
-			  (set! happy #f)
-			  (snd-display #__line__ ";copied sound 2 (0) not equal? pos: ~A, ~A ~A" i v1 v2))))
-		  (let ((v1 (r11))
-			(v2 (r21)))
-		    (if (> (abs (- v1 v2)) .0001)
-			(begin
-			  (set! happy #f)
-			  (snd-display #__line__ ";copied sound 2 (1) not equal? pos: ~A, ~A ~A" i v1 v2))))))
+	      (let ((d10 (channel->float-vector 0 #f s1 0))
+		    (d11 (channel->float-vector 0 #f s1 1))
+		    (d20 (channel->float-vector 0 #f s2 0))
+		    (d21 (channel->float-vector 0 #f s2 1)))
+		(if (not (vequal d10 d20))
+		    (snd-display #__line__ ";copied sound 2 (0) not equal? ~A?" (float-vector-peak (float-vector-subtract! d10 d20))))
+		(if (not (vequal d11 d21))
+		    (snd-display #__line__ ";copied sound 2 (1) not equal? ~A?" (float-vector-peak (float-vector-subtract! d11 d21)))))
 	      (close-sound s2))))
       (fill! s1 0.0)
       (if (fneq (maxamp s1) 0.0) (snd-display #__line__ ";fill 2 with 0: ~A" (maxamp s1)))
@@ -9488,52 +9468,31 @@ EDITS: 2
       (make-selection 1000 2000 snd 0)
       (if (not (selection?)) (snd-display #__line__ ";make-selection for copy failed?"))
       (copy (selection))
-      (let* ((r1 (make-sampler 1000 snd 0))
+      (let* ((r1 (channel->float-vector 1000 1000 snd 0))
 	     (snds (sounds))
 	     (sel (if (equal? (car snds) snd) (cadr snds) (car snds)))
-	     (r2 (make-sampler 0 sel 0))
-	     (happy #t))
+	     (r2 (channel->float-vector 0 1000 sel 0)))
 	(if (equal? sel snd)
 	    (snd-display #__line__ ";very weird: ~A equal? ~A from ~A (~A ~A ~A)" sel snd snds (car snds) (cadr snds) (equal? (car snds) snd)))
-	(do ((i 0 (+ i 1)))
-	    ((or (not happy)
-		 (= i 1000)))
-	  (let ((v1 (r1))
-		(v2 (r2)))
-	    (if (> (abs (- v1 v2)) .0001)
-		(begin
-		  (set! happy #f)
-		  (snd-display #__line__ ";copied selection not equal? pos: ~A, ~A ~A (~A ~A from ~A)" i v1 v2 sel snd snds)))))
+	(if (not (vequal r1 r2))
+	    (snd-display #__line__ ";copied selection not equal? ~A?" (float-vector-peak (float-vector-subtract! r1 r2))))
 	(close-sound sel)
 	(if (not (selection?))
 	    (snd-display #__line__ ";copy selection unselected? ~A" (sounds))
 	    (begin
 	      (fill! (selection) 0.0)
-	      (let ((r1 (make-sampler 1000 snd 0))
-		    (happy #t))
-		(do ((i 0 (+ i 1)))
-		    ((or (not happy)
-			 (= i 1000)))
-		  (let ((v1 (r1)))
-		    (if (not (= v1 0.0))
-			(begin
-			  (set! happy #f)
-			  (snd-display #__line__ ";fill! selection not 0.0? pos: ~A, ~A" i v1))))))
+	      (let ((r1 (channel->float-vector 1000 1000 snd 0)))
+		(if (> (float-vector-peak r1) 0.0)
+		    (snd-display #__line__ ";fill! selection not 0.0? ~A" (float-vector-peak r1))))
 	      (revert-sound snd)
 	      (if (not (selection?))
 		  (snd-display #__line__ ";revert-sound selection unselected?")
 		  (begin
 		    (fill! (selection) 0.3)
-		    (let ((r1 (make-sampler 1000 snd 0))
-			  (happy #t))
-		      (do ((i 0 (+ i 1)))
-			  ((or (not happy)
-			       (= i 1000)))
-			(let ((v1 (r1)))
-			  (if (not (= v1 0.3))
-			      (begin
-				(set! happy #f)
-				(snd-display #__line__ ";fill! selection not 0.3? pos: ~A, ~A" i v1)))))))))))
+		    (let ((r1 (channel->float-vector 1000 1000 snd 0)))
+		      (if (or (not (= (float-vector-max r1) 0.3))
+			      (not (= (float-vector-min r1) 0.3)))
+			  (snd-display #__line__ ";fill! selection not 0.3? ~A ~A" (float-vector-min r1) (float-vector-max r1)))))))))
       (for-each close-sound (sounds)))
     
     (let ((snd (open-sound "oboe.snd")))
@@ -20494,7 +20453,8 @@ EDITS: 2
 	  (snd-display #__line__ ";set phase-vocoder-freqs: ~A?" ((phase-vocoder-freqs pv) 0)))
       (undo 1)
       (free-sampler reader)
-      (let ((lastphases (make-float-vector 512)))
+      (let ((lastphases (make-float-vector 512))
+	    (diffs (make-float-vector 512)))
 	(set! reader (make-sampler 0))
 	(set! pv (make-phase-vocoder (lambda (dir) (next-sample reader))
 				     512 4 128 1.0
@@ -20504,14 +20464,15 @@ EDITS: 2
 				       (let ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
 					     (D (mus-hop v))
 					     (freqs (phase-vocoder-freqs v)))
+					 (copy freqs diffs)
+					 (float-vector-subtract! diffs lastphases)
+					 (copy freqs lastphases)
 					 (let ((N2 (floor (/ N 2)))
 					       (pscl (/ 1.0 D))
 					       (kscl (/ pi2 N)))
 					   (do ((k 0 (+ k 1)))
 					       ((= k N2))
-					     (let ((phasediff (remainder (- (float-vector-ref freqs k) (float-vector-ref lastphases k)) pi2)))
-					       (float-vector-set! lastphases k (float-vector-ref freqs k))
-					       (float-vector-set! freqs k (* 0.5 (+ (* pscl phasediff) (* k kscl)))))))
+					     (float-vector-set! freqs k (* 0.5 (+ (* pscl (remainder (float-vector-ref diffs k) pi2)) (* k kscl))))))
 					 #f))
 				     #f ; no change to synthesis
 				     ))
@@ -20583,6 +20544,84 @@ EDITS: 2
 	  (let ((genxx genx))
 	    (if (not (equal? genx genxx)) (snd-display #__line__ ";phase-vocoder equal: ~A ~A" genxx genx)))))
       (close-sound ind))
+    
+    (let ((old-fudge *mus-float-equal-fudge-factor*) ; some phase-vocoder tests
+	  (ind (new-sound :size 110))
+	  (rd #f)
+	  (pv #f))
+      (set! (sample 1) 1.0)
+      (set! rd (make-sampler))
+      (set! pv (make-phase-vocoder (lambda (dir) (next-sample rd)) 128 4 32 1.0 #f #f #f))
+      (map-channel (lambda (y) (phase-vocoder pv)))
+      
+      (set! *mus-float-equal-fudge-factor* 1e-5)
+      
+      (let ((v (channel->float-vector 0 50))
+	    (v0 (float-vector 0.00022 0.00130 0.00382 0.00810 0.01381 0.01960 0.02301 0.02143 0.01421 0.00481 0.00000 0.00396 0.01168 0.01231 0.00413 0.00018 0.00704 0.00984 0.00189 0.00197 0.00881 0.00290 0.00151 0.00781 0.00091 0.00404 0.00498 0.00047 0.00641 -0.00017 0.00590 0.00006 0.00492 0.00031 0.00380 0.00052 0.00290 0.00066 0.00219 0.00074 0.00164 0.00076 0.00123 0.00074 0.00092 0.00067 0.00069 0.00058 0.00052 0.00048)))
+	(if (not (mus-arrays-equal? v v0))
+	    (snd-display #__line__ ";1 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+      
+      (undo)
+      
+      (set! rd (make-sampler))
+      (set! pv (make-phase-vocoder (lambda (dir) (next-sample rd)) 128 4 32 2.0 #f #f #f))
+      (map-channel (lambda (y) (phase-vocoder pv)))
+      
+      (let ((v (channel->float-vector 0 50))
+	    (v0 (float-vector 0.00044 0.00255 0.00705 0.01285 0.01595 0.01177 0.00281 0.00069 0.00782 0.00702 0.00001 0.00584 0.00385 0.00138 0.00547 0.00035 0.00494 0.00082 0.00305 0.00310 0.00003 0.00380 0.00245 -0.00019 0.00159 0.00348 0.00268 0.00087 -0.00020 -0.00036 -0.00010 0.00012 0.00036 0.00057 0.00075 0.00089 0.00099 0.00105 0.00108 0.00107 0.00104 0.00099 0.00094 0.00087 0.00080 0.00073 0.00066 0.00059 0.00053 0.00047)))
+	(if (not (mus-arrays-equal? v v0))
+	    (snd-display #__line__ ";2 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+      
+      (undo)
+      
+      (set! rd (make-sampler))
+      (set! pv (make-phase-vocoder (lambda (dir) (next-sample rd)) 128 4 32 0.5 #f #f #f))
+      (map-channel (lambda (y) (phase-vocoder pv)))
+      
+      (let ((v (channel->float-vector 0 50))
+	    (v0 (float-vector 0.00011 0.00065 0.00195 0.00428 0.00785 0.01266 0.01845 0.02456 0.02989 0.03305 0.03267 0.02803 0.01970 0.00993 0.00228 0.00009 0.00441 0.01250 0.01858 0.01759 0.00975 0.00160 0.00079 0.00795 0.01454 0.01201 0.00325 0.00024 0.00716 0.01261 0.00704 0.00003 0.00384 0.00962 0.00620 0.00027 0.00196 0.00655 0.00492 0.00040 0.00101 0.00448 0.00375 0.00041 0.00053 0.00305 0.00273 0.00033 0.00029 0.00204)))
+	(if (not (mus-arrays-equal? v v0))
+	    (snd-display #__line__ ";3 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+      
+      (undo)
+      
+      (set! rd (make-sampler))
+      (set! pv (make-phase-vocoder (lambda (dir) (next-sample rd)) 128 4 64 1.0 #f #f #f))
+      (map-channel (lambda (y) (phase-vocoder pv)))
+      
+      (let ((v (channel->float-vector 0 100))
+	    (v0 (float-vector 0.00005 0.00033 0.00098 0.00214 0.00392 0.00633 0.00923 0.01228 0.01495 0.01652 0.01633 0.01401 0.00985 0.00497 0.00114 0.00004 0.00221 0.00625 0.00929 0.00880 0.00488 0.00080 0.00040 0.00397 0.00727 0.00601 0.00162 0.00012 0.00358 0.00630 0.00352 0.00002 0.00217 0.00552 0.00300 -0.00008 0.00299 0.00479 0.00083 0.00098 0.00457 0.00175 0.00033 0.00412 0.00172 0.00039 0.00399 0.00087 0.00118 0.00356 -0.00016 0.00280 0.00169 0.00051 0.00326 -0.00030 0.00301 0.00040 0.00184 0.00144 0.00078 0.00213 0.00015 0.00242 -0.00017 0.00240 -0.00038 0.00230 -0.00049 0.00214 -0.00053 0.00194 -0.00051 0.00172 -0.00047 0.00150 -0.00040 0.00127 -0.00033 0.00106 -0.00025 0.00086 -0.00019 0.00068 -0.00013 0.00052 -0.00008 0.00039 -0.00005 0.00027 -0.00002 0.00017 -0.00001 0.00009 -0.00000 0.00003 -0.00000 -0.00002 -0.00001 -0.00006)))
+	(if (not (mus-arrays-equal? v v0))
+	    (snd-display #__line__ ";4 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+      
+      (undo)
+      
+      (set! (sample 10) 1.0)
+      (set! (sample 23) 1.0)
+      (set! rd (make-sampler))
+      (set! pv (make-phase-vocoder (lambda (dir) (next-sample rd)) 128 4 32 1.0 #f #f #f))
+      (map-channel (lambda (y) (phase-vocoder pv)))
+      
+      (let ((v (channel->float-vector 0 100))
+	    (v0 (float-vector 0.00100 0.00598 0.01756 0.03708 0.06286 0.08826 0.10172 0.09163 0.05680 0.01564 -0.00075 0.02124 0.05164 0.04457 0.00861 0.00529 0.03648 0.02747 -0.00875 0.00936 0.02402 -0.00553 -0.00090 -0.02262 -0.00221 0.06633 -0.03229 0.01861 0.05228 0.00672 0.00885 0.01442 -0.00484 -0.02293 -0.01893 -0.02256 -0.10229 -0.22474 0.31110 0.07597 0.07127 0.03670 0.02583 0.03173 0.02260 0.01550 0.01485 0.03212 -0.00966 0.00779 -0.00964 0.00698 0.01100 0.00468 0.00107 0.00517 0.00469 0.00131 0.00058 0.00530 0.00582 -0.00652 0.00011 0.00000 -0.00000 -0.00000 -0.00000 0.00000 -0.00000 0.00000 0.00000 -0.00000 -0.00000 -0.00000 -0.00000 -0.00000 -0.00000 0.00000 -0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 -0.00000 -0.00000 -0.00000 0.00000 0.00000 0.00000 -0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000)))
+	(if (not (mus-arrays-equal? v v0))
+	    (snd-display #__line__ ";5 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+      
+      (undo)
+      
+      (set! (sample 40) 1.0)
+      (set! (sample 63) 1.0)
+      (set! rd (make-sampler))
+      (set! pv (make-phase-vocoder (lambda (dir) (next-sample rd)) 128 4 32 1.0 #f #f #f))
+      (map-channel (lambda (y) (phase-vocoder pv)))
+      
+      (let ((v (channel->float-vector 0 100))
+	    (v0 (float-vector 0.00332 0.01977 0.05805 0.12252 0.20738 0.29035 0.33291 0.29696 0.18017 0.04637 -0.00003 0.08250 0.18618 0.15495 0.02775 0.02252 0.13597 0.09767 -0.03116 0.05301 0.10256 -0.05005 0.01966 0.06176 -0.04418 0.04118 -0.11409 -0.04115 -0.05157 -0.11409 0.07815 -0.08155 -0.00536 0.02090 -0.18804 -0.10686 -0.11931 -0.42989 0.39009 0.03157 0.14253 0.05984 0.05439 0.00764 0.02636 -0.02799 -0.01346 -0.01011 -0.04925 -0.02896 -0.07812 -0.07880 -0.11338 -0.13133 -0.41421 0.38140 0.08676 0.07712 0.00983 0.03731 0.01585 0.00108 0.00101 0.00282 -0.01106 -0.00403 -0.02165 -0.02054 -0.02452 -0.02382 -0.03213 -0.02693 -0.03734 -0.03978 -0.04879 -0.07504 -0.09597 -0.31426 0.32995 0.13460 0.04120 0.05029 0.01900 0.02517 0.01163 0.01294 0.00827 0.00576 0.00640 0.00141 0.00489 -0.00057 0.00301 -0.00089 0.00099 -0.00000 0.00000 -0.00000 -0.00000 -0.00000)))
+	(if (not (mus-arrays-equal? v v0))
+	    (snd-display #__line__ ";6 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+      
+      (close-sound ind)
+      (set! *mus-float-equal-fudge-factor* old-fudge))
     
     (let ((ind (open-sound "oboe.snd")))
       (let ((gen (make-moog-filter 500.0 .1)))
@@ -47013,27 +47052,26 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   449,476,048  ???:n1_64 [/home/bil/snd-14/snd]
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
- 
-6-Feb-14:
-40,193,641,186
-5,998,222,058  s7.c:eval [/home/bil/gtk-snd/snd]
-3,255,526,436  ???:sin [/lib64/libm-2.12.so]
-2,375,767,456  ???:cos [/lib64/libm-2.12.so]
-1,335,711,872  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+
+7-Feb-14:
+39,872,438,850
+5,985,134,732  s7.c:eval [/home/bil/gtk-snd/snd]
+3,566,415,686  ???:sin [/lib64/libm-2.12.so]
+2,375,911,192  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,037,701,666  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  952,047,087  s7.c:gc [/home/bil/gtk-snd/snd]
-  885,469,132  ???:t2_32 [/home/bil/gtk-snd/snd]
-  861,018,495  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,086,202,738  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  948,850,658  s7.c:gc [/home/bil/gtk-snd/snd]
+  899,392,996  ???:t2_32 [/home/bil/gtk-snd/snd]
+  861,570,413  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  827,847,499  s7.c:eval'2 [/home/bil/gtk-snd/snd]
   781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  609,154,910  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,844,805  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,551,144  ???:n1_64 [/home/bil/gtk-snd/snd]
-  415,120,599  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  588,829,072  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,379,066  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
+  438,268,945  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  374,545,464  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
-  351,982,008  ???:sincos [/lib64/libm-2.12.so]
+  381,386,568  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
  |#
