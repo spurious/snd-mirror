@@ -65,7 +65,6 @@
   (strftime "%d-%b-%y %H:%M %Z" (localtime (current-time))))
 
 (define (alphanumeric? c) (or (char-alphabetic? c) (char-numeric? c)))
-(define-expansion (when test . forms) `(if ,test (begin ,@forms)))
 
 (define (find-if pred l)
   (cond ((null? l) #f)

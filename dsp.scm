@@ -181,25 +181,50 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; the time domain display (to give our graph all the window -- to do this in a much more
 ;;; elegant manner, see snd-motif.scm under scanned-synthesis).
 
+#|
+(define old-compute-uniform-circular-string
+  (lambda (size x0 x1 x2 mass xspring damp)
+    (define circle-ref 
+      (lambda (v i)
+	(if (< i 0)
+	    (v (+ size i))
+	    (if (>= i size)
+		(v (- i size))
+		(v i)))))
+    (let* ((dm (/ damp mass))
+	   (km (/ xspring mass))
+	   (denom (+ 1.0 dm))
+	   (p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
+	   (p2 (/ km denom))
+	   (p3 (/ -1.0 denom)))
+      (do ((i 0 (+ i 1)))
+	  ((= i size))
+	(set! (x0 i) (+ (* p1 (x1 i))
+			(* p2 (+ (circle-ref x1 (- i 1)) (circle-ref x1 (+ i 1))))
+			(* p3 (x2 i)))))
+      (fill! x2 0.0)
+      (float-vector-add! x2 x1)
+      (fill! x1 0.0)
+      (float-vector-add! x1 x0))))
+
+;;; (compute-uniform-circular-string 100 (make-float-vector 100) (make-float-vector 100) (make-float-vector 100) .5 .5 .5)
+|#
+
 (define (compute-uniform-circular-string size x0 x1 x2 mass xspring damp)
   (let* ((dm (/ damp mass))
 	 (km (/ xspring mass))
 	 (denom (+ 1.0 dm))
-	 (p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
 	 (p2 (/ km denom))
-	 (p3 (/ -1.0 denom)))
-    (set! (x0 0) (+ (* p1 (x1 0))
-		    (* p2 (+ (x1 (- size 1)) (x1 1)))
-		    (* p3 (x2 0))))
+	 (s1 (- size 1)))
+    (float-vector-scale! x2 (/ -1.0 denom))
+    (copy x1 x0)
+    (float-vector-scale! x0 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
+    (float-vector-add! x0 x2)
+    (set! (x0 0) (+ (x0 0) (* p2 (+ (x1 s1) (x1 1)))))
     (do ((i 1 (+ i 1)))
-	((= i (- size 1)))
-      (set! (x0 i) (+ (* p1 (x1 i))
-		      (* p2 (+ (x1 (- i 1)) (x1 (+ i 1))))
-		      (* p3 (x2 i)))))
-    (set! size (- size 1))
-    (set! (x0 size) (+ (* p1 (x1 size))
-		       (* p2 (+ (x1 (- size 1)) (x1 0)))
-		       (* p3 (x2 size))))
+	((= i s1))
+      (float-vector-set! x0 i (+ (float-vector-ref x0 i) (* p2 (+ (float-vector-ref x1 (- i 1)) (float-vector-ref x1 (+ i 1)))))))
+    (set! (x0 s1) (+ (x0 s1) (* p2 (+ (x1 (- s1 1)) (x1 0)))))
     (fill! x2 0.0)
     (float-vector-add! x2 x1)
     (fill! x1 0.0)
@@ -856,7 +881,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (float-vector alpha (* -2.0 gamma) alpha)
 		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
-(define* (make-eliminate-hum (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10))
+
+#|
+(define* (old-make-eliminate-hum (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10))
   (let ((gen (make-vector hum-harmonics)))
     (do ((i 0 (+ i 1)))
 	((= i hum-harmonics))
@@ -865,12 +892,32 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(set! (gen i) (make-iir-band-stop-2 (- center b2) (+ center b2)))))
     gen))
 
-(define (eliminate-hum gen x0)
+(define (old-eliminate-hum gen x0)
   (do ((i 0 (+ i 1)))
       ((= i (length gen)) x0)
     (set! x0 (filter (vector-ref gen i) x0)))) ; "cascade" n filters
 
-;;; (let ((hummer (make-eliminate-hum))) (map-channel (lambda (x) (eliminate-hum hummer x))))
+;;; (let ((hummer (old-make-eliminate-hum))) (map-channel (lambda (x) (old-eliminate-hum hummer x))))
+|#
+
+;;; the new form is creating a function/closure of the form:
+;;;  (let ((g0 (make-iir-band-stop-2 c00 c01)) (g1 (make-iir-band-stop-2 c10 c11))) (lambda (y) (filter g1 (filter g0 y))))
+
+(define-macro* (make-eliminate-hum (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10))
+  `(let ((body 'y)
+	 (closure ()))
+     (do ((i 0 (+ i 1)))
+	 ((= i ,hum-harmonics))
+       (let ((filt (string->symbol (format #f "g~D" i)))
+	     (center (* (+ i 1.0) ,hum-freq))
+	     (b2 (* 0.5 ,bandwidth)))
+	 (set! body (list 'filter filt body))
+	 (set! closure (cons (list filt (list 'make-iir-band-stop-2 (- center b2) (+ center b2))) closure))))
+    (apply let closure 
+	   `((lambda (y) ,body)))))
+
+;;; (map-channel (make-eliminate-hum))
+
 
 (define (make-peaking-2 f1 f2 m)
   ;; bandpass, m is gain at center of peak
@@ -2106,12 +2153,15 @@ and replaces it with the spectrum given in coeffs"
 	      (do ((i 0 (+ i 1)))
 		  ((= i (+ k 1)))
 		(float-vector-set! wkm i (float-vector-ref d i)))
-	      (let ((wkm-k (float-vector-ref wkm k)))
+	      (let ((wkm-k (float-vector-ref wkm k))
+		    (old-wk1 (copy wk1)))
+		(do ((j 0 (+ j 1)))
+		    ((= j end))
+		  (float-vector-set! wk1 j (- (float-vector-ref wk1 j) (* wkm-k (float-vector-ref wk2 j)))))
 		(do ((j 0 (+ j 1))
 		     (j1 1 (+ j1 1)))
 		    ((= j end))
-		  (set! (wk1 j) (- (wk1 j) (* wkm-k (wk2 j))))
-		  (set! (wk2 j) (- (wk2 j1) (* wkm-k (wk1 j1))))))))))))
+		  (float-vector-set! wk2 j (- (float-vector-ref wk2 j1) (* wkm-k (float-vector-ref old-wk1 j1))))))))))))
 
 (define* (lpc-predict data n coeffs m nf clipped)
   ;; translated and changed to use 0-based arrays from predic of NRinC
@@ -2153,10 +2203,13 @@ is assumed to be outside -1.0 to 1.0."
   (let ((clips 0)                              ; number of clipped portions * 2
 	(unclipped-max 0.0)
 	(len (frames snd chn))
-	(data (channel->float-vector 0 #f snd chn)))
+	(data (channel->float-vector 0 #f snd chn))
+	(clip-size 1000)
+	(clip-data (make-vector 1000 0)))
 
     ;; count clipped portions
-    (let ((in-clip #f))
+    (let ((in-clip #f)
+	  (clip-beg 0))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(float-vector-set! data i (abs (vector-ref data i))))
@@ -2164,113 +2217,101 @@ is assumed to be outside -1.0 to 1.0."
 	  ((= i len))
 	(if (> (float-vector-ref data i) .9999)                    ; this sample is clipped
 	    (if (not in-clip)
-		(set! in-clip #t))
+		(begin
+		  (set! in-clip #t)
+		  (set! clip-beg i)))
 	    (begin                            ; not clipped
 	      (set! unclipped-max (max unclipped-max (float-vector-ref data i)))
 	      (if in-clip
 		  (begin
 		    (set! in-clip #f)
-		    (set! clips (+ clips 2))))))))
-
-    (if (> clips 0)                             ; we did find clipped portions
-	(let ((clip-data (make-vector clips 0))  ; clipped portion begin and end points
-	      (clip-beg 0)
-	      (in-clip #f)
-	      (cur-clip 0)
-	      (samp 0))
-	  (do ((i 0 (+ i 1)))
-	      ((= i len))
-	    (if (> (float-vector-ref data i) .9999)
-		(if (not in-clip)
-		    (begin
-		      (set! in-clip #t)
-		      (set! clip-beg samp)))
-		(begin                            ; not clipped
-		  (if in-clip                     ; if we were in a clipped portion
-		      (begin                      ;   save the bounds in clip-data
-			(set! in-clip #f)
-			(set! (clip-data cur-clip) clip-beg)
-			(set! (clip-data (+ 1 cur-clip)) (- samp 1))
-			(set! cur-clip (+ cur-clip 2))))))
-	    (set! samp (+ samp 1)))
-	  
-	  ;; try to restore clipped portions
-	  
-	  (let ((min-data-len 32)
-		(max-len 0))
-	    (as-one-edit
-	     (lambda ()
-	       (do ((clip 0 (+ clip 2)))               ;   so go through all...
-		   ((>= clip clips))
-		 (let* ((clip-beg (clip-data clip))  ; clip-beg to clip-end inclusive are clipped
-			(clip-end (clip-data (+ 1 clip)))
-			(clip-len (+ 1 (- clip-end clip-beg)))
-			(data-len (max min-data-len (* clip-len 4))))
+		    (set! (clip-data clips) clip-beg)
+		    (set! (clip-data (+ 1 clips)) (- i 1))
+		    (set! clips (+ clips 2))
+		    (if (> clips clip-size)
+			(let ((new-clip-data (make-vector (* 2 clip-size) 0)))
+			  (copy clip-data new-clip-data)
+			  (set! clip-data new-clip-data)
+			  (set! clip-size (* 2 clip-size))))))))))
+      
+    (if (> clips 0)
+	;; try to restore clipped portions
+	
+	(let ((min-data-len 32)
+	      (max-len 0))
+	  (as-one-edit
+	   (lambda ()
+	     (do ((clip 0 (+ clip 2)))               ;   so go through all...
+		 ((>= clip clips))
+	       (let* ((clip-beg (clip-data clip))  ; clip-beg to clip-end inclusive are clipped
+		      (clip-end (clip-data (+ 1 clip)))
+		      (clip-len (+ 1 (- clip-end clip-beg)))
+		      (data-len (max min-data-len (* clip-len 4))))
+		 
+		 (if (> clip-len max-len) 
+		     (set! max-len clip-len))
+		 
+		 (let ((forward-data-len data-len)
+		       (backward-data-len data-len)
+		       (previous-end (if (= clip 0) 0 (clip-data (- clip 1))))
+		       (next-beg (if (< clip (- clips 3)) (clip-data (+ clip 2)) (frames snd chn))))
 		   
-		   (if (> clip-len max-len) 
-		       (set! max-len clip-len))
+		   (if (< (- clip-beg data-len) previous-end)  ; current beg - data collides with previous
+		       (begin
+			 ;; (format #t ";[~A] collision at ~A -> [~A : ~A]" clip previous-end clip-beg clip-end)
+			 (set! forward-data-len (max 4 (- clip-beg previous-end)))))
 		   
-		   (let ((forward-data-len data-len)
-			 (backward-data-len data-len)
-			 (previous-end (if (= clip 0) 0 (clip-data (- clip 1))))
-			 (next-beg (if (< clip (- clips 3)) (clip-data (+ clip 2)) (frames snd chn))))
+		   (if (> (+ clip-end data-len) next-beg)    ; current end + data collides with next
+		       (begin
+			 ;; (format #t ";[~A] collision at [~A : ~A] -> ~A" clip clip-beg clip-end next-beg)
+			 (set! backward-data-len (max 4 (- next-beg clip-end)))))
+		   
+		   (let ((forward-predict-len (min (max clip-len (floor (/ forward-data-len 2))) forward-data-len))
+			 (backward-predict-len (min (max clip-len (floor (/ backward-data-len 2))) backward-data-len)))
 		     
-		     (if (< (- clip-beg data-len) previous-end)  ; current beg - data collides with previous
-			 (begin
-			   ;; (format #t ";[~A] collision at ~A -> [~A : ~A]" clip previous-end clip-beg clip-end)
-			   (set! forward-data-len (max 4 (- clip-beg previous-end)))))
+		     ;; use LPC to reconstruct going both forwards and backwards
 		     
-		     (if (> (+ clip-end data-len) next-beg)    ; current end + data collides with next
-			 (begin
-			   ;; (format #t ";[~A] collision at [~A : ~A] -> ~A" clip clip-beg clip-end next-beg)
-			   (set! backward-data-len (max 4 (- next-beg clip-end)))))
-		     
-		     (let ((forward-predict-len (min (max clip-len (floor (/ forward-data-len 2))) forward-data-len))
-			   (backward-predict-len (min (max clip-len (floor (/ backward-data-len 2))) backward-data-len)))
-		       
-		       ;; use LPC to reconstruct going both forwards and backwards
-		       
-		       (let* ((data (channel->float-vector (- clip-beg forward-data-len) forward-data-len snd chn))
-			      (future (lpc-predict 
-				       data forward-data-len 
-				       (lpc-coeffs data forward-data-len forward-predict-len)
-				       forward-predict-len
-				       clip-len #f))
-			      
-			      (rdata (reverse! (channel->float-vector (+ 1 clip-end) backward-data-len snd chn)))
-			      (past (lpc-predict 
-				     rdata backward-data-len 
-				     (lpc-coeffs rdata backward-data-len backward-predict-len)
-				     backward-predict-len
+		     (let* ((data (channel->float-vector (- clip-beg forward-data-len) forward-data-len snd chn))
+			    (future (lpc-predict 
+				     data forward-data-len 
+				     (lpc-coeffs data forward-data-len forward-predict-len)
+				     forward-predict-len
 				     clip-len #f))
-			      
-			      (new-data (make-float-vector clip-len 0.0)))
-			 
-			 (if (> clip-len 1)
-			     (do ((i 0 (+ i 1))
-				  (j (- clip-len 1) (- j 1)))
-				 ((= i clip-len))
-			       (let ((sn (* 0.5 (+ 1.0 (cos (* pi (/ i (- clip-len 1))))))))
-				 (set! (new-data i) (+ (* sn 
-							  (future i))
-						       (* (- 1.0 sn) 
-							  (past j))))))
-			     
-			     ;; todo perhaps move this mix dependent on data-lens?
-			     ;; todo perhaps special case for 2 samps (what if both 1.0 for example?)
-			     ;; todo perhaps if multichannel and channels are correlated and one is not clipped -- use
-			     ;;   its data to help reconstruct clipped case?
-			     
-			     (set! (new-data 0) (if (> (future 0) 0.0)
-						    (max (future 0) (past 0))
-						    (min (future 0) (past 0)))))
-			 
-			 ;; write reconstruction
-			 (float-vector->channel new-data clip-beg clip-len snd chn))))))))
+			    
+			    (rdata (reverse! (channel->float-vector (+ 1 clip-end) backward-data-len snd chn)))
+			    (past (lpc-predict 
+				   rdata backward-data-len 
+				   (lpc-coeffs rdata backward-data-len backward-predict-len)
+				   backward-predict-len
+				   clip-len #f))
+			    
+			    (new-data (make-float-vector clip-len 0.0)))
+		       
+		       (if (> clip-len 1)
+			   (do ((i 0 (+ i 1))
+				(j (- clip-len 1) (- j 1)))
+			       ((= i clip-len))
+			     (let ((sn (* 0.5 (+ 1.0 (cos (* pi (/ i (- clip-len 1))))))))
+			       (set! (new-data i) (+ (* sn 
+							(future i))
+						     (* (- 1.0 sn) 
+							(past j))))))
+			   
+			   ;; todo perhaps move this mix dependent on data-lens?
+			   ;; todo perhaps special case for 2 samps (what if both 1.0 for example?)
+			   ;; todo perhaps if multichannel and channels are correlated and one is not clipped -- use
+			   ;;   its data to help reconstruct clipped case?
+			   
+			   (set! (new-data 0) (if (> (future 0) 0.0)
+						  (max (future 0) (past 0))
+						  (min (future 0) (past 0)))))
+		       
+		       ;; write reconstruction
+		       (float-vector->channel new-data clip-beg clip-len snd chn))))))))
 	    
-	    (if (> unclipped-max .95) (set! unclipped-max .999))
-	    (scale-channel (/ unclipped-max (maxamp snd chn)) 0 (frames snd chn) snd chn)
-	    (list 'max unclipped-max 'clips (/ clips 2) 'max-len max-len)))
+	  (if (> unclipped-max .95) (set! unclipped-max .999))
+	  (scale-channel (/ unclipped-max (maxamp snd chn)) 0 (frames snd chn) snd chn)
+	  (list 'max unclipped-max 'clips (/ clips 2) 'max-len max-len))
 	  
 	'no-clips)))
 

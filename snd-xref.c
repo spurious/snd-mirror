@@ -1769,7 +1769,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11384] = {
+static const char *snd_names[11382] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4084,7 +4084,6 @@ static const char *snd_names[11384] = {
     "eastern-wood-pewee-1", "animals.scm",
     "eastern-wood-pewee-2", "animals.scm",
     "echo", "examp.scm",
-    "eliminate-hum", "dsp.scm",
     "elliptic-prototype", "analog-filter.scm",
     "endhostent", "libc.scm",
     "endnetent", "libc.scm",
@@ -6452,7 +6451,6 @@ static const char *snd_names[11384] = {
     "make-delayl", "prc95.scm",
     "make-differentiator", "dsp.scm",
     "make-dlocsig", "dlocsig.scm",
-    "make-eliminate-hum", "dsp.scm",
     "make-elliptic-bandpass", "analog-filter.scm",
     "make-elliptic-bandstop", "analog-filter.scm",
     "make-elliptic-highpass", "analog-filter.scm",
@@ -6622,6 +6620,7 @@ static const char *snd_names[11384] = {
     "mono-files->stereo", "extensions.scm",
     "montezuma-quail", "animals.scm",
     "moog-filter", "moog.scm",
+    "moog-filter-saturated", "moog.scm",
     "moog-frequency", "moog.scm",
     "moog?", "moog.scm",
     "mosquito", "animals.scm",
@@ -7466,7 +7465,7 @@ static const char *snd_names[11384] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5692);
+  s7_autoload_set_names(sc, snd_names, 5691);
 }
 #endif
 

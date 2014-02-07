@@ -4551,7 +4551,7 @@
 (CFNC "GdkScreen* gtk_widget_get_screen GtkWidget* widget")
 (CFNC "gboolean gtk_widget_has_screen GtkWidget* widget")
 (CFNC "GdkDisplay* gtk_widget_get_display GtkWidget* widget")
-(CFNC "GdkWindow* gtk_widget_get_root_window GtkWidget* widget")
+;;; 3.11.5 (CFNC "GdkWindow* gtk_widget_get_root_window GtkWidget* widget")
 (CFNC "GtkClipboard* gtk_widget_get_clipboard GtkWidget* widget GdkAtom selection")
 
 ;;; -------- end gtk 2.1 additions
@@ -8834,6 +8834,22 @@
 ;(CFNC-3.12 "GtkTreePath* gtk_tree_path_new_from_indicesv gint* indices gsize length")
 (CFNC-3.12 "gboolean gtk_window_is_maximized GtkWindow* window")
 
+
+;;; 3.11.5
+
+(CCAST-3.12 "GTK_POPOVER" "GtkPopover*")
+(CCHK-3.12 "GTK_IS_POPOVER" "GtkPopover*")
+(CFNC-3.12 "GdkVisual* gdk_screen_get_preferred_visual GdkScreen* screen")
+(CFNC-3.12 "GtkWidget* gtk_dialog_get_header_bar GtkDialog* dialog")
+(CFNC-3.12 "GtkWidget* gtk_popover_new GtkWidget* relative_to")
+(CFNC-3.12 "void gtk_popover_set_relative_to GtkPopover* popover GtkWidget* relative_to")
+(CFNC-3.12 "GtkWidget* gtk_popover_get_relative_to GtkPopover* popover")
+(CFNC-3.12 "void gtk_popover_set_pointing_to GtkPopover* popover cairo_rectangle_int_t *rect")
+(CFNC-3.12 "gboolean gtk_popover_get_pointing_to GtkPopover* popover cairo_rectangle_int_t *rect")
+(CFNC-3.12 "void gtk_popover_set_position GtkPopover* popover GtkPositionType position")
+(CFNC-3.12 "GtkPositionType gtk_popover_get_position GtkPopover* popover")
+(CFNC-3.12 "void gtk_popover_set_modal GtkPopover* popover gboolean modal")
+(CFNC-3.12 "gboolean gtk_popover_get_modal GtkPopover* popover")
 
 
 

@@ -4004,7 +4004,7 @@
 			(if (not (= (mix-position mx) (* 44100 61000))) (snd-display #__line__ ";bigger mix to: ~A" (mix-position mx))))
 		      (snd-display #__line__ ";no mix tag from mix-sound"))
 		  (undo 2))
-		(let ((res (find-channel (lambda (y) (not (= y 0.0))))))
+		(let ((res (scan-channel (lambda (y) (not (= y 0.0))))))
 		  (if (or (not res)
 			  (> (cadr res) 100))
 		      (snd-display #__line__ ";bigger find not 0.0: ~A" res)))
@@ -4941,7 +4941,7 @@
 
   (define (check-maxamp caller-line ind val name)
     (if (fneq (maxamp ind 0) val) (snd-display #__line__ ";maxamp amp-env ~A: ~A should be ~A" name (maxamp ind) val))
-    (let ((pos (find-channel (lambda (y) (>= (abs y) (- val .0001)))))
+    (let ((pos (scan-channel (lambda (y) (>= (abs y) (- val .0001)))))
 	  (maxpos (maxamp-position ind 0)))
       (if (not pos) 
 	  (snd-display #__line__ ";actual maxamp ~A vals not right" name)
@@ -6277,7 +6277,7 @@ EDITS: 5
 	(if (not (string=? (short-file-name index) "oboe.snd")) (snd-display #__line__ ";oboe short name: ~S?" (short-file-name index)))
 	(let ((matches (count-matches (lambda (a) (> a .125)))))
 	  (if (not (= matches 1313)) (snd-display #__line__ ";count-matches: ~A?" matches)))
-	(let ((spot (find-channel (lambda (a) (> a .13)))))
+	(let ((spot (scan-channel (lambda (a) (> a .13)))))
 	  (if (or (not spot) (not (= spot 8862))) (snd-display #__line__ ";find: ~A?" spot)))
 	(set! (right-sample) 3000) 
 	(let ((samp (right-sample)))
@@ -7569,7 +7569,7 @@ EDITS: 5
 	   (lambda () (scale-by 2.0 ind1 0)) 
 	   ind1)
 	  (test-edpos 
-	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos))
+	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (scan-channel (lambda (n2) (> n2 .1)) 0 #f snd chn edpos))
 	   'find
 	   (lambda () (delete-samples 0 100 ind1 0))
 	   ind1)
@@ -9395,7 +9395,7 @@ EDITS: 2
 	(if clip (snd-display #__line__ ";channel-clipped? oboe.snd -> ~A" clip)))
       (scale-to 1.5 ind0 0)
       (let ((clip (channel-clipped? ind0 0)))
-	(if (not (= clip 4503)) (snd-display #__line__ ";channel-clipped after scale: ~A" clip)))
+	(if (not (member clip (list 4502 4503))) (snd-display #__line__ ";channel-clipped after scale: ~A" clip)))
       (revert-sound ind0)
       
       (ramp-channel 0.0 1.0 0 #f ind1 0)
@@ -11047,8 +11047,7 @@ EDITS: 2
 		(snd-display #__line__ ";butterworth highpass ~A ~A ~A" cutoff local dsp)))))
       
       (let ((ind (open-sound "oboe.snd")))
-	(let ((hummer (make-eliminate-hum 550))) 
-	  (map-channel (lambda (x) (eliminate-hum hummer x))))
+	(map-channel (make-eliminate-hum 550))
 	(let ((peaker (make-peaking-2 500 1000 1.0)))
 	  (map-channel peaker))
 	(map-channel (chordalize))
@@ -11882,21 +11881,24 @@ EDITS: 2
 	     (* csin yh)))))
   
   ;; ----------------
-#|
+
   (define (rough-spectrum ind)
-    (let ((r (make-sampler 0 ind 0))
+    (let ((data (channel->float-vector 0 10000 ind 0))
 	  (spect (make-float-vector 10)))
-      (do ((i 0 (+ i 1)))
+      (float-vector-multiply! data data)
+      (do ((i 0 (+ i 1))
+	   (beg 0 (+ beg 1000))
+	   (end 999 (+ end 1000)))
 	  ((= i 10))
 	(let ((g (make-moving-average 1001)))
 	  (set! (mus-increment g) 1.0)
-	  (do ((j 0 (+ j 1))
-	       (x (read-sample r) (read-sample r)))
-	      ((= j 999) (float-vector-set! spect i (moving-average g (* x x))))
-	    (moving-average g (* x x)))))
+	  (do ((j beg (+ j 1)))
+	      ((= j end))
+	    (moving-average g (float-vector-ref data j)))
+	  (float-vector-set! spect i (moving-average g (float-vector-ref data end)))))
       (float-vector-scale! spect (/ 1.0 (float-vector-peak spect)))))
-|#
-  (define (rough-spectrum ind)
+#|
+  (define (old-rough-spectrum ind)
     (let ((r (make-sampler 0 ind 0))
 	  (spect (make-float-vector 10)))
       (do ((i 0 (+ i 1)))
@@ -11908,6 +11910,7 @@ EDITS: 2
 	      (set! sum (+ sum (* val val)))))
 	  (set! (spect i) sum)))
       (float-vector-scale! spect (/ 1.0 (float-vector-peak spect)))))
+|#
   
   ;; ----------------
   (define* (print-and-check gen name desc (desc1 "") (desc2 ""))
@@ -26631,7 +26634,8 @@ EDITS: 2
 		   (lambda args args))
 	    (if (not (= (edit-position ind 0) 0)) (snd-display #__line__ ";convolve z: ~A" (edit-position ind 0)))
 	    (let ((matches (count-matches (lambda (y) (> y .1)))))
-	      (if matches (snd-display #__line__ ";count z: ~A" matches)))
+	      (if (and matches (> matches 0))
+		  (snd-display #__line__ ";count z: ~A" matches)))
 	    (let* ((reader (make-sampler 0))
 		   (val (next-sample reader))
 		   (str (format #f "~A" reader)))
@@ -30540,7 +30544,7 @@ EDITS: 2
 	    (set! (vals i) (vals (- i 1000))))
 	  (do ((i 3000 (+ i 1)))
 	      ((= i 4000))
-	    (set! (vals i) 0.0))
+	    (float-vector-set! vals i 0.0))
 	  (check-edit-tree '((0 1 0 2999 1.0 0.0 1.00010001915507e-4 4) (3000 2 0 999 1.0 0.0 0.0 0) 
 			     (4000 1 3000 8999 1.0 0.300029993057251 1.00010001915507e-4 4) (10000 -2 0 0 0.0 0.0 0.0 0))
 			   vals "envd ins/del")
@@ -30548,14 +30552,14 @@ EDITS: 2
 	  (insert-samples 0 1000 (make-float-vector 1000))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 1000))
-	    (set! (vals i) 0.0))
+	    (float-vector-set! vals i 0.0))
 	  (check-edit-tree '((0 3 0 999 1.0 0.0 0.0 0) (1000 1 1000 2999 1.0 0.100010000169277 1.00010001915507e-4 4) 
 			     (3000 2 0 999 1.0 0.0 0.0 0) (4000 1 3000 8999 1.0 0.300029993057251 1.00010001915507e-4 4) (10000 -2 0 0 0.0 0.0 0.0 0))
 			   vals "envd predel")
 	  (scale-by 0.5)
 	  (do ((i 0 (+ i 1)))
 	      ((= i 10000))
-	    (set! (vals i) (* (vals i) 0.5)))
+	    (float-vector-set! vals i (* (float-vector-ref vals i) 0.5)))
 	  (check-edit-tree '((0 3 0 999 0.5 0.0 0.0 0) (1000 1 1000 2999 0.5 0.100010000169277 1.00010001915507e-4 4) 
 			     (3000 2 0 999 0.5 0.0 0.0 0) (4000 1 3000 8999 0.5 0.300029993057251 1.00010001915507e-4 4) (10000 -2 0 0 0.0 0.0 0.0 0))
 			   vals "envd scl")
@@ -30577,7 +30581,7 @@ EDITS: 2
 	  (let ((e (make-env '(0 0 1 1 2 0) :length 10000)))
 	    (do ((i 30000 (+ i 1)))
 		((= i 40000))
-	      (set! (vals i) (env e))))
+	      (float-vector-set! vals i (env e))))
 	  (check-edit-tree '((0 1 0 29999 1.0 0.0 0.0 0) (30000 1 30000 34999 1.0 0.0 1.99999994947575e-4 4)
 			     (35000 1 35000 39999 1.0 1.0 -2.00040012714453e-4 4) (40000 1 40000 99999 1.0 0.0 0.0 0) (100000 -2 0 0 0.0 0.0 0.0 0))
 			   vals "partial env")
@@ -30586,24 +30590,24 @@ EDITS: 2
 	  (let ((e (make-env '(0 0 1 1 2 0) :length 10000)))
 	    (do ((i 30000 (+ i 1)))
 		((= i 40000))
-	      (set! (vals i) (* (vals i) (env e)))))
+	      (float-vector-set! vals i (* (float-vector-ref vals i) (env e)))))
 	  (do ((i 10000 (+ i 1)))
 	      ((= i 20000))
-	    (set! (vals i) (* (vals i) 0.5)))
+	    (float-vector-set! vals i (* (float-vector-ref vals i) 0.5)))
 	  (check-edit-tree '((0 1 0 9999 1.0 0.0 0.0 0) (10000 1 10000 19999 0.5 0.0 0.0 0) (20000 1 20000 29999 1.0 0.0 0.0 0) (30000 1 30000 34999 1.0 0.0 1.99999994947575e-4 6) (35000 1 35000 39999 1.0 1.0 -2.00040012714453e-4 6) (40000 1 40000 99999 1.0 0.0 0.0 0) (100000 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env over env")
 	  (env-channel (make-env '(0 0 1 1 2 0) :length 10000) 5000 10000) ; env over scl
 	  (let ((e (make-env '(0 0 1 1 2 0) :length 10000)))
 	    (do ((i 5000 (+ i 1)))
 		((= i 15000))
-	      (set! (vals i) (* (vals i) (env e)))))
+	      (float-vector-set! vals i (* (float-vector-ref vals i) (env e)))))
 	  (check-edit-tree '((0 1 0 4999 1.0 0.0 0.0 0) (5000 1 5000 9999 1.0 0.0 1.99999994947575e-4 4) (10000 1 10000 14999 0.5 1.0 -2.00040012714453e-4 4) (15000 1 15000 19999 0.5 0.0 0.0 0) (20000 1 20000 29999 1.0 0.0 0.0 0) (30000 1 30000 34999 1.0 0.0 1.99999994947575e-4 6) (35000 1 35000 39999 1.0 1.0 -2.00040012714453e-4 6) (40000 1 40000 99999 1.0 0.0 0.0 0) (100000 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env over scl")
 	  (ramp-channel .5 -.5 25000 1000)
 	  (let ((e (make-env '(0 .5 1 -.5) :length 1000)))
 	    (do ((i 25000 (+ i 1)))
 		((= i 26000))
-	      (set! (vals i) (* (vals i) (env e)))))
+	      (float-vector-set! vals i (* (float-vector-ref vals i) (env e)))))
 	  (check-edit-tree '((0 1 0 4999 1.0 0.0 0.0 0) (5000 1 5000 9999 1.0 0.0 1.99999994947575e-4 4) (10000 1 10000 14999 0.5 1.0 -2.00040012714453e-4 4) (15000 1 15000 19999 0.5 0.0 0.0 0) (20000 1 20000 24999 1.0 0.0 0.0 0) (25000 1 25000 25999 1.0 0.5 -0.00100100098643452 4) (26000 1 26000 29999 1.0 0.0 0.0 0) (30000 1 30000 34999 1.0 0.0 1.99999994947575e-4 6) (35000 1 35000 39999 1.0 1.0 -2.00040012714453e-4 6) (40000 1 40000 99999 1.0 0.0 0.0 0) (100000 -2 0 0 0.0 0.0 0.0 0))
 			   vals "ramp")
 	  (scale-by -1.0)
@@ -30622,7 +30626,7 @@ EDITS: 2
 	  (let ((e (make-env '(0 -1.0 1 1.0) :length 30000)))
 	    (do ((i 50000 (+ i 1)))
 		((= i 80000))
-	      (set! (vals i) (* (vals i) (env e)))))
+	      (float-vector-set! vals i (* (float-vector-ref vals i) (env e)))))
 	  (check-edit-tree '((0 1 0 4999 -1.0 0.0 0.0 0) (5000 1 5000 9999 -1.0 0.0 1.99999994947575e-4 4) (10000 1 10000 14999 -0.5 1.0 -2.00040012714453e-4 4) (15000 1 15000 19999 -0.5 0.0 0.0 0) (20000 1 20000 24999 -1.0 0.0 0.0 0) (25000 1 25000 25999 -1.0 0.5 -0.00100100098643452 4) (26000 1 26000 29999 -1.0 0.0 0.0 0) (30000 1 30000 34999 -1.0 0.0 1.99999994947575e-4 6) (35000 1 35000 39999 -1.0 1.0 -2.00040012714453e-4 6) (40000 1 40000 49999 -1.0 0.0 0.0 0) (50000 1 50000 79999 -1.0 -1.0 6.66688865749165e-5 4) (80000 1 80000 99999 -1.0 0.0 0.0 0) (100000 -2 0 0 -0.0 0.0 0.0 0))
 			   vals "ramp")
 	  (env-sound '(0 0 1 1))
@@ -31157,9 +31161,9 @@ EDITS: 2
 	       (fill-float-vector hi (if (scan-channel (lambda (y) (> y .1)))
 				1.0 0.0))
 	       (if (not (vequal hi (float-vector 1.0 1.0 1.0))) (snd-display #__line__ ";fill-float-vector with scan-channel (opt ~A): ~A" n hi)))
-	     (let ((val (find-channel (lambda (y) (find-channel (lambda (n6) (> n6 .1)))))))
+	     (let ((val (scan-channel (lambda (y) (scan-channel (lambda (n6) (> n6 .1)))))))
 	       (if (not (= val 0)) (snd-display #__line__ ";find with find: ~A" val)))
-	     (let ((val (find-channel (lambda (y) (scan-channel (lambda (n7) (> n7 .1)))))))
+	     (let ((val (scan-channel (lambda (y) (scan-channel (lambda (n7) (> n7 .1)))))))
 	       (if (not (= val 0)) (snd-display #__line__ ";find with scan-channel: ~A" val)))
 	     (let ((mx (maxamp ind 0))
 		   (val (scan-channel (lambda (y) (map-channel (lambda (n) (* n 2.0))) #t))))
@@ -32840,6 +32844,8 @@ EDITS: 1
   
   ;; echoes with each echo at a new pitch via ssb-am etc
   
+#|
+  ;; old form
   (define* (make-ssb-transposer old-freq new-freq pairs (order 40) (bw 50.0))
     (let ((ssbs (make-vector pairs))
 	  (bands (make-vector pairs))
@@ -32873,7 +32879,39 @@ EDITS: 1
   
   (define (transposed-echo pitch scaler secs)
     (map-channel (make-fdelay (round (* secs (srate))) pitch scaler)))
+|#
   
+  (define-macro (make-fdelay len pitch scaler)
+    `(let ((body ())
+	   (closure (list (list 'dly (list 'make-delay ,len))))
+	   (old-freq 440.0)
+	   (new-freq (* 440.0 ,pitch))
+	   (pairs 10)
+	   (order 40)
+	   (bw 50.0))
+       (let ((factor (/ (- new-freq old-freq) old-freq)))
+	 (do ((i 1 (+ i 5)))
+	     ((> i pairs))
+	   (let ((inner-body ())
+		 (n (+ 1 (min 4 (- pairs i)))))
+	     (do ((k 0 (+ k 1))) ; the inner loop is dividing up large sums for the optimizer's benefit (it can handle 5 at a time currently)
+		 ((= k n))
+	       (let ((aff (* (+ i k) old-freq))
+		     (bwf (* bw (+ 1.0 (/ (+ i k) (* 2 pairs)))))
+		     (ssb (string->symbol (format #f "s~D" (+ i k))))
+		     (flt (string->symbol (format #f "g~D" (+ i k)))))
+		 (set! closure (cons (list ssb (list 'make-ssb-am (* (+ i k) old-freq factor)))
+				     (cons (list flt (list 'make-bandpass (hz->radians (- aff bw)) (hz->radians (+ aff bw)) order)) 
+					   closure)))
+		 (set! inner-body (cons (list 'ssb-am ssb (list 'bandpass flt 'y)) inner-body))))
+	     (set! body (cons (append (list '+) inner-body) body))))
+	 (apply let closure
+		  `((lambda (y) 
+		      (+ y (delay dly (* ,,scaler (+ ,@body))))))))))
+
+  (define (transposed-echo pitch scaler secs)
+    (map-channel (make-fdelay (round (* secs (srate))) pitch scaler)))
+
   (define (local-eq? a b)
     (if (number? a)
 	(if (rational? a)
@@ -34014,7 +34052,7 @@ EDITS: 1
 
 	(let ((vals (apply float-vector (rms-envelope "oboe.snd" :rfreq 4))))
 	  (if (not (vequal vals (float-vector 0.0 0.0430 0.25 0.0642 0.5 0.0695 0.75 0.0722 1.0 0.0738 1.25 0.0713 
-				     1.5 0.065 1.75 0.0439 2.0 0.01275 2.25 0.0)))
+				     1.5 0.065 1.75 0.0439 2.0 0.01275 2.25 0.007)))
 	      (snd-display #__line__ ";rms-envelope: ~A" vals)))
 
 	(let ((ind (open-sound "2a.snd")))
@@ -45773,7 +45811,7 @@ EDITS: 1
 			  left-sample make-graph-data map-chan max-transform-peaks maxamp-position min-dB mix-region
 			  transform-normalization peaks ;play
 			  position->x position->y reverse-sound
-			  revert-sound right-sample sample save-sound save-sound-as scan-chan
+			  revert-sound right-sample sample save-sound save-sound-as 
 			  select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
 			  spectrum-end spectro-hop spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle  grid-density
 			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
@@ -46976,29 +47014,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-4-Feb-14:
-41,136,912,009
-6,243,035,665  s7.c:eval [/home/bil/gtk-snd/snd]
-3,258,610,028  ???:sin [/lib64/libm-2.12.so]
-2,373,861,498  ???:cos [/lib64/libm-2.12.so]
+6-Feb-14:
+40,193,641,186
+5,998,222,058  s7.c:eval [/home/bil/gtk-snd/snd]
+3,255,526,436  ???:sin [/lib64/libm-2.12.so]
+2,375,767,456  ???:cos [/lib64/libm-2.12.so]
 1,335,711,872  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,119,303,728  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-1,097,340,875  clm.c:mus_src [/home/bil/gtk-snd/snd]
-1,012,033,642  s7.c:gc [/home/bil/gtk-snd/snd]
-  904,634,092  ???:t2_32 [/home/bil/gtk-snd/snd]
-  781,898,497  ???:t2_64 [/home/bil/gtk-snd/snd]
+1,037,701,666  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  952,047,087  s7.c:gc [/home/bil/gtk-snd/snd]
+  885,469,132  ???:t2_32 [/home/bil/gtk-snd/snd]
+  861,018,495  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  627,090,971  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,447,380  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,430,536  ???:n1_64 [/home/bil/gtk-snd/snd]
-  442,917,218  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
-  413,652,716  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  389,174,382  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
-  352,080,567  ???:sincos [/lib64/libm-2.12.so]
+  609,154,910  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,844,805  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,551,144  ???:n1_64 [/home/bil/gtk-snd/snd]
+  415,120,599  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+  374,545,464  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  351,982,008  ???:sincos [/lib64/libm-2.12.so]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  308,748,060  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
  |#
 
 

@@ -3229,16 +3229,14 @@ The second set (make-butter-lp et al) provide arbitrary order Butterworths.
 <em class=emdef>make-iir-band-pass-2</em> f1 f2
 <em class=emdef>make-iir-band-stop-2</em> f1 f2
 <em class=emdef>make-eliminate-hum </em> (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10)
-<em class=emdef>eliminate-hum</em> gen x0
 <em class=emdef>make-peaking-2</em> f1 f2 m
 </pre>
 
-<p>More IIR filters.  Except for make-peaking-2, each function returns a CLM <a href="sndclm.html#filter">filter</a> generator.
+<p>More IIR filters.
 </p>
 
 <pre class="indented">
-(let ((hummer (make-eliminate-hum))) 
-   (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (x) (eliminate-hum hummer x))))
+(map-channel (make-eliminate-hum))
 </pre>
 
 <p>make-peaking (a bandpass filter) returns a function suitable for map-channel (it takes one argument, the current sample,

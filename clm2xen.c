@@ -12714,8 +12714,7 @@ gf *find_gf(s7_scheme *sc, s7_pointer expr)
 #define return_null(Arg) return(NULL) /* {fprintf(stderr, "%d %s\n", __LINE__, DISPLAY(Arg)); return(NULL);} */
 
 /* TODO: according to callgrind, lots of overhead here
- *   also maybe contrast_enhancement, (/ i 5)??
- *   in-any file->sample move-sound 
+ *   also maybe contrast_enhancement file->sample move-sound 
  */
 
 gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
@@ -12723,7 +12722,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
   s7_pointer *choices;
   s7_pointer op;
 
-  /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(expr)); */
+  /* fprintf(stderr, "%d: %s %s\n", __LINE__, DISPLAY(expr), DISPLAY(locals)); */
 
   if ((!s7_is_pair(expr)) ||
       (!s7_is_symbol(car(expr))))

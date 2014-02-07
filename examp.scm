@@ -416,7 +416,7 @@ read an ASCII sound file"
 	     (frame 0)
 	     (short->float (/ 1.0 32768.0)))
 	 (do ((loc 0 (+ loc 1))
-	      (val (read in-fd) (read in-fd)))
+	      (val (read-line in-fd) (read-line in-fd)))
 	     ((eof-object? val)
 	      (if (> loc 0)
 		  (float-vector->channel data frame loc out-fd 0)))
@@ -425,7 +425,7 @@ read an ASCII sound file"
 		 (float-vector->channel data frame bufsize out-fd 0)
 		 (set! frame (+ frame bufsize))
 		 (set! loc 0)))
-	   (float-vector-set! data loc (* val short->float))))))
+	   (float-vector-set! data loc (* (string->number val) short->float))))))
     (close-input-port in-fd)
     out-fd))
 
@@ -862,7 +862,6 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 y))) is like 
 ;; (filter-fft (lambda (y) (* y y y))) ; extreme low pass
 
 #|
-;;; save this example -- find a better use for it someday and add to docs
 (let* ((ind (or (find-sound "now.snd")
 		(open-sound "now.snd")))
        (mx (maxamp ind 0)))
@@ -1885,41 +1884,53 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
 (define* (chain-dsps beg dur :rest dsps)
   "(chain-dsps beg dur :rest dsps) sets up a generator patch from its arguments"
-  ;; I assume the dsps are already made, 
-  ;;          the envs are present as break-point lists
-  ;;          the calls are ordered out->in (or last first)
-  ;; this should use definstrument, not define*, but it's defined in ws.scm which I don't want to require here
-  (let* ((dsp-chain (list->vector (reverse (map (lambda (gen)
-						  (if (list? gen)
-						      (make-env gen :duration dur)
-						      gen))
-						dsps))))
+
+  ;; assume the dsps are already made, 
+  ;;        the envs are present as break-point lists
+  ;;        the calls are ordered out->in (or last first)
+  ;; we take this list and create and evaluate a new function
+
+  (let ((dsp-chain (list->vector (reverse (map (lambda (gen)
+						 (if (list? gen)
+						     (make-env gen :duration dur)
+						     gen))
+					       dsps))))
 	 (start (seconds->samples beg))
 	 (samps (seconds->samples dur))
-	 (end (+ start samps))
-	 (len (length dsp-chain)))
-     (do ((k start (+ k 1)))
-	 ((= k end))
-       (let ((val 0.0))
-	 (do ((i 0 (+ i 1)))
-	     ((= i len))
-	   (let ((gen (dsp-chain i)))
-	     (if (env? gen)
-		 (set! val (* val (env gen)))
-		 (if (readin? gen)
-		     (set! val (+ val (readin gen)))
-		     (set! val (gen val))))))
-	 (outa k val)))))
+	 (body 0.0)
+	 (closure ()))
+    (let ((end (+ start samps))
+	  (len (length dsp-chain)))
 
+      ;; create the let variable list and lambda body of our new function
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(let ((g (dsp-chain i))
+	      (gname (string->symbol (format #f "g~D" i))))
+	  (set! closure (cons `(,gname (dsp-chain ,i)) closure))
+	  (if (env? g)
+	      (set! body `(* ,body (env ,gname)))
+	      (if (readin? g)
+		  (set! body `(+ ,body (readin ,gname)))
+		  (if (mus-generator? g)
+		      (set! body (list (string->symbol (mus-name g)) gname body))
+		      (set! body (list gname body)))))))
+
+      ;; now patch the two together (the apply let below) and evaluate the resultant thunk
+      ((apply let closure 
+	      `((lambda () 
+		  (do ((k ,start (+ k 1)))
+		      ((= k ,end))
+		    (outa k ,body)))))))))
 #|
 (with-sound ()
-  (chain-dsps 0 1.0 '(0 0 1 1 2 0) (make-oscil 440))
-  (chain-dsps 0 1.0 '(0 0 1 1 2 0) (make-one-zero .5) (make-readin "oboe.snd"))
+  (chain-dsps 0 1.0 '(0 0 1 .5 2 0) (make-oscil 440))
+  (chain-dsps 1 1.0 '(0 0 1 4 2 0) (make-one-zero .5) (make-readin "oboe.snd"))
   ;; next call not currently optimizable
-  (chain-dsps 0 1.0 '(0 0 1 1 2 0) (let ((osc1 (make-oscil 220)) 
-					 (osc2 (make-oscil 440))) 
-				     (lambda (val) (+ (osc1 val) 
-						      (osc2 (* 2 val)))))))
+  (chain-dsps 2 1.0 '(0 0 1 .5 2 0) (let ((osc1 (make-oscil 220)) 
+					  (osc2 (make-oscil 440))) 
+				      (lambda (val) (+ (osc1 val) 
+						       (osc2 (* 2 val)))))))
 |#
 
 
@@ -2073,127 +2084,9 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	(reverse-channel 0 #f snd chn))))
 
   
-#|
-;;; -------- sound segmentation
-;;;
-;;; this code was used to return note on and off points for the Iowa Musical Instrument Sound library
-;;;   the main function takes the top level directory of the sounds, and returns (eventually) a text
-;;;   file containing the start times (in samples) and durations of all the notes (each sound file in
-;;;   this library can have about 12 notes).  The results of this function need to be fixed up by hand
-;;;   in some cases (violin notes in particular).
-
-;;; this code needs closedir, readdir and opendir (Guile-isms, I think)
-
-(define* (sounds->segment-data main-dir (output-file "sounds.data"))
-
-  (define (lower-case-and-no-spaces name)
-    (let* ((new-name (string-downcase name))
-	   (len (string-length new-name)))
-      (do ((i 0 (+ i 1)))
-	  ((= i len) new-name)
-	(if (char=? (new-name i) #\space)
-	    (set! (new-name i) #\-)))))
-
-  (define (directory->list dir)
-    (let ((dport (opendir dir)) 
-	  (ctr 0)) ; try to avoid infinite loop in the broken cases
-      (let loop ((entry (readdir dport))
-		 (files ()))
-	(set! ctr (+ ctr 1))
-	(if (and (< ctr 2000)
-		 (not (eof-object? entry)))
-	    (loop (readdir dport) (cons entry files))
-	    (begin
-	      (closedir dport)
-	      (reverse! files))))))
-
-  (define (segment-maxamp name beg dur)
-    (float-vector-peak (samples beg dur name)))
-
-  (define (segment-sound name high low)
-    (let* ((end (frames name))
-	   (reader (make-sampler 0 name))    ; no need to open the sound and display it
-	   (avg (make-moving-average :size 128))
-	   (lavg (make-moving-average :size 2048)) ; to distinguish between slow pulse train (low horn) and actual silence
-	   (segments (make-float-vector 100))
-	   (segctr 0)
-	   (possible-end 0)
-	   (in-sound #f))
-       ;; this block is where 99% of the time goes
-       (do ((i 0 (+ i 1)))
-	   ((= i end))
-	 (let* ((samp (abs (next-sample reader)))
-		(val (moving-average avg samp))
-		(lval (moving-average lavg samp)))
-	   (if in-sound
-	       (if (< val low)
-		   (begin
-		     (set! possible-end i)
-		     (if (< lval low)
-			 (begin
-			   (set! (segments segctr) (+ possible-end 128))
-			   (set! segctr (+ segctr 1))
-			   (set! in-sound #f)))))
-	       (if (> val high)
-		   (begin
-		     (set! (segments segctr) (- i 128))
-		     (set! segctr (+ segctr 1))
-		     (set! in-sound #t))))))
-      (if in-sound
-	  (begin
-	    (set! (segments segctr) end)
-	    (list (+ 1 segctr) segments))
-	  (list segctr segments))))
-
-  (define* (do-one-directory fd dir-name ins-name (high .01) (low .001))
-    (snd-print (format #f ";~A~%" dir-name))
-    (for-each
-     (lambda (sound)
-       (let* ((sound-name (string-append dir-name "/" sound))
-	      (boundary-data (segment-sound sound-name high low))
-	      (boundaries (cadr boundary-data))
-	      (segments (car boundary-data)))
-	 (format fd "~%~%;;;    ~A" sound)
-	 (format fd "~%(~A ~S" ins-name (string-append dir-name "/" sound))
-	 (do ((bnd 0 (+ bnd 2)))
-	     ((>= bnd segments))
-	   (let* ((segbeg (floor (boundaries bnd)))
-		  (segdur (floor (- (boundaries (+ 1 bnd)) segbeg))))
-	     (format fd " (~A ~A ~A)" segbeg segdur (segment-maxamp sound-name segbeg segdur))))
-	 (format fd ")")
-	 (mus-sound-forget (string-append dir-name "/" sound))))
-     (sound-files-in-directory dir-name)))
-
-  (call-with-output-file
-      output-file
-    (lambda (fd)
-      (let ((old-fam (with-file-monitor))) 
-	(set! (with-file-monitor) #f) ; no need to monitor these guys
-	(format fd ";;; sound data from ~S" main-dir)
-	(if (not (char=? (main-dir (- (string-length main-dir) 1)) #\/))
-	    (set! main-dir (string-append main-dir "/")))
-	(for-each
-	 (lambda (dir)
-	   (if (not (char=? (dir 0) #\.))
-	       (let ((ins-name (lower-case-and-no-spaces dir)))
-		 (format fd "~%~%;;; ---------------- ~A ----------------" dir)
-		 (if (string=? dir "Piano")
-		     (for-each
-		      (lambda (inner-dir)
-			(if (not (char=? (inner-dir 0) #\.))
-			    (do-one-directory fd (string-append main-dir dir "/" inner-dir) ins-name .001 .0001))) ; pp piano notes are .01 maxamp and short
-		      (directory->list (string-append main-dir dir)))
-		     (do-one-directory fd (string-append main-dir dir) ins-name)))))
-	 (directory->list main-dir))
-	(set! (with-file-monitor) old-fam)))))
-
-;;; (sounds->segment-data "/home/bil/test/iowa/sounds/" "iowa.data")
-|#
-
-
-
 ;;; -------- channel-clipped?
 
+#|
 (define* (channel-clipped? snd chn)
   "(channel-clipped? snd chn) returns the sample number if it finds clipping"
   (let ((last-y 0.0)
@@ -2208,6 +2101,16 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		    (>= (abs last-y) 0.9999))
 	       (quit i)
 	       (set! last-y y))))))))
+|#
+;;; not pretty but faster:
+
+(define* (channel-clipped? snd chn)
+  "(channel-clipped? snd chn) returns the sample number if it finds clipping"
+  (do ((pos (scan-channel (lambda (y) (>= (abs y) 0.9999)) 0 #f snd chn) 
+	    (scan-channel (lambda (y) (>= (abs y) 0.9999)) (+ pos 1) #f snd chn)))
+      ((or (not pos)
+	   (>= (abs (sample (+ pos 1) snd chn)) 0.9999))
+       pos)))
 
 
 ;;; -------- sync-everything

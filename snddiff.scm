@@ -33,7 +33,7 @@
 	  (do ((i 0 (+ i 1)))
 	      ((or (> diffs 10)
 		   (= i len)))
-	    (if (> (abs (- (v0 i) (v1 i))) .00001)
+	    (if (> (abs (diff i)) .00001)
 		(begin
 		  (set! diffs (+ diffs 1))
 		  (set! diff-data (cons (list i (v0 i) (v1 i)) diff-data)))))

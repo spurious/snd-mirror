@@ -877,26 +877,65 @@ mus_float_t wrapped_vct_ref(void *p)
   return(0.0);
 }
 
+static mus_float_t wrapped_vct_ref_p1(void *p)
+{
+  gf *g = (gf *)p;
+  s7_Int k;
+  k = s7_cell_integer(s7_cell_slot_value(g->s1));
+  if ((k >= 0) && (k < g->i1))
+    return(g->rx1[k + 1]);
+  return(0.0);
+}
+
+static mus_float_t wrapped_vct_ref_m1(void *p)
+{
+  gf *g = (gf *)p;
+  s7_Int k;
+  k = s7_cell_integer(s7_cell_slot_value(g->s1));
+  if ((k >= 0) && (k < g->i1))
+    return(g->rx1[k - 1]);
+  return(0.0);
+}
+
 static gf *fixup_vct_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
   gf *g;
   s7_pointer obj;
   if ((s7_is_symbol(cadr(expr))) &&
-      (!s7_is_local_variable(sc, cadr(expr), locals)) &&
-      (s7_is_symbol(caddr(expr))))
+      (!s7_is_local_variable(sc, cadr(expr), locals)))
     {
       obj = s7_cadr_value(sc, expr);
       if (s7_is_float_vector(obj))
 	{
-	  g = gf_alloc();
-	  g->func = wrapped_vct_ref;
-	  g->gen = obj;
-	  g->s1 = s7_slot(sc, caddr(expr));
-
-	  g->rx1 = s7_float_vector_elements(obj);
-	  g->i1 = s7_vector_length(obj);
-
-	  return(g);
+	  s7_pointer ind;
+	  ind = caddr(expr);
+	  if (s7_is_symbol(ind))
+	    {
+	      g = gf_alloc();
+	      g->func = wrapped_vct_ref;
+	      g->gen = obj;
+	      g->s1 = s7_slot(sc, ind);
+	      g->rx1 = s7_float_vector_elements(obj);
+	      g->i1 = s7_vector_length(obj);
+	      return(g);
+	    }
+	  if ((s7_is_pair(ind)) &&
+	      (s7_list_length(sc, ind) == 3) &&
+	      (s7_is_symbol(cadr(ind))) &&
+	      (s7_is_integer(s7_caddr(ind))) &&
+	      (s7_integer(s7_caddr(ind)) == 1) &&
+	      ((car(ind) == s7_make_symbol(sc, "+")) || (car(ind) == s7_make_symbol(sc, "-"))))
+	    {
+	      g = gf_alloc();
+	      if (car(ind) == s7_make_symbol(sc, "+"))
+		g->func = wrapped_vct_ref_p1;
+	      else g->func = wrapped_vct_ref_m1;
+	      g->gen = obj;
+	      g->s1 = s7_slot(sc, cadr(ind));
+	      g->rx1 = s7_float_vector_elements(obj);
+	      g->i1 = s7_vector_length(obj);
+	      return(g);
+	    }
 	}
     }
   return(NULL);
@@ -1306,6 +1345,7 @@ static s7_pointer vct_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       if ((s7_is_symbol(arg1)) &&
 	  (s7_is_symbol(arg2)))
 	{
+	  /* fprintf(stderr, "%s %d\n", DISPLAY(arg3), s7_function_choice_is_direct(sc, arg3)); */
 	  if ((s7_is_pair(arg3)) &&
 	      (s7_function_choice_is_direct(sc, arg3)))
 	    {

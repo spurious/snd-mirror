@@ -7818,40 +7818,6 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 
 
 
-<!-- find-channel -->
-<pre class="indented">
-<em class=def>find-channel</em> proc sample snd chn edpos
-</pre>
-
-<p id="findchannelinreverse">This function finds the sample that satisfies the function 'proc'. 'sample'
-determines where to start the search. 
-</p>
-
-<pre class="indented">
-&gt; (find-channel (lambda (y) (&gt; y .1)))
-4423
-
-&gt;lambda: &lt;{ y }&gt; 0.1 y f&lt; ; find-channel
-4423
-</pre>
-
-<p>find-channel is obsolete; use a do-loop and a sampler:
-</p>
-
-<pre class="indented">
-(define* (find-channel func (beg 0) snd chn edpos)
-  (let ((end (frames snd chn edpos)))
-    (call-with-exit
-     (lambda (return)
-       (let ((reader (make-sampler beg snd chn 1 edpos)))
-	 (do ((i beg (+ i 1)))
-	     ((= i end) #f)
-	   (if (func (next-sample reader))
-	       (return i))))))))
-</pre>
-
-
-
 <!-- INDEX searchexamples:Searching -->
 
 <TABLE class="method">
@@ -7861,7 +7827,6 @@ find a mark: <a href="extsnd.html#findmark">find-mark</a><br>
 find a mix: <a href="sndscm.html#findmix">find-mix</a><br>
 find a sound: <a href="extsnd.html#findsound">find-sound</a><br>
 Example find procedures: <a href="sndscm.html#searchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
-find in reverse: <a href="extsnd.html#findchannelinreverse">find-channel-in-reverse</a><br>
 Default search procedure: <a href="extsnd.html#searchprocedure">search-procedure</a><br>
 The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="extsnd.html#finddialog">find-dialog</a><br>
 find silence: <a href="extsnd.html#mapsilence">map-silence</a>, scramble-channel in examp.scm<br>
@@ -9386,10 +9351,10 @@ If all the sound's samples are 0.0, scale-to returns #f and does not perform any
 
 <pre class="indented">
 (define* (scan-channel func (beg 0) dur snd chn edpos)
-  (let ((end (min (+ beg dur) (frames snd chn)))
+  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn)))
 	(rd (make-sampler beg snd chn 1 edpos)))
     (do ((pos beg (+ pos 1)))
-        ((or (= pos end)
+        ((or (&gt;= pos end)
 	     (func (next-sample rd)))
          (and (&lt; pos end)
 	      pos)))))

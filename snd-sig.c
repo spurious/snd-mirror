@@ -4664,6 +4664,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 }
 
 
+#if (!HAVE_SCHEME)
 static XEN g_scan_chan(XEN proc, XEN beg, XEN end, XEN snd, XEN chn, XEN edpos) 
 { 
   #if HAVE_SCHEME
@@ -4684,7 +4685,7 @@ if 'func' returns non-" PROC_FALSE ", the scan stops, and the current sample num
   ASSERT_CHANNEL(S_scan_chan, snd, chn, 4); 
   return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, false, edpos, 6, XEN_FALSE));
 }
-
+#endif
 
 static XEN g_scan_channel(XEN proc, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpos) 
 { 
@@ -4746,6 +4747,7 @@ apply func to samples in current channel; edname is the edit history name for th
 }
 
 
+#if (!HAVE_SCHEME)
 static XEN g_find_channel(XEN expr, XEN sample, XEN snd, XEN chn_n, XEN edpos)
 {
   #if HAVE_SCHEME
@@ -4765,6 +4767,7 @@ the current sample, to each sample in snd's channel chn, starting at 'start-samp
   ASSERT_CHANNEL(S_find_channel, snd, chn_n, 3);
   return(g_sp_scan(expr, sample, XEN_FALSE, snd, chn_n, S_find_channel, false, edpos, 5, XEN_FALSE));
 }
+#endif
 
 
 static XEN g_count_matches(XEN expr, XEN sample, XEN snd, XEN chn_n, XEN edpos)
@@ -7520,11 +7523,13 @@ static XEN g_fpsap_1(XEN x_choice, XEN x_n, XEN start_phases, XEN x_amps, XEN x_
 
 
 
-XEN_ARGIFY_6(g_scan_chan_w, g_scan_chan)
 XEN_ARGIFY_7(g_map_chan_w, g_map_chan)
 XEN_ARGIFY_6(g_scan_channel_w, g_scan_channel)
 XEN_ARGIFY_7(g_map_channel_w, g_map_channel)
+#if (!HAVE_SCHEME)
+XEN_ARGIFY_6(g_scan_chan_w, g_scan_chan)
 XEN_ARGIFY_5(g_find_channel_w, g_find_channel)
+#endif
 XEN_ARGIFY_5(g_count_matches_w, g_count_matches)
 XEN_ARGIFY_4(g_smooth_sound_w, g_smooth_sound)
 XEN_ARGIFY_5(g_smooth_channel_w, g_smooth_channel)
@@ -7572,8 +7577,10 @@ XEN_ARGIFY_6(g_fpsap_1_w, g_fpsap_1)
 void g_init_sig(void)
 {
   XEN_DEFINE_PROCEDURE(S_scan_channel,                g_scan_channel_w,                1, 5, 0, H_scan_channel);
+#if (!HAVE_SCHEME)
   XEN_DEFINE_PROCEDURE(S_scan_chan,                   g_scan_chan_w,                   1, 5, 0, H_scan_chan);
   XEN_DEFINE_PROCEDURE(S_find_channel,                g_find_channel_w,                1, 4, 0, H_find_channel);
+#endif
   XEN_DEFINE_PROCEDURE(S_count_matches,               g_count_matches_w,               1, 4, 0, H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan,                    g_map_chan_w,                    1, 6, 0, H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel,                 g_map_channel_w,                 1, 6, 0, H_map_channel);
@@ -7626,3 +7633,29 @@ void g_init_sig(void)
 #endif
 
 }
+
+#if 0
+/* these work in snd-test, but cost about 1.5B in callgrind 
+
+(define* (scan-channel func (beg 0) dur snd chn edpos)
+  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn)))
+	(rd (make-sampler beg snd chn 1 edpos)))
+    (do ((pos beg (+ pos 1)))
+        ((or (>= pos end)
+	     (func (next-sample rd)))
+         (and (< pos end)
+	      pos)))))
+
+(define* (count-matches func (beg 0) snd chn edpos)
+  (let ((end (frames snd chn edpos))
+	(matches 0)
+	(reader (make-sampler beg snd chn 1 edpos)))
+    (do ((i beg (+ i 1)))
+	((>= i end) matches)
+      (if (func (next-sample reader))
+	  (set! matches (+ matches 1))))))
+*/
+#endif
+
+
+
