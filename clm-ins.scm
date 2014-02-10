@@ -131,6 +131,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	    (loc (make-locsig deg 1.0 pcrev))
 	    (per-vib (make-triangle-wave :frequency 6 :amplitude (* freq vibscl)))
 	    (ran-vib (make-rand-interp :frequency 20 :amplitude (* freq .5 vibscl))))
+
 	(do ((i 0 (+ i 1)))
 	    ((= i fs))
 	  (set! (evens i) (make-oscil 0))
@@ -138,6 +139,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	  (set! (ampfs i) (make-env ampfun :scaler (* amp (formant-amps i)) :duration dur))
 	  (set! (indices i) (formant-indices i))
 	  (set! (frmfs i) (make-env (vox-fun phonemes i) :duration dur)))
+
 	(do ((i start (+ i 1))) 
 	    ((= i end))
 	  (set! frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))

@@ -1685,17 +1685,19 @@ static int t_optimized = T_OPTIMIZED;
  *    on only for a very short time.
  */
 
-#define T_MATCHED                     (1 << (TYPE_BITS + 7))
+#define T_MATCHED                     T_MULTIPLE_VALUE
 #define is_matched(p)                 ((typeflag(p) & T_MATCHED) != 0)
 #define set_matched(p)                typeflag(p) |= T_MATCHED
 #define clear_matched(p)              typeflag(p) &= (~T_MATCHED)
-/* similar transient bit for tree walker */
+/* similar transient bit for tree walker 
+ */
 
 #define T_GLOBAL                      (1 << (TYPE_BITS + 8))
 #define is_global(p)                  ((typeflag(p) & T_GLOBAL) != 0)
-/* this marks something defined (bound) at the top-level, and never defined locally */
 #define set_global(p)                 typeflag(p) |= T_GLOBAL
 #define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
+/* this marks something defined (bound) at the top-level, and never defined locally 
+ */
 
 #define T_RETURNS_TEMP                (1 << (TYPE_BITS + 9))
 #define returns_temp(p)               ((typeflag(p) & T_RETURNS_TEMP) != 0)
@@ -2723,18 +2725,64 @@ static void report_counts(s7_scheme *sc)
   int len, i, loc = 0, entries;
   s7_pointer *elements;
   datum **data;
+  int *lens;
 
   len = hash_table_length(hashes);
   elements = hash_table_elements(hashes);
   entries = hash_table_entries(hashes);
   data = (datum **)calloc(entries, sizeof(datum *));
 
+  lens = (int *)calloc(len, sizeof(int));
   for (i = 0; i < len; i++)
     {
+      int k;
       s7_pointer x;
-      for (x = elements[i]; is_pair(x); x = cdr(x))
+      for (k = 0, x = elements[i]; is_pair(x); x = cdr(x), k++)
 	data[loc++] = new_datum(s7_integer(cdar(x)), caar(x));
+      lens[i] = k;
     }
+
+  {
+    int n, ctr = 0, total = 0;
+    for (n = 0; n < len; n++)
+      if (is_pair(elements[n])) 
+	{
+	  ctr++;
+	  total += s7_list_length(sc, elements[n]);
+	}
+    fprintf(stderr, "\n%d locs of %d are in use for %d items\n", ctr, len, total);
+    
+    for (n = 0; n < 100; n++)
+      {
+	int mx, mxj = 0, j;
+	mx = 0;
+	
+	for (j = 0; j < len; j++)
+	  {
+	    if (lens[j] > mx)
+	      {
+		mx = lens[j];
+		mxj = j;
+	      }
+	  }
+	if (mx > 0)
+	  {
+	    fprintf(stderr, "%d: %d\n", mxj, mx);
+	    lens[mxj] = 0;
+	    if (n < 4)
+	      {
+		int a;
+		s7_pointer p;
+		for (a = 0, p = elements[mxj]; (a < 10) && (is_pair(p)); p = cdr(p), a++)
+		  fprintf(stderr, "    %s\n", DISPLAY(caar(p)));
+		if (is_pair(p)) fprintf(stderr, "    ...\n");
+	      }
+	  }
+	else break;
+      }
+  }
+  fprintf(stderr, "\n");
+
   qsort((void *)data, loc, sizeof(datum *), sort_data);
   if (loc > 400) loc = 400;
   for (i = 0; i < loc; i++)
@@ -5749,7 +5797,7 @@ static s7_pointer g_environment_set(s7_scheme *sc, s7_pointer args)
 
   e = car(args);
   if (!is_environment(e))
-    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, e, AN_ENVIRONMENT));
+    return(s7_wrong_type_arg_error(sc, "environment-set!", 1, e, "an environment"));
 
   return(s7_environment_set(sc, e, cadr(args), caddr(args)));
 }
@@ -14201,14 +14249,6 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));      
     }
   return(x);
-}
-
-s7_pointer s7_multiply_2(s7_scheme *sc, s7_pointer x, s7_pointer y)
-{
-  /* clm2xen opt fallback */
-  car(sc->T2_1) = x;
-  car(sc->T2_2) = y;
-  return(g_multiply_2(sc, sc->T2_1));
 }
 
 
@@ -23546,8 +23586,13 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
 
 static int shared_ref(shared_info *ci, s7_pointer p)
 {
+  /* from print after collecting refs, not called by equality check
+   */
   int i;
   s7_pointer *objs;
+
+  if (!is_collected(p)) return(0);
+
   objs = ci->objs;
   for (i = 0; i < ci->top; i++)
     if (objs[i] == p)
@@ -23565,24 +23610,14 @@ static int shared_ref(shared_info *ci, s7_pointer p)
 static int peek_shared_ref(shared_info *ci, s7_pointer p)
 {
   /* returns 0 if not found, otherwise the ref value for p */
-  int i, lim;
+  int i;
   s7_pointer *objs;
   objs = ci->objs;
-  i = 0;
-  lim = ci->top - 4;
-  while (i <= lim)
-    {
-      if (objs[i] == p) return(ci->refs[i]);
-      i++;
-      if (objs[i] == p) return(ci->refs[i]);
-      i++;
-      if (objs[i] == p) return(ci->refs[i]);
-      i++;
-      if (objs[i] == p) return(ci->refs[i]);
-      i++;
-    }
-  for (; i < ci->top; i++)
+
+  if (!is_collected(p)) return(0);
+  for (i = 0; i < ci->top; i++)
     if (objs[i] == p) return(ci->refs[i]);
+
   return(0);
 }
 
@@ -23603,10 +23638,15 @@ static void enlarge_shared_info(shared_info *ci)
 
 static void add_equal_ref(shared_info *ci, s7_pointer x, s7_pointer y)
 {
-  /* assume neither x nor y is in the table, and that they should share a ref value */
+  /* assume neither x nor y is in the table, and that they should share a ref value,
+   *   called only in equality check, not printer.
+   */
 
   if ((ci->top + 2) >= ci->size)
     enlarge_shared_info(ci);
+
+  set_collected(x);
+  set_collected(y);
 
   ci->ref++;
   ci->objs[ci->top] = x;
@@ -23618,8 +23658,12 @@ static void add_equal_ref(shared_info *ci, s7_pointer x, s7_pointer y)
 
 static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
 {
+  /* called only in equality check, not printer */
+
   if (ci->top == ci->size)
     enlarge_shared_info(ci);
+
+  set_collected(x);
 
   ci->objs[ci->top] = x;
   ci->refs[ci->top++] = ref_x;
@@ -23656,7 +23700,6 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
    *   encounter an object with that bit on, we've seen it before so we have a possible cycle.
    *   Once the collection pass is done, we run through our list, and clear all these bits.
    */
-
   if (is_collected(top))
     {
       s7_pointer *p, *objs_end;
@@ -23761,8 +23804,15 @@ static shared_info *new_shared_info(s7_scheme *sc)
     }
   else 
     {
+      int i;
       ci = sc->circle_info;
       memset((void *)(ci->refs), 0, ci->top * sizeof(int));
+      for (i = 0; i < ci->top; i++)
+	{
+	  s7_pointer p;
+	  p = ci->objs[i];
+	  clear_collected(p);
+	}
     }
   ci->top = 0;
   ci->ref = 0;
@@ -23773,6 +23823,7 @@ static shared_info *new_shared_info(s7_scheme *sc)
 
 static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at_print_length)
 {
+  /* for the printer */
   shared_info *ci;
   int i, refs;
   s7_pointer *ci_objs;
@@ -23826,15 +23877,12 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
   /* collect all pointers associated with top */
   collect_shared_info(sc, ci, top, stop_at_print_length);
 
-  {
-    int i;
-    for (i = 0; i < ci->top; i++)
-      {
-	s7_pointer p;
-	p = ci->objs[i];
-	clear_collected(p);
-      }
-  }
+  for (i = 0; i < ci->top; i++)
+    {
+      s7_pointer p;
+      p = ci->objs[i];
+      clear_collected(p);
+    }
 
   if (!(ci->has_hits))
     return(NULL);
@@ -23846,13 +23894,13 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
   for (i = 0, refs = 0; i < ci->top; i++)
     if (ci_refs[i] > 0)
       {
+	set_collected(ci_objs[i]);
 	if (i == refs)
 	  refs++;
 	else
 	  {
 	    ci_objs[refs] = ci_objs[i];
 	    ci_refs[refs++] = ci_refs[i];
-
 	    ci_refs[i] = 0;
 	    ci_objs[i] = NULL;
 	  }
@@ -29827,7 +29875,7 @@ a vector that points to the same elements as the original-vector but with differ
 	  if (offset < 0)
 	    return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, "a non-negative integer"));
 	  if (offset >= orig_len)  /* we need this if, for example, offset == 9223372036854775807 */
-	    return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, "less than the original vector length"));
+	    return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, "greater than the original vector length"));
 	}
       else return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, T_INTEGER));
     }
@@ -31244,10 +31292,42 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
       return(vector_length(key));
 
     case T_PAIR:
+      /* len+loc(car) is not horrible, but it means (for example) every list '(set! a b) is hashed to the same location,
+       *   so at least we need to take cadr into account if possible.  Better would combine the list_length(max 5 == safe_strlen5?) call
+       *   with stats like symbols/pairs/constants at top level, then use those to spread it out over all the locs.
+       */
+      {
+	s7_pointer p1, p2;
+	if (car(key) != key)
+	  loc = hash_loc(sc, car(key)) + 1;
+	p1 = cdr(key);
+	if (is_pair(p1))
+	  {
+	    if ((car(p1) != key) && (car(p1) != p1))
+	      {
+		if (is_pair(car(p1)))
+		  loc = hash_loc(sc, caar(p1)) + 1 + loc * 2 + s7_list_length(sc, car(p1));
+		else loc = hash_loc(sc, car(p1)) + 1 + loc * 2;
+	      }
+	    p2 = cdr(p1);
+	    if (is_pair(p2))
+	      {
+		if ((car(p2) != key) && (car(p2) != p1) && (car(p2) != p2))
+		  {
+		    if (is_pair(car(p2)))
+		      loc = hash_loc(sc, caar(p2)) + 1 + loc * 2 + s7_list_length(sc, car(p2));
+		    else loc = hash_loc(sc, car(p2)) + 1 + loc * 2;
+		  }
+	      }
+	  }
+	return(loc);
+      }
+#if 0
       loc = (int)s7_list_length(sc, key);
       if ((loc > 0) && (key != car(key)))      /* avoid infinite loop if #1=(#1#)! */
 	return(loc + hash_loc(sc, car(key)));
       return(0);
+#endif
 
     default:
       break;
@@ -31447,6 +31527,11 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
       /* we can get into an infinite loop here, but it requires 2 hash tables that are members of each other
        *    and key is one of them, so I changed the equality check above to use eq? -- not sure this is right.
        */
+      /* hope for an easy case... */
+      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+	if (fcdr(x) == key)
+	  return(car(x));
+
       for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (s7_is_equal(sc, fcdr(x), key))
 	  return(car(x));
@@ -34371,6 +34456,8 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 #else
       return(structures_are_equal(sc, x, y, new_shared_info(sc)));
 #endif
+
+      return(structures_are_equal(sc, x, y, new_shared_info(sc)));
 
     case T_C_POINTER:
       return(raw_pointer(x) == raw_pointer(y));
@@ -45292,6 +45379,7 @@ static bool arg_match(s7_scheme *sc, s7_pointer expr, s7_pointer args)
     set_matched(p);
 
   unhappy = tree_match(sc, expr);
+
   for (p = args; is_pair(p); p = cdr(p))
     if (is_pair(car(p)))
       clear_matched(caar(p));
@@ -51424,6 +51512,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		}
 	    }
+
 	  if ((is_null(cdr(code))) &&
 	      (is_pair(car(code))))
 	    {
@@ -51448,152 +51537,177 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  goto START_WITHOUT_POP_STACK;
 		}
-	      
-	    if (is_symbol(car(code)))
-	      {
-		s7_pointer f;
-		f = s7_symbol_value(sc, car(code));
 
-		if ((is_c_function(f)) &&
-		    (c_function_ex_parser(f)))
-		  {
-		    s7_ex *exd = NULL;
-		    exd = c_function_ex_parser(f)(sc, code);
-		    if (exd)
-		      {
-			s7_function endf;
-			s7_pointer endp, slots, slot;
-			int arg;
-			s7_pointer p, slot1 = NULL, slot2 = NULL, slot3 = NULL, expr1 = NULL, expr2 = NULL, expr3 = NULL;
-			dox_function d1 = NULL, d2 = NULL, d3 = NULL;
-			bool mut; /* C++ claims "mutable" */
-
-			mut = is_step_safe(f);
-
-			for (arg = 0, p = environment_slots(sc->envir); is_slot(p); p = next_slot(p))
-			  if (is_pair(slot_expression(p)))
+	      if (is_symbol(car(code)))
+		{
+		  s7_pointer f;
+		  f = s7_symbol_value(sc, car(code));
+		  
+		  if ((is_c_function(f)) &&
+		      (c_function_ex_parser(f)))
+		    {
+		      s7_ex *exd = NULL;
+		      exd = c_function_ex_parser(f)(sc, code);
+		      if (exd)
+			{
+			  s7_function endf;
+			  s7_pointer endp, slots, slot;
+			  int arg;
+			  s7_pointer p, slot1 = NULL, slot2 = NULL, slot3 = NULL, expr1 = NULL, expr2 = NULL, expr3 = NULL;
+			  dox_function d1 = NULL, d2 = NULL, d3 = NULL;
+			  bool mut; /* C++ claims "mutable" */
+			  
+			  mut = is_step_safe(f);
+			  
+			  for (arg = 0, p = environment_slots(sc->envir); is_slot(p); p = next_slot(p))
+			    if (is_pair(slot_expression(p)))
+			      {
+				arg++;
+				if (!slot1) 
+				  {
+				    slot1 = p; 
+				    expr1 = slot_expression(slot1);
+				    if (mut)
+				      d1 = dox_mutate(sc, p);
+				    else d1 = (dox_function)fcdr(expr1);
+				    expr1 = car(expr1);
+				  }
+				else 
+				  {
+				    if (!slot2)
+				      {
+					slot2 = p;
+					expr2 = slot_expression(slot2);
+					if (mut)
+					  d2 = dox_mutate(sc, p);
+					else d2 = (dox_function)fcdr(expr2);
+					expr2 = car(expr2);
+				      }
+				    else
+				      {
+					if (!slot3)
+					  {
+					    slot3 = p;
+					    expr3 = slot_expression(slot3);
+					    if (mut)
+					      d3 = dox_mutate(sc, p);
+					    else d3 = (dox_function)fcdr(expr3);
+					    expr3 = car(expr3);
+					  }
+				      }
+				  }
+			      }
+			  
+			  endf = (s7_function)fcdr(cdr(sc->code));
+			  endp = fcdr(sc->code);
+			  slots = environment_slots(sc->envir);
+			  
+			  if (arg == 1)
 			    {
-			      arg++;
-			      if (!slot1) 
+			      while (true)
 				{
-				  slot1 = p; 
-				  expr1 = slot_expression(slot1);
-				  if (mut)
-				    d1 = dox_mutate(sc, p);
-				  else d1 = (dox_function)fcdr(expr1);
-				  expr1 = car(expr1);
-				}
-			      else 
-				{
-				  if (!slot2)
+				  exd->ex_vf(exd->ex_data);
+				  slot_set_value(slot1, d1(sc, expr1, slot1));
+				  if (is_true(sc, endf(sc, endp)))
 				    {
-				      slot2 = p;
-				      expr2 = slot_expression(slot2);
-				      if (mut)
-					d2 = dox_mutate(sc, p);
-				      else d2 = (dox_function)fcdr(expr2);
-				      expr2 = car(expr2);
-				    }
-				  else
-				    {
-				      if (!slot3)
+				      exd->ex_free(exd->ex_data);
+				      free(exd);
+				      sc->code = cdadr(sc->code);
+				      if (!is_null(sc->code))
 					{
-					  slot3 = p;
-					  expr3 = slot_expression(slot3);
 					  if (mut)
-					    d3 = dox_mutate(sc, p);
-					  else d3 = (dox_function)fcdr(expr3);
-					  expr3 = car(expr3);
+					    clear_mutable(slot_value(slot1));
+					  goto BEGIN;
 					}
+				      sc->value = sc->NIL;
+				      goto START;	
 				    }
 				}
 			    }
+			  
+			  if (arg < 4)
+			    {
+			      while (true)
+				{
+				  exd->ex_vf(exd->ex_data);
+				  slot_set_value(slot1, d1(sc, expr1, slot1));
+				  slot_set_value(slot2, d2(sc, expr2, slot2));
+				  if (slot3) slot_set_value(slot3, d3(sc, expr3, slot3));
+				  if (is_true(sc, endf(sc, endp)))
+				    {
+				      exd->ex_free(exd->ex_data);
+				      free(exd);
+				      sc->code = cdadr(sc->code);
+				      if (!is_null(sc->code))
+					{
+					  if (mut)
+					    {
+					      clear_mutable(slot_value(slot1));
+					      clear_mutable(slot_value(slot2));
+					      if (slot3) clear_mutable(slot_value(slot3));
+					    }
+					  goto BEGIN;
+					}
+				      sc->value = sc->NIL;
+				      goto START;	
+				    }
+				}
+			    }
+			  
+			  while (true)
+			    {
+			      exd->ex_vf(exd->ex_data);
+			      
+			      for (slot = slots; is_slot(slot); slot = next_slot(slot))
+				if (is_pair(slot_expression(slot)))
+				  slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
+			      
+			      if (is_true(sc, endf(sc, endp)))
+				{
+				  exd->ex_free(exd->ex_data);
+				  free(exd);
+				  sc->code = cdadr(sc->code);
+				  if (!is_null(sc->code))
+				    {
+				      if (mut)
+					{
+					  if (slot1) clear_mutable(slot_value(slot1));
+					  if (slot2) clear_mutable(slot_value(slot2));
+					}
+				      goto BEGIN;
+				    }
+				  sc->value = sc->NIL;
+				  goto START;	
+				}
+			    }
+			}
+		    }
+		}
 
-			endf = (s7_function)fcdr(cdr(sc->code));
-			endp = fcdr(sc->code);
-			slots = environment_slots(sc->envir);
+	      if (is_all_x_safe(sc, code))
+		{
+		  s7_function body, endf;
+		  s7_pointer endp, slots;
 
-			if (arg == 1)
-			  {
-			    while (true)
-			      {
-				exd->ex_vf(exd->ex_data);
-				slot_set_value(slot1, d1(sc, expr1, slot1));
-				if (is_true(sc, endf(sc, endp)))
-				  {
-				    exd->ex_free(exd->ex_data);
-				    free(exd);
-				    sc->code = cdadr(sc->code);
-				    if (!is_null(sc->code))
-				      {
-					if (mut)
-					  clear_mutable(slot_value(slot1));
-					goto BEGIN;
-				      }
-				    sc->value = sc->NIL;
-				    goto START;	
-				  }
-			      }
-			  }
+		  body = all_x_eval(sc, code);
+		  endf = (s7_function)fcdr(cdr(sc->code));
+		  endp = fcdr(sc->code);
+		  slots = environment_slots(sc->envir);
 
-			if (arg < 4)
-			  {
-			    while (true)
-			      {
-				exd->ex_vf(exd->ex_data);
-				slot_set_value(slot1, d1(sc, expr1, slot1));
-				slot_set_value(slot2, d2(sc, expr2, slot2));
-				if (slot3) slot_set_value(slot3, d3(sc, expr3, slot3));
-				if (is_true(sc, endf(sc, endp)))
-				  {
-				    exd->ex_free(exd->ex_data);
-				    free(exd);
-				    sc->code = cdadr(sc->code);
-				    if (!is_null(sc->code))
-				      {
-					if (mut)
-					  {
-					    clear_mutable(slot_value(slot1));
-					    clear_mutable(slot_value(slot2));
-					    if (slot3) clear_mutable(slot_value(slot3));
-					  }
-					goto BEGIN;
-				      }
-				    sc->value = sc->NIL;
-				    goto START;	
-				  }
-			      }
-			  }
-			
-			while (true)
-			  {
-			    exd->ex_vf(exd->ex_data);
-		    
-			    for (slot = slots; is_slot(slot); slot = next_slot(slot))
-			      if (is_pair(slot_expression(slot)))
-				slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
-
-			    if (is_true(sc, endf(sc, endp)))
-			      {
-				exd->ex_free(exd->ex_data);
-				free(exd);
-				sc->code = cdadr(sc->code);
-				if (!is_null(sc->code))
-				  {
-				    if (mut)
-				      {
-					if (slot1) clear_mutable(slot_value(slot1));
-					if (slot2) clear_mutable(slot_value(slot2));
-				      }
-				    goto BEGIN;
-				  }
-				sc->value = sc->NIL;
-				goto START;	
-			      }
-			  }
-		      }
-		  }
-	      }
+		  while (true)
+		    {
+		      s7_pointer slot;
+		      body(sc, code);
+		      for (slot = slots; is_slot(slot); slot = next_slot(slot))
+			if (is_pair(slot_expression(slot)))
+			  slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
+		      if (is_true(sc, endf(sc, endp)))
+			{
+			  sc->code = cdadr(sc->code);
+			  goto DO_BEGIN;
+			}
+		    }
+		}
 	    }
 	}
 	push_stack_no_args(sc, OP_DOX_STEP, sc->code);
@@ -69213,13 +69327,13 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 4110
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3476
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974
- * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  8.5
+ * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.9
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.8
  *            153 with run macro (eval_ptree)
  */
 

@@ -7,8 +7,8 @@
       (format *stderr* "this won't work in Snd!~%") ; see t705.scm
       (exit)))
 
-(define data-file #f) ;(open-output-file "output-of-t455"))
-(define max-args 2)
+(define data-file (open-output-file "output-of-t455"))
+(define max-args 3)
 
 (define constants (list #f #t () #\a (/ 1 most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 			"hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) '() (list (list 1 2)) (list (list 1)) (list ()) #() 
@@ -55,23 +55,41 @@
        (copy args c-args)
 
        (let ((p (list-tail c-args args-now)))
+
 	 (if (= args-left 1)
-	     (for-each
-	      (lambda (c)
-		(catch #t 
-		  (lambda () 
-		    (set-car! p c)
+
+	     (call-with-exit
+	      (lambda (quit)
+		(set-car! p (car constants))
+		(catch #t
+		  (lambda ()
 		    (cond ((apply func c-args) => (lambda (val)
 						    (if data-file 
 							(format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
-		  (lambda any 'error)))
-	      constants)
+		  (lambda any 
+		    (if (and (eq? (car any) 'wrong-type-arg)
+			     (integer? (caddr (cadr any))) ; if just 1 arg, arg num can be omitted
+			     (< (caddr (cadr any)) low))
+			(quit))))
+		 
+		(for-each
+		 (lambda (c)
+		   (catch #t 
+		     (lambda () 
+		       (set-car! p c)
+		       (cond ((apply func c-args) => (lambda (val)
+						       (if data-file 
+							   (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
+		     (lambda any 
+		       'error)))
+		 (cdr constants))))
 	   
-	   (for-each
-	    (lambda (c)
-	      (set-car! p c)
-	      (autotest func c-args (+ args-now 1) (- args-left 1)))
-	    constants)))))))
+	     (for-each
+	      (lambda (c)
+		(set-car! p c)
+		(autotest func c-args (+ args-now 1) (- args-left 1)))
+	      constants)))))))
+
 
 (let ((st (symbol-table)))
   (do ((i 0 (+ i 1))) 
@@ -91,9 +109,12 @@
 			   (strname (symbol->string sym)))
 		       (if (not (or (member (strname 0) '(#\{ #\[ #\())
 				    (member strname '("exit" "emergency-exit" "abort" "unoptimize" "autotest" "delete-file" "system" "set-cdr!" "stacktrace"
-						      "augment-environment!" "make-procedure-with-setter" "open-environment" "eval"))))
+						      "augment-environment!" "make-procedure-with-setter" "open-environment" "eval"
+						      "vector" "list" "cons"))))
 			   (begin
-			     (format *stderr* ";~A...~%" sym)
+			     (if (< top bottom)
+				 (format *stderr* ";~A ~A ~A...~%" sym bottom top)
+				 (format *stderr* ";~A...~%" sym))
 			     (format data-file ";~A...~%" sym)
 			     (set! low bottom)
 			     (if (zero? (cdr argn))
@@ -102,3 +123,4 @@
 				       (format data-file "(~S) -> ~S~%" sym val)))
 				 (autotest f () 0 top))))))))))
        lst))))
+

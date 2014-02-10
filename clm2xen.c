@@ -12671,6 +12671,7 @@ static mus_float_t vf_3_s1_s2(void *p)  {gf *g = (gf *)p; return(g->func_3(g->vf
 
 static mus_float_t gf_vct_ref(void *p) {gf *g = (gf *)p; return(g->rx1[s7_integer(s7_cell_slot_value(g->s1))]);}
 static mus_float_t gf_gen_ref_0(void *p) {gf *g = (gf *)p; return(g->func_3((void *)(g->gen), 0.0, 0.0));}
+static mus_float_t gf_gen_ref_1(void *p) {gf *g = (gf *)p; return(g->func_3((void *)(g->gen), ((gf *)(g->g1))->func(g->g1), 0.0));}
 
 #if USE_SND
 static mus_float_t gf_sampler(void *p) {gf *g = (gf *)p; return(read_sample((snd_fd *)(g->gen)));}
@@ -13082,9 +13083,20 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
       return(p);
     }
 
-  if (!s7_is_pair(cdr(expr)))
+#if USE_SND
+  if (sampler_p(op))
     {
-      if (mus_xen_p(op))
+      gf *p;
+      p = gf_alloc();
+      p->func = gf_sampler;
+      p->gen = (void *)xen_to_sampler(op);
+      return(p);
+    }
+#endif
+
+  if (mus_xen_p(op))
+    {
+      if (!s7_is_pair(cdr(expr)))
 	{
 	  /* (with-sound () (let ((o (make-oscil 440.0))) (do ((i 0 (+ i 1))) ((= i 10000)) (outa i (o))))) */
 	  gf *p;
@@ -13096,16 +13108,23 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	  p->func_3 = (mus_float_t (*)(void *p, mus_float_t x, mus_float_t y))mus_run_function(o);
 	  return(p);
 	}
-#if USE_SND
-      if (sampler_p(op))
+      if (!s7_is_pair(cddr(expr)))
 	{
-	  gf *p;
-	  p = gf_alloc();
-	  p->func = gf_sampler;
-	  p->gen = (void *)xen_to_sampler(op);
-	  return(p);
+	  gf *g1;
+	  g1 = find_gf_with_locals(sc, cadr(expr), locals);
+	  if (g1)
+	    {
+	      gf *p;
+	      mus_any *o;
+	      o = XEN_TO_MUS_ANY(op);
+	      p = gf_alloc();
+	      p->func = gf_gen_ref_1;
+	      p->gen = (void *)o;
+	      p->func_3 = (mus_float_t (*)(void *p, mus_float_t x, mus_float_t y))mus_run_function(o);
+	      p->g1 = g1;
+	      return(p);
+	    }
 	}
-#endif
     }
   return_null(expr);
 }

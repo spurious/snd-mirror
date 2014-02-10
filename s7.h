@@ -349,7 +349,6 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (
 
 s7_pointer s7_sin(s7_scheme *sc, s7_pointer z);                             /* (sin z) */
 s7_pointer s7_cos(s7_scheme *sc, s7_pointer z);                             /* (cos z) */
-s7_pointer s7_multiply_2(s7_scheme *sc, s7_pointer x, s7_pointer y);        /* (* x y) */
 
 
 bool s7_is_vector(s7_pointer p);                                            /* (vector? p) */

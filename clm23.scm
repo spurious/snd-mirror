@@ -2284,7 +2284,7 @@
 		    (set! cs (make-comb-bank cs))
 		    (do ((k 0 (+ k 1)))
 			((= k grain-size))
-		      (set! (grain k) (comb-bank cs (original-grain k)))))))))))))
+		      (float-vector-set! grain k (comb-bank cs (float-vector-ref original-grain k)))))))))))))
 
 (definstrument (move-formants start file amp radius move-env num-formants)
   (let ((frms (make-vector num-formants))
@@ -2645,8 +2645,7 @@
 	(move-locsig loc (* 1.0 i) 1.0))))
   (with-sound (:channels 4) (sndclmdoc-simple-dloc 0 2 440 .5))
   (with-sound () (when? 0 4 2.0 8.0 "1a.snd"))
-  (with-sound () 
-    (move-formants 0 "oboe.snd" 2.0 0.99 '(0 1200 1.6 2400 2 1400) 4))
+  (with-sound () (move-formants 0 "oboe.snd" 2.0 0.99 '(0 1200 1.6 2400 2 1400) 4))
   (test-filter (make-one-zero 0.5 0.5))
   (test-filter (make-one-pole 0.1 -0.9))
   (test-filter (make-two-pole 0.1 0.1 0.9))

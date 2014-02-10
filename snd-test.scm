@@ -35159,30 +35159,27 @@ EDITS: 1
 	   (fftlen2 (/ fftlen 2))
 	   (fftscale (/ 1.0 fftlen))
 	   (rl (channel->float-vector 0 fftlen snd chn))
-	   (im (make-float-vector fftlen)))
+	   (im (make-float-vector fftlen))
+	   (c1 #f))
       (fft rl im 1)
       (float-vector-scale! rl fftscale)
       (float-vector-scale! im fftscale)
       ;; handle 0 case by itself
-      (let* ((c1 (make-rectangular (rl 0) (im 0)))
-	     (val (/ (+ (* a c1) b)
-		     (+ (* c c1) d)))
-	     (rval (real-part val))
-	     (ival (imag-part val)))
-	(set! (rl 0) rval)
-	(set! (im 0) ival))
+      (set! c1 (make-rectangular (rl 0) (im 0)))
+      (set! c1 (/ (+ (* a c1) b) (+ (* c c1) d)))
+      (set! (rl 0) (real-part c1))
+      (set! (im 0) (imag-part c1))
+	
       (do ((i 1 (+ i 1))
 	   (k (- fftlen 1) (- k 1)))
 	  ((= i fftlen2))
-	(let* ((c1 (make-rectangular (float-vector-ref rl i) (float-vector-ref im i)))
-	       (val (/ (+ (* a c1) b)      ; (az + b) / (cz + d)
-		       (+ (* c c1) d)))
-	       (rval (real-part val))
-	       (ival (imag-part val)))
-	  (float-vector-set! rl i rval)
-	  (float-vector-set! im i ival)
-	  (float-vector-set! rl k rval)
-	  (float-vector-set! im k (- ival))))
+	(set! c1 (make-rectangular (float-vector-ref rl i) (float-vector-ref im i)))
+	(set! c1 (/ (+ (* a c1) b) (+ (* c c1) d)))
+	(float-vector-set! rl i (real-part c1))
+	(float-vector-set! im i (imag-part c1))
+	(float-vector-set! rl k (real-part c1))
+	(float-vector-set! im k (- (imag-part c1))))
+
       (fft rl im -1)
       (float-vector->channel rl 0 len snd chn #f (format #f "automorph ~A ~A ~A ~A" a b c d))))
   
@@ -47053,25 +47050,25 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-7-Feb-14:
-39,872,438,850
-5,985,134,732  s7.c:eval [/home/bil/gtk-snd/snd]
-3,566,415,686  ???:sin [/lib64/libm-2.12.so]
-2,375,911,192  ???:cos [/lib64/libm-2.12.so]
+8-Feb-14:
+39,822,603,191
+5,938,740,645  s7.c:eval [/home/bil/gtk-snd/snd]
+3,548,768,428  ???:sin [/lib64/libm-2.12.so]
+2,379,044,959  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,086,202,738  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  948,850,658  s7.c:gc [/home/bil/gtk-snd/snd]
-  899,392,996  ???:t2_32 [/home/bil/gtk-snd/snd]
-  861,570,413  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  827,847,499  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,098,925,643  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  942,491,695  s7.c:gc [/home/bil/gtk-snd/snd]
+  899,447,632  ???:t2_32 [/home/bil/gtk-snd/snd]
+  829,547,700  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  807,888,966  s7.c:eval'2 [/home/bil/gtk-snd/snd]
   781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  588,829,072  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,379,066  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  607,606,719  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,825,705  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
   454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
-  438,268,945  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  454,186,720  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  381,386,568  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  383,087,556  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
  |#
