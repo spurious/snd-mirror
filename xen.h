@@ -1058,11 +1058,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_STRING_P(Arg)                          s7_is_string(Arg)
 #define XEN_NAME_AS_C_STRING_TO_VALUE(Arg)         s7_name_to_value(s7, Arg)
 #define XEN_TO_C_STRING(Str)                       s7_string(Str)
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define C_TO_XEN_STRING(Str)                     s7_make_string(s7, Str)
-#else
-  #define C_TO_XEN_STRING(Arg)                     xen_s7_c_to_xen_string(Arg)
-#endif
+#define C_TO_XEN_STRING(Str)                       s7_make_string(s7, Str)
 #define C_TO_XEN_STRINGN(Str, Len)                 s7_make_string_with_length(s7, Str, Len)
 
 #define XEN_ZERO                                   xen_zero
@@ -1242,10 +1238,6 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc);
 void xen_s7_set_repl_prompt(const char *new_prompt);
 XEN xen_set_assoc(s7_scheme *sc, s7_pointer key, s7_pointer val, s7_pointer alist);
 XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
-
-#if !(defined(__GNUC__) && (!(defined(__cplusplus))))
-  XEN xen_s7_c_to_xen_string(const char *str);
-#endif
 
 #ifdef __cplusplus
 }

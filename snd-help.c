@@ -407,9 +407,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Feb: Snd 14.4.\n\
 4-Jan:  Snd 14.3.\n\
 22-Nov: Snd 14.2.\n\
-15-Oct: Snd 14.1.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

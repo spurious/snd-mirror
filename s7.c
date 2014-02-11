@@ -449,6 +449,7 @@ enum {OP_NO_OP,
       OP_SAFE_C_ZZA_1, OP_SAFE_C_ZZA_2, OP_SAFE_C_ZAZ_1, OP_SAFE_C_ZAZ_2, OP_SAFE_C_AZZ_1, OP_SAFE_C_AZZ_2, 
       OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3, 
       OP_SAFE_C_ZZZZ_1, OP_SAFE_C_ZZZZ_2, OP_SAFE_C_ZZZZ_3, OP_SAFE_C_ZZZZ_4, 
+      /* the zzzz cases exist only to trigger later optimizations (canter) */
 
       OP_SAFE_C_opSq_P_1, OP_SAFE_C_opSq_P_MV, OP_C_P_1, OP_C_P_2, OP_C_SP_1, OP_C_SP_2,
 
@@ -2774,7 +2775,7 @@ static void report_counts(s7_scheme *sc)
 		int a;
 		s7_pointer p;
 		for (a = 0, p = elements[mxj]; (a < 10) && (is_pair(p)); p = cdr(p), a++)
-		  fprintf(stderr, "    %s\n", DISPLAY(caar(p)));
+		  fprintf(stderr, "    %s\n", DISPLAY_80(caar(p)));
 		if (is_pair(p)) fprintf(stderr, "    ...\n");
 	      }
 	  }
@@ -44538,11 +44539,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
   bool func_is_safe, func_is_c_function, func_is_closure;
 
   func_is_closure = is_closure(func);
-  /*
-  fprintf(stderr, "check %s: closure: %d, closure*: %d, bad: %d, q: %d, safe: %d\n", 
-	  DISPLAY(car_x), func_is_closure, is_closure_star(func),
-	  bad_pairs, quotes, func_is_safe);
-  */
+
   if ((func_is_closure) &&
       (closure_arity_to_int(sc, func) != args))
     return(false);
@@ -44551,21 +44548,17 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
       ((!has_simple_args(closure_body(func))) ||
        (closure_star_arity_to_int(sc, func) < args) ||
        (arglist_has_keyword(cdr(car_x)))))
-    {
-      /*
-      fprintf(stderr, "    not simple: %d, %d < %d, key: %d\n", 
-	      has_simple_args(closure_body(func)), 
-	      closure_star_arity_to_int(sc, func), args,
-	      arglist_has_keyword(cdr(car_x)));
-      */
-      return(false);
-    }
+    return(false);
 
   if (bad_pairs > quotes) return(false);
 
   func_is_safe = is_safe_procedure(func);
   func_is_c_function = is_c_function(func);
-
+  /*
+  fprintf(stderr, "check %s: closure: %d, closure*: %d, bad: %d, q: %d, safe: %d, pairs: %d, all_x: %d\n", 
+	  DISPLAY(car_x), func_is_closure, is_closure_star(func),
+	  bad_pairs, quotes, func_is_safe, pairs, all_x_count(car_x));
+  */
   if (func_is_c_function)
     {
       if (func_is_safe)
@@ -44657,11 +44650,10 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 	}
       else
 	{
-	  /* 
-	  fprintf(stderr, "    args: %d, p: %d, count: %d\n",
-		  arglist_has_accessed_symbol(closure_args(func)),
-		  pairs,
-		  quotes + all_x_count(car_x));
+	  /*
+	  fprintf(stderr, "    %s args: %d, pairs: %d, all_x_count: %d\n",
+		  DISPLAY_80(car_x), args, pairs,
+		  all_x_count(car_x));
 	  */
 	  if (((func_is_closure) ||
 	       (is_closure_star(func))) && 
@@ -44694,7 +44686,6 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 	}
       choose_c_function(sc, car_x, func, args); /* don't assume hop_safe_c_c here -- let chooser set that */
     }
-
   return(is_optimized(car_x));
 }
 
@@ -50124,7 +50115,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(sc->code));
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
 
@@ -50151,7 +50142,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (result)
 		      {
 			sc->code = cdr(cadr(sc->code));
-			goto DO_BEGIN;
+			goto DO_END_CLAUSES;
 		      }
 		    /* else fall into the ordinary loop */
 		  }
@@ -50172,7 +50163,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (numerator(stepper) == denominator(stepper))
 		      {
 			sc->code = cdr(cadr(sc->code));
-			goto DO_BEGIN;
+			goto DO_END_CLAUSES;
 		      }
 		  }
 	      }
@@ -50213,7 +50204,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(sc->code));
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
@@ -50231,7 +50222,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (result)
 		      {
 			sc->code = cdr(cadr(sc->code));
-			goto DO_BEGIN;
+			goto DO_END_CLAUSES;
 		      }
 		    /* else fall into the ordinary loop */
 		  }
@@ -50244,7 +50235,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (numerator(stepper) == denominator(stepper))
 		      {
 			sc->code = cdr(cadr(sc->code));
-			goto DO_BEGIN;
+			goto DO_END_CLAUSES;
 		      }
 		  }
 	      }
@@ -50287,7 +50278,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(sc->code));
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
@@ -50300,7 +50291,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    numerator(stepper) = denominator(stepper);
 		    sc->code = cdr(cadr(sc->code));
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 
 		if (is_pair(cdr(body)))
@@ -50316,7 +50307,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (numerator(stepper) == denominator(stepper))
 			  {
 			    sc->code = cdr(cadr(sc->code));
-			    goto DO_BEGIN;
+			    goto DO_END_CLAUSES;
 			  }
 		      }
 		  }
@@ -50336,7 +50327,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (numerator(stepper) == denominator(stepper))
 			  {
 			    sc->code = cdr(cadr(sc->code));
-			    goto DO_BEGIN;
+			    goto DO_END_CLAUSES;
 			  }
 		      }
 		  }
@@ -50384,13 +50375,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    numerator(slot_value(sc->args)) = s7_integer(end_val);
 		    sc->code = cdr(cadr(code));
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(code));
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 		if ((is_null(cdr(sc->code))) &&
 		    (is_pair(car(sc->code))))
@@ -50450,7 +50441,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    if (result)
 				      {
 					sc->code = cdr(cadr(code));
-					goto DO_BEGIN;
+					goto DO_END_CLAUSES;
 				      }
 				    /* else fall into the ordinary loop */
 				  }
@@ -50487,7 +50478,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (result)
 			      {
 				sc->code = cdr(cadr(code));
-				goto DO_BEGIN;
+				goto DO_END_CLAUSES;
 			      }
 			  }
 			/* else {if (is_optimized(sc->code)) fprintf(stderr, "%s has no looper\n", DISPLAY(sc->code));} */
@@ -50533,7 +50524,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    if (numerator(step) == denominator(step))
 				      {
 					sc->code = end;
-					goto DO_BEGIN;
+					goto DO_END_CLAUSES;
 				      }
 				  }
 			      }
@@ -50563,7 +50554,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_P, sc->args, sc->code);
 	sc->code = fcdr(sc->code);
@@ -50582,7 +50573,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, sc->code);
 	sc->code = fcdr(sc->code);
@@ -50604,7 +50595,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_A, sc->args, sc->code);
@@ -50622,7 +50613,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, sc->code);
 
@@ -50674,7 +50665,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 	  {
 	    sc->code = cdr(cadr(code));
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 	if (is_symbol(end))
 	  sc->args = find_symbol(sc, end);
@@ -50854,7 +50845,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       SAFE_DO_DONE:
 	slot_value(environment_dox1(sc->envir)) = slot_value(environment_dox2(sc->envir));
 	sc->code = cdr(cadr(code));
-	goto DO_BEGIN;
+	goto DO_END_CLAUSES;
       }
 
 
@@ -50880,7 +50871,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif	      
 	  {
 	    sc->code = cdadr(code);
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 	push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
 	code = fcdr(code);
@@ -50935,7 +50926,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdadr(code);
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 
 	set_fcdr(code, cddr(code));
@@ -51050,7 +51041,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_true(sc, endf(sc, sc->T2_1)))
 		      {
 			sc->code = cdr(cadr(code));
-			goto DO_BEGIN;
+			goto DO_END_CLAUSES;
 		      }
 		  }
 	      }
@@ -51094,7 +51085,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdr(cadr(code));
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, code);
 	sc->code = fcdr(code);
@@ -51127,7 +51118,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (integer(val) == integer(end))
 		  {
 		    sc->code = cdr(cadr(code));
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 	      }
 	    else
@@ -51137,7 +51128,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_true(sc, g_equal_2(sc, sc->T2_1)))
 		  {
 		    sc->code = cdr(cadr(code));
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 	      }
 	  }
@@ -51152,7 +51143,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_true(sc, g_equal_2(sc, sc->T2_1)))
 	      {
 		sc->code = cdr(cadr(code));
-		goto DO_BEGIN;
+		goto DO_END_CLAUSES;
 	      }
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP_A, sc->args, code);
@@ -51228,7 +51219,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdadr(code);
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 
 	/* (((i 0 (+ 1 i))) ((= i len)) (set! (v i) (read-mix-sample reader)))
@@ -51264,7 +51255,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdadr(code);
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP_P, sc->args, code);
 	code = caddr(code);
@@ -51314,7 +51305,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdadr(code);
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 	push_stack(sc, OP_DOTIMES_STEP_P, sc->args, code);
 	sc->code = caddr(code);
@@ -51348,7 +51339,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 		  { 
 		    sc->code = cdadr(code);
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 	      }
 	    else
@@ -51358,7 +51349,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_true(sc, c_call(end_test)(sc, sc->T2_1)))
 		  {
 		    sc->code = cdadr(code);
-		    goto DO_BEGIN;
+		    goto DO_END_CLAUSES;
 		  }
 	      }
 	  }
@@ -51373,7 +51364,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_true(sc, c_call(end_test)(sc, sc->T2_1)))
 	      {
 		sc->code = cdadr(code);
-		goto DO_BEGIN;
+		goto DO_END_CLAUSES;
 	      }
 	  }
 	push_stack(sc, OP_DOTIMES_STEP_P, sc->args, code);
@@ -51485,7 +51476,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     *    (let ((x (do ((i 0 (+ i 1))) (#t)))) x) -> ()
 	     */
 	    sc->code = cdadr(sc->code);
-	    goto DO_BEGIN;
+	    goto DO_END_CLAUSES;
 	  }
 
 	{
@@ -51508,7 +51499,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (is_true(sc, endf(sc, endp)))
 		    {
 		      sc->code = cdadr(sc->code);
-		      goto DO_BEGIN;
+		      goto DO_END_CLAUSES;
 		    }
 		}
 	    }
@@ -51704,7 +51695,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      if (is_true(sc, endf(sc, endp)))
 			{
 			  sc->code = cdadr(sc->code);
-			  goto DO_BEGIN;
+			  goto DO_END_CLAUSES;
 			}
 		    }
 		}
@@ -51728,7 +51719,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_true(sc, ((s7_function)fcdr(cdr(sc->code)))(sc, fcdr(sc->code))))
 	    {
 	      sc->code = cdadr(sc->code);
-	      goto DO_BEGIN;
+	      goto DO_END_CLAUSES;
 	    }
 	  push_stack_no_args(sc, OP_DOX_STEP, sc->code);
 	  sc->code = cddr(sc->code);
@@ -51748,7 +51739,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_true(sc, ((s7_function)fcdr(cdr(sc->code)))(sc, fcdr(sc->code))))
 	    {
 	      sc->code = cdadr(sc->code);
-	      goto DO_BEGIN;
+	      goto DO_END_CLAUSES;
 	    }
 	  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
 	  sc->code = caddr(sc->code);
@@ -52065,9 +52056,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
 
 
-    DO_BEGIN:
+    DO_END_CLAUSES:
       {
-	/* I don't think this matters at all -- use BEGIN! */
 	if (is_null(sc->code)) 
 	  {
 	    sc->value = sc->NIL;
@@ -52095,7 +52085,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->envir = main_stack_environment(sc);
 	code = main_stack_code(sc); 
 	sc->code =  car(code); 
-	if (is_null(cdr(code))) 
+	if (is_null(cdr(code)))  /* about 1/2 of these are symbols/#f but checking here costs more than it saves */
 	  pop_main_stack(sc);                 
 	else main_stack_code(sc) = cdr(code); 
 	goto EVAL;
@@ -69327,13 +69317,13 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3476
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.8
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7
  *            153 with run macro (eval_ptree)
  */
 

@@ -15709,7 +15709,6 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	      pv->sn[i] = s;
 	      pv->cs[i] = c;
 	    }
-#endif
 	  pv->amp_zero[i] = ((pv->amps[i] < 1e-7) && (pv->ampinc[i] == 0.0));
 	  if ((!(pv->synthesize)) && (pv->amp_zero[i]))
 	    {
@@ -15721,6 +15720,10 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	      pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
 	      pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
 	    }
+#else
+	  pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
+	  pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
+#endif
 	}
     }
   
@@ -15759,7 +15762,9 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       
       for (i = 0; i < N2; i++)
 	{
+#if HAVE_SINCOS
 	  if (!(pv->amp_zero[i]))
+#endif
 	    {
 #if HAVE_SINCOS
 	      double sx, cx;

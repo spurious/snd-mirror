@@ -1,9 +1,30 @@
-Snd 14.3
-read-sample-with-direction
-make-float-vector
-mus-set-formant-frequency
-make-polywave additional args xcoeffs ycoeffs
-mus_file_read* changed and mus-sound-read
-mus-sound-preload
-checked: sbcl-1.1.14, FC 20
-Thanks!: Mike Scholz, Dave Phillips.
+Snd 14.4: 
+
+Mike Scholz updated sndins.c.
+
+s7: changed lambda* arg handling slightly to mimic CL.
+    added when and unless (for r7rs; these were macros).
+
+CLM: Frank Zalkow donated lw-all.lisp.
+
+checked: gtk 3.11.4|5, sbcl 1.1.15.
+
+Thanks!: Rick, Mike, Frank Zalkow, James Hearon.
+
+
+Just a progress report, some timings:
+
+  version     12.x  13.0  14.4
+
+  snd-test     359   275  39.7  (no gui)
+  s7test      1721  1358   974  (hard to optimize)
+  make-index 44300  3291  1382  (hooray for char-position)
+  t455|6       265    89   5.2  (the s7.html torture tester)
+  t502          90    43  13.6  (pure clm)
+  bench      42736  8752  3447  (the standard Gabriel tests)
+  lat          229    63  30.4  (bad-old-style academistry)
+
+These are callgrind numbers.  Currently if you're running the 
+gtk Snd, nearly all the time is going to gtk and cairo (mainly, 
+I think, to their allocation functions).
+

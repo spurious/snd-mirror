@@ -1499,14 +1499,6 @@ void xen_gc_mark(XEN val)
 }
 
 
-#if !(defined(__GNUC__) && (!(defined(__cplusplus))))
-XEN xen_s7_c_to_xen_string(const char *str)
-{
-  return((str) ? s7_make_string(s7, str) : XEN_FALSE);
-}
-#endif
-
-
 XEN xen_set_assoc(s7_scheme *sc, s7_pointer key, s7_pointer val, s7_pointer alist)
 {
   /* fixup alist, return it (caller has to make sure it is reflected in its object) */
@@ -1695,7 +1687,7 @@ static XEN g_current_time(void)
 
 static XEN g_tmpnam(void)
 {
-  #define H_tmpnam "(tmpnam) returns a new (hopefully unused) tempporary file name"
+  #define H_tmpnam "(tmpnam) returns a new (hopefully unused) temporary file name"
   #define BUFFER_SIZE 512
   static int file_ctr = 0;
   char *str, *tmpdir = NULL;

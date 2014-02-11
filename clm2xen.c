@@ -13158,7 +13158,24 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
 
   GET_GENERATOR_CADR(args, locsig, locs);
   callee = cadddr(args);
-  
+
+  /*
+88200 (* (env amp-env) (table-lookup s (rand ran-vib)))
+88200 (* (env amp-env) (table-lookup s (rand ran-vib)))
+88200 (* (env amp-env) (table-lookup s (rand ran-vib)))
+11025 (* (env amp-f) (oscil carrier (+ (env freq-f) (* (env dev-f) (rand modulator (env rfreq-f))))))
+66150 (* (env ampfun) (oscil carrier (+ (* (env indxfun1) (oscil mod1)) (* (env indxfun2) (oscil mod2)) (* (env indxfun3) (oscil mod3)))))
+22050 (* (env amp-env) (table-lookup s (+ (triangle-wave per-vib) (rand-interp ran-vib))))
+22932 (* (env ampenv1) (oscil-bank obank))
+4410 (* (env ampenv2) (oscil-bank obank))
+2205*100 (* (env amp-env) (table-lookup gr-env) (src in-file-reader))
+2205*100 (* (env amp-env) (src in-file-reader) (+ (* (env gr-int-env) (table-lookup gr-env-end)) (* (env gr-int-env-1) (table-lookup gr-env))))
+1000*100 (* 0.5 (oscil osc))
+22946*10 (* (env aenv) (oscil osc))
+50828 (read-sample rd)
+88200 (* amp (oscil os))
+  */
+
   /* ---------------------------------------- */
   topgf = find_gf(sc, callee);
   if (topgf)
@@ -13180,18 +13197,19 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
 	        mus_float_t (*f1)(void *p);
 		mus_float_t (*f2)(void *p);
 		mus_float_t (*f3)(void *p);
-		gf *g1, *g2, *g3;
+		void *g1, *g2, *g3;
 		f1 = topgf->f1;
 		f2 = topgf->f2;
 		f3 = topgf->f3;
-		g1 = (gf *)(topgf->g1);
-		g2 = (gf *)(topgf->g2);
-		g3 = (gf *)(topgf->g3);
+		g1 = topgf->g1;
+		g2 = topgf->g2;
+		g3 = topgf->g3;
 		for (; pos < end; pos++) 
-		  mover(locs, pos, f1(g1) * f2(g2) * f3(g3));
+		  mover(locs, pos, f1(g1) * f2(g2) * f3(g3)); /* probably env tbl src, and env src add */
 	    }
 	  else
 	    {
+	      /* probably env g, c g, etc */
 	      for (; pos < end; pos++) 
 		mover(locs, pos, topgf->func(topgf));
 	    }

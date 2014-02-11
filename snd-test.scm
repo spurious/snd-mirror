@@ -2707,13 +2707,14 @@
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com 
-							    (string-append "ICRD: 1997-02-22" 
-									   (string #\newline)
-									   "IENG: Paul R. Roger"
-									   (string #\newline)
-									   "ISFT: Sound Forge 4.0"
-									   (string #\newline)))))
+		(if (or (not (string? com)) 
+			(not (string-=? com 
+					(string-append "ICRD: 1997-02-22" 
+						       (string #\newline)
+						       "IENG: Paul R. Roger"
+						       (string #\newline)
+						       "ISFT: Sound Forge 4.0"
+						       (string #\newline)))))
 		    (snd-display #__line__ ";mus-sound-comment \"nasahal8.wav\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "8svx-8.snd")))
 	  (if (file-exists? fsnd)
@@ -26905,9 +26906,7 @@ EDITS: 2
 					   ((= i len) v)
 					 (let ((bin (round (* 16.0 (abs (next-sample fd))))))
 					   (if (< bin steps)
-					       (do ((j 0 (+ j 1)))
-						   ((= j steps))
-						 (set! (v (+ j bin)) (+ step (v (+ j bin)))))))))))))
+					       (vct-offset! (make-shared-vector v (list steps) bin) step)))))))))
 	  (set! (x-bounds) '(.1 .2))
 	  (set! (transform-type) fourier-transform)
 	  (set! (x-bounds) '(.1 .2))
@@ -47050,27 +47049,27 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-8-Feb-14:
-39,822,603,191
-5,938,740,645  s7.c:eval [/home/bil/gtk-snd/snd]
-3,548,768,428  ???:sin [/lib64/libm-2.12.so]
-2,379,044,959  ???:cos [/lib64/libm-2.12.so]
+10-Feb:
+39,719,900,581
+5,857,539,069  s7.c:eval [/home/bil/gtk-snd/snd]
+3,548,330,830  ???:sin [/lib64/libm-2.12.so]
+2,379,274,805  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,098,925,643  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  942,491,695  s7.c:gc [/home/bil/gtk-snd/snd]
-  899,447,632  ???:t2_32 [/home/bil/gtk-snd/snd]
+1,096,583,635  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  929,524,163  s7.c:gc [/home/bil/gtk-snd/snd]
+  899,447,588  ???:t2_32 [/home/bil/gtk-snd/snd]
   829,547,700  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  807,888,966  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  807,901,459  s7.c:eval'2 [/home/bil/gtk-snd/snd]
   781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  607,606,719  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,825,705  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
-  454,186,720  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  596,885,900  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,250,130  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,355,496  ???:n1_64 [/home/bil/gtk-snd/snd]
+  454,260,375  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  383,087,556  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  375,283,256  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
- |#
+|#
 
 
