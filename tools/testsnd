@@ -3,7 +3,7 @@
 echo ' -------------------------------- without-gui --with-ladspa -------------------------------- '
 rm -f snd
 rm -f config.cache
-./configure --quiet CFLAGS="-Wall" --without-gui
+./configure --quiet CFLAGS="-Wall -I/usr/local/include" --without-gui
 make
 echo ' '
 echo ' '

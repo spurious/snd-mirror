@@ -6253,7 +6253,8 @@ static mus_float_t interp_noi_set_freq(mus_any *ptr, mus_float_t val)
   noi *gen = (noi *)ptr;
   if (val < 0.0) val = -val; 
   gen->freq = mus_hz_to_radians(val); 
-  gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
+  if (gen->freq != 0.0)
+    gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
   return(val);
 }
 
@@ -6403,7 +6404,9 @@ mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base)
   gen->base = base;
   gen->incr =  mus_random(base) * freq / sampling_rate;
   gen->output = 0.0;
-  gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
+  if (gen->freq != 0.0)
+    gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
+  else gen->norm = 1.0;
   gen->ran_unmod = rand_interp_unmodulated;
   return((mus_any *)gen);
 }

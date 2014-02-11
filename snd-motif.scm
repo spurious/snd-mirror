@@ -49,7 +49,7 @@
 (define (load-font name)
   "(load-font name) loads the font 'name', returning the font id"
   (let ((fs (XLoadQueryFont (XtDisplay (cadr (main-widgets))) name)))
-    (and (XFontStruct? fs) (.fid fs))))
+    (and fs (XFontStruct? fs) (.fid fs))))
 
 (define (current-screen)
   "(current-screen) returns the current X screen number of the current display"
@@ -1325,7 +1325,8 @@
 	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) (or (listener-font) "9x15"))))
     (set! (.foreground gv) *data-color*)
     (set! (.background gv) *basic-color*)
-    (set! (.font gv) (.fid button-fontstruct))
+    (if (and button-fontstruct (.fid button-fontstruct))
+	(set! (.font gv) (.fid button-fontstruct)))
     (let ((gc (XCreateGC (XtDisplay shell) 
 			 (XtWindow shell) 
 			 (logior GCForeground GCBackground GCFont) gv))
@@ -1494,11 +1495,12 @@
 		(fill-rectangle x (+ y height) width 2 snd chn)
 		(fill-rectangle x y 2 height snd chn)
 		(fill-rectangle (+ x width -2) y 2 height snd chn)
-		(XSetFont dpy
-			  (if (= chn (selected-channel snd))
-			      (cadr (snd-gcs))
-			      (car (snd-gcs)))
-			  (.fid fs))
+		(if (and fs (.fid fs))
+		    (XSetFont dpy
+			      (if (= chn (selected-channel snd))
+				  (cadr (snd-gcs))
+				  (car (snd-gcs)))
+			      (.fid fs)))
 		(draw-string smpte (+ x 4) (+ y 4) snd chn))))))))
 
 (define (show-smpte-label . arg)

@@ -22,9 +22,9 @@ Just a progress report, some timings:
   t455|6       265    89   5.2  (the s7.html torture tester)
   t502          90    43  13.6  (pure clm)
   bench      42736  8752  3447  (the standard Gabriel tests)
-  lat          229    63  30.4  (bad-old-style academistry)
+  lat          229    63  30.4  (old-style academistry)
 
 These are callgrind numbers.  Currently if you're running the 
-gtk Snd, nearly all the time is going to gtk and cairo (mainly, 
-I think, to their allocation functions).
+gtk Snd, nearly all the time is going to gtk and cairo.
+
 

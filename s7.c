@@ -69344,5 +69344,8 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0), (ina i invals)
+ *
+ * explicitly test for /0 in clm, add 0amp special cases
+ * check reader-cond #t branch -- appears not to work -- why isn't reader-cond using traverse+features?
  */
 
