@@ -1704,7 +1704,7 @@
     (do ((i start (+ i 1))
 	 (x 0.0 (+ x x-incr)))
 	((= i end))
-      (set! y (+ x (* index (sin y))))
+      (set! y (+ x (* index (sin y)))) ; 2 statements better here than 1 -- opt sees (* s (sin s)) twice
       (outa i (* amp (sin y))))))
 
 (define* (fmdoc-vox beg dur freq amp (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))

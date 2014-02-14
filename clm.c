@@ -6142,6 +6142,8 @@ mus_float_t mus_rand(mus_any *ptr, mus_float_t fm)
 }
 
 
+static mus_float_t zero_unmodulated(mus_any *ptr) {return(0.0);}
+
 mus_float_t mus_rand_unmodulated(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
@@ -6268,11 +6270,29 @@ static mus_float_t noi_phase(mus_any *ptr) {return(fmod(((noi *)ptr)->phase, TWO
 static mus_float_t noi_set_phase(mus_any *ptr, mus_float_t val) {((noi *)ptr)->phase = val; return(val);}
 
 static mus_float_t noi_scaler(mus_any *ptr) {return(((noi *)ptr)->base);}
-static mus_float_t noi_set_scaler(mus_any *ptr, mus_float_t val) {((noi *)ptr)->base = val; return(val);}
+static mus_float_t noi_set_scaler(mus_any *ptr, mus_float_t val) {((noi *)ptr)->base = val; return(val);} /* rand, not rand-interp */
 
 static mus_float_t *noi_data(mus_any *ptr) {return(((noi *)ptr)->distribution);}
 static mus_long_t noi_length(mus_any *ptr) {return(((noi *)ptr)->distribution_size);}
 
+
+static mus_float_t randi_set_scaler(mus_any *ptr, mus_float_t val) 
+{
+  noi *gen = (noi *)ptr;
+  if (val == 0.0)
+    gen->ran_unmod = zero_unmodulated;
+  else
+    {
+      if (gen->base == 0.0)
+	{
+	  if (gen->distribution)
+	    gen->ran_unmod = rand_interp_unmodulated_with_distribution;
+	  else gen->ran_unmod = rand_interp_unmodulated;
+	}
+    }
+  gen->base = val; 
+  return(val);
+}
 
 static void noi_reset(mus_any *ptr)
 {
@@ -6324,34 +6344,6 @@ static char *describe_noi(mus_any *ptr)
 }
 
 
-static mus_any_class RAND_INTERP_CLASS = {
-  MUS_RAND_INTERP,
-  (char *)S_rand_interp,
-  &free_noi,
-  &describe_noi,
-  &noi_equalp,
-  &noi_data, 0, 
-  &noi_length, 0,
-  &noi_freq,
-  &interp_noi_set_freq,
-  &noi_phase,
-  &noi_set_phase,
-  &noi_scaler,
-  &noi_set_scaler,
-  &noi_increment, /* phase increment, not incr field */
-  &noi_set_increment,
-  &run_rand_interp,
-  MUS_NOT_SPECIAL, 
-  NULL, 0,
-  &noi_incr, &noi_set_incr,  /* incr field == mus_offset method */
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0,
-  &noi_reset,
-  0
-};
-
-
 static mus_any_class RAND_CLASS = {
   MUS_RAND,
   (char *)S_rand,
@@ -6380,6 +6372,34 @@ static mus_any_class RAND_CLASS = {
 };
 
 
+static mus_any_class RAND_INTERP_CLASS = {
+  MUS_RAND_INTERP,
+  (char *)S_rand_interp,
+  &free_noi,
+  &describe_noi,
+  &noi_equalp,
+  &noi_data, 0, 
+  &noi_length, 0,
+  &noi_freq,
+  &interp_noi_set_freq,
+  &noi_phase,
+  &noi_set_phase,
+  &noi_scaler,
+  &randi_set_scaler,
+  &noi_increment, /* phase increment, not incr field */
+  &noi_set_increment,
+  &run_rand_interp,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  &noi_incr, &noi_set_incr,  /* incr field == mus_offset method */
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &noi_reset,
+  0
+};
+
+
 mus_any *mus_make_rand(mus_float_t freq, mus_float_t base)
 {
   noi *gen;
@@ -6390,24 +6410,6 @@ mus_any *mus_make_rand(mus_float_t freq, mus_float_t base)
   gen->base = base;
   gen->incr = 0.0;
   gen->output = random_any(gen); /* this was always starting at 0.0 (changed 23-Dec-06) */
-  return((mus_any *)gen);
-}
-
-
-mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base)
-{
-  noi *gen;
-  gen = (noi *)calloc(1, sizeof(noi));
-  gen->core = &RAND_INTERP_CLASS;
-  if (freq < 0.0) freq = -freq;
-  gen->freq = mus_hz_to_radians(freq);
-  gen->base = base;
-  gen->incr =  mus_random(base) * freq / sampling_rate;
-  gen->output = 0.0;
-  if (gen->freq != 0.0)
-    gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
-  else gen->norm = 1.0;
-  gen->ran_unmod = rand_interp_unmodulated;
   return((mus_any *)gen);
 }
 
@@ -6423,13 +6425,32 @@ mus_any *mus_make_rand_with_distribution(mus_float_t freq, mus_float_t base, mus
 }
 
 
+mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base)
+{
+  noi *gen;
+  gen = (noi *)calloc(1, sizeof(noi));
+  gen->core = &RAND_INTERP_CLASS;
+  gen->distribution = NULL;
+  if (freq < 0.0) freq = -freq;
+  gen->freq = mus_hz_to_radians(freq);
+  gen->base = base;
+  gen->incr =  mus_random(base) * freq / sampling_rate;
+  gen->output = 0.0;
+  if (gen->freq != 0.0)
+    gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
+  else gen->norm = 1.0;
+  gen->ran_unmod = ((base == 0.0) ? zero_unmodulated : rand_interp_unmodulated);
+  return((mus_any *)gen);
+}
+
+
 mus_any *mus_make_rand_interp_with_distribution(mus_float_t freq, mus_float_t base, mus_float_t *distribution, int distribution_size)
 {
   noi *gen;
   gen = (noi *)mus_make_rand_interp(freq, base);
   gen->distribution = distribution;
   gen->distribution_size = distribution_size;
-  gen->ran_unmod = rand_interp_unmodulated_with_distribution;
+  gen->ran_unmod = ((base == 0.0) ? zero_unmodulated : rand_interp_unmodulated_with_distribution);
   return((mus_any *)gen);
 }
 
@@ -13818,9 +13839,11 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	  lim = (spd->in_data_len - curstart);
 	if (lim > spd->grain_len)
 	  lim = spd->grain_len;
-
-	mus_clear_array(spd->grain, spd->grain_len);
-
+	else
+	  {
+	    if (lim < spd->grain_len)
+	      memset((void *)(spd->grain), 0, (spd->grain_len - lim) * sizeof(mus_float_t));
+	  }
 	if (spd->rmp > 0)
 	  {
 	    mus_float_t amp = 0.0, incr;
@@ -15114,13 +15137,14 @@ mus_float_t *mus_cepstrum(mus_float_t *data, mus_long_t n)
 
 mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, mus_long_t n)
 {
-  /* convolves two real arrays.                                           */
-  /* rl1 and rl2 are assumed to be set up correctly for the convolution   */
-  /* (that is, rl1 (the "signal") is zero-padded by length of             */
-  /* (non-zero part of) rl2 and rl2 is stored in wrap-around order)       */
-  /* We treat rl2 as the imaginary part of the first fft, then do         */
-  /* the split, scaling, and (complex) spectral multiply in one step.     */
-  /* result in rl1                                                        */
+  /* convolves two real arrays.                                           
+   * rl1 and rl2 are assumed to be set up correctly for the convolution   
+   * (that is, rl1 (the "signal") is zero-padded by length of             
+   * (non-zero part of) rl2 and rl2 is stored in wrap-around order)       
+   * We treat rl2 as the imaginary part of the first fft, then do         
+   * the split, scaling, and (complex) spectral multiply in one step.     
+   * result in rl1                                                       
+   */
 
   mus_long_t j, n2;
   mus_float_t invn;

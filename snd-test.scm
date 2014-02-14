@@ -18088,6 +18088,13 @@ EDITS: 2
 					;      (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 500))
 					;      (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 1000 0.5))
     
+    (let ((gen (make-rand-interp 100.0 0.0)))
+      (do ((i 0 (+ i 1)))
+	  ((= i 10))
+	(let ((val (rand-interp gen)))
+	(if (not (zero? val))
+	    (snd-display #__line__ ";rand-interp 0 amp: ~A" val)))))
+
     (let ((gen (make-rand-interp 4000.0))
 	  (v0 (make-float-vector 10)))
       (print-and-check gen 
@@ -35174,10 +35181,8 @@ EDITS: 1
 	  ((= i fftlen2))
 	(set! c1 (make-rectangular (float-vector-ref rl i) (float-vector-ref im i)))
 	(set! c1 (/ (+ (* a c1) b) (+ (* c c1) d)))
-	(float-vector-set! rl i (real-part c1))
-	(float-vector-set! im i (imag-part c1))
-	(float-vector-set! rl k (real-part c1))
-	(float-vector-set! im k (- (imag-part c1))))
+	(float-vector-set! rl k (float-vector-set! rl i (real-part c1)))
+	(float-vector-set! im k (- (float-vector-set! im i (imag-part c1)))))
 
       (fft rl im -1)
       (float-vector->channel rl 0 len snd chn #f (format #f "automorph ~A ~A ~A ~A" a b c d))))
@@ -47049,25 +47054,25 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-10-Feb:
-39,719,900,581
-5,857,539,069  s7.c:eval [/home/bil/gtk-snd/snd]
-3,548,330,830  ???:sin [/lib64/libm-2.12.so]
-2,379,274,805  ???:cos [/lib64/libm-2.12.so]
+14-Feb:
+39,510,305,643
+5,837,394,548  s7.c:eval [/home/bil/gtk-snd/snd]
+3,550,464,259  ???:sin [/lib64/libm-2.12.so]
+2,371,297,834  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,096,583,635  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  929,524,163  s7.c:gc [/home/bil/gtk-snd/snd]
-  899,447,588  ???:t2_32 [/home/bil/gtk-snd/snd]
+1,037,874,261  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  917,020,704  s7.c:gc [/home/bil/gtk-snd/snd]
+  885,359,904  ???:t2_32 [/home/bil/gtk-snd/snd]
   829,547,700  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  807,901,459  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+  789,728,411  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  596,885,900  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,250,130  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,355,496  ???:n1_64 [/home/bil/gtk-snd/snd]
-  454,260,375  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  624,100,354  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,958,716  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,776,292  ???:n1_64 [/home/bil/gtk-snd/snd]
+  415,147,921  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  375,283,256  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  373,314,604  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 |#

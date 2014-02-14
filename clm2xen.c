@@ -7110,8 +7110,10 @@ static XEN fallback_out_any_2(XEN outp, mus_long_t pos, mus_float_t inv, int chn
 
   /* adds to existing -- these have to precede procedure check since vcts/sound-data objects are applicable */
   if (sound_data_p(outp))
-    return(C_TO_XEN_DOUBLE(mus_sound_data_set(XEN_TO_SOUND_DATA(outp), chn, pos, 
-					      mus_sound_data_ref(XEN_TO_SOUND_DATA(outp), chn, pos) + inv)));
+    {
+      mus_sound_data_set(XEN_TO_SOUND_DATA(outp), chn, pos, mus_sound_data_ref(XEN_TO_SOUND_DATA(outp), chn, pos) + inv);
+      return(XEN_ZERO);
+    }
 
   if (MUS_VCT_P(outp))
     {
@@ -7888,9 +7890,8 @@ static XEN g_locsig_set(XEN obj, XEN chan, XEN val)
 #if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_locsig_set, "a number");
 #endif
-  return(C_TO_XEN_DOUBLE(mus_locsig_set(XEN_TO_MUS_ANY(obj),
-					XEN_TO_C_INT(chan),
-					XEN_TO_C_DOUBLE(val))));
+  mus_locsig_set(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT(chan), XEN_TO_C_DOUBLE(val));
+  return(val);
 }
 
 
@@ -7911,9 +7912,8 @@ static XEN g_locsig_reverb_set(XEN obj, XEN chan, XEN val)
 #if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_locsig_reverb_set, "a number");
 #endif
-  return(C_TO_XEN_DOUBLE(mus_locsig_reverb_set(XEN_TO_MUS_ANY(obj),
-					       XEN_TO_C_INT(chan),
-					       XEN_TO_C_DOUBLE(val))));
+  mus_locsig_reverb_set(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT(chan), XEN_TO_C_DOUBLE(val));
+  return(val);
 }
 
 
@@ -11572,6 +11572,16 @@ static mus_float_t wrapped_ina_ss(void *p)
   return(mus_in_any(k, 0, (mus_any *)(g->gen1)));
 }
 
+static mus_float_t wrapped_ina_ss_v(void *p)
+{
+  s7_Int k;
+  gf *g = (gf *)p;
+  k = s7_cell_integer(s7_cell_slot_value(g->s1));
+  if ((k >= 0) && (k < g->i1))
+    return(g->rx1[k]);
+  return(0.0);
+}
+
 static gf *fixup_in_ab(s7_scheme *sc, s7_pointer expr, s7_pointer locals, bool its_a)
 {
   /* (ina|b i *reverb*) */
@@ -11607,6 +11617,17 @@ static gf *fixup_in_ab(s7_scheme *sc, s7_pointer expr, s7_pointer locals, bool i
 		  g->func = wrapped_ina_ss;
 		  g->s1 = slot;
 		  g->gen1 = (void *)XEN_TO_MUS_ANY(obj);
+		  return(g);
+		}
+	      if (s7_is_float_vector(obj))
+		{
+		  /* we can't get here if there's a run-time set!, so presumably the input vector won't change? */
+		  gf *g;
+		  g = gf_alloc();
+		  g->func = wrapped_ina_ss_v;
+		  g->s1 = slot;
+		  g->rx1 = (mus_float_t *)s7_float_vector_elements(obj);
+		  g->i1 = (mus_long_t)s7_vector_length(obj);
 		  return(g);
 		}
 	    }
@@ -12700,7 +12721,8 @@ gf *gf_alloc(void)
       gf *p;
       p = gf_free_list;
       gf_free_list = gf_free_list->nxt;
-      memset((void *)p, 0, sizeof(gf));
+      /* memset((void *)p, 255, sizeof(gf)) -- use this to flush out hidden assumptions */
+      memset((void *)p, 0, 7 * sizeof(void *)); /* some code checks func_1 first = 7th field */
       return(p);
     }
   return((gf *)calloc(1, sizeof(gf)));
