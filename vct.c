@@ -1256,7 +1256,6 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
       if (lf1) gf_free(lf1);
       if (lf2) gf_free(lf2);
       if (bg) gf_free(bg);
-
       return(NULL);
     }
 
@@ -1293,7 +1292,6 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
     if (bg) gf_free(bg);
   }
   /* ---------------------------------------- */
-
   return(NULL);
 }
 

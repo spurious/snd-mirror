@@ -15633,7 +15633,8 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
 
 #if HAVE_SINCOS
   /* in some cases, sincos is slower than sin+cos? Callgrind is seriously confused by it!
-   *   in Linux at least, sincos is faster than sin+sin.
+   *   in Linux at least, sincos is faster than sin+sin -- in my timing tests, although
+   *   callgrind is crazy, the actual runtimes are about 25% faster (sincos vs sin+sin).
    */
   pv->calc = true;
   pv->cs = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));

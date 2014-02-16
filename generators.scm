@@ -1374,9 +1374,13 @@
 			       (set! (g 'osc) (make-oscil (g 'frequency) (* 0.5 pi)))
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       (set! (g 'rr) (* (g 'r) (g 'r)))
+			       (set! (g 'rr+1) (+ 1.0 (g 'rr)))
+			       (set! (g 'rr-1) (- 1.0 (g 'rr)))
+			       (set! (g 'r2) (* 2.0 (g 'r)))
 			       (let ((absr (abs (g 'r))))
-				 (set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))
-				 (set! (g 'trouble) (< absr nearly-zero)))
+				 (if (< absr nearly-zero)
+				     (set! (g 'norm) 0.0)
+				     (set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))))
 			       g)
 	       :methods (list
 			 (cons 'mus-frequency
@@ -1390,16 +1394,21 @@
 				(lambda (g val) 
 				  (set! (g 'r) (generator-clamp-r val))
 				  (set! (g 'rr) (* (g 'r) (g 'r)))
+				  (set! (g 'rr+1) (+ 1.0 (g 'rr)))
+				  (set! (g 'rr-1) (- 1.0 (g 'rr)))
+				  (set! (g 'r2) (* 2.0 (g 'r)))
 				  (let ((absr (abs (g 'r))))
-				    (set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))
-				    (set! (g 'trouble) (< absr nearly-zero))))))
+				    (if (< absr nearly-zero)
+					(set! (g 'norm) 0.0)
+					(set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))))
+				  val)))
 				  
 			 (cons 'mus-phase
 			       (make-procedure-with-setter
 				(lambda (g) (mus-phase (g 'osc)))
 				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
   (frequency *clm-default-frequency*) (r 0.5) fm
-  (osc #f) rr norm trouble)
+  (osc #f) rr norm rr+1 rr-1 r2)
 
 (define* (rcos gen (fm 0.0))
 ;;  "(make-rcos frequency (r 0.5)) creates an rcos generator.\n\
@@ -1410,14 +1419,7 @@
   
   (environment-set! gen 'fm fm)
   (with-environment gen
-    (if trouble
-	0.0                       ; 1.0 from the formula, but we're subtracting out DC
-	(* (- (/ (- 1.0 rr)
-		 (- (+ 1.0 rr)
-		    (* 2.0 r (oscil osc fm))))
-	      1.0)
-	     norm))))
-
+    (* (- (/ rr-1 (- rr+1 (* r2 (oscil osc fm)))) 1.0) norm)))
 
 #|
   (with-environment gen
@@ -1747,7 +1749,7 @@
 (define* (rxycos gen (fm 0.0))
 ;;  "(make-rxycos frequency (ratio 1.0) (r 0.5)) creates an rxycos generator.\n\
 ;;   (rxycos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."
-;; I really need to figure out how to keep these dic strings out of the evaluator.
+;; I really need to figure out how to keep these doc strings out of the evaluator.
   
   (environment-set! gen 'fm fm)
   (with-environment gen

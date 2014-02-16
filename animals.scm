@@ -1338,22 +1338,29 @@
 	      (pulse-ampf (make-env '(0.000 0.000 0.227 0.057 0.319 0.164 0.407 0.946 0.554 0.706 0.707 0.036 0.839 0.031 
 					    0.930 0.097 1.000 0.000) :duration .008))
 	      (rnd (make-rand-interp 20 (hz->radians 3)))
-	      (pulse-amp amp))
-	  (do ((i attack-stop (+ i 1)))
+	      (pulse-amp amp)
+	      (saved-frq (make-float-vector (floor (* .03 *clm-srate*)))) ; 100 hz in pulser, so this is 3 times bigger than expected
+	      (last-stop attack-stop))
+	  (pulse-train pulser 0.0) ; flush the startup pulse
+	  (do ((i attack-stop (+ i 1))
+	       (j 0 (+ j 1)))
 	      ((= i stop))
-	    (let ((frq2 (+ (env frqf2)
-			   (rand-interp rnd))))
-	      (if (> (pulse-train pulser frq2) 0.1)
-		  (begin
-		    (mus-reset pulse-ampf)
-		    (set! (mus-location ampf) (- i attack-stop))
-		    (set! pulse-amp (env ampf))
-		    (set! (mus-phase gen1) (* pi .75))))
-	      (outa i (* pulse-amp
-			 (env pulse-ampf)
-			 (+ (* (env low-ampf) 
-			       (polywave gp frq2))
-			    (polywave gen1 (env frqf))))))))))))
+	    (if (> (pulse-train pulser (float-vector-set! saved-frq j (+ (env frqf2) (rand-interp rnd)))) 0.1)
+		(begin
+		  (do ((k 0 (+ k 1))
+		       (n last-stop (+ n 1)))
+		      ((= k j))
+		    (outa n (* pulse-amp
+			       (env pulse-ampf)
+			       (+ (* (env low-ampf) 
+				     (polywave gp (float-vector-ref saved-frq k)))
+				  (polywave gen1 (env frqf))))))
+		  (mus-reset pulse-ampf)
+		  (set! (mus-location ampf) (- i attack-stop))
+		  (set! pulse-amp (env ampf))
+		  (set! (mus-phase gen1) (* pi .75))
+		  (set! last-stop i)
+		  (set! j 0)))))))))
 
 ;; (with-sound (:play #t) (great-plains-narrow-mouthed-toad 0 2 .25))
 

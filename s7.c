@@ -671,7 +671,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opCq_opSSq, HOP_SAFE_C_opCq_opSSq, 
       OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, 
       OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C, OP_SAFE_C_S_op_opSSq_opSSqq, HOP_SAFE_C_S_op_opSSq_opSSqq, 
-      OP_SAFE_C_opSSq_op_opSSq_q, HOP_SAFE_C_opSSq_op_opSSq_q,
+      OP_SAFE_C_opSSq_op_opSSq_q, HOP_SAFE_C_opSSq_op_opSSq_q, OP_SAFE_C_op_opSSq_Sq_opSSq, HOP_SAFE_C_op_opSSq_Sq_opSSq,
       OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, 
       
       OP_THUNK, HOP_THUNK, 
@@ -782,7 +782,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_opscq_c", "h_safe_c_opscq_c", "safe_c_opcq_opssq", "h_safe_c_opcq_opssq",
       "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", 
       "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c", "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq", 
-      "safe_c_opssq_op_opssq_q", "h_safe_c_opssq_op_opssq_q",
+      "safe_c_opssq_op_opssq_q", "h_safe_c_opssq_op_opssq_q", "safe_c_op_opssq_sq_opssq", "h_safe_c_op_opssq_sq_opssq",
       "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", 
 
       "thunk", "h_thunk", 
@@ -2728,15 +2728,17 @@ static int sort_data(const void *v1, const void *v2)
 }
 static void report_counts(s7_scheme *sc)
 {
-  int len, i, loc = 0, entries;
+  int len, i, loc = 0, entries, top_hist = 0;
   s7_pointer *elements;
   datum **data;
-  int *lens;
+  int *lens, *hist;
+  #define HIST_SIZE 100
 
   len = hash_table_length(hashes);
   elements = hash_table_elements(hashes);
   entries = hash_table_entries(hashes);
   data = (datum **)calloc(entries, sizeof(datum *));
+  hist = (int *)calloc(HIST_SIZE, sizeof(int));
 
   lens = (int *)calloc(len, sizeof(int));
   for (i = 0; i < len; i++)
@@ -2749,18 +2751,23 @@ static void report_counts(s7_scheme *sc)
     }
 
   {
-    int n, ctr = 0, total = 0;
+    int n, ctr = 0, total = 0, ents;
     for (n = 0; n < len; n++)
       if (is_pair(elements[n])) 
 	{
 	  ctr++;
-	  total += s7_list_length(sc, elements[n]);
+	  ents = s7_list_length(sc, elements[n]);
+	  total += ents;
+	  if (ents >= HIST_SIZE) ents = HIST_SIZE - 1;
+	  hist[ents]++;
+	  if (ents > top_hist) top_hist = ents;
 	}
     fprintf(stderr, "\n%d locs of %d are in use for %d items\n", ctr, len, total);
     
-    for (n = 0; n < 100; n++)
+    for (n = 0; n < 4; n++)
       {
-	int mx, mxj = 0, j;
+	int mx, mxj = 0, j, a;
+	s7_pointer p;
 	mx = 0;
 	
 	for (j = 0; j < len; j++)
@@ -2775,25 +2782,30 @@ static void report_counts(s7_scheme *sc)
 	  {
 	    fprintf(stderr, "%d: %d\n", mxj, mx);
 	    lens[mxj] = 0;
-	    if (n < 4)
-	      {
-		int a;
-		s7_pointer p;
-		for (a = 0, p = elements[mxj]; (a < 10) && (is_pair(p)); p = cdr(p), a++)
-		  fprintf(stderr, "    %s\n", DISPLAY_80(caar(p)));
-		if (is_pair(p)) fprintf(stderr, "    ...\n");
-	      }
+	    for (a = 0, p = elements[mxj]; (a < 10) && (is_pair(p)); p = cdr(p), a++)
+	      fprintf(stderr, "    %s\n", DISPLAY_80(caar(p)));
+	    if (is_pair(p)) fprintf(stderr, "    ...\n");
 	  }
 	else break;
       }
+
+    for (n = 1; n < top_hist; n++)
+      {
+	fprintf(stderr, "%d ", hist[n]);
+	if ((n % 20) == 0) fprintf(stderr, "\n");
+      }
   }
-  fprintf(stderr, "\n");
+  fprintf(stderr, "\n\n");
 
   qsort((void *)data, loc, sizeof(datum *), sort_data);
   if (loc > 400) loc = 400;
   for (i = 0; i < loc; i++)
     if (data[i]->count > 0)
       fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY_80(data[i]->expr));
+
+  free(data);
+  free(hist);
+  free(lens);
 }
 #endif
 #endif
@@ -43187,6 +43199,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	    return(OP_SAFE_C_opSSq_opSSq);
 	  if (optimize_data_match(e1, OP_SAFE_C_S))
 	    return(OP_SAFE_C_opSq_opSSq);
+	  if (optimize_data_match(e1, OP_SAFE_C_opSSq_S))
+	    return(OP_SAFE_C_op_opSSq_Sq_opSSq);
 	  break;
 
 	case OP_SAFE_C_opSSq:
@@ -49025,11 +49039,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	    }
 	  else 
 	    {
-	      /* lots of unoptimized (I assume) cases in s7test 
-	       * snd-test:  (= i (channels s)) h_safe_c_s_opvsq 
-	       *            (= i (- (length mn) 4)) h_safe_c_sz, also (>= j (* (+ k 1) 3)), (>= (+ p (* 2 i)) n), (> j (min i (- v1-len 1)))
-	       * bench: (>= (* i i) size) h_safe_c_opcq_s
-	       */
 	      /* fprintf(stderr, "end: %s %s\n", DISPLAY(car(end)), opt_name(car(end))); */
 	      return(sc->code);
 	    }
@@ -49046,13 +49055,6 @@ static s7_pointer check_do(s7_scheme *sc)
 
 	      if (!is_init_dox_safe(sc, cadr(var)))
 		{
-		  /* snd-test: (make-rectangular 0.0 (* pi dir)) h_safe_c_c_opssq
-		   *           (/ 2.0 (abs x)) h_safe_c_c_opsq
-		   * bench: (* (- ncols 1) 3) h_safe_c_opcq_c
-		   *        (+ (* (- nrows 1) 2) (bitwise-and x 1)) h_safe_c_aa
-		   *        (char-position #\space str 0) h_safe_c_aaa
-		   *        (quotient (length (car l2)) 2) h_safe_c_zc -- op_opSq_q
-		   */
 		  /* fprintf(stderr, "init: %s %s\n", DISPLAY(cadr(var)), opt_name(cadr(var))); */
 		  return(sc->code);
 		}
@@ -50468,13 +50470,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				s7_pointer p;
 				for (p = cadr(sc->code); is_pair(p); p = cdr(p))
 				  if ((!is_pair(cadar(p))) ||
-				      (!is_optimized(cadar(p))) ||
-				      (optimize_data(cadar(p)) != HOP_SAFE_C_C))
+				      (!is_optimized(cadar(p))))
 				    {
+				      /* fprintf(stderr, "   bad: %s %s\n", opt_name(cadar(p)), DISPLAY(cadar(p))); */
 				      happy = false;
 				      break;
 				    }
-				/* fprintf(stderr, "%s%s%s is let loopable\n", (happy) ? RED_TEXT : "", DISPLAY(sc->code), (happy) ? NORMAL_TEXT : ""); */
+				/*
+				fprintf(stderr, "%s%s%s is%slet loopable\n", 
+					(happy) ? RED_TEXT : "", DISPLAY(sc->code), (happy) ? NORMAL_TEXT : "", (happy) ? " " : " not "); 
+				*/
 				if (happy)
 				  {
 				    s7_function f;
@@ -50485,6 +50490,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				      add_slot(sc, caar(p), s7_make_mutable_real(sc, 1.5));
 
 				    /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(old_e)); */
+
 				    f = (s7_function)c_function_call(c_function_let_looped(ecdr(caddr(sc->code))));
 				    car(sc->T3_1) = slot_value(sc->args);
 				    car(sc->T3_2) = sc->code;
@@ -55748,6 +55754,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_AA:
+	      /* 400000 of safe_c_op_opssq_sq_opssq
+	       */
 	      car(sc->A2_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      car(sc->A2_2) = ((s7_function)fcdr(cddr(code)))(sc, caddr(code));
 	      sc->value = c_call(code)(sc, sc->A2_1);
@@ -56476,6 +56484,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_1) = f1;
 		car(sc->T2_2) = c_call(args)(sc, sc->T2_1);
 		car(sc->T2_1) = find_symbol_checked(sc, cadr(code));        
+		sc->value = c_call(code)(sc, sc->T2_1);        
+		goto START;
+	      }
+
+
+	    case OP_SAFE_C_op_opSSq_Sq_opSSq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, caddr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_op_opSSq_Sq_opSSq:
+	      {
+		/* (op4 (op1 (op2 s1 s2) s3) (op3 s4 s5)) 
+		 * (define (hi a b c d e) (+ (+ (+ a b) c) (+ d e)))
+		 */
+		s7_pointer op1, op2, op3, val1;
+
+		op1 = cadr(code);    
+		op3 = caddr(code);   
+		op2 = cadr(op1);
+
+		car(sc->T2_1) = find_symbol_checked(sc, cadr(op3));
+		car(sc->T2_2) = find_symbol_checked(sc, caddr(op3));
+		val1 = c_call(op3)(sc, sc->T2_1);
+
+		car(sc->T2_1) = find_symbol_checked(sc, cadr(op2));
+		car(sc->T2_2) = find_symbol_checked(sc, caddr(op2));
+		car(sc->T2_1) = c_call(op2)(sc, sc->T2_1);
+		car(sc->T2_2) = find_symbol_checked(sc, caddr(op1));
+
+		car(sc->T2_1) = c_call(op1)(sc, sc->T2_1);
+		car(sc->T2_2) = val1;
 		sc->value = c_call(code)(sc, sc->T2_1);        
 		goto START;
 	      }
@@ -69386,8 +69427,8 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4
- * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 39.5
+ * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.5
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 38.5
  *            153 with run macro (eval_ptree)
  */
 
@@ -69408,5 +69449,10 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0)
+ * 
+ * extend sincos to polywave
+ * unchecked ramp etc
+ * collapse trees continued?
+ * oscil_bank using sincos (need check of each osc?)
  */
 
