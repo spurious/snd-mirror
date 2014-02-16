@@ -12660,7 +12660,8 @@ static void gen_list_walk(s7_scheme *sc, s7_pointer tree)
       mus_xen *gn;
       gp = s7_symbol_value(s7, tree); /* not s7_value because that will complain about currently undefined local vars in the tree */
       gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag);
-      if ((gn) && (mus_oscil_p(gn->gen)))
+      if ((gn) && (gn->gen) && 
+	  ((mus_oscil_p(gn->gen)) || (mus_polywave_p(gn->gen)))) /* SOMEDAY: get rid of the "_p"! -> mus_is_oscil etc */
 	{
 	  if (!gen_list)
 	    {
@@ -12739,6 +12740,25 @@ static mus_float_t gf_unmod_oscil_1b(void *p)
   return(g->x5 * g->x4 + g->x6 * g->x3);
 }
 
+static mus_float_t gf_unmod_scaled_oscil_1b(void *p);
+static mus_float_t gf_unmod_scaled_oscil_1a(void *p)
+{
+  gf *g = (gf *)p; 
+  mus_float_t ph;
+  g->o1 = gf_unmod_scaled_oscil_1b;
+  ph = g->x1;
+  sincos(ph, &(g->x5), &(g->x6));
+  g->x1 += g->x2;
+  return(g->x7 * g->x5);
+}
+
+static mus_float_t gf_unmod_scaled_oscil_1b(void *p)
+{
+  gf *g = (gf *)p; 
+  g->o1 = gf_unmod_scaled_oscil_1a;
+  return(g->x5 * g->x4 + g->x6 * g->x3); /* the scaling by x7 is embedded in the sn/cs numbers */
+}
+
 #endif
 
 static mus_float_t gf_unmod_oscil_1(void *p)
@@ -12748,6 +12768,16 @@ static mus_float_t gf_unmod_oscil_1(void *p)
   return(g->o1(p));
 #else
   return(mus_oscil_unmodulated((mus_any *)(g->gen)));
+#endif  
+}
+
+static mus_float_t gf_unmod_scaled_oscil_1(void *p)
+{
+  gf *g = (gf *)p; 
+#if HAVE_SINCOS
+  return(g->o1(p));
+#else
+  return(g->x7 * mus_oscil_unmodulated((mus_any *)(g->gen)));
 #endif  
 }
 
@@ -12958,6 +12988,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	      if (gen1 == (mus_float_t (*)(void *p))wrapped_oscil_1)
 		{
 		  p->gen = ((mus_xen *)(p->gen))->gen;
+#if HAVE_SINCOS
 		  if (gen_is_ok(p->gen))
 		    {
 		      mus_float_t sn, cs;
@@ -12971,21 +13002,46 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		      p->o1 = gf_unmod_oscil_1a;
 		    }
 		  else p->func = gf_oscil_1;
+#else
+		  p->func = gf_oscil_1;
+#endif
 		  p->func_1 = NULL;
 		}
+#if HAVE_SINCOS
 	      if (gen1 == (mus_float_t (*)(void *p))wrapped_polywave_1)
 		{
 		  mus_any *pw;
 		  pw = ((mus_xen *)(p->gen))->gen;
-		  if ((mus_polywave_p(pw)) && (mus_length(pw) == 2))
+		  if ((mus_polywave_p(pw)) && 
+		      (gen_is_ok(pw)) &&
+		      (mus_length(pw) == 2))
 		    {
 		      /* probably just (* scl (oscil pw)): polyw_first_1 or polyw_f1 or polyw_second_2
 		       *   type is mus_channel(pw)
 		       */
 		      /* fprintf(stderr, "%s: %lld %d (%.3f %.3f)\n", DISPLAY(expr), mus_length(pw), mus_channel(pw), mus_xcoeff(pw, 0), mus_xcoeff(pw, 1)); */
+		      if (mus_xcoeff(pw, 0) == 0.0)
+			{
+			  /* this is xcoeff[1] * unmod_oscil */
+			  mus_float_t sn, cs;
+			  p->gen = pw;
+			  p->func = gf_unmod_scaled_oscil_1;
+			  p->func_1 = NULL;
+			  if (mus_channel(pw) == MUS_CHEBYSHEV_SECOND_KIND)
+			    p->x1 = mus_phase(pw);
+			  else p->x1 = mus_phase(pw) + M_PI / 2.0;
+			  p->x2 = mus_increment(pw); /* x2 doesn't need to be saved */
+			  p->x7 = mus_xcoeff(pw, 1);
+			  sincos(p->x2, &sn, &cs);
+			  p->x3 = sn * p->x7;
+			  p->x4 = cs * p->x7;
+			  p->x2 *= 2.0;
+			  p->o1 = gf_unmod_scaled_oscil_1a;
+			}
+		      /* else fprintf(stderr, "%s: %lld %d (%.3f %.3f)\n", DISPLAY(expr), mus_length(pw), mus_channel(pw), mus_xcoeff(pw, 0), mus_xcoeff(pw, 1)); */
 		    }
 		}
-		
+#endif
 	    }
 	  else
 	    {
@@ -13031,6 +13087,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	    case GF_X:
 	      p->func = (its_gf) ? gf_2_x1 : vf_2_x1;                     /* (gen g s|c) */
 	      p->x1 = x;
+#if HAVE_SINCOS
 	      if (gen2 == (mus_float_t (*)(void *p, mus_float_t x))wrapped_oscil_2)
 		{
 		  mus_any *o;
@@ -13054,6 +13111,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		      p->o1 = gf_unmod_oscil_1a;
 		    }
 		}
+#endif
 	      return(p);
 
 	    case GF_RX:

@@ -57,7 +57,7 @@ typedef struct gf {
   mus_float_t (*o1)(void *p);
   void *gen, *gen1, *gen2, *gen3; /* mus_any's -- not touched */
   void *(*vf)(void *p);
-  double x1, x2, x3, x4, x5, x6;
+  double x1, x2, x3, x4, x5, x6, x7, x8;
   double *rx1, *rx2, *rx3;
   s7_pointer s1, s2, s3;
   mus_long_t i1;

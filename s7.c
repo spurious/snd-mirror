@@ -69427,7 +69427,7 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4
- * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.5
+ * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.4
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 38.5
  *            153 with run macro (eval_ptree)
  */
@@ -69450,9 +69450,9 @@ int main(int argc, char **argv)
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0)
  * 
- * extend sincos to polywave
- * unchecked ramp etc
- * collapse trees continued?
+ * extend sincos to polywave, ri and count down here?, and tri can be greatly sped up if simple
+ * unchecked ramp etc mus_env_line -> gf_constant (2.4M calls)
+ * collapse trees continued? esp gf_constant`
  * oscil_bank using sincos (need check of each osc?)
  */
 
