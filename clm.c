@@ -185,7 +185,7 @@ static const char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", 
 
 static const char *interp_type_to_string(int type)
 {
-  if (mus_interp_type_p(type))
+  if (mus_is_interp_type(type))
     return(interp_name[type]);
   return("unknown");
 }
@@ -1242,7 +1242,7 @@ static mus_float_t mus_array_bezier_interp(mus_float_t *wave, mus_float_t x, mus
 }
 
 
-bool mus_interp_type_p(int val)
+bool mus_is_interp_type(int val)
 {
   /* this is C++'s fault. */
   switch (val)
@@ -1351,13 +1351,13 @@ mus_float_t mus_oscil_pm(mus_any *ptr, mus_float_t pm)
 }
 
 
-bool mus_oscil_p(mus_any *ptr) 
+bool mus_is_oscil(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_OSCIL));
 }
 
-/* this could be: bool mus_oscil_p(mus_any *ptr) {return((ptr) && (ptr->core == &OSCIL_CLASS));}
+/* this could be: bool mus_is_oscil(mus_any *ptr) {return((ptr) && (ptr->core == &OSCIL_CLASS));}
  *   making the MUS_OSCIL business unnecessary, but that makes it harder to do things like mus-set-name.
  */
 
@@ -1382,8 +1382,8 @@ static mus_float_t fallback_scaler(mus_any *ptr) {return(1.0);}
 static bool oscil_equalp(mus_any *p1, mus_any *p2)
 {
   return((p1 == p2) ||
-	 ((mus_oscil_p((mus_any *)p1)) && 
-	  (mus_oscil_p((mus_any *)p2)) &&
+	 ((mus_is_oscil((mus_any *)p1)) && 
+	  (mus_is_oscil((mus_any *)p2)) &&
 	  ((((osc *)p1)->freq) == (((osc *)p2)->freq)) &&
 	  ((((osc *)p1)->phase) == (((osc *)p2)->phase))));
 }
@@ -1451,13 +1451,29 @@ typedef struct {
   mus_any_class *core;
   int size, orig_size;
   mus_float_t *amps, *phases, *freqs;
+#if HAVE_SINCOS
+  mus_float_t *sn1, *cs1, *sn2, *cs2, *phs;
+  bool use_sc;
+#endif
 } ob;
 
 
 static int free_oscil_bank(mus_any *ptr) 
 {
-  if (ptr) 
-    free(ptr);
+#if HAVE_SINCOS
+  if (ptr)
+    {
+      ob *g = (ob *)ptr;
+      if (g->sn1) {free(g->sn1); g->sn1 = NULL;}
+      if (g->sn2) {free(g->sn2); g->sn2 = NULL;}
+      if (g->cs1) {free(g->cs1); g->cs1 = NULL;}
+      if (g->cs2) {free(g->cs2); g->cs2 = NULL;}
+      if (g->phs) {free(g->phs); g->phs = NULL;}
+      free(ptr);
+    }
+#else
+  if (ptr) free(ptr);
+#endif
   return(0);
 }
 
@@ -1546,7 +1562,7 @@ static mus_any_class OSCIL_BANK_CLASS = {
 };
 
 
-bool mus_oscil_bank_p(mus_any *ptr)
+bool mus_is_oscil_bank(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_OSCIL_BANK));
@@ -1558,7 +1574,41 @@ mus_float_t mus_oscil_bank(mus_any *ptr)
   ob *p = (ob *)ptr;
   int i;
   mus_float_t sum = 0.0;
-  
+#if HAVE_SINCOS
+  if (p->use_sc)
+    {
+      for (i = 0; i < p->size; i++)
+	sum += (p->sn1[i] * p->cs2[i] + p->cs1[i] * p->sn2[i]);
+      p->use_sc = false;
+    }
+  else
+    {
+      mus_float_t s, c;
+      if (!p->amps)
+	{
+	  for (i = 0; i < p->size; i++)
+	    {
+	      sincos(p->phases[i], &s, &c);
+	      p->sn2[i] = s;
+	      p->cs2[i] = c;
+	      sum += s;
+	      p->phases[i] += p->phs[i];
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < p->size; i++)
+	    {
+	      sincos(p->phases[i], &s, &c);
+	      p->sn2[i] = s;
+	      p->cs2[i] = c;
+	      sum += p->amps[i] * s;
+	      p->phases[i] += p->phs[i];
+	    }
+	}
+      p->use_sc = true;
+    }
+#else
   if (!p->amps)
     {
       for (i = 0; i < p->size; i++)
@@ -1575,6 +1625,7 @@ mus_float_t mus_oscil_bank(mus_any *ptr)
 	  p->phases[i] += p->freqs[i];
 	}
     }
+#endif
   return(sum);
 }
 
@@ -1590,6 +1641,31 @@ mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, 
   gen->amps = amps;
   gen->freqs = freqs;
   gen->phases = phases;
+
+#if HAVE_SINCOS
+  gen->use_sc = false;
+  gen->sn1 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+  gen->sn2 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+  gen->cs1 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+  gen->cs2 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+  gen->phs = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+  {
+    int i;
+    mus_float_t s, c;
+    for (i = 0; i < size; i++)
+      {
+	sincos(freqs[i], &s, &c);
+	if (amps)
+	  {
+	    s *= amps[i];
+	    c *= amps[i];
+	  }
+	gen->sn1[i] = s;
+	gen->cs1[i] = c;
+	gen->phs[i] = freqs[i] * 2.0;
+      }
+  }
+#endif
 
   return((mus_any *)gen);
 }
@@ -1689,7 +1765,7 @@ mus_float_t mus_ncos(mus_any *ptr, mus_float_t fm)
 #endif
 
 
-bool mus_ncos_p(mus_any *ptr) 
+bool mus_is_ncos(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_NCOS));
@@ -1731,7 +1807,7 @@ static mus_float_t run_ncos(mus_any *ptr, mus_float_t fm, mus_float_t unused) {r
 static bool ncos_equalp(mus_any *p1, mus_any *p2)
 {
   return((p1 == p2) ||
-	 ((mus_ncos_p((mus_any *)p1)) && (mus_ncos_p((mus_any *)p2)) &&
+	 ((mus_is_ncos((mus_any *)p1)) && (mus_is_ncos((mus_any *)p2)) &&
 	  ((((cosp *)p1)->freq) == (((cosp *)p2)->freq)) &&
 	  ((((cosp *)p1)->phase) == (((cosp *)p2)->phase)) &&
 	  ((((cosp *)p1)->n) == (((cosp *)p2)->n)) &&
@@ -1802,7 +1878,7 @@ mus_any *mus_make_ncos(mus_float_t freq, int n)
 static bool nsin_equalp(mus_any *p1, mus_any *p2)
 {
   return((p1 == p2) ||
-	 ((mus_nsin_p((mus_any *)p1)) && (mus_nsin_p((mus_any *)p2)) &&
+	 ((mus_is_nsin((mus_any *)p1)) && (mus_is_nsin((mus_any *)p2)) &&
 	  ((((cosp *)p1)->freq) == (((cosp *)p2)->freq)) &&
 	  ((((cosp *)p1)->phase) == (((cosp *)p2)->phase)) &&
 	  ((((cosp *)p1)->n) == (((cosp *)p2)->n)) &&
@@ -1823,7 +1899,7 @@ static char *describe_nsin(mus_any *ptr)
 }
 
 
-bool mus_nsin_p(mus_any *ptr) 
+bool mus_is_nsin(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_NSIN));
@@ -2089,7 +2165,7 @@ static char *describe_asyfm(mus_any *ptr)
 }
 
 
-bool mus_asymmetric_fm_p(mus_any *ptr) 
+bool mus_is_asymmetric_fm(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_ASYMMETRIC_FM));
@@ -2244,7 +2320,7 @@ static bool nrxy_equalp(mus_any *p1, mus_any *p2)
 }
 
 
-bool mus_nrxysin_p(mus_any *ptr) 
+bool mus_is_nrxysin(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_NRXYSIN));
@@ -2365,7 +2441,7 @@ mus_any *mus_make_nrxysin(mus_float_t frequency, mus_float_t y_over_x, int n, mu
 }
 
 
-bool mus_nrxycos_p(mus_any *ptr) 
+bool mus_is_nrxycos(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_NRXYCOS));
@@ -2520,7 +2596,7 @@ static char *describe_rxyk(mus_any *ptr)
 }
 
 
-bool mus_rxykcos_p(mus_any *ptr) 
+bool mus_is_rxykcos(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_RXYKCOS));
@@ -2582,7 +2658,7 @@ mus_any *mus_make_rxykcos(mus_float_t freq, mus_float_t phase, mus_float_t r, mu
 
 
 
-bool mus_rxyksin_p(mus_any *ptr) 
+bool mus_is_rxyksin(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_RXYKSIN));
@@ -2808,7 +2884,7 @@ static mus_float_t table_look_unmodulated_any(mus_any *ptr)
 
 static mus_float_t run_table_lookup(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(((tbl *)ptr)->tbl_look(ptr, fm)); }
 
-bool mus_table_lookup_p(mus_any *ptr) 
+bool mus_is_table_lookup(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_TABLE_LOOKUP));
@@ -3033,7 +3109,7 @@ typedef struct {
 
 mus_float_t (*mus_polywave_function(mus_any *g))(mus_any *gen, mus_float_t fm)
 {
-  if (mus_polywave_p(g))
+  if (mus_is_polywave(g))
     return(((pw *)g)->polyw);
   return(NULL);
 }
@@ -3810,7 +3886,7 @@ mus_any *mus_make_polywave_tu(mus_float_t frequency, mus_float_t *tcoeffs, mus_f
 }
 
 
-bool mus_polywave_p(mus_any *ptr) 
+bool mus_is_polywave(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_POLYWAVE));
@@ -3910,7 +3986,7 @@ mus_any *mus_make_polyshape(mus_float_t frequency, mus_float_t phase, mus_float_
 }
 
 
-bool mus_polyshape_p(mus_any *ptr) 
+bool mus_is_polyshape(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_POLYSHAPE));
@@ -4159,7 +4235,7 @@ mus_any *mus_make_wave_train(mus_float_t freq, mus_float_t phase, mus_float_t *w
 }
 
 
-bool mus_wave_train_p(mus_any *ptr) 
+bool mus_is_wave_train(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_WAVE_TRAIN));
@@ -4390,13 +4466,13 @@ static mus_long_t delay_set_length(mus_any *ptr, mus_long_t val)
 }
 
 
-bool mus_delay_line_p(mus_any *gen)
+bool mus_is_delay_line(mus_any *gen)
 {
   return((gen) && 
 	 (gen->core->extended_type == MUS_DELAY_LINE));
 }
 
-bool mus_tap_p(mus_any *gen)
+bool mus_is_tap(mus_any *gen)
 {
   return((gen) && 
 	 (gen->core->extended_type == MUS_DELAY_LINE));
@@ -4471,7 +4547,7 @@ mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mu
 }
 
 
-bool mus_delay_p(mus_any *ptr) 
+bool mus_is_delay(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_DELAY));
@@ -4584,7 +4660,7 @@ mus_any *mus_make_comb(mus_float_t scaler, int size, mus_float_t *line, int line
 }
 
 
-bool mus_comb_p(mus_any *ptr) 
+bool mus_is_comb(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_COMB));
@@ -4750,7 +4826,7 @@ mus_any *mus_make_comb_bank(int size, mus_any **combs)
   return((mus_any *)gen);
 }
 
-bool mus_comb_bank_p(mus_any *ptr)
+bool mus_is_comb_bank(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_COMB_BANK));
@@ -4846,7 +4922,7 @@ mus_float_t mus_notch_unmodulated_noz(mus_any *ptr, mus_float_t input)
 }
 
 
-bool mus_notch_p(mus_any *ptr) 
+bool mus_is_notch(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_NOTCH));
@@ -4902,7 +4978,7 @@ mus_float_t mus_all_pass_unmodulated_noz(mus_any *ptr, mus_float_t input)
 }
 
 
-bool mus_all_pass_p(mus_any *ptr) 
+bool mus_is_all_pass(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_ALL_PASS));
@@ -5130,7 +5206,7 @@ mus_any *mus_make_all_pass_bank(int size, mus_any **all_passs)
 }
 
 
-bool mus_all_pass_bank_p(mus_any *ptr)
+bool mus_is_all_pass_bank(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_ALL_PASS_BANK));
@@ -5148,7 +5224,7 @@ mus_float_t mus_all_pass_bank(mus_any *all_passes, mus_float_t inval)
 
 /* ---------------- moving-average ---------------- */
 
-bool mus_moving_average_p(mus_any *ptr) 
+bool mus_is_moving_average(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_MOVING_AVERAGE));
@@ -5240,7 +5316,7 @@ mus_any *mus_make_moving_average(int size, mus_float_t *line)
 
 /* -------- moving-max -------- */
 
-bool mus_moving_max_p(mus_any *ptr) 
+bool mus_is_moving_max(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_MOVING_MAX));
@@ -5378,7 +5454,7 @@ static char *describe_filtered_comb(mus_any *ptr)
 }
 
 
-bool mus_filtered_comb_p(mus_any *ptr) 
+bool mus_is_filtered_comb(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FILTERED_COMB));
@@ -5611,7 +5687,7 @@ mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
     {
       gen->gens[i] = filtered_combs[i];
       zdly = (zdly) || (((dly *)(filtered_combs[i]))->zdly);
-      oz = (oz) && (mus_one_zero_p(((dly *)(filtered_combs[i]))->filt));
+      oz = (oz) && (mus_is_one_zero(((dly *)(filtered_combs[i]))->filt));
     }
 
   if ((size == 8) &&
@@ -5624,7 +5700,7 @@ mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
 }
 
 
-bool mus_filtered_comb_bank_p(mus_any *ptr)
+bool mus_is_filtered_comb_bank(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FILTERED_COMB_BANK));
@@ -5675,7 +5751,7 @@ mus_float_t mus_sawtooth_wave(mus_any *ptr, mus_float_t fm)
 
 static mus_float_t run_sawtooth_wave(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(mus_sawtooth_wave(ptr, fm));}
 
-bool mus_sawtooth_wave_p(mus_any *ptr) 
+bool mus_is_sawtooth_wave(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_SAWTOOTH_WAVE));
@@ -5791,7 +5867,7 @@ mus_float_t mus_square_wave(mus_any *ptr, mus_float_t fm)
 }
 
 
-bool mus_square_wave_p(mus_any *ptr) 
+bool mus_is_square_wave(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_SQUARE_WAVE));
@@ -5907,7 +5983,7 @@ mus_float_t mus_triangle_wave_unmodulated(mus_any *ptr)
 }
 
 
-bool mus_triangle_wave_p(mus_any *ptr) 
+bool mus_is_triangle_wave(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_TRIANGLE_WAVE));
@@ -6007,7 +6083,7 @@ mus_float_t mus_pulse_train_unmodulated(mus_any *ptr)
 }
 
 
-bool mus_pulse_train_p(mus_any *ptr) 
+bool mus_is_pulse_train(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_PULSE_TRAIN));
@@ -6189,7 +6265,7 @@ mus_float_t mus_rand_interp_unmodulated(mus_any *ptr)
 mus_float_t (*mus_rand_interp_unmodulated_function(mus_any *g))(mus_any *gen);
 mus_float_t (*mus_rand_interp_unmodulated_function(mus_any *g))(mus_any *gen)
 {
-  if (mus_rand_interp_p(g))
+  if (mus_is_rand_interp(g))
     return(((noi *)g)->ran_unmod);
   return(NULL);
 }
@@ -6227,13 +6303,13 @@ static mus_float_t run_rand(mus_any *ptr, mus_float_t fm, mus_float_t unused) {r
 static mus_float_t run_rand_interp(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(mus_rand_interp(ptr, fm));}
 
 
-bool mus_rand_p(mus_any *ptr) 
+bool mus_is_rand(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_RAND));
 }
 
-bool mus_rand_interp_p(mus_any *ptr) 
+bool mus_is_rand_interp(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_RAND_INTERP));
@@ -6324,7 +6400,7 @@ static char *describe_noi(mus_any *ptr)
   noi *gen = (noi *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  if (mus_rand_p(ptr))
+  if (mus_is_rand(ptr))
     snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, amp: %.3f%s",
 		 mus_name(ptr),
 		 mus_frequency(ptr),
@@ -6598,7 +6674,7 @@ mus_any *mus_make_one_zero(mus_float_t a0, mus_float_t a1)
 }
 
 
-bool mus_one_zero_p(mus_any *ptr) 
+bool mus_is_one_zero(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_ONE_ZERO));
@@ -6651,7 +6727,7 @@ mus_any *mus_make_one_pole(mus_float_t a0, mus_float_t b1)
 }
 
 
-bool mus_one_pole_p(mus_any *ptr) 
+bool mus_is_one_pole(mus_any *ptr) 
 {
   return((ptr) &&
 	 (ptr->core->type == MUS_ONE_POLE));
@@ -6741,7 +6817,7 @@ mus_any *mus_make_two_zero(mus_float_t a0, mus_float_t a1, mus_float_t a2)
 }
 
 
-bool mus_two_zero_p(mus_any *ptr) 
+bool mus_is_two_zero(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_TWO_ZERO));
@@ -6837,7 +6913,7 @@ mus_any *mus_make_two_pole(mus_float_t a0, mus_float_t b1, mus_float_t b2)
 }
 
 
-bool mus_two_pole_p(mus_any *ptr) 
+bool mus_is_two_pole(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_TWO_POLE));
@@ -6868,7 +6944,7 @@ static int free_frm(mus_any *ptr)
 }
 
 
-bool mus_formant_p(mus_any *ptr) 
+bool mus_is_formant(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FORMANT));
@@ -7612,7 +7688,7 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
   return((mus_any *)gen);
 }
 
-bool mus_formant_bank_p(mus_any *ptr)
+bool mus_is_formant_bank(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FORMANT_BANK));
@@ -7657,7 +7733,7 @@ static mus_float_t firmant_set_radius(mus_any *ptr, mus_float_t radius)
 }
 
 
-bool mus_firmant_p(mus_any *ptr)
+bool mus_is_firmant(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FIRMANT));
@@ -8114,7 +8190,7 @@ static mus_float_t iir_n(mus_any *ptr, mus_float_t input)
 
 static mus_float_t run_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) {return((((flt *)ptr)->filtw)(ptr, input));}
 
-bool mus_filter_p(mus_any *ptr) 
+bool mus_is_filter(mus_any *ptr) 
 {
   return((ptr) && 
 	 ((ptr->core->type == MUS_FILTER) || 
@@ -8123,13 +8199,13 @@ bool mus_filter_p(mus_any *ptr)
 }
 
 
-bool mus_fir_filter_p(mus_any *ptr) 
+bool mus_is_fir_filter(mus_any *ptr) 
 {
   return((ptr) &&
 	 (ptr->core->type == MUS_FIR_FILTER));
 }
 
-bool mus_iir_filter_p(mus_any *ptr) 
+bool mus_is_iir_filter(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_IIR_FILTER));
@@ -8268,7 +8344,7 @@ static bool filter_equalp(mus_any *p1, mus_any *p2)
   f2 = (flt *)p2;
   if (p1 == p2) return(true);
   return(((p1->core)->type == (p2->core)->type) &&
-	 ((mus_filter_p(p1)) || (mus_fir_filter_p(p1)) || (mus_iir_filter_p(p1))) &&
+	 ((mus_is_filter(p1)) || (mus_is_fir_filter(p1)) || (mus_is_iir_filter(p1))) &&
 	 (f1->order == f2->order) &&
 	 ((!(f1->x)) || (!(f2->x)) || (clm_arrays_are_equal(f1->x, f2->x, f1->order))) &&
 	 ((!(f1->y)) || (!(f2->y)) || (clm_arrays_are_equal(f1->y, f2->y, f1->order))) &&
@@ -8758,7 +8834,7 @@ mus_any *mus_make_one_pole_all_pass(int size, mus_float_t coeff)
 }
 
 
-bool mus_one_pole_all_pass_p(mus_any *ptr)
+bool mus_is_one_pole_all_pass(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_ONE_POLE_ALL_PASS));
@@ -8817,7 +8893,7 @@ typedef struct {
 */
 
 
-bool mus_env_p(mus_any *ptr) 
+bool mus_is_env(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_ENV));
@@ -8833,7 +8909,7 @@ mus_float_t mus_env(mus_any *ptr)
 
 mus_float_t (*mus_env_function(mus_any *g))(mus_any *gen)
 {
-  if (mus_env_p(g))
+  if (mus_is_env(g))
     return(((seg *)g)->env_func);
   return(NULL);
 }
@@ -8860,6 +8936,14 @@ static mus_float_t mus_env_line(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   return(gen->current_value);
+}
+
+
+bool mus_env_is_constant(mus_any *ptr);
+bool mus_env_is_constant(mus_any *ptr)
+{
+  seg *gen = (seg *)ptr;
+  return(gen->env_func == mus_env_line);
 }
 
 
@@ -9507,7 +9591,7 @@ mus_any *mus_make_pulsed_env(mus_any *e, mus_any *p)
   return((mus_any *)gen);
 }
 
-bool mus_pulsed_env_p(mus_any *ptr)
+bool mus_is_pulsed_env(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_PULSED_ENV));
@@ -9575,14 +9659,14 @@ static char *describe_frame(mus_any *ptr)
 }
 
 
-bool mus_frame_p(mus_any *ptr) 
+bool mus_is_frame(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FRAME));
 }
 
 
-bool mus_frame_or_mixer_p(mus_any *ptr) 
+bool mus_is_frame_or_mixer(mus_any *ptr) 
 {
   return((ptr) && 
 	 ((ptr->core->type == MUS_FRAME) ||
@@ -9889,7 +9973,7 @@ static char *describe_mixer(mus_any *ptr)
 }
 
 
-bool mus_mixer_p(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_MIXER));}
+bool mus_is_mixer(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_MIXER));}
 
 
 static bool equalp_mixer(mus_any *p1, mus_any *p2)
@@ -10145,7 +10229,7 @@ static mus_any *frame_to_frame_left(mus_any *arg1, mus_any *arg2, mus_any *arg_o
 
 mus_any *mus_frame_to_frame(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
 {
-  if (mus_mixer_p(arg2))
+  if (mus_is_mixer(arg2))
     return(frame_to_frame_right(arg1, arg2, arg_out));
   return(frame_to_frame_left(arg1, arg2, arg_out));
 }
@@ -10155,7 +10239,7 @@ mus_any *mus_sample_to_frame(mus_any *f, mus_float_t in, mus_any *uout)
 {
   int i, chans;
   mus_frame *out = (mus_frame *)uout;
-  if (mus_frame_p(f))
+  if (mus_is_frame(f))
     {
       mus_frame *fr;
       fr = (mus_frame *)f;
@@ -10172,7 +10256,7 @@ mus_any *mus_sample_to_frame(mus_any *f, mus_float_t in, mus_any *uout)
     }
   else
     {
-      if (mus_mixer_p(f))
+      if (mus_is_mixer(f))
 	{
 	  mus_mixer *mx;
 	  mx = (mus_mixer *)f;
@@ -10197,7 +10281,7 @@ mus_float_t mus_frame_to_sample(mus_any *f, mus_any *uin)
   int i, chans;
   mus_frame *in = (mus_frame *)uin;
   mus_float_t val = 0.0;
-  if (mus_frame_p(f))
+  if (mus_is_frame(f))
     {
       mus_frame *fr;
       fr = (mus_frame *)f;
@@ -10209,7 +10293,7 @@ mus_float_t mus_frame_to_sample(mus_any *f, mus_any *uin)
     }
   else
     {
-      if (mus_mixer_p(f))
+      if (mus_is_mixer(f))
 	{
 	  mus_mixer *mx;
 	  mx = (mus_mixer *)f;
@@ -10339,14 +10423,14 @@ char *mus_file_name(mus_any *gen)
 }
 
 
-bool mus_input_p(mus_any *gen) 
+bool mus_is_input(mus_any *gen) 
 {
   return((gen) && 
 	 (gen->core->extended_type == MUS_INPUT));
 }
 
 
-bool mus_output_p(mus_any *gen) 
+bool mus_is_output(mus_any *gen) 
 {
   return((gen) && 
 	 (gen->core->extended_type == MUS_OUTPUT));
@@ -10554,7 +10638,7 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
 };
 
 
-bool mus_file_to_sample_p(mus_any *ptr) 
+bool mus_is_file_to_sample(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FILE_TO_SAMPLE));
@@ -10685,7 +10769,7 @@ static mus_any_class READIN_CLASS = {
 };
 
 
-bool mus_readin_p(mus_any *ptr) 
+bool mus_is_readin(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_READIN));
@@ -10893,7 +10977,7 @@ mus_any *mus_make_file_to_frame(const char *filename)
 }
 
 
-bool mus_file_to_frame_p(mus_any *ptr) 
+bool mus_is_file_to_frame(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FILE_TO_FRAME));
@@ -11440,7 +11524,7 @@ static int sample_to_file_end(mus_any *ptr)
 }
 
 
-bool mus_sample_to_file_p(mus_any *ptr) 
+bool mus_is_sample_to_file(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_SAMPLE_TO_FILE));
@@ -11532,7 +11616,7 @@ mus_float_t mus_sample_to_file(mus_any *fd, mus_long_t samp, int chan, mus_float
 int mus_close_file(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
-  if ((mus_output_p(ptr)) && (gen->obufs)) sample_to_file_end(ptr);
+  if ((mus_is_output(ptr)) && (gen->obufs)) sample_to_file_end(ptr);
   return(0);
 }
 
@@ -11695,7 +11779,7 @@ mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, in
 }
 
 
-bool mus_frame_to_file_p(mus_any *ptr) 
+bool mus_is_frame_to_file(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FRAME_TO_FILE));
@@ -11975,7 +12059,7 @@ static mus_any *locsig_warned = NULL;
 mus_float_t mus_locsig_ref(mus_any *ptr, int chan) 
 {
   locs *gen = (locs *)ptr;
-  if ((ptr) && (mus_locsig_p(ptr))) 
+  if ((ptr) && (mus_is_locsig(ptr))) 
     {
       if ((chan >= 0) && 
 	  (chan < gen->chans))
@@ -11998,7 +12082,7 @@ mus_float_t mus_locsig_ref(mus_any *ptr, int chan)
 mus_float_t mus_locsig_set(mus_any *ptr, int chan, mus_float_t val) 
 {
   locs *gen = (locs *)ptr;
-  if ((ptr) && (mus_locsig_p(ptr))) 
+  if ((ptr) && (mus_is_locsig(ptr))) 
     {
       if ((chan >= 0) && 
 	  (chan < gen->chans))
@@ -12021,7 +12105,7 @@ mus_float_t mus_locsig_set(mus_any *ptr, int chan, mus_float_t val)
 mus_float_t mus_locsig_reverb_ref(mus_any *ptr, int chan) 
 {
   locs *gen = (locs *)ptr;
-  if ((ptr) && (mus_locsig_p(ptr))) 
+  if ((ptr) && (mus_is_locsig(ptr))) 
     {
       if ((chan >= 0) && 
 	  (chan < gen->rev_chans))
@@ -12044,7 +12128,7 @@ mus_float_t mus_locsig_reverb_ref(mus_any *ptr, int chan)
 mus_float_t mus_locsig_reverb_set(mus_any *ptr, int chan, mus_float_t val) 
 {
   locs *gen = (locs *)ptr;
-  if ((ptr) && (mus_locsig_p(ptr))) 
+  if ((ptr) && (mus_is_locsig(ptr))) 
     {
       if ((chan >= 0) && 
 	  (chan < gen->rev_chans))
@@ -12098,7 +12182,7 @@ static mus_any_class LOCSIG_CLASS = {
 };
 
 
-bool mus_locsig_p(mus_any *ptr) 
+bool mus_is_locsig(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_LOCSIG));
@@ -12433,13 +12517,13 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
     dist = 1.0 / distance;
   else dist = 1.0;
 
-  if (mus_output_p(output)) 
+  if (mus_is_output(output)) 
     gen->outn_writer = output;
   gen->chans = chans;
   gen->outn = (mus_float_t *)calloc(gen->chans, sizeof(mus_float_t));
   mus_locsig_fill(gen->outn, gen->chans, degree, dist, type);
 
-  if (mus_output_p(revput))
+  if (mus_is_output(revput))
     gen->revn_writer = revput;
   gen->rev_chans = rev_chans;
   if (gen->rev_chans > 0)
@@ -12457,14 +12541,14 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
     {
       gen->locsig_func = mus_locsig_any;
 
-      if ((mus_output_p(output)) &&
+      if ((mus_is_output(output)) &&
 	  (mus_out_any_is_safe(output)) &&
 	  (mus_channels(output) == chans))
 	{
 	  if (rev_chans > 0)
 	    {
 	      if ((rev_chans == 1) &&
-		  (mus_output_p(revput)) &&
+		  (mus_is_output(revput)) &&
 		  (mus_out_any_is_safe(revput)) &&
 		  (mus_channels(revput) == 1))
 		{
@@ -12686,7 +12770,7 @@ static int free_move_sound(mus_any *p)
 }
 
 
-bool mus_move_sound_p(mus_any *ptr) 
+bool mus_is_move_sound(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_MOVE_SOUND));
@@ -12823,12 +12907,12 @@ mus_any *mus_make_move_sound(mus_long_t start, mus_long_t end, int out_channels,
   gen->free_arrays = free_arrays;
 
   gen->outf = (mus_frame *)mus_make_empty_frame(out_channels);
-  if (mus_output_p(output)) 
+  if (mus_is_output(output)) 
     gen->outn_writer = output;
 
   if (rev_channels > 0)
     {
-      if (mus_output_p(revput))
+      if (mus_is_output(revput))
 	gen->revn_writer = revput;
       gen->revf = (mus_frame *)mus_make_empty_frame(rev_channels);
     }
@@ -12988,7 +13072,7 @@ static int init_sinc_table(int width)
 }
 
 
-bool mus_src_p(mus_any *ptr) 
+bool mus_is_src(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_SRC));
@@ -13436,7 +13520,7 @@ mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
 
   ldata = (mus_float_t *)in_data;
   dur2 = dur / 2 + 1;
-  if ((dur && 1) != 0) dur2++;
+  if ((dur & 1) != 0) dur2++;
   wid10 = width - 10;
   wid1 = width - 1;
 
@@ -13555,7 +13639,7 @@ typedef struct {
 } grn_info;
 
 
-bool mus_granulate_p(mus_any *ptr) 
+bool mus_is_granulate(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_GRANULATE));
@@ -14274,7 +14358,7 @@ static mus_float_t ultraspherical(int n, mus_float_t x, mus_float_t lambda)
 #endif
 
 
-bool mus_fft_window_p(int val)
+bool mus_is_fft_window(int val)
 {
   switch (val)
     {
@@ -14975,7 +15059,7 @@ static const char *fft_window_names[MUS_NUM_FFT_WINDOWS] =
 
 const char *mus_fft_window_name(mus_fft_window_t win)
 {
-  if (mus_fft_window_p((int)win))
+  if (mus_is_fft_window((int)win))
     return(fft_window_names[(int)win]);
   return("unknown");
 }
@@ -15288,7 +15372,7 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
 }
 
 
-bool mus_convolve_p(mus_any *ptr) 
+bool mus_is_convolve(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_CONVOLVE));
@@ -15460,7 +15544,7 @@ typedef struct {
 } pv_info;
 
 
-bool mus_phase_vocoder_p(mus_any *ptr) 
+bool mus_is_phase_vocoder(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_PHASE_VOCODER));
@@ -15839,19 +15923,19 @@ mus_float_t mus_phase_vocoder(mus_any *ptr, mus_float_t (*input)(void *arg, int 
 
 void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int direction))
 {
-  if (mus_src_p(g))
+  if (mus_is_src(g))
     ((sr *)g)->feeder = feed;
   else
     {
-      if (mus_granulate_p(g))
+      if (mus_is_granulate(g))
 	((grn_info *)g)->rd = feed;
       else
 	{
-	  if (mus_phase_vocoder_p(g))
+	  if (mus_is_phase_vocoder(g))
 	    ((pv_info *)g)->input = feed;
 	  else
 	    {
-	      if (mus_convolve_p(g))
+	      if (mus_is_convolve(g))
 		((conv *)g)->feeder = feed;
 	    }
 	}
@@ -15876,7 +15960,7 @@ typedef struct {
 } ssbam;
 
 
-bool mus_ssb_am_p(mus_any *ptr) 
+bool mus_is_ssb_am(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_SSB_AM));
@@ -16069,8 +16153,8 @@ static mus_float_t ssb_am_set_xcoeff(mus_any *ptr, int index, mus_float_t val) {
 static bool ssb_am_equalp(mus_any *p1, mus_any *p2)
 {
   return((p1 == p2) ||
-	 ((mus_ssb_am_p((mus_any *)p1)) && 
-	  (mus_ssb_am_p((mus_any *)p2)) &&
+	 ((mus_is_ssb_am((mus_any *)p1)) && 
+	  (mus_is_ssb_am((mus_any *)p2)) &&
 	  (((ssbam *)p1)->shift_up == ((ssbam *)p2)->shift_up) &&
 #if (!HAVE_SINCOS)
 	  (mus_equalp(((ssbam *)p1)->sin_osc, ((ssbam *)p2)->sin_osc)) &&

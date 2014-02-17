@@ -425,11 +425,11 @@
 		(do ((j 2 (+ j 1))
 		     (k 1 (+ k 1)))
 		    ((= j noseposition))
-		  (set! x (dline2 (+ j 1)))
-		  (set! (dline2 j) (+ x (* (coeffs j) (- (dline1 k) x))))
+		  (set! x (float-vector-ref dline2 (+ j 1)))
+		  (float-vector-set! dline2 j (+ x (* (float-vector-ref coeffs j) (- (float-vector-ref dline1 k) x))))
 		  (set! temp1 temp)
-		  (set! temp (+ (dline1 k) (- (dline2 j) x)))
-		  (set! (dline1 k) temp1)))
+		  (set! temp (+ (float-vector-ref dline1 k) (- (float-vector-ref dline2 j) x)))
+		  (float-vector-set! dline1 k temp1)))
 	      (set! j noseposition)	;added
 	      ;;next nasal tick
 	      (let ((plussamp (dline1 (- j 1)))

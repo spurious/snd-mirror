@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.4"
-#define S7_DATE "22-Jan-14"
+#define S7_VERSION "3.5"
+#define S7_DATE "17-Feb-14"
 
 
 typedef long long int s7_Int;

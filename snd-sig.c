@@ -5413,7 +5413,7 @@ static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, c
   else
     {
       mus_any *egen = NULL;
-      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = XEN_TO_MUS_ANY(edata))), edata, 1, caller, "an env generator or a list");
+      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_is_env(egen = XEN_TO_MUS_ANY(edata))), edata, 1, caller, "an env generator or a list");
       apply_env(cp, NULL, beg, dur, over_selection, caller, egen, edpos, 7);
       return(edata);
     }
@@ -5769,7 +5769,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   if (XEN_BOOLEAN_P(normalized)) normed = XEN_TO_C_BOOLEAN(normalized);
 
   wtype = (XEN_INTEGER_P(win)) ? XEN_TO_C_INT(win) : (int)MUS_RECTANGULAR_WINDOW;
-  if (!(mus_fft_window_p(wtype)))
+  if (!(mus_is_fft_window(wtype)))
     XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "unknown fft window");
 
   if (XEN_NUMBER_P(beta)) b = XEN_TO_C_DOUBLE(beta);
@@ -5978,7 +5978,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   XEN_ASSERT_TYPE((XEN_NUMBER_P(ratio_or_env)) || 
 		  (XEN_LIST_P(ratio_or_env)) ||
 		  ((mus_xen_p(ratio_or_env)) && 
-		   (mus_env_p(egen = XEN_TO_MUS_ANY(ratio_or_env)))),
+		   (mus_is_env(egen = XEN_TO_MUS_ANY(ratio_or_env)))),
 		  ratio_or_env, 1, S_src_channel, "a number, an envelope, or a CLM env generator");
   ASSERT_SAMPLE_TYPE(S_src_channel, beg_n, 2);
   ASSERT_SAMPLE_TYPE(S_src_channel, dur_n, 3);
@@ -6110,7 +6110,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	  mus_any *egen;
 	  XEN_ASSERT_TYPE(mus_xen_p(ratio_or_env), ratio_or_env, 1, caller, "a number, list, or env generator");
 	  egen = XEN_TO_MUS_ANY(ratio_or_env);
-	  XEN_ASSERT_TYPE(mus_env_p(egen), ratio_or_env, 1, caller, "a number, list, or env generator");
+	  XEN_ASSERT_TYPE(mus_is_env(egen), ratio_or_env, 1, caller, "a number, list, or env generator");
 
 	  check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), &error);
 	  if (error != SRC_ENV_NO_ERROR)

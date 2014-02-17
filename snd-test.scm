@@ -37476,7 +37476,7 @@ EDITS: 1
 			(rd (make-sampler 0 ind 0))
 			(home (sampler-home rd)))
 		   (scan-channel (lambda (y)
-				   (not (set! diff (max diff (abs (- y (rd)))))))
+				   (not (set! diff (max diff (abs (- y (next-sample rd)))))))
 				 0 fr old-ind 0)
 		   (if (fneq diff 0.0) 
 		       (snd-display #__line__ ";update-sound looped overall max diff: ~A, sounds: ~A, ind: ~A, old-ind: ~A, rd: ~A" diff (sounds) ind old-ind home))
@@ -38382,47 +38382,6 @@ EDITS: 1
   (ivect #f)
   (vvect #f)
   (cvect #f))
-
-(defgenerator (osc329 :make-wrapper (lambda (gen)
-					(set! (gen 'freq) (hz->radians (gen 'freq)))
-					gen)
-			:methods (list
-				  (cons 'mus-frequency 
-					(make-procedure-with-setter
-					 (lambda (g) (radians->hz (g 'freq)))
-					 (lambda (g val) (set! (g 'freq) (hz->radians val)))))
-				  (cons 'mus-phase 
-					(make-procedure-with-setter
-					 (lambda (g) (g 'phase))
-					 (lambda (g val) (set! (g 'phase) val))))
-				  (cons 'mus-increment 
-					(make-procedure-with-setter
-					 (lambda (g) (g 'incr))
-					 (lambda (g val) (set! (g 'incr) val))))
-				  (cons 'mus-name
-					(lambda (g) "osc329"))
-				  (cons 'mus-length
-					(make-procedure-with-setter
-					 (lambda (g) (g 'n))
-					 (lambda (g val) (set! (g 'n) val))))
-				  (cons 'mus-hop
-					(make-procedure-with-setter
-					 (lambda (g) (g 'n))
-					 (lambda (g val) (set! (g 'n) val))))
-				  (cons 'mus-describe 
-					(lambda (g) (format #f "osc329 freq: ~A, phase: ~A" 
-							    (mus-frequency g) 
-							    (mus-phase g))))))
-  freq phase (n 1)
-  (incr 1.0) fm)
-
-(define (osc329 gen fm)
-  (environment-set! gen 'fm fm)
-  (with-environment gen
-    (let ((result (sin phase)))
-      (set! phase (+ phase freq fm))
-      result)))
-
 
 (define (snd_test_22)
   

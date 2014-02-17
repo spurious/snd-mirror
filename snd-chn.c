@@ -8559,7 +8559,7 @@ static XEN g_set_fft_window(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_fft_window, "an integer"); 
 
   in_win = XEN_TO_C_INT(val);
-  if (!(mus_fft_window_p(in_win)))
+  if (!(mus_is_fft_window(in_win)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window, 1, val, "unknown fft data window");
 
   if (XEN_BOUND_P(snd))
