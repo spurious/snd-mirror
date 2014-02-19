@@ -2038,6 +2038,19 @@ mus_float_t mus_nsin(mus_any *ptr, mus_float_t fm)
 	   0.0
 	   (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den)))
   */
+#if HAVE_SINCOS
+  double val, a2, ns, nc, s, c;
+  cosp *gen = (cosp *)ptr;
+  a2 = gen->phase * 0.5;
+  sincos(a2, &s, &c);
+  if (DIVISOR_NEAR_ZERO(s)) /* see note under ncos */
+    val = 0.0;
+  else 
+    {
+      sincos(gen->n * a2, &ns, &nc);
+      val = gen->scaler * ns * (ns * c + nc * s) / s;
+    }
+#else
   double val, den, a2;
   cosp *gen = (cosp *)ptr;
   a2 = gen->phase * 0.5;
@@ -2045,6 +2058,7 @@ mus_float_t mus_nsin(mus_any *ptr, mus_float_t fm)
   if (DIVISOR_NEAR_ZERO(den)) /* see note under ncos */
     val = 0.0;
   else val = gen->scaler * sin(gen->n * a2) * sin(a2 * gen->cos5) / den;
+#endif
   gen->phase += (gen->freq + fm);
   return((mus_float_t)val);
 }
@@ -2376,6 +2390,28 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
 #endif
     }
 
+#if HAVE_SINCOS
+  {
+    double xs, xc, ys, yc, nys, nyc, sin_x_y, sin_x_ny, sin_x_n1y, cos_x_ny;
+
+    y = x * gen->y_over_x;
+    sincos(y, &ys, &yc);
+    divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * yc));
+    if (DIVISOR_NEAR_ZERO(divisor))
+      return(0.0);
+
+    sincos(x, &xs, &xc);
+    sincos(n * y, &nys, &nyc);
+    sin_x_y = (xs * yc - ys * xc);
+    sin_x_ny = (xs * nyc + nys * xc);
+    cos_x_ny = (xc * nyc - xs * nys);
+    sin_x_n1y = (sin_x_ny * yc + cos_x_ny * ys);
+
+    return((xs -
+	    r * sin_x_y - 
+	    gen->r_to_n_plus_1 * (sin_x_n1y - r * sin_x_ny)) / divisor);
+  }
+#else
   y = x * gen->y_over_x;
   divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cos(y)));
   if (DIVISOR_NEAR_ZERO(divisor))
@@ -2386,11 +2422,7 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
 	  gen->r_to_n_plus_1 * (sin(x + (n + 1) * y) - 
 				r * sin(x + n * y))) / 
 	 divisor);
-
-  /* 3 sincos calls would give sin|cos(x|y|ny) => sx cx sy cy sny cny, then
-   * - rr*(- r*(cx*sny + sx*cny) - sx*sy*sny + cx*cy*sny + cx*sy*cny + sx*cy*cny) + r*(cx*sy - sx*cy) + sx
-   * which could be reduced further, but is it worth it?
-   */
+#endif
 }
 
 
@@ -2476,7 +2508,27 @@ mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm)
   r = gen->r;
 
   gen->phase += (gen->freq + fm);
-  
+
+#if HAVE_SINCOS
+  {
+    double xs, xc, ys, yc, nys, nyc, cos_x_y, cos_x_ny, cos_x_n1y, sin_x_ny;
+
+    sincos(y, &ys, &yc);
+    divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * yc));
+    if (DIVISOR_NEAR_ZERO(divisor))
+      return(1.0);
+
+    sincos(x, &xs, &xc);
+    sincos(n * y, &nys, &nyc);
+    cos_x_y = (xc * yc + ys * xs);
+    sin_x_ny = (xs * nyc + nys * xc);
+    cos_x_ny = (xc * nyc - xs * nys);
+    cos_x_n1y = (cos_x_ny * yc - sin_x_ny * ys);
+    return((xc -
+	    r * cos_x_y - 
+	    gen->r_to_n_plus_1 * (cos_x_n1y - r * cos_x_ny)) / divisor);
+  }
+#else
   divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cos(y)));
   if (DIVISOR_NEAR_ZERO(divisor))
     return(1.0);
@@ -2488,6 +2540,7 @@ mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm)
 	  gen->r_to_n_plus_1 * (cos(x + (n + 1) * y) - 
 				r * cos(x + n * y))) / 
 	 divisor);
+#endif
 }
 
 
@@ -7039,8 +7092,11 @@ mus_float_t mus_set_formant_frequency(mus_any *ptr, mus_float_t freq_in_hz)
 mus_float_t mus_formant_with_frequency(mus_any *ptr, mus_float_t input, mus_float_t freq_in_radians)
 {
   frm *gen = (frm *)ptr;
-  gen->frequency = freq_in_radians;
-  gen->fdbk = 2.0 * gen->radius * cos(freq_in_radians);
+  if (gen->frequency != freq_in_radians)
+    {
+      gen->frequency = freq_in_radians;
+      gen->fdbk = 2.0 * gen->radius * cos(freq_in_radians);
+    }
   return(mus_formant(ptr, input));
 }
 
@@ -8610,10 +8666,25 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
       xt0 = envl[0] * 0.5;
       for (j = 0, jj = n - 1; j < m; j++, jj--)
 	{
+#if HAVE_SINCOS
+	  mus_float_t s1, c1, s2, c2, qj1;
+	  xt = xt0;
+	  qj = q * (am - j);
+	  sincos(qj, &s1, &c1);
+	  qj1 = qj * 2.0;
+	  for (i = 1, x = qj; i < m; i += 2, x += qj1)
+	    {
+	      sincos(x, &s2, &c2);
+	      xt += (envl[i] * c2);
+	      if (i < (m - 1))
+		xt += (envl[i + 1] * (c1 * c2 - s1 * s2));
+	    }
+#else
 	  xt = xt0;
 	  qj = q * (am - j);
 	  for (i = 1, x = qj; i < m; i++, x += qj)
 	    xt += (envl[i] * cos(x));
+#endif
 	  a[j] = xt * scl;
 	  a[jj] = a[j];
 	}

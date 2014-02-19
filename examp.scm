@@ -1137,12 +1137,12 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
   (let* ((os (make-oscil osfrq))
 	 (len (frames snd chn))
 	 (sf (make-sampler 0 snd chn))
-	 (s (make-src :srate sr :input (lambda (dir) (read-sample-with-direction sf dir))))
-	 (out-data (make-float-vector len)))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (float-vector-set! out-data i (src s (* osamp (oscil os)))))
-    (float-vector->channel out-data 0 len snd chn #f (format #f "fp ~A ~A ~A" sr osamp osfrq))))
+	 (s (make-src :srate sr :input (lambda (dir) (read-sample-with-direction sf dir)))))
+    (map-channel
+     (lambda (y)
+       (src s (* osamp (oscil os))))
+      0 #f snd chn #f (format #f "fp ~A ~A ~A" sr osamp osfrq))))
+     
 	    
 
 ;;; -------- compand, compand-channel
@@ -1917,7 +1917,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
       ;; now patch the two together (the apply let below) and evaluate the resultant thunk
       ((apply let closure 
-	      `((lambda () 
+	      `((lambda ()
 		  (do ((k ,start (+ k 1)))
 		      ((= k ,end))
 		    (outa k ,body)))))))))

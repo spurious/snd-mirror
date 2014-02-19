@@ -33,7 +33,8 @@
 	 (format *stderr* "~A~A~12T(~A ~A)~40T~A~%" 
 		 (if (negative? (list-ref entry 0)) "" " ")
 		 (list-ref entry 0) (list-ref entry 2) (list-ref entry 3) (list-ref entry 1)))
-       vals))))
+       vals)))
+  (exit))
 
 (define (string->number-ignoring-commas str)
   (let ((num 0)

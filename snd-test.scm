@@ -40098,36 +40098,36 @@ EDITS: 1
   
     (for-each
      (lambda (n)
-       (let ((v1 (with-sound (:output (make-float-vector 44100))
+       (let ((v1 (with-sound (:output (make-float-vector 4410))
 			     (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
 	     (v2 (with-sound (:output (make-float-vector 400))
 			     (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
 	     (v3 (with-sound (:output (make-float-vector 400))
 			     (simple-outn 0 .1 440 0.0 .5 0.0 0.0 0.0 0.0)))
-	     (v4 (with-sound (:output (make-float-vector 44100) :reverb jc-reverb)
+	     (v4 (with-sound (:output (make-float-vector 4410) :reverb jc-reverb)
 			     (simple-outn 0 .1 440 0.2 0.0 0.0 0.0 0.05 0.0)))
-	     (v5 (with-sound (:output (make-float-vector 44100) :reverb simple-in-rev :reverb-data '(0.0 1.0 1.0 0.0))
+	     (v5 (with-sound (:output (make-float-vector 4410) :reverb simple-in-rev :reverb-data '(0.0 1.0 1.0 0.0))
 			     (simple-outn 0 .1 440 0.0 0.0 0.0 0.0 0.5 0.0)))
 	     (v6 (with-sound (:output (make-float-vector 400))
 			     (simple-outn 0 .1 440 0.5 0.0 0.0 0.0 0.0 0.0)
 			     (simple-outn 0 .1 440 0.2 0.0 0.0 0.0 0.0 0.0)))
-	     (sd1 (with-sound (:output (make-vector (list 1 44100) 0.0 #t))
+	     (sd1 (with-sound (:output (make-vector (list 1 4410) 0.0 #t))
 			      (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
-	     (sd2 (with-sound (:output (make-vector (list 4 44100) 0.0 #t))
+	     (sd2 (with-sound (:output (make-vector (list 4 4410) 0.0 #t))
 			      (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
-	     (sd3 (with-sound (:output (make-vector (list 2 44100) 0.0 #t))
+	     (sd3 (with-sound (:output (make-vector (list 2 4410) 0.0 #t))
 			      (simple-outn 0 .1 440 0.0 0.0 .3 .4 0.0 0.0)))
-	     (sd4 (with-sound (:output (make-vector (list 4 44100) 0.0 #t) :reverb simple-in-rev :reverb-channels 2 :reverb-data '(0.0 1.0 1.0 1.0))
+	     (sd4 (with-sound (:output (make-vector (list 4 4410) 0.0 #t) :reverb simple-in-rev :reverb-channels 2 :reverb-data '(0.0 1.0 1.0 1.0))
 			      (simple-outn 0 .1 440 0.0 0.0 0.0 0.0 0.5 0.25)))
-	     (sd5 (with-sound (:output (make-vector (list 4 44100) 0.0 #t) :reverb simple-in-rev :reverb-channels 1 :reverb-data '(0.0 1.0 1.0 1.0))
+	     (sd5 (with-sound (:output (make-vector (list 4 4410) 0.0 #t) :reverb simple-in-rev :reverb-channels 1 :reverb-data '(0.0 1.0 1.0 1.0))
 			      (simple-outn 0 .1 440 0.0 0.0 0.0 0.0 0.5 0.25)))
-	     (sd6 (with-sound (:output (make-vector (list 4 44100) 0.0 #t))
+	     (sd6 (with-sound (:output (make-vector (list 4 4410) 0.0 #t))
 			      (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)
 			      (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0))))
 	 (if (fneq (float-vector-peak v1) 0.1) (snd-display #__line__ ";outa tests 1 ~A: ~A" n (float-vector-peak v1)))
 	 (if (fneq (float-vector-peak v2) 0.1) (snd-display #__line__ ";outa tests 2 ~A: ~A" n (float-vector-peak v2)))
 	 (if (fneq (float-vector-peak v3) 0.0) (snd-display #__line__ ";outa tests 3 ~A: ~A" n (float-vector-peak v3)))
-	 (if (< (float-vector-peak v4) 0.2) (snd-display #__line__ ";outa tests 4 ~A: ~A" n (float-vector-peak v4)))
+	 (if (fneq (float-vector-peak v4) 0.2) (snd-display #__line__ ";outa tests 4 ~A: ~A" n (float-vector-peak v4)))
 	 (if (fneq (float-vector-peak v5) 0.5) (snd-display #__line__ ";outa tests 5 ~A: ~A" n (float-vector-peak v5)))
 	 (if (fneq (float-vector-peak v6) 0.7) (snd-display #__line__ ";outa tests 11 ~A: ~A" n (float-vector-peak v6)))
 	 
@@ -47013,25 +47013,47 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-15-Feb:
-38,546,608,462
-5,845,685,419  s7.c:eval [/home/bil/gtk-snd/snd]
-2,721,723,353  ???:sin [/lib64/libm-2.12.so]
-2,368,595,000  ???:cos [/lib64/libm-2.12.so]
+17-Feb:
+38,439,667,663
+5,840,744,520  s7.c:eval [/home/bil/gtk-snd/snd]
+2,502,789,885  ???:sin [/lib64/libm-2.12.so]
+2,264,528,788  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,035,899,990  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  900,076,505  s7.c:gc [/home/bil/gtk-snd/snd]
-  885,469,132  ???:t2_32 [/home/bil/gtk-snd/snd]
+1,097,340,243  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  906,458,379  s7.c:gc [/home/bil/gtk-snd/snd]
+  899,447,588  ???:t2_32 [/home/bil/gtk-snd/snd]
   829,547,700  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  788,332,264  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
+  788,198,692  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  587,817,830  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,454,347  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,851,360  ???:n1_64 [/home/bil/gtk-snd/snd]
-  415,989,597  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  612,651,837  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,234,994  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,355,496  ???:n1_64 [/home/bil/gtk-snd/snd]
+  443,530,890  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  372,979,012  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  375,279,814  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
+  326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+
+18-Feb:
+38,341,153,622
+5,816,271,352  s7.c:eval [/home/bil/gtk-snd/snd]
+2,476,847,832  ???:sin [/lib64/libm-2.12.so]
+2,254,145,324  ???:cos [/lib64/libm-2.12.so]
+1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
+1,036,711,042  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  908,793,885  s7.c:gc [/home/bil/gtk-snd/snd]
+  885,578,404  ???:t2_32 [/home/bil/gtk-snd/snd]
+  829,547,700  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  818,694,923  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+  774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  637,581,527  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,594,512  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,551,144  ???:n1_64 [/home/bil/gtk-snd/snd]
+  416,210,008  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+  380,877,542  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 |#

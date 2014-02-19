@@ -21,9 +21,9 @@
 (define all-types ())
 
 ;;; preset some types that are getting confused
-(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*" "GtkStateType"
+(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*"
 		  "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
-(set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "GtkStateType"
+(set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*"
 		      "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
 
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
@@ -50,7 +50,7 @@
 	"GtkMessageDialog*" "GtkMisc*" "GtkNotebook*" "GtkOptionMenu*" "GtkPackType*" "GtkPaned*" "GtkPlug*"
 	"GtkProgressBar*" "GtkRadioButton*" "GtkRadioMenuItem*" "GtkRadioToolButton*" "GtkRange*" "GtkRcPropertyParser" "GtkRuler*"
 	"GtkScale*" "GtkScrolledWindow*" "GtkSeparatorToolItem*" "GtkSettingsValue*" "GtkSocket*" "GtkSortType*" "GtkSpinButton*"
-	"GtkStateType*" "GtkStatusbar*" "GtkTable*" "GtkTextCharPredicate" "GtkTextTagTableForeach" "GtkTextView*"
+	"GtkStatusbar*" "GtkTable*" "GtkTextCharPredicate" "GtkTextTagTableForeach" "GtkTextView*"
 	"GtkToggleActionEntry*" "GtkToggleButton*" "GtkToggleToolButton*" "GtkToolButton*" "GtkToolbar*" "GtkTreeDragDest*"
 	"GtkTreeDragSource*" "GtkTreeModel**" "GtkTreeModelFilter*" "GtkTreeModelSort*" "GtkTreeSortable*" "GtkUIManagerItemType"
 	"GtkViewport*" "PangoAnalysis*" "PangoAttrList**" "PangoFontDescription**" "PangoFontMap*" "PangoRectangle*"
@@ -691,7 +691,6 @@
 	(cons "GtkDestDefaults" "INT")
 	(cons "GtkPositionType" "INT")
 	(cons "GtkTextDirection" "INT")
-	(cons "GtkStateType" "INT")
 	(cons "GtkStateFlags" "INT")
 	(cons "GtkImageType" "INT")
 ;	(cons "GtkIconSize" "INT")

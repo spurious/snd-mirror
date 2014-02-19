@@ -2222,7 +2222,7 @@ static void ficl_begin_vct(ficlVm *vm)
 #define h_begin_vct "( -- )  \
 Creates a vct with contents between `vct(' and closing paren `)'.\n\
 vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
-  fth_begin_values_to_obj(vm, ">vct", FTH_FALSE);
+  fth_begin_values_to_obj(vm, (char *)">vct", FTH_FALSE);
 }
 #endif
 
@@ -2276,8 +2276,8 @@ void mus_vct_init(void)
   fth_set_object_length(vct_tag,    g_vct_length);
   fth_set_object_free(vct_tag,      free_vct);
   fth_set_object_apply(vct_tag, XEN_PROCEDURE_CAST g_vct_ref, 1, 0, 0);
-  FTH_PRIM(FTH_FICL_DICT(), ">vct",   ficl_values_to_vct, h_values_to_vct);
-  FTH_PRIM(FTH_FICL_DICT(), "vct(",   ficl_begin_vct,     h_begin_vct);
+  FTH_PRIM(FTH_FICL_DICT(), (char *)">vct",   ficl_values_to_vct, h_values_to_vct);
+  FTH_PRIM(FTH_FICL_DICT(), (char *)"vct(",   ficl_begin_vct,     h_begin_vct);
   XEN_EVAL_C_STRING("start-prefixes : vct( vct( ; end-prefixes"); 
 #endif
 

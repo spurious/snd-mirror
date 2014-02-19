@@ -419,7 +419,7 @@ enum {OP_NO_OP,
       OP_IF_B_P, OP_IF_B_P_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
       OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, OP_IF_PXX, 
       OP_IF_S_P_P, OP_IF_S_P, OP_IF_S_P_X, OP_IF_S_X_P, OP_IF_P_FEED, OP_IF_P_FEED_1, OP_WHEN_S, OP_UNLESS_S,
-      OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
+      OP_IF_UNCHECKED, OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
       
       OP_SAFE_IF_Z_Z, 
       OP_CATCH_1, OP_CATCH_ALL, OP_COND_ALL_X,
@@ -606,7 +606,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_IF_B_P", "OP_IF_B_P_P", "OP_IF_ANDP_P", "OP_IF_ANDP_P_P", "OP_IF_ORP_P", "OP_IF_ORP_P_P", 
   "OP_IF_PPP", "OP_IF_PP", "OP_IF_PPX", "OP_IF_PXP", "OP_IF_PXX", 
   "OP_IF_S_P_P", "OP_IF_S_P", "OP_IF_S_P_X", "OP_IF_S_X_P", "OP_IF_P_FEED", "OP_IF_P_FEED_1", "OP_WHEN_S", "OP_UNLESS_S",
-  "OP_AND_UNCHECKED", "OP_AND_P", "OP_AND_P1", "OP_OR_UNCHECKED", "OP_OR_P", "OP_OR_P1",
+  "OP_IF_UNCHECKED", "OP_AND_UNCHECKED", "OP_AND_P", "OP_AND_P1", "OP_OR_UNCHECKED", "OP_OR_P", "OP_OR_P1",
   
   "OP_SAFE_IF_Z_Z", 
   "OP_CATCH_1", "OP_CATCH_ALL", "OP_COND_ALL_X",
@@ -1332,7 +1332,7 @@ struct s7_scheme {
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C;
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_X;
   s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq, LET_C_P, LET_S_P;
-  s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
+  s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, IF_UNCHECKED, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
   s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_B_P_P, IF_P_P_X, IF_P_X_P, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_P_FEED;
   s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_GT_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P, WHEN_UNCHECKED, UNLESS_UNCHECKED, WHEN_S, UNLESS_S;
 
@@ -2807,6 +2807,12 @@ static void report_counts(s7_scheme *sc)
   free(hist);
   free(lens);
 }
+void add_code(s7_scheme *sc);
+void add_code(s7_scheme *sc)
+{
+  add_expr(sc, sc->code);
+}
+/* use xen.h and s7 here */
 #endif
 #endif
 
@@ -8874,59 +8880,59 @@ static void init_ctables(void)
   for (i = 1; i < CTABLE_SIZE; i++)
     char_ok_in_a_name[i] = true;
   char_ok_in_a_name[0] = false;
-  char_ok_in_a_name['('] = false;
-  char_ok_in_a_name[')'] = false;
-  char_ok_in_a_name[';'] = false;
-  char_ok_in_a_name['\t'] = false;
-  char_ok_in_a_name['\n'] = false;
-  char_ok_in_a_name['\r'] = false;
-  char_ok_in_a_name[' '] = false;
-  char_ok_in_a_name['"'] = false;
+  char_ok_in_a_name[(unsigned char)'('] = false;  /* idiotic cast is for C++'s benefit */
+  char_ok_in_a_name[(unsigned char)')'] = false;
+  char_ok_in_a_name[(unsigned char)';'] = false;
+  char_ok_in_a_name[(unsigned char)'\t'] = false;
+  char_ok_in_a_name[(unsigned char)'\n'] = false;
+  char_ok_in_a_name[(unsigned char)'\r'] = false;
+  char_ok_in_a_name[(unsigned char)' '] = false;
+  char_ok_in_a_name[(unsigned char)'"'] = false;
   /* double-quote is recent, but I want '(1 ."hi") to be parsed as '(1 . "hi") 
    * what about stuff like vertical tab?  or comma?
    */
 
   for (i = 0; i < CTABLE_SIZE; i++)
     white_space[i] = false;
-  white_space['\t'] = true;
-  white_space['\n'] = true;
-  white_space['\r'] = true;
-  white_space['\f'] = true;
-  white_space['\v'] = true;
-  white_space[' '] = true;
+  white_space[(unsigned char)'\t'] = true;
+  white_space[(unsigned char)'\n'] = true;
+  white_space[(unsigned char)'\r'] = true;
+  white_space[(unsigned char)'\f'] = true;
+  white_space[(unsigned char)'\v'] = true;
+  white_space[(unsigned char)' '] = true;
 
   /* surely only 'e' is needed... */
-  exponent_table['e'] = true; exponent_table['E'] = true;
+  exponent_table[(unsigned char)'e'] = true; exponent_table[(unsigned char)'E'] = true;
 #if WITH_AT_SIGN_AS_EXPONENT
-  exponent_table['@'] = true; 
+  exponent_table[(unsigned char)'@'] = true; 
 #endif
 #if WITH_EXTRA_EXPONENT_MARKERS
-  exponent_table['s'] = true; exponent_table['S'] = true; 
-  exponent_table['f'] = true; exponent_table['F'] = true;
-  exponent_table['d'] = true; exponent_table['D'] = true;
-  exponent_table['l'] = true; exponent_table['L'] = true;
+  exponent_table[(unsigned char)'s'] = true; exponent_table[(unsigned char)'S'] = true; 
+  exponent_table[(unsigned char)'f'] = true; exponent_table[(unsigned char)'F'] = true;
+  exponent_table[(unsigned char)'d'] = true; exponent_table[(unsigned char)'D'] = true;
+  exponent_table[(unsigned char)'l'] = true; exponent_table[(unsigned char)'L'] = true;
 #endif
 
   for (i = 0; i < 32; i++)
     slashify_table[i] = true;
   for (i = 127; i < 160; i++)
     slashify_table[i] = true;
-  slashify_table['\\'] = true;
-  slashify_table['"'] = true;
-  slashify_table['\n'] = false;
+  slashify_table[(unsigned char)'\\'] = true;
+  slashify_table[(unsigned char)'"'] = true;
+  slashify_table[(unsigned char)'\n'] = false;
 
   digits = (int *)calloc(CTABLE_SIZE, sizeof(int));
   for (i = 0; i < CTABLE_SIZE; i++)
     digits[i] = 256;
 
-  digits['0'] = 0; digits['1'] = 1; digits['2'] = 2; digits['3'] = 3; digits['4'] = 4;
-  digits['5'] = 5; digits['6'] = 6; digits['7'] = 7; digits['8'] = 8; digits['9'] = 9;
-  digits['a'] = 10; digits['A'] = 10;
-  digits['b'] = 11; digits['B'] = 11;
-  digits['c'] = 12; digits['C'] = 12;
-  digits['d'] = 13; digits['D'] = 13;
-  digits['e'] = 14; digits['E'] = 14;
-  digits['f'] = 15; digits['F'] = 15;
+  digits[(unsigned char)'0'] = 0; digits[(unsigned char)'1'] = 1; digits[(unsigned char)'2'] = 2; digits[(unsigned char)'3'] = 3; digits[(unsigned char)'4'] = 4;
+  digits[(unsigned char)'5'] = 5; digits[(unsigned char)'6'] = 6; digits[(unsigned char)'7'] = 7; digits[(unsigned char)'8'] = 8; digits[(unsigned char)'9'] = 9;
+  digits[(unsigned char)'a'] = 10; digits[(unsigned char)'A'] = 10;
+  digits[(unsigned char)'b'] = 11; digits[(unsigned char)'B'] = 11;
+  digits[(unsigned char)'c'] = 12; digits[(unsigned char)'C'] = 12;
+  digits[(unsigned char)'d'] = 13; digits[(unsigned char)'D'] = 13;
+  digits[(unsigned char)'e'] = 14; digits[(unsigned char)'E'] = 14;
+  digits[(unsigned char)'f'] = 15; digits[(unsigned char)'F'] = 15;
 }
 
 
@@ -9240,27 +9246,27 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	    return(chars[0]);
 
 	  if (strings_are_equal(name + 1, "newline"))
-	    return(chars['\n']);
+	    return(chars[(unsigned char)'\n']);
 	  break;
 
 	case 's':
 	  if (strings_are_equal(name + 1, "space")) 
-	    return(chars[' ']);
+	    return(chars[(unsigned char)' ']);
 	  break;
 
 	case 'r':
 	  if (strings_are_equal(name + 1, "return")) 
-	    return(chars['\r']);
+	    return(chars[(unsigned char)'\r']);
 	  break;
 
 	case 'l':
 	  if (strings_are_equal(name + 1, "linefeed"))
-	    return(chars['\n']);
+	    return(chars[(unsigned char)'\n']);
 	  break;
 
 	case 't':
 	  if (strings_are_equal(name + 1, "tab")) 
-	    return(chars['\t']);
+	    return(chars[(unsigned char)'\t']);
 	  break;
 	  
 	case 'a':
@@ -43088,7 +43094,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  return(OP_SAFE_C_S_opAAAq);
 	}
 
-      /* fprintf(stderr, "sz: %s %s\n", opt_name(e2), DISPLAY(e2)); */
+      /* fprintf(stderr, "sz: %s %s\n", opt_name(e2), DISPLAY(e1)); */
       return(OP_SAFE_C_SZ);
       break;
 
@@ -43111,6 +43117,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_SS:
 	  return(OP_SAFE_C_opSSq_S);
 	}
+      /* fprintf(stderr, "zs: %s %s\n", opt_name(e2), DISPLAY(e1)); */
       return(OP_SAFE_C_ZS);
       break;
 
@@ -43136,6 +43143,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_opSSq:
 	  return(OP_SAFE_C_op_opSSq_q_C);
 	}
+      /* fprintf(stderr, "zc: %s %s\n", opt_name(e2), DISPLAY(e1)); */
       return(OP_SAFE_C_ZC);
       break;
 
@@ -43166,6 +43174,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  set_fcdr(cdr(e1), caddr(e2));
 	  return(OP_SAFE_C_C_opSSq);
 	}
+      /* fprintf(stderr, "cz: %s %s\n", opt_name(e2), DISPLAY(e1)); */
       return(OP_SAFE_C_CZ);
       break;
 
@@ -43208,10 +43217,18 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	    return(OP_SAFE_C_opSSq_op_opSSq_q);
 	  break;
 	}
-
+      /* fprintf(stderr, "zz: %s %s %s %s\n", opt_name(e1), opt_name(e2), DISPLAY(e1), DISPLAY(e2)); */
       /* see comment under OP_SAFE_C_ZZ */
       return(OP_SAFE_C_ZZ);
       break;
+      
+      /* currently ignored:
+       * OP_SAFE_C_QS OP_SAFE_C_QQ OP_SAFE_C_CQ OP_SAFE_C_QC 
+       * [OP_SAFE_C_SSS] [OP_SAFE_C_SCS] [OP_SAFE_C_SSC]
+       * [OP_SAFE_C_CSS] 
+       * OP_SAFE_C_ALL_S OP_SAFE_C_ALL_X OP_SAFE_C_A OP_SAFE_C_AAAA (OP_SAFE_C_AZ) (OP_SAFE_C_ZA)
+       * OP_SAFE_C_SQS
+       */
 
     default:
       break;
@@ -46866,6 +46883,7 @@ static s7_pointer check_if(s7_scheme *sc)
       (cdr(ecdr(sc->code)) == sc->code))
     {
       s7_pointer test, t, f;
+      set_syntax_op(sc->code, sc->IF_UNCHECKED);
 
       test = car(sc->code);
       t = car(cdr_code);
@@ -46873,8 +46891,46 @@ static s7_pointer check_if(s7_scheme *sc)
 	f = cadr(cdr_code);
       else f = sc->UNSPECIFIED;
 
+#if 0
+      /* this case is more rare than I expected */
+      /* if_a_* branches:
+101654: (begin (set! amp (abs y)) (set! loc ctr))
+101195: (set! val (* val (- actual-block-len beg) 0.1))
+86966: (begin (if (>= frame-loc cursamples) (begin (set! frame-loc 0) (set!...
+86966: (begin (set! frame-loc 0) (input2))
+81364: (begin (do ((k 0 (+ k 1)) (n last-stop (+ n 1))) ((= k j)) (outa n (*...
+80127: (set! diff (+ diff (* 2 pi)))
+79999: (set! val (env e))
+79999: (set! val (* val 0.5))
+50827: (begin (set! oldloc ctr) (set! oldamp (abs y)))
+50827: (set! count (+ count 1))
+44098: (let ((samps (floor (- next-samp ex-samp)))) (do ((k 0 (+ k 1))) ((= k...
+32766: (let ((scl (/ cur orig))) (set! (rdata i) (* scl (rdata i))) (set! (idata i)...
+32766: (if (> (abs cur) 1e-06) (let ((scl (/ cur (sqrt 2.0)))) (set! (rdata i) scl)...
+22050: (set! count (+ count 1))
+22050: (set! count (+ count 1))
+11023: (let ((samps (floor (- next-samp ex-samp)))) (if (= samps 2) (begin (set!...
+11023: (begin (set! snd-level (+ snd-level (* gain shake-energy))) (do ((j 0 (+ j...
+9999: (set! x (modulo x (* 2 pi)))
+9999: (/ (sin (* 2 n cx)) den)
+9999: (let ((fang (modulo (abs cx) (* 2 pi)))) (if (or (< fang 0.001) (< (abs (-...
+9999: (if (< (modulo (abs mx) (* 2 pi)) 0.1) -1.0 1.0)
+9999: (- (* (sin x) (/ (* sinnx sinnx) den)) (* (cos x) (/ (sin (* 2 n mx)) (* 2...
+       */
+      if (is_all_x_safe(sc, test))
+	{
+	  if (is_all_x_safe(sc, t))
+	    {
+	      if (is_all_x_safe(sc, f))
+		fprintf(stderr, "all if: %s\n", DISPLAY(sc->code));
+	    }
+	}
+#endif
+
       if (is_pair(test))
 	{
+	  /* TODO: IF_A_C and IF_A_C_C c=constant here -- currently these are not optimized -- why not safe_c or something? */
+
 	  if (is_pair(t))
 	    {
 	      if (is_pair(f))
@@ -55423,6 +55479,38 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_Z:
+	      /* index: 25550: (string->symbol (substring line (+ start 1) i)): op_safe_c_op_s_opssq_sq
+	       * bench: 17204: (not (= (car placed) (+ row dist))): op_safe_c_op_opsq_opssq_q
+131068: (- (float-vector-set! im i (imag-part c1)))
+108200: (not (<= 0.0 angle two-pi))
+40005: (floor (/ (- (/ *clm-srate* 3) x) y))
+39910: (sin (* 0.5 (+ n 1) x))
+30000: (sqrt (- (* a a) (* b b)))
+22100: (exp (* 0.5 index (- r r1) (+ one (cos modphase))))
+22100: (cos (+ phase (* 0.5 index (+ r r1) (sin modphase))))
+22051: (floor (* (- (* 2.0 ramp) 1.0) fs))
+22049: (floor (* 2.0 ramp fs))
+19998: (floor (/ (- (/ *clm-srate* 3) x) (* x ratio)))
+19955: (sin (* 0.5 n1 angle))
+19955: (sin (* 0.5 p2n2 angle))
+19954: (sin (* 0.5 n y))
+13435: (sqrt (+ (* x x) (* y y) (* z z)))
+11032: (sqrt (+ (* a a) (* b b) (* c c)))
+10059: (sin (/ (* n mx) 2))
+10059: (sin (* mx (/ (+ n 1) 2)))
+10000: (bes-j0 (* k (sqrt (+ (* a a) (* r r) (* -2 a r)))))
+10000: (bes-j0 (* k (sqrt (+ (* r r) (* a a) (* a (* -2.0 r (cos x)))))))
+10000: (floor (+ 5 (rand gen 0.0)))
+10000: (sqrt (+ (* a a) (* r r) (* -2 a r)))
+10000: (sqrt (+ (* r r) (* a a) (* a (* -2.0 r (cos x)))))
+10000: (not (<= 0.0 x two-pi))
+10000: (sin (+ x (* (- n 0.5) y)))
+10000: (sin (+ x (* 0.5 (- n 1) (+ y pi))))
+10000: (sin (* 0.5 n (+ y pi)))
+10000: (log (+ 1.0 (* -2.0 r cs) (* r r)))
+10000: (log (+ 1.0 (* -2.0 rcosmx) (* r r)))
+10000: (abs (- (sqrt (- (* a a) (* b b))) a))
+	       */
 	      push_stack(sc, OP_SAFE_C_P_1, sc->NIL, code);
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;
@@ -60305,6 +60393,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* -------------------------------- IF -------------------------------- */
     case OP_IF:
       check_if(sc);
+
+    case OP_IF_UNCHECKED:
       push_stack_no_args(sc, OP_IF1, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
@@ -68212,6 +68302,7 @@ s7_scheme *s7_init(void)
   sc->WHEN_UNCHECKED =        assign_internal_syntax(sc, "when",    OP_WHEN_UNCHECKED);
   sc->UNLESS_UNCHECKED =      assign_internal_syntax(sc, "unless",  OP_UNLESS_UNCHECKED);
 
+  sc->IF_UNCHECKED =          assign_internal_syntax(sc, "if",      OP_IF_UNCHECKED);
   sc->IF_P_P_P =              assign_internal_syntax(sc, "if",      OP_IF_P_P_P);
   sc->IF_P_P =                assign_internal_syntax(sc, "if",      OP_IF_P_P);
   sc->IF_ANDP_P =             assign_internal_syntax(sc, "if",      OP_IF_ANDP_P);
@@ -69427,8 +69518,8 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4
- * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.2
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 38.5
+ * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.0
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 38.3
  *            153 with run macro (eval_ptree)
  */
 
@@ -69449,6 +69540,6 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0)
- * many more _p -> _is_ changes remain (snd-strings, clm-strings, sndlib)
+ * many more _p -> _is_ changes remain (snd-strings, sndlib, lisp, xen)
  */
 

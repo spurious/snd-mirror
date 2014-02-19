@@ -3476,6 +3476,9 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 }
 #endif
 
+void setup_gen_list(s7_scheme *sc, s7_pointer tree);
+void clear_gen_list(void);
+
 
 static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
 {
@@ -3614,6 +3617,8 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				  s7_Double *ry;
 				  gf *gf1;
 
+				  setup_gen_list(s7, res);
+
 				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 				  old_e = s7_set_current_environment(s7, e);
 				  y = s7_make_mutable_real(s7, 1.5);
@@ -3621,7 +3626,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				  slot = s7_make_slot(s7, e, arg, y); 
 				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
 				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
-
+				  
 				  gf1 = find_gf_with_locals(s7, res, old_e);
 				  if (gf1)
 				    {
@@ -3642,8 +3647,11 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				      gf_free(gf1);
 				      s7_set_current_environment(s7, old_e);
 				      samps = num;
+				      clear_gen_list();
 				      goto DO_EDIT;
 				    }
+
+				  clear_gen_list();
 
 				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
 				    {
@@ -4102,6 +4110,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 	  s7_make_slot(s7, e, arg, y);
 
+	  setup_gen_list(s7, res);
 	  gf1 = find_gf_with_locals(s7, res, old_e);
 	  if (gf1)
 	    {
@@ -4125,8 +4134,10 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	      free(data);
 	      gf_free(gf1);
 	      s7_set_current_environment(s7, old_e);
+	      clear_gen_list();
 	      return(res);
 	    }
+	  clear_gen_list();
 	  s7_set_current_environment(s7, old_e);
 	}
 

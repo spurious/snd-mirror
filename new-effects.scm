@@ -451,16 +451,23 @@
 (define* (effects-flecho-1 scaler secs input-samps-1 beg dur snd chn)
   "(effects-flecho-1 scaler secs input-samps-1 beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
-	(del (make-delay (round (* secs (srate snd)))))
-	(samp 0)
-	(input-samps (or input-samps-1 dur (frames snd chn))))
-    (map-channel (lambda (inval)
-		   (set! samp (+ samp 1))
-		   (+ inval 
-		      (delay del 
-			     (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
-		 beg dur snd chn #f
-		 (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))
+	(del (make-delay (round (* secs (srate snd))))))
+    (if (and (not input-samps-1) (not dur))
+	(map-channel (lambda (inval)
+		       (+ inval 
+			  (delay del 
+				 (fir-filter flt (* scaler (+ (tap del) inval))))))
+		     beg #f snd chn #f
+		     (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg #f))
+	(let ((samp 0)
+	      (input-samps (or input-samps-1 dur (frames snd chn))))
+	  (map-channel (lambda (inval)
+			 (set! samp (+ samp 1))
+			 (+ inval 
+			    (delay del 
+				   (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
+		       beg dur snd chn #f
+		       (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))))
 
 (define* (effects-zecho-1 scaler secs frq amp input-samps-1 beg dur snd chn)
   "(effects-zecho-1 scaler secs frq amp input-samps-1 beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
@@ -2186,19 +2193,16 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (float-vector->channel out-data beg j snd chn #f 
 		  (format #f "effects-hello-dentist ~A ~A ~A ~A" frq amp beg (if (= len (frames snd chn)) #f len)))))
 
-(define* (effects-fp srf osamp osfrq beg dur snd chn)
-  "(effects-fp srf osamp osfrq beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
+(define* (effects-fp sr osamp osfrq beg dur snd chn)
   (let* ((os (make-oscil osfrq))
-	 (sf (make-sampler beg))
-	 (sr (make-src :srate srf :input (lambda (dir) (read-sample-with-direction sf dir))))
-	 (len (or dur (frames snd chn)))
-	 (out-data (make-float-vector len)))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (set! (out-data i) (src sr (* osamp (oscil os)))))
-    (free-sampler sf)
-    (float-vector->channel out-data beg len snd chn #f
-		  (format #f "effects-fp ~A ~A ~A ~A ~A" srf osamp osfrq beg (if (= len (frames snd chn)) #f len)))))
+	 (len (frames snd chn))
+	 (sf (make-sampler beg snd chn))
+	 (s (make-src :srate sr :input (lambda (dir) (read-sample-with-direction sf dir)))))
+    (map-channel
+     (lambda (y)
+       (src s (* osamp (oscil os))))
+     beg len snd chn #f (format #f "effects-fp ~A ~A ~A ~A ~A" sr osamp osfrq beg (if (= len (frames snd chn)) #f len)))))
+     
 
 (define* (effects-position-sound mono-snd pos snd chn)
   "(effects-position-sound mono-snd pos-1 snd chn) is used by the effects dialog to tie into edit-list->function"

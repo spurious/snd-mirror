@@ -1263,7 +1263,7 @@ static ficlWord *snd_exit_xt;
 static void fth_snd_exit(int n) 
 { 
   if (!snd_exit_xt) 
-    snd_exit_xt = ficlSystemLookup(FTH_FICL_SYSTEM(), "snd-exit"); 
+    snd_exit_xt = ficlSystemLookup(FTH_FICL_SYSTEM(), (char *)"snd-exit"); 
   ficlStackPushInteger(FTH_FICL_STACK(), n); 
   ficlVmExecuteXT(FTH_FICL_VM(), snd_exit_xt); 
   ficlStackDrop(FTH_FICL_STACK(), 1); 

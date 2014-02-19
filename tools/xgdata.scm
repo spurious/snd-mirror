@@ -8852,6 +8852,15 @@
 (CFNC-3.12 "gboolean gtk_popover_get_modal GtkPopover* popover")
 
 
+;;; 3.11.6
+;;; gtkmodelbutton.h
+
+(CFNC-3.12 "void gtk_box_set_center_widget GtkBox* box GtkWidget* widget")
+(CFNC-3.12 "GtkWidget* gtk_box_get_center_widget GtkBox* box")
+(CFNC-3.12 "void gtk_entry_set_max_width_chars GtkEntry* entry gint n_chars")
+(CFNC-3.12 "gint gtk_entry_get_max_width_chars GtkEntry* entry")
+
+
 
 ;;; --------------------------------------------------------------------------------
 #|

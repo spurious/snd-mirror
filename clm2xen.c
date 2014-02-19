@@ -57,6 +57,11 @@
   #define HAVE_SINCOS 0
 #endif
 
+#if HAVE_SCHEME
+void setup_gen_list(s7_scheme *sc, s7_pointer tree);
+void clear_gen_list(void);
+static void gen_list_walk(s7_scheme *sc, s7_pointer tree);
+#endif
 
 struct mus_xen {
   mus_any *gen;
@@ -1192,9 +1197,9 @@ bool mus_xen_p(XEN obj) {return(MUS_XEN_P(obj));}
 
 
 
-static XEN g_mus_generator_p(XEN obj) 
+static XEN g_is_mus_generator(XEN obj) 
 {
-  #define H_mus_generator_p "(" S_mus_generator_p " obj): " PROC_TRUE " if 'obj' is a CLM generator."
+  #define H_is_mus_generator "(" S_is_mus_generator " obj): " PROC_TRUE " if 'obj' is a CLM generator."
   return(C_TO_XEN_BOOLEAN(MUS_XEN_P(obj)));
 }
 
@@ -2367,9 +2372,9 @@ static XEN g_oscil(XEN osc, XEN fm, XEN pm)
 }
 
 
-static XEN g_oscil_p(XEN os) 
+static XEN g_is_oscil(XEN os) 
 {
-  #define H_oscil_p "(" S_oscil_p " gen): " PROC_TRUE " if gen is an " S_oscil
+  #define H_is_oscil "(" S_is_oscil " gen): " PROC_TRUE " if gen is an " S_oscil
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_oscil(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -2403,9 +2408,9 @@ static XEN g_make_oscil_bank(XEN freqs, XEN phases, XEN amps)
 }
 
 
-static XEN g_oscil_bank_p(XEN os) 
+static XEN g_is_oscil_bank(XEN os) 
 {
-  #define H_oscil_bank_p "(" S_oscil_bank_p " gen): " PROC_TRUE " if gen is an " S_oscil_bank
+  #define H_is_oscil_bank "(" S_is_oscil_bank " gen): " PROC_TRUE " if gen is an " S_oscil_bank
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_oscil_bank(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -2829,9 +2834,9 @@ static XEN g_make_comb_bank(XEN arg)
 }
 
 
-static XEN g_comb_bank_p(XEN os) 
+static XEN g_is_comb_bank(XEN os) 
 {
-  #define H_comb_bank_p "(" S_comb_bank_p " gen): " PROC_TRUE " if gen is a " S_comb_bank
+  #define H_is_comb_bank "(" S_is_comb_bank " gen): " PROC_TRUE " if gen is a " S_comb_bank
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_comb_bank(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -2903,9 +2908,9 @@ static XEN g_make_filtered_comb_bank(XEN arg)
 }
 
 
-static XEN g_filtered_comb_bank_p(XEN os) 
+static XEN g_is_filtered_comb_bank(XEN os) 
 {
-  #define H_filtered_comb_bank_p "(" S_filtered_comb_bank_p " gen): " PROC_TRUE " if gen is a " S_filtered_comb_bank
+  #define H_is_filtered_comb_bank "(" S_is_filtered_comb_bank " gen): " PROC_TRUE " if gen is a " S_filtered_comb_bank
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_filtered_comb_bank(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -2977,9 +2982,9 @@ static XEN g_make_all_pass_bank(XEN arg)
 }
 
 
-static XEN g_all_pass_bank_p(XEN os) 
+static XEN g_is_all_pass_bank(XEN os) 
 {
-  #define H_all_pass_bank_p "(" S_all_pass_bank_p " gen): " PROC_TRUE " if gen is a " S_all_pass_bank
+  #define H_is_all_pass_bank "(" S_is_all_pass_bank " gen): " PROC_TRUE " if gen is a " S_all_pass_bank
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_all_pass_bank(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -3042,67 +3047,67 @@ static XEN g_tap(XEN obj, XEN loc)
 }
 
 
-static XEN g_tap_p(XEN obj) 
+static XEN g_is_tap(XEN obj) 
 {
-  #define H_tap_p "(" S_tap_p " gen): " PROC_TRUE " if gen is a delay line tap"
+  #define H_is_tap "(" S_is_tap " gen): " PROC_TRUE " if gen is a delay line tap"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_tap(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_delay_p(XEN obj) 
+static XEN g_is_delay(XEN obj) 
 {
-  #define H_delay_p "(" S_delay_p " gen): " PROC_TRUE " if gen is a delay line"
+  #define H_is_delay "(" S_is_delay " gen): " PROC_TRUE " if gen is a delay line"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_delay(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_comb_p(XEN obj)
+static XEN g_is_comb(XEN obj)
 {
-  #define H_comb_p "(" S_comb_p " gen): " PROC_TRUE " if gen is a comb filter"
+  #define H_is_comb "(" S_is_comb " gen): " PROC_TRUE " if gen is a comb filter"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_comb(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_filtered_comb_p(XEN obj)
+static XEN g_is_filtered_comb(XEN obj)
 {
-  #define H_filtered_comb_p "(" S_filtered_comb_p " gen): " PROC_TRUE " if gen is a filtered-comb filter"
+  #define H_is_filtered_comb "(" S_is_filtered_comb " gen): " PROC_TRUE " if gen is a filtered-comb filter"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_filtered_comb(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_notch_p(XEN obj) 
+static XEN g_is_notch(XEN obj) 
 {
-  #define H_notch_p "(" S_notch_p " gen): " PROC_TRUE " if gen is a notch filter"
+  #define H_is_notch "(" S_is_notch " gen): " PROC_TRUE " if gen is a notch filter"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_notch(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_all_pass_p(XEN obj) 
+static XEN g_is_all_pass(XEN obj) 
 {
-  #define H_all_pass_p "(" S_all_pass_p " gen): " PROC_TRUE " if gen is an all-pass filter"
+  #define H_is_all_pass "(" S_is_all_pass " gen): " PROC_TRUE " if gen is an all-pass filter"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_all_pass(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_moving_average_p(XEN obj) 
+static XEN g_is_moving_average(XEN obj) 
 {
-  #define H_moving_average_p "(" S_moving_average_p " gen): " PROC_TRUE " if gen is a moving-average generator"
+  #define H_is_moving_average "(" S_is_moving_average " gen): " PROC_TRUE " if gen is a moving-average generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_moving_average(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_moving_max_p(XEN obj) 
+static XEN g_is_moving_max(XEN obj) 
 {
-  #define H_moving_max_p "(" S_moving_max_p " gen): " PROC_TRUE " if gen is a moving-max generator"
+  #define H_is_moving_max "(" S_is_moving_max " gen): " PROC_TRUE " if gen is a moving-max generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_moving_max(XEN_TO_MUS_ANY(obj)))));
 }
 
 
 /* -------- ncos -------- */
 
-static XEN g_ncos_p(XEN obj) 
+static XEN g_is_ncos(XEN obj) 
 {
-  #define H_ncos_p "(" S_ncos_p " gen): " PROC_TRUE " if gen is an " S_ncos " generator"
+  #define H_is_ncos "(" S_is_ncos " gen): " PROC_TRUE " if gen is an " S_ncos " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
 			  (mus_is_ncos(XEN_TO_MUS_ANY(obj)))));
 }
@@ -3162,9 +3167,9 @@ static XEN g_ncos(XEN obj, XEN fm)
 
 /* -------- nsin -------- */
 
-static XEN g_nsin_p(XEN obj) 
+static XEN g_is_nsin(XEN obj) 
 {
-  #define H_nsin_p "(" S_nsin_p " gen): " PROC_TRUE " if gen is an " S_nsin " generator"
+  #define H_is_nsin "(" S_is_nsin " gen): " PROC_TRUE " if gen is an " S_nsin " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
 			  (mus_is_nsin(XEN_TO_MUS_ANY(obj)))));
 }
@@ -3433,9 +3438,9 @@ fm modulates the rate at which the current number is changed."
 }
 
 
-static XEN g_rand_p(XEN obj) 
+static XEN g_is_rand(XEN obj) 
 {
-  #define H_rand_p "(" S_rand_p " gen): " PROC_TRUE " if gen is a " S_rand
+  #define H_is_rand "(" S_is_rand " gen): " PROC_TRUE " if gen is a " S_rand
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_rand(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -3456,9 +3461,9 @@ fm modulates the rate at which new segment end-points are chosen."
 }
 
 
-static XEN g_rand_interp_p(XEN obj) 
+static XEN g_is_rand_interp(XEN obj) 
 {
-  #define H_rand_interp_p "(" S_rand_interp_p " gen): " PROC_TRUE " if gen is a " S_rand_interp
+  #define H_is_rand_interp "(" S_is_rand_interp " gen): " PROC_TRUE " if gen is a " S_rand_interp
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_rand_interp(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -3494,9 +3499,9 @@ static XEN g_mus_set_rand_seed(XEN a)
 
 /* ---------------- table lookup ---------------- */
 
-static XEN g_table_lookup_p(XEN obj) 
+static XEN g_is_table_lookup(XEN obj) 
 {
-  #define H_table_lookup_p "(" S_table_lookup_p " gen): " PROC_TRUE " if gen is a " S_table_lookup
+  #define H_is_table_lookup "(" S_is_table_lookup " gen): " PROC_TRUE " if gen is a " S_table_lookup
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_table_lookup(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -3920,30 +3925,30 @@ static XEN g_pulse_train(XEN obj, XEN fm)
 }
 
 
-static XEN g_sawtooth_wave_p(XEN obj) 
+static XEN g_is_sawtooth_wave(XEN obj) 
 {
-  #define H_sawtooth_wave_p "(" S_sawtooth_wave_p " gen): " PROC_TRUE " if gen is a " S_sawtooth_wave
+  #define H_is_sawtooth_wave "(" S_is_sawtooth_wave " gen): " PROC_TRUE " if gen is a " S_sawtooth_wave
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_sawtooth_wave(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_square_wave_p(XEN obj) 
+static XEN g_is_square_wave(XEN obj) 
 {
-  #define H_square_wave_p "(" S_square_wave_p " gen): " PROC_TRUE " if gen is a " S_square_wave
+  #define H_is_square_wave "(" S_is_square_wave " gen): " PROC_TRUE " if gen is a " S_square_wave
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_square_wave(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_triangle_wave_p(XEN obj) 
+static XEN g_is_triangle_wave(XEN obj) 
 {
-  #define H_triangle_wave_p "(" S_triangle_wave_p " gen): " PROC_TRUE " if gen is a " S_triangle_wave
+  #define H_is_triangle_wave "(" S_is_triangle_wave " gen): " PROC_TRUE " if gen is a " S_triangle_wave
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_triangle_wave(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_pulse_train_p(XEN obj) 
+static XEN g_is_pulse_train(XEN obj) 
 {
-  #define H_pulse_train_p "(" S_pulse_train_p " gen): " PROC_TRUE " if gen is a " S_pulse_train
+  #define H_is_pulse_train "(" S_is_pulse_train " gen): " PROC_TRUE " if gen is a " S_pulse_train
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_pulse_train(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -4007,9 +4012,9 @@ static XEN g_asymmetric_fm(XEN obj, XEN index, XEN fm)
 }
 
 
-static XEN g_asymmetric_fm_p(XEN obj) 
+static XEN g_is_asymmetric_fm(XEN obj) 
 {
-  #define H_asymmetric_fm_p "(" S_asymmetric_fm_p " gen): " PROC_TRUE " if gen is a " S_asymmetric_fm
+  #define H_is_asymmetric_fm "(" S_is_asymmetric_fm " gen): " PROC_TRUE " if gen is a " S_asymmetric_fm
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_asymmetric_fm(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -4224,30 +4229,30 @@ static XEN g_two_pole(XEN obj, XEN fm)
 }
 
 
-static XEN g_one_zero_p(XEN obj) 
+static XEN g_is_one_zero(XEN obj) 
 {
-  #define H_one_zero_p "(" S_one_zero_p " gen): " PROC_TRUE " if gen is a " S_one_zero
+  #define H_is_one_zero "(" S_is_one_zero " gen): " PROC_TRUE " if gen is a " S_one_zero
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_one_zero(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_one_pole_p(XEN obj) 
+static XEN g_is_one_pole(XEN obj) 
 {
-  #define H_one_pole_p "(" S_one_pole_p " gen): " PROC_TRUE " if gen is a " S_one_pole
+  #define H_is_one_pole "(" S_is_one_pole " gen): " PROC_TRUE " if gen is a " S_one_pole
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_one_pole(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_two_zero_p(XEN obj) 
+static XEN g_is_two_zero(XEN obj) 
 {
-  #define H_two_zero_p "(" S_two_zero_p " gen): " PROC_TRUE " if gen is a " S_two_zero
+  #define H_is_two_zero "(" S_is_two_zero " gen): " PROC_TRUE " if gen is a " S_two_zero
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_two_zero(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_two_pole_p(XEN obj) 
+static XEN g_is_two_pole(XEN obj) 
 {
-  #define H_two_pole_p "(" S_two_pole_p " gen): " PROC_TRUE " if gen is a " S_two_pole
+  #define H_is_two_pole "(" S_is_two_pole " gen): " PROC_TRUE " if gen is a " S_two_pole
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_two_pole(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -4329,9 +4334,9 @@ frequency sets the resonance center frequency (Hz)."
 }
 
 
-static XEN g_formant_p(XEN os) 
+static XEN g_is_formant(XEN os) 
 {
-  #define H_formant_p "(" S_formant_p " gen): " PROC_TRUE " if gen is a " S_formant
+  #define H_is_formant "(" S_is_formant " gen): " PROC_TRUE " if gen is a " S_formant
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_formant(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -4417,9 +4422,9 @@ static XEN g_make_formant_bank(XEN frms, XEN amps)
 }
 
 
-static XEN g_formant_bank_p(XEN os) 
+static XEN g_is_formant_bank(XEN os) 
 {
-  #define H_formant_bank_p "(" S_formant_bank_p " gen): " PROC_TRUE " if gen is a " S_formant_bank
+  #define H_is_formant_bank "(" S_is_formant_bank " gen): " PROC_TRUE " if gen is a " S_formant_bank
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_formant_bank(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -4467,9 +4472,9 @@ static XEN g_make_one_pole_all_pass(XEN arg1, XEN arg2)
 }
 
 
-static XEN g_one_pole_all_pass_p(XEN os) 
+static XEN g_is_one_pole_all_pass(XEN os) 
 {
-  #define H_one_pole_all_pass_p "(" S_one_pole_all_pass_p " gen): " PROC_TRUE " if gen is a " S_one_pole_all_pass
+  #define H_is_one_pole_all_pass "(" S_is_one_pole_all_pass " gen): " PROC_TRUE " if gen is a " S_one_pole_all_pass
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_one_pole_all_pass(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -4501,9 +4506,9 @@ frequency sets the resonance center frequency (Hz)."
 }
 
 
-static XEN g_firmant_p(XEN os) 
+static XEN g_is_firmant(XEN os) 
 {
-  #define H_firmant_p "(" S_firmant_p " gen): " PROC_TRUE " if gen is a " S_firmant " generator"
+  #define H_is_firmant "(" S_is_firmant " gen): " PROC_TRUE " if gen is a " S_firmant " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_firmant(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -4634,9 +4639,9 @@ static XEN g_frame(XEN args)
 
 
 
-static XEN g_frame_p(XEN obj) 
+static XEN g_is_frame(XEN obj) 
 {
-  #define H_frame_p "(" S_frame_p " gen): " PROC_TRUE " if gen is a frame"
+  #define H_is_frame "(" S_is_frame " gen): " PROC_TRUE " if gen is a frame"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_frame(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -4766,9 +4771,9 @@ static XEN g_frame_set(XEN uf1, XEN uchan, XEN val)
 
 /* ---------------- mixer ---------------- */
 
-static XEN g_mixer_p(XEN obj) 
+static XEN g_is_mixer(XEN obj) 
 {
-  #define H_mixer_p "(" S_mixer_p " gen): " PROC_TRUE " if gen is a mixer"
+  #define H_is_mixer "(" S_is_mixer " gen): " PROC_TRUE " if gen is a mixer"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_mixer(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -5458,9 +5463,9 @@ static XEN g_wave_train(XEN obj, XEN fm)
 }
 
 
-static XEN g_wave_train_p(XEN obj) 
+static XEN g_is_wave_train(XEN obj) 
 {
-  #define H_wave_train_p "(" S_wave_train_p " gen): " PROC_TRUE " if gen is a " S_wave_train
+  #define H_is_wave_train "(" S_is_wave_train " gen): " PROC_TRUE " if gen is a " S_wave_train
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_wave_train(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -5884,9 +5889,9 @@ static XEN g_polyshape(XEN obj, XEN index, XEN fm)
 }
 
 
-static XEN g_polyshape_p(XEN obj) 
+static XEN g_is_polyshape(XEN obj) 
 {
-  #define H_polyshape_p "(" S_polyshape_p " gen): " PROC_TRUE " if gen is a " S_polyshape
+  #define H_is_polyshape "(" S_is_polyshape " gen): " PROC_TRUE " if gen is a " S_polyshape
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_polyshape(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -6016,16 +6021,16 @@ static XEN g_polywave(XEN obj, XEN fm)
 }
 
 
-static XEN g_polywave_p(XEN obj) 
+static XEN g_is_polywave(XEN obj) 
 {
-  #define H_polywave_p "(" S_polywave_p " gen): " PROC_TRUE " if gen is a " S_polywave " generator"
+  #define H_is_polywave "(" S_is_polywave " gen): " PROC_TRUE " if gen is a " S_polywave " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_polywave(XEN_TO_MUS_ANY(obj)))));
 }
 
 
 static XEN g_make_polywave(XEN arglist)
 {
-  #define H_make_polywave "(" S_make_polywave " (frequency *clm-default-frequency*) (partials '(1 1)) (type " S_mus_chebyshev_first_kind " xcoeffs ycoeffs): \
+  #define H_make_polywave "(" S_make_polywave " (frequency *clm-default-frequency*) (partials '(1 1)) (type " S_mus_chebyshev_first_kind ") xcoeffs ycoeffs): \
 return a new polynomial-based waveshaping generator.  (" S_make_polywave " :partials (vct 1 1.0)) is the same in effect as " S_make_oscil "."
 
   mus_any *ge;
@@ -6143,17 +6148,17 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 
 /* ---------------- nrxysin and nrxycos ---------------- */
 
-static XEN g_nrxysin_p(XEN obj) 
+static XEN g_is_nrxysin(XEN obj) 
 {
-  #define H_nrxysin_p "(" S_nrxysin_p " gen): " PROC_TRUE " if gen is an " S_nrxysin " generator"
+  #define H_is_nrxysin "(" S_is_nrxysin " gen): " PROC_TRUE " if gen is an " S_nrxysin " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
 			  (mus_is_nrxysin(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_nrxycos_p(XEN obj) 
+static XEN g_is_nrxycos(XEN obj) 
 {
-  #define H_nrxycos_p "(" S_nrxycos_p " gen): " PROC_TRUE " if gen is an " S_nrxycos " generator"
+  #define H_is_nrxycos "(" S_is_nrxycos " gen): " PROC_TRUE " if gen is an " S_nrxycos " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
 			  (mus_is_nrxycos(XEN_TO_MUS_ANY(obj)))));
 }
@@ -6257,17 +6262,17 @@ return a new nrxycos generator."
 
 /* ---------------- rxyksin and rxykcos ---------------- */
 
-static XEN g_rxyksin_p(XEN obj) 
+static XEN g_is_rxyksin(XEN obj) 
 {
-  #define H_rxyksin_p "(" S_rxyksin_p " gen): " PROC_TRUE " if gen is an " S_rxyksin " generator"
+  #define H_is_rxyksin "(" S_is_rxyksin " gen): " PROC_TRUE " if gen is an " S_rxyksin " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
 			  (mus_is_rxyksin(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_rxykcos_p(XEN obj) 
+static XEN g_is_rxykcos(XEN obj) 
 {
-  #define H_rxykcos_p "(" S_rxykcos_p " gen): " PROC_TRUE " if gen is an " S_rxykcos " generator"
+  #define H_is_rxykcos "(" S_is_rxykcos " gen): " PROC_TRUE " if gen is an " S_rxykcos " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
 			  (mus_is_rxykcos(XEN_TO_MUS_ANY(obj)))));
 }
@@ -6386,23 +6391,23 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
 }
 
 
-static XEN g_filter_p(XEN obj) 
+static XEN g_is_filter(XEN obj) 
 {
-  #define H_filter_p "(" S_filter_p " gen): " PROC_TRUE " if gen is a " S_filter
+  #define H_is_filter "(" S_is_filter " gen): " PROC_TRUE " if gen is a " S_filter
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_filter(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_fir_filter_p(XEN obj) 
+static XEN g_is_fir_filter(XEN obj) 
 {
-  #define H_fir_filter_p "(" S_fir_filter_p " gen): " PROC_TRUE " if gen is an " S_fir_filter
+  #define H_is_fir_filter "(" S_is_fir_filter " gen): " PROC_TRUE " if gen is an " S_fir_filter
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_fir_filter(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_iir_filter_p(XEN obj) 
+static XEN g_is_iir_filter(XEN obj) 
 {
-  #define H_iir_filter_p "(" S_iir_filter_p " gen): " PROC_TRUE " if gen is an " S_iir_filter
+  #define H_is_iir_filter "(" S_is_iir_filter " gen): " PROC_TRUE " if gen is an " S_iir_filter
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_iir_filter(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -6607,9 +6612,9 @@ static XEN g_make_iir_filter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 /* ---------------- env ---------------- */
 
-static XEN g_env_p(XEN obj) 
+static XEN g_is_env(XEN obj) 
 {
-  #define H_env_p "(" S_env_p " gen): " PROC_TRUE " if gen is a " S_env
+  #define H_is_env "(" S_is_env " gen): " PROC_TRUE " if gen is a " S_env
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_env(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -6929,9 +6934,9 @@ static XEN g_make_pulsed_env(XEN e, XEN dur, XEN frq)
   return(mus_xen_to_object(mus_any_to_mus_xen_with_two_vcts(pl, ge, gp)));
 }
 
-static XEN g_pulsed_env_p(XEN os)
+static XEN g_is_pulsed_env(XEN os)
 {
-  #define H_pulsed_env_p "(" S_pulsed_env_p " gen) returns " PROC_TRUE " if gen is a pulsed-env generator."
+  #define H_is_pulsed_env "(" S_is_pulsed_env " gen) returns " PROC_TRUE " if gen is a pulsed-env generator."
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_is_pulsed_env(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -6981,44 +6986,44 @@ static XEN mus_clm_reverb(void) {return(CLM_REVERB);}
 
 static XEN g_input_p(XEN obj) 
 {
-  #define H_mus_input_p "(" S_mus_input_p " gen): " PROC_TRUE " if gen is an input generator"
+  #define H_is_mus_input "(" S_is_mus_input " gen): " PROC_TRUE " if gen is an input generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_input(XEN_TO_MUS_ANY(obj)))));
 }
 
 
 static XEN g_output_p(XEN obj) 
 {
-  #define H_mus_output_p "(" S_mus_output_p " gen): " PROC_TRUE " if gen is an output generator"
+  #define H_is_mus_output "(" S_is_mus_output " gen): " PROC_TRUE " if gen is an output generator"
 
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_output(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_file_to_sample_p(XEN obj) 
+static XEN g_is_file_to_sample(XEN obj) 
 {
-  #define H_file_to_sample_p "(" S_file_to_sample_p " gen): " PROC_TRUE " if gen is a " S_file_to_sample " generator"
+  #define H_is_file_to_sample "(" S_is_file_to_sample " gen): " PROC_TRUE " if gen is a " S_file_to_sample " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_file_to_sample(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_file_to_frame_p(XEN obj) 
+static XEN g_is_file_to_frame(XEN obj) 
 {
-  #define H_file_to_frame_p "(" S_file_to_frame_p " gen): " PROC_TRUE " if gen is a " S_file_to_frame " generator"
+  #define H_is_file_to_frame "(" S_is_file_to_frame " gen): " PROC_TRUE " if gen is a " S_file_to_frame " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_file_to_frame(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_sample_to_file_p(XEN obj) 
+static XEN g_is_sample_to_file(XEN obj) 
 {
-  #define H_sample_to_file_p "(" S_sample_to_file_p " gen): " PROC_TRUE " if gen is a " S_sample_to_file " generator"
+  #define H_is_sample_to_file "(" S_is_sample_to_file " gen): " PROC_TRUE " if gen is a " S_sample_to_file " generator"
 
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_sample_to_file(XEN_TO_MUS_ANY(obj)))));
 }
 
 
-static XEN g_frame_to_file_p(XEN obj) 
+static XEN g_is_frame_to_file(XEN obj) 
 {
-  #define H_frame_to_file_p "(" S_frame_to_file_p " gen): " PROC_TRUE " if gen is a " S_frame_to_file " generator"
+  #define H_is_frame_to_file "(" S_is_frame_to_file " gen): " PROC_TRUE " if gen is a " S_frame_to_file " generator"
 
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_frame_to_file(XEN_TO_MUS_ANY(obj)))));
 }
@@ -7785,9 +7790,9 @@ static XEN g_file_to_float_vector(XEN obj, XEN samp, XEN val)
 
 /* ---------------- readin ---------------- */
 
-static XEN g_readin_p(XEN obj) 
+static XEN g_is_readin(XEN obj) 
 {
-  #define H_readin_p "(" S_readin_p " gen): " PROC_TRUE " if gen is a " S_readin
+  #define H_is_readin "(" S_is_readin " gen): " PROC_TRUE " if gen is a " S_readin
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_readin(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -7924,9 +7929,9 @@ static XEN g_locsig_reverb_set(XEN obj, XEN chan, XEN val)
 }
 
 
-static XEN g_locsig_p(XEN obj)
+static XEN g_is_locsig(XEN obj)
 {
-  #define H_locsig_p "(" S_locsig_p " gen): " PROC_TRUE " if gen is a " S_locsig
+  #define H_is_locsig "(" S_is_locsig " gen): " PROC_TRUE " if gen is a " S_locsig
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_locsig(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -8238,9 +8243,9 @@ static XEN g_move_locsig(XEN obj, XEN degree, XEN distance)
 
 /* ---------------- move-sound ---------------- */
 
-static XEN g_move_sound_p(XEN obj)
+static XEN g_is_move_sound(XEN obj)
 {
-  #define H_move_sound_p "(" S_move_sound_p " gen): " PROC_TRUE " if gen is a " S_move_sound
+  #define H_is_move_sound "(" S_is_move_sound " gen): " PROC_TRUE " if gen is a " S_move_sound
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_move_sound(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -8583,14 +8588,17 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 			      /* here we need to make sure the function's environment is set up correctly */
 			      s7_pointer old_e;
 			      old_e = s7_set_current_environment(s7, s7_cdr(source));
+			      setup_gen_list(s7, res);
 			      g = find_gf(s7, res);
 			      s7_set_current_environment(s7, old_e);
 			      if (g)
 				{
 				  gn->g = g;
 				  mus_generator_set_feeder(gn->gen, as_needed_input_f1);
+				  clear_gen_list();
 				  return(g->func(g));
 				}
+			      clear_gen_list();
 			    }
 			}
 		    }
@@ -8658,9 +8666,9 @@ static XEN g_mus_clear_sincs(void)
 }
 
 
-static XEN g_src_p(XEN obj) 
+static XEN g_is_src(XEN obj) 
 {
-  #define H_src_p "(" S_src_p " gen): " PROC_TRUE " if gen is an " S_src
+  #define H_is_src "(" S_is_src " gen): " PROC_TRUE " if gen is an " S_src
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_src(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -8788,9 +8796,9 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 
 /* ---------------- granulate ---------------- */
 
-static XEN g_granulate_p(XEN obj) 
+static XEN g_is_granulate(XEN obj) 
 {
-  #define H_granulate_p "(" S_granulate_p " gen): " PROC_TRUE " if gen is a " S_granulate " generator"
+  #define H_is_granulate "(" S_is_granulate " gen): " PROC_TRUE " if gen is a " S_granulate " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_granulate(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -8951,9 +8959,9 @@ The edit function, if any, should return the length in samples of the grain, or 
 
 /* ---------------- convolve ---------------- */
 
-static XEN g_convolve_p(XEN obj) 
+static XEN g_is_convolve(XEN obj) 
 {
-  #define H_convolve_p "(" S_convolve_p " gen): " PROC_TRUE " if gen is a " S_convolve " generator"
+  #define H_is_convolve "(" S_is_convolve " gen): " PROC_TRUE " if gen is a " S_convolve " generator"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_convolve(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -9133,9 +9141,9 @@ static bool pvanalyze(void *ptr, mus_float_t (*input)(void *arg1, int direction)
 }
 
 
-static XEN g_phase_vocoder_p(XEN obj) 
+static XEN g_is_phase_vocoder(XEN obj) 
 {
-  #define H_phase_vocoder_p "(" S_phase_vocoder_p " gen): " PROC_TRUE " if gen is an " S_phase_vocoder
+  #define H_is_phase_vocoder "(" S_is_phase_vocoder " gen): " PROC_TRUE " if gen is an " S_phase_vocoder
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_phase_vocoder(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -9349,14 +9357,14 @@ static XEN g_phase_vocoder_freqs(XEN pv)
 }
 
   
-static XEN g_phase_vocoder_phases(XEN pv) 
+static XEN g_is_phase_vocoderhases(XEN pv) 
 {
-  #define H_phase_vocoder_phases "(" S_phase_vocoder_phases " gen): vct containing the current output sinusoid phases"
+  #define H_is_phase_vocoderhases "(" S_is_phase_vocoderhases " gen): vct containing the current output sinusoid phases"
   mus_float_t *amps; 
   int len;
   mus_xen *gn;
 
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_is_phase_vocoder(XEN_TO_MUS_ANY(pv))), pv, 1, S_phase_vocoder_phases, "a " S_phase_vocoder " generator");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_is_phase_vocoder(XEN_TO_MUS_ANY(pv))), pv, 1, S_is_phase_vocoderhases, "a " S_phase_vocoder " generator");
 
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phases(gn->gen); 
@@ -9381,14 +9389,14 @@ static XEN g_phase_vocoder_amp_increments(XEN pv)
 }
   
 
-static XEN g_phase_vocoder_phase_increments(XEN pv) 
+static XEN g_is_phase_vocoderhase_increments(XEN pv) 
 {
-  #define H_phase_vocoder_phase_increments "(" S_phase_vocoder_phase_increments " gen): vct containing the current output sinusoid phase increments"
+  #define H_is_phase_vocoderhase_increments "(" S_is_phase_vocoderhase_increments " gen): vct containing the current output sinusoid phase increments"
   mus_float_t *amps; 
   int len;
   mus_xen *gn;
 
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_is_phase_vocoder(XEN_TO_MUS_ANY(pv))), pv, 1, S_phase_vocoder_phase_increments, "a " S_phase_vocoder " generator");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_is_phase_vocoder(XEN_TO_MUS_ANY(pv))), pv, 1, S_is_phase_vocoderhase_increments, "a " S_phase_vocoder " generator");
 
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phase_increments(gn->gen); 
@@ -9593,9 +9601,9 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 
 /* -------- ssb-am -------- */
 
-static XEN g_ssb_am_p(XEN obj) 
+static XEN g_is_ssb_am(XEN obj) 
 {
-  #define H_ssb_am_p "(" S_ssb_am_p " gen): " PROC_TRUE " if gen is a " S_ssb_am
+  #define H_is_ssb_am "(" S_is_ssb_am " gen): " PROC_TRUE " if gen is a " S_ssb_am
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_is_ssb_am(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -10200,7 +10208,7 @@ static s7_pointer g_asymmetric_fm_3(s7_scheme *sc, s7_pointer args)
 }
 
 static s7_pointer oscil_pm_direct;
-static s7_pointer g_oscil_pm_direct(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_is_oscilm_direct(s7_scheme *sc, s7_pointer args)
 {
   /* (oscil g 0.0 ...), args is (g 0.0 ...) */
   mus_any *o;
@@ -10606,10 +10614,6 @@ static s7_pointer g_fm_violin_4(s7_scheme *sc, s7_pointer args)
 }
 
 
-static void setup_gen_list(s7_scheme *sc, s7_pointer tree);
-static void clear_gen_list(void);
-static void gen_list_walk(s7_scheme *sc, s7_pointer tree);
-
 #if (!WITH_GMP)
 static s7_pointer out_bank_looped, out_bank_three;
 static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
@@ -10755,14 +10759,13 @@ static mus_float_t simple_triangle_wave(smptri *gen)
 static smptri *make_simple_triangle_wave(mus_any *w)
 {
   /* w here is the original triangle wave gen */
-  double base, phase, freq, cur_val;
+  double base, freq, cur_val;
   smptri *gen;
 
   gen = (smptri *)calloc(1, sizeof(smptri));
-  base = mus_scaler(w); /* not normalized */
-  phase = mus_phase(w);
-  freq = mus_frequency(w); /* hz */
-  cur_val = mus_triangle_wave_unmodulated(w);
+  base = mus_scaler(w);                       /* not normalized */
+  freq = mus_frequency(w);                    /* hz */
+  cur_val = mus_triangle_wave_unmodulated(w); /* includes effect of possible :initial-phase */
   gen->val = cur_val;
   gen->incr = base * freq * 4.0 / mus_srate();
   gen->high = base;
@@ -12779,13 +12782,13 @@ static bool gen_is_ok(mus_any *gen)
 }
 #endif
 
-static void setup_gen_list(s7_scheme *sc, s7_pointer tree)
+void setup_gen_list(s7_scheme *sc, s7_pointer tree)
 {
   gen_list_top = 0;
   gen_list_walk(sc, tree);
 }
 
-static void clear_gen_list(void)
+void clear_gen_list(void)
 {
   gen_list_top = 0;
 }
@@ -12816,6 +12819,7 @@ static mus_float_t gf_unmod_oscil_1b(void *p)
 }
 
 
+/* -------- */
 static mus_float_t gf_unmod_scaled_oscil_1b(void *p);
 static mus_float_t gf_unmod_scaled_oscil_1a(void *p)
 {
@@ -12835,6 +12839,33 @@ static mus_float_t gf_unmod_scaled_oscil_1b(void *p)
   return(g->x5 * g->x4 + g->x6 * g->x3); /* the scaling by x7 is embedded in the sn/cs numbers */
 }
 
+
+/* -------- */
+
+static mus_float_t gf_unmod_scaled_oscil_2b(void *p);
+static mus_float_t gf_unmod_scaled_oscil_2a(void *p)
+{
+  gf *g = (gf *)p; 
+  mus_float_t ph;
+  g->o1 = gf_unmod_scaled_oscil_2b;
+  ph = g->x1;
+  sincos(ph, &(g->x5), &(g->x6));
+  g->x1 += g->x2;
+  return((2.0 * g->x5 * g->x8 + g->x7) * g->x5 - g->x8);
+  /* ((2.0 * cx * tn[2] + tn[1]) * cx - tn[2]) */
+}
+
+static mus_float_t gf_unmod_scaled_oscil_2b(void *p)
+{
+  gf *g = (gf *)p; 
+  mus_float_t cx;
+  g->o1 = gf_unmod_scaled_oscil_2a;
+  cx = (g->x5 * g->x4 + g->x6 * g->x3);
+  return((2.0 * cx * g->x8 + g->x7) * cx - g->x8);
+}
+
+
+/* -------- */
 static mus_float_t gf_unmod_oscil_1(void *p)
 {
   gf *g = (gf *)p; 
@@ -12844,7 +12875,13 @@ static mus_float_t gf_unmod_oscil_1(void *p)
 static mus_float_t gf_unmod_scaled_oscil_1(void *p)
 {
   gf *g = (gf *)p; 
-  return(g->x7 * mus_oscil_unmodulated((mus_any *)(g->gen)));
+  return(g->o1(p));
+}
+
+static mus_float_t gf_unmod_scaled_oscil_2(void *p)
+{
+  gf *g = (gf *)p; 
+  return(g->o1(p));
 }
 #endif
 
@@ -13078,7 +13115,11 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		      p->x2 *= 2.0;
 		      p->o1 = gf_unmod_oscil_1a;
 		    }
-		  else p->func = gf_oscil_1;
+		  else 
+		    {
+		      /* fprintf(stderr, "not ok: %s\n", DISPLAY(expr)); */
+		      p->func = gf_oscil_1;
+		    }
 #else
 		  p->func = gf_oscil_1;
 #endif
@@ -13089,9 +13130,12 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		{
 		  mus_any *pw;
 		  pw = ((mus_xen *)(p->gen))->gen;
+
 		  if ((mus_is_polywave(pw)) && 
 		      (gen_is_ok(pw)) &&
-		      (mus_length(pw) == 2))
+		      ((mus_length(pw) == 2) || 
+		       ((mus_length(pw) == 3) &&
+			(mus_channel(pw) == MUS_CHEBYSHEV_FIRST_KIND))))
 		    {
 		      /* probably just (* scl (oscil pw)): polyw_first_1 or polyw_f1 or polyw_second_2
 		       *   type is mus_channel(pw)
@@ -13101,21 +13145,33 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 			{
 			  /* this is xcoeff[1] * unmod_oscil */
 			  mus_float_t sn, cs;
+			  bool three_case;
+			  three_case = (mus_length(pw) == 3);
 			  p->gen = pw;
-			  p->func = gf_unmod_scaled_oscil_1;
+			  p->func = (three_case) ? gf_unmod_scaled_oscil_2 : gf_unmod_scaled_oscil_1;
 			  p->func_1 = NULL;
 			  if (mus_channel(pw) == MUS_CHEBYSHEV_SECOND_KIND)
 			    p->x1 = mus_phase(pw);
 			  else p->x1 = mus_phase(pw) + M_PI / 2.0;
 			  p->x2 = mus_increment(pw); /* x2 doesn't need to be saved */
 			  p->x7 = mus_xcoeff(pw, 1);
+			  if (three_case) p->x8 = mus_xcoeff(pw, 2);
 			  sincos(p->x2, &sn, &cs);
-			  p->x3 = sn * p->x7;
-			  p->x4 = cs * p->x7;
+			  p->x3 = sn;
+			  p->x4 = cs;
+			  if (!three_case)
+			    {
+			      p->x3 *= p->x7;
+			      p->x4 *= p->x7;
+			    }
+			  /* (with-sound () (let ((g (make-polywave 120 (list 1 .1 2 .1)))) (do ((i 0 (+ i 1))) ((= i 1000)) (outa i (polywave g))))) */
 			  p->x2 *= 2.0;
-			  p->o1 = gf_unmod_scaled_oscil_1a;
+			  p->o1 = (three_case) ? gf_unmod_scaled_oscil_2a : gf_unmod_scaled_oscil_1a;
+			  return(p);
 			}
 		    }
+		  /* here the n=3 case is common */
+		  /* fprintf(stderr, "poly: %d %d %lld %.3f\n", mus_is_polywave(pw), gen_is_ok(pw), mus_length(pw), mus_xcoeff(pw, 0)); */
 		}
 #endif
 	    }
@@ -18898,7 +18954,7 @@ static void init_choosers(s7_scheme *sc)
 
   direct_oscil_2 = clm_make_temp_function_no_choice(sc, "oscil", g_direct_oscil_2, 2, 0, false, "oscil optimization", f);
   indirect_oscil_2 = clm_make_temp_function_no_choice(sc, "oscil", g_indirect_oscil_2, 2, 0, false, "oscil optimization", f);
-  oscil_pm_direct = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_pm_direct, 3, 0, false, "oscil optimization", f);
+  oscil_pm_direct = clm_make_temp_function_no_choice(sc, "oscil", g_is_oscilm_direct, 3, 0, false, "oscil optimization", f);
   oscil_3_direct = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_3_direct, 3, 0, false, "oscil optimization", f);
   oscil_ss3_direct = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_ss3_direct, 3, 0, false, "oscil optimization", f);
   oscil_one = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_one, 1, 0, false, "oscil optimization", f);
@@ -19601,9 +19657,9 @@ XEN_NARGIFY_1(g_mus_type_w, g_mus_type)
 XEN_NARGIFY_1(g_mus_order_w, g_mus_order)
 XEN_NARGIFY_1(g_mus_data_w, g_mus_data)
 XEN_NARGIFY_2(g_mus_set_data_w, g_mus_set_data)
-XEN_NARGIFY_1(g_oscil_p_w, g_oscil_p)
+XEN_NARGIFY_1(g_is_oscil_w, g_is_oscil)
 XEN_ARGIFY_3(g_oscil_w, g_oscil)
-XEN_NARGIFY_1(g_oscil_bank_p_w, g_oscil_bank_p)
+XEN_NARGIFY_1(g_is_oscil_bank_w, g_is_oscil_bank)
 XEN_NARGIFY_1(g_oscil_bank_w, g_oscil_bank)
 XEN_VARGIFY(g_mus_apply_w, g_mus_apply)
 XEN_VARGIFY(g_make_delay_w, g_make_delay)
@@ -19622,79 +19678,79 @@ XEN_ARGIFY_3(g_filtered_comb_w, g_filtered_comb)
 XEN_ARGIFY_3(g_all_pass_w, g_all_pass)
 XEN_ARGIFY_2(g_moving_average_w, g_moving_average)
 XEN_ARGIFY_2(g_moving_max_w, g_moving_max)
-XEN_NARGIFY_1(g_tap_p_w, g_tap_p)
-XEN_NARGIFY_1(g_delay_p_w, g_delay_p)
-XEN_NARGIFY_1(g_notch_p_w, g_notch_p)
-XEN_NARGIFY_1(g_comb_p_w, g_comb_p)
-XEN_NARGIFY_1(g_filtered_comb_p_w, g_filtered_comb_p)
-XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
-XEN_NARGIFY_1(g_moving_average_p_w, g_moving_average_p)
-XEN_NARGIFY_1(g_moving_max_p_w, g_moving_max_p)
+XEN_NARGIFY_1(g_is_tap_w, g_is_tap)
+XEN_NARGIFY_1(g_is_delay_w, g_is_delay)
+XEN_NARGIFY_1(g_is_notch_w, g_is_notch)
+XEN_NARGIFY_1(g_is_comb_w, g_is_comb)
+XEN_NARGIFY_1(g_is_filtered_comb_w, g_is_filtered_comb)
+XEN_NARGIFY_1(g_is_all_pass_w, g_is_all_pass)
+XEN_NARGIFY_1(g_is_moving_average_w, g_is_moving_average)
+XEN_NARGIFY_1(g_is_moving_max_w, g_is_moving_max)
 
 XEN_ARGIFY_2(g_ncos_w, g_ncos)
-XEN_NARGIFY_1(g_ncos_p_w, g_ncos_p)
+XEN_NARGIFY_1(g_is_ncos_w, g_is_ncos)
 XEN_ARGIFY_2(g_nsin_w, g_nsin)
-XEN_NARGIFY_1(g_nsin_p_w, g_nsin_p)
+XEN_NARGIFY_1(g_is_nsin_w, g_is_nsin)
 
 XEN_VARGIFY(g_make_rand_w, g_make_rand)
 XEN_VARGIFY(g_make_rand_interp_w, g_make_rand_interp)
 XEN_ARGIFY_2(g_rand_w, g_rand)
 XEN_ARGIFY_2(g_rand_interp_w, g_rand_interp)
-XEN_NARGIFY_1(g_rand_p_w, g_rand_p)
-XEN_NARGIFY_1(g_rand_interp_p_w, g_rand_interp_p)
+XEN_NARGIFY_1(g_is_rand_w, g_is_rand)
+XEN_NARGIFY_1(g_is_rand_interp_w, g_is_rand_interp)
 XEN_NARGIFY_1(g_mus_random_w, g_mus_random)
 XEN_NARGIFY_0(g_mus_rand_seed_w, g_mus_rand_seed)
 XEN_NARGIFY_1(g_mus_set_rand_seed_w, g_mus_set_rand_seed)
-XEN_NARGIFY_1(g_table_lookup_p_w, g_table_lookup_p)
+XEN_NARGIFY_1(g_is_table_lookup_w, g_is_table_lookup)
 XEN_VARGIFY(g_make_table_lookup_w, g_make_table_lookup)
 XEN_ARGIFY_2(g_table_lookup_w, g_table_lookup)
 XEN_ARGIFY_3(g_partials_to_wave_w, g_partials_to_wave)
 XEN_ARGIFY_3(g_phase_partials_to_wave_w, g_phase_partials_to_wave)
 XEN_ARGIFY_6(g_make_sawtooth_wave_w, g_make_sawtooth_wave)
 XEN_ARGIFY_2(g_sawtooth_wave_w, g_sawtooth_wave)
-XEN_NARGIFY_1(g_sawtooth_wave_p_w, g_sawtooth_wave_p)
+XEN_NARGIFY_1(g_is_sawtooth_wave_w, g_is_sawtooth_wave)
 XEN_ARGIFY_6(g_make_triangle_wave_w, g_make_triangle_wave)
 XEN_ARGIFY_2(g_triangle_wave_w, g_triangle_wave)
-XEN_NARGIFY_1(g_triangle_wave_p_w, g_triangle_wave_p)
+XEN_NARGIFY_1(g_is_triangle_wave_w, g_is_triangle_wave)
 XEN_ARGIFY_6(g_make_square_wave_w, g_make_square_wave)
 XEN_ARGIFY_2(g_square_wave_w, g_square_wave)
-XEN_NARGIFY_1(g_square_wave_p_w, g_square_wave_p)
+XEN_NARGIFY_1(g_is_square_wave_w, g_is_square_wave)
 XEN_ARGIFY_6(g_make_pulse_train_w, g_make_pulse_train)
 XEN_ARGIFY_2(g_pulse_train_w, g_pulse_train)
-XEN_NARGIFY_1(g_pulse_train_p_w, g_pulse_train_p)
+XEN_NARGIFY_1(g_is_pulse_train_w, g_is_pulse_train)
 
 XEN_NARGIFY_3(g_make_pulsed_env_w, g_make_pulsed_env)
 XEN_ARGIFY_2(g_pulsed_env_w, g_pulsed_env)
-XEN_NARGIFY_1(g_pulsed_env_p_w, g_pulsed_env_p)
+XEN_NARGIFY_1(g_is_pulsed_env_w, g_is_pulsed_env)
 
 XEN_ARGIFY_3(g_asymmetric_fm_w, g_asymmetric_fm)
-XEN_NARGIFY_1(g_asymmetric_fm_p_w, g_asymmetric_fm_p)
+XEN_NARGIFY_1(g_is_asymmetric_fm_w, g_is_asymmetric_fm)
 XEN_ARGIFY_4(g_make_one_zero_w, g_make_one_zero)
 XEN_ARGIFY_2(g_one_zero_w, g_one_zero)
-XEN_NARGIFY_1(g_one_zero_p_w, g_one_zero_p)
+XEN_NARGIFY_1(g_is_one_zero_w, g_is_one_zero)
 XEN_ARGIFY_4(g_make_one_pole_w, g_make_one_pole)
 XEN_ARGIFY_2(g_one_pole_w, g_one_pole)
-XEN_NARGIFY_1(g_one_pole_p_w, g_one_pole_p)
+XEN_NARGIFY_1(g_is_one_pole_w, g_is_one_pole)
 XEN_ARGIFY_6(g_make_two_zero_w, g_make_two_zero)
 XEN_ARGIFY_2(g_two_zero_w, g_two_zero)
-XEN_NARGIFY_1(g_two_zero_p_w, g_two_zero_p)
+XEN_NARGIFY_1(g_is_two_zero_w, g_is_two_zero)
 XEN_ARGIFY_6(g_make_two_pole_w, g_make_two_pole)
 XEN_ARGIFY_2(g_two_pole_w, g_two_pole)
-XEN_NARGIFY_1(g_two_pole_p_w, g_two_pole_p)
+XEN_NARGIFY_1(g_is_two_pole_w, g_is_two_pole)
 
-XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
+XEN_NARGIFY_1(g_is_formant_w, g_is_formant)
 XEN_ARGIFY_4(g_make_formant_w, g_make_formant)
 XEN_ARGIFY_3(g_formant_w, g_formant)
 
 XEN_NARGIFY_2(g_formant_bank_w, g_formant_bank)
-XEN_NARGIFY_1(g_formant_bank_p_w, g_formant_bank_p)
+XEN_NARGIFY_1(g_is_formant_bank_w, g_is_formant_bank)
 XEN_ARGIFY_2(g_make_formant_bank_w, g_make_formant_bank)
 
-XEN_NARGIFY_1(g_firmant_p_w, g_firmant_p)
+XEN_NARGIFY_1(g_is_firmant_w, g_is_firmant)
 XEN_ARGIFY_4(g_make_firmant_w, g_make_firmant)
 XEN_ARGIFY_3(g_firmant_w, g_firmant)
 
-XEN_NARGIFY_1(g_one_pole_all_pass_p_w, g_one_pole_all_pass_p)
+XEN_NARGIFY_1(g_is_one_pole_all_pass_w, g_is_one_pole_all_pass)
 XEN_NARGIFY_2(g_make_one_pole_all_pass_w, g_make_one_pole_all_pass)
 XEN_ARGIFY_2(g_one_pole_all_pass_w, g_one_pole_all_pass)
 
@@ -19703,7 +19759,7 @@ XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_fre
 XEN_VARGIFY(g_make_frame_w, g_make_frame)
 XEN_VARGIFY(g_make_frame_unchecked_w, g_make_frame_unchecked)
 XEN_VARGIFY(g_frame_w, g_frame)
-XEN_NARGIFY_1(g_frame_p_w, g_frame_p)
+XEN_NARGIFY_1(g_is_frame_w, g_is_frame)
 XEN_ARGIFY_3(g_frame_add_w, g_frame_add)
 XEN_ARGIFY_3(g_frame_multiply_w, g_frame_multiply)
 XEN_NARGIFY_2(g_frame_ref_w, g_frame_ref)
@@ -19711,7 +19767,7 @@ XEN_NARGIFY_3(g_frame_set_w, g_frame_set)
 XEN_VARGIFY(g_make_mixer_w, g_make_mixer)
 XEN_VARGIFY(g_make_mixer_unchecked_w, g_make_mixer_unchecked)
 XEN_VARGIFY(g_mixer_w, g_mixer)
-XEN_NARGIFY_1(g_mixer_p_w, g_mixer_p)
+XEN_NARGIFY_1(g_is_mixer_w, g_is_mixer)
 XEN_ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
 XEN_ARGIFY_3(g_mixer_add_w, g_mixer_add)
 XEN_NARGIFY_2(g_make_scalar_mixer_w, g_make_scalar_mixer)
@@ -19723,10 +19779,10 @@ XEN_ARGIFY_3(g_frame_to_frame_w, g_frame_to_frame)
 XEN_ARGIFY_3(g_sample_to_frame_w, g_sample_to_frame)
 XEN_VARGIFY(g_make_wave_train_w, g_make_wave_train)
 XEN_ARGIFY_2(g_wave_train_w, g_wave_train)
-XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
+XEN_NARGIFY_1(g_is_wave_train_w, g_is_wave_train)
 XEN_VARGIFY(g_make_polyshape_w, g_make_polyshape)
 XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
-XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
+XEN_NARGIFY_1(g_is_polyshape_w, g_is_polyshape)
 XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
 XEN_NARGIFY_1(g_normalize_partials_w, g_normalize_partials)
 XEN_NARGIFY_2(g_chebyshev_t_sum_w, g_chebyshev_t_sum)
@@ -19734,57 +19790,57 @@ XEN_NARGIFY_2(g_chebyshev_u_sum_w, g_chebyshev_u_sum)
 XEN_NARGIFY_3(g_chebyshev_tu_sum_w, g_chebyshev_tu_sum)
 XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
 XEN_ARGIFY_2(g_polywave_w, g_polywave)
-XEN_NARGIFY_1(g_polywave_p_w, g_polywave_p)
+XEN_NARGIFY_1(g_is_polywave_w, g_is_polywave)
 
 XEN_VARGIFY(g_make_nrxysin_w, g_make_nrxysin)
 XEN_ARGIFY_2(g_nrxysin_w, g_nrxysin)
-XEN_NARGIFY_1(g_nrxysin_p_w, g_nrxysin_p)
+XEN_NARGIFY_1(g_is_nrxysin_w, g_is_nrxysin)
 XEN_VARGIFY(g_make_nrxycos_w, g_make_nrxycos)
 XEN_ARGIFY_2(g_nrxycos_w, g_nrxycos)
-XEN_NARGIFY_1(g_nrxycos_p_w, g_nrxycos_p)
+XEN_NARGIFY_1(g_is_nrxycos_w, g_is_nrxycos)
 
 XEN_VARGIFY(g_make_rxyksin_w, g_make_rxyksin)
 XEN_ARGIFY_2(g_rxyksin_w, g_rxyksin)
-XEN_NARGIFY_1(g_rxyksin_p_w, g_rxyksin_p)
+XEN_NARGIFY_1(g_is_rxyksin_w, g_is_rxyksin)
 XEN_VARGIFY(g_make_rxykcos_w, g_make_rxykcos)
 XEN_ARGIFY_2(g_rxykcos_w, g_rxykcos)
-XEN_NARGIFY_1(g_rxykcos_p_w, g_rxykcos_p)
+XEN_NARGIFY_1(g_is_rxykcos_w, g_is_rxykcos)
 
 XEN_ARGIFY_6(g_make_filter_w, g_make_filter)
 XEN_NARGIFY_2(g_filter_w, g_filter)
-XEN_NARGIFY_1(g_filter_p_w, g_filter_p)
+XEN_NARGIFY_1(g_is_filter_w, g_is_filter)
 XEN_ARGIFY_4(g_make_fir_filter_w, g_make_fir_filter)
 XEN_NARGIFY_2(g_make_fir_coeffs_w, g_make_fir_coeffs)
 XEN_NARGIFY_2(g_fir_filter_w, g_fir_filter)
-XEN_NARGIFY_1(g_fir_filter_p_w, g_fir_filter_p)
+XEN_NARGIFY_1(g_is_fir_filter_w, g_is_fir_filter)
 XEN_ARGIFY_4(g_make_iir_filter_w, g_make_iir_filter)
 XEN_NARGIFY_2(g_iir_filter_w, g_iir_filter)
-XEN_NARGIFY_1(g_iir_filter_p_w, g_iir_filter_p)
+XEN_NARGIFY_1(g_is_iir_filter_w, g_is_iir_filter)
 XEN_NARGIFY_1(g_mus_xcoeffs_w, g_mus_xcoeffs)
 XEN_NARGIFY_1(g_mus_ycoeffs_w, g_mus_ycoeffs)
 XEN_NARGIFY_2(g_mus_xcoeff_w, g_mus_xcoeff)
 XEN_NARGIFY_3(g_mus_set_xcoeff_w, g_mus_set_xcoeff)
 XEN_NARGIFY_2(g_mus_ycoeff_w, g_mus_ycoeff)
 XEN_NARGIFY_3(g_mus_set_ycoeff_w, g_mus_set_ycoeff)
-XEN_NARGIFY_1(g_env_p_w, g_env_p)
+XEN_NARGIFY_1(g_is_env_w, g_is_env)
 XEN_NARGIFY_1(g_env_w, g_env)
 XEN_VARGIFY(g_make_env_w, g_make_env)
 XEN_NARGIFY_2(g_env_interp_w, g_env_interp)
 XEN_ARGIFY_3(g_envelope_interp_w, g_envelope_interp)
 XEN_NARGIFY_2(g_env_any_w, g_env_any)
-XEN_NARGIFY_1(g_file_to_sample_p_w, g_file_to_sample_p)
+XEN_NARGIFY_1(g_is_file_to_sample_w, g_is_file_to_sample)
 XEN_ARGIFY_2(g_make_file_to_sample_w, g_make_file_to_sample)
 XEN_ARGIFY_3(g_file_to_sample_w, g_file_to_sample)
-XEN_NARGIFY_1(g_file_to_frame_p_w, g_file_to_frame_p)
+XEN_NARGIFY_1(g_is_file_to_frame_w, g_is_file_to_frame)
 XEN_ARGIFY_2(g_make_file_to_frame_w, g_make_file_to_frame)
 XEN_ARGIFY_3(g_file_to_frame_w, g_file_to_frame)
-XEN_NARGIFY_1(g_sample_to_file_p_w, g_sample_to_file_p)
+XEN_NARGIFY_1(g_is_sample_to_file_w, g_is_sample_to_file)
 XEN_ARGIFY_5(g_make_sample_to_file_w, g_make_sample_to_file)
 XEN_NARGIFY_1(g_continue_sample_to_file_w, g_continue_sample_to_file)
 XEN_NARGIFY_1(g_continue_frame_to_file_w, g_continue_frame_to_file)
 XEN_NARGIFY_4(g_sample_to_file_w, g_sample_to_file)
 XEN_NARGIFY_2(g_sample_to_file_add_w, g_sample_to_file_add)
-XEN_NARGIFY_1(g_frame_to_file_p_w, g_frame_to_file_p)
+XEN_NARGIFY_1(g_is_frame_to_file_w, g_is_frame_to_file)
 XEN_NARGIFY_3(g_frame_to_file_w, g_frame_to_file)
 XEN_ARGIFY_5(g_make_frame_to_file_w, g_make_frame_to_file)
 #if HAVE_SCHEME
@@ -19805,7 +19861,7 @@ XEN_ARGIFY_3(g_outd_w, g_outd)
 XEN_NARGIFY_1(g_mus_close_w, g_mus_close)
 XEN_NARGIFY_0(g_mus_file_buffer_size_w, g_mus_file_buffer_size)
 XEN_NARGIFY_1(g_mus_set_file_buffer_size_w, g_mus_set_file_buffer_size)
-XEN_NARGIFY_1(g_readin_p_w, g_readin_p)
+XEN_NARGIFY_1(g_is_readin_w, g_is_readin)
 XEN_NARGIFY_1(g_readin_w, g_readin)
 XEN_VARGIFY(g_make_readin_w, g_make_readin)
 XEN_NARGIFY_1(g_mus_channel_w, g_mus_channel)
@@ -19816,7 +19872,7 @@ XEN_NARGIFY_1(g_mus_increment_w, g_mus_increment)
 XEN_NARGIFY_2(g_mus_set_increment_w, g_mus_set_increment)
 XEN_NARGIFY_1(g_mus_feedback_w, g_mus_feedback)
 XEN_NARGIFY_2(g_mus_set_feedback_w, g_mus_set_feedback)
-XEN_NARGIFY_1(g_locsig_p_w, g_locsig_p)
+XEN_NARGIFY_1(g_is_locsig_w, g_is_locsig)
 XEN_NARGIFY_3(g_locsig_w, g_locsig)
 XEN_VARGIFY(g_make_locsig_w, g_make_locsig)
 XEN_NARGIFY_3(g_move_locsig_w, g_move_locsig)
@@ -19827,41 +19883,41 @@ XEN_NARGIFY_2(g_locsig_ref_w, g_locsig_ref)
 XEN_NARGIFY_2(g_locsig_reverb_ref_w, g_locsig_reverb_ref)
 XEN_NARGIFY_3(g_locsig_set_w, g_locsig_set)
 XEN_NARGIFY_3(g_locsig_reverb_set_w, g_locsig_reverb_set)
-XEN_NARGIFY_1(g_move_sound_p_w, g_move_sound_p)
+XEN_NARGIFY_1(g_is_move_sound_w, g_is_move_sound)
 XEN_NARGIFY_3(g_move_sound_w, g_move_sound)
 XEN_ARGIFY_3(g_make_move_sound_w, g_make_move_sound)
 XEN_NARGIFY_0(g_mus_clear_sincs_w, g_mus_clear_sincs)
-XEN_NARGIFY_1(g_src_p_w, g_src_p)
+XEN_NARGIFY_1(g_is_src_w, g_is_src)
 XEN_ARGIFY_3(g_src_w, g_src)
 XEN_ARGIFY_6(g_make_src_w, g_make_src)
-XEN_NARGIFY_1(g_granulate_p_w, g_granulate_p)
+XEN_NARGIFY_1(g_is_granulate_w, g_is_granulate)
 XEN_ARGIFY_3(g_granulate_w, g_granulate)
 XEN_VARGIFY(g_make_granulate_w, g_make_granulate)
 XEN_NARGIFY_1(g_mus_ramp_w, g_mus_ramp)
 XEN_NARGIFY_2(g_mus_set_ramp_w, g_mus_set_ramp)
-XEN_NARGIFY_1(g_convolve_p_w, g_convolve_p)
+XEN_NARGIFY_1(g_is_convolve_w, g_is_convolve)
 XEN_ARGIFY_2(g_convolve_w, g_convolve)
 XEN_VARGIFY(g_make_convolve_w, g_make_convolve)
 XEN_ARGIFY_4(g_convolve_files_w, g_convolve_files)
-XEN_NARGIFY_1(g_phase_vocoder_p_w, g_phase_vocoder_p)
+XEN_NARGIFY_1(g_is_phase_vocoder_w, g_is_phase_vocoder)
 XEN_ARGIFY_5(g_phase_vocoder_w, g_phase_vocoder)
 XEN_VARGIFY(g_make_phase_vocoder_w, g_make_phase_vocoder)
 XEN_NARGIFY_1(g_phase_vocoder_amp_increments_w, g_phase_vocoder_amp_increments)
 XEN_NARGIFY_1(g_phase_vocoder_amps_w, g_phase_vocoder_amps)
 XEN_NARGIFY_1(g_phase_vocoder_freqs_w, g_phase_vocoder_freqs)
-XEN_NARGIFY_1(g_phase_vocoder_phases_w, g_phase_vocoder_phases)
-XEN_NARGIFY_1(g_phase_vocoder_phase_increments_w, g_phase_vocoder_phase_increments)
+XEN_NARGIFY_1(g_is_phase_vocoderhases_w, g_is_phase_vocoderhases)
+XEN_NARGIFY_1(g_is_phase_vocoderhase_increments_w, g_is_phase_vocoderhase_increments)
 XEN_NARGIFY_1(g_mus_hop_w, g_mus_hop)
 XEN_NARGIFY_2(g_mus_set_hop_w, g_mus_set_hop)
 XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 XEN_ARGIFY_4(g_make_ssb_am_w, g_make_ssb_am)
 XEN_ARGIFY_3(g_ssb_am_w, g_ssb_am)
-XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
+XEN_NARGIFY_1(g_is_ssb_am_w, g_is_ssb_am)
 XEN_NARGIFY_0(g_clm_table_size_w, g_clm_table_size)
 XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 XEN_NARGIFY_0(g_clm_default_frequency_w, g_clm_default_frequency)
 XEN_NARGIFY_1(g_set_clm_default_frequency_w, g_set_clm_default_frequency)
-XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
+XEN_NARGIFY_1(g_is_mus_generator_w, g_is_mus_generator)
 XEN_NARGIFY_1(g_mus_frandom_w, g_mus_frandom)
 XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 XEN_ARGIFY_4(g_make_oscil_w, g_make_oscil)
@@ -19872,13 +19928,13 @@ XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 
 XEN_ARGIFY_10(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
 XEN_NARGIFY_2(g_comb_bank_w, g_comb_bank)
-XEN_NARGIFY_1(g_comb_bank_p_w, g_comb_bank_p)
+XEN_NARGIFY_1(g_is_comb_bank_w, g_is_comb_bank)
 XEN_NARGIFY_1(g_make_comb_bank_w, g_make_comb_bank)
 XEN_NARGIFY_2(g_filtered_comb_bank_w, g_filtered_comb_bank)
-XEN_NARGIFY_1(g_filtered_comb_bank_p_w, g_filtered_comb_bank_p)
+XEN_NARGIFY_1(g_is_filtered_comb_bank_w, g_is_filtered_comb_bank)
 XEN_NARGIFY_1(g_make_filtered_comb_bank_w, g_make_filtered_comb_bank)
 XEN_NARGIFY_2(g_all_pass_bank_w, g_all_pass_bank)
-XEN_NARGIFY_1(g_all_pass_bank_p_w, g_all_pass_bank_p)
+XEN_NARGIFY_1(g_is_all_pass_bank_w, g_is_all_pass_bank)
 XEN_NARGIFY_1(g_make_all_pass_bank_w, g_make_all_pass_bank)
 XEN_NARGIFY_1(g_pink_noise_w, g_pink_noise)
 XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
@@ -20109,9 +20165,9 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_xcoeffs,          g_mus_xcoeffs_w,           1, 0, 0, H_mus_xcoeffs);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_ycoeffs,          g_mus_ycoeffs_w,           1, 0, 0, H_mus_ycoeffs);
-  XEN_DEFINE_SAFE_PROCEDURE(S_oscil_p,              g_oscil_p_w,               1, 0, 0, H_oscil_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_oscil,              g_is_oscil_w,               1, 0, 0, H_is_oscil);
   XEN_DEFINE_REAL_PROCEDURE(S_oscil,                g_oscil_w,                 1, 2, 0, H_oscil);
-  XEN_DEFINE_SAFE_PROCEDURE(S_oscil_bank_p,         g_oscil_bank_p_w,          1, 0, 0, H_oscil_bank_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_oscil_bank,         g_is_oscil_bank_w,          1, 0, 0, H_is_oscil_bank);
   XEN_DEFINE_REAL_PROCEDURE(S_oscil_bank,           g_oscil_bank_w,            1, 0, 0, H_oscil_bank);
 
   XEN_DEFINE_PROCEDURE(S_mus_apply,                 g_mus_apply_w,             0, 0, 1, H_mus_apply);
@@ -20132,25 +20188,25 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_all_pass,             g_all_pass_w,              1, 2, 0, H_all_pass);
   XEN_DEFINE_REAL_PROCEDURE(S_moving_average,       g_moving_average_w,        1, 1, 0, H_moving_average);
   XEN_DEFINE_REAL_PROCEDURE(S_moving_max,           g_moving_max_w,            1, 1, 0, H_moving_max);
-  XEN_DEFINE_SAFE_PROCEDURE(S_tap_p,                g_tap_p_w,                 1, 0, 0, H_tap_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_delay_p,              g_delay_p_w,               1, 0, 0, H_delay_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_notch_p,              g_notch_p_w,               1, 0, 0, H_notch_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_comb_p,               g_comb_p_w,                1, 0, 0, H_comb_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_filtered_comb_p,      g_filtered_comb_p_w,       1, 0, 0, H_filtered_comb_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_all_pass_p,           g_all_pass_p_w,            1, 0, 0, H_all_pass_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_moving_average_p,     g_moving_average_p_w,      1, 0, 0, H_moving_average_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_moving_max_p,         g_moving_max_p_w,          1, 0, 0, H_moving_max_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_tap,                g_is_tap_w,                 1, 0, 0, H_is_tap);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_delay,              g_is_delay_w,               1, 0, 0, H_is_delay);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_notch,              g_is_notch_w,               1, 0, 0, H_is_notch);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_comb,               g_is_comb_w,                1, 0, 0, H_is_comb);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_filtered_comb,      g_is_filtered_comb_w,       1, 0, 0, H_is_filtered_comb);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_all_pass,           g_is_all_pass_w,            1, 0, 0, H_is_all_pass);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_moving_average,     g_is_moving_average_w,      1, 0, 0, H_is_moving_average);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_moving_max,         g_is_moving_max_w,          1, 0, 0, H_is_moving_max);
 
   XEN_DEFINE_REAL_PROCEDURE(S_comb_bank,            g_comb_bank_w,             2, 0, 0, H_comb_bank);
-  XEN_DEFINE_SAFE_PROCEDURE(S_comb_bank_p,          g_comb_bank_p_w,           1, 0, 0, H_comb_bank_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_comb_bank,          g_is_comb_bank_w,           1, 0, 0, H_is_comb_bank);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_comb_bank,       g_make_comb_bank_w,        1, 0, 0, H_make_comb_bank);
 
   XEN_DEFINE_REAL_PROCEDURE(S_filtered_comb_bank,   g_filtered_comb_bank_w,    2, 0, 0, H_filtered_comb_bank);
-  XEN_DEFINE_SAFE_PROCEDURE(S_filtered_comb_bank_p, g_filtered_comb_bank_p_w,  1, 0, 0, H_filtered_comb_bank_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_filtered_comb_bank, g_is_filtered_comb_bank_w,  1, 0, 0, H_is_filtered_comb_bank);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_filtered_comb_bank, g_make_filtered_comb_bank_w, 1, 0, 0, H_make_filtered_comb_bank);
 
   XEN_DEFINE_REAL_PROCEDURE(S_all_pass_bank,        g_all_pass_bank_w,         2, 0, 0, H_all_pass_bank);
-  XEN_DEFINE_SAFE_PROCEDURE(S_all_pass_bank_p,      g_all_pass_bank_p_w,       1, 0, 0, H_all_pass_bank_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_all_pass_bank,      g_is_all_pass_bank_w,       1, 0, 0, H_is_all_pass_bank);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_all_pass_bank,   g_make_all_pass_bank_w,    1, 0, 0, H_make_all_pass_bank);
 
   XEN_DEFINE_REAL_PROCEDURE(S_pink_noise,           g_pink_noise_w,            1, 0, 0, H_pink_noise);
@@ -20167,18 +20223,18 @@ static void mus_xen_init(void)
 #endif
   XEN_DEFINE_REAL_PROCEDURE(S_rand,                 g_rand_w,                  1, 1, 0, H_rand);
   XEN_DEFINE_REAL_PROCEDURE(S_rand_interp,          g_rand_interp_w,           1, 1, 0, H_rand_interp);
-  XEN_DEFINE_SAFE_PROCEDURE(S_rand_p,               g_rand_p_w,                1, 0, 0, H_rand_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_rand_interp_p,        g_rand_interp_p_w,         1, 0, 0, H_rand_interp_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_rand,               g_is_rand_w,                1, 0, 0, H_is_rand);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_rand_interp,        g_is_rand_interp_w,         1, 0, 0, H_is_rand_interp);
   XEN_DEFINE_REAL_PROCEDURE(S_mus_random,           g_mus_random_w,            1, 0, 0, H_mus_random);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_mus_rand_seed_w, H_mus_rand_seed, S_setB S_mus_rand_seed, g_mus_set_rand_seed_w, 0, 0, 1, 0);
 
   XEN_DEFINE_REAL_PROCEDURE(S_ncos,                 g_ncos_w,                  1, 1, 0, H_ncos);
-  XEN_DEFINE_SAFE_PROCEDURE(S_ncos_p,               g_ncos_p_w,                1, 0, 0, H_ncos_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_ncos,               g_is_ncos_w,                1, 0, 0, H_is_ncos);
   XEN_DEFINE_REAL_PROCEDURE(S_nsin,                 g_nsin_w,                  1, 1, 0, H_nsin);
-  XEN_DEFINE_SAFE_PROCEDURE(S_nsin_p,               g_nsin_p_w,                1, 0, 0, H_nsin_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_nsin,               g_is_nsin_w,                1, 0, 0, H_is_nsin);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_table_lookup_p,       g_table_lookup_p_w,        1, 0, 0, H_table_lookup_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_table_lookup,       g_is_table_lookup_w,        1, 0, 0, H_is_table_lookup);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_table_lookup,    g_make_table_lookup_w,     0, 0, 1, H_make_table_lookup);
   XEN_DEFINE_REAL_PROCEDURE(S_table_lookup,         g_table_lookup_w,          1, 1, 0, H_table_lookup);
   XEN_DEFINE_SAFE_PROCEDURE(S_partials_to_wave,     g_partials_to_wave_w,      1, 2, 0, H_partials_to_wave);
@@ -20187,49 +20243,49 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_sawtooth_wave,   g_make_sawtooth_wave_w,    0, 6, 0, H_make_sawtooth_wave);
   XEN_DEFINE_REAL_PROCEDURE(S_sawtooth_wave,        g_sawtooth_wave_w,         1, 1, 0, H_sawtooth_wave);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sawtooth_wave_p,      g_sawtooth_wave_p_w,       1, 0, 0, H_sawtooth_wave_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sawtooth_wave,      g_is_sawtooth_wave_w,       1, 0, 0, H_is_sawtooth_wave);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_triangle_wave,   g_make_triangle_wave_w,    0, 6, 0, H_make_triangle_wave);
   XEN_DEFINE_REAL_PROCEDURE(S_triangle_wave,        g_triangle_wave_w,         1, 1, 0, H_triangle_wave);
-  XEN_DEFINE_SAFE_PROCEDURE(S_triangle_wave_p,      g_triangle_wave_p_w,       1, 0, 0, H_triangle_wave_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_triangle_wave,      g_is_triangle_wave_w,       1, 0, 0, H_is_triangle_wave);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_square_wave,     g_make_square_wave_w,      0, 6, 0, H_make_square_wave);
   XEN_DEFINE_REAL_PROCEDURE(S_square_wave,          g_square_wave_w,           1, 1, 0, H_square_wave);
-  XEN_DEFINE_SAFE_PROCEDURE(S_square_wave_p,        g_square_wave_p_w,         1, 0, 0, H_square_wave_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_square_wave,        g_is_square_wave_w,         1, 0, 0, H_is_square_wave);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_pulse_train,     g_make_pulse_train_w,      0, 6, 0, H_make_pulse_train);
   XEN_DEFINE_REAL_PROCEDURE(S_pulse_train,          g_pulse_train_w,           1, 1, 0, H_pulse_train);
-  XEN_DEFINE_SAFE_PROCEDURE(S_pulse_train_p,        g_pulse_train_p_w,         1, 0, 0, H_pulse_train_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_pulse_train,        g_is_pulse_train_w,         1, 0, 0, H_is_pulse_train);
 
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_pulsed_env,      g_make_pulsed_env_w,       3, 0, 0, H_make_pulsed_env);
   XEN_DEFINE_REAL_PROCEDURE(S_pulsed_env,           g_pulsed_env_w,            1, 1, 0, H_pulsed_env);
-  XEN_DEFINE_SAFE_PROCEDURE(S_pulsed_env_p,         g_pulsed_env_p_w,          1, 0, 0, H_pulsed_env_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_pulsed_env,         g_is_pulsed_env_w,          1, 0, 0, H_is_pulsed_env);
 
 
   XEN_DEFINE_REAL_PROCEDURE(S_asymmetric_fm,        g_asymmetric_fm_w,         1, 2, 0, H_asymmetric_fm);
-  XEN_DEFINE_SAFE_PROCEDURE(S_asymmetric_fm_p,      g_asymmetric_fm_p_w,       1, 0, 0, H_asymmetric_fm_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_asymmetric_fm,      g_is_asymmetric_fm_w,       1, 0, 0, H_is_asymmetric_fm);
 
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_one_zero,        g_make_one_zero_w,         0, 4, 0, H_make_one_zero);
   XEN_DEFINE_REAL_PROCEDURE(S_one_zero,             g_one_zero_w,              1, 1, 0, H_one_zero);
-  XEN_DEFINE_SAFE_PROCEDURE(S_one_zero_p,           g_one_zero_p_w,            1, 0, 0, H_one_zero_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_one_zero,           g_is_one_zero_w,            1, 0, 0, H_is_one_zero);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_one_pole,        g_make_one_pole_w,         0, 4, 0, H_make_one_pole);
   XEN_DEFINE_REAL_PROCEDURE(S_one_pole,             g_one_pole_w,              1, 1, 0, H_one_pole);
-  XEN_DEFINE_SAFE_PROCEDURE(S_one_pole_p,           g_one_pole_p_w,            1, 0, 0, H_one_pole_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_one_pole,           g_is_one_pole_w,            1, 0, 0, H_is_one_pole);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_two_zero,        g_make_two_zero_w,         0, 6, 0, H_make_two_zero);
   XEN_DEFINE_REAL_PROCEDURE(S_two_zero,             g_two_zero_w,              1, 1, 0, H_two_zero);
-  XEN_DEFINE_SAFE_PROCEDURE(S_two_zero_p,           g_two_zero_p_w,            1, 0, 0, H_two_zero_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_two_zero,           g_is_two_zero_w,            1, 0, 0, H_is_two_zero);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_two_pole,        g_make_two_pole_w,         0, 6, 0, H_make_two_pole);
   XEN_DEFINE_REAL_PROCEDURE(S_two_pole,             g_two_pole_w,              1, 1, 0, H_two_pole);
-  XEN_DEFINE_SAFE_PROCEDURE(S_two_pole_p,           g_two_pole_p_w,            1, 0, 0, H_two_pole_p)  ;
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_two_pole,           g_is_two_pole_w,            1, 0, 0, H_is_two_pole)  ;
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_wave_train,      g_make_wave_train_w,       0, 0, 1, H_make_wave_train);
   XEN_DEFINE_REAL_PROCEDURE(S_wave_train,           g_wave_train_w,            1, 1, 0, H_wave_train);
-  XEN_DEFINE_SAFE_PROCEDURE(S_wave_train_p,         g_wave_train_p_w,          1, 0, 0, H_wave_train_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_wave_train,         g_is_wave_train_w,          1, 0, 0, H_is_wave_train);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_frame,           g_make_frame_w,            0, 0, 1, H_make_frame);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_frame "!",       g_make_frame_unchecked_w,  0, 0, 1, H_make_frame_unchecked);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame,                g_frame_w,                 0, 0, 1, H_frame);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_frame_p,              g_frame_p_w,               1, 0, 0, H_frame_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_frame,              g_is_frame_w,               1, 0, 0, H_is_frame);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_add,            g_frame_add_w,             2, 1, 0, H_frame_add);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_multiply,       g_frame_multiply_w,        2, 1, 0, H_frame_multiply);
 #if HAVE_SCHEME || HAVE_FORTH
@@ -20244,7 +20300,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_make_mixer,           g_make_mixer_w,            0, 0, 1, H_make_mixer);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_mixer "!",       g_make_mixer_unchecked_w,  0, 0, 1, H_make_mixer_unchecked);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer,                g_mixer_w,                 0, 0, 1, H_mixer);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mixer_p,              g_mixer_p_w,               1, 0, 0, H_mixer_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_mixer,              g_is_mixer_w,               1, 0, 0, H_is_mixer);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_multiply,       g_mixer_multiply_w,        2, 1, 0, H_mixer_multiply);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_add,            g_mixer_add_w,             2, 1, 0, H_mixer_add);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_scalar_mixer,    g_make_scalar_mixer_w,     2, 0, 0, H_make_scalar_mixer);
@@ -20261,19 +20317,19 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_frame,      g_sample_to_frame_w,       2, 1, 0, H_sample_to_frame);
 
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_formant_p,            g_formant_p_w,             1, 0, 0, H_formant_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_formant,            g_is_formant_w,             1, 0, 0, H_is_formant);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_formant,         g_make_formant_w,          0, 4, 0, H_make_formant);
   XEN_DEFINE_REAL_PROCEDURE(S_formant,              g_formant_w,               1, 2, 0, H_formant);
 
   XEN_DEFINE_REAL_PROCEDURE(S_formant_bank,         g_formant_bank_w,          2, 0, 0, H_formant_bank);
-  XEN_DEFINE_SAFE_PROCEDURE(S_formant_bank_p,       g_formant_bank_p_w,        1, 0, 0, H_formant_bank_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_formant_bank,       g_is_formant_bank_w,        1, 0, 0, H_is_formant_bank);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_formant_bank,    g_make_formant_bank_w,     1, 1, 0, H_make_formant_bank);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_firmant_p,            g_firmant_p_w,             1, 0, 0, H_firmant_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_firmant,            g_is_firmant_w,             1, 0, 0, H_is_firmant);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_firmant,         g_make_firmant_w,          0, 4, 0, H_make_firmant);
   XEN_DEFINE_REAL_PROCEDURE(S_firmant,              g_firmant_w,               1, 2, 0, H_firmant);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_one_pole_all_pass_p,  g_one_pole_all_pass_p_w,   1, 0, 0, H_one_pole_all_pass_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_one_pole_all_pass,  g_is_one_pole_all_pass_w,   1, 0, 0, H_is_one_pole_all_pass);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_one_pole_all_pass, g_make_one_pole_all_pass_w, 2, 0, 0, H_make_one_pole_all_pass);
   XEN_DEFINE_REAL_PROCEDURE(S_one_pole_all_pass,    g_one_pole_all_pass_w,     1, 1, 0, H_one_pole_all_pass);
 
@@ -20283,7 +20339,7 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_polyshape,       g_make_polyshape_w,        0, 0, 1, H_make_polyshape);
   XEN_DEFINE_REAL_PROCEDURE(S_polyshape,            g_polyshape_w,             1, 2, 0, H_polyshape);
-  XEN_DEFINE_SAFE_PROCEDURE(S_polyshape_p,          g_polyshape_p_w,           1, 0, 0, H_polyshape_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_polyshape,          g_is_polyshape_w,           1, 0, 0, H_is_polyshape);
   XEN_DEFINE_SAFE_PROCEDURE(S_partials_to_polynomial, g_partials_to_polynomial_w, 1, 1, 0, H_partials_to_polynomial);
   XEN_DEFINE_SAFE_PROCEDURE(S_normalize_partials,   g_normalize_partials_w,    1, 0, 0, H_normalize_partials);
   XEN_DEFINE_REAL_PROCEDURE(S_mus_chebyshev_t_sum,  g_chebyshev_t_sum_w,       2, 0, 0, H_chebyshev_t_sum);
@@ -20291,38 +20347,38 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_mus_chebyshev_tu_sum, g_chebyshev_tu_sum_w,      3, 0, 0, H_chebyshev_tu_sum);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_polywave,        g_make_polywave_w,         0, 0, 1, H_make_polywave);
   XEN_DEFINE_REAL_PROCEDURE(S_polywave,             g_polywave_w,              1, 1, 0, H_polywave);
-  XEN_DEFINE_SAFE_PROCEDURE(S_polywave_p,           g_polywave_p_w,            1, 0, 0, H_polywave_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_polywave,           g_is_polywave_w,            1, 0, 0, H_is_polywave);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_nrxysin,         g_make_nrxysin_w,          0, 0, 1, H_make_nrxysin);
   XEN_DEFINE_REAL_PROCEDURE(S_nrxysin,              g_nrxysin_w,               1, 1, 0, H_nrxysin);
-  XEN_DEFINE_SAFE_PROCEDURE(S_nrxysin_p,            g_nrxysin_p_w,             1, 0, 0, H_nrxysin_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_nrxysin,            g_is_nrxysin_w,             1, 0, 0, H_is_nrxysin);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_nrxycos,         g_make_nrxycos_w,          0, 0, 1, H_make_nrxycos);
   XEN_DEFINE_REAL_PROCEDURE(S_nrxycos,              g_nrxycos_w,               1, 1, 0, H_nrxycos);
-  XEN_DEFINE_SAFE_PROCEDURE(S_nrxycos_p,            g_nrxycos_p_w,             1, 0, 0, H_nrxycos_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_nrxycos,            g_is_nrxycos_w,             1, 0, 0, H_is_nrxycos);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_rxyksin,         g_make_rxyksin_w,          0, 0, 1, H_make_rxyksin);
   XEN_DEFINE_REAL_PROCEDURE(S_rxyksin,              g_rxyksin_w,               1, 1, 0, H_rxyksin);
-  XEN_DEFINE_SAFE_PROCEDURE(S_rxyksin_p,            g_rxyksin_p_w,             1, 0, 0, H_rxyksin_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_rxyksin,            g_is_rxyksin_w,             1, 0, 0, H_is_rxyksin);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_rxykcos,         g_make_rxykcos_w,          0, 0, 1, H_make_rxykcos);
   XEN_DEFINE_REAL_PROCEDURE(S_rxykcos,              g_rxykcos_w,               1, 1, 0, H_rxykcos);
-  XEN_DEFINE_SAFE_PROCEDURE(S_rxykcos_p,            g_rxykcos_p_w,             1, 0, 0, H_rxykcos_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_rxykcos,            g_is_rxykcos_w,             1, 0, 0, H_is_rxykcos);
 
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_filter,          g_make_filter_w,           0, 6, 0, H_make_filter);
   XEN_DEFINE_REAL_PROCEDURE(S_filter,               g_filter_w,                2, 0, 0, H_filter);
-  XEN_DEFINE_SAFE_PROCEDURE(S_filter_p,             g_filter_p_w,              1, 0, 0, H_filter_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_filter,             g_is_filter_w,              1, 0, 0, H_is_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_fir_coeffs,      g_make_fir_coeffs_w,       2, 0, 0, H_make_fir_coeffs);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_fir_filter,      g_make_fir_filter_w,       0, 4, 0, H_make_fir_filter);
   XEN_DEFINE_REAL_PROCEDURE(S_fir_filter,           g_fir_filter_w,            2, 0, 0, H_fir_filter);
-  XEN_DEFINE_SAFE_PROCEDURE(S_fir_filter_p,         g_fir_filter_p_w,          1, 0, 0, H_fir_filter_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_fir_filter,         g_is_fir_filter_w,          1, 0, 0, H_is_fir_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_iir_filter,      g_make_iir_filter_w,       0, 4, 0, H_make_iir_filter);
   XEN_DEFINE_REAL_PROCEDURE(S_iir_filter,           g_iir_filter_w,            2, 0, 0, H_iir_filter);
-  XEN_DEFINE_SAFE_PROCEDURE(S_iir_filter_p,         g_iir_filter_p_w,          1, 0, 0, H_iir_filter_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_iir_filter,         g_is_iir_filter_w,          1, 0, 0, H_is_iir_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_order,            g_mus_order_w,             1, 0, 0, H_mus_order);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_type,             g_mus_type_w,              1, 0, 0, H_mus_type);
 
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_env_p,                g_env_p_w,                 1, 0, 0, H_env_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_env,                g_is_env_w,                 1, 0, 0, H_is_env);
   XEN_DEFINE_REAL_PROCEDURE(S_env,                  g_env_w,                   1, 0, 0, H_env);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_env,             g_make_env_w,              0, 0, 1, H_make_env);
   XEN_DEFINE_REAL_PROCEDURE(S_env_interp,           g_env_interp_w,            2, 0, 0, H_env_interp);
@@ -20330,7 +20386,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_env_any,                   g_env_any_w,               2, 0, 0, H_env_any);
 
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_locsig_p,             g_locsig_p_w,              1, 0, 0, H_locsig_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_locsig,             g_is_locsig_w,              1, 0, 0, H_is_locsig);
   XEN_DEFINE_SAFE_PROCEDURE(S_locsig,               g_locsig_w,                3, 0, 0, H_locsig);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_locsig,          g_make_locsig_w,           0, 0, 1, H_make_locsig);
   XEN_DEFINE_SAFE_PROCEDURE(S_move_locsig,          g_move_locsig_w,           3, 0, 0, H_move_locsig);
@@ -20358,23 +20414,23 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_locsig_reverb_set,    g_locsig_reverb_set_w,     3, 0, 0, H_locsig_reverb_set);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type,   g_locsig_type_w, H_locsig_type, S_setB S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_move_sound_p,         g_move_sound_p_w,          1, 0, 0, H_move_sound_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_move_sound,         g_is_move_sound_w,          1, 0, 0, H_is_move_sound);
   XEN_DEFINE_SAFE_PROCEDURE(S_move_sound,           g_move_sound_w,            3, 0, 0, H_move_sound);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_move_sound,      g_make_move_sound_w,       1, 2, 0, H_make_move_sound);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_file_to_sample_p,     g_file_to_sample_p_w,      1, 0, 0, H_file_to_sample_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_file_to_sample,     g_is_file_to_sample_w,      1, 0, 0, H_is_file_to_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_file_to_sample,  g_make_file_to_sample_w,   1, 1, 0, H_make_file_to_sample);
   XEN_DEFINE_REAL_PROCEDURE(S_file_to_sample,       g_file_to_sample_w,        2, 1, 0, H_file_to_sample);
-  XEN_DEFINE_SAFE_PROCEDURE(S_file_to_frame_p,      g_file_to_frame_p_w,       1, 0, 0, H_file_to_frame_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_file_to_frame,      g_is_file_to_frame_w,       1, 0, 0, H_is_file_to_frame);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_file_to_frame,   g_make_file_to_frame_w,    1, 1, 0, H_make_file_to_frame);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_to_frame,        g_file_to_frame_w,         2, 1, 0, H_file_to_frame);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_file_p,     g_sample_to_file_p_w,      1, 0, 0, H_sample_to_file_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sample_to_file,     g_is_sample_to_file_w,      1, 0, 0, H_is_sample_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_sample_to_file,  g_make_sample_to_file_w,   1, 4, 0, H_make_sample_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_continue_sample_to_file, g_continue_sample_to_file_w, 1, 0, 0, H_continue_sample_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_continue_frame_to_file, g_continue_frame_to_file_w, 1, 0, 0, H_continue_frame_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_file,       g_sample_to_file_w,        4, 0, 0, H_sample_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_file_add,   g_sample_to_file_add_w,    2, 0, 0, H_sample_to_file_add);
-  XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_file_p,      g_frame_to_file_p_w,       1, 0, 0, H_frame_to_file_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_frame_to_file,      g_is_frame_to_file_w,       1, 0, 0, H_is_frame_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_file,        g_frame_to_file_w,         3, 0, 0, H_frame_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_frame_to_file,   g_make_frame_to_file_w,    1, 4, 0, H_make_frame_to_file);
 #if HAVE_SCHEME
@@ -20387,8 +20443,8 @@ static void mus_xen_init(void)
   s7_eval_c_string(s7, "(define float-vector->file? frame->file?)");
   s7_eval_c_string(s7, "(define continue-float-vector->file continue-frame->file)");
 #endif
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_input_p,          g_input_p_w,               1, 0, 0, H_mus_input_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_output_p,         g_output_p_w,              1, 0, 0, H_mus_output_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_mus_input,          g_input_p_w,               1, 0, 0, H_is_mus_input);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_mus_output,         g_output_p_w,              1, 0, 0, H_is_mus_output);
   XEN_DEFINE_REAL_PROCEDURE(S_in_any,               g_in_any_w,                3, 0, 0, H_in_any);
   XEN_DEFINE_REAL_PROCEDURE(S_ina,                  g_ina_w,                   2, 0, 0, H_ina);  
   XEN_DEFINE_REAL_PROCEDURE(S_inb,                  g_inb_w,                   2, 0, 0, H_inb);
@@ -20403,7 +20459,7 @@ static void mus_xen_init(void)
 				   S_setB S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0);
 
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_readin_p,             g_readin_p_w,              1, 0, 0, H_readin_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_readin,             g_is_readin_w,              1, 0, 0, H_is_readin);
   XEN_DEFINE_REAL_PROCEDURE(S_readin,               g_readin_w,                1, 0, 0, H_readin);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_readin,          g_make_readin_w,           0, 0, 1, H_make_readin);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_channel,          g_mus_channel_w,           1, 0, 0, H_mus_channel);
@@ -20412,7 +20468,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_location,  g_mus_location_w, H_mus_location, S_setB S_mus_location, g_mus_set_location_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_increment, g_mus_increment_w, H_mus_increment, S_setB S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_granulate_p,          g_granulate_p_w,           1, 0, 0, H_granulate_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_granulate,          g_is_granulate_w,           1, 0, 0, H_is_granulate);
   XEN_DEFINE_REAL_PROCEDURE(S_granulate,            g_granulate_w,             1, 2, 0, H_granulate);
   XEN_DEFINE_PROCEDURE(S_make_granulate,            g_make_granulate_w,        0, 0, 1, H_make_granulate);
 
@@ -20420,24 +20476,24 @@ static void mus_xen_init(void)
 
 
   XEN_DEFINE_SAFE_PROCEDURE(S_clear_sincs,          g_mus_clear_sincs_w,       0, 0, 0, "clears out any sinc tables");
-  XEN_DEFINE_SAFE_PROCEDURE(S_src_p,                g_src_p_w,                 1, 0, 0, H_src_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_src,                g_is_src_w,                 1, 0, 0, H_is_src);
   XEN_DEFINE_REAL_PROCEDURE(S_src,                  g_src_w,                   1, 2, 0, H_src); /* live dangerously? */
   XEN_DEFINE_PROCEDURE(S_make_src,                  g_make_src_w,              0, 6, 0, H_make_src);
 
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_convolve_p,           g_convolve_p_w,            1, 0, 0, H_convolve_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_convolve,           g_is_convolve_w,            1, 0, 0, H_is_convolve);
   XEN_DEFINE_REAL_PROCEDURE(S_convolve,             g_convolve_w,              1, 1, 0, H_convolve_gen);
   XEN_DEFINE_PROCEDURE(S_make_convolve,             g_make_convolve_w,         0, 0, 1, H_make_convolve);
   XEN_DEFINE_SAFE_PROCEDURE(S_convolve_files,       g_convolve_files_w,        2, 2, 0, H_convolve_files);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_p,      g_phase_vocoder_p_w,       1, 0, 0, H_phase_vocoder_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_phase_vocoder,      g_is_phase_vocoder_w,       1, 0, 0, H_is_phase_vocoder);
   XEN_DEFINE_REAL_PROCEDURE(S_phase_vocoder,        g_phase_vocoder_w,         1, 4, 0, H_phase_vocoder);
   XEN_DEFINE_PROCEDURE(S_make_phase_vocoder,        g_make_phase_vocoder_w,    0, 0, 1, H_make_phase_vocoder);
   XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_amp_increments,  g_phase_vocoder_amp_increments_w, 1, 0, 0, H_phase_vocoder_amp_increments);
   XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_amps,   g_phase_vocoder_amps_w,    1, 0, 0, H_phase_vocoder_amps);
   XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_freqs,  g_phase_vocoder_freqs_w,   1, 0, 0, H_phase_vocoder_freqs);
-  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_phases, g_phase_vocoder_phases_w,  1, 0, 0, H_phase_vocoder_phases);
-  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_phase_increments, g_phase_vocoder_phase_increments_w, 1, 0, 0, H_phase_vocoder_phase_increments);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_phase_vocoderhases, g_is_phase_vocoderhases_w,  1, 0, 0, H_is_phase_vocoderhases);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_phase_vocoderhase_increments, g_is_phase_vocoderhase_increments_w, 1, 0, 0, H_is_phase_vocoderhase_increments);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_mus_hop_w, H_mus_hop, S_setB S_mus_hop, g_mus_set_hop_w,  1, 0, 2, 0);
 
@@ -20446,9 +20502,9 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_ssb_am,          g_make_ssb_am_w,           0, 4, 0, H_make_ssb_am); 
   XEN_DEFINE_REAL_PROCEDURE(S_ssb_am,               g_ssb_am_w,                1, 2, 0, H_ssb_am);
-  XEN_DEFINE_SAFE_PROCEDURE(S_ssb_am_p,             g_ssb_am_p_w,              1, 0, 0, H_ssb_am_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_ssb_am,             g_is_ssb_am_w,              1, 0, 0, H_is_ssb_am);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_generator_p,      g_mus_generator_p_w,       1, 0, 0, H_mus_generator_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_mus_generator,      g_is_mus_generator_w,       1, 0, 0, H_is_mus_generator);
 
   XEN_DEFINE_VARIABLE(S_output, clm_output, XEN_FALSE);
   XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
