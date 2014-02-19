@@ -2359,7 +2359,7 @@ XEN snd_no_such_sound_error(const char *caller, XEN n)
 
 static XEN g_sound_p(XEN snd)
 {
-  #define H_sound_p "(" S_sound_p " snd): " PROC_TRUE " if 'snd' (a sound object or an integer) is an active (accessible) sound"
+  #define H_sound_p "(" S_is_sound " snd): " PROC_TRUE " if 'snd' (a sound object or an integer) is an active (accessible) sound"
 
   if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
     {
@@ -2812,7 +2812,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  ival = XEN_TO_C_INT(val);
-	  if (mus_data_format_p(ival))
+	  if (mus_is_data_format(ival))
 	    {
 	      chan_info *cp;
 	      int old_format;
@@ -2841,7 +2841,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  ival = XEN_TO_C_INT(val);
-	  if (mus_header_type_p(ival))
+	  if (mus_is_header_type(ival))
 	    {
 	      mus_sound_set_header_type(sp->filename, ival);
 	      snd_update_within_xen(sp, caller); 
@@ -3545,15 +3545,15 @@ WITH_TWO_SETTER_ARGS(g_set_read_only_reversed, g_set_read_only)
 
 static XEN g_contrast_control_p(XEN snd) 
 {
-  #define H_contrast_control_p "(" S_contrast_control_p " :optional snd): snd's control panel constrast button state"
-  return(sound_get(snd, SP_CONTRASTING, S_contrast_control_p));
+  #define H_contrast_control_p "(" S_is_contrast_control " :optional snd): snd's control panel constrast button state"
+  return(sound_get(snd, SP_CONTRASTING, S_is_contrast_control));
 }
 
 
 static XEN g_set_contrast_control_p(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_contrast_control_p, "a boolean");
-  return(sound_set(snd, on, SP_CONTRASTING, S_setB S_contrast_control_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_contrast_control, "a boolean");
+  return(sound_set(snd, on, SP_CONTRASTING, S_setB S_is_contrast_control));
 }
 
 WITH_TWO_SETTER_ARGS(g_set_contrast_control_p_reversed, g_set_contrast_control_p)
@@ -3561,15 +3561,15 @@ WITH_TWO_SETTER_ARGS(g_set_contrast_control_p_reversed, g_set_contrast_control_p
 
 static XEN g_expand_control_p(XEN snd) 
 {
-  #define H_expand_control_p "(" S_expand_control_p " :optional snd): snd's control panel expand button state"
-  return(sound_get(snd, SP_EXPANDING, S_expand_control_p));
+  #define H_expand_control_p "(" S_is_expand_control " :optional snd): snd's control panel expand button state"
+  return(sound_get(snd, SP_EXPANDING, S_is_expand_control));
 }
 
 
 static XEN g_set_expand_control_p(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_expand_control_p, "a boolean");
-  return(sound_set(snd, on, SP_EXPANDING, S_setB S_expand_control_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_expand_control, "a boolean");
+  return(sound_set(snd, on, SP_EXPANDING, S_setB S_is_expand_control));
 }
 
 WITH_TWO_SETTER_ARGS(g_set_expand_control_p_reversed, g_set_expand_control_p)
@@ -3577,15 +3577,15 @@ WITH_TWO_SETTER_ARGS(g_set_expand_control_p_reversed, g_set_expand_control_p)
 
 static XEN g_reverb_control_p(XEN snd) 
 {
-  #define H_reverb_control_p "(" S_reverb_control_p " :optional snd): snd's control panel reverb button state"
-  return(sound_get(snd, SP_REVERBING, S_reverb_control_p));
+  #define H_reverb_control_p "(" S_is_reverb_control " :optional snd): snd's control panel reverb button state"
+  return(sound_get(snd, SP_REVERBING, S_is_reverb_control));
 }
 
 
 static XEN g_set_reverb_control_p(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_reverb_control_p, "a boolean");
-  return(sound_set(snd, on, SP_REVERBING, S_setB S_reverb_control_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_reverb_control, "a boolean");
+  return(sound_set(snd, on, SP_REVERBING, S_setB S_is_reverb_control));
 }
 
 WITH_TWO_SETTER_ARGS(g_set_reverb_control_p_reversed, g_set_reverb_control_p)
@@ -3593,15 +3593,15 @@ WITH_TWO_SETTER_ARGS(g_set_reverb_control_p_reversed, g_set_reverb_control_p)
 
 static XEN g_filter_control_p(XEN snd) 
 {
-  #define H_filter_control_p "(" S_filter_control_p " :optional snd): snd's control panel filter button state"
-  return(sound_get(snd, SP_FILTERING, S_filter_control_p));
+  #define H_filter_control_p "(" S_is_filter_control " :optional snd): snd's control panel filter button state"
+  return(sound_get(snd, SP_FILTERING, S_is_filter_control));
 }
 
 
 static XEN g_set_filter_control_p(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_filter_control_p, "a boolean");
-  return(sound_set(snd, on, SP_FILTERING, S_setB S_filter_control_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_filter_control, "a boolean");
+  return(sound_set(snd, on, SP_FILTERING, S_setB S_is_filter_control));
 }
 
 WITH_TWO_SETTER_ARGS(g_set_filter_control_p_reversed, g_set_filter_control_p)
@@ -4319,17 +4319,17 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
       len = mus_optkey_to_mus_long_t(keys[6], S_new_sound, orig_arg[6], len);
     }
 
-  if (!(mus_header_type_p(ht)))
+  if (!(mus_is_header_type(ht)))
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[1], keys[1], "invalid header type");
 
-  if (!(mus_data_format_p(df)))
+  if (!(mus_is_data_format(df)))
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[2], keys[2], "invalid data format");
 
   if (!(mus_header_writable(ht, df)))
     XEN_ERROR(BAD_HEADER,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_new_sound ": can't write ~A data to a ~A header"),
-			 keys[2], 
-			 keys[1]));
+			 C_TO_XEN_STRING(mus_data_format_short_name(df)),
+			 C_TO_XEN_STRING(mus_header_type_name(ht))));
 
   if (sr <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[3], keys[3], "srate <= 0?");
@@ -5903,7 +5903,7 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_header_type,   g_header_type_w,   H_header_type,   S_setB S_header_type,   g_set_header_type_w,    0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_comment,       g_comment_w,       H_comment,       S_setB S_comment,       g_set_comment_w,        0, 1, 1, 1);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_p,               g_sound_p_w,          1, 0, 0, H_sound_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sound,               g_sound_p_w,          1, 0, 0, H_sound_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_find_sound,            g_find_sound_w,       1, 1, 0, H_find_sound);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_name,             g_file_name_w,        0, 1, 0, H_file_name);
   XEN_DEFINE_SAFE_PROCEDURE(S_short_file_name,       g_short_file_name_w,  0, 1, 0, H_short_file_name);
@@ -5943,10 +5943,10 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_property, g_sound_property_w, H_sound_property, S_setB S_sound_property, g_set_sound_property_w, 1, 1, 2, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channel_style, g_channel_style_w, H_channel_style, S_setB S_channel_style, g_set_channel_style_w, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_read_only, g_read_only_w, H_read_only, S_setB S_read_only, g_set_read_only_w, 0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_expand_control_p, g_expand_control_p_w, H_expand_control_p, S_setB S_expand_control_p, g_set_expand_control_p_w, 0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_contrast_control_p, g_contrast_control_p_w, H_contrast_control_p, S_setB S_contrast_control_p, g_set_contrast_control_p_w, 0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_p, g_reverb_control_p_w, H_reverb_control_p, S_setB S_reverb_control_p, g_set_reverb_control_p_w, 0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_p, g_filter_control_p_w, H_filter_control_p, S_setB S_filter_control_p, g_set_filter_control_p_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_expand_control, g_expand_control_p_w, H_expand_control_p, S_setB S_is_expand_control, g_set_expand_control_p_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_contrast_control, g_contrast_control_p_w, H_contrast_control_p, S_setB S_is_contrast_control, g_set_contrast_control_p_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_reverb_control, g_reverb_control_p_w, H_reverb_control_p, S_setB S_is_reverb_control, g_set_reverb_control_p_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_filter_control, g_filter_control_p_w, H_filter_control_p, S_setB S_is_filter_control, g_set_filter_control_p_w, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB, S_setB S_filter_control_in_dB, g_set_filter_control_in_dB_w, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_in_hz, g_filter_control_in_hz_w, H_filter_control_in_hz, S_setB S_filter_control_in_hz, g_set_filter_control_in_hz_w, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_order, g_filter_control_order_w, H_filter_control_order, S_setB S_filter_control_order, g_set_filter_control_order_w, 0, 1, 1, 1);

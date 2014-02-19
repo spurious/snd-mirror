@@ -2232,7 +2232,7 @@ static XEN g_transform_to_integer(XEN n)
 
 static XEN g_transform_p(XEN type)
 {
-  #define H_transform_p "(" S_transform_p " obj): " PROC_TRUE " if 'obj' is a transform object."
+  #define H_transform_p "(" S_is_transform " obj): " PROC_TRUE " if 'obj' is a transform object."
   return(C_TO_XEN_BOOLEAN(XEN_TRANSFORM_P(type) && 
 			  transform_p(XEN_TRANSFORM_TO_C_INT(type))));
 }
@@ -2480,7 +2480,7 @@ of a moving mark:\n\
   XEN_DEFINE_PROCEDURE(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
   XEN_DEFINE_PROCEDURE(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
   XEN_DEFINE_PROCEDURE(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
-  XEN_DEFINE_PROCEDURE(S_transform_p,          g_transform_p_w,      1, 0, 0, H_transform_p);
+  XEN_DEFINE_PROCEDURE(S_is_transform,          g_transform_p_w,      1, 0, 0, H_transform_p);
   XEN_DEFINE_PROCEDURE(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
   XEN_DEFINE_PROCEDURE("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
 

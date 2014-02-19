@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 
   afd = -1;
 
-  if (!(mus_header_type_p(mus_sound_header_type(name))))
+  if (!(mus_is_header_type(mus_sound_header_type(name))))
     {
       fprintf(stderr, "can't play %s (header type: %s?)\n",
 	      name,
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
       exit(0);
     }
 
-  if (!(mus_data_format_p(mus_sound_data_format(name))))
+  if (!(mus_is_data_format(mus_sound_data_format(name))))
     {
       fprintf(stderr, "can't play %s (data format: %s (%s)?)\n",
 	      name,

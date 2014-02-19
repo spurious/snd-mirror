@@ -588,7 +588,7 @@ MUS_EXPORT void mus_clear_sinc_tables(void);
 MUS_EXPORT void *mus_environ(mus_any *gen);
 MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 
-#if (!CLM_DISABLE_DEPRECATED)
+#if (!DISABLE_DEPRECATED)
 #define mus_fft_window_p(W) mus_is_fft_window(W)
 #define mus_interp_type_p(Gen) mus_is_interp_type(Gen)
 #define mus_oscil_p(Gen) mus_is_oscil(Gen)

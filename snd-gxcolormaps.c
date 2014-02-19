@@ -1142,7 +1142,7 @@ static XEN g_colormap_name(XEN col)
 
 static XEN g_colormap_p(XEN obj)
 {
-  #define H_colormap_p "(" S_colormap_p " obj) -> " PROC_TRUE " if 'obj' is a colormap."
+  #define H_colormap_p "(" S_is_colormap " obj) -> " PROC_TRUE " if 'obj' is a colormap."
   return(C_TO_XEN_BOOLEAN(XEN_COLORMAP_P(obj) && 
 			  is_colormap(XEN_COLORMAP_TO_C_INT(obj))));
 }
@@ -1268,7 +1268,7 @@ void g_init_gxcolormaps(void)
   XEN_DEFINE_VARIABLE("phases-colormap",          colormap_temp[15], C_INT_TO_XEN_COLORMAP(15));
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_colormap_p, g_colormap_p_w,           1, 0, 0, H_colormap_p);
+  XEN_DEFINE_PROCEDURE(S_is_colormap, g_colormap_p_w,           1, 0, 0, H_colormap_p);
   XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);
   XEN_DEFINE_PROCEDURE(S_add_colormap, g_add_colormap_w,       2, 0, 0, H_add_colormap);
   XEN_DEFINE_PROCEDURE(S_colormap_name, g_colormap_name_w,     1, 0, 0, H_colormap_name);

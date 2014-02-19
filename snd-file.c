@@ -79,7 +79,7 @@ time_t file_write_date(const char *filename)
 
 const char *short_data_format_name(int sndlib_format, const char *filename)
 {
-  if (mus_data_format_p(sndlib_format))
+  if (mus_is_data_format(sndlib_format))
     return(mus_data_format_short_name(sndlib_format));
   else return(mus_header_original_format_name(mus_sound_original_format(filename),
 					      mus_sound_header_type(filename)));
@@ -705,7 +705,7 @@ static file_info *make_file_info_1(const char *fullname)
       hdr->format = mus_sound_data_format(fullname);
       original_format = hdr->format;
     }
-  if (!(mus_data_format_p(hdr->format))) hdr->format = fallback_format;
+  if (!(mus_is_data_format(hdr->format))) hdr->format = fallback_format;
   if (hdr->srate <= 0) {if (fallback_srate > 0) hdr->srate = fallback_srate; else hdr->srate = 1;}
   if (hdr->chans <= 0) {if (fallback_chans > 0) hdr->chans = fallback_chans; else hdr->chans = 1;}
   hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
@@ -988,7 +988,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	  return(translate_file(fullname, type));
 	}
 	  
-      if (mus_header_type_p(type)) 
+      if (mus_is_header_type(type)) 
 	{ /* at least the header type seems plausible */
 	  /* check header fields */
 	  int sr = 0, ch = 0;
@@ -1006,7 +1006,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	  else
 	    {
 	      format = mus_sound_data_format(fullname);
-	      if (mus_data_format_p(format))
+	      if (mus_is_data_format(format))
 		return(make_file_info_1(fullname));
 	      return(translate_file(fullname, type));
 	    }
@@ -2738,7 +2738,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
   /* data format */
-  if (!(mus_data_format_p(original_format)))
+  if (!(mus_is_data_format(original_format)))
     {
       char *format_info;
       if (original_format != MUS_UNKNOWN)
@@ -3373,8 +3373,8 @@ static XEN g_new_sound_dialog(XEN managed)
 
 static XEN g_sound_file_p(XEN name)
 {
-  #define H_sound_file_p "(" S_sound_file_p " name): " PROC_TRUE " if name has a known sound file extension"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_sound_file_p, "a filename");   
+  #define H_sound_file_p "(" S_is_sound_file " name): " PROC_TRUE " if name has a known sound file extension"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_is_sound_file, "a filename");   
   return(C_TO_XEN_BOOLEAN(sound_file_p(XEN_TO_C_STRING(name))));
 }
 
@@ -3484,7 +3484,7 @@ are available, but not all are compatible with all header types"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_default_output_data_format, "an integer"); 
 
   format = XEN_TO_C_INT(val);
-  if (mus_data_format_p(format))
+  if (mus_is_data_format(format))
     {set_default_output_data_format(format);}
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_data_format, 1, val, "unknown data format");
   return(C_TO_XEN_INT(default_output_data_format(ss)));
@@ -3809,7 +3809,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
 				   S_setB S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_file_p,                     g_sound_file_p_w,                     1, 0, 0, H_sound_file_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sound_file,                     g_sound_file_p_w,                     1, 0, 0, H_sound_file_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
   XEN_DEFINE_SAFE_PROCEDURE(S_soundfont_info,                   g_soundfont_info_w,                   0, 1, 0, H_soundfont_info);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_files_in_directory,         g_sound_files_in_directory_w,         0, 1, 0, H_sound_files_in_directory);

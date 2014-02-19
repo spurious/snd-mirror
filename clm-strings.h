@@ -348,7 +348,7 @@
 #define S_is_wave_train               "wave-train?"
 #define S_welch_window               "welch-window"
 
-#if (CLM_DISABLE_DEPRECATED)
+#if (DISABLE_DEPRECATED)
 #define S_all_pass_p S_is_all_pass
 #define S_all_pass_bank_p S_is_all_pass_bank
 #define S_asymmetric_fm_p S_is_asymmetric_fm

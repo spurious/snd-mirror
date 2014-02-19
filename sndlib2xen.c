@@ -819,7 +819,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
   XEN_ASSERT_TYPE((XEN_STRING_P(comment) || (XEN_NOT_BOUND_P(comment))), comment, 6, S_mus_sound_open_output, "a string");
 
   df = (XEN_INTEGER_P(data_format)) ? XEN_TO_C_INT(data_format) : (int)MUS_OUT_FORMAT;
-  if (mus_data_format_p(df))
+  if (mus_is_data_format(df))
     {
       int ht;
 #if MUS_LITTLE_ENDIAN
@@ -828,7 +828,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
       ht = (XEN_INTEGER_P(header_type)) ? XEN_TO_C_INT(header_type) : (int)MUS_NEXT;
 #endif
       /* now check that data format and header type are ok together */
-      if (mus_header_type_p(ht))
+      if (mus_is_header_type(ht))
 	{
 	  int chns;
 
@@ -929,7 +929,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
       if (df == MUS_ERROR)
 	df = MUS_OUT_FORMAT;
     }
-  if (mus_data_format_p(df))
+  if (mus_is_data_format(df))
     {
       int ht;
       if (XEN_INTEGER_P(header_type))
@@ -944,7 +944,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	    ht = MUS_NEXT;
 #endif
 	}
-      if (mus_header_type_p(ht))
+      if (mus_is_header_type(ht))
 	{
 	  int chns;
 	  if (XEN_INTEGER_P(chans))
@@ -1235,7 +1235,7 @@ return the audio line number:\n  " audio_open_example
   ifmt = XEN_TO_C_INT(format);
   isize = XEN_TO_C_INT(size);
 
-  if (!(mus_data_format_p(ifmt)))
+  if (!(mus_is_data_format(ifmt)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 4, format, "invalid data format");
   if (isize < 0)
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 5, size, "size < 0?");
@@ -1269,7 +1269,7 @@ open the audio device ready for input with the indicated attributes; return the 
   ifmt = XEN_TO_C_INT(format);
   isize = XEN_TO_C_INT(size);
 
-  if (!(mus_data_format_p(ifmt)))
+  if (!(mus_is_data_format(ifmt)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 4, format, "invalid data format");
   if (isize < 0)
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 5, size, "size < 0?");

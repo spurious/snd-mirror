@@ -3543,7 +3543,7 @@ static mus_float_t polyw_first_4(mus_any *ptr, mus_float_t fm)
 
   cx = cos(x);
   x2 = 2.0 * cx;
-  b = x2 * tn[3] - tn[2];
+  b = x2 * tn[3] + tn[2];  /* was -tn[2]! 19-Feb-14 */
   return((x2 * b - tn[3] + tn[1]) * cx - b);
 }
 

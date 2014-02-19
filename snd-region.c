@@ -1624,7 +1624,7 @@ static XEN g_set_max_regions(XEN n)
 
 static XEN g_region_p(XEN n)
 {
-  #define H_region_p "(" S_region_p " reg): " PROC_TRUE " if region is active"
+  #define H_region_p "(" S_is_region " reg): " PROC_TRUE " if region is active"
   return(C_TO_XEN_BOOLEAN((XEN_REGION_P(n)) && (region_ok(XEN_REGION_TO_C_INT(n)))));
 }
 
@@ -2138,7 +2138,7 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_mix_region,             g_mix_region_w,             1, 4, 0, H_mix_region);
   XEN_DEFINE_SAFE_PROCEDURE(S_region_sample,          g_region_sample_w,          2, 1, 0, H_region_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_region_to_vct,          g_region_to_vct_w,          1, 4, 0, H_region_to_vct);
-  XEN_DEFINE_SAFE_PROCEDURE(S_region_p,               g_region_p_w,               1, 0, 0, H_region_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_region,               g_region_p_w,               1, 0, 0, H_region_p);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_integer_to_region,      g_integer_to_region_w,      1, 0, 0, H_integer_to_region);
   XEN_DEFINE_SAFE_PROCEDURE(S_region_to_integer,      g_region_to_integer_w,      1, 0, 0, H_region_to_integer);

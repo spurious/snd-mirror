@@ -7218,14 +7218,14 @@ WITH_THREE_SETTER_ARGS(g_set_edit_position_reversed, g_set_edit_position)
 
 static XEN g_transform_graph_p(XEN snd, XEN chn_n) 
 {
-  #define H_transform_graph_p "(" S_transform_graph_p " :optional snd chn): " PROC_TRUE " if fft display is active in snd's channel chn"
-  return(channel_get(snd, chn_n, CP_GRAPH_TRANSFORM_P, S_transform_graph_p));
+  #define H_transform_graph_p "(" S_is_transform_graph " :optional snd chn): " PROC_TRUE " if fft display is active in snd's channel chn"
+  return(channel_get(snd, chn_n, CP_GRAPH_TRANSFORM_P, S_is_transform_graph));
 }
 
 static XEN g_set_transform_graph_p(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_transform_graph_p, "a boolean");
-  return(channel_set(snd, chn_n, on, CP_GRAPH_TRANSFORM_P, S_setB S_transform_graph_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_transform_graph, "a boolean");
+  return(channel_set(snd, chn_n, on, CP_GRAPH_TRANSFORM_P, S_setB S_is_transform_graph));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_transform_graph_p_reversed, g_set_transform_graph_p)
@@ -7234,14 +7234,14 @@ WITH_THREE_SETTER_ARGS(g_set_transform_graph_p_reversed, g_set_transform_graph_p
 
 static XEN g_time_graph_p(XEN snd, XEN chn_n) 
 {
-  #define H_time_graph_p "(" S_time_graph_p " :optional snd chn): " PROC_TRUE " if time domain display is active in snd's channel chn"
-  return(channel_get(snd, chn_n, CP_GRAPH_TIME_P, S_time_graph_p));
+  #define H_time_graph_p "(" S_is_time_graph " :optional snd chn): " PROC_TRUE " if time domain display is active in snd's channel chn"
+  return(channel_get(snd, chn_n, CP_GRAPH_TIME_P, S_is_time_graph));
 }
 
 static XEN g_set_time_graph_p(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_time_graph_p, "a boolean");
-  return(channel_set(snd, chn_n, on, CP_GRAPH_TIME_P, S_setB S_time_graph_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_time_graph, "a boolean");
+  return(channel_set(snd, chn_n, on, CP_GRAPH_TIME_P, S_setB S_is_time_graph));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_time_graph_p_reversed, g_set_time_graph_p)
@@ -7250,14 +7250,14 @@ WITH_THREE_SETTER_ARGS(g_set_time_graph_p_reversed, g_set_time_graph_p)
 
 static XEN g_lisp_graph_p(XEN snd, XEN chn_n) 
 {
-  #define H_lisp_graph_p "(" S_lisp_graph_p " :optional snd chn): " PROC_TRUE " if lisp-generated data display is active in snd's channel chn"
-  return(channel_get(snd, chn_n, CP_GRAPH_LISP_P, S_lisp_graph_p));
+  #define H_lisp_graph_p "(" S_is_lisp_graph " :optional snd chn): " PROC_TRUE " if lisp-generated data display is active in snd's channel chn"
+  return(channel_get(snd, chn_n, CP_GRAPH_LISP_P, S_is_lisp_graph));
 }
 
 static XEN g_set_lisp_graph_p(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_lisp_graph_p, "a boolean");
-  return(channel_set(snd, chn_n, on, CP_GRAPH_LISP_P, S_setB S_lisp_graph_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_lisp_graph, "a boolean");
+  return(channel_set(snd, chn_n, on, CP_GRAPH_LISP_P, S_setB S_is_lisp_graph));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_lisp_graph_p_reversed, g_set_lisp_graph_p)
@@ -9529,10 +9529,10 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
 
 static XEN g_variable_graph_p(XEN index)
 {
-  #define H_variable_graph_p "(" S_variable_graph_p " :optional snd): " PROC_TRUE " if snd is a variable graph (from " S_make_variable_graph ")."
+  #define H_variable_graph_p "(" S_is_variable_graph " :optional snd): " PROC_TRUE " if snd is a variable graph (from " S_make_variable_graph ")."
   snd_info *sp;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index) || XEN_SOUND_P(index), index, 1, S_variable_graph_p, "a sound");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index) || XEN_SOUND_P(index), index, 1, S_is_variable_graph, "a sound");
 
   sp = get_sp(index);
   if (sp)
@@ -9913,7 +9913,7 @@ void g_init_chn(void)
 {
   cp_edpos = XEN_UNDEFINED;
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_variable_graph_p,        g_variable_graph_p_w,       1, 0, 0, H_variable_graph_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_variable_graph,        g_variable_graph_p_w,       1, 0, 0, H_variable_graph_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w,    1, 3, 0, H_make_variable_graph);
   XEN_DEFINE_SAFE_PROCEDURE(S_channel_data,            g_channel_data_w,           0, 2, 0, H_channel_data);
 
@@ -9938,7 +9938,7 @@ void g_init_chn(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_cursor_position,   g_cursor_position_w, 0, 2, 0,   H_cursor_position);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_edit_position, g_edit_position_w, H_edit_position, S_setB S_edit_position, g_set_edit_position_w, 0, 2, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_transform_graph_p, g_transform_graph_p_w, H_transform_graph_p, S_setB S_transform_graph_p, g_set_transform_graph_p_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_transform_graph, g_transform_graph_p_w, H_transform_graph_p, S_setB S_is_transform_graph, g_set_transform_graph_p_w, 0, 2, 1, 2);
 
   #define H_graph_once "The value for the various graph-type variables that displays the standard waveform"
   #define H_graph_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
@@ -9954,8 +9954,8 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_graph_as_spectrogram, GRAPH_AS_SPECTROGRAM, H_graph_as_spectrogram);
   /* XEN_DEFINE_CONSTANT(S_graph_as_complex,     GRAPH_AS_COMPLEX,     H_graph_as_complex); */
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_time_graph_p, g_time_graph_p_w, H_time_graph_p, S_setB S_time_graph_p, g_set_time_graph_p_w, 0, 2, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_lisp_graph_p, g_lisp_graph_p_w, H_lisp_graph_p, S_setB S_lisp_graph_p, g_set_lisp_graph_p_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_time_graph, g_time_graph_p_w, H_time_graph_p, S_setB S_is_time_graph, g_set_time_graph_p_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_lisp_graph, g_lisp_graph_p_w, H_lisp_graph_p, S_setB S_is_lisp_graph, g_set_lisp_graph_p_w, 0, 2, 1, 2);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_squelch_update, g_squelch_update_w, H_squelch_update, S_setB S_squelch_update, g_set_squelch_update_w, 0, 2, 1, 2);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor, g_cursor_w, H_cursor, S_setB S_cursor, g_set_cursor_w, 0, 3, 1, 3);
   

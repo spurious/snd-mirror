@@ -6886,8 +6886,8 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 
 static XEN g_sampler_at_end(XEN obj) 
 {
-  #define H_sampler_at_end "(" S_sampler_at_end_p " obj): " PROC_TRUE " if sampler has reached the end of its data"
-  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, 1, S_sampler_at_end_p, "a sampler (of any kind)");
+  #define H_sampler_at_end "(" S_is_sampler_at_end " obj): " PROC_TRUE " if sampler has reached the end of its data"
+  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, 1, S_is_sampler_at_end, "a sampler (of any kind)");
 
   if (sampler_p(obj))
     {
@@ -7118,7 +7118,7 @@ snd can be a filename, a mix, a region, or a sound index number."
 
 static XEN g_sampler_p(XEN obj)
 {
-  #define H_sampler_p "(" S_sampler_p " obj): " PROC_TRUE " if obj is a sound sampler."
+  #define H_sampler_p "(" S_is_sampler " obj): " PROC_TRUE " if obj is a sound sampler."
 
   if (sampler_p(obj))
     {
@@ -7136,7 +7136,7 @@ static XEN g_sampler_p(XEN obj)
 
 static XEN g_region_sampler_p(XEN obj)
 {
-  #define H_region_sampler_p "(" S_region_sampler_p " obj): " PROC_TRUE " if obj is a region sampler."
+  #define H_region_sampler_p "(" S_is_region_sampler " obj): " PROC_TRUE " if obj is a region sampler."
   if (sampler_p(obj))
     {
       snd_fd *fd;
@@ -8927,7 +8927,7 @@ static mus_any *make_snd_to_sample(snd_info *sp)
 
 static XEN g_snd_to_sample_p(XEN os) 
 {
-  #define H_snd_to_sample_p "(" S_snd_to_sample_p " gen): " PROC_TRUE " if gen is an " S_snd_to_sample " generator"
+  #define H_snd_to_sample_p "(" S_is_snd_to_sample " gen): " PROC_TRUE " if gen is an " S_snd_to_sample " generator"
   return(C_TO_XEN_BOOLEAN((mus_xen_p(os)) && 
 			  (snd_to_sample_p(XEN_TO_MUS_ANY(os)))));
 }
@@ -9146,9 +9146,9 @@ void g_init_edits(void)
   XEN_DEFINE_DIRECT_PROCEDURE(S_previous_sample,      g_previous_sample_w,        1, 0, 0, H_previous_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
   XEN_DEFINE_SAFE_PROCEDURE(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sampler_p,              g_sampler_p_w,              1, 0, 0, H_sampler_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_region_sampler_p,       g_region_sampler_p_w,       1, 0, 0, H_region_sampler_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sampler_at_end_p,       g_sampler_at_end_w,         1, 0, 0, H_sampler_at_end);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sampler,             g_sampler_p_w,              1, 0, 0, H_sampler_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_region_sampler,       g_region_sampler_p_w,       1, 0, 0, H_region_sampler_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sampler_at_end,       g_sampler_at_end_w,         1, 0, 0, H_sampler_at_end);
   XEN_DEFINE_SAFE_PROCEDURE(S_sampler_position,       g_sampler_position_w,       1, 0, 0, H_sampler_position);
   XEN_DEFINE_SAFE_PROCEDURE(S_copy_sampler,           g_copy_sampler_w,           1, 0, 0, H_copy_sampler);
 
@@ -9192,7 +9192,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE("set-samples",                  orig_g_set_samples_w,             3, 7, 0, H_set_samples);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_snd_to_sample_p,              g_snd_to_sample_p_w,              1, 0, 0, H_snd_to_sample_p);
+  XEN_DEFINE_PROCEDURE(S_is_snd_to_sample,              g_snd_to_sample_p_w,              1, 0, 0, H_snd_to_sample_p);
   XEN_DEFINE_PROCEDURE(S_make_snd_to_sample,           g_make_snd_to_sample_w,           0, 1, 0, H_make_snd_to_sample);
   XEN_DEFINE_PROCEDURE(S_snd_to_sample,                g_snd_to_sample_w,                2, 1, 0, H_snd_to_sample);
   XEN_DEFINE_PROCEDURE(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);

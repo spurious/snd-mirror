@@ -3164,7 +3164,7 @@ static XEN g_set_mix_tag_height(XEN val)
 
 static XEN g_mix_p(XEN n) 
 {
-  #define H_mix_p "(" S_mix_p " id): returns " PROC_TRUE " if the 'n' is a mix that exists somewhere in the edit list."
+  #define H_mix_p "(" S_is_mix " id): returns " PROC_TRUE " if the 'n' is a mix that exists somewhere in the edit list."
   return(C_TO_XEN_BOOLEAN((XEN_MIX_P(n)) && (mix_exists(XEN_MIX_TO_C_INT(n)))));
 }
 
@@ -3502,7 +3502,7 @@ bool mix_sampler_p(XEN obj)
 
 static XEN g_mix_sampler_p(XEN obj) 
 {
-  #define H_mix_sampler_p "(" S_mix_sampler_p " obj): " PROC_TRUE " if obj is a mix-sampler"
+  #define H_mix_sampler_p "(" S_is_mix_sampler " obj): " PROC_TRUE " if obj is a mix-sampler"
   return(C_TO_XEN_BOOLEAN(mix_sampler_p(obj)));
 }
 
@@ -3985,7 +3985,7 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE(S_make_mix_sampler,       g_make_mix_sampler_w, 1, 1, 0, H_make_mix_sampler);
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
-  XEN_DEFINE_PROCEDURE(S_mix_sampler_p,          g_mix_sampler_p_w,    1, 0, 0, H_mix_sampler_p);
+  XEN_DEFINE_PROCEDURE(S_is_mix_sampler,          g_mix_sampler_p_w,    1, 0, 0, H_mix_sampler_p);
   XEN_DEFINE_PROCEDURE(S_save_mix,               g_save_mix_w,               2, 0, 0, H_save_mix);
 
   XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);
@@ -3995,7 +3995,7 @@ void g_init_mix(void)
 #endif
   XEN_DEFINE_PROCEDURE(S_mixes,                  g_mixes_w,                  0, 2, 0, H_mixes);
   XEN_DEFINE_PROCEDURE(S_mix_home,               g_mix_home_w,               1, 0, 0, H_mix_home);
-  XEN_DEFINE_PROCEDURE(S_mix_p,                  g_mix_p_w,                  1, 0, 0, H_mix_p);
+  XEN_DEFINE_PROCEDURE(S_is_mix,                  g_mix_p_w,                  1, 0, 0, H_mix_p);
   XEN_DEFINE_PROCEDURE(S_mix_length,             g_mix_length_w,             1, 0, 0, H_mix_length);
   XEN_DEFINE_PROCEDURE(S_integer_to_mix,         g_integer_to_mix_w,         1, 0, 0, H_integer_to_mix);
   XEN_DEFINE_PROCEDURE(S_mix_to_integer,         g_mix_to_integer_w,         1, 0, 0, H_mix_to_integer);

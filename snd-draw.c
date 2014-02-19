@@ -1250,7 +1250,7 @@ void sgl_set_currents(bool with_dialogs)
 
 static XEN g_color_p(XEN obj) 
 {
-  #define H_color_p "(" S_color_p " obj): " PROC_TRUE " if obj is a color"
+  #define H_color_p "(" S_is_color " obj): " PROC_TRUE " if obj is a color"
   return(C_TO_XEN_BOOLEAN(XEN_PIXEL_P(obj)));
 }
 
@@ -2049,7 +2049,7 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color, g_mix_color_w, H_mix_color, S_setB S_mix_color, g_set_mix_color_w, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_combined_data_color, g_combined_data_color_w, H_combined_data_color, S_setB S_combined_data_color, g_set_combined_data_color_w, 2, 0, 3, 0);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_color_p,       g_color_p_w,        1, 0, 0, H_color_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_color,       g_color_p_w,        1, 0, 0, H_color_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color);
   XEN_DEFINE_SAFE_PROCEDURE(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
 

@@ -76,12 +76,12 @@
 #define S_color_orientation_dialog      "color-orientation-dialog"
 #define S_color_hook                    "color-hook"
 #define S_color_inverted                "color-inverted"
-#define S_color_p                       "color?"
+#define S_is_color                      "color?"
 #define S_color_scale                   "color-scale"
 #define S_color_to_list                 "color->list"
 #define S_colormap                      "colormap"
 #define S_colormap_name                 "colormap-name"
-#define S_colormap_p                    "colormap?"
+#define S_is_colormap                   "colormap?"
 #define S_colormap_ref                  "colormap-ref"
 #define S_colormap_size                 "colormap-size"
 #define S_colormap_to_integer           "colormap->integer"
@@ -90,7 +90,7 @@
 #define S_contrast_control              "contrast-control"
 #define S_contrast_control_amp          "contrast-control-amp"
 #define S_contrast_control_bounds       "contrast-control-bounds"
-#define S_contrast_control_p            "contrast-control?"
+#define S_is_contrast_control           "contrast-control?"
 #define S_controls_to_channel           "controls->channel"
 #define S_convolve_selection_with       "convolve-selection-with"
 #define S_convolve_with                 "convolve-with"
@@ -167,7 +167,7 @@
 #define S_enved_add_point               "enved-add-point"
 #define S_enved_amplitude               "enved-amplitude"
 #define S_enved_base                    "enved-base"
-#define S_enved_clip_p                  "enved-clip?"
+#define S_is_enved_clip                 "enved-clip?"
 #define S_enved_delete_point            "enved-delete-point"
 #define S_enved_dialog                  "enved-dialog"
 #define S_enved_envelope                "enved-envelope"
@@ -181,7 +181,7 @@
 #define S_enved_srate                   "enved-srate"
 #define S_enved_style                   "enved-style"
 #define S_enved_target                  "enved-target"
-#define S_enved_wave_p                  "enved-wave?"
+#define S_is_enved_wave                 "enved-wave?"
 #define S_enved_waveform_color          "enved-waveform-color"
 #define S_envelope_exponential          "envelope-exponential"
 #define S_envelope_linear               "envelope-linear"
@@ -196,7 +196,7 @@
 #define S_expand_control_hop            "expand-control-hop"
 #define S_expand_control_jitter         "expand-control-jitter"
 #define S_expand_control_length         "expand-control-length"
-#define S_expand_control_p              "expand-control?"
+#define S_is_expand_control             "expand-control?"
 #define S_expand_control_ramp           "expand-control-ramp"
 #define S_fft                           "fft"
 #define S_fft_log_frequency             "fft-log-frequency"
@@ -214,7 +214,7 @@
 #define S_filter_control_in_dB          "filter-control-in-dB"
 #define S_filter_control_in_hz          "filter-control-in-hz"
 #define S_filter_control_order          "filter-control-order"
-#define S_filter_control_p              "filter-control?"
+#define S_is_filter_control             "filter-control?"
 #define S_filter_control_waveform_color "filter-control-waveform-color"
 #define S_filter_selection              "filter-selection"
 #define S_filter_sound                  "filter-sound"
@@ -291,7 +291,7 @@
 #define S_left_sample                   "left-sample"
 #define S_lisp_graph                    "lisp-graph"
 #define S_lisp_graph_hook               "lisp-graph-hook"
-#define S_lisp_graph_p                  "lisp-graph?"
+#define S_is_lisp_graph                 "lisp-graph?"
 #define S_lisp_graph_style              "lisp-graph-style"
 #define S_listener_click_hook           "listener-click-hook"
 #define S_listener_color                "listener-color"
@@ -324,7 +324,7 @@
 #define S_mark_name                     "mark-name"
 #define S_mark_properties               "mark-properties"
 #define S_mark_property                 "mark-property"
-#define S_mark_p                        "mark?"
+#define S_is_mark                       "mark?"
 #define S_mark_sample                   "mark-sample"
 #define S_mark_sync                     "mark-sync"
 #define S_mark_sync_max                 "mark-sync-max"
@@ -348,14 +348,14 @@
 #define S_mix_file_dialog               "mix-file-dialog"
 #define S_mix_length                    "mix-length"
 #define S_mix_home                      "mix-home"
-#define S_mix_p                         "mix?"
+#define S_is_mix                        "mix?"
 #define S_mix_name                      "mix-name"
 #define S_mix_position                  "mix-position"
 #define S_mix_properties                "mix-properties"
 #define S_mix_property                  "mix-property"
 #define S_mix_region                    "mix-region"
 #define S_mix_release_hook              "mix-release-hook"
-#define S_mix_sampler_p                 "mix-sampler?"
+#define S_is_mix_sampler                "mix-sampler?"
 #define S_mix_selection                 "mix-selection"
 #define S_mix_speed                     "mix-speed"
 #define S_mix_sync                      "mix-sync"
@@ -408,7 +408,7 @@
 #define S_play_hook                     "play-hook"
 #define S_playing                       "playing"
 #define S_player_home                   "player-home"
-#define S_player_p                      "player?"
+#define S_is_player                     "player?"
 #define S_players                       "players"
 #define S_position_color                "position-color"
 #define S_position_to_x                 "position->x"
@@ -435,10 +435,10 @@
 #define S_region_home                   "region-home"
 #define S_region_maxamp                 "region-maxamp"
 #define S_region_maxamp_position        "region-maxamp-position"
-#define S_region_p                      "region?"
+#define S_is_region                     "region?"
 #define S_region_position               "region-position"
 #define S_region_sample                 "region-sample"
-#define S_region_sampler_p              "region-sampler?"
+#define S_is_region_sampler             "region-sampler?"
 #define S_region_srate                  "region-srate"
 #define S_region_to_integer             "region->integer"
 #define S_region_to_vct                 "region->vct"
@@ -454,7 +454,7 @@
 #define S_reverb_control_length         "reverb-control-length"
 #define S_reverb_control_length_bounds  "reverb-control-length-bounds"
 #define S_reverb_control_lowpass        "reverb-control-lowpass"
-#define S_reverb_control_p              "reverb-control?"
+#define S_is_reverb_control             "reverb-control?"
 #define S_reverb_control_scale          "reverb-control-scale"
 #define S_reverb_control_scale_bounds   "reverb-control-scale-bounds"
 #define S_reverse_channel               "reverse-channel"
@@ -463,9 +463,9 @@
 #define S_revert_sound                  "revert-sound"
 #define S_right_sample                  "right-sample"
 #define S_sample                        "sample"
-#define S_sampler_at_end_p              "sampler-at-end?"
+#define S_is_sampler_at_end             "sampler-at-end?"
 #define S_sampler_home                  "sampler-home"
-#define S_sampler_p                     "sampler?"
+#define S_is_sampler                    "sampler?"
 #define S_sampler_position              "sampler-position"
 #define S_samples                       "samples"
 #define S_sash_color                    "sash-color"
@@ -518,7 +518,7 @@
 #define S_selection_maxamp_position     "selection-maxamp-position"
 #define S_selection_member              "selection-member?"
 #define S_selection_to_mix              "selection->mix"
-#define S_selection_p                   "selection?"
+#define S_is_selection                  "selection?"
 #define S_selection_position            "selection-position"
 #define S_selection_srate               "selection-srate"
 #define S_short_file_name               "short-file-name"
@@ -562,17 +562,17 @@
 #define S_snd_spectrum                  "snd-spectrum"
 #define S_snd_tempnam                   "snd-tempnam"
 #define S_snd_to_sample                 "snd->sample"
-#define S_snd_to_sample_p               "snd->sample?"
+#define S_is_snd_to_sample              "snd->sample?"
 #define S_snd_url                       "snd-url"
 #define S_snd_urls                      "snd-urls"
 #define S_snd_version                   "snd-version"
 #define S_snd_warning                   "snd-warning"
 #define S_snd_warning_hook              "snd-warning-hook"
 #define S_sound_file_extensions         "sound-file-extensions"
-#define S_sound_file_p                  "sound-file?"
+#define S_is_sound_file                 "sound-file?"
 #define S_sound_files_in_directory      "sound-files-in-directory"
 #define S_sound_loop_info               "sound-loop-info"
-#define S_sound_p                       "sound?"
+#define S_is_sound                      "sound?"
 #define S_sound_properties              "sound-properties"
 #define S_sound_property                "sound-property"
 #define S_sound_widgets                 "sound-widgets"
@@ -622,7 +622,7 @@
 #define S_temp_dir                      "temp-dir"
 #define S_text_focus_color              "text-focus-color"
 #define S_time_graph                    "time-graph"
-#define S_time_graph_p                  "time-graph?"
+#define S_is_time_graph                 "time-graph?"
 #define S_time_graph_style              "time-graph-style"
 #define S_time_graph_type               "time-graph-type"
 #define S_tiny_font                     "tiny-font"
@@ -630,11 +630,11 @@
 #define S_transform_dialog              "transform-dialog"
 #define S_transform_frames              "transform-frames"
 #define S_transform_graph               "transform-graph"
-#define S_transform_graph_p             "transform-graph?"
+#define S_is_transform_graph            "transform-graph?"
 #define S_transform_graph_style         "transform-graph-style"
 #define S_transform_graph_type          "transform-graph-type"
 #define S_transform_normalization       "transform-normalization"
-#define S_transform_p                   "transform?"
+#define S_is_transform                  "transform?"
 #define S_transform_sample              "transform-sample"
 #define S_transform_size                "transform-size"
 #define S_transform_to_integer          "transform->integer"
@@ -649,7 +649,7 @@
 #define S_update_sound                  "update-sound"
 #define S_update_time_graph             "update-time-graph"
 #define S_update_transform_graph        "update-transform-graph"
-#define S_variable_graph_p              "variable-graph?"
+#define S_is_variable_graph             "variable-graph?"
 #define S_vct_to_channel                "vct->channel"
 #define S_view_files_amp                "view-files-amp"
 #define S_view_files_amp_env            "view-files-amp-env"
@@ -714,4 +714,33 @@
 #define S_zoom_focus_middle             "zoom-focus-middle"
 #define S_zoom_focus_right              "zoom-focus-right"
 #define S_zoom_focus_style              "zoom-focus-style"
+
+#if (!DISABLE_DEPRECATED)
+#define S_colormap_p S_is_colormap
+#define S_color_p S_is_color
+#define S_contrast_control_p S_is_contrast_control
+#define S_enved_clip_p S_is_enved_clip
+#define S_enved_wave_p S_is_enved_wave
+#define S_expand_control_p S_is_expand_control
+#define S_filter_control_p S_is_filter_control
+#define S_lisp_graph_p S_is_lisp_graph
+#define S_mark_p S_is_mark
+#define S_mix_sampler_p S_is_mix_sampler
+#define S_mix_p S_is_mix
+#define S_player_p S_is_player
+#define S_region_p S_is_region
+#define S_region_sampler_p S_is_region_sampler
+#define S_reverb_control_p S_is_reverb_control
+#define S_sampler_at_end_p S_is_sampler_at_end
+#define S_sampler_p S_is_sampler
+#define S_selection_p S_is_selection
+#define S_snd_to_sample_p S_is_snd_to_sample
+#define S_sound_file_p S_is_sound_file
+#define S_sound_p S_is_sound
+#define S_time_graph_p S_is_time_graph
+#define S_transform_graph_p S_is_transform_graph
+#define S_transform_p S_is_transform
+#define S_variable_graph_p S_is_variable_graph
+#endif
+
 #endif

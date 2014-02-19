@@ -395,7 +395,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->listener_font_symbol = s7_define_variable(s7, "*" S_listener_font "*", s7_make_string(s7, DEFAULT_LISTENER_FONT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_font "*) (list #f (lambda (s v) (set! (" S_listener_font ") v)) #f))");
 #else
-  ss->listener_font_symbol = s7_define_variable(s7, "*" S_listener_font "*", s7_make_boolean(s7, s7_f(s7)));
+  ss->listener_font_symbol = s7_define_variable(s7, "*" S_listener_font "*", s7_make_string(s7, ""));
 #endif
   s7_symbol_set_documentation(s7, ss->listener_font_symbol, "*listener-font*: font used by the lisp listener");
 
@@ -746,8 +746,8 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_auto_update_interval "*) (list #f (lambda (s v) (set! (" S_auto_update_interval ") v)) #f))");
   s7_symbol_set_documentation(s7, ss->auto_update_interval_symbol, "*auto-update-interval*: time (seconds) between background checks for changed file on disk (60)");
 
-  ss->enved_wave_p_symbol = s7_define_variable(s7, "*" S_enved_wave_p "*", s7_make_boolean(s7, DEFAULT_ENVED_WAVE_P));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_wave_p "*) (list #f (lambda (s v) (set! (" S_enved_wave_p ") v)) #f))");
+  ss->enved_wave_p_symbol = s7_define_variable(s7, "*" S_is_enved_wave "*", s7_make_boolean(s7, DEFAULT_ENVED_WAVE_P));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_is_enved_wave "*) (list #f (lambda (s v) (set! (" S_is_enved_wave ") v)) #f))");
   s7_symbol_set_documentation(s7, ss->enved_wave_p_symbol, "*enved-wave?*: #t if the envelope editor is displaying the waveform to be edited");
 
   ss->graphs_horizontal_symbol = s7_define_variable(s7, "*" S_graphs_horizontal "*", s7_make_boolean(s7, DEFAULT_GRAPHS_HORIZONTAL));

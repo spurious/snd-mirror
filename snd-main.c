@@ -494,9 +494,9 @@ static void save_options(FILE *fd)
   if (mix_tag_width(ss) != DEFAULT_MIX_TAG_WIDTH) pss_sd(fd, S_mix_tag_width, mix_tag_width(ss));
   if (mark_tag_height(ss) != DEFAULT_MARK_TAG_HEIGHT) pss_sd(fd, S_mark_tag_height, mark_tag_height(ss));
   if (mark_tag_width(ss) != DEFAULT_MARK_TAG_WIDTH) pss_sd(fd, S_mark_tag_width, mark_tag_width(ss));
-  if (enved_wave_p(ss) != DEFAULT_ENVED_WAVE_P) pss_ss(fd, S_enved_wave_p, b2s(enved_wave_p(ss)));
+  if (enved_wave_p(ss) != DEFAULT_ENVED_WAVE_P) pss_ss(fd, S_is_enved_wave, b2s(enved_wave_p(ss)));
   if (enved_in_dB(ss) != DEFAULT_ENVED_IN_DB) pss_ss(fd, S_enved_in_dB, b2s(enved_in_dB(ss)));
-  if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_enved_clip_p, b2s(enved_clip_p(ss)));
+  if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_is_enved_clip, b2s(enved_clip_p(ss)));
   if (enved_style(ss) == ENVELOPE_EXPONENTIAL) pss_ss(fd, S_enved_style, TO_VAR_NAME(S_envelope_exponential));
 
   if ((!tiny_font(ss)) || (!(mus_strcmp(tiny_font(ss), DEFAULT_TINY_FONT)))) pss_sq(fd, S_tiny_font, tiny_font(ss));
@@ -978,13 +978,13 @@ void save_sound_state(snd_info *sp, void *ptr)
   open_save_sound_block(sp, fd, true);
   b_ok = false; 
   if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
-  if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_contrast_control_p, b2s(sp->contrast_control_p));
+  if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_is_contrast_control, b2s(sp->contrast_control_p));
   if (fneq(sp->contrast_control, DEFAULT_CONTRAST_CONTROL)) psp_sf(fd, S_contrast_control, sp->contrast_control);
   if ((fneq(sp->contrast_control_min, DEFAULT_CONTRAST_CONTROL_MIN)) ||
       (fneq(sp->contrast_control_max, DEFAULT_CONTRAST_CONTROL_MAX)))
     psp_sl(fd, S_contrast_control_bounds, sp->contrast_control_min, sp->contrast_control_max);
   if (fneq(sp->contrast_control_amp, DEFAULT_CONTRAST_CONTROL_AMP)) psp_sf(fd, S_contrast_control_amp, sp->contrast_control_amp);
-  if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P) psp_ss(fd, S_expand_control_p, b2s(sp->expand_control_p));
+  if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P) psp_ss(fd, S_is_expand_control, b2s(sp->expand_control_p));
   if (fneq(sp->expand_control, DEFAULT_EXPAND_CONTROL)) psp_sf(fd, S_expand_control, sp->expand_control);
   if ((fneq(sp->expand_control_min, DEFAULT_EXPAND_CONTROL_MIN)) ||
       (fneq(sp->expand_control_max, DEFAULT_EXPAND_CONTROL_MAX)))
@@ -1014,7 +1014,7 @@ void save_sound_state(snd_info *sp, void *ptr)
   if ((fneq(sp->speed_control_min, DEFAULT_SPEED_CONTROL_MIN)) ||
       (fneq(sp->speed_control_max, DEFAULT_SPEED_CONTROL_MAX)))
     psp_sl(fd, S_speed_control_bounds, sp->speed_control_min, sp->speed_control_max);
-  if (sp->reverb_control_p != DEFAULT_REVERB_CONTROL_P) psp_ss(fd, S_reverb_control_p, b2s(sp->reverb_control_p));
+  if (sp->reverb_control_p != DEFAULT_REVERB_CONTROL_P) psp_ss(fd, S_is_reverb_control, b2s(sp->reverb_control_p));
   if (fneq(sp->reverb_control_scale, DEFAULT_REVERB_CONTROL_SCALE)) psp_sf(fd, S_reverb_control_scale, sp->reverb_control_scale);
   if ((fneq(sp->reverb_control_scale_min, DEFAULT_REVERB_CONTROL_SCALE_MIN)) ||
       (fneq(sp->reverb_control_scale_max, DEFAULT_REVERB_CONTROL_SCALE_MAX)))
@@ -1030,7 +1030,7 @@ void save_sound_state(snd_info *sp, void *ptr)
   if ((fneq(sp->amp_control_min, DEFAULT_AMP_CONTROL_MIN)) ||
       (fneq(sp->amp_control_max, DEFAULT_AMP_CONTROL_MAX)))
     psp_sl(fd, S_amp_control_bounds, sp->amp_control_min, sp->amp_control_max);
-  if (sp->filter_control_p != DEFAULT_FILTER_CONTROL_P) psp_ss(fd, S_filter_control_p, b2s(sp->filter_control_p));
+  if (sp->filter_control_p != DEFAULT_FILTER_CONTROL_P) psp_ss(fd, S_is_filter_control, b2s(sp->filter_control_p));
   if (sp->filter_control_order != DEFAULT_FILTER_CONTROL_ORDER) psp_sd(fd, S_filter_control_order, sp->filter_control_order);
   if (sp->filter_control_in_dB != DEFAULT_FILTER_CONTROL_IN_DB) psp_ss(fd, S_filter_control_in_dB, b2s(sp->filter_control_in_dB));
   if (sp->filter_control_in_hz != DEFAULT_FILTER_CONTROL_IN_HZ) psp_ss(fd, S_filter_control_in_hz, b2s(sp->filter_control_in_hz));
@@ -1051,9 +1051,9 @@ void save_sound_state(snd_info *sp, void *ptr)
       cp = sp->chans[chan];
       if ((!cp) || (!cp->edits) || (!cp->sounds)) break;
       ap = cp->axis;
-      if (!(cp->graph_time_p)) pcp_ss(fd, S_time_graph_p, b2s(cp->graph_time_p), chan);
-      if (cp->graph_transform_p) pcp_ss(fd, S_transform_graph_p, b2s(cp->graph_transform_p), chan);
-      if (cp->graph_lisp_p) pcp_ss(fd, S_lisp_graph_p, b2s(cp->graph_lisp_p), chan);
+      if (!(cp->graph_time_p)) pcp_ss(fd, S_is_time_graph, b2s(cp->graph_time_p), chan);
+      if (cp->graph_transform_p) pcp_ss(fd, S_is_transform_graph, b2s(cp->graph_transform_p), chan);
+      if (cp->graph_lisp_p) pcp_ss(fd, S_is_lisp_graph, b2s(cp->graph_lisp_p), chan);
       if (ap)
 	{
 	  if (((ap->x0 != 0.0) || (ap->x1 != 0.1)) && (ap->x1 > .0005)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);

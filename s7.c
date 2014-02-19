@@ -985,7 +985,7 @@ typedef struct s7_cell {
     struct{
       unsigned char c;
       unsigned char up_c, down_c;
-      bool alpha_p, digit_p, space_p, upper_p, lower_p;
+      bool alpha_c, digit_c, space_c, upper_c, lower_c;
       const char *c_name;              /* actually we have room here for the name */
       int length;
     } chr;
@@ -1274,9 +1274,9 @@ struct s7_scheme {
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_EXIT;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
-  s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, CHARP, CHAR_POSITION, CHAR_TO_INTEGER, CHAR_ALPHABETICP, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
-  s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, CHAR_LOWER_CASEP, CHAR_NUMERICP, CHAR_READYP, CHAR_UPCASE, CHAR_UPPER_CASEP;
-  s7_pointer CHAR_WHITESPACEP, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, COMPLEXP, CONS, CONSTANTP, CONTINUATIONP, COPY, COS, COSH, C_POINTER, C_POINTERP;
+  s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, CHAR_IS_ALPHABETIC, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
+  s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, CHAR_IS_LOWER_CASE, CHAR_IS_NUMERIC, CHAR_READYP, CHAR_UPCASE, CHAR_IS_UPPER_CASE;
+  s7_pointer CHAR_IS_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, COMPLEXP, CONS, CONSTANTP, CONTINUATIONP, COPY, COS, COSH, C_POINTER, C_POINTERP;
   s7_pointer DEFINEDP, DENOMINATOR, DISPLAY, DYNAMIC_WIND, ENVIRONMENTP, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_TO_LIST;
   s7_pointer EOF_OBJECTP, EQP, EQUALP, EQVP, ERROR, EVAL, EVAL_STRING, EVENP, EXACTP;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, FLOAT_VECTORP, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
@@ -2058,11 +2058,11 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define character(p)                  (p)->object.chr.c
 #define upper_character(p)            (p)->object.chr.up_c
 #define lower_character(p)            (p)->object.chr.down_c
-#define alphabetic_p(p)               (p)->object.chr.alpha_p
-#define numeric_p(p)                  (p)->object.chr.digit_p
-#define whitespace_p(p)               (p)->object.chr.space_p
-#define upper_p(p)                    (p)->object.chr.upper_p
-#define lower_p(p)                    (p)->object.chr.lower_p
+#define alphabetic_p(p)               (p)->object.chr.alpha_c
+#define numeric_p(p)                  (p)->object.chr.digit_c
+#define whitespace_p(p)               (p)->object.chr.space_c
+#define upper_p(p)                    (p)->object.chr.upper_c
+#define lower_p(p)                    (p)->object.chr.lower_c
 #define character_name(p)             (p)->object.chr.c_name
 #define character_name_length(p)      (p)->object.chr.length
 
@@ -2589,6 +2589,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 
 
 #define WITH_COUNTS 0
+
 #if WITH_COUNTS
 #if 0
 #if 1
@@ -18447,13 +18448,13 @@ static s7_pointer g_char_downcase(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_is_char_alphabetic(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_char_is_alphabetic(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_alphabetic "(char-alphabetic? c) returns #t if the character c is alphabetic"
   if (!s7_is_character(car(args)))
     {
-      CHECK_METHOD(sc, car(args), sc->CHAR_ALPHABETICP, args);
-      return(simple_wrong_type_argument(sc, sc->CHAR_ALPHABETICP, car(args), T_CHARACTER));
+      CHECK_METHOD(sc, car(args), sc->CHAR_IS_ALPHABETIC, args);
+      return(simple_wrong_type_argument(sc, sc->CHAR_IS_ALPHABETIC, car(args), T_CHARACTER));
     }
   return(make_boolean(sc, alphabetic_p(car(args))));
 
@@ -18461,49 +18462,49 @@ static s7_pointer g_is_char_alphabetic(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_is_char_numeric(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_char_is_numeric(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_numeric "(char-numeric? c) returns #t if the character c is a digit"
   if (!s7_is_character(car(args)))
     {
-      CHECK_METHOD(sc, car(args), sc->CHAR_NUMERICP, args);
-      return(simple_wrong_type_argument(sc, sc->CHAR_NUMERICP, car(args), T_CHARACTER));
+      CHECK_METHOD(sc, car(args), sc->CHAR_IS_NUMERIC, args);
+      return(simple_wrong_type_argument(sc, sc->CHAR_IS_NUMERIC, car(args), T_CHARACTER));
     }
   return(make_boolean(sc, numeric_p(car(args))));
 }
 
 
-static s7_pointer g_is_char_whitespace(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_char_is_whitespace(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_whitespace "(char-whitespace? c) returns #t if the character c is non-printing character"
   if (!s7_is_character(car(args)))
     {
-      CHECK_METHOD(sc, car(args), sc->CHAR_WHITESPACEP, args);
-      return(simple_wrong_type_argument(sc, sc->CHAR_WHITESPACEP, car(args), T_CHARACTER));
+      CHECK_METHOD(sc, car(args), sc->CHAR_IS_WHITESPACE, args);
+      return(simple_wrong_type_argument(sc, sc->CHAR_IS_WHITESPACE, car(args), T_CHARACTER));
     }
   return(make_boolean(sc, whitespace_p(car(args))));
 }
 
 
-static s7_pointer g_is_char_upper_case(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_char_is_upper_case(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_upper_case "(char-upper-case? c) returns #t if the character c is in upper case"
   if (!s7_is_character(car(args)))
     {
-      CHECK_METHOD(sc, car(args), sc->CHAR_UPPER_CASEP, args);
-      return(simple_wrong_type_argument(sc, sc->CHAR_UPPER_CASEP, car(args), T_CHARACTER));
+      CHECK_METHOD(sc, car(args), sc->CHAR_IS_UPPER_CASE, args);
+      return(simple_wrong_type_argument(sc, sc->CHAR_IS_UPPER_CASE, car(args), T_CHARACTER));
     }
   return(make_boolean(sc, upper_p(car(args))));
 }
 
 
-static s7_pointer g_is_char_lower_case(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_char_is_lower_case(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_lower_case "(char-lower-case? c) returns #t if the character c is in lower case"
   if (!s7_is_character(car(args)))
     {
-      CHECK_METHOD(sc, car(args), sc->CHAR_LOWER_CASEP, args);
-      return(simple_wrong_type_argument(sc, sc->CHAR_LOWER_CASEP, car(args), T_CHARACTER));
+      CHECK_METHOD(sc, car(args), sc->CHAR_IS_LOWER_CASE, args);
+      return(simple_wrong_type_argument(sc, sc->CHAR_IS_LOWER_CASE, car(args), T_CHARACTER));
     }
   return(make_boolean(sc, lower_p(car(args))));
 }
@@ -18512,7 +18513,7 @@ static s7_pointer g_is_char_lower_case(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char "(char? obj) returns #t if obj is a character"
-  CHECK_BOOLEAN_METHOD(sc, car(args), s7_is_character, sc->CHARP, args);
+  CHECK_BOOLEAN_METHOD(sc, car(args), s7_is_character, sc->IS_CHAR, args);
 }
 
 
@@ -20801,7 +20802,7 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_char_is_ready(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_ready "(char-ready? (port (current-input-port))) returns #t if a character is ready for input on the given port"
   if (is_not_null(args))
@@ -56029,6 +56030,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = c_call(code)(sc, sc->T3_1);
 		goto START;
 	      }
+	      /*
+108200: (<= 0.0 angle two-pi)
+92050: (* 4 sx2 sx2)
+50828: (file->sample ind2 ctr 0)
+22057: (src rd 0.0 func)
+22049: (* 2.0 ramp fs)
+19955: (* 0.5 p2n2 angle)
+19955: (* 0.5 n1 angle)
+19954: (* 0.5 n y)
+14332: (file->sample fil ctr 0)
+13230: (* 0.2 zslope vh)
+13230: (* 0.3 vb fb)
+10000: (<= 0.0 x two-pi)
+10000: (* pi 0.5 n)
+10000: (* -2.0 r cs)
+10000: (* 2 n den)
+10000: (* 2 a a)
+10000: (* -2 a r)
+	       */
 	      
 
 	    case OP_SAFE_C_SSS:
@@ -68529,7 +68549,7 @@ s7_scheme *s7_init(void)
   sc->INPUT_PORTP =           s7_define_safe_function(sc, "input-port?",             g_is_input_port,          1, 0, false, H_is_input_port);
   sc->OUTPUT_PORTP =          s7_define_safe_function(sc, "output-port?",            g_is_output_port,         1, 0, false, H_is_output_port);
   sc->PORT_CLOSEDP =          s7_define_safe_function(sc, "port-closed?",            g_is_port_closed,         1, 0, false, H_is_port_closed);
-  sc->CHAR_READYP =           s7_define_safe_function(sc, "char-ready?",             g_is_char_ready,          0, 1, false, H_is_char_ready);
+  sc->CHAR_READYP =           s7_define_safe_function(sc, "char-ready?",             g_char_is_ready,          0, 1, false, H_is_char_ready);
   sc->EOF_OBJECTP =           s7_define_safe_function(sc, "eof-object?",             g_is_eof_object,          1, 0, false, H_is_eof_object);
   /* this should be named eof? (what isn't an object?) */
   
@@ -68679,12 +68699,12 @@ s7_scheme *s7_init(void)
   sc->CHAR_TO_INTEGER =       s7_define_safe_function(sc, "char->integer",           g_char_to_integer,        1, 0, false, H_char_to_integer);
   sc->INTEGER_TO_CHAR =       s7_define_safe_function(sc, "integer->char",           g_integer_to_char,        1, 0, false, H_integer_to_char);
   
-  sc->CHAR_UPPER_CASEP =      s7_define_safe_function(sc, "char-upper-case?",        g_is_char_upper_case,     1, 0, false, H_is_char_upper_case);
-  sc->CHAR_LOWER_CASEP =      s7_define_safe_function(sc, "char-lower-case?",        g_is_char_lower_case,     1, 0, false, H_is_char_lower_case);
-  sc->CHAR_ALPHABETICP =      s7_define_safe_function(sc, "char-alphabetic?",        g_is_char_alphabetic,     1, 0, false, H_is_char_alphabetic);
-  sc->CHAR_NUMERICP =         s7_define_safe_function(sc, "char-numeric?",           g_is_char_numeric,        1, 0, false, H_is_char_numeric);
-  sc->CHAR_WHITESPACEP =      s7_define_safe_function(sc, "char-whitespace?",        g_is_char_whitespace,     1, 0, false, H_is_char_whitespace);
-  sc->CHARP =                 s7_define_safe_function(sc, "char?",                   g_is_char,                1, 0, false, H_is_char);
+  sc->CHAR_IS_UPPER_CASE =    s7_define_safe_function(sc, "char-upper-case?",        g_char_is_upper_case,     1, 0, false, H_is_char_upper_case);
+  sc->CHAR_IS_LOWER_CASE =    s7_define_safe_function(sc, "char-lower-case?",        g_char_is_lower_case,     1, 0, false, H_is_char_lower_case);
+  sc->CHAR_IS_ALPHABETIC =    s7_define_safe_function(sc, "char-alphabetic?",        g_char_is_alphabetic,     1, 0, false, H_is_char_alphabetic);
+  sc->CHAR_IS_NUMERIC =       s7_define_safe_function(sc, "char-numeric?",           g_char_is_numeric,        1, 0, false, H_is_char_numeric);
+  sc->CHAR_IS_WHITESPACE =    s7_define_safe_function(sc, "char-whitespace?",        g_char_is_whitespace,     1, 0, false, H_is_char_whitespace);
+  sc->IS_CHAR =               s7_define_safe_function(sc, "char?",                   g_is_char,                1, 0, false, H_is_char);
   
   sc->CHAR_EQ =               s7_define_safe_function(sc, "char=?",                  g_chars_are_equal,        2, 0, true,  H_chars_are_equal);
   sc->CHAR_LT =               s7_define_safe_function(sc, "char<?",                  g_chars_are_less,         2, 0, true,  H_chars_are_less);
@@ -69540,6 +69560,7 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0)
- * many more _p -> _is_ changes remain (snd-strings, sndlib, lisp, xen)
+ * many (20000) more _p -> _is_ changes remain (snd (g_*_p and H_*_p), lisp (cmus.c, run.lisp), xen, xm/xg/gl, here (char cases, Pnames))
+ * add simple tests for nsin|cos, nrxysin|cos
  */
 

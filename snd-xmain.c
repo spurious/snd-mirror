@@ -1,7 +1,9 @@
 #include "snd.h"
 
 #define FALLBACK_FONT        "fixed"
+#define DEFAULT_LISTENER_FONT "9x15"
 #define DEFAULT_FONTLIST     "9x15"
+
 #define HIGHLIGHT_COLOR      "ivory1"
 #define BASIC_COLOR          "ivory2"
 #define POSITION_COLOR       "ivory3"
@@ -706,6 +708,8 @@ void snd_doit(int argc, char **argv)
   if ((!(set_axis_numbers_font(DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(FALLBACK_FONT))))
     fprintf(stderr, "can't find axis numbers font %s", DEFAULT_AXIS_NUMBERS_FONT);
+
+  set_listener_font(DEFAULT_LISTENER_FONT); /* we need some sort of font here! */
 
   ss->orig_axis_label_font = mus_strdup(axis_label_font(ss));
   ss->orig_axis_numbers_font = mus_strdup(axis_numbers_font(ss));

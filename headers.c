@@ -555,7 +555,7 @@ const char *mus_data_format_to_string(int format)
 
 static const char *any_data_format_name(int sndlib_format)
 {
-  if (mus_data_format_p(sndlib_format))
+  if (mus_is_data_format(sndlib_format))
     return(mus_data_format_name(sndlib_format));
   else return(mus_header_original_format_name(mus_header_original_format(),
 					      mus_header_type()));
@@ -5507,7 +5507,7 @@ void mus_header_set_raw_defaults(int sr, int chn, int frm)
 {
   if (sr > 0) header_raw_srate = sr;
   if (chn > 0) header_raw_chans = chn;
-  if (mus_data_format_p(frm)) header_raw_format = frm;
+  if (mus_is_data_format(frm)) header_raw_format = frm;
 }
 
 
@@ -7022,7 +7022,7 @@ void mus_header_set_aiff_loop_info(int *data)
 }
 
 
-bool mus_header_type_p(int n)
+bool mus_is_header_type(int n)
 {
   switch (n)
     {
@@ -7049,7 +7049,7 @@ bool mus_header_type_p(int n)
 }
 
 
-bool mus_data_format_p(int n)
+bool mus_is_data_format(int n)
 {
   switch (n)
     {

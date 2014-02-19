@@ -889,7 +889,7 @@ The main FFT-related functions are:\
   " S_fft_with_phases " (:optional snd chn)\n\
     sets whether the single fft display includes phase information\n\
 \n\
-  " S_transform_graph_p " (:optional snd chn)\n\
+  " S_is_transform_graph " (:optional snd chn)\n\
     if " PROC_TRUE ", the fft graph is displayed: " transform_graph_example "\n\
 \n\
   " S_transform_normalization " (:optional snd chn)\n\
@@ -1600,7 +1600,7 @@ reverbs mentioned in the related topics list.  The control panel reverb function
   " S_reverb_control_lowpass " (:optional snd):\n\
     reverb low pass filter coefficient. (filter in feedback loop).\n\
 \n\
-  " S_reverb_control_p " (:optional snd):\n\
+  " S_is_reverb_control " (:optional snd):\n\
     " PROC_TRUE " if the reverb button is set (i.e. the reverberator is active).\n\
       " reverb_control_p_example "\n\
 \n\
@@ -1696,7 +1696,7 @@ The control filter functions are:\n\
   " S_filter_control_order " (:optional snd)\n\
     The filter order\n\
 \n\
-  " S_filter_control_p " (:optional snd)\n\
+  " S_is_filter_control " (:optional snd)\n\
     " PROC_TRUE " if the filter is active.\n\
 \n\
   " S_filter_control_waveform_color "\n\
@@ -1940,7 +1940,7 @@ The main region-related functions are:\n\
 \n\
   " S_forget_region " (:optional reg): remove region from region list\n\
 \n\
-  " S_region_p " (reg): " PROC_TRUE " if 'reg' is a known region id\n\
+  " S_is_region " (reg): " PROC_TRUE " if 'reg' is a known region id\n\
 \n\
   " S_regions ": list of currently active regions\n\
 \n\
@@ -2068,7 +2068,7 @@ The primary selection-related functions are:\n\
   " S_selection_maxamp_position " (:optional snd chn): sample number of maxamp\n\
   " S_selection_member " (:optional snd chn): \n\
     " PROC_TRUE " if snd's channel chn has selected data.\n\
-  " S_selection_p ": " PROC_TRUE " if there's a selection\n\
+  " S_is_selection ": " PROC_TRUE " if there's a selection\n\
   " S_selection_position " (:optional snd chn): \n\
     sample number where selection starts\n\
   " S_selection_srate ": nominal srate of selected portion.\n\

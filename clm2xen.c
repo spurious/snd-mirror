@@ -2381,7 +2381,7 @@ static XEN g_is_oscil(XEN os)
 
 static XEN g_make_oscil_bank(XEN freqs, XEN phases, XEN amps)
 {
-  #define H_make_oscil_bank "(" S_make_oscil_bank " freqs phases amps): return a new oscil-bank generator."
+  #define H_make_oscil_bank "(" S_make_oscil_bank " freqs phases amps): return a new oscil-bank generator. (freqs in radians)"
 
   mus_any *ge = NULL;
   vct *f, *p, *a = NULL;
@@ -7540,11 +7540,11 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, 4, S_make_sample_to_file, "an integer (header type id)");
 
   if (XEN_INTEGER_P(out_format)) df = XEN_TO_C_INT(out_format);
-  if (mus_data_format_p(df))
+  if (mus_is_data_format(df))
     {
       int ht = (int)MUS_NEXT;
       if (XEN_INTEGER_P(out_type)) ht = XEN_TO_C_INT(out_type);
-      if (mus_header_type_p(ht))
+      if (mus_is_header_type(ht))
 	{
 	  int chns = 1;
 	  if (XEN_INTEGER_P(chans)) chns = XEN_TO_C_INT(chans);
@@ -15167,7 +15167,8 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   letf = s7_function_choice(sc, letp);
   letp = cdr(letp);
 
-  if (s7_function_choice_is_direct_to_real(sc, callee))
+  if ((s7_function_choice_is_direct_to_real(sc, callee)) &&
+      (s7_function_choice_is_direct_to_real(sc, letp)))
     {
       for (; pos < end; pos++)
 	{

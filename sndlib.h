@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 23
-#define SNDLIB_REVISION 2
-#define SNDLIB_DATE "17-Feb-14"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "19-Feb-14"
 
 #include <stdio.h>
 /* need FILE */
@@ -337,8 +337,12 @@ MUS_EXPORT char *mus_strcat(char *errmsg, const char *str, int *err_size);
 
 /* -------- headers.c -------- */
 
-MUS_EXPORT bool mus_data_format_p(int n);
-MUS_EXPORT bool mus_header_type_p(int n);
+MUS_EXPORT bool mus_is_data_format(int n);
+MUS_EXPORT bool mus_is_header_type(int n);
+#if (!DISABLE_DEPRECATED)
+  #define mus_data_format_p(DF) mus_is_data_format(DF)
+  #define mus_header_type_p(HT) mus_is_header_type(HT)
+#endif
 
 MUS_EXPORT mus_long_t mus_header_samples(void);
 MUS_EXPORT mus_long_t mus_header_data_location(void);

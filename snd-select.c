@@ -1436,8 +1436,8 @@ static XEN g_selection_to_mix(void)
 
 static XEN g_selection_p(XEN sel)
 {
-  #define H_selection_p "(" S_selection_p " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
-If 'obj' is passed, " S_selection_p " returns " PROC_TRUE " if obj is a selection object and there is a current selection."
+  #define H_selection_p "(" S_is_selection " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
+If 'obj' is passed, " S_is_selection " returns " PROC_TRUE " if obj is a selection object and there is a current selection."
 
   if ((XEN_BOUND_P(sel)) &&
       (!(xen_selection_p(sel))))
@@ -1868,7 +1868,7 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_member, g_selection_member_w, H_selection_member, S_setB S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_selection,        g_selection_w,        0, 0, 0, H_selection);
-  XEN_DEFINE_SAFE_PROCEDURE(S_selection_p,      g_selection_p_w,      0, 1, 0, H_selection_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_selection,      g_selection_p_w,      0, 1, 0, H_selection_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_chans,  g_selection_chans_w,  0, 0, 0, H_selection_chans);
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate);
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);

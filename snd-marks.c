@@ -2207,7 +2207,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
 
 static XEN g_mark_p(XEN id_n)
 {
-  #define H_mark_p "(" S_mark_p " id): " PROC_TRUE " if mark is active"
+  #define H_mark_p "(" S_is_mark " id): " PROC_TRUE " if mark is active"
   if (XEN_MARK_P(id_n))
     return(C_TO_XEN_BOOLEAN(find_mark_from_id(XEN_MARK_TO_C_INT(id_n), NULL, AT_CURRENT_EDIT_POSITION)));
   return(XEN_FALSE);
@@ -2923,7 +2923,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_syncd_marks,     g_syncd_marks_w,     1, 0, 0, H_syncd_marks);
   XEN_DEFINE_PROCEDURE(S_find_mark,       g_find_mark_w,       1, 3, 0, H_find_mark);
   XEN_DEFINE_PROCEDURE(S_save_marks,      g_save_marks_w,      0, 2, 0, H_save_marks);
-  XEN_DEFINE_PROCEDURE(S_mark_p,          g_mark_p_w,          1, 0, 0, H_mark_p);
+  XEN_DEFINE_PROCEDURE(S_is_mark,         g_mark_p_w,          1, 0, 0, H_mark_p);
   XEN_DEFINE_PROCEDURE(S_integer_to_mark, g_integer_to_mark_w, 1, 0, 0, H_integer_to_mark);
   XEN_DEFINE_PROCEDURE(S_mark_to_integer, g_mark_to_integer_w, 1, 0, 0, H_mark_to_integer);
 

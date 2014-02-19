@@ -2821,13 +2821,13 @@ static XEN play_file(const char *play_name, mus_long_t start, mus_long_t end, in
   if (!(mus_file_probe(play_name)))
     return(snd_no_such_file_error(S_play, C_TO_XEN_STRING(play_name)));
 
-  if (!(mus_header_type_p(mus_sound_header_type(play_name))))
+  if (!(mus_is_header_type(mus_sound_header_type(play_name))))
     XEN_ERROR(BAD_HEADER,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_play ": ~S has unknown header: ~A"),
 			 C_TO_XEN_STRING(play_name),
 			 C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
 
-  if (!(mus_data_format_p(mus_sound_data_format(play_name))))
+  if (!(mus_is_data_format(mus_sound_data_format(play_name))))
     XEN_ERROR(XEN_ERROR_TYPE("bad-format"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_play ": ~S has unknown data format: ~A"),
 			 C_TO_XEN_STRING(play_name),
@@ -3271,7 +3271,7 @@ static XEN g_free_player(XEN player)
 
 static XEN g_player_p(XEN obj)
 {
-  #define H_player_p "(" S_player_p " obj): is 'obj' an active player"
+  #define H_player_p "(" S_is_player " obj): is 'obj' an active player"
   int index;
 
   if (XEN_PLAYER_P(obj))
@@ -3490,7 +3490,7 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_stop_player,    g_stop_player_w,    1, 0, 0, H_stop_player);
   XEN_DEFINE_PROCEDURE(S_free_player,    g_free_player_w,    1, 0, 0, H_free_player);
   XEN_DEFINE_PROCEDURE(S_players,        g_players_w,        0, 0, 0, H_players);
-  XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w,       1, 0, 0, H_player_p);
+  XEN_DEFINE_PROCEDURE(S_is_player,       g_player_p_w,       1, 0, 0, H_player_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
 				   S_setB S_with_tracking_cursor, g_set_with_tracking_cursor_w, 0, 0, 1, 0);

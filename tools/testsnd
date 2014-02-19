@@ -15,7 +15,7 @@ echo ' -------------------------------- that was snd-test without-gui (also s7te
 echo ' '
 echo ' '
 
-valgrind ./snd -l snd-test
+valgrind ./snd -noinit -l snd-test
 echo ' '
 echo ' '
 echo ' -------------------------------- that was valgrind without-gui (also s7test) -------------------------------- '
@@ -87,6 +87,7 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test 23
+./snd -noinit -l snd-test
 ./snd -l snd-test
 make clmclean
 make sndinfo
@@ -153,6 +154,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
+./snd -noinit -l snd-test
 ./snd -l snd-test
 echo ' '
 echo ' '
