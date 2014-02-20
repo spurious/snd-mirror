@@ -787,11 +787,10 @@
 	(os (make-oscil freq))
 	(sr1 (make-src :srate speed))
 	(sr2 (make-src :srate speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (src sr1 0.0 (lambda (dir)
-				    (src sr2 0.0
-					 (lambda (dir)
-					   (oscil os))))))))))
+    (let ((f1 (lambda (dir) (oscil os))))
+      (let ((f2 (lambda (dir) (src sr2 0.0 f1))))
+	(do ((i start (+ i 1))) ((= i end))
+	  (outa i (* amp (src sr1 0.0 f2))))))))
 
 (define (sample-srl3 beg dur amp speed freq)
   "(sample-srl3 beg dur amp speed freq) test instrument for src"
@@ -802,13 +801,11 @@
 	(sr1 (make-src :srate speed))
 	(sr2 (make-src :srate speed))
 	(sr3 (make-src :srate speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (+ (src sr1 0.0 (lambda (dir)
-				       (src sr2 0.0
-					    (lambda (dir)
-					      (oscil os1)))))
-			(src sr3 0.0 (lambda (dir)
-				       (oscil os2)))))))))
+    (let ((f1 (lambda (dir) (oscil os2)))
+	  (f3 (lambda (dir) (oscil os1))))
+      (let ((f2 (lambda (dir) (src sr2 0.0 f3))))
+	(do ((i start (+ i 1))) ((= i end))
+	  (outa i (* amp (+ (src sr1 0.0 f2) (src sr3 0.0 f1)))))))))
 
 (define (sample-grn2 beg dur amp speed freq)
   "(sample-grn2 beg dur amp speed freq) test instrument for granulate"
@@ -865,15 +862,12 @@
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(sr (make-phase-vocoder (make-readin file) :fft-size size)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (phase-vocoder sr
-				    #f
-				    #f
-				    (lambda (closure)
-				      (if (not (= (mus-location sr) 0))
-					  (format #t "outctr: ~A" (mus-location sr)))
-				      #t)
-				    #f))))))
+    (let ((f1 (lambda (closure)
+		(if (not (= (mus-location sr) 0))
+		    (format #t "outctr: ~A" (mus-location sr)))
+		#t)))
+      (do ((i start (+ i 1))) ((= i end))
+	(outa i (* amp (phase-vocoder sr #f #f f1 #f)))))))
 
 (define (sample-pvoc3 beg dur amp size file)
   "(sample-pvoc3 beg dur amp size file) test instrument for phase-vocoder"
@@ -886,17 +880,14 @@
 	  (ppincrs (phase-vocoder-phase-increments sr))
 	  (phases (phase-vocoder-phases sr))
 	  (freqs (phase-vocoder-freqs sr)))
-      (do ((i start (+ i 1))) 
-	  ((= i end))
-	(outa i (* amp (phase-vocoder sr
-				      #f
-				  #f
-				  #f
-				  (lambda (closure)
-				    (float-vector-add! amps paincrs)
-				    (float-vector-add! ppincrs freqs)
-				    (float-vector-add! phases ppincrs)
-				    (clm23-sine-bank amps phases N2)))))))))
+      (let ((f1 (lambda (closure)
+		  (float-vector-add! amps paincrs)
+		  (float-vector-add! ppincrs freqs)
+		  (float-vector-add! phases ppincrs)
+		  (clm23-sine-bank amps phases N2))))
+	(do ((i start (+ i 1))) 
+	    ((= i end))
+	  (outa i (* amp (phase-vocoder sr #f #f #f f1))))))))
 
 (define (sample-osc beg dur freq amp)
   "(sample-osc beg dur freq amp) test instrument for oscil"
@@ -1131,14 +1122,9 @@
 	(end (seconds->samples (+ beg dur)))
 	(sr (make-phase-vocoder (make-readin file) :fft-size size))
 	(os (make-oscil freq)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (phase-vocoder sr
-				    #f
-				    #f
-				    #f
-				    (lambda (closure)
-				      (oscil os))))))))
-
+    (let ((f1 (lambda (closure) (oscil os))))
+      (do ((i start (+ i 1))) ((= i end))
+	(outa i (* amp (phase-vocoder sr #f #f #f f1)))))))
 					;(with-sound () (sample-pvoc5 0 1 .1 256 "oboe.snd" 440.0))
 
 
@@ -2273,18 +2259,17 @@
 	    ((= i end))
 	  (let ((gliss (env frqf)))
 	    (outa i (* (env ampf) (wave-train grains gliss)))
-	    (let ((click (pulse-train click-track gliss)))
-	      (if (> click 0.0)
-		  (let ((scaler (max 0.1 (* 1.0 (/ (- i beg) len))))
-			(comb-len 32)
-			(cs (make-vector 3)))
-		    (vector-set! cs 0 (make-comb scaler comb-len))
-		    (vector-set! cs 1 (make-comb scaler (floor (* comb-len .75))))
-		    (vector-set! cs 2 (make-comb scaler (floor (* comb-len 1.25))))
-		    (set! cs (make-comb-bank cs))
-		    (do ((k 0 (+ k 1)))
-			((= k grain-size))
-		      (float-vector-set! grain k (comb-bank cs (float-vector-ref original-grain k)))))))))))))
+	    (if (> (pulse-train click-track gliss) 0.0)
+		(let ((scaler (max 0.1 (* 1.0 (/ (- i beg) len))))
+		      (comb-len 32)
+		      (cs (make-vector 3)))
+		  (vector-set! cs 0 (make-comb scaler comb-len))
+		  (vector-set! cs 1 (make-comb scaler (floor (* comb-len .75))))
+		  (vector-set! cs 2 (make-comb scaler (floor (* comb-len 1.25))))
+		  (set! cs (make-comb-bank cs))
+		  (do ((k 0 (+ k 1)))
+		      ((= k grain-size))
+		    (float-vector-set! grain k (comb-bank cs (float-vector-ref original-grain k))))))))))))
 
 (definstrument (move-formants start file amp radius move-env num-formants)
   (let ((frms (make-vector num-formants))
@@ -2353,14 +2338,14 @@
 
 ;;; ---------------- sndscm-osc ----------------
 
-(defgenerator sndscm-osc freq phase fm)
+(defgenerator sndscm-osc freq phase fm res)
 
 (define (sndscm-osc gen fm)
   (environment-set! gen 'fm fm)
   (with-environment gen
-    (let ((result (sin phase)))
-      (set! phase (+ phase freq fm))
-      result)))
+    (set! res (sin phase))
+    (set! phase (+ phase freq fm))
+    res))
 
 (definstrument (sndscm-osc-fm beg dur freq amp mc-ratio fm-index)
   (let ((start (seconds->samples beg))
@@ -2381,14 +2366,14 @@
   (sndscm-osc1 :make-wrapper (lambda (gen)
 			       (set! (gen 'freq) (hz->radians (gen 'freq)))
 			       gen))
-  freq phase fm)
+  freq phase fm res)
 
 (define* (sndscm-osc1 gen fm)
   (environment-set! gen 'fm fm)
   (with-environment gen
-    (let ((result (sin phase)))
-      (set! phase (+ phase freq fm))
-      result)))
+    (set! res (sin phase))
+    (set! phase (+ phase freq fm))
+    res))
 
 (definstrument (sndscm-osc1-fm beg dur freq amp mc-ratio (fm-index 1.0))
   (let ((start (seconds->samples beg))
@@ -2423,14 +2408,14 @@
 					   (lambda (g) (format #f "sndscm-osc2 freq: ~A, phase: ~A" 
 							       (mus-frequency g) 
 							       (mus-phase g))))))
-  freq phase fm)
+  freq phase fm res)
 
 (define* (sndscm-osc2 gen fm)
   (environment-set! gen 'fm fm)
   (with-environment gen
-    (let ((result (sin phase)))
-      (set! phase (+ phase freq fm))
-      result)))
+    (set! res (sin phase))
+    (set! phase (+ phase freq fm))
+    res))
 
 (definstrument (sndscm-osc2-fm beg dur freq amp mc-ratio (fm-index 1.0))
   (let ((start (seconds->samples beg))

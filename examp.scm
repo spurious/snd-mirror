@@ -52,7 +52,7 @@
 (if (provided? 'snd)
     (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
     (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
-(if (not (provided? 'snd-env.scm)) (load "env.scm")) ; integrate-envelope
+(if (not (provided? 'snd-env.scm)) (load "env.scm")) ; integrate-envelope, reverse-envelopes, etc
 
 
 ;;; -------- (ext)snd.html examples made harder to break --------
@@ -670,19 +670,12 @@ then inverse ffts."
       (rectangular->polar vr vi)
       (set! scaler (float-vector-peak vr)))
     (let ((scl-squelch (* squelch scaler)))
-      (if (< (magnitude (make-rectangular (rdata 0) (idata 0))) scl-squelch) ;(sqrt (+ (* (rdata 0) (rdata 0)) (* (idata 0) (idata 0)))) scl-squelch)
-	  (begin
-	    (set! (rdata 0) 0.0)
-	    (set! (idata 0) 0.0)))
-      (do ((i 1 (+ i 1))
-	   (j (- fsize 1) (- j 1)))
-	  ((= i fsize2))
-	(if (< (magnitude (make-rectangular (rdata i) (idata i))) scl-squelch) ;(sqrt (+ (* (rdata i) (rdata i)) (* (idata i) (idata i))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i fsize))
+	(if (< (magnitude (make-rectangular (rdata i) (idata i))) scl-squelch)
 	    (begin
 	      (set! (rdata i) 0.0)
-	      (set! (rdata j) 0.0)
-	      (set! (idata i) 0.0)
-	      (set! (idata j) 0.0))))
+	      (set! (idata i) 0.0))))
       (fft rdata idata -1)
       (float-vector-scale! rdata (/ 1.0 fsize)))
     (float-vector->channel rdata 0 (- len 1) snd chn #f (format #f "fft-squelch ~A" squelch))
@@ -719,15 +712,13 @@ then inverse ffts."
   ;;
   ;; this could use the moving-average generator, though the resultant envelopes would be slightly less bumpy
 
-  (set! (gen 'up) (if up 1 -1))
+  (environment-set! gen 'up up)
   (with-environment gen
-    (let ((val (* 1.0 (/ ctr size))))
-      (set! ctr (min size (max 0 (+ ctr up))))
-      val)))
+    (set! val (min 1.0 (max 0.0 (+ val (if up incr (- incr))))))))
 
 (define* (make-ramp (size 128))
   "(make-ramp (size 128)) returns a ramp generator"
-  (environment (cons 'ctr 0) (cons 'size size) (cons 'up 1)))
+  (environment (cons 'val 0.0) (cons 'incr (/ 1.0 size)) (cons 'up 1)))
 
 ;;; (let ((r (make-ramp))) (map-channel (lambda (y) (* y (ramp r (> (random 1.0) 0.5))))))
 
@@ -778,19 +769,14 @@ then inverse ffts."
 	 (rdata (channel->float-vector 0 fsize snd chn))
 	 (idata (make-float-vector fsize))
 	 (fsize2 (/ fsize 2))
-	 (e (make-env fft-env :length fsize2)))
+	 (e (make-env (concatenate-envelopes fft-env (reverse-envelope fft-env)) :length fsize))
+	 (ve (make-float-vector fsize)))
     (fft rdata idata 1)
-    (let ((val (env e)))
-      (set! (rdata 0) (* val (rdata 0)))
-      (set! (idata 0) (* val (idata 0))))
-    (do ((i 1 (+ i 1))
-	 (j (- fsize 1) (- j 1)))
-	((= i fsize2))
-      (let ((val (env e)))
-	(set! (rdata i) (* val (rdata i)))
-	(set! (idata i) (* val (idata i)))
-	(set! (rdata j) (* val (rdata j)))
-	(set! (idata j) (* val (idata j)))))
+    (do ((i 0 (+ i 1)))
+	((= i fsize))
+      (float-vector-set! ve i (env e)))
+    (float-vector-multiply! rdata ve)
+    (float-vector-multiply! idata ve)
     (fft rdata idata -1)
     (float-vector-scale! rdata (/ 1.0 fsize))))
 
@@ -807,13 +793,13 @@ spectral envelopes) following interp (an env between 0 and 1)"
 	 (data2 (fft-env-data env2 snd chn))
 	 (len (frames snd chn))
 	 (new-data (make-float-vector len))
-	 (e (make-env interp :length len)))
+	 (e (make-env interp :length len))
+	 (erev (make-env (scale-envelope interp -1.0 1.0) :length len))) ; 1.0 - e
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (let ((pan (env e)))
-	(set! (new-data i) 
-	      (+ (* (- 1.0 pan) (float-vector-ref data1 i))
-		 (* pan (float-vector-ref data2 i))))))
+      (float-vector-set! new-data i
+			 (+ (* (env erev) (float-vector-ref data1 i))
+			    (* (env e) (float-vector-ref data2 i)))))
     (float-vector->channel new-data 0 (- len 1) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
 
 
@@ -825,28 +811,20 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 y))) is like 
 	 (mx (maxamp snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (fsize2 (/ fsize 2))
-	 (orig 0.0) (cur 0.0)
+	 ;(orig 0.0) (cur 0.0)
 	 (rdata (channel->float-vector 0 fsize snd chn))
 	 (idata (make-float-vector fsize))
-	 (spect (snd-spectrum rdata rectangular-window fsize #t 1.0 #f normalize))) ; not in-place!
+	 (spect (snd-spectrum rdata rectangular-window fsize #t 1.0 #f normalize)) ; not in-place!
+	 (vf (make-float-vector fsize)))
+
     (fft rdata idata 1)
     (flt (spect 0))
     (do ((i 1 (+ i 1))
 	 (j (- fsize 1) (- j 1)))
 	((= i fsize2))
-      (set! cur (flt (set! orig (spect i))))
-      (if (>  (abs orig) .000001)
-	  (let ((scl (/ cur orig)))
-	    (set! (rdata i) (* scl (rdata i)))
-	    (set! (idata i) (* scl (idata i)))
-	    (set! (rdata j) (* scl (rdata j)))
-	    (set! (idata j) (* scl (idata j))))
-	  (if (> (abs cur) .000001)
-	      (let ((scl (/ cur (sqrt 2.0))))
-		(set! (rdata i) scl)
-		(set! (idata i) scl)
-		(set! (rdata j) scl)
-		(set! (idata j) (- scl))))))
+      (float-vector-set! vf j (float-vector-set! vf i (/ (flt (spect i)) (max (spect i) 1e-5)))))
+    (float-vector-multiply! rdata vf)
+    (float-vector-multiply! idata vf)
     (fft rdata idata -1)
     (if (not (= mx 0.0))
 	(let ((pk (float-vector-peak rdata)))
@@ -867,10 +845,10 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 y))) is like 
   (do ((i 1 (+ i 1))
        (lo 0.0 (+ lo .1)))
       ((= i 8))
-    (filter-fft (lambda (y) (contrast-enhancement y (+ 1.0 (* lo 30.0)))) #t ind 0 0))
+    (filter-fft (lambda (y) (contrast-enhancement y (+ 1.0 (* lo 30.0)))) #t ind 0))
   (let ((mixers (make-vector 8)))
     (do ((i 0 (+ i 1))
-	 (lo 0.0 (+ lo .12)))
+	 (lo 0.001 (+ lo .12)))
 	((= i 8))
       (env-sound (list 0 0 lo 1 1 0) 0 #f 32.0 ind 0 (+ i 1))
       (set! (mixers i) (make-sampler 0 ind 0 1 (edit-position ind 0))))
@@ -1113,20 +1091,15 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
 	 (i 0)
 	 (len (frames))
+	 (len1 (- len 1))
 	 (in-data (channel->float-vector 0 len snd chn))
-	 (out-len (round (* len (+ 1.0 (* 2 amp)))))
-	 (out-data (make-float-vector out-len))
 	 (rd (make-src :srate 1.0 
 		       :input (lambda (dir) 
-				(let ((val (if (and (>= i 0) (< i len)) 
-					       (float-vector-ref in-data i) 
-					       0.0)))
-				  (set! i (+ i dir)) 
-				  val)))))
-    (do ((i 0 (+ i 1)))
-	((= i out-len))
-      (float-vector-set! out-data i (src rd (rand-interp rn))))
-    (float-vector->channel out-data 0 len snd chn #f (format #f "hello-dentist ~A ~A" frq amp))))
+				(float-vector-ref in-data (min (max 0 (set! i (+ i dir))) len1))))))
+    (map-channel
+     (lambda (y)
+       (src rd (rand-interp rn)))
+     0 len snd chn #f (format #f "hello-dentist ~A ~A" frq amp))))
 
 
 ;;; a very similar function uses oscil instead of rand-interp, giving
@@ -1172,20 +1145,20 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 	 (vsize 1024)
 	 (vbeg 0)
 	 (v (channel->float-vector 0 vsize))
-	 (inctr 0))
+	 (inctr 0)
+	 (f1 (lambda (dir)
+	       (let ((val (v inctr)))
+		 (set! inctr (+ inctr dir))
+		 (if (>= inctr vsize)
+		     (begin
+		       (set! vbeg (+ vbeg inctr))
+		       (set! inctr 0)
+		       (set! v (channel->float-vector vbeg vsize snd chn))))
+		 val)))
+	 (f2 (lambda (dir)
+	       (granulate gr f1))))
     (lambda (inval)
-      (src sr 0.0
-	   (lambda (dir)
-	     (granulate gr
-			(lambda (dir)
-			  (let ((val (v inctr)))
-			    (set! inctr (+ inctr dir))
-			    (if (>= inctr vsize)
-				(begin
-				  (set! vbeg (+ vbeg inctr))
-				  (set! inctr 0)
-				  (set! v (channel->float-vector vbeg vsize snd chn))))
-			    val))))))))
+      (src sr 0.0 f2))))
 
 
 ;;; the next (expsnd) changes the tempo according to an envelope; the new duration

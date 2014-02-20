@@ -6284,7 +6284,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 #if HAVE_SCHEME
 	      gc_loc = s7_gc_protect(s7, data);
 #endif
-	      if (mus_vct_p(data))
+	      if (mus_is_vct(data))
 		v0 = xen_to_vct(data);
 	      else
 		{
@@ -7442,7 +7442,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
       if (sound_data_p(snd))                     /* sound-data-length */
 	return(C_TO_XEN_LONG_LONG(mus_sound_data_length(XEN_TO_SOUND_DATA(snd))));
 
-      if (MUS_VCT_P(snd))                        /* vct-length */
+      if (MUS_IS_VCT(snd))                        /* vct-length */
 	return(C_TO_XEN_LONG_LONG(mus_vct_length(XEN_TO_VCT(snd))));
 
       if (XEN_MIX_P(snd))                        /* mix-length */
@@ -7542,14 +7542,14 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
 	{
 	  XEN v;
 	  v = g_mus_data(snd);
-	  if (MUS_VCT_P(v))
+	  if (MUS_IS_VCT(v))
 	    return(g_vct_peak(v));
 	}
 
       if (sound_data_p(snd))
 	return(g_list_maxamp(g_sound_data_maxamp(snd)));
 
-      if (MUS_VCT_P(snd))                        /* vct-peak */
+      if (MUS_IS_VCT(snd))                        /* vct-peak */
 	return(g_vct_peak(snd));
 
       if (XEN_MIX_P(snd))                        /* mix => sound maxamp of the mix data */
@@ -9298,9 +9298,9 @@ If 'data' is a list of numbers, it is treated as an envelope."
   int old_y_offset = 0, gx0 = 0;
 
   /* ldata can be a vct or a list of numbers or vcts */
-  XEN_ASSERT_TYPE(((MUS_VCT_P(ldata)) || 
+  XEN_ASSERT_TYPE(((MUS_IS_VCT(ldata)) || 
 		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0) && 
-		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (MUS_VCT_P(XEN_CAR(ldata)))))),
+		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (MUS_IS_VCT(XEN_CAR(ldata)))))),
 		  ldata, 1, S_graph, "a vct or a list");
 
   XEN_ASSERT_TYPE(XEN_STRING_P(xlabel) || XEN_NOT_BOUND_P(xlabel), xlabel, 2, S_graph, "a string (x axis label)");

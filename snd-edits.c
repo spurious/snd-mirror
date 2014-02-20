@@ -7855,7 +7855,7 @@ static mus_float_t *g_floats_to_samples(XEN obj, int *size, const char *caller, 
       else
 	{
 	  /* this block probably can't happen anymore */
-	  if (MUS_VCT_P(obj))
+	  if (MUS_IS_VCT(obj))
 	    {
 	      vct *v;
 	      mus_float_t *vdata;
@@ -8083,7 +8083,7 @@ the new data's end."
     }
   else
     {
-      if (MUS_VCT_P(vect))
+      if (MUS_IS_VCT(vect))
 	{
 	  vct *v;
 	  v = XEN_TO_VCT(vect);
@@ -8171,7 +8171,7 @@ static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd, XEN chn_n, XEN edp
   #define H_vct_to_channel "(" S_vct_to_channel " vct :optional (beg 0) (dur len) snd chn edpos origin): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
   const char *caller;
-  XEN_ASSERT_TYPE(MUS_VCT_P(v), v, 1, S_vct_to_channel, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(v), v, 1, S_vct_to_channel, "a vct");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 7, S_vct_to_channel, "a string");
   if (XEN_NOT_BOUND_P(beg)) beg = XEN_ZERO;
   if (XEN_NOT_BOUND_P(dur)) 
@@ -8670,7 +8670,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
     }
   else
     {
-      if (MUS_VCT_P(vect))
+      if (MUS_IS_VCT(vect))
 	{
 	  vct *v;
 	  v = XEN_TO_VCT(vect);

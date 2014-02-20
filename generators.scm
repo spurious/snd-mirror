@@ -11,6 +11,7 @@
 
 
 (define nearly-zero 1.0e-10) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
+(define two-pi (* 2.0 pi))
 
 ;;; --------------------------------------------------------------------------------
 
@@ -1776,10 +1777,7 @@
   ;;   we reach srate/3, then solve for the corresponding r.
   (environment-set! gen 'fm fm)
   (with-environment gen
-    (let* ((x (radians->hz (+ frequency fm))) ; undo the earlier hz->radians
-	   (y (* x ratio))
-	   (topk (/ 1.0 (floor (/ (- (/ *clm-srate* 3) x) y))))
-	   (maxr (expt cutoff topk)))
+    (let ((maxr (expt cutoff (/ (floor (- (/ two-pi (* 3 ratio (+ fm frequency))) (/ ratio)))))))
       (if (>= r 0.0)
 	  (min r maxr)
 	  (max r (- maxr))))))
@@ -1789,7 +1787,6 @@
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'r) (clamp-rxycos-r g 0.0))
 			       g)
-	       
 	       :methods (list
 			 (cons 'mus-scaler
 			       (make-procedure-with-setter
@@ -1826,8 +1823,7 @@
       (set! angle (+ angle fm frequency))
 
       (if (not (= fm 0.0))  ;(set! r (clamp-rxycos-r (current-environment) fm))
-	  (let* ((x (radians->hz (+ frequency fm))) ; undo the earlier hz->radians
-		 (maxr (expt cutoff (/ 1.0 (floor (/ (- (/ *clm-srate* 3) x) (* x ratio)))))))
+	  (let ((maxr (expt cutoff (/ (floor (- (/ two-pi (* 3 ratio (+ fm frequency))) (/ ratio)))))))
 	    (if (>= r 0.0)
 		(set! r (min r maxr))
 		(set! r (max r (- maxr))))))
@@ -4351,14 +4347,13 @@ index 10 (so 10/2 is the bes-jn arg):
 						      (/ (* pi pi) 6.0)
 						      (/ pi -4.0)
 						      (/ 12.0)))
-			       (set! (g 'two-pi) (* 2.0 pi))
 			       g)
 	       :methods (list
 			 (cons 'mus-reset
 			       (lambda (g)
 				 (set! (g 'frequency) 0.0)
 				 (set! (g 'angle) 0.0)))))
-  (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f) fm two-pi)
+  (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f) fm)
 
 
 (define* (k3sin gen (fm 0.0))
@@ -4511,7 +4506,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		 (set! (g 'p2) (make-pulse-train 
 				(g 'frequency) 
 				(- (g 'amplitude))
-				(* 2.0 pi (- 1.0 (g 'duty-factor)))))
+				(* two-pi (- 1.0 (g 'duty-factor)))))
 		 g)
 	       
 	       :methods (list
@@ -4528,7 +4523,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				(lambda (g) (g 'duty-factor))
 				(lambda (g val)
 				  (set! (g 'duty-factor) val)
-				  (set! (mus-phase (g 'p2)) (* 2.0 pi (- 1.0 (g 'duty-factor))))
+				  (set! (mus-phase (g 'p2)) (* two-pi (- 1.0 (g 'duty-factor))))
 				  val)))))
   
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0)
@@ -5122,10 +5117,9 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (set! (g 'dv) (/ 1.0 (ceiling (/ *clm-srate* (max 1.0 (g 'frequency))))))
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'incr) (* (mus-random (g 'amplitude)) dv))
-			       (set! (g 'two-pi) (* 2.0 pi))
 			       g))
   (frequency *clm-default-frequency*) (amplitude 1.0) (low -1.0) (high 1.0)
-  (angle 0.0) (sum 0.0) (incr 0.0) fm two-pi dv)
+  (angle 0.0) (sum 0.0) (incr 0.0) fm dv)
 
 
 (define* (green-noise-interp gen (fm 0.0))
@@ -6081,7 +6075,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (with-environment gen
     (let ((n2 (/ n 2)))
       (if (>= outctr hop)
-	  (let ((two-pi (* 2.0 pi)))
+	  (begin
 	    (if (> outctr n) ; must be first time through -- fill data array
 		(begin
 		  (do ((i 0 (+ i 1)))

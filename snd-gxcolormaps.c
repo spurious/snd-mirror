@@ -259,7 +259,7 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
       /* user-defined colormap func returns a list of 3 vcts (r g b) */
       gc_loc = snd_protect(xrgb);
 
-      if (!(mus_vct_p(XEN_LIST_REF(xrgb, 0)))) 
+      if (!(mus_is_vct(XEN_LIST_REF(xrgb, 0)))) 
 	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		  XEN_LIST_2(C_TO_XEN_STRING(S_add_colormap ": function did not return a list of vcts! ~A"),
 			     xrgb));

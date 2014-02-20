@@ -3229,7 +3229,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   int len, mix_id = NO_MIX_TAG;
   bool with_mixer;
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, 1, S_mix_vct, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(obj), obj, 1, S_mix_vct, "a vct");
   ASSERT_CHANNEL(S_mix_vct, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, 2, S_mix_vct, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_tag), with_tag, 5, S_mix_vct, "a boolean");

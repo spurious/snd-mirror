@@ -2132,7 +2132,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
   mus_any *u1;
   XEN_ASSERT_TYPE(mus_xen_p(matrix), matrix, 1, "gsl-eigenvectors", "a mixer (matrix)");
   u1 = XEN_TO_MUS_ANY(matrix);
-  if (!mus_mixer_p(u1)) return(XEN_FALSE);
+  if (!mus_is_mixer(u1)) return(XEN_FALSE);
 
   len = mus_length(u1);
   data = (double *)calloc(len * len, sizeof(double));

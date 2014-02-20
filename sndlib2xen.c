@@ -1495,7 +1495,7 @@ srate and channels.  'len' samples are written."
   vct *v;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, 1, S_array_to_file, "a string");
-  XEN_ASSERT_TYPE(MUS_VCT_P(data), data, 2, S_array_to_file, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(data), data, 2, S_array_to_file, "a vct");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(len), len, 3, S_array_to_file, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(srate), srate, 4, S_array_to_file, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(channels), channels, 5, S_array_to_file, "an integer");
@@ -1531,7 +1531,7 @@ at frame 'start' and reading 'samples' samples altogether."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 2, S_file_to_array, "an integer");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(start), start, 3, S_file_to_array, "an integer");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samples), samples, 4, S_file_to_array, "an integer");
-  XEN_ASSERT_TYPE((MUS_VCT_P(data)), data, 5, S_file_to_array, "a vct");
+  XEN_ASSERT_TYPE((MUS_IS_VCT(data)), data, 5, S_file_to_array, "a vct");
 
   name = XEN_TO_C_STRING(filename);
   if (!(mus_file_probe(name)))
@@ -2192,7 +2192,7 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
 
   XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, 1, S_sound_data_to_vct, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 2, S_sound_data_to_vct, "an integer");
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vobj) || MUS_VCT_P(vobj), vobj, 3, S_sound_data_to_vct, "a vct");
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vobj) || MUS_IS_VCT(vobj), vobj, 3, S_sound_data_to_vct, "a vct");
 
   sd = XEN_TO_SOUND_DATA(sdobj);
   sdlen = mus_sound_data_length(sd);
@@ -2206,7 +2206,7 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
 			 chan, 
 			 C_TO_XEN_INT(mus_sound_data_chans(sd))));
 
-  if (!(MUS_VCT_P(vobj))) 
+  if (!(MUS_IS_VCT(vobj))) 
     vobj = xen_make_vct(sdlen, (mus_float_t *)calloc(sdlen, sizeof(mus_float_t)));
   v = XEN_TO_VCT(vobj);
 
@@ -2229,7 +2229,7 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   int chn;
   mus_long_t len;
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, 1, S_vct_to_sound_data, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(vobj), vobj, 1, S_vct_to_sound_data, "a vct");
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(sdobj) || SOUND_DATA_P(sdobj), sdobj, 2, S_vct_to_sound_data, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 3, S_vct_to_sound_data, "an integer");
 

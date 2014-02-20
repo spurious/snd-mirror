@@ -7504,22 +7504,17 @@ EDITS: 5
 	
 	(let* ((ind1 (open-sound "oboe.snd"))
 	       (len (frames ind1))
-	       (ctr 0))
+	       (ctr #f))
 	  (map-chan (lambda (n)
-		      (if (= ctr 1) (set! ctr 0) (set! ctr 1))
-		      (if (= ctr 0)
-			  (* n 2.0)
-			  #f))
+		      (and (set! ctr (not ctr))
+			   (* n 2.0)))
 		    0 (frames ind1) "ignore: cut 2" ind1 0)
 	  (if (> (frames ind1) (+ (* len 2) 1))
 	      (snd-display #__line__ ";map-chan cut: ~A ~A?" len (frames ind1)))
 	  (revert-sound ind1)
 	  (set! ctr 0)
 	  (map-chan (lambda (n)
-		      (set! ctr (+ ctr 1))
-		      (if (> ctr 3)
-			  #t
-			  n))
+		      (or (> (set! ctr (+ ctr 1)) 3) n))
 		    0 (frames ind1) "ignore: cut none" ind1 0)
 	  (if (> ctr 4)
 	      (snd-display #__line__ ";map-chan no-edit count: ~A?" ctr))
@@ -10550,6 +10545,56 @@ EDITS: 2
 		  p ob))
       (close-sound (find-sound t1))
       (close-sound (find-sound t2)))))
+
+(define (test-simple-nsin n)
+  (let ((p (make-nsin 400.0 n))
+	(vp (make-float-vector 200))
+	(vo (make-float-vector 200)))
+    (let ((ob (make-oscil-bank 
+	       (apply float-vector (let ((frqs ()))
+				     (do ((i 1 (+ i 1)))
+					 ((> i n))
+				       (set! frqs (cons (hz->radians (* i 400.0)) frqs)))
+				     (reverse frqs)))
+	       (make-float-vector n 0.0)
+	       (make-float-vector n (mus-scaler p)))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 200))
+	(float-vector-set! vp i (nsin p)))
+      (do ((i 0 (+ i 1)))
+	  ((= i 200))
+	(float-vector-set! vo i (oscil-bank ob)))
+      (if (not (mus-arrays-equal? vp vo))
+	  (format *stderr* ";simple nsin ~A: ~A~%    ~A~%    ~A~%~A ~A~%" 
+		  n 
+		  (float-vector-peak (float-vector-subtract! (copy vp) vo))
+		  vp vo
+		  p ob)))))
+
+(define (test-simple-ncos n)
+  (let ((p (make-ncos 400.0 n))
+	(vp (make-float-vector 200))
+	(vo (make-float-vector 200)))
+    (let ((ob (make-oscil-bank 
+	       (apply float-vector (let ((frqs ()))
+				     (do ((i 1 (+ i 1)))
+					 ((> i n))
+				       (set! frqs (cons (hz->radians (* i 400.0)) frqs)))
+				     (reverse frqs)))
+	       (make-float-vector n (/ pi 2.0))
+	       (make-float-vector n (mus-scaler p)))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 200))
+	(float-vector-set! vp i (ncos p)))
+      (do ((i 0 (+ i 1)))
+	  ((= i 200))
+	(float-vector-set! vo i (oscil-bank ob)))
+      (if (not (mus-arrays-equal? vp vo))
+	  (format *stderr* ";simple ncos ~A: ~A~%    ~A~%    ~A~%~A ~A~%" 
+		  n 
+		  (float-vector-peak (float-vector-subtract! (copy vp) vo))
+		  vp vo
+		  p ob)))))
 
 (define (snd-test-jc-reverb decay-dur low-pass volume amp-env)
   (let ((allpass1 (make-all-pass -0.700 0.700 1051))
@@ -14475,6 +14520,11 @@ EDITS: 2
 	(set! mx (max mx (abs (- (gen1) (gen2))))))
       (if (fneq mx 0.0)
 	  (snd-display #__line__ ";ncos +-: ~A" mx)))
+
+    (test-simple-ncos 1)
+    (test-simple-ncos 3)
+    (test-simple-ncos 10)
+
     
     (let ((gen (make-nsin 440.0 10))
 	  (v0 (make-float-vector 10))
@@ -14511,6 +14561,10 @@ EDITS: 2
       (if (fneq mx 0.0)
 	  (snd-display #__line__ ";nsin +-: ~A" mx)))
     
+    (test-simple-nsin 1)
+    (test-simple-nsin 3)
+    (test-simple-nsin 10)
+
     
     (let ((gen (make-nrxysin 440.0))
 	  (v0 (make-float-vector 10))
@@ -19276,7 +19330,8 @@ EDITS: 2
 					   (float-vector-scale! (mus-data g) 2.0)
 					   0)))
 	    (rd (make-sampler 0)))
-	(map-channel (lambda (y) (granulate grn (lambda (dir) (read-sample rd)))))
+	(let ((f1 (lambda (dir) (read-sample rd))))
+	  (map-channel (lambda (y) (granulate grn f1))))
 	(if (or (< (/ (maxamp) mx) 1.4) (> (/ mx (maxamp)) 2.5))
 	    (snd-display #__line__ ";gran edit 2* (1): ~A ~A" mx (maxamp)))
 	(undo)
@@ -19285,33 +19340,26 @@ EDITS: 2
 					   (float-vector-scale! (mus-data g) 4.0)
 					   0)))
 	      (rd (make-sampler 0)))
-	  (map-channel (lambda (y) (granulate grn (lambda (dir) (read-sample rd)))))
+	  (let ((f1 (lambda (dir) (read-sample rd))))
+	    (map-channel (lambda (y) (granulate grn f1))))
 	  (if (or (< (/ (maxamp) mx) 2.9) (> (/ mx (maxamp)) 6.0))
 	      (snd-display #__line__ ";gran edit 4* (1): ~A ~A" mx (maxamp)))
 	  (revert-sound ind)))
       (let ((grn (make-granulate :expansion 2.0 :input (make-sampler 0))))
-	(map-channel 
-	 (lambda (y) 
-	   (granulate grn 
-		      #f
-		      (lambda (g)
-			(float-vector-scale! (mus-data g) 2.0)
-			0))))
+	(let ((f1 (lambda (g)
+		    (float-vector-scale! (mus-data g) 2.0)
+		    0)))
+	  (map-channel (lambda (y) (granulate grn #f f1))))
 	(if (or (< (/ (maxamp) mx) 1.4) (> (/ mx (maxamp)) 2.5))
 	    (snd-display #__line__ ";gran edit 2* (2): ~A ~A" mx (maxamp)))
 	(undo)
 	(let ((grn (make-granulate :expansion 2.0))
 	      (rd (make-sampler 0)))
-	  (map-channel 
-	   (lambda (y) 
-	     (granulate grn 
-			(lambda (dir) 
-			  (rd))
-			(lambda (g)
-			  (float-vector-scale! (mus-data g) 4.0)
-			  0))))
-	  (if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
-	      (snd-display #__line__ ";gran edit 4* (2): ~A ~A" mx (maxamp)))))
+	  (let ((f1 (lambda (dir) (read-sample rd)))
+		(f2 (lambda (g) (float-vector-scale! (mus-data g) 4.0) 0)))
+	    (map-channel (lambda (y) (granulate grn f1 f2)))
+	    (if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
+		(snd-display #__line__ ";gran edit 4* (2): ~A ~A" mx (maxamp))))))
       (close-sound ind))
     
     (let ((ind (open-sound "oboe.snd")))
@@ -19483,11 +19531,11 @@ EDITS: 2
 	(undo))
       
       (let ((gen (make-granulate :jitter 0.0 :hop .001 :length .005 :ramp .5 :scaler 1.0)))
-	(map-channel (lambda (y) (granulate gen 
-					    (lambda (dir) .1)
-					    (lambda (g)
-					      (float-vector-scale! (mus-data g) 2.0)
-					      0))))
+	(let ((f1 (lambda (dir) .1))
+	      (f2 (lambda (g)
+		    (float-vector-scale! (mus-data g) 2.0)
+		    0)))
+	  (map-channel (lambda (y) (granulate gen f1 f2))))
 	(let ((mx (maxamp)))
 	  (if (fneq mx (* 2 0.264)) (snd-display #__line__ ";gran 10 max: ~A" mx)))
 	(if (not (vequal (float-vector-scale! (channel->float-vector 0 30) 0.5)
@@ -19504,17 +19552,17 @@ EDITS: 2
 	    (forward #t)
 	    (ctr -0.5)
 	    (incr .001))
-	(map-channel (lambda (y) (granulate gen 
-					    (lambda (dir) 
-					      (set! ctr (+ ctr incr)))
-					    (lambda (g)
-					      (if forward ; no change to data
-						  (set! forward #f)
-						  (let ((len (mus-length g)))
-						    (let ((grain (make-shared-vector (mus-data g) (list len))))
-						      (set! forward #t)
-						      (reverse! grain)))) ; should get ramps going up then down across overall rising ramp
-					      (mus-length g)))))
+	(let ((f1 (lambda (dir) 
+		    (set! ctr (+ ctr incr))))
+	      (f2 (lambda (g)
+		    (if forward ; no change to data
+			(set! forward #f)
+			(let ((len (mus-length g)))
+			  (let ((grain (make-shared-vector (mus-data g) (list len))))
+			    (set! forward #t)
+			    (reverse! grain)))) ; should get ramps going up then down across overall rising ramp
+		    (mus-length g))))
+	  (map-channel (lambda (y) (granulate gen f1 f2))))
 	(let ((mx (maxamp)))
 	  (if (> mx 0.6) (snd-display #__line__ ";gran 11 max: ~A" mx)))
 	(if (not (vequal (channel->float-vector 0 30)
@@ -34160,7 +34208,7 @@ EDITS: 1
 	  (let ((ramper (make-ramp 10)))
 	    (map-channel (lambda (y) (ramp ramper y)))
 	    (let ((vals (channel->float-vector 0 20)))
-	      (if (not (vequal vals (float-vector 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000 
+	      (if (not (vequal vals (float-vector 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000 1.0
 					 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
 		  (snd-display #__line__ ";make-ramp: ~A" vals))))
 	  (revert-sound ind)
@@ -46610,11 +46658,11 @@ EDITS: 1
 	     (lambda (arg)
 	       (for-each 
 		(lambda (n)
-		  (let ((err (catch #t
-			       (lambda () (n arg))
-			       (lambda args (car args)))))
-		    (if (eq? err 'wrong-number-of-args)
-			(snd-display #__line__ ";procs1 wna: ~A ~A" err (procedure-documentation n)))))
+		  (if (eq? (catch #t
+			     (lambda () (n arg))
+			     (lambda args (car args)))
+			   'wrong-number-of-args)
+		      (snd-display #__line__ ";procs1 wna: ~A" (procedure-documentation n))))
 		procs1))
 	     main-args)
 	    (for-each close-sound (sounds))
@@ -46626,11 +46674,11 @@ EDITS: 1
 		(lambda (arg2)
 		  (for-each 
 		   (lambda (n)
-		     (let ((err (catch #t
-				  (lambda () (n arg1 arg2))
-				  (lambda args (car args)))))
-		       (if (eq? err 'wrong-number-of-args)
-			   (snd-display #__line__ ";procs2: ~A ~A" err (procedure-documentation n)))))
+		     (if (eq? (catch #t
+				(lambda () (n arg1 arg2))
+				(lambda args (car args)))
+			      'wrong-number-of-args)
+			 (snd-display #__line__ ";procs2: ~A" (procedure-documentation n))))
 		   procs2))
 		main-args))
 	     main-args)
@@ -46641,11 +46689,11 @@ EDITS: 1
 	     (lambda (arg)
 	       (for-each 
 		(lambda (n)
-		  (let ((err (catch #t
-			       (lambda () (set! (n) arg))
-			       (lambda args (car args)))))
-		    (if (eq? err 'wrong-number-of-args)
-			(snd-display #__line__ ";set-procs0: ~A ~A" err (procedure-documentation n)))))
+		  (if (eq? (catch #t
+			     (lambda () (set! (n) arg))
+			     (lambda args (car args)))
+			   'wrong-number-of-args)
+		      (snd-display #__line__ ";set-procs0: ~A" (procedure-documentation n))))
 		set-procs0))
 	     main-args)
 	    (for-each close-sound (sounds))
@@ -46657,11 +46705,11 @@ EDITS: 1
 		(lambda (arg2)
 		  (for-each 
 		   (lambda (n)
-		     (let ((err (catch #t
-				  (lambda () (set! (n arg1) arg2))
-				  (lambda args (car args)))))
-		       (if (eq? err 'wrong-number-of-args)
-			   (snd-display #__line__ ";set-procs1: ~A ~A" err (procedure-documentation n)))))
+		     (if (eq? (catch #t
+				(lambda () (set! (n arg1) arg2))
+				(lambda args (car args)))
+			      'wrong-number-of-args)
+			 (snd-display #__line__ ";set-procs1: ~A" (procedure-documentation n))))
 		   set-procs1))
 		main-args))
 	     main-args)
@@ -46677,11 +46725,11 @@ EDITS: 1
 		   (lambda (arg3)
 		     (for-each 
 		      (lambda (n)
-			(let ((err (catch #t
-				     (lambda () (set! (n arg1 arg2) arg3))
-				     (lambda args (car args)))))
-			  (if (eq? err 'wrong-number-of-args)
-			      (snd-display #__line__ ";set-procs2: ~A ~A" err (procedure-documentation n)))))
+			(if (eq? (catch #t
+				   (lambda () (set! (n arg1 arg2) arg3))
+				   (lambda args (car args)))
+				 'wrong-number-of-args)
+			    (snd-display #__line__ ";set-procs2: ~A" (procedure-documentation n))))
 		      set-procs2))
 		   less-args))
 		less-args))
@@ -47091,47 +47139,25 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-17-Feb:
-38,439,667,663
-5,840,744,520  s7.c:eval [/home/bil/gtk-snd/snd]
-2,502,789,885  ???:sin [/lib64/libm-2.12.so]
-2,264,528,788  ???:cos [/lib64/libm-2.12.so]
+20-Feb:
+37,848,267,878
+5,748,468,128  s7.c:eval [/home/bil/gtk-snd/snd]
+2,305,476,830  ???:sin [/lib64/libm-2.12.so]
+2,170,843,468  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,097,340,243  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  906,458,379  s7.c:gc [/home/bil/gtk-snd/snd]
-  899,447,588  ???:t2_32 [/home/bil/gtk-snd/snd]
+1,095,169,731  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  899,502,268  ???:t2_32 [/home/bil/gtk-snd/snd]
+  884,646,576  s7.c:gc [/home/bil/gtk-snd/snd]
   829,547,700  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  788,198,692  s7.c:eval'2 [/home/bil/gtk-snd/snd]
   781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  612,651,837  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,234,994  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,355,496  ???:n1_64 [/home/bil/gtk-snd/snd]
-  443,530,890  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  749,113,460  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  605,611,947  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,829,010  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
+  454,166,129  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  375,279,814  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
-  338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-
-18-Feb:
-38,341,153,622
-5,816,271,352  s7.c:eval [/home/bil/gtk-snd/snd]
-2,476,847,832  ???:sin [/lib64/libm-2.12.so]
-2,254,145,324  ???:cos [/lib64/libm-2.12.so]
-1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,036,711,042  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  908,793,885  s7.c:gc [/home/bil/gtk-snd/snd]
-  885,578,404  ???:t2_32 [/home/bil/gtk-snd/snd]
-  829,547,700  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  818,694,923  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
-  774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  637,581,527  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,594,512  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,551,144  ???:n1_64 [/home/bil/gtk-snd/snd]
-  416,210,008  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
-  413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  380,877,542  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  375,489,814  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 |#

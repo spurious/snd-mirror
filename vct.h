@@ -12,11 +12,11 @@ extern "C" {
 #endif
 
 MUS_EXPORT void mus_vct_init(void);
-MUS_EXPORT bool mus_vct_p(XEN obj);
+MUS_EXPORT bool mus_is_vct(XEN obj);
 MUS_EXPORT int mus_vct_print_length(void);
 MUS_EXPORT void mus_vct_set_print_length(int len);
 MUS_EXPORT XEN mus_array_to_list(mus_float_t *arr, mus_long_t i, mus_long_t len);
-MUS_EXPORT bool mus_vct_equalp(vct *v1, vct *v2);
+MUS_EXPORT bool mus_vct_is_equal(vct *v1, vct *v2);
 MUS_EXPORT char *mus_vct_to_readable_string(vct *v);
 MUS_EXPORT vct *mus_vct_make(mus_long_t len);
 MUS_EXPORT vct *mus_vct_free(vct *v);
@@ -35,11 +35,16 @@ MUS_EXPORT XEN g_vct_peak(XEN obj);
   #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #endif
 
-#define MUS_VCT_P(arg) mus_vct_p(arg)
-
+#define MUS_IS_VCT(arg) mus_is_vct(arg)
 MUS_EXPORT mus_long_t mus_vct_length(vct *v);
 MUS_EXPORT mus_float_t *mus_vct_data(vct *v);
 MUS_EXPORT vct *mus_vct_wrap(mus_long_t len, mus_float_t *data);
+
+#if (!DISABLE_DEPRECATED)
+#define mus_vct_p mus_is_vct
+#define mus_vct_equalp mus_vct_is_equal
+#define MUS_VCT_P(arg) mus_is_vct(arg)
+#endif
 
 #ifdef __cplusplus
 }

@@ -3230,7 +3230,7 @@ static XEN g_channels(XEN snd)
 
   if ((mus_xen_p(snd)) ||
       (sound_data_p(snd)) ||                     /* sound-data-chans */
-      (MUS_VCT_P(snd)) ||
+      (MUS_IS_VCT(snd)) ||
       (XEN_LIST_P(snd)))
     return(g_mus_channels(snd));                 /* mus-channels */
 

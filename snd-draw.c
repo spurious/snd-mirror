@@ -694,9 +694,9 @@ data in the recipient's graph between points low and high in the drawing mode gr
   if (XEN_FALSE_P(data)) return(XEN_FALSE);
   XEN_ASSERT_TYPE((XEN_LIST_P(data) && 
 		   (XEN_LIST_LENGTH(data) == 2) &&
-		   (MUS_VCT_P(XEN_CAR(data))) &&
-		   (MUS_VCT_P(XEN_CADR(data)))) || 
-		  MUS_VCT_P(data), 
+		   (MUS_IS_VCT(XEN_CAR(data))) &&
+		   (MUS_IS_VCT(XEN_CADR(data)))) || 
+		  (MUS_IS_VCT(data)), 
 		  data, 1, S_graph_data, "a list of 2 vcts or vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(ax), ax, 4, S_graph_data, "an integer");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(lo) || XEN_FALSE_P(lo) || XEN_NOT_BOUND_P(lo), lo, 5, S_graph_data, "a sample number");

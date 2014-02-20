@@ -2035,26 +2035,20 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 ;;; VARIOUS AND MISCELLANEOUS
 
 (define* (effects-hello-dentist frq amp beg dur snd chn)
+  "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
 	 (i 0)
-	 (j 0)
-	 (len (or dur (frames snd chn)))
+	 (len (or dur (- (frames snd chn) beg)))
+	 (len1 (- len 1))
 	 (in-data (channel->float-vector beg len snd chn))
-	 (out-len (round (* len (+ 1.0 (* 2 amp)))))
-	 (out-data (make-float-vector out-len))
-	 (rd (make-src :srate 1.0
-		       :input (lambda (dir)
-				(let ((val (if (and (>= i 0) (< i len))
-					       (in-data i)
-					       0.0)))
-				  (set! i (+ i dir))
-				  val)))))
-    (do ()
-	((or (= i len) (= j out-len)))
-      (set! (out-data j) (src rd (rand-interp rn)))
-      (set! j (+ j 1)))
-    (float-vector->channel out-data beg j snd chn #f 
-		  (format #f "effects-hello-dentist ~A ~A ~A ~A" frq amp beg (if (= len (frames snd chn)) #f len)))))
+	 (rd (make-src :srate 1.0 
+		       :input (lambda (dir) 
+				(float-vector-ref in-data (min (max 0 (set! i (+ i dir))) len1))))))
+    (map-channel
+     (lambda (y)
+       (src rd (rand-interp rn)))
+     beg len snd chn #f (format #f "effects-hello-dentist ~A ~A ~A ~A" frq amp beg (if (= len (frames snd chn)) #f len)))))
+		  
 
 (define* (effects-fp sr osamp osfrq beg dur snd chn)
   (let* ((os (make-oscil osfrq))

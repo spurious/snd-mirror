@@ -383,9 +383,9 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define (" S_free_cairo " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_axis_info " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_channel_widgets " . args) #f)");
-  XEN_EVAL_C_STRING("(define (" S_color_p " . args) #f)");
+  XEN_EVAL_C_STRING("(define (" S_is_color " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_color_to_list " .args) #f)");
-  XEN_EVAL_C_STRING("(define (" S_colormap_p " . args) #f)");
+  XEN_EVAL_C_STRING("(define (" S_is_colormap " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_current_font " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_dialog_widgets ") #f)");
   XEN_EVAL_C_STRING("(define (" S_graph_data " . args) #f)");
@@ -633,9 +633,9 @@ void snd_doit(int argc, char **argv)
 : " S_y_bounds " { s c a } #f ;\n\
 : set-" S_y_bounds " { a } #f ;\n\
 : " S_channel_widgets " { s c } #f ;\n\
-: " S_color_p " { a } #f ;\n\
+: " S_is_color " { a } #f ;\n\
 : " S_color_to_list " { a } #f ;\n\
-: " S_colormap_p " { a } #f ;\n\
+: " S_is_colormap " { a } #f ;\n\
 : " S_current_font " #f ;\n\
 : " S_dialog_widgets " #f ;\n\
 : " S_focus_widget " #f ;\n\

@@ -283,7 +283,7 @@ static vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def)
 {
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
-      XEN_ASSERT_TYPE(MUS_VCT_P(key), key, n, caller, "a vct");
+      XEN_ASSERT_TYPE(MUS_IS_VCT(key), key, n, caller, "a vct");
       return(XEN_TO_VCT(key));
     }
   return(def);
@@ -701,8 +701,8 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
   vct *v1, *v2;
   mus_long_t len;  
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(val1), val1, 1, S_dot_product, "a vct");
-  XEN_ASSERT_TYPE(MUS_VCT_P(val2), val2, 2, S_dot_product, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(val1), val1, 1, S_dot_product, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(val2), val2, 2, S_dot_product, "a vct");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, 3, S_dot_product, "an integer");
 
   v1 = XEN_TO_VCT(val1);
@@ -741,10 +741,10 @@ static XEN g_edot_product(XEN val1, XEN val2)
   XEN result;
 
   XEN_ASSERT_TYPE(XEN_COMPLEX_P(val1), val1, 1, S_edot_product, "complex");
-  XEN_ASSERT_TYPE((MUS_VCT_P(val2)) || (XEN_VECTOR_P(val2)), val2, 2, S_edot_product, "a vct");
+  XEN_ASSERT_TYPE((MUS_IS_VCT(val2)) || (XEN_VECTOR_P(val2)), val2, 2, S_edot_product, "a vct");
 
   freq = XEN_TO_C_COMPLEX(val1);
-  if (MUS_VCT_P(val2))
+  if (MUS_IS_VCT(val2))
     {
       v = XEN_TO_VCT(val2);
       len = mus_vct_length(v);
@@ -754,7 +754,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
       len = XEN_VECTOR_LENGTH(val2);
     }
   vals = (complex double *)calloc(len, sizeof(complex double));
-  if (MUS_VCT_P(val2))
+  if (MUS_IS_VCT(val2))
     {
       mus_float_t *vdata;
       vdata = mus_vct_data(v);
@@ -780,8 +780,8 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
   vct *v1, *v2;
   mus_long_t len;
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(val1), val1, 1, caller, "a vct");
-  XEN_ASSERT_TYPE(MUS_VCT_P(val2), val2, 2, caller, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(val1), val1, 1, caller, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(val2), val2, 2, caller, "a vct");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(ulen), ulen, 3, caller, "an integer");
 
   v1 = XEN_TO_VCT(val1);
@@ -850,8 +850,8 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
   mus_long_t n;
   vct *v1, *v2;
 
-  XEN_ASSERT_TYPE((MUS_VCT_P(url)), url, 1, S_mus_fft, "a vct");
-  XEN_ASSERT_TYPE((MUS_VCT_P(uim)), uim, 2, S_mus_fft, "a vct");
+  XEN_ASSERT_TYPE((MUS_IS_VCT(url)), url, 1, S_mus_fft, "a vct");
+  XEN_ASSERT_TYPE((MUS_IS_VCT(uim)), uim, 2, S_mus_fft, "a vct");
 
   v1 = XEN_TO_VCT(url);
   v2 = XEN_TO_VCT(uim);
@@ -954,9 +954,9 @@ and type determines how the spectral data is scaled:\n\
   mus_long_t n;
   vct *v1, *v2, *v3 = NULL;
 
-  XEN_ASSERT_TYPE((MUS_VCT_P(url)), url, 1, S_spectrum, "a vct");
-  XEN_ASSERT_TYPE((MUS_VCT_P(uim)), uim, 2, S_spectrum, "a vct");
-  if (XEN_NOT_FALSE_P(uwin)) XEN_ASSERT_TYPE((MUS_VCT_P(uwin)), uwin, 3, S_spectrum, "a vct or " PROC_FALSE);
+  XEN_ASSERT_TYPE((MUS_IS_VCT(url)), url, 1, S_spectrum, "a vct");
+  XEN_ASSERT_TYPE((MUS_IS_VCT(uim)), uim, 2, S_spectrum, "a vct");
+  if (XEN_NOT_FALSE_P(uwin)) XEN_ASSERT_TYPE((MUS_IS_VCT(uwin)), uwin, 3, S_spectrum, "a vct or " PROC_FALSE);
 
   v1 = XEN_TO_VCT(url);
   v2 = XEN_TO_VCT(uim);
@@ -994,7 +994,7 @@ static XEN g_autocorrelate(XEN reals)
   #define H_autocorrelate "(" S_autocorrelate " data): in place autocorrelation of data (a vct)"
   /* assumes length is power of 2 */
   vct *v1 = NULL;
-  XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, 1, S_autocorrelate, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(reals), reals, 1, S_autocorrelate, "a vct");
   v1 = XEN_TO_VCT(reals);
   if (mus_vct_length(v1) > 0)
     mus_autocorrelate(mus_vct_data(v1), mus_vct_length(v1));
@@ -1008,8 +1008,8 @@ static XEN g_correlate(XEN data1, XEN data2)
   mus_long_t size;
   vct *v1 = NULL, *v2 = NULL;
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(data1), data1, 1, S_correlate, "a vct");
-  XEN_ASSERT_TYPE(MUS_VCT_P(data2), data2, 2, S_correlate, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(data1), data1, 1, S_correlate, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(data2), data2, 2, S_correlate, "a vct");
 
   v1 = XEN_TO_VCT(data1);
   v2 = XEN_TO_VCT(data2);
@@ -1031,8 +1031,8 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
   mus_long_t n;
   vct *v1, *v2;
 
-  XEN_ASSERT_TYPE((MUS_VCT_P(url1)), url1, 1, S_convolution, "a vct");
-  XEN_ASSERT_TYPE((MUS_VCT_P(url2)), url2, 2, S_convolution, "a vct");
+  XEN_ASSERT_TYPE((MUS_IS_VCT(url1)), url1, 1, S_convolution, "a vct");
+  XEN_ASSERT_TYPE((MUS_IS_VCT(url2)), url2, 2, S_convolution, "a vct");
 
   v1 = XEN_TO_VCT(url1);
   v2 = XEN_TO_VCT(url2);
@@ -1068,7 +1068,7 @@ static XEN g_clear_array(XEN arr)
 {
   #define H_clear_array "(" S_clear_array " v): clear vct v: v[i] = 0.0"
   vct *v;
-  XEN_ASSERT_TYPE(MUS_VCT_P(arr), arr, 1, S_clear_array, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(arr), arr, 1, S_clear_array, "a vct");
   v = XEN_TO_VCT(arr);
   if (mus_vct_length(v) > 0)
     memset((void *)(mus_vct_data(v)), 0, mus_vct_length(v) * sizeof(mus_float_t));
@@ -1084,7 +1084,7 @@ of degree, so coeff[0] is the constant term."
 #if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_polynomial, "a number");
 #endif
-  if (MUS_VCT_P(arr))
+  if (MUS_IS_VCT(arr))
     {
       vct *v;
       v = XEN_TO_VCT(arr);
@@ -1117,7 +1117,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
   mus_long_t len;
   vct *v;
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, 1, S_array_interp, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(obj), obj, 1, S_array_interp, "a vct");
 #if (!HAVE_SCHEME)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(phase), phase, 2, S_array_interp, "a number");
 #endif
@@ -1151,7 +1151,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, 1, S_mus_interpolate, "an integer (interp type such as " S_mus_interp_all_pass ")");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_mus_interpolate, "a number");
-  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, 3, S_mus_interpolate, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(obj), obj, 3, S_mus_interpolate, "a vct");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, 4, S_mus_interpolate, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(yn1), yn1, 5, S_mus_interpolate, "a number");
 
@@ -1463,7 +1463,7 @@ static XEN mus_optkey_to_input_procedure(XEN key, const char *caller, int n, XEN
 	  (!(local_arity_ok(key, required_args))))
 	XEN_BAD_ARITY_ERROR(caller, n, key, err);
 
-      if (MUS_VCT_P(key))
+      if (MUS_IS_VCT(key))
 	XEN_WRONG_TYPE_ARG_ERROR(caller, n, key, "an input procedure");
 
       if ((MUS_XEN_P(key)) &&
@@ -2010,7 +2010,7 @@ static XEN g_mus_set_data(XEN gen, XEN val)
   ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
   if (ms) 
     {
-      XEN_ASSERT_TYPE((MUS_VCT_P(val)), val, 2, S_setB S_mus_data, "a vct");
+      XEN_ASSERT_TYPE((MUS_IS_VCT(val)), val, 2, S_setB S_mus_data, "a vct");
       if (ms->vcts)
 	{
 	  vct *v;
@@ -2228,7 +2228,7 @@ XEN g_mus_channels(XEN gen)
   if (sound_data_p(gen))
     return(C_TO_XEN_INT(mus_sound_data_chans(XEN_TO_SOUND_DATA(gen))));
 
-  if (MUS_VCT_P(gen))
+  if (MUS_IS_VCT(gen))
     return(C_TO_XEN_INT(1));
 
 #if HAVE_SCHEME
@@ -2257,7 +2257,7 @@ XEN g_mus_length(XEN gen)
   if (sound_data_p(gen))
     return(C_TO_XEN_INT(mus_sound_data_length(XEN_TO_SOUND_DATA(gen))));
 
-  if (MUS_VCT_P(gen))
+  if (MUS_IS_VCT(gen))
     return(C_TO_XEN_INT(mus_vct_length(XEN_TO_VCT(gen))));
 
 #if HAVE_SCHEME
@@ -2387,12 +2387,12 @@ static XEN g_make_oscil_bank(XEN freqs, XEN phases, XEN amps)
   vct *f, *p, *a = NULL;
   mus_xen *gn;
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(freqs), freqs, 1, S_make_oscil_bank, "a vct");
-  XEN_ASSERT_TYPE(MUS_VCT_P(phases), phases, 2, S_make_oscil_bank, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(freqs), freqs, 1, S_make_oscil_bank, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(phases), phases, 2, S_make_oscil_bank, "a vct");
 
   f = XEN_TO_VCT(freqs);
   p = XEN_TO_VCT(phases);
-  if (MUS_VCT_P(amps)) a = XEN_TO_VCT(amps);
+  if (MUS_IS_VCT(amps)) a = XEN_TO_VCT(amps);
   
   ge = mus_make_oscil_bank(mus_vct_length(f), mus_vct_data(f), mus_vct_data(p), (a) ? mus_vct_data(a) : NULL);
 
@@ -2561,7 +2561,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 				   orig_arg[initial_contents_key], 
 				   keys[initial_contents_key], 
 				   "initial-contents and initial-element in same call?");
-	  if (MUS_VCT_P(keys[initial_contents_key]))
+	  if (MUS_IS_VCT(keys[initial_contents_key]))
 	    {
 	      initial_contents = XEN_TO_VCT(keys[initial_contents_key]);
 	      orig_v = keys[initial_contents_key];
@@ -3369,8 +3369,8 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 	{
 	  if (!(XEN_KEYWORD_P(keys[3]))) /* i.e. distribution arg was specified */
 	    {
-	      XEN_ASSERT_TYPE(MUS_VCT_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], caller, "a vct");
-	      if (MUS_VCT_P(keys[3]))
+	      XEN_ASSERT_TYPE(MUS_IS_VCT(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], caller, "a vct");
+	      if (MUS_IS_VCT(keys[3]))
 		{
 		  orig_v = keys[3];
 		  v = mus_optkey_to_vct(orig_v, caller, orig_arg[3], NULL);
@@ -3394,7 +3394,7 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
     }
   if (ge)
     {
-      if (MUS_VCT_P(orig_v))
+      if (MUS_IS_VCT(orig_v))
 	return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
       return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
     }
@@ -3524,11 +3524,11 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   int gc_loc;
 #endif
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(partials) || XEN_LIST_P(partials), partials, 1, S_partials_to_wave, "a list or a vct");
-  XEN_ASSERT_TYPE(MUS_VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, 2, S_partials_to_wave, "a vct or " PROC_FALSE);
+  XEN_ASSERT_TYPE(MUS_IS_VCT(partials) || XEN_LIST_P(partials), partials, 1, S_partials_to_wave, "a list or a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, 2, S_partials_to_wave, "a vct or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, 3, S_partials_to_wave, "a boolean");
 
-  if (MUS_VCT_P(partials))
+  if (MUS_IS_VCT(partials))
     {
       vct *v;
       v = XEN_TO_VCT(partials);
@@ -3553,7 +3553,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 			 C_TO_XEN_STRING(S_partials_to_wave), 
 			 partials));
 
-  if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
+  if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_IS_VCT(utable))))
     {
       mus_float_t *wave;
       wave = (mus_float_t *)calloc(clm_table_size, sizeof(mus_float_t));
@@ -3617,11 +3617,11 @@ take a list or vct of partials (harmonic number, amplitude, initial phase) and p
 a waveform for use in " S_table_lookup ".  If wave (a vct) is not given, \
 a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goes between -1.0 and 1.0.\n  " pp2w_example
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(partials) || XEN_LIST_P(partials), partials, 1, S_phase_partials_to_wave, "a list or a vct");
-  XEN_ASSERT_TYPE(MUS_VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, 2, S_phase_partials_to_wave, "a vct or " PROC_FALSE);
+  XEN_ASSERT_TYPE(MUS_IS_VCT(partials) || XEN_LIST_P(partials), partials, 1, S_phase_partials_to_wave, "a list or a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, 2, S_phase_partials_to_wave, "a vct or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, 3, S_phase_partials_to_wave, "a boolean");
 
-  if (MUS_VCT_P(partials))
+  if (MUS_IS_VCT(partials))
     {
       vct *v;
       v = XEN_TO_VCT(partials);
@@ -3646,7 +3646,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 			 C_TO_XEN_STRING(S_phase_partials_to_wave), 
 			 partials));
 
-  if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
+  if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_IS_VCT(utable))))
     {
       wave = (mus_float_t *)calloc(clm_table_size, sizeof(mus_float_t));
       if (wave == NULL)
@@ -3750,7 +3750,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[4], keys[4], "no such interp-type");
     }
 
-  if (!(MUS_VCT_P(orig_v)))
+  if (!(MUS_IS_VCT(orig_v)))
     {
       table = (mus_float_t *)calloc(table_size, sizeof(mus_float_t));
       if (table == NULL)
@@ -4435,7 +4435,7 @@ static XEN g_formant_bank(XEN gens, XEN inp)
   mus_any *bank = NULL;
   mus_xen *gn;
 
-  XEN_ASSERT_TYPE((XEN_NUMBER_P(inp)) || (MUS_VCT_P(inp)), inp, 2, S_formant_bank, "a number or a vct");
+  XEN_ASSERT_TYPE((XEN_NUMBER_P(inp)) || (MUS_IS_VCT(inp)), inp, 2, S_formant_bank, "a number or a vct");
   XEN_TO_C_GENERATOR(gens, gn, bank, mus_is_formant_bank, S_formant_bank, "a formant-bank generator");
 
   if (XEN_NUMBER_P(inp))
@@ -5343,7 +5343,7 @@ static XEN g_pink_noise(XEN gens)
   vct *v;
   mus_float_t *data;
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(gens), gens, 1, S_pink_noise, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(gens), gens, 1, S_pink_noise, "a vct");
   v = XEN_TO_VCT(gens);
 
   size = mus_vct_length(v);
@@ -5678,7 +5678,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
   mus_float_t *partials = NULL, *wave;
   int error = NO_PROBLEM_IN_LIST;
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(amps) || XEN_LIST_P(amps), amps, 1, S_partials_to_polynomial, "a list or a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(amps) || XEN_LIST_P(amps), amps, 1, S_partials_to_polynomial, "a list or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, 2, S_partials_to_polynomial, "either " S_mus_chebyshev_first_kind " or " S_mus_chebyshev_second_kind);
 
   if (XEN_INTEGER_P(ukind))
@@ -5690,7 +5690,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
       else XEN_OUT_OF_RANGE_ERROR(S_partials_to_polynomial, 2, ukind, "unknown Chebyshev polynomial kind");
     }
   
-  if (MUS_VCT_P(amps))
+  if (MUS_IS_VCT(amps))
     partials = mus_vct_to_partials(XEN_TO_VCT(amps), &npartials, &error);
   else partials = list_to_partials(amps, &npartials, &error);
 
@@ -5713,9 +5713,9 @@ partial amplitudes in the vct or list 'partials' by the inverse of their sum (so
   vct *v;
   XEN xv = XEN_FALSE;
 
-  XEN_ASSERT_TYPE(((XEN_LIST_P(partials)) && (XEN_NOT_NULL_P(partials))) || (MUS_VCT_P(partials)), partials, 1, S_normalize_partials, "a vct or (non-empty) list");
+  XEN_ASSERT_TYPE(((XEN_LIST_P(partials)) && (XEN_NOT_NULL_P(partials))) || (MUS_IS_VCT(partials)), partials, 1, S_normalize_partials, "a vct or (non-empty) list");
 
-  if (MUS_VCT_P(partials))
+  if (MUS_IS_VCT(partials))
     xv = partials;
   else xv = xen_list_to_vct(partials);
   v = XEN_TO_VCT(xv);
@@ -5754,8 +5754,8 @@ Chebyshev polynomials Tn and Un (vectors or vcts), with phase x."
   
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, 1, S_mus_chebyshev_tu_sum, "a float");
 
-  if ((MUS_VCT_P(tn)) &&
-      (MUS_VCT_P(un)))
+  if ((MUS_IS_VCT(tn)) &&
+      (MUS_IS_VCT(un)))
     {
       vct *Tn, *Un;
       Tn = XEN_TO_VCT(tn);
@@ -5806,7 +5806,7 @@ Chebyshev polynomials Tn (a vct)."
   XEN result;
   
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, 1, S_mus_chebyshev_t_sum, "a float");
-  if (MUS_VCT_P(tn))
+  if (MUS_IS_VCT(tn))
     {
       vct *Tn;
       Tn = XEN_TO_VCT(tn);
@@ -5844,7 +5844,7 @@ Chebyshev polynomials Un (a vct)."
 
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, 1, S_mus_chebyshev_u_sum, "a float");
 
-  if (MUS_VCT_P(un))
+  if (MUS_IS_VCT(un))
     {
       vct *Un;
       Un = XEN_TO_VCT(un);
@@ -5964,7 +5964,7 @@ is the same in effect as " S_make_oscil
 	  if (!(XEN_KEYWORD_P(keys[3])))
 	    {
 	      int error = NO_PROBLEM_IN_LIST;
-	      if (MUS_VCT_P(keys[3]))
+	      if (MUS_IS_VCT(keys[3]))
 		partials = mus_vct_to_partials(XEN_TO_VCT(keys[3]), &npartials, &error);
 	      else
 		{
@@ -6076,7 +6076,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 
       if (!(XEN_KEYWORD_P(keys[1]))) /* partials were supplied */
 	{
-	  if (MUS_VCT_P(keys[1]))
+	  if (MUS_IS_VCT(keys[1]))
 	    partials = mus_vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
 	  else
 	    {
@@ -6102,7 +6102,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 
       if (!(XEN_KEYWORD_P(keys[3])))
         {
-	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[3]), keys[3], orig_arg[3], S_make_polywave, "a vct");
+	  XEN_ASSERT_TYPE(MUS_IS_VCT(keys[3]), keys[3], orig_arg[3], S_make_polywave, "a vct");
 	  orig_x = keys[3];
 	  v = XEN_TO_VCT(orig_x);
 	  n = mus_vct_length(v);
@@ -6113,7 +6113,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 	{
 	  /* make-polyoid in generators.scm */
 	  int yn;
-	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[4]), keys[4], orig_arg[4], S_make_polywave, "a vct");
+	  XEN_ASSERT_TYPE(MUS_IS_VCT(keys[4]), keys[4], orig_arg[4], S_make_polywave, "a vct");
 	  orig_y = keys[4];
 	  v = XEN_TO_VCT(orig_y);
 	  yn = mus_vct_length(v);
@@ -6375,7 +6375,7 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
   vct *v;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), order, 1, S_make_fir_coeffs, "int");
-  XEN_ASSERT_TYPE(MUS_VCT_P(envl), envl, 2, S_make_fir_coeffs, "a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(envl), envl, 2, S_make_fir_coeffs, "a vct");
 
   v = XEN_TO_VCT(envl);
 
@@ -6488,7 +6488,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 
       if (!(XEN_KEYWORD_P(keys[1])))
         {
-	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[1]), keys[1], orig_arg[1], caller, "a vct");
+	  XEN_ASSERT_TYPE(MUS_IS_VCT(keys[1]), keys[1], orig_arg[1], caller, "a vct");
 	  if (choice == G_IIR_FILTER)
 	    {
 	      ywave = keys[1];
@@ -6503,7 +6503,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 
       if (!(XEN_KEYWORD_P(keys[2])))
 	{
-	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[2]), keys[2], orig_arg[2], caller, "a vct");
+	  XEN_ASSERT_TYPE(MUS_IS_VCT(keys[2]), keys[2], orig_arg[2], caller, "a vct");
 	  ywave = keys[2];
 	  y = XEN_TO_VCT(ywave);
 	}
@@ -6693,7 +6693,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
         {
 	  vct *v = NULL;
 	  XEN vect = XEN_NULL;
-	  if (MUS_VCT_P(keys[0]))
+	  if (MUS_IS_VCT(keys[0]))
 	    {
 	      v = XEN_TO_VCT(keys[0]);
 	      len = mus_vct_length(v);
@@ -7061,7 +7061,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
   if (sound_data_p(inp))
     return(C_TO_XEN_DOUBLE(mus_sound_data_ref(XEN_TO_SOUND_DATA(inp), in_chan, pos)));
 
-  if (MUS_VCT_P(inp))
+  if (MUS_IS_VCT(inp))
     {
       vct *v;
       mus_float_t *vdata;
@@ -7127,7 +7127,7 @@ static XEN fallback_out_any_2(XEN outp, mus_long_t pos, mus_float_t inv, int chn
       return(XEN_ZERO);
     }
 
-  if (MUS_VCT_P(outp))
+  if (MUS_IS_VCT(outp))
     {
       if (chn == 0)
 	{
@@ -7245,7 +7245,7 @@ static s7_pointer g_clm_output_set(s7_scheme *sc, s7_pointer args)
 	}
       else
 	{
-	  if (MUS_VCT_P(new_output))
+	  if (MUS_IS_VCT(new_output))
 	    {
 	      out_any_2 = out_any_2_to_vct;
 	      clm_output_vct = xen_to_vct(new_output);
@@ -7332,7 +7332,7 @@ static s7_pointer g_clm_reverb_set(s7_scheme *sc, s7_pointer args)
 	}
       else
 	{
-	  if (MUS_VCT_P(new_input))
+	  if (MUS_IS_VCT(new_input))
 	    {
 	      in_any_2 = in_any_2_to_vct;
 	      clm_input_vct = xen_to_vct(new_input);
@@ -7460,7 +7460,7 @@ static XEN g_mus_close(XEN ptr)
   if (MUS_XEN_P(ptr))
     return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_VECTOR_P(ptr), 
+  XEN_ASSERT_TYPE(MUS_IS_VCT(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_VECTOR_P(ptr), 
 		  ptr, 1, S_mus_close, "an IO gen or its outa equivalent");
   return(XEN_ZERO);
 }
@@ -7962,7 +7962,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	mus_sound_data_add_frame(XEN_TO_SOUND_DATA(output), pos, mus_data(outfr));
       else
 	{
-	  if (MUS_VCT_P(output))
+	  if (MUS_IS_VCT(output))
 	    {
 	      vct *v;
 	      mus_float_t *vdata;
@@ -7988,7 +7988,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	mus_sound_data_add_frame(XEN_TO_SOUND_DATA(reverb), pos, mus_data(revfr));
       else
 	{
-	  if (MUS_VCT_P(reverb))
+	  if (MUS_IS_VCT(reverb))
 	    {
 	      vct *v;
 	      mus_float_t *vdata;
@@ -8154,7 +8154,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	}
       else
 	{
-	  if (MUS_VCT_P(keys3))
+	  if (MUS_IS_VCT(keys3))
 	    ov = keys3;
 	  else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, vector, or a sound-data object");
 	}
@@ -8177,7 +8177,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	}
       else
 	{
-	  if (MUS_VCT_P(keys4))
+	  if (MUS_IS_VCT(keys4))
 	    {
 	      rv = keys4;
 	      rev_chans = 1;
@@ -8347,7 +8347,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
     }
   else
     {
-      if ((MUS_VCT_P(outp)) || 
+      if ((MUS_IS_VCT(outp)) || 
 	  (sound_data_p(outp)) || 
 	  (XEN_FALSE_P(outp)) || 
 	  (XEN_NOT_BOUND_P(outp)))
@@ -8362,7 +8362,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
     }
   else
     {
-      if ((MUS_VCT_P(revp)) || 
+      if ((MUS_IS_VCT(revp)) || 
 	  (sound_data_p(revp)) || 
 	  (XEN_FALSE_P(revp)) || 
 	  (XEN_NOT_BOUND_P(revp)))
@@ -9860,7 +9860,7 @@ static bool wrapped_formant_bank_p(s7_pointer obj) {return((MUS_XEN_P(obj)) && (
 static mus_float_t wrapped_formant_bank_2(mus_xen *p, mus_float_t x) {return(mus_formant_bank(p->gen, x));}
 
 /* special polynomial experiment */
-static bool wrapped_polynomial_p(s7_pointer obj) {return(MUS_VCT_P(obj));}
+static bool wrapped_polynomial_p(s7_pointer obj) {return(MUS_IS_VCT(obj));}
 static mus_float_t wrapped_polynomial_2(vct *p, mus_float_t x) {return(mus_polynomial(mus_vct_data(p), x, mus_vct_length(p)));}
 
 /* same for mus-random */
@@ -11608,7 +11608,7 @@ static gf *fixup_array_interp(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	{
 	  s7_pointer obj;
 	  obj = s7_value(sc, arg1);
-	  if (mus_vct_p(obj))
+	  if (mus_is_vct(obj))
 	    {
 	      int typ;
 	      double x;
@@ -13451,7 +13451,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
   /* vector, vct, sound-data, frame -- anything applicable
    */
-  if ((mus_vct_p(op)) &&
+  if ((mus_is_vct(op)) &&
       (!s7_is_pair(cddr(expr))) &&
       (s7_is_symbol(cadr(expr))))
     {
@@ -15475,7 +15475,8 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
    * nothing here
    */
 
-  if (s7_function_choice_is_direct_to_real(sc, callee))
+  if ((s7_function_choice_is_direct_to_real(sc, callee)) &&
+      (s7_function_choice_is_direct_to_real(sc, letp)))
     {
       letf = s7_function_choice(sc, letp);
       letp = cdr(letp);

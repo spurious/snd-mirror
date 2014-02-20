@@ -473,7 +473,6 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix);                    /* (
 
 bool s7_is_keyword(s7_pointer obj);                                         /* (keyword? obj) */
 s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);                 /* (make-keyword key) */
-#define s7_keyword_eq_p(Obj1, Obj2) s7_is_eq(Obj1, Obj2)
 
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs);
@@ -835,6 +834,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
 #define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
 
 bool s7_is_valid_pointer(s7_pointer arg); 
+#define s7_keyword_eq_p(Obj1, Obj2) s7_is_eq(Obj1, Obj2)
 #endif
 
 /* the following Scheme functions are not currently exported to C:

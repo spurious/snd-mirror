@@ -3476,8 +3476,10 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 }
 #endif
 
+#if HAVE_SCHEME
 void setup_gen_list(s7_scheme *sc, s7_pointer tree);
 void clear_gen_list(void);
+#endif
 
 
 static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
@@ -3889,7 +3891,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 		    break;
 		  else
 		    {
-		      if (MUS_VCT_P(res))
+		      if (MUS_IS_VCT(res))
 			{
 			  vct *v;
 			  mus_long_t vlen;
@@ -4210,7 +4212,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 		break;
 	      else
 		{
-		  if (MUS_VCT_P(res))
+		  if (MUS_IS_VCT(res))
 		    {
 		      vct *v;
 		      mus_long_t vlen;
@@ -5221,7 +5223,7 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
     len = 1;
   else
     {
-      if (MUS_VCT_P(scalers))
+      if (MUS_IS_VCT(scalers))
 	{
 	  v = XEN_TO_VCT(scalers);
 	  len = mus_vct_length(v);
@@ -5709,8 +5711,8 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   mus_float_t *rl = NULL, *im = NULL;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, 3, S_fft, "an integer");
-  XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, 1, S_fft, "vct");
-  XEN_ASSERT_TYPE(MUS_VCT_P(imag), imag, 2, S_fft, "vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(reals), reals, 1, S_fft, "vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(imag), imag, 2, S_fft, "vct");
 
   isign = (XEN_INTEGER_P(sign)) ? XEN_TO_C_INT(sign) : 1;
   v1 = XEN_TO_VCT(reals);
@@ -5761,7 +5763,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   mus_float_t *rdat;
   vct *v;
 
-  XEN_ASSERT_TYPE((MUS_VCT_P(data)), data, 1, S_snd_spectrum, "a vct");
+  XEN_ASSERT_TYPE((MUS_IS_VCT(data)), data, 1, S_snd_spectrum, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(win), win, 2, S_snd_spectrum, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(len), len, 3, S_snd_spectrum, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, 4, S_snd_spectrum, "a boolean");
@@ -6178,7 +6180,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   vct *v = NULL;
   mus_float_t *coeffs = NULL;
 
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || MUS_VCT_P(e), e, 1, S_filter_channel, "an envelope or a vct");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || MUS_IS_VCT(e), e, 1, S_filter_channel, "an envelope or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, 2, S_filter_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 9, S_filter_channel, "a string");
 
@@ -6265,7 +6267,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	  if (len <= 0) 
 	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order should be positive");
 	}
-      if (MUS_VCT_P(e)) /* the filter coefficients direct */
+      if (MUS_IS_VCT(e)) /* the filter coefficients direct */
 	{
 	  vct *v;
 	  char *new_origin = NULL, *estr = NULL;
