@@ -1247,8 +1247,8 @@ static XEN g_in(XEN ms, XEN code)
   #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
 
 #if HAVE_EXTENSION_LANGUAGE
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, 1, S_in, "a number");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, 2, S_in, "a procedure");
+  XEN_ASSERT_TYPE(Xen_is_number(ms), ms, 1, S_in, "a number");
+  XEN_ASSERT_TYPE(Xen_is_procedure(code), code, 2, S_in, "a procedure");
   if (XEN_REQUIRED_ARGS_OK(code, 0))
     {
       int secs;
@@ -1335,7 +1335,7 @@ static XEN g_graph_cursor(void)
 static XEN g_set_graph_cursor(XEN curs)
 {
   int val;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(curs), curs, 1, S_setB S_graph_cursor, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(curs), curs, 1, S_setB S_graph_cursor, "an integer");
   val = XEN_TO_C_INT(curs);
   if ((val >= 0) && ((val & 1) == 0) && (val <= GDK_XTERM)) /* these are even numbers up to about 152 (gdkcursor.h) */
     {

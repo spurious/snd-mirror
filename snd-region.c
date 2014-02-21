@@ -1380,7 +1380,7 @@ static XEN_OBJECT_TYPE xen_region_tag;
 
 bool xen_region_p(XEN obj) 
 {
-  return(XEN_OBJECT_TYPE_P(obj, xen_region_tag));
+  return(Xen_c_object_is_type(obj, xen_region_tag));
 }
 
 
@@ -1501,7 +1501,7 @@ static void init_xen_region(void)
 static XEN g_integer_to_region(XEN n)
 {
   #define H_integer_to_region "(" S_integer_to_region " n) returns a region object corresponding to the given integer"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_integer_to_region, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(n), n, 1, S_integer_to_region, "an integer");
   return(new_xen_region(XEN_TO_C_INT(n)));
 }
 
@@ -1530,16 +1530,16 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   region *r;
   int regn;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, 1, S_restore_region, "a region id");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, 2, S_restore_region, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(len), len, 3, S_restore_region, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(srate), srate, 4, S_restore_region, "an integer");
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(maxamp), maxamp, 5, S_restore_region, "a double");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 6, S_restore_region, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(start), start, 7, S_restore_region, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(end), end, 8, S_restore_region, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, 9, S_restore_region, "a string");
-  XEN_ASSERT_TYPE(XEN_LIST_P(date) && (XEN_LIST_LENGTH(date) == 2), date, 10, S_restore_region, "a list: '(time bytes)");
+  XEN_ASSERT_TYPE(Xen_is_integer(pos), pos, 1, S_restore_region, "a region id");
+  XEN_ASSERT_TYPE(Xen_is_integer(chans), chans, 2, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_number(len), len, 3, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(srate), srate, 4, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_double(maxamp), maxamp, 5, S_restore_region, "a double");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 6, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(start), start, 7, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(end), end, 8, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(filename), filename, 9, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(Xen_is_list(date) && (XEN_LIST_LENGTH(date) == 2), date, 10, S_restore_region, "a list: '(time bytes)");
 
   check_saved_temp_file("region", filename, date);
 
@@ -1611,7 +1611,7 @@ static XEN g_max_regions(void)
 static XEN g_set_max_regions(XEN n) 
 {
   int regs;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_setB S_max_regions, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(n), n, 1, S_setB S_max_regions, "an integer"); 
 
   regs = XEN_TO_C_INT(n);
   if (regs < 0)
@@ -1666,7 +1666,7 @@ static XEN g_region_position(XEN n, XEN chan)
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_position, n));
 
-  if (XEN_INTEGER_P(chan)) chn = XEN_TO_C_INT(chan);
+  if (Xen_is_integer(chan)) chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn >= region_chans(rg)))
     return(snd_no_such_channel_error(S_region_position, XEN_LIST_1(n), chan));
 
@@ -1802,13 +1802,13 @@ selection is used."
       mus_long_t ibeg, iend;
       mus_long_t *ends = NULL;
 
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, 1, S_make_region, "an integer");
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(end), end, 2, S_make_region, "an integer");
+      XEN_ASSERT_TYPE(Xen_is_integer(beg), beg, 1, S_make_region, "an integer");
+      XEN_ASSERT_TYPE(Xen_is_integer(end), end, 2, S_make_region, "an integer");
 
       ibeg = beg_to_sample(beg, S_make_region);
       iend = beg_to_sample(end, S_make_region);
 
-      if (XEN_TRUE_P(chn_n))
+      if (Xen_is_true(chn_n))
 	{
 	  /* all chans and all sync'd chans if sync not 0 */
 	  sp = get_sp(snd_n);
@@ -1965,11 +1965,11 @@ it returns a list of the new mixes"
   cp = get_cp(snd_n, chn_n, S_mix_region);
   if (!cp) return(XEN_FALSE);
 
-  if (XEN_BOUND_P(chn_samp_n))
+  if (Xen_is_bound(chn_samp_n))
     samp = beg_to_sample(chn_samp_n, S_mix_region);
   else samp = CURSOR(cp);
 
-  if (XEN_INTEGER_P(reg_chn))
+  if (Xen_is_integer(reg_chn))
     reg_chan = XEN_TO_C_INT(reg_chn);
 
   id = paste_region_1(rg, cp, true, samp, &err, reg_chan, &reg_chans);
@@ -1996,10 +1996,10 @@ static XEN g_region_sample(XEN reg_n, XEN samp_n, XEN chn_n)
   mus_long_t samp;
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, 1, S_region_sample, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, 2, S_region_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(samp_n), samp_n, 2, S_region_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, 3, S_region_sample, "an integer");
 
-  if (XEN_INTEGER_P(chn_n)) chan = XEN_TO_C_INT(chn_n);
+  if (Xen_is_integer(chn_n)) chan = XEN_TO_C_INT(chn_n);
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_sample, reg_n));
@@ -2030,13 +2030,13 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   if (!(region_ok(reg)))
     return(snd_no_such_region_error(S_region_to_vct, reg_n));
 
-  if (XEN_INTEGER_P(chn_n)) 
+  if (Xen_is_integer(chn_n)) 
     {
       chn = XEN_TO_C_INT(chn_n);
       if ((chn < 0) || (chn >= region_chans(reg)))
 	return(snd_no_such_channel_error(S_region_to_vct, XEN_LIST_1(reg_n), chn_n));
     }
-  if (XEN_INTEGER_P(num)) 
+  if (Xen_is_integer(num)) 
     {
       len = XEN_TO_C_LONG_LONG(num);
       if (len < 0)
@@ -2080,7 +2080,7 @@ static XEN g_set_region_graph_style(XEN val)
 The " S_region_graph_style " choices are " S_graph_lines ", " S_graph_dots ", " S_graph_filled ", " S_graph_lollipops ", \
 and " S_graph_dots_and_lines "."
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_region_graph_style, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_region_graph_style, "an integer");
 
   style = XEN_TO_C_INT(val);
   if (!(graph_style_p(style)))

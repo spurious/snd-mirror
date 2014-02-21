@@ -1261,7 +1261,7 @@ void save_envelope_editor_state(FILE *fd)
 env *xen_to_env(XEN res)
 {
   env *rtn = NULL;
-  if (XEN_LIST_P(res))
+  if (Xen_is_list(res))
     {
       int len = 0;
       len = XEN_LIST_LENGTH(res);
@@ -1271,7 +1271,7 @@ env *xen_to_env(XEN res)
 	  mus_float_t *data = NULL;
 	  XEN lst;
 	  
-	  if (XEN_NUMBER_P(XEN_CAR(res)))
+	  if (Xen_is_number(XEN_CAR(res)))
 	    {
 	      data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	      for (i = 0, lst = XEN_COPY_ARG(res); i < len; i++, lst = XEN_CDR(lst))
@@ -1284,7 +1284,7 @@ env *xen_to_env(XEN res)
 	  else
 	    {
 	      /* embedded lists '((0 0) (100 1)) */
-	      if (XEN_LIST_P(XEN_CAR(res)))
+	      if (Xen_is_list(XEN_CAR(res)))
 		{
 		  len *= 2;
 		  data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
@@ -1292,8 +1292,8 @@ env *xen_to_env(XEN res)
 		    {
 		      XEN el;
 		      el = XEN_CAR(lst);
-		      if ((!(XEN_NUMBER_P(XEN_CAR(el)))) ||
-			  (!(XEN_NUMBER_P(XEN_CADR(el)))))
+		      if ((!(Xen_is_number(XEN_CAR(el)))) ||
+			  (!(Xen_is_number(XEN_CADR(el)))))
 			{
 			  free(data);
 			  return(NULL);
@@ -1446,18 +1446,18 @@ static XEN g_define_envelope(XEN name, XEN data, XEN base)
   #define H_define_envelope "(" S_define_envelope " name data :optional base): load 'name' with associated 'data', a list of breakpoints \
 into the envelope editor."
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, 1, S_define_envelope, "a string or symbol");
-  XEN_ASSERT_TYPE(XEN_LIST_P(data), data, 2, S_define_envelope, "a list of breakpoints");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || XEN_FALSE_P(base), base, 3, S_define_envelope, "a float or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_string(name) || Xen_is_symbol(name), name, 1, S_define_envelope, "a string or symbol");
+  XEN_ASSERT_TYPE(Xen_is_list(data), data, 2, S_define_envelope, "a list of breakpoints");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || Xen_is_false(base), base, 3, S_define_envelope, "a float or " PROC_FALSE);
 
-  if (XEN_STRING_P(name))
+  if (Xen_is_string(name))
     ename = XEN_TO_C_STRING(name);
   else ename = XEN_SYMBOL_TO_C_STRING(name);
 
   e = xen_to_env(data);
   if (!e) return(XEN_FALSE);
 
-  if (XEN_NUMBER_P(base))
+  if (Xen_is_number(base))
     e->base = XEN_TO_C_DOUBLE(base);
 
 #if HAVE_RUBY
@@ -1576,9 +1576,9 @@ static XEN g_save_envelopes(XEN filename)
   char *name = NULL;
   FILE *fd;
 
-  XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), 
+  XEN_ASSERT_TYPE((Xen_is_string(filename) || (Xen_is_false(filename)) || (XEN_NOT_BOUND_P(filename))), 
 		  filename, 1, S_save_envelopes, "a string or " PROC_FALSE);
-  if (XEN_STRING_P(filename)) 
+  if (Xen_is_string(filename)) 
     name = mus_expand_filename(XEN_TO_C_STRING(filename));
   else name = mus_strdup("envs.save");
   
@@ -1674,7 +1674,7 @@ static XEN g_enved_base(void) {return(C_TO_XEN_DOUBLE(enved_base(ss)));}
 static XEN g_set_enved_base(XEN val) 
 {
   #define H_enved_base "(" S_enved_base "): envelope editor exponential base value (1.0)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_enved_base, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_enved_base, "a number"); 
   set_enved_base(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 300000.0));
   return(C_TO_XEN_DOUBLE(enved_base(ss)));
 }
@@ -1685,7 +1685,7 @@ static XEN g_enved_power(void) {return(C_TO_XEN_DOUBLE(enved_power(ss)));}
 static XEN g_set_enved_power(XEN val) 
 {
   #define H_enved_power "(" S_enved_power "): envelope editor base scale range (9.0^power)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_enved_power, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_enved_power, "a number"); 
   set_enved_power(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 10.0));
   return(C_TO_XEN_DOUBLE(enved_power(ss)));
 }
@@ -1698,7 +1698,7 @@ static XEN g_set_enved_clip_p(XEN on)
   #define H_enved_clip_p "(" S_is_enved_clip "): envelope editor clip button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_enved_clip, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_enved_clip, "a boolean");
   set_enved_clip_p(XEN_TO_C_BOOLEAN(on)); 
   return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));
 }
@@ -1712,7 +1712,7 @@ static XEN g_set_enved_style(XEN val)
 be " S_envelope_linear ", or " S_envelope_exponential
 
   int choice;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_enved_style, S_envelope_linear ", or " S_envelope_exponential);
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_enved_style, S_envelope_linear ", or " S_envelope_exponential);
   choice = XEN_TO_C_INT(val);
   if ((choice == ENVELOPE_LINEAR) || (choice == ENVELOPE_EXPONENTIAL))
     {
@@ -1734,7 +1734,7 @@ static XEN g_set_enved_target(XEN val)
   #define H_enved_target "(" S_enved_target "): determines how the envelope edit envelope is applied; \
 choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_enved_spectrum "(apply as a filter)."
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_enved_target, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_enved_target, "an integer"); 
   in_n = XEN_TO_C_INT(val);
   if ((in_n < 0) ||
       (in_n > (int)ENVED_SRATE))
@@ -1750,7 +1750,7 @@ static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));}
 static XEN g_set_enved_wave_p(XEN val) 
 {
   #define H_enved_wave_p "(" S_is_enved_wave "): " PROC_TRUE " if the envelope editor is displaying the waveform to be edited"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, 1, S_setB S_is_enved_wave, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_is_enved_wave, "a boolean");
   set_enved_wave_p(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));
 }
@@ -1761,7 +1761,7 @@ static XEN g_enved_in_dB(void) {return(C_TO_XEN_BOOLEAN(enved_in_dB(ss)));}
 static XEN g_set_enved_in_dB(XEN val) 
 {
   #define H_enved_in_dB "(" S_enved_in_dB "): " PROC_TRUE " if the envelope editor is using dB"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, 1, S_setB S_enved_in_dB, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_enved_in_dB, "a boolean");
   set_enved_in_dB(XEN_TO_C_BOOLEAN(val)); 
   return(C_TO_XEN_BOOLEAN(enved_in_dB(ss)));
 }
@@ -1772,7 +1772,7 @@ static XEN g_enved_filter_order(void) {return(C_TO_XEN_INT(enved_filter_order(ss
 static XEN g_set_enved_filter_order(XEN val) 
 {
   #define H_enved_filter_order "(" S_enved_filter_order "): envelope editor's FIR filter order (40)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_enved_filter_order, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_enved_filter_order, "an integer"); 
   set_enved_filter_order(XEN_TO_C_INT(val));
   return(C_TO_XEN_INT(enved_filter_order(ss)));
 }

@@ -1643,11 +1643,11 @@ static void draw_mix_tag(mix_info *md, int x, int y)
 				      C_TO_XEN_INT(x),
 				      C_TO_XEN_INT(y)),
 			   S_draw_mix_hook);
-      if (!(XEN_FALSE_P(res)))
+      if (!(Xen_is_false(res)))
 	{
 	  md->x = x;
 	  md->y = y;
-	  if (XEN_LIST_P(res))
+	  if (Xen_is_list(res))
 	    {
 	      md->tag_x = XEN_TO_C_INT(XEN_CAR(res));
 	      md->tag_y = XEN_TO_C_INT(XEN_CADR(res));
@@ -2343,7 +2343,7 @@ void finish_moving_mix_tag(int mix_id, int x)
 				    C_TO_XEN_LONG_LONG(pos - mix_position_from_id(mix_id))),
 			 S_mix_release_hook);
 
-  if (!(XEN_TRUE_P(res)))
+  if (!(Xen_is_true(res)))
     {
       mus_long_t old_pos;
       old_pos = mix_position_from_id(mix_id);
@@ -2569,7 +2569,7 @@ static XEN_OBJECT_TYPE xen_mix_tag;
 
 bool xen_mix_p(XEN obj) 
 {
-  return(XEN_OBJECT_TYPE_P(obj, xen_mix_tag));
+  return(Xen_c_object_is_type(obj, xen_mix_tag));
 }
 
 
@@ -2698,7 +2698,7 @@ static void init_xen_mix(void)
 static XEN g_integer_to_mix(XEN n)
 {
   #define H_integer_to_mix "(" S_integer_to_mix " n) returns a mix object corresponding to the given integer"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_integer_to_mix, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(n), n, 1, S_integer_to_mix, "an integer");
   return(new_xen_mix(XEN_TO_C_INT(n)));
 }
 
@@ -2740,7 +2740,7 @@ static XEN g_set_mix_position(XEN n, XEN pos)
   int id;
   mus_long_t beg;
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, 1, S_setB S_mix_position, "a mix");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, 2, S_setB S_mix_position, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(pos), pos, 2, S_setB S_mix_position, "an integer");
 
   id = XEN_MIX_TO_C_INT(n);
   if (!(mix_is_active(id)))
@@ -2771,7 +2771,7 @@ static XEN g_set_mix_amp(XEN n, XEN uval)
 {
   int id;
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, 1, S_setB S_mix_amp, "a mix");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, 2, S_setB S_mix_amp, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(uval), uval, 2, S_setB S_mix_amp, "a number");
 
   id = XEN_MIX_TO_C_INT(n);
   if (!(mix_is_active(id)))
@@ -2803,13 +2803,13 @@ static XEN g_set_mix_amp_env(XEN n, XEN val)
   env *e = NULL;
   int id;
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, 1, S_setB S_mix_amp_env, "a mix");
-  XEN_ASSERT_TYPE(XEN_LIST_P(val) || XEN_FALSE_P(val), val, 2, S_setB S_mix_amp_env, "a list or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_list(val) || Xen_is_false(val), val, 2, S_setB S_mix_amp_env, "a list or " PROC_FALSE);
 
   id = XEN_MIX_TO_C_INT(n);
   if (!(mix_is_active(id)))
     return(snd_no_such_mix_error(S_setB S_mix_amp_env, n));  
 
-  if (XEN_LIST_P(val))
+  if (Xen_is_list(val))
     e = get_env(val, S_setB S_mix_amp_env);
 
   if (mix_set_amp_env_edit(id, e))
@@ -2837,7 +2837,7 @@ static XEN g_set_mix_speed(XEN n, XEN uval)
 {
   int id;
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, 1, S_setB S_mix_speed, "a mix");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, 2, S_setB S_mix_speed, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(uval), uval, 2, S_setB S_mix_speed, "a number");
 
   id = XEN_MIX_TO_C_INT(n);
   if (!(mix_is_active(id)))
@@ -2866,11 +2866,11 @@ static XEN g_set_mix_name(XEN n, XEN val)
 {
   int id;
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, 1, S_setB S_mix_name, "a mix");
-  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, 2, S_setB S_mix_name, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(val) || Xen_is_false(val), val, 2, S_setB S_mix_name, "a string");
   id = XEN_MIX_TO_C_INT(n);
   if (mix_exists(id))
     {
-      mix_set_name_from_id(id, (XEN_STRING_P(val) ? XEN_TO_C_STRING(val) : NULL));
+      mix_set_name_from_id(id, (Xen_is_string(val) ? XEN_TO_C_STRING(val) : NULL));
       update_graph(mix_chan_info_from_id(id));
     }
   else return(snd_no_such_mix_error(S_setB S_mix_name, n));
@@ -2894,7 +2894,7 @@ XEN g_set_mix_sync(XEN n, XEN val)
 {
   int id;
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, 1, S_setB S_mix_sync, "a mix");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 2, S_setB S_mix_sync, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 2, S_setB S_mix_sync, "an integer");
   id = XEN_MIX_TO_C_INT(n);
   if (mix_exists(id))
     mix_set_sync_from_id(id, XEN_TO_C_INT(val));
@@ -2927,7 +2927,7 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
   int id;
 
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, 1, S_setB S_mix_tag_y, "a mix");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 2, S_setB S_mix_tag_y, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 2, S_setB S_mix_tag_y, "an integer");
   id = XEN_MIX_TO_C_INT(n);
 
   if (mix_exists(id))
@@ -2975,7 +2975,7 @@ static XEN g_mix_properties(XEN n)
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_properties, n));
 
-  if (!(XEN_VECTOR_P(md->properties)))
+  if (!(Xen_is_vector(md->properties)))
     {
       md->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
       md->properties_gc_loc = snd_protect(md->properties);
@@ -2993,7 +2993,7 @@ static XEN g_set_mix_properties(XEN n, XEN val)
   if (md == NULL)
     return(snd_no_such_mix_error(S_setB S_mix_properties, n));
 
-  if (!(XEN_VECTOR_P(md->properties)))
+  if (!(Xen_is_vector(md->properties)))
     {
       md->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
       md->properties_gc_loc = snd_protect(md->properties);
@@ -3104,7 +3104,7 @@ static XEN g_mix_waveform_height(void)
 static XEN g_set_mix_waveform_height(XEN val) 
 {
   int new_val;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_mix_waveform_height, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_mix_waveform_height, "an integer"); 
   new_val = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mix_waveform_height(new_val);
   return(C_TO_XEN_INT(mix_waveform_height(ss)));
@@ -3120,7 +3120,7 @@ static XEN g_with_mix_tags(void)
 
 static XEN g_set_with_mix_tags(XEN val) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, 1, S_setB S_with_mix_tags, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_with_mix_tags, "a boolean");
   set_with_mix_tags(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));
 }
@@ -3136,7 +3136,7 @@ static XEN g_mix_tag_width(void)
 static XEN g_set_mix_tag_width(XEN val) 
 {
   int width;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_mix_tag_width, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_mix_tag_width, "an integer"); 
   width = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mix_tag_width(width);
   for_each_normal_chan(update_graph);
@@ -3154,7 +3154,7 @@ static XEN g_mix_tag_height(void)
 static XEN g_set_mix_tag_height(XEN val) 
 {
   int height;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_mix_tag_height, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_mix_tag_height, "an integer"); 
   height = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mix_tag_height(height);
   for_each_normal_chan(update_graph);
@@ -3179,9 +3179,9 @@ static XEN g_mixes(XEN snd, XEN chn)
   
   ASSERT_CHANNEL(S_mixes, snd, chn, 0);
 
-  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
+  if (Xen_is_integer(snd) || XEN_SOUND_P(snd))
     {
-      if (XEN_INTEGER_P(chn))
+      if (Xen_is_integer(chn))
 	{
 	  /* scan all mixes for any associated with this channel */
 	  cp = get_cp(snd, chn, S_mixes);
@@ -3239,7 +3239,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   if (!cp) return(XEN_FALSE);
   if (!(editable_p(cp))) return(XEN_FALSE);
 
-  if (XEN_STRING_P(origin))
+  if (Xen_is_string(origin))
     edname = XEN_TO_C_STRING(origin);
   else edname = S_mix_vct;
 
@@ -3331,7 +3331,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
    * save_sound_as :file :sound :header-type :data-format :srate :channel :edit-position :comment): 
    */
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, 1, S_mix, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mix, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, 2, S_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(file_chn), file_chn, 3, S_mix, "an integer or " PROC_TRUE);
   ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
@@ -3346,7 +3346,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   cp = get_cp(snd_n, chn_n, S_mix);
   if (!cp) return(XEN_FALSE);
 
-  if (XEN_LONG_LONG_P(chn_samp_n))
+  if (Xen_is_long_long_int(chn_samp_n))
     beg = XEN_TO_C_LONG_LONG(chn_samp_n);
 
   chans = mus_sound_chans(name);
@@ -3357,7 +3357,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 			   file,
 			   C_TO_XEN_INT(chans)));
     }
-  if (XEN_INTEGER_P(file_chn))
+  if (Xen_is_integer(file_chn))
     {
       file_channel = XEN_TO_C_INT(file_chn);
       if ((file_channel >= chans) ||
@@ -3372,17 +3372,17 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
     }
   else
     {
-      if (XEN_TRUE_P(file_chn)) /* this used to be the default as well -- XEN_NOT_BOUND_P case */
+      if (Xen_is_true(file_chn)) /* this used to be the default as well -- XEN_NOT_BOUND_P case */
 	{
 	  int i, out_chans = 1;
 	  XEN result = XEN_EMPTY_LIST;
 	  file_delete_t delete_choice = DONT_DELETE_ME;
 
-	  if (XEN_INTEGER_P(auto_delete))
+	  if (Xen_is_integer(auto_delete))
 	    delete_choice = (file_delete_t)XEN_TO_C_INT(auto_delete);
 	  else
 	    {
-	      if (XEN_BOOLEAN_P(auto_delete))
+	      if (Xen_is_boolean(auto_delete))
 		{
 		  if (XEN_TO_C_BOOLEAN(auto_delete))
 		    {
@@ -3492,12 +3492,12 @@ static XEN_OBJECT_TYPE mf_tag;
 
 bool mix_sampler_p(XEN obj) 
 {
-  return(XEN_OBJECT_TYPE_P(obj, mf_tag));
+  return(Xen_c_object_is_type(obj, mf_tag));
 }
 
 
 #define XEN_TO_MIX_SAMPLER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
-#define MIX_SAMPLER_P(Obj) XEN_OBJECT_TYPE_P(Obj, mf_tag)
+#define MIX_SAMPLER_P(Obj) Xen_c_object_is_type(Obj, mf_tag)
 
 
 static XEN g_mix_sampler_p(XEN obj) 
@@ -3784,7 +3784,7 @@ static XEN g_save_mix(XEN m, XEN file)
   #define H_save_mix "(" S_save_mix " mix filename) saves mix's samples in the file 'filename'"
 
   XEN_ASSERT_TYPE(XEN_MIX_P(m), m, 1, S_save_mix, "a mix");
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, 2, S_save_mix, "a filename");
+  XEN_ASSERT_TYPE(Xen_is_string(file), file, 2, S_save_mix, "a filename");
 
   save_mix(XEN_MIX_TO_C_INT(m), XEN_TO_C_STRING(file), MUS_NEXT, MUS_OUT_FORMAT);
   return(m);
@@ -3884,7 +3884,7 @@ XEN g_mix_to_vct(XEN mix_n, XEN beg_n, XEN num)
     return(snd_no_such_mix_error(S_mix_to_vct, mix_n));
   ms = current_mix_state(md);
 
-  if (XEN_INTEGER_P(num)) 
+  if (Xen_is_integer(num)) 
     {
       len = XEN_TO_C_LONG_LONG(num);
       if (len < 0)

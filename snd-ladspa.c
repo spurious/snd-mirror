@@ -465,11 +465,11 @@ a user interface edit the parameter in a useful way."
   if (!g_bLADSPAInitialised)
     loadLADSPA();
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_filename),
+  XEN_ASSERT_TYPE(Xen_is_string(ladspa_plugin_filename),
                   ladspa_plugin_filename,
 	          1,
 	          S_analyse_ladspa, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_label),
+  XEN_ASSERT_TYPE(Xen_is_string(ladspa_plugin_label),
 	          ladspa_plugin_label,
 	          2,
 	          S_analyse_ladspa, "a string");
@@ -582,27 +582,27 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
     loadLADSPA();
 
   /* First parameter should be a file reader or list thereof. */
-  XEN_ASSERT_TYPE(sampler_p(reader) || XEN_LIST_P(reader) || XEN_FALSE_P(reader),
+  XEN_ASSERT_TYPE(sampler_p(reader) || Xen_is_list(reader) || Xen_is_false(reader),
 		  reader,
 		  1,
 		  S_apply_ladspa, "a sampler, a list of readers, or " PROC_FALSE);
-  if (XEN_LIST_P(reader)) 
+  if (Xen_is_list(reader)) 
     readers = XEN_LIST_LENGTH(reader);
   else
     {
-      if (!(XEN_FALSE_P(reader)))
+      if (!(Xen_is_false(reader)))
 	readers = 1;
     }
 
   /* Second parameter should be a list of two strings, then any number
      (inc 0) of numbers. */
   if ((XEN_LIST_LENGTH(ladspa_plugin_configuration) < 2) ||
-      (!(XEN_STRING_P(XEN_CAR(ladspa_plugin_configuration)))) ||
-      (!(XEN_STRING_P(XEN_CADR(ladspa_plugin_configuration)))))
+      (!(Xen_is_string(XEN_CAR(ladspa_plugin_configuration)))) ||
+      (!(Xen_is_string(XEN_CADR(ladspa_plugin_configuration)))))
     XEN_ASSERT_TYPE(0, ladspa_plugin_configuration, 2, S_apply_ladspa, "a list of 2 or more strings");
 
   /* Third parameter is the number of samples to process. */
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samples),
+  XEN_ASSERT_TYPE(Xen_is_number(samples),
 		  samples,
 		  3,
 		  S_apply_ladspa, "a number");
@@ -611,7 +611,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   if (num <= 0) return(XEN_FALSE);
 
   /* The fourth parameter is a tag to identify the edit. */
-  XEN_ASSERT_TYPE(XEN_STRING_P(origin),
+  XEN_ASSERT_TYPE(Xen_is_string(origin),
 		  origin,
 		  4,
 		  S_apply_ladspa, "a string");
@@ -663,13 +663,13 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   free(msg);
   pfControls = (LADSPA_Data *)malloc(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
-  if (XEN_BOUND_P(snd))
+  if (Xen_is_bound(snd))
     cp = get_cp(snd, chn, S_apply_ladspa);
   else
     {
       if (inchans > 0)
 	{
-	  if (XEN_LIST_P(reader))
+	  if (Xen_is_list(reader))
 	    tmp_fd = xen_to_sampler(XEN_LIST_REF(reader, 0));
 	  else tmp_fd = xen_to_sampler(reader);
 	  cp = tmp_fd->cp;
@@ -686,7 +686,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
     iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];
     if (LADSPA_IS_PORT_CONTROL(iPortDescriptor)
 	&& LADSPA_IS_PORT_INPUT(iPortDescriptor)) {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(XEN_CAR(xenParameters)),
+      XEN_ASSERT_TYPE(Xen_is_number(XEN_CAR(xenParameters)),
 		      ladspa_plugin_configuration,
 		      2,
 		      S_apply_ladspa, "a number");
@@ -737,10 +737,10 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
       sf = (snd_fd **)calloc(readers, sizeof(snd_fd *));
 
       /* Local version of sound descriptor. */
-      if (XEN_LIST_P(reader))
+      if (Xen_is_list(reader))
 	{
 	  for (i = 0; i < readers; i++)
-	    if (!(XEN_FALSE_P(XEN_LIST_REF(reader, i))))
+	    if (!(Xen_is_false(XEN_LIST_REF(reader, i))))
 	      sf[i] = xen_to_sampler(XEN_LIST_REF(reader, i));
 	}
       else sf[0] = xen_to_sampler(reader);
@@ -925,13 +925,13 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 #define C_TO_XEN_Ladspa_Descriptor(Value) \
   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Ladspa-Descriptor"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
 #define XEN_TO_C_Ladspa_Descriptor(Value) ((LADSPA_Descriptor *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
-#define XEN_Ladspa_Descriptor_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+#define XEN_Ladspa_Descriptor_P(Value) (Xen_is_list(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (Xen_is_symbol(XEN_CAR(Value))) && \
                             (strcmp("Ladspa-Descriptor", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
   
 #define C_TO_XEN_Ladspa_Handle(Value) \
   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Ladspa-Handle"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
 #define XEN_TO_C_Ladspa_Handle(Value) ((LADSPA_Handle *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
-#define XEN_Ladspa_Handle_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+#define XEN_Ladspa_Handle_P(Value) (Xen_is_list(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (Xen_is_symbol(XEN_CAR(Value))) && \
                            (strcmp("Ladspa-Handle", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
   
 
@@ -945,8 +945,8 @@ associated with the given plugin."
   char *pcFilename;
   const char *pcLabel, *pcTmp;
   if (!g_bLADSPAInitialised) loadLADSPA();
-  XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_filename), ladspa_plugin_filename, 1, S_ladspa_descriptor, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_label), ladspa_plugin_label, 2, S_ladspa_descriptor, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(ladspa_plugin_filename), ladspa_plugin_filename, 1, S_ladspa_descriptor, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(ladspa_plugin_label), ladspa_plugin_label, 2, S_ladspa_descriptor, "a string");
   pcTmp = XEN_TO_C_STRING(ladspa_plugin_filename);
   pcLabel = XEN_TO_C_STRING(ladspa_plugin_label);
   pcFilename = packLADSPAFilename(pcTmp);
@@ -1070,7 +1070,7 @@ static XEN g_ladspa_instantiate(XEN ptr, XEN srate)
   const LADSPA_Descriptor *descriptor;
   LADSPA_Handle handle;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, 1, S_ladspa_instantiate, "Ladspa descriptor");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(srate), srate, 2, S_ladspa_instantiate, "int");
+  XEN_ASSERT_TYPE(Xen_is_ulong_int(srate), srate, 2, S_ladspa_instantiate, "int");
   descriptor = XEN_TO_C_Ladspa_Descriptor(ptr);
   handle = descriptor->instantiate(descriptor, XEN_TO_C_ULONG(srate));
   return(C_TO_XEN_Ladspa_Handle(handle));
@@ -1127,7 +1127,7 @@ static XEN g_ladspa_run(XEN desc, XEN ptr, XEN count)
   const LADSPA_Descriptor *descriptor;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, 1, S_ladspa_run, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, 2, S_ladspa_run, "Ladspa handle");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(count), count, 3, S_ladspa_run, "unsigned long");
+  XEN_ASSERT_TYPE(Xen_is_ulong_int(count), count, 3, S_ladspa_run, "unsigned long");
   descriptor = XEN_TO_C_Ladspa_Descriptor(desc);
   if (descriptor->run) descriptor->run(XEN_TO_C_Ladspa_Handle(ptr), XEN_TO_C_ULONG(count));
   return(XEN_FALSE);
@@ -1142,7 +1142,7 @@ static XEN g_ladspa_run_adding(XEN desc, XEN ptr, XEN count)
   const LADSPA_Descriptor *descriptor;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, 1, S_ladspa_run_adding, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, 2, S_ladspa_run_adding, "Ladspa handle");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(count), count, 3, S_ladspa_run_adding, "unsigned long");
+  XEN_ASSERT_TYPE(Xen_is_ulong_int(count), count, 3, S_ladspa_run_adding, "unsigned long");
   descriptor = XEN_TO_C_Ladspa_Descriptor(desc);
   if (descriptor->run_adding) descriptor->run_adding(XEN_TO_C_Ladspa_Handle(ptr), XEN_TO_C_ULONG(count));
   return(XEN_FALSE);
@@ -1157,7 +1157,7 @@ static XEN g_ladspa_set_run_adding_gain(XEN desc, XEN ptr, XEN gain)
   const LADSPA_Descriptor *descriptor;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, 1, S_ladspa_set_run_adding_gain, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, 2, S_ladspa_set_run_adding_gain, "Ladspa handle");
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(gain), gain, 3, S_ladspa_set_run_adding_gain, "float");
+  XEN_ASSERT_TYPE(Xen_is_double(gain), gain, 3, S_ladspa_set_run_adding_gain, "float");
   descriptor = XEN_TO_C_Ladspa_Descriptor(desc);
   if (descriptor->set_run_adding_gain) descriptor->set_run_adding_gain(XEN_TO_C_Ladspa_Handle(ptr), (LADSPA_Data)(XEN_TO_C_DOUBLE(gain)));
   return(XEN_FALSE);
@@ -1183,7 +1183,7 @@ static XEN g_ladspa_connect_port(XEN desc, XEN ptr, XEN port, XEN data)
   vct *samples;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, 1, S_ladspa_connect_port, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, 2, S_ladspa_connect_port, "Ladspa handle");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(port), port, 3, S_ladspa_connect_port, "unsigned long");
+  XEN_ASSERT_TYPE(Xen_is_ulong_int(port), port, 3, S_ladspa_connect_port, "unsigned long");
   XEN_ASSERT_TYPE(MUS_VCT_P(data), data, 4, S_ladspa_connect_port, "vct");
   descriptor = XEN_TO_C_Ladspa_Descriptor(desc);
   samples = XEN_TO_VCT(data);

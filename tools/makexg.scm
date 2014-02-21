@@ -131,7 +131,7 @@
 	"GdkEventAny*" "GdkDeviceManager*"
 	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t" "cairo_bool_t" "cairo_region_overlap_t"
 
-	"glong"
+	"glong" "double"
 	))
 
 (define no-xen-to-c 
@@ -847,26 +847,28 @@
 		    (if (not (member type no-xen-to-c))
 			(hey "#define XEN_TO_C_~A(Arg) (~A)(XEN_TO_C_~A(Arg))~%" (no-stars (car typ)) (car typ) (cdr typ)))
 		    (if (not (member type no-xen-p))
-			(hey "#define XEN_~A_P(Arg) XEN_~A_P(Arg)~%" 
+			(hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
 			     (no-stars (car typ))
 			     (if (string=? (cdr typ) "INT") 
-				 "INTEGER" 
+				 "integer" 
 				 (if (string=? (cdr typ) "DOUBLE")
-				     "NUMBER"
-				     (cdr typ))))))
+				     "number"
+				     (if (string=? (cdr typ) "ULONG")
+					 "ulong_int"
+					 (apply string (map char-downcase (cdr typ)))))))))
 		  (begin
 		    (if (not (cdr typ)) ; void special case
 			(begin
 			  (if (not (member type no-xen-p))
-			      (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ))))
+			      (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ))))
 			  (if (not (member type no-xen-to-c))
 			      (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))
 			(begin          ; xen special case
 			  (if (string=? type "etc")
-			      (hey "#define XEN_etc_P(Arg) (XEN_LIST_P(Arg))~%")
+			      (hey "#define Xen_is_etc(Arg) (Xen_is_list(Arg))~%")
 			      (begin
 				(if (not (member type no-xen-p))
-				    (hey "#define XEN_~A_P(Arg) ((XEN_LIST_P(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))~%" (no-stars (car typ))))
+				    (hey "#define Xen_is_~A(Arg) ((Xen_is_list(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))~%" (no-stars (car typ))))
 				(if (not (member type no-xen-to-c))
 				    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ))))))))))))
 	(if (and (not (string=? type "lambda"))
@@ -1616,17 +1618,17 @@
 
 
 (hey "#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(xg_ ## Name ## _symbol, XEN_WRAP_C_POINTER(Value))~%")
-(hey "#define WRAP_P(Name, Value) (XEN_PAIR_P(Value) && (XEN_CAR(Value) == xg_ ## Name ## _symbol))~%")
+(hey "#define IS_WRAPPED(Name, Value) (Xen_is_pair(Value) && (XEN_CAR(Value) == xg_ ## Name ## _symbol))~%")
 (hey "~%")
 (hey "#define XM_TYPE(Name, XType) \\~%")
 ;; these are not pointers, so should not use wrap_c_pointer and friends 
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(xg_ ## Name ## _symbol, C_TO_XEN_ULONG(val)));} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
+(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_1(Name, XType) \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
+(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(Name, val));}~%")
 (hey "~%")
 					;(hey "#define XM_TYPE_NO_P(Name, XType) \\~%")
 					;(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(Name, val));} \\~%")
@@ -1637,17 +1639,17 @@
 (hey "~%")
 (hey "#define XM_TYPE_PTR(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(Name, val)); return(XEN_FALSE);} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_PTR_CONST(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (const XType val) {if (val) return(WRAP_FOR_XEN(Name, val)); return(XEN_FALSE);} \\~%")
-(hey "  static const XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((const XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
+(hey "  static const XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((const XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_PTR_1(Name, XType) \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_PTR_2(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(Name, val)); return(XEN_FALSE);} \\~%")
@@ -1655,17 +1657,17 @@
 (hey "/* type checks for callback wrappers */~%")
 
 (define (callback-p func)
-  (hey "#define XEN_~A_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, ~D)))~%"
+  (hey "#define Xen_is_~A(Arg)  Xen_is_false(Arg) || (Xen_is_procedure(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, ~D)))~%"
        (symbol->string (callback-name func))
        (length (callback-args func))))
 
 (for-each callback-p callbacks)
 
-					;(hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
-(hey "#define XEN_GCallback_P(Arg) (XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)) || (XEN_REQUIRED_ARGS_OK(Arg, 4))))~%")
+					;(hey "#define Xen_is_lambda(Arg) Xen_is_procedure(Arg)~%")
+(hey "#define Xen_is_GCallback(Arg) (Xen_is_procedure(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)) || (XEN_REQUIRED_ARGS_OK(Arg, 4))))~%")
 
 (define (xen-callback func)
-  (hey "#define XEN_TO_C_~A(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_~A~%"
+  (hey "#define XEN_TO_C_~A(Arg) Xen_is_false(Arg) ? NULL : gxg_~A~%"
        (symbol->string (callback-name func))
        (callback-func func)))
 
@@ -1675,7 +1677,7 @@
 ;; (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
 
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
-(hey "#define XEN_lambda_data_P(Arg) 1~%")
+(hey "#define Xen_is_lambda_data(Arg) 1~%")
 
 ;; needed if func returns func of this type
 (hey "#define C_TO_XEN_GtkTreeViewSearchPositionFunc(Arg) WRAP_FOR_XEN(GtkTreeViewSearchPositionFunc, Arg)~%")
@@ -1687,14 +1689,8 @@
 					;(hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(GtkDestroyNotify, Arg)~%")
 (hey "#define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)~%")
 
-#|
-(hey "#define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)~%")
-(hey "#define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING((char *)Arg) : XEN_FALSE)~%")
-(hey "#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))~%")
-|#
 (hey "#define XEN_TO_C_String(Arg) XEN_TO_C_STRING(Arg)~%")
 (hey "#define C_TO_XEN_String(Arg) C_TO_XEN_STRING((char *)Arg)~%")
-(hey "#define XEN_String_P(Arg) XEN_STRING_P(Arg)~%")
 
 (hey "static XEN C_TO_XEN_GError_(GError *err)~%")
 (hey "{~%")
@@ -1725,7 +1721,7 @@
 (hey "#define XLL(a, b) (XEN_TO_C_LONG_LONG(XEN_LIST_REF(a, b)))~%")
 (hey "#define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))~%")
 (hey "#define XLT(a, b) XEN_TO_C_GtkTextTag_(XEN_LIST_REF(a, b))~%")
-(hey "#define XLA(a, b) ((XEN_INTEGER_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLL(a, b)) : ((XEN_STRING_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLS(a, b)) : ((gpointer)XLG(a, b))))~%~%")
+(hey "#define XLA(a, b) ((Xen_is_integer(XEN_LIST_REF(a, b))) ? ((gpointer)XLL(a, b)) : ((Xen_is_string(XEN_LIST_REF(a, b))) ? ((gpointer)XLS(a, b)) : ((gpointer)XLG(a, b))))~%~%")
 
 (hey "static XEN c_to_xen_string(XEN str)~%")
 (hey "{~%")
@@ -1747,7 +1743,7 @@
 (hey "  if (last_xm_unprotect >= 0)~%")
 (hey "    {~%")
 (hey "      i = last_xm_unprotect;~%")
-(hey "      if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))~%")
+(hey "      if (Xen_is_false(XEN_VECTOR_REF(xm_protected, i)))~%")
 (hey "	{~%")
 (hey "	  XEN_VECTOR_SET(xm_protected, i, obj);~%")
 (hey "	  last_xm_unprotect = NOT_A_GC_LOC;~%")
@@ -1756,7 +1752,7 @@
 (hey "      last_xm_unprotect = NOT_A_GC_LOC;~%")
 (hey "    }~%")
 (hey "  for (i = 0; i < xm_protected_size; i++)~%")
-(hey "    if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))~%")
+(hey "    if (Xen_is_false(XEN_VECTOR_REF(xm_protected, i)))~%")
 (hey "      {~%")
 (hey "	XEN_VECTOR_SET(xm_protected, i, obj);~%")
 (hey "	return(i);~%")
@@ -1830,7 +1826,7 @@
 			(hey ")~%"))
 		      (hey "{~%  ")
 		      ;; I tried to use XEN_ERROR here but it was a no-op for some reason?? 
-		      (hey "if (!XEN_LIST_P((XEN)func_info)) return~A;~%  "
+		      (hey "if (!Xen_is_list((XEN)func_info)) return~A;~%  "
 			   (if void? 
 			       ""
 			       (format #f "((~A)0)" (no-stars type))))
@@ -2004,14 +2000,14 @@
 		     (argtype (car arg)))
 		 (if (not (ref-arg? arg))
 		     (if (null-arg? arg)
-			 (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A) || XEN_FALSE_P(~A), ~A, ~D, ~S, ~S);~%" 
+			 (hey "  XEN_ASSERT_TYPE(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
 			      (no-stars argtype) argname argname argname ctr name argtype)
 			 (if (opt-arg? arg)
 			     (begin
-			       (hey "  if (XEN_NOT_BOUND_P(~A)) ~A = XEN_FALSE; ~%" argname argname)
-			       (hey "  else XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%" 
+			       (hey "  if (!Xen_is_bound(~A)) ~A = XEN_FALSE; ~%" argname argname)
+			       (hey "  else XEN_ASSERT_TYPE(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
 				    (no-stars argtype) argname argname ctr name argtype))
-			     (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%"
+			     (hey "  XEN_ASSERT_TYPE(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
 				  (no-stars argtype) argname argname ctr name argtype)))
 		     (if (>= (length arg) 3)
 			 (if (char=? ((arg 2) 0) #\{)
@@ -2124,7 +2120,7 @@
 		    ((= i (- cargs 1)))
 		  (let ((arg (args i)))
 		    (hey "    ~A p_arg~D;~%" (car arg) i)))
-		(hey "    if (XEN_LIST_P(~A)) etc_len = XEN_LIST_LENGTH(~A);~%" list-name list-name)
+		(hey "    if (Xen_is_list(~A)) etc_len = XEN_LIST_LENGTH(~A);~%" list-name list-name)
 		(if (> min-len 0)
 		    (hey "    if (etc_len < ~D) XEN_OUT_OF_RANGE_ERROR(~S, ~A, ~A, \"... list must have at least ~D entr~A\");~%"
 			 min-len name (- cargs 1) list-name min-len (if (= min-len 1) "y" "ies")))
@@ -2317,17 +2313,17 @@
  all-funcs all-func-withs)
 
 
-(hey "#define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))~%~%")
+(hey "#define Xen_is_wrapped_object(Obj) (Xen_is_list(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (Xen_is_symbol(XEN_CAR(Obj))))~%~%")
 
 (define cast-it
   (lambda (cast)
     (let ((cast-name (car cast))
 	  (cast-type (cadr cast)))
       (hey "static XEN gxg_~A(XEN obj)" (no-arg cast-name))
-      (hey " {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(xg_~A_symbol, XEN_CADR(obj)) : XEN_FALSE);}~%" (no-stars cast-type)))))
+      (hey " {return((Xen_is_wrapped_object(obj)) ? XEN_LIST_2(xg_~A_symbol, XEN_CADR(obj)) : XEN_FALSE);}~%" (no-stars cast-type)))))
 
 (hey "static XEN gxg_GPOINTER(XEN obj)")
-(hey " {return(XEN_LIST_2(xg_gpointer_symbol, (WRAPPED_OBJECT_P(obj)) ? XEN_CADR(obj) : XEN_WRAP_C_POINTER(obj)));}~%")
+(hey " {return(XEN_LIST_2(xg_gpointer_symbol, (Xen_is_wrapped_object(obj)) ? XEN_CADR(obj) : XEN_WRAP_C_POINTER(obj)));}~%")
 
 (for-each cast-it (reverse casts))
 (for-each
@@ -2341,7 +2337,7 @@
 
 (define (make-check func)
   (hey "static XEN gxg_~A(XEN obj)" (no-arg (car func)))
-  (hey " {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && ~A((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}~%" (no-arg (car func))))
+  (hey " {return(C_TO_XEN_BOOLEAN(Xen_is_wrapped_object(obj) && ~A((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}~%" (no-arg (car func))))
 
 (for-each make-check (reverse checks))
 (for-each
@@ -2360,9 +2356,9 @@
 (hey "  #define H_gtk_init \"void gtk_init(int* argc, char*** argv)\" ~%")
 (hey "  int ref_argc = 0; ~%")
 (hey "  char** ref_argv = NULL; ~%")
-(hey "  if (XEN_BOUND_P(argv)) ~%")
+(hey "  if (Xen_is_bound(argv)) ~%")
 (hey "    { ~%")
-(hey "      if (XEN_BOUND_P(argc) && XEN_INTEGER_P(argc) && XEN_TO_C_int(argc) <= XEN_LIST_LENGTH(argv)) ~%")
+(hey "      if (Xen_is_bound(argc) && Xen_is_integer(argc) && XEN_TO_C_int(argc) <= XEN_LIST_LENGTH(argv)) ~%")
 (hey "	ref_argc = XEN_TO_C_int(argc); ~%")
 (hey "      else ref_argc = XEN_LIST_LENGTH(argv); ~%")
 (hey "    } ~%")
@@ -2382,18 +2378,18 @@
 (hey "  #define H_gtk_init_check \"gboolean gtk_init_check(int* argc, char*** argv)\" ~%")
 (hey "  int ref_argc = 0; ~%")
 (hey "  char** ref_argv = NULL; ~%")
-(hey "  if (XEN_BOUND_P(argc) && XEN_LIST_P(argc)) ~%")
+(hey "  if (Xen_is_bound(argc) && Xen_is_list(argc)) ~%")
 (hey "    { ~%")
 (hey "      argv = argc; ~%")
 (hey "      ref_argc = XEN_LIST_LENGTH(argv); ~%")
 (hey "    } ~%")
 (hey "  else ~%")
 (hey "    {~%")
-(hey "      if (XEN_BOUND_P(argv)) ~%")
+(hey "      if (Xen_is_bound(argv)) ~%")
 (hey "	{ ~%")
 (hey "	  int len; ~%")
-(hey "	  XEN_ASSERT_TYPE(XEN_INTEGER_P(argc), argc, 1, \"gtk_init_check\", \"int argc\"); ~%")
-(hey "	  XEN_ASSERT_TYPE(XEN_LIST_P(argv), argv, 2, \"gtk_init_check\", \"char *argv[]\"); ~%")
+(hey "	  XEN_ASSERT_TYPE(Xen_is_integer(argc), argc, 1, \"gtk_init_check\", \"int argc\"); ~%")
+(hey "	  XEN_ASSERT_TYPE(Xen_is_list(argv), argv, 2, \"gtk_init_check\", \"char *argv[]\"); ~%")
 (hey "	  len = XEN_LIST_LENGTH(argv); ~%")
 (hey "	  ref_argc = XEN_TO_C_int(argc); ~%")
 (hey "	  if (ref_argc > len) ref_argc = len; ~%")
@@ -2419,7 +2415,7 @@
 (hey "  XEN val;~%")
 (hey "  int i, len;~%")
 (hey "  #define H_make_target_entry \"(make-target-entry lst): GtkTargetEntry*, each member of 'lst' should be (list target flags info)\"~%")
-(hey "  XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, 1, \"make-target-entry\", \"a list of lists describing each target\");~%")
+(hey "  XEN_ASSERT_TYPE(Xen_is_list(lst), lst, 1, \"make-target-entry\", \"a list of lists describing each target\");~%")
 (hey "  len = XEN_LIST_LENGTH(lst);~%")
 (hey "  if (len == 0) return(XEN_FALSE);~%")
 (hey "  targets = (GtkTargetEntry *)calloc(len, sizeof(GtkTargetEntry));~%")
@@ -2471,9 +2467,9 @@
 (hey "  XEN result = XEN_EMPTY_LIST;~%")
 (hey "  XEN val, ctype;~%")
 (hey "  int i, len = -1;~%")
-(hey "  if (XEN_INTEGER_P(clen))~%")
+(hey "  if (Xen_is_integer(clen))~%")
 (hey "    len = XEN_TO_C_INT(clen);~%")
-(hey "  if (!(XEN_LIST_P(val_1))) return(XEN_FALSE); /* type:location cons */~%")
+(hey "  if (!(Xen_is_list(val_1))) return(XEN_FALSE); /* type:location cons */~%")
 (hey "  val = XEN_COPY_ARG(val_1); /* protect Ruby arg */~%")
 (hey "  ctype = XEN_CAR(val);~%")
 (for-each array->list listable-types)
@@ -2501,9 +2497,9 @@
 (hey "static XEN xg_object_get(XEN val, XEN name, XEN string_type)~%")
 (hey "{~%")
 (hey "  gint temp; gchar *str;~%")
-(hey "  XEN_ASSERT_TYPE(XEN_gpointer_P(val), val, 1, \"g_object_get\", \"gpointer\");~%")
-(hey "  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 2, \"g_object_get\", \"string\");~%")
-(hey "  if (XEN_FALSE_P(string_type))~%")
+(hey "  XEN_ASSERT_TYPE(Xen_is_gpointer(val), val, 1, \"g_object_get\", \"gpointer\");~%")
+(hey "  XEN_ASSERT_TYPE(Xen_is_string(name), name, 2, \"g_object_get\", \"string\");~%")
+(hey "  if (Xen_is_false(string_type))~%")
 (hey "    {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &temp, NULL); return(C_TO_XEN_INT(temp));}~%")
 (hey "  else {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &str, NULL); return(C_TO_XEN_STRING(str));}~%")
 (hey "}~%~%")
@@ -2512,13 +2508,13 @@
 
 (hey "static XEN xg_object_set(XEN val, XEN name, XEN new_val)~%")
 (hey "{~%")
-(hey "  XEN_ASSERT_TYPE(XEN_gpointer_P(val), val, 1, \"g_object_set\", \"gpointer\");~%")
-(hey "  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 2, \"g_object_set\", \"string\");~%")
-(hey "  if (XEN_BOOLEAN_P(new_val))~%")
+(hey "  XEN_ASSERT_TYPE(Xen_is_gpointer(val), val, 1, \"g_object_set\", \"gpointer\");~%")
+(hey "  XEN_ASSERT_TYPE(Xen_is_string(name), name, 2, \"g_object_set\", \"string\");~%")
+(hey "  if (Xen_is_boolean(new_val))~%")
 (hey "    g_object_set(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), XEN_TO_C_BOOLEAN(new_val), NULL);~%")
 (hey "  else~%")
 (hey "    {~%")
-(hey "      if (XEN_NUMBER_P(new_val))~%")
+(hey "      if (Xen_is_number(new_val))~%")
 (hey "        g_object_set(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), XEN_TO_C_INT(new_val), NULL);~%")
 (hey "      else g_object_set(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), XEN_TO_C_STRING(new_val), NULL);~%")
 (hey "    }~%")
@@ -2573,11 +2569,11 @@
 	(hey "~A: not found" field)
 	(begin
 	  (if (= (length vals) 1)
-	      (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, 1, ~S, ~S);~%" 
+	      (hey "  XEN_ASSERT_TYPE(Xen_is__~A(ptr), ptr, 1, ~S, ~S);~%" 
 		   (caar vals) field 
 		   (caar vals))
 	      (if (= (length vals) 2)
-		  (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr) || XEN_~A__P(ptr), ptr, 1, ~S, ~S \" or \" ~S);~%" 
+		  (hey "  XEN_ASSERT_TYPE(Xen_is__~A(ptr) || Xen_is__~A(ptr), ptr, 1, ~S, ~S \" or \" ~S);~%" 
 		       (caar vals) (car (cadr vals)) field 
 		       (caar vals) (car (cadr vals)))))))
     (let ((ctr 0))
@@ -2586,7 +2582,7 @@
 	 (if (or (> (length vals) 2)
 		 (and (= (length vals) 2)
 		      (= ctr 0)))
-	     (hey "  if (XEN_~A__P(ptr)) " (car val))
+	     (hey "  if (Xen_is__~A(ptr)) " (car val))
 	     (heyc "  "))
 	 (set! ctr (+ ctr 1))
 	 (hey "return(C_TO_XEN_~A((~A)((XEN_TO_C_~A_(ptr))->~A)));~%"
@@ -2617,11 +2613,11 @@
 	(format #t "(writer) ~A: not found" field)
 	(begin
 	  (if (= (length vals) 1)
-	      (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, 1, ~S, ~S);~%" 
+	      (hey "  XEN_ASSERT_TYPE(Xen_is__~A(ptr), ptr, 1, ~S, ~S);~%" 
 		   (caar vals) field 
 		   (caar vals))
 	      (if (= (length vals) 2)
-		  (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr) || XEN_~A__P(ptr), ptr, 1, ~S, ~S \" or \" ~S);~%" 
+		  (hey "  XEN_ASSERT_TYPE(Xen_is__~A(ptr) || Xen_is__~A(ptr), ptr, 1, ~S, ~S \" or \" ~S);~%" 
 		       (caar vals) (car (cadr vals)) field 
 		       (caar vals) (car (cadr vals)))))))
     (let ((ctr 0))
@@ -2630,7 +2626,7 @@
 	 (if (or (> (length vals) 2)
 		 (and (= (length vals) 2)
 		      (= ctr 0)))
-	     (hey "  if (XEN_~A__P(ptr)) " (car val))
+	     (hey "  if (Xen_is__~A(ptr)) " (car val))
 	     (heyc "  "))
 	 (set! ctr (+ ctr 1))
 	 (hey "(XEN_TO_C_~A_(ptr))->~A = XEN_TO_C_~A(val);~%"

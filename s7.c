@@ -36404,6 +36404,19 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 }
 
 
+s7_pointer s7_wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, int arg_n, s7_pointer arg, s7_pointer descr)
+{
+  if (arg_n < 0) arg_n = 0;
+  if (arg_n > 0)
+    return(wrong_type_arg_error_prepackaged(sc, caller, make_integer(sc, arg_n), arg, 
+					    make_protected_string(sc, type_name(sc, arg, INDEFINITE_ARTICLE)),
+					    descr));
+  return(simple_wrong_type_arg_error_prepackaged(sc, caller, arg,
+						 make_protected_string(sc, type_name(sc, arg, INDEFINITE_ARTICLE)),
+						 descr));
+}
+
+
 static s7_pointer out_of_range_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, const char *descr)
 {
   /* info list is '(format_string caller arg_n arg descr) */
@@ -36962,7 +36975,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
   /* sc->s7_call_name = NULL; */
   sc->no_values = 0; 
   sc->format_depth = -1;
-  s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
+  sc->gc_off = false;  /* this is in case we were triggered from the sort function -- clumsy! */
 
   slot_set_value(sc->error_type, type);
   slot_set_value(sc->error_data, info);
@@ -69498,9 +69511,9 @@ int main(int argc, char **argv)
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447
- * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382
- * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974
- * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 
+ * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971
+ * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.0
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.8
@@ -69522,5 +69535,7 @@ int main(int argc, char **argv)
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0)
  * many (20000) more _p -> _is_ changes remain (snd (g_*_p and H_*_p *.h), lisp (cmus.c, run.lisp), xen, xm/xg/gl)
+ *
+ * if gen_is_ok even if not gf, use static mus_any* in g_oscil*?  Where to check the tree? [g_oscil_two]
  */
 

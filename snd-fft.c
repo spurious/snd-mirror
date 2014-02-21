@@ -790,7 +790,7 @@ static void apply_fft(fft_state *fs)
 			       XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index), 
 					  C_TO_XEN_INT(cp->chan)),
 			       S_before_transform_hook);
-	  if (XEN_LONG_LONG_P(res))
+	  if (Xen_is_long_long_int(res))
 	    ind0 = XEN_TO_C_LONG_LONG(res) + fs->beg;
 	  else ind0 = cp->axis->losamp + fs->beg;
 	}
@@ -1899,7 +1899,7 @@ static XEN g_set_log_freq_start(XEN val)
   mus_float_t base;
   #define H_log_freq_start "(" S_log_freq_start "): log freq base (default: 25.0)"
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_log_freq_start, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_log_freq_start, "a number");
   base = XEN_TO_C_DOUBLE(val);
   if ((base < 0.0) ||
       (base > 100000.0))
@@ -1917,7 +1917,7 @@ static XEN g_show_selection_transform(void) {return(C_TO_XEN_BOOLEAN(show_select
 static XEN g_set_show_selection_transform(XEN val) 
 {
   #define H_show_selection_transform "(" S_show_selection_transform "): " PROC_TRUE " if transform display reflects selection, not time-domain window"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, 1, S_setB S_show_selection_transform, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_show_selection_transform, "a boolean");
   set_show_selection_transform(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));
 }
@@ -1971,7 +1971,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
       if (fp)
 	{
 	  mus_long_t fbin = 0;
-	  if (XEN_LONG_LONG_P(bin)) fbin = XEN_TO_C_LONG_LONG(bin);
+	  if (Xen_is_long_long_int(bin)) fbin = XEN_TO_C_LONG_LONG(bin);
 
 	  if (fbin < fp->current_size)
 	    {
@@ -1982,7 +1982,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 		  mus_long_t fslice = 0;
 		  sono_info *si;
 
-		  if (XEN_LONG_LONG_P(slice)) fslice = XEN_TO_C_LONG_LONG(slice);
+		  if (Xen_is_long_long_int(slice)) fslice = XEN_TO_C_LONG_LONG(slice);
 		  si = cp->sonogram_data;
 
 		  if ((si) && 
@@ -2094,7 +2094,7 @@ static XEN_OBJECT_TYPE xen_transform_tag;
 
 bool xen_transform_p(XEN obj) 
 {
-  return(XEN_OBJECT_TYPE_P(obj, xen_transform_tag));
+  return(Xen_c_object_is_type(obj, xen_transform_tag));
 }
 
 
@@ -2217,7 +2217,7 @@ static void init_xen_transform(void)
 static XEN g_integer_to_transform(XEN n)
 {
   #define H_integer_to_transform "(" S_integer_to_transform " n) returns a transform object corresponding to the given integer"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_integer_to_transform, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(n), n, 1, S_integer_to_transform, "an integer");
   return(new_xen_transform(XEN_TO_C_INT(n)));
 }
 
@@ -2325,11 +2325,11 @@ to be displayed goes from low to high (normally 0.0 to 1.0).  " S_add_transform 
     XEN_WRONG_TYPE_ARG_ERROR(S_add_transform, 5, proc, "a procedure");
 #endif
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_add_transform, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(xlabel), xlabel, 2, S_add_transform, "a string");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(lo), lo, 3, S_add_transform, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(hi), hi, 4, S_add_transform, "a number");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, 5, S_add_transform, "a procedure");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_add_transform, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(xlabel), xlabel, 2, S_add_transform, "a string");
+  XEN_ASSERT_TYPE(Xen_is_number(lo), lo, 3, S_add_transform, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(hi), hi, 4, S_add_transform, "a number");
+  XEN_ASSERT_TYPE(Xen_is_procedure(proc), proc, 5, S_add_transform, "a procedure");
 
   return(C_INT_TO_XEN_TRANSFORM(add_transform(XEN_TO_C_STRING(name),
 					      XEN_TO_C_STRING(xlabel),

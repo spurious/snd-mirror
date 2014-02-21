@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 21
-#define XEN_VERSION "3.21"
+#define XEN_MINOR_VERSION 22
+#define XEN_VERSION "3.22"
 
 /* HISTORY:
  *
+ *  21-Feb:    Xen_is_number and friends.
  *  7-Jan-14:  in s7, C_TO_XEN_STRING and XEN_TO_C_STRING now treat a null string as a string (not #f).
  *  --------
  *  9-Nov:     removed XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER.
@@ -1143,7 +1144,19 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_PROVIDE(Feature)                       s7_provide(s7, Feature)
 #define XEN_PROTECT_FROM_GC(Arg)                   s7_gc_protect(s7, Arg)
 
+/* an experiment: */
+#if (defined(__GNUC__) || defined(__clang__))
+#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
+  ({							   \
+    static s7_pointer _caller_ = NULL, _descr_ = NULL; \
+    if (!_caller_) _caller_ = s7_make_permanent_string(Caller); \
+    if (!_descr_) _descr_ = s7_make_permanent_string(Descr); \
+    s7_wrong_type_arg_error_prepackaged(s7, _caller_, ArgN, Arg, _descr_); \
+  })
+#else
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) s7_wrong_type_arg_error(s7, Caller, ArgN, Arg, Descr)
+#endif					       
+
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)   s7_out_of_range_error(s7, Caller, ArgN, Arg, Descr)
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) if (!(Assertion)) XEN_WRONG_TYPE_ARG_ERROR(Caller, Position, Arg, Correct_Type)
@@ -1507,6 +1520,35 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
     #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG_LONG(a) 
   #endif
 #endif
+
+
+#define Xen_is_number(Arg)            XEN_NUMBER_P(Arg)
+#define Xen_is_integer(Arg)           XEN_INTEGER_P(Arg)
+#define Xen_is_long_long_int(Arg)     XEN_LONG_LONG_P(Arg)
+#define Xen_is_keyword(Arg)           XEN_KEYWORD_P(Arg)
+#define Xen_is_true(Arg)              XEN_TRUE_P(Arg)
+#define Xen_is_false(Arg)             XEN_FALSE_P(Arg)
+#define Xen_is_bound(Arg)             XEN_BOUND_P(Arg)
+#define Xen_is_boolean(Arg)           XEN_BOOLEAN_P(Arg)
+#define Xen_is_null(Arg)              XEN_NULL_P(Arg)
+#define Xen_is_eq(Arg1, Arg2)         XEN_EQ_P(Arg1, Arg2)
+#define Xen_is_cons(Arg)              XEN_CONS_P(Arg)
+#define Xen_is_pair(Arg)              XEN_PAIR_P(Arg)
+#define Xen_is_list(Arg)              XEN_LIST_P(Arg)
+#define Xen_is_string(Arg)            XEN_STRING_P(Arg)
+#define Xen_is_double(Arg)            XEN_DOUBLE_P(Arg)
+#define Xen_is_complex(Arg)           XEN_COMPLEX_P(Arg)
+#define Xen_is_ulong_int(Arg)         XEN_ULONG_P(Arg)
+#define Xen_is_ulong_long_int(Arg)    XEN_ULONG_LONG_P(Arg)
+#define Xen_is_wrapped_c_pointer(Arg) XEN_WRAPPED_C_POINTER_P(Arg)
+#define Xen_is_procedure(Arg)         XEN_PROCEDURE_P(Arg)
+#define Xen_c_object_is_type(Obj, Tag) XEN_OBJECT_TYPE_P(Obj, Tag)
+#define Xen_is_symbol(Arg)            XEN_SYMBOL_P(Arg)
+#define Xen_is_hook(Arg)              XEN_HOOK_P(Arg)
+#define Xen_is_vector(Arg)            XEN_VECTOR_P(Arg)
+#define Xen_is_char(Arg)              XEN_CHAR_P(Arg)
+#define Xen_keyword_is_eq(Arg1, Arg2) XEN_KEYWORD_EQ_P(Arg1, Arg2)
+
 
 #ifdef __cplusplus
 extern "C" {

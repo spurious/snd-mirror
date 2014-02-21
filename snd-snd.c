@@ -18,10 +18,10 @@ snd_info *get_sp(XEN snd)
     return(get_sp_1(xen_sound_to_int(snd)));
 
 #if (!HAVE_SCHEME)      
-  if (XEN_INTEGER_P(snd))
+  if (Xen_is_integer(snd))
     return(get_sp_1(XEN_TO_C_INT(snd)));
 #else
-  if (XEN_INTEGER_P(snd))
+  if (Xen_is_integer(snd))
     {
       s7_Int p;
       p = s7_integer(snd);
@@ -32,7 +32,7 @@ snd_info *get_sp(XEN snd)
     }
 #endif
 
-  if ((XEN_BOOLEAN_P(snd)) || (!XEN_BOUND_P(snd)))  /* use default sound, if any */
+  if ((Xen_is_boolean(snd)) || (!Xen_is_bound(snd)))  /* use default sound, if any */
     return(any_selected_sound());
 
   return(NULL);
@@ -1315,7 +1315,7 @@ char *sp_name_click(snd_info *sp) /* caller should free returned string */
 
       /* call name-click-hook (if any) return #t = don't print info in the status area */
       if ((XEN_HOOKED(name_click_hook)) &&
-	  (XEN_TRUE_P(run_or_hook(name_click_hook, 
+	  (Xen_is_true(run_or_hook(name_click_hook, 
 				  XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
 				  S_name_click_hook))))
 	return(NULL);
@@ -2138,7 +2138,7 @@ static XEN_OBJECT_TYPE xen_sound_tag;
 
 bool xen_sound_p(XEN obj) 
 {
-  return(XEN_OBJECT_TYPE_P(obj, xen_sound_tag));
+  return(Xen_c_object_is_type(obj, xen_sound_tag));
 }
 
 
@@ -2334,7 +2334,7 @@ static void init_xen_sound(void)
 static XEN g_integer_to_sound(XEN n)
 {
   #define H_integer_to_sound "(" S_integer_to_sound " n) returns a sound object corresponding to the given integer"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_integer_to_sound, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(n), n, 1, S_integer_to_sound, "an integer");
   return(new_xen_sound(XEN_TO_C_INT(n)));
 }
 
@@ -2361,7 +2361,7 @@ static XEN g_sound_p(XEN snd)
 {
   #define H_sound_p "(" S_is_sound " snd): " PROC_TRUE " if 'snd' (a sound object or an integer) is an active (accessible) sound"
 
-  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
+  if (Xen_is_integer(snd) || XEN_SOUND_P(snd))
     {
       snd_info *sp;
       sp = get_sp(snd);
@@ -2388,7 +2388,7 @@ static XEN g_select_sound(XEN snd)
 any editing operations."
   snd_info *sp;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd) || XEN_SOUND_P(snd), snd, 1, S_select_sound, "a sound object or index");
+  XEN_ASSERT_TYPE(Xen_is_integer(snd) || XEN_SOUND_P(snd), snd, 1, S_select_sound, "a sound object or index");
 
   sp = get_sp(snd);
   if (sp)
@@ -2409,7 +2409,7 @@ channel for editing."
   int chan = 0;
 
   ASSERT_SOUND(S_select_channel, chn_n, 1);
-  if (XEN_INTEGER_P(chn_n)) chan = XEN_TO_C_INT(chn_n);
+  if (Xen_is_integer(chn_n)) chan = XEN_TO_C_INT(chn_n);
 
   sp = any_selected_sound();
   if ((sp) && 
@@ -2430,10 +2430,10 @@ static XEN g_find_sound(XEN filename, XEN which)
 If more than one such sound exists, 'nth' chooses which one to return."
   snd_info *sp;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, 1, S_find_sound, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(filename), filename, 1, S_find_sound, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(which), which, 2, S_find_sound, "an integer");
 
-  sp = find_sound(XEN_TO_C_STRING(filename), (XEN_INTEGER_P(which)) ? XEN_TO_C_INT(which) : 0);
+  sp = find_sound(XEN_TO_C_STRING(filename), (Xen_is_integer(which)) ? XEN_TO_C_INT(which) : 0);
   if (sp) return(C_INT_TO_XEN_SOUND(sp->index));
 
   return(XEN_FALSE);
@@ -2458,7 +2458,7 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
   int i;
   XEN res = XEN_EMPTY_LIST;
 
-  if (XEN_TRUE_P(snd))
+  if (Xen_is_true(snd))
     {
       for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
@@ -2571,7 +2571,7 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
     case SP_PROPERTIES:
       if (!(IS_PLAYER_SOUND(sp)))
 	{
-	  if (!(XEN_VECTOR_P(sp->properties)))
+	  if (!(Xen_is_vector(sp->properties)))
 	    {
 	      sp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
 	      sp->properties_loc = snd_protect(sp->properties);
@@ -2674,7 +2674,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
   int i, ival;
   mus_float_t fval;
 
-  if (XEN_TRUE_P(snd))
+  if (Xen_is_true(snd))
     {
       for (i = 0; i < ss->max_sounds; i++)
 	{
@@ -2706,7 +2706,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
   switch (fld)
     {
     case SP_SYNC:  
-      if (XEN_INTEGER_P(val))
+      if (Xen_is_integer(val))
 	syncb(sp, XEN_TO_C_INT(val));
       else syncb(sp, (int)XEN_TO_C_BOOLEAN(val));
       break;
@@ -2778,7 +2778,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
     case SP_SRATE:
       if (!(IS_PLAYER_SOUND(sp))) 
 	{
-	  ival = (XEN_INTEGER_P(val)) ? XEN_TO_C_INT(val) : 44100;
+	  ival = (Xen_is_integer(val)) ? XEN_TO_C_INT(val) : 44100;
 	  if ((ival <= 0) || (ival > 100000000))
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "impossible srate");
 	  mus_sound_set_srate(sp->filename, ival);
@@ -2882,7 +2882,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  if (sp->hdr->comment) free(sp->hdr->comment);
-	  if (XEN_FALSE_P(val))
+	  if (Xen_is_false(val))
 	    sp->hdr->comment = NULL;
 	  else sp->hdr->comment = mus_strdup(XEN_TO_C_STRING(val));
 	}
@@ -2891,7 +2891,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
     case SP_PROPERTIES:
       if (!(IS_PLAYER_SOUND(sp)))
 	{
-	  if (!(XEN_VECTOR_P(sp->properties)))
+	  if (!(Xen_is_vector(sp->properties)))
 	    {
 	      sp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
 	      sp->properties_loc = snd_protect(sp->properties);
@@ -3070,7 +3070,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 	env *e = NULL;
 	if (sp->filter_control_envelope) 
 	  sp->filter_control_envelope = free_env(sp->filter_control_envelope);  /* set to null in case get_env throws error */
-	if (!(XEN_FALSE_P(val)))
+	if (!(Xen_is_false(val)))
 	  e = get_env(val, caller); /* has some error checks -- val must be list, but we can be #f -- see "get" case above: null env (nogui) -> #f */
 	if (e)
 	  {
@@ -3225,13 +3225,13 @@ static XEN g_channels(XEN snd)
 {
   #define H_channels "("  S_channels " :optional obj): how many channels the object obj has"
 
-  if (XEN_STRING_P(snd))
+  if (Xen_is_string(snd))
     return(g_mus_sound_chans(snd));              /* mus-sound-chans */
 
   if ((mus_xen_p(snd)) ||
       (sound_data_p(snd)) ||                     /* sound-data-chans */
       (MUS_IS_VCT(snd)) ||
-      (XEN_LIST_P(snd)))
+      (Xen_is_list(snd)))
     return(g_mus_channels(snd));                 /* mus-channels */
 
   if (XEN_MIX_P(snd))                            /* mixes are always 1 chan */
@@ -3243,7 +3243,7 @@ static XEN g_channels(XEN snd)
   if (XEN_SELECTION_P(snd))                      /* selection-chans */
     return(g_selection_chans());
 
-  if (XEN_VECTOR_P(snd))                         /* vector as output in clm */
+  if (Xen_is_vector(snd))                         /* vector as output in clm */
     return(C_TO_XEN_INT(XEN_VECTOR_RANK(snd)));
 
   return(sound_get(snd, SP_NCHANS, S_channels));
@@ -3252,14 +3252,14 @@ static XEN g_channels(XEN snd)
 
 static XEN check_number(XEN val, const char *caller)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, caller, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, caller, "a number");
   return(val);
 }
 
 
 static XEN check_non_negative_integer(XEN val, const char *caller)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val) && (XEN_TO_C_INT(val) >= 0), val, 1, caller, "a non-negative integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(val) && (XEN_TO_C_INT(val) >= 0), val, 1, caller, "a non-negative integer");
   return(val);
 }
 
@@ -3276,7 +3276,7 @@ static XEN g_srate(XEN snd)
 {
   #define H_srate "(" S_srate " :optional obj): obj's srate; obj can be a region, a string (sound file name), a sound, or an integer (sound index)"
 
-  if (XEN_STRING_P(snd))
+  if (Xen_is_string(snd))
     return(g_mus_sound_srate(snd));
 
   if (XEN_REGION_P(snd))
@@ -3368,11 +3368,11 @@ static XEN g_set_comment(XEN snd, XEN val)
 {
   if (XEN_NOT_BOUND_P(val))
     {
-      XEN_ASSERT_TYPE(XEN_STRING_P(snd) || XEN_FALSE_P(snd), snd, 1, S_setB S_comment, "a string");
+      XEN_ASSERT_TYPE(Xen_is_string(snd) || Xen_is_false(snd), snd, 1, S_setB S_comment, "a string");
       return(sound_set(XEN_UNDEFINED, snd, SP_COMMENT, S_setB S_comment));
     }
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, 2, S_setB S_comment, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(val) || Xen_is_false(val), val, 2, S_setB S_comment, "a string");
   return(sound_set(snd, val, SP_COMMENT, S_setB S_comment));
 }
 
@@ -3501,7 +3501,7 @@ static XEN g_set_channel_style(XEN style, XEN snd)
 The default is " S_channels_combined "; other values are " S_channels_separate " and " S_channels_superimposed ". \
 As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button."
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, 1, S_setB S_channel_style, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(style), style, 1, S_setB S_channel_style, "an integer"); 
   in_style = XEN_TO_C_INT(style);
   if ((in_style < 0) ||
       (in_style >= NUM_CHANNEL_STYLES))
@@ -3536,7 +3536,7 @@ static XEN g_read_only(XEN snd)
 
 static XEN g_set_read_only(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_read_only, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_read_only, "a boolean");
   return(sound_set(snd, on, SP_READ_ONLY, S_setB S_read_only));
 }
 
@@ -3552,7 +3552,7 @@ static XEN g_contrast_control_p(XEN snd)
 
 static XEN g_set_contrast_control_p(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_contrast_control, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_contrast_control, "a boolean");
   return(sound_set(snd, on, SP_CONTRASTING, S_setB S_is_contrast_control));
 }
 
@@ -3568,7 +3568,7 @@ static XEN g_expand_control_p(XEN snd)
 
 static XEN g_set_expand_control_p(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_expand_control, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_expand_control, "a boolean");
   return(sound_set(snd, on, SP_EXPANDING, S_setB S_is_expand_control));
 }
 
@@ -3584,7 +3584,7 @@ static XEN g_reverb_control_p(XEN snd)
 
 static XEN g_set_reverb_control_p(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_reverb_control, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_reverb_control, "a boolean");
   return(sound_set(snd, on, SP_REVERBING, S_setB S_is_reverb_control));
 }
 
@@ -3600,7 +3600,7 @@ static XEN g_filter_control_p(XEN snd)
 
 static XEN g_set_filter_control_p(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_is_filter_control, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_filter_control, "a boolean");
   return(sound_set(snd, on, SP_FILTERING, S_setB S_is_filter_control));
 }
 
@@ -3616,7 +3616,7 @@ static XEN g_filter_control_in_dB(XEN snd)
 
 static XEN g_set_filter_control_in_dB(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_filter_control_in_dB, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_filter_control_in_dB, "a boolean");
   return(sound_set_global(snd, on, SP_FILTER_DBING, S_setB S_filter_control_in_dB));
 }
 
@@ -3632,7 +3632,7 @@ static XEN g_filter_control_in_hz(XEN snd)
 
 static XEN g_set_filter_control_in_hz(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_filter_control_in_hz, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_filter_control_in_hz, "a boolean");
   return(sound_set_global(snd, on, SP_FILTER_HZING, S_setB S_filter_control_in_hz));
 }
 
@@ -3655,7 +3655,7 @@ static XEN g_filter_control_order(XEN snd)
 
 static XEN g_set_filter_control_order(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, 1, S_setB S_filter_control_order, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(on), on, 1, S_setB S_filter_control_order, "an integer"); 
   return(sound_set_global(snd, on, SP_FILTER_ORDER, S_setB S_filter_control_order));
 }
 
@@ -3671,7 +3671,7 @@ static XEN g_show_controls(XEN snd)
 
 static XEN g_set_show_controls(XEN on, XEN snd)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_show_controls, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_show_controls, "a boolean");
   return(sound_set_global(snd, on, SP_SHOW_CONTROLS, S_setB S_show_controls));
 }
 
@@ -3718,12 +3718,12 @@ static XEN g_set_selected_channel(XEN snd, XEN chn_n)
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_selected_channel, snd));
 
-  if (XEN_FALSE_P(chn_n))
+  if (Xen_is_false(chn_n))
     sp->selected_channel = NO_SELECTION;
   else
     {
       mus_long_t chan = 0;
-      if (XEN_INTEGER_P(chn_n)) chan = XEN_TO_C_INT(chn_n);
+      if (Xen_is_integer(chn_n)) chan = XEN_TO_C_INT(chn_n);
       if ((chan >= 0) && 
 	  (chan < sp->nchans)) 
 	{
@@ -3758,7 +3758,7 @@ static XEN g_file_name(XEN snd)
     return(C_TO_XEN_STRING(s7_port_filename(snd)));
 #endif
 
-  if (XEN_STRING_P(snd))
+  if (Xen_is_string(snd))
     return(g_mus_expand_filename(snd));
 
   if ((sampler_p(snd)) || (mix_sampler_p(snd)))
@@ -3801,7 +3801,7 @@ static XEN g_close_sound(XEN snd)
 {
   #define H_close_sound "(" S_close_sound " :optional snd): close snd"
 
-  if (XEN_INTEGER_P(snd))
+  if (Xen_is_integer(snd))
     return(g_close_sound_1(XEN_TO_C_INT(snd)));
 
   if (XEN_SOUND_P(snd))
@@ -3928,7 +3928,7 @@ open filename (as if opened from File:Open menu option), and return the new soun
   snd_info *sp;
   bool file_exists;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, 1, S_open_sound, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(filename), filename, 1, S_open_sound, "a string");
 
   fname = XEN_TO_C_STRING(filename);
   {
@@ -4007,11 +4007,11 @@ open file assuming the data matches the attributes indicated unless the file act
       if ((oc < 0) ||
 	  (oc > 256))
 	XEN_OUT_OF_RANGE_ERROR(S_open_raw_sound, 2, args[orig_arg[1]], "too many channels requested");
-      if (!(XEN_KEYWORD_P(keys[1]))) set_fallback_chans(oc);
+      if (!(Xen_is_keyword(keys[1]))) set_fallback_chans(oc);
       os = mus_optkey_to_int(keys[2], S_open_raw_sound, orig_arg[2], os);
-      if (!(XEN_KEYWORD_P(keys[2]))) set_fallback_srate(os);
+      if (!(Xen_is_keyword(keys[2]))) set_fallback_srate(os);
       ofr = mus_optkey_to_int(keys[3], S_open_raw_sound, orig_arg[3], ofr);
-      if (!(XEN_KEYWORD_P(keys[3]))) set_fallback_format(ofr);
+      if (!(Xen_is_keyword(keys[3]))) set_fallback_format(ofr);
     }
 
   if (file == NULL) 
@@ -4063,7 +4063,7 @@ static XEN g_view_sound(XEN filename)
   snd_info *sp = NULL;
   bool file_exists;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, 1, S_view_sound, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(filename), filename, 1, S_view_sound, "a string");
 
   fname = XEN_TO_C_STRING(filename);
   fullname = mus_expand_filename(fname);
@@ -4127,21 +4127,21 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_save_sound_as, orig_arg[0], NULL);
-      if (!(XEN_KEYWORD_P(keys[1]))) index = keys[1];
+      if (!(Xen_is_keyword(keys[1]))) index = keys[1];
       ht = mus_optkey_to_int(keys[2], S_save_sound_as, orig_arg[2], ht);
       df = mus_optkey_to_int(keys[3], S_save_sound_as, orig_arg[3], df);
       sr = mus_optkey_to_int(keys[4], S_save_sound_as, orig_arg[4], sr);
 
-      if ((sr <= 0) && (!XEN_KEYWORD_P(keys[4])))
+      if ((sr <= 0) && (!Xen_is_keyword(keys[4])))
 	XEN_ERROR(CANNOT_SAVE,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as ": srate (~A) can't be <= 0"),
 			     C_TO_XEN_INT(sr)));
 
       chan = mus_optkey_to_int(keys[5], S_save_sound_as, orig_arg[5], chan);
-      if (!(XEN_KEYWORD_P(keys[6]))) 
+      if (!(Xen_is_keyword(keys[6]))) 
 	{
 	  edpos = keys[6];
-	  if ((XEN_INTEGER_P(edpos)) || (XEN_PROCEDURE_P(edpos)))
+	  if ((Xen_is_integer(edpos)) || (Xen_is_procedure(edpos)))
 	    got_edpos = true;
 	}
       outcom = mus_optkey_to_string(keys[7], S_save_sound_as, orig_arg[7], NULL);
@@ -4396,7 +4396,7 @@ static XEN g_set_speed_control_style(XEN speed, XEN snd)
   int in_spd;
   speed_style_t spd;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, 1, S_setB S_speed_control_style, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(speed), speed, 1, S_setB S_speed_control_style, "an integer"); 
 
   in_spd = XEN_TO_C_INT(speed);
   if (in_spd < 0)
@@ -4422,7 +4422,7 @@ static XEN g_speed_control_tones(XEN snd)
 
 static XEN g_set_speed_control_tones(XEN val, XEN snd)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_speed_control_tones, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_speed_control_tones, "a number"); 
   return(sound_set_global(snd, val, SP_SPEED_TONES, S_setB S_speed_control_tones));
 }
 
@@ -4432,7 +4432,7 @@ WITH_TWO_SETTER_ARGS(g_set_speed_control_tones_reversed, g_set_speed_control_ton
 static XEN g_amp_control(XEN snd, XEN chn_n) 
 {
   #define H_amp_control "(" S_amp_control " :optional snd chn): current amp slider setting"
-  if (XEN_BOUND_P(chn_n))
+  if (Xen_is_bound(chn_n))
     {
       chan_info *cp;
       ASSERT_CHANNEL(S_amp_control, snd, chn_n, 1);
@@ -4447,9 +4447,9 @@ static XEN g_amp_control(XEN snd, XEN chn_n)
 
 static XEN g_set_amp_control(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_amp_control, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_amp_control, "a number"); 
 
-  if (XEN_BOUND_P(chn_n))
+  if (Xen_is_bound(chn_n))
     {
       chan_info *cp;
       ASSERT_CHANNEL(S_amp_control, snd, chn_n, 2);
@@ -4476,11 +4476,11 @@ static XEN g_amp_control_bounds(XEN snd)
 
 static XEN g_set_amp_control_bounds(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, 1, S_setB S_amp_control_bounds, "a list of the new min and max values"); 
+  XEN_ASSERT_TYPE(Xen_is_list(on), on, 1, S_setB S_amp_control_bounds, "a list of the new min and max values"); 
 
   if ((XEN_LIST_LENGTH(on) != 2) ||
-      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
-      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+      (!(Xen_is_number(XEN_CAR(on)))) ||
+      (!(Xen_is_number(XEN_CADR(on)))))
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_amp_control_bounds, 1, on, "a list of 2 numbers");
 
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
@@ -4501,7 +4501,7 @@ static XEN g_contrast_control(XEN snd)
 
 static XEN g_set_contrast_control(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_contrast_control, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_contrast_control, "a number"); 
   return(sound_set(snd, on, SP_CONTRAST, S_setB S_contrast_control));
 }
 
@@ -4517,11 +4517,11 @@ static XEN g_contrast_control_bounds(XEN snd)
 
 static XEN g_set_contrast_control_bounds(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, 1, S_setB S_contrast_control_bounds, "a list of the new min and max values"); 
+  XEN_ASSERT_TYPE(Xen_is_list(on), on, 1, S_setB S_contrast_control_bounds, "a list of the new min and max values"); 
 
   if ((XEN_LIST_LENGTH(on) != 2) ||
-      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
-      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+      (!(Xen_is_number(XEN_CAR(on)))) ||
+      (!(Xen_is_number(XEN_CADR(on)))))
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_contrast_control_bounds, 1, on, "a list of 2 numbers");
 
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
@@ -4544,7 +4544,7 @@ static XEN g_contrast_control_amp(XEN snd)
 
 static XEN g_set_contrast_control_amp(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_contrast_control_amp, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_contrast_control_amp, "a number");
   return(sound_set_global(snd, on, SP_CONTRAST_AMP, S_setB S_contrast_control_amp));
 }
 
@@ -4560,7 +4560,7 @@ static XEN g_expand_control(XEN snd)
 
 static XEN g_set_expand_control(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_expand_control, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_expand_control, "a number"); 
   return(sound_set(snd, on, SP_EXPAND, S_setB S_expand_control));
 }
 
@@ -4576,11 +4576,11 @@ static XEN g_expand_control_bounds(XEN snd)
 
 static XEN g_set_expand_control_bounds(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, 1, S_setB S_expand_control_bounds, "a list of the new min and max values"); 
+  XEN_ASSERT_TYPE(Xen_is_list(on), on, 1, S_setB S_expand_control_bounds, "a list of the new min and max values"); 
 
   if ((XEN_LIST_LENGTH(on) != 2) ||
-      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
-      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+      (!(Xen_is_number(XEN_CAR(on)))) ||
+      (!(Xen_is_number(XEN_CADR(on)))))
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_expand_control_bounds, 1, on, "a list of 2 numbers");
 
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
@@ -4604,7 +4604,7 @@ static XEN g_expand_control_length(XEN snd)
 
 static XEN g_set_expand_control_length(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_expand_control_length, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_expand_control_length, "a number"); 
   return(sound_set_global(snd, on, SP_EXPAND_LENGTH, S_setB S_expand_control_length));
 }
 
@@ -4620,7 +4620,7 @@ static XEN g_expand_control_ramp(XEN snd)
 
 static XEN g_set_expand_control_ramp(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_expand_control_ramp, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_expand_control_ramp, "a number");
   return(sound_set_global(snd, on, SP_EXPAND_RAMP, S_setB S_expand_control_ramp));
 }
 
@@ -4636,7 +4636,7 @@ static XEN g_expand_control_hop(XEN snd)
 
 static XEN g_set_expand_control_hop(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_expand_control_hop, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_expand_control_hop, "a number"); 
   return(sound_set_global(snd, on, SP_EXPAND_HOP, S_setB S_expand_control_hop));
 }
 
@@ -4652,7 +4652,7 @@ static XEN g_expand_control_jitter(XEN snd)
 
 static XEN g_set_expand_control_jitter(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_expand_control_jitter, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_expand_control_jitter, "a number"); 
   return(sound_set_global(snd, on, SP_EXPAND_JITTER, S_setB S_expand_control_jitter));
 }
 
@@ -4668,7 +4668,7 @@ static XEN g_speed_control(XEN snd)
 
 static XEN g_set_speed_control(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_speed_control, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_speed_control, "a number"); 
   return(sound_set(snd, on, SP_SPEED, S_setB S_speed_control));
 }
 
@@ -4684,11 +4684,11 @@ static XEN g_speed_control_bounds(XEN snd)
 
 static XEN g_set_speed_control_bounds(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, 1, S_setB S_speed_control_bounds, "a list of the new min and max values"); 
+  XEN_ASSERT_TYPE(Xen_is_list(on), on, 1, S_setB S_speed_control_bounds, "a list of the new min and max values"); 
 
   if ((XEN_LIST_LENGTH(on) != 2) ||
-      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
-      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+      (!(Xen_is_number(XEN_CAR(on)))) ||
+      (!(Xen_is_number(XEN_CADR(on)))))
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_speed_control_bounds, 1, on, "a list of 2 numbers");
 
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
@@ -4712,7 +4712,7 @@ static XEN g_reverb_control_length(XEN snd)
 
 static XEN g_set_reverb_control_length(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_reverb_control_length, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_reverb_control_length, "a number"); 
   return(sound_set(snd, on, SP_REVERB_LENGTH, S_setB S_reverb_control_length));
 }
 
@@ -4728,11 +4728,11 @@ static XEN g_reverb_control_length_bounds(XEN snd)
 
 static XEN g_set_reverb_control_length_bounds(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, 1, S_setB S_reverb_control_length_bounds, "a list of the new min and max values"); 
+  XEN_ASSERT_TYPE(Xen_is_list(on), on, 1, S_setB S_reverb_control_length_bounds, "a list of the new min and max values"); 
 
   if ((XEN_LIST_LENGTH(on) != 2) ||
-      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
-      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+      (!(Xen_is_number(XEN_CAR(on)))) ||
+      (!(Xen_is_number(XEN_CADR(on)))))
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_reverb_control_length_bounds, 1, on, "a list of 2 numbers");
 
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
@@ -4753,7 +4753,7 @@ static XEN g_reverb_control_feedback(XEN snd)
 
 static XEN g_set_reverb_control_feedback(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_reverb_control_feedback, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_reverb_control_feedback, "a number"); 
   return(sound_set_global(snd, on, SP_REVERB_FEEDBACK, S_setB S_reverb_control_feedback));
 }
 
@@ -4769,7 +4769,7 @@ static XEN g_reverb_control_scale(XEN snd)
 
 static XEN g_set_reverb_control_scale(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_reverb_control_scale, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_reverb_control_scale, "a number"); 
   return(sound_set(snd, on, SP_REVERB_SCALE, S_setB S_reverb_control_scale));
 }
 
@@ -4785,11 +4785,11 @@ static XEN g_reverb_control_scale_bounds(XEN snd)
 
 static XEN g_set_reverb_control_scale_bounds(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, 1, S_setB S_reverb_control_scale_bounds, "a list of the new min and max values"); 
+  XEN_ASSERT_TYPE(Xen_is_list(on), on, 1, S_setB S_reverb_control_scale_bounds, "a list of the new min and max values"); 
 
   if ((XEN_LIST_LENGTH(on) != 2) ||
-      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
-      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+      (!(Xen_is_number(XEN_CAR(on)))) ||
+      (!(Xen_is_number(XEN_CADR(on)))))
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_reverb_control_scale_bounds, 1, on, "a list of 2 numbers");
 
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
@@ -4810,7 +4810,7 @@ static XEN g_reverb_control_lowpass(XEN snd)
 
 static XEN g_set_reverb_control_lowpass(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, 1, S_setB S_reverb_control_lowpass, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(on), on, 1, S_setB S_reverb_control_lowpass, "a number"); 
   return(sound_set_global(snd, on, SP_REVERB_LOW_PASS, S_setB S_reverb_control_lowpass));
 }
 
@@ -4826,7 +4826,7 @@ static XEN g_reverb_control_decay(XEN snd)
 
 static XEN g_set_reverb_control_decay(XEN val, XEN snd)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_reverb_control_decay, "a number"); 
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_reverb_control_decay, "a number"); 
   return(sound_set_global(snd, val, SP_REVERB_DECAY, S_setB S_reverb_control_decay));
 }
 
@@ -4881,10 +4881,10 @@ where each inner list entry can also be " PROC_FALSE "."
   snd_info *sp;
   chan_info *cp;
 
-  XEN_ASSERT_TYPE(XEN_LIST_P(settings), settings, 1, S_controls_to_channel, "a list");
+  XEN_ASSERT_TYPE(Xen_is_list(settings), settings, 1, S_controls_to_channel, "a list");
   ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(beg) || XEN_FALSE_P(beg) || XEN_NOT_BOUND_P(beg), beg, 2, S_controls_to_channel, "an integer");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(dur) || XEN_FALSE_P(dur) || XEN_NOT_BOUND_P(dur), dur, 3, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(beg) || Xen_is_false(beg) || XEN_NOT_BOUND_P(beg), beg, 2, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(dur) || Xen_is_false(dur) || XEN_NOT_BOUND_P(dur), dur, 3, S_controls_to_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 7, S_controls_to_channel, "a string");
 
   sp = get_sp(snd); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
@@ -4899,15 +4899,15 @@ where each inner list entry can also be " PROC_FALSE "."
 	  XEN_ERROR(XEN_ERROR_TYPE("cannot-apply-controls"),
 		    XEN_LIST_1(C_TO_XEN_STRING(S_controls_to_channel ": already applying controls")));
 	}
-      if (XEN_LONG_LONG_P(beg)) apply_beg = XEN_TO_C_LONG_LONG(beg); else apply_beg = 0;
-      if (XEN_LONG_LONG_P(dur)) apply_dur = XEN_TO_C_LONG_LONG(dur); else apply_dur = 0;
+      if (Xen_is_long_long_int(beg)) apply_beg = XEN_TO_C_LONG_LONG(beg); else apply_beg = 0;
+      if (Xen_is_long_long_int(dur)) apply_dur = XEN_TO_C_LONG_LONG(dur); else apply_dur = 0;
       cp = get_cp(snd, chn, S_controls_to_channel);
       old_selected_channel = sp->selected_channel;
       sp->selected_channel = cp->chan;
       saved_settings = current_control_settings(sp, NULL);
 
       /* now read the 'settings' list for any new settings */
-      if ((XEN_LIST_P(settings)) && (XEN_NOT_NULL_P(settings)))
+      if ((Xen_is_list(settings)) && (XEN_NOT_NULL_P(settings)))
 	{
 	  int i, len, elen;
 	  /* settings: 
@@ -4926,15 +4926,15 @@ where each inner list entry can also be " PROC_FALSE "."
 	      switch (i)
 		{
 		case 0: 
-		  if (XEN_NUMBER_P(element)) sp->amp_control = XEN_TO_C_DOUBLE(element);
+		  if (Xen_is_number(element)) sp->amp_control = XEN_TO_C_DOUBLE(element);
 		  break;
 
 		case 1:
-		  if (XEN_NUMBER_P(element)) sp->speed_control = XEN_TO_C_DOUBLE(element);
+		  if (Xen_is_number(element)) sp->speed_control = XEN_TO_C_DOUBLE(element);
 		  break;
 
 		case 2:
-		  if (XEN_LIST_P(element))
+		  if (Xen_is_list(element))
 		    {
 		      elen = XEN_LIST_LENGTH(element);
 		      if (elen > 0) sp->contrast_control_p = true;
@@ -4944,7 +4944,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		  break;
 
 		case 3:
-		  if (XEN_LIST_P(element))
+		  if (Xen_is_list(element))
 		    {
 		      elen = XEN_LIST_LENGTH(element);
 		      if (elen > 0) sp->expand_control_p = true;
@@ -4957,7 +4957,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		  break;
 
 		case 4:
-		  if (XEN_LIST_P(element))
+		  if (Xen_is_list(element))
 		    {
 		      elen = XEN_LIST_LENGTH(element);
 		      if (elen > 0) sp->reverb_control_p = true;
@@ -4970,7 +4970,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		  break;
 
 		case 5:
-		  if (XEN_LIST_P(element))
+		  if (Xen_is_list(element))
 		    {
 		      elen = XEN_LIST_LENGTH(element);
 		      if (elen > 0) sp->filter_control_p = true;
@@ -4987,7 +4987,7 @@ where each inner list entry can also be " PROC_FALSE "."
 
 #if HAVE_EXTENSION_LANGUAGE
 #if HAVE_FORTH
-      if (!(XEN_NUMBER_P(dur)))
+      if (!(Xen_is_number(dur)))
 	ap->origin = mus_format("%s %lld" PROC_SEP PROC_FALSE " %s", 
 				XEN_AS_STRING(settings), 
 				apply_beg, S_controls_to_channel);
@@ -4997,7 +4997,7 @@ where each inner list entry can also be " PROC_FALSE "."
 #else
       {
 	char *temp = NULL;
-	if (!(XEN_NUMBER_P(dur)))
+	if (!(Xen_is_number(dur)))
 	  ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
 				  TO_PROC_NAME(S_controls_to_channel), 
 				  PROC_QUOTE,
@@ -5057,10 +5057,10 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 		    XEN_LIST_1(C_TO_XEN_STRING(S_apply_controls ": already applying controls")));
 	}
 
-      if (XEN_LONG_LONG_P(beg)) apply_beg = XEN_TO_C_LONG_LONG(beg); else apply_beg = 0;
-      if (XEN_LONG_LONG_P(dur)) apply_dur = XEN_TO_C_LONG_LONG(dur); else apply_dur = 0;
+      if (Xen_is_long_long_int(beg)) apply_beg = XEN_TO_C_LONG_LONG(beg); else apply_beg = 0;
+      if (Xen_is_long_long_int(dur)) apply_dur = XEN_TO_C_LONG_LONG(dur); else apply_dur = 0;
 
-      if (XEN_INTEGER_P(choice))
+      if (Xen_is_integer(choice))
 	cur_choice = (snd_apply_t)XEN_TO_C_INT(choice);
       if (cur_choice > APPLY_TO_SELECTION)
 	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "choice must be 0=sound, 1=channel, or 2=selection");
@@ -5382,7 +5382,7 @@ static idle_func_t tick_it(any_pointer_t pet)
   if (val)
     {
       es = free_env_state(es);
-      if (XEN_PROCEDURE_P(et->func))
+      if (Xen_is_procedure(et->func))
 	{
 	  int loc;
 	  XEN peak;
@@ -5423,21 +5423,21 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   chan_info *cp = NULL;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename) || XEN_NOT_BOUND_P(filename) || XEN_SOUND_P(filename), 
+  XEN_ASSERT_TYPE(Xen_is_string(filename) || Xen_is_integer(filename) || XEN_NOT_BOUND_P(filename) || XEN_SOUND_P(filename), 
 		  filename, 1, S_channel_amp_envs, "a string or sound index");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 2, S_channel_amp_envs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pts), pts, 3, S_channel_amp_envs, "an integer");
 
-  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(peak_func)) && (procedure_arity_ok(peak_func, 2))) ||
-		  (XEN_FALSE_P(peak_func)) ||
+  XEN_ASSERT_TYPE(((Xen_is_procedure(peak_func)) && (procedure_arity_ok(peak_func, 2))) ||
+		  (Xen_is_false(peak_func)) ||
 		  (XEN_NOT_BOUND_P(peak_func)), 
 		  peak_func, 4, S_channel_amp_envs, "a procedure of 2 args");
-  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(done_func)) && (procedure_arity_ok(done_func, 3))) ||
-		  (XEN_FALSE_P(done_func)) ||
+  XEN_ASSERT_TYPE(((Xen_is_procedure(done_func)) && (procedure_arity_ok(done_func, 3))) ||
+		  (Xen_is_false(done_func)) ||
 		  (XEN_NOT_BOUND_P(done_func)), 
 		  done_func, 5, S_channel_amp_envs, "a procedure of 3 args");
 
-  if (!(XEN_STRING_P(filename)))
+  if (!(Xen_is_string(filename)))
     {
       cp = get_cp(filename, chan, S_channel_amp_envs);
       if (cp)
@@ -5474,10 +5474,10 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   /* filename is a string from here down */
 
   fullname = mus_expand_filename(XEN_TO_C_STRING(filename));
-  if (XEN_INTEGER_P(chan)) chn = XEN_TO_C_INT(chan);
+  if (Xen_is_integer(chan)) chn = XEN_TO_C_INT(chan);
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_channel_amp_envs, 2, chan, "must be >= 0");
-  if (XEN_INTEGER_P(pts)) len = XEN_TO_C_INT(pts);
+  if (Xen_is_integer(pts)) len = XEN_TO_C_INT(pts);
 
   /* look for sp->filename = fullname
      then peak
@@ -5526,14 +5526,14 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
       return(XEN_FALSE);
     }
 
-  if (XEN_PROCEDURE_P(peak_func))
+  if (Xen_is_procedure(peak_func))
     {
       XEN peak_filename;
       peak_filename = XEN_CALL_2(peak_func,
 				 filename,
 				 chan,
 				 "peak env filename procedure");
-      if (XEN_STRING_P(peak_filename))
+      if (Xen_is_string(peak_filename))
 	{
 	  char *peakname;
 	  peakname = mus_expand_filename(XEN_TO_C_STRING(peak_filename));
@@ -5572,7 +5572,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 	  if (es)
 	    {
 #if (!USE_NO_GUI)
-	      if (XEN_PROCEDURE_P(done_func))
+	      if (Xen_is_procedure(done_func))
 		{
 		  int id;
 		  env_tick *et;
@@ -5649,7 +5649,7 @@ update an on-going 'progress report' (an animated hour-glass icon) in snd's chan
   if (!cp)
     return(snd_no_such_channel_error(S_progress_report, snd, chn));
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(pct), pct, 1, S_progress_report, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(pct), pct, 1, S_progress_report, "a number");
 
   progress_report(cp, XEN_TO_C_DOUBLE(pct));
   return(pct);
@@ -5683,7 +5683,7 @@ If there is no sound or listener, it is sent to stderr."
   snd_info *sp;
   const char *message;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, 1, S_status_report, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(msg), msg, 1, S_status_report, "a string");
   ASSERT_SOUND(S_status_report, snd, 2);
 
   message = XEN_TO_C_STRING(msg);

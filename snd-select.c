@@ -879,7 +879,7 @@ static XEN_OBJECT_TYPE xen_selection_tag;
 
 bool xen_selection_p(XEN obj) 
 {
-  return(XEN_OBJECT_TYPE_P(obj, xen_selection_tag));
+  return(Xen_c_object_is_type(obj, xen_selection_tag));
 }
 
 
@@ -1310,7 +1310,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
 
       samp = beg_to_sample(beg, S_insert_selection);
-      if (XEN_INTEGER_P(chn))
+      if (Xen_is_integer(chn))
 	si_out = make_simple_sync(cp, samp); /* ignore sync */
       else si_out = sync_to_chan(cp);
 
@@ -1347,9 +1347,9 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
 
       obeg = beg_to_sample(beg, S_mix_selection);
-      if (XEN_INTEGER_P(sel_chan))
+      if (Xen_is_integer(sel_chan))
 	selection_chan = XEN_TO_C_INT(sel_chan);
-      if (XEN_INTEGER_P(chn))
+      if (Xen_is_integer(chn))
 	si_out = make_simple_sync(cp, obeg); /* ignore sync */
       else si_out = sync_to_chan(cp);
 
@@ -1439,7 +1439,7 @@ static XEN g_selection_p(XEN sel)
   #define H_selection_p "(" S_is_selection " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
 If 'obj' is passed, " S_is_selection " returns " PROC_TRUE " if obj is a selection object and there is a current selection."
 
-  if ((XEN_BOUND_P(sel)) &&
+  if ((Xen_is_bound(sel)) &&
       (!(xen_selection_p(sel))))
     return(XEN_FALSE);
 
@@ -1473,7 +1473,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   mus_long_t beg;
 
   ASSERT_CHANNEL(S_setB S_selection_position, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, 1, S_selection_position, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(pos), pos, 1, S_selection_position, "an integer");
 
   beg = beg_to_sample(pos, S_setB S_selection_position);
   if (XEN_NOT_BOUND_P(snd))
@@ -1532,7 +1532,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
   chan_info *cp;
   mus_long_t len;
 
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samps), samps, 1, S_setB S_selection_frames, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(samps), samps, 1, S_setB S_selection_frames, "an integer");
   len = XEN_TO_C_LONG_LONG(samps);
   if (len <= 0)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_selection_frames, 1, samps, "a positive integer");
@@ -1581,8 +1581,8 @@ static XEN g_selection_member(XEN snd, XEN chn)
 
 static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_selection_member, "a boolean");
-  if ((XEN_TRUE_P(snd)) && (XEN_FALSE_P(on)))
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_selection_member, "a boolean");
+  if ((Xen_is_true(snd)) && (Xen_is_false(on)))
     deactivate_selection();
   else
     {
@@ -1590,7 +1590,7 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
       ASSERT_CHANNEL(S_setB S_selection_member, snd, chn, 2);
       cp = get_cp(snd, chn, S_setB S_selection_member);
       if (!cp) return(XEN_FALSE);
-      if (XEN_TRUE_P(on))
+      if (Xen_is_true(on))
 	{
 	  if (selection_is_active())
 	    cp_set_selection_beg(cp, selection_beg(NULL));
@@ -1738,7 +1738,7 @@ XEN g_selection_srate(void)
 XEN g_selection_maxamp(XEN snd, XEN chn)
 {
   #define H_selection_maxamp "(" S_selection_maxamp " :optional snd chn): selection maxamp in given channel, or overall maxamp if no args passed."
-  if (XEN_BOUND_P(snd))
+  if (Xen_is_bound(snd))
     {
       chan_info *cp;
       ASSERT_CHANNEL(S_selection_maxamp, snd, chn, 1);

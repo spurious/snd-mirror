@@ -48,7 +48,7 @@ int snd_protect(XEN obj)
   else
     {
       if ((gc_last_cleared >= 0) && 
-	  XEN_EQ_P(XEN_VECTOR_REF(gc_protection, gc_last_cleared), DEFAULT_GC_VALUE))
+	  Xen_is_eq(XEN_VECTOR_REF(gc_protection, gc_last_cleared), DEFAULT_GC_VALUE))
 	{
 	  /* we hit this branch about 2/3 of the time */
 	  XEN_VECTOR_SET(gc_protection, gc_last_cleared, obj);
@@ -59,7 +59,7 @@ int snd_protect(XEN obj)
 	}
 
       for (i = gc_last_set; i < gc_protection_size; i++)
-	if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
+	if (Xen_is_eq(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
 	    XEN_VECTOR_SET(gc_protection, i, obj);
 	    gc_last_set = i;
@@ -68,7 +68,7 @@ int snd_protect(XEN obj)
 	  }
 
       for (i = 0; i < gc_last_set; i++)
-	if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
+	if (Xen_is_eq(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
 	    /* here we average 3 checks before a hit, so this isn't as bad as it looks */
 	    XEN_VECTOR_SET(gc_protection, i, obj);
@@ -121,7 +121,7 @@ static XEN g_snd_s7_error_handler(XEN args)
 {
   s7_pointer msg;
   msg = s7_car(args);
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, 1, "_snd_s7_error_handler_", "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(msg), msg, 1, "_snd_s7_error_handler_", "a string");
 
   if (ss->xen_error_handler)
     (*(ss->xen_error_handler))(s7_string(msg), (void *)any_selected_sound()); /* not NULL! */
@@ -203,7 +203,7 @@ static XEN snd_format_if_needed(XEN args)
   format_info = mus_strdup(XEN_TO_C_STRING(XEN_CAR(args))); 
   format_info_len = mus_strlen(format_info); 
 
-  if (XEN_CONS_P(XEN_CADR(args))) 
+  if (Xen_is_cons(XEN_CADR(args))) 
     format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case */ 
   else format_args = XEN_CDR(args); 
 
@@ -233,7 +233,7 @@ static XEN snd_format_if_needed(XEN args)
              { 
                cur_arg = XEN_CAR(format_args); 
                format_args = XEN_CDR(format_args); 
-               if (XEN_VECTOR_P(cur_arg)) 
+               if (Xen_is_vector(cur_arg)) 
               { 
                 char *vstr; 
                 vstr = gl_print(cur_arg); 
@@ -264,7 +264,7 @@ static XEN snd_format_if_needed(XEN args)
 
       if (num_args > 2) 
     { 
-      if (!XEN_FALSE_P(XEN_CADDR(args))) start = 2; else start = 3; 
+      if (!Xen_is_false(XEN_CADDR(args))) start = 2; else start = 3; 
       for (i = start; i < num_args; i++) 
         { 
           char *temp = NULL; 
@@ -385,7 +385,7 @@ bool procedure_arity_ok(XEN proc, int args)
     gc_loc = s7_gc_protect(s7, arity);
     rargs = XEN_TO_C_INT(XEN_CAR(arity));
     oargs = XEN_TO_C_INT(XEN_CADR(arity));
-    restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+    restargs = ((Xen_is_true(XEN_CADDR(arity))) ? 1 : 0);
     s7_gc_unprotect_at(s7, gc_loc);
 
     if (rargs > args) return(false);
@@ -404,7 +404,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   XEN arity;
   int rargs;
 
-  if (!(XEN_PROCEDURE_P(proc)))
+  if (!(Xen_is_procedure(proc)))
     {
       if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
 	{
@@ -437,7 +437,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	loc = snd_protect(arity);
 	rargs = XEN_TO_C_INT(XEN_CAR(arity));
 	oargs = XEN_TO_C_INT(XEN_CADR(arity));
-	restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+	restargs = ((Xen_is_true(XEN_CADDR(arity))) ? 1 : 0);
 	snd_unprotect_at(loc);
 
 	if (rargs > args)
@@ -482,7 +482,7 @@ XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
   int index = NOT_A_SOUND;
   snd_info *sp;
 
-  if (XEN_INTEGER_P(snd))
+  if (Xen_is_integer(snd))
     index = XEN_TO_C_INT(snd);
   else
     {
@@ -615,7 +615,7 @@ static char *gl_print(XEN result)
 #endif
 
   /* specialize vectors which can be enormous in this context */
-  if ((!(XEN_VECTOR_P(result))) || 
+  if ((!(Xen_is_vector(result))) || 
       ((int)(XEN_VECTOR_LENGTH(result)) <= print_length(ss)))
     return(g_print_1(result));
 
@@ -1112,11 +1112,11 @@ static XEN g_snd_print(XEN msg)
   #define H_snd_print "(" S_snd_print " str): display str in the listener window"
   char *str = NULL;
 
-  if (XEN_STRING_P(msg))
+  if (Xen_is_string(msg))
     str = mus_strdup(XEN_TO_C_STRING(msg));
   else
     {
-      if (XEN_CHAR_P(msg))
+      if (Xen_is_char(msg))
 	{
 	  str = (char *)calloc(2, sizeof(char));
 	  str[0] = XEN_TO_C_CHAR(msg);
@@ -1180,7 +1180,7 @@ mus_float_t string_to_mus_float_t(const char *str, mus_float_t lo, const char *f
   XEN res;
   mus_float_t f;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->float");
-  if (XEN_NUMBER_P(res))
+  if (Xen_is_number(res))
     {
       f = XEN_TO_C_DOUBLE(res);
       if (f < lo)
@@ -1211,7 +1211,7 @@ int string_to_int(const char *str, int lo, const char *field_name)
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->int");
-  if (XEN_NUMBER_P(res))
+  if (Xen_is_number(res))
     {
       int val;
       val = XEN_TO_C_INT(res);
@@ -1244,7 +1244,7 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
   XEN res;
 
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->mus_long_t");
-  if (XEN_NUMBER_P(res))
+  if (Xen_is_number(res))
     {
       mus_long_t val;
       val = XEN_TO_C_LONG_LONG(res);
@@ -1299,7 +1299,7 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
 
   while (XEN_NOT_NULL_P(procs))
     {
-      if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
+      if (!(Xen_is_eq(args, XEN_EMPTY_LIST)))
 	XEN_APPLY(XEN_CAR(procs), args, caller);
       else XEN_CALL_0(XEN_CAR(procs), caller);
       procs = XEN_CDR (procs);
@@ -1321,7 +1321,7 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 
   while (XEN_NOT_NULL_P(procs))
     {
-      if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
+      if (!(Xen_is_eq(args, XEN_EMPTY_LIST)))
 	result = XEN_APPLY(XEN_CAR(procs), args, caller);
       else result = XEN_CALL_0(XEN_CAR(procs), caller);
       if (XEN_NOT_FALSE_P(result)) 
@@ -1352,7 +1352,7 @@ static XEN g_dlopen(XEN name, XEN flags)
   #define H_dlopen "(dlopen lib (flags RTLD_LAZY)) loads the dynamic library 'lib' and returns a handle for it (for dlinit and dlclose)"
   void *handle;
   const char *cname;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "dlopen", "a string (filename)");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, "dlopen", "a string (filename)");
   cname = XEN_TO_C_STRING(name);
   if (cname)
     {
@@ -1362,7 +1362,7 @@ static XEN g_dlopen(XEN name, XEN flags)
 	  char *longname;
 
 	  longname = mus_expand_filename(cname);
-	  if (XEN_INTEGER_P(flags))
+	  if (Xen_is_integer(flags))
 	    handle = dlopen(longname, XEN_TO_C_INT(flags));
 	  else handle = dlopen(longname, RTLD_LAZY);
 	  free(longname);
@@ -1385,7 +1385,7 @@ static XEN g_dlopen(XEN name, XEN flags)
 static XEN g_dlclose(XEN handle)
 {
   #define H_dlclose "(dlclose handle) may close the library referred to by 'handle'."
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(handle), handle, 1, "dlclose", "a library handle");
+  XEN_ASSERT_TYPE(Xen_is_wrapped_c_pointer(handle), handle, 1, "dlclose", "a library handle");
   return(C_TO_XEN_INT(dlclose((void *)(XEN_UNWRAP_C_POINTER(handle)))));
 }
 
@@ -1402,8 +1402,8 @@ static XEN g_dlsym(XEN handle, XEN func)
   #define H_dlsym "(dlsym library function-name) returns a pointer to function in library, or #f."
   void *proc;
 
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(handle), handle, 1, "dlsym", "a library handle");
-  XEN_ASSERT_TYPE(XEN_STRING_P(func), func, 2, "dlsym", "a string (function name)");
+  XEN_ASSERT_TYPE(Xen_is_wrapped_c_pointer(handle), handle, 1, "dlsym", "a library handle");
+  XEN_ASSERT_TYPE(Xen_is_string(func), func, 2, "dlsym", "a string (function name)");
 
   proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
   if (proc == NULL) return(XEN_FALSE);
@@ -1417,8 +1417,8 @@ static XEN g_dlinit(XEN handle, XEN func)
   typedef void *(*snd_dl_func)(void);
   void *proc;
 
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(handle), handle, 1, "dlinit", "a library handle");
-  XEN_ASSERT_TYPE(XEN_STRING_P(func), func, 2, "dlinit", "a string (init func name)");
+  XEN_ASSERT_TYPE(Xen_is_wrapped_c_pointer(handle), handle, 1, "dlinit", "a library handle");
+  XEN_ASSERT_TYPE(Xen_is_string(func), func, 2, "dlinit", "a string (init func name)");
 
   proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
   if (proc == NULL) return(C_TO_XEN_STRING(dlerror()));
@@ -1459,8 +1459,8 @@ static XEN g_snd_global_state(void)
 static XEN g_fmod(XEN a, XEN b)
 {
   double val, x, y;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, 1, "fmod", " a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, 2, "fmod", " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(a), a, 1, "fmod", " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(b), b, 2, "fmod", " a number");
   x = XEN_TO_C_DOUBLE(a);
   y = XEN_TO_C_DOUBLE(b);
   val = fmod(x, y);
@@ -1753,7 +1753,7 @@ static XEN g_j0(XEN x)
 {
   #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function value J0(x)"
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_j0, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_j0, " a number");
 #endif
 
 #if HAVE_SCHEME && WITH_GMP
@@ -1770,7 +1770,7 @@ static XEN g_j1(XEN x)
 {
   #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function value J1(x)"
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_j1, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_j1, " a number");
 #endif
 
 #if HAVE_SCHEME && WITH_GMP
@@ -1786,9 +1786,9 @@ static XEN g_j1(XEN x)
 static XEN g_jn(XEN order, XEN x)
 {
   #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function value Jn(x)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, 1, S_bes_jn, " an int");
+  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_jn, " an int");
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_bes_jn, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_jn, " a number");
 #endif
 
 #if HAVE_SCHEME && WITH_GMP
@@ -1804,7 +1804,7 @@ static XEN g_jn(XEN order, XEN x)
 static XEN g_y0(XEN x)
 {
   #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function value Y0(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_y0, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_y0, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -1818,7 +1818,7 @@ static XEN g_y0(XEN x)
 static XEN g_y1(XEN x)
 {
   #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function value Y1(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_y1, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_y1, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -1832,8 +1832,8 @@ static XEN g_y1(XEN x)
 static XEN g_yn(XEN order, XEN x)
 {
   #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function value Yn(x)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, 1, S_bes_yn, " an int");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_bes_yn, " a number");
+  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_yn, " an int");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_yn, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -1847,7 +1847,7 @@ static XEN g_yn(XEN order, XEN x)
 static XEN g_erf(XEN x)
 {
   #define H_erf "(erf x): returns the error function erf(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, "erf", " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "erf", " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -1861,7 +1861,7 @@ static XEN g_erf(XEN x)
 static XEN g_erfc(XEN x)
 {
   #define H_erfc "(erfc x): returns the complementary error function erfc(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, "erfc", " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "erfc", " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -1875,7 +1875,7 @@ static XEN g_erfc(XEN x)
 static XEN g_lgamma(XEN x)
 {
   #define H_lgamma "(lgamma x): returns the log of the gamma function at x"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, "lgamma", " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "lgamma", " a number");
   return(C_TO_XEN_DOUBLE(lgamma(XEN_TO_C_DOUBLE(x))));
 }
 #endif
@@ -1886,7 +1886,7 @@ static XEN g_lgamma(XEN x)
 static XEN g_i0(XEN x)
 {
   #define H_i0 "(" S_bes_i0 " x): returns the modified cylindrical bessel function value I0(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_i0, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_i0, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -1906,7 +1906,7 @@ static XEN g_i0(XEN x)
 static XEN g_j0(XEN x)
 {
   #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function value J0(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_j0, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_j0, " a number");
 
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -1921,7 +1921,7 @@ static XEN g_j0(XEN x)
 static XEN g_j1(XEN x)
 {
   #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function value J1(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_j1, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_j1, " a number");
 
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -1936,8 +1936,8 @@ static XEN g_j1(XEN x)
 static XEN g_jn(XEN order, XEN x)
 {
   #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function value Jn(x)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, 1, S_bes_jn, " an int");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_bes_jn, " a number");
+  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_jn, " an int");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_jn, " a number");
 
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -1952,7 +1952,7 @@ static XEN g_jn(XEN order, XEN x)
 static XEN g_y0(XEN x)
 {
   #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function value Y0(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_y0, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_y0, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -1966,7 +1966,7 @@ static XEN g_y0(XEN x)
 static XEN g_y1(XEN x)
 {
   #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function value Y1(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_y1, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_y1, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -1980,8 +1980,8 @@ static XEN g_y1(XEN x)
 static XEN g_yn(XEN order, XEN x)
 {
   #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function value Yn(x)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, 1, S_bes_yn, " an int");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_bes_yn, " a number");
+  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_yn, " an int");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_yn, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -2000,7 +2000,7 @@ static XEN g_yn(XEN order, XEN x)
 static XEN g_i1(XEN x)
 {
   #define H_i1 "(" S_bes_i1 " x): returns the regular cylindrical bessel function value I1(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_i1, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_i1, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_I1(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2008,8 +2008,8 @@ static XEN g_i1(XEN x)
 static XEN g_in(XEN order, XEN x)
 {
   #define H_in "(" S_bes_in " n x): returns the regular cylindrical bessel function value In(x)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, 1, S_bes_in, " an int");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_bes_in, " a number");
+  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_in, " an int");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_in, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_In(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2017,7 +2017,7 @@ static XEN g_in(XEN order, XEN x)
 static XEN g_k0(XEN x)
 {
   #define H_k0 "(" S_bes_k0 " x): returns the irregular cylindrical bessel function value K0(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_k0, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_k0, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_K0(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2025,7 +2025,7 @@ static XEN g_k0(XEN x)
 static XEN g_k1(XEN x)
 {
   #define H_k1 "(" S_bes_k1 " x): returns the irregular cylindrical bessel function value K1(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_bes_k1, " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_k1, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_K1(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2033,8 +2033,8 @@ static XEN g_k1(XEN x)
 static XEN g_kn(XEN order, XEN x)
 {
   #define H_kn "(" S_bes_kn " n x): returns the irregular cylindrical bessel function value Kn(x)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, 1, S_bes_kn, " an int");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_bes_kn, " a number");
+  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_kn, " an int");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_kn, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Kn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2043,7 +2043,7 @@ static XEN g_kn(XEN order, XEN x)
 static XEN g_erf(XEN x)
 {
   #define H_erf "(erf x): returns the error function erf(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, "erf", " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "erf", " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -2057,7 +2057,7 @@ static XEN g_erf(XEN x)
 static XEN g_erfc(XEN x)
 {
   #define H_erfc "(erfc x): returns the complementary error function value erfc(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, "erfc", " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "erfc", " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
@@ -2072,7 +2072,7 @@ static XEN g_erfc(XEN x)
 static XEN g_lgamma(XEN x)
 {
   #define H_lgamma "(lgamma x): returns the log of the gamma function at x"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, "lgamma", " a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "lgamma", " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_lngamma(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2083,7 +2083,7 @@ static XEN g_gsl_ellipk(XEN k)
 {
   double f;
   #define H_gsl_ellipk "(gsl-ellipk k): returns the complete elliptic integral k"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(k), k, 1, "gsl-ellipk", "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(k), k, 1, "gsl-ellipk", "a number");
   f = XEN_TO_C_DOUBLE(k);
   XEN_ASSERT_TYPE(f >= 0.0, k, 1, "gsl-ellipk", "a non-negative number");
   return(C_TO_XEN_DOUBLE(gsl_sf_ellint_Kcomp(sqrt(XEN_TO_C_DOUBLE(k)), GSL_PREC_APPROX)));
@@ -2095,8 +2095,8 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 {
   #define H_gsl_ellipj "(gsl-ellipj u m): returns the Jacobian elliptic functions sn, cn, and dn of u and m"
   double sn = 0.0, cn = 0.0, dn = 0.0;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(u), u, 1, "gsl-ellipj", "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(m), m, 2, "gsl-ellipj", "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(u), u, 1, "gsl-ellipj", "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(m), m, 2, "gsl-ellipj", "a number");
   gsl_sf_elljac_e(XEN_TO_C_DOUBLE(u),
 		  XEN_TO_C_DOUBLE(m),
 		  &sn, &cn, &dn);
@@ -2203,7 +2203,7 @@ static XEN g_gsl_roots(XEN poly)
   gsl_poly_complex_workspace *w;
   XEN result;
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(poly), poly, 1, "gsl-roots", "a vector");
+  XEN_ASSERT_TYPE(Xen_is_vector(poly), poly, 1, "gsl-roots", "a vector");
 
   n = XEN_VECTOR_LENGTH(poly);
   w = gsl_poly_complex_workspace_alloc(n);
@@ -2313,7 +2313,7 @@ void save_added_source_file_extensions(FILE *fd)
 static XEN g_add_source_file_extension(XEN ext)
 {
   #define H_add_source_file_extension "(" S_add_source_file_extension " ext):  add the file extension 'ext' to the list of source file extensions"
-  XEN_ASSERT_TYPE(XEN_STRING_P(ext), ext, 1, S_add_source_file_extension, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(ext), ext, 1, S_add_source_file_extension, "a string");
   add_source_file_extension(XEN_TO_C_STRING(ext));
   return(ext);
 }

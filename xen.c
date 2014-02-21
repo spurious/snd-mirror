@@ -53,8 +53,8 @@ void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
 
 XEN rb_documentation(XEN name)
 {
-  XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, 1, S_get_help, "a char* or symbol");
-  if (XEN_SYMBOL_P(name))
+  XEN_ASSERT_TYPE((Xen_is_string(name) || Xen_is_symbol(name)), name, 1, S_get_help, "a char* or symbol");
+  if (Xen_is_symbol(name))
     return(rb_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL));
   else
     return(rb_property(name, XEN_DOCUMENTATION_SYMBOL));
@@ -63,9 +63,9 @@ XEN rb_documentation(XEN name)
 
 XEN rb_set_documentation(XEN name, XEN help)
 {
-  XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, 1, S_add_help, "a char* or symbol");
-  XEN_ASSERT_TYPE(XEN_STRING_P(help), help, 2, S_add_help, "a char*");
-  if (XEN_SYMBOL_P(name))
+  XEN_ASSERT_TYPE((Xen_is_string(name) || Xen_is_symbol(name)), name, 1, S_add_help, "a char* or symbol");
+  XEN_ASSERT_TYPE(Xen_is_string(help), help, 2, S_add_help, "a char*");
+  if (Xen_is_symbol(name))
     rb_set_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL, help);
   else
     rb_set_property(name, XEN_DOCUMENTATION_SYMBOL, help);
@@ -113,7 +113,7 @@ void xen_gc_mark(XEN val)
 
 XEN xen_rb_cdr(XEN val)
 {
-  if (XEN_CONS_P(val))
+  if (Xen_is_cons(val))
     {
       XEN new_list;
       new_list = XEN_COPY_ARG(val);
@@ -126,9 +126,9 @@ XEN xen_rb_cdr(XEN val)
 
 XEN xen_rb_cons(XEN arg1, XEN arg2)
 {
-  if (XEN_NULL_P(arg2))
+  if (Xen_is_null(arg2))
     return(rb_ary_new3(1, arg1));
-  if (!(XEN_CONS_P(arg2)))
+  if (!(Xen_is_cons(arg2)))
     return(rb_ary_new3(2, arg1, arg2));
   return(rb_ary_unshift(arg2, arg1)); /* arg2 assumed to be array here in Ruby */
 }
@@ -165,11 +165,11 @@ XEN xen_set_assoc(XEN key, XEN val, XEN alist)
       [[key, val]]
     end
   */
-  if (XEN_CONS_P(alist))
+  if (Xen_is_cons(alist))
     {
       XEN pair;
       pair = rb_ary_assoc(alist, key);
-      if (XEN_CONS_P(pair))
+      if (Xen_is_cons(pair))
 	rb_ary_store(pair, 1, val);
       else rb_ary_push(alist, rb_assoc_new(key, val));
       return(alist);
@@ -180,7 +180,7 @@ XEN xen_set_assoc(XEN key, XEN val, XEN alist)
 
 XEN xen_assoc(XEN key, XEN alist) 
 { 
-  if (XEN_CONS_P(alist)) 
+  if (Xen_is_cons(alist)) 
     { 
       XEN val; 
       val = rb_ary_assoc(alist, key); 
@@ -389,7 +389,7 @@ XEN xen_rb_define_class(const char *name)
 
 int xen_rb_list_length(XEN obj) 
 { 
-  if (XEN_VECTOR_P(obj)) 
+  if (Xen_is_vector(obj)) 
      return((int)RB_ARRAY_LEN(obj)); 
   if (obj == XEN_EMPTY_LIST) 
     return(0); 
@@ -401,7 +401,7 @@ int xen_rb_list_length(XEN obj)
 
 XEN xen_rb_list_ref(XEN obj, int index)
 {
-  if (XEN_VECTOR_P(obj))
+  if (Xen_is_vector(obj))
     return(rb_ary_entry(obj, (long)index));
   return(XEN_EMPTY_LIST);
 }
@@ -411,7 +411,7 @@ XEN xen_rb_list_ref(XEN obj, int index)
 
 XEN xen_rb_list_set(XEN obj, int index, XEN value)
 {
-  if (XEN_VECTOR_P(obj))
+  if (Xen_is_vector(obj))
     rb_ary_store(obj, (long)index, value);
   return(value);
 }
@@ -538,7 +538,7 @@ XEN xen_rb_add_to_load_path(char *path)
  XEN rpath, load_path; 
  rpath = rb_str_new2(path); 
  load_path = rb_gv_get("$:");
- if (XEN_FALSE_P(rb_ary_includes(load_path, rpath))) 
+ if (Xen_is_false(rb_ary_includes(load_path, rpath))) 
    rb_ary_unshift(load_path, rpath); 
  return(XEN_FALSE); 
 } 
@@ -604,7 +604,7 @@ static XEN xen_rb_apply_1(XEN args)
 
 static XEN xen_rb_apply_1(XEN args)
 {
-  if (XEN_PROCEDURE_P(XEN_CAR(args))) 
+  if (Xen_is_procedure(XEN_CAR(args))) 
     return(rb_apply(XEN_CAR(args), rb_intern("call"), XEN_CADR(args))); 
   return(rb_apply(rb_mKernel, XEN_CAR(args), XEN_CADR(args))); 
 }
@@ -646,7 +646,7 @@ XEN xen_rb_funcall_0(XEN func)
 
 XEN xen_rb_copy_list(XEN val) 
 { 
-  if ((val == XEN_EMPTY_LIST) || (!XEN_CONS_P(val)))
+  if ((val == XEN_EMPTY_LIST) || (!Xen_is_cons(val)))
     return XEN_EMPTY_LIST; 
   return rb_ary_dup(val); 
 } 
@@ -694,17 +694,17 @@ static XEN xen_rb_hook_initialize(int argc, XEN *argv, XEN hook)
 {
   XEN name, arity, help;
   rb_scan_args(argc, argv, "12", &name, &arity, &help);
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, 1, __func__, "a char* or symbol");
-  if (XEN_SYMBOL_P(name))
+  XEN_ASSERT_TYPE(Xen_is_string(name) || Xen_is_symbol(name), name, 1, __func__, "a char* or symbol");
+  if (Xen_is_symbol(name))
     name = XEN_SYMBOL_TO_STRING(name);
   if (arity != Qnil)
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, 2, __func__, "an integer");
+      XEN_ASSERT_TYPE(Xen_is_integer(arity), arity, 2, __func__, "an integer");
     }
   else arity = INT2NUM(0);
   if (help != Qnil)
     {
-      XEN_ASSERT_TYPE(XEN_STRING_P(help), help, 3, __func__, "a char*");
+      XEN_ASSERT_TYPE(Xen_is_string(help), help, 3, __func__, "a char*");
       XEN_SET_OBJECT_HELP(name, help);
     }
   else help = rb_str_new2("");
@@ -774,8 +774,8 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
   int args;
   args = XEN_TO_C_INT(rb_iv_get(hook, "@arity"));
   rb_scan_args(argc, argv, "1&", &name, &func);
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, __func__, "a char*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && xen_rb_arity_ok(XEN_TO_C_INT(XEN_ARITY(func)), args),
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, __func__, "a char*");
+  XEN_ASSERT_TYPE(Xen_is_procedure(func) && xen_rb_arity_ok(XEN_TO_C_INT(XEN_ARITY(func)), args),
 		  func, 2, __func__, "a procedure");
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, name, func));
   return(hook);
@@ -786,7 +786,7 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
 
 static XEN xen_proc_call(XEN args, XEN id) 
 { 
-  return(rb_apply(rb_mKernel, (ID)id, XEN_CONS_P(args) ? args : XEN_LIST_1(args))); 
+  return(rb_apply(rb_mKernel, (ID)id, Xen_is_cons(args) ? args : XEN_LIST_1(args))); 
 } 
 
 #if 0
@@ -825,7 +825,7 @@ XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc
   char *temp; 
   temp = xen_scheme_procedure_to_ruby(name); 
   avar = rb_iv_get(hook, "@arity");
-  rb_define_module_function(rb_mKernel, temp, XEN_PROCEDURE_CAST func, (XEN_INTEGER_P(avar)) ? XEN_TO_C_INT(avar) : 0); 
+  rb_define_module_function(rb_mKernel, temp, XEN_PROCEDURE_CAST func, (Xen_is_integer(avar)) ? XEN_TO_C_INT(avar) : 0); 
   if (doc) C_SET_OBJECT_HELP(temp, doc); 
   var = rb_intern(temp); 
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_TO_XEN_STRING(temp), var)); 
@@ -1100,12 +1100,12 @@ XEN rb_property(XEN obj, XEN key)
 if key exists, return obj's value (maybe nil) associated with key otherwise false"
   XEN props = XEN_FALSE;
   
-  if (XEN_FALSE_P(rb_object_properties))
+  if (Xen_is_false(rb_object_properties))
     return(XEN_FALSE);
 
   props = rb_hash_aref(rb_object_properties, obj);
 
-  if (XEN_FALSE_P(props) || props == Qnil)
+  if (Xen_is_false(props) || props == Qnil)
     return(XEN_FALSE);
   else
     return(rb_hash_aref(props, key));
@@ -1118,7 +1118,7 @@ XEN rb_set_property(XEN obj, XEN key, XEN value)
 set key-value pair for obj and return value"
   XEN props = XEN_FALSE;
 
-  if (XEN_FALSE_P(rb_object_properties))
+  if (Xen_is_false(rb_object_properties))
     {
       rb_object_properties = rb_hash_new();
       XEN_PROTECT_FROM_GC(rb_object_properties);
@@ -1126,7 +1126,7 @@ set key-value pair for obj and return value"
   else
     props = rb_hash_aref(rb_object_properties, obj);
   
-  if (XEN_FALSE_P(props) || props == Qnil)
+  if (Xen_is_false(props) || props == Qnil)
     props = rb_hash_new();
   
   rb_hash_aset(props, key, value);
@@ -1569,7 +1569,7 @@ static bool file_probe(const char *arg)
 static XEN g_file_exists_p(XEN name)
 {
   #define H_file_exists_p "(file-exists? filename): #t if the file exists"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "file-exists?", "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, "file-exists?", "a string");
   return(C_TO_XEN_BOOLEAN(file_probe(XEN_TO_C_STRING(name))));
 }
 
@@ -1591,14 +1591,14 @@ static bool directory_p(const char *filename)
 static XEN g_directory_p(XEN name)
 {
   #define H_directory_p "(directory? filename): #t if filename names a directory"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "directory?", "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, "directory?", "a string");
   return(C_TO_XEN_BOOLEAN(directory_p(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
 }
 
 static XEN g_delete_file(XEN name)
 {
   #define H_delete_file "(delete-file filename): deletes the file"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "delete-file", "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, "delete-file", "a string");
   return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
 }
 
@@ -1606,7 +1606,7 @@ static XEN g_delete_file(XEN name)
 static XEN g_system(XEN command)
 {
   #define H_system "(system command): execute command"
-  XEN_ASSERT_TYPE(XEN_STRING_P(command), command, 1, "system", "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(command), command, 1, "system", "a string");
   return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
 }
 
@@ -1614,7 +1614,7 @@ static XEN g_system(XEN command)
 static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
 {
   #define H_getenv "(getenv var): return value of environment variable var"
-  XEN_ASSERT_TYPE(XEN_STRING_P(var), var, 1, "getenv", "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(var), var, 1, "getenv", "a string");
   return(C_TO_XEN_STRING(getenv(XEN_TO_C_STRING(var))));
 }
 #endif
@@ -1649,8 +1649,8 @@ static XEN g_strftime(XEN format, XEN tm)
   XEN result;
   const struct tm *p;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(format), format, 1, "strftime", "a string");
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(tm), tm, 2, "strftime", "a localtime struct");
+  XEN_ASSERT_TYPE(Xen_is_string(format), format, 1, "strftime", "a string");
+  XEN_ASSERT_TYPE(Xen_is_wrapped_c_pointer(tm), tm, 2, "strftime", "a localtime struct");
 
   p = (const struct tm *)XEN_UNWRAP_C_POINTER(tm);
   XEN_ASSERT_TYPE(p != NULL, tm, 2, "strftime", "a localtime struct");

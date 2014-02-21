@@ -173,6 +173,7 @@ bool s7_is_provided(s7_scheme *sc, const char *feature);             /* (provide
 s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info);
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
   /* set arg_n to 0 to indicate that caller takes only one argument (so the argument number need not be reported */
+s7_pointer s7_wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, int arg_n, s7_pointer arg, s7_pointer descr);
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args);
 s7_pointer s7_stacktrace(s7_scheme *sc);

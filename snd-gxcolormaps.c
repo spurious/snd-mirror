@@ -52,7 +52,7 @@ static cmap *delete_cmap(int index)
       if (c->g) free(c->g);
       if (c->b) free(c->b);
       if (c->name) free(c->name);
-      if (XEN_PROCEDURE_P(c->lambda))
+      if (Xen_is_procedure(c->lambda))
 	snd_unprotect_at(c->gc_loc);
       free(c);
       cmaps[index] = NULL;
@@ -245,7 +245,7 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
 			   str));
     }
 
-  if (!(XEN_LIST_P(xrgb)))
+  if (!(Xen_is_list(xrgb)))
     XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap ": colormap function, ~A, returned ~A, but should return a list of 3 vcts"),
 			 lambda,
@@ -900,7 +900,7 @@ static XEN_OBJECT_TYPE xen_colormap_tag;
 
 static bool xen_colormap_p(XEN obj) 
 {
-  return(XEN_OBJECT_TYPE_P(obj, xen_colormap_tag));
+  return(Xen_c_object_is_type(obj, xen_colormap_tag));
 }
 
 #define XEN_COLORMAP_P(Obj) xen_colormap_p(Obj)
@@ -1034,7 +1034,7 @@ static void init_xen_colormap(void)
 static XEN g_integer_to_colormap(XEN n)
 {
   #define H_integer_to_colormap "(" S_integer_to_colormap " n) returns a colormap object corresponding to the given integer"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_integer_to_colormap, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(n), n, 1, S_integer_to_colormap, "an integer");
   return(new_xen_colormap(XEN_TO_C_INT(n)));
 }
 
@@ -1057,7 +1057,7 @@ static XEN g_colormap_ref(XEN map, XEN pos)
   #define H_colormap_ref "(" S_colormap_ref " colormap pos): (list r g b). Pos is between 0.0 and 1.0."
 
   XEN_ASSERT_TYPE(XEN_COLORMAP_P(map), map, 1, S_colormap_ref, "a colormap object");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(pos), pos, 2, S_colormap_ref, "a number between 0.0 and 1.0");
+  XEN_ASSERT_TYPE(Xen_is_number(pos), pos, 2, S_colormap_ref, "a number between 0.0 and 1.0");
 
   index = XEN_COLORMAP_TO_C_INT(map);
   if (!(is_colormap(index)))
@@ -1108,7 +1108,7 @@ static XEN g_set_colormap_size(XEN val)
   int size;
   #define H_colormap_size "(" S_colormap_size "): current colormap size; default is 512."
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_colormap_size, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_colormap_size, "an integer"); 
 
   size = XEN_TO_C_INT(val);
   if (size < 0)
@@ -1177,8 +1177,8 @@ static XEN g_add_colormap(XEN name, XEN func)
   #define H_add_colormap "(" S_add_colormap " name func) adds the colormap created by func to the colormap table, \
 returning the new colormap. 'name' is the colormap's name in the View:Color/Orientation dialog."
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_add_colormap, "a string"); 
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && (!mus_xen_p(func)), func, 2, S_add_colormap, "a function of 2 args");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_add_colormap, "a string"); 
+  XEN_ASSERT_TYPE(Xen_is_procedure(func) && (!mus_xen_p(func)), func, 2, S_add_colormap, "a function of 2 args");
 
   if (!(procedure_arity_ok(func, 1)))
     return(snd_bad_arity_error(S_add_colormap, 

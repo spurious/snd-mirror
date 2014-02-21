@@ -96,7 +96,7 @@ int in_keymap(int key, int state, bool cx_extended)
     if ((keymap[i].key == key) && 
 	(keymap[i].state == state) &&
 	(keymap[i].cx_extended == cx_extended) && 
-	(XEN_BOUND_P(keymap[i].func)))
+	(Xen_is_bound(keymap[i].func)))
       return(i);
   return(-1);
 }
@@ -190,7 +190,7 @@ void map_over_keys(bool (*func)(int key, int state, bool cx, XEN xf))
 {
   int i;
   for (i = 0; i < keymap_top; i++)
-    if ((XEN_BOUND_P(keymap[i].func)) &&
+    if ((Xen_is_bound(keymap[i].func)) &&
 	((*func)(keymap[i].key, 
 		 keymap[i].state, 
 		 keymap[i].cx_extended, 
@@ -222,7 +222,7 @@ key_info *find_prefs_key(const char *prefs_name)
   int i;
   key_info *ki;
   for (i = 0; i < keymap_top; i++)
-    if ((XEN_BOUND_P(keymap[i].func)) &&
+    if ((Xen_is_bound(keymap[i].func)) &&
 	(mus_strcmp(keymap[i].prefs_info, prefs_name)))
       return(make_key_info(keymap[i]));
 
@@ -301,7 +301,7 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
     }
   else
     {
-      if ((XEN_PROCEDURE_P(keymap[i].func)) &&
+      if ((Xen_is_procedure(keymap[i].func)) &&
 	  (keymap[i].gc_loc != NOT_A_GC_LOC))
 	{
 	  snd_unprotect_at(keymap[i].gc_loc);
@@ -327,7 +327,7 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
   keymap[i].prefs_info = mus_strdup(prefs_info);
   keymap[i].args = args;
   keymap[i].func = func;
-  if (XEN_PROCEDURE_P(func)) 
+  if (Xen_is_procedure(func)) 
     keymap[i].gc_loc = snd_protect(func);
 }
 
@@ -336,7 +336,7 @@ static void call_keymap(int hashedsym, int count)
 {
   kbd_cursor_t res = KEYBOARD_NO_ACTION;
 
-  if (XEN_BOUND_P(keymap[hashedsym].func))
+  if (Xen_is_bound(keymap[hashedsym].func))
     {
       /* not _NO_CATCH here because the code is not protected at any higher level */
       if (keymap[hashedsym].args == 0)
@@ -1512,11 +1512,11 @@ char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
 static int key_name_to_key(XEN key, const char *caller)
 {
   /* Ruby thinks chars are strings */
-  if (XEN_INTEGER_P(key))
+  if (Xen_is_integer(key))
     return(XEN_TO_C_INT(key)); /* includes 0xffc0 style keys, and in Ruby things like ?a */
 
 #if (!HAVE_RUBY)
-  if (XEN_CHAR_P(key))
+  if (Xen_is_char(key))
     return((int)(XEN_TO_C_CHAR(key)));
 #endif
 
@@ -1550,14 +1550,14 @@ modifiers.  As in " S_bind_key ", state is the logical 'or' of ctrl=4, meta=8, a
 prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an integer."
   int i, k, s;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_CHAR_P(key) || XEN_STRING_P(key), key, 1, S_key_binding, "an integer, character, or string");
+  XEN_ASSERT_TYPE(Xen_is_integer(key) || Xen_is_char(key) || Xen_is_string(key), key, 1, S_key_binding, "an integer, character, or string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, 2, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, 3, S_key_binding, "a boolean");
 
   k = key_name_to_key(key, S_key_binding);
-  s = ((XEN_INTEGER_P(state)) ? XEN_TO_C_INT(state) : 0) & 0xfffe; /* no shift bit */
+  s = ((Xen_is_integer(state)) ? XEN_TO_C_INT(state) : 0) & 0xfffe; /* no shift bit */
   check_for_key_error(k, s, S_key_binding);
-  i = in_keymap(k, s, XEN_TRUE_P(cx_extended));
+  i = in_keymap(k, s, Xen_is_true(cx_extended));
   if (i >= 0) 
     return(keymap[i].func);
 
@@ -1570,9 +1570,9 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
   int args, k = 0, s;
   bool e;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_STRING_P(key) || XEN_CHAR_P(key), key, 1, caller, "an integer, char, or string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, 2, caller, "an integer");
-  XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, 3, caller, PROC_FALSE " or a procedure");
+  XEN_ASSERT_TYPE(Xen_is_integer(key) || Xen_is_string(key) || Xen_is_char(key), key, 1, caller, "an integer, char, or string");
+  XEN_ASSERT_TYPE(Xen_is_integer(state), state, 2, caller, "an integer");
+  XEN_ASSERT_TYPE((Xen_is_false(code) || Xen_is_procedure(code)), code, 3, caller, PROC_FALSE " or a procedure");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, 4, caller, "a boolean");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 5, caller, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(prefs_info), prefs_info, 6, caller, "a string");
@@ -1580,9 +1580,9 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
   k = key_name_to_key(key, caller);
   s = XEN_TO_C_INT(state) & 0xfffe; /* get rid of shift bit */
   check_for_key_error(k, s, caller);
-  e = (XEN_TRUE_P(cx_extended));
+  e = (Xen_is_true(cx_extended));
 
-  if (XEN_FALSE_P(code))
+  if (Xen_is_false(code))
     set_keymap_entry(k, s, 0, XEN_UNDEFINED, e, NULL, NULL);
   else 
     {
@@ -1599,8 +1599,8 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 	  free(errstr);
 	  return(snd_bad_arity_error(caller, errmsg, code));
 	}
-      if (XEN_STRING_P(origin)) comment = XEN_TO_C_STRING(origin); else comment = make_key_name(buf, 256, k, s, e);
-      if (XEN_STRING_P(prefs_info)) prefs = XEN_TO_C_STRING(prefs_info);
+      if (Xen_is_string(origin)) comment = XEN_TO_C_STRING(origin); else comment = make_key_name(buf, 256, k, s, e);
+      if (Xen_is_string(prefs_info)) prefs = XEN_TO_C_STRING(prefs_info);
       set_keymap_entry(k, s, args, code, e, comment, prefs);
     }
 
@@ -1637,8 +1637,8 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   chan_info *cp;
   int k, s;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd) || XEN_CHAR_P(kbd) || XEN_STRING_P(kbd), kbd, 1, S_key, "an integer, character, or string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, 2, S_key, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(kbd) || Xen_is_char(kbd) || Xen_is_string(kbd), kbd, 1, S_key, "an integer, character, or string");
+  XEN_ASSERT_TYPE(Xen_is_integer(buckybits), buckybits, 2, S_key, "an integer");
   ASSERT_CHANNEL(S_key, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_key);

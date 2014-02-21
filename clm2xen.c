@@ -83,18 +83,18 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #if (!HAVE_SCHEME)
 
 #define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) \
-  if (XEN_BOUND_P(Xen_Arg)) {if (XEN_NUMBER_P(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "a number");}
+  if (Xen_is_bound(Xen_Arg)) {if (Xen_is_number(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "a number");}
 
 #define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
-   if (XEN_NUMBER_P(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "a number")
+   if (Xen_is_number(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "a number")
 
 #define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
-  if (XEN_INTEGER_P(Xen_Arg)) C_Val = XEN_TO_C_INT(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "an integer")
+  if (Xen_is_integer(Xen_Arg)) C_Val = XEN_TO_C_INT(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "an integer")
 
 #define XEN_NULL 0
 
 #if (HAVE_FORTH) || (HAVE_RUBY)
-  #define XEN_OBJECT_REF_CHECKED(Obj, Type) (XEN_OBJECT_TYPE_P(Obj, Type) ? XEN_OBJECT_REF(Obj) : NULL)
+  #define XEN_OBJECT_REF_CHECKED(Obj, Type) (Xen_c_object_is_type(Obj, Type) ? XEN_OBJECT_REF(Obj) : NULL)
 #else
   #define XEN_OBJECT_REF_CHECKED(Obj, Type) NULL
 #endif
@@ -107,7 +107,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define XEN_OBJECT_REF_CHECKED(Obj, Type) imported_s7_object_value_checked(Obj, Type)
 #define XEN_NULL NULL
 
-#define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) if (XEN_BOUND_P(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg)
+#define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) if (Xen_is_bound(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg)
 #define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) C_Val = XEN_TO_C_DOUBLE(Xen_Arg)
 #define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) C_Val = XEN_TO_C_INT(Xen_Arg)
 #endif
@@ -166,9 +166,9 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
   nargs = nkeys * 2;
 
   while ((arg_ctr < nargs) && 
-	 (XEN_BOUND_P(args[arg_ctr])))
+	 (Xen_is_bound(args[arg_ctr])))
     {
-      if (!(XEN_KEYWORD_P(args[arg_ctr])))
+      if (!(Xen_is_keyword(args[arg_ctr])))
 	{
 	  if (keying) 
 	    clm_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
@@ -189,19 +189,19 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
 	  int i;
 
 	  if ((arg_ctr == (nargs - 1)) ||
-	      (!(XEN_BOUND_P(args[arg_ctr + 1]))))
+	      (!(Xen_is_bound(args[arg_ctr + 1]))))
 	    clm_error(caller, "keyword without value?", args[arg_ctr]);
 
 	  keying = true;
 	  key = args[arg_ctr];
 
-	  if (XEN_KEYWORD_P(args[arg_ctr + 1])) 
+	  if (Xen_is_keyword(args[arg_ctr + 1])) 
 	    clm_error(caller, "two keywords in a row?", key);
 
 	  key_found = false;
 	  for (i = key_start; i < nkeys; i++)
 	    {
-	      if (XEN_KEYWORD_EQ_P(keys[i], key))
+	      if (Xen_keyword_is_eq(keys[i], key))
 		{
 		  keys[i] = args[arg_ctr + 1];
 		  orig[i] = arg_ctr + 2;
@@ -226,9 +226,9 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
 
 mus_float_t mus_optkey_to_float(XEN key, const char *caller, int n, mus_float_t def)
 {
-  if (!(XEN_KEYWORD_P(key)))
+  if (!(Xen_is_keyword(key)))
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a number");
+      XEN_ASSERT_TYPE(Xen_is_number(key), key, n, caller, "a number");
       return(XEN_TO_C_DOUBLE(key));
     }
   return(def);
@@ -237,9 +237,9 @@ mus_float_t mus_optkey_to_float(XEN key, const char *caller, int n, mus_float_t 
 
 int mus_optkey_to_int(XEN key, const char *caller, int n, int def)
 {
-  if (!(XEN_KEYWORD_P(key)))
+  if (!(Xen_is_keyword(key)))
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, n, caller, "an integer");
+      XEN_ASSERT_TYPE(Xen_is_integer(key), key, n, caller, "an integer");
       return(XEN_TO_C_INT(key));
     }
   return(def);
@@ -248,9 +248,9 @@ int mus_optkey_to_int(XEN key, const char *caller, int n, int def)
 
 bool mus_optkey_to_bool(XEN key, const char *caller, int n, bool def)
 {
-  if (!(XEN_KEYWORD_P(key)))
+  if (!(Xen_is_keyword(key)))
     {
-      XEN_ASSERT_TYPE(XEN_BOOLEAN_P(key), key, n, caller, "#f or #t");
+      XEN_ASSERT_TYPE(Xen_is_boolean(key), key, n, caller, "#f or #t");
       return(XEN_TO_C_BOOLEAN(key));
     }
   return(def);
@@ -259,9 +259,9 @@ bool mus_optkey_to_bool(XEN key, const char *caller, int n, bool def)
 
 mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int n, mus_long_t def)
 {
-  if (!(XEN_KEYWORD_P(key)))
+  if (!(Xen_is_keyword(key)))
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, n, caller, "a sample number or size");
+      XEN_ASSERT_TYPE(Xen_is_integer(key), key, n, caller, "a sample number or size");
       return(XEN_TO_C_LONG_LONG(key));
     }
   return(def);
@@ -270,9 +270,9 @@ mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int n, mus_long
 
 const char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def)
 {
-  if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
+  if ((!(Xen_is_keyword(key))) && (!(Xen_is_false(key))))
     {
-      XEN_ASSERT_TYPE(XEN_STRING_P(key), key, n, caller, "a string");
+      XEN_ASSERT_TYPE(Xen_is_string(key), key, n, caller, "a string");
       return(XEN_TO_C_STRING(key));
     }
   return(def);
@@ -281,7 +281,7 @@ const char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def)
 
 static vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def)
 {
-  if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
+  if ((!(Xen_is_keyword(key))) && (!(Xen_is_false(key))))
     {
       XEN_ASSERT_TYPE(MUS_IS_VCT(key), key, n, caller, "a vct");
       return(XEN_TO_VCT(key));
@@ -311,7 +311,7 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
     int oargs, restargs;
     rargs = XEN_TO_C_INT(XEN_CAR(arity));
     oargs = XEN_TO_C_INT(XEN_CADR(arity));
-    restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+    restargs = ((Xen_is_true(XEN_CADDR(arity))) ? 1 : 0);
     if (rargs > args) return(false);
     if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
   }
@@ -323,9 +323,9 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
 
 XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err)
 {
-  if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
+  if ((!(Xen_is_keyword(key))) && (!(Xen_is_false(key))))
     {
-      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key), key, n, caller, "a procedure");
+      XEN_ASSERT_TYPE(Xen_is_procedure(key), key, n, caller, "a procedure");
       if (!(local_arity_ok(key, required_args)))
 	XEN_BAD_ARITY_ERROR(caller, n, key, err);
       return(key);
@@ -433,7 +433,7 @@ static XEN g_set_clm_table_size(XEN val)
 {
   mus_long_t size;
   #define H_clm_table_size "(" S_clm_table_size "): the default table size for most generators (512)"
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(val), val, 1, S_setB S_clm_table_size, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(val), val, 1, S_setB S_clm_table_size, "an integer");
   size = XEN_TO_C_LONG_LONG(val);
   if ((size <= 0) || 
       (size > mus_max_table_size()))
@@ -460,7 +460,7 @@ static XEN g_clm_default_frequency(void) {return(C_TO_XEN_DOUBLE(clm_default_fre
 static XEN g_set_clm_default_frequency(XEN val) 
 {
   #define H_clm_default_frequency "(" S_clm_default_frequency "): the default frequency for most generators (0.0)"
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(val), val, 1, S_setB S_clm_default_frequency, "a number");
+  XEN_ASSERT_TYPE(Xen_is_double(val), val, 1, S_setB S_clm_default_frequency, "a number");
   clm_default_frequency = XEN_TO_C_DOUBLE(val);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, clm_default_frequency_symbol, s7_make_real(s7, clm_default_frequency));
@@ -502,7 +502,7 @@ static XEN g_mus_file_buffer_size(void)
 static XEN g_mus_set_file_buffer_size(XEN val)
 {
   mus_long_t len;
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(val), val, 1, S_setB S_mus_file_buffer_size, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(val), val, 1, S_setB S_mus_file_buffer_size, "an integer");
   len = XEN_TO_C_LONG_LONG(val);
   if (len <= 0) 
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_file_buffer_size, 1, val, "must be > 0");
@@ -580,7 +580,7 @@ static XEN g_seconds_to_samples(XEN val)
 static XEN g_samples_to_seconds(XEN val) 
 {
   #define H_samples_to_seconds "(" S_samples_to_seconds " samps): use " S_mus_srate " to convert samples to seconds"
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(val), val, 1, S_samples_to_seconds, "a number");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(val), val, 1, S_samples_to_seconds, "a number");
   return(C_TO_XEN_DOUBLE(mus_samples_to_seconds(XEN_TO_C_LONG_LONG(val))));
 }
 
@@ -599,7 +599,7 @@ static XEN g_mus_srate(void)
 static XEN g_mus_set_srate(XEN val) 
 {
   mus_float_t sr;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_mus_srate, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_mus_srate, "a number");
   sr = XEN_TO_C_DOUBLE(val);
   if (sr <= 0.0) 
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_srate, 1, val, "must be > 0.0");
@@ -625,7 +625,7 @@ static XEN g_mus_float_equal_fudge_factor(void)
 static XEN g_mus_set_float_equal_fudge_factor(XEN val) 
 {
   mus_float_t factor;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_mus_float_equal_fudge_factor, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_mus_float_equal_fudge_factor, "a number");
   factor = XEN_TO_C_DOUBLE(val);
   mus_set_float_equal_fudge_factor(factor);
 #if HAVE_SCHEME
@@ -650,7 +650,7 @@ affects error reporting and generator descriptions.  Array (vct) elements beyond
 static XEN g_mus_set_array_print_length(XEN val) 
 {
   int len;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_mus_array_print_length, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_mus_array_print_length, "an integer");
   len = XEN_TO_C_INT(val);
   if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_array_print_length, 1, val, "must be >= 0");
@@ -665,8 +665,8 @@ static XEN g_mus_set_array_print_length(XEN val)
 static XEN g_ring_modulate(XEN val1, XEN val2) 
 {
   #define H_ring_modulate "(" S_ring_modulate " s1 s2): s1 * s2 (sample by sample multiply)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val1), val1, 1, S_ring_modulate, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val2), val2, 2, S_ring_modulate, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val1), val1, 1, S_ring_modulate, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val2), val2, 2, S_ring_modulate, "a number");
   return(C_TO_XEN_DOUBLE(mus_ring_modulate(XEN_TO_C_DOUBLE(val1), XEN_TO_C_DOUBLE(val2))));
 }
 
@@ -674,9 +674,9 @@ static XEN g_ring_modulate(XEN val1, XEN val2)
 static XEN g_amplitude_modulate(XEN val1, XEN val2, XEN val3) 
 {
   #define H_amplitude_modulate "(" S_amplitude_modulate " carrier in1 in2): in1 * (carrier + in2)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val1), val1, 1, S_amplitude_modulate, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val2), val2, 2, S_amplitude_modulate, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val3), val3, 3, S_amplitude_modulate, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val1), val1, 1, S_amplitude_modulate, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val2), val2, 2, S_amplitude_modulate, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val3), val3, 3, S_amplitude_modulate, "a number");
   return(C_TO_XEN_DOUBLE(mus_amplitude_modulate(XEN_TO_C_DOUBLE(val1), XEN_TO_C_DOUBLE(val2), XEN_TO_C_DOUBLE(val3))));
 }
 
@@ -685,10 +685,10 @@ static XEN g_contrast_enhancement(XEN val1, XEN val2)
 {
   mus_float_t index = 1.0; /* this is the default in clm.html and mus.lisp */
   #define H_contrast_enhancement "(" S_contrast_enhancement " sig (index 1.0)): sin(sig * pi / 2 + index * sin(sig * 2 * pi))"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val1), val1, 1, S_contrast_enhancement, "a number");
-  if (XEN_BOUND_P(val2))
+  XEN_ASSERT_TYPE(Xen_is_number(val1), val1, 1, S_contrast_enhancement, "a number");
+  if (Xen_is_bound(val2))
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(val2), val2, 2, S_contrast_enhancement, "a number");
+      XEN_ASSERT_TYPE(Xen_is_number(val2), val2, 2, S_contrast_enhancement, "a number");
       index = XEN_TO_C_DOUBLE(val2);
     }
   return(C_TO_XEN_DOUBLE(mus_contrast_enhancement(XEN_TO_C_DOUBLE(val1), index)));
@@ -707,7 +707,7 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
 
   v1 = XEN_TO_VCT(val1);
   v2 = XEN_TO_VCT(val2);
-  if (XEN_LONG_LONG_P(size))
+  if (Xen_is_long_long_int(size))
     {
       len = XEN_TO_C_LONG_LONG(size);
       if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
@@ -740,8 +740,8 @@ static XEN g_edot_product(XEN val1, XEN val2)
   complex double *vals;
   XEN result;
 
-  XEN_ASSERT_TYPE(XEN_COMPLEX_P(val1), val1, 1, S_edot_product, "complex");
-  XEN_ASSERT_TYPE((MUS_IS_VCT(val2)) || (XEN_VECTOR_P(val2)), val2, 2, S_edot_product, "a vct");
+  XEN_ASSERT_TYPE(Xen_is_complex(val1), val1, 1, S_edot_product, "complex");
+  XEN_ASSERT_TYPE((MUS_IS_VCT(val2)) || (Xen_is_vector(val2)), val2, 2, S_edot_product, "a vct");
 
   freq = XEN_TO_C_COMPLEX(val1);
   if (MUS_IS_VCT(val2))
@@ -786,7 +786,7 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
 
   v1 = XEN_TO_VCT(val1);
   v2 = XEN_TO_VCT(val2);
-  if (XEN_LONG_LONG_P(ulen))
+  if (Xen_is_long_long_int(ulen))
     {
       len = XEN_TO_C_LONG_LONG(ulen);
       if (len == 0) return(XEN_FALSE);
@@ -856,11 +856,11 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
   v1 = XEN_TO_VCT(url);
   v2 = XEN_TO_VCT(uim);
 
-  if (XEN_INTEGER_P(usign)) 
+  if (Xen_is_integer(usign)) 
     sign = XEN_TO_C_INT(usign); 
   else sign = 1;
 
-  if (XEN_LONG_LONG_P(len)) 
+  if (Xen_is_long_long_int(len)) 
     {
       n = XEN_TO_C_LONG_LONG(len); 
       if (n <= 0)
@@ -918,11 +918,11 @@ is the window family parameter, if any:\n  " make_window_example
   int fft_window;
   mus_float_t *data;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, 1, S_make_fft_window, "an integer (window type)");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(size), size, 2, S_make_fft_window, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(type), type, 1, S_make_fft_window, "an integer (window type)");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(size), size, 2, S_make_fft_window, "an integer");
 
-  if (XEN_NUMBER_P(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
-  if (XEN_NUMBER_P(ualpha)) alpha = XEN_TO_C_DOUBLE(ualpha);
+  if (Xen_is_number(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
+  if (Xen_is_number(ualpha)) alpha = XEN_TO_C_DOUBLE(ualpha);
 
   n = XEN_TO_C_LONG_LONG(size);
   if (n <= 0)
@@ -977,7 +977,7 @@ and type determines how the spectral data is scaled:\n\
       n = (int)pow(2.0, np);
     }
 
-  if (XEN_INTEGER_P(utype)) 
+  if (Xen_is_integer(utype)) 
     type = XEN_TO_C_INT(utype);
   else type = 1; /* linear normalized */
   if ((type < 0) || (type > 2))
@@ -1037,7 +1037,7 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
   v1 = XEN_TO_VCT(url1);
   v2 = XEN_TO_VCT(url2);
 
-  if (XEN_INTEGER_P(un)) 
+  if (Xen_is_integer(un)) 
     {
       n = XEN_TO_C_LONG_LONG(un); 
       if (n <= 0)
@@ -1082,7 +1082,7 @@ static XEN g_polynomial(XEN arr, XEN x)
 of degree, so coeff[0] is the constant term."
 
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_polynomial, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_polynomial, "a number");
 #endif
   if (MUS_IS_VCT(arr))
     {
@@ -1091,7 +1091,7 @@ of degree, so coeff[0] is the constant term."
       return(C_TO_XEN_DOUBLE(mus_polynomial(mus_vct_data(v), XEN_TO_C_DOUBLE(x), mus_vct_length(v))));
     }
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(arr), arr, 1, S_polynomial, "a vector or vct");
+  XEN_ASSERT_TYPE(Xen_is_vector(arr), arr, 1, S_polynomial, "a vector or vct");
   {
     double sum, cx;
     int i, ncoeffs;
@@ -1119,12 +1119,12 @@ taking into account wrap-around (size is size of data), with linear interpolatio
 
   XEN_ASSERT_TYPE(MUS_IS_VCT(obj), obj, 1, S_array_interp, "a vct");
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(phase), phase, 2, S_array_interp, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(phase), phase, 2, S_array_interp, "a number");
 #endif
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, 3, S_array_interp, "an integer");
 
   v = XEN_TO_VCT(obj);
-  if (XEN_BOUND_P(size)) 
+  if (Xen_is_bound(size)) 
     {
       len = XEN_TO_C_LONG_LONG(size); 
       if (len <= 0)
@@ -1149,8 +1149,8 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   vct *v;
   mus_float_t y = 0.0;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, 1, S_mus_interpolate, "an integer (interp type such as " S_mus_interp_all_pass ")");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 2, S_mus_interpolate, "a number");
+  XEN_ASSERT_TYPE(Xen_is_integer(type), type, 1, S_mus_interpolate, "an integer (interp type such as " S_mus_interp_all_pass ")");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_mus_interpolate, "a number");
   XEN_ASSERT_TYPE(MUS_IS_VCT(obj), obj, 3, S_mus_interpolate, "a vct");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, 4, S_mus_interpolate, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(yn1), yn1, 5, S_mus_interpolate, "a number");
@@ -1161,7 +1161,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
 
   v = XEN_TO_VCT(obj);
 
-  if (XEN_BOUND_P(size)) 
+  if (Xen_is_bound(size)) 
     {
       len = XEN_TO_C_LONG_LONG(size); 
       if (len <= 0)
@@ -1173,7 +1173,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   if (len == 0)
     return(C_TO_XEN_DOUBLE(0.0));
 
-  if (XEN_NUMBER_P(yn1))
+  if (Xen_is_number(yn1))
     y = XEN_TO_C_DOUBLE(yn1);
 
   return(C_TO_XEN_DOUBLE(mus_interpolate((mus_interp_t)itype, XEN_TO_C_DOUBLE(x), mus_vct_data(v), len, y)));
@@ -1185,7 +1185,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
 
 static XEN_OBJECT_TYPE mus_xen_tag;
 
-#define MUS_XEN_P(obj) (XEN_OBJECT_TYPE_P(obj, mus_xen_tag))
+#define MUS_XEN_P(obj) (Xen_c_object_is_type(obj, mus_xen_tag))
 
 bool mus_xen_p(XEN obj) {return(MUS_XEN_P(obj));}
 
@@ -1236,7 +1236,7 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
       lim = MUS_SELF_WRAPPER;
       if (ms->nvcts < lim) lim = ms->nvcts;
       for (i = 0; i < lim; i++) 
-	if (XEN_BOUND_P(ms->vcts[i]))
+	if (Xen_is_bound(ms->vcts[i]))
 	  xen_gc_mark(ms->vcts[i]);
     }
 #if HAVE_RUBY
@@ -1316,8 +1316,8 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, 1, S_mus_apply, "a generator");
 #endif
   return(C_TO_XEN_DOUBLE(mus_run(XEN_TO_MUS_ANY(gen),
-				 (XEN_NUMBER_P(arg1)) ? XEN_TO_C_DOUBLE(arg1) : 0.0,
-				 (XEN_NUMBER_P(arg2)) ? XEN_TO_C_DOUBLE(arg2) : 0.0)));
+				 (Xen_is_number(arg1)) ? XEN_TO_C_DOUBLE(arg1) : 0.0,
+				 (Xen_is_number(arg2)) ? XEN_TO_C_DOUBLE(arg2) : 0.0)));
 }
 #endif
 
@@ -1443,7 +1443,7 @@ XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined ge
 mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mus_any *def)
 {
   /* from Michael Scholz's sndins.c */
-  if (!(XEN_KEYWORD_P(key))) 
+  if (!(Xen_is_keyword(key))) 
     {
       XEN_ASSERT_TYPE(MUS_XEN_P(key), key, n, caller, "a clm generator or keyword");
       return(XEN_TO_MUS_ANY(key));
@@ -1454,12 +1454,12 @@ mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mus_any *def)
 
 static XEN mus_optkey_to_input_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err)
 {
-  if ((!(XEN_KEYWORD_P(key))) && 
-      (!(XEN_FALSE_P(key))))
+  if ((!(Xen_is_keyword(key))) && 
+      (!(Xen_is_false(key))))
     {
-      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key) || MUS_XEN_P(key), key, n, caller, "a procedure or input generator");
+      XEN_ASSERT_TYPE(Xen_is_procedure(key) || MUS_XEN_P(key), key, n, caller, "a procedure or input generator");
       
-      if ((XEN_PROCEDURE_P(key)) &&
+      if ((Xen_is_procedure(key)) &&
 	  (!(local_arity_ok(key, required_args))))
 	XEN_BAD_ARITY_ERROR(caller, n, key, err);
 
@@ -1658,7 +1658,7 @@ static XEN g_mus_describe(XEN gen)
 #define MUS_SET_DOUBLE_GENERIC(Caller, CLM_case)                   \
   mus_xen *gn;                                                             \
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(val), val, 2, S_setB Caller, "a float");   \
+  XEN_ASSERT_TYPE(Xen_is_double(val), val, 2, S_setB Caller, "a float");   \
   if (gn) {CLM_case(gn->gen, XEN_TO_C_DOUBLE(val)); return(val);}	\
   if (s7_is_open_environment(gen)) \
     { \
@@ -1686,7 +1686,7 @@ static XEN g_mus_describe(XEN gen)
 #define MUS_SET_LONG_LONG_GENERIC(Caller, CLM_case)                \
   mus_xen *gn;                                                             \
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 2, Caller, "an integer"); \
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 2, Caller, "an integer"); \
   if (gn) {CLM_case(gn->gen, XEN_TO_C_LONG_LONG(val)); return(val);}	\
   if (s7_is_open_environment(gen)) \
     { \
@@ -1723,7 +1723,7 @@ static XEN g_mus_describe(XEN gen)
   mus_xen *gn;                                                             \
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
   if (!gn) XEN_ASSERT_TYPE(false, gen, 1, S_setB Caller, "a generator");  \
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(val), val, 2, S_setB Caller, "a float");   \
+  XEN_ASSERT_TYPE(Xen_is_double(val), val, 2, S_setB Caller, "a float");   \
   CLM_case(gn->gen, XEN_TO_C_DOUBLE(val));				   \
   return(val);
 
@@ -1737,7 +1737,7 @@ static XEN g_mus_describe(XEN gen)
   mus_xen *gn;                                                             \
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
   if (!gn) XEN_ASSERT_TYPE(false, gen, 1, S_setB Caller, "a generator");  \
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 2, S_setB Caller, "a float");   \
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 2, S_setB Caller, "a float");   \
   CLM_case(gn->gen, XEN_TO_C_LONG_LONG(val));				   \
   return(val);
 
@@ -1940,7 +1940,7 @@ static XEN g_mus_set_name(XEN gen, XEN name)
   ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
   if (ms)
     {
-      XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 2, S_setB S_mus_name, "a string");
+      XEN_ASSERT_TYPE(Xen_is_string(name), name, 2, S_setB S_mus_name, "a string");
       mus_set_name(MUS_XEN_TO_MUS_ANY(ms), (const char *)(XEN_TO_C_STRING(name)));
       return(name);
     }
@@ -2291,7 +2291,7 @@ static XEN g_mus_set_length(XEN gen, XEN val)
       ptr = ms->gen;
       if ((!mus_is_env(ptr)) && (!mus_is_src(ptr))) /* set length doesn't refer to data vct here */
 	{
-	  if ((ms->vcts) && (!(XEN_EQ_P(ms->vcts[MUS_DATA_WRAPPER], XEN_UNDEFINED))))
+	  if ((ms->vcts) && (!(Xen_is_eq(ms->vcts[MUS_DATA_WRAPPER], XEN_UNDEFINED))))
 	    {
 	      vct *v;
 	      v = XEN_TO_VCT(ms->vcts[MUS_DATA_WRAPPER]);
@@ -2491,7 +2491,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
        *   a major complication here is that size can be 0
        */
 
-      if (!(XEN_KEYWORD_P(keys[size_key])))
+      if (!(Xen_is_keyword(keys[size_key])))
 	{
 	  size = mus_optkey_to_mus_long_t(keys[size_key], caller, orig_arg[size_key], size); /* size can  be 0? -- surely we need a line in any case? */
 	  if (size < 0)
@@ -2501,7 +2501,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  size_set = true;
 	}
 
-      if (!(XEN_KEYWORD_P(keys[max_size_key])))
+      if (!(Xen_is_keyword(keys[max_size_key])))
 	{
 	  max_size = mus_optkey_to_mus_long_t(keys[max_size_key], caller, orig_arg[max_size_key], max_size); /* -1 = unset */
 	  if (max_size <= 0)
@@ -2511,7 +2511,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  max_size_set = true;
 	}
 
-      if (XEN_KEYWORD_P(keys[interp_type_key]))
+      if (Xen_is_keyword(keys[interp_type_key]))
 	{
 	  /* if type not given, if max_size, assume linear interp (for possible tap), else no interp */
 	  if ((max_size_set) && (max_size != size))
@@ -2544,7 +2544,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  break;
 	}
 
-      if (!(XEN_KEYWORD_P(keys[filter_key])))
+      if (!(Xen_is_keyword(keys[filter_key])))
 	{
 	  if (choice != G_FCOMB)
 	    clm_error(caller, "filter arg passed??", keys[filter_key]);
@@ -2554,9 +2554,9 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  filt = XEN_TO_MUS_ANY(xen_filt);
 	}
 
-      if (!(XEN_KEYWORD_P(keys[initial_contents_key])))
+      if (!(Xen_is_keyword(keys[initial_contents_key])))
 	{
-	  if (!(XEN_KEYWORD_P(keys[initial_element_key])))
+	  if (!(Xen_is_keyword(keys[initial_element_key])))
 	    XEN_OUT_OF_RANGE_ERROR(caller, 
 				   orig_arg[initial_contents_key], 
 				   keys[initial_contents_key], 
@@ -2579,7 +2579,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 		  initial_contents = XEN_TO_VCT(orig_v);
 		  /* do I need to protect this until we read its contents? -- no extlang stuff except error returns */
 		}
-	      else XEN_ASSERT_TYPE(XEN_FALSE_P(keys[initial_contents_key]), 
+	      else XEN_ASSERT_TYPE(Xen_is_false(keys[initial_contents_key]), 
 				   keys[initial_contents_key], 
 				   orig_arg[initial_contents_key], 
 				   caller, "a vct or a list");
@@ -2806,7 +2806,7 @@ static XEN g_make_comb_bank(XEN arg)
   mus_any **gens;
   int i, j, size;
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(arg), arg, 1, S_make_comb_bank, "a vector of comb generators");
+  XEN_ASSERT_TYPE(Xen_is_vector(arg), arg, 1, S_make_comb_bank, "a vector of comb generators");
 
   size = XEN_VECTOR_LENGTH(arg);
   if (size == 0) return(XEN_FALSE);
@@ -2848,7 +2848,7 @@ static XEN g_comb_bank(XEN gens, XEN inp)
   mus_xen *gn;
 
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, 2, S_comb_bank, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(inp), inp, 2, S_comb_bank, "a number");
 #endif
   XEN_TO_C_GENERATOR(gens, gn, bank, mus_is_comb_bank, S_comb_bank, "a comb-bank generator");
 
@@ -2880,7 +2880,7 @@ static XEN g_make_filtered_comb_bank(XEN arg)
   mus_any **gens;
   int i, j, size;
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(arg), arg, 1, S_make_filtered_comb_bank, "a vector of filtered_comb generators");
+  XEN_ASSERT_TYPE(Xen_is_vector(arg), arg, 1, S_make_filtered_comb_bank, "a vector of filtered_comb generators");
 
   size = XEN_VECTOR_LENGTH(arg);
   if (size == 0) return(XEN_FALSE);
@@ -2922,7 +2922,7 @@ static XEN g_filtered_comb_bank(XEN gens, XEN inp)
   mus_xen *gn;
 
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, 2, S_filtered_comb_bank, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(inp), inp, 2, S_filtered_comb_bank, "a number");
 #endif
   XEN_TO_C_GENERATOR(gens, gn, bank, mus_is_filtered_comb_bank, S_filtered_comb_bank, "a filtered-comb-bank generator");
 
@@ -2954,7 +2954,7 @@ static XEN g_make_all_pass_bank(XEN arg)
   mus_any **gens;
   int i, j, size;
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(arg), arg, 1, S_make_all_pass_bank, "a vector of all_pass generators");
+  XEN_ASSERT_TYPE(Xen_is_vector(arg), arg, 1, S_make_all_pass_bank, "a vector of all_pass generators");
 
   size = XEN_VECTOR_LENGTH(arg);
   if (size == 0) return(XEN_FALSE);
@@ -2996,7 +2996,7 @@ static XEN g_all_pass_bank(XEN gens, XEN inp)
   mus_xen *gn;
 
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, 2, S_all_pass_bank, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(inp), inp, 2, S_all_pass_bank, "a number");
 #endif
   XEN_TO_C_GENERATOR(gens, gn, bank, mus_is_all_pass_bank, S_all_pass_bank, "an all-pass-bank generator");
 
@@ -3352,24 +3352,24 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
       if (distribution_size > mus_max_table_size())
 	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[4], keys[4], "distribution size too large (see mus-max-table-size)");
 
-      if (!(XEN_KEYWORD_P(keys[2]))) /* i.e. envelope arg was specified */
+      if (!(Xen_is_keyword(keys[2]))) /* i.e. envelope arg was specified */
         {
 	  int len;
-	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[2]), keys[2], orig_arg[2], caller, "an envelope");
+	  XEN_ASSERT_TYPE(Xen_is_list(keys[2]), keys[2], orig_arg[2], caller, "an envelope");
 	  len = XEN_LIST_LENGTH(keys[2]);
 	  if ((len < 4) || (len & 1))
 	    clm_error(caller, "bad distribution envelope", keys[2]);
 	  /* envelope and distribution are incompatible */
-	  if (!(XEN_KEYWORD_P(keys[3])))
+	  if (!(Xen_is_keyword(keys[3])))
 	    clm_error(caller, ":envelope and :distribution in same call?", keys[3]);
 	  distribution = inverse_integrate(keys[2], distribution_size);
 	  orig_v = xen_make_vct(distribution_size, distribution);
 	}
       else
 	{
-	  if (!(XEN_KEYWORD_P(keys[3]))) /* i.e. distribution arg was specified */
+	  if (!(Xen_is_keyword(keys[3]))) /* i.e. distribution arg was specified */
 	    {
-	      XEN_ASSERT_TYPE(MUS_IS_VCT(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], caller, "a vct");
+	      XEN_ASSERT_TYPE(MUS_IS_VCT(keys[3]) || Xen_is_false(keys[3]), keys[3], orig_arg[3], caller, "a vct");
 	      if (MUS_IS_VCT(keys[3]))
 		{
 		  orig_v = keys[3];
@@ -3490,7 +3490,7 @@ this can be used to re-run a particular random number sequence."
 
 static XEN g_mus_set_rand_seed(XEN a) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(a), a, 1, S_setB S_mus_rand_seed, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(a), a, 1, S_setB S_mus_rand_seed, "an integer");
   mus_set_rand_seed((unsigned long)XEN_TO_C_INT(a)); 
   return(a);
 }
@@ -3524,8 +3524,8 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   int gc_loc;
 #endif
 
-  XEN_ASSERT_TYPE(MUS_IS_VCT(partials) || XEN_LIST_P(partials), partials, 1, S_partials_to_wave, "a list or a vct");
-  XEN_ASSERT_TYPE(MUS_IS_VCT(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, 2, S_partials_to_wave, "a vct or " PROC_FALSE);
+  XEN_ASSERT_TYPE(MUS_IS_VCT(partials) || Xen_is_list(partials), partials, 1, S_partials_to_wave, "a list or a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(utable) || Xen_is_false(utable) || (!(Xen_is_bound(utable))), utable, 2, S_partials_to_wave, "a vct or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, 3, S_partials_to_wave, "a boolean");
 
   if (MUS_IS_VCT(partials))
@@ -3544,7 +3544,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 		  XEN_LIST_2(C_TO_XEN_STRING("~A: partials list empty?"), 
 			     C_TO_XEN_STRING(S_partials_to_wave)));
 
-      if (!(XEN_NUMBER_P(XEN_CAR(partials))))
+      if (!(Xen_is_number(XEN_CAR(partials))))
 	XEN_ASSERT_TYPE(false, partials, 1, S_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
     }
   if (len & 1)
@@ -3578,7 +3578,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 	partial_data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
     }
 
-  mus_partials_to_wave(partial_data, len / 2, mus_vct_data(f), mus_vct_length(f), (XEN_TRUE_P(normalize)));
+  mus_partials_to_wave(partial_data, len / 2, mus_vct_data(f), mus_vct_length(f), (Xen_is_true(normalize)));
 
   if (partials_allocated)
     free(partial_data);
@@ -3617,8 +3617,8 @@ take a list or vct of partials (harmonic number, amplitude, initial phase) and p
 a waveform for use in " S_table_lookup ".  If wave (a vct) is not given, \
 a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goes between -1.0 and 1.0.\n  " pp2w_example
 
-  XEN_ASSERT_TYPE(MUS_IS_VCT(partials) || XEN_LIST_P(partials), partials, 1, S_phase_partials_to_wave, "a list or a vct");
-  XEN_ASSERT_TYPE(MUS_IS_VCT(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, 2, S_phase_partials_to_wave, "a vct or " PROC_FALSE);
+  XEN_ASSERT_TYPE(MUS_IS_VCT(partials) || Xen_is_list(partials), partials, 1, S_phase_partials_to_wave, "a list or a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(utable) || Xen_is_false(utable) || (!(Xen_is_bound(utable))), utable, 2, S_phase_partials_to_wave, "a vct or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, 3, S_phase_partials_to_wave, "a boolean");
 
   if (MUS_IS_VCT(partials))
@@ -3637,7 +3637,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 		  XEN_LIST_2(C_TO_XEN_STRING("~A: partials list empty?"),
 			     C_TO_XEN_STRING(S_phase_partials_to_wave)));
 
-      if (!(XEN_NUMBER_P(XEN_CAR(partials))))
+      if (!(Xen_is_number(XEN_CAR(partials))))
 	XEN_ASSERT_TYPE(false, partials, 1, S_phase_partials_to_wave, "a list of numbers (partial numbers with amplitudes and phases)");
     }
   if ((len % 3) != 0)
@@ -3670,7 +3670,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 	partial_data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
     }
 
-  mus_phase_partials_to_wave(partial_data, len / 3, mus_vct_data(f), mus_vct_length(f), (XEN_TRUE_P(normalize)));
+  mus_phase_partials_to_wave(partial_data, len / 3, mus_vct_data(f), mus_vct_length(f), (Xen_is_true(normalize)));
 
   if (partials_allocated)
     free(partial_data);
@@ -4119,17 +4119,17 @@ static XEN g_make_smpflt_2(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
 
 static bool found_polar_key(XEN arg)
 {
-  return((XEN_KEYWORD_P(arg)) && 
-	 ((XEN_KEYWORD_EQ_P(arg, kw_radius)) ||
-	  (XEN_KEYWORD_EQ_P(arg, kw_frequency))));
+  return((Xen_is_keyword(arg)) && 
+	 ((Xen_keyword_is_eq(arg, kw_radius)) ||
+	  (Xen_keyword_is_eq(arg, kw_frequency))));
 }
 
 
 static bool found_coeff_key(XEN arg)
 {
-  return((XEN_KEYWORD_P(arg)) && 
-	 (!(XEN_KEYWORD_EQ_P(arg, kw_radius))) &&
-	 (!(XEN_KEYWORD_EQ_P(arg, kw_frequency))));
+  return((Xen_is_keyword(arg)) && 
+	 (!(Xen_keyword_is_eq(arg, kw_radius))) &&
+	 (!(Xen_keyword_is_eq(arg, kw_frequency))));
 }
 
 
@@ -4138,14 +4138,14 @@ static XEN g_make_two_zero(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN
   #define H_make_two_zero "(" S_make_two_zero " a0 a1 a2) or (" S_make_two_zero " frequency radius): return a new " S_two_zero " filter; \
 a0*x(n) + a1*x(n-1) + a2*x(n-2)"
 
-  if ((XEN_BOUND_P(arg2)) && /* 0 or 1 args -> coeffs */
-      (!(XEN_BOUND_P(arg5)))) /* 5 or more args -> coeffs */
+  if ((Xen_is_bound(arg2)) && /* 0 or 1 args -> coeffs */
+      (!(Xen_is_bound(arg5)))) /* 5 or more args -> coeffs */
     {
       if ((found_polar_key(arg1)) || 
 	  (found_polar_key(arg2)) ||    /* if arg1 is frequency as number, then arg2 is either key or number */
-	  ((!(XEN_BOUND_P(arg3))) &&    /* make a guess that if 2 args, no keys, and a0 > 20, it is intended as a frequency */
+	  ((!(Xen_is_bound(arg3))) &&    /* make a guess that if 2 args, no keys, and a0 > 20, it is intended as a frequency */
 	   (!(found_coeff_key(arg1))) &&
-	   ((XEN_NUMBER_P(arg1)) && (XEN_TO_C_DOUBLE(arg1) >= 20.0))))
+	   ((Xen_is_number(arg1)) && (XEN_TO_C_DOUBLE(arg1) >= 20.0))))
 	return(g_make_smpflt_1(G_TWO_ZERO, arg1, arg2, arg3, arg4));
     }
 
@@ -4158,14 +4158,14 @@ static XEN g_make_two_pole(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN
   #define H_make_two_pole "(" S_make_two_pole " a0 b1 b2) or (" S_make_two_pole " frequency radius): return a new " S_two_pole " filter; \
 a0*x(n) - b1*y(n-1) - b2*y(n-2)"
 
-  if ((XEN_BOUND_P(arg2)) && /* 0 or 1 args -> coeffs */
-      (!(XEN_BOUND_P(arg5)))) /* 5 or more args -> coeffs */
+  if ((Xen_is_bound(arg2)) && /* 0 or 1 args -> coeffs */
+      (!(Xen_is_bound(arg5)))) /* 5 or more args -> coeffs */
     {
       if ((found_polar_key(arg1)) || 
 	  (found_polar_key(arg2)) ||    /* if arg1 is frequency as number, then arg2 is either key or number */
-	  ((!(XEN_BOUND_P(arg3))) &&
+	  ((!(Xen_is_bound(arg3))) &&
 	   (!(found_coeff_key(arg1))) &&
-	   ((XEN_NUMBER_P(arg1)) && (XEN_TO_C_DOUBLE(arg1) >= 2.0))))
+	   ((Xen_is_number(arg1)) && (XEN_TO_C_DOUBLE(arg1) >= 2.0))))
 	return(g_make_smpflt_1(G_TWO_POLE, arg1, arg2, arg3, arg4));
     }
 
@@ -4317,7 +4317,7 @@ static XEN g_formant(XEN gen, XEN input, XEN freq)
   XEN_TO_C_GENERATOR(gen, gn, g, mus_is_formant, S_formant, "a formant generator");
 
   XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_formant, 2);
-  if (XEN_BOUND_P(freq))
+  if (Xen_is_bound(freq))
     return(C_TO_XEN_DOUBLE(mus_formant_with_frequency(g, in1, XEN_TO_C_DOUBLE(freq))));
 
   return(C_TO_XEN_DOUBLE(mus_formant(g, in1)));
@@ -4383,14 +4383,14 @@ static XEN g_make_formant_bank(XEN frms, XEN amps)
   int i, j, size;
   vct *v = NULL;
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(frms), frms, 1, S_make_formant_bank, "a vector of formant generators");
+  XEN_ASSERT_TYPE(Xen_is_vector(frms), frms, 1, S_make_formant_bank, "a vector of formant generators");
   /* need size and elements -> mus_any */
 
   size = XEN_VECTOR_LENGTH(frms);
   if (size == 0) return(XEN_FALSE);
   gens = (mus_any **)calloc(size, sizeof(mus_any *));
 
-  if (XEN_BOUND_P(amps))
+  if (Xen_is_bound(amps))
     {
       v = XEN_TO_VCT(amps);
       if (!v) XEN_ASSERT_TYPE(false, amps, 2, S_make_formant_bank, "a vct if anything");
@@ -4435,10 +4435,10 @@ static XEN g_formant_bank(XEN gens, XEN inp)
   mus_any *bank = NULL;
   mus_xen *gn;
 
-  XEN_ASSERT_TYPE((XEN_NUMBER_P(inp)) || (MUS_IS_VCT(inp)), inp, 2, S_formant_bank, "a number or a vct");
+  XEN_ASSERT_TYPE((Xen_is_number(inp)) || (MUS_IS_VCT(inp)), inp, 2, S_formant_bank, "a number or a vct");
   XEN_TO_C_GENERATOR(gens, gn, bank, mus_is_formant_bank, S_formant_bank, "a formant-bank generator");
 
-  if (XEN_NUMBER_P(inp))
+  if (Xen_is_number(inp))
     return(C_TO_XEN_DOUBLE(mus_formant_bank(bank, XEN_TO_C_DOUBLE(inp))));
   return(C_TO_XEN_DOUBLE(mus_formant_bank_with_inputs(bank, mus_vct_data(XEN_TO_VCT(inp)))));
 }
@@ -4456,9 +4456,9 @@ static XEN g_make_one_pole_all_pass(XEN arg1, XEN arg2)
   int size;
   mus_float_t coeff;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, S_make_one_pole_all_pass, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(arg1), arg1, 1, S_make_one_pole_all_pass, "an integer");
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(arg2), arg2, 2, S_make_one_pole_all_pass, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(arg2), arg2, 2, S_make_one_pole_all_pass, "a number");
 #endif
 
   size = XEN_TO_C_INT(arg1);
@@ -4523,7 +4523,7 @@ static XEN g_firmant(XEN gen, XEN input, XEN freq)
   XEN_TO_C_GENERATOR(gen, gn, g, mus_is_firmant, S_firmant, "a firmant generator");
 
   XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_firmant, 2);
-  if (XEN_BOUND_P(freq)) 
+  if (Xen_is_bound(freq)) 
     return(C_TO_XEN_DOUBLE(mus_firmant_with_frequency(g, in1, XEN_TO_C_DOUBLE(freq))));
 
   return(C_TO_XEN_DOUBLE(mus_firmant(g, in1)));
@@ -4551,7 +4551,7 @@ static XEN g_make_frame_2(int len, XEN args)
 	  int i;
 	  vals = mus_data(ge);
 	  for (i = 0, lst = XEN_COPY_ARG(args); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
-	    if (XEN_NUMBER_P(XEN_CAR(lst)))
+	    if (Xen_is_number(XEN_CAR(lst)))
 	      vals[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	    else
 	      {
@@ -4600,7 +4600,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
     {
       XEN cararg;
       cararg = XEN_CAR(arglist);
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, 1, S_make_frame, "a number");
+      XEN_ASSERT_TYPE(Xen_is_number(cararg), cararg, 1, S_make_frame, "a number");
       size = XEN_TO_C_INT(cararg);
       if (size <= 0) 
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, 1, cararg, "chans <= 0?");
@@ -4657,14 +4657,14 @@ if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i].  Either f
       (mus_is_frame(XEN_TO_MUS_ANY(ures)))) 
     res = (mus_any *)XEN_TO_MUS_ANY(ures);
 
-  if (XEN_NUMBER_P(uf1))
+  if (Xen_is_number(uf1))
     {
       XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_is_frame(XEN_TO_MUS_ANY(uf2))), uf2, 2, S_frame_add, "a frame");
       nf = mus_frame_offset((mus_any *)XEN_TO_MUS_ANY(uf2), XEN_TO_C_DOUBLE(uf1), res);
     }
   else
     {
-      if (XEN_NUMBER_P(uf2))
+      if (Xen_is_number(uf2))
 	{
 	  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_is_frame(XEN_TO_MUS_ANY(uf1))), uf1, 1, S_frame_add, "a frame");
 	  nf = mus_frame_offset((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_DOUBLE(uf2), res);
@@ -4694,14 +4694,14 @@ if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
       (mus_is_frame(XEN_TO_MUS_ANY(ures)))) 
     res = (mus_any *)XEN_TO_MUS_ANY(ures);
 
-  if (XEN_NUMBER_P(uf1))
+  if (Xen_is_number(uf1))
     {
       XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_is_frame(XEN_TO_MUS_ANY(uf2))), uf2, 2, S_frame_multiply, "a frame");
       nf = mus_frame_scale((mus_any *)XEN_TO_MUS_ANY(uf2), XEN_TO_C_DOUBLE(uf1), res);
     }
   else
     {
-      if (XEN_NUMBER_P(uf2))
+      if (Xen_is_number(uf2))
 	{
 	  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_is_frame(XEN_TO_MUS_ANY(uf1))), uf1, 1, S_frame_multiply, "a frame");
 	  nf = mus_frame_scale((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_DOUBLE(uf2), res);
@@ -4832,7 +4832,7 @@ returning the mixer outm, or creating a new mixer if outm is not given.  Either 
       if (!u1_mixer)
 	XEN_ASSERT_TYPE(mus_is_frame(u1), uf1, 1, S_mixer_multiply, "a frame or mixer");
     }
-  else XEN_ASSERT_TYPE(XEN_NUMBER_P(uf1), uf1, 1, S_mixer_multiply, "a number, frame or mixer");
+  else XEN_ASSERT_TYPE(Xen_is_number(uf1), uf1, 1, S_mixer_multiply, "a number, frame or mixer");
 
   if (MUS_XEN_P(uf2))
     {
@@ -4841,7 +4841,7 @@ returning the mixer outm, or creating a new mixer if outm is not given.  Either 
       if (!u2_mixer)
 	XEN_ASSERT_TYPE(mus_is_frame(u2), uf2, 2, S_mixer_multiply, "a frame or mixer");
     }
-  else XEN_ASSERT_TYPE(XEN_NUMBER_P(uf2), uf2, 2, S_mixer_multiply, "a number, frame or mixer");
+  else XEN_ASSERT_TYPE(Xen_is_number(uf2), uf2, 2, S_mixer_multiply, "a number, frame or mixer");
 
   XEN_ASSERT_TYPE(u1_mixer || u2_mixer, uf1, 1, S_mixer_multiply, "one arg must be a mixer");
   if (!u1)
@@ -4882,14 +4882,14 @@ Either m1 or m2 can be a float, rather than a mixer."
       (mus_is_mixer(XEN_TO_MUS_ANY(ures))))
     res = (mus_any *)XEN_TO_MUS_ANY(ures);
 
-  if (XEN_NUMBER_P(uf1))
+  if (Xen_is_number(uf1))
     {
       XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_is_mixer(XEN_TO_MUS_ANY(uf2))), uf2, 2, S_mixer_add, "a mixer");
       nm = mus_mixer_offset((mus_any *)XEN_TO_MUS_ANY(uf2), XEN_TO_C_DOUBLE(uf1), res);
     }
   else
     {
-      if (XEN_NUMBER_P(uf2))
+      if (Xen_is_number(uf2))
 	{
 	  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_is_mixer(XEN_TO_MUS_ANY(uf1))), uf1, 1, S_mixer_add, "a mixer");
 	  nm = mus_mixer_offset((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_DOUBLE(uf2), res);
@@ -4978,7 +4978,7 @@ returning frame outf (creating it if necessary)"
   if (!gn) XEN_ASSERT_TYPE(false, mx, 1, S_sample_to_frame, "a frame or mixer");
   gen = gn->gen;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(insp), insp, 2, S_sample_to_frame, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(insp), insp, 2, S_sample_to_frame, "a number");
 
   outgn = (mus_xen *)XEN_OBJECT_REF_CHECKED(outfr, mus_xen_tag);
   if ((outgn) &&
@@ -5000,8 +5000,8 @@ with 'chans' channels, and 'val' along the diagonal"
   mus_any *mx = NULL;
   int size;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, 1, S_make_scalar_mixer, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 2, S_make_scalar_mixer, "a number");
+  XEN_ASSERT_TYPE(Xen_is_integer(chans), chans, 1, S_make_scalar_mixer, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 2, S_make_scalar_mixer, "a number");
 
   size = XEN_TO_C_INT(chans);
   if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_scalar_mixer, 1, chans, "chans <= 0?");
@@ -5030,7 +5030,7 @@ static XEN g_make_mixer_2(int len, XEN args)
 	  k = 0;
 	  for (i = 0, lst = XEN_COPY_ARG(args); (i < size) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 	    {
-	      if (XEN_NUMBER_P(XEN_CAR(lst)))
+	      if (Xen_is_number(XEN_CAR(lst)))
 		vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	      else
 		{
@@ -5079,7 +5079,7 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
   if (len == 0) clm_error(S_make_mixer, "need at least 1 arg", arglist);
 
   cararg = XEN_CAR(arglist);
-  if (!(XEN_NUMBER_P(cararg)))
+  if (!(Xen_is_number(cararg)))
     XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, 1, cararg, "an integer = number of chans");
 
   size = XEN_TO_C_INT(cararg);
@@ -5135,25 +5135,25 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
   XEN ve;
   bool need_mx_free = false, need_revmx_free = false;
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(file), file, 1, S_mus_mix_with_envs, "a vector of readin generators");
+  XEN_ASSERT_TYPE(Xen_is_vector(file), file, 1, S_mus_mix_with_envs, "a vector of readin generators");
   in_chans = XEN_VECTOR_LENGTH(file);
   
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, 2, S_mus_mix_with_envs, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(dur), dur, 3, S_mus_mix_with_envs, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(beg), beg, 2, S_mus_mix_with_envs, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(dur), dur, 3, S_mus_mix_with_envs, "an integer");
 
   st = XEN_TO_C_INT(beg);
   nd = st + XEN_TO_C_INT(dur);
 
-  if (!XEN_VECTOR_P(mx))
+  if (!Xen_is_vector(mx))
     {
       gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(mx, mus_xen_tag);
       if (!gn) XEN_ASSERT_TYPE(false, mx, 4, S_mus_mix_with_envs, "a mixer");
       mix = gn->gen;
       XEN_ASSERT_TYPE(mus_is_mixer(mix), mx, 4, S_mus_mix_with_envs, "a mixer");
     }
-  if (!XEN_VECTOR_P(revmx))
+  if (!Xen_is_vector(revmx))
     {
-      if (!XEN_FALSE_P(revmx))
+      if (!Xen_is_false(revmx))
 	{
 	  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(revmx, mus_xen_tag);
 	  if (!gn) XEN_ASSERT_TYPE(false, mx, 5, S_mus_mix_with_envs, "a mixer");
@@ -5162,7 +5162,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
 	}
     }
 
-  if (!XEN_FALSE_P(srcenv))
+  if (!Xen_is_false(srcenv))
     {
       gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(srcenv, mus_xen_tag);
       if (!gn) XEN_ASSERT_TYPE(false, srcenv, 8, S_mus_mix_with_envs, "an env generator");
@@ -5170,7 +5170,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
       XEN_ASSERT_TYPE(mus_is_env(s_env), srcenv, 8, S_mus_mix_with_envs, "an env generator");
     }
 
-  if (XEN_BOUND_P(outstream))
+  if (Xen_is_bound(outstream))
     {
       gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(outstream, mus_xen_tag);
       ostr = gn->gen;
@@ -5180,7 +5180,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
 
   if (rev_mix)
     {
-      if (XEN_BOUND_P(revstream))
+      if (Xen_is_bound(revstream))
 	{
 	  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(revstream, mus_xen_tag);
 	  rstr = gn->gen;
@@ -5188,13 +5188,13 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
       else rstr = XEN_TO_MUS_ANY(mus_clm_reverb());
     }
 
-  if (!XEN_FALSE_P(envs))
-    XEN_ASSERT_TYPE(XEN_VECTOR_P(envs), envs, 6, S_mus_mix_with_envs, "a vector of env generators");
-  if (!XEN_FALSE_P(srcs))
-    XEN_ASSERT_TYPE(XEN_VECTOR_P(srcs), srcs, 7, S_mus_mix_with_envs, "a vector of src generators");
+  if (!Xen_is_false(envs))
+    XEN_ASSERT_TYPE(Xen_is_vector(envs), envs, 6, S_mus_mix_with_envs, "a vector of env generators");
+  if (!Xen_is_false(srcs))
+    XEN_ASSERT_TYPE(Xen_is_vector(srcs), srcs, 7, S_mus_mix_with_envs, "a vector of src generators");
 
 #if HAVE_SCHEME
-  if (XEN_VECTOR_P(mx))
+  if (Xen_is_vector(mx))
     {
       int j, k, chans;
       s7_Double *vals;
@@ -5206,7 +5206,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
 	  mus_mixer_set(mix, i, j, (mus_float_t)(vals[k]));
       need_mx_free = true;
     }
-  if (XEN_VECTOR_P(revmx))
+  if (Xen_is_vector(revmx))
     {
       int j, k, chans;
       s7_Double *vals;
@@ -5226,21 +5226,21 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
   for (i = 0; i < in_chans; i++)
     mix_rds[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(file, i));
     
-  if (XEN_VECTOR_P(srcs))
+  if (Xen_is_vector(srcs))
     {
       for (i = 0; i < in_chans; i++)
 	{
 	  ve = XEN_VECTOR_REF(srcs, i);
-	  if (!XEN_FALSE_P(ve)) mix_srcs[i] = XEN_TO_MUS_ANY(ve);
+	  if (!Xen_is_false(ve)) mix_srcs[i] = XEN_TO_MUS_ANY(ve);
 	}
     }
 
   mix_envs = (mus_any **)calloc(in_chans * out_chans, sizeof(mus_any *));
-  if (XEN_VECTOR_P(envs))
+  if (Xen_is_vector(envs))
     for (i = 0; i < in_chans * out_chans; i++)
       {
 	ve = XEN_VECTOR_REF(envs, i);
-	if (!XEN_FALSE_P(ve)) mix_envs[i] = XEN_TO_MUS_ANY(ve);
+	if (!Xen_is_false(ve)) mix_envs[i] = XEN_TO_MUS_ANY(ve);
       }
 
   {
@@ -5509,7 +5509,7 @@ static mus_float_t *list_to_partials(XEN harms, int *npartials, int *error_code)
       return(NULL);
     }
 
-  if (!(XEN_NUMBER_P(XEN_CAR(harms)))) 
+  if (!(Xen_is_number(XEN_CAR(harms)))) 
     {
       (*error_code) = NON_NUMBER_IN_LIST;
       return(NULL);
@@ -5519,8 +5519,8 @@ static mus_float_t *list_to_partials(XEN harms, int *npartials, int *error_code)
 
   for (i = 0, lst = XEN_COPY_ARG(harms); i < listlen; i += 2, lst = XEN_CDDR(lst))
     {
-      if ((!(XEN_NUMBER_P(XEN_CAR(lst)))) ||
-	  (!(XEN_NUMBER_P(XEN_CADR(lst)))))
+      if ((!(Xen_is_number(XEN_CAR(lst)))) ||
+	  (!(Xen_is_number(XEN_CADR(lst)))))
 	{
 	  (*error_code) = NON_NUMBER_IN_LIST;
 	  return(NULL);
@@ -5678,10 +5678,10 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
   mus_float_t *partials = NULL, *wave;
   int error = NO_PROBLEM_IN_LIST;
 
-  XEN_ASSERT_TYPE(MUS_IS_VCT(amps) || XEN_LIST_P(amps), amps, 1, S_partials_to_polynomial, "a list or a vct");
+  XEN_ASSERT_TYPE(MUS_IS_VCT(amps) || Xen_is_list(amps), amps, 1, S_partials_to_polynomial, "a list or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, 2, S_partials_to_polynomial, "either " S_mus_chebyshev_first_kind " or " S_mus_chebyshev_second_kind);
 
-  if (XEN_INTEGER_P(ukind))
+  if (Xen_is_integer(ukind))
     {
       int ck;
       ck = XEN_TO_C_INT(ukind);
@@ -5713,7 +5713,7 @@ partial amplitudes in the vct or list 'partials' by the inverse of their sum (so
   vct *v;
   XEN xv = XEN_FALSE;
 
-  XEN_ASSERT_TYPE(((XEN_LIST_P(partials)) && (XEN_NOT_NULL_P(partials))) || (MUS_IS_VCT(partials)), partials, 1, S_normalize_partials, "a vct or (non-empty) list");
+  XEN_ASSERT_TYPE(((Xen_is_list(partials)) && (XEN_NOT_NULL_P(partials))) || (MUS_IS_VCT(partials)), partials, 1, S_normalize_partials, "a vct or (non-empty) list");
 
   if (MUS_IS_VCT(partials))
     xv = partials;
@@ -5752,7 +5752,7 @@ Chebyshev polynomials Tn and Un (vectors or vcts), with phase x."
   mus_float_t *tdata = NULL, *udata = NULL;
   XEN result;
   
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, 1, S_mus_chebyshev_tu_sum, "a float");
+  XEN_ASSERT_TYPE(Xen_is_double(x), x, 1, S_mus_chebyshev_tu_sum, "a float");
 
   if ((MUS_IS_VCT(tn)) &&
       (MUS_IS_VCT(un)))
@@ -5768,8 +5768,8 @@ Chebyshev polynomials Tn and Un (vectors or vcts), with phase x."
     }
   else
     {
-      if ((XEN_VECTOR_P(tn)) && 
-	  (XEN_VECTOR_P(un)))
+      if ((Xen_is_vector(tn)) && 
+	  (Xen_is_vector(un)))
 	{
 	  len = XEN_VECTOR_LENGTH(tn);
 	  if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
@@ -5805,7 +5805,7 @@ Chebyshev polynomials Tn (a vct)."
   mus_float_t *data = NULL;
   XEN result;
   
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, 1, S_mus_chebyshev_t_sum, "a float");
+  XEN_ASSERT_TYPE(Xen_is_double(x), x, 1, S_mus_chebyshev_t_sum, "a float");
   if (MUS_IS_VCT(tn))
     {
       vct *Tn;
@@ -5816,7 +5816,7 @@ Chebyshev polynomials Tn (a vct)."
     }
   else
     {
-      if (XEN_VECTOR_P(tn))
+      if (Xen_is_vector(tn))
 	{
 	  len = XEN_VECTOR_LENGTH(tn);
 	  if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
@@ -5842,7 +5842,7 @@ Chebyshev polynomials Un (a vct)."
   mus_float_t *data = NULL;
   XEN result;
 
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, 1, S_mus_chebyshev_u_sum, "a float");
+  XEN_ASSERT_TYPE(Xen_is_double(x), x, 1, S_mus_chebyshev_u_sum, "a float");
 
   if (MUS_IS_VCT(un))
     {
@@ -5854,7 +5854,7 @@ Chebyshev polynomials Un (a vct)."
     }
   else
     {
-      if (XEN_VECTOR_P(un))
+      if (Xen_is_vector(un))
 	{
 	  len = XEN_VECTOR_LENGTH(un);
 	  if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
@@ -5961,14 +5961,14 @@ is the same in effect as " S_make_oscil
 	}
       else
 	{
-	  if (!(XEN_KEYWORD_P(keys[3])))
+	  if (!(Xen_is_keyword(keys[3])))
 	    {
 	      int error = NO_PROBLEM_IN_LIST;
 	      if (MUS_IS_VCT(keys[3]))
 		partials = mus_vct_to_partials(XEN_TO_VCT(keys[3]), &npartials, &error);
 	      else
 		{
-		  XEN_ASSERT_TYPE(XEN_LIST_P(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list or a vct");
+		  XEN_ASSERT_TYPE(Xen_is_list(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list or a vct");
 		  partials = list_to_partials(keys[3], &npartials, &error);
 		}
 	      if (partials == NULL)
@@ -5994,7 +5994,7 @@ is the same in effect as " S_make_oscil
       csize = 2;
     }
 
-  if (XEN_FALSE_P(orig_v))
+  if (Xen_is_false(orig_v))
     orig_v = xen_make_vct(csize, coeffs);
 
   ge = mus_make_polyshape(freq, phase, coeffs, csize, kind);
@@ -6074,17 +6074,17 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 	kind = (mus_polynomial_t)type;
       else XEN_OUT_OF_RANGE_ERROR(S_make_polywave, orig_arg[2], keys[2], "unknown Chebyshev polynomial kind");
 
-      if (!(XEN_KEYWORD_P(keys[1]))) /* partials were supplied */
+      if (!(Xen_is_keyword(keys[1]))) /* partials were supplied */
 	{
 	  if (MUS_IS_VCT(keys[1]))
 	    partials = mus_vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
 	  else
 	    {
-	      if (XEN_VECTOR_P(keys[1]))
+	      if (Xen_is_vector(keys[1]))
 		partials = mus_vector_to_partials(keys[1], &npartials, &error);
 	      else
 		{
-		  XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_polywave, "a list or a vct");
+		  XEN_ASSERT_TYPE(Xen_is_list(keys[1]), keys[1], orig_arg[1], S_make_polywave, "a list or a vct");
 		  partials = list_to_partials(keys[1], &npartials, &error);
 		}
 	    }
@@ -6100,7 +6100,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 	  /* xcoeffs = partials here, so don't delete */ 
 	}
 
-      if (!(XEN_KEYWORD_P(keys[3])))
+      if (!(Xen_is_keyword(keys[3])))
         {
 	  XEN_ASSERT_TYPE(MUS_IS_VCT(keys[3]), keys[3], orig_arg[3], S_make_polywave, "a vct");
 	  orig_x = keys[3];
@@ -6109,7 +6109,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 	  xcoeffs = mus_vct_data(v);
         }
       
-      if (!(XEN_KEYWORD_P(keys[4])))
+      if (!(Xen_is_keyword(keys[4])))
 	{
 	  /* make-polyoid in generators.scm */
 	  int yn;
@@ -6374,7 +6374,7 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
   mus_float_t *a;
   vct *v;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), order, 1, S_make_fir_coeffs, "int");
+  XEN_ASSERT_TYPE(Xen_is_integer(order), order, 1, S_make_fir_coeffs, "int");
   XEN_ASSERT_TYPE(MUS_IS_VCT(envl), envl, 2, S_make_fir_coeffs, "a vct");
 
   v = XEN_TO_VCT(envl);
@@ -6421,7 +6421,7 @@ static XEN g_filter(XEN obj, XEN input)
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_filter, S_filter, "a filter");
 
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, 2, S_filter, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(input), input, 2, S_filter, "a number");
 #endif
   return(C_TO_XEN_DOUBLE(mus_filter(g, XEN_TO_C_DOUBLE(input))));
 }
@@ -6436,7 +6436,7 @@ static XEN g_fir_filter(XEN obj, XEN input)
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_fir_filter, S_fir_filter, "an FIR filter");
 
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, 2, S_fir_filter, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(input), input, 2, S_fir_filter, "a number");
 #endif
   return(C_TO_XEN_DOUBLE(mus_fir_filter(g, XEN_TO_C_DOUBLE(input))));
 }
@@ -6451,7 +6451,7 @@ static XEN g_iir_filter(XEN obj, XEN input)
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_iir_filter, S_iir_filter, "an IIR filter");
 
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, 2, S_iir_filter, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(input), input, 2, S_iir_filter, "a number");
 #endif
   return(C_TO_XEN_DOUBLE(mus_iir_filter(g, XEN_TO_C_DOUBLE(input))));
 }
@@ -6479,14 +6479,14 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
   vals = mus_optkey_unscramble(caller, 4, keys, args, orig_arg);
   if (vals > 0)
     {
-      if (!(XEN_KEYWORD_P(keys[0])))
+      if (!(Xen_is_keyword(keys[0])))
 	{
 	  order = mus_optkey_to_int(keys[0], caller, orig_arg[0], 0);
 	  if (order <= 0)
 	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[0], keys[0], "order <= 0?");
 	}
 
-      if (!(XEN_KEYWORD_P(keys[1])))
+      if (!(Xen_is_keyword(keys[1])))
         {
 	  XEN_ASSERT_TYPE(MUS_IS_VCT(keys[1]), keys[1], orig_arg[1], caller, "a vct");
 	  if (choice == G_IIR_FILTER)
@@ -6501,14 +6501,14 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	    }
         }
 
-      if (!(XEN_KEYWORD_P(keys[2])))
+      if (!(Xen_is_keyword(keys[2])))
 	{
 	  XEN_ASSERT_TYPE(MUS_IS_VCT(keys[2]), keys[2], orig_arg[2], caller, "a vct");
 	  ywave = keys[2];
 	  y = XEN_TO_VCT(ywave);
 	}
 
-      if ((choice != G_FILTER) && (!(XEN_KEYWORD_P(keys[3]))))
+      if ((choice != G_FILTER) && (!(Xen_is_keyword(keys[3]))))
         {
 	  if (choice == G_IIR_FILTER)
 	    clm_error(caller, "redundant arg passed to " S_make_iir_filter "?", keys[3]);
@@ -6671,7 +6671,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       scaler = mus_optkey_to_float(keys[1], S_make_env, orig_arg[1], 1.0);
 
       duration = mus_optkey_to_float(keys[2], S_make_env, orig_arg[2], 0.0);
-      if ((duration < 0.0) || ((duration == 0.0) && (!XEN_KEYWORD_P(keys[2]))))
+      if ((duration < 0.0) || ((duration == 0.0) && (!Xen_is_keyword(keys[2]))))
 	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[2], keys[2], "duration <= 0.0?");
 
       offset = mus_optkey_to_float(keys[3], S_make_env, orig_arg[3], 0.0);
@@ -6689,7 +6689,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[6], keys[6], "dur < 0?");
 
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
-      if (!(XEN_KEYWORD_P(keys[0])))
+      if (!(Xen_is_keyword(keys[0])))
         {
 	  vct *v = NULL;
 	  XEN vect = XEN_NULL;
@@ -6706,7 +6706,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	    {
 #if HAVE_SCHEME
 	      /* in Ruby and Forth vectors and lists are the same, so stay with the old code */
-	      if (XEN_VECTOR_P(keys[0]))
+	      if (Xen_is_vector(keys[0]))
 		{
 		  vect = keys[0];
 		  len = XEN_VECTOR_LENGTH(vect);
@@ -6722,7 +6722,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 			      XEN_LIST_2(C_TO_XEN_STRING(S_make_env ": null env? ~A"), 
 					 keys[0]));
 		  
-		  if (XEN_LIST_P(XEN_CAR(keys[0])))
+		  if (Xen_is_list(XEN_CAR(keys[0])))
 		    len *= 2;
 		  else
 		    {
@@ -6731,7 +6731,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 				  XEN_LIST_2(C_TO_XEN_STRING(S_make_env ": odd length breakpoints list? ~A"), 
 					     keys[0]));
 		      
-		      if (!(XEN_NUMBER_P(XEN_CAR(keys[0]))))
+		      if (!(Xen_is_number(XEN_CAR(keys[0]))))
 			XEN_ASSERT_TYPE(false, keys[0], orig_arg[0], S_make_env, "a list of numbers (breakpoints)");
 		    }
 		}
@@ -6757,7 +6757,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 		}
 	      else
 		{
-		  if (XEN_NUMBER_P(XEN_CAR(keys[0])))
+		  if (Xen_is_number(XEN_CAR(keys[0])))
 		    {
 		      for (i = 0, lst = XEN_COPY_ARG(keys[0]); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 			brkpts[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
@@ -6768,10 +6768,10 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 			{
 			  XEN el;
 			  el = XEN_CAR(lst);
-			  if ((XEN_PAIR_P(el)) &&
-			      (XEN_NUMBER_P(XEN_CAR(el))) &&
-			      (XEN_PAIR_P(XEN_CDR(el))) &&
-			      (XEN_NUMBER_P(XEN_CADR(el))))
+			  if ((Xen_is_pair(el)) &&
+			      (Xen_is_number(XEN_CAR(el))) &&
+			      (Xen_is_pair(XEN_CDR(el))) &&
+			      (Xen_is_number(XEN_CADR(el))))
 			    {
 			      brkpts[i] = XEN_TO_C_DOUBLE(XEN_CAR(el));
 			      brkpts[i + 1] = XEN_TO_C_DOUBLE(XEN_CADR(el));
@@ -6836,7 +6836,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!! */
 {
   #define H_env_interp "(" S_env_interp " x env): value of envelope env at x"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, 1, S_env_interp, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_env_interp, "a number");
   XEN_ASSERT_TYPE((MUS_XEN_P(env1)) && (mus_is_env(XEN_TO_MUS_ANY(env1))), env1, 2, S_env_interp, "an env generator");
   return(C_TO_XEN_DOUBLE(mus_env_interp(XEN_TO_C_DOUBLE(x), XEN_TO_MUS_ANY(env1))));
 }
@@ -6865,7 +6865,7 @@ static XEN g_env_any(XEN e, XEN func)
 
   #define H_env_any "(" S_env_any " e func) uses 'func' to connect the dots in the env 'e'"
   XEN_ASSERT_TYPE((MUS_XEN_P(e)) && (mus_is_env(XEN_TO_MUS_ANY(e))), e, 1, S_env_any, "an env generator");
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS_OK(func, 1)), func, 2, S_env_any, "a function of one arg");
+  XEN_ASSERT_TYPE((Xen_is_procedure(func)) && (XEN_REQUIRED_ARGS_OK(func, 1)), func, 2, S_env_any, "a function of one arg");
   
   old_connect_func = current_connect_func;
   current_connect_func = func;
@@ -6883,14 +6883,14 @@ static XEN g_envelope_interp(XEN ux, XEN e, XEN ubase)
 {
   #define H_envelope_interp "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0)) -> .6"
   mus_float_t x, base = 1.0, x0, x1, y0, y1;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(ux), ux, 1, S_envelope_interp, "a number");
-  XEN_ASSERT_TYPE(XEN_LIST_P(e), e, 2, S_envelope_interp, "a list");
+  XEN_ASSERT_TYPE(Xen_is_number(ux), ux, 1, S_envelope_interp, "a number");
+  XEN_ASSERT_TYPE(Xen_is_list(e), e, 2, S_envelope_interp, "a list");
 
-  if (XEN_NULL_P(e))
+  if (Xen_is_null(e))
     return(XEN_ZERO);
 
   x = XEN_TO_C_DOUBLE(ux);
-  if (XEN_BOUND_P(ubase)) base = XEN_TO_C_DOUBLE(ubase);
+  if (Xen_is_bound(ubase)) base = XEN_TO_C_DOUBLE(ubase);
   x0 = XEN_TO_C_DOUBLE(XEN_CAR(e));
 
   while (true)
@@ -6898,7 +6898,7 @@ static XEN g_envelope_interp(XEN ux, XEN e, XEN ubase)
       XEN ey;
       ey = XEN_CADR(e);
       if ((x <= x0) ||
-	  (XEN_NULL_P(XEN_CDDR(e))))
+	  (Xen_is_null(XEN_CDDR(e))))
 	return(ey);
       x1 = XEN_TO_C_DOUBLE(XEN_CADDR(e));
       if (x < x1)
@@ -6947,7 +6947,7 @@ static XEN g_pulsed_env(XEN g, XEN fm)
 
   XEN_ASSERT_TYPE((MUS_XEN_P(g)) && (mus_is_pulsed_env(pl = XEN_TO_MUS_ANY(g))), g, 1, S_pulsed_env, "a pulsed-env object");
 
-  if (XEN_NUMBER_P(fm))
+  if (Xen_is_number(fm))
     return(C_TO_XEN_DOUBLE(mus_pulsed_env(pl, XEN_TO_C_DOUBLE(fm))));
   return(C_TO_XEN_DOUBLE(mus_pulsed_env_unmodulated(pl)));
 }
@@ -7037,7 +7037,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
 {
   mus_long_t pos;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(frame), frame, 1, caller, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(frame), frame, 1, caller, "an integer");
 
   pos = XEN_TO_C_LONG_LONG(frame);
   if (pos < 0) 
@@ -7047,7 +7047,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
     XEN_OUT_OF_RANGE_ERROR(caller, 2, C_TO_XEN_INT(in_chan), "must be >= 0");    
 
 #if HAVE_SCHEME
-  if (XEN_FALSE_P(inp)) return(C_TO_XEN_DOUBLE(0.0)); /* ws.scm default for *clm-reverb* is #f */
+  if (Xen_is_false(inp)) return(C_TO_XEN_DOUBLE(0.0)); /* ws.scm default for *clm-reverb* is #f */
   if (inp == CLM_REVERB)
     return(s7_make_real(s7, in_any_2(pos, in_chan)));
 #endif
@@ -7072,7 +7072,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
       return(C_TO_XEN_DOUBLE(0.0));
     }
 
-  if (XEN_VECTOR_P(inp))
+  if (Xen_is_vector(inp))
     {
       if (pos < XEN_VECTOR_LENGTH(inp))
 	return(XEN_VECTOR_REF(inp, pos));
@@ -7085,7 +7085,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
 static XEN g_in_any(XEN frame, XEN chan, XEN inp) 
 {
   #define H_in_any "(" S_in_any " frame chan stream): input stream sample at frame in channel chan"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 2, S_in_any, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_in_any, "an integer");
   return(g_in_any_1(S_in_any, frame, XEN_TO_C_INT(chan), inp));
 }
 
@@ -7141,7 +7141,7 @@ static XEN fallback_out_any_2(XEN outp, mus_long_t pos, mus_float_t inv, int chn
       return(XEN_ZERO);
     }
 
-  if (XEN_VECTOR_P(outp))
+  if (Xen_is_vector(outp))
     {
       if (pos < XEN_VECTOR_LENGTH(outp))
 	XEN_VECTOR_SET(outp, pos, C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(outp, pos)) + inv));
@@ -7252,7 +7252,7 @@ static s7_pointer g_clm_output_set(s7_scheme *sc, s7_pointer args)
 	    }
 	  else
 	    {
-	      if (XEN_VECTOR_P(new_output))
+	      if (Xen_is_vector(new_output))
 		{
 		  out_any_2 = out_any_2_to_vector;
 		}
@@ -7339,7 +7339,7 @@ static s7_pointer g_clm_reverb_set(s7_scheme *sc, s7_pointer args)
 	    }
 	  else
 	    {
-	      if (XEN_VECTOR_P(new_input))
+	      if (Xen_is_vector(new_input))
 		{
 		  in_any_2 = in_any_2_to_vector;
 		}
@@ -7364,15 +7364,15 @@ sends that output to the output channels in the vector order (the first generato
   int i, size;
   double x = 0.0;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(loc), loc, 2, S_out_bank, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(loc), loc, 2, S_out_bank, "an integer");
   pos = XEN_TO_C_LONG_LONG(loc);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(S_out_bank, 2, loc, "must be >= 0");    
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, 1, S_out_bank, "a vector of generators");
+  XEN_ASSERT_TYPE(Xen_is_vector(gens), gens, 1, S_out_bank, "a vector of generators");
   size = XEN_VECTOR_LENGTH(gens);
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(inval), inval, 3, S_out_bank, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(inval), inval, 3, S_out_bank, "a number");
   x = XEN_TO_C_DOUBLE(inval);
 
 #if HAVE_SCHEME  
@@ -7420,7 +7420,7 @@ static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp
 static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
 {
   #define H_out_any "(" S_out_any " frame val chan stream): add val to output stream at frame in channel chan"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 3, S_out_any, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 3, S_out_any, "an integer");
   return(g_out_any_1(S_out_any, frame, XEN_TO_C_INT(chan), val, outp));
 }
 
@@ -7460,7 +7460,7 @@ static XEN g_mus_close(XEN ptr)
   if (MUS_XEN_P(ptr))
     return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
 
-  XEN_ASSERT_TYPE(MUS_IS_VCT(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_VECTOR_P(ptr), 
+  XEN_ASSERT_TYPE(MUS_IS_VCT(ptr) || Xen_is_false(ptr) || sound_data_p(ptr) || Xen_is_vector(ptr), 
 		  ptr, 1, S_mus_close, "an IO gen or its outa equivalent");
   return(XEN_ZERO);
 }
@@ -7473,7 +7473,7 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
   mus_any *ge;
   mus_long_t size;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_make_file_to_sample, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_make_file_to_sample, "a string");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(buffer_size), buffer_size, 2, S_make_file_to_sample, "an integer");
 
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
@@ -7482,7 +7482,7 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
 			 name,
 			 C_TO_XEN_STRING(STRERROR(errno))));
 
-  if (XEN_LONG_LONG_P(buffer_size))
+  if (Xen_is_long_long_int(buffer_size))
     {
       size = XEN_TO_C_LONG_LONG(buffer_size);
       if (size <= 0)
@@ -7504,11 +7504,11 @@ static XEN g_file_to_sample(XEN obj, XEN samp, XEN chan)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_input, S_file_to_sample, "an input generator");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp), samp, 2, S_file_to_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(samp), samp, 2, S_file_to_sample, "an integer");
 
-  if (XEN_BOUND_P(chan))
+  if (Xen_is_bound(chan))
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 3, S_file_to_sample, "an integer");
+      XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 3, S_file_to_sample, "an integer");
       channel = XEN_TO_C_INT(chan);
     }
   return(C_TO_XEN_DOUBLE(mus_file_to_sample(g, XEN_TO_C_LONG_LONG(samp), channel)));
@@ -7534,26 +7534,26 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
 
   int df = (int)MUS_OUT_FORMAT;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_make_sample_to_file, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_make_sample_to_file, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, 2, S_make_sample_to_file, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_format), out_format, 3, S_make_sample_to_file, "an integer (data format id)");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, 4, S_make_sample_to_file, "an integer (header type id)");
 
-  if (XEN_INTEGER_P(out_format)) df = XEN_TO_C_INT(out_format);
+  if (Xen_is_integer(out_format)) df = XEN_TO_C_INT(out_format);
   if (mus_is_data_format(df))
     {
       int ht = (int)MUS_NEXT;
-      if (XEN_INTEGER_P(out_type)) ht = XEN_TO_C_INT(out_type);
+      if (Xen_is_integer(out_type)) ht = XEN_TO_C_INT(out_type);
       if (mus_is_header_type(ht))
 	{
 	  int chns = 1;
-	  if (XEN_INTEGER_P(chans)) chns = XEN_TO_C_INT(chans);
+	  if (Xen_is_integer(chans)) chns = XEN_TO_C_INT(chans);
 	  if (chns > 0)
 	    {
 	      mus_any *rgen;
 	      rgen = mus_make_sample_to_file_with_comment(XEN_TO_C_STRING(name),
 							  chns, df, ht,
-							  (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
+							  (Xen_is_string(comment)) ? XEN_TO_C_STRING(comment) : NULL);
 	      if (rgen) return(mus_xen_to_object(mus_any_to_mus_xen(rgen)));
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_make_sample_to_file, 2, chans, "chans <= 0?");
@@ -7571,7 +7571,7 @@ static XEN g_continue_sample_to_file(XEN name)
 that reopens an existing sound file 'filename' ready for output via " S_sample_to_file
 
   mus_any *rgen = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_continue_sample_to_file, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_continue_sample_to_file, "a string");
   rgen = mus_continue_sample_to_file(XEN_TO_C_STRING(name));
   if (rgen) return(mus_xen_to_object(mus_any_to_mus_xen(rgen)));
   return(XEN_FALSE);
@@ -7589,9 +7589,9 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
   XEN_TO_C_ANY_GENERATOR(obj, gn, g, S_sample_to_file, "an output generator");
   XEN_ASSERT_TYPE(mus_is_output(g), obj, 1, S_sample_to_file, "an output generator");
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, 2, S_sample_to_file, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 3, S_sample_to_file, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 4, S_sample_to_file, "a number");
+  XEN_ASSERT_TYPE(Xen_is_integer(samp), samp, 2, S_sample_to_file, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 3, S_sample_to_file, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 4, S_sample_to_file, "a number");
 
   mus_sample_to_file(g,
 		     XEN_TO_C_LONG_LONG(samp),
@@ -7624,7 +7624,7 @@ static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
   mus_any *ge;
   mus_long_t size;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_make_file_to_frame, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_make_file_to_frame, "a string");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(buffer_size), buffer_size, 2, S_make_file_to_frame, "an integer");
 
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
@@ -7633,7 +7633,7 @@ static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
 			 name,
 			 C_TO_XEN_STRING(STRERROR(errno))));
 
-  if (XEN_LONG_LONG_P(buffer_size))
+  if (Xen_is_long_long_int(buffer_size))
     {
       size = XEN_TO_C_LONG_LONG(buffer_size);
       if (size <= 0)
@@ -7652,7 +7652,7 @@ static XEN g_file_to_frame(XEN obj, XEN samp, XEN outfr)
   mus_any *res = NULL, *nf = NULL;
   
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_is_input(XEN_TO_MUS_ANY(obj))), obj, 1, S_file_to_frame, "an input generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, 2, S_file_to_frame, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(samp), samp, 2, S_file_to_frame, "an integer");
 
   if ((MUS_XEN_P(outfr)) && 
       (mus_is_frame(XEN_TO_MUS_ANY(outfr)))) 
@@ -7684,16 +7684,16 @@ should be sndlib identifiers:\n  " make_frame_to_file_example
 
   mus_any *fgen = NULL;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_make_frame_to_file, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_make_frame_to_file, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, 2, S_make_frame_to_file, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_format), out_format, 3, S_make_frame_to_file, "an integer (data format id)");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, 4, S_make_frame_to_file, "an integer (header-type id)");
 
   fgen = mus_make_frame_to_file_with_comment(XEN_TO_C_STRING(name),
-					     (XEN_INTEGER_P(chans)) ? XEN_TO_C_INT(chans) : 1,
-					     (XEN_INTEGER_P(out_format)) ? XEN_TO_C_INT(out_format) : (int)MUS_OUT_FORMAT,
-					     (XEN_INTEGER_P(out_type)) ? XEN_TO_C_INT(out_type) : (int)MUS_NEXT,
-					     (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
+					     (Xen_is_integer(chans)) ? XEN_TO_C_INT(chans) : 1,
+					     (Xen_is_integer(out_format)) ? XEN_TO_C_INT(out_format) : (int)MUS_OUT_FORMAT,
+					     (Xen_is_integer(out_type)) ? XEN_TO_C_INT(out_type) : (int)MUS_NEXT,
+					     (Xen_is_string(comment)) ? XEN_TO_C_STRING(comment) : NULL);
   if (fgen) return(mus_xen_to_object(mus_any_to_mus_xen(fgen)));
   return(XEN_FALSE);
 }
@@ -7705,7 +7705,7 @@ static XEN g_continue_frame_to_file(XEN name)
 that reopens an existing sound file 'filename' ready for output via " S_frame_to_file
 
   mus_any *rgen = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_continue_frame_to_file, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_continue_frame_to_file, "a string");
   rgen = mus_continue_frame_to_file(XEN_TO_C_STRING(name));
   if (rgen) return(mus_xen_to_object(mus_any_to_mus_xen(rgen)));
   return(XEN_FALSE);
@@ -7720,7 +7720,7 @@ handled by the output generator 'obj' at frame 'samp'"
 
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(obj, mus_xen_tag);
   XEN_ASSERT_TYPE(((gn) && (mus_is_output(gn->gen))), obj, 1, S_frame_to_file, "an output generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, 2, S_frame_to_file, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(samp), samp, 2, S_frame_to_file, "an integer");
 
   frm = (mus_xen *)XEN_OBJECT_REF_CHECKED(val, mus_xen_tag);
   XEN_ASSERT_TYPE((frm) && (mus_is_frame(frm->gen)), val, 3, S_frame_to_file, "a frame");
@@ -7741,7 +7741,7 @@ handled by the output generator 'obj' at frame 'samp'"
 
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(obj, mus_xen_tag);
   XEN_ASSERT_TYPE(((gn) && (mus_is_output(gn->gen))), obj, 1, S_float_vector_to_file, "an output generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, 2, S_float_vector_to_file, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(samp), samp, 2, S_float_vector_to_file, "an integer");
   XEN_ASSERT_TYPE(s7_is_float_vector(val), val, 3, S_float_vector_to_file, "a float-vector");
 
   mus_vector_to_file(gn->gen, XEN_TO_C_LONG_LONG(samp), (mus_float_t *)s7_float_vector_elements(val), s7_vector_length(val));
@@ -7778,7 +7778,7 @@ static XEN g_file_to_float_vector(XEN obj, XEN samp, XEN val)
   #define H_file_to_float_vector "(" S_file_to_float_vector " obj samp outf): vector of samples at 'samp' in sound file read by 'obj'"
   
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_is_input(XEN_TO_MUS_ANY(obj))), obj, 1, S_file_to_float_vector, "an input generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, 2, S_file_to_float_vector, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(samp), samp, 2, S_file_to_float_vector, "an integer");
   XEN_ASSERT_TYPE(s7_is_float_vector(val), val, 3, S_file_to_float_vector, "a float-vector");
 
   mus_file_to_vector(XEN_TO_MUS_ANY(obj), XEN_TO_C_LONG_LONG(samp), s7_float_vector_elements(val), s7_vector_length(val));
@@ -7889,7 +7889,7 @@ static XEN g_locsig_ref(XEN obj, XEN chan)
 {
   #define H_locsig_ref "(" S_locsig_ref " gen chan): locsig 'gen' channel 'chan' scaler"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_is_locsig(XEN_TO_MUS_ANY(obj))), obj, 1, S_locsig_ref, "a locsig generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 2, S_locsig_ref, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_locsig_ref, "an integer");
   return(C_TO_XEN_DOUBLE(mus_locsig_ref(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT(chan))));
 }
 
@@ -7898,9 +7898,9 @@ static XEN g_locsig_set(XEN obj, XEN chan, XEN val)
 {
   #define H_locsig_set "(" S_locsig_set " gen chan val): set the locsig generator's channel 'chan' scaler to 'val'"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_is_locsig(XEN_TO_MUS_ANY(obj))), obj, 1, S_locsig_set, "a locsig generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 2, S_locsig_set, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_locsig_set, "an integer");
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_locsig_set, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 3, S_locsig_set, "a number");
 #endif
   mus_locsig_set(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT(chan), XEN_TO_C_DOUBLE(val));
   return(val);
@@ -7911,7 +7911,7 @@ static XEN g_locsig_reverb_ref(XEN obj, XEN chan)
 {
   #define H_locsig_reverb_ref "(" S_locsig_reverb_ref " gen chan): locsig reverb channel 'chan' scaler"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_is_locsig(XEN_TO_MUS_ANY(obj))), obj, 1, S_locsig_reverb_ref, "a locsig generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 2, S_locsig_reverb_ref, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_locsig_reverb_ref, "an integer");
   return(C_TO_XEN_DOUBLE(mus_locsig_reverb_ref(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT(chan))));
 }
 
@@ -7920,9 +7920,9 @@ static XEN g_locsig_reverb_set(XEN obj, XEN chan, XEN val)
 {
   #define H_locsig_reverb_set "(" S_locsig_reverb_set " gen chan val): set the locsig reverb channel 'chan' scaler to 'val'"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_is_locsig(XEN_TO_MUS_ANY(obj))), obj, 1, S_locsig_reverb_set, "a locsig generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, 2, S_locsig_reverb_set, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_locsig_reverb_set, "an integer");
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_locsig_reverb_set, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 3, S_locsig_reverb_set, "a number");
 #endif
   mus_locsig_reverb_set(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT(chan), XEN_TO_C_DOUBLE(val));
   return(val);
@@ -7973,7 +7973,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	    }
 	  else 
 	    {
-	      if ((XEN_VECTOR_P(output)) &&
+	      if ((Xen_is_vector(output)) &&
 		  (pos < XEN_VECTOR_LENGTH(output)))
 		XEN_VECTOR_SET(output, pos, C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(output, pos)) + mus_frame_ref(outfr, 0)));
 	    }
@@ -7981,7 +7981,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
     }
   
   if ((revfr) && 
-      (XEN_BOUND_P(ms->vcts[G_LOCSIG_REVOUT])))
+      (Xen_is_bound(ms->vcts[G_LOCSIG_REVOUT])))
     {
       reverb = ms->vcts[G_LOCSIG_REVOUT];
       if (sound_data_p(reverb))
@@ -7999,7 +7999,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	    }
 	  else 
 	    {
-	      if ((XEN_VECTOR_P(reverb)) &&
+	      if ((Xen_is_vector(reverb)) &&
 		  (pos < XEN_VECTOR_LENGTH(reverb)))
 		XEN_VECTOR_SET(reverb, pos, C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(reverb, pos)) + mus_frame_ref(revfr, 0)));
 	    }
@@ -8021,14 +8021,14 @@ static XEN g_locsig(XEN xobj, XEN xpos, XEN xval)
   loc_gen = ms->gen;
   XEN_ASSERT_TYPE(mus_is_locsig(loc_gen), xobj, 1, S_locsig, "a locsig generator");
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(xpos), xpos, 2, S_locsig, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(xpos), xpos, 2, S_locsig, "an integer");
 
   pos = XEN_TO_C_LONG_LONG(xpos);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(S_locsig, 2, xpos, "must be >= 0");    
 
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(xval), xval, 3, S_locsig, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(xval), xval, 3, S_locsig, "a number");
 #endif
   fval = XEN_TO_C_DOUBLE(xval);
 
@@ -8049,7 +8049,7 @@ static XEN g_locsig_type(void)
 static XEN g_set_locsig_type(XEN val)
 {
   mus_interp_t newval;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_locsig_type, S_mus_interp_linear " or " S_mus_interp_sinusoidal);
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_locsig_type, S_mus_interp_linear " or " S_mus_interp_sinusoidal);
   newval = (mus_interp_t)XEN_TO_C_INT(val);
   if ((newval == MUS_INTERP_LINEAR) || (newval == MUS_INTERP_SINUSOIDAL))
     clm_locsig_type = newval;
@@ -8107,15 +8107,15 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
       distance = mus_optkey_to_float(keys[1], S_make_locsig, orig_arg[1], distance);
       reverb = mus_optkey_to_float(keys[2], S_make_locsig, orig_arg[2], reverb);
 
-      if (!(XEN_KEYWORD_P(keys[3])))
+      if (!(Xen_is_keyword(keys[3])))
 	keys3 = keys[3];
 
-      if (!(XEN_KEYWORD_P(keys[4])))
+      if (!(Xen_is_keyword(keys[4])))
 	keys4 = keys[4];
 
-      if (!(XEN_KEYWORD_P(keys[5])))
+      if (!(Xen_is_keyword(keys[5])))
 	{
-	  XEN_ASSERT_TYPE(XEN_INTEGER_P(keys[5]), keys[5], orig_arg[5], S_make_locsig, "an integer");
+	  XEN_ASSERT_TYPE(Xen_is_integer(keys[5]), keys[5], orig_arg[5], S_make_locsig, "an integer");
 	  out_chans = XEN_TO_C_INT(keys[5]);
 	  if (out_chans < 0) 
 	    XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans < 0?");
@@ -8156,7 +8156,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	{
 	  if (MUS_IS_VCT(keys3))
 	    ov = keys3;
-	  else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, vector, or a sound-data object");
+	  else XEN_ASSERT_TYPE(Xen_is_keyword(keys[3]) || Xen_is_false(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, vector, or a sound-data object");
 	}
     }
 
@@ -8182,7 +8182,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	      rv = keys4;
 	      rev_chans = 1;
 	    }
-	  else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[4]) || XEN_FALSE_P(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output generator");
+	  else XEN_ASSERT_TYPE(Xen_is_keyword(keys[4]) || Xen_is_false(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output generator");
 	}
     }
 
@@ -8195,8 +8195,8 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     {
       gn = (mus_xen *)calloc(1, sizeof(mus_xen));
 
-      if (((XEN_BOUND_P(ov)) && (!XEN_FALSE_P(ov))) || 
-	  ((XEN_BOUND_P(rv)) && (!XEN_FALSE_P(rv))))
+      if (((Xen_is_bound(ov)) && (!Xen_is_false(ov))) || 
+	  ((Xen_is_bound(rv)) && (!Xen_is_false(rv))))
 	gn->nvcts = 4;
       else gn->nvcts = 2;
       gn->vcts = make_vcts(gn->nvcts);
@@ -8229,8 +8229,8 @@ static XEN g_move_locsig(XEN obj, XEN degree, XEN distance)
   #define H_move_locsig "(" S_move_locsig " gen degree distance): move locsig gen to reflect degree and distance"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_is_locsig(XEN_TO_MUS_ANY(obj))), obj, 1, S_move_locsig, "a locsig generator");
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(degree), degree, 2, S_move_locsig, "a number in degrees");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(distance), distance, 3, S_move_locsig, "a number > 1.0");
+  XEN_ASSERT_TYPE(Xen_is_number(degree), degree, 2, S_move_locsig, "a number in degrees");
+  XEN_ASSERT_TYPE(Xen_is_number(distance), distance, 3, S_move_locsig, "a number > 1.0");
 #endif
   mus_move_locsig(XEN_TO_MUS_ANY(obj),
 		  XEN_TO_C_DOUBLE(degree),
@@ -8263,8 +8263,8 @@ static XEN g_move_sound(XEN obj, XEN loc, XEN val)
   move_gen = (mus_any *)(ms->gen);
 
   XEN_ASSERT_TYPE(mus_is_move_sound(move_gen), obj, 1, S_move_sound, "a move-sound generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(loc), loc, 2, S_move_sound, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_move_sound, "a number");
+  XEN_ASSERT_TYPE(Xen_is_integer(loc), loc, 2, S_move_sound, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 3, S_move_sound, "a number");
 
   pos = XEN_TO_C_LONG_LONG(loc);
   if (pos < 0) 
@@ -8281,7 +8281,7 @@ static mus_any **xen_vector_to_mus_any_array(XEN vect)
   mus_any **gens;
   mus_long_t i, len;
 
-  if (!(XEN_VECTOR_P(vect))) return(NULL);
+  if (!(Xen_is_vector(vect))) return(NULL);
   len = XEN_VECTOR_LENGTH(vect);
   gens = (mus_any **)calloc(len, sizeof(mus_any *));
 
@@ -8332,7 +8332,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   /* dloc-list is (list start end outchans revchans dopdly dopenv revenv outdelays outenvs revenvs outmap) */
   /*   outdelays envs and revenvs are vectors */
 
-  XEN_ASSERT_TYPE(XEN_LIST_P(dloc_list) && (XEN_LIST_LENGTH(dloc_list) == 11), dloc_list, 1, S_make_move_sound, "a dlocsig list");
+  XEN_ASSERT_TYPE(Xen_is_list(dloc_list) && (XEN_LIST_LENGTH(dloc_list) == 11), dloc_list, 1, S_make_move_sound, "a dlocsig list");
 
   if (XEN_NOT_BOUND_P(outp))
     outp = CLM_OUTPUT;
@@ -8349,7 +8349,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
     {
       if ((MUS_IS_VCT(outp)) || 
 	  (sound_data_p(outp)) || 
-	  (XEN_FALSE_P(outp)) || 
+	  (Xen_is_false(outp)) || 
 	  (XEN_NOT_BOUND_P(outp)))
 	ov = outp;
       else XEN_ASSERT_TYPE(false, outp, 2, S_make_move_sound, "output stream, vct, or a sound-data object");
@@ -8364,26 +8364,26 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
     {
       if ((MUS_IS_VCT(revp)) || 
 	  (sound_data_p(revp)) || 
-	  (XEN_FALSE_P(revp)) || 
+	  (Xen_is_false(revp)) || 
 	  (XEN_NOT_BOUND_P(revp)))
 	rv = revp;
       else XEN_ASSERT_TYPE(false, revp, 3, S_make_move_sound, "reverb stream, vct, or a sound-data object");
     }
 
   ref = XEN_LIST_REF(dloc_list, 0);
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(ref), ref, 1, S_make_move_sound, "dlocsig list[0] (start): a sample number");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(ref), ref, 1, S_make_move_sound, "dlocsig list[0] (start): a sample number");
   start = XEN_TO_C_LONG_LONG(ref);
 
   ref = XEN_LIST_REF(dloc_list, 1);
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(ref), ref, 1, S_make_move_sound, "dlocsig list[1] (end): a sample number");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(ref), ref, 1, S_make_move_sound, "dlocsig list[1] (end): a sample number");
   end = XEN_TO_C_LONG_LONG(ref);
 
   ref = XEN_LIST_REF(dloc_list, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ref), ref, 1, S_make_move_sound, "dlocsig list[2] (outchans): an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(ref), ref, 1, S_make_move_sound, "dlocsig list[2] (outchans): an integer");
   outchans = XEN_TO_C_INT(ref);
 
   ref = XEN_LIST_REF(dloc_list, 3);
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ref), ref, 1, S_make_move_sound, "dlocsig list[3] (revchans): an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(ref), ref, 1, S_make_move_sound, "dlocsig list[3] (revchans): an integer");
   revchans = XEN_TO_C_INT(ref);
 
   ref = XEN_LIST_REF(dloc_list, 4);
@@ -8397,7 +8397,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   XEN_ASSERT_TYPE(mus_is_env(dopenv), ref, 1, S_make_move_sound, "dlocsig list[5] (doppler env): an env generator");
 
   ref = XEN_LIST_REF(dloc_list, 6);
-  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || MUS_XEN_P(ref), ref, 1, S_make_move_sound, "dlocsig list[6] (global rev env): an env generator");
+  XEN_ASSERT_TYPE(Xen_is_false(ref) || MUS_XEN_P(ref), ref, 1, S_make_move_sound, "dlocsig list[6] (global rev env): an env generator");
   if (MUS_XEN_P(ref))
     {
       globrevenv = XEN_TO_MUS_ANY(ref);
@@ -8405,19 +8405,19 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
     }
 
   ref = XEN_LIST_REF(dloc_list, 7);
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= outchans), 
+  XEN_ASSERT_TYPE(Xen_is_vector(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= outchans), 
 		  ref, 1, S_make_move_sound, "dlocsig list[7] (out delays): a vector of delay gens");
 
   ref = XEN_LIST_REF(dloc_list, 8);
-  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || (XEN_VECTOR_P(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= outchans)), 
+  XEN_ASSERT_TYPE(Xen_is_false(ref) || (Xen_is_vector(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= outchans)), 
 		  ref, 1, S_make_move_sound, "dlocsig list[8] (out envs): " PROC_FALSE " or a vector of envs");
 
   ref = XEN_LIST_REF(dloc_list, 9);
-  XEN_ASSERT_TYPE(XEN_FALSE_P(ref) || (XEN_VECTOR_P(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= revchans)), 
+  XEN_ASSERT_TYPE(Xen_is_false(ref) || (Xen_is_vector(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= revchans)), 
 		  ref, 1, S_make_move_sound, "dlocsig list[9] (rev envs): " PROC_FALSE " or a vector of envs");
 
   ref = XEN_LIST_REF(dloc_list, 10);
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= outchans), 
+  XEN_ASSERT_TYPE(Xen_is_vector(ref) && ((int)XEN_VECTOR_LENGTH(ref) >= outchans), 
 		  ref, 1, S_make_move_sound, "dlocsig list[10] (out map): vector of ints");
 
   /* put off allocation until all type error checks are done */
@@ -8435,8 +8435,8 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   if (ge)
     {
       gn = (mus_xen *)calloc(1, sizeof(mus_xen));
-      if (((XEN_BOUND_P(ov)) && (!XEN_FALSE_P(ov))) || 
-	  ((XEN_BOUND_P(rv)) && (!XEN_FALSE_P(rv))))
+      if (((Xen_is_bound(ov)) && (!Xen_is_false(ov))) || 
+	  ((Xen_is_bound(rv)) && (!Xen_is_false(rv))))
 	gn->nvcts = 4;
       else gn->nvcts = 1;
       gn->vcts = make_vcts(gn->nvcts);
@@ -8548,8 +8548,8 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
       XEN in_obj;
       in_obj = gn->vcts[MUS_INPUT_FUNCTION];
 
-      if ((XEN_BOUND_P(in_obj)) && 
-	  (XEN_PROCEDURE_P(in_obj)))
+      if ((Xen_is_bound(in_obj)) && 
+	  (Xen_is_procedure(in_obj)))
 	{
 #if HAVE_SCHEME
 	  mus_float_t result;
@@ -8696,7 +8696,7 @@ included an 'input' argument, input-function is ignored."
 
   if (XEN_NOT_BOUND_P(gn->vcts[MUS_INPUT_DATA]))
     {
-      if (XEN_PROCEDURE_P(func))
+      if (Xen_is_procedure(func))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(func, 1))
 	    gn->vcts[MUS_INPUT_FUNCTION] = func;
@@ -8818,20 +8818,20 @@ static XEN g_granulate(XEN obj, XEN func, XEN edit_func)
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_granulate, S_granulate, "a granulate generator");
 
-  if ((XEN_BOUND_P(func)) &&
+  if ((Xen_is_bound(func)) &&
       (XEN_NOT_BOUND_P(gn->vcts[MUS_INPUT_DATA])))
     {
-      if (XEN_PROCEDURE_P(func))
+      if (Xen_is_procedure(func))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(func, 1))
 	    gn->vcts[MUS_INPUT_FUNCTION] = func;
 	  else XEN_BAD_ARITY_ERROR(S_granulate, 2, func, "granulate input function wants 1 arg");
 	}
-      if (XEN_PROCEDURE_P(edit_func))
+      if (Xen_is_procedure(edit_func))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(edit_func, 1))
 	    {
-	      if (!(XEN_BOUND_P(gn->vcts[MUS_EDIT_FUNCTION]))) /* default value is XEN_UNDEFINED */
+	      if (!(Xen_is_bound(gn->vcts[MUS_EDIT_FUNCTION]))) /* default value is XEN_UNDEFINED */
 		{
 		  mus_granulate_set_edit_function(gn->gen, grnedit);
 		  gn->vcts[MUS_EDIT_FUNCTION] = edit_func;
@@ -8918,7 +8918,7 @@ The edit function, if any, should return the length in samples of the grain, or 
       maxsize = mus_optkey_to_int(keys[7], S_make_granulate, orig_arg[7], maxsize);
       if ((maxsize > mus_max_malloc()) || 
 	  (maxsize < 0) ||
-	  ((maxsize == 0) && (!XEN_KEYWORD_P(keys[7]))))
+	  ((maxsize == 0) && (!Xen_is_keyword(keys[7]))))
 	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[7], keys[7], "max-size invalid");
 
       edit_obj = mus_optkey_to_procedure(keys[8], S_make_granulate, orig_arg[8], XEN_UNDEFINED, 1, "granulate edit procedure takes 1 arg");
@@ -8976,7 +8976,7 @@ static XEN g_convolve(XEN obj, XEN func)
 
   if (XEN_NOT_BOUND_P(gn->vcts[MUS_INPUT_DATA]))
     {
-      if (XEN_PROCEDURE_P(func))
+      if (Xen_is_procedure(func))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(func, 1))
 	    gn->vcts[MUS_INPUT_FUNCTION] = func;
@@ -9025,7 +9025,7 @@ return a new convolution generator which convolves its input with the impulse re
 
       fft_size = mus_optkey_to_mus_long_t(keys[2], S_make_convolve, orig_arg[2], fft_size);
       if ((fft_size  < 0) || 
-	  ((fft_size == 0) && (!XEN_KEYWORD_P(keys[2]))) ||
+	  ((fft_size == 0) && (!Xen_is_keyword(keys[2]))) ||
 	  (fft_size > mus_max_malloc()))
 	XEN_OUT_OF_RANGE_ERROR(S_make_convolve, orig_arg[2], keys[2], "fft-size invalid (see mus-max-malloc))");
     }
@@ -9075,17 +9075,17 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
   const char *f1, *f2, *f3;
   mus_float_t maxval = 1.0;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(file1), file1, 1, S_convolve_files, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(file2), file2, 2, S_convolve_files, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(file1), file1, 1, S_convolve_files, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(file2), file2, 2, S_convolve_files, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(maxamp), maxamp, 3, S_convolve_files, "a number");
-  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(outfile)) || (XEN_STRING_P(outfile)), outfile, 4, S_convolve_files, "a string");
+  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(outfile)) || (Xen_is_string(outfile)), outfile, 4, S_convolve_files, "a string");
 
   f1 = XEN_TO_C_STRING(file1);
   f2 = XEN_TO_C_STRING(file2);
-  if (XEN_STRING_P(outfile)) 
+  if (Xen_is_string(outfile)) 
     f3 = XEN_TO_C_STRING(outfile); 
   else f3 = "tmp.snd";
-  if (XEN_NUMBER_P(maxamp)) 
+  if (Xen_is_number(maxamp)) 
     maxval = XEN_TO_C_DOUBLE(maxamp);
 
   mus_convolve_files(f1, f2, maxval, f3);
@@ -9156,20 +9156,20 @@ static XEN g_phase_vocoder(XEN obj, XEN func, XEN analyze_func, XEN edit_func, X
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_phase_vocoder, S_phase_vocoder, "a phase-vocoder generator");
 
-  if (XEN_BOUND_P(func))
+  if (Xen_is_bound(func))
     {
       bool (*analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction)) = NULL;
       int (*edit)(void *arg) = NULL;
       mus_float_t (*synthesize)(void *arg) = NULL;
 
-      if ((XEN_PROCEDURE_P(func)) &&
+      if ((Xen_is_procedure(func)) &&
 	  (XEN_NOT_BOUND_P(gn->vcts[MUS_INPUT_DATA])))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(func, 1))
 	    gn->vcts[MUS_INPUT_FUNCTION] = func; /* as_needed_input_func set at make time will pick this up */
 	  else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 2, func, S_phase_vocoder " input function wants 1 arg");
 	}
-      if (XEN_PROCEDURE_P(analyze_func))
+      if (Xen_is_procedure(analyze_func))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(analyze_func, 2))
 	    {
@@ -9178,7 +9178,7 @@ static XEN g_phase_vocoder(XEN obj, XEN func, XEN analyze_func, XEN edit_func, X
 	    }
 	  else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 3, analyze_func, S_phase_vocoder " analyze function wants 2 args");
 	}
-      if (XEN_PROCEDURE_P(edit_func))
+      if (Xen_is_procedure(edit_func))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(edit_func, 1))
 	    {
@@ -9187,7 +9187,7 @@ static XEN g_phase_vocoder(XEN obj, XEN func, XEN analyze_func, XEN edit_func, X
 	    }
 	  else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 4, edit_func, S_phase_vocoder " edit function wants 1 arg");
 	}
-      if (XEN_PROCEDURE_P(synthesize_func))
+      if (Xen_is_procedure(synthesize_func))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(synthesize_func, 1))
 	    {
@@ -9427,20 +9427,20 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   mus_long_t ostart = 0, istart = 0, osamps = 0;
   int in_chans = 0, out_chans = 0, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(out) || ((MUS_XEN_P(out)) && (mus_is_output(XEN_TO_MUS_ANY(out)))), 
+  XEN_ASSERT_TYPE(Xen_is_string(out) || ((MUS_XEN_P(out)) && (mus_is_output(XEN_TO_MUS_ANY(out)))), 
 		  out, 1, S_mus_mix, "a filename or a frame->file generator");
-  XEN_ASSERT_TYPE(XEN_STRING_P(in) || ((MUS_XEN_P(in)) && (mus_is_input(XEN_TO_MUS_ANY(in)))), 
+  XEN_ASSERT_TYPE(Xen_is_string(in) || ((MUS_XEN_P(in)) && (mus_is_input(XEN_TO_MUS_ANY(in)))), 
 		  in, 2, S_mus_mix, "a filename or a file->frame generator");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ost), ost, 3, S_mus_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(olen), olen, 4, S_mus_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ist), ist, 5, S_mus_mix, "an integer");
-  XEN_ASSERT_TYPE((XEN_VECTOR_P(mx)) || (XEN_NOT_BOUND_P(mx)) || (XEN_FALSE_P(mx)) || ((MUS_XEN_P(mx)) && (mus_is_mixer(XEN_TO_MUS_ANY(mx)))), mx, 6, S_mus_mix, "a mixer");
-  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(envs)) || (XEN_FALSE_P(envs)) || (XEN_VECTOR_P(envs)), envs, 7, S_mus_mix, "an env gen or vector of envs");
-  if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_LONG_LONG(ost);
-  if (XEN_BOUND_P(ist)) istart = XEN_TO_C_LONG_LONG(ist);
-  if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) 
+  XEN_ASSERT_TYPE((Xen_is_vector(mx)) || (XEN_NOT_BOUND_P(mx)) || (Xen_is_false(mx)) || ((MUS_XEN_P(mx)) && (mus_is_mixer(XEN_TO_MUS_ANY(mx)))), mx, 6, S_mus_mix, "a mixer");
+  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(envs)) || (Xen_is_false(envs)) || (Xen_is_vector(envs)), envs, 7, S_mus_mix, "an env gen or vector of envs");
+  if (Xen_is_bound(ost)) ostart = XEN_TO_C_LONG_LONG(ost);
+  if (Xen_is_bound(ist)) istart = XEN_TO_C_LONG_LONG(ist);
+  if ((Xen_is_bound(mx)) && (MUS_XEN_P(mx))) 
     mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
-  if (XEN_STRING_P(out)) 
+  if (Xen_is_string(out)) 
     {
       const char *tmp_outf = NULL;
       tmp_outf = XEN_TO_C_STRING(out);
@@ -9461,7 +9461,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": ~S output chans <= 0"),
 			 out));
 
-  if (XEN_STRING_P(in)) 
+  if (Xen_is_string(in)) 
     {
       const char *tmp_inf = NULL;
       tmp_inf = XEN_TO_C_STRING(in); 
@@ -9482,11 +9482,11 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": ~S input chans <= 0"),
 			 in));
 
-  if (XEN_BOUND_P(olen)) 
+  if (Xen_is_bound(olen)) 
     osamps = XEN_TO_C_LONG_LONG(olen); 
   else 
     {
-      if (XEN_STRING_P(in))
+      if (Xen_is_string(in))
 	osamps = mus_sound_frames(XEN_TO_C_STRING(in));
       else osamps = mus_length(inf);
       if (osamps < 0)
@@ -9496,7 +9496,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
     }
   if (osamps == 0) return(XEN_FALSE);
 
-  if ((XEN_BOUND_P(envs)) && (!(XEN_FALSE_P(envs))))
+  if ((Xen_is_bound(envs)) && (!(Xen_is_false(envs))))
     {
       int in_len = 0, out_len, j;
       /* pack into a C-style array of arrays of env pointers */
@@ -9511,7 +9511,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 	{
 	  XEN datum;
 	  datum = XEN_VECTOR_REF(envs, i);
-	  if (!(XEN_VECTOR_P(datum)))
+	  if (!(Xen_is_vector(datum)))
 	    XEN_ERROR(BAD_TYPE,
 		      XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": each element of env vector, ~A, must be a vector (of envelopes)"),
 				 datum));
@@ -9565,8 +9565,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       }
 #endif
 
-    if (XEN_STRING_P(out)) outfile = mus_strdup(XEN_TO_C_STRING(out));
-    if (XEN_STRING_P(in)) infile = mus_strdup(XEN_TO_C_STRING(in));
+    if (Xen_is_string(out)) outfile = mus_strdup(XEN_TO_C_STRING(out));
+    if (Xen_is_string(in)) infile = mus_strdup(XEN_TO_C_STRING(in));
 
     if ((infile) && (outfile))
       mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
@@ -9659,9 +9659,9 @@ static XEN g_ssb_am(XEN obj, XEN insig, XEN fm)
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_ssb_am, S_ssb_am, "an ssb-am generator");
   XEN_TO_C_DOUBLE_IF_BOUND(insig, insig1, S_ssb_am, 2);
 
-  if (XEN_BOUND_P(fm))
+  if (Xen_is_bound(fm))
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(fm), fm, 3, S_ssb_am, "a number");
+      XEN_ASSERT_TYPE(Xen_is_number(fm), fm, 3, S_ssb_am, "a number");
       return(C_TO_XEN_DOUBLE(mus_ssb_am(g, insig1, XEN_TO_C_DOUBLE(fm))));
     }
   return(C_TO_XEN_DOUBLE(mus_ssb_am_unmodulated(g, insig1)));

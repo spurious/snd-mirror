@@ -180,7 +180,7 @@ void draw_cursor(chan_info *cp)
       free_cairo(ss->cr);
       ss->cr = NULL;
 #endif
-      XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
+      XEN_CALL_3((Xen_is_procedure(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
 		 C_INT_TO_XEN_SOUND(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
 		 /* this was time-graph, which was useless. It's now #t if we're in tracking-cursor mode */
@@ -245,9 +245,9 @@ static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller, XE
       /* (gdk_cairo_create (GDK_DRAWABLE (gtk_widget_get_window (car (channel-widgets 0 0)))))) -> '(cairo_t_ #<c_pointer 0x12bbca0>)
        *    (eq? (car hi) 'cairo_t_) -> #t
        */
-      if ((XEN_LIST_P(xcr)) &&
+      if ((Xen_is_list(xcr)) &&
 	  (XEN_LIST_LENGTH(xcr) == 2) &&
-	  (XEN_SYMBOL_P(XEN_CAR(xcr))) &&
+	  (Xen_is_symbol(XEN_CAR(xcr))) &&
 	  (strcmp("cairo_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(xcr))) == 0))
 	ss->cr = (cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(xcr));
       else 
@@ -286,8 +286,8 @@ static graphics_context *get_ax_no_cr(chan_info *cp, int ax_id, const char *call
 #endif
 
 
-#define TO_C_AXIS_CONTEXT(Snd, Chn, Ax, Caller, Cr) get_ax(get_cp(Snd, Chn, Caller), (XEN_INTEGER_P(Ax)) ? XEN_TO_C_INT(Ax) : (int)CHAN_GC, Caller, Cr)
-#define TO_C_AXIS_CONTEXT_NO_CR(Snd, Chn, Ax, Caller) get_ax_no_cr(get_cp(Snd, Chn, Caller), (XEN_INTEGER_P(Ax)) ? XEN_TO_C_INT(Ax) : (int)CHAN_GC, Caller)
+#define TO_C_AXIS_CONTEXT(Snd, Chn, Ax, Caller, Cr) get_ax(get_cp(Snd, Chn, Caller), (Xen_is_integer(Ax)) ? XEN_TO_C_INT(Ax) : (int)CHAN_GC, Caller, Cr)
+#define TO_C_AXIS_CONTEXT_NO_CR(Snd, Chn, Ax, Caller) get_ax_no_cr(get_cp(Snd, Chn, Caller), (Xen_is_integer(Ax)) ? XEN_TO_C_INT(Ax) : (int)CHAN_GC, Caller)
 
 
 static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax, XEN xcr)
@@ -295,10 +295,10 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax,
   #define H_draw_line "(" S_draw_line " x0 y0 x1 y1 :optional snd chn (ax " S_time_graph ") cr): draw a line"
 
   ASSERT_CHANNEL(S_draw_line, snd, chn, 5);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, 1, S_draw_line, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, 2, S_draw_line, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x1), x1, 3, S_draw_line, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(y1), y1, 4, S_draw_line, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x0), x0, 1, S_draw_line, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(y0), y0, 2, S_draw_line, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x1), x1, 3, S_draw_line, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(y1), y1, 4, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 7, S_draw_line, "an integer such as " S_time_graph);
 
   draw_line(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line, xcr),
@@ -315,9 +315,9 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax, XEN xc
   #define H_draw_dot "(" S_draw_dot " x0 y0 size :optional snd chn (ax " S_time_graph ") cr): draw a dot"
  
   ASSERT_CHANNEL(S_draw_dot, snd, chn, 4);
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(x0), x0, 1, S_draw_dot, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(y0), y0, 2, S_draw_dot, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, 3, S_draw_dot, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(x0), x0, 1, S_draw_dot, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(y0), y0, 2, S_draw_dot, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(size), size, 3, S_draw_dot, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 6, S_draw_dot, "an integer such as " S_time_graph);
 
   draw_dot(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dot, xcr),
@@ -333,15 +333,15 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
   #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height :optional snd chn (ax " S_time_graph ") erase cr): draw a filled rectangle"
 
   ASSERT_CHANNEL(S_fill_rectangle, snd, chn, 5);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, 1, S_fill_rectangle, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, 2, S_fill_rectangle, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(width), width, 3, S_fill_rectangle, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(height), height, 4, S_fill_rectangle, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(x0), x0, 1, S_fill_rectangle, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(y0), y0, 2, S_fill_rectangle, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(width), width, 3, S_fill_rectangle, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(height), height, 4, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 7, S_fill_rectangle, "an integer such as " S_time_graph);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(erase), erase, 8, S_fill_rectangle, "a boolean");
 
-  if ((XEN_BOOLEAN_P(erase)) &&
-      (XEN_TRUE_P(erase)))
+  if ((Xen_is_boolean(erase)) &&
+      (Xen_is_true(erase)))
     erase_rectangle(get_cp(snd, chn, S_fill_rectangle),
 		    TO_C_AXIS_CONTEXT(snd, chn, ax, S_fill_rectangle, xcr),
 		    XEN_TO_C_INT(x0),
@@ -363,9 +363,9 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax, XEN
   
   const char *tmp = NULL;
   ASSERT_CHANNEL(S_draw_string, snd, chn, 4);
-  XEN_ASSERT_TYPE(XEN_STRING_P(text), text, 1, S_draw_string, "a string");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, 2, S_draw_string, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, 3, S_draw_string, "a number");
+  XEN_ASSERT_TYPE(Xen_is_string(text), text, 1, S_draw_string, "a string");
+  XEN_ASSERT_TYPE(Xen_is_number(x0), x0, 2, S_draw_string, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(y0), y0, 3, S_draw_string, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 6, S_draw_string, "an integer such as " S_time_graph);
 
   tmp = XEN_TO_C_STRING(text);
@@ -423,7 +423,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
   int vlen = 0;
 
   ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, 1, S_draw_lines, "a vector");
+  XEN_ASSERT_TYPE(Xen_is_vector(pts), pts, 1, S_draw_lines, "a vector");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 4, S_draw_lines, "an integer such as " S_time_graph);
 
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines, xcr);
@@ -446,7 +446,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
   int vlen = 0;
 
   ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, 1, S_draw_dots, "a vector");
+  XEN_ASSERT_TYPE(Xen_is_vector(pts), pts, 1, S_draw_dots, "a vector");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, 2, S_draw_dots, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 5, S_draw_dots, "an integer such as " S_time_graph);
 
@@ -456,7 +456,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
   draw_points(ax1,
 	      pack_pts, 
 	      vlen,
-	      (XEN_INTEGER_P(size)) ? XEN_TO_C_INT(size) : 1);
+	      (Xen_is_integer(size)) ? XEN_TO_C_INT(size) : 1);
 
   free(pack_pts);
   return(pts);
@@ -472,7 +472,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
   int vlen = 0;
 
   ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, 1, S_fill_polygon, "a vector");
+  XEN_ASSERT_TYPE(Xen_is_vector(pts), pts, 1, S_fill_polygon, "a vector");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, 4, S_fill_polygon, "an integer such as " S_time_graph);
 
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon, xcr);
@@ -548,7 +548,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   cp = get_cp(snd, chn, S_foreground_color);
   if (!cp) return(XEN_FALSE);
 
-  ax = get_ax_no_cr(cp, (XEN_INTEGER_P(xax)) ? XEN_TO_C_INT(xax) : (int)CHAN_GC, S_foreground_color);
+  ax = get_ax_no_cr(cp, (Xen_is_integer(xax)) ? XEN_TO_C_INT(xax) : (int)CHAN_GC, S_foreground_color);
   return(XEN_WRAP_PIXEL(get_foreground_color(ax)));
 }
 
@@ -564,7 +564,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   cp = get_cp(snd, chn, S_setB S_foreground_color);
   if (!cp) return(XEN_FALSE);
 
-  set_foreground_color(get_ax_no_cr(cp, (XEN_INTEGER_P(ax)) ? XEN_TO_C_INT(ax) : (int)CHAN_GC, S_setB S_foreground_color),
+  set_foreground_color(get_ax_no_cr(cp, (Xen_is_integer(ax)) ? XEN_TO_C_INT(ax) : (int)CHAN_GC, S_setB S_foreground_color),
 		       XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -580,9 +580,9 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
-  XEN_ASSERT_TYPE((XEN_LIST_P(id)) &&
+  XEN_ASSERT_TYPE((Xen_is_list(id)) &&
 		  (XEN_LIST_LENGTH(id) >= 2) &&
-		  (XEN_SYMBOL_P(XEN_CAR(id))) &&
+		  (Xen_is_symbol(XEN_CAR(id))) &&
 		  (strcmp("Font", XEN_SYMBOL_TO_C_STRING(XEN_CAR(id))) == 0), id, 1, S_setB S_current_font, "a Font");
 
   ax = TO_C_AXIS_CONTEXT_NO_CR(snd, chn, ax_id, S_current_font);
@@ -603,7 +603,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   cp = get_cp(snd, chn, S_current_font);
   if (!cp) return(XEN_FALSE);
 
-  ax = get_ax_no_cr(cp, (XEN_INTEGER_P(ax_id)) ? XEN_TO_C_INT(ax_id) : (int)CHAN_GC, S_current_font);
+  ax = get_ax_no_cr(cp, (Xen_is_integer(ax_id)) ? XEN_TO_C_INT(ax_id) : (int)CHAN_GC, S_current_font);
   if (ax->current_font == 0)
     {
       if ((cp->axis) && (cp->axis->ax))
@@ -626,13 +626,13 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
 
   ax = TO_C_AXIS_CONTEXT_NO_CR(snd, chn, ax_id, S_setB S_current_font);
-  XEN_ASSERT_TYPE((XEN_WRAPPED_C_POINTER_P(id)) ||
-		  (XEN_LIST_P(id) && 
+  XEN_ASSERT_TYPE((Xen_is_wrapped_c_pointer(id)) ||
+		  (Xen_is_list(id) && 
 		   (XEN_LIST_LENGTH(id) >= 2) &&
-		   (XEN_SYMBOL_P(XEN_CAR(id)))),
+		   (Xen_is_symbol(XEN_CAR(id)))),
 		  id, 1, S_setB S_current_font, "a wrapped object or a raw pointer");
 
-  if (XEN_WRAPPED_C_POINTER_P(id))
+  if (Xen_is_wrapped_c_pointer(id))
     ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(id); 
   else ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(XEN_CADR(id));
   return(id);
@@ -672,8 +672,8 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
 
   return(make_graph_data(cp,
 			 to_c_edit_position(cp, edpos, S_make_graph_data, 3),
-			 (XEN_LONG_LONG_P(lo)) ? XEN_TO_C_LONG_LONG(lo) : -1,
-			 (XEN_LONG_LONG_P(hi)) ? XEN_TO_C_LONG_LONG(hi) : -1));
+			 (Xen_is_long_long_int(lo)) ? XEN_TO_C_LONG_LONG(lo) : -1,
+			 (Xen_is_long_long_int(hi)) ? XEN_TO_C_LONG_LONG(hi) : -1));
 }
 
 
@@ -691,19 +691,19 @@ data in the recipient's graph between points low and high in the drawing mode gr
   cp = get_cp(snd, chn, S_graph_data);
   if (!cp) return(XEN_FALSE);
 
-  if (XEN_FALSE_P(data)) return(XEN_FALSE);
-  XEN_ASSERT_TYPE((XEN_LIST_P(data) && 
+  if (Xen_is_false(data)) return(XEN_FALSE);
+  XEN_ASSERT_TYPE((Xen_is_list(data) && 
 		   (XEN_LIST_LENGTH(data) == 2) &&
 		   (MUS_IS_VCT(XEN_CAR(data))) &&
 		   (MUS_IS_VCT(XEN_CADR(data)))) || 
 		  (MUS_IS_VCT(data)), 
 		  data, 1, S_graph_data, "a list of 2 vcts or vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(ax), ax, 4, S_graph_data, "an integer");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(lo) || XEN_FALSE_P(lo) || XEN_NOT_BOUND_P(lo), lo, 5, S_graph_data, "a sample number");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(hi) || XEN_FALSE_P(hi) || XEN_NOT_BOUND_P(hi), hi, 6, S_graph_data, "a sample number");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(lo) || Xen_is_false(lo) || XEN_NOT_BOUND_P(lo), lo, 5, S_graph_data, "a sample number");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(hi) || Xen_is_false(hi) || XEN_NOT_BOUND_P(hi), hi, 6, S_graph_data, "a sample number");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(style), style, 7, S_graph_data, "an integer");
 
-  if (XEN_LIST_P(data))
+  if (Xen_is_list(data))
     {
       v0 = xen_to_vct(XEN_CAR(data));
       v1 = xen_to_vct(XEN_CADR(data));
@@ -711,13 +711,13 @@ data in the recipient's graph between points low and high in the drawing mode gr
   else v0 = xen_to_vct(data);
 
   draw_graph_data(cp, 
-		  (XEN_LONG_LONG_P(lo)) ? XEN_TO_C_LONG_LONG(lo) : -1,
-		  (XEN_LONG_LONG_P(hi)) ? XEN_TO_C_LONG_LONG(hi) : -1,
+		  (Xen_is_long_long_int(lo)) ? XEN_TO_C_LONG_LONG(lo) : -1,
+		  (Xen_is_long_long_int(hi)) ? XEN_TO_C_LONG_LONG(hi) : -1,
 		  mus_vct_length(v0),
 		  mus_vct_data(v0),
 		  (v1) ? (mus_vct_data(v1)) : NULL,
-		  get_ax(cp, (XEN_INTEGER_P(ax)) ? XEN_TO_C_INT(ax) : (int)CHAN_GC, S_graph_data, xcr),
-		  (XEN_INTEGER_P(style)) ? (graph_style_t)XEN_TO_C_INT(style) : cp->time_graph_style);
+		  get_ax(cp, (Xen_is_integer(ax)) ? XEN_TO_C_INT(ax) : (int)CHAN_GC, S_graph_data, xcr),
+		  (Xen_is_integer(style)) ? (graph_style_t)XEN_TO_C_INT(style) : cp->time_graph_style);
   return(data);
 }
 
@@ -761,7 +761,7 @@ void run_new_widget_hook(widget_t w)
 
 static void check_dialog_widget_table(void)
 {
-  if (!(XEN_VECTOR_P(dialog_widgets)))
+  if (!(Xen_is_vector(dialog_widgets)))
     {
       dialog_widgets = XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE);
       XEN_PROTECT_FROM_GC(dialog_widgets);
@@ -809,7 +809,7 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
   gtk_widget_override_background_color(wid, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->basic_color)); /* was GTK_STATE_NORMAL which can't be right */
 #endif
 
-  if (XEN_FALSE_P(XEN_VECTOR_REF(dialog_widgets, (int)which)))
+  if (Xen_is_false(XEN_VECTOR_REF(dialog_widgets, (int)which)))
     XEN_VECTOR_SET(dialog_widgets, (int)which, 
 		   XEN_WRAP_WIDGET(wid));
   else 
@@ -845,7 +845,7 @@ static XEN g_set_widget_position(XEN wid, XEN xy)
 {
   widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_setB S_widget_position, "a Widget");  
-  XEN_ASSERT_TYPE(XEN_LIST_P(xy) && (XEN_LIST_LENGTH(xy) == 2), xy, 2, S_setB S_widget_position, "a list: (x y)");  
+  XEN_ASSERT_TYPE(Xen_is_list(xy) && (XEN_LIST_LENGTH(xy) == 2), xy, 2, S_setB S_widget_position, "a list: (x y)");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_position(w,
@@ -877,7 +877,7 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
 {
   widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_setB S_widget_size, "a Widget");  
-  XEN_ASSERT_TYPE(XEN_LIST_P(wh) && (XEN_LIST_LENGTH(wh) == 2), wh, 2, S_setB S_widget_size, "a list: (width height)");  
+  XEN_ASSERT_TYPE(Xen_is_list(wh) && (XEN_LIST_LENGTH(wh) == 2), wh, 2, S_setB S_widget_size, "a list: (width height)");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_size(w,
@@ -962,12 +962,12 @@ static XEN g_set_widget_text(XEN wid, XEN text)
   const char *str = NULL;
 
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_setB S_widget_text, "a Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(text) || XEN_FALSE_P(text), text, 2, S_setB S_widget_text, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(text) || Xen_is_false(text), text, 2, S_setB S_widget_text, "a string");
 
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
-      if (XEN_STRING_P(text)) str = XEN_TO_C_STRING(text);
+      if (Xen_is_string(text)) str = XEN_TO_C_STRING(text);
 #if USE_MOTIF
       if ((XmIsText(w)) || (XmIsTextField(w)))
 	XmTextSetString(w, (char *)str);
@@ -1084,7 +1084,7 @@ static XEN g_snd_color(XEN choice)
 {
   #define H_snd_color "(" S_snd_color " num): color associated with 'num' -- see table of colors in snd-draw.c"
   color_t col;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(choice), choice, 1, S_snd_color, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(choice), choice, 1, S_snd_color, "an integer");
 
   switch (XEN_TO_C_INT(choice))
     {
@@ -1139,7 +1139,7 @@ static XEN g_snd_font(XEN choice)
 #endif
 
   #define H_snd_font "(" S_snd_font " num): font associated with 'num' -- see table of fonts in snd-draw.c"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(choice), choice, 1, S_snd_font, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(choice), choice, 1, S_snd_font, "an integer");
 
   switch (XEN_TO_C_INT(choice))
     {
@@ -1193,9 +1193,9 @@ static XEN g_free_cairo(XEN xcr)
   #define H_free_cairo "(" S_free_cairo " cr) in gtk, this frees (destroys) the cairo_t 'cr'."
 
 #if USE_GTK
-  if ((XEN_LIST_P(xcr)) &&
+  if ((Xen_is_list(xcr)) &&
       (XEN_LIST_LENGTH(xcr) == 2) &&
-      (XEN_SYMBOL_P(XEN_CAR(xcr))) &&
+      (Xen_is_symbol(XEN_CAR(xcr))) &&
       (strcmp("cairo_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(xcr))) == 0))
     free_cairo((cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(xcr)));
   else 
@@ -1729,10 +1729,10 @@ static XEN g_make_color(XEN r, XEN g, XEN b, XEN alpha)
   color_info *ccolor;
   mus_float_t rf, gf, bf;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, 1, S_make_color, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(r), r, 1, S_make_color, "a number");
   /* someday accept a list as r */
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(g), g, 2, S_make_color, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, 3, S_make_color, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(g), g, 2, S_make_color, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(b), b, 3, S_make_color, "a number");
 
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
@@ -1742,7 +1742,7 @@ static XEN g_make_color(XEN r, XEN g, XEN b, XEN alpha)
   ccolor->green = gf;
   ccolor->blue = bf;
 
-  if (XEN_NUMBER_P(alpha))
+  if (Xen_is_number(alpha))
     ccolor->alpha = check_color_range(S_make_color, alpha);
   else ccolor->alpha = 1.0;
 
@@ -1793,10 +1793,10 @@ static XEN g_make_color(XEN r, XEN g, XEN b, XEN alpha)
   Display *dpy;
   mus_float_t rf, gf, bf;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, 1, S_make_color, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(r), r, 1, S_make_color, "a number");
   /* someday accept a list as r */
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(g), g, 2, S_make_color, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, 3, S_make_color, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(g), g, 2, S_make_color, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(b), b, 3, S_make_color, "a number");
 
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);

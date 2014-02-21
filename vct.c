@@ -163,7 +163,7 @@ static XEN_OBJECT_TYPE vct_tag;
 
 bool mus_is_vct(XEN obj)
 {
-  return(XEN_OBJECT_TYPE_P(obj, vct_tag));
+  return(Xen_c_object_is_type(obj, vct_tag));
 }
 
 
@@ -374,8 +374,8 @@ static XEN g_make_vct(XEN len, XEN filler)
 initial-element: \n  " vct_make_example
 
   mus_long_t size;
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(len), len, 1, S_make_vct, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(filler) || XEN_NOT_BOUND_P(filler), filler, 2, S_make_vct, "a number");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(len), len, 1, S_make_vct, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_number(filler) || XEN_NOT_BOUND_P(filler), filler, 2, S_make_vct, "a number");
 
   size = XEN_TO_C_LONG_LONG(len);
   if (size < 0) 
@@ -385,7 +385,7 @@ initial-element: \n  " vct_make_example
       (((mus_long_t)(size * sizeof(mus_float_t))) > mus_max_malloc()))
     XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "new vct size is too large (see mus-max-malloc)");
 
-  if (XEN_NUMBER_P(filler))
+  if (Xen_is_number(filler))
     return(g_vct_fill(xen_make_vct(size, (mus_float_t *)calloc(size, sizeof(mus_float_t))), filler));
 
   return(xen_make_vct(size, (mus_float_t *)calloc(size, sizeof(mus_float_t))));
@@ -467,8 +467,8 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
   mus_float_t *d;
 
   XEN_ASSERT_TYPE(mus_is_vct(obj), obj, 1, S_vct_moveB, "a vct");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(newi), newi, 2, S_vct_moveB, "an integer");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(oldi), oldi, 3, S_vct_moveB, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(newi), newi, 2, S_vct_moveB, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(oldi), oldi, 3, S_vct_moveB, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(backwards), backwards, 4, S_vct_moveB, "a boolean");
 
   v = XEN_TO_VCT(obj);
@@ -476,7 +476,7 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
   ni = XEN_TO_C_LONG_LONG(newi);
   nj = XEN_TO_C_LONG_LONG(oldi);
 
-  if ((XEN_BOOLEAN_P(backwards)) && 
+  if ((Xen_is_boolean(backwards)) && 
       (XEN_NOT_FALSE_P(backwards)))
     {
       if (ni >= mus_vct_length(v)) 
@@ -508,7 +508,7 @@ static XEN g_vct_ref(XEN obj, XEN pos)
   mus_long_t loc;
 
   XEN_ASSERT_TYPE(mus_is_vct(obj), obj, 1, S_vct_ref, "a vct");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, 2, S_vct_ref, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(pos), pos, 2, S_vct_ref, "an integer");
 
   v = XEN_TO_VCT(obj);
   loc = XEN_TO_C_LONG_LONG(pos);
@@ -1370,8 +1370,8 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
   mus_float_t *d;
 
   XEN_ASSERT_TYPE(mus_is_vct(obj), obj, 1, S_vct_setB, "a vct");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, 2, S_vct_setB, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 3, S_vct_setB, "a real number");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(pos), pos, 2, S_vct_setB, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_number(val), val, 3, S_vct_setB, "a real number");
 
   x = XEN_TO_C_DOUBLE(val);
   v = XEN_TO_VCT(obj);
@@ -1427,7 +1427,7 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
   lim = MIN(len1, mus_vct_length(v2));
   if (lim == 0) return(obj1);
 
-  if (XEN_LONG_LONG_P(offs))
+  if (Xen_is_long_long_int(offs))
     {
       j = XEN_TO_C_LONG_LONG(offs);
       if (j < 0) 
@@ -1518,7 +1518,7 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
   mus_float_t *d;
 
   XEN_ASSERT_TYPE(mus_is_vct(obj1), obj1, 1, S_vct_scaleB, "a vct");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, 2, S_vct_scaleB, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(obj2), obj2, 2, S_vct_scaleB, "a number");
 
   v1 = XEN_TO_VCT(obj1);
   if (mus_vct_length(v1) == 0) return(obj1);
@@ -1560,7 +1560,7 @@ static XEN g_vct_offset(XEN obj1, XEN obj2)
   mus_float_t *d;
 
   XEN_ASSERT_TYPE(mus_is_vct(obj1), obj1, 1, S_vct_offsetB, "a vct");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, 2, S_vct_offsetB, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(obj2), obj2, 2, S_vct_offsetB, "a number");
 
   v1 = XEN_TO_VCT(obj1);
   if (mus_vct_length(v1) == 0) return(obj1);
@@ -1584,7 +1584,7 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
   mus_float_t *d;
 
   XEN_ASSERT_TYPE(mus_is_vct(obj1), obj1, 1, S_vct_fillB, "a vct");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, 2, S_vct_fillB, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(obj2), obj2, 2, S_vct_fillB, "a number");
 
   v1 = XEN_TO_VCT(obj1);
   if (mus_vct_length(v1) == 0) return(obj1);
@@ -1696,7 +1696,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   mus_long_t i, old_len, new_len, j, istart, iend;
 
   XEN_ASSERT_TYPE(mus_is_vct(vobj), vobj, 1, S_vct_subseq, "a vct");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(start), start, 2, S_vct_subseq, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(start), start, 2, S_vct_subseq, "an integer");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(end), end, 3, S_vct_subseq, "an integer");
 
   istart = XEN_TO_C_LONG_LONG(start);
@@ -1706,7 +1706,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   vold = XEN_TO_VCT(vobj);
   old_len = mus_vct_length(vold);
 
-  if (XEN_LONG_LONG_P(end))
+  if (Xen_is_long_long_int(end))
     {
       iend = XEN_TO_C_LONG_LONG(end);
       if (iend < istart)
@@ -1755,7 +1755,7 @@ XEN xen_list_to_vct(XEN lst)
   d = mus_vct_data(v);
   for (i = 0, lst1 = XEN_COPY_ARG(lst); i < len; i++, lst1 = XEN_CDR(lst1)) 
     {
-      if (XEN_NUMBER_P(XEN_CAR(lst1)))
+      if (Xen_is_number(XEN_CAR(lst1)))
 	d[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_CAR(lst1));
       else XEN_WRONG_TYPE_ARG_ERROR(S_list_to_vct, i, XEN_CAR(lst1), "a number");
     }
@@ -1804,7 +1804,7 @@ static XEN g_vector_to_vct(XEN vect)
   mus_float_t *d;
   XEN scv;
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(vect), vect, 1, S_vector_to_vct, "a vector");
+  XEN_ASSERT_TYPE(Xen_is_vector(vect), vect, 1, S_vector_to_vct, "a vector");
 
   len = (mus_long_t)XEN_VECTOR_LENGTH(vect);
   if (len > 0) 
@@ -1864,7 +1864,7 @@ static XEN g_vct_reverse(XEN vobj, XEN size)
   XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, 2, S_vct_reverse, "an integer");
 
   v = XEN_TO_VCT(vobj);
-  if (XEN_LONG_LONG_P(size))
+  if (Xen_is_long_long_int(size))
     len = XEN_TO_C_LONG_LONG(size);
   if ((len <= 0) || (len > mus_vct_length(v)))
     len = mus_vct_length(v);
@@ -2008,11 +2008,11 @@ static XEN g_rb_make_vct(int argc, XEN *argv, XEN self)
   mus_long_t size;
   XEN len, filler;
   rb_scan_args(argc, argv, "11", &len, &filler);
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(len), len, 1, "Vct.new", "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(len), len, 1, "Vct.new", "an integer");
   size = XEN_TO_C_LONG_LONG(len);
   if (size <= 0) 
     XEN_OUT_OF_RANGE_ERROR("Vct.new", 1, len, "len <= 0?");
-  if (XEN_NUMBER_P(filler))
+  if (Xen_is_number(filler))
     return(g_vct_fill(xen_make_vct(size, (mus_float_t *)calloc(size, sizeof(mus_float_t))), filler));
   if (rb_block_given_p()) {
     mus_long_t i;

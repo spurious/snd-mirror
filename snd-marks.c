@@ -261,7 +261,7 @@ static void draw_mark_1(chan_info *cp, mark *mp, bool show)
       res = run_progn_hook(draw_mark_hook,
 			   XEN_LIST_1(new_xen_mark(mp->id)),
 			   S_draw_mark_hook);
-      if (XEN_TRUE_P(res))
+      if (Xen_is_true(res))
 	{
 	  mp->visible = show;
 	  return;
@@ -448,7 +448,7 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
   if (mp->samp > samps) mp->samp = samps;
 
   if (XEN_HOOKED(mark_drag_hook))
-    ss->squelch_mark_drag_info = XEN_TRUE_P(run_progn_hook(mark_drag_hook,
+    ss->squelch_mark_drag_info = Xen_is_true(run_progn_hook(mark_drag_hook,
 							   XEN_LIST_1(new_xen_mark(mp->id)),
 							   S_mark_drag_hook));
   else ss->squelch_mark_drag_info = false;
@@ -1974,7 +1974,7 @@ static XEN_OBJECT_TYPE xen_mark_tag;
 
 bool xen_mark_p(XEN obj) 
 {
-  return(XEN_OBJECT_TYPE_P(obj, xen_mark_tag));
+  return(Xen_c_object_is_type(obj, xen_mark_tag));
 }
 
 
@@ -2102,7 +2102,7 @@ static void init_xen_mark(void)
 static XEN g_integer_to_mark(XEN n)
 {
   #define H_integer_to_mark "(" S_integer_to_mark " n) returns a mark object corresponding to the given integer"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_integer_to_mark, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(n), n, 1, S_integer_to_mark, "an integer");
   return(new_xen_mark(XEN_TO_C_INT(n)));
 }
 
@@ -2133,7 +2133,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
   chan_info *ncp[1];
   mark *m = NULL;
 
-  pos = (XEN_INTEGER_P(pos_n)) ? XEN_TO_C_INT(pos_n) : AT_CURRENT_EDIT_POSITION;
+  pos = (Xen_is_integer(pos_n)) ? XEN_TO_C_INT(pos_n) : AT_CURRENT_EDIT_POSITION;
 
   m = find_mark_from_id(XEN_MARK_TO_C_INT(n), ncp, pos);
   if (m == NULL) 
@@ -2177,7 +2177,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
     {
     case MARK_SAMPLE: 
       m->samp = mus_oclamp(0, 
-			   (XEN_LONG_LONG_P(val)) ? XEN_TO_C_LONG_LONG(val) : 0,
+			   (Xen_is_long_long_int(val)) ? XEN_TO_C_LONG_LONG(val) : 0,
 			   CURRENT_SAMPLES(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       run_mark_hook(cp[0], m->id, MARK_MOVE);
@@ -2185,14 +2185,14 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
       break;
 
     case MARK_SYNC: 
-      if (XEN_INTEGER_P(val))
+      if (Xen_is_integer(val))
 	set_mark_sync(m, XEN_TO_C_INT(val));
       else set_mark_sync(m, (int)XEN_TO_C_BOOLEAN(val));
       break;
 
     case MARK_NAME:
       if (m->name) free(m->name);
-      if (XEN_FALSE_P(val))
+      if (Xen_is_false(val))
 	m->name = NULL;
       else m->name = mus_strdup(XEN_TO_C_STRING(val));
       update_graph(cp[0]);
@@ -2225,7 +2225,7 @@ static XEN g_mark_sample(XEN mark_n, XEN pos_n)
 static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
 {
   XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_setB S_mark_sample, "a mark");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, 2, S_setB S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, 2, S_setB S_mark_sample, "an integer");
   return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_setB S_mark_sample));
 }
 
@@ -2255,7 +2255,7 @@ static XEN g_mark_name(XEN mark_n)
 static XEN g_set_mark_name(XEN mark_n, XEN name) 
 {
   XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_setB S_mark_name, "a mark");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_FALSE_P(name), name, 2, S_setB S_mark_name, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(name) || Xen_is_false(name), name, 2, S_setB S_mark_name, "a string");
   return(mark_set(mark_n, name, MARK_NAME, S_setB S_mark_name));
 }
 
@@ -2284,7 +2284,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   int pos;
   chan_info *cp = NULL;
 
-  XEN_ASSERT_TYPE((XEN_LONG_LONG_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, 1, S_find_mark, "an integer or string or " PROC_FALSE);
+  XEN_ASSERT_TYPE((Xen_is_long_long_int(samp_n) || Xen_is_string(samp_n) || (Xen_is_false(samp_n))), samp_n, 1, S_find_mark, "an integer or string or " PROC_FALSE);
   ASSERT_CHANNEL(S_find_mark, snd, chn_n, 2); 
 
   cp = get_cp(snd, chn_n, S_find_mark);
@@ -2297,11 +2297,11 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
       int i;
       mus_long_t samp = 0;
       const char *name = NULL;
-      if (XEN_STRING_P(samp_n))
+      if (Xen_is_string(samp_n))
 	name = XEN_TO_C_STRING(samp_n);
       else 
 	{
-	  if (XEN_LONG_LONG_P(samp_n))
+	  if (Xen_is_long_long_int(samp_n))
 	    samp = XEN_TO_C_LONG_LONG(samp_n);
 	}
       if (name)
@@ -2332,15 +2332,15 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
   int msync = 0;
   const char *mname = NULL;
 
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, 1, S_add_mark, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || XEN_FALSE_P(name), name, 4, S_add_mark, "a string");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, 1, S_add_mark, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || Xen_is_false(name), name, 4, S_add_mark, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sync), sync, 5, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd, chn_n, 2);
 
   cp = get_cp(snd, chn_n, S_add_mark);
   if (!cp) return(XEN_FALSE);
 
-  if (XEN_LONG_LONG_P(samp_n)) loc = XEN_TO_C_LONG_LONG(samp_n);
+  if (Xen_is_long_long_int(samp_n)) loc = XEN_TO_C_LONG_LONG(samp_n);
 
   if ((!check_sample) &&
       (loc >= CURRENT_SAMPLES(cp)))
@@ -2352,8 +2352,8 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
 	      XEN_LIST_2(C_TO_XEN_STRING(S_add_mark ": no such sample, ~A"),
 			 samp_n));
 
-  if (XEN_STRING_P(name)) mname = XEN_TO_C_STRING(name);
-  if (XEN_INTEGER_P(sync)) msync = XEN_TO_C_INT(sync);
+  if (Xen_is_string(name)) mname = XEN_TO_C_STRING(name);
+  if (Xen_is_integer(sync)) msync = XEN_TO_C_INT(sync);
 
   m = add_mark(loc, mname, cp);
   if (m)
@@ -2444,7 +2444,7 @@ static XEN g_syncd_marks(XEN sync)
   int *ids;
   XEN res;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(sync), sync, 1, S_syncd_marks, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer(sync), sync, 1, S_syncd_marks, "an integer");
   ids = syncd_marks(XEN_TO_C_INT(sync));
 
   if (ids == NULL) return(XEN_EMPTY_LIST);
@@ -2463,7 +2463,7 @@ static XEN g_set_mark_tag_width(XEN val)
 {
   #define H_mark_tag_width "(" S_mark_tag_width "): width (pixels) of mark tags (10)"
   int width;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_mark_tag_width, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_mark_tag_width, "an integer"); 
   width = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mark_tag_width(width);
   for_each_normal_chan(update_graph);
@@ -2477,7 +2477,7 @@ static XEN g_set_mark_tag_height(XEN val)
 {
   #define H_mark_tag_height "(" S_mark_tag_height "): height (pixels) of mark tags (4)"
   int height;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_mark_tag_height, "an integer"); 
+  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_mark_tag_height, "an integer"); 
   height = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mark_tag_height(height);
   for_each_normal_chan(update_graph);
@@ -2520,16 +2520,16 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 
   ASSERT_CHANNEL(S_marks, snd, chn_n, 0);
 
-  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
+  if (Xen_is_integer(snd) || XEN_SOUND_P(snd))
       {
 	int i, pos;
 	int *ids;
 	XEN res;
-	if (XEN_INTEGER_P(chn_n))
+	if (Xen_is_integer(chn_n))
 	  {
 	    cp = get_cp(snd, chn_n, S_marks);
 	    if (!cp) return(XEN_FALSE);
-	    if (XEN_INTEGER_P(pos_n)) 
+	    if (Xen_is_integer(pos_n)) 
 	      {
 		pos = XEN_TO_C_INT(pos_n);
 		if (pos == AT_CURRENT_EDIT_POSITION)
@@ -2769,7 +2769,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
       char *newname = NULL;
       int i, len;
       FILE *fd;
-      if (XEN_STRING_P(filename))
+      if (Xen_is_string(filename))
 	newname = mus_strdup(XEN_TO_C_STRING(filename));
       else
 	{
@@ -2822,7 +2822,7 @@ static XEN g_mark_properties(XEN n)
   if (m == NULL)
     return(snd_no_such_mark_error(S_mark_properties, n));
 
-  if (!(XEN_VECTOR_P(m->properties)))
+  if (!(Xen_is_vector(m->properties)))
     {
       m->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
       m->properties_gc_loc = snd_protect(m->properties);
@@ -2840,7 +2840,7 @@ static XEN g_set_mark_properties(XEN n, XEN val)
   if (m == NULL)
     return(snd_no_such_mark_error(S_setB S_mark_properties, n));
 
-  if (!(XEN_VECTOR_P(m->properties)))
+  if (!(Xen_is_vector(m->properties)))
     {
       m->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
       m->properties_gc_loc = snd_protect(m->properties);

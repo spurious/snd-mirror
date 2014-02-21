@@ -313,15 +313,17 @@
 			     (no-stars (car typ)) (car typ) (cdr typ)))
 		    (if (not (member (car typ)
 				     (list "constchar*")))
-			(hey "#define XEN_~A_P(Arg) XEN_~A_P(Arg)~%" 
+			(hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
 			     (no-stars (car typ))
 			     (if (string=? (cdr typ) "INT") 
-				 "INTEGER" 
-				 (if (string=? (cdr typ) "DOUBLE")
-				     "NUMBER"
-				     (cdr typ))))))
+				 "integer" 
+				 (if (string=? (cdr typ) "ULONG")
+				     "ulong_int"
+				     (if (string=? (cdr typ) "DOUBLE")
+					 "number"
+					 (apply string (map char-downcase (cdr typ)))))))))
 		  (begin
-		    (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ)))
+		    (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ)))
 		    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
 
 	(if (not (or (string=? type "Display*")     ; why are these 2 handled specially?
@@ -482,9 +484,9 @@
 (hey "~%")
 
 (hey "#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), XEN_WRAP_C_POINTER(Value))~%")
-(hey "#define WRAP_P(Name, Value) (XEN_LIST_P(Value) && \\~%")
+(hey "#define IS_WRAPPED(Name, Value) (Xen_is_list(Value) && \\~%")
 (hey "                            (XEN_LIST_LENGTH(Value) >= 2) && \\~%")
-(hey "                            (XEN_SYMBOL_P(XEN_CAR(Value))) && \\~%")
+(hey "                            (Xen_is_symbol(XEN_CAR(Value))) && \\~%")
 (hey "                            (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))~%")
 (hey "~%")
 
@@ -492,18 +494,18 @@
 (hey "#define XL_TYPE(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_ULONG(val)));} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
-(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));}~%")
 (hey "#define XL_TYPE_1(Name, XType) \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
-(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));}~%")
 (hey "~%")
 (hey "#define XL_TYPE_PTR(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
-(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));} /* if NULL ok, should be explicit */~%")
 (hey "#define XL_TYPE_PTR_1(Name, XType) \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
-(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));} /* if NULL ok, should be explicit */~%")
 
 ;XL_TYPE_PTR_2 was for "GdkVisual*" "PangoFont*" "GdkColormap*"
 ;(hey "#define XL_TYPE_PTR_2(Name, XType) \\~%")
@@ -669,14 +671,14 @@
 		    (argtype (car arg)))
 		(if (not (ref-arg? arg))
 		    (if (null-arg? arg)
-			(hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A) || XEN_FALSE_P(~A), ~A, ~D, ~S, ~S);~%" 
+			(hey "  XEN_ASSERT_TYPE(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
 			     (no-stars argtype) argname argname argname ctr name argtype)
 			(if (opt-arg? arg)
 			    (begin
-			      (hey "  if (XEN_NOT_BOUND_P(~A)) ~A = XEN_FALSE; ~%" argname argname)
-			      (hey "  else XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%" 
+			      (hey "  if (!Xen_is_bound(~A)) ~A = XEN_FALSE; ~%" argname argname)
+			      (hey "  else XEN_ASSERT_TYPE(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
 				   (no-stars argtype) argname argname ctr name argtype))
-			    (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%"
+			    (hey "  XEN_ASSERT_TYPE(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
 				 (no-stars argtype) argname argname ctr name argtype))))
 		(set! ctr (+ 1 ctr))))
 	    args)))

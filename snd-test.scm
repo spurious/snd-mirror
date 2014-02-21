@@ -5,30 +5,30 @@
 ;;;  test 2: headers                            [1612]
 ;;;  test 3: variables                          [1927]
 ;;;  test 4: sndlib                             [2494]
-;;;  test 5: simple overall checks              [4845]
-;;;  test 6: float-vectors                      [9593]
-;;;  test 7: colors                             [9887]
-;;;  test 8: clm                                [10406]
-;;;  test 9: mix                                [21731]
-;;;  test 10: marks                             [23522]
-;;;  test 11: dialogs                           [24470]
-;;;  test 12: extensions                        [24644]
-;;;  test 13: menus, edit lists, hooks, etc     [24910]
-;;;  test 14: all together now                  [26280]
-;;;  test 15: chan-local vars                   [27153]
-;;;  test 16: regularized funcs                 [28906]
-;;;  test 17: dialogs and graphics              [32731]
-;;;  test 18: save and restore                  [32844]
-;;;  test 19: transforms                        [34496]
-;;;  test 20: new stuff                         [36608]
-;;;  test 21: optimizer                         [37815]
-;;;  test 22: with-sound                        [38339]
-;;;  test 23: X/Xt/Xm                           [41331]
-;;;  test 24: GL                                [45013]
-;;;  test 25: errors                            [45137]
-;;;  test 26: s7                                [46667]
-;;;  test all done                              [46733]
-;;;  test the end                               [46942]
+;;;  test 5: simple overall checks              [4846]
+;;;  test 6: float-vectors                      [9585]
+;;;  test 7: colors                             [9877]
+;;;  test 8: clm                                [10396]
+;;;  test 9: mix                                [21859]
+;;;  test 10: marks                             [23650]
+;;;  test 11: dialogs                           [24598]
+;;;  test 12: extensions                        [24772]
+;;;  test 13: menus, edit lists, hooks, etc     [25038]
+;;;  test 14: all together now                  [26408]
+;;;  test 15: chan-local vars                   [27279]
+;;;  test 16: regularized funcs                 [29032]
+;;;  test 17: dialogs and graphics              [32857]
+;;;  test 18: save and restore                  [32970]
+;;;  test 19: transforms                        [34622]
+;;;  test 20: new stuff                         [36729]
+;;;  test 21: optimizer                         [37936]
+;;;  test 22: with-sound                        [38460]
+;;;  test 23: X/Xt/Xm                           [41412]
+;;;  test 24: GL                                [45094]
+;;;  test 25: errors                            [45218]
+;;;  test 26: s7                                [46748]
+;;;  test all done                              [46814]
+;;;  test the end                               [47023]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -7322,16 +7322,12 @@ EDITS: 5
 	  (test-orig (lambda (snd) (map-channel 
 				    (let ((vect (make-float-vector 2 0.0))) 
 				      (lambda (y) 
-					(set! (vect 0) (* y 2))
-					(set! (vect 1) (* y 2))
+					(set! (vect 0) (set! (vect 1) (* y 2)))
 					vect))))
 		     (lambda (snd) (map-channel
 				    (let ((outp #f))
 				      (lambda (y) 
-					(if outp
-					    (set! outp #f)
-					    (set! outp (* y 0.5)))
-					outp))))
+					(and (set! outp (not outp)) (* y 0.5))))))
 		     'map-channel ind1)
 	  (test-orig (lambda (snd) (map-chan (lambda (n) (* n 2.0)))) (lambda (snd) (map-chan (lambda (n) (* n 0.5)))) 'map-chan ind1)
 	  (test-orig (lambda (snd) (pad-channel 1000 2000 ind1)) (lambda (snd) (delete-samples 1000 2000 ind1)) 'pad-channel ind1)
@@ -9787,8 +9783,7 @@ EDITS: 2
 	  (if (fneq (speed-control ind) 1.0) (snd-display #__line__ ";apply-controls -1.0 -> ~A?" (speed-control ind)))
 	  
 	  (hook-push dac-hook (lambda (hook) 
-				(set! ctr (+ ctr 1))
-				(if (>= ctr 3) (set! (playing) #f))))
+				(if (>= (set! ctr (+ ctr 1)) 3) (set! (playing) #f))))
 	  (play :wait #t)
 	  (if (not (= ctr 3)) (snd-display #__line__ ";ctr after dac-hook: ~A" ctr))
 	  (set! ctr 0)
@@ -9799,8 +9794,7 @@ EDITS: 2
 	  (set! (speed-control) 1.5)
 	  (set! ctr 0)
 	  (hook-push dac-hook (lambda (hook) 
-				(set! ctr (+ ctr 1))
-				(if (= ctr 3) (apply-controls))))
+				(if (= (set! ctr (+ ctr 1)) 3) (apply-controls))))
 	  (play :wait #t)
 	  (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";apply-controls from hook: ~A ~A" (edits ind) (edit-tree ind)))
 	  (revert-sound)
@@ -32518,7 +32512,7 @@ EDITS: 1
 	
 	(let ((ind (open-sound "oboe.snd")))
 	  (let ((ctr 0))
-	    (map-channel (lambda (y) (set! ctr (+ ctr 1)) (if (> ctr 3) #t (* y 2)))))
+	    (map-channel (lambda (y) (or (> (set! ctr (+ ctr 1)) 3) (* y 2)))))
 	  (if (not (= (frames ind 0) 3)) 
 	      (snd-display #__line__ ";map-channel oboe -> #t at 3: ~A" (frames ind 0))
 	      (if (not (vequal (channel->float-vector) (float-vector 0.0 -.001 -.001)))
@@ -32526,7 +32520,7 @@ EDITS: 1
 	  
 	  (undo)
 	  (let ((ctr 0))
-	    (map-channel (lambda (y) (set! ctr (+ ctr 1)) (if (= ctr 3) (make-float-vector 5 .1) (* y .5)))))
+	    (map-channel (lambda (y) (if (= (set! ctr (+ ctr 1)) 3) (make-float-vector 5 .1) (* y .5)))))
 	  (if (not (= (frames ind 0) (+ 50828 4)))
 	      (snd-display #__line__ ";map-channel oboe -> float-vector at 3: ~A" (frames ind 0))
 	      (if (not (vequal (channel->float-vector 0 10) (float-vector 0.000 -0.000 0.100 0.100 0.100 0.100 0.100 -0.000 -0.000 -0.000)))
@@ -33517,7 +33511,7 @@ EDITS: 1
 	;; map-channel as backup
 	(lambda (ind)
 	  (let ((ctr 0))
-	    (map-channel (lambda (y) (set! ctr (+ ctr 1)) (if (even? ctr) .1 #f)))))
+	    (map-channel (lambda (y) (if (even? (set! ctr (+ ctr 1))) .1 #f)))))
 	
 	;; as-one-edit
 	(lambda (ind)
@@ -40408,12 +40402,13 @@ EDITS: 1
 			  (let ((gen (make-ercos 100 :r 0.1)))
 			    (with-environment gen
 			      (let ((g (current-environment))
-				    (t-env (make-env '(0 .1 1 2) :length 20000)))
+				    (t-env (make-env '(0 .1 1 2) :length 20000))
+				    (poly-coeffs (mus-data osc)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 20000))
 				  (set! r (env t-env))
 				  (set! cosh-t (cosh r))
-				  (set! ((mus-data osc) 0) cosh-t)
+				  (float-vector-set! poly-coeffs 0 cosh-t)
 				  (let ((exp-t (exp (- r))))
 				    (set! offset (/ (- 1.0 exp-t) (* 2.0 exp-t)))
 				    (set! scaler (* (sinh r) offset)))
@@ -46624,7 +46619,7 @@ EDITS: 1
 		       (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
 		    keyargs))
 		 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32))))
-	  (if all-args (snd-display #__line__ ";args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))))
+;	  (if all-args (snd-display #__line__ ";args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))))
 	  
 	  ;; ---------------- 0 Args
 	  (for-each 

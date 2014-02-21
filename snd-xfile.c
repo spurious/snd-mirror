@@ -151,7 +151,7 @@ static void snd_sort(int sorter, sort_info **data, int len)
       if ((sorter_pos >= 0) &&
 	  (sorter_pos < ss->file_sorters_size))
 	{
-	  if (XEN_LIST_P(XEN_VECTOR_REF(ss->file_sorters, sorter_pos)))
+	  if (Xen_is_list(XEN_VECTOR_REF(ss->file_sorters, sorter_pos)))
 	    {
 	      sorter_func = XEN_CADR(XEN_VECTOR_REF(ss->file_sorters, sorter_pos));
 	      qsort((void *)data, len, sizeof(sort_info *), sort_xen);
@@ -855,10 +855,10 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
       {
 	int extra_sorters = 0, extra_filters = 0;
 	for (i = 0; i < ss->file_sorters_size; i++)
-	  if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i))))
+	  if (!(Xen_is_false(XEN_VECTOR_REF(ss->file_sorters, i))))
 	    extra_sorters++;
 	for (i = 0; i < ss->file_filters_size; i++)
-	  if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i))))
+	  if (!(Xen_is_false(XEN_VECTOR_REF(ss->file_filters, i))))
 	    extra_filters++;
 
 	items_len = SORT_XEN + extra_sorters + extra_filters;
@@ -881,7 +881,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 	  /* sorters */
 	  for (i = 0; i < ss->file_sorters_size; i++)
 	    {
-	      if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i))))
+	      if (!(Xen_is_false(XEN_VECTOR_REF(ss->file_sorters, i))))
 		{
 		  set_label(fd->file_list_items[k], XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_sorters, i))));
 		  XtVaSetValues(fd->file_list_items[k], 
@@ -896,7 +896,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 	  
 	  for (i = 0; i < ss->file_filters_size; i++)
 	    {
-	      if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i))))
+	      if (!(Xen_is_false(XEN_VECTOR_REF(ss->file_filters, i))))
 		{
 		  set_label(fd->file_list_items[k], XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_filters, i))));
 		  XtVaSetValues(fd->file_list_items[k], XmNbackground, ss->light_blue, 
@@ -5871,7 +5871,7 @@ static void view_files_reflect_sort_items(void)
     {
       XEN ref;
       ref = XEN_VECTOR_REF(ss->file_sorters, i);
-      if (XEN_PAIR_P(ref))
+      if (Xen_is_pair(ref))
 	{
 	  XmString s1;
 	  s1 = XmStringCreateLocalized((char *)XEN_TO_C_STRING(XEN_CAR(ref)));
@@ -8446,7 +8446,7 @@ static XEN g_view_files_dialog(XEN managed, XEN make_new)
 {
   #define H_view_files_dialog "(" S_view_files_dialog " :optional managed create-new-dialog): start the View Files dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_view_files_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_view_files_dialog(XEN_TO_C_BOOLEAN(managed), XEN_TRUE_P(make_new))));
+  return(XEN_WRAP_WIDGET(make_view_files_dialog(XEN_TO_C_BOOLEAN(managed), Xen_is_true(make_new))));
 }
 
 
@@ -8454,7 +8454,7 @@ static XEN g_add_directory_to_view_files_list(XEN directory, XEN dialog)
 {
   #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir :optional w): adds any sound files in 'dir' to the View:Files dialog"
   
-  XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, 1, S_add_directory_to_view_files_list, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(directory), directory, 1, S_add_directory_to_view_files_list, "a string");
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog) || XEN_NOT_BOUND_P(dialog), dialog, 2, S_add_directory_to_view_files_list, "a view-files dialog widget"); 
 
   if (XEN_NOT_BOUND_P(dialog))
@@ -8469,7 +8469,7 @@ static XEN g_add_file_to_view_files_list(XEN file, XEN dialog)
   #define H_add_file_to_view_files_list "(" S_add_file_to_view_files_list " file :optional w): adds file to the View:Files dialog's list"
   char *name = NULL;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, 1, S_add_file_to_view_files_list, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_add_file_to_view_files_list, "a string");
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog) || XEN_NOT_BOUND_P(dialog), dialog, 2, S_add_file_to_view_files_list, "a view-files dialog widget"); 
 
   name = mus_expand_filename(XEN_TO_C_STRING(file));
@@ -8487,7 +8487,7 @@ static XEN g_add_file_to_view_files_list(XEN file, XEN dialog)
 static XEN g_view_files_sort(XEN dialog) 
 {
   #define H_view_files_sort "(" S_view_files_sort " :optional dialog): sort choice in View:files dialog."
-  if (XEN_BOUND_P(dialog))
+  if (Xen_is_bound(dialog))
     {
       XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_view_files_sort, "a view-files dialog widget"); 
       return(C_TO_XEN_INT(view_files_local_sort((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
@@ -8501,15 +8501,15 @@ static XEN g_set_view_files_sort(XEN dialog, XEN val)
   int choice;
   XEN sort_choice;
 
-  if (XEN_BOUND_P(val)) sort_choice = val; else sort_choice = dialog;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(sort_choice), sort_choice, 1, S_setB S_view_files_sort, "an integer"); 
+  if (Xen_is_bound(val)) sort_choice = val; else sort_choice = dialog;
+  XEN_ASSERT_TYPE(Xen_is_integer(sort_choice), sort_choice, 1, S_setB S_view_files_sort, "an integer"); 
 
   choice = XEN_TO_C_INT(sort_choice);
   if ((choice < 0) ||
       (choice >= (ss->file_sorters_size + SORT_XEN)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_view_files_sort, 2, sort_choice, "must be a valid file-sorter index");
 
-  if (XEN_BOUND_P(val))
+  if (Xen_is_bound(val))
     {
       widget_t w;
       XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_sort, "a view-files dialog widget"); 
@@ -8534,7 +8534,7 @@ static XEN g_view_files_amp(XEN dialog)
 static XEN g_view_files_set_amp(XEN dialog, XEN amp)
 {
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_amp, "a view-files dialog widget"); 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, 2, S_setB S_view_files_amp, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(amp), amp, 2, S_setB S_view_files_amp, "a number");
   view_files_set_amp((widget_t)(XEN_UNWRAP_WIDGET(dialog)), XEN_TO_C_DOUBLE(amp));
   return(amp);
 }
@@ -8551,7 +8551,7 @@ static XEN g_view_files_speed(XEN dialog)
 static XEN g_view_files_set_speed(XEN dialog, XEN speed)
 {
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_speed, "a view-files dialog widget"); 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(speed), speed, 2, S_setB S_view_files_speed, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(speed), speed, 2, S_setB S_view_files_speed, "a number");
   view_files_set_speed((widget_t)(XEN_UNWRAP_WIDGET(dialog)), XEN_TO_C_DOUBLE(speed));
   return(speed);
 }
@@ -8568,7 +8568,7 @@ static XEN g_view_files_amp_env(XEN dialog)
 static XEN g_view_files_set_amp_env(XEN dialog, XEN amp_env)
 {
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_amp_env, "a view-files dialog widget"); 
-  XEN_ASSERT_TYPE(XEN_LIST_P(amp_env), amp_env, 2, S_setB S_view_files_amp_env, "an envelope");
+  XEN_ASSERT_TYPE(Xen_is_list(amp_env), amp_env, 2, S_setB S_view_files_amp_env, "an envelope");
   view_files_set_amp_env((widget_t)(XEN_UNWRAP_WIDGET(dialog)), xen_to_env(amp_env));
   return(amp_env);
 }
@@ -8585,7 +8585,7 @@ static XEN g_view_files_speed_style(XEN dialog)
 static XEN g_view_files_set_speed_style(XEN dialog, XEN speed_style)
 {
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_speed_style, "a view-files dialog widget"); 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(speed_style), speed_style, 2, S_setB S_view_files_speed_style, "an int");
+  XEN_ASSERT_TYPE(Xen_is_integer(speed_style), speed_style, 2, S_setB S_view_files_speed_style, "an int");
   view_files_set_speed_style((widget_t)(XEN_UNWRAP_WIDGET(dialog)), (speed_style_t)(XEN_TO_C_INT(speed_style)));
   return(speed_style);
 }
@@ -8620,13 +8620,13 @@ static XEN g_view_files_set_selected_files(XEN dialog, XEN files)
   char **cfiles = NULL;
 
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_selected_files, "a view-files dialog widget");   
-  XEN_ASSERT_TYPE(XEN_LIST_P(files), files, 2, S_setB S_view_files_selected_files, "a list of files or directories");
+  XEN_ASSERT_TYPE(Xen_is_list(files), files, 2, S_setB S_view_files_selected_files, "a list of files or directories");
 
   len = XEN_LIST_LENGTH(files);
   if (len > 0)
     {
       for (i = 0; i < len; i++)
-	if (!(XEN_STRING_P(XEN_LIST_REF(files, i))))
+	if (!(Xen_is_string(XEN_LIST_REF(files, i))))
 	  {
 	    XEN_ASSERT_TYPE(0, XEN_LIST_REF(files, i), i, S_setB S_view_files_selected_files, "a filename (string)");
 	    return(XEN_FALSE);
@@ -8664,13 +8664,13 @@ static XEN g_view_files_set_files(XEN dialog, XEN files)
   char **cfiles = NULL;
 
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_files, "a view-files dialog widget");   
-  XEN_ASSERT_TYPE(XEN_LIST_P(files), files, 2, S_setB S_view_files_files, "a list of files or directories");
+  XEN_ASSERT_TYPE(Xen_is_list(files), files, 2, S_setB S_view_files_files, "a list of files or directories");
 
   len = XEN_LIST_LENGTH(files);
   if (len > 0)
     {
       for (i = 0; i < len; i++)
-	if (!(XEN_STRING_P(XEN_LIST_REF(files, i))))
+	if (!(Xen_is_string(XEN_LIST_REF(files, i))))
 	  {
 	    XEN_ASSERT_TYPE(0, XEN_LIST_REF(files, i), i, S_setB S_view_files_files, "a filename (string)");
 	    return(XEN_FALSE);
@@ -8704,8 +8704,8 @@ static bool file_sorter_ok(XEN name, XEN proc, const char *caller)
 {
   char *errmsg;
   XEN errstr;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, caller, "a string");   
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, 2, caller, "a procedure of 2 args (file1 and file2)");
+  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, caller, "a string");   
+  XEN_ASSERT_TYPE(Xen_is_procedure(proc), proc, 2, caller, "a procedure of 2 args (file1 and file2)");
   errmsg = procedure_ok(proc, 2, caller, "function", 2);
   if (errmsg)
     {
@@ -8729,7 +8729,7 @@ static XEN g_add_file_sorter(XEN name, XEN proc)
       len = ss->file_sorters_size;
       for (i = 0; i < len; i++)
 	{
-	  if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i)))
+	  if (Xen_is_false(XEN_VECTOR_REF(ss->file_sorters, i)))
 	    {
 	      XEN_VECTOR_SET(ss->file_sorters, i, XEN_LIST_2(name, proc));
 	      choice = i;
@@ -8753,7 +8753,7 @@ static XEN g_delete_file_sorter(XEN index)
 {
   #define H_delete_file_sorter "(" S_delete_file_sorter " index) -- delete proc with identifier name from file sorter list"
   int pos;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, 1, S_delete_file_sorter, "a file-sorter index");   
+  XEN_ASSERT_TYPE(Xen_is_integer(index), index, 1, S_delete_file_sorter, "a file-sorter index");   
   pos = XEN_TO_C_INT(index);
   if ((pos >= SORT_XEN) &&
       ((pos - SORT_XEN) < ss->file_sorters_size))
@@ -8925,7 +8925,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
   if (str)
     {
       if ((!(XEN_HOOKED(drop_hook))) || 
-	  (!(XEN_TRUE_P(run_or_hook(drop_hook,
+	  (!(Xen_is_true(run_or_hook(drop_hook,
 				    XEN_LIST_1(C_TO_XEN_STRING(str)),
 				    S_drop_hook)))))
 	{
