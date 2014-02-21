@@ -1448,7 +1448,7 @@ into the envelope editor."
 
   XEN_ASSERT_TYPE(Xen_is_string(name) || Xen_is_symbol(name), name, 1, S_define_envelope, "a string or symbol");
   XEN_ASSERT_TYPE(Xen_is_list(data), data, 2, S_define_envelope, "a list of breakpoints");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || Xen_is_false(base), base, 3, S_define_envelope, "a float or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_number_or_unbound(base) || Xen_is_false(base), base, 3, S_define_envelope, "a float or " PROC_FALSE);
 
   if (Xen_is_string(name))
     ename = XEN_TO_C_STRING(name);
@@ -1576,7 +1576,7 @@ static XEN g_save_envelopes(XEN filename)
   char *name = NULL;
   FILE *fd;
 
-  XEN_ASSERT_TYPE((Xen_is_string(filename) || (Xen_is_false(filename)) || (XEN_NOT_BOUND_P(filename))), 
+  XEN_ASSERT_TYPE((Xen_is_string(filename) || (Xen_is_false(filename)) || (!Xen_is_bound(filename))), 
 		  filename, 1, S_save_envelopes, "a string or " PROC_FALSE);
   if (Xen_is_string(filename)) 
     name = mus_expand_filename(XEN_TO_C_STRING(filename));
@@ -1629,7 +1629,7 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 	XEN procs, env_list;
 	env_list = env_to_xen(e);
 	procs = XEN_HOOK_PROCEDURES(enved_hook);
-	while (XEN_NOT_NULL_P(procs))
+	while (!Xen_is_null(procs))
 	  {
 	    XEN temp;
 	    temp = XEN_APPLY(XEN_CAR(procs), 
@@ -1639,7 +1639,7 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 					  C_TO_XEN_DOUBLE(y),
 					  C_TO_XEN_INT((int)reason)),
 			       S_enved_hook);
-	    if (XEN_NOT_FALSE_P(temp))
+	    if (!Xen_is_false(temp))
 	      {
 		result = temp;
 		env_list = temp;
@@ -1648,7 +1648,7 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 	  }
       }
 #endif
-      if ((XEN_NOT_FALSE_P(result)) && 
+      if ((!Xen_is_false(result)) && 
 	  (XEN_LIST_P_WITH_LENGTH(result, len)))
 	{
 	  int i;

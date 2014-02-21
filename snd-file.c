@@ -830,7 +830,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       XEN arg1, procs;
       procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
       arg1 = C_TO_XEN_STRING(fullname);
-      while (XEN_NOT_NULL_P(procs))
+      while (!Xen_is_null(procs))
 	{
 	  res = XEN_CALL_2(XEN_CAR(procs), 
 			   arg1, 
@@ -1196,7 +1196,7 @@ char *output_name(const char *current_name)
       XEN result, fname, procs;
       procs = XEN_HOOK_PROCEDURES (output_name_hook);
       fname = C_TO_XEN_STRING(current_name);
-      while (XEN_NOT_NULL_P(procs))
+      while (!Xen_is_null(procs))
 	{
 	  result = XEN_CALL_1(XEN_CAR(procs),
 			      fname,
@@ -2896,7 +2896,7 @@ void display_info(snd_info *sp)
 #else
 	  XEN procs;
 	  procs = XEN_HOOK_PROCEDURES(info_popup_hook);
-	  while (XEN_NOT_NULL_P(procs))
+	  while (!Xen_is_null(procs))
 	    {
 	      result = XEN_CALL_1(XEN_CAR(procs), C_INT_TO_XEN_SOUND(sp->index), S_info_popup_hook);
 	      if (Xen_is_string(result))
@@ -3077,9 +3077,9 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   XEN start1 = XEN_ZERO, end1 = XEN_ZERO; 
   XEN mode0 = XEN_ZERO, mode1 = XEN_ZERO;
   XEN note = XEN_ZERO, detune = XEN_ZERO;
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, 2, S_setB S_sound_loop_info, "a list");
+  XEN_ASSERT_TYPE(!Xen_is_bound(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, 2, S_setB S_sound_loop_info, "a list");
 
-  if (XEN_NOT_BOUND_P(vals))
+  if (!Xen_is_bound(vals))
     {
       /* what is going on here? -- (set! (sound-loop-info) (list...))? */
       XEN_ASSERT_TYPE(Xen_is_list(snd), snd, 1, S_setB S_sound_loop_info, "a list");
@@ -3262,7 +3262,7 @@ static XEN g_sound_files_in_directory(XEN dirname)
   #define H_sound_files_in_directory "(" S_sound_files_in_directory " :optional (directory \".\")): return a list of the sound files in 'directory'"
   char *name = NULL;
   XEN res = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(dirname), dirname, 1, S_sound_files_in_directory, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(dirname), dirname, 1, S_sound_files_in_directory, "a string");
   if (Xen_is_string(dirname))
     name = mus_expand_filename(XEN_TO_C_STRING(dirname));
   else name = mus_expand_filename(".");
@@ -3296,7 +3296,7 @@ static XEN g_disk_kspace(XEN name)
 static XEN g_open_file_dialog(XEN managed)
 {
   #define H_open_file_dialog "(" S_open_file_dialog " :optional (managed " PROC_TRUE ")): create the file dialog if needed and display it if 'managed'"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_open_file_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_open_file_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_open_file_dialog(FILE_READ_WRITE, (Xen_is_bound(managed)) ? XEN_TO_C_BOOLEAN(managed) : true)));
 }
 
@@ -3304,7 +3304,7 @@ static XEN g_open_file_dialog(XEN managed)
 static XEN g_mix_file_dialog(XEN managed)
 {
   #define H_mix_file_dialog "(" S_mix_file_dialog " :optional (managed " PROC_TRUE ")): create the mix file dialog if needed and display it if 'managed'"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_mix_file_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_mix_file_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_mix_file_dialog((Xen_is_bound(managed)) ? XEN_TO_C_BOOLEAN(managed) : true)));
 }
 
@@ -3312,7 +3312,7 @@ static XEN g_mix_file_dialog(XEN managed)
 static XEN g_insert_file_dialog(XEN managed)
 {
   #define H_insert_file_dialog "(" S_insert_file_dialog " :optional (managed " PROC_TRUE ")): create the insert file dialog if needed and display it if 'managed'"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_insert_file_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_insert_file_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_insert_file_dialog((Xen_is_bound(managed)) ? XEN_TO_C_BOOLEAN(managed) : true)));
 }
 
@@ -3331,7 +3331,7 @@ static XEN g_edit_header_dialog(XEN snd_n)
 static XEN g_save_selection_dialog(XEN managed)
 {
 #define H_save_selection_dialog "(" S_save_selection_dialog " :optional managed): start the Selection Save-as dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_save_selection_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_save_selection_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_selection_save_as_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
@@ -3339,7 +3339,7 @@ static XEN g_save_selection_dialog(XEN managed)
 static XEN g_save_region_dialog(XEN managed)
 {
   #define H_save_region_dialog "(" S_save_region_dialog " :optional managed): start the Region Save-as dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_save_region_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_save_region_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_region_save_as_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
@@ -3347,7 +3347,7 @@ static XEN g_save_region_dialog(XEN managed)
 static XEN g_save_sound_dialog(XEN managed)
 {
   #define H_save_sound_dialog "(" S_save_sound_dialog " :optional managed): start the File Save-as dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_save_sound_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_save_sound_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_sound_save_as_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
@@ -3364,7 +3364,7 @@ static XEN g_info_dialog(XEN subject, XEN msg)
 static XEN g_new_sound_dialog(XEN managed)
 {
   #define H_new_sound_dialog "(" S_new_sound_dialog " :optional managed): start the File New sound dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_new_sound_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_new_sound_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_new_file_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 

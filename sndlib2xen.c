@@ -812,11 +812,11 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 
   int fd = -1, df;
   XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_sound_open_output, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(srate), srate, 2, S_mus_sound_open_output, "an integer or " PROC_FALSE);
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chans), chans, 3, S_mus_sound_open_output, "an integer or " PROC_FALSE);
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(data_format), data_format, 4, S_mus_sound_open_output, "a data-format or " PROC_FALSE);
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(header_type), header_type, 5, S_mus_sound_open_output, "a header-type or " PROC_FALSE);
-  XEN_ASSERT_TYPE((Xen_is_string(comment) || (XEN_NOT_BOUND_P(comment))), comment, 6, S_mus_sound_open_output, "a string");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(srate), srate, 2, S_mus_sound_open_output, "an integer or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(chans), chans, 3, S_mus_sound_open_output, "an integer or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(data_format), data_format, 4, S_mus_sound_open_output, "a data-format or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(header_type), header_type, 5, S_mus_sound_open_output, "a header-type or " PROC_FALSE);
+  XEN_ASSERT_TYPE((Xen_is_string(comment) || (!Xen_is_bound(comment))), comment, 6, S_mus_sound_open_output, "a string");
 
   df = (Xen_is_integer(data_format)) ? XEN_TO_C_INT(data_format) : (int)MUS_OUT_FORMAT;
   if (mus_is_data_format(df))
@@ -912,10 +912,10 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
   int fd = -1, df;
   char *filename;
   XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_sound_reopen_output, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chans), chans, 2, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(data_format), data_format, 3, S_mus_sound_reopen_output, "a data-format or " PROC_FALSE);
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(header_type), header_type, 4, S_mus_sound_reopen_output, "a header-type or " PROC_FALSE);
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(data_loc) || Xen_is_false(data_loc) || XEN_NOT_BOUND_P(data_loc), 
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(chans), chans, 2, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(data_format), data_format, 3, S_mus_sound_reopen_output, "a data-format or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(header_type), header_type, 4, S_mus_sound_reopen_output, "a header-type or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(data_loc) || Xen_is_false(data_loc) || !Xen_is_bound(data_loc), 
 		  data_loc, 5, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
 
   filename = mus_expand_filename(XEN_TO_C_STRING(file));
@@ -1314,7 +1314,7 @@ to the audio line from sound-data sdata."
   XEN_ASSERT_TYPE(Xen_is_integer(line), line, 1, S_mus_audio_write, "an integer");
   XEN_ASSERT_TYPE(sound_data_p(sdata), sdata, 2, S_mus_audio_write, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(frames), frames, 3, S_mus_audio_write, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(start) || XEN_NOT_BOUND_P(start), start, 4, S_mus_audio_write, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(start) || !Xen_is_bound(start), start, 4, S_mus_audio_write, "an integer");
 
   sd = XEN_TO_SOUND_DATA(sdata);
   frms = XEN_TO_C_LONG_LONG(frames);
@@ -1440,7 +1440,7 @@ cache info to the file given or stdout"
   const char *name;
   char *str = NULL;
 
-  if (XEN_NOT_BOUND_P(file))
+  if (!Xen_is_bound(file))
     {
       mus_sound_report_cache(stdout);
       return(XEN_FALSE);
@@ -1578,7 +1578,7 @@ static void g_new_sound_hook(const char *filename)
       XEN procs, fname;
       fname = C_TO_XEN_STRING(filename);
       procs = XEN_HOOK_PROCEDURES(new_sound_hook);
-      while (XEN_NOT_NULL_P(procs))
+      while (!Xen_is_null(procs))
 	{
 	  XEN_CALL_1(XEN_CAR(procs), fname, S_new_sound_hook);
 	  procs = XEN_CDR (procs);
@@ -2191,8 +2191,8 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
   mus_long_t len, sdlen;
 
   XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, 1, S_sound_data_to_vct, "a sound-data object");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 2, S_sound_data_to_vct, "an integer");
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vobj) || MUS_IS_VCT(vobj), vobj, 3, S_sound_data_to_vct, "a vct");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 2, S_sound_data_to_vct, "an integer");
+  XEN_ASSERT_TYPE(!Xen_is_bound(vobj) || MUS_IS_VCT(vobj), vobj, 3, S_sound_data_to_vct, "a vct");
 
   sd = XEN_TO_SOUND_DATA(sdobj);
   sdlen = mus_sound_data_length(sd);
@@ -2230,8 +2230,8 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   mus_long_t len;
 
   XEN_ASSERT_TYPE(MUS_IS_VCT(vobj), vobj, 1, S_vct_to_sound_data, "a vct");
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(sdobj) || SOUND_DATA_P(sdobj), sdobj, 2, S_vct_to_sound_data, "a sound-data object");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 3, S_vct_to_sound_data, "an integer");
+  XEN_ASSERT_TYPE(!Xen_is_bound(sdobj) || SOUND_DATA_P(sdobj), sdobj, 2, S_vct_to_sound_data, "a sound-data object");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 3, S_vct_to_sound_data, "an integer");
 
   v = XEN_TO_VCT(vobj);
   chn = (Xen_is_integer(chan)) ? XEN_TO_C_INT(chan) : 0;

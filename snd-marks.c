@@ -2218,14 +2218,14 @@ static XEN g_mark_sample(XEN mark_n, XEN pos_n)
 {
   #define H_mark_sample "(" S_mark_sample " id :optional pos): mark's location (sample number) at edit history pos"
   XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_mark_sample, "a mark");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos_n), pos_n, 2, S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(pos_n), pos_n, 2, S_mark_sample, "an integer");
   return(mark_get(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
 }
 
 static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
 {
   XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_setB S_mark_sample, "a mark");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, 2, S_setB S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(samp_n) || !Xen_is_bound(samp_n), samp_n, 2, S_setB S_mark_sample, "an integer");
   return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_setB S_mark_sample));
 }
 
@@ -2240,7 +2240,7 @@ XEN g_mark_sync(XEN mark_n)
 XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
 {
   XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_setB S_mark_sync, "a mark");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(sync_n), sync_n, 2, S_setB S_mark_sync, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_boolean(sync_n), sync_n, 2, S_setB S_mark_sync, "an integer");
   return(mark_set(mark_n, sync_n, MARK_SYNC, S_setB S_mark_sync));
 }
 
@@ -2332,9 +2332,9 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
   int msync = 0;
   const char *mname = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, 1, S_add_mark, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || Xen_is_false(name), name, 4, S_add_mark, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sync), sync, 5, S_add_mark, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(samp_n) || !Xen_is_bound(samp_n), samp_n, 1, S_add_mark, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(name) || Xen_is_false(name), name, 4, S_add_mark, "a string");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(sync), sync, 5, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd, chn_n, 2);
 
   cp = get_cp(snd, chn_n, S_add_mark);
@@ -2758,7 +2758,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
   XEN res = XEN_FALSE;
 
   ASSERT_SOUND(S_save_marks, snd, 1);
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, 2, S_save_marks, "a string");  
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(filename), filename, 2, S_save_marks, "a string");  
 
   sp = get_sp(snd);
   if (sp == NULL) 

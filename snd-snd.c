@@ -2431,7 +2431,7 @@ If more than one such sound exists, 'nth' chooses which one to return."
   snd_info *sp;
 
   XEN_ASSERT_TYPE(Xen_is_string(filename), filename, 1, S_find_sound, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(which), which, 2, S_find_sound, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(which), which, 2, S_find_sound, "an integer");
 
   sp = find_sound(XEN_TO_C_STRING(filename), (Xen_is_integer(which)) ? XEN_TO_C_INT(which) : 0);
   if (sp) return(C_INT_TO_XEN_SOUND(sp->index));
@@ -2619,7 +2619,7 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
 
 static XEN sound_get_global(XEN snd, sp_field_t fld, const char *caller)
 {
-  if (XEN_NOT_BOUND_P(snd))
+  if (!Xen_is_bound(snd))
     switch (fld)
       {
       case SP_FILTER_DBING:         return(C_TO_XEN_BOOLEAN(filter_control_in_dB(ss)));    break;
@@ -3097,7 +3097,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 static XEN sound_set_global(XEN snd, XEN val, sp_field_t fld, const char *caller)
 {
   mus_float_t fval;
-  if (XEN_NOT_BOUND_P(snd))
+  if (!Xen_is_bound(snd))
     switch (fld)
       {
       case SP_FILTER_DBING:   
@@ -3266,7 +3266,7 @@ static XEN check_non_negative_integer(XEN val, const char *caller)
 
 static XEN g_set_channels(XEN snd, XEN val)
 {
-  if (XEN_NOT_BOUND_P(val))
+  if (!Xen_is_bound(val))
     return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_channels), SP_NCHANS, S_setB S_channels));
   else return(sound_set(snd, check_non_negative_integer(val, S_setB S_channels), SP_NCHANS, S_setB S_channels));
 }
@@ -3291,7 +3291,7 @@ static XEN g_srate(XEN snd)
 
 static XEN g_set_srate(XEN snd, XEN val) 
 {
-  if (XEN_NOT_BOUND_P(val))
+  if (!Xen_is_bound(val))
     return(sound_set(XEN_UNDEFINED, check_number(snd, S_setB S_srate), SP_SRATE, S_setB S_srate));
   else return(sound_set(snd, check_number(val, S_setB S_srate), SP_SRATE, S_setB S_srate));
 }
@@ -3306,7 +3306,7 @@ static XEN g_data_location(XEN snd)
 
 static XEN g_set_data_location(XEN snd, XEN val) 
 {
-  if (XEN_NOT_BOUND_P(val))
+  if (!Xen_is_bound(val))
     return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_data_location), SP_DATA_LOCATION, S_setB S_data_location));
   else return(sound_set(snd, check_non_negative_integer(val, S_setB S_data_location), SP_DATA_LOCATION, S_setB S_data_location));
 }
@@ -3321,7 +3321,7 @@ static XEN g_data_size(XEN snd)
 
 static XEN g_set_data_size(XEN snd, XEN val) 
 {
-  if (XEN_NOT_BOUND_P(val))
+  if (!Xen_is_bound(val))
     return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_data_size), SP_DATA_SIZE, S_setB S_data_size));
   else return(sound_set(snd, check_non_negative_integer(val, S_setB S_data_size), SP_DATA_SIZE, S_setB S_data_size));
 }
@@ -3336,7 +3336,7 @@ static XEN g_data_format(XEN snd)
 
 static XEN g_set_data_format(XEN snd, XEN val) 
 {
-  if (XEN_NOT_BOUND_P(val))
+  if (!Xen_is_bound(val))
     return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_data_format), SP_DATA_FORMAT, S_setB S_data_format));
   else return(sound_set(snd, check_non_negative_integer(val, S_setB S_data_format), SP_DATA_FORMAT, S_setB S_data_format));
 }
@@ -3351,7 +3351,7 @@ static XEN g_header_type(XEN snd)
 
 static XEN g_set_header_type(XEN snd, XEN val) 
 {
-  if (XEN_NOT_BOUND_P(val))
+  if (!Xen_is_bound(val))
     return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_header_type), SP_HEADER_TYPE, S_setB S_header_type));
   else return(sound_set(snd, check_non_negative_integer(val, S_setB S_header_type), SP_HEADER_TYPE, S_setB S_header_type));
 }
@@ -3366,7 +3366,7 @@ static XEN g_comment(XEN snd)
 
 static XEN g_set_comment(XEN snd, XEN val) 
 {
-  if (XEN_NOT_BOUND_P(val))
+  if (!Xen_is_bound(val))
     {
       XEN_ASSERT_TYPE(Xen_is_string(snd) || Xen_is_false(snd), snd, 1, S_setB S_comment, "a string");
       return(sound_set(XEN_UNDEFINED, snd, SP_COMMENT, S_setB S_comment));
@@ -3394,7 +3394,7 @@ are applied to all sounds sharing the sync value of the selected sound.  'snd' c
 
 static XEN g_set_sync(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(on), on, 1, S_setB S_sync, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_boolean(on), on, 1, S_setB S_sync, "an integer");
 
   if (XEN_MIX_P(snd))
     return(g_set_mix_sync(snd, on));
@@ -3455,7 +3455,7 @@ static XEN g_channel_style(XEN snd)
 {
   snd_info *sp;
 
-  if (XEN_NOT_BOUND_P(snd))
+  if (!Xen_is_bound(snd))
     return(C_TO_XEN_INT(channel_style(ss)));
 
   ASSERT_SOUND(S_channel_style, snd, 1);
@@ -3508,7 +3508,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
     XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, S_channel_style " should be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
   new_style = (channel_style_t)in_style;
 
-  if (XEN_NOT_BOUND_P(snd))
+  if (!Xen_is_bound(snd))
     {
       set_channel_style(new_style);
       return(C_TO_XEN_INT(channel_style(ss)));
@@ -3710,7 +3710,7 @@ static XEN g_set_selected_channel(XEN snd, XEN chn_n)
 {
   snd_info *sp;
 
-  if (XEN_NOT_BOUND_P(chn_n))
+  if (!Xen_is_bound(chn_n))
     return(g_select_channel(snd));
 
   ASSERT_SOUND(S_setB S_selected_channel, snd, 1); 
@@ -4883,9 +4883,9 @@ where each inner list entry can also be " PROC_FALSE "."
 
   XEN_ASSERT_TYPE(Xen_is_list(settings), settings, 1, S_controls_to_channel, "a list");
   ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(beg) || Xen_is_false(beg) || XEN_NOT_BOUND_P(beg), beg, 2, S_controls_to_channel, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(dur) || Xen_is_false(dur) || XEN_NOT_BOUND_P(dur), dur, 3, S_controls_to_channel, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 7, S_controls_to_channel, "a string");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(beg) || Xen_is_false(beg) || !Xen_is_bound(beg), beg, 2, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(dur) || Xen_is_false(dur) || !Xen_is_bound(dur), dur, 3, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 7, S_controls_to_channel, "a string");
 
   sp = get_sp(snd); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
@@ -4907,7 +4907,7 @@ where each inner list entry can also be " PROC_FALSE "."
       saved_settings = current_control_settings(sp, NULL);
 
       /* now read the 'settings' list for any new settings */
-      if ((Xen_is_list(settings)) && (XEN_NOT_NULL_P(settings)))
+      if ((Xen_is_list(settings)) && (!Xen_is_null(settings)))
 	{
 	  int i, len, elen;
 	  /* settings: 
@@ -5041,9 +5041,9 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   snd_info *sp;
 
   ASSERT_SOUND(S_apply_controls, snd, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(choice), choice, 2, S_apply_controls, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, 3, S_apply_controls, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, 4, S_apply_controls, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(choice), choice, 2, S_apply_controls, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(beg), beg, 3, S_apply_controls, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(dur), dur, 4, S_apply_controls, "an integer");
 
   sp = get_sp(snd); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
@@ -5423,18 +5423,18 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   chan_info *cp = NULL;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
 
-  XEN_ASSERT_TYPE(Xen_is_string(filename) || Xen_is_integer(filename) || XEN_NOT_BOUND_P(filename) || XEN_SOUND_P(filename), 
+  XEN_ASSERT_TYPE(Xen_is_string(filename) || Xen_is_integer(filename) || !Xen_is_bound(filename) || XEN_SOUND_P(filename), 
 		  filename, 1, S_channel_amp_envs, "a string or sound index");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 2, S_channel_amp_envs, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pts), pts, 3, S_channel_amp_envs, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 2, S_channel_amp_envs, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(pts), pts, 3, S_channel_amp_envs, "an integer");
 
   XEN_ASSERT_TYPE(((Xen_is_procedure(peak_func)) && (procedure_arity_ok(peak_func, 2))) ||
 		  (Xen_is_false(peak_func)) ||
-		  (XEN_NOT_BOUND_P(peak_func)), 
+		  (!Xen_is_bound(peak_func)), 
 		  peak_func, 4, S_channel_amp_envs, "a procedure of 2 args");
   XEN_ASSERT_TYPE(((Xen_is_procedure(done_func)) && (procedure_arity_ok(done_func, 3))) ||
 		  (Xen_is_false(done_func)) ||
-		  (XEN_NOT_BOUND_P(done_func)), 
+		  (!Xen_is_bound(done_func)), 
 		  done_func, 5, S_channel_amp_envs, "a procedure of 3 args");
 
   if (!(Xen_is_string(filename)))

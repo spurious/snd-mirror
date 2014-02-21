@@ -375,7 +375,7 @@ initial-element: \n  " vct_make_example
 
   mus_long_t size;
   XEN_ASSERT_TYPE(Xen_is_long_long_int(len), len, 1, S_make_vct, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_number(filler) || XEN_NOT_BOUND_P(filler), filler, 2, S_make_vct, "a number");
+  XEN_ASSERT_TYPE(Xen_is_number(filler) || !Xen_is_bound(filler), filler, 2, S_make_vct, "a number");
 
   size = XEN_TO_C_LONG_LONG(len);
   if (size < 0) 
@@ -469,7 +469,7 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
   XEN_ASSERT_TYPE(mus_is_vct(obj), obj, 1, S_vct_moveB, "a vct");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(newi), newi, 2, S_vct_moveB, "an integer");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(oldi), oldi, 3, S_vct_moveB, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(backwards), backwards, 4, S_vct_moveB, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(backwards), backwards, 4, S_vct_moveB, "a boolean");
 
   v = XEN_TO_VCT(obj);
   d = mus_vct_data(v);
@@ -477,7 +477,7 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
   nj = XEN_TO_C_LONG_LONG(oldi);
 
   if ((Xen_is_boolean(backwards)) && 
-      (XEN_NOT_FALSE_P(backwards)))
+      (!Xen_is_false(backwards)))
     {
       if (ni >= mus_vct_length(v)) 
 	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index too high");
@@ -1417,7 +1417,7 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
 
   XEN_ASSERT_TYPE(mus_is_vct(obj1), obj1, 1, S_vct_addB, "a vct");
   XEN_ASSERT_TYPE(mus_is_vct(obj2), obj2, 2, S_vct_addB, "a vct");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(offs), offs, 3, S_vct_addB, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_or_unbound(offs), offs, 3, S_vct_addB, "an integer");
 
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
@@ -1697,7 +1697,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 
   XEN_ASSERT_TYPE(mus_is_vct(vobj), vobj, 1, S_vct_subseq, "a vct");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(start), start, 2, S_vct_subseq, "an integer");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(end), end, 3, S_vct_subseq, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_or_unbound(end), end, 3, S_vct_subseq, "an integer");
 
   istart = XEN_TO_C_LONG_LONG(start);
   if (istart < 0)
@@ -1861,7 +1861,7 @@ static XEN g_vct_reverse(XEN vobj, XEN size)
   mus_long_t i, j, len = -1;
 
   XEN_ASSERT_TYPE(mus_is_vct(vobj), vobj, 1, S_vct_reverse, "a vct");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, 2, S_vct_reverse, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_or_unbound(size), size, 2, S_vct_reverse, "an integer");
 
   v = XEN_TO_VCT(vobj);
   if (Xen_is_long_long_int(size))

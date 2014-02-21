@@ -1579,7 +1579,7 @@ static XEN g_save_state(XEN filename)
   #define H_save_state "(" S_save_state " :optional filename): save the current Snd state in filename; (load filename) restores it.  The \
 default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be changed via " S_save_state_file "."
 
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, 1, S_save_state, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(filename), filename, 1, S_save_state, "a string");
 
   if (Xen_is_bound(filename))
     name = mus_strdup(XEN_TO_C_STRING(filename));
@@ -2183,7 +2183,7 @@ static XEN g_snd_version(void)
 static XEN g_color_orientation_dialog(XEN managed) 
 {
   #define H_color_orientation_dialog "(" S_color_orientation_dialog " :optional managed): start the Color/Orientation dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_color_orientation_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_color_orientation_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_color_orientation_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
@@ -2191,7 +2191,7 @@ static XEN g_color_orientation_dialog(XEN managed)
 static XEN g_transform_dialog(XEN managed) 
 {
   #define H_transform_dialog "(" S_transform_dialog " :optional (managed " PROC_TRUE ")): start the Transforms dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_transform_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_transform_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_transform_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
@@ -2199,8 +2199,8 @@ static XEN g_transform_dialog(XEN managed)
 static XEN g_print_dialog(XEN managed, XEN direct_to_printer) 
 {
   #define H_print_dialog "(" S_print_dialog " :optional managed direct): start the File Print dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_print_dialog, "a boolean");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(direct_to_printer), direct_to_printer, 2, S_print_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_print_dialog, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(direct_to_printer), direct_to_printer, 2, S_print_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_file_print_dialog(!(Xen_is_false(managed)), Xen_is_true(direct_to_printer))));
 }
 

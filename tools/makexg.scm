@@ -1421,6 +1421,8 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     21-Feb_14: changed _p to _is_.~%")
+(hey " *     --------~%")
 (hey " *     3-Sep:     use symbol directly in type checks, not the symbol name.~%")
 (hey " *     18-Aug:    changed the gtk version macros to reflect the version number.~%")
 (hey " *     7-Jun-13:  added mixed arg types to the ... arg lists.~%")

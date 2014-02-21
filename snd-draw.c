@@ -299,7 +299,7 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax,
   XEN_ASSERT_TYPE(Xen_is_number(y0), y0, 2, S_draw_line, "a number");
   XEN_ASSERT_TYPE(Xen_is_number(x1), x1, 3, S_draw_line, "a number");
   XEN_ASSERT_TYPE(Xen_is_number(y1), y1, 4, S_draw_line, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 7, S_draw_line, "an integer such as " S_time_graph);
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 7, S_draw_line, "an integer such as " S_time_graph);
 
   draw_line(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line, xcr),
 	    XEN_TO_C_INT(x0),
@@ -318,7 +318,7 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax, XEN xc
   XEN_ASSERT_TYPE(Xen_is_integer(x0), x0, 1, S_draw_dot, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer(y0), y0, 2, S_draw_dot, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer(size), size, 3, S_draw_dot, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 6, S_draw_dot, "an integer such as " S_time_graph);
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 6, S_draw_dot, "an integer such as " S_time_graph);
 
   draw_dot(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dot, xcr),
 	   XEN_TO_C_INT(x0),
@@ -337,8 +337,8 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
   XEN_ASSERT_TYPE(Xen_is_number(y0), y0, 2, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(Xen_is_number(width), width, 3, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(Xen_is_number(height), height, 4, S_fill_rectangle, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 7, S_fill_rectangle, "an integer such as " S_time_graph);
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(erase), erase, 8, S_fill_rectangle, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 7, S_fill_rectangle, "an integer such as " S_time_graph);
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(erase), erase, 8, S_fill_rectangle, "a boolean");
 
   if ((Xen_is_boolean(erase)) &&
       (Xen_is_true(erase)))
@@ -366,7 +366,7 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax, XEN
   XEN_ASSERT_TYPE(Xen_is_string(text), text, 1, S_draw_string, "a string");
   XEN_ASSERT_TYPE(Xen_is_number(x0), x0, 2, S_draw_string, "a number");
   XEN_ASSERT_TYPE(Xen_is_number(y0), y0, 3, S_draw_string, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 6, S_draw_string, "an integer such as " S_time_graph);
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 6, S_draw_string, "an integer such as " S_time_graph);
 
   tmp = XEN_TO_C_STRING(text);
 #if USE_MOTIF
@@ -424,7 +424,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
 
   ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
   XEN_ASSERT_TYPE(Xen_is_vector(pts), pts, 1, S_draw_lines, "a vector");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 4, S_draw_lines, "an integer such as " S_time_graph);
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 4, S_draw_lines, "an integer such as " S_time_graph);
 
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines, xcr);
 
@@ -447,8 +447,8 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
 
   ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
   XEN_ASSERT_TYPE(Xen_is_vector(pts), pts, 1, S_draw_dots, "a vector");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, 2, S_draw_dots, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 5, S_draw_dots, "an integer such as " S_time_graph);
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(size), size, 2, S_draw_dots, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 5, S_draw_dots, "an integer such as " S_time_graph);
 
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots, xcr);
 
@@ -473,7 +473,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
 
   ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
   XEN_ASSERT_TYPE(Xen_is_vector(pts), pts, 1, S_fill_polygon, "a vector");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, 4, S_fill_polygon, "an integer such as " S_time_graph);
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_fill_polygon, "an integer such as " S_time_graph);
 
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon, xcr);
 
@@ -512,7 +512,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
       y[i] = XEN_TO_C_INT(XEN_CADR(args));
       args = XEN_CDDR(args);
     }
-  if (XEN_NOT_NULL_P(args)) 
+  if (!Xen_is_null(args)) 
     n = XEN_TO_C_INT(XEN_CAR(args));
 
   cx = 3 * (x[1] - x[0]);
@@ -543,7 +543,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   graphics_context *ax;
 
   ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(xax), xax, 3, S_foreground_color, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(xax), xax, 3, S_foreground_color, "an integer");
 
   cp = get_cp(snd, chn, S_foreground_color);
   if (!cp) return(XEN_FALSE);
@@ -559,7 +559,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
 
   ASSERT_CHANNEL(S_setB S_foreground_color, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_foreground_color, "a color");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, 4, S_setB S_foreground_color, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_foreground_color, "an integer");
 
   cp = get_cp(snd, chn, S_setB S_foreground_color);
   if (!cp) return(XEN_FALSE);
@@ -579,7 +579,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   graphics_context *ax;
 
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
   XEN_ASSERT_TYPE((Xen_is_list(id)) &&
 		  (XEN_LIST_LENGTH(id) >= 2) &&
 		  (Xen_is_symbol(XEN_CAR(id))) &&
@@ -599,7 +599,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   chan_info *cp;
 
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, 3, S_current_font, "an integer such as time-graph");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax_id), ax_id, 3, S_current_font, "an integer such as time-graph");
   cp = get_cp(snd, chn, S_current_font);
   if (!cp) return(XEN_FALSE);
 
@@ -623,7 +623,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   graphics_context *ax;
 
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
 
   ax = TO_C_AXIS_CONTEXT_NO_CR(snd, chn, ax_id, S_setB S_current_font);
   XEN_ASSERT_TYPE((Xen_is_wrapped_c_pointer(id)) ||
@@ -644,7 +644,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   #define H_current_font "(" S_current_font " :optional snd chn (ax " S_time_graph ")): current font id"
   graphics_context *ax;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, 3, S_current_font, "an integer such as time-graph");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax_id), ax_id, 3, S_current_font, "an integer such as time-graph");
   ax = TO_C_AXIS_CONTEXT_NO_CR(snd, chn, ax_id, S_current_font);
   return(XEN_WRAP_C_POINTER(ax->current_font));
 }
@@ -667,8 +667,8 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
   cp = get_cp(snd, chn, S_make_graph_data);
   if (!cp) return(XEN_FALSE);
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(lo), lo, 4, S_make_graph_data, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(hi), hi, 5, S_make_graph_data, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(lo), lo, 4, S_make_graph_data, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(hi), hi, 5, S_make_graph_data, "an integer");
 
   return(make_graph_data(cp,
 			 to_c_edit_position(cp, edpos, S_make_graph_data, 3),
@@ -698,10 +698,10 @@ data in the recipient's graph between points low and high in the drawing mode gr
 		   (MUS_IS_VCT(XEN_CADR(data)))) || 
 		  (MUS_IS_VCT(data)), 
 		  data, 1, S_graph_data, "a list of 2 vcts or vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(ax), ax, 4, S_graph_data, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(lo) || Xen_is_false(lo) || XEN_NOT_BOUND_P(lo), lo, 5, S_graph_data, "a sample number");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(hi) || Xen_is_false(hi) || XEN_NOT_BOUND_P(hi), hi, 6, S_graph_data, "a sample number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(style), style, 7, S_graph_data, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(ax), ax, 4, S_graph_data, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(lo) || Xen_is_false(lo) || !Xen_is_bound(lo), lo, 5, S_graph_data, "a sample number");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(hi) || Xen_is_false(hi) || !Xen_is_bound(hi), hi, 6, S_graph_data, "a sample number");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(style), style, 7, S_graph_data, "an integer");
 
   if (Xen_is_list(data))
     {
@@ -1862,7 +1862,7 @@ static XEN g_mix_color(XEN mix_id)
 static XEN g_set_mix_color(XEN color, XEN mix_id)
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_mix_color, "a color"); 
-  XEN_ASSERT_TYPE(XEN_MIX_P(mix_id) || XEN_NOT_BOUND_P(mix_id), mix_id, 2, S_setB S_mix_color, "a mix");
+  XEN_ASSERT_TYPE(XEN_MIX_P(mix_id) || !Xen_is_bound(mix_id), mix_id, 2, S_setB S_mix_color, "a mix");
   if (XEN_MIX_P(mix_id))
     mix_set_color_from_id(XEN_MIX_TO_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
   else color_mixes(XEN_UNWRAP_PIXEL(color));

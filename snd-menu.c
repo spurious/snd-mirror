@@ -353,7 +353,7 @@ func (a function of no args) when the new menu is activated. Returns the new men
   XEN_ASSERT_TYPE(Xen_is_string(label) || Xen_is_false(label), label, 2, S_add_to_menu, "a string");
   XEN_ASSERT_TYPE(Xen_is_integer(menu), menu, 1, S_add_to_menu, "an integer");
   XEN_ASSERT_TYPE(Xen_is_procedure(callback) || Xen_is_false(callback), callback, 3, S_add_to_menu, "a procedure");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(gpos), gpos, 4, S_add_to_menu, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(gpos), gpos, 4, S_add_to_menu, "an integer");
 
   /* fprintf(stderr, "add-to-menu %s\n", XEN_AS_STRING(XEN_CAR(callback))); */
 

@@ -258,7 +258,7 @@ char *run_save_state_hook(const char *file)
       XEN procs, fname;
       fname = C_TO_XEN_STRING(filename);
       procs = XEN_HOOK_PROCEDURES(save_state_hook);
-      while (XEN_NOT_NULL_P(procs))
+      while (!Xen_is_null(procs))
 	{
 	  result = XEN_CALL_1(XEN_CAR(procs), fname, "save state hook");
 	  if (Xen_is_string(result))
@@ -6626,7 +6626,7 @@ associated with snd's channel chn; the returned value is a list (origin type sta
   chan_info *cp;
   int ctr;
   ASSERT_CHANNEL(S_edit_fragment, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(uctr), uctr, 1, S_edit_fragment, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(uctr), uctr, 1, S_edit_fragment, "an integer");
   cp = get_cp(snd, chn, S_edit_fragment);
   if (!cp) return(XEN_FALSE);
 
@@ -7002,9 +7002,9 @@ return a reader ready to access region's channel chn data starting at start-samp
   int direction = 1;
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg), reg, 1, S_make_region_sampler, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, 2, S_make_region_sampler, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, 3, S_make_region_sampler, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, 4, S_make_region_sampler, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samp_n), samp_n, 2, S_make_region_sampler, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chn), chn, 3, S_make_region_sampler, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(dir1), dir1, 4, S_make_region_sampler, "an integer");
   reg_n = XEN_REGION_TO_C_INT(reg);
 
   if (!(region_ok(reg_n))) 
@@ -7058,8 +7058,8 @@ snd can be a filename, a mix, a region, or a sound index number."
   snd_info *loc_sp = NULL;
   mus_long_t beg;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, 1, S_make_sampler, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, 4, S_make_sampler, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samp_n), samp_n, 1, S_make_sampler, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(dir1), dir1, 4, S_make_sampler, "an integer");
 
   if (XEN_MIX_P(snd))
     return(g_make_mix_sampler(snd, samp_n));
@@ -7069,7 +7069,7 @@ snd can be a filename, a mix, a region, or a sound index number."
 
   if (Xen_is_string(snd))
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, 3, S_make_sampler, "an integer or boolean");
+      XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(chn), chn, 3, S_make_sampler, "an integer or boolean");
       filename = XEN_TO_C_STRING(snd);
       if (mus_file_probe(filename))
 	loc_sp = make_sound_readable(filename, false);
@@ -7360,7 +7360,7 @@ static XEN g_undo(XEN ed_n, XEN snd, XEN chn_n) /* opt ed_n */
   #define H_undo "(" S_undo " :optional (count 1) snd chn): undo 'count' edits in snd's channel chn"
   chan_info *cp;
   int num;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, 1, S_undo, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ed_n), ed_n, 1, S_undo, "an integer");
   ASSERT_CHANNEL(S_undo, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_undo);
   if (!cp) return(XEN_FALSE);
@@ -7385,7 +7385,7 @@ static XEN g_redo(XEN ed_n, XEN snd, XEN chn_n) /* opt ed_n */
   #define H_redo "(" S_redo " :optional (count 1) snd chn): redo 'count' edits in snd's channel chn"
   chan_info *cp;
   int num;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, 1, S_redo, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ed_n), ed_n, 1, S_redo, "an integer");
   ASSERT_CHANNEL(S_redo, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_redo);
   if (!cp) return(XEN_FALSE);
@@ -7500,7 +7500,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 #endif
 
   XEN_ASSERT_TYPE((Xen_is_procedure(proc)), proc, 1, S_as_one_edit, "a procedure");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 2, S_as_one_edit, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 2, S_as_one_edit, "a string");
   errmsg = procedure_ok(proc, 0, S_as_one_edit, "edit", 1);
   if (errmsg)
     {
@@ -7884,7 +7884,7 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
   int pos;
   chan_info *cp;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, 1, S_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samp_n), samp_n, 1, S_sample, "an integer");
 
   if (Xen_is_true(chn_n)) /* a convenience! */
     {
@@ -7938,7 +7938,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
   mus_float_t fval;
   mus_float_t ival[1];
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, 1, S_setB S_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samp_n), samp_n, 1, S_setB S_sample, "an integer");
   XEN_ASSERT_TYPE(Xen_is_number(val), val, 2, S_setB S_sample, "a number");
   ASSERT_CHANNEL(S_setB S_sample, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_setB S_sample);
@@ -8039,17 +8039,17 @@ the new data's end."
   ASSERT_SAMPLE_TYPE(caller, samp_0, 1);
   ASSERT_SAMPLE_TYPE(caller, samps, 2);
   ASSERT_CHANNEL(caller, snd, chn_n, 4);
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, 6, caller, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(truncate), truncate, 6, caller, "a boolean");
 
   cp = get_cp(snd, chn_n, caller);
   if (!cp) return(XEN_FALSE);
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(infile_chan), infile_chan, 8, caller, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(infile_chan), infile_chan, 8, caller, "an integer");
 
   pos = to_c_edit_position(cp, edpos, caller, 9);
   beg = beg_to_sample(samp_0, caller);
   len = dur_to_samples(samps, beg, cp, pos, 2, caller);
   if (len == 0) return(XEN_FALSE);
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, 10, caller, "a boolean or an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(auto_delete), auto_delete, 10, caller, "a boolean or an integer");
 
   override = Xen_is_true(truncate);
   if (Xen_is_string(vect))
@@ -8110,7 +8110,7 @@ the new data's end."
 
 static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos, XEN auto_delete)
 {
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || Xen_is_string(edname) || Xen_is_false(edname), edname, 7, "set-samples", "a string");
+  XEN_ASSERT_TYPE(!Xen_is_bound(edname) || Xen_is_string(edname) || Xen_is_false(edname), edname, 7, "set-samples", "a string");
   return(g_set_samples_with_origin(samp_0, samps, vect, snd, chn_n, truncate,
 				   (char *)((Xen_is_string(edname)) ? XEN_TO_C_STRING(edname) : "set-samples"),
 				   infile_chan, edpos, auto_delete));
@@ -8172,15 +8172,15 @@ static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd, XEN chn_n, XEN edp
 set snd's channel chn's samples starting at beg for dur samps from vct data"
   const char *caller;
   XEN_ASSERT_TYPE(MUS_IS_VCT(v), v, 1, S_vct_to_channel, "a vct");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 7, S_vct_to_channel, "a string");
-  if (XEN_NOT_BOUND_P(beg)) beg = XEN_ZERO;
-  if (XEN_NOT_BOUND_P(dur)) 
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 7, S_vct_to_channel, "a string");
+  if (!Xen_is_bound(beg)) beg = XEN_ZERO;
+  if (!Xen_is_bound(dur)) 
     {
       vct *v1;
       v1 = XEN_TO_VCT(v);
       dur = C_TO_XEN_INT(mus_vct_length(v1));
     }
-  if (XEN_NOT_BOUND_P(origin))
+  if (!Xen_is_bound(origin))
     caller = S_vct_to_channel;
   else caller = (const char *)XEN_TO_C_STRING(origin);
   return(g_set_samples_with_origin(beg, dur, v, snd, chn_n, XEN_FALSE, caller, XEN_FALSE, edpos, XEN_UNDEFINED));
@@ -8310,8 +8310,8 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos
   mus_long_t len, beg;
   int pos;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_0) || Xen_is_false(samp_0), samp_0, 1, caller, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samps) || Xen_is_false(samps), samps, 2, caller, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samp_0) || Xen_is_false(samp_0), samp_0, 1, caller, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samps) || Xen_is_false(samps), samps, 2, caller, "an integer");
   ASSERT_CHANNEL(caller, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, caller);
@@ -8345,8 +8345,8 @@ history position to read (defaults to current position). snd can be a filename, 
   mus_long_t beg, len;
   int pos;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_0) || Xen_is_false(samp_0), samp_0, 1, S_samples, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samps) || Xen_is_false(samps), samps, 2, S_samples, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samp_0) || Xen_is_false(samp_0), samp_0, 1, S_samples, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samps) || Xen_is_false(samps), samps, 2, S_samples, "an integer");
   beg = beg_to_sample(samp_0, S_samples);
 
   /* -------- a file -------- */
@@ -8358,7 +8358,7 @@ history position to read (defaults to current position). snd can be a filename, 
       mus_float_t *fvals;
       vct *v;
 
-      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn_n), chn_n, 4, S_samples, "an integer");
+      XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(chn_n), chn_n, 4, S_samples, "an integer");
       if (Xen_is_integer(chn_n)) chan = XEN_TO_C_INT(chn_n);
       if (chan < 0) return(snd_no_such_channel_error(S_samples, snd, chn_n));	
 
@@ -8512,14 +8512,14 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
   mus_long_t beg = 0, len;
 
   XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_insert_sound, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ubeg), ubeg, 2, S_insert_sound, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(file_chn), file_chn, 3, S_insert_sound, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ubeg), ubeg, 2, S_insert_sound, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(file_chn), file_chn, 3, S_insert_sound, "an integer");
 
   ASSERT_CHANNEL(S_insert_sound, snd, chn_n, 4);
   cp = get_cp(snd, chn_n, S_insert_sound);
   if (!cp) return(XEN_FALSE);
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, 7, S_insert_sound, "a boolean or an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(auto_delete), auto_delete, 7, S_insert_sound, "a boolean or an integer");
   delete_file = xen_to_file_delete_t(auto_delete, S_insert_sound);
 
   if (filename) free(filename);
@@ -8636,7 +8636,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
   XEN_ASSERT_TYPE(Xen_is_integer(samp), samp, 1, S_insert_samples, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer(samps), samps, 2, S_insert_samples, "an integer");
   ASSERT_CHANNEL(S_insert_samples, snd, chn_n, 4);
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(caller), caller, 8, S_insert_samples, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(caller), caller, 8, S_insert_samples, "a string");
   cp = get_cp(snd, chn_n, S_insert_samples);
   if (!cp) return(XEN_FALSE);
 
@@ -8645,7 +8645,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
   if (len <= 0) return(samps);
   pos = to_c_edit_position(cp, edpos, S_insert_samples, 6);
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, 7, S_insert_samples, "a boolean or an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(auto_delete), auto_delete, 7, S_insert_samples, "a boolean or an integer");
   delete_file = xen_to_file_delete_t(auto_delete, S_insert_samples);
 
   if (Xen_is_string(caller))
@@ -8938,7 +8938,7 @@ static XEN g_snd_to_sample(XEN os, XEN frame, XEN chan)
   #define H_snd_to_sample "(" S_snd_to_sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
   XEN_ASSERT_TYPE((mus_xen_p(os)) && (snd_to_sample_p(XEN_TO_MUS_ANY(os))), os, 1, S_snd_to_sample, "a " S_snd_to_sample " gen");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(frame), frame, 2, S_snd_to_sample, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 3, S_snd_to_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 3, S_snd_to_sample, "an integer");
   return(C_TO_XEN_DOUBLE(snd_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), 
 					    XEN_TO_C_LONG_LONG(frame), 
 					    (Xen_is_integer(chan)) ? XEN_TO_C_INT(chan) : 0)));
@@ -8976,8 +8976,8 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
   cp = get_cp(snd, chn, S_edit_list_to_function);
   if (!cp) return(XEN_FALSE);
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(start), start, 3, S_edit_list_to_function, "an integer");  
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, 4, S_edit_list_to_function, "an integer");  
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(start), start, 3, S_edit_list_to_function, "an integer");  
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(end), end, 4, S_edit_list_to_function, "an integer");  
 
   if (Xen_is_integer(start)) start_pos = XEN_TO_C_INT(start);
   if (start_pos < 0) /* is 0 legal here? */

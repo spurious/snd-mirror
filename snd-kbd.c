@@ -1551,8 +1551,8 @@ prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an in
   int i, k, s;
 
   XEN_ASSERT_TYPE(Xen_is_integer(key) || Xen_is_char(key) || Xen_is_string(key), key, 1, S_key_binding, "an integer, character, or string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, 2, S_key_binding, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, 3, S_key_binding, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(state), state, 2, S_key_binding, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(cx_extended), cx_extended, 3, S_key_binding, "a boolean");
 
   k = key_name_to_key(key, S_key_binding);
   s = ((Xen_is_integer(state)) ? XEN_TO_C_INT(state) : 0) & 0xfffe; /* no shift bit */
@@ -1573,9 +1573,9 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
   XEN_ASSERT_TYPE(Xen_is_integer(key) || Xen_is_string(key) || Xen_is_char(key), key, 1, caller, "an integer, char, or string");
   XEN_ASSERT_TYPE(Xen_is_integer(state), state, 2, caller, "an integer");
   XEN_ASSERT_TYPE((Xen_is_false(code) || Xen_is_procedure(code)), code, 3, caller, PROC_FALSE " or a procedure");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, 4, caller, "a boolean");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 5, caller, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(prefs_info), prefs_info, 6, caller, "a string");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(cx_extended), cx_extended, 4, caller, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 5, caller, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(prefs_info), prefs_info, 6, caller, "a string");
 
   k = key_name_to_key(key, caller);
   s = XEN_TO_C_INT(state) & 0xfffe; /* get rid of shift bit */

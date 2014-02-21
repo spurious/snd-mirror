@@ -2888,7 +2888,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
   play_process_t background;
   snd_info *sp;
 
-  if (XEN_NOT_NULL_P(arglist))
+  if (!Xen_is_null(arglist))
     {
       #define NARGS 10
       XEN args[NARGS * 2]; 
@@ -2961,7 +2961,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 #endif
 
   /* unspecified object means the current sound, all chans, all samps, with sync, without wait, current edpos */
-  if (XEN_NOT_BOUND_P(object))
+  if (!Xen_is_bound(object))
     {
       sp = any_selected_sound();
       if (sp) 
@@ -3069,7 +3069,7 @@ static XEN g_stop_playing(XEN snd)
   #define H_stop_playing "(" S_stop_playing " :optional snd): stop play (DAC output) in progress"
   snd_info *sp = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(snd) || XEN_SOUND_P(snd) || XEN_NOT_BOUND_P(snd) || XEN_PLAYER_P(snd), snd, 1, S_stop_playing, "a sound or player");
+  XEN_ASSERT_TYPE(Xen_is_integer(snd) || XEN_SOUND_P(snd) || !Xen_is_bound(snd) || XEN_PLAYER_P(snd), snd, 1, S_stop_playing, "a sound or player");
 
   if (Xen_is_integer(snd) || XEN_SOUND_P(snd))
     {
@@ -3168,13 +3168,13 @@ channel number in the sound that contains the channel being played."
   int i, ochan = -1;
 
   XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, 1, S_add_player, "a player");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(start), start, 2, S_add_player, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, 3, S_add_player, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(start), start, 2, S_add_player, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(end), end, 3, S_add_player, "an integer");
   XEN_ASSERT_TYPE(((Xen_is_procedure(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
-		  (XEN_NOT_BOUND_P(stop_proc)) || 
+		  (!Xen_is_bound(stop_proc)) || 
 		  (Xen_is_false(stop_proc)), 
 		  stop_proc, 5, S_add_player, "a procedure of 1 arg");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_chan), out_chan, 6, S_add_player, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(out_chan), out_chan, 6, S_add_player, "an integer");
 
   index = XEN_PLAYER_TO_C_INT(player);
   if ((index > 0) && (index < players_size)) 
@@ -3220,9 +3220,9 @@ If a play-list is waiting, start it."
   int chans = 1, srate = 44100;
   bool back;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Chans), Chans, 1, S_start_playing, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Srate), Srate, 2, S_start_playing, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, 3, S_start_playing, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(Chans), Chans, 1, S_start_playing, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(Srate), Srate, 2, S_start_playing, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(In_Background), In_Background, 3, S_start_playing, "a boolean");
 
   if (Xen_is_integer(Chans)) chans = XEN_TO_C_INT(Chans);
   if ((chans <= 0) || (chans > 256))

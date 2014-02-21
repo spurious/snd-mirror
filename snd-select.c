@@ -1304,7 +1304,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       sync_info *si_out;
 
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
-      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, 1, S_insert_selection, "an integer");
+      XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(beg), beg, 1, S_insert_selection, "an integer");
 
       cp = get_cp(snd, chn, S_insert_selection);
       if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
@@ -1340,8 +1340,8 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       XEN result = XEN_EMPTY_LIST;
 
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
-      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, 1, S_mix_selection, "an integer");
-      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sel_chan), sel_chan, 4, S_mix_selection, "an integer or " PROC_TRUE);
+      XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(beg), beg, 1, S_mix_selection, "an integer");
+      XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(sel_chan), sel_chan, 4, S_mix_selection, "an integer or " PROC_TRUE);
 
       cp = get_cp(snd, chn, S_mix_selection);
       if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
@@ -1452,7 +1452,7 @@ static XEN g_selection_position(XEN snd, XEN chn)
   #define H_selection_position "(" S_selection_position " :optional snd chn): selection start samp"
   if (selection_is_active())
     {
-      if (XEN_NOT_BOUND_P(snd))
+      if (!Xen_is_bound(snd))
 	return(C_TO_XEN_LONG_LONG(selection_beg(NULL)));
       else
 	{
@@ -1476,7 +1476,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(Xen_is_integer(pos), pos, 1, S_selection_position, "an integer");
 
   beg = beg_to_sample(pos, S_setB S_selection_position);
-  if (XEN_NOT_BOUND_P(snd))
+  if (!Xen_is_bound(snd))
     {
       sync_info *si = NULL;
       if (selection_is_active())
@@ -1512,7 +1512,7 @@ XEN g_selection_frames(XEN snd, XEN chn)
   #define H_selection_frames "(" S_selection_frames " :optional snd chn): selection length"
   if (selection_is_active())
     {
-      if (XEN_NOT_BOUND_P(snd))
+      if (!Xen_is_bound(snd))
 	return(C_TO_XEN_LONG_LONG(selection_len()));
       else
 	{
@@ -1536,7 +1536,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
   len = XEN_TO_C_LONG_LONG(samps);
   if (len <= 0)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_selection_frames, 1, samps, "a positive integer");
-  if (XEN_NOT_BOUND_P(snd))
+  if (!Xen_is_bound(snd))
     {
       sync_info *si = NULL;
       if (selection_is_active())

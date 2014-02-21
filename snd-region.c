@@ -1578,7 +1578,7 @@ insert region data into snd's channel chn starting at start-samp"
   io_error_t err = IO_NO_ERROR;
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, 1, S_insert_region, "a region id");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, 2, S_insert_region, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samp_n), samp_n, 2, S_insert_region, "an integer");
 
   ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
@@ -1636,13 +1636,13 @@ XEN g_region_frames(XEN n, XEN chan)
   #define H_region_frames "(" S_region_frames " reg :optional (chan 0)): region length in frames"
 
   XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_frames, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 2, S_region_frames, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 2, S_region_frames, "an integer");
 
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_frames, n));
 
-  if (XEN_NOT_BOUND_P(chan))
+  if (!Xen_is_bound(chan))
     return(C_TO_XEN_LONG_LONG(region_len(rg)));
   chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn >= region_chans(rg)))
@@ -1660,7 +1660,7 @@ static XEN g_region_position(XEN n, XEN chan)
   #define H_region_position "(" S_region_position " reg :optional (chan 0)): region's position in the original sound"
 
   XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_position, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 2, S_region_position, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 2, S_region_position, "an integer");
 
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
@@ -1792,7 +1792,7 @@ selection is used."
   int id = INVALID_REGION, old_sync, i;
 
   if (max_regions(ss) <= 0) return(XEN_FALSE);
-  if (XEN_NOT_BOUND_P(beg))
+  if (!Xen_is_bound(beg))
     id = make_region_from_selection();
   else
     {
@@ -1954,8 +1954,8 @@ it returns a list of the new mixes"
   XEN result = XEN_EMPTY_LIST;
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, 1, S_mix_region, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_samp_n), chn_samp_n, 2, S_mix_region, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(reg_chn), reg_chn, 5, S_mix_region, "an integer or " PROC_TRUE);
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chn_samp_n), chn_samp_n, 2, S_mix_region, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(reg_chn), reg_chn, 5, S_mix_region, "an integer or " PROC_TRUE);
   ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
 
   rg = XEN_REGION_TO_C_INT(reg_n);
@@ -1997,7 +1997,7 @@ static XEN g_region_sample(XEN reg_n, XEN samp_n, XEN chn_n)
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, 1, S_region_sample, "a region");
   XEN_ASSERT_TYPE(Xen_is_integer(samp_n), samp_n, 2, S_region_sample, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, 3, S_region_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chn_n), chn_n, 3, S_region_sample, "an integer");
 
   if (Xen_is_integer(chn_n)) chan = XEN_TO_C_INT(chn_n);
   rg = XEN_REGION_TO_C_INT(reg_n);
@@ -2022,9 +2022,9 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   vct *v1 = xen_to_vct(v);
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, 1, S_region_to_vct, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg_n), beg_n, 2, S_region_to_vct, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, 3, S_region_to_vct, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, 4, S_region_to_vct, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(beg_n), beg_n, 2, S_region_to_vct, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(num), num, 3, S_region_to_vct, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chn_n), chn_n, 4, S_region_to_vct, "an integer");
 
   reg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(reg)))

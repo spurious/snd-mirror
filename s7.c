@@ -69534,8 +69534,6 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0)
- * many (20000) more _p -> _is_ changes remain (snd (g_*_p and H_*_p *.h), lisp (cmus.c, run.lisp), xen, xm/xg/gl)
- *
- * if gen_is_ok even if not gf, use static mus_any* in g_oscil*?  Where to check the tree? [g_oscil_two]
+ * many (1000) more _p|P -> _is_ changes remain (snd (g_*_p and H_*_p *.h), lisp (cmus.c, run.lisp), xen, docs?, also the Xm_char business in xm.c)
  */
 

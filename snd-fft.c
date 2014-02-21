@@ -1957,8 +1957,8 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 
   chan_info *cp;
 
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(bin), bin, 1, S_transform_sample, "an integer");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(slice), slice, 2, S_transform_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_or_unbound(bin), bin, 1, S_transform_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_or_unbound(slice), slice, 2, S_transform_sample, "an integer");
 
   ASSERT_CHANNEL(S_transform_sample, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_transform_sample);

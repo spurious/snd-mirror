@@ -7284,7 +7284,7 @@ static XEN g_cursor(XEN snd, XEN chn_n, XEN edpos)
 
 static XEN g_set_cursor(XEN on, XEN snd, XEN chn_n, XEN edpos) 
 {
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(on) || XEN_NOT_BOUND_P(on), on, 1, S_setB S_cursor, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(on) || !Xen_is_bound(on), on, 1, S_setB S_cursor, "an integer");
   if (Xen_is_bound(edpos))
     {
       XEN res;
@@ -9070,7 +9070,7 @@ to the info dialog if filename is omitted"
   bool post_to_dialog = true;
   FILE *fd = NULL;
 
-  XEN_ASSERT_TYPE((Xen_is_string(filename) || (Xen_is_false(filename)) || (XEN_NOT_BOUND_P(filename))), filename, 1, S_peaks, "a string or " PROC_FALSE);
+  XEN_ASSERT_TYPE((Xen_is_string(filename) || (Xen_is_false(filename)) || (!Xen_is_bound(filename))), filename, 1, S_peaks, "a string or " PROC_FALSE);
 
   ASSERT_CHANNEL(S_peaks, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_peaks);
@@ -9123,7 +9123,7 @@ static XEN g_left_sample(XEN snd, XEN chn_n)
 
 static XEN g_set_left_sample(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(on) || XEN_NOT_BOUND_P(on), on, 1, S_setB S_left_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(on) || !Xen_is_bound(on), on, 1, S_setB S_left_sample, "an integer");
   return(channel_set(snd, chn_n, on, CP_AP_LOSAMP, S_setB S_left_sample));
 }
 
@@ -9139,7 +9139,7 @@ static XEN g_right_sample(XEN snd, XEN chn_n)
 
 static XEN g_set_right_sample(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(on) || XEN_NOT_BOUND_P(on), on, 1, S_setB S_right_sample, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_long_long_int(on) || !Xen_is_bound(on), on, 1, S_setB S_right_sample, "an integer");
   return(channel_set(snd, chn_n, on, CP_AP_HISAMP, S_setB S_right_sample));
 }
 
@@ -9303,13 +9303,13 @@ If 'data' is a list of numbers, it is treated as an envelope."
 		    ((Xen_is_number(XEN_CAR(ldata))) || (MUS_IS_VCT(XEN_CAR(ldata)))))),
 		  ldata, 1, S_graph, "a vct or a list");
 
-  XEN_ASSERT_TYPE(Xen_is_string(xlabel) || XEN_NOT_BOUND_P(xlabel), xlabel, 2, S_graph, "a string (x axis label)");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(x0), x0, 3, S_graph, "a number (x0)");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(x1), x1, 4, S_graph, "a number (x1)");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(y0), y0, 5, S_graph, "a number (y0)");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(y1), y1, 6, S_graph, "a number (y1)");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(force_display), force_display, 9, S_graph, "a boolean (force-display)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(show_axes), show_axes, 10, S_graph, "an integer (show-axes choice)");
+  XEN_ASSERT_TYPE(Xen_is_string(xlabel) || !Xen_is_bound(xlabel), xlabel, 2, S_graph, "a string (x axis label)");
+  XEN_ASSERT_TYPE(Xen_is_number_or_unbound(x0), x0, 3, S_graph, "a number (x0)");
+  XEN_ASSERT_TYPE(Xen_is_number_or_unbound(x1), x1, 4, S_graph, "a number (x1)");
+  XEN_ASSERT_TYPE(Xen_is_number_or_unbound(y0), y0, 5, S_graph, "a number (y0)");
+  XEN_ASSERT_TYPE(Xen_is_number_or_unbound(y1), y1, 6, S_graph, "a number (y1)");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(force_display), force_display, 9, S_graph, "a boolean (force-display)");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(show_axes), show_axes, 10, S_graph, "an integer (show-axes choice)");
 
   ASSERT_CHANNEL(S_graph, snd, chn_n, 7);
   cp = get_cp(snd, chn_n, S_graph);
@@ -9446,8 +9446,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
       uap->graph_x0 = gx0;
     }
   cp->graph_lisp_p = true;
-  if ((XEN_NOT_BOUND_P(force_display)) || 
-      (XEN_NOT_FALSE_P(force_display)))
+  if ((!Xen_is_bound(force_display)) || 
+      (!Xen_is_false(force_display)))
     {
       if (need_update)
 	update_graph(cp);
@@ -9557,9 +9557,9 @@ to a standard Snd channel graph placed in the widget 'container'."
   int rate, initial_length;
 
   XEN_ASSERT_TYPE(XEN_WIDGET_P(container), container, 1, S_make_variable_graph, "a widget");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, 2, S_make_variable_graph, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(length), length, 3, S_make_variable_graph, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(srate), srate, 4, S_make_variable_graph, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(name), name, 2, S_make_variable_graph, "a string");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(length), length, 3, S_make_variable_graph, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(srate), srate, 4, S_make_variable_graph, "an integer");
 
   rate = (Xen_is_integer(srate)) ? XEN_TO_C_INT(srate) : (int)mus_srate();
   initial_length = (Xen_is_integer(length)) ? XEN_TO_C_INT(length) : 8192;

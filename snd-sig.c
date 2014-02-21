@@ -33,7 +33,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
   return(cp->edit_ctr);
 #endif
 
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edpos) || Xen_is_integer(edpos) || Xen_is_procedure(edpos) || Xen_is_false(edpos), 
+  XEN_ASSERT_TYPE(!Xen_is_bound(edpos) || Xen_is_integer(edpos) || Xen_is_procedure(edpos) || Xen_is_false(edpos), 
 		  edpos, arg_pos, caller, "an integer, " PROC_FALSE ", or a procedure");
 
   if (Xen_is_procedure(edpos))
@@ -3885,7 +3885,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	    }
 	  else
 	    {
-	      if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
+	      if (!Xen_is_false(res))                  /* if #f, no output on this pass */
 		{
 		  if (Xen_is_true(res))                   /* if #t we halt the entire map */
 		    break;
@@ -4206,7 +4206,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	}
       else
 	{
-	  if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
+	  if (!Xen_is_false(res))                  /* if #f, no output on this pass */
 	    {
 	      if (Xen_is_true(res))                   /* if #t we halt the entire map */
 		break;
@@ -4364,8 +4364,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 }
 
 
-static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
-		     const char *caller, bool counting, XEN edpos, int arg_pos, XEN s_dur)
+static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, const char *caller, bool counting, XEN edpos, int arg_pos, XEN s_dur)
 {
   chan_info *cp;
   mus_long_t beg = 0, end = 0, dur = 0;
@@ -4653,7 +4652,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 #endif
       /* leak here -- if reader active and error occurs, we jump out without cleanup */
       /* see dynamic_wind above */
-      if (XEN_NOT_FALSE_P(res))
+      if (!Xen_is_false(res))
 	{
 	  if ((counting) &&
 	      (Xen_is_true(res)))
@@ -4702,6 +4701,16 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   return(XEN_FALSE);
 }
 
+
+mus_long_t scan_channel(chan_info *cp, mus_long_t start, mus_long_t end, XEN proc)
+{
+  XEN result;
+  result = g_sp_scan(proc, C_TO_XEN_LONG_LONG(start), C_TO_XEN_LONG_LONG(end),
+		     XEN_FALSE, XEN_FALSE, "search procedure", false, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, XEN_FALSE);
+  if (XEN_LONG_LONG_P(result))
+    return(XEN_TO_C_LONG_LONG(result));
+  return(-1);
+}
 
 #if (!HAVE_SCHEME)
 static XEN g_scan_chan(XEN proc, XEN beg, XEN end, XEN snd, XEN chn, XEN edpos) 
@@ -5370,8 +5379,8 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
 
   ASSERT_SAMPLE_TYPE(S_clm_channel, samp_n, 2);
   ASSERT_SAMPLE_TYPE(S_clm_channel, samps, 3);
-  XEN_ASSERT_TYPE(Xen_is_integer(overlap) || Xen_is_false(overlap) || XEN_NOT_BOUND_P(overlap), overlap, 7, S_clm_channel, "an integer or " PROC_FALSE);
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 8, S_clm_channel, "a string");
+  XEN_ASSERT_TYPE(Xen_is_integer(overlap) || Xen_is_false(overlap) || !Xen_is_bound(overlap), overlap, 7, S_clm_channel, "an integer or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 8, S_clm_channel, "a string");
   ASSERT_CHANNEL(S_clm_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_clm_channel);
@@ -5710,7 +5719,7 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   bool need_free = false;
   mus_float_t *rl = NULL, *im = NULL;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, 3, S_fft, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(sign), sign, 3, S_fft, "an integer");
   XEN_ASSERT_TYPE(MUS_IS_VCT(reals), reals, 1, S_fft, "vct");
   XEN_ASSERT_TYPE(MUS_IS_VCT(imag), imag, 2, S_fft, "vct");
 
@@ -5764,12 +5773,12 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   vct *v;
 
   XEN_ASSERT_TYPE((MUS_IS_VCT(data)), data, 1, S_snd_spectrum, "a vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(win), win, 2, S_snd_spectrum, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(len), len, 3, S_snd_spectrum, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, 4, S_snd_spectrum, "a boolean");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beta), beta, 5, S_snd_spectrum, "a number");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(in_place), in_place, 6, S_snd_spectrum, "a boolean");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalized), normalized, 7, S_snd_spectrum, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(win), win, 2, S_snd_spectrum, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(len), len, 3, S_snd_spectrum, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(linear_or_dB), linear_or_dB, 4, S_snd_spectrum, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_number_or_unbound(beta), beta, 5, S_snd_spectrum, "a number");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(in_place), in_place, 6, S_snd_spectrum, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(normalized), normalized, 7, S_snd_spectrum, "a boolean");
 
   v = XEN_TO_VCT(data);
   n = (Xen_is_integer(len)) ? XEN_TO_C_INT(len) : mus_vct_length(v);
@@ -6181,8 +6190,8 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   mus_float_t *coeffs = NULL;
 
   XEN_ASSERT_TYPE(Xen_is_list(e) || MUS_IS_VCT(e), e, 1, S_filter_channel, "an envelope or a vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, 2, S_filter_channel, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 9, S_filter_channel, "a string");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(order), order, 2, S_filter_channel, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 9, S_filter_channel, "a string");
 
   if (Xen_is_integer(order)) 
     {
@@ -6194,7 +6203,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   cp = get_cp(snd, chn_n, S_filter_channel);
   if (!cp) return(XEN_FALSE);
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, 8, S_filter_channel, "boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(truncate), truncate, 8, S_filter_channel, "boolean");
   if (Xen_is_boolean(truncate)) truncate_1 = XEN_TO_C_BOOLEAN(truncate);
 
   ASSERT_SAMPLE_TYPE(S_filter_channel, beg, 3);
@@ -6260,7 +6269,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
   else
     {
       int len = 0;
-      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, 2, caller, "an integer");
+      XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(order), order, 2, caller, "an integer");
       if (Xen_is_integer(order)) 
 	{
 	  len = XEN_TO_C_INT(order);
@@ -6333,7 +6342,7 @@ static XEN g_filter_sound(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, XEN o
   #define H_filter_sound "(" S_filter_sound " filter :optional order snd chn edpos origin): \
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct with the actual coefficients"
 
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 6, S_filter_sound, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 6, S_filter_sound, "a string");
   return(g_filter_1(e, order, snd, chn_n, edpos, 
 		    S_filter_sound, (Xen_is_string(origin)) ? XEN_TO_C_STRING(origin) : NULL, 
 		    OVER_SOUND, false));
@@ -6345,7 +6354,7 @@ static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
   #define H_filter_selection "(" S_filter_selection " filter :optional order (truncate " PROC_TRUE ")): apply filter to selection. If truncate, \
 cut off filter output at end of selection, else mix"
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, 3, S_filter_selection, "boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(truncate), truncate, 3, S_filter_selection, "boolean");
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_filter_selection));
   return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, 

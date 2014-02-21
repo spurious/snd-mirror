@@ -3231,9 +3231,9 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 
   XEN_ASSERT_TYPE(MUS_IS_VCT(obj), obj, 1, S_mix_vct, "a vct");
   ASSERT_CHANNEL(S_mix_vct, snd, chn, 3);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, 2, S_mix_vct, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_tag), with_tag, 5, S_mix_vct, "a boolean");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 6, S_mix_vct, "a string");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(beg), beg, 2, S_mix_vct, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(with_tag), with_tag, 5, S_mix_vct, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 6, S_mix_vct, "a string");
 
   cp = get_cp(snd, chn, S_mix_vct);
   if (!cp) return(XEN_FALSE);
@@ -3250,7 +3250,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   with_mixer = virtual_mix_ok(cp, cp->edit_ctr);
   if (with_mixer)
     {
-      if (XEN_NOT_BOUND_P(with_tag))
+      if (!Xen_is_bound(with_tag))
 	with_mixer = with_mix_tags(ss);
       else with_mixer = XEN_TO_C_BOOLEAN(with_tag);
     }
@@ -3332,11 +3332,11 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
    */
 
   XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mix, "a string");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, 2, S_mix, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(file_chn), file_chn, 3, S_mix, "an integer or " PROC_TRUE);
+  XEN_ASSERT_TYPE(Xen_is_number_or_unbound(chn_samp_n), chn_samp_n, 2, S_mix, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(file_chn), file_chn, 3, S_mix, "an integer or " PROC_TRUE);
   ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(tag), tag, 6, S_mix, "a boolean");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, 7, S_mix, "a boolean or an integer");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(tag), tag, 6, S_mix, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(auto_delete), auto_delete, 7, S_mix, "a boolean or an integer");
   if (name) free(name);
 
   name = mus_expand_filename(XEN_TO_C_STRING(file));
@@ -3399,7 +3399,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	    }
 
 	  id = mix_complete_file(cp->sound, beg, name, 
-				 (XEN_NOT_BOUND_P(tag)) ? with_mix_tags(ss) : XEN_TO_C_BOOLEAN(tag),
+				 (!Xen_is_bound(tag)) ? with_mix_tags(ss) : XEN_TO_C_BOOLEAN(tag),
 				 delete_choice, MIX_SETS_SYNC_LOCALLY,
 				 &out_chans);
 	  if (id == -1) return(XEN_FALSE);
@@ -3416,7 +3416,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   with_mixer = virtual_mix_ok(cp, cp->edit_ctr);
   if (with_mixer)
     {
-      if (XEN_NOT_BOUND_P(tag))
+      if (!Xen_is_bound(tag))
 	with_mixer = with_mix_tags(ss);
       else with_mixer = XEN_TO_C_BOOLEAN(tag);
     }
@@ -3876,8 +3876,8 @@ XEN g_mix_to_vct(XEN mix_n, XEN beg_n, XEN num)
   mix_state *ms;
 
   XEN_ASSERT_TYPE(XEN_MIX_P(mix_n), mix_n, 1, S_mix_to_vct, "a mix");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg_n), beg_n, 2, S_mix_to_vct, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, 3, S_mix_to_vct, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(beg_n), beg_n, 2, S_mix_to_vct, "an integer");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(num), num, 3, S_mix_to_vct, "an integer");
 
   md = md_from_id(XEN_MIX_TO_C_INT(mix_n));
   if (md == NULL)

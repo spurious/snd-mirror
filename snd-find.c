@@ -28,61 +28,24 @@ static bool search_in_progress = false;
 static chan_info *previous_channel = NULL;
 #define MANY_PASSES 100000
 
-
-static mus_long_t channel_find_forward(chan_info *cp, bool repeating)
+static mus_long_t channel_find_forward(chan_info *cp)
 {
-  bool reported = false;
-  mus_long_t i, end, start, passes;
-  snd_fd *sf = NULL;
-  XEN res = XEN_FALSE;
+  mus_long_t i, end, start;
 
   end = CURRENT_SAMPLES(cp);
   start = CURSOR(cp) + 1;
   if (start >= end)
     start = 0;
-
-  sf = init_sample_read(start, cp, READ_FORWARD);
-  if (!sf)
-    return(-1);
-
-  ss->stopped_explicitly = false;
-  for (i = start, passes = 0; i < end; i++, passes++)
-    {
-      res = XEN_CALL_1(ss->search_proc, 
-		       C_TO_XEN_DOUBLE((double)(read_sample(sf))), 
-		       "search function");
-      if (XEN_NOT_FALSE_P(res)) 
-	break;
-      if (passes >= MANY_PASSES)
-	{
-	  passes = 0;
-	  check_for_event();
-	  if (!(ss->stopped_explicitly))
-	    {
-	      char *msg;
-	      msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(cp->sound) * 60)));
-	      find_report(cp, msg);
-	      free(msg);
-	      reported = true;
-	    }
-	  /* if user types C-s during an active search, we risk stomping on our current pointers */
-	  if (!(cp->sound->active)) break;
-	}
-      if (ss->stopped_explicitly) break;
-    }
-
-  ss->stopped_explicitly = false;
-  if (reported) find_report(cp, NULL);
-  free_snd_fd(sf);
-
+  i = scan_channel(cp, start, end, ss->search_proc);
   if (i < end)
     return(i);
   return(-1);
 }
 
 
-static mus_long_t channel_find_backward(chan_info *cp, bool repeating)
+static mus_long_t channel_find_backward(chan_info *cp)
 {
+  /* TODO: scan backward via scan_channel in snd-sig.c */
   bool reported = false;
   mus_long_t i, start, passes;
   snd_fd *sf = NULL;
@@ -132,14 +95,14 @@ static mus_long_t channel_find_backward(chan_info *cp, bool repeating)
 }
 
 
-static char *channel_search(chan_info *cp, read_direction_t direction, bool repeating)
+static char *channel_search(chan_info *cp, read_direction_t direction)
 {
   mus_long_t samp;
   char *s1, *s2, *msg;
 
   if (direction == READ_FORWARD)
-    samp = channel_find_forward(cp, repeating);
-  else samp = channel_find_backward(cp, repeating);
+    samp = channel_find_forward(cp);
+  else samp = channel_find_backward(cp);
   
   previous_channel = cp;
 
@@ -183,7 +146,7 @@ static char *global_search(read_direction_t direction, bool repeating)
 	      {
 		char *msg;
 		repeating = false; /* after we find the channel, look at everything */
-		msg = channel_search(cp, direction, repeating);
+		msg = channel_search(cp, direction);
 		if (msg)
 		  return(msg);
 	      }
@@ -252,7 +215,7 @@ void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
   find_dialog_stop_label(true);
   redirect_xen_error_to(stop_search_if_error, NULL);
   if (cp)
-    str = channel_search(cp, direction, repeating_search);
+    str = channel_search(cp, direction);
   else str = global_search(direction, repeating_search);
   redirect_xen_error_to(NULL, NULL);
   find_dialog_stop_label(false);

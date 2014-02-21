@@ -1549,6 +1549,13 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_is_char(Arg)              XEN_CHAR_P(Arg)
 #define Xen_keyword_is_eq(Arg1, Arg2) XEN_KEYWORD_EQ_P(Arg1, Arg2)
 
+#define Xen_is_long_long_or_unbound(Arg) XEN_LONG_LONG_IF_BOUND_P(Arg)
+#define Xen_is_boolean_or_unbound(Arg)   XEN_BOOLEAN_IF_BOUND_P(Arg)
+#define Xen_is_integer_or_unbound(Arg)   XEN_INTEGER_IF_BOUND_P(Arg)
+#define Xen_is_number_or_unbound(Arg)    XEN_NUMBER_IF_BOUND_P(Arg)
+#define Xen_is_string_or_unbound(Arg)    XEN_STRING_IF_BOUND_P(Arg)
+#define Xen_is_integer_boolean_or_unbound(Arg) XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg)
+#define Xen_is_integer_or_boolean(Arg)   XEN_INTEGER_OR_BOOLEAN_P(Arg)
 
 #ifdef __cplusplus
 extern "C" {

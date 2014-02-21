@@ -3445,7 +3445,7 @@ char *output_comment(file_info *hdr)
       {
 	XEN procs;
 	procs = XEN_HOOK_PROCEDURES(hook);
-	while (XEN_NOT_NULL_P(procs))
+	while (!Xen_is_null(procs))
 	  {
 	    result = XEN_CALL_1(XEN_CAR(procs), result, S_output_comment_hook);
 	    procs = XEN_CDR(procs);
@@ -3517,7 +3517,7 @@ and its value is returned."
 #if HAVE_FORTH
   if (XEN_STRING_P(text))	/* "play" snd-help */
     subject = XEN_TO_C_STRING(text);
-  else if (XEN_NOT_BOUND_P(text)) /* snd-help play */
+  else if (!Xen_is_bound(text)) /* snd-help play */
     {
       subject = fth_parse_word();
       text = C_TO_XEN_STRING(subject);
@@ -3651,7 +3651,7 @@ and its value is returned."
 		  {
 		    XEN procs;
 		    procs = XEN_HOOK_PROCEDURES(hook);
-		    while (XEN_NOT_NULL_P(procs))
+		    while (!Xen_is_null(procs))
 		      {
 			result = XEN_CALL_2(XEN_CAR(procs), subj, result, S_help_hook);
 			procs = XEN_CDR(procs);
@@ -3699,7 +3699,7 @@ XEN g_snd_help(XEN text, int widget_wid)
 
 static XEN g_listener_help(XEN arg, XEN formatted)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(formatted), formatted, 2, S_snd_help, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(formatted), formatted, 2, S_snd_help, "a boolean");
   if (XEN_FALSE_P(formatted))
     return(g_snd_help(arg, 0));
   return(g_snd_help(arg, listener_width()));
@@ -3778,8 +3778,8 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, 1, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, 2, S_help_dialog, "a string");
-  XEN_ASSERT_TYPE(XEN_LIST_P(xrefs) || XEN_NOT_BOUND_P(xrefs), xrefs, 3, S_help_dialog, "a list of related references");
-  XEN_ASSERT_TYPE(XEN_LIST_P(xurls) || XEN_NOT_BOUND_P(xurls), xurls, 4, S_help_dialog, "a list of urls");
+  XEN_ASSERT_TYPE(XEN_LIST_P(xrefs) || !Xen_is_bound(xrefs), xrefs, 3, S_help_dialog, "a list of related references");
+  XEN_ASSERT_TYPE(XEN_LIST_P(xurls) || !Xen_is_bound(xurls), xurls, 4, S_help_dialog, "a list of urls");
 
   if (refs) {free(refs); refs = NULL;}
   if (urls) {free(urls); urls = NULL;}

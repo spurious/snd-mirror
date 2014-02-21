@@ -25,6 +25,8 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     21-Feb_14: changed _p to _is_.
+ *     --------
  *     3-Sep:     use symbol directly in type checks, not the symbol name.
  *     18-Aug:    changed the gtk version macros to reflect the version number.
  *     7-Jun-13:  added mixed arg types to the ... arg lists.

@@ -611,7 +611,7 @@ static XEN g_graph_to_ps(XEN filename)
   char *error;
   const char *file;
 
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, 1, S_graph_to_ps, "a string (filename)");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(filename), filename, 1, S_graph_to_ps, "a string (filename)");
 
   if (Xen_is_string(filename))
     file = XEN_TO_C_STRING(filename);
@@ -656,8 +656,8 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   char *old_locale = NULL;
 #endif
 
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, 1, S_gl_graph_to_ps, "a string (filename)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(output_type), output_type, 2, S_gl_graph_to_ps, "an integer, 0=eps");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(filename), filename, 1, S_gl_graph_to_ps, "a string (filename)");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(output_type), output_type, 2, S_gl_graph_to_ps, "an integer, 0=eps");
 
   ASSERT_CHANNEL(S_gl_graph_to_ps, snd, chn, 3);
   cp = get_cp(snd, chn, S_gl_graph_to_ps);
@@ -732,8 +732,8 @@ void gl2ps_text(const char *msg)
 static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd_ignore, XEN chn_ignore)
 {
   #define H_gl_graph_to_ps "gl-graph->ps is a no-op in this version of Snd"
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, 1, S_gl_graph_to_ps, "a string (filename)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(output_type), output_type, 2, S_gl_graph_to_ps, "an integer, 0=eps");
+  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(filename), filename, 1, S_gl_graph_to_ps, "a string (filename)");
+  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(output_type), output_type, 2, S_gl_graph_to_ps, "an integer, 0=eps");
   return(XEN_FALSE);
 }
 #endif
