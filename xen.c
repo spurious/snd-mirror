@@ -668,17 +668,17 @@ static XEN hook_alloc(XEN klass)
 }
 
 
-#define XEN_CLASS_HOOK_P(Arg)              rb_obj_is_kind_of(Arg, xen_rb_cHook)
+#define Xen_is_class_hook(Arg)              rb_obj_is_kind_of(Arg, xen_rb_cHook)
 
 bool xen_rb_hook_p(XEN obj)
 {
-  return(XEN_CLASS_HOOK_P(obj));
+  return(Xen_is_class_hook(obj));
 }
 
 
 bool xen_rb_hook_empty_p(XEN obj) 
 { 
-  if (XEN_CLASS_HOOK_P(obj)) 
+  if (Xen_is_class_hook(obj)) 
     return(RB_ARRAY_LEN(rb_iv_get(obj, "@procs")) == 0); 
   return(true); 
 } 
@@ -846,7 +846,7 @@ static XEN xen_rb_hook_remove_hook(XEN hook, XEN name)
 
 XEN xen_rb_hook_reset_hook(XEN hook)
 {
-  if (XEN_CLASS_HOOK_P(hook))
+  if (Xen_is_class_hook(hook))
     rb_ary_clear(rb_iv_get(hook, "@procs"));
   return(hook);
 }
@@ -872,7 +872,7 @@ static XEN xen_rb_hook_names(XEN hook)
 XEN xen_rb_hook_to_a(XEN hook)
 {
   XEN ret = Qnil;
-  if (XEN_CLASS_HOOK_P(hook))
+  if (Xen_is_class_hook(hook))
     {
       XEN ary;
       long len;
@@ -1052,7 +1052,7 @@ static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
 
 static XEN xen_rb_is_hook_p(XEN klass, XEN obj)
 {
-  return(C_TO_XEN_BOOLEAN(XEN_CLASS_HOOK_P(obj)));
+  return(C_TO_XEN_BOOLEAN(Xen_is_class_hook(obj)));
 }
 
 

@@ -873,7 +873,7 @@ typedef struct s7_port_t {
   bool needs_free;
   FILE *file;
   char *filename;
-  int filename_length;
+  int filename_length, gc_loc;
   s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
   void (*output_function)(s7_scheme *sc, unsigned char c, s7_pointer port);
   /* a version of string ports using a pointer to the current location and a pointer to the end
@@ -1232,6 +1232,7 @@ struct s7_scheme {
   unsigned int strbuf_size;
   char *strbuf;
   int print_width;
+  s7_pointer *singletons;
   
   char *read_line_buf;
   unsigned int read_line_buf_size;
@@ -2198,6 +2199,7 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #define port_read_semicolon(p)        port_port(p)->read_semicolon
 #define port_read_white_space(p)      port_port(p)->read_white_space
 #define port_read_name(p)             port_port(p)->read_name
+#define port_gc_loc(p)                port_port(p)->gc_loc
 
 #define is_c_function(f)              (type(f) >= T_C_FUNCTION)
 #define c_function_data(f)            (f)->object.fnc.c_proc
@@ -9786,7 +9788,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 	return((want_symbol) ? make_symbol(sc, q) : sc->F); 
       break;
 
-    case '0':        /* these two are always digits */
+    case '0':        /* these two are always digits */ /* PERHAPS: rest of single digits (and table for 2 digits?) */
     case '1':
       break;
 
@@ -20853,13 +20855,20 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
       port_filename(p) = NULL;
     }
   
-  if ((is_file_port(p)) &&
-      (port_file(p)))
+  if (is_file_port(p))
     {
-      fclose(port_file(p));
-      port_file(p) = NULL;
+      if (port_file(p))
+	{
+	  fclose(port_file(p));
+	  port_file(p) = NULL;
+	}
     }
-
+  else
+    {
+      if ((is_string_port(p)) &&
+	  (port_gc_loc(p) != -1))
+	s7_gc_unprotect_at(sc, port_gc_loc(p));
+    }
   if (port_needs_free(p))
     {
       if (port_string(p))
@@ -20871,7 +20880,6 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
       port_needs_free(p) = false;
     }
 
-  /* if input string, someone else is dealing with GC */
   port_read_character(p) = closed_port_read_char;
   port_read_line(p) = closed_port_read_line;
   port_write_character(p) = closed_port_write_char;
@@ -21504,15 +21512,32 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool at
 
   port_string_point(pt) += k;
   
-  if ((!atom_case) &&             /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
-      (k == 1) && 
-      (*orig_str == '\\'))
+  if (k == 1)
     {
-      /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
-      sc->strbuf[1] = orig_str[1];
-      sc->strbuf[2] = '\0';
-      return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
+      if (atom_case)
+	{
+	  s7_pointer result;
+	  result = sc->singletons[(unsigned char)*orig_str];
+	  if (!result)
+	    {
+	      sc->strbuf[1] = '\0';
+	      result = make_symbol(sc, sc->strbuf);
+	      sc->singletons[(unsigned char)(*orig_str)] = result;
+	    }
+	  if (*str) port_string_point(pt)--;
+	  return(result);
+	}
+
+      if (*orig_str == '\\')              /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
+	{
+	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
+	  sc->strbuf[1] = orig_str[1];
+	  sc->strbuf[2] = '\0';
+	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
+	}
     }
+
+  /* if k=2, ca 140 numbers, a dozen built-ins */
 
   /* eval_c_string string is a constant so we can't set and unset the token's end char */
   if ((k + 1) >= sc->strbuf_size)
@@ -21585,6 +21610,22 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 
       return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
 #endif
+    }
+
+  if (k == 1)
+    {
+      result = sc->singletons[(unsigned char)(*orig_str)];
+      if (!result)
+	{
+	  endc = (*str);
+	  (*str) = '\0';
+	  result = make_symbol(sc, orig_str);
+	  sc->singletons[(unsigned char)(*orig_str)] = result;
+	  (*str) = endc;
+	  if (endc != 0) port_string_point(pt)--;
+	}
+      else if (*str) port_string_point(pt)--;
+      return(result);
     }
 
   endc = (*str);
@@ -21724,6 +21765,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       port_string_length(port) = size;
       port_string_point(port) = 0;
       port_needs_free(port) = true;
+      port_gc_loc(port) = -1;
       port_read_character(port) = string_read_char;
       port_read_line(port) = string_read_line;
       port_display(port) = input_display;
@@ -22024,6 +22066,7 @@ static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int
   port_filename(x) = NULL;
   port_file_number(x) = -1;
   port_needs_free(x) = false;
+  port_gc_loc(x) = -1;
   port_read_character(x) = string_read_char;
   port_read_line(x) = string_read_line;
   port_display(x) = input_display;
@@ -22036,10 +22079,21 @@ static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int
   return(x);
 }
 
+
+static s7_pointer open_and_protect_input_string(s7_scheme *sc, s7_pointer str)
+{
+  s7_pointer p;
+  p = open_input_string(sc, string_value(str), string_length(str));
+  port_gc_loc(p) = s7_gc_protect(sc, str);
+  return(p);
+}
+
+
 s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 {
   return(open_input_string(sc, input_string, safe_strlen(input_string)));
 }
+
 
 static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 {
@@ -22052,11 +22106,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, input_string, sc->OPEN_INPUT_STRING, args);
       return(simple_wrong_type_argument(sc, sc->OPEN_INPUT_STRING, input_string, T_STRING));
     }
-  port = open_input_string(sc, string_value(input_string), string_length(input_string));
-  /* here we have to make sure we don't depend on the incoming input string (which might change or be GC'd while the port is open) 
-   */
-  port_string(port) = copy_string_with_len(string_value(input_string), string_length(input_string));
-  port_needs_free(port) = true;
+  port = open_and_protect_input_string(sc, input_string);
   return(port);
 }
 
@@ -23226,7 +23276,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
       else sc->envir = e;
     }
 
-  port = open_input_string(sc, string_value(str), string_length(str));
+  port = open_and_protect_input_string(sc, str);
   push_input_port(sc, port);
   
   sc->temp4 = sc->args;
@@ -23270,7 +23320,7 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, small_int(2), cadr(args), 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
   
-  return(call_with_input(sc, open_input_string(sc, string_value(str), string_length(str)), args));
+  return(call_with_input(sc, open_and_protect_input_string(sc, str), args));
 }
 
 
@@ -23327,7 +23377,7 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
    *   ";with-input-from-string argument 2, #<eof>, is untyped but should be a thunk"
    */
   
-  return(with_input(sc, open_input_string(sc, string_value(str), string_length(str)), args));
+  return(with_input(sc, open_and_protect_input_string(sc, str), args));
 }
 
 
@@ -31268,9 +31318,10 @@ static int hash_float_location(s7_Double x)
   if ((is_inf(x)) || (is_NaN(x)))
     return(0);
 
-  if (x < 0.0)
-    loc = 0.5 - x;
-  else loc = x + 0.5;
+  x = fabs(x);
+  if (x < 100.0)
+    loc = 1000.0 * x;
+  else loc = x;
 
   if (loc < 0) /* (hash-table-index 1e+18) -> -2147483648 */
     return(0);
@@ -40481,16 +40532,11 @@ static s7_pointer format_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 		return(format_just_newline);
 	    }
 	}
-	  
-      if ((args == 2) ||
-	  ((is_optimized(expr)) &&
-	   ((op_no_hop(expr) == OP_C_ALL_X) ||
-	    (op_no_hop(expr) == OP_SAFE_C_ALL_X))))
-	{
-	  if (!is_columnizing(string_value(str_arg)))
-	    return(format_allg_no_column);
-	  return(format_allg);
-	}
+
+      /* this used to worry about optimized expr and particular cases -- why? I can't find a broken case */
+      if (!is_columnizing(string_value(str_arg)))
+	return(format_allg_no_column);
+      return(format_allg);
     }
   return(f);
 }
@@ -67857,6 +67903,7 @@ s7_scheme *s7_init(void)
   sc->slash_str_size = 0;
   sc->slash_str = NULL;
   
+  sc->singletons = (s7_pointer *)calloc(256, sizeof(s7_pointer));
   sc->read_line_buf = NULL;
   sc->read_line_buf_size = 0;
 
@@ -69158,6 +69205,15 @@ s7_scheme *s7_init(void)
     sc->default_rng->ran_carry = 1675393560;
 
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
+
+    for (i = 0; i < 10; i++) sc->singletons[(unsigned char)'0' + i] = small_int(i);
+    sc->singletons[(unsigned char)'+'] = sc->ADD;
+    sc->singletons[(unsigned char)'-'] = sc->MINUS;
+    sc->singletons[(unsigned char)'*'] = sc->MULTIPLY;
+    sc->singletons[(unsigned char)'/'] = sc->DIVIDE;
+    sc->singletons[(unsigned char)'<'] = sc->LT;
+    sc->singletons[(unsigned char)'>'] = sc->GT;
+    sc->singletons[(unsigned char)'='] = sc->EQ;
   }
 
 #if WITH_GMP
@@ -69510,14 +69566,16 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447
- * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3446
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1372
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
- * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4
+ * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.0
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.8
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.7
  *            153 with run macro (eval_ptree)
+ */
+/* caveats: callgrind is confused about sincos, and does not count file IO delays
  */
 
 /* letrec* built-in (not macro)
@@ -69534,6 +69592,7 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0)
- * many (1000) more _p|P -> _is_ changes remain (snd (g_*_p and H_*_p *.h), lisp (cmus.c, run.lisp), xen, docs?, also the Xm_char business in xm.c)
+ * many (1000) more _p|P -> _is_ changes remain in snd (g_*_p and H_*_p *.h)
+ *
  */
 

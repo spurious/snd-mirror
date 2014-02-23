@@ -856,7 +856,7 @@ static void apply_fft(fft_state *fs)
 			 sfd,
 			 "added transform func");
 	gc_loc = snd_protect(res);
-	if (MUS_IS_VCT(res))
+	if (mus_is_vct(res))
 	  {
 	    v = XEN_TO_VCT(res);
 	    len = mus_vct_length(v);
@@ -2250,7 +2250,7 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
   mus_float_t *dat, *vdata;
 
   XEN_ASSERT_TYPE(XEN_TRANSFORM_P(type), type, 1, "snd-transform", "a transform object");
-  XEN_ASSERT_TYPE(MUS_IS_VCT(data), data, 2, "snd-transform", "a vct");
+  XEN_ASSERT_TYPE(mus_is_vct(data), data, 2, "snd-transform", "a vct");
 
   trf = XEN_TRANSFORM_TO_C_INT(type);
   if ((trf < 0) || (trf > HAAR))

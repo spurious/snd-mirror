@@ -1432,7 +1432,7 @@ static mus_any_class OSCIL_CLASS = {
 mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase)
 {
   osc *gen;
-  gen = (osc *)calloc(1, sizeof(osc));
+  gen = (osc *)malloc(sizeof(osc));
   gen->core = &OSCIL_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->phase = phase;
@@ -3815,11 +3815,12 @@ static mus_any_class POLYWAVE_CLASS = {
 mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, int cheby_choice)
 {
   pw *gen;
-  gen = (pw *)calloc(1, sizeof(pw));
+  gen = (pw *)malloc(sizeof(pw));
   gen->core = &POLYWAVE_CLASS;
   gen->phase = 0.0; /* cos used in cheby funcs above */
   gen->freq = mus_hz_to_radians(frequency);
   gen->coeffs = coeffs;
+  gen->ucoeffs = NULL;
   gen->n = n;
   gen->index = 1.0;
   gen->cheby_choice = cheby_choice;
@@ -3925,7 +3926,7 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
 mus_any *mus_make_polywave_tu(mus_float_t frequency, mus_float_t *tcoeffs, mus_float_t *ucoeffs, int n)
 {
   pw *gen;
-  gen = (pw *)calloc(1, sizeof(pw));
+  gen = (pw *)malloc(sizeof(pw));
   gen->core = &POLYWAVE_CLASS;
   gen->phase = 0.0; /* cos used in cheby funcs above */
   gen->freq = mus_hz_to_radians(frequency);
@@ -9074,8 +9075,8 @@ static void dmagify_env(seg *e, mus_float_t *data, int pts, mus_long_t dur, doub
       (data[pts * 2 - 2] != data[0]))
     xscl = (double)(dur - 1) / (double)(data[pts * 2 - 2] - data[0]); /* was dur, 7-Apr-02 */
 
-  e->rates = (double *)calloc(pts, sizeof(double));
-  e->locs = (mus_long_t *)calloc(pts + 1, sizeof(mus_long_t));
+  e->rates = (double *)malloc(pts * sizeof(double));
+  e->locs = (mus_long_t *)malloc((pts + 1) * sizeof(mus_long_t));
 
   for (j = 0, i = 2; i < pts * 2; i += 2, j++)
     {
@@ -9119,8 +9120,7 @@ static void dmagify_env(seg *e, mus_float_t *data, int pts, mus_long_t dur, doub
 	}
     }
 
-  if ((pts > 1) && 
-      (e->locs[pts - 2] != e->end))
+  if (pts > 1)
     e->locs[pts - 2] = e->end;
 
   if (pts > 1)
@@ -9163,7 +9163,7 @@ static mus_float_t *fixup_exp_env(seg *e, mus_float_t *data, int pts, double off
 
   /* fill "result" with x and (offset+scaler*y) */
 
-  result = (mus_float_t *)calloc(len, sizeof(mus_float_t));
+  result = (mus_float_t *)malloc(len * sizeof(mus_float_t));
   result[0] = data[0];
   result[1] = min_y;
 
@@ -9391,7 +9391,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
   int i;
   mus_long_t dur_in_samples;
   mus_float_t *edata;
-  seg *e = NULL;
+  seg *e;
 
   for (i = 2; i < npts * 2; i += 2)
     if (brkpts[i - 2] >= brkpts[i])
@@ -9404,7 +9404,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 	return(NULL);
       }
 
-  e = (seg *)calloc(1, sizeof(seg));
+  e = (seg *)malloc(sizeof(seg));
   e->core = &ENV_CLASS;
 
   if (duration != 0.0)
@@ -9424,7 +9424,10 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
   e->index = 0;
 
   if (odata)
-    e->original_data = odata;
+    {
+      e->original_data = odata;
+      e->data_allocated = false;
+    }
   else
     {      
       e->original_data  = (mus_float_t *)calloc(npts * 2, sizeof(mus_float_t));
@@ -9434,21 +9437,25 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
   if (e->original_data != brkpts)
     memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 * sizeof(mus_float_t));
 
-  if (base == 0.0)
+  if (base == 1.0)
     {
-      e->style = MUS_ENV_STEP;
-      e->env_func = mus_env_step;
+      e->style = MUS_ENV_LINEAR;
+      if ((npts == 2) &&
+	  (brkpts[1] == brkpts[3]))
+	e->env_func = mus_env_line;
+      else e->env_func = mus_env_linear;
+      e->power = 0.0;
+      e->init_power = 0.0;
       dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
     }
   else
     {
-      if (base == 1.0)
+      if (base == 0.0)
 	{
-	  e->style = MUS_ENV_LINEAR;
-	  if ((npts == 2) &&
-	      (brkpts[1] == brkpts[3]))
-	    e->env_func = mus_env_line;
-	  else e->env_func = mus_env_linear;
+	  e->style = MUS_ENV_STEP;
+	  e->env_func = mus_env_step;
+	  e->power = 0.0;
+	  e->init_power = 0.0;
 	  dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
 	}
       else
@@ -9462,9 +9469,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 	      free(e);
 	      return(NULL);
 	    }
-
 	  dmagify_env(e, edata, npts, dur_in_samples, 1.0);
-
 	  e->power = exp(edata[1]);
 	  e->init_power = e->power;
 	  e->offset -= e->scaler;

@@ -35,12 +35,12 @@ MUS_EXPORT XEN g_vct_peak(XEN obj);
   #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #endif
 
-#define MUS_IS_VCT(arg) mus_is_vct(arg)
 MUS_EXPORT mus_long_t mus_vct_length(vct *v);
 MUS_EXPORT mus_float_t *mus_vct_data(vct *v);
 MUS_EXPORT vct *mus_vct_wrap(mus_long_t len, mus_float_t *data);
 
 #if (!DISABLE_DEPRECATED)
+#define MUS_IS_VCT(arg) mus_is_vct(arg)
 #define mus_vct_p mus_is_vct
 #define mus_vct_equalp mus_vct_is_equal
 #define MUS_VCT_P(arg) mus_is_vct(arg)

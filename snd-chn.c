@@ -7442,10 +7442,10 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
       if (sound_data_p(snd))                     /* sound-data-length */
 	return(C_TO_XEN_LONG_LONG(mus_sound_data_length(XEN_TO_SOUND_DATA(snd))));
 
-      if (MUS_IS_VCT(snd))                        /* vct-length */
+      if (mus_is_vct(snd))                        /* vct-length */
 	return(C_TO_XEN_LONG_LONG(mus_vct_length(XEN_TO_VCT(snd))));
 
-      if (XEN_MIX_P(snd))                        /* mix-length */
+      if (xen_is_mix(snd))                        /* mix-length */
 	return(g_mix_length(snd));
 
       if (XEN_REGION_P(snd))                     /* region-frames */
@@ -7542,17 +7542,17 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
 	{
 	  XEN v;
 	  v = g_mus_data(snd);
-	  if (MUS_IS_VCT(v))
+	  if (mus_is_vct(v))
 	    return(g_vct_peak(v));
 	}
 
       if (sound_data_p(snd))
 	return(g_list_maxamp(g_sound_data_maxamp(snd)));
 
-      if (MUS_IS_VCT(snd))                        /* vct-peak */
+      if (mus_is_vct(snd))                        /* vct-peak */
 	return(g_vct_peak(snd));
 
-      if (XEN_MIX_P(snd))                        /* mix => sound maxamp of the mix data */
+      if (xen_is_mix(snd))                        /* mix => sound maxamp of the mix data */
 	return(g_mix_maxamp(snd));
 
       if (XEN_REGION_P(snd))                     /* region-maxamp */
@@ -9298,9 +9298,9 @@ If 'data' is a list of numbers, it is treated as an envelope."
   int old_y_offset = 0, gx0 = 0;
 
   /* ldata can be a vct or a list of numbers or vcts */
-  XEN_ASSERT_TYPE(((MUS_IS_VCT(ldata)) || 
+  XEN_ASSERT_TYPE(((mus_is_vct(ldata)) || 
 		   ((Xen_is_list(ldata)) && (XEN_LIST_LENGTH(ldata) > 0) && 
-		    ((Xen_is_number(XEN_CAR(ldata))) || (MUS_IS_VCT(XEN_CAR(ldata)))))),
+		    ((Xen_is_number(XEN_CAR(ldata))) || (mus_is_vct(XEN_CAR(ldata)))))),
 		  ldata, 1, S_graph, "a vct or a list");
 
   XEN_ASSERT_TYPE(Xen_is_string(xlabel) || !Xen_is_bound(xlabel), xlabel, 2, S_graph, "a string (x axis label)");

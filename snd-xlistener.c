@@ -283,7 +283,7 @@ static bool highlight_unbalanced_paren(void);
 static int check_balance(const char *expr, int start, int end, bool in_listener) 
 {
   int i;
-  bool non_whitespace_p = false;
+  bool not_whitespace = false;
   int paren_count = 0;
   bool prev_separator = true;
   bool quote_wait = false;
@@ -304,7 +304,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	case '\n':
 	case '\t':
 	case '\r':
-	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	  if ((not_whitespace) && (paren_count == 0) && (!quote_wait))
 	    return(i);
 	  else 
 	    {
@@ -314,7 +314,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	  break;
 
 	case '\"' :
-	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	  if ((not_whitespace) && (paren_count == 0) && (!quote_wait))
 	    return(i);
 	  else 
 	    {
@@ -342,7 +342,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	      else 
 		{
 		  prev_separator = true;
-		  non_whitespace_p = true;
+		  not_whitespace = true;
 		  quote_wait = false;
 		}
 	    }
@@ -364,7 +364,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	    {
 	      /* (set! *#readers* (cons (cons #\c (lambda (str) (apply make-rectangular (read)))) *#readers*))
 	       */
-	      if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	      if ((not_whitespace) && (paren_count == 0) && (!quote_wait))
 		return(i);
 	      else 
 		{
@@ -377,7 +377,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 			  if (expr[k] == '(')
 			    {
 			      /* should we look at the readers here? I want to support #c(1 2) for example */
-			      non_whitespace_p = false;
+			      not_whitespace = false;
 			      prev_separator = false;
 			      incr = k - i;
 			      break;
@@ -408,7 +408,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 			{
 			  prev_separator = false;
 			  quote_wait = false;
-			  non_whitespace_p = true;
+			  not_whitespace = true;
 			  i++;
 			}
 		    }
@@ -417,13 +417,13 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	  break;
 
 	case '(' :
-	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	  if ((not_whitespace) && (paren_count == 0) && (!quote_wait))
 	    return(i - 1); /* 'a(...) -- ignore the (...) */
 	  else 
 	    {
 	      i++;
 	      paren_count++;
-	      non_whitespace_p = true;
+	      not_whitespace = true;
 	      prev_separator = true;
 	      quote_wait = false;
 	    }
@@ -431,12 +431,12 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 
 	case ')' :
 	  paren_count--;
-	  if ((non_whitespace_p) && (paren_count == 0))
+	  if ((not_whitespace) && (paren_count == 0))
 	    return(i + 1);
 	  else 
 	    {
 	      i++;
-	      non_whitespace_p = true;
+	      not_whitespace = true;
 	      prev_separator = true;
 	      quote_wait = false;
 	    }
@@ -446,21 +446,21 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	case '`' :                  /* `(1 2) */
 	  if (prev_separator) 
 	    quote_wait = true;
-	  non_whitespace_p = true;
+	  not_whitespace = true;
 	  i++;
 	  break;
 
 	case ',':                   /* `,(+ 1 2) */
 	case '@':                   /* `,@(list 1 2) */
 	  prev_separator = false;
-	  non_whitespace_p = true;
+	  not_whitespace = true;
 	  i++;
 	  break;
 
 	default:
 	  prev_separator = false;
 	  quote_wait = false;
-	  non_whitespace_p = true;
+	  not_whitespace = true;
 	  i++;
 	  break;
 	}

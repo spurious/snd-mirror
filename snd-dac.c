@@ -2978,7 +2978,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
     return(C_TO_XEN_BOOLEAN(add_xen_to_play_list(object)));
 
   /* mix object */
-  if (XEN_MIX_P(object))
+  if (xen_is_mix(object))
     return(g_play_mix(object, start));
 
   /* selection object */

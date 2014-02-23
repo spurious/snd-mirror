@@ -229,7 +229,7 @@ static XEN snd_format_if_needed(XEN args)
          case '%': errmsg = mus_strcat(errmsg, "\n", &err_size); break; 
          case 'S': 
          case 'A': 
-           if (XEN_NOT_NULL_P(format_args)) 
+           if (!Xen_is_null(format_args)) 
              { 
                cur_arg = XEN_CAR(format_args); 
                format_args = XEN_CDR(format_args); 
@@ -406,7 +406,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 
   if (!(Xen_is_procedure(proc)))
     {
-      if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
+      if (!Xen_is_false(proc)) /* #f as explicit arg to clear */
 	{
 	  char *temp = NULL, *str;
 	  str = mus_format("%s: %s (%s arg %d) is not a procedure!", 
@@ -711,7 +711,7 @@ void clear_stdin(void)
 static int check_balance(const char *expr, int start, int end, bool in_listener) 
 {
   int i;
-  bool non_whitespace_p = false;
+  bool not_whitespace = false;
   int paren_count = 0;
   bool prev_separator = true;
   bool quote_wait = false;
@@ -732,7 +732,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	case '\n':
 	case '\t':
 	case '\r':
-	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	  if ((not_whitespace) && (paren_count == 0) && (!quote_wait))
 	    return(i);
 	  else 
 	    {
@@ -742,7 +742,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	  break;
 
 	case '\"' :
-	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	  if ((not_whitespace) && (paren_count == 0) && (!quote_wait))
 	    return(i);
 	  else 
 	    {
@@ -770,7 +770,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	      else 
 		{
 		  prev_separator = true;
-		  non_whitespace_p = true;
+		  not_whitespace = true;
 		  quote_wait = false;
 		}
 	    }
@@ -792,7 +792,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	    {
 	      /* (set! *#readers* (cons (cons #\c (lambda (str) (apply make-rectangular (read)))) *#readers*))
 	       */
-	      if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	      if ((not_whitespace) && (paren_count == 0) && (!quote_wait))
 		return(i);
 	      else 
 		{
@@ -805,7 +805,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 			  if (expr[k] == '(')
 			    {
 			      /* should we look at the readers here? I want to support #c(1 2) for example */
-			      non_whitespace_p = false;
+			      not_whitespace = false;
 			      prev_separator = false;
 			      incr = k - i;
 			      break;
@@ -836,7 +836,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 			{
 			  prev_separator = false;
 			  quote_wait = false;
-			  non_whitespace_p = true;
+			  not_whitespace = true;
 			  i++;
 			}
 		    }
@@ -845,13 +845,13 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	  break;
 
 	case '(' :
-	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	  if ((not_whitespace) && (paren_count == 0) && (!quote_wait))
 	    return(i - 1); /* 'a(...) -- ignore the (...) */
 	  else 
 	    {
 	      i++;
 	      paren_count++;
-	      non_whitespace_p = true;
+	      not_whitespace = true;
 	      prev_separator = true;
 	      quote_wait = false;
 	    }
@@ -859,12 +859,12 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 
 	case ')' :
 	  paren_count--;
-	  if ((non_whitespace_p) && (paren_count == 0))
+	  if ((not_whitespace) && (paren_count == 0))
 	    return(i + 1);
 	  else 
 	    {
 	      i++;
-	      non_whitespace_p = true;
+	      not_whitespace = true;
 	      prev_separator = true;
 	      quote_wait = false;
 	    }
@@ -874,21 +874,21 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	case '`' :                  /* `(1 2) */
 	  if (prev_separator) 
 	    quote_wait = true;
-	  non_whitespace_p = true;
+	  not_whitespace = true;
 	  i++;
 	  break;
 
 	case ',':                   /* `,(+ 1 2) */
 	case '@':                   /* `,@(list 1 2) */
 	  prev_separator = false;
-	  non_whitespace_p = true;
+	  not_whitespace = true;
 	  i++;
 	  break;
 
 	default:
 	  prev_separator = false;
 	  quote_wait = false;
-	  non_whitespace_p = true;
+	  not_whitespace = true;
 	  i++;
 	  break;
 	}
@@ -1279,7 +1279,7 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
   XEN result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES(hook);
 
-  while (XEN_NOT_NULL_P(procs))
+  while (!Xen_is_null(procs))
     {
       result = XEN_APPLY(XEN_CAR(procs), args, caller);
       procs = XEN_CDR(procs);
@@ -1297,7 +1297,7 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
 #else
   XEN procs = XEN_HOOK_PROCEDURES(hook);
 
-  while (XEN_NOT_NULL_P(procs))
+  while (!Xen_is_null(procs))
     {
       if (!(Xen_is_eq(args, XEN_EMPTY_LIST)))
 	XEN_APPLY(XEN_CAR(procs), args, caller);
@@ -1319,12 +1319,12 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
   XEN hook_result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES(hook);
 
-  while (XEN_NOT_NULL_P(procs))
+  while (!Xen_is_null(procs))
     {
       if (!(Xen_is_eq(args, XEN_EMPTY_LIST)))
 	result = XEN_APPLY(XEN_CAR(procs), args, caller);
       else result = XEN_CALL_0(XEN_CAR(procs), caller);
-      if (XEN_NOT_FALSE_P(result)) 
+      if (!Xen_is_false(result)) 
         hook_result = result;
       procs = XEN_CDR (procs);
     }

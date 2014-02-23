@@ -3230,11 +3230,11 @@ static XEN g_channels(XEN snd)
 
   if ((mus_xen_p(snd)) ||
       (sound_data_p(snd)) ||                     /* sound-data-chans */
-      (MUS_IS_VCT(snd)) ||
+      (mus_is_vct(snd)) ||
       (Xen_is_list(snd)))
     return(g_mus_channels(snd));                 /* mus-channels */
 
-  if (XEN_MIX_P(snd))                            /* mixes are always 1 chan */
+  if (xen_is_mix(snd))                            /* mixes are always 1 chan */
     return(C_TO_XEN_INT(1));
 
   if (XEN_REGION_P(snd))                         /* region-chans */
@@ -3382,7 +3382,7 @@ static XEN g_sync(XEN snd)
   #define H_sync "(" S_sync " :optional snd): snd's sync value (0 = no sync).  Some editing operations \
 are applied to all sounds sharing the sync value of the selected sound.  'snd' can also be a mix or mark object."
 
-  if (XEN_MIX_P(snd))                            /* mix-sync */
+  if (xen_is_mix(snd))                            /* mix-sync */
     return(g_mix_sync(snd));
 
   if (XEN_MARK_P(snd))                           /* mark-sync */
@@ -3396,7 +3396,7 @@ static XEN g_set_sync(XEN on, XEN snd)
 {
   XEN_ASSERT_TYPE(Xen_is_integer_or_boolean(on), on, 1, S_setB S_sync, "an integer");
 
-  if (XEN_MIX_P(snd))
+  if (xen_is_mix(snd))
     return(g_set_mix_sync(snd, on));
 
   if (XEN_MARK_P(snd))
@@ -3747,7 +3747,7 @@ static XEN g_file_name(XEN snd)
   if (mus_xen_p(snd))
     return(g_mus_file_name(snd));
 
-  if (XEN_MIX_P(snd))
+  if (xen_is_mix(snd))
     return(C_TO_XEN_STRING(mix_file_name(XEN_MIX_TO_C_INT(snd))));
 
   if (XEN_REGION_P(snd))

@@ -694,9 +694,9 @@ data in the recipient's graph between points low and high in the drawing mode gr
   if (Xen_is_false(data)) return(XEN_FALSE);
   XEN_ASSERT_TYPE((Xen_is_list(data) && 
 		   (XEN_LIST_LENGTH(data) == 2) &&
-		   (MUS_IS_VCT(XEN_CAR(data))) &&
-		   (MUS_IS_VCT(XEN_CADR(data)))) || 
-		  (MUS_IS_VCT(data)), 
+		   (mus_is_vct(XEN_CAR(data))) &&
+		   (mus_is_vct(XEN_CADR(data)))) || 
+		  (mus_is_vct(data)), 
 		  data, 1, S_graph_data, "a list of 2 vcts or vct");
   XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(ax), ax, 4, S_graph_data, "an integer");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(lo) || Xen_is_false(lo) || !Xen_is_bound(lo), lo, 5, S_graph_data, "a sample number");
@@ -1853,7 +1853,7 @@ static XEN g_set_basic_color(XEN color)
 static XEN g_mix_color(XEN mix_id) 
 {
   #define H_mix_color "(" S_mix_color " :optional mix-id): color of all mix tags (if mix-id is omitted), or of mix-id's tag"
-  if (XEN_MIX_P(mix_id))
+  if (xen_is_mix(mix_id))
     return(XEN_WRAP_PIXEL(mix_color_from_id(XEN_MIX_TO_C_INT(mix_id))));
   return(XEN_WRAP_PIXEL(ss->mix_color));
 }
@@ -1862,8 +1862,8 @@ static XEN g_mix_color(XEN mix_id)
 static XEN g_set_mix_color(XEN color, XEN mix_id)
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_mix_color, "a color"); 
-  XEN_ASSERT_TYPE(XEN_MIX_P(mix_id) || !Xen_is_bound(mix_id), mix_id, 2, S_setB S_mix_color, "a mix");
-  if (XEN_MIX_P(mix_id))
+  XEN_ASSERT_TYPE(xen_is_mix(mix_id) || !Xen_is_bound(mix_id), mix_id, 2, S_setB S_mix_color, "a mix");
+  if (xen_is_mix(mix_id))
     mix_set_color_from_id(XEN_MIX_TO_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
   else color_mixes(XEN_UNWRAP_PIXEL(color));
   return(color);

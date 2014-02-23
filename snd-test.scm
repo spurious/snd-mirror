@@ -12002,24 +12002,24 @@ EDITS: 2
     
     (let ((g3 g0))
       (if (not (eq? g0 g3))
-	  (snd-display #__line__ ";let ~A not eq? ~A ~A" (mus-name g0) g0 g3))
+	  (snd-display #__line__ ";let ~A not eq?~%    ~A~%    ~A" (mus-name g0) g0 g3))
       (if (eq? g0 g1)
-	  (snd-display #__line__ ";arg ~A eq? ~A ~A" (mus-name g0) g0 g1))
+	  (snd-display #__line__ ";arg ~A eq?~%    ~A~%    ~A" (mus-name g0) g0 g1))
       (if (not (equal? g0 g1))
-	  (snd-display #__line__ ";~A not equal? ~A ~A" (mus-name g0) g0 g1))
+	  (snd-display #__line__ ";~A not equal?~%    ~A~%    ~A" (mus-name g0) g0 g1))
       (if (equal? g0 g2)
-	  (snd-display #__line__ ";~A equal? ~A ~A" (mus-name g0) g0 g2))
+	  (snd-display #__line__ ";~A equal?~%    ~A~%    ~A" (mus-name g0) g0 g2))
       (g0)
       (g3)
       (g3)
       (if (not (eq? g0 g3))
-	  (snd-display #__line__ ";run let ~A not eq? ~A ~A" (mus-name g0) g0 g3))
+	  (snd-display #__line__ ";run let ~A not eq?~%    ~A~%    ~A" (mus-name g0) g0 g3))
       (if (eq? g0 g1)
-	  (snd-display #__line__ ";arg ~A eq? ~A ~A" (mus-name g0) g0 g1))
+	  (snd-display #__line__ ";arg ~A eq?~%    ~A~%    ~A" (mus-name g0) g0 g1))
       (if (equal? g0 g1)
-	  (snd-display #__line__ ";run ~A equal? ~A ~A" (mus-name g0) g0 g1))
+	  (snd-display #__line__ ";run ~A equal?~%    ~A~%    ~A" (mus-name g0) g0 g1))
       (if (equal? g0 g2)
-	  (snd-display #__line__ ";run ~A equal? ~A ~A" (mus-name g0) g0 g2))))
+	  (snd-display #__line__ ";run ~A equal?~%    ~A~%    ~A" (mus-name g0) g0 g2))))
   
   ;; ----------------
   (define (fm-test gen)
@@ -37656,20 +37656,14 @@ EDITS: 1
 	  (system "mv test.snd fmv.snd")
 	  (mus-sound-forget "test.snd")
 	  (mus-sound-forget "fmv.snd"))
-	(let ((diff 0.0)
-	      (ctr 0)
+	(let ((diff 0.0) (ctr 0)
 	      (ind1 (open-sound "oboe.snd"))
 	      (ind2 (make-file->sample "fmv.snd")))
 	  (scan-channel (lambda (y)
-			  (let* ((yy (file->sample ind2 ctr 0))
-				 (cd (abs (- y yy))))
-			    (if (> cd diff)
-				(begin 
-				  (set! diff cd)
-				  ;; if this happens it is almost certainly a problem with mus-sound-forget above
-				  (format *stderr* ";file->sample looped ~A: ~A ~A ~A~%" ctr diff y yy)))
-			    (set! ctr (+ ctr 1))
-			    #f)))
+			  (set! diff (max diff (abs (- y (file->sample ind2 ctr 0)))))
+			  (set! ctr (+ ctr 1))
+			  ;; if this happens it is almost certainly a problem with mus-sound-forget above
+			  #f))
 	  (if (fneq diff 0.0) (snd-display #__line__ ";file->sample->file overall max diff: ~A" diff))
 	  (close-sound ind1)))
       
@@ -37937,7 +37931,8 @@ EDITS: 1
 
 (define (snd_test_21)
   (if all-args
-      (let ()
+      (let ((old-size *clm-file-buffer-size*))
+	(set! *clm-file-buffer-size* 100)
 
 	(define args1 (list 1.5 '(oscil o1) '(env e1) 'x 'i '(oscil o) '(- 1.0 x) '(oscil (vector-ref oscs k))))
 	(define args2 (list 1.5 '(oscil o2) '(env e2) 'y 'i '(float-vector-ref v-1 i)))
@@ -37945,8 +37940,8 @@ EDITS: 1
 	(define args4 (list 1.5 '(oscil o4) '(env e4) 'x 'i))
 	
 	(define (try str)
-					;(format *stderr* "~A~%" str)
-	  (call-with-output-file "try-test.scm"
+	  (eval-string
+	   (call-with-output-string
 	    (lambda (p)
 	      (format p "(if (not (provided? 'snd-ws.scm)) (load \"ws.scm\"))~%~%")
 	      (format p "(set! *mus-float-equal-fudge-factor* 1e-4)~%")
@@ -38251,11 +38246,8 @@ EDITS: 1
 	      (format p "  (if (not (vequal v9 v10))~%")
 	      (format p "      (format *stderr* \"env let ~A:~~%    ~~A~~%    ~~A~~%\" v9 v10))~%~%" str)
 	      (format p "  (if (not (vequal v11 v12))~%")
-	      (format p "      (format *stderr* \"letx ~A:~~%    ~~A~~%    ~~A~~%\" v11 v12))))~%~%" str)))
+	      (format p "      (format *stderr* \"letx ~A:~~%    ~~A~~%    ~~A~~%\" v11 v12))))~%~%" str)))))
 	  
-	  (load "try-test.scm"))
-	
-	
 	(define (out-args)
 	  
 	  (for-each 
@@ -38452,7 +38444,9 @@ EDITS: 1
 	   args1)
 |#	
 	  )
-	(out-args))))
+	(out-args)
+	(set! *clm-file-buffer-size* old-size)
+	)))
 
 
 
@@ -47134,25 +47128,25 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-20-Feb:
-37,848,267,878
-5,748,468,128  s7.c:eval [/home/bil/gtk-snd/snd]
-2,305,476,830  ???:sin [/lib64/libm-2.12.so]
-2,170,843,468  ???:cos [/lib64/libm-2.12.so]
+22-Feb:
+37,665,008,257
+5,722,311,055  s7.c:eval [/home/bil/gtk-snd/snd]
+2,304,526,702  ???:sin [/lib64/libm-2.12.so]
+2,170,243,720  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,095,169,731  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  899,502,268  ???:t2_32 [/home/bil/gtk-snd/snd]
-  884,646,576  s7.c:gc [/home/bil/gtk-snd/snd]
+1,032,633,591  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  885,414,540  ???:t2_32 [/home/bil/gtk-snd/snd]
+  878,330,138  s7.c:gc [/home/bil/gtk-snd/snd]
   829,547,700  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+  782,408,943  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  749,113,460  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  605,611,947  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,829,010  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
-  454,166,129  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  750,771,091  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  614,488,708  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,263,218  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,926,400  ???:n1_64 [/home/bil/gtk-snd/snd]
+  415,219,833  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  375,489,814  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  374,145,626  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 |#

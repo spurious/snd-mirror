@@ -463,10 +463,6 @@ static void define_xm_obj(void)
 #define C_TO_XEN_Position(Arg)   (C_TO_XEN_INT((Position)Arg))
 #define Xen_is_Position(Arg)      (Xen_is_integer(Arg))
 
-#define XEN_TO_C_char(Arg)       (char)(XEN_TO_C_INT(Arg))
-#define C_TO_XEN_char(Arg)       (C_TO_XEN_INT(Arg))
-#define Xm_is_char(Arg)          (Xen_is_integer(Arg))
-
 #define XEN_TO_C_Modifiers(Arg)  (Modifiers)(XEN_TO_C_ULONG(Arg))
 #define C_TO_XEN_Modifiers(Arg)  (C_TO_XEN_ULONG(Arg))
 #define Xen_is_Modifiers(Arg)     (Xen_is_ulong_int(Arg))
@@ -16992,14 +16988,14 @@ static XEN gxm_XColor(XEN pixel, XEN red, XEN green, XEN blue, XEN flags, XEN pa
 static XEN gxm_pad(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(Xen_is_XColor(ptr), ptr, 1, "pad", "XColor");
-  return(C_TO_XEN_char((char)((XEN_TO_C_XColor(ptr))->pad)));
+  return(C_TO_XEN_INT((char)((XEN_TO_C_XColor(ptr))->pad)));
 }
 
 static XEN gxm_set_pad(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(Xen_is_XColor(ptr), ptr, 1, "pad", "XColor");
-  XM_SET_FIELD_ASSERT_TYPE(Xm_is_char(val), val, 2, "pad", "char");
-  (XEN_TO_C_XColor(ptr))->pad = XEN_TO_C_char(val);
+  XM_SET_FIELD_ASSERT_TYPE(Xen_is_integer(val), val, 2, "pad", "char");
+  (XEN_TO_C_XColor(ptr))->pad = (char)XEN_TO_C_INT(val);
   return(val);
 }
 
@@ -17536,7 +17532,7 @@ static XEN gxm_set_input(XEN ptr, XEN val)
 
 static XEN gxm_flags(XEN ptr)
 {
-  if (Xen_is_XColor(ptr)) return(C_TO_XEN_char((char)((XEN_TO_C_XColor(ptr))->flags)));
+  if (Xen_is_XColor(ptr)) return(C_TO_XEN_INT((char)((XEN_TO_C_XColor(ptr))->flags)));
   if (Xen_is_XmSelectionCallbackStruct(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->flags)));
   if (Xen_is_XmDestinationCallbackStruct(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDestinationCallbackStruct(ptr))->flags)));
   if (Xen_is_XmConvertCallbackStruct(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->flags)));
@@ -17548,9 +17544,9 @@ static XEN gxm_flags(XEN ptr)
 static XEN gxm_set_flags(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(Xen_is_XColor(ptr) || Xen_is_XWMHints(ptr), ptr, 1, "flags", "XColor or XWMHints");
-  XM_SET_FIELD_ASSERT_TYPE(Xm_is_char(val), val, 2, "input", "a char (int)");
-  if (Xen_is_XColor(ptr)) (XEN_TO_C_XColor(ptr))->flags = XEN_TO_C_char(val);
-  else if (Xen_is_XWMHints(ptr)) (XEN_TO_C_XWMHints(ptr))->flags = XEN_TO_C_char(val);
+  XM_SET_FIELD_ASSERT_TYPE(Xen_is_integer(val), val, 2, "input", "a char (int)");
+  if (Xen_is_XColor(ptr)) (XEN_TO_C_XColor(ptr))->flags = (char)XEN_TO_C_INT(val);
+  else if (Xen_is_XWMHints(ptr)) (XEN_TO_C_XWMHints(ptr))->flags = (char)XEN_TO_C_INT(val);
   return(val);
 }
 
@@ -18255,7 +18251,7 @@ static XEN gxm_set_mode(XEN ptr, XEN val)
 
 static XEN gxm_is_hint(XEN ptr)
 {
-  if (Xen_is_XMotionEvent(ptr)) return(C_TO_XEN_char((char)((XEN_TO_C_XMotionEvent(ptr))->is_hint)));
+  if (Xen_is_XMotionEvent(ptr)) return(C_TO_XEN_INT((char)((XEN_TO_C_XMotionEvent(ptr))->is_hint)));
   XM_FIELD_ASSERT_TYPE(0, ptr, 1, "is_hint", "XMotionEvent");
   return(XEN_FALSE);
 }
@@ -19170,13 +19166,13 @@ static XEN gxm_set_dash_offset(XEN ptr, XEN val)
 static XEN gxm_dashes(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(Xen_is_XGCValues(ptr), ptr, 1, "dashes", "XGCValues");
-  return(C_TO_XEN_char((char)((XEN_TO_C_XGCValues(ptr))->dashes)));
+  return(C_TO_XEN_INT((char)((XEN_TO_C_XGCValues(ptr))->dashes)));
 }
 
 static XEN gxm_set_dashes(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(Xen_is_XGCValues(ptr), ptr, 1, "dashes", "XGCValues");
-  (XEN_TO_C_XGCValues(ptr))->dashes = XEN_TO_C_char(val);
+  (XEN_TO_C_XGCValues(ptr))->dashes = (char)XEN_TO_C_INT(val);
   return(val);
 }
 
@@ -19491,13 +19487,13 @@ static XEN gxm_auto_selection_type(XEN ptr)
   XM_FIELD_ASSERT_TYPE(Xen_is_XmContainerSelectCallbackStruct(ptr) || Xen_is_XmListCallbackStruct(ptr), 
 		  ptr, 1, "auto_selection_type", "a struct with an auto_selection_type field");
   if (Xen_is_XmContainerSelectCallbackStruct(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmContainerSelectCallbackStruct(ptr))->auto_selection_type)));
-  return(C_TO_XEN_char((char)((XEN_TO_C_XmListCallbackStruct(ptr))->auto_selection_type)));
+  return(C_TO_XEN_INT((char)((XEN_TO_C_XmListCallbackStruct(ptr))->auto_selection_type)));
 }
 
 static XEN gxm_selection_type(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(Xen_is_XmListCallbackStruct(ptr), ptr, 1, "selection_type", "XmListCallbackStruct");
-  return(C_TO_XEN_char((char)((XEN_TO_C_XmListCallbackStruct(ptr))->selection_type)));
+  return(C_TO_XEN_INT((char)((XEN_TO_C_XmListCallbackStruct(ptr))->selection_type)));
 }
 
 static XEN gxm_selected_item_positions(XEN ptr)

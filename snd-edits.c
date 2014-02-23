@@ -7061,7 +7061,7 @@ snd can be a filename, a mix, a region, or a sound index number."
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samp_n), samp_n, 1, S_make_sampler, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(dir1), dir1, 4, S_make_sampler, "an integer");
 
-  if (XEN_MIX_P(snd))
+  if (xen_is_mix(snd))
     return(g_make_mix_sampler(snd, samp_n));
 
   if (XEN_REGION_P(snd))
@@ -7855,7 +7855,7 @@ static mus_float_t *g_floats_to_samples(XEN obj, int *size, const char *caller, 
       else
 	{
 	  /* this block probably can't happen anymore */
-	  if (MUS_IS_VCT(obj))
+	  if (mus_is_vct(obj))
 	    {
 	      vct *v;
 	      mus_float_t *vdata;
@@ -8083,7 +8083,7 @@ the new data's end."
     }
   else
     {
-      if (MUS_IS_VCT(vect))
+      if (mus_is_vct(vect))
 	{
 	  vct *v;
 	  v = XEN_TO_VCT(vect);
@@ -8171,7 +8171,7 @@ static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd, XEN chn_n, XEN edp
   #define H_vct_to_channel "(" S_vct_to_channel " vct :optional (beg 0) (dur len) snd chn edpos origin): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
   const char *caller;
-  XEN_ASSERT_TYPE(MUS_IS_VCT(v), v, 1, S_vct_to_channel, "a vct");
+  XEN_ASSERT_TYPE(mus_is_vct(v), v, 1, S_vct_to_channel, "a vct");
   XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 7, S_vct_to_channel, "a string");
   if (!Xen_is_bound(beg)) beg = XEN_ZERO;
   if (!Xen_is_bound(dur)) 
@@ -8387,7 +8387,7 @@ history position to read (defaults to current position). snd can be a filename, 
     }
 
   /* -------- a mix -------- */
-  if (XEN_MIX_P(snd))
+  if (xen_is_mix(snd))
     return(g_mix_to_vct(snd, samp_0, samps));
 
 
@@ -8670,7 +8670,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
     }
   else
     {
-      if (MUS_IS_VCT(vect))
+      if (mus_is_vct(vect))
 	{
 	  vct *v;
 	  v = XEN_TO_VCT(vect);
