@@ -1178,7 +1178,7 @@ static XEN g_add_colormap(XEN name, XEN func)
 returning the new colormap. 'name' is the colormap's name in the View:Color/Orientation dialog."
 
   XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_add_colormap, "a string"); 
-  XEN_ASSERT_TYPE(Xen_is_procedure(func) && (!mus_xen_p(func)), func, 2, S_add_colormap, "a function of 2 args");
+  XEN_ASSERT_TYPE(Xen_is_procedure(func) && (!mus_is_xen(func)), func, 2, S_add_colormap, "a function of 2 args");
 
   if (!(procedure_arity_ok(func, 1)))
     return(snd_bad_arity_error(S_add_colormap, 

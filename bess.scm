@@ -225,7 +225,7 @@
     (mus-oss-set-buffers 4 12) ; a no-op except in OSS/Linux
     (let* ((bufsize 256)
 	   (srate 22050)
-	   (data (make-float-vector (list 0 bufsize) 0.0 #t))
+	   (data (make-float-vector (list 0 bufsize) 0.0))
 	   (proc #f)
 	   (port (mus-audio-open-output mus-audio-default srate 1 mus-lshort (* bufsize 2))))
       (if (< port 0) 

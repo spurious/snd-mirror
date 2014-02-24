@@ -19,7 +19,7 @@
   #define M_PI_2 (M_PI / 2.0)
 #endif
 
-#define POWER_OF_2_P(x)	((((x) - 1) & (x)) == 0)
+#define IS_POWER_OF_2(x)	((((x) - 1) & (x)) == 0)
 
 #define MUS_MAX_MALLOC_DEFAULT (1 << 26)
 #define MUS_MAX_TABLE_SIZE_DEFAULT (1024 * 1024 * 20) /* delay line allocation etc */

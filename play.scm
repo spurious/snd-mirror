@@ -46,7 +46,7 @@
       (let* ((filechans (chans))
 	     (audio-info (open-play-output filechans (srate) #f 256))
 	     (audio-fd (car audio-info))
-	     (outchans (cadr audio-info))
+	     ;; (outchans (cadr audio-info))
 	     (pframes (caddr audio-info)))
 	(if (not (= audio-fd -1))
 	    (let ((len (frames)))
@@ -125,7 +125,7 @@
 	      (stop-looping
 	       (mus-audio-close audio-fd)
 	       (unbind-key #\space 0))
-	    (mus-audio-write (make-shared-vector (channel->float-vector beg bufsize) (list 1 bufsize)) bufsize)
+	    (mus-audio-write audio-fd (make-shared-vector (channel->float-vector beg bufsize) (list 1 bufsize)) bufsize)
 	    (set! beg (+ beg bufsize))
 	    (if (>= beg end)
 		(begin

@@ -1631,7 +1631,7 @@
 	      (fm-indices (make-float-vector n)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i n))
-	    (set! (modulators i) (hz->radians (* freq (mc-ratios i)) (mod-phases i)))
+	    (set! (modulators i) (hz->radians (* freq (mc-ratios i) (mod-phases i))))
 	    (set! (fm-indices i) (hz->radians (* freq (indexes i) (mc-ratios i)))))
 	  (let ((ob (make-oscil-bank modulators (make-float-vector n 0.0) fm-indices)))
 	    (do ((i start (+ i 1)))

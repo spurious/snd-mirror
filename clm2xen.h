@@ -19,7 +19,7 @@ MUS_EXPORT double clm_default_frequency_c(void);
 
 MUS_EXPORT mus_any *mus_xen_gen(mus_xen *x);
 
-MUS_EXPORT bool mus_xen_p(XEN obj);
+MUS_EXPORT bool mus_is_xen(XEN obj);
 MUS_EXPORT const char *mus_fft_window_xen_name(mus_fft_window_t i);
 MUS_EXPORT XEN mus_xen_to_object(mus_xen *gn);
 MUS_EXPORT XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
@@ -75,6 +75,10 @@ MUS_EXPORT void s7_init_sndlib(s7_scheme *sc);
 #endif
 
 MUS_EXPORT void Init_sndlib(void);
+
+#if (!DISABLE_DEPRECATED)
+#define mus_xen_p(Obj) mus_is_xen(Obj)
+#endif
 
 #ifdef __cplusplus
 }

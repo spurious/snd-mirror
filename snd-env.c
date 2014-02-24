@@ -1695,10 +1695,10 @@ static XEN g_enved_clip_p(void) {return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));}
 
 static XEN g_set_enved_clip_p(XEN on)
 {
-  #define H_enved_clip_p "(" S_is_enved_clip "): envelope editor clip button setting; \
+  #define H_enved_clip_p "(" S_enved_clip_on "): envelope editor clip button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_enved_clip, "a boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_enved_clip_on, "a boolean");
   set_enved_clip_p(XEN_TO_C_BOOLEAN(on)); 
   return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));
 }
@@ -1749,8 +1749,8 @@ static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));}
 
 static XEN g_set_enved_wave_p(XEN val) 
 {
-  #define H_enved_wave_p "(" S_is_enved_wave "): " PROC_TRUE " if the envelope editor is displaying the waveform to be edited"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_is_enved_wave, "a boolean");
+  #define H_enved_wave_p "(" S_enved_wave_on "): " PROC_TRUE " if the envelope editor is displaying the waveform to be edited"
+  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_enved_wave_on, "a boolean");
   set_enved_wave_p(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));
 }
@@ -1820,10 +1820,10 @@ void g_init_env(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_enved_clip, g_enved_clip_p_w, H_enved_clip_p, S_setB S_is_enved_clip, g_set_enved_clip_p_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_on, g_enved_clip_p_w, H_enved_clip_p, S_setB S_enved_clip_on, g_set_enved_clip_p_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_enved_wave, g_enved_wave_p_w, H_enved_wave_p, S_setB S_is_enved_wave, g_set_enved_wave_p_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_wave_on, g_enved_wave_p_w, H_enved_wave_p, S_setB S_enved_wave_on, g_set_enved_wave_p_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,

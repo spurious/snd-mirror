@@ -662,7 +662,6 @@ then inverse ffts."
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rdata (channel->float-vector 0 fsize snd chn))
 	 (idata (make-float-vector fsize))
-	 (fsize2 (/ fsize 2))
 	 (scaler 1.0))
     (fft rdata idata 1)
     (let ((vr (copy rdata))
@@ -768,7 +767,6 @@ then inverse ffts."
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rdata (channel->float-vector 0 fsize snd chn))
 	 (idata (make-float-vector fsize))
-	 (fsize2 (/ fsize 2))
 	 (e (make-env (concatenate-envelopes fft-env (reverse-envelope fft-env)) :length fsize))
 	 (ve (make-float-vector fsize)))
     (fft rdata idata 1)
@@ -1108,7 +1106,6 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 (define* (fp sr osamp osfrq snd chn)
   "(fp sr osamp osfrq snd chn) varies the sampling rate via an oscil: (fp 1.0 .3 20)"
   (let* ((os (make-oscil osfrq))
-	 (len (frames snd chn))
 	 (sf (make-sampler 0 snd chn))
 	 (s (make-src :srate sr :input (lambda (dir) (read-sample-with-direction sf dir)))))
     (map-channel
@@ -1261,7 +1258,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
       (spectrum fdr fdi #f 2)
       (float-vector-subtract! fdr spectr)
       (float-vector-scale! fdr (/ 2.0 freq-inc))
-      (set! inctr (+ hop inctr))
+      (set! inctr (+ inctr hop))
 
       (do ((k 0 (+ k 2))
 	   (j i (+ j 2)))
@@ -1307,7 +1304,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
       (spectrum fdr fdi #f 2)
       (float-vector-subtract! fdr spectr)
       (float-vector-scale! fdr (/ 1.0 freq-inc))
-      (set! inctr (+ freq-inc inctr))
+      (set! inctr (+ inctr freq-inc))
 
       (do ((k 0 (+ k 1))
 	   (j i (+ j 1)))

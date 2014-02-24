@@ -7218,14 +7218,14 @@ WITH_THREE_SETTER_ARGS(g_set_edit_position_reversed, g_set_edit_position)
 
 static XEN g_transform_graph_p(XEN snd, XEN chn_n) 
 {
-  #define H_transform_graph_p "(" S_is_transform_graph " :optional snd chn): " PROC_TRUE " if fft display is active in snd's channel chn"
-  return(channel_get(snd, chn_n, CP_GRAPH_TRANSFORM_P, S_is_transform_graph));
+  #define H_transform_graph_p "(" S_transform_graph_on " :optional snd chn): " PROC_TRUE " if fft display is active in snd's channel chn"
+  return(channel_get(snd, chn_n, CP_GRAPH_TRANSFORM_P, S_transform_graph_on));
 }
 
 static XEN g_set_transform_graph_p(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_transform_graph, "a boolean");
-  return(channel_set(snd, chn_n, on, CP_GRAPH_TRANSFORM_P, S_setB S_is_transform_graph));
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_transform_graph_on, "a boolean");
+  return(channel_set(snd, chn_n, on, CP_GRAPH_TRANSFORM_P, S_setB S_transform_graph_on));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_transform_graph_p_reversed, g_set_transform_graph_p)
@@ -7234,14 +7234,14 @@ WITH_THREE_SETTER_ARGS(g_set_transform_graph_p_reversed, g_set_transform_graph_p
 
 static XEN g_time_graph_p(XEN snd, XEN chn_n) 
 {
-  #define H_time_graph_p "(" S_is_time_graph " :optional snd chn): " PROC_TRUE " if time domain display is active in snd's channel chn"
-  return(channel_get(snd, chn_n, CP_GRAPH_TIME_P, S_is_time_graph));
+  #define H_time_graph_p "(" S_time_graph_on " :optional snd chn): " PROC_TRUE " if time domain display is active in snd's channel chn"
+  return(channel_get(snd, chn_n, CP_GRAPH_TIME_P, S_time_graph_on));
 }
 
 static XEN g_set_time_graph_p(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_time_graph, "a boolean");
-  return(channel_set(snd, chn_n, on, CP_GRAPH_TIME_P, S_setB S_is_time_graph));
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_time_graph_on, "a boolean");
+  return(channel_set(snd, chn_n, on, CP_GRAPH_TIME_P, S_setB S_time_graph_on));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_time_graph_p_reversed, g_set_time_graph_p)
@@ -7250,14 +7250,14 @@ WITH_THREE_SETTER_ARGS(g_set_time_graph_p_reversed, g_set_time_graph_p)
 
 static XEN g_lisp_graph_p(XEN snd, XEN chn_n) 
 {
-  #define H_lisp_graph_p "(" S_is_lisp_graph " :optional snd chn): " PROC_TRUE " if lisp-generated data display is active in snd's channel chn"
-  return(channel_get(snd, chn_n, CP_GRAPH_LISP_P, S_is_lisp_graph));
+  #define H_lisp_graph_p "(" S_lisp_graph_on " :optional snd chn): " PROC_TRUE " if lisp-generated data display is active in snd's channel chn"
+  return(channel_get(snd, chn_n, CP_GRAPH_LISP_P, S_lisp_graph_on));
 }
 
 static XEN g_set_lisp_graph_p(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_lisp_graph, "a boolean");
-  return(channel_set(snd, chn_n, on, CP_GRAPH_LISP_P, S_setB S_is_lisp_graph));
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_lisp_graph_on, "a boolean");
+  return(channel_set(snd, chn_n, on, CP_GRAPH_LISP_P, S_setB S_lisp_graph_on));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_lisp_graph_p_reversed, g_set_lisp_graph_p)
@@ -7436,7 +7436,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
       if (Xen_is_string(snd))
 	return(g_mus_sound_frames(snd));         /* mus-sound-frames */
       
-      if (mus_xen_p(snd))                        /* mus-length */
+      if (mus_is_xen(snd))                        /* mus-length */
 	return(g_mus_length(snd));
 
       if (sound_data_p(snd))                     /* sound-data-length */
@@ -7448,7 +7448,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
       if (xen_is_mix(snd))                        /* mix-length */
 	return(g_mix_length(snd));
 
-      if (XEN_REGION_P(snd))                     /* region-frames */
+      if (xen_is_region(snd))                     /* region-frames */
 	return(g_region_frames(snd, XEN_ZERO));
 
       if (XEN_PLAYER_P(snd))
@@ -7538,7 +7538,7 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
       if (Xen_is_string(snd))                     /* string => mus_sound_maxamp */
 	return(XEN_CADR(g_mus_sound_maxamp(snd)));
 
-      if (mus_xen_p(snd))                        /* maxamp of mus-data */
+      if (mus_is_xen(snd))                        /* maxamp of mus-data */
 	{
 	  XEN v;
 	  v = g_mus_data(snd);
@@ -7555,7 +7555,7 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
       if (xen_is_mix(snd))                        /* mix => sound maxamp of the mix data */
 	return(g_mix_maxamp(snd));
 
-      if (XEN_REGION_P(snd))                     /* region-maxamp */
+      if (xen_is_region(snd))                     /* region-maxamp */
 	return(g_region_maxamp(snd));
 
       if (Xen_is_vector(snd))
@@ -8496,7 +8496,7 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   len = XEN_TO_C_LONG_LONG(val);
   if (len <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size must be > 0");
-  if (!(POWER_OF_2_P(len)))
+  if (!(IS_POWER_OF_2(len)))
     len = snd_mus_long_t_pow2((int)(log(len + 1) / log(2.0))); /* actually rounds down, despite appearances */
   if (len <= 0) return(XEN_FALSE);
   if (Xen_is_bound(snd))
@@ -9556,7 +9556,7 @@ to a standard Snd channel graph placed in the widget 'container'."
   chan_info *cp;
   int rate, initial_length;
 
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(container), container, 1, S_make_variable_graph, "a widget");
+  XEN_ASSERT_TYPE(Xen_is_widget(container), container, 1, S_make_variable_graph, "a widget");
   XEN_ASSERT_TYPE(Xen_is_string_or_unbound(name), name, 2, S_make_variable_graph, "a string");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(length), length, 3, S_make_variable_graph, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(srate), srate, 4, S_make_variable_graph, "an integer");
@@ -9938,7 +9938,7 @@ void g_init_chn(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_cursor_position,   g_cursor_position_w, 0, 2, 0,   H_cursor_position);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_edit_position, g_edit_position_w, H_edit_position, S_setB S_edit_position, g_set_edit_position_w, 0, 2, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_transform_graph, g_transform_graph_p_w, H_transform_graph_p, S_setB S_is_transform_graph, g_set_transform_graph_p_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_transform_graph_on, g_transform_graph_p_w, H_transform_graph_p, S_setB S_transform_graph_on, g_set_transform_graph_p_w, 0, 2, 1, 2);
 
   #define H_graph_once "The value for the various graph-type variables that displays the standard waveform"
   #define H_graph_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
@@ -9954,8 +9954,8 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_graph_as_spectrogram, GRAPH_AS_SPECTROGRAM, H_graph_as_spectrogram);
   /* XEN_DEFINE_CONSTANT(S_graph_as_complex,     GRAPH_AS_COMPLEX,     H_graph_as_complex); */
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_time_graph, g_time_graph_p_w, H_time_graph_p, S_setB S_is_time_graph, g_set_time_graph_p_w, 0, 2, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_lisp_graph, g_lisp_graph_p_w, H_lisp_graph_p, S_setB S_is_lisp_graph, g_set_lisp_graph_p_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_time_graph_on, g_time_graph_p_w, H_time_graph_p, S_setB S_time_graph_on, g_set_time_graph_p_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_lisp_graph_on, g_lisp_graph_p_w, H_lisp_graph_p, S_setB S_lisp_graph_on, g_set_lisp_graph_p_w, 0, 2, 1, 2);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_squelch_update, g_squelch_update_w, H_squelch_update, S_setB S_squelch_update, g_set_squelch_update_w, 0, 2, 1, 2);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor, g_cursor_w, H_cursor, S_setB S_cursor, g_set_cursor_w, 0, 3, 1, 3);
   

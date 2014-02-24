@@ -2085,7 +2085,7 @@
 			(let ((call-args (length (cdr form)))
 			      (decl-args (max 0 (- (length pargs) (keywords pargs) (if rst 1 0)))))
 			  
-			  (let ((req (if (memq type '(define lambda)) decl-args 0))
+			  (let ((req (if (memq type '(define lambda)) decl-args 0)) ; this is not right -- built-in define*'s for example
 				(opt (if (memq type '(define lambda)) 0 decl-args)))
 			    (if (< call-args req)
 				(lint-format "~A needs ~D argument~A:~A" 

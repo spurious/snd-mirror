@@ -330,11 +330,8 @@
       (newline cep))))
 
 ;;@ define an error procedure for the library
-(define slib:error
-  (let ((error error))
-    (lambda args
-      (if (provided? 'trace) (print-call-stack (current-error-port)))
-      (apply error args))))
+(define slib:error error)
+
 ;@
 (define (make-exchanger obj)
   (lambda (rep) (let ((old obj)) (set! obj rep) old)))
@@ -384,7 +381,7 @@
 
 ;;@ Define SLIB:EXIT to be the implementation procedure to exit or
 ;;; return if exiting not supported.
-(define slib:exit s7-version) 
+(define slib:exit exit) 
 
 ;;@ Here for backward compatability
 (define scheme-file-suffix
@@ -414,3 +411,22 @@
 ;;(define syncase:load slib:load-source)
 
 (slib:load (in-vicinity (library-vicinity) "require"))
+
+
+;;; --------------------------------------------------------------------------------
+;;; for wttree.scm
+
+(set! *#readers* 
+	  (cons (cons #\F (lambda (str)
+			    (if (string=? str "")
+				#f)))
+		*#readers*))
+
+;;; for r4syn.scm
+
+(set! *#readers* 
+	  (cons (cons #\T (lambda (str)
+			    (if (string=? str "")
+				#t)))
+		*#readers*))
+

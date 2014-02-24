@@ -389,15 +389,15 @@ static void expand_button_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
 
 
-  sp->expand_control_p = cb->set;
-  XmChangeColor(EXPAND_SCROLLBAR(sp), (Pixel)((sp->expand_control_p) ? (ss->position_color) : (ss->basic_color)));
+  sp->expand_control_on = cb->set;
+  XmChangeColor(EXPAND_SCROLLBAR(sp), (Pixel)((sp->expand_control_on) ? (ss->position_color) : (ss->basic_color)));
 }
 
 
 void toggle_expand_button(snd_info *sp, bool state)
 {
   if (!HAS_WIDGETS(sp))
-    sp->expand_control_p = state;
+    sp->expand_control_on = state;
   else XmToggleButtonSetState(EXPAND_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
 
@@ -465,15 +465,15 @@ static void contrast_button_callback(Widget w, XtPointer context, XtPointer info
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  sp->contrast_control_p = cb->set;
-  XmChangeColor(CONTRAST_SCROLLBAR(sp), (Pixel)((sp->contrast_control_p) ? (ss->position_color) : (ss->basic_color)));
+  sp->contrast_control_on = cb->set;
+  XmChangeColor(CONTRAST_SCROLLBAR(sp), (Pixel)((sp->contrast_control_on) ? (ss->position_color) : (ss->basic_color)));
 }
 
 
 void toggle_contrast_button(snd_info *sp, bool state)
 {
   if (!HAS_WIDGETS(sp))
-    sp->contrast_control_p = state;
+    sp->contrast_control_on = state;
   else XmToggleButtonSetState(CONTRAST_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
 
@@ -616,16 +616,16 @@ static void reverb_button_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  sp->reverb_control_p = cb->set;
-  XmChangeColor(REVLEN_SCROLLBAR(sp), (Pixel)((sp->reverb_control_p) ? (ss->position_color) : (ss->basic_color)));
-  XmChangeColor(REVSCL_SCROLLBAR(sp), (Pixel)((sp->reverb_control_p) ? (ss->position_color) : (ss->basic_color)));
+  sp->reverb_control_on = cb->set;
+  XmChangeColor(REVLEN_SCROLLBAR(sp), (Pixel)((sp->reverb_control_on) ? (ss->position_color) : (ss->basic_color)));
+  XmChangeColor(REVSCL_SCROLLBAR(sp), (Pixel)((sp->reverb_control_on) ? (ss->position_color) : (ss->basic_color)));
 }
 
 
 void toggle_reverb_button(snd_info *sp, bool state)
 {
   if (!HAS_WIDGETS(sp))
-    sp->reverb_control_p = state;
+    sp->reverb_control_on = state;
   else XmToggleButtonSetState(REVERB_BUTTON(sp), (Boolean)state, true);
 }
 
@@ -636,14 +636,14 @@ static void filter_button_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  sp->filter_control_p = cb->set;
+  sp->filter_control_on = cb->set;
 }
 
 
 void toggle_filter_button(snd_info *sp, bool state)
 {
   if (!HAS_WIDGETS(sp))
-    sp->filter_control_p = state;
+    sp->filter_control_on = state;
   else XmToggleButtonSetState(FILTER_BUTTON(sp), (Boolean)state, true);
 }
 

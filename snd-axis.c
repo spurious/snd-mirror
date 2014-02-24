@@ -1633,7 +1633,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #endif
   
   xwid = XEN_LIST_REF(args, 0);
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(xwid), xwid, 1, S_draw_axes, "widget");
+  XEN_ASSERT_TYPE(Xen_is_widget(xwid), xwid, 1, S_draw_axes, "widget");
   xgc = XEN_LIST_REF(args, 1);
   XEN_ASSERT_TYPE(XEN_SND_GC_P(xgc), xgc, 2, S_draw_axes, "snd-gc");
 

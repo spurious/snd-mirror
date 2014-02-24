@@ -1391,10 +1391,10 @@ static ctrl_state *current_control_settings(snd_info *sp, ctrl_state *cs)
   cs->revscl = sp->reverb_control_scale;
   cs->revlen = sp->reverb_control_length;
   cs->contrast = sp->contrast_control;
-  cs->expand_on = sp->expand_control_p;
-  cs->reverb_on = sp->reverb_control_p;
-  cs->contrast_on = sp->contrast_control_p;
-  cs->filter_on = sp->filter_control_p;
+  cs->expand_on = sp->expand_control_on;
+  cs->reverb_on = sp->reverb_control_on;
+  cs->contrast_on = sp->contrast_control_on;
+  cs->filter_on = sp->filter_control_on;
   cs->filter_order = sp->filter_control_order;
   if (sp->filter_control_envelope) 
     {
@@ -1434,10 +1434,10 @@ static ctrl_state *restore_control_settings(snd_info *sp, ctrl_state *cs)
       sp->reverb_control_scale = cs->revscl;
       sp->reverb_control_length = cs->revlen;
       sp->contrast_control = cs->contrast;
-      sp->expand_control_p = cs->expand_on;
-      sp->reverb_control_p = cs->reverb_on;
-      sp->contrast_control_p = cs->contrast_on;
-      sp->filter_control_p = cs->filter_on;
+      sp->expand_control_on = cs->expand_on;
+      sp->reverb_control_on = cs->reverb_on;
+      sp->contrast_control_on = cs->contrast_on;
+      sp->filter_control_on = cs->filter_on;
       sp->filter_control_order = cs->filter_order;
       if (cs->filter_env)
 	{
@@ -1616,19 +1616,19 @@ static bool apply_controls(apply_state *ap)
   sp = ap->sp;
   if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(false);
 
-  if (sp->filter_control_p) 
+  if (sp->filter_control_on) 
     added_dur = sp->filter_control_order;
   mult_dur = 1.0 / fabs(sp->speed_control);
-  if (sp->expand_control_p) 
+  if (sp->expand_control_on) 
     mult_dur *= sp->expand_control;
-  if (sp->reverb_control_p) 
+  if (sp->reverb_control_on) 
     added_dur += (int)((SND_SRATE(sp) * sp->reverb_control_decay));
 
   if ((ss->apply_choice != APPLY_TO_SELECTION) &&
       (snd_feq(sp->speed_control, 1.0)) && 
       (apply_beg == 0) &&
       (sp->speed_control_direction == 1) &&
-      (!(sp->filter_control_p)) && (!(sp->expand_control_p)) && (!(sp->reverb_control_p)) && (!(sp->contrast_control_p)))
+      (!(sp->filter_control_on)) && (!(sp->expand_control_on)) && (!(sp->reverb_control_on)) && (!(sp->contrast_control_on)))
     {
       int old_sync;
       bool need_scaling = false;
@@ -1728,21 +1728,21 @@ static bool apply_controls(apply_state *ap)
 		speedstr = mus_format("%.4f", 
 				      sp->speed_control * sp->speed_control_direction);
 	      else speedstr = mus_strdup(PROC_FALSE);
-	      if (sp->contrast_control_p)
+	      if (sp->contrast_control_on)
 		contraststr = mus_format(LIST_OPEN "%.4f" PROC_SEP "%.4f" LIST_CLOSE, 
 					 sp->contrast_control, sp->contrast_control_amp);
 	      else contraststr = mus_strdup(PROC_FALSE);
-	      if (sp->expand_control_p)
+	      if (sp->expand_control_on)
 		expandstr = mus_format(LIST_OPEN "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" LIST_CLOSE,
 				       sp->expand_control, sp->expand_control_length, sp->expand_control_ramp, 
 				       sp->expand_control_hop, sp->expand_control_jitter);
 	      else expandstr = mus_strdup(PROC_FALSE);
-	      if (sp->reverb_control_p)
+	      if (sp->reverb_control_on)
 		reverbstr = mus_format(LIST_OPEN "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" LIST_CLOSE,
 				       sp->reverb_control_scale, sp->reverb_control_length, sp->reverb_control_feedback, 
 				       sp->reverb_control_lowpass, sp->reverb_control_decay);
 	      else reverbstr = mus_strdup(PROC_FALSE);
-	      if (sp->filter_control_p)
+	      if (sp->filter_control_on)
 		{
 		  char *envstr;
 		  envstr = env_to_string(sp->filter_control_envelope);
@@ -1904,7 +1904,7 @@ static bool apply_controls(apply_state *ap)
 	      clear_status_area(sp);
 	      sp->apply_ok = false;
 	      
-	      if ((sp->expand_control_p) || 
+	      if ((sp->expand_control_on) || 
 		  (sp->speed_control_direction != 1) || (!(snd_feq(sp->speed_control, 1.0))))
 		{
 		  for (i = 0; i < sp->nchans; i++)
@@ -1913,7 +1913,7 @@ static bool apply_controls(apply_state *ap)
 		      if (cp->edits[cp->edit_ctr]->marks)
 			{
 			  mus_float_t ratio;
-			  if (!(sp->expand_control_p))
+			  if (!(sp->expand_control_on))
 			    ratio = sp->speed_control;
 			  else ratio = sp->speed_control / sp->expand_control;
 			  if (ratio != 1.0)
@@ -2492,10 +2492,10 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
     case SP_SYNC:                return(C_TO_XEN_INT(sp->sync));                                                    break;
     case SP_READ_ONLY:           return(C_TO_XEN_BOOLEAN(sp->user_read_only == FILE_READ_ONLY));                    break;
     case SP_NCHANS:              return(C_TO_XEN_INT(sp->nchans));                                                  break;
-    case SP_EXPANDING:           return(C_TO_XEN_BOOLEAN(sp->expand_control_p));                                    break;
-    case SP_CONTRASTING:         return(C_TO_XEN_BOOLEAN(sp->contrast_control_p));                                  break;
-    case SP_REVERBING:           return(C_TO_XEN_BOOLEAN(sp->reverb_control_p));                                    break;
-    case SP_FILTERING:           return(C_TO_XEN_BOOLEAN(sp->filter_control_p));                                    break;
+    case SP_EXPANDING:           return(C_TO_XEN_BOOLEAN(sp->expand_control_on));                                    break;
+    case SP_CONTRASTING:         return(C_TO_XEN_BOOLEAN(sp->contrast_control_on));                                  break;
+    case SP_REVERBING:           return(C_TO_XEN_BOOLEAN(sp->reverb_control_on));                                    break;
+    case SP_FILTERING:           return(C_TO_XEN_BOOLEAN(sp->filter_control_on));                                    break;
     case SP_FILTER_DBING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_dB));                                break;
     case SP_FILTER_HZING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_hz));                                break;
     case SP_FILTER_ORDER:        return(C_TO_XEN_INT(sp->filter_control_order));                                    break;
@@ -3228,7 +3228,7 @@ static XEN g_channels(XEN snd)
   if (Xen_is_string(snd))
     return(g_mus_sound_chans(snd));              /* mus-sound-chans */
 
-  if ((mus_xen_p(snd)) ||
+  if ((mus_is_xen(snd)) ||
       (sound_data_p(snd)) ||                     /* sound-data-chans */
       (mus_is_vct(snd)) ||
       (Xen_is_list(snd)))
@@ -3237,7 +3237,7 @@ static XEN g_channels(XEN snd)
   if (xen_is_mix(snd))                            /* mixes are always 1 chan */
     return(C_TO_XEN_INT(1));
 
-  if (XEN_REGION_P(snd))                         /* region-chans */
+  if (xen_is_region(snd))                         /* region-chans */
     return(g_region_chans(snd));
 
   if (XEN_SELECTION_P(snd))                      /* selection-chans */
@@ -3279,7 +3279,7 @@ static XEN g_srate(XEN snd)
   if (Xen_is_string(snd))
     return(g_mus_sound_srate(snd));
 
-  if (XEN_REGION_P(snd))
+  if (xen_is_region(snd))
     return(g_region_srate(snd));
 
   if (XEN_SELECTION_P(snd))
@@ -3543,68 +3543,68 @@ static XEN g_set_read_only(XEN on, XEN snd)
 WITH_TWO_SETTER_ARGS(g_set_read_only_reversed, g_set_read_only)
 
 
-static XEN g_contrast_control_p(XEN snd) 
+static XEN g_contrast_control_on(XEN snd) 
 {
-  #define H_contrast_control_p "(" S_is_contrast_control " :optional snd): snd's control panel constrast button state"
-  return(sound_get(snd, SP_CONTRASTING, S_is_contrast_control));
+  #define H_contrast_control_on "(" S_contrast_control_on " :optional snd): snd's control panel constrast button state"
+  return(sound_get(snd, SP_CONTRASTING, S_contrast_control_on));
 }
 
 
-static XEN g_set_contrast_control_p(XEN on, XEN snd) 
+static XEN g_set_contrast_control_on(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_contrast_control, "a boolean");
-  return(sound_set(snd, on, SP_CONTRASTING, S_setB S_is_contrast_control));
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_contrast_control_on, "a boolean");
+  return(sound_set(snd, on, SP_CONTRASTING, S_setB S_contrast_control_on));
 }
 
-WITH_TWO_SETTER_ARGS(g_set_contrast_control_p_reversed, g_set_contrast_control_p)
+WITH_TWO_SETTER_ARGS(g_set_contrast_control_on_reversed, g_set_contrast_control_on)
 
 
-static XEN g_expand_control_p(XEN snd) 
+static XEN g_expand_control_on(XEN snd) 
 {
-  #define H_expand_control_p "(" S_is_expand_control " :optional snd): snd's control panel expand button state"
-  return(sound_get(snd, SP_EXPANDING, S_is_expand_control));
-}
-
-
-static XEN g_set_expand_control_p(XEN on, XEN snd) 
-{
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_expand_control, "a boolean");
-  return(sound_set(snd, on, SP_EXPANDING, S_setB S_is_expand_control));
-}
-
-WITH_TWO_SETTER_ARGS(g_set_expand_control_p_reversed, g_set_expand_control_p)
-
-
-static XEN g_reverb_control_p(XEN snd) 
-{
-  #define H_reverb_control_p "(" S_is_reverb_control " :optional snd): snd's control panel reverb button state"
-  return(sound_get(snd, SP_REVERBING, S_is_reverb_control));
+  #define H_expand_control_on "(" S_expand_control_on " :optional snd): snd's control panel expand button state"
+  return(sound_get(snd, SP_EXPANDING, S_expand_control_on));
 }
 
 
-static XEN g_set_reverb_control_p(XEN on, XEN snd) 
+static XEN g_set_expand_control_on(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_reverb_control, "a boolean");
-  return(sound_set(snd, on, SP_REVERBING, S_setB S_is_reverb_control));
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_expand_control_on, "a boolean");
+  return(sound_set(snd, on, SP_EXPANDING, S_setB S_expand_control_on));
 }
 
-WITH_TWO_SETTER_ARGS(g_set_reverb_control_p_reversed, g_set_reverb_control_p)
+WITH_TWO_SETTER_ARGS(g_set_expand_control_on_reversed, g_set_expand_control_on)
 
 
-static XEN g_filter_control_p(XEN snd) 
+static XEN g_reverb_control_on(XEN snd) 
 {
-  #define H_filter_control_p "(" S_is_filter_control " :optional snd): snd's control panel filter button state"
-  return(sound_get(snd, SP_FILTERING, S_is_filter_control));
+  #define H_reverb_control_on "(" S_reverb_control_on " :optional snd): snd's control panel reverb button state"
+  return(sound_get(snd, SP_REVERBING, S_reverb_control_on));
 }
 
 
-static XEN g_set_filter_control_p(XEN on, XEN snd) 
+static XEN g_set_reverb_control_on(XEN on, XEN snd) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_is_filter_control, "a boolean");
-  return(sound_set(snd, on, SP_FILTERING, S_setB S_is_filter_control));
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_reverb_control_on, "a boolean");
+  return(sound_set(snd, on, SP_REVERBING, S_setB S_reverb_control_on));
 }
 
-WITH_TWO_SETTER_ARGS(g_set_filter_control_p_reversed, g_set_filter_control_p)
+WITH_TWO_SETTER_ARGS(g_set_reverb_control_on_reversed, g_set_reverb_control_on)
+
+
+static XEN g_filter_control_on(XEN snd) 
+{
+  #define H_filter_control_on "(" S_filter_control_on " :optional snd): snd's control panel filter button state"
+  return(sound_get(snd, SP_FILTERING, S_filter_control_on));
+}
+
+
+static XEN g_set_filter_control_on(XEN on, XEN snd) 
+{
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_filter_control_on, "a boolean");
+  return(sound_set(snd, on, SP_FILTERING, S_setB S_filter_control_on));
+}
+
+WITH_TWO_SETTER_ARGS(g_set_filter_control_on_reversed, g_set_filter_control_on)
 
 
 static XEN g_filter_control_in_dB(XEN snd) 
@@ -3744,13 +3744,13 @@ static XEN g_file_name(XEN snd)
   if (XEN_SOUND_P(snd))
     return(sound_get(snd, SP_FILE_NAME, S_file_name));
 
-  if (mus_xen_p(snd))
+  if (mus_is_xen(snd))
     return(g_mus_file_name(snd));
 
   if (xen_is_mix(snd))
     return(C_TO_XEN_STRING(mix_file_name(XEN_MIX_TO_C_INT(snd))));
 
-  if (XEN_REGION_P(snd))
+  if (xen_is_region(snd))
     return(C_TO_XEN_STRING(region_file_name(XEN_REGION_TO_C_INT(snd))));
 
 #if HAVE_SCHEME
@@ -4937,7 +4937,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		  if (Xen_is_list(element))
 		    {
 		      elen = XEN_LIST_LENGTH(element);
-		      if (elen > 0) sp->contrast_control_p = true;
+		      if (elen > 0) sp->contrast_control_on = true;
 		      if (elen > 0) sp->contrast_control = XEN_TO_C_DOUBLE(XEN_CAR(element));
 		      if (elen > 1) sp->contrast_control_amp = XEN_TO_C_DOUBLE(XEN_CADR(element));
 		    }
@@ -4947,7 +4947,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		  if (Xen_is_list(element))
 		    {
 		      elen = XEN_LIST_LENGTH(element);
-		      if (elen > 0) sp->expand_control_p = true;
+		      if (elen > 0) sp->expand_control_on = true;
 		      if (elen > 0) sp->expand_control = XEN_TO_C_DOUBLE(XEN_CAR(element));
 		      if (elen > 1) sp->expand_control_length = XEN_TO_C_DOUBLE(XEN_CADR(element));
 		      if (elen > 2) sp->expand_control_ramp = XEN_TO_C_DOUBLE(XEN_CADDR(element));
@@ -4960,7 +4960,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		  if (Xen_is_list(element))
 		    {
 		      elen = XEN_LIST_LENGTH(element);
-		      if (elen > 0) sp->reverb_control_p = true;
+		      if (elen > 0) sp->reverb_control_on = true;
 		      if (elen > 0) sp->reverb_control_scale = XEN_TO_C_DOUBLE(XEN_CAR(element));
 		      if (elen > 1) sp->reverb_control_length = XEN_TO_C_DOUBLE(XEN_CADR(element));
 		      if (elen > 2) sp->reverb_control_feedback = XEN_TO_C_DOUBLE(XEN_CADDR(element));
@@ -4973,7 +4973,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		  if (Xen_is_list(element))
 		    {
 		      elen = XEN_LIST_LENGTH(element);
-		      if (elen > 0) sp->filter_control_p = true;
+		      if (elen > 0) sp->filter_control_on = true;
 		      if (elen > 0) sp->filter_control_order = XEN_TO_C_INT(XEN_CAR(element));
 		      if (elen > 1) sp->filter_control_envelope = get_env(XEN_CADR(element), S_controls_to_channel);
 		    }
@@ -5236,7 +5236,7 @@ static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *
 	(*error) = PEAK_ENV_BAD_FORMAT;
       else
 	{
-	  if ((ibuf[1] <= 0) || (!(POWER_OF_2_P(ibuf[1]))))
+	  if ((ibuf[1] <= 0) || (!(IS_POWER_OF_2(ibuf[1]))))
 	    (*error) = PEAK_ENV_BAD_SIZE;
 	  else
 	    {
@@ -5754,10 +5754,10 @@ XEN_ARGIFY_1(g_sound_properties_w, g_sound_properties)
 XEN_ARGIFY_2(g_sound_property_w, g_sound_property)
 XEN_ARGIFY_1(g_channel_style_w, g_channel_style)
 XEN_ARGIFY_1(g_read_only_w, g_read_only)
-XEN_ARGIFY_1(g_expand_control_p_w, g_expand_control_p)
-XEN_ARGIFY_1(g_contrast_control_p_w, g_contrast_control_p)
-XEN_ARGIFY_1(g_reverb_control_p_w, g_reverb_control_p)
-XEN_ARGIFY_1(g_filter_control_p_w, g_filter_control_p)
+XEN_ARGIFY_1(g_expand_control_on_w, g_expand_control_on)
+XEN_ARGIFY_1(g_contrast_control_on_w, g_contrast_control_on)
+XEN_ARGIFY_1(g_reverb_control_on_w, g_reverb_control_on)
+XEN_ARGIFY_1(g_filter_control_on_w, g_filter_control_on)
 XEN_ARGIFY_1(g_filter_control_in_dB_w, g_filter_control_in_dB)
 XEN_ARGIFY_1(g_filter_control_in_hz_w, g_filter_control_in_hz)
 XEN_ARGIFY_1(g_filter_control_coeffs_w, g_filter_control_coeffs)
@@ -5800,10 +5800,10 @@ XEN_ARGIFY_2(g_status_report_w, g_status_report)
 #define g_set_sync_w g_set_sync_reversed
 #define g_set_channel_style_w g_set_channel_style_reversed
 #define g_set_show_controls_w g_set_show_controls_reversed
-#define g_set_expand_control_p_w g_set_expand_control_p_reversed
-#define g_set_contrast_control_p_w g_set_contrast_control_p_reversed
-#define g_set_reverb_control_p_w g_set_reverb_control_p_reversed
-#define g_set_filter_control_p_w g_set_filter_control_p_reversed
+#define g_set_expand_control_on_w g_set_expand_control_on_reversed
+#define g_set_contrast_control_on_w g_set_contrast_control_on_reversed
+#define g_set_reverb_control_on_w g_set_reverb_control_on_reversed
+#define g_set_filter_control_on_w g_set_filter_control_on_reversed
 #define g_set_filter_control_in_dB_w g_set_filter_control_in_dB_reversed
 #define g_set_filter_control_in_hz_w g_set_filter_control_in_hz_reversed
 #define g_set_filter_control_order_w g_set_filter_control_order_reversed
@@ -5837,10 +5837,10 @@ XEN_ARGIFY_3(g_set_sound_property_w, g_set_sound_property)
 XEN_ARGIFY_2(g_set_sync_w, g_set_sync)
 XEN_ARGIFY_2(g_set_channel_style_w, g_set_channel_style)
 XEN_ARGIFY_2(g_set_show_controls_w, g_set_show_controls)
-XEN_ARGIFY_2(g_set_expand_control_p_w, g_set_expand_control_p)
-XEN_ARGIFY_2(g_set_contrast_control_p_w, g_set_contrast_control_p)
-XEN_ARGIFY_2(g_set_reverb_control_p_w, g_set_reverb_control_p)
-XEN_ARGIFY_2(g_set_filter_control_p_w, g_set_filter_control_p)
+XEN_ARGIFY_2(g_set_expand_control_on_w, g_set_expand_control_on)
+XEN_ARGIFY_2(g_set_contrast_control_on_w, g_set_contrast_control_on)
+XEN_ARGIFY_2(g_set_reverb_control_on_w, g_set_reverb_control_on)
+XEN_ARGIFY_2(g_set_filter_control_on_w, g_set_filter_control_on)
 XEN_ARGIFY_2(g_set_filter_control_in_dB_w, g_set_filter_control_in_dB)
 XEN_ARGIFY_2(g_set_filter_control_in_hz_w, g_set_filter_control_in_hz)
 XEN_ARGIFY_2(g_set_filter_control_order_w, g_set_filter_control_order)
@@ -5943,10 +5943,10 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_property, g_sound_property_w, H_sound_property, S_setB S_sound_property, g_set_sound_property_w, 1, 1, 2, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channel_style, g_channel_style_w, H_channel_style, S_setB S_channel_style, g_set_channel_style_w, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_read_only, g_read_only_w, H_read_only, S_setB S_read_only, g_set_read_only_w, 0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_expand_control, g_expand_control_p_w, H_expand_control_p, S_setB S_is_expand_control, g_set_expand_control_p_w, 0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_contrast_control, g_contrast_control_p_w, H_contrast_control_p, S_setB S_is_contrast_control, g_set_contrast_control_p_w, 0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_reverb_control, g_reverb_control_p_w, H_reverb_control_p, S_setB S_is_reverb_control, g_set_reverb_control_p_w, 0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_is_filter_control, g_filter_control_p_w, H_filter_control_p, S_setB S_is_filter_control, g_set_filter_control_p_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_expand_control_on, g_expand_control_on_w, H_expand_control_on, S_setB S_expand_control_on, g_set_expand_control_on_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_contrast_control_on, g_contrast_control_on_w, H_contrast_control_on, S_setB S_contrast_control_on, g_set_contrast_control_on_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_on, g_reverb_control_on_w, H_reverb_control_on, S_setB S_reverb_control_on, g_set_reverb_control_on_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_on, g_filter_control_on_w, H_filter_control_on, S_setB S_filter_control_on, g_set_filter_control_on_w, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB, S_setB S_filter_control_in_dB, g_set_filter_control_in_dB_w, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_in_hz, g_filter_control_in_hz_w, H_filter_control_in_hz, S_setB S_filter_control_in_hz, g_set_filter_control_in_hz_w, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_order, g_filter_control_order_w, H_filter_control_order, S_setB S_filter_control_order, g_set_filter_control_order_w, 0, 1, 1, 1);

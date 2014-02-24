@@ -7001,7 +7001,7 @@ return a reader ready to access region's channel chn data starting at start-samp
   mus_long_t beg;
   int direction = 1;
 
-  XEN_ASSERT_TYPE(XEN_REGION_P(reg), reg, 1, S_make_region_sampler, "a region");
+  XEN_ASSERT_TYPE(xen_is_region(reg), reg, 1, S_make_region_sampler, "a region");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(samp_n), samp_n, 2, S_make_region_sampler, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chn), chn, 3, S_make_region_sampler, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(dir1), dir1, 4, S_make_region_sampler, "an integer");
@@ -7064,7 +7064,7 @@ snd can be a filename, a mix, a region, or a sound index number."
   if (xen_is_mix(snd))
     return(g_make_mix_sampler(snd, samp_n));
 
-  if (XEN_REGION_P(snd))
+  if (xen_is_region(snd))
     return(g_make_region_sampler(snd, samp_n, chn, dir1));
 
   if (Xen_is_string(snd))
@@ -8392,7 +8392,7 @@ history position to read (defaults to current position). snd can be a filename, 
 
 
   /* -------- a region -------- */
-  if (XEN_REGION_P(snd))
+  if (xen_is_region(snd))
     return(g_region_to_vct(snd, samp_0, samps, chn_n, XEN_FALSE));
 
 
@@ -8928,7 +8928,7 @@ static mus_any *make_snd_to_sample(snd_info *sp)
 static XEN g_snd_to_sample_p(XEN os) 
 {
   #define H_snd_to_sample_p "(" S_is_snd_to_sample " gen): " PROC_TRUE " if gen is an " S_snd_to_sample " generator"
-  return(C_TO_XEN_BOOLEAN((mus_xen_p(os)) && 
+  return(C_TO_XEN_BOOLEAN((mus_is_xen(os)) && 
 			  (snd_to_sample_p(XEN_TO_MUS_ANY(os)))));
 }
 
@@ -8936,7 +8936,7 @@ static XEN g_snd_to_sample_p(XEN os)
 static XEN g_snd_to_sample(XEN os, XEN frame, XEN chan)
 {
   #define H_snd_to_sample "(" S_snd_to_sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
-  XEN_ASSERT_TYPE((mus_xen_p(os)) && (snd_to_sample_p(XEN_TO_MUS_ANY(os))), os, 1, S_snd_to_sample, "a " S_snd_to_sample " gen");
+  XEN_ASSERT_TYPE((mus_is_xen(os)) && (snd_to_sample_p(XEN_TO_MUS_ANY(os))), os, 1, S_snd_to_sample, "a " S_snd_to_sample " gen");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(frame), frame, 2, S_snd_to_sample, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 3, S_snd_to_sample, "an integer");
   return(C_TO_XEN_DOUBLE(snd_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), 

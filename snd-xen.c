@@ -2130,7 +2130,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
   data = (double *)s7_float_vector_elements(matrix);
 #else
   mus_any *u1;
-  XEN_ASSERT_TYPE(mus_xen_p(matrix), matrix, 1, "gsl-eigenvectors", "a mixer (matrix)");
+  XEN_ASSERT_TYPE(mus_is_xen(matrix), matrix, 1, "gsl-eigenvectors", "a mixer (matrix)");
   u1 = XEN_TO_MUS_ANY(matrix);
   if (!mus_is_mixer(u1)) return(XEN_FALSE);
 

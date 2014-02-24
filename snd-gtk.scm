@@ -276,7 +276,7 @@
 			(if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON play-button))
 			    (let* ((audio-info (open-play-output 1 22050 #f 128))
 				   (audio-fd (car audio-info))
-				   (outchans (cadr audio-info))
+				   ;; (outchans (cadr audio-info))
 				   (len (caddr audio-info))
 				   (data (make-float-vector len))
 				   (sdata (make-shared-vector data (list 1 len))))

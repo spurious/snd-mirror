@@ -18,13 +18,13 @@
 #define XEN_WRAP_WIDGET(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Widget"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
 #define XEN_WRAP_WINDOW(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Window"), C_TO_XEN_ULONG(Value)) : XEN_FALSE)
 #define XEN_UNWRAP_WIDGET(Value)     (XEN_LIST_P(Value) ? XEN_UNWRAP_C_POINTER(XEN_CADR(Value)) : 0)
-#define XEN_WIDGET_P(Value)          (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+#define Xen_is_widget(Value)         (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                                       (strcmp("Widget", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define XEN_WRAP_PIXEL(Value)        XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Pixel"), C_TO_XEN_INT((int)Value))
                                        /* not ulong here! -- messes up the equal? check */
 #define XEN_UNWRAP_PIXEL(Value)      (unsigned long)XEN_TO_C_INT(XEN_CADR(Value))
-#define XEN_PIXEL_P(Value)           (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+#define Xen_is_pixel(Value)           (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                                          (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define NULL_WIDGET NULL

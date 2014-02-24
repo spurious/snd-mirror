@@ -1836,7 +1836,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 
       reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
       if (order == 0) order = 65536; /* presumably fsize is enormous here, so no MIN needed */
-      if (!(POWER_OF_2_P(order)))
+      if (!(IS_POWER_OF_2(order)))
 	order = snd_to_int_pow2(order);
       fsize = 2 * order; /* need room for convolution */
       if (precalculated_coeffs)
@@ -4301,7 +4301,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
     caller = XEN_TO_C_STRING(org);
   else caller = fallback_caller;
 
-  XEN_ASSERT_TYPE((Xen_is_procedure(proc)) || (mus_xen_p(proc)), proc, 1, caller, "a procedure");
+  XEN_ASSERT_TYPE((Xen_is_procedure(proc)) || (mus_is_xen(proc)), proc, 1, caller, "a procedure");
   ASSERT_SAMPLE_TYPE(caller, s_beg, 2);
   ASSERT_SAMPLE_TYPE(caller, s_end, 3);
   ASSERT_SAMPLE_TYPE(caller, s_dur, 3);
@@ -5389,7 +5389,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   beg = beg_to_sample(samp_n, S_clm_channel);
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_clm_channel);
   if (dur == 0) return(XEN_FALSE);
-  XEN_ASSERT_TYPE(mus_xen_p(gen), gen, 1, S_clm_channel, "a clm generator");
+  XEN_ASSERT_TYPE(mus_is_xen(gen), gen, 1, S_clm_channel, "a clm generator");
   egen = XEN_TO_MUS_ANY(gen);
   if (Xen_is_string(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_clm_channel);
 
@@ -5435,7 +5435,7 @@ static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, c
   else
     {
       mus_any *egen = NULL;
-      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_is_env(egen = XEN_TO_MUS_ANY(edata))), edata, 1, caller, "an env generator or a list");
+      XEN_ASSERT_TYPE((mus_is_xen(edata)) && (mus_is_env(egen = XEN_TO_MUS_ANY(edata))), edata, 1, caller, "an env generator or a list");
       apply_env(cp, NULL, beg, dur, over_selection, caller, egen, edpos, 7);
       return(edata);
     }
@@ -5730,7 +5730,7 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   n = mus_vct_length(v1);
   if (mus_vct_length(v2) < n) n = mus_vct_length(v2);
   if (n == 0) return(XEN_ZERO);
-  if (POWER_OF_2_P(n))
+  if (IS_POWER_OF_2(n))
     {
       n2 = n;
       rl = mus_vct_data(v1);
@@ -5999,7 +5999,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 
   XEN_ASSERT_TYPE((Xen_is_number(ratio_or_env)) || 
 		  (Xen_is_list(ratio_or_env)) ||
-		  ((mus_xen_p(ratio_or_env)) && 
+		  ((mus_is_xen(ratio_or_env)) && 
 		   (mus_is_env(egen = XEN_TO_MUS_ANY(ratio_or_env)))),
 		  ratio_or_env, 1, S_src_channel, "a number, an envelope, or a CLM env generator");
   ASSERT_SAMPLE_TYPE(S_src_channel, beg_n, 2);
@@ -6130,7 +6130,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
       else
 	{
 	  mus_any *egen;
-	  XEN_ASSERT_TYPE(mus_xen_p(ratio_or_env), ratio_or_env, 1, caller, "a number, list, or env generator");
+	  XEN_ASSERT_TYPE(mus_is_xen(ratio_or_env), ratio_or_env, 1, caller, "a number, list, or env generator");
 	  egen = XEN_TO_MUS_ANY(ratio_or_env);
 	  XEN_ASSERT_TYPE(mus_is_env(egen), ratio_or_env, 1, caller, "a number, list, or env generator");
 
@@ -6250,7 +6250,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
   ASSERT_CHANNEL(caller, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, caller);
   if (!cp) return(XEN_FALSE);
-  if (mus_xen_p(e))
+  if (mus_is_xen(e))
     {
       char *error;
       bool clm_err = false;

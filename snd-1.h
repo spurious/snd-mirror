@@ -348,10 +348,10 @@ typedef struct snd_info {
   int index;
   int playing;
   int sync, previous_sync;
-  bool expand_control_p;
-  bool contrast_control_p;
-  bool reverb_control_p;
-  bool filter_control_p, filter_control_in_dB, filter_control_in_hz;
+  bool expand_control_on;
+  bool contrast_control_on;
+  bool reverb_control_on;
+  bool filter_control_on, filter_control_in_dB, filter_control_in_hz;
   mus_float_t amp_control;
   mus_float_t speed_control;
   int speed_control_direction, speed_control_tones, speed_control_numerator, speed_control_denominator;
@@ -1289,9 +1289,8 @@ mus_long_t region_current_location(snd_fd *fd);
 char *region_description(int rg);
 
 XEN new_xen_region(int n);
-bool xen_region_p(XEN obj);
+bool xen_is_region(XEN obj);
 int xen_region_to_int(XEN n);
-#define XEN_REGION_P(arg) xen_region_p(arg)
 #define C_INT_TO_XEN_REGION(Val) new_xen_region(Val)
 #define XEN_REGION_TO_C_INT(n) xen_region_to_int(n)
 XEN g_region_srate(XEN n);

@@ -52,7 +52,7 @@
 				     (rmx (make-vector (list rchans rchans) 0.0 #t)))
 				(do ((i 0 (+ i 1)))
 				    ((= i rchans))
-				  (set! (rmx i i reverb)))
+				  (set! (rmx i i) reverb))
 				rmx)
 			      #f)))
 	      

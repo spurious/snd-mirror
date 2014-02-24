@@ -259,7 +259,7 @@ void initialize_control_panel(snd_info *sp)
   sp->expand_control_max = expand_control_max(ss);
   sp->last_expand_control = 0.0;
   sp->saved_expand_control = 0.0;
-  sp->expand_control_p = DEFAULT_EXPAND_CONTROL_P;
+  sp->expand_control_on = DEFAULT_EXPAND_CONTROL_P;
   sp->amp_control = DEFAULT_AMP_CONTROL;
   sp->amp_control_min = amp_control_min(ss);
   sp->amp_control_max = amp_control_max(ss);
@@ -271,15 +271,15 @@ void initialize_control_panel(snd_info *sp)
   sp->last_speed_control = 1.0;
   sp->saved_speed_control = 1.0;
   if (DEFAULT_SPEED_CONTROL > 0.0) sp->speed_control_direction = 1; else sp->speed_control_direction = -1;
-  sp->contrast_control_p = DEFAULT_CONTRAST_CONTROL_P;
+  sp->contrast_control_on = DEFAULT_CONTRAST_CONTROL_P;
   sp->contrast_control = DEFAULT_CONTRAST_CONTROL;
   sp->contrast_control_min = contrast_control_min(ss);
   sp->contrast_control_max = contrast_control_max(ss);
   sp->contrast_control_amp = contrast_control_amp(ss);
   sp->last_contrast_control = contrast_control_min(ss);
   sp->saved_contrast_control = contrast_control_min(ss);
-  sp->reverb_control_p = DEFAULT_REVERB_CONTROL_P;
-  sp->filter_control_p = DEFAULT_FILTER_CONTROL_P;
+  sp->reverb_control_on = DEFAULT_REVERB_CONTROL_P;
+  sp->filter_control_on = DEFAULT_FILTER_CONTROL_P;
   sp->expand_control_length = expand_control_length(ss);
   sp->expand_control_ramp = expand_control_ramp(ss);
   sp->expand_control_hop = expand_control_hop(ss);
@@ -376,11 +376,11 @@ void free_snd_info(snd_info *sp)
   env_editor *edp;
 
   /* make sure trough colors are ok upon reuse */
-  if (sp->reverb_control_p != DEFAULT_REVERB_CONTROL_P)
+  if (sp->reverb_control_on != DEFAULT_REVERB_CONTROL_P)
     toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
-  if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P)
+  if (sp->expand_control_on != DEFAULT_EXPAND_CONTROL_P)
     toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
-  if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P)
+  if (sp->contrast_control_on != DEFAULT_CONTRAST_CONTROL_P)
     toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
 
   edp = sp->flt;

@@ -90,7 +90,7 @@
 #define S_contrast_control              "contrast-control"
 #define S_contrast_control_amp          "contrast-control-amp"
 #define S_contrast_control_bounds       "contrast-control-bounds"
-#define S_is_contrast_control           "contrast-control?"
+#define S_contrast_control_on           "contrast-control?"
 #define S_controls_to_channel           "controls->channel"
 #define S_convolve_selection_with       "convolve-selection-with"
 #define S_convolve_with                 "convolve-with"
@@ -167,7 +167,7 @@
 #define S_enved_add_point               "enved-add-point"
 #define S_enved_amplitude               "enved-amplitude"
 #define S_enved_base                    "enved-base"
-#define S_is_enved_clip                 "enved-clip?"
+#define S_enved_clip_on                 "enved-clip?"
 #define S_enved_delete_point            "enved-delete-point"
 #define S_enved_dialog                  "enved-dialog"
 #define S_enved_envelope                "enved-envelope"
@@ -181,7 +181,7 @@
 #define S_enved_srate                   "enved-srate"
 #define S_enved_style                   "enved-style"
 #define S_enved_target                  "enved-target"
-#define S_is_enved_wave                 "enved-wave?"
+#define S_enved_wave_on                 "enved-wave?"
 #define S_enved_waveform_color          "enved-waveform-color"
 #define S_envelope_exponential          "envelope-exponential"
 #define S_envelope_linear               "envelope-linear"
@@ -196,7 +196,7 @@
 #define S_expand_control_hop            "expand-control-hop"
 #define S_expand_control_jitter         "expand-control-jitter"
 #define S_expand_control_length         "expand-control-length"
-#define S_is_expand_control             "expand-control?"
+#define S_expand_control_on             "expand-control?"
 #define S_expand_control_ramp           "expand-control-ramp"
 #define S_fft                           "fft"
 #define S_fft_log_frequency             "fft-log-frequency"
@@ -214,7 +214,7 @@
 #define S_filter_control_in_dB          "filter-control-in-dB"
 #define S_filter_control_in_hz          "filter-control-in-hz"
 #define S_filter_control_order          "filter-control-order"
-#define S_is_filter_control             "filter-control?"
+#define S_filter_control_on             "filter-control?"
 #define S_filter_control_waveform_color "filter-control-waveform-color"
 #define S_filter_selection              "filter-selection"
 #define S_filter_sound                  "filter-sound"
@@ -291,7 +291,7 @@
 #define S_left_sample                   "left-sample"
 #define S_lisp_graph                    "lisp-graph"
 #define S_lisp_graph_hook               "lisp-graph-hook"
-#define S_is_lisp_graph                 "lisp-graph?"
+#define S_lisp_graph_on                 "lisp-graph?"
 #define S_lisp_graph_style              "lisp-graph-style"
 #define S_listener_click_hook           "listener-click-hook"
 #define S_listener_color                "listener-color"
@@ -454,7 +454,7 @@
 #define S_reverb_control_length         "reverb-control-length"
 #define S_reverb_control_length_bounds  "reverb-control-length-bounds"
 #define S_reverb_control_lowpass        "reverb-control-lowpass"
-#define S_is_reverb_control             "reverb-control?"
+#define S_reverb_control_on             "reverb-control?"
 #define S_reverb_control_scale          "reverb-control-scale"
 #define S_reverb_control_scale_bounds   "reverb-control-scale-bounds"
 #define S_reverse_channel               "reverse-channel"
@@ -622,7 +622,7 @@
 #define S_temp_dir                      "temp-dir"
 #define S_text_focus_color              "text-focus-color"
 #define S_time_graph                    "time-graph"
-#define S_is_time_graph                 "time-graph?"
+#define S_time_graph_on                 "time-graph?"
 #define S_time_graph_style              "time-graph-style"
 #define S_time_graph_type               "time-graph-type"
 #define S_tiny_font                     "tiny-font"
@@ -630,7 +630,7 @@
 #define S_transform_dialog              "transform-dialog"
 #define S_transform_frames              "transform-frames"
 #define S_transform_graph               "transform-graph"
-#define S_is_transform_graph            "transform-graph?"
+#define S_transform_graph_on            "transform-graph?"
 #define S_transform_graph_style         "transform-graph-style"
 #define S_transform_graph_type          "transform-graph-type"
 #define S_transform_normalization       "transform-normalization"
@@ -718,12 +718,12 @@
 #if (!DISABLE_DEPRECATED)
 #define S_colormap_p S_is_colormap
 #define S_color_p S_is_color
-#define S_contrast_control_p S_is_contrast_control
-#define S_enved_clip_p S_is_enved_clip
-#define S_enved_wave_p S_is_enved_wave
-#define S_expand_control_p S_is_expand_control
-#define S_filter_control_p S_is_filter_control
-#define S_lisp_graph_p S_is_lisp_graph
+#define S_contrast_control_p S_contrast_control_on
+#define S_enved_clip_p S_enved_clip_on
+#define S_enved_wave_p S_enved_wave_on
+#define S_expand_control_p S_expand_control_on
+#define S_filter_control_p S_filter_control_on
+#define S_lisp_graph_p S_lisp_graph_on
 #define S_mark_p S_is_mark
 #define S_mix_sampler_p S_is_mix_sampler
 #define S_mix_p S_is_mix
@@ -737,8 +737,8 @@
 #define S_snd_to_sample_p S_is_snd_to_sample
 #define S_sound_file_p S_is_sound_file
 #define S_sound_p S_is_sound
-#define S_time_graph_p S_is_time_graph
-#define S_transform_graph_p S_is_transform_graph
+#define S_time_graph_p S_time_graph_on
+#define S_transform_graph_p S_transform_graph_on
 #define S_transform_p S_is_transform
 #define S_variable_graph_p S_is_variable_graph
 #endif

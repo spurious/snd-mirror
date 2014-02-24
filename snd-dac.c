@@ -977,9 +977,9 @@ static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd
   /* next block may get input */
   if (sp)
     {
-      dp->expanding = sp->expand_control_p;
-      dp->filtering = ((sp->filter_control_p) && (sp->filter_control_order > 0));
-      dp->reverbing = sp->reverb_control_p;
+      dp->expanding = sp->expand_control_on;
+      dp->filtering = ((sp->filter_control_on) && (sp->filter_control_order > 0));
+      dp->reverbing = sp->reverb_control_on;
       dp->contrast_amp = sp->contrast_control_amp;
 
       if ((!(snd_feq(sp->speed_control, 1.0))) ||
@@ -1520,7 +1520,7 @@ void loop_play_selection(void)
 static int choose_dac_op(dac_info *dp, snd_info *sp)
 {
   if (!sp) return(NO_CHANGE);
-  if ((dp->expanding) || (dp->filtering) || (dp->reverbing) || (sp->contrast_control_p)) 
+  if ((dp->expanding) || (dp->filtering) || (dp->reverbing) || (sp->contrast_control_on)) 
     return(ALL_CHANGES);
   else
     {
@@ -1764,7 +1764,7 @@ static int fill_dac_buffers(int write_ok)
 		      for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, ex += exincr, rev += revincr) 
 			{
 			  fval = expand(dp, sr, ex);
-			  if (sp->contrast_control_p) fval = contrast(dp, amp, ind, fval); else fval *= amp;
+			  if (sp->contrast_control_on) fval = contrast(dp, amp, ind, fval); else fval *= amp;
 			  if (dp->filtering) fval = mus_fir_filter(dp->flt, fval);
 			  if (dp->reverbing) revin[j] += fval * rev;
 			  buf[j] += fval;
@@ -1778,7 +1778,7 @@ static int fill_dac_buffers(int write_ok)
 			  for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
 			    {
 			      fval = speed(dp, sr);
-			      if (sp->contrast_control_p) fval = contrast(dp, amp, ind, fval); else fval *= amp;
+			      if (sp->contrast_control_on) fval = contrast(dp, amp, ind, fval); else fval *= amp;
 			      fval = mus_fir_filter(dp->flt, fval);
 			      if (dp->reverbing) revin[j] += fval * rev;
 			      buf[j] += fval;
@@ -1786,7 +1786,7 @@ static int fill_dac_buffers(int write_ok)
 			}
 		      else
 			{
-			  if (sp->contrast_control_p)
+			  if (sp->contrast_control_on)
 			    {
 			      for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
 				{
@@ -2990,7 +2990,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
     }
 
   /* region object */
-  if (XEN_REGION_P(object))
+  if (xen_is_region(object))
     return(g_play_region(object, background, stop_func));
 
   /* string object = filename */

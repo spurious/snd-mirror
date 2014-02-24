@@ -8656,7 +8656,7 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
     a = aa;
   else a = (mus_float_t *)calloc(order + 1, sizeof(mus_float_t));
   if (!a) return(NULL);
-  if (!(POWER_OF_2_P(order)))
+  if (!(IS_POWER_OF_2(order)))
     {
       int m;
       mus_float_t am, q, xt = 0.0, xt0, qj, x;

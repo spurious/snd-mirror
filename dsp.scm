@@ -1803,7 +1803,6 @@ and replaces it with the spectrum given in coeffs"
 	(startup 40)
 	(len (- (or dur (frames snd chn edpos)) beg)))
     (let ((adder (make-float-vector len))
-	  (divider (make-float-vector len))
 	  (summer (make-float-vector len))
 	  (indata (channel->float-vector beg len snd chn edpos)))
       

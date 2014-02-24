@@ -889,7 +889,7 @@ The main FFT-related functions are:\
   " S_fft_with_phases " (:optional snd chn)\n\
     sets whether the single fft display includes phase information\n\
 \n\
-  " S_is_transform_graph " (:optional snd chn)\n\
+  " S_transform_graph_on " (:optional snd chn)\n\
     if " PROC_TRUE ", the fft graph is displayed: " transform_graph_example "\n\
 \n\
   " S_transform_normalization " (:optional snd chn)\n\
@@ -1600,7 +1600,7 @@ reverbs mentioned in the related topics list.  The control panel reverb function
   " S_reverb_control_lowpass " (:optional snd):\n\
     reverb low pass filter coefficient. (filter in feedback loop).\n\
 \n\
-  " S_is_reverb_control " (:optional snd):\n\
+  " S_reverb_control_on " (:optional snd):\n\
     " PROC_TRUE " if the reverb button is set (i.e. the reverberator is active).\n\
       " reverb_control_p_example "\n\
 \n\
@@ -1696,7 +1696,7 @@ The control filter functions are:\n\
   " S_filter_control_order " (:optional snd)\n\
     The filter order\n\
 \n\
-  " S_is_filter_control " (:optional snd)\n\
+  " S_filter_control_on " (:optional snd)\n\
     " PROC_TRUE " if the filter is active.\n\
 \n\
   " S_filter_control_waveform_color "\n\

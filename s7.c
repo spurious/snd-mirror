@@ -750,7 +750,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
 
 #define is_safe_c_op(op) ((op < OP_THUNK) && (op >= OP_SAFE_C_C))
 #define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_P))
-
+#define is_callable_c_op(op) (((op < OP_THUNK) && (op >= OP_SAFE_C_C)) || (op >= OP_SAFE_C_opVSq_S))
 
 /* also for debugging */
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
@@ -9753,7 +9753,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error) 
 {
-  #define ISDIGIT(Chr, Rad) (digits[(unsigned char)Chr] < Rad)
+  #define IS_DIGIT(Chr, Rad) (digits[(unsigned char)Chr] < Rad)
 
   char c, *p;
   bool has_dec_point1 = false;
@@ -9776,7 +9776,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 	  has_dec_point1 = true; 
 	  c = *p++; 
 	} 
-      if ((!c) || (!ISDIGIT(c, radix)))
+      if ((!c) || (!IS_DIGIT(c, radix)))
 	return((want_symbol) ? make_symbol(sc, q) : sc->F);
       break;
 
@@ -9784,7 +9784,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
       has_dec_point1 = true; 
       c = *p++; 
 
-      if ((!c) || (!ISDIGIT(c, radix)))
+      if ((!c) || (!IS_DIGIT(c, radix)))
 	return((want_symbol) ? make_symbol(sc, q) : sc->F); 
       break;
 
@@ -9793,7 +9793,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
       break;
 
     default:
-      if (!ISDIGIT(c, radix))
+      if (!IS_DIGIT(c, radix))
 	return((want_symbol) ? make_symbol(sc, q) : sc->F); 
       break;
     }
@@ -9815,7 +9815,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 	/* what about embedded null? (string->number (string #\1 (integer->char 0) #\0)) 
 	 *   currently we stop and return 1, but Guile returns #f
 	 */
-	if (!ISDIGIT(c, current_radix))         /* moving this inside the switch statement was much slower */
+	if (!IS_DIGIT(c, current_radix))         /* moving this inside the switch statement was much slower */
 	  {
 	    current_radix = radix;
 	    
@@ -9833,8 +9833,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 		    (has_plus_or_minus != 0)) /* 1+1.. or 1+1/2. */
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
-		if ((!ISDIGIT(p[1], current_radix)) &&
-		    (!ISDIGIT(p[-1], current_radix))) 
+		if ((!IS_DIGIT(p[1], current_radix)) &&
+		    (!IS_DIGIT(p[-1], current_radix))) 
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
 		if (has_plus_or_minus == 0)
@@ -9871,7 +9871,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 		    (has_plus_or_minus != 0)) /* 1+1.0ee */
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
-		if ((!ISDIGIT(p[-1], radix)) && /* was current_radix but that's always 10! */
+		if ((!IS_DIGIT(p[-1], radix)) && /* was current_radix but that's always 10! */
 		    (p[-1] != '.'))
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
@@ -9887,7 +9887,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 		  }
 		p++;
 		if ((*p == '-') || (*p == '+')) p++;
-		if (ISDIGIT(*p, current_radix))
+		if (IS_DIGIT(*p, current_radix))
 		  continue;
 		break;
 
@@ -9920,8 +9920,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 		  slash1 = (char *)(p + 1);
 		else slash2 = (char *)(p + 1);
 		
-		if ((!ISDIGIT(p[1], current_radix)) ||
-		    (!ISDIGIT(p[-1], current_radix)))
+		if ((!IS_DIGIT(p[1], current_radix)) ||
+		    (!IS_DIGIT(p[-1], current_radix)))
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F);
 		
 		continue;
@@ -21635,6 +21635,7 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
     {
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
+      /* check here for 2 digit ints costs more than it saves */
     case '.': case '+': case '-':
       result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR);
       break;
@@ -29152,6 +29153,8 @@ static s7_pointer float_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc)
 static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ) 
 {
   s7_pointer x;
+  if (len < 0)
+    return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), s7_make_integer(sc, len), A_NON_NEGATIVE_INTEGER));
   if (len > 134217728)
     {
       /* len is an "int" currently */
@@ -47880,42 +47883,53 @@ static s7_pointer check_set(s7_scheme *sc)
 					    }
 					  else
 					    {
+					      /*
+					      if ((!is_callable_c_op(optimize_data(value))) ||
+						  (!is_h_optimized(value)))
+						fprintf(stderr, "%s: %s %d %d %d\n", 
+							DISPLAY(sc->code), opt_name(value), 
+							is_safe_c_op(optimize_data(value)), is_all_x_safe(sc, value), is_h_optimized(value));
+					      */
 					      if (is_all_x_safe(sc, value)) /* value = cadr(sc->code) */
 						{
 						  set_syntax_op(sc->code, sc->SET_SYMBOL_A);
-						  annotate_arg(sc, cdr(sc->code));
+						  annotate_arg(sc, cdr(sc->code)); 
 						}
-					      if ((settee == cadr(value)) &&
-						  (!is_null(cddr(value))))
+					      if ((is_callable_c_op(optimize_data(value))) &&
+						  (is_h_optimized(value)))
 						{
-						  if (is_null(cdddr(value)))
+						  if ((settee == cadr(value)) &&
+						      (!is_null(cddr(value))))
 						    {
-						      if (is_all_x_safe(sc, caddr(value)))
+						      if (is_null(cdddr(value)))
 							{
-							  /* this appears to give a slight savings over the SZ case */
-							  set_syntax_op(sc->code, sc->INCREMENT_SA);
-							  annotate_arg(sc, cddr(value)); /* this sets fcdr(arg) */
-							  set_fcdr(sc->code, cddr(value));
+							  if (is_all_x_safe(sc, caddr(value)))
+							    {
+							      /* this appears to give a slight savings over the SZ case */
+							      set_syntax_op(sc->code, sc->INCREMENT_SA);
+							      annotate_arg(sc, cddr(value)); /* this sets fcdr(arg) */
+							      set_fcdr(sc->code, cddr(value));
+							    }
+							  else
+							    {
+							      if (is_optimized(caddr(value)))
+								{
+								  set_syntax_op(sc->code, sc->INCREMENT_SZ);
+								  set_fcdr(sc->code, caddr(value));
+								}
+							    }
 							}
 						      else
 							{
-							  if (is_optimized(caddr(value)))
+							  if ((is_null(cddddr(value))) &&
+							      (is_all_x_safe(sc, caddr(value))) &&
+							      (is_all_x_safe(sc, cadddr(value))))
 							    {
-							      set_syntax_op(sc->code, sc->INCREMENT_SZ);
-							      set_fcdr(sc->code, caddr(value));
+							      set_syntax_op(sc->code, sc->INCREMENT_SAA);
+							      annotate_arg(sc, cddr(value));
+							      annotate_arg(sc, cdddr(value)); 
+							      set_fcdr(sc->code, cddr(value));
 							    }
-							}
-						    }
-						  else
-						    {
-						      if ((is_null(cddddr(value))) &&
-							  (is_all_x_safe(sc, caddr(value))) &&
-							  (is_all_x_safe(sc, cadddr(value))))
-							{
-							  set_syntax_op(sc->code, sc->INCREMENT_SAA);
-							  annotate_arg(sc, cddr(value));
-							  annotate_arg(sc, cdddr(value)); 
-							  set_fcdr(sc->code, cddr(value));
 							}
 						    }
 						}
@@ -57138,8 +57152,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = c_call(code)(sc, sc->args);
 		goto START;
 	      }
-	      
-	      
+
+
 	    case OP_C_S:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -69594,5 +69608,8 @@ int main(int argc, char **argv)
  *  (file->sample fil ctr 0)
  * many (1000) more _p|P -> _is_ changes remain in snd (g_*_p and H_*_p *.h)
  *
+ * for each all_x case (and maybe c_s...? have map of symbols, get slots, call using slots not symbols in do loops
+ *   would mean returning n slots, then assume they are passed to the all_x_slot replacement along with the code (for c_call etc)
+ *   se HOP_SAFE_C_SSA case
  */
 

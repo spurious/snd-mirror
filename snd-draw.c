@@ -558,7 +558,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   chan_info *cp;
 
   ASSERT_CHANNEL(S_setB S_foreground_color, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_foreground_color, "a color");
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_foreground_color, "a color");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_foreground_color, "an integer");
 
   cp = get_cp(snd, chn, S_setB S_foreground_color);
@@ -814,7 +814,7 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
 		   XEN_WRAP_WIDGET(wid));
   else 
     {
-      if (XEN_WIDGET_P(XEN_VECTOR_REF(dialog_widgets, (int)which)))
+      if (Xen_is_widget(XEN_VECTOR_REF(dialog_widgets, (int)which)))
 	XEN_VECTOR_SET(dialog_widgets, (int)which, 
 		       XEN_LIST_2(XEN_WRAP_WIDGET(wid), 
 				  XEN_VECTOR_REF(dialog_widgets, (int)which)));
@@ -830,7 +830,7 @@ static XEN g_widget_position(XEN wid)
 {
   #define H_widget_position "(" S_widget_position " wid): widget's position, (list x y), in pixels"
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_widget_position, "a Widget");  
+  XEN_ASSERT_TYPE(Xen_is_widget(wid), wid, 1, S_widget_position, "a Widget");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (!w)
     XEN_ERROR(NO_SUCH_WIDGET,
@@ -844,7 +844,7 @@ static XEN g_widget_position(XEN wid)
 static XEN g_set_widget_position(XEN wid, XEN xy)
 {
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_setB S_widget_position, "a Widget");  
+  XEN_ASSERT_TYPE(Xen_is_widget(wid), wid, 1, S_setB S_widget_position, "a Widget");  
   XEN_ASSERT_TYPE(Xen_is_list(xy) && (XEN_LIST_LENGTH(xy) == 2), xy, 2, S_setB S_widget_position, "a list: (x y)");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
@@ -862,7 +862,7 @@ static XEN g_widget_size(XEN wid)
 {
   #define H_widget_size "(" S_widget_size " wid): widget's size, (list width height), in pixels"
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_widget_size, "a Widget"); 
+  XEN_ASSERT_TYPE(Xen_is_widget(wid), wid, 1, S_widget_size, "a Widget"); 
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (!w)
     XEN_ERROR(NO_SUCH_WIDGET,
@@ -876,7 +876,7 @@ static XEN g_widget_size(XEN wid)
 static XEN g_set_widget_size(XEN wid, XEN wh)
 {
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_setB S_widget_size, "a Widget");  
+  XEN_ASSERT_TYPE(Xen_is_widget(wid), wid, 1, S_setB S_widget_size, "a Widget");  
   XEN_ASSERT_TYPE(Xen_is_list(wh) && (XEN_LIST_LENGTH(wh) == 2), wh, 2, S_setB S_widget_size, "a list: (width height)");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
@@ -896,7 +896,7 @@ static XEN g_widget_text(XEN wid)
   widget_t w;
 
   XEN res = XEN_FALSE;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_widget_text, "a Widget");
+  XEN_ASSERT_TYPE(Xen_is_widget(wid), wid, 1, S_widget_text, "a Widget");
 
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
@@ -961,7 +961,7 @@ static XEN g_set_widget_text(XEN wid, XEN text)
   widget_t w;
   const char *str = NULL;
 
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_setB S_widget_text, "a Widget");
+  XEN_ASSERT_TYPE(Xen_is_widget(wid), wid, 1, S_setB S_widget_text, "a Widget");
   XEN_ASSERT_TYPE(Xen_is_string(text) || Xen_is_false(text), text, 2, S_setB S_widget_text, "a string");
 
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
@@ -989,7 +989,7 @@ static XEN g_hide_widget(XEN wid)
 {
   #define H_hide_widget "(" S_hide_widget " widget): hide or undisplay widget"
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_hide_widget, "a Widget");  
+  XEN_ASSERT_TYPE(Xen_is_widget(wid), wid, 1, S_hide_widget, "a Widget");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
@@ -1010,7 +1010,7 @@ static XEN g_show_widget(XEN wid)
 {
   #define H_show_widget "(" S_show_widget " widget): show or display widget"
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_show_widget, "a Widget");  
+  XEN_ASSERT_TYPE(Xen_is_widget(wid), wid, 1, S_show_widget, "a Widget");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
@@ -1031,7 +1031,7 @@ static XEN g_focus_widget(XEN wid)
 {
   #define H_focus_widget "(" S_focus_widget " widget): cause widget to receive input focus"
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, 1, S_focus_widget, "a Widget");
+  XEN_ASSERT_TYPE(Xen_is_widget(wid), wid, 1, S_focus_widget, "a Widget");
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     goto_window(w);
@@ -1173,7 +1173,7 @@ static XEN g_make_cairo(XEN drawer)
   #define C_TO_XEN_cairo_t(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("cairo_t_"), XEN_WRAP_C_POINTER(Value))
   cairo_t *cr;
 
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(drawer), drawer, 1, S_make_cairo, "a widget");
+  XEN_ASSERT_TYPE(Xen_is_widget(drawer), drawer, 1, S_make_cairo, "a widget");
 
 #if (!HAVE_GTK_3)
   cr = make_cairo(GDK_DRAWABLE(gtk_widget_get_window(XEN_UNWRAP_WIDGET(drawer))));
@@ -1251,7 +1251,7 @@ void sgl_set_currents(bool with_dialogs)
 static XEN g_color_p(XEN obj) 
 {
   #define H_color_p "(" S_is_color " obj): " PROC_TRUE " if obj is a color"
-  return(C_TO_XEN_BOOLEAN(XEN_PIXEL_P(obj)));
+  return(C_TO_XEN_BOOLEAN(Xen_is_pixel(obj)));
 }
 
 
@@ -1267,7 +1267,7 @@ mus_float_t check_color_range(const char *caller, XEN val)
 
 static XEN g_set_cursor_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_cursor_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_cursor_color, "a color"); 
   color_cursor(XEN_UNWRAP_PIXEL(color));
   for_each_chan(update_graph);
   return(color);
@@ -1316,7 +1316,7 @@ void set_highlight_color(color_t color)
 
 static XEN g_set_highlight_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_highlight_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_highlight_color, "a color"); 
   set_highlight_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1331,7 +1331,7 @@ static XEN g_highlight_color(void)
 
 static XEN g_set_mark_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_mark_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_mark_color, "a color"); 
   color_marks(XEN_UNWRAP_PIXEL(color));
   for_each_chan(update_graph);
   return(color);
@@ -1357,7 +1357,7 @@ void set_zoom_color(color_t color)
 
 static XEN g_set_zoom_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_zoom_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_zoom_color, "a color"); 
   set_zoom_color(XEN_UNWRAP_PIXEL(color)); 
   return(color);
 }
@@ -1382,7 +1382,7 @@ void set_position_color(color_t color)
 
 static XEN g_set_position_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_position_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_position_color, "a color"); 
   set_position_color(XEN_UNWRAP_PIXEL(color)); 
   return(color);
 }
@@ -1397,7 +1397,7 @@ static XEN g_position_color(void)
 
 static XEN g_set_listener_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_listener_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_listener_color, "a color"); 
   color_listener(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1412,7 +1412,7 @@ static XEN g_listener_color(void)
 
 static XEN g_set_listener_text_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_listener_text_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_listener_text_color, "a color"); 
   color_listener_text(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1427,7 +1427,7 @@ static XEN g_listener_text_color(void)
 
 static XEN g_set_enved_waveform_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_enved_waveform_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_enved_waveform_color, "a color"); 
   ss->enved_waveform_color = XEN_UNWRAP_PIXEL(color);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->enved_waveform_color_symbol, color);
@@ -1446,7 +1446,7 @@ static XEN g_enved_waveform_color(void)
 
 static XEN g_set_filter_control_waveform_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_filter_control_waveform_color, "a color");
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_filter_control_waveform_color, "a color");
   ss->filter_control_waveform_color = XEN_UNWRAP_PIXEL(color);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->filter_control_waveform_color_symbol, color);
@@ -1465,7 +1465,7 @@ static XEN g_filter_control_waveform_color(void)
 
 static XEN g_set_selection_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_selection_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_selection_color, "a color"); 
   color_selection(XEN_UNWRAP_PIXEL(color));
   for_each_chan(update_graph);
   return(color);
@@ -1481,7 +1481,7 @@ static XEN g_selection_color(void)
 
 static XEN g_set_text_focus_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_text_focus_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_text_focus_color, "a color"); 
   ss->text_focus_color = XEN_UNWRAP_PIXEL(color);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->text_focus_color_symbol, color);
@@ -1499,7 +1499,7 @@ static XEN g_text_focus_color(void)
 
 static XEN g_set_sash_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_sash_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_sash_color, "a color"); 
   ss->sash_color = XEN_UNWRAP_PIXEL(color);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->sash_color_symbol, color);
@@ -1536,7 +1536,7 @@ void set_data_color(color_t color)
 
 static XEN g_set_data_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_data_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_data_color, "a color"); 
   set_data_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1558,7 +1558,7 @@ void set_selected_data_color(color_t color)
 
 static XEN g_set_selected_data_color(XEN color)
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_selected_data_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_selected_data_color, "a color"); 
   set_selected_data_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1585,7 +1585,7 @@ void set_graph_color(color_t color)
 
 static XEN g_set_graph_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_graph_color, "a color");
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_graph_color, "a color");
   set_graph_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1621,7 +1621,7 @@ void set_selected_graph_color(color_t color)
 
 static XEN g_set_selected_graph_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_selected_graph_color, "a color");
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_selected_graph_color, "a color");
   set_selected_graph_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1636,7 +1636,7 @@ static XEN g_selected_graph_color(void)
 
 static XEN g_set_axis_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_axis_color, "a color");
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_axis_color, "a color");
   ss->axis_color = XEN_UNWRAP_PIXEL(color);
   ss->axis_color_set = true;
 #if HAVE_SCHEME
@@ -1712,7 +1712,7 @@ static XEN g_color_to_list(XEN obj)
 {
   #define H_color_to_list "(" S_color_to_list " obj): 'obj' rgb values as a list of floats"
   color_info *v;
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, 1, S_color_to_list, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(obj), obj, 1, S_color_to_list, "a color"); 
   v = XEN_UNWRAP_PIXEL(obj);
   if (v)
     return(XEN_LIST_4(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->red)),
@@ -1771,7 +1771,7 @@ static XEN g_color_to_list(XEN obj)
   XColor tmp_color;
   Display *dpy;
 
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, 1, S_color_to_list, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(obj), obj, 1, S_color_to_list, "a color"); 
 
   dpy = XtDisplay(MAIN_SHELL(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -1844,7 +1844,7 @@ void set_basic_color(color_t color)
 
 static XEN g_set_basic_color(XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_basic_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_basic_color, "a color"); 
   set_basic_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1861,7 +1861,7 @@ static XEN g_mix_color(XEN mix_id)
 
 static XEN g_set_mix_color(XEN color, XEN mix_id)
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_mix_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_mix_color, "a color"); 
   XEN_ASSERT_TYPE(xen_is_mix(mix_id) || !Xen_is_bound(mix_id), mix_id, 2, S_setB S_mix_color, "a mix");
   if (xen_is_mix(mix_id))
     mix_set_color_from_id(XEN_MIX_TO_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
@@ -1874,7 +1874,7 @@ WITH_TWO_SETTER_ARGS(g_set_mix_color_reversed, g_set_mix_color)
 
 bool foreground_color_ok(XEN color, graphics_context *ax)
 {
-  if (XEN_PIXEL_P(color))
+  if (Xen_is_pixel(color))
     {
       set_foreground_color(ax, (color_t)XEN_UNWRAP_PIXEL(color));
       return(true);
@@ -1901,7 +1901,7 @@ static XEN g_set_combined_data_color(XEN color, XEN snd, XEN chn)
 {
   chan_info *cp;
 
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_combined_data_color, "a color"); 
+  XEN_ASSERT_TYPE(Xen_is_pixel(color), color, 1, S_setB S_combined_data_color, "a color"); 
   ASSERT_CHANNEL(S_combined_data_color, snd, chn, 1);
   cp = get_cp(snd, chn, S_combined_data_color);
   if (!cp) return(XEN_FALSE);

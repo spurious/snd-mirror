@@ -868,7 +868,7 @@ static gboolean expand_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
 static void expand_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->expand_control_p = TOGGLE_BUTTON_ACTIVE(w);
+  sp->expand_control_on = TOGGLE_BUTTON_ACTIVE(w);
   /* to change the trough color: (widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_ACTIVE (zoom-color)) */
   /*   and the slider color:     (widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_PRELIGHT (highlight-color)) */
 }
@@ -877,7 +877,7 @@ static void expand_button_callback(GtkWidget *w, gpointer context)
 void toggle_expand_button(snd_info *sp, bool state)
 {
   if (!HAS_WIDGETS(sp))
-    sp->expand_control_p = state;
+    sp->expand_control_on = state;
   else set_toggle_button(EXPAND_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
 
@@ -949,14 +949,14 @@ static gboolean contrast_release_callback(GtkWidget *w, GdkEventButton *ev, gpoi
 static void contrast_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->contrast_control_p = TOGGLE_BUTTON_ACTIVE(w);
+  sp->contrast_control_on = TOGGLE_BUTTON_ACTIVE(w);
 }
 
 
 void toggle_contrast_button(snd_info *sp, bool state)
 {
   if (!HAS_WIDGETS(sp))
-    sp->contrast_control_p = state;
+    sp->contrast_control_on = state;
   else set_toggle_button(CONTRAST_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
 
@@ -1100,14 +1100,14 @@ static gboolean revlen_release_callback(GtkWidget *w, GdkEventButton *ev, gpoint
 static void reverb_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->reverb_control_p = TOGGLE_BUTTON_ACTIVE(w);
+  sp->reverb_control_on = TOGGLE_BUTTON_ACTIVE(w);
 }
 
 
 void toggle_reverb_button(snd_info *sp, bool state)
 {
   if (!HAS_WIDGETS(sp))
-    sp->reverb_control_p = state;
+    sp->reverb_control_on = state;
   else set_toggle_button(REVERB_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
 
@@ -1256,14 +1256,14 @@ static gboolean filter_drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpoint
 static void filter_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->filter_control_p = TOGGLE_BUTTON_ACTIVE(w);
+  sp->filter_control_on = TOGGLE_BUTTON_ACTIVE(w);
 }
 
 
 void toggle_filter_button(snd_info *sp, bool state)
 {
   if (!HAS_WIDGETS(sp))
-    sp->filter_control_p = state;
+    sp->filter_control_on = state;
   else set_toggle_button(FILTER_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
 
