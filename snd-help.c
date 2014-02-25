@@ -169,7 +169,7 @@ static char *xm_version(void)
   #endif
 #endif
 
-  if (XEN_STRING_P(xm_val))
+  if (Xen_is_string(xm_val))
     {
       char *version = NULL;
       version = (char *)calloc(32, sizeof(char));
@@ -209,7 +209,7 @@ static char *gl_version(void)
     gl_val = XEN_VARIABLE_REF("gl-version");
 #endif
 
-  if (XEN_STRING_P(gl_val))
+  if (Xen_is_string(gl_val))
     {
       char *version = NULL;
       version = (char *)calloc(32, sizeof(char));
@@ -1389,7 +1389,7 @@ static void show_key_help(int key, int state, bool cx, char *help)
 
 static bool find_unbuckified_keys(int key, int state, bool cx, XEN func)
 {
-  if ((key > 256) && (state == 0) && (!cx) && (XEN_BOUND_P(func)))
+  if ((key > 256) && (state == 0) && (!cx) && (Xen_is_bound(func)))
     show_key_help(key, state, cx, key_description(key, state, cx));
   return(false);
 }
@@ -1397,7 +1397,7 @@ static bool find_unbuckified_keys(int key, int state, bool cx, XEN func)
 
 static bool find_buckified_keys(int key, int state, bool cx, XEN func)
 {
-  if ((key > 256) && (state == snd_ControlMask) && (!cx) && (XEN_BOUND_P(func)))
+  if ((key > 256) && (state == snd_ControlMask) && (!cx) && (Xen_is_bound(func)))
     show_key_help(key, state, cx, key_description(key, state, cx));
   return(false);
 }
@@ -1405,7 +1405,7 @@ static bool find_buckified_keys(int key, int state, bool cx, XEN func)
 
 static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func)
 {
-  if ((key > 256) && (state == 0) && (cx) && (XEN_BOUND_P(func)))
+  if ((key > 256) && (state == 0) && (cx) && (Xen_is_bound(func)))
     show_key_help(key, state, cx, key_description(key, state, cx));
   return(false);
 }
@@ -1413,7 +1413,7 @@ static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func)
 
 static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func)
 {
-  if ((key > 256) && (state == snd_ControlMask) && (cx) && (XEN_BOUND_P(func)))
+  if ((key > 256) && (state == snd_ControlMask) && (cx) && (Xen_is_bound(func)))
     show_key_help(key, state, cx, key_description(key, state, cx));
   return(false);
 }
@@ -3008,7 +3008,7 @@ static char *snd_finder(const char *name, bool got_help)
   const char *defines[NUM_DEFINES] = {": ", "instrument: ", "event: "};
 #endif
 
-  is_defined = XEN_DEFINED_P(name);
+  is_defined = Xen_is_defined(name);
 
 #if HAVE_SCHEME
   {
@@ -3032,7 +3032,7 @@ static char *snd_finder(const char *name, bool got_help)
 
   for (i = 0; (!fgrep) && (i < dir_len); i++)
     {
-      if (XEN_STRING_P(XEN_LIST_REF(dirs, i))) /* *load-path* might have garbage */
+      if (Xen_is_string(XEN_LIST_REF(dirs, i))) /* *load-path* might have garbage */
 	{
 	  const char *path;
 	  path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
@@ -3452,7 +3452,7 @@ char *output_comment(file_info *hdr)
 	  }
       }
 #endif
-      if (XEN_STRING_P(result))
+      if (Xen_is_string(result))
 	return(mus_strdup(XEN_TO_C_STRING(result)));
     }
   return(mus_strdup((hdr) ? hdr->comment : NULL));
@@ -3492,14 +3492,14 @@ and its value is returned."
   char *str = NULL, *subject = NULL;
   int min_diff = 1000;
 
-  if (XEN_KEYWORD_P(text))
+  if (Xen_is_keyword(text))
     return(C_TO_XEN_STRING("keyword"));
 
 #if HAVE_RUBY
-  if (XEN_STRING_P(text))
+  if (Xen_is_string(text))
     subject = XEN_TO_C_STRING(text);
   else 
-    if ((XEN_SYMBOL_P(text)) && (XEN_BOUND_P(text)))
+    if ((Xen_is_symbol(text)) && (Xen_is_bound(text)))
       {
 	text = XEN_SYMBOL_TO_STRING(text);
 	subject = XEN_TO_C_STRING(text);
@@ -3515,7 +3515,7 @@ and its value is returned."
 #endif
 
 #if HAVE_FORTH
-  if (XEN_STRING_P(text))	/* "play" snd-help */
+  if (Xen_is_string(text))	/* "play" snd-help */
     subject = XEN_TO_C_STRING(text);
   else if (!Xen_is_bound(text)) /* snd-help play */
     {
@@ -3533,14 +3533,14 @@ and its value is returned."
 #if HAVE_SCHEME
   {
     XEN sym = XEN_FALSE;
-    if (XEN_STRING_P(text))
+    if (Xen_is_string(text))
       {
 	subject = (char *)XEN_TO_C_STRING(text);
 	sym = s7_name_to_value(s7, subject);
       }
     else 
       {
-	if (XEN_SYMBOL_P(text))
+	if (Xen_is_symbol(text))
 	  {
 	    subject = (char *)XEN_SYMBOL_TO_C_STRING(text);
 	    str = (char *)s7_help(s7, text);
@@ -3557,7 +3557,7 @@ and its value is returned."
     if ((str == NULL) ||
 	(mus_strlen(str) == 0))
       {
-	if (XEN_PROCEDURE_P(sym))
+	if (Xen_is_procedure(sym))
 	  {
 	    str = (char *)s7_procedure_documentation(s7, sym);
 
@@ -3658,7 +3658,7 @@ and its value is returned."
 		      }
 		  }
 #endif
-		  if (XEN_STRING_P(result))
+		  if (Xen_is_string(result))
 		    new_str = mus_strdup(XEN_TO_C_STRING(result));
 		  else new_str = mus_strdup(str);
 		}
@@ -3700,7 +3700,7 @@ XEN g_snd_help(XEN text, int widget_wid)
 static XEN g_listener_help(XEN arg, XEN formatted)
 {
   XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(formatted), formatted, 2, S_snd_help, "a boolean");
-  if (XEN_FALSE_P(formatted))
+  if (Xen_is_false(formatted))
     return(g_snd_help(arg, 0));
   return(g_snd_help(arg, listener_width()));
 }
@@ -3722,7 +3722,7 @@ static XEN g_html_dir(void)
 
 static XEN g_set_html_dir(XEN val) 
 {
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, 1, S_setB S_html_dir, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_html_dir, "a string");
   set_html_dir(mus_strdup(XEN_TO_C_STRING(val))); 
   return(val);
 }
@@ -3737,7 +3737,7 @@ static XEN g_html_program(void)
 
 static XEN g_set_html_program(XEN val) 
 {
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, 1, S_setB S_html_program, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_html_program, "a string");
   if (html_program(ss)) free(html_program(ss));
   set_html_program(mus_strdup(XEN_TO_C_STRING(val))); 
   return(val);
@@ -3748,8 +3748,8 @@ static XEN g_snd_url(XEN name)
 {
   #define H_snd_url "(" S_snd_url " name): url corresponding to 'name'"
   /* given Snd entity ('open-sound) as symbol or string return associated url */
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, 1, S_snd_url, "a string or symbol");
-  if (XEN_STRING_P(name))
+  XEN_ASSERT_TYPE(Xen_is_string(name) || Xen_is_symbol(name), name, 1, S_snd_url, "a string or symbol");
+  if (Xen_is_string(name))
     return(C_TO_XEN_STRING(snd_url(XEN_TO_C_STRING(name))));
   return(C_TO_XEN_STRING(snd_url(XEN_SYMBOL_TO_C_STRING(name))));
 }
@@ -3776,15 +3776,15 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 {
   #define H_help_dialog "(" S_help_dialog " subject message xrefs urls): start the Help window with subject and message"
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, 1, S_help_dialog, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, 2, S_help_dialog, "a string");
-  XEN_ASSERT_TYPE(XEN_LIST_P(xrefs) || !Xen_is_bound(xrefs), xrefs, 3, S_help_dialog, "a list of related references");
-  XEN_ASSERT_TYPE(XEN_LIST_P(xurls) || !Xen_is_bound(xurls), xurls, 4, S_help_dialog, "a list of urls");
+  XEN_ASSERT_TYPE(Xen_is_string(subject), subject, 1, S_help_dialog, "a string");
+  XEN_ASSERT_TYPE(Xen_is_string(msg), msg, 2, S_help_dialog, "a string");
+  XEN_ASSERT_TYPE(Xen_is_list(xrefs) || !Xen_is_bound(xrefs), xrefs, 3, S_help_dialog, "a list of related references");
+  XEN_ASSERT_TYPE(Xen_is_list(xurls) || !Xen_is_bound(xurls), xurls, 4, S_help_dialog, "a list of urls");
 
   if (refs) {free(refs); refs = NULL;}
   if (urls) {free(urls); urls = NULL;}
 
-  if (XEN_LIST_P(xrefs))
+  if (Xen_is_list(xrefs))
     {
       int i, len;
 
@@ -3792,17 +3792,17 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
       refs = (const char **)calloc(len + 1, sizeof(char *));
 
       for (i = 0; i < len; i++)
-	if (XEN_STRING_P(XEN_LIST_REF(xrefs, i)))
+	if (Xen_is_string(XEN_LIST_REF(xrefs, i)))
 	  refs[i] = XEN_TO_C_STRING(XEN_LIST_REF(xrefs, i));
 
-      if (XEN_LIST_P(xurls))
+      if (Xen_is_list(xurls))
 	{
 	  int ulen;
 	  ulen = XEN_LIST_LENGTH(xurls);
 	  if (ulen > len) ulen = len;
 	  urls = (const char **)calloc(ulen + 1, sizeof(char *));
 	  for (i = 0; i < ulen; i++)
-	    if (XEN_STRING_P(XEN_LIST_REF(xurls, i)))
+	    if (Xen_is_string(XEN_LIST_REF(xurls, i)))
 	      urls[i] = XEN_TO_C_STRING(XEN_LIST_REF(xurls, i));
 	}
       return(XEN_WRAP_WIDGET(snd_help_with_xrefs(XEN_TO_C_STRING(subject),

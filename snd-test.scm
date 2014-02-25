@@ -14226,6 +14226,40 @@ EDITS: 2
       (if (fneq (mus-apply) 0.0)
 	  (snd-display #__line__ ";(mus-apply): ~A" (mus-apply))))
 
+    ;; we can't (or don't anyway) guarantee optimized arg order evaluation so:
+    (let ((o (make-oscil 1000.0)) 
+	  (o1 (make-oscil 1000.0))
+	  (v (make-float-vector 10))
+	  (x 0.0))
+      (do ((i 0 (+ i 1))) 
+	  ((= i 10))
+	(set! x (oscil o (oscil o1) (oscil o1)))
+	(set! (v i) x))
+      (let ((o4 (make-oscil 1000.0)) 
+	    (o5 (make-oscil 1000.0))
+	    (v2 (make-float-vector 10))
+	    (x1 0.0)
+	    (x2 0.0))
+	(do ((i 0 (+ i 1))) 
+	    ((= i 10))
+	  (set! x1 (oscil o5))
+	  (set! x2 (oscil o5))
+	  (set! (v2 i) (oscil o4 x2 x1)))
+	(let ()
+	  (define (hi) 
+	    (let ((o2 (make-oscil 1000.0)) 
+		  (o3 (make-oscil 1000.0)) 
+		  (v1 (make-float-vector 10)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i 10) v1)
+		(float-vector-set! v1 i (oscil o2 (oscil o3) (oscil o3))))))
+	  (hi)
+	  (let ((v1 (hi)))
+	    
+	    (if (and (not (mus-arrays-equal? v v1))
+		     (not (mus-arrays-equal? v2 v1)))
+		(format *stderr* ":orig: ~A~%;  v1: ~A~%;  v2: ~A~%" v v1 v2))))))
+
     (osc-opt)
     (nrxysin-opt)
     (polywave-opt)
@@ -46853,6 +46887,8 @@ EDITS: 1
 ;; 3-Apr-13:  #(1 1 2 2 30  89 4 1 297 1 11 1 2 10  9 1  81 1 1 110 41  73 1 1048 0 0 0 1 2 80)  ;  19
 ;; 14-Apr-13: #(1 1 2 2 31  88 4 1 288 1 16 1 2 10 17 1  77 1 1 110 39  73 1  975 0 0 0 1 2 75)  ;  18
 ;; 21-Apr-13: #(1 1 2 2 27  88 4 1 266 1 15 1 2 10 15 1  78 1 1  97 39  69 1  917 0 0 0 1 2 77)  ;  17
+;; 24-Feb-14: #(1 1 2 1 22  74 2 1 162 2  9 1 3  8  9 2  54 2    70 33  24 2  791     0 0 1 82)  ;  14
+
 
 ;;; -------- cleanup temp files
 

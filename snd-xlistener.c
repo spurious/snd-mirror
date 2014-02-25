@@ -127,7 +127,7 @@ static void listener_help_at_cursor(char *buf, int name_curpos, int len, int pro
 	  if (matches == 1)
 	    {
 	      help = g_snd_help(C_TO_XEN_STRING(new_text), 0);
-	      if (XEN_STRING_P(help))
+	      if (Xen_is_string(help))
 		snd_help((char *)(buf + name_start), XEN_TO_C_STRING(help), WITH_WORD_WRAP);
 	    }
 	  else
@@ -578,7 +578,7 @@ static void listener_return(widget_t w, int last_prompt)
 	  for (i = last_prompt, j = 0; i < last_position; i++, j++) str[j] = full_str[i]; 
 	  result = run_read_hook(str);
 	  free(str);
-	  if (XEN_TRUE_P(result)) 
+	  if (Xen_is_true(result)) 
 	    {
 	      if (full_str) GUI_FREE(full_str);
 	      return;

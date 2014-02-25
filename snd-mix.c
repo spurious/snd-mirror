@@ -36,7 +36,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
   mus_float_t **data;
   mus_float_t *chandata;
 
-  if ((num <= 0) || (!editable_p(cp)))
+  if ((num <= 0) || (!is_editable(cp)))
     return(false);
 
   ihdr = make_file_info(filename, FILE_READ_ONLY, FILE_NOT_SELECTED);
@@ -3162,9 +3162,9 @@ static XEN g_set_mix_tag_height(XEN val)
 }
 
 
-static XEN g_mix_p(XEN n) 
+static XEN g_is_mix(XEN n) 
 {
-  #define H_mix_p "(" S_is_mix " id): returns " PROC_TRUE " if the 'n' is a mix that exists somewhere in the edit list."
+  #define H_is_mix "(" S_is_mix " id): returns " PROC_TRUE " if the 'n' is a mix that exists somewhere in the edit list."
   return(C_TO_XEN_BOOLEAN((xen_is_mix(n)) && (mix_exists(XEN_MIX_TO_C_INT(n)))));
 }
 
@@ -3179,7 +3179,7 @@ static XEN g_mixes(XEN snd, XEN chn)
   
   ASSERT_CHANNEL(S_mixes, snd, chn, 0);
 
-  if (Xen_is_integer(snd) || XEN_SOUND_P(snd))
+  if (Xen_is_integer(snd) || xen_is_sound(snd))
     {
       if (Xen_is_integer(chn))
 	{
@@ -3237,7 +3237,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 
   cp = get_cp(snd, chn, S_mix_vct);
   if (!cp) return(XEN_FALSE);
-  if (!(editable_p(cp))) return(XEN_FALSE);
+  if (!(is_editable(cp))) return(XEN_FALSE);
 
   if (Xen_is_string(origin))
     edname = XEN_TO_C_STRING(origin);
@@ -3490,20 +3490,18 @@ typedef struct mix_fd {
 
 static XEN_OBJECT_TYPE mf_tag;
 
-bool mix_sampler_p(XEN obj) 
+bool is_mix_sampler(XEN obj) 
 {
   return(Xen_c_object_is_type(obj, mf_tag));
 }
 
-
 #define XEN_TO_MIX_SAMPLER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
-#define MIX_SAMPLER_P(Obj) Xen_c_object_is_type(Obj, mf_tag)
 
 
-static XEN g_mix_sampler_p(XEN obj) 
+static XEN g_is_mix_sampler(XEN obj) 
 {
-  #define H_mix_sampler_p "(" S_is_mix_sampler " obj): " PROC_TRUE " if obj is a mix-sampler"
-  return(C_TO_XEN_BOOLEAN(mix_sampler_p(obj)));
+  #define H_is_mix_sampler "(" S_is_mix_sampler " obj): " PROC_TRUE " if obj is a mix-sampler"
+  return(C_TO_XEN_BOOLEAN(is_mix_sampler(obj)));
 }
 
 
@@ -3595,7 +3593,7 @@ static XEN g_read_mix_sample(XEN obj)
 {
   mix_fd *mf;
   #define H_read_mix_sample "(" S_read_mix_sample " reader): read sample from mix reader"
-  XEN_ASSERT_TYPE(MIX_SAMPLER_P(obj), obj, 1, S_read_mix_sample, "a mix-sampler");
+  XEN_ASSERT_TYPE(is_mix_sampler(obj), obj, 1, S_read_mix_sample, "a mix-sampler");
   mf = XEN_TO_MIX_SAMPLER(obj);
   return(C_TO_XEN_DOUBLE(read_sample(mf->sf)));
 }
@@ -3948,14 +3946,14 @@ XEN_NARGIFY_1(g_set_mix_tag_width_w, g_set_mix_tag_width)
 XEN_NARGIFY_0(g_mix_tag_height_w, g_mix_tag_height)
 XEN_NARGIFY_1(g_set_mix_tag_height_w, g_set_mix_tag_height)
 
-XEN_NARGIFY_1(g_mix_p_w, g_mix_p)
+XEN_NARGIFY_1(g_is_mix_w, g_is_mix)
 XEN_ARGIFY_2(g_mixes_w, g_mixes)
 XEN_ARGIFY_7(g_mix_w, g_mix)
 XEN_ARGIFY_6(g_mix_vct_w, g_mix_vct)
 
 XEN_ARGIFY_2(g_make_mix_sampler_w, g_make_mix_sampler)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
-XEN_NARGIFY_1(g_mix_sampler_p_w, g_mix_sampler_p)
+XEN_NARGIFY_1(g_is_mix_sampler_w, g_is_mix_sampler)
 XEN_NARGIFY_2(g_save_mix_w, g_save_mix)
 
 XEN_NARGIFY_0(g_view_mixes_dialog_w, g_view_mixes_dialog)
@@ -3985,7 +3983,7 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE(S_make_mix_sampler,       g_make_mix_sampler_w, 1, 1, 0, H_make_mix_sampler);
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
-  XEN_DEFINE_PROCEDURE(S_is_mix_sampler,          g_mix_sampler_p_w,    1, 0, 0, H_mix_sampler_p);
+  XEN_DEFINE_PROCEDURE(S_is_mix_sampler,          g_is_mix_sampler_w,    1, 0, 0, H_is_mix_sampler);
   XEN_DEFINE_PROCEDURE(S_save_mix,               g_save_mix_w,               2, 0, 0, H_save_mix);
 
   XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);
@@ -3995,7 +3993,7 @@ void g_init_mix(void)
 #endif
   XEN_DEFINE_PROCEDURE(S_mixes,                  g_mixes_w,                  0, 2, 0, H_mixes);
   XEN_DEFINE_PROCEDURE(S_mix_home,               g_mix_home_w,               1, 0, 0, H_mix_home);
-  XEN_DEFINE_PROCEDURE(S_is_mix,                  g_mix_p_w,                  1, 0, 0, H_mix_p);
+  XEN_DEFINE_PROCEDURE(S_is_mix,                  g_is_mix_w,                  1, 0, 0, H_is_mix);
   XEN_DEFINE_PROCEDURE(S_mix_length,             g_mix_length_w,             1, 0, 0, H_mix_length);
   XEN_DEFINE_PROCEDURE(S_integer_to_mix,         g_integer_to_mix_w,         1, 0, 0, H_integer_to_mix);
   XEN_DEFINE_PROCEDURE(S_mix_to_integer,         g_mix_to_integer_w,         1, 0, 0, H_mix_to_integer);

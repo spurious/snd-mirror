@@ -1515,7 +1515,7 @@ void add_or_edit_symbol(const char *name, env *val)
 #if HAVE_SCHEME
   XEN e;
   if (!val) return;
-  if (XEN_DEFINED_P(name))
+  if (Xen_is_defined(name))
     {
       e = XEN_NAME_AS_C_STRING_TO_VARIABLE(name);
       XEN_VARIABLE_SET(e, env_to_xen(val));
@@ -1526,7 +1526,7 @@ void add_or_edit_symbol(const char *name, env *val)
 #if HAVE_FORTH
   XEN e;
   if (!val) return;
-  if (XEN_DEFINED_P(name))
+  if (Xen_is_defined(name))
     XEN_VARIABLE_SET(name, env_to_xen(val));
   else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
 #endif
@@ -1745,14 +1745,14 @@ choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_en
 }
 
 
-static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));}
+static XEN g_enved_with_wave(void) {return(C_TO_XEN_BOOLEAN(enved_with_wave(ss)));}
 
-static XEN g_set_enved_wave_p(XEN val) 
+static XEN g_set_enved_with_wave(XEN val) 
 {
-  #define H_enved_wave_p "(" S_enved_wave_on "): " PROC_TRUE " if the envelope editor is displaying the waveform to be edited"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_enved_wave_on, "a boolean");
-  set_enved_wave_p(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));
+  #define H_enved_with_wave "(" S_enved_with_wave "): " PROC_TRUE " if the envelope editor is displaying the waveform to be edited"
+  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_enved_with_wave, "a boolean");
+  set_enved_with_wave(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(enved_with_wave(ss)));
 }
 
 
@@ -1795,8 +1795,8 @@ XEN_NARGIFY_0(g_enved_style_w, g_enved_style)
 XEN_NARGIFY_1(g_set_enved_style_w, g_set_enved_style)
 XEN_NARGIFY_0(g_enved_target_w, g_enved_target)
 XEN_NARGIFY_1(g_set_enved_target_w, g_set_enved_target)
-XEN_NARGIFY_0(g_enved_wave_p_w, g_enved_wave_p)
-XEN_NARGIFY_1(g_set_enved_wave_p_w, g_set_enved_wave_p)
+XEN_NARGIFY_0(g_enved_with_wave_w, g_enved_with_wave)
+XEN_NARGIFY_1(g_set_enved_with_wave_w, g_set_enved_with_wave)
 XEN_NARGIFY_0(g_enved_in_dB_w, g_enved_in_dB)
 XEN_NARGIFY_1(g_set_enved_in_dB_w, g_set_enved_in_dB)
 XEN_NARGIFY_0(g_enved_filter_order_w, g_enved_filter_order)
@@ -1823,7 +1823,7 @@ void g_init_env(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_on, g_enved_clip_p_w, H_enved_clip_p, S_setB S_enved_clip_on, g_set_enved_clip_p_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_wave_on, g_enved_wave_p_w, H_enved_wave_p, S_setB S_enved_wave_on, g_set_enved_wave_p_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, S_setB S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,

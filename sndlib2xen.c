@@ -1033,7 +1033,7 @@ filling sound-data sdata's buffers starting at frame beg in the file, and writin
   XEN_ASSERT_TYPE(Xen_is_long_long_int(beg), beg, 2, S_mus_sound_read, "an integer");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(num), num, 3, S_mus_sound_read, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer(chans), chans, 4, S_mus_sound_read, "an integer");
-  XEN_ASSERT_TYPE(sound_data_p(sv), sv, 5, S_mus_sound_read, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(sv), sv, 5, S_mus_sound_read, "a sound-data object");
 
   sd = XEN_TO_SOUND_DATA(sv);
   bg = XEN_TO_C_LONG_LONG(beg);
@@ -1071,7 +1071,7 @@ starting at beg (buffer location), going to end"
   XEN_ASSERT_TYPE(Xen_is_long_long_int(beg), beg, 2, S_mus_sound_write, "an integer");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(end), end, 3, S_mus_sound_write, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer(chans), chans, 4, S_mus_sound_write, "an integer");
-  XEN_ASSERT_TYPE(sound_data_p(sv), sv, 5, S_mus_sound_write, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(sv), sv, 5, S_mus_sound_write, "a sound-data object");
 
   /* even here we can write memory that doesn't belong to us if clipping */
   sd = XEN_TO_SOUND_DATA(sv);
@@ -1312,7 +1312,7 @@ to the audio line from sound-data sdata."
   mus_float_t **bufs;
 
   XEN_ASSERT_TYPE(Xen_is_integer(line), line, 1, S_mus_audio_write, "an integer");
-  XEN_ASSERT_TYPE(sound_data_p(sdata), sdata, 2, S_mus_audio_write, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(sdata), sdata, 2, S_mus_audio_write, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(frames), frames, 3, S_mus_audio_write, "an integer");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(start) || !Xen_is_bound(start), start, 4, S_mus_audio_write, "an integer");
 
@@ -1357,7 +1357,7 @@ from the audio line into sound-data sdata."
   mus_float_t **bufs;
 
   XEN_ASSERT_TYPE(Xen_is_integer(line), line, 1, S_mus_audio_read, "an integer");
-  XEN_ASSERT_TYPE(sound_data_p(sdata), sdata, 2, S_mus_audio_read, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(sdata), sdata, 2, S_mus_audio_read, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(frames), frames, 3, S_mus_audio_read, "an integer");
 
   sd = XEN_TO_SOUND_DATA(sdata);
@@ -1601,14 +1601,12 @@ static XEN g_mus_audio_reinitialize(void)
 #if (!HAVE_SCHEME)
 static XEN_OBJECT_TYPE sound_data_tag = 0;
 
-bool sound_data_p(XEN obj) {return(Xen_c_object_is_type(obj, sound_data_tag));}
+bool xen_is_sound_data(XEN obj) {return(Xen_c_object_is_type(obj, sound_data_tag));}
 
-#define SOUND_DATA_P(Obj) Xen_c_object_is_type(Obj, sound_data_tag)
-
-static XEN g_sound_data_p(XEN obj) 
+static XEN g_is_sound_data(XEN obj) 
 {
-  #define H_sound_data_p "(" S_sound_data_p " obj): is 'obj' is a sound-data object"
-  return(C_TO_XEN_BOOLEAN(sound_data_p(obj)));
+  #define H_is_sound_data "(" S_is_sound_data " obj): is 'obj' is a sound-data object"
+  return(C_TO_XEN_BOOLEAN(xen_is_sound_data(obj)));
 }
 
 
@@ -1682,7 +1680,7 @@ static bool sound_data_equalp(sound_data *sd1, sound_data *sd2)
 static XEN equalp_sound_data(XEN obj1, XEN obj2)
 {
 #if HAVE_RUBY || HAVE_FORTH
-  if ((!(SOUND_DATA_P(obj1))) || (!(SOUND_DATA_P(obj2)))) return(XEN_FALSE);
+  if ((!(xen_is_sound_data(obj1))) || (!(xen_is_sound_data(obj2)))) return(XEN_FALSE);
 #endif
   return(C_TO_XEN_BOOLEAN(sound_data_equalp(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2))));
 }
@@ -1691,7 +1689,7 @@ static XEN g_sound_data_length(XEN obj)
 {
   #define H_sound_data_length "(" S_sound_data_length " sd): length (in samples) of each channel of sound-data sd"
   sound_data *sd;
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_length, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_length, "a sound-data object");
   sd = XEN_TO_SOUND_DATA(obj);
   return(C_TO_XEN_LONG_LONG(mus_sound_data_length(sd)));
 }
@@ -1701,7 +1699,7 @@ static XEN g_sound_data_chans(XEN obj)
 {
   #define H_sound_data_chans "(" S_sound_data_chans " sd): number of channels in sound-data sd"
   sound_data *sd;
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_chans, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_chans, "a sound-data object");
   sd = XEN_TO_SOUND_DATA(obj);
   return(C_TO_XEN_INT(mus_sound_data_chans(sd)));
 }
@@ -1759,7 +1757,7 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
   mus_long_t loc;
   int chn;
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_ref, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_ref, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_sound_data_ref, "an integer");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(frame_num), frame_num, 3, S_sound_data_ref, "an integer");
 
@@ -1788,13 +1786,12 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 
 #else /* scheme */
 
-bool sound_data_p(XEN obj) 
+bool xen_is_sound_data(XEN obj) 
 {
   return((s7_is_float_vector(obj)) &&
 	 (s7_vector_rank(obj) == 2));
 }
 
-#define SOUND_DATA_P(Obj) sound_data_p(Obj)
 
 XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data)
 {
@@ -1821,7 +1818,7 @@ XEN g_sound_data_maxamp(XEN obj)
   mus_long_t j, len;
 
   XEN lst = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_maxamp, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_maxamp, "a sound-data object");
 
   sd = XEN_TO_SOUND_DATA(obj);
   chans = mus_sound_data_chans(sd);
@@ -1870,7 +1867,7 @@ static mus_float_t sound_data_peak(sound_data *sd)
 static XEN g_sound_data_peak(XEN obj)
 {
   #define H_sound_data_peak "(" S_sound_data_peak " sd): overall maxamp of data in sd"
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_maxamp, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_maxamp, "a sound-data object");
   return(C_TO_XEN_DOUBLE(sound_data_peak(XEN_TO_SOUND_DATA(obj))));
 }
 
@@ -1891,7 +1888,7 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
   mus_long_t loc;
   mus_float_t *d;
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_setB, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_setB, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_sound_data_setB, "an integer");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(frame_num), frame_num, 3, S_sound_data_setB, "an integer");
   XEN_ASSERT_TYPE(Xen_is_number(val), val, 4, S_sound_data_setB, "a number");
@@ -1953,7 +1950,7 @@ static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
 {
   #define H_sound_data_scaleB "(" S_sound_data_scaleB " sd scl): scales (multiplies) sound-data sd's data by scl"
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, 1, S_sound_data_scaleB, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_scaleB, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_number(scl), scl, 2, S_sound_data_scaleB, "a number");
 
   sound_data_scale(XEN_TO_SOUND_DATA(sdobj), XEN_TO_C_DOUBLE(scl));
@@ -1992,7 +1989,7 @@ static XEN g_sound_data_fillB(XEN sdobj, XEN scl)
 {
   #define H_sound_data_fillB "(" S_sound_data_fillB " sd value): fills the sound-data object sd with value"
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, 1, S_sound_data_fillB, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_fillB, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_number(scl), scl, 2, S_sound_data_fillB, "a number");
 
   sound_data_fill(XEN_TO_SOUND_DATA(sdobj), XEN_TO_C_DOUBLE(scl));
@@ -2004,7 +2001,7 @@ static XEN g_sound_data_copy(XEN obj)
   sound_data *sdnew;
   #define H_sound_data_copy "(" S_sound_data_copy " sd): returns a copy of the sound-data object sd"
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_copy, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_copy, "a sound-data object");
 
   sdnew = sound_data_copy(XEN_TO_SOUND_DATA(obj));
   XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sdnew, 0, free_sound_data);
@@ -2038,7 +2035,7 @@ static XEN g_sound_data_reverseB(XEN obj)
 {
   #define H_sound_data_reverseB "(" S_sound_data_reverseB " sd): reverses the elements (within each channel) of sound-data object sd"
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_reverseB, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_reverseB, "a sound-data object");
 
   sound_data_reverse(XEN_TO_SOUND_DATA(obj));
   return(obj);
@@ -2070,8 +2067,8 @@ static XEN g_sound_data_addB(XEN obj1, XEN obj2)
 {
   #define H_sound_data_addB "(" S_sound_data_addB " sd1 sd2): adds (element-wise) sd2 to sd1, returning sd1"
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj1), obj1, 1, S_sound_data_addB, "a sound-data object");
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj2), obj2, 2, S_sound_data_addB, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj1), obj1, 1, S_sound_data_addB, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj2), obj2, 2, S_sound_data_addB, "a sound-data object");
 
   sound_data_add(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2));
   return(obj1);
@@ -2103,8 +2100,8 @@ static XEN g_sound_data_multiplyB(XEN obj1, XEN obj2)
 {
   #define H_sound_data_multiplyB "(" S_sound_data_multiplyB " sd1 sd2): multiplies (element-wise) sd1 by sd2, returning sd1"
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj1), obj1, 1, S_sound_data_multiplyB, "a sound-data object");
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj2), obj2, 2, S_sound_data_multiplyB, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj1), obj1, 1, S_sound_data_multiplyB, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj2), obj2, 2, S_sound_data_multiplyB, "a sound-data object");
 
   sound_data_multiply(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2));
   return(obj1);
@@ -2136,7 +2133,7 @@ static XEN g_sound_data_offsetB(XEN obj, XEN offset)
 {
   #define H_sound_data_offsetB "(" S_sound_data_offsetB " sd val): adds val to each element of sd, returning sd"
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_offsetB, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_offsetB, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_number(offset), offset, 2, S_sound_data_offsetB, "a number");
 
   sound_data_offset(XEN_TO_SOUND_DATA(obj), XEN_TO_C_DOUBLE(offset));
@@ -2148,16 +2145,16 @@ static XEN g_sound_data_add(XEN obj1, XEN obj2)
 {
   #define H_sound_data_add "(" S_sound_data_add " obj1 obj2): adds obj1 to obj2, either or both of which can be sound-data objects"
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj1) || Xen_is_number(obj1), obj1, 1, S_sound_data_add, "a sound-data object or a number");
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj2) || Xen_is_number(obj2), obj2, 2, S_sound_data_add, "a sound-data object or a number");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj1) || Xen_is_number(obj1), obj1, 1, S_sound_data_add, "a sound-data object or a number");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj2) || Xen_is_number(obj2), obj2, 2, S_sound_data_add, "a sound-data object or a number");
 
-  if (SOUND_DATA_P(obj1))
+  if (xen_is_sound_data(obj1))
     {
-      if (SOUND_DATA_P(obj2))
+      if (xen_is_sound_data(obj2))
 	return(g_sound_data_addB(obj1, obj2));
       return(g_sound_data_offsetB(obj1, obj2));
     }
-  if (SOUND_DATA_P(obj2))
+  if (xen_is_sound_data(obj2))
     return(g_sound_data_offsetB(obj2, obj1));
   return(C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(obj1) + XEN_TO_C_DOUBLE(obj2)));
 }
@@ -2167,16 +2164,16 @@ static XEN g_sound_data_multiply(XEN obj1, XEN obj2)
 {
   #define H_sound_data_multiply "(" S_sound_data_multiply " obj1 obj2): multiplies obj1 by obj2, either or both of which can be sound-data objects"
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj1) || Xen_is_number(obj1), obj1, 1, S_sound_data_multiply, "a sound-data object or a number");
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj2) || Xen_is_number(obj2), obj2, 2, S_sound_data_multiply, "a sound-data object or a number");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj1) || Xen_is_number(obj1), obj1, 1, S_sound_data_multiply, "a sound-data object or a number");
+  XEN_ASSERT_TYPE(xen_is_sound_data(obj2) || Xen_is_number(obj2), obj2, 2, S_sound_data_multiply, "a sound-data object or a number");
 
-  if (SOUND_DATA_P(obj1))
+  if (xen_is_sound_data(obj1))
     {
-      if (SOUND_DATA_P(obj2))
+      if (xen_is_sound_data(obj2))
 	return(g_sound_data_multiplyB(obj1, obj2));
       return(g_sound_data_scaleB(obj1, obj2));
     }
-  if (SOUND_DATA_P(obj2))
+  if (xen_is_sound_data(obj2))
     return(g_sound_data_scaleB(obj2, obj1));
   return(C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(obj1) * XEN_TO_C_DOUBLE(obj2)));
 }
@@ -2190,7 +2187,7 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
   int chn;
   mus_long_t len, sdlen;
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, 1, S_sound_data_to_vct, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_to_vct, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 2, S_sound_data_to_vct, "an integer");
   XEN_ASSERT_TYPE(!Xen_is_bound(vobj) || mus_is_vct(vobj), vobj, 3, S_sound_data_to_vct, "a vct");
 
@@ -2230,14 +2227,14 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   mus_long_t len;
 
   XEN_ASSERT_TYPE(mus_is_vct(vobj), vobj, 1, S_vct_to_sound_data, "a vct");
-  XEN_ASSERT_TYPE(!Xen_is_bound(sdobj) || SOUND_DATA_P(sdobj), sdobj, 2, S_vct_to_sound_data, "a sound-data object");
+  XEN_ASSERT_TYPE(!Xen_is_bound(sdobj) || xen_is_sound_data(sdobj), sdobj, 2, S_vct_to_sound_data, "a sound-data object");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 3, S_vct_to_sound_data, "an integer");
 
   v = XEN_TO_VCT(vobj);
   chn = (Xen_is_integer(chan)) ? XEN_TO_C_INT(chan) : 0;
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_data, 3, chan, "invalid channel");
-  if (!(SOUND_DATA_P(sdobj)))
+  if (!(xen_is_sound_data(sdobj)))
     {
       if (chn > 0)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_data, 3, chan, "invalid channel");
@@ -2274,7 +2271,7 @@ returns a vector of chans dimensions containing all channels of sound-data sd as
   sound_data *sd;
   FTH vec;
 
-  XEN_ASSERT_TYPE(SOUND_DATA_P(sdata), sdata, 1, S_sound_data_to_vector, "a sound-data object");
+  XEN_ASSERT_TYPE(xen_is_sound_data(sdata), sdata, 1, S_sound_data_to_vector, "a sound-data object");
   sd = XEN_TO_SOUND_DATA(sdata);
   chans = mus_sound_data_chans(sd);
   vec = XEN_MAKE_VECTOR(chans, FTH_NIL);
@@ -2313,7 +2310,7 @@ static XEN sound_data_compare(XEN vr1, XEN vr2)
   mus_long_t i, len;
   int j, sd1chans, sd2chans;
   sound_data *sd1, *sd2;
-  if ((SOUND_DATA_P(vr1)) && (SOUND_DATA_P(vr2)))
+  if ((xen_is_sound_data(vr1)) && (xen_is_sound_data(vr2)))
     {
       sd1 = XEN_TO_SOUND_DATA(vr1);
       sd2 = XEN_TO_SOUND_DATA(vr2);
@@ -2455,7 +2452,7 @@ XEN_NARGIFY_1(g_sound_data_maxamp_w, g_sound_data_maxamp)
 XEN_NARGIFY_2(g_sound_data_scaleB_w, g_sound_data_scaleB)
 XEN_NARGIFY_3(g_sound_data_ref_w, g_sound_data_ref)
 XEN_NARGIFY_4(g_sound_data_set_w, g_sound_data_set)
-XEN_NARGIFY_1(g_sound_data_p_w, g_sound_data_p)
+XEN_NARGIFY_1(g_is_sound_data_w, g_is_sound_data)
 XEN_ARGIFY_3(g_sound_data_to_vct_w, g_sound_data_to_vct)
 XEN_ARGIFY_3(g_vct_to_sound_data_w, g_vct_to_sound_data)
 #endif
@@ -2660,7 +2657,7 @@ void mus_sndlib_xen_initialize(void)
   s7_eval_c_string(s7, "(define (sound-data-length sd) (cadr (vector-dimensions sd)))");
   s7_eval_c_string(s7, "(define (make-sound-data chans frames) (make-vector (list chans frames) 0.0 #t))");
 #else
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_p,             g_sound_data_p_w,               1, 0, 0, H_sound_data_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sound_data,             g_is_sound_data_w,               1, 0, 0, H_is_sound_data);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_setB,          g_sound_data_set_w,             4, 0, 0, H_sound_data_setB);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, g_sound_data_ref_w, H_sound_data_ref,

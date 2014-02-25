@@ -322,7 +322,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 
 	  ok = false;
       	  ucp = si->cps[ip];
-	  if (!(editable_p(ucp))) continue;
+	  if (!(is_editable(ucp))) continue;
 	  sp = ucp->sound;
 	  if (!(sp->active)) continue;
 	  if ((ip == 0) || (sp != gsp)) 
@@ -649,7 +649,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
   io_error_t io_err = IO_NO_ERROR;
 
   if (dur <= 0) return;
-  if ((!(editable_p(cp0))) || (!(editable_p(cp1)))) return;
+  if ((!(is_editable(cp0))) || (!(is_editable(cp1)))) return;
   sp0 = cp0->sound;
   reporting = ((sp0) && (dur > REPORTING_SIZE) && (!(cp0->squelch_update)));
   if (reporting) start_progress_report(cp0);
@@ -794,7 +794,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
   io_error_t io_err = IO_NO_ERROR;
 
   if ((beg < 0) || (dur <= 0)) return(NULL);
-  if (!(editable_p(cp))) return(NULL);
+  if (!(is_editable(cp))) return(NULL);
   /* if last was reverse and start/end match, we could just copy preceding edlist entry, or undo/redo etc --
    *   how to tell that this is happening?
    */
@@ -1089,7 +1089,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
     }
 
   sp = cp->sound;
-  if (!(editable_p(cp))) return(NULL); /* edit hook result perhaps */
+  if (!(is_editable(cp))) return(NULL); /* edit hook result perhaps */
 
   sr = make_src(ratio, sf, egen);  /* ratio is 0.0 if egen because the envelope is the srate, but it's passed as the "sr-change" arg */
   if (sr == NULL) 
@@ -1678,7 +1678,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
 
   if ((beg < 0) || ((dur + overlap) <= 0)) return(NULL);
   sp = cp->sound;
-  if (!(editable_p(cp))) return(NULL);
+  if (!(is_editable(cp))) return(NULL);
 
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL)
@@ -1795,7 +1795,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
   mus_float_t *fltdat = NULL;
   io_error_t io_err = IO_NO_ERROR;
 
-  if (!(editable_p(cp))) return(NULL);
+  if (!(is_editable(cp))) return(NULL);
   sp = cp->sound;
 
   dur += order;
@@ -1968,7 +1968,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   mus_any *g = NULL;
   mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
   
-  if (!(editable_p(cp))) return(NULL);
+  if (!(is_editable(cp))) return(NULL);
   sp = cp->sound;
 
   total_dur = dur;
@@ -2172,7 +2172,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   mus_any *g = NULL;
   mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
   
-  if (!(editable_p(cp))) return(NULL);
+  if (!(is_editable(cp))) return(NULL);
   sp = cp->sound;
   if ((!over_selection) || (!truncate))
     dur += order;
@@ -2674,7 +2674,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
       for (i = 0; i < si->chans; i++) 
 	{
 	  bool edited = false;
-	  if (!(editable_p(si->cps[i]))) continue;
+	  if (!(is_editable(si->cps[i]))) continue;
 	  segbeg = si->begs[i];
 	  segend = si->begs[i] + dur;
 	  segnum = passes[0] + 1;
@@ -2938,7 +2938,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
       for (i = 0; i < si->chans; i++) 
 	{
 	  bool edited = false;
-	  if (!(editable_p(si->cps[i]))) continue;
+	  if (!(is_editable(si->cps[i]))) continue;
 	  segbeg = si->begs[i];
 	  segend = si->begs[i] + dur;
 	  segnum = passes[0];
@@ -3208,7 +3208,7 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
   mus_float_t y0, y1, angle, incr, off, scale;
 
   if ((beg < 0) || (dur <= 0)) return;
-  if (!(editable_p(cp))) return;
+  if (!(is_editable(cp))) return;
   if ((beg + dur) > cp->edits[edpos]->samples) 
     {
       dur = cp->edits[edpos]->samples - beg;
@@ -3769,7 +3769,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 
 				  z = s7_symbol_value(s7, s7_cadr(res));
 				  if ((s7_car(res) == s7_make_symbol(s7, "read-sample")) &&
-				      (sampler_p(z)))
+				      (is_sampler(z)))
 				    {
 				      snd_fd *sf;
 				      mus_float_t *buf;
@@ -4309,7 +4309,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 
   cp = get_cp(snd, chn, caller);
   if (!cp) return(XEN_FALSE);
-  if (!(editable_p(cp))) return(XEN_FALSE);
+  if (!(is_editable(cp))) return(XEN_FALSE);
 
   pos = to_c_edit_position(cp, edpos, caller, 7);
   beg = beg_to_sample(s_beg, caller);
@@ -4707,7 +4707,7 @@ mus_long_t scan_channel(chan_info *cp, mus_long_t start, mus_long_t end, XEN pro
   XEN result;
   result = g_sp_scan(proc, C_TO_XEN_LONG_LONG(start), C_TO_XEN_LONG_LONG(end),
 		     XEN_FALSE, XEN_FALSE, "search procedure", false, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, XEN_FALSE);
-  if (XEN_LONG_LONG_P(result))
+  if (Xen_is_long_long_int(result))
     return(XEN_TO_C_LONG_LONG(result));
   return(-1);
 }
@@ -5144,7 +5144,7 @@ swap the indicated channels"
     }
   else
     {
-      if (Xen_is_integer(snd1) || XEN_SOUND_P(snd1))
+      if (Xen_is_integer(snd1) || xen_is_sound(snd1))
 	sp = get_sp(snd1);
       else sp = cp0->sound;
       if (sp == NULL) 
@@ -5194,7 +5194,7 @@ swap the indicated channels"
 	    {
 	      /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
 	      if ((dur0 == 0) && (dur1 == 0)) return(XEN_FALSE);
-	      if ((editable_p(cp0)) && (editable_p(cp1)))
+	      if ((is_editable(cp0)) && (is_editable(cp1)))
 		{
 		  peak_env_info *e0, *e1;
 		  e0 = peak_env_copy(cp0, false, cp0->edit_ctr);

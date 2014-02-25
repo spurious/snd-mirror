@@ -2689,7 +2689,7 @@ snd_info *get_player_sound(XEN obj)
 
 static XEN_OBJECT_TYPE xen_player_tag;
 
-bool xen_player_p(XEN obj) 
+bool xen_is_player(XEN obj) 
 {
   return(Xen_c_object_is_type(obj, xen_player_tag));
 }
@@ -2720,7 +2720,7 @@ static XEN g_xen_player_to_string(XEN obj)
   XEN result;
   #define S_xen_player_to_string "player->string"
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(obj), obj, 1, S_xen_player_to_string, "a player");
+  XEN_ASSERT_TYPE(xen_is_player(obj), obj, 1, S_xen_player_to_string, "a player");
 
   vstr = xen_player_to_string(XEN_TO_XEN_PLAYER(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -2739,7 +2739,7 @@ static bool xen_player_equalp(xen_player *v1, xen_player *v2)
 
 static XEN equalp_xen_player(XEN obj1, XEN obj2)
 {
-  if ((!(XEN_PLAYER_P(obj1))) || (!(XEN_PLAYER_P(obj2)))) return(XEN_FALSE);
+  if ((!(xen_is_player(obj1))) || (!(xen_is_player(obj2)))) return(XEN_FALSE);
   return(C_TO_XEN_BOOLEAN(xen_player_equalp(XEN_TO_XEN_PLAYER(obj1), XEN_TO_XEN_PLAYER(obj2))));
 }
 #endif
@@ -2982,7 +2982,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
     return(g_play_mix(object, start));
 
   /* selection object */
-  if (XEN_SELECTION_P(object))
+  if (xen_is_selection(object))
     {
       if (selection_is_active())
 	play_selection_1(background, stop_func);
@@ -3004,7 +3004,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
     }
 
   /* otherwise object is either a player or a sound */
-  if (XEN_PLAYER_P(object))
+  if (xen_is_player(object))
     sp = get_player_sound(object);
   else sp = get_sp(object);
 
@@ -3069,9 +3069,9 @@ static XEN g_stop_playing(XEN snd)
   #define H_stop_playing "(" S_stop_playing " :optional snd): stop play (DAC output) in progress"
   snd_info *sp = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(snd) || XEN_SOUND_P(snd) || !Xen_is_bound(snd) || XEN_PLAYER_P(snd), snd, 1, S_stop_playing, "a sound or player");
+  XEN_ASSERT_TYPE(Xen_is_integer(snd) || xen_is_sound(snd) || !Xen_is_bound(snd) || xen_is_player(snd), snd, 1, S_stop_playing, "a sound or player");
 
-  if (Xen_is_integer(snd) || XEN_SOUND_P(snd))
+  if (Xen_is_integer(snd) || xen_is_sound(snd))
     {
       sp = get_sp(snd);
       if (!sp)
@@ -3079,7 +3079,7 @@ static XEN g_stop_playing(XEN snd)
     }
   else
     {
-      if (XEN_PLAYER_P(snd))
+      if (xen_is_player(snd))
 	{
 	  sp = get_player_sound(snd);
 	  if (!sp)
@@ -3130,7 +3130,7 @@ static XEN g_player_home(XEN player)
   #define H_player_home "(" S_player_home " player): a list of the sound index and channel number associated with player"
   int index;
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, 1, S_player_home, "a player");
+  XEN_ASSERT_TYPE(xen_is_player(player), player, 1, S_player_home, "a player");
   index = XEN_PLAYER_TO_C_INT(player);
 
   if ((index > 0) && 
@@ -3167,7 +3167,7 @@ channel number in the sound that contains the channel being played."
   dac_info *dp = NULL;
   int i, ochan = -1;
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, 1, S_add_player, "a player");
+  XEN_ASSERT_TYPE(xen_is_player(player), player, 1, S_add_player, "a player");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(start), start, 2, S_add_player, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(end), end, 3, S_add_player, "an integer");
   XEN_ASSERT_TYPE(((Xen_is_procedure(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
@@ -3244,7 +3244,7 @@ static XEN g_stop_player(XEN player)
   #define H_stop_player "(" S_stop_player " player): stop player and remove its associated sound from the current DAC playlist"
   snd_info *sp = NULL;
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, 1, S_stop_player, "a player");
+  XEN_ASSERT_TYPE(xen_is_player(player), player, 1, S_stop_player, "a player");
 
   sp = get_player_sound(player);
   if (sp) 
@@ -3258,7 +3258,7 @@ static XEN g_free_player(XEN player)
   #define H_free_player "(" S_free_player " player): free all resources associated with 'player' and remove it from the current DAC playlist"
   snd_info *sp = NULL;
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, 1, S_free_player, "a player");
+  XEN_ASSERT_TYPE(xen_is_player(player), player, 1, S_free_player, "a player");
 
   sp = get_player_sound(player);
   if (sp) 
@@ -3269,12 +3269,12 @@ static XEN g_free_player(XEN player)
 
 /* also the dac filler needs to run on empty buffers in this case? */
 
-static XEN g_player_p(XEN obj)
+static XEN g_is_player(XEN obj)
 {
-  #define H_player_p "(" S_is_player " obj): is 'obj' an active player"
+  #define H_is_player "(" S_is_player " obj): is 'obj' an active player"
   int index;
 
-  if (XEN_PLAYER_P(obj))
+  if (xen_is_player(obj))
     {
       index = XEN_PLAYER_TO_C_INT(obj);
       return(C_TO_XEN_BOOLEAN((index > 0) && 
@@ -3458,7 +3458,7 @@ XEN_ARGIFY_3(g_start_playing_w, g_start_playing)
 XEN_NARGIFY_1(g_stop_player_w, g_stop_player)
 XEN_NARGIFY_1(g_free_player_w, g_free_player)
 XEN_NARGIFY_0(g_players_w, g_players)
-XEN_NARGIFY_1(g_player_p_w, g_player_p)
+XEN_NARGIFY_1(g_is_player_w, g_is_player)
 XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
 XEN_NARGIFY_1(g_set_dac_size_w, g_set_dac_size)
 XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
@@ -3490,7 +3490,7 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_stop_player,    g_stop_player_w,    1, 0, 0, H_stop_player);
   XEN_DEFINE_PROCEDURE(S_free_player,    g_free_player_w,    1, 0, 0, H_free_player);
   XEN_DEFINE_PROCEDURE(S_players,        g_players_w,        0, 0, 0, H_players);
-  XEN_DEFINE_PROCEDURE(S_is_player,       g_player_p_w,       1, 0, 0, H_player_p);
+  XEN_DEFINE_PROCEDURE(S_is_player,       g_is_player_w,       1, 0, 0, H_is_player);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
 				   S_setB S_with_tracking_cursor, g_set_with_tracking_cursor_w, 0, 0, 1, 0);

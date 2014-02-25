@@ -401,7 +401,7 @@ void add_selection_or_region(int reg, chan_info *cp)
   /* in all cases, this has a local sound to report in (kbd, xmenu) */
   if (cp) 
     {
-      if (editable_p(cp))
+      if (is_editable(cp))
 	{
 	  io_error_t io_err = IO_NO_ERROR;
 	  bool got_selection;
@@ -877,7 +877,7 @@ typedef struct {
 
 static XEN_OBJECT_TYPE xen_selection_tag;
 
-bool xen_selection_p(XEN obj) 
+bool xen_is_selection(XEN obj) 
 {
   return(Xen_c_object_is_type(obj, xen_selection_tag));
 }
@@ -890,11 +890,11 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(xen_selection, free_xen_selection, xen_selection_
 
 static char *xen_selection_to_string(xen_selection *v)
 {
-  #define XEN_SELECTION_PRINT_BUFFER_SIZE 64
+  #define xen_is_selectionRINT_BUFFER_SIZE 64
   char *buf;
   if (v == NULL) return(NULL);
-  buf = (char *)calloc(XEN_SELECTION_PRINT_BUFFER_SIZE, sizeof(char));
-  snprintf(buf, XEN_SELECTION_PRINT_BUFFER_SIZE, "#<selection %d>", v->n);
+  buf = (char *)calloc(xen_is_selectionRINT_BUFFER_SIZE, sizeof(char));
+  snprintf(buf, xen_is_selectionRINT_BUFFER_SIZE, "#<selection %d>", v->n);
   return(buf);
 }
 
@@ -908,7 +908,7 @@ static XEN g_xen_selection_to_string(XEN obj)
   XEN result;
   #define S_xen_selection_to_string "selection->string"
 
-  XEN_ASSERT_TYPE(XEN_SELECTION_P(obj), obj, 1, S_xen_selection_to_string, "a selection");
+  XEN_ASSERT_TYPE(xen_is_selection(obj), obj, 1, S_xen_selection_to_string, "a selection");
 
   vstr = xen_selection_to_string(XEN_TO_XEN_SELECTION(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -928,7 +928,7 @@ static bool xen_selection_equalp(xen_selection *v1, xen_selection *v2)
 
 static XEN equalp_xen_selection(XEN obj1, XEN obj2)
 {
-  if ((!(XEN_SELECTION_P(obj1))) || (!(XEN_SELECTION_P(obj2)))) return(XEN_FALSE);
+  if ((!(xen_is_selection(obj1))) || (!(xen_is_selection(obj2)))) return(XEN_FALSE);
   return(C_TO_XEN_BOOLEAN(xen_selection_equalp(XEN_TO_XEN_SELECTION(obj1), XEN_TO_XEN_SELECTION(obj2))));
 }
 #endif
@@ -1307,7 +1307,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(beg), beg, 1, S_insert_selection, "an integer");
 
       cp = get_cp(snd, chn, S_insert_selection);
-      if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
+      if ((!cp) || (!(is_editable(cp)))) return(XEN_FALSE);
 
       samp = beg_to_sample(beg, S_insert_selection);
       if (Xen_is_integer(chn))
@@ -1344,7 +1344,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(sel_chan), sel_chan, 4, S_mix_selection, "an integer or " PROC_TRUE);
 
       cp = get_cp(snd, chn, S_mix_selection);
-      if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
+      if ((!cp) || (!(is_editable(cp)))) return(XEN_FALSE);
 
       obeg = beg_to_sample(beg, S_mix_selection);
       if (Xen_is_integer(sel_chan))
@@ -1434,13 +1434,13 @@ static XEN g_selection_to_mix(void)
 }
 
 
-static XEN g_selection_p(XEN sel)
+static XEN g_is_selection(XEN sel)
 {
-  #define H_selection_p "(" S_is_selection " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
+  #define H_is_selection "(" S_is_selection " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
 If 'obj' is passed, " S_is_selection " returns " PROC_TRUE " if obj is a selection object and there is a current selection."
 
   if ((Xen_is_bound(sel)) &&
-      (!(xen_selection_p(sel))))
+      (!(xen_is_selection(sel))))
     return(XEN_FALSE);
 
   return(C_TO_XEN_BOOLEAN(selection_is_active()));
@@ -1835,7 +1835,7 @@ XEN_ARGIFY_2(g_selection_position_w, g_selection_position)
 XEN_ARGIFY_2(g_selection_frames_w, g_selection_frames)
 XEN_ARGIFY_2(g_selection_member_w, g_selection_member)
 XEN_NARGIFY_0(g_selection_w, g_selection)
-XEN_ARGIFY_1(g_selection_p_w, g_selection_p)
+XEN_ARGIFY_1(g_is_selection_w, g_is_selection)
 XEN_NARGIFY_0(g_selection_chans_w, g_selection_chans)
 XEN_NARGIFY_0(g_selection_srate_w, g_selection_srate)
 XEN_ARGIFY_2(g_selection_maxamp_w, g_selection_maxamp)
@@ -1868,7 +1868,7 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_member, g_selection_member_w, H_selection_member, S_setB S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_selection,        g_selection_w,        0, 0, 0, H_selection);
-  XEN_DEFINE_SAFE_PROCEDURE(S_is_selection,      g_selection_p_w,      0, 1, 0, H_selection_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_selection,      g_is_selection_w,      0, 1, 0, H_is_selection);
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_chans,  g_selection_chans_w,  0, 0, 0, H_selection_chans);
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate);
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);

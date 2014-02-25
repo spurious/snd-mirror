@@ -495,7 +495,7 @@ static added_transform *type_to_transform(int type)
 }
 
 
-bool transform_p(int type)
+bool is_transform(int type)
 {
   if (type < 0) return(false);
   if (type < NUM_BUILTIN_TRANSFORM_TYPES) return(true);
@@ -507,7 +507,7 @@ bool transform_p(int type)
 
 const char *transform_name(int type)
 {
-  if (transform_p(type))
+  if (is_transform(type))
     {
       added_transform *af;
       if (type < NUM_BUILTIN_TRANSFORM_TYPES)
@@ -521,7 +521,7 @@ const char *transform_name(int type)
 
 const char *transform_program_name(int type)
 {
-  if (transform_p(type))
+  if (is_transform(type))
     {
       added_transform *af;
       if (type < NUM_BUILTIN_TRANSFORM_TYPES)
@@ -2092,7 +2092,7 @@ int xen_transform_to_int(XEN n)
 
 static XEN_OBJECT_TYPE xen_transform_tag;
 
-bool xen_transform_p(XEN obj) 
+bool xen_is_transform(XEN obj) 
 {
   return(Xen_c_object_is_type(obj, xen_transform_tag));
 }
@@ -2123,7 +2123,7 @@ static XEN g_xen_transform_to_string(XEN obj)
   XEN result;
   #define S_xen_transform_to_string "transform->string"
 
-  XEN_ASSERT_TYPE(XEN_TRANSFORM_P(obj), obj, 1, S_xen_transform_to_string, "a transform");
+  XEN_ASSERT_TYPE(xen_is_transform(obj), obj, 1, S_xen_transform_to_string, "a transform");
 
   vstr = xen_transform_to_string(XEN_TO_XEN_TRANSFORM(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -2142,7 +2142,7 @@ static bool xen_transform_equalp(xen_transform *v1, xen_transform *v2)
 
 static XEN equalp_xen_transform(XEN obj1, XEN obj2)
 {
-  if ((!(XEN_TRANSFORM_P(obj1))) || (!(XEN_TRANSFORM_P(obj2)))) return(XEN_FALSE);
+  if ((!(xen_is_transform(obj1))) || (!(xen_is_transform(obj2)))) return(XEN_FALSE);
   return(C_TO_XEN_BOOLEAN(xen_transform_equalp(XEN_TO_XEN_TRANSFORM(obj1), XEN_TO_XEN_TRANSFORM(obj2))));
 }
 #endif
@@ -2225,16 +2225,16 @@ static XEN g_integer_to_transform(XEN n)
 static XEN g_transform_to_integer(XEN n)
 {
   #define H_transform_to_integer "(" S_transform_to_integer " id) returns the integer corresponding to the given transform"
-  XEN_ASSERT_TYPE(XEN_TRANSFORM_P(n), n, 1, S_transform_to_integer, "a transform");
+  XEN_ASSERT_TYPE(xen_is_transform(n), n, 1, S_transform_to_integer, "a transform");
   return(C_TO_XEN_INT(xen_transform_to_int(n)));
 }
 
 
-static XEN g_transform_p(XEN type)
+static XEN g_is_transform(XEN type)
 {
-  #define H_transform_p "(" S_is_transform " obj): " PROC_TRUE " if 'obj' is a transform object."
-  return(C_TO_XEN_BOOLEAN(XEN_TRANSFORM_P(type) && 
-			  transform_p(XEN_TRANSFORM_TO_C_INT(type))));
+  #define H_is_transform "(" S_is_transform " obj): " PROC_TRUE " if 'obj' is a transform object."
+  return(C_TO_XEN_BOOLEAN(xen_is_transform(type) && 
+			  is_transform(XEN_TRANSFORM_TO_C_INT(type))));
 }
 
 
@@ -2249,7 +2249,7 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
   vct *v;
   mus_float_t *dat, *vdata;
 
-  XEN_ASSERT_TYPE(XEN_TRANSFORM_P(type), type, 1, "snd-transform", "a transform object");
+  XEN_ASSERT_TYPE(xen_is_transform(type), type, 1, "snd-transform", "a transform object");
   XEN_ASSERT_TYPE(mus_is_vct(data), data, 2, "snd-transform", "a vct");
 
   trf = XEN_TRANSFORM_TO_C_INT(type);
@@ -2321,7 +2321,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0).  " S_add_transform 
     }
 
 #if HAVE_SCHEME
-  if ((mus_is_xen(proc)) || (sound_data_p(proc))) /* happens a lot in snd-test.scm, so add a check */
+  if ((mus_is_xen(proc)) || (xen_is_sound_data(proc))) /* happens a lot in snd-test.scm, so add a check */
     XEN_WRONG_TYPE_ARG_ERROR(S_add_transform, 5, proc, "a procedure");
 #endif
 
@@ -2353,10 +2353,10 @@ static XEN g_delete_transform(XEN type)
   added_transform *af;
   #define H_delete_transform "(" S_delete_transform " obj) deletes the specified transform if it was created via " S_add_transform "."
 
-  XEN_ASSERT_TYPE(XEN_TRANSFORM_P(type), type, 1, S_delete_transform, "a transform");
+  XEN_ASSERT_TYPE(xen_is_transform(type), type, 1, S_delete_transform, "a transform");
 
   typ = XEN_TRANSFORM_TO_C_INT(type);
-  if ((typ < NUM_BUILTIN_TRANSFORM_TYPES) || (!transform_p(typ)))
+  if ((typ < NUM_BUILTIN_TRANSFORM_TYPES) || (!is_transform(typ)))
     XEN_OUT_OF_RANGE_ERROR(S_delete_transform, 1, type, "an integer (an active added transform)");
 
   af = type_to_transform(typ);
@@ -2383,7 +2383,7 @@ XEN_ARGIFY_4(g_transform_sample_w, g_transform_sample)
 XEN_ARGIFY_3(g_transform_to_vct_w, g_transform_to_vct)
 XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
 XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
-XEN_NARGIFY_1(g_transform_p_w, g_transform_p)
+XEN_NARGIFY_1(g_is_transform_w, g_is_transform)
 XEN_NARGIFY_1(g_delete_transform_w, g_delete_transform)
 XEN_NARGIFY_0(g_log_freq_start_w, g_log_freq_start)
 XEN_NARGIFY_1(g_set_log_freq_start_w, g_set_log_freq_start)
@@ -2480,7 +2480,7 @@ of a moving mark:\n\
   XEN_DEFINE_PROCEDURE(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
   XEN_DEFINE_PROCEDURE(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
   XEN_DEFINE_PROCEDURE(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
-  XEN_DEFINE_PROCEDURE(S_is_transform,          g_transform_p_w,      1, 0, 0, H_transform_p);
+  XEN_DEFINE_PROCEDURE(S_is_transform,          g_is_transform_w,      1, 0, 0, H_is_transform);
   XEN_DEFINE_PROCEDURE(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
   XEN_DEFINE_PROCEDURE("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
 

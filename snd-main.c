@@ -494,7 +494,7 @@ static void save_options(FILE *fd)
   if (mix_tag_width(ss) != DEFAULT_MIX_TAG_WIDTH) pss_sd(fd, S_mix_tag_width, mix_tag_width(ss));
   if (mark_tag_height(ss) != DEFAULT_MARK_TAG_HEIGHT) pss_sd(fd, S_mark_tag_height, mark_tag_height(ss));
   if (mark_tag_width(ss) != DEFAULT_MARK_TAG_WIDTH) pss_sd(fd, S_mark_tag_width, mark_tag_width(ss));
-  if (enved_wave_p(ss) != DEFAULT_ENVED_WAVE_P) pss_ss(fd, S_enved_wave_on, b2s(enved_wave_p(ss)));
+  if (enved_with_wave(ss) != DEFAULT_ENVED_WITH_WAVE) pss_ss(fd, S_enved_with_wave, b2s(enved_with_wave(ss)));
   if (enved_in_dB(ss) != DEFAULT_ENVED_IN_DB) pss_ss(fd, S_enved_in_dB, b2s(enved_in_dB(ss)));
   if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_enved_clip_on, b2s(enved_clip_p(ss)));
   if (enved_style(ss) == ENVELOPE_EXPONENTIAL) pss_ss(fd, S_enved_style, TO_VAR_NAME(S_envelope_exponential));

@@ -190,7 +190,7 @@ void set_enved_clip_p(bool val) {}
 void reflect_enved_style(void) {}
 void set_enved_base(mus_float_t val) {}
 void set_enved_target(enved_target_t val) {}
-void set_enved_wave_p(bool val) {}
+void set_enved_with_wave(bool val) {}
 void set_enved_in_dB(bool val) {}
 bool enved_dialog_is_active(void) {return(false);}
 void set_enved_filter_order(int order) {}

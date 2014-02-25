@@ -1548,6 +1548,8 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_is_vector(Arg)            XEN_VECTOR_P(Arg)
 #define Xen_is_char(Arg)              XEN_CHAR_P(Arg)
 #define Xen_keyword_is_eq(Arg1, Arg2) XEN_KEYWORD_EQ_P(Arg1, Arg2)
+#define Xen_is_defined(Arg)           XEN_DEFINED_P(Arg)
+#define Xen_is_ratio(Arg)             XEN_RATIO_P(Arg)
 
 #define Xen_is_long_long_or_unbound(Arg) XEN_LONG_LONG_IF_BOUND_P(Arg)
 #define Xen_is_boolean_or_unbound(Arg)   XEN_BOOLEAN_IF_BOUND_P(Arg)

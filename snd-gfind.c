@@ -252,7 +252,7 @@ static XEN g_find_dialog(XEN managed, XEN text)
   XEN_ASSERT_TYPE(Xen_is_string_or_unbound(text), text, 2, S_find_dialog, "a string");
 
   make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed), NULL);
-  if ((edit_find_text) && (XEN_STRING_P(text)))
+  if ((edit_find_text) && (Xen_is_string(text)))
     gtk_entry_get_text(GTK_ENTRY(edit_find_text));
 
   return(XEN_WRAP_WIDGET(edit_find_dialog));

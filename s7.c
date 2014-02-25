@@ -29154,7 +29154,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ)
 {
   s7_pointer x;
   if (len < 0)
-    return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), s7_make_integer(sc, len), A_NON_NEGATIVE_INTEGER));
+    return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), A_NON_NEGATIVE_INTEGER));
   if (len > 134217728)
     {
       /* len is an "int" currently */
@@ -69606,7 +69606,7 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0)
- * many (1000) more _p|P -> _is_ changes remain in snd (g_*_p and H_*_p *.h)
+ * many (500) more _p|P -> _is_ changes remain in snd (g_*_p and H_*_p *.h)
  *
  * for each all_x case (and maybe c_s...? have map of symbols, get slots, call using slots not symbols in do loops
  *   would mean returning n slots, then assume they are passed to the all_x_slot replacement along with the code (for c_call etc)

@@ -117,7 +117,7 @@ static void prune_edits(chan_info *cp, int edpt)
 }
 
 
-bool editable_p(chan_info *cp)
+bool is_editable(chan_info *cp)
 {
   if (!(cp->editable)) return(false);
   if ((Xen_is_hook(cp->edit_hook)) &&
@@ -154,7 +154,7 @@ static bool prepare_edit_list(chan_info *cp, int pos, const char *caller)
    */
   snd_info *sp;
 
-  if (!(editable_p(cp))) return(false); /* this may represent a second call on edit-hook for this edit */
+  if (!(is_editable(cp))) return(false); /* this may represent a second call on edit-hook for this edit */
   if (pos > cp->edit_ctr)
     {
       XEN_ERROR(NO_SUCH_EDIT,
@@ -6712,14 +6712,12 @@ static XEN g_edit_fragment_type_name(XEN type)
 
 static XEN_OBJECT_TYPE sf_tag;
 
-bool sampler_p(XEN obj) {return(Xen_c_object_is_type(obj, sf_tag));}
+bool is_sampler(XEN obj) {return(Xen_c_object_is_type(obj, sf_tag));}
 
-#define SAMPLER_P(Obj) Xen_c_object_is_type(Obj, sf_tag)
-
-#define ANY_SAMPLER_P(Obj) ((sampler_p(Obj)) || (mix_sampler_p(Obj)))
+#define is_any_sampler(Obj) ((is_sampler(Obj)) || (is_mix_sampler(Obj)))
 
 
-snd_fd *xen_to_sampler(XEN obj) {if (SAMPLER_P(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
+snd_fd *xen_to_sampler(XEN obj) {if (is_sampler(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
 
 #define XEN_TO_SAMPLER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
 
@@ -6887,16 +6885,16 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 static XEN g_sampler_at_end(XEN obj) 
 {
   #define H_sampler_at_end "(" S_is_sampler_at_end " obj): " PROC_TRUE " if sampler has reached the end of its data"
-  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, 1, S_is_sampler_at_end, "a sampler (of any kind)");
+  XEN_ASSERT_TYPE(is_any_sampler(obj), obj, 1, S_is_sampler_at_end, "a sampler (of any kind)");
 
-  if (sampler_p(obj))
+  if (is_sampler(obj))
     {
       snd_fd *sf;
       sf = XEN_TO_SAMPLER(obj);
       return(C_TO_XEN_BOOLEAN(sf->at_eof));
     }
 
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(g_mix_sampler_at_end_p(obj));
 
   return(XEN_FALSE);
@@ -6914,9 +6912,9 @@ static XEN g_sampler_at_end(XEN obj)
 static XEN g_sampler_position(XEN obj) 
 {
   #define H_sampler_position "(" S_sampler_position " obj): current (sample-wise) location of sampler"
-  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, 1, S_sampler_position, "a sampler (of any kind)");
+  XEN_ASSERT_TYPE(is_any_sampler(obj), obj, 1, S_sampler_position, "a sampler (of any kind)");
 
-  if (sampler_p(obj))
+  if (is_sampler(obj))
     {
       snd_fd *fd = NULL;
       fd = XEN_TO_SAMPLER(obj);
@@ -6931,7 +6929,7 @@ static XEN g_sampler_position(XEN obj)
 	}
     }
 
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(g_mix_sampler_position(obj));
 
   return(XEN_ZERO);
@@ -6942,9 +6940,9 @@ static XEN g_sampler_home(XEN obj)
 {
   #define H_sampler_home "(" S_sampler_home " obj): (list sound-index chan-num) associated with a sound reader, or \
 if 'obj' is a mix-sampler, the id of underlying mix"
-  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, 1, S_sampler_home, "a sampler (of any kind)");
+  XEN_ASSERT_TYPE(is_any_sampler(obj), obj, 1, S_sampler_home, "a sampler (of any kind)");
 
-  if (sampler_p(obj))
+  if (is_sampler(obj))
     {
       snd_fd *fd = NULL;
       fd = XEN_TO_SAMPLER(obj);
@@ -6961,7 +6959,7 @@ if 'obj' is a mix-sampler, the id of underlying mix"
 	}
     }
 
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(g_mix_sampler_home(obj));
 
   return(XEN_FALSE);
@@ -6970,7 +6968,7 @@ if 'obj' is a mix-sampler, the id of underlying mix"
 
 XEN g_sampler_file_name(XEN obj)
 {
-  if (sampler_p(obj))
+  if (is_sampler(obj))
     {
       snd_fd *fd = NULL;
       fd = XEN_TO_SAMPLER(obj);
@@ -7116,28 +7114,28 @@ snd can be a filename, a mix, a region, or a sound index number."
 }
 
 
-static XEN g_sampler_p(XEN obj)
+static XEN g_is_sampler(XEN obj)
 {
-  #define H_sampler_p "(" S_is_sampler " obj): " PROC_TRUE " if obj is a sound sampler."
+  #define H_is_sampler "(" S_is_sampler " obj): " PROC_TRUE " if obj is a sound sampler."
 
-  if (sampler_p(obj))
+  if (is_sampler(obj))
     {
       snd_fd *fd;
       fd = XEN_TO_SAMPLER(obj);
       return(C_TO_XEN_BOOLEAN(fd->type == SAMPLER));
     }
 
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(C_STRING_TO_XEN_SYMBOL("mix"));
 
   return(XEN_FALSE);
 }
 
 
-static XEN g_region_sampler_p(XEN obj)
+static XEN g_region_is_sampler(XEN obj)
 {
-  #define H_region_sampler_p "(" S_is_region_sampler " obj): " PROC_TRUE " if obj is a region sampler."
-  if (sampler_p(obj))
+  #define H_region_is_sampler "(" S_is_region_sampler " obj): " PROC_TRUE " if obj is a region sampler."
+  if (is_sampler(obj))
     {
       snd_fd *fd;
       fd = XEN_TO_SAMPLER(obj);
@@ -7150,9 +7148,9 @@ static XEN g_region_sampler_p(XEN obj)
 static XEN g_copy_sampler(XEN obj)
 {
   #define H_copy_sampler "(" S_copy_sampler " reader): return a copy of reader"
-  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, 1, S_copy_sampler, "a sampler (of any kind)");
+  XEN_ASSERT_TYPE(is_any_sampler(obj), obj, 1, S_copy_sampler, "a sampler (of any kind)");
 
-  if (sampler_p(obj))
+  if (is_sampler(obj))
     {
       snd_fd *fd = NULL;
       fd = XEN_TO_SAMPLER(obj);
@@ -7175,7 +7173,7 @@ static XEN g_copy_sampler(XEN obj)
       return(XEN_FALSE);
     }
 
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(g_copy_mix_sampler(obj));
 
   return(XEN_FALSE);
@@ -7193,9 +7191,9 @@ static XEN g_next_sample(XEN obj)
 {
   #define H_next_sample "(" S_next_sample " reader): next sample from reader"
 
-  if (SAMPLER_P(obj))
+  if (is_sampler(obj))
     return(C_TO_XEN_DOUBLE(protected_next_sample((snd_fd *)XEN_OBJECT_REF(obj))));
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(C_TO_XEN_DOUBLE(protected_next_sample(xen_mix_to_snd_fd(obj))));
 
   XEN_ASSERT_TYPE(false, obj, 1, S_next_sample, "a sampler");
@@ -7222,9 +7220,9 @@ mus_float_t read_sample_with_direction(void *p, int dir)
 static XEN g_read_sample(XEN obj)
 {
   #define H_read_sample "(" S_read_sample " reader): read sample from reader"
-  if (SAMPLER_P(obj))
+  if (is_sampler(obj))
     return(C_TO_XEN_DOUBLE(read_sample((snd_fd *)XEN_OBJECT_REF(obj))));
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(C_TO_XEN_DOUBLE(read_sample(xen_mix_to_snd_fd(obj))));
 
   XEN_ASSERT_TYPE(false, obj, 1, S_read_sample, "a sampler");
@@ -7237,9 +7235,9 @@ static XEN g_read_sample_with_direction(XEN obj, XEN dir)
 {
   #define H_read_sample_with_direction "(" S_read_sample_with_direction " reader dir): read sample from reader following dir (next/previous choice)"
   XEN_ASSERT_TYPE(Xen_is_integer(dir), dir, 1, S_read_sample_with_direction, "an integer");
-  if (SAMPLER_P(obj))
+  if (is_sampler(obj))
     return(C_TO_XEN_DOUBLE(read_sample_with_direction((void *)XEN_OBJECT_REF(obj), XEN_TO_C_INT(dir))));
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(C_TO_XEN_DOUBLE(read_sample_with_direction((void *)xen_mix_to_snd_fd(obj), XEN_TO_C_INT(dir))));
 
   XEN_ASSERT_TYPE(false, obj, 1, S_read_sample_with_direction, "a sampler");
@@ -7259,9 +7257,9 @@ static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
 static XEN g_previous_sample(XEN obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader): previous sample from reader"
-  if (SAMPLER_P(obj))
+  if (is_sampler(obj))
     return(C_TO_XEN_DOUBLE(protected_previous_sample((snd_fd *)XEN_OBJECT_REF(obj))));
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(C_TO_XEN_DOUBLE(protected_previous_sample(xen_mix_to_snd_fd(obj))));
 
   XEN_ASSERT_TYPE(false, obj, 1, S_previous_sample, "a sampler");
@@ -7272,9 +7270,9 @@ static XEN g_previous_sample(XEN obj)
 static XEN g_free_sampler(XEN obj)
 {
   #define H_free_sampler "(" S_free_sampler " reader): free a sampler (of any kind)"
-  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, 1, S_free_sampler, "a sampler");
+  XEN_ASSERT_TYPE(is_any_sampler(obj), obj, 1, S_free_sampler, "a sampler");
 
-  if (sampler_p(obj))
+  if (is_sampler(obj))
     {
       snd_info *sp = NULL;
       snd_fd *fd;
@@ -7286,7 +7284,7 @@ static XEN g_free_sampler(XEN obj)
       if (sp) completely_free_snd_info(sp);
     }
 
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(g_free_mix_sampler(obj));
   return(XEN_FALSE);
 }
@@ -7313,7 +7311,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
     {
       chan_info *cp;
       if ((Xen_is_integer(chn)) && 
-	  (Xen_is_integer(snd) || XEN_SOUND_P(snd)))
+	  (Xen_is_integer(snd) || xen_is_sound(snd)))
 	{
 	  cp = get_cp(snd, chn, S_save_edit_history);
 	  if (!cp) return(XEN_FALSE);
@@ -7323,7 +7321,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 	{
 	  int i, j;
 	  snd_info *sp;
-	  if (Xen_is_integer(snd) || XEN_SOUND_P(snd))
+	  if (Xen_is_integer(snd) || xen_is_sound(snd))
 	    {
 	      sp = get_sp(snd);
 	      if (sp)
@@ -9006,9 +9004,9 @@ static s7_pointer g_next_sample_s(s7_scheme *sc, s7_pointer args)
   s7_pointer obj;
   obj = s7_car_value(s7, args);
 
-  if (SAMPLER_P(obj))
+  if (is_sampler(obj))
     return(C_TO_XEN_DOUBLE(protected_next_sample((snd_fd *)XEN_OBJECT_REF(obj))));
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(C_TO_XEN_DOUBLE(protected_next_sample(xen_mix_to_snd_fd(obj))));
 
   XEN_ASSERT_TYPE(false, obj, 1, S_next_sample, "a sampler");
@@ -9032,9 +9030,9 @@ static s7_pointer g_read_sample_s(s7_scheme *sc, s7_pointer args)
   s7_pointer obj;
   obj = s7_car_value(s7, args);
 
-  if (SAMPLER_P(obj))
+  if (is_sampler(obj))
     return(C_TO_XEN_DOUBLE(read_sample((snd_fd *)XEN_OBJECT_REF(obj))));
-  if (mix_sampler_p(obj))
+  if (is_mix_sampler(obj))
     return(C_TO_XEN_DOUBLE(read_sample(xen_mix_to_snd_fd(obj))));
 
   XEN_ASSERT_TYPE(false, obj, 1, S_read_sample, "a sampler");
@@ -9063,8 +9061,8 @@ XEN_NARGIFY_1(g_previous_sample_w, g_previous_sample)
 XEN_NARGIFY_1(g_free_sampler_w, g_free_sampler)
 XEN_NARGIFY_1(g_sampler_home_w, g_sampler_home)
 XEN_NARGIFY_1(g_sampler_position_w, g_sampler_position)
-XEN_NARGIFY_1(g_sampler_p_w, g_sampler_p)
-XEN_NARGIFY_1(g_region_sampler_p_w, g_region_sampler_p)
+XEN_NARGIFY_1(g_is_sampler_w, g_is_sampler)
+XEN_NARGIFY_1(g_region_is_sampler_w, g_region_is_sampler)
 XEN_NARGIFY_1(g_sampler_at_end_w, g_sampler_at_end)
 XEN_NARGIFY_1(g_copy_sampler_w, g_copy_sampler)
 XEN_ARGIFY_3(g_save_edit_history_w, g_save_edit_history)
@@ -9146,8 +9144,8 @@ void g_init_edits(void)
   XEN_DEFINE_DIRECT_PROCEDURE(S_previous_sample,      g_previous_sample_w,        1, 0, 0, H_previous_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
   XEN_DEFINE_SAFE_PROCEDURE(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
-  XEN_DEFINE_SAFE_PROCEDURE(S_is_sampler,             g_sampler_p_w,              1, 0, 0, H_sampler_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_is_region_sampler,       g_region_sampler_p_w,       1, 0, 0, H_region_sampler_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sampler,             g_is_sampler_w,              1, 0, 0, H_is_sampler);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_region_sampler,       g_region_is_sampler_w,       1, 0, 0, H_region_is_sampler);
   XEN_DEFINE_SAFE_PROCEDURE(S_is_sampler_at_end,       g_sampler_at_end_w,         1, 0, 0, H_sampler_at_end);
   XEN_DEFINE_SAFE_PROCEDURE(S_sampler_position,       g_sampler_position_w,       1, 0, 0, H_sampler_position);
   XEN_DEFINE_SAFE_PROCEDURE(S_copy_sampler,           g_copy_sampler_w,           1, 0, 0, H_copy_sampler);
@@ -9232,8 +9230,8 @@ keep track of which files are in a given saved state batch, and a way to rename 
     next_sample_s = s7_make_function(s7, "next-sample", g_next_sample_s, 1, 0, false, "next-sample optimization");
     s7_function_set_class(next_sample_s, f);
     s7_function_set_returns_temp(next_sample_s);
-    store_choices(s7, next_sample_s, (s7_pointer)next_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
-    store_choices(s7, f, (s7_pointer)next_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
+    store_choices(s7, next_sample_s, (s7_pointer)next_sample_direct, NULL, NULL, (s7_pointer)is_sampler);
+    store_choices(s7, f, (s7_pointer)next_sample_direct, NULL, NULL, (s7_pointer)is_sampler);
 
     /* read-sample */
     f = s7_name_to_value(s7, "read-sample");
@@ -9242,12 +9240,12 @@ keep track of which files are in a given saved state batch, and a way to rename 
     read_sample_s = s7_make_function(s7, "read-sample", g_read_sample_s, 1, 0, false, "read-sample optimization");
     s7_function_set_class(read_sample_s, f);
     s7_function_set_returns_temp(read_sample_s);
-    store_choices(s7, read_sample_s, (s7_pointer)read_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
-    store_choices(s7, f, (s7_pointer)read_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
+    store_choices(s7, read_sample_s, (s7_pointer)read_sample_direct, NULL, NULL, (s7_pointer)is_sampler);
+    store_choices(s7, f, (s7_pointer)read_sample_direct, NULL, NULL, (s7_pointer)is_sampler);
 
     /* read-sample-with-direction */
     f = s7_name_to_value(s7, "read-sample-with-direction");
-    store_choices(s7, f, NULL, (s7_pointer)read_sample_with_direction, NULL, (s7_pointer)sampler_p);
+    store_choices(s7, f, NULL, (s7_pointer)read_sample_with_direction, NULL, (s7_pointer)is_sampler);
   }
 #endif
 

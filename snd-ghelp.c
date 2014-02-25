@@ -85,7 +85,7 @@ static bool new_help(const char *pattern, bool complain)
       /* given name, find doc string, if any */
       XEN xstr;
       xstr = g_snd_help(C_TO_XEN_STRING(pattern), 0);
-      if (XEN_STRING_P(xstr))
+      if (Xen_is_string(xstr))
 	{
 	  int gc_loc;
 	  gc_loc = snd_protect(xstr);

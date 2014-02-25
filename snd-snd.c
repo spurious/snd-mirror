@@ -14,7 +14,7 @@ static snd_info *get_sp_1(int index)
 
 snd_info *get_sp(XEN snd)
 {
-  if (XEN_SOUND_P(snd))
+  if (xen_is_sound(snd))
     return(get_sp_1(xen_sound_to_int(snd)));
 
 #if (!HAVE_SCHEME)      
@@ -2136,7 +2136,7 @@ int xen_sound_to_int(XEN n)
 
 static XEN_OBJECT_TYPE xen_sound_tag;
 
-bool xen_sound_p(XEN obj) 
+bool xen_is_sound(XEN obj) 
 {
   return(Xen_c_object_is_type(obj, xen_sound_tag));
 }
@@ -2167,7 +2167,7 @@ static XEN g_xen_sound_to_string(XEN obj)
   XEN result;
   #define S_xen_sound_to_string "sound->string"
 
-  XEN_ASSERT_TYPE(XEN_SOUND_P(obj), obj, 1, S_xen_sound_to_string, "a sound");
+  XEN_ASSERT_TYPE(xen_is_sound(obj), obj, 1, S_xen_sound_to_string, "a sound");
 
   vstr = xen_sound_to_string(XEN_TO_XEN_SOUND(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -2186,7 +2186,7 @@ static bool xen_sound_equalp(xen_sound *v1, xen_sound *v2)
 
 static XEN equalp_xen_sound(XEN obj1, XEN obj2)
 {
-  if ((!(XEN_SOUND_P(obj1))) || (!(XEN_SOUND_P(obj2)))) return(XEN_FALSE);
+  if ((!(xen_is_sound(obj1))) || (!(xen_is_sound(obj2)))) return(XEN_FALSE);
   return(C_TO_XEN_BOOLEAN(xen_sound_equalp(XEN_TO_XEN_SOUND(obj1), XEN_TO_XEN_SOUND(obj2))));
 }
 #endif
@@ -2342,7 +2342,7 @@ static XEN g_integer_to_sound(XEN n)
 static XEN g_sound_to_integer(XEN n)
 {
   #define H_sound_to_integer "(" S_sound_to_integer " id) returns the integer corresponding to the given sound"
-  XEN_ASSERT_TYPE(XEN_SOUND_P(n), n, 1, S_sound_to_integer, "a sound");
+  XEN_ASSERT_TYPE(xen_is_sound(n), n, 1, S_sound_to_integer, "a sound");
   return(C_TO_XEN_INT(xen_sound_to_int(n)));
 }
 
@@ -2357,11 +2357,11 @@ XEN snd_no_such_sound_error(const char *caller, XEN n)
 }
 
 
-static XEN g_sound_p(XEN snd)
+static XEN g_is_sound(XEN snd)
 {
-  #define H_sound_p "(" S_is_sound " snd): " PROC_TRUE " if 'snd' (a sound object or an integer) is an active (accessible) sound"
+  #define H_is_sound "(" S_is_sound " snd): " PROC_TRUE " if 'snd' (a sound object or an integer) is an active (accessible) sound"
 
-  if (Xen_is_integer(snd) || XEN_SOUND_P(snd))
+  if (Xen_is_integer(snd) || xen_is_sound(snd))
     {
       snd_info *sp;
       sp = get_sp(snd);
@@ -2388,7 +2388,7 @@ static XEN g_select_sound(XEN snd)
 any editing operations."
   snd_info *sp;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(snd) || XEN_SOUND_P(snd), snd, 1, S_select_sound, "a sound object or index");
+  XEN_ASSERT_TYPE(Xen_is_integer(snd) || xen_is_sound(snd), snd, 1, S_select_sound, "a sound object or index");
 
   sp = get_sp(snd);
   if (sp)
@@ -2470,7 +2470,7 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
       return(res);
     }
 
-  if (XEN_PLAYER_P(snd))
+  if (xen_is_player(snd))
     {
       sp = get_player_sound(snd);
       if (!sp)
@@ -2686,7 +2686,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       return(val);
     }
 
-  if (XEN_PLAYER_P(snd))
+  if (xen_is_player(snd))
     {
       sp = get_player_sound(snd);
       if (!sp)
@@ -2985,7 +2985,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
     case SP_SPEED: 
 #if XEN_HAVE_RATIOS
       if ((sp->speed_control_style == SPEED_CONTROL_AS_RATIO) &&
-	  (XEN_RATIO_P(val)))
+	  (Xen_is_ratio(val)))
 	{
 	  sp->speed_control_numerator = (int)XEN_NUMERATOR(val);
 	  sp->speed_control_denominator = (int)XEN_DENOMINATOR(val);
@@ -3229,7 +3229,7 @@ static XEN g_channels(XEN snd)
     return(g_mus_sound_chans(snd));              /* mus-sound-chans */
 
   if ((mus_is_xen(snd)) ||
-      (sound_data_p(snd)) ||                     /* sound-data-chans */
+      (xen_is_sound_data(snd)) ||                     /* sound-data-chans */
       (mus_is_vct(snd)) ||
       (Xen_is_list(snd)))
     return(g_mus_channels(snd));                 /* mus-channels */
@@ -3240,7 +3240,7 @@ static XEN g_channels(XEN snd)
   if (xen_is_region(snd))                         /* region-chans */
     return(g_region_chans(snd));
 
-  if (XEN_SELECTION_P(snd))                      /* selection-chans */
+  if (xen_is_selection(snd))                      /* selection-chans */
     return(g_selection_chans());
 
   if (Xen_is_vector(snd))                         /* vector as output in clm */
@@ -3282,7 +3282,7 @@ static XEN g_srate(XEN snd)
   if (xen_is_region(snd))
     return(g_region_srate(snd));
 
-  if (XEN_SELECTION_P(snd))
+  if (xen_is_selection(snd))
     return(g_selection_srate());
 
   return(sound_get(snd, SP_SRATE, S_srate));
@@ -3385,7 +3385,7 @@ are applied to all sounds sharing the sync value of the selected sound.  'snd' c
   if (xen_is_mix(snd))                            /* mix-sync */
     return(g_mix_sync(snd));
 
-  if (XEN_MARK_P(snd))                           /* mark-sync */
+  if (xen_is_mark(snd))                           /* mark-sync */
     return(g_mark_sync(snd));
 
   return(sound_get(snd, SP_SYNC, S_sync));       /* sync */
@@ -3399,7 +3399,7 @@ static XEN g_set_sync(XEN on, XEN snd)
   if (xen_is_mix(snd))
     return(g_set_mix_sync(snd, on));
 
-  if (XEN_MARK_P(snd))
+  if (xen_is_mark(snd))
     return(g_set_mark_sync(snd, on));
 
   return(sound_set(snd, on, SP_SYNC, S_setB S_sync));
@@ -3741,7 +3741,7 @@ static XEN g_file_name(XEN snd)
 {
   #define H_file_name "(" S_file_name " :optional snd): snd's full filename; snd can be a sound, mix, region, string, or generator."
 
-  if (XEN_SOUND_P(snd))
+  if (xen_is_sound(snd))
     return(sound_get(snd, SP_FILE_NAME, S_file_name));
 
   if (mus_is_xen(snd))
@@ -3761,7 +3761,7 @@ static XEN g_file_name(XEN snd)
   if (Xen_is_string(snd))
     return(g_mus_expand_filename(snd));
 
-  if ((sampler_p(snd)) || (mix_sampler_p(snd)))
+  if ((is_sampler(snd)) || (is_mix_sampler(snd)))
     return(g_sampler_file_name(snd));
 
   return(sound_get(snd, SP_FILE_NAME, S_file_name));
@@ -3804,7 +3804,7 @@ static XEN g_close_sound(XEN snd)
   if (Xen_is_integer(snd))
     return(g_close_sound_1(XEN_TO_C_INT(snd)));
 
-  if (XEN_SOUND_P(snd))
+  if (xen_is_sound(snd))
     return(g_close_sound_1(XEN_SOUND_TO_C_INT(snd)));
 
   return(sound_get(snd, SP_CLOSE, S_close_sound));
@@ -5423,7 +5423,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   chan_info *cp = NULL;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
 
-  XEN_ASSERT_TYPE(Xen_is_string(filename) || Xen_is_integer(filename) || !Xen_is_bound(filename) || XEN_SOUND_P(filename), 
+  XEN_ASSERT_TYPE(Xen_is_string(filename) || Xen_is_integer(filename) || !Xen_is_bound(filename) || xen_is_sound(filename), 
 		  filename, 1, S_channel_amp_envs, "a string or sound index");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 2, S_channel_amp_envs, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(pts), pts, 3, S_channel_amp_envs, "an integer");
@@ -5709,7 +5709,7 @@ If there is no sound or listener, it is sent to stderr."
 }
 
 
-XEN_NARGIFY_1(g_sound_p_w, g_sound_p)
+XEN_NARGIFY_1(g_is_sound_w, g_is_sound)
 XEN_ARGIFY_2(g_find_sound_w, g_find_sound)
 XEN_ARGIFY_1(g_channels_w, g_channels)
 XEN_ARGIFY_2(g_set_channels_w, g_set_channels)
@@ -5903,7 +5903,7 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_header_type,   g_header_type_w,   H_header_type,   S_setB S_header_type,   g_set_header_type_w,    0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_comment,       g_comment_w,       H_comment,       S_setB S_comment,       g_set_comment_w,        0, 1, 1, 1);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_is_sound,               g_sound_p_w,          1, 0, 0, H_sound_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sound,               g_is_sound_w,          1, 0, 0, H_is_sound);
   XEN_DEFINE_SAFE_PROCEDURE(S_find_sound,            g_find_sound_w,       1, 1, 0, H_find_sound);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_name,             g_file_name_w,        0, 1, 0, H_file_name);
   XEN_DEFINE_SAFE_PROCEDURE(S_short_file_name,       g_short_file_name_w,  0, 1, 0, H_short_file_name);

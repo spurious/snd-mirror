@@ -486,7 +486,7 @@ XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
     index = XEN_TO_C_INT(snd);
   else
     {
-      if (XEN_SOUND_P(snd))
+      if (xen_is_sound(snd))
 	index = XEN_SOUND_TO_C_INT(snd);
     }
 

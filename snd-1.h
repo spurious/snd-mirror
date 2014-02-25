@@ -4,14 +4,14 @@
 #define WITH_RELATIVE_PANES (USE_MOTIF && (XmVERSION > 1))
 
 #define ASSERT_SOUND(Origin, Snd, Offset) \
-  if (!((XEN_INTEGER_P(Snd)) || (XEN_SOUND_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+  if (!((Xen_is_integer(Snd)) || (xen_is_sound(Snd)) || (Xen_is_false(Snd)) || (!Xen_is_bound(Snd)))) \
     XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE);
 
 #define ASSERT_CHANNEL(Origin, Snd, Chn, Offset) \
-  if (!((XEN_INTEGER_P(Snd)) || (XEN_SOUND_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+  if (!((Xen_is_integer(Snd)) || (xen_is_sound(Snd)) || (Xen_is_false(Snd)) || (!Xen_is_bound(Snd)))) \
     XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE); \
   else \
-    if (!((XEN_INTEGER_P(Chn)) || (XEN_FALSE_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
+    if (!((Xen_is_integer(Chn)) || (Xen_is_false(Chn)) || (!Xen_is_bound(Chn)))) \
       XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or " PROC_FALSE);
 
 
@@ -21,7 +21,7 @@
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)	   \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)   \
   {                                                        \
-    if (XEN_NULL_P(XEN_CDR(args)))		   \
+    if (Xen_is_null(XEN_CDR(args)))		   \
       return(name(XEN_CAR(args), XEN_UNDEFINED));	   \
     return(name(XEN_CADR(args), XEN_CAR(args)));	   \
   }
@@ -29,10 +29,10 @@
 #define WITH_THREE_SETTER_ARGS(name_reversed, name)                      \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)                 \
   {							                 \
-    if (XEN_NULL_P(XEN_CDR(args)))		                 \
+    if (Xen_is_null(XEN_CDR(args)))		                 \
       return(name(XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED));         \
     else {					 		         \
-      if (XEN_NULL_P(XEN_CDDR(args)))				 \
+      if (Xen_is_null(XEN_CDDR(args)))				 \
 	return(name(XEN_CADR(args), XEN_CAR(args), XEN_UNDEFINED));	\
       else return(name(XEN_CADDR(args), XEN_CAR(args), XEN_CADR(args))); \
   }}
@@ -40,13 +40,13 @@
 #define WITH_FOUR_SETTER_ARGS(name_reversed, name)                                         \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)                                   \
 {							                                   \
-  if (XEN_NULL_P(XEN_CDR(args)))					                   \
+  if (Xen_is_null(XEN_CDR(args)))					                   \
     return(name(XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));              \
   else {								                   \
-    if (XEN_NULL_P(XEN_CDDR(args)))				                   \
+    if (Xen_is_null(XEN_CDDR(args)))				                   \
       return(name(XEN_CADR(args), XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED));           \
     else {								                   \
-      if (XEN_NULL_P(XEN_CDDDR(args)))				                   \
+      if (Xen_is_null(XEN_CDDDR(args)))				                   \
 	return(name(XEN_CADDR(args), XEN_CAR(args), XEN_CADR(args), XEN_UNDEFINED));       \
       else return(name(XEN_CADDDR(args), XEN_CAR(args), XEN_CADR(args), XEN_CADDR(args))); \
   }}}
@@ -59,7 +59,7 @@
 #endif
 
 #define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(Beg) || XEN_FALSE_P(Beg) || XEN_NOT_BOUND_P(Beg), Beg, Offset, Origin, "an integer or " PROC_FALSE)
+  XEN_ASSERT_TYPE(Xen_is_integer(Beg) || Xen_is_false(Beg) || (!Xen_is_bound(Beg)), Beg, Offset, Origin, "an integer or " PROC_FALSE)
 
 typedef struct {
   char **values;
@@ -485,7 +485,7 @@ typedef struct snd_state {
   bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   mus_float_t Enved_Base, Enved_Power, Auto_Update_Interval;
-  bool Enved_Wave_p, Graphs_Horizontal, With_Background_Processes, With_File_Monitor;
+  bool Enved_With_Wave, Graphs_Horizontal, With_Background_Processes, With_File_Monitor;
   env_type_t Enved_Style;
   int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Mark_Tag_Height, Mark_Tag_Width;
   enved_target_t Enved_Target;
@@ -548,7 +548,7 @@ typedef struct snd_state {
     dac_combines_channels_symbol, show_selection_transform_symbol, with_mix_tags_symbol, selection_creates_region_symbol,
     save_state_file_symbol, listener_prompt_symbol,
     enved_base_symbol, enved_power_symbol, auto_update_interval_symbol,
-    enved_wave_p_symbol, graphs_horizontal_symbol, with_background_processes_symbol, with_file_monitor_symbol,
+    enved_with_wave_symbol, graphs_horizontal_symbol, with_background_processes_symbol, with_file_monitor_symbol,
     enved_style_symbol,
     graph_cursor_symbol, mix_tag_width_symbol, mix_tag_height_symbol, mark_tag_height_symbol, mark_tag_width_symbol,
     enved_target_symbol,
@@ -968,8 +968,7 @@ void sound_restore_marks(snd_info *sp, void *marks);
 mus_long_t mark_id_to_sample(int id);
 
 XEN new_xen_mark(int n);
-bool xen_mark_p(XEN obj);
-#define XEN_MARK_P(arg) xen_mark_p(arg)
+bool xen_is_mark(XEN obj);
 int xen_mark_to_int(XEN n);
 #define XEN_MARK_TO_C_INT(n) xen_mark_to_int(n)
 XEN g_mark_sync(XEN mark_n);
@@ -1052,11 +1051,11 @@ bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, c
 bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin);
 mus_float_t chn_sample(mus_long_t samp, chan_info *cp, int pos);
 void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length);
-bool editable_p(chan_info *cp);
+bool is_editable(chan_info *cp);
 file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller);
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sampler_to_string(snd_fd *fd);
-bool sampler_p(XEN obj);
+bool is_sampler(XEN obj);
 snd_fd *xen_to_sampler(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 bool scale_channel(chan_info *cp, mus_float_t scaler, mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit);
@@ -1148,12 +1147,11 @@ int transform_position_to_type(int pos);
 int transform_type_to_position(int type);
 int max_transform_type(void);
 void set_transform_position(int i, int j);
-bool transform_p(int type);
+bool is_transform(int type);
 
 XEN new_xen_transform(int n);
-bool xen_transform_p(XEN obj);
+bool xen_is_transform(XEN obj);
 int xen_transform_to_int(XEN n);
-#define XEN_TRANSFORM_P(arg) xen_transform_p(arg)
 #define C_INT_TO_XEN_TRANSFORM(Val) new_xen_transform(Val)
 #define XEN_TRANSFORM_TO_C_INT(n) xen_transform_to_int(n)
 
@@ -1246,8 +1244,7 @@ void add_selection_or_region(int reg, chan_info *cp);
 void insert_selection_from_menu(void);
 void cancel_selection_watch(void);
 void show_selection(void);
-bool xen_selection_p(XEN obj);
-#define XEN_SELECTION_P(arg) xen_selection_p(arg)
+bool xen_is_selection(XEN obj);
 XEN g_selection_chans(void);
 XEN g_selection_srate(void);
 XEN g_selection_maxamp(XEN snd, XEN chn);
@@ -1378,8 +1375,7 @@ mus_float_t *sample_linear_env(env *e, int order);
 void g_init_dac(void);
 void clear_players(void);
 
-bool xen_player_p(XEN obj);
-#define XEN_PLAYER_P(arg) xen_player_p(arg)
+bool xen_is_player(XEN obj);
 #define IS_PLAYER_SOUND(Sp) ((Sp) && ((Sp)->index < 0))
 snd_info *get_player_sound(XEN player);
 XEN no_such_player_error(const char *caller, XEN player);
@@ -1591,9 +1587,8 @@ void pick_one_bin(peak_env_info *ep, int bin, mus_long_t cursamp, chan_info *cp,
 void set_channel_style(channel_style_t val);
 
 XEN new_xen_sound(int n);
-bool xen_sound_p(XEN obj);
+bool xen_is_sound(XEN obj);
 int xen_sound_to_int(XEN n);
-#define XEN_SOUND_P(arg) xen_sound_p(arg)
 #define C_INT_TO_XEN_SOUND(Val) new_xen_sound(Val)
 #define XEN_SOUND_TO_C_INT(n) xen_sound_to_int(n)
 
@@ -1780,7 +1775,7 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
 int mix_complete_file_at_cursor(snd_info *sp, const char *str);
 int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan);
 
-bool mix_sampler_p(XEN obj);
+bool is_mix_sampler(XEN obj);
 XEN g_copy_mix_sampler(XEN obj);
 XEN g_mix_sampler_home(XEN obj);
 XEN g_mix_sampler_at_end_p(XEN obj);

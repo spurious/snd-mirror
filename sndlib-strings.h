@@ -105,7 +105,7 @@
 #define S_sound_data_maxamp             "sound-data-maxamp"
 #define S_sound_data_multiplyB          "sound-data-multiply!"
 #define S_sound_data_offsetB            "sound-data-offset!"
-#define S_sound_data_p                  "sound-data?"
+#define S_is_sound_data                  "sound-data?"
 #define S_sound_data_peak               "sound-data-peak"
 #define S_sound_data_ref                "sound-data-ref"
 #define S_sound_data_reverseB           "sound-data-reverse!"

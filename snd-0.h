@@ -1391,13 +1391,13 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define in_set_enved_clip_p(a) ss->enved->clip_p = a
 #define DEFAULT_ENVED_CLIP_P true
 
-#define enved_wave_p(ss) ss->Enved_Wave_p
+#define enved_with_wave(ss) ss->Enved_With_Wave
 #if HAVE_SCHEME
-  #define in_set_enved_wave_p(a) {ss->Enved_Wave_p = a; s7_symbol_set_value(s7, ss->enved_wave_p_symbol, s7_make_boolean(s7, a));}
+  #define in_set_enved_with_wave(a) {ss->Enved_With_Wave = a; s7_symbol_set_value(s7, ss->enved_with_wave_symbol, s7_make_boolean(s7, a));}
 #else
-  #define in_set_enved_wave_p(a) ss->Enved_Wave_p = a
+  #define in_set_enved_with_wave(a) ss->Enved_With_Wave = a
 #endif
-#define DEFAULT_ENVED_WAVE_P false
+#define DEFAULT_ENVED_WITH_WAVE false
 
 #define enved_filter_order(ss) ss->Enved_Filter_Order
 #if HAVE_SCHEME

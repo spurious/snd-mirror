@@ -196,7 +196,7 @@ typedef struct {
   graphics_context *env_ax;
   env_editor *spf;
   env *amp_env;
-  bool error_p;
+  bool has_error;
   int sort_items_size;
   speed_style_t speed_style;
   mus_long_t beg;
@@ -5491,7 +5491,7 @@ static view_files_info *new_view_files_dialog(void)
   vdat->selected_files = NULL;
   vdat->selected_files_size = 0;
   vdat->location_choice = VF_AT_CURSOR;
-  vdat->error_p = false;
+  vdat->has_error = false;
   vdat->need_update = false;
   vdat->dirs_size = 0;
   vdat->dirs = NULL;
@@ -6222,7 +6222,7 @@ static void vf_clear_error(view_files_info *vdat)
 	vf_unpost_info(vdat);
       else vf_post_selected_files_list(vdat);
     }
-  vdat->error_p = false;
+  vdat->has_error = false;
 }
 
 
@@ -6276,12 +6276,12 @@ static int vf_mix(view_files_info *vdat)
 
 static void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
 {
-  vdat->error_p = false;
+  vdat->has_error = false;
   redirect_snd_error_to(redirect_vf_post_location_error, (void *)vdat);
   vdat->beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
 
-  if (!(vdat->error_p))
+  if (!(vdat->has_error))
     {
       int id_or_error = 0;
 
@@ -6302,7 +6302,7 @@ static void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
 	    msg = mus_format("%s mixed in at %lld", vdat->names[vdat->selected_files[0]], vdat->beg);
 	  else msg = mus_format("selected files mixed in at %lld", vdat->beg);
 	  vf_post_error(msg, vdat);
-	  vdat->error_p = false;
+	  vdat->has_error = false;
 	  free(msg);
 	}
     }
@@ -6361,12 +6361,12 @@ static bool vf_insert(view_files_info *vdat)
 
 static void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 {
-  vdat->error_p = false;
+  vdat->has_error = false;
   redirect_snd_error_to(redirect_vf_post_location_error, (void *)vdat);
   vdat->beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
 
-  if (!(vdat->error_p))
+  if (!(vdat->has_error))
     {
       bool ok = false;
 
@@ -6386,7 +6386,7 @@ static void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 	    msg = mus_format("%s inserted at %lld", vdat->names[vdat->selected_files[0]], vdat->beg);
 	  else msg = mus_format("selected files inserted at %lld", vdat->beg);
 	  vf_post_error(msg, vdat);
-	  vdat->error_p = false;
+	  vdat->has_error = false;
 	  free(msg);
 	}
       /* else we've already posted whatever went wrong (make_file_info etc) */
@@ -7350,7 +7350,7 @@ static void vf_post_error(const char *error_msg, view_files_info *vdat)
 {
   XmString msg;
   remove_all_pending_clear_callbacks(vdat);
-  vdat->error_p = true;
+  vdat->has_error = true;
   msg = XmStringCreateLocalized((char *)error_msg);
   XtVaSetValues(vdat->info1,
 		XmNlabelString, msg, 
@@ -7422,7 +7422,7 @@ static void view_files_insert_selected_callback(Widget w, XtPointer context, XtP
 static void view_files_at_cursor_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  if (vdat->error_p)
+  if (vdat->has_error)
     {
       if (vdat->location_choice == VF_AT_SAMPLE)
 	vf_clear_sample(vdat);
@@ -7440,7 +7440,7 @@ static void view_files_at_cursor_callback(Widget w, XtPointer context, XtPointer
 static void view_files_at_end_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  if (vdat->error_p)
+  if (vdat->has_error)
     {
       if (vdat->location_choice == VF_AT_SAMPLE)
 	vf_clear_sample(vdat);
@@ -7458,7 +7458,7 @@ static void view_files_at_end_callback(Widget w, XtPointer context, XtPointer in
 static void view_files_at_beginning_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  if (vdat->error_p)
+  if (vdat->has_error)
     {
       if (vdat->location_choice == VF_AT_SAMPLE)
 	vf_clear_sample(vdat);
@@ -7476,7 +7476,7 @@ static void view_files_at_beginning_callback(Widget w, XtPointer context, XtPoin
 static void view_files_at_sample_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  if ((vdat->error_p) && 
+  if ((vdat->has_error) && 
       (vdat->location_choice == VF_AT_MARK))
       vf_clear_mark(vdat);
   XmToggleButtonSetState(vdat->at_cursor_button, false, false);
@@ -7491,7 +7491,7 @@ static void view_files_at_sample_callback(Widget w, XtPointer context, XtPointer
 static void view_files_at_mark_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  if ((vdat->error_p) &&
+  if ((vdat->has_error) &&
       (vdat->location_choice == VF_AT_SAMPLE))
     vf_clear_sample(vdat);
   XmToggleButtonSetState(vdat->at_cursor_button, false, false);

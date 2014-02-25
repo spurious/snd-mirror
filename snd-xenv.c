@@ -136,7 +136,7 @@ void make_scrolled_env_list(void)
 
 void enved_reflect_peak_env_completion(snd_info *sp)
 {
-  if ((enved_dialog) && (active_channel) && (enved_wave_p(ss)))
+  if ((enved_dialog) && (active_channel) && (enved_with_wave(ss)))
     if (active_channel->sound == sp) 
       env_redisplay();
 }
@@ -248,7 +248,7 @@ static void apply_enved(void)
 	      max_env = free_env(max_env);
 	      break;
 	    }
-	  if (enved_wave_p(ss)) env_redisplay();
+	  if (enved_with_wave(ss)) env_redisplay();
 	  set_sensitive(applyB, true);
 	  set_sensitive(apply2B, true);
 	  set_button_label(cancelB, I_GO_AWAY);
@@ -272,7 +272,7 @@ static void env_redisplay_1(printing_t printing)
 	  if (!name) name = mus_strdup("noname");
 	  /* active_env can be null here if just showing axes (empty initial graph) */
 	  
-	  if ((enved_wave_p(ss)) &&
+	  if ((enved_with_wave(ss)) &&
 	      (active_channel) &&
 	      (!(active_channel->squelch_update)))
 	    {
@@ -302,7 +302,7 @@ void env_redisplay_with_print(void)
 void update_enved_background_waveform(chan_info *cp)
 {
   if ((enved_dialog_is_active()) &&
-      (enved_wave_p(ss)) &&
+      (enved_with_wave(ss)) &&
       (enved_target(ss) == ENVED_AMPLITUDE) &&
       (cp == active_channel) &&
       ((!apply_to_selection) || (selection_is_active_in_channel(cp))))
@@ -317,7 +317,7 @@ static void enved_reset(void)
   set_enved_power(DEFAULT_ENVED_POWER);
   set_enved_base(DEFAULT_ENVED_BASE);
   set_enved_target(DEFAULT_ENVED_TARGET);
-  set_enved_wave_p(DEFAULT_ENVED_WAVE_P);
+  set_enved_with_wave(DEFAULT_ENVED_WITH_WAVE);
   set_enved_in_dB(DEFAULT_ENVED_IN_DB);
   XmTextSetString(textL, NULL);
   set_enved_filter_order(DEFAULT_ENVED_FILTER_ORDER);
@@ -629,7 +629,7 @@ static void selection_button_pressed(Widget s, XtPointer context, XtPointer info
   apply_to_selection = (!apply_to_selection);
   XmChangeColor(selectionB, (apply_to_selection) ? ((Pixel)ss->yellow) : ((Pixel)ss->highlight_color));
   set_sensitive(apply2B, true);
-  if ((enved_wave_p(ss)) && 
+  if ((enved_with_wave(ss)) && 
       (!showing_all_envs))
     env_redisplay();
 }
@@ -671,7 +671,7 @@ static void reflect_apply_state(void)
   XmChangeColor(fltB, (enved_target(ss) == ENVED_SPECTRUM) ? ((Pixel)ss->yellow) : ((Pixel)ss->highlight_color));
   XmChangeColor(srcB, (enved_target(ss) == ENVED_SRATE) ? ((Pixel)ss->yellow) : ((Pixel)ss->highlight_color));
   if ((!showing_all_envs) && 
-      (enved_wave_p(ss))) 
+      (enved_with_wave(ss))) 
     env_redisplay();
 }
 
@@ -725,7 +725,7 @@ static void env_browse_callback(Widget w, XtPointer context, XtPointer info)
 static void graph_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  in_set_enved_wave_p(cb->set);
+  in_set_enved_with_wave(cb->set);
   env_redisplay();
 }
 
@@ -858,7 +858,7 @@ static void FIR_click_callback(Widget w, XtPointer context, XtPointer info)
 {
   FIR_p = (!FIR_p);
   set_label(w, (FIR_p) ? "fir" : "fft");
-  if (enved_wave_p(ss)) env_redisplay();
+  if (enved_with_wave(ss)) env_redisplay();
 }
 
 
@@ -1400,7 +1400,7 @@ Widget create_envelope_editor(void)
 	set_sensitive(selectionB, false);
 
       XmToggleButtonSetState(clipB, (Boolean)(enved_clip_p(ss)), false);
-      XmToggleButtonSetState(graphB, (Boolean)(enved_wave_p(ss)), false);
+      XmToggleButtonSetState(graphB, (Boolean)(enved_with_wave(ss)), false);
       XmToggleButtonSetState(dBB, (Boolean)(enved_in_dB(ss)), false);
 
       free(n1);
@@ -1444,9 +1444,9 @@ void set_enved_target(enved_target_t val)
 }
 
 
-void set_enved_wave_p(bool val) 
+void set_enved_with_wave(bool val) 
 {
-  in_set_enved_wave_p(val); 
+  in_set_enved_with_wave(val); 
   if (enved_dialog) 
     XmToggleButtonSetState(graphB, (Boolean)val, false);
 }
@@ -1487,7 +1487,7 @@ void set_enved_filter_order(int order)
 	  widget_int_to_text(orderL, enved_filter_order(ss));
 	  if ((enved_dialog) && 
 	      (enved_target(ss) == ENVED_SPECTRUM) && 
-	      (enved_wave_p(ss)) && (!showing_all_envs)) 
+	      (enved_with_wave(ss)) && (!showing_all_envs)) 
 	    env_redisplay();
 	}
     }
@@ -1510,7 +1510,7 @@ void enved_reflect_selection(bool on)
 	}
       XmChangeColor(selectionB, (apply_to_selection) ? ((Pixel)ss->yellow) : ((Pixel)ss->highlight_color));
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
-	  (enved_wave_p(ss)) && 
+	  (enved_with_wave(ss)) && 
 	  (!showing_all_envs)) 
 	env_redisplay();
     }
@@ -1523,7 +1523,7 @@ void color_enved_waveform(Pixel pix)
   if (enved_dialog)
     {
       XSetForeground(MAIN_DISPLAY(ss), ggc, pix);
-      if ((enved_wave_p(ss)) && 
+      if ((enved_with_wave(ss)) && 
 	  (enved_dialog)) 
 	env_redisplay();
     }
@@ -1539,12 +1539,12 @@ static XEN g_enved_envelope(void)
 
 static XEN g_set_enved_envelope(XEN e)
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
+  XEN_ASSERT_TYPE(Xen_is_list(e) || Xen_is_string(e) || Xen_is_symbol(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
-  if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
-    active_env = name_to_env((XEN_STRING_P(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e)); /* xen_to_env in name_to_env, so no copy */
+  if ((Xen_is_string(e)) || (Xen_is_symbol(e)))
+    active_env = name_to_env((Xen_is_string(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e)); /* xen_to_env in name_to_env, so no copy */
   else active_env = xen_to_env(e);
-  if ((!active_env) && (!(XEN_LIST_P(e))))
+  if ((!active_env) && (!(Xen_is_list(e))))
     XEN_ERROR(NO_SUCH_ENVELOPE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_envelope ": bad envelope arg: ~A"),
 			 e));
@@ -1563,7 +1563,7 @@ static XEN g_enved_filter(void)
 
 static XEN g_set_enved_filter(XEN type)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, 1, S_setB S_enved_filter, "boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(type), type, 1, S_setB S_enved_filter, "boolean");
   FIR_p = XEN_TO_C_BOOLEAN(type);
   if (firB)
     set_label(firB, (FIR_p) ? "fir" : "fft");

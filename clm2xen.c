@@ -4,7 +4,6 @@
  *    might shadow a generator name; one such case was (make-hook 'env...) in snd-env.c
  *
  * (env env) is accepted by the optimizer in error
- * similarly (hz->radians 1 2) is not caught 
  */
 
 #include <mus-config.h>
@@ -2232,7 +2231,7 @@ XEN g_mus_channels(XEN gen)
   if (gn)
     return(C_TO_XEN_INT(mus_channels(gn->gen)));
 
-  if (sound_data_p(gen))
+  if (xen_is_sound_data(gen))
     return(C_TO_XEN_INT(mus_sound_data_chans(XEN_TO_SOUND_DATA(gen))));
 
   if (mus_is_vct(gen))
@@ -2261,7 +2260,7 @@ XEN g_mus_length(XEN gen)
   if (gn)
     return(C_TO_XEN_LONG_LONG(mus_length(gn->gen)));
 
-  if (sound_data_p(gen))
+  if (xen_is_sound_data(gen))
     return(C_TO_XEN_INT(mus_sound_data_length(XEN_TO_SOUND_DATA(gen))));
 
   if (mus_is_vct(gen))
@@ -7078,7 +7077,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
       return(C_TO_XEN_DOUBLE(mus_in_any(pos, in_chan, (mus_any *)XEN_TO_MUS_ANY(inp))));
     }
 
-  if (sound_data_p(inp))
+  if (xen_is_sound_data(inp))
     return(C_TO_XEN_DOUBLE(mus_sound_data_ref(XEN_TO_SOUND_DATA(inp), in_chan, pos)));
 
   if (mus_is_vct(inp))
@@ -7141,7 +7140,7 @@ static XEN fallback_out_any_2(XEN outp, mus_long_t pos, mus_float_t inv, int chn
     }
 
   /* adds to existing -- these have to precede procedure check since vcts/sound-data objects are applicable */
-  if (sound_data_p(outp))
+  if (xen_is_sound_data(outp))
     {
       mus_sound_data_set(XEN_TO_SOUND_DATA(outp), chn, pos, mus_sound_data_ref(XEN_TO_SOUND_DATA(outp), chn, pos) + inv);
       return(XEN_ZERO);
@@ -7253,7 +7252,7 @@ static s7_pointer g_clm_output_set(s7_scheme *sc, s7_pointer args)
   else
     {
       clm_output_gen = NULL;
-      if (sound_data_p(new_output))
+      if (xen_is_sound_data(new_output))
 	{
 	  out_any_2 = out_any_2_to_sound_data;
 	  clm_output_sd = XEN_TO_SOUND_DATA(new_output);
@@ -7345,7 +7344,7 @@ static s7_pointer g_clm_reverb_set(s7_scheme *sc, s7_pointer args)
     }
   else
     {
-      if (sound_data_p(new_input))
+      if (xen_is_sound_data(new_input))
 	{
 	  in_any_2 = in_any_2_to_sound_data;
 	  clm_input_sd = XEN_TO_SOUND_DATA(new_input);
@@ -7480,7 +7479,7 @@ static XEN g_mus_close(XEN ptr)
   if (mus_is_xen(ptr))
     return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
 
-  XEN_ASSERT_TYPE(mus_is_vct(ptr) || Xen_is_false(ptr) || sound_data_p(ptr) || Xen_is_vector(ptr), 
+  XEN_ASSERT_TYPE(mus_is_vct(ptr) || Xen_is_false(ptr) || xen_is_sound_data(ptr) || Xen_is_vector(ptr), 
 		  ptr, 1, S_mus_close, "an IO gen or its outa equivalent");
   return(XEN_ZERO);
 }
@@ -7978,7 +7977,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 
   if (outfr)
     {
-      if (sound_data_p(output))
+      if (xen_is_sound_data(output))
 	mus_sound_data_add_frame(XEN_TO_SOUND_DATA(output), pos, mus_data(outfr));
       else
 	{
@@ -8004,7 +8003,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
       (Xen_is_bound(ms->vcts[G_LOCSIG_REVOUT])))
     {
       reverb = ms->vcts[G_LOCSIG_REVOUT];
-      if (sound_data_p(reverb))
+      if (xen_is_sound_data(reverb))
 	mus_sound_data_add_frame(XEN_TO_SOUND_DATA(reverb), pos, mus_data(revfr));
       else
 	{
@@ -8166,7 +8165,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     }
   else
     {
-      if (sound_data_p(keys3))
+      if (xen_is_sound_data(keys3))
 	{
 	  ov = keys3;
 	  if (out_chans < 0) 
@@ -8189,7 +8188,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     }
   else
     {
-      if (sound_data_p(keys4))
+      if (xen_is_sound_data(keys4))
 	{
 	  rv = keys4;
 	  if (rev_chans < 0)
@@ -8368,7 +8367,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   else
     {
       if ((mus_is_vct(outp)) || 
-	  (sound_data_p(outp)) || 
+	  (xen_is_sound_data(outp)) || 
 	  (Xen_is_false(outp)) || 
 	  (!Xen_is_bound(outp)))
 	ov = outp;
@@ -8383,7 +8382,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   else
     {
       if ((mus_is_vct(revp)) || 
-	  (sound_data_p(revp)) || 
+	  (xen_is_sound_data(revp)) || 
 	  (Xen_is_false(revp)) || 
 	  (!Xen_is_bound(revp)))
 	rv = revp;
@@ -8627,7 +8626,7 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 
 #if USE_SND
 	  /* check for a sampler (snd-edits.c) */
-	  if (sampler_p(in_obj))
+	  if (is_sampler(in_obj))
 	    {
 	      /* fprintf(stderr, "use sampler direct\n"); */
 	      gn->vcts[MUS_INPUT_DATA] = (XEN)xen_to_sampler(in_obj);
@@ -11395,49 +11394,52 @@ static mus_float_t gf_abs_s1(void *p) {gf *g = (gf *)p; return(fabs(s7_cell_s1_t
 
 static gf *fixup_abs(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  int typ;
-  double x;
-  double *rx;
-  s7_pointer s;
-  gf *g1 = NULL, *g = NULL;
-
-  typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
-  switch (typ)
+  if (s7_list_length(sc, expr) == 2)
     {
-    case GF_G:
-      if (g1->func_1)
+      int typ;
+      double x;
+      double *rx;
+      s7_pointer s;
+      gf *g1 = NULL, *g = NULL;
+      
+      typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
+      switch (typ)
 	{
-	  g1->f1 = g1->func_1;
-	  g1->func = gf_abs_1;
-	  g1->func_1 = NULL;
-	  return(g1);
+	case GF_G:
+	  if (g1->func_1)
+	    {
+	      g1->f1 = g1->func_1;
+	      g1->func = gf_abs_1;
+	      g1->func_1 = NULL;
+	      return(g1);
+	    }
+	  g = gf_alloc();
+	  g->func = gf_abs;
+	  g->g1 = g1;
+	  g->f1 = g1->func;
+	  return(g);
+	  
+	case GF_X:
+	  g = gf_alloc();
+	  g->func = gf_constant;
+	  g->x1 = fabs(x);
+	  return(g);
+	  
+	case GF_S:
+	  g = gf_alloc();
+	  g->func = gf_abs_s1;
+	  g->s1 = s;
+	  g->gen1 = (void *)sc;
+	  return(g);
+	  
+	case GF_RX:
+	  g = gf_alloc();
+	  g->func = gf_abs_rx1;
+	  g->rx1 = rx;
+	  return(g);
 	}
-      g = gf_alloc();
-      g->func = gf_abs;
-      g->g1 = g1;
-      g->f1 = g1->func;
-      return(g);
-
-    case GF_X:
-      g = gf_alloc();
-      g->func = gf_constant;
-      g->x1 = fabs(x);
-      return(g);
-
-    case GF_S:
-      g = gf_alloc();
-      g->func = gf_abs_s1;
-      g->s1 = s;
-      g->gen1 = (void *)sc;
-      return(g);
-
-    case GF_RX:
-      g = gf_alloc();
-      g->func = gf_abs_rx1;
-      g->rx1 = rx;
-      return(g);
+      if (g1) gf_free(g1);
     }
-  if (g1) gf_free(g1);
   return(NULL);
 }
 
@@ -11446,11 +11448,15 @@ static gf *fixup_abs(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
 static gf *fixup_mus_srate(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  gf *g;
-  g = gf_alloc();
-  g->func = gf_constant;
-  g->x1 = mus_srate();
-  return(g);
+  if (s7_list_length(sc, expr) == 1)
+    {
+      gf *g;
+      g = gf_alloc();
+      g->func = gf_constant;
+      g->x1 = mus_srate();
+      return(g);
+    }
+  return(NULL);
 }
 
   
@@ -11461,17 +11467,20 @@ static mus_float_t gf_random_x1(void *p) {gf *g = (gf *)p; return(g->x1 * s7_ran
 
 static gf *fixup_random(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  s7_pointer x;
-  gf *g;
-
-  x = cadr(expr);
-  if ((s7_is_real(x)) && (!s7_is_rational(x)))
+  if (s7_list_length(sc, expr) == 2)
     {
-      g = gf_alloc();
-      g->func = gf_random_x1;
-      g->x1 = s7_real(x);
-      g->gen1 = (void *)sc;
-      return(g);
+      s7_pointer x;
+      gf *g;
+      
+      x = cadr(expr);
+      if ((s7_is_real(x)) && (!s7_is_rational(x)))
+	{
+	  g = gf_alloc();
+	  g->func = gf_random_x1;
+	  g->x1 = s7_real(x);
+	  g->gen1 = (void *)sc;
+	  return(g);
+	}
     }
   return(NULL);
 }
@@ -11539,37 +11548,40 @@ static mus_float_t gf_hz_to_radians(void *p) {gf *g = (gf *)p; return(mus_hz_to_
 
 static gf *fixup_hz_to_radians(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  gf *g, *g1 = NULL;
-  int typ;
-  double x;
-  double *rx;
-  s7_pointer s;
-
-  typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
-  switch (typ)
+  if (s7_list_length(sc, expr) == 2)
     {
-    case GF_X:
-      g = gf_alloc();
-      g->func = gf_constant;
-      g->x1 = mus_hz_to_radians(x);
-      return(g);
-
-    case GF_G:
-      if (g1->func_1)
+      gf *g, *g1 = NULL;
+      int typ;
+      double x;
+      double *rx;
+      s7_pointer s;
+      
+      typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
+      switch (typ)
 	{
-	  g1->f1 = g1->func_1;
-	  g1->func = gf_hz_to_radians_1;
-	  g1->func_1 = NULL;
-	  return(g1);
+	case GF_X:
+	  g = gf_alloc();
+	  g->func = gf_constant;
+	  g->x1 = mus_hz_to_radians(x);
+	  return(g);
+	  
+	case GF_G:
+	  if (g1->func_1)
+	    {
+	      g1->f1 = g1->func_1;
+	      g1->func = gf_hz_to_radians_1;
+	      g1->func_1 = NULL;
+	      return(g1);
+	    }
+	  g = gf_alloc();
+	  g->func = gf_hz_to_radians;
+	  g->g1 = g1;
+	  g->f1 = g1->func;
+	  return(g);
 	}
-      g = gf_alloc();
-      g->func = gf_hz_to_radians;
-      g->g1 = g1;
-      g->f1 = g1->func;
-      return(g);
+      
+      if (g1) gf_free(g1);
     }
-
-  if (g1) gf_free(g1);
   return(NULL);
 }
 
@@ -11580,29 +11592,32 @@ static mus_float_t gf_am_x1_rx1_g1(void *p) {gf *g = (gf *)p; return(mus_amplitu
 
 static gf *fixup_amplitude_modulate(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  if (s7_is_real(cadr(expr)))
+  if (s7_list_length(sc, expr) == 4)
     {
-      int typ1, typ2;
-      double x1, x2;
-      double *rx1, *rx2;
-      s7_pointer s1, s2;
-      gf *g1 = NULL, *g2 = NULL, *g = NULL;
-
-      typ1 = gf_parse(sc, caddr(expr), locals, &g1, &s1, &x1, &rx1);
-      typ2 = gf_parse(sc, cadddr(expr), locals, &g2, &s2, &x2, &rx2);
-      
-      if ((typ1 == GF_RX) && (typ2 == GF_G))
+      if (s7_is_real(cadr(expr)))
 	{
-	  g = gf_alloc();
-	  g->func = gf_am_x1_rx1_g1;
-	  g->x1 = s7_number_to_real(sc, cadr(expr));
-	  g->rx1 = rx1;
-	  g->g1 = g2;
-	  g->f1 = g2->func;
-	  return(g);
+	  int typ1, typ2;
+	  double x1, x2;
+	  double *rx1, *rx2;
+	  s7_pointer s1, s2;
+	  gf *g1 = NULL, *g2 = NULL, *g = NULL;
+	  
+	  typ1 = gf_parse(sc, caddr(expr), locals, &g1, &s1, &x1, &rx1);
+	  typ2 = gf_parse(sc, cadddr(expr), locals, &g2, &s2, &x2, &rx2);
+	  
+	  if ((typ1 == GF_RX) && (typ2 == GF_G))
+	    {
+	      g = gf_alloc();
+	      g->func = gf_am_x1_rx1_g1;
+	      g->x1 = s7_number_to_real(sc, cadr(expr));
+	      g->rx1 = rx1;
+	      g->g1 = g2;
+	      g->f1 = g2->func;
+	      return(g);
+	    }
+	  if (g1) gf_free(g1);
+	  if (g2) gf_free(g2);
 	}
-      if (g1) gf_free(g1);
-      if (g2) gf_free(g2);
     }
   return(NULL);
 }
@@ -11697,51 +11712,54 @@ static mus_float_t wrapped_ina_ss_v(void *p)
 
 static gf *fixup_in_ab(s7_scheme *sc, s7_pointer expr, s7_pointer locals, bool its_a)
 {
-  /* (ina|b i *reverb*) */
-  s7_pointer obj, loc;
-
-  loc = cadr(expr);
-  obj = caddr(expr);
-
-  if (s7_is_symbol(loc))
+  if (s7_list_length(sc, expr) == 3)
     {
-      s7_pointer slot;
-      slot = s7_is_local_variable(sc, loc, locals);
-      if (slot)
+      /* (ina|b i *reverb*) */
+      s7_pointer obj, loc;
+      
+      loc = cadr(expr);
+      obj = caddr(expr);
+      
+      if (s7_is_symbol(loc))
 	{
-	  if (obj == reverb_symbol)
+	  s7_pointer slot;
+	  slot = s7_is_local_variable(sc, loc, locals);
+	  if (slot)
 	    {
-	      gf *g;
-	      g = gf_alloc();
-	      g->func = (its_a) ? wrapped_ina_reverb : wrapped_inb_reverb;
-	      g->s1 = slot;
-	      return(g);
-	    }
-	  if ((its_a) &&
-	      (s7_is_symbol(obj)) &&
-	      (!s7_is_local_variable(sc, obj, locals)))
-	    {
-	      obj = s7_symbol_value(sc, obj);
-	      if (mus_is_xen(obj))
+	      if (obj == reverb_symbol)
 		{
-		  /* (with-sound () (sndclmdoc-simple-ina 0 1 .1 "oboe.snd")) */
 		  gf *g;
 		  g = gf_alloc();
-		  g->func = wrapped_ina_ss;
+		  g->func = (its_a) ? wrapped_ina_reverb : wrapped_inb_reverb;
 		  g->s1 = slot;
-		  g->gen1 = (void *)XEN_TO_MUS_ANY(obj);
 		  return(g);
 		}
-	      if (s7_is_float_vector(obj))
+	      if ((its_a) &&
+		  (s7_is_symbol(obj)) &&
+		  (!s7_is_local_variable(sc, obj, locals)))
 		{
-		  /* we can't get here if there's a run-time set!, so presumably the input vector won't change? */
-		  gf *g;
-		  g = gf_alloc();
-		  g->func = wrapped_ina_ss_v;
-		  g->s1 = slot;
-		  g->rx1 = (mus_float_t *)s7_float_vector_elements(obj);
-		  g->i1 = (mus_long_t)s7_vector_length(obj);
-		  return(g);
+		  obj = s7_symbol_value(sc, obj);
+		  if (mus_is_xen(obj))
+		    {
+		      /* (with-sound () (sndclmdoc-simple-ina 0 1 .1 "oboe.snd")) */
+		      gf *g;
+		      g = gf_alloc();
+		      g->func = wrapped_ina_ss;
+		      g->s1 = slot;
+		      g->gen1 = (void *)XEN_TO_MUS_ANY(obj);
+		      return(g);
+		    }
+		  if (s7_is_float_vector(obj))
+		    {
+		      /* we can't get here if there's a run-time set!, so presumably the input vector won't change? */
+		      gf *g;
+		      g = gf_alloc();
+		      g->func = wrapped_ina_ss_v;
+		      g->s1 = slot;
+		      g->rx1 = (mus_float_t *)s7_float_vector_elements(obj);
+		      g->i1 = (mus_long_t)s7_vector_length(obj);
+		      return(g);
+		    }
 		}
 	    }
 	}
@@ -11761,33 +11779,36 @@ static gf *fixup_inb(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
 static gf *fixup_in_any(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  /* (in-any ctr 0 fil) -> (ina ctr fil) */
-  s7_pointer obj, chan, loc;
-
-  chan = caddr(expr);
-  if ((s7_is_integer(chan)) &&
-      (s7_integer(chan) == 0))
+  if (s7_list_length(sc, expr) == 4)
     {
-      loc = cadr(expr);
-      obj = cadddr(expr);
-
-      if ((s7_is_symbol(loc)) &&
-	  (s7_is_symbol(obj)) &&
-	  (!s7_is_local_variable(sc, obj, locals)))
+      /* (in-any ctr 0 fil) -> (ina ctr fil) */
+      s7_pointer obj, chan, loc;
+      
+      chan = caddr(expr);
+      if ((s7_is_integer(chan)) &&
+	  (s7_integer(chan) == 0))
 	{
-	  s7_pointer slot;
-	  slot = s7_is_local_variable(sc, loc, locals);
-	  if (slot)
+	  loc = cadr(expr);
+	  obj = cadddr(expr);
+	  
+	  if ((s7_is_symbol(loc)) &&
+	      (s7_is_symbol(obj)) &&
+	      (!s7_is_local_variable(sc, obj, locals)))
 	    {
-	      obj = s7_symbol_value(sc, obj);
-	      if (mus_is_xen(obj))
+	      s7_pointer slot;
+	      slot = s7_is_local_variable(sc, loc, locals);
+	      if (slot)
 		{
-		  gf *g;
-		  g = gf_alloc();
-		  g->func = wrapped_ina_ss;
-		  g->s1 = slot;
-		  g->gen1 = (void *)XEN_TO_MUS_ANY(obj);
-		  return(g);
+		  obj = s7_symbol_value(sc, obj);
+		  if (mus_is_xen(obj))
+		    {
+		      gf *g;
+		      g = gf_alloc();
+		      g->func = wrapped_ina_ss;
+		      g->s1 = slot;
+		      g->gen1 = (void *)XEN_TO_MUS_ANY(obj);
+		      return(g);
+		    }
 		}
 	    }
 	}
@@ -11806,22 +11827,25 @@ static mus_float_t gf_frame_ref_s1(void *p)
 
 static gf *fixup_frame_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  gf *g;
-  s7_pointer obj;
-  if ((s7_is_symbol(cadr(expr))) &&
-      (!s7_is_local_variable(sc, cadr(expr), locals)) &&
-      (s7_is_symbol(caddr(expr))))
+  if (s7_list_length(sc, expr) == 3)
     {
-      mus_any *f;
-      obj = s7_cadr_value(sc, expr);
-      f = XEN_TO_MUS_ANY(obj);
-      if (mus_is_frame(f))
+      gf *g;
+      s7_pointer obj;
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (!s7_is_local_variable(sc, cadr(expr), locals)) &&
+	  (s7_is_symbol(caddr(expr))))
 	{
-	  g = gf_alloc();
-	  g->func = gf_frame_ref_s1;
-	  g->gen = (void *)mus_data(f);
-	  g->s1 = s7_slot(sc, caddr(expr));
-	  return(g);
+	  mus_any *f;
+	  obj = s7_cadr_value(sc, expr);
+	  f = XEN_TO_MUS_ANY(obj);
+	  if (mus_is_frame(f))
+	    {
+	      g = gf_alloc();
+	      g->func = gf_frame_ref_s1;
+	      g->gen = (void *)mus_data(f);
+	      g->s1 = s7_slot(sc, caddr(expr));
+	      return(g);
+	    }
 	}
     }
   return(NULL);
@@ -11916,49 +11940,52 @@ static mus_float_t gf_cos_s1(void *p)       {gf *g = (gf *)p; return(cos(s7_cell
 
 static gf *fixup_cos_or_sin(s7_scheme *sc, s7_pointer expr, s7_pointer locals, bool its_cos)
 {
-  int typ;
-  double x;
-  double *rx;
-  s7_pointer s;
-  gf *g1 = NULL, *g = NULL;
-
-  typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
-  switch (typ)
+  if (s7_list_length(sc, expr) == 2)
     {
-    case GF_G:
-      if (g1->func_1)
+      int typ;
+      double x;
+      double *rx;
+      s7_pointer s;
+      gf *g1 = NULL, *g = NULL;
+      
+      typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
+      switch (typ)
 	{
-	  g1->f1 = g1->func_1;
-	  g1->func = (its_cos) ? gf_cos_1 : gf_sin_1;
-	  g1->func_1 = NULL;
-	  return(g1);
+	case GF_G:
+	  if (g1->func_1)
+	    {
+	      g1->f1 = g1->func_1;
+	      g1->func = (its_cos) ? gf_cos_1 : gf_sin_1;
+	      g1->func_1 = NULL;
+	      return(g1);
+	    }
+	  g = gf_alloc();
+	  g->func = (its_cos) ? gf_cos : gf_sin;
+	  g->g1 = g1;
+	  g->f1 = g1->func;
+	  return(g);
+	  
+	case GF_X:
+	  g = gf_alloc();
+	  g->func = gf_constant;
+	  if (its_cos) g->x1 = cos(x); else g->x1 = sin(x);
+	  return(g);
+	  
+	case GF_S:
+	  g = gf_alloc();
+	  g->func = (its_cos) ? gf_cos_s1 : gf_sin_s1;
+	  g->s1 = s;
+	  g->gen1 = (void *)sc;
+	  return(g);
+	  
+	case GF_RX:
+	  g = gf_alloc();
+	  g->func = (its_cos) ? gf_cos_rx1 : gf_sin_rx1;
+	  g->rx1 = rx;
+	  return(g);
 	}
-      g = gf_alloc();
-      g->func = (its_cos) ? gf_cos : gf_sin;
-      g->g1 = g1;
-      g->f1 = g1->func;
-      return(g);
-
-    case GF_X:
-      g = gf_alloc();
-      g->func = gf_constant;
-      if (its_cos) g->x1 = cos(x); else g->x1 = sin(x);
-      return(g);
-
-    case GF_S:
-      g = gf_alloc();
-      g->func = (its_cos) ? gf_cos_s1 : gf_sin_s1;
-      g->s1 = s;
-      g->gen1 = (void *)sc;
-      return(g);
-
-    case GF_RX:
-      g = gf_alloc();
-      g->func = (its_cos) ? gf_cos_rx1 : gf_sin_rx1;
-      g->rx1 = rx;
-      return(g);
+      if (g1) gf_free(g1);
     }
-  if (g1) gf_free(g1);
   return(NULL);
 }
 
@@ -13488,7 +13515,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
     }
 
 #if USE_SND
-  if (sampler_p(op))
+  if (is_sampler(op))
     {
       gf *p;
       p = gf_alloc();

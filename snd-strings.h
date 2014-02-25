@@ -181,7 +181,7 @@
 #define S_enved_srate                   "enved-srate"
 #define S_enved_style                   "enved-style"
 #define S_enved_target                  "enved-target"
-#define S_enved_wave_on                 "enved-wave?"
+#define S_enved_with_wave               "enved-wave?"
 #define S_enved_waveform_color          "enved-waveform-color"
 #define S_envelope_exponential          "envelope-exponential"
 #define S_envelope_linear               "envelope-linear"
@@ -720,7 +720,7 @@
 #define S_color_p S_is_color
 #define S_contrast_control_p S_contrast_control_on
 #define S_enved_clip_p S_enved_clip_on
-#define S_enved_wave_p S_enved_wave_on
+#define S_enved_wave_p S_enved_with_wave
 #define S_expand_control_p S_expand_control_on
 #define S_filter_control_p S_filter_control_on
 #define S_lisp_graph_p S_lisp_graph_on

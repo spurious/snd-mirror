@@ -165,13 +165,13 @@ static chan_info *free_chan_info(chan_info *cp)
       free(cp->amp_control);
       cp->amp_control = NULL;
     }
-  if (XEN_PROCEDURE_P(cp->cursor_proc))
+  if (Xen_is_procedure(cp->cursor_proc))
     {
       snd_unprotect_at(cp->cursor_proc_loc);
       cp->cursor_proc = XEN_UNDEFINED;
       cp->cursor_proc_loc = NOT_A_GC_LOC;
     }
-  if (XEN_VECTOR_P(cp->properties)) /* using vector as node for GC */
+  if (Xen_is_vector(cp->properties)) /* using vector as node for GC */
     XEN_VECTOR_SET(cp->properties, 0, XEN_EMPTY_LIST);
   cp->waiting_to_make_graph = false;
   if (cp->sonogram_data) free_sono_info(cp);
@@ -209,21 +209,21 @@ static chan_info *free_chan_info(chan_info *cp)
       cp->as_one_edit_positions_size = 0;
     }
 
-  if (XEN_HOOK_P(cp->edit_hook))
+  if (Xen_is_hook(cp->edit_hook))
     {
       XEN_CLEAR_HOOK(cp->edit_hook);
       snd_unprotect_at(cp->edit_hook_loc);
       cp->edit_hook = XEN_FALSE;
       cp->edit_hook_loc = NOT_A_GC_LOC;
     }
-  if (XEN_HOOK_P(cp->after_edit_hook))
+  if (Xen_is_hook(cp->after_edit_hook))
     {
       XEN_CLEAR_HOOK(cp->after_edit_hook);
       snd_unprotect_at(cp->after_edit_hook_loc);
       cp->after_edit_hook = XEN_FALSE;
       cp->after_edit_hook_loc = NOT_A_GC_LOC;
     }
-  if (XEN_HOOK_P(cp->undo_hook))
+  if (Xen_is_hook(cp->undo_hook))
     {
       XEN_CLEAR_HOOK(cp->undo_hook);
       snd_unprotect_at(cp->undo_hook_loc);
@@ -412,7 +412,7 @@ void free_snd_info(snd_info *sp)
   sp->file_read_only = FILE_READ_WRITE;
   sp->need_update = false;
   sp->file_unreadable = false;
-  if (XEN_VECTOR_P(sp->properties)) /* using vector as node for GC */
+  if (Xen_is_vector(sp->properties)) /* using vector as node for GC */
     XEN_VECTOR_SET(sp->properties, 0, XEN_EMPTY_LIST);
   sp->selected_channel = NO_SELECTION;
   sp->short_filename = NULL;                      /* was a pointer into filename */
@@ -446,7 +446,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
       cp = sp->chans[i];
       if (cp)
 	{
-	  if (XEN_VECTOR_P(cp->properties))
+	  if (Xen_is_vector(cp->properties))
 	    {
 	      snd_unprotect_at(cp->properties_loc);
 	      cp->properties_loc = NOT_A_GC_LOC;
@@ -460,7 +460,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
 	}
     }
   free(sp->chans);
-  if (XEN_VECTOR_P(sp->properties))
+  if (Xen_is_vector(sp->properties))
     {
       snd_unprotect_at(sp->properties_loc);
       sp->properties_loc = NOT_A_GC_LOC;

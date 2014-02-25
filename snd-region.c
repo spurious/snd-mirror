@@ -623,7 +623,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
       (r->frames == 0)) 
     return(INVALID_REGION);
 
-  if (!(editable_p(cp))) 
+  if (!(is_editable(cp))) 
     {
       (*err) = IO_EDIT_HOOK_CANCELLATION;
       return(NOT_EDITABLE);

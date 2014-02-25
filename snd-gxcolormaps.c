@@ -898,12 +898,10 @@ static int xen_colormap_to_int(XEN n)
 
 static XEN_OBJECT_TYPE xen_colormap_tag;
 
-static bool xen_colormap_p(XEN obj) 
+static bool xen_is_colormap(XEN obj) 
 {
   return(Xen_c_object_is_type(obj, xen_colormap_tag));
 }
-
-#define XEN_COLORMAP_P(Obj) xen_colormap_p(Obj)
 
 
 static void xen_colormap_free(xen_colormap *v) {if (v) free(v);}
@@ -913,11 +911,11 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(xen_colormap, free_xen_colormap, xen_colormap_fre
 
 static char *xen_colormap_to_string(xen_colormap *v)
 {
-  #define XEN_COLORMAP_PRINT_BUFFER_SIZE 64
+  #define xen_is_colormapRINT_BUFFER_SIZE 64
   char *buf;
   if (v == NULL) return(NULL);
-  buf = (char *)calloc(XEN_COLORMAP_PRINT_BUFFER_SIZE, sizeof(char));
-  snprintf(buf, XEN_COLORMAP_PRINT_BUFFER_SIZE, "#<colormap %s>", colormap_name(v->n));
+  buf = (char *)calloc(xen_is_colormapRINT_BUFFER_SIZE, sizeof(char));
+  snprintf(buf, xen_is_colormapRINT_BUFFER_SIZE, "#<colormap %s>", colormap_name(v->n));
   return(buf);
 }
 
@@ -931,7 +929,7 @@ static XEN g_xen_colormap_to_string(XEN obj)
   XEN result;
   #define S_xen_colormap_to_string "colormap->string"
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(obj), obj, 1, S_xen_colormap_to_string, "a colormap");
+  XEN_ASSERT_TYPE(xen_is_colormap(obj), obj, 1, S_xen_colormap_to_string, "a colormap");
 
   vstr = xen_colormap_to_string(XEN_TO_XEN_COLORMAP(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -950,7 +948,7 @@ static bool xen_colormap_equalp(xen_colormap *v1, xen_colormap *v2)
 
 static XEN equalp_xen_colormap(XEN obj1, XEN obj2)
 {
-  if ((!(XEN_COLORMAP_P(obj1))) || (!(XEN_COLORMAP_P(obj2)))) return(XEN_FALSE);
+  if ((!(xen_is_colormap(obj1))) || (!(xen_is_colormap(obj2)))) return(XEN_FALSE);
   return(C_TO_XEN_BOOLEAN(xen_colormap_equalp(XEN_TO_XEN_COLORMAP(obj1), XEN_TO_XEN_COLORMAP(obj2))));
 }
 #endif
@@ -1042,7 +1040,7 @@ static XEN g_integer_to_colormap(XEN n)
 static XEN g_colormap_to_integer(XEN n)
 {
   #define H_colormap_to_integer "(" S_colormap_to_integer " id) returns the integer corresponding to the given colormap"
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(n), n, 1, S_colormap_to_integer, "a colormap");
+  XEN_ASSERT_TYPE(xen_is_colormap(n), n, 1, S_colormap_to_integer, "a colormap");
   return(C_TO_XEN_INT(xen_colormap_to_int(n)));
 }
 
@@ -1056,7 +1054,7 @@ static XEN g_colormap_ref(XEN map, XEN pos)
 
   #define H_colormap_ref "(" S_colormap_ref " colormap pos): (list r g b). Pos is between 0.0 and 1.0."
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(map), map, 1, S_colormap_ref, "a colormap object");
+  XEN_ASSERT_TYPE(xen_is_colormap(map), map, 1, S_colormap_ref, "a colormap object");
   XEN_ASSERT_TYPE(Xen_is_number(pos), pos, 2, S_colormap_ref, "a number between 0.0 and 1.0");
 
   index = XEN_COLORMAP_TO_C_INT(map);
@@ -1088,7 +1086,7 @@ static XEN g_set_colormap(XEN val)
 {
   int index;
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(val), val, 1, S_setB S_colormap, "a colormap"); 
+  XEN_ASSERT_TYPE(xen_is_colormap(val), val, 1, S_setB S_colormap, "a colormap"); 
 
   index = XEN_COLORMAP_TO_C_INT(val);
   if (!(is_colormap(index)))
@@ -1128,7 +1126,7 @@ static XEN g_colormap_name(XEN col)
   int map;
   #define H_colormap_name "(" S_colormap_name " colormap) returns the colormap's name (used in the Color/Orientation dialog)."
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(col), col, 1, S_colormap_name, "a colormap"); 
+  XEN_ASSERT_TYPE(xen_is_colormap(col), col, 1, S_colormap_name, "a colormap"); 
 
   map = XEN_COLORMAP_TO_C_INT(col);
   if (!(is_colormap(map)))
@@ -1140,10 +1138,10 @@ static XEN g_colormap_name(XEN col)
 }
 
 
-static XEN g_colormap_p(XEN obj)
+static XEN g_is_colormap(XEN obj)
 {
-  #define H_colormap_p "(" S_is_colormap " obj) -> " PROC_TRUE " if 'obj' is a colormap."
-  return(C_TO_XEN_BOOLEAN(XEN_COLORMAP_P(obj) && 
+  #define H_is_colormap "(" S_is_colormap " obj) -> " PROC_TRUE " if 'obj' is a colormap."
+  return(C_TO_XEN_BOOLEAN(xen_is_colormap(obj) && 
 			  is_colormap(XEN_COLORMAP_TO_C_INT(obj))));
 }
 
@@ -1153,7 +1151,7 @@ static XEN g_delete_colormap(XEN col)
   int map;
   #define H_delete_colormap "(" S_delete_colormap " colormap) frees the specified colormap."
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(col), col, 1, S_delete_colormap, "a colormap"); 
+  XEN_ASSERT_TYPE(xen_is_colormap(col), col, 1, S_delete_colormap, "a colormap"); 
 
   map = XEN_COLORMAP_TO_C_INT(col);
   if (!(is_colormap(map)))
@@ -1194,7 +1192,7 @@ returning the new colormap. 'name' is the colormap's name in the View:Color/Orie
 
 XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 XEN_NARGIFY_0(g_colormap_w, g_colormap)
-XEN_NARGIFY_1(g_colormap_p_w, g_colormap_p)
+XEN_NARGIFY_1(g_is_colormap_w, g_is_colormap)
 XEN_NARGIFY_1(g_set_colormap_w, g_set_colormap)
 XEN_NARGIFY_0(g_colormap_size_w, g_colormap_size)
 XEN_NARGIFY_1(g_set_colormap_size_w, g_set_colormap_size)
@@ -1268,7 +1266,7 @@ void g_init_gxcolormaps(void)
   XEN_DEFINE_VARIABLE("phases-colormap",          colormap_temp[15], C_INT_TO_XEN_COLORMAP(15));
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_is_colormap, g_colormap_p_w,           1, 0, 0, H_colormap_p);
+  XEN_DEFINE_PROCEDURE(S_is_colormap, g_is_colormap_w,         1, 0, 0, H_is_colormap);
   XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);
   XEN_DEFINE_PROCEDURE(S_add_colormap, g_add_colormap_w,       2, 0, 0, H_add_colormap);
   XEN_DEFINE_PROCEDURE(S_colormap_name, g_colormap_name_w,     1, 0, 0, H_colormap_name);

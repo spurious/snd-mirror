@@ -16,7 +16,7 @@ static bool ignore_mus_error(int type, char *msg)
 			 XEN_LIST_2(C_TO_XEN_INT(type), 
 				    C_TO_XEN_STRING(msg)),
 			 S_mus_error_hook);
-  return(XEN_TRUE_P(result));
+  return(Xen_is_true(result));
 }
 
 #ifndef _MSC_VER
@@ -145,9 +145,9 @@ void snd_set_global_defaults(bool need_cleanup)
       if (ss->Open_File_Dialog_Directory) {free(ss->Open_File_Dialog_Directory); ss->Open_File_Dialog_Directory = NULL;}
       
       /* not sure about the next two... */
-      if ((cursor_style(ss) == CURSOR_PROC) && (XEN_PROCEDURE_P(ss->cursor_proc)))
+      if ((cursor_style(ss) == CURSOR_PROC) && (Xen_is_procedure(ss->cursor_proc)))
 	snd_unprotect_at(ss->cursor_proc_loc);
-      if ((zoom_focus_style(ss) == ZOOM_FOCUS_PROC) && (XEN_PROCEDURE_P(ss->zoom_focus_proc)))
+      if ((zoom_focus_style(ss) == ZOOM_FOCUS_PROC) && (Xen_is_procedure(ss->zoom_focus_proc)))
 	snd_unprotect_at(ss->zoom_focus_proc_loc);
     }
 
@@ -269,7 +269,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Spectrum_Start =              DEFAULT_SPECTRUM_START;
   ss->Enved_Base =                  DEFAULT_ENVED_BASE;
   ss->Enved_Power =                 DEFAULT_ENVED_POWER;
-  ss->Enved_Wave_p =                DEFAULT_ENVED_WAVE_P;
+  ss->Enved_With_Wave =             DEFAULT_ENVED_WITH_WAVE;
   ss->Enved_Style =                 DEFAULT_ENVED_STYLE;
   ss->Enved_Target =                DEFAULT_ENVED_TARGET;
   ss->Enved_Filter_Order =          DEFAULT_ENVED_FILTER_ORDER;
@@ -746,9 +746,9 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_auto_update_interval "*) (list #f (lambda (s v) (set! (" S_auto_update_interval ") v)) #f))");
   s7_symbol_set_documentation(s7, ss->auto_update_interval_symbol, "*auto-update-interval*: time (seconds) between background checks for changed file on disk (60)");
 
-  ss->enved_wave_p_symbol = s7_define_variable(s7, "*" S_enved_wave_on "*", s7_make_boolean(s7, DEFAULT_ENVED_WAVE_P));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_wave_on "*) (list #f (lambda (s v) (set! (" S_enved_wave_on ") v)) #f))");
-  s7_symbol_set_documentation(s7, ss->enved_wave_p_symbol, "*enved-wave?*: #t if the envelope editor is displaying the waveform to be edited");
+  ss->enved_with_wave_symbol = s7_define_variable(s7, "*" S_enved_with_wave "*", s7_make_boolean(s7, DEFAULT_ENVED_WITH_WAVE));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_with_wave "*) (list #f (lambda (s v) (set! (" S_enved_with_wave ") v)) #f))");
+  s7_symbol_set_documentation(s7, ss->enved_with_wave_symbol, "*enved-wave?*: #t if the envelope editor is displaying the waveform to be edited");
 
   ss->graphs_horizontal_symbol = s7_define_variable(s7, "*" S_graphs_horizontal "*", s7_make_boolean(s7, DEFAULT_GRAPHS_HORIZONTAL));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_graphs_horizontal "*) (list #f (lambda (s v) (set! (" S_graphs_horizontal ") v)) #f))");

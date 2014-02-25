@@ -3717,7 +3717,7 @@ static char *find_sources(void) /* returns directory name where it finds extensi
   {
     XEN xfile;
     xfile = rb_find_file(C_TO_XEN_STRING(BASE_FILE));
-    if (XEN_STRING_P(xfile))
+    if (Xen_is_string(xfile))
       file = mus_expand_filename(XEN_TO_C_STRING(xfile));
   }
 #endif

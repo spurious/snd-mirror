@@ -2,7 +2,7 @@
 
 static void clear_search_state(void)
 {
-  if (XEN_PROCEDURE_P(ss->search_proc)) 
+  if (Xen_is_procedure(ss->search_proc)) 
     {
       snd_unprotect_at(ss->search_proc_loc);
       ss->search_proc_loc = NOT_A_GC_LOC;
@@ -65,7 +65,7 @@ static mus_long_t channel_find_backward(chan_info *cp)
       res = XEN_CALL_1(ss->search_proc, 
 		       C_TO_XEN_DOUBLE((double)(read_sample(sf))), 
 		       "search function");
-      if (XEN_NOT_FALSE_P(res)) 
+      if (!Xen_is_false(res)) 
 	break;
       if (passes >= MANY_PASSES)
 	{
@@ -180,7 +180,7 @@ void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
       (mus_strcmp(str, ss->search_expr)))
     {
       proc = ss->search_proc;
-      if (!(XEN_PROCEDURE_P(proc)))
+      if (!(Xen_is_procedure(proc)))
 	return;
       repeating_search = true;
     }
@@ -192,7 +192,7 @@ void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
       proc = snd_catch_any(eval_str_wrapper, str, str);
       redirect_errors_to(NULL, NULL);
 
-      if ((!(XEN_PROCEDURE_P(proc))) ||
+      if ((!(Xen_is_procedure(proc))) ||
 	  (!(procedure_arity_ok(proc, 1))))
 	return;
 
@@ -250,13 +250,13 @@ static XEN g_set_search_procedure(XEN proc)
 
   /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> as "proc" */
   
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) || XEN_FALSE_P(proc), proc, 1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
+  XEN_ASSERT_TYPE(Xen_is_procedure(proc) || Xen_is_false(proc), proc, 1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
 
   error = procedure_ok(proc, 1, S_setB S_search_procedure, "proc", 1);
   if (!error)
     {
       clear_search_state();
-      if (XEN_PROCEDURE_P(proc))
+      if (Xen_is_procedure(proc))
 	{
 	  ss->search_proc = proc;
 	  ss->search_proc_loc = snd_protect(proc);

@@ -345,7 +345,7 @@ static void chans_transform_type(chan_info *cp, int value)
 
 void set_transform_type(int val)
 {
-  if (transform_p(val))
+  if (is_transform(val))
     {
       if (!(ss->graph_hook_active)) for_each_chan(force_fft_clear);
       in_set_transform_type(val);
@@ -379,7 +379,7 @@ void make_transform_type_list(void)
       int i, j;
       types = (XmString *)calloc(num, sizeof(XmString));
       for (i = 0, j = 0; i < num; i++) 
-	if (transform_p(i))
+	if (is_transform(i))
 	  {
 	    set_transform_position(i, j);
 	    types[j++] = XmStringCreateLocalized((char *)transform_name(i)); 

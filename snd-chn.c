@@ -2671,7 +2671,7 @@ void make_sonogram(chan_info *cp)
 	}
       if ((enved_dialog_is_active()) &&  /*   or we want to see the sonogram as the enved background */
 	  (enved_target(ss) == ENVED_SPECTRUM) &&
-	  (enved_wave_p(ss)))
+	  (enved_with_wave(ss)))
 	{
 	  cp->fft_pix = cairo_recording_surface_create(CAIRO_CONTENT_COLOR, NULL);
 	  lcr = cairo_create(cp->fft_pix);
@@ -2803,7 +2803,7 @@ void make_sonogram(chan_info *cp)
       if ((bins >= SAVE_FFT_SIZE) ||      /* transform size of twice that (8192) */
 	  ((enved_dialog_is_active()) &&  /*   or we want to see the sonogram as the enved background */
 	   (enved_target(ss) == ENVED_SPECTRUM) &&
-	   (enved_wave_p(ss))))
+	   (enved_with_wave(ss))))
 	save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
 #else
 #if CAIRO_HAS_RECORDING_SURFACE && (0)
@@ -7430,7 +7430,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
 
   if (!(Xen_is_bound(chn)))
     {
-      if ((XEN_SOUND_P(snd)) || (!Xen_is_bound(snd)))
+      if ((xen_is_sound(snd)) || (!Xen_is_bound(snd)))
 	return(channel_get(snd, chn, CP_FRAMES, S_frames));
 
       if (Xen_is_string(snd))
@@ -7439,7 +7439,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
       if (mus_is_xen(snd))                        /* mus-length */
 	return(g_mus_length(snd));
 
-      if (sound_data_p(snd))                     /* sound-data-length */
+      if (xen_is_sound_data(snd))                     /* sound-data-length */
 	return(C_TO_XEN_LONG_LONG(mus_sound_data_length(XEN_TO_SOUND_DATA(snd))));
 
       if (mus_is_vct(snd))                        /* vct-length */
@@ -7451,7 +7451,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
       if (xen_is_region(snd))                     /* region-frames */
 	return(g_region_frames(snd, XEN_ZERO));
 
-      if (XEN_PLAYER_P(snd))
+      if (xen_is_player(snd))
 	{
 	  snd_info *sp;
 	  sp = get_player_sound(snd);
@@ -7459,7 +7459,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
 	}
     }
 
-  if (XEN_SELECTION_P(snd))
+  if (xen_is_selection(snd))
     return(g_selection_frames(chn, edpos));
 
   if (Xen_is_bound(edpos))
@@ -7546,7 +7546,7 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
 	    return(g_vct_peak(v));
 	}
 
-      if (sound_data_p(snd))
+      if (xen_is_sound_data(snd))
 	return(g_list_maxamp(g_sound_data_maxamp(snd)));
 
       if (mus_is_vct(snd))                        /* vct-peak */
@@ -7565,7 +7565,7 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
 	return(g_list_maxamp(snd));
     }
 
-  if (XEN_SELECTION_P(snd))                      /* selection-maxamp where chn=snd and edpos=chn */
+  if (xen_is_selection(snd))                      /* selection-maxamp where chn=snd and edpos=chn */
     return(g_selection_maxamp(chn_n, edpos));
 
   if (Xen_is_bound(edpos))
@@ -8587,9 +8587,9 @@ static XEN g_transform_type(XEN snd, XEN chn)
 static XEN g_set_transform_type(XEN val, XEN snd, XEN chn)
 {
   int type;
-  XEN_ASSERT_TYPE(XEN_TRANSFORM_P(val), val, 1, S_setB S_transform_type, "a transform object"); 
+  XEN_ASSERT_TYPE(xen_is_transform(val), val, 1, S_setB S_transform_type, "a transform object"); 
   type = XEN_TRANSFORM_TO_C_INT(val);
-  if (!(transform_p(type)))
+  if (!is_transform(type))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_type, 1, val, "unknown transform");
 
   if (Xen_is_bound(snd))
@@ -9532,7 +9532,7 @@ static XEN g_variable_graph_p(XEN index)
   #define H_variable_graph_p "(" S_is_variable_graph " :optional snd): " PROC_TRUE " if snd is a variable graph (from " S_make_variable_graph ")."
   snd_info *sp;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(index) || XEN_SOUND_P(index), index, 1, S_is_variable_graph, "a sound");
+  XEN_ASSERT_TYPE(Xen_is_integer(index) || xen_is_sound(index), index, 1, S_is_variable_graph, "a sound");
 
   sp = get_sp(index);
   if (sp)

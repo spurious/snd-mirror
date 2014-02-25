@@ -310,7 +310,7 @@ If 'text' is included, it is preloaded into the find dialog text widget."
   XEN_ASSERT_TYPE(Xen_is_string_or_unbound(text), text, 2, S_find_dialog, "a string");
 
   make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed), NULL);
-  if ((edit_find_text) && (XEN_STRING_P(text)))
+  if ((edit_find_text) && (Xen_is_string(text)))
     XmTextSetString(edit_find_text, (char *)XEN_TO_C_STRING(text));
 
   return(XEN_WRAP_WIDGET(edit_find_dialog));

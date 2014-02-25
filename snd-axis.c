@@ -1583,18 +1583,18 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 
 #if USE_MOTIF
   #define XEN_UNWRAP_SND_GC(Value) XEN_UNWRAP_C_POINTER(XEN_CADR(Value))
-  #define XEN_SND_GC_P(Value) (Xen_is_list(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
+  #define Xen_is_GC(Value) (Xen_is_list(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
                           (Xen_is_symbol(XEN_CAR(Value))) && \
 			  (strcmp("GC", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #else
   #if USE_GTK
       #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
-      #define XEN_SND_GC_P(Value) (Xen_is_list(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
+      #define Xen_is_GC(Value) (Xen_is_list(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
                               (Xen_is_symbol(XEN_CAR(Value))) && \
 			      (strcmp("gc_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
   #else
     #define XEN_UNWRAP_SND_GC(Value) 0
-    #define XEN_SND_GC_P(Value) 0
+    #define Xen_is_GC(Value) 0
   #endif
 #endif
 
@@ -1635,7 +1635,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   xwid = XEN_LIST_REF(args, 0);
   XEN_ASSERT_TYPE(Xen_is_widget(xwid), xwid, 1, S_draw_axes, "widget");
   xgc = XEN_LIST_REF(args, 1);
-  XEN_ASSERT_TYPE(XEN_SND_GC_P(xgc), xgc, 2, S_draw_axes, "snd-gc");
+  XEN_ASSERT_TYPE(Xen_is_GC(xgc), xgc, 2, S_draw_axes, "snd-gc");
 
 #if USE_MOTIF
   w = (Widget)(XEN_UNWRAP_WIDGET(xwid));

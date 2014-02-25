@@ -695,7 +695,7 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
     /* now look for added filters added via add-file-filter */
     int i;
     for (i = 0; i < ss->file_filters_size; i++)
-      if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i))))
+      if (!(Xen_is_false(XEN_VECTOR_REF(ss->file_filters, i))))
 	{
 	  const char *filter_name;
 	  GtkFileFilter *nfilt;
@@ -3909,7 +3909,7 @@ static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint 
       else str = (char *)g_filename_from_utf8((gchar *)(SELECTION_DATA(data)), SELECTION_LENGTH(data), &bread, &bwritten, &error);
 
       if ((!(XEN_HOOKED(drop_hook))) || 
-	  (!(XEN_TRUE_P(run_or_hook(drop_hook,
+	  (!(Xen_is_true(run_or_hook(drop_hook,
 				    XEN_LIST_1(C_TO_XEN_STRING(str)),
 				    S_drop_hook)))))
 	{

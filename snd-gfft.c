@@ -316,7 +316,7 @@ void make_transform_type_list(void)
       num = max_transform_type();
       transform_names = (const char **)calloc(num, sizeof(char *));
       for (i = 0, j = 0; i < num; i++) 
-	if (transform_p(i))
+	if (is_transform(i))
 	  {
 	    set_transform_position(i, j);
 	    transform_names[j++] = transform_name(i);
@@ -340,7 +340,7 @@ void make_transform_type_list(void)
 
 void set_transform_type(int val)
 {
-  if (transform_p(val))
+  if (is_transform(val))
     {
       if (!(ss->graph_hook_active)) for_each_chan(force_fft_clear);
       in_set_transform_type(val);

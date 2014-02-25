@@ -93,7 +93,7 @@ void make_scrolled_env_list(void)
 
 void enved_reflect_peak_env_completion(snd_info *sp)
 {
-  if ((enved_dialog) && (active_channel) && (enved_wave_p(ss)))
+  if ((enved_dialog) && (active_channel) && (enved_with_wave(ss)))
     {
       if (active_channel->sound == sp) 
 	env_redisplay();
@@ -175,7 +175,7 @@ static void apply_enved(void)
 			origin, NULL,
 			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
-	      if (enved_wave_p(ss)) env_redisplay();
+	      if (enved_with_wave(ss)) env_redisplay();
 	      if (estr) free(estr);
 	      if (origin) free(origin);
 	      break;
@@ -215,7 +215,7 @@ static void apply_enved(void)
 			       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 		within_selection_src = false;
 		max_env = free_env(max_env);
-		if (enved_wave_p(ss)) env_redisplay();
+		if (enved_with_wave(ss)) env_redisplay();
 	      }
 	      break;
 	    }
@@ -265,7 +265,7 @@ static void env_redisplay_1(printing_t printing)
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = (char *)"noname";
 
-	  if ((enved_wave_p(ss)) &&
+	  if ((enved_with_wave(ss)) &&
 	      (active_channel) &&
 	      (!(active_channel->squelch_update)))
 	    {
@@ -303,7 +303,7 @@ void env_redisplay_with_print(void)
 void update_enved_background_waveform(chan_info *cp)
 {
   if ((enved_dialog_is_active()) &&
-      (enved_wave_p(ss)) &&
+      (enved_with_wave(ss)) &&
       (enved_target(ss) == ENVED_AMPLITUDE) &&
       (cp == active_channel) &&
       ((!apply_to_selection) || (selection_is_active_in_channel(cp))))
@@ -596,7 +596,7 @@ static void selection_button_pressed(GtkWidget *w, gpointer context)
   apply_to_selection = (!apply_to_selection);
   widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->yellow : ss->basic_color);
   set_sensitive(apply2B, true);
-  if ((enved_wave_p(ss)) && 
+  if ((enved_with_wave(ss)) && 
       (!showing_all_envs)) 
     env_redisplay();
 }
@@ -637,7 +637,7 @@ static void reflect_apply_state(void)
   widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? ss->yellow : ss->basic_color);
   widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? ss->yellow : ss->basic_color);
   widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? ss->yellow : ss->basic_color);
-  if ((!showing_all_envs) && (enved_wave_p(ss))) env_redisplay();
+  if ((!showing_all_envs) && (enved_with_wave(ss))) env_redisplay();
 }
 
 
@@ -675,7 +675,7 @@ static void enved_reset(void)
   set_enved_power(DEFAULT_ENVED_POWER);
   set_enved_base(DEFAULT_ENVED_BASE);
   set_enved_target(DEFAULT_ENVED_TARGET);
-  set_enved_wave_p(DEFAULT_ENVED_WAVE_P);
+  set_enved_with_wave(DEFAULT_ENVED_WITH_WAVE);
   set_enved_in_dB(DEFAULT_ENVED_IN_DB);
   set_enved_filter_order(DEFAULT_ENVED_FILTER_ORDER);
   if (active_env) active_env = free_env(active_env);
@@ -710,7 +710,7 @@ static void env_browse_callback(const char *name, int row, void *data)
 
 static void graph_button_callback(GtkWidget *w, gpointer context)
 {
-  in_set_enved_wave_p(TOGGLE_BUTTON_ACTIVE(w));
+  in_set_enved_with_wave(TOGGLE_BUTTON_ACTIVE(w));
   env_redisplay();
 }
 
@@ -828,7 +828,7 @@ static gboolean fir_button_pressed(GtkWidget *w, GdkEventButton *ev, gpointer da
 {
   FIR_p = (!FIR_p);
   gtk_label_set_text(GTK_LABEL(firB), (FIR_p) ? "fir" : "fft");
-  if (enved_wave_p(ss)) env_redisplay();
+  if (enved_with_wave(ss)) env_redisplay();
   return(false);
 }
 
@@ -1206,7 +1206,7 @@ GtkWidget *create_envelope_editor(void)
 	set_sensitive(selectionB, false);
 
       set_toggle_button(clipB, enved_clip_p(ss), false, NULL);
-      set_toggle_button(graphB, enved_wave_p(ss), false, NULL);
+      set_toggle_button(graphB, enved_with_wave(ss), false, NULL);
       set_toggle_button(dBB, enved_in_dB(ss), false, NULL);
 
       reflect_apply_state();
@@ -1248,9 +1248,9 @@ void set_enved_target(enved_target_t val)
 }
 
 
-void set_enved_wave_p(bool val) 
+void set_enved_with_wave(bool val) 
 {
-  in_set_enved_wave_p(val); 
+  in_set_enved_with_wave(val); 
   if (enved_dialog) set_toggle_button(graphB, val, false, NULL);
 }
 
@@ -1286,7 +1286,7 @@ void set_enved_filter_order(int order)
 	{
 	  widget_int_to_text(orderL, enved_filter_order(ss));
 	  if ((enved_target(ss) == ENVED_SPECTRUM) && 
-	      (enved_wave_p(ss)) && 
+	      (enved_with_wave(ss)) && 
 	      (!showing_all_envs)) 
 	    env_redisplay();
 	}
@@ -1310,7 +1310,7 @@ void enved_reflect_selection(bool on)
 	}
       widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->yellow : ss->basic_color);
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
-	  (enved_wave_p(ss)) && 
+	  (enved_with_wave(ss)) && 
 	  (!showing_all_envs)) 
 	env_redisplay();
     }
@@ -1319,11 +1319,10 @@ void enved_reflect_selection(bool on)
 
 void color_enved_waveform(color_info *pix)
 {
-  ss->enved_waveform_color = pix;
   if (enved_dialog)
     {
       gc_set_foreground(ggc, pix);
-      if ((enved_wave_p(ss)) && (enved_dialog)) env_redisplay();
+      if ((enved_with_wave(ss)) && (enved_dialog)) env_redisplay();
     }
 }
 
@@ -1337,12 +1336,12 @@ static XEN g_enved_envelope(void)
 
 static XEN g_set_enved_envelope(XEN e)
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
+  XEN_ASSERT_TYPE(Xen_is_list(e) || Xen_is_string(e) || Xen_is_symbol(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
-  if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
-    active_env = name_to_env((XEN_STRING_P(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e));
+  if ((Xen_is_string(e)) || (Xen_is_symbol(e)))
+    active_env = name_to_env((Xen_is_string(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e));
   else active_env = xen_to_env(e);
-  if ((!active_env) && (!(XEN_LIST_P(e))))
+  if ((!active_env) && (!(Xen_is_list(e))))
     XEN_ERROR(NO_SUCH_ENVELOPE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_envelope ": bad envelope arg: ~A"),
 			 e));
@@ -1361,7 +1360,7 @@ static XEN g_enved_filter(void)
 
 static XEN g_set_enved_filter(XEN type)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, 1, S_setB S_enved_filter, "boolean");
+  XEN_ASSERT_TYPE(Xen_is_boolean(type), type, 1, S_setB S_enved_filter, "boolean");
   FIR_p = XEN_TO_C_BOOLEAN(type);
   if (firB)
     gtk_label_set_text(GTK_LABEL(firB), (FIR_p) ? "fir" : "fft");
