@@ -42,7 +42,7 @@
   #define TWO_PI (2.0 * M_PI)
 #endif
 
-#if defined(__GNUC__) && defined(__linux__)
+#if (!DISABLE_SINCOS) && defined(__GNUC__) && defined(__linux__)
   #define HAVE_SINCOS 1
   void sincos(double x, double *sin, double *cos);
 #else
@@ -9035,6 +9035,7 @@ static mus_float_t mus_env_linear(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   mus_float_t val;
+
   val = gen->current_value;
   if (gen->loc == 0)
     {
@@ -9090,7 +9091,7 @@ static void dmagify_env(seg *e, mus_float_t *data, int pts, mus_long_t dur, doub
   e->rates = (double *)malloc(pts * sizeof(double));
   e->locs = (mus_long_t *)malloc((pts + 1) * sizeof(mus_long_t));
 
-  for (j = 0, i = 2; i < pts * 2; i += 2, j++)
+  for (j = 0, i = 2; i < pts * 2; i += 2, j++) /* if pts == 1, no loop */
     {
       mus_long_t samps;
       double cur_dx, x0, y0, x1;
@@ -9405,6 +9406,17 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
   mus_float_t *edata;
   seg *e;
 
+  if (npts == 1)
+    {
+      e = (seg *)calloc(1, sizeof(seg));
+      e->core = &ENV_CLASS;
+      e->current_value = offset + scaler * brkpts[1];
+      e->env_func = mus_env_line;
+      e->original_data = brkpts;
+      e->data_allocated = false;
+      return((mus_any *)e);
+    }
+
   for (i = 2; i < npts * 2; i += 2)
     if (brkpts[i - 2] >= brkpts[i])
       {
@@ -9416,16 +9428,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 	return(NULL);
       }
 
-#if __APPLE__
-  /* yow -- there is a serious bug either in the OSX gcc or is it clang? As far as I can tell,
-   *   when e->env_func is set below, not all the relevent bits in the address are actually set!!
-   *   The low order byte appears to be garbage? Without this calloc, instead of calling 
-   *   mus_env_linear, it goes to some random place and dies.
-   */
-  e = (seg *)calloc(1, sizeof(seg));
-#else
   e = (seg *)malloc(sizeof(seg));
-#endif
   e->core = &ENV_CLASS;
 
   if (duration != 0.0)
@@ -9500,7 +9503,6 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 
   e->rate = e->rates[0];
   e->loc = e->locs[0];
-
   return((mus_any *)e);
 }
 
@@ -15988,8 +15990,9 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
   if (pv->calc)
     {
       mus_float_t *pinc, *frq, *ph, *amp, *panc;
-      int j, topN;
+      int topN;
 #if HAVE_SINCOS
+      int j;
       mus_float_t *cs, *sn;
 #endif
 

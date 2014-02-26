@@ -50,7 +50,7 @@
   #endif
 #endif
 
-#if defined(__GNUC__) && defined(__linux__)
+#if (!DISABLE_SINCOS) && defined(__GNUC__) && defined(__linux__)
   #define HAVE_SINCOS 1
   void sincos(double x, double *sin, double *cos);
 #else
