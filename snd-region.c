@@ -1622,9 +1622,9 @@ static XEN g_set_max_regions(XEN n)
 }
 
 
-static XEN g_region_p(XEN n)
+static XEN g_is_region(XEN n)
 {
-  #define H_region_p "(" S_is_region " reg): " PROC_TRUE " if region is active"
+  #define H_is_region "(" S_is_region " reg): " PROC_TRUE " if region is active"
   return(C_TO_XEN_BOOLEAN((xen_is_region(n)) && (region_ok(XEN_REGION_TO_C_INT(n)))));
 }
 
@@ -2083,7 +2083,7 @@ and " S_graph_dots_and_lines "."
   XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_region_graph_style, "an integer");
 
   style = XEN_TO_C_INT(val);
-  if (!(graph_style_p(style)))
+  if (!is_graph_style(style))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_region_graph_style, 1, val, "unknown " S_lisp_graph_style);
 
   set_region_graph_style((graph_style_t)style);
@@ -2108,7 +2108,7 @@ XEN_ARGIFY_4(g_make_region_w, g_make_region)
 XEN_ARGIFY_5(g_mix_region_w, g_mix_region)
 XEN_ARGIFY_3(g_region_sample_w, g_region_sample)
 XEN_ARGIFY_5(g_region_to_vct_w, g_region_to_vct)
-XEN_NARGIFY_1(g_region_p_w, g_region_p)
+XEN_NARGIFY_1(g_is_region_w, g_is_region)
 XEN_NARGIFY_0(g_max_regions_w, g_max_regions)
 XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 XEN_NARGIFY_0(g_region_graph_style_w, g_region_graph_style)
@@ -2138,7 +2138,7 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_mix_region,             g_mix_region_w,             1, 4, 0, H_mix_region);
   XEN_DEFINE_SAFE_PROCEDURE(S_region_sample,          g_region_sample_w,          2, 1, 0, H_region_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_region_to_vct,          g_region_to_vct_w,          1, 4, 0, H_region_to_vct);
-  XEN_DEFINE_SAFE_PROCEDURE(S_is_region,               g_region_p_w,               1, 0, 0, H_region_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_region,               g_is_region_w,               1, 0, 0, H_is_region);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_integer_to_region,      g_integer_to_region_w,      1, 0, 0, H_integer_to_region);
   XEN_DEFINE_SAFE_PROCEDURE(S_region_to_integer,      g_region_to_integer_w,      1, 0, 0, H_region_to_integer);

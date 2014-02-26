@@ -11,7 +11,7 @@ int position_to_type(int pos);
 const char **short_writable_headers(int *len);
 const char **short_readable_headers(int *len);
 const char **short_builtin_headers(int *len);
-bool encoded_header_p(int header_type);
+bool header_is_encoded(int header_type);
 void snd_encode(int type, const char *input_filename, const char *output_filename);
 snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname);
 snd_info *finish_opening_sound(snd_info *sp, bool selected);

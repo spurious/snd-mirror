@@ -15421,25 +15421,29 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
   mus_float_t result;
   if (gen->ctr >= gen->fftsize2)
     {
-      mus_long_t i, j;
+      mus_long_t i;
+      size_t bytes;
+      bytes = gen->fftsize2 * sizeof(mus_float_t);
 
-      mus_clear_array(gen->rl2, gen->fftsize);
       if (input) gen->feeder = input;
-      for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
-	{
-	  gen->buf[i] = gen->buf[j]; 
-	  gen->buf[j] = 0.0;
-	  gen->rl1[i] = gen->feeder(gen->closure, 1);
-	  gen->rl1[j] = 0.0;
-	}
+      memset((void *)(gen->rl2), 0, bytes * 2);
       memcpy((void *)(gen->rl2), (void *)(gen->filter), gen->filtersize * sizeof(mus_float_t));
 
+      memcpy((void *)(gen->buf), (void *)(gen->buf + gen->fftsize2), bytes);
+      memset((void *)(gen->buf + gen->fftsize2), 0, bytes);
+      memset((void *)(gen->rl1 + gen->fftsize2), 0, bytes);
+
+      for (i = 0; i < gen->fftsize2; i++)
+	gen->rl1[i] = gen->feeder(gen->closure, 1);
+
       mus_convolution(gen->rl1, gen->rl2, gen->fftsize);
-      for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
+
+      for (i = 0; i < gen->fftsize2;)
 	{
-	  gen->buf[i] += gen->rl1[i];
-	  gen->buf[j] = gen->rl1[j];
+	  gen->buf[i] += gen->rl1[i]; i++;
+	  gen->buf[i] += gen->rl1[i]; i++;
 	}
+      memcpy((void *)(gen->buf + gen->fftsize2), (void *)(gen->rl1 + gen->fftsize2), bytes);
       gen->ctr = 0;
     }
   result = gen->buf[gen->ctr];
@@ -15608,14 +15612,15 @@ typedef struct {
   bool (*analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction));
   int (*edit)(void *arg);
   mus_float_t (*synthesize)(void *arg);
-  int outctr, interp, filptr, N, D;
+  int outctr, interp, filptr, N, D, topN;
   mus_float_t *win, *ampinc, *amps, *freqs, *phases, *phaseinc, *lastphase, *in_data;
 
   mus_float_t sum1;
   bool calc;
 #if HAVE_SINCOS
   mus_float_t *cs, *sn;
-  bool *sc_safe, *amp_zero;
+  bool *sc_safe;
+  int *indices;
 #endif
 } pv_info;
 
@@ -15659,10 +15664,10 @@ static int free_phase_vocoder(mus_any *ptr)
       if (gen->lastphase) free(gen->lastphase);
       if (gen->ampinc) free(gen->ampinc);
 #if HAVE_SINCOS
+      if (gen->indices) free(gen->indices);
       if (gen->sn) free(gen->sn);
       if (gen->cs) free(gen->cs);
       if (gen->sc_safe) free(gen->sc_safe);
-      if (gen->amp_zero) free(gen->amp_zero);
 #endif
       free(gen);
     }
@@ -15766,6 +15771,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv->core = &PHASE_VOCODER_CLASS;
   pv->N = fftsize;
   pv->D = D;
+  pv->topN = 0;
   pv->interp = interp;
   pv->outctr = interp;
   pv->filptr = 0;
@@ -15800,7 +15806,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv->cs = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
   pv->sn = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
   pv->sc_safe = (bool *)calloc(fftsize, sizeof(bool));
-  pv->amp_zero = (bool *)calloc(fftsize, sizeof(bool));
+  pv->indices = (int *)malloc(N2 * sizeof(int));
 #endif
   return((mus_any *)pv);
 }
@@ -15845,6 +15851,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	    }
 	  else
 	    {
+	      /* if back-to-back here we could omit a lot of data movement or just use a circle here! */
 	      for (i = 0, j = pv->D; j < pv->N; i++, j++)
 		pv->in_data[i] = pv->in_data[j];
 	      for (i = pv->N - pv->D; i < pv->N; i++) 
@@ -15885,20 +15892,33 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
        */
 
       scl = 1.0 / (mus_float_t)(pv->interp);
+#if HAVE_SINCOS
+      pv->topN = 0;
+#else
+      pv->topN = N2;
+#endif
+
       for (i = 0; i < N2; i++)
 	{
 #if HAVE_SINCOS
 	  double s, c;
+	  bool amp_zero;
 	  
-	  pv->sc_safe[i] = (fabs(pv->freqs[i] - pv->phaseinc[i]) < 0.02); /* .5 is too big, .01 and .03 ok by tests */
-	  if (pv->sc_safe[i])
+	  amp_zero = ((pv->amps[i] < 1e-7) && (pv->ampinc[i] == 0.0));
+	  if (!amp_zero)
 	    {
-	      sincos((pv->freqs[i] + pv->phaseinc[i]) * 0.5, &s, &c);
-	      pv->sn[i] = s;
-	      pv->cs[i] = c;
+	      pv->indices[pv->topN++] = i;
+
+	      pv->sc_safe[i] = (fabs(pv->freqs[i] - pv->phaseinc[i]) < 0.02); /* .5 is too big, .01 and .03 ok by tests */
+	      if (pv->sc_safe[i])
+		{
+		  sincos((pv->freqs[i] + pv->phaseinc[i]) * 0.5, &s, &c);
+		  pv->sn[i] = s;
+		  pv->cs[i] = c;
+		}
 	    }
-	  pv->amp_zero[i] = ((pv->amps[i] < 1e-7) && (pv->ampinc[i] == 0.0));
-	  if ((!(pv->synthesize)) && (pv->amp_zero[i]))
+
+	  if ((!(pv->synthesize)) && (amp_zero))
 	    {
 	      pv->phases[i] += (pv->interp * (pv->freqs[i] + pv->phaseinc[i]) * 0.5);
 	      pv->phaseinc[i] = pv->freqs[i];
@@ -15916,19 +15936,30 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
     }
   
   pv->outctr++;
-
   if (pv_synthesize) 
     return((*pv_synthesize)(pv->closure));
 
   if (pv->calc)
     {
       mus_float_t *pinc, *frq, *ph, *amp, *panc;
+      int j, topN;
+#if HAVE_SINCOS
+      int *inds;
+      mus_float_t *cs, *sn;
+#endif
+
+      topN = pv->topN;
       pinc = pv->phaseinc;
       frq = pv->freqs;
       ph = pv->phases;
       amp = pv->amps;
       panc = pv->ampinc;
-      
+#if HAVE_SINCOS
+      cs = pv->cs;
+      sn = pv->sn;
+      inds = pv->indices;
+#endif
+
       sum = 0.0;
       sum1 = 0.0;
 
@@ -15944,43 +15975,43 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
        *   and get 3 samples?  If 2, the difference is very small (we're taking the midpoint of the phase increment change,
        *   so the two are not quite the same).  In tests, 10000 samples, channel-distance is ca .15.
        *
-       * If the amp_zero phase is off (incorrectly incremented above), the effect is a sort of low-pass filter??
+       * If the amp zero phase is off (incorrectly incremented above), the effect is a sort of low-pass filter??
        *   Are we getting cancellation from the overlap?
        */
       
-      for (i = 0; i < N2; i++)
+#if HAVE_SINCOS
+      for (j = 0; j < topN; j++)
 	{
-#if HAVE_SINCOS
-	  if (!(pv->amp_zero[i]))
-#endif
-	    {
-#if HAVE_SINCOS
-	      double sx, cx;
-#endif
-	      pinc[i] += frq[i];
-	      ph[i] += pinc[i];
-	      amp[i] += panc[i];
-	      
-#if HAVE_SINCOS
-	      sincos(ph[i], &sx, &cx);
-	      sum += (amp[i] * sx);
-#else
-	      sum += amp[i] * sin(ph[i]);
-#endif
-	      pinc[i] += frq[i];
-	      ph[i] += pinc[i];
-	      amp[i] += panc[i];
-	      
-#if HAVE_SINCOS
-	      if (pv->sc_safe[i]) 
-		sum1 += amp[i] * (sx * pv->cs[i] + cx * pv->sn[i]);
-	      else sum1 += amp[i] * sin(ph[i]);
-#else
-	      sum1 += amp[i] * sin(ph[i]);
-#endif
-	      /* unrolled is not faster */
-	    }
+	  double sx, cx;
+
+	  i = pv->indices[j];
+	  pinc[i] += frq[i];
+	  ph[i] += pinc[i];
+	  amp[i] += panc[i];
+	  sincos(ph[i], &sx, &cx);
+	  sum += (amp[i] * sx);
+
+	  pinc[i] += frq[i];
+	  ph[i] += pinc[i];
+	  amp[i] += panc[i];
+	  if (pv->sc_safe[i]) 
+	    sum1 += amp[i] * (sx * cs[i] + cx * sn[i]);
+	  else sum1 += amp[i] * sin(ph[i]);
 	}
+#else
+      for (i = 0; i < topN; i++)
+	{
+	  pinc[i] += frq[i];
+	  ph[i] += pinc[i];
+	  amp[i] += panc[i];
+	  if (amp[i] > 0.0) sum += amp[i] * sin(ph[i]);
+
+	  pinc[i] += frq[i];
+	  ph[i] += pinc[i];
+	  amp[i] += panc[i];
+	  if (amp[i] > 0.0) sum1 += amp[i] * sin(ph[i]);
+	}
+#endif
       pv->sum1 = sum1;
       pv->calc = false;
       return(sum);

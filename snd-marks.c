@@ -254,7 +254,7 @@ static XEN draw_mark_hook;
 static void draw_mark_1(chan_info *cp, mark *mp, bool show)
 {
   /* fields are samp and name */
-  if (!(cp->graph_time_p)) return;
+  if (!(cp->graph_time_on)) return;
   if (XEN_HOOKED(draw_mark_hook))
     {
       XEN res = XEN_FALSE;

@@ -618,12 +618,12 @@ static void redraw_selection(void)
 		    {
 #if (!USE_GTK)
 		      cp_redraw_selection(cp);
-		      if ((cp->graph_transform_p) && 
+		      if ((cp->graph_transform_on) && 
 			  (!(chan_fft_in_progress(cp))) &&
 			  (show_selection_transform(ss)))
 			calculate_fft(cp);
 #else
-		      if ((cp->graph_transform_p) && 
+		      if ((cp->graph_transform_on) && 
 			  (!(chan_fft_in_progress(cp))) &&
 			  (show_selection_transform(ss)))
 			update_graph(cp);
@@ -1116,7 +1116,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
       bps = mus_bytes_per_sample(format);
       num = dur * bps * chans;
 
-      no_space = disk_space_p(num, ofile);
+      no_space = disk_has_space(num, ofile);
       if (no_space != DISK_SPACE_OK)
 	{
 	  snd_close(ofd, ofile);

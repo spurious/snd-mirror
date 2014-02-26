@@ -582,7 +582,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
     loadLADSPA();
 
   /* First parameter should be a file reader or list thereof. */
-  XEN_ASSERT_TYPE(sampler_p(reader) || Xen_is_list(reader) || Xen_is_false(reader),
+  XEN_ASSERT_TYPE(is_sampler(reader) || Xen_is_list(reader) || Xen_is_false(reader),
 		  reader,
 		  1,
 		  S_apply_ladspa, "a sampler, a list of readers, or " PROC_FALSE);

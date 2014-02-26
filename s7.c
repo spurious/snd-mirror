@@ -69586,7 +69586,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.0
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.7
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.4
  *            153 with run macro (eval_ptree)
  */
 /* caveats: callgrind is confused about sincos, and does not count file IO delays
@@ -69606,10 +69606,9 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *  (file->sample fil ctr 0)
- * many (500) more _p|P -> _is_ changes remain in snd (g_*_p and H_*_p *.h)
  *
  * for each all_x case (and maybe c_s...? have map of symbols, get slots, call using slots not symbols in do loops
  *   would mean returning n slots, then assume they are passed to the all_x_slot replacement along with the code (for c_call etc)
- *   se HOP_SAFE_C_SSA case
+ *   see HOP_SAFE_C_SSA case
  */
 

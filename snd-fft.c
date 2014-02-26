@@ -955,7 +955,7 @@ static void display_fft(fft_state *fs)
       for (j = 0; j < sp->nchans; j++)
 	{
 	  ncp = sp->chans[j];
-	  if ((ncp->graph_transform_p) && (ncp->fft)) /* normalize-by-sound but not ffting all chans? */
+	  if ((ncp->graph_transform_on) && (ncp->fft)) /* normalize-by-sound but not ffting all chans? */
 	    {
 	      nfp = ncp->fft;
 	      tdata = nfp->data;
@@ -1411,7 +1411,7 @@ void free_sono_info(chan_info *cp)
 }
 
 
-static bool memory_available_p(mus_long_t slices, mus_long_t bins)
+static bool memory_is_available(mus_long_t slices, mus_long_t bins)
 {
   /* as far as I can tell, the approved way to make sure we can allocate enough memory is to allocate it... */
   mus_long_t bytes_needed; /* "mus_long_t" throughout is vital here */
@@ -1467,7 +1467,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
     cp->fft_changed = FFT_UNCHANGED;
   else cp->fft_changed = FFT_CHANGED;
 
-  if ((!(cp->graph_transform_p)) || (cp->transform_size <= 2)) return(SONO_QUIT);
+  if ((!(cp->graph_transform_on)) || (cp->transform_size <= 2)) return(SONO_QUIT);
   ap = cp->axis;
   sg->slice = SONO_INIT;
   sg->outer = 0;
@@ -1478,8 +1478,8 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   sg->alpha = cp->fft_window_alpha;
   sg->beta = cp->fft_window_beta;
 
-  if (cp->graph_time_p) dpys++; 
-  if (cp->graph_lisp_p) dpys++; 
+  if (cp->graph_time_on) dpys++; 
+  if (cp->graph_lisp_on) dpys++; 
 
   if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
     sg->outlim = ap->height / cp->spectro_hop;
@@ -1507,7 +1507,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
       si->total_bins = sg->spectrum_size; 
       si->total_slices = snd_to_int_pow2(sg->outlim);
 
-      if (!memory_available_p((mus_long_t)(si->total_slices), (mus_long_t)(si->total_bins)))
+      if (!memory_is_available((mus_long_t)(si->total_slices), (mus_long_t)(si->total_bins)))
 	{
 	  free(si);
 	  return(SONO_QUIT);
@@ -1525,7 +1525,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
 	int tempsize;
 
 	tempsize = snd_to_int_pow2(sg->outlim);
-	if (!memory_available_p((mus_long_t)tempsize, (mus_long_t)(sg->spectrum_size)))
+	if (!memory_is_available((mus_long_t)tempsize, (mus_long_t)(sg->spectrum_size)))
 	  return(SONO_QUIT);
 
 	for (i = 0; i < si->total_slices; i++) 
@@ -1610,7 +1610,7 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
       progress_report(cp, ((mus_float_t)(si->active_slices) / (mus_float_t)(si->target_slices)));
       sg->status_needs_to_be_cleared = true;
       sg->msg_ctr = 8;
-      if ((!(cp->graph_transform_p)) || 
+      if ((!(cp->graph_transform_on)) || 
 	  (cp->active < CHANNEL_HAS_AXES))
 	return(SONO_QUIT);
     }
@@ -1639,7 +1639,7 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
       si->active_slices++;
     }
   sg->outer++;
-  if ((sg->outer == sg->outlim) || (!(cp->graph_transform_p)) || (cp->transform_graph_type == GRAPH_ONCE)) return(SONO_QUIT);
+  if ((sg->outer == sg->outlim) || (!(cp->graph_transform_on)) || (cp->transform_graph_type == GRAPH_ONCE)) return(SONO_QUIT);
   sg->acc_hop += sg->hop;
   fs->beg = (mus_long_t)(sg->acc_hop);
   ap = cp->axis;
@@ -1659,7 +1659,7 @@ static void finish_sonogram(sonogram_state *sg)
       chan_info *cp;
       cp = sg->cp;
       if ((cp->active < CHANNEL_HAS_AXES) ||
-	  (!(cp->graph_transform_p)))
+	  (!(cp->graph_transform_on)))
 	{
 	  if (sg->fs) 
 	    sg->fs = free_fft_state(sg->fs);
@@ -1699,7 +1699,7 @@ idle_func_t sonogram_in_slices(void *sono)
   cp = sg->cp;
   cp->temp_sonogram = NULL;
   if ((cp->active < CHANNEL_HAS_AXES) ||
-      (!(cp->graph_transform_p)))
+      (!(cp->graph_transform_on)))
     {
       if ((sg) && (sg->fs)) sg->fs = free_fft_state(sg->fs);
       return(BACKGROUND_QUIT);
@@ -1877,7 +1877,7 @@ static void update_log_freq_fft_graph(chan_info *cp)
   if ((cp->active < CHANNEL_HAS_AXES) ||
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL) ||
-      (!(cp->graph_transform_p)) ||
+      (!(cp->graph_transform_on)) ||
       (!(cp->fft_log_frequency)) ||
       (chan_fft_in_progress(cp)))
     return;
@@ -1936,7 +1936,7 @@ and otherwise return a list (spectrum-cutoff time-slices fft-bins)"
   ASSERT_CHANNEL(S_transform_frames, snd, chn, 1);
   cp = get_cp(snd, chn, S_transform_frames);
   if (!cp) return(XEN_FALSE);
-  if (!(cp->graph_transform_p)) 
+  if (!(cp->graph_transform_on)) 
     return(XEN_ZERO);
 
   if (cp->transform_graph_type == GRAPH_ONCE)
@@ -1964,7 +1964,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
   cp = get_cp(snd, chn_n, S_transform_sample);
   if (!cp) return(XEN_FALSE);
 
-  if (cp->graph_transform_p)
+  if (cp->graph_transform_on)
     {
       fft_info *fp;
       fp = cp->fft;
@@ -2026,7 +2026,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
   cp = get_cp(snd, chn_n, S_transform_to_vct);
   if (!cp) return(XEN_FALSE);
 
-  if ((cp->graph_transform_p) && 
+  if ((cp->graph_transform_on) && 
       (cp->fft))
     {
       mus_long_t len;

@@ -247,8 +247,8 @@ void reflect_just_sounds(void) {}
 static bool post_sound_info(file_dialog_info *fd, const char *filename, bool with_filename)
 {
   if ((!filename) ||
-      (directory_p(filename)) ||
-      (!sound_file_p(filename)))
+      (is_directory(filename)) ||
+      (!is_sound_file(filename)))
     {
       gtk_label_set_text(GTK_LABEL(fd->info), "");
 #if WITH_SKETCH
@@ -347,7 +347,7 @@ static void file_dialog_play(GtkWidget *w, gpointer data)
       char *filename;
       filename = fd->filename; /* gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser)); */
       if ((filename) &&
-	  (!directory_p(filename)))
+	  (!is_directory(filename)))
 	{
 	  if (mus_file_probe(filename))
 	    {
@@ -395,8 +395,8 @@ static void sketch_1(file_dialog_info *fd, bool new_data)
   if (!filename)
     return;
 
-  if ((directory_p(filename)) ||
-      (!sound_file_p(filename)))
+  if ((is_directory(filename)) ||
+      (!is_sound_file(filename)))
     return;
   
   if ((!new_data) &&
@@ -889,7 +889,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 
   file_dialog_stop_playing(fd);
   if ((filename) &&
-      (!directory_p(filename)))
+      (!is_directory(filename)))
     {
       snd_info *sp;
       redirect_snd_error_to(redirect_file_open_error, (void *)fd);
@@ -957,7 +957,7 @@ static void file_activated_callback(GtkFileChooser *w, gpointer data)
   fd->filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
   filename = fd->filename;
   if ((filename) &&
-      (!(directory_p(filename))))
+      (!(is_directory(filename))))
     {
       snd_info *sp;
       
@@ -1058,7 +1058,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
   else
     {
       file_dialog_stop_playing(mdat);
-      if (!(directory_p(filename)))
+      if (!(is_directory(filename)))
 	{
 	  snd_info *sp;
 	  int err;
@@ -1145,7 +1145,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
   else
     {
       file_dialog_stop_playing(fd);
-      if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
+      if (!(is_directory(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
 	{
 	  bool ok = false;
 	  snd_info *sp;
@@ -2045,7 +2045,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
       post_file_dialog_error((const char *)msg, fd->panel_data);
       return;
     }
-  if (directory_p(str))
+  if (is_directory(str))
     {
       post_file_dialog_error("can't overwrite a directory", fd->panel_data);
       return;
@@ -2174,7 +2174,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
     save_as_undoit(fd);
   ss->local_errno = 0;
 
-  if (encoded_header_p(type))
+  if (header_is_encoded(type))
     {
       output_type = type;
       format = MUS_LSHORT;
@@ -2240,7 +2240,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
 
   if (io_err == IO_NO_ERROR)
     {
-      if (encoded_header_p(output_type))
+      if (header_is_encoded(output_type))
 	{
 	  snd_encode(output_type, tmpfile, fullname);
 	  snd_remove(tmpfile, REMOVE_FROM_CACHE);

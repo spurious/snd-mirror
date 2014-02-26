@@ -270,10 +270,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define DEFAULT_REVERB_CONTROL_LENGTH 1.0
 #define DEFAULT_REVERB_CONTROL_SCALE 0.0
 #define DEFAULT_SPEED_CONTROL 1.0
-#define DEFAULT_CONTRAST_CONTROL_P false
-#define DEFAULT_EXPAND_CONTROL_P false
-#define DEFAULT_FILTER_CONTROL_P false
-#define DEFAULT_REVERB_CONTROL_P false
+#define DEFAULT_CONTRAST_CONTROL_ON false
+#define DEFAULT_EXPAND_CONTROL_ON false
+#define DEFAULT_FILTER_CONTROL_ON false
+#define DEFAULT_REVERB_CONTROL_ON false
 
 
 #define filter_control_in_dB(ss) ss->Filter_Control_In_Db
@@ -1387,9 +1387,9 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #endif
 #define DEFAULT_VIEW_FILES_SORT SORT_A_TO_Z
 
-#define enved_clip_p(ss) ss->enved->clip_p
-#define in_set_enved_clip_p(a) ss->enved->clip_p = a
-#define DEFAULT_ENVED_CLIP_P true
+#define enved_clipping(ss) ss->enved->clipping
+#define in_set_enved_clipping(a) ss->enved->clipping = a
+#define DEFAULT_ENVED_CLIPPING true
 
 #define enved_with_wave(ss) ss->Enved_With_Wave
 #if HAVE_SCHEME

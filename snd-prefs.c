@@ -200,7 +200,7 @@ static bool local_access(char *dir)
 }
 
 
-static bool string_member_p(const char *val, char **lst, int len)
+static bool is_string_member(const char *val, char **lst, int len)
 {
   int i;
   if ((len == 0) || (!lst) || (!val)) return(false);
@@ -227,7 +227,7 @@ static char **load_path_to_string_array(int *len)
 	{
 	  const char *path;
 	  path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
-	  if ((path) && (!(string_member_p(path, cdirs, j))))   /* try to remove duplicates */
+	  if ((path) && (!(is_string_member(path, cdirs, j))))   /* try to remove duplicates */
 	    cdirs[j++] = mus_strdup(path);
 	}
     }
@@ -296,7 +296,7 @@ static void save_prefs(void)
 	  add_local_load_path(fd, current_dirs[i]); /* don't try to be smart about startup paths -- just include everybody */
 
       if ((include_load_path) &&
-	  (!(string_member_p(include_load_path, current_dirs, current_dirs_len))))
+	  (!(is_string_member(include_load_path, current_dirs, current_dirs_len))))
 	add_local_load_path(fd, include_load_path);
 
       if (load_path_text_widget)
@@ -304,7 +304,7 @@ static void save_prefs(void)
 	  unchecked_load_path = GET_TEXT(load_path_text_widget);
 	  if ((unchecked_load_path) &&                                                          /* text widget has an entry */
 	      (local_access(unchecked_load_path)) &&                                            /* it's a legit path */
-	      (!(string_member_p(unchecked_load_path, current_dirs, current_dirs_len))) &&      /* it's not in LOAD_PATH */
+	      (!(is_string_member(unchecked_load_path, current_dirs, current_dirs_len))) &&      /* it's not in LOAD_PATH */
 	      (!(mus_strcmp(unchecked_load_path, include_load_path))))                          /* it's not already included above */
 	    add_local_load_path(fd, unchecked_load_path);
 	  if (unchecked_load_path) {free_TEXT(unchecked_load_path);} /* a no-op in gtk */

@@ -268,7 +268,7 @@ void env_redisplay(void);
 void env_redisplay_with_print(void);
 void update_enved_background_waveform(chan_info *cp);
 int create_envelope_editor(void);
-void set_enved_clip_p(bool val);
+void set_enved_clipping(bool val);
 void reflect_enved_style(void);
 void set_enved_base(mus_float_t val);
 void set_enved_target(enved_target_t val);

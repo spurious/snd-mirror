@@ -100,8 +100,8 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->beats_per_minute = beats_per_minute(ss);
   cp->beats_per_measure = beats_per_measure(ss);
   cp->show_axes = show_axes(ss);
-  cp->graph_time_p = true; /* the default state (button is set when we start) */
-  cp->graph_transform_p = false;
+  cp->graph_time_on = true; /* the default state (button is set when we start) */
+  cp->graph_transform_on = false;
   cp->printing = NOT_PRINTING;
   cp->waiting_to_make_graph = false;
   cp->new_peaks = false;
@@ -147,9 +147,9 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->axis = free_axis_info(cp->axis);
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
   cp_free_fft_state(cp);
-  cp->graph_transform_p = false;
+  cp->graph_transform_on = false;
   cp->printing = NOT_PRINTING;
-  cp->graph_time_p = true;
+  cp->graph_time_on = true;
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
   free_channel_mixes(cp);
@@ -199,7 +199,7 @@ static chan_info *free_chan_info(chan_info *cp)
       free_lisp_info(cp);
       cp->lisp_info = NULL;
     }
-  cp->graph_lisp_p = false;
+  cp->graph_lisp_on = false;
   cp->selection_transform_size = 0;
 
   if (cp->as_one_edit_positions)
@@ -259,7 +259,7 @@ void initialize_control_panel(snd_info *sp)
   sp->expand_control_max = expand_control_max(ss);
   sp->last_expand_control = 0.0;
   sp->saved_expand_control = 0.0;
-  sp->expand_control_on = DEFAULT_EXPAND_CONTROL_P;
+  sp->expand_control_on = DEFAULT_EXPAND_CONTROL_ON;
   sp->amp_control = DEFAULT_AMP_CONTROL;
   sp->amp_control_min = amp_control_min(ss);
   sp->amp_control_max = amp_control_max(ss);
@@ -271,15 +271,15 @@ void initialize_control_panel(snd_info *sp)
   sp->last_speed_control = 1.0;
   sp->saved_speed_control = 1.0;
   if (DEFAULT_SPEED_CONTROL > 0.0) sp->speed_control_direction = 1; else sp->speed_control_direction = -1;
-  sp->contrast_control_on = DEFAULT_CONTRAST_CONTROL_P;
+  sp->contrast_control_on = DEFAULT_CONTRAST_CONTROL_ON;
   sp->contrast_control = DEFAULT_CONTRAST_CONTROL;
   sp->contrast_control_min = contrast_control_min(ss);
   sp->contrast_control_max = contrast_control_max(ss);
   sp->contrast_control_amp = contrast_control_amp(ss);
   sp->last_contrast_control = contrast_control_min(ss);
   sp->saved_contrast_control = contrast_control_min(ss);
-  sp->reverb_control_on = DEFAULT_REVERB_CONTROL_P;
-  sp->filter_control_on = DEFAULT_FILTER_CONTROL_P;
+  sp->reverb_control_on = DEFAULT_REVERB_CONTROL_ON;
+  sp->filter_control_on = DEFAULT_FILTER_CONTROL_ON;
   sp->expand_control_length = expand_control_length(ss);
   sp->expand_control_ramp = expand_control_ramp(ss);
   sp->expand_control_hop = expand_control_hop(ss);
@@ -376,12 +376,12 @@ void free_snd_info(snd_info *sp)
   env_editor *edp;
 
   /* make sure trough colors are ok upon reuse */
-  if (sp->reverb_control_on != DEFAULT_REVERB_CONTROL_P)
-    toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
-  if (sp->expand_control_on != DEFAULT_EXPAND_CONTROL_P)
-    toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
-  if (sp->contrast_control_on != DEFAULT_CONTRAST_CONTROL_P)
-    toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
+  if (sp->reverb_control_on != DEFAULT_REVERB_CONTROL_ON)
+    toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_ON);
+  if (sp->expand_control_on != DEFAULT_EXPAND_CONTROL_ON)
+    toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_ON);
+  if (sp->contrast_control_on != DEFAULT_CONTRAST_CONTROL_ON)
+    toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_ON);
 
   edp = sp->flt;
   if (edp)

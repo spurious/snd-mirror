@@ -149,13 +149,13 @@ static int completions(const char *text) {return(0);}
 
 
 #if HAVE_FORTH
-static bool separator_char_p(char c)
+static bool is_separator(char c)
 {
   /* only space is separator */
   return(!(isgraph((int)c)));
 }
 #else
-static bool separator_char_p(char c)
+static bool is_separator(char c)
 {
   return((!(isalpha((int)c))) &&
 	 (!(isdigit((int)c))) &&
@@ -211,7 +211,7 @@ char *expression_completer(widget_t w, const char *original_text, void *data)
 
       len = strlen(original_text);
       for (i = len - 1; i >= 0; i--)
-	if (separator_char_p(original_text[i]))
+	if (is_separator(original_text[i]))
 	  break;
       beg = i + 1;
 
@@ -510,11 +510,10 @@ enum {ANY_FILE_TYPE, SOUND_FILE_TYPE};
 
 static char *filename_completer_1(widget_t w, const char *text, int file_type)
 {
-#if HAVE_OPENDIR
   /* assume text is a partial filename */
   /* get directory name, opendir, read files checking for match */
   /* return name of same form as original (i.e. don't change user's directory indication) */
-  /* if directory, add "/" -- directory_p(name) static in snd-xfile.c */
+  /* if directory, add "/" -- is_directory(name) static in snd-xfile.c */
 
   char *full_name = NULL, *dir_name = NULL, *file_name = NULL, *current_match = NULL;
   int i, j, k, len, curlen, matches = 0;
@@ -549,7 +548,7 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
 	    (strncmp(dirp->d_name, file_name, len) == 0)) /* match dirp->d_name against rest of text */
 	  {
 	    if ((file_type == ANY_FILE_TYPE) ||
-		(sound_file_p(dirp->d_name)))
+		(is_sound_file(dirp->d_name)))
 	      {
 		matches++;
 		add_possible_completion(dirp->d_name);
@@ -590,12 +589,11 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
       file_name = (char *)calloc(curlen, sizeof(char));
       strncpy(file_name, text, i + 1);
       strcat(file_name, current_match);
-      if (directory_p(file_name)) 
+      if (is_directory(file_name)) 
 	strcat(file_name, "/");
       free(current_match);
       return(file_name);
     }
-#endif
   return(mus_strdup(text));
 }
 

@@ -27,8 +27,8 @@ static env* active_env = NULL;   /* env currently being edited */
 static axis_info *axis = NULL;
 static axis_info *gray_ap = NULL;
 
-static bool FIR_p = true;
-static bool old_clip_p = false;
+static bool is_FIR = true;
+static bool old_clipping = false;
 static bool ignore_button_release = false;
 
 
@@ -194,7 +194,7 @@ static void apply_enved(void)
 				  (apply_to_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 #endif
 	      apply_filter(active_channel, 
-			   (FIR_p) ? enved_filter_order(ss) : 0,
+			   (is_FIR) ? enved_filter_order(ss) : 0,
 			   active_env, 
 			   origin, NULL,
 			   apply_to_selection, NULL, NULL,
@@ -269,7 +269,7 @@ static void env_redisplay_1(printing_t printing)
 	      (active_channel) &&
 	      (!(active_channel->squelch_update)))
 	    {
-	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (printing == NOT_PRINTING))
+	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (is_FIR) && (printing == NOT_PRINTING))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
 	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), NOT_PRINTING);
 	    }
@@ -644,8 +644,8 @@ static void reflect_apply_state(void)
 static void flt_button_pressed(GtkWidget *w, gpointer context)
 {
   in_set_enved_target(ENVED_SPECTRUM);
-  old_clip_p = enved_clip_p(ss);
-  set_enved_clip_p(true);
+  old_clipping = enved_clipping(ss);
+  set_enved_clipping(true);
   reflect_apply_state();
 }
 
@@ -653,7 +653,7 @@ static void flt_button_pressed(GtkWidget *w, gpointer context)
 static void amp_button_pressed(GtkWidget *w, gpointer context)
 {
   if (enved_target(ss) == ENVED_SPECTRUM)
-    set_enved_clip_p(old_clip_p);
+    set_enved_clipping(old_clipping);
   in_set_enved_target(ENVED_AMPLITUDE);
   reflect_apply_state();
 }
@@ -662,7 +662,7 @@ static void amp_button_pressed(GtkWidget *w, gpointer context)
 static void src_button_pressed(GtkWidget *w, gpointer context)
 {
   if (enved_target(ss) == ENVED_SPECTRUM)
-    set_enved_clip_p(old_clip_p);
+    set_enved_clipping(old_clipping);
   in_set_enved_target(ENVED_SRATE);
   reflect_apply_state();
 }
@@ -670,7 +670,7 @@ static void src_button_pressed(GtkWidget *w, gpointer context)
 
 static void enved_reset(void)
 {
-  set_enved_clip_p(DEFAULT_ENVED_CLIP_P);
+  set_enved_clipping(DEFAULT_ENVED_CLIPPING);
   set_enved_style(ENVELOPE_LINEAR);
   set_enved_power(DEFAULT_ENVED_POWER);
   set_enved_base(DEFAULT_ENVED_BASE);
@@ -724,7 +724,7 @@ static void dB_button_callback(GtkWidget *w, gpointer context)
 
 static void clip_button_callback(GtkWidget *w, gpointer context)
 {
-  in_set_enved_clip_p(TOGGLE_BUTTON_ACTIVE(w));
+  in_set_enved_clipping(TOGGLE_BUTTON_ACTIVE(w));
 }
 
 
@@ -826,8 +826,8 @@ static void base_changed_callback(GtkAdjustment *adj, gpointer context)
 
 static gboolean fir_button_pressed(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  FIR_p = (!FIR_p);
-  gtk_label_set_text(GTK_LABEL(firB), (FIR_p) ? "fir" : "fft");
+  is_FIR = (!is_FIR);
+  gtk_label_set_text(GTK_LABEL(firB), (is_FIR) ? "fir" : "fft");
   if (enved_with_wave(ss)) env_redisplay();
   return(false);
 }
@@ -835,10 +835,10 @@ static gboolean fir_button_pressed(GtkWidget *w, GdkEventButton *ev, gpointer da
 
 static void reflect_sound_state(void)
 {
-  bool file_p;
-  file_p = (bool)(any_selected_sound());
-  set_sensitive(applyB, file_p);
-  set_sensitive(apply2B, file_p);
+  bool file_on;
+  file_on = (bool)(any_selected_sound());
+  set_sensitive(applyB, file_on);
+  set_sensitive(apply2B, file_on);
 }
 
 
@@ -1154,7 +1154,7 @@ GtkWidget *create_envelope_editor(void)
       SG_SIGNAL_CONNECT(orderL, "leave_notify_event", spin_button_unfocus_callback, NULL);
       gtk_widget_show(orderL);
 
-      /* firB = gtk_button_new_with_label((FIR_p) ? "fir" : "fft"); */
+      /* firB = gtk_button_new_with_label((is_FIR) ? "fir" : "fft"); */
       /* SG_SIGNAL_CONNECT(eb, "clicked", fir_button_pressed, NULL); */
       {
 	GtkWidget *eb;
@@ -1205,7 +1205,7 @@ GtkWidget *create_envelope_editor(void)
       if (!(selection_is_active())) 
 	set_sensitive(selectionB, false);
 
-      set_toggle_button(clipB, enved_clip_p(ss), false, NULL);
+      set_toggle_button(clipB, enved_clipping(ss), false, NULL);
       set_toggle_button(graphB, enved_with_wave(ss), false, NULL);
       set_toggle_button(dBB, enved_in_dB(ss), false, NULL);
 
@@ -1228,9 +1228,9 @@ GtkWidget *create_envelope_editor(void)
 }
 
 
-void set_enved_clip_p(bool val) 
+void set_enved_clipping(bool val) 
 {
-  in_set_enved_clip_p(val); 
+  in_set_enved_clipping(val); 
   if (enved_dialog) set_toggle_button(clipB, val, false, NULL);
 }
 
@@ -1354,16 +1354,16 @@ static XEN g_set_enved_envelope(XEN e)
 static XEN g_enved_filter(void)
 {
   #define H_enved_filter "(" S_enved_filter "): envelope editor FIR/FFT filter choice (" PROC_TRUE ": FIR)"
-  return(C_TO_XEN_BOOLEAN(FIR_p));
+  return(C_TO_XEN_BOOLEAN(is_FIR));
 }
 
 
 static XEN g_set_enved_filter(XEN type)
 {
   XEN_ASSERT_TYPE(Xen_is_boolean(type), type, 1, S_setB S_enved_filter, "boolean");
-  FIR_p = XEN_TO_C_BOOLEAN(type);
+  is_FIR = XEN_TO_C_BOOLEAN(type);
   if (firB)
-    gtk_label_set_text(GTK_LABEL(firB), (FIR_p) ? "fir" : "fft");
+    gtk_label_set_text(GTK_LABEL(firB), (is_FIR) ? "fir" : "fft");
   return(type);
 }
 

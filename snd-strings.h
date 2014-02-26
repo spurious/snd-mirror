@@ -167,7 +167,7 @@
 #define S_enved_add_point               "enved-add-point"
 #define S_enved_amplitude               "enved-amplitude"
 #define S_enved_base                    "enved-base"
-#define S_enved_clip_on                 "enved-clip?"
+#define S_enved_clipping                "enved-clip?"
 #define S_enved_delete_point            "enved-delete-point"
 #define S_enved_dialog                  "enved-dialog"
 #define S_enved_envelope                "enved-envelope"
@@ -719,7 +719,7 @@
 #define S_colormap_p S_is_colormap
 #define S_color_p S_is_color
 #define S_contrast_control_p S_contrast_control_on
-#define S_enved_clip_p S_enved_clip_on
+#define S_enved_clip_p S_enved_clipping
 #define S_enved_wave_p S_enved_with_wave
 #define S_expand_control_p S_expand_control_on
 #define S_filter_control_p S_filter_control_on

@@ -3394,7 +3394,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
     }
   else  new_dur = dur;
 
-  if (!(default_env_p(amp_env)))
+  if (!(is_default_env(amp_env)))
     e = mus_make_env_with_length(amp_env->data, amp_env->pts, amp, 0.0, 1.0, new_dur);
 
   j = 0;

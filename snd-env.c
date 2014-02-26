@@ -243,7 +243,7 @@ env *default_env(mus_float_t x1, mus_float_t y)
 }
 
 
-bool default_env_p(env *e)
+bool is_default_env(env *e)
 {
   if (e == NULL) return(true);
   if (e->pts != 2) return(false);
@@ -266,7 +266,7 @@ env_editor *new_env_editor(void)
   edp->env_pos = 0;
   edp->click_to_delete = false;
   edp->edited = false;
-  edp->clip_p = true;
+  edp->clipping = true;
   edp->in_dB = false;
   return(edp);
 }
@@ -556,7 +556,7 @@ void env_editor_button_motion_with_xy(env_editor *edp, int evx, int evy, oclock_
   if (edp->env_pos == 0) x = e->data[0];
   if (edp->env_pos == (e->pts - 1)) x = e->data[(e->pts - 1) * 2];
   y = ungrf_y(ap, evy);
-  if ((edp->clip_p) || (edp->in_dB))
+  if ((edp->clipping) || (edp->in_dB))
     {
       if (y < ap->y0) y = ap->y0;
       if (y > ap->y1) y = ap->y1;
@@ -588,7 +588,7 @@ bool env_editor_button_press(env_editor *edp, int evx, int evy, oclock_t time, e
   pos = hit_point(edp->current_xs, edp->current_ys, e->pts, evx, evy);
   x = ungrf_x(ap, evx);
   y = env_editor_ungrf_y_dB(edp, evy);
-  if (edp->clip_p)
+  if (edp->clipping)
     {
       if (y < ap->y0) y = ap->y0;
       if (y > ap->y1) y = ap->y1;
@@ -1063,7 +1063,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 #if USE_MOTIF 
       /* uses fft_pix etc in chan_info */
       if ((active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
-	  (active_channel->graph_transform_p))
+	  (active_channel->graph_transform_on))
 	{
 	  /* if the sonogram isn't ready, try to get it 
 	   *   this is for frequency envelopes as in animals.scm
@@ -1076,7 +1076,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
       if ((active_channel->fft_pix) &&
 	  (active_channel->fft_pix_ready) &&
 	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
-	  (active_channel->graph_transform_p))
+	  (active_channel->graph_transform_on))
 	{
 	  int old_x0, old_y0;
 
@@ -1100,12 +1100,12 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	      (active_channel->fft_pix),
 	      (active_channel->fft_pix_ready),
 	      (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM),
-	      (active_channel->graph_transform_p));
+	      (active_channel->graph_transform_on));
       */
       if ((active_channel->fft_pix) &&
 	  (active_channel->fft_pix_ready) &&
 	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
-	  (active_channel->graph_transform_p))
+	  (active_channel->graph_transform_on))
 	{
 	  cairo_t *lcr, *old_cr;
 	  old_cr = ss->cr;
@@ -1121,7 +1121,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 #else
 	/* this is not so slow as to be an annoyance, so maybe it's ok */
       if ((active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
-	  (active_channel->graph_transform_p))
+	  (active_channel->graph_transform_on))
 	{
 	  axis_info *old_ap;
 	  old_ap = active_channel->axis;
@@ -1691,16 +1691,16 @@ static XEN g_set_enved_power(XEN val)
 }
 
 
-static XEN g_enved_clip_p(void) {return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));}
+static XEN g_enved_clipping(void) {return(C_TO_XEN_BOOLEAN(enved_clipping(ss)));}
 
-static XEN g_set_enved_clip_p(XEN on)
+static XEN g_set_enved_clipping(XEN on)
 {
-  #define H_enved_clip_p "(" S_enved_clip_on "): envelope editor clip button setting; \
+  #define H_enved_clipping "(" S_enved_clipping "): envelope editor clip button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_enved_clip_on, "a boolean");
-  set_enved_clip_p(XEN_TO_C_BOOLEAN(on)); 
-  return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));
+  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_enved_clipping, "a boolean");
+  set_enved_clipping(XEN_TO_C_BOOLEAN(on)); 
+  return(C_TO_XEN_BOOLEAN(enved_clipping(ss)));
 }
 
 
@@ -1789,8 +1789,8 @@ XEN_NARGIFY_0(g_enved_base_w, g_enved_base)
 XEN_NARGIFY_1(g_set_enved_base_w, g_set_enved_base)
 XEN_NARGIFY_0(g_enved_power_w, g_enved_power)
 XEN_NARGIFY_1(g_set_enved_power_w, g_set_enved_power)
-XEN_NARGIFY_0(g_enved_clip_p_w, g_enved_clip_p)
-XEN_NARGIFY_1(g_set_enved_clip_p_w, g_set_enved_clip_p)
+XEN_NARGIFY_0(g_enved_clipping_w, g_enved_clipping)
+XEN_NARGIFY_1(g_set_enved_clipping_w, g_set_enved_clipping)
 XEN_NARGIFY_0(g_enved_style_w, g_enved_style)
 XEN_NARGIFY_1(g_set_enved_style_w, g_set_enved_style)
 XEN_NARGIFY_0(g_enved_target_w, g_enved_target)
@@ -1820,7 +1820,7 @@ void g_init_env(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_on, g_enved_clip_p_w, H_enved_clip_p, S_setB S_enved_clip_on, g_set_enved_clip_p_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clipping, g_enved_clipping_w, H_enved_clipping, S_setB S_enved_clipping, g_set_enved_clipping_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, S_setB S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0);
@@ -1902,5 +1902,5 @@ stretch-envelope from env.fth: \n\
   free(ss->enved->axis);
   ss->enved->axis = NULL;
   ss->enved->in_dB = DEFAULT_ENVED_IN_DB;
-  ss->enved->clip_p = DEFAULT_ENVED_CLIP_P;
+  ss->enved->clipping = DEFAULT_ENVED_CLIPPING;
 }

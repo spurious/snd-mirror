@@ -570,7 +570,7 @@ static void mix_sync_callback(GtkWidget *w, gpointer context)
 
 static void mix_clip_callback(GtkWidget *w, gpointer context) 
 {
-  spf->clip_p = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+  spf->clipping = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
   mix_amp_env_resize(w_env);
 }
 
@@ -588,7 +588,7 @@ static void apply_env_callback(GtkWidget *w, gpointer context)
   if (!(mix_is_active(mix_dialog_id))) return;
 
   if ((dialog_env) && 
-      (!(default_env_p(dialog_env))))
+      (!(is_default_env(dialog_env))))
     {
       mix_set_amp_env_edit(mix_dialog_id, dialog_env);
       syncd_mix_set_amp_env(mix_dialog_id, dialog_env);  

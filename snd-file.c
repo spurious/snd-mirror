@@ -37,7 +37,7 @@ mus_long_t disk_kspace(const char *filename)
 #endif
 
 
-bool link_p(const char *filename)
+bool is_link_file(const char *filename)
 {
 #if __MINGW32__ 
   return(false);
@@ -54,7 +54,7 @@ bool link_p(const char *filename)
 }
 
 
-bool directory_p(const char *filename)
+bool is_directory(const char *filename)
 {
   struct stat statbuf;
 #ifndef _MSC_VER
@@ -353,9 +353,9 @@ static void load_dir(DIR *dpos, dir_info *dp, bool (*filter)(const char *filenam
 }
 
 
-static bool not_directory_p(const char *name)
+static bool not_is_directory(const char *name)
 {
-  return(!(directory_p(name)));
+  return(!(is_directory(name)));
 }
 
 
@@ -370,7 +370,7 @@ dir_info *find_files_in_dir(const char *name)
   if (dpos)
     {
       dp = make_dir_info(name);
-      load_dir(dpos, dp, not_directory_p);
+      load_dir(dpos, dp, not_is_directory);
       if (closedir(dpos) != 0) 
 	snd_error("closedir %s failed (%s)!",
 		  name, snd_io_strerror());
@@ -399,7 +399,7 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
   if ((dpos = opendir(name)) != NULL)
     {
       if (filter_choice == JUST_SOUNDS_FILTER)
-	filter = sound_file_p;
+	filter = is_sound_file;
       else
 	{
 	  int filter_pos;
@@ -544,7 +544,7 @@ void save_added_sound_file_extensions(FILE *fd)
  * fool as an extension check (file might start with the word ".snd" or whatever).
  */
 
-bool sound_file_p(const char *name)
+bool is_sound_file(const char *name)
 {
   int i, dot_loc = -1, len;
   if (!name) return(false);
@@ -951,7 +951,7 @@ static file_info *tackle_bad_header(const char *fullname, read_only_t read_only,
 	(type != MUS_IEEE) &&
 	(type != MUS_MUS10) && 
 	(type != MUS_HCOM) &&
-	(!(encoded_header_p(type))))
+	(!(header_is_encoded(type))))
       {
 	char *info = NULL, *title = NULL;
 	title = raw_data_explanation(fullname, make_file_info_1(fullname), &info);
@@ -983,7 +983,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	  (type == MUS_IEEE) ||
 	  (type == MUS_MUS10) ||
 	  (type == MUS_HCOM) ||
-	  (encoded_header_p(type)))
+	  (header_is_encoded(type)))
 	{
 	  return(translate_file(fullname, type));
 	}
@@ -1519,8 +1519,8 @@ axes_data *make_axes_data(snd_info *sp)
       sa->axis_data[loc + SA_SY] = ap->sy;
       sa->axis_data[loc + SA_GSY] = cp->gsy;
       sa->axis_data[loc + SA_GZY] = cp->gzy;
-      sa->wavep[i] = cp->graph_time_p;
-      sa->fftp[i] = cp->graph_transform_p;
+      sa->wavep[i] = cp->graph_time_on;
+      sa->fftp[i] = cp->graph_transform_on;
       
       /* unite and sync buttons are being cleared in snd_info_cleanup and explicitly in snd_update
        *   then probably reset in change_channel_style
@@ -2327,7 +2327,7 @@ void position_to_type_and_format(file_data *fdat, int pos)
 }
 
 
-bool encoded_header_p(int header_type)
+bool header_is_encoded(int header_type)
 {
   /* going either way here */
   return((header_type == MUS_OGG) ||
@@ -3371,11 +3371,11 @@ static XEN g_new_sound_dialog(XEN managed)
 
 
 
-static XEN g_sound_file_p(XEN name)
+static XEN g_is_sound_file(XEN name)
 {
-  #define H_sound_file_p "(" S_is_sound_file " name): " PROC_TRUE " if name has a known sound file extension"
+  #define H_is_sound_file "(" S_is_sound_file " name): " PROC_TRUE " if name has a known sound file extension"
   XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_is_sound_file, "a filename");   
-  return(C_TO_XEN_BOOLEAN(sound_file_p(XEN_TO_C_STRING(name))));
+  return(C_TO_XEN_BOOLEAN(is_sound_file(XEN_TO_C_STRING(name))));
 }
 
 
@@ -3759,7 +3759,7 @@ XEN_ARGIFY_1(g_save_region_dialog_w, g_save_region_dialog)
 XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
 XEN_ARGIFY_1(g_new_sound_dialog_w, g_new_sound_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
-XEN_NARGIFY_1(g_sound_file_p_w, g_sound_file_p)
+XEN_NARGIFY_1(g_is_sound_file_w, g_is_sound_file)
 XEN_NARGIFY_0(g_snd_tempnam_w, g_snd_tempnam)
 XEN_NARGIFY_0(g_auto_update_w, g_auto_update)
 XEN_NARGIFY_1(g_set_auto_update_w, g_set_auto_update)
@@ -3809,7 +3809,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
 				   S_setB S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_is_sound_file,                     g_sound_file_p_w,                     1, 0, 0, H_sound_file_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_is_sound_file,                     g_is_sound_file_w,                     1, 0, 0, H_is_sound_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
   XEN_DEFINE_SAFE_PROCEDURE(S_soundfont_info,                   g_soundfont_info_w,                   0, 1, 0, H_soundfont_info);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_files_in_directory,         g_sound_files_in_directory_w,         0, 1, 0, H_sound_files_in_directory);

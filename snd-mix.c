@@ -62,7 +62,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
       return(false);
     }
 
-  if ((disk_space_p(num * mus_bytes_per_sample(ohdr->format), ofile)) != DISK_SPACE_OK)
+  if ((disk_has_space(num * mus_bytes_per_sample(ohdr->format), ofile)) != DISK_SPACE_OK)
     return(false);
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
@@ -3631,18 +3631,18 @@ XEN g_mix_sampler_home(XEN obj)
 }
 
 
-static bool mix_sampler_at_end_p(void *ptr)
+static bool mix_sampler_is_at_end(void *ptr)
 {
   mix_fd *mf = (mix_fd *)ptr;
   return(mf->sf->at_eof);
 }
 
 
-XEN g_mix_sampler_at_end_p(XEN obj)
+XEN g_mix_sampler_is_at_end(XEN obj)
 {
   mix_fd *mf;
   mf = XEN_TO_MIX_SAMPLER(obj);
-  return(C_TO_XEN_BOOLEAN(mix_sampler_at_end_p(mf)));
+  return(C_TO_XEN_BOOLEAN(mix_sampler_is_at_end(mf)));
 }
 
 
@@ -3650,7 +3650,7 @@ XEN g_mix_sampler_position(XEN obj)
 {
   mix_fd *mf;
   mf = XEN_TO_MIX_SAMPLER(obj);
-  if (mix_sampler_at_end_p(mf)) return(XEN_ZERO);
+  if (mix_sampler_is_at_end(mf)) return(XEN_ZERO);
   return(C_TO_XEN_LONG_LONG(current_location(mf->sf)));
 }
 

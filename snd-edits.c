@@ -6895,7 +6895,7 @@ static XEN g_sampler_at_end(XEN obj)
     }
 
   if (is_mix_sampler(obj))
-    return(g_mix_sampler_at_end_p(obj));
+    return(g_mix_sampler_is_at_end(obj));
 
   return(XEN_FALSE);
 }
@@ -8792,7 +8792,7 @@ typedef struct {
   mus_long_t *samps;
 } snd_to_sample;
 
-bool snd_to_sample_p(mus_any *ptr) {return(mus_type(ptr) == snd_to_sample_tag);}
+static bool is_snd_to_sample(mus_any *ptr) {return(mus_type(ptr) == snd_to_sample_tag);}
 
 static bool snd_to_sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
@@ -8877,7 +8877,7 @@ static char *snd_to_sample_describe(mus_any *ptr)
 }
 
 
-mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frame, int chan) 
+static mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frame, int chan) 
 {
   snd_to_sample *spl = (snd_to_sample *)ptr;
   mus_long_t diff, i;
@@ -8923,18 +8923,18 @@ static mus_any *make_snd_to_sample(snd_info *sp)
 }
 
 
-static XEN g_snd_to_sample_p(XEN os) 
+static XEN g_is_snd_to_sample(XEN os) 
 {
-  #define H_snd_to_sample_p "(" S_is_snd_to_sample " gen): " PROC_TRUE " if gen is an " S_snd_to_sample " generator"
+  #define H_is_snd_to_sample "(" S_is_snd_to_sample " gen): " PROC_TRUE " if gen is an " S_snd_to_sample " generator"
   return(C_TO_XEN_BOOLEAN((mus_is_xen(os)) && 
-			  (snd_to_sample_p(XEN_TO_MUS_ANY(os)))));
+			  (is_snd_to_sample(XEN_TO_MUS_ANY(os)))));
 }
 
 
 static XEN g_snd_to_sample(XEN os, XEN frame, XEN chan)
 {
   #define H_snd_to_sample "(" S_snd_to_sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
-  XEN_ASSERT_TYPE((mus_is_xen(os)) && (snd_to_sample_p(XEN_TO_MUS_ANY(os))), os, 1, S_snd_to_sample, "a " S_snd_to_sample " gen");
+  XEN_ASSERT_TYPE((mus_is_xen(os)) && (is_snd_to_sample(XEN_TO_MUS_ANY(os))), os, 1, S_snd_to_sample, "a " S_snd_to_sample " gen");
   XEN_ASSERT_TYPE(Xen_is_long_long_int(frame), frame, 2, S_snd_to_sample, "an integer");
   XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 3, S_snd_to_sample, "an integer");
   return(C_TO_XEN_DOUBLE(snd_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), 
@@ -9095,7 +9095,7 @@ XEN_ARGIFY_5(g_set_sample_w, g_set_sample)
 XEN_ARGIFY_10(g_set_samples_w, g_set_samples)
 #endif
 XEN_ARGIFY_5(g_samples_w, g_samples)
-XEN_NARGIFY_1(g_snd_to_sample_p_w, g_snd_to_sample_p)
+XEN_NARGIFY_1(g_is_snd_to_sample_w, g_is_snd_to_sample)
 XEN_ARGIFY_3(g_snd_to_sample_w, g_snd_to_sample)
 XEN_ARGIFY_1(g_make_snd_to_sample_w, g_make_snd_to_sample)
 XEN_ARGIFY_4(g_edit_list_to_function_w, g_edit_list_to_function)
@@ -9190,7 +9190,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE("set-samples",                  orig_g_set_samples_w,             3, 7, 0, H_set_samples);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_is_snd_to_sample,              g_snd_to_sample_p_w,              1, 0, 0, H_snd_to_sample_p);
+  XEN_DEFINE_PROCEDURE(S_is_snd_to_sample,              g_is_snd_to_sample_w,              1, 0, 0, H_is_snd_to_sample);
   XEN_DEFINE_PROCEDURE(S_make_snd_to_sample,           g_make_snd_to_sample_w,           0, 1, 0, H_make_snd_to_sample);
   XEN_DEFINE_PROCEDURE(S_snd_to_sample,                g_snd_to_sample_w,                2, 1, 0, H_snd_to_sample);
   XEN_DEFINE_PROCEDURE(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);

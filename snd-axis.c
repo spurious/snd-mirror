@@ -1,6 +1,6 @@
 #include "snd.h"
 
-bool x_axis_style_p(int n)
+bool is_x_axis_style(int n)
 {
   switch (n)
     {
@@ -13,7 +13,7 @@ bool x_axis_style_p(int n)
 }
 
 
-bool show_axes_p(int n)
+bool shows_axes(int n)
 {
   switch (n)
     {
@@ -1674,7 +1674,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 		      xstyle = XEN_LIST_REF(args, 7);
 		      XEN_ASSERT_TYPE(Xen_is_integer(xstyle), xstyle, 8, S_draw_axes, "axis style");
 		      tmp = XEN_TO_C_INT(xstyle);
-		      if (!(x_axis_style_p(tmp)))
+		      if (!(is_x_axis_style(tmp)))
 			XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 7, xstyle, "axis style");
 		      x_style = (x_axis_style_t)tmp;
 		      if (len > 8) 
@@ -1682,7 +1682,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 			  xaxes = XEN_LIST_REF(args, 8);
 			  XEN_ASSERT_TYPE(Xen_is_integer(xaxes), xaxes, 9, S_draw_axes, S_show_axes " choice");
 			  tmp = XEN_TO_C_INT(xaxes);
-			  if (!(show_axes_p(tmp)))
+			  if (!(shows_axes(tmp)))
 			    XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 8, xaxes, S_show_axes " choice");
 			  axes = (show_axes_t)XEN_TO_C_INT(xaxes);
 #if USE_GTK

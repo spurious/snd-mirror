@@ -1261,7 +1261,7 @@ static char sname[PRINT_BUFFER_SIZE];
 
 char *shortname(snd_info *sp)
 {
-  if (link_p(sp->filename))
+  if (is_link_file(sp->filename))
     {
       snprintf(sname, PRINT_BUFFER_SIZE, "(%s)", sp->short_filename);
       return(sname);
@@ -1274,7 +1274,7 @@ char *shortname_indexed(snd_info *sp)
 {
   if (show_indices(ss))
     {
-      if (link_p(sp->filename))
+      if (is_link_file(sp->filename))
 	snprintf(sname, PRINT_BUFFER_SIZE, "%d: (%s)", sp->index, sp->short_filename); /* don't try to share sname */
       else snprintf(sname, PRINT_BUFFER_SIZE, "%d: %s", sp->index, sp->short_filename);
       return(sname);
@@ -1327,7 +1327,7 @@ char *sp_name_click(snd_info *sp) /* caller should free returned string */
 	  char *result, *str = NULL;
 
 	  bool linked = false;
-	  linked = link_p(sp->filename);
+	  linked = is_link_file(sp->filename);
 	  dur = (mus_float_t)((double)(hdr->samples) / (double)(hdr->chans * hdr->srate));
 	  result = mus_format("%d, %d chan%s, %.3f sec%s, %s: %s, %s%s%s%s",
 			       hdr->srate,
@@ -1473,13 +1473,13 @@ void restore_controls(snd_info *sp)
       cs->speed = DEFAULT_SPEED_CONTROL;
       cs->reversed = false; /* (this is the button's view) */
       cs->expand = DEFAULT_EXPAND_CONTROL;
-      cs->expand_on = DEFAULT_EXPAND_CONTROL_P;
+      cs->expand_on = DEFAULT_EXPAND_CONTROL_ON;
       cs->revscl = DEFAULT_REVERB_CONTROL_SCALE;
       cs->revlen = DEFAULT_REVERB_CONTROL_LENGTH;
-      cs->reverb_on = DEFAULT_REVERB_CONTROL_P;
+      cs->reverb_on = DEFAULT_REVERB_CONTROL_ON;
       cs->contrast = DEFAULT_CONTRAST_CONTROL;
-      cs->contrast_on = DEFAULT_CONTRAST_CONTROL_P;
-      cs->filter_on = DEFAULT_FILTER_CONTROL_P;
+      cs->contrast_on = DEFAULT_CONTRAST_CONTROL_ON;
+      cs->filter_on = DEFAULT_FILTER_CONTROL_ON;
       cs->filter_order = filter_control_order(ss);
       cs->filter_env = NULL;
     }
@@ -1508,10 +1508,10 @@ void restore_controls(snd_info *sp)
 void reset_controls(snd_info *sp) 
 {
   char *tmpstr;
-  toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
-  toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
-  toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
-  toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
+  toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_ON);
+  toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_ON);
+  toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_ON);
+  toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_ON);
   toggle_direction_arrow(sp, false);
   set_amp(sp, DEFAULT_AMP_CONTROL);
   set_speed(sp, DEFAULT_SPEED_CONTROL);
@@ -1533,10 +1533,10 @@ void reset_controls(snd_info *sp)
 static void apply_unset_controls(snd_info *sp) 
 {
   /* after apply_controls there's no need to clear everything! */
-  toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
-  toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
-  toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
-  toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
+  toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_ON);
+  toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_ON);
+  toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_ON);
+  toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_ON);
   toggle_direction_arrow(sp, false);
   set_amp(sp, DEFAULT_AMP_CONTROL);
   set_speed(sp, DEFAULT_SPEED_CONTROL);
@@ -2371,15 +2371,6 @@ static XEN g_is_sound(XEN snd)
     }
   return(XEN_FALSE);
 }
-
-
-#if HAVE_SCHEME
-bool r_sound_p(int i);
-bool r_sound_p(int i)
-{
-  return((i < ss->max_sounds) && (snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL));
-}
-#endif
 
 
 static XEN g_select_sound(XEN snd)
@@ -4148,7 +4139,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     }
 
   if ((file == NULL) || 
-      (directory_p(file)))
+      (is_directory(file)))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_1(C_TO_XEN_STRING(S_save_sound_as ": no output file?")));
 

@@ -202,7 +202,7 @@ typedef struct env_editor {
   oclock_t down_time;
   bool env_dragged;
   int env_pos;
-  bool click_to_delete, in_dB, with_dots, clip_p;
+  bool click_to_delete, in_dB, with_dots, clipping;
   bool edited;
 } env_editor;
 
@@ -238,9 +238,9 @@ typedef struct {
 
 typedef struct chan_info {
   int chan;                /* which chan are we */
-  bool graph_transform_p;  /* f button state */
-  bool graph_time_p;       /* w button state */
-  bool graph_lisp_p;       /* is lisp graph active */
+  bool graph_transform_on;  /* f button state */
+  bool graph_time_on;       /* w button state */
+  bool graph_lisp_on;       /* is lisp graph active */
   struct lisp_grf *lisp_info; /* defined in snd-chn.c */
   bool cursor_on;          /* channel's cursor */
   bool cursor_visible, fft_cursor_visible;     /* for XOR decisions */
@@ -1096,9 +1096,6 @@ mus_long_t ed_selection_maxamp_position(chan_info *cp);
 void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1);
 void reflect_file_change_in_label(chan_info *cp);
 void reflect_file_change_in_title(void);
-
-bool snd_to_sample_p(mus_any *ptr);
-mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frame, int chan);
 int mix_buffer_with_tag(chan_info *cp, mus_float_t *data, mus_long_t beg, mus_long_t num, const char *origin);
 
 int mix_file_with_tag(chan_info *cp, const char *filename, int chan, mus_long_t beg, file_delete_t auto_delete, const char *origin);
@@ -1205,7 +1202,7 @@ void clear_stdin(void);
 #if HAVE_RUBY
   void snd_rb_raise(XEN type, XEN info);
 #endif
-bool source_file_p(const char *name);
+bool is_source_file(const char *name);
 void save_added_source_file_extensions(FILE *fd);
 
 
@@ -1306,7 +1303,7 @@ env *free_env(env *e);
 char *env_to_string(env *e);
 env *make_envelope_with_offset_and_scaler(mus_float_t *env_buffer, int len, mus_float_t offset, mus_float_t scaler);
 env *default_env(mus_float_t x1, mus_float_t y);
-bool default_env_p(env *e);
+bool is_default_env(env *e);
 bool envs_equal(env *e1, env *e2);
 env_editor *new_env_editor(void);
 void env_editor_button_motion_with_xy(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e, mus_float_t *new_x, mus_float_t *new_y);
@@ -1392,7 +1389,7 @@ void dac_set_reverb_lowpass(snd_info *sp, mus_float_t newval);
 
 /* -------- snd-chn.c -------- */
 
-bool graph_style_p(int grf);
+bool is_graph_style(int grf);
 chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
 snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t with_arrows, 
 				      graph_style_t grf_style, widget_t container, bool with_events);
@@ -1499,8 +1496,8 @@ chan_info *channel_to_chan(chan_info *cp);
 
 /* -------- snd-axis.c -------- */
 
-bool x_axis_style_p(int n);
-bool show_axes_p(int n);
+bool is_x_axis_style(int n);
+bool shows_axes(int n);
 axis_info *free_axis_info(axis_info *ap);
 char *x_axis_location_to_string(chan_info *cp, double loc);
 int grf_x(double val, axis_info *ap);
@@ -1605,15 +1602,15 @@ axes_data *make_axes_data(snd_info *sp);
 void restore_axes_data(snd_info *sp, axes_data *sa, mus_float_t new_duration, bool need_edit_history_update);
 mus_long_t disk_kspace(const char *filename);
 time_t file_write_date(const char *filename);
-bool link_p(const char *filename);
+bool is_link_file(const char *filename);
 int recent_files_size(void);
 char **recent_files(void);
-bool directory_p(const char *filename);
+bool is_directory(const char *filename);
 file_info *make_file_info(const char *fullname, read_only_t read_only, bool selected);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(const char *fullname, file_info *ohdr);
 file_info *make_temp_header(const char *fullname, int srate, int chans, mus_long_t samples, const char *caller);
-bool sound_file_p(const char *name);
+bool is_sound_file(const char *name);
 void init_sound_file_extensions(void);
 void save_added_sound_file_extensions(FILE *fd);
 const char **get_sound_file_extensions(void);
@@ -1678,7 +1675,7 @@ char *file_to_string(const char *filename);
   char *snd_strftime(const char *format, time_t date);
 #endif
 
-disk_space_t disk_space_p(mus_long_t bytes, const char *filename);
+disk_space_t disk_has_space(mus_long_t bytes, const char *filename);
 char *prettyf(double num, int tens);
 char *shorter_tempnam(const char *dir, const char *prefix);
 char *snd_tempnam(void);
@@ -1778,7 +1775,7 @@ int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const c
 bool is_mix_sampler(XEN obj);
 XEN g_copy_mix_sampler(XEN obj);
 XEN g_mix_sampler_home(XEN obj);
-XEN g_mix_sampler_at_end_p(XEN obj);
+XEN g_mix_sampler_is_at_end(XEN obj);
 XEN g_mix_sampler_position(XEN obj);
 XEN g_free_mix_sampler(XEN obj);
 char *edit_list_mix_init(chan_info *cp);
