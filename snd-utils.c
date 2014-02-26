@@ -231,7 +231,7 @@ char *vstr(const char *format, va_list ap)
 }
 
 
-disk_space_t disk_space_p(mus_long_t bytes, const char *filename)
+disk_space_t disk_has_space(mus_long_t bytes, const char *filename)
 {
   mus_long_t kfree, kneeded;
   kfree = disk_kspace(filename);

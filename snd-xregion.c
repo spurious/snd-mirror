@@ -339,10 +339,10 @@ static XEN reflect_file_in_region_browser(XEN hook_or_reason)
 {
   if (region_dialog)
     {
-      bool file_p;
-      file_p = (bool)(any_selected_sound());
-      set_sensitive(mix_button, file_p);
-      set_sensitive(insert_button, file_p);
+      bool file_on;
+      file_on = (bool)(any_selected_sound());
+      set_sensitive(mix_button, file_on);
+      set_sensitive(insert_button, file_on);
     }
   return(XEN_FALSE);
 }

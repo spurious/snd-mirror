@@ -1574,7 +1574,7 @@ static XEN g_file_exists_p(XEN name)
 }
 
 
-static bool directory_p(const char *filename)
+static bool is_directory(const char *filename)
 {
 #if (defined(_MSC_VER) || __CYGWIN__)
   return(false);
@@ -1588,11 +1588,11 @@ static bool directory_p(const char *filename)
 #endif
 }
 
-static XEN g_directory_p(XEN name)
+static XEN g_is_directory(XEN name)
 {
-  #define H_directory_p "(directory? filename): #t if filename names a directory"
+  #define H_is_directory "(directory? filename): #t if filename names a directory"
   XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, "directory?", "a string");
-  return(C_TO_XEN_BOOLEAN(directory_p(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
+  return(C_TO_XEN_BOOLEAN(is_directory(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
 }
 
 static XEN g_delete_file(XEN name)
@@ -1751,7 +1751,7 @@ static XEN g_gc_on(void)
 XEN_NARGIFY_0(g_getpid_w, g_getpid)
 #if (!WITH_SYSTEM_EXTRAS)
   XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
-  XEN_NARGIFY_1(g_directory_p_w, g_directory_p)
+  XEN_NARGIFY_1(g_is_directory_w, g_is_directory)
   XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
   XEN_NARGIFY_1(g_s7_getenv_w, g_s7_getenv)
   XEN_NARGIFY_1(g_system_w, g_system)
@@ -1793,7 +1793,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_SAFE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
 #if (!WITH_SYSTEM_EXTRAS)
   XEN_DEFINE_SAFE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_SAFE_PROCEDURE("directory?",          g_directory_p_w,        1, 0, 0, H_directory_p);
+  XEN_DEFINE_SAFE_PROCEDURE("directory?",          g_is_directory_w,        1, 0, 0, H_is_directory);
   XEN_DEFINE_SAFE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
   XEN_DEFINE_SAFE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
   XEN_DEFINE_SAFE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);

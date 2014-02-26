@@ -2258,7 +2258,7 @@ static void add_source_file_extension(const char *ext)
 }
 
 
-bool source_file_p(const char *name)
+bool is_source_file(const char *name)
 {
   int i, dot_loc = -1, len;
 

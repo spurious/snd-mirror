@@ -1377,7 +1377,7 @@ static void unpost_file_info(file_dialog_info *fd)
 }
 
 
-static bool empty_file_p(const char *filename)
+static bool is_empty_file(const char *filename)
 {
 #ifndef _MSC_VER
   struct stat statbuf;
@@ -1402,10 +1402,10 @@ static void local_error2snd(int type, char *msg)
 }
 
 
-static bool plausible_sound_file_p(const char *name)
+static bool is_plausible_sound_file(const char *name)
 {
   int err = MUS_NO_ERROR;
-  if (empty_file_p(name)) return(false);
+  if (is_empty_file(name)) return(false);
   old_error_handler = mus_error_set_handler(local_error2snd);
   err = mus_header_read(name);
   mus_error_set_handler(old_error_handler);
@@ -1423,7 +1423,7 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
   filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if (filename)
     {
-      if (plausible_sound_file_p(filename)) /* forces header read to avoid later unwanted error possibility */
+      if (is_plausible_sound_file(filename)) /* forces header read to avoid later unwanted error possibility */
 	post_file_info(fd, filename);
       XtFree(filename);      
     }
@@ -1486,9 +1486,9 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
 	ensure_list_row_visible(file_list, pos);
 
       if ((mus_file_probe(filename)) && 
-	  (!directory_p(filename)))
+	  (!is_directory(filename)))
 	{
-	  if (sound_file_p(filename))
+	  if (is_sound_file(filename))
 	    post_file_info(fd, filename);
 	}
     }
@@ -1515,7 +1515,7 @@ static bool file_is_directory(Widget dialog)
   filename = XmTextGetString(FSB_BOX(dialog, XmDIALOG_TEXT));
   if (filename)
     {
-      is_dir = directory_p(filename);
+      is_dir = is_directory(filename);
       XtFree(filename);
     }
   return(is_dir);
@@ -1540,7 +1540,7 @@ static bool file_is_nonexistent_directory(Widget dialog)
 	    if (filename[i] == '/')
 	      {
 		filename[i] = '\0';
-		is_nonexistent_dir = directory_p(filename);
+		is_nonexistent_dir = is_directory(filename);
 		break;
 	      }
 	}
@@ -1788,7 +1788,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
   else
     {
       file_dialog_stop_playing(fd->dp);
-      if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
+      if (!(is_directory(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
 	{
 	  snd_info *sp;
 	  redirect_snd_error_to(redirect_file_open_error, (void *)fd);
@@ -1902,7 +1902,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   else
     {
       file_dialog_stop_playing(fd->dp);
-      if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
+      if (!(is_directory(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
 	{
 	  int id_or_error;
 	  snd_info *sp;
@@ -2001,7 +2001,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
   else
     {
       file_dialog_stop_playing(fd->dp);
-      if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
+      if (!(is_directory(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
 	{
 	  bool ok = false;
 	  snd_info *sp;
@@ -3334,7 +3334,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     save_as_undoit(sd);
   ss->local_errno = 0;
 
-  if (encoded_header_p(type))
+  if (header_is_encoded(type))
     {
       output_type = type;
       format = MUS_LSHORT;
@@ -3400,7 +3400,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 
   if (io_err == IO_NO_ERROR)
     {
-      if (encoded_header_p(output_type))
+      if (header_is_encoded(output_type))
 	{
 	  snd_encode(output_type, tmpfile, fullname);
 	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
@@ -3459,7 +3459,7 @@ static void save_as_dialog_select_callback(Widget w, XtPointer context, XtPointe
   XmString *strs;
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
   filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  if ((filename) && (sound_file_p(filename)))
+  if ((filename) && (is_sound_file(filename)))
     XtManageChild(dp->play_button);
   else
     {
@@ -3496,10 +3496,10 @@ static bool directory_exists(char *name)
   if (last_slash <= 0)
     return(true);
   if (last_slash >= len - 1) /* can't be > */
-    return(directory_p(name));
+    return(is_directory(name));
   temp = name[last_slash + 1];
   name[last_slash + 1] = '\0';
-  result = directory_p(name);
+  result = is_directory(name);
   name[last_slash + 1] = temp;
   return(result);
 }
@@ -3514,7 +3514,7 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
   if ((filename) && (*filename))
     {
       if ((mus_file_probe(filename)) && 
-	  (!directory_p(filename)))
+	  (!is_directory(filename)))
 	{
 #ifndef _MSC_VER
 	  if (access(filename, W_OK) < 0)
@@ -5785,7 +5785,7 @@ static void view_files_select(vf_row *r, bool add_to_selected)
 
   if ((vdat->currently_selected_files == 0) ||
       ((vdat->currently_selected_files == 1) &&
-       (!(plausible_sound_file_p(vdat->full_names[vdat->selected_files[0]])))))
+       (!(is_plausible_sound_file(vdat->full_names[vdat->selected_files[0]])))))
     vf_unpost_info(vdat);
   else
     {
@@ -6237,7 +6237,7 @@ static int vf_mix(view_files_info *vdat)
   if ((len == 1) &&
       (snd_feq(vdat->amp, 1.0)) &&
       (snd_feq(vdat->speed, 1.0)) &&
-      (default_env_p(vdat->amp_env)))
+      (is_default_env(vdat->amp_env)))
     id_or_error = mix_complete_file(sp, vdat->beg, 
 				    vdat->full_names[vdat->selected_files[0]], 
 				    with_mix_tags(ss), DONT_DELETE_ME, MIX_SETS_SYNC_LOCALLY, NULL);
@@ -6320,7 +6320,7 @@ static bool vf_insert(view_files_info *vdat)
   if ((len == 1) &&
       (snd_feq(vdat->amp, 1.0)) &&
       (snd_feq(vdat->speed, 1.0)) &&
-      (default_env_p(vdat->amp_env)))
+      (is_default_env(vdat->amp_env)))
     ok = insert_complete_file(sp, 
 			      vdat->full_names[vdat->selected_files[0]], 
 			      vdat->beg,
@@ -6567,7 +6567,7 @@ void save_view_files_dialogs(FILE *fd)
 	if (!(snd_feq(vdat->speed, 1.0)))
 	  fprintf(fd, "  (set! (" S_view_files_speed " vf) %.3f)\n", vdat->speed);
 
-	if (!(default_env_p(vdat->amp_env)))
+	if (!(is_default_env(vdat->amp_env)))
 	  fprintf(fd, "  (set! (" S_view_files_amp_env " vf) %s)\n", env_to_string(vdat->amp_env));
 
 	/* assume file-sorters are set up already */
@@ -6598,7 +6598,7 @@ void save_view_files_dialogs(FILE *fd)
 	if (!(snd_feq(vdat->speed, 1.0)))
 	  fprintf(fd, "  set_view_files_speed(vf, %.3f)\n", vdat->speed);
 
-	if (!(default_env_p(vdat->amp_env)))
+	if (!(is_default_env(vdat->amp_env)))
 	  fprintf(fd, "  set_view_files_amp_env(vf, %s)\n", env_to_string(vdat->amp_env));
 
 	/* assume file-sorters are set up already */
@@ -6629,7 +6629,7 @@ void save_view_files_dialogs(FILE *fd)
 	if (!(snd_feq(vdat->speed, 1.0)))
 	  fprintf(fd, "  vf %.3f set-view-files-speed drop\n", vdat->speed);
 
-	if (!(default_env_p(vdat->amp_env)))
+	if (!(is_default_env(vdat->amp_env)))
 	  fprintf(fd, "  vf %s set-view-files-amp-env drop\n", env_to_string(vdat->amp_env));
 
 	/* assume file-sorters are set up already */
@@ -7178,7 +7178,7 @@ static void view_files_add_file_or_directory(view_files_info *vdat, const char *
       len = strlen(filename);
       if (filename[len - 1] == '*')
 	filename[len - 1] = 0;
-      if (directory_p(filename))
+      if (is_directory(filename))
 	add_directory_to_view_files_list(vdat, (const char *)filename);
       else add_file_to_view_files_list(vdat, file_or_dir, filename);
       free(filename);

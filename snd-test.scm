@@ -20102,6 +20102,20 @@ EDITS: 2
       (if (fneq (cadr (mus-sound-maxamp "fmv.snd")) .5) 
 	  (snd-display #__line__ ";convolve-files: ~A is not .5?" (cadr (mus-sound-maxamp "fmv.snd"))))
       (play-sound-1 "fmv.snd"))
+
+    (let ((flt (float-vector 1.0 0.5 0.1 0.2 0.3 0.4 0.5 1.0))
+	  (data (float-vector 0.0 1.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0))
+	  (ctr -1))
+      (let ((res (make-float-vector 16))
+	    (g (make-convolve :filter flt
+			      :input (lambda (dir)
+				       (set! ctr (+ ctr 1))
+				       (data ctr)))))
+	(do ((i 0 (+ i 1)))
+	    ((= i 16))
+	  (set! (res i) (convolve g)))
+	(if (not (vequal res (float-vector 0.0 1.0 0.5 0.1 1.2 0.8 0.5 0.7 1.3 0.4 0.5 1.0 0.0 0.0 0.0 0.0)))
+	    (snd-display #__line__ ";convolve: ~A~%" res))))
     
     (let* ((fd (mus-sound-open-input "oboe.snd"))
 	   (chans (mus-sound-chans "oboe.snd"))
@@ -20720,8 +20734,9 @@ EDITS: 2
       
       (let ((v (channel->float-vector 0 50))
 	    (v0 (float-vector 0.00022 0.00130 0.00382 0.00810 0.01381 0.01960 0.02301 0.02143 0.01421 0.00481 0.00000 0.00396 0.01168 0.01231 0.00413 0.00018 0.00704 0.00984 0.00189 0.00197 0.00881 0.00290 0.00151 0.00781 0.00091 0.00404 0.00498 0.00047 0.00641 -0.00017 0.00590 0.00006 0.00492 0.00031 0.00380 0.00052 0.00290 0.00066 0.00219 0.00074 0.00164 0.00076 0.00123 0.00074 0.00092 0.00067 0.00069 0.00058 0.00052 0.00048)))
-	(if (not (mus-arrays-equal? v v0))
-	    (snd-display #__line__ ";1 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+	(if (and (not (mus-arrays-equal? v v0))
+		 (not (mus-arrays-equal? (float-vector-scale! v -1.0) v0))) 
+	    (snd-display #__line__ ";pv 1 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
       
       (undo)
       
@@ -20732,7 +20747,7 @@ EDITS: 2
       (let ((v (channel->float-vector 0 50))
 	    (v0 (float-vector 0.00044 0.00255 0.00705 0.01285 0.01595 0.01177 0.00281 0.00069 0.00782 0.00702 0.00001 0.00584 0.00385 0.00138 0.00547 0.00035 0.00494 0.00082 0.00305 0.00310 0.00003 0.00380 0.00245 -0.00019 0.00159 0.00348 0.00268 0.00087 -0.00020 -0.00036 -0.00010 0.00012 0.00036 0.00057 0.00075 0.00089 0.00099 0.00105 0.00108 0.00107 0.00104 0.00099 0.00094 0.00087 0.00080 0.00073 0.00066 0.00059 0.00053 0.00047)))
 	(if (not (mus-arrays-equal? v v0))
-	    (snd-display #__line__ ";2 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+	    (snd-display #__line__ ";pv 2 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
       
       (undo)
       
@@ -20743,7 +20758,7 @@ EDITS: 2
       (let ((v (channel->float-vector 0 50))
 	    (v0 (float-vector 0.00011 0.00065 0.00195 0.00428 0.00785 0.01266 0.01845 0.02456 0.02989 0.03305 0.03267 0.02803 0.01970 0.00993 0.00228 0.00009 0.00441 0.01250 0.01858 0.01759 0.00975 0.00160 0.00079 0.00795 0.01454 0.01201 0.00325 0.00024 0.00716 0.01261 0.00704 0.00003 0.00384 0.00962 0.00620 0.00027 0.00196 0.00655 0.00492 0.00040 0.00101 0.00448 0.00375 0.00041 0.00053 0.00305 0.00273 0.00033 0.00029 0.00204)))
 	(if (not (mus-arrays-equal? v v0))
-	    (snd-display #__line__ ";3 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+	    (snd-display #__line__ ";pv 3 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
       
       (undo)
       
@@ -20754,7 +20769,7 @@ EDITS: 2
       (let ((v (channel->float-vector 0 100))
 	    (v0 (float-vector 0.00005 0.00033 0.00098 0.00214 0.00392 0.00633 0.00923 0.01228 0.01495 0.01652 0.01633 0.01401 0.00985 0.00497 0.00114 0.00004 0.00221 0.00625 0.00929 0.00880 0.00488 0.00080 0.00040 0.00397 0.00727 0.00601 0.00162 0.00012 0.00358 0.00630 0.00352 0.00002 0.00217 0.00552 0.00300 -0.00008 0.00299 0.00479 0.00083 0.00098 0.00457 0.00175 0.00033 0.00412 0.00172 0.00039 0.00399 0.00087 0.00118 0.00356 -0.00016 0.00280 0.00169 0.00051 0.00326 -0.00030 0.00301 0.00040 0.00184 0.00144 0.00078 0.00213 0.00015 0.00242 -0.00017 0.00240 -0.00038 0.00230 -0.00049 0.00214 -0.00053 0.00194 -0.00051 0.00172 -0.00047 0.00150 -0.00040 0.00127 -0.00033 0.00106 -0.00025 0.00086 -0.00019 0.00068 -0.00013 0.00052 -0.00008 0.00039 -0.00005 0.00027 -0.00002 0.00017 -0.00001 0.00009 -0.00000 0.00003 -0.00000 -0.00002 -0.00001 -0.00006)))
 	(if (not (mus-arrays-equal? v v0))
-	    (snd-display #__line__ ";4 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+	    (snd-display #__line__ ";pv 4 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
       
       (undo)
       
@@ -20767,7 +20782,7 @@ EDITS: 2
       (let ((v (channel->float-vector 0 100))
 	    (v0 (float-vector 0.00100 0.00598 0.01756 0.03708 0.06286 0.08826 0.10172 0.09163 0.05680 0.01564 -0.00075 0.02124 0.05164 0.04457 0.00861 0.00529 0.03648 0.02747 -0.00875 0.00936 0.02402 -0.00553 -0.00090 -0.02262 -0.00221 0.06633 -0.03229 0.01861 0.05228 0.00672 0.00885 0.01442 -0.00484 -0.02293 -0.01893 -0.02256 -0.10229 -0.22474 0.31110 0.07597 0.07127 0.03670 0.02583 0.03173 0.02260 0.01550 0.01485 0.03212 -0.00966 0.00779 -0.00964 0.00698 0.01100 0.00468 0.00107 0.00517 0.00469 0.00131 0.00058 0.00530 0.00582 -0.00652 0.00011 0.00000 -0.00000 -0.00000 -0.00000 0.00000 -0.00000 0.00000 0.00000 -0.00000 -0.00000 -0.00000 -0.00000 -0.00000 -0.00000 0.00000 -0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 -0.00000 -0.00000 -0.00000 0.00000 0.00000 0.00000 -0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000)))
 	(if (not (mus-arrays-equal? v v0))
-	    (snd-display #__line__ ";5 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+	    (snd-display #__line__ ";pv 5 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
       
       (undo)
       
@@ -20780,7 +20795,7 @@ EDITS: 2
       (let ((v (channel->float-vector 0 100))
 	    (v0 (float-vector 0.00332 0.01977 0.05805 0.12252 0.20738 0.29035 0.33291 0.29696 0.18017 0.04637 -0.00003 0.08250 0.18618 0.15495 0.02775 0.02252 0.13597 0.09767 -0.03116 0.05301 0.10256 -0.05005 0.01966 0.06176 -0.04418 0.04118 -0.11409 -0.04115 -0.05157 -0.11409 0.07815 -0.08155 -0.00536 0.02090 -0.18804 -0.10686 -0.11931 -0.42989 0.39009 0.03157 0.14253 0.05984 0.05439 0.00764 0.02636 -0.02799 -0.01346 -0.01011 -0.04925 -0.02896 -0.07812 -0.07880 -0.11338 -0.13133 -0.41421 0.38140 0.08676 0.07712 0.00983 0.03731 0.01585 0.00108 0.00101 0.00282 -0.01106 -0.00403 -0.02165 -0.02054 -0.02452 -0.02382 -0.03213 -0.02693 -0.03734 -0.03978 -0.04879 -0.07504 -0.09597 -0.31426 0.32995 0.13460 0.04120 0.05029 0.01900 0.02517 0.01163 0.01294 0.00827 0.00576 0.00640 0.00141 0.00489 -0.00057 0.00301 -0.00089 0.00099 -0.00000 0.00000 -0.00000 -0.00000 -0.00000)))
 	(if (not (mus-arrays-equal? v v0))
-	    (snd-display #__line__ ";6 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
+	    (snd-display #__line__ ";pv 6 diff: ~A" (float-vector-peak (float-vector-subtract! v v0)))))
       
       (close-sound ind)
       (set! *mus-float-equal-fudge-factor* old-fudge))
@@ -47164,25 +47179,25 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-22-Feb:
-37,665,008,257
-5,722,311,055  s7.c:eval [/home/bil/gtk-snd/snd]
-2,304,526,702  ???:sin [/lib64/libm-2.12.so]
-2,170,243,720  ???:cos [/lib64/libm-2.12.so]
+26-Feb:
+37,427,617,827
+5,729,216,351  s7.c:eval [/home/bil/gtk-snd/snd]
+2,305,771,247  ???:sin [/lib64/libm-2.12.so]
+2,165,763,725  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,032,633,591  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  885,414,540  ???:t2_32 [/home/bil/gtk-snd/snd]
-  878,330,138  s7.c:gc [/home/bil/gtk-snd/snd]
-  829,547,700  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  782,408,943  ???:t2_64 [/home/bil/gtk-snd/snd]
+1,035,789,621  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  885,359,904  ???:t2_32 [/home/bil/gtk-snd/snd]
+  869,749,557  s7.c:gc [/home/bil/gtk-snd/snd]
+  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
   774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  750,771,091  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  614,488,708  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,263,218  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,926,400  ???:n1_64 [/home/bil/gtk-snd/snd]
-  415,219,833  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  713,375,943  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  660,961,138  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  598,643,312  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  565,391,522  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,776,292  ???:n1_64 [/home/bil/gtk-snd/snd]
+  415,419,856  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  374,145,626  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  373,265,354  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 |#

@@ -3824,6 +3824,16 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
   gen->n = n;
   gen->index = 1.0;
   gen->cheby_choice = cheby_choice;
+
+#if 0
+  {
+    int i, zeros = 0;
+    for (i = 0; i < n; i++)
+      if (coeffs[i] == 0.0) zeros++;
+    fprintf(stderr, "%d(%d/%d) ", cheby_choice, zeros, n);
+  }
+#endif
+
   if (cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
     {
       if (coeffs[0] == 0.0)
@@ -4637,11 +4647,13 @@ mus_float_t mus_comb_unmodulated_noz(mus_any *ptr, mus_float_t input)
 {
   dly *gen = (dly *)ptr;
   mus_float_t result;
+
   result = gen->line[gen->loc];
   gen->line[gen->loc] = input + (result * gen->yscl);
   gen->loc++;
   if (gen->loc >= gen->size) 
     gen->loc = 0;
+
   return(result);
 }
 
@@ -9404,7 +9416,16 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 	return(NULL);
       }
 
+#if __APPLE__
+  /* yow -- there is a serious bug either in the OSX gcc or is it clang? As far as I can tell,
+   *   when e->env_func is set below, not all the relevent bits in the address are actually set!!
+   *   The low order byte appears to be garbage? Without this calloc, instead of calling 
+   *   mus_env_linear, it goes to some random place and dies.
+   */
+  e = (seg *)calloc(1, sizeof(seg));
+#else
   e = (seg *)malloc(sizeof(seg));
+#endif
   e->core = &ENV_CLASS;
 
   if (duration != 0.0)
@@ -10949,7 +10970,9 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
   return(NULL);
 }
 
-
+/* it would be easy to extend readin to read from a float-vector by using the saved_data and safe_readin
+ *   business above -- just need mus_make_readin_from_float_vector or something.
+ */
 
 
 mus_long_t mus_set_location(mus_any *gen, mus_long_t loc)
@@ -13066,6 +13089,9 @@ static int init_sinc_table(int width)
 {
   int i, size, padded_size, loc;
   mus_float_t win_freq, win_phase;
+#if HAVE_SINCOS
+  mus_float_t sn, snp, cs, csp;
+#endif
 
   if (width > sinc_size)
     {
@@ -13084,8 +13110,22 @@ static int init_sinc_table(int width)
       sinc_size = width;
       sinc_freq = M_PI / (mus_float_t)SRC_SINC_DENSITY;
       sinc_phase = old_end * sinc_freq;
+#if HAVE_SINCOS
+      sincos(sinc_freq, &sn, &cs);
+      for (i = old_end; i < padded_size;)
+	{
+	  sincos(sinc_phase, &snp, &csp);
+	  sinc[i] = snp / (2.0 * sinc_phase);
+	  i++;
+	  sinc_phase += sinc_freq;
+	  sinc[i] = (snp * cs + csp * sn) / (2.0 * sinc_phase);
+	  i++;
+	  sinc_phase += sinc_freq;
+	}
+#else
       for (i = old_end; i < padded_size; i++, sinc_phase += sinc_freq)
 	sinc[i] = sin(sinc_phase) / (2.0 * sinc_phase);
+#endif
     }
 
   for (i = 0; i < sincs; i++)
@@ -15320,6 +15360,7 @@ mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, mus_long_t n)
     {
       mus_long_t nn2;
       mus_float_t rem, rep, aim, aip;
+
       nn2 = n - j;
       rep = (rl1[j] + rl1[nn2]);
       rem = (rl1[j] - rl1[nn2]);
@@ -15327,8 +15368,8 @@ mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, mus_long_t n)
       aim = (rl2[j] - rl2[nn2]);
 
       rl1[j] = invn * (rep * aip + aim * rem);
-      rl1[nn2] = rl1[j];
       rl2[j] = invn * (aim * aip - rep * rem);
+      rl1[nn2] = rl1[j];
       rl2[nn2] = -rl2[j];
     }
   
@@ -15421,29 +15462,34 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
   mus_float_t result;
   if (gen->ctr >= gen->fftsize2)
     {
-      mus_long_t i;
+      mus_long_t i, N;
       size_t bytes;
-      bytes = gen->fftsize2 * sizeof(mus_float_t);
+
+      N = gen->fftsize2;
+      bytes = N * sizeof(mus_float_t);
 
       if (input) gen->feeder = input;
       memset((void *)(gen->rl2), 0, bytes * 2);
       memcpy((void *)(gen->rl2), (void *)(gen->filter), gen->filtersize * sizeof(mus_float_t));
 
-      memcpy((void *)(gen->buf), (void *)(gen->buf + gen->fftsize2), bytes);
-      memset((void *)(gen->buf + gen->fftsize2), 0, bytes);
-      memset((void *)(gen->rl1 + gen->fftsize2), 0, bytes);
+      memcpy((void *)(gen->buf), (void *)(gen->buf + N), bytes);
+      memset((void *)(gen->buf + N), 0, bytes);
+      memset((void *)(gen->rl1 + N), 0, bytes);
 
-      for (i = 0; i < gen->fftsize2; i++)
-	gen->rl1[i] = gen->feeder(gen->closure, 1);
+      for (i = 0; i < N;)
+	{
+	  gen->rl1[i] = gen->feeder(gen->closure, 1); i++;
+	  gen->rl1[i] = gen->feeder(gen->closure, 1); i++;
+	}
 
       mus_convolution(gen->rl1, gen->rl2, gen->fftsize);
 
-      for (i = 0; i < gen->fftsize2;)
+      for (i = 0; i < N;)
 	{
 	  gen->buf[i] += gen->rl1[i]; i++;
 	  gen->buf[i] += gen->rl1[i]; i++;
 	}
-      memcpy((void *)(gen->buf + gen->fftsize2), (void *)(gen->rl1 + gen->fftsize2), bytes);
+      memcpy((void *)(gen->buf + N), (void *)(gen->rl1 + N), bytes);
       gen->ctr = 0;
     }
   result = gen->buf[gen->ctr];
@@ -15788,6 +15834,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv->analyze = analyze;
   pv->edit = edit;
   pv->synthesize = synthesize;
+  pv->calc = true;
 
   pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW, fftsize, 0.0);
   scl = 2.0 / (0.54 * (mus_float_t)fftsize);
@@ -15802,7 +15849,6 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
    *   in Linux at least, sincos is faster than sin+sin -- in my timing tests, although
    *   callgrind is crazy, the actual runtimes are about 25% faster (sincos vs sin+sin).
    */
-  pv->calc = true;
   pv->cs = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
   pv->sn = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
   pv->sc_safe = (bool *)calloc(fftsize, sizeof(bool));
@@ -15817,7 +15863,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 					   bool (*analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction)),
 					   int (*edit)(void *arg), 
 					   mus_float_t (*synthesize)(void *arg))
-{
+ {
   pv_info *pv = (pv_info *)ptr;
   int N2, i;
   mus_float_t sum, sum1;
@@ -15944,7 +15990,6 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       mus_float_t *pinc, *frq, *ph, *amp, *panc;
       int j, topN;
 #if HAVE_SINCOS
-      int *inds;
       mus_float_t *cs, *sn;
 #endif
 
@@ -15957,7 +16002,6 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 #if HAVE_SINCOS
       cs = pv->cs;
       sn = pv->sn;
-      inds = pv->indices;
 #endif
 
       sum = 0.0;

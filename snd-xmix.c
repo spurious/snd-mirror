@@ -441,7 +441,7 @@ static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer inf
 {
   if (!(mix_is_active(mix_dialog_id))) return;
   if ((dialog_env) && 
-      (!(default_env_p(dialog_env))))
+      (!(is_default_env(dialog_env))))
     {
       mix_set_amp_env_edit(mix_dialog_id, dialog_env);
       syncd_mix_set_amp_env(mix_dialog_id, dialog_env);  
@@ -565,7 +565,7 @@ static void mix_sync_callback(Widget w, XtPointer context, XtPointer info)
 static void mix_clip_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
-  spf->clip_p = cb->set;
+  spf->clipping = cb->set;
   mix_amp_env_resize(w_env, NULL, NULL);
 }
 

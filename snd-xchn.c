@@ -1455,15 +1455,15 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 			  chan_info *ncp;
 			  ncp = sp->chans[i];
 			  CURSOR(ncp) = CURSOR(selected_cp);
-			  if (selected_cp->graph_transform_p != ncp->graph_transform_p)
+			  if (selected_cp->graph_transform_on != ncp->graph_transform_on)
 			    {
-			      ncp->graph_transform_p = selected_cp->graph_transform_p;
-			      set_toggle_button(channel_f(ncp), selected_cp->graph_transform_p, false, (void *)ncp);
+			      ncp->graph_transform_on = selected_cp->graph_transform_on;
+			      set_toggle_button(channel_f(ncp), selected_cp->graph_transform_on, false, (void *)ncp);
 			    }
-			  if (selected_cp->graph_time_p != ncp->graph_time_p)
+			  if (selected_cp->graph_time_on != ncp->graph_time_on)
 			    {
-			      ncp->graph_time_p = selected_cp->graph_time_p;
-			      set_toggle_button(channel_w(ncp), selected_cp->graph_time_p, false, (void *)ncp);
+			      ncp->graph_time_on = selected_cp->graph_time_on;
+			      set_toggle_button(channel_w(ncp), selected_cp->graph_time_on, false, (void *)ncp);
 			    }
 			}
 		    }
@@ -1512,8 +1512,8 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 			if ((cw[j]) && (!XtIsManaged(cw[j]))) 
 			  XtManageChild(cw[j]);
 
-		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_p), false);
-		      XmToggleButtonSetState(cw[W_w], (Boolean)(cp->graph_time_p), false);
+		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_on), false);
+		      XmToggleButtonSetState(cw[W_w], (Boolean)(cp->graph_time_on), false);
 		      /* these can get out of sync if changes are made in the unseparated case */
 		    }
 
