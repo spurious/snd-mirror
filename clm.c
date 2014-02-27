@@ -7164,7 +7164,7 @@ typedef struct {
   mus_any_class *core;
   int size;
   mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *rr, *fdbk, *gain;
-  mus_float_t c1, c2;
+  mus_float_t c1, c2, cx1, cx2;
   mus_float_t (*one_input)(mus_any *fbank, mus_float_t inval);
   mus_float_t (*many_inputs)(mus_any *fbank, mus_float_t *inval);
 } frm_bank;
@@ -7425,16 +7425,14 @@ static mus_float_t fb_many_without_amps(mus_any *fbank, mus_float_t *inval)
   return(sum);
 }
 
+
 static mus_float_t fb_one_with_amps_c1_c2(mus_any *fbank, mus_float_t inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
   int i, size4;
-  mus_float_t sum = 0.0, rr, gain;
-  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *fdbk;
+  mus_float_t sum = 0.0, rr, gain, cx2, cx0;
+  mus_float_t *y0, *y1, *y2, *amps, *fdbk;
 
-  x0 = bank->x0;
-  x1 = bank->x1;
-  x2 = bank->x2;
   y0 = bank->y0;
   y1 = bank->y1;
   y2 = bank->y2;
@@ -7443,40 +7441,37 @@ static mus_float_t fb_one_with_amps_c1_c2(mus_any *fbank, mus_float_t inval)
   size4 = bank->size - 4;
 
   rr = bank->c1;
-  gain = (bank->c2 * inval);
+  cx2 = bank->cx2;
+  cx0 = (bank->c2 * inval);
+  gain = cx0 - cx2;
+
   i = 0;
   while (i <= size4)
     {
-      x0[i] = gain;    
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += amps[i] * y0[i];
       i++;
       
-      x0[i] = gain;
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += amps[i] * y0[i];
       i++;
       
-      x0[i] = gain;
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += amps[i] * y0[i];
       i++;
       
-      x0[i] = gain;
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += amps[i] * y0[i];
       i++;
     }
   for (; i < bank->size; i++)
     {
-      x0[i] = gain;
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += amps[i] * y0[i];
     }
 
-  bank->x2 = x1;
-  bank->x1 = x0;
-  bank->x0 = x2;
+  bank->cx2 = bank->cx1;
+  bank->cx1 = cx0;
 
   bank->y2 = y1;
   bank->y1 = y0;
@@ -7489,12 +7484,9 @@ static mus_float_t fb_one_without_amps_c1_c2(mus_any *fbank, mus_float_t inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
   int i, size4;
-  mus_float_t sum = 0.0, rr, gain;
-  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *fdbk;
+  mus_float_t sum = 0.0, rr, gain, cx0;
+  mus_float_t *y0, *y1, *y2, *fdbk;
 
-  x0 = bank->x0;
-  x1 = bank->x1;
-  x2 = bank->x2;
   y0 = bank->y0;
   y1 = bank->y1;
   y2 = bank->y2;
@@ -7502,41 +7494,36 @@ static mus_float_t fb_one_without_amps_c1_c2(mus_any *fbank, mus_float_t inval)
   size4 = bank->size - 4;
 
   rr = bank->c1;
-  gain = (bank->c2 * inval);
+  cx0 = (bank->c2 * inval);
+  gain = cx0 - bank->cx2;
 
   i = 0;
   while (i <= size4)
     {
-      x0[i] = gain;
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += y0[i];
       i++;
       
-      x0[i] = gain;
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += y0[i];
       i++;
       
-      x0[i] = gain;
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += y0[i];
       i++;
       
-      x0[i] = gain;
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += y0[i];
       i++;
     }
   for (; i < bank->size; i++)
     {
-      x0[i] = gain * inval;
-      y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
       sum += y0[i];
     }
 
-  bank->x2 = x1;
-  bank->x1 = x0;
-  bank->x0 = x2;
+  bank->cx2 = bank->cx1;
+  bank->cx1 = cx0;
 
   bank->y2 = y1;
   bank->y1 = y0;

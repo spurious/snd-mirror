@@ -7664,7 +7664,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
   snd_fd *sf;
   mus_float_t ymax, x;
   mus_float_t *d;
-  mus_long_t i, k, lim8, kend, mpos;
+  mus_long_t i, k, lim8, kend, mpos, offset;
 
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, (num > MAX_BUFFER_SIZE) ? MAX_BUFFER_SIZE : num);
   if (sf == NULL) return(0.0);
@@ -7680,6 +7680,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
       dur = sf->last - sf->loc + 1; /* current fragment, we're always reading forward here */
       left = num - i;
       if (dur > left) dur = left;
+      offset = i - sf->loc;
       
       if (sf->runf == next_sample_value_unscaled)
 	{
@@ -7690,18 +7691,18 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 
 	  while (k <= lim8)
 	    {
-	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
-	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
-	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
-	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
-	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
-	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
-	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
-	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = k + offset;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = k + offset;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = k + offset;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = k + offset;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = k + offset;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = k + offset;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = k + offset;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = k + offset;} k++;
 	    }
 	  while (k < kend)
 	    {
-	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = i + k - sf->loc;} k++;
+	      x = fabs(d[k]); if (x > ymax) {ymax = x; mpos = k + offset;} k++;
 	    }
 	  i += dur;
 	}
@@ -7709,8 +7710,8 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	{
 	  if (sf->runf == next_sample_value)
 	    {
-	      mus_float_t scl, lmax;
-	      mus_long_t lpos;
+	      mus_float_t scl, lmax; /* provisional max -- we omit the scaling until the end */
+	      mus_long_t lpos;       /* provisional max position */
 
 	      scl = fabs(sf->fscaler);
 	      lpos = -1;
@@ -7722,23 +7723,23 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	      k = sf->loc;
 	      while (k <= lim8)
 		{
-		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
-		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
-		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
-		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
-		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
-		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
-		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
-		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = k;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = k;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = k;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = k;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = k;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = k;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = k;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = k;} k++;
 		}
 	      while (k < kend)
 		{
-		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = i + k - sf->loc;} k++;
+		  x = fabs(d[k]); if (x > lmax) {lmax = x; lpos = k;} k++;
 		}
 	      if (lmax * scl > ymax)
 		{
 		  ymax = lmax * scl;
-		  mpos = i + lpos - sf->loc;
+		  mpos = lpos + offset;
 		}
 	      i += dur;
 	    }
@@ -7752,12 +7753,20 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		  amp = READER_VAL(sf, 0);
 		  incr = READER_INCR(sf, 0);
 		  kend = sf->loc + dur;
+		  lim8 = kend - 4;
 		  d = sf->data;
 
-		  for (j = sf->loc; j < kend; j++) 
+		  j = sf->loc;		  
+		  while (j <= lim8)
 		    {
-		      x = fabs(amp * d[j]); if (x > ymax) {ymax = x; mpos = i + j - sf->loc;}
-		      amp += incr;
+		      x = fabs(amp * d[j]); if (x > ymax) {ymax = x; mpos = j + offset;} amp += incr; j++;
+		      x = fabs(amp * d[j]); if (x > ymax) {ymax = x; mpos = j + offset;} amp += incr; j++;
+		      x = fabs(amp * d[j]); if (x > ymax) {ymax = x; mpos = j + offset;} amp += incr; j++;
+		      x = fabs(amp * d[j]); if (x > ymax) {ymax = x; mpos = j + offset;} amp += incr; j++;
+		    }
+		  while (j < kend) 
+		    {
+		      x = fabs(amp * d[j]); if (x > ymax) {ymax = x; mpos = j + offset;} amp += incr; j++;
 		    }
 		  READER_VAL(sf, 0) = amp;
 		  i += dur;
@@ -7772,10 +7781,10 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		    {
 		      if (sf->runf == next_xramp1)
 			{
-			  mus_float_t offset, scaler, xval, scl, incr;
+			  mus_float_t off, scaler, xval, scl, incr;
 			  mus_long_t j;
 
-			  offset = READER_XRAMP_OFFSET(sf, 0);
+			  off = READER_XRAMP_OFFSET(sf, 0);
 			  scl = READER_SCALER(sf);
 			  scaler = READER_XRAMP_SCALER(sf, 0);
 			  xval = READER_XVAL(sf, 0);
@@ -7783,12 +7792,12 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 			  
 			  d = sf->data;
 			  kend = sf->loc + dur;
-			  offset *= scl;
+			  off *= scl;
 			  scaler *= scl;
 
 			  for (j = sf->loc; j < kend; j++) 
 			    {
-			      x = fabs(d[j] * (offset + scaler * xval)); if (x > ymax) {ymax = x; mpos = i + j - sf->loc;}
+			      x = fabs(d[j] * (off + scaler * xval)); if (x > ymax) {ymax = x; mpos = j + offset;}
 			      xval *= incr;
 			    }
 			  READER_XVAL(sf, 0) = xval;

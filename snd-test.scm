@@ -9,26 +9,26 @@
 ;;;  test 6: float-vectors                      [9585]
 ;;;  test 7: colors                             [9877]
 ;;;  test 8: clm                                [10396]
-;;;  test 9: mix                                [21859]
-;;;  test 10: marks                             [23650]
-;;;  test 11: dialogs                           [24598]
-;;;  test 12: extensions                        [24772]
-;;;  test 13: menus, edit lists, hooks, etc     [25038]
-;;;  test 14: all together now                  [26408]
-;;;  test 15: chan-local vars                   [27279]
-;;;  test 16: regularized funcs                 [29032]
-;;;  test 17: dialogs and graphics              [32857]
-;;;  test 18: save and restore                  [32970]
-;;;  test 19: transforms                        [34622]
-;;;  test 20: new stuff                         [36729]
-;;;  test 21: optimizer                         [37936]
-;;;  test 22: with-sound                        [38460]
-;;;  test 23: X/Xt/Xm                           [41412]
-;;;  test 24: GL                                [45094]
-;;;  test 25: errors                            [45218]
-;;;  test 26: s7                                [46748]
-;;;  test all done                              [46814]
-;;;  test the end                               [47023]
+;;;  test 9: mix                                [22020]
+;;;  test 10: marks                             [23811]
+;;;  test 11: dialogs                           [24759]
+;;;  test 12: extensions                        [24933]
+;;;  test 13: menus, edit lists, hooks, etc     [25199]
+;;;  test 14: all together now                  [26569]
+;;;  test 15: chan-local vars                   [27440]
+;;;  test 16: regularized funcs                 [29193]
+;;;  test 17: dialogs and graphics              [33018]
+;;;  test 18: save and restore                  [33131]
+;;;  test 19: transforms                        [34783]
+;;;  test 20: new stuff                         [36890]
+;;;  test 21: optimizer                         [38091]
+;;;  test 22: with-sound                        [38615]
+;;;  test 23: X/Xt/Xm                           [41567]
+;;;  test 24: GL                                [45249]
+;;;  test 25: errors                            [45373]
+;;;  test 26: s7                                [46903]
+;;;  test all done                              [46969]
+;;;  test the end                               [47180]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -17230,8 +17230,8 @@ EDITS: 2
 		(set! happy #f))))))
     
     (let ((old-srate *clm-srate*)
-	  (v0 (make-float-vector 44100))
-	  (v1 (make-float-vector 44100)))
+	  (v0 (make-float-vector 4410))
+	  (v1 (make-float-vector 4410)))
       (set! *clm-srate* 44100)
       (for-each
        (lambda (k)
@@ -17239,12 +17239,12 @@ EDITS: 2
 	       (incr (/ (* 2.0 pi 100.0) 44100))
 	       (kincr (/ (* 2.0 k pi 100.0) 44100)))
 	   (do ((i 0 (+ i 1)))
-	       ((= i 44100))
+	       ((= i 4410))
 	     (float-vector-set! v0 i (polywave gen)))
 	   (do ((i 0 (+ i 1))
 		(ph 0.0 (+ ph incr))
 		(kph 0.0 (+ kph kincr)))
-	       ((= i 44100))
+	       ((= i 4410))
 	     (float-vector-set! v1 i (+ (cos ph) (cos kph))))
 	   (float-vector-scale! v1 0.5)
 	   (if (not (vequal v0 v1))
@@ -21623,12 +21623,12 @@ EDITS: 2
 	      (snd-display #__line__ ";(filtered-comb .5 3) + (filtered-comb .2 10) + (filtered-comb -.7 11) ~A, filtered-comb: ~A, bank: ~A" i x0 x1)))))
     
     
-    
+    ;; make-formant-bank tests
     (let ((c1 (make-formant 440.0 .5))
 	  (c2 (make-formant-bank (vector (make-formant 440.0 .5)))))
       (do ((i 0 (+ i 1))
 	   (x 1.0 0.0))
-	  ((= i 20))
+	  ((= i 40))
 	(let ((x0 (formant c1 x))
 	      (x1 (formant-bank c2 x)))
 	  (if (not (morally-equal? x0 x1))
@@ -21640,7 +21640,7 @@ EDITS: 2
 					 (make-formant 1000.0 .2)))))
       (do ((i 0 (+ i 1))
 	   (x 1.0 0.0))
-	  ((= i 30))
+	  ((= i 40))
 	(let ((x0 (+ (formant c1 x) (formant c2 x)))
 	      (x1 (formant-bank c3 x)))
 	  (if (not (morally-equal? x0 x1))
@@ -21659,6 +21659,118 @@ EDITS: 2
 	      (x1 (formant-bank c4 x)))
 	  (if (not (morally-equal? x0 x1))
 	      (snd-display #__line__ ";(formant 440.0 .5) + (formant 1000.0 .2) + (formant 34.0 .1) ~A, formant: ~A, bank: ~A" i x0 x1)))))
+
+    (let ((c1 (make-formant 440.0 .75))
+	  (c2 (make-formant 1000.0 .75))
+	  (c3 (make-formant 34.0 .75))
+	  (c4 (make-formant-bank (vector (make-formant 440.0 .75)
+					 (make-formant 1000.0 .75)
+					 (make-formant 34.0 .75)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (formant c1 x) (formant c2 x) (formant c3 x)))
+	      (x1 (formant-bank c4 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(formant 440.0 .75) + (formant 1000.0 .75) + (formant 34.0 .75) ~A, formant: ~A, bank: ~A" i x0 x1)))))
+
+    (let ((c1 (make-formant 440.0 .5))
+	  (c2 (make-formant 1000.0 .2))
+	  (c3 (make-formant 34.0 .1))
+	  (c4 (make-formant-bank (vector (make-formant 440.0 .5)
+					 (make-formant 1000.0 .2)
+					 (make-formant 34.0 .1))
+				 (float-vector .5 .3 .4))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (* .5 (formant c1 x)) (* .3 (formant c2 x)) (* .4 (formant c3 x))))
+	      (x1 (formant-bank c4 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";fb 3 with amps at ~A, formant: ~A, bank: ~A" i x0 x1)))))
+
+    (let ((c1 (make-formant 440.0 .9))
+	  (c2 (make-formant 1000.0 .9))
+	  (c3 (make-formant 34.0 .9))
+	  (c4 (make-formant-bank (vector (make-formant 440.0 .9)
+					 (make-formant 1000.0 .9)
+					 (make-formant 34.0 .9))
+				 (float-vector .5 .3 .4))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (* .5 (formant c1 x)) (* .3 (formant c2 x)) (* .4 (formant c3 x))))
+	      (x1 (formant-bank c4 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";fb 3 with amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))))
+
+    (let ((c1 (make-formant 440.0 .5))
+	  (c2 (make-formant 1000.0 .2))
+	  (c3 (make-formant 34.0 .1))
+	  (inputs (make-float-vector 3 1.0))
+	  (c4 (make-formant-bank (vector (make-formant 440.0 .5)
+					 (make-formant 1000.0 .2)
+					 (make-formant 34.0 .1)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (formant c1 x) (formant c2 x) (formant c3 x)))
+	      (x1 (formant-bank c4 inputs)))
+	  (fill! inputs 0.0)
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";many (formant 440.0 .5) + (formant 1000.0 .2) + (formant 34.0 .1) ~A, formant: ~A, bank: ~A" i x0 x1)))))
+
+    (let ((c1 (make-formant 440.0 .75))
+	  (c2 (make-formant 1000.0 .75))
+	  (c3 (make-formant 34.0 .75))
+	  (inputs (make-float-vector 3 1.0))
+	  (c4 (make-formant-bank (vector (make-formant 440.0 .75)
+					 (make-formant 1000.0 .75)
+					 (make-formant 34.0 .75)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (formant c1 x) (formant c2 x) (formant c3 x)))
+	      (x1 (formant-bank c4 inputs)))
+	  (fill! inputs 0.0)
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";many (formant 440.0 .75) + (formant 1000.0 .75) + (formant 34.0 .75) ~A, formant: ~A, bank: ~A" i x0 x1)))))
+
+
+    (let ((c1 (make-formant 440.0 .5))
+	  (c2 (make-formant 1000.0 .2))
+	  (c3 (make-formant 34.0 .1))
+	  (inputs (make-float-vector 3 1.0))
+	  (c4 (make-formant-bank (vector (make-formant 440.0 .5)
+					 (make-formant 1000.0 .2)
+					 (make-formant 34.0 .1))
+				 (float-vector .5 .3 .4))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (* .5 (formant c1 x)) (* .3 (formant c2 x)) (* .4 (formant c3 x))))
+	      (x1 (formant-bank c4 inputs)))
+	  (fill! inputs 0.0)
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";fb 3 with amps at ~A, formant: ~A, bank: ~A" i x0 x1)))))
+
+    (let ((c1 (make-formant 440.0 .9))
+	  (c2 (make-formant 1000.0 .9))
+	  (c3 (make-formant 34.0 .9))
+	  (inputs (make-float-vector 3 1.0))
+	  (c4 (make-formant-bank (vector (make-formant 440.0 .9)
+					 (make-formant 1000.0 .9)
+					 (make-formant 34.0 .9))
+				 (float-vector .5 .3 .4))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (* .5 (formant c1 x)) (* .3 (formant c2 x)) (* .4 (formant c3 x))))
+	      (x1 (formant-bank c4 inputs)))
+	  (fill! inputs 0.0)
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";fb 3 with amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))))
+
 
     (set! *clm-srate* 44100)
     (if (file-exists? "jcrev-ip.snd")
@@ -47179,27 +47291,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-26-Feb:
-37,427,617,827
-5,729,216,351  s7.c:eval [/home/bil/gtk-snd/snd]
-2,305,771,247  ???:sin [/lib64/libm-2.12.so]
-2,165,763,725  ???:cos [/lib64/libm-2.12.so]
+27-Feb:
+37,280,686,412
+5,730,894,343  s7.c:eval [/home/bil/gtk-snd/snd]
+2,278,728,863  ???:sin [/lib64/libm-2.12.so]
+2,036,170,955  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,035,789,621  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  885,359,904  ???:t2_32 [/home/bil/gtk-snd/snd]
-  869,749,557  s7.c:gc [/home/bil/gtk-snd/snd]
-  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
-  774,613,578  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  713,375,943  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  660,961,138  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  598,643,312  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  565,391,522  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,776,292  ???:n1_64 [/home/bil/gtk-snd/snd]
-  415,419,856  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+1,093,336,963  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  899,338,360  ???:t2_32 [/home/bil/gtk-snd/snd]
+  876,155,105  s7.c:gc [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+  720,862,725  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  660,078,856  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  648,381,221  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  602,826,854  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  565,986,761  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
+  443,722,045  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  373,265,354  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  381,346,982  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  326,516,400  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  326,521,520  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  315,885,348  ???:memcpy [/lib64/ld-2.12.so]
 |#
 
 

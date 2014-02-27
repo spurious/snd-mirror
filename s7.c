@@ -69586,7 +69586,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.0
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.4
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.3
  *            153 with run macro (eval_ptree)
  */
 /* caveats: callgrind is confused about sincos, and does not count file IO delays
