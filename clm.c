@@ -7162,9 +7162,9 @@ mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius)
 
 typedef struct {
   mus_any_class *core;
-  int size;
+  int size, mctr;
   mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *rr, *fdbk, *gain;
-  mus_float_t c1, c2, cx1, cx2;
+  mus_float_t c1, c2;
   mus_float_t (*one_input)(mus_any *fbank, mus_float_t inval);
   mus_float_t (*many_inputs)(mus_any *fbank, mus_float_t *inval);
 } frm_bank;
@@ -7425,14 +7425,16 @@ static mus_float_t fb_many_without_amps(mus_any *fbank, mus_float_t *inval)
   return(sum);
 }
 
-
 static mus_float_t fb_one_with_amps_c1_c2(mus_any *fbank, mus_float_t inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
   int i, size4;
-  mus_float_t sum = 0.0, rr, gain, cx2, cx0;
-  mus_float_t *y0, *y1, *y2, *amps, *fdbk;
+  mus_float_t sum = 0.0, rr, gain;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *fdbk;
 
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
   y0 = bank->y0;
   y1 = bank->y1;
   y2 = bank->y2;
@@ -7440,38 +7442,87 @@ static mus_float_t fb_one_with_amps_c1_c2(mus_any *fbank, mus_float_t inval)
   amps = bank->amps;
   size4 = bank->size - 4;
 
+  bank->mctr++;
+
   rr = bank->c1;
-  cx2 = bank->cx2;
-  cx0 = (bank->c2 * inval);
-  gain = cx0 - cx2;
+  gain = (bank->c2 * inval);
+  x0[0] = gain;
 
-  i = 0;
-  while (i <= size4)
+  if (bank->mctr < 3)
     {
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += amps[i] * y0[i];
-      i++;
-      
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += amps[i] * y0[i];
-      i++;
-      
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += amps[i] * y0[i];
-      i++;
-      
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += amps[i] * y0[i];
-      i++;
+      i = 0;
+      while (i <= size4)
+	{
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+	  /* in isolation this looks like the x0[i]-x2[i] business could be handled outside the loop
+	   *   by a single float, but formant-bank can be called in the same do-loop both with and
+	   *   without multiple inputs, so fb_one has to be completely compatible sample-by-sample
+	   *   with fb_many.  Since we can't predict here when we'll need bank->x2, we can't collapse
+	   *   this calculation. 
+	   *
+	   * If we know we've had 2 fb_one calls just before this one, then x2[i] are all the same,
+	   *   x0[i] will all be the same in this loop, so x0[i] - x2[i] can be collapsed, but
+	   *   we still need to set x0[i]=gain.  Would this save enough to be worth it?
+	   *
+	   * Even in the current case, we could save merely x0[0]=gain -> x1 -> x2, then in fm_many
+	   *   mctr=1 -- x2 is ok, x1[0] needs to be propogated
+	   *   mctr>1 -- x2 and x1 need propogation
+	   * On the other side, if mctr>=3, then x2[i] was not set, so don't access it.
+	   */
+	  
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+	  
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+	  
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+	}
+      for (; i < bank->size; i++)
+	{
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	}
     }
-  for (; i < bank->size; i++)
+  else
     {
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += amps[i] * y0[i];
+      mus_float_t g2;
+      g2 = gain - x2[0];
+      i = 0;
+      while (i <= size4)
+	{
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+	  
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+	  
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+	  
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+	}
+      for (; i < bank->size; i++)
+	{
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	}
     }
 
-  bank->cx2 = bank->cx1;
-  bank->cx1 = cx0;
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
 
   bank->y2 = y1;
   bank->y1 = y0;
@@ -7479,59 +7530,6 @@ static mus_float_t fb_one_with_amps_c1_c2(mus_any *fbank, mus_float_t inval)
 
   return(sum);
 }
-
-static mus_float_t fb_one_without_amps_c1_c2(mus_any *fbank, mus_float_t inval)
-{
-  frm_bank *bank = (frm_bank *)fbank;
-  int i, size4;
-  mus_float_t sum = 0.0, rr, gain, cx0;
-  mus_float_t *y0, *y1, *y2, *fdbk;
-
-  y0 = bank->y0;
-  y1 = bank->y1;
-  y2 = bank->y2;
-  fdbk = bank->fdbk;
-  size4 = bank->size - 4;
-
-  rr = bank->c1;
-  cx0 = (bank->c2 * inval);
-  gain = cx0 - bank->cx2;
-
-  i = 0;
-  while (i <= size4)
-    {
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += y0[i];
-      i++;
-      
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += y0[i];
-      i++;
-      
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += y0[i];
-      i++;
-      
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += y0[i];
-      i++;
-    }
-  for (; i < bank->size; i++)
-    {
-      y0[i] = gain + (fdbk[i] * y1[i]) - (rr * y2[i]);
-      sum += y0[i];
-    }
-
-  bank->cx2 = bank->cx1;
-  bank->cx1 = cx0;
-
-  bank->y2 = y1;
-  bank->y1 = y0;
-  bank->y0 = y2;
-
-  return(sum);
-}
-
 
 static mus_float_t fb_many_with_amps_c1_c2(mus_any *fbank, mus_float_t *inval)
 {
@@ -7550,6 +7548,18 @@ static mus_float_t fb_many_with_amps_c1_c2(mus_any *fbank, mus_float_t *inval)
   amps = bank->amps;
   size4 = bank->size - 4;
 
+  if (bank->mctr > 0)
+    {
+      if (bank->mctr == 1)
+	{
+	  for (i = 1; i < bank->size; i++) x1[i] = x1[0];
+	}
+      else
+	{
+	  for (i = 1; i < bank->size; i++) {x1[i] = x1[0]; x2[i] = x2[0];}
+	}
+      bank->mctr = 0;
+    }
   rr = bank->c1;
   gain = bank->c2;
 
@@ -7594,6 +7604,98 @@ static mus_float_t fb_many_with_amps_c1_c2(mus_any *fbank, mus_float_t *inval)
   return(sum);
 }
 
+
+static mus_float_t fb_one_without_amps_c1_c2(mus_any *fbank, mus_float_t inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i, size4;
+  mus_float_t sum = 0.0, rr, gain;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *fdbk;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  fdbk = bank->fdbk;
+  size4 = bank->size - 4;
+
+  bank->mctr++;
+
+  rr = bank->c1;
+  gain = (bank->c2 * inval);
+  x0[0] = gain;
+
+  if (bank->mctr < 3)
+    {
+      i = 0;
+      while (i <= size4)
+	{
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	  
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	  
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	  
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	}
+      for (; i < bank->size; i++)
+	{
+	  y0[i] = gain - x2[i] + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	}
+    }
+  else
+    {
+      mus_float_t g2;
+      g2 = gain - x2[0];
+      i = 0;
+      while (i <= size4)
+	{
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	  
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	  
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	  
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	}
+      for (; i < bank->size; i++)
+	{
+	  y0[i] = g2 + (fdbk[i] * y1[i]) - (rr * y2[i]);
+	  sum += y0[i];
+	}
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
+
 static mus_float_t fb_many_without_amps_c1_c2(mus_any *fbank, mus_float_t *inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
@@ -7609,6 +7711,19 @@ static mus_float_t fb_many_without_amps_c1_c2(mus_any *fbank, mus_float_t *inval
   y2 = bank->y2;
   fdbk = bank->fdbk;
   size4 = bank->size - 4;
+
+  if (bank->mctr > 0)
+    {
+      if (bank->mctr == 1)
+	{
+	  for (i = 1; i < bank->size; i++) x1[i] = x1[0];
+	}
+      else
+	{
+	  for (i = 1; i < bank->size; i++) {x1[i] = x1[0]; x2[i] = x2[0];}
+	}
+      bank->mctr = 0;
+    }
 
   rr = bank->c1;
   gain = bank->c2;
@@ -7688,6 +7803,7 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
   gen = (frm_bank *)calloc(1, sizeof(frm_bank));
   gen->core = &FORMANT_BANK_CLASS;
   gen->size = size;
+  gen->mctr = 0;
 
   gen->x0 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->x1 = (mus_float_t *)calloc(size, sizeof(mus_float_t));

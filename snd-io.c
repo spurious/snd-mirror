@@ -151,7 +151,7 @@ io_error_t copy_file(const char *oldname, const char *newname)
       snd_close(ifd, oldname);
       return(IO_CANT_CREATE_FILE);
     }
-  buf = (char *)calloc(8192, sizeof(char));
+  buf = (char *)malloc(8192 * sizeof(char));
   while ((bytes = read(ifd, buf, 8192)))
     {
       total += bytes;
@@ -607,7 +607,7 @@ void forget_temps(void)
 snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan)
 {
   snd_data *sd;
-  sd = (snd_data *)calloc(1, sizeof(snd_data));
+  sd = (snd_data *)malloc(sizeof(snd_data));
   sd->type = SND_DATA_FILE;
   sd->buffered_data = io->arrays[temp_chan];
   sd->io = io;
@@ -621,6 +621,7 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
   sd->copy = false;
   sd->chan = temp_chan;
   sd->data_bytes = (hdr->samples) * (mus_bytes_per_sample(hdr->format)) + hdr->data_location;
+  sd->free_me = false;
   return(sd);
 }
 
@@ -643,7 +644,7 @@ snd_data *copy_snd_data(snd_data *sd, mus_long_t beg, int bufsize)
 			    hdr->type);
   during_open(fd, sd->filename, SND_COPY_READER);
   io = make_file_state(fd, hdr, sd->chan, beg, bufsize);
-  sf = (snd_data *)calloc(1, sizeof(snd_data));
+  sf = (snd_data *)malloc(sizeof(snd_data));
   sf->type = sd->type;
   sf->buffered_data = io->arrays[sd->chan];
   sf->io = io;
@@ -654,6 +655,9 @@ snd_data *copy_snd_data(snd_data *sd, mus_long_t beg, int bufsize)
   sf->open = FD_OPEN;
   sf->inuse = false;
   sf->copy = true;
+  sf->chan = 0;
+  sf->data_bytes = 0;
+  sf->free_me = false;
   return(sf);
 }
 

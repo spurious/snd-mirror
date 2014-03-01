@@ -473,7 +473,7 @@ void add_srate_to_completion_list(int srate)
   int i;
 
   init_srate_list();
-  str = (char *)calloc(16, sizeof(char));
+  str = (char *)malloc(16 * sizeof(char));
   snprintf(str, 16, "%d", srate);
 
   for (i = 0; i < srate_info->num_values; i++)

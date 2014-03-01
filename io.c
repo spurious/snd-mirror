@@ -593,12 +593,13 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	}
 
       if (io_fds[tfd] == NULL)
-	io_fds[tfd] = (io_fd *)calloc(1, sizeof(io_fd));
+	io_fds[tfd] = (io_fd *)malloc(sizeof(io_fd));
 
       if (io_fds[tfd])
 	{
 	  io_fd *fd;
 	  fd = io_fds[tfd];
+	  fd->frames = 0;
 	  fd->data_format = format;
 	  fd->bytes_per_sample = size;
 	  fd->data_location = location;
@@ -615,6 +616,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	      strcpy(fd->name, name);
 	      fd->name[len] = 0;
 	    }
+	  else fd->name = NULL;
 	}
       else err = MUS_MEMORY_ALLOCATION_FAILED;
     }

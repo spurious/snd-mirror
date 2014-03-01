@@ -2651,19 +2651,21 @@ static ed_mixes *copy_fragment_mixes(ed_mixes *old_mixes)
 static ed_ramps *copy_fragment_ramps(ed_ramps *old_ramps)
 {
   ed_ramps *new_ramps;
-  new_ramps = (ed_ramps *)calloc(1, sizeof(ed_ramps));
+  new_ramps = (ed_ramps *)malloc(sizeof(ed_ramps));
   new_ramps->ramps = old_ramps->ramps;
   new_ramps->xramps = old_ramps->xramps;
   if (new_ramps->ramps > 0)
     {
-      new_ramps->ramp_list = (ramp_state *)calloc(new_ramps->ramps, sizeof(ramp_state));
+      new_ramps->ramp_list = (ramp_state *)malloc(new_ramps->ramps * sizeof(ramp_state));
       memcpy((void *)(new_ramps->ramp_list), (void *)(old_ramps->ramp_list), new_ramps->ramps * sizeof(ramp_state));
     }
+  else new_ramps->ramp_list = NULL;
   if (new_ramps->xramps > 0)
     {
-      new_ramps->xramp_list = (xramp_state *)calloc(new_ramps->xramps, sizeof(xramp_state));
+      new_ramps->xramp_list = (xramp_state *)malloc(new_ramps->xramps * sizeof(xramp_state));
       memcpy((void *)(new_ramps->xramp_list), (void *)(old_ramps->xramp_list), new_ramps->xramps * sizeof(xramp_state));
     }
+  else new_ramps->xramp_list = NULL;
   return(new_ramps);
 }
 

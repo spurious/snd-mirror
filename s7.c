@@ -1706,6 +1706,10 @@ static int t_optimized = T_OPTIMIZED;
 /* this marks something defined (bound) at the top-level, and never defined locally 
  */
 
+#define T_UNSAFE_DO                   T_GLOBAL
+#define is_unsafe_do(p)               ((typeflag(p) & T_UNSAFE_DO) != 0)
+#define set_unsafe_do(p)              typeflag(p) |= T_UNSAFE_DO
+
 #define T_RETURNS_TEMP                (1 << (TYPE_BITS + 9))
 #define returns_temp(p)               ((typeflag(p) & T_RETURNS_TEMP) != 0)
 #define set_returns_temp(p)           typeflag(p) |= T_RETURNS_TEMP
@@ -12097,11 +12101,9 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 	z = real(x);
 	if (is_NaN(z))
 	  return(simple_out_of_range(sc, sc->FLOOR, x, "argument is NaN"));
-	if ((is_inf(z)) ||
-	    (z > REAL_TO_INT_LIMIT) ||
-	    (z < -REAL_TO_INT_LIMIT))
+	if (fabs(z) > REAL_TO_INT_LIMIT)
 	  return(simple_out_of_range(sc, sc->FLOOR, x, "argument is too large"));
-	return(make_integer(sc, (s7_Int)floor(real(x)))); 
+	return(make_integer(sc, (s7_Int)floor(z))); 
 	/* floor here rounds down, whereas a straight int<=real coercion apparently rounds towards 0 */
       }
 
@@ -19442,129 +19444,6 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   return(c);
 }
 
-static s7_pointer string_set_ssa;
-static s7_pointer g_string_set_ssa(s7_scheme *sc, s7_pointer args)
-{
-  /* a place-holder */
-  car(sc->T3_3) = ((s7_function)fcdr(cddr(args)))(sc, caddr(args));
-  car(sc->T3_1) = find_symbol_checked(sc, car(args));
-  car(sc->T3_2) = find_symbol_checked(sc, cadr(args));
-  return(g_string_set(sc, sc->T3_1));
-}
-
-static s7_pointer string_set_ssa_looped;
-static s7_pointer g_string_set_ssa_looped(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer str, ind, expr, chr;
-  s7_Int pos, end;
-  s7_pointer stepper;
-  s7_function func;
-  char *str_val;
-
-  /* incoming args: (0 str i (...)) */
-
-  str = find_symbol_checked(sc, cadr(args));
-  if (!is_string(str))
-    return(NULL);
-
-  stepper = car(args);
-  ind = s7_slot(sc, caddr(args));
-  if (slot_value(ind) != stepper)
-    return(NULL);
-
-  pos = numerator(stepper);
-  end = denominator(stepper);
-  if ((pos < 0) ||
-      (end > string_length(str)))
-    return(out_of_range(sc, sc->STRING_SET, small_int(2), ind, "should be less than the string length"));
-
-  expr = cdddr(args);
-  func = (s7_function)fcdr(expr);
-  str_val = string_value(str);
-
-  for (; pos < end; pos++)
-    {
-      numerator(stepper) = pos;
-      chr = func(sc, car(expr));
-      if (!s7_is_character(chr))
-	return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), chr, T_CHARACTER));
-      str_val[pos] = s7_character(chr);
-    }
-  numerator(stepper) = end;
-  return(args);
-}
-
-
-/* this does not give much of a speed up */
-typedef struct {
-  s7_pointer i_slot, j_slot, s0, s1;
-  s7_Int s0_len, s1_len;
-} strset_ex;
-
-static void strset_ref(void *p)
-{
-  strset_ex *data = (strset_ex *)p;
-  s7_Int i, j;
-  i = s7_integer(slot_value(data->i_slot));
-  j = s7_integer(slot_value(data->j_slot));
-  if ((i >= 0) && (i < data->s0_len) &&
-      (j >= 0) && (j < data->s1_len))
-    string_value(data->s0)[i] = string_value(data->s1)[j];
-}
-
-static void strset_free(void *p)
-{
-  free(p);
-}
-
-static s7_ex *string_set_ex_parser(s7_scheme *sc, s7_pointer expr)
-{
-  if ((is_symbol(cadr(expr))) &&
-      (is_symbol(caddr(expr))))
-    {
-      s7_pointer s0, iloc, val;
-      s0 = find_symbol_checked(sc, cadr(expr));
-      iloc = s7_local_slot(sc, caddr(expr));
-      if ((iloc) &&
-	  (is_integer(slot_value(iloc))) &&
-	  (s7_is_string(s0)) &&
-	  (!s7_local_slot(sc, cadr(expr))))
-	{
-	  val = cadddr(expr);
-	  if ((is_pair(val)) &&
-	      (car(val) == sc->STRING_REF) &&
-	      (is_symbol(cadr(val))) &&
-	      (is_symbol(caddr(val))))
-	    {
-	      s7_pointer s1, jloc;
-	      s1 = find_symbol_checked(sc, cadr(val));
-	      jloc = s7_local_slot(sc, caddr(val));
-	      if ((jloc) &&
-		  (is_integer(slot_value(jloc))) &&
-		  (s7_is_string(s1)) &&
-		  (!s7_local_slot(sc, cadr(val))))
-		{
-		  strset_ex *p;
-		  s7_ex *e;
-		  p = (strset_ex *)malloc(sizeof(strset_ex));
-		  e = (s7_ex *)malloc(sizeof(s7_ex));
-		  e->ex_free = strset_free;
-		  e->ex_data = p;
-		  p->s0 = s0;
-		  p->s0_len = string_length(s0);
-		  p->i_slot = iloc;
-		  p->s1 = s1;
-		  p->s1_len = string_length(s1);
-		  p->j_slot = jloc;
-		  e->ex_vf = strset_ref;
-		  return(e);
-		}
-	    }
-	}
-    }
-  return(NULL);
-}
-
 
 static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
 {
@@ -22381,94 +22260,11 @@ static s7_pointer g_write_char_1(s7_scheme *sc, s7_pointer args)
   return(sc->UNSPECIFIED);
 }
 
-static s7_pointer write_char_a_s;
-static s7_pointer g_write_char_a_s(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer chr, port;
-  
-  chr = ((s7_function)fcdr(args))(sc, car(args));
-  if (!s7_is_character(chr))
-    {
-      CHECK_METHOD(sc, chr, sc->WRITE_CHAR, args);
-      return(wrong_type_argument(sc, sc->WRITE_CHAR, small_int(1), car(args), T_CHARACTER));
-    }
-
-  port = find_symbol_checked(sc, cadr(args));
-  if (!is_output_port(port))
-    return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, AN_OUTPUT_PORT));
-  
-  port_write_character(port)(sc, s7_character(chr), port);
-  return(sc->UNSPECIFIED);
-}
-
-static s7_pointer all_x_c_s(s7_scheme *sc, s7_pointer arg);
-static s7_pointer write_char_a_s_looped;
-static s7_pointer g_write_char_a_s_looped(s7_scheme *sc, s7_pointer args)
-{
-  /* args: (0 (read-char port) outport) */
-  args = cdr(args); /* ignore the stepper -- here we only accept the case write(read) */
-  if (fcdr(args) == (s7_pointer)all_x_c_s)
-    {
-      if (c_call(car(args)) == g_read_char_1)
-	{
-	  s7_pointer read_port, write_port;
-	  int (*read_ch)(s7_scheme *sc, s7_pointer port);
-	  void (*write_ch)(s7_scheme *sc, int c, s7_pointer port);
-
-	  write_port = find_symbol_checked(sc, cadr(args));
-	  if (!is_output_port(write_port))
-	    return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), write_port, AN_OUTPUT_PORT));
-	  write_ch = port_write_character(write_port);
-
-	  read_port = find_symbol_checked(sc, cadar(args));
-	  if (!is_input_port(read_port))
-	    return(simple_wrong_type_argument_with_type(sc, sc->READ_CHAR, read_port, AN_INPUT_PORT));
-	  read_ch = port_read_character(read_port);
-	  
-	  if ((read_ch == string_read_char) &&
-	      (write_ch == file_write_char))    /* (do () () (write-char (read-char port) outport)) */
-	    {
-	      /* flush current write buffer */
-	      if (port_position(write_port) > 0)
-		fwrite((void *)(port_data(write_port)), 1, port_position(write_port), port_file(write_port));
-	      port_position(write_port) = 0;
-	      /* send out the entire string (only its EOF can stop us) */
-	      fwrite((void *)(port_string(read_port) + port_string_point(read_port)), 1, /* start point in string */
-		     port_string_length(read_port) - port_string_point(read_port),       /* length of remaining un-output string */
-		     port_file(write_port));
-	      port_string_point(read_port) = port_string_length(read_port);              /* make sure any subsequent read -> EOF */
-	      /* simulate hitting the string end */
-	      return(wrong_type_argument(sc, sc->WRITE_CHAR, small_int(1), sc->EOF_OBJECT, T_CHARACTER)); /* only normal way out! */
-	    }
-
-	  while (true)
-	    {
-	      int chr;
-	      chr = read_ch(sc, read_port);
-	      if (chr == EOF)
-		return(wrong_type_argument(sc, sc->WRITE_CHAR, small_int(1), sc->EOF_OBJECT, T_CHARACTER)); /* only normal way out! */
-	      write_ch(sc, chr, write_port);
-	    }
-	}
-    }
-  return(NULL);
-}
-
 
 static s7_pointer write_char_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 1)
     return(write_char_1);
-  if (args == 2)
-    {
-      if ((is_symbol(caddr(expr))) &&
-	  (is_all_x_safe(sc, cadr(expr))))
-	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  annotate_arg(sc, cdr(expr));
-	  return(write_char_a_s);
-	}
-    }
   return(f);
 }
 
@@ -30409,74 +30205,6 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
   return(val);
 }
 
-static s7_pointer vector_set_ssc;
-static s7_pointer g_vector_set_ssc(s7_scheme *sc, s7_pointer args)
-{
-  /* this is just a placeholder */
-  return(g_vector_set(sc, list_3(sc, find_symbol_checked(sc, car(args)), find_symbol_checked(sc, cadr(args)), caddr(args))));
-}
-
-
-static s7_pointer vector_set_ssc_looped;
-static s7_pointer g_vector_set_ssc_looped(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer vec, ind, val;
-  s7_Int pos, end;
-  s7_pointer stepper;
-
-  /* incoming args: (0 vect i #f) */
-  vec = find_symbol_checked(sc, cadr(args));
-  if ((!s7_is_vector(vec)) ||
-      (vector_rank(vec) > 1))
-    return(NULL);
-
-  stepper = car(args);
-  ind = s7_slot(sc, caddr(args));
-  if (slot_value(ind) != stepper)
-    return(NULL);
-
-  pos = numerator(stepper);
-  end = denominator(stepper);
-  if ((pos < 0) ||
-      (end > vector_length(vec)))
-    return(out_of_range(sc, sc->VECTOR_SET, small_int(2), ind, "should be less than the vector length"));
-
-  val = cadddr(args);
-  if (is_int_vector(vec))
-    {
-      s7_Int k;
-      k = s7_number_to_integer(sc, val);
-      for (; pos < end; pos++)
-	int_vector_element(vec, pos) = k;
-    }
-  else
-    {
-      if (is_float_vector(vec))
-	{
-	  s7_Double x;
-	  x = number_to_double(sc, val);
-	  for (; pos < end; pos++)
-	    float_vector_element(vec, pos) = x;
-	}
-      else
-	{
-	  for (; pos < end; pos++)
-	    vector_element(vec, pos) = val;
-	}
-    }
-  numerator(stepper) = end;
-
-  return(val);
-}
-
-
-/* other standard cases (fft-related): (+|- (vector-ref ...) s) -- actually (vector-set! v i (+|- (vector-ref v i) s))
- *                                     (+|- (* s (vector-ref ...)) (* s (vector-ref ...)))
- * (vset v i s)
- * (vset v (+ i 1) (vref v (+ j 1)))
- * (vset v (+ i 1) s)
- */
-
 
 
 #define MAX_VECTOR_DIMENSIONS 512
@@ -30940,7 +30668,6 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
 #endif
 
 /* need float_vector_set_direct_looped[s7_function_set_looped=c_function_looped] (both vct/sound-data) -- does this require float-vector-set!?
- *       there's vector_set_ssc_looped which can handle float-vectors (see vector_set_chooser)
  *   gsl uses gsl_vector_scale|add_constant|add(vectors) and sub/mul/div|minmax and minmax_index|max|min, set_zero|all all unoptimized
  * so...
  *   vector-scale -- replaces vct|sound_data cases
@@ -40836,12 +40563,6 @@ static s7_pointer vector_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	    }
 	  if (is_symbol(arg2))
 	    {
-	      if ((!is_pair(arg3)) &&
-		  (!is_symbol(arg3)))
-		{
-		  set_optimize_data(expr, HOP_SAFE_C_C);
-		  return(vector_set_ssc);
-		}
 	      if ((is_pair(arg3)) &&
 		  (is_safely_optimized(arg3)) &&
 		  (c_call(arg3) == g_vector_ref_2) &&
@@ -41859,17 +41580,6 @@ static s7_pointer string_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 
 static s7_pointer string_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if (args == 3)
-    {
-      if ((is_symbol(cadr(expr))) &&
-	  (is_symbol(caddr(expr))) &&
-	  (is_all_x_safe(sc, cadddr(expr))))
-	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  annotate_arg(sc, cdddr(expr));
-	  return(string_set_ssa);
-	}
-    }
   return(f);
 }
 
@@ -42403,13 +42113,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* string-set! */
   f = set_function_chooser(sc, sc->STRING_SET, string_set_chooser);
-  string_set_ssa = make_function_with_class(sc, f, "string-set!", g_string_set_ssa, 3, 0, false, "string-set! optimization");
-
-  string_set_ssa_looped = s7_make_function(sc, "string-set!", g_string_set_ssa_looped, 3, 0, false, "string-set! optimization");
-  s7_function_set_class(string_set_ssa_looped, f);
-  s7_function_set_looped(string_set_ssa, string_set_ssa_looped);
-  s7_function_set_ex_parser(f, string_set_ex_parser);
-
 
   /* string-append */
   f = set_function_chooser(sc, sc->STRING_APPEND, string_append_chooser);
@@ -42443,11 +42146,7 @@ static void init_choosers(s7_scheme *sc)
 
   vector_set_ic = make_function_with_class(sc, f, "vector-set!", g_vector_set_ic, 3, 0, false, "vector-set! optimization");
   vector_set_vref = make_function_with_class(sc, f, "vector-set!", g_vector_set_vref, 3, 0, false, "vector-set! optimization");
-  vector_set_ssc = make_function_with_class(sc, f, "vector-set!", g_vector_set_ssc, 3, 0, false, "vector-set! optimization");
   vector_set_3 = make_function_with_class(sc, f, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! optimization");
-
-  vector_set_ssc_looped = make_function_with_class(sc, f, "vector-set!", g_vector_set_ssc_looped, 3, 0, false, "vector-set! optimization");
-  s7_function_set_looped(vector_set_ssc, vector_set_ssc_looped);
 
 
 
@@ -42554,13 +42253,7 @@ static void init_choosers(s7_scheme *sc)
 
   /* write-char */
   f = set_function_chooser(sc, sc->WRITE_CHAR, write_char_chooser);
-  
   write_char_1 = make_function_with_class(sc, f, "write-char", g_write_char_1, 1, 0, false, "write-char optimization");
-  write_char_a_s = make_function_with_class(sc, f, "write-char", g_write_char_a_s, 2, 0, false, "write-char optimization");
-
-  write_char_a_s_looped = s7_make_function(sc, "write-char", g_write_char_a_s_looped, 2, 0, false, "write-char optimization");
-  s7_function_set_class(write_char_a_s_looped, f);
-  s7_function_set_looped(write_char_a_s, write_char_a_s_looped);
 
 
   /* or and if simple cases */
@@ -50863,6 +50556,63 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	environment_dox2(sc->envir) = sc->args;
 
 	sc->code = cddr(code);
+	
+	if (is_unsafe_do(sc->code))              /* we've seen this loop before and it's not optimizable */
+	  {
+	    set_fcdr(code, sc->code);
+	    push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
+	    goto BEGIN;
+	  }
+
+	/* fprintf(stderr, "safe_do: %s\n", DISPLAY(code));  */
+
+	/* main cases earlier:
+	 * t502:
+	 * (((i 0 (+ i 1))) ((= i size)) (set! x (vector-ref ones i))) | (set! x (* i 2.0)) | (set! x (* (env e1) (oscil osc x)))
+	 * 
+	 * bench (and s7test)
+	 * (((i 0 (+ i 1))) ((>= i n) sum) (set! sum (+ sum 1))) | (vector-set! l1 is (vector-ref l1 (+ is 1))))
+	 * (vector-set! v i (random 100.0)) | (set! (sequence i) item)
+	 *
+	 * snd-test: [many explicit]
+	 * (vector-set! sdata 0 i (* i 0.01)))
+	 * (if (> (next-sample reader) 0.03) (set! count (+ count 1)))
+	 * (let ((val (fir-filter b inv))) (set! inv 0.0) val)
+	 * ... (remainder (float-vector-ref diffs k) pi2) ...
+	 * (set! (lv1 i) (env e1))
+	 * (set! (vals i) 0.5)
+	 * (set! sum (+ sum (abs (float-vector-ref d1 i))))
+	 * carsin and expandn inner loops -- are these checked repeatedly? -- once checked, mark as unchecked thereafter
+	 * all the generator calls
+	 * some gf opt stuff: (oscil o 0.0) etc
+	 *
+	 * and all the vct.c looping cases
+	 */
+
+	/* here we first want gf_find if possible and loopers.
+	 *   (set! sym gf-expr) -- make sure sym is not a step var or do local, handle via its slot [and handle steppers via slots]
+	 *   (set! (...) gf-expr) -- expand as in float-vector-set! loopers
+	 *   (vector-set! ...) as in float-vector-loopers
+	 * also want to get rid of the ex_parser stuff, and anything unrelated to gf_parse
+	 *   locally that only affects string_set
+	 *   vct.c: vct_set_ex_parser, clm2xen: outa_ex_parser
+	 * or have a way to make a set! parser? or return non-void from the ex_func
+	 * maybe here call safe_do_ex_parser if it has been set? then set it up in clm2xen.
+	 * syntax_ex_parser? ex_fallback_parser to handle anything unspecified elsewhere (this needs to be a list).
+	 *
+	 * set up safe-do, as above, if one-liner: if ((is_c_function(f)) && (c_function_ex_parser(f))) exd = c_function_ex_parser(f)(sc, body);
+	 * if not exd: exd = ex_fallback_parser(sc, body);
+	 * if (exd) {while (true) {exd->ex_func(exd->ex_data); ... step...} exd->ex_free(exd->ex_data); free(exd);}
+	 *     [can this sequence be canned and replicated in all the do-loops? -- currently in SIMPLE_DO and DOX]
+	 *     [can loopers go through this path too?  Then just one way to go beneath the s7 evaluator.]
+	 *     [they currently reside in ecdr? they're tied to an optimization naming the underlying function.]
+	 *     [they assume a simple loop I think -- no check for other steppers for example].
+	 *     [also need to combine looped/let-looped]
+	 * now jump to safe_do_done or whatever
+	 */
+	
+#if 0
+	/* -------- under reconstruction -------- */
 
 	if ((is_null(cdr(sc->code))) &&
 	    (is_pair(car(sc->code))))
@@ -51027,15 +50777,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 *   also opssq_... or not_an_op??
 	 *   ((set! (mus-scaler gen) (env indr)) (outa i (nrxycos gen))) h_safe_c_c
 	 */
+	/* -------- */
+#endif
 
+	set_unsafe_do(sc->code);
 	set_fcdr(code, sc->code);
 	push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
 	goto BEGIN;
 
+#if 0
       SAFE_DO_DONE:
 	slot_value(environment_dox1(sc->envir)) = slot_value(environment_dox2(sc->envir));
 	sc->code = cdr(cadr(code));
 	goto DO_END_CLAUSES;
+#endif
       }
 
 
@@ -51167,7 +50922,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 			while (true)
 			  {
-			    exd->ex_vf(exd->ex_data);
+			    exd->ex_func(exd->ex_data);
 		    
 			    car(sc->T2_1) = slot_value(ctr);
 			    car(sc->T2_2) = step_var;
@@ -51787,7 +51542,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    {
 			      while (true)
 				{
-				  exd->ex_vf(exd->ex_data);
+				  exd->ex_func(exd->ex_data);
 				  slot_set_value(slot1, d1(sc, expr1, slot1));
 				  if (is_true(sc, endf(sc, endp)))
 				    {
@@ -51810,7 +51565,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    {
 			      while (true)
 				{
-				  exd->ex_vf(exd->ex_data);
+				  exd->ex_func(exd->ex_data);
 				  slot_set_value(slot1, d1(sc, expr1, slot1));
 				  slot_set_value(slot2, d2(sc, expr2, slot2));
 				  if (slot3) slot_set_value(slot3, d3(sc, expr3, slot3));
@@ -51837,7 +51592,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  
 			  while (true)
 			    {
-			      exd->ex_vf(exd->ex_data);
+			      exd->ex_func(exd->ex_data);
 			      
 			      for (slot = slots; is_slot(slot); slot = next_slot(slot))
 				if (is_pair(slot_expression(slot)))
@@ -69586,7 +69341,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.0
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.3
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.0
  *            153 with run macro (eval_ptree)
  */
 /* caveats: callgrind is confused about sincos, and does not count file IO delays
@@ -69605,10 +69360,7 @@ int main(int argc, char **argv)
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
- *  (file->sample fil ctr 0)
  *
- * for each all_x case (and maybe c_s...? have map of symbols, get slots, call using slots not symbols in do loops
- *   would mean returning n slots, then assume they are passed to the all_x_slot replacement along with the code (for c_call etc)
- *   see HOP_SAFE_C_SSA case
+ * Xen_real_to_C_double, C_double_to_Xen_real? Xen_to_float_vector? (for xen_to_vct)
  */
 

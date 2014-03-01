@@ -21771,7 +21771,107 @@ EDITS: 2
 	  (if (not (morally-equal? x0 x1))
 	      (snd-display #__line__ ";fb 3 with amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))))
 
+    (let ((c1 (make-formant 440.0 .9))
+	  (c2 (make-formant 1000.0 .9))
+	  (c3 (make-formant 34.0 .9))
+	  (inputs (make-float-vector 3 1.0))
+	  (c4 (make-formant-bank (vector (make-formant 440.0 .9)
+					 (make-formant 1000.0 .9)
+					 (make-formant 34.0 .9))
+				 (float-vector .5 .3 .4))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0)
+	   (y 1.0 0.0)
+	   (z 1.0 0.0))
+	  ((= i 40))
+	(if (< i 10)
+	    (let ((x0 (+ (* .5 (formant c1 x)) (* .3 (formant c2 y)) (* .4 (formant c3 z))))
+		  (x1 (formant-bank c4 inputs)))
+	      (fill! inputs 0.0)
+	      (if (not (morally-equal? x0 x1))
+		  (snd-display #__line__ ";fb 3(1) with amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))
+	    (if (< i 20)
+		(let ((x0 (+ (* .5 (formant c1 x)) (* .3 (formant c2 y)) (* .4 (formant c3 z))))
+		      (x1 (formant-bank c4 0.0)))
+		  (if (not (morally-equal? x0 x1))
+		      (snd-display #__line__ ";fb 3(2) with amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))
+		(if (< i 30)
+		    (begin
+		      (set! x 0.5)
+		      (set! y 0.25)
+		      (set! z 0.125)
+		      (set! (inputs 0) x)
+		      (set! (inputs 1) y)
+		      (set! (inputs 2) z)
+		      (let ((x0 (+ (* .5 (formant c1 x)) (* .3 (formant c2 y)) (* .4 (formant c3 z))))
+			    (x1 (formant-bank c4 inputs)))
+			(if (not (morally-equal? x0 x1))
+			    (snd-display #__line__ ";fb 3(3) with amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1))))
+		    (begin
+		      (set! x 0.25)
+		      (set! y 0.25)
+		      (set! z 0.25)
+		      (let ((x0 (+ (* .5 (formant c1 x)) (* .3 (formant c2 y)) (* .4 (formant c3 z))))
+			    (x1 (formant-bank c4 .25)))
+			(if (not (morally-equal? x0 x1))
+			    (snd-display #__line__ ";fb 3(4) with amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))))))))
 
+    (let ((c1 (make-formant 440.0 .9))
+	  (c2 (make-formant 1000.0 .9))
+	  (c3 (make-formant 34.0 .9))
+	  (c4 (make-formant 340.0 .9))
+	  (c5 (make-formant 2000.0 .9))
+	  (inputs (make-float-vector 5 1.0))
+	  (c6 (make-formant-bank (vector (make-formant 440.0 .9)
+					 (make-formant 1000.0 .9)
+					 (make-formant 34.0 .9)
+					 (make-formant 340.0 .9)
+					 (make-formant 2000.0 .9)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0)
+	   (y 1.0 0.0)
+	   (z 1.0 0.0)
+	   (a 1.0 0.0)
+	   (b 1.0 0.0))
+	  ((= i 40))
+	(if (< i 10)
+	    (let ((x0 (+ (formant c1 x) (formant c2 y) (formant c3 z) (formant c4 a) (formant c5 b)))
+		  (x1 (formant-bank c6 inputs)))
+	      (fill! inputs 0.0)
+	      (if (not (morally-equal? x0 x1))
+		  (snd-display #__line__ ";fb 5(1) no amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))
+	    (if (< i 20)
+		(let ((x0 (+ (formant c1 x) (formant c2 y) (formant c3 z) (formant c4 a) (formant c5 b)))
+		      (x1 (formant-bank c6 0.0)))
+		  (if (not (morally-equal? x0 x1))
+		      (snd-display #__line__ ";fb 5(2) no amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))
+		(if (< i 30)
+		    (begin
+		      (set! x 0.5)
+		      (set! y 0.25)
+		      (set! z 0.125)
+		      (set! a .1)
+		      (set! b .3)
+		      (set! (inputs 0) x)
+		      (set! (inputs 1) y)
+		      (set! (inputs 2) z)
+		      (set! (inputs 3) a)
+		      (set! (inputs 4) b)
+		      (let ((x0 (+ (formant c1 x) (formant c2 y) (formant c3 z) (formant c4 a) (formant c5 b)))
+			    (x1 (formant-bank c6 inputs)))
+			(if (not (morally-equal? x0 x1))
+			    (snd-display #__line__ ";fb 5(3) no amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1))))
+		    (begin
+		      (set! x 0.25)
+		      (set! y 0.25)
+		      (set! z 0.25)
+		      (set! a 0.25)
+		      (set! b 0.25)
+		      (let ((x0 (+ (+ (formant c1 x) (formant c2 y) (formant c3 z) (formant c4 a) (formant c5 b))))
+			    (x1 (formant-bank c6 .25)))
+			(if (not (morally-equal? x0 x1))
+			    (snd-display #__line__ ";fb 5(4) no amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))))))))
+		      
     (set! *clm-srate* 44100)
     (if (file-exists? "jcrev-ip.snd")
 	(begin
@@ -47291,28 +47391,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-27-Feb:
-37,280,686,412
-5,730,894,343  s7.c:eval [/home/bil/gtk-snd/snd]
-2,278,728,863  ???:sin [/lib64/libm-2.12.so]
-2,036,170,955  ???:cos [/lib64/libm-2.12.so]
+28-Feb:
+37,097,740,552
+5,712,836,328  s7.c:eval [/home/bil/gtk-snd/snd]
+2,278,663,743  ???:sin [/lib64/libm-2.12.so]
+2,029,346,174  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,093,336,963  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  899,338,360  ???:t2_32 [/home/bil/gtk-snd/snd]
-  876,155,105  s7.c:gc [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
-  720,862,725  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  660,078,856  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+1,035,616,813  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  890,710,228  ???:t2_32 [/home/bil/gtk-snd/snd]
+  869,630,667  s7.c:gc [/home/bil/gtk-snd/snd]
+  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
+  714,522,430  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  683,558,590  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   648,381,221  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  602,826,854  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  565,986,761  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
-  443,722,045  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  567,980,480  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,851,360  ???:n1_64 [/home/bil/gtk-snd/snd]
+  414,839,411  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  381,346,982  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  386,296,392  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  326,521,520  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  315,885,348  ???:memcpy [/lib64/ld-2.12.so]
+  327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  304,013,421  ???:memcpy [/lib64/ld-2.12.so]
 |#
 
 

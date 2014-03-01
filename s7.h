@@ -583,7 +583,7 @@ size_t s7_denominator_offset(s7_scheme *sc);
 size_t s7_slot_value_offset(s7_scheme *sc);
 
 typedef struct {
-  void (*ex_vf)(void *p); 
+  void (*ex_func)(void *p); 
   void (*ex_free)(void *p); 
   void *ex_data;
 } s7_ex;

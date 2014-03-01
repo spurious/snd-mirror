@@ -802,10 +802,10 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
   edpos = to_c_edit_position(cp, edp, caller, arg_pos);
 
   if (dur > cp->edits[edpos]->samples) dur = cp->edits[edpos]->samples;
-  if (dur > MAX_BUFFER_SIZE)
+  if (dur > REPORTING_SIZE)
     {
       temp_file = true; 
-      alloc_len = MAX_BUFFER_SIZE;
+      alloc_len = REPORTING_SIZE;
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, caller);
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
@@ -855,7 +855,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 
   sampler_set_safe(sf, dur);
   data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  data[0] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t)); 
+  data[0] = (mus_float_t *)malloc(alloc_len * sizeof(mus_float_t)); 
   idata = data[0];
 
 #if HAVE_FORTH
@@ -1127,14 +1127,12 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
     {
       if ((ratio == 0.5) && (dur < (1 << 22)))
 	{
-	  mus_long_t m, in_dur, swid2;
+	  mus_long_t in_dur, swid2;
 	  mus_float_t *in_data;
 
 	  swid2 = 2 * sinc_width(ss);
 	  in_dur = dur + 4 + swid2;
 	  in_data = (mus_float_t *)calloc(in_dur, sizeof(mus_float_t));
-	  for (m = 0; m < swid2; m++)
-	    in_data[m] = 0.0;
 	  samples_to_vct_with_reader(in_dur - swid2, (mus_float_t *)(in_data + swid2), sf);
 	  data[0] = mus_src_05(sr->gen, in_data, dur);
 	  k = dur * 2 + 1;
@@ -1147,14 +1145,12 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	    {
 	      /* make and fill input data, make output data, pass mus_src_20 the input data array, new dur, and sr->gen
 	       */
-	      mus_long_t m, in_dur, swid2;
+	      mus_long_t in_dur, swid2;
 	      mus_float_t *in_data;
 
 	      swid2 = 2 * sinc_width(ss);
 	      in_dur = dur + 4 + swid2;
 	      in_data = (mus_float_t *)calloc(in_dur, sizeof(mus_float_t));
-	      for (m = 0; m < swid2; m++)
-		in_data[m] = 0.0;
 	      samples_to_vct_with_reader(in_dur - swid2, (mus_float_t *)(in_data + swid2), sf);
 	      data[0] = mus_src_20(sr->gen, in_data, dur);
 	      k = dur / 2 + 1;
