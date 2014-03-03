@@ -5573,4 +5573,7 @@ int mus_audio_device_channels(int dev)   {return(0);}
 int mus_audio_compatible_format(int dev) {return(0);}
 int mus_audio_device_format(int dev)     {return(0);}
 
+#if __APPLE__
+bool mus_audio_output_properties_mutable(bool mut) {return(false);}
+#endif
 #endif

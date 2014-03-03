@@ -1190,7 +1190,7 @@ mus_float_t string_to_mus_float_t(const char *str, mus_float_t lo, const char *f
   else snd_error("%s is not a number", str);
   return(0.0);
 #else
-  mus_float_t res = 0.0;
+  float res = 0.0;
   if (str) 
     {
       if (!(sscanf(str, "%f", &res)))
@@ -1201,7 +1201,7 @@ mus_float_t string_to_mus_float_t(const char *str, mus_float_t lo, const char *f
 	    snd_error("%s: %.3f is invalid", field_name, res);
 	}
     }
-  return(res);
+  return((mus_float_t)res);
 #endif
 }
 

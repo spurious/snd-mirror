@@ -1861,7 +1861,7 @@ static mus_any_class NCOS_CLASS = {
 mus_any *mus_make_ncos(mus_float_t freq, int n)
 {
   cosp *gen;
-  gen = (cosp *)calloc(1, sizeof(cosp));
+  gen = (cosp *)malloc(sizeof(cosp));
   gen->core = &NCOS_CLASS;
   if (n == 0) n = 1;
   gen->scaler = 1.0 / (mus_float_t)n;
@@ -2244,7 +2244,7 @@ mus_any *mus_make_asymmetric_fm(mus_float_t freq, mus_float_t phase, mus_float_t
    mus_error(MUS_ARG_OUT_OF_RANGE, "r can't be 0.0");
  else
    {
-     gen = (asyfm *)calloc(1, sizeof(asyfm));
+     gen = (asyfm *)malloc(sizeof(asyfm));
      gen->core = &ASYMMETRIC_FM_CLASS;
      gen->freq = mus_hz_to_radians(freq);
      gen->phase = phase;
@@ -5512,7 +5512,7 @@ static char *describe_filtered_comb(mus_any *ptr)
   comb_str = describe_comb(ptr);
   filter_str = mus_describe(((dly *)ptr)->filt);
   len = strlen(comb_str) + strlen(filter_str) + 64;
-  res = (char *)calloc(len, sizeof(char));
+  res = (char *)malloc(len * sizeof(char));
   snprintf(res, len, "%s, filter: [%s]", comb_str, filter_str);
   if (comb_str) free(comb_str);
   if (filter_str) free(filter_str);
@@ -5905,7 +5905,7 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
 mus_any *mus_make_sawtooth_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase) /* M_PI as initial phase, normally */
 {
   sw *gen;
-  gen = (sw *)calloc(1, sizeof(sw));
+  gen = (sw *)malloc(sizeof(sw));
   gen->core = &SAWTOOTH_WAVE_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = (amp / M_PI);
@@ -5986,7 +5986,7 @@ static mus_any_class SQUARE_WAVE_CLASS = {
 mus_any *mus_make_square_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase)
 {
   sw *gen;
-  gen = (sw *)calloc(1, sizeof(sw));
+  gen = (sw *)malloc(sizeof(sw));
   gen->core = &SQUARE_WAVE_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = amp;
@@ -6099,7 +6099,7 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
 mus_any *mus_make_triangle_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase)
 {
   sw *gen;
-  gen = (sw *)calloc(1, sizeof(sw));
+  gen = (sw *)malloc(sizeof(sw));
   gen->core = &TRIANGLE_WAVE_CLASS;
   if (freq < 0.0) 
     {
@@ -6199,7 +6199,7 @@ static mus_any_class PULSE_TRAIN_CLASS = {
 mus_any *mus_make_pulse_train(mus_float_t freq, mus_float_t amp, mus_float_t phase) /* TWO_PI initial phase, normally */
 {
   sw *gen;
-  gen = (sw *)calloc(1, sizeof(sw));
+  gen = (sw *)malloc(sizeof(sw));
   gen->core = &PULSE_TRAIN_CLASS;
   if (freq < 0.0) freq = -freq;
   gen->freq = mus_hz_to_radians(freq);
@@ -7464,9 +7464,9 @@ static mus_float_t fb_one_with_amps_c1_c2(mus_any *fbank, mus_float_t inval)
 	   *
 	   * If we know we've had 2 fb_one calls just before this one, then x2[i] are all the same,
 	   *   x0[i] will all be the same in this loop, so x0[i] - x2[i] can be collapsed, but
-	   *   we still need to set x0[i]=gain.  Would this save enough to be worth it?
+	   *   we still need to set x0[0]=gain: enter mctr.
 	   *
-	   * Even in the current case, we could save merely x0[0]=gain -> x1 -> x2, then in fm_many
+	   * So in the current case, we can save x0[0]=gain -> x1 -> x2, then in fm_many
 	   *   mctr=1 -- x2 is ok, x1[0] needs to be propogated
 	   *   mctr>1 -- x2 and x1 need propogation
 	   * On the other side, if mctr>=3, then x2[i] was not set, so don't access it.
@@ -9926,7 +9926,7 @@ mus_any *mus_make_empty_frame(int chans)
 {
   mus_frame *nf;
   if (chans <= 0) return(NULL);
-  nf = (mus_frame *)calloc(1, sizeof(mus_frame));
+  nf = (mus_frame *)malloc(sizeof(mus_frame));
   nf->core = &FRAME_CLASS;
   nf->chans = chans;
   nf->vals = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
@@ -9940,7 +9940,7 @@ mus_any *mus_make_frame_with_data(int chans, mus_float_t *data)
   /* for CLM */
   mus_frame *nf;
   if (chans <= 0) return(NULL);
-  nf = (mus_frame *)calloc(1, sizeof(mus_frame));
+  nf = (mus_frame *)malloc(sizeof(mus_frame));
   nf->core = &FRAME_CLASS;
   nf->chans = chans;
   nf->vals = data;
@@ -10153,7 +10153,7 @@ static char *describe_mixer(mus_any *ptr)
   else
     {
       snprintf(describe_buffer, bufsize, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
-      str = (char *)calloc(64, sizeof(char));
+      str = (char *)malloc(64 * sizeof(char));
 
       for (i = 0; i < lim; i++)
 	for (j = 0; j < lim; j++)
@@ -10234,10 +10234,10 @@ mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data)
   mus_mixer *nf;
   int i;
   if (chans <= 0) return(NULL);
-  nf = (mus_mixer *)calloc(1, sizeof(mus_mixer));
+  nf = (mus_mixer *)malloc(sizeof(mus_mixer));
   nf->core = &MIXER_CLASS;
   nf->chans = chans;
-  nf->vals = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
+  nf->vals = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
     nf->vals[i] = (mus_float_t *)(data + (i * chans));
   nf->data_allocated = false;
@@ -10249,10 +10249,10 @@ mus_any *mus_make_empty_mixer(int chans)
 {
   mus_mixer *nf = NULL;
   int i;
-  nf = (mus_mixer *)calloc(1, sizeof(mus_mixer));
+  nf = (mus_mixer *)malloc(sizeof(mus_mixer));
   nf->core = &MIXER_CLASS;
   nf->chans = chans;
-  nf->vals = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
+  nf->vals = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
     nf->vals[i] = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
   nf->data_allocated = true;
@@ -10758,9 +10758,14 @@ static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 	  */
 	  if (gen->ibufs == NULL) 
 	    {
+	      mus_long_t len;
+	      len = gen->file_end + 1;
+	      if (len > gen->file_buffer_size) 
+		len = gen->file_buffer_size;
+	      
 	      gen->ibufs = (mus_float_t **)malloc(gen->chans * sizeof(mus_float_t *));
 	      for (i = 0; i < gen->chans; i++)
-		gen->ibufs[i] = (mus_float_t *)calloc(gen->file_buffer_size, sizeof(mus_float_t));
+		gen->ibufs[i] = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	    }
 	  mus_file_seek_frame(fd, gen->data_start);
 
@@ -10857,7 +10862,6 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
     {
       gen = (rdin *)calloc(1, sizeof(rdin));
       gen->core = &FILE_TO_SAMPLE_CLASS;
-      gen->file_buffer_size = buffer_size;
 
       gen->file_name = (char *)calloc(strlen(filename) + 1, sizeof(char));
       strcpy(gen->file_name, filename);
@@ -10870,6 +10874,10 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
       gen->file_end = mus_sound_frames(gen->file_name);
       if (gen->file_end < 0) 
 	mus_error(MUS_NO_LENGTH, "%s frames: %lld", filename, gen->file_end);
+
+      if (buffer_size < gen->file_end)
+	gen->file_buffer_size = buffer_size;
+      else gen->file_buffer_size = gen->file_end;
 
       return((mus_any *)gen);
     }
@@ -11046,7 +11054,7 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
 	}
       if (gen->saved_data)
 	{
-	  gen->file_buffer_size = gen->file_end + 1;
+	  gen->file_buffer_size = gen->file_end;
 	  gen->sbuf = gen->saved_data[chan];
 	  gen->reader = safe_readin;
 	  gen->data_start = 0;
@@ -11057,7 +11065,7 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
 	  gen->ibufs = (mus_float_t **)calloc(gen->chans, sizeof(mus_float_t *));
 	  if (buffer_size > gen->file_end)
 	    {
-	      gen->file_buffer_size = gen->file_end + 1;
+	      gen->file_buffer_size = gen->file_end;
 	      gen->reader = safe_readin;
 	      gen->ibufs[chan] = (mus_float_t *)malloc(gen->file_buffer_size * sizeof(mus_float_t));
 	      mus_in_any_from_file((mus_any *)gen, 0, chan);
@@ -11066,7 +11074,7 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
 	    {
 	      gen->file_buffer_size = buffer_size;
 	      gen->reader = readin;
-	      gen->ibufs[chan] = (mus_float_t *)calloc(gen->file_buffer_size, sizeof(mus_float_t));
+	      gen->ibufs[chan] = (mus_float_t *)malloc(gen->file_buffer_size * sizeof(mus_float_t));
 	    }
 	  gen->sbuf = gen->ibufs[chan];
 	}
@@ -13217,6 +13225,12 @@ static int init_sinc_table(int width)
       sinc_phase = old_end * sinc_freq;
 #if HAVE_SINCOS
       sincos(sinc_freq, &sn, &cs);
+      if (old_end == 1)
+	{
+	  sinc[1] = sin(sinc_phase) / (2.0 * sinc_phase);
+	  old_end++;
+	  sinc_phase += sinc_freq;
+	}
       for (i = old_end; i < padded_size;)
 	{
 	  sincos(sinc_phase, &snp, &csp);
@@ -13278,8 +13292,8 @@ static int init_sinc_table(int width)
   padded_size = size + 4;
   win_freq = (mus_float_t)SRC_SINC_WINDOW_SIZE / (mus_float_t)size;
 
-  sinc_tables[loc] = (mus_float_t *)calloc(padded_size * 2, sizeof(mus_float_t));
-  sinc_tables[loc][0 + padded_size] = 1.0;
+  sinc_tables[loc] = (mus_float_t *)malloc(padded_size * 2 * sizeof(mus_float_t));
+  sinc_tables[loc][padded_size] = 1.0;
 
   for (i = 1, win_phase = win_freq; i < padded_size; i++, win_phase += win_freq)
     {
@@ -13722,7 +13736,9 @@ mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
   mus_long_t k, dur2;
   mus_float_t *out_data, *ldata, *coeffs;
   
-  out_data = (mus_float_t *)calloc(dur / 2 + 2, sizeof(mus_float_t));
+  dur2 = dur / 2 + 1;
+  if ((dur & 1) != 0) dur2++;
+  out_data = (mus_float_t *)malloc(dur2 * sizeof(mus_float_t));
 
   lim = srp->lim; /* 2 * width so it's even */
   width = srp->width;
@@ -13740,8 +13756,6 @@ mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
     in_data[i] = srp->data[i];
 
   ldata = (mus_float_t *)in_data;
-  dur2 = dur / 2 + 1;
-  if ((dur & 1) != 0) dur2++;
   wid10 = width - 10;
   wid1 = width - 1;
 
@@ -13781,7 +13795,9 @@ mus_float_t *mus_src_05(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
   mus_long_t k, dur2;
   mus_float_t *out_data, *ldata, *coeffs;
   
-  out_data = (mus_float_t *)calloc(dur * 2 + 2, sizeof(mus_float_t));
+  dur2 = dur * 2;
+  out_data = (mus_float_t *)malloc((dur2 + 1) * sizeof(mus_float_t));
+  out_data[dur2] = 0.0;
 
   lim = srp->lim;
   width = srp->width;
@@ -13797,7 +13813,6 @@ mus_float_t *mus_src_05(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
     in_data[i] = srp->data[i];
 
   ldata = (mus_float_t *)in_data;
-  dur2 = dur * 2;
   wid10 = lim - 10;
   wid1 = width - 1;
 
@@ -16676,9 +16691,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
 
     case SCALED_MIX:
       for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
-	mus_frame_to_file(outf, 
-			  outc, 
-			  safe_frame_to_frame((mus_frame *)mus_file_to_frame(inf, inc, (mus_any *)frin), mx, frthru, in_chans, out_chans));
+	mus_frame_to_file(outf, outc, safe_frame_to_frame((mus_frame *)mus_file_to_frame(inf, inc, (mus_any *)frin), mx, frthru, in_chans, out_chans));
       break;
 
     }

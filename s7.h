@@ -583,9 +583,10 @@ size_t s7_denominator_offset(s7_scheme *sc);
 size_t s7_slot_value_offset(s7_scheme *sc);
 
 typedef struct {
-  void (*ex_func)(void *p); 
-  void (*ex_free)(void *p); 
-  void *ex_data;
+  void (*func)(void *p); 
+  void (*free)(void *p); 
+  s7_Double (*f)(void *p); 
+  void *data;
 } s7_ex;
 
 void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr));
@@ -722,6 +723,8 @@ void s7_function_set_looped(s7_pointer f, s7_pointer c);
 void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
 s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
+void s7_set_ex_fallback(s7_scheme *sc, s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals));
+s7_ex *(*s7_ex_fallback(s7_scheme *sc))(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
 
 void s7_autoload_set_names(s7_scheme *sc, const char **names, int size);
 

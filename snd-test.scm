@@ -151,7 +151,11 @@
 (define (snd-display line . args)
   (let ((str (if (null? (cdr args))
 		 (car args)
-		 (apply format #f args))))
+		 (if (or (string? (car args))
+			 (and (not (car args))
+			      (string? (cadr args))))
+		     (apply format #f args)
+		     (object->string args)))))
     (format *stderr* "~%~A: ~8T~A" line str)
     (if (not (provided? 'snd-nogui))
 	(snd-print (format #f "~%~A: ~A" line str)))))
@@ -6829,43 +6833,47 @@ EDITS: 5
 	      (let ((secamp (maxamp obind))
 		    (secdur (frames obind)))
 		(if (fneq secamp .989) (snd-display #__line__ ";apply contrast: ~A?" secamp))
-		(if (not (= secdur newdur)) (snd-display #__line__ ";apply contrast length: ~A -> ~A?" newdur secdur))
-		(undo 3 obind)
-		(set! (reverb-control? obind) #t)
-		(set! (reverb-control-scale-bounds obind) (list 0.0 1.0))
-		(if (not (equal? (reverb-control-scale-bounds obind) (list 0.0 1.0))) 
-		    (snd-display #__line__ ";reverb-control-scale-bounds: ~A" (reverb-control-scale-bounds)))
-		(set! (reverb-control-length-bounds obind) (list 0.0 2.0))
-		(if (not (equal? (reverb-control-length-bounds obind) (list 0.0 2.0))) 
-		    (snd-display #__line__ ";reverb-control-length-bounds: ~A" (reverb-control-length-bounds)))
-		(set! (reverb-control-scale obind) .2)
+		(if (not (= secdur newdur)) (snd-display #__line__ ";apply contrast length: ~A -> ~A?" newdur secdur)))
+	      (undo 3 obind)
+	      (set! (reverb-control? obind) #t)
+	      (set! (reverb-control-scale-bounds obind) (list 0.0 1.0))
+	      (if (not (equal? (reverb-control-scale-bounds obind) (list 0.0 1.0))) 
+		  (snd-display #__line__ ";reverb-control-scale-bounds: ~A" (reverb-control-scale-bounds)))
+	      (set! (reverb-control-length-bounds obind) (list 0.0 2.0))
+	      (if (not (equal? (reverb-control-length-bounds obind) (list 0.0 2.0))) 
+		  (snd-display #__line__ ";reverb-control-length-bounds: ~A" (reverb-control-length-bounds)))
+	      (set! (reverb-control-scale obind) .2)
+	      (let ((nowamp (maxamp obind)))
 		(apply-controls obind)
 		(let ((revamp (maxamp obind))
 		      (revdur (frames obind)))
-		  (if (ffneq revamp .214) (snd-display #__line__ ";apply reverb scale: ~A?" revamp))
+		  (if (ffneq revamp .214) 
+		      (snd-display #__line__ ";apply reverb scale: ~A at ~A, scale: ~A previous max: ~A?" 
+				   revamp (maxamp-position obind) (reverb-control-scale obind) nowamp))
 		  (if (>= (- revdur (+ 50828 (round (* (reverb-control-decay) 22050)))) 256) 
-		      (snd-display #__line__ ";apply reverb length: ~A?" revdur))
-		  (undo 1 obind)
-		  (set! (expand-control? obind) #t)
-		  (set! (expand-control-bounds obind) (list 1.0 3.0))
-		  (if (not (equal? (expand-control-bounds obind) (list 1.0 3.0))) (snd-display #__line__ ";expand-control-bounds: ~A" (expand-control-bounds)))
-		  (set! (expand-control obind) 1.5)
-		  (apply-controls obind)
-		  (let ((expamp (maxamp obind))
-			(expdur (frames obind)))
-		    (if (> (abs (- expamp .152)) .05) (snd-display #__line__ ";apply expand-control scale: ~A?" expamp))
-		    (if (<= expdur (* 1.25 50828)) (snd-display #__line__ ";apply expand-control length: ~A?" expdur))
-		    (set! (expand-control-bounds obind) (list 0.001 20.0))
-		    (undo 1 obind)
-		    (set! (filter-control? obind) #t)
-		    (set! (filter-control-order obind) 40)
-		    (set! (filter-control-envelope obind) '(0 0 1 .5 2 0))
-		    (apply-controls obind)
-		    (let ((fltamp (maxamp obind))
-			  (fltdur (frames obind)))
-		      (if (> (abs (- fltamp .02)) .005) (snd-display #__line__ ";apply filter scale: ~A?" fltamp))
-		      (if (> (- fltdur (+ 40 50828)) 256) (snd-display #__line__ ";apply filter length: ~A?" fltdur))
-		      (undo 1 obind)))))))
+		      (snd-display #__line__ ";apply reverb length: ~A?" revdur))))
+	      (undo 1 obind)
+	      (set! (expand-control? obind) #t)
+	      (set! (expand-control-bounds obind) (list 1.0 3.0))
+	      (if (not (equal? (expand-control-bounds obind) (list 1.0 3.0))) (snd-display #__line__ ";expand-control-bounds: ~A" (expand-control-bounds)))
+	      (set! (expand-control obind) 1.5)
+	      (apply-controls obind)
+	      (let ((expamp (maxamp obind))
+		    (expdur (frames obind)))
+		(if (> (abs (- expamp .152)) .05) (snd-display #__line__ ";apply expand-control scale: ~A?" expamp))
+		(if (<= expdur (* 1.25 50828)) (snd-display #__line__ ";apply expand-control length: ~A?" expdur))
+		(set! (expand-control-bounds obind) (list 0.001 20.0)))
+	      (undo 1 obind)
+	      (set! (filter-control? obind) #t)
+	      (set! (filter-control-order obind) 40)
+	      (set! (filter-control-envelope obind) '(0 0 1 .5 2 0))
+	      (apply-controls obind)
+	      (let ((fltamp (maxamp obind))
+		    (fltdur (frames obind)))
+		(if (> (abs (- fltamp .02)) .005) (snd-display #__line__ ";apply filter scale: ~A?" fltamp))
+		(if (> (- fltdur (+ 40 50828)) 256) (snd-display #__line__ ";apply filter length: ~A?" fltdur))
+		(undo 1 obind))))
+
 	  (revert-sound obind)
 	  (make-selection 1000 1000)
 	  (scale-selection-to .1)
@@ -47391,28 +47399,27 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-28-Feb:
-37,097,740,552
-5,712,836,328  s7.c:eval [/home/bil/gtk-snd/snd]
-2,278,663,743  ???:sin [/lib64/libm-2.12.so]
-2,029,346,174  ???:cos [/lib64/libm-2.12.so]
+2-Mar:
+37,048,001,848
+5,734,603,713  s7.c:eval [/home/bil/gtk-snd/snd]
+2,278,354,203  ???:sin [/lib64/libm-2.12.so]
+2,035,703,742  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,035,616,813  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  890,710,228  ???:t2_32 [/home/bil/gtk-snd/snd]
-  869,630,667  s7.c:gc [/home/bil/gtk-snd/snd]
-  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
-  714,522,430  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  683,558,590  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+1,093,356,975  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  899,392,996  ???:t2_32 [/home/bil/gtk-snd/snd]
+  873,555,505  s7.c:gc [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+  713,319,012  s7.c:eval'2 [/home/bil/gtk-snd/snd]
   648,381,221  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  646,201,591  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  567,980,480  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,851,360  ???:n1_64 [/home/bil/gtk-snd/snd]
-  414,839,411  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  565,597,399  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,280,428  ???:n1_64 [/home/bil/gtk-snd/snd]
+  442,609,251  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  386,296,392  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  381,382,002  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  304,013,421  ???:memcpy [/lib64/ld-2.12.so]
 |#
 
 

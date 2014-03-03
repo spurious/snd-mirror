@@ -3,7 +3,8 @@
 (define (compare-calls f1 f2)
   (let ((h1 (with-input-from-file f1 read-calls))
 	(total-diff 0)
-	(diffs ()))
+	(diffs ())
+	(scl 1e-6))
 
     (let ((h2 (with-input-from-file f2 read-calls)))
       (for-each 
@@ -27,12 +28,12 @@
        h2))
 		 
     (let ((vals (sort! diffs (lambda (a b) (> (car a) (car b))))))
-      (format *stderr* "total: ~A~%" total-diff)
+      (format *stderr* "total: ~,3F~%" (* scl total-diff))
       (for-each
        (lambda (entry)
-	 (format *stderr* "~A~A~12T(~A ~A)~40T~A~%" 
+	 (format *stderr* "~A~,3F~12T(~,3F~24T~,3F)~40T~A~%" 
 		 (if (negative? (list-ref entry 0)) "" " ")
-		 (list-ref entry 0) (list-ref entry 2) (list-ref entry 3) (list-ref entry 1)))
+		 (* scl (list-ref entry 0)) (* scl (list-ref entry 2)) (* scl (list-ref entry 3)) (list-ref entry 1)))
        vals)))
   (exit))
 

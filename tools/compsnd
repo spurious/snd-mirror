@@ -167,21 +167,6 @@ rm -f config.cache
 
 echo ' '
 echo ' '
-echo ' -------------------------------- no complex -------------------------------- '
-make clean
-sed mus-config.h -e 's/#define WITH_COMPLEX 1/#define WITH_COMPLEX 0/g' > tmp
-mv tmp mus-config.h
-sed mus-config.h -e 's/#define HAVE_COMPLEX_TRIG 1/#define HAVE_COMPLEX_TRIG 0/g' > tmp
-mv tmp mus-config.h
-make
-
-
-make allclean
-rm -f snd
-rm -f config.cache
-
-echo ' '
-echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-gui --with-oss                              ----  '
 echo ' -------------------------------------------------------------------------------- '

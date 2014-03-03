@@ -3472,11 +3472,6 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 }
 #endif
 
-#if HAVE_SCHEME
-void setup_gen_list(s7_scheme *sc, s7_pointer tree);
-void clear_gen_list(void);
-#endif
-
 
 static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
 {
@@ -3613,9 +3608,9 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				{
 				  s7_pointer old_e, y;
 				  s7_Double *ry;
-				  gf *gf1;
-
-				  setup_gen_list(s7, res);
+				  s7_ex *gf1;
+				  s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
+				  fallback = s7_ex_fallback(s7);
 
 				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 				  old_e = s7_set_current_environment(s7, e);
@@ -3625,7 +3620,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
 				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
 				  
-				  gf1 = find_gf_with_locals(s7, res, old_e);
+				  gf1 = fallback(s7, res, old_e);
 				  if (gf1)
 				    {
 				      for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
@@ -3637,19 +3632,16 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 					  for (j = 0; j < local_samps; j++)
 					    {
 					      (*ry) = read_sample(sf);
-					      data[0][j] = gf1->func(gf1);
+					      data[0][j] = gf1->f((void *)gf1);
 					    }
 					  err = mus_file_write(ofd, 0, j - 1, 1, data);
 					  if (err != MUS_NO_ERROR) break;
 					}
-				      gf_free(gf1);
 				      s7_set_current_environment(s7, old_e);
 				      samps = num;
-				      clear_gen_list();
+				      gf1->free((void *)gf1);
 				      goto DO_EDIT;
 				    }
-
-				  clear_gen_list();
 
 				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
 				    {
@@ -4030,7 +4022,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
       if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  s7_pointer old_e;
-	  gf *gf1;
+	  s7_ex *gf1;
 	  s7_pointer y;
 	  s7_Double *ry;
 
@@ -4099,44 +4091,46 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	      sf = free_snd_fd(sf);
 	      return(res);
 	    }
+	  
+	  {
+	    s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
+	    fallback = s7_ex_fallback(s7);
 
-	  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
-	  old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
-	  /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
+	    e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
+	    old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
+	    /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
 
-	  y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
-	  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
-	  s7_make_slot(s7, e, arg, y);
+	    y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
+	    ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+	    s7_make_slot(s7, e, arg, y);
 
-	  setup_gen_list(s7, res);
-	  gf1 = find_gf_with_locals(s7, res, old_e);
-	  if (gf1)
-	    {
-	      data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
-	      if (s7_tree_memq(s7, arg, res))
-		{
-		  samples_to_vct_with_reader(num, data, sf);
-		  for (kp = 0; kp < num; kp++)
-		    {
-		      (*ry) = data[kp];
-		      data[kp] = gf1->func(gf1);
-		    }
-		}
-	      else
-		{
-		  for (kp = 0; kp < num; kp++)
-		    data[kp] = gf1->func(gf1);
-		}
-	      sf = free_snd_fd(sf);
-	      change_samples(beg, num, data, cp, caller, pos, -1.0);
-	      free(data);
-	      gf_free(gf1);
-	      s7_set_current_environment(s7, old_e);
-	      clear_gen_list();
-	      return(res);
-	    }
-	  clear_gen_list();
-	  s7_set_current_environment(s7, old_e);
+	    gf1 = fallback(s7, res, old_e);
+	    if (gf1)
+	      {
+		data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
+		if (s7_tree_memq(s7, arg, res))
+		  {
+		    samples_to_vct_with_reader(num, data, sf);
+		    for (kp = 0; kp < num; kp++)
+		      {
+			(*ry) = data[kp];
+			data[kp] = gf1->f((void *)gf1);
+		      }
+		  }
+		else
+		  {
+		    for (kp = 0; kp < num; kp++)
+		      data[kp] = gf1->f((void *)gf1);
+		  }
+		sf = free_snd_fd(sf);
+		change_samples(beg, num, data, cp, caller, pos, -1.0);
+		free(data);
+		gf1->free((void *)gf1);
+		s7_set_current_environment(s7, old_e);
+		return(res);
+	      }
+	    s7_set_current_environment(s7, old_e);
+	  }
 	}
 
       arg = s7_caadar(source);

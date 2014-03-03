@@ -342,7 +342,7 @@ static s7_pointer g_block_ref(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   g_block *g = (g_block *)s7_object_value(obj);
   size_t index;
   index = (size_t)s7_integer(s7_car(args));
-  if ((index >= 0) && (index < g->size))
+  if (index < g->size)
     return(s7_make_real(sc, g->data[index]));
   return(s7_out_of_range_error(sc, "block-ref", 2, s7_car(args), "should be less than block length"));
 }
@@ -955,7 +955,7 @@ int main(int argc, char **argv)
   if (!s7_is_keyword(p))
     {fprintf(stderr, "%d: %s is not a keyword?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
-  if (!s7_keyword_eq_p(p, p))
+  if (!s7_is_eq(p, p))
     {fprintf(stderr, "%d: %s is not a self-eq??\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
   p = s7_global_environment(sc);

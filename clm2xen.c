@@ -61,6 +61,37 @@
 void setup_gen_list(s7_scheme *sc, s7_pointer tree);
 void clear_gen_list(void);
 static void gen_list_walk(s7_scheme *sc, s7_pointer tree);
+
+
+typedef struct gf {
+  void *g1, *g2, *g3, *g4, *g5; /* gf's -- freed */
+  mus_float_t (*func)(void *p);
+  mus_float_t (*func_1)(void *p);
+  mus_float_t (*fn_1)(void *p);
+  mus_float_t (*func_2)(void *p, mus_float_t x);
+  mus_float_t (*func_3)(void *p, mus_float_t x, mus_float_t y);
+  mus_float_t (*f1)(void *p);
+  mus_float_t (*f2)(void *p);
+  mus_float_t (*f3)(void *p);
+  mus_float_t (*f4)(void *p);
+  mus_float_t (*f5)(void *p);
+  mus_float_t (*o1)(void *p);
+  void *gen, *gen1, *gen2, *gen3; /* mus_any's -- not touched */
+  void *(*vf)(void *p);
+  double x1, x2, x3, x4, x5, x6, x7, x8;
+  double *rx1, *rx2, *rx3;
+  s7_pointer s1, s2, s3;
+  mus_long_t i1;
+  mus_long_t *ix1;
+  struct gf *nxt;
+} gf;
+
+static gf *find_gf(s7_scheme *sc, s7_pointer expr);
+static void gf_free(void *p);
+static gf *gf_alloc(void);
+static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
+static void store_gf_fixup(s7_scheme *sc, s7_pointer f, gf *(*fixup)(s7_scheme *sc, s7_pointer expr, s7_pointer locals));
+
 #endif
 
 struct mus_xen {
@@ -933,7 +964,7 @@ is the window family parameter, if any:\n  " make_window_example
   if (!(mus_is_fft_window(fft_window)))
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "unknown fft window");
 
-  data = (mus_float_t *)calloc(n, sizeof(mus_float_t));
+  data = (mus_float_t *)malloc(n * sizeof(mus_float_t));
   mus_make_fft_window_with_window((mus_fft_window_t)fft_window, n, beta, alpha, data);
   return(xen_make_vct(n, data));
 }
@@ -1238,6 +1269,9 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
     }
 #if HAVE_RUBY
   return(NULL);
+#endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  return(0);
 #endif
 }
 
@@ -10182,10 +10216,13 @@ static vcset_ex *vex_free_list = NULL;
 
 static void vcset_free(void *p)
 {
-  vcset_ex *ep = (vcset_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  vcset_ex *ep;
+  ep = (vcset_ex *)(e->data);
   if (ep->g) gf_free(ep->g);
   ep->next = (struct vcset_ex *)vex_free_list;
   vex_free_list = ep;
+  free(e);
 }
 
 
@@ -10205,8 +10242,11 @@ static vcset_ex *allocate_vcset_ex(void)
 
 static void vcset_0(void *p)
 {
-  vcset_ex *ep = (vcset_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  vcset_ex *ep;
   mus_long_t pos;
+
+  ep = (vcset_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   if (pos < ep->v_len)
     ep->v_data[pos] = ep->x1;
@@ -10215,8 +10255,11 @@ static void vcset_0(void *p)
 
 static void vcset_s(void *p)
 {
-  vcset_ex *ep = (vcset_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  vcset_ex *ep;
   mus_long_t pos;
+
+  ep = (vcset_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   if (pos < ep->v_len)
     ep->v_data[pos] = s7_number_to_real(ep->sc, s7_cell_slot_value(ep->val_slot));
@@ -10225,8 +10268,11 @@ static void vcset_s(void *p)
 
 static void vcset_1(void *p)
 {
-  vcset_ex *ep = (vcset_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  vcset_ex *ep;
   mus_long_t pos;
+
+  ep = (vcset_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   if (pos < ep->v_len)
     ep->v_data[pos] = ep->func_1(ep->gen);
@@ -10235,8 +10281,11 @@ static void vcset_1(void *p)
 
 static void vcset_2(void *p)
 {
-  vcset_ex *ep = (vcset_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  vcset_ex *ep;
   mus_long_t pos;
+
+  ep = (vcset_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   if (pos < ep->v_len)
     ep->v_data[pos] = ep->func(ep->g);
@@ -10245,9 +10294,12 @@ static void vcset_2(void *p)
 
 static void vcset_3(void *p)
 {
-  vcset_ex *ep = (vcset_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  vcset_ex *ep;
   mus_long_t pos;
   mus_float_t x;
+
+  ep = (vcset_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   if (pos < ep->v_len)
     {
@@ -10289,21 +10341,21 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
     {
       p = allocate_vcset_ex();
       e = (s7_ex *)malloc(sizeof(s7_ex));
-      e->ex_free = vcset_free;
-      e->ex_data = p;
+      e->free = vcset_free;
+      e->data = p;
       p->v_len = mus_vct_length(v);
       p->v_data = mus_vct_data(v);
       p->i_slot = i_slot;
       p->sc = sc;
       if (s7_is_symbol(val_arg))
 	{
-	  e->ex_func = vcset_s;
+	  e->func = vcset_s;
 	  p->val_slot = s7_slot(sc, val_arg);
 	}
       else
 	{
 	  p->x1 = s7_number_to_real(sc, val_arg);
-	  e->ex_func = vcset_0;
+	  e->func = vcset_0;
 	}
       return(e);
     }
@@ -10334,15 +10386,15 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
 
 		      p = allocate_vcset_ex();
 		      e = (s7_ex *)malloc(sizeof(s7_ex));
-		      e->ex_free = vcset_free;
-		      e->ex_data = p;
+		      e->free = vcset_free;
+		      e->data = p;
 		      p->v_len = mus_vct_length(v);
 		      p->v_data = mus_vct_data(v);
 		      p->i_slot = i_slot;
 		      p->val_slot = x_slot;
 		      p->x1 = x1;
 		      p->x2 = x2;
-		      e->ex_func = vcset_3;
+		      e->func = vcset_3;
 		      return(e);
 		    }
 		}
@@ -10355,8 +10407,8 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
     {
       p = allocate_vcset_ex();
       e = (s7_ex *)malloc(sizeof(s7_ex));
-      e->ex_free = vcset_free;
-      e->ex_data = p;
+      e->free = vcset_free;
+      e->data = p;
       p->v_len = mus_vct_length(v);
       p->v_data = mus_vct_data(v);
       p->i_slot = i_slot;
@@ -10367,14 +10419,14 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
 	  p->gen = gf1->gen;
 	  p->g = NULL;
 	  gf_free(gf1);
-	  e->ex_func = vcset_1;
+	  e->func = vcset_1;
 	  return(e);
 	}
       if (gf1->func)
 	{
 	  p->func = gf1->func;
 	  p->g = gf1;
-	  e->ex_func = vcset_2;
+	  e->func = vcset_2;
 	  return(e);
 	}
 
@@ -12189,6 +12241,8 @@ static int gf_parse(s7_scheme *sc, s7_pointer arg, s7_pointer locals, gf **g, s7
 	  (*rx) = (s7_Double *)((unsigned char *)(r) + xen_s7_number_location);
 	  return(GF_RX);
 	}
+
+      /* here we assume that it's a real of some sort */
       (*s) = slot;
       return(GF_S);
     }
@@ -13826,7 +13880,7 @@ static mus_float_t gf_sampler(void *p) {gf *g = (gf *)p; return(read_sample((snd
 
 static gf *gf_free_list = NULL;
 
-void gf_free(void *p)
+static void gf_free(void *p)
 {
   gf *g = (gf *)p;
   if (g->g1) gf_free(g->g1);
@@ -13840,7 +13894,7 @@ void gf_free(void *p)
   gf_free_list = g;
 }
 
-gf *gf_alloc(void)
+static gf *gf_alloc(void)
 {
   if (gf_free_list)
     {
@@ -13855,7 +13909,7 @@ gf *gf_alloc(void)
 }
 
 
-gf *find_gf(s7_scheme *sc, s7_pointer expr)
+static gf *find_gf(s7_scheme *sc, s7_pointer expr)
 {
   return(find_gf_with_locals(sc, expr, s7_outer_environment(s7_current_environment(sc))));
 }
@@ -13869,7 +13923,7 @@ gf *find_gf(s7_scheme *sc, s7_pointer expr)
 bool mus_env_is_constant(mus_any *ptr);
 
 
-gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
+static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
   s7_pointer *choices;
   s7_pointer op;
@@ -13878,8 +13932,17 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
   if ((!s7_is_pair(expr)) ||
       (!s7_is_symbol(car(expr))))
-    return_null(expr);
-
+    {
+      if (s7_is_real(expr))
+	{
+	  gf *g;
+	  g = gf_alloc();
+	  g->func = gf_constant;
+	  g->x1 = s7_number_to_real(sc, expr);
+	  return(g);
+	}
+      return_null(expr);
+    }
   op = s7_car_value(sc, expr);
   choices = (s7_pointer *)s7_function_chooser_data_direct(op);
   if (choices)
@@ -14379,6 +14442,40 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	}
     }
   return_null(expr);
+}
+
+
+static s7_Double exfunc(void *p)
+{
+  s7_ex *e = (s7_ex *)p;
+  gf *g;
+  g = (gf *)(e->data);
+  return(g->func(g));
+}
+
+static void exfree(void *p)
+{
+  s7_ex *e = (s7_ex *)p;
+  if (e->data) gf_free((gf *)(e->data));
+  free(e);
+}
+
+static s7_ex *find_ex_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
+{
+  gf *g;
+  setup_gen_list(sc, expr);
+  g = find_gf_with_locals(sc, expr, locals);
+  clear_gen_list();
+  if (g)
+    {
+      s7_ex *e;
+      e = (s7_ex *)malloc(sizeof(s7_ex));
+      e->free = exfree;
+      e->data = (void *)g;
+      e->f = exfunc;
+      return(e);
+    }
+  return(NULL);
 }
 
 
@@ -15317,16 +15414,21 @@ typedef struct {
 
 static void outa_ex_free(void *p)
 {
-  outa_ex *ep = (outa_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  outa_ex *ep;
+  ep = (outa_ex *)(e->data);
   if (ep->g) gf_free(ep->g);
-  free(p);
+  free(ep);
+  free(e);
 }
 
 
 static void outa_0(void *p)
 {
-  outa_ex *ep = (outa_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  outa_ex *ep;
   mus_long_t pos;
+  ep = (outa_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   out_any_2(pos, ep->x1, ep->chan, "outa");
 }
@@ -15334,8 +15436,10 @@ static void outa_0(void *p)
 
 static void outa_s(void *p)
 {
-  outa_ex *ep = (outa_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  outa_ex *ep;
   mus_long_t pos;
+  ep = (outa_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   out_any_2(pos, s7_number_to_real(ep->sc, s7_cell_slot_value(ep->val_slot)), ep->chan, "outa");
 }
@@ -15343,8 +15447,10 @@ static void outa_s(void *p)
 
 static void outa_1(void *p)
 {
-  outa_ex *ep = (outa_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  outa_ex *ep;
   mus_long_t pos;
+  ep = (outa_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   out_any_2(pos, ep->func_1(ep->gen), ep->chan, "outa");
 }
@@ -15352,8 +15458,10 @@ static void outa_1(void *p)
 
 static void outa_2(void *p)
 {
-  outa_ex *ep = (outa_ex *)p;
+  s7_ex *e = (s7_ex *)p;
+  outa_ex *ep;
   mus_long_t pos;
+  ep = (outa_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   out_any_2(pos, ep->func(ep->g), ep->chan, "outa");
 }
@@ -15381,8 +15489,8 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
     {
       p = (outa_ex *)calloc(1, sizeof(outa_ex));
       e = (s7_ex *)malloc(sizeof(s7_ex));
-      e->ex_free = outa_ex_free;
-      e->ex_data = p;
+      e->free = outa_ex_free;
+      e->data = p;
       p->i_slot = i_slot;
       p->sc = sc;
       if (car(expr) == outa_symbol)
@@ -15391,12 +15499,12 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
       if (s7_is_symbol(val_arg))
 	{
 	  p->val_slot = s7_slot(sc, val_arg);
-	  e->ex_func = outa_s;
+	  e->func = outa_s;
 	}
       else
 	{
 	  p->x1 = s7_number_to_real(sc, val_arg);
-	  e->ex_func = outa_0;
+	  e->func = outa_0;
 	}
       return(e);
     }
@@ -15406,8 +15514,8 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
     {
       p = (outa_ex *)calloc(1, sizeof(outa_ex));
       e = (s7_ex *)malloc(sizeof(s7_ex));
-      e->ex_free = outa_ex_free;
-      e->ex_data = p;
+      e->free = outa_ex_free;
+      e->data = p;
       p->i_slot = i_slot;
       if (car(expr) == outa_symbol)
 	p->chan = 0;
@@ -15419,14 +15527,14 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
 	  p->gen = gf1->gen;
 	  p->g = NULL;
 	  gf_free(gf1);
-	  e->ex_func = outa_1;
+	  e->func = outa_1;
 	  return(e);
 	}
       if (gf1->func)
 	{
 	  p->func = gf1->func;
 	  p->g = gf1;
-	  e->ex_func = outa_2; /* TODO: go down a step here (even skip chan check) */
+	  e->func = outa_2; /* TODO: go down a step here (even skip chan check) */
 	  return(e);
 	}
 
@@ -19475,6 +19583,8 @@ static s7_pointer clm_make_function_no_choice(s7_scheme *sc, const char *name, s
 static void init_choosers(s7_scheme *sc)
 {
   s7_pointer f;
+
+  s7_set_ex_fallback(sc, find_ex_with_locals);
 
   abs_symbol = s7_make_symbol(sc, "abs");
   env_symbol = s7_make_symbol(sc, "env");

@@ -182,8 +182,7 @@ static void c_io_bufclr(snd_io *io, int beg)
   int k;
   size_t bytes;
 
-  bytes = (io->bufsize - beg - 1) * sizeof(mus_float_t);
-
+  bytes = (io->bufsize - beg) * sizeof(mus_float_t);
   for (k = 0; k < io->chans; k++)
     {
       mus_float_t *j;
@@ -286,8 +285,9 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, mus_long_t beg, int su
   io->beg = 0;
   io->end = bufsize - 1;
   io->bufsize = bufsize;
-  io->arrays[chan] = (mus_float_t *)calloc(bufsize, sizeof(mus_float_t));
-  reposition_file_buffers_1(beg, io); /* get ready to read -- we're assuming mus_file_read_chans here */
+  io->arrays[chan] = (mus_float_t *)malloc(bufsize * sizeof(mus_float_t));
+  io->arrays[chan][bufsize - 1] = 0.0; /* there is buffer bounds confusion somewhere... */
+  reposition_file_buffers_1(beg, io);  /* get ready to read -- we're assuming mus_file_read_chans here */
   return(io);
 }
 
@@ -545,7 +545,7 @@ void remember_temp(const char *filename, int chans)
 	}
     }
 
-  tmp = (tempfile_ctr *)calloc(1, sizeof(tempfile_ctr));
+  tmp = (tempfile_ctr *)malloc(sizeof(tempfile_ctr));
   tempfiles[i] = tmp;
   tmp->name = mus_strdup(filename);
   tmp->chans = chans;

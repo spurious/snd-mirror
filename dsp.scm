@@ -1803,6 +1803,7 @@ and replaces it with the spectrum given in coeffs"
 	(startup 40)
 	(len (- (or dur (frames snd chn edpos)) beg)))
     (let ((adder (make-float-vector len))
+	  (divider (make-float-vector len))
 	  (summer (make-float-vector len))
 	  (indata (channel->float-vector beg len snd chn edpos)))
       
@@ -2211,7 +2212,7 @@ is assumed to be outside -1.0 to 1.0."
 	  (clip-beg 0))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(float-vector-set! data i (abs (vector-ref data i))))
+	(float-vector-set! data i (abs (float-vector-ref data i))))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(if (> (float-vector-ref data i) .9999)                    ; this sample is clipped

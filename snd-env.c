@@ -1482,6 +1482,10 @@ into the envelope editor."
     return(temp);
   }
 #endif
+
+#if (!HAVE_EXTENSION_LANGUAGE)
+  return(0);
+#endif
 }
 
 

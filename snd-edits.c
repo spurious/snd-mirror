@@ -2617,6 +2617,10 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   free(old_function);
   return(function);
 #endif
+
+#if (!HAVE_EXTENSION_LANGUAGE)
+  return(NULL);
+#endif
 }
 
 
