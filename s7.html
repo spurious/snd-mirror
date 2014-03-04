@@ -6071,19 +6071,6 @@ of it as being a little REPL.  begin does not introduce a new frame in
 the current environment, so defines happen in the enclosing environment.
 </p>
 
-<pre class="indented">
-&gt; (let ((y 2)) 
-      (let ((x 1)) 
-        (begin 
-          (define x y)         ; x is 2 (this x is the same as the x in the let above it)
-          (set! x (* x 2))     ; now it is 4
-          (define y 123))      ; this is great, but it doesn't affect x 
-         x))                   ; defines in begin are in the enclosing environment so
-   4                           ;   we get 4
-</pre>
-</div>
-
-
 
 <div class="indented">
 

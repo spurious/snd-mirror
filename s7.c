@@ -424,7 +424,7 @@ enum {OP_NO_OP,
       OP_SAFE_IF_Z_Z, 
       OP_CATCH_1, OP_CATCH_ALL, OP_COND_ALL_X,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O, OP_SAFE_DOTIMES_STEP_A,
-      OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DOTIMES_C_C,
+      OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_1, OP_SAFE_DOTIMES_C_C,
       OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, OP_SIMPLE_DO_FOREVER,
       OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_A,
       OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A,
@@ -611,7 +611,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_Z_Z", 
   "OP_CATCH_1", "OP_CATCH_ALL", "OP_COND_ALL_X",
   "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_SAFE_DOTIMES", "OP_SAFE_DOTIMES_STEP", "OP_SAFE_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_STEP_O", "OP_SAFE_DOTIMES_STEP_A",
-  "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DOTIMES_C_C",
+  "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DO_STEP_1", "OP_SAFE_DOTIMES_C_C",
   "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_DOX", "OP_DOX_STEP", "OP_DOX_STEP_P", "OP_SIMPLE_DO_FOREVER",
   "OP_DOTIMES_P", "OP_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_C_A",
   "OP_SIMPLE_DO_A", "OP_SIMPLE_DO_STEP_A",
@@ -5215,6 +5215,7 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 	  for (i = sc->global_env_entries; i < vector_length(ge); i++)
 	    vector_element(ge, i) = sc->NIL;
 	}
+
       global_slot(symbol) = slot;
       if (symbol_id(symbol) == 0) /* never defined locally? */
 	{
@@ -6025,7 +6026,7 @@ s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol)
 
 s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 {
-  /* search from env e inward */
+  /* search from env e inward, or actually from the current env out to e */
   s7_pointer x, y;
   for (x = sc->envir; (x != e) && (is_environment(x)); x = next_environment(x))
     for (y = environment_slots(x); is_slot(y); y = next_slot(y))
@@ -43037,6 +43038,8 @@ static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer car_x, int 
 	  (cadr(cadr(body)) == car(closure_args(func))) &&
 	  (cadddr(car(body)) == caadr(closure_args(func))))
 	{
+	  if (is_global(car(car_x)))
+	    hop = 1; /* it's my party... */
 	  set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_STAR_S0);
 	}
     }
@@ -44523,13 +44526,19 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
        * (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12))
        * and similar define* cases
        */
-      if ((!is_global(caar(x))) ||
-	  (rdirect_memq(sc, caar(x), e)))
-	hop = 0;
+      hop = 0;
       /* this is very tricky!  See s7test for some cases.  Basically, we need to protect a recursive call
        *   of the current function being optimized from being confused with some previous definition
        *   of the same name.  But method lists have global names so the global bit is off even though the
-       *   thing is actually a safe global.
+       *   thing is actually a safe global.  But no closure can be considered safe in the hop sense --
+       *   even a global function might be redefined at anuy time, and previous uses of it in other functions
+       *   need to reflect its new value.  
+       *   So, closures are always checked, but built-in functions are used as if never redefined until that redefinition.
+       *   costs: index 6/1380, t502: 2/12900, bench: 43/4134, snd-test: 22/37200
+       * Syntax handling is already impure in s7, so the special handling of built-in functions doesn't
+       *   offend me much.  Consider each a sort of reader macro until someone redefines it -- previous
+       *   uses may not be affected because they might have been optimized away -- the result depends on the
+       *   current optimizer.
        */
     }
 
@@ -50596,11 +50605,101 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto DO_END_CLAUSES;
 		  }
 	      }
+
+	    set_unsafe_do(sc->code);
+	    set_fcdr(code, sc->code);
+	    push_stack(sc, OP_SAFE_DO_STEP_1, sc->args, code);
+	    sc->code = body;
+	    goto EVAL;
 	  }
-	set_unsafe_do(sc->code);
-	set_fcdr(code, sc->code);
-	push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
-	goto BEGIN;
+	else
+	  {
+	    set_unsafe_do(sc->code);
+	    set_fcdr(code, sc->code);
+	    push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
+	    goto BEGIN;
+	  }
+      }
+
+    case OP_SAFE_DO_STEP_1:
+      {
+	s7_pointer body;
+	body = car(fcdr(sc->code));
+	if (typesflag(body) == SYNTACTIC_PAIR)
+	  {
+	    /* fprintf(stderr, "syn: %s, code: %s\n", real_op_names[lifted_op(body)], DISPLAY(body)); */
+	    if ((lifted_op(body) == OP_INCREMENT_SA) || 
+		(lifted_op(body) == OP_INCREMENT_1))
+	      {
+		s7_pointer sym, arg, args, code, step_slot, end_slot;
+		s7_function incr, increment;
+		s7_Int step, end;
+		bool use_geq = false;
+
+		sym = find_symbol(sc, cadr(body));
+		arg = cddr(caddr(body));
+		args = sc->envir;
+		code = cdr(sc->code);
+		step_slot = environment_dox1(args);
+		end_slot = environment_dox2(args);
+
+#if (!WITH_GMP)
+		use_geq = (ecdr(caadr(code)) == geq_2);
+#endif
+		if (lifted_op(body) == OP_INCREMENT_1)
+		  {
+		    increment = all_x_c;
+		    incr = g_add_s1;
+		  }
+		else 
+		  {
+		    incr = (s7_function)(fcdr(caddr(body)));
+		    increment = (s7_function)(fcdr(arg));
+		  }
+
+		while (true)
+		  {
+		    step = s7_integer(slot_value(step_slot)) + 1;
+		    slot_set_value(step_slot, make_integer(sc, step));
+		    end = s7_integer(slot_value(end_slot));
+
+		    if ((step == end) || ((use_geq) && (step > end)))
+		      {
+			sc->code = cdar(code);
+			goto DO_END_CLAUSES;
+		      }
+		    car(sc->T2_2) = increment(sc, car(arg));
+		    car(sc->T2_1) = slot_value(sym);
+		    slot_set_value(sym, incr(sc, sc->T2_1));
+		  }
+	      }
+	  }
+	else
+	  {
+	    /*
+	    if (is_optimized(body))
+	      fprintf(stderr, "opt: %s, code: %s\n", opt_name(body), DISPLAY(body));
+	    else fprintf(stderr, "unk: %s\n", DISPLAY(body));
+	    */
+	  }
+	/*  OP_INCREMENT_SA, code: (set! x (+ x (* i 2.0)))
+	 *                   code: (set! sum (+ sum (expt (abs (next-sample reader)) p))) [channel-lp]
+	 *                   code: (set! name (string-append name "-test"))
+	 *                   code: (set! sum (+ sum (float-vector-ref ndat i)))
+	 *                   code: (set! diff (+ diff (abs (float-vector-ref diffs i))))
+	 *  OP_INCREMENT_SS, code: (set! x (+ x i)) 
+	 *                   code: (set! com (string-append com com))
+	 *  OP_INCREMENT_1, code: (set! sum (+ sum 1))
+	 *  OP_INCREMENT_C_TEMP, code: (set! sum (+ sum (next-sample reader))) [channel-mean]
+	 *  OP_SET_SYMBOL_A, code: (set! val (moving-average gen 0.0))
+	 *  OP_SET_PAIR_A, code: (set! (sample i) (* 2 (sample i)))
+	 * also many let_all_x and let_star_all_x
+
+	 * (let () (define (hi) (let ((x 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! x (+ x (* i .1)))) x)) (hi))
+	 * (let () (define (hi) (let ((x 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! x (+ x 1))) x)) (hi))
+	 *  h_safe_c_aaaa, code: (vector-set! sdata i 1 0.1)
+	 */
+	/* here we know we can goto EVAL */
       }
 
 
@@ -50929,6 +51028,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	/* this was mistakenly evaluating fcdr(body) but that means any inner argument is unevaluated! */
 	func = (s7_function)fcdr(body);
 	while (true) {func(sc, car(body));}
+
+	/* TODO: this is mostly all_x_c_opsq_s: the s's are obviously not changing, so expand? 
+	 *   but here as elsewhere a better way would handle all all_x s->slot directly
+	 */
+#if 0
+static s7_pointer all_x_c_opsq_s(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T1_1) = find_symbol_checked(sc, cadr(largs));
+  car(sc->T2_1) = c_call(largs)(sc, sc->T1_1);
+  car(sc->T2_2) = find_symbol_checked(sc, caddr(arg));
+  return(c_call(arg)(sc, sc->T2_1));
+}
+#endif
       }
 
 
@@ -53027,14 +53141,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = ecdr(code);
 	      goto UNSAFE_CLOSURE;
 	      
-	      
+
 	    case OP_CLOSURE_ALL_S:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, integer(arglist_length(code))))
 		{
 		  set_optimize_data(code, OP_UNKNOWN_ALL_S);
 		  goto OPT_EVAL;
 		}
-	      
+
 	    case HOP_CLOSURE_ALL_S:
 	      {
 		s7_pointer args, p, func, e;
@@ -69145,7 +69259,7 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
- * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 13.0
+ * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.9
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.0
  *            153 with run macro (eval_ptree)
  */
