@@ -1182,6 +1182,7 @@ struct s7_scheme {
 
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger, **previous_free_heap_top;
   unsigned int heap_size;
+  int gc_freed;
 
   /* "int" or "unsigned int" seems safe here:
    *      sizeof(s7_cell) = 48 bytes
@@ -2535,6 +2536,7 @@ static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
+static void stack_reset(s7_scheme *sc);
 
 static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer hdl);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
@@ -3587,13 +3589,28 @@ static void mark_c_proc(s7_pointer p)
 }
 
 
+/* 
+ * TODO: add begin_hook to GC, make GC stats C accessible.
+ * TODO: check gtk_demo for the toolbar replacement code
+ * TODO: (f)ceiling in gf
+ * TODO: src/gran 3rd arg in gf
+ */
+
 static void mark_pair(s7_pointer p)
 {
   if (!is_marked(p)) 
     {
       set_mark(p);
       S7_MARK(car(p));
-      S7_MARK(cdr(p));
+      /* if the list is huge, the recursion to cdr(p) is problematic when there are strict limits on the stack size
+       *  (C is not tail recursive apparently), so I'll try somthing else... (This form is faster according to callgrind).
+       */
+      for (p = cdr(p); is_pair(p) && (!is_marked(p)); p = cdr(p)) /* this order much faster */
+	{
+	  set_mark(p);
+	  S7_MARK(car(p));
+	}
+      if (!is_marked(p)) S7_MARK(p);                              /* checked is much faster */
     }
 }
 
@@ -4022,6 +4039,8 @@ static int gc(s7_scheme *sc)
     sweep(sc);
   }
 
+  sc->gc_freed = (int)(sc->free_heap_top - old_free_heap_top);
+
   if (sc->gc_stats)
     {
 #ifndef _MSC_VER
@@ -4031,12 +4050,23 @@ static int gc(s7_scheme *sc)
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
       fprintf(stdout, "freed %d/%d, time: %f\n", (int)(sc->free_heap_top - old_free_heap_top), sc->heap_size, secs);
 #else
-      fprintf(stdout, "freed %d/%d\n", (int)(sc->free_heap_top - old_free_heap_top), sc->heap_size);
+      fprintf(stdout, "freed %d/%d\n", sc->gc_freed, sc->heap_size);
 #endif
     }
-  
+
+  if (sc->begin_hook) call_begin_hook(sc);
   sc->previous_free_heap_top = sc->free_heap_top;
-  return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
+  return(sc->gc_freed); /* needed by cell allocator to decide when to increase heap size */
+}
+
+unsigned int s7_heap_size(s7_scheme *sc)
+{
+  return(sc->heap_size);
+}
+
+int s7_gc_freed(s7_scheme *sc)
+{
+  return(sc->gc_freed);
 }
 
 
@@ -20498,6 +20528,14 @@ static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 }
 
 
+int s7_port_line_number(s7_pointer p)
+{
+  if (is_input_port(p))
+    return(port_line_number(p));
+  return(0);
+}
+
+
 const char *s7_port_filename(s7_pointer x)
 {
   if (((is_input_port(x)) || 
@@ -32236,21 +32274,6 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 }
 
 
-s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
-{
-  if (is_c_function(fnc))
-    return(c_function_call(fnc)(sc, args));
-
-  /* mostly mus_scaler, mus_frequency, as_needed_input_any */
-
-  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-  sc->args = args;
-  sc->code = fnc;
-  eval(sc, OP_APPLY);
-  return(sc->value);
-}
-
-
 bool s7_is_procedure(s7_pointer x)
 {
   return(is_procedure(x)); /* this returns "is applicable" so it is true for applicable c_objects, macros, etc */
@@ -37408,7 +37431,6 @@ static bool call_begin_hook(s7_scheme *sc)
       /* otherwise the evaluator returns whatever random thing is in sc->value (normally #<closure>)
        *   which makes debugging unnecessarily difficult.
        */
-      
       s7_quit(sc);     /* don't call gc here -- perhaps at restart somehow? */
       return(true);
     }
@@ -37503,6 +37525,69 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
   return(sc->NIL);
 }
 
+/* 5-Mar:
+   
+241929: ((float-vector-ref in-data (min (max 0 (set! i (+ i dir))) len1))) -- in examp and effects
+  this is a moving-average with increment set to 1.0, but what size?
+134359: ((set! ctr (+ ctr 1)) (if (= ctr fft-size) (begin (fft rl im 1)...
+101756: (let ((env-val (env amp-env))) (float-vector-set! xc 0 env-val)...
+101656: (let ((val (read-sample rd))) (if (< beg 10) (set! val (* val beg 0.1)) (if...
+101656: (and (set! outp (not outp)) (* y 0.5))
+    [101656: (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))] -> now uses ceiling which clm2xen could handle? gf_ceiling_g?
+101656: (moog-filter gen inval)
+94928: ((float-vector-multiply! xcof es) (fir-filter flt x))
+88200: (+ y (zipper zip read0 read1))
+50829: ((set! (v1 0) n) (set! (v1 1) (* n 3)) v1)
+50829: (and (set! ctr (not ctr)) (* n 2.0))
+50828: (let ((old-y (delay buffer y))) (set! current-sample (+ 1 current-sample))...
+50828: ((set! (data 0) y) data)
+50828: ((set! diff (max diff (abs (- y (file->sample ind2 ctr 0))))) (set! ctr (+...
+50828: ((if (>= (abs y) oldamp) (begin (set! oldloc ctr) (set! oldamp (abs y))))...
+50828: ((if (> (abs y) amp) (begin (set! amp (abs y)) (set! loc ctr))) (set! ctr (-...
+50828: ((if (> (abs y) amp) (begin (set! amp (abs y)) (set! loc ctr))) (set! ctr (-...
+50828: (let ((outval (* gain (formant filt (* amp y)))))...
+50828: (granulate grn f1 f2)
+50828: (granulate grn #f f1)
+50828: (not (set! mxdiff (max mxdiff (abs (- (rd1) (rd2))))))
+50828: (not (set! diff (max diff (abs (- y (next-sample rd))))))
+50828: (if (= (set! ctr (+ ctr 1)) 3) (make-float-vector 5 0.1) (* y 0.5))
+50828: ((set! (vect 0) (set! (vect 1) (* y 2))) vect)
+43840: (or (> n3 0.1) (not (set! samp (+ samp 1))))
+41623: (let ((val (formant frm x))) (mus-set-formant-frequency frm (env menv)) val)
+41623: (let* ((curmax (moving-max maxer y)) (diff (- 0.5 (* mult curmax)))...
+41623: (src sr 0.0 f2)
+41327: ((let ((val (v inctr))) (set! inctr (+ inctr dir)) (if (>= inctr vsize)...
+40000: ((set! (g 'r) (min 0.999999 (max -0.999999 val))) (with-environment g (let...
+33083: ((let ((inval (file->sample f cur-sample))) (set! cur-sample (+ cur-sample...
+22050: (let ((val (sin phase))) (set! phase (+ phase freq)) (set! freq (+ freq...
+22050: ((set! (g 'r) (generator-clamp-r val)) (set! (g 'rr1) (+ 1.0 (* (g 'r) (g...
+20000: ((set! (g 'frequency) (hz->radians val)) (set! (g 'r) (clamp-rxycos-r g 0.0))...
+10000: (let ((diff (abs (- cur y)))) (if (> diff mxoff) (set! mxoff diff)) (set! cur...
+10000: (let ((diff (abs (- cur y)))) (if (> diff mxoff) (set! mxoff diff)) (set! cur...
+8000: (let ((diff (abs (- cur y)))) (if (> diff mxoff) (set! mxoff diff)) (set! cur...
+6833: ((set! ctr (+ ctr 0.0001)))
+5000: ((if (and (< lasty 0.1) (>= y 0.1)) (set! pts (cons samp pts))) (set! lasty...
+4412: (convolve cnv (lambda (dir) (read-sample sf)))
+2506: (>= (abs y) (- val 0.0001))
+2288: ((set! ctr (+ ctr incr)) ctr)
+2203: ((src sr2 0.0 f1))
+2203: ((src sr2 0.0 f3))
+2000: (granulate gen f1 f2)
+ */
+
+s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
+{
+  if (is_c_function(fnc))
+    return(c_function_call(fnc)(sc, args));
+
+  /* mostly mus_scaler, mus_frequency, as_needed_input_any */
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+  sc->args = args;
+  sc->code = fnc;
+  eval(sc, OP_APPLY);
+  return(sc->value);
+}
+
 
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 {
@@ -37519,10 +37604,6 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 
 s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
 {
-  /* nothing here is easy to optimize:
-      101756: (let ((env-val (env amp-env))) (set! (mus-xcoeff flt 0) env-val) (set!...
-      etc
-  */
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = form;
   if ((e != sc->global_env) &&
@@ -44543,7 +44624,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
     }
 
   /* but if we make a recursive call on a func, we've obviously already looked up that function, and
-   *   if it has not been shadowed, then we don't need to check it -- so the hop but should be on
+   *   if it has not been shadowed, then we don't need to check it -- so the hop bit should be on
    *   for that one case.
    */
 
@@ -50422,7 +50503,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      }
 			  }
 
-			/* fprintf(stderr, "%d %s\n", __LINE__, DISPLAY_80(sc->code));	*/
+			/* fprintf(stderr, "%d %s\n", __LINE__, DISPLAY_80(sc->code)); */
 			push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, code);
 			goto NS_EVAL;
 		      }
@@ -50631,17 +50712,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if ((lifted_op(body) == OP_INCREMENT_SA) || 
 		(lifted_op(body) == OP_INCREMENT_1))
 	      {
-		s7_pointer sym, arg, args, code, step_slot, end_slot;
+		s7_pointer sym_slot, arg, code, step_slot, end_slot;
 		s7_function incr, increment;
 		s7_Int step, end;
 		bool use_geq = false;
 
-		sym = find_symbol(sc, cadr(body));
+		sym_slot = find_symbol(sc, cadr(body));
 		arg = cddr(caddr(body));
-		args = sc->envir;
 		code = cdr(sc->code);
-		step_slot = environment_dox1(args);
-		end_slot = environment_dox2(args);
+		step_slot = environment_dox1(sc->envir);
+		end_slot = environment_dox2(sc->envir);
 
 #if (!WITH_GMP)
 		use_geq = (ecdr(caadr(code)) == geq_2);
@@ -50656,6 +50736,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    incr = (s7_function)(fcdr(caddr(body)));
 		    increment = (s7_function)(fcdr(arg));
 		  }
+		arg = car(arg);
 
 		while (true)
 		  {
@@ -50663,14 +50744,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    slot_set_value(step_slot, make_integer(sc, step));
 		    end = s7_integer(slot_value(end_slot));
 
-		    if ((step == end) || ((use_geq) && (step > end)))
+		    if ((step == end) || 
+			((use_geq) && (step > end)))
 		      {
 			sc->code = cdar(code);
 			goto DO_END_CLAUSES;
 		      }
-		    car(sc->T2_2) = increment(sc, car(arg));
-		    car(sc->T2_1) = slot_value(sym);
-		    slot_set_value(sym, incr(sc, sc->T2_1));
+		    car(sc->T2_2) = increment(sc, arg);
+		    car(sc->T2_1) = slot_value(sym_slot);
+		    slot_set_value(sym_slot, incr(sc, sc->T2_1));
 		  }
 	      }
 	  }
@@ -50690,7 +50772,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 *  OP_INCREMENT_SS, code: (set! x (+ x i)) 
 	 *                   code: (set! com (string-append com com))
 	 *  OP_INCREMENT_1, code: (set! sum (+ sum 1))
-	 *  OP_INCREMENT_C_TEMP, code: (set! sum (+ sum (next-sample reader))) [channel-mean]
+	 *  OP_INCREMENT_C_TEMP, code: (set! sum (+ sum (next-sample reader))) [channel-mean]: is direct call of top like symbol_a
 	 *  OP_SET_SYMBOL_A, code: (set! val (moving-average gen 0.0))
 	 *  OP_SET_PAIR_A, code: (set! (sample i) (* 2 (sample i)))
 	 * also many let_all_x and let_star_all_x
@@ -69260,7 +69342,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.9
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 37.0
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.7
  *            153 with run macro (eval_ptree)
  */
 /* caveats: callgrind is confused about sincos, and does not count file IO delays

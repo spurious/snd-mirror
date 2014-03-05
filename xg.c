@@ -42502,9 +42502,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_SUBSTRUCTURE_MASK);
   DEFINE_INTEGER(GDK_SCROLL_MASK);
   DEFINE_INTEGER(GDK_ALL_EVENTS_MASK);
-  DEFINE_INTEGER(GDK_VISIBILITY_UNOBSCURED );
-  DEFINE_INTEGER(GDK_VISIBILITY_PARTIAL );
-  DEFINE_INTEGER(GDK_VISIBILITY_FULLY_OBSCURED);
   DEFINE_INTEGER(GDK_SCROLL_UP);
   DEFINE_INTEGER(GDK_SCROLL_DOWN);
   DEFINE_INTEGER(GDK_SCROLL_LEFT);
@@ -44288,7 +44285,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Feb-14"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("04-Mar-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

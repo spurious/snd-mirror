@@ -413,9 +413,9 @@
 (CINT "GDK_ALL_EVENTS_MASK" "GdkEventMask")
 
 
-(CINT "GDK_VISIBILITY_UNOBSCURED " "GdkVisibilityState")
-(CINT "GDK_VISIBILITY_PARTIAL " "GdkVisibilityState")
-(CINT "GDK_VISIBILITY_FULLY_OBSCURED" "GdkVisibilityState")
+;;; 3.11.8 (CINT "GDK_VISIBILITY_UNOBSCURED " "GdkVisibilityState")
+;;; 3.11.8 (CINT "GDK_VISIBILITY_PARTIAL " "GdkVisibilityState")
+;;; 3.11.8 (CINT "GDK_VISIBILITY_FULLY_OBSCURED" "GdkVisibilityState")
 (CINT "GDK_SCROLL_UP" "GdkScrollDirection")
 (CINT "GDK_SCROLL_DOWN" "GdkScrollDirection")
 (CINT "GDK_SCROLL_LEFT" "GdkScrollDirection")

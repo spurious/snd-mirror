@@ -168,13 +168,19 @@
 
 ;;; AMPLITUDE EFFECTS
 
-(define* (effects-squelch-channel amp gate-size snd chn)
+(define* (effects-squelch-channel amp gate-size snd chn no-silence)
   (let ((f0 (make-moving-average gate-size))
 	(f1 (make-moving-average gate-size :initial-element 1.0)))
-    (map-channel (lambda (y) (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0))))
-		 ;; or       (* y (moving-average f1 (min 1.0 (* (max 0.0 (- (moving-average f0 (* y y)) amp)) 1e7)))) -- no "if"
-		 0 #f snd chn #f
-		 (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
+    (if no-silence
+	(map-channel (lambda (y)
+		       (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
+			 (if (zero? val)
+			     #f
+			     val)))
+		     0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size))
+	(map-channel (lambda (y) 
+		       (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp)))))
+		     0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size)))))
 
 
 (let* ((amp-menu-list ())
@@ -376,9 +382,9 @@
 			   (apply map
 				  (lambda (snd chn)
 				    (if (= (sync snd) snc)
-					(effects-squelch-channel (* gate-amount gate-amount) gate-size snd chn)))
+					(effects-squelch-channel (* gate-amount gate-amount) gate-size snd chn omit-silence)))
 				  (all-chans))
-			   (effects-squelch-channel (* gate-amount gate-amount) gate-size (selected-sound) (selected-channel)))))
+			   (effects-squelch-channel (* gate-amount gate-amount) gate-size (selected-sound) (selected-channel) omit-silence))))
 		   
 		   (lambda (w context info)
 		     (help-dialog "Gate"
@@ -459,13 +465,12 @@
 				 (fir-filter flt (* scaler (+ (tap del) inval))))))
 		     beg #f snd chn #f
 		     (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg #f))
-	(let ((samp 0)
-	      (input-samps (or input-samps-1 dur (frames snd chn))))
+	(let* ((cutoff (- (or input-samps-1 dur (frames snd chn)) 1))
+	       (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 	  (map-channel (lambda (inval)
-			 (set! samp (+ samp 1))
 			 (+ inval 
 			    (delay del 
-				   (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
+				   (fir-filter flt (* scaler (+ (tap del) (* (env genv) inval)))))))
 		       beg dur snd chn #f
 		       (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))))
 
@@ -474,13 +479,12 @@
   (let* ((os (make-oscil frq))
 	 (len (round (* secs (srate snd))))
 	 (del (make-delay len :max-size (round (+ len amp 1))))
-	 (samp 0)
-	 (input-samps (or input-samps-1 dur (frames snd chn))))
+	 (cutoff (- (or input-samps-1 dur (frames snd chn)) 1))
+	 (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
     (map-channel (lambda (inval)
-		   (set! samp (+ samp 1))
 		   (+ inval 
 		      (delay del 
-			     (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
+			     (* scaler (+ (tap del) (* (env genv) inval)))
 			     (* amp (oscil os)))))
 		 beg dur snd chn #f
     		 (format #f "effects-zecho-1 ~A ~A ~A ~A ~A ~A ~A" scaler secs frq amp input-samps-1 beg dur))))
@@ -515,14 +519,13 @@
 		   
 		   (lambda (w context info)
 		     (map-chan-over-target-with-sync
-		      (lambda (input-samps) 
+		      (lambda (cutoff) 
 			(let ((del (make-delay (round (* delay-time (srate)))))
-			      (samp 0))
+			      (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 			  (lambda (inval)
-			    (set! samp (+ samp 1))
 			    (+ inval
 			       (delay del
-				      (* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))
+				      (* echo-amount (+ (tap del) (* (env genv) inval))))))))
 		      echo-target
 		      (lambda (target input-samps) 
 			(format #f "effects-echo ~A ~A ~A" 
@@ -585,15 +588,14 @@
 	(flecho-truncate #t))
     
     (define flecho-1
-      (lambda (scaler secs input-samps)
+      (lambda (scaler secs cutoff)
 	(let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
 	      (del (make-delay (round (* secs (srate)))))
-	      (samp 0))
+	      (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 	  (lambda (inval)
-	    (set! samp (+ samp 1))
 	    (+ inval 
 	       (delay del 
-		      (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))))
+		      (fir-filter flt (* scaler (+ (tap del) (* (env genv) inval))))))))))
     
     (define (post-flecho-dialog)
       (if (not (Widget? flecho-dialog))
@@ -674,16 +676,15 @@
 	(zecho-truncate #t))
     
     (define zecho-1
-      (lambda (scaler secs frq amp input-samps)
+      (lambda (scaler secs frq amp cutoff)
 	(let* ((os (make-oscil frq))
 	       (len (round (* secs (srate))))
 	       (del (make-delay len :max-size (round (+ len amp 1))))
-	       (samp 0))
+	       (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 	  (lambda (inval)
-	    (set! samp (+ samp 1))
 	    (+ inval 
 	       (delay del 
-		      (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
+		      (* scaler (+ (tap del) (* (env genv) inval)))
 		      (* amp (oscil os))))))))
     
     (define (post-zecho-dialog)

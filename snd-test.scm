@@ -39,12 +39,15 @@
 (if (<= tests 0) (set! tests 1))
 ;(set! *gc-stats* #t)
 
+#|
 (set! *#readers* 
       (cons (cons #\_ (lambda (str)
 			(if (string=? str "__line__")
 			    (port-line-number)
 			    #f)))
             *#readers*))
+|#
+(set! *#readers* (cons (cons #\_ _snd-line-reader_) *#readers*))
 
 (define (copy-file source dest) (system (string-append "cp " source " " dest)))
 
@@ -4009,7 +4012,7 @@
 			(if (not (= (mix-position mx) (* 44100 61000))) (snd-display #__line__ ";bigger mix to: ~A" (mix-position mx))))
 		      (snd-display #__line__ ";no mix tag from mix-sound"))
 		  (undo 2))
-		(let ((res (scan-channel (lambda (y) (not (= y 0.0))))))
+		(let ((res (scan-channel (lambda (y) (> (abs y) 0.0)))))
 		  (if (or (not res)
 			  (> (cadr res) 100))
 		      (snd-display #__line__ ";bigger find not 0.0: ~A" res)))
@@ -11907,16 +11910,14 @@ EDITS: 2
     "(fltit) returns a time-varying filter: (map-chan (fltit))"
     (let* ((coeffs (float-vector .1 .2 .3 .4 .4 .3 .2 .1))
 	   (flt (make-fir-filter 8 coeffs))
-	   (xcof (mus-xcoeffs flt))
-	   (es (make-vector 8)))
+	   (xcof (mus-xcoeffs flt)) ; maybe a copy?
+	   (es (make-float-vector 8)))
       (do ((i 0 (+ i 1)))
 	  ((= i 8))
-	(set! (es i) (make-env (list 0 (coeffs i) 1 0) :duration 0.5)))
-      (set! (es 5) (make-env '(0 .4 1 1) :duration 1.0))
+	(set! (es i) 0.9994)) ; something like (+ 1.0 (/ (log 1e-5) (* 0.5 *clm-srate*)))
+      (set! (es 5) 1.00002)
       (lambda (x)
-	(do ((i 0 (+ i 1)))
-	    ((= i 8))
-	  (float-vector-set! xcof i (env (vector-ref es i))))
+	(float-vector-multiply! xcof es)
 	(fir-filter flt x))))
   
 ;;; (with-sound (:output "test.snd") (let ((p (make-pulse-train 1000))) (do ((i 0 (+ i 1))) ((= i 44100)) (outa i (* .5 (pulse-train p))))))
@@ -19927,12 +19928,9 @@ EDITS: 2
 	  (if minval (snd-display #__line__ ";granulate stable 3 min: ~A ~A" minval (sample (cadr minval)))))
 	(undo)
 	
-	(let ((ctr 0))
+	(let ((ctr -0.0001))
 	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir)
-					     (let ((val (* ctr .0001)))
-					       (set! ctr (+ ctr 1))
-					       val))
+				    :input (lambda (dir) (set! ctr (+ ctr .0001)))
 				    :length .01
 				    :hop .1
 				    :ramp 0.0
@@ -19940,7 +19938,7 @@ EDITS: 2
 				    :jitter 0.0))
 	  (clm-channel gen)
 	  (if (fneq (maxamp) .462) (snd-display #__line__ ";granulate ramped 4: ~A" (maxamp)))
-	  (let ((vals (count-matches (lambda (y) (not (= y 0.0))))))
+	  (let ((vals (count-matches (lambda (y) (> (abs y) 0.0)))))
 	    (if (> (abs (- vals 1104)) 10) (snd-display #__line__ ";granulate ramped 4 not 0.0: ~A" vals)))
 	  (if (or (not (vequal (channel->float-vector 2203 10)
 			       (float-vector 0.000 0.000 0.110 0.110 0.110 0.111 0.111 0.111 0.111 0.111)))
@@ -31512,7 +31510,9 @@ EDITS: 2
 				-0.003 -0.002 -0.000 0.001 0.001 0.000 0.000 -0.000 -0.000 -0.000)))
 	      (snd-display #__line__ ";src-channel 0.25 -> ~A" (channel->float-vector 360 80 ind 0)))
 	  (undo 2 ind 0)
-	  (map-channel (let ((i 0)) (lambda (y) (let ((val (sin (* i (/ pi 100))))) (set! i (+ i 1)) (* .5 val)))))
+	  ;(map-channel (let ((i 0)) (lambda (y) (let ((val (sin (* i (/ pi 100))))) (set! i (+ i 1)) (* .5 val)))))
+	  (let ((e (make-env (list 0.0 0.0 1.0 1.0) :scaler (* .01 pi (- (frames) 1.0)) :length (frames))))
+	    (map-channel (lambda (y) (* .5 (sin (env e))))))
 	  (for-each
 	   (lambda (sr df)
 	     (src-channel sr)
@@ -31609,7 +31609,8 @@ EDITS: 2
 			      (lambda (y) 
 				(if (= ctr 0) (map-channel (lambda (n) (* n 2.0)))) 
 				(set! ctr 1) 
-				y)))
+				y))
+			    0 3)
 	       (if (fneq mx (maxamp ind 0)) (snd-display #__line__ ";map+map max 2: ~A ~A" mx (maxamp ind 0)))
 	       (if (not (= (edit-position ind 0) 2)) (snd-display #__line__ ";map+map edit-pos: ~A" (edit-position ind 0)))
 	       (if (fneq mx (/ (maxamp ind 0 1) 2)) (snd-display #__line__ ";map+map max 1: ~A ~A" mx (maxamp ind 0 1)))
@@ -34864,7 +34865,7 @@ EDITS: 1
       (close-sound ind)
       (set! ind (open-sound "test.snd"))
       (if (not (= (chans ind) 2)) (snd-display #__line__ ";src-sound/save-sound-as-> ~D chans" (chans ind)))
-      (let ((tag (scan-channel (lambda (y) (not (= y 0.0))) 8000 #f)))
+      (let ((tag (scan-channel (lambda (y) (> (abs y) 0.0)) 8000 #f)))
 	(if tag (snd-display #__line__ ";src-sound/save-sound-as not zeros: ~A ~A" tag (sample (cadr tag) ind 0))))
       (close-sound ind))
     
@@ -47399,27 +47400,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-4-Mar:
-36,980,134,014
-5,712,614,932  s7.c:eval [/home/bil/gtk-snd/snd]
-2,278,888,655  ???:sin [/lib64/libm-2.12.so]
-2,032,882,298  ???:cos [/lib64/libm-2.12.so]
+5-Mar:
+36,709,624,133
+5,739,812,299  s7.c:eval [/home/bil/gtk-snd/snd]
+2,258,508,257  ???:sin [/lib64/libm-2.12.so]
+2,029,047,261  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,034,977,513  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  887,216,164  ???:t2_32 [/home/bil/gtk-snd/snd]
-  876,243,680  s7.c:gc [/home/bil/gtk-snd/snd]
+1,036,157,588  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  890,710,228  ???:t2_32 [/home/bil/gtk-snd/snd]
+  858,175,164  s7.c:gc [/home/bil/gtk-snd/snd]
   782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
-  752,238,608  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  679,733,025  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  660,956,223  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  649,478,855  s7.c:eval'2 [/home/bil/gtk-snd/snd]
   648,381,221  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
   592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  566,455,398  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  565,843,433  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
   449,851,360  ???:n1_64 [/home/bil/gtk-snd/snd]
-  415,207,651  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  415,883,525  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  373,210,168  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  372,982,030  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  299,928,449  ???:memcpy [/lib64/ld-2.12.so]
 |#
 
 

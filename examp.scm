@@ -1340,37 +1340,6 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
       (if (> max-samp 1.0) (set! (y-bounds snd1) (list (- max-samp) max-samp)))
       max-samp)))
 
-#|
-;;; -------- time varying FIR filter (not very interesting...)
-
-(define (fltit)
-  "(fltit) returns a time-varying filter: (map-channel (fltit))"
-  (let* ((coeffs (float-vector .1 .2 .3 .4 .4 .3 .2 .1))
-	 (flt (make-fir-filter 8 coeffs))
-	 (es (make-vector 8)))
-    (do ((i 0 (+ i 1)))
-	((= i 8))
-      (set! (es i) (make-env (list 0 (coeffs i) 1 0) :length 100)))
-    (set! (es 5) (make-env '(0 .4 1 1) :duration 1.0))
-    (lambda (x)
-      (let ((val (fir-filter flt x))
-	    (xcof (mus-xcoeffs flt)))
-	(do ((i 0 (+ i 1)))
-	    ((= i 8))
-	  (float-vector-set! xcof i (env (vector-ref es i))))
-	val))))
-
-;;; for something this simple (like a notch filter), we can use a two-zero filter:
-;
-;(define flt (make-two-zero 550.0 .99))
-;
-;;; this is a strong notch filter centered at 550 Hz
-;
-;(map-channel (lambda (x) (two-zero flt x)))
-;
-;;; similarly make-two-pole (or better, make-formant)
-;;; can be used for resonances.
-|#
 
 
 ;;; -------- locate-zero (Anders Vinjar)
@@ -1517,7 +1486,6 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 
 
 
-
 ;;; -------- filtered-env 
 
 (define* (filtered-env e snd chn)
@@ -1525,12 +1493,14 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together"
   (let* ((samps (frames))
 	 (flt (make-one-pole 1.0 0.0))
+	 (xc (mus-xcoeffs flt))
+	 (yc (mus-ycoeffs flt))
 	 (amp-env (make-env e :length samps)))
     (map-channel
      (lambda (val)
        (let ((env-val (env amp-env)))
-	 (set! (mus-xcoeff flt 0) env-val)
-	 (set! (mus-ycoeff flt 1) (- env-val 1.0))
+	 (float-vector-set! xc 0 env-val)
+	 (float-vector-set! yc 1 (- env-val 1.0))
 	 (one-pole flt (* env-val val))))
      0 #f snd chn #f (format #f "filtered-env '~A" e))))
 

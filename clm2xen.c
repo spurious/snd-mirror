@@ -90,7 +90,6 @@ static gf *find_gf(s7_scheme *sc, s7_pointer expr);
 static void gf_free(void *p);
 static gf *gf_alloc(void);
 static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
-static void store_gf_fixup(s7_scheme *sc, s7_pointer f, gf *(*fixup)(s7_scheme *sc, s7_pointer expr, s7_pointer locals));
 
 #endif
 
@@ -2085,18 +2084,24 @@ static XEN g_mus_xcoeffs(XEN gen)
 {
   #define H_mus_xcoeffs "(" S_mus_xcoeffs " gen): gen's filter xcoeffs (vct of coefficients on inputs)"
   mus_xen *ms;
-
+  
   ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
   if (ms) 
     {
+      mus_any *g;
+      g = ms->gen;
       if (ms->vcts)
 	{
-	  if (mus_is_polywave(XEN_TO_MUS_ANY(gen)))
+	  if (mus_is_polywave(g))
 	    return(ms->vcts[0]);
 	  if (ms->nvcts > G_FILTER_XCOEFFS)
 	    return(ms->vcts[G_FILTER_XCOEFFS]); 
 	}
-      /* no wrapper -- locsig/ssb-am, all smpflts have xcoeffs, latter have ycoeffs, but how to get array size? */
+      if ((mus_is_one_zero(g)) ||
+	  (mus_is_one_pole(g)) ||
+	  (mus_is_two_zero(g)) ||
+	  (mus_is_two_pole(g)))
+	return(xen_make_vct_wrapper(3, mus_xcoeffs(g)));
       return(XEN_FALSE);
     }
 #if HAVE_SCHEME
@@ -2120,6 +2125,8 @@ static XEN g_mus_ycoeffs(XEN gen)
   ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
   if (ms) 
     {
+      mus_any *g;
+      g = ms->gen;
       if (ms->vcts)
 	{
 	  if ((mus_is_polywave(XEN_TO_MUS_ANY(gen))) && (ms->nvcts == 2))
@@ -2127,6 +2134,11 @@ static XEN g_mus_ycoeffs(XEN gen)
 	  if (ms->nvcts > G_FILTER_YCOEFFS)
 	    return(ms->vcts[G_FILTER_YCOEFFS]);
 	}
+      if ((mus_is_one_zero(g)) ||
+	  (mus_is_one_pole(g)) ||
+	  (mus_is_two_zero(g)) ||
+	  (mus_is_two_pole(g)))
+	return(xen_make_vct_wrapper(3, mus_ycoeffs(g)));
       return(XEN_FALSE);
     }
 #if HAVE_SCHEME
@@ -12361,6 +12373,46 @@ static gf *fixup_random(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 }
 
 
+/* -------- contrast_enhancement -------- */
+
+static mus_float_t gf_contrast_enhancement_gx(void *p) {gf *g = (gf *)p; return(mus_contrast_enhancement(g->f1(g->g1), g->x1));}
+
+static gf *fixup_contrast_enhancement(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
+{
+  if (s7_list_length(sc, expr) == 3)
+    {
+      gf *g, *g1 = NULL;
+      int typ;
+      double x, x1 = 0.0;
+      double *rx;
+      s7_pointer r, s, y;
+      
+      y = caddr(expr);
+      if ((s7_is_symbol(y)) &&
+	  (!s7_is_local_variable(sc, y, locals)))
+	{
+	  r = s7_symbol_value(sc, y);
+	  if (s7_is_real(r))
+	    x1 = s7_number_to_real(sc, r);
+	  else return(NULL);
+	}
+
+      typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
+      if (typ == GF_G)
+	{
+	  g = gf_alloc();
+	  g->func = gf_contrast_enhancement_gx;
+	  g->x1 = x1;
+	  g->f1 = g1->func;
+	  g->g1 = g1;
+	  return(g);
+	}
+      if (g1) gf_free(g1);
+    }
+  return(NULL);
+}
+
+
 /* -------- max -------- */
 
 static mus_float_t gf_max_x1_rx1(void *p) {gf *g = (gf *)p; return((g->x1 >= (*(g->rx1))) ? g->x1 : (*(g->rx1)));}
@@ -13873,6 +13925,7 @@ static mus_float_t vf_3_s1_s2(void *p)  {gf *g = (gf *)p; return(g->func_3(g->vf
 static mus_float_t gf_vct_ref(void *p) {gf *g = (gf *)p; return(g->rx1[s7_integer(s7_cell_slot_value(g->s1))]);}
 static mus_float_t gf_gen_ref_0(void *p) {gf *g = (gf *)p; return(g->func_3((void *)(g->gen), 0.0, 0.0));}
 static mus_float_t gf_gen_ref_1(void *p) {gf *g = (gf *)p; return(g->func_3((void *)(g->gen), ((gf *)(g->g1))->func(g->g1), 0.0));}
+static mus_float_t gf_gen_ref_2(void *p) {gf *g = (gf *)p; return(g->func_3((void *)(g->gen), ((gf *)(g->g1))->func(g->g1), ((gf *)(g->g2))->func(g->g2)));}
 
 #if USE_SND
 static mus_float_t gf_sampler(void *p) {gf *g = (gf *)p; return(read_sample((snd_fd *)(g->gen)));}
@@ -13916,12 +13969,7 @@ static gf *find_gf(s7_scheme *sc, s7_pointer expr)
 
 
 #define return_null(Arg) return(NULL) /* {fprintf(stderr, "%d %s\n", __LINE__, DISPLAY(Arg)); return(NULL);} */
-
-/* TODO: according to callgrind, lots of overhead here
- *   also maybe contrast_enhancement file->sample move-sound 
- */
 bool mus_env_is_constant(mus_any *ptr);
-
 
 static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
@@ -13943,12 +13991,14 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	}
       return_null(expr);
     }
+
   op = s7_car_value(sc, expr);
   choices = (s7_pointer *)s7_function_chooser_data_direct(op);
+
   if (choices)
     {
-      bool (*is_gen)(s7_pointer p);
       int len;
+      bool (*is_gen)(s7_pointer p);
       s7_pointer obj, vec = NULL, ind = NULL;
       gf *(*fixup_gf)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
       gf *p;
@@ -13960,7 +14010,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
       fixup_gf = (gf* (*)(s7_scheme *sc, s7_pointer p, s7_pointer locals))(choices[GEN_DIRECT_FIXUP]);
       if (fixup_gf)
 	{
-	  p = fixup_gf(sc, expr, locals);
+	  p = fixup_gf(sc, expr, locals); /* special gf cases like fixup_abs */
 	  if (!p) return_null(expr);
 	  return(p);
 	}
@@ -14000,6 +14050,8 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	return_null(expr);
 
       len = s7_list_length(sc, expr);
+      
+      /* -------- (oscil osc) -------- */
       if (len == 2)
 	{
 	  mus_float_t (*gen1)(void *p);
@@ -14118,6 +14170,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	  return(p);
 	}
 
+      /* -------- (oscil osc fm) -------- */
       if (len == 3)
 	{
 	  mus_float_t (*gen2)(void *p, mus_float_t x);
@@ -14128,7 +14181,43 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	  gf *g1 = NULL;
 
 	  gen2 = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
-	  if (!gen2) return_null(expr);
+	  if (!gen2) 
+	    {
+	      mus_any *grn;
+	      mus_xen *gn;
+	      /* special case (for now?) granulate check */
+	      if ((its_gf) && 
+		  (s7_is_symbol(caddr(expr))))
+		{
+		  if (s7_is_object(obj))
+		    gn = (mus_xen *)s7_object_value(obj);
+		  else gn = (mus_xen *)obj;
+		  if ((gn) && (gn->gen) && 
+		      (mus_is_granulate((mus_any *)(gn->gen))))
+		    {
+		      s7_pointer func;
+		      grn = gn->gen;
+		      func = s7_symbol_value(s7, caddr(expr));
+
+		      if ((Xen_is_bound(func)) &&
+			  (!Xen_is_bound(gn->vcts[MUS_INPUT_DATA])))
+			{
+			  if (Xen_is_procedure(func))
+			    {
+			      if (XEN_REQUIRED_ARGS_OK(func, 1))
+				gn->vcts[MUS_INPUT_FUNCTION] = func;
+			      else XEN_BAD_ARITY_ERROR(S_granulate, 2, func, "granulate input function wants 1 arg");
+			    }
+			}
+		      p = gf_alloc();
+		      p->func = gf_1;
+		      p->func_1 = (mus_float_t (*)(void *p))wrapped_granulate_1; /* wrapped_* takes the mus_xen pointer */
+		      p->gen = (void *)gn;
+		      return(p);
+		    }
+		}
+	      return_null(expr);
+	    }
 
 	  p = gf_alloc();
 	  p->func_2 = gen2;
@@ -14209,6 +14298,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	  return_null(expr);
 	}
 
+      /* -------- (oscil osc fm pm) -------- */
       if (len == 4)
 	{
 	  gf *g1 = NULL, *g2 = NULL;
@@ -14219,7 +14309,47 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	  mus_float_t (*gen3)(void *p, mus_float_t x, mus_float_t y);
 
 	  gen3 = (mus_float_t (*)(void *p, mus_float_t x, mus_float_t y))(choices[GEN_DIRECT_3]);
-	  if (!gen3) return_null(expr);
+	  if (!gen3) 
+	    {
+	      /* fprintf(stderr, "nope: %s\n", DISPLAY(expr)); */
+#if 0
+	      mus_any *grn;
+	      mus_xen *gn;
+	      /* special case (for now?) src/granulate check (gran: #f|func #f|func), src: expr #f|func
+	       */
+	      if ((its_gf) && 
+		  (s7_is_symbol(caddr(expr))))
+		{
+		  if (s7_is_object(obj))
+		    gn = (mus_xen *)s7_object_value(obj);
+		  else gn = (mus_xen *)obj;
+		  if ((gn) && (gn->gen) && 
+		      (mus_is_granulate((mus_any *)(gn->gen))))
+		    {
+		      s7_pointer func;
+		      grn = gn->gen;
+		      func = s7_symbol_value(s7, caddr(expr));
+
+		      if ((Xen_is_bound(func)) &&
+			  (!Xen_is_bound(gn->vcts[MUS_INPUT_DATA])))
+			{
+			  if (Xen_is_procedure(func))
+			    {
+			      if (XEN_REQUIRED_ARGS_OK(func, 1))
+				gn->vcts[MUS_INPUT_FUNCTION] = func;
+			      else XEN_BAD_ARITY_ERROR(S_granulate, 2, func, "granulate input function wants 1 arg");
+			    }
+			}
+		      p = gf_alloc();
+		      p->func = gf_1;
+		      p->func_1 = (mus_float_t (*)(void *p))wrapped_granulate_1; /* wrapped_* takes the mus_xen pointer */
+		      p->gen = (void *)gn;
+		      return(p);
+		    }
+		}
+#endif
+	      return_null(expr);
+	    }
 
 	  arg1 = caddr(expr);
 	  arg2 = cadddr(expr);
@@ -14411,7 +14541,10 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 
   if (mus_is_xen(op))
     {
-      if (!s7_is_pair(cdr(expr)))
+      int len;
+      len = s7_list_length(sc, expr);
+      /* this is gen as applicable object -- fixup above handles most cases */
+      if (len == 1)
 	{
 	  /* (with-sound () (let ((o (make-oscil 440.0))) (do ((i 0 (+ i 1))) ((= i 10000)) (outa i (o))))) */
 	  gf *p;
@@ -14423,9 +14556,9 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	  p->func_3 = (mus_float_t (*)(void *p, mus_float_t x, mus_float_t y))mus_run_function(o);
 	  return(p);
 	}
-      if (!s7_is_pair(cddr(expr)))
+      if (len < 4)
 	{
-	  gf *g1;
+	  gf *g1, *g2;
 	  g1 = find_gf_with_locals(sc, cadr(expr), locals);
 	  if (g1)
 	    {
@@ -14437,9 +14570,21 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	      p->gen = (void *)o;
 	      p->func_3 = (mus_float_t (*)(void *p, mus_float_t x, mus_float_t y))mus_run_function(o);
 	      p->g1 = g1;
-	      return(p);
+	      if (len == 2)
+		return(p);
+
+	      g2 = find_gf_with_locals(sc, caddr(expr), locals);
+	      if (g2)
+		{
+		  p->func = gf_gen_ref_2;
+		  p->g2 = g2;
+		  return(p);
+		}
+	      if (g1) gf_free(g1);
+	      gf_free(p);
 	    }
 	}
+
     }
   return_null(expr);
 }
@@ -16826,7 +16971,7 @@ static void direct_choice_2(s7_scheme *sc, s7_pointer f, s7_pointer g2, s7_point
   choices[GEN_DIRECT_CHECKER] = isg;
 }
 
-void store_gf_fixup(s7_scheme *sc, s7_pointer f, gf *(*fixup)(s7_scheme *sc, s7_pointer expr, s7_pointer locals))
+static void store_gf_fixup(s7_scheme *sc, s7_pointer f, gf *(*fixup)(s7_scheme *sc, s7_pointer expr, s7_pointer locals))
 {
   s7_pointer *choices;
   choices = (s7_pointer *)s7_function_chooser_data(sc, f);
@@ -20488,6 +20633,9 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "random");
   store_gf_fixup(s7, f, fixup_random);
+
+  f = s7_name_to_value(sc, "contrast-enhancement");
+  store_gf_fixup(s7, f, fixup_contrast_enhancement);
 
   f = s7_name_to_value(sc, "hz->radians");
   store_gf_fixup(s7, f, fixup_hz_to_radians);

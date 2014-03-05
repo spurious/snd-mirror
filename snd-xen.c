@@ -1427,6 +1427,16 @@ static XEN g_dlinit(XEN handle, XEN func)
 }
 #endif
 
+#if HAVE_SCHEME
+static s7_pointer g_line_reader(s7_scheme *sc, s7_pointer args)
+{
+  const char *str;
+  str = s7_string(s7_car(args));
+  if ((str) && (strcmp(str, "__line__") == 0))
+    return(s7_make_integer(sc, s7_port_line_number(s7_current_input_port(sc))));
+  return(XEN_FALSE);
+}
+#endif
 
 static XEN g_little_endian(void)
 {
@@ -2603,6 +2613,7 @@ void g_xen_initialize(void)
 
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("_snd_s7_error_handler_", g_snd_s7_error_handler_w,  0, 0, 1, "internal error redirection for snd/s7");
+  s7_define_safe_function(s7, "_snd-line-reader_", g_line_reader, 1, 0, false, "port-line-number reader");
 
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");

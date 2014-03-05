@@ -3475,6 +3475,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 
 static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
 {
+  /* TODO: fold this into map_channel_to_buffer, or use its scheme opts once they settle down */
   snd_info *sp;
   int i, rpt = 0, rpt4, ofd, datumb;
   char *filename;
@@ -3484,10 +3485,6 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
   bool reporting = false;
   io_error_t io_err = IO_NO_ERROR;
   XEN res = XEN_FALSE;
-#if HAVE_SCHEME
-  bool use_apply = false;
-  s7_pointer arg_list = NULL;
-#endif
 
   sampler_set_safe(sf, num);
   sp = cp->sound;
@@ -3511,355 +3508,15 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       int err = MUS_NO_ERROR;
       mus_float_t **data = NULL;
       
-#if HAVE_SCHEME
-
-      int gc_loc;
-      s7_pointer source, arg, body = NULL, e = NULL, slot = NULL;
-      s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
-      mus_long_t local_samps;
-      
-      /* proc might be abs: source is nil
-       */
-
-      source = s7_procedure_source(s7, proc);
-      if (s7_is_pair(source))
-	{
-	  body = s7_cddar(source);
-
-	  if (s7_is_null(s7, s7_cdr(body)))
-	    {
-	      res = s7_car(body);
-	      arg = s7_caadar(source);
-
-	      if ((s7_is_boolean(res)) ||
-		  (res == arg))
-		{
-		  /* #f = delete all samples in the range, #t = no-op, (lambda (y) y) also a no-op */
-		  close_temp_file(filename, ofd, hdr->type, 0);
-		  free_file_info(hdr);
-		  sf = free_snd_fd(sf);
-		  if (res == s7_f(s7))
-		    delete_samples(beg, num, cp, pos);		    
-		  snd_remove(filename, REMOVE_FROM_CACHE);
-		  free(filename);
-		  return(res);
-		}
-
-	      if (s7_is_number(res))
-		{
-		  s7_Double x;
-		  x = s7_number_to_real(s7, res);
-		  
-		  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-		  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
-		  for (kp = 0; kp < MAX_BUFFER_SIZE; kp++)
-		    data[0][kp] = x;
-		  /* since we're not calling eval or the event checker, the channel can't be closed during the loop (??) */
-		  
-		  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
-		    {
-		      local_samps = num - kp;
-		      if (local_samps > MAX_BUFFER_SIZE)
-			j = MAX_BUFFER_SIZE;
-		      else j = (int)local_samps;
-		      err = mus_file_write(ofd, 0, j - 1, 1, data);
-		      if (err != MUS_NO_ERROR) break;
-		    }
-		  samps = num;
-		  goto DO_EDIT;
-		}
-
-	      if (s7_is_pair(res))
-		{
-		  int len;
-		  s7_function f;
-		  f = s7_function_choice(s7, res);
-		  if (f)
-		    {
-		      /* it is optimized and f can be applied f(s7, args) */
-
-		      /* look first for the common scaling case */
-		      if ((s7_list_length(s7, res) == 3) &&
-			  (s7_car(res) == s7_make_symbol(s7, "*")) &&
-			  (((s7_cadr(res) == arg) && (s7_is_real(s7_caddr(res)))) ||
-			   ((s7_caddr(res) == arg) && (s7_is_real(s7_cadr(res))))))
-			{
-			  scale_channel(cp, s7_number_to_real(s7, (s7_is_real(s7_caddr(res))) ? s7_caddr(res) : s7_cadr(res)),
-					beg, num, pos, NOT_IN_AS_ONE_EDIT);
-			  close_temp_file(filename, ofd, hdr->type, 0);
-			  free_file_info(hdr);
-			  sf = free_snd_fd(sf);
-			  snd_remove(filename, REMOVE_FROM_CACHE);
-			  free(filename);
-			  if (reporting) finish_progress_report(cp);
-			  return(res);
-			}
-
-		      /* now is lambda arg used at all?
-		       * is it direct? can other symbols all be looked up in advance?
-		       * can we assume only real as return val?
-		       */
-		      
-		      if (s7_tree_memq(s7, arg, res))
-			{
-			  if (s7_function_choice_is_direct(s7, res))
-			    {
-			      if (s7_function_returns_temp(s7, res))
-				{
-				  s7_pointer old_e, y;
-				  s7_Double *ry;
-				  s7_ex *gf1;
-				  s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
-				  fallback = s7_ex_fallback(s7);
-
-				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-				  old_e = s7_set_current_environment(s7, e);
-				  y = s7_make_mutable_real(s7, 1.5);
-				  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
-				  slot = s7_make_slot(s7, e, arg, y); 
-				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
-				  
-				  gf1 = fallback(s7, res, old_e);
-				  if (gf1)
-				    {
-				      for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
-					{
-					  local_samps = num - kp;
-					  if (local_samps > MAX_BUFFER_SIZE)
-					    local_samps = MAX_BUFFER_SIZE;
-
-					  for (j = 0; j < local_samps; j++)
-					    {
-					      (*ry) = read_sample(sf);
-					      data[0][j] = gf1->f((void *)gf1);
-					    }
-					  err = mus_file_write(ofd, 0, j - 1, 1, data);
-					  if (err != MUS_NO_ERROR) break;
-					}
-				      s7_set_current_environment(s7, old_e);
-				      samps = num;
-				      gf1->free((void *)gf1);
-				      goto DO_EDIT;
-				    }
-
-				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
-				    {
-				      local_samps = num - kp;
-				      if (local_samps > MAX_BUFFER_SIZE)
-					local_samps = MAX_BUFFER_SIZE;
-
-				      for (j = 0; j < local_samps; j++)
-					{
-					  (*ry) = read_sample(sf);
-					  data[0][j] = s7_call_direct_to_real_and_free(s7, res);
-					}
-				      err = mus_file_write(ofd, 0, j - 1, 1, data);
-				      if (err != MUS_NO_ERROR) break;
-				    }
-
-				  s7_set_current_environment(s7, old_e);
-				  samps = num;
-				  goto DO_EDIT;
-				}
-
-			      /* here it's direct but not known to be always real */
-			      len = s7_list_length(s7, res);
-			      if ((len == 3) &&
-				  (s7_cadr(res) == arg) &&      /* tree_memq but perhaps (* (abs y) 2.0) ? */
-				  (s7_is_real(s7_caddr(res))))  /* avoid complex here */
-				{
-				  /* (map-channel (lambda (y) (* y 2.0))) */
-				  s7_pointer y, z, args;
-				  s7_Double *ry;
-				  s7_pointer old_e;
-				  
-				  z = s7_caddr(res);
-				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-				  old_e = s7_set_current_environment(s7, e);
-				  y = s7_make_mutable_real(s7, 1.5);
-				  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
-				  slot = s7_make_slot(s7, e, arg, y);
-				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
-			      
-				  args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
-				  gc_loc = s7_gc_protect(s7, args);
-				  
-				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
-				    {
-				      local_samps = num - kp;
-				      if (local_samps > MAX_BUFFER_SIZE)
-					local_samps = MAX_BUFFER_SIZE;
-				      
-				      for (j = 0; j < local_samps; j++)
-					{
-					  (*ry) = read_sample(sf);
-					  data[0][j] = s7_call_direct_to_real_and_free(s7, res);
-					}
-				      err = mus_file_write(ofd, 0, j - 1, 1, data);
-				      if (err != MUS_NO_ERROR) break;
-				    }
-
-				  s7_set_current_environment(s7, old_e);
-				  samps = num;
-				  goto DO_EDIT;
-				}
-			    }
-			}
-		      else
-			{
-			  /* lambda arg can be ignored */
-			  
-			  if ((s7_function_choice_is_direct(s7, res)) &&
-			      (s7_car(res) != s7_make_symbol(s7, "read-sample"))) /* handled directly below */			
-			    {
-			      if (s7_function_returns_temp(s7, res))
-				{
-				  s7_pointer old_e;
-				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-				  old_e = s7_set_current_environment(s7, e);
-				  /* the function closure might be needed even if the arg isn't */
-
-				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
-
-				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
-				    {
-				      local_samps = num - kp;
-				      if (local_samps > MAX_BUFFER_SIZE)
-					local_samps = MAX_BUFFER_SIZE;
-				      for (j = 0; j < local_samps; j++)
-					data[0][j] = s7_call_direct_to_real_and_free(s7, res); /* 100000 */
-				      err = mus_file_write(ofd, 0, j - 1, 1, data);
-				      if (err != MUS_NO_ERROR) break;
-				    }
-
-				  s7_set_current_environment(s7, old_e);
-				  samps = num;
-				  goto DO_EDIT;
-				}
-			    }
-			  else
-			    {
-			      /* not direct but possibly temp:
-			       * (let ((reader (make-sampler 0 0 0))) (map-channel (lambda (y) (read-sample reader))))
-			       */
-			      len = s7_list_length(s7, res);
-			      if ((s7_function_returns_temp(s7, res)) &&
-				  (len == 2) &&
-				  (s7_is_symbol(s7_cadr(res))))
-				{
-				  s7_pointer old_e, z, args;
-
-				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
-
-				  z = s7_symbol_value(s7, s7_cadr(res));
-				  if ((s7_car(res) == s7_make_symbol(s7, "read-sample")) &&
-				      (is_sampler(z)))
-				    {
-				      snd_fd *sf;
-				      mus_float_t *buf;
-				      sf = (snd_fd *)XEN_OBJECT_REF(z);
-				      buf = data[0];
-				      for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
-					{
-					  int ls4;
-					  local_samps = num - kp;
-					  if (local_samps > MAX_BUFFER_SIZE)
-					    local_samps = MAX_BUFFER_SIZE;
-					  ls4 = local_samps - 4;
-					  j = 0;
-					  while (j <= ls4)
-					    {
-					      buf[j++] = read_sample(sf);
-					      buf[j++] = read_sample(sf);
-					      buf[j++] = read_sample(sf);
-					      buf[j++] = read_sample(sf);
-					    }
-					  for (; j < local_samps; j++)
-					    buf[j] = read_sample(sf);
-					  err = mus_file_write(ofd, 0, j - 1, 1, data);
-					  if (err != MUS_NO_ERROR) break;
-					}
-				      samps = num;
-				      goto DO_EDIT;
-				    }
-
-				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-				  old_e = s7_set_current_environment(s7, e);
-				  /* the function closure might be needed even if the arg isn't */
-				  args = s7_cons(s7, z, s7_nil(s7));
-				  gc_loc = s7_gc_protect(s7, args);
-
-				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
-				    {
-				      local_samps = num - kp;
-				      if (local_samps > MAX_BUFFER_SIZE)
-					local_samps = MAX_BUFFER_SIZE;
-				      for (j = 0; j < local_samps; j++)
-					data[0][j] = s7_real(f(s7, args));
-				      err = mus_file_write(ofd, 0, j - 1, 1, data);
-				      if (err != MUS_NO_ERROR) break;
-				    }
-
-				  s7_gc_unprotect_at(s7, gc_loc);
-				  s7_set_current_environment(s7, old_e);
-				  samps = num;
-				  goto DO_EDIT;
-				}
-			    }
-			}
-		    }
-		}
-	    }
-
-	  arg = s7_caadar(source);
-	  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-
-	  gc_loc = s7_gc_protect(s7, e);
-	  slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
-	  if (s7_is_null(s7, s7_cdr(body)))
-	    {
-	      eval = s7_eval_form;
-	      body = s7_car(body);
-	    }
-	  else eval = s7_eval;
-	}
-      else
-	{
-	  /* presumably "proc" is something like abs */
-	  arg_list = XEN_LIST_1(XEN_FALSE);
-	  gc_loc = s7_gc_protect(s7, arg_list);
-	  use_apply = true;
-	}
-#endif
-      
       data = (mus_float_t **)malloc(1 * sizeof(mus_float_t *));
       data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
       ss->stopped_explicitly = false;
       
-      /* fprintf(stderr, "%d, %lld %s\n", __LINE__, num, DISPLAY(body)); */
+      /* fprintf(stderr, "tempfile %d, %lld %s\n", __LINE__, num, DISPLAY(body)); */
       for (kp = 0; kp < num; kp++)
 	{
 	  /* changed here to remove catch 24-Mar-02 */
-#if HAVE_SCHEME
-      if (use_apply)
-	{
-	  s7_set_car(arg_list, s7_make_real(s7, read_sample(sf)));
-	  if (kp == 0)
-	    res = s7_call_with_location(s7, proc, arg_list, __func__, __FILE__, __LINE__);
-	  else res = s7_apply_function(s7, proc, arg_list);
-	}
-      else
-	{
-	  s7_slot_set_value(s7, slot, s7_make_real(s7, read_sample(sf)));
-	  res = eval(s7, body, e);
-	}
-#else
 	  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
-#endif
 	  if (Xen_is_number(res))                         /* one number -> replace current sample */
 	    {
 	      samps++;
@@ -3910,9 +3567,6 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 			  free(filename);
 			  free(data[0]);
 			  free(data);
-#if HAVE_SCHEME
-			  s7_gc_unprotect_at(s7, gc_loc);
-#endif
 			  
 			  XEN_ERROR(BAD_TYPE,
 				    XEN_LIST_3(C_TO_XEN_STRING("~A: result of procedure must be a (non-complex) number, boolean, or vct: ~A"),
@@ -3939,15 +3593,9 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	  if (ss->stopped_explicitly) break;
 	}
       
-#if HAVE_SCHEME
-      s7_gc_unprotect_at(s7, gc_loc);
-#endif
       if (j > 0) 
 	mus_file_write(ofd, 0, j - 1, 1, data);
 
-#if HAVE_SCHEME
-    DO_EDIT:
-#endif
       close_temp_file(filename, ofd, hdr->type, samps * datumb);
       free_file_info(hdr);
       free(data[0]);
@@ -4132,6 +3780,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	    s7_set_current_environment(s7, old_e);
 	  }
 	}
+      /* (let ((rd (make-sampler 0))) (map-channel (lambda (y) (+ (next-sample rd) y)))) */
 
       arg = s7_caadar(source);
       e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
@@ -4161,7 +3810,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 #endif
   cur_size = num;
 
-  /* fprintf(stderr, "%lld: %s\n", num, DISPLAY(s7_car(source)));  */
+  /* fprintf(stderr, "buffer %lld: %s\n", num, DISPLAY(s7_car(source))); */
   /*
 50828: (lambda (x) (+ x (* (- m 1.0) (filter flt x)))) -- not real->temp?
    */
@@ -4340,7 +3989,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       if (sf == NULL) 
 	return(XEN_TRUE);
 
-      temp_file = (num > MAX_BUFFER_SIZE);
+      temp_file = (num > REPORTING_SIZE);
       if (temp_file)
 	res = map_channel_to_temp_file(cp, sf, proc, beg, num, pos, caller);
       else res = map_channel_to_buffer(cp, sf, proc, beg, num, pos, caller);
@@ -4611,12 +4260,23 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
       use_apply = true;
     }
 
-  /* fprintf(stderr, "%lld: body: %s\n", num, s7_object_to_c_string(s7, body)); */
+  /* fprintf(stderr, "scan %lld: body: %s\n", num, s7_object_to_c_string(s7, body)); */
 
   reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(cp);
   rpt4 = MAX_BUFFER_SIZE / 4;
   ss->stopped_explicitly = false;
+
+#if 0
+  if (!use_apply)
+    {
+      s7_pointer res;
+      res = s7_apply_function(s7, s7_name_to_value(s7, "scan-channel-fallback"), s7_list(s7, 1, proc));
+      fprintf(stderr, "res: %s\n", DISPLAY(res));
+      return(res);
+      /* (scan-channel (lambda (y) (let ((x .1)) (> y x)))) */
+    }
+#endif
 
   for (kp = 0; kp < num; kp++)
     {
@@ -7670,10 +7330,23 @@ void g_init_sig(void)
 #endif
 #endif
 
+#if 0
+  s7_eval_c_string(s7, "\n\
+(define* (scan-channel-fallback func (beg 0) dur snd chn edpos)\n\
+  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn)))\n\
+	(rd (make-sampler beg snd chn 1 edpos)))\n\
+    (do ((pos beg (+ pos 1)))\n\
+        ((or (>= pos end)\n\
+	     (func (next-sample rd)))\n\
+         (and (< pos end)\n\
+	      pos)))))");
+
+#endif
+
 }
 
 #if 0
-/* these work in snd-test, but cost about 1.5B in callgrind 
+/* these work in snd-test, but are not faster */
 
 (define* (scan-channel func (beg 0) dur snd chn edpos)
   (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn)))
@@ -7692,6 +7365,41 @@ void g_init_sig(void)
 	((>= i end) matches)
       (if (func (next-sample reader))
 	  (set! matches (+ matches 1))))))
+
+
+(define-macro* (scan-channel-1 func (beg 0) dur snd chn edpos)
+  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn))))
+    `(let ((rd (make-sampler ,beg ,snd ,chn 1 ,edpos))
+	   (f ,func))
+       (define (call)
+	 (do ((pos ,beg (+ pos 1)))
+	     ((or (>= pos ,end)
+		  (f (next-sample rd)))
+	      (and (< pos ,end)
+		   pos))))
+       (call))))
+
+(define* (scan-channel-2 func (beg 0) dur snd chn edpos)
+  (define* (uncons lst (res ()))
+    (if (null? lst) res (uncons (cdr lst) (cons (list (caar lst) (cdar lst)) res))))
+  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn)))
+	(source (procedure-source func))
+	(e (procedure-environment func)))
+    (let ((arg (caadr source))
+	  (body (cddr source))
+	  (new-e (if (eq? e (global-environment)) () (uncons (environment->list e))))
+	  (rd (make-sampler beg snd chn 1 edpos)))
+      (define call (apply let new-e 
+			  `((lambda ()
+			     (do ((pos ,beg (+ pos 1))
+				(,arg (next-sample ,rd) (next-sample ,rd)))
+			       ((or (>= pos ,end)
+				    (begin ,@body))
+				(and (< pos ,end)
+				     pos)))))))
+      (call))))
+
+
 */
 #endif
 

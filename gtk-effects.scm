@@ -144,13 +144,19 @@
 
 (define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
 
-(define* (effects-squelch-channel amp gate-size snd chn)
+(define* (effects-squelch-channel amp gate-size snd chn no-silence)
   (let ((f0 (make-moving-average gate-size))
 	(f1 (make-moving-average gate-size :initial-element 1.0)))
-    (map-channel (lambda (y) 
-		   (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0))))
-		 0 #f snd chn #f
-		 (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
+    (if no-silence
+	(map-channel (lambda (y)
+		       (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
+			 (if (zero? val)
+			     #f
+			     val)))
+		     0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size))
+	(map-channel (lambda (y) 
+		       (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp)))))
+		     0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size)))))
 
 (let ((amp-menu-list ())
       (amp-menu (gtk_menu_item_new_with_label "Amplitude Effects"))
@@ -335,9 +341,9 @@
 					       (apply map
 						      (lambda (snd chn)
 							(if (= (sync snd) snc)
-							    (effects-squelch-channel (* gate-amount gate-amount) gate-size snd chn)))
+							    (effects-squelch-channel (* gate-amount gate-amount) gate-size snd chn omit-silence)))
 						      (all-chans))
-					       (effects-squelch-channel (* gate-amount gate-amount) gate-size (selected-sound) (selected-channel)))))
+					       (effects-squelch-channel (* gate-amount gate-amount) gate-size (selected-sound) (selected-channel) omit-silence))))
 
 				       (lambda (w data)
 					 (help-dialog "Gate"
@@ -401,13 +407,12 @@
 				 (fir-filter flt (* scaler (+ (tap del) inval))))))
 		     beg #f snd chn #f
 		     (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg #f))
-	(let ((samp 0)
-	      (input-samps (or input-samps-1 dur)))
+	(let* ((cutoff (- (or input-samps-1 dur (frames snd chn)) 1))
+	       (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 	  (map-channel (lambda (inval)
-			 (set! samp (+ samp 1))
 			 (+ inval 
 			    (delay del 
-				   (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
+				   (fir-filter flt (* scaler (+ (tap del) (* (env genv) inval)))))))
 		       beg dur snd chn #f
 		       (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))))
 
@@ -415,13 +420,12 @@
   (let* ((os (make-oscil frq))
 	 (len (round (* secs (srate snd))))
 	 (del (make-delay len :max-size (round (+ len amp 1))))
-	 (samp 0)
-	 (input-samps (or input-samps-1 dur (frames snd chn))))
+	 (cutoff (- (or input-samps-1 dur (frames snd chn)) 1))
+	 (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
     (map-channel (lambda (inval)
-		   (set! samp (+ samp 1))
 		   (+ inval 
 		      (delay del 
-			     (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
+			     (* scaler (+ (tap del) (* (env genv) inval)))
 			     (* amp (oscil os)))))
 		 beg dur snd chn #f
     		 (format #f "effects-zecho-1 ~A ~A ~A ~A ~A ~A ~A" scaler secs frq amp input-samps-1 beg dur))))
@@ -458,14 +462,13 @@
 
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync 
-			(lambda (input-samps) 
+			(lambda (cutoff) 
 			  (let ((del (make-delay (round (* delay-time (srate)))))
-				(samp 0))
+				(genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 			    (lambda (inval)
-			      (set! samp (+ samp 1))
 			      (+ inval
 				 (delay del
-					(* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))
+					(* echo-amount (+ (tap del) (* (env genv) inval))))))))
 			echo-target
 			(lambda (target input-samps) 
 			  (format #f "effects-echo ~A ~A ~A" 
@@ -526,15 +529,14 @@
 	(flecho-truncate #t))
 
     (define flecho-1
-      (lambda (scaler secs input-samps)
+      (lambda (scaler secs cutoff)
 	(let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
 	      (del (make-delay (round (* secs (srate)))))
-	      (samp 0))
+	      (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 	  (lambda (inval)
-	    (set! samp (+ samp 1))
 	    (+ inval 
 	       (delay del 
-		      (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))))
+		      (fir-filter flt (* scaler (+ (tap del) (* (env genv) inval))))))))))
     
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
     (gtk_widget_show child)
@@ -614,16 +616,15 @@
 	(zecho-truncate #t))
 
     (define zecho-1
-      (lambda (scaler secs frq amp input-samps)
+      (lambda (scaler secs frq amp cutoff)
 	(let* ((os (make-oscil frq))
 	       (len (round (* secs (srate))))
 	       (del (make-delay len :max-size (round (+ len amp 1))))
-	       (samp 0))
+	       (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 	  (lambda (inval)
-	    (set! samp (+ samp 1))
 	    (+ inval 
 	       (delay del 
-		      (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
+		      (* scaler (+ (tap del) (* (env genv) inval)))
 		      (* amp (oscil os))))))))
 
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
@@ -1791,13 +1792,12 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(comb3 (make-comb 0.715 5399))
 	(comb4 (make-comb 0.697 5801))
 	(outdel1 (make-delay (round (* .013 (srate)))))
-	(samp 0))
+	(e (make-env '(0 1 1 0) :scaler volume :base 0.0 :length input-samps)))
     (let ((combs (make-comb-bank (vector comb1 comb2 comb3 comb4)))
 	  (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
       (lambda (inval)
-	(set! samp (+ samp 1))
 	(+ inval
-	   (* volume (delay outdel1 (comb-bank combs (all-pass-bank allpasses (if (< samp input-samps) inval 0.0))))))))))
+	   (* volume (delay outdel1 (comb-bank combs (all-pass-bank allpasses (* (env e) inval))))))))))
     
 (define* (effects-jc-reverb-1 volume beg dur snd chn)
   (map-channel (effects-jc-reverb (or dur (frames snd chn)) volume)

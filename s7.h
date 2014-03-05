@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.5"
-#define S7_DATE "17-Feb-14"
+#define S7_VERSION "3.6"
+#define S7_DATE "5-Mar-14"
 
 
 typedef long long int s7_Int;
@@ -205,6 +205,8 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc);
 s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc);
 s7_pointer s7_gc_on(s7_scheme *sc, bool on);
 void s7_gc_stats(s7_scheme *sc, bool on);
+unsigned int s7_heap_size(s7_scheme *sc);
+int s7_gc_freed(s7_scheme *sc);
 
   /* any s7_pointer object held in C (as a local variable for example) needs to be
    *   protected from garbage collection if there is any chance the GC may run without
@@ -418,6 +420,7 @@ s7_pointer s7_hook_set_functions(s7_scheme *sc, s7_pointer hook, s7_pointer func
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (input-port? p) */
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);                        /* (output-port? p) */
 const char *s7_port_filename(s7_pointer x);                                 /* (port-filename p) */
+int s7_port_line_number(s7_pointer p);                                      /* (port-line-number p) */
 
 s7_pointer s7_current_input_port(s7_scheme *sc);                            /* (current-input-port) */
 s7_pointer s7_set_current_input_port(s7_scheme *sc, s7_pointer p);          /* (set-current-input-port) */
@@ -872,6 +875,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  * 
  *        s7 changes
  *		
+ * 5-Mar:     s7_heap_size, s7_gc_freed.
  * 22-Jan:    s7_vector_ref_object_value_checked.
  * --------
  * 8-Nov:     s7_symbol_documentation, s7_define_constant_with_documentation.

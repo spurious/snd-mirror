@@ -520,7 +520,8 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #endif
 
 
-#if GTK_CHECK_VERSION(3, 10, 0)
+#if GTK_CHECK_VERSION(3, 12, 0)
+/* these are deprecated from 3.10.0 but I apparently have to create my own goddamn icons?? */
 #define ICON_ADD             "Add"
 #define ICON_APPLY           "Apply"
 #define ICON_CANCEL          "Cancel"
