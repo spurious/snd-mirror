@@ -84,13 +84,13 @@ static bool new_help(const char *pattern, bool complain)
     {
       /* given name, find doc string, if any */
       XEN xstr;
-      xstr = g_snd_help(C_TO_XEN_STRING(pattern), 0);
+      xstr = g_snd_help(C_string_to_Xen_string(pattern), 0);
       if (Xen_is_string(xstr))
 	{
 	  int gc_loc;
 	  gc_loc = snd_protect(xstr);
 	  xrefs = help_name_to_xrefs(pattern);
-	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), WITH_WORD_WRAP, xrefs, NULL);
+	  snd_help_with_xrefs(pattern, Xen_string_to_C_string(xstr), WITH_WORD_WRAP, xrefs, NULL);
 	  snd_unprotect_at(gc_loc);
 	  if (xrefs) free(xrefs);
 	  return(true);

@@ -1445,9 +1445,9 @@ static XEN reflect_file_close_in_sync(XEN hook_or_reason)
 {
   int reason;
 #if HAVE_SCHEME
-  reason = XEN_TO_C_INT(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
+  reason = Xen_integer_to_C_int(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
 #else
-  reason = XEN_TO_C_INT(hook_or_reason);
+  reason = Xen_integer_to_C_int(hook_or_reason);
 #endif
   if ((reason == FILE_CLOSED) && /* snd-file.c */
       (ss->active_sounds == 1))
@@ -1457,10 +1457,10 @@ static XEN reflect_file_close_in_sync(XEN hook_or_reason)
       if ((sp) && (sp->nchans == 1))
 	gtk_widget_hide(SYNC_BUTTON(sp));
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
-XEN_NARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
+Xen_wrap_1_arg(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
 
 
 static void close_button_callback(GtkWidget *w, gpointer context)
@@ -2431,28 +2431,28 @@ pane-box (10)name-form"
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
   if (!HAS_WIDGETS(sp))
-    return(XEN_EMPTY_LIST);
+    return(Xen_empty_list);
 
-  return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),
-	  XEN_CONS(XEN_WRAP_WIDGET(NAME_BUTTON(sp)),
-           XEN_CONS(XEN_WRAP_WIDGET(CONTROL_PANEL(sp)),
-	    XEN_CONS(XEN_WRAP_WIDGET(STATUS_AREA(sp)),
+  return(Xen_cons(XEN_WRAP_WIDGET(SND_PANE(sp)),
+	  Xen_cons(XEN_WRAP_WIDGET(NAME_BUTTON(sp)),
+           Xen_cons(XEN_WRAP_WIDGET(CONTROL_PANEL(sp)),
+	    Xen_cons(XEN_WRAP_WIDGET(STATUS_AREA(sp)),
 #if WITH_AUDIO
-	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
+	     Xen_cons(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
 #else
-             XEN_CONS(XEN_FALSE,
+             Xen_cons(Xen_false,
 #endif
-	      XEN_CONS(XEN_WRAP_WIDGET(FILTER_ENV(sp)), /* this is the (filter) drawingarea widget */
-	       XEN_CONS(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
-		XEN_CONS(XEN_FALSE,
-	         XEN_CONS(XEN_WRAP_WIDGET(NAME_PIX(sp)),
-		  XEN_CONS(XEN_WRAP_WIDGET(PANE_BOX(sp)),
-		   XEN_CONS(XEN_WRAP_WIDGET(NAME_HBOX(sp)),
-	            XEN_EMPTY_LIST))))))))))));
+	      Xen_cons(XEN_WRAP_WIDGET(FILTER_ENV(sp)), /* this is the (filter) drawingarea widget */
+	       Xen_cons(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
+		Xen_cons(Xen_false,
+	         Xen_cons(XEN_WRAP_WIDGET(NAME_PIX(sp)),
+		  Xen_cons(XEN_WRAP_WIDGET(PANE_BOX(sp)),
+		   Xen_cons(XEN_WRAP_WIDGET(NAME_HBOX(sp)),
+	            Xen_empty_list))))))))))));
 }
 
 
-XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
+Xen_wrap_1_optional_arg(g_sound_widgets_w, g_sound_widgets)
 
 
 /* -------------------------------------------------------------------------------- */
@@ -2466,9 +2466,9 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   if (with_pointer_focus(ss))
     goto_window(w);
   widget_modify_base(w, GTK_STATE_NORMAL, ss->white);
-  if (XEN_HOOKED(mouse_enter_text_hook))
+  if (Xen_hook_has_list(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
-	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
+	     Xen_list_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_enter_text_hook);
   cursor_set_blinks(w, true);
   return(false);
@@ -2478,9 +2478,9 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   widget_modify_base(w, GTK_STATE_NORMAL, ss->basic_color);
-  if (XEN_HOOKED(mouse_leave_text_hook))
+  if (Xen_hook_has_list(mouse_leave_text_hook))
     run_hook(mouse_leave_text_hook,
-	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
+	     Xen_list_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_leave_text_hook);
   cursor_set_blinks(w, false);
   return(false);
@@ -2575,9 +2575,9 @@ GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size)
 
 void g_init_gxsnd(void) 
 {
-  XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
+  Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
 
-  XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
+  Xen_define_procedure(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
 
 #if HAVE_SCHEME
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
@@ -2598,6 +2598,6 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
 
   #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget): called when the mouse leaves a text widget"
 
-  mouse_enter_text_hook = XEN_DEFINE_HOOK(S_mouse_enter_text_hook, "(make-hook 'widget)", 1, H_mouse_enter_text_hook);
-  mouse_leave_text_hook = XEN_DEFINE_HOOK(S_mouse_leave_text_hook, "(make-hook 'widget)", 1, H_mouse_leave_text_hook);
+  mouse_enter_text_hook = Xen_define_hook(S_mouse_enter_text_hook, "(make-hook 'widget)", 1, H_mouse_enter_text_hook);
+  mouse_leave_text_hook = Xen_define_hook(S_mouse_leave_text_hook, "(make-hook 'widget)", 1, H_mouse_leave_text_hook);
 }

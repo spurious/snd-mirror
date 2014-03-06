@@ -252,8 +252,8 @@ bool delete_selection(cut_selection_regraph_t regraph)
 	for_each_normal_chan(update_graph);
       enved_reflect_selection(false);
 
-      if (XEN_HOOKED(ss->effects_hook))
-	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+      if (Xen_hook_has_list(ss->effects_hook))
+	run_hook(ss->effects_hook, Xen_empty_list, S_effects_hook);
 
       return(true);
     }
@@ -277,8 +277,8 @@ void deactivate_selection(void)
   for_each_normal_chan(update_graph);
   enved_reflect_selection(false);
 
-  if (XEN_HOOKED(ss->effects_hook))
-    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+  if (Xen_hook_has_list(ss->effects_hook))
+    run_hook(ss->effects_hook, Xen_empty_list, S_effects_hook);
 
   if (syncd_chans) 
     syncd_chans = free_sync_info(syncd_chans);
@@ -307,8 +307,8 @@ void reactivate_selection(chan_info *cp, mus_long_t beg, mus_long_t end)
   enved_reflect_selection(true);
   reflect_selection_in_save_as_dialog(true);
 
-  if (XEN_HOOKED(ss->effects_hook))
-    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+  if (Xen_hook_has_list(ss->effects_hook))
+    run_hook(ss->effects_hook, Xen_empty_list, S_effects_hook);
 }
 
 
@@ -537,8 +537,8 @@ void finish_selection_creation(void)
       enved_reflect_selection(true);
       reflect_selection_in_save_as_dialog(true);
 
-      if (XEN_HOOKED(ss->effects_hook))
-	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+      if (Xen_hook_has_list(ss->effects_hook))
+	run_hook(ss->effects_hook, Xen_empty_list, S_effects_hook);
 
       syncd_chans = free_sync_info(syncd_chans);      
     }
@@ -873,9 +873,9 @@ typedef struct {
 } xen_selection;
 
 
-#define XEN_TO_XEN_SELECTION(arg) ((xen_selection *)XEN_OBJECT_REF(arg))
+#define XEN_TO_XEN_SELECTION(arg) ((xen_selection *)Xen_object_ref(arg))
 
-static XEN_OBJECT_TYPE xen_selection_tag;
+static Xen_object_type_t xen_selection_tag;
 
 bool xen_is_selection(XEN obj) 
 {
@@ -885,7 +885,7 @@ bool xen_is_selection(XEN obj)
 
 static void xen_selection_free(xen_selection *v) {if (v) free(v);}
 
-XEN_MAKE_OBJECT_FREE_PROCEDURE(xen_selection, free_xen_selection, xen_selection_free)
+Xen_wrap_free(xen_selection, free_xen_selection, xen_selection_free)
 
 
 static char *xen_selection_to_string(xen_selection *v)
@@ -898,7 +898,7 @@ static char *xen_selection_to_string(xen_selection *v)
   return(buf);
 }
 
-XEN_MAKE_OBJECT_PRINT_PROCEDURE(xen_selection, print_xen_selection, xen_selection_to_string)
+Xen_wrap_print(xen_selection, print_xen_selection, xen_selection_to_string)
 
 
 #if HAVE_FORTH || HAVE_RUBY
@@ -908,10 +908,10 @@ static XEN g_xen_selection_to_string(XEN obj)
   XEN result;
   #define S_xen_selection_to_string "selection->string"
 
-  XEN_ASSERT_TYPE(xen_is_selection(obj), obj, 1, S_xen_selection_to_string, "a selection");
+  Xen_check_type(xen_is_selection(obj), obj, 1, S_xen_selection_to_string, "a selection");
 
   vstr = xen_selection_to_string(XEN_TO_XEN_SELECTION(obj));
-  result = C_TO_XEN_STRING(vstr);
+  result = C_string_to_Xen_string(vstr);
   free(vstr);
   return(result);
 }
@@ -928,8 +928,8 @@ static bool xen_selection_equalp(xen_selection *v1, xen_selection *v2)
 
 static XEN equalp_xen_selection(XEN obj1, XEN obj2)
 {
-  if ((!(xen_is_selection(obj1))) || (!(xen_is_selection(obj2)))) return(XEN_FALSE);
-  return(C_TO_XEN_BOOLEAN(xen_selection_equalp(XEN_TO_XEN_SELECTION(obj1), XEN_TO_XEN_SELECTION(obj2))));
+  if ((!(xen_is_selection(obj1))) || (!(xen_is_selection(obj2)))) return(Xen_false);
+  return(C_bool_to_Xen_boolean(xen_selection_equalp(XEN_TO_XEN_SELECTION(obj1), XEN_TO_XEN_SELECTION(obj2))));
 }
 #endif
 
@@ -950,16 +950,16 @@ static XEN g_selection(void)
     {
       xen_selection *mx;
       mx = xen_selection_make(xen_selection_counter);
-      XEN_MAKE_AND_RETURN_OBJECT(xen_selection_tag, mx, 0, free_xen_selection);
+      return(Xen_make_object(xen_selection_tag, mx, 0, free_xen_selection));
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 #if HAVE_SCHEME
 static XEN s7_xen_selection_length(s7_scheme *sc, XEN obj)
 {
-  return(g_selection_frames(XEN_UNDEFINED, XEN_UNDEFINED));
+  return(g_selection_frames(Xen_undefined, Xen_undefined));
 }
 
 
@@ -982,7 +982,7 @@ static XEN s7_xen_selection_copy(s7_scheme *sc, XEN obj)
       free(name);
       return(new_xen_sound(sp->index));
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -991,12 +991,12 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
   sync_info *si;
   mus_float_t valf;
 
-  valf = XEN_TO_C_DOUBLE(val);
+  valf = Xen_real_to_C_double(val);
   if (valf == 0.0)
     {
       mus_float_t vals[1] = {0.0};
       scale_by(NULL, vals, 1, true); /* 1 entry in vals array, true = over selection */
-      return(XEN_FALSE);
+      return(Xen_false);
     }
 
   si = selection_sync();
@@ -1018,7 +1018,7 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
 	  free(data);
 	}
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 #endif
 
@@ -1026,15 +1026,15 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
 static void init_xen_selection(void)
 {
 #if HAVE_SCHEME
-  xen_selection_tag = XEN_MAKE_OBJECT_TYPE("<selection>", 
+  xen_selection_tag = s7_new_type_x("<selection>", 
 					   print_xen_selection, free_xen_selection, s7_xen_selection_equalp, 
 					   NULL, NULL, NULL, s7_xen_selection_length, 
 					   s7_xen_selection_copy, NULL, s7_xen_selection_fill);
 #else
 #if HAVE_RUBY
-  xen_selection_tag = XEN_MAKE_OBJECT_TYPE("XenSelection", sizeof(xen_selection));
+  xen_selection_tag = Xen_make_object_type("XenSelection", sizeof(xen_selection));
 #else
-  xen_selection_tag = XEN_MAKE_OBJECT_TYPE("selection", sizeof(xen_selection));
+  xen_selection_tag = Xen_make_object_type("selection", sizeof(xen_selection));
 #endif
 #endif
 
@@ -1287,7 +1287,7 @@ static XEN g_delete_selection(void)
   if (selection_is_active())
     {
       delete_selection(UPDATE_DISPLAY);
-      return(XEN_TRUE);
+      return(Xen_true);
     }
   return(snd_no_active_selection_error(S_delete_selection));
 }
@@ -1304,10 +1304,10 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       sync_info *si_out;
 
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
-      XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(beg), beg, 1, S_insert_selection, "an integer");
+      Xen_check_type(Xen_is_integer_or_unbound(beg), beg, 1, S_insert_selection, "an integer");
 
       cp = get_cp(snd, chn, S_insert_selection);
-      if ((!cp) || (!(is_editable(cp)))) return(XEN_FALSE);
+      if ((!cp) || (!(is_editable(cp)))) return(Xen_false);
 
       samp = beg_to_sample(beg, S_insert_selection);
       if (Xen_is_integer(chn))
@@ -1318,10 +1318,10 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       free_sync_info(si_out);
 
       if (SERIOUS_IO_ERROR(io_err))
-	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		  XEN_LIST_2(C_TO_XEN_STRING(S_insert_selection ": IO error ~A"),
-			     C_TO_XEN_STRING(io_error_name(io_err))));
-      return(XEN_FALSE);
+	Xen_error(Xen_make_error_type("IO-error"),
+		  Xen_list_2(C_string_to_Xen_string(S_insert_selection ": IO error ~A"),
+			     C_string_to_Xen_string(io_error_name(io_err))));
+      return(Xen_false);
     }
   return(snd_no_active_selection_error(S_insert_selection));
 }
@@ -1337,18 +1337,18 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       io_error_t io_err = IO_NO_ERROR;
       int i, selection_chan = 0, id = -1, chans = 0;
       sync_info *si_out;
-      XEN result = XEN_EMPTY_LIST;
+      XEN result = Xen_empty_list;
 
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
-      XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(beg), beg, 1, S_mix_selection, "an integer");
-      XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(sel_chan), sel_chan, 4, S_mix_selection, "an integer or " PROC_TRUE);
+      Xen_check_type(Xen_is_integer_or_unbound(beg), beg, 1, S_mix_selection, "an integer");
+      Xen_check_type(Xen_is_integer_boolean_or_unbound(sel_chan), sel_chan, 4, S_mix_selection, "an integer or " PROC_TRUE);
 
       cp = get_cp(snd, chn, S_mix_selection);
-      if ((!cp) || (!(is_editable(cp)))) return(XEN_FALSE);
+      if ((!cp) || (!(is_editable(cp)))) return(Xen_false);
 
       obeg = beg_to_sample(beg, S_mix_selection);
       if (Xen_is_integer(sel_chan))
-	selection_chan = XEN_TO_C_INT(sel_chan);
+	selection_chan = Xen_integer_to_C_int(sel_chan);
       if (Xen_is_integer(chn))
 	si_out = make_simple_sync(cp, obeg); /* ignore sync */
       else si_out = sync_to_chan(cp);
@@ -1358,14 +1358,14 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       free_sync_info(si_out);
 
       if (SERIOUS_IO_ERROR(io_err))
-	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection ": IO error ~A"),
-			     C_TO_XEN_STRING(io_error_name(io_err))));
+	Xen_error(Xen_make_error_type("IO-error"),
+		  Xen_list_2(C_string_to_Xen_string(S_mix_selection ": IO error ~A"),
+			     C_string_to_Xen_string(io_error_name(io_err))));
 
-      if (id == -1) return(XEN_FALSE);
+      if (id == -1) return(Xen_false);
       for (i = 0; i < chans; i++)
-	result = XEN_CONS(new_xen_mix(id + i), result);
-      return(XEN_LIST_REVERSE(result));
+	result = Xen_cons(new_xen_mix(id + i), result);
+      return(Xen_list_reverse(result));
     }
   return(snd_no_active_selection_error(S_mix_selection));
 }
@@ -1380,7 +1380,7 @@ static XEN g_selection_to_mix(void)
       io_error_t io_err = IO_NO_ERROR;
       int i, id = INVALID_MIX_ID, chans = 0, sync = GET_NEW_SYNC;
       sync_info *si_out;
-      XEN result = XEN_EMPTY_LIST;
+      XEN result = Xen_empty_list;
       char *tempfile = NULL, *origin = NULL;
 
       si_out = selection_sync();
@@ -1392,16 +1392,16 @@ static XEN g_selection_to_mix(void)
 	{
 	  if (tempfile) free(tempfile);
 	  free_sync_info(si_out);
-	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		    XEN_LIST_2(C_TO_XEN_STRING(S_selection_to_mix ": IO error ~A"),
-			       C_TO_XEN_STRING(io_error_name(io_err))));
+	  Xen_error(Xen_make_error_type("IO-error"),
+		    Xen_list_2(C_string_to_Xen_string(S_selection_to_mix ": IO error ~A"),
+			       C_string_to_Xen_string(io_error_name(io_err))));
 	}
 
       origin = mus_format("%s", S_selection_to_mix);
       if (si_out->chans > 1)
 	remember_temp(tempfile, si_out->chans);
 
-      g_scale_selection_by(C_TO_XEN_DOUBLE(0.0));
+      g_scale_selection_by(C_double_to_Xen_real(0.0));
 
       id = mix_file(selection_beg(NULL), selection_len(), si_out->chans, si_out->cps, tempfile, 
 		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
@@ -1414,21 +1414,21 @@ static XEN g_selection_to_mix(void)
       chans = si_out->chans;                 /* save for loop below */
       free_sync_info(si_out);
 
-      if (id == -1) return(XEN_FALSE);
+      if (id == -1) return(Xen_false);
       if (chans == 1)
-	return(XEN_CONS(new_xen_mix(id), XEN_EMPTY_LIST)); /* no sync */
+	return(Xen_cons(new_xen_mix(id), Xen_empty_list)); /* no sync */
 
       for (i = 0; i < chans; i++)
 	{
 	  sync = mix_set_sync_from_id(id + i, sync);
-	  result = XEN_CONS(new_xen_mix(id + i), result);
+	  result = Xen_cons(new_xen_mix(id + i), result);
 	}
 
       if ((mix_dialog_mix() >= id) &&
 	  (mix_dialog_mix() < (id + chans)))
 	reflect_mix_change(id);
        /* this update is needed in a case like: file close (closing old mix), open new, mix -- this mix can now have old mix's id */
-      return(XEN_LIST_REVERSE(result));
+      return(Xen_list_reverse(result));
     }
   return(snd_no_active_selection_error(S_selection_to_mix));
 }
@@ -1441,9 +1441,9 @@ If 'obj' is passed, " S_is_selection " returns " PROC_TRUE " if obj is a selecti
 
   if ((Xen_is_bound(sel)) &&
       (!(xen_is_selection(sel))))
-    return(XEN_FALSE);
+    return(Xen_false);
 
-  return(C_TO_XEN_BOOLEAN(selection_is_active()));
+  return(C_bool_to_Xen_boolean(selection_is_active()));
 }
 
 
@@ -1453,14 +1453,14 @@ static XEN g_selection_position(XEN snd, XEN chn)
   if (selection_is_active())
     {
       if (!Xen_is_bound(snd))
-	return(C_TO_XEN_LONG_LONG(selection_beg(NULL)));
+	return(C_llong_to_Xen_llong(selection_beg(NULL)));
       else
 	{
 	  chan_info *cp;
 	  ASSERT_CHANNEL(S_selection_position, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_position);
-	  if (!cp) return(XEN_FALSE);
-	  return(C_TO_XEN_LONG_LONG(selection_beg(cp)));
+	  if (!cp) return(Xen_false);
+	  return(C_llong_to_Xen_llong(selection_beg(cp)));
 	}
     }
   return(snd_no_active_selection_error(S_selection_position));
@@ -1473,7 +1473,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   mus_long_t beg;
 
   ASSERT_CHANNEL(S_setB S_selection_position, snd, chn, 2);
-  XEN_ASSERT_TYPE(Xen_is_integer(pos), pos, 1, S_selection_position, "an integer");
+  Xen_check_type(Xen_is_integer(pos), pos, 1, S_selection_position, "an integer");
 
   beg = beg_to_sample(pos, S_setB S_selection_position);
   if (!Xen_is_bound(snd))
@@ -1497,7 +1497,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   else 
     {
       cp = get_cp(snd, chn, S_setB S_selection_position);
-      if (!cp) return(XEN_FALSE);
+      if (!cp) return(Xen_false);
       cp_set_selection_beg(cp, beg);
     }
   redraw_selection();
@@ -1513,14 +1513,14 @@ XEN g_selection_frames(XEN snd, XEN chn)
   if (selection_is_active())
     {
       if (!Xen_is_bound(snd))
-	return(C_TO_XEN_LONG_LONG(selection_len()));
+	return(C_llong_to_Xen_llong(selection_len()));
       else
 	{
 	  chan_info *cp;
 	  ASSERT_CHANNEL(S_selection_frames, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_frames);
-	  if (!cp) return(XEN_FALSE);
-	  return(C_TO_XEN_LONG_LONG(cp_selection_len(cp, NULL)));
+	  if (!cp) return(Xen_false);
+	  return(C_llong_to_Xen_llong(cp_selection_len(cp, NULL)));
 	}
     }
   return(snd_no_active_selection_error(S_selection_frames));
@@ -1532,10 +1532,10 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
   chan_info *cp;
   mus_long_t len;
 
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(samps), samps, 1, S_setB S_selection_frames, "an integer");
-  len = XEN_TO_C_LONG_LONG(samps);
+  Xen_check_type(Xen_is_long_long_int(samps), samps, 1, S_setB S_selection_frames, "an integer");
+  len = Xen_llong_to_C_llong(samps);
   if (len <= 0)
-    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_selection_frames, 1, samps, "a positive integer");
+    Xen_wrong_type_arg_error(S_setB S_selection_frames, 1, samps, "a positive integer");
   if (!Xen_is_bound(snd))
     {
       sync_info *si = NULL;
@@ -1558,7 +1558,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
     {
       ASSERT_CHANNEL(S_setB S_selection_frames, snd, chn, 2);
       cp = get_cp(snd, chn, S_setB S_selection_frames);
-      if (!cp) return(XEN_FALSE);
+      if (!cp) return(Xen_false);
       cp_set_selection_len(cp, len);
     }
   redraw_selection();
@@ -1574,14 +1574,14 @@ static XEN g_selection_member(XEN snd, XEN chn)
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_member, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_member);
-  if (!cp) return(XEN_FALSE);
-  return(C_TO_XEN_BOOLEAN(selection_is_active_in_channel(cp)));
+  if (!cp) return(Xen_false);
+  return(C_bool_to_Xen_boolean(selection_is_active_in_channel(cp)));
 }
 
 
 static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_selection_member, "a boolean");
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_selection_member, "a boolean");
   if ((Xen_is_true(snd)) && (Xen_is_false(on)))
     deactivate_selection();
   else
@@ -1589,7 +1589,7 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
       chan_info *cp;
       ASSERT_CHANNEL(S_setB S_selection_member, snd, chn, 2);
       cp = get_cp(snd, chn, S_setB S_selection_member);
-      if (!cp) return(XEN_FALSE);
+      if (!cp) return(Xen_false);
       if (Xen_is_true(on))
 	{
 	  if (selection_is_active())
@@ -1600,8 +1600,8 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
       enved_reflect_selection(selection_is_active());
       reflect_selection_in_save_as_dialog(selection_is_active());
 
-      if (XEN_HOOKED(ss->effects_hook))
-	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+      if (Xen_hook_has_list(ss->effects_hook))
+	run_hook(ss->effects_hook, Xen_empty_list, S_effects_hook);
 
       if (selection_is_active())
 	redraw_selection();
@@ -1621,12 +1621,12 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
 
   ASSERT_CHANNEL(S_select_all, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_select_all);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   id = select_all(cp);
   if (selection_creates_region(ss)) 
     return(C_INT_TO_XEN_REGION(id));
-  else return(XEN_FALSE);
+  else return(Xen_false);
 }
 
 
@@ -1634,12 +1634,12 @@ static XEN kw_header_type, kw_data_format, kw_comment, kw_file, kw_srate, kw_cha
 
 static void init_selection_keywords(void)
 {
-  kw_header_type = XEN_MAKE_KEYWORD("header-type");
-  kw_data_format = XEN_MAKE_KEYWORD("data-format");
-  kw_comment = XEN_MAKE_KEYWORD("comment");
-  kw_file = XEN_MAKE_KEYWORD("file");
-  kw_srate = XEN_MAKE_KEYWORD("srate");
-  kw_channel = XEN_MAKE_KEYWORD("channel");
+  kw_header_type = Xen_make_keyword("header-type");
+  kw_data_format = Xen_make_keyword("data-format");
+  kw_comment = Xen_make_keyword("comment");
+  kw_file = Xen_make_keyword("file");
+  kw_srate = Xen_make_keyword("srate");
+  kw_channel = Xen_make_keyword("channel");
 }
 
 
@@ -1671,9 +1671,9 @@ save the current selection in file using the indicated file attributes.  If chan
   keys[4] = kw_comment;
   keys[5] = kw_channel;
 
-  for (i = 0; i < 12; i++) args[i] = XEN_UNDEFINED;
-  arglist_len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = 0; i < 12; i++) args[i] = Xen_undefined;
+  arglist_len = Xen_list_length(arglist);
+  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
 
   vals = mus_optkey_unscramble(S_save_selection, 6, keys, args, orig_arg);
   if (vals > 0)
@@ -1687,24 +1687,24 @@ save the current selection in file using the indicated file attributes.  If chan
     }
 
   if (file == NULL) 
-    XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-	      XEN_LIST_1(C_TO_XEN_STRING(S_save_selection ": no output file?")));
+    Xen_error(Xen_make_error_type("IO-error"),
+	      Xen_list_1(C_string_to_Xen_string(S_save_selection ": no output file?")));
 
   if ((type != -1) && (!(mus_header_writable(type, -2))))
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection ": can't write a ~A header"),
-			 C_TO_XEN_STRING(mus_header_type_name(type))));
+    Xen_error(CANNOT_SAVE,
+	      Xen_list_2(C_string_to_Xen_string(S_save_selection ": can't write a ~A header"),
+			 C_string_to_Xen_string(mus_header_type_name(type))));
 
   if ((type != -1) && (format != -1) && (!(mus_header_writable(type, format))))
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection ": can't write ~A data to a ~A header"),
-			 C_TO_XEN_STRING(mus_data_format_name(format)),
-			 C_TO_XEN_STRING(mus_header_type_name(type))));
+    Xen_error(CANNOT_SAVE,
+	      Xen_list_3(C_string_to_Xen_string(S_save_selection ": can't write ~A data to a ~A header"),
+			 C_string_to_Xen_string(mus_data_format_name(format)),
+			 C_string_to_Xen_string(mus_header_type_name(type))));
 
   if ((sr != -1) && (sr <= 0))
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection ": srate (~A) can't be <= 0"),
-			 C_TO_XEN_INT(sr)));
+    Xen_error(CANNOT_SAVE,
+	      Xen_list_2(C_string_to_Xen_string(S_save_selection ": srate (~A) can't be <= 0"),
+			 C_int_to_Xen_integer(sr)));
 
   fname = mus_expand_filename(file);
   io_err = save_selection(fname, type, format, sr, com, chn);
@@ -1713,10 +1713,10 @@ save the current selection in file using the indicated file attributes.  If chan
   if ((io_err != IO_NO_ERROR) &&
       (io_err != IO_INTERRUPTED) &&
       (io_err != IO_SAVE_HOOK_CANCELLATION))
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection ": can't save ~S, ~A"),
+    Xen_error(CANNOT_SAVE,
+	      Xen_list_3(C_string_to_Xen_string(S_save_selection ": can't save ~S, ~A"),
 			 keys[0],
-			 C_TO_XEN_STRING(snd_open_strerror())));
+			 C_string_to_Xen_string(snd_open_strerror())));
   return(args[orig_arg[0] - 1]);
 }
 
@@ -1724,14 +1724,14 @@ save the current selection in file using the indicated file attributes.  If chan
 XEN g_selection_chans(void)
 {
   #define H_selection_chans "(" S_selection_chans "): chans in active selection"
-  return(C_TO_XEN_INT(selection_chans()));
+  return(C_int_to_Xen_integer(selection_chans()));
 }
 
 
 XEN g_selection_srate(void)
 {
   #define H_selection_srate "(" S_selection_srate "): selection srate"
-  return(C_TO_XEN_INT(selection_srate()));
+  return(C_int_to_Xen_integer(selection_srate()));
 }
 
 
@@ -1743,8 +1743,8 @@ XEN g_selection_maxamp(XEN snd, XEN chn)
       chan_info *cp;
       ASSERT_CHANNEL(S_selection_maxamp, snd, chn, 1);
       cp = get_cp(snd, chn, S_selection_maxamp);
-      if (!cp) return(XEN_FALSE);
-      return(C_TO_XEN_DOUBLE(selection_maxamp(cp)));
+      if (!cp) return(Xen_false);
+      return(C_double_to_Xen_real(selection_maxamp(cp)));
     }
   else
     {
@@ -1753,7 +1753,7 @@ XEN g_selection_maxamp(XEN snd, XEN chn)
       sync_info *si;
       si = selection_sync();
       if (!si)
-	return(C_TO_XEN_DOUBLE(0.0)); /* no selection -- error? */
+	return(C_double_to_Xen_real(0.0)); /* no selection -- error? */
       for (i = 0; i < si->chans; i++)
 	{
 	  mus_float_t cur_mx;
@@ -1762,7 +1762,7 @@ XEN g_selection_maxamp(XEN snd, XEN chn)
 	    mx = cur_mx;
 	}
       free_sync_info(si);
-      return(C_TO_XEN_DOUBLE(mx));
+      return(C_double_to_Xen_real(mx));
     }
 }
 
@@ -1773,8 +1773,8 @@ static XEN g_selection_maxamp_position(XEN snd, XEN chn)
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_maxamp_position, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_maxamp_position);
-  if (!cp) return(XEN_FALSE);
-  return(C_TO_XEN_LONG_LONG(selection_maxamp_position(cp)));
+  if (!cp) return(Xen_false);
+  return(C_llong_to_Xen_llong(selection_maxamp_position(cp)));
 }
 
 
@@ -1819,7 +1819,7 @@ static XEN g_show_selection(void)
   #define H_show_selection "(" S_show_selection ") adjusts graph bounds to display the current selection in full"
   if (selection_is_active())
     show_selection();
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -1827,35 +1827,35 @@ static XEN g_unselect_all(void)
 {
   #define H_unselect_all "(" S_unselect_all ") deactivates (unselects) the current selection."
   deactivate_selection();
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
-XEN_ARGIFY_2(g_selection_position_w, g_selection_position)
-XEN_ARGIFY_2(g_selection_frames_w, g_selection_frames)
-XEN_ARGIFY_2(g_selection_member_w, g_selection_member)
-XEN_NARGIFY_0(g_selection_w, g_selection)
-XEN_ARGIFY_1(g_is_selection_w, g_is_selection)
-XEN_NARGIFY_0(g_selection_chans_w, g_selection_chans)
-XEN_NARGIFY_0(g_selection_srate_w, g_selection_srate)
-XEN_ARGIFY_2(g_selection_maxamp_w, g_selection_maxamp)
-XEN_ARGIFY_2(g_selection_maxamp_position_w, g_selection_maxamp_position)
-XEN_NARGIFY_0(g_delete_selection_w, g_delete_selection)
-XEN_ARGIFY_3(g_insert_selection_w, g_insert_selection)
-XEN_ARGIFY_4(g_mix_selection_w, g_mix_selection)
-XEN_NARGIFY_0(g_selection_to_mix_w, g_selection_to_mix)
-XEN_ARGIFY_2(g_select_all_w, g_select_all)
-XEN_VARGIFY(g_save_selection_w, g_save_selection)
-XEN_NARGIFY_0(g_show_selection_w, g_show_selection)
-XEN_NARGIFY_0(g_unselect_all_w, g_unselect_all)
+Xen_wrap_2_optional_args(g_selection_position_w, g_selection_position)
+Xen_wrap_2_optional_args(g_selection_frames_w, g_selection_frames)
+Xen_wrap_2_optional_args(g_selection_member_w, g_selection_member)
+Xen_wrap_no_args(g_selection_w, g_selection)
+Xen_wrap_1_optional_arg(g_is_selection_w, g_is_selection)
+Xen_wrap_no_args(g_selection_chans_w, g_selection_chans)
+Xen_wrap_no_args(g_selection_srate_w, g_selection_srate)
+Xen_wrap_2_optional_args(g_selection_maxamp_w, g_selection_maxamp)
+Xen_wrap_2_optional_args(g_selection_maxamp_position_w, g_selection_maxamp_position)
+Xen_wrap_no_args(g_delete_selection_w, g_delete_selection)
+Xen_wrap_3_optional_args(g_insert_selection_w, g_insert_selection)
+Xen_wrap_4_optional_args(g_mix_selection_w, g_mix_selection)
+Xen_wrap_no_args(g_selection_to_mix_w, g_selection_to_mix)
+Xen_wrap_2_optional_args(g_select_all_w, g_select_all)
+Xen_wrap_any_args(g_save_selection_w, g_save_selection)
+Xen_wrap_no_args(g_show_selection_w, g_show_selection)
+Xen_wrap_no_args(g_unselect_all_w, g_unselect_all)
 #if HAVE_SCHEME
 #define g_set_selection_position_w g_set_selection_position_reversed
 #define g_set_selection_frames_w g_set_selection_frames_reversed
 #define g_set_selection_member_w g_set_selection_member_reversed
 #else
-XEN_ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
-XEN_ARGIFY_3(g_set_selection_frames_w, g_set_selection_frames)
-XEN_ARGIFY_3(g_set_selection_member_w, g_set_selection_member)
+Xen_wrap_3_optional_args(g_set_selection_position_w, g_set_selection_position)
+Xen_wrap_3_optional_args(g_set_selection_frames_w, g_set_selection_frames)
+Xen_wrap_3_optional_args(g_set_selection_member_w, g_set_selection_member)
 #endif
 
 void g_init_selection(void)
@@ -1863,22 +1863,22 @@ void g_init_selection(void)
   init_selection_keywords();
   init_xen_selection();
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_position, g_selection_position_w, H_selection_position, S_setB S_selection_position, g_set_selection_position_w, 0, 2, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_frames, g_selection_frames_w, H_selection_frames, S_setB S_selection_frames, g_set_selection_frames_w, 0, 2, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_member, g_selection_member_w, H_selection_member, S_setB S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
+  Xen_define_procedure_with_setter(S_selection_position, g_selection_position_w, H_selection_position, S_setB S_selection_position, g_set_selection_position_w, 0, 2, 1, 2);
+  Xen_define_procedure_with_setter(S_selection_frames, g_selection_frames_w, H_selection_frames, S_setB S_selection_frames, g_set_selection_frames_w, 0, 2, 1, 2);
+  Xen_define_procedure_with_setter(S_selection_member, g_selection_member_w, H_selection_member, S_setB S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_selection,        g_selection_w,        0, 0, 0, H_selection);
-  XEN_DEFINE_SAFE_PROCEDURE(S_is_selection,      g_is_selection_w,      0, 1, 0, H_is_selection);
-  XEN_DEFINE_SAFE_PROCEDURE(S_selection_chans,  g_selection_chans_w,  0, 0, 0, H_selection_chans);
-  XEN_DEFINE_SAFE_PROCEDURE(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate);
-  XEN_DEFINE_SAFE_PROCEDURE(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);
-  XEN_DEFINE_SAFE_PROCEDURE(S_selection_maxamp_position, g_selection_maxamp_position_w, 0, 2, 0, H_selection_maxamp_position);
-  XEN_DEFINE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
-  XEN_DEFINE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
-  XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
-  XEN_DEFINE_PROCEDURE(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
-  XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
-  XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
-  XEN_DEFINE_PROCEDURE(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection);
-  XEN_DEFINE_PROCEDURE(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all);
+  Xen_define_safe_procedure(S_selection,        g_selection_w,        0, 0, 0, H_selection);
+  Xen_define_safe_procedure(S_is_selection,      g_is_selection_w,      0, 1, 0, H_is_selection);
+  Xen_define_safe_procedure(S_selection_chans,  g_selection_chans_w,  0, 0, 0, H_selection_chans);
+  Xen_define_safe_procedure(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate);
+  Xen_define_safe_procedure(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);
+  Xen_define_safe_procedure(S_selection_maxamp_position, g_selection_maxamp_position_w, 0, 2, 0, H_selection_maxamp_position);
+  Xen_define_procedure(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
+  Xen_define_procedure(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
+  Xen_define_procedure(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
+  Xen_define_procedure(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
+  Xen_define_procedure(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
+  Xen_define_procedure(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
+  Xen_define_procedure(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection);
+  Xen_define_procedure(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all);
 }

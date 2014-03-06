@@ -368,6 +368,7 @@
 /* ---- C structs ---- */
 #define XEN_MARK_OBJECT_TYPE            void *
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(Data_Wrap_Struct(Tag, Mark, Free, Val))
+#define XEN_MAKE_OBJECT(Tag, Val, Mark, Free) Data_Wrap_Struct(Tag, Mark, Free, Val)
 #define XEN_OBJECT_REF(a)               DATA_PTR(a)
 #define XEN_OBJECT_TYPE                 VALUE
 #define XEN_OBJECT_TYPE_P(OBJ, TAG)     (XEN_BOUND_P(OBJ) && (rb_obj_is_instance_of(OBJ, TAG)))
@@ -919,6 +920,7 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_MARK_OBJECT_TYPE            void
 
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(fth_make_instance(Tag, Val))
+#define XEN_MAKE_OBJECT(Tag, Val, Mark, Free) fth_make_instance(Tag, Val)
 
 #define XEN_OBJECT_TYPE_P(Obj, Tag)     fth_object_is_instance_of(Obj, Tag)
 #define XEN_OBJECT_REF(Obj)             fth_instance_ref_gen(Obj)
@@ -1230,6 +1232,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
                                                                       static char *Wrapped_Print(s7_scheme *sc, void *obj) {return(Original_Print((Type *)obj));}
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)                return(s7_make_object(s7, Tag, Val))
+#define XEN_MAKE_OBJECT(Tag, Val, ig1, ig2)                           s7_make_object(s7, Tag, Val)
 #define XEN_OBJECT_REF(Arg)                                           s7_object_value(Arg)
 #define XEN_OBJECT_TYPE                                               int /* tag type */
 #define XEN_OBJECT_TYPE_P(Obj, Tag)                                   (s7_object_type(Obj) == Tag)
@@ -1257,7 +1260,7 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #endif
 
 #endif
-/* end S7 */
+/* end s7 */
 
 
 
@@ -1399,6 +1402,7 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free)
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2) return(0)
+#define XEN_MAKE_OBJECT(Tag, Val, ig1, ig2) 0
 #define XEN_OBJECT_REF(a) 0
 #define XEN_OBJECT_TYPE int
 #define XEN_OBJECT_TYPE_P(OBJ, TAG) 0
@@ -1437,6 +1441,7 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
+#define XEN_VECTOR_RANK(a) 1
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #ifdef __cplusplus
@@ -1561,6 +1566,143 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_is_string_or_unbound(Arg)    XEN_STRING_IF_BOUND_P(Arg)
 #define Xen_is_integer_boolean_or_unbound(Arg) XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg)
 #define Xen_is_integer_or_boolean(Arg)   XEN_INTEGER_OR_BOOLEAN_P(Arg)
+
+#define Xen_append(a, b)                 XEN_APPEND(a, b)
+#define Xen_cadddr(a)                    XEN_CADDDR(a)
+#define Xen_caddr(a)                     XEN_CADDR(a)
+#define Xen_cadr(a)                      XEN_CADR(a)
+#define Xen_car(a)                       XEN_CAR(a)
+#define Xen_cddr(a)                      XEN_CDDR(a)
+#define Xen_cdr(a)                       XEN_CDR(a)
+#define Xen_cons(a, b)                   XEN_CONS(a, b)
+#define Xen_cons_2(a, b, c)              XEN_CONS_2(a, b, c)
+#define Xen_list_1(a)                    XEN_LIST_1(a)
+#define Xen_list_2(a, b)                 XEN_LIST_2(a, b)
+#define Xen_list_3(a, b, c)              XEN_LIST_3(a, b, c)
+#define Xen_list_4(a, b, c, d)           XEN_LIST_4(a, b, c, d)
+#define Xen_list_5(a, b, c, d, e)        XEN_LIST_5(a, b, c, d, e)
+#define Xen_list_6(a, b, c, d, e, f)     XEN_LIST_6(a, b, c, d, e, f)
+#define Xen_list_7(a, b, c, d, e, f, g)  XEN_LIST_7(a, b, c, d, e, f, g)
+#define Xen_list_8(a, b, c, d, e, f, g, h)    XEN_LIST_8(a, b, c, d, e, f, g, h)
+#define Xen_list_9(a, b, c, d, e, f, g, h, i) XEN_LIST_9(a, b, c, d, e, f, g, h, i)
+#define Xen_list_length(a)               XEN_LIST_LENGTH(a)
+#define Xen_list_ref(a, b)               XEN_LIST_REF(a, b)
+#define Xen_list_reverse(a)              XEN_LIST_REVERSE(a)
+#define Xen_list_set(a, b, c)            XEN_LIST_SET(a, b, c)
+#define Xen_make_keyword(a)              XEN_MAKE_KEYWORD(a)
+#define Xen_make_vector(a, b)            XEN_MAKE_VECTOR(a, b)
+#define Xen_throw(a)                     XEN_THROW(a)
+#define Xen_vector_length(a)             XEN_VECTOR_LENGTH(a)
+#define Xen_vector_ref(a, b)             XEN_VECTOR_REF(a, b)
+#define Xen_vector_set(a, b, c)          XEN_VECTOR_SET(a, b, c)
+#define Xen_vector_to_Xen_list(a)        XEN_VECTOR_TO_LIST(a)
+#define C_bool_to_Xen_boolean(a)         C_TO_XEN_BOOLEAN(a)
+#define C_char_to_Xen_char(a)            C_TO_XEN_CHAR(a)
+#define C_complex_to_Xen_complex(a)      C_TO_XEN_COMPLEX(a)
+#define C_double_to_Xen_real(a)          C_TO_XEN_DOUBLE(a)
+#define C_int_to_Xen_integer(a)          C_TO_XEN_INT(a)
+#define C_llong_to_Xen_llong(a)          C_TO_XEN_LONG_LONG(a)
+#define C_string_to_Xen_string(a)        C_TO_XEN_STRING(a)
+#define C_string_to_Xen_string_with_length(a, b) C_TO_XEN_STRINGN(a, b)
+#define C_string_to_Xen_symbol(a)        C_STRING_TO_XEN_SYMBOL(a)
+#define C_ulong_to_Xen_ulong(a)          C_TO_XEN_ULONG(a)
+#define C_ullong_to_Xen_ullong(a)        C_TO_XEN_ULONG_LONG(a)
+#define Xen_boolean_to_C_bool(a)         XEN_TO_C_BOOLEAN(a)
+#define Xen_char_to_C_char(a)            XEN_TO_C_CHAR(a)
+#define Xen_complex_to_C_complex(a)      XEN_TO_C_COMPLEX(a)
+#define Xen_real_to_C_double(a)          XEN_TO_C_DOUBLE(a)
+#define Xen_integer_to_C_int(a)          XEN_TO_C_INT(a)
+#define Xen_llong_to_C_llong(a)          XEN_TO_C_LONG_LONG(a)
+#define Xen_string_to_C_string(a)        XEN_TO_C_STRING(a)
+#define Xen_symbol_to_C_string(a)        XEN_SYMBOL_TO_C_STRING(a)
+#define C_string_to_Xen_value(a)         XEN_NAME_AS_C_STRING_TO_VALUE(a)
+#define Xen_ulong_to_C_ulong(a)          XEN_TO_C_ULONG(a)
+#define Xen_ullong_to_C_ullong(a)        XEN_TO_C_ULONG_LONG(a)
+#define Xen_load(a)                      XEN_LOAD_FILE(a)
+#define Xen_documentation(a)             XEN_OBJECT_HELP(a)
+#define Xen_vector_rank(a)               XEN_VECTOR_RANK(a)
+#define Xen_wrap_no_args(a, b)           XEN_NARGIFY_0(a, b)
+#define Xen_wrap_1_arg(a, b)             XEN_NARGIFY_1(a, b)
+#define Xen_wrap_2_args(a, b)            XEN_NARGIFY_2(a, b)
+#define Xen_wrap_3_args(a, b)            XEN_NARGIFY_3(a, b)
+#define Xen_wrap_4_args(a, b)            XEN_NARGIFY_4(a, b)
+#define Xen_wrap_5_args(a, b)            XEN_NARGIFY_5(a, b)
+#define Xen_wrap_6_args(a, b)            XEN_NARGIFY_6(a, b)
+#define Xen_wrap_7_args(a, b)            XEN_NARGIFY_7(a, b)
+#define Xen_wrap_8_args(a, b)            XEN_NARGIFY_8(a, b)
+#define Xen_wrap_9_args(a, b)            XEN_NARGIFY_9(a, b)
+#define Xen_wrap_1_optional_arg(a, b)    XEN_ARGIFY_1(a, b)
+#define Xen_wrap_10_optional_args(a, b)  XEN_ARGIFY_10(a, b)
+#define Xen_wrap_2_optional_args(a, b)   XEN_ARGIFY_2(a, b)
+#define Xen_wrap_3_optional_args(a, b)   XEN_ARGIFY_3(a, b)
+#define Xen_wrap_4_optional_args(a, b)   XEN_ARGIFY_4(a, b)
+#define Xen_wrap_5_optional_args(a, b)   XEN_ARGIFY_5(a, b)
+#define Xen_wrap_6_optional_args(a, b)   XEN_ARGIFY_6(a, b)
+#define Xen_wrap_7_optional_args(a, b)   XEN_ARGIFY_7(a, b)
+#define Xen_wrap_8_optional_args(a, b)   XEN_ARGIFY_8(a, b)
+#define Xen_wrap_9_optional_args(a, b)   XEN_ARGIFY_9(a, b)
+#define Xen_wrap_any_args(a, b)          XEN_VARGIFY(a, b)
+#define Xen_apply(a, b, c)               XEN_APPLY(a, b, c)
+#define Xen_unprotected_apply(a, b)      XEN_APPLY_NO_CATCH(a, b)
+#define Xen_eval_C_string(a)             XEN_EVAL_C_STRING(a)
+#define Xen_error(a, b)                  XEN_ERROR(a, b)
+#define Xen_call_with_no_args(a, b)                  XEN_CALL_0(a, b)
+#define Xen_call_with_1_arg(a, b, c)                 XEN_CALL_1(a, b, c)
+#define Xen_call_with_2_args(a, b, c, d)             XEN_CALL_2(a, b, c, d)
+#define Xen_call_with_3_args(a, b, c, d, e)          XEN_CALL_3(a, b, c, d, e)
+#define Xen_call_with_4_args(a, b, c, d, e, f)       XEN_CALL_4(a, b, c, d, e, f)
+#define Xen_call_with_5_args(a, b, c, d, e, f, g)    XEN_CALL_5(a, b, c, d, e, f, g)
+#define Xen_call_with_6_args(a, b, c, d, e, f, g, h) XEN_CALL_6(a, b, c, d, e, f, g, h)
+#define Xen_unprotected_call_with_no_args(a)         XEN_CALL_0_NO_CATCH(a)
+#define Xen_unprotected_call_with_1_arg(a, b)        XEN_CALL_1_NO_CATCH(a, b)
+#define Xen_unprotected_call_with_2_args(a, b, c)    XEN_CALL_2_NO_CATCH(a, b, c)
+#define Xen_unprotected_call_with_3_args(a, b, c, d) XEN_CALL_3_NO_CATCH(a, b, c, d)
+#define Xen_define(a, b)                             XEN_DEFINE(a, b)
+#define Xen_define_constant(a, b, c)                 XEN_DEFINE_CONSTANT(a, b, c)
+#define Xen_define_hook(a, b, c, d)                  XEN_DEFINE_HOOK(a, b, c, d)
+#define Xen_define_procedure(a, b, c, d, e, f)       XEN_DEFINE_PROCEDURE(a, b, c, d, e, f)
+#define Xen_define_procedure_with_setter(a, b, c, d, e, f, g, h, i) XEN_DEFINE_PROCEDURE_WITH_SETTER(a, b, c, d, e, f, g, h, i)
+#define Xen_define_safe_procedure(a, b, c, d, e, f)  XEN_DEFINE_SAFE_PROCEDURE(a, b, c, d, e, f)
+#define Xen_define_simple_hook(a, b)                 XEN_DEFINE_SIMPLE_HOOK(a, b)
+#define Xen_define_variable(a, b, c)                 XEN_DEFINE_VARIABLE(a, b, c)
+#define Xen_out_of_range_error(a, b, c, d)           XEN_OUT_OF_RANGE_ERROR(a, b, c, d)
+#define Xen_wrong_type_arg_error(a, b, c, d)         XEN_WRONG_TYPE_ARG_ERROR(a, b, c, d)
+#define Xen_clear_hook_list(a)           XEN_CLEAR_HOOK(a)
+#define Xen_hook_has_list(a)             XEN_HOOKED(a)
+#define Xen_hook_list(a)                 XEN_HOOK_PROCEDURES(a)
+#define Xen_add_to_hook_list(a, b, c, d) XEN_ADD_HOOK(a, b, c, d)
+#define Xen_GC_protect(a)                XEN_PROTECT_FROM_GC(a)
+#define Xen_provide_feature(a)           XEN_PROVIDE(a)
+#define Xen_arity(a)                     XEN_ARITY(a)
+#define Xen_add_to_load_path(a)          XEN_ADD_TO_LOAD_PATH(a)
+#define Xen_check_type(a, b, c, d, e)    XEN_ASSERT_TYPE(a, b, c, d, e)
+#define Xen_make_object(a, b, c, d)      XEN_MAKE_OBJECT(a, b, c, d)
+#define Xen_variable_ref(a)              XEN_VARIABLE_REF(a)
+#define Xen_variable_set(a, b)           XEN_VARIABLE_SET(a, b)
+#define Xen_object_ref(a)                XEN_OBJECT_REF(a)
+#define Xen_copy_arg(a)                  XEN_COPY_ARG(a)
+#define Xen_assoc_ref(a, b)              XEN_ASSOC_REF(a, b)
+#define Xen_assoc_set(a, b, c)           XEN_ASSOC_SET(a, b, c)
+#define Xen_make_error_type(a)           XEN_ERROR_TYPE(a)
+#define Xen_required_args(a)             XEN_REQUIRED_ARGS(a)
+#define Xen_is_aritable(a, b)            XEN_REQUIRED_ARGS_OK(a, b)
+#define Xen_object_to_C_string(a)        XEN_AS_STRING(a)
+#define Xen_wrap_free(a, b, c)           XEN_MAKE_OBJECT_FREE_PROCEDURE(a, b, c)
+#define Xen_wrap_print(a, b, c)          XEN_MAKE_OBJECT_PRINT_PROCEDURE(a, b, c)
+#define Xen_make_object_type(a, b)       XEN_MAKE_OBJECT_TYPE(a, b)
+#define Xen_object_mark_t                XEN_MARK_OBJECT_TYPE
+#define Xen_object_type_t                XEN_OBJECT_TYPE
+#define Xen_catch_t                      XEN_CATCH_BODY_TYPE
+#define Xen_comment_mark                 XEN_COMMENT_STRING
+#define Xen_documentation_symbol         XEN_DOCUMENTATION_SYMBOL
+#define Xen_empty_list                   XEN_EMPTY_LIST
+#define Xen_false                        XEN_FALSE
+#define Xen_true                         XEN_TRUE
+#define Xen_undefined                    XEN_UNDEFINED
+#define Xen_integer_zero                 XEN_ZERO
+#define Xen_file_extension               XEN_FILE_EXTENSION
+#define Xen_language                     XEN_LANGUAGE_NAME
+#define Xen_load_path                    XEN_LOAD_PATH
 
 #ifdef __cplusplus
 extern "C" {

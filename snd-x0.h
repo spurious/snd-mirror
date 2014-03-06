@@ -15,17 +15,17 @@
 #define XM_FONT_FREE XmRenderTableFree
 
 #define LOTSA_PIXELS 10000
-#define XEN_WRAP_WIDGET(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Widget"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
-#define XEN_WRAP_WINDOW(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Window"), C_TO_XEN_ULONG(Value)) : XEN_FALSE)
-#define XEN_UNWRAP_WIDGET(Value)     (XEN_LIST_P(Value) ? XEN_UNWRAP_C_POINTER(XEN_CADR(Value)) : 0)
-#define Xen_is_widget(Value)         (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                      (strcmp("Widget", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#define XEN_WRAP_WIDGET(Value)       ((Value) ? Xen_list_2(C_string_to_Xen_symbol("Widget"), XEN_WRAP_C_POINTER(Value)) : Xen_false)
+#define XEN_WRAP_WINDOW(Value)       ((Value) ? Xen_list_2(C_string_to_Xen_symbol("Window"), C_ulong_to_Xen_ulong(Value)) : Xen_false)
+#define XEN_UNWRAP_WIDGET(Value)     (XEN_LIST_P(Value) ? XEN_UNWRAP_C_POINTER(Xen_cadr(Value)) : 0)
+#define Xen_is_widget(Value)         (XEN_LIST_P(Value) && (Xen_list_length(Value) >= 2) && (XEN_SYMBOL_P(Xen_car(Value))) && \
+                                      (strcmp("Widget", Xen_symbol_to_C_string(Xen_car(Value))) == 0))
 
-#define XEN_WRAP_PIXEL(Value)        XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Pixel"), C_TO_XEN_INT((int)Value))
+#define XEN_WRAP_PIXEL(Value)        Xen_list_2(C_string_to_Xen_symbol("Pixel"), C_int_to_Xen_integer((int)Value))
                                        /* not ulong here! -- messes up the equal? check */
-#define XEN_UNWRAP_PIXEL(Value)      (unsigned long)XEN_TO_C_INT(XEN_CADR(Value))
-#define Xen_is_pixel(Value)           (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                         (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#define XEN_UNWRAP_PIXEL(Value)      (unsigned long)Xen_integer_to_C_int(Xen_cadr(Value))
+#define Xen_is_pixel(Value)           (XEN_LIST_P(Value) && (Xen_list_length(Value) >= 2) && (XEN_SYMBOL_P(Xen_car(Value))) && \
+                                         (strcmp("Pixel", Xen_symbol_to_C_string(Xen_car(Value))) == 0))
 
 #define NULL_WIDGET NULL
 

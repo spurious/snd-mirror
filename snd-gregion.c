@@ -387,10 +387,10 @@ static XEN reflect_file_in_region_browser(XEN hook_or_reason)
       set_sensitive(mix_button, file_on);
       set_sensitive(insert_button, file_on);
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
-XEN_NARGIFY_1(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
+Xen_wrap_1_arg(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
 
 char *regrow_get_label(void *ur)
 {
@@ -412,15 +412,15 @@ static XEN mouse_leave_label_hook;
 static void mouse_enter_or_leave_label(void *r, int type, XEN hook, const char *caller)
 {
   if ((r) &&
-      (XEN_HOOKED(hook)))
+      (Xen_hook_has_list(hook)))
     {
       char *label = NULL;
       label = regrow_get_label(r);
       if (label)
 	run_hook(hook,
-		 XEN_LIST_3(C_TO_XEN_INT(type),
-			    C_TO_XEN_INT(regrow_get_pos(r)),
-			    C_TO_XEN_STRING(label)),
+		 Xen_list_3(C_int_to_Xen_integer(type),
+			    C_int_to_Xen_integer(regrow_get_pos(r)),
+			    C_string_to_Xen_string(label)),
 		 caller);
 
     }
@@ -764,7 +764,7 @@ static void make_region_dialog(void)
   highlight_region();
   region_update_graph(cp);
 
-  XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_in_region_browser_w, "region-dialog-open-file-watcher", "region dialog open-file-hook handler");
+  Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_in_region_browser_w, "region-dialog-open-file-watcher", "region dialog open-file-hook handler");
 
   set_dialog_widget(REGION_DIALOG, region_dialog);
 }
@@ -836,11 +836,11 @@ static XEN g_view_regions_dialog(void)
 }
 
 
-XEN_NARGIFY_0(g_view_regions_dialog_w, g_view_regions_dialog)
+Xen_wrap_no_args(g_view_regions_dialog_w, g_view_regions_dialog)
 
 void g_init_gxregion(void)
 {
-  XEN_DEFINE_PROCEDURE(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
+  Xen_define_procedure(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
 #if HAVE_SCHEME
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 1 for view-files, and 2 for regions. The 'position' \
@@ -880,7 +880,7 @@ to popup file info as follows: \n\
 
   #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"
 
-  mouse_enter_label_hook = XEN_DEFINE_HOOK(S_mouse_enter_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_enter_label_hook);
-  mouse_leave_label_hook = XEN_DEFINE_HOOK(S_mouse_leave_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_leave_label_hook);
+  mouse_enter_label_hook = Xen_define_hook(S_mouse_enter_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_enter_label_hook);
+  mouse_leave_label_hook = Xen_define_hook(S_mouse_leave_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_leave_label_hook);
 }
 

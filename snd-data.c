@@ -27,13 +27,13 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       cp->gl_fft_list = NO_LIST;
       cp->gl_wavo_list = NO_LIST;
 #endif
-      cp->edit_hook = XEN_FALSE;
+      cp->edit_hook = Xen_false;
       cp->edit_hook_loc = NOT_A_GC_LOC;
-      cp->after_edit_hook = XEN_FALSE;
+      cp->after_edit_hook = Xen_false;
       cp->after_edit_hook_loc = NOT_A_GC_LOC;
-      cp->undo_hook = XEN_FALSE;
+      cp->undo_hook = Xen_false;
       cp->undo_hook_loc = NOT_A_GC_LOC;
-      cp->properties = XEN_FALSE; /* will be a vector of 1 element if it's ever used */
+      cp->properties = Xen_false; /* will be a vector of 1 element if it's ever used */
       cp->properties_loc = NOT_A_GC_LOC;
       cp->active = CHANNEL_INACTIVE;
     }
@@ -53,7 +53,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->cursor_style = cursor_style(ss);
   cp->tracking_cursor_style = tracking_cursor_style(ss);
   cp->cursor_size = cursor_size(ss);
-  cp->cursor_proc = XEN_UNDEFINED;
+  cp->cursor_proc = Xen_undefined;
   cp->cursor_proc_loc = NOT_A_GC_LOC;
   cp->squelch_update = false;
   cp->show_y_zero = show_y_zero(ss);
@@ -168,11 +168,11 @@ static chan_info *free_chan_info(chan_info *cp)
   if (Xen_is_procedure(cp->cursor_proc))
     {
       snd_unprotect_at(cp->cursor_proc_loc);
-      cp->cursor_proc = XEN_UNDEFINED;
+      cp->cursor_proc = Xen_undefined;
       cp->cursor_proc_loc = NOT_A_GC_LOC;
     }
   if (Xen_is_vector(cp->properties)) /* using vector as node for GC */
-    XEN_VECTOR_SET(cp->properties, 0, XEN_EMPTY_LIST);
+    Xen_vector_set(cp->properties, 0, Xen_empty_list);
   cp->waiting_to_make_graph = false;
   if (cp->sonogram_data) free_sono_info(cp);
   if (cp->temp_sonogram) 
@@ -211,23 +211,23 @@ static chan_info *free_chan_info(chan_info *cp)
 
   if (Xen_is_hook(cp->edit_hook))
     {
-      XEN_CLEAR_HOOK(cp->edit_hook);
+      Xen_clear_hook_list(cp->edit_hook);
       snd_unprotect_at(cp->edit_hook_loc);
-      cp->edit_hook = XEN_FALSE;
+      cp->edit_hook = Xen_false;
       cp->edit_hook_loc = NOT_A_GC_LOC;
     }
   if (Xen_is_hook(cp->after_edit_hook))
     {
-      XEN_CLEAR_HOOK(cp->after_edit_hook);
+      Xen_clear_hook_list(cp->after_edit_hook);
       snd_unprotect_at(cp->after_edit_hook_loc);
-      cp->after_edit_hook = XEN_FALSE;
+      cp->after_edit_hook = Xen_false;
       cp->after_edit_hook_loc = NOT_A_GC_LOC;
     }
   if (Xen_is_hook(cp->undo_hook))
     {
-      XEN_CLEAR_HOOK(cp->undo_hook);
+      Xen_clear_hook_list(cp->undo_hook);
       snd_unprotect_at(cp->undo_hook_loc);
-      cp->undo_hook = XEN_FALSE;
+      cp->undo_hook = Xen_false;
       cp->undo_hook_loc = NOT_A_GC_LOC;
     }
   if (cp->inset_graph)
@@ -243,7 +243,7 @@ snd_info *make_basic_snd_info(int chans)
   sp = (snd_info *)calloc(1, sizeof(snd_info));
   sp->chans = (chan_info **)calloc(chans, sizeof(chan_info *));
   sp->allocated_chans = chans;
-  sp->properties = XEN_FALSE; /* will be a vector of 1 element if it's ever used */
+  sp->properties = Xen_false; /* will be a vector of 1 element if it's ever used */
   sp->properties_loc = NOT_A_GC_LOC;
 #if USE_NO_GUI
   sp->snd_widgets = false;
@@ -413,7 +413,7 @@ void free_snd_info(snd_info *sp)
   sp->need_update = false;
   sp->file_unreadable = false;
   if (Xen_is_vector(sp->properties)) /* using vector as node for GC */
-    XEN_VECTOR_SET(sp->properties, 0, XEN_EMPTY_LIST);
+    Xen_vector_set(sp->properties, 0, Xen_empty_list);
   sp->selected_channel = NO_SELECTION;
   sp->short_filename = NULL;                      /* was a pointer into filename */
   if (sp->filename) free(sp->filename);
@@ -429,8 +429,8 @@ void free_snd_info(snd_info *sp)
   clear_players();
   reflect_mix_change(ANY_MIX_ID);
 
-  if (XEN_HOOKED(ss->effects_hook))
-    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+  if (Xen_hook_has_list(ss->effects_hook))
+    run_hook(ss->effects_hook, Xen_empty_list, S_effects_hook);
 }
 
 
@@ -839,9 +839,9 @@ static void select_sound(snd_info *sp)
 {
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
 
-  if (XEN_HOOKED(select_sound_hook))
+  if (Xen_hook_has_list(select_sound_hook))
     run_hook(select_sound_hook,
-	     XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
+	     Xen_list_1(C_INT_TO_XEN_SOUND(sp->index)),
 	     S_select_sound_hook);
 
   if (ss->selected_sound != sp->index)
@@ -853,8 +853,8 @@ static void select_sound(snd_info *sp)
     }
   sp->selectpos = current_selectpos++;
 
-  if (XEN_HOOKED(ss->effects_hook))
-    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+  if (Xen_hook_has_list(ss->effects_hook))
+    run_hook(ss->effects_hook, Xen_empty_list, S_effects_hook);
 }
 
 
@@ -886,10 +886,10 @@ void select_channel(snd_info *sp, int chan)
 	  if (sp != cp->sound) cp->sound->selected_channel = NO_SELECTION;
 	  update_graph(cp);
 	}
-      if (XEN_HOOKED(select_channel_hook))
+      if (Xen_hook_has_list(select_channel_hook))
 	run_hook(select_channel_hook,
-		 XEN_LIST_2(C_INT_TO_XEN_SOUND(sp->index),
-			    C_TO_XEN_INT(chan)),
+		 Xen_list_2(C_INT_TO_XEN_SOUND(sp->index),
+			    C_int_to_Xen_integer(chan)),
 		 S_select_channel_hook);
       ncp = color_selected_channel(sp);
       goto_graph(ncp);
@@ -1023,7 +1023,7 @@ void g_init_data(void)
   #define H_select_channel_hook S_select_channel_hook " (snd chn): called whenever a channel is selected. \
 Its arguments are the sound index and the channel number."
 
-  select_sound_hook =   XEN_DEFINE_HOOK(S_select_sound_hook,   "(make-hook 'snd)",      1, H_select_sound_hook);
-  select_channel_hook = XEN_DEFINE_HOOK(S_select_channel_hook, "(make-hook 'snd 'chn)", 2, H_select_channel_hook);
+  select_sound_hook =   Xen_define_hook(S_select_sound_hook,   "(make-hook 'snd)",      1, H_select_sound_hook);
+  select_channel_hook = Xen_define_hook(S_select_channel_hook, "(make-hook 'snd 'chn)", 2, H_select_channel_hook);
 }
 

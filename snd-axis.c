@@ -1489,28 +1489,28 @@ static axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
       case LISP_AXIS_INFO:      if (cp->lisp_info) return(lisp_info_axis(cp)); break;
       }
 
-  XEN_ERROR(XEN_ERROR_TYPE("no-such-axis"),
-	    XEN_LIST_6(((!(cp->squelch_update)) || (!(AXIS_INFO_ID_OK(ap_id)))) ?
-		         C_TO_XEN_STRING("~A: no such axis: ~A of sound ~A (~A), chan: ~A (axis should be " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")") :
-		         C_TO_XEN_STRING("~A: no such axis: ~A of sound ~A (~A), chan: ~A does not exist, probably because output is squelched"),
-		       C_TO_XEN_STRING(caller),
-		       C_TO_XEN_INT((int)(ap_id)),
+  Xen_error(Xen_make_error_type("no-such-axis"),
+	    Xen_list_6(((!(cp->squelch_update)) || (!(AXIS_INFO_ID_OK(ap_id)))) ?
+		         C_string_to_Xen_string("~A: no such axis: ~A of sound ~A (~A), chan: ~A (axis should be " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")") :
+		         C_string_to_Xen_string("~A: no such axis: ~A of sound ~A (~A), chan: ~A does not exist, probably because output is squelched"),
+		       C_string_to_Xen_string(caller),
+		       C_int_to_Xen_integer((int)(ap_id)),
 		       C_INT_TO_XEN_SOUND(cp->sound->index),
-		       C_TO_XEN_STRING(cp->sound->short_filename),
-		       C_TO_XEN_INT(cp->chan)));
+		       C_string_to_Xen_string(cp->sound->short_filename),
+		       C_int_to_Xen_integer(cp->chan)));
   return(NULL);
 }
 
-#define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) get_ap(get_cp(Snd, Chn, Caller), (Xen_is_integer(Ap)) ? (axis_info_t)XEN_TO_C_INT(Ap) : TIME_AXIS_INFO, Caller)
+#define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) get_ap(get_cp(Snd, Chn, Caller), (Xen_is_integer(Ap)) ? (axis_info_t)Xen_integer_to_C_int(Ap) : TIME_AXIS_INFO, Caller)
 
 
 static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_x_to_position "(" S_x_to_position " val :optional snd chn (ax " S_time_graph ")): x pixel loc of val"
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_x_to_position, "a number");
+  Xen_check_type(Xen_is_number(val), val, 1, S_x_to_position, "a number");
   ASSERT_CHANNEL(S_x_to_position, snd, chn, 2);
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ap), ap, 4, S_x_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
-  return(C_TO_XEN_INT(grf_x(XEN_TO_C_DOUBLE(val),
+  Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_x_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  return(C_int_to_Xen_integer(grf_x(Xen_real_to_C_double(val),
 			    TO_C_AXIS_INFO(snd, chn, ap, S_x_to_position))));
 }
 
@@ -1518,10 +1518,10 @@ static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_y_to_position "(" S_y_to_position " val :optional snd chn (ax " S_time_graph ")): y pixel loc of val"
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_y_to_position, "a number");
+  Xen_check_type(Xen_is_number(val), val, 1, S_y_to_position, "a number");
   ASSERT_CHANNEL(S_y_to_position, snd, chn, 2);
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ap), ap, 4, S_y_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
-  return(C_TO_XEN_INT(grf_y(XEN_TO_C_DOUBLE(val),
+  Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_y_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  return(C_int_to_Xen_integer(grf_y(Xen_real_to_C_double(val),
 			    TO_C_AXIS_INFO(snd, chn, ap, S_y_to_position))));
 }
 
@@ -1529,22 +1529,22 @@ static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 static XEN g_position_to_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_position_to_x "(" S_position_to_x " val :optional snd chn (ax " S_time_graph ")): x axis value corresponding to pixel val"
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_position_to_x, "an integer");
+  Xen_check_type(Xen_is_integer(val), val, 1, S_position_to_x, "an integer");
   ASSERT_CHANNEL(S_position_to_x, snd, chn, 2);
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ap), ap, 4, S_position_to_x, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
-  return(C_TO_XEN_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_x),
-				 XEN_TO_C_INT(val))));
+  Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_position_to_x, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  return(C_double_to_Xen_real(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_x),
+				 Xen_integer_to_C_int(val))));
 }
 
 
 static XEN g_position_to_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_position_to_y "(" S_position_to_y " val :optional snd chn (ax " S_time_graph ")): y axis value corresponding to pixel val"
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_position_to_y, "an integer");
+  Xen_check_type(Xen_is_integer(val), val, 1, S_position_to_y, "an integer");
   ASSERT_CHANNEL(S_position_to_y, snd, chn, 2);
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ap), ap, 4, S_position_to_y, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
-  return(C_TO_XEN_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_y),
-				 XEN_TO_C_INT(val))));
+  Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_position_to_y, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  return(C_double_to_Xen_real(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_y),
+				 Xen_integer_to_C_int(val))));
 }
 
 
@@ -1554,44 +1554,44 @@ static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale xlabel ylabel new-peaks)"
   axis_info *ap;
   ASSERT_CHANNEL(S_axis_info, snd, chn, 1);
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ap_id), ap_id, 3, S_axis_info, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type(Xen_is_integer_or_unbound(ap_id), ap_id, 3, S_axis_info, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, S_axis_info);
-  if (ap == NULL) return(XEN_EMPTY_LIST);
-  return(XEN_CONS(C_TO_XEN_LONG_LONG(ap->losamp),
-	  XEN_CONS(C_TO_XEN_LONG_LONG(ap->hisamp),
-	   XEN_CONS(C_TO_XEN_DOUBLE(ap->x0),
-	    XEN_CONS(C_TO_XEN_DOUBLE(ap->y0),
-	     XEN_CONS(C_TO_XEN_DOUBLE(ap->x1),
-	      XEN_CONS(C_TO_XEN_DOUBLE(ap->y1),
-	       XEN_CONS(C_TO_XEN_DOUBLE(ap->xmin),
-		XEN_CONS(C_TO_XEN_DOUBLE(ap->ymin),
-		 XEN_CONS(C_TO_XEN_DOUBLE(ap->xmax),
-		  XEN_CONS(C_TO_XEN_DOUBLE(ap->ymax),
-		   XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
-		    XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
-		     XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
-		      XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
-		       XEN_CONS(C_TO_XEN_INT(ap->y_offset),
-			XEN_CONS(C_TO_XEN_DOUBLE(ap->x_scale),
-			 XEN_CONS(C_TO_XEN_DOUBLE(ap->y_scale),
-			  XEN_CONS((ap->xlabel) ? C_TO_XEN_STRING(ap->xlabel) : XEN_FALSE,
-			   XEN_CONS((ap->ylabel) ? C_TO_XEN_STRING(ap->ylabel) : XEN_FALSE,
-			    XEN_CONS((ap->cp) ? C_TO_XEN_BOOLEAN(ap->cp->new_peaks) : XEN_FALSE,
-			     XEN_EMPTY_LIST)))))))))))))))))))));
+  if (ap == NULL) return(Xen_empty_list);
+  return(Xen_cons(C_llong_to_Xen_llong(ap->losamp),
+	  Xen_cons(C_llong_to_Xen_llong(ap->hisamp),
+	   Xen_cons(C_double_to_Xen_real(ap->x0),
+	    Xen_cons(C_double_to_Xen_real(ap->y0),
+	     Xen_cons(C_double_to_Xen_real(ap->x1),
+	      Xen_cons(C_double_to_Xen_real(ap->y1),
+	       Xen_cons(C_double_to_Xen_real(ap->xmin),
+		Xen_cons(C_double_to_Xen_real(ap->ymin),
+		 Xen_cons(C_double_to_Xen_real(ap->xmax),
+		  Xen_cons(C_double_to_Xen_real(ap->ymax),
+		   Xen_cons(C_int_to_Xen_integer(ap->x_axis_x0),
+		    Xen_cons(C_int_to_Xen_integer(ap->y_axis_y0),
+		     Xen_cons(C_int_to_Xen_integer(ap->x_axis_x1),
+		      Xen_cons(C_int_to_Xen_integer(ap->y_axis_y1),
+		       Xen_cons(C_int_to_Xen_integer(ap->y_offset),
+			Xen_cons(C_double_to_Xen_real(ap->x_scale),
+			 Xen_cons(C_double_to_Xen_real(ap->y_scale),
+			  Xen_cons((ap->xlabel) ? C_string_to_Xen_string(ap->xlabel) : Xen_false,
+			   Xen_cons((ap->ylabel) ? C_string_to_Xen_string(ap->ylabel) : Xen_false,
+			    Xen_cons((ap->cp) ? C_bool_to_Xen_boolean(ap->cp->new_peaks) : Xen_false,
+			     Xen_empty_list)))))))))))))))))))));
 }
 
 
 #if USE_MOTIF
-  #define XEN_UNWRAP_SND_GC(Value) XEN_UNWRAP_C_POINTER(XEN_CADR(Value))
-  #define Xen_is_GC(Value) (Xen_is_list(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
-                          (Xen_is_symbol(XEN_CAR(Value))) && \
-			  (strcmp("GC", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+  #define XEN_UNWRAP_SND_GC(Value) XEN_UNWRAP_C_POINTER(Xen_cadr(Value))
+  #define Xen_is_GC(Value) (Xen_is_list(Value) && (Xen_list_length(Value) >= 2) && \
+                          (Xen_is_symbol(Xen_car(Value))) && \
+			  (strcmp("GC", Xen_symbol_to_C_string(Xen_car(Value))) == 0))
 #else
   #if USE_GTK
-      #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
-      #define Xen_is_GC(Value) (Xen_is_list(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
-                              (Xen_is_symbol(XEN_CAR(Value))) && \
-			      (strcmp("gc_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+      #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_UNWRAP_C_POINTER(Xen_cadr(Value)))
+      #define Xen_is_GC(Value) (Xen_is_list(Value) && (Xen_list_length(Value) >= 2) && \
+                              (Xen_is_symbol(Xen_car(Value))) && \
+			      (strcmp("gc_t_", Xen_symbol_to_C_string(Xen_car(Value))) == 0))
   #else
     #define XEN_UNWRAP_SND_GC(Value) 0
     #define Xen_is_GC(Value) 0
@@ -1625,17 +1625,17 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   axis_info *ap;
   int len;
 
-  len = XEN_LIST_LENGTH(args);
+  len = Xen_list_length(args);
 #if (!USE_GTK)
-  XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, 1, S_draw_axes, "3 required and 6 optional args");
+  Xen_check_type((len >= 3) && (len < 10), args, 1, S_draw_axes, "3 required and 6 optional args");
 #else
-  XEN_ASSERT_TYPE((len >= 3) && (len < 11), args, 1, S_draw_axes, "3 required and 7 optional args");
+  Xen_check_type((len >= 3) && (len < 11), args, 1, S_draw_axes, "3 required and 7 optional args");
 #endif
   
-  xwid = XEN_LIST_REF(args, 0);
-  XEN_ASSERT_TYPE(Xen_is_widget(xwid), xwid, 1, S_draw_axes, "widget");
-  xgc = XEN_LIST_REF(args, 1);
-  XEN_ASSERT_TYPE(Xen_is_GC(xgc), xgc, 2, S_draw_axes, "snd-gc");
+  xwid = Xen_list_ref(args, 0);
+  Xen_check_type(Xen_is_widget(xwid), xwid, 1, S_draw_axes, "widget");
+  xgc = Xen_list_ref(args, 1);
+  Xen_check_type(Xen_is_GC(xgc), xgc, 2, S_draw_axes, "snd-gc");
 
 #if USE_MOTIF
   w = (Widget)(XEN_UNWRAP_WIDGET(xwid));
@@ -1646,48 +1646,48 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   gc = (gc_t *)(XEN_UNWRAP_SND_GC(xgc));
 #endif
 
-  label_ref = XEN_LIST_REF(args, 2);
-  XEN_ASSERT_TYPE(Xen_is_string(label_ref) || Xen_is_false(label_ref), label_ref, 3, S_draw_axes, "a string");
+  label_ref = Xen_list_ref(args, 2);
+  Xen_check_type(Xen_is_string(label_ref) || Xen_is_false(label_ref), label_ref, 3, S_draw_axes, "a string");
   if (len > 3) 
     {
-      xx0 = XEN_LIST_REF(args, 3);
-      XEN_ASSERT_TYPE(Xen_is_number(xx0), xx0, 4, S_draw_axes, "a number");
-      x0 = XEN_TO_C_DOUBLE(xx0);
+      xx0 = Xen_list_ref(args, 3);
+      Xen_check_type(Xen_is_number(xx0), xx0, 4, S_draw_axes, "a number");
+      x0 = Xen_real_to_C_double(xx0);
       if (len > 4) 
 	{
-	  xx1 = XEN_LIST_REF(args, 4);
-	  XEN_ASSERT_TYPE(Xen_is_number(xx1), xx1, 5, S_draw_axes, "a number");
-	  x1 = XEN_TO_C_DOUBLE(xx1);
+	  xx1 = Xen_list_ref(args, 4);
+	  Xen_check_type(Xen_is_number(xx1), xx1, 5, S_draw_axes, "a number");
+	  x1 = Xen_real_to_C_double(xx1);
 	  if (len > 5) 
 	    {
-	      xy0 = XEN_LIST_REF(args, 5);
-	      XEN_ASSERT_TYPE(Xen_is_number(xy0), xy0, 6, S_draw_axes, "a number");
-	      y0 = XEN_TO_C_DOUBLE(xy0);
+	      xy0 = Xen_list_ref(args, 5);
+	      Xen_check_type(Xen_is_number(xy0), xy0, 6, S_draw_axes, "a number");
+	      y0 = Xen_real_to_C_double(xy0);
 	      if (len > 6) 
 		{
-		  xy1 = XEN_LIST_REF(args, 6);
-		  XEN_ASSERT_TYPE(Xen_is_number(xy1), xy1, 7, S_draw_axes, "a number");
-		  y1 = XEN_TO_C_DOUBLE(xy1);
+		  xy1 = Xen_list_ref(args, 6);
+		  Xen_check_type(Xen_is_number(xy1), xy1, 7, S_draw_axes, "a number");
+		  y1 = Xen_real_to_C_double(xy1);
 		  if (len > 7) 
 		    {
 		      int tmp;
-		      xstyle = XEN_LIST_REF(args, 7);
-		      XEN_ASSERT_TYPE(Xen_is_integer(xstyle), xstyle, 8, S_draw_axes, "axis style");
-		      tmp = XEN_TO_C_INT(xstyle);
+		      xstyle = Xen_list_ref(args, 7);
+		      Xen_check_type(Xen_is_integer(xstyle), xstyle, 8, S_draw_axes, "axis style");
+		      tmp = Xen_integer_to_C_int(xstyle);
 		      if (!(is_x_axis_style(tmp)))
-			XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 7, xstyle, "axis style");
+			Xen_out_of_range_error(S_draw_axes, 7, xstyle, "axis style");
 		      x_style = (x_axis_style_t)tmp;
 		      if (len > 8) 
 			{
-			  xaxes = XEN_LIST_REF(args, 8);
-			  XEN_ASSERT_TYPE(Xen_is_integer(xaxes), xaxes, 9, S_draw_axes, S_show_axes " choice");
-			  tmp = XEN_TO_C_INT(xaxes);
+			  xaxes = Xen_list_ref(args, 8);
+			  Xen_check_type(Xen_is_integer(xaxes), xaxes, 9, S_draw_axes, S_show_axes " choice");
+			  tmp = Xen_integer_to_C_int(xaxes);
 			  if (!(shows_axes(tmp)))
-			    XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 8, xaxes, S_show_axes " choice");
-			  axes = (show_axes_t)XEN_TO_C_INT(xaxes);
+			    Xen_out_of_range_error(S_draw_axes, 8, xaxes, S_show_axes " choice");
+			  axes = (show_axes_t)Xen_integer_to_C_int(xaxes);
 #if USE_GTK
 			  if (len > 9)
-			    ss->cr = (cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(XEN_LIST_REF(args, 9)));
+			    ss->cr = (cairo_t *)XEN_UNWRAP_C_POINTER(Xen_cadr(Xen_list_ref(args, 9)));
 #endif
 			}}}}}}
 
@@ -1704,8 +1704,8 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
   if (!ss->cr)
-    XEN_ERROR(XEN_ERROR_TYPE("no-cairo-t"),
-	      XEN_LIST_1(C_TO_XEN_STRING(S_draw_axes ": in Gtk, the trailing cairo_t argument is not optional")));
+    Xen_error(Xen_make_error_type("no-cairo-t"),
+	      Xen_list_1(C_string_to_Xen_string(S_draw_axes ": in Gtk, the trailing cairo_t argument is not optional")));
 #endif
 
   ap->xmin = x0;
@@ -1715,7 +1715,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ap->y_ambit = y1 - y0;
   ap->x_ambit = x1 - x0;
   if (Xen_is_string(label_ref))
-    ap->xlabel = mus_strdup(XEN_TO_C_STRING(label_ref));
+    ap->xlabel = mus_strdup(Xen_string_to_C_string(label_ref));
   ap->x0 = x0;
   ap->x1 = x1;
   ap->y0 = y0;
@@ -1730,11 +1730,11 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 
   make_axes_1(ap, x_style, 1, axes, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
 
-  val = XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
-	 XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
-	  XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
-	   XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
-	    XEN_EMPTY_LIST))));
+  val = Xen_cons(C_int_to_Xen_integer(ap->x_axis_x0),
+	 Xen_cons(C_int_to_Xen_integer(ap->y_axis_y0),
+	  Xen_cons(C_int_to_Xen_integer(ap->x_axis_x1),
+	   Xen_cons(C_int_to_Xen_integer(ap->y_axis_y1),
+	    Xen_empty_list))));
 
   free_axis_info(ap);
   return(val);
@@ -1747,10 +1747,10 @@ static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
   axis_info *ap;
 
   ASSERT_CHANNEL(S_x_axis_label, snd, chn, 1);
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 3, S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 3, S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
 
-  return(C_TO_XEN_STRING(ap->xlabel));
+  return(C_string_to_Xen_string(ap->xlabel));
 }
 
 
@@ -1759,8 +1759,8 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   axis_info *ap;
 
   ASSERT_CHANNEL(S_setB S_x_axis_label, snd, chn, 2);
-  XEN_ASSERT_TYPE(Xen_is_string(label) || Xen_is_false(label), label, 1, S_setB S_x_axis_label, "a string");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 1, S_setB S_x_axis_label, "a string");
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
 
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
   if (ap->xlabel) free(ap->xlabel);
@@ -1773,8 +1773,8 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
     }
   else
     {
-      ap->xlabel = mus_strdup(XEN_TO_C_STRING(label));
-      if ((Xen_is_integer(ax)) && (XEN_TO_C_INT(ax) == (int)TRANSFORM_AXIS_INFO))
+      ap->xlabel = mus_strdup(Xen_string_to_C_string(label));
+      if ((Xen_is_integer(ax)) && (Xen_integer_to_C_int(ax) == (int)TRANSFORM_AXIS_INFO))
 	set_fft_info_xlabel(ap->cp, ap->xlabel);
       ap->default_xlabel = mus_strdup(ap->xlabel);
     }
@@ -1792,10 +1792,10 @@ static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
   axis_info *ap;
 
   ASSERT_CHANNEL(S_y_axis_label, snd, chn, 1);
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 3, S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 3, S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
 
-  return(C_TO_XEN_STRING(ap->ylabel));
+  return(C_string_to_Xen_string(ap->ylabel));
 }
 
 static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
@@ -1803,15 +1803,15 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   axis_info *ap;
 
   ASSERT_CHANNEL(S_setB S_y_axis_label, snd, chn, 2);
-  XEN_ASSERT_TYPE(Xen_is_string(label) || Xen_is_false(label), label, 1, S_setB S_y_axis_label, "a string");
+  Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 1, S_setB S_y_axis_label, "a string");
 
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
   if (ap->ylabel) free(ap->ylabel);
 
   if (Xen_is_false(label))
     ap->ylabel = NULL;
-  else ap->ylabel = mus_strdup(XEN_TO_C_STRING(label));
+  else ap->ylabel = mus_strdup(Xen_string_to_C_string(label));
   update_graph(ap->cp);
 
   return(label);
@@ -1827,11 +1827,11 @@ static XEN g_x_bounds(XEN snd, XEN chn, XEN ax)
   axis_info *ap;
 
   ASSERT_CHANNEL(S_x_bounds, snd, chn, 1);
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 4, S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_bounds);
 
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->x0),
-		    C_TO_XEN_DOUBLE(ap->x1)));
+  return(Xen_list_2(C_double_to_Xen_real(ap->x0),
+		    C_double_to_Xen_real(ap->x1)));
   /* wavogram settings depend on context -- no easy way to map back to user's notion of bounds */
 }
 
@@ -1843,24 +1843,24 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
   mus_float_t x0 = 0.0, x1 = 0.0;
 
   ASSERT_CHANNEL(S_setB S_x_bounds, snd, chn, 2);
-  XEN_ASSERT_TYPE(Xen_is_number(bounds) || (Xen_is_list(bounds) && (XEN_LIST_LENGTH(bounds) == 2)), bounds, 1, S_setB S_x_bounds, "a list: (x0 x1) or a number");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type(Xen_is_number(bounds) || (Xen_is_list(bounds) && (Xen_list_length(bounds) == 2)), bounds, 1, S_setB S_x_bounds, "a list: (x0 x1) or a number");
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_setB S_x_bounds);
 
   cp = get_cp(snd, chn, S_setB S_x_bounds);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   if (Xen_is_number(bounds))
     {
       x0 = 0.0;
-      x1 = XEN_TO_C_DOUBLE(bounds);
+      x1 = Xen_real_to_C_double(bounds);
     }
   else
     {
-      x0 = XEN_TO_C_DOUBLE(XEN_CAR(bounds));
-      x1 = XEN_TO_C_DOUBLE(XEN_CADR(bounds));
+      x0 = Xen_real_to_C_double(Xen_car(bounds));
+      x1 = Xen_real_to_C_double(Xen_cadr(bounds));
       if (x1 < x0)
-	XEN_OUT_OF_RANGE_ERROR(S_setB S_x_bounds, 1, bounds, "x1 < x0?");
+	Xen_out_of_range_error(S_setB S_x_bounds, 1, bounds, "x1 < x0?");
     }
 
   if (ap == cp->axis)
@@ -1901,11 +1901,11 @@ static XEN g_y_bounds(XEN snd, XEN chn, XEN ax)
   axis_info *ap;
 
   ASSERT_CHANNEL(S_y_bounds, snd, chn, 1);
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 4, S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_bounds);
 
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->y0),
-		    C_TO_XEN_DOUBLE(ap->y1)));
+  return(Xen_list_2(C_double_to_Xen_real(ap->y0),
+		    C_double_to_Xen_real(ap->y1)));
 }
 
 
@@ -1915,34 +1915,35 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
   axis_info *ap;
   mus_float_t low = 0.0, hi = 0.0;
   int len = 0;
-  XEN y0 = XEN_UNDEFINED, y1 = XEN_UNDEFINED;
+  XEN y0 = Xen_undefined, y1 = Xen_undefined;
 
   ASSERT_CHANNEL(S_setB S_y_bounds, snd, chn, 2);
-  XEN_ASSERT_TYPE(Xen_is_number(bounds) || XEN_LIST_P_WITH_LENGTH(bounds, len), bounds, 1, S_setB S_y_bounds, "a list or a number");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type((Xen_is_number(bounds)) || (Xen_is_list(bounds)), bounds, 1, S_setB S_y_bounds, "a list or a number");
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_setB S_y_bounds);
 
   cp = get_cp(snd, chn, S_setB S_y_bounds);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   if (Xen_is_number(bounds))
     {
-      hi = XEN_TO_C_DOUBLE(bounds);
+      hi = Xen_real_to_C_double(bounds);
       low = -hi;
     }
   else
     {
+      len = Xen_list_length(bounds);
       if (len > 0)
 	{
-	  y0 = XEN_CAR(bounds);
+	  y0 = Xen_car(bounds);
 	  if (len > 1)
-	    y1 = XEN_CADR(bounds);
+	    y1 = Xen_cadr(bounds);
 	}
       if (Xen_is_number(y0))
 	{
-	  low = XEN_TO_C_DOUBLE(y0);
+	  low = Xen_real_to_C_double(y0);
 	  if (Xen_is_number(y1))
-	    hi = XEN_TO_C_DOUBLE(y1);
+	    hi = Xen_real_to_C_double(y1);
 	  else
 	    {
 	      if (low < 0.0)
@@ -1991,48 +1992,48 @@ WITH_FOUR_SETTER_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
 
   
 
-XEN_ARGIFY_4(g_x_to_position_w, g_x_to_position)
-XEN_ARGIFY_4(g_y_to_position_w, g_y_to_position)
-XEN_ARGIFY_4(g_position_to_x_w, g_position_to_x)
-XEN_ARGIFY_4(g_position_to_y_w, g_position_to_y)
-XEN_ARGIFY_3(g_axis_info_w, g_axis_info)
+Xen_wrap_4_optional_args(g_x_to_position_w, g_x_to_position)
+Xen_wrap_4_optional_args(g_y_to_position_w, g_y_to_position)
+Xen_wrap_4_optional_args(g_position_to_x_w, g_position_to_x)
+Xen_wrap_4_optional_args(g_position_to_y_w, g_position_to_y)
+Xen_wrap_3_optional_args(g_axis_info_w, g_axis_info)
 #if (!USE_NO_GUI)
-XEN_VARGIFY(g_draw_axes_w, g_draw_axes)
+Xen_wrap_any_args(g_draw_axes_w, g_draw_axes)
 #endif
-XEN_ARGIFY_3(g_x_axis_label_w, g_x_axis_label)
-XEN_ARGIFY_3(g_y_axis_label_w, g_y_axis_label)
-XEN_ARGIFY_3(g_x_bounds_w, g_x_bounds)
-XEN_ARGIFY_3(g_y_bounds_w, g_y_bounds)
+Xen_wrap_3_optional_args(g_x_axis_label_w, g_x_axis_label)
+Xen_wrap_3_optional_args(g_y_axis_label_w, g_y_axis_label)
+Xen_wrap_3_optional_args(g_x_bounds_w, g_x_bounds)
+Xen_wrap_3_optional_args(g_y_bounds_w, g_y_bounds)
 #if HAVE_SCHEME
 #define g_set_x_axis_label_w g_set_x_axis_label_reversed
 #define g_set_y_axis_label_w g_set_y_axis_label_reversed
 #define g_set_x_bounds_w g_set_x_bounds_reversed
 #define g_set_y_bounds_w g_set_y_bounds_reversed
 #else
-XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
-XEN_ARGIFY_4(g_set_y_axis_label_w, g_set_y_axis_label)
-XEN_ARGIFY_4(g_set_x_bounds_w, g_set_x_bounds)
-XEN_ARGIFY_4(g_set_y_bounds_w, g_set_y_bounds)
+Xen_wrap_4_optional_args(g_set_x_axis_label_w, g_set_x_axis_label)
+Xen_wrap_4_optional_args(g_set_y_axis_label_w, g_set_y_axis_label)
+Xen_wrap_4_optional_args(g_set_x_bounds_w, g_set_x_bounds)
+Xen_wrap_4_optional_args(g_set_y_bounds_w, g_set_y_bounds)
 #endif
 
   
 void g_init_axis(void)
 {
-  XEN_DEFINE_SAFE_PROCEDURE(S_x_to_position, g_x_to_position_w,   1, 3, 0, H_x_to_position);
-  XEN_DEFINE_SAFE_PROCEDURE(S_y_to_position, g_y_to_position_w,   1, 3, 0, H_y_to_position);
-  XEN_DEFINE_SAFE_PROCEDURE(S_position_to_x, g_position_to_x_w,   1, 3, 0, H_position_to_x);
-  XEN_DEFINE_SAFE_PROCEDURE(S_position_to_y, g_position_to_y_w,   1, 3, 0, H_position_to_y);
-  XEN_DEFINE_SAFE_PROCEDURE(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info);
-  XEN_DEFINE_SAFE_PROCEDURE(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes);
+  Xen_define_safe_procedure(S_x_to_position, g_x_to_position_w,   1, 3, 0, H_x_to_position);
+  Xen_define_safe_procedure(S_y_to_position, g_y_to_position_w,   1, 3, 0, H_y_to_position);
+  Xen_define_safe_procedure(S_position_to_x, g_position_to_x_w,   1, 3, 0, H_position_to_x);
+  Xen_define_safe_procedure(S_position_to_y, g_position_to_y_w,   1, 3, 0, H_position_to_y);
+  Xen_define_safe_procedure(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info);
+  Xen_define_safe_procedure(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes);
   
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label, S_setB S_x_axis_label, g_set_x_axis_label_w, 0, 3, 1, 3);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_y_axis_label, g_y_axis_label_w, H_y_axis_label, S_setB S_y_axis_label, g_set_y_axis_label_w, 0, 3, 1, 3);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_x_bounds, g_x_bounds_w, H_x_bounds, S_setB S_x_bounds, g_set_x_bounds_w, 0, 3, 1, 3);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_y_bounds, g_y_bounds_w, H_y_bounds, S_setB S_y_bounds, g_set_y_bounds_w, 0, 3, 1, 3);
+  Xen_define_procedure_with_setter(S_x_axis_label, g_x_axis_label_w, H_x_axis_label, S_setB S_x_axis_label, g_set_x_axis_label_w, 0, 3, 1, 3);
+  Xen_define_procedure_with_setter(S_y_axis_label, g_y_axis_label_w, H_y_axis_label, S_setB S_y_axis_label, g_set_y_axis_label_w, 0, 3, 1, 3);
+  Xen_define_procedure_with_setter(S_x_bounds, g_x_bounds_w, H_x_bounds, S_setB S_x_bounds, g_set_x_bounds_w, 0, 3, 1, 3);
+  Xen_define_procedure_with_setter(S_y_bounds, g_y_bounds_w, H_y_bounds, S_setB S_y_bounds, g_set_y_bounds_w, 0, 3, 1, 3);
 
-  XEN_DEFINE_CONSTANT(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
-  XEN_DEFINE_CONSTANT(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");
-  XEN_DEFINE_CONSTANT(S_lisp_graph,      LISP_AXIS_INFO,      "lisp graph axis info");
+  Xen_define_constant(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
+  Xen_define_constant(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");
+  Xen_define_constant(S_lisp_graph,      LISP_AXIS_INFO,      "lisp graph axis info");
 }
 
 #endif

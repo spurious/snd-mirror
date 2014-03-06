@@ -53,22 +53,22 @@ void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
 
 XEN rb_documentation(XEN name)
 {
-  XEN_ASSERT_TYPE((Xen_is_string(name) || Xen_is_symbol(name)), name, 1, S_get_help, "a char* or symbol");
+  Xen_check_type((Xen_is_string(name) || Xen_is_symbol(name)), name, 1, S_get_help, "a char* or symbol");
   if (Xen_is_symbol(name))
-    return(rb_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL));
+    return(rb_property(XEN_SYMBOL_TO_STRING(name), Xen_documentation_symbol));
   else
-    return(rb_property(name, XEN_DOCUMENTATION_SYMBOL));
+    return(rb_property(name, Xen_documentation_symbol));
 }
 
 
 XEN rb_set_documentation(XEN name, XEN help)
 {
-  XEN_ASSERT_TYPE((Xen_is_string(name) || Xen_is_symbol(name)), name, 1, S_add_help, "a char* or symbol");
-  XEN_ASSERT_TYPE(Xen_is_string(help), help, 2, S_add_help, "a char*");
+  Xen_check_type((Xen_is_string(name) || Xen_is_symbol(name)), name, 1, S_add_help, "a char* or symbol");
+  Xen_check_type(Xen_is_string(help), help, 2, S_add_help, "a char*");
   if (Xen_is_symbol(name))
-    rb_set_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL, help);
+    rb_set_property(XEN_SYMBOL_TO_STRING(name), Xen_documentation_symbol, help);
   else
-    rb_set_property(name, XEN_DOCUMENTATION_SYMBOL, help);
+    rb_set_property(name, Xen_documentation_symbol, help);
   return(name);
 }
 
@@ -85,7 +85,7 @@ static XEN g_get_help(XEN name)
 #define H_get_help S_get_help "([name=:" S_get_help "])  \
 return help associated with name (String or Symbol) or false"
   if (!Xen_is_bound(name))
-    return(C_TO_XEN_STRING(H_get_help));
+    return(C_string_to_Xen_string(H_get_help));
   else
     return(rb_documentation(name));
 }
@@ -116,7 +116,7 @@ XEN xen_rb_cdr(XEN val)
   if (Xen_is_cons(val))
     {
       XEN new_list;
-      new_list = XEN_COPY_ARG(val);
+      new_list = Xen_copy_arg(val);
       rb_ary_delete_at(new_list, 0);
       return(new_list);
     }
@@ -296,7 +296,7 @@ bool xen_rb_defined_p(const char *name)
     sprintf(buf, "defined? %s", var_name);
   else sprintf(buf, "defined? $%s", var_name);
 
-  if (XEN_EVAL_C_STRING(buf) != Qnil)
+  if (Xen_eval_C_string(buf) != Qnil)
     {
       free(var_name);
       return(true);
@@ -350,7 +350,7 @@ XEN xen_rb_make_keyword(const char *name)
   char *temp;
   XEN val;
   temp = xen_scheme_procedure_to_ruby(name);
-  val = C_STRING_TO_XEN_SYMBOL(temp);
+  val = C_string_to_Xen_symbol(temp);
   if (temp) free(temp);
   return(val);
 }
@@ -391,7 +391,7 @@ int xen_rb_list_length(XEN obj)
 { 
   if (Xen_is_vector(obj)) 
      return((int)RB_ARRAY_LEN(obj)); 
-  if (obj == XEN_EMPTY_LIST) 
+  if (obj == Xen_empty_list) 
     return(0); 
   return(-1); 
 } 
@@ -403,7 +403,7 @@ XEN xen_rb_list_ref(XEN obj, int index)
 {
   if (Xen_is_vector(obj))
     return(rb_ary_entry(obj, (long)index));
-  return(XEN_EMPTY_LIST);
+  return(Xen_empty_list);
 }
 
 
@@ -438,8 +438,8 @@ static XEN xen_rb_report_error(XEN nada, XEN err_info)
   /*    return rb_funcall(err_info, rb_intern("backtrace"), 0); */
   /* which can be an array of strings */
 
-  fprintf(stderr,"error: %s\n", XEN_AS_STRING(err_info));
-  return(XEN_FALSE);
+  fprintf(stderr,"error: %s\n", Xen_object_to_C_string(err_info));
+  return(Xen_false);
 }
 
 
@@ -456,7 +456,7 @@ static XEN xen_rb_rep(XEN ig)
     {
       add_history(line_read);
       val = xen_rb_eval_string_with_error(line_read);
-      str = XEN_AS_STRING(val);
+      str = Xen_object_to_C_string(val);
       fprintf(stdout, "%s\n", (str) ? str : "nil");
       free(line_read);
       line_read = NULL;
@@ -469,7 +469,7 @@ static XEN xen_rb_rep(XEN ig)
   fprintf(stdout, "%s", rb_prompt);
   fgets(buffer[0], size, stdin);
   val = xen_rb_eval_string_with_error(buffer[0]);
-  str = XEN_AS_STRING(val);
+  str = Xen_object_to_C_string(val);
   fprintf(stdout, "%s\n", (str) ? str : "nil");
   free(buffer[0]);
   free(buffer);
@@ -489,9 +489,9 @@ static XEN xen_rb_rescue(XEN val)
 {
   if (!rb_prompt) rb_prompt = xen_strdup(">");
   return(rb_rescue(XEN_PROCEDURE_CAST xen_rb_rep,
-		   XEN_FALSE,
+		   Xen_false,
 		   XEN_PROCEDURE_CAST xen_rb_report_error,
-		   XEN_FALSE));
+		   Xen_false));
 }
 
 
@@ -501,11 +501,11 @@ void xen_repl(int argc, char **argv)
     {
       int status = 0;
       rb_protect(XEN_VALUE_ARG_PROCEDURE_CAST xen_rb_rescue,
-		 XEN_FALSE,
+		 Xen_false,
 		 &status);
       if (status != 0)
 	{
-	  fprintf(stderr, "%s\n", XEN_AS_STRING(rb_gv_get("$!")));
+	  fprintf(stderr, "%s\n", Xen_object_to_C_string(rb_gv_get("$!")));
 	  status = 0;
 	}
     }
@@ -518,7 +518,7 @@ XEN xen_rb_eval_string_with_error(const char *str)
   XEN res;
   res = rb_eval_string_protect(str, &status);
   if (status != 0)
-    return(XEN_TO_STRING(rb_gv_get("$!")));
+    return(xen_rb_obj_as_string(rb_gv_get("$!")));
   return(res);
 }
 
@@ -528,8 +528,8 @@ XEN xen_rb_load_file_with_error(XEN file)
   int status = 0;
   rb_load_protect(file, 0, &status);
   if (status != 0)
-    return(XEN_TO_STRING(rb_gv_get("$!")));
-  return(XEN_TRUE);
+    return(xen_rb_obj_as_string(rb_gv_get("$!")));
+  return(Xen_true);
 }
 
 
@@ -540,7 +540,7 @@ XEN xen_rb_add_to_load_path(char *path)
  load_path = rb_gv_get("$:");
  if (Xen_is_false(rb_ary_includes(load_path, rpath))) 
    rb_ary_unshift(load_path, rpath); 
- return(XEN_FALSE); 
+ return(Xen_false); 
 } 
 
 
@@ -552,10 +552,10 @@ static char *xen_rb_list_to_s(XEN lst)
   if (lstbuf == NULL) 
     lstbuf = (char *)calloc(512, sizeof(char));
   else lstbuf[0] = '\0';
-  len = XEN_LIST_LENGTH(lst);
+  len = Xen_list_length(lst);
   for (i = 0; i < len; i++)
     {
-      strcat(lstbuf, XEN_AS_STRING(XEN_LIST_REF(lst, i)));
+      strcat(lstbuf, Xen_object_to_C_string(Xen_list_ref(lst, i)));
       strcat(lstbuf, " ");
     }
   return(lstbuf);
@@ -573,7 +573,7 @@ void xen_rb_raise(XEN type, XEN info)
 int xen_rb_required_args(XEN val)
 {
   int args;
-  args = XEN_TO_C_INT(val);
+  args = Xen_integer_to_C_int(val);
   if (args == -1) return(1); 
   if (args < 0) return(abs(args + 1));
   return(args);
@@ -588,7 +588,7 @@ XEN xen_rb_obj_as_string(XEN obj)
 		      obj,
 		      &status);
   if (status != 0)
-    return(C_TO_XEN_STRING("<invalid object>"));
+    return(C_string_to_Xen_string("<invalid object>"));
   return(result);
 }
 
@@ -597,16 +597,16 @@ XEN xen_rb_obj_as_string(XEN obj)
 
 static XEN xen_rb_apply_1(XEN args) 
 { 
-  return(rb_apply(XEN_CAR(args), rb_intern("call"), XEN_CADR(args))); 
+  return(rb_apply(Xen_car(args), rb_intern("call"), Xen_cadr(args))); 
 } 
 
 #else
 
 static XEN xen_rb_apply_1(XEN args)
 {
-  if (Xen_is_procedure(XEN_CAR(args))) 
-    return(rb_apply(XEN_CAR(args), rb_intern("call"), XEN_CADR(args))); 
-  return(rb_apply(rb_mKernel, XEN_CAR(args), XEN_CADR(args))); 
+  if (Xen_is_procedure(Xen_car(args))) 
+    return(rb_apply(Xen_car(args), rb_intern("call"), Xen_cadr(args))); 
+  return(rb_apply(rb_mKernel, Xen_car(args), Xen_cadr(args))); 
 }
 
 #endif
@@ -617,10 +617,10 @@ XEN xen_rb_apply(XEN func, XEN args)
   XEN val;
   int status = 0;
   val = rb_protect(XEN_VALUE_ARG_PROCEDURE_CAST xen_rb_apply_1,
-		   XEN_LIST_2(func, args),
+		   Xen_list_2(func, args),
 		   &status);
   if (status != 0)
-    return(XEN_TO_STRING(rb_gv_get("$!")));
+    return(xen_rb_obj_as_string(rb_gv_get("$!")));
   return(val);
 }
 
@@ -639,15 +639,15 @@ XEN xen_rb_funcall_0(XEN func)
 		   func,
 		   &status);
   if (status != 0)
-    return(XEN_TO_STRING(rb_gv_get("$!")));
+    return(xen_rb_obj_as_string(rb_gv_get("$!")));
   return(val);
 }
 
 
 XEN xen_rb_copy_list(XEN val) 
 { 
-  if ((val == XEN_EMPTY_LIST) || (!Xen_is_cons(val)))
-    return XEN_EMPTY_LIST; 
+  if ((val == Xen_empty_list) || (!Xen_is_cons(val)))
+    return Xen_empty_list; 
   return rb_ary_dup(val); 
 } 
 
@@ -694,17 +694,17 @@ static XEN xen_rb_hook_initialize(int argc, XEN *argv, XEN hook)
 {
   XEN name, arity, help;
   rb_scan_args(argc, argv, "12", &name, &arity, &help);
-  XEN_ASSERT_TYPE(Xen_is_string(name) || Xen_is_symbol(name), name, 1, __func__, "a char* or symbol");
+  Xen_check_type(Xen_is_string(name) || Xen_is_symbol(name), name, 1, __func__, "a char* or symbol");
   if (Xen_is_symbol(name))
     name = XEN_SYMBOL_TO_STRING(name);
   if (arity != Qnil)
     {
-      XEN_ASSERT_TYPE(Xen_is_integer(arity), arity, 2, __func__, "an integer");
+      Xen_check_type(Xen_is_integer(arity), arity, 2, __func__, "an integer");
     }
   else arity = INT2NUM(0);
   if (help != Qnil)
     {
-      XEN_ASSERT_TYPE(Xen_is_string(help), help, 3, __func__, "a char*");
+      Xen_check_type(Xen_is_string(help), help, 3, __func__, "a char*");
       XEN_SET_OBJECT_HELP(name, help);
     }
   else help = rb_str_new2("");
@@ -723,9 +723,9 @@ static XEN xen_rb_hook_initialize(int argc, XEN *argv, XEN hook)
 XEN xen_rb_hook_c_new(char *name, int arity, char *help)
 {
   XEN args[3];
-  args[0] = C_TO_XEN_STRING(name);
-  args[1] = C_TO_XEN_INT(arity);
-  args[2] = C_TO_XEN_STRING(help);
+  args[0] = C_string_to_Xen_string(name);
+  args[1] = C_int_to_Xen_integer(arity);
+  args[2] = C_string_to_Xen_string(help);
   return(xen_rb_hook_initialize(3, args, hook_alloc(xen_rb_cHook)));
 }
 
@@ -745,7 +745,7 @@ XEN xen_rb_hook_c_new(char *name, int arity, char *help)
 #ifdef RUBY_VERSION
   #define XEN_RUBY_RELEASE_DATE  RUBY_RELEASE_DATE
 #else
-  #define XEN_RUBY_RELEASE_DATE  XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_RELEASE_DATE"))
+  #define XEN_RUBY_RELEASE_DATE  Xen_string_to_C_string(Xen_eval_C_string("RUBY_RELEASE_DATE"))
 #endif
 
 #define RUBY_NEW_ARITY_DATE   "2004-03-18"
@@ -772,10 +772,10 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
 {
   XEN name, func;
   int args;
-  args = XEN_TO_C_INT(rb_iv_get(hook, "@arity"));
+  args = Xen_integer_to_C_int(rb_iv_get(hook, "@arity"));
   rb_scan_args(argc, argv, "1&", &name, &func);
-  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, __func__, "a char*");
-  XEN_ASSERT_TYPE(Xen_is_procedure(func) && xen_rb_arity_ok(XEN_TO_C_INT(XEN_ARITY(func)), args),
+  Xen_check_type(Xen_is_string(name), name, 1, __func__, "a char*");
+  Xen_check_type(Xen_is_procedure(func) && xen_rb_arity_ok(Xen_integer_to_C_int(Xen_arity(func)), args),
 		  func, 2, __func__, "a procedure");
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, name, func));
   return(hook);
@@ -786,7 +786,7 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
 
 static XEN xen_proc_call(XEN args, XEN id) 
 { 
-  return(rb_apply(rb_mKernel, (ID)id, Xen_is_cons(args) ? args : XEN_LIST_1(args))); 
+  return(rb_apply(rb_mKernel, (ID)id, Xen_is_cons(args) ? args : Xen_list_1(args))); 
 } 
 
 #if 0
@@ -808,7 +808,7 @@ XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc
   /* called from C, not Ruby, to add a function to a Ruby-side hook */ 
   char *temp; 
   temp = xen_scheme_procedure_to_ruby(name); 
-  rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_TO_XEN_STRING(temp), xen_rb_proc_new(temp, func, XEN_TO_C_INT(xen_rb_hook_arity(hook)), doc))); 
+  rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_string_to_Xen_string(temp), xen_rb_proc_new(temp, func, Xen_integer_to_C_int(xen_rb_hook_arity(hook)), doc))); 
   if (temp) free(temp); 
   return(hook); 
 } 
@@ -825,10 +825,10 @@ XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc
   char *temp; 
   temp = xen_scheme_procedure_to_ruby(name); 
   avar = rb_iv_get(hook, "@arity");
-  rb_define_module_function(rb_mKernel, temp, XEN_PROCEDURE_CAST func, (Xen_is_integer(avar)) ? XEN_TO_C_INT(avar) : 0); 
+  rb_define_module_function(rb_mKernel, temp, XEN_PROCEDURE_CAST func, (Xen_is_integer(avar)) ? Xen_integer_to_C_int(avar) : 0); 
   if (doc) C_SET_OBJECT_HELP(temp, doc); 
   var = rb_intern(temp); 
-  rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_TO_XEN_STRING(temp), var)); 
+  rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_string_to_Xen_string(temp), var)); 
   if (temp) free(temp); 
   return(hook); 
 }
@@ -863,7 +863,7 @@ static XEN xen_rb_hook_names(XEN hook)
       long i;
       ret = rb_ary_new2(len);
       for (i = 0; i < len; i++)
-	rb_ary_store(ret, i, XEN_VECTOR_REF(XEN_VECTOR_REF(ary, i), 0));
+	rb_ary_store(ret, i, Xen_vector_ref(Xen_vector_ref(ary, i), 0));
     }
   return(ret);
 }
@@ -877,13 +877,13 @@ XEN xen_rb_hook_to_a(XEN hook)
       XEN ary;
       long len;
       ary = rb_iv_get(hook, "@procs");
-      len = XEN_LIST_LENGTH(ary);
+      len = Xen_list_length(ary);
       if (len > 0)
 	{
 	  long i;
 	  ret = rb_ary_new2(len);
 	  for (i = 0; i < len; i++)
-	    rb_ary_store(ret, i, XEN_VECTOR_REF(XEN_VECTOR_REF(ary, i), 1));
+	    rb_ary_store(ret, i, Xen_vector_ref(Xen_vector_ref(ary, i), 1));
 	}
     }
   return(ret);
@@ -921,13 +921,13 @@ static XEN xen_rb_hook_call(int argc, XEN *argv, XEN hook)
 
 static XEN xen_rb_hook_is_empty_p(XEN hook)
 {
-  return(C_TO_XEN_BOOLEAN(RB_ARRAY_LEN(rb_iv_get(hook, "@procs")) == 0)); 
+  return(C_bool_to_Xen_boolean(RB_ARRAY_LEN(rb_iv_get(hook, "@procs")) == 0)); 
 }
 
  
 static XEN xen_rb_hook_length(XEN hook)
 {
-  return(C_TO_XEN_INT(RB_ARRAY_LEN(rb_iv_get(hook, "@procs")))); 
+  return(C_int_to_Xen_integer(RB_ARRAY_LEN(rb_iv_get(hook, "@procs")))); 
 }
 
 
@@ -939,7 +939,7 @@ static XEN xen_rb_hook_name(XEN hook)
 
 static XEN xen_rb_hook_describe(XEN hook)
 {
-  return(XEN_OBJECT_HELP(xen_rb_hook_name(hook)));
+  return(Xen_documentation(xen_rb_hook_name(hook)));
 }
 
 
@@ -976,7 +976,7 @@ XEN xen_rb_create_hook(char *name, int arity, char *help)
   char *temp;
   var = xen_rb_hook_c_new(temp = xen_scheme_global_variable_to_ruby(name), arity, help);
   hook_name = xen_rb_hook_name(var);
-  rb_gv_set(XEN_TO_C_STRING(hook_name), var);
+  rb_gv_set(Xen_string_to_C_string(hook_name), var);
   if (temp) free(temp);
   return(var);
 }
@@ -1019,7 +1019,7 @@ XEN xen_rb_create_simple_hook(int arity)
 
 static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
 {
-  XEN hook = XEN_FALSE, name;
+  XEN hook = Xen_false, name;
   if (argc > 0 && argc < 4)
     {
       hook = xen_rb_hook_initialize(argc, argv, hook_alloc(xen_rb_cHook));
@@ -1035,24 +1035,24 @@ static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
       argv[0] = argv[3];
       xen_rb_hook_add_hook(1, argv, hook);
     }
-  else XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"),
-		 XEN_LIST_1(C_TO_XEN_STRING("make_hook(name, arity=0, help=\"\", hook_name=\"\", &func)")));
+  else Xen_error(Xen_make_error_type("wrong-number-of-args"),
+		 Xen_list_1(C_string_to_Xen_string("make_hook(name, arity=0, help=\"\", hook_name=\"\", &func)")));
   name = xen_rb_hook_name(hook);
-  if (XEN_TO_C_CHAR(name) != '$') 
+  if (Xen_char_to_C_char(name) != '$') 
     {
       char *temp;
-      temp = xen_scheme_global_variable_to_ruby(XEN_TO_C_STRING(name)); 
-      name = C_TO_XEN_STRING(temp);
+      temp = xen_scheme_global_variable_to_ruby(Xen_string_to_C_string(name)); 
+      name = C_string_to_Xen_string(temp);
       if (temp) free(temp);
     }
-  XEN_ASSERT_TYPE(RB_STR_LEN(name) >= 2, name, 1, __func__, "a char*, len >= 2"); 
-  return(rb_gv_set(XEN_TO_C_STRING(name), hook)); 
+  Xen_check_type(RB_STR_LEN(name) >= 2, name, 1, __func__, "a char*, len >= 2"); 
+  return(rb_gv_set(Xen_string_to_C_string(name), hook)); 
 }
 
 
 static XEN xen_rb_is_hook_p(XEN klass, XEN obj)
 {
-  return(C_TO_XEN_BOOLEAN(Xen_is_class_hook(obj)));
+  return(C_bool_to_Xen_boolean(Xen_is_class_hook(obj)));
 }
 
 
@@ -1087,7 +1087,7 @@ static XEN xen_rb_new(int argc, XEN *argv, XEN klass)
 #endif
 
 
-static XEN rb_object_properties = XEN_FALSE;
+static XEN rb_object_properties = Xen_false;
 
 #define S_property       "property"
 #define S_set_property   "set_property"
@@ -1098,15 +1098,15 @@ XEN rb_property(XEN obj, XEN key)
 {
 #define H_property S_property "(obj, key)  \
 if key exists, return obj's value (maybe nil) associated with key otherwise false"
-  XEN props = XEN_FALSE;
+  XEN props = Xen_false;
   
   if (Xen_is_false(rb_object_properties))
-    return(XEN_FALSE);
+    return(Xen_false);
 
   props = rb_hash_aref(rb_object_properties, obj);
 
   if (Xen_is_false(props) || props == Qnil)
-    return(XEN_FALSE);
+    return(Xen_false);
   else
     return(rb_hash_aref(props, key));
 }
@@ -1116,12 +1116,12 @@ XEN rb_set_property(XEN obj, XEN key, XEN value)
 {
 #define H_set_property S_set_property "(obj, key, value)  \
 set key-value pair for obj and return value"
-  XEN props = XEN_FALSE;
+  XEN props = Xen_false;
 
   if (Xen_is_false(rb_object_properties))
     {
       rb_object_properties = rb_hash_new();
-      XEN_PROTECT_FROM_GC(rb_object_properties);
+      Xen_GC_protect(rb_object_properties);
     }
   else
     props = rb_hash_aref(rb_object_properties, obj);
@@ -1146,7 +1146,7 @@ static XEN g_gc_off(void)
 {
   #define H_gc_off "(" S_gc_off ") turns off garbage collection"
   rb_gc_disable();
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -1154,18 +1154,18 @@ static XEN g_gc_on(void)
 {
   #define H_gc_on "(" S_gc_on ") turns on garbage collection"
   rb_gc_enable();
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
-XEN_ARGIFY_1(g_get_help_w, g_get_help);
-XEN_NARGIFY_2(g_add_help_w, g_add_help);
-XEN_NARGIFY_3(g_set_property_w, rb_set_property);
-XEN_NARGIFY_2(g_property_w, rb_property);
-XEN_NARGIFY_0(g_properties_w, rb_properties);
+Xen_wrap_1_optional_arg(g_get_help_w, g_get_help);
+Xen_wrap_2_args(g_add_help_w, g_add_help);
+Xen_wrap_3_args(g_set_property_w, rb_set_property);
+Xen_wrap_2_args(g_property_w, rb_property);
+Xen_wrap_no_args(g_properties_w, rb_properties);
 
-XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
-XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
+Xen_wrap_no_args(g_gc_off_w, g_gc_off)
+Xen_wrap_no_args(g_gc_on_w, g_gc_on)
 
 
 static bool hook_inited = false;
@@ -1205,15 +1205,15 @@ void Init_Hook(void)
   rb_define_global_function("make_hook", XEN_PROCEDURE_CAST xen_rb_make_hook, -1);
   rb_define_global_function("hook?", XEN_PROCEDURE_CAST xen_rb_is_hook_p, 1);
 
-  XEN_DEFINE_PROCEDURE(S_get_help,             g_get_help_w,             0, 1, 0, H_get_help);
-  XEN_DEFINE_PROCEDURE(S_add_help,             g_add_help_w,             2, 0, 0, H_add_help);
+  Xen_define_procedure(S_get_help,             g_get_help_w,             0, 1, 0, H_get_help);
+  Xen_define_procedure(S_add_help,             g_add_help_w,             2, 0, 0, H_add_help);
 
-  XEN_DEFINE_PROCEDURE(S_set_property,         g_set_property_w,         3, 0, 0, H_set_property);
-  XEN_DEFINE_PROCEDURE(S_property,             g_property_w,             2, 0, 0, H_property);
-  XEN_DEFINE_PROCEDURE(S_properties,           g_properties_w,           0, 0, 0, H_properties);
+  Xen_define_procedure(S_set_property,         g_set_property_w,         3, 0, 0, H_set_property);
+  Xen_define_procedure(S_property,             g_property_w,             2, 0, 0, H_property);
+  Xen_define_procedure(S_properties,           g_properties_w,           0, 0, 0, H_properties);
 
-  XEN_DEFINE_PROCEDURE(S_gc_off,               g_gc_off_w,               0, 0, 0, H_gc_off);
-  XEN_DEFINE_PROCEDURE(S_gc_on,                g_gc_on_w,                0, 0, 0, H_gc_on);
+  Xen_define_procedure(S_gc_off,               g_gc_off_w,               0, 0, 0, H_gc_off);
+  Xen_define_procedure(S_gc_on,                g_gc_on_w,                0, 0, 0, H_gc_on);
 }
 
 /* end of class Hook */
@@ -1274,7 +1274,7 @@ static XEN g_gc_off(void)
 {
   #define H_gc_off "(" S_gc_off ") turns off garbage collection"
   fth_gc_on();
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -1282,7 +1282,7 @@ static XEN g_gc_on(void)
 {
   #define H_gc_on "(" S_gc_on ") turns on garbage collection"
   fth_gc_on();
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -1291,8 +1291,8 @@ void xen_initialize(void)
   fth_init();
   fth_exit_hook = fth_snd_exit; 
 
-  XEN_DEFINE_PROCEDURE(S_gc_off, g_gc_off, 0, 0, 0, H_gc_off);
-  XEN_DEFINE_PROCEDURE(S_gc_on,  g_gc_on,  0, 0, 0, H_gc_on);
+  Xen_define_procedure(S_gc_off, g_gc_off, 0, 0, 0, H_gc_off);
+  Xen_define_procedure(S_gc_on,  g_gc_on,  0, 0, 0, H_gc_on);
 }
 
 #endif 	/* HAVE_FORTH */
@@ -1446,7 +1446,7 @@ void xen_repl(int argc, char **argv)
 	    {
 	      s7_pointer result;
 	      add_history(str);
-	      result = XEN_EVAL_C_STRING(str);
+	      result = Xen_eval_C_string(str);
 	      s7_write(s7, result, s7_current_output_port(s7));   /* use write, not display so that strings are in double quotes */
 	      s7_newline(s7, s7_current_output_port(s7));
 	    }
@@ -1481,7 +1481,7 @@ void xen_repl(int argc, char **argv)
 	      char *temp;
 	      temp = (char *)malloc(len + 128);
 	      snprintf(temp, len + 128, "(write %s)", buffer);    /* use write, not display so that strings are in double quotes */
-	      XEN_EVAL_C_STRING(temp);
+	      Xen_eval_C_string(temp);
 	      free(temp);
 	    }
 	}
@@ -1543,7 +1543,7 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist)
 static XEN g_getpid(void)
 {
   #define H_getpid "(getpid) returns the current job's process id"
-  return(C_TO_XEN_INT((int)getpid()));
+  return(C_int_to_Xen_integer((int)getpid()));
 }
 
 
@@ -1569,8 +1569,8 @@ static bool file_probe(const char *arg)
 static XEN g_file_exists_p(XEN name)
 {
   #define H_file_exists_p "(file-exists? filename): #t if the file exists"
-  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, "file-exists?", "a string");
-  return(C_TO_XEN_BOOLEAN(file_probe(XEN_TO_C_STRING(name))));
+  Xen_check_type(Xen_is_string(name), name, 1, "file-exists?", "a string");
+  return(C_bool_to_Xen_boolean(file_probe(Xen_string_to_C_string(name))));
 }
 
 
@@ -1591,31 +1591,31 @@ static bool is_directory(const char *filename)
 static XEN g_is_directory(XEN name)
 {
   #define H_is_directory "(directory? filename): #t if filename names a directory"
-  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, "directory?", "a string");
-  return(C_TO_XEN_BOOLEAN(is_directory(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
+  Xen_check_type(Xen_is_string(name), name, 1, "directory?", "a string");
+  return(C_bool_to_Xen_boolean(is_directory(Xen_string_to_C_string(name)))); /* snd-file.c l 84 */
 }
 
 static XEN g_delete_file(XEN name)
 {
   #define H_delete_file "(delete-file filename): deletes the file"
-  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, "delete-file", "a string");
-  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
+  Xen_check_type(Xen_is_string(name), name, 1, "delete-file", "a string");
+  return(C_bool_to_Xen_boolean(unlink(Xen_string_to_C_string(name))));
 }
 
 
 static XEN g_system(XEN command)
 {
   #define H_system "(system command): execute command"
-  XEN_ASSERT_TYPE(Xen_is_string(command), command, 1, "system", "a string");
-  return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
+  Xen_check_type(Xen_is_string(command), command, 1, "system", "a string");
+  return(C_int_to_Xen_integer(system(Xen_string_to_C_string(command))));
 }
 
 
 static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
 {
   #define H_getenv "(getenv var): return value of environment variable var"
-  XEN_ASSERT_TYPE(Xen_is_string(var), var, 1, "getenv", "a string");
-  return(C_TO_XEN_STRING(getenv(XEN_TO_C_STRING(var))));
+  Xen_check_type(Xen_is_string(var), var, 1, "getenv", "a string");
+  return(C_string_to_Xen_string(getenv(Xen_string_to_C_string(var))));
 }
 #endif
 
@@ -1629,14 +1629,14 @@ static XEN g_getcwd(void)
 {
   #define H_getcwd "(getcwd) returns the name of the current working directory"
   char *buf;
-  XEN result = XEN_FALSE;
+  XEN result = Xen_false;
   buf = (char *)calloc(1024, sizeof(char));
 #ifdef _MSC_VER
   if (_getcwd(buf, 1024) != NULL)
 #else
   if (getcwd(buf, 1024) != NULL)
 #endif
-    result = C_TO_XEN_STRING(buf);
+    result = C_string_to_Xen_string(buf);
   free(buf);
   return(result);
 }
@@ -1649,15 +1649,15 @@ static XEN g_strftime(XEN format, XEN tm)
   XEN result;
   const struct tm *p;
 
-  XEN_ASSERT_TYPE(Xen_is_string(format), format, 1, "strftime", "a string");
-  XEN_ASSERT_TYPE(Xen_is_wrapped_c_pointer(tm), tm, 2, "strftime", "a localtime struct");
+  Xen_check_type(Xen_is_string(format), format, 1, "strftime", "a string");
+  Xen_check_type(Xen_is_wrapped_c_pointer(tm), tm, 2, "strftime", "a localtime struct");
 
   p = (const struct tm *)XEN_UNWRAP_C_POINTER(tm);
-  XEN_ASSERT_TYPE(p != NULL, tm, 2, "strftime", "a localtime struct");
+  Xen_check_type(p != NULL, tm, 2, "strftime", "a localtime struct");
 
   buf = (char *)calloc(1024, sizeof(char));
-  strftime(buf, 1024, XEN_TO_C_STRING(format), p);
-  result = C_TO_XEN_STRING(buf);
+  strftime(buf, 1024, Xen_string_to_C_string(format), p);
+  result = C_string_to_Xen_string(buf);
   free(buf);
 
   return(result);
@@ -1671,7 +1671,7 @@ static XEN g_localtime(XEN tm)
 {
   #define H_localtime "(localtime tm) breaks up tm into something suitable for strftime"
   time_t rtime;
-  rtime = (time_t)XEN_TO_C_ULONG(tm);
+  rtime = (time_t)Xen_ulong_to_C_ulong(tm);
   return(XEN_WRAP_C_POINTER(localtime((time_t *)(&rtime))));
 }
 
@@ -1681,7 +1681,7 @@ static XEN g_current_time(void)
   time_t curtime;
   #define H_current_time "(current-time) returns the current time (for localtime and strftime)"
   curtime = time(NULL);
-  return(C_TO_XEN_ULONG(curtime));
+  return(C_ulong_to_Xen_ulong(curtime));
 }
 
 
@@ -1719,7 +1719,7 @@ static XEN g_tmpnam(void)
 
   snprintf(str, BUFFER_SIZE, "%s/xen_%d_%d", tmpdir, (int)getpid(), file_ctr++);
   if (tmpdir) free(tmpdir);
-  result = C_TO_XEN_STRING(str);
+  result = C_string_to_Xen_string(str);
   free(str);
   return(result);
 }
@@ -1727,7 +1727,7 @@ static XEN g_tmpnam(void)
 
 static XEN g_ftell(XEN fd)
 {
-  return(C_TO_XEN_INT(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
+  return(C_int_to_Xen_integer(lseek(Xen_integer_to_C_int(fd), 0, SEEK_CUR)));
 }
 
 
@@ -1735,7 +1735,7 @@ static XEN g_gc_off(void)
 {
   #define H_gc_off "(" S_gc_off ") turns off garbage collection"
   s7_gc_on(s7, false);
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -1743,28 +1743,28 @@ static XEN g_gc_on(void)
 {
   #define H_gc_on "(" S_gc_on ") turns on garbage collection"
   s7_gc_on(s7, true);
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 
-XEN_NARGIFY_0(g_getpid_w, g_getpid)
+Xen_wrap_no_args(g_getpid_w, g_getpid)
 #if (!WITH_SYSTEM_EXTRAS)
-  XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
-  XEN_NARGIFY_1(g_is_directory_w, g_is_directory)
-  XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
-  XEN_NARGIFY_1(g_s7_getenv_w, g_s7_getenv)
-  XEN_NARGIFY_1(g_system_w, g_system)
+  Xen_wrap_1_arg(g_file_exists_p_w, g_file_exists_p)
+  Xen_wrap_1_arg(g_is_directory_w, g_is_directory)
+  Xen_wrap_1_arg(g_delete_file_w, g_delete_file)
+  Xen_wrap_1_arg(g_s7_getenv_w, g_s7_getenv)
+  Xen_wrap_1_arg(g_system_w, g_system)
 #endif
-XEN_NARGIFY_0(g_getcwd_w, g_getcwd)
-XEN_NARGIFY_2(g_strftime_w, g_strftime)
-XEN_NARGIFY_1(g_localtime_w, g_localtime)
-XEN_NARGIFY_0(g_current_time_w, g_current_time)
-XEN_NARGIFY_0(g_tmpnam_w, g_tmpnam)
-XEN_NARGIFY_1(g_ftell_w, g_ftell)
+Xen_wrap_no_args(g_getcwd_w, g_getcwd)
+Xen_wrap_2_args(g_strftime_w, g_strftime)
+Xen_wrap_1_arg(g_localtime_w, g_localtime)
+Xen_wrap_no_args(g_current_time_w, g_current_time)
+Xen_wrap_no_args(g_tmpnam_w, g_tmpnam)
+Xen_wrap_1_arg(g_ftell_w, g_ftell)
 
-XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
-XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
+Xen_wrap_no_args(g_gc_off_w, g_gc_off)
+Xen_wrap_no_args(g_gc_on_w, g_gc_on)
 
 
 s7_scheme *s7_xen_initialize(s7_scheme *sc)
@@ -1790,31 +1790,31 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   xen_s7_number_location = s7_number_offset(sc);
   xen_s7_denominator_location = s7_denominator_offset(sc);
 
-  XEN_DEFINE_SAFE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
+  Xen_define_safe_procedure("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
 #if (!WITH_SYSTEM_EXTRAS)
-  XEN_DEFINE_SAFE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_SAFE_PROCEDURE("directory?",          g_is_directory_w,        1, 0, 0, H_is_directory);
-  XEN_DEFINE_SAFE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
-  XEN_DEFINE_SAFE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
-  XEN_DEFINE_SAFE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);
+  Xen_define_safe_procedure("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
+  Xen_define_safe_procedure("directory?",          g_is_directory_w,        1, 0, 0, H_is_directory);
+  Xen_define_safe_procedure("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
+  Xen_define_safe_procedure("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
+  Xen_define_safe_procedure("system",              g_system_w,             1, 0, 0, H_system);
 #endif
-  XEN_DEFINE_SAFE_PROCEDURE("getcwd",              g_getcwd_w,             0, 0, 0, H_getcwd);
-  XEN_DEFINE_SAFE_PROCEDURE("strftime",            g_strftime_w,           2, 0, 0, H_strftime);
-  XEN_DEFINE_SAFE_PROCEDURE("tmpnam",              g_tmpnam_w,             0, 0, 0, H_tmpnam);
-  XEN_DEFINE_SAFE_PROCEDURE("localtime",           g_localtime_w,          1, 0, 0, H_localtime);
-  XEN_DEFINE_SAFE_PROCEDURE("current-time",        g_current_time_w,       0, 0, 0, H_current_time);
-  XEN_DEFINE_SAFE_PROCEDURE("ftell",               g_ftell_w,              1, 0, 0, "(ftell fd): lseek");
-  XEN_DEFINE_SAFE_PROCEDURE(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
-  XEN_DEFINE_SAFE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
+  Xen_define_safe_procedure("getcwd",              g_getcwd_w,             0, 0, 0, H_getcwd);
+  Xen_define_safe_procedure("strftime",            g_strftime_w,           2, 0, 0, H_strftime);
+  Xen_define_safe_procedure("tmpnam",              g_tmpnam_w,             0, 0, 0, H_tmpnam);
+  Xen_define_safe_procedure("localtime",           g_localtime_w,          1, 0, 0, H_localtime);
+  Xen_define_safe_procedure("current-time",        g_current_time_w,       0, 0, 0, H_current_time);
+  Xen_define_safe_procedure("ftell",               g_ftell_w,              1, 0, 0, "(ftell fd): lseek");
+  Xen_define_safe_procedure(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
+  Xen_define_safe_procedure(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
 
-  XEN_EVAL_C_STRING("(define (hook-push hook func) \n\
+  Xen_eval_C_string("(define (hook-push hook func) \n\
                        \"(hook-push hook func) adds func to hook's function list\" \n\
                        (if (not (memq func (hook-functions hook))) (set! (hook-functions hook) (cons func (hook-functions hook)))))");
-  XEN_EVAL_C_STRING("(define (hook-append hook func) \n\
+  Xen_eval_C_string("(define (hook-append hook func) \n\
                        \"(hook-append hook func) adds func to the end of hook's function list\" \n\
                        (set! (hook-functions hook) (append (hook-functions hook) (list func))))");
-  XEN_EVAL_C_STRING("(define (hook-clear hook) (set! (hook-functions hook) ()))");
-  XEN_EVAL_C_STRING("(define (hook-remove hook func) \n\
+  Xen_eval_C_string("(define (hook-clear hook) (set! (hook-functions hook) ()))");
+  Xen_eval_C_string("(define (hook-remove hook func) \n\
                        (set! (hook-functions hook)\n\
 	                     (let loop ((l (hook-functions hook))\n\
 		                        (result ()))\n\
@@ -1822,11 +1822,11 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 		                     ((eq? func (car l)) (loop (cdr l) result))\n\
 		                     (else (loop (cdr l) (cons (car l) result)))))))");
 
-  XEN_EVAL_C_STRING("(define load-from-path load)");
-  XEN_EVAL_C_STRING("(define (1+ x) \"add 1 to arg\" (+ x 1))");
-  XEN_EVAL_C_STRING("(define (1- x) \"subtract 1 from arg\" (- x 1))");
-  XEN_EVAL_C_STRING("(define-macro (while whether . body) `(do () ((not ,whether)) ,@body))");
-  XEN_EVAL_C_STRING("(define (identity x) \"return arg\" x)");
+  Xen_eval_C_string("(define load-from-path load)");
+  Xen_eval_C_string("(define (1+ x) \"add 1 to arg\" (+ x 1))");
+  Xen_eval_C_string("(define (1- x) \"subtract 1 from arg\" (- x 1))");
+  Xen_eval_C_string("(define-macro (while whether . body) `(do () ((not ,whether)) ,@body))");
+  Xen_eval_C_string("(define (identity x) \"return arg\" x)");
 
   return(s7);
 }

@@ -212,18 +212,18 @@ static XEN g_mus_sound_loop_info(XEN gfilename)
   #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename): synth loop info for sound as a list: (start1 \
 end1 start2 end2 base-note base-detune mode1 mode2)"
   int *res;
-  XEN sres = XEN_EMPTY_LIST;
+  XEN sres = Xen_empty_list;
   char *str = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_string(gfilename), gfilename, 1, S_mus_sound_loop_info, "a string"); 
+  Xen_check_type(Xen_is_string(gfilename), gfilename, 1, S_mus_sound_loop_info, "a string"); 
 
-  res = mus_sound_loop_info(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  res = mus_sound_loop_info(str = mus_expand_filename(Xen_string_to_C_string(gfilename)));
   if (str) free(str);
   if (res)
     {
-      sres = XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
-			C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]),
-			C_TO_XEN_INT(res[6]), C_TO_XEN_INT(res[7]));
+      sres = Xen_list_8(C_int_to_Xen_integer(res[0]), C_int_to_Xen_integer(res[1]), C_int_to_Xen_integer(res[2]),
+			C_int_to_Xen_integer(res[3]), C_int_to_Xen_integer(res[4]), C_int_to_Xen_integer(res[5]),
+			C_int_to_Xen_integer(res[6]), C_int_to_Xen_integer(res[7]));
       free(res);
     }
   return(sres);
@@ -235,19 +235,19 @@ static XEN g_mus_sound_mark_info(XEN gfilename)
   #define H_mus_sound_mark_info "(" S_mus_sound_mark_info " filename): aifc header mark info as a list of lists: ((id pos)...)"
   int *mark_ids, *mark_positions;
   int marks = 0;
-  XEN sres = XEN_EMPTY_LIST;
+  XEN sres = Xen_empty_list;
   char *str = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_string(gfilename), gfilename, 1, S_mus_sound_mark_info, "a string"); 
+  Xen_check_type(Xen_is_string(gfilename), gfilename, 1, S_mus_sound_mark_info, "a string"); 
 
-  marks = mus_sound_mark_info(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)), &mark_ids, &mark_positions);
+  marks = mus_sound_mark_info(str = mus_expand_filename(Xen_string_to_C_string(gfilename)), &mark_ids, &mark_positions);
   if (str) free(str);
   if (marks > 0)
     {
       int i;
       for (i = 0; i < marks; i++)
-	sres = XEN_CONS(XEN_LIST_2(C_TO_XEN_INT(mark_ids[i]),
-				   C_TO_XEN_INT(mark_positions[i])),
+	sres = Xen_cons(Xen_list_2(C_int_to_Xen_integer(mark_ids[i]),
+				   C_int_to_Xen_integer(mark_positions[i])),
 			sres);
     }
   return(sres);
@@ -259,9 +259,9 @@ static XEN gmus_sound(const char *caller, int (*func)(const char *file), XEN gfi
   char *str = NULL;
   XEN result;
 
-  XEN_ASSERT_TYPE(Xen_is_string(gfilename), gfilename, 1, caller, "a string"); 
-  str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
-  result = C_TO_XEN_INT((*func)(str));
+  Xen_check_type(Xen_is_string(gfilename), gfilename, 1, caller, "a string"); 
+  str = mus_expand_filename(Xen_string_to_C_string(gfilename));
+  result = C_int_to_Xen_integer((*func)(str));
   if (str) free(str);
   return(result);
 }
@@ -272,10 +272,10 @@ static XEN gmus_sound_set(const char *caller, int (*func)(const char *file, int 
   char *str = NULL;
   XEN result;
 
-  XEN_ASSERT_TYPE(Xen_is_string(gfilename), gfilename, 1, caller, "a string"); 
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 2, caller, "an integer");
-  str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
-  result = C_TO_XEN_INT((*func)(str, XEN_TO_C_INT(val)));
+  Xen_check_type(Xen_is_string(gfilename), gfilename, 1, caller, "a string"); 
+  Xen_check_type(Xen_is_integer(val), val, 2, caller, "an integer");
+  str = mus_expand_filename(Xen_string_to_C_string(gfilename));
+  result = C_int_to_Xen_integer((*func)(str, Xen_integer_to_C_int(val)));
   if (str) free(str);
   return(result);
 }
@@ -286,9 +286,9 @@ static XEN glmus_sound(const char *caller, mus_long_t (*func)(const char *file),
   char *str = NULL;
   XEN result;
 
-  XEN_ASSERT_TYPE(Xen_is_string(gfilename), gfilename, 1, caller, "a string"); 
-  str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
-  result = C_TO_XEN_LONG_LONG((*func)(str));
+  Xen_check_type(Xen_is_string(gfilename), gfilename, 1, caller, "a string"); 
+  str = mus_expand_filename(Xen_string_to_C_string(gfilename));
+  result = C_llong_to_Xen_llong((*func)(str));
   if (str) free(str);
   return(result);
 }
@@ -299,10 +299,10 @@ static XEN glmus_sound_set(const char *caller, int (*func)(const char *file, mus
   char *str = NULL;
   XEN result;
 
-  XEN_ASSERT_TYPE(Xen_is_string(gfilename), gfilename, 1, caller, "a string"); 
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 2, caller, "a number");
-  str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
-  result = C_TO_XEN_LONG_LONG((*func)(str, XEN_TO_C_LONG_LONG(val)));
+  Xen_check_type(Xen_is_string(gfilename), gfilename, 1, caller, "a string"); 
+  Xen_check_type(Xen_is_number(val), val, 2, caller, "a number");
+  str = mus_expand_filename(Xen_string_to_C_string(gfilename));
+  result = C_llong_to_Xen_llong((*func)(str, Xen_llong_to_C_llong(val)));
   if (str) free(str);
   return(result);
 }
@@ -425,7 +425,7 @@ delete a sound file, " S_mus_sound_forget " can be used to clear it from sndlib'
 static XEN g_mus_sound_prune(void) 
 {
   #define H_mus_sound_prune "(" S_mus_sound_prune "): remove all defunct entries from sndlib's sound file cache."
-  return(C_TO_XEN_INT(mus_sound_prune()));
+  return(C_int_to_Xen_integer(mus_sound_prune()));
 }
 
 
@@ -435,11 +435,11 @@ static XEN g_mus_sound_comment(XEN gfilename)
   char *res = NULL, *str = NULL; 
   XEN newstr;
 
-  XEN_ASSERT_TYPE(Xen_is_string(gfilename), gfilename, 1, S_mus_sound_comment, "a string"); 
+  Xen_check_type(Xen_is_string(gfilename), gfilename, 1, S_mus_sound_comment, "a string"); 
 
-  res = mus_sound_comment(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  res = mus_sound_comment(str = mus_expand_filename(Xen_string_to_C_string(gfilename)));
   if (str) free(str);
-  newstr = C_TO_XEN_STRING(res);
+  newstr = C_string_to_Xen_string(res);
   if (res) free(res);
   return(newstr);
 }
@@ -451,9 +451,9 @@ static XEN g_mus_sound_write_date(XEN filename)
   XEN result;
 
   #define H_mus_sound_write_date "(" S_mus_sound_write_date " filename): write date of sound file"
-  XEN_ASSERT_TYPE(Xen_is_string(filename), filename, 1, S_mus_sound_write_date, "a string"); 
-  str = mus_expand_filename(XEN_TO_C_STRING(filename));
-  result = C_TO_XEN_ULONG((unsigned long)mus_sound_write_date(str)); /* actually time_t */
+  Xen_check_type(Xen_is_string(filename), filename, 1, S_mus_sound_write_date, "a string"); 
+  str = mus_expand_filename(Xen_string_to_C_string(filename));
+  result = C_ulong_to_Xen_ulong((unsigned long)mus_sound_write_date(str)); /* actually time_t */
   if (str) free(str);
   return(result);
 }
@@ -462,9 +462,9 @@ static XEN g_mus_sound_write_date(XEN filename)
 static XEN g_mus_header_writable(XEN head, XEN data)
 {
   #define H_mus_header_writable "(" S_mus_header_writable " header-type data-format) returns " PROC_TRUE " if the header can handle the data format"
-  XEN_ASSERT_TYPE(Xen_is_integer(head), head, 1, S_mus_header_writable, "a header type");
-  XEN_ASSERT_TYPE(Xen_is_integer(data), data, 2, S_mus_header_writable, "a data format");
-  return(C_TO_XEN_BOOLEAN(mus_header_writable(XEN_TO_C_INT(head), XEN_TO_C_INT(data))));
+  Xen_check_type(Xen_is_integer(head), head, 1, S_mus_header_writable, "a header type");
+  Xen_check_type(Xen_is_integer(data), data, 2, S_mus_header_writable, "a data format");
+  return(C_bool_to_Xen_boolean(mus_header_writable(Xen_integer_to_C_int(head), Xen_integer_to_C_int(data))));
 }
 
 static XEN g_mus_header_raw_defaults(void)
@@ -472,21 +472,21 @@ static XEN g_mus_header_raw_defaults(void)
   #define H_mus_header_raw_defaults "(" S_mus_header_raw_defaults "): returns list '(srate chans format) of current raw sound default attributes"
   int srate, chans, data_format;
   mus_header_raw_defaults(&srate, &chans, &data_format);
-  return(XEN_LIST_3(C_TO_XEN_INT(srate),
-		    C_TO_XEN_INT(chans),
-		    C_TO_XEN_INT(data_format)));
+  return(Xen_list_3(C_int_to_Xen_integer(srate),
+		    C_int_to_Xen_integer(chans),
+		    C_int_to_Xen_integer(data_format)));
 }
 
 
 static XEN g_mus_header_set_raw_defaults(XEN lst)
 {
-  XEN_ASSERT_TYPE((Xen_is_list(lst)) && (XEN_LIST_LENGTH(lst) == 3), lst, 1, S_mus_header_raw_defaults, "a list: '(srate chans data-format)");
-  XEN_ASSERT_TYPE(Xen_is_integer(XEN_CAR(lst)), XEN_CAR(lst), 1, S_mus_header_raw_defaults, "an integer = srate");
-  XEN_ASSERT_TYPE(Xen_is_integer(XEN_CADR(lst)), XEN_CADR(lst), 2, S_mus_header_raw_defaults, "an integer = chans");
-  XEN_ASSERT_TYPE(Xen_is_integer(XEN_CADDR(lst)), XEN_CADDR(lst), 3, S_mus_header_raw_defaults, "an integer = data-format");
-  mus_header_set_raw_defaults(XEN_TO_C_INT(XEN_CAR(lst)),
-			      XEN_TO_C_INT(XEN_CADR(lst)),
-			      XEN_TO_C_INT(XEN_CADDR(lst)));
+  Xen_check_type((Xen_is_list(lst)) && (Xen_list_length(lst) == 3), lst, 1, S_mus_header_raw_defaults, "a list: '(srate chans data-format)");
+  Xen_check_type(Xen_is_integer(Xen_car(lst)), Xen_car(lst), 1, S_mus_header_raw_defaults, "an integer = srate");
+  Xen_check_type(Xen_is_integer(Xen_cadr(lst)), Xen_cadr(lst), 2, S_mus_header_raw_defaults, "an integer = chans");
+  Xen_check_type(Xen_is_integer(Xen_caddr(lst)), Xen_caddr(lst), 3, S_mus_header_raw_defaults, "an integer = data-format");
+  mus_header_set_raw_defaults(Xen_integer_to_C_int(Xen_car(lst)),
+			      Xen_integer_to_C_int(Xen_cadr(lst)),
+			      Xen_integer_to_C_int(Xen_caddr(lst)));
   return(lst);
 }
 
@@ -494,32 +494,32 @@ static XEN g_mus_header_set_raw_defaults(XEN lst)
 static XEN g_mus_header_type_name(XEN type) 
 {
   #define H_mus_header_type_name "(" S_mus_header_type_name " type): header type (e.g. " S_mus_aiff ") as a string"
-  XEN_ASSERT_TYPE(Xen_is_integer(type), type, 1, S_mus_header_type_name, "an integer (header-type id)"); 
-  return(C_TO_XEN_STRING(mus_header_type_name(XEN_TO_C_INT(type))));
+  Xen_check_type(Xen_is_integer(type), type, 1, S_mus_header_type_name, "an integer (header-type id)"); 
+  return(C_string_to_Xen_string(mus_header_type_name(Xen_integer_to_C_int(type))));
 }
 
 
 static XEN g_mus_header_type_to_string(XEN type) 
 {
   #define H_mus_header_type_to_string "(" S_mus_header_type_to_string " type): header type (e.g. " S_mus_aiff ") as a string"
-  XEN_ASSERT_TYPE(Xen_is_integer(type), type, 1, S_mus_header_type_to_string, "an integer (header-type id)"); 
-  return(C_TO_XEN_STRING(mus_header_type_to_string(XEN_TO_C_INT(type))));
+  Xen_check_type(Xen_is_integer(type), type, 1, S_mus_header_type_to_string, "an integer (header-type id)"); 
+  return(C_string_to_Xen_string(mus_header_type_to_string(Xen_integer_to_C_int(type))));
 }
 
 
 static XEN g_mus_data_format_name(XEN format) 
 {
   #define H_mus_data_format_name "(" S_mus_data_format_name " format): data format (e.g. " S_mus_bshort ") as a string"
-  XEN_ASSERT_TYPE(Xen_is_integer(format), format, 1, S_mus_data_format_name, "an integer (data-format id)"); 
-  return(C_TO_XEN_STRING(mus_data_format_name(XEN_TO_C_INT(format))));
+  Xen_check_type(Xen_is_integer(format), format, 1, S_mus_data_format_name, "an integer (data-format id)"); 
+  return(C_string_to_Xen_string(mus_data_format_name(Xen_integer_to_C_int(format))));
 }
 
 
 static XEN g_mus_data_format_to_string(XEN format) 
 {
   #define H_mus_data_format_to_string "(" S_mus_data_format_to_string " format): data format (e.g. " S_mus_bshort ") as a string"
-  XEN_ASSERT_TYPE(Xen_is_integer(format), format, 1, S_mus_data_format_to_string, "an integer (data-format id)"); 
-  return(C_TO_XEN_STRING(mus_data_format_to_string(XEN_TO_C_INT(format))));
+  Xen_check_type(Xen_is_integer(format), format, 1, S_mus_data_format_to_string, "an integer (data-format id)"); 
+  return(C_string_to_Xen_string(mus_data_format_to_string(Xen_integer_to_C_int(format))));
 }
 
 
@@ -527,8 +527,8 @@ static XEN g_mus_bytes_per_sample(XEN format)
 {
   #define H_mus_bytes_per_sample "(" S_mus_bytes_per_sample " format): number of bytes per sample in \
 format (e.g. " S_mus_bshort " = 2)"
-  XEN_ASSERT_TYPE(Xen_is_integer(format), format, 1, S_mus_bytes_per_sample, "an integer (data-format id)"); 
-  return(C_TO_XEN_INT(mus_bytes_per_sample(XEN_TO_C_INT(format))));
+  Xen_check_type(Xen_is_integer(format), format, 1, S_mus_bytes_per_sample, "an integer (data-format id)"); 
+  return(C_int_to_Xen_integer(mus_bytes_per_sample(Xen_integer_to_C_int(format))));
 }
 
 
@@ -538,10 +538,10 @@ static XEN g_mus_sound_duration(XEN gfilename)
   float res;
   char *str = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_string(gfilename), gfilename, 1, S_mus_sound_duration, "a string"); 
-  res = mus_sound_duration(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  Xen_check_type(Xen_is_string(gfilename), gfilename, 1, S_mus_sound_duration, "a string"); 
+  res = mus_sound_duration(str = mus_expand_filename(Xen_string_to_C_string(gfilename)));
   if (str) free(str);
-  return(C_TO_XEN_DOUBLE(res));
+  return(C_double_to_Xen_real(res));
 
 }
 
@@ -553,12 +553,12 @@ If Snd's controls seem sluggish, try (" S_mus_oss_set_buffers " 4 12) or even ("
 This reduces the on-card buffering, but may introduce clicks."
 
 #if (HAVE_OSS || HAVE_ALSA)
-  XEN_ASSERT_TYPE(Xen_is_integer(num), num, 1, S_mus_oss_set_buffers, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer(size), size, 2, S_mus_oss_set_buffers, "an integer");
-  mus_oss_set_buffers(XEN_TO_C_INT(num),
-			    XEN_TO_C_INT(size));
+  Xen_check_type(Xen_is_integer(num), num, 1, S_mus_oss_set_buffers, "an integer");
+  Xen_check_type(Xen_is_integer(size), size, 2, S_mus_oss_set_buffers, "an integer");
+  mus_oss_set_buffers(Xen_integer_to_C_int(num),
+			    Xen_integer_to_C_int(size));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -566,19 +566,19 @@ static XEN g_mus_alsa_buffers(void)
 {
   #define H_mus_alsa_buffers "(" S_mus_alsa_buffers "): current number of ALSA periods."
 #if HAVE_ALSA
-  return(C_TO_XEN_INT(mus_alsa_buffers()));
+  return(C_int_to_Xen_integer(mus_alsa_buffers()));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 static XEN g_mus_alsa_set_buffers(XEN val)
 {
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_mus_alsa_buffers, "an integer");
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_mus_alsa_buffers, "an integer");
 #if HAVE_ALSA
-  return(C_TO_XEN_INT(mus_alsa_set_buffers(XEN_TO_C_INT(val))));
+  return(C_int_to_Xen_integer(mus_alsa_set_buffers(Xen_integer_to_C_int(val))));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -586,19 +586,19 @@ static XEN g_mus_alsa_buffer_size(void)
 {
   #define H_mus_alsa_buffer_size "(" S_mus_alsa_buffer_size "): current size of ALSA buffers."
 #if HAVE_ALSA
-  return(C_TO_XEN_INT(mus_alsa_buffer_size()));
+  return(C_int_to_Xen_integer(mus_alsa_buffer_size()));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 static XEN g_mus_alsa_set_buffer_size(XEN val)
 {
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_mus_alsa_buffer_size, "an integer");
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_mus_alsa_buffer_size, "an integer");
 #if HAVE_ALSA
-  return(C_TO_XEN_INT(mus_alsa_set_buffer_size(XEN_TO_C_INT(val))));
+  return(C_int_to_Xen_integer(mus_alsa_set_buffer_size(Xen_integer_to_C_int(val))));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -606,19 +606,19 @@ static XEN g_mus_alsa_device(void)
 {
   #define H_mus_alsa_device "(" S_mus_alsa_device "): current ALSA device."
 #if HAVE_ALSA
-  return(C_TO_XEN_STRING(mus_alsa_device()));
+  return(C_string_to_Xen_string(mus_alsa_device()));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 static XEN g_mus_alsa_set_device(XEN val)
 {
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_mus_alsa_device, "a string (ALSA device name)");
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_mus_alsa_device, "a string (ALSA device name)");
 #if HAVE_ALSA
-  return(C_TO_XEN_STRING(mus_alsa_set_device(XEN_TO_C_STRING(val))));
+  return(C_string_to_Xen_string(mus_alsa_set_device(Xen_string_to_C_string(val))));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -626,19 +626,19 @@ static XEN g_mus_alsa_playback_device(void)
 {
   #define H_mus_alsa_playback_device "(" S_mus_alsa_playback_device "): current ALSA playback device."
 #if HAVE_ALSA
-  return(C_TO_XEN_STRING(mus_alsa_playback_device()));
+  return(C_string_to_Xen_string(mus_alsa_playback_device()));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 static XEN g_mus_alsa_set_playback_device(XEN val)
 {
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_mus_alsa_playback_device, "a string (ALSA device name)");
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_mus_alsa_playback_device, "a string (ALSA device name)");
 #if HAVE_ALSA
-  return(C_TO_XEN_STRING(mus_alsa_set_playback_device(XEN_TO_C_STRING(val))));
+  return(C_string_to_Xen_string(mus_alsa_set_playback_device(Xen_string_to_C_string(val))));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -646,19 +646,19 @@ static XEN g_mus_alsa_capture_device(void)
 {
   #define H_mus_alsa_capture_device "(" S_mus_alsa_capture_device "): current ALSA capture device."
 #if HAVE_ALSA
-  return(C_TO_XEN_STRING(mus_alsa_capture_device()));
+  return(C_string_to_Xen_string(mus_alsa_capture_device()));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 static XEN g_mus_alsa_set_capture_device(XEN val)
 {
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_mus_alsa_capture_device, "a string (ALSA device name)");
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_mus_alsa_capture_device, "a string (ALSA device name)");
 #if HAVE_ALSA
-  return(C_TO_XEN_STRING(mus_alsa_set_capture_device(XEN_TO_C_STRING(val))));
+  return(C_string_to_Xen_string(mus_alsa_set_capture_device(Xen_string_to_C_string(val))));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -666,19 +666,19 @@ static XEN g_mus_alsa_squelch_warning(void)
 {
   #define H_mus_alsa_squelch_warning "(" S_mus_alsa_squelch_warning "): whether to squelch ALSA srate mismatch warnings."
 #if HAVE_ALSA
-  return(C_TO_XEN_BOOLEAN(mus_alsa_squelch_warning()));
+  return(C_bool_to_Xen_boolean(mus_alsa_squelch_warning()));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 static XEN g_mus_alsa_set_squelch_warning(XEN val)
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_mus_alsa_squelch_warning, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_mus_alsa_squelch_warning, "a boolean");
 #if HAVE_ALSA
-  return(C_TO_XEN_BOOLEAN(mus_alsa_set_squelch_warning(XEN_TO_C_BOOLEAN(val))));
+  return(C_bool_to_Xen_boolean(mus_alsa_set_squelch_warning(Xen_boolean_to_C_bool(val))));
 #endif
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -689,10 +689,10 @@ in the sound cache; if it isn't, a call on " S_mus_sound_maxamp " has to open an
   bool val;
   char *str = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_sound_maxamp_exists, "a string");
-  val = mus_sound_maxamp_exists(str = mus_expand_filename(XEN_TO_C_STRING(file)));
+  Xen_check_type(Xen_is_string(file), file, 1, S_mus_sound_maxamp_exists, "a string");
+  val = mus_sound_maxamp_exists(str = mus_expand_filename(Xen_string_to_C_string(file)));
   if (str) free(str);
-  return(C_TO_XEN_BOOLEAN(val));
+  return(C_bool_to_Xen_boolean(val));
 }
 
 
@@ -701,11 +701,11 @@ XEN g_mus_sound_maxamp(XEN file)
   #define H_mus_sound_maxamp "(" S_mus_sound_maxamp " filename): maxamps in sound (a list of paired amps (floats) and locations (samples))"
   int chans;
   char *filename;
-  XEN res = XEN_EMPTY_LIST;
+  XEN res = Xen_empty_list;
 
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_sound_maxamp, "a string");
+  Xen_check_type(Xen_is_string(file), file, 1, S_mus_sound_maxamp, "a string");
 
-  filename = mus_expand_filename(XEN_TO_C_STRING(file));
+  filename = mus_expand_filename(Xen_string_to_C_string(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
@@ -720,8 +720,8 @@ XEN g_mus_sound_maxamp(XEN file)
       rtn = mus_sound_maxamps(filename, chans, vals, times);
       if (rtn != MUS_ERROR)
 	for (i = chans - 1; i >= 0; i--)
-	  res = XEN_CONS(C_TO_XEN_LONG_LONG(times[i]),
-		  XEN_CONS(C_TO_XEN_DOUBLE(vals[i]), res));
+	  res = Xen_cons(C_llong_to_Xen_llong(times[i]),
+		  Xen_cons(C_double_to_Xen_real(vals[i]), res));
       free(vals);
       free(times);
       if (filename) free(filename);
@@ -729,8 +729,8 @@ XEN g_mus_sound_maxamp(XEN file)
   else 
     {
       if (filename) free(filename);
-      XEN_ERROR(BAD_HEADER,
-		XEN_LIST_1(C_TO_XEN_STRING(S_mus_sound_maxamp ": chans <= 0")));
+      Xen_error(BAD_HEADER,
+		Xen_list_1(C_string_to_Xen_string(S_mus_sound_maxamp ": chans <= 0")));
     }
   return(res);
 }
@@ -741,10 +741,10 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
   int chans;
   char *filename;
 
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_setB S_mus_sound_maxamp, "a string");
-  XEN_ASSERT_TYPE(Xen_is_list(vals), vals, 2, S_setB S_mus_sound_maxamp, "a list");
+  Xen_check_type(Xen_is_string(file), file, 1, S_setB S_mus_sound_maxamp, "a string");
+  Xen_check_type(Xen_is_list(vals), vals, 2, S_setB S_mus_sound_maxamp, "a list");
 
-  filename = mus_expand_filename(XEN_TO_C_STRING(file));
+  filename = mus_expand_filename(Xen_string_to_C_string(file));
   chans = mus_sound_chans(filename);
 
   /* presumably any actual error here will be trapped via mus-error (raised in mus_header_read via read_sound_file_header),
@@ -757,18 +757,18 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
       mus_float_t *mvals;
       mus_long_t *times;
 
-      len = XEN_LIST_LENGTH(vals);
+      len = Xen_list_length(vals);
       if (len < (chans * 2))
-	XEN_WRONG_TYPE_ARG_ERROR(S_setB S_mus_sound_maxamp, 2, vals, "max amp list length must = 2 * chans");
+	Xen_wrong_type_arg_error(S_setB S_mus_sound_maxamp, 2, vals, "max amp list length must = 2 * chans");
       if (len > chans * 2) len = chans * 2;
 
       mvals = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
       times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
 
-      for (i = 0, j = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, j++, lst = XEN_CDDR(lst))
+      for (i = 0, j = 0, lst = Xen_copy_arg(vals); i < len; i += 2, j++, lst = Xen_cddr(lst))
 	{
-	  times[j] = XEN_TO_C_LONG_LONG(XEN_CAR(lst));
-	  mvals[j] = XEN_TO_C_DOUBLE(XEN_CADR(lst));
+	  times[j] = Xen_llong_to_C_llong(Xen_car(lst));
+	  mvals[j] = Xen_real_to_C_double(Xen_cadr(lst));
 	}
 
       fprintf(stderr, "set in g_mus_sound_set_maxamp\n");
@@ -780,8 +780,8 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
   else 
     {
       if (filename) free(filename);
-      XEN_ERROR(BAD_HEADER,
-		XEN_LIST_1(C_TO_XEN_STRING(S_setB S_mus_sound_maxamp ": chans <= 0")));
+      Xen_error(BAD_HEADER,
+		Xen_list_1(C_string_to_Xen_string(S_setB S_mus_sound_maxamp ": chans <= 0")));
     }
   return(vals);
 }
@@ -794,10 +794,10 @@ return file descriptor (an integer)"
   int fd;
   char *str = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_sound_open_input, "a string");
-  fd = mus_sound_open_input(str = mus_expand_filename(XEN_TO_C_STRING(file)));
+  Xen_check_type(Xen_is_string(file), file, 1, S_mus_sound_open_input, "a string");
+  fd = mus_sound_open_input(str = mus_expand_filename(Xen_string_to_C_string(file)));
   if (str) free(str);
-  return(C_TO_XEN_INT(fd));
+  return(C_int_to_Xen_integer(fd));
 }
 
 
@@ -811,21 +811,21 @@ data-format is a sndlib format indicator such as " S_mus_bshort ", if " PROC_FAL
 header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently only writes 5 or so header types."
 
   int fd = -1, df;
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_sound_open_output, "a string");
-  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(srate), srate, 2, S_mus_sound_open_output, "an integer or " PROC_FALSE);
-  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(chans), chans, 3, S_mus_sound_open_output, "an integer or " PROC_FALSE);
-  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(data_format), data_format, 4, S_mus_sound_open_output, "a data-format or " PROC_FALSE);
-  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(header_type), header_type, 5, S_mus_sound_open_output, "a header-type or " PROC_FALSE);
-  XEN_ASSERT_TYPE((Xen_is_string(comment) || (!Xen_is_bound(comment))), comment, 6, S_mus_sound_open_output, "a string");
+  Xen_check_type(Xen_is_string(file), file, 1, S_mus_sound_open_output, "a string");
+  Xen_check_type(Xen_is_integer_boolean_or_unbound(srate), srate, 2, S_mus_sound_open_output, "an integer or " PROC_FALSE);
+  Xen_check_type(Xen_is_integer_boolean_or_unbound(chans), chans, 3, S_mus_sound_open_output, "an integer or " PROC_FALSE);
+  Xen_check_type(Xen_is_integer_boolean_or_unbound(data_format), data_format, 4, S_mus_sound_open_output, "a data-format or " PROC_FALSE);
+  Xen_check_type(Xen_is_integer_boolean_or_unbound(header_type), header_type, 5, S_mus_sound_open_output, "a header-type or " PROC_FALSE);
+  Xen_check_type((Xen_is_string(comment) || (!Xen_is_bound(comment))), comment, 6, S_mus_sound_open_output, "a string");
 
-  df = (Xen_is_integer(data_format)) ? XEN_TO_C_INT(data_format) : (int)MUS_OUT_FORMAT;
+  df = (Xen_is_integer(data_format)) ? Xen_integer_to_C_int(data_format) : (int)MUS_OUT_FORMAT;
   if (mus_is_data_format(df))
     {
       int ht;
 #if MUS_LITTLE_ENDIAN
-      ht = (Xen_is_integer(header_type)) ? XEN_TO_C_INT(header_type) : (int)MUS_RIFF;
+      ht = (Xen_is_integer(header_type)) ? Xen_integer_to_C_int(header_type) : (int)MUS_RIFF;
 #else
-      ht = (Xen_is_integer(header_type)) ? XEN_TO_C_INT(header_type) : (int)MUS_NEXT;
+      ht = (Xen_is_integer(header_type)) ? Xen_integer_to_C_int(header_type) : (int)MUS_NEXT;
 #endif
       /* now check that data format and header type are ok together */
       if (mus_is_header_type(ht))
@@ -836,10 +836,10 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 	    {
 	      if ((Xen_is_integer(data_format)) &&
 		  (Xen_is_integer(header_type)))
-		XEN_ERROR(XEN_ERROR_TYPE("bad-data"),
-			  XEN_LIST_3(C_TO_XEN_STRING(S_mus_sound_open_output ": ~A header can't handle ~A data"),
-				     C_TO_XEN_STRING(mus_header_type_name(ht)),
-				     C_TO_XEN_STRING(mus_data_format_name(df))));
+		Xen_error(Xen_make_error_type("bad-data"),
+			  Xen_list_3(C_string_to_Xen_string(S_mus_sound_open_output ": ~A header can't handle ~A data"),
+				     C_string_to_Xen_string(mus_header_type_name(ht)),
+				     C_string_to_Xen_string(mus_data_format_name(df))));
 
 	      if (!(Xen_is_integer(data_format)))
 		{
@@ -869,35 +869,35 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 		}
 	  
 	      if (!mus_header_writable(ht, df))
-		XEN_ERROR(XEN_ERROR_TYPE("bad-data"),
-			  XEN_LIST_3(C_TO_XEN_STRING(S_mus_sound_open_output ": ~A header can't handle ~A data"),
-				     C_TO_XEN_STRING(mus_header_type_name(ht)),
-				     C_TO_XEN_STRING(mus_data_format_name(df))));
+		Xen_error(Xen_make_error_type("bad-data"),
+			  Xen_list_3(C_string_to_Xen_string(S_mus_sound_open_output ": ~A header can't handle ~A data"),
+				     C_string_to_Xen_string(mus_header_type_name(ht)),
+				     C_string_to_Xen_string(mus_data_format_name(df))));
 	    }
 
-	  chns = (Xen_is_integer(chans)) ? XEN_TO_C_INT(chans) : 1;
+	  chns = (Xen_is_integer(chans)) ? Xen_integer_to_C_int(chans) : 1;
 	  if (chns > 0)
 	    {
 	      const char *com = NULL;
 	      char *str = NULL;
-	      str = (char *)XEN_TO_C_STRING(file);
+	      str = (char *)Xen_string_to_C_string(file);
 	      if ((str) && (*str))
 		{
 		  str = mus_expand_filename(str);
-		  if (Xen_is_string(comment)) com = XEN_TO_C_STRING(comment);
+		  if (Xen_is_string(comment)) com = Xen_string_to_C_string(comment);
 		  fd = mus_sound_open_output(str, 
-					     (Xen_is_integer(srate)) ? XEN_TO_C_INT(srate) : 44100,  /* not DEFAULT_OUTPUT_SRATE here because that depends on Snd */
+					     (Xen_is_integer(srate)) ? Xen_integer_to_C_int(srate) : 44100,  /* not DEFAULT_OUTPUT_SRATE here because that depends on Snd */
 					     chns, df, ht, com);
 		  if (str) free(str);
 		}
-	      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 1, file, "a filename");
+	      else Xen_out_of_range_error(S_mus_sound_open_output, 1, file, "a filename");
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans <= 0?");
+	  else Xen_out_of_range_error(S_mus_sound_open_output, 3, chans, "chans <= 0?");
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 5, header_type, "invalid header type");
+      else Xen_out_of_range_error(S_mus_sound_open_output, 5, header_type, "invalid header type");
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 4, data_format, "invalid data format");
-  return(C_TO_XEN_INT(fd));
+  else Xen_out_of_range_error(S_mus_sound_open_output, 4, data_format, "invalid data format");
+  return(C_int_to_Xen_integer(fd));
 }
 
 
@@ -911,18 +911,18 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 
   int fd = -1, df;
   char *filename;
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_sound_reopen_output, "a string");
-  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(chans), chans, 2, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
-  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(data_format), data_format, 3, S_mus_sound_reopen_output, "a data-format or " PROC_FALSE);
-  XEN_ASSERT_TYPE(Xen_is_integer_boolean_or_unbound(header_type), header_type, 4, S_mus_sound_reopen_output, "a header-type or " PROC_FALSE);
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(data_loc) || Xen_is_false(data_loc) || !Xen_is_bound(data_loc), 
+  Xen_check_type(Xen_is_string(file), file, 1, S_mus_sound_reopen_output, "a string");
+  Xen_check_type(Xen_is_integer_boolean_or_unbound(chans), chans, 2, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
+  Xen_check_type(Xen_is_integer_boolean_or_unbound(data_format), data_format, 3, S_mus_sound_reopen_output, "a data-format or " PROC_FALSE);
+  Xen_check_type(Xen_is_integer_boolean_or_unbound(header_type), header_type, 4, S_mus_sound_reopen_output, "a header-type or " PROC_FALSE);
+  Xen_check_type(Xen_is_long_long_int(data_loc) || Xen_is_false(data_loc) || !Xen_is_bound(data_loc), 
 		  data_loc, 5, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
 
-  filename = mus_expand_filename(XEN_TO_C_STRING(file));
+  filename = mus_expand_filename(Xen_string_to_C_string(file));
 
   /* use existing settings if unbound as args */
   if (Xen_is_integer(data_format))
-    df = XEN_TO_C_INT(data_format);
+    df = Xen_integer_to_C_int(data_format);
   else
     {
       df = mus_sound_data_format(filename);
@@ -933,7 +933,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
     {
       int ht;
       if (Xen_is_integer(header_type))
-	ht = XEN_TO_C_INT(header_type);
+	ht = Xen_integer_to_C_int(header_type);
       else
 	{
 	  ht = mus_sound_header_type(filename);
@@ -948,7 +948,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	{
 	  int chns;
 	  if (Xen_is_integer(chans))
-	    chns = XEN_TO_C_INT(chans);
+	    chns = Xen_integer_to_C_int(chans);
 	  else
 	    {
 	      chns = mus_sound_chans(filename);
@@ -959,7 +959,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	    {
 	      mus_long_t dloc;
 	      if (Xen_is_long_long_int(data_loc))
-		dloc = XEN_TO_C_LONG_LONG(data_loc);
+		dloc = Xen_llong_to_C_llong(data_loc);
 	      else
 		{
 		  dloc = mus_sound_data_location(filename);
@@ -969,12 +969,12 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	      fd = mus_sound_reopen_output(filename, chns, df, ht, dloc);
 	      if (filename) free(filename);
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 2, chans, "chans <= 0?");
+	  else Xen_out_of_range_error(S_mus_sound_reopen_output, 2, chans, "chans <= 0?");
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 4, header_type, "invalid header type");
+      else Xen_out_of_range_error(S_mus_sound_reopen_output, 4, header_type, "invalid header type");
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 3, data_format, "invalid data format");
-  return(C_TO_XEN_INT(fd));
+  else Xen_out_of_range_error(S_mus_sound_reopen_output, 3, data_format, "invalid data format");
+  return(C_int_to_Xen_integer(fd));
 }
 
 
@@ -995,11 +995,11 @@ static XEN g_mus_sound_close_input(XEN fd)
   #define H_mus_sound_close_input "(" S_mus_sound_close_input " fd): close (low-level) file fd that was opened \
 by " S_mus_sound_open_input "."
   int nfd;
-  XEN_ASSERT_TYPE(Xen_is_integer(fd), fd, 1, S_mus_sound_close_input, "an integer");
-  nfd = XEN_TO_C_INT(fd);
+  Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_sound_close_input, "an integer");
+  nfd = Xen_integer_to_C_int(fd);
   if ((nfd < 0) || (nfd == STDIN_FILENO) || (nfd == STDOUT_FILENO) || (nfd == STDERR_FILENO))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_input, 1, fd, "invalid file number");
-  return(C_TO_XEN_INT(mus_sound_close_input(XEN_TO_C_INT(fd))));
+    Xen_out_of_range_error(S_mus_sound_close_input, 1, fd, "invalid file number");
+  return(C_int_to_Xen_integer(mus_sound_close_input(Xen_integer_to_C_int(fd))));
 }
 
 
@@ -1009,12 +1009,12 @@ static XEN g_mus_sound_close_output(XEN fd, XEN bytes)
 that was opened by " S_mus_sound_open_output " after updating its header (if any) to reflect bytes, the new file data size"
 
   int nfd;
-  XEN_ASSERT_TYPE(Xen_is_integer(fd), fd, 1, S_mus_sound_close_output, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(bytes), bytes, 2, S_mus_sound_close_output, "an integer");
-  nfd = XEN_TO_C_INT(fd);
+  Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_sound_close_output, "an integer");
+  Xen_check_type(Xen_is_long_long_int(bytes), bytes, 2, S_mus_sound_close_output, "an integer");
+  nfd = Xen_integer_to_C_int(fd);
   if ((nfd < 0) || (nfd == STDIN_FILENO) || (nfd == STDOUT_FILENO) || (nfd == STDERR_FILENO))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_output, 1, fd, "invalid file number");
-  return(C_TO_XEN_INT(mus_sound_close_output(XEN_TO_C_INT(fd), XEN_TO_C_LONG_LONG(bytes))));
+    Xen_out_of_range_error(S_mus_sound_close_output, 1, fd, "invalid file number");
+  return(C_int_to_Xen_integer(mus_sound_close_output(Xen_integer_to_C_int(fd), Xen_llong_to_C_llong(bytes))));
 }
 
 
@@ -1029,27 +1029,27 @@ filling sound-data sdata's buffers starting at frame beg in the file, and writin
   XEN val;
   mus_float_t **bufs;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(fd), fd, 1, S_mus_sound_read, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(beg), beg, 2, S_mus_sound_read, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(num), num, 3, S_mus_sound_read, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer(chans), chans, 4, S_mus_sound_read, "an integer");
-  XEN_ASSERT_TYPE(xen_is_sound_data(sv), sv, 5, S_mus_sound_read, "a sound-data object");
+  Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_sound_read, "an integer");
+  Xen_check_type(Xen_is_long_long_int(beg), beg, 2, S_mus_sound_read, "an integer");
+  Xen_check_type(Xen_is_long_long_int(num), num, 3, S_mus_sound_read, "an integer");
+  Xen_check_type(Xen_is_integer(chans), chans, 4, S_mus_sound_read, "an integer");
+  Xen_check_type(xen_is_sound_data(sv), sv, 5, S_mus_sound_read, "a sound-data object");
 
   sd = XEN_TO_SOUND_DATA(sv);
-  bg = XEN_TO_C_LONG_LONG(beg);
-  nd = XEN_TO_C_LONG_LONG(num);
+  bg = Xen_llong_to_C_llong(beg);
+  nd = Xen_llong_to_C_llong(num);
   if (nd > mus_sound_data_length(sd))
-    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_mus_sound_read ": num ~A > sound-data array length, ~A"),
+    Xen_error(Xen_make_error_type("out-of-range"),
+	      Xen_list_3(C_string_to_Xen_string(S_mus_sound_read ": num ~A > sound-data array length, ~A"),
 			 num, 
-			 C_TO_XEN_LONG_LONG(mus_sound_data_length(sd))));
+			 C_llong_to_Xen_llong(mus_sound_data_length(sd))));
 
   nchans = mus_sound_data_chans(sd);
   bufs = (mus_float_t **)malloc(nchans * sizeof(mus_float_t *));
   for (i = 0; i < nchans; i++)
     bufs[i] = mus_sound_data_channel_data(sd, i);
 
-  val = C_TO_XEN_INT(mus_file_read(XEN_TO_C_INT(fd), bg, nd, XEN_TO_C_INT(chans), bufs));
+  val = C_int_to_Xen_integer(mus_file_read(Xen_integer_to_C_int(fd), bg, nd, Xen_integer_to_C_int(chans), bufs));
   
   free(bufs);
   return(val);
@@ -1067,29 +1067,29 @@ starting at beg (buffer location), going to end"
   XEN val;
   mus_float_t **bufs;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(fd), fd, 1, S_mus_sound_write, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(beg), beg, 2, S_mus_sound_write, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(end), end, 3, S_mus_sound_write, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer(chans), chans, 4, S_mus_sound_write, "an integer");
-  XEN_ASSERT_TYPE(xen_is_sound_data(sv), sv, 5, S_mus_sound_write, "a sound-data object");
+  Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_sound_write, "an integer");
+  Xen_check_type(Xen_is_long_long_int(beg), beg, 2, S_mus_sound_write, "an integer");
+  Xen_check_type(Xen_is_long_long_int(end), end, 3, S_mus_sound_write, "an integer");
+  Xen_check_type(Xen_is_integer(chans), chans, 4, S_mus_sound_write, "an integer");
+  Xen_check_type(xen_is_sound_data(sv), sv, 5, S_mus_sound_write, "a sound-data object");
 
   /* even here we can write memory that doesn't belong to us if clipping */
   sd = XEN_TO_SOUND_DATA(sv);
-  bg = XEN_TO_C_LONG_LONG(beg);
-  nd = XEN_TO_C_LONG_LONG(end);
+  bg = Xen_llong_to_C_llong(beg);
+  nd = Xen_llong_to_C_llong(end);
   if ((nd - bg) >= mus_sound_data_length(sd))
-    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-	      XEN_LIST_4(C_TO_XEN_STRING(S_mus_sound_write ": end - beg (~A - ~A) >= sound-data array length, ~A"),
+    Xen_error(Xen_make_error_type("out-of-range"),
+	      Xen_list_4(C_string_to_Xen_string(S_mus_sound_write ": end - beg (~A - ~A) >= sound-data array length, ~A"),
 			 end, 
 			 beg, 
-			 C_TO_XEN_LONG_LONG(mus_sound_data_length(sd))));
+			 C_llong_to_Xen_llong(mus_sound_data_length(sd))));
 
   nchans = mus_sound_data_chans(sd);
   bufs = (mus_float_t **)malloc(nchans * sizeof(mus_float_t *));
   for (i = 0; i < nchans; i++)
     bufs[i] = mus_sound_data_channel_data(sd, i);
 
-  val = C_TO_XEN_INT(mus_file_write(XEN_TO_C_INT(fd), bg, nd, XEN_TO_C_INT(chans), bufs));
+  val = C_int_to_Xen_integer(mus_file_write(Xen_integer_to_C_int(fd), bg, nd, Xen_integer_to_C_int(chans), bufs));
   
   free(bufs);
   return(val);
@@ -1101,10 +1101,10 @@ static XEN g_mus_sound_seek_frame(XEN fd, XEN offset)
   #define H_mus_sound_seek_frame "(" S_mus_sound_seek_frame " fd frame): move the current read/write location in file fd \
 to the frame offset"
 
-  XEN_ASSERT_TYPE(Xen_is_integer(fd), fd, 1, S_mus_sound_seek_frame, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(offset), offset, 2, S_mus_sound_seek_frame, "an integer");
-  return(C_TO_XEN_LONG_LONG(mus_file_seek_frame(XEN_TO_C_INT(fd),
-					    XEN_TO_C_LONG_LONG(offset))));
+  Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_sound_seek_frame, "an integer");
+  Xen_check_type(Xen_is_long_long_int(offset), offset, 2, S_mus_sound_seek_frame, "an integer");
+  return(C_llong_to_Xen_llong(mus_file_seek_frame(Xen_integer_to_C_int(fd),
+					    Xen_llong_to_C_llong(offset))));
 }
 
 
@@ -1114,8 +1114,8 @@ static XEN g_mus_sound_preload(XEN file)
   #define H_mus_sound_preload "(" S_mus_sound_preload " filename): save filename's data in memory (faster opens and so on)."
   char *str;
 
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_sound_preload, "a string");
-  str = mus_expand_filename(XEN_TO_C_STRING(file));
+  Xen_check_type(Xen_is_string(file), file, 1, S_mus_sound_preload, "a string");
+  str = mus_expand_filename(Xen_string_to_C_string(file));
 
   if (str)
     {
@@ -1223,30 +1223,30 @@ return the audio line number:\n  " audio_open_example
 
   int line, idev, ifmt, isize, israte, ichans;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(dev), dev, 1, S_mus_audio_open_output, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_number(srate), srate, 2, S_mus_audio_open_output, "a number");
-  XEN_ASSERT_TYPE(Xen_is_integer(chans), chans, 3, S_mus_audio_open_output, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer(format), format, 4, S_mus_audio_open_output, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_number(size), size, 5, S_mus_audio_open_output, "a number");
+  Xen_check_type(Xen_is_integer(dev), dev, 1, S_mus_audio_open_output, "an integer");
+  Xen_check_type(Xen_is_number(srate), srate, 2, S_mus_audio_open_output, "a number");
+  Xen_check_type(Xen_is_integer(chans), chans, 3, S_mus_audio_open_output, "an integer");
+  Xen_check_type(Xen_is_integer(format), format, 4, S_mus_audio_open_output, "an integer");
+  Xen_check_type(Xen_is_number(size), size, 5, S_mus_audio_open_output, "a number");
 
-  idev = XEN_TO_C_INT(dev);
-  israte = XEN_TO_C_INT(srate);
-  ichans = XEN_TO_C_INT(chans);
-  ifmt = XEN_TO_C_INT(format);
-  isize = XEN_TO_C_INT(size);
+  idev = Xen_integer_to_C_int(dev);
+  israte = Xen_integer_to_C_int(srate);
+  ichans = Xen_integer_to_C_int(chans);
+  ifmt = Xen_integer_to_C_int(format);
+  isize = Xen_integer_to_C_int(size);
 
   if (!(mus_is_data_format(ifmt)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 4, format, "invalid data format");
+    Xen_out_of_range_error(S_mus_audio_open_output, 4, format, "invalid data format");
   if (isize < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 5, size, "size < 0?");
+    Xen_out_of_range_error(S_mus_audio_open_output, 5, size, "size < 0?");
   if (israte <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 2, srate, "srate <= 0?");
+    Xen_out_of_range_error(S_mus_audio_open_output, 2, srate, "srate <= 0?");
   if ((ichans <= 0) || (ichans > 256))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 3, chans, "chans <= 0 or > 256?");
+    Xen_out_of_range_error(S_mus_audio_open_output, 3, chans, "chans <= 0 or > 256?");
 
   line = mus_audio_open_output(idev, israte, ichans, ifmt, isize);
   audio_io_set_write_format(line, ifmt);
-  return(C_TO_XEN_INT(line));
+  return(C_int_to_Xen_integer(line));
 }
 
 
@@ -1257,30 +1257,30 @@ open the audio device ready for input with the indicated attributes; return the 
 
   int line, idev, ifmt, isize, israte, ichans;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(dev), dev, 1, S_mus_audio_open_input, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_number(srate), srate, 2, S_mus_audio_open_input, "a number");
-  XEN_ASSERT_TYPE(Xen_is_integer(chans), chans, 3, S_mus_audio_open_input, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer(format), format, 4, S_mus_audio_open_input, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_number(size), size, 5, S_mus_audio_open_input, "a number");
+  Xen_check_type(Xen_is_integer(dev), dev, 1, S_mus_audio_open_input, "an integer");
+  Xen_check_type(Xen_is_number(srate), srate, 2, S_mus_audio_open_input, "a number");
+  Xen_check_type(Xen_is_integer(chans), chans, 3, S_mus_audio_open_input, "an integer");
+  Xen_check_type(Xen_is_integer(format), format, 4, S_mus_audio_open_input, "an integer");
+  Xen_check_type(Xen_is_number(size), size, 5, S_mus_audio_open_input, "a number");
 
-  idev = XEN_TO_C_INT(dev);
-  israte = XEN_TO_C_INT(srate);
-  ichans = XEN_TO_C_INT(chans);
-  ifmt = XEN_TO_C_INT(format);
-  isize = XEN_TO_C_INT(size);
+  idev = Xen_integer_to_C_int(dev);
+  israte = Xen_integer_to_C_int(srate);
+  ichans = Xen_integer_to_C_int(chans);
+  ifmt = Xen_integer_to_C_int(format);
+  isize = Xen_integer_to_C_int(size);
 
   if (!(mus_is_data_format(ifmt)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 4, format, "invalid data format");
+    Xen_out_of_range_error(S_mus_audio_open_input, 4, format, "invalid data format");
   if (isize < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 5, size, "size < 0?");
+    Xen_out_of_range_error(S_mus_audio_open_input, 5, size, "size < 0?");
   if (israte <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 2, srate, "srate <= 0?");
+    Xen_out_of_range_error(S_mus_audio_open_input, 2, srate, "srate <= 0?");
   if (ichans <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 3, chans, "chans <= 0?");
+    Xen_out_of_range_error(S_mus_audio_open_input, 3, chans, "chans <= 0?");
 
   line = mus_audio_open_input(idev, israte, ichans, ifmt, isize);
   audio_io_set_read_format(line, ifmt);
-  return(C_TO_XEN_INT(line));
+  return(C_int_to_Xen_integer(line));
 }
 
 
@@ -1288,12 +1288,12 @@ static XEN g_mus_audio_close(XEN line)
 {
   int res;
   #define H_mus_audio_close "(" S_mus_audio_close " line): close the audio hardware line"
-  XEN_ASSERT_TYPE(Xen_is_integer(line), line, 1, S_mus_audio_close, "an integer");
-  res = (int)XEN_TO_C_INT(line);
+  Xen_check_type(Xen_is_integer(line), line, 1, S_mus_audio_close, "an integer");
+  res = (int)Xen_integer_to_C_int(line);
   if (res < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_close, 1, line, "line < 0?");
+    Xen_out_of_range_error(S_mus_audio_close, 1, line, "line < 0?");
   res = mus_audio_close(res);
-  return(C_TO_XEN_INT(res));
+  return(C_int_to_Xen_integer(res));
 }
 
 
@@ -1311,23 +1311,23 @@ to the audio line from sound-data sdata."
   mus_long_t frms, beg = 0;
   mus_float_t **bufs;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(line), line, 1, S_mus_audio_write, "an integer");
-  XEN_ASSERT_TYPE(xen_is_sound_data(sdata), sdata, 2, S_mus_audio_write, "a sound-data object");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(frames), frames, 3, S_mus_audio_write, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(start) || !Xen_is_bound(start), start, 4, S_mus_audio_write, "an integer");
+  Xen_check_type(Xen_is_integer(line), line, 1, S_mus_audio_write, "an integer");
+  Xen_check_type(xen_is_sound_data(sdata), sdata, 2, S_mus_audio_write, "a sound-data object");
+  Xen_check_type(Xen_is_long_long_int(frames), frames, 3, S_mus_audio_write, "an integer");
+  Xen_check_type(Xen_is_long_long_int(start) || !Xen_is_bound(start), start, 4, S_mus_audio_write, "an integer");
 
   sd = XEN_TO_SOUND_DATA(sdata);
-  frms = XEN_TO_C_LONG_LONG(frames);
+  frms = Xen_llong_to_C_llong(frames);
 
   if (frms > mus_sound_data_length(sd))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_write, 3, frames, "frames > sound-data buffer length");
+    Xen_out_of_range_error(S_mus_audio_write, 3, frames, "frames > sound-data buffer length");
 
   if (Xen_is_bound(start))
-    beg = XEN_TO_C_LONG_LONG(start);
+    beg = Xen_llong_to_C_llong(start);
 
   chans = mus_sound_data_chans(sd);
 
-  fd = XEN_TO_C_INT(line);
+  fd = Xen_integer_to_C_int(line);
   fmt = audio_io_write_format(fd);
   outbytes = frms * chans * mus_bytes_per_sample(fmt);
   obuf = (char *)calloc(outbytes, sizeof(char));
@@ -1341,7 +1341,7 @@ to the audio line from sound-data sdata."
   free(obuf);
   free(bufs);
 
-  return(C_TO_XEN_INT(val));
+  return(C_int_to_Xen_integer(val));
 }
 
 
@@ -1356,13 +1356,13 @@ from the audio line into sound-data sdata."
   mus_long_t frms;
   mus_float_t **bufs;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(line), line, 1, S_mus_audio_read, "an integer");
-  XEN_ASSERT_TYPE(xen_is_sound_data(sdata), sdata, 2, S_mus_audio_read, "a sound-data object");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(frames), frames, 3, S_mus_audio_read, "an integer");
+  Xen_check_type(Xen_is_integer(line), line, 1, S_mus_audio_read, "an integer");
+  Xen_check_type(xen_is_sound_data(sdata), sdata, 2, S_mus_audio_read, "a sound-data object");
+  Xen_check_type(Xen_is_long_long_int(frames), frames, 3, S_mus_audio_read, "an integer");
 
   sd = XEN_TO_SOUND_DATA(sdata);
-  frms = XEN_TO_C_LONG_LONG(frames);
-  fd = XEN_TO_C_INT(line);
+  frms = Xen_llong_to_C_llong(frames);
+  fd = Xen_integer_to_C_int(line);
 
   chans = mus_sound_data_chans(sd);
   fmt = audio_io_read_format(fd);
@@ -1378,7 +1378,7 @@ from the audio line into sound-data sdata."
   free(inbuf);
   free(bufs);
 
-  return(C_TO_XEN_INT(val));
+  return(C_int_to_Xen_integer(val));
 }
 
 
@@ -1387,14 +1387,14 @@ from the audio line into sound-data sdata."
 static XEN g_mus_clipping(void)
 {
   #define H_mus_clipping "(" S_mus_clipping "): whether sound data written to a file should be clipped"
-  return(C_TO_XEN_BOOLEAN(mus_clipping()));
+  return(C_bool_to_Xen_boolean(mus_clipping()));
 }
 
 
 static XEN g_mus_set_clipping(XEN clipped)
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(clipped), clipped, 1, S_setB S_mus_clipping, "a boolean");
-  return(C_TO_XEN_BOOLEAN(mus_set_clipping(XEN_TO_C_BOOLEAN(clipped))));
+  Xen_check_type(Xen_is_boolean(clipped), clipped, 1, S_setB S_mus_clipping, "a boolean");
+  return(C_bool_to_Xen_boolean(mus_set_clipping(Xen_boolean_to_C_bool(clipped))));
 }
 
 
@@ -1403,16 +1403,16 @@ static XEN g_mus_set_clipping(XEN clipped)
 static XEN g_mus_file_clipping(XEN fd)
 {
   #define H_mus_file_clipping "(" S_mus_file_clipping " fd): whether sound data written to file 'fd' should be clipped"
-  XEN_ASSERT_TYPE(Xen_is_integer(fd), fd, 1, S_mus_file_clipping, "an integer");
-  return(C_TO_XEN_BOOLEAN(mus_file_clipping(XEN_TO_C_INT(fd))));
+  Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_file_clipping, "an integer");
+  return(C_bool_to_Xen_boolean(mus_file_clipping(Xen_integer_to_C_int(fd))));
 }
 
 
 static XEN g_mus_file_set_clipping(XEN fd, XEN clipped)
 {
-  XEN_ASSERT_TYPE(Xen_is_integer(fd), fd, 1, S_setB S_mus_file_clipping, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_boolean(clipped), clipped, 2, S_setB S_mus_file_clipping, "a boolean");
-  return(C_TO_XEN_BOOLEAN(mus_file_set_clipping(XEN_TO_C_INT(fd), XEN_TO_C_BOOLEAN(clipped))));
+  Xen_check_type(Xen_is_integer(fd), fd, 1, S_setB S_mus_file_clipping, "an integer");
+  Xen_check_type(Xen_is_boolean(clipped), clipped, 2, S_setB S_mus_file_clipping, "a boolean");
+  return(C_bool_to_Xen_boolean(mus_file_set_clipping(Xen_integer_to_C_int(fd), Xen_boolean_to_C_bool(clipped))));
 }
 
 
@@ -1424,9 +1424,9 @@ one in which all directories in the path are explicit."
   char *str = NULL;
   XEN result;
 
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_expand_filename, "a string");
-  str = mus_expand_filename(XEN_TO_C_STRING(file));
-  result = C_TO_XEN_STRING(str);
+  Xen_check_type(Xen_is_string(file), file, 1, S_mus_expand_filename, "a string");
+  str = mus_expand_filename(Xen_string_to_C_string(file));
+  result = C_string_to_Xen_string(str);
   if (str) free(str);
   return(result);
 }
@@ -1443,11 +1443,11 @@ cache info to the file given or stdout"
   if (!Xen_is_bound(file))
     {
       mus_sound_report_cache(stdout);
-      return(XEN_FALSE);
+      return(Xen_false);
     }
 
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, S_mus_sound_report_cache, "a string");
-  name = XEN_TO_C_STRING(file);
+  Xen_check_type(Xen_is_string(file), file, 1, S_mus_sound_report_cache, "a string");
+  name = Xen_string_to_C_string(file);
   if (name)
     {
       str = mus_expand_filename(name);
@@ -1464,19 +1464,19 @@ cache info to the file given or stdout"
 	}
     }
 
-  XEN_ERROR(XEN_ERROR_TYPE("cannot-save"),
-	    XEN_LIST_3(C_TO_XEN_STRING(S_mus_sound_report_cache ": ~S ~A"),
+  Xen_error(Xen_make_error_type("cannot-save"),
+	    Xen_list_3(C_string_to_Xen_string(S_mus_sound_report_cache ": ~S ~A"),
 		       file,
-		       C_TO_XEN_STRING(STRERROR(errno))));
-  return(XEN_FALSE);
+		       C_string_to_Xen_string(STRERROR(errno))));
+  return(Xen_false);
 }
 
 
 static XEN g_mus_error_type_to_string(XEN err)
 {
   #define H_mus_error_type_to_string "(" S_mus_error_type_to_string " err): string description of err (a sndlib error type)"
-  XEN_ASSERT_TYPE(Xen_is_integer(err), err, 1, S_mus_error_type_to_string, "an integer");
-  return(C_TO_XEN_STRING((char *)mus_error_type_to_string(XEN_TO_C_INT(err))));
+  Xen_check_type(Xen_is_integer(err), err, 1, S_mus_error_type_to_string, "an integer");
+  return(C_string_to_Xen_string((char *)mus_error_type_to_string(Xen_integer_to_C_int(err))));
 }
 
 
@@ -1494,25 +1494,25 @@ srate and channels.  'len' samples are written."
   mus_long_t olen, samps;
   vct *v;
 
-  XEN_ASSERT_TYPE(Xen_is_string(filename), filename, 1, S_array_to_file, "a string");
-  XEN_ASSERT_TYPE(mus_is_vct(data), data, 2, S_array_to_file, "a vct");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(len), len, 3, S_array_to_file, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer(srate), srate, 4, S_array_to_file, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer(channels), channels, 5, S_array_to_file, "an integer");
+  Xen_check_type(Xen_is_string(filename), filename, 1, S_array_to_file, "a string");
+  Xen_check_type(mus_is_vct(data), data, 2, S_array_to_file, "a vct");
+  Xen_check_type(Xen_is_long_long_int(len), len, 3, S_array_to_file, "an integer");
+  Xen_check_type(Xen_is_integer(srate), srate, 4, S_array_to_file, "an integer");
+  Xen_check_type(Xen_is_integer(channels), channels, 5, S_array_to_file, "an integer");
 
   v = XEN_TO_VCT(data);
-  samps = XEN_TO_C_LONG_LONG(len);
+  samps = Xen_llong_to_C_llong(len);
   if (samps <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_array_to_file, 3, len, "samples <= 0?");
+    Xen_out_of_range_error(S_array_to_file, 3, len, "samples <= 0?");
   if (samps > mus_vct_length(v))
     samps = mus_vct_length(v);
 
-  olen = mus_float_array_to_file(XEN_TO_C_STRING(filename),
+  olen = mus_float_array_to_file(Xen_string_to_C_string(filename),
 				 mus_vct_data(v),
 				 samps,
-				 XEN_TO_C_INT(srate),
-				 XEN_TO_C_INT(channels));
-  return(C_TO_XEN_LONG_LONG(olen));
+				 Xen_integer_to_C_int(srate),
+				 Xen_integer_to_C_int(channels));
+  return(C_llong_to_Xen_llong(olen));
 }
 
 
@@ -1527,41 +1527,41 @@ at frame 'start' and reading 'samples' samples altogether."
   vct *v;
   const char *name = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_string(filename), filename, 1, S_file_to_array, "a string");
-  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_file_to_array, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(start), start, 3, S_file_to_array, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(samples), samples, 4, S_file_to_array, "an integer");
-  XEN_ASSERT_TYPE((mus_is_vct(data)), data, 5, S_file_to_array, "a vct");
+  Xen_check_type(Xen_is_string(filename), filename, 1, S_file_to_array, "a string");
+  Xen_check_type(Xen_is_integer(chan), chan, 2, S_file_to_array, "an integer");
+  Xen_check_type(Xen_is_long_long_int(start), start, 3, S_file_to_array, "an integer");
+  Xen_check_type(Xen_is_long_long_int(samples), samples, 4, S_file_to_array, "an integer");
+  Xen_check_type((mus_is_vct(data)), data, 5, S_file_to_array, "a vct");
 
-  name = XEN_TO_C_STRING(filename);
+  name = Xen_string_to_C_string(filename);
   if (!(mus_file_probe(name)))
-    XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array ": ~S ~A"),
+    Xen_error(NO_SUCH_FILE,
+	      Xen_list_3(C_string_to_Xen_string(S_file_to_array ": ~S ~A"),
 			 filename,
-			 C_TO_XEN_STRING(STRERROR(errno))));
+			 C_string_to_Xen_string(STRERROR(errno))));
 
   v = XEN_TO_VCT(data);
 
-  samps = XEN_TO_C_LONG_LONG(samples);
+  samps = Xen_llong_to_C_llong(samples);
   if (samps <= 0) 
-    XEN_OUT_OF_RANGE_ERROR(S_file_to_array, 4, samples, "samples <= 0?");
+    Xen_out_of_range_error(S_file_to_array, 4, samples, "samples <= 0?");
   if (samps > mus_vct_length(v))
     samps = mus_vct_length(v);
 
-  chn = XEN_TO_C_INT(chan);
+  chn = Xen_integer_to_C_int(chan);
   if ((chn < 0) || (chn > mus_sound_chans(name)))
-    XEN_ERROR(NO_SUCH_CHANNEL,
-	      XEN_LIST_4(C_TO_XEN_STRING(S_file_to_array ": invalid chan: ~A, ~S has ~A chans"),
+    Xen_error(NO_SUCH_CHANNEL,
+	      Xen_list_4(C_string_to_Xen_string(S_file_to_array ": invalid chan: ~A, ~S has ~A chans"),
 			 chan,
 			 filename,
-			 C_TO_XEN_INT(mus_sound_chans(name))));
+			 C_int_to_Xen_integer(mus_sound_chans(name))));
 
   if (mus_sound_chans(name) <= 0)
-    XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_file_to_array ": ~S chans <= 0"),
+    Xen_error(BAD_HEADER,
+	      Xen_list_2(C_string_to_Xen_string(S_file_to_array ": ~S chans <= 0"),
 			 filename));
 
-  mus_file_to_float_array(name, chn, XEN_TO_C_LONG_LONG(start), samps, mus_vct_data(v));
+  mus_file_to_float_array(name, chn, Xen_llong_to_C_llong(start), samps, mus_vct_data(v));
   return(data);
 }
 
@@ -1570,17 +1570,17 @@ static XEN new_sound_hook;
 
 static void g_new_sound_hook(const char *filename)
 {
-  if (XEN_HOOKED(new_sound_hook))
+  if (Xen_hook_has_list(new_sound_hook))
     {
 #if HAVE_SCHEME
-      s7_call(s7, new_sound_hook, s7_cons(s7, C_TO_XEN_STRING(filename), XEN_EMPTY_LIST));
+      s7_call(s7, new_sound_hook, s7_cons(s7, C_string_to_Xen_string(filename), Xen_empty_list));
 #else
       XEN procs, fname;
-      fname = C_TO_XEN_STRING(filename);
-      procs = XEN_HOOK_PROCEDURES(new_sound_hook);
+      fname = C_string_to_Xen_string(filename);
+      procs = Xen_hook_list(new_sound_hook);
       while (!Xen_is_null(procs))
 	{
-	  XEN_CALL_1(XEN_CAR(procs), fname, S_new_sound_hook);
+	  Xen_call_with_1_arg(Xen_car(procs), fname, S_new_sound_hook);
 	  procs = XEN_CDR (procs);
 	}
 #endif
@@ -1593,24 +1593,24 @@ static void g_new_sound_hook(const char *filename)
 static XEN g_mus_audio_reinitialize(void)
 {
   #define H_mus_audio_reinitialize "(" S_mus_audio_reinitialize "): force audio device re-initialization"
-  return(C_TO_XEN_INT(mus_audio_reinitialize()));
+  return(C_int_to_Xen_integer(mus_audio_reinitialize()));
 }
 #endif
 
 
 #if (!HAVE_SCHEME)
-static XEN_OBJECT_TYPE sound_data_tag = 0;
+static Xen_object_type_t sound_data_tag = 0;
 
 bool xen_is_sound_data(XEN obj) {return(Xen_c_object_is_type(obj, sound_data_tag));}
 
 static XEN g_is_sound_data(XEN obj) 
 {
   #define H_is_sound_data "(" S_is_sound_data " obj): is 'obj' is a sound-data object"
-  return(C_TO_XEN_BOOLEAN(xen_is_sound_data(obj)));
+  return(C_bool_to_Xen_boolean(xen_is_sound_data(obj)));
 }
 
 
-XEN_MAKE_OBJECT_FREE_PROCEDURE(sound_data, free_sound_data, sound_data_free)
+Xen_wrap_free(sound_data, free_sound_data, sound_data_free)
 
 
 static char *sound_data_to_string(sound_data *sd)
@@ -1653,7 +1653,7 @@ static char *sound_data_to_string(sound_data *sd)
   return(buf);
 }
 
-XEN_MAKE_OBJECT_PRINT_PROCEDURE(sound_data, print_sound_data, sound_data_to_string)
+Xen_wrap_print(sound_data, print_sound_data, sound_data_to_string)
 
 
 static bool sound_data_equalp(sound_data *sd1, sound_data *sd2)
@@ -1680,18 +1680,18 @@ static bool sound_data_equalp(sound_data *sd1, sound_data *sd2)
 static XEN equalp_sound_data(XEN obj1, XEN obj2)
 {
 #if HAVE_RUBY || HAVE_FORTH
-  if ((!(xen_is_sound_data(obj1))) || (!(xen_is_sound_data(obj2)))) return(XEN_FALSE);
+  if ((!(xen_is_sound_data(obj1))) || (!(xen_is_sound_data(obj2)))) return(Xen_false);
 #endif
-  return(C_TO_XEN_BOOLEAN(sound_data_equalp(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2))));
+  return(C_bool_to_Xen_boolean(sound_data_equalp(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2))));
 }
 
 static XEN g_sound_data_length(XEN obj)
 {
   #define H_sound_data_length "(" S_sound_data_length " sd): length (in samples) of each channel of sound-data sd"
   sound_data *sd;
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_length, "a sound-data object");
+  Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_length, "a sound-data object");
   sd = XEN_TO_SOUND_DATA(obj);
-  return(C_TO_XEN_LONG_LONG(mus_sound_data_length(sd)));
+  return(C_llong_to_Xen_llong(mus_sound_data_length(sd)));
 }
 
 
@@ -1699,9 +1699,9 @@ static XEN g_sound_data_chans(XEN obj)
 {
   #define H_sound_data_chans "(" S_sound_data_chans " sd): number of channels in sound-data sd"
   sound_data *sd;
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_chans, "a sound-data object");
+  Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_chans, "a sound-data object");
   sd = XEN_TO_SOUND_DATA(obj);
-  return(C_TO_XEN_INT(mus_sound_data_chans(sd)));
+  return(C_int_to_Xen_integer(mus_sound_data_chans(sd)));
 }
 
 static XEN make_sound_data(int chans, mus_long_t frames)
@@ -1709,7 +1709,7 @@ static XEN make_sound_data(int chans, mus_long_t frames)
   #define H_make_sound_data "(" S_make_sound_data " chans frames): return a new sound-data object with 'chans' channels, each having 'frames' samples"
   sound_data *sd;
   sd = c_make_sound_data(chans, frames);
-  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sd, 0, free_sound_data);
+  return(Xen_make_object(sound_data_tag, sd, 0, free_sound_data));
 }
 
 
@@ -1721,7 +1721,7 @@ XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data)
   sd->chans = chans;
   sd->wrapped = true;
   sd->data = data;
-  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sd, 0, free_sound_data);
+  return(Xen_make_object(sound_data_tag, sd, 0, free_sound_data));
 }
 
 
@@ -1730,21 +1730,21 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
   int chns;
   mus_long_t frms;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(chans), chans, 1, S_make_sound_data, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(frames), frames, 2, S_make_sound_data, "an integer");
+  Xen_check_type(Xen_is_integer(chans), chans, 1, S_make_sound_data, "an integer");
+  Xen_check_type(Xen_is_long_long_int(frames), frames, 2, S_make_sound_data, "an integer");
 
-  chns = XEN_TO_C_INT(chans);
+  chns = Xen_integer_to_C_int(chans);
   if (chns <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans <= 0?");
+    Xen_out_of_range_error(S_make_sound_data, 1, chans, "chans <= 0?");
   if (chns > (1 << 26))
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans arg too large");
+    Xen_out_of_range_error(S_make_sound_data, 1, chans, "chans arg too large");
 
-  frms = XEN_TO_C_LONG_LONG(frames);
+  frms = Xen_llong_to_C_llong(frames);
   if (frms <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames <= 0?");
+    Xen_out_of_range_error(S_make_sound_data, 2, frames, "frames <= 0?");
   if ((frms > mus_max_malloc()) ||
       (((mus_long_t)(frms * sizeof(mus_float_t))) > mus_max_malloc()))
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames arg too large (see mus-max-malloc)");
+    Xen_out_of_range_error(S_make_sound_data, 2, frames, "frames arg too large (see mus-max-malloc)");
 
   return(make_sound_data(chns, frms));
 }
@@ -1757,31 +1757,31 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
   mus_long_t loc;
   int chn;
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_ref, "a sound-data object");
-  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_sound_data_ref, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(frame_num), frame_num, 3, S_sound_data_ref, "an integer");
+  Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_ref, "a sound-data object");
+  Xen_check_type(Xen_is_integer(chan), chan, 2, S_sound_data_ref, "an integer");
+  Xen_check_type(Xen_is_long_long_int(frame_num), frame_num, 3, S_sound_data_ref, "an integer");
 
   sd = XEN_TO_SOUND_DATA(obj);
 
-  chn = XEN_TO_C_INT(chan);
+  chn = Xen_integer_to_C_int(chan);
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, chan, "invalid channel");
+    Xen_out_of_range_error(S_sound_data_ref, 2, chan, "invalid channel");
   if (chn >= mus_sound_data_chans(sd))
-    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref ": chan: ~A >= sound-data chans, ~A"),
+    Xen_error(Xen_make_error_type("out-of-range"),
+	      Xen_list_3(C_string_to_Xen_string(S_sound_data_ref ": chan: ~A >= sound-data chans, ~A"),
 			 chan, 
-			 C_TO_XEN_INT(mus_sound_data_chans(sd))));
+			 C_int_to_Xen_integer(mus_sound_data_chans(sd))));
 
-  loc = XEN_TO_C_LONG_LONG(frame_num);
+  loc = Xen_llong_to_C_llong(frame_num);
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, frame_num, "invalid frame");
+    Xen_out_of_range_error(S_sound_data_ref, 3, frame_num, "invalid frame");
   if (loc >= mus_sound_data_length(sd))
-    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref ": frame: ~A >= sound-data length, ~A"),
+    Xen_error(Xen_make_error_type("out-of-range"),
+	      Xen_list_3(C_string_to_Xen_string(S_sound_data_ref ": frame: ~A >= sound-data length, ~A"),
 			 frame_num, 
-			 C_TO_XEN_LONG_LONG(mus_sound_data_length(sd))));
+			 C_llong_to_Xen_llong(mus_sound_data_length(sd))));
 
-  return(C_TO_XEN_DOUBLE(mus_sound_data_ref(sd, chn, loc)));
+  return(C_double_to_Xen_real(mus_sound_data_ref(sd, chn, loc)));
 }
 
 #else /* scheme */
@@ -1817,8 +1817,8 @@ XEN g_sound_data_maxamp(XEN obj)
   int i, chans;
   mus_long_t j, len;
 
-  XEN lst = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_maxamp, "a sound-data object");
+  XEN lst = Xen_empty_list;
+  Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_maxamp, "a sound-data object");
 
   sd = XEN_TO_SOUND_DATA(obj);
   chans = mus_sound_data_chans(sd);
@@ -1836,7 +1836,7 @@ XEN g_sound_data_maxamp(XEN obj)
 	  x = fabs(buf[j]);
 	  if (x > mx) mx = x;
 	}
-      lst = XEN_CONS(C_TO_XEN_DOUBLE(mx), lst);
+      lst = Xen_cons(C_double_to_Xen_real(mx), lst);
     }
   return(lst);
 }
@@ -1867,8 +1867,8 @@ static mus_float_t sound_data_peak(sound_data *sd)
 static XEN g_sound_data_peak(XEN obj)
 {
   #define H_sound_data_peak "(" S_sound_data_peak " sd): overall maxamp of data in sd"
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_maxamp, "a sound-data object");
-  return(C_TO_XEN_DOUBLE(sound_data_peak(XEN_TO_SOUND_DATA(obj))));
+  Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_maxamp, "a sound-data object");
+  return(C_double_to_Xen_real(sound_data_peak(XEN_TO_SOUND_DATA(obj))));
 }
 
 
@@ -1888,33 +1888,33 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
   mus_long_t loc;
   mus_float_t *d;
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_setB, "a sound-data object");
-  XEN_ASSERT_TYPE(Xen_is_integer(chan), chan, 2, S_sound_data_setB, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(frame_num), frame_num, 3, S_sound_data_setB, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 4, S_sound_data_setB, "a number");
+  Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_setB, "a sound-data object");
+  Xen_check_type(Xen_is_integer(chan), chan, 2, S_sound_data_setB, "an integer");
+  Xen_check_type(Xen_is_long_long_int(frame_num), frame_num, 3, S_sound_data_setB, "an integer");
+  Xen_check_type(Xen_is_number(val), val, 4, S_sound_data_setB, "a number");
 
   sd = XEN_TO_SOUND_DATA(obj);
 
-  chn = XEN_TO_C_INT(chan);
+  chn = Xen_integer_to_C_int(chan);
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, chan, "invalid channel");
+    Xen_out_of_range_error(S_sound_data_setB, 2, chan, "invalid channel");
   if (chn >= mus_sound_data_chans(sd))
-    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": chan: ~A >= sound-data chans, ~A"),
+    Xen_error(Xen_make_error_type("out-of-range"),
+	      Xen_list_3(C_string_to_Xen_string(S_sound_data_setB ": chan: ~A >= sound-data chans, ~A"),
 			 chan, 
-			 C_TO_XEN_INT(mus_sound_data_chans(sd))));
+			 C_int_to_Xen_integer(mus_sound_data_chans(sd))));
 
-  loc = XEN_TO_C_LONG_LONG(frame_num);
+  loc = Xen_llong_to_C_llong(frame_num);
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, frame_num, "invalid frame");
+    Xen_out_of_range_error(S_sound_data_setB, 3, frame_num, "invalid frame");
   if (loc >= mus_sound_data_length(sd))
-    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": frame: ~A >= sound-data length, ~A"),
+    Xen_error(Xen_make_error_type("out-of-range"),
+	      Xen_list_3(C_string_to_Xen_string(S_sound_data_setB ": frame: ~A >= sound-data length, ~A"),
 			 frame_num, 
-			 C_TO_XEN_LONG_LONG(mus_sound_data_length(sd))));
+			 C_llong_to_Xen_llong(mus_sound_data_length(sd))));
 
   d = mus_sound_data_channel_data(sd, chn);
-  d[loc] = XEN_TO_C_DOUBLE(val);
+  d[loc] = Xen_real_to_C_double(val);
   return(val);
 }
 
@@ -1950,10 +1950,10 @@ static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
 {
   #define H_sound_data_scaleB "(" S_sound_data_scaleB " sd scl): scales (multiplies) sound-data sd's data by scl"
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_scaleB, "a sound-data object");
-  XEN_ASSERT_TYPE(Xen_is_number(scl), scl, 2, S_sound_data_scaleB, "a number");
+  Xen_check_type(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_scaleB, "a sound-data object");
+  Xen_check_type(Xen_is_number(scl), scl, 2, S_sound_data_scaleB, "a number");
 
-  sound_data_scale(XEN_TO_SOUND_DATA(sdobj), XEN_TO_C_DOUBLE(scl));
+  sound_data_scale(XEN_TO_SOUND_DATA(sdobj), Xen_real_to_C_double(scl));
   return(sdobj);
 }
 
@@ -1989,10 +1989,10 @@ static XEN g_sound_data_fillB(XEN sdobj, XEN scl)
 {
   #define H_sound_data_fillB "(" S_sound_data_fillB " sd value): fills the sound-data object sd with value"
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_fillB, "a sound-data object");
-  XEN_ASSERT_TYPE(Xen_is_number(scl), scl, 2, S_sound_data_fillB, "a number");
+  Xen_check_type(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_fillB, "a sound-data object");
+  Xen_check_type(Xen_is_number(scl), scl, 2, S_sound_data_fillB, "a number");
 
-  sound_data_fill(XEN_TO_SOUND_DATA(sdobj), XEN_TO_C_DOUBLE(scl));
+  sound_data_fill(XEN_TO_SOUND_DATA(sdobj), Xen_real_to_C_double(scl));
   return(sdobj);
 }
 
@@ -2001,10 +2001,10 @@ static XEN g_sound_data_copy(XEN obj)
   sound_data *sdnew;
   #define H_sound_data_copy "(" S_sound_data_copy " sd): returns a copy of the sound-data object sd"
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_copy, "a sound-data object");
+  Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_copy, "a sound-data object");
 
   sdnew = sound_data_copy(XEN_TO_SOUND_DATA(obj));
-  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sdnew, 0, free_sound_data);
+  return(Xen_make_object(sound_data_tag, sdnew, 0, free_sound_data));
 }
 
 
@@ -2035,7 +2035,7 @@ static XEN g_sound_data_reverseB(XEN obj)
 {
   #define H_sound_data_reverseB "(" S_sound_data_reverseB " sd): reverses the elements (within each channel) of sound-data object sd"
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_reverseB, "a sound-data object");
+  Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_reverseB, "a sound-data object");
 
   sound_data_reverse(XEN_TO_SOUND_DATA(obj));
   return(obj);
@@ -2067,8 +2067,8 @@ static XEN g_sound_data_addB(XEN obj1, XEN obj2)
 {
   #define H_sound_data_addB "(" S_sound_data_addB " sd1 sd2): adds (element-wise) sd2 to sd1, returning sd1"
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj1), obj1, 1, S_sound_data_addB, "a sound-data object");
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj2), obj2, 2, S_sound_data_addB, "a sound-data object");
+  Xen_check_type(xen_is_sound_data(obj1), obj1, 1, S_sound_data_addB, "a sound-data object");
+  Xen_check_type(xen_is_sound_data(obj2), obj2, 2, S_sound_data_addB, "a sound-data object");
 
   sound_data_add(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2));
   return(obj1);
@@ -2100,8 +2100,8 @@ static XEN g_sound_data_multiplyB(XEN obj1, XEN obj2)
 {
   #define H_sound_data_multiplyB "(" S_sound_data_multiplyB " sd1 sd2): multiplies (element-wise) sd1 by sd2, returning sd1"
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj1), obj1, 1, S_sound_data_multiplyB, "a sound-data object");
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj2), obj2, 2, S_sound_data_multiplyB, "a sound-data object");
+  Xen_check_type(xen_is_sound_data(obj1), obj1, 1, S_sound_data_multiplyB, "a sound-data object");
+  Xen_check_type(xen_is_sound_data(obj2), obj2, 2, S_sound_data_multiplyB, "a sound-data object");
 
   sound_data_multiply(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2));
   return(obj1);
@@ -2133,10 +2133,10 @@ static XEN g_sound_data_offsetB(XEN obj, XEN offset)
 {
   #define H_sound_data_offsetB "(" S_sound_data_offsetB " sd val): adds val to each element of sd, returning sd"
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj), obj, 1, S_sound_data_offsetB, "a sound-data object");
-  XEN_ASSERT_TYPE(Xen_is_number(offset), offset, 2, S_sound_data_offsetB, "a number");
+  Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_offsetB, "a sound-data object");
+  Xen_check_type(Xen_is_number(offset), offset, 2, S_sound_data_offsetB, "a number");
 
-  sound_data_offset(XEN_TO_SOUND_DATA(obj), XEN_TO_C_DOUBLE(offset));
+  sound_data_offset(XEN_TO_SOUND_DATA(obj), Xen_real_to_C_double(offset));
   return(obj);
 }
 
@@ -2145,8 +2145,8 @@ static XEN g_sound_data_add(XEN obj1, XEN obj2)
 {
   #define H_sound_data_add "(" S_sound_data_add " obj1 obj2): adds obj1 to obj2, either or both of which can be sound-data objects"
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj1) || Xen_is_number(obj1), obj1, 1, S_sound_data_add, "a sound-data object or a number");
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj2) || Xen_is_number(obj2), obj2, 2, S_sound_data_add, "a sound-data object or a number");
+  Xen_check_type(xen_is_sound_data(obj1) || Xen_is_number(obj1), obj1, 1, S_sound_data_add, "a sound-data object or a number");
+  Xen_check_type(xen_is_sound_data(obj2) || Xen_is_number(obj2), obj2, 2, S_sound_data_add, "a sound-data object or a number");
 
   if (xen_is_sound_data(obj1))
     {
@@ -2156,7 +2156,7 @@ static XEN g_sound_data_add(XEN obj1, XEN obj2)
     }
   if (xen_is_sound_data(obj2))
     return(g_sound_data_offsetB(obj2, obj1));
-  return(C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(obj1) + XEN_TO_C_DOUBLE(obj2)));
+  return(C_double_to_Xen_real(Xen_real_to_C_double(obj1) + Xen_real_to_C_double(obj2)));
 }
 
 
@@ -2164,8 +2164,8 @@ static XEN g_sound_data_multiply(XEN obj1, XEN obj2)
 {
   #define H_sound_data_multiply "(" S_sound_data_multiply " obj1 obj2): multiplies obj1 by obj2, either or both of which can be sound-data objects"
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj1) || Xen_is_number(obj1), obj1, 1, S_sound_data_multiply, "a sound-data object or a number");
-  XEN_ASSERT_TYPE(xen_is_sound_data(obj2) || Xen_is_number(obj2), obj2, 2, S_sound_data_multiply, "a sound-data object or a number");
+  Xen_check_type(xen_is_sound_data(obj1) || Xen_is_number(obj1), obj1, 1, S_sound_data_multiply, "a sound-data object or a number");
+  Xen_check_type(xen_is_sound_data(obj2) || Xen_is_number(obj2), obj2, 2, S_sound_data_multiply, "a sound-data object or a number");
 
   if (xen_is_sound_data(obj1))
     {
@@ -2175,7 +2175,7 @@ static XEN g_sound_data_multiply(XEN obj1, XEN obj2)
     }
   if (xen_is_sound_data(obj2))
     return(g_sound_data_scaleB(obj2, obj1));
-  return(C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(obj1) * XEN_TO_C_DOUBLE(obj2)));
+  return(C_double_to_Xen_real(Xen_real_to_C_double(obj1) * Xen_real_to_C_double(obj2)));
 }
 
 
@@ -2187,21 +2187,21 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
   int chn;
   mus_long_t len, sdlen;
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_to_vct, "a sound-data object");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 2, S_sound_data_to_vct, "an integer");
-  XEN_ASSERT_TYPE(!Xen_is_bound(vobj) || mus_is_vct(vobj), vobj, 3, S_sound_data_to_vct, "a vct");
+  Xen_check_type(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_to_vct, "a sound-data object");
+  Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 2, S_sound_data_to_vct, "an integer");
+  Xen_check_type(!Xen_is_bound(vobj) || mus_is_vct(vobj), vobj, 3, S_sound_data_to_vct, "a vct");
 
   sd = XEN_TO_SOUND_DATA(sdobj);
   sdlen = mus_sound_data_length(sd);
 
-  chn = (Xen_is_integer(chan)) ? XEN_TO_C_INT(chan) : 0;
+  chn = (Xen_is_integer(chan)) ? Xen_integer_to_C_int(chan) : 0;
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_to_vct, 2, chan, "invalid channel");
+    Xen_out_of_range_error(S_sound_data_to_vct, 2, chan, "invalid channel");
   if (chn >= mus_sound_data_chans(sd))
-    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_to_vct ": chan: ~A >= sound-data chans, ~A"),
+    Xen_error(Xen_make_error_type("out-of-range"),
+	      Xen_list_3(C_string_to_Xen_string(S_sound_data_to_vct ": chan: ~A >= sound-data chans, ~A"),
 			 chan, 
-			 C_TO_XEN_INT(mus_sound_data_chans(sd))));
+			 C_int_to_Xen_integer(mus_sound_data_chans(sd))));
 
   if (!(mus_is_vct(vobj))) 
     vobj = xen_make_vct(sdlen, (mus_float_t *)calloc(sdlen, sizeof(mus_float_t)));
@@ -2222,22 +2222,22 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   #define H_vct_to_sound_data "(" S_vct_to_sound_data " v sd chan): copies vct v's data into sound-data sd's channel chan"
   vct *v;
   sound_data *sd;
-  XEN obj = XEN_FALSE;
+  XEN obj = Xen_false;
   int chn;
   mus_long_t len;
 
-  XEN_ASSERT_TYPE(mus_is_vct(vobj), vobj, 1, S_vct_to_sound_data, "a vct");
-  XEN_ASSERT_TYPE(!Xen_is_bound(sdobj) || xen_is_sound_data(sdobj), sdobj, 2, S_vct_to_sound_data, "a sound-data object");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(chan), chan, 3, S_vct_to_sound_data, "an integer");
+  Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_to_sound_data, "a vct");
+  Xen_check_type(!Xen_is_bound(sdobj) || xen_is_sound_data(sdobj), sdobj, 2, S_vct_to_sound_data, "a sound-data object");
+  Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 3, S_vct_to_sound_data, "an integer");
 
   v = XEN_TO_VCT(vobj);
-  chn = (Xen_is_integer(chan)) ? XEN_TO_C_INT(chan) : 0;
+  chn = (Xen_is_integer(chan)) ? Xen_integer_to_C_int(chan) : 0;
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_data, 3, chan, "invalid channel");
+    Xen_out_of_range_error(S_vct_to_sound_data, 3, chan, "invalid channel");
   if (!(xen_is_sound_data(sdobj)))
     {
       if (chn > 0)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_data, 3, chan, "invalid channel");
+	Xen_out_of_range_error(S_vct_to_sound_data, 3, chan, "invalid channel");
       obj = make_sound_data(1, mus_vct_length(v));
       sd = XEN_TO_SOUND_DATA(obj);
     }
@@ -2245,10 +2245,10 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
     {
       sd = XEN_TO_SOUND_DATA(sdobj);
       if (chn >= mus_sound_data_chans(sd))
-	XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-		  XEN_LIST_3(C_TO_XEN_STRING(S_vct_to_sound_data ": chan: ~A >= sound-data chans, ~A"),
+	Xen_error(Xen_make_error_type("out-of-range"),
+		  Xen_list_3(C_string_to_Xen_string(S_vct_to_sound_data ": chan: ~A >= sound-data chans, ~A"),
 			     chan, 
-			     C_TO_XEN_INT(mus_sound_data_chans(sd))));
+			     C_int_to_Xen_integer(mus_sound_data_chans(sd))));
       obj = sdobj;
     }
   if (mus_sound_data_length(sd) < mus_vct_length(v)) 
@@ -2271,13 +2271,13 @@ returns a vector of chans dimensions containing all channels of sound-data sd as
   sound_data *sd;
   FTH vec;
 
-  XEN_ASSERT_TYPE(xen_is_sound_data(sdata), sdata, 1, S_sound_data_to_vector, "a sound-data object");
+  Xen_check_type(xen_is_sound_data(sdata), sdata, 1, S_sound_data_to_vector, "a sound-data object");
   sd = XEN_TO_SOUND_DATA(sdata);
   chans = mus_sound_data_chans(sd);
-  vec = XEN_MAKE_VECTOR(chans, FTH_NIL);
+  vec = Xen_make_vector(chans, FTH_NIL);
 
   for (chn = 0; chn < chans; chn++)
-    XEN_VECTOR_SET(vec, chn, g_sound_data_to_vct(sdata, C_TO_XEN_INT(chn), XEN_UNDEFINED));
+    Xen_vector_set(vec, chn, g_sound_data_to_vct(sdata, C_int_to_Xen_integer(chn), Xen_undefined));
   return vec;
 }
 #endif
@@ -2299,7 +2299,7 @@ static XEN sound_data_each(XEN obj)
       mus_float_t *d;
       d = mus_sound_data_channel_data(sd, j);
       for (i = 0; i < len; i++)
-	rb_yield(C_TO_XEN_DOUBLE(d[i]));
+	rb_yield(C_double_to_Xen_real(d[i]));
     }
   return(obj);
 }
@@ -2318,9 +2318,9 @@ static XEN sound_data_compare(XEN vr1, XEN vr2)
       sd2chans = mus_sound_data_chans(sd2);
 
       if (sd1chans > sd2chans) 
-	return(C_TO_XEN_INT(1));
+	return(C_int_to_Xen_integer(1));
       if (sd1chans < sd2chans)
-	return(C_TO_XEN_INT(-1));
+	return(C_int_to_Xen_integer(-1));
 
       len = mus_sound_data_length(sd1);
       if (len > mus_sound_data_length(sd2)) len = mus_sound_data_length(sd2);
@@ -2332,16 +2332,16 @@ static XEN sound_data_compare(XEN vr1, XEN vr2)
 	  d2 = mus_sound_data_channel_data(sd2, j);
 	  for (i = 0; i < len; i++) 
 	    if (d1[i] < d2[i])
-	      return(C_TO_XEN_INT(-1));
+	      return(C_int_to_Xen_integer(-1));
 	    else
 	      if (d1[i] > d2[i])
-		return(C_TO_XEN_INT(1));
+		return(C_int_to_Xen_integer(1));
 	}
       len = mus_sound_data_length(sd1) - mus_sound_data_length(sd2);
-      if (len == 0) return(XEN_ZERO);
-      if (len > 0) return(C_TO_XEN_INT(1));
+      if (len == 0) return(Xen_integer_zero);
+      if (len > 0) return(C_int_to_Xen_integer(1));
     }
-  return(C_TO_XEN_INT(-1));
+  return(C_int_to_Xen_integer(-1));
 }
 
 
@@ -2349,7 +2349,7 @@ static XEN sound_data_size(XEN obj)
 {
   sound_data *sd;
   sd = XEN_TO_SOUND_DATA(obj);
-  return(C_TO_XEN_LONG_LONG(mus_sound_data_length(sd) * mus_sound_data_chans(sd)));
+  return(C_llong_to_Xen_llong(mus_sound_data_length(sd) * mus_sound_data_chans(sd)));
 }
 
 
@@ -2357,13 +2357,13 @@ static XEN sound_data_chans(XEN obj)
 {
   sound_data *sd;
   sd = XEN_TO_SOUND_DATA(obj);
-  return(C_TO_XEN_INT(mus_sound_data_chans(sd)));
+  return(C_int_to_Xen_integer(mus_sound_data_chans(sd)));
 }
 
 
 static XEN g_rb_sound_data_fill(XEN obj, XEN val)
 {
-  sound_data_fill(XEN_TO_SOUND_DATA(obj), XEN_TO_C_DOUBLE(val));
+  sound_data_fill(XEN_TO_SOUND_DATA(obj), Xen_real_to_C_double(val));
   return(val);
 }
 
@@ -2379,7 +2379,7 @@ static XEN g_rb_make_sound_data(XEN self, XEN chans, XEN frames)
 static XEN g_mus_max_malloc(void)
 {
   #define H_mus_max_malloc "(" S_mus_max_malloc "): maximum number of bytes we will try to malloc."
-  return(C_TO_XEN_LONG_LONG(mus_max_malloc()));
+  return(C_llong_to_Xen_llong(mus_max_malloc()));
 }
 
 #if HAVE_SCHEME
@@ -2389,12 +2389,12 @@ static XEN g_mus_max_malloc(void)
 static XEN g_mus_set_max_malloc(XEN val)
 {
   mus_long_t size;
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(val), val, 1, S_setB S_mus_max_malloc, "an integer");
-  size = XEN_TO_C_LONG_LONG(val);
+  Xen_check_type(Xen_is_long_long_int(val), val, 1, S_setB S_mus_max_malloc, "an integer");
+  size = Xen_llong_to_C_llong(val);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, mus_max_malloc_symbol, s7_make_integer(s7, size));
 #endif
-  return(C_TO_XEN_LONG_LONG(mus_set_max_malloc(size)));
+  return(C_llong_to_Xen_llong(mus_set_max_malloc(size)));
 }
 
 
@@ -2402,7 +2402,7 @@ static XEN g_mus_set_max_malloc(XEN val)
 static XEN g_mus_max_table_size(void)
 {
   #define H_mus_max_table_size "(" S_mus_max_table_size "): maximum table size."
-  return(C_TO_XEN_LONG_LONG(mus_max_table_size()));
+  return(C_llong_to_Xen_llong(mus_max_table_size()));
 }
 
 
@@ -2413,12 +2413,12 @@ static XEN g_mus_max_table_size(void)
 static XEN g_mus_set_max_table_size(XEN val)
 {
   mus_long_t size;
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(val), val, 1, S_setB S_mus_max_table_size, "an integer");
-  size = XEN_TO_C_LONG_LONG(val);
+  Xen_check_type(Xen_is_long_long_int(val), val, 1, S_setB S_mus_max_table_size, "an integer");
+  size = Xen_llong_to_C_llong(val);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, mus_max_table_size_symbol, s7_make_integer(s7, size));
 #endif
-  return(C_TO_XEN_LONG_LONG(mus_set_max_table_size(size)));
+  return(C_llong_to_Xen_llong(mus_set_max_table_size(size)));
 }
 
 
@@ -2429,119 +2429,119 @@ static XEN g_mus_set_max_table_size(XEN val)
 static XEN g_mus_audio_output_properties_mutable(XEN mut)
 {
   #define H_mus_audio_output_properties_mutable "(" S_mus_audio_output_properties_mutable " val): can DAC settings be changed to match the current sound"
-  XEN_ASSERT_TYPE(Xen_is_boolean(mut), mut, 1, S_mus_audio_output_properties_mutable, "a boolean");
-  return(C_TO_XEN_BOOLEAN(mus_audio_output_properties_mutable(XEN_TO_C_BOOLEAN(mut))));
+  Xen_check_type(Xen_is_boolean(mut), mut, 1, S_mus_audio_output_properties_mutable, "a boolean");
+  return(C_bool_to_Xen_boolean(mus_audio_output_properties_mutable(Xen_boolean_to_C_bool(mut))));
 }
 #endif
 
 
 #if (!HAVE_SCHEME)
-XEN_NARGIFY_1(g_sound_data_copy_w, g_sound_data_copy)
-XEN_NARGIFY_2(g_sound_data_fillB_w, g_sound_data_fillB)
-XEN_NARGIFY_1(g_sound_data_peak_w, g_sound_data_peak)
-XEN_NARGIFY_1(g_sound_data_length_w, g_sound_data_length)
-XEN_NARGIFY_1(g_sound_data_chans_w, g_sound_data_chans)
-XEN_NARGIFY_2(g_make_sound_data_w, g_make_sound_data)
-XEN_NARGIFY_2(g_sound_data_addB_w, g_sound_data_addB)
-XEN_NARGIFY_2(g_sound_data_add_w, g_sound_data_add)
-XEN_NARGIFY_2(g_sound_data_offsetB_w, g_sound_data_offsetB)
-XEN_NARGIFY_2(g_sound_data_multiplyB_w, g_sound_data_multiplyB)
-XEN_NARGIFY_2(g_sound_data_multiply_w, g_sound_data_multiply)
-XEN_NARGIFY_1(g_sound_data_reverseB_w, g_sound_data_reverseB)
-XEN_NARGIFY_1(g_sound_data_maxamp_w, g_sound_data_maxamp)
-XEN_NARGIFY_2(g_sound_data_scaleB_w, g_sound_data_scaleB)
-XEN_NARGIFY_3(g_sound_data_ref_w, g_sound_data_ref)
-XEN_NARGIFY_4(g_sound_data_set_w, g_sound_data_set)
-XEN_NARGIFY_1(g_is_sound_data_w, g_is_sound_data)
-XEN_ARGIFY_3(g_sound_data_to_vct_w, g_sound_data_to_vct)
-XEN_ARGIFY_3(g_vct_to_sound_data_w, g_vct_to_sound_data)
+Xen_wrap_1_arg(g_sound_data_copy_w, g_sound_data_copy)
+Xen_wrap_2_args(g_sound_data_fillB_w, g_sound_data_fillB)
+Xen_wrap_1_arg(g_sound_data_peak_w, g_sound_data_peak)
+Xen_wrap_1_arg(g_sound_data_length_w, g_sound_data_length)
+Xen_wrap_1_arg(g_sound_data_chans_w, g_sound_data_chans)
+Xen_wrap_2_args(g_make_sound_data_w, g_make_sound_data)
+Xen_wrap_2_args(g_sound_data_addB_w, g_sound_data_addB)
+Xen_wrap_2_args(g_sound_data_add_w, g_sound_data_add)
+Xen_wrap_2_args(g_sound_data_offsetB_w, g_sound_data_offsetB)
+Xen_wrap_2_args(g_sound_data_multiplyB_w, g_sound_data_multiplyB)
+Xen_wrap_2_args(g_sound_data_multiply_w, g_sound_data_multiply)
+Xen_wrap_1_arg(g_sound_data_reverseB_w, g_sound_data_reverseB)
+Xen_wrap_1_arg(g_sound_data_maxamp_w, g_sound_data_maxamp)
+Xen_wrap_2_args(g_sound_data_scaleB_w, g_sound_data_scaleB)
+Xen_wrap_3_args(g_sound_data_ref_w, g_sound_data_ref)
+Xen_wrap_4_args(g_sound_data_set_w, g_sound_data_set)
+Xen_wrap_1_arg(g_is_sound_data_w, g_is_sound_data)
+Xen_wrap_3_optional_args(g_sound_data_to_vct_w, g_sound_data_to_vct)
+Xen_wrap_3_optional_args(g_vct_to_sound_data_w, g_vct_to_sound_data)
 #endif
 
-XEN_NARGIFY_1(g_mus_sound_samples_w, g_mus_sound_samples)
-XEN_NARGIFY_2(g_mus_sound_set_samples_w, g_mus_sound_set_samples)
-XEN_NARGIFY_1(g_mus_sound_frames_w, g_mus_sound_frames)
-XEN_NARGIFY_1(g_mus_sound_duration_w, g_mus_sound_duration)
-XEN_NARGIFY_1(g_mus_sound_datum_size_w, g_mus_sound_datum_size)
-XEN_NARGIFY_1(g_mus_sound_data_location_w, g_mus_sound_data_location)
-XEN_NARGIFY_2(g_mus_sound_set_data_location_w, g_mus_sound_set_data_location)
-XEN_NARGIFY_1(g_mus_sound_chans_w, g_mus_sound_chans)
-XEN_NARGIFY_2(g_mus_sound_set_chans_w, g_mus_sound_set_chans)
-XEN_NARGIFY_1(g_mus_sound_srate_w, g_mus_sound_srate)
-XEN_NARGIFY_2(g_mus_sound_set_srate_w, g_mus_sound_set_srate)
-XEN_NARGIFY_1(g_mus_sound_header_type_w, g_mus_sound_header_type)
-XEN_NARGIFY_2(g_mus_sound_set_header_type_w, g_mus_sound_set_header_type)
-XEN_NARGIFY_1(g_mus_sound_data_format_w, g_mus_sound_data_format)
-XEN_NARGIFY_2(g_mus_sound_set_data_format_w, g_mus_sound_set_data_format)
-XEN_NARGIFY_1(g_mus_sound_length_w, g_mus_sound_length)
-XEN_NARGIFY_1(g_mus_sound_type_specifier_w, g_mus_sound_type_specifier)
-XEN_NARGIFY_1(g_mus_header_type_name_w, g_mus_header_type_name)
-XEN_NARGIFY_1(g_mus_header_type_to_string_w, g_mus_header_type_to_string)
-XEN_NARGIFY_1(g_mus_data_format_name_w, g_mus_data_format_name)
-XEN_NARGIFY_1(g_mus_data_format_to_string_w, g_mus_data_format_to_string)
-XEN_NARGIFY_1(g_mus_sound_comment_w, g_mus_sound_comment)
-XEN_NARGIFY_1(g_mus_sound_write_date_w, g_mus_sound_write_date)
-XEN_NARGIFY_1(g_mus_bytes_per_sample_w, g_mus_bytes_per_sample)
-XEN_NARGIFY_1(g_mus_sound_loop_info_w, g_mus_sound_loop_info)
-XEN_NARGIFY_1(g_mus_sound_mark_info_w, g_mus_sound_mark_info)
-XEN_NARGIFY_1(g_mus_sound_maxamp_w, g_mus_sound_maxamp)
-XEN_NARGIFY_2(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
-XEN_NARGIFY_1(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
-XEN_NARGIFY_1(g_mus_sound_open_input_w, g_mus_sound_open_input)
-XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
-XEN_NARGIFY_1(g_mus_sound_preload_w, g_mus_sound_preload)
+Xen_wrap_1_arg(g_mus_sound_samples_w, g_mus_sound_samples)
+Xen_wrap_2_args(g_mus_sound_set_samples_w, g_mus_sound_set_samples)
+Xen_wrap_1_arg(g_mus_sound_frames_w, g_mus_sound_frames)
+Xen_wrap_1_arg(g_mus_sound_duration_w, g_mus_sound_duration)
+Xen_wrap_1_arg(g_mus_sound_datum_size_w, g_mus_sound_datum_size)
+Xen_wrap_1_arg(g_mus_sound_data_location_w, g_mus_sound_data_location)
+Xen_wrap_2_args(g_mus_sound_set_data_location_w, g_mus_sound_set_data_location)
+Xen_wrap_1_arg(g_mus_sound_chans_w, g_mus_sound_chans)
+Xen_wrap_2_args(g_mus_sound_set_chans_w, g_mus_sound_set_chans)
+Xen_wrap_1_arg(g_mus_sound_srate_w, g_mus_sound_srate)
+Xen_wrap_2_args(g_mus_sound_set_srate_w, g_mus_sound_set_srate)
+Xen_wrap_1_arg(g_mus_sound_header_type_w, g_mus_sound_header_type)
+Xen_wrap_2_args(g_mus_sound_set_header_type_w, g_mus_sound_set_header_type)
+Xen_wrap_1_arg(g_mus_sound_data_format_w, g_mus_sound_data_format)
+Xen_wrap_2_args(g_mus_sound_set_data_format_w, g_mus_sound_set_data_format)
+Xen_wrap_1_arg(g_mus_sound_length_w, g_mus_sound_length)
+Xen_wrap_1_arg(g_mus_sound_type_specifier_w, g_mus_sound_type_specifier)
+Xen_wrap_1_arg(g_mus_header_type_name_w, g_mus_header_type_name)
+Xen_wrap_1_arg(g_mus_header_type_to_string_w, g_mus_header_type_to_string)
+Xen_wrap_1_arg(g_mus_data_format_name_w, g_mus_data_format_name)
+Xen_wrap_1_arg(g_mus_data_format_to_string_w, g_mus_data_format_to_string)
+Xen_wrap_1_arg(g_mus_sound_comment_w, g_mus_sound_comment)
+Xen_wrap_1_arg(g_mus_sound_write_date_w, g_mus_sound_write_date)
+Xen_wrap_1_arg(g_mus_bytes_per_sample_w, g_mus_bytes_per_sample)
+Xen_wrap_1_arg(g_mus_sound_loop_info_w, g_mus_sound_loop_info)
+Xen_wrap_1_arg(g_mus_sound_mark_info_w, g_mus_sound_mark_info)
+Xen_wrap_1_arg(g_mus_sound_maxamp_w, g_mus_sound_maxamp)
+Xen_wrap_2_args(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
+Xen_wrap_1_arg(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
+Xen_wrap_1_arg(g_mus_sound_open_input_w, g_mus_sound_open_input)
+Xen_wrap_1_arg(g_mus_sound_close_input_w, g_mus_sound_close_input)
+Xen_wrap_1_arg(g_mus_sound_preload_w, g_mus_sound_preload)
 
-XEN_NARGIFY_1(g_mus_audio_close_w, g_mus_audio_close)
-XEN_ARGIFY_4(g_mus_audio_write_w, g_mus_audio_write)
-XEN_NARGIFY_3(g_mus_audio_read_w, g_mus_audio_read)
-XEN_NARGIFY_5(g_mus_audio_open_output_w, g_mus_audio_open_output)
-XEN_NARGIFY_5(g_mus_audio_open_input_w, g_mus_audio_open_input)
+Xen_wrap_1_arg(g_mus_audio_close_w, g_mus_audio_close)
+Xen_wrap_4_optional_args(g_mus_audio_write_w, g_mus_audio_write)
+Xen_wrap_3_args(g_mus_audio_read_w, g_mus_audio_read)
+Xen_wrap_5_args(g_mus_audio_open_output_w, g_mus_audio_open_output)
+Xen_wrap_5_args(g_mus_audio_open_input_w, g_mus_audio_open_input)
 
-XEN_NARGIFY_0(g_mus_clipping_w, g_mus_clipping)
-XEN_NARGIFY_1(g_mus_set_clipping_w, g_mus_set_clipping)
-XEN_NARGIFY_1(g_mus_file_clipping_w, g_mus_file_clipping)
-XEN_NARGIFY_2(g_mus_file_set_clipping_w, g_mus_file_set_clipping)
-XEN_NARGIFY_0(g_mus_header_raw_defaults_w, g_mus_header_raw_defaults)
-XEN_NARGIFY_1(g_mus_header_set_raw_defaults_w, g_mus_header_set_raw_defaults)
-XEN_NARGIFY_2(g_mus_header_writable_w, g_mus_header_writable)
-XEN_NARGIFY_1(g_mus_expand_filename_w, g_mus_expand_filename)
-XEN_ARGIFY_6(g_mus_sound_open_output_w, g_mus_sound_open_output)
-XEN_ARGIFY_5(g_mus_sound_reopen_output_w, g_mus_sound_reopen_output)
-XEN_NARGIFY_2(g_mus_sound_close_output_w, g_mus_sound_close_output)
-XEN_NARGIFY_5(g_mus_sound_read_w, g_mus_sound_read)
-XEN_NARGIFY_5(g_mus_sound_write_w, g_mus_sound_write)
-XEN_NARGIFY_2(g_mus_sound_seek_frame_w, g_mus_sound_seek_frame)
-XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
-XEN_NARGIFY_1(g_mus_sound_forget_w, g_mus_sound_forget)
-XEN_NARGIFY_0(g_mus_sound_prune_w, g_mus_sound_prune)
-XEN_NARGIFY_1(g_mus_error_type_to_string_w, g_mus_error_type_to_string)
-XEN_NARGIFY_2(g_mus_oss_set_buffers_w, g_mus_oss_set_buffers)
-XEN_NARGIFY_5(g_array_to_file_w, g_array_to_file)
-XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
-XEN_NARGIFY_0(g_mus_alsa_buffers_w, g_mus_alsa_buffers)
-XEN_NARGIFY_1(g_mus_alsa_set_buffers_w, g_mus_alsa_set_buffers)
-XEN_NARGIFY_0(g_mus_alsa_buffer_size_w, g_mus_alsa_buffer_size)
-XEN_NARGIFY_1(g_mus_alsa_set_buffer_size_w, g_mus_alsa_set_buffer_size)
-XEN_NARGIFY_0(g_mus_alsa_device_w, g_mus_alsa_device)
-XEN_NARGIFY_1(g_mus_alsa_set_device_w, g_mus_alsa_set_device)
-XEN_NARGIFY_0(g_mus_alsa_playback_device_w, g_mus_alsa_playback_device)
-XEN_NARGIFY_1(g_mus_alsa_set_playback_device_w, g_mus_alsa_set_playback_device)
-XEN_NARGIFY_0(g_mus_alsa_capture_device_w, g_mus_alsa_capture_device)
-XEN_NARGIFY_1(g_mus_alsa_set_capture_device_w, g_mus_alsa_set_capture_device)
-XEN_NARGIFY_0(g_mus_alsa_squelch_warning_w, g_mus_alsa_squelch_warning)
-XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
+Xen_wrap_no_args(g_mus_clipping_w, g_mus_clipping)
+Xen_wrap_1_arg(g_mus_set_clipping_w, g_mus_set_clipping)
+Xen_wrap_1_arg(g_mus_file_clipping_w, g_mus_file_clipping)
+Xen_wrap_2_args(g_mus_file_set_clipping_w, g_mus_file_set_clipping)
+Xen_wrap_no_args(g_mus_header_raw_defaults_w, g_mus_header_raw_defaults)
+Xen_wrap_1_arg(g_mus_header_set_raw_defaults_w, g_mus_header_set_raw_defaults)
+Xen_wrap_2_args(g_mus_header_writable_w, g_mus_header_writable)
+Xen_wrap_1_arg(g_mus_expand_filename_w, g_mus_expand_filename)
+Xen_wrap_6_optional_args(g_mus_sound_open_output_w, g_mus_sound_open_output)
+Xen_wrap_5_optional_args(g_mus_sound_reopen_output_w, g_mus_sound_reopen_output)
+Xen_wrap_2_args(g_mus_sound_close_output_w, g_mus_sound_close_output)
+Xen_wrap_5_args(g_mus_sound_read_w, g_mus_sound_read)
+Xen_wrap_5_args(g_mus_sound_write_w, g_mus_sound_write)
+Xen_wrap_2_args(g_mus_sound_seek_frame_w, g_mus_sound_seek_frame)
+Xen_wrap_1_optional_arg(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
+Xen_wrap_1_arg(g_mus_sound_forget_w, g_mus_sound_forget)
+Xen_wrap_no_args(g_mus_sound_prune_w, g_mus_sound_prune)
+Xen_wrap_1_arg(g_mus_error_type_to_string_w, g_mus_error_type_to_string)
+Xen_wrap_2_args(g_mus_oss_set_buffers_w, g_mus_oss_set_buffers)
+Xen_wrap_5_args(g_array_to_file_w, g_array_to_file)
+Xen_wrap_5_args(g_file_to_array_w, g_file_to_array)
+Xen_wrap_no_args(g_mus_alsa_buffers_w, g_mus_alsa_buffers)
+Xen_wrap_1_arg(g_mus_alsa_set_buffers_w, g_mus_alsa_set_buffers)
+Xen_wrap_no_args(g_mus_alsa_buffer_size_w, g_mus_alsa_buffer_size)
+Xen_wrap_1_arg(g_mus_alsa_set_buffer_size_w, g_mus_alsa_set_buffer_size)
+Xen_wrap_no_args(g_mus_alsa_device_w, g_mus_alsa_device)
+Xen_wrap_1_arg(g_mus_alsa_set_device_w, g_mus_alsa_set_device)
+Xen_wrap_no_args(g_mus_alsa_playback_device_w, g_mus_alsa_playback_device)
+Xen_wrap_1_arg(g_mus_alsa_set_playback_device_w, g_mus_alsa_set_playback_device)
+Xen_wrap_no_args(g_mus_alsa_capture_device_w, g_mus_alsa_capture_device)
+Xen_wrap_1_arg(g_mus_alsa_set_capture_device_w, g_mus_alsa_set_capture_device)
+Xen_wrap_no_args(g_mus_alsa_squelch_warning_w, g_mus_alsa_squelch_warning)
+Xen_wrap_1_arg(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
 
 #if HAVE_OSS
-  XEN_NARGIFY_0(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
+  Xen_wrap_no_args(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
 #endif
 
 #if __APPLE__
-XEN_NARGIFY_1(g_mus_audio_output_properties_mutable_w, g_mus_audio_output_properties_mutable)
+Xen_wrap_1_arg(g_mus_audio_output_properties_mutable_w, g_mus_audio_output_properties_mutable)
 #endif
 
-XEN_NARGIFY_0(g_mus_max_malloc_w, g_mus_max_malloc)
-XEN_NARGIFY_1(g_mus_set_max_malloc_w, g_mus_set_max_malloc)
-XEN_NARGIFY_0(g_mus_max_table_size_w, g_mus_max_table_size)
-XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
+Xen_wrap_no_args(g_mus_max_malloc_w, g_mus_max_malloc)
+Xen_wrap_1_arg(g_mus_set_max_malloc_w, g_mus_set_max_malloc)
+Xen_wrap_no_args(g_mus_max_table_size_w, g_mus_max_table_size)
+Xen_wrap_1_arg(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 
 
 
@@ -2550,7 +2550,7 @@ void mus_sndlib_xen_initialize(void)
   mus_sound_initialize();
 
 #if (!HAVE_SCHEME)
-  sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));
+  sound_data_tag = Xen_make_object_type("SoundData", sizeof(sound_data));
 #endif
 
 #if HAVE_FORTH
@@ -2589,59 +2589,59 @@ void mus_sndlib_xen_initialize(void)
   rb_define_singleton_method(sound_data_tag, "new", XEN_PROCEDURE_CAST g_rb_make_sound_data, 2);
 #endif
 
-  XEN_DEFINE_CONSTANT(S_mus_out_format,           MUS_OUT_FORMAT,           "sample format for fastest IO");
-  XEN_DEFINE_CONSTANT(S_mus_unsupported,          MUS_UNSUPPORTED,          "unsupported header id");
-  XEN_DEFINE_CONSTANT(S_mus_next,                 MUS_NEXT,                 "NeXT (Sun) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_aifc,                 MUS_AIFC,                 "AIFC sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_rf64,                 MUS_RF64,                 "RF64 sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_riff,                 MUS_RIFF,                 "RIFF (MS wave) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_nist,                 MUS_NIST,                 "NIST (Sphere) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_raw,                  MUS_RAW,                  "raw (headerless) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_ircam,                MUS_IRCAM,                "IRCAM sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_aiff,                 MUS_AIFF,                 "AIFF (old-style) sound header id");
-  XEN_DEFINE_CONSTANT(S_mus_bicsf,                MUS_BICSF,                "BICSF header id");
-  XEN_DEFINE_CONSTANT(S_mus_voc,                  MUS_VOC,                  "VOC header id");
-  XEN_DEFINE_CONSTANT(S_mus_svx,                  MUS_SVX,                  "SVX (IFF) header id");
-  XEN_DEFINE_CONSTANT(S_mus_soundfont,            MUS_SOUNDFONT,            "soundfont header id");
-  XEN_DEFINE_CONSTANT(S_mus_caff,                 MUS_CAFF,                 "Apple Core Audio File Format header id");
+  Xen_define_constant(S_mus_out_format,           MUS_OUT_FORMAT,           "sample format for fastest IO");
+  Xen_define_constant(S_mus_unsupported,          MUS_UNSUPPORTED,          "unsupported header id");
+  Xen_define_constant(S_mus_next,                 MUS_NEXT,                 "NeXT (Sun) sound header id");
+  Xen_define_constant(S_mus_aifc,                 MUS_AIFC,                 "AIFC sound header id");
+  Xen_define_constant(S_mus_rf64,                 MUS_RF64,                 "RF64 sound header id");
+  Xen_define_constant(S_mus_riff,                 MUS_RIFF,                 "RIFF (MS wave) sound header id");
+  Xen_define_constant(S_mus_nist,                 MUS_NIST,                 "NIST (Sphere) sound header id");
+  Xen_define_constant(S_mus_raw,                  MUS_RAW,                  "raw (headerless) sound header id");
+  Xen_define_constant(S_mus_ircam,                MUS_IRCAM,                "IRCAM sound header id");
+  Xen_define_constant(S_mus_aiff,                 MUS_AIFF,                 "AIFF (old-style) sound header id");
+  Xen_define_constant(S_mus_bicsf,                MUS_BICSF,                "BICSF header id");
+  Xen_define_constant(S_mus_voc,                  MUS_VOC,                  "VOC header id");
+  Xen_define_constant(S_mus_svx,                  MUS_SVX,                  "SVX (IFF) header id");
+  Xen_define_constant(S_mus_soundfont,            MUS_SOUNDFONT,            "soundfont header id");
+  Xen_define_constant(S_mus_caff,                 MUS_CAFF,                 "Apple Core Audio File Format header id");
 
-  XEN_DEFINE_CONSTANT(S_mus_unknown,              MUS_UNKNOWN,              "unknown data format");
-  XEN_DEFINE_CONSTANT(S_mus_bshort,               MUS_BSHORT,               "big-endian short data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lshort,               MUS_LSHORT,               "little-endian short data format id");
-  XEN_DEFINE_CONSTANT(S_mus_mulaw,                MUS_MULAW,                "mulaw (8-bit) data format id");
-  XEN_DEFINE_CONSTANT(S_mus_alaw,                 MUS_ALAW,                 "alaw (8-bit) data format id");
-  XEN_DEFINE_CONSTANT(S_mus_byte,                 MUS_BYTE,                 "signed byte data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ubyte,                MUS_UBYTE,                "unsigned byte data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bfloat,               MUS_BFLOAT,               "big-endian float data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lfloat,               MUS_LFLOAT,               "little-endian float data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bint,                 MUS_BINT,                 "big-endian int data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lint,                 MUS_LINT,                 "little-endian int data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bintn,                MUS_BINTN,                "normalized big-endian int data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lintn,                MUS_LINTN,                "normalized little-endian int data format id");
-  XEN_DEFINE_CONSTANT(S_mus_b24int,               MUS_B24INT,               "big-endian 24-bit data format id");
-  XEN_DEFINE_CONSTANT(S_mus_l24int,               MUS_L24INT,               "little-endian 24-bit data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bdouble,              MUS_BDOUBLE,              "big-endian double data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ldouble,              MUS_LDOUBLE,              "little-endian double data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ubshort,              MUS_UBSHORT,              "unsigned big-endian short data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ulshort,              MUS_ULSHORT,              "unsigned little-endian short data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bdouble_unscaled,     MUS_BDOUBLE_UNSCALED,     "unscaled big-endian double data format id");
-  XEN_DEFINE_CONSTANT(S_mus_ldouble_unscaled,     MUS_LDOUBLE_UNSCALED,     "unscaled little-endian double data format id");
-  XEN_DEFINE_CONSTANT(S_mus_bfloat_unscaled,      MUS_BFLOAT_UNSCALED,      "unscaled big-endian float data format id");
-  XEN_DEFINE_CONSTANT(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float data format id");
+  Xen_define_constant(S_mus_unknown,              MUS_UNKNOWN,              "unknown data format");
+  Xen_define_constant(S_mus_bshort,               MUS_BSHORT,               "big-endian short data format id");
+  Xen_define_constant(S_mus_lshort,               MUS_LSHORT,               "little-endian short data format id");
+  Xen_define_constant(S_mus_mulaw,                MUS_MULAW,                "mulaw (8-bit) data format id");
+  Xen_define_constant(S_mus_alaw,                 MUS_ALAW,                 "alaw (8-bit) data format id");
+  Xen_define_constant(S_mus_byte,                 MUS_BYTE,                 "signed byte data format id");
+  Xen_define_constant(S_mus_ubyte,                MUS_UBYTE,                "unsigned byte data format id");
+  Xen_define_constant(S_mus_bfloat,               MUS_BFLOAT,               "big-endian float data format id");
+  Xen_define_constant(S_mus_lfloat,               MUS_LFLOAT,               "little-endian float data format id");
+  Xen_define_constant(S_mus_bint,                 MUS_BINT,                 "big-endian int data format id");
+  Xen_define_constant(S_mus_lint,                 MUS_LINT,                 "little-endian int data format id");
+  Xen_define_constant(S_mus_bintn,                MUS_BINTN,                "normalized big-endian int data format id");
+  Xen_define_constant(S_mus_lintn,                MUS_LINTN,                "normalized little-endian int data format id");
+  Xen_define_constant(S_mus_b24int,               MUS_B24INT,               "big-endian 24-bit data format id");
+  Xen_define_constant(S_mus_l24int,               MUS_L24INT,               "little-endian 24-bit data format id");
+  Xen_define_constant(S_mus_bdouble,              MUS_BDOUBLE,              "big-endian double data format id");
+  Xen_define_constant(S_mus_ldouble,              MUS_LDOUBLE,              "little-endian double data format id");
+  Xen_define_constant(S_mus_ubshort,              MUS_UBSHORT,              "unsigned big-endian short data format id");
+  Xen_define_constant(S_mus_ulshort,              MUS_ULSHORT,              "unsigned little-endian short data format id");
+  Xen_define_constant(S_mus_bdouble_unscaled,     MUS_BDOUBLE_UNSCALED,     "unscaled big-endian double data format id");
+  Xen_define_constant(S_mus_ldouble_unscaled,     MUS_LDOUBLE_UNSCALED,     "unscaled little-endian double data format id");
+  Xen_define_constant(S_mus_bfloat_unscaled,      MUS_BFLOAT_UNSCALED,      "unscaled big-endian float data format id");
+  Xen_define_constant(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float data format id");
 
-  XEN_DEFINE_CONSTANT(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
+  Xen_define_constant(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples, 
+  Xen_define_procedure_with_setter(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples, 
 				   S_setB S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_data_location, g_mus_sound_data_location_w, H_mus_sound_data_location,
+  Xen_define_procedure_with_setter(S_mus_sound_data_location, g_mus_sound_data_location_w, H_mus_sound_data_location,
 				   S_setB S_mus_sound_data_location, g_mus_sound_set_data_location_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_chans, g_mus_sound_chans_w, H_mus_sound_chans,
+  Xen_define_procedure_with_setter(S_mus_sound_chans, g_mus_sound_chans_w, H_mus_sound_chans,
 				   S_setB S_mus_sound_chans, g_mus_sound_set_chans_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_srate, g_mus_sound_srate_w, H_mus_sound_srate,
+  Xen_define_procedure_with_setter(S_mus_sound_srate, g_mus_sound_srate_w, H_mus_sound_srate,
 				   S_setB S_mus_sound_srate, g_mus_sound_set_srate_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_header_type, g_mus_sound_header_type_w, H_mus_sound_header_type,
+  Xen_define_procedure_with_setter(S_mus_sound_header_type, g_mus_sound_header_type_w, H_mus_sound_header_type,
 				   S_setB S_mus_sound_header_type, g_mus_sound_set_header_type_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_data_format, g_mus_sound_data_format_w, H_mus_sound_data_format,
+  Xen_define_procedure_with_setter(S_mus_sound_data_format, g_mus_sound_data_format_w, H_mus_sound_data_format,
 				   S_setB S_mus_sound_data_format, g_mus_sound_set_data_format_w, 1, 0, 2, 0);
 
 
@@ -2657,103 +2657,103 @@ void mus_sndlib_xen_initialize(void)
   s7_eval_c_string(s7, "(define (sound-data-length sd) (cadr (vector-dimensions sd)))");
   s7_eval_c_string(s7, "(define (make-sound-data chans frames) (make-vector (list chans frames) 0.0 #t))");
 #else
-  XEN_DEFINE_SAFE_PROCEDURE(S_is_sound_data,             g_is_sound_data_w,               1, 0, 0, H_is_sound_data);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_setB,          g_sound_data_set_w,             4, 0, 0, H_sound_data_setB);
+  Xen_define_safe_procedure(S_is_sound_data,             g_is_sound_data_w,               1, 0, 0, H_is_sound_data);
+  Xen_define_safe_procedure(S_sound_data_setB,          g_sound_data_set_w,             4, 0, 0, H_sound_data_setB);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, g_sound_data_ref_w, H_sound_data_ref,
+  Xen_define_procedure_with_setter(S_sound_data_ref, g_sound_data_ref_w, H_sound_data_ref,
 				   S_setB S_sound_data_ref, g_sound_data_set_w,  3, 0, 4, 0);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_to_vct,        g_sound_data_to_vct_w,          1, 2, 0, H_sound_data_to_vct);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_sound_data,        g_vct_to_sound_data_w,          1, 2, 0, H_vct_to_sound_data);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_maxamp,        g_sound_data_maxamp_w,          1, 0, 0, H_sound_data_maxamp);
-  XEN_DEFINE_SAFE_PROCEDURE(S_make_sound_data,          g_make_sound_data_w,            2, 0, 0, H_make_sound_data);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_copy,          g_sound_data_copy_w,            1, 0, 0, H_sound_data_copy);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_fillB,         g_sound_data_fillB_w,           2, 0, 0, H_sound_data_fillB);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_peak,          g_sound_data_peak_w,            1, 0, 0, H_sound_data_peak);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_chans,         g_sound_data_chans_w,           1, 0, 0, H_sound_data_chans);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_length,        g_sound_data_length_w,          1, 0, 0, H_sound_data_length);
+  Xen_define_safe_procedure(S_sound_data_to_vct,        g_sound_data_to_vct_w,          1, 2, 0, H_sound_data_to_vct);
+  Xen_define_safe_procedure(S_vct_to_sound_data,        g_vct_to_sound_data_w,          1, 2, 0, H_vct_to_sound_data);
+  Xen_define_safe_procedure(S_sound_data_maxamp,        g_sound_data_maxamp_w,          1, 0, 0, H_sound_data_maxamp);
+  Xen_define_safe_procedure(S_make_sound_data,          g_make_sound_data_w,            2, 0, 0, H_make_sound_data);
+  Xen_define_safe_procedure(S_sound_data_copy,          g_sound_data_copy_w,            1, 0, 0, H_sound_data_copy);
+  Xen_define_safe_procedure(S_sound_data_fillB,         g_sound_data_fillB_w,           2, 0, 0, H_sound_data_fillB);
+  Xen_define_safe_procedure(S_sound_data_peak,          g_sound_data_peak_w,            1, 0, 0, H_sound_data_peak);
+  Xen_define_safe_procedure(S_sound_data_chans,         g_sound_data_chans_w,           1, 0, 0, H_sound_data_chans);
+  Xen_define_safe_procedure(S_sound_data_length,        g_sound_data_length_w,          1, 0, 0, H_sound_data_length);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_scaleB,        g_sound_data_scaleB_w,          2, 0, 0, H_sound_data_scaleB);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_offsetB,       g_sound_data_offsetB_w,         2, 0, 0, H_sound_data_offsetB);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_addB,          g_sound_data_addB_w,            2, 0, 0, H_sound_data_addB);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_add,           g_sound_data_add_w,             2, 0, 0, H_sound_data_add);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_multiplyB,     g_sound_data_multiplyB_w,       2, 0, 0, H_sound_data_multiplyB);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_multiply,      g_sound_data_multiply_w,        2, 0, 0, H_sound_data_multiply);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_reverseB,      g_sound_data_reverseB_w,        1, 0, 0, H_sound_data_reverseB);
+  Xen_define_safe_procedure(S_sound_data_scaleB,        g_sound_data_scaleB_w,          2, 0, 0, H_sound_data_scaleB);
+  Xen_define_safe_procedure(S_sound_data_offsetB,       g_sound_data_offsetB_w,         2, 0, 0, H_sound_data_offsetB);
+  Xen_define_safe_procedure(S_sound_data_addB,          g_sound_data_addB_w,            2, 0, 0, H_sound_data_addB);
+  Xen_define_safe_procedure(S_sound_data_add,           g_sound_data_add_w,             2, 0, 0, H_sound_data_add);
+  Xen_define_safe_procedure(S_sound_data_multiplyB,     g_sound_data_multiplyB_w,       2, 0, 0, H_sound_data_multiplyB);
+  Xen_define_safe_procedure(S_sound_data_multiply,      g_sound_data_multiply_w,        2, 0, 0, H_sound_data_multiply);
+  Xen_define_safe_procedure(S_sound_data_reverseB,      g_sound_data_reverseB_w,        1, 0, 0, H_sound_data_reverseB);
 #endif
   /* -------------------------------------------------------------------------------- */
 
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_frames,         g_mus_sound_frames_w,           1, 0, 0, H_mus_sound_frames);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_duration,       g_mus_sound_duration_w,         1, 0, 0, H_mus_sound_duration);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_datum_size,     g_mus_sound_datum_size_w,       1, 0, 0, H_mus_sound_datum_size);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_length,         g_mus_sound_length_w,           1, 0, 0, H_mus_sound_length);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_type_specifier, g_mus_sound_type_specifier_w,   1, 0, 0, H_mus_sound_type_specifier);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_header_type_name,     g_mus_header_type_name_w,       1, 0, 0, H_mus_header_type_name);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_header_type_to_string,g_mus_header_type_to_string_w,  1, 0, 0, H_mus_header_type_to_string);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_header_writable,      g_mus_header_writable_w,        2, 0, 0, H_mus_header_writable);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_data_format_name,     g_mus_data_format_name_w,       1, 0, 0, H_mus_data_format_name);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_data_format_to_string,g_mus_data_format_to_string_w,  1, 0, 0, H_mus_data_format_to_string);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_loop_info,      g_mus_sound_loop_info_w,        1, 0, 0, H_mus_sound_loop_info);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_mark_info,      g_mus_sound_mark_info_w,        1, 0, 0, H_mus_sound_mark_info);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_open_input,     g_mus_sound_open_input_w,       1, 0, 0, H_mus_sound_open_input);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_close_input,    g_mus_sound_close_input_w,      1, 0, 0, H_mus_sound_close_input);
+  Xen_define_safe_procedure(S_mus_sound_frames,         g_mus_sound_frames_w,           1, 0, 0, H_mus_sound_frames);
+  Xen_define_safe_procedure(S_mus_sound_duration,       g_mus_sound_duration_w,         1, 0, 0, H_mus_sound_duration);
+  Xen_define_safe_procedure(S_mus_sound_datum_size,     g_mus_sound_datum_size_w,       1, 0, 0, H_mus_sound_datum_size);
+  Xen_define_safe_procedure(S_mus_sound_length,         g_mus_sound_length_w,           1, 0, 0, H_mus_sound_length);
+  Xen_define_safe_procedure(S_mus_sound_type_specifier, g_mus_sound_type_specifier_w,   1, 0, 0, H_mus_sound_type_specifier);
+  Xen_define_safe_procedure(S_mus_header_type_name,     g_mus_header_type_name_w,       1, 0, 0, H_mus_header_type_name);
+  Xen_define_safe_procedure(S_mus_header_type_to_string,g_mus_header_type_to_string_w,  1, 0, 0, H_mus_header_type_to_string);
+  Xen_define_safe_procedure(S_mus_header_writable,      g_mus_header_writable_w,        2, 0, 0, H_mus_header_writable);
+  Xen_define_safe_procedure(S_mus_data_format_name,     g_mus_data_format_name_w,       1, 0, 0, H_mus_data_format_name);
+  Xen_define_safe_procedure(S_mus_data_format_to_string,g_mus_data_format_to_string_w,  1, 0, 0, H_mus_data_format_to_string);
+  Xen_define_safe_procedure(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment);
+  Xen_define_safe_procedure(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date);
+  Xen_define_safe_procedure(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample);
+  Xen_define_safe_procedure(S_mus_sound_loop_info,      g_mus_sound_loop_info_w,        1, 0, 0, H_mus_sound_loop_info);
+  Xen_define_safe_procedure(S_mus_sound_mark_info,      g_mus_sound_mark_info_w,        1, 0, 0, H_mus_sound_mark_info);
+  Xen_define_safe_procedure(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists);
+  Xen_define_safe_procedure(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
+  Xen_define_safe_procedure(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
+  Xen_define_safe_procedure(S_mus_sound_open_input,     g_mus_sound_open_input_w,       1, 0, 0, H_mus_sound_open_input);
+  Xen_define_safe_procedure(S_mus_sound_close_input,    g_mus_sound_close_input_w,      1, 0, 0, H_mus_sound_close_input);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_audio_write,          g_mus_audio_write_w,            3, 1, 0, H_mus_audio_write);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_audio_read,           g_mus_audio_read_w,             3, 0, 0, H_mus_audio_read);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_audio_open_output,    g_mus_audio_open_output_w,      5, 0, 0, H_mus_audio_open_output);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);
+  Xen_define_safe_procedure(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
+  Xen_define_safe_procedure(S_mus_audio_write,          g_mus_audio_write_w,            3, 1, 0, H_mus_audio_write);
+  Xen_define_safe_procedure(S_mus_audio_read,           g_mus_audio_read_w,             3, 0, 0, H_mus_audio_read);
+  Xen_define_safe_procedure(S_mus_audio_open_output,    g_mus_audio_open_output_w,      5, 0, 0, H_mus_audio_open_output);
+  Xen_define_safe_procedure(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_expand_filename,      g_mus_expand_filename_w,        1, 0, 0, H_mus_expand_filename);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_open_output,    g_mus_sound_open_output_w,      1, 5, 0, H_mus_sound_open_output);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_reopen_output,  g_mus_sound_reopen_output_w,    1, 4, 0, H_mus_sound_reopen_output);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_close_output,   g_mus_sound_close_output_w,     2, 0, 0, H_mus_sound_close_output);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_read,           g_mus_sound_read_w,             5, 0, 0, H_mus_sound_read);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_write,          g_mus_sound_write_w,            5, 0, 0, H_mus_sound_write);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_seek_frame,     g_mus_sound_seek_frame_w,       2, 0, 0, H_mus_sound_seek_frame);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_error_type_to_string, g_mus_error_type_to_string_w,   1, 0, 0, H_mus_error_type_to_string);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_oss_set_buffers,      g_mus_oss_set_buffers_w,        2, 0, 0, H_mus_oss_set_buffers);
-  XEN_DEFINE_SAFE_PROCEDURE(S_array_to_file,            g_array_to_file_w,              5, 0, 0, H_array_to_file);
-  XEN_DEFINE_SAFE_PROCEDURE(S_file_to_array,            g_file_to_array_w,              5, 0, 0, H_file_to_array);
+  Xen_define_safe_procedure(S_mus_expand_filename,      g_mus_expand_filename_w,        1, 0, 0, H_mus_expand_filename);
+  Xen_define_safe_procedure(S_mus_sound_open_output,    g_mus_sound_open_output_w,      1, 5, 0, H_mus_sound_open_output);
+  Xen_define_safe_procedure(S_mus_sound_reopen_output,  g_mus_sound_reopen_output_w,    1, 4, 0, H_mus_sound_reopen_output);
+  Xen_define_safe_procedure(S_mus_sound_close_output,   g_mus_sound_close_output_w,     2, 0, 0, H_mus_sound_close_output);
+  Xen_define_safe_procedure(S_mus_sound_read,           g_mus_sound_read_w,             5, 0, 0, H_mus_sound_read);
+  Xen_define_safe_procedure(S_mus_sound_write,          g_mus_sound_write_w,            5, 0, 0, H_mus_sound_write);
+  Xen_define_safe_procedure(S_mus_sound_seek_frame,     g_mus_sound_seek_frame_w,       2, 0, 0, H_mus_sound_seek_frame);
+  Xen_define_safe_procedure(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache);
+  Xen_define_safe_procedure(S_mus_error_type_to_string, g_mus_error_type_to_string_w,   1, 0, 0, H_mus_error_type_to_string);
+  Xen_define_safe_procedure(S_mus_oss_set_buffers,      g_mus_oss_set_buffers_w,        2, 0, 0, H_mus_oss_set_buffers);
+  Xen_define_safe_procedure(S_array_to_file,            g_array_to_file_w,              5, 0, 0, H_array_to_file);
+  Xen_define_safe_procedure(S_file_to_array,            g_file_to_array_w,              5, 0, 0, H_file_to_array);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_preload,        g_mus_sound_preload_w,          1, 0, 0, H_mus_sound_preload);
+  Xen_define_safe_procedure(S_mus_sound_preload,        g_mus_sound_preload_w,          1, 0, 0, H_mus_sound_preload);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
+  Xen_define_procedure_with_setter(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
 				   S_setB S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_clipping, g_mus_clipping_w, H_mus_clipping,
+  Xen_define_procedure_with_setter(S_mus_clipping, g_mus_clipping_w, H_mus_clipping,
 				   S_setB S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping,
+  Xen_define_procedure_with_setter(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping,
 				   S_setB S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp,
+  Xen_define_procedure_with_setter(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp,
 				   S_setB S_mus_sound_maxamp, g_mus_sound_set_maxamp_w, 1, 0, 2, 0);
 
   /* these are no-ops if not ALSA, but that makes it easier to maintain global initialization files */
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_buffers, g_mus_alsa_buffers_w, H_mus_alsa_buffers,
+  Xen_define_procedure_with_setter(S_mus_alsa_buffers, g_mus_alsa_buffers_w, H_mus_alsa_buffers,
 				   S_setB S_mus_alsa_buffers, g_mus_alsa_set_buffers_w, 0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_buffer_size, g_mus_alsa_buffer_size_w, H_mus_alsa_buffer_size,
+  Xen_define_procedure_with_setter(S_mus_alsa_buffer_size, g_mus_alsa_buffer_size_w, H_mus_alsa_buffer_size,
 				   S_setB S_mus_alsa_buffer_size, g_mus_alsa_set_buffer_size_w, 0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_device, g_mus_alsa_device_w, H_mus_alsa_device,
+  Xen_define_procedure_with_setter(S_mus_alsa_device, g_mus_alsa_device_w, H_mus_alsa_device,
 				   S_setB S_mus_alsa_device, g_mus_alsa_set_device_w, 0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_playback_device, g_mus_alsa_playback_device_w, H_mus_alsa_playback_device,
+  Xen_define_procedure_with_setter(S_mus_alsa_playback_device, g_mus_alsa_playback_device_w, H_mus_alsa_playback_device,
 				   S_setB S_mus_alsa_playback_device, g_mus_alsa_set_playback_device_w, 0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_capture_device, g_mus_alsa_capture_device_w, H_mus_alsa_capture_device,
+  Xen_define_procedure_with_setter(S_mus_alsa_capture_device, g_mus_alsa_capture_device_w, H_mus_alsa_capture_device,
 				   S_setB S_mus_alsa_capture_device, g_mus_alsa_set_capture_device_w, 0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
+  Xen_define_procedure_with_setter(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
 				   S_setB S_mus_alsa_squelch_warning, g_mus_alsa_set_squelch_warning_w, 0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc,
+  Xen_define_procedure_with_setter(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc,
 				   S_setB S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size,
+  Xen_define_procedure_with_setter(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size,
 				   S_setB S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0);
 
 #if HAVE_SCHEME
@@ -2767,20 +2767,20 @@ void mus_sndlib_xen_initialize(void)
 #endif
 
 #if HAVE_OSS
-  XEN_DEFINE_PROCEDURE(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);
+  Xen_define_procedure(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);
 #endif
 
 #if HAVE_FORTH
-  XEN_DEFINE_PROCEDURE(S_sound_data_to_vector, g_sound_data_to_vector /* no _w! */, 1, 0, 0, H_sound_data_to_vector);
+  Xen_define_procedure(S_sound_data_to_vector, g_sound_data_to_vector /* no _w! */, 1, 0, 0, H_sound_data_to_vector);
 #endif
 
 #if __APPLE__
-  XEN_DEFINE_PROCEDURE(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable_w, 1, 0, 0, H_mus_audio_output_properties_mutable);
+  Xen_define_procedure(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable_w, 1, 0, 0, H_mus_audio_output_properties_mutable);
 #endif
 
   #define H_new_sound_hook S_new_sound_hook "(name): called when a new sound file is being created"
-  new_sound_hook = XEN_DEFINE_HOOK(S_new_sound_hook, "(make-hook 'name)", 1, H_new_sound_hook);
+  new_sound_hook = Xen_define_hook(S_new_sound_hook, "(make-hook 'name)", 1, H_new_sound_hook);
   mus_header_write_set_hook(g_new_sound_hook);
 
-  XEN_PROVIDE("sndlib");
+  Xen_provide_feature("sndlib");
 }

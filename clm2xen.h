@@ -5,7 +5,7 @@
 
 typedef struct mus_xen mus_xen;
 
-#define XEN_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
+#define XEN_TO_MUS_XEN(arg) ((mus_xen *)Xen_object_ref(arg))
 #define XEN_TO_MUS_ANY(obj) mus_xen_gen(XEN_TO_MUS_XEN(obj))
 #define MUS_CLM_DEFAULT_TABLE_SIZE 512
 #define MUS_CLM_DEFAULT_FREQUENCY 0.0

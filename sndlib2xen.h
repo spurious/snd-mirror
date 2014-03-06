@@ -5,11 +5,11 @@
 
 /* error indications */
 
-#define NO_SUCH_CHANNEL      XEN_ERROR_TYPE("no-such-channel")
-#define NO_SUCH_FILE         XEN_ERROR_TYPE("no-such-file")
-#define BAD_TYPE             XEN_ERROR_TYPE("bad-type")
-#define NO_DATA              XEN_ERROR_TYPE("no-data")
-#define BAD_HEADER           XEN_ERROR_TYPE("bad-header")
+#define NO_SUCH_CHANNEL      Xen_make_error_type("no-such-channel")
+#define NO_SUCH_FILE         Xen_make_error_type("no-such-file")
+#define BAD_TYPE             Xen_make_error_type("bad-type")
+#define NO_DATA              Xen_make_error_type("no-data")
+#define BAD_HEADER           Xen_make_error_type("bad-header")
 
 #if HAVE_SCHEME
   typedef struct s7_cell sound_data;
@@ -33,7 +33,7 @@ MUS_EXPORT void mus_sound_data_add_frame(sound_data *sd, mus_long_t pos, mus_flo
 #if HAVE_SCHEME
 #define XEN_TO_SOUND_DATA(Obj) (sound_data *)Obj
 #else
-#define XEN_TO_SOUND_DATA(Obj) (sound_data *)XEN_OBJECT_REF(Obj)
+#define XEN_TO_SOUND_DATA(Obj) (sound_data *)Xen_object_ref(Obj)
 #endif
 
 MUS_EXPORT XEN g_mus_sound_srate(XEN filename);

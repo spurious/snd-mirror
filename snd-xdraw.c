@@ -419,8 +419,8 @@ static XEN color_hook;
 
 static void check_color_hook(void)
 {
-  if (XEN_HOOKED(color_hook))
-    run_hook(color_hook, XEN_EMPTY_LIST, S_color_hook);
+  if (Xen_hook_has_list(color_hook))
+    run_hook(color_hook, Xen_empty_list, S_color_hook);
 }
 
 
@@ -598,8 +598,8 @@ static XEN orientation_hook;
 
 static void check_orientation_hook(void)
 {
-  if (XEN_HOOKED(orientation_hook))
-    run_hook(orientation_hook, XEN_EMPTY_LIST, S_orientation_hook);
+  if (Xen_hook_has_list(orientation_hook))
+    run_hook(orientation_hook, Xen_empty_list, S_orientation_hook);
 }
 
 
@@ -1429,6 +1429,6 @@ orientation dialog changes"
   #define H_color_hook S_color_hook " (): called whenever one of the variables associated with the \
 color dialog changes"
 
-  orientation_hook = XEN_DEFINE_HOOK(S_orientation_hook, "(make-hook)", 0, H_orientation_hook);
-  color_hook =       XEN_DEFINE_HOOK(S_color_hook,       "(make-hook)", 0, H_color_hook);
+  orientation_hook = Xen_define_hook(S_orientation_hook, "(make-hook)", 0, H_orientation_hook);
+  color_hook =       Xen_define_hook(S_color_hook,       "(make-hook)", 0, H_color_hook);
 }

@@ -3589,13 +3589,6 @@ static void mark_c_proc(s7_pointer p)
 }
 
 
-/* 
- * TODO: add begin_hook to GC, make GC stats C accessible.
- * TODO: check gtk_demo for the toolbar replacement code
- * TODO: (f)ceiling in gf
- * TODO: src/gran 3rd arg in gf
- */
-
 static void mark_pair(s7_pointer p)
 {
   if (!is_marked(p)) 
@@ -37525,55 +37518,6 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
   return(sc->NIL);
 }
 
-/* 5-Mar:
-   
-241929: ((float-vector-ref in-data (min (max 0 (set! i (+ i dir))) len1))) -- in examp and effects
-  this is a moving-average with increment set to 1.0, but what size?
-134359: ((set! ctr (+ ctr 1)) (if (= ctr fft-size) (begin (fft rl im 1)...
-101756: (let ((env-val (env amp-env))) (float-vector-set! xc 0 env-val)...
-101656: (let ((val (read-sample rd))) (if (< beg 10) (set! val (* val beg 0.1)) (if...
-101656: (and (set! outp (not outp)) (* y 0.5))
-    [101656: (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))] -> now uses ceiling which clm2xen could handle? gf_ceiling_g?
-101656: (moog-filter gen inval)
-94928: ((float-vector-multiply! xcof es) (fir-filter flt x))
-88200: (+ y (zipper zip read0 read1))
-50829: ((set! (v1 0) n) (set! (v1 1) (* n 3)) v1)
-50829: (and (set! ctr (not ctr)) (* n 2.0))
-50828: (let ((old-y (delay buffer y))) (set! current-sample (+ 1 current-sample))...
-50828: ((set! (data 0) y) data)
-50828: ((set! diff (max diff (abs (- y (file->sample ind2 ctr 0))))) (set! ctr (+...
-50828: ((if (>= (abs y) oldamp) (begin (set! oldloc ctr) (set! oldamp (abs y))))...
-50828: ((if (> (abs y) amp) (begin (set! amp (abs y)) (set! loc ctr))) (set! ctr (-...
-50828: ((if (> (abs y) amp) (begin (set! amp (abs y)) (set! loc ctr))) (set! ctr (-...
-50828: (let ((outval (* gain (formant filt (* amp y)))))...
-50828: (granulate grn f1 f2)
-50828: (granulate grn #f f1)
-50828: (not (set! mxdiff (max mxdiff (abs (- (rd1) (rd2))))))
-50828: (not (set! diff (max diff (abs (- y (next-sample rd))))))
-50828: (if (= (set! ctr (+ ctr 1)) 3) (make-float-vector 5 0.1) (* y 0.5))
-50828: ((set! (vect 0) (set! (vect 1) (* y 2))) vect)
-43840: (or (> n3 0.1) (not (set! samp (+ samp 1))))
-41623: (let ((val (formant frm x))) (mus-set-formant-frequency frm (env menv)) val)
-41623: (let* ((curmax (moving-max maxer y)) (diff (- 0.5 (* mult curmax)))...
-41623: (src sr 0.0 f2)
-41327: ((let ((val (v inctr))) (set! inctr (+ inctr dir)) (if (>= inctr vsize)...
-40000: ((set! (g 'r) (min 0.999999 (max -0.999999 val))) (with-environment g (let...
-33083: ((let ((inval (file->sample f cur-sample))) (set! cur-sample (+ cur-sample...
-22050: (let ((val (sin phase))) (set! phase (+ phase freq)) (set! freq (+ freq...
-22050: ((set! (g 'r) (generator-clamp-r val)) (set! (g 'rr1) (+ 1.0 (* (g 'r) (g...
-20000: ((set! (g 'frequency) (hz->radians val)) (set! (g 'r) (clamp-rxycos-r g 0.0))...
-10000: (let ((diff (abs (- cur y)))) (if (> diff mxoff) (set! mxoff diff)) (set! cur...
-10000: (let ((diff (abs (- cur y)))) (if (> diff mxoff) (set! mxoff diff)) (set! cur...
-8000: (let ((diff (abs (- cur y)))) (if (> diff mxoff) (set! mxoff diff)) (set! cur...
-6833: ((set! ctr (+ ctr 0.0001)))
-5000: ((if (and (< lasty 0.1) (>= y 0.1)) (set! pts (cons samp pts))) (set! lasty...
-4412: (convolve cnv (lambda (dir) (read-sample sf)))
-2506: (>= (abs y) (- val 0.0001))
-2288: ((set! ctr (+ ctr incr)) ctr)
-2203: ((src sr2 0.0 f1))
-2203: ((src sr2 0.0 f3))
-2000: (granulate gen f1 f2)
- */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 {
@@ -46749,46 +46693,8 @@ static s7_pointer check_if(s7_scheme *sc)
 	f = cadr(cdr_code);
       else f = sc->UNSPECIFIED;
 
-#if 0
-      /* this case is more rare than I expected */
-      /* if_a_* branches:
-101654: (begin (set! amp (abs y)) (set! loc ctr))
-101195: (set! val (* val (- actual-block-len beg) 0.1))
-86966: (begin (if (>= frame-loc cursamples) (begin (set! frame-loc 0) (set!...
-86966: (begin (set! frame-loc 0) (input2))
-81364: (begin (do ((k 0 (+ k 1)) (n last-stop (+ n 1))) ((= k j)) (outa n (*...
-80127: (set! diff (+ diff (* 2 pi)))
-79999: (set! val (env e))
-79999: (set! val (* val 0.5))
-50827: (begin (set! oldloc ctr) (set! oldamp (abs y)))
-50827: (set! count (+ count 1))
-44098: (let ((samps (floor (- next-samp ex-samp)))) (do ((k 0 (+ k 1))) ((= k...
-32766: (let ((scl (/ cur orig))) (set! (rdata i) (* scl (rdata i))) (set! (idata i)...
-32766: (if (> (abs cur) 1e-06) (let ((scl (/ cur (sqrt 2.0)))) (set! (rdata i) scl)...
-22050: (set! count (+ count 1))
-22050: (set! count (+ count 1))
-11023: (let ((samps (floor (- next-samp ex-samp)))) (if (= samps 2) (begin (set!...
-11023: (begin (set! snd-level (+ snd-level (* gain shake-energy))) (do ((j 0 (+ j...
-9999: (set! x (modulo x (* 2 pi)))
-9999: (/ (sin (* 2 n cx)) den)
-9999: (let ((fang (modulo (abs cx) (* 2 pi)))) (if (or (< fang 0.001) (< (abs (-...
-9999: (if (< (modulo (abs mx) (* 2 pi)) 0.1) -1.0 1.0)
-9999: (- (* (sin x) (/ (* sinnx sinnx) den)) (* (cos x) (/ (sin (* 2 n mx)) (* 2...
-       */
-      if (is_all_x_safe(sc, test))
-	{
-	  if (is_all_x_safe(sc, t))
-	    {
-	      if (is_all_x_safe(sc, f))
-		fprintf(stderr, "all if: %s\n", DISPLAY(sc->code));
-	    }
-	}
-#endif
-
       if (is_pair(test))
 	{
-	  /* TODO: IF_A_C and IF_A_C_C c=constant here -- currently these are not optimized -- why not safe_c or something? */
-
 	  if (is_pair(t))
 	    {
 	      if (is_pair(f))
@@ -51110,21 +51016,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	/* this was mistakenly evaluating fcdr(body) but that means any inner argument is unevaluated! */
 	func = (s7_function)fcdr(body);
 	while (true) {func(sc, car(body));}
-
-	/* TODO: this is mostly all_x_c_opsq_s: the s's are obviously not changing, so expand? 
-	 *   but here as elsewhere a better way would handle all all_x s->slot directly
-	 */
-#if 0
-static s7_pointer all_x_c_opsq_s(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer largs;
-  largs = cadr(arg);
-  car(sc->T1_1) = find_symbol_checked(sc, cadr(largs));
-  car(sc->T2_1) = c_call(largs)(sc, sc->T1_1);
-  car(sc->T2_2) = find_symbol_checked(sc, caddr(arg));
-  return(c_call(arg)(sc, sc->T2_1));
-}
-#endif
       }
 
 
@@ -68659,7 +68550,7 @@ s7_scheme *s7_init(void)
 
   ht_iter_tag = s7_new_type_x("<hash-table-iterator>", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
-  sc->IS_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "hash-table-iterator?",  g_is_hash_table_iterator, 1, 0, false, H_is_hash_table_iterator);
+  sc->IS_HASH_TABLE_ITERATOR =   s7_define_safe_function(sc, "hash-table-iterator?",     g_is_hash_table_iterator,   1, 0, false, H_is_hash_table_iterator);
   s7_set_object_print_readably(ht_iter_tag, write_ht_iter_readably);
 
 
@@ -69033,13 +68924,11 @@ s7_scheme *s7_init(void)
    *           (or (member (caar lst) (cdr lst) (lambda (x y) (eq? x (car y)))) 
    *               (duplicate-car-memq (cdr lst)))))
    */
-
   
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
 
-  /* call-with-values is almost a no-op in this context 
-   */
+  /* call-with-values is almost a no-op */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
   /* (call-with-values (lambda () (values 1 2 3)) +) */
 
@@ -69336,8 +69225,8 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3446
- * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1372
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 4132
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
@@ -69363,5 +69252,10 @@ int main(int argc, char **argv)
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *
  * Xen_real_to_C_double, C_double_to_Xen_real? Xen_to_float_vector? (for xen_to_vct)
+
+xen_false to Xen_false?
+cddr in clm2xen
+s/XEN /Xen /
+
  */
 

@@ -37,9 +37,9 @@ static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoi
   if (with_pointer_focus(ss))
     goto_window(listener_text);
 
-  if (XEN_HOOKED(mouse_enter_listener_hook))
+  if (Xen_hook_has_list(mouse_enter_listener_hook))
     run_hook(mouse_enter_listener_hook,
-	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
+	     Xen_list_1(XEN_WRAP_WIDGET(listener_text)),
 	     S_mouse_enter_listener_hook);
   cursor_set_blinks(w, true);
   return(false);
@@ -48,9 +48,9 @@ static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoi
 
 static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
-  if (XEN_HOOKED(mouse_leave_listener_hook))
+  if (Xen_hook_has_list(mouse_leave_listener_hook))
     run_hook(mouse_leave_listener_hook,
-	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
+	     Xen_list_1(XEN_WRAP_WIDGET(listener_text)),
 	     S_mouse_leave_listener_hook);
   cursor_set_blinks(w, false);
   return(false);
@@ -686,7 +686,7 @@ int listener_width(void)
 static XEN g_listener_selection(void)
 {
   #define H_listener_selection "(" S_listener_selection "): currently selected text in listener or " PROC_FALSE
-  XEN res = XEN_FALSE;
+  XEN res = Xen_false;
   if (listener_text)
     {
       GtkTextIter start, end;
@@ -696,7 +696,7 @@ static XEN g_listener_selection(void)
 	  txt = gtk_text_buffer_get_text(listener_buffer, &start, &end, true);
 	  if (txt) 
 	    {
-	      res = C_TO_XEN_STRING(txt);
+	      res = C_string_to_Xen_string(txt);
 	      g_free(txt);
 	    }
 	}
@@ -717,7 +717,7 @@ static XEN g_reset_listener_cursor(void)
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
   if (listener_text)
     glistener_set_cursor_shape(ss->listener, ss->arrow_cursor);
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -753,14 +753,14 @@ static XEN g_goto_listener_end(void)
   #define H_goto_listener_end "(" S_goto_listener_end "): move cursor and scroll to bottom of listener pane"
   if (ss->listener)
     glistener_scroll_to_end(ss->listener);
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 
-XEN_NARGIFY_0(g_listener_selection_w, g_listener_selection)
-XEN_NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
-XEN_NARGIFY_0(g_goto_listener_end_w, g_goto_listener_end)
+Xen_wrap_no_args(g_listener_selection_w, g_listener_selection)
+Xen_wrap_no_args(g_reset_listener_cursor_w, g_reset_listener_cursor)
+Xen_wrap_no_args(g_goto_listener_end_w, g_goto_listener_end)
 
 void g_init_gxlistener(void)
 {
@@ -787,15 +787,15 @@ enters the lisp listener pane:\n\
   #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (widget): called when the mouse \
 leaves the lisp listener pane"
 
-  mouse_enter_listener_hook = XEN_DEFINE_HOOK(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1, H_mouse_enter_listener_hook);
-  mouse_leave_listener_hook = XEN_DEFINE_HOOK(S_mouse_leave_listener_hook, "(make-hook 'widget)", 1, H_mouse_leave_listener_hook);
+  mouse_enter_listener_hook = Xen_define_hook(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1, H_mouse_enter_listener_hook);
+  mouse_leave_listener_hook = Xen_define_hook(S_mouse_leave_listener_hook, "(make-hook 'widget)", 1, H_mouse_leave_listener_hook);
 
-  XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selection_w,       0, 0, 0, H_listener_selection);
-  XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor);
-  XEN_DEFINE_PROCEDURE(S_goto_listener_end, g_goto_listener_end_w,         0, 0, 0, H_goto_listener_end);
+  Xen_define_procedure(S_listener_selection, g_listener_selection_w,       0, 0, 0, H_listener_selection);
+  Xen_define_procedure(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor);
+  Xen_define_procedure(S_goto_listener_end, g_goto_listener_end_w,         0, 0, 0, H_goto_listener_end);
 
   #define H_listener_click_hook S_listener_click_hook " (position): called when listener clicked; position is text pos of click in listener"
-  listener_click_hook = XEN_DEFINE_HOOK(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook); 
+  listener_click_hook = Xen_define_hook(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook); 
 
 #if HAVE_SCHEME
   s7_define_function(s7, "colorizer-colors", g_colorizer_colors, 0, 0, true, H_colorizer_colors);

@@ -5258,6 +5258,10 @@ index 10 (so 10/2 is the bes-jn arg):
   (moving-average (gen 'gen) (abs y)))
 
 
+;;; TODO: oscil involves sin -- what's the fastest fm increment?
+(define (make-unmoving-sum) (make-oscil 0.0))
+(define (unmoving-sum gen x) (oscil gen x) (mus-phase gen))
+
 
 
 ;;; --------------------------------------------------------------------------------

@@ -7,7 +7,7 @@ static void clear_search_state(void)
       snd_unprotect_at(ss->search_proc_loc);
       ss->search_proc_loc = NOT_A_GC_LOC;
     }
-  ss->search_proc = XEN_UNDEFINED;
+  ss->search_proc = Xen_undefined;
 
   if (ss->search_expr) free(ss->search_expr);
   ss->search_expr = NULL;
@@ -49,7 +49,7 @@ static mus_long_t channel_find_backward(chan_info *cp)
   bool reported = false;
   mus_long_t i, start, passes;
   snd_fd *sf = NULL;
-  XEN res = XEN_FALSE;
+  XEN res = Xen_false;
 
   start = CURSOR(cp) - 1;
   if (start < 0)
@@ -62,8 +62,8 @@ static mus_long_t channel_find_backward(chan_info *cp)
   ss->stopped_explicitly = false;
   for (i = start, passes = 0; i >= 0; i--, passes++)
     {
-      res = XEN_CALL_1(ss->search_proc, 
-		       C_TO_XEN_DOUBLE((double)(read_sample(sf))), 
+      res = Xen_call_with_1_arg(ss->search_proc, 
+		       C_double_to_Xen_real((double)(read_sample(sf))), 
 		       "search function");
       if (!Xen_is_false(res)) 
 	break;
@@ -168,7 +168,7 @@ void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
       return;
     }
 
-  proc = XEN_FALSE;
+  proc = Xen_false;
 
   /* str can be null, or equal to the previous call's str -- in this case use
    *   the current search procedure if possible, else complain.
@@ -250,7 +250,7 @@ static XEN g_set_search_procedure(XEN proc)
 
   /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> as "proc" */
   
-  XEN_ASSERT_TYPE(Xen_is_procedure(proc) || Xen_is_false(proc), proc, 1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
+  Xen_check_type(Xen_is_procedure(proc) || Xen_is_false(proc), proc, 1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
 
   error = procedure_ok(proc, 1, S_setB S_search_procedure, "proc", 1);
   if (!error)
@@ -264,7 +264,7 @@ static XEN g_set_search_procedure(XEN proc)
     }
   else 
     {
-      errstr = C_TO_XEN_STRING(error);
+      errstr = C_string_to_Xen_string(error);
       free(error);
       return(snd_bad_arity_error(S_setB S_search_procedure, errstr, proc));
     }
@@ -272,11 +272,11 @@ static XEN g_set_search_procedure(XEN proc)
 }
 
 
-XEN_NARGIFY_0(g_search_procedure_w, g_search_procedure)
-XEN_NARGIFY_1(g_set_search_procedure_w, g_set_search_procedure)
+Xen_wrap_no_args(g_search_procedure_w, g_search_procedure)
+Xen_wrap_1_arg(g_set_search_procedure_w, g_set_search_procedure)
 
 void g_init_find(void)
 {
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_search_procedure, g_search_procedure_w, H_search_procedure,
+  Xen_define_procedure_with_setter(S_search_procedure, g_search_procedure_w, H_search_procedure,
 				   S_setB S_search_procedure, g_set_search_procedure_w,  0, 0, 1, 0);
 }

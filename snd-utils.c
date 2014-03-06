@@ -337,10 +337,10 @@ void snd_exit(int val)
 static XEN g_file_to_string(XEN name)
 { 
   char *contents;
-  XEN val = XEN_FALSE;
-  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_file_to_string, "a string");
-  contents = file_to_string(XEN_TO_C_STRING(name));
-  val = C_TO_XEN_STRING(contents);
+  XEN val = Xen_false;
+  Xen_check_type(Xen_is_string(name), name, 1, S_file_to_string, "a string");
+  contents = file_to_string(Xen_string_to_C_string(name));
+  val = C_string_to_Xen_string(contents);
   free(contents);
   return(val);
 }
@@ -348,12 +348,12 @@ static XEN g_file_to_string(XEN name)
 
 
 #if HAVE_SCHEME
-  XEN_NARGIFY_1(g_file_to_string_w, g_file_to_string)
+  Xen_wrap_1_arg(g_file_to_string_w, g_file_to_string)
 #endif
 
 void g_init_utils(void)
 {
 #if HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE(S_file_to_string, g_file_to_string_w, 1, 0, 0, "file contents as string");
+  Xen_define_procedure(S_file_to_string, g_file_to_string_w, 1, 0, 0, "file contents as string");
 #endif
 }

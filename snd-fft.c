@@ -565,7 +565,7 @@ static XEN added_transform_proc(int type)
   added_transform *af;
   af = type_to_transform(type);
   if (af) return(af->proc);
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -784,14 +784,14 @@ static void apply_fft(fft_state *fs)
   else 
     {
       XEN res;
-      if (XEN_HOOKED(before_transform_hook))
+      if (Xen_hook_has_list(before_transform_hook))
 	{
 	  res = run_progn_hook(before_transform_hook, 
-			       XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index), 
-					  C_TO_XEN_INT(cp->chan)),
+			       Xen_list_2(C_INT_TO_XEN_SOUND(cp->sound->index), 
+					  C_int_to_Xen_integer(cp->chan)),
 			       S_before_transform_hook);
 	  if (Xen_is_long_long_int(res))
-	    ind0 = XEN_TO_C_LONG_LONG(res) + fs->beg;
+	    ind0 = Xen_llong_to_C_llong(res) + fs->beg;
 	  else ind0 = cp->axis->losamp + fs->beg;
 	}
       else
@@ -851,8 +851,8 @@ static void apply_fft(fft_state *fs)
 	mus_long_t len;
 	sfd = g_c_make_sampler(sf);
 	sf_loc = snd_protect(sfd);
-	res = XEN_CALL_2(added_transform_proc(cp->transform_type), 
-			 C_TO_XEN_LONG_LONG(data_len), 
+	res = Xen_call_with_2_args(added_transform_proc(cp->transform_type), 
+			 C_llong_to_Xen_llong(data_len), 
 			 sfd,
 			 "added transform func");
 	gc_loc = snd_protect(res);
@@ -1124,7 +1124,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
     {
       fs = cp->fft_data;
       if ((fs->losamp == ap->losamp) && 
-	  (!(XEN_HOOKED(before_transform_hook))) &&
+	  (!(Xen_hook_has_list(before_transform_hook))) &&
 	  (fs->size == fftsize) &&
 	  (fs->transform_type == cp->transform_type) &&
 	  (fs->wintype == cp->fft_window) &&
@@ -1892,34 +1892,34 @@ void set_log_freq_start(mus_float_t base)
 }
 
 
-static XEN g_log_freq_start(void) {return(C_TO_XEN_DOUBLE(log_freq_start(ss)));}
+static XEN g_log_freq_start(void) {return(C_double_to_Xen_real(log_freq_start(ss)));}
 
 static XEN g_set_log_freq_start(XEN val) 
 {
   mus_float_t base;
   #define H_log_freq_start "(" S_log_freq_start "): log freq base (default: 25.0)"
 
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_log_freq_start, "a number");
-  base = XEN_TO_C_DOUBLE(val);
+  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_log_freq_start, "a number");
+  base = Xen_real_to_C_double(val);
   if ((base < 0.0) ||
       (base > 100000.0))
-    XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, 1, val, "base should be between 0 and srate/2");
+    Xen_out_of_range_error(S_log_freq_start, 1, val, "base should be between 0 and srate/2");
 
   set_log_freq_start(base);
   reflect_log_freq_start_in_transform_dialog();
 
-  return(C_TO_XEN_DOUBLE(log_freq_start(ss)));
+  return(C_double_to_Xen_real(log_freq_start(ss)));
 }
 
 
-static XEN g_show_selection_transform(void) {return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));}
+static XEN g_show_selection_transform(void) {return(C_bool_to_Xen_boolean(show_selection_transform(ss)));}
 
 static XEN g_set_show_selection_transform(XEN val) 
 {
   #define H_show_selection_transform "(" S_show_selection_transform "): " PROC_TRUE " if transform display reflects selection, not time-domain window"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_show_selection_transform, "a boolean");
-  set_show_selection_transform(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_show_selection_transform, "a boolean");
+  set_show_selection_transform(Xen_boolean_to_C_bool(val));
+  return(C_bool_to_Xen_boolean(show_selection_transform(ss)));
 }
 
 
@@ -1935,18 +1935,18 @@ and otherwise return a list (spectrum-cutoff time-slices fft-bins)"
 
   ASSERT_CHANNEL(S_transform_frames, snd, chn, 1);
   cp = get_cp(snd, chn, S_transform_frames);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   if (!(cp->graph_transform_on)) 
-    return(XEN_ZERO);
+    return(Xen_integer_zero);
 
   if (cp->transform_graph_type == GRAPH_ONCE)
-    return(C_TO_XEN_INT(cp->transform_size));
+    return(C_int_to_Xen_integer(cp->transform_size));
   si = cp->sonogram_data;
 
-  if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectrum_end),
-			    C_TO_XEN_LONG_LONG(si->active_slices),
-			    C_TO_XEN_LONG_LONG(si->target_bins)));
-  return(XEN_ZERO);
+  if (si) return(Xen_list_3(C_double_to_Xen_real(cp->spectrum_end),
+			    C_llong_to_Xen_llong(si->active_slices),
+			    C_llong_to_Xen_llong(si->target_bins)));
+  return(Xen_integer_zero);
 }
 
 
@@ -1957,12 +1957,12 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 
   chan_info *cp;
 
-  XEN_ASSERT_TYPE(Xen_is_long_long_or_unbound(bin), bin, 1, S_transform_sample, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_or_unbound(slice), slice, 2, S_transform_sample, "an integer");
+  Xen_check_type(Xen_is_long_long_or_unbound(bin), bin, 1, S_transform_sample, "an integer");
+  Xen_check_type(Xen_is_long_long_or_unbound(slice), slice, 2, S_transform_sample, "an integer");
 
   ASSERT_CHANNEL(S_transform_sample, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_transform_sample);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   if (cp->graph_transform_on)
     {
@@ -1971,45 +1971,45 @@ return the current transform sample at bin and slice in snd channel chn (assumin
       if (fp)
 	{
 	  mus_long_t fbin = 0;
-	  if (Xen_is_long_long_int(bin)) fbin = XEN_TO_C_LONG_LONG(bin);
+	  if (Xen_is_long_long_int(bin)) fbin = Xen_llong_to_C_llong(bin);
 
 	  if (fbin < fp->current_size)
 	    {
 	      if (cp->transform_graph_type == GRAPH_ONCE)
-		return(C_TO_XEN_DOUBLE(fp->data[fbin]));
+		return(C_double_to_Xen_real(fp->data[fbin]));
 	      else 
 		{
 		  mus_long_t fslice = 0;
 		  sono_info *si;
 
-		  if (Xen_is_long_long_int(slice)) fslice = XEN_TO_C_LONG_LONG(slice);
+		  if (Xen_is_long_long_int(slice)) fslice = Xen_llong_to_C_llong(slice);
 		  si = cp->sonogram_data;
 
 		  if ((si) && 
 		      (fbin < si->target_bins) && 
 		      (fslice < si->active_slices))
-		    return(C_TO_XEN_DOUBLE(si->data[fslice][fbin]));
-		  else XEN_ERROR(NO_SUCH_SAMPLE,
-				 XEN_LIST_8(C_TO_XEN_STRING(S_transform_sample ": no such sample, bin: ~A, max bin: ~A, slice: ~A, max slice: ~A, sound index: ~A (~A), chan: ~A"),
+		    return(C_double_to_Xen_real(si->data[fslice][fbin]));
+		  else Xen_error(NO_SUCH_SAMPLE,
+				 Xen_list_8(C_string_to_Xen_string(S_transform_sample ": no such sample, bin: ~A, max bin: ~A, slice: ~A, max slice: ~A, sound index: ~A (~A), chan: ~A"),
 					    bin,
-					    C_TO_XEN_INT((si) ? si->target_bins : 0),
+					    C_int_to_Xen_integer((si) ? si->target_bins : 0),
 					    slice,
-					    C_TO_XEN_INT((si) ? si->active_slices : 0),
+					    C_int_to_Xen_integer((si) ? si->active_slices : 0),
 					    snd, 
-					    C_TO_XEN_STRING(cp->sound->short_filename),
+					    C_string_to_Xen_string(cp->sound->short_filename),
 					    chn_n));
 		}
 	    }
-	  else XEN_ERROR(NO_SUCH_SAMPLE,
-			 XEN_LIST_6(C_TO_XEN_STRING(S_transform_sample ": no such sample, bin: ~A, max bin: ~A, sound index: ~A (~A), chan: ~A"),
+	  else Xen_error(NO_SUCH_SAMPLE,
+			 Xen_list_6(C_string_to_Xen_string(S_transform_sample ": no such sample, bin: ~A, max bin: ~A, sound index: ~A (~A), chan: ~A"),
 				    bin,
-				    C_TO_XEN_INT(fp->current_size),
+				    C_int_to_Xen_integer(fp->current_size),
 				    snd,
-				    C_TO_XEN_STRING(cp->sound->short_filename),
+				    C_string_to_Xen_string(cp->sound->short_filename),
 				    chn_n));
 	}
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }  
 
 
@@ -2024,7 +2024,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 
   ASSERT_CHANNEL(S_transform_to_vct, snd, chn_n, 1);
   cp = get_cp(snd, chn_n, S_transform_to_vct);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   if ((cp->graph_transform_on) && 
       (cp->fft))
@@ -2068,7 +2068,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 	    }
 	}
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }  
 
 
@@ -2080,7 +2080,7 @@ typedef struct {
 } xen_transform;
 
 
-#define XEN_TO_XEN_TRANSFORM(arg) ((xen_transform *)XEN_OBJECT_REF(arg))
+#define XEN_TO_XEN_TRANSFORM(arg) ((xen_transform *)Xen_object_ref(arg))
 
 int xen_transform_to_int(XEN n)
 {
@@ -2090,7 +2090,7 @@ int xen_transform_to_int(XEN n)
 }
 
 
-static XEN_OBJECT_TYPE xen_transform_tag;
+static Xen_object_type_t xen_transform_tag;
 
 bool xen_is_transform(XEN obj) 
 {
@@ -2100,7 +2100,7 @@ bool xen_is_transform(XEN obj)
 
 static void xen_transform_free(xen_transform *v) {if (v) free(v);}
 
-XEN_MAKE_OBJECT_FREE_PROCEDURE(xen_transform, free_xen_transform, xen_transform_free)
+Xen_wrap_free(xen_transform, free_xen_transform, xen_transform_free)
 
 
 static char *xen_transform_to_string(xen_transform *v)
@@ -2113,7 +2113,7 @@ static char *xen_transform_to_string(xen_transform *v)
   return(buf);
 }
 
-XEN_MAKE_OBJECT_PRINT_PROCEDURE(xen_transform, print_xen_transform, xen_transform_to_string)
+Xen_wrap_print(xen_transform, print_xen_transform, xen_transform_to_string)
 
 
 #if HAVE_FORTH || HAVE_RUBY
@@ -2123,10 +2123,10 @@ static XEN g_xen_transform_to_string(XEN obj)
   XEN result;
   #define S_xen_transform_to_string "transform->string"
 
-  XEN_ASSERT_TYPE(xen_is_transform(obj), obj, 1, S_xen_transform_to_string, "a transform");
+  Xen_check_type(xen_is_transform(obj), obj, 1, S_xen_transform_to_string, "a transform");
 
   vstr = xen_transform_to_string(XEN_TO_XEN_TRANSFORM(obj));
-  result = C_TO_XEN_STRING(vstr);
+  result = C_string_to_Xen_string(vstr);
   free(vstr);
   return(result);
 }
@@ -2142,8 +2142,8 @@ static bool xen_transform_equalp(xen_transform *v1, xen_transform *v2)
 
 static XEN equalp_xen_transform(XEN obj1, XEN obj2)
 {
-  if ((!(xen_is_transform(obj1))) || (!(xen_is_transform(obj2)))) return(XEN_FALSE);
-  return(C_TO_XEN_BOOLEAN(xen_transform_equalp(XEN_TO_XEN_TRANSFORM(obj1), XEN_TO_XEN_TRANSFORM(obj2))));
+  if ((!(xen_is_transform(obj1))) || (!(xen_is_transform(obj2)))) return(Xen_false);
+  return(C_bool_to_Xen_boolean(xen_transform_equalp(XEN_TO_XEN_TRANSFORM(obj1), XEN_TO_XEN_TRANSFORM(obj2))));
 }
 #endif
 
@@ -2161,10 +2161,10 @@ XEN new_xen_transform(int n)
 {
   xen_transform *mx;
   if (n < 0)
-    return(XEN_FALSE);
+    return(Xen_false);
 
   mx = xen_transform_make(n);
-  XEN_MAKE_AND_RETURN_OBJECT(xen_transform_tag, mx, 0, free_xen_transform);
+  return(Xen_make_object(xen_transform_tag, mx, 0, free_xen_transform));
 }
 
 #define C_INT_TO_XEN_TRANSFORM(Val) new_xen_transform(Val)
@@ -2180,7 +2180,7 @@ static bool s7_xen_transform_equalp(void *obj1, void *obj2)
 
 static XEN s7_xen_transform_length(s7_scheme *sc, XEN obj)
 {
-  return(C_TO_XEN_INT(transform_size(ss)));
+  return(C_int_to_Xen_integer(transform_size(ss)));
 }
 #endif
 
@@ -2188,13 +2188,13 @@ static XEN s7_xen_transform_length(s7_scheme *sc, XEN obj)
 static void init_xen_transform(void)
 {
 #if HAVE_SCHEME
-  xen_transform_tag = XEN_MAKE_OBJECT_TYPE("<transform>", print_xen_transform, free_xen_transform, s7_xen_transform_equalp, 
+  xen_transform_tag = s7_new_type_x("<transform>", print_xen_transform, free_xen_transform, s7_xen_transform_equalp, 
 					   NULL, NULL, NULL, s7_xen_transform_length, NULL, NULL, NULL);
 #else
 #if HAVE_RUBY
-  xen_transform_tag = XEN_MAKE_OBJECT_TYPE("XenTransform", sizeof(xen_transform));
+  xen_transform_tag = Xen_make_object_type("XenTransform", sizeof(xen_transform));
 #else
-  xen_transform_tag = XEN_MAKE_OBJECT_TYPE("Transform", sizeof(xen_transform));
+  xen_transform_tag = Xen_make_object_type("Transform", sizeof(xen_transform));
 #endif
 #endif
 
@@ -2217,23 +2217,23 @@ static void init_xen_transform(void)
 static XEN g_integer_to_transform(XEN n)
 {
   #define H_integer_to_transform "(" S_integer_to_transform " n) returns a transform object corresponding to the given integer"
-  XEN_ASSERT_TYPE(Xen_is_integer(n), n, 1, S_integer_to_transform, "an integer");
-  return(new_xen_transform(XEN_TO_C_INT(n)));
+  Xen_check_type(Xen_is_integer(n), n, 1, S_integer_to_transform, "an integer");
+  return(new_xen_transform(Xen_integer_to_C_int(n)));
 }
 
 
 static XEN g_transform_to_integer(XEN n)
 {
   #define H_transform_to_integer "(" S_transform_to_integer " id) returns the integer corresponding to the given transform"
-  XEN_ASSERT_TYPE(xen_is_transform(n), n, 1, S_transform_to_integer, "a transform");
-  return(C_TO_XEN_INT(xen_transform_to_int(n)));
+  Xen_check_type(xen_is_transform(n), n, 1, S_transform_to_integer, "a transform");
+  return(C_int_to_Xen_integer(xen_transform_to_int(n)));
 }
 
 
 static XEN g_is_transform(XEN type)
 {
   #define H_is_transform "(" S_is_transform " obj): " PROC_TRUE " if 'obj' is a transform object."
-  return(C_TO_XEN_BOOLEAN(xen_is_transform(type) && 
+  return(C_bool_to_Xen_boolean(xen_is_transform(type) && 
 			  is_transform(XEN_TRANSFORM_TO_C_INT(type))));
 }
 
@@ -2249,12 +2249,12 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
   vct *v;
   mus_float_t *dat, *vdata;
 
-  XEN_ASSERT_TYPE(xen_is_transform(type), type, 1, "snd-transform", "a transform object");
-  XEN_ASSERT_TYPE(mus_is_vct(data), data, 2, "snd-transform", "a vct");
+  Xen_check_type(xen_is_transform(type), type, 1, "snd-transform", "a transform object");
+  Xen_check_type(mus_is_vct(data), data, 2, "snd-transform", "a vct");
 
   trf = XEN_TRANSFORM_TO_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
-    XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "invalid transform choice");
+    Xen_out_of_range_error("snd-transform", 1, type, "invalid transform choice");
 
   v = XEN_TO_VCT(data);
   vlen = mus_vct_length(v);
@@ -2277,7 +2277,7 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
       break;
 
     case WAVELET:
-      hnt = XEN_TO_C_INT(hint);
+      hnt = Xen_integer_to_C_int(hint);
       if (hnt < NUM_WAVELETS)
 	wavelet_transform(vdata, vlen, wavelet_data[hnt], wavelet_sizes[hnt]);
       break;
@@ -2315,26 +2315,26 @@ to be displayed goes from low to high (normally 0.0 to 1.0).  " S_add_transform 
   if (errmsg)
     {
       XEN errstr;
-      errstr = C_TO_XEN_STRING(errmsg);
+      errstr = C_string_to_Xen_string(errmsg);
       free(errmsg);
       return(snd_bad_arity_error(S_add_transform, errstr, proc));
     }
 
 #if HAVE_SCHEME
   if ((mus_is_xen(proc)) || (xen_is_sound_data(proc))) /* happens a lot in snd-test.scm, so add a check */
-    XEN_WRONG_TYPE_ARG_ERROR(S_add_transform, 5, proc, "a procedure");
+    Xen_wrong_type_arg_error(S_add_transform, 5, proc, "a procedure");
 #endif
 
-  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, S_add_transform, "a string");
-  XEN_ASSERT_TYPE(Xen_is_string(xlabel), xlabel, 2, S_add_transform, "a string");
-  XEN_ASSERT_TYPE(Xen_is_number(lo), lo, 3, S_add_transform, "a number");
-  XEN_ASSERT_TYPE(Xen_is_number(hi), hi, 4, S_add_transform, "a number");
-  XEN_ASSERT_TYPE(Xen_is_procedure(proc), proc, 5, S_add_transform, "a procedure");
+  Xen_check_type(Xen_is_string(name), name, 1, S_add_transform, "a string");
+  Xen_check_type(Xen_is_string(xlabel), xlabel, 2, S_add_transform, "a string");
+  Xen_check_type(Xen_is_number(lo), lo, 3, S_add_transform, "a number");
+  Xen_check_type(Xen_is_number(hi), hi, 4, S_add_transform, "a number");
+  Xen_check_type(Xen_is_procedure(proc), proc, 5, S_add_transform, "a procedure");
 
-  return(C_INT_TO_XEN_TRANSFORM(add_transform(XEN_TO_C_STRING(name),
-					      XEN_TO_C_STRING(xlabel),
-					      XEN_TO_C_DOUBLE(lo),
-					      XEN_TO_C_DOUBLE(hi),
+  return(C_INT_TO_XEN_TRANSFORM(add_transform(Xen_string_to_C_string(name),
+					      Xen_string_to_C_string(xlabel),
+					      Xen_real_to_C_double(lo),
+					      Xen_real_to_C_double(hi),
 					      proc)));
 }
 
@@ -2353,11 +2353,11 @@ static XEN g_delete_transform(XEN type)
   added_transform *af;
   #define H_delete_transform "(" S_delete_transform " obj) deletes the specified transform if it was created via " S_add_transform "."
 
-  XEN_ASSERT_TYPE(xen_is_transform(type), type, 1, S_delete_transform, "a transform");
+  Xen_check_type(xen_is_transform(type), type, 1, S_delete_transform, "a transform");
 
   typ = XEN_TRANSFORM_TO_C_INT(type);
   if ((typ < NUM_BUILTIN_TRANSFORM_TYPES) || (!is_transform(typ)))
-    XEN_OUT_OF_RANGE_ERROR(S_delete_transform, 1, type, "an integer (an active added transform)");
+    Xen_out_of_range_error(S_delete_transform, 1, type, "an integer (an active added transform)");
 
   af = type_to_transform(typ);
   if (af)
@@ -2366,31 +2366,31 @@ static XEN g_delete_transform(XEN type)
       free(af->xlabel);
       free(af->name);
       snd_unprotect_at(af->gc_loc);
-      af->proc = XEN_FALSE;
+      af->proc = Xen_false;
       free(af);
       /* now make sure nobody expects to use that transform */
       if (transform_type(ss) == typ) set_transform_type(DEFAULT_TRANSFORM_TYPE);
       deleted_type = typ;
       for_each_chan(unset_deleted_transform_type);
-      return(XEN_TRUE);
+      return(Xen_true);
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
-XEN_ARGIFY_2(g_transform_frames_w, g_transform_frames)
-XEN_ARGIFY_4(g_transform_sample_w, g_transform_sample)
-XEN_ARGIFY_3(g_transform_to_vct_w, g_transform_to_vct)
-XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
-XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
-XEN_NARGIFY_1(g_is_transform_w, g_is_transform)
-XEN_NARGIFY_1(g_delete_transform_w, g_delete_transform)
-XEN_NARGIFY_0(g_log_freq_start_w, g_log_freq_start)
-XEN_NARGIFY_1(g_set_log_freq_start_w, g_set_log_freq_start)
-XEN_NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
-XEN_NARGIFY_1(g_set_show_selection_transform_w, g_set_show_selection_transform)
-XEN_NARGIFY_1(g_integer_to_transform_w, g_integer_to_transform)
-XEN_NARGIFY_1(g_transform_to_integer_w, g_transform_to_integer)
+Xen_wrap_2_optional_args(g_transform_frames_w, g_transform_frames)
+Xen_wrap_4_optional_args(g_transform_sample_w, g_transform_sample)
+Xen_wrap_3_optional_args(g_transform_to_vct_w, g_transform_to_vct)
+Xen_wrap_5_args(g_add_transform_w, g_add_transform)
+Xen_wrap_3_optional_args(g_snd_transform_w, g_snd_transform)
+Xen_wrap_1_arg(g_is_transform_w, g_is_transform)
+Xen_wrap_1_arg(g_delete_transform_w, g_delete_transform)
+Xen_wrap_no_args(g_log_freq_start_w, g_log_freq_start)
+Xen_wrap_1_arg(g_set_log_freq_start_w, g_set_log_freq_start)
+Xen_wrap_no_args(g_show_selection_transform_w, g_show_selection_transform)
+Xen_wrap_1_arg(g_set_show_selection_transform_w, g_set_show_selection_transform)
+Xen_wrap_1_arg(g_integer_to_transform_w, g_integer_to_transform)
+Xen_wrap_1_arg(g_transform_to_integer_w, g_transform_to_integer)
 
 #if (!HAVE_SCHEME)
 static XEN transform_temp[6]; /* static for Ruby's sake */
@@ -2442,7 +2442,7 @@ of a moving mark:\n\
 
   init_xen_transform();
 
-  before_transform_hook = XEN_DEFINE_HOOK(S_before_transform_hook, "(make-hook 'snd 'chn)", 2, H_before_transform_hook);
+  before_transform_hook = Xen_define_hook(S_before_transform_hook, "(make-hook 'snd 'chn)", 2, H_before_transform_hook);
 
 #if HAVE_SCHEME
   s7_define_constant(s7, S_fourier_transform, C_INT_TO_XEN_TRANSFORM(FOURIER));
@@ -2458,12 +2458,12 @@ of a moving mark:\n\
   s7_symbol_set_documentation(s7, ss->transform_type_symbol, "*transform-type*: transform type (fourier-transform etc)");
 
 #else
-  XEN_DEFINE_VARIABLE(S_fourier_transform, transform_temp[0], C_INT_TO_XEN_TRANSFORM(FOURIER));
-  XEN_DEFINE_VARIABLE(S_wavelet_transform, transform_temp[1], C_INT_TO_XEN_TRANSFORM(WAVELET));
-  XEN_DEFINE_VARIABLE(S_haar_transform,    transform_temp[2], C_INT_TO_XEN_TRANSFORM(HAAR));
-  XEN_DEFINE_VARIABLE(S_cepstrum,          transform_temp[3], C_INT_TO_XEN_TRANSFORM(CEPSTRUM));
-  XEN_DEFINE_VARIABLE(S_walsh_transform,   transform_temp[4], C_INT_TO_XEN_TRANSFORM(WALSH));
-  XEN_DEFINE_VARIABLE(S_autocorrelation,   transform_temp[5], C_INT_TO_XEN_TRANSFORM(AUTOCORRELATION));
+  Xen_define_variable(S_fourier_transform, transform_temp[0], C_INT_TO_XEN_TRANSFORM(FOURIER));
+  Xen_define_variable(S_wavelet_transform, transform_temp[1], C_INT_TO_XEN_TRANSFORM(WAVELET));
+  Xen_define_variable(S_haar_transform,    transform_temp[2], C_INT_TO_XEN_TRANSFORM(HAAR));
+  Xen_define_variable(S_cepstrum,          transform_temp[3], C_INT_TO_XEN_TRANSFORM(CEPSTRUM));
+  Xen_define_variable(S_walsh_transform,   transform_temp[4], C_INT_TO_XEN_TRANSFORM(WALSH));
+  Xen_define_variable(S_autocorrelation,   transform_temp[5], C_INT_TO_XEN_TRANSFORM(AUTOCORRELATION));
 #endif
 
   #define H_dont_normalize "The value for " S_transform_normalization " that causes the transform to display raw data"
@@ -2471,27 +2471,27 @@ of a moving mark:\n\
   #define H_normalize_by_sound "The value for " S_transform_normalization " that causes the transform to be normalized across a sound's channels"
   #define H_normalize_globally "The value for " S_transform_normalization " that causes the transform to be normalized across all sounds"
 
-  XEN_DEFINE_CONSTANT(S_dont_normalize,        DONT_NORMALIZE,       H_dont_normalize);
-  XEN_DEFINE_CONSTANT(S_normalize_by_channel,  NORMALIZE_BY_CHANNEL, H_normalize_by_channel);
-  XEN_DEFINE_CONSTANT(S_normalize_by_sound,    NORMALIZE_BY_SOUND,   H_normalize_by_sound);
-  XEN_DEFINE_CONSTANT(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
+  Xen_define_constant(S_dont_normalize,        DONT_NORMALIZE,       H_dont_normalize);
+  Xen_define_constant(S_normalize_by_channel,  NORMALIZE_BY_CHANNEL, H_normalize_by_channel);
+  Xen_define_constant(S_normalize_by_sound,    NORMALIZE_BY_SOUND,   H_normalize_by_sound);
+  Xen_define_constant(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
 
-  XEN_DEFINE_PROCEDURE(S_transform_frames,     g_transform_frames_w, 0, 2, 0, H_transform_frames);
-  XEN_DEFINE_PROCEDURE(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
-  XEN_DEFINE_PROCEDURE(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
-  XEN_DEFINE_PROCEDURE(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
-  XEN_DEFINE_PROCEDURE(S_is_transform,          g_is_transform_w,      1, 0, 0, H_is_transform);
-  XEN_DEFINE_PROCEDURE(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
-  XEN_DEFINE_PROCEDURE("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
+  Xen_define_procedure(S_transform_frames,     g_transform_frames_w, 0, 2, 0, H_transform_frames);
+  Xen_define_procedure(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
+  Xen_define_procedure(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
+  Xen_define_procedure(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
+  Xen_define_procedure(S_is_transform,          g_is_transform_w,      1, 0, 0, H_is_transform);
+  Xen_define_procedure(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
+  Xen_define_procedure("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_log_freq_start, g_log_freq_start_w, H_log_freq_start,
+  Xen_define_procedure_with_setter(S_log_freq_start, g_log_freq_start_w, H_log_freq_start,
 				   S_setB S_log_freq_start, g_set_log_freq_start_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
+  Xen_define_procedure_with_setter(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
 				   S_setB S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_integer_to_transform, g_integer_to_transform_w, 1, 0, 0, H_integer_to_transform);
-  XEN_DEFINE_PROCEDURE(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer);
+  Xen_define_procedure(S_integer_to_transform, g_integer_to_transform_w, 1, 0, 0, H_integer_to_transform);
+  Xen_define_procedure(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer);
 
 #if HAVE_SCHEME
   s7_eval_c_string(s7, "(define transform->float-vector transform->vct)");

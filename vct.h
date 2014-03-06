@@ -32,7 +32,7 @@ MUS_EXPORT XEN g_vct_peak(XEN obj);
 #if HAVE_SCHEME
   #define XEN_TO_VCT(Obj) (vct *)Obj
 #else
-  #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
+  #define XEN_TO_VCT(arg) ((vct *)Xen_object_ref(arg))
 #endif
 
 MUS_EXPORT mus_long_t mus_vct_length(vct *v);

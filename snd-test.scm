@@ -47400,7 +47400,7 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-5-Mar:
+5-Mar-14:
 36,709,624,133
 5,739,812,299  s7.c:eval [/home/bil/gtk-snd/snd]
 2,258,508,257  ???:sin [/lib64/libm-2.12.so]

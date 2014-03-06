@@ -498,10 +498,10 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
 
   XtVaGetValues(w, XmNuserData, &data, NULL);
 
-  if (XEN_HOOKED(mouse_enter_graph_hook))
+  if (Xen_hook_has_list(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
-	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(data)),
-			C_TO_XEN_INT(UNPACK_CHANNEL(data))),
+	     Xen_list_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(data)),
+			C_int_to_Xen_integer(UNPACK_CHANNEL(data))),
 	     S_mouse_enter_graph_hook);
 
   check_cursor_shape((chan_info *)context, ev->x, ev->y);
@@ -514,10 +514,10 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
   XLeaveWindowEvent *ev = (XLeaveWindowEvent *)event;
 
   XtVaGetValues(w, XmNuserData, &data, NULL);
-  if (XEN_HOOKED(mouse_leave_graph_hook))
+  if (Xen_hook_has_list(mouse_leave_graph_hook))
     run_hook(mouse_leave_graph_hook,
-	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(data)),
-			C_TO_XEN_INT(UNPACK_CHANNEL(data))),
+	     Xen_list_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(data)),
+			C_int_to_Xen_integer(UNPACK_CHANNEL(data))),
 	     S_mouse_leave_graph_hook);
 
   /*
@@ -1536,19 +1536,19 @@ static XEN g_channel_widgets(XEN snd, XEN chn)
   chan_info *cp;
   ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
-  if (!cp) return(XEN_FALSE);
-  return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
-	   XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),
-	     XEN_CONS(XEN_WRAP_WIDGET(channel_f(cp)),
-	       XEN_CONS(XEN_WRAP_WIDGET(channel_sx(cp)),
-	         XEN_CONS(XEN_WRAP_WIDGET(channel_sy(cp)),
-	           XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
-	             XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
-		       XEN_CONS(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)),
-			 XEN_CONS(XEN_WRAP_WIDGET(channel_gsy(cp)),
-			   XEN_CONS(XEN_WRAP_WIDGET(channel_gzy(cp)),
-			     XEN_CONS(XEN_WRAP_WIDGET(channel_main_pane(cp)),
-	                       XEN_EMPTY_LIST))))))))))));
+  if (!cp) return(Xen_false);
+  return(Xen_cons(XEN_WRAP_WIDGET(channel_graph(cp)),
+	   Xen_cons(XEN_WRAP_WIDGET(channel_w(cp)),
+	     Xen_cons(XEN_WRAP_WIDGET(channel_f(cp)),
+	       Xen_cons(XEN_WRAP_WIDGET(channel_sx(cp)),
+	         Xen_cons(XEN_WRAP_WIDGET(channel_sy(cp)),
+	           Xen_cons(XEN_WRAP_WIDGET(channel_zx(cp)),
+	             Xen_cons(XEN_WRAP_WIDGET(channel_zy(cp)),
+		       Xen_cons(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)),
+			 Xen_cons(XEN_WRAP_WIDGET(channel_gsy(cp)),
+			   Xen_cons(XEN_WRAP_WIDGET(channel_gzy(cp)),
+			     Xen_cons(XEN_WRAP_WIDGET(channel_main_pane(cp)),
+	                       Xen_empty_list))))))))))));
 }
 
 
@@ -1558,8 +1558,8 @@ static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN lst = (XEN)in_code;
-  XEN_CALL_0(XEN_CADR(lst), "timed callback func");
-  snd_unprotect_at(XEN_TO_C_INT(XEN_CAR(lst)));
+  Xen_call_with_no_args(Xen_cadr(lst), "timed callback func");
+  snd_unprotect_at(Xen_integer_to_C_int(Xen_car(lst)));
 #endif
 }
 
@@ -1569,20 +1569,20 @@ static XEN g_in(XEN ms, XEN code)
   #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
 
 #if HAVE_EXTENSION_LANGUAGE
-  XEN_ASSERT_TYPE(Xen_is_number(ms), ms, 1, S_in, "a number");
-  XEN_ASSERT_TYPE(Xen_is_procedure(code), code, 2, S_in, "a procedure");
+  Xen_check_type(Xen_is_number(ms), ms, 1, S_in, "a number");
+  Xen_check_type(Xen_is_procedure(code), code, 2, S_in, "a procedure");
 
-  if (XEN_REQUIRED_ARGS_OK(code, 0))
+  if (Xen_is_aritable(code, 0))
     {
       int secs;
-      secs = XEN_TO_C_INT(ms);
+      secs = Xen_integer_to_C_int(ms);
       if (secs < 0) 
-	XEN_OUT_OF_RANGE_ERROR(S_in, 1, ms, "a positive integer");
+	Xen_out_of_range_error(S_in, 1, ms, "a positive integer");
       else
 	{
 	  XEN lst;
-	  lst = XEN_LIST_2(XEN_FALSE, code);
-	  XEN_LIST_SET(lst, 0, C_TO_XEN_INT(snd_protect(lst)));
+	  lst = Xen_list_2(Xen_false, code);
+	  Xen_list_set(lst, 0, C_int_to_Xen_integer(snd_protect(lst)));
 	  XtAppAddTimeOut(MAIN_APP(ss), 
 			  (unsigned long)secs,
 			  (XtTimerCallbackProc)timed_eval, 
@@ -1650,7 +1650,7 @@ void color_chan_components(color_t color, slider_choice_t which_component)
 static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor "): current graph cursor shape"
-  return(C_TO_XEN_INT(in_graph_cursor(ss)));
+  return(C_int_to_Xen_integer(in_graph_cursor(ss)));
 }
 
 
@@ -1659,33 +1659,33 @@ static XEN g_graph_cursor(void)
 static XEN g_set_graph_cursor(XEN curs)
 {
   int val;
-  XEN_ASSERT_TYPE(Xen_is_integer(curs), curs, 1, S_setB S_graph_cursor, "an integer");
+  Xen_check_type(Xen_is_integer(curs), curs, 1, S_setB S_graph_cursor, "an integer");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, X dies */
-  val = XEN_TO_C_INT(curs);
+  val = Xen_integer_to_C_int(curs);
   if ((val >= 0) && (val <= XC_xterm))
     {
       ss->Graph_Cursor = val;
       ss->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "invalid cursor");
+  else Xen_out_of_range_error(S_setB S_graph_cursor, 1, curs, "invalid cursor");
   return(curs);
 }
 
 
-XEN_NARGIFY_2(g_in_w, g_in)
-XEN_NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
-XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
-XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
+Xen_wrap_2_args(g_in_w, g_in)
+Xen_wrap_no_args(g_graph_cursor_w, g_graph_cursor)
+Xen_wrap_1_arg(g_set_graph_cursor_w, g_set_graph_cursor)
+Xen_wrap_2_optional_args(g_channel_widgets_w, g_channel_widgets)
 
 void g_init_gxchn(void)
 {
-  XEN_DEFINE_PROCEDURE(S_in,            g_in_w,             2, 0, 0, H_in);
+  Xen_define_procedure(S_in,            g_in_w,             2, 0, 0, H_in);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
+  Xen_define_procedure_with_setter(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
+  Xen_define_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
 
 #if HAVE_SCHEME
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
@@ -1717,6 +1717,6 @@ enters the drawing area (graph pane) of the given channel.\n\
 leaves the drawing area (graph pane) of the given channel."
 #endif
 
-  mouse_enter_graph_hook = XEN_DEFINE_HOOK(S_mouse_enter_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_enter_graph_hook);
-  mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_leave_graph_hook);
+  mouse_enter_graph_hook = Xen_define_hook(S_mouse_enter_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_enter_graph_hook);
+  mouse_leave_graph_hook = Xen_define_hook(S_mouse_leave_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_leave_graph_hook);
 }

@@ -24,9 +24,9 @@ const char *io_error_name(io_error_t err)
 
 bool run_snd_error_hook(const char *msg)
 {
-  return((XEN_HOOKED(ss->snd_error_hook)) &&
+  return((Xen_hook_has_list(ss->snd_error_hook)) &&
 	 (Xen_is_true(run_or_hook(ss->snd_error_hook, 
-				 XEN_LIST_1(C_TO_XEN_STRING(msg)),
+				 Xen_list_1(C_string_to_Xen_string(msg)),
 				 S_snd_error_hook))));
 }
 
@@ -111,9 +111,9 @@ static void snd_warning_1(const char *msg)
       return;
     }
 
-  if ((XEN_HOOKED(ss->snd_warning_hook)) &&
+  if ((Xen_hook_has_list(ss->snd_warning_hook)) &&
       (Xen_is_true(run_or_hook(ss->snd_warning_hook, 
-			      XEN_LIST_1(C_TO_XEN_STRING(msg)),
+			      Xen_list_1(C_string_to_Xen_string(msg)),
 			      S_snd_warning_hook))))
     return;
 
@@ -205,11 +205,11 @@ static XEN g_snd_error(XEN msg)
 {
   /* this throws a 'snd-error error; it does not call snd_error_1 or friends above */
   #define H_snd_error "(" S_snd_error " str): throws a 'snd-error error"
-  XEN_ASSERT_TYPE(Xen_is_string(msg), msg, 1, S_snd_error, "a string");
+  Xen_check_type(Xen_is_string(msg), msg, 1, S_snd_error, "a string");
 
-  if (!(run_snd_error_hook(XEN_TO_C_STRING(msg)))) /* have to call this before the throw, else we end up at top level */
-    XEN_ERROR(XEN_ERROR_TYPE("snd-error"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_snd_error ": ~A"),
+  if (!(run_snd_error_hook(Xen_string_to_C_string(msg)))) /* have to call this before the throw, else we end up at top level */
+    Xen_error(Xen_make_error_type("snd-error"),
+	      Xen_list_2(C_string_to_Xen_string(S_snd_error ": ~A"),
 			 msg));
   return(msg);
 }
@@ -218,8 +218,8 @@ static XEN g_snd_error(XEN msg)
 static XEN g_snd_warning(XEN msg)
 {
   #define H_snd_warning "(" S_snd_warning " str): reports warning message str (normally in the status area)"
-  XEN_ASSERT_TYPE(Xen_is_string(msg), msg, 1, S_snd_warning, "a string");
-  snd_warning("%s", XEN_TO_C_STRING(msg));
+  Xen_check_type(Xen_is_string(msg), msg, 1, S_snd_warning, "a string");
+  snd_warning("%s", Xen_string_to_C_string(msg));
   return(msg);
 }
 
@@ -228,14 +228,14 @@ static XEN clip_hook;
 
 static mus_float_t run_clip_hook(mus_float_t val)
 {
-  if (XEN_HOOKED(clip_hook))
+  if (Xen_hook_has_list(clip_hook))
     {
       XEN result;
       result = run_progn_hook(clip_hook,
-			      XEN_LIST_1(C_TO_XEN_DOUBLE(val)),
+			      Xen_list_1(C_double_to_Xen_real(val)),
 			      S_clip_hook);
       if (Xen_is_number(result))
-	return(XEN_TO_C_DOUBLE(result));
+	return(Xen_real_to_C_double(result));
     }
   /* otherwise mimic the built-in default in io.c */
   if (val >= 0.99999)
@@ -246,7 +246,7 @@ static mus_float_t run_clip_hook(mus_float_t val)
 static bool clip_hook_checker(void)
 {
   bool result;
-  result = XEN_HOOKED(clip_hook);
+  result = Xen_hook_has_list(clip_hook);
   if (result)
     mus_clip_set_handler(run_clip_hook);
   else mus_clip_set_handler(NULL);
@@ -255,13 +255,13 @@ static bool clip_hook_checker(void)
 
 
  
-XEN_NARGIFY_1(g_snd_error_w, g_snd_error)
-XEN_NARGIFY_1(g_snd_warning_w, g_snd_warning)
+Xen_wrap_1_arg(g_snd_error_w, g_snd_error)
+Xen_wrap_1_arg(g_snd_warning_w, g_snd_warning)
 
 void g_init_errors(void)
 {
-  XEN_DEFINE_PROCEDURE(S_snd_error,   g_snd_error_w,   1, 0, 0, H_snd_error);
-  XEN_DEFINE_PROCEDURE(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
+  Xen_define_procedure(S_snd_error,   g_snd_error_w,   1, 0, 0, H_snd_error);
+  Xen_define_procedure(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
 
 #if HAVE_SCHEME
   #define H_snd_error_hook S_snd_error_hook " (message): called upon snd_error. \
@@ -316,15 +316,15 @@ If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported
 "
 #endif
 
-  ss->snd_error_hook =   XEN_DEFINE_HOOK(S_snd_error_hook,   "(make-hook 'message)", 1, H_snd_error_hook);
-  ss->snd_warning_hook = XEN_DEFINE_HOOK(S_snd_warning_hook, "(make-hook 'message)", 1, H_snd_warning_hook);
+  ss->snd_error_hook =   Xen_define_hook(S_snd_error_hook,   "(make-hook 'message)", 1, H_snd_error_hook);
+  ss->snd_warning_hook = Xen_define_hook(S_snd_warning_hook, "(make-hook 'message)", 1, H_snd_warning_hook);
 
 
   #define H_clip_hook S_clip_hook " (val) is called each time a sample is about to \
 be clipped upon being written to a sound file.  The hook function can return the new value to \
 be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val')."
 
-  clip_hook = XEN_DEFINE_HOOK(S_clip_hook, "(make-hook 'val)", 1, H_clip_hook); 
+  clip_hook = Xen_define_hook(S_clip_hook, "(make-hook 'val)", 1, H_clip_hook); 
   mus_clip_set_handler_and_checker(NULL, clip_hook_checker);
 }
 

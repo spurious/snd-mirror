@@ -1087,16 +1087,13 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 (define* (hello-dentist frq amp snd chn)
   "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
-	 (i 0)
 	 (len (frames))
-	 (len1 (- len 1))
-	 (in-data (channel->float-vector 0 len snd chn))
-	 (rd (make-src :srate 1.0 
-		       :input (lambda (dir) 
-				(float-vector-ref in-data (min (max 0 (set! i (+ i dir))) len1))))))
+	 (rd (make-sampler 0 snd chn))
+	 (sr (make-src :srate 1.0 
+		       :input (lambda (dir) (read-sample-with-direction rd dir)))))
     (map-channel
      (lambda (y)
-       (src rd (rand-interp rn)))
+       (src sr (rand-interp rn)))
      0 len snd chn #f (format #f "hello-dentist ~A ~A" frq amp))))
 
 
@@ -1136,26 +1133,15 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 (define* (expsrc rate snd chn)
   "(expsrc rate snd chn) uses sampling-rate conversion and granular synthesis 
 to produce a sound at a new pitch but at the original tempo.  It returns a function for map-channel."
-  (let* ((gr (make-granulate :expansion rate))
-	 ;; this can be improved by messing with make-granulate's hop and length args
-	 (sr (make-src :srate rate))
-	 (vsize 1024)
-	 (vbeg 0)
-	 (v (channel->float-vector 0 vsize))
-	 (inctr 0)
-	 (f1 (lambda (dir)
-	       (let ((val (v inctr)))
-		 (set! inctr (+ inctr dir))
-		 (if (>= inctr vsize)
-		     (begin
-		       (set! vbeg (+ vbeg inctr))
-		       (set! inctr 0)
-		       (set! v (channel->float-vector vbeg vsize snd chn))))
-		 val)))
-	 (f2 (lambda (dir)
-	       (granulate gr f1))))
+  (let* ((rd (make-sampler 0 snd chn))
+	 (gr (make-granulate :expansion rate
+			     :input (lambda (dir) 
+				      (read-sample-with-direction rd dir))))
+	 (sr (make-src :srate rate
+		       :input (lambda (dir)
+				(granulate gr)))))
     (lambda (inval)
-      (src sr 0.0 f2))))
+      (src sr 0.0))))
 
 
 ;;; the next (expsnd) changes the tempo according to an envelope; the new duration

@@ -29,13 +29,13 @@ static XEN before_exit_hook;
 
 bool snd_exit_cleanly(bool force_exit)
 {  
-  XEN res = XEN_FALSE;
+  XEN res = Xen_false;
   ss->exiting = true; /* if segfault during exit code, don't try to restart at event loop! */
 
   /* before-exit-hook can cancel the exit, whereas exit-hook can't */
-  if (XEN_HOOKED(before_exit_hook))
+  if (Xen_hook_has_list(before_exit_hook))
     res = run_or_hook(before_exit_hook, 
-		      XEN_EMPTY_LIST,
+		      Xen_empty_list,
 		      S_before_exit_hook);
   if ((Xen_is_true(res)) && (!force_exit)) return(false); /* does it make any sense to call this hook if we're forced to exit anyway? */
 
@@ -63,9 +63,9 @@ bool snd_exit_cleanly(bool force_exit)
   if (peak_env_dir(ss))
     for_each_chan(save_peak_env_info);
 
-  if (XEN_HOOKED(exit_hook))
+  if (Xen_hook_has_list(exit_hook))
     run_hook(exit_hook, 
-	     XEN_EMPTY_LIST,
+	     Xen_empty_list,
 	     S_exit_hook);
 
   if (ss->file_monitor_ok)
@@ -394,7 +394,7 @@ static void save_options(FILE *fd)
   /* must use decimal point in floats */
 #endif
 
-  fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_VERSION, SND_DATE, snd_local_time());
+  fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", Xen_comment_mark, SND_VERSION, SND_DATE, snd_local_time());
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sod(fd, S_transform_size, transform_size(ss));
   if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_xen_name(fft_window(ss))));
@@ -621,7 +621,7 @@ static void save_options(FILE *fd)
       }
   }
   
-  fprintf(fd, "%s end of snd options\n", XEN_COMMENT_STRING);
+  fprintf(fd, "%s end of snd options\n", Xen_comment_mark);
   if (locale)
     {
 #ifndef _MSC_VER
@@ -717,44 +717,44 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
   /* make sure we don't truncate vector output with "..." */
   set_print_lengths(1000000); /* this sets all three lengths */  
 
-  ignore_list = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
+  ignore_list = XEN_ASSOC(C_string_to_Xen_symbol("save-state-ignore"), property_list);
 
   if (!(Xen_is_list(ignore_list)))
     {
       char *temp = NULL;
       if (chan == -1)
-	fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, temp = XEN_AS_STRING(property_list));
+	fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, temp = Xen_object_to_C_string(property_list));
       else 
 	{
 	  if (edpos == -1)
-	    fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, temp = XEN_AS_STRING(property_list));
-	  else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = XEN_AS_STRING(property_list));
+	    fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, temp = Xen_object_to_C_string(property_list));
+	  else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = Xen_object_to_C_string(property_list));
 	}
       if (temp) free(temp);
     }
   else
     {
-      XEN new_properties = XEN_EMPTY_LIST;
+      XEN new_properties = Xen_empty_list;
       int i, property_len, gc_loc;
       gc_loc = snd_protect(new_properties);
-      property_len = XEN_LIST_LENGTH(property_list);
+      property_len = Xen_list_length(property_list);
       for (i = 0; i < property_len; i++)
 	{
 	  XEN property;
-	  property = XEN_LIST_REF(property_list, i);
-	  if (Xen_is_false(XEN_MEMBER(XEN_CAR(property), ignore_list)))
-	    new_properties = XEN_CONS(property, new_properties);
+	  property = Xen_list_ref(property_list, i);
+	  if (Xen_is_false(XEN_MEMBER(Xen_car(property), ignore_list)))
+	    new_properties = Xen_cons(property, new_properties);
 	}
       if (!(Xen_is_null(new_properties)))
 	{
 	  char *temp = NULL;
 	  if (chan == -1)
-	    fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, temp = XEN_AS_STRING(new_properties));
+	    fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, temp = Xen_object_to_C_string(new_properties));
 	  else 
 	    {
 	      if (edpos == -1)
-		fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, temp = XEN_AS_STRING(new_properties));
-	      else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = XEN_AS_STRING(new_properties));
+		fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, temp = Xen_object_to_C_string(new_properties));
+	      else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = Xen_object_to_C_string(new_properties));
 	    }
 	  if (temp) free(temp);
 	}
@@ -773,49 +773,49 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
   XEN ignore_list;
-  ignore_list = rb_ary_assoc(property_list, C_STRING_TO_XEN_SYMBOL("save_state_ignore"));
+  ignore_list = rb_ary_assoc(property_list, C_string_to_Xen_symbol("save_state_ignore"));
   if (!(Xen_is_vector(ignore_list)))
     {
       if (chan == -1)
-	fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(property_list));
+	fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), Xen_object_to_C_string(property_list));
       else 
 	{
 	  if (edpos == -1)
-	    fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(S_channel_properties), XEN_AS_STRING(property_list), chan);
-	  else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, TO_PROC_NAME(S_edit_properties), XEN_AS_STRING(property_list), chan, edpos);
+	    fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(S_channel_properties), Xen_object_to_C_string(property_list), chan);
+	  else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, TO_PROC_NAME(S_edit_properties), Xen_object_to_C_string(property_list), chan, edpos);
 	}
     }
   else
     {
-      XEN ignore_vec, new_properties = XEN_EMPTY_LIST;
+      XEN ignore_vec, new_properties = Xen_empty_list;
       int i, property_len, gc_loc;
       gc_loc = snd_protect(new_properties);
-      property_len = XEN_LIST_LENGTH(property_list);
-      ignore_vec = XEN_VECTOR_REF(ignore_list, 1);
+      property_len = Xen_list_length(property_list);
+      ignore_vec = Xen_vector_ref(ignore_list, 1);
       if (Xen_is_vector(ignore_vec))
 	{
 	  for (i = 0; i < property_len; i++)
 	    {
 	      XEN property;
-	      property = XEN_LIST_REF(property_list, i);
-	      if (Xen_is_false(rb_ary_includes(ignore_vec, XEN_CAR(property))))
-		new_properties = XEN_CONS(property, new_properties);
+	      property = Xen_list_ref(property_list, i);
+	      if (Xen_is_false(rb_ary_includes(ignore_vec, Xen_car(property))))
+		new_properties = Xen_cons(property, new_properties);
 	    }
 	}
       else
 	{
 	  for (i = 0; i < property_len; i++)
-	  new_properties = XEN_CONS(XEN_LIST_REF(property_list, i), new_properties);
+	  new_properties = Xen_cons(Xen_list_ref(property_list, i), new_properties);
 	}
       if (!(Xen_is_null(new_properties)))
 	{
 	  if (chan == -1)
-	    fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(new_properties));
+	    fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), Xen_object_to_C_string(new_properties));
 	  else 
 	    {
 	      if (edpos == -1)
-		fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(S_channel_properties), XEN_AS_STRING(new_properties), chan);
-	      else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, TO_PROC_NAME(S_edit_properties), XEN_AS_STRING(new_properties), chan, edpos);
+		fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(S_channel_properties), Xen_object_to_C_string(new_properties), chan);
+	      else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, TO_PROC_NAME(S_edit_properties), Xen_object_to_C_string(new_properties), chan, edpos);
 	    }
 	}
       snd_unprotect_at(gc_loc);
@@ -828,7 +828,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
   XEN ignore_list;
-  ignore_list = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
+  ignore_list = XEN_ASSOC(C_string_to_Xen_symbol("save-state-ignore"), property_list);
   if (!(Xen_is_list(ignore_list)))
     {
       if (chan == -1)
@@ -842,16 +842,16 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
     }
   else
     {
-      XEN new_properties = XEN_EMPTY_LIST;
+      XEN new_properties = Xen_empty_list;
       int i, property_len, gc_loc;
       gc_loc = snd_protect(new_properties);
-      property_len = XEN_LIST_LENGTH(property_list);
+      property_len = Xen_list_length(property_list);
       for (i = 0; i < property_len; i++)
 	{
 	  XEN property;
-	  property = XEN_LIST_REF(property_list, i);
-	  if (Xen_is_false(XEN_MEMBER(XEN_CAR(property), ignore_list)))
-	    new_properties = XEN_CONS(property, new_properties);
+	  property = Xen_list_ref(property_list, i);
+	  if (Xen_is_false(XEN_MEMBER(Xen_car(property), ignore_list)))
+	    new_properties = Xen_cons(property, new_properties);
 	}
       if (!(Xen_is_null(new_properties)))
 	{
@@ -1041,10 +1041,10 @@ void save_sound_state(snd_info *sp, void *ptr)
     }
 
   if ((Xen_is_vector(sp->properties)) &&
-      (Xen_is_list(XEN_VECTOR_REF(sp->properties, 0))) &&
-      (!(Xen_is_null(XEN_VECTOR_REF(sp->properties, 0)))))
+      (Xen_is_list(Xen_vector_ref(sp->properties, 0))) &&
+      (!(Xen_is_null(Xen_vector_ref(sp->properties, 0)))))
     {
-      save_property_list(fd, XEN_VECTOR_REF(sp->properties, 0), -1, -1); /* sound-properties */
+      save_property_list(fd, Xen_vector_ref(sp->properties, 0), -1, -1); /* sound-properties */
     }
   for (chan = 0; chan < sp->nchans; chan++)
     {
@@ -1110,10 +1110,10 @@ void save_sound_state(snd_info *sp, void *ptr)
       if (cp->show_axes != show_axes(ss)) pcp_ss(fd, S_show_axes, show_axes2string(cp->show_axes), chan);
       if (cp->graphs_horizontal != graphs_horizontal(ss)) pcp_ss(fd, S_graphs_horizontal, b2s(cp->graphs_horizontal), chan);
       if ((Xen_is_vector(cp->properties)) &&
-	  (Xen_is_list(XEN_VECTOR_REF(cp->properties, 0))) &&
-	  (!(Xen_is_null(XEN_VECTOR_REF(cp->properties, 0)))))
+	  (Xen_is_list(Xen_vector_ref(cp->properties, 0))) &&
+	  (!(Xen_is_null(Xen_vector_ref(cp->properties, 0)))))
 	{
-	  save_property_list(fd, XEN_VECTOR_REF(cp->properties, 0), chan, -1); /* channel-properties */
+	  save_property_list(fd, Xen_vector_ref(cp->properties, 0), chan, -1); /* channel-properties */
 	}
 
       /* ap->default_xlabel if not null, user explicitly set it */
@@ -1139,10 +1139,10 @@ void save_sound_state(snd_info *sp, void *ptr)
 	    ed_list *ed;
 	    ed = cp->edits[i];
 	    if ((Xen_is_vector(ed->properties)) &&
-		(Xen_is_list(XEN_VECTOR_REF(ed->properties, 0))) &&
-		(!(Xen_is_null(XEN_VECTOR_REF(ed->properties, 0)))))
+		(Xen_is_list(Xen_vector_ref(ed->properties, 0))) &&
+		(!(Xen_is_null(Xen_vector_ref(ed->properties, 0)))))
 	      {
-		save_property_list(fd, XEN_VECTOR_REF(ed->properties, 0), chan, i); /* edit-properties */
+		save_property_list(fd, Xen_vector_ref(ed->properties, 0), chan, i); /* edit-properties */
 	      }
 	  }
       }
@@ -1183,13 +1183,13 @@ void save_state(const char *save_state_name)
       return;
     }
   fullname = mus_expand_filename(save_state_name);
-  if (XEN_HOOKED(before_save_state_hook))
+  if (Xen_hook_has_list(before_save_state_hook))
     {
-      XEN res = XEN_FALSE;
+      XEN res = Xen_false;
       res = run_or_hook(before_save_state_hook, 
-			XEN_LIST_1(C_TO_XEN_STRING(fullname)),
+			Xen_list_1(C_string_to_Xen_string(fullname)),
 			S_before_save_state_hook);
-      append_new_state = XEN_TO_C_BOOLEAN(res);
+      append_new_state = Xen_boolean_to_C_bool(res);
     }
   if (append_new_state)
     save_fd = FOPEN(fullname, "a");
@@ -1310,9 +1310,9 @@ void save_state(const char *save_state_name)
       free(locale);
     }
   snd_fclose(save_fd, save_state_name);
-  if (XEN_HOOKED(after_save_state_hook))
+  if (Xen_hook_has_list(after_save_state_hook))
     run_hook(after_save_state_hook, 
-	     XEN_LIST_1(C_TO_XEN_STRING(save_state_name)),
+	     Xen_list_1(C_string_to_Xen_string(save_state_name)),
 	     S_after_save_state_hook);
 }
 
@@ -1367,10 +1367,10 @@ static XEN start_hook;
 
 static bool dont_start(char *filename)
 {
-  XEN res = XEN_FALSE;
-  if (XEN_HOOKED(start_hook))
+  XEN res = Xen_false;
+  if (Xen_hook_has_list(start_hook))
     res = run_or_hook(start_hook,
-		      XEN_LIST_1(C_TO_XEN_STRING(filename)),
+		      Xen_list_1(C_string_to_Xen_string(filename)),
 		      S_start_hook);
   return(Xen_is_true(res));
 }
@@ -1383,13 +1383,13 @@ static char **script_args;
 static XEN g_script_arg(void) 
 {
   #define H_script_arg "(" S_script_arg "): where we are in the startup arg list"
-  return(C_TO_XEN_INT(script_arg));
+  return(C_int_to_Xen_integer(script_arg));
 }
 
 
 static XEN g_set_script_arg(XEN arg) 
 {
-  script_arg = XEN_TO_C_INT(arg); 
+  script_arg = Xen_integer_to_C_int(arg); 
   return(arg);
 }
 
@@ -1397,10 +1397,10 @@ static XEN g_set_script_arg(XEN arg)
 static XEN g_script_args(void)
 {
   #define H_script_args "(" S_script_args "): the args passed to Snd at startup as a list of strings"
-  XEN lst = XEN_EMPTY_LIST;
+  XEN lst = Xen_empty_list;
   int i;
   for (i = script_argn - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_STRING(script_args[i]), lst);
+    lst = Xen_cons(C_string_to_Xen_string(script_args[i]), lst);
   return(lst);
 }
 
@@ -1524,7 +1524,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				    snd_error_without_format("-I but no path?");
 				  else 
 				    {
-				      XEN_ADD_TO_LOAD_PATH(auto_open_file_names[auto_open_ctr]);
+				      Xen_add_to_load_path(auto_open_file_names[auto_open_ctr]);
 				    }
 				}
 			      else
@@ -1561,13 +1561,13 @@ static void save_state_error_handler(const char *msg, void *data)
   XEN fname;
   if (filename)
     {
-      fname = C_TO_XEN_STRING(filename);
+      fname = C_string_to_Xen_string(filename);
       free(filename); /* this is "name" below */
     }
-  else fname = C_TO_XEN_STRING(save_state_file(ss));
+  else fname = C_string_to_Xen_string(save_state_file(ss));
   redirect_snd_error_to(NULL, NULL);
-  XEN_ERROR(CANNOT_SAVE,
-	    XEN_LIST_2(C_TO_XEN_STRING(S_save_state ": can't save ~S"),
+  Xen_error(CANNOT_SAVE,
+	    Xen_list_2(C_string_to_Xen_string(S_save_state ": can't save ~S"),
 		       fname));
 }
 
@@ -1579,17 +1579,17 @@ static XEN g_save_state(XEN filename)
   #define H_save_state "(" S_save_state " :optional filename): save the current Snd state in filename; (load filename) restores it.  The \
 default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be changed via " S_save_state_file "."
 
-  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(filename), filename, 1, S_save_state, "a string");
+  Xen_check_type(Xen_is_string_or_unbound(filename), filename, 1, S_save_state, "a string");
 
   if (Xen_is_bound(filename))
-    name = mus_strdup(XEN_TO_C_STRING(filename));
+    name = mus_strdup(Xen_string_to_C_string(filename));
   else name = mus_strdup(save_state_file(ss));
 
   redirect_snd_error_to(save_state_error_handler, (void *)name);
   save_state(name);
   redirect_snd_error_to(NULL, NULL);
 
-  res = C_TO_XEN_STRING(name);
+  res = C_string_to_Xen_string(name);
   free(name);
   return(res);
 }
@@ -1599,8 +1599,8 @@ static XEN g_exit(XEN val)
 {
   #define H_exit "(" S_exit " :optional val): exit Snd"
   if (snd_exit_cleanly(EXIT_NOT_FORCED))
-    snd_exit((Xen_is_integer(val)) ? XEN_TO_C_INT(val) : 1); 
-  return(XEN_FALSE);
+    snd_exit((Xen_is_integer(val)) ? Xen_integer_to_C_int(val) : 1); 
+  return(Xen_false);
 }
 
 
@@ -1615,10 +1615,10 @@ static int snd_access(const char *dir, const char *caller)
       XEN res;
       free(temp);
       temp = mus_format("%s: directory %s is not writable: %s", caller, dir, snd_open_strerror());
-      res = C_TO_XEN_STRING(temp);
+      res = C_string_to_Xen_string(temp);
       free(temp);
-      XEN_ERROR(NO_SUCH_FILE,
-		XEN_LIST_1(res));
+      Xen_error(NO_SUCH_FILE,
+		Xen_list_1(res));
     }
   else snd_close(err, temp);
   snd_remove(temp, IGNORE_CACHE);
@@ -1627,33 +1627,33 @@ static int snd_access(const char *dir, const char *caller)
 }
 
 
-static XEN g_temp_dir(void) {return(C_TO_XEN_STRING(temp_dir(ss)));}
+static XEN g_temp_dir(void) {return(C_string_to_Xen_string(temp_dir(ss)));}
 
 static XEN g_set_temp_dir(XEN val) 
 {
   #define H_temp_dir "(" S_temp_dir "): name of directory for temp files (or " PROC_FALSE "=null)"
   const char *dir = MUS_DEFAULT_TEMP_DIR;
-  XEN_ASSERT_TYPE(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_temp_dir, "a string or " PROC_FALSE "=default (null)"); 
-  if (Xen_is_string(val)) dir = XEN_TO_C_STRING(val);
+  Xen_check_type(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_temp_dir, "a string or " PROC_FALSE "=default (null)"); 
+  if (Xen_is_string(val)) dir = Xen_string_to_C_string(val);
   if (snd_access(dir, S_temp_dir))
     {
       if (temp_dir(ss)) free(temp_dir(ss));
       set_temp_dir(mus_strdup(dir));
     }
-  return(C_TO_XEN_STRING(temp_dir(ss)));
+  return(C_string_to_Xen_string(temp_dir(ss)));
 }
 
 
-static XEN g_peak_env_dir(void) {return(C_TO_XEN_STRING(peak_env_dir(ss)));}
+static XEN g_peak_env_dir(void) {return(C_string_to_Xen_string(peak_env_dir(ss)));}
 
 static XEN g_set_peak_env_dir(XEN val) 
 {
   #define H_peak_env_dir "(" S_peak_env_dir "): name of directory for peak env files (or " PROC_FALSE "=null)"
   const char *dir = NULL;
-  XEN_ASSERT_TYPE(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_peak_env_dir, "a string or " PROC_FALSE "=default (null)"); 
+  Xen_check_type(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_peak_env_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (Xen_is_string(val)) 
     {
-      dir = XEN_TO_C_STRING(val);
+      dir = Xen_string_to_C_string(val);
       if (snd_access(dir, S_peak_env_dir))
 	{
 	  if (peak_env_dir(ss)) free(peak_env_dir(ss));
@@ -1665,69 +1665,69 @@ static XEN g_set_peak_env_dir(XEN val)
       if (peak_env_dir(ss)) free(peak_env_dir(ss));
       set_peak_env_dir(NULL);
     }
-  return(C_TO_XEN_STRING(peak_env_dir(ss)));
+  return(C_string_to_Xen_string(peak_env_dir(ss)));
 }
 
 
-static XEN g_ladspa_dir(void) {return(C_TO_XEN_STRING(ladspa_dir(ss)));}
+static XEN g_ladspa_dir(void) {return(C_string_to_Xen_string(ladspa_dir(ss)));}
 
 static XEN g_set_ladspa_dir(XEN val) 
 {
   #define H_ladspa_dir "(" S_ladspa_dir "): name of directory for ladspa plugin libraries"
-  XEN_ASSERT_TYPE(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_ladspa_dir, "a string or " PROC_FALSE "=default (null)"); 
+  Xen_check_type(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_ladspa_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (ladspa_dir(ss)) free(ladspa_dir(ss));
   if (Xen_is_false(val))
     {set_ladspa_dir(mus_strdup(DEFAULT_LADSPA_DIR));}
-  else {set_ladspa_dir(mus_strdup(XEN_TO_C_STRING(val)));}
-  return(C_TO_XEN_STRING(ladspa_dir(ss)));
+  else {set_ladspa_dir(mus_strdup(Xen_string_to_C_string(val)));}
+  return(C_string_to_Xen_string(ladspa_dir(ss)));
 }
 
 
-static XEN g_save_state_file(void) {return(C_TO_XEN_STRING(save_state_file(ss)));}
+static XEN g_save_state_file(void) {return(C_string_to_Xen_string(save_state_file(ss)));}
 
 static XEN g_set_save_state_file(XEN val) 
 {
   const char *filename;
-  #define H_save_state_file "(" S_save_state_file "): the name of the saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_save_state_file, "a string"); 
-  filename = XEN_TO_C_STRING(val);
+  #define H_save_state_file "(" S_save_state_file "): the name of the saved state file (\"saved-snd." Xen_file_extension "\")"
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_save_state_file, "a string"); 
+  filename = Xen_string_to_C_string(val);
   if (save_state_file(ss)) free(save_state_file(ss));
   in_set_save_state_file(mus_strdup(filename));
-  return(C_TO_XEN_STRING(save_state_file(ss)));
+  return(C_string_to_Xen_string(save_state_file(ss)));
 }
 
 
-static XEN g_save_dir(void) {return(C_TO_XEN_STRING(save_dir(ss)));}
+static XEN g_save_dir(void) {return(C_string_to_Xen_string(save_dir(ss)));}
 
 static XEN g_set_save_dir(XEN val) 
 {
   #define H_save_dir "(" S_save_dir "): name of directory for saved state data (or " PROC_FALSE "=null)"
   const char *dir = MUS_DEFAULT_SAVE_DIR;
-  XEN_ASSERT_TYPE(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_save_dir, "a string or " PROC_FALSE "=default (null)"); 
-  if (Xen_is_string(val)) dir = XEN_TO_C_STRING(val);
+  Xen_check_type(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_save_dir, "a string or " PROC_FALSE "=default (null)"); 
+  if (Xen_is_string(val)) dir = Xen_string_to_C_string(val);
   if (snd_access(dir, S_save_dir))
     {
       if (save_dir(ss)) free(save_dir(ss));
       set_save_dir(mus_strdup(dir));
     }
-  return(C_TO_XEN_STRING(save_dir(ss)));
+  return(C_string_to_Xen_string(save_dir(ss)));
 }
 
 
-static XEN g_open_file_dialog_directory(void) {return(C_TO_XEN_STRING(open_file_dialog_directory(ss)));}
+static XEN g_open_file_dialog_directory(void) {return(C_string_to_Xen_string(open_file_dialog_directory(ss)));}
 
 static XEN g_set_open_file_dialog_directory(XEN val) 
 {
   #define H_open_file_dialog_directory "(" S_open_file_dialog_directory "): name of directory for initial open file dialog search"
   const char *dir;
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_open_file_dialog_directory, "a string"); 
-  dir = XEN_TO_C_STRING(val);
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_open_file_dialog_directory, "a string"); 
+  dir = Xen_string_to_C_string(val);
   if (snd_access(dir, S_open_file_dialog_directory))
     {
       if (open_file_dialog_directory(ss)) free(open_file_dialog_directory(ss));
       set_open_file_dialog_directory(mus_strdup(dir));
     }
-  return(C_TO_XEN_STRING(open_file_dialog_directory(ss)));
+  return(C_string_to_Xen_string(open_file_dialog_directory(ss)));
 }
 
 
@@ -1762,15 +1762,15 @@ static int snd_screen_width(void)
 static XEN g_window_height(void) 
 {
   #define H_window_height "(" S_window_height "): current Snd window height in pixels"
-  return(C_TO_XEN_INT(widget_height(MAIN_SHELL(ss))));
+  return(C_int_to_Xen_integer(widget_height(MAIN_SHELL(ss))));
 }
 
 
 static XEN g_set_window_height(XEN height) 
 {
   int val;
-  XEN_ASSERT_TYPE(Xen_is_integer(height), height, 1, S_setB S_window_height, "an integer"); 
-  val = XEN_TO_C_INT(height);
+  Xen_check_type(Xen_is_integer(height), height, 1, S_setB S_window_height, "an integer"); 
+  val = Xen_integer_to_C_int(height);
   if ((val > 0) && (val < snd_screen_height()))
     {
 #if (!USE_NO_GUI)
@@ -1785,15 +1785,15 @@ static XEN g_set_window_height(XEN height)
 static XEN g_window_width(void) 
 {
   #define H_window_width "(" S_window_width "): current Snd window width in pixels"
-  return(C_TO_XEN_INT(widget_width(MAIN_SHELL(ss))));
+  return(C_int_to_Xen_integer(widget_width(MAIN_SHELL(ss))));
 }
 
 
 static XEN g_set_window_width(XEN width) 
 {
   int val;
-  XEN_ASSERT_TYPE(Xen_is_integer(width), width, 1, S_setB S_window_width, "an integer"); 
-  val = XEN_TO_C_INT(width);
+  Xen_check_type(Xen_is_integer(width), width, 1, S_setB S_window_width, "an integer"); 
+  val = Xen_integer_to_C_int(width);
   if ((val > 0) && (val < snd_screen_width()))
     {
 #if (!USE_NO_GUI)
@@ -1808,15 +1808,15 @@ static XEN g_set_window_width(XEN width)
 static XEN g_window_x(void) 
 {
   #define H_window_x "(" S_window_x "): current Snd window x position in pixels"
-  return(C_TO_XEN_INT(widget_x(MAIN_SHELL(ss))));
+  return(C_int_to_Xen_integer(widget_x(MAIN_SHELL(ss))));
 }
 
 
 static XEN g_set_window_x(XEN val) 
 {
   int x;
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_window_x, "an integer"); 
-  x = XEN_TO_C_INT(val);
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_window_x, "an integer"); 
+  x = Xen_integer_to_C_int(val);
   if ((x >= 0) && (x < snd_screen_width()))
     {
       set_widget_x(MAIN_SHELL(ss), x);
@@ -1829,15 +1829,15 @@ static XEN g_set_window_x(XEN val)
 static XEN g_window_y(void) 
 {
   #define H_window_y "(" S_window_y "): current Snd window y position in pixels"
-  return(C_TO_XEN_INT(widget_y(MAIN_SHELL(ss))));
+  return(C_int_to_Xen_integer(widget_y(MAIN_SHELL(ss))));
 }
 
 
 static XEN g_set_window_y(XEN val) 
 {
   int y;
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_window_y, "an integer"); 
-  y = XEN_TO_C_INT(val);
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_window_y, "an integer"); 
+  y = Xen_integer_to_C_int(val);
   if ((y >= 0) && (y < snd_screen_height()))
     {
       set_widget_y(MAIN_SHELL(ss), y);
@@ -1850,35 +1850,35 @@ static XEN g_set_window_y(XEN val)
 static XEN g_just_sounds(void)
 {
   #define H_just_sounds "(" S_just_sounds "): the 'just sounds' choice in the file chooser dialog"
-  return(C_TO_XEN_BOOLEAN(just_sounds(ss)));
+  return(C_bool_to_Xen_boolean(just_sounds(ss)));
 }
 
 
 static XEN g_set_just_sounds(XEN on) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_just_sounds, "a boolean");
-  set_just_sounds(XEN_TO_C_BOOLEAN(on));
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_just_sounds, "a boolean");
+  set_just_sounds(Xen_boolean_to_C_bool(on));
   reflect_just_sounds();
-  return(C_TO_XEN_BOOLEAN(just_sounds(ss)));
+  return(C_bool_to_Xen_boolean(just_sounds(ss)));
 }
 
 
 static XEN g_play_arrow_size(void)
 {
   #define H_play_arrow_size "(" S_play_arrow_size "): the size of the play triangles"
-  return(C_TO_XEN_INT(play_arrow_size(ss)));
+  return(C_int_to_Xen_integer(play_arrow_size(ss)));
 }
 
 
 static XEN g_set_play_arrow_size(XEN size) 
 {
   int arrow_size;
-  XEN_ASSERT_TYPE(Xen_is_integer(size), size, 1, S_setB S_play_arrow_size, "an integer");
+  Xen_check_type(Xen_is_integer(size), size, 1, S_setB S_play_arrow_size, "an integer");
 
-  arrow_size = XEN_TO_C_INT(size);
+  arrow_size = Xen_integer_to_C_int(size);
   if (arrow_size >= 0)
     {set_play_arrow_size(arrow_size);}
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_play_arrow_size, 1, size, "must be >= 0");
+  else Xen_out_of_range_error(S_setB S_play_arrow_size, 1, size, "must be >= 0");
 
   for_each_chan(update_graph);
   return(size);
@@ -1888,220 +1888,220 @@ static XEN g_set_play_arrow_size(XEN size)
 static XEN g_with_inset_graph(void)
 {
   #define H_with_inset_graph "(" S_with_inset_graph "): if " PROC_TRUE " (default is " PROC_FALSE "), display the inset graph in the time domain section."
-  return(C_TO_XEN_BOOLEAN(with_inset_graph(ss)));
+  return(C_bool_to_Xen_boolean(with_inset_graph(ss)));
 }
 
 
 static XEN g_set_with_inset_graph(XEN on) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_with_inset_graph, "a boolean");
-  set_with_inset_graph(XEN_TO_C_BOOLEAN(on));
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_with_inset_graph, "a boolean");
+  set_with_inset_graph(Xen_boolean_to_C_bool(on));
   for_each_chan(update_graph);
-  return(C_TO_XEN_BOOLEAN(with_inset_graph(ss)));
+  return(C_bool_to_Xen_boolean(with_inset_graph(ss)));
 }
 
 
 static XEN g_with_interrupts(void)
 {
   #define H_with_interrupts "(" S_with_interrupts "): if " PROC_TRUE ", check for GUI events during computations."
-  return(C_TO_XEN_BOOLEAN(with_interrupts(ss)));
+  return(C_bool_to_Xen_boolean(with_interrupts(ss)));
 }
 
 
 static XEN g_set_with_interrupts(XEN on) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_with_interrupts, "a boolean");
-  set_with_interrupts(XEN_TO_C_BOOLEAN(on));
-  return(C_TO_XEN_BOOLEAN(with_interrupts(ss)));
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_with_interrupts, "a boolean");
+  set_with_interrupts(Xen_boolean_to_C_bool(on));
+  return(C_bool_to_Xen_boolean(with_interrupts(ss)));
 }
 
 
 static XEN g_with_smpte_label(void)
 {
   #define H_with_smpte_label "(" S_with_smpte_label "): if " PROC_TRUE " (default is " PROC_FALSE "), display the SMPTE data in the time domain section."
-  return(C_TO_XEN_BOOLEAN(with_smpte_label(ss)));
+  return(C_bool_to_Xen_boolean(with_smpte_label(ss)));
 }
 
 
 static XEN g_set_with_smpte_label(XEN on) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_with_smpte_label, "a boolean");
-  set_with_smpte_label(XEN_TO_C_BOOLEAN(on));
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_with_smpte_label, "a boolean");
+  set_with_smpte_label(Xen_boolean_to_C_bool(on));
   for_each_chan(update_graph);
-  return(C_TO_XEN_BOOLEAN(with_smpte_label(ss)));
+  return(C_bool_to_Xen_boolean(with_smpte_label(ss)));
 }
 
 
 static XEN g_with_pointer_focus(void)
 {
   #define H_with_pointer_focus "(" S_with_pointer_focus "): if " PROC_TRUE " (default is " PROC_FALSE "), activate the text or graph widget beneath the mouse."
-  return(C_TO_XEN_BOOLEAN(with_pointer_focus(ss)));
+  return(C_bool_to_Xen_boolean(with_pointer_focus(ss)));
 }
 
 
 static XEN g_set_with_pointer_focus(XEN on) 
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_with_pointer_focus, "a boolean");
-  set_with_pointer_focus(XEN_TO_C_BOOLEAN(on));
-  return(C_TO_XEN_BOOLEAN(with_pointer_focus(ss)));
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_with_pointer_focus, "a boolean");
+  set_with_pointer_focus(Xen_boolean_to_C_bool(on));
+  return(C_bool_to_Xen_boolean(with_pointer_focus(ss)));
 }
 
 
-static XEN g_tiny_font(void) {return(C_TO_XEN_STRING(tiny_font(ss)));}
+static XEN g_tiny_font(void) {return(C_string_to_Xen_string(tiny_font(ss)));}
 
 static XEN g_set_tiny_font(XEN val) 
 {
   #define H_tiny_font "(" S_tiny_font "): font use for some info in the graphs"
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_tiny_font, "a string"); 
-  set_tiny_font(XEN_TO_C_STRING(val)); 
-  return(C_TO_XEN_STRING(tiny_font(ss)));
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_tiny_font, "a string"); 
+  set_tiny_font(Xen_string_to_C_string(val)); 
+  return(C_string_to_Xen_string(tiny_font(ss)));
 }
 
 
-static XEN g_axis_label_font(void) {return(C_TO_XEN_STRING(axis_label_font(ss)));}
+static XEN g_axis_label_font(void) {return(C_string_to_Xen_string(axis_label_font(ss)));}
 
 static XEN g_set_axis_label_font(XEN val) 
 {
   #define H_axis_label_font "(" S_axis_label_font "): font used for axis labels"
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_axis_label_font, "a string"); 
-  set_axis_label_font(XEN_TO_C_STRING(val)); 
-  return(C_TO_XEN_STRING(axis_label_font(ss)));
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_axis_label_font, "a string"); 
+  set_axis_label_font(Xen_string_to_C_string(val)); 
+  return(C_string_to_Xen_string(axis_label_font(ss)));
 }
 
 
-static XEN g_axis_numbers_font(void) {return(C_TO_XEN_STRING(axis_numbers_font(ss)));}
+static XEN g_axis_numbers_font(void) {return(C_string_to_Xen_string(axis_numbers_font(ss)));}
 
 static XEN g_set_axis_numbers_font(XEN val) 
 {
   #define H_axis_numbers_font "(" S_axis_numbers_font "): font used for axis numbers"
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_axis_numbers_font, "a string"); 
-  set_axis_numbers_font(XEN_TO_C_STRING(val)); 
-  return(C_TO_XEN_STRING(axis_numbers_font(ss)));
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_axis_numbers_font, "a string"); 
+  set_axis_numbers_font(Xen_string_to_C_string(val)); 
+  return(C_string_to_Xen_string(axis_numbers_font(ss)));
 }
 
 
-static XEN g_listener_font(void) {return(C_TO_XEN_STRING(listener_font(ss)));}
+static XEN g_listener_font(void) {return(C_string_to_Xen_string(listener_font(ss)));}
 
 static XEN g_set_listener_font(XEN val) 
 {
   #define H_listener_font "(" S_listener_font "): font used by the lisp listener"
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_listener_font, "a string");
-  set_listener_font(XEN_TO_C_STRING(val)); 
-  return(C_TO_XEN_STRING(listener_font(ss)));
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_listener_font, "a string");
+  set_listener_font(Xen_string_to_C_string(val)); 
+  return(C_string_to_Xen_string(listener_font(ss)));
 }
 
 
-static XEN g_bold_peaks_font(void) {return(C_TO_XEN_STRING(bold_peaks_font(ss)));}
+static XEN g_bold_peaks_font(void) {return(C_string_to_Xen_string(bold_peaks_font(ss)));}
 
 static XEN g_set_bold_peaks_font(XEN val) 
 {
   #define H_bold_peaks_font "(" S_bold_peaks_font "): bold font used by fft peak display"
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_bold_peaks_font, "a string"); 
-  set_bold_peaks_font(XEN_TO_C_STRING(val)); 
-  return(C_TO_XEN_STRING(bold_peaks_font(ss)));
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_bold_peaks_font, "a string"); 
+  set_bold_peaks_font(Xen_string_to_C_string(val)); 
+  return(C_string_to_Xen_string(bold_peaks_font(ss)));
 }
 
 
-static XEN g_peaks_font(void) {return(C_TO_XEN_STRING(peaks_font(ss)));}
+static XEN g_peaks_font(void) {return(C_string_to_Xen_string(peaks_font(ss)));}
 
 static XEN g_set_peaks_font(XEN val) 
 {
   #define H_peaks_font "(" S_peaks_font "): normal font used by fft peak display"
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_peaks_font, "a string"); 
-  set_peaks_font(XEN_TO_C_STRING(val)); 
-  return(C_TO_XEN_STRING(peaks_font(ss)));
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_peaks_font, "a string"); 
+  set_peaks_font(Xen_string_to_C_string(val)); 
+  return(C_string_to_Xen_string(peaks_font(ss)));
 }
 
 
-static XEN g_audio_output_device(void) {return(C_TO_XEN_INT(audio_output_device(ss)));}
+static XEN g_audio_output_device(void) {return(C_int_to_Xen_integer(audio_output_device(ss)));}
 
 static XEN g_set_audio_output_device(XEN val) 
 {
   #define H_audio_output_device "(" S_audio_output_device "): the current sndlib default output device (" S_mus_audio_default ")"
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_audio_output_device, "an integer"); 
-  set_audio_output_device(XEN_TO_C_INT(val)); 
-  return(C_TO_XEN_INT(audio_output_device(ss)));
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_audio_output_device, "an integer"); 
+  set_audio_output_device(Xen_integer_to_C_int(val)); 
+  return(C_int_to_Xen_integer(audio_output_device(ss)));
 }
 
 
-static XEN g_audio_input_device(void) {return(C_TO_XEN_INT(audio_input_device(ss)));}
+static XEN g_audio_input_device(void) {return(C_int_to_Xen_integer(audio_input_device(ss)));}
 
 static XEN g_set_audio_input_device(XEN val) 
 {
   #define H_audio_input_device "(" S_audio_input_device "): the current sndlib default input device (" S_mus_audio_default ")"
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_audio_input_device, "an integer"); 
-  set_audio_input_device(XEN_TO_C_INT(val)); 
-  return(C_TO_XEN_INT(audio_input_device(ss)));
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_audio_input_device, "an integer"); 
+  set_audio_input_device(Xen_integer_to_C_int(val)); 
+  return(C_int_to_Xen_integer(audio_input_device(ss)));
 }
 
 
-static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(ss)));}
+static XEN g_auto_resize(void) {return(C_bool_to_Xen_boolean(auto_resize(ss)));}
 
 static XEN g_set_auto_resize(XEN val) 
 {
   #define H_auto_resize "(" S_auto_resize "): " PROC_TRUE " if Snd can change its main window size as it pleases (default: " PROC_TRUE ")"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_auto_resize, "a boolean");
-  set_auto_resize(XEN_TO_C_BOOLEAN(val)); 
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_auto_resize, "a boolean");
+  set_auto_resize(Xen_boolean_to_C_bool(val)); 
 #if USE_MOTIF
   XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, auto_resize(ss), NULL);
 #endif
-  return(C_TO_XEN_BOOLEAN(auto_resize(ss)));
+  return(C_bool_to_Xen_boolean(auto_resize(ss)));
 }
 
 
-static XEN g_color_cutoff(void) {return(C_TO_XEN_DOUBLE(color_cutoff(ss)));}
+static XEN g_color_cutoff(void) {return(C_double_to_Xen_real(color_cutoff(ss)));}
 
 static XEN g_set_color_cutoff(XEN val) 
 {
   #define H_color_cutoff "(" S_color_cutoff "): color map cutoff point (default .003).  Any values \
 below the cutoff are displayed in the background color"
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_color_cutoff, "a number");
+  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_color_cutoff, "a number");
   set_color_cutoff(mus_fclamp(0.0,
-			      XEN_TO_C_DOUBLE(val),
+			      Xen_real_to_C_double(val),
 #if USE_MOTIF
 			      0.25
 #else
 			      1.0
 #endif
 			      )); 
-  return(C_TO_XEN_DOUBLE(color_cutoff(ss)));
+  return(C_double_to_Xen_real(color_cutoff(ss)));
 }
 
 
-static XEN g_color_inverted(void) {return(C_TO_XEN_BOOLEAN(color_inverted(ss)));}
+static XEN g_color_inverted(void) {return(C_bool_to_Xen_boolean(color_inverted(ss)));}
 
 static XEN g_set_color_inverted(XEN val) 
 {
   #define H_color_inverted "(" S_color_inverted "): whether the colormap in operation should be inverted"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_color_inverted, "a boolean");
-  set_color_inverted(XEN_TO_C_BOOLEAN(val)); 
-  return(C_TO_XEN_BOOLEAN(color_inverted(ss)));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_color_inverted, "a boolean");
+  set_color_inverted(Xen_boolean_to_C_bool(val)); 
+  return(C_bool_to_Xen_boolean(color_inverted(ss)));
 }
 
 
-static XEN g_color_scale(void) {return(C_TO_XEN_DOUBLE(color_scale(ss)));}
+static XEN g_color_scale(void) {return(C_double_to_Xen_real(color_scale(ss)));}
 
 static XEN g_set_color_scale(XEN val) 
 {
   #define H_color_scale "(" S_color_scale "): darkness setting for colormaps (0.5)"
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_color_scale, "a number"); 
+  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_color_scale, "a number"); 
   set_color_scale(mus_fclamp(0.0,
-			     XEN_TO_C_DOUBLE(val),
+			     Xen_real_to_C_double(val),
 			     1000.0)); 
-  return(C_TO_XEN_DOUBLE(color_scale(ss)));
+  return(C_double_to_Xen_real(color_scale(ss)));
 }
 
 
-static XEN g_selection_creates_region(void) {return(C_TO_XEN_BOOLEAN(selection_creates_region(ss)));}
+static XEN g_selection_creates_region(void) {return(C_bool_to_Xen_boolean(selection_creates_region(ss)));}
 
 static XEN g_set_selection_creates_region(XEN val) 
 {
   #define H_selection_creates_region "(" S_selection_creates_region "): " PROC_TRUE " if a region should be created each time a selection is made. \
 The default is currently " PROC_TRUE ", but that may change.  If you're dealing with large selections, and have no need of \
 regions (saved selections), you can speed up many operations by setting this flag to " PROC_FALSE
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_selection_creates_region, "a boolean");
-  set_selection_creates_region(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(selection_creates_region(ss)));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_selection_creates_region, "a boolean");
+  set_selection_creates_region(Xen_boolean_to_C_bool(val));
+  return(C_bool_to_Xen_boolean(selection_creates_region(ss)));
 }
 
 
@@ -2114,93 +2114,93 @@ static void set_print_lengths(int len)
 #endif
 }
 
-static XEN g_print_length(void) {return(C_TO_XEN_INT(print_length(ss)));}
+static XEN g_print_length(void) {return(C_int_to_Xen_integer(print_length(ss)));}
 
 static XEN g_set_print_length(XEN val) 
 {
   int len;
   #define H_print_length "(" S_print_length "): number of vector elements to print in the listener (default: 12)"
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_print_length, "an integer"); 
-  len = XEN_TO_C_INT(val);
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_print_length, "an integer"); 
+  len = Xen_integer_to_C_int(val);
   if (len < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_print_length, 1, val, "must be >= 0");
+    Xen_out_of_range_error(S_setB S_print_length, 1, val, "must be >= 0");
   set_print_lengths(len);
-  return(C_TO_XEN_INT(print_length(ss)));
+  return(C_int_to_Xen_integer(print_length(ss)));
 }
 
 
-static XEN g_show_indices(void) {return(C_TO_XEN_BOOLEAN(show_indices(ss)));}
+static XEN g_show_indices(void) {return(C_bool_to_Xen_boolean(show_indices(ss)));}
 
 static XEN g_set_show_indices(XEN val) 
 {
   #define H_show_indices "(" S_show_indices "): " PROC_TRUE " if sound name should be preceded by its index in the sound display."
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_show_indices, "a boolean");
-  set_show_indices(XEN_TO_C_BOOLEAN(val));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_show_indices, "a boolean");
+  set_show_indices(Xen_boolean_to_C_bool(val));
   for_each_sound(update_sound_label);
-  return(C_TO_XEN_BOOLEAN(show_indices(ss)));
+  return(C_bool_to_Xen_boolean(show_indices(ss)));
 }
 
-static XEN g_with_relative_panes(void) {return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));}
+static XEN g_with_relative_panes(void) {return(C_bool_to_Xen_boolean(with_relative_panes(ss)));}
 
 static XEN g_set_with_relative_panes(XEN val) 
 {
   #define H_with_relative_panes "(" S_with_relative_panes "): " PROC_TRUE " if multichannel sounds should try to maintain relative pane sizes"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_with_relative_panes, "a boolean");
-  set_with_relative_panes(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_relative_panes, "a boolean");
+  set_with_relative_panes(Xen_boolean_to_C_bool(val));
+  return(C_bool_to_Xen_boolean(with_relative_panes(ss)));
 }
 
 
-static XEN g_with_background_processes(void) {return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));}
+static XEN g_with_background_processes(void) {return(C_bool_to_Xen_boolean(with_background_processes(ss)));}
 
 static XEN g_set_with_background_processes(XEN val) 
 {
   #define H_with_background_processes "(" S_with_background_processes "): " PROC_TRUE " if Snd should use background (idle time) processing"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_with_background_processes, "a boolean");
-  set_with_background_processes(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_background_processes, "a boolean");
+  set_with_background_processes(Xen_boolean_to_C_bool(val));
+  return(C_bool_to_Xen_boolean(with_background_processes(ss)));
 }
 
 
-static XEN g_with_file_monitor(void) {return(C_TO_XEN_BOOLEAN(with_file_monitor(ss)));}
+static XEN g_with_file_monitor(void) {return(C_bool_to_Xen_boolean(with_file_monitor(ss)));}
 
 static XEN g_set_with_file_monitor(XEN val) 
 {
   #define H_with_file_monitor "(" S_with_file_monitor "): " PROC_TRUE " if the file alteration monitor is active"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_with_file_monitor, "a boolean");
-  set_with_file_monitor(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(with_file_monitor(ss)));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_file_monitor, "a boolean");
+  set_with_file_monitor(Xen_boolean_to_C_bool(val));
+  return(C_bool_to_Xen_boolean(with_file_monitor(ss)));
 }
 
 
 static XEN g_snd_version(void) 
 {
   #define H_snd_version "(" S_snd_version "): current Snd version (a string)"
-  return(C_TO_XEN_STRING("Snd " SND_VERSION ", " SND_DATE)); /* make it look like s7-version's output */
+  return(C_string_to_Xen_string("Snd " SND_VERSION ", " SND_DATE)); /* make it look like s7-version's output */
 }
 
 
 static XEN g_color_orientation_dialog(XEN managed) 
 {
   #define H_color_orientation_dialog "(" S_color_orientation_dialog " :optional managed): start the Color/Orientation dialog"
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_color_orientation_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_color_orientation_dialog(XEN_TO_C_BOOLEAN(managed))));
+  Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_color_orientation_dialog, "a boolean");
+  return(XEN_WRAP_WIDGET(make_color_orientation_dialog(Xen_boolean_to_C_bool(managed))));
 }
 
 
 static XEN g_transform_dialog(XEN managed) 
 {
   #define H_transform_dialog "(" S_transform_dialog " :optional (managed " PROC_TRUE ")): start the Transforms dialog"
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_transform_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_transform_dialog(XEN_TO_C_BOOLEAN(managed))));
+  Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_transform_dialog, "a boolean");
+  return(XEN_WRAP_WIDGET(make_transform_dialog(Xen_boolean_to_C_bool(managed))));
 }
 
 
 static XEN g_print_dialog(XEN managed, XEN direct_to_printer) 
 {
   #define H_print_dialog "(" S_print_dialog " :optional managed direct): start the File Print dialog"
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_print_dialog, "a boolean");
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(direct_to_printer), direct_to_printer, 2, S_print_dialog, "a boolean");
+  Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_print_dialog, "a boolean");
+  Xen_check_type(Xen_is_boolean_or_unbound(direct_to_printer), direct_to_printer, 2, S_print_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_file_print_dialog(!(Xen_is_false(managed)), Xen_is_true(direct_to_printer))));
 }
 
@@ -2216,7 +2216,7 @@ static XEN g_abort(void)
 {
   #define H_abort "(" S_abort "): exit Snd via \"abort\", presumably to land in the debugger"
   abort();
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -2230,237 +2230,237 @@ static XEN g_abortq(void)
     {
       ss->stopped_explicitly = false;
       ss->C_g_typed = false;
-      return(XEN_TRUE);
+      return(Xen_true);
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 #endif
 
 
-XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
-XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
-XEN_NARGIFY_0(g_save_dir_w, g_save_dir)
-XEN_NARGIFY_1(g_set_save_dir_w, g_set_save_dir)
-XEN_NARGIFY_0(g_open_file_dialog_directory_w, g_open_file_dialog_directory)
-XEN_NARGIFY_1(g_set_open_file_dialog_directory_w, g_set_open_file_dialog_directory)
-XEN_NARGIFY_0(g_peak_env_dir_w, g_peak_env_dir)
-XEN_NARGIFY_1(g_set_peak_env_dir_w, g_set_peak_env_dir)
-XEN_NARGIFY_0(g_temp_dir_w, g_temp_dir)
-XEN_NARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
-XEN_NARGIFY_0(g_ladspa_dir_w, g_ladspa_dir)
-XEN_NARGIFY_1(g_set_ladspa_dir_w, g_set_ladspa_dir)
-XEN_ARGIFY_1(g_save_state_w, g_save_state)
-XEN_ARGIFY_1(g_exit_w, g_exit)
-XEN_NARGIFY_0(g_script_arg_w, g_script_arg)
-XEN_NARGIFY_1(g_set_script_arg_w, g_set_script_arg)
-XEN_NARGIFY_0(g_script_args_w, g_script_args)
-XEN_NARGIFY_0(g_window_x_w, g_window_x)
-XEN_NARGIFY_1(g_set_window_x_w, g_set_window_x)
-XEN_NARGIFY_0(g_window_y_w, g_window_y)
-XEN_NARGIFY_1(g_set_window_y_w, g_set_window_y)
-XEN_NARGIFY_0(g_window_width_w, g_window_width)
-XEN_NARGIFY_1(g_set_window_width_w, g_set_window_width)
-XEN_NARGIFY_0(g_window_height_w, g_window_height)
-XEN_NARGIFY_1(g_set_window_height_w, g_set_window_height)
-XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
-XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
-XEN_NARGIFY_0(g_play_arrow_size_w, g_play_arrow_size)
-XEN_NARGIFY_1(g_set_play_arrow_size_w, g_set_play_arrow_size)
-XEN_NARGIFY_0(g_with_inset_graph_w, g_with_inset_graph)
-XEN_NARGIFY_1(g_set_with_inset_graph_w, g_set_with_inset_graph)
-XEN_NARGIFY_0(g_with_interrupts_w, g_with_interrupts)
-XEN_NARGIFY_1(g_set_with_interrupts_w, g_set_with_interrupts)
-XEN_NARGIFY_0(g_with_smpte_label_w, g_with_smpte_label)
-XEN_NARGIFY_1(g_set_with_smpte_label_w, g_set_with_smpte_label)
-XEN_NARGIFY_0(g_with_pointer_focus_w, g_with_pointer_focus)
-XEN_NARGIFY_1(g_set_with_pointer_focus_w, g_set_with_pointer_focus)
-XEN_NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
-XEN_NARGIFY_1(g_set_audio_output_device_w, g_set_audio_output_device)
-XEN_NARGIFY_0(g_audio_input_device_w, g_audio_input_device)
-XEN_NARGIFY_1(g_set_audio_input_device_w, g_set_audio_input_device)
-XEN_NARGIFY_0(g_auto_resize_w, g_auto_resize)
-XEN_NARGIFY_1(g_set_auto_resize_w, g_set_auto_resize)
-XEN_NARGIFY_0(g_color_cutoff_w, g_color_cutoff)
-XEN_NARGIFY_1(g_set_color_cutoff_w, g_set_color_cutoff)
-XEN_NARGIFY_0(g_color_inverted_w, g_color_inverted)
-XEN_NARGIFY_1(g_set_color_inverted_w, g_set_color_inverted)
-XEN_NARGIFY_0(g_color_scale_w, g_color_scale)
-XEN_NARGIFY_1(g_set_color_scale_w, g_set_color_scale)
-XEN_NARGIFY_0(g_selection_creates_region_w, g_selection_creates_region)
-XEN_NARGIFY_1(g_set_selection_creates_region_w, g_set_selection_creates_region)
-XEN_NARGIFY_0(g_print_length_w, g_print_length)
-XEN_NARGIFY_1(g_set_print_length_w, g_set_print_length)
-XEN_NARGIFY_0(g_show_indices_w, g_show_indices)
-XEN_NARGIFY_1(g_set_show_indices_w, g_set_show_indices)
-XEN_NARGIFY_0(g_with_relative_panes_w, g_with_relative_panes)
-XEN_NARGIFY_1(g_set_with_relative_panes_w, g_set_with_relative_panes)
-XEN_NARGIFY_0(g_with_background_processes_w, g_with_background_processes)
-XEN_NARGIFY_1(g_set_with_background_processes_w, g_set_with_background_processes)
-XEN_NARGIFY_0(g_with_file_monitor_w, g_with_file_monitor)
-XEN_NARGIFY_1(g_set_with_file_monitor_w, g_set_with_file_monitor)
-XEN_NARGIFY_0(g_tiny_font_w, g_tiny_font)
-XEN_NARGIFY_1(g_set_tiny_font_w, g_set_tiny_font)
-XEN_NARGIFY_0(g_peaks_font_w, g_peaks_font)
-XEN_NARGIFY_1(g_set_peaks_font_w, g_set_peaks_font)
-XEN_NARGIFY_0(g_bold_peaks_font_w, g_bold_peaks_font)
-XEN_NARGIFY_1(g_set_bold_peaks_font_w, g_set_bold_peaks_font)
-XEN_NARGIFY_0(g_axis_label_font_w, g_axis_label_font)
-XEN_NARGIFY_1(g_set_axis_label_font_w, g_set_axis_label_font)
-XEN_NARGIFY_0(g_axis_numbers_font_w, g_axis_numbers_font)
-XEN_NARGIFY_1(g_set_axis_numbers_font_w, g_set_axis_numbers_font)
-XEN_NARGIFY_0(g_listener_font_w, g_listener_font)
-XEN_NARGIFY_1(g_set_listener_font_w, g_set_listener_font)
-XEN_NARGIFY_0(g_snd_version_w, g_snd_version)
-XEN_ARGIFY_1(g_color_orientation_dialog_w, g_color_orientation_dialog)
-XEN_ARGIFY_1(g_transform_dialog_w, g_transform_dialog)
-XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
-XEN_NARGIFY_0(g_preferences_dialog_w, g_preferences_dialog)
-XEN_NARGIFY_0(g_abort_w, g_abort)
+Xen_wrap_no_args(g_save_state_file_w, g_save_state_file)
+Xen_wrap_1_arg(g_set_save_state_file_w, g_set_save_state_file)
+Xen_wrap_no_args(g_save_dir_w, g_save_dir)
+Xen_wrap_1_arg(g_set_save_dir_w, g_set_save_dir)
+Xen_wrap_no_args(g_open_file_dialog_directory_w, g_open_file_dialog_directory)
+Xen_wrap_1_arg(g_set_open_file_dialog_directory_w, g_set_open_file_dialog_directory)
+Xen_wrap_no_args(g_peak_env_dir_w, g_peak_env_dir)
+Xen_wrap_1_arg(g_set_peak_env_dir_w, g_set_peak_env_dir)
+Xen_wrap_no_args(g_temp_dir_w, g_temp_dir)
+Xen_wrap_1_arg(g_set_temp_dir_w, g_set_temp_dir)
+Xen_wrap_no_args(g_ladspa_dir_w, g_ladspa_dir)
+Xen_wrap_1_arg(g_set_ladspa_dir_w, g_set_ladspa_dir)
+Xen_wrap_1_optional_arg(g_save_state_w, g_save_state)
+Xen_wrap_1_optional_arg(g_exit_w, g_exit)
+Xen_wrap_no_args(g_script_arg_w, g_script_arg)
+Xen_wrap_1_arg(g_set_script_arg_w, g_set_script_arg)
+Xen_wrap_no_args(g_script_args_w, g_script_args)
+Xen_wrap_no_args(g_window_x_w, g_window_x)
+Xen_wrap_1_arg(g_set_window_x_w, g_set_window_x)
+Xen_wrap_no_args(g_window_y_w, g_window_y)
+Xen_wrap_1_arg(g_set_window_y_w, g_set_window_y)
+Xen_wrap_no_args(g_window_width_w, g_window_width)
+Xen_wrap_1_arg(g_set_window_width_w, g_set_window_width)
+Xen_wrap_no_args(g_window_height_w, g_window_height)
+Xen_wrap_1_arg(g_set_window_height_w, g_set_window_height)
+Xen_wrap_no_args(g_just_sounds_w, g_just_sounds)
+Xen_wrap_1_arg(g_set_just_sounds_w, g_set_just_sounds)
+Xen_wrap_no_args(g_play_arrow_size_w, g_play_arrow_size)
+Xen_wrap_1_arg(g_set_play_arrow_size_w, g_set_play_arrow_size)
+Xen_wrap_no_args(g_with_inset_graph_w, g_with_inset_graph)
+Xen_wrap_1_arg(g_set_with_inset_graph_w, g_set_with_inset_graph)
+Xen_wrap_no_args(g_with_interrupts_w, g_with_interrupts)
+Xen_wrap_1_arg(g_set_with_interrupts_w, g_set_with_interrupts)
+Xen_wrap_no_args(g_with_smpte_label_w, g_with_smpte_label)
+Xen_wrap_1_arg(g_set_with_smpte_label_w, g_set_with_smpte_label)
+Xen_wrap_no_args(g_with_pointer_focus_w, g_with_pointer_focus)
+Xen_wrap_1_arg(g_set_with_pointer_focus_w, g_set_with_pointer_focus)
+Xen_wrap_no_args(g_audio_output_device_w, g_audio_output_device)
+Xen_wrap_1_arg(g_set_audio_output_device_w, g_set_audio_output_device)
+Xen_wrap_no_args(g_audio_input_device_w, g_audio_input_device)
+Xen_wrap_1_arg(g_set_audio_input_device_w, g_set_audio_input_device)
+Xen_wrap_no_args(g_auto_resize_w, g_auto_resize)
+Xen_wrap_1_arg(g_set_auto_resize_w, g_set_auto_resize)
+Xen_wrap_no_args(g_color_cutoff_w, g_color_cutoff)
+Xen_wrap_1_arg(g_set_color_cutoff_w, g_set_color_cutoff)
+Xen_wrap_no_args(g_color_inverted_w, g_color_inverted)
+Xen_wrap_1_arg(g_set_color_inverted_w, g_set_color_inverted)
+Xen_wrap_no_args(g_color_scale_w, g_color_scale)
+Xen_wrap_1_arg(g_set_color_scale_w, g_set_color_scale)
+Xen_wrap_no_args(g_selection_creates_region_w, g_selection_creates_region)
+Xen_wrap_1_arg(g_set_selection_creates_region_w, g_set_selection_creates_region)
+Xen_wrap_no_args(g_print_length_w, g_print_length)
+Xen_wrap_1_arg(g_set_print_length_w, g_set_print_length)
+Xen_wrap_no_args(g_show_indices_w, g_show_indices)
+Xen_wrap_1_arg(g_set_show_indices_w, g_set_show_indices)
+Xen_wrap_no_args(g_with_relative_panes_w, g_with_relative_panes)
+Xen_wrap_1_arg(g_set_with_relative_panes_w, g_set_with_relative_panes)
+Xen_wrap_no_args(g_with_background_processes_w, g_with_background_processes)
+Xen_wrap_1_arg(g_set_with_background_processes_w, g_set_with_background_processes)
+Xen_wrap_no_args(g_with_file_monitor_w, g_with_file_monitor)
+Xen_wrap_1_arg(g_set_with_file_monitor_w, g_set_with_file_monitor)
+Xen_wrap_no_args(g_tiny_font_w, g_tiny_font)
+Xen_wrap_1_arg(g_set_tiny_font_w, g_set_tiny_font)
+Xen_wrap_no_args(g_peaks_font_w, g_peaks_font)
+Xen_wrap_1_arg(g_set_peaks_font_w, g_set_peaks_font)
+Xen_wrap_no_args(g_bold_peaks_font_w, g_bold_peaks_font)
+Xen_wrap_1_arg(g_set_bold_peaks_font_w, g_set_bold_peaks_font)
+Xen_wrap_no_args(g_axis_label_font_w, g_axis_label_font)
+Xen_wrap_1_arg(g_set_axis_label_font_w, g_set_axis_label_font)
+Xen_wrap_no_args(g_axis_numbers_font_w, g_axis_numbers_font)
+Xen_wrap_1_arg(g_set_axis_numbers_font_w, g_set_axis_numbers_font)
+Xen_wrap_no_args(g_listener_font_w, g_listener_font)
+Xen_wrap_1_arg(g_set_listener_font_w, g_set_listener_font)
+Xen_wrap_no_args(g_snd_version_w, g_snd_version)
+Xen_wrap_1_optional_arg(g_color_orientation_dialog_w, g_color_orientation_dialog)
+Xen_wrap_1_optional_arg(g_transform_dialog_w, g_transform_dialog)
+Xen_wrap_2_optional_args(g_print_dialog_w, g_print_dialog)
+Xen_wrap_no_args(g_preferences_dialog_w, g_preferences_dialog)
+Xen_wrap_no_args(g_abort_w, g_abort)
 #if (!HAVE_SCHEME)
-XEN_NARGIFY_0(g_abortq_w, g_abortq)
+Xen_wrap_no_args(g_abortq_w, g_abortq)
 #endif
 
 void g_init_main(void)
 {
-  XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state);
+  Xen_define_procedure(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state);
 #if HAVE_FORTH			/* exit is an existing word */
-  XEN_DEFINE_PROCEDURE("snd-" S_exit,  g_exit_w,         0, 1, 0, H_exit);
+  Xen_define_procedure("snd-" S_exit,  g_exit_w,         0, 1, 0, H_exit);
 #else
-  XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w,         0, 1, 0, H_exit);
+  Xen_define_procedure(S_exit,         g_exit_w,         0, 1, 0, H_exit);
 #endif
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,
+  Xen_define_procedure_with_setter(S_save_state_file, g_save_state_file_w, H_save_state_file,
 				   S_setB S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
   
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_dir, g_save_dir_w, H_save_dir,
+  Xen_define_procedure_with_setter(S_save_dir, g_save_dir_w, H_save_dir,
 				   S_setB S_save_dir, g_set_save_dir_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_open_file_dialog_directory, g_open_file_dialog_directory_w, H_open_file_dialog_directory,
+  Xen_define_procedure_with_setter(S_open_file_dialog_directory, g_open_file_dialog_directory_w, H_open_file_dialog_directory,
 				   S_setB S_open_file_dialog_directory, g_set_open_file_dialog_directory_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_peak_env_dir, g_peak_env_dir_w, H_peak_env_dir,
+  Xen_define_procedure_with_setter(S_peak_env_dir, g_peak_env_dir_w, H_peak_env_dir,
 				   S_setB S_peak_env_dir, g_set_peak_env_dir_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_temp_dir, g_temp_dir_w, H_temp_dir,
+  Xen_define_procedure_with_setter(S_temp_dir, g_temp_dir_w, H_temp_dir,
 				   S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir,
+  Xen_define_procedure_with_setter(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir,
 				   S_setB S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0);
 
   #define H_start_hook S_start_hook " (name): called upon start-up. If it returns " PROC_TRUE ", snd exits immediately."
-  start_hook = XEN_DEFINE_HOOK(S_start_hook, "(make-hook 'name)", 1, H_start_hook); 
+  start_hook = Xen_define_hook(S_start_hook, "(make-hook 'name)", 1, H_start_hook); 
 
   #define H_before_exit_hook S_before_exit_hook " (): called upon exit. \
 If it returns " PROC_TRUE ", Snd does not exit.  This can be used to check for unsaved edits."
 
-  before_exit_hook = XEN_DEFINE_HOOK(S_before_exit_hook, "(make-hook)", 0, H_before_exit_hook);
+  before_exit_hook = Xen_define_hook(S_before_exit_hook, "(make-hook)", 0, H_before_exit_hook);
 
   #define H_exit_hook S_exit_hook " (): called upon exit.  This can be used to perform cleanup activities."
 
-  exit_hook = XEN_DEFINE_HOOK(S_exit_hook, "(make-hook)", 0, H_exit_hook);
+  exit_hook = Xen_define_hook(S_exit_hook, "(make-hook)", 0, H_exit_hook);
 
   #define H_after_save_state_hook S_after_save_state_hook " (name): called after Snd state has been saved; \
 filename is the save state file."
-  after_save_state_hook = XEN_DEFINE_HOOK(S_after_save_state_hook, "(make-hook 'name)", 1, H_after_save_state_hook);
+  after_save_state_hook = Xen_define_hook(S_after_save_state_hook, "(make-hook 'name)", 1, H_after_save_state_hook);
 
   #define H_before_save_state_hook S_before_save_state_hook " (name): called before Snd state is saved. If \
 the hook functions return " PROC_TRUE ", the save state process opens the file 'name' for appending, rather than truncating."
-  before_save_state_hook = XEN_DEFINE_HOOK(S_before_save_state_hook, "(make-hook 'name)", 1, H_before_save_state_hook);
+  before_save_state_hook = Xen_define_hook(S_before_save_state_hook, "(make-hook 'name)", 1, H_before_save_state_hook);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);
+  Xen_define_procedure_with_setter(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
+  Xen_define_procedure(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_x, g_window_x_w, H_window_x,
+  Xen_define_procedure_with_setter(S_window_x, g_window_x_w, H_window_x,
 				   S_setB S_window_x, g_set_window_x_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_y, g_window_y_w, H_window_y,
+  Xen_define_procedure_with_setter(S_window_y, g_window_y_w, H_window_y,
 				   S_setB S_window_y, g_set_window_y_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_width, g_window_width_w, H_window_width,
+  Xen_define_procedure_with_setter(S_window_width, g_window_width_w, H_window_width,
 				   S_setB S_window_width, g_set_window_width_w,  0, 0, 1, 0);  
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_height, g_window_height_w, H_window_height,
+  Xen_define_procedure_with_setter(S_window_height, g_window_height_w, H_window_height,
 				   S_setB S_window_height, g_set_window_height_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_output_device, g_audio_output_device_w, H_audio_output_device,
+  Xen_define_procedure_with_setter(S_audio_output_device, g_audio_output_device_w, H_audio_output_device,
 				   S_setB S_audio_output_device, g_set_audio_output_device_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_input_device, g_audio_input_device_w, H_audio_input_device,
+  Xen_define_procedure_with_setter(S_audio_input_device, g_audio_input_device_w, H_audio_input_device,
 				   S_setB S_audio_input_device, g_set_audio_input_device_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_resize, g_auto_resize_w, H_auto_resize,
+  Xen_define_procedure_with_setter(S_auto_resize, g_auto_resize_w, H_auto_resize,
 				   S_setB S_auto_resize, g_set_auto_resize_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_cutoff, g_color_cutoff_w, H_color_cutoff,
+  Xen_define_procedure_with_setter(S_color_cutoff, g_color_cutoff_w, H_color_cutoff,
 				   S_setB S_color_cutoff, g_set_color_cutoff_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_inverted, g_color_inverted_w, H_color_inverted,
+  Xen_define_procedure_with_setter(S_color_inverted, g_color_inverted_w, H_color_inverted,
 				   S_setB S_color_inverted, g_set_color_inverted_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_scale, g_color_scale_w, H_color_scale,
+  Xen_define_procedure_with_setter(S_color_scale, g_color_scale_w, H_color_scale,
 				   S_setB S_color_scale, g_set_color_scale_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
+  Xen_define_procedure_with_setter(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
 				   S_setB S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_print_length, g_print_length_w, H_print_length,
+  Xen_define_procedure_with_setter(S_print_length, g_print_length_w, H_print_length,
 				   S_setB S_print_length, g_set_print_length_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_indices, g_show_indices_w, H_show_indices,
+  Xen_define_procedure_with_setter(S_show_indices, g_show_indices_w, H_show_indices,
 				   S_setB S_show_indices, g_set_show_indices_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_relative_panes, g_with_relative_panes_w, H_with_relative_panes,
+  Xen_define_procedure_with_setter(S_with_relative_panes, g_with_relative_panes_w, H_with_relative_panes,
 				   S_setB S_with_relative_panes, g_set_with_relative_panes_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
+  Xen_define_procedure_with_setter(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
 				   S_setB S_with_background_processes, g_set_with_background_processes_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_file_monitor, g_with_file_monitor_w, H_with_file_monitor,
+  Xen_define_procedure_with_setter(S_with_file_monitor, g_with_file_monitor_w, H_with_file_monitor,
 				   S_setB S_with_file_monitor, g_set_with_file_monitor_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tiny_font, g_tiny_font_w, H_tiny_font,
+  Xen_define_procedure_with_setter(S_tiny_font, g_tiny_font_w, H_tiny_font,
 				   S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_peaks_font, g_peaks_font_w, H_peaks_font,
+  Xen_define_procedure_with_setter(S_peaks_font, g_peaks_font_w, H_peaks_font,
 				   S_setB S_peaks_font, g_set_peaks_font_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_peaks_font, g_bold_peaks_font_w, H_bold_peaks_font,
+  Xen_define_procedure_with_setter(S_bold_peaks_font, g_bold_peaks_font_w, H_bold_peaks_font,
 				   S_setB S_bold_peaks_font, g_set_bold_peaks_font_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_label_font, g_axis_label_font_w, H_axis_label_font,
+  Xen_define_procedure_with_setter(S_axis_label_font, g_axis_label_font_w, H_axis_label_font,
 				   S_setB S_axis_label_font, g_set_axis_label_font_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_numbers_font, g_axis_numbers_font_w, H_axis_numbers_font,
+  Xen_define_procedure_with_setter(S_axis_numbers_font, g_axis_numbers_font_w, H_axis_numbers_font,
 				   S_setB S_axis_numbers_font, g_set_axis_numbers_font_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_font, g_listener_font_w, H_listener_font,
+  Xen_define_procedure_with_setter(S_listener_font, g_listener_font_w, H_listener_font,
 				   S_setB S_listener_font, g_set_listener_font_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, 
+  Xen_define_procedure_with_setter(S_just_sounds, g_just_sounds_w, H_just_sounds, 
 				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_play_arrow_size, g_play_arrow_size_w, H_play_arrow_size, 
+  Xen_define_procedure_with_setter(S_play_arrow_size, g_play_arrow_size_w, H_play_arrow_size, 
 				   S_setB S_play_arrow_size, g_set_play_arrow_size_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, 
+  Xen_define_procedure_with_setter(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, 
 				   S_setB S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_interrupts, g_with_interrupts_w, H_with_interrupts, 
+  Xen_define_procedure_with_setter(S_with_interrupts, g_with_interrupts_w, H_with_interrupts, 
 				   S_setB S_with_interrupts, g_set_with_interrupts_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_smpte_label, g_with_smpte_label_w, H_with_smpte_label, 
+  Xen_define_procedure_with_setter(S_with_smpte_label, g_with_smpte_label_w, H_with_smpte_label, 
 				   S_setB S_with_smpte_label, g_set_with_smpte_label_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, 
+  Xen_define_procedure_with_setter(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, 
 				   S_setB S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_snd_version,         g_snd_version_w,              0, 0, 0, H_snd_version);
-  XEN_DEFINE_PROCEDURE(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);
-  XEN_DEFINE_PROCEDURE(S_transform_dialog,         g_transform_dialog_w,         0, 1, 0, H_transform_dialog);
-  XEN_DEFINE_PROCEDURE(S_print_dialog,             g_print_dialog_w,             0, 2, 0, H_print_dialog);
-  XEN_DEFINE_PROCEDURE(S_preferences_dialog,       g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog);
-  XEN_DEFINE_PROCEDURE(S_abort,                    g_abort_w,                    0, 0, 0, H_abort);
+  Xen_define_safe_procedure(S_snd_version,         g_snd_version_w,              0, 0, 0, H_snd_version);
+  Xen_define_procedure(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);
+  Xen_define_procedure(S_transform_dialog,         g_transform_dialog_w,         0, 1, 0, H_transform_dialog);
+  Xen_define_procedure(S_print_dialog,             g_print_dialog_w,             0, 2, 0, H_print_dialog);
+  Xen_define_procedure(S_preferences_dialog,       g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog);
+  Xen_define_procedure(S_abort,                    g_abort_w,                    0, 0, 0, H_abort);
 #if (!HAVE_SCHEME)
-  XEN_DEFINE_PROCEDURE(S_c_g,                      g_abortq_w,                   0, 0, 0, H_abortQ);
+  Xen_define_procedure(S_c_g,                      g_abortq_w,                   0, 0, 0, H_abortQ);
 #endif
 }

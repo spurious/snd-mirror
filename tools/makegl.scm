@@ -483,33 +483,33 @@
 (hey "#endif~%")
 (hey "~%")
 
-(hey "#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), XEN_WRAP_C_POINTER(Value))~%")
+(hey "#define WRAP_FOR_XEN(Name, Value) Xen_list_2(C_string_to_Xen_symbol(Name), XEN_WRAP_C_POINTER(Value))~%")
 (hey "#define IS_WRAPPED(Name, Value) (Xen_is_list(Value) && \\~%")
-(hey "                            (XEN_LIST_LENGTH(Value) >= 2) && \\~%")
-(hey "                            (Xen_is_symbol(XEN_CAR(Value))) && \\~%")
-(hey "                            (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))~%")
+(hey "                            (Xen_list_length(Value) >= 2) && \\~%")
+(hey "                            (Xen_is_symbol(Xen_car(Value))) && \\~%")
+(hey "                            (strcmp(Name, Xen_symbol_to_C_string(Xen_car(Value))) == 0))~%")
 (hey "~%")
 
 ;;; these have to match the choices in xm.c 
 (hey "#define XL_TYPE(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_ULONG(val)));} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \\~%")
 (hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));}~%")
 (hey "#define XL_TYPE_1(Name, XType) \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \\~%")
 (hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));}~%")
 (hey "~%")
 (hey "#define XL_TYPE_PTR(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(Xen_false);} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(Xen_cadr(val)));} \\~%")
 (hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));} /* if NULL ok, should be explicit */~%")
 (hey "#define XL_TYPE_PTR_1(Name, XType) \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(Xen_cadr(val)));} \\~%")
 (hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));} /* if NULL ok, should be explicit */~%")
 
 ;XL_TYPE_PTR_2 was for "GdkVisual*" "PangoFont*" "GdkColormap*"
 ;(hey "#define XL_TYPE_PTR_2(Name, XType) \\~%")
-;(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);}~%")
+;(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(Xen_false);}~%")
 
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")
@@ -660,7 +660,7 @@
 	     (for-each
 	      (lambda (arg)
 		(if (not (ref-arg? arg))
-		    (hey "  ~A = XEN_LIST_REF(arglist, ~D);~%" (cadr arg) ctr))
+		    (hey "  ~A = Xen_list_ref(arglist, ~D);~%" (cadr arg) ctr))
 		(set! ctr (+ 1 ctr)))
 	      args))))
      (if (> (length args) 0)
@@ -671,14 +671,14 @@
 		    (argtype (car arg)))
 		(if (not (ref-arg? arg))
 		    (if (null-arg? arg)
-			(hey "  XEN_ASSERT_TYPE(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
+			(hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
 			     (no-stars argtype) argname argname argname ctr name argtype)
 			(if (opt-arg? arg)
 			    (begin
-			      (hey "  if (!Xen_is_bound(~A)) ~A = XEN_FALSE; ~%" argname argname)
-			      (hey "  else XEN_ASSERT_TYPE(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
+			      (hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
+			      (hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
 				   (no-stars argtype) argname argname ctr name argtype))
-			    (hey "  XEN_ASSERT_TYPE(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
+			    (hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
 				 (no-stars argtype) argname argname ctr name argtype))))
 		(set! ctr (+ 1 ctr))))
 	    args)))
@@ -688,7 +688,7 @@
        (if using-result
 	   (begin
 	     (hey "  {~%")
-	     (hey "    XEN result = XEN_FALSE;~%")))
+	     (hey "    XEN result = Xen_false;~%")))
        (hey-start)
        (if (not (string=? return-type "void"))
 	   (if (= refargs 0)
@@ -728,9 +728,9 @@
 		       (hey "    XEN result;~%"))
 		   (hey "    int i, vals;~%")
 		   (hey "    vals = how_many_vals(XEN_TO_C_GLenum(pname));~%")
-		   (hey "    result = XEN_EMPTY_LIST;~%")
+		   (hey "    result = Xen_empty_list;~%")
 		   (hey "    for (i = 0; i < vals; i++)~%")
-		   (hey "      result = XEN_CONS(C_TO_XEN_~A(~A[i]), result);~%" 
+		   (hey "      result = Xen_cons(C_TO_XEN_~A(~A[i]), result);~%" 
 			(no-stars (deref-type (args (- (length args) 1))))
 			(deref-name (args (- (length args) 1))))
 		   (hey "    return(result);~%")
@@ -751,7 +751,7 @@
 	   (if (string=? return-type "void")
 	       (begin
 		 (hey ");~%")
-		 (hey "  return(XEN_FALSE);~%"))
+		 (hey "  return(Xen_false);~%"))
 	       (hey ")));~%")))
        )
 
@@ -803,7 +803,7 @@
 ;;; ---------------- procedure linkages
 (hey "static void define_functions(void)~%")
 (hey "{~%")
-(hey "  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)~%")
+(hey "  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) Xen_define_procedure(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
@@ -836,9 +836,9 @@
 (hey "static void define_integers(void)~%")
 (hey "{~%~%")
 (hey "#if HAVE_SCHEME~%")
-(hey "#define DEFINE_INTEGER(Name) s7_define_constant(s7, XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))~%")
+(hey "#define DEFINE_INTEGER(Name) s7_define_constant(s7, XL_PRE #Name XL_POST, C_int_to_Xen_integer(Name))~%")
 (hey "#else~%")
-(hey "#define DEFINE_INTEGER(Name) XEN_DEFINE(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))~%")
+(hey "#define DEFINE_INTEGER(Name) Xen_define(XL_PRE #Name XL_POST, C_int_to_Xen_integer(Name))~%")
 (hey "#endif~%")
 (hey "~%")
 
@@ -882,8 +882,8 @@
 (hey "    {~%")
 (hey "      define_integers();~%")
 (hey "      define_functions();~%")
-(hey "      XEN_PROVIDE(\"gl\");~%")
-(hey "      XEN_DEFINE(\"gl-version\", C_TO_XEN_STRING(\"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
+(hey "      Xen_provide_feature(\"gl\");~%")
+(hey "      Xen_define(\"gl-version\", C_string_to_Xen_string(\"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "      gl_already_inited = true;~%")
 (hey "    }~%")
 (hey "}~%")

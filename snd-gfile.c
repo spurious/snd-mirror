@@ -575,7 +575,7 @@ static gboolean file_filter_callback(const GtkFileFilterInfo *filter_info, gpoin
 {
   /* return true => include this file */
   if (filter_info)
-    return(XEN_TO_C_BOOLEAN(XEN_CALL_1((XEN)data, C_TO_XEN_STRING(filter_info->filename), "filter func")));
+    return(Xen_boolean_to_C_bool(Xen_call_with_1_arg((XEN)data, C_string_to_Xen_string(filter_info->filename), "filter func")));
   return(false);
 }
 
@@ -695,14 +695,14 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
     /* now look for added filters added via add-file-filter */
     int i;
     for (i = 0; i < ss->file_filters_size; i++)
-      if (!(Xen_is_false(XEN_VECTOR_REF(ss->file_filters, i))))
+      if (!(Xen_is_false(Xen_vector_ref(ss->file_filters, i))))
 	{
 	  const char *filter_name;
 	  GtkFileFilter *nfilt;
 	  XEN filter_func;
 
-	  filter_name = XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_filters, i)));
-	  filter_func = XEN_CADR(XEN_VECTOR_REF(ss->file_filters, i));
+	  filter_name = Xen_string_to_C_string(Xen_car(Xen_vector_ref(ss->file_filters, i)));
+	  filter_func = Xen_cadr(Xen_vector_ref(ss->file_filters, i));
 
 	  nfilt = gtk_file_filter_new();
 	  gtk_file_filter_set_name(nfilt, filter_name);
@@ -3908,9 +3908,9 @@ static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint 
 	str = (char *)(SELECTION_DATA(data));
       else str = (char *)g_filename_from_utf8((gchar *)(SELECTION_DATA(data)), SELECTION_LENGTH(data), &bread, &bwritten, &error);
 
-      if ((!(XEN_HOOKED(drop_hook))) || 
+      if ((!(Xen_hook_has_list(drop_hook))) || 
 	  (!(Xen_is_true(run_or_hook(drop_hook,
-				    XEN_LIST_1(C_TO_XEN_STRING(str)),
+				    Xen_list_1(C_string_to_Xen_string(str)),
 				    S_drop_hook)))))
 	{
 	  drop_watcher_t *d;
@@ -3993,5 +3993,5 @@ void g_init_gxfile(void)
   #define H_drop_hook S_drop_hook " (name): called whenever Snd receives a drag-and-drop \
 event. If it returns " PROC_TRUE ", the file is not opened by Snd."
 
-  drop_hook = XEN_DEFINE_HOOK(S_drop_hook, "(make-hook 'name)", 1, H_drop_hook); 
+  drop_hook = Xen_define_hook(S_drop_hook, "(make-hook 'name)", 1, H_drop_hook); 
 }

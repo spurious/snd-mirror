@@ -947,7 +947,7 @@ static void popup_normalize_callback(Widget w, XtPointer info, XtPointer context
 
 static void popup_reverse_callback(Widget w, XtPointer info, XtPointer context) 
 {
-  reverse_sound(current_channel(), OVER_SOUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+  reverse_sound(current_channel(), OVER_SOUND, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0);
 }
 
 
@@ -1075,7 +1075,7 @@ static void popup_mark_selection_callback(Widget w, XtPointer info, XtPointer co
 
 static void popup_reverse_selection_callback(Widget w, XtPointer info, XtPointer context)
 {
-  reverse_sound(current_channel(), OVER_SELECTION, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+  reverse_sound(current_channel(), OVER_SELECTION, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0);
 }
 
 static mus_float_t selection_max = 0.0;
@@ -1889,21 +1889,21 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 static XEN g_menu_widgets(void)
 {
   #define H_menu_widgets "(" S_menu_widgets "): a list of top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help)"
-  return(XEN_CONS(XEN_WRAP_WIDGET(main_menu),
-	  XEN_CONS(XEN_WRAP_WIDGET(file_cascade_menu),
-           XEN_CONS(XEN_WRAP_WIDGET(edit_cascade_menu),
-            XEN_CONS(XEN_WRAP_WIDGET(view_cascade_menu),
-             XEN_CONS(XEN_WRAP_WIDGET(options_cascade_menu),
-              XEN_CONS(XEN_WRAP_WIDGET(help_cascade_menu),
-	       XEN_EMPTY_LIST)))))));
+  return(Xen_cons(XEN_WRAP_WIDGET(main_menu),
+	  Xen_cons(XEN_WRAP_WIDGET(file_cascade_menu),
+           Xen_cons(XEN_WRAP_WIDGET(edit_cascade_menu),
+            Xen_cons(XEN_WRAP_WIDGET(view_cascade_menu),
+             Xen_cons(XEN_WRAP_WIDGET(options_cascade_menu),
+              Xen_cons(XEN_WRAP_WIDGET(help_cascade_menu),
+	       Xen_empty_list)))))));
 }
 
 
-XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
+Xen_wrap_no_args(g_menu_widgets_w, g_menu_widgets)
 
 void g_init_gxmenu(void)
 {
-  XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
+  Xen_define_procedure(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }
 
 /* Motif bug: the button backgrounds remain in the original highlight color? but the widget (if it is one) is not the child of any obvious widget

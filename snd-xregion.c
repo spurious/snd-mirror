@@ -344,10 +344,10 @@ static XEN reflect_file_in_region_browser(XEN hook_or_reason)
       set_sensitive(mix_button, file_on);
       set_sensitive(insert_button, file_on);
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
-XEN_NARGIFY_1(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
+Xen_wrap_1_arg(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
 
 
 char *regrow_get_label(void *ur)
@@ -695,7 +695,7 @@ static void make_region_dialog(void)
   highlight_region();
   region_update_graph(cp);
 
-  XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_in_region_browser_w, "region-dialog-open-file-watcher", "region dialog open-file-hook handler");
+  Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_in_region_browser_w, "region-dialog-open-file-watcher", "region dialog open-file-hook handler");
 
   set_dialog_widget(REGION_DIALOG, region_dialog);
 }
@@ -769,9 +769,9 @@ static XEN g_view_regions_dialog(void)
 }
 
 
-XEN_NARGIFY_0(g_view_regions_dialog_w, g_view_regions_dialog)
+Xen_wrap_no_args(g_view_regions_dialog_w, g_view_regions_dialog)
 
 void g_init_gxregion(void)
 {
-  XEN_DEFINE_PROCEDURE(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
+  Xen_define_procedure(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
 }

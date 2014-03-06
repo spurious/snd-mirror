@@ -127,15 +127,15 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #endif
 
 
-#define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
-#define XEN_WRAP_WINDOW(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
-#define XEN_UNWRAP_WIDGET(Value) (Xen_is_pair(Value) ? (GtkWidget *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))) : NULL)
-#define Xen_is_widget(Value)     (Xen_is_pair(Value) && (XEN_CAR(Value) == C_STRING_TO_XEN_SYMBOL("GtkWidget_")))
+#define XEN_WRAP_WIDGET(Value)   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GtkWidget_"), XEN_WRAP_C_POINTER(Value)) : Xen_false)
+#define XEN_WRAP_WINDOW(Value)   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GdkWindow_"), XEN_WRAP_C_POINTER(Value)) : Xen_false)
+#define XEN_UNWRAP_WIDGET(Value) (Xen_is_pair(Value) ? (GtkWidget *)(XEN_UNWRAP_C_POINTER(Xen_cadr(Value))) : NULL)
+#define Xen_is_widget(Value)     (Xen_is_pair(Value) && (Xen_car(Value) == C_string_to_Xen_symbol("GtkWidget_")))
 
-#define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("color_t"), XEN_WRAP_C_POINTER((unsigned long)Value))
-#define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
-#define Xen_is_pixel(Value)       (Xen_is_list(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (Xen_is_symbol(XEN_CAR(Value))) && \
-                                    (strcmp("color_t", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#define XEN_WRAP_PIXEL(Value)    Xen_list_2(C_string_to_Xen_symbol("color_t"), XEN_WRAP_C_POINTER((unsigned long)Value))
+#define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_UNWRAP_C_POINTER(Xen_cadr(Value)))
+#define Xen_is_pixel(Value)       (Xen_is_list(Value) && (Xen_list_length(Value) >= 2) && (Xen_is_symbol(Xen_car(Value))) && \
+                                    (strcmp("color_t", Xen_symbol_to_C_string(Xen_car(Value))) == 0))
 /* unfortunately, we can't just make PIXEL into a C type here -- it is called
  *   XM_PIXEL in xm.c and in that context, it assumes the layout given above.
  */

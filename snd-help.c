@@ -141,30 +141,30 @@ static void main_snd_help(const char *subject, ...)
 
 static char *xm_version(void)
 {
-  XEN xm_val = XEN_FALSE;
+  XEN xm_val = Xen_false;
 
 #if HAVE_SCHEME
   #if USE_MOTIF
-    xm_val = XEN_EVAL_C_STRING("(and (defined? 'xm-version) xm-version)");
+    xm_val = Xen_eval_C_string("(and (defined? 'xm-version) xm-version)");
   #else
     #if USE_GTK
-      xm_val = XEN_EVAL_C_STRING("(and (defined? 'xg-version) xg-version)");
+      xm_val = Xen_eval_C_string("(and (defined? 'xg-version) xg-version)");
     #endif
   #endif
 #endif
 
 #if HAVE_FORTH
-      xm_val = XEN_VARIABLE_REF(XM_VERSION_NAME);
+      xm_val = Xen_variable_ref(XM_VERSION_NAME);
 #endif
 
 #if HAVE_RUBY
   #if USE_MOTIF
       if (rb_const_defined(rb_cObject, rb_intern("Xm_Version")))
-	xm_val = XEN_EVAL_C_STRING("Xm_Version");
+	xm_val = Xen_eval_C_string("Xm_Version");
   #else
     #if USE_GTK
       if (rb_const_defined(rb_cObject, rb_intern("Xg_Version")))
-        xm_val = XEN_EVAL_C_STRING("Xg_Version");
+        xm_val = Xen_eval_C_string("Xg_Version");
     #endif
   #endif
 #endif
@@ -179,7 +179,7 @@ static char *xm_version(void)
 #else
 		   "xg",
 #endif
-		   XEN_TO_C_STRING(xm_val));
+		   Xen_string_to_C_string(xm_val));
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
@@ -192,28 +192,28 @@ void Init_libgl(void);
 
 static char *gl_version(void)
 {
-  XEN gl_val = XEN_FALSE;
+  XEN gl_val = Xen_false;
   Init_libgl(); /* define the version string, if ./snd --version */
 
 #if HAVE_SCHEME
-  gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)"); /* this refers to gl.c, not the GL library */
+  gl_val = Xen_eval_C_string("(and (provided? 'gl) gl-version)"); /* this refers to gl.c, not the GL library */
 #endif
 
 #if HAVE_RUBY
   if (rb_const_defined(rb_cObject, rb_intern("Gl_Version")))
-    gl_val = XEN_EVAL_C_STRING("Gl_Version");
+    gl_val = Xen_eval_C_string("Gl_Version");
 #endif
 
 #if HAVE_FORTH
   if (fth_provided_p("gl"))
-    gl_val = XEN_VARIABLE_REF("gl-version");
+    gl_val = Xen_variable_ref("gl-version");
 #endif
 
   if (Xen_is_string(gl_val))
     {
       char *version = NULL;
       version = (char *)calloc(32, sizeof(char));
-      snprintf(version, 32, " (snd gl: %s)", XEN_TO_C_STRING(gl_val));
+      snprintf(version, 32, " (snd gl: %s)", Xen_string_to_C_string(gl_val));
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
@@ -386,17 +386,17 @@ void about_snd_help(void)
   char *info = NULL, *features = NULL;
 
 #if HAVE_RUBY
-  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING((char *)"$\".join(' ')")), 400);
+  features = word_wrap(Xen_object_to_C_string(Xen_eval_C_string((char *)"$\".join(' ')")), 400);
 #endif
 
 #if HAVE_FORTH
-  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400); 
+  features = word_wrap(Xen_object_to_C_string(Xen_eval_C_string("*features*")), 400); 
 #endif
 
 #if HAVE_SCHEME
   {
     char *temp = NULL;
-    features = word_wrap(temp = XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
+    features = word_wrap(temp = Xen_object_to_C_string(Xen_eval_C_string("*features*")), 400);
     if (temp) free(temp);
   }
 #endif
@@ -1260,10 +1260,10 @@ static const char *header_and_data_xrefs[10] = {
   "data format constants: {" S_mus_data_format_name "}",
   "header type discussion: {" S_header_type "}",
   "header type constants: {" S_mus_header_type_name "}",
-  "MPEG support: mpg in examp." XEN_FILE_EXTENSION,
-  "OGG support: read-ogg in examp." XEN_FILE_EXTENSION,
-  "Speex support: read-speex in examp." XEN_FILE_EXTENSION,
-  "Flac support: read-flac in examp." XEN_FILE_EXTENSION,
+  "MPEG support: mpg in examp." Xen_file_extension,
+  "OGG support: read-ogg in examp." Xen_file_extension,
+  "Speex support: read-speex in examp." Xen_file_extension,
+  "Flac support: read-flac in examp." Xen_file_extension,
   "{Sndlib}: underlying support",
   NULL};
 
@@ -1662,7 +1662,7 @@ void filter_help(void)
 
 #if HAVE_EXTENSION_LANGUAGE
 "There is an FIR Filter in the control panel, a filtering option in the envelope editor dialog, and a variety of other filters scattered around; \
-see sndclm.html, dsp." XEN_FILE_EXTENSION " and analog-filters." XEN_FILE_EXTENSION " in particular. The \
+see sndclm.html, dsp." Xen_file_extension " and analog-filters." Xen_file_extension " in particular. The \
 built-in filtering functions include: \n\
 \n\
   " S_filter_channel " (env :optional order beg dur snd chn edpos trunc origin)\n\
@@ -1748,7 +1748,7 @@ void resample_help(void)
 
 #if HAVE_EXTENSION_LANGUAGE
 "There is a sampling rate changer in the control panel, and a resampling option in the envelope \
-editor dialog; see also sndclm.html and examp." XEN_FILE_EXTENSION ". \
+editor dialog; see also sndclm.html and examp." Xen_file_extension ". \
 The basic resampling functions are:\n\
 \n\
   " S_src_channel " (num-or-env :optional beg dur snd chn edpos)\n\
@@ -2073,7 +2073,7 @@ The primary selection-related functions are:\n\
     sample number where selection starts\n\
   " S_selection_srate ": nominal srate of selected portion.\n\
 \n\
-There are many more selection-oriented functions scattered around the various *." XEN_FILE_EXTENSION " files. \
+There are many more selection-oriented functions scattered around the various *." Xen_file_extension " files. \
 See the related topics list below.",
 
 #else
@@ -2111,7 +2111,7 @@ as numbers between 0.0 and 1.0. A color object is created via " S_make_color ":\
   " make_color_example "\n\
 \n\
 This declares the variable \"blue\" and gives it the value of the color whose rgb components \
-include only blue in full force. The X11 color names are defined in rgb." XEN_FILE_EXTENSION ". The overall widget background color is " S_basic_color ".\n\
+include only blue in full force. The X11 color names are defined in rgb." Xen_file_extension ". The overall widget background color is " S_basic_color ".\n\
 \n\
   " set_basic_color_example "\n\
 \n\
@@ -2266,7 +2266,7 @@ in linear terms.",
 static const char *color_orientation_dialog_xrefs[11] = {
   "colormap variable: {colormap}",
   "orientation variables: {" S_spectro_x_scale "}, {" S_spectro_x_angle "}, etc",
-  "colormap constants: rgb." XEN_FILE_EXTENSION,
+  "colormap constants: rgb." Xen_file_extension,
   "colormap colors: {" S_colormap_ref "}",
   "color dialog variables: {" S_color_cutoff "}, {" S_color_inverted "}, {" S_color_scale "}",
   "start the color/orientation dialog: {" S_color_orientation_dialog "}",
@@ -2488,7 +2488,7 @@ void find_dialog_help(void)
 expression is a function of one argument, the current sample value.  It is evaluated on each sample, and should return " PROC_TRUE " when the \
 search is satisfied.  For example, \n\n  " find_example "\n\nlooks for the next sample that is greater than .1. \
 If you need to compare the current sample with a previous one, use a 'closure' as in " zero_plus " in \
-examp." XEN_FILE_EXTENSION ": \n\n" closure_example "\n\nThere are several other \
+examp." Xen_file_extension ": \n\n" closure_example "\n\nThere are several other \
 search function examples in that file that search for peaks, clicks, or a particular pitch.",
 #else
 "This search mechanism is built on the extension language, which isn't available in this version of Snd.",
@@ -2968,10 +2968,10 @@ static char *call_grep(const char *defstr, const char *name, const char *endstr,
   char *command;
 #ifndef __sun
   /* Gnu fgrep: -s switch to fgrep = "silent", I guess (--no-messages) [OSX uses Gnu fgrep] */
-  command = mus_format("grep -F -s \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " --line-number > %s", defstr, name, endstr, path, tempfile);
+  command = mus_format("grep -F -s \"%s%s%s\" %s/*." Xen_file_extension " --line-number > %s", defstr, name, endstr, path, tempfile);
 #else
   /* Sun fgrep: here -s means -q and --line-number prints an error message */
-  command = mus_format("grep -F \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " > %s", defstr, name, endstr, path, tempfile);
+  command = mus_format("grep -F \"%s%s%s\" %s/*." Xen_file_extension " > %s", defstr, name, endstr, path, tempfile);
 #endif
   err = system(command);
   free(command);
@@ -2988,7 +2988,7 @@ static char *snd_finder(const char *name, bool got_help)
   char *fgrep = NULL, *tempfile = NULL, *command = NULL;
   bool is_defined = false;
   int a_def = 0, dir_len = 0, i;
-  XEN dirs = XEN_EMPTY_LIST;
+  XEN dirs = Xen_empty_list;
 
 #if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
   #define NUM_DEFINES 7
@@ -3027,15 +3027,15 @@ static char *snd_finder(const char *name, bool got_help)
 
   url = snd_url(name);
   tempfile = snd_tempnam(); /* this will have a .snd extension */
-  dirs = XEN_LOAD_PATH;
-  dir_len = XEN_LIST_LENGTH(dirs);
+  dirs = Xen_load_path;
+  dir_len = Xen_list_length(dirs);
 
   for (i = 0; (!fgrep) && (i < dir_len); i++)
     {
-      if (Xen_is_string(XEN_LIST_REF(dirs, i))) /* *load-path* might have garbage */
+      if (Xen_is_string(Xen_list_ref(dirs, i))) /* *load-path* might have garbage */
 	{
 	  const char *path;
-	  path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
+	  path = Xen_string_to_C_string(Xen_list_ref(dirs, i));
 	  if (!path) continue;
 
 	  for (a_def = 0; (!fgrep) && (a_def < NUM_DEFINES); a_def++)
@@ -3434,26 +3434,26 @@ char *output_comment(file_info *hdr)
 {
   XEN hook;
   hook = output_comment_hook;
-  if (XEN_HOOKED(hook))
+  if (Xen_hook_has_list(hook))
     {
       XEN result;
-      result = C_TO_XEN_STRING((hdr) ? hdr->comment : NULL);
+      result = C_string_to_Xen_string((hdr) ? hdr->comment : NULL);
 
 #if HAVE_SCHEME
       result = s7_call(s7, hook, s7_cons(s7, result, s7_nil(s7)));
 #else		
       {
 	XEN procs;
-	procs = XEN_HOOK_PROCEDURES(hook);
+	procs = Xen_hook_list(hook);
 	while (!Xen_is_null(procs))
 	  {
-	    result = XEN_CALL_1(XEN_CAR(procs), result, S_output_comment_hook);
-	    procs = XEN_CDR(procs);
+	    result = Xen_call_with_1_arg(Xen_car(procs), result, S_output_comment_hook);
+	    procs = Xen_cdr(procs);
 	  }
       }
 #endif
       if (Xen_is_string(result))
-	return(mus_strdup(XEN_TO_C_STRING(result)));
+	return(mus_strdup(Xen_string_to_C_string(result)));
     }
   return(mus_strdup((hdr) ? hdr->comment : NULL));
 }
@@ -3482,7 +3482,7 @@ XEN g_snd_help_with_search(XEN text, int widget_wid, bool search)
 associated with its argument. " snd_help_example " for example, prints out a brief description of make-vct. \
 The argument " snd_help_arg_type ". \
 In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry. \
-A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index." XEN_FILE_EXTENSION " \
+A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index." Xen_file_extension " \
 the functions html and ? can be used in place of help to go to the HTML description, \
 and the location of the associated C code will be displayed, if it can be found. \
 If " S_help_hook " is not empty, it is invoked with the subject and the snd-help result \
@@ -3493,56 +3493,56 @@ and its value is returned."
   int min_diff = 1000;
 
   if (Xen_is_keyword(text))
-    return(C_TO_XEN_STRING("keyword"));
+    return(C_string_to_Xen_string("keyword"));
 
 #if HAVE_RUBY
   if (Xen_is_string(text))
-    subject = XEN_TO_C_STRING(text);
+    subject = Xen_string_to_C_string(text);
   else 
     if ((Xen_is_symbol(text)) && (Xen_is_bound(text)))
       {
 	text = XEN_SYMBOL_TO_STRING(text);
-	subject = XEN_TO_C_STRING(text);
+	subject = Xen_string_to_C_string(text);
       }
     else 
       {
 	char *temp;
 	temp = xen_scheme_procedure_to_ruby(S_snd_help);
-	text = C_TO_XEN_STRING(temp);
+	text = C_string_to_Xen_string(temp);
 	if (temp) free(temp);
       }
-  str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
+  str = Xen_object_to_C_string(Xen_documentation(text));
 #endif
 
 #if HAVE_FORTH
   if (Xen_is_string(text))	/* "play" snd-help */
-    subject = XEN_TO_C_STRING(text);
+    subject = Xen_string_to_C_string(text);
   else if (!Xen_is_bound(text)) /* snd-help play */
     {
       subject = fth_parse_word();
-      text = C_TO_XEN_STRING(subject);
+      text = C_string_to_Xen_string(subject);
     }
   if (!subject)
     {
       subject = S_snd_help;
-      text = C_TO_XEN_STRING(S_snd_help);
+      text = C_string_to_Xen_string(S_snd_help);
     }
-  str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
+  str = Xen_object_to_C_string(Xen_documentation(text));
 #endif
 
 #if HAVE_SCHEME
   {
-    XEN sym = XEN_FALSE;
+    XEN sym = Xen_false;
     if (Xen_is_string(text))
       {
-	subject = (char *)XEN_TO_C_STRING(text);
+	subject = (char *)Xen_string_to_C_string(text);
 	sym = s7_name_to_value(s7, subject);
       }
     else 
       {
 	if (Xen_is_symbol(text))
 	  {
-	    subject = (char *)XEN_SYMBOL_TO_C_STRING(text);
+	    subject = (char *)Xen_symbol_to_C_string(text);
 	    str = (char *)s7_help(s7, text);
 	    sym = s7_symbol_value(s7, text);
 	  }
@@ -3612,7 +3612,7 @@ and its value is returned."
 	  (mus_strlen(str) == 0) ||
 	  (strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
 	{
-	  if (!subject) return(XEN_FALSE);
+	  if (!subject) return(Xen_false);
 	  str = snd_finder(subject, false);
 	  need_free = true;
 	}
@@ -3632,34 +3632,34 @@ and its value is returned."
 	}
       if (str)
 	{
-	  XEN help_text = XEN_FALSE;  /* so that we can free "str" */
+	  XEN help_text = Xen_false;  /* so that we can free "str" */
 	  char *new_str = NULL;
 	  if (subject)
 	    {
 	      XEN hook;
 	      hook = help_hook;
-	      if (XEN_HOOKED(hook))
+	      if (Xen_hook_has_list(hook))
 		{
 		  XEN result, subj;
 
-		  result = C_TO_XEN_STRING(str);
-		  subj = C_TO_XEN_STRING(subject);
+		  result = C_string_to_Xen_string(str);
+		  subj = C_string_to_Xen_string(subject);
 
 #if HAVE_SCHEME
 		  result = s7_call(s7, hook, s7_cons(s7, subj, s7_cons(s7, result, s7_nil(s7))));
 #else		       
 		  {
 		    XEN procs;
-		    procs = XEN_HOOK_PROCEDURES(hook);
+		    procs = Xen_hook_list(hook);
 		    while (!Xen_is_null(procs))
 		      {
-			result = XEN_CALL_2(XEN_CAR(procs), subj, result, S_help_hook);
-			procs = XEN_CDR(procs);
+			result = Xen_call_with_2_args(Xen_car(procs), subj, result, S_help_hook);
+			procs = Xen_cdr(procs);
 		      }
 		  }
 #endif
 		  if (Xen_is_string(result))
-		    new_str = mus_strdup(XEN_TO_C_STRING(result));
+		    new_str = mus_strdup(Xen_string_to_C_string(result));
 		  else new_str = mus_strdup(str);
 		}
 	      else new_str = mus_strdup(str);
@@ -3679,15 +3679,15 @@ and its value is returned."
 	  else 
 #endif
 	    str = new_str;
-	  help_text = C_TO_XEN_STRING(str);
+	  help_text = C_string_to_Xen_string(str);
 	  if (str) free(str);
 	  return(help_text);
 	}
     }
 
   if (str)
-    return(C_TO_XEN_STRING(str));
-  return(XEN_FALSE);
+    return(C_string_to_Xen_string(str));
+  return(Xen_false);
 }
 
 
@@ -3699,7 +3699,7 @@ XEN g_snd_help(XEN text, int widget_wid)
 
 static XEN g_listener_help(XEN arg, XEN formatted)
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(formatted), formatted, 2, S_snd_help, "a boolean");
+  Xen_check_type(Xen_is_boolean_or_unbound(formatted), formatted, 2, S_snd_help, "a boolean");
   if (Xen_is_false(formatted))
     return(g_snd_help(arg, 0));
   return(g_snd_help(arg, listener_width()));
@@ -3716,14 +3716,14 @@ void set_html_dir(char *new_dir)
 static XEN g_html_dir(void) 
 {
   #define H_html_dir "(" S_html_dir "): location of Snd documentation"
-  return(C_TO_XEN_STRING(html_dir(ss)));
+  return(C_string_to_Xen_string(html_dir(ss)));
 }
 
 
 static XEN g_set_html_dir(XEN val) 
 {
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_html_dir, "a string");
-  set_html_dir(mus_strdup(XEN_TO_C_STRING(val))); 
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_html_dir, "a string");
+  set_html_dir(mus_strdup(Xen_string_to_C_string(val))); 
   return(val);
 }
 
@@ -3731,15 +3731,15 @@ static XEN g_set_html_dir(XEN val)
 static XEN g_html_program(void) 
 {
   #define H_html_program "(" S_html_program "): name of documentation reader (mozilla, by default)"
-  return(C_TO_XEN_STRING(html_program(ss)));
+  return(C_string_to_Xen_string(html_program(ss)));
 }
 
 
 static XEN g_set_html_program(XEN val) 
 {
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_html_program, "a string");
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_html_program, "a string");
   if (html_program(ss)) free(html_program(ss));
-  set_html_program(mus_strdup(XEN_TO_C_STRING(val))); 
+  set_html_program(mus_strdup(Xen_string_to_C_string(val))); 
   return(val);
 }
 
@@ -3748,22 +3748,22 @@ static XEN g_snd_url(XEN name)
 {
   #define H_snd_url "(" S_snd_url " name): url corresponding to 'name'"
   /* given Snd entity ('open-sound) as symbol or string return associated url */
-  XEN_ASSERT_TYPE(Xen_is_string(name) || Xen_is_symbol(name), name, 1, S_snd_url, "a string or symbol");
+  Xen_check_type(Xen_is_string(name) || Xen_is_symbol(name), name, 1, S_snd_url, "a string or symbol");
   if (Xen_is_string(name))
-    return(C_TO_XEN_STRING(snd_url(XEN_TO_C_STRING(name))));
-  return(C_TO_XEN_STRING(snd_url(XEN_SYMBOL_TO_C_STRING(name))));
+    return(C_string_to_Xen_string(snd_url(Xen_string_to_C_string(name))));
+  return(C_string_to_Xen_string(snd_url(Xen_symbol_to_C_string(name))));
 }
 
 
 static XEN g_snd_urls(void)
 {
   #define H_snd_urls "(" S_snd_urls "): list of all snd names with the associated url (a list of lists)"
-  XEN lst = XEN_EMPTY_LIST;
+  XEN lst = Xen_empty_list;
 #if HAVE_EXTENSION_LANGUAGE
   int i;
   for (i = 0; i < HELP_NAMES_SIZE; i++)
-    lst = XEN_CONS(XEN_CONS(C_TO_XEN_STRING(help_names[i]), 
-			    C_TO_XEN_STRING(help_urls[i])), 
+    lst = Xen_cons(Xen_cons(C_string_to_Xen_string(help_names[i]), 
+			    C_string_to_Xen_string(help_urls[i])), 
 		   lst);
 #endif
   return(lst);
@@ -3776,10 +3776,10 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 {
   #define H_help_dialog "(" S_help_dialog " subject message xrefs urls): start the Help window with subject and message"
 
-  XEN_ASSERT_TYPE(Xen_is_string(subject), subject, 1, S_help_dialog, "a string");
-  XEN_ASSERT_TYPE(Xen_is_string(msg), msg, 2, S_help_dialog, "a string");
-  XEN_ASSERT_TYPE(Xen_is_list(xrefs) || !Xen_is_bound(xrefs), xrefs, 3, S_help_dialog, "a list of related references");
-  XEN_ASSERT_TYPE(Xen_is_list(xurls) || !Xen_is_bound(xurls), xurls, 4, S_help_dialog, "a list of urls");
+  Xen_check_type(Xen_is_string(subject), subject, 1, S_help_dialog, "a string");
+  Xen_check_type(Xen_is_string(msg), msg, 2, S_help_dialog, "a string");
+  Xen_check_type(Xen_is_list(xrefs) || !Xen_is_bound(xrefs), xrefs, 3, S_help_dialog, "a list of related references");
+  Xen_check_type(Xen_is_list(xurls) || !Xen_is_bound(xurls), xurls, 4, S_help_dialog, "a list of urls");
 
   if (refs) {free(refs); refs = NULL;}
   if (urls) {free(urls); urls = NULL;}
@@ -3788,59 +3788,59 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
     {
       int i, len;
 
-      len = XEN_LIST_LENGTH(xrefs);
+      len = Xen_list_length(xrefs);
       refs = (const char **)calloc(len + 1, sizeof(char *));
 
       for (i = 0; i < len; i++)
-	if (Xen_is_string(XEN_LIST_REF(xrefs, i)))
-	  refs[i] = XEN_TO_C_STRING(XEN_LIST_REF(xrefs, i));
+	if (Xen_is_string(Xen_list_ref(xrefs, i)))
+	  refs[i] = Xen_string_to_C_string(Xen_list_ref(xrefs, i));
 
       if (Xen_is_list(xurls))
 	{
 	  int ulen;
-	  ulen = XEN_LIST_LENGTH(xurls);
+	  ulen = Xen_list_length(xurls);
 	  if (ulen > len) ulen = len;
 	  urls = (const char **)calloc(ulen + 1, sizeof(char *));
 	  for (i = 0; i < ulen; i++)
-	    if (Xen_is_string(XEN_LIST_REF(xurls, i)))
-	      urls[i] = XEN_TO_C_STRING(XEN_LIST_REF(xurls, i));
+	    if (Xen_is_string(Xen_list_ref(xurls, i)))
+	      urls[i] = Xen_string_to_C_string(Xen_list_ref(xurls, i));
 	}
-      return(XEN_WRAP_WIDGET(snd_help_with_xrefs(XEN_TO_C_STRING(subject),
-						 XEN_TO_C_STRING(msg), 
+      return(XEN_WRAP_WIDGET(snd_help_with_xrefs(Xen_string_to_C_string(subject),
+						 Xen_string_to_C_string(msg), 
 						 WITH_WORD_WRAP,
 						 refs,
 						 urls)));
     }
-  return(XEN_WRAP_WIDGET(snd_help(XEN_TO_C_STRING(subject), 
-				  XEN_TO_C_STRING(msg), 
+  return(XEN_WRAP_WIDGET(snd_help(Xen_string_to_C_string(subject), 
+				  Xen_string_to_C_string(msg), 
 				  WITH_WORD_WRAP)));
 }
 
 
-XEN_ARGIFY_2(g_listener_help_w, g_listener_help)
-XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
-XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
-XEN_NARGIFY_0(g_html_program_w, g_html_program)
-XEN_NARGIFY_1(g_set_html_program_w, g_set_html_program)
-XEN_NARGIFY_1(g_snd_url_w, g_snd_url)
-XEN_NARGIFY_0(g_snd_urls_w, g_snd_urls)
-XEN_ARGIFY_4(g_help_dialog_w, g_help_dialog)
+Xen_wrap_2_optional_args(g_listener_help_w, g_listener_help)
+Xen_wrap_no_args(g_html_dir_w, g_html_dir)
+Xen_wrap_1_arg(g_set_html_dir_w, g_set_html_dir)
+Xen_wrap_no_args(g_html_program_w, g_html_program)
+Xen_wrap_1_arg(g_set_html_program_w, g_set_html_program)
+Xen_wrap_1_arg(g_snd_url_w, g_snd_url)
+Xen_wrap_no_args(g_snd_urls_w, g_snd_urls)
+Xen_wrap_4_optional_args(g_help_dialog_w, g_help_dialog)
 
 void g_init_help(void)
 {
-  XEN_DEFINE_PROCEDURE(S_snd_help,    g_listener_help_w,  0, 2, 0, H_snd_help);
+  Xen_define_procedure(S_snd_help,    g_listener_help_w,  0, 2, 0, H_snd_help);
 #if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(define s7-help help)");
-  XEN_DEFINE_PROCEDURE("help",        g_listener_help_w,  0, 2, 0, H_snd_help); /* override s7's help */
+  Xen_eval_C_string("(define s7-help help)");
+  Xen_define_procedure("help",        g_listener_help_w,  0, 2, 0, H_snd_help); /* override s7's help */
 #endif
-  XEN_DEFINE_PROCEDURE(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url);
-  XEN_DEFINE_PROCEDURE(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls);
-  XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);
+  Xen_define_procedure(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url);
+  Xen_define_procedure(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls);
+  Xen_define_procedure(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);
 
   #define H_help_hook S_help_hook "(subject message): called from " S_snd_help ".  If \
 it returns a string, it replaces 'message' (the default help)"
 
-  help_hook = XEN_DEFINE_HOOK(S_help_hook, "(make-hook 'subject 'message)", 2, H_help_hook);
+  help_hook = Xen_define_hook(S_help_hook, "(make-hook 'subject 'message)", 2, H_help_hook);
 
 #if HAVE_SCHEME
   #define H_output_comment_hook S_output_comment_hook " (comment): called in Save-As dialog, passed current sound's comment, if any. \
@@ -3867,10 +3867,10 @@ If more than one hook function, each function gets the previous function's outpu
 ; add-hook!"
 #endif
 
-  output_comment_hook = XEN_DEFINE_HOOK(S_output_comment_hook, "(make-hook 'comment)", 1, H_output_comment_hook);
+  output_comment_hook = Xen_define_hook(S_output_comment_hook, "(make-hook 'comment)", 1, H_output_comment_hook);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir,     g_html_dir_w,     H_html_dir,     S_setB S_html_dir,     g_set_html_dir_w,      0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_html_dir,     g_html_dir_w,     H_html_dir,     S_setB S_html_dir,     g_set_html_dir_w,      0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
   autoload_info(s7); /* snd-xref.c included above */

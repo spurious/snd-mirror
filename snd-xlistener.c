@@ -126,9 +126,9 @@ static void listener_help_at_cursor(char *buf, int name_curpos, int len, int pro
 
 	  if (matches == 1)
 	    {
-	      help = g_snd_help(C_TO_XEN_STRING(new_text), 0);
+	      help = g_snd_help(C_string_to_Xen_string(new_text), 0);
 	      if (Xen_is_string(help))
-		snd_help((char *)(buf + name_start), XEN_TO_C_STRING(help), WITH_WORD_WRAP);
+		snd_help((char *)(buf + name_start), Xen_string_to_C_string(help), WITH_WORD_WRAP);
 	    }
 	  else
 	    {
@@ -546,7 +546,7 @@ static void listener_return(widget_t w, int last_prompt)
   GUI_TEXT_POSITION_TYPE cmd_eot = 0;
   char *str = NULL, *full_str = NULL;
   int i, j;
-  XEN form = XEN_UNDEFINED;
+  XEN form = Xen_undefined;
   GUI_TEXT_POSITION_TYPE last_position = 0, current_position = 0;
 
 #if (!HAVE_RUBY && !HAVE_FORTH)
@@ -746,7 +746,7 @@ static void listener_return(widget_t w, int last_prompt)
 	      remember_listener_string(str);
 	    
 #if HAVE_RUBY || HAVE_FORTH
-	    form = XEN_EVAL_C_STRING(str);
+	    form = Xen_eval_C_string(str);
 #endif
 	    
 #if HAVE_SCHEME
@@ -777,19 +777,18 @@ static void listener_return(widget_t w, int last_prompt)
 	    
 	    if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	      {
-		
 		int gc_loc;
 		s7_pointer old_port;
 		
 		old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
 		gc_loc = s7_gc_protect(s7, old_port);
 		
-		if (with_interrupts(ss))
+		if (with_interrupts(ss)) 
 		  s7_set_begin_hook(s7, listener_begin_hook);
 		
 		if (have_read_hook()) 
 		  form = run_read_hook(str);
-		else form = XEN_EVAL_C_STRING(str);
+		else form = Xen_eval_C_string(str);
 		
 		s7_set_begin_hook(s7, NULL);
 		if (ss->C_g_typed)
@@ -1235,9 +1234,9 @@ static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num)
   XmTextSetCursorPosition(w, pos);
   down_pos = pos;
   last_pos = pos;
-  if (XEN_HOOKED(listener_click_hook))
+  if (Xen_hook_has_list(listener_click_hook))
     run_hook(listener_click_hook,
-	     XEN_LIST_1(C_TO_XEN_INT((int)pos)),
+	     Xen_list_1(C_int_to_Xen_integer((int)pos)),
 	     S_listener_click_hook);
 }
 
@@ -1757,18 +1756,18 @@ void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boole
   if (with_pointer_focus(ss))
     goto_window(w);
 
-  if (XEN_HOOKED(mouse_enter_text_hook))
+  if (Xen_hook_has_list(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
-	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
+	     Xen_list_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_enter_text_hook);
 }
 
 
 void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  if (XEN_HOOKED(mouse_leave_text_hook))
+  if (Xen_hook_has_list(mouse_leave_text_hook))
     run_hook(mouse_leave_text_hook,
-	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
+	     Xen_list_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_leave_text_hook);
 }
 
@@ -2005,18 +2004,18 @@ static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, 
   if (with_pointer_focus(ss))
     goto_window(listener_text);
 
-  if (XEN_HOOKED(mouse_enter_listener_hook))
+  if (Xen_hook_has_list(mouse_enter_listener_hook))
     run_hook(mouse_enter_listener_hook,
-	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)), /* not w */
+	     Xen_list_1(XEN_WRAP_WIDGET(listener_text)), /* not w */
 	     S_mouse_enter_listener_hook);
 }
 
 
 static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  if (XEN_HOOKED(mouse_leave_listener_hook))
+  if (Xen_hook_has_list(mouse_leave_listener_hook))
     run_hook(mouse_leave_listener_hook,
-	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)), /* not w */
+	     Xen_list_1(XEN_WRAP_WIDGET(listener_text)), /* not w */
 	     S_mouse_leave_listener_hook);
 }
 
@@ -2035,7 +2034,7 @@ static void listener_help_callback(Widget w, XtPointer context, XtPointer info)
       trim_txt = trim(txt);
       if (trim_txt)
 	{
-	  snd_help(trim_txt, XEN_TO_C_STRING(g_snd_help(C_TO_XEN_STRING(trim_txt), 0)), WITH_WORD_WRAP);
+	  snd_help(trim_txt, Xen_string_to_C_string(g_snd_help(C_string_to_Xen_string(trim_txt), 0)), WITH_WORD_WRAP);
 	  free(trim_txt);
 	}
       XtFree(txt);
@@ -2298,14 +2297,14 @@ Widget make_pushbutton_widget(const char *name, Widget parent, Arg *args, int n)
 static XEN g_listener_selection(void)
 {
   #define H_listener_selection "(" S_listener_selection "): currently selected text in listener or " PROC_FALSE
-  XEN res = XEN_FALSE;
+  XEN res = Xen_false;
   if (listener_text)
     {
       char *txt;
       txt = XmTextGetSelection(listener_text);
       if (txt) 
 	{
-	  res = C_TO_XEN_STRING(txt);
+	  res = C_string_to_Xen_string(txt);
 	  XtFree(txt);
 	}
     }
@@ -2319,7 +2318,7 @@ static XEN g_reset_listener_cursor(void)
   if (listener_text)
     XUndefineCursor(XtDisplay(listener_text), 
 		    XtWindow(listener_text)); 
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -2352,15 +2351,15 @@ static XEN g_goto_listener_end(void)
       eot = XmTextGetLastPosition(listener_text);
       XmTextShowPosition(listener_text, eot);
       XmTextSetInsertionPosition(listener_text, eot);
-      return(C_TO_XEN_INT(eot));
+      return(C_int_to_Xen_integer(eot));
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
-XEN_NARGIFY_0(g_listener_selection_w, g_listener_selection)
-XEN_NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
-XEN_NARGIFY_0(g_goto_listener_end_w, g_goto_listener_end)
+Xen_wrap_no_args(g_listener_selection_w, g_listener_selection)
+Xen_wrap_no_args(g_reset_listener_cursor_w, g_reset_listener_cursor)
+Xen_wrap_no_args(g_goto_listener_end_w, g_goto_listener_end)
 
 void g_init_gxlistener(void)
 {
@@ -2389,8 +2388,8 @@ enters the lisp listener pane:\n\
   #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (widget): called when the mouse \
 leaves the lisp listener pane"
 
-  mouse_enter_listener_hook = XEN_DEFINE_HOOK(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1, H_mouse_enter_listener_hook);
-  mouse_leave_listener_hook = XEN_DEFINE_HOOK(S_mouse_leave_listener_hook, "(make-hook 'widget)", 1, H_mouse_leave_listener_hook);
+  mouse_enter_listener_hook = Xen_define_hook(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1, H_mouse_enter_listener_hook);
+  mouse_leave_listener_hook = Xen_define_hook(S_mouse_leave_listener_hook, "(make-hook 'widget)", 1, H_mouse_leave_listener_hook);
 
 #if HAVE_SCHEME
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
@@ -2413,15 +2412,15 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
 
   #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget): called when the mouse leaves a text widget"
   
-  mouse_enter_text_hook = XEN_DEFINE_HOOK(S_mouse_enter_text_hook, "(make-hook 'widget)", 1, H_mouse_enter_text_hook);
-  mouse_leave_text_hook = XEN_DEFINE_HOOK(S_mouse_leave_text_hook, "(make-hook 'widget)", 1, H_mouse_leave_text_hook);
+  mouse_enter_text_hook = Xen_define_hook(S_mouse_enter_text_hook, "(make-hook 'widget)", 1, H_mouse_enter_text_hook);
+  mouse_leave_text_hook = Xen_define_hook(S_mouse_leave_text_hook, "(make-hook 'widget)", 1, H_mouse_leave_text_hook);
 
-  XEN_DEFINE_PROCEDURE(S_listener_selection,    g_listener_selection_w,     0, 0, 0, H_listener_selection);
-  XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w,  0, 0, 0, H_reset_listener_cursor);
-  XEN_DEFINE_PROCEDURE(S_goto_listener_end,     g_goto_listener_end_w,      0, 0, 0, H_goto_listener_end);
+  Xen_define_procedure(S_listener_selection,    g_listener_selection_w,     0, 0, 0, H_listener_selection);
+  Xen_define_procedure(S_reset_listener_cursor, g_reset_listener_cursor_w,  0, 0, 0, H_reset_listener_cursor);
+  Xen_define_procedure(S_goto_listener_end,     g_goto_listener_end_w,      0, 0, 0, H_goto_listener_end);
 
   #define H_listener_click_hook S_listener_click_hook " (position): called when listener clicked; position is text pos of click in listener"
-  listener_click_hook = XEN_DEFINE_HOOK(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook);
+  listener_click_hook = Xen_define_hook(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook);
 
   preload_best_completions();
 }

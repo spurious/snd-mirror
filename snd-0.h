@@ -9,11 +9,11 @@
   #define DISPLAY(Obj) s7_object_to_c_string(s7, Obj)
 #endif
 
-#define NO_SUCH_ENVELOPE XEN_ERROR_TYPE("no-such-envelope")
-#define NO_SUCH_SAMPLE   XEN_ERROR_TYPE("no-such-sample")
-#define NO_SUCH_EDIT     XEN_ERROR_TYPE("no-such-edit")
-#define CANNOT_SAVE      XEN_ERROR_TYPE("cannot-save")
-#define CANT_UPDATE_FILE XEN_ERROR_TYPE("cant-update-file")
+#define NO_SUCH_ENVELOPE Xen_make_error_type("no-such-envelope")
+#define NO_SUCH_SAMPLE   Xen_make_error_type("no-such-sample")
+#define NO_SUCH_EDIT     Xen_make_error_type("no-such-edit")
+#define CANNOT_SAVE      Xen_make_error_type("cannot-save")
+#define CANT_UPDATE_FILE Xen_make_error_type("cant-update-file")
 
 #if (SIZEOF_VOID_P == 4)
   typedef int pointer_or_int_t;
@@ -1053,7 +1053,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #else
   #define in_set_save_state_file(a) ss->Save_State_File = a
 #endif
-#define DEFAULT_SAVE_STATE_FILE "saved-snd." XEN_FILE_EXTENSION
+#define DEFAULT_SAVE_STATE_FILE "saved-snd." Xen_file_extension
 
 #define temp_dir(ss) ss->Temp_Dir
 #if HAVE_SCHEME

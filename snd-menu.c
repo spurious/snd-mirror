@@ -8,11 +8,11 @@ void edit_menu_update(void)
   /* called when the "Edit" top level menu is clicked -- make sure all items reflect current Snd state */
   snd_info *selected_sp = NULL, *any_sp = NULL;
   chan_info *cp = NULL;
-  bool selection_p = false, region_p = false, file_p = false, undoable_edit_p = false, redoable_edit_p = false;
+  bool has_selection = false, has_region = false, file_open = false, has_undoable_edit = false, has_redoable_edit = false;
   selected_sp = selected_sound();
   if (selected_sp) 
     {
-      file_p = true;
+      file_open = true;
       cp = any_selected_channel(selected_sp);
       any_sp = selected_sp;
     }
@@ -22,42 +22,42 @@ void edit_menu_update(void)
       if (any_sp)
 	{
 	  cp = any_selected_channel(any_sp);
-	  file_p = true;
+	  file_open = true;
 	}
     }
-  selection_p = selection_is_active();
-  region_p = region_ok(region_list_position_to_id(0));
+  has_selection = selection_is_active();
+  has_region = region_ok(region_list_position_to_id(0));
   if (cp)
     {
-      undoable_edit_p = (cp->edit_ctr > 0);
-      redoable_edit_p = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
+      has_undoable_edit = (cp->edit_ctr > 0);
+      has_redoable_edit = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
 			   (!(cp->edits[cp->edit_ctr + 1]))));
     }
   
   /* is there an open sound? */
-  set_sensitive(edit_header_menu, file_p);
+  set_sensitive(edit_header_menu, file_open);
 #if HAVE_EXTENSION_LANGUAGE
-  set_sensitive(edit_find_menu, file_p);
+  set_sensitive(edit_find_menu, file_open);
 #endif
-  set_sensitive(edit_select_all_menu, file_p);
+  set_sensitive(edit_select_all_menu, file_open);
 
   /* is there an active selection? */
-  set_sensitive(edit_cut_menu, selection_p);
+  set_sensitive(edit_cut_menu, has_selection);
 #if WITH_AUDIO
-  set_sensitive(edit_play_menu, selection_p);
+  set_sensitive(edit_play_menu, has_selection);
 #endif
-  set_sensitive(edit_mix_menu, selection_p);
-  set_sensitive(edit_save_as_menu, selection_p);
-  set_sensitive(edit_unselect_menu, selection_p);
+  set_sensitive(edit_mix_menu, has_selection);
+  set_sensitive(edit_save_as_menu, has_selection);
+  set_sensitive(edit_unselect_menu, has_selection);
 
   /* is there an undoable edit? */
-  set_sensitive(edit_undo_menu, undoable_edit_p);
+  set_sensitive(edit_undo_menu, has_undoable_edit);
 
   /* is there a redoable edit? */
-  set_sensitive(edit_redo_menu, redoable_edit_p);
+  set_sensitive(edit_redo_menu, has_redoable_edit);
 
   /* does paste make any sense? */
-  set_sensitive(edit_paste_menu, (file_p) && (selection_p || region_p));  
+  set_sensitive(edit_paste_menu, (file_open) && (has_selection || has_region));  
  
   /* make sure edit-header menu option label correctly reflects current selected sound header type */
   if (any_sp)
@@ -140,24 +140,24 @@ void view_menu_update(void)
 void file_menu_update(void)
 {
   snd_info *any_sp = NULL;
-  bool file_p = false, edits_p = false;
+  bool file_open = false, has_edits = false;
 
   any_sp = any_selected_sound();
   if (any_sp)
     {
-      edits_p = has_unsaved_edits(any_sp);
-      file_p = true;
+      has_edits = has_unsaved_edits(any_sp);
+      file_open = true;
     }
 
-  set_sensitive(file_close_menu, file_p);
-  set_sensitive(file_print_menu, file_p);
-  set_sensitive(file_mix_menu, file_p);
-  set_sensitive(file_insert_menu, file_p);
-  set_sensitive(file_save_as_menu, file_p);
-  set_sensitive(file_update_menu, file_p);
+  set_sensitive(file_close_menu, file_open);
+  set_sensitive(file_print_menu, file_open);
+  set_sensitive(file_mix_menu, file_open);
+  set_sensitive(file_insert_menu, file_open);
+  set_sensitive(file_save_as_menu, file_open);
+  set_sensitive(file_update_menu, file_open);
 
-  set_sensitive(file_save_menu, edits_p);
-  set_sensitive(file_revert_menu, edits_p);
+  set_sensitive(file_save_menu, has_edits);
+  set_sensitive(file_revert_menu, has_edits);
 
   if (ss->active_sounds > 1)
     activate_widget(file_close_all_menu);
@@ -211,12 +211,12 @@ void revert_file_from_menu(void)
 }
 
 
-static bool save_state_error_p = false;
+static bool has_save_state_error = false;
 
 static void save_state_from_menu_error_handler(const char *msg, void *ignore)
 {
   snd_warning_without_format(msg);
-  save_state_error_p = true;
+  has_save_state_error = true;
 }
 
 
@@ -224,11 +224,11 @@ void save_state_from_menu(void)
 {
   if (save_state_file(ss))
     {
-      save_state_error_p = false;
+      has_save_state_error = false;
       redirect_everything_to(save_state_from_menu_error_handler, NULL);
       save_state(save_state_file(ss));
       redirect_everything_to(NULL, NULL);
-      if (!save_state_error_p)
+      if (!has_save_state_error)
 	{
 	  if (any_selected_sound())
 	    status_report(any_selected_sound(), "saved state in %s", save_state_file(ss));
@@ -246,11 +246,11 @@ void save_state_from_menu(void)
 
 static XEN snd_no_such_menu_error(const char *caller, XEN id)
 {
-  XEN_ERROR(XEN_ERROR_TYPE("no-such-menu"),
-	    XEN_LIST_3(C_TO_XEN_STRING("~A: no such menu, ~A"),
-		       C_TO_XEN_STRING(caller),
+  Xen_error(Xen_make_error_type("no-such-menu"),
+	    Xen_list_3(C_string_to_Xen_string("~A: no such menu, ~A"),
+		       C_string_to_Xen_string(caller),
 		       id));
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -273,14 +273,14 @@ static int make_callback_slot(void)
       if (callb == 0)
 	{
 	  menu_functions = (XEN *)calloc(callbacks_size, sizeof(XEN));
-	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
+	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = Xen_undefined;
 	  menu_functions_loc = (int *)calloc(callbacks_size, sizeof(int));
 	  for (i = 0; i < callbacks_size; i++) menu_functions_loc[i] = NOT_A_GC_LOC;
 	}
       else 
 	{
 	  menu_functions = (XEN *)realloc(menu_functions, callbacks_size * sizeof(XEN));
-	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
+	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = Xen_undefined;
 	  menu_functions_loc = (int *)realloc(menu_functions_loc, callbacks_size * sizeof(int));
 	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions_loc[i] = NOT_A_GC_LOC;
 	}
@@ -311,7 +311,7 @@ void unprotect_callback(int slot)
 	  snd_unprotect_at(menu_functions_loc[slot]);
 	  menu_functions_loc[slot] = NOT_A_GC_LOC;
 	}
-      menu_functions[slot] = XEN_FALSE;  /* not XEN_UNDEFINED -- need a way to distinguish "no callback" from "recyclable slot" */
+      menu_functions[slot] = Xen_false;  /* not Xen_undefined -- need a way to distinguish "no callback" from "recyclable slot" */
     }
 }
 
@@ -320,7 +320,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label :optional callback): adds label to the main (top-level) menu, returning its index"
   int slot = -1;
-  XEN_ASSERT_TYPE(Xen_is_string(label), label, 1, S_add_to_main_menu, "a string");
+  Xen_check_type(Xen_is_string(label), label, 1, S_add_to_main_menu, "a string");
   slot = make_callback_slot();
   if (Xen_is_bound(callback))
     {
@@ -331,13 +331,13 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
       else 
 	{
 	  XEN errm;
-	  errm = C_TO_XEN_STRING(err);
+	  errm = C_string_to_Xen_string(err);
 	  free(err);
 	  return(snd_bad_arity_error(S_add_to_main_menu, errm, callback));
 	}
     }
-  else menu_functions[slot] = XEN_UNDEFINED;
-  return(C_TO_XEN_INT(g_add_to_main_menu((char *)XEN_TO_C_STRING(label), slot)));
+  else menu_functions[slot] = Xen_undefined;
+  return(C_int_to_Xen_integer(g_add_to_main_menu((char *)Xen_string_to_C_string(label), slot)));
 }
 
 
@@ -350,12 +350,12 @@ func (a function of no args) when the new menu is activated. Returns the new men
   widget_t result;
   char *errmsg = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_string(label) || Xen_is_false(label), label, 2, S_add_to_menu, "a string");
-  XEN_ASSERT_TYPE(Xen_is_integer(menu), menu, 1, S_add_to_menu, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_procedure(callback) || Xen_is_false(callback), callback, 3, S_add_to_menu, "a procedure");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(gpos), gpos, 4, S_add_to_menu, "an integer");
+  Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 2, S_add_to_menu, "a string");
+  Xen_check_type(Xen_is_integer(menu), menu, 1, S_add_to_menu, "an integer");
+  Xen_check_type(Xen_is_procedure(callback) || Xen_is_false(callback), callback, 3, S_add_to_menu, "a procedure");
+  Xen_check_type(Xen_is_integer_or_unbound(gpos), gpos, 4, S_add_to_menu, "an integer");
 
-  /* fprintf(stderr, "add-to-menu %s\n", XEN_AS_STRING(XEN_CAR(callback))); */
+  /* fprintf(stderr, "add-to-menu %s\n", Xen_object_to_C_string(Xen_car(callback))); */
 
   if (Xen_is_procedure(callback))
     errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
@@ -363,15 +363,15 @@ func (a function of no args) when the new menu is activated. Returns the new men
     {
       int slot = -1, m, position = -1;
 
-      m = XEN_TO_C_INT(menu);
+      m = Xen_integer_to_C_int(menu);
       if (m < 0)
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
 
       if (Xen_is_procedure(callback)) slot = make_callback_slot();
-      if (Xen_is_integer(gpos)) position = XEN_TO_C_INT(gpos);
+      if (Xen_is_integer(gpos)) position = Xen_integer_to_C_int(gpos);
 
       result = g_add_to_menu(m,
-			     (Xen_is_false(label)) ? NULL : XEN_TO_C_STRING(label),
+			     (Xen_is_false(label)) ? NULL : Xen_string_to_C_string(label),
 			     slot,
 			     position);
       if (result == NULL)
@@ -381,13 +381,13 @@ func (a function of no args) when the new menu is activated. Returns the new men
   else 
     {
       XEN errm;
-      errm = C_TO_XEN_STRING(errmsg);
+      errm = C_string_to_Xen_string(errmsg);
       free(errmsg);
       return(snd_bad_arity_error(S_add_to_menu, errm, callback));
     }
   return(XEN_WRAP_WIDGET(result));
 #else
-  return(XEN_FALSE);
+  return(Xen_false);
 #endif
 }
 
@@ -395,7 +395,7 @@ func (a function of no args) when the new menu is activated. Returns the new men
 void g_menu_callback(int callb)
 {
   if ((callb >= 0) && (Xen_is_bound(menu_functions[callb])))
-    XEN_CALL_0(menu_functions[callb], "menu callback func");
+    Xen_call_with_no_args(menu_functions[callb], "menu callback func");
 }
 
 
@@ -404,13 +404,13 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
   #define H_remove_from_menu "(" S_remove_from_menu " menu label): removes menu item label from menu"
   int m;
 
-  XEN_ASSERT_TYPE(Xen_is_string(label), label, 2, S_remove_from_menu, "a string");
-  XEN_ASSERT_TYPE(Xen_is_integer(menu), menu, 1, S_remove_from_menu, "an integer");
+  Xen_check_type(Xen_is_string(label), label, 2, S_remove_from_menu, "a string");
+  Xen_check_type(Xen_is_integer(menu), menu, 1, S_remove_from_menu, "an integer");
 
-  m = XEN_TO_C_INT(menu);
+  m = Xen_integer_to_C_int(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_remove_from_menu, menu));
-  return(C_TO_XEN_INT(g_remove_from_menu(m, XEN_TO_C_STRING(label))));
+  return(C_int_to_Xen_integer(g_remove_from_menu(m, Xen_string_to_C_string(label))));
 }
 
 
@@ -419,25 +419,25 @@ static XEN g_main_menu(XEN which)
   #define H_main_menu "(" S_main_menu " menu): the top-level menu widget referred to by menu"
   int which_menu;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(which), which, 1, S_main_menu, "an integer");
-  which_menu = XEN_TO_C_INT(which);
+  Xen_check_type(Xen_is_integer(which), which, 1, S_main_menu, "an integer");
+  which_menu = Xen_integer_to_C_int(which);
   if ((which_menu < 0) || (which_menu >= MAX_MAIN_MENUS))
-    XEN_ERROR(XEN_ERROR_TYPE("no-such-menu"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_main_menu ": no such menu, ~A"),
+    Xen_error(Xen_make_error_type("no-such-menu"),
+	      Xen_list_2(C_string_to_Xen_string(S_main_menu ": no such menu, ~A"),
 			 which));
   return(XEN_WRAP_WIDGET(menu_widget(which_menu)));
 }
 
 
-XEN_ARGIFY_2(gl_add_to_main_menu_w, gl_add_to_main_menu)
-XEN_ARGIFY_4(gl_add_to_menu_w, gl_add_to_menu)
-XEN_NARGIFY_2(gl_remove_from_menu_w, gl_remove_from_menu)
-XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
+Xen_wrap_2_optional_args(gl_add_to_main_menu_w, gl_add_to_main_menu)
+Xen_wrap_4_optional_args(gl_add_to_menu_w, gl_add_to_menu)
+Xen_wrap_2_args(gl_remove_from_menu_w, gl_remove_from_menu)
+Xen_wrap_1_arg(g_main_menu_w, g_main_menu)
 
 void g_init_menu(void)
 {
-  XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w,  1, 1, 0, H_add_to_main_menu);
-  XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w,       3, 1, 0, H_add_to_menu);
-  XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu);
-  XEN_DEFINE_PROCEDURE(S_main_menu,         g_main_menu_w,          1, 0, 0, H_main_menu);
+  Xen_define_procedure(S_add_to_main_menu,  gl_add_to_main_menu_w,  1, 1, 0, H_add_to_main_menu);
+  Xen_define_procedure(S_add_to_menu,       gl_add_to_menu_w,       3, 1, 0, H_add_to_menu);
+  Xen_define_procedure(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu);
+  Xen_define_procedure(S_main_menu,         g_main_menu_w,          1, 0, 0, H_main_menu);
 }

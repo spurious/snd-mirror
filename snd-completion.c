@@ -64,7 +64,7 @@ static XEN snd_rb_methods(void)
 {
   /* returns all the functions we defined */
   XEN argv[1];
-  argv[0] = XEN_TRUE;
+  argv[0] = Xen_true;
   return(rb_class_private_instance_methods(1, argv, rb_mKernel));
   /* rb_ary_new here -- should we free? */
 }
@@ -76,7 +76,7 @@ static int completions(const char *text)
   int i, n, len, matches = 0;
 
   tab = snd_rb_methods();
-  n = XEN_VECTOR_LENGTH(tab);
+  n = Xen_vector_length(tab);
   len = strlen(text);
 
   for (i = 0; i < n; ++i)
@@ -84,8 +84,8 @@ static int completions(const char *text)
       char *sym;
       XEN handle;
 
-      handle = XEN_VECTOR_REF(tab, i);
-      sym = XEN_AS_STRING(handle);
+      handle = Xen_vector_ref(tab, i);
+      sym = Xen_object_to_C_string(handle);
 
       if (strncmp(text, sym, len) == 0)
 	{
@@ -118,11 +118,11 @@ static int completions(const char *text)
 static int completions(const char *text)
 {
   XEN tab = fth_find_in_wordlist(text);
-  int i, matches = XEN_VECTOR_LENGTH(tab);
+  int i, matches = Xen_vector_length(tab);
 
   for (i = 0; i < matches; i++)
     {
-      char *sym = XEN_TO_C_STRING(XEN_VECTOR_REF(tab, i));
+      char *sym = Xen_string_to_C_string(Xen_vector_ref(tab, i));
       add_possible_completion(sym);
       if (current_match == NULL)
 	current_match = mus_strdup(sym);

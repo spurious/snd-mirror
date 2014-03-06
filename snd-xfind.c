@@ -306,12 +306,12 @@ static XEN g_find_dialog(XEN managed, XEN text)
   #define H_find_dialog "(" S_find_dialog " :optional managed text): create and activate the Edit:Find dialog, return the dialog widget. \
 If 'text' is included, it is preloaded into the find dialog text widget."
 
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(managed), managed, 1, S_find_dialog, "a boolean");
-  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(text), text, 2, S_find_dialog, "a string");
+  Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_find_dialog, "a boolean");
+  Xen_check_type(Xen_is_string_or_unbound(text), text, 2, S_find_dialog, "a string");
 
-  make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed), NULL);
+  make_edit_find_dialog(Xen_boolean_to_C_bool(managed), NULL);
   if ((edit_find_text) && (Xen_is_string(text)))
-    XmTextSetString(edit_find_text, (char *)XEN_TO_C_STRING(text));
+    XmTextSetString(edit_find_text, (char *)Xen_string_to_C_string(text));
 
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
@@ -320,23 +320,23 @@ If 'text' is included, it is preloaded into the find dialog text widget."
 static XEN g_find_dialog_widgets(void)
 {
   if (edit_find_dialog)
-    return(XEN_CONS(XEN_WRAP_WIDGET(edit_find_dialog),
-	     XEN_CONS(XEN_WRAP_WIDGET(edit_find_text),
-  	       XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),           /* find next */
-		 XEN_CONS(XEN_WRAP_WIDGET(previousB),                                                          /* find previous */
-		   XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)),   /* go away */
-		     XEN_EMPTY_LIST))))));
-  return(XEN_EMPTY_LIST);
+    return(Xen_cons(XEN_WRAP_WIDGET(edit_find_dialog),
+	     Xen_cons(XEN_WRAP_WIDGET(edit_find_text),
+  	       Xen_cons(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),           /* find next */
+		 Xen_cons(XEN_WRAP_WIDGET(previousB),                                                          /* find previous */
+		   Xen_cons(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)),   /* go away */
+		     Xen_empty_list))))));
+  return(Xen_empty_list);
 }
 
 
-XEN_ARGIFY_2(g_find_dialog_w, g_find_dialog)
-XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
+Xen_wrap_2_optional_args(g_find_dialog_w, g_find_dialog)
+Xen_wrap_no_args(g_find_dialog_widgets_w, g_find_dialog_widgets)
 
 void g_init_gxfind(void)
 {
-  XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 2, 0, H_find_dialog);
-  XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function");
+  Xen_define_procedure(S_find_dialog, g_find_dialog_w, 0, 2, 0, H_find_dialog);
+  Xen_define_procedure("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function");
 }
 
 

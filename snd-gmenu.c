@@ -847,7 +847,7 @@ static void popup_normalize_callback(GtkWidget *w, gpointer info)
 
 static void popup_reverse_callback(GtkWidget *w, gpointer info)
 {
-  reverse_sound(current_channel(), OVER_SOUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+  reverse_sound(current_channel(), OVER_SOUND, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0);
 }
 
 
@@ -974,7 +974,7 @@ static void popup_mark_selection_callback(GtkWidget *w, gpointer info)
 
 static void popup_reverse_selection_callback(GtkWidget *w, gpointer info)
 {
-  reverse_sound(current_channel(), OVER_SELECTION, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+  reverse_sound(current_channel(), OVER_SELECTION, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0);
 }
 
 static mus_float_t selection_max = 0.0;
@@ -1275,6 +1275,22 @@ static GtkWidget *add_to_toolbar(GtkWidget *bar, const gchar *stock, const char 
   return(GTK_WIDGET(w));
 }
 
+/* in 3.10.* maybe need TODO: fix toolbar
+ *   GtkIconTheme *icon_theme; icon_theme = gtk_icon_theme_get_default();
+ *   GdkPixbuf *pixbuf; pixbuf = gtk_icon_theme_load_icon(icon_theme, NAME, 16, 0, NULL); 24/32 name=GTK_STOCK_*? 0 for GTK_ICON_LOOKUP_GENERIC_FALLBACK
+ * now turn it into an image?
+ *   gtk_tool_button_new(Image, NAME?) then show both the widget and the image?
+ *   gtk_tool_button_set_icon_name(w, NAME)
+ widget = gtk_image_new_from_pixbuf (pixbuf)
+ gtk_tool_button_new(widget, NAME)
+
+ item = gtk_tool_button_new (NULL, NULL);
+  gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (item), "document-new");
+  gtk_tool_button_set_label (GTK_TOOL_BUTTON (item), "Custom label");
+  add_item_to_list (store, item, "New");
+  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), item, -1);
+
+ */
 
 static void add_separator_to_toolbar(GtkWidget *bar)
 {
@@ -2027,21 +2043,21 @@ int g_remove_from_menu(int which_menu, const char *label)
 static XEN g_menu_widgets(void)
 {
   #define H_menu_widgets "(" S_menu_widgets "): a list of the top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help)"
-  return(XEN_CONS(XEN_WRAP_WIDGET(main_menu),
-	  XEN_CONS(XEN_WRAP_WIDGET(file_menu),
-           XEN_CONS(XEN_WRAP_WIDGET(edit_menu),
-            XEN_CONS(XEN_WRAP_WIDGET(view_menu),
-             XEN_CONS(XEN_WRAP_WIDGET(options_menu),
-              XEN_CONS(XEN_WRAP_WIDGET(help_menu),
-	       XEN_EMPTY_LIST)))))));
+  return(Xen_cons(XEN_WRAP_WIDGET(main_menu),
+	  Xen_cons(XEN_WRAP_WIDGET(file_menu),
+           Xen_cons(XEN_WRAP_WIDGET(edit_menu),
+            Xen_cons(XEN_WRAP_WIDGET(view_menu),
+             Xen_cons(XEN_WRAP_WIDGET(options_menu),
+              Xen_cons(XEN_WRAP_WIDGET(help_menu),
+	       Xen_empty_list)))))));
 }
 
 
-XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
+Xen_wrap_no_args(g_menu_widgets_w, g_menu_widgets)
 
 void g_init_gxmenu(void)
 {
-  XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
+  Xen_define_procedure(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }
 
 

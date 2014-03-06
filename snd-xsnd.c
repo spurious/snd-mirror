@@ -2756,9 +2756,9 @@ static XEN reflect_file_close_in_sync(XEN hook_or_reason)
 {
   int reason;
 #if HAVE_SCHEME
-  reason = XEN_TO_C_INT(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
+  reason = Xen_integer_to_C_int(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
 #else
-  reason = XEN_TO_C_INT(hook_or_reason);
+  reason = Xen_integer_to_C_int(hook_or_reason);
 #endif
   if ((reason == FILE_CLOSED) && /* snd-file.c */
       (ss->active_sounds == 1))
@@ -2771,10 +2771,10 @@ static XEN reflect_file_close_in_sync(XEN hook_or_reason)
 	  attach_status_area(sp);
 	}
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
-XEN_NARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
+Xen_wrap_1_arg(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
 
 
 void set_sound_pane_file_label(snd_info *sp, const char *str)
@@ -3259,30 +3259,30 @@ widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filte
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
   if (!HAS_WIDGETS(sp))
-    return(XEN_EMPTY_LIST);
+    return(Xen_empty_list);
 
-  return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),
-	  XEN_CONS(XEN_WRAP_WIDGET(SND_NAME(sp)),
-           XEN_CONS(XEN_WRAP_WIDGET(CONTROLS(sp)),
-	    XEN_CONS(XEN_WRAP_WIDGET(STATUS_AREA(sp)),
+  return(Xen_cons(XEN_WRAP_WIDGET(SND_PANE(sp)),
+	  Xen_cons(XEN_WRAP_WIDGET(SND_NAME(sp)),
+           Xen_cons(XEN_WRAP_WIDGET(CONTROLS(sp)),
+	    Xen_cons(XEN_WRAP_WIDGET(STATUS_AREA(sp)),
 #if WITH_AUDIO
-	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
+	     Xen_cons(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
 #else
-	     XEN_CONS(XEN_FALSE,
+	     Xen_cons(Xen_false,
 #endif
-	      XEN_CONS(XEN_WRAP_WIDGET(FILTER_GRAPH(sp)), /* this is the drawingarea widget */
-	       XEN_CONS(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
-		XEN_CONS(XEN_FALSE,
-	         XEN_CONS(XEN_WRAP_WIDGET(LOCK_OR_BOMB(sp)),
-	          XEN_CONS(XEN_WRAP_WIDGET(SYNC_BUTTON(sp)),
-	           XEN_EMPTY_LIST)))))))))));
+	      Xen_cons(XEN_WRAP_WIDGET(FILTER_GRAPH(sp)), /* this is the drawingarea widget */
+	       Xen_cons(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
+		Xen_cons(Xen_false,
+	         Xen_cons(XEN_WRAP_WIDGET(LOCK_OR_BOMB(sp)),
+	          Xen_cons(XEN_WRAP_WIDGET(SYNC_BUTTON(sp)),
+	           Xen_empty_list)))))))))));
 }
 
 
-XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
+Xen_wrap_1_optional_arg(g_sound_widgets_w, g_sound_widgets)
 
 void g_init_gxsnd(void)
 {
-  XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
-  XEN_DEFINE_PROCEDURE(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
+  Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
+  Xen_define_procedure(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 }

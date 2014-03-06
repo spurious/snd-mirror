@@ -501,8 +501,8 @@ static slist *ccd_list;
 
 static void check_color_hook(void)
 {
-  if (XEN_HOOKED(color_hook))
-    run_hook(color_hook, XEN_EMPTY_LIST, S_color_hook);
+  if (Xen_hook_has_list(color_hook))
+    run_hook(color_hook, Xen_empty_list, S_color_hook);
 }
 
 
@@ -646,7 +646,7 @@ static XEN orientation_hook;
 
 static void check_orientation_hook(void)
 {
-  run_hook(orientation_hook, XEN_EMPTY_LIST, S_orientation_hook);
+  run_hook(orientation_hook, Xen_empty_list, S_orientation_hook);
 }
 
 
@@ -1289,26 +1289,26 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 }
 
 
-static XEN g_background_gradient(void) {return(C_TO_XEN_DOUBLE(ss->bg_gradient));}
+static XEN g_background_gradient(void) {return(C_double_to_Xen_real(ss->bg_gradient));}
 
 static XEN g_set_background_gradient(XEN val) 
 {
   #define H_background_gradient "(" S_background_gradient "): channel graph background color gradient"
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_background_gradient, "a number between 0 (none) and 1");
+  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_background_gradient, "a number between 0 (none) and 1");
 
-  ss->bg_gradient = XEN_TO_C_DOUBLE(val);
+  ss->bg_gradient = Xen_real_to_C_double(val);
   for_each_chan(update_graph);
 
   return(val);
 }
 
 
-XEN_NARGIFY_0(g_background_gradient_w, g_background_gradient)
-XEN_NARGIFY_1(g_set_background_gradient_w, g_set_background_gradient)
+Xen_wrap_no_args(g_background_gradient_w, g_background_gradient)
+Xen_wrap_1_arg(g_set_background_gradient_w, g_set_background_gradient)
 
 void g_init_gxdraw(void)
 {
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_background_gradient, g_background_gradient_w, H_background_gradient,
+  Xen_define_procedure_with_setter(S_background_gradient, g_background_gradient_w, H_background_gradient,
 				   S_setB S_background_gradient, g_set_background_gradient_w,  0, 0, 1, 0);
 
   #define H_orientation_hook S_orientation_hook " (): called whenever one of the variables associated with the \
@@ -1316,6 +1316,6 @@ orientation dialog changes"
   #define H_color_hook S_color_hook " (): called whenever one of the variables associated with the \
 color dialog changes"
 
-  orientation_hook = XEN_DEFINE_HOOK(S_orientation_hook, "(make-hook)", 0, H_orientation_hook);
-  color_hook =       XEN_DEFINE_HOOK(S_color_hook,       "(make-hook)", 0, H_color_hook);
+  orientation_hook = Xen_define_hook(S_orientation_hook, "(make-hook)", 0, H_orientation_hook);
+  color_hook =       Xen_define_hook(S_color_hook,       "(make-hook)", 0, H_color_hook);
 }

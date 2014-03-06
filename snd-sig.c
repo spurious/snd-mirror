@@ -33,7 +33,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
   return(cp->edit_ctr);
 #endif
 
-  XEN_ASSERT_TYPE(!Xen_is_bound(edpos) || Xen_is_integer(edpos) || Xen_is_procedure(edpos) || Xen_is_false(edpos), 
+  Xen_check_type(!Xen_is_bound(edpos) || Xen_is_integer(edpos) || Xen_is_procedure(edpos) || Xen_is_false(edpos), 
 		  edpos, arg_pos, caller, "an integer, " PROC_FALSE ", or a procedure");
 
   if (Xen_is_procedure(edpos))
@@ -44,27 +44,27 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
       if (errmsg)
 	{
 	  XEN errstr;
-	  errstr = C_TO_XEN_STRING(errmsg);
+	  errstr = C_string_to_Xen_string(errmsg);
 	  free(errmsg);
 	  snd_bad_arity_error(caller, errstr, edpos);
 	  return(cp->edit_ctr);
 	}
 
-      pos = XEN_TO_C_INT(XEN_CALL_2(edpos, 
+      pos = Xen_integer_to_C_int(Xen_call_with_2_args(edpos, 
 				    C_INT_TO_XEN_SOUND(cp->sound->index), 
-				    C_TO_XEN_INT(cp->chan),
+				    C_int_to_Xen_integer(cp->chan),
 				    caller));
       
       if (cp->active < CHANNEL_HAS_EDIT_LIST) /* edpos proc clobbered channel somehow... */
-	XEN_ERROR(NO_SUCH_CHANNEL,
-		  XEN_LIST_3(C_TO_XEN_STRING("~A: edpos arg (~A) clobbered the current sound!"),
-			     C_TO_XEN_STRING(caller),
+	Xen_error(NO_SUCH_CHANNEL,
+		  Xen_list_3(C_string_to_Xen_string("~A: edpos arg (~A) clobbered the current sound!"),
+			     C_string_to_Xen_string(caller),
 			     edpos));
     }
   else 
     {
       if (Xen_is_integer(edpos))
-	pos = XEN_TO_C_INT(edpos);
+	pos = Xen_integer_to_C_int(edpos);
     }
 
   if (pos == AT_CURRENT_EDIT_POSITION)
@@ -73,15 +73,15 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
   if ((pos < 0) || 
       (pos >= cp->edit_size) ||
       (cp->edits[pos] == NULL))
-    XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_8(C_TO_XEN_STRING("~A: no such edpos: ~A (from ~A), sound index: ~A (~S), chan: ~A, current edit: ~A"),
-			 C_TO_XEN_STRING(caller),
-			 C_TO_XEN_INT(pos),
+    Xen_error(NO_SUCH_EDIT,
+	      Xen_list_8(C_string_to_Xen_string("~A: no such edpos: ~A (from ~A), sound index: ~A (~S), chan: ~A, current edit: ~A"),
+			 C_string_to_Xen_string(caller),
+			 C_int_to_Xen_integer(pos),
 			 edpos,
 			 C_INT_TO_XEN_SOUND(cp->sound->index),
-			 C_TO_XEN_STRING(cp->sound->short_filename),
-			 C_TO_XEN_INT(cp->chan),
-			 C_TO_XEN_INT(cp->edit_ctr)));
+			 C_string_to_Xen_string(cp->sound->short_filename),
+			 C_int_to_Xen_integer(cp->chan),
+			 C_int_to_Xen_integer(cp->edit_ctr)));
   return(pos);
 }
 
@@ -97,11 +97,11 @@ mus_long_t beg_to_sample(XEN beg, const char *caller)
   if (Xen_is_integer(beg))
     {
       mus_long_t start;
-      start = XEN_TO_C_LONG_LONG(beg);
+      start = Xen_llong_to_C_llong(beg);
       if (start < 0) 
-	XEN_ERROR(NO_SUCH_SAMPLE, XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"), C_TO_XEN_STRING(caller), beg));
+	Xen_error(NO_SUCH_SAMPLE, Xen_list_3(C_string_to_Xen_string("~A: no such sample: ~A"), C_string_to_Xen_string(caller), beg));
       if (start > (1LL << 34))
-	XEN_OUT_OF_RANGE_ERROR(caller, 1, beg, "too large");
+	Xen_out_of_range_error(caller, 1, beg, "too large");
       return(start);
     }
   return(0);
@@ -113,11 +113,11 @@ mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int
   if (Xen_is_integer(dur))
     {
       mus_long_t samps;
-      samps = XEN_TO_C_LONG_LONG(dur);
+      samps = Xen_llong_to_C_llong(dur);
       if (samps < 0)
-	XEN_WRONG_TYPE_ARG_ERROR(caller, argn, dur, "a positive integer");
+	Xen_wrong_type_arg_error(caller, argn, dur, "a positive integer");
       if (samps > (1LL << 34))
-	XEN_OUT_OF_RANGE_ERROR(caller, argn, dur, "too large");
+	Xen_out_of_range_error(caller, argn, dur, "too large");
       return(samps);
     }
   return(cp->edits[edpos]->samples - beg);
@@ -129,11 +129,11 @@ static mus_long_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *c
   if (Xen_is_integer(end))
     {
       mus_long_t last;
-      last = XEN_TO_C_LONG_LONG(end);
+      last = Xen_llong_to_C_llong(end);
       if (last < 0) 
-	XEN_ERROR(NO_SUCH_SAMPLE, XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"), C_TO_XEN_STRING(caller), end));
+	Xen_error(NO_SUCH_SAMPLE, Xen_list_3(C_string_to_Xen_string("~A: no such sample: ~A"), C_string_to_Xen_string(caller), end));
       if (last > (1LL << 34))
-	XEN_OUT_OF_RANGE_ERROR(caller, 2, end, "too large");
+	Xen_out_of_range_error(caller, 2, end, "too large");
       return(last);
     }
   return(cp->edits[edpos]->samples - 1);
@@ -1085,7 +1085,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
       if (ratio == 1.0) 
 	return(NULL);
       if (ratio == -1.0)
-	return(reverse_channel(cp, sf, beg, dur, C_TO_XEN_INT(sf->edit_ctr), origin, 0));
+	return(reverse_channel(cp, sf, beg, dur, C_int_to_Xen_integer(sf->edit_ctr), origin, 0));
     }
 
   sp = cp->sound;
@@ -3484,7 +3484,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
   int j = 0;
   bool reporting = false;
   io_error_t io_err = IO_NO_ERROR;
-  XEN res = XEN_FALSE;
+  XEN res = Xen_false;
 
   sampler_set_safe(sf, num);
   sp = cp->sound;
@@ -3516,11 +3516,11 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       for (kp = 0; kp < num; kp++)
 	{
 	  /* changed here to remove catch 24-Mar-02 */
-	  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
+	  res = Xen_unprotected_call_with_1_arg(proc, C_double_to_Xen_real((double)read_sample(sf)));
 	  if (Xen_is_number(res))                         /* one number -> replace current sample */
 	    {
 	      samps++;
-	      data[0][j++] = XEN_TO_C_DOUBLE(res);
+	      data[0][j++] = Xen_real_to_C_double(res);
 	      if (j == MAX_BUFFER_SIZE)
 		{
 		  err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -3568,9 +3568,9 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 			  free(data[0]);
 			  free(data);
 			  
-			  XEN_ERROR(BAD_TYPE,
-				    XEN_LIST_3(C_TO_XEN_STRING("~A: result of procedure must be a (non-complex) number, boolean, or vct: ~A"),
-					       C_TO_XEN_STRING(caller),
+			  Xen_error(BAD_TYPE,
+				    Xen_list_3(C_string_to_Xen_string("~A: result of procedure must be a (non-complex) number, boolean, or vct: ~A"),
+					       C_string_to_Xen_string(caller),
 					       res));
 			}
 		    }
@@ -3611,10 +3611,10 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	    {
 	      snd_remove(filename, REMOVE_FROM_CACHE);
 	      free(filename);
-	      XEN_ERROR(NO_SUCH_CHANNEL,
-			XEN_LIST_2(C_TO_XEN_STRING("~A: can't edit closed channel!"),
-				   C_TO_XEN_STRING(caller)));
-	      return(XEN_FALSE);
+	      Xen_error(NO_SUCH_CHANNEL,
+			Xen_list_2(C_string_to_Xen_string("~A: can't edit closed channel!"),
+				   C_string_to_Xen_string(caller)));
+	      return(Xen_false);
 	    }
 	  
 	  if (samps == num)
@@ -3647,7 +3647,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
   int i, data_pos = 0, kp;
   mus_long_t cur_size;
   mus_float_t *data = NULL;
-  XEN res = XEN_FALSE;
+  XEN res = Xen_false;
 
 #if HAVE_SCHEME
   mus_float_t *in_data;
@@ -3797,7 +3797,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
   else
     {
       /* presumably "proc" is something like abs */
-      arg_list = XEN_LIST_1(XEN_FALSE);
+      arg_list = Xen_list_1(Xen_false);
       gc_loc = s7_gc_protect(s7, arg_list);
       use_apply = true;
     }
@@ -3831,7 +3831,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	  res = eval(s7, body, e);
 	}
 #else
-      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
+      res = Xen_unprotected_call_with_1_arg(proc, C_double_to_Xen_real((double)read_sample(sf)));
 #endif
 
       if (Xen_is_number(res))                         /* one number -> replace current sample */
@@ -3841,7 +3841,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	      cur_size *= 2;
 	      data = (mus_float_t *)realloc(data, cur_size * sizeof(mus_float_t));
 	    }
-	  data[data_pos++] = XEN_TO_C_DOUBLE(res);
+	  data[data_pos++] = Xen_real_to_C_double(res);
 	}
       else
 	{
@@ -3878,9 +3878,9 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 #if HAVE_SCHEME
 		      s7_gc_unprotect_at(s7, gc_loc);
 #endif
-		      XEN_ERROR(BAD_TYPE,
-				XEN_LIST_3(C_TO_XEN_STRING("~A: result of procedure must be a number, boolean, or vct: ~A"),
-					   C_TO_XEN_STRING(caller),
+		      Xen_error(BAD_TYPE,
+				Xen_list_3(C_string_to_Xen_string("~A: result of procedure must be a number, boolean, or vct: ~A"),
+					   C_string_to_Xen_string(caller),
 					   res));
 		    }
 		}
@@ -3896,10 +3896,10 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
   if (cp->active < CHANNEL_HAS_EDIT_LIST)
     {
       if (data) {free(data); data = NULL;} 
-      XEN_ERROR(NO_SUCH_CHANNEL,
-		XEN_LIST_2(C_TO_XEN_STRING("~A: can't edit closed channel!"),
-			   C_TO_XEN_STRING(caller)));
-      return(XEN_FALSE);
+      Xen_error(NO_SUCH_CHANNEL,
+		Xen_list_2(C_string_to_Xen_string("~A: can't edit closed channel!"),
+			   C_string_to_Xen_string(caller)));
+      return(Xen_false);
     }
   if (data_pos == num)
     change_samples(beg, data_pos, data, cp, caller, pos, -1.0);
@@ -3931,24 +3931,24 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   mus_long_t num;
   int pos;
   bool temp_file = false, backup = false;
-  XEN res = XEN_FALSE;
-  XEN proc = XEN_FALSE;
+  XEN res = Xen_false;
+  XEN proc = Xen_false;
 
   proc = proc_and_list;
 
   if (Xen_is_string(org)) 
-    caller = XEN_TO_C_STRING(org);
+    caller = Xen_string_to_C_string(org);
   else caller = fallback_caller;
 
-  XEN_ASSERT_TYPE((Xen_is_procedure(proc)) || (mus_is_xen(proc)), proc, 1, caller, "a procedure");
+  Xen_check_type((Xen_is_procedure(proc)) || (mus_is_xen(proc)), proc, 1, caller, "a procedure");
   ASSERT_SAMPLE_TYPE(caller, s_beg, 2);
   ASSERT_SAMPLE_TYPE(caller, s_end, 3);
   ASSERT_SAMPLE_TYPE(caller, s_dur, 3);
   ASSERT_CHANNEL(caller, snd, chn, 5); 
 
   cp = get_cp(snd, chn, caller);
-  if (!cp) return(XEN_FALSE);
-  if (!(is_editable(cp))) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
+  if (!(is_editable(cp))) return(Xen_false);
 
   pos = to_c_edit_position(cp, edpos, caller, 7);
   beg = beg_to_sample(s_beg, caller);
@@ -3971,7 +3971,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       if (errmsg)
 	{
 	  XEN errstr;
-	  errstr = C_TO_XEN_STRING(errmsg);
+	  errstr = C_string_to_Xen_string(errmsg);
 	  free(errmsg);
 	  return(snd_bad_arity_error(caller, errstr, proc));
 	}
@@ -3980,14 +3980,14 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       if (beg > cp->edits[pos]->samples)
 	{
 	  if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg - cp->edits[pos]->samples, pos, "extend for " S_map_channel))) 
-	    return(XEN_FALSE);
+	    return(Xen_false);
 	  backup = true;
 	  pos = cp->edit_ctr;
 	}
 
       sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, (num > REPORTING_SIZE) ? REPORTING_SIZE : num);
       if (sf == NULL) 
-	return(XEN_TRUE);
+	return(Xen_true);
 
       temp_file = (num > REPORTING_SIZE);
       if (temp_file)
@@ -4015,23 +4015,23 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
   bool reporting = false;
   int counts = 0, pos;
   char *errmsg;
-  XEN proc = XEN_FALSE;
+  XEN proc = Xen_false;
 
   proc = proc_and_list;
 
-  XEN_ASSERT_TYPE((Xen_is_procedure(proc)), proc, 1, caller, "a procedure");
+  Xen_check_type((Xen_is_procedure(proc)), proc, 1, caller, "a procedure");
   ASSERT_SAMPLE_TYPE(caller, s_beg, 2);
   ASSERT_SAMPLE_TYPE(caller, s_end, 3);
   ASSERT_SAMPLE_TYPE(caller, s_dur, 3);
   ASSERT_CHANNEL(caller, snd, chn, 4);
 
   cp = get_cp(snd, chn, caller);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   pos = to_c_edit_position(cp, edpos, caller, arg_pos);
 
   beg = beg_to_sample(s_beg, caller);
-  if (beg > cp->edits[pos]->samples) return(XEN_FALSE);
+  if (beg > cp->edits[pos]->samples) return(Xen_false);
   if (Xen_is_false(s_dur))
     end = end_to_sample(s_end, cp, pos, caller);
   else dur = dur_to_samples(s_dur, beg, cp, pos, 3, caller);
@@ -4039,7 +4039,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
   errmsg = procedure_ok(proc, 1, caller, "", 1);
   if (errmsg)
     {
-      errstr = C_TO_XEN_STRING(errmsg);
+      errstr = C_string_to_Xen_string(errmsg);
       free(errmsg);
       return(snd_bad_arity_error(caller, errstr, proc));
     }
@@ -4052,9 +4052,9 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
       else end = cp->edits[pos]->samples - 1;
     }
   num = end - beg + 1;
-  if (num <= 0) return(XEN_FALSE);
+  if (num <= 0) return(Xen_false);
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, (num < REPORTING_SIZE) ? REPORTING_SIZE : num);
-  if (sf == NULL) return(XEN_TRUE);
+  if (sf == NULL) return(Xen_true);
   sampler_set_safe(sf, num);
 
 #if HAVE_SCHEME
@@ -4255,7 +4255,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
   else
     {
       /* is this for built-in funcs? */
-      arg_list = XEN_LIST_1(XEN_FALSE);
+      arg_list = Xen_list_1(Xen_false);
       gc_loc = s7_gc_protect(s7, arg_list);
       use_apply = true;
     }
@@ -4298,7 +4298,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
   for (kp = 0; kp < num; kp++)
     {
       XEN res;
-      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
+      res = Xen_unprotected_call_with_1_arg(proc, C_double_to_Xen_real((double)read_sample(sf)));
 #endif
       /* leak here -- if reader active and error occurs, we jump out without cleanup */
       /* see dynamic_wind above */
@@ -4315,7 +4315,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 #if HAVE_SCHEME
 	      s7_gc_unprotect_at(s7, gc_loc);
 #endif
-	      return(C_TO_XEN_LONG_LONG(kp + beg));
+	      return(C_llong_to_Xen_llong(kp + beg));
 	    }
 	}
       if (reporting) 
@@ -4346,19 +4346,19 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
   if (reporting) finish_progress_report(cp);
   sf = free_snd_fd(sf);
   if (counting)
-    return(C_TO_XEN_INT(counts));
+    return(C_int_to_Xen_integer(counts));
 
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 mus_long_t scan_channel(chan_info *cp, mus_long_t start, mus_long_t end, XEN proc)
 {
   XEN result;
-  result = g_sp_scan(proc, C_TO_XEN_LONG_LONG(start), C_TO_XEN_LONG_LONG(end),
-		     XEN_FALSE, XEN_FALSE, "search procedure", false, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, XEN_FALSE);
+  result = g_sp_scan(proc, C_llong_to_Xen_llong(start), C_llong_to_Xen_llong(end),
+		     Xen_false, Xen_false, "search procedure", false, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0, Xen_false);
   if (Xen_is_long_long_int(result))
-    return(XEN_TO_C_LONG_LONG(result));
+    return(Xen_llong_to_C_llong(result));
   return(-1);
 }
 
@@ -4381,7 +4381,7 @@ apply 'func' to samples in current channel (or the specified channel). \
 if 'func' returns non-" PROC_FALSE ", the scan stops, and the current sample number is returned.\n  " scan_chan_example
 
   ASSERT_CHANNEL(S_scan_chan, snd, chn, 4); 
-  return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, false, edpos, 6, XEN_FALSE));
+  return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, false, edpos, 6, Xen_false));
 }
 #endif
 
@@ -4403,7 +4403,7 @@ func is a function of one argument, the current sample. \
 if func returns non-" PROC_FALSE ", the scan stops, and the current sample number is returned. \n  " scan_channel_example
 
   ASSERT_CHANNEL(S_scan_channel, snd, chn, 4); 
-  return(g_sp_scan(proc, beg, XEN_FALSE, snd, chn, S_scan_channel, false, edpos, 6, (Xen_is_bound(dur)) ? dur : XEN_FALSE));
+  return(g_sp_scan(proc, beg, Xen_false, snd, chn, S_scan_channel, false, edpos, 6, (Xen_is_bound(dur)) ? dur : Xen_false));
 }
 
 
@@ -4422,7 +4422,7 @@ static XEN g_map_chan(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn,
   #define H_map_chan "(" S_map_chan " func :optional (start 0) (end len) edname snd chn edpos): \
 apply func to samples in current channel; edname is the edit history name for this editing operation.\n  " map_chan_example
 
-  return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, XEN_FALSE, S_map_chan));
+  return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, Xen_false, S_map_chan));
 }
 
 
@@ -4441,7 +4441,7 @@ static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN e
   #define H_map_channel "(" S_map_channel " func :optional (start 0) (dur len) snd chn edpos edname): \
 apply func to samples in current channel; edname is the edit history name for this editing operation.\n  " map_channel_example
 
-  return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, (Xen_is_bound(s_dur)) ? s_dur : XEN_FALSE, S_map_channel));
+  return(g_map_chan_1(proc, s_beg, Xen_false, org, snd, chn, edpos, (Xen_is_bound(s_dur)) ? s_dur : Xen_false, S_map_channel));
 }
 
 
@@ -4463,7 +4463,7 @@ the current sample, to each sample in snd's channel chn, starting at 'start-samp
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
   ASSERT_CHANNEL(S_find_channel, snd, chn_n, 3);
-  return(g_sp_scan(expr, sample, XEN_FALSE, snd, chn_n, S_find_channel, false, edpos, 5, XEN_FALSE));
+  return(g_sp_scan(expr, sample, Xen_false, snd, chn_n, S_find_channel, false, edpos, 5, Xen_false));
 }
 #endif
 
@@ -4484,7 +4484,7 @@ static XEN g_count_matches(XEN expr, XEN sample, XEN snd, XEN chn_n, XEN edpos)
 samples satisfy func (a function of one argument, the current sample, returning " PROC_TRUE " upon match):\n  " count_matches_example
 
   ASSERT_CHANNEL(S_count_matches, snd, chn_n, 3);
-  return(g_sp_scan(expr, sample, XEN_FALSE, snd, chn_n, S_count_matches, true, edpos, 5, XEN_FALSE));
+  return(g_sp_scan(expr, sample, Xen_false, snd, chn_n, S_count_matches, true, edpos, 5, Xen_false));
 }
 
 
@@ -4500,7 +4500,7 @@ data from start-samp for samps in snd's channel chn"
   ASSERT_CHANNEL(S_smooth_sound, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, S_smooth_sound);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   start = beg_to_sample(beg, S_smooth_sound);
   samps = dur_to_samples(num, start, cp, cp->edit_ctr, 2, S_smooth_sound);
 
@@ -4523,7 +4523,7 @@ smooth data from beg for dur in snd's channel chn"
   ASSERT_CHANNEL(S_smooth_channel, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, S_smooth_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   pos = to_c_edit_position(cp, edpos, S_smooth_channel, 5);
   start = beg_to_sample(beg, S_smooth_channel);
   num = dur_to_samples(dur, start, cp, pos, 2, S_smooth_channel);
@@ -4543,12 +4543,12 @@ static XEN g_smooth_selection(void)
 
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_smooth_selection));
-  cp = get_cp(XEN_FALSE, XEN_FALSE, S_smooth_selection);
-  if (!cp) return(XEN_FALSE);
+  cp = get_cp(Xen_false, Xen_false, S_smooth_selection);
+  if (!cp) return(Xen_false);
 
   cos_smooth(cp, 0, 0, OVER_SELECTION);
 
-  return(XEN_TRUE);
+  return(Xen_true);
 }
 
 
@@ -4609,7 +4609,7 @@ make the splice-point smooth."
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_delete_selection_and_smooth));
   for_each_chan(cut_and_smooth);
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -4623,20 +4623,20 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
   int pos;
   mus_long_t samp, len;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(samp_n), samp_n, 1, S_delete_samples_and_smooth, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_long_long_int(samps), samps, 2, S_delete_samples_and_smooth, "an integer");
+  Xen_check_type(Xen_is_integer(samp_n), samp_n, 1, S_delete_samples_and_smooth, "an integer");
+  Xen_check_type(Xen_is_long_long_int(samps), samps, 2, S_delete_samples_and_smooth, "an integer");
 
   ASSERT_CHANNEL(S_delete_samples_and_smooth, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_delete_samples_and_smooth);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   pos = to_c_edit_position(cp, edpos, S_delete_samples_and_smooth, 5);
   samp = beg_to_sample(samp_n, S_delete_samples_and_smooth);
   if (samp > cp->edits[pos]->samples)
-    XEN_OUT_OF_RANGE_ERROR(S_delete_samples_and_smooth, 1, samp_n, "beyond end of sound");
+    Xen_out_of_range_error(S_delete_samples_and_smooth, 1, samp_n, "beyond end of sound");
 
-  len = XEN_TO_C_LONG_LONG(samps);
-  if (len <= 0) return(XEN_FALSE);
+  len = Xen_llong_to_C_llong(samps);
+  if (len <= 0) return(Xen_false);
   if (len > cp->edits[pos]->samples)
     len = cp->edits[pos]->samples;
 
@@ -4654,11 +4654,11 @@ static XEN g_reverse_sound(XEN snd, XEN chn_n, XEN edpos)
 
   ASSERT_CHANNEL(S_reverse_sound, snd, chn_n, 1);
   cp = get_cp(snd, chn_n, S_reverse_sound);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   reverse_sound(cp, OVER_SOUND, edpos, 3);
 
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -4670,12 +4670,12 @@ static XEN g_reverse_selection(void)
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_reverse_selection));
 
-  cp = get_cp(XEN_FALSE, XEN_FALSE, S_reverse_selection);
-  if (!cp) return(XEN_FALSE);
+  cp = get_cp(Xen_false, Xen_false, S_reverse_selection);
+  if (!cp) return(Xen_false);
 
-  reverse_sound(cp, OVER_SELECTION, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+  reverse_sound(cp, OVER_SELECTION, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0);
 
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -4693,11 +4693,11 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd, XEN chn_n, XEN edpos
   ASSERT_CHANNEL(S_reverse_channel, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, S_reverse_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   beg = beg_to_sample(s_beg, S_reverse_channel);
   pos = to_c_edit_position(cp, edpos, S_reverse_channel, 5);
   dur = dur_to_samples(s_dur, beg, cp, pos, 2, S_reverse_channel);
-  if ((beg > cp->edits[pos]->samples) || (dur == 0)) return(XEN_FALSE);
+  if ((beg > cp->edits[pos]->samples) || (dur == 0)) return(Xen_false);
   end = beg + dur;
   if (end > cp->edits[pos]->samples)
     end = cp->edits[pos]->samples;
@@ -4709,10 +4709,10 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd, XEN chn_n, XEN edpos
   if (errmsg)
     {
       XEN str;
-      str = C_TO_XEN_STRING(errmsg);
+      str = C_string_to_Xen_string(errmsg);
       free(errmsg);
-      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		XEN_LIST_2(C_TO_XEN_STRING(S_reverse_channel ": IO error ~A"),
+      Xen_error(Xen_make_error_type("IO-error"),
+		Xen_list_2(C_string_to_Xen_string(S_reverse_channel ": IO error ~A"),
 			   str));
     }
   return(s_beg);
@@ -4725,18 +4725,18 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
   chan_info *cp; /* follows sync */
   mus_long_t start = 0, len = 0;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(beg), beg, 1, S_insert_silence, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer(num), num, 2, S_insert_silence, "an integer");
+  Xen_check_type(Xen_is_integer(beg), beg, 1, S_insert_silence, "an integer");
+  Xen_check_type(Xen_is_integer(num), num, 2, S_insert_silence, "an integer");
   ASSERT_CHANNEL(S_insert_silence, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_insert_silence);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   start = beg_to_sample(beg, S_insert_silence);
-  len = XEN_TO_C_LONG_LONG(num);
-  if (len <= 0) return(XEN_FALSE);
+  len = Xen_llong_to_C_llong(num);
+  if (len <= 0) return(Xen_false);
   if (len > (1LL << 34))
-    XEN_OUT_OF_RANGE_ERROR(S_insert_silence, 2, num, "too large");
+    Xen_out_of_range_error(S_insert_silence, 2, num, "too large");
 
   cursor_insert(cp, start, len);
 
@@ -4751,19 +4751,19 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   mus_long_t bg, len;
   int pos;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(beg), beg, 1, S_pad_channel, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer(num), num, 2, S_pad_channel, "an integer");
+  Xen_check_type(Xen_is_integer(beg), beg, 1, S_pad_channel, "an integer");
+  Xen_check_type(Xen_is_integer(num), num, 2, S_pad_channel, "an integer");
   ASSERT_CHANNEL(S_pad_channel, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_pad_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   bg = beg_to_sample(beg, S_pad_channel);
 
-  len = XEN_TO_C_LONG_LONG(num);
-  if (len <= 0) return(XEN_FALSE); /* to parallel insert-silence above -- maybe better would be an out of range error in both cases */
+  len = Xen_llong_to_C_llong(num);
+  if (len <= 0) return(Xen_false); /* to parallel insert-silence above -- maybe better would be an out of range error in both cases */
   if (len > (1LL << 34))
-    XEN_OUT_OF_RANGE_ERROR(S_pad_channel, 2, num, "too large");
+    Xen_out_of_range_error(S_pad_channel, 2, num, "too large");
 
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
 
@@ -4784,8 +4784,8 @@ swap the indicated channels"
   ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
 
   cp0 = get_cp(snd0, chn0, S_swap_channels);
-  if (!cp0) return(XEN_FALSE);
-  if (!(cp0->editable)) return(XEN_FALSE);
+  if (!cp0) return(Xen_false);
+  if (!(cp0->editable)) return(Xen_false);
 
   if (Xen_is_integer(chn1))
     {
@@ -4808,15 +4808,15 @@ swap the indicated channels"
       else cp1 = sp->chans[0];
     }
 
-  if (cp0 == cp1) return(XEN_FALSE);
-  if (!(cp1->editable)) return(XEN_FALSE);
+  if (cp0 == cp1) return(Xen_false);
+  if (!(cp1->editable)) return(Xen_false);
   if ((cp0) && (cp1))
     {
       int pos0, pos1;
       mus_long_t dur0, dur1, beg0 = 0, num;
 
       if (Xen_is_integer(beg)) 
-	beg0 = XEN_TO_C_LONG_LONG(beg);
+	beg0 = Xen_llong_to_C_llong(beg);
 
       pos0 = to_c_edit_position(cp0, edpos0, S_swap_channels, 7);
       pos1 = to_c_edit_position(cp1, edpos1, S_swap_channels, 8);
@@ -4825,7 +4825,7 @@ swap the indicated channels"
       dur1 = cp1->edits[pos1]->samples;
 
       if (Xen_is_integer(dur)) 
-	num = XEN_TO_C_LONG_LONG(dur);
+	num = Xen_llong_to_C_llong(dur);
       else
 	{
 	  if (dur0 > dur1) 
@@ -4843,7 +4843,7 @@ swap the indicated channels"
 	      (pos1 == 0))
 	    {
 	      /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
-	      if ((dur0 == 0) && (dur1 == 0)) return(XEN_FALSE);
+	      if ((dur0 == 0) && (dur1 == 0)) return(Xen_false);
 	      if ((is_editable(cp0)) && (is_editable(cp1)))
 		{
 		  peak_env_info *e0, *e1;
@@ -4869,7 +4869,7 @@ swap the indicated channels"
 	    }
 	}
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -4891,17 +4891,17 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
 	{
 	  if (Xen_is_list(scalers))
 	    {
-	      len = XEN_LIST_LENGTH(scalers);
+	      len = Xen_list_length(scalers);
 	      if (len < 0)
-		XEN_WRONG_TYPE_ARG_ERROR(caller, 1, scalers, "a proper list");
+		Xen_wrong_type_arg_error(caller, 1, scalers, "a proper list");
 	    }
-	  else XEN_WRONG_TYPE_ARG_ERROR(caller, 1, scalers, "a number, list, or vct");
+	  else Xen_wrong_type_arg_error(caller, 1, scalers, "a number, list, or vct");
 	}
 
       if (len == 0) 
-	XEN_ERROR(NO_DATA,
-		  XEN_LIST_2(C_TO_XEN_STRING("~A: scalers data is empty?"), 
-			     C_TO_XEN_STRING(caller)));
+	Xen_error(NO_DATA,
+		  Xen_list_2(C_string_to_Xen_string("~A: scalers data is empty?"), 
+			     C_string_to_Xen_string(caller)));
     }
   
   scls = (mus_float_t *)calloc(len, sizeof(mus_float_t));
@@ -4912,10 +4912,10 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
       if (Xen_is_list(scalers))
 	{
 	  XEN lst;
-	  for (i = 0, lst = XEN_COPY_ARG(scalers); i < len; i++, lst = XEN_CDR(lst)) 
-	    scls[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	  for (i = 0, lst = Xen_copy_arg(scalers); i < len; i++, lst = Xen_cdr(lst)) 
+	    scls[i] = (mus_float_t)Xen_real_to_C_double(Xen_car(lst));
 	}
-      else scls[0] = (mus_float_t)XEN_TO_C_DOUBLE(scalers);
+      else scls[0] = (mus_float_t)Xen_real_to_C_double(scalers);
     }
   result_len[0] = len;
   return(scls);
@@ -4935,7 +4935,7 @@ normalize snd to norms (following sync); norms can be a float or a vct/list of f
 
   ASSERT_CHANNEL(S_scale_to, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_scale_to);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   scls = load_mus_float_ts(scalers, len, S_scale_to);
   happy = scale_to(cp->sound, cp, scls, len[0], OVER_SOUND);
@@ -4943,7 +4943,7 @@ normalize snd to norms (following sync); norms can be a float or a vct/list of f
   free(scls);
   if (happy)
     return(scalers);
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -4959,16 +4959,16 @@ scale snd by scalers (following sync); scalers can be a float or a vct/list of f
 
   ASSERT_CHANNEL(S_scale_by, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_scale_by);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   len[0] = 0;
 
-  /* fprintf(stderr, "(scale-by %s %s %s)\n", XEN_AS_STRING(scalers), XEN_AS_STRING(snd), XEN_AS_STRING(chn_n)); */
+  /* fprintf(stderr, "(scale-by %s %s %s)\n", Xen_object_to_C_string(scalers), Xen_object_to_C_string(snd), Xen_object_to_C_string(chn_n)); */
 
   scls = load_mus_float_ts(scalers, len, S_scale_by);
   if (len[0] == 0)
     {
       /* fprintf(stderr, "len is 0\n"); */
-      return(XEN_FALSE);
+      return(Xen_false);
     }
   scale_by(cp, scls, len[0], OVER_SOUND);
 
@@ -4992,7 +4992,7 @@ static XEN g_scale_selection_to(XEN scalers)
       free(scls);
       if (happy)
 	return(scalers);
-      return(XEN_FALSE);
+      return(Xen_false);
     }
   return(snd_no_active_selection_error(S_scale_selection_to));
 }
@@ -5029,30 +5029,30 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
 
   ASSERT_SAMPLE_TYPE(S_clm_channel, samp_n, 2);
   ASSERT_SAMPLE_TYPE(S_clm_channel, samps, 3);
-  XEN_ASSERT_TYPE(Xen_is_integer(overlap) || Xen_is_false(overlap) || !Xen_is_bound(overlap), overlap, 7, S_clm_channel, "an integer or " PROC_FALSE);
-  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 8, S_clm_channel, "a string");
+  Xen_check_type(Xen_is_integer(overlap) || Xen_is_false(overlap) || !Xen_is_bound(overlap), overlap, 7, S_clm_channel, "an integer or " PROC_FALSE);
+  Xen_check_type(Xen_is_string_or_unbound(origin), origin, 8, S_clm_channel, "a string");
   ASSERT_CHANNEL(S_clm_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_clm_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   pos = to_c_edit_position(cp, edpos, S_clm_channel, 6);
   beg = beg_to_sample(samp_n, S_clm_channel);
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_clm_channel);
-  if (dur == 0) return(XEN_FALSE);
-  XEN_ASSERT_TYPE(mus_is_xen(gen), gen, 1, S_clm_channel, "a clm generator");
+  if (dur == 0) return(Xen_false);
+  Xen_check_type(mus_is_xen(gen), gen, 1, S_clm_channel, "a clm generator");
   egen = XEN_TO_MUS_ANY(gen);
-  if (Xen_is_string(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_clm_channel);
+  if (Xen_is_string(origin)) caller = mus_strdup(Xen_string_to_C_string(origin)); else caller = mus_strdup(S_clm_channel);
 
-  errmsg = clm_channel(cp, egen, beg, dur, pos, (Xen_is_long_long_int(overlap)) ? XEN_TO_C_LONG_LONG(overlap) : 0, caller);
+  errmsg = clm_channel(cp, egen, beg, dur, pos, (Xen_is_long_long_int(overlap)) ? Xen_llong_to_C_llong(overlap) : 0, caller);
 
   free(caller);
   if (errmsg)
     {
       XEN str;
-      str = C_TO_XEN_STRING(errmsg);
+      str = C_string_to_Xen_string(errmsg);
       free(errmsg);
-      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		XEN_LIST_2(C_TO_XEN_STRING(S_clm_channel ": IO error ~A"),
+      Xen_error(Xen_make_error_type("IO-error"),
+		Xen_list_2(C_string_to_Xen_string(S_clm_channel ": IO error ~A"),
 			   str));
     }
   return(gen);
@@ -5070,11 +5070,11 @@ static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, c
 	  if (Xen_is_number(ebase))
 	    {
 	      /* env 'e' is a temp here, so we can clobber its base, etc */
-	      e->base = XEN_TO_C_DOUBLE(ebase);
+	      e->base = Xen_real_to_C_double(ebase);
 	      if (e->base < 0.0)
 		{
 		  free_env(e);
-		  XEN_OUT_OF_RANGE_ERROR(caller, 4, ebase, "base < 0.0?");
+		  Xen_out_of_range_error(caller, 4, ebase, "base < 0.0?");
 		}
 	    }
 	  apply_env(cp, e, beg, dur, over_selection, caller, NULL, edpos, 7);
@@ -5085,11 +5085,11 @@ static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, c
   else
     {
       mus_any *egen = NULL;
-      XEN_ASSERT_TYPE((mus_is_xen(edata)) && (mus_is_env(egen = XEN_TO_MUS_ANY(edata))), edata, 1, caller, "an env generator or a list");
+      Xen_check_type((mus_is_xen(edata)) && (mus_is_env(egen = XEN_TO_MUS_ANY(edata))), edata, 1, caller, "an env generator or a list");
       apply_env(cp, NULL, beg, dur, over_selection, caller, egen, edpos, 7);
       return(edata);
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -5101,8 +5101,8 @@ apply envelope to the selection using env-base to determine how breakpoints are 
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_env_selection));
   return(g_apply_env_1(edata, 0, 0, base, 
-		 get_cp(XEN_FALSE, XEN_FALSE, S_env_selection), 
-		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
+		 get_cp(Xen_false, Xen_false, S_env_selection), 
+		 C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 
 		 S_env_selection, OVER_SELECTION));
 }
 
@@ -5122,7 +5122,7 @@ either to the end of the sound or for samps samples, with segments interpolating
   ASSERT_CHANNEL(S_env_sound, snd, chn_n, 5);
 
   cp = get_cp(snd, chn_n, S_env_sound);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   pos = to_c_edit_position(cp, edpos, S_env_sound, 7);
   beg = beg_to_sample(samp_n, S_env_sound);
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_env_sound);
@@ -5147,17 +5147,17 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   ASSERT_CHANNEL(S_env_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_env_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   beg = beg_to_sample(samp_n, S_env_channel);
   pos = to_c_edit_position(cp, edpos, S_env_channel, 6);
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_env_channel);
-  if (dur == 0) return(XEN_FALSE);
-  if (beg > cp->edits[pos]->samples) return(XEN_FALSE); /* not redundant */
+  if (dur == 0) return(Xen_false);
+  if (beg > cp->edits[pos]->samples) return(Xen_false); /* not redundant */
   sp = cp->sound;
   old_sync = sp->sync;
   sp->sync = 0;
 
-  val = g_apply_env_1(gen, beg, dur, XEN_FALSE, cp, edpos, S_env_channel, OVER_SOUND);
+  val = g_apply_env_1(gen, beg, dur, Xen_false, cp, edpos, S_env_channel, OVER_SOUND);
 
   sp->sync = old_sync;
   return(val);
@@ -5180,12 +5180,12 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   ASSERT_CHANNEL(S_env_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_env_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   beg = beg_to_sample(samp_n, S_env_channel);
   pos = to_c_edit_position(cp, edpos, S_env_channel, 6);
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_env_channel);
-  if (dur == 0) return(XEN_FALSE);
-  if (beg > cp->edits[pos]->samples) return(XEN_FALSE); /* not redundant */
+  if (dur == 0) return(Xen_false);
+  if (beg > cp->edits[pos]->samples) return(Xen_false); /* not redundant */
   sp = cp->sound;
   old_sync = sp->sync;
   sp->sync = 0;
@@ -5207,15 +5207,15 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
   int pos;
   double seg0, seg1;
 
-  XEN_ASSERT_TYPE(Xen_is_number(rmp0), rmp0, 1, S_ramp_channel, "a number");
-  XEN_ASSERT_TYPE(Xen_is_number(rmp1), rmp1, 2, S_ramp_channel, "a number");
+  Xen_check_type(Xen_is_number(rmp0), rmp0, 1, S_ramp_channel, "a number");
+  Xen_check_type(Xen_is_number(rmp1), rmp1, 2, S_ramp_channel, "a number");
   ASSERT_SAMPLE_TYPE(S_ramp_channel, beg, 3);
   ASSERT_SAMPLE_TYPE(S_ramp_channel, num, 4);
   ASSERT_SOUND(S_ramp_channel, snd, 5);
 
   samp = beg_to_sample(beg, S_ramp_channel);
   cp = get_cp(snd, chn, S_ramp_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   pos = to_c_edit_position(cp, edpos, S_ramp_channel, 7);
   samps = dur_to_samples(num, samp, cp, pos, 4, S_ramp_channel);
 
@@ -5228,14 +5228,14 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
       sp = cp->sound;
       old_sync = sp->sync;
       sp->sync = 0;
-      val = g_apply_env_1(XEN_LIST_4(C_TO_XEN_DOUBLE(0.0), rmp0, C_TO_XEN_DOUBLE(1.0), rmp1),
-		    samp, samps, C_TO_XEN_DOUBLE(1.0), cp, edpos, S_ramp_channel, false);
+      val = g_apply_env_1(Xen_list_4(C_double_to_Xen_real(0.0), rmp0, C_double_to_Xen_real(1.0), rmp1),
+		    samp, samps, C_double_to_Xen_real(1.0), cp, edpos, S_ramp_channel, false);
       sp->sync = old_sync;
       return(val);
     }
 
-  seg0 = XEN_TO_C_DOUBLE(rmp0);
-  seg1 = XEN_TO_C_DOUBLE(rmp1);
+  seg0 = Xen_real_to_C_double(rmp0);
+  seg1 = Xen_real_to_C_double(rmp1);
 
   if (ramp_channel(cp, seg0, (seg1 - seg0) / (double)(samps - 1),
 		   samp, samps, pos, NOT_IN_AS_ONE_EDIT))
@@ -5274,24 +5274,24 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   int pos;
   mus_float_t ebase = 1.0;
 
-  XEN_ASSERT_TYPE(Xen_is_number(rmp0), rmp0, 1, S_xramp_channel, "a number");
-  XEN_ASSERT_TYPE(Xen_is_number(rmp1), rmp1, 2, S_xramp_channel, "a number");
-  XEN_ASSERT_TYPE(Xen_is_number(base), base, 3, S_xramp_channel, "a number");
+  Xen_check_type(Xen_is_number(rmp0), rmp0, 1, S_xramp_channel, "a number");
+  Xen_check_type(Xen_is_number(rmp1), rmp1, 2, S_xramp_channel, "a number");
+  Xen_check_type(Xen_is_number(base), base, 3, S_xramp_channel, "a number");
   ASSERT_SAMPLE_TYPE(S_xramp_channel, beg, 4);
   ASSERT_SAMPLE_TYPE(S_xramp_channel, num, 5);
   ASSERT_SOUND(S_xramp_channel, snd, 6);
 
   samp = beg_to_sample(beg, S_xramp_channel);
   cp = get_cp(snd, chn, S_xramp_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   pos = to_c_edit_position(cp, edpos, S_xramp_channel, 8);
   samps = dur_to_samples(num, samp, cp, pos, 4, S_xramp_channel);
 
-  ebase = XEN_TO_C_DOUBLE(base);
+  ebase = Xen_real_to_C_double(base);
   if (ebase < 0.0) 
-    XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base < 0.0?");
+    Xen_out_of_range_error(S_xramp_channel, 3, base, "base < 0.0?");
   if (ebase > 1.0e10)
-    XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base too large");
+    Xen_out_of_range_error(S_xramp_channel, 3, base, "base too large");
 
   if (unrampable(cp, samp, samps, pos, (ebase != 1.0)))
     {
@@ -5301,7 +5301,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
       sp = cp->sound;
       old_sync = sp->sync;
       sp->sync = 0;
-      val = g_apply_env_1(XEN_LIST_4(C_TO_XEN_DOUBLE(0.0), rmp0, C_TO_XEN_DOUBLE(1.0), rmp1),
+      val = g_apply_env_1(Xen_list_4(C_double_to_Xen_real(0.0), rmp0, C_double_to_Xen_real(1.0), rmp1),
 		    samp, samps, base, cp, edpos, S_xramp_channel, false);
       sp->sync = old_sync;
       return(val);
@@ -5313,13 +5313,13 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
       mus_any *e;
       double seg0, seg1;
 
-      seg0 = XEN_TO_C_DOUBLE(rmp0);
+      seg0 = Xen_real_to_C_double(rmp0);
 
       if (ebase == 0.0)
 	scale_channel(cp, seg0, samp, samps, pos, NOT_IN_AS_ONE_EDIT);
       else
 	{
-	  seg1 = XEN_TO_C_DOUBLE(rmp1);
+	  seg1 = Xen_real_to_C_double(rmp1);
 
 	  if (ebase == 1.0)
 	    ramp_channel(cp, seg0, (seg1 - seg0) / (double)(samps - 1), samp, samps, pos, NOT_IN_AS_ONE_EDIT);
@@ -5369,17 +5369,17 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   bool need_free = false;
   mus_float_t *rl = NULL, *im = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(sign), sign, 3, S_fft, "an integer");
-  XEN_ASSERT_TYPE(mus_is_vct(reals), reals, 1, S_fft, "vct");
-  XEN_ASSERT_TYPE(mus_is_vct(imag), imag, 2, S_fft, "vct");
+  Xen_check_type(Xen_is_integer_or_unbound(sign), sign, 3, S_fft, "an integer");
+  Xen_check_type(mus_is_vct(reals), reals, 1, S_fft, "vct");
+  Xen_check_type(mus_is_vct(imag), imag, 2, S_fft, "vct");
 
-  isign = (Xen_is_integer(sign)) ? XEN_TO_C_INT(sign) : 1;
+  isign = (Xen_is_integer(sign)) ? Xen_integer_to_C_int(sign) : 1;
   v1 = XEN_TO_VCT(reals);
   v2 = XEN_TO_VCT(imag);
 
   n = mus_vct_length(v1);
   if (mus_vct_length(v2) < n) n = mus_vct_length(v2);
-  if (n == 0) return(XEN_ZERO);
+  if (n == 0) return(Xen_integer_zero);
   if (IS_POWER_OF_2(n))
     {
       n2 = n;
@@ -5422,29 +5422,29 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   mus_float_t *rdat;
   vct *v;
 
-  XEN_ASSERT_TYPE((mus_is_vct(data)), data, 1, S_snd_spectrum, "a vct");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(win), win, 2, S_snd_spectrum, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(len), len, 3, S_snd_spectrum, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(linear_or_dB), linear_or_dB, 4, S_snd_spectrum, "a boolean");
-  XEN_ASSERT_TYPE(Xen_is_number_or_unbound(beta), beta, 5, S_snd_spectrum, "a number");
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(in_place), in_place, 6, S_snd_spectrum, "a boolean");
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(normalized), normalized, 7, S_snd_spectrum, "a boolean");
+  Xen_check_type((mus_is_vct(data)), data, 1, S_snd_spectrum, "a vct");
+  Xen_check_type(Xen_is_integer_or_unbound(win), win, 2, S_snd_spectrum, "an integer");
+  Xen_check_type(Xen_is_integer_or_unbound(len), len, 3, S_snd_spectrum, "an integer");
+  Xen_check_type(Xen_is_boolean_or_unbound(linear_or_dB), linear_or_dB, 4, S_snd_spectrum, "a boolean");
+  Xen_check_type(Xen_is_number_or_unbound(beta), beta, 5, S_snd_spectrum, "a number");
+  Xen_check_type(Xen_is_boolean_or_unbound(in_place), in_place, 6, S_snd_spectrum, "a boolean");
+  Xen_check_type(Xen_is_boolean_or_unbound(normalized), normalized, 7, S_snd_spectrum, "a boolean");
 
   v = XEN_TO_VCT(data);
-  n = (Xen_is_integer(len)) ? XEN_TO_C_INT(len) : mus_vct_length(v);
+  n = (Xen_is_integer(len)) ? Xen_integer_to_C_int(len) : mus_vct_length(v);
   if (n > mus_vct_length(v)) n = mus_vct_length(v);
   if (n <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length <= 0 or vct length == 0?");
+    Xen_out_of_range_error(S_snd_spectrum, 3, len, "length <= 0 or vct length == 0?");
 
-  if (Xen_is_boolean(linear_or_dB)) linear = XEN_TO_C_BOOLEAN(linear_or_dB);
-  if (Xen_is_boolean(in_place)) in_data = XEN_TO_C_BOOLEAN(in_place);
-  if (Xen_is_boolean(normalized)) normed = XEN_TO_C_BOOLEAN(normalized);
+  if (Xen_is_boolean(linear_or_dB)) linear = Xen_boolean_to_C_bool(linear_or_dB);
+  if (Xen_is_boolean(in_place)) in_data = Xen_boolean_to_C_bool(in_place);
+  if (Xen_is_boolean(normalized)) normed = Xen_boolean_to_C_bool(normalized);
 
-  wtype = (Xen_is_integer(win)) ? XEN_TO_C_INT(win) : (int)MUS_RECTANGULAR_WINDOW;
+  wtype = (Xen_is_integer(win)) ? Xen_integer_to_C_int(win) : (int)MUS_RECTANGULAR_WINDOW;
   if (!(mus_is_fft_window(wtype)))
-    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "unknown fft window");
+    Xen_out_of_range_error(S_snd_spectrum, 2, win, "unknown fft window");
 
-  if (Xen_is_number(beta)) b = XEN_TO_C_DOUBLE(beta);
+  if (Xen_is_number(beta)) b = Xen_real_to_C_double(beta);
   if (b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0;
 
   if (!in_data)
@@ -5530,10 +5530,10 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
   mus_float_t amp;
   static char *fname = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_string(file), file, 1, caller, "a string");
+  Xen_check_type(Xen_is_string(file), file, 1, caller, "a string");
 
   if (Xen_is_number(new_amp)) 
-    amp = XEN_TO_C_DOUBLE(new_amp);
+    amp = Xen_real_to_C_double(new_amp);
   else
     {
       if (Xen_is_false(new_amp))
@@ -5541,7 +5541,7 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
       else amp = 1.0;
     }
   if (fname) free(fname);
-  fname = mus_expand_filename(XEN_TO_C_STRING(file));
+  fname = mus_expand_filename(Xen_string_to_C_string(file));
 
   if (mus_file_probe(fname))
     {
@@ -5552,11 +5552,11 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
       if (error)
 	{
 	  XEN errstr;
-	  errstr = C_TO_XEN_STRING(error);
+	  errstr = C_string_to_Xen_string(error);
 	  free(error);
-	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		    XEN_LIST_3(C_TO_XEN_STRING("~A: IO error ~A"),
-			       C_TO_XEN_STRING(caller),
+	  Xen_error(Xen_make_error_type("IO-error"),
+		    Xen_list_3(C_string_to_Xen_string("~A: IO error ~A"),
+			       C_string_to_Xen_string(caller),
 			       errstr));
 	}
     }
@@ -5573,7 +5573,7 @@ convolve file with snd's channel chn (or the currently sync'd channels); amp is 
   chan_info *cp;
   ASSERT_CHANNEL(S_convolve_with, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_convolve_with);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   return(g_convolve_with_1(file, new_amp, cp, edpos, S_convolve_with));
 }
 
@@ -5585,7 +5585,7 @@ convolve the selection with file; amp is the resultant peak amp"
 
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_convolve_selection_with));
-  return(g_convolve_with_1(file, new_amp, NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_convolve_selection_with));
+  return(g_convolve_with_1(file, new_amp, NULL, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), S_convolve_selection_with));
 }
 
 
@@ -5647,7 +5647,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   bool need_free = false;
   mus_float_t ratio = 0.0; /* not 1.0 here! -- the zero is significant */
 
-  XEN_ASSERT_TYPE((Xen_is_number(ratio_or_env)) || 
+  Xen_check_type((Xen_is_number(ratio_or_env)) || 
 		  (Xen_is_list(ratio_or_env)) ||
 		  ((mus_is_xen(ratio_or_env)) && 
 		   (mus_is_env(egen = XEN_TO_MUS_ANY(ratio_or_env)))),
@@ -5657,22 +5657,22 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   ASSERT_CHANNEL(S_src_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_src_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   beg = beg_to_sample(beg_n, S_src_channel);
   pos = to_c_edit_position(cp, edpos, S_src_channel, 6);
   dur = dur_to_samples(dur_n, beg, cp, pos, 3, S_src_channel);
-  if (dur == 0) return(XEN_FALSE);
-  if (beg > cp->edits[pos]->samples) return(XEN_FALSE);
+  if (dur == 0) return(Xen_false);
+  if (beg > cp->edits[pos]->samples) return(Xen_false);
 
   if (Xen_is_number(ratio_or_env))
     {
-      ratio = XEN_TO_C_DOUBLE(ratio_or_env);
+      ratio = Xen_real_to_C_double(ratio_or_env);
       if ((pos == cp->edit_ctr) &&
 	  ((ratio == 0.0) || (ratio == 1.0)))
-	return(XEN_FALSE);
+	return(Xen_false);
       if ((is_NaN(ratio)) ||
 	  (fabs(ratio) < 1.0e-10)) /* dur > 0 here */
-	XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, ratio_or_env, "too small (resultant sound will be too large)");
+	Xen_out_of_range_error(S_src_channel, 1, ratio_or_env, "too small (resultant sound will be too large)");
     }
   else 
     {
@@ -5695,10 +5695,10 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	    mus_free(egen); 
 
 	  if (error == SRC_ENV_HIT_ZERO)
-	    XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "envelope hits 0.0");
-	  else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "envelope passes through 0.0");
+	    Xen_out_of_range_error(S_src_channel, 1, data, "envelope hits 0.0");
+	  else Xen_out_of_range_error(S_src_channel, 1, data, "envelope passes through 0.0");
 
-	  return(XEN_FALSE); /* just for clarity... */
+	  return(Xen_false); /* just for clarity... */
 	}
     }
 
@@ -5713,10 +5713,10 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   if (errmsg)
     {
       XEN err;
-      err = C_TO_XEN_STRING(errmsg);
+      err = C_string_to_Xen_string(errmsg);
       free(errmsg);
-      XEN_ERROR(XEN_ERROR_TYPE((clm_err) ? "mus-error" : "IO-error"),
-		XEN_LIST_2(C_TO_XEN_STRING(S_src_channel ": ~A"),
+      Xen_error(Xen_make_error_type((clm_err) ? "mus-error" : "IO-error"),
+		Xen_list_2(C_string_to_Xen_string(S_src_channel ": ~A"),
 			   err));
     }
   return(ratio_or_env);
@@ -5733,15 +5733,15 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 
   ASSERT_CHANNEL(caller, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, caller);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   if (Xen_is_number(ratio_or_env))
     {
       mus_float_t ratio;
 
-      ratio = XEN_TO_C_DOUBLE(ratio_or_env);
+      ratio = Xen_real_to_C_double(ratio_or_env);
       if ((is_NaN(ratio)) || (isinf(ratio)))
-	XEN_OUT_OF_RANGE_ERROR(caller, 1, ratio_or_env, "src ratio must be a normal number");
+	Xen_out_of_range_error(caller, 1, ratio_or_env, "src ratio must be a normal number");
 
       if (ratio != 1.0)
 	src_env_or_num(cp, NULL, ratio,
@@ -5759,7 +5759,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	  /* env 'e' is a temp here, so we can clobber its base, etc */
 	  e = get_env(ratio_or_env, caller);
 	  if (Xen_is_number(ebase))
-	    e->base = XEN_TO_C_DOUBLE(ebase);
+	    e->base = Xen_real_to_C_double(ebase);
 
 	  e_ratio = check_src_envelope(e->pts, e->data, &error);
 	  if (error != SRC_ENV_NO_ERROR)
@@ -5768,8 +5768,8 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	      data = mus_array_to_list(e->data, 0, e->pts * 2);
 	      free_env(e);
 	      if (error == SRC_ENV_HIT_ZERO)
-		XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "envelope hits 0.0");
-	      else XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "envelope passes through 0.0");
+		Xen_out_of_range_error(caller, 1, data, "envelope hits 0.0");
+	      else Xen_out_of_range_error(caller, 1, data, "envelope passes through 0.0");
 	    }
 	  else
 	    {
@@ -5780,9 +5780,9 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
       else
 	{
 	  mus_any *egen;
-	  XEN_ASSERT_TYPE(mus_is_xen(ratio_or_env), ratio_or_env, 1, caller, "a number, list, or env generator");
+	  Xen_check_type(mus_is_xen(ratio_or_env), ratio_or_env, 1, caller, "a number, list, or env generator");
 	  egen = XEN_TO_MUS_ANY(ratio_or_env);
-	  XEN_ASSERT_TYPE(mus_is_env(egen), ratio_or_env, 1, caller, "a number, list, or env generator");
+	  Xen_check_type(mus_is_env(egen), ratio_or_env, 1, caller, "a number, list, or env generator");
 
 	  check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), &error);
 	  if (error != SRC_ENV_NO_ERROR)
@@ -5790,8 +5790,8 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	      XEN data;
 	      data = mus_array_to_list(mus_data(egen), 0, mus_env_breakpoints(egen) * 2);
 	      if (error == SRC_ENV_HIT_ZERO)
-		XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "envelope hits 0.0");
-	      else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "envelope passes through 0.0");
+		Xen_out_of_range_error(S_src_channel, 1, data, "envelope hits 0.0");
+	      else Xen_out_of_range_error(S_src_channel, 1, data, "envelope passes through 0.0");
 	    }
 	  else
 	    src_env_or_num(cp, NULL, 
@@ -5820,7 +5820,7 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
 
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_src_selection));
-  return(g_src_1(ratio_or_env, base, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_src_selection, OVER_SELECTION));
+  return(g_src_1(ratio_or_env, base, Xen_false, Xen_false, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), S_src_selection, OVER_SELECTION));
 }
 
 
@@ -5839,22 +5839,22 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   vct *v = NULL;
   mus_float_t *coeffs = NULL;
 
-  XEN_ASSERT_TYPE(Xen_is_list(e) || mus_is_vct(e), e, 1, S_filter_channel, "an envelope or a vct");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(order), order, 2, S_filter_channel, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 9, S_filter_channel, "a string");
+  Xen_check_type(Xen_is_list(e) || mus_is_vct(e), e, 1, S_filter_channel, "an envelope or a vct");
+  Xen_check_type(Xen_is_integer_or_unbound(order), order, 2, S_filter_channel, "an integer");
+  Xen_check_type(Xen_is_string_or_unbound(origin), origin, 9, S_filter_channel, "a string");
 
   if (Xen_is_integer(order)) 
     {
-      order_1 = XEN_TO_C_INT(order);
+      order_1 = Xen_integer_to_C_int(order);
       if (order_1 < 0) 
-	XEN_OUT_OF_RANGE_ERROR(S_filter_channel, 2, order, "order should not be negative");
+	Xen_out_of_range_error(S_filter_channel, 2, order, "order should not be negative");
     }
   ASSERT_CHANNEL(S_filter_channel, snd, chn_n, 5);
   cp = get_cp(snd, chn_n, S_filter_channel);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(truncate), truncate, 8, S_filter_channel, "boolean");
-  if (Xen_is_boolean(truncate)) truncate_1 = XEN_TO_C_BOOLEAN(truncate);
+  Xen_check_type(Xen_is_boolean_or_unbound(truncate), truncate, 8, S_filter_channel, "boolean");
+  if (Xen_is_boolean(truncate)) truncate_1 = Xen_boolean_to_C_bool(truncate);
 
   ASSERT_SAMPLE_TYPE(S_filter_channel, beg, 3);
   ASSERT_SAMPLE_TYPE(S_filter_channel, dur, 4);
@@ -5866,7 +5866,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   if (Xen_is_list(e))
     {
       e_1 = get_env(e, S_filter_channel);
-      if (e_1 == NULL) return(XEN_FALSE);
+      if (e_1 == NULL) return(Xen_false);
       if (order_1 == 0) order_1 = e_1->pts * 4;
     }
   else 
@@ -5876,7 +5876,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
       if (order_1 == 0) order_1 = mus_vct_length(v);
     }
   if (Xen_is_string(origin))
-    caller = XEN_TO_C_STRING(origin);
+    caller = Xen_string_to_C_string(origin);
 
   errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, caller, truncate_1, coeffs);
 
@@ -5884,10 +5884,10 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   if (errstr)
     {
       XEN str;
-      str = C_TO_XEN_STRING(errstr);
+      str = C_string_to_Xen_string(errstr);
       free(errstr);
-      XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		XEN_LIST_2(C_TO_XEN_STRING(S_filter_channel ": IO error ~A"),
+      Xen_error(Xen_make_error_type("IO-error"),
+		Xen_list_2(C_string_to_Xen_string(S_filter_channel ": IO error ~A"),
 			   str));
     }
   return(e);
@@ -5899,7 +5899,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
   chan_info *cp;
   ASSERT_CHANNEL(caller, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, caller);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
   if (mus_is_xen(e))
     {
       char *error;
@@ -5908,23 +5908,23 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
       if (error)
 	{
 	  XEN errstr;
-	  errstr = C_TO_XEN_STRING(error);
+	  errstr = C_string_to_Xen_string(error);
 	  free(error);
-	  XEN_ERROR(XEN_ERROR_TYPE((clm_err) ? "mus-error" : "IO-error"),
-		    XEN_LIST_3(C_TO_XEN_STRING("~A: ~A"),
-			       C_TO_XEN_STRING(caller),
+	  Xen_error(Xen_make_error_type((clm_err) ? "mus-error" : "IO-error"),
+		    Xen_list_3(C_string_to_Xen_string("~A: ~A"),
+			       C_string_to_Xen_string(caller),
 			       errstr));
 	}
     }
   else
     {
       int len = 0;
-      XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(order), order, 2, caller, "an integer");
+      Xen_check_type(Xen_is_integer_or_unbound(order), order, 2, caller, "an integer");
       if (Xen_is_integer(order)) 
 	{
-	  len = XEN_TO_C_INT(order);
+	  len = Xen_integer_to_C_int(order);
 	  if (len <= 0) 
-	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order should be positive");
+	    Xen_out_of_range_error(caller, 2, order, "order should be positive");
 	}
       if (mus_is_vct(e)) /* the filter coefficients direct */
 	{
@@ -5932,7 +5932,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	  char *new_origin = NULL, *estr = NULL;
 	  v = XEN_TO_VCT(e);
 	  if (len > mus_vct_length(v)) 
-	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order > length coeffs");
+	    Xen_out_of_range_error(caller, 2, order, "order > length coeffs");
 	  else
 	    {
 	      if (len == 0) len = mus_vct_length(v);
@@ -5960,7 +5960,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	{
 	  env *ne = NULL;
 	  char *new_origin = NULL, *estr = NULL;
-	  XEN_ASSERT_TYPE(Xen_is_list(e), e, 1, caller, "a list, vct, or env generator");
+	  Xen_check_type(Xen_is_list(e), e, 1, caller, "a list, vct, or env generator");
 	  ne = get_env(e, caller); /* arg here must be a list */
 	  if (!origin)
 	    {
@@ -5983,7 +5983,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	  if (new_origin) free(new_origin);
 	}
     }
-  return(XEN_TRUE);
+  return(Xen_true);
 }
 
 
@@ -5992,9 +5992,9 @@ static XEN g_filter_sound(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, XEN o
   #define H_filter_sound "(" S_filter_sound " filter :optional order snd chn edpos origin): \
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct with the actual coefficients"
 
-  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 6, S_filter_sound, "a string");
+  Xen_check_type(Xen_is_string_or_unbound(origin), origin, 6, S_filter_sound, "a string");
   return(g_filter_1(e, order, snd, chn_n, edpos, 
-		    S_filter_sound, (Xen_is_string(origin)) ? XEN_TO_C_STRING(origin) : NULL, 
+		    S_filter_sound, (Xen_is_string(origin)) ? Xen_string_to_C_string(origin) : NULL, 
 		    OVER_SOUND, false));
 }
 
@@ -6004,17 +6004,17 @@ static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
   #define H_filter_selection "(" S_filter_selection " filter :optional order (truncate " PROC_TRUE ")): apply filter to selection. If truncate, \
 cut off filter output at end of selection, else mix"
 
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(truncate), truncate, 3, S_filter_selection, "boolean");
+  Xen_check_type(Xen_is_boolean_or_unbound(truncate), truncate, 3, S_filter_selection, "boolean");
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_filter_selection));
-  return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, 
-		    C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
+  return(g_filter_1(e, order, Xen_false, Xen_false, 
+		    C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 
 		    S_filter_selection, NULL, 
-		    OVER_SELECTION, XEN_TO_C_BOOLEAN(truncate)));
+		    OVER_SELECTION, Xen_boolean_to_C_bool(truncate)));
 }
 
 
-static XEN g_sinc_width(void) {return(C_TO_XEN_INT(sinc_width(ss)));}
+static XEN g_sinc_width(void) {return(C_int_to_Xen_integer(sinc_width(ss)));}
 
 static XEN g_set_sinc_width(XEN val) 
 {
@@ -6024,11 +6024,11 @@ src runs.  If you use too low a setting, you can sometimes hear high \
 frequency whistles leaking through."
 
   int len;
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_sinc_width, "an integer"); 
-  len = XEN_TO_C_INT(val);
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_sinc_width, "an integer"); 
+  len = Xen_integer_to_C_int(val);
   if ((len >= 0) && (len <= MUS_MAX_CLM_SINC_WIDTH))
     set_sinc_width(len);
-  return(C_TO_XEN_INT(sinc_width(ss)));
+  return(C_int_to_Xen_integer(sinc_width(ss)));
 }
 
 
@@ -6104,12 +6104,12 @@ that give a minimum peak amplitude when the signals are added together."
 
   int i;
   mus_float_t cmax;
-  XEN result = XEN_EMPTY_LIST;
+  XEN result = Xen_empty_list;
 
-  n = (XEN_LIST_LENGTH(arglist) - 1);
-  if (n < 2) return(XEN_LIST_1(XEN_ZERO));
-  dist = XEN_TO_C_INT(XEN_CAR(arglist));
-  arglist = XEN_CDR(arglist);
+  n = (Xen_list_length(arglist) - 1);
+  if (n < 2) return(Xen_list_1(Xen_integer_zero));
+  dist = Xen_integer_to_C_int(Xen_car(arglist));
+  arglist = Xen_cdr(arglist);
 
   sines = (mus_float_t **)calloc(n, sizeof(mus_float_t *));
   sizes = (int *)calloc(n, sizeof(int));
@@ -6122,7 +6122,7 @@ that give a minimum peak amplitude when the signals are added together."
     {
       vct *v;
       current_max[i] = 0.0;
-      v = XEN_TO_VCT(XEN_LIST_REF(arglist, i));
+      v = XEN_TO_VCT(Xen_list_ref(arglist, i));
       sines[i] = mus_vct_data(v);
       sizes[i] = mus_vct_length(v);
       if (sizes[i] > size)
@@ -6149,7 +6149,7 @@ that give a minimum peak amplitude when the signals are added together."
   try_case(1);
 
   for (i = 0; i < n; i++)
-    result = XEN_CONS(C_TO_XEN_INT(best_phases[i]), result);
+    result = Xen_cons(C_int_to_Xen_integer(best_phases[i]), result);
 
   free(best_phases);
   free(current_phases);
@@ -6159,7 +6159,7 @@ that give a minimum peak amplitude when the signals are added together."
   free(sines);
   free(current_max);
 
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(best), XEN_LIST_REVERSE(result)));
+  return(Xen_list_2(C_double_to_Xen_real(best), Xen_list_reverse(result)));
 }
 
 #if 0
@@ -6632,18 +6632,18 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   }
 #endif
 
-  choice = XEN_TO_C_INT(x_choice);
+  choice = Xen_integer_to_C_int(x_choice);
   if ((choice < ALL) || (choice > PRIME))
     choice = ALL;
 
-  n = XEN_TO_C_INT(x_n);
+  n = Xen_integer_to_C_int(x_n);
 
   if (Xen_is_integer(x_size))
-    size = XEN_TO_C_INT(x_size);
+    size = Xen_integer_to_C_int(x_size);
   else size = 3000; 
 
   if (Xen_is_double(x_increment))
-    increment = XEN_TO_C_DOUBLE(x_increment);
+    increment = Xen_real_to_C_double(x_increment);
   else increment = 0.06; /* was .03 */
 
   counts = 50; /* 100? */
@@ -6657,7 +6657,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
       int i;
       initial_phases = (mus_float_t *)malloc(n * sizeof(mus_float_t));
       for (i = 0; i < n; i++)
-	initial_phases[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(start_phases, i));
+	initial_phases[i] = (mus_float_t)Xen_real_to_C_double(Xen_vector_ref(start_phases, i));
     }
 
   min_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
@@ -6774,7 +6774,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     free(choices);
   }
 
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(local_best), 
+  return(Xen_list_2(C_double_to_Xen_real(local_best), 
 		    xen_make_vct(n, min_phases)));
 }
 
@@ -7065,18 +7065,18 @@ static XEN g_fpsap_1(XEN x_choice, XEN x_n, XEN start_phases, XEN x_amps, XEN x_
   }
 #endif
 
-  choice = XEN_TO_C_INT(x_choice);
+  choice = Xen_integer_to_C_int(x_choice);
   if ((choice < ALL) || (choice > PRIME))
     choice = ALL;
 
-  n = XEN_TO_C_INT(x_n);
+  n = Xen_integer_to_C_int(x_n);
 
   if (Xen_is_integer(x_size))
-    size = XEN_TO_C_INT(x_size);
+    size = Xen_integer_to_C_int(x_size);
   else size = 3000; 
 
   if (Xen_is_double(x_increment))
-    increment = XEN_TO_C_DOUBLE(x_increment);
+    increment = Xen_real_to_C_double(x_increment);
   else increment = 0.06; /* was .03 */
 
   counts = 50; /* 100? */
@@ -7091,8 +7091,8 @@ static XEN g_fpsap_1(XEN x_choice, XEN x_n, XEN start_phases, XEN x_amps, XEN x_
     amps = (mus_float_t *)malloc(n * sizeof(mus_float_t));
     for (i = 0; i < n; i++)
       {
-	initial_phases[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(start_phases, i));
-	amps[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(x_amps, i));
+	initial_phases[i] = (mus_float_t)Xen_real_to_C_double(Xen_vector_ref(start_phases, i));
+	amps[i] = (mus_float_t)Xen_real_to_C_double(Xen_vector_ref(x_amps, i));
       }
   }
 
@@ -7211,7 +7211,7 @@ static XEN g_fpsap_1(XEN x_choice, XEN x_n, XEN start_phases, XEN x_amps, XEN x_
     free(choices);
   }
 
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(local_best), 
+  return(Xen_list_2(C_double_to_Xen_real(local_best), 
 		    xen_make_vct(n, min_phases)));
 }
 
@@ -7221,112 +7221,112 @@ static XEN g_fpsap_1(XEN x_choice, XEN x_n, XEN start_phases, XEN x_amps, XEN x_
 
 
 
-XEN_ARGIFY_7(g_map_chan_w, g_map_chan)
-XEN_ARGIFY_6(g_scan_channel_w, g_scan_channel)
-XEN_ARGIFY_7(g_map_channel_w, g_map_channel)
+Xen_wrap_7_optional_args(g_map_chan_w, g_map_chan)
+Xen_wrap_6_optional_args(g_scan_channel_w, g_scan_channel)
+Xen_wrap_7_optional_args(g_map_channel_w, g_map_channel)
 #if (!HAVE_SCHEME)
-XEN_ARGIFY_6(g_scan_chan_w, g_scan_chan)
-XEN_ARGIFY_5(g_find_channel_w, g_find_channel)
+Xen_wrap_6_optional_args(g_scan_chan_w, g_scan_chan)
+Xen_wrap_5_optional_args(g_find_channel_w, g_find_channel)
 #endif
-XEN_ARGIFY_5(g_count_matches_w, g_count_matches)
-XEN_ARGIFY_4(g_smooth_sound_w, g_smooth_sound)
-XEN_ARGIFY_5(g_smooth_channel_w, g_smooth_channel)
-XEN_NARGIFY_0(g_smooth_selection_w, g_smooth_selection)
-XEN_NARGIFY_0(g_delete_selection_and_smooth_w, g_delete_selection_and_smooth)
-XEN_ARGIFY_5(g_delete_samples_and_smooth_w, g_delete_samples_and_smooth)
-XEN_ARGIFY_3(g_reverse_sound_w, g_reverse_sound)
-XEN_ARGIFY_5(g_reverse_channel_w, g_reverse_channel)
-XEN_NARGIFY_0(g_reverse_selection_w, g_reverse_selection)
-XEN_ARGIFY_8(g_swap_channels_w, g_swap_channels)
-XEN_ARGIFY_4(g_insert_silence_w, g_insert_silence)
-XEN_ARGIFY_1(g_scale_selection_to_w, g_scale_selection_to)
-XEN_NARGIFY_1(g_scale_selection_by_w, g_scale_selection_by)
-XEN_ARGIFY_3(g_scale_to_w, g_scale_to)
-XEN_ARGIFY_3(g_scale_by_w, g_scale_by)
-XEN_ARGIFY_2(g_env_selection_w, g_env_selection)
-XEN_ARGIFY_7(g_env_sound_w, g_env_sound)
-XEN_ARGIFY_6(g_env_channel_w, g_env_channel)
-XEN_ARGIFY_7(g_env_channel_with_base_w, g_env_channel_with_base)
-XEN_ARGIFY_7(g_ramp_channel_w, g_ramp_channel)
-XEN_ARGIFY_8(g_xramp_channel_w, g_xramp_channel)
-XEN_ARGIFY_3(g_fft_w, g_fft)
-XEN_ARGIFY_7(g_snd_spectrum_w, g_snd_spectrum)
-XEN_ARGIFY_5(g_convolve_with_w, g_convolve_with)
-XEN_ARGIFY_2(g_convolve_selection_with_w, g_convolve_selection_with)
-XEN_ARGIFY_5(g_src_sound_w, g_src_sound)
-XEN_ARGIFY_2(g_src_selection_w, g_src_selection)
-XEN_ARGIFY_6(g_src_channel_w, g_src_channel)
-XEN_ARGIFY_5(g_pad_channel_w, g_pad_channel)
-XEN_ARGIFY_9(g_filter_channel_w, g_filter_channel)
-XEN_ARGIFY_6(g_filter_sound_w, g_filter_sound)
-XEN_ARGIFY_3(g_filter_selection_w, g_filter_selection)
-XEN_ARGIFY_8(g_clm_channel_w, g_clm_channel)
-XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
-XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
+Xen_wrap_5_optional_args(g_count_matches_w, g_count_matches)
+Xen_wrap_4_optional_args(g_smooth_sound_w, g_smooth_sound)
+Xen_wrap_5_optional_args(g_smooth_channel_w, g_smooth_channel)
+Xen_wrap_no_args(g_smooth_selection_w, g_smooth_selection)
+Xen_wrap_no_args(g_delete_selection_and_smooth_w, g_delete_selection_and_smooth)
+Xen_wrap_5_optional_args(g_delete_samples_and_smooth_w, g_delete_samples_and_smooth)
+Xen_wrap_3_optional_args(g_reverse_sound_w, g_reverse_sound)
+Xen_wrap_5_optional_args(g_reverse_channel_w, g_reverse_channel)
+Xen_wrap_no_args(g_reverse_selection_w, g_reverse_selection)
+Xen_wrap_8_optional_args(g_swap_channels_w, g_swap_channels)
+Xen_wrap_4_optional_args(g_insert_silence_w, g_insert_silence)
+Xen_wrap_1_optional_arg(g_scale_selection_to_w, g_scale_selection_to)
+Xen_wrap_1_arg(g_scale_selection_by_w, g_scale_selection_by)
+Xen_wrap_3_optional_args(g_scale_to_w, g_scale_to)
+Xen_wrap_3_optional_args(g_scale_by_w, g_scale_by)
+Xen_wrap_2_optional_args(g_env_selection_w, g_env_selection)
+Xen_wrap_7_optional_args(g_env_sound_w, g_env_sound)
+Xen_wrap_6_optional_args(g_env_channel_w, g_env_channel)
+Xen_wrap_7_optional_args(g_env_channel_with_base_w, g_env_channel_with_base)
+Xen_wrap_7_optional_args(g_ramp_channel_w, g_ramp_channel)
+Xen_wrap_8_optional_args(g_xramp_channel_w, g_xramp_channel)
+Xen_wrap_3_optional_args(g_fft_w, g_fft)
+Xen_wrap_7_optional_args(g_snd_spectrum_w, g_snd_spectrum)
+Xen_wrap_5_optional_args(g_convolve_with_w, g_convolve_with)
+Xen_wrap_2_optional_args(g_convolve_selection_with_w, g_convolve_selection_with)
+Xen_wrap_5_optional_args(g_src_sound_w, g_src_sound)
+Xen_wrap_2_optional_args(g_src_selection_w, g_src_selection)
+Xen_wrap_6_optional_args(g_src_channel_w, g_src_channel)
+Xen_wrap_5_optional_args(g_pad_channel_w, g_pad_channel)
+Xen_wrap_9_optional_args(g_filter_channel_w, g_filter_channel)
+Xen_wrap_6_optional_args(g_filter_sound_w, g_filter_sound)
+Xen_wrap_3_optional_args(g_filter_selection_w, g_filter_selection)
+Xen_wrap_8_optional_args(g_clm_channel_w, g_clm_channel)
+Xen_wrap_no_args(g_sinc_width_w, g_sinc_width)
+Xen_wrap_1_arg(g_set_sinc_width_w, g_set_sinc_width)
 
 #if HAVE_NESTED_FUNCTIONS
-XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
-XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
+Xen_wrap_any_args(g_find_min_peak_phases_w, g_find_min_peak_phases)
+Xen_wrap_5_optional_args(g_fpsap_w, g_fpsap)
 #if HAVE_SCHEME
-XEN_ARGIFY_6(g_fpsap_1_w, g_fpsap_1)
+Xen_wrap_6_optional_args(g_fpsap_1_w, g_fpsap_1)
 #endif
 #endif
 
 void g_init_sig(void)
 {
-  XEN_DEFINE_PROCEDURE(S_scan_channel,                g_scan_channel_w,                1, 5, 0, H_scan_channel);
+  Xen_define_procedure(S_scan_channel,                g_scan_channel_w,                1, 5, 0, H_scan_channel);
 #if (!HAVE_SCHEME)
-  XEN_DEFINE_PROCEDURE(S_scan_chan,                   g_scan_chan_w,                   1, 5, 0, H_scan_chan);
-  XEN_DEFINE_PROCEDURE(S_find_channel,                g_find_channel_w,                1, 4, 0, H_find_channel);
+  Xen_define_procedure(S_scan_chan,                   g_scan_chan_w,                   1, 5, 0, H_scan_chan);
+  Xen_define_procedure(S_find_channel,                g_find_channel_w,                1, 4, 0, H_find_channel);
 #endif
-  XEN_DEFINE_PROCEDURE(S_count_matches,               g_count_matches_w,               1, 4, 0, H_count_matches);
-  XEN_DEFINE_PROCEDURE(S_map_chan,                    g_map_chan_w,                    1, 6, 0, H_map_chan);
-  XEN_DEFINE_PROCEDURE(S_map_channel,                 g_map_channel_w,                 1, 6, 0, H_map_channel);
+  Xen_define_procedure(S_count_matches,               g_count_matches_w,               1, 4, 0, H_count_matches);
+  Xen_define_procedure(S_map_chan,                    g_map_chan_w,                    1, 6, 0, H_map_chan);
+  Xen_define_procedure(S_map_channel,                 g_map_channel_w,                 1, 6, 0, H_map_channel);
 
-  XEN_DEFINE_PROCEDURE(S_smooth_sound,                g_smooth_sound_w,                0, 4, 0, H_smooth_sound);
-  XEN_DEFINE_PROCEDURE(S_smooth_selection,            g_smooth_selection_w,            0, 0, 0, H_smooth_selection);
-  XEN_DEFINE_PROCEDURE(S_delete_selection_and_smooth, g_delete_selection_and_smooth_w, 0, 0, 0, H_delete_selection_and_smooth);
-  XEN_DEFINE_PROCEDURE(S_delete_samples_and_smooth,   g_delete_samples_and_smooth_w,   2, 3, 0, H_delete_samples_and_smooth);
-  XEN_DEFINE_PROCEDURE(S_reverse_sound,               g_reverse_sound_w,               0, 3, 0, H_reverse_sound);
-  XEN_DEFINE_PROCEDURE(S_reverse_selection,           g_reverse_selection_w,           0, 0, 0, H_reverse_selection);
-  XEN_DEFINE_PROCEDURE(S_swap_channels,               g_swap_channels_w,               0, 8, 0, H_swap_channels);
-  XEN_DEFINE_PROCEDURE(S_insert_silence,              g_insert_silence_w,              2, 2, 0, H_insert_silence);
+  Xen_define_procedure(S_smooth_sound,                g_smooth_sound_w,                0, 4, 0, H_smooth_sound);
+  Xen_define_procedure(S_smooth_selection,            g_smooth_selection_w,            0, 0, 0, H_smooth_selection);
+  Xen_define_procedure(S_delete_selection_and_smooth, g_delete_selection_and_smooth_w, 0, 0, 0, H_delete_selection_and_smooth);
+  Xen_define_procedure(S_delete_samples_and_smooth,   g_delete_samples_and_smooth_w,   2, 3, 0, H_delete_samples_and_smooth);
+  Xen_define_procedure(S_reverse_sound,               g_reverse_sound_w,               0, 3, 0, H_reverse_sound);
+  Xen_define_procedure(S_reverse_selection,           g_reverse_selection_w,           0, 0, 0, H_reverse_selection);
+  Xen_define_procedure(S_swap_channels,               g_swap_channels_w,               0, 8, 0, H_swap_channels);
+  Xen_define_procedure(S_insert_silence,              g_insert_silence_w,              2, 2, 0, H_insert_silence);
 
-  XEN_DEFINE_PROCEDURE(S_scale_selection_to,          g_scale_selection_to_w,          0, 1, 0, H_scale_selection_to);
-  XEN_DEFINE_PROCEDURE(S_scale_selection_by,          g_scale_selection_by_w,          1, 0, 0, H_scale_selection_by);
-  XEN_DEFINE_PROCEDURE(S_scale_to,                    g_scale_to_w,                    0, 3, 0, H_scale_to);
-  XEN_DEFINE_PROCEDURE(S_scale_by,                    g_scale_by_w,                    1, 2, 0, H_scale_by);
-  XEN_DEFINE_PROCEDURE(S_env_selection,               g_env_selection_w,               1, 1, 0, H_env_selection);
-  XEN_DEFINE_PROCEDURE(S_env_sound,                   g_env_sound_w,                   1, 6, 0, H_env_sound);
-  XEN_DEFINE_SAFE_PROCEDURE(S_fft,                    g_fft_w,                         2, 1, 0, H_fft);
-  XEN_DEFINE_SAFE_PROCEDURE(S_snd_spectrum,           g_snd_spectrum_w,                1, 6, 0, H_snd_spectrum);
-  XEN_DEFINE_SAFE_PROCEDURE(S_convolve_with,          g_convolve_with_w,               1, 4, 0, H_convolve_with);
-  XEN_DEFINE_SAFE_PROCEDURE(S_convolve_selection_with, g_convolve_selection_with_w,     1, 1, 0, H_convolve_selection_with);
-  XEN_DEFINE_PROCEDURE(S_src_sound,                   g_src_sound_w,                   1, 4, 0, H_src_sound);
-  XEN_DEFINE_PROCEDURE(S_src_selection,               g_src_selection_w,               1, 1, 0, H_src_selection);
-  XEN_DEFINE_PROCEDURE(S_filter_channel,              g_filter_channel_w,              1, 8, 0, H_filter_channel);
-  XEN_DEFINE_PROCEDURE(S_filter_sound,                g_filter_sound_w,                1, 5, 0, H_filter_sound);
-  XEN_DEFINE_PROCEDURE(S_filter_selection,            g_filter_selection_w,            1, 2, 0, H_filter_selection);
+  Xen_define_procedure(S_scale_selection_to,          g_scale_selection_to_w,          0, 1, 0, H_scale_selection_to);
+  Xen_define_procedure(S_scale_selection_by,          g_scale_selection_by_w,          1, 0, 0, H_scale_selection_by);
+  Xen_define_procedure(S_scale_to,                    g_scale_to_w,                    0, 3, 0, H_scale_to);
+  Xen_define_procedure(S_scale_by,                    g_scale_by_w,                    1, 2, 0, H_scale_by);
+  Xen_define_procedure(S_env_selection,               g_env_selection_w,               1, 1, 0, H_env_selection);
+  Xen_define_procedure(S_env_sound,                   g_env_sound_w,                   1, 6, 0, H_env_sound);
+  Xen_define_safe_procedure(S_fft,                    g_fft_w,                         2, 1, 0, H_fft);
+  Xen_define_safe_procedure(S_snd_spectrum,           g_snd_spectrum_w,                1, 6, 0, H_snd_spectrum);
+  Xen_define_safe_procedure(S_convolve_with,          g_convolve_with_w,               1, 4, 0, H_convolve_with);
+  Xen_define_safe_procedure(S_convolve_selection_with, g_convolve_selection_with_w,     1, 1, 0, H_convolve_selection_with);
+  Xen_define_procedure(S_src_sound,                   g_src_sound_w,                   1, 4, 0, H_src_sound);
+  Xen_define_procedure(S_src_selection,               g_src_selection_w,               1, 1, 0, H_src_selection);
+  Xen_define_procedure(S_filter_channel,              g_filter_channel_w,              1, 8, 0, H_filter_channel);
+  Xen_define_procedure(S_filter_sound,                g_filter_sound_w,                1, 5, 0, H_filter_sound);
+  Xen_define_procedure(S_filter_selection,            g_filter_selection_w,            1, 2, 0, H_filter_selection);
 
-  XEN_DEFINE_PROCEDURE(S_reverse_channel,             g_reverse_channel_w,             0, 5, 0, H_reverse_channel);
-  XEN_DEFINE_PROCEDURE(S_clm_channel,                 g_clm_channel_w,                 1, 7, 0, H_clm_channel);
-  XEN_DEFINE_PROCEDURE(S_env_channel,                 g_env_channel_w,                 1, 5, 0, H_env_channel);
-  XEN_DEFINE_PROCEDURE(S_env_channel_with_base,       g_env_channel_with_base_w,       1, 6, 0, H_env_channel_with_base);
-  XEN_DEFINE_PROCEDURE(S_ramp_channel,                g_ramp_channel_w,                2, 5, 0, H_ramp_channel);
-  XEN_DEFINE_PROCEDURE(S_xramp_channel,               g_xramp_channel_w,               2, 6, 0, H_xramp_channel);
-  XEN_DEFINE_PROCEDURE(S_smooth_channel,              g_smooth_channel_w,              0, 5, 0, H_smooth_channel);
-  XEN_DEFINE_PROCEDURE(S_src_channel,                 g_src_channel_w,                 1, 5, 0, H_src_channel);
-  XEN_DEFINE_PROCEDURE(S_pad_channel,                 g_pad_channel_w,                 2, 3, 0, H_pad_channel);
+  Xen_define_procedure(S_reverse_channel,             g_reverse_channel_w,             0, 5, 0, H_reverse_channel);
+  Xen_define_procedure(S_clm_channel,                 g_clm_channel_w,                 1, 7, 0, H_clm_channel);
+  Xen_define_procedure(S_env_channel,                 g_env_channel_w,                 1, 5, 0, H_env_channel);
+  Xen_define_procedure(S_env_channel_with_base,       g_env_channel_with_base_w,       1, 6, 0, H_env_channel_with_base);
+  Xen_define_procedure(S_ramp_channel,                g_ramp_channel_w,                2, 5, 0, H_ramp_channel);
+  Xen_define_procedure(S_xramp_channel,               g_xramp_channel_w,               2, 6, 0, H_xramp_channel);
+  Xen_define_procedure(S_smooth_channel,              g_smooth_channel_w,              0, 5, 0, H_smooth_channel);
+  Xen_define_procedure(S_src_channel,                 g_src_channel_w,                 1, 5, 0, H_src_channel);
+  Xen_define_procedure(S_pad_channel,                 g_pad_channel_w,                 2, 3, 0, H_pad_channel);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
+  Xen_define_procedure_with_setter(S_sinc_width, g_sinc_width_w, H_sinc_width,
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 
 #if HAVE_NESTED_FUNCTIONS
-  XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
-  XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
+  Xen_define_procedure(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
+  Xen_define_procedure(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
 #if HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("fpsap-1", g_fpsap_1_w, 3, 3, 0, H_fpsap);
-  XEN_DEFINE_PROCEDURE("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
+  Xen_define_procedure("fpsap-1", g_fpsap_1_w, 3, 3, 0, H_fpsap);
+  Xen_define_procedure("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
 #endif
 #endif
 

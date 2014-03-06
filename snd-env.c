@@ -1264,42 +1264,42 @@ env *xen_to_env(XEN res)
   if (Xen_is_list(res))
     {
       int len = 0;
-      len = XEN_LIST_LENGTH(res);
+      len = Xen_list_length(res);
       if (len > 0)
 	{
 	  int i;
 	  mus_float_t *data = NULL;
 	  XEN lst;
 	  
-	  if (Xen_is_number(XEN_CAR(res)))
+	  if (Xen_is_number(Xen_car(res)))
 	    {
 	      data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
-	      for (i = 0, lst = XEN_COPY_ARG(res); i < len; i++, lst = XEN_CDR(lst))
+	      for (i = 0, lst = Xen_copy_arg(res); i < len; i++, lst = Xen_cdr(lst))
 		{
 		  XEN el;
-		  el = XEN_CAR(lst);
-		  data[i] = XEN_TO_C_DOUBLE(el);
+		  el = Xen_car(lst);
+		  data[i] = Xen_real_to_C_double(el);
 		}
 	    }
 	  else
 	    {
 	      /* embedded lists '((0 0) (100 1)) */
-	      if (Xen_is_list(XEN_CAR(res)))
+	      if (Xen_is_list(Xen_car(res)))
 		{
 		  len *= 2;
 		  data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
-		  for (i = 0, lst = XEN_COPY_ARG(res); i < len; i += 2, lst = XEN_CDR(lst))
+		  for (i = 0, lst = Xen_copy_arg(res); i < len; i += 2, lst = Xen_cdr(lst))
 		    {
 		      XEN el;
-		      el = XEN_CAR(lst);
-		      if ((!(Xen_is_number(XEN_CAR(el)))) ||
-			  (!(Xen_is_number(XEN_CADR(el)))))
+		      el = Xen_car(lst);
+		      if ((!(Xen_is_number(Xen_car(el)))) ||
+			  (!(Xen_is_number(Xen_cadr(el)))))
 			{
 			  free(data);
 			  return(NULL);
 			}
-		      data[i] = XEN_TO_C_DOUBLE(XEN_CAR(el));
-		      data[i + 1] = XEN_TO_C_DOUBLE(XEN_CADR(el));
+		      data[i] = Xen_real_to_C_double(Xen_car(el));
+		      data[i + 1] = Xen_real_to_C_double(Xen_cadr(el));
 		    }
 		}
 	      else
@@ -1325,12 +1325,12 @@ static bool x_increases(XEN res)
   int i, len;
   XEN lst;
   mus_float_t x;
-  len = XEN_LIST_LENGTH(res);
-  x = XEN_TO_C_DOUBLE(XEN_CAR(res));
-  for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(res)); i < len; i += 2, lst = XEN_CDDR(lst))
+  len = Xen_list_length(res);
+  x = Xen_real_to_C_double(Xen_car(res));
+  for (i = 2, lst = Xen_cddr(Xen_copy_arg(res)); i < len; i += 2, lst = Xen_cddr(lst))
     {
       mus_float_t nx;
-      nx = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+      nx = Xen_real_to_C_double(Xen_car(lst));
       if (x >= nx) return(false);
       x = nx;
     }
@@ -1352,8 +1352,9 @@ env *string_to_env(const char *str)
   XEN res;
   int len = 0;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->env");
-  if (XEN_LIST_P_WITH_LENGTH(res, len))
+  if (Xen_is_list(res))
     {
+      len = Xen_list_length(res);
       if ((len % 2) == 0)
 	{
 	  if (x_increases(res))
@@ -1423,9 +1424,9 @@ env *name_to_env(const char *str)
   pos = find_env(str);
   if (pos >= 0) return(copy_env(all_envs[pos]));
 #if HAVE_SCHEME || HAVE_FORTH
-  e = xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(str));
+  e = xen_to_env(C_string_to_Xen_value(str));
 #else
-  e = xen_to_env(XEN_EVAL_C_STRING((char *)str));
+  e = xen_to_env(Xen_eval_C_string((char *)str));
 #endif
   return(e);
 }
@@ -1446,19 +1447,19 @@ static XEN g_define_envelope(XEN name, XEN data, XEN base)
   #define H_define_envelope "(" S_define_envelope " name data :optional base): load 'name' with associated 'data', a list of breakpoints \
 into the envelope editor."
 
-  XEN_ASSERT_TYPE(Xen_is_string(name) || Xen_is_symbol(name), name, 1, S_define_envelope, "a string or symbol");
-  XEN_ASSERT_TYPE(Xen_is_list(data), data, 2, S_define_envelope, "a list of breakpoints");
-  XEN_ASSERT_TYPE(Xen_is_number_or_unbound(base) || Xen_is_false(base), base, 3, S_define_envelope, "a float or " PROC_FALSE);
+  Xen_check_type(Xen_is_string(name) || Xen_is_symbol(name), name, 1, S_define_envelope, "a string or symbol");
+  Xen_check_type(Xen_is_list(data), data, 2, S_define_envelope, "a list of breakpoints");
+  Xen_check_type(Xen_is_number_or_unbound(base) || Xen_is_false(base), base, 3, S_define_envelope, "a float or " PROC_FALSE);
 
   if (Xen_is_string(name))
-    ename = XEN_TO_C_STRING(name);
-  else ename = XEN_SYMBOL_TO_C_STRING(name);
+    ename = Xen_string_to_C_string(name);
+  else ename = Xen_symbol_to_C_string(name);
 
   e = xen_to_env(data);
-  if (!e) return(XEN_FALSE);
+  if (!e) return(Xen_false);
 
   if (Xen_is_number(base))
-    e->base = XEN_TO_C_DOUBLE(base);
+    e->base = Xen_real_to_C_double(base);
 
 #if HAVE_RUBY
   {
@@ -1468,7 +1469,7 @@ into the envelope editor."
       env_index = 0;
     else
       env_index++;
-    XEN_DEFINE_VARIABLE(ename, snd_env_array[env_index], data); /* need global C variable */
+    Xen_define_variable(ename, snd_env_array[env_index], data); /* need global C variable */
     free(name);
     return(snd_env_array[env_index]);
   }
@@ -1478,7 +1479,7 @@ into the envelope editor."
   {
     XEN temp;
     alert_envelope_editor(ename, e);
-    XEN_DEFINE_VARIABLE(ename, temp, data); /* already gc protected */
+    Xen_define_variable(ename, temp, data); /* already gc protected */
     return(temp);
   }
 #endif
@@ -1493,7 +1494,7 @@ XEN env_to_xen(env *e)
 {
   if (e) 
     return(mus_array_to_list(e->data, 0, e->pts * 2));
-  return(XEN_EMPTY_LIST);
+  return(Xen_empty_list);
 }
 
 
@@ -1522,17 +1523,17 @@ void add_or_edit_symbol(const char *name, env *val)
   if (Xen_is_defined(name))
     {
       e = XEN_NAME_AS_C_STRING_TO_VARIABLE(name);
-      XEN_VARIABLE_SET(e, env_to_xen(val));
+      Xen_variable_set(e, env_to_xen(val));
     }
-  else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
+  else Xen_define_variable(name, e, env_to_xen(val));
 #endif
 
 #if HAVE_FORTH
   XEN e;
   if (!val) return;
   if (Xen_is_defined(name))
-    XEN_VARIABLE_SET(name, env_to_xen(val));
-  else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
+    Xen_variable_set(name, env_to_xen(val));
+  else Xen_define_variable(name, e, env_to_xen(val));
 #endif
 }
 
@@ -1542,17 +1543,17 @@ env *get_env(XEN e, const char *origin) /* list in e */
   int i, len = 0;
   env *new_env;
 
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(e, len), e, 1, origin, "a list");
-
+  Xen_check_type(Xen_is_list(e), e, 1, origin, "a list");
+  len = Xen_list_length(e);
   if (len == 0)
-    XEN_ERROR(NO_DATA,
-	      XEN_LIST_3(C_TO_XEN_STRING("~A: null env, ~A"), 
-			 C_TO_XEN_STRING(origin), 
+    Xen_error(NO_DATA,
+	      Xen_list_3(C_string_to_Xen_string("~A: null env, ~A"), 
+			 C_string_to_Xen_string(origin), 
 			 e));
   new_env = xen_to_env(e);
   if (!new_env)
-    XEN_ERROR(XEN_ERROR_TYPE("env-error"),
-	      XEN_LIST_2(C_TO_XEN_STRING("envelope break point list is screwed up: ~A"),
+    Xen_error(Xen_make_error_type("env-error"),
+	      Xen_list_2(C_string_to_Xen_string("envelope break point list is screwed up: ~A"),
 			 e));
 
   for (i = 2; i < new_env->pts * 2; i += 2)
@@ -1562,11 +1563,11 @@ env *get_env(XEN e, const char *origin) /* list in e */
 	char *buf;
 	buf = (char *)calloc(1024, sizeof(char));
 	snprintf(buf, 1024, "%s: env at breakpoint %d: x axis value %f > %f", origin, i / 2, new_env->data[i - 2], new_env->data[i]);
-	msg = C_TO_XEN_STRING(buf);
+	msg = C_string_to_Xen_string(buf);
 	free(buf);
 	free_env(new_env);
-	XEN_ERROR(XEN_ERROR_TYPE("env-error"),
-		  XEN_LIST_3(C_TO_XEN_STRING("~A, ~A"),
+	Xen_error(Xen_make_error_type("env-error"),
+		  Xen_list_3(C_string_to_Xen_string("~A, ~A"),
 			     msg,
 			     e));
       }
@@ -1580,10 +1581,10 @@ static XEN g_save_envelopes(XEN filename)
   char *name = NULL;
   FILE *fd;
 
-  XEN_ASSERT_TYPE((Xen_is_string(filename) || (Xen_is_false(filename)) || (!Xen_is_bound(filename))), 
+  Xen_check_type((Xen_is_string(filename) || (Xen_is_false(filename)) || (!Xen_is_bound(filename))), 
 		  filename, 1, S_save_envelopes, "a string or " PROC_FALSE);
   if (Xen_is_string(filename)) 
-    name = mus_expand_filename(XEN_TO_C_STRING(filename));
+    name = mus_expand_filename(Xen_string_to_C_string(filename));
   else name = mus_strdup("envs.save");
   
   if (name)
@@ -1598,10 +1599,10 @@ static XEN g_save_envelopes(XEN filename)
 
       if (!fd)
 	{
-	  XEN_ERROR(CANNOT_SAVE,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_save_envelopes ": can't save ~S, ~A"),
+	  Xen_error(CANNOT_SAVE,
+		    Xen_list_3(C_string_to_Xen_string(S_save_envelopes ": can't save ~S, ~A"),
 			       filename,
-			       C_TO_XEN_STRING(snd_open_strerror())));
+			       C_string_to_Xen_string(snd_open_strerror())));
 	}
     }
   return(filename);
@@ -1612,10 +1613,10 @@ static XEN enved_hook;
 
 static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enved_point_t reason)
 {
-  if (XEN_HOOKED(enved_hook))
+  if (Xen_hook_has_list(enved_hook))
     {
       int len = 0;
-      XEN result = XEN_FALSE;
+      XEN result = Xen_false;
       /* if hook procedure returns a list, that is the new contents of the
        * envelope -- if its length doesn't match current, we need to remake
        * current. Otherwise return 0, and assume the caller will handle default
@@ -1623,25 +1624,25 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 
 #if HAVE_SCHEME
       result = s7_call(s7, enved_hook, 
-		       XEN_LIST_5(env_to_xen(e),
-				  C_TO_XEN_INT(pos),
-				  C_TO_XEN_DOUBLE(x),
-				  C_TO_XEN_DOUBLE(y),
-				  C_TO_XEN_INT((int)reason)));
+		       Xen_list_5(env_to_xen(e),
+				  C_int_to_Xen_integer(pos),
+				  C_double_to_Xen_real(x),
+				  C_double_to_Xen_real(y),
+				  C_int_to_Xen_integer((int)reason)));
 #else
       {
 	XEN procs, env_list;
 	env_list = env_to_xen(e);
-	procs = XEN_HOOK_PROCEDURES(enved_hook);
+	procs = Xen_hook_list(enved_hook);
 	while (!Xen_is_null(procs))
 	  {
 	    XEN temp;
-	    temp = XEN_APPLY(XEN_CAR(procs), 
-			       XEN_LIST_5(env_list,
-					  C_TO_XEN_INT(pos),
-					  C_TO_XEN_DOUBLE(x),
-					  C_TO_XEN_DOUBLE(y),
-					  C_TO_XEN_INT((int)reason)),
+	    temp = Xen_apply(Xen_car(procs), 
+			       Xen_list_5(env_list,
+					  C_int_to_Xen_integer(pos),
+					  C_double_to_Xen_real(x),
+					  C_double_to_Xen_real(y),
+					  C_int_to_Xen_integer((int)reason)),
 			       S_enved_hook);
 	    if (!Xen_is_false(temp))
 	      {
@@ -1652,11 +1653,11 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 	  }
       }
 #endif
-      if ((!Xen_is_false(result)) && 
-	  (XEN_LIST_P_WITH_LENGTH(result, len)))
+      if (Xen_is_list(result))
 	{
 	  int i;
 	  XEN lst;
+	  len = Xen_list_length(result);
 	  if (len > e->data_size)
 	    {
 	      free(e->data);
@@ -1664,8 +1665,8 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 	      e->data_size = len;
 	    }
 	  e->pts = len / 2;
-	  for (i = 0, lst = XEN_COPY_ARG(result); i < len; i++, lst = XEN_CDR(lst))
-	    e->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	  for (i = 0, lst = Xen_copy_arg(result); i < len; i++, lst = Xen_cdr(lst))
+	    e->data[i] = Xen_real_to_C_double(Xen_car(lst));
 	  return(true);
 	}
     }
@@ -1673,42 +1674,42 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 }
 
 
-static XEN g_enved_base(void) {return(C_TO_XEN_DOUBLE(enved_base(ss)));}
+static XEN g_enved_base(void) {return(C_double_to_Xen_real(enved_base(ss)));}
 
 static XEN g_set_enved_base(XEN val) 
 {
   #define H_enved_base "(" S_enved_base "): envelope editor exponential base value (1.0)"
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_enved_base, "a number"); 
-  set_enved_base(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 300000.0));
-  return(C_TO_XEN_DOUBLE(enved_base(ss)));
+  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_enved_base, "a number"); 
+  set_enved_base(mus_fclamp(0.0, Xen_real_to_C_double(val), 300000.0));
+  return(C_double_to_Xen_real(enved_base(ss)));
 }
 
 
-static XEN g_enved_power(void) {return(C_TO_XEN_DOUBLE(enved_power(ss)));}
+static XEN g_enved_power(void) {return(C_double_to_Xen_real(enved_power(ss)));}
 
 static XEN g_set_enved_power(XEN val) 
 {
   #define H_enved_power "(" S_enved_power "): envelope editor base scale range (9.0^power)"
-  XEN_ASSERT_TYPE(Xen_is_number(val), val, 1, S_setB S_enved_power, "a number"); 
-  set_enved_power(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 10.0));
-  return(C_TO_XEN_DOUBLE(enved_power(ss)));
+  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_enved_power, "a number"); 
+  set_enved_power(mus_fclamp(0.0, Xen_real_to_C_double(val), 10.0));
+  return(C_double_to_Xen_real(enved_power(ss)));
 }
 
 
-static XEN g_enved_clipping(void) {return(C_TO_XEN_BOOLEAN(enved_clipping(ss)));}
+static XEN g_enved_clipping(void) {return(C_bool_to_Xen_boolean(enved_clipping(ss)));}
 
 static XEN g_set_enved_clipping(XEN on)
 {
   #define H_enved_clipping "(" S_enved_clipping "): envelope editor clip button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  XEN_ASSERT_TYPE(Xen_is_boolean(on), on, 1, S_setB S_enved_clipping, "a boolean");
-  set_enved_clipping(XEN_TO_C_BOOLEAN(on)); 
-  return(C_TO_XEN_BOOLEAN(enved_clipping(ss)));
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_enved_clipping, "a boolean");
+  set_enved_clipping(Xen_boolean_to_C_bool(on)); 
+  return(C_bool_to_Xen_boolean(enved_clipping(ss)));
 }
 
 
-static XEN g_enved_style(void) {return(C_TO_XEN_INT(enved_style(ss)));}
+static XEN g_enved_style(void) {return(C_int_to_Xen_integer(enved_style(ss)));}
 
 static XEN g_set_enved_style(XEN val) 
 {
@@ -1716,19 +1717,19 @@ static XEN g_set_enved_style(XEN val)
 be " S_envelope_linear ", or " S_envelope_exponential
 
   int choice;
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_enved_style, S_envelope_linear ", or " S_envelope_exponential);
-  choice = XEN_TO_C_INT(val);
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_enved_style, S_envelope_linear ", or " S_envelope_exponential);
+  choice = Xen_integer_to_C_int(val);
   if ((choice == ENVELOPE_LINEAR) || (choice == ENVELOPE_EXPONENTIAL))
     {
       set_enved_style((env_type_t)choice);
       reflect_enved_style();
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_enved_style, 1, val, S_enved_style " should be " S_envelope_linear ", or " S_envelope_exponential);
+  else Xen_out_of_range_error(S_enved_style, 1, val, S_enved_style " should be " S_envelope_linear ", or " S_envelope_exponential);
   return(val);
 }
 
 
-static XEN g_enved_target(void) {return(C_TO_XEN_INT((int)enved_target(ss)));}
+static XEN g_enved_target(void) {return(C_int_to_Xen_integer((int)enved_target(ss)));}
 
 static XEN g_set_enved_target(XEN val) 
 {
@@ -1738,47 +1739,47 @@ static XEN g_set_enved_target(XEN val)
   #define H_enved_target "(" S_enved_target "): determines how the envelope edit envelope is applied; \
 choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_enved_spectrum "(apply as a filter)."
 
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_enved_target, "an integer"); 
-  in_n = XEN_TO_C_INT(val);
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_enved_target, "an integer"); 
+  in_n = Xen_integer_to_C_int(val);
   if ((in_n < 0) ||
       (in_n > (int)ENVED_SRATE))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, S_enved_target " should be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
+    Xen_out_of_range_error(S_setB S_enved_target, 1, val, S_enved_target " should be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
   n = (enved_target_t)in_n;
   set_enved_target(n); 
-  return(C_TO_XEN_INT((int)enved_target(ss)));
+  return(C_int_to_Xen_integer((int)enved_target(ss)));
 }
 
 
-static XEN g_enved_with_wave(void) {return(C_TO_XEN_BOOLEAN(enved_with_wave(ss)));}
+static XEN g_enved_with_wave(void) {return(C_bool_to_Xen_boolean(enved_with_wave(ss)));}
 
 static XEN g_set_enved_with_wave(XEN val) 
 {
   #define H_enved_with_wave "(" S_enved_with_wave "): " PROC_TRUE " if the envelope editor is displaying the waveform to be edited"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_enved_with_wave, "a boolean");
-  set_enved_with_wave(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(enved_with_wave(ss)));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_enved_with_wave, "a boolean");
+  set_enved_with_wave(Xen_boolean_to_C_bool(val));
+  return(C_bool_to_Xen_boolean(enved_with_wave(ss)));
 }
 
 
-static XEN g_enved_in_dB(void) {return(C_TO_XEN_BOOLEAN(enved_in_dB(ss)));}
+static XEN g_enved_in_dB(void) {return(C_bool_to_Xen_boolean(enved_in_dB(ss)));}
 
 static XEN g_set_enved_in_dB(XEN val) 
 {
   #define H_enved_in_dB "(" S_enved_in_dB "): " PROC_TRUE " if the envelope editor is using dB"
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_enved_in_dB, "a boolean");
-  set_enved_in_dB(XEN_TO_C_BOOLEAN(val)); 
-  return(C_TO_XEN_BOOLEAN(enved_in_dB(ss)));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_enved_in_dB, "a boolean");
+  set_enved_in_dB(Xen_boolean_to_C_bool(val)); 
+  return(C_bool_to_Xen_boolean(enved_in_dB(ss)));
 }
 
 
-static XEN g_enved_filter_order(void) {return(C_TO_XEN_INT(enved_filter_order(ss)));}
+static XEN g_enved_filter_order(void) {return(C_int_to_Xen_integer(enved_filter_order(ss)));}
 
 static XEN g_set_enved_filter_order(XEN val) 
 {
   #define H_enved_filter_order "(" S_enved_filter_order "): envelope editor's FIR filter order (40)"
-  XEN_ASSERT_TYPE(Xen_is_integer(val), val, 1, S_setB S_enved_filter_order, "an integer"); 
-  set_enved_filter_order(XEN_TO_C_INT(val));
-  return(C_TO_XEN_INT(enved_filter_order(ss)));
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_enved_filter_order, "an integer"); 
+  set_enved_filter_order(Xen_integer_to_C_int(val));
+  return(C_int_to_Xen_integer(enved_filter_order(ss)));
 }
 
 
@@ -1789,25 +1790,25 @@ static XEN g_enved_dialog(void)
 }
 
 
-XEN_NARGIFY_0(g_enved_base_w, g_enved_base)
-XEN_NARGIFY_1(g_set_enved_base_w, g_set_enved_base)
-XEN_NARGIFY_0(g_enved_power_w, g_enved_power)
-XEN_NARGIFY_1(g_set_enved_power_w, g_set_enved_power)
-XEN_NARGIFY_0(g_enved_clipping_w, g_enved_clipping)
-XEN_NARGIFY_1(g_set_enved_clipping_w, g_set_enved_clipping)
-XEN_NARGIFY_0(g_enved_style_w, g_enved_style)
-XEN_NARGIFY_1(g_set_enved_style_w, g_set_enved_style)
-XEN_NARGIFY_0(g_enved_target_w, g_enved_target)
-XEN_NARGIFY_1(g_set_enved_target_w, g_set_enved_target)
-XEN_NARGIFY_0(g_enved_with_wave_w, g_enved_with_wave)
-XEN_NARGIFY_1(g_set_enved_with_wave_w, g_set_enved_with_wave)
-XEN_NARGIFY_0(g_enved_in_dB_w, g_enved_in_dB)
-XEN_NARGIFY_1(g_set_enved_in_dB_w, g_set_enved_in_dB)
-XEN_NARGIFY_0(g_enved_filter_order_w, g_enved_filter_order)
-XEN_NARGIFY_1(g_set_enved_filter_order_w, g_set_enved_filter_order)
-XEN_NARGIFY_0(g_enved_dialog_w, g_enved_dialog)
-XEN_ARGIFY_1(g_save_envelopes_w, g_save_envelopes)
-XEN_ARGIFY_3(g_define_envelope_w, g_define_envelope)
+Xen_wrap_no_args(g_enved_base_w, g_enved_base)
+Xen_wrap_1_arg(g_set_enved_base_w, g_set_enved_base)
+Xen_wrap_no_args(g_enved_power_w, g_enved_power)
+Xen_wrap_1_arg(g_set_enved_power_w, g_set_enved_power)
+Xen_wrap_no_args(g_enved_clipping_w, g_enved_clipping)
+Xen_wrap_1_arg(g_set_enved_clipping_w, g_set_enved_clipping)
+Xen_wrap_no_args(g_enved_style_w, g_enved_style)
+Xen_wrap_1_arg(g_set_enved_style_w, g_set_enved_style)
+Xen_wrap_no_args(g_enved_target_w, g_enved_target)
+Xen_wrap_1_arg(g_set_enved_target_w, g_set_enved_target)
+Xen_wrap_no_args(g_enved_with_wave_w, g_enved_with_wave)
+Xen_wrap_1_arg(g_set_enved_with_wave_w, g_set_enved_with_wave)
+Xen_wrap_no_args(g_enved_in_dB_w, g_enved_in_dB)
+Xen_wrap_1_arg(g_set_enved_in_dB_w, g_set_enved_in_dB)
+Xen_wrap_no_args(g_enved_filter_order_w, g_enved_filter_order)
+Xen_wrap_1_arg(g_set_enved_filter_order_w, g_set_enved_filter_order)
+Xen_wrap_no_args(g_enved_dialog_w, g_enved_dialog)
+Xen_wrap_1_optional_arg(g_save_envelopes_w, g_save_envelopes)
+Xen_wrap_3_optional_args(g_define_envelope_w, g_define_envelope)
 
 void g_init_env(void)
 {
@@ -1815,40 +1816,40 @@ void g_init_env(void)
   #define H_enved_spectrum "The value for " S_enved_target " that sets the envelope editor 'flt' button."
   #define H_enved_srate "The value for " S_enved_target " that sets the envelope editor 'src' button."
 
-  XEN_DEFINE_CONSTANT(S_enved_amplitude, ENVED_AMPLITUDE, H_enved_amplitude);
-  XEN_DEFINE_CONSTANT(S_enved_spectrum,  ENVED_SPECTRUM,  H_enved_spectrum);
-  XEN_DEFINE_CONSTANT(S_enved_srate,     ENVED_SRATE,     H_enved_srate);
+  Xen_define_constant(S_enved_amplitude, ENVED_AMPLITUDE, H_enved_amplitude);
+  Xen_define_constant(S_enved_spectrum,  ENVED_SPECTRUM,  H_enved_spectrum);
+  Xen_define_constant(S_enved_srate,     ENVED_SRATE,     H_enved_srate);
 
-  XEN_DEFINE_CONSTANT(S_envelope_linear,      ENVELOPE_LINEAR,      S_enved_style " choice: linear connections between breakpoints");
-  XEN_DEFINE_CONSTANT(S_envelope_exponential, ENVELOPE_EXPONENTIAL, S_enved_style " choice: exponential connections between breakpoints");
+  Xen_define_constant(S_envelope_linear,      ENVELOPE_LINEAR,      S_enved_style " choice: linear connections between breakpoints");
+  Xen_define_constant(S_envelope_exponential, ENVELOPE_EXPONENTIAL, S_enved_style " choice: exponential connections between breakpoints");
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clipping, g_enved_clipping_w, H_enved_clipping, S_setB S_enved_clipping, g_set_enved_clipping_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, S_setB S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_enved_clipping, g_enved_clipping_w, H_enved_clipping, S_setB S_enved_clipping, g_set_enved_clipping_w,  0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, S_setB S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
+  Xen_define_procedure_with_setter(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
 				   S_setB S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);
-  XEN_DEFINE_PROCEDURE(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes);
+  Xen_define_procedure(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);
+  Xen_define_procedure(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes);
 
 
 #if HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
-  XEN_EVAL_C_STRING("(define-macro (define-envelope a . b) `(define-envelope-1 ',a ,@b))");
-  XEN_EVAL_C_STRING("(define-macro (defvar a b) `(define-envelope-1 ',a ,b))");
+  Xen_define_procedure(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
+  Xen_eval_C_string("(define-macro (define-envelope a . b) `(define-envelope-1 ',a ,@b))");
+  Xen_eval_C_string("(define-macro (defvar a b) `(define-envelope-1 ',a ,b))");
   /* macro used here to ensure that "ampf" in (defvar ampf '(0 0 1 1)) is not evaluated */
 #else
-  XEN_DEFINE_PROCEDURE(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);
+  Xen_define_procedure(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);
 #endif
 
-  XEN_DEFINE_CONSTANT(S_enved_add_point,      ENVED_ADD_POINT,      S_enved_hook " 'reason' arg when point is added");
-  XEN_DEFINE_CONSTANT(S_enved_delete_point,   ENVED_DELETE_POINT,   S_enved_hook " 'reason' arg when point is deleted");
-  XEN_DEFINE_CONSTANT(S_enved_move_point,     ENVED_MOVE_POINT,     S_enved_hook " 'reason' arg when point is moved");
+  Xen_define_constant(S_enved_add_point,      ENVED_ADD_POINT,      S_enved_hook " 'reason' arg when point is added");
+  Xen_define_constant(S_enved_delete_point,   ENVED_DELETE_POINT,   S_enved_hook " 'reason' arg when point is deleted");
+  Xen_define_constant(S_enved_move_point,     ENVED_MOVE_POINT,     S_enved_hook " 'reason' arg when point is moved");
 
 #if HAVE_SCHEME
   #define H_enved_hook S_enved_hook " (envelope point x y reason): \
@@ -1899,7 +1900,7 @@ stretch-envelope from env.fth: \n\
 ; add-hook!"
 #endif
 
-  enved_hook = XEN_DEFINE_HOOK(S_enved_hook, "(make-hook 'envelope 'point 'x 'y 'reason)", 5, H_enved_hook);
+  enved_hook = Xen_define_hook(S_enved_hook, "(make-hook 'envelope 'point 'x 'y 'reason)", 5, H_enved_hook);
   /* not 'env as hook arg name! that can confuse clm2xen's optimizer */
 
   ss->enved = new_env_editor();

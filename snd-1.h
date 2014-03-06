@@ -5,14 +5,14 @@
 
 #define ASSERT_SOUND(Origin, Snd, Offset) \
   if (!((Xen_is_integer(Snd)) || (xen_is_sound(Snd)) || (Xen_is_false(Snd)) || (!Xen_is_bound(Snd)))) \
-    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE);
+    Xen_wrong_type_arg_error(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE);
 
 #define ASSERT_CHANNEL(Origin, Snd, Chn, Offset) \
   if (!((Xen_is_integer(Snd)) || (xen_is_sound(Snd)) || (Xen_is_false(Snd)) || (!Xen_is_bound(Snd)))) \
-    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE); \
+    Xen_wrong_type_arg_error(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE); \
   else \
     if (!((Xen_is_integer(Chn)) || (Xen_is_false(Chn)) || (!Xen_is_bound(Chn)))) \
-      XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or " PROC_FALSE);
+      Xen_wrong_type_arg_error(Origin, Offset + 1, Chn, "an integer (0-based channel number) or " PROC_FALSE);
 
 
 #if HAVE_SCHEME
@@ -21,34 +21,34 @@
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)	   \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)   \
   {                                                        \
-    if (Xen_is_null(XEN_CDR(args)))		   \
-      return(name(XEN_CAR(args), XEN_UNDEFINED));	   \
-    return(name(XEN_CADR(args), XEN_CAR(args)));	   \
+    if (Xen_is_null(Xen_cdr(args)))		   \
+      return(name(Xen_car(args), Xen_undefined));	   \
+    return(name(Xen_cadr(args), Xen_car(args)));	   \
   }
 
 #define WITH_THREE_SETTER_ARGS(name_reversed, name)                      \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)                 \
   {							                 \
-    if (Xen_is_null(XEN_CDR(args)))		                 \
-      return(name(XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED));         \
+    if (Xen_is_null(Xen_cdr(args)))		                 \
+      return(name(Xen_car(args), Xen_undefined, Xen_undefined));         \
     else {					 		         \
-      if (Xen_is_null(XEN_CDDR(args)))				 \
-	return(name(XEN_CADR(args), XEN_CAR(args), XEN_UNDEFINED));	\
-      else return(name(XEN_CADDR(args), XEN_CAR(args), XEN_CADR(args))); \
+      if (Xen_is_null(Xen_cddr(args)))				 \
+	return(name(Xen_cadr(args), Xen_car(args), Xen_undefined));	\
+      else return(name(Xen_caddr(args), Xen_car(args), Xen_cadr(args))); \
   }}
 
 #define WITH_FOUR_SETTER_ARGS(name_reversed, name)                                         \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)                                   \
 {							                                   \
-  if (Xen_is_null(XEN_CDR(args)))					                   \
-    return(name(XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));              \
+  if (Xen_is_null(Xen_cdr(args)))					                   \
+    return(name(Xen_car(args), Xen_undefined, Xen_undefined, Xen_undefined));              \
   else {								                   \
-    if (Xen_is_null(XEN_CDDR(args)))				                   \
-      return(name(XEN_CADR(args), XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED));           \
+    if (Xen_is_null(Xen_cddr(args)))				                   \
+      return(name(Xen_cadr(args), Xen_car(args), Xen_undefined, Xen_undefined));           \
     else {								                   \
       if (Xen_is_null(XEN_CDDDR(args)))				                   \
-	return(name(XEN_CADDR(args), XEN_CAR(args), XEN_CADR(args), XEN_UNDEFINED));       \
-      else return(name(XEN_CADDDR(args), XEN_CAR(args), XEN_CADR(args), XEN_CADDR(args))); \
+	return(name(Xen_caddr(args), Xen_car(args), Xen_cadr(args), Xen_undefined));       \
+      else return(name(Xen_cadddr(args), Xen_car(args), Xen_cadr(args), Xen_caddr(args))); \
   }}}
 
 #else
@@ -59,7 +59,7 @@
 #endif
 
 #define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \
-  XEN_ASSERT_TYPE(Xen_is_integer(Beg) || Xen_is_false(Beg) || (!Xen_is_bound(Beg)), Beg, Offset, Origin, "an integer or " PROC_FALSE)
+  Xen_check_type(Xen_is_integer(Beg) || Xen_is_false(Beg) || (!Xen_is_bound(Beg)), Beg, Offset, Origin, "an integer or " PROC_FALSE)
 
 typedef struct {
   char **values;
@@ -1159,7 +1159,7 @@ int xen_transform_to_int(XEN n);
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data);
-XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller);
+XEN snd_catch_any(Xen_catch_t body, void *body_data, const char *caller);
 XEN snd_throw(XEN key, XEN args);
 XEN snd_no_such_file_error(const char *caller, XEN filename);
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn);

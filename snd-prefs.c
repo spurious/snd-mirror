@@ -217,8 +217,8 @@ static char **load_path_to_string_array(int *len)
   int dir_len = 0, i, j = 0;
   XEN dirs;
 
-  dirs = XEN_LOAD_PATH;
-  dir_len = XEN_LIST_LENGTH(dirs);
+  dirs = Xen_load_path;
+  dir_len = Xen_list_length(dirs);
 
   if (dir_len > 0)
     {
@@ -226,7 +226,7 @@ static char **load_path_to_string_array(int *len)
       for (i = 0; i < dir_len; i++)
 	{
 	  const char *path;
-	  path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
+	  path = Xen_string_to_C_string(Xen_list_ref(dirs, i));
 	  if ((path) && (!(is_string_member(path, cdirs, j))))   /* try to remove duplicates */
 	    cdirs[j++] = mus_strdup(path);
 	}
@@ -3662,8 +3662,8 @@ static const char *help_load_path(prefs_info *prf)
 from the Scheme, Ruby, or Forth files found in the Snd tarball.  \n\
 You can run Snd without these files, but there's no reason to!  \n\
 Just add the directory containing them to the load path \n\
-variable %s.  " XEN_LANGUAGE_NAME " searches these directories \n\
-for any *." XEN_FILE_EXTENSION " files that it can't find elsewhere.  \n\
+variable %s.  " Xen_language " searches these directories \n\
+for any *." Xen_file_extension " files that it can't find elsewhere.  \n\
 The current load path list is: \n\n%s\n",
 #if HAVE_RUBY
 		   ", $LOAD_PATH",
@@ -3674,7 +3674,7 @@ The current load path list is: \n\n%s\n",
 		   "",
 #endif
 #endif
-		   temp = (char *)XEN_AS_STRING(XEN_LOAD_PATH));
+		   temp = (char *)Xen_object_to_C_string(Xen_load_path));
 #if HAVE_SCHEME
   if (temp) free(temp);
 #endif
@@ -3685,22 +3685,22 @@ The current load path list is: \n\n%s\n",
 static char *find_sources(void) /* returns directory name where it finds extensions.* */
 {
   char *file = NULL;
-  #define BASE_FILE "extensions." XEN_FILE_EXTENSION
+  #define BASE_FILE "extensions." Xen_file_extension
 
 #if HAVE_SCHEME
   /* mimic Forth code below -- get *load-path* value and run through it */
   {
       int i, len, base_len;
       XEN load_path;
-      load_path = XEN_LOAD_PATH;
-      len = XEN_LIST_LENGTH(load_path);
+      load_path = Xen_load_path;
+      len = Xen_list_length(load_path);
       base_len = strlen(BASE_FILE);
       for (i = 0; i < len; i++)
 	{
 	  char *fname;
 	  const char *path;
 	  int flen;
-	  path = XEN_TO_C_STRING(XEN_LIST_REF(load_path, i));
+	  path = Xen_string_to_C_string(Xen_list_ref(load_path, i));
 	  flen = base_len + 32 + strlen(path);
 	  fname = (char *)calloc(flen, sizeof(char));
 	  snprintf(fname, flen, "%s/%s", path, BASE_FILE);
@@ -3716,9 +3716,9 @@ static char *find_sources(void) /* returns directory name where it finds extensi
 #if HAVE_RUBY
   {
     XEN xfile;
-    xfile = rb_find_file(C_TO_XEN_STRING(BASE_FILE));
+    xfile = rb_find_file(C_string_to_Xen_string(BASE_FILE));
     if (Xen_is_string(xfile))
-      file = mus_expand_filename(XEN_TO_C_STRING(xfile));
+      file = mus_expand_filename(Xen_string_to_C_string(xfile));
   }
 #endif
 
@@ -3727,7 +3727,7 @@ static char *find_sources(void) /* returns directory name where it finds extensi
       /* taken from fth/src/misc.c -- fth_find_file looks for an already-loaded file */
       int i, len, base_len;
       XEN load_path;
-      load_path = XEN_LOAD_PATH;
+      load_path = Xen_load_path;
       len = fth_array_length(load_path);
       base_len = strlen(BASE_FILE);
       for (i = 0; i < len; i++)
@@ -3802,7 +3802,7 @@ static void load_path_text(prefs_info *prf)
       black_text(prf);
       if (include_load_path) free(include_load_path);
       include_load_path = mus_strdup(str);
-      XEN_ADD_TO_LOAD_PATH(include_load_path);
+      Xen_add_to_load_path(include_load_path);
     }
   if (str) {free_TEXT(str);}
 }
@@ -3925,7 +3925,7 @@ static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m,
     {
       expr = (*binder)(key, ctrl, meta, cx);
       free_TEXT(key);
-      XEN_EVAL_C_STRING(expr);
+      Xen_eval_C_string(expr);
       free(expr);
     }
 }
@@ -3943,9 +3943,9 @@ static void clear_key(prefs_info *prf, const char *name)
 	  if (ki->c) state |= 4;
 	  if (ki->m) state |= 8;
 #if USE_MOTIF
-	  set_keymap_entry((int)XStringToKeysym(ki->key), state, 0, XEN_UNDEFINED, ki->x, name, name);
+	  set_keymap_entry((int)XStringToKeysym(ki->key), state, 0, Xen_undefined, ki->x, name, name);
 #else
-	  set_keymap_entry((int)gdk_keyval_from_name(ki->key), state, 0, XEN_UNDEFINED, ki->x, name, name);
+	  set_keymap_entry((int)gdk_keyval_from_name(ki->key), state, 0, Xen_undefined, ki->x, name, name);
 #endif
 	}
       free(ki);

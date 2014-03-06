@@ -105,7 +105,7 @@ int in_keymap(int key, int state, bool cx_extended)
 #if HAVE_SCHEME || HAVE_FORTH
   #define kbd_false 0
 #else
-  #define kbd_false XEN_FALSE
+  #define kbd_false Xen_false
 #endif
 
 #define NUM_BUILT_IN_KEYS 81
@@ -275,7 +275,7 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
 	    {
 	      keymap = (key_entry *)calloc(keymap_size, sizeof(key_entry));
 	      for (i = 0; i < keymap_size; i++) 
-		keymap[i].func = XEN_UNDEFINED;
+		keymap[i].func = Xen_undefined;
 	    }
 	  else 
 	    {
@@ -284,7 +284,7 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
 		{
 		  keymap[i].key = 0; 
 		  keymap[i].state = 0; 
-		  keymap[i].func = XEN_UNDEFINED;
+		  keymap[i].func = Xen_undefined;
 		  keymap[i].cx_extended = false;
 		  keymap[i].origin = NULL;
 		  keymap[i].prefs_info = NULL;
@@ -340,8 +340,8 @@ static void call_keymap(int hashedsym, int count)
     {
       /* not _NO_CATCH here because the code is not protected at any higher level */
       if (keymap[hashedsym].args == 0)
-	res = (kbd_cursor_t)XEN_TO_C_INT(XEN_CALL_0(keymap[hashedsym].func, keymap[hashedsym].origin));
-      else res = (kbd_cursor_t)XEN_TO_C_INT(XEN_CALL_1(keymap[hashedsym].func, C_TO_XEN_INT(count), keymap[hashedsym].origin));
+	res = (kbd_cursor_t)Xen_integer_to_C_int(Xen_call_with_no_args(keymap[hashedsym].func, keymap[hashedsym].origin));
+      else res = (kbd_cursor_t)Xen_integer_to_C_int(Xen_call_with_1_arg(keymap[hashedsym].func, C_int_to_Xen_integer(count), keymap[hashedsym].origin));
     }
   handle_cursor(selected_channel(), res);
 }
@@ -1513,18 +1513,18 @@ static int key_name_to_key(XEN key, const char *caller)
 {
   /* Ruby thinks chars are strings */
   if (Xen_is_integer(key))
-    return(XEN_TO_C_INT(key)); /* includes 0xffc0 style keys, and in Ruby things like ?a */
+    return(Xen_integer_to_C_int(key)); /* includes 0xffc0 style keys, and in Ruby things like ?a */
 
 #if (!HAVE_RUBY)
   if (Xen_is_char(key))
-    return((int)(XEN_TO_C_CHAR(key)));
+    return((int)(Xen_char_to_C_char(key)));
 #endif
 
 #if USE_MOTIF
-  return((int)XStringToKeysym(XEN_TO_C_STRING(key)));  /* these are the X names: not "+" but "plus" etc */
+  return((int)XStringToKeysym(Xen_string_to_C_string(key)));  /* these are the X names: not "+" but "plus" etc */
 #endif
 #if USE_GTK
-  return((int)gdk_keyval_from_name(XEN_TO_C_STRING(key)));
+  return((int)gdk_keyval_from_name(Xen_string_to_C_string(key)));
 #endif
   return(0);
 }
@@ -1534,12 +1534,12 @@ static XEN check_for_key_error(int k, int s, const char *caller)
 {
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
-    XEN_ERROR(XEN_ERROR_TYPE("no-such-key"),
-	      XEN_LIST_4(C_TO_XEN_STRING("~A: no such key: ~A, state: ~A"),
-			 C_TO_XEN_STRING(caller),
-			 C_TO_XEN_INT(k),
-			 C_TO_XEN_INT(s)));
-  return(XEN_FALSE);
+    Xen_error(Xen_make_error_type("no-such-key"),
+	      Xen_list_4(C_string_to_Xen_string("~A: no such key: ~A, state: ~A"),
+			 C_string_to_Xen_string(caller),
+			 C_int_to_Xen_integer(k),
+			 C_int_to_Xen_integer(s)));
+  return(Xen_false);
 }
 
 
@@ -1550,18 +1550,18 @@ modifiers.  As in " S_bind_key ", state is the logical 'or' of ctrl=4, meta=8, a
 prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an integer."
   int i, k, s;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(key) || Xen_is_char(key) || Xen_is_string(key), key, 1, S_key_binding, "an integer, character, or string");
-  XEN_ASSERT_TYPE(Xen_is_integer_or_unbound(state), state, 2, S_key_binding, "an integer");
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(cx_extended), cx_extended, 3, S_key_binding, "a boolean");
+  Xen_check_type(Xen_is_integer(key) || Xen_is_char(key) || Xen_is_string(key), key, 1, S_key_binding, "an integer, character, or string");
+  Xen_check_type(Xen_is_integer_or_unbound(state), state, 2, S_key_binding, "an integer");
+  Xen_check_type(Xen_is_boolean_or_unbound(cx_extended), cx_extended, 3, S_key_binding, "a boolean");
 
   k = key_name_to_key(key, S_key_binding);
-  s = ((Xen_is_integer(state)) ? XEN_TO_C_INT(state) : 0) & 0xfffe; /* no shift bit */
+  s = ((Xen_is_integer(state)) ? Xen_integer_to_C_int(state) : 0) & 0xfffe; /* no shift bit */
   check_for_key_error(k, s, S_key_binding);
   i = in_keymap(k, s, Xen_is_true(cx_extended));
   if (i >= 0) 
     return(keymap[i].func);
 
-  return(XEN_UNDEFINED);
+  return(Xen_undefined);
 }
 
 
@@ -1570,37 +1570,37 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
   int args, k = 0, s;
   bool e;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(key) || Xen_is_string(key) || Xen_is_char(key), key, 1, caller, "an integer, char, or string");
-  XEN_ASSERT_TYPE(Xen_is_integer(state), state, 2, caller, "an integer");
-  XEN_ASSERT_TYPE((Xen_is_false(code) || Xen_is_procedure(code)), code, 3, caller, PROC_FALSE " or a procedure");
-  XEN_ASSERT_TYPE(Xen_is_boolean_or_unbound(cx_extended), cx_extended, 4, caller, "a boolean");
-  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(origin), origin, 5, caller, "a string");
-  XEN_ASSERT_TYPE(Xen_is_string_or_unbound(prefs_info), prefs_info, 6, caller, "a string");
+  Xen_check_type(Xen_is_integer(key) || Xen_is_string(key) || Xen_is_char(key), key, 1, caller, "an integer, char, or string");
+  Xen_check_type(Xen_is_integer(state), state, 2, caller, "an integer");
+  Xen_check_type((Xen_is_false(code) || Xen_is_procedure(code)), code, 3, caller, PROC_FALSE " or a procedure");
+  Xen_check_type(Xen_is_boolean_or_unbound(cx_extended), cx_extended, 4, caller, "a boolean");
+  Xen_check_type(Xen_is_string_or_unbound(origin), origin, 5, caller, "a string");
+  Xen_check_type(Xen_is_string_or_unbound(prefs_info), prefs_info, 6, caller, "a string");
 
   k = key_name_to_key(key, caller);
-  s = XEN_TO_C_INT(state) & 0xfffe; /* get rid of shift bit */
+  s = Xen_integer_to_C_int(state) & 0xfffe; /* get rid of shift bit */
   check_for_key_error(k, s, caller);
   e = (Xen_is_true(cx_extended));
 
   if (Xen_is_false(code))
-    set_keymap_entry(k, s, 0, XEN_UNDEFINED, e, NULL, NULL);
+    set_keymap_entry(k, s, 0, Xen_undefined, e, NULL, NULL);
   else 
     {
       char buf[256];
       const char *comment = NULL, *prefs = NULL;
-      args = XEN_REQUIRED_ARGS(code);
+      args = Xen_required_args(code);
       if (args > 1)
 	{
 	  XEN errmsg;
 	  char *errstr;
 	  errstr = mus_format(S_bind_key " function arg should take either zero or one args, not %d", args);
-	  errmsg = C_TO_XEN_STRING(errstr);
+	  errmsg = C_string_to_Xen_string(errstr);
 
 	  free(errstr);
 	  return(snd_bad_arity_error(caller, errmsg, code));
 	}
-      if (Xen_is_string(origin)) comment = XEN_TO_C_STRING(origin); else comment = make_key_name(buf, 256, k, s, e);
-      if (Xen_is_string(prefs_info)) prefs = XEN_TO_C_STRING(prefs_info);
+      if (Xen_is_string(origin)) comment = Xen_string_to_C_string(origin); else comment = make_key_name(buf, 256, k, s, e);
+      if (Xen_is_string(prefs_info)) prefs = Xen_string_to_C_string(prefs_info);
       set_keymap_entry(k, s, args, code, e, comment, prefs);
     }
 
@@ -1627,7 +1627,7 @@ or \"<char> a\" in Forth)."
 static XEN g_unbind_key(XEN key, XEN state, XEN cx_extended)
 {
   #define H_unbind_key "(" S_unbind_key " key state :optional extended): undo the effect of a prior " S_bind_key " call."
-  return(g_bind_key_1(key, state, XEN_FALSE, cx_extended, XEN_UNDEFINED, XEN_UNDEFINED, S_unbind_key));
+  return(g_bind_key_1(key, state, Xen_false, cx_extended, Xen_undefined, Xen_undefined, S_unbind_key));
 }
 
 
@@ -1637,15 +1637,15 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   chan_info *cp;
   int k, s;
 
-  XEN_ASSERT_TYPE(Xen_is_integer(kbd) || Xen_is_char(kbd) || Xen_is_string(kbd), kbd, 1, S_key, "an integer, character, or string");
-  XEN_ASSERT_TYPE(Xen_is_integer(buckybits), buckybits, 2, S_key, "an integer");
+  Xen_check_type(Xen_is_integer(kbd) || Xen_is_char(kbd) || Xen_is_string(kbd), kbd, 1, S_key, "an integer, character, or string");
+  Xen_check_type(Xen_is_integer(buckybits), buckybits, 2, S_key, "an integer");
   ASSERT_CHANNEL(S_key, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_key);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(Xen_false);
 
   k = key_name_to_key(kbd, S_key);
-  s = XEN_TO_C_INT(buckybits);
+  s = Xen_integer_to_C_int(buckybits);
   check_for_key_error(k, s, S_key);
   keyboard_command(cp, k, s);
 
@@ -1653,10 +1653,10 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 }
 
 
-XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
-XEN_ARGIFY_6(g_bind_key_w, g_bind_key)
-XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
-XEN_ARGIFY_4(g_key_w, g_key)
+Xen_wrap_3_optional_args(g_key_binding_w, g_key_binding)
+Xen_wrap_6_optional_args(g_bind_key_w, g_bind_key)
+Xen_wrap_3_optional_args(g_unbind_key_w, g_unbind_key)
+Xen_wrap_4_optional_args(g_key_w, g_key)
 
 void g_init_kbd(void)
 {
@@ -1668,17 +1668,17 @@ void g_init_kbd(void)
   #define H_cursor_in_middle   "The value for a " S_bind_key " function that moves the window so that the cursor is in the middle"
   #define H_keyboard_no_action "The value for a " S_bind_key " function that does nothing upon return"
 
-  XEN_DEFINE_CONSTANT(S_cursor_in_view,          CURSOR_IN_VIEW,                      H_cursor_in_view);
-  XEN_DEFINE_CONSTANT(S_cursor_on_left,          CURSOR_ON_LEFT,                      H_cursor_on_left);
-  XEN_DEFINE_CONSTANT(S_cursor_on_right,         CURSOR_ON_RIGHT,                     H_cursor_on_right);
-  XEN_DEFINE_CONSTANT(S_cursor_in_middle,        CURSOR_IN_MIDDLE,                    H_cursor_in_middle);
-  XEN_DEFINE_CONSTANT(S_keyboard_no_action,      KEYBOARD_NO_ACTION,                  H_keyboard_no_action);
+  Xen_define_constant(S_cursor_in_view,          CURSOR_IN_VIEW,                      H_cursor_in_view);
+  Xen_define_constant(S_cursor_on_left,          CURSOR_ON_LEFT,                      H_cursor_on_left);
+  Xen_define_constant(S_cursor_on_right,         CURSOR_ON_RIGHT,                     H_cursor_on_right);
+  Xen_define_constant(S_cursor_in_middle,        CURSOR_IN_MIDDLE,                    H_cursor_in_middle);
+  Xen_define_constant(S_keyboard_no_action,      KEYBOARD_NO_ACTION,                  H_keyboard_no_action);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_key_binding,            g_key_binding_w,            1, 2, 0, H_key_binding);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 3, 0, H_bind_key);
-  XEN_DEFINE_SAFE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
-  XEN_DEFINE_SAFE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
+  Xen_define_safe_procedure(S_key_binding,            g_key_binding_w,            1, 2, 0, H_key_binding);
+  Xen_define_safe_procedure(S_bind_key,               g_bind_key_w,               3, 3, 0, H_bind_key);
+  Xen_define_safe_procedure(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
+  Xen_define_safe_procedure(S_key,                    g_key_w,                    2, 2, 0, H_key);
 
   for (i = 0; i < NUM_BUILT_IN_KEYS; i++)
-    built_in_keys[i].func = XEN_FALSE;
+    built_in_keys[i].func = Xen_false;
 }

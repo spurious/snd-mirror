@@ -249,29 +249,29 @@ static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 static XEN g_file_exists_p(XEN name)
 {
   #define H_file_exists_p "(file-exists? filename): #t if the file exists"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "file-exists?", "a string");
-  return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
+  Xen_check_type(Xen_is_string(name), name, 1, "file-exists?", "a string");
+  return(C_bool_to_Xen_boolean(mus_file_probe(Xen_string_to_C_string(name))));
 }
 
-XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
+Xen_wrap_1_arg(g_file_exists_p_w, g_file_exists_p)
 
 static XEN g_delete_file(XEN name)
 {
   #define H_delete_file "(delete-file filename): deletes the file"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "delete-file", "a string");
-  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
+  Xen_check_type(Xen_is_string(name), name, 1, "delete-file", "a string");
+  return(C_bool_to_Xen_boolean(unlink(Xen_string_to_C_string(name))));
 }
 
-XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
+Xen_wrap_1_arg(g_delete_file_w, g_delete_file)
 
 static XEN g_random(XEN val)
 {
-  if (XEN_INTEGER_P(val))
-    return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));
-  return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));
+  if (Xen_is_integer(val))
+    return(C_int_to_Xen_integer(mus_irandom(Xen_integer_to_C_int(val))));
+  return(C_double_to_Xen_real(mus_frandom(Xen_real_to_C_double(val))));
 }
 
-XEN_NARGIFY_1(g_random_w, g_random)
+Xen_wrap_1_arg(g_random_w, g_random)
 
 
 
@@ -285,13 +285,13 @@ int main(int argc, char **argv)
   xen_initialize();                   /* initialize the xen stuff (hooks and the xen s7 FFI used by sndlib) */
   Init_sndlib();                      /* initialize sndlib with all the functions linked into s7 */  
 
-  XEN_EVAL_C_STRING("(define load-from-path load)");
+  Xen_eval_C_string("(define load-from-path load)");
   
-  XEN_DEFINE_PROCEDURE("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_PROCEDURE("delete-file",  g_delete_file_w,   1, 0, 0, H_delete_file);
-  XEN_DEFINE_PROCEDURE("random",       g_random_w,        1, 0, 0, "(random arg): random number between 0 and arg ");
-  XEN_EVAL_C_STRING("(define (run-safety) 0)");        /* for the run macro and CLM */
-  XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");        /* lots of the CLM instruments use this macro */
+  Xen_define_procedure("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p);
+  Xen_define_procedure("delete-file",  g_delete_file_w,   1, 0, 0, H_delete_file);
+  Xen_define_procedure("random",       g_random_w,        1, 0, 0, "(random arg): random number between 0 and arg ");
+  Xen_eval_C_string("(define (run-safety) 0)");        /* for the run macro and CLM */
+  Xen_eval_C_string("(define (1+ x) (+ x 1))");        /* lots of the CLM instruments use this macro */
 
   s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
 

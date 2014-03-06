@@ -28,7 +28,7 @@ void snd_unprotect_at(int loc) {s7_gc_unprotect_at(s7, loc);}
 #else
 static XEN gc_protection;
 static int gc_protection_size = 0;
-#define DEFAULT_GC_VALUE XEN_UNDEFINED
+#define DEFAULT_GC_VALUE Xen_undefined
 static int gc_last_cleared = NOT_A_GC_LOC;
 static int gc_last_set = NOT_A_GC_LOC;
 
@@ -40,18 +40,18 @@ int snd_protect(XEN obj)
   if (gc_protection_size == 0)
     {
       gc_protection_size = 512;
-      gc_protection = XEN_MAKE_VECTOR(gc_protection_size, DEFAULT_GC_VALUE);
-      XEN_PROTECT_FROM_GC(gc_protection);
-      XEN_VECTOR_SET(gc_protection, 0, obj);
+      gc_protection = Xen_make_vector(gc_protection_size, DEFAULT_GC_VALUE);
+      Xen_GC_protect(gc_protection);
+      Xen_vector_set(gc_protection, 0, obj);
       gc_last_set = 0;
     }
   else
     {
       if ((gc_last_cleared >= 0) && 
-	  Xen_is_eq(XEN_VECTOR_REF(gc_protection, gc_last_cleared), DEFAULT_GC_VALUE))
+	  Xen_is_eq(Xen_vector_ref(gc_protection, gc_last_cleared), DEFAULT_GC_VALUE))
 	{
 	  /* we hit this branch about 2/3 of the time */
-	  XEN_VECTOR_SET(gc_protection, gc_last_cleared, obj);
+	  Xen_vector_set(gc_protection, gc_last_cleared, obj);
 	  gc_last_set = gc_last_cleared;
 	  gc_last_cleared = NOT_A_GC_LOC;
 
@@ -59,19 +59,19 @@ int snd_protect(XEN obj)
 	}
 
       for (i = gc_last_set; i < gc_protection_size; i++)
-	if (Xen_is_eq(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
+	if (Xen_is_eq(Xen_vector_ref(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
-	    XEN_VECTOR_SET(gc_protection, i, obj);
+	    Xen_vector_set(gc_protection, i, obj);
 	    gc_last_set = i;
 	    
 	    return(gc_last_set);
 	  }
 
       for (i = 0; i < gc_last_set; i++)
-	if (Xen_is_eq(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
+	if (Xen_is_eq(Xen_vector_ref(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
 	    /* here we average 3 checks before a hit, so this isn't as bad as it looks */
-	    XEN_VECTOR_SET(gc_protection, i, obj);
+	    Xen_vector_set(gc_protection, i, obj);
 	    gc_last_set = i;
 
 	    return(gc_last_set);
@@ -80,16 +80,16 @@ int snd_protect(XEN obj)
       tmp = gc_protection;
       old_size = gc_protection_size;
       gc_protection_size *= 2;
-      gc_protection = XEN_MAKE_VECTOR(gc_protection_size, DEFAULT_GC_VALUE);
-      XEN_PROTECT_FROM_GC(gc_protection);
+      gc_protection = Xen_make_vector(gc_protection_size, DEFAULT_GC_VALUE);
+      Xen_GC_protect(gc_protection);
 
       for (i = 0; i < old_size; i++)
 	{
-	  XEN_VECTOR_SET(gc_protection, i, XEN_VECTOR_REF(tmp, i));
-	  XEN_VECTOR_SET(tmp, i, DEFAULT_GC_VALUE);
+	  Xen_vector_set(gc_protection, i, Xen_vector_ref(tmp, i));
+	  Xen_vector_set(tmp, i, DEFAULT_GC_VALUE);
 	}
 
-      XEN_VECTOR_SET(gc_protection, old_size, obj);
+      Xen_vector_set(gc_protection, old_size, obj);
 
       /*   in Ruby, I think we can unprotect it */
 #if HAVE_RUBY || HAVE_FORTH
@@ -105,7 +105,7 @@ void snd_unprotect_at(int loc)
 {
   if (loc >= 0)
     {
-      XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
+      Xen_vector_set(gc_protection, loc, DEFAULT_GC_VALUE);
       gc_last_cleared = loc;
     }
 }
@@ -121,7 +121,7 @@ static XEN g_snd_s7_error_handler(XEN args)
 {
   s7_pointer msg;
   msg = s7_car(args);
-  XEN_ASSERT_TYPE(Xen_is_string(msg), msg, 1, "_snd_s7_error_handler_", "a string");
+  Xen_check_type(Xen_is_string(msg), msg, 1, "_snd_s7_error_handler_", "a string");
 
   if (ss->xen_error_handler)
     (*(ss->xen_error_handler))(s7_string(msg), (void *)any_selected_sound()); /* not NULL! */
@@ -192,20 +192,20 @@ static char *gl_print(XEN result);
 static XEN snd_format_if_needed(XEN args) 
 { 
   /* if car has formatting info, use next arg as arg list for it */ 
-  XEN format_args = XEN_EMPTY_LIST, cur_arg, result; 
+  XEN format_args = Xen_empty_list, cur_arg, result; 
   int i, start = 0, num_args, format_info_len, err_size = 8192; 
   bool got_tilde = false, was_formatted = false; 
   char *format_info = NULL, *errmsg = NULL; 
 
-  num_args = XEN_LIST_LENGTH(args); 
-  if (num_args == 1) return(XEN_CAR(args)); 
+  num_args = Xen_list_length(args); 
+  if (num_args == 1) return(Xen_car(args)); 
 
-  format_info = mus_strdup(XEN_TO_C_STRING(XEN_CAR(args))); 
+  format_info = mus_strdup(Xen_string_to_C_string(Xen_car(args))); 
   format_info_len = mus_strlen(format_info); 
 
-  if (Xen_is_cons(XEN_CADR(args))) 
-    format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case */ 
-  else format_args = XEN_CDR(args); 
+  if (Xen_is_cons(Xen_cadr(args))) 
+    format_args = Xen_copy_arg(Xen_cadr(args)); /* protect Ruby case */ 
+  else format_args = Xen_cdr(args); 
 
   errmsg = (char *)calloc(err_size, sizeof(char)); 
 
@@ -231,8 +231,8 @@ static XEN snd_format_if_needed(XEN args)
          case 'A': 
            if (!Xen_is_null(format_args)) 
              { 
-               cur_arg = XEN_CAR(format_args); 
-               format_args = XEN_CDR(format_args); 
+               cur_arg = Xen_car(format_args); 
+               format_args = Xen_cdr(format_args); 
                if (Xen_is_vector(cur_arg)) 
               { 
                 char *vstr; 
@@ -243,7 +243,7 @@ static XEN snd_format_if_needed(XEN args)
                else 
               { 
                 char *temp = NULL; 
-                errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(cur_arg), &err_size); 
+                errmsg = mus_strcat(errmsg, temp = (char *)Xen_object_to_C_string(cur_arg), &err_size); 
               } 
              } 
            /* else ignore it */ 
@@ -260,20 +260,20 @@ static XEN snd_format_if_needed(XEN args)
     { 
       char *temp = NULL; 
       errmsg = mus_strcat(errmsg, " ", &err_size); 
-      errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_CADR(args)), &err_size); 
+      errmsg = mus_strcat(errmsg, temp = (char *)Xen_object_to_C_string(Xen_cadr(args)), &err_size); 
 
       if (num_args > 2) 
     { 
-      if (!Xen_is_false(XEN_CADDR(args))) start = 2; else start = 3; 
+      if (!Xen_is_false(Xen_caddr(args))) start = 2; else start = 3; 
       for (i = start; i < num_args; i++) 
         { 
           char *temp = NULL; 
           errmsg = mus_strcat(errmsg, " ", &err_size); 
-          errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size); 
+          errmsg = mus_strcat(errmsg, temp = (char *)Xen_object_to_C_string(Xen_list_ref(args, i)), &err_size); 
         } 
     } 
     } 
-  result = C_TO_XEN_STRING(errmsg); 
+  result = C_string_to_Xen_string(errmsg); 
   free(errmsg); 
   return(result); 
 } 
@@ -299,17 +299,17 @@ void snd_rb_raise(XEN tag, XEN throw_args)
   if (strcmp(idname, "Mus_error") == 0) 
     msg = mus_strcat(msg, ": ", &size); 
   else msg = mus_strcat(msg, " in ", &size); 
-  msg = mus_strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(throw_args)), &size); 
+  msg = mus_strcat(msg, Xen_string_to_C_string(snd_format_if_needed(throw_args)), &size); 
 
   bt = rb_funcall(err, rb_intern("caller"), 0); 
 
-  if (XEN_VECTOR_LENGTH(bt) > 0) 
+  if (Xen_vector_length(bt) > 0) 
     { 
       int i; 
       msg = mus_strcat(msg, "\n", &size); 
-      for (i = 0; i < XEN_VECTOR_LENGTH(bt); i++) 
+      for (i = 0; i < Xen_vector_length(bt); i++) 
     { 
-      msg = mus_strcat(msg, XEN_TO_C_STRING(XEN_VECTOR_REF(bt, i)), &size); 
+      msg = mus_strcat(msg, Xen_string_to_C_string(Xen_vector_ref(bt, i)), &size); 
       msg = mus_strcat(msg, "\n", &size); 
     } 
     } 
@@ -343,7 +343,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 
 #if HAVE_EXTENSION_LANGUAGE
 
-XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
+XEN snd_catch_any(Xen_catch_t body, void *body_data, const char *caller)
 {
   return((*body)(body_data));
 }
@@ -353,10 +353,10 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 /* no extension language but user managed to try to evaluate something
  *   can this happen?
  */
-XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
+XEN snd_catch_any(Xen_catch_t body, void *body_data, const char *caller)
 {
   snd_error("This version of Snd has no extension language, so there's no way for %s to evaluate anything", caller);
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 #endif
 
@@ -365,15 +365,15 @@ bool procedure_arity_ok(XEN proc, int args)
 {
   XEN arity;
   int rargs;
-  arity = XEN_ARITY(proc);
+  arity = Xen_arity(proc);
 
 #if HAVE_RUBY
-  rargs = XEN_TO_C_INT(arity);
+  rargs = Xen_integer_to_C_int(arity);
   return(xen_rb_arity_ok(rargs, args));
 #endif
 
 #if HAVE_FORTH
-  rargs = XEN_TO_C_INT(arity);
+  rargs = Xen_integer_to_C_int(arity);
   if (rargs != args)
     return(false);
 #endif
@@ -383,9 +383,9 @@ bool procedure_arity_ok(XEN proc, int args)
     int oargs, restargs, gc_loc;
 
     gc_loc = s7_gc_protect(s7, arity);
-    rargs = XEN_TO_C_INT(XEN_CAR(arity));
-    oargs = XEN_TO_C_INT(XEN_CADR(arity));
-    restargs = ((Xen_is_true(XEN_CADDR(arity))) ? 1 : 0);
+    rargs = Xen_integer_to_C_int(Xen_car(arity));
+    oargs = Xen_integer_to_C_int(Xen_cadr(arity));
+    restargs = ((Xen_is_true(Xen_caddr(arity))) ? 1 : 0);
     s7_gc_unprotect_at(s7, gc_loc);
 
     if (rargs > args) return(false);
@@ -410,7 +410,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	{
 	  char *temp = NULL, *str;
 	  str = mus_format("%s: %s (%s arg %d) is not a procedure!", 
-			   temp = (char *)XEN_AS_STRING(proc),
+			   temp = (char *)Xen_object_to_C_string(proc),
 			   arg_name, caller, argn);
 #if HAVE_SCHEME
 	  if (temp) free(temp);
@@ -420,10 +420,10 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
     }
   else
     {
-      arity = XEN_ARITY(proc);
+      arity = Xen_arity(proc);
 
 #if HAVE_RUBY
-      rargs = XEN_TO_C_INT(arity);
+      rargs = Xen_integer_to_C_int(arity);
       if (!xen_rb_arity_ok(rargs, args))
  	return(mus_format("%s function (%s arg %d) should take %d args, not %d",
  			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
@@ -435,9 +435,9 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	int loc;
 
 	loc = snd_protect(arity);
-	rargs = XEN_TO_C_INT(XEN_CAR(arity));
-	oargs = XEN_TO_C_INT(XEN_CADR(arity));
-	restargs = ((Xen_is_true(XEN_CADDR(arity))) ? 1 : 0);
+	rargs = Xen_integer_to_C_int(Xen_car(arity));
+	oargs = Xen_integer_to_C_int(Xen_cadr(arity));
+	restargs = ((Xen_is_true(Xen_caddr(arity))) ? 1 : 0);
 	snd_unprotect_at(loc);
 
 	if (rargs > args)
@@ -456,7 +456,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 #endif
 
 #if HAVE_FORTH
-      rargs = XEN_TO_C_INT(arity);
+      rargs = Xen_integer_to_C_int(arity);
       if (rargs != args)
 	return(mus_format("%s function (%s arg %d) should take %d args, not %d",
 			  arg_name, caller, argn, args, rargs));
@@ -468,12 +468,12 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 
 XEN snd_no_such_file_error(const char *caller, XEN filename)
 {
-  XEN_ERROR(NO_SUCH_FILE,
-	    XEN_LIST_4(C_TO_XEN_STRING("no-such-file: ~A ~S: ~A"),
-		       C_TO_XEN_STRING(caller),
+  Xen_error(NO_SUCH_FILE,
+	    Xen_list_4(C_string_to_Xen_string("no-such-file: ~A ~S: ~A"),
+		       C_string_to_Xen_string(caller),
 		       filename,
-		       C_TO_XEN_STRING(snd_open_strerror())));
-  return(XEN_FALSE);
+		       C_string_to_Xen_string(snd_open_strerror())));
+  return(Xen_false);
 }
 
 
@@ -483,7 +483,7 @@ XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
   snd_info *sp;
 
   if (Xen_is_integer(snd))
-    index = XEN_TO_C_INT(snd);
+    index = Xen_integer_to_C_int(snd);
   else
     {
       if (xen_is_sound(snd))
@@ -495,39 +495,39 @@ XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
       (snd_ok(ss->sounds[index]))) /* good grief... */
     {
       sp = ss->sounds[index];
-      XEN_ERROR(NO_SUCH_CHANNEL,
-		XEN_LIST_6(C_TO_XEN_STRING("no-such-channel: (~A: sound: ~A, chan: ~A) (~S, chans: ~A))"),
-			   C_TO_XEN_STRING(caller),
+      Xen_error(NO_SUCH_CHANNEL,
+		Xen_list_6(C_string_to_Xen_string("no-such-channel: (~A: sound: ~A, chan: ~A) (~S, chans: ~A))"),
+			   C_string_to_Xen_string(caller),
 			   snd, 
 			   chn, 
-			   C_TO_XEN_STRING(sp->short_filename), 
-			   C_TO_XEN_INT(sp->nchans)));
+			   C_string_to_Xen_string(sp->short_filename), 
+			   C_int_to_Xen_integer(sp->nchans)));
     }
-  XEN_ERROR(NO_SUCH_CHANNEL,
-	    XEN_LIST_4(C_TO_XEN_STRING("no-such-channel: (~A: sound: ~A, chan: ~A)"),
-		       C_TO_XEN_STRING(caller),
+  Xen_error(NO_SUCH_CHANNEL,
+	    Xen_list_4(C_string_to_Xen_string("no-such-channel: (~A: sound: ~A, chan: ~A)"),
+		       C_string_to_Xen_string(caller),
 		       snd,
 		       chn));
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 XEN snd_no_active_selection_error(const char *caller)
 {
-  XEN_ERROR(XEN_ERROR_TYPE("no-active-selection"),
-	    XEN_LIST_2(C_TO_XEN_STRING("~A: no active selection"),
-		       C_TO_XEN_STRING(caller)));
-  return(XEN_FALSE);
+  Xen_error(Xen_make_error_type("no-active-selection"),
+	    Xen_list_2(C_string_to_Xen_string("~A: no active selection"),
+		       C_string_to_Xen_string(caller)));
+  return(Xen_false);
 }
 
 
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 {
-  XEN_ERROR(XEN_ERROR_TYPE("bad-arity"),
-            XEN_LIST_3(C_TO_XEN_STRING("~A,~A"),
-		       C_TO_XEN_STRING(caller),
+  Xen_error(Xen_make_error_type("bad-arity"),
+            Xen_list_3(C_string_to_Xen_string("~A,~A"),
+		       C_string_to_Xen_string(caller),
                        errstr));
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
@@ -536,7 +536,7 @@ XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 
 XEN eval_str_wrapper(void *data)
 {
-  return(XEN_EVAL_C_STRING((char *)data));
+  return(Xen_eval_C_string((char *)data));
 }
 
 
@@ -544,7 +544,7 @@ static XEN eval_file_wrapper(void *data)
 {
   XEN error;
   last_file_loaded = (char *)data;
-  error = XEN_LOAD_FILE((char *)data); /* error only meaningful in Ruby */
+  error = Xen_load((char *)data); /* error only meaningful in Ruby */
   last_file_loaded = NULL;
   return(error);
 }
@@ -553,11 +553,11 @@ static XEN eval_file_wrapper(void *data)
 static char *g_print_1(XEN obj) /* free return val */
 {
 #if HAVE_SCHEME
-  return(XEN_AS_STRING(obj)); 
+  return(Xen_object_to_C_string(obj)); 
 #endif
 
 #if HAVE_FORTH || HAVE_RUBY
-  return(mus_strdup(XEN_AS_STRING(obj))); 
+  return(mus_strdup(Xen_object_to_C_string(obj))); 
 #endif
 
 #if (!HAVE_EXTENSION_LANGUAGE)
@@ -616,7 +616,7 @@ static char *gl_print(XEN result)
 
   /* specialize vectors which can be enormous in this context */
   if ((!(Xen_is_vector(result))) || 
-      ((int)(XEN_VECTOR_LENGTH(result)) <= print_length(ss)))
+      ((int)(Xen_vector_length(result)) <= print_length(ss)))
     return(g_print_1(result));
 
   ilen = print_length(ss); 
@@ -633,7 +633,7 @@ static char *gl_print(XEN result)
 
   for (i = 0; i < ilen; i++)
     {
-      str = g_print_1(XEN_VECTOR_REF(result, i));
+      str = g_print_1(Xen_vector_ref(result, i));
       if ((str) && (*str)) 
 	{
 	  if (i != 0) 
@@ -1113,13 +1113,13 @@ static XEN g_snd_print(XEN msg)
   char *str = NULL;
 
   if (Xen_is_string(msg))
-    str = mus_strdup(XEN_TO_C_STRING(msg));
+    str = mus_strdup(Xen_string_to_C_string(msg));
   else
     {
       if (Xen_is_char(msg))
 	{
 	  str = (char *)calloc(2, sizeof(char));
-	  str[0] = XEN_TO_C_CHAR(msg);
+	  str[0] = Xen_char_to_C_char(msg);
 	}
       else str = gl_print(msg);
     }
@@ -1144,7 +1144,7 @@ void check_features_list(const char *features)
   if (!features) return;
 
 #if HAVE_SCHEME
-  XEN_EVAL_C_STRING(mus_format("(for-each \
+  Xen_eval_C_string(mus_format("(for-each \
                                   (lambda (f)	\
                                     (if (not (provided? f)) \
                                         (display (format #f \"~%%no ~A!~%%~%%\" f)))) \
@@ -1153,7 +1153,7 @@ void check_features_list(const char *features)
 
 #if HAVE_RUBY
   /* provided? is defined in examp.rb */
-  XEN_EVAL_C_STRING(mus_format("[%s].each do |f|\n\
+  Xen_eval_C_string(mus_format("[%s].each do |f|\n\
                                   unless $LOADED_FEATURES.map do |ff| File.basename(ff) end.member?(f.to_s.tr(\"_\", \"-\"))\n\
                                     $stderr.printf(\"~\\nno %%s!\\n\\n\", f.id2name)\n\
                                   end\n\
@@ -1161,7 +1161,7 @@ void check_features_list(const char *features)
 #endif
 
 #if HAVE_FORTH
-  XEN_EVAL_C_STRING(mus_format("'( %s ) [each] dup \
+  Xen_eval_C_string(mus_format("'( %s ) [each] dup \
                                           provided? [if] \
                                             drop \
                                           [else] \
@@ -1182,7 +1182,7 @@ mus_float_t string_to_mus_float_t(const char *str, mus_float_t lo, const char *f
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->float");
   if (Xen_is_number(res))
     {
-      f = XEN_TO_C_DOUBLE(res);
+      f = Xen_real_to_C_double(res);
       if (f < lo)
 	snd_error("%s: %.3f is invalid", field_name, f);
       else return(f);
@@ -1214,7 +1214,7 @@ int string_to_int(const char *str, int lo, const char *field_name)
   if (Xen_is_number(res))
     {
       int val;
-      val = XEN_TO_C_INT(res);
+      val = Xen_integer_to_C_int(res);
       if (val < lo)
 	snd_error("%s: %d is invalid", field_name, val);
       else return(val);
@@ -1247,7 +1247,7 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
   if (Xen_is_number(res))
     {
       mus_long_t val;
-      val = XEN_TO_C_LONG_LONG(res);
+      val = Xen_llong_to_C_llong(res);
       if (val < lo)
 	snd_error("%s: %lld is invalid", field_name, val);
       else return(val);
@@ -1276,13 +1276,13 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 #if HAVE_SCHEME
   return(s7_call(s7, hook, args));
 #else
-  XEN result = XEN_FALSE;
-  XEN procs = XEN_HOOK_PROCEDURES(hook);
+  XEN result = Xen_false;
+  XEN procs = Xen_hook_list(hook);
 
   while (!Xen_is_null(procs))
     {
-      result = XEN_APPLY(XEN_CAR(procs), args, caller);
-      procs = XEN_CDR(procs);
+      result = Xen_apply(Xen_car(procs), args, caller);
+      procs = Xen_cdr(procs);
     }
 
   return(result);
@@ -1295,17 +1295,17 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
 #if HAVE_SCHEME
   return(s7_call(s7, hook, args));
 #else
-  XEN procs = XEN_HOOK_PROCEDURES(hook);
+  XEN procs = Xen_hook_list(hook);
 
   while (!Xen_is_null(procs))
     {
-      if (!(Xen_is_eq(args, XEN_EMPTY_LIST)))
-	XEN_APPLY(XEN_CAR(procs), args, caller);
-      else XEN_CALL_0(XEN_CAR(procs), caller);
+      if (!(Xen_is_eq(args, Xen_empty_list)))
+	Xen_apply(Xen_car(procs), args, caller);
+      else Xen_call_with_no_args(Xen_car(procs), caller);
       procs = XEN_CDR (procs);
     }
 
-  return(XEN_FALSE);
+  return(Xen_false);
 #endif
 }
 
@@ -1315,15 +1315,15 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 #if HAVE_SCHEME
   return(s7_call(s7, hook, args));
 #else
-  XEN result = XEN_FALSE; /* (or): #f */
-  XEN hook_result = XEN_FALSE;
-  XEN procs = XEN_HOOK_PROCEDURES(hook);
+  XEN result = Xen_false; /* (or): #f */
+  XEN hook_result = Xen_false;
+  XEN procs = Xen_hook_list(hook);
 
   while (!Xen_is_null(procs))
     {
-      if (!(Xen_is_eq(args, XEN_EMPTY_LIST)))
-	result = XEN_APPLY(XEN_CAR(procs), args, caller);
-      else result = XEN_CALL_0(XEN_CAR(procs), caller);
+      if (!(Xen_is_eq(args, Xen_empty_list)))
+	result = Xen_apply(Xen_car(procs), args, caller);
+      else result = Xen_call_with_no_args(Xen_car(procs), caller);
       if (!Xen_is_false(result)) 
         hook_result = result;
       procs = XEN_CDR (procs);
@@ -1352,8 +1352,8 @@ static XEN g_dlopen(XEN name, XEN flags)
   #define H_dlopen "(dlopen lib (flags RTLD_LAZY)) loads the dynamic library 'lib' and returns a handle for it (for dlinit and dlclose)"
   void *handle;
   const char *cname;
-  XEN_ASSERT_TYPE(Xen_is_string(name), name, 1, "dlopen", "a string (filename)");
-  cname = XEN_TO_C_STRING(name);
+  Xen_check_type(Xen_is_string(name), name, 1, "dlopen", "a string (filename)");
+  cname = Xen_string_to_C_string(name);
   if (cname)
     {
       handle = dlopen(cname, RTLD_LAZY);
@@ -1363,7 +1363,7 @@ static XEN g_dlopen(XEN name, XEN flags)
 
 	  longname = mus_expand_filename(cname);
 	  if (Xen_is_integer(flags))
-	    handle = dlopen(longname, XEN_TO_C_INT(flags));
+	    handle = dlopen(longname, Xen_integer_to_C_int(flags));
 	  else handle = dlopen(longname, RTLD_LAZY);
 	  free(longname);
 
@@ -1372,28 +1372,28 @@ static XEN g_dlopen(XEN name, XEN flags)
 	      char *err;
 	      err = (char *)dlerror();
 	      if ((err) && (*err))
-		return(C_TO_XEN_STRING(err));
-	      return(XEN_FALSE);
+		return(C_string_to_Xen_string(err));
+	      return(Xen_false);
 	    }
 	}
       return(XEN_WRAP_C_POINTER(handle));
     }
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 static XEN g_dlclose(XEN handle)
 {
   #define H_dlclose "(dlclose handle) may close the library referred to by 'handle'."
-  XEN_ASSERT_TYPE(Xen_is_wrapped_c_pointer(handle), handle, 1, "dlclose", "a library handle");
-  return(C_TO_XEN_INT(dlclose((void *)(XEN_UNWRAP_C_POINTER(handle)))));
+  Xen_check_type(Xen_is_wrapped_c_pointer(handle), handle, 1, "dlclose", "a library handle");
+  return(C_int_to_Xen_integer(dlclose((void *)(XEN_UNWRAP_C_POINTER(handle)))));
 }
 
 
 static XEN g_dlerror(void)
 {
   #define H_dlerror "(dlerror) returns a string describing the last dlopen/dlinit/dlclose error"
-  return(C_TO_XEN_STRING(dlerror()));
+  return(C_string_to_Xen_string(dlerror()));
 }
 
 
@@ -1402,11 +1402,11 @@ static XEN g_dlsym(XEN handle, XEN func)
   #define H_dlsym "(dlsym library function-name) returns a pointer to function in library, or #f."
   void *proc;
 
-  XEN_ASSERT_TYPE(Xen_is_wrapped_c_pointer(handle), handle, 1, "dlsym", "a library handle");
-  XEN_ASSERT_TYPE(Xen_is_string(func), func, 2, "dlsym", "a string (function name)");
+  Xen_check_type(Xen_is_wrapped_c_pointer(handle), handle, 1, "dlsym", "a library handle");
+  Xen_check_type(Xen_is_string(func), func, 2, "dlsym", "a string (function name)");
 
-  proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
-  if (proc == NULL) return(XEN_FALSE);
+  proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), Xen_string_to_C_string(func));
+  if (proc == NULL) return(Xen_false);
   return(XEN_WRAP_C_POINTER(func));
 }
 
@@ -1417,13 +1417,13 @@ static XEN g_dlinit(XEN handle, XEN func)
   typedef void *(*snd_dl_func)(void);
   void *proc;
 
-  XEN_ASSERT_TYPE(Xen_is_wrapped_c_pointer(handle), handle, 1, "dlinit", "a library handle");
-  XEN_ASSERT_TYPE(Xen_is_string(func), func, 2, "dlinit", "a string (init func name)");
+  Xen_check_type(Xen_is_wrapped_c_pointer(handle), handle, 1, "dlinit", "a library handle");
+  Xen_check_type(Xen_is_string(func), func, 2, "dlinit", "a string (init func name)");
 
-  proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
-  if (proc == NULL) return(C_TO_XEN_STRING(dlerror()));
+  proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), Xen_string_to_C_string(func));
+  if (proc == NULL) return(C_string_to_Xen_string(dlerror()));
   ((snd_dl_func)proc)();
-  return(XEN_TRUE);
+  return(Xen_true);
 }
 #endif
 
@@ -1434,16 +1434,16 @@ static s7_pointer g_line_reader(s7_scheme *sc, s7_pointer args)
   str = s7_string(s7_car(args));
   if ((str) && (strcmp(str, "__line__") == 0))
     return(s7_make_integer(sc, s7_port_line_number(s7_current_input_port(sc))));
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 #endif
 
 static XEN g_little_endian(void)
 {
 #if MUS_LITTLE_ENDIAN
-  return(XEN_TRUE);
+  return(Xen_true);
 #else
-  return(XEN_FALSE);
+  return(Xen_false);
 #endif
 }
 
@@ -1469,15 +1469,15 @@ static XEN g_snd_global_state(void)
 static XEN g_fmod(XEN a, XEN b)
 {
   double val, x, y;
-  XEN_ASSERT_TYPE(Xen_is_number(a), a, 1, "fmod", " a number");
-  XEN_ASSERT_TYPE(Xen_is_number(b), b, 2, "fmod", " a number");
-  x = XEN_TO_C_DOUBLE(a);
-  y = XEN_TO_C_DOUBLE(b);
+  Xen_check_type(Xen_is_number(a), a, 1, "fmod", " a number");
+  Xen_check_type(Xen_is_number(b), b, 2, "fmod", " a number");
+  x = Xen_real_to_C_double(a);
+  y = Xen_real_to_C_double(b);
   val = fmod(x, y);
   if (((y > 0.0) && (val < 0.0)) ||
       ((y < 0.0) && (val > 0.0)))
-    return(C_TO_XEN_DOUBLE(val + y));
-  return(C_TO_XEN_DOUBLE(val));
+    return(C_double_to_Xen_real(val + y));
+  return(C_double_to_Xen_real(val));
 }
 #endif
 
@@ -1526,7 +1526,7 @@ static XEN big_math_2(XEN n, XEN x,
   s7_pointer val;
   mpfr_t y;
   mpfr_init_set(y, *s7_big_real(x), GMP_RNDN);
-  mpfr_math(y, XEN_TO_C_INT(n), y, GMP_RNDN);
+  mpfr_math(y, Xen_integer_to_C_int(n), y, GMP_RNDN);
   val = s7_make_big_real(s7, &y);
   mpfr_clear(y);
   return(val);
@@ -1763,7 +1763,7 @@ static XEN g_j0(XEN x)
 {
   #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function value J0(x)"
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_j0, " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_j0, " a number");
 #endif
 
 #if HAVE_SCHEME && WITH_GMP
@@ -1772,7 +1772,7 @@ static XEN g_j0(XEN x)
       (!(s7_is_rational(x))))
     return(big_j0(x));
 #endif
-  return(C_TO_XEN_DOUBLE(j0(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(j0(Xen_real_to_C_double(x))));
 }
 
 
@@ -1780,7 +1780,7 @@ static XEN g_j1(XEN x)
 {
   #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function value J1(x)"
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_j1, " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_j1, " a number");
 #endif
 
 #if HAVE_SCHEME && WITH_GMP
@@ -1789,16 +1789,16 @@ static XEN g_j1(XEN x)
       (!(s7_is_rational(x))))
     return(big_j1(x));
 #endif
-  return(C_TO_XEN_DOUBLE(j1(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(j1(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_jn(XEN order, XEN x)
 {
   #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function value Jn(x)"
-  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_jn, " an int");
+  Xen_check_type(Xen_is_integer(order), x, 1, S_bes_jn, " an int");
 #if (!HAVE_SCHEME)
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_jn, " a number");
+  Xen_check_type(Xen_is_number(x), x, 2, S_bes_jn, " a number");
 #endif
 
 #if HAVE_SCHEME && WITH_GMP
@@ -1807,86 +1807,86 @@ static XEN g_jn(XEN order, XEN x)
       (!(s7_is_rational(x))))
     return(big_jn(order, x));
 #endif
-  return(C_TO_XEN_DOUBLE(jn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(jn(Xen_integer_to_C_int(order), Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_y0(XEN x)
 {
   #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function value Y0(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_y0, " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_y0, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_y0(x));
 #endif
-  return(C_TO_XEN_DOUBLE(y0(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(y0(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_y1(XEN x)
 {
   #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function value Y1(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_y1, " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_y1, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_y1(x));
 #endif
-  return(C_TO_XEN_DOUBLE(y1(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(y1(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_yn(XEN order, XEN x)
 {
   #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function value Yn(x)"
-  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_yn, " an int");
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_yn, " a number");
+  Xen_check_type(Xen_is_integer(order), x, 1, S_bes_yn, " an int");
+  Xen_check_type(Xen_is_number(x), x, 2, S_bes_yn, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_yn(order, x));
 #endif
-  return(C_TO_XEN_DOUBLE(yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(yn(Xen_integer_to_C_int(order), Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_erf(XEN x)
 {
   #define H_erf "(erf x): returns the error function erf(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "erf", " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, "erf", " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_erf(x));
 #endif
-  return(C_TO_XEN_DOUBLE(erf(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(erf(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_erfc(XEN x)
 {
   #define H_erfc "(erfc x): returns the complementary error function erfc(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "erfc", " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, "erfc", " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_erfc(x));
 #endif
-  return(C_TO_XEN_DOUBLE(erfc(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(erfc(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_lgamma(XEN x)
 {
   #define H_lgamma "(lgamma x): returns the log of the gamma function at x"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "lgamma", " a number");
-  return(C_TO_XEN_DOUBLE(lgamma(XEN_TO_C_DOUBLE(x))));
+  Xen_check_type(Xen_is_number(x), x, 1, "lgamma", " a number");
+  return(C_double_to_Xen_real(lgamma(Xen_real_to_C_double(x))));
 }
 #endif
 
@@ -1896,14 +1896,14 @@ static XEN g_lgamma(XEN x)
 static XEN g_i0(XEN x)
 {
   #define H_i0 "(" S_bes_i0 " x): returns the modified cylindrical bessel function value I0(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_i0, " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_i0, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_i0(x));
 #endif
-  return(C_TO_XEN_DOUBLE(mus_bessi0(XEN_TO_C_DOUBLE(x)))); /* uses GSL if possible */
+  return(C_double_to_Xen_real(mus_bessi0(Xen_real_to_C_double(x)))); /* uses GSL if possible */
 }
 
 
@@ -1916,7 +1916,7 @@ static XEN g_i0(XEN x)
 static XEN g_j0(XEN x)
 {
   #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function value J0(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_j0, " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_j0, " a number");
 
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -1924,14 +1924,14 @@ static XEN g_j0(XEN x)
       (!(s7_is_rational(x))))
     return(big_j0(x));
 #endif
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_J0(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(gsl_sf_bessel_J0(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_j1(XEN x)
 {
   #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function value J1(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_j1, " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_j1, " a number");
 
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -1939,15 +1939,15 @@ static XEN g_j1(XEN x)
       (!(s7_is_rational(x))))
     return(big_j1(x));
 #endif
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_J1(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(gsl_sf_bessel_J1(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_jn(XEN order, XEN x)
 {
   #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function value Jn(x)"
-  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_jn, " an int");
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_jn, " a number");
+  Xen_check_type(Xen_is_integer(order), x, 1, S_bes_jn, " an int");
+  Xen_check_type(Xen_is_number(x), x, 2, S_bes_jn, " a number");
 
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -1955,50 +1955,50 @@ static XEN g_jn(XEN order, XEN x)
       (!(s7_is_rational(x))))
     return(big_jn(order, x));
 #endif
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Jn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(gsl_sf_bessel_Jn(Xen_integer_to_C_int(order), Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_y0(XEN x)
 {
   #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function value Y0(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_y0, " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_y0, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_y0(x));
 #endif
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Y0(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(gsl_sf_bessel_Y0(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_y1(XEN x)
 {
   #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function value Y1(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_y1, " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_y1, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_y1(x));
 #endif
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Y1(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(gsl_sf_bessel_Y1(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_yn(XEN order, XEN x)
 {
   #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function value Yn(x)"
-  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_yn, " an int");
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_yn, " a number");
+  Xen_check_type(Xen_is_integer(order), x, 1, S_bes_yn, " an int");
+  Xen_check_type(Xen_is_number(x), x, 2, S_bes_yn, " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_yn(order, x));
 #endif
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(gsl_sf_bessel_Yn(Xen_integer_to_C_int(order), Xen_real_to_C_double(x))));
 }
 
 #define S_bes_i1 "bes-i1"
@@ -2010,42 +2010,42 @@ static XEN g_yn(XEN order, XEN x)
 static XEN g_i1(XEN x)
 {
   #define H_i1 "(" S_bes_i1 " x): returns the regular cylindrical bessel function value I1(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_i1, " a number");
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_I1(XEN_TO_C_DOUBLE(x))));
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_i1, " a number");
+  return(C_double_to_Xen_real(gsl_sf_bessel_I1(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_in(XEN order, XEN x)
 {
   #define H_in "(" S_bes_in " n x): returns the regular cylindrical bessel function value In(x)"
-  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_in, " an int");
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_in, " a number");
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_In(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
+  Xen_check_type(Xen_is_integer(order), x, 1, S_bes_in, " an int");
+  Xen_check_type(Xen_is_number(x), x, 2, S_bes_in, " a number");
+  return(C_double_to_Xen_real(gsl_sf_bessel_In(Xen_integer_to_C_int(order), Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_k0(XEN x)
 {
   #define H_k0 "(" S_bes_k0 " x): returns the irregular cylindrical bessel function value K0(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_k0, " a number");
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_K0(XEN_TO_C_DOUBLE(x))));
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_k0, " a number");
+  return(C_double_to_Xen_real(gsl_sf_bessel_K0(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_k1(XEN x)
 {
   #define H_k1 "(" S_bes_k1 " x): returns the irregular cylindrical bessel function value K1(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, S_bes_k1, " a number");
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_K1(XEN_TO_C_DOUBLE(x))));
+  Xen_check_type(Xen_is_number(x), x, 1, S_bes_k1, " a number");
+  return(C_double_to_Xen_real(gsl_sf_bessel_K1(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_kn(XEN order, XEN x)
 {
   #define H_kn "(" S_bes_kn " n x): returns the irregular cylindrical bessel function value Kn(x)"
-  XEN_ASSERT_TYPE(Xen_is_integer(order), x, 1, S_bes_kn, " an int");
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 2, S_bes_kn, " a number");
-  return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Kn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
+  Xen_check_type(Xen_is_integer(order), x, 1, S_bes_kn, " an int");
+  Xen_check_type(Xen_is_number(x), x, 2, S_bes_kn, " a number");
+  return(C_double_to_Xen_real(gsl_sf_bessel_Kn(Xen_integer_to_C_int(order), Xen_real_to_C_double(x))));
 }
 
 
@@ -2053,28 +2053,28 @@ static XEN g_kn(XEN order, XEN x)
 static XEN g_erf(XEN x)
 {
   #define H_erf "(erf x): returns the error function erf(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "erf", " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, "erf", " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_erf(x));
 #endif
-  return(C_TO_XEN_DOUBLE(gsl_sf_erf(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(gsl_sf_erf(Xen_real_to_C_double(x))));
 }
 
 
 static XEN g_erfc(XEN x)
 {
   #define H_erfc "(erfc x): returns the complementary error function value erfc(x)"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "erfc", " a number");
+  Xen_check_type(Xen_is_number(x), x, 1, "erfc", " a number");
 #if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
     return(big_erfc(x));
 #endif
-  return(C_TO_XEN_DOUBLE(gsl_sf_erfc(XEN_TO_C_DOUBLE(x))));
+  return(C_double_to_Xen_real(gsl_sf_erfc(Xen_real_to_C_double(x))));
 }
 
 
@@ -2082,8 +2082,8 @@ static XEN g_erfc(XEN x)
 static XEN g_lgamma(XEN x)
 {
   #define H_lgamma "(lgamma x): returns the log of the gamma function at x"
-  XEN_ASSERT_TYPE(Xen_is_number(x), x, 1, "lgamma", " a number");
-  return(C_TO_XEN_DOUBLE(gsl_sf_lngamma(XEN_TO_C_DOUBLE(x))));
+  Xen_check_type(Xen_is_number(x), x, 1, "lgamma", " a number");
+  return(C_double_to_Xen_real(gsl_sf_lngamma(Xen_real_to_C_double(x))));
 }
 
 
@@ -2093,10 +2093,10 @@ static XEN g_gsl_ellipk(XEN k)
 {
   double f;
   #define H_gsl_ellipk "(gsl-ellipk k): returns the complete elliptic integral k"
-  XEN_ASSERT_TYPE(Xen_is_number(k), k, 1, "gsl-ellipk", "a number");
-  f = XEN_TO_C_DOUBLE(k);
-  XEN_ASSERT_TYPE(f >= 0.0, k, 1, "gsl-ellipk", "a non-negative number");
-  return(C_TO_XEN_DOUBLE(gsl_sf_ellint_Kcomp(sqrt(XEN_TO_C_DOUBLE(k)), GSL_PREC_APPROX)));
+  Xen_check_type(Xen_is_number(k), k, 1, "gsl-ellipk", "a number");
+  f = Xen_real_to_C_double(k);
+  Xen_check_type(f >= 0.0, k, 1, "gsl-ellipk", "a non-negative number");
+  return(C_double_to_Xen_real(gsl_sf_ellint_Kcomp(sqrt(Xen_real_to_C_double(k)), GSL_PREC_APPROX)));
 }
 
 
@@ -2105,14 +2105,14 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 {
   #define H_gsl_ellipj "(gsl-ellipj u m): returns the Jacobian elliptic functions sn, cn, and dn of u and m"
   double sn = 0.0, cn = 0.0, dn = 0.0;
-  XEN_ASSERT_TYPE(Xen_is_number(u), u, 1, "gsl-ellipj", "a number");
-  XEN_ASSERT_TYPE(Xen_is_number(m), m, 2, "gsl-ellipj", "a number");
-  gsl_sf_elljac_e(XEN_TO_C_DOUBLE(u),
-		  XEN_TO_C_DOUBLE(m),
+  Xen_check_type(Xen_is_number(u), u, 1, "gsl-ellipj", "a number");
+  Xen_check_type(Xen_is_number(m), m, 2, "gsl-ellipj", "a number");
+  gsl_sf_elljac_e(Xen_real_to_C_double(u),
+		  Xen_real_to_C_double(m),
 		  &sn, &cn, &dn);
-  return(XEN_LIST_3(C_TO_XEN_DOUBLE(sn),
-		    C_TO_XEN_DOUBLE(cn),
-		    C_TO_XEN_DOUBLE(dn)));
+  return(Xen_list_3(C_double_to_Xen_real(sn),
+		    C_double_to_Xen_real(cn),
+		    C_double_to_Xen_real(dn)));
 }
 
 
@@ -2132,17 +2132,17 @@ static XEN g_gsl_eigenvectors(XEN matrix)
 {
   double *data;
   int i, j, len;
-  XEN values = XEN_FALSE, vectors = XEN_FALSE;
+  XEN values = Xen_false, vectors = Xen_false;
 
 #if HAVE_SCHEME
-  XEN_ASSERT_TYPE(s7_is_float_vector(matrix), matrix, 1, "gsl-eigenvectors", "a float vector");
+  Xen_check_type(s7_is_float_vector(matrix), matrix, 1, "gsl-eigenvectors", "a float vector");
   len = (int)sqrt(s7_vector_length(matrix));
   data = (double *)s7_float_vector_elements(matrix);
 #else
   mus_any *u1;
-  XEN_ASSERT_TYPE(mus_is_xen(matrix), matrix, 1, "gsl-eigenvectors", "a mixer (matrix)");
+  Xen_check_type(mus_is_xen(matrix), matrix, 1, "gsl-eigenvectors", "a mixer (matrix)");
   u1 = XEN_TO_MUS_ANY(matrix);
-  if (!mus_is_mixer(u1)) return(XEN_FALSE);
+  if (!mus_is_mixer(u1)) return(Xen_false);
 
   len = mus_length(u1);
   data = (double *)calloc(len * len, sizeof(double));
@@ -2163,9 +2163,9 @@ static XEN g_gsl_eigenvectors(XEN matrix)
     {
       int values_loc, vectors_loc;
 
-      values = XEN_MAKE_VECTOR(len, XEN_ZERO);
+      values = Xen_make_vector(len, Xen_integer_zero);
       values_loc = snd_protect(values);
-      vectors = XEN_MAKE_VECTOR(len, XEN_FALSE);
+      vectors = Xen_make_vector(len, Xen_false);
       vectors_loc = snd_protect(vectors);
 
       for (i = 0; i < len; i++)
@@ -2173,15 +2173,15 @@ static XEN g_gsl_eigenvectors(XEN matrix)
 	  XEN vect;
 	  gsl_complex eval_i = gsl_vector_complex_get(eval, i);
 	  gsl_vector_complex_view evec_i = gsl_matrix_complex_column(evec, i);
-	  XEN_VECTOR_SET(values, i, C_TO_XEN_DOUBLE(GSL_REAL(eval_i)));
+	  Xen_vector_set(values, i, C_double_to_Xen_real(GSL_REAL(eval_i)));
 	
-	  vect = XEN_MAKE_VECTOR(len, XEN_ZERO);
-	  XEN_VECTOR_SET(vectors, i, vect);
+	  vect = Xen_make_vector(len, Xen_integer_zero);
+	  Xen_vector_set(vectors, i, vect);
 
 	  for (j = 0; j < len; j++)
 	    {
 	      gsl_complex z = gsl_vector_complex_get(&evec_i.vector, j);
-	      XEN_VECTOR_SET(vect, j, C_TO_XEN_DOUBLE(GSL_REAL(z)));
+	      Xen_vector_set(vect, j, C_double_to_Xen_real(GSL_REAL(z)));
 	    }
 	}
       snd_unprotect_at(values_loc);
@@ -2195,7 +2195,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
 #if (!HAVE_SCHEME)
   free(data);
 #endif
-  return(XEN_LIST_2(values, vectors));
+  return(Xen_list_2(values, vectors));
 }
 #endif
 
@@ -2213,25 +2213,25 @@ static XEN g_gsl_roots(XEN poly)
   gsl_poly_complex_workspace *w;
   XEN result;
 
-  XEN_ASSERT_TYPE(Xen_is_vector(poly), poly, 1, "gsl-roots", "a vector");
+  Xen_check_type(Xen_is_vector(poly), poly, 1, "gsl-roots", "a vector");
 
-  n = XEN_VECTOR_LENGTH(poly);
+  n = Xen_vector_length(poly);
   w = gsl_poly_complex_workspace_alloc(n);
   z = (double complex *)calloc(n, sizeof(double complex));
   p = (double *)calloc(n, sizeof(double));
 
   for (i = 0; i < n; i++)
-    p[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(poly, i));
+    p[i] = Xen_real_to_C_double(Xen_vector_ref(poly, i));
 
   gsl_poly_complex_solve(p, n, w, (gsl_complex_packed_ptr)z);
   gsl_poly_complex_workspace_free (w);
 
-  result = XEN_MAKE_VECTOR(n - 1, XEN_ZERO);
+  result = Xen_make_vector(n - 1, Xen_integer_zero);
   loc = snd_protect(result);
   for (i = 0; i < n - 1; i++)
     if (__imag__(z[i]) != 0.0)
-      XEN_VECTOR_SET(result, i, C_TO_XEN_COMPLEX(z[i]));
-    else XEN_VECTOR_SET(result, i, C_TO_XEN_DOUBLE(__real__(z[i])));
+      Xen_vector_set(result, i, C_complex_to_Xen_complex(z[i]));
+    else Xen_vector_set(result, i, C_double_to_Xen_real(__real__(z[i])));
 
   free(z);
   free(p);
@@ -2323,8 +2323,8 @@ void save_added_source_file_extensions(FILE *fd)
 static XEN g_add_source_file_extension(XEN ext)
 {
   #define H_add_source_file_extension "(" S_add_source_file_extension " ext):  add the file extension 'ext' to the list of source file extensions"
-  XEN_ASSERT_TYPE(Xen_is_string(ext), ext, 1, S_add_source_file_extension, "a string");
-  add_source_file_extension(XEN_TO_C_STRING(ext));
+  Xen_check_type(Xen_is_string(ext), ext, 1, S_add_source_file_extension, "a string");
+  add_source_file_extension(Xen_string_to_C_string(ext));
   return(ext);
 }
 
@@ -2350,54 +2350,54 @@ static char *find_source_file(const char *orig)
  */
 
 #if HAVE_SCHEME && (!_MSC_VER)
-  XEN_ARGIFY_2(g_dlopen_w, g_dlopen)
-  XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
-  XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
-  XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
-  XEN_NARGIFY_2(g_dlsym_w, g_dlsym)
+  Xen_wrap_2_optional_args(g_dlopen_w, g_dlopen)
+  Xen_wrap_1_arg(g_dlclose_w, g_dlclose)
+  Xen_wrap_no_args(g_dlerror_w, g_dlerror)
+  Xen_wrap_2_args(g_dlinit_w, g_dlinit)
+  Xen_wrap_2_args(g_dlsym_w, g_dlsym)
 #endif
 #if HAVE_SCHEME
-  XEN_VARGIFY(g_snd_s7_error_handler_w, g_snd_s7_error_handler);
+  Xen_wrap_any_args(g_snd_s7_error_handler_w, g_snd_s7_error_handler);
 #endif
 
-XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
-XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
-XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
-XEN_NARGIFY_1(g_add_source_file_extension_w, g_add_source_file_extension)
+Xen_wrap_1_arg(g_snd_print_w, g_snd_print)
+Xen_wrap_no_args(g_little_endian_w, g_little_endian)
+Xen_wrap_no_args(g_snd_global_state_w, g_snd_global_state)
+Xen_wrap_1_arg(g_add_source_file_extension_w, g_add_source_file_extension)
 
 #if (!HAVE_SCHEME)
-XEN_NARGIFY_2(g_fmod_w, g_fmod)
+Xen_wrap_2_args(g_fmod_w, g_fmod)
 #endif
 
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
-  XEN_NARGIFY_1(g_j0_w, g_j0)
-  XEN_NARGIFY_1(g_j1_w, g_j1)
-  XEN_NARGIFY_2(g_jn_w, g_jn)
-  XEN_NARGIFY_1(g_y0_w, g_y0)
-  XEN_NARGIFY_1(g_y1_w, g_y1)
-  XEN_NARGIFY_2(g_yn_w, g_yn)
-  XEN_NARGIFY_1(g_erf_w, g_erf)
-  XEN_NARGIFY_1(g_erfc_w, g_erfc)
-  XEN_NARGIFY_1(g_lgamma_w, g_lgamma)
+  Xen_wrap_1_arg(g_j0_w, g_j0)
+  Xen_wrap_1_arg(g_j1_w, g_j1)
+  Xen_wrap_2_args(g_jn_w, g_jn)
+  Xen_wrap_1_arg(g_y0_w, g_y0)
+  Xen_wrap_1_arg(g_y1_w, g_y1)
+  Xen_wrap_2_args(g_yn_w, g_yn)
+  Xen_wrap_1_arg(g_erf_w, g_erf)
+  Xen_wrap_1_arg(g_erfc_w, g_erfc)
+  Xen_wrap_1_arg(g_lgamma_w, g_lgamma)
 #endif
 
-XEN_NARGIFY_1(g_i0_w, g_i0)
+Xen_wrap_1_arg(g_i0_w, g_i0)
 
 #if HAVE_GSL
-  XEN_NARGIFY_1(g_i1_w, g_i1)
-  XEN_NARGIFY_2(g_in_w, g_in)
-  XEN_NARGIFY_1(g_k0_w, g_k0)
-  XEN_NARGIFY_1(g_k1_w, g_k1)
-  XEN_NARGIFY_2(g_kn_w, g_kn)
+  Xen_wrap_1_arg(g_i1_w, g_i1)
+  Xen_wrap_2_args(g_in_w, g_in)
+  Xen_wrap_1_arg(g_k0_w, g_k0)
+  Xen_wrap_1_arg(g_k1_w, g_k1)
+  Xen_wrap_2_args(g_kn_w, g_kn)
 
-  XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
-  XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
+  Xen_wrap_1_arg(g_gsl_ellipk_w, g_gsl_ellipk)
+  Xen_wrap_2_args(g_gsl_ellipj_w, g_gsl_ellipj)
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-  XEN_NARGIFY_1(g_gsl_eigenvectors_w, g_gsl_eigenvectors)
+  Xen_wrap_1_arg(g_gsl_eigenvectors_w, g_gsl_eigenvectors)
 #endif
 
   #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
-    XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
+    Xen_wrap_1_arg(g_gsl_roots_w, g_gsl_roots)
   #endif
 #endif
 
@@ -2437,11 +2437,11 @@ static char *legalize_path(const char *in_str)
 #if HAVE_GL
 static XEN g_snd_glx_context(void)
 {
-  return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GLXContext"), 
+  return(Xen_list_2(C_string_to_Xen_symbol("GLXContext"), 
 		    XEN_WRAP_C_POINTER(ss->cx)));
 } 
 
-XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
+Xen_wrap_no_args(g_snd_glx_context_w, g_snd_glx_context)
 #endif
 
 
@@ -2454,7 +2454,7 @@ void g_xen_initialize(void)
   rb_gc_disable();
 #endif
 
-  add_source_file_extension(XEN_FILE_EXTENSION);
+  add_source_file_extension(Xen_file_extension);
 #if HAVE_SCHEME
   add_source_file_extension("cl");
   add_source_file_extension("lisp");
@@ -2468,13 +2468,13 @@ void g_xen_initialize(void)
   add_source_file_extension("marks"); /* from save-marks */
   default_source_file_extensions = source_file_extensions_end;
 
-  XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE(S_add_source_file_extension, g_add_source_file_extension_w, 1, 0, 0, H_add_source_file_extension);
+  Xen_define_procedure("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
+  Xen_define_procedure(S_add_source_file_extension, g_add_source_file_extension_w, 1, 0, 0, H_add_source_file_extension);
 
-  ss->snd_open_file_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook 'reason)", 1);
-  XEN_PROTECT_FROM_GC(ss->snd_open_file_hook);
+  ss->snd_open_file_hook = Xen_define_simple_hook("(make-hook 'reason)", 1);
+  Xen_GC_protect(ss->snd_open_file_hook);
 
-  ss->effects_hook = XEN_DEFINE_HOOK(S_effects_hook, "(make-hook)", 0, "called when something changes that the effects dialogs care about");
+  ss->effects_hook = Xen_define_hook(S_effects_hook, "(make-hook)", 0, "called when something changes that the effects dialogs care about");
 
   Init_sndlib();
 
@@ -2483,16 +2483,16 @@ void g_xen_initialize(void)
 #endif
 
 #if (!HAVE_SCHEME)
-  gc_protection = XEN_FALSE;
+  gc_protection = Xen_false;
 #endif
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print);
-  XEN_DEFINE_SAFE_PROCEDURE("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian");
+  Xen_define_safe_procedure(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print);
+  Xen_define_safe_procedure("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian");
 
 #if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(define fmod modulo)");
+  Xen_eval_C_string("(define fmod modulo)");
 #else
-  XEN_DEFINE_PROCEDURE("fmod",           g_fmod_w,          2, 0, 0, "C's fmod");
+  Xen_define_procedure("fmod",           g_fmod_w,          2, 0, 0, "C's fmod");
 #endif
 
 #if HAVE_SCHEME && (!HAVE_GSL)
@@ -2504,7 +2504,7 @@ void g_xen_initialize(void)
   s7_function_set_returns_temp(f);\
   } while (0)
 #else
-#define XEN_DEFINE_REAL_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#define XEN_DEFINE_REAL_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #endif
 
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
@@ -2519,24 +2519,24 @@ void g_xen_initialize(void)
   XEN_DEFINE_REAL_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);
+  Xen_define_procedure(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);
 
 #if HAVE_GSL
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_i1, g_i1_w,     1, 0, 0, H_i1);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_in, g_in_w,     2, 0, 0, H_in);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_k0, g_k0_w,     1, 0, 0, H_k0);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_k1, g_k1_w,     1, 0, 0, H_k1);
-  XEN_DEFINE_SAFE_PROCEDURE(S_bes_kn, g_kn_w,     2, 0, 0, H_kn);
+  Xen_define_safe_procedure(S_bes_i1, g_i1_w,     1, 0, 0, H_i1);
+  Xen_define_safe_procedure(S_bes_in, g_in_w,     2, 0, 0, H_in);
+  Xen_define_safe_procedure(S_bes_k0, g_k0_w,     1, 0, 0, H_k0);
+  Xen_define_safe_procedure(S_bes_k1, g_k1_w,     1, 0, 0, H_k1);
+  Xen_define_safe_procedure(S_bes_kn, g_kn_w,     2, 0, 0, H_kn);
 
-  XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
-  XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
+  Xen_define_safe_procedure("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
+  Xen_define_safe_procedure("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
 
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-  XEN_DEFINE_SAFE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
+  Xen_define_safe_procedure("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
 #endif
 
 #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
-  XEN_DEFINE_SAFE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
+  Xen_define_safe_procedure("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
 #endif
 
@@ -2584,15 +2584,15 @@ void g_xen_initialize(void)
 
 
 #if HAVE_SCHEME && (!_MSC_VER)
-  XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 1 ,0, H_dlopen);
-  XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, H_dlclose);
-  XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, H_dlerror);
-  XEN_DEFINE_PROCEDURE("dlinit",  g_dlinit_w,  2, 0 ,0, H_dlinit);
-  XEN_DEFINE_PROCEDURE("dlsym",   g_dlsym_w,   2, 0 ,0, H_dlsym);
+  Xen_define_procedure("dlopen",  g_dlopen_w,  1, 1 ,0, H_dlopen);
+  Xen_define_procedure("dlclose", g_dlclose_w, 1, 0 ,0, H_dlclose);
+  Xen_define_procedure("dlerror", g_dlerror_w, 0, 0 ,0, H_dlerror);
+  Xen_define_procedure("dlinit",  g_dlinit_w,  2, 0 ,0, H_dlinit);
+  Xen_define_procedure("dlsym",   g_dlsym_w,   2, 0 ,0, H_dlsym);
 
-  XEN_DEFINE_CONSTANT("RTLD_LAZY", RTLD_LAZY, "dlopen flag");
-  XEN_DEFINE_CONSTANT("RTLD_NOW", RTLD_NOW, "dlopen flag");
-  XEN_DEFINE_CONSTANT("RTLD_GLOBAL", RTLD_GLOBAL, "dlopen flag");
+  Xen_define_constant("RTLD_LAZY", RTLD_LAZY, "dlopen flag");
+  Xen_define_constant("RTLD_NOW", RTLD_NOW, "dlopen flag");
+  Xen_define_constant("RTLD_GLOBAL", RTLD_GLOBAL, "dlopen flag");
 #endif
 
 #if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE
@@ -2600,28 +2600,28 @@ void g_xen_initialize(void)
 #endif
 
 #ifdef SCRIPTS_DIR
-  XEN_ADD_TO_LOAD_PATH((char *)SCRIPTS_DIR);
+  Xen_add_to_load_path((char *)SCRIPTS_DIR);
 #endif
 
   { 
     char *pwd, *legal_pwd; 
     pwd = mus_getcwd(); 
     legal_pwd = legalize_path(pwd);
-    XEN_ADD_TO_LOAD_PATH(legal_pwd); 
+    Xen_add_to_load_path(legal_pwd); 
     free(legal_pwd); 
   } 
 
 #if HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("_snd_s7_error_handler_", g_snd_s7_error_handler_w,  0, 0, 1, "internal error redirection for snd/s7");
+  Xen_define_procedure("_snd_s7_error_handler_", g_snd_s7_error_handler_w,  0, 0, 1, "internal error redirection for snd/s7");
   s7_define_safe_function(s7, "_snd-line-reader_", g_line_reader, 1, 0, false, "port-line-number reader");
 
-  XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
-  XEN_EVAL_C_STRING("(define undo-edit undo)");
+  Xen_eval_C_string("(define redo-edit redo)");        /* consistency with Ruby */
+  Xen_eval_C_string("(define undo-edit undo)");
   
-  /* XEN_EVAL_C_STRING("(define (procedure-name proc) (if (procedure? proc) (format #f \"~A\" proc) #f))"); */
+  /* Xen_eval_C_string("(define (procedure-name proc) (if (procedure? proc) (format #f \"~A\" proc) #f))"); */
   /* needed in snd-test.scm and hooks.scm */
 
-  XEN_EVAL_C_STRING("\
+  Xen_eval_C_string("\
         (define* (apropos name port)\
           \"(apropos name (port #f)) looks for 'name' as a part of any symbol name, and sends matches to 'port'\"\
           (define (apropos-1 e)\
@@ -2646,7 +2646,7 @@ void g_xen_initialize(void)
                      (for-each apropos-1 (environment->list (current-environment)))) \
                  (apropos-1 (global-environment)))))");
 
-  XEN_EVAL_C_STRING("\
+  Xen_eval_C_string("\
 (define break-ok #f)\
 (define break-exit #f)  ; a kludge to get 2 funcs to share a local variable\n\
 (define break-enter #f)\
@@ -2677,37 +2677,37 @@ void g_xen_initialize(void)
 
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ADJUSTMENT_GET_UPPER)
   /* Gtk 3 is removing direct struct accesses (which they should have done years ago), so we need compatibility functions: */
-  XEN_EVAL_C_STRING("(define (gtk_widget_get_window w) (.window w))");
-  XEN_EVAL_C_STRING("(define (gtk_font_selection_dialog_get_ok_button w) (.ok_button w))");
-  XEN_EVAL_C_STRING("(define (gtk_font_selection_dialog_get_apply_button w) (.apply_button w))");
-  XEN_EVAL_C_STRING("(define (gtk_font_selection_dialog_get_cancel_button w) (.cancel_button w))");
-  XEN_EVAL_C_STRING("(define (gtk_color_selection_dialog_get_color_selection w) (.colorsel w))");
-  XEN_EVAL_C_STRING("(define (gtk_dialog_get_action_area w) (.action_area w))");
-  XEN_EVAL_C_STRING("(define (gtk_dialog_get_content_area w) (.vbox w))");
+  Xen_eval_C_string("(define (gtk_widget_get_window w) (.window w))");
+  Xen_eval_C_string("(define (gtk_font_selection_dialog_get_ok_button w) (.ok_button w))");
+  Xen_eval_C_string("(define (gtk_font_selection_dialog_get_apply_button w) (.apply_button w))");
+  Xen_eval_C_string("(define (gtk_font_selection_dialog_get_cancel_button w) (.cancel_button w))");
+  Xen_eval_C_string("(define (gtk_color_selection_dialog_get_color_selection w) (.colorsel w))");
+  Xen_eval_C_string("(define (gtk_dialog_get_action_area w) (.action_area w))");
+  Xen_eval_C_string("(define (gtk_dialog_get_content_area w) (.vbox w))");
   /* also gtk_adjustment fields, but I think they are not in use in Snd's gtk code */
 #endif
 
 #if HAVE_FORTH
-  XEN_EVAL_C_STRING("<'> redo alias redo-edit");        /* consistency with Ruby */ 
-  XEN_EVAL_C_STRING("<'> undo alias undo-edit"); 
-  XEN_EVAL_C_STRING(": clm-print ( fmt :optional args -- ) fth-format snd-print drop ;"); 
+  Xen_eval_C_string("<'> redo alias redo-edit");        /* consistency with Ruby */ 
+  Xen_eval_C_string("<'> undo alias undo-edit"); 
+  Xen_eval_C_string(": clm-print ( fmt :optional args -- ) fth-format snd-print drop ;"); 
 #endif
 
 #if HAVE_RUBY
-  XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
+  Xen_eval_C_string("def clm_print(str, *args)\n\
                       snd_print format(str, *args)\n\
                       end");
 #endif
 
 #if (!DISABLE_DEPRECATED)
 #if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(define (clm-print . args) \"(clm-print . args) applies format to args and prints the result via snd-print\" \
+  Xen_eval_C_string("(define (clm-print . args) \"(clm-print . args) applies format to args and prints the result via snd-print\" \
                        (snd-print (apply format #f args)))");
 #endif
 #endif
 
 #if HAVE_GL
-  XEN_DEFINE_PROCEDURE("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");
+  Xen_define_procedure("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");
 #endif
 
 #if USE_MOTIF
@@ -2731,56 +2731,56 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_ALSA
-  XEN_PROVIDE("alsa");
+  Xen_provide_feature("alsa");
 #endif
 
 #if HAVE_OSS
-  XEN_PROVIDE("oss");
+  Xen_provide_feature("oss");
 #endif
 
 #if MUS_PULSEAUDIO
-  XEN_PROVIDE("pulse-audio");
+  Xen_provide_feature("pulse-audio");
 #endif
 
 #if MUS_JACK
-  XEN_PROVIDE("jack");
+  Xen_provide_feature("jack");
 #endif
 
 #if HAVE_GSL
-  XEN_PROVIDE("gsl");
+  Xen_provide_feature("gsl");
 #endif
 
 #if USE_MOTIF
-  XEN_PROVIDE("snd-motif");
+  Xen_provide_feature("snd-motif");
 #endif
 
 #if USE_GTK
-  XEN_PROVIDE("snd-gtk");
+  Xen_provide_feature("snd-gtk");
 #if HAVE_GTK_3
-  XEN_PROVIDE("gtk3");
+  Xen_provide_feature("gtk3");
 #else
-  XEN_PROVIDE("gtk2");
+  Xen_provide_feature("gtk2");
 #endif
 #endif
 
 #if USE_NO_GUI
-  XEN_PROVIDE("snd-nogui");
+  Xen_provide_feature("snd-nogui");
 #endif
 
 #if HAVE_FORTH
-  XEN_PROVIDE("snd-forth");
+  Xen_provide_feature("snd-forth");
 #endif
 
 #if HAVE_SCHEME
-  XEN_PROVIDE("snd-s7");
+  Xen_provide_feature("snd-s7");
 #endif
 
 #if WITH_AUDIO
-  XEN_PROVIDE("audio");
+  Xen_provide_feature("audio");
 #endif
 
 #if HAVE_RUBY
-  XEN_PROVIDE("snd-ruby");
+  Xen_provide_feature("snd-ruby");
   /* we need to set up the search path so that load and require will work as in the program irb */
   {
     XEN paths;
@@ -2789,15 +2789,15 @@ void g_xen_initialize(void)
     /* this is printed as 
      *   ["/home/bil/ruby-snd", "/usr/local/share/snd", "/usr/local/lib/ruby/site_ruby/2.0.0", ...]
      */
-    len = XEN_VECTOR_LENGTH(paths);
+    len = Xen_vector_length(paths);
     for (i = 0; i < len; i++)
-      XEN_ADD_TO_LOAD_PATH(XEN_TO_C_STRING(XEN_VECTOR_REF(paths, i)));
+      Xen_add_to_load_path(Xen_string_to_C_string(Xen_vector_ref(paths, i)));
   }
 #endif
 
-  XEN_PROVIDE("snd");
-  XEN_PROVIDE("snd" SND_MAJOR_VERSION);
-  XEN_PROVIDE("snd-" SND_MAJOR_VERSION "." SND_MINOR_VERSION);
+  Xen_provide_feature("snd");
+  Xen_provide_feature("snd" SND_MAJOR_VERSION);
+  Xen_provide_feature("snd-" SND_MAJOR_VERSION "." SND_MINOR_VERSION);
 
 #if HAVE_RUBY
   rb_gc_enable();

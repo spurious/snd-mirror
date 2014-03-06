@@ -173,7 +173,7 @@ static void apply_enved(void)
 			CURRENT_SAMPLES(active_channel),
 			apply_to_selection, 
 			origin, NULL,
-			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+			C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_with_wave(ss)) env_redisplay();
 	      if (estr) free(estr);
@@ -198,7 +198,7 @@ static void apply_enved(void)
 			   active_env, 
 			   origin, NULL,
 			   apply_to_selection, NULL, NULL,
-			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, false);
+			   C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0, false);
 	      if (estr) free(estr);
 	      if (origin) free(origin);
 	      break;
@@ -212,7 +212,7 @@ static void apply_enved(void)
 		within_selection_src = true;
 		src_env_or_num(active_channel, max_env, 0.0, 
 			       false, "Enved: src", apply_to_selection, NULL,
-			       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+			       C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0);
 		within_selection_src = false;
 		max_env = free_env(max_env);
 		if (enved_with_wave(ss)) env_redisplay();
@@ -845,10 +845,10 @@ static void reflect_sound_state(void)
 static XEN reflect_file_in_enved(XEN hook_or_reason)
 {
   if (enved_dialog) reflect_sound_state();
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
-XEN_NARGIFY_1(reflect_file_in_enved_w, reflect_file_in_enved)
+Xen_wrap_1_arg(reflect_file_in_enved_w, reflect_file_in_enved)
 
 #define BB_MARGIN 3
 
@@ -1215,7 +1215,7 @@ GtkWidget *create_envelope_editor(void)
 
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
 
-      XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_in_enved_w, "enved-file-open-handler", "enved dialog's file-open-hook handler");
+      Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_in_enved_w, "enved-file-open-handler", "enved dialog's file-open-hook handler");
     }
   else raise_dialog(enved_dialog);
 
@@ -1336,14 +1336,14 @@ static XEN g_enved_envelope(void)
 
 static XEN g_set_enved_envelope(XEN e)
 {
-  XEN_ASSERT_TYPE(Xen_is_list(e) || Xen_is_string(e) || Xen_is_symbol(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
+  Xen_check_type(Xen_is_list(e) || Xen_is_string(e) || Xen_is_symbol(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((Xen_is_string(e)) || (Xen_is_symbol(e)))
-    active_env = name_to_env((Xen_is_string(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e));
+    active_env = name_to_env((Xen_is_string(e)) ? Xen_string_to_C_string(e) : Xen_symbol_to_C_string(e));
   else active_env = xen_to_env(e);
   if ((!active_env) && (!(Xen_is_list(e))))
-    XEN_ERROR(NO_SUCH_ENVELOPE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_envelope ": bad envelope arg: ~A"),
+    Xen_error(NO_SUCH_ENVELOPE,
+	      Xen_list_2(C_string_to_Xen_string(S_setB S_enved_envelope ": bad envelope arg: ~A"),
 			 e));
   if (enved_dialog) 
     env_redisplay();
@@ -1354,30 +1354,30 @@ static XEN g_set_enved_envelope(XEN e)
 static XEN g_enved_filter(void)
 {
   #define H_enved_filter "(" S_enved_filter "): envelope editor FIR/FFT filter choice (" PROC_TRUE ": FIR)"
-  return(C_TO_XEN_BOOLEAN(is_FIR));
+  return(C_bool_to_Xen_boolean(is_FIR));
 }
 
 
 static XEN g_set_enved_filter(XEN type)
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(type), type, 1, S_setB S_enved_filter, "boolean");
-  is_FIR = XEN_TO_C_BOOLEAN(type);
+  Xen_check_type(Xen_is_boolean(type), type, 1, S_setB S_enved_filter, "boolean");
+  is_FIR = Xen_boolean_to_C_bool(type);
   if (firB)
     gtk_label_set_text(GTK_LABEL(firB), (is_FIR) ? "fir" : "fft");
   return(type);
 }
 
 
-XEN_NARGIFY_0(g_enved_filter_w, g_enved_filter)
-XEN_NARGIFY_1(g_set_enved_filter_w, g_set_enved_filter)
-XEN_NARGIFY_0(g_enved_envelope_w, g_enved_envelope)
-XEN_NARGIFY_1(g_set_enved_envelope_w, g_set_enved_envelope)
+Xen_wrap_no_args(g_enved_filter_w, g_enved_filter)
+Xen_wrap_1_arg(g_set_enved_filter_w, g_set_enved_filter)
+Xen_wrap_no_args(g_enved_envelope_w, g_enved_envelope)
+Xen_wrap_1_arg(g_set_enved_envelope_w, g_set_enved_envelope)
 
 void g_init_gxenv(void)
 {
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter, g_enved_filter_w, H_enved_filter,
+  Xen_define_procedure_with_setter(S_enved_filter, g_enved_filter_w, H_enved_filter,
 				   S_setB S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
+  Xen_define_procedure_with_setter(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
 				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
 }
 

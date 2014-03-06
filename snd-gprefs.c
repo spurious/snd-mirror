@@ -1835,7 +1835,7 @@ widget_t make_preferences_dialog(void)
     make_inner_label("  file options", dpy_box);
 
     rts_load_path = find_sources();
-    prf = prefs_row_with_text("directory containing Snd's " XEN_LANGUAGE_NAME " files", "load path", 
+    prf = prefs_row_with_text("directory containing Snd's " Xen_language " files", "load path", 
 			      rts_load_path,
 			      dpy_box,
 			      load_path_text);

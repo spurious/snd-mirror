@@ -66,14 +66,14 @@ void listener_begin_hook(s7_scheme *sc, bool *val)
 
 bool have_read_hook(void)
 {
-  return(XEN_HOOKED(read_hook));
+  return(Xen_hook_has_list(read_hook));
 }
 
 
 XEN run_read_hook(char *str)
 {
   return(run_or_hook(read_hook, 
-		     XEN_LIST_1(C_TO_XEN_STRING(str)),
+		     Xen_list_1(C_string_to_Xen_string(str)),
 		     S_read_hook));
 }
 
@@ -81,15 +81,15 @@ XEN run_read_hook(char *str)
 void call_read_hook_or_eval(const char *text)
 {
   XEN form;
-  if (XEN_HOOKED(read_hook))
+  if (Xen_hook_has_list(read_hook))
     {
       form = run_or_hook(read_hook, 
-			 XEN_LIST_1(C_TO_XEN_STRING(text)),
+			 Xen_list_1(C_string_to_Xen_string(text)),
 			 S_read_hook);
       if (Xen_is_true(form))
 	return;
     }
-  else form = XEN_EVAL_C_STRING(text);
+  else form = Xen_eval_C_string(text);
   snd_report_listener_result(form);
 }
 #endif
@@ -101,8 +101,8 @@ static XEN g_save_listener(XEN filename)
   FILE *fp = NULL;
   const char *name;
   int err = 0;
-  XEN_ASSERT_TYPE(Xen_is_string(filename), filename, 1, S_save_listener, "a string");
-  name = XEN_TO_C_STRING(filename);
+  Xen_check_type(Xen_is_string(filename), filename, 1, S_save_listener, "a string");
+  name = Xen_string_to_C_string(filename);
   fp = FOPEN(name, "w");
   if (fp) 
     {
@@ -110,10 +110,10 @@ static XEN g_save_listener(XEN filename)
       snd_fclose(fp, name);
     }
   if ((!fp) || (err == -1))
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_listener ": can't save ~S, ~A"),
+    Xen_error(CANNOT_SAVE,
+	      Xen_list_3(C_string_to_Xen_string(S_save_listener ": can't save ~S, ~A"),
 			 filename,
-			 C_TO_XEN_STRING(snd_io_strerror())));
+			 C_string_to_Xen_string(snd_io_strerror())));
   return(filename);
 }
 
@@ -122,22 +122,22 @@ static XEN g_clear_listener(void)
 {
   #define H_clear_listener "(" S_clear_listener "): removes listener text from the beginning to the cursor"
   clear_listener();
-  return(XEN_FALSE);
+  return(Xen_false);
 }
 
 
 static XEN g_show_listener(void) 
 {
   #define H_show_listener "(" S_show_listener ") returns " PROC_TRUE " if the listener is open, otherwise " PROC_FALSE "."
-  return(C_TO_XEN_BOOLEAN(listener_is_visible()));
+  return(C_bool_to_Xen_boolean(listener_is_visible()));
 }
 
 
 static XEN g_set_show_listener(XEN val)
 {
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_show_listener, "a boolean");
-  handle_listener(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(listener_is_visible()));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_show_listener, "a boolean");
+  handle_listener(Xen_boolean_to_C_bool(val));
+  return(C_bool_to_Xen_boolean(listener_is_visible()));
 }
 
 
@@ -150,9 +150,9 @@ void set_listener_prompt(const char *new_prompt)
   {
 #if HAVE_FORTH
     char *str;
-    XEN_EVAL_C_STRING("before-prompt-hook reset-hook!\n");
+    Xen_eval_C_string("before-prompt-hook reset-hook!\n");
     str = mus_format("before-prompt-hook lambda: <{ prompt pos }> \"%s\" ; add-hook!", listener_prompt(ss));
-    XEN_EVAL_C_STRING(str);
+    Xen_eval_C_string(str);
     free(str);
 #endif
 
@@ -182,18 +182,18 @@ void set_listener_prompt(const char *new_prompt)
 }
 
 
-static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(ss)));}
+static XEN g_listener_prompt(void) {return(C_string_to_Xen_string(listener_prompt(ss)));}
 
 static XEN g_set_listener_prompt(XEN val) 
 {
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
 
-  XEN_ASSERT_TYPE(Xen_is_string(val), val, 1, S_setB S_listener_prompt, "a string"); 
+  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_listener_prompt, "a string"); 
 
   if (listener_prompt(ss)) free(listener_prompt(ss));
-  set_listener_prompt(mus_strdup(XEN_TO_C_STRING(val)));
+  set_listener_prompt(mus_strdup(Xen_string_to_C_string(val)));
 
-  return(C_TO_XEN_STRING(listener_prompt(ss)));
+  return(C_string_to_Xen_string(listener_prompt(ss)));
 }
 
 
@@ -203,11 +203,11 @@ static XEN g_snd_completion(XEN text)
   char *str, *temp;
   XEN res;
 
-  XEN_ASSERT_TYPE(Xen_is_string(text), text, 1, "snd-completion", "a string"); 
+  Xen_check_type(Xen_is_string(text), text, 1, "snd-completion", "a string"); 
 
-  temp = mus_strdup(XEN_TO_C_STRING(text));
+  temp = mus_strdup(Xen_string_to_C_string(text));
   str = expression_completer(NULL_WIDGET, temp, NULL);
-  res = C_TO_XEN_STRING(str);
+  res = C_string_to_Xen_string(str);
 
   free(str);
   free(temp);
@@ -220,50 +220,50 @@ static XEN g_listener_colorized(void)
 {
   #define H_listener_colorized "(" S_listener_colorized ") returns #t if the listener is highlighting syntax."
 #if USE_GTK
-  return(C_TO_XEN_BOOLEAN(listener_colorized()));
+  return(C_bool_to_Xen_boolean(listener_colorized()));
 #else
-  return(XEN_FALSE);
+  return(Xen_false);
 #endif
 }
 
 static XEN g_listener_set_colorized(XEN val) 
 {
 #if USE_GTK
-  XEN_ASSERT_TYPE(Xen_is_boolean(val), val, 1, S_setB S_listener_colorized, "a boolean");
-  listener_set_colorized(XEN_TO_C_BOOLEAN(val));
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_listener_colorized, "a boolean");
+  listener_set_colorized(Xen_boolean_to_C_bool(val));
 #endif
   return(val);
 }
 
 
-XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
-XEN_NARGIFY_0(g_clear_listener_w, g_clear_listener);
-XEN_NARGIFY_0(g_show_listener_w, g_show_listener)
-XEN_NARGIFY_1(g_set_show_listener_w, g_set_show_listener)
-XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
-XEN_NARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
-XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
-XEN_NARGIFY_0(g_listener_colorized_w, g_listener_colorized)
-XEN_NARGIFY_1(g_listener_set_colorized_w, g_listener_set_colorized)
+Xen_wrap_1_arg(g_save_listener_w, g_save_listener)
+Xen_wrap_no_args(g_clear_listener_w, g_clear_listener);
+Xen_wrap_no_args(g_show_listener_w, g_show_listener)
+Xen_wrap_1_arg(g_set_show_listener_w, g_set_show_listener)
+Xen_wrap_no_args(g_listener_prompt_w, g_listener_prompt)
+Xen_wrap_1_arg(g_set_listener_prompt_w, g_set_listener_prompt)
+Xen_wrap_1_arg(g_snd_completion_w, g_snd_completion)
+Xen_wrap_no_args(g_listener_colorized_w, g_listener_colorized)
+Xen_wrap_1_arg(g_listener_set_colorized_w, g_listener_set_colorized)
 
 void g_init_listener(void)
 {
-  XEN_DEFINE_PROCEDURE(S_save_listener,  g_save_listener_w,  1, 0, 0, H_save_listener);
-  XEN_DEFINE_PROCEDURE(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
+  Xen_define_procedure(S_save_listener,  g_save_listener_w,  1, 0, 0, H_save_listener);
+  Xen_define_procedure(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_listener, g_show_listener_w, H_show_listener,
+  Xen_define_procedure_with_setter(S_show_listener, g_show_listener_w, H_show_listener,
 				   S_setB S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
+  Xen_define_procedure_with_setter(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
 				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
+  Xen_define_procedure_with_setter(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
 				   S_setB S_listener_colorized, g_listener_set_colorized_w,  0, 0, 1, 0);
 
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."
   
-  read_hook = XEN_DEFINE_HOOK(S_read_hook, "(make-hook 'text)", 1, H_read_hook);
+  read_hook = Xen_define_hook(S_read_hook, "(make-hook 'text)", 1, H_read_hook);
 
-  XEN_DEFINE_PROCEDURE("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
+  Xen_define_procedure("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
 }

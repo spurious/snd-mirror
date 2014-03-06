@@ -83,7 +83,7 @@
 		     (lambda any 
 		       'error)))
 		 (cdr constants))))
-	   
+
 	     (for-each
 	      (lambda (c)
 		(set-car! p c)

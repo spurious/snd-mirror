@@ -449,7 +449,3 @@
 
 ;;; backwards compatibility
 (define define-c-function c-define)
-
-
-
-;;; TODO: doc output handling and arg

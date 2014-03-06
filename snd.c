@@ -9,12 +9,12 @@ snd_state *ss = NULL;
 
 static bool ignore_mus_error(int type, char *msg)
 {
-  XEN result = XEN_FALSE;
+  XEN result = Xen_false;
 
-  if (XEN_HOOKED(ss->mus_error_hook))
+  if (Xen_hook_has_list(ss->mus_error_hook))
     result = run_or_hook(ss->mus_error_hook, 
-			 XEN_LIST_2(C_TO_XEN_INT(type), 
-				    C_TO_XEN_STRING(msg)),
+			 Xen_list_2(C_int_to_Xen_integer(type), 
+				    C_string_to_Xen_string(msg)),
 			 S_mus_error_hook);
   return(Xen_is_true(result));
 }
@@ -36,10 +36,10 @@ static void mus_error_to_snd(int type, char *msg)
     {
 #if HAVE_EXTENSION_LANGUAGE
       if (msg == NULL)
-	XEN_ERROR(XEN_ERROR_TYPE("mus-error"),
-		  XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_type_to_string(type))));
-      else XEN_ERROR(XEN_ERROR_TYPE("mus-error"),
-		     XEN_LIST_1(C_TO_XEN_STRING(msg)));
+	Xen_error(Xen_make_error_type("mus-error"),
+		  Xen_list_1(C_string_to_Xen_string((char *)mus_error_type_to_string(type))));
+      else Xen_error(Xen_make_error_type("mus-error"),
+		     Xen_list_1(C_string_to_Xen_string(msg)));
 #endif
       snd_error("%s: %s", mus_error_type_to_string(type), msg);
 #ifndef _MSC_VER
@@ -122,7 +122,7 @@ static void initialize_load_path(void)
 
       for (i = curdir - 1; i >= 0; i--)
 	{
-	  XEN_ADD_TO_LOAD_PATH(dirnames[i]);
+	  Xen_add_to_load_path(dirnames[i]);
 	  free(dirnames[i]);
 	}
       free(dirnames);
@@ -210,7 +210,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Dot_Size =                    DEFAULT_DOT_SIZE;
   ss->Grid_Density =                DEFAULT_GRID_DENSITY;
   ss->Zoom_Focus_Style =            DEFAULT_ZOOM_FOCUS_STYLE;
-  ss->zoom_focus_proc =             XEN_UNDEFINED;
+  ss->zoom_focus_proc =             Xen_undefined;
   ss->zoom_focus_proc_loc =         NOT_A_GC_LOC;
   ss->Max_Regions =                 DEFAULT_MAX_REGIONS;
   ss->Show_Y_Zero =                 DEFAULT_SHOW_Y_ZERO;
@@ -237,7 +237,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Cursor_Style =                DEFAULT_CURSOR_STYLE;
   ss->Tracking_Cursor_Style =       DEFAULT_TRACKING_CURSOR_STYLE;
   ss->With_Tracking_Cursor =        DEFAULT_WITH_TRACKING_CURSOR;
-  ss->cursor_proc =                 XEN_UNDEFINED;
+  ss->cursor_proc =                 Xen_undefined;
   ss->cursor_proc_loc =             NOT_A_GC_LOC;
   ss->With_Verbose_Cursor =         DEFAULT_WITH_VERBOSE_CURSOR;
   ss->Cursor_Update_Interval =      DEFAULT_CURSOR_UPDATE_INTERVAL;
@@ -979,13 +979,13 @@ void snd_set_global_defaults(bool need_cleanup)
 
 static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
 {
-  XEN_ERROR(XEN_ERROR_TYPE("gsl-error"),
-	    XEN_LIST_6(C_TO_XEN_STRING("GSL: ~A, ~A in ~A line ~A, gsl err: ~A"),
-		       C_TO_XEN_STRING(gsl_strerror(gsl_errno)),
-		       C_TO_XEN_STRING(reason),
-		       C_TO_XEN_STRING(file),
-		       C_TO_XEN_INT(line),
-		       C_TO_XEN_INT(gsl_errno)));
+  Xen_error(Xen_make_error_type("gsl-error"),
+	    Xen_list_6(C_string_to_Xen_string("GSL: ~A, ~A in ~A line ~A, gsl err: ~A"),
+		       C_string_to_Xen_string(gsl_strerror(gsl_errno)),
+		       C_string_to_Xen_string(reason),
+		       C_string_to_Xen_string(file),
+		       C_int_to_Xen_integer(line),
+		       C_int_to_Xen_integer(gsl_errno)));
 }
 #endif
 
@@ -1071,7 +1071,7 @@ int main(int argc, char **argv)
   ss->gl_printing = false;
 #endif
   g_xen_initialize();
-  ss->search_proc = XEN_UNDEFINED;
+  ss->search_proc = Xen_undefined;
   ss->search_expr = NULL;
   mus_error_set_handler(mus_error_to_snd);
   mus_print_set_handler(mus_print_to_snd);
@@ -1088,5 +1088,5 @@ void g_init_base(void)
   #define H_mus_error_hook S_mus_error_hook " (type message):  called upon mus_error. \
 If it returns " PROC_TRUE ", Snd ignores the error (it assumes you've handled it via the hook)."
 
-  ss->mus_error_hook = XEN_DEFINE_HOOK(S_mus_error_hook, "(make-hook 'type 'message)", 2, H_mus_error_hook);
+  ss->mus_error_hook = Xen_define_hook(S_mus_error_hook, "(make-hook 'type 'message)", 2, H_mus_error_hook);
 }
