@@ -201,7 +201,7 @@ void snd_error_without_format(const char *msg)
 }
 
 
-static XEN g_snd_error(XEN msg)
+static Xen g_snd_error(Xen msg)
 {
   /* this throws a 'snd-error error; it does not call snd_error_1 or friends above */
   #define H_snd_error "(" S_snd_error " str): throws a 'snd-error error"
@@ -215,7 +215,7 @@ static XEN g_snd_error(XEN msg)
 }
 
   
-static XEN g_snd_warning(XEN msg)
+static Xen g_snd_warning(Xen msg)
 {
   #define H_snd_warning "(" S_snd_warning " str): reports warning message str (normally in the status area)"
   Xen_check_type(Xen_is_string(msg), msg, 1, S_snd_warning, "a string");
@@ -224,13 +224,13 @@ static XEN g_snd_warning(XEN msg)
 }
 
 
-static XEN clip_hook;
+static Xen clip_hook;
 
 static mus_float_t run_clip_hook(mus_float_t val)
 {
   if (Xen_hook_has_list(clip_hook))
     {
-      XEN result;
+      Xen result;
       result = run_progn_hook(clip_hook,
 			      Xen_list_1(C_double_to_Xen_real(val)),
 			      S_clip_hook);

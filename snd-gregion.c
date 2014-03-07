@@ -378,7 +378,7 @@ static void region_play_callback(GtkWidget *w, gpointer context)
 }
 
 
-static XEN reflect_file_in_region_browser(XEN hook_or_reason)
+static Xen reflect_file_in_region_browser(Xen hook_or_reason)
 {
   if (region_dialog)
     {
@@ -406,10 +406,10 @@ int regrow_get_pos(void *ur)
 }
 
 
-static XEN mouse_enter_label_hook;
-static XEN mouse_leave_label_hook;
+static Xen mouse_enter_label_hook;
+static Xen mouse_leave_label_hook;
 
-static void mouse_enter_or_leave_label(void *r, int type, XEN hook, const char *caller)
+static void mouse_enter_or_leave_label(void *r, int type, Xen hook, const char *caller)
 {
   if ((r) &&
       (Xen_hook_has_list(hook)))
@@ -827,12 +827,12 @@ int region_dialog_region(void)
 }
 
 
-static XEN g_view_regions_dialog(void) 
+static Xen g_view_regions_dialog(void) 
 {
   #define H_view_regions_dialog "(" S_view_regions_dialog "): start the region dialog"
   if (snd_regions() > 0) 
     view_region_callback(MAIN_PANE(ss), NULL); 
-  return(XEN_WRAP_WIDGET(region_dialog));
+  return(Xen_wrap_widget(region_dialog));
 }
 
 

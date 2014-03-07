@@ -298,7 +298,7 @@ void top_level_catch(int ignore)
 
 
 #define FALLBACK_FONT "9x15"
-static XEN colormap_temp[16]; /* static for Ruby's sake */
+static Xen colormap_temp[16]; /* static for Ruby's sake */
 
 void snd_doit(int argc, char **argv)
 {

@@ -244,7 +244,7 @@ void save_find_dialog_state(FILE *fd)
 }
 
 
-static XEN g_find_dialog(XEN managed, XEN text)
+static Xen g_find_dialog(Xen managed, Xen text)
 {
   #define H_find_dialog "(" S_find_dialog " :optional managed text): create and activate the Edit:Find dialog, return the dialog widget"
 
@@ -255,18 +255,18 @@ static XEN g_find_dialog(XEN managed, XEN text)
   if ((edit_find_text) && (Xen_is_string(text)))
     gtk_entry_get_text(GTK_ENTRY(edit_find_text));
 
-  return(XEN_WRAP_WIDGET(edit_find_dialog));
+  return(Xen_wrap_widget(edit_find_dialog));
 }
 
 
-static XEN g_find_dialog_widgets(void)
+static Xen g_find_dialog_widgets(void)
 {
   if (edit_find_dialog)
-    return(Xen_cons(XEN_WRAP_WIDGET(edit_find_dialog),
-	     Xen_cons(XEN_WRAP_WIDGET(edit_find_text),
-  	       Xen_cons(XEN_WRAP_WIDGET(next_button),
-		 Xen_cons(XEN_WRAP_WIDGET(previous_button),
-		   Xen_cons(XEN_WRAP_WIDGET(cancelB),
+    return(Xen_cons(Xen_wrap_widget(edit_find_dialog),
+	     Xen_cons(Xen_wrap_widget(edit_find_text),
+  	       Xen_cons(Xen_wrap_widget(next_button),
+		 Xen_cons(Xen_wrap_widget(previous_button),
+		   Xen_cons(Xen_wrap_widget(cancelB),
 		     Xen_empty_list))))));
   return(Xen_empty_list);
 }

@@ -842,7 +842,7 @@ static void reflect_sound_state(void)
 }
 
 
-static XEN reflect_file_in_enved(XEN hook_or_reason)
+static Xen reflect_file_in_enved(Xen hook_or_reason)
 {
   if (enved_dialog) reflect_sound_state();
   return(Xen_false);
@@ -1327,14 +1327,14 @@ void color_enved_waveform(color_info *pix)
 }
 
 
-static XEN g_enved_envelope(void)
+static Xen g_enved_envelope(void)
 {
   #define H_enved_envelope "(" S_enved_envelope "): current envelope editor displayed (active) envelope"
   return(env_to_xen(active_env));
 }
 
 
-static XEN g_set_enved_envelope(XEN e)
+static Xen g_set_enved_envelope(Xen e)
 {
   Xen_check_type(Xen_is_list(e) || Xen_is_string(e) || Xen_is_symbol(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
@@ -1351,14 +1351,14 @@ static XEN g_set_enved_envelope(XEN e)
 }
 
 
-static XEN g_enved_filter(void)
+static Xen g_enved_filter(void)
 {
   #define H_enved_filter "(" S_enved_filter "): envelope editor FIR/FFT filter choice (" PROC_TRUE ": FIR)"
   return(C_bool_to_Xen_boolean(is_FIR));
 }
 
 
-static XEN g_set_enved_filter(XEN type)
+static Xen g_set_enved_filter(Xen type)
 {
   Xen_check_type(Xen_is_boolean(type), type, 1, S_setB S_enved_filter, "boolean");
   is_FIR = Xen_boolean_to_C_bool(type);

@@ -127,14 +127,14 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #endif
 
 
-#define XEN_WRAP_WIDGET(Value)   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GtkWidget_"), XEN_WRAP_C_POINTER(Value)) : Xen_false)
-#define XEN_WRAP_WINDOW(Value)   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GdkWindow_"), XEN_WRAP_C_POINTER(Value)) : Xen_false)
-#define XEN_UNWRAP_WIDGET(Value) (Xen_is_pair(Value) ? (GtkWidget *)(XEN_UNWRAP_C_POINTER(Xen_cadr(Value))) : NULL)
+#define Xen_wrap_widget(Value)   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GtkWidget_"), Xen_wrap_C_pointer(Value)) : Xen_false)
+#define Xen_wrap_window(Value)   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GdkWindow_"), Xen_wrap_C_pointer(Value)) : Xen_false)
+#define Xen_unwrap_widget(Value) (Xen_is_pair(Value) ? (GtkWidget *)(Xen_unwrap_C_pointer(Xen_cadr(Value))) : NULL)
 #define Xen_is_widget(Value)     (Xen_is_pair(Value) && (Xen_car(Value) == C_string_to_Xen_symbol("GtkWidget_")))
 
-#define XEN_WRAP_PIXEL(Value)    Xen_list_2(C_string_to_Xen_symbol("color_t"), XEN_WRAP_C_POINTER((unsigned long)Value))
-#define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_UNWRAP_C_POINTER(Xen_cadr(Value)))
-#define Xen_is_pixel(Value)       (Xen_is_list(Value) && (Xen_list_length(Value) >= 2) && (Xen_is_symbol(Xen_car(Value))) && \
+#define Xen_wrap_pixel(Value)    Xen_list_2(C_string_to_Xen_symbol("color_t"), Xen_wrap_C_pointer((unsigned long)Value))
+#define Xen_unwrap_pixel(Value)  (color_t)(Xen_unwrap_C_pointer(Xen_cadr(Value)))
+#define Xen_is_pixel(Value)      (Xen_is_list(Value) && (Xen_list_length(Value) >= 2) && (Xen_is_symbol(Xen_car(Value))) && \
                                     (strcmp("color_t", Xen_symbol_to_C_string(Xen_car(Value))) == 0))
 /* unfortunately, we can't just make PIXEL into a C type here -- it is called
  *   XM_PIXEL in xm.c and in that context, it assumes the layout given above.

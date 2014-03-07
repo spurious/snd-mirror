@@ -493,7 +493,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
 
 /* -------- color browser -------- */
 
-static XEN color_hook;
+static Xen color_hook;
 static GtkWidget *ccd_dialog = NULL, *ccd_scale, *ccd_invert, *ccd_cutoff;
 static GtkAdjustment *ccd_scale_adj, *ccd_cutoff_adj;
 static slist *ccd_list;
@@ -642,7 +642,7 @@ void reflect_color_list(bool setup_time)
 
 /* -------- orientation browser -------- */
 
-static XEN orientation_hook;
+static Xen orientation_hook;
 
 static void check_orientation_hook(void)
 {
@@ -1289,9 +1289,9 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 }
 
 
-static XEN g_background_gradient(void) {return(C_double_to_Xen_real(ss->bg_gradient));}
+static Xen g_background_gradient(void) {return(C_double_to_Xen_real(ss->bg_gradient));}
 
-static XEN g_set_background_gradient(XEN val) 
+static Xen g_set_background_gradient(Xen val) 
 {
   #define H_background_gradient "(" S_background_gradient "): channel graph background color gradient"
   Xen_check_type(Xen_is_number(val), val, 1, S_setB S_background_gradient, "a number between 0 (none) and 1");

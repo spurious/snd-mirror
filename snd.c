@@ -9,7 +9,7 @@ snd_state *ss = NULL;
 
 static bool ignore_mus_error(int type, char *msg)
 {
-  XEN result = Xen_false;
+  Xen result = Xen_false;
 
   if (Xen_hook_has_list(ss->mus_error_hook))
     result = run_or_hook(ss->mus_error_hook, 

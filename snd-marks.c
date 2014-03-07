@@ -5,7 +5,7 @@ struct mark {
   char *name;
   int id, sync;
   bool visible;
-  XEN properties;
+  Xen properties;
   int properties_gc_loc;
 };
 
@@ -249,7 +249,7 @@ void marks_off(chan_info *cp)
 
 static void show_mark(chan_info *cp, mark *mp, bool show);
 
-static XEN draw_mark_hook;
+static Xen draw_mark_hook;
 
 static void draw_mark_1(chan_info *cp, mark *mp, bool show)
 {
@@ -257,7 +257,7 @@ static void draw_mark_1(chan_info *cp, mark *mp, bool show)
   if (!(cp->graph_time_on)) return;
   if (Xen_hook_has_list(draw_mark_hook))
     {
-      XEN res = Xen_false;
+      Xen res = Xen_false;
       res = run_progn_hook(draw_mark_hook,
 			   Xen_list_1(new_xen_mark(mp->id)),
 			   S_draw_mark_hook);
@@ -365,8 +365,8 @@ mark *hit_mark_triangle(chan_info *cp, int x, int y)
 }
 
 
-static XEN mark_drag_hook;
-static XEN mark_hook; /* add, delete, move */
+static Xen mark_drag_hook;
+static Xen mark_hook; /* add, delete, move */
 
 static bool watching_mouse = false; /* this is tracking axis moves */
 static int last_mouse_x = 0;
@@ -484,7 +484,7 @@ static void run_mark_hook(chan_info *cp, int id, mark_hook_reason_t reason)
   if (Xen_hook_has_list(mark_hook))
     run_hook(mark_hook,
 	     Xen_list_4(new_xen_mark(id),
-			C_INT_TO_XEN_SOUND(cp->sound->index),
+			C_int_to_Xen_sound(cp->sound->index),
 			C_int_to_Xen_integer(cp->chan),
 			C_int_to_Xen_integer((int)reason)),
 	     S_mark_hook);
@@ -1960,19 +1960,19 @@ typedef struct {
 } xen_mark;
 
 
-#define XEN_TO_XEN_MARK(arg) ((xen_mark *)Xen_object_ref(arg))
+#define Xen_to_xen_mark(arg) ((xen_mark *)Xen_object_ref(arg))
 
-int xen_mark_to_int(XEN n)
+int xen_mark_to_int(Xen n)
 {
   xen_mark *mx;
-  mx = XEN_TO_XEN_MARK(n);
+  mx = Xen_to_xen_mark(n);
   return(mx->n);
 }
 
 
 static Xen_object_type_t xen_mark_tag;
 
-bool xen_is_mark(XEN obj) 
+bool xen_is_mark(Xen obj) 
 {
   return(Xen_c_object_is_type(obj, xen_mark_tag));
 }
@@ -1985,11 +1985,11 @@ Xen_wrap_free(xen_mark, free_xen_mark, xen_mark_free)
 
 static char *xen_mark_to_string(xen_mark *v)
 {
-  #define XEN_MARK_PRINT_BUFFER_SIZE 64
+  #define MARK_PRINT_BUFFER_SIZE 64
   char *buf;
   if (v == NULL) return(NULL);
-  buf = (char *)calloc(XEN_MARK_PRINT_BUFFER_SIZE, sizeof(char));
-  snprintf(buf, XEN_MARK_PRINT_BUFFER_SIZE, "#<mark %d>", v->n);
+  buf = (char *)calloc(MARK_PRINT_BUFFER_SIZE, sizeof(char));
+  snprintf(buf, MARK_PRINT_BUFFER_SIZE, "#<mark %d>", v->n);
   return(buf);
 }
 
@@ -1997,15 +1997,15 @@ Xen_wrap_print(xen_mark, print_xen_mark, xen_mark_to_string)
 
 
 #if HAVE_FORTH || HAVE_RUBY
-static XEN g_xen_mark_to_string(XEN obj)
+static Xen g_xen_mark_to_string(Xen obj)
 {
   char *vstr;
-  XEN result;
+  Xen result;
   #define S_xen_mark_to_string "mark->string"
 
   Xen_check_type(xen_is_mark(obj), obj, 1, S_xen_mark_to_string, "a mark");
 
-  vstr = xen_mark_to_string(XEN_TO_XEN_MARK(obj));
+  vstr = xen_mark_to_string(Xen_to_xen_mark(obj));
   result = C_string_to_Xen_string(vstr);
   free(vstr);
   return(result);
@@ -2020,10 +2020,10 @@ static bool xen_mark_equalp(xen_mark *v1, xen_mark *v2)
 	 (v1->n == v2->n));
 }
 
-static XEN equalp_xen_mark(XEN obj1, XEN obj2)
+static Xen equalp_xen_mark(Xen obj1, Xen obj2)
 {
   if ((!(xen_is_mark(obj1))) || (!(xen_is_mark(obj2)))) return(Xen_false);
-  return(C_bool_to_Xen_boolean(xen_mark_equalp(XEN_TO_XEN_MARK(obj1), XEN_TO_XEN_MARK(obj2))));
+  return(C_bool_to_Xen_boolean(xen_mark_equalp(Xen_to_xen_mark(obj1), Xen_to_xen_mark(obj2))));
 }
 #endif
 
@@ -2037,7 +2037,7 @@ static xen_mark *xen_mark_make(int n)
 }
 
 
-XEN new_xen_mark(int n)
+Xen new_xen_mark(int n)
 {
   xen_mark *mx;
   if (n < 0)
@@ -2056,7 +2056,7 @@ static bool s7_xen_mark_equalp(void *obj1, void *obj2)
 }
 
 
-static XEN s7_xen_mark_copy(s7_scheme *sc, s7_pointer obj)
+static Xen s7_xen_mark_copy(s7_scheme *sc, s7_pointer obj)
 {
   int id;
   mark *m, *new_m;
@@ -2090,16 +2090,16 @@ static void init_xen_mark(void)
 #endif
 
 #if HAVE_RUBY
-  rb_define_method(xen_mark_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_mark, 0);
-  rb_define_method(xen_mark_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_mark, 1);
-  rb_define_method(xen_mark_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_mark, 1);
-  rb_define_method(xen_mark_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_mark_to_string, 0);
+  rb_define_method(xen_mark_tag, "to_s",     Xen_procedure_cast print_xen_mark, 0);
+  rb_define_method(xen_mark_tag, "eql?",     Xen_procedure_cast equalp_xen_mark, 1);
+  rb_define_method(xen_mark_tag, "==",       Xen_procedure_cast equalp_xen_mark, 1);
+  rb_define_method(xen_mark_tag, "to_str",   Xen_procedure_cast g_xen_mark_to_string, 0);
 #endif
 }
 /* -------------------------------------------------------------------------------- */
 
 
-static XEN g_integer_to_mark(XEN n)
+static Xen g_integer_to_mark(Xen n)
 {
   #define H_integer_to_mark "(" S_integer_to_mark " n) returns a mark object corresponding to the given integer"
   Xen_check_type(Xen_is_integer(n), n, 1, S_integer_to_mark, "an integer");
@@ -2107,7 +2107,7 @@ static XEN g_integer_to_mark(XEN n)
 }
 
 
-static XEN g_mark_to_integer(XEN n)
+static Xen g_mark_to_integer(Xen n)
 {
   #define H_mark_to_integer "(" S_mark_to_integer " id) returns the integer corresponding to the given mark object"
   Xen_check_type(xen_is_mark(n), n, 1, S_mark_to_integer, "a mark");
@@ -2115,7 +2115,7 @@ static XEN g_mark_to_integer(XEN n)
 }
 
 
-static XEN snd_no_such_mark_error(const char *caller, XEN id)
+static Xen snd_no_such_mark_error(const char *caller, Xen id)
 {
   Xen_error(Xen_make_error_type("no-such-mark"),
 	    Xen_list_3(C_string_to_Xen_string("~A: no such mark ~A"),
@@ -2127,7 +2127,7 @@ static XEN snd_no_such_mark_error(const char *caller, XEN id)
 
 typedef enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME} mark_field_t;
 
-static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
+static Xen mark_get(Xen n, mark_field_t fld, Xen pos_n, const char *caller)
 {
   int pos;
   chan_info *ncp[1];
@@ -2135,7 +2135,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
 
   pos = (Xen_is_integer(pos_n)) ? Xen_integer_to_C_int(pos_n) : AT_CURRENT_EDIT_POSITION;
 
-  m = find_mark_from_id(XEN_MARK_TO_C_INT(n), ncp, pos);
+  m = find_mark_from_id(Xen_mark_to_C_int(n), ncp, pos);
   if (m == NULL) 
     return(snd_no_such_mark_error(caller, n));
 
@@ -2156,7 +2156,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
       break;
 
     case MARK_HOME:   
-      return(Xen_list_2(C_INT_TO_XEN_SOUND((ncp[0]->sound)->index),
+      return(Xen_list_2(C_int_to_Xen_sound((ncp[0]->sound)->index),
 			C_int_to_Xen_integer(ncp[0]->chan))); 
       break;
     }
@@ -2164,12 +2164,12 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
 }
 
 
-static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
+static Xen mark_set(Xen mark_n, Xen val, mark_field_t fld, const char *caller)
 {
   chan_info *cp[1];
   mark *m;
 
-  m = find_mark_from_id(XEN_MARK_TO_C_INT(mark_n), cp, AT_CURRENT_EDIT_POSITION);
+  m = find_mark_from_id(Xen_mark_to_C_int(mark_n), cp, AT_CURRENT_EDIT_POSITION);
   if (m == NULL) 
     return(snd_no_such_mark_error(caller, mark_n));
 
@@ -2205,16 +2205,16 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
 }
 
 
-static XEN g_is_mark(XEN id_n)
+static Xen g_is_mark(Xen id_n)
 {
   #define H_is_mark "(" S_is_mark " id): " PROC_TRUE " if mark is active"
   if (xen_is_mark(id_n))
-    return(C_bool_to_Xen_boolean(find_mark_from_id(XEN_MARK_TO_C_INT(id_n), NULL, AT_CURRENT_EDIT_POSITION)));
+    return(C_bool_to_Xen_boolean(find_mark_from_id(Xen_mark_to_C_int(id_n), NULL, AT_CURRENT_EDIT_POSITION)));
   return(Xen_false);
 }
 
 
-static XEN g_mark_sample(XEN mark_n, XEN pos_n) 
+static Xen g_mark_sample(Xen mark_n, Xen pos_n) 
 {
   #define H_mark_sample "(" S_mark_sample " id :optional pos): mark's location (sample number) at edit history pos"
   Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_mark_sample, "a mark");
@@ -2222,7 +2222,7 @@ static XEN g_mark_sample(XEN mark_n, XEN pos_n)
   return(mark_get(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
 }
 
-static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
+static Xen g_set_mark_sample(Xen mark_n, Xen samp_n) 
 {
   Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_setB S_mark_sample, "a mark");
   Xen_check_type(Xen_is_long_long_int(samp_n) || !Xen_is_bound(samp_n), samp_n, 2, S_setB S_mark_sample, "an integer");
@@ -2230,14 +2230,14 @@ static XEN g_set_mark_sample(XEN mark_n, XEN samp_n)
 }
 
 
-XEN g_mark_sync(XEN mark_n)
+Xen g_mark_sync(Xen mark_n)
 {
   #define H_mark_sync "(" S_mark_sync " id): mark's sync value (default: 0)"
   Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_mark_sync, "a mark");
   return(mark_get(mark_n, MARK_SYNC, Xen_undefined, S_mark_sync));
 }
 
-XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
+Xen g_set_mark_sync(Xen mark_n, Xen sync_n)
 {
   Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_setB S_mark_sync, "a mark");
   Xen_check_type(Xen_is_integer_or_boolean(sync_n), sync_n, 2, S_setB S_mark_sync, "an integer");
@@ -2245,14 +2245,14 @@ XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
 }
 
 
-static XEN g_mark_name(XEN mark_n) 
+static Xen g_mark_name(Xen mark_n) 
 {
   #define H_mark_name "(" S_mark_name " id): mark's name"
   Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_mark_name, "a mark");
   return(mark_get(mark_n, MARK_NAME, Xen_undefined, S_mark_name));
 }
 
-static XEN g_set_mark_name(XEN mark_n, XEN name) 
+static Xen g_set_mark_name(Xen mark_n, Xen name) 
 {
   Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_setB S_mark_name, "a mark");
   Xen_check_type(Xen_is_string(name) || Xen_is_false(name), name, 2, S_setB S_mark_name, "a string");
@@ -2260,14 +2260,14 @@ static XEN g_set_mark_name(XEN mark_n, XEN name)
 }
 
 
-static XEN g_mark_sync_max(void) 
+static Xen g_mark_sync_max(void) 
 {
   #define H_mark_sync_max "(" S_mark_sync_max "): max mark sync value seen so far"
   return(C_int_to_Xen_integer(mark_sync_max()));
 }
 
 
-static XEN g_mark_home(XEN mark_n)
+static Xen g_mark_home(Xen mark_n)
 {
   #define H_mark_home "(" S_mark_home " id): the sound (index) and channel that hold mark id"
   Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_mark_home, "a mark");
@@ -2275,7 +2275,7 @@ static XEN g_mark_home(XEN mark_n)
 }
 
 
-static XEN g_find_mark(XEN samp_n, XEN snd, XEN chn_n, XEN edpos) 
+static Xen g_find_mark(Xen samp_n, Xen snd, Xen chn_n, Xen edpos) 
 {
   #define H_find_mark "(" S_find_mark " samp-or-name :optional snd chn edpos): \
 find the mark in snd's channel chn at samp (if a number) or with the given name (if a string); return the mark or " PROC_FALSE " if no mark found."
@@ -2323,7 +2323,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 }
 
 
-static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool check_sample) 
+static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool check_sample) 
 {
   #define H_add_mark "(" S_add_mark " samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark."
   mark *m = NULL;
@@ -2366,13 +2366,13 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
 }
 
 
-static XEN g_add_mark(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync)
+static Xen g_add_mark(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync)
 {
   return(g_add_mark_1(samp_n, snd, chn_n, name, sync, true));
 }
 
 
-static XEN g_add_mark_unchecked(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync)
+static Xen g_add_mark_unchecked(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync)
 {
   #define H_add_mark_unchecked "(add-mark! samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark.\
 Unlike add-mark, add-mark! does not check for an invalid sample number."
@@ -2381,7 +2381,7 @@ Unlike add-mark, add-mark! does not check for an invalid sample number."
 }
 
 
-static XEN g_delete_mark(XEN id_n) 
+static Xen g_delete_mark(Xen id_n) 
 {
   #define H_delete_mark "(" S_delete_mark " id): delete mark id"
   chan_info *cp[1];
@@ -2389,7 +2389,7 @@ static XEN g_delete_mark(XEN id_n)
   int id;
 
   Xen_check_type(xen_is_mark(id_n), id_n, 1, S_delete_mark, "a mark");
-  id = XEN_MARK_TO_C_INT(id_n);
+  id = Xen_mark_to_C_int(id_n);
 
   m = find_mark_from_id(id, cp, AT_CURRENT_EDIT_POSITION);
   if (m == NULL) 
@@ -2403,7 +2403,7 @@ static XEN g_delete_mark(XEN id_n)
 }
 
 
-static XEN g_delete_marks(XEN snd, XEN chn_n) 
+static Xen g_delete_marks(Xen snd, Xen chn_n) 
 {
   #define H_delete_marks "(" S_delete_marks " :optional snd chn): delete all marks in snd's channel chn"
   chan_info *cp;
@@ -2415,7 +2415,7 @@ static XEN g_delete_marks(XEN snd, XEN chn_n)
 }
 
 
-static XEN int_array_to_mark_list(int *arr, int i, int len)
+static Xen int_array_to_mark_list(int *arr, int i, int len)
 {
   if (i < len)
     return(Xen_cons(new_xen_mark(arr[i]), int_array_to_mark_list(arr, i + 1, len)));
@@ -2438,11 +2438,11 @@ static int *syncd_marks(int sync)
 }
 
 
-static XEN g_syncd_marks(XEN sync)
+static Xen g_syncd_marks(Xen sync)
 {
   #define H_syncd_marks "(" S_syncd_marks " sync): list of marks that share a given sync value (" S_mark_sync ")"
   int *ids;
-  XEN res;
+  Xen res;
 
   Xen_check_type(Xen_is_integer(sync), sync, 1, S_syncd_marks, "an integer");
   ids = syncd_marks(Xen_integer_to_C_int(sync));
@@ -2457,9 +2457,9 @@ static XEN g_syncd_marks(XEN sync)
 }
 
 
-static XEN g_mark_tag_width(void) {return(C_int_to_Xen_integer(mark_tag_width(ss)));}
+static Xen g_mark_tag_width(void) {return(C_int_to_Xen_integer(mark_tag_width(ss)));}
 
-static XEN g_set_mark_tag_width(XEN val) 
+static Xen g_set_mark_tag_width(Xen val) 
 {
   #define H_mark_tag_width "(" S_mark_tag_width "): width (pixels) of mark tags (10)"
   int width;
@@ -2471,9 +2471,9 @@ static XEN g_set_mark_tag_width(XEN val)
 }
 
 
-static XEN g_mark_tag_height(void) {return(C_int_to_Xen_integer(mark_tag_height(ss)));}
+static Xen g_mark_tag_height(void) {return(C_int_to_Xen_integer(mark_tag_height(ss)));}
 
-static XEN g_set_mark_tag_height(XEN val) 
+static Xen g_set_mark_tag_height(Xen val) 
 {
   #define H_mark_tag_height "(" S_mark_tag_height "): height (pixels) of mark tags (4)"
   int height;
@@ -2509,14 +2509,14 @@ static int *channel_marks(chan_info *cp, int pos)
 }
 
 
-static XEN g_marks(XEN snd, XEN chn_n, XEN pos_n) 
+static Xen g_marks(Xen snd, Xen chn_n, Xen pos_n) 
 {
   #define H_marks "(" S_marks " :optional snd chn edpos): list of marks in snd/chn at edit history position pos. \
 mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neither given: (((id ...) ...) ...)."
 
   chan_info *cp;
   snd_info *sp;
-  XEN res1 = Xen_empty_list;
+  Xen res1 = Xen_empty_list;
 
   ASSERT_CHANNEL(S_marks, snd, chn_n, 0);
 
@@ -2524,7 +2524,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
       {
 	int i, pos;
 	int *ids;
-	XEN res;
+	Xen res;
 	if (Xen_is_integer(chn_n))
 	  {
 	    cp = get_cp(snd, chn_n, S_marks);
@@ -2749,13 +2749,13 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
 }  
 
 
-static XEN g_save_marks(XEN snd, XEN filename)
+static Xen g_save_marks(Xen snd, Xen filename)
 {
   #define H_save_marks "(" S_save_marks " :optional snd (filename \"<snd-file-name>.marks\")): save snd's marks in filename. \
 The saved file is " Xen_language " code, so to restore the marks, load that file."
 
   snd_info *sp;
-  XEN res = Xen_false;
+  Xen res = Xen_false;
 
   ASSERT_SOUND(S_save_marks, snd, 1);
   Xen_check_type(Xen_is_string_or_unbound(filename), filename, 2, S_save_marks, "a string");  
@@ -2786,7 +2786,7 @@ The saved file is " Xen_language " code, so to restore the marks, load that file
       fd = FOPEN(newname, "w");
       if (fd == NULL)
 	{
-	  XEN lname;
+	  Xen lname;
 	  lname = C_string_to_Xen_string(newname);
 	  free(newname);
 	  Xen_error(CANNOT_SAVE,
@@ -2811,14 +2811,14 @@ The saved file is " Xen_language " code, so to restore the marks, load that file
 }
 
 
-static XEN g_mark_properties(XEN n)
+static Xen g_mark_properties(Xen n)
 {
   mark *m;
   #define H_mark_properties "(" S_mark_properties " id):  A property list associated with the given mark."
 
   Xen_check_type(xen_is_mark(n), n, 1, S_mark_properties, "a mark");
 
-  m = find_mark_from_id(XEN_MARK_TO_C_INT(n), NULL, AT_CURRENT_EDIT_POSITION);
+  m = find_mark_from_id(Xen_mark_to_C_int(n), NULL, AT_CURRENT_EDIT_POSITION);
   if (m == NULL)
     return(snd_no_such_mark_error(S_mark_properties, n));
 
@@ -2831,12 +2831,12 @@ static XEN g_mark_properties(XEN n)
 }
 
 
-static XEN g_set_mark_properties(XEN n, XEN val)
+static Xen g_set_mark_properties(Xen n, Xen val)
 {
   mark *m;
   Xen_check_type(xen_is_mark(n), n, 1, S_mark_properties, "a mark");
 
-  m = find_mark_from_id(XEN_MARK_TO_C_INT(n), NULL, AT_CURRENT_EDIT_POSITION);
+  m = find_mark_from_id(Xen_mark_to_C_int(n), NULL, AT_CURRENT_EDIT_POSITION);
   if (m == NULL)
     return(snd_no_such_mark_error(S_setB S_mark_properties, n));
 
@@ -2851,13 +2851,13 @@ static XEN g_set_mark_properties(XEN n, XEN val)
 }
 
 
-static XEN g_mark_property(XEN key, XEN id) 
+static Xen g_mark_property(Xen key, Xen id) 
 {
   #define H_mark_property "(" S_mark_property " key id) returns the value associated with 'key' in the given mark's property list, or " PROC_FALSE "."
   return(Xen_assoc_ref(key, g_mark_properties(id)));
 }
 
-static XEN g_set_mark_property(XEN key, XEN id, XEN val) 
+static Xen g_set_mark_property(Xen key, Xen id, Xen val) 
 {
   g_set_mark_properties(id, Xen_assoc_set(key, val, g_mark_properties(id)));
   return(val);

@@ -46,7 +46,7 @@
     if (Xen_is_null(Xen_cddr(args)))				                   \
       return(name(Xen_cadr(args), Xen_car(args), Xen_undefined, Xen_undefined));           \
     else {								                   \
-      if (Xen_is_null(XEN_CDDDR(args)))				                   \
+      if (Xen_is_null(Xen_cdddr(args)))				                   \
 	return(name(Xen_caddr(args), Xen_car(args), Xen_cadr(args), Xen_undefined));       \
       else return(name(Xen_cadddr(args), Xen_car(args), Xen_cadr(args), Xen_caddr(args))); \
   }}}
@@ -127,7 +127,7 @@ typedef struct {
   enved_fft *fft;                      /* overall fft data for envelope editor */
   void *readers;                       /* current readers of this edit (g++ stupidity forces us to use void* here -- type is sf_info, snd-edits.c) */
   void *mixes;
-  XEN properties;
+  Xen properties;
   int properties_gc_loc;
 } ed_list;
 
@@ -323,11 +323,11 @@ typedef struct chan_info {
   fft_normalize_t transform_normalization;
   int transform_type, spectro_hop, edhist_base;
   bool show_mix_waveforms, graphs_horizontal;
-  XEN edit_hook;
-  XEN undo_hook;
-  XEN cursor_proc;
-  XEN after_edit_hook;
-  XEN properties;
+  Xen edit_hook;
+  Xen undo_hook;
+  Xen cursor_proc;
+  Xen after_edit_hook;
+  Xen properties;
   int cursor_proc_loc, edit_hook_loc, undo_hook_loc, after_edit_hook_loc, properties_loc;
   bool selection_visible;
   channel_state_t active;
@@ -374,7 +374,7 @@ typedef struct snd_info {
   char *filename;
   char *short_filename;
   int nchans;
-  XEN properties;
+  Xen properties;
   int properties_loc;
   bool remembering;
   read_only_t user_read_only, file_read_only;
@@ -428,9 +428,9 @@ typedef struct snd_state {
   int channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title, *startup_errors;
-  XEN search_proc;
+  Xen search_proc;
   int file_sorters_size, file_filters_size;
-  XEN file_sorters, file_filters;
+  Xen file_sorters, file_filters;
   int search_proc_loc, local_errno, local_open_errno;
   int position_slider_width, zoom_slider_width, toggle_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
   int max_sounds, sound_sync_max;
@@ -570,9 +570,9 @@ typedef struct snd_state {
 #endif
 
   bool tracking;
-  XEN cursor_proc;
+  Xen cursor_proc;
   int cursor_proc_loc, listener_prompt_length;
-  XEN zoom_focus_proc;
+  Xen zoom_focus_proc;
   int zoom_focus_proc_loc;
   mus_float_t lin_dB;
   char *io_error_info;
@@ -596,11 +596,11 @@ typedef struct snd_state {
 #if HAVE_GL && WITH_GL2PS
   bool gl_printing;
 #endif
-  XEN mus_error_hook;
-  XEN snd_error_hook; 
-  XEN snd_warning_hook; 
-  XEN snd_open_file_hook;
-  XEN effects_hook;
+  Xen mus_error_hook;
+  Xen snd_error_hook; 
+  Xen snd_warning_hook; 
+  Xen snd_open_file_hook;
+  Xen effects_hook;
 
 #if USE_MOTIF
   XtAppContext mainapp;     
@@ -815,8 +815,8 @@ void insert_file_dialog_help(void);
 void save_as_dialog_help(void);
 char* word_wrap(const char *text, int widget_len);
 void g_init_help(void);
-XEN g_snd_help_with_search(XEN text, int widget_wid, bool search);
-XEN g_snd_help(XEN text, int widget_wid);
+Xen g_snd_help_with_search(Xen text, int widget_wid, bool search);
+Xen g_snd_help(Xen text, int widget_wid);
 const char *snd_url(const char *name);
 void set_html_dir(char *new_dir);
 void key_help(void);
@@ -967,12 +967,12 @@ void *sound_store_marks(snd_info *sp);
 void sound_restore_marks(snd_info *sp, void *marks);
 mus_long_t mark_id_to_sample(int id);
 
-XEN new_xen_mark(int n);
-bool xen_is_mark(XEN obj);
-int xen_mark_to_int(XEN n);
-#define XEN_MARK_TO_C_INT(n) xen_mark_to_int(n)
-XEN g_mark_sync(XEN mark_n);
-XEN g_set_mark_sync(XEN mark_n, XEN sync_n);
+Xen new_xen_mark(int n);
+bool xen_is_mark(Xen obj);
+int xen_mark_to_int(Xen n);
+#define Xen_mark_to_C_int(n) xen_mark_to_int(n)
+Xen g_mark_sync(Xen mark_n);
+Xen g_set_mark_sync(Xen mark_n, Xen sync_n);
  
 
 
@@ -1050,13 +1050,13 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
 bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
 bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin);
 mus_float_t chn_sample(mus_long_t samp, chan_info *cp, int pos);
-void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length);
+void check_saved_temp_file(const char *type, Xen filename, Xen date_and_length);
 bool is_editable(chan_info *cp);
-file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller);
+file_delete_t xen_to_file_delete_t(Xen auto_delete, const char *caller);
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sampler_to_string(snd_fd *fd);
-bool is_sampler(XEN obj);
-snd_fd *xen_to_sampler(XEN obj);
+bool is_sampler(Xen obj);
+snd_fd *xen_to_sampler(Xen obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 bool scale_channel(chan_info *cp, mus_float_t scaler, mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit);
 bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit, const char *origin);
@@ -1106,7 +1106,7 @@ bool virtual_mix_ok(chan_info *cp, int edpos);
 bool begin_mix_op(chan_info *cp, mus_long_t old_beg, mus_long_t old_len, mus_long_t new_beg, mus_long_t new_len, int edpos, const char *caller);
 void end_mix_op(chan_info *cp, mus_long_t old_beg, mus_long_t old_len);
 void prepare_sound_list(chan_info *cp);
-XEN g_sampler_file_name(XEN obj);
+Xen g_sampler_file_name(Xen obj);
 char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos);
 vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_float_t *buf, snd_fd *reader);
 vct *samples_to_vct_with_reader(mus_long_t len, mus_float_t *buf, snd_fd *reader);
@@ -1146,11 +1146,11 @@ int max_transform_type(void);
 void set_transform_position(int i, int j);
 bool is_transform(int type);
 
-XEN new_xen_transform(int n);
-bool xen_is_transform(XEN obj);
-int xen_transform_to_int(XEN n);
-#define C_INT_TO_XEN_TRANSFORM(Val) new_xen_transform(Val)
-#define XEN_TRANSFORM_TO_C_INT(n) xen_transform_to_int(n)
+Xen new_xen_transform(int n);
+bool xen_is_transform(Xen obj);
+int xen_transform_to_int(Xen n);
+#define C_int_to_Xen_transform(Val) new_xen_transform(Val)
+#define Xen_transform_to_C_int(n) xen_transform_to_int(n)
 
 
 
@@ -1159,26 +1159,26 @@ int xen_transform_to_int(XEN n);
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data);
-XEN snd_catch_any(Xen_catch_t body, void *body_data, const char *caller);
-XEN snd_throw(XEN key, XEN args);
-XEN snd_no_such_file_error(const char *caller, XEN filename);
-XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn);
-XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc);
-XEN snd_no_active_selection_error(const char *caller);
+Xen snd_catch_any(Xen_catch_t body, void *body_data, const char *caller);
+Xen snd_throw(Xen key, Xen args);
+Xen snd_no_such_file_error(const char *caller, Xen filename);
+Xen snd_no_such_channel_error(const char *caller, Xen snd, Xen chn);
+Xen snd_bad_arity_error(const char *caller, Xen errstr, Xen proc);
+Xen snd_no_active_selection_error(const char *caller);
 void g_xen_initialize(void);
-XEN eval_str_wrapper(void *data);
-XEN g_c_make_sampler(snd_fd *fd);
-char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
-bool procedure_arity_ok(XEN proc, int args);
-int snd_protect(XEN obj);
+Xen eval_str_wrapper(void *data);
+Xen g_c_make_sampler(snd_fd *fd);
+char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name, int argn);
+bool procedure_arity_ok(Xen proc, int args);
+int snd_protect(Xen obj);
 void snd_unprotect_at(int loc);
 
-XEN run_or_hook(XEN hook, XEN args, const char *caller);
-XEN run_progn_hook(XEN hook, XEN args, const char *caller);
-XEN run_hook(XEN hook, XEN args, const char *caller);
+Xen run_or_hook(Xen hook, Xen args, const char *caller);
+Xen run_progn_hook(Xen hook, Xen args, const char *caller);
+Xen run_hook(Xen hook, Xen args, const char *caller);
 void check_features_list(const char *features);
 #if (!USE_NO_GUI)
-  mus_float_t check_color_range(const char *caller, XEN val);
+  mus_float_t check_color_range(const char *caller, Xen val);
 #endif
 void set_basic_color(color_t color);
 void set_highlight_color(color_t color);
@@ -1195,12 +1195,12 @@ char *output_comment(file_info *hdr);
 void snd_load_init_file(bool nog, bool noi);
 void snd_load_file(const char *filename);
 void snd_display_result(const char *str, const char *endstr);
-void snd_report_result(XEN result, const char *buf);
-void snd_report_listener_result(XEN form);
+void snd_report_result(Xen result, const char *buf);
+void snd_report_listener_result(Xen form);
 void snd_eval_stdin_str(const char *buf);
 void clear_stdin(void);
 #if HAVE_RUBY
-  void snd_rb_raise(XEN type, XEN info);
+  void snd_rb_raise(Xen type, Xen info);
 #endif
 bool is_source_file(const char *name);
 void save_added_source_file_extensions(FILE *fd);
@@ -1241,11 +1241,11 @@ void add_selection_or_region(int reg, chan_info *cp);
 void insert_selection_from_menu(void);
 void cancel_selection_watch(void);
 void show_selection(void);
-bool xen_is_selection(XEN obj);
-XEN g_selection_chans(void);
-XEN g_selection_srate(void);
-XEN g_selection_maxamp(XEN snd, XEN chn);
-XEN g_selection_frames(XEN snd, XEN chn);
+bool xen_is_selection(Xen obj);
+Xen g_selection_chans(void);
+Xen g_selection_srate(void);
+Xen g_selection_maxamp(Xen snd, Xen chn);
+Xen g_selection_frames(Xen snd, Xen chn);
 
 void g_init_selection(void);
   
@@ -1282,17 +1282,17 @@ void for_each_region_chan_with_refint(void (*func)(chan_info *ncp, int *val), in
 mus_long_t region_current_location(snd_fd *fd);
 char *region_description(int rg);
 
-XEN new_xen_region(int n);
-bool xen_is_region(XEN obj);
-int xen_region_to_int(XEN n);
-#define C_INT_TO_XEN_REGION(Val) new_xen_region(Val)
-#define XEN_REGION_TO_C_INT(n) xen_region_to_int(n)
-XEN g_region_srate(XEN n);
-XEN g_region_chans(XEN n);
-XEN g_region_frames(XEN n, XEN chan);
-XEN g_region_maxamp(XEN n);
-XEN g_play_region(XEN n, play_process_t back, XEN stop_proc);
-XEN g_region_to_vct(XEN reg_n, XEN beg_n, XEN num, XEN chn_n, XEN v);
+Xen new_xen_region(int n);
+bool xen_is_region(Xen obj);
+int xen_region_to_int(Xen n);
+#define C_int_to_Xen_region(Val) new_xen_region(Val)
+#define Xen_region_to_C_int(n) xen_region_to_int(n)
+Xen g_region_srate(Xen n);
+Xen g_region_chans(Xen n);
+Xen g_region_frames(Xen n, Xen chan);
+Xen g_region_maxamp(Xen n);
+Xen g_play_region(Xen n, play_process_t back, Xen stop_proc);
+Xen g_region_to_vct(Xen reg_n, Xen beg_n, Xen num, Xen chn_n, Xen v);
 
 
 
@@ -1338,9 +1338,9 @@ env *position_to_env(int pos);
 enved_fft *free_enved_fft(enved_fft *ef);
 void reflect_enved_fft_change(chan_info *cp);
 
-XEN env_to_xen(env *e);
-env *xen_to_env(XEN res);
-env *get_env(XEN e, const char *origin);
+Xen env_to_xen(env *e);
+env *xen_to_env(Xen res);
+env *get_env(Xen e, const char *origin);
 void g_init_env(void);
 
 
@@ -1353,12 +1353,12 @@ void stop_playing_sound_no_toggle(snd_info *sp, play_stop_t reason);
 void stop_playing_all_sounds(play_stop_t reason);
 void stop_playing_region(int n, play_stop_t reason);
 void play_region(int n, play_process_t background);
-void play_region_1(int region, play_process_t background, XEN stop_proc);
+void play_region_1(int region, play_process_t background, Xen stop_proc);
 void play_channel(chan_info *cp, mus_long_t start, mus_long_t end);
 void play_channel_with_sync(chan_info *cp, mus_long_t start, mus_long_t end);
 void play_sound(snd_info *sp, mus_long_t start, mus_long_t end);
 void play_channels(chan_info **cps, int chans, mus_long_t *starts, mus_long_t *ur_ends, 
-		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos);
+		   play_process_t background, Xen edpos, bool selection, const char *caller, int arg_pos);
 void play_selection(play_process_t background);
 void loop_play_selection(void);
 bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix, bool start_playing);
@@ -1372,10 +1372,10 @@ mus_float_t *sample_linear_env(env *e, int order);
 void g_init_dac(void);
 void clear_players(void);
 
-bool xen_is_player(XEN obj);
+bool xen_is_player(Xen obj);
 #define IS_PLAYER_SOUND(Sp) ((Sp) && ((Sp)->index < 0))
-snd_info *get_player_sound(XEN player);
-XEN no_such_player_error(const char *caller, XEN player);
+snd_info *get_player_sound(Xen player);
+Xen no_such_player_error(const char *caller, Xen player);
 
 void dac_set_expand(snd_info *sp, mus_float_t newval);
 void dac_set_expand_length(snd_info *sp, mus_float_t newval);
@@ -1390,7 +1390,7 @@ void dac_set_reverb_lowpass(snd_info *sp, mus_float_t newval);
 /* -------- snd-chn.c -------- */
 
 bool is_graph_style(int grf);
-chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
+chan_info *get_cp(Xen snd_n, Xen chn_n, const char *caller);
 snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t with_arrows, 
 				      graph_style_t grf_style, widget_t container, bool with_events);
 axis_info *lisp_info_axis(chan_info *cp);
@@ -1465,7 +1465,7 @@ void draw_inset_line_cursor(chan_info *cp, graphics_context *ax);
 void make_sonogram(chan_info *cp);
 
 void g_init_chn(void);
-XEN make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t hisamp);
+Xen make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t hisamp);
 void draw_graph_data(chan_info *cp, mus_long_t losamp, mus_long_t hisamp, int data_size, mus_float_t *data, mus_float_t *data1, graphics_context *ax, graph_style_t style);
 
 void fftb(chan_info *cp, bool on);
@@ -1487,7 +1487,7 @@ void set_graph_style(graph_style_t val);
 void set_show_marks(bool val);
 void set_show_y_zero(bool val);
 
-XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos);
+Xen g_frames(Xen snd_n, Xen chn_n, Xen edpos);
 void check_cursor_shape(chan_info *cp, int x, int y);
 widget_t channel_to_widget(chan_info *cp);
 chan_info *channel_to_chan(chan_info *cp);
@@ -1526,7 +1526,7 @@ void set_numbers_font(graphics_context *ax, printing_t printing, bool use_tiny_f
 
 /* -------- snd-snd.c -------- */
 
-snd_info *get_sp(XEN snd_n);
+snd_info *get_sp(Xen snd_n);
 peak_env_info *free_peak_env(chan_info *cp, int pos);
 void free_peak_env_state(chan_info *cp);
 peak_env_info *free_peak_env_info(peak_env_info *ep);
@@ -1574,7 +1574,7 @@ void printout_to_status_area(const char *msg, void *data);
 void clear_status_area(snd_info *sp);;
 
 void g_init_snd(void);
-XEN snd_no_such_sound_error(const char *caller, XEN n);
+Xen snd_no_such_sound_error(const char *caller, Xen n);
 
 void peak_env_scale_by(chan_info *cp, mus_float_t scl, int pos);
 void peak_env_scale_selection_by(chan_info *cp, mus_float_t scl, mus_long_t beg, mus_long_t num, int pos);
@@ -1583,11 +1583,11 @@ peak_env_info *peak_env_section(chan_info *cp, mus_long_t beg, mus_long_t num, i
 void pick_one_bin(peak_env_info *ep, int bin, mus_long_t cursamp, chan_info *cp, int edpos);
 void set_channel_style(channel_style_t val);
 
-XEN new_xen_sound(int n);
-bool xen_is_sound(XEN obj);
-int xen_sound_to_int(XEN n);
-#define C_INT_TO_XEN_SOUND(Val) new_xen_sound(Val)
-#define XEN_SOUND_TO_C_INT(n) xen_sound_to_int(n)
+Xen new_xen_sound(int n);
+bool xen_is_sound(Xen obj);
+int xen_sound_to_int(Xen n);
+#define C_int_to_Xen_sound(Val) new_xen_sound(Val)
+#define Xen_sound_to_C_int(n) xen_sound_to_int(n)
 
 const char *read_peak_env_info_file(chan_info *cp);
 bool write_peak_env_info_file(chan_info *cp);
@@ -1637,7 +1637,7 @@ void set_with_toolbar_and_display(bool val);
 void g_init_file(void);
 void initialize_format_lists(void);
 void set_with_menu_icons(bool val);
-XEN g_expand_vector(XEN vector, int new_size);
+Xen g_expand_vector(Xen vector, int new_size);
 
 
 
@@ -1692,7 +1692,7 @@ void listener_begin_hook(s7_scheme *sc, bool *val);
 #endif
 void set_listener_prompt(const char *new_prompt);
 bool listener_is_visible(void);
-XEN run_read_hook(char *str);
+Xen run_read_hook(char *str);
 bool have_read_hook(void);
 
 
@@ -1721,17 +1721,17 @@ void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp);
 int mix_sync_from_id(int id);
 int mix_set_sync_from_id(int id, int new_sync);
 void set_mix_waveform_height(int new_val);
-XEN new_xen_mix(int n);
-XEN g_make_mix_sampler(XEN mix_id, XEN ubeg);
-bool xen_is_mix(XEN obj);
-snd_fd *xen_mix_to_snd_fd(XEN obj);
-int xen_mix_to_int(XEN n);
-#define XEN_MIX_TO_C_INT(n) xen_mix_to_int(n)
-XEN g_mix_length(XEN n);
-XEN g_mix_sync(XEN n);
-XEN g_set_mix_sync(XEN n, XEN val);
-XEN g_mix_maxamp(XEN mix_id);
-XEN g_mix_to_vct(XEN mix_n, XEN beg_n, XEN num);
+Xen new_xen_mix(int n);
+Xen g_make_mix_sampler(Xen mix_id, Xen ubeg);
+bool xen_is_mix(Xen obj);
+snd_fd *xen_mix_to_snd_fd(Xen obj);
+int xen_mix_to_int(Xen n);
+#define Xen_mix_to_C_int(n) xen_mix_to_int(n)
+Xen g_mix_length(Xen n);
+Xen g_mix_sync(Xen n);
+Xen g_set_mix_sync(Xen n, Xen val);
+Xen g_mix_maxamp(Xen mix_id);
+Xen g_mix_to_vct(Xen mix_n, Xen beg_n, Xen num);
  
 mus_long_t mix_position_from_id(int id);
 mus_long_t mix_length_from_id(int id);
@@ -1772,12 +1772,12 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
 int mix_complete_file_at_cursor(snd_info *sp, const char *str);
 int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan);
 
-bool is_mix_sampler(XEN obj);
-XEN g_copy_mix_sampler(XEN obj);
-XEN g_mix_sampler_home(XEN obj);
-XEN g_mix_sampler_is_at_end(XEN obj);
-XEN g_mix_sampler_position(XEN obj);
-XEN g_free_mix_sampler(XEN obj);
+bool is_mix_sampler(Xen obj);
+Xen g_copy_mix_sampler(Xen obj);
+Xen g_mix_sampler_home(Xen obj);
+Xen g_mix_sampler_is_at_end(Xen obj);
+Xen g_mix_sampler_position(Xen obj);
+Xen g_free_mix_sampler(Xen obj);
 char *edit_list_mix_init(chan_info *cp);
 void channel_set_mix_tags_erased(chan_info *cp);
 void color_mixes(color_t color);
@@ -1789,7 +1789,7 @@ int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided);
 void display_channel_mixes(chan_info *cp);
 
 bool play_mix_from_id(int mix_id);
-XEN g_play_mix(XEN num, mus_long_t beg);
+Xen g_play_mix(Xen num, mus_long_t beg);
 void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
 
 
@@ -1817,10 +1817,10 @@ void g_init_base(void);
 /* -------- snd-kbd.c -------- */
 
 int in_keymap(int key, int state, bool cx_extended);
-void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info);
+void set_keymap_entry(int key, int state, int args, Xen func, bool cx_extended, const char *origin, const char *prefs_info);
 char *key_description(int key, int state, bool cx_extended);
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
-void map_over_keys(bool (*func)(int key, int state, bool cx, XEN xf));
+void map_over_keys(bool (*func)(int key, int state, bool cx, Xen xf));
 key_info *find_prefs_key(const char *prefs_name);
 
 void save_edits_from_kbd(snd_info *sp);
@@ -1834,11 +1834,11 @@ void g_init_kbd(void);
 void scale_by(chan_info *cp, mus_float_t *scalers, int len, bool selection);
 bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *scalers, int len, bool selection);
 void src_env_or_num(chan_info *cp, env *e, mus_float_t ratio, bool just_num, 
-		    const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos);
+		    const char *origin, bool over_selection, mus_any *gen, Xen edpos, int arg_pos);
 void apply_filter(chan_info *ncp, int order, env *e, const char *caller, const char *origin, 
-		  bool over_selection, mus_float_t *ur_a, mus_any *gen, XEN edpos, int arg_pos, bool truncate);
+		  bool over_selection, mus_float_t *ur_a, mus_any *gen, Xen edpos, int arg_pos, bool truncate);
 void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_selection, 
-	       const char *origin, mus_any *gen, XEN edpos, int arg_pos);
+	       const char *origin, mus_any *gen, Xen edpos, int arg_pos);
 void cos_smooth(chan_info *cp, mus_long_t beg, mus_long_t num, bool over_selection);
 void display_frequency_response(env *e, axis_info *ap, graphics_context *gax, int order, bool dBing);
 void cursor_delete(chan_info *cp, mus_long_t count);
@@ -1846,18 +1846,18 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection);
 void cursor_insert(chan_info *cp, mus_long_t beg, mus_long_t count);
 void cut_and_smooth(chan_info *cp);
 void src_file(const char *file, double ratio);
-mus_long_t scan_channel(chan_info *cp, mus_long_t start, mus_long_t end, XEN proc);
+mus_long_t scan_channel(chan_info *cp, mus_long_t start, mus_long_t end, Xen proc);
 
 void g_init_sig(void);
-int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
-mus_long_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
-mus_long_t beg_to_sample(XEN beg, const char *caller);
-mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller);
+int to_c_edit_position(chan_info *cp, Xen edpos, const char *caller, int arg_pos);
+mus_long_t to_c_edit_samples(chan_info *cp, Xen edpos, const char *caller, int arg_pos);
+mus_long_t beg_to_sample(Xen beg, const char *caller);
+mus_long_t dur_to_samples(Xen dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller);
 #if USE_MOTIF
 char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_float_t speed, env *amp_env, bool *err);
 #endif
-XEN g_scale_selection_by(XEN scalers);
-void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos);
+Xen g_scale_selection_by(Xen scalers);
+void reverse_sound(chan_info *ncp, bool over_selection, Xen edpos, int arg_pos);
 
 
 /* -------- snd-draw.c -------- */
@@ -1872,7 +1872,7 @@ void draw_both_grf_points(int dot_size, graphics_context *ax, int j, graph_style
 void g_init_draw(void);
 void set_dialog_widget(snd_dialog_t which, widget_t wid);
 void run_new_widget_hook(widget_t w);
-bool foreground_color_ok(XEN color, graphics_context *ax);
+bool foreground_color_ok(Xen color, graphics_context *ax);
 
 #if HAVE_GL
   void sgl_save_currents(void);

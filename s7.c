@@ -22609,7 +22609,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   port_file_number(port) = remember_file_name(sc, filename);
   push_input_port(sc, port);
   
-  /* it's possible to call this recursively (s7_load is XEN_LOAD_FILE which can be invoked via s7_call)
+  /* it's possible to call this recursively (s7_load is Xen_load_file which can be invoked via s7_call)
    *   but in that case, we actually want it to behave like g_load and continue the evaluation upon completion
    */
   sc->envir = sc->NIL;
@@ -69416,9 +69416,8 @@ int main(int argc, char **argv)
  * Xen_to_float_vector? (for xen_to_vct)
 
 xen_false to Xen_false?
-s/XEN /Xen /
+s/Xen /Xen /
 ulong_int inconsistent
-makegl
 xm by hand
 4251 XEN_* left in *.c
 all internal Snd XEN_ macros

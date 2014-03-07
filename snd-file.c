@@ -165,10 +165,10 @@ char **recent_files(void)
 
 #define INITIAL_FILE_FILTERS_SIZE 4
 
-XEN g_expand_vector(XEN vector, int new_size)
+Xen g_expand_vector(Xen vector, int new_size)
 {
   int i, len;
-  XEN new_vect;
+  Xen new_vect;
   len = Xen_vector_length(vector);
   new_vect = Xen_make_vector(new_size, Xen_false);
   Xen_GC_protect(new_vect);
@@ -178,16 +178,16 @@ XEN g_expand_vector(XEN vector, int new_size)
       Xen_vector_set(vector, i, Xen_false);
     }
 #if HAVE_RUBY || HAVE_FORTH
-  XEN_UNPROTECT_FROM_GC(vector);
+  Xen_GC_unprotect(vector);
 #endif
   return(new_vect);
 }
 
 
-static bool file_filter_ok(XEN name, XEN proc, const char *caller)
+static bool file_filter_ok(Xen name, Xen proc, const char *caller)
 {
   char *errmsg;
-  XEN errstr;
+  Xen errstr;
   Xen_check_type(Xen_is_string(name), name, 1, caller, "a string");   
   Xen_check_type(Xen_is_procedure(proc), proc, 2, caller, "a procedure of 1 arg (filename)");
   errmsg = procedure_ok(proc, 1, caller, "function", 2);
@@ -202,7 +202,7 @@ static bool file_filter_ok(XEN name, XEN proc, const char *caller)
 }
 
 
-static XEN g_add_file_filter(XEN name, XEN proc)
+static Xen g_add_file_filter(Xen name, Xen proc)
 {
   #define H_add_file_filter "(" S_add_file_filter " name proc) -- add proc with identifier name to file filter list. \n\
   (add-file-filter \"just .snd\" \n\
@@ -231,7 +231,7 @@ static XEN g_add_file_filter(XEN name, XEN proc)
 }
 
 
-static XEN g_delete_file_filter(XEN index)
+static Xen g_delete_file_filter(Xen index)
 {
   #define H_delete_file_filter "(" S_delete_file_filter " index) -- delete proc with identifier index from file filter list"
   int pos;
@@ -244,7 +244,7 @@ static XEN g_delete_file_filter(XEN index)
       /* in the gtk case, the function might be in use anyway, so we need to protect it */
       if (Xen_is_list(Xen_vector_ref(ss->file_filters, pos)))
 	Xen_GC_protect(Xen_cadr(Xen_vector_ref(ss->file_filters, pos)));
-      /* in ruby XEN_PROTECT_FROM_GC takes the address of the arg, so we need a variable or something */
+      /* in ruby Xen_GC_protect takes the address of the arg, so we need a variable or something */
 #endif
       Xen_vector_set(ss->file_filters, pos, Xen_false);
     }
@@ -380,7 +380,7 @@ dir_info *find_files_in_dir(const char *name)
 }
 
 
-static XEN filter_func;
+static Xen filter_func;
 
 static bool filter_xen(const char *name)
 {
@@ -807,11 +807,11 @@ static file_info *translate_file(const char *filename, int type)
 }
 
 
-static XEN open_raw_sound_hook;
+static Xen open_raw_sound_hook;
 
 static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bool selected)
 {
-  XEN res = Xen_false;
+  Xen res = Xen_false;
   int res_loc = NOT_A_GC_LOC;
   int len, srate, chans, data_format;
   mus_long_t data_location, bytes;
@@ -827,7 +827,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 #if HAVE_SCHEME
       res = s7_call(s7, open_raw_sound_hook, s7_list(s7, 2, C_string_to_Xen_string(fullname), Xen_false)); /* state = #f? */
 #else
-      XEN arg1, procs;
+      Xen arg1, procs;
       procs = Xen_hook_list(open_raw_sound_hook);
       arg1 = C_string_to_Xen_string(fullname);
       while (!Xen_is_null(procs))
@@ -852,7 +852,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       if (len > 1) srate = Xen_integer_to_C_int(Xen_cadr(res));
       if (len > 2) 
 	{
-	  XEN df;
+	  Xen df;
 	  df = Xen_list_ref(res, 2);
 	  data_format = Xen_integer_to_C_int(df);
 	}
@@ -916,7 +916,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 #endif
 
 
-static XEN bad_header_hook;
+static Xen bad_header_hook;
 
 static file_info *tackle_bad_header(const char *fullname, read_only_t read_only, bool selected)
 {
@@ -1123,13 +1123,13 @@ static void remember_sound_file(snd_info *sp)
 }
 
 
-static XEN snd_opened_sound;
-static XEN open_hook;
-static XEN close_hook;
-static XEN before_close_hook;
-static XEN during_open_hook;
-static XEN after_open_hook;
-static XEN output_name_hook;
+static Xen snd_opened_sound;
+static Xen open_hook;
+static Xen close_hook;
+static Xen before_close_hook;
+static Xen during_open_hook;
+static Xen after_open_hook;
+static Xen output_name_hook;
 
 void during_open(int fd, const char *file, open_reason_t reason)
 {
@@ -1170,7 +1170,7 @@ void after_open(snd_info *sp)
 
   if (Xen_hook_has_list(after_open_hook))
     run_hook(after_open_hook,
-	     Xen_list_1(C_INT_TO_XEN_SOUND(sp->index)),
+	     Xen_list_1(C_int_to_Xen_sound(sp->index)),
 	     S_after_open_hook);
 
   if (Xen_hook_has_list(ss->snd_open_file_hook))
@@ -1188,13 +1188,13 @@ char *output_name(const char *current_name)
   if (Xen_hook_has_list(output_name_hook))
     {
 #if HAVE_SCHEME
-      XEN result;
+      Xen result;
       result = s7_call(s7, output_name_hook, s7_cons(s7, C_string_to_Xen_string(current_name), Xen_empty_list));
       if (Xen_is_string(result)) 
 	return(mus_strdup(Xen_string_to_C_string(result)));
 #else      
-      XEN result, fname, procs;
-      procs = XEN_HOOK_PROCEDURES (output_name_hook);
+      Xen result, fname, procs;
+      procs = Xen_hook_list(output_name_hook);
       fname = C_string_to_Xen_string(current_name);
       while (!Xen_is_null(procs))
 	{
@@ -1203,7 +1203,7 @@ char *output_name(const char *current_name)
 			      S_output_name_hook);
 	  if (Xen_is_string(result)) 
 	    return(mus_strdup(Xen_string_to_C_string(result)));
-	  procs = XEN_CDR (procs);
+	  procs = Xen_cdr(procs);
 	}
 #endif
     }
@@ -1216,11 +1216,11 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
   if (sp)
     {
 #if HAVE_RUBY || HAVE_FORTH
-      Xen_variable_set(S_snd_opened_sound, C_INT_TO_XEN_SOUND(sp->index));
+      Xen_variable_set(S_snd_opened_sound, C_int_to_Xen_sound(sp->index));
 #endif
 
 #if HAVE_SCHEME
-      Xen_variable_set(snd_opened_sound, C_INT_TO_XEN_SOUND(sp->index));
+      Xen_variable_set(snd_opened_sound, C_int_to_Xen_sound(sp->index));
 #endif
       sp->write_date = file_write_date(sp->filename); /* redundant (see snd-xsnd.c) */
       sp->need_update = false;
@@ -1270,8 +1270,8 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
   mcf = mus_expand_filename(filename);
   if (Xen_hook_has_list(open_hook))
     {
-      XEN res = Xen_false;
-      XEN fstr;
+      Xen res = Xen_false;
+      Xen fstr;
       fstr = C_string_to_Xen_string(mcf);
       res = run_or_hook(open_hook,
 			Xen_list_1(fstr),
@@ -1308,13 +1308,13 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
 void snd_close_file(snd_info *sp)
 {
   int i;
-  XEN res = Xen_false;
+  Xen res = Xen_false;
   snd_info *chosen_sp = NULL;
 
   /* before-close-hook can cancel the close, whereas close-hook can't */
   if (Xen_hook_has_list(before_close_hook))
     res = run_or_hook(before_close_hook,
-		      Xen_list_1(C_INT_TO_XEN_SOUND(sp->index)),
+		      Xen_list_1(C_int_to_Xen_sound(sp->index)),
 		      S_before_close_hook);
   if (Xen_is_true(res)) return;
 
@@ -1334,7 +1334,7 @@ void snd_close_file(snd_info *sp)
 
   if (Xen_hook_has_list(close_hook))
     run_hook(close_hook,
-	     Xen_list_1(C_INT_TO_XEN_SOUND(sp->index)),
+	     Xen_list_1(C_int_to_Xen_sound(sp->index)),
 	     S_close_hook);
 
   if (remember_sound_state(ss))
@@ -1735,7 +1735,7 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
 }
 
 
-static XEN update_hook;
+static Xen update_hook;
 
 snd_info *snd_update(snd_info *sp)
 {
@@ -1752,7 +1752,7 @@ snd_info *snd_update(snd_info *sp)
   struct ctrl_state *saved_controls;
   mus_long_t *old_cursors;
   void *old_file_watcher;
-  XEN update_hook_result = Xen_false;
+  Xen update_hook_result = Xen_false;
   const char *ur_filename;
   int app_x, app_y;
 
@@ -1786,14 +1786,14 @@ snd_info *snd_update(snd_info *sp)
     {
       /* #t => return without updating (not recommended!!), proc of 1 arg will be evaluated after update is complete */
       update_hook_result = run_or_hook(update_hook, 
-				       Xen_list_1(C_INT_TO_XEN_SOUND(sp->index)),
+				       Xen_list_1(C_int_to_Xen_sound(sp->index)),
 				       S_update_hook);
       if (Xen_is_true(update_hook_result)) return(sp);
       if (Xen_is_procedure(update_hook_result))
 	{
 	  if (Xen_is_aritable(update_hook_result, 1))
 	    gc_loc = snd_protect(update_hook_result);
-	  else XEN_BAD_ARITY_ERROR(S_update_hook, 0, update_hook_result, S_update_hook " function result should require 1 arg");
+	  else Xen_bad_arity_error(S_update_hook, 0, update_hook_result, S_update_hook " function result should require 1 arg");
 	}
     }
 
@@ -1905,7 +1905,7 @@ snd_info *snd_update(snd_info *sp)
   if (Xen_is_procedure(update_hook_result))
     {
       Xen_call_with_1_arg(update_hook_result,
-		 (nsp) ? C_INT_TO_XEN_SOUND(nsp->index) : Xen_false,
+		 (nsp) ? C_int_to_Xen_sound(nsp->index) : Xen_false,
 		 "procedure returned by " S_update_hook);
       if (gc_loc != NOT_A_GC_LOC) snd_unprotect_at(gc_loc);
     }
@@ -1960,7 +1960,7 @@ snd_info *snd_update_within_xen(snd_info *sp, const char *caller)
 }
 
 
-static XEN after_save_as_hook;
+static Xen after_save_as_hook;
 
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog)
 {
@@ -1970,7 +1970,7 @@ void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, boo
       char *fullname;
       fullname = mus_expand_filename(already_saved_as_name);
       run_progn_hook(after_save_as_hook,
-		     Xen_list_3((sp) ? C_INT_TO_XEN_SOUND(sp->index) : Xen_false,
+		     Xen_list_3((sp) ? C_int_to_Xen_sound(sp->index) : Xen_false,
 				C_string_to_Xen_string(fullname),
 				C_bool_to_Xen_boolean(from_save_as_dialog)),
 		     S_after_save_as_hook);
@@ -1979,7 +1979,7 @@ void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, boo
 }
 
 
-static XEN before_save_as_hook;
+static Xen before_save_as_hook;
 static bool before_save_as_hook_active = false;
 
 bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, const char *comment)
@@ -1988,10 +1988,10 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
   if (before_save_as_hook_active) return(false);
   if (Xen_hook_has_list(before_save_as_hook))
     {
-      XEN result = Xen_false;
+      Xen result = Xen_false;
       before_save_as_hook_active = true;
       result = run_progn_hook(before_save_as_hook,
-			      Xen_list_7((sp) ? C_INT_TO_XEN_SOUND(sp->index) : Xen_false,
+			      Xen_list_7((sp) ? C_int_to_Xen_sound(sp->index) : Xen_false,
 					 C_string_to_Xen_string(save_as_filename),
 					 C_bool_to_Xen_boolean(selection),
 					 C_int_to_Xen_integer(srate),
@@ -2819,7 +2819,7 @@ char *dialog_get_title(widget_t dialog)
 
 /* -------- info popup -------- */
 
-static XEN info_popup_hook;
+static Xen info_popup_hook;
 
 #if (!USE_NO_GUI)
 
@@ -2888,17 +2888,17 @@ void display_info(snd_info *sp)
       /* run info-popup-hook, appending each string */
       if (Xen_hook_has_list(info_popup_hook))
 	{
-	  XEN result;
+	  Xen result;
 #if HAVE_SCHEME
-	  result = s7_call(s7, info_popup_hook, s7_cons(s7, C_INT_TO_XEN_SOUND(sp->index), Xen_empty_list));
+	  result = s7_call(s7, info_popup_hook, s7_cons(s7, C_int_to_Xen_sound(sp->index), Xen_empty_list));
 	  if (Xen_is_string(result))
 	    post_it_append(Xen_string_to_C_string(result));
 #else
-	  XEN procs;
+	  Xen procs;
 	  procs = Xen_hook_list(info_popup_hook);
 	  while (!Xen_is_null(procs))
 	    {
-	      result = Xen_call_with_1_arg(Xen_car(procs), C_INT_TO_XEN_SOUND(sp->index), S_info_popup_hook);
+	      result = Xen_call_with_1_arg(Xen_car(procs), C_int_to_Xen_sound(sp->index), S_info_popup_hook);
 	      if (Xen_is_string(result))
 		post_it_append(Xen_string_to_C_string(result));
 	      procs = Xen_cdr(procs);
@@ -2971,7 +2971,7 @@ void display_info(snd_info *sp)
 /* -------- extlang connections -------- */
 
 
-static XEN g_add_sound_file_extension(XEN ext)
+static Xen g_add_sound_file_extension(Xen ext)
 {
   #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext):  add the file extension 'ext' to the list of sound file extensions"
   Xen_check_type(Xen_is_string(ext), ext, 1, S_add_sound_file_extension, "a string");
@@ -2980,12 +2980,12 @@ static XEN g_add_sound_file_extension(XEN ext)
 }
 
 
-static XEN g_sound_file_extensions(void)
+static Xen g_sound_file_extensions(void)
 {
   #define H_sound_file_extensions "(" S_sound_file_extensions "): list of current sound file extensions (used \
 by the just-sounds file filters)"
 
-  XEN res = Xen_empty_list;
+  Xen res = Xen_empty_list;
   int i;
   for (i = 0; i < sound_file_extensions_end; i++)
     res = Xen_cons(C_string_to_Xen_string(sound_file_extensions[i]),
@@ -2994,7 +2994,7 @@ by the just-sounds file filters)"
 }
 
 
-static XEN g_set_sound_file_extensions(XEN lst)
+static Xen g_set_sound_file_extensions(Xen lst)
 {
   int i, len;
   for (i = 0; i < sound_file_extensions_end; i++)
@@ -3018,7 +3018,7 @@ static XEN g_set_sound_file_extensions(XEN lst)
 }
 
 
-static XEN g_file_write_date(XEN file)
+static Xen g_file_write_date(Xen file)
 {
   #if HAVE_RUBY
     #define write_date_equivalent "Equivalent to Ruby's File.mtime(file)"
@@ -3047,7 +3047,7 @@ current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (" S_file_write_dat
 }
 
 
-static XEN g_sound_loop_info(XEN snd)
+static Xen g_sound_loop_info(Xen snd)
 {
   #define H_sound_loop_info "(" S_sound_loop_info " :optional snd): return the sound's loop points as a \
 list: (sustain-start sustain-end release-start release-end baseNote detune)"
@@ -3066,17 +3066,17 @@ list: (sustain-start sustain-end release-start release-end baseNote detune)"
 }
 
 
-static XEN g_set_sound_loop_info(XEN snd, XEN vals)
+static Xen g_set_sound_loop_info(Xen snd, Xen vals)
 {
   snd_info *sp;
   char *tmp_file;
   file_info *hdr;
   int type, len = 0;
   
-  XEN start0 = Xen_integer_zero, end0 = Xen_integer_zero; 
-  XEN start1 = Xen_integer_zero, end1 = Xen_integer_zero; 
-  XEN mode0 = Xen_integer_zero, mode1 = Xen_integer_zero;
-  XEN note = Xen_integer_zero, detune = Xen_integer_zero;
+  Xen start0 = Xen_integer_zero, end0 = Xen_integer_zero; 
+  Xen start1 = Xen_integer_zero, end1 = Xen_integer_zero; 
+  Xen mode0 = Xen_integer_zero, mode1 = Xen_integer_zero;
+  Xen note = Xen_integer_zero, detune = Xen_integer_zero;
   Xen_check_type((!Xen_is_bound(vals)) || (Xen_is_list(vals)), vals, 2, S_setB S_sound_loop_info, "a list");
 
   if (!Xen_is_bound(vals))
@@ -3219,13 +3219,13 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 }
 
 
-static XEN g_soundfont_info(XEN snd)
+static Xen g_soundfont_info(Xen snd)
 {
   /* return all soundfont descriptors as list of lists: ((name start loopstart loopend)) */
   #define H_soundfont_info "(" S_soundfont_info " :optional snd): list of lists describing snd as a soundfont. \
 each inner list has the form: (name start loopstart loopend)"
 
-  XEN outlist = Xen_empty_list;
+  Xen outlist = Xen_empty_list;
   snd_info *sp;
   ASSERT_SOUND(S_soundfont_info, snd, 1);
   sp = get_sp(snd);
@@ -3239,7 +3239,7 @@ each inner list has the form: (name start loopstart loopend)"
       if (lim > 0)
 	for (i = lim - 1; i >= 0; i--)
 	  {
-	    XEN inlist;
+	    Xen inlist;
 	    inlist = Xen_list_4(C_string_to_Xen_string(mus_header_sf2_name(i)),
 			        C_int_to_Xen_integer(mus_header_sf2_start(i)),
 			        C_int_to_Xen_integer(mus_header_sf2_loop_start(i)),
@@ -3257,11 +3257,11 @@ dir_info *find_sound_files_in_dir(const char *name)
 }
 
 
-static XEN g_sound_files_in_directory(XEN dirname)
+static Xen g_sound_files_in_directory(Xen dirname)
 {
   #define H_sound_files_in_directory "(" S_sound_files_in_directory " :optional (directory \".\")): return a list of the sound files in 'directory'"
   char *name = NULL;
-  XEN res = Xen_empty_list;
+  Xen res = Xen_empty_list;
   Xen_check_type(Xen_is_string_or_unbound(dirname), dirname, 1, S_sound_files_in_directory, "a string");
   if (Xen_is_string(dirname))
     name = mus_expand_filename(Xen_string_to_C_string(dirname));
@@ -3285,7 +3285,7 @@ static XEN g_sound_files_in_directory(XEN dirname)
 
 #define S_disk_kspace "disk-kspace"
 
-static XEN g_disk_kspace(XEN name)
+static Xen g_disk_kspace(Xen name)
 {
   #define H_disk_kspace "(" S_disk_kspace " filename): kbytes of space available on partition containing 'filename'"
   Xen_check_type(Xen_is_string(name), name, 1, S_disk_kspace, "a string");
@@ -3293,85 +3293,85 @@ static XEN g_disk_kspace(XEN name)
 }
 
 
-static XEN g_open_file_dialog(XEN managed)
+static Xen g_open_file_dialog(Xen managed)
 {
   #define H_open_file_dialog "(" S_open_file_dialog " :optional (managed " PROC_TRUE ")): create the file dialog if needed and display it if 'managed'"
   Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_open_file_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_open_file_dialog(FILE_READ_WRITE, (Xen_is_bound(managed)) ? Xen_boolean_to_C_bool(managed) : true)));
+  return(Xen_wrap_widget(make_open_file_dialog(FILE_READ_WRITE, (Xen_is_bound(managed)) ? Xen_boolean_to_C_bool(managed) : true)));
 }
 
 
-static XEN g_mix_file_dialog(XEN managed)
+static Xen g_mix_file_dialog(Xen managed)
 {
   #define H_mix_file_dialog "(" S_mix_file_dialog " :optional (managed " PROC_TRUE ")): create the mix file dialog if needed and display it if 'managed'"
   Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_mix_file_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_mix_file_dialog((Xen_is_bound(managed)) ? Xen_boolean_to_C_bool(managed) : true)));
+  return(Xen_wrap_widget(make_mix_file_dialog((Xen_is_bound(managed)) ? Xen_boolean_to_C_bool(managed) : true)));
 }
 
 
-static XEN g_insert_file_dialog(XEN managed)
+static Xen g_insert_file_dialog(Xen managed)
 {
   #define H_insert_file_dialog "(" S_insert_file_dialog " :optional (managed " PROC_TRUE ")): create the insert file dialog if needed and display it if 'managed'"
   Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_insert_file_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_insert_file_dialog((Xen_is_bound(managed)) ? Xen_boolean_to_C_bool(managed) : true)));
+  return(Xen_wrap_widget(make_insert_file_dialog((Xen_is_bound(managed)) ? Xen_boolean_to_C_bool(managed) : true)));
 }
 
 
-static XEN g_edit_header_dialog(XEN snd_n) 
+static Xen g_edit_header_dialog(Xen snd_n) 
 {
   #define H_edit_header_dialog "(" S_edit_header_dialog " :optional snd): start the Edit Header dialog on sound snd"
   snd_info *sp; 
   sp = get_sp(snd_n);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
-  return(XEN_WRAP_WIDGET(edit_header(sp)));
+  return(Xen_wrap_widget(edit_header(sp)));
 }
 
 
-static XEN g_save_selection_dialog(XEN managed)
+static Xen g_save_selection_dialog(Xen managed)
 {
 #define H_save_selection_dialog "(" S_save_selection_dialog " :optional managed): start the Selection Save-as dialog"
   Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_save_selection_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_selection_save_as_dialog(Xen_boolean_to_C_bool(managed))));
+  return(Xen_wrap_widget(make_selection_save_as_dialog(Xen_boolean_to_C_bool(managed))));
 }
 
 
-static XEN g_save_region_dialog(XEN managed)
+static Xen g_save_region_dialog(Xen managed)
 {
   #define H_save_region_dialog "(" S_save_region_dialog " :optional managed): start the Region Save-as dialog"
   Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_save_region_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_region_save_as_dialog(Xen_boolean_to_C_bool(managed))));
+  return(Xen_wrap_widget(make_region_save_as_dialog(Xen_boolean_to_C_bool(managed))));
 }
 
 
-static XEN g_save_sound_dialog(XEN managed)
+static Xen g_save_sound_dialog(Xen managed)
 {
   #define H_save_sound_dialog "(" S_save_sound_dialog " :optional managed): start the File Save-as dialog"
   Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_save_sound_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_sound_save_as_dialog(Xen_boolean_to_C_bool(managed))));
+  return(Xen_wrap_widget(make_sound_save_as_dialog(Xen_boolean_to_C_bool(managed))));
 }
 
 
-static XEN g_info_dialog(XEN subject, XEN msg)
+static Xen g_info_dialog(Xen subject, Xen msg)
 {
   #define H_info_dialog "(" S_info_dialog " subject message): start the Info window with subject and message"
   Xen_check_type(Xen_is_string(subject), subject, 1, S_info_dialog, "a string");
   Xen_check_type(Xen_is_string(msg), msg, 2, S_info_dialog, "a string");
-  return(XEN_WRAP_WIDGET(post_it(Xen_string_to_C_string(subject), Xen_string_to_C_string(msg))));
+  return(Xen_wrap_widget(post_it(Xen_string_to_C_string(subject), Xen_string_to_C_string(msg))));
 }
 
 
-static XEN g_new_sound_dialog(XEN managed)
+static Xen g_new_sound_dialog(Xen managed)
 {
   #define H_new_sound_dialog "(" S_new_sound_dialog " :optional managed): start the File New sound dialog"
   Xen_check_type(Xen_is_boolean_or_unbound(managed), managed, 1, S_new_sound_dialog, "a boolean");
-  return(XEN_WRAP_WIDGET(make_new_file_dialog(Xen_boolean_to_C_bool(managed))));
+  return(Xen_wrap_widget(make_new_file_dialog(Xen_boolean_to_C_bool(managed))));
 }
 
 
 
 
-static XEN g_is_sound_file(XEN name)
+static Xen g_is_sound_file(Xen name)
 {
   #define H_is_sound_file "(" S_is_sound_file " name): " PROC_TRUE " if name has a known sound file extension"
   Xen_check_type(Xen_is_string(name), name, 1, S_is_sound_file, "a filename");   
@@ -3379,11 +3379,11 @@ static XEN g_is_sound_file(XEN name)
 }
 
 
-static XEN g_snd_tempnam(void) 
+static Xen g_snd_tempnam(void) 
 {
   #define H_snd_tempnam "(" S_snd_tempnam "): return a new temp file name using " S_temp_dir "."
   char *tmp;
-  XEN res;
+  Xen res;
   tmp = snd_tempnam();
   res = C_string_to_Xen_string(tmp);
   free(tmp);
@@ -3391,9 +3391,9 @@ static XEN g_snd_tempnam(void)
 }
 
 
-static XEN g_auto_update(void) {return(C_bool_to_Xen_boolean(auto_update(ss)));}
+static Xen g_auto_update(void) {return(C_bool_to_Xen_boolean(auto_update(ss)));}
 
-static XEN g_set_auto_update(XEN val) 
+static Xen g_set_auto_update(Xen val) 
 {
   #define H_auto_update "(" S_auto_update "): " PROC_TRUE " if Snd should automatically update a file if it changes unexpectedly (default: " PROC_FALSE "). \
 The number of seconds between update checks is set by " S_auto_update_interval "."
@@ -3403,9 +3403,9 @@ The number of seconds between update checks is set by " S_auto_update_interval "
 }
 
 
-static XEN g_auto_update_interval(void) {return(C_double_to_Xen_real(auto_update_interval(ss)));}
+static Xen g_auto_update_interval(void) {return(C_double_to_Xen_real(auto_update_interval(ss)));}
 
-static XEN g_set_auto_update_interval(XEN val) 
+static Xen g_set_auto_update_interval(Xen val) 
 {
   mus_float_t ctime, old_time;
   #define H_auto_update_interval "(" S_auto_update_interval "): time (seconds) between background checks for changed file on disk (default: 60). \
@@ -3428,9 +3428,9 @@ This value only matters if " S_auto_update " is " PROC_TRUE
 }
 
 
-static XEN g_default_output_chans(void) {return(C_int_to_Xen_integer(default_output_chans(ss)));}
+static Xen g_default_output_chans(void) {return(C_int_to_Xen_integer(default_output_chans(ss)));}
 
-static XEN g_set_default_output_chans(XEN val) 
+static Xen g_set_default_output_chans(Xen val) 
 {
   #define MAX_OUTPUT_CHANS 1024
   #define H_default_output_chans "(" S_default_output_chans "): default number of channels when a new or temporary file is created (1)"
@@ -3440,9 +3440,9 @@ static XEN g_set_default_output_chans(XEN val)
 }
 
 
-static XEN g_default_output_srate(void) {return(C_int_to_Xen_integer(default_output_srate(ss)));}
+static Xen g_default_output_srate(void) {return(C_int_to_Xen_integer(default_output_srate(ss)));}
 
-static XEN g_set_default_output_srate(XEN val) 
+static Xen g_set_default_output_srate(Xen val) 
 {
   #define MAX_OUTPUT_SRATE 1000000000
   #define H_default_output_srate "(" S_default_output_srate "): default srate when a new or temporary file is created (22050)" 
@@ -3453,9 +3453,9 @@ static XEN g_set_default_output_srate(XEN val)
 }
 
 
-static XEN g_default_output_header_type(void) {return(C_int_to_Xen_integer(default_output_header_type(ss)));}
+static Xen g_default_output_header_type(void) {return(C_int_to_Xen_integer(default_output_header_type(ss)));}
 
-static XEN g_set_default_output_header_type(XEN val) 
+static Xen g_set_default_output_header_type(Xen val) 
 {
   int typ;
   #define H_default_output_header_type "(" S_default_output_header_type "): default header type when a new or temporary file is created. \
@@ -3472,9 +3472,9 @@ Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", 
 }
 
 
-static XEN g_default_output_data_format(void) {return(C_int_to_Xen_integer(default_output_data_format(ss)));}
+static Xen g_default_output_data_format(void) {return(C_int_to_Xen_integer(default_output_data_format(ss)));}
 
-static XEN g_set_default_output_data_format(XEN val) 
+static Xen g_set_default_output_data_format(Xen val) 
 {
   int format;
   #define H_default_output_data_format "(" S_default_output_data_format "): default data format when a new or temporary file is created, \
@@ -3491,9 +3491,9 @@ are available, but not all are compatible with all header types"
 }
 
 
-static XEN g_clipping(void) {return(C_bool_to_Xen_boolean(clipping(ss)));}
+static Xen g_clipping(void) {return(C_bool_to_Xen_boolean(clipping(ss)));}
 
-static XEN g_set_clipping(XEN val) 
+static Xen g_set_clipping(Xen val) 
 {
   #define H_clipping "(" S_clipping "): " PROC_TRUE " if Snd should clip output values to the current \
 output data format's maximum. The default (" PROC_FALSE ") allows them to wrap-around which makes a very loud click"
@@ -3503,9 +3503,9 @@ output data format's maximum. The default (" PROC_FALSE ") allows them to wrap-a
 }
 
 
-static XEN g_ask_before_overwrite(void) {return(C_bool_to_Xen_boolean(ask_before_overwrite(ss)));}
+static Xen g_ask_before_overwrite(void) {return(C_bool_to_Xen_boolean(ask_before_overwrite(ss)));}
 
-static XEN g_set_ask_before_overwrite(XEN val) 
+static Xen g_set_ask_before_overwrite(Xen val) 
 {
   #define H_ask_before_overwrite "(" S_ask_before_overwrite "): " PROC_TRUE " if you want Snd to ask before overwriting a file. \
 If " PROC_FALSE ", any existing file of the same name will be overwritten without warning when you save a sound."
@@ -3515,7 +3515,7 @@ If " PROC_FALSE ", any existing file of the same name will be overwritten withou
 }
 
 
-static XEN g_with_toolbar(void) {return(C_bool_to_Xen_boolean(with_toolbar(ss)));}
+static Xen g_with_toolbar(void) {return(C_bool_to_Xen_boolean(with_toolbar(ss)));}
 
 void set_with_toolbar_and_display(bool val)
 {
@@ -3527,7 +3527,7 @@ void set_with_toolbar_and_display(bool val)
 #endif
 }
 
-static XEN g_set_with_toolbar(XEN val) 
+static Xen g_set_with_toolbar(Xen val) 
 {
   #define H_with_toolbar "(" S_with_toolbar "): " PROC_TRUE " if you want a toolbar"
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_toolbar, "a boolean");
@@ -3536,7 +3536,7 @@ static XEN g_set_with_toolbar(XEN val)
 }
 
 
-static XEN g_with_tooltips(void) {return(C_bool_to_Xen_boolean(with_tooltips(ss)));}
+static Xen g_with_tooltips(void) {return(C_bool_to_Xen_boolean(with_tooltips(ss)));}
 
 void set_with_tooltips(bool val)
 {
@@ -3546,7 +3546,7 @@ void set_with_tooltips(bool val)
 #endif
 }
 
-static XEN g_set_with_tooltips(XEN val) 
+static Xen g_set_with_tooltips(Xen val) 
 {
   #define H_with_tooltips "(" S_with_tooltips "): " PROC_TRUE " if you want tooltips displayed at all"
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_tooltips, "a boolean");
@@ -3572,9 +3572,9 @@ void set_with_menu_icons(bool val)
 }
 
 
-static XEN g_with_menu_icons(void) {return(C_bool_to_Xen_boolean(with_menu_icons(ss)));}
+static Xen g_with_menu_icons(void) {return(C_bool_to_Xen_boolean(with_menu_icons(ss)));}
 
-static XEN g_set_with_menu_icons(XEN val) 
+static Xen g_set_with_menu_icons(Xen val) 
 {
   #define H_with_menu_icons "(" S_with_menu_icons "): " PROC_TRUE " if you want icons in the menus (gtk only)"
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_menu_icons, "a boolean");
@@ -3589,9 +3589,9 @@ static void set_save_as_dialog_src(bool val)
   reflect_save_as_src(val);
 }
 
-static XEN g_save_as_dialog_src(void) {return(C_bool_to_Xen_boolean(save_as_dialog_src(ss)));}
+static Xen g_save_as_dialog_src(void) {return(C_bool_to_Xen_boolean(save_as_dialog_src(ss)));}
 
-static XEN g_set_save_as_dialog_src(XEN val) 
+static Xen g_set_save_as_dialog_src(Xen val) 
 {
   #define H_save_as_dialog_src "(" S_save_as_dialog_src "): " PROC_TRUE " if you want the 'src' button set by default in the various Save-as dialogs"
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_save_as_dialog_src, "a boolean");
@@ -3606,9 +3606,9 @@ static void set_save_as_dialog_auto_comment(bool val)
   reflect_save_as_auto_comment(val);
 }
 
-static XEN g_save_as_dialog_auto_comment(void) {return(C_bool_to_Xen_boolean(save_as_dialog_auto_comment(ss)));}
+static Xen g_save_as_dialog_auto_comment(void) {return(C_bool_to_Xen_boolean(save_as_dialog_auto_comment(ss)));}
 
-static XEN g_set_save_as_dialog_auto_comment(XEN val) 
+static Xen g_set_save_as_dialog_auto_comment(Xen val) 
 {
   #define H_save_as_dialog_auto_comment "(" S_save_as_dialog_auto_comment "): " PROC_TRUE " if you want the 'auto' button set by default in the various Save-as dialogs"
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_save_as_dialog_auto_comment, "a boolean");
@@ -3617,9 +3617,9 @@ static XEN g_set_save_as_dialog_auto_comment(XEN val)
 }
 
 
-static XEN g_remember_sound_state(void) {return(C_bool_to_Xen_boolean(remember_sound_state(ss)));}
+static Xen g_remember_sound_state(void) {return(C_bool_to_Xen_boolean(remember_sound_state(ss)));}
 
-static XEN g_set_remember_sound_state(XEN val) 
+static Xen g_set_remember_sound_state(Xen val) 
 {
   #define H_remember_sound_state "(" S_remember_sound_state "): " PROC_TRUE " if you want a Snd to remember the current \
 state of each sound when it is closed, restoring that state when it is opened again later."
@@ -3629,9 +3629,9 @@ state of each sound when it is closed, restoring that state when it is opened ag
 }
 
 
-static XEN g_ask_about_unsaved_edits(void) {return(C_bool_to_Xen_boolean(ask_about_unsaved_edits(ss)));}
+static Xen g_ask_about_unsaved_edits(void) {return(C_bool_to_Xen_boolean(ask_about_unsaved_edits(ss)));}
 
-static XEN g_set_ask_about_unsaved_edits(XEN val) 
+static Xen g_set_ask_about_unsaved_edits(Xen val) 
 {
   #define H_ask_about_unsaved_edits "(" S_ask_about_unsaved_edits "): " PROC_TRUE " if you want Snd to ask whether \
 to save unsaved edits when a sound is closed."
@@ -3642,9 +3642,9 @@ to save unsaved edits when a sound is closed."
 }
 
 
-static XEN g_show_full_duration(void) {return(C_bool_to_Xen_boolean(show_full_duration(ss)));}
+static Xen g_show_full_duration(void) {return(C_bool_to_Xen_boolean(show_full_duration(ss)));}
 
-static XEN g_set_show_full_duration(XEN val) 
+static Xen g_set_show_full_duration(Xen val) 
 {
   int i;
   #define H_show_full_duration "(" S_show_full_duration "): " PROC_TRUE " if you want the entire sound \
@@ -3669,9 +3669,9 @@ displayed whn it is opened."
 }
 
 
-static XEN g_initial_beg(void) {return(C_double_to_Xen_real(initial_beg(ss)));}
+static Xen g_initial_beg(void) {return(C_double_to_Xen_real(initial_beg(ss)));}
 
-static XEN g_set_initial_beg(XEN val) 
+static Xen g_set_initial_beg(Xen val) 
 {
   #define H_initial_beg "(" S_initial_beg "): the begin point (in seconds) for the initial graph of a sound."
 
@@ -3681,9 +3681,9 @@ static XEN g_set_initial_beg(XEN val)
 }
 
 
-static XEN g_initial_dur(void) {return(C_double_to_Xen_real(initial_dur(ss)));}
+static Xen g_initial_dur(void) {return(C_double_to_Xen_real(initial_dur(ss)));}
 
-static XEN g_set_initial_dur(XEN val) 
+static Xen g_set_initial_dur(Xen val) 
 {
   #define H_initial_dur "(" S_initial_dur "): the duration (in seconds) for the initial graph of a sound."
 
@@ -3693,9 +3693,9 @@ static XEN g_set_initial_dur(XEN val)
 }
 
 
-static XEN g_show_full_range(void) {return(C_bool_to_Xen_boolean(show_full_range(ss)));}
+static Xen g_show_full_range(void) {return(C_bool_to_Xen_boolean(show_full_range(ss)));}
 
-static XEN g_set_show_full_range(XEN val) 
+static Xen g_set_show_full_range(Xen val) 
 {
   int i;
   #define H_show_full_range "(" S_show_full_range "): " PROC_TRUE " if you want the graph y-bounds to accommodate the sound's \

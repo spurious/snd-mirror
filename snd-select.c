@@ -873,11 +873,11 @@ typedef struct {
 } xen_selection;
 
 
-#define XEN_TO_XEN_SELECTION(arg) ((xen_selection *)Xen_object_ref(arg))
+#define Xen_to_xen_selection(arg) ((xen_selection *)Xen_object_ref(arg))
 
 static Xen_object_type_t xen_selection_tag;
 
-bool xen_is_selection(XEN obj) 
+bool xen_is_selection(Xen obj) 
 {
   return(Xen_c_object_is_type(obj, xen_selection_tag));
 }
@@ -902,15 +902,15 @@ Xen_wrap_print(xen_selection, print_xen_selection, xen_selection_to_string)
 
 
 #if HAVE_FORTH || HAVE_RUBY
-static XEN g_xen_selection_to_string(XEN obj)
+static Xen g_xen_selection_to_string(Xen obj)
 {
   char *vstr;
-  XEN result;
+  Xen result;
   #define S_xen_selection_to_string "selection->string"
 
   Xen_check_type(xen_is_selection(obj), obj, 1, S_xen_selection_to_string, "a selection");
 
-  vstr = xen_selection_to_string(XEN_TO_XEN_SELECTION(obj));
+  vstr = xen_selection_to_string(Xen_to_xen_selection(obj));
   result = C_string_to_Xen_string(vstr);
   free(vstr);
   return(result);
@@ -926,10 +926,10 @@ static bool xen_selection_equalp(xen_selection *v1, xen_selection *v2)
 }
 
 
-static XEN equalp_xen_selection(XEN obj1, XEN obj2)
+static Xen equalp_xen_selection(Xen obj1, Xen obj2)
 {
   if ((!(xen_is_selection(obj1))) || (!(xen_is_selection(obj2)))) return(Xen_false);
-  return(C_bool_to_Xen_boolean(xen_selection_equalp(XEN_TO_XEN_SELECTION(obj1), XEN_TO_XEN_SELECTION(obj2))));
+  return(C_bool_to_Xen_boolean(xen_selection_equalp(Xen_to_xen_selection(obj1), Xen_to_xen_selection(obj2))));
 }
 #endif
 
@@ -943,7 +943,7 @@ static xen_selection *xen_selection_make(int n)
 }
 
 
-static XEN g_selection(void)
+static Xen g_selection(void)
 {
   #define H_selection "(" S_selection" ) returns an object representing the current selection, or " PROC_FALSE " if there is no active selection"
   if (selection_is_active())
@@ -957,7 +957,7 @@ static XEN g_selection(void)
 
 
 #if HAVE_SCHEME
-static XEN s7_xen_selection_length(s7_scheme *sc, XEN obj)
+static Xen s7_xen_selection_length(s7_scheme *sc, Xen obj)
 {
   return(g_selection_frames(Xen_undefined, Xen_undefined));
 }
@@ -970,7 +970,7 @@ static bool s7_xen_selection_equalp(void *obj1, void *obj2)
 }
 
 
-static XEN s7_xen_selection_copy(s7_scheme *sc, XEN obj)
+static Xen s7_xen_selection_copy(s7_scheme *sc, Xen obj)
 {
   if (selection_is_active())
     {
@@ -986,7 +986,7 @@ static XEN s7_xen_selection_copy(s7_scheme *sc, XEN obj)
 }
 
 
-static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
+static Xen s7_xen_selection_fill(s7_scheme *sc, Xen obj, Xen val)
 {
   sync_info *si;
   mus_float_t valf;
@@ -1046,10 +1046,10 @@ static void init_xen_selection(void)
 #endif
 
 #if HAVE_RUBY
-  rb_define_method(xen_selection_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_selection, 0);
-  rb_define_method(xen_selection_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_selection, 1);
-  rb_define_method(xen_selection_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_selection, 1);
-  rb_define_method(xen_selection_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_selection_to_string, 0);
+  rb_define_method(xen_selection_tag, "to_s",     Xen_procedure_cast print_xen_selection, 0);
+  rb_define_method(xen_selection_tag, "eql?",     Xen_procedure_cast equalp_xen_selection, 1);
+  rb_define_method(xen_selection_tag, "==",       Xen_procedure_cast equalp_xen_selection, 1);
+  rb_define_method(xen_selection_tag, "to_str",   Xen_procedure_cast g_xen_selection_to_string, 0);
 #endif
 }
 /* -------------------------------------------------------------------------------- */
@@ -1281,7 +1281,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 }
 
 
-static XEN g_delete_selection(void)
+static Xen g_delete_selection(void)
 {
   #define H_delete_selection "(" S_delete_selection "): delete the currently selected portion"
   if (selection_is_active())
@@ -1293,7 +1293,7 @@ static XEN g_delete_selection(void)
 }
 
 
-static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
+static Xen g_insert_selection(Xen beg, Xen snd, Xen chn)
 {
   #define H_insert_selection "(" S_insert_selection " :optional (beg 0) snd chn): insert the currently selected portion starting at beg"
   if (selection_is_active())
@@ -1327,7 +1327,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 }
 
 
-static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
+static Xen g_mix_selection(Xen beg, Xen snd, Xen chn, Xen sel_chan)
 {
   #define H_mix_selection "(" S_mix_selection " :optional (beg 0) snd chn (selection-channel " PROC_TRUE ")): mix the currently selected portion starting at beg"
   if (selection_is_active())
@@ -1337,7 +1337,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       io_error_t io_err = IO_NO_ERROR;
       int i, selection_chan = 0, id = -1, chans = 0;
       sync_info *si_out;
-      XEN result = Xen_empty_list;
+      Xen result = Xen_empty_list;
 
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       Xen_check_type(Xen_is_integer_or_unbound(beg), beg, 1, S_mix_selection, "an integer");
@@ -1371,7 +1371,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 }
 
 
-static XEN g_selection_to_mix(void)
+static Xen g_selection_to_mix(void)
 {
   #define H_selection_to_mix "(" S_selection_to_mix "): turns the current selection into a mix"
   if (selection_is_active())
@@ -1380,7 +1380,7 @@ static XEN g_selection_to_mix(void)
       io_error_t io_err = IO_NO_ERROR;
       int i, id = INVALID_MIX_ID, chans = 0, sync = GET_NEW_SYNC;
       sync_info *si_out;
-      XEN result = Xen_empty_list;
+      Xen result = Xen_empty_list;
       char *tempfile = NULL, *origin = NULL;
 
       si_out = selection_sync();
@@ -1434,7 +1434,7 @@ static XEN g_selection_to_mix(void)
 }
 
 
-static XEN g_is_selection(XEN sel)
+static Xen g_is_selection(Xen sel)
 {
   #define H_is_selection "(" S_is_selection " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
 If 'obj' is passed, " S_is_selection " returns " PROC_TRUE " if obj is a selection object and there is a current selection."
@@ -1447,7 +1447,7 @@ If 'obj' is passed, " S_is_selection " returns " PROC_TRUE " if obj is a selecti
 }
 
 
-static XEN g_selection_position(XEN snd, XEN chn)
+static Xen g_selection_position(Xen snd, Xen chn)
 {
   #define H_selection_position "(" S_selection_position " :optional snd chn): selection start samp"
   if (selection_is_active())
@@ -1467,7 +1467,7 @@ static XEN g_selection_position(XEN snd, XEN chn)
 }
 
 
-static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
+static Xen g_set_selection_position(Xen pos, Xen snd, Xen chn)
 {
   chan_info *cp;
   mus_long_t beg;
@@ -1507,7 +1507,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 WITH_THREE_SETTER_ARGS(g_set_selection_position_reversed, g_set_selection_position)
 
 
-XEN g_selection_frames(XEN snd, XEN chn)
+Xen g_selection_frames(Xen snd, Xen chn)
 {
   #define H_selection_frames "(" S_selection_frames " :optional snd chn): selection length"
   if (selection_is_active())
@@ -1527,7 +1527,7 @@ XEN g_selection_frames(XEN snd, XEN chn)
 }
 
 
-static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
+static Xen g_set_selection_frames(Xen samps, Xen snd, Xen chn)
 {
   chan_info *cp;
   mus_long_t len;
@@ -1568,7 +1568,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
 WITH_THREE_SETTER_ARGS(g_set_selection_frames_reversed, g_set_selection_frames)
 
 
-static XEN g_selection_member(XEN snd, XEN chn)
+static Xen g_selection_member(Xen snd, Xen chn)
 {
   #define H_selection_member "(" S_selection_member " :optional snd chn): " PROC_TRUE " if snd's channel chn is a member of the current selection"
   chan_info *cp;
@@ -1579,7 +1579,7 @@ static XEN g_selection_member(XEN snd, XEN chn)
 }
 
 
-static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
+static Xen g_set_selection_member(Xen on, Xen snd, Xen chn)
 {
   Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_selection_member, "a boolean");
   if ((Xen_is_true(snd)) && (Xen_is_false(on)))
@@ -1612,7 +1612,7 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 WITH_THREE_SETTER_ARGS(g_set_selection_member_reversed, g_set_selection_member)
 
 
-static XEN g_select_all(XEN snd_n, XEN chn_n)
+static Xen g_select_all(Xen snd_n, Xen chn_n)
 {
   #define H_select_all "(" S_select_all " :optional snd chn): make a new selection containing all of snd's channel chn. \
 If sync is set, all chans are included.  The new region id is returned (if " S_selection_creates_region " is " PROC_TRUE ")."
@@ -1625,12 +1625,12 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
 
   id = select_all(cp);
   if (selection_creates_region(ss)) 
-    return(C_INT_TO_XEN_REGION(id));
+    return(C_int_to_Xen_region(id));
   else return(Xen_false);
 }
 
 
-static XEN kw_header_type, kw_data_format, kw_comment, kw_file, kw_srate, kw_channel;
+static Xen kw_header_type, kw_data_format, kw_comment, kw_file, kw_srate, kw_channel;
 
 static void init_selection_keywords(void)
 {
@@ -1643,7 +1643,7 @@ static void init_selection_keywords(void)
 }
 
 
-static XEN g_save_selection(XEN arglist)
+static Xen g_save_selection(Xen arglist)
 {
   #define H_save_selection "(" S_save_selection " file header-type data-format srate comment channel): \
 save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
@@ -1652,8 +1652,8 @@ save the current selection in file using the indicated file attributes.  If chan
   io_error_t io_err = IO_NO_ERROR;
   const char *com = NULL, *file = NULL;
   char *fname = NULL;
-  XEN args[12]; 
-  XEN keys[6];
+  Xen args[12]; 
+  Xen keys[6];
   int orig_arg[6] = {0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len;
   if (!(selection_is_active()))
@@ -1721,21 +1721,21 @@ save the current selection in file using the indicated file attributes.  If chan
 }
 
 
-XEN g_selection_chans(void)
+Xen g_selection_chans(void)
 {
   #define H_selection_chans "(" S_selection_chans "): chans in active selection"
   return(C_int_to_Xen_integer(selection_chans()));
 }
 
 
-XEN g_selection_srate(void)
+Xen g_selection_srate(void)
 {
   #define H_selection_srate "(" S_selection_srate "): selection srate"
   return(C_int_to_Xen_integer(selection_srate()));
 }
 
 
-XEN g_selection_maxamp(XEN snd, XEN chn)
+Xen g_selection_maxamp(Xen snd, Xen chn)
 {
   #define H_selection_maxamp "(" S_selection_maxamp " :optional snd chn): selection maxamp in given channel, or overall maxamp if no args passed."
   if (Xen_is_bound(snd))
@@ -1767,7 +1767,7 @@ XEN g_selection_maxamp(XEN snd, XEN chn)
 }
 
 
-static XEN g_selection_maxamp_position(XEN snd, XEN chn)
+static Xen g_selection_maxamp_position(Xen snd, Xen chn)
 {
   #define H_selection_maxamp_position "(" S_selection_maxamp_position " :optional snd chn): location of selection maxamp (0 = start of selection)"
   chan_info *cp;
@@ -1814,7 +1814,7 @@ void show_selection(void)
 }
 
 
-static XEN g_show_selection(void)
+static Xen g_show_selection(void)
 {
   #define H_show_selection "(" S_show_selection ") adjusts graph bounds to display the current selection in full"
   if (selection_is_active())
@@ -1823,7 +1823,7 @@ static XEN g_show_selection(void)
 }
 
 
-static XEN g_unselect_all(void)
+static Xen g_unselect_all(void)
 {
   #define H_unselect_all "(" S_unselect_all ") deactivates (unselects) the current selection."
   deactivate_selection();

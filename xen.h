@@ -223,6 +223,7 @@
 #define XEN_CADDDR(a)                   xen_rb_list_ref(a, 3)
 #define XEN_CDR(a)                      xen_rb_cdr(a)
 #define XEN_CDDR(a)                     XEN_CDR(XEN_CDR(a))
+#define XEN_CDDDR(a)                    XEN_CDR(XEN_CDR(XEN_CDR(a)))
 
 #define XEN_LIST_P(Arg)                 ((Arg) == XEN_EMPTY_LIST || XEN_CONS_P(Arg))
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = XEN_LIST_LENGTH(Arg)) >= 0)
@@ -849,6 +850,7 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_CADDDR(a)                   FTH_CADDDR(a)
 #define XEN_CDR(a)                      fth_cdr(a)
 #define XEN_CDDR(a)                     FTH_CDDR(a)
+#define XEN_CDDDR(a)                    FTH_CDDDR(a)
 #define XEN_COPY_ARG(Lst)               fth_list_copy(Lst)
 #define XEN_APPEND(a, b)                fth_list_append(XEN_LIST_2(a, b))
 #define XEN_ASSOC_REF(Item, Lst)        fth_list_assoc_ref(Lst, Item)
@@ -1296,6 +1298,7 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_CADDDR(a) 0
 #define XEN_CDR(a) 0
 #define XEN_CDDR(a) 0
+#define XEN_CDDDR(a) 0
 #define XEN_LIST_P(Arg) 0
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) 0
 #define XEN_LIST_LENGTH(Arg) 0
@@ -1573,6 +1576,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_cadr(a)                      XEN_CADR(a)
 #define Xen_car(a)                       XEN_CAR(a)
 #define Xen_cddr(a)                      XEN_CDDR(a)
+#define Xen_cdddr(a)                     XEN_CDDDR(a)
 #define Xen_cdr(a)                       XEN_CDR(a)
 #define Xen_cons(a, b)                   XEN_CONS(a, b)
 #define Xen_cons_2(a, b, c)              XEN_CONS_2(a, b, c)
@@ -1589,6 +1593,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_list_ref(a, b)               XEN_LIST_REF(a, b)
 #define Xen_list_reverse(a)              XEN_LIST_REVERSE(a)
 #define Xen_list_set(a, b, c)            XEN_LIST_SET(a, b, c)
+#define Xen_member(a, b)                 XEN_MEMBER(a, b)
 #define Xen_make_keyword(a)              XEN_MAKE_KEYWORD(a)
 #define Xen_make_vector(a, b)            XEN_MAKE_VECTOR(a, b)
 #define Xen_throw(a)                     XEN_THROW(a)
@@ -1620,6 +1625,10 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_ullong_to_C_ullong(a)        XEN_TO_C_ULONG_LONG(a)
 #define Xen_wrap_C_pointer(a)            XEN_WRAP_C_POINTER(a)
 #define Xen_unwrap_C_pointer(a)          XEN_UNWRAP_C_POINTER(a)
+#define Xen_numerator(a)                 XEN_NUMERATOR(a)            
+#define Xen_denominator(a)               XEN_DENOMINATOR(a)  
+#define Xen_rationalize(a, b)            XEN_RATIONALIZE(a, b)
+#define Xen_make_ratio(a, b)             XEN_MAKE_RATIO(a, b)          
 #define Xen_load(a)                      XEN_LOAD_FILE(a)
 #define Xen_documentation(a)             XEN_OBJECT_HELP(a)
 #define Xen_vector_rank(a)               XEN_VECTOR_RANK(a)
@@ -1669,11 +1678,13 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_define_variable(a, b, c)                 XEN_DEFINE_VARIABLE(a, b, c)
 #define Xen_out_of_range_error(a, b, c, d)           XEN_OUT_OF_RANGE_ERROR(a, b, c, d)
 #define Xen_wrong_type_arg_error(a, b, c, d)         XEN_WRONG_TYPE_ARG_ERROR(a, b, c, d)
+#define Xen_bad_arity_error(a, b, c, d)              XEN_BAD_ARITY_ERROR(a, b, c, d)
 #define Xen_clear_hook_list(a)           XEN_CLEAR_HOOK(a)
 #define Xen_hook_has_list(a)             XEN_HOOKED(a)
 #define Xen_hook_list(a)                 XEN_HOOK_PROCEDURES(a)
 #define Xen_add_to_hook_list(a, b, c, d) XEN_ADD_HOOK(a, b, c, d)
 #define Xen_GC_protect(a)                XEN_PROTECT_FROM_GC(a)
+#define Xen_GC_unprotect(a)              XEN_UNPROTECT_FROM_GC(a)
 #define Xen_provide_feature(a)           XEN_PROVIDE(a)
 #define Xen_arity(a)                     XEN_ARITY(a)
 #define Xen_add_to_load_path(a)          XEN_ADD_TO_LOAD_PATH(a)
@@ -1683,6 +1694,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_variable_set(a, b)           XEN_VARIABLE_SET(a, b)
 #define Xen_object_ref(a)                XEN_OBJECT_REF(a)
 #define Xen_copy_arg(a)                  XEN_COPY_ARG(a)
+#define Xen_assoc(a, b)                  XEN_ASSOC(a, b)
 #define Xen_assoc_ref(a, b)              XEN_ASSOC_REF(a, b)
 #define Xen_assoc_set(a, b, c)           XEN_ASSOC_SET(a, b, c)
 #define Xen_make_error_type(a)           XEN_ERROR_TYPE(a)
@@ -1705,6 +1717,8 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_file_extension               XEN_FILE_EXTENSION
 #define Xen_language                     XEN_LANGUAGE_NAME
 #define Xen_load_path                    XEN_LOAD_PATH
+#define Xen_procedure_cast               XEN_PROCEDURE_CAST
+#define Xen                              XEN
 
 #ifdef __cplusplus
 extern "C" {

@@ -604,7 +604,7 @@ void print_enved(const char *output, int y0)
 }
 
 
-static XEN g_graph_to_ps(XEN filename)
+static Xen g_graph_to_ps(Xen filename)
 {
   #define H_graph_to_ps "(" S_graph_to_ps " :optional (filename eps-file)): write the current Snd displays to an EPS file"
 
@@ -620,7 +620,7 @@ static XEN g_graph_to_ps(XEN filename)
   error = snd_print_or_error(file);
   if (error)
     {
-      XEN result;
+      Xen result;
       result = C_string_to_Xen_string(error);
       free(error);
       Xen_error(Xen_make_error_type("cannot-print"),
@@ -642,7 +642,7 @@ static XEN g_graph_to_ps(XEN filename)
 static int gl2ps_types[NUM_GL2PS_TYPES] = {GL2PS_EPS, GL2PS_PS, GL2PS_PDF, GL2PS_TEX, GL2PS_SVG, GL2PS_PGF};
 
 
-static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd, XEN chn)
+static Xen g_gl_graph_to_ps(Xen filename, Xen output_type, Xen snd, Xen chn)
 {
   #define H_gl_graph_to_ps "(" S_gl_graph_to_ps " :optional filename (type 0) snd chn) produces a postscript output file from \
 OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
@@ -729,7 +729,7 @@ void gl2ps_text(const char *msg)
 
 #else
 
-static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd_ignore, XEN chn_ignore)
+static Xen g_gl_graph_to_ps(Xen filename, Xen output_type, Xen snd_ignore, Xen chn_ignore)
 {
   #define H_gl_graph_to_ps "gl-graph->ps is a no-op in this version of Snd"
   Xen_check_type(Xen_is_string_or_unbound(filename), filename, 1, S_gl_graph_to_ps, "a string (filename)");
@@ -741,9 +741,9 @@ static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd_ignore, XEN c
 /* -------------------------------- */
 
 
-static XEN g_eps_file(void) {return(C_string_to_Xen_string(eps_file(ss)));}
+static Xen g_eps_file(void) {return(C_string_to_Xen_string(eps_file(ss)));}
 
-static XEN g_set_eps_file(XEN val) 
+static Xen g_set_eps_file(Xen val) 
 {
   #define H_eps_file "(" S_eps_file "): File:Print and " S_graph_to_ps " file name (snd.eps)"
   Xen_check_type(Xen_is_string(val), val, 1, S_setB S_eps_file, "a string"); 
@@ -755,9 +755,9 @@ static XEN g_set_eps_file(XEN val)
 
 #define MAX_EPS_MARGIN 1000.0
 
-static XEN g_eps_left_margin(void) {return(C_double_to_Xen_real(eps_left_margin(ss)));}
+static Xen g_eps_left_margin(void) {return(C_double_to_Xen_real(eps_left_margin(ss)));}
 
-static XEN g_set_eps_left_margin(XEN val) 
+static Xen g_set_eps_left_margin(Xen val) 
 {
   #define H_eps_left_margin "(" S_eps_left_margin "): File:Print and " S_graph_to_ps " left margin"
   Xen_check_type(Xen_is_number(val), val, 1, S_setB S_eps_left_margin, "a number"); 
@@ -766,9 +766,9 @@ static XEN g_set_eps_left_margin(XEN val)
 }
 
 
-static XEN g_eps_bottom_margin(void) {return(C_double_to_Xen_real(eps_bottom_margin(ss)));}
+static Xen g_eps_bottom_margin(void) {return(C_double_to_Xen_real(eps_bottom_margin(ss)));}
 
-static XEN g_set_eps_bottom_margin(XEN val) 
+static Xen g_set_eps_bottom_margin(Xen val) 
 {
   #define H_eps_bottom_margin "(" S_eps_bottom_margin "): File:Print and " S_graph_to_ps " bottom margin"
   Xen_check_type(Xen_is_number(val), val, 1, S_setB S_eps_bottom_margin, "a number"); 
@@ -777,9 +777,9 @@ static XEN g_set_eps_bottom_margin(XEN val)
 }
 
 
-static XEN g_eps_size(void) {return(C_double_to_Xen_real(eps_size(ss)));}
+static Xen g_eps_size(void) {return(C_double_to_Xen_real(eps_size(ss)));}
 
-static XEN g_set_eps_size(XEN val) 
+static Xen g_set_eps_size(Xen val) 
 {
   #define MAX_EPS_SIZE 1000.0
   #define H_eps_size "(" S_eps_size "): File:Print and " S_graph_to_ps " output size scaler (1.0)"

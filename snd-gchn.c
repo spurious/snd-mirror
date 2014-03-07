@@ -428,8 +428,8 @@ static gboolean channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpo
 }
 
 
-static XEN mouse_enter_graph_hook;
-static XEN mouse_leave_graph_hook;
+static Xen mouse_enter_graph_hook;
+static Xen mouse_leave_graph_hook;
 
 static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
@@ -443,7 +443,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
       int pdata;
       pdata = get_user_int_data(G_OBJECT(w));
       run_hook(mouse_enter_graph_hook,
-	       Xen_list_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(pdata)),
+	       Xen_list_2(C_int_to_Xen_sound(UNPACK_SOUND(pdata)),
 			  C_int_to_Xen_integer(UNPACK_CHANNEL(pdata))),
 	       S_mouse_enter_graph_hook);
     }
@@ -460,7 +460,7 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
       int pdata;
       pdata = get_user_int_data(G_OBJECT(w));
       run_hook(mouse_leave_graph_hook,
-	       Xen_list_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(pdata)),
+	       Xen_list_2(C_int_to_Xen_sound(UNPACK_SOUND(pdata)),
 			  C_int_to_Xen_integer(UNPACK_CHANNEL(pdata))),
 	       S_mouse_leave_graph_hook);
     }
@@ -1196,34 +1196,34 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
 
 
-static XEN g_channel_widgets(XEN snd, XEN chn)
+static Xen g_channel_widgets(Xen snd, Xen chn)
 {
   #define H_channel_widgets "(" S_channel_widgets " :optional snd chn): a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)\
 edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gsy_adj (16)gzy_adj"
 
-  #define XEN_WRAP_ADJ(Value) ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GtkAdjustment_"), XEN_WRAP_C_POINTER(Value)) : Xen_false)
+  #define Xen_wrap_adj(Value) ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GtkAdjustment_"), Xen_wrap_C_pointer(Value)) : Xen_false)
 
   chan_info *cp;
   ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
   if (!cp) return(Xen_false);
-  return(Xen_cons(XEN_WRAP_WIDGET(channel_graph(cp)),
-	  Xen_cons(XEN_WRAP_WIDGET(channel_w(cp)),
-	   Xen_cons(XEN_WRAP_WIDGET(channel_f(cp)),
-	    Xen_cons(XEN_WRAP_WIDGET(channel_sx(cp)),
-	     Xen_cons(XEN_WRAP_WIDGET(channel_sy(cp)),
-	      Xen_cons(XEN_WRAP_WIDGET(channel_zx(cp)),
-	       Xen_cons(XEN_WRAP_WIDGET(channel_zy(cp)),
-		Xen_cons((EDIT_HISTORY_LIST(cp)) ? XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)->topics) : Xen_false,
-		 Xen_cons(XEN_WRAP_WIDGET(channel_gsy(cp)),
-		  Xen_cons(XEN_WRAP_WIDGET(channel_gzy(cp)),
-		   Xen_cons(XEN_WRAP_WIDGET(channel_main_pane(cp)),
-		    Xen_cons(XEN_WRAP_ADJ(sx_adj(cp)),
-		     Xen_cons(XEN_WRAP_ADJ(sy_adj(cp)),
-		      Xen_cons(XEN_WRAP_ADJ(zx_adj(cp)),
-		       Xen_cons(XEN_WRAP_ADJ(zy_adj(cp)),
-		        Xen_cons(XEN_WRAP_ADJ(gsy_adj(cp)),
-			 Xen_cons(XEN_WRAP_ADJ(gzy_adj(cp)),
+  return(Xen_cons(Xen_wrap_widget(channel_graph(cp)),
+	  Xen_cons(Xen_wrap_widget(channel_w(cp)),
+	   Xen_cons(Xen_wrap_widget(channel_f(cp)),
+	    Xen_cons(Xen_wrap_widget(channel_sx(cp)),
+	     Xen_cons(Xen_wrap_widget(channel_sy(cp)),
+	      Xen_cons(Xen_wrap_widget(channel_zx(cp)),
+	       Xen_cons(Xen_wrap_widget(channel_zy(cp)),
+		Xen_cons((EDIT_HISTORY_LIST(cp)) ? Xen_wrap_widget(EDIT_HISTORY_LIST(cp)->topics) : Xen_false,
+		 Xen_cons(Xen_wrap_widget(channel_gsy(cp)),
+		  Xen_cons(Xen_wrap_widget(channel_gzy(cp)),
+		   Xen_cons(Xen_wrap_widget(channel_main_pane(cp)),
+		    Xen_cons(Xen_wrap_adj(sx_adj(cp)),
+		     Xen_cons(Xen_wrap_adj(sy_adj(cp)),
+		      Xen_cons(Xen_wrap_adj(zx_adj(cp)),
+		       Xen_cons(Xen_wrap_adj(zy_adj(cp)),
+		        Xen_cons(Xen_wrap_adj(gsy_adj(cp)),
+			 Xen_cons(Xen_wrap_adj(gzy_adj(cp)),
                           Xen_empty_list))))))))))))))))));
 }
 
@@ -1234,7 +1234,7 @@ static gint timed_eval(gpointer in_code)
 {
 #if HAVE_EXTENSION_LANGUAGE
   /* #if needed on 64-bit machines */
-  XEN lst = (XEN)in_code;
+  Xen lst = (Xen)in_code;
   Xen_call_with_no_args(Xen_cadr(lst), "timed callback func");
   snd_unprotect_at(Xen_integer_to_C_int(Xen_car(lst)));
 #endif
@@ -1242,7 +1242,7 @@ static gint timed_eval(gpointer in_code)
 }
 
 
-static XEN g_in(XEN ms, XEN code)
+static Xen g_in(Xen ms, Xen code)
 {
   #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
 
@@ -1257,13 +1257,13 @@ static XEN g_in(XEN ms, XEN code)
 	Xen_out_of_range_error(S_in, 1, ms, "a positive integer");
       else
 	{
-	  XEN lst;
+	  Xen lst;
 	  lst = Xen_list_2(Xen_false, code);
 	  Xen_list_set(lst, 0, C_int_to_Xen_integer(snd_protect(lst)));
 	  g_timeout_add_full(0, (guint32)secs, timed_eval, (gpointer)lst, NULL);
 	}
     }
-  else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");
+  else Xen_bad_arity_error(S_in, 2, code, "should take no args");
 #endif
 
   return(ms);
@@ -1325,14 +1325,14 @@ void color_chan_components(color_t color, slider_choice_t which_component)
 }
 
 
-static XEN g_graph_cursor(void)
+static Xen g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor "): current graph cursor shape"
   return(C_int_to_Xen_integer(in_graph_cursor(ss)));
 }
 
 
-static XEN g_set_graph_cursor(XEN curs)
+static Xen g_set_graph_cursor(Xen curs)
 {
   int val;
   Xen_check_type(Xen_is_integer(curs), curs, 1, S_setB S_graph_cursor, "an integer");

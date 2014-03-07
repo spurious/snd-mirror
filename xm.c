@@ -343,7 +343,7 @@
 static Xen_object_type_t xm_obj_tag;
 
 #if HAVE_RUBY
-static void *xm_obj_free(XEN obj)
+static void *xm_obj_free(Xen obj)
 {
   void *vobj;
   vobj = (void *)obj;
@@ -353,7 +353,7 @@ static void *xm_obj_free(XEN obj)
 #endif
 
 #if HAVE_FORTH
-static void xm_obj_free(XEN obj)
+static void xm_obj_free(Xen obj)
 {
   void *val;
   val = (void *)Xen_object_ref(obj);
@@ -373,7 +373,7 @@ static bool s7_equalp_xm(void *x1, void *x2)
 }
 #endif
 
-static XEN make_xm_obj(void *ptr)
+static Xen make_xm_obj(void *ptr)
 {
   return(Xen_make_object(xm_obj_tag, ptr, 0, xm_obj_free));
 }
@@ -408,51 +408,51 @@ static void define_xm_obj(void)
 
 /* XM_TYPE is used for non-pointers (XID mainly) */
 #define XM_TYPE(Name, XType) \
-  static XEN C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \
-  static XType Xen_to_C_ ## Name (XEN val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(is_wrapped(#Name, val));} \
-  static XEN g_is_ ## Name (XEN val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
+  static Xen C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \
+  static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
+  static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
 
 #define XM_TYPE_NO_p(Name, XType) \
-  static XEN C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \
-  static XType Xen_to_C_ ## Name (XEN val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(is_wrapped(#Name, val));}
+  static Xen C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \
+  static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}
 
 #define XM_TYPE_INT(Name, XType) \
-  static XEN C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_int_to_Xen_integer(val)));} \
-  static XType Xen_to_C_ ## Name (XEN val) {return((XType)Xen_integer_to_C_int(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(is_wrapped(#Name, val));} \
-  static XEN g_is_ ## Name (XEN val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
+  static Xen C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_int_to_Xen_integer(val)));} \
+  static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_integer_to_C_int(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
+  static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
 
 #define XM_TYPE_PTR(Name, XType) \
-  static XEN C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
-  static XType Xen_to_C_ ## Name (XEN val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(is_wrapped(#Name, val));} \
-  static XEN g_is_ ## Name (XEN val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
+  static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
+  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
+  static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
 
 #define XM_TYPE_PTR_NO_p(Name, XType) \
-  static XEN C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
-  static XType Xen_to_C_ ## Name (XEN val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(is_wrapped(#Name, val));}
+  static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
+  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}
 
 #define XM_TYPE_PTR_NO_p_NO_P(Name, XType) \
-  static XEN C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
-  static XType Xen_to_C_ ## Name (XEN val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));}
+  static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
+  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));}
 
 #define XM_TYPE_PTR_NO_C2X(Name, XType) \
-  static XType Xen_to_C_ ## Name (XEN val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(is_wrapped(#Name, val));} \
-  static XEN g_is_ ## Name (XEN val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
+  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
+  static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
 
 #define XM_TYPE_PTR_NO_C2X_NO_p(Name, XType) \
-  static XType Xen_to_C_ ## Name (XEN val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(is_wrapped(#Name, val));}
+  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}
 
 #define XM_TYPE_PTR_OBJ(Name, XType) \
-  static XEN C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen_OBJ(#Name, val)); return(Xen_false);} \
-  static XType Xen_to_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(is_wrapped(#Name, val));} \
-  static XEN g_is_ ## Name (XEN val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
+  static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen_OBJ(#Name, val)); return(Xen_false);} \
+  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return(NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
+  static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
 
 
 
@@ -496,7 +496,7 @@ XM_TYPE_PTR(XGCValues, XGCValues *)
 XM_TYPE_PTR_NO_C2X(XTextItem, XTextItem *)
 XM_TYPE_PTR(XModifierKeymap, XModifierKeymap *) /* opaque in this implementation */
 XM_TYPE_PTR(XImage, XImage *)
-static XAnyEvent *Xen_to_C_XAnyEvent(XEN val) {return((XAnyEvent *)Xen_unwrap_C_pointer(Xen_cadr(val)));}
+static XAnyEvent *Xen_to_C_XAnyEvent(Xen val) {return((XAnyEvent *)Xen_unwrap_C_pointer(Xen_cadr(val)));}
 XM_TYPE_PTR_NO_C2X(XButtonEvent, XButtonEvent *)
 XM_TYPE_PTR_NO_C2X(XCirculateEvent, XCirculateEvent *)
 XM_TYPE_PTR_NO_C2X(XCirculateRequestEvent, XCirculateRequestEvent *)
@@ -597,12 +597,12 @@ XM_TYPE_PTR_NO_p(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
 XM_TYPE(XmTextSource, XmTextSource)
 XM_TYPE(XmStringContext, XmStringContext)
 
-static int Xen_is_XmFontList_or_XmRenderTable(XEN arg)
+static int Xen_is_XmFontList_or_XmRenderTable(Xen arg)
 {
   return(Xen_is_XmRenderTable(arg));
 }
 
-static XEN type_to_event_symbol(int utype)
+static Xen type_to_event_symbol(int utype)
 {
   const char *type;
   type = "XErrorEvent"; /* -1 for an error event? */
@@ -646,7 +646,7 @@ static XEN type_to_event_symbol(int utype)
   return(C_string_to_Xen_symbol(type));
 }
 
-static XEN C_to_Xen_XEvent_1(XEvent *e, int need_free)
+static Xen C_to_Xen_XEvent_1(XEvent *e, int need_free)
 {
   if (e == NULL) return(Xen_false); /* synthetic callback may have no event */
   if (need_free)
@@ -669,12 +669,12 @@ static XEN C_to_Xen_XEvent_1(XEvent *e, int need_free)
                                (Xen_is_symbol(Xen_cadddr(Value))) &&\
                                (strcmp("XEvent", Xen_symbol_to_C_string(Xen_cadddr(Value))) == 0))
 
-static XEN g_is_XEvent(XEN val) 
+static Xen g_is_XEvent(Xen val) 
 {
   return(C_bool_to_Xen_boolean(Xen_is_XEvent(val)));
 }
 
-static XEN gxm_XEvent(XEN type)
+static Xen gxm_XEvent(Xen type)
 {
   XEvent *e;
   Xen_check_type(Xen_is_integer_or_unbound(type), type, 1, "XEvent", "an X event type (integer)");
@@ -687,7 +687,7 @@ static XEN gxm_XEvent(XEN type)
 		    C_string_to_Xen_symbol("XEvent")));
 }
 
-static XEN gxm_XGCValues(void) 
+static Xen gxm_XGCValues(void) 
 {
   XGCValues *e;
   e = (XGCValues *)calloc(1, sizeof(XGCValues));
@@ -695,7 +695,7 @@ static XEN gxm_XGCValues(void)
 }
 
 #define XM_Make(Name) \
-  static XEN gxm_ ## Name (void) {Name *e; e = (Name *)calloc(1, sizeof(Name)); return(wrap_for_Xen_OBJ(#Name, e));} \
+  static Xen gxm_ ## Name (void) {Name *e; e = (Name *)calloc(1, sizeof(Name)); return(wrap_for_Xen_OBJ(#Name, e));} \
   Xen_wrap_no_args(gxm_ ## Name ## _w, gxm_ ## Name)
 #define XM_Declare(Name) \
   Xen_define_procedure(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name ## _w, 0, 0, 0, "Make an " #Name " struct")
@@ -739,7 +739,7 @@ XM_Make(XmTransferDoneCallbackStruct)
 XM_Make(XmDisplayCallbackStruct)
 XM_Make(XmDragStartCallbackStruct)
 
-static XEN gxm_XmTextBlock(void) 
+static Xen gxm_XmTextBlock(void) 
 {
   XmTextBlockRec *e; 
   e = (XmTextBlockRec *)calloc(1, sizeof(XmTextBlockRec)); 
@@ -812,7 +812,7 @@ static int its_a_callbackstruct(const char *name)
                                        (Xen_is_symbol(Xen_car(Value))) && \
                                        (its_a_callbackstruct(Xen_symbol_to_C_string(Xen_car(Value)))))
 
-static int xm_protect(XEN obj);
+static int xm_protect(Xen obj);
 static void xm_unprotect_at(int ind);
 
 
@@ -836,9 +836,9 @@ typedef enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_S
 
 static xm_resource_t resource_type(const char *resource);
 
-static XEN C_to_Xen_Widgets(Widget *array, int len)
+static Xen C_to_Xen_Widgets(Widget *array, int len)
 {
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   if (array)
     {
       int i, loc;
@@ -850,9 +850,9 @@ static XEN C_to_Xen_Widgets(Widget *array, int len)
   return(lst);
 }
 
-static XEN C_to_Xen_XmStringTable(XmStringTable array, int len)
+static Xen C_to_Xen_XmStringTable(XmStringTable array, int len)
 {
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   if (array)
     {
       int i, loc;
@@ -864,11 +864,11 @@ static XEN C_to_Xen_XmStringTable(XmStringTable array, int len)
   return(lst);
 }
 
-static Widget *Xen_to_C_Widgets(XEN lst_1, int n)
+static Widget *Xen_to_C_Widgets(Xen lst_1, int n)
 {
   Widget *ws;
   int i;
-  XEN lst;
+  Xen lst;
   lst = Xen_copy_arg(lst_1);
   ws = (Widget *)calloc(n, sizeof(Widget));
   for (i = 0; (i < n) && (!Xen_is_null(lst)); i++, lst = Xen_cdr(lst))
@@ -884,11 +884,11 @@ static Widget *Xen_to_C_Widgets(XEN lst_1, int n)
   return(ws);
 }
 
-static XmString *Xen_to_C_XmStrings(XEN v_1, int len)
+static XmString *Xen_to_C_XmStrings(Xen v_1, int len)
 {
   XmString *str;
   int i;
-  XEN v;
+  Xen v;
   v = Xen_copy_arg(v_1);
   str = (XmString *)calloc(len, sizeof(XmString));
   for (i = 0; (i < len) && (!Xen_is_null(v)); i++, v = Xen_cdr(v))
@@ -904,11 +904,11 @@ static XmString *Xen_to_C_XmStrings(XEN v_1, int len)
   return(str);
 }
 
-static XmDropTransferEntryRec *Xen_to_C_XmDropTransferEntryRecs(XEN v_1, int len)
+static XmDropTransferEntryRec *Xen_to_C_XmDropTransferEntryRecs(Xen v_1, int len)
 {
   XmDropTransferEntryRec *ps;
   int i;
-  XEN v;
+  Xen v;
   v = Xen_copy_arg(v_1);
   ps = (XmDropTransferEntryRec *)calloc(len, sizeof(XmDropTransferEntryRec));
   for (i = 0; (i < len) && (!Xen_is_null(v)); i++, v = Xen_cdr(v))
@@ -929,9 +929,9 @@ static XmDropTransferEntryRec *Xen_to_C_XmDropTransferEntryRecs(XEN v_1, int len
   return(ps);
 }
 
-static XmStringTable Xen_to_C_XmStringTable(XEN v_1, int len)
+static XmStringTable Xen_to_C_XmStringTable(Xen v_1, int len)
 {
-  XEN v;
+  Xen v;
   XmStringTable str;
   int i;
   v = Xen_copy_arg(v_1);
@@ -949,9 +949,9 @@ static XmStringTable Xen_to_C_XmStringTable(XEN v_1, int len)
   return(str);
 }
 
-static XEN C_to_Xen_Ints(int *array, int len)
+static Xen C_to_Xen_Ints(int *array, int len)
 {
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   if (array)
     {
       int i, loc;
@@ -964,7 +964,7 @@ static XEN C_to_Xen_Ints(int *array, int len)
 }
 
 #if HAVE_SCHEME
-static XEN c_to_xen_ints(XEN array, XEN len)
+static Xen c_to_xen_ints(Xen array, Xen len)
 {
   #define H_to_ints "->ints translates a Motif int array (from a .value reference for example) into a scheme list of ints"
   Xen_check_type(Xen_is_wrapped_c_pointer(array), array, 1, "->ints", "int*");
@@ -972,9 +972,9 @@ static XEN c_to_xen_ints(XEN array, XEN len)
 }
 #endif
 
-static XEN C_to_Xen_Atoms(Atom *array, int len)
+static Xen C_to_Xen_Atoms(Atom *array, int len)
 {
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   if (array)
     {
       int i, loc;
@@ -987,7 +987,7 @@ static XEN C_to_Xen_Atoms(Atom *array, int len)
 }
 
 #if HAVE_SCHEME
-static XEN c_to_xen_atoms(XEN array, XEN len)
+static Xen c_to_xen_atoms(Xen array, Xen len)
 {
   #define H_to_Atoms "->Atoms translates a Motif Atoms array (from a .value reference for example) into a scheme list of Atoms"
   Xen_check_type(Xen_is_wrapped_c_pointer(array), array, 1, "->Atoms", "Atom*");
@@ -995,9 +995,9 @@ static XEN c_to_xen_atoms(XEN array, XEN len)
 }
 #endif
 
-static XEN C_to_Xen_Strings(char **array, int len)
+static Xen C_to_Xen_Strings(char **array, int len)
 {
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   if (array)
     {
       int i, loc;
@@ -1010,14 +1010,14 @@ static XEN C_to_Xen_Strings(char **array, int len)
 }
 
 #if HAVE_SCHEME
-static XEN c_to_xen_strings(XEN array, XEN len)
+static Xen c_to_xen_strings(Xen array, Xen len)
 {
   #define H_to_strings "->strings translates a Motif string array (from a .value reference for example) into a scheme list of strings"
   Xen_check_type(Xen_is_wrapped_c_pointer(array), array, 1, "->strings", "char**");
   return(C_to_Xen_Strings((char **)Xen_unwrap_C_pointer(array), Xen_integer_to_C_int(len)));
 }
 
-static XEN c_to_xen_string(XEN str)
+static Xen c_to_xen_string(Xen str)
 {
   #define H_to_string "->string translates a Motif string (from a .value reference for example) into a scheme string"
   char *tmp;
@@ -1029,7 +1029,7 @@ static XEN c_to_xen_string(XEN str)
 }
 #endif
 
-static XEN copy_xrectangle(XRectangle *old_r)
+static Xen copy_xrectangle(XRectangle *old_r)
 {
   XRectangle *r;
   r = (XRectangle *)calloc(1, sizeof(XRectangle));
@@ -1040,9 +1040,9 @@ static XEN copy_xrectangle(XRectangle *old_r)
   return(C_to_Xen_XRectangle(r));
 }
 
-static XEN C_to_Xen_XRectangles(XRectangle *array, int len)
+static Xen C_to_Xen_XRectangles(XRectangle *array, int len)
 {
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   if (array)
     {
       int i, loc;
@@ -1055,7 +1055,7 @@ static XEN C_to_Xen_XRectangles(XRectangle *array, int len)
 }
 
 #if HAVE_SCHEME
-static XEN c_to_xen_xrectangles(XEN array, XEN len)
+static Xen c_to_xen_xrectangles(Xen array, Xen len)
 {
   #define H_to_XRectangles "->XRectangles translates a Motif rectangle array (from a .value reference for example) into a scheme list of rectangles"
   Xen_check_type(Xen_is_wrapped_c_pointer(array), array, 1, "->XRectangles", "Motif rectangle array");
@@ -1063,9 +1063,9 @@ static XEN c_to_xen_xrectangles(XEN array, XEN len)
 }
 #endif
 
-static XEN C_to_Xen_KeySyms(KeySym *array, int len)
+static Xen C_to_Xen_KeySyms(KeySym *array, int len)
 {
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   if (array)
     {
       int i, loc;
@@ -1077,11 +1077,11 @@ static XEN C_to_Xen_KeySyms(KeySym *array, int len)
   return(lst);
 }
 
-static Window *Xen_to_C_Windows(XEN lst_1, int n)
+static Window *Xen_to_C_Windows(Xen lst_1, int n)
 {
   Window *ws;
   int i;
-  XEN lst;
+  Xen lst;
   if (n == 0) return(NULL);
   lst = Xen_copy_arg(lst_1);
   ws = (Window *)calloc(n, sizeof(Window));
@@ -1098,9 +1098,9 @@ static Window *Xen_to_C_Windows(XEN lst_1, int n)
   return(ws);
 }
 
-static XmRendition *Xen_to_C_XmRenditions(XEN lst_1, int n)
+static XmRendition *Xen_to_C_XmRenditions(Xen lst_1, int n)
 {
-  XEN lst;
+  Xen lst;
   XmRendition *ws;
   int i;
   if (n == 0) return(NULL);
@@ -1119,9 +1119,9 @@ static XmRendition *Xen_to_C_XmRenditions(XEN lst_1, int n)
   return(ws);
 }
 
-static XmTab *Xen_to_C_XmTabs(XEN v_1, int len)
+static XmTab *Xen_to_C_XmTabs(Xen v_1, int len)
 {
-  XEN v;
+  Xen v;
   XmTab *str;
   int i;
   if (len == 0) return(NULL);
@@ -1140,9 +1140,9 @@ static XmTab *Xen_to_C_XmTabs(XEN v_1, int len)
   return(str);
 }
 
-static Atom *Xen_to_C_Atoms(XEN v_1, int len)
+static Atom *Xen_to_C_Atoms(Xen v_1, int len)
 {
-  XEN v;
+  Xen v;
   Atom *str;
   int i;
   if (len == 0) return(NULL);
@@ -1161,9 +1161,9 @@ static Atom *Xen_to_C_Atoms(XEN v_1, int len)
   return(str);
 }
 
-static Pixel *Xen_to_C_Pixels(XEN v_1, int len)
+static Pixel *Xen_to_C_Pixels(Xen v_1, int len)
 {
-  XEN v;
+  Xen v;
   Pixel *str;
   int i;
   if (len == 0) return(NULL);
@@ -1182,9 +1182,9 @@ static Pixel *Xen_to_C_Pixels(XEN v_1, int len)
   return(str);
 }
 
-static KeySym *Xen_to_C_KeySyms(XEN v_1, int len)
+static KeySym *Xen_to_C_KeySyms(Xen v_1, int len)
 {
-  XEN v;
+  Xen v;
   KeySym *str;
   int i;
   if (len == 0) return(NULL);
@@ -1203,9 +1203,9 @@ static KeySym *Xen_to_C_KeySyms(XEN v_1, int len)
   return(str);
 }
 
-static char **Xen_to_C_Strings(XEN v_1, int len)
+static char **Xen_to_C_Strings(Xen v_1, int len)
 {
-  XEN v;
+  Xen v;
   char **str;
   int i;
   if (len == 0) return(NULL);
@@ -1224,9 +1224,9 @@ static char **Xen_to_C_Strings(XEN v_1, int len)
   return(str);
 }
 
-static int *Xen_to_C_Ints(XEN v_1, int len)
+static int *Xen_to_C_Ints(Xen v_1, int len)
 {
-  XEN v;
+  Xen v;
   int *ps;
   int i;
   if (len == 0) return(NULL);
@@ -1245,9 +1245,9 @@ static int *Xen_to_C_Ints(XEN v_1, int len)
   return(ps);
 }
 
-static Cardinal *Xen_to_C_Cardinals(XEN v_1, int len)
+static Cardinal *Xen_to_C_Cardinals(Xen v_1, int len)
 {
-  XEN v;
+  Xen v;
   Cardinal *ps;
   int i;
   if (len == 0) return(NULL);
@@ -1266,9 +1266,9 @@ static Cardinal *Xen_to_C_Cardinals(XEN v_1, int len)
   return(ps);
 }
 
-static XRectangle *Xen_to_C_XRectangles(XEN v_1, int len)
+static XRectangle *Xen_to_C_XRectangles(Xen v_1, int len)
 {
-  XEN v;
+  Xen v;
   XRectangle *str, *dat;
   int i;
   if (len == 0) return(NULL);
@@ -1297,11 +1297,11 @@ static XRectangle *Xen_to_C_XRectangles(XEN v_1, int len)
 
 /* -------- arglists -------- */
 
-static XEN wrap_callback_struct(int type, XtPointer info);
-static int map_over_protected_elements(bool (*func)(XEN val, int loc, unsigned long fid), unsigned long id);
-static XEN xm_protected_element(int loc);
+static Xen wrap_callback_struct(int type, XtPointer info);
+static int map_over_protected_elements(bool (*func)(Xen val, int loc, unsigned long fid), unsigned long id);
+static Xen xm_protected_element(int loc);
 static int callback_struct_type(Widget w, const char *name);
-static void xm_unprotect(XEN obj);
+static void xm_unprotect(Xen obj);
 
 enum {CALLBACK_TYPE, CALLBACK_FUNC, CALLBACK_DATA, CALLBACK_STRUCT_TYPE, CALLBACK_GC_LOC};
 
@@ -1310,7 +1310,7 @@ enum {CALLBACK_TYPE, CALLBACK_FUNC, CALLBACK_DATA, CALLBACK_STRUCT_TYPE, CALLBAC
 
 static void gxm_XtCallbackProc(Widget w, XtPointer context, XtPointer info)
 {
-  XEN descr = (XEN)context;
+  Xen descr = (Xen)context;
   Xen_call_with_3_args(Xen_list_ref(descr, CALLBACK_FUNC),    /* descr: (list "XtCallback" func user-data struct-type gc-loc) */
 	     C_to_Xen_Widget(w),
 	     Xen_list_ref(descr, CALLBACK_DATA),
@@ -1322,10 +1322,10 @@ static void gxm_XtCallbackProc(Widget w, XtPointer context, XtPointer info)
   Xen_list_5(C_string_to_Xen_symbol("Drop_Callback"), Code, Xen_false, Xen_integer_zero, Xen_integer_zero)
 #define XM_is_Drop_Callback(Arg) is_wrapped("Drop_Callback", Arg)
 
-static bool find_dropproc(XEN val, int loc, unsigned long w)
+static bool find_dropproc(Xen val, int loc, unsigned long w)
 {
   return((XM_is_Drop_Callback(val)) &&
-	 (((Xen_is_false((XEN)w)) && 
+	 (((Xen_is_false((Xen)w)) && 
 	   (Xen_is_false(Xen_list_ref(val, CALLBACK_DATA)))) ||
 	  ((Xen_is_Widget(Xen_list_ref(val, CALLBACK_DATA))) &&
 	   (Xen_ulong_to_C_ulong(Xen_cadr(Xen_list_ref(val, CALLBACK_DATA))) == w))));
@@ -1338,7 +1338,7 @@ static void gxm_Drop_Callback(Widget w, XtPointer context, XtPointer info)
   i = map_over_protected_elements(find_dropproc, (unsigned long)w);
   if (i >= 0)
     {
-      XEN code;
+      Xen code;
       code = Xen_list_ref(xm_protected_element(i), CALLBACK_FUNC);
       if (Xen_is_procedure(code))
 	Xen_call_with_3_args(code,
@@ -1354,10 +1354,10 @@ static void gxm_Drop_Callback(Widget w, XtPointer context, XtPointer info)
   Xen_list_5(C_string_to_Xen_symbol("Drag_Callback"), Code, Xen_false, Xen_integer_zero, Xen_integer_zero)
 #define XM_is_Drag_Callback(Arg) is_wrapped("Drag_Callback", Arg)
 
-static bool find_dragproc(XEN val, int loc, unsigned long w)
+static bool find_dragproc(Xen val, int loc, unsigned long w)
 {
   return((XM_is_Drag_Callback(val)) &&
-	 (((Xen_is_false((XEN)w)) && 
+	 (((Xen_is_false((Xen)w)) && 
 	   (Xen_is_false(Xen_list_ref(val, CALLBACK_DATA)))) ||
 	  ((Xen_is_Widget(Xen_list_ref(val, CALLBACK_DATA))) &&
 	   (Xen_ulong_to_C_ulong(Xen_cadr(Xen_list_ref(val, CALLBACK_DATA))) == w))));
@@ -1370,7 +1370,7 @@ static void gxm_Drag_Callback(Widget w, XtPointer context, XtPointer info)
   i = map_over_protected_elements(find_dragproc, (unsigned long)w);
   if (i >= 0)
     {
-      XEN code;
+      Xen code;
       code = Xen_list_ref(xm_protected_element(i), CALLBACK_FUNC);
       if (Xen_is_procedure(code))
 	Xen_call_with_3_args(code,
@@ -1385,10 +1385,10 @@ static void gxm_Drag_Callback(Widget w, XtPointer context, XtPointer info)
   Xen_list_5(C_string_to_Xen_symbol("XtPopupChild"), Code, Xen_false, Xen_integer_zero, Xen_integer_zero)
 #define XM_is_XtPopupChild(Arg) is_wrapped("XtPopupChild", Arg)
 
-static bool find_popupchild(XEN val, int loc, unsigned long w)
+static bool find_popupchild(Xen val, int loc, unsigned long w)
 {
   return((XM_is_XtPopupChild(val)) &&
-	 (((Xen_is_false((XEN)w)) && 
+	 (((Xen_is_false((Xen)w)) && 
 	   (Xen_is_false(Xen_list_ref(val, CALLBACK_DATA)))) ||
 	  ((Xen_is_Widget(Xen_list_ref(val, CALLBACK_DATA))) &&
 	   (Xen_ulong_to_C_ulong(Xen_cadr(Xen_list_ref(val, CALLBACK_DATA))) == w))));
@@ -1401,7 +1401,7 @@ static void gxm_XtPopupChild(Widget w)
   i = map_over_protected_elements(find_popupchild, (unsigned long)w);
   if (i >= 0)
     {
-      XEN code;
+      Xen code;
       code = Xen_list_ref(xm_protected_element(i), CALLBACK_FUNC);
       if (Xen_is_procedure(code))
 	Xen_call_with_1_arg(code,
@@ -1414,10 +1414,10 @@ static void gxm_XtPopupChild(Widget w)
   Xen_list_5(C_string_to_Xen_symbol("XmSearchProc"), Code, Xen_false, Xen_integer_zero, Xen_integer_zero)
 #define XM_is_XmSearchProc(Arg) is_wrapped("XmSearchProc", Arg)
 
-static bool find_searchproc(XEN val, int loc, unsigned long w)
+static bool find_searchproc(Xen val, int loc, unsigned long w)
 {
   return((XM_is_XmSearchProc(val)) &&
-	 (((Xen_is_false((XEN)w)) && 
+	 (((Xen_is_false((Xen)w)) && 
 	   (Xen_is_false(Xen_list_ref(val, CALLBACK_DATA)))) ||
 	  ((Xen_is_Widget(Xen_list_ref(val, CALLBACK_DATA))) &&
 	   (Xen_ulong_to_C_ulong(Xen_cadr(Xen_list_ref(val, CALLBACK_DATA))) == w))));
@@ -1430,7 +1430,7 @@ static void gxm_XmSearchProc(Widget w, XmFileSelectionBoxCallbackStruct *info)
   i = map_over_protected_elements(find_searchproc, (unsigned long)w);
   if (i >= 0)
     {
-      XEN code;
+      Xen code;
       code = Xen_list_ref(xm_protected_element(i), CALLBACK_FUNC);
       if (Xen_is_procedure(code))
 	Xen_call_with_2_args(code,
@@ -1444,10 +1444,10 @@ static void gxm_XmSearchProc(Widget w, XmFileSelectionBoxCallbackStruct *info)
   Xen_list_5(C_string_to_Xen_symbol("XmQualifyProc"), Code, Xen_false, Xen_integer_zero, Xen_integer_zero)
 #define XM_is_XmQualifyProc(Arg) is_wrapped("XmQualifyProc", Arg)
 
-static bool find_qualifyproc(XEN val, int loc, unsigned long w)
+static bool find_qualifyproc(Xen val, int loc, unsigned long w)
 {
   return((XM_is_XmQualifyProc(val)) &&
-	 (((Xen_is_false((XEN)w)) && 
+	 (((Xen_is_false((Xen)w)) && 
 	   (Xen_is_false(Xen_list_ref(val, CALLBACK_DATA)))) ||
 	  ((Xen_is_Widget(Xen_list_ref(val, CALLBACK_DATA))) &&
 	   (Xen_ulong_to_C_ulong(Xen_cadr(Xen_list_ref(val, CALLBACK_DATA))) == w))));
@@ -1460,7 +1460,7 @@ static void gxm_XmQualifyProc(Widget w, XtPointer indata, XtPointer outdata)
   i = map_over_protected_elements(find_qualifyproc, (unsigned long)w);
   if (i >= 0)
     {
-      XEN code;
+      Xen code;
       code = Xen_list_ref(xm_protected_element(i), CALLBACK_FUNC);
       if (Xen_is_procedure(code))
 	Xen_call_with_3_args(code,
@@ -1475,10 +1475,10 @@ static void gxm_XmQualifyProc(Widget w, XtPointer indata, XtPointer outdata)
   Xen_list_5(C_string_to_Xen_symbol("XtOrderProc"), Code, Xen_false, Xen_integer_zero, Xen_integer_zero)
 #define XM_is_XtOrderProc(Arg) is_wrapped("XtOrderProc", Arg)
 
-static bool find_orderproc(XEN val, int loc, unsigned long w)
+static bool find_orderproc(Xen val, int loc, unsigned long w)
 {
   return((XM_is_XtOrderProc(val)) &&
-	 (((Xen_is_false((XEN)w)) && 
+	 (((Xen_is_false((Xen)w)) && 
 	   (Xen_is_false(Xen_list_ref(val, CALLBACK_DATA)))) ||
 	  ((Xen_is_Widget(Xen_list_ref(val, CALLBACK_DATA))) &&
 	   (Xen_ulong_to_C_ulong(Xen_cadr(Xen_list_ref(val, CALLBACK_DATA))) == w))));
@@ -1491,7 +1491,7 @@ static Cardinal gxm_XtOrderProc(Widget w)
   i = map_over_protected_elements(find_orderproc, (unsigned long)w);
   if (i >= 0)
     {
-      XEN code;
+      Xen code;
       code = Xen_list_ref(xm_protected_element(i), CALLBACK_FUNC);
       if (Xen_is_procedure(code))
 	result = Xen_integer_to_C_int(Xen_call_with_1_arg(code,
@@ -1506,10 +1506,10 @@ static Cardinal gxm_XtOrderProc(Widget w)
   Xen_list_5(C_string_to_Xen_symbol("Parse_Callback"), Code, Xen_false, Xen_integer_zero, Xen_integer_zero)
 #define XM_is_Parse_Callback(Arg) is_wrapped("Parse_Callback", Arg)
 
-static bool find_parseproc(XEN val, int loc, unsigned long w)
+static bool find_parseproc(Xen val, int loc, unsigned long w)
 {
   return((XM_is_Parse_Callback(val)) &&
-	 (((Xen_is_false((XEN)w)) && 
+	 (((Xen_is_false((Xen)w)) && 
 	   (Xen_is_false(Xen_list_ref(val, CALLBACK_DATA)))) ||
 	  ((Xen_is_XmParseMapping(Xen_list_ref(val, CALLBACK_DATA))) &&
 	   (Xen_ulong_to_C_ulong(Xen_cadr(Xen_list_ref(val, CALLBACK_DATA))) == w))));
@@ -1522,7 +1522,7 @@ static XmIncludeStatus gxm_Parse_Callback(XtPointer *in_out, XtPointer text_end,
   i = map_over_protected_elements(find_parseproc, (unsigned long)entry);
   if (i >= 0)
     {
-      XEN code;
+      Xen code;
       code = Xen_list_ref(xm_protected_element(i), CALLBACK_FUNC);
       if (Xen_is_procedure(code))
 	return(Xen_integer_to_C_int(Xen_apply(code,
@@ -1533,19 +1533,19 @@ static XmIncludeStatus gxm_Parse_Callback(XtPointer *in_out, XtPointer text_end,
 						 C_to_Xen_XmParseMapping(entry),
 						 C_int_to_Xen_integer(pattern_length),
 						 C_to_Xen_XmString((*str_include)), /* can't work... */
-						 (XEN)call_data),
+						 (Xen)call_data),
 				      __func__)));
     }
   return(0);
 }
 
-static XEN xm_XmColorAllocationProc;
+static Xen xm_XmColorAllocationProc;
 
 static void gxm_XmAllocColorProc(Display *dpy, Colormap color, XColor *bs)
 {
   /* DIFF: XmAllocColorProc should return new XColor value
    */
-  XEN val;
+  Xen val;
   val = Xen_call_with_3_args(xm_XmColorAllocationProc,
 		   C_to_Xen_Display(dpy),
 		   C_to_Xen_Colormap(color),
@@ -1554,13 +1554,13 @@ static void gxm_XmAllocColorProc(Display *dpy, Colormap color, XColor *bs)
   (*bs) = (*(Xen_to_C_XColor(val)));
 }
 
-static XEN xm_XmColorCalculationProc;
+static Xen xm_XmColorCalculationProc;
 
 static void gxm_XmColorCalculationProc(Screen *scr, XColor *bg, XColor *fg, XColor *sel, XColor *ts, XColor *bs)
 {
   /* DIFF: XmColorCalculationProc takes 2 args, returns list of 4 colors
    */
-  XEN lst;
+  Xen lst;
   int loc;
   lst = Xen_call_with_2_args(xm_XmColorCalculationProc,
 		   C_to_Xen_Screen(scr),
@@ -1577,11 +1577,11 @@ static void gxm_XmColorCalculationProc(Screen *scr, XColor *bg, XColor *fg, XCol
   xm_unprotect_at(loc);
 }
 
-static XEN xm_XmColorProc; /* XmColorProc is not the same as XmScreen color calculation proc */
+static Xen xm_XmColorProc; /* XmColorProc is not the same as XmScreen color calculation proc */
 
 static void gxm_XmColorProc(XColor *bg, XColor *fg, XColor *sel, XColor *ts, XColor *bs)
 {
-  XEN lst;
+  Xen lst;
   int loc;
   lst = Xen_call_with_1_arg(xm_XmColorProc,
 		   C_to_Xen_XColor(bg),
@@ -1597,9 +1597,9 @@ static void gxm_XmColorProc(XColor *bg, XColor *fg, XColor *sel, XColor *ts, XCo
   xm_unprotect_at(loc);
 }
 
-static XtCallbackList Xen_to_C_XtCallbackList(XEN call_list1)
+static XtCallbackList Xen_to_C_XtCallbackList(Xen call_list1)
 {
-  XEN call_list;
+  Xen call_list;
   int call_i, call_len;
   XtCallbackRec *cl = NULL;
   call_list = Xen_copy_arg(call_list1);
@@ -1608,14 +1608,14 @@ static XtCallbackList Xen_to_C_XtCallbackList(XEN call_list1)
   cl = (XtCallbackRec *)calloc(call_len + 1, sizeof(XtCallbackRec));
   for (call_i = 0; call_i < call_len; call_i++, call_list = Xen_cddr(call_list))
     {
-      XEN func, data;
+      Xen func, data;
       func = Xen_car(call_list);
       if (Xen_list_length(call_list) == 2)
 	data = Xen_cadr(call_list);
       else data = Xen_false;
       if ((Xen_is_procedure(func)) && (Xen_is_aritable(func, 3)))
 	{
-	  XEN descr;
+	  Xen descr;
 	  cl[call_i].callback = gxm_XtCallbackProc;
 	  descr = C_to_Xen_XM_XtCallback(Xen_car(call_list), data);
 	  cl[call_i].closure = (XtPointer)descr;
@@ -1625,14 +1625,14 @@ static XtCallbackList Xen_to_C_XtCallbackList(XEN call_list1)
   return(cl);
 }
 
-static XEN C_to_Xen_STRING_WITH_TERMINATION(char *str, unsigned long len)
+static Xen C_to_Xen_STRING_WITH_TERMINATION(char *str, unsigned long len)
 {
   if ((len == 0) || (str == NULL)) return(Xen_false);
   str[len] = '\0';
   return(C_string_to_Xen_string(str));
 }
 
-static XEN xm_XtSelectionCallback_Descr;
+static Xen xm_XtSelectionCallback_Descr;
 
 static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom *a1, Atom *a2, XtPointer x1, unsigned long *l, int *i)
 {
@@ -1647,7 +1647,7 @@ static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom *a1, Atom *a
 	    __func__);
 }
 
-static XEN xm_XtConvertSelectionIncr_Descr;
+static Xen xm_XtConvertSelectionIncr_Descr;
 
 static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom *selection, Atom *target, 
 					   Atom *type_return, XtPointer *value_return, 
@@ -1659,7 +1659,7 @@ static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom *selection, Atom *t
    *       should return (list ...) if ok, #f if not
    *       the list should be (type value length format)
    */
-  XEN result;
+  Xen result;
   result = Xen_apply(xm_XtConvertSelectionIncr_Descr,
 		     Xen_list_6(C_to_Xen_Widget(w),
 				C_to_Xen_Atom(*selection),
@@ -1697,12 +1697,12 @@ static Arg *free_args(Arg *args, int len)
   return(NULL);
 }
 
-static Arg *Xen_to_C_Args(XEN inargl)
+static Arg *Xen_to_C_Args(Xen inargl)
 {
   /* an Arg array in xm is a list of name value pairs */
   Arg *args = NULL;
   int i, len, gcloc;
-  XEN descr, inarg;
+  Xen descr, inarg;
   /* if XtVaNestedList supported, scan for it here, and increase length as needed,
    *   then make recursive call to Xen_to_C_Args in that branch, unloading afterwards
    *   this is not actually needed in xm -- just use append!
@@ -1716,7 +1716,7 @@ static Arg *Xen_to_C_Args(XEN inargl)
     {
       XtCallbackRec *cl = NULL;
       xm_resource_t type;
-      XEN xname, value;
+      Xen xname, value;
       char *name;
       xname = Xen_car(inarg);
       Xen_check_type(Xen_is_string(xname), xname, 0, __func__, "string");
@@ -1725,7 +1725,7 @@ static Arg *Xen_to_C_Args(XEN inargl)
       value = Xen_cadr(inarg);
       switch (type)
 	{
-	  /* here the XtSetArg call wants an XtCallbackList, the incoming XEN type is a list of callback data pairs
+	  /* here the XtSetArg call wants an XtCallbackList, the incoming Xen type is a list of callback data pairs
 	   *   the new callback rec.callback = gxm_XtCallback (etc -- chosen by resource type)
 	   *   the rec.closure will be the wrapped func/data info
 	   *   we don't have all the data we need for the actual wrapped list here since we need the widget to choose the callback struct type
@@ -2052,7 +2052,7 @@ static void fixup_args(Widget w, Arg *args, int len)
 	{
 	  XtCallbackRec *cl = NULL;
 	  int j;
-	  XEN data;
+	  Xen data;
 	  switch (resource_type(name))
 	    {
 	    case XM_STRING_TABLE:
@@ -2074,7 +2074,7 @@ static void fixup_args(Widget w, Arg *args, int len)
 	      for (j = 0 ;; j++)
 		{
 		  if (cl[j].callback == NULL) break;
-		  data = (XEN)(cl[j].closure);
+		  data = (Xen)(cl[j].closure);
 		  Xen_list_set(data, CALLBACK_STRUCT_TYPE, C_int_to_Xen_integer(callback_struct_type(w, name)));
 		}
 	      free(cl);
@@ -2189,7 +2189,7 @@ static int xmstringtable_length(Widget w, const char *name)
   return(len);
 }
 
-static XEN C_to_Xen_ANY(Widget w, Arg arg)
+static Xen C_to_Xen_ANY(Widget w, Arg arg)
 {
   /* XtGetValues -- a list of pairs: resource-name place-holder where we fill in the 2nd element */
   /* this has to wait until the last moment to decide what arg.value is -- if we assume unsigned long*
@@ -2328,13 +2328,13 @@ static XEN C_to_Xen_ANY(Widget w, Arg arg)
   return(C_ulong_to_Xen_ulong((*((unsigned long *)(arg.value))))); /* fallback */
 }
 
-static XEN C_to_Xen_Args(Widget w, Arg *args, int len)
+static Xen C_to_Xen_Args(Widget w, Arg *args, int len)
 {
   /* here XtGetValues (or equivalent) has filled in the resource values and we need to pass them back
    *   to scheme properly wrapped
    */
   int i, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--) 
     lst = Xen_cons_2(C_string_to_Xen_string(args[i].name),
@@ -2346,12 +2346,12 @@ static XEN C_to_Xen_Args(Widget w, Arg *args, int len)
 
 /* (XtGetValues c1 (list XmNx 0) 1) */
 
-static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
+static Xen gxm_XtGetValues_1(Xen arg1, Xen larg2, int len)
 {
   Arg *args;
   unsigned long *locs;
   Widget w;
-  XEN val, arg2;
+  Xen val, arg2;
   int i, gcloc;
   /* here we need to make sure the ref args are ok from C's point of view */
   if (len <= 0) return(Xen_false);
@@ -2378,15 +2378,15 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
 
 /* -------------------------------- gc protection -------------------------------- */
 
-static XEN xm_protected;
+static Xen xm_protected;
 static int xm_protected_size = 0;
-static XEN xm_gc_table;
+static Xen xm_gc_table;
 static int last_xm_unprotect = NOT_A_GC_LOC;
 
-static int xm_protect(XEN obj)
+static int xm_protect(Xen obj)
 {
   int i, new_size;
-  XEN new_table;
+  Xen new_table;
   if (last_xm_unprotect >= 0)
     {
       i = last_xm_unprotect;
@@ -2419,7 +2419,7 @@ static int xm_protect(XEN obj)
   return(i);
 }
 
-static void xm_unprotect(XEN obj)
+static void xm_unprotect(Xen obj)
 {
   int i;
   for (i = 0; i < xm_protected_size; i++)
@@ -2437,7 +2437,7 @@ static void xm_unprotect_at(int ind)
   last_xm_unprotect = ind;
 }
 
-static int map_over_protected_elements(bool (*func)(XEN val, int loc, unsigned long fid), unsigned long id)
+static int map_over_protected_elements(bool (*func)(Xen val, int loc, unsigned long fid), unsigned long id)
 {
   int i;
   for (i = 0; i < xm_protected_size; i++)
@@ -2446,7 +2446,7 @@ static int map_over_protected_elements(bool (*func)(XEN val, int loc, unsigned l
   return(-1);
 }
 
-static XEN xm_protected_element(int loc)
+static Xen xm_protected_element(int loc)
 {
   return(Xen_vector_ref(xm_protected, loc));
 }
@@ -2475,7 +2475,7 @@ static XEN xm_protected_element(int loc)
  *   so everything is slightly backwards
  */
 
-static int Xen_to_C_INT_DEF(XEN len, XEN lst) 
+static int Xen_to_C_INT_DEF(Xen len, Xen lst) 
 {
   if (Xen_is_integer(len))
     return(Xen_integer_to_C_int(len));
@@ -2487,7 +2487,7 @@ static int Xen_to_C_INT_DEF(XEN len, XEN lst)
     }
 }
 
-static XEN gxm_XmTransferDone(XEN arg1, XEN arg2)
+static Xen gxm_XmTransferDone(Xen arg1, Xen arg2)
 {
   #define H_XmTransferDone "void XmTransferDone(XtPointer transfer_id, XmTransferStatus status) completes a data transfer"
   Xen_check_type(Xen_is_wrapped_c_pointer(arg1), arg1, 1, "XmTransferDone", "XtPointer");
@@ -2496,7 +2496,7 @@ static XEN gxm_XmTransferDone(XEN arg1, XEN arg2)
   return(arg1);
 }
 
-static XEN gxm_XmTransferSendRequest(XEN arg1, XEN arg2)
+static Xen gxm_XmTransferSendRequest(Xen arg1, Xen arg2)
 {
   #define H_XmTransferSendRequest "void XmTransferSendRequest(XtPointer transfer_id, Time time) transfers a MULTIPLE request"
   Xen_check_type(Xen_is_wrapped_c_pointer(arg1), arg1, 1, "XmTransferSendRequest", "XtPointer");
@@ -2505,7 +2505,7 @@ static XEN gxm_XmTransferSendRequest(XEN arg1, XEN arg2)
   return(arg1);
 }
 
-static XEN gxm_XmTransferStartRequest(XEN arg1)
+static Xen gxm_XmTransferStartRequest(Xen arg1)
 {
   #define H_XmTransferStartRequest "void XmTransferStartRequest(XtPointer transfer_id) begins a MULTIPLE transfer"
   Xen_check_type(Xen_is_wrapped_c_pointer(arg1), arg1, 1, "XmTransferStartRequest", "XtPointer");
@@ -2513,7 +2513,7 @@ static XEN gxm_XmTransferStartRequest(XEN arg1)
   return(arg1);
 }
 
-static XEN gxm_XmTransferSetParameters(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmTransferSetParameters(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmTransferSetParameters "void XmTransferSetParameters(XtPointer transfer_id, XtPointer parm, int parm_fmt, \
 unsigned long parm_length, Atom parm_type)  establishes parameters to be passed by the next call to XmTransferValue"
@@ -2532,7 +2532,7 @@ unsigned long parm_length, Atom parm_type)  establishes parameters to be passed 
 
 static void gxm_TransferValueProc(Widget w, XtPointer context, XtPointer info)
 {
-  XEN descr = (XEN)context;
+  Xen descr = (Xen)context;
   Xen_call_with_3_args(Xen_list_ref(descr, 0),
 	     C_to_Xen_Widget(w),
 	     Xen_list_ref(descr, 1),
@@ -2540,7 +2540,7 @@ static void gxm_TransferValueProc(Widget w, XtPointer context, XtPointer info)
 	     __func__);
 }
 
-static XEN gxm_XmTransferValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmTransferValue(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmTransferValue "void XmTransferValue(XtPointer transfer_id, Atom target, XtCallbackProc proc, XtPointer client_data, Time time) \
 transfers data to a destination"
@@ -2556,7 +2556,7 @@ transfers data to a destination"
   return(arg1);
 }
 
-static XEN gxm_new_widget(const char *caller, Widget (*func)(Widget parent, char *name, ArgList al, Cardinal ac), XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_new_widget(const char *caller, Widget (*func)(Widget parent, char *name, ArgList al, Cardinal ac), Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   Widget w;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, caller, "Widget");
@@ -2580,14 +2580,14 @@ static XEN gxm_new_widget(const char *caller, Widget (*func)(Widget parent, char
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XmCreateMenuShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateMenuShell(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateMenuShell "Widget XmCreateMenuShell(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MenuShell widget creation function"
   return(gxm_new_widget("XmCreateMenuShell", XmCreateMenuShell, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmProcessTraversal(XEN arg1, XEN arg2)
+static Xen gxm_XmProcessTraversal(Xen arg1, Xen arg2)
 {
   #define H_XmProcessTraversal "Boolean XmProcessTraversal(Widget widget, XmTraversalDirection direction) determines which \
 component receives keyboard events when a widget has the focus"
@@ -2596,42 +2596,42 @@ component receives keyboard events when a widget has the focus"
   return(C_bool_to_Xen_boolean(XmProcessTraversal(Xen_to_C_Widget(arg1), (XmTraversalDirection)Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XmGetFocusWidget(XEN arg1)
+static Xen gxm_XmGetFocusWidget(Xen arg1)
 {
   #define H_XmGetFocusWidget "Widget XmGetFocusWidget(Widget widget): returns the ID of the widget that has keyboard focus"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmGetFocusWidget", "Widget");
   return(C_to_Xen_Widget(XmGetFocusWidget(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmGetTabGroup(XEN arg1)
+static Xen gxm_XmGetTabGroup(Xen arg1)
 {
   #define H_XmGetTabGroup "Widget XmGetTabGroup(Widget widget): returns the widget ID of a tab group"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmGetTabGroup", "Widget");
   return(C_to_Xen_Widget(XmGetTabGroup(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmGetVisibility(XEN arg1)
+static Xen gxm_XmGetVisibility(Xen arg1)
 {
   #define H_XmGetVisibility "XmVisibility XmGetVisibility(Widget widget) determines if a widget is visible"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmGetVisibility", "Widget");
   return(C_int_to_Xen_integer(XmGetVisibility(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmIsTraversable(XEN arg1)
+static Xen gxm_XmIsTraversable(Xen arg1)
 {
   #define H_XmIsTraversable "Boolean XmIsTraversable(Widget widget) identifies whether a widget can be traversed"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmIsTraversable", "Widget");
   return(C_bool_to_Xen_boolean(XmIsTraversable(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmGetDestination(XEN arg1)
+static Xen gxm_XmGetDestination(Xen arg1)
 {
   #define H_XmGetDestination "Widget XmGetDestination(Display *display) gets the current destination widget for paste etc"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmGetDestination", "Display*");
   return(C_to_Xen_Widget(XmGetDestination(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XmRenderTableAddRenditions(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmRenderTableAddRenditions(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmRenderTableAddRenditions "XmRenderTable XmRenderTableAddRenditions(XmRenderTable oldtable, \
 XmRendition *renditions, Cardinal rendition_count, XmMergeMode merge_mode) adds renditions to a render table"
@@ -2656,7 +2656,7 @@ XmRendition *renditions, Cardinal rendition_count, XmMergeMode merge_mode) adds 
   return(C_to_Xen_XmRenderTable(res));
 }
 
-static XEN gxm_XmRenderTableRemoveRenditions(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmRenderTableRemoveRenditions(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmRenderTableRemoveRenditions "XmRenderTable XmRenderTableRemoveRenditions(XmRenderTable oldtable, XmStringTag *tags, int tag_count) \
 removes renditions"
@@ -2685,7 +2685,7 @@ removes renditions"
   return(C_to_Xen_XmRenderTable(rt));
 }
 
-static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmRenderTableCopy(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmRenderTableCopy "XmRenderTable XmRenderTableCopy(XmRenderTable table, XmStringTag *tags, int tag_count) copies renditions"
   /* DIFF: XmRenderTableCopy arg2 is list of strings
@@ -2713,7 +2713,7 @@ static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
   return(C_to_Xen_XmRenderTable(rt));
 }
 
-static XEN gxm_XmRenderTableFree(XEN arg1)
+static Xen gxm_XmRenderTableFree(Xen arg1)
 {
   #define H_XmRenderTableFree "void XmRenderTableFree(XmRenderTable table)  recovers memory"
   Xen_check_type(Xen_is_XmRenderTable(arg1), arg1, 1, "XmRenderTableFree", "XmRenderTable");
@@ -2721,13 +2721,13 @@ static XEN gxm_XmRenderTableFree(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmRenderTableGetTags(XEN arg1)
+static Xen gxm_XmRenderTableGetTags(Xen arg1)
 {
   #define H_XmRenderTableGetTags "int XmRenderTableGetTags(XmRenderTable table) gets rendition tags (list of strings)"
   /* DIFF: XmRenderTableGetTags omits arg2, returns list of strings
    */
   int len, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   XmStringTag *str;
   Xen_check_type(Xen_is_XmRenderTable(arg1), arg1, 1, "XmRenderTableGetTags", "XmRenderTable");
   loc = xm_protect(lst);
@@ -2746,7 +2746,7 @@ static XEN gxm_XmRenderTableGetTags(XEN arg1)
   return(lst);
 }
 
-static XEN gxm_XmRenderTableGetRendition(XEN arg1, XEN arg2)
+static Xen gxm_XmRenderTableGetRendition(Xen arg1, Xen arg2)
 {
   #define H_XmRenderTableGetRendition "XmRendition XmRenderTableGetRendition(XmRenderTable table, XmStringTag tag) \
 matches a rendition tag"
@@ -2755,14 +2755,14 @@ matches a rendition tag"
   return(C_to_Xen_XmRendition(XmRenderTableGetRendition(Xen_to_C_XmRenderTable(arg1), (char *)Xen_string_to_C_string(arg2))));
 }
 
-static XEN gxm_XmRenderTableGetRenditions(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmRenderTableGetRenditions(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmRenderTableGetRenditions "XmRendition *XmRenderTableGetRenditions(XmRenderTable table, XmStringTag *tags, Cardinal tag_count) \
 matches rendition tags"
   /* DIFF: XmRenderTableGetRenditions returns list of XmRenditions, arg2 is list of strings
    */
   int i, len = 0, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   XmRendition *rs;
   XmStringTag *tags;
   if ((!Xen_is_bound(arg1)) || !Xen_is_bound(arg2) || Xen_is_false(arg2)) return(Xen_false);
@@ -2784,7 +2784,7 @@ matches rendition tags"
   return(lst);
 }
 
-static XEN gxm_XmRenditionCreate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmRenditionCreate(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmRenditionCreate "XmRendition XmRenditionCreate(Widget widget, XmStringTag tag, ArgList arglist, Cardinal argcount) \
 creates a rendition"
@@ -2804,7 +2804,7 @@ creates a rendition"
   return(C_to_Xen_XmRendition(w));
 }
 
-static XEN gxm_XmRenditionFree(XEN arg1)
+static Xen gxm_XmRenditionFree(Xen arg1)
 {
   #define H_XmRenditionFree "void XmRenditionFree(XmRendition rendition) frees a rendition"
   Xen_check_type(Xen_is_XmRendition(arg1), arg1, 1, "XmRenditionFree", "XmRendition");
@@ -2812,7 +2812,7 @@ static XEN gxm_XmRenditionFree(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmRenditionRetrieve(XEN arg1, XEN larg2, XEN arg3)
+static Xen gxm_XmRenditionRetrieve(Xen arg1, Xen larg2, Xen arg3)
 {
   #define H_XmRenditionRetrieve "void XmRenditionRetrieve(XmRendition rendition, ArgList arglist, Cardinal argcount) \
 retrieves rendition resources"
@@ -2824,11 +2824,11 @@ retrieves rendition resources"
      */
     Arg *args;
     unsigned long *locs;
-    XEN val;
+    Xen val;
     int i, len, gcloc;
     XmRendition r;
     char *name;
-    XEN arg2;
+    Xen arg2;
     arg2 = Xen_copy_arg(larg2);
     gcloc = xm_protect(arg2);
     /* here we need to make sure the ref args are ok from C's point of view */
@@ -2851,7 +2851,7 @@ retrieves rendition resources"
   }
 }
 
-static XEN gxm_XmRenditionUpdate(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmRenditionUpdate(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmRenditionUpdate "void XmRenditionUpdate(XmRendition rendition, ArgList arglist, Cardinal argcount) \
 modifies resources"
@@ -2869,7 +2869,7 @@ modifies resources"
   return(Xen_false);
 }
 
-static XEN gxm_XmRenderTableCvtToProp(XEN arg1, XEN arg2)
+static Xen gxm_XmRenderTableCvtToProp(Xen arg1, Xen arg2)
 {
   #define H_XmRenderTableCvtToProp "unsigned int XmRenderTableCvtToProp(Widget widget, XmRenderTable table) \
 converts a render table to a string representation -> (val props)"
@@ -2884,7 +2884,7 @@ converts a render table to a string representation -> (val props)"
 		    C_string_to_Xen_string(buf)));
 }
 
-static XEN gxm_XmRenderTableCvtFromProp(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmRenderTableCvtFromProp(Xen arg1, Xen arg2, Xen arg3)
 {
   char *str;
   int len;
@@ -2900,7 +2900,7 @@ converts from a string representation to a render table"
   return(Xen_false);
 }
 
-static XEN gxm_XmTabListInsertTabs(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTabListInsertTabs(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTabListInsertTabs "XmTabList XmTabListInsertTabs(XmTabList oldlist, XmTab *tabs, Cardinal tab_count, int position) \
 inserts tabs into a tab list"
@@ -2924,7 +2924,7 @@ inserts tabs into a tab list"
   return(C_to_Xen_XmTabList(tl));
 }
 
-static XEN gxm_XmTabListCopy(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTabListCopy(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmTabListCopy "XmTabList XmTabListCopy(XmTabList tablist, int offset, Cardinal count) creates \
 a new tab list from an existing list"
@@ -2935,7 +2935,7 @@ a new tab list from an existing list"
   return(C_to_Xen_XmTabList(XmTabListCopy(Xen_to_C_XmTabList(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XmTabListTabCount(XEN arg1)
+static Xen gxm_XmTabListTabCount(Xen arg1)
 {
   #define H_XmTabListTabCount "Cardinal XmTabListTabCount(XmTabList tablist): returns length of tablist"
   Xen_check_type(Xen_is_XmTabList(arg1), arg1, 1, "XmTabListTabCount", "XmTabList");  
@@ -2943,7 +2943,7 @@ static XEN gxm_XmTabListTabCount(XEN arg1)
 }
 
 
-static XEN gxm_XmTabListGetTab(XEN arg1, XEN arg2)
+static Xen gxm_XmTabListGetTab(Xen arg1, Xen arg2)
 {
   #define H_XmTabListGetTab "XmTab XmTabListGetTab(XmTabList tablist, Cardinal position): returns a copy of a tab"
   Xen_check_type(Xen_is_XmTabList(arg1), arg1, 1, "XmTabListGetTab", "XmTabList");
@@ -2951,7 +2951,7 @@ static XEN gxm_XmTabListGetTab(XEN arg1, XEN arg2)
   return(C_to_Xen_XmTab(XmTabListGetTab(Xen_to_C_XmTabList(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XmTabListReplacePositions(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTabListReplacePositions(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTabListReplacePositions "XmTabList XmTabListReplacePositions(XmTabList oldlist, Cardinal *position_list, XmTab *tabs, Cardinal tab_count) \
 creates a new tab list with replacement tabs"
@@ -2959,7 +2959,7 @@ creates a new tab list with replacement tabs"
    */
   Cardinal *ts;
   int len;
-  XEN res;
+  Xen res;
   XmTab *tabs;
   Xen_check_type(Xen_is_XmTabList(arg1), arg1, 1, "XmTabListReplacePositions", "XmTabList");
   Xen_check_type(Xen_is_list(arg2), arg2, 2, "XmTabListReplacePositions", "list of ints");
@@ -2975,7 +2975,7 @@ creates a new tab list with replacement tabs"
   return(res);
 }
 
-static XEN gxm_XmTabListRemoveTabs(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTabListRemoveTabs(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmTabListRemoveTabs "XmTabList XmTabListRemoveTabs(XmTabList oldlist, Cardinal *position_list, Cardinal position_count) \
 removes noncontiguous tabs"
@@ -2983,7 +2983,7 @@ removes noncontiguous tabs"
    */
   Cardinal *ts;
   int len;
-  XEN res;
+  Xen res;
   Xen_check_type(Xen_is_XmTabList(arg1), arg1, 1, "XmTabListRemoveTabs", "XmTabList");
   Xen_check_type(Xen_is_list(arg2), arg2, 2, "XmTabListRemoveTabs", "list of int");
   Xen_check_type(Xen_is_integer_or_unbound(arg3), arg3, 3, "XmTabListRemoveTabs", "int");
@@ -2995,7 +2995,7 @@ removes noncontiguous tabs"
   return(res);
 }
 
-static XEN gxm_XmTabCreate(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmTabCreate(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmTabCreate "XmTab XmTabCreate(float value, unsigned char units, XmOffsetModel offset_model, unsigned char alignment, char *decimal) \
 creates a tab stop"
@@ -3011,7 +3011,7 @@ creates a tab stop"
 				    (char *)Xen_string_to_C_string(arg5))));
 }
 
-static XEN gxm_XmTabListFree(XEN arg1)
+static Xen gxm_XmTabListFree(Xen arg1)
 {
   #define H_XmTabListFree "void XmTabListFree(XmTabList tab) frees a tab list"
   Xen_check_type(Xen_is_XmTabList(arg1), arg1, 1, "XmTabListFree", "XmTabList");
@@ -3019,7 +3019,7 @@ static XEN gxm_XmTabListFree(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmTabFree(XEN arg1)
+static Xen gxm_XmTabFree(Xen arg1)
 {
   #define H_XmTabFree "void XmTabFree(XmTab tab) frees a tab"
   Xen_check_type(Xen_is_XmTab(arg1), arg1, 1, "XmTabFree", "XmTab");
@@ -3027,7 +3027,7 @@ static XEN gxm_XmTabFree(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmTabGetValues(XEN arg1)
+static Xen gxm_XmTabGetValues(Xen arg1)
 {
   #define H_XmTabGetValues "float XmTabGetValues(XmTab tab): returns tab values"
   /* DIFF: XmTabGetValues tab [units offset align decimal] -> (list val units ofset align decimal)
@@ -3037,7 +3037,7 @@ static XEN gxm_XmTabGetValues(XEN arg1)
   unsigned char a1, a2;
   char **a3;
   float res;
-  XEN val;
+  Xen val;
   Xen_check_type(Xen_is_XmTab(arg1), arg1, 1, "XmTabGetValues", "XmTab");
   a3 = (char **)calloc(1, sizeof(char *));
   res = XmTabGetValues(Xen_to_C_XmTab(arg1), &a1, &off, &a2, a3);
@@ -3050,7 +3050,7 @@ static XEN gxm_XmTabGetValues(XEN arg1)
   return(val);
 }
 
-static XEN gxm_XmTabSetValue(XEN arg1, XEN arg2)
+static Xen gxm_XmTabSetValue(Xen arg1, Xen arg2)
 {
   #define H_XmTabSetValue "void XmTabSetValue(XmTab tab, float value) sets a tab stop"
   Xen_check_type(Xen_is_XmTab(arg1), arg1, 1, "XmTabSetValue", "XmTab");
@@ -3059,7 +3059,7 @@ static XEN gxm_XmTabSetValue(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmStringTableProposeTablist(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmStringTableProposeTablist(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmStringTableProposeTablist "XmTabList XmStringTableProposeTablist(XmStringTable strings, Cardinal num_strings, Widget widget, \
 float pad_value, XmOffsetModel offset_model): returns a tab list"
@@ -3084,7 +3084,7 @@ float pad_value, XmOffsetModel offset_model): returns a tab list"
 
 #define Xen_is_XmParseTable(Arg) Xen_is_list(Arg)
 
-static XmParseTable Xen_to_C_XmParseTable(XEN lst, int size)
+static XmParseTable Xen_to_C_XmParseTable(Xen lst, int size)
 {
   int i;
   XmParseTable pt;
@@ -3092,7 +3092,7 @@ static XmParseTable Xen_to_C_XmParseTable(XEN lst, int size)
   pt = (XmParseTable)XtCalloc(size, sizeof(XmParseMapping));
   for (i = 0; i < size; i++)
     {
-      XEN val;
+      Xen val;
       val = Xen_list_ref(lst, i);
       if (Xen_is_XmParseMapping(val))
 	pt[i] = Xen_to_C_XmParseMapping(val);
@@ -3101,7 +3101,7 @@ static XmParseTable Xen_to_C_XmParseTable(XEN lst, int size)
   return(pt);
 }
 
-static XEN gxm_XmParseTableFree(XEN arg1, XEN arg2)
+static Xen gxm_XmParseTableFree(Xen arg1, Xen arg2)
 {
   #define H_XmParseTableFree "void XmParseTableFree(XmParseTable parse_table, Cardinal count) recovers memory"
   Xen_check_type(Xen_is_XmParseTable(arg1), arg1, 1, "XmParseTableFree", "XmParseTable");
@@ -3110,7 +3110,7 @@ static XEN gxm_XmParseTableFree(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmParseMappingFree(XEN arg1)
+static Xen gxm_XmParseMappingFree(Xen arg1)
 {
   #define H_XmParseMappingFree "void XmParseMappingFree(XmParseMapping parse_mapping) frees a parse mapping"
   Xen_check_type(Xen_is_XmParseMapping(arg1), arg1, 1, "XmParseMappingFree", "XmParseMapping");
@@ -3118,7 +3118,7 @@ static XEN gxm_XmParseMappingFree(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmParseMappingGetValues(XEN arg1, XEN larg2, XEN arg3)
+static Xen gxm_XmParseMappingGetValues(Xen arg1, Xen larg2, Xen arg3)
 {
   #define H_XmParseMappingGetValues "void XmParseMappingGetValues(XmParseMapping parse_mapping, ArgList arglist, Cardinal argcount) \
 retrieves attributes of a parse mapping"
@@ -3129,7 +3129,7 @@ retrieves attributes of a parse mapping"
     Arg *args;
     unsigned long *locs;
     int len, gcloc;
-    XEN val, arg2;
+    Xen val, arg2;
     int i;
     len = Xen_to_C_INT_DEF(arg3, larg2);
     arg2 = Xen_copy_arg(larg2);
@@ -3151,7 +3151,7 @@ retrieves attributes of a parse mapping"
   }
 }
 
-static XEN gxm_XmParseMappingSetValues(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmParseMappingSetValues(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmParseMappingSetValues "void XmParseMappingSetValues(XmParseMapping parse_mapping, ArgList arglist, Cardinal argcount) \
 sets attributes of a parse mapping"
@@ -3169,7 +3169,7 @@ sets attributes of a parse mapping"
   }
 }
 
-static XEN gxm_XmParseMappingCreate(XEN arg1, XEN arg2)
+static Xen gxm_XmParseMappingCreate(Xen arg1, Xen arg2)
 {
   #define H_XmParseMappingCreate "XmParseMapping XmParseMappingCreate(ArgList arglist, Cardinal argcount) create a parse mapping"
   XmParseMapping w;
@@ -3186,7 +3186,7 @@ static XEN gxm_XmParseMappingCreate(XEN arg1, XEN arg2)
   return(C_to_Xen_XmParseMapping(w));
 }
 
-static XEN gxm_XmCvtXmStringToByteStream(XEN str)
+static Xen gxm_XmCvtXmStringToByteStream(Xen str)
 {
   #define H_XmCvtXmStringToByteStream "int XmCvtXmStringToByteStream(XmString str) converts an XmString into a byte stream."
   unsigned char *prop = NULL;
@@ -3200,7 +3200,7 @@ static XEN gxm_XmCvtXmStringToByteStream(XEN str)
   return(Xen_list_2(C_int_to_Xen_integer(res), C_string_to_Xen_string((const char *)prop)));
 }
 
-static XEN gxm_XmCvtByteStreamToXmString(XEN str)
+static Xen gxm_XmCvtByteStreamToXmString(Xen str)
 {
   #define H_XmCvtByteStreamToXmString "XmString XmCvtByteStreamToXmString(char *str) converts a byte stream into an XmString."
   XmString res = NULL;
@@ -3212,7 +3212,7 @@ static XEN gxm_XmCvtByteStreamToXmString(XEN str)
   return(C_to_Xen_XmString(res));
 }
 
-static XEN gxm_XmStringByteStreamLength(XEN str)
+static Xen gxm_XmStringByteStreamLength(Xen str)
 {
   #define H_XmStringByteStreamLength "int XmStringByteStreamLength(char *str): returns the length of the byte stream."
   unsigned char *stream;
@@ -3224,7 +3224,7 @@ static XEN gxm_XmStringByteStreamLength(XEN str)
   return(C_int_to_Xen_integer((int)XmStringByteStreamLength(stream)));
 }
 
-static XEN gxm_XmStringPutRendition(XEN arg1, XEN arg2)
+static Xen gxm_XmStringPutRendition(Xen arg1, Xen arg2)
 {
   #define H_XmStringPutRendition "XmString XmStringPutRendition(XmString string, XmStringTag rendition) places \
 renditions around strings"
@@ -3233,7 +3233,7 @@ renditions around strings"
   return(C_to_Xen_XmString(XmStringPutRendition(Xen_to_C_XmString(arg1), (char *)Xen_string_to_C_string(arg2))));
 }
 
-static XEN gxm_XmStringGenerate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmStringGenerate(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmStringGenerate "XmString XmStringGenerate(XtPointer text, XmStringTag tag, XmTextType type, XmStringTag rendition) \
 generates a compound string"
@@ -3255,7 +3255,7 @@ generates a compound string"
 					    rendition)));
 }
 
-static XEN gxm_XmStringDirectionToDirection(XEN arg1)
+static Xen gxm_XmStringDirectionToDirection(Xen arg1)
 {
   #define H_XmStringDirectionToDirection "XmDirection XmStringDirectionToDirection(XmStringDirection direction) converts \
 from XmStringDirection to XmDirection"
@@ -3263,7 +3263,7 @@ from XmStringDirection to XmDirection"
   return(C_int_to_Xen_integer(XmStringDirectionToDirection(Xen_integer_to_C_int(arg1))));
 }
 
-static XEN gxm_XmDirectionToStringDirection(XEN arg1)
+static Xen gxm_XmDirectionToStringDirection(Xen arg1)
 {
   #define H_XmDirectionToStringDirection "XmStringDirection XmDirectionToStringDirection (dir) converts an XmDirection \
 value to an XmStringDirection value"
@@ -3271,7 +3271,7 @@ value to an XmStringDirection value"
   return(C_int_to_Xen_integer(XmDirectionToStringDirection(Xen_integer_to_C_int(arg1))));
 }
 
-static XEN gxm_XmStringTableParseStringArray(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XmStringTableParseStringArray(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XmStringTableParseStringArray "XmStringTable XmStringTableParseStringArray(XtPointer *strings, Cardinal count, XmStringTag tag, \
 XmTextType type, XmParseTable parse, Cardinal parse_count, XtPointer call_data) converts an array of strings \
@@ -3282,7 +3282,7 @@ to a compound string table"
   int len;
   XmStringTable val;
   XmParseTable pt = NULL;
-  XEN lst;
+  Xen lst;
   XmTextType type;
   Xen_check_type(Xen_is_list(arg1), arg1, 1, "XmStringTableParseStringArray", "list of strings");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XmStringTableParseStringArray", "int");
@@ -3310,14 +3310,14 @@ to a compound string table"
   return(lst);
 }
 
-static XEN gxm_XmStringTableUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static Xen gxm_XmStringTableUnparse(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
   #define H_XmStringTableUnparse "XtPointer *XmStringTableUnparse(XmStringTable table, Cardinal count, XmStringTag tag, XmTextType tag_type, \
 XmTextType output_type, XmParseTable parse, Cardinal parse_count, XmParseModel parse_model) converts a table of \
 compound strings to an array of text"
   /* DIFF: XmStringTableUnparse returns list of strings, 1st arg is list of XmStrings
    */
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   char **tab;
   XmStringTable tb;
   int i, len, loc;
@@ -3360,7 +3360,7 @@ compound strings to an array of text"
   return(lst);
 }
 
-static XEN gxm_XmStringTableToXmString(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmStringTableToXmString(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmStringTableToXmString "XmString XmStringTableToXmString(XmStringTable table, Cardinal count, XmString break_component) \
 converts a compound string table to a single compound string"
@@ -3382,7 +3382,7 @@ converts a compound string table to a single compound string"
   return(C_to_Xen_XmString(val));
 }
 
-static XEN gxm_XmStringToXmStringTable(XEN arg1, XEN arg2)
+static Xen gxm_XmStringToXmStringTable(Xen arg1, Xen arg2)
 {
   #define H_XmStringToXmStringTable "Cardinal XmStringToXmStringTable(XmString string, XmString break_component) \
 converts a single compound string to a table of compound strings"
@@ -3398,7 +3398,7 @@ converts a single compound string to a table of compound strings"
   return(Xen_list_2(C_int_to_Xen_integer(val), C_to_Xen_XmStringTable(tab, val)));
 }
 
-static XEN gxm_XmStringParseText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XmStringParseText(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XmStringParseText "XmString XmStringParseText(XtPointer text, XtPointer *text_end, XmStringTag tag, XmTextType type, \
 XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a character string to a compound string"
@@ -3409,7 +3409,7 @@ XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a 
   XmTextType type;
   XtPointer *intext = NULL;
   XmParseTable pt = NULL;
-  XEN rtn;
+  Xen rtn;
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XmStringParseText", "string");
   Xen_check_type(Xen_is_integer(arg2) || Xen_is_false(arg2), arg2, 2, "XmStringParseText", "int");
   Xen_check_type(Xen_is_string(arg3) || Xen_is_false(arg3), arg3, 3, "XmStringParseText", "XmStringTag");
@@ -3432,12 +3432,12 @@ XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a 
   return(rtn);
 }
 
-static XEN gxm_XmStringUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XmStringUnparse(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XmStringUnparse "XtPointer XmStringUnparse(XmString string, XmStringTag tag, XmTextType tag_type, XmTextType output_type, \
 XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unparses text"
   XmTextType type1, type2;
-  XEN rtn;
+  Xen rtn;
   char *str;
   XmParseTable pt = NULL;
   int len;
@@ -3464,7 +3464,7 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   return(rtn);
 }
 
-static XEN gxm_XmStringComponentCreate(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmStringComponentCreate(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmStringComponentCreate "XmString XmStringComponentCreate(XmStringComponentType c_type, unsigned int length, XtPointer value) \
 creates arbitrary components"
@@ -3476,7 +3476,7 @@ creates arbitrary components"
 						   Xen_is_false(arg3) ? NULL : (char *)Xen_string_to_C_string(arg3))));
 }
 
-static XEN gxm_XmStringGetNextTriple(XEN arg1)
+static Xen gxm_XmStringGetNextTriple(Xen arg1)
 {
   #define H_XmStringGetNextTriple "XmStringComponentType XmStringGetNextTriple(XmStringContext context) \
 returns the type, length, and value of the next component in the compound string"
@@ -3492,7 +3492,7 @@ returns the type, length, and value of the next component in the compound string
 		    (val == XmSTRING_COMPONENT_TEXT) ? C_string_to_Xen_string((char *)(*ptr)) : Xen_wrap_C_pointer(ptr)));
 }
 
-static XEN gxm_XmStringPeekNextTriple(XEN arg1)
+static Xen gxm_XmStringPeekNextTriple(Xen arg1)
 {
   #define H_XmStringPeekNextTriple "XmStringComponentType XmStringPeekNextTriple(XmStringContext context): returns the \
 component type of the next component"
@@ -3500,12 +3500,12 @@ component type of the next component"
   return(C_int_to_Xen_integer(XmStringPeekNextTriple(Xen_to_C_XmStringContext(arg1))));
 }
 
-static XEN gxm_XmStringDrawUnderline(XEN args)
+static Xen gxm_XmStringDrawUnderline(Xen args)
 {
   #define H_XmStringDrawUnderline "void XmStringDrawUnderline(Display *d, Window w, XmRenderTable rendertable, XmString string, GC gc, \
 Position x, Position y, Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle *clip, XmString underline) \
 underlines a string drawn in an X Window"
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -3542,12 +3542,12 @@ underlines a string drawn in an X Window"
   return(Xen_false);
 }
 
-static XEN gxm_XmStringDrawImage(XEN args)
+static Xen gxm_XmStringDrawImage(Xen args)
 {
   #define H_XmStringDrawImage "void XmStringDrawImage(Display *d, Window w, XmRenderTable rendertable, XmString string, GC gc, Position x, \
 Position y, Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle *clip) \
 draws a compound string in an X Window and creates an image"
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -3581,12 +3581,12 @@ draws a compound string in an X Window and creates an image"
   return(Xen_false);
 }
 
-static XEN gxm_XmStringDraw(XEN args)
+static Xen gxm_XmStringDraw(Xen args)
 {
   #define H_XmStringDraw "void XmStringDraw(Display *d, Window w, XmRenderTable rendertable, XmString string, GC gc, Position x, Position y, \
 Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle *clip) draws a compound \
 string in an X window"
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -3620,7 +3620,7 @@ string in an X window"
   return(Xen_false);
 }
 
-static XEN gxm_XmStringLineCount(XEN arg1)
+static Xen gxm_XmStringLineCount(Xen arg1)
 {
   #define H_XmStringLineCount "int XmStringLineCount(XmString string): returns the number of separators plus one \
 in the provided compound string"
@@ -3628,7 +3628,7 @@ in the provided compound string"
   return(C_int_to_Xen_integer(XmStringLineCount(Xen_to_C_XmString(arg1))));
 }
 
-static XEN gxm_XmStringExtent(XEN arg1, XEN arg2)
+static Xen gxm_XmStringExtent(Xen arg1, Xen arg2)
 {
   #define H_XmStringExtent "void XmStringExtent(XmRenderTable rendertable, XmString string) \
 determines the size of the smallest rectangle that will enclose the compound string"
@@ -3642,7 +3642,7 @@ determines the size of the smallest rectangle that will enclose the compound str
 		    C_to_Xen_Dimension(h)));
 }
 
-static XEN gxm_XmStringHeight(XEN arg1, XEN arg2)
+static Xen gxm_XmStringHeight(Xen arg1, Xen arg2)
 {
   #define H_XmStringHeight "Dimension XmStringHeight(XmRenderTable rendertable, XmString string): returns the line \
 height of the given compound string"
@@ -3651,7 +3651,7 @@ height of the given compound string"
   return(C_to_Xen_Dimension(XmStringHeight(Xen_to_C_XmFontList(arg1), Xen_to_C_XmString(arg2))));
 }
 
-static XEN gxm_XmStringWidth(XEN arg1, XEN arg2)
+static Xen gxm_XmStringWidth(Xen arg1, Xen arg2)
 {
   #define H_XmStringWidth "Dimension XmStringWidth(XmRenderTable rendertable, XmString string): returns \
 the width of the widest line in a compound string"
@@ -3660,7 +3660,7 @@ the width of the widest line in a compound string"
   return(C_to_Xen_Dimension(XmStringWidth(Xen_to_C_XmFontList(arg1), Xen_to_C_XmString(arg2))));
 }
 
-static XEN gxm_XmStringBaseline(XEN arg1, XEN arg2)
+static Xen gxm_XmStringBaseline(Xen arg1, Xen arg2)
 {
   #define H_XmStringBaseline "Dimension XmStringBaseline(XmRenderTable rendertable, XmString string): returns \
 the number of pixels between \
@@ -3670,7 +3670,7 @@ the top of the character box and the baseline of the first line of text"
   return(C_to_Xen_Dimension(XmStringBaseline(Xen_to_C_XmFontList(arg1), Xen_to_C_XmString(arg2))));
 }
 
-static XEN gxm_XmStringFree(XEN arg1)
+static Xen gxm_XmStringFree(Xen arg1)
 {
   #define H_XmStringFree "void XmStringFree(XmString string) conditionally deallocates memory"
   Xen_check_type(Xen_is_XmString(arg1), arg1, 1, "XmStringFree", "XmString");
@@ -3678,7 +3678,7 @@ static XEN gxm_XmStringFree(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmStringHasSubstring(XEN arg1, XEN arg2)
+static Xen gxm_XmStringHasSubstring(Xen arg1, Xen arg2)
 {
   #define H_XmStringHasSubstring "Boolean XmStringHasSubstring(XmString string, XmString substring) indicates \
 whether one compound string is contained within another"
@@ -3687,7 +3687,7 @@ whether one compound string is contained within another"
   return(C_bool_to_Xen_boolean(XmStringHasSubstring(Xen_to_C_XmString(arg1), Xen_to_C_XmString(arg2))));
 }
 
-static XEN gxm_XmStringIsVoid(XEN arg1)
+static Xen gxm_XmStringIsVoid(Xen arg1)
 {
   #define H_XmStringIsVoid "Boolean XmStringIsVoid(XmString s1) provides information on the existence of non-zero-length text \
 components, tab components, or separator components"
@@ -3695,7 +3695,7 @@ components, tab components, or separator components"
   return(C_bool_to_Xen_boolean(XmStringIsVoid(Xen_to_C_XmString(arg1))));
 }
 
-static XEN gxm_XmStringEmpty(XEN arg1)
+static Xen gxm_XmStringEmpty(Xen arg1)
 {
   #define H_XmStringEmpty "Boolean XmStringEmpty(XmString s1) provides information on the existence of \
 non-zero-length text components"
@@ -3703,7 +3703,7 @@ non-zero-length text components"
   return(C_bool_to_Xen_boolean(XmStringEmpty(Xen_to_C_XmString(arg1))));
 }
 
-static XEN gxm_XmStringCompare(XEN arg1, XEN arg2)
+static Xen gxm_XmStringCompare(Xen arg1, Xen arg2)
 {
   #define H_XmStringCompare "Boolean XmStringCompare(XmString s1, XmString s2) compares two strings"
   Xen_check_type(Xen_is_XmString(arg1), arg1, 1, "XmStringCompare", "XmString");
@@ -3711,14 +3711,14 @@ static XEN gxm_XmStringCompare(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmStringCompare(Xen_to_C_XmString(arg1), Xen_to_C_XmString(arg2))));
 }
 
-static XEN gxm_XmStringCopy(XEN arg1)
+static Xen gxm_XmStringCopy(Xen arg1)
 {
   #define H_XmStringCopy "XmString XmStringCopy(XmString s1)  makes a copy of a string"
   Xen_check_type(Xen_is_XmString(arg1), arg1, 1, "XmStringCopy", "XmString");
   return(C_to_Xen_XmString(XmStringCopy(Xen_to_C_XmString(arg1))));
 }
 
-static XEN gxm_XmStringConcatAndFree(XEN arg1, XEN arg2)
+static Xen gxm_XmStringConcatAndFree(Xen arg1, Xen arg2)
 {
   #define H_XmStringConcatAndFree "XmString XmStringConcatAndFree(XmString s1, XmString s2) appends one string to \
 another and frees the original strings"
@@ -3727,7 +3727,7 @@ another and frees the original strings"
   return(C_to_Xen_XmString(XmStringConcatAndFree(Xen_to_C_XmString(arg1), Xen_to_C_XmString(arg2))));
 }
 
-static XEN gxm_XmStringConcat(XEN arg1, XEN arg2)
+static Xen gxm_XmStringConcat(Xen arg1, Xen arg2)
 {
   #define H_XmStringConcat "XmString XmStringConcat(XmString s1, XmString s2) appends one string to another"
   Xen_check_type(Xen_is_XmString(arg1), arg1, 1, "XmStringConcat", "XmString");
@@ -3735,7 +3735,7 @@ static XEN gxm_XmStringConcat(XEN arg1, XEN arg2)
   return(C_to_Xen_XmString(XmStringConcat(Xen_to_C_XmString(arg1), Xen_to_C_XmString(arg2))));
 }
 
-static XEN gxm_XmStringFreeContext(XEN arg1)
+static Xen gxm_XmStringFreeContext(Xen arg1)
 {
   #define H_XmStringFreeContext "void XmStringFreeContext(XmStringContext context) releases the string scanning \
 context data structure"
@@ -3745,7 +3745,7 @@ context data structure"
 }
 
 static XmStringContext gxm_initxmsc;
-static XEN gxm_XmStringInitContext(XEN arg2)
+static Xen gxm_XmStringInitContext(Xen arg2)
 {
   #define H_XmStringInitContext "Boolean XmStringInitContext(XmString string) creates \
 a data structure for scanning an XmString component by component"
@@ -3757,27 +3757,27 @@ a data structure for scanning an XmString component by component"
   return(Xen_list_2(C_bool_to_Xen_boolean(val), C_to_Xen_XmStringContext(gxm_initxmsc)));
 }
 
-static XEN gxm_XmStringSeparatorCreate(void)
+static Xen gxm_XmStringSeparatorCreate(void)
 {
   #define H_XmStringSeparatorCreate "XmString XmStringSeparatorCreate(void) creates a compound string"
   return(C_to_Xen_XmString(XmStringSeparatorCreate()));
 }
 
-static XEN gxm_XmStringDirectionCreate(XEN arg1)
+static Xen gxm_XmStringDirectionCreate(Xen arg1)
 {
   #define H_XmStringDirectionCreate "XmString XmStringDirectionCreate(XmStringDirection direction) creates a compound string"
   Xen_check_type(Xen_is_integer(arg1), arg1, 1, "XmStringDirectionCreate", "int");
   return(C_to_Xen_XmString(XmStringDirectionCreate(Xen_integer_to_C_int(arg1))));
 }
 
-static XEN gxm_XmStringCreateLocalized(XEN arg1)
+static Xen gxm_XmStringCreateLocalized(Xen arg1)
 {
   #define H_XmStringCreateLocalized "XmString XmStringCreateLocalized(char *text) creates a compound string in the current locale"
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XmStringCreateLocalized", "String");
   return(C_to_Xen_XmString(XmStringCreateLocalized((char *)Xen_string_to_C_string(arg1))));
 }
 
-static XEN gxm_XmStringCreate(XEN arg1, XEN arg2)
+static Xen gxm_XmStringCreate(Xen arg1, Xen arg2)
 {
   #define H_XmStringCreate "XmString XmStringCreate(char *text, char *tag) creates a compound string"
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XmStringCreate", "char*");
@@ -3785,7 +3785,7 @@ static XEN gxm_XmStringCreate(XEN arg1, XEN arg2)
   return(C_to_Xen_XmString(XmStringCreate((char *)Xen_string_to_C_string(arg1), (char *)Xen_string_to_C_string(arg2))));
 }
 
-static XEN gxm_XmChangeColor(XEN arg1, XEN arg2)
+static Xen gxm_XmChangeColor(Xen arg1, Xen arg2)
 {
   #define H_XmChangeColor "void XmChangeColor(Widget widget, Pixel background) recalculates all associated colors of a widget"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmChangeColor", "Widget");
@@ -3794,7 +3794,7 @@ static XEN gxm_XmChangeColor(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmGetColors(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmGetColors(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmGetColors "void XmGetColors(Screen *screen, Colormap colormap, Pixel background) generates foreground, select, and shadow colors"
   /* DIFF: XmGetColors omits trailing 4 args and returns them
@@ -3813,13 +3813,13 @@ static XEN gxm_XmGetColors(XEN arg1, XEN arg2, XEN arg3)
 		    C_to_Xen_Pixel(sr)));
 }
 
-static XEN gxm_XmGetColorCalculation(void)
+static Xen gxm_XmGetColorCalculation(void)
 {
   #define H_XmGetColorCalculation "XmColorProc XmGetColorCalculation(void) get the procedure used for default color calculation"
   return(xm_XmColorProc);
 }
 
-static XEN gxm_XmSetColorCalculation(XEN arg1)
+static Xen gxm_XmSetColorCalculation(Xen arg1)
 {
   #define H_XmSetColorCalculation "XmColorProc XmSetColorCalculation(XmColorProc color_proc) set the procedure used for default color calculation"
   /* DIFF: XmSetColorCalculation NULL -> #f
@@ -3840,7 +3840,7 @@ static XEN gxm_XmSetColorCalculation(XEN arg1)
   return(arg1);
 }
 
-static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTrackingEvent(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmTrackingEvent "Widget XmTrackingEvent(Widget widget, Cursor cursor, Boolean confine_to): (widget event)"
   /* DIFF: XmTrackingEvent widget cursor confine [event] -> (list widget event)
@@ -3884,7 +3884,7 @@ static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
 				      NULL);				    
 */
 
-static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmVaCreateSimpleCheckBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmVaCreateSimpleCheckBox "Widget XmVaCreateSimpleCheckBox(Widget parent, String name, XtCallbackProc callback, args)"
   Widget w;
@@ -3914,7 +3914,7 @@ static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 }
 
-static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmVaCreateSimpleRadioBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmVaCreateSimpleRadioBox "Widget XmVaCreateSimpleRadioBox(Widget parent, String name, int button_set, XtCallbackProc callback, args)"
   Widget w;
@@ -3945,7 +3945,7 @@ static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, 
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XmVaCreateSimpleOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XmVaCreateSimpleOptionMenu(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XmVaCreateSimpleOptionMenu "Widget XmVaCreateSimpleOptionMenu(Widget parent, String name, XmString option_label, \
 KeySym option_mnemonic, int button_set, XtCallbackProc callback, args)"
@@ -3982,7 +3982,7 @@ KeySym option_mnemonic, int button_set, XtCallbackProc callback, args)"
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmVaCreateSimplePulldownMenu(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmVaCreateSimplePulldownMenu "Widget XmVaCreateSimplePulldownMenu(Widget parent, String name, int post_from_button, XtCallbackProc callback, args)"
   Widget w;
@@ -4012,7 +4012,7 @@ static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN ar
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmVaCreateSimplePopupMenu(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmVaCreateSimplePopupMenu "Widget XmVaCreateSimplePopupMenu(Widget parent, String name, XtCallbackProc callback, args)"
   Widget w;
@@ -4041,7 +4041,7 @@ static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XmVaCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmVaCreateSimpleMenuBar(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmVaCreateSimpleMenuBar "Widget XmVaCreateSimpleMenuBar(Widget parent, String name, args)"
   Widget w;
@@ -4066,43 +4066,43 @@ static XEN gxm_XmVaCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3)
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XmCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSimpleCheckBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSimpleCheckBox "Widget XmCreateSimpleCheckBox(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   return(gxm_new_widget("XmCreateSimpleCheckBox", XmCreateSimpleCheckBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSimpleRadioBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSimpleRadioBox "Widget XmCreateSimpleRadioBox(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   return(gxm_new_widget("XmCreateSimpleRadioBox", XmCreateSimpleRadioBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateSimpleOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSimpleOptionMenu(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSimpleOptionMenu "Widget XmCreateSimpleOptionMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   return(gxm_new_widget("XmCreateSimpleOptionMenu", XmCreateSimpleOptionMenu, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSimplePulldownMenu(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSimplePulldownMenu "Widget XmCreateSimplePulldownMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   return(gxm_new_widget("XmCreateSimplePulldownMenu", XmCreateSimplePulldownMenu, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSimplePopupMenu(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSimplePopupMenu "Widget XmCreateSimplePopupMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   return(gxm_new_widget("XmCreateSimplePopupMenu", XmCreateSimplePopupMenu, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSimpleMenuBar(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSimpleMenuBar "Widget XmCreateSimpleMenuBar(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   return(gxm_new_widget("XmCreateSimpleMenuBar", XmCreateSimpleMenuBar, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmConvertUnits(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmConvertUnits(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmConvertUnits "int XmConvertUnits(Widget widget, int orientation, int from_unit_type, int from_value, int to_unit_type) \
 converts a value in one unit type to another unit type"
@@ -4114,7 +4114,7 @@ converts a value in one unit type to another unit type"
   return(C_int_to_Xen_integer(XmConvertUnits(Xen_to_C_Widget(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3), Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5))));
 }
 
-static XEN gxm_XmConvertStringToUnits(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmConvertStringToUnits(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmConvertStringToUnits "int XmConvertStringToUnits(Screen *screen, String spec, int orientation, int to_type, XtEnum *parse_error) \
 converts a string specification to a unit value"
@@ -4132,7 +4132,7 @@ converts a string specification to a unit value"
   return(Xen_false);
 }
 
-static XEN gxm_XmCvtXmStringToCT(XEN arg1)
+static Xen gxm_XmCvtXmStringToCT(Xen arg1)
 {
   #define H_XmCvtXmStringToCT "char *XmCvtXmStringToCT(XmString string) converts a compound string to compound text"
   Xen_check_type(Xen_is_XmString(arg1), arg1, 1, "XmCvtXmStringToCT", "XmString");
@@ -4140,17 +4140,17 @@ static XEN gxm_XmCvtXmStringToCT(XEN arg1)
   /* memory leak here, but the docs don't say that I should free the string of "compound text" */
 }
 
-static XEN gxm_XmCvtCTToXmString(XEN arg1)
+static Xen gxm_XmCvtCTToXmString(Xen arg1)
 {
   #define H_XmCvtCTToXmString "XmString XmCvtCTToXmString(char *text) converts compound text to a compound string"
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XmCvtCTToXmString", "char*");
   return(C_to_Xen_XmString(XmCvtCTToXmString((char *)Xen_string_to_C_string(arg1))));
 }
 
-static XEN gxm_XmMapSegmentEncoding(XEN arg1)
+static Xen gxm_XmMapSegmentEncoding(Xen arg1)
 {
   char *str;
-  XEN res;
+  Xen res;
   #define H_XmMapSegmentEncoding "char *XmMapSegmentEncoding(char *fontlist_tag): returns the compound text \
 encoding format associated with the specified font list tag"
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XmMapSegmentEncoding", "char*");
@@ -4160,10 +4160,10 @@ encoding format associated with the specified font list tag"
   return(res);
 }
 
-static XEN gxm_XmRegisterSegmentEncoding(XEN arg1, XEN arg2)
+static Xen gxm_XmRegisterSegmentEncoding(Xen arg1, Xen arg2)
 {
   char *str;
-  XEN res;
+  Xen res;
   #define H_XmRegisterSegmentEncoding "char *XmRegisterSegmentEncoding(char *fontlist_tag, char *ct_encoding) \
 registers a compound text encoding format for a specified font list element tag"
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XmRegisterSegmentEncoding", "char*");
@@ -4174,7 +4174,7 @@ registers a compound text encoding format for a specified font list element tag"
   return(res);
 }
 
-static XEN gxm_XmWidgetGetBaselines(XEN arg1)
+static Xen gxm_XmWidgetGetBaselines(Xen arg1)
 {
   #define H_XmWidgetGetBaselines "Boolean XmWidgetGetBaselines(Widget widget) retrieves baseline information for a widget"
   /* DIFF: XmWidgetGetBaselines omits args 2 and 3, returns list of Dimensions
@@ -4182,7 +4182,7 @@ static XEN gxm_XmWidgetGetBaselines(XEN arg1)
   Dimension *ds;
   int len, i, loc;
   Boolean b;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmWidgetGetBaselines", "Widget");
   b = XmWidgetGetBaselines(Xen_to_C_Widget(arg1), &ds, &len);
   if (!b)
@@ -4195,7 +4195,7 @@ static XEN gxm_XmWidgetGetBaselines(XEN arg1)
   return(lst);
 }
 
-static XEN gxm_XmWidgetGetDisplayRect(XEN arg1)
+static Xen gxm_XmWidgetGetDisplayRect(Xen arg1)
 {
   #define H_XmWidgetGetDisplayRect "Boolean XmWidgetGetDisplayRect(Widget widget): returns widget's bounding box as XRectangle"
   XRectangle *r;
@@ -4209,7 +4209,7 @@ static XEN gxm_XmWidgetGetDisplayRect(XEN arg1)
   return(C_to_Xen_XRectangle(r));
 }
 
-static XEN gxm_XmObjectAtPoint(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmObjectAtPoint(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmObjectAtPoint "Widget XmObjectAtPoint(Widget widget, Position x, Position y) determines which child \
 intersects or comes closest to a specified point"
@@ -4219,7 +4219,7 @@ intersects or comes closest to a specified point"
   return(C_to_Xen_Widget(XmObjectAtPoint(Xen_to_C_Widget(arg1), Xen_to_C_Position(arg2), Xen_to_C_Position(arg3))));
 }
 
-static XEN gxm_XmUpdateDisplay(XEN arg1)
+static Xen gxm_XmUpdateDisplay(Xen arg1)
 {
   #define H_XmUpdateDisplay "void XmUpdateDisplay (widget) processes all pending exposure events immediately"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmUpdateDisplay", "Widget");
@@ -4227,7 +4227,7 @@ static XEN gxm_XmUpdateDisplay(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmDestroyPixmap(XEN arg1, XEN arg2)
+static Xen gxm_XmDestroyPixmap(Xen arg1, Xen arg2)
 {
   #define H_XmDestroyPixmap "Boolean XmDestroyPixmap(Screen *screen, Pixmap pixmap) removes a pixmap from the pixmap cache"
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XmDestroyPixmap", "Screen*");
@@ -4236,7 +4236,7 @@ static XEN gxm_XmDestroyPixmap(XEN arg1, XEN arg2)
 					  Xen_to_C_Pixmap(arg2))));
 }
 
-static XEN gxm_XmGetPixmapByDepth(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmGetPixmapByDepth(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmGetPixmapByDepth "Pixmap XmGetPixmapByDepth(Screen *screen, char *image_name, Pixel foreground, Pixel background, int depth) \
 generates a pixmap, stores it in a pixmap cache, and returns the pixmap"
@@ -4252,7 +4252,7 @@ generates a pixmap, stores it in a pixmap cache, and returns the pixmap"
 					    Xen_integer_to_C_int(arg5))));
 }
 
-static XEN gxm_XmGetPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmGetPixmap(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmGetPixmap "Pixmap XmGetPixmap(Screen *screen, char *image_name, Pixel foreground, Pixel background) A pixmap caching function \
 that generates a pixmap, stores it in a pixmap cache, and returns the pixmap"
@@ -4266,14 +4266,14 @@ that generates a pixmap, stores it in a pixmap cache, and returns the pixmap"
 				     Xen_to_C_Pixel(arg4))));
 }
 
-static XEN gxm_XmUninstallImage(XEN arg1)
+static Xen gxm_XmUninstallImage(Xen arg1)
 {
   #define H_XmUninstallImage "Boolean XmUninstallImage(XImage *image) removes an image from the image cache"
   Xen_check_type(Xen_is_XImage(arg1), arg1, 1, "XmUninstallImage", "XImage*");
   return(C_bool_to_Xen_boolean(XmUninstallImage(Xen_to_C_XImage(arg1))));
 }
 
-static XEN gxm_XmInstallImage(XEN arg1, XEN arg2)
+static Xen gxm_XmInstallImage(Xen arg1, Xen arg2)
 {
   #define H_XmInstallImage "Boolean XmInstallImage(XImage *image, char *image_name) adds an image to the image cache"
   Xen_check_type(Xen_is_XImage(arg1), arg1, 1, "XmInstallImage", "XImage*");
@@ -4282,14 +4282,14 @@ static XEN gxm_XmInstallImage(XEN arg1, XEN arg2)
 					 (char *)Xen_string_to_C_string(arg2))));
 }
 
-static XEN gxm_XmCreateMainWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateMainWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateMainWindow "Widget XmCreateMainWindow(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MainWindow widget creation function"
   return(gxm_new_widget("XmCreateMainWindow", XmCreateMainWindow, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmTranslateKey(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTranslateKey(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmTranslateKey "void XmTranslateKey(Display *display, KeyCode keycode, Modifiers modifiers) \
 The default keycode-to-keysym translator -> (modifiers keysym)"
@@ -4305,14 +4305,14 @@ The default keycode-to-keysym translator -> (modifiers keysym)"
 		    C_to_Xen_KeySym(k)));
 }
 
-static XEN gxm_XmCreateScrolledList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateScrolledList(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateScrolledList "Widget XmCreateScrolledList(Widget parent, String name, ArgList arglist, Cardinal argcount) The List \
 ScrolledList creation function"
   return(gxm_new_widget("XmCreateScrolledList", XmCreateScrolledList, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateList(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateList "Widget XmCreateList(Widget parent, String name, ArgList arglist, Cardinal argcount) The List widget creation function"
   return(gxm_new_widget("XmCreateList", XmCreateList, arg1, arg2, arg3, arg4));
@@ -4320,7 +4320,7 @@ static XEN gxm_XmCreateList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 #define Xen_is_ListWidget(Arg) (Xen_is_Widget(Arg) && XmIsList(Xen_to_C_Widget(Arg)))
 
-static XEN gxm_XmListPosSelected(XEN arg1, XEN arg2)
+static Xen gxm_XmListPosSelected(Xen arg1, Xen arg2)
 {
   #define H_XmListPosSelected "Boolean XmListPosSelected(Widget widget, int position) determines if the list item at a \
 specified position is selected"
@@ -4329,7 +4329,7 @@ specified position is selected"
   return(C_bool_to_Xen_boolean(XmListPosSelected(Xen_to_C_Widget(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XmListUpdateSelectedList(XEN arg1)
+static Xen gxm_XmListUpdateSelectedList(Xen arg1)
 {
   #define H_XmListUpdateSelectedList "void XmListUpdateSelectedList(Widget widget) updates the XmNselectedItems resource"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListUpdateSelectedList", "List Widget");
@@ -4337,7 +4337,7 @@ static XEN gxm_XmListUpdateSelectedList(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmListSetHorizPos(XEN arg1, XEN arg2)
+static Xen gxm_XmListSetHorizPos(Xen arg1, Xen arg2)
 {
   #define H_XmListSetHorizPos "void XmListSetHorizPos(Widget widget, int position) scrolls to the specified position in the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListSetHorizPos", "List Widget");
@@ -4346,7 +4346,7 @@ static XEN gxm_XmListSetHorizPos(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmListGetSelectedPos(XEN arg1)
+static Xen gxm_XmListGetSelectedPos(Xen arg1)
 {
   #define H_XmListGetSelectedPos "Boolean XmListGetSelectedPos(Widget widget) A List function that returns the position of every selected item in the list"
   /* DIFF: XmListGetSelectedPos omits args 2 and 3, returns list of positions
@@ -4354,7 +4354,7 @@ static XEN gxm_XmListGetSelectedPos(XEN arg1)
   int *ps;
   int i, len, loc;
   Boolean b;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListGetSelectedPos", "List Widget");
   b = XmListGetSelectedPos(Xen_to_C_Widget(arg1), &ps, &len);
   if (!b)
@@ -4367,7 +4367,7 @@ static XEN gxm_XmListGetSelectedPos(XEN arg1)
   return(lst);
 }
 
-static XEN gxm_XmListGetMatchPos(XEN arg1, XEN arg2)
+static Xen gxm_XmListGetMatchPos(Xen arg1, Xen arg2)
 {
   #define H_XmListGetMatchPos "Boolean XmListGetMatchPos(Widget widget, XmString item): returns all instances of an item in the list"
   /* DIFF: XmListGetSelectedPos omits args 3 and 4, returns list of positions
@@ -4375,7 +4375,7 @@ static XEN gxm_XmListGetMatchPos(XEN arg1, XEN arg2)
   int *ps;
   int i, len, loc;
   Boolean b;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListGetMatchPos", "List Widget");
   Xen_check_type(Xen_is_XmString(arg2), arg2, 2, "XmListGetMatchPos", "XmString");
   b = XmListGetMatchPos(Xen_to_C_Widget(arg1), Xen_to_C_XmString(arg2), &ps, &len);
@@ -4389,7 +4389,7 @@ static XEN gxm_XmListGetMatchPos(XEN arg1, XEN arg2)
   return(lst);
 }
 
-static XEN gxm_XmListPosToBounds(XEN arg1, XEN arg2)
+static Xen gxm_XmListPosToBounds(Xen arg1, Xen arg2)
 {
   #define H_XmListPosToBounds "Boolean XmListPosToBounds(Widget widget, int position): returns the bounding box of an item at a specified position in a list"
   /* DIFF: XmListPosToBounds last 4 args omitted and returned 
@@ -4408,7 +4408,7 @@ static XEN gxm_XmListPosToBounds(XEN arg1, XEN arg2)
 }
 
 
-static XEN gxm_XmListYToPos(XEN arg1, XEN arg2)
+static Xen gxm_XmListYToPos(Xen arg1, Xen arg2)
 {
   #define H_XmListYToPos "int XmListYToPos(Widget widget, Position y): returns the position of the item at a specified y-coordinate"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListYToPos", "List Widget");
@@ -4416,7 +4416,7 @@ static XEN gxm_XmListYToPos(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XmListYToPos(Xen_to_C_Widget(arg1), Xen_to_C_Position(arg2))));
 }
 
-static XEN gxm_XmListSetKbdItemPos(XEN arg1, XEN arg2)
+static Xen gxm_XmListSetKbdItemPos(Xen arg1, Xen arg2)
 {
   #define H_XmListSetKbdItemPos "Boolean XmListSetKbdItemPos(Widget widget, int position) sets the location cursor at a specified position"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListSetKbdItemPos", "List Widget");
@@ -4424,14 +4424,14 @@ static XEN gxm_XmListSetKbdItemPos(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmListSetKbdItemPos(Xen_to_C_Widget(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XmListGetKbdItemPos(XEN arg1)
+static Xen gxm_XmListGetKbdItemPos(Xen arg1)
 {
   #define H_XmListGetKbdItemPos "int XmListGetKbdItemPos(Widget widget): returns the position of the item at the location cursor"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListGetKbdItemPos", "List Widget");
   return(C_int_to_Xen_integer(XmListGetKbdItemPos(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmListItemPos(XEN arg1, XEN arg2)
+static Xen gxm_XmListItemPos(Xen arg1, Xen arg2)
 {
   #define H_XmListItemPos "int XmListItemPos(Widget widget, XmString item): returns the position of an item in the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListItemPos", "List Widget");
@@ -4439,7 +4439,7 @@ static XEN gxm_XmListItemPos(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XmListItemPos(Xen_to_C_Widget(arg1), Xen_to_C_XmString(arg2))));
 }
 
-static XEN gxm_XmListItemExists(XEN arg1, XEN arg2)
+static Xen gxm_XmListItemExists(Xen arg1, Xen arg2)
 {
   #define H_XmListItemExists "Boolean XmListItemExists(Widget widget, XmString item) checks if a specified item is in the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListItemExists", "List Widget");
@@ -4447,7 +4447,7 @@ static XEN gxm_XmListItemExists(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmListItemExists(Xen_to_C_Widget(arg1), Xen_to_C_XmString(arg2))));
 }
 
-static XEN gxm_XmListSetAddMode(XEN arg1, XEN arg2)
+static Xen gxm_XmListSetAddMode(Xen arg1, Xen arg2)
 {
   #define H_XmListSetAddMode "void XmListSetAddMode(Widget widget, Boolean state) sets add mode in the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListSetAddMode", "List Widget");
@@ -4456,7 +4456,7 @@ static XEN gxm_XmListSetAddMode(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmListSetBottomItem(XEN arg1, XEN arg2)
+static Xen gxm_XmListSetBottomItem(Xen arg1, Xen arg2)
 {
   #define H_XmListSetBottomItem "void XmListSetBottomItem(Widget widget, XmString item) makes an existing item the last \
 visible item in the list"
@@ -4466,7 +4466,7 @@ visible item in the list"
   return(Xen_false);
 }
 
-static XEN gxm_XmListSetItem(XEN arg1, XEN arg2)
+static Xen gxm_XmListSetItem(Xen arg1, Xen arg2)
 {
   #define H_XmListSetItem "void XmListSetItem(Widget widget, XmString item) makes an existing item the first visible item in the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListSetItem", "List Widget");
@@ -4475,7 +4475,7 @@ static XEN gxm_XmListSetItem(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmListSetBottomPos(XEN arg1, XEN arg2)
+static Xen gxm_XmListSetBottomPos(Xen arg1, Xen arg2)
 {
   #define H_XmListSetBottomPos "void XmListSetBottomPos(Widget widget, int position) makes a specified item the last visible item in the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListSetBottomPos", "List Widget");
@@ -4484,7 +4484,7 @@ static XEN gxm_XmListSetBottomPos(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmListSetPos(XEN arg1, XEN arg2)
+static Xen gxm_XmListSetPos(Xen arg1, Xen arg2)
 {
   #define H_XmListSetPos "void XmListSetPos(Widget widget, int position) makes the item at the given position the first \
 visible position in the list"
@@ -4494,7 +4494,7 @@ visible position in the list"
   return(Xen_false);
 }
 
-static XEN gxm_XmListDeselectAllItems(XEN arg1)
+static Xen gxm_XmListDeselectAllItems(Xen arg1)
 {
   #define H_XmListDeselectAllItems "void XmListDeselectAllItems(Widget widget) unhighlights and removes all items from the selected list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListDeselectAllItems", "List Widget");
@@ -4502,7 +4502,7 @@ static XEN gxm_XmListDeselectAllItems(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmListDeselectPos(XEN arg1, XEN arg2)
+static Xen gxm_XmListDeselectPos(Xen arg1, Xen arg2)
 {
   #define H_XmListDeselectPos "void XmListDeselectPos(Widget widget, int position) deselects an item at a specified position in the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListDeselectPos", "List Widget");
@@ -4511,7 +4511,7 @@ static XEN gxm_XmListDeselectPos(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmListDeselectItem(XEN arg1, XEN arg2)
+static Xen gxm_XmListDeselectItem(Xen arg1, Xen arg2)
 {
   #define H_XmListDeselectItem "void XmListDeselectItem(Widget widget, XmString item) deselects the specified item from the selected list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListDeselectItem", "List Widget");
@@ -4520,7 +4520,7 @@ static XEN gxm_XmListDeselectItem(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmListSelectPos(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmListSelectPos(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmListSelectPos "void XmListSelectPos(Widget widget, int position, Boolean notify) selects an item at a specified \
 position in the list"
@@ -4531,7 +4531,7 @@ position in the list"
   return(Xen_false);
 }
 
-static XEN gxm_XmListSelectItem(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmListSelectItem(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmListSelectItem "void XmListSelectItem(Widget widget, XmString item, Boolean notify) selects an item in the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListSelectItem", "List Widget");
@@ -4541,7 +4541,7 @@ static XEN gxm_XmListSelectItem(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XmListReplacePositions(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmListReplacePositions(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmListReplacePositions "void XmListReplacePositions(Widget widget, int *position_list, XmString *item_list, int item_count) \
 replaces items in a list based on position"
@@ -4564,7 +4564,7 @@ replaces items in a list based on position"
   return(Xen_false);
 }
 
-static XEN gxm_XmListReplaceItemsPosUnselected(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmListReplaceItemsPosUnselected(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmListReplaceItemsPosUnselected "void XmListReplaceItemsPosUnselected(Widget widget, XmString *new_items, int item_count, int position) \
 replaces items in a list without selecting the replacement items"
@@ -4584,7 +4584,7 @@ replaces items in a list without selecting the replacement items"
   return(Xen_false);
 }
 
-static XEN gxm_XmListReplaceItemsUnselected(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmListReplaceItemsUnselected(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmListReplaceItemsUnselected "void XmListReplaceItemsUnselected(Widget widget, XmString *old_items, int item_count, XmString *new_items) \
 replaces items in a list"
@@ -4606,7 +4606,7 @@ replaces items in a list"
   return(Xen_false);
 }
 
-static XEN gxm_XmListReplaceItemsPos(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmListReplaceItemsPos(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmListReplaceItemsPos "void XmListReplaceItemsPos(Widget widget, XmString *new_items, int item_count, int position) \
 replaces the specified elements in the list"
@@ -4626,7 +4626,7 @@ replaces the specified elements in the list"
   return(Xen_false);
 }
 
-static XEN gxm_XmListReplaceItems(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmListReplaceItems(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmListReplaceItems "void XmListReplaceItems(Widget widget, XmString *old_items, int item_count, XmString *new_items) \
 replaces the specified elements in the list"
@@ -4648,7 +4648,7 @@ replaces the specified elements in the list"
   return(Xen_false);
 }
 
-static XEN gxm_XmListDeleteAllItems(XEN arg1)
+static Xen gxm_XmListDeleteAllItems(Xen arg1)
 {
   #define H_XmListDeleteAllItems "void XmListDeleteAllItems(Widget widget) deletes all items from the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListDeleteAllItems", "List Widget");
@@ -4656,7 +4656,7 @@ static XEN gxm_XmListDeleteAllItems(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmListDeleteItemsPos(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmListDeleteItemsPos(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmListDeleteItemsPos "void XmListDeleteItemsPos(Widget widget, int item_count, int position) deletes \
 items from the list starting at the given position"
@@ -4667,7 +4667,7 @@ items from the list starting at the given position"
   return(Xen_false);
 }
 
-static XEN gxm_XmListDeletePos(XEN arg1, XEN arg2)
+static Xen gxm_XmListDeletePos(Xen arg1, Xen arg2)
 {
   #define H_XmListDeletePos "void XmListDeletePos(Widget widget, int position) deletes an item from a list at a specified position"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListDeletePos", "List Widget");
@@ -4676,7 +4676,7 @@ static XEN gxm_XmListDeletePos(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmListDeletePositions(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmListDeletePositions(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmListDeletePositions "void XmListDeletePositions(Widget widget, int *position_list, int position_count) deletes \
 items from a list based on an array of positions"
@@ -4695,7 +4695,7 @@ items from a list based on an array of positions"
   return(Xen_false);
 }
 
-static XEN gxm_XmListDeleteItems(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmListDeleteItems(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmListDeleteItems "void XmListDeleteItems(Widget widget, XmString *items, int item_count) deletes items from the list"
   /* DIFF: XmListDeleteItems arg 2 is list of XmStrings
@@ -4713,7 +4713,7 @@ static XEN gxm_XmListDeleteItems(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XmListDeleteItem(XEN arg1, XEN arg2)
+static Xen gxm_XmListDeleteItem(Xen arg1, Xen arg2)
 {
   #define H_XmListDeleteItem "void XmListDeleteItem(Widget widget, XmString item) deletes an item from the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListDeleteItem", "List Widget");
@@ -4722,7 +4722,7 @@ static XEN gxm_XmListDeleteItem(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmListAddItemUnselected(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmListAddItemUnselected(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmListAddItemUnselected "void XmListAddItemUnselected(Widget widget, XmString item, int position) adds an item to the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListAddItemUnselected", "List Widget");
@@ -4732,7 +4732,7 @@ static XEN gxm_XmListAddItemUnselected(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XmListAddItemsUnselected(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmListAddItemsUnselected(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmListAddItemsUnselected "void XmListAddItemsUnselected(Widget widget, XmString *items, int item_count, int position) \
 adds items to a list"
@@ -4752,7 +4752,7 @@ adds items to a list"
   return(Xen_false);
 }
 
-static XEN gxm_XmListAddItems(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmListAddItems(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmListAddItems "void XmListAddItems(Widget widget, XmString *items, int item_count, int position) adds items to the list"
   /* DIFF: XmListAddItems arg 2 is list of XmStrings
@@ -4771,7 +4771,7 @@ static XEN gxm_XmListAddItems(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(Xen_false);
 }
 
-static XEN gxm_XmListAddItem(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmListAddItem(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmListAddItem "void XmListAddItem(Widget widget, XmString item, int position) adds an item to the list"
   Xen_check_type(Xen_is_ListWidget(arg1), arg1, 1, "XmListAddItem", "List Widget");
@@ -4781,7 +4781,7 @@ static XEN gxm_XmListAddItem(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XmIsMotifWMRunning(XEN arg1)
+static Xen gxm_XmIsMotifWMRunning(Xen arg1)
 {
   #define H_XmIsMotifWMRunning "Boolean XmIsMotifWMRunning(Widget shell)  determines whether the window manager is running"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmIsMotifWMRunning", "Widget");
@@ -4790,32 +4790,32 @@ static XEN gxm_XmIsMotifWMRunning(XEN arg1)
 
 /* DIFF: all XmCreate<Obj> arglist is a list of args 
  */
-static XEN gxm_XmCreateLabel(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateLabel(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateLabel "Widget XmCreateLabel(Widget parent, String name, ArgList arglist, Cardinal argcount) The Label widget creation function"
   return(gxm_new_widget("XmCreateLabel", XmCreateLabel, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateLabelGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateLabelGadget(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateLabelGadget "Widget XmCreateLabelGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) The LabelGadget creation function"
   return(gxm_new_widget("XmCreateLabelGadget", XmCreateLabelGadget, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateIconHeader(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateIconHeader(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateIconHeader "Widget XmCreateIconHeader(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   return(gxm_new_widget("XmCreateIconHeader", XmCreateIconHeader, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateIconGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateIconGadget(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateIconGadget "Widget XmCreateIconGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The IconGadget widget creation function"
   return(gxm_new_widget("XmCreateIconGadget", XmCreateIconGadget, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateToggleButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateToggleButton(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateToggleButton "Widget XmCreateToggleButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ToggleButton widget creation function"
@@ -4824,7 +4824,7 @@ The ToggleButton widget creation function"
 
 #define Xen_is_ToggleButtonWidget(Arg) (Xen_is_Widget(Arg) && (XmIsToggleButton(Xen_to_C_Widget(Arg)) || XmIsToggleButtonGadget(Xen_to_C_Widget(Arg))))
 
-static XEN gxm_XmToggleButtonSetValue(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmToggleButtonSetValue(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmToggleButtonSetValue "void XmToggleButtonSetValue(Widget widget, XmToggleButtonState state, Boolean notify) \
 sets or changes the current state"
@@ -4834,7 +4834,7 @@ sets or changes the current state"
   return(C_bool_to_Xen_boolean(XmToggleButtonSetValue(Xen_to_C_Widget(arg1), Xen_integer_to_C_int(arg2), Xen_boolean_to_C_bool(arg3))));
 }
 
-static XEN gxm_XmToggleButtonSetState(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmToggleButtonSetState(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmToggleButtonSetState "void XmToggleButtonSetState(Widget widget, Boolean state, Boolean notify) \
 sets or changes the current state"
@@ -4845,7 +4845,7 @@ sets or changes the current state"
   return(Xen_false);
 }
 
-static XEN gxm_XmToggleButtonGetState(XEN arg1)
+static Xen gxm_XmToggleButtonGetState(Xen arg1)
 {
   #define H_XmToggleButtonGetState "Boolean XmToggleButtonGetState(Widget widget) obtains the state of a ToggleButton"
   Xen_check_type(Xen_is_ToggleButtonWidget(arg1), arg1, 1, "XmToggleButtonGetState", "ToggleButton Widget");
@@ -4853,14 +4853,14 @@ static XEN gxm_XmToggleButtonGetState(XEN arg1)
 }
 
 
-static XEN gxm_XmCreateToggleButtonGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateToggleButtonGadget(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateToggleButtonGadget "Widget XmCreateToggleButtonGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ToggleButtonGadget creation function"
   return(gxm_new_widget("XmCreateToggleButtonGadget", XmCreateToggleButtonGadget, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmToggleButtonGadgetSetValue(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmToggleButtonGadgetSetValue(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmToggleButtonGadgetSetValue "Boolean XmToggleButtonGadgetSetValue(Widget w, XmToggleButtonState newstate, Boolean notify)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmToggleButtonGadgetSetValue", "Widget");
@@ -4869,13 +4869,13 @@ static XEN gxm_XmToggleButtonGadgetSetValue(XEN arg1, XEN arg2, XEN arg3)
   return(C_bool_to_Xen_boolean(XmToggleButtonGadgetSetValue(Xen_to_C_Widget(arg1), Xen_integer_to_C_int(arg2), Xen_boolean_to_C_bool(arg3))));
 }
 
-static XEN gxm_XmCreateGrabShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateGrabShell(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateGrabShell "Widget XmCreateGrabShell(Widget parent, char *name, ArgList al, Cardinal ac): a new GrabShell"
   return(gxm_new_widget("XmCreateGrabShell", XmCreateGrabShell, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmToggleButtonGadgetSetState(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmToggleButtonGadgetSetState(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmToggleButtonGadgetSetState "void XmToggleButtonGadgetSetState(Widget widget, Boolean state, Boolean notify) \
 sets or changes the current state"
@@ -4886,7 +4886,7 @@ sets or changes the current state"
   return(Xen_false);
 }
 
-static XEN gxm_XmToggleButtonGadgetGetState(XEN arg1)
+static Xen gxm_XmToggleButtonGadgetGetState(Xen arg1)
 {
   #define H_XmToggleButtonGadgetGetState "Boolean XmToggleButtonGadgetGetState(Widget widget) obtains \
 the state of a ToggleButtonGadget"
@@ -4894,20 +4894,20 @@ the state of a ToggleButtonGadget"
   return(C_bool_to_Xen_boolean(XmToggleButtonGadgetGetState(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmCreateFrame(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateFrame(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateFrame "Widget XmCreateFrame(Widget parent, String name, ArgList arglist, Cardinal argcount) The Frame widget creation function"
   return(gxm_new_widget("XmCreateFrame", XmCreateFrame, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateFormDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateFormDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateFormDialog "Widget XmCreateFormDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A Form FormDialog creation function"
   return(gxm_new_widget("XmCreateFormDialog", XmCreateFormDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateForm(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateForm(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateForm "Widget XmCreateForm(Widget parent, String name, ArgList arglist, Cardinal argcount) The Form widget creation function"
   return(gxm_new_widget("XmCreateForm", XmCreateForm, arg1, arg2, arg3, arg4));
@@ -4916,7 +4916,7 @@ static XEN gxm_XmCreateForm(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 #define Xen_is_TextWidget(Arg) (Xen_is_Widget(Arg) && (XmIsText(Xen_to_C_Widget(Arg)) || XmIsTextField(Xen_to_C_Widget(Arg))))
 #define Xen_is_JustTextWidget(Arg) (Xen_is_Widget(Arg) && XmIsText(Xen_to_C_Widget(Arg)))
 
-static XEN gxm_XmTextFindString(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTextFindString(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTextFindString "Boolean XmTextFindString(Widget widget, XmTextPosition start, char *string, XmTextDirection direction) \
 finds the beginning position of a text string"
@@ -4938,7 +4938,7 @@ finds the beginning position of a text string"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextEnableRedisplay(XEN arg1)
+static Xen gxm_XmTextEnableRedisplay(Xen arg1)
 {
   #define H_XmTextEnableRedisplay "void XmTextEnableRedisplay(Widget widget) forces the visual update of a Text widget"
   Xen_check_type(Xen_is_JustTextWidget(arg1), arg1, 1, "XmTextEnableRedisplay", "Text or TextField Widget");
@@ -4946,7 +4946,7 @@ static XEN gxm_XmTextEnableRedisplay(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextDisableRedisplay(XEN arg1)
+static Xen gxm_XmTextDisableRedisplay(Xen arg1)
 {
   #define H_XmTextDisableRedisplay "void XmTextDisableRedisplay(Widget widget) temporarily prevents visual update of the Text widget"
   Xen_check_type(Xen_is_JustTextWidget(arg1), arg1, 1, "XmTextDisableRedisplay", "Text or TextField Widget");
@@ -4954,21 +4954,21 @@ static XEN gxm_XmTextDisableRedisplay(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextGetCenterline(XEN arg1)
+static Xen gxm_XmTextGetCenterline(Xen arg1)
 {
   #define H_XmTextGetCenterline "int XmTextGetCenterline(Widget widget) Return the height (length) of a character string when the writing direction is vertical"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextGetCenterline", "Text or TextField Widget");
   return(C_int_to_Xen_integer(XmTextGetCenterline(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextGetBaseline(XEN arg1)
+static Xen gxm_XmTextGetBaseline(Xen arg1)
 {
   #define H_XmTextGetBaseline "int XmTextGetBaseline(Widget widget) accesses the y position of the baseline"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextGetBaseline", "Text or TextField Widget");
   return(C_int_to_Xen_integer(XmTextGetBaseline(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextScroll(XEN arg1, XEN arg2)
+static Xen gxm_XmTextScroll(Xen arg1, Xen arg2)
 {
   #define H_XmTextScroll "void XmTextScroll(Widget widget, int lines) scrolls text"
   Xen_check_type(Xen_is_JustTextWidget(arg1), arg1, 1, "XmTextScroll", "Text or TextField Widget");
@@ -4977,7 +4977,7 @@ static XEN gxm_XmTextScroll(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextShowPosition(XEN arg1, XEN arg2)
+static Xen gxm_XmTextShowPosition(Xen arg1, Xen arg2)
 {
   #define H_XmTextShowPosition "void XmTextShowPosition(Widget widget, XmTextPosition position) forces text at a given position to be displayed"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextShowPosition", "Text or TextField Widget");
@@ -4986,7 +4986,7 @@ static XEN gxm_XmTextShowPosition(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextSetSource(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTextSetSource(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTextSetSource "void XmTextSetSource(Widget widget, XmTextSource source, XmTextPosition top_character, \
 XmTextPosition cursor_position) sets the source of the widget"
@@ -4998,14 +4998,14 @@ XmTextPosition cursor_position) sets the source of the widget"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextGetSource(XEN arg1)
+static Xen gxm_XmTextGetSource(Xen arg1)
 {
   #define H_XmTextGetSource "XmTextSource XmTextGetSource(Widget widget) accesses the source of the widget"
   Xen_check_type(Xen_is_JustTextWidget(arg1), arg1, 1, "XmTextGetSource", "Text or TextField Widget");
   return(C_to_Xen_XmTextSource(XmTextGetSource(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextPosToXY(XEN arg1, XEN arg2)
+static Xen gxm_XmTextPosToXY(Xen arg1, Xen arg2)
 {
   #define H_XmTextPosToXY "Boolean XmTextPosToXY(Widget widget, XmTextPosition position) A Text function \
 that returns the x and y position of a character position"
@@ -5021,7 +5021,7 @@ that returns the x and y position of a character position"
 		    C_to_Xen_Position(y)));
 }
 
-static XEN gxm_XmTextXYToPos(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTextXYToPos(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmTextXYToPos "XmTextPosition XmTextXYToPos(Widget widget, Position x, Position y) accesses \
 the character position nearest an x and y position"
@@ -5031,7 +5031,7 @@ the character position nearest an x and y position"
   return(C_int_to_Xen_integer(XmTextXYToPos(Xen_to_C_Widget(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XmTextGetSelectionPosition(XEN arg1)
+static Xen gxm_XmTextGetSelectionPosition(Xen arg1)
 {
   #define H_XmTextGetSelectionPosition "Boolean XmTextGetSelectionPosition(Widget widget): returns the position of the primary selection"
   /* DIFF: XmTextGetSelectionPosition widget [left right] -> (list res left right)
@@ -5045,7 +5045,7 @@ static XEN gxm_XmTextGetSelectionPosition(XEN arg1)
 		    C_int_to_Xen_integer(pos2)));
 }
 
-static XEN gxm_XmTextClearSelection(XEN arg1, XEN arg2)
+static Xen gxm_XmTextClearSelection(Xen arg1, Xen arg2)
 {
   #define H_XmTextClearSelection "void XmTextClearSelection(Widget widget, Time time) clears the primary selection"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextClearSelection", "Text or TextField Widget");
@@ -5054,7 +5054,7 @@ static XEN gxm_XmTextClearSelection(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextSetSelection(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTextSetSelection(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTextSetSelection "void XmTextSetSelection(Widget widget, XmTextPosition first, XmTextPosition last, Time time) \
 sets the primary selection of the text"
@@ -5066,10 +5066,10 @@ sets the primary selection of the text"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextGetSelection(XEN arg1)
+static Xen gxm_XmTextGetSelection(Xen arg1)
 {
   char *str;
-  XEN res;
+  Xen res;
   #define H_XmTextGetSelection "char *XmTextGetSelection(Widget widget) retrieves the value of the primary selection"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextGetSelection", "Text or TextField Widget");
   str = XmTextGetSelection(Xen_to_C_Widget(arg1));
@@ -5078,21 +5078,21 @@ static XEN gxm_XmTextGetSelection(XEN arg1)
   return(res);
 }
 
-static XEN gxm_XmTextPasteLink(XEN arg1)
+static Xen gxm_XmTextPasteLink(Xen arg1)
 {
   #define H_XmTextPasteLink "Boolean XmTextPasteLink(Widget widget) inserts a link to the clipboard selection"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextPasteLink", "Text or TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextPasteLink(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextPaste(XEN arg1)
+static Xen gxm_XmTextPaste(Xen arg1)
 {
   #define H_XmTextPaste "Boolean XmTextPaste(Widget widget) inserts the clipboard selection"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextPaste", "Text or TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextPaste(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextCut(XEN arg1, XEN arg2)
+static Xen gxm_XmTextCut(Xen arg1, Xen arg2)
 {
   #define H_XmTextCut "Boolean XmTextCut(Widget widget, Time time) copies the primary selection to the clipboard and deletes the selected text"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextCut", "Text or TextField Widget");
@@ -5100,7 +5100,7 @@ static XEN gxm_XmTextCut(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmTextCut(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmTextCopyLink(XEN arg1, XEN arg2)
+static Xen gxm_XmTextCopyLink(Xen arg1, Xen arg2)
 {
   #define H_XmTextCopyLink "Boolean XmTextCopyLink(Widget widget, Time time) copies a link to the primary selection to the clipboard"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextCopyLink", "Text or TextField Widget");
@@ -5108,7 +5108,7 @@ static XEN gxm_XmTextCopyLink(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmTextCopyLink(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmTextCopy(XEN arg1, XEN arg2)
+static Xen gxm_XmTextCopy(Xen arg1, Xen arg2)
 {
   #define H_XmTextCopy "Boolean XmTextCopy(Widget widget, Time time) copies the primary selection to the clipboard"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextCopy", "Text or TextField Widget");
@@ -5116,14 +5116,14 @@ static XEN gxm_XmTextCopy(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmTextCopy(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmTextRemove(XEN arg1)
+static Xen gxm_XmTextRemove(Xen arg1)
 {
   #define H_XmTextRemove "Boolean XmTextRemove(Widget widget) deletes the primary selection"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextRemove", "Text or TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextRemove(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextSetCursorPosition(XEN arg1, XEN arg2)
+static Xen gxm_XmTextSetCursorPosition(Xen arg1, Xen arg2)
 {
   #define H_XmTextSetCursorPosition "void XmTextSetCursorPosition(Widget w, int position) sets the insertion cursor position"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextSetCursorPosition", "Text or TextField Widget");
@@ -5132,7 +5132,7 @@ static XEN gxm_XmTextSetCursorPosition(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextSetInsertionPosition(XEN arg1, XEN arg2)
+static Xen gxm_XmTextSetInsertionPosition(Xen arg1, Xen arg2)
 {
   #define H_XmTextSetInsertionPosition "void XmTextSetInsertionPosition(Widget widget, XmTextPosition position) \
 sets the position of the insert cursor"
@@ -5142,7 +5142,7 @@ sets the position of the insert cursor"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextGetInsertionPosition(XEN arg1)
+static Xen gxm_XmTextGetInsertionPosition(Xen arg1)
 {
   #define H_XmTextGetInsertionPosition "XmTextPosition XmTextGetInsertionPosition(Widget widget) accesses the \
 position of the insert cursor"
@@ -5150,14 +5150,14 @@ position of the insert cursor"
   return(C_int_to_Xen_integer(XmTextGetInsertionPosition(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextGetCursorPosition(XEN arg1)
+static Xen gxm_XmTextGetCursorPosition(Xen arg1)
 {
   #define H_XmTextGetCursorPosition "int XmTextGetCursorPosition(Widget w) presumably returns the widget's insertion cursor position"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextGetCursorPosition", "Text or TextField Widget");
   return(C_int_to_Xen_integer(XmTextGetCursorPosition(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextSetTopCharacter(XEN arg1, XEN arg2)
+static Xen gxm_XmTextSetTopCharacter(Xen arg1, Xen arg2)
 {
   #define H_XmTextSetTopCharacter "void XmTextSetTopCharacter(Widget widget, XmTextPosition top_character) sets \
 the position of the first character displayed"
@@ -5167,14 +5167,14 @@ the position of the first character displayed"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextGetTopCharacter(XEN arg1)
+static Xen gxm_XmTextGetTopCharacter(Xen arg1)
 {
   #define H_XmTextGetTopCharacter "XmTextPosition XmTextGetTopCharacter(Widget widget) accesses the position of the first character displayed"
   Xen_check_type(Xen_is_JustTextWidget(arg1), arg1, 1, "XmTextGetTopCharacter", "Text or TextField Widget");
   return(C_int_to_Xen_integer(XmTextGetTopCharacter(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextSetMaxLength(XEN arg1, XEN arg2)
+static Xen gxm_XmTextSetMaxLength(Xen arg1, Xen arg2)
 {
   #define H_XmTextSetMaxLength "void XmTextSetMaxLength(Widget widget, int max_length) sets the value of the current \
 maximum allowable length of a text string entered from the keyboard"
@@ -5184,7 +5184,7 @@ maximum allowable length of a text string entered from the keyboard"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextGetMaxLength(XEN arg1)
+static Xen gxm_XmTextGetMaxLength(Xen arg1)
 {
   #define H_XmTextGetMaxLength "int XmTextGetMaxLength(Widget widget) accesses the value of the current maximum allowable \
 length of a text string entered from the keyboard"
@@ -5192,7 +5192,7 @@ length of a text string entered from the keyboard"
   return(C_int_to_Xen_integer(XmTextGetMaxLength(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextSetEditable(XEN arg1, XEN arg2)
+static Xen gxm_XmTextSetEditable(Xen arg1, Xen arg2)
 {
   #define H_XmTextSetEditable "void XmTextSetEditable(Widget widget, Boolean editable) sets the edit permission"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextSetEditable", "Text or TextField Widget");
@@ -5201,21 +5201,21 @@ static XEN gxm_XmTextSetEditable(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextGetEditable(XEN arg1)
+static Xen gxm_XmTextGetEditable(Xen arg1)
 {
   #define H_XmTextGetEditable "Boolean XmTextGetEditable(Widget widget) accesses the edit permission state"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextGetEditable", "Text or TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextGetEditable(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextGetAddMode(XEN arg1)
+static Xen gxm_XmTextGetAddMode(Xen arg1)
 {
   #define H_XmTextGetAddMode "Boolean XmTextGetAddMode(Widget w) presumably returns the widget's current add mode."
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextGetAddMode", "Text or TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextGetAddMode(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextSetAddMode(XEN arg1, XEN arg2)
+static Xen gxm_XmTextSetAddMode(Xen arg1, Xen arg2)
 {
   #define H_XmTextSetAddMode "void XmTextSetAddMode(Widget widget, Boolean state) sets the widget's add mode -- \
 this determines whether you can move the insertion cursor without changing the primary selection"
@@ -5225,7 +5225,7 @@ this determines whether you can move the insertion cursor without changing the p
   return(Xen_false);
 }
 
-static XEN gxm_XmTextInsert(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTextInsert(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmTextInsert "void XmTextInsert(Widget widget, XmTextPosition position, char *value) inserts a character \
 string into a text string"
@@ -5236,7 +5236,7 @@ string into a text string"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextReplace(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTextReplace(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTextReplace "void XmTextReplace(Widget widget, XmTextPosition from_pos, XmTextPosition to_pos, char *value) \
 replaces part of a text string"
@@ -5248,7 +5248,7 @@ replaces part of a text string"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextSetString(XEN arg1, XEN arg2)
+static Xen gxm_XmTextSetString(Xen arg1, Xen arg2)
 {
   #define H_XmTextSetString "void XmTextSetString(Widget widget, char *value) sets the string value"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextSetString", "Text or TextField Widget");
@@ -5257,17 +5257,17 @@ static XEN gxm_XmTextSetString(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextGetLastPosition(XEN arg1)
+static Xen gxm_XmTextGetLastPosition(Xen arg1)
 {
   #define H_XmTextGetLastPosition "XmTextPosition XmTextGetLastPosition(Widget widget) accesses the last position in the text"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextGetLastPosition", "Text or TextField Widget");
   return(C_int_to_Xen_integer(XmTextGetLastPosition(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextGetString(XEN arg1)
+static Xen gxm_XmTextGetString(Xen arg1)
 {
   char *str;
-  XEN res;
+  Xen res;
   #define H_XmTextGetString "char *XmTextGetString(Widget widget) accesses the string value"
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextGetString", "Text or TextField Widget");
   str = XmTextGetString(Xen_to_C_Widget(arg1));
@@ -5276,14 +5276,14 @@ static XEN gxm_XmTextGetString(XEN arg1)
   return(res);
 }
 
-static XEN gxm_XmTextGetSubstring(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTextGetSubstring(Xen arg1, Xen arg2, Xen arg3)
 {
   /* DIFF: omit and rtn last 2 args */
   #define H_XmTextGetSubstring "int XmTextGetSubstring(Widget widget, XmTextPosition start, int num_chars) \
 retrieves a copy of a portion of the internal text buffer"
   int rtn, len;
   char *buf;
-  XEN str = Xen_false;
+  Xen str = Xen_false;
   Xen_check_type(Xen_is_TextWidget(arg1), arg1, 1, "XmTextGetSubstring", "Text or TextField Widget");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XmTextGetSubstring", "XmTextPosition");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XmTextGetSubstring", "int");
@@ -5296,20 +5296,20 @@ retrieves a copy of a portion of the internal text buffer"
   return(str);
 }
 
-static XEN gxm_XmCreateText(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateText(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateText "Widget XmCreateText(Widget parent, String name, ArgList arglist, Cardinal argcount) The Text widget creation function"
   return(gxm_new_widget("XmCreateText", XmCreateText, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateScrolledText(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateScrolledText(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateScrolledText "Widget XmCreateScrolledText(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Text ScrolledText creation function"
   return(gxm_new_widget("XmCreateScrolledText", XmCreateScrolledText, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmTextSetHighlight(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTextSetHighlight(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTextSetHighlight "void XmTextSetHighlight(Widget widget, XmTextPosition left, XmTextPosition right, XmHighlightMode mode) \
 highlights text"
@@ -5324,21 +5324,21 @@ highlights text"
   return(Xen_false);
 }
 
-static XEN gxm_XmCreateFileSelectionDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateFileSelectionDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateFileSelectionDialog "Widget XmCreateFileSelectionDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The FileSelectionBox FileSelectionDialog creation function"
   return(gxm_new_widget("XmCreateFileSelectionDialog", XmCreateFileSelectionDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateFileSelectionBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateFileSelectionBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateFileSelectionBox "Widget XmCreateFileSelectionBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The FileSelectionBox widget creation function"
   return(gxm_new_widget("XmCreateFileSelectionBox", XmCreateFileSelectionBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmFileSelectionDoSearch(XEN arg1, XEN arg2)
+static Xen gxm_XmFileSelectionDoSearch(Xen arg1, Xen arg2)
 {
   #define H_XmFileSelectionDoSearch "void XmFileSelectionDoSearch(Widget widget, XmString dirmask) \
 initiates a directory search"
@@ -5348,7 +5348,7 @@ initiates a directory search"
   return(Xen_false);
 }
 
-static XEN gxm_XmFileSelectionBoxGetChild(XEN arg1, XEN arg2)
+static Xen gxm_XmFileSelectionBoxGetChild(Xen arg1, Xen arg2)
 {
   #define H_XmFileSelectionBoxGetChild "Widget XmFileSelectionBoxGetChild(Widget widget, unsigned char child) \
 used to access a component"
@@ -5357,7 +5357,7 @@ used to access a component"
   return(C_to_Xen_Widget(XmFileSelectionBoxGetChild(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
-static XEN gxm_XmCreateTextField(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateTextField(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateTextField "Widget XmCreateTextField(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The TextField widget creation function"
@@ -5366,14 +5366,14 @@ The TextField widget creation function"
 
 #define Xen_is_TextFieldWidget(Arg) (Xen_is_Widget(Arg) && XmIsTextField(Xen_to_C_Widget(Arg)))
 
-static XEN gxm_XmTextFieldGetBaseline(XEN arg1)
+static Xen gxm_XmTextFieldGetBaseline(Xen arg1)
 {
   #define H_XmTextFieldGetBaseline "int XmTextFieldGetBaseline(Widget widget) accesses the y position of the baseline"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldGetBaseline", "TextField Widget");
   return(C_int_to_Xen_integer(XmTextFieldGetBaseline(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldSetHighlight(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTextFieldSetHighlight(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTextFieldSetHighlight "void XmTextFieldSetHighlight(Widget widget, XmTextPosition left, XmTextPosition right, XmHighlightMode mode) \
 highlights text"
@@ -5388,7 +5388,7 @@ highlights text"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldShowPosition(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldShowPosition(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldShowPosition "void XmTextFieldShowPosition(Widget widget, XmTextPosition position) \
 forces text at a given position to be displayed"
@@ -5399,7 +5399,7 @@ forces text at a given position to be displayed"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldPosToXY(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldPosToXY(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldPosToXY "Boolean XmTextFieldPosToXY(Widget widget, XmTextPosition position): returns the x and y position of a character position"
   /* DIFF: XmTextFieldPosToXY omits last 2 args and returns them
@@ -5416,7 +5416,7 @@ static XEN gxm_XmTextFieldPosToXY(XEN arg1, XEN arg2)
 		    C_to_Xen_Position(y)));
 }
 
-static XEN gxm_XmTextFieldXYToPos(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTextFieldXYToPos(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmTextFieldXYToPos "XmTextPosition XmTextFieldXYToPos(Widget widget, Position x, Position y) \
 accesses the character position nearest an x and y position"
@@ -5426,7 +5426,7 @@ accesses the character position nearest an x and y position"
   return(C_int_to_Xen_integer(XmTextFieldXYToPos(Xen_to_C_Widget(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XmTextFieldSetSelection(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTextFieldSetSelection(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTextFieldSetSelection "void XmTextFieldSetSelection(Widget widget, XmTextPosition first, XmTextPosition last, Time time) \
 sets the primary selection of the text"
@@ -5438,7 +5438,7 @@ sets the primary selection of the text"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldClearSelection(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldClearSelection(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldClearSelection "void XmTextFieldClearSelection(Widget widget, Time time) clears the primary selection"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldClearSelection", "TextField Widget");
@@ -5447,14 +5447,14 @@ static XEN gxm_XmTextFieldClearSelection(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldPasteLink(XEN arg1)
+static Xen gxm_XmTextFieldPasteLink(Xen arg1)
 {
   #define H_XmTextFieldPasteLink "Boolean XmTextFieldPasteLink(Widget widget) inserts a link to the clipboard selection"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldPasteLink", "TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextFieldPasteLink(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldCopyLink(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldCopyLink(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldCopyLink "Boolean XmTextFieldCopyLink(Widget widget, Time time) copies a link to the \
 primary selection to the clipboard"
@@ -5463,14 +5463,14 @@ primary selection to the clipboard"
   return(C_bool_to_Xen_boolean(XmTextFieldCopyLink(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmTextFieldPaste(XEN arg1)
+static Xen gxm_XmTextFieldPaste(Xen arg1)
 {
   #define H_XmTextFieldPaste "Boolean XmTextFieldPaste(Widget widget) inserts the clipboard selection"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldPaste", "TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextFieldPaste(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldCut(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldCut(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldCut "Boolean XmTextFieldCut(Widget widget, Time time) copies the primary selection \
 to the clipboard and deletes the selected text"
@@ -5479,7 +5479,7 @@ to the clipboard and deletes the selected text"
   return(C_bool_to_Xen_boolean(XmTextFieldCut(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmTextFieldCopy(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldCopy(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldCopy "Boolean XmTextFieldCopy(Widget widget, Time time) copies the primary selection to the clipboard"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldCopy", "TextField Widget");
@@ -5487,17 +5487,17 @@ static XEN gxm_XmTextFieldCopy(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmTextFieldCopy(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmTextFieldRemove(XEN arg1)
+static Xen gxm_XmTextFieldRemove(Xen arg1)
 {
   #define H_XmTextFieldRemove "Boolean XmTextFieldRemove(Widget widget) deletes the primary selection"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldRemove", "TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextFieldRemove(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldGetSelection(XEN arg1)
+static Xen gxm_XmTextFieldGetSelection(Xen arg1)
 {
   char *str;
-  XEN res;
+  Xen res;
   #define H_XmTextFieldGetSelection "char *XmTextFieldGetSelection(Widget widget) retrieves the value of the primary selection"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldGetSelection", "TextField Widget");
   str = XmTextFieldGetSelection(Xen_to_C_Widget(arg1));
@@ -5506,7 +5506,7 @@ static XEN gxm_XmTextFieldGetSelection(XEN arg1)
   return(res);
 }
 
-static XEN gxm_XmTextFieldGetSelectionPosition(XEN arg1)
+static Xen gxm_XmTextFieldGetSelectionPosition(Xen arg1)
 {
   #define H_XmTextFieldGetSelectionPosition "Boolean XmTextFieldGetSelectionPosition(Widget widget) \
 returns the position of the primary selection"
@@ -5522,7 +5522,7 @@ returns the position of the primary selection"
 		    C_int_to_Xen_integer(pos2)));
 }
 
-static XEN gxm_XmTextFieldSetInsertionPosition(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldSetInsertionPosition(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldSetInsertionPosition "void XmTextFieldSetInsertionPosition(Widget widget, XmTextPosition position) \
 sets the position of the insertion cursor"
@@ -5532,7 +5532,7 @@ sets the position of the insertion cursor"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldSetCursorPosition(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldSetCursorPosition(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldSetCursorPosition "void XmTextFieldSetCursorPosition(Widget w, int position) sets the insertion cursor position"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldSetCursorPosition", "TextField Widget");
@@ -5541,7 +5541,7 @@ static XEN gxm_XmTextFieldSetCursorPosition(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldGetInsertionPosition(XEN arg1)
+static Xen gxm_XmTextFieldGetInsertionPosition(Xen arg1)
 {
   #define H_XmTextFieldGetInsertionPosition "XmTextPosition XmTextFieldGetInsertionPosition(Widget widget) \
 accesses the position of the insertion cursor"
@@ -5549,14 +5549,14 @@ accesses the position of the insertion cursor"
   return(C_int_to_Xen_integer(XmTextFieldGetInsertionPosition(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldGetCursorPosition(XEN arg1)
+static Xen gxm_XmTextFieldGetCursorPosition(Xen arg1)
 {
   #define H_XmTextFieldGetCursorPosition "int XmTextFieldGetCursorPosition(Widget w) presumably returns the widget's insertion cursor position"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldGetCursorPosition", "TextField Widget");
   return(C_int_to_Xen_integer(XmTextFieldGetCursorPosition(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldSetMaxLength(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldSetMaxLength(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldSetMaxLength "void XmTextFieldSetMaxLength(Widget widget, int max_length) sets the \
 value of the current maximum allowable length of a text string \
@@ -5567,7 +5567,7 @@ entered from the keyboard"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldGetMaxLength(XEN arg1)
+static Xen gxm_XmTextFieldGetMaxLength(Xen arg1)
 {
   #define H_XmTextFieldGetMaxLength "int XmTextFieldGetMaxLength(Widget widget) accesses the value of the \
 current maximum allowable length of a text string \
@@ -5576,7 +5576,7 @@ entered from the keyboard"
   return(C_int_to_Xen_integer(XmTextFieldGetMaxLength(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldSetEditable(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldSetEditable(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldSetEditable "void XmTextFieldSetEditable(Widget widget, Boolean editable) sets the edit permission"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldSetEditable", "TextField Widget");
@@ -5585,21 +5585,21 @@ static XEN gxm_XmTextFieldSetEditable(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldGetEditable(XEN arg1)
+static Xen gxm_XmTextFieldGetEditable(Xen arg1)
 {
   #define H_XmTextFieldGetEditable "Boolean XmTextFieldGetEditable(Widget widget) accesses the edit permission state"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldGetEditable", "TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextFieldGetEditable(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldGetAddMode(XEN arg1)
+static Xen gxm_XmTextFieldGetAddMode(Xen arg1)
 {
   #define H_XmTextFieldGetAddMode "Boolean XmTextFieldGetAddMode(Widget w) presumably returns the widget's current add mode."
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldGetAddMode", "TextField Widget");
   return(C_bool_to_Xen_boolean(XmTextFieldGetAddMode(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldSetAddMode(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldSetAddMode(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldSetAddMode "void XmTextFieldSetAddMode(Widget widget, Boolean state) sets the state of Add mode"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldSetAddMode", "TextField Widget");
@@ -5608,7 +5608,7 @@ static XEN gxm_XmTextFieldSetAddMode(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldInsert(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTextFieldInsert(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmTextFieldInsert "void XmTextFieldInsert(Widget widget, XmTextPosition position, char *value) \
 inserts a character string into a text string"
@@ -5619,7 +5619,7 @@ inserts a character string into a text string"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldReplace(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmTextFieldReplace(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmTextFieldReplace "void XmTextFieldReplace(Widget widget, XmTextPosition from_pos, XmTextPosition to_pos, char *value) \
 replaces part of a text string"
@@ -5631,7 +5631,7 @@ replaces part of a text string"
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldSetString(XEN arg1, XEN arg2)
+static Xen gxm_XmTextFieldSetString(Xen arg1, Xen arg2)
 {
   #define H_XmTextFieldSetString "void XmTextFieldSetString(Widget widget, char *value) sets the string value"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldSetString", "TextField Widget");
@@ -5640,7 +5640,7 @@ static XEN gxm_XmTextFieldSetString(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmTextFieldGetLastPosition(XEN arg1)
+static Xen gxm_XmTextFieldGetLastPosition(Xen arg1)
 {
   #define H_XmTextFieldGetLastPosition "XmTextPosition XmTextFieldGetLastPosition(Widget widget) accesses \
 the position of the last text character"
@@ -5648,14 +5648,14 @@ the position of the last text character"
   return(C_int_to_Xen_integer(XmTextFieldGetLastPosition(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmTextFieldGetSubstring(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmTextFieldGetSubstring(Xen arg1, Xen arg2, Xen arg3)
 {
   /* DIFF: omit and rtn last 2 args */
   #define H_XmTextFieldGetSubstring "int XmTextFieldGetSubstring(Widget widget, XmTextPosition start, int num_chars) \
 retrieves a copy of a portion of the internal text buffer"
   int rtn, len;
   char *buf;
-  XEN str = Xen_false;
+  Xen str = Xen_false;
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldGetSubstring", "TextField Widget");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XmTextFieldGetSubstring", "XmTextPosition");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XmTextFieldGetSubstring", "int");
@@ -5668,10 +5668,10 @@ retrieves a copy of a portion of the internal text buffer"
   return(str);
 }
 
-static XEN gxm_XmTextFieldGetString(XEN arg1)
+static Xen gxm_XmTextFieldGetString(Xen arg1)
 {
   char *str;
-  XEN res;
+  Xen res;
   #define H_XmTextFieldGetString "char *XmTextFieldGetString(Widget widget) accesses the string value"
   Xen_check_type(Xen_is_TextFieldWidget(arg1), arg1, 1, "XmTextFieldGetString", "TextField Widget");
   str = XmTextFieldGetString(Xen_to_C_Widget(arg1));
@@ -5680,7 +5680,7 @@ static XEN gxm_XmTextFieldGetString(XEN arg1)
   return(res);
 }
 
-static XEN gxm_XmDropTransferAdd(XEN arg1, XEN arg2)
+static Xen gxm_XmDropTransferAdd(Xen arg1, Xen arg2)
 {
   #define H_XmDropTransferAdd "void XmDropTransferAdd(Widget drop_transfer, XmDropTransferEntryRec *transfers) \
 enables additional drop transfer entries to be processed after initiating a drop transfer"
@@ -5698,7 +5698,7 @@ enables additional drop transfer entries to be processed after initiating a drop
   return(Xen_false);
 }
 
-static XEN gxm_XmDropTransferStart(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmDropTransferStart(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmDropTransferStart "Widget XmDropTransferStart(Widget widget, ArgList arglist, Cardinal argcount) \
 initiates a drop transfer"
@@ -5721,7 +5721,7 @@ initiates a drop transfer"
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XmDropSiteConfigureStackingOrder(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmDropSiteConfigureStackingOrder(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmDropSiteConfigureStackingOrder "void XmDropSiteConfigureStackingOrder(Widget widget, Widget sibling, Cardinal stack_mode) \
 reorders a stack of widgets that are registered drop sites"
@@ -5732,7 +5732,7 @@ reorders a stack of widgets that are registered drop sites"
   return(Xen_false);
 }
 
-static XEN gxm_XmDropSiteQueryStackingOrder(XEN arg1)
+static Xen gxm_XmDropSiteQueryStackingOrder(Xen arg1)
 {
   #define H_XmDropSiteQueryStackingOrder "Status XmDropSiteQueryStackingOrder(Widget widget): (list parent child ...)"
   /* DIFF: XmDropSiteQueryStackingOrder widget [parent child numchild] -> (list parent child ...)
@@ -5740,7 +5740,7 @@ static XEN gxm_XmDropSiteQueryStackingOrder(XEN arg1)
   */
   Widget parent;
   Widget *children;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   unsigned int num_children;
   int res, i, loc;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmDropSiteQueryStackingOrder", "Widget");
@@ -5754,16 +5754,16 @@ static XEN gxm_XmDropSiteQueryStackingOrder(XEN arg1)
   return(Xen_cons(C_to_Xen_Widget(parent), lst));
 }
 
-static XEN gxm_XmDropSiteRetrieve(XEN arg1, XEN larg2, XEN arg3)
+static Xen gxm_XmDropSiteRetrieve(Xen arg1, Xen larg2, Xen arg3)
 {
   #define H_XmDropSiteRetrieve "void XmDropSiteRetrieve(Widget widget, ArgList arglist, Cardinal argcount) \
 retrieves resource values set on a drop site"
 
   Arg *args;
   unsigned long *locs;
-  XEN val = Xen_false;
+  Xen val = Xen_false;
   int i, len, gcloc;
-  XEN arg2;
+  Xen arg2;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmDropSiteRetrieve", "Widget");
   Xen_check_type(Xen_is_list(larg2), larg2, 2, "XmDropSiteRetrieve", "ArgList");
   Xen_check_type(Xen_is_integer_or_unbound(arg3), arg3, 3, "XmDropSiteRetrieve", "int");
@@ -5787,7 +5787,7 @@ retrieves resource values set on a drop site"
   return(val);
 }
 
-static XEN gxm_XmDropSiteEndUpdate(XEN arg1)
+static Xen gxm_XmDropSiteEndUpdate(Xen arg1)
 {
   #define H_XmDropSiteEndUpdate "void XmDropSiteEndUpdate(Widget widget) facilitates processing updates to multiple drop sites"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmDropSiteEndUpdate", "Widget");
@@ -5795,7 +5795,7 @@ static XEN gxm_XmDropSiteEndUpdate(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmDropSiteUpdate(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmDropSiteUpdate(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmDropSiteUpdate "void XmDropSiteUpdate(Widget widget, ArgList arglist, Cardinal argcount) sets \
 resource values for a drop site"
@@ -5819,7 +5819,7 @@ resource values for a drop site"
   return(Xen_false);
 }
 
-static XEN gxm_XmDropSiteStartUpdate(XEN arg1)
+static Xen gxm_XmDropSiteStartUpdate(Xen arg1)
 {
   #define H_XmDropSiteStartUpdate "void XmDropSiteStartUpdate(Widget widget) facilitates processing updates \
 to multiple drop sites"
@@ -5828,14 +5828,14 @@ to multiple drop sites"
   return(Xen_false);
 }
 
-static XEN gxm_XmDropSiteRegistered(XEN arg1)
+static Xen gxm_XmDropSiteRegistered(Xen arg1)
 {
   #define H_XmDropSiteRegistered "Boolean XmDropSiteRegistered(Widget widget) determines if a drop site has been registered"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmDropSiteRegistered", "Widget");
   return(C_bool_to_Xen_boolean(XmDropSiteRegistered(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmDropSiteUnregister(XEN arg1)
+static Xen gxm_XmDropSiteUnregister(Xen arg1)
 {
   #define H_XmDropSiteUnregister "void XmDropSiteUnregister(Widget widget) frees drop site information"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmDropSiteUnregister", "Widget");
@@ -5843,7 +5843,7 @@ static XEN gxm_XmDropSiteUnregister(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmDropSiteRegister(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmDropSiteRegister(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmDropSiteRegister "void XmDropSiteRegister(Widget widget, ArgList arglist, Cardinal argcount) \
 identifies a drop site and assigns resources that specify its behavior"
@@ -5867,7 +5867,7 @@ identifies a drop site and assigns resources that specify its behavior"
   return(Xen_false);
 }
 
-static XEN gxm_XmSimpleSpinBoxSetItem(XEN arg1, XEN arg2)
+static Xen gxm_XmSimpleSpinBoxSetItem(Xen arg1, Xen arg2)
 {
   #define H_XmSimpleSpinBoxSetItem "void XmSimpleSpinBoxSetItem(Widget w, XmString item) set an item in the XmSimpleSpinBox list"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmSimpleSpinBoxSetItem", "Widget");
@@ -5876,7 +5876,7 @@ static XEN gxm_XmSimpleSpinBoxSetItem(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmSimpleSpinBoxDeletePos(XEN arg1, XEN arg2)
+static Xen gxm_XmSimpleSpinBoxDeletePos(Xen arg1, Xen arg2)
 {
   #define H_XmSimpleSpinBoxDeletePos "void XmSimpleSpinBoxDeletePos(Widget w, int pos) delete a XmSimpleSpinBox item"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmSimpleSpinBoxDeletePos", "Widget");
@@ -5885,7 +5885,7 @@ static XEN gxm_XmSimpleSpinBoxDeletePos(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmSimpleSpinBoxAddItem(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmSimpleSpinBoxAddItem(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmSimpleSpinBoxAddItem "void XmSimpleSpinBoxAddItem(Widget w, XmString item, int pos) add an item to the XmSimpleSpinBox"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmSimpleSpinBoxAddItem", "Widget");
@@ -5895,21 +5895,21 @@ static XEN gxm_XmSimpleSpinBoxAddItem(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XmCreateSimpleSpinBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSimpleSpinBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSimpleSpinBox "Widget XmCreateSimpleSpinBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The SimpleSpinBox widget creation function"
   return(gxm_new_widget("XmCreateSimpleSpinBox", XmCreateSimpleSpinBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateDrawnButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateDrawnButton(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateDrawnButton "Widget XmCreateDrawnButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The DrawnButton widget creation function"
   return(gxm_new_widget("XmCreateDrawnButton", XmCreateDrawnButton, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmSpinBoxValidatePosition(XEN arg1)
+static Xen gxm_XmSpinBoxValidatePosition(Xen arg1)
 {
   #define H_XmSpinBoxValidatePosition "int XmSpinBoxValidatePosition(Widget textfield) translate the current value of \
 the specified XmSpinBox child into a valid position"
@@ -5921,41 +5921,41 @@ the specified XmSpinBox child into a valid position"
   return(C_int_to_Xen_integer(pos));
 }
 
-static XEN gxm_XmCreateSpinBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSpinBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSpinBox "The SpinBox creation function"
   return(gxm_new_widget("XmCreateSpinBox", XmCreateSpinBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateDrawingArea(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateDrawingArea(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateDrawingArea "Widget XmCreateDrawingArea(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The DrawingArea widget creation function"
   return(gxm_new_widget("XmCreateDrawingArea", XmCreateDrawingArea, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateSeparator(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSeparator(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSeparator "Widget XmCreateSeparator(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Separator widget creation function"
   return(gxm_new_widget("XmCreateSeparator", XmCreateSeparator, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateDragIcon(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateDragIcon(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateDragIcon "Widget XmCreateDragIcon(Widget widget, String name, ArgList arglist, Cardinal argcount) \
 creates a DragIcon widget"
   return(gxm_new_widget("XmCreateDragIcon", XmCreateDragIcon, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateSeparatorGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSeparatorGadget(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSeparatorGadget "Widget XmCreateSeparatorGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The SeparatorGadget creation function"
   return(gxm_new_widget("XmCreateSeparatorGadget", XmCreateSeparatorGadget, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmTargetsAreCompatible(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmTargetsAreCompatible(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmTargetsAreCompatible "Boolean XmTargetsAreCompatible(Display *display, Atom *export_targets, Cardinal num_export_targets, \
 Atom *import_targets, Cardinal num_import_targets)  tests whether the target types match between a drop site and source object"
@@ -5978,7 +5978,7 @@ Atom *import_targets, Cardinal num_import_targets)  tests whether the target typ
   return(C_bool_to_Xen_boolean(val));
 }
 
-static XEN gxm_XmDragCancel(XEN arg1)
+static Xen gxm_XmDragCancel(Xen arg1)
 {
   #define H_XmDragCancel "void XmDragCancel(Widget dragcontext) terminates a drag transaction"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmDragCancel", "Widget");
@@ -5986,7 +5986,7 @@ static XEN gxm_XmDragCancel(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmDragStart(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmDragStart(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmDragStart "Widget XmDragStart(Widget widget, XEvent *event, ArgList arglist, Cardinal argcount) \
 initiates a drag and drop transaction"
@@ -6012,28 +6012,28 @@ initiates a drag and drop transaction"
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XmCreatePromptDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreatePromptDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreatePromptDialog "Widget XmCreatePromptDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The SelectionBox PromptDialog creation function"
   return(gxm_new_widget("XmCreatePromptDialog", XmCreatePromptDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateSelectionDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSelectionDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSelectionDialog "Widget XmCreateSelectionDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The SelectionBox SelectionDialog creation function"
   return(gxm_new_widget("XmCreateSelectionDialog", XmCreateSelectionDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateSelectionBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateSelectionBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateSelectionBox "Widget XmCreateSelectionBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The SelectionBox widget creation function"
   return(gxm_new_widget("XmCreateSelectionBox", XmCreateSelectionBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmSelectionBoxGetChild(XEN arg1, XEN arg2)
+static Xen gxm_XmSelectionBoxGetChild(Xen arg1, Xen arg2)
 {
   #define H_XmSelectionBoxGetChild "Widget XmSelectionBoxGetChild(Widget widget, unsigned char child) used to access a SelectionBox component"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmSelectionBoxGetChild", "Widget");
@@ -6041,14 +6041,14 @@ static XEN gxm_XmSelectionBoxGetChild(XEN arg1, XEN arg2)
   return(C_to_Xen_Widget(XmSelectionBoxGetChild(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
-static XEN gxm_XmGetXmDisplay(XEN arg1)
+static Xen gxm_XmGetXmDisplay(Xen arg1)
 {
   #define H_XmGetXmDisplay "Widget XmGetXmDisplay(Display *display) A Display function that returns the"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmGetXmDisplay", "Display*");
   return(C_to_Xen_Widget(XmGetXmDisplay(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XmGetDragContext(XEN arg1, XEN arg2)
+static Xen gxm_XmGetDragContext(Xen arg1, Xen arg2)
 {
   #define H_XmGetDragContext "Widget XmGetDragContext(Widget refwidget, Time timestamp) retrieves \
 the DragContext widget ID associated with a timestamp"
@@ -6057,7 +6057,7 @@ the DragContext widget ID associated with a timestamp"
   return(C_to_Xen_Widget(XmGetDragContext(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmScrollVisible(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmScrollVisible(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmScrollVisible "void XmScrollVisible(Widget scrollw_widget, Widget widget, Dimension left_right_margin, Dimension top_bottom_margin) \
 makes an invisible  descendant of a ScrolledWindow work area visible"
@@ -6070,21 +6070,21 @@ makes an invisible  descendant of a ScrolledWindow work area visible"
   return(Xen_false);
 }
 
-static XEN gxm_XmCreateScrolledWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateScrolledWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateScrolledWindow "Widget XmCreateScrolledWindow(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ScrolledWindow widget creation function"
   return(gxm_new_widget("XmCreateScrolledWindow", XmCreateScrolledWindow, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateDialogShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateDialogShell(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateDialogShell "Widget XmCreateDialogShell(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The DialogShell widget creation function"
   return(gxm_new_widget("XmCreateDialogShell", XmCreateDialogShell, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmScrollBarSetValues(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XmScrollBarSetValues(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XmScrollBarSetValues "void XmScrollBarSetValues (widget, value, slider_size, increment, page_increment, notify) \
 changes ScrollBar's increment values and the slider's size and position"
@@ -6101,7 +6101,7 @@ changes ScrollBar's increment values and the slider's size and position"
   return(Xen_false);
 }
 
-static XEN gxm_XmScrollBarGetValues(XEN arg1)
+static Xen gxm_XmScrollBarGetValues(Xen arg1)
 {
   #define H_XmScrollBarGetValues "void XmScrollBarGetValues (widget): returns the ScrollBar's increment values (list val size incr page)"
   /* DIFF: XmScrollBarGetValues omits and returns last 4 args
@@ -6115,14 +6115,14 @@ static XEN gxm_XmScrollBarGetValues(XEN arg1)
 		    C_int_to_Xen_integer(page)));
 }
 
-static XEN gxm_XmCreateScrollBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateScrollBar(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateScrollBar "Widget XmCreateScrollBar(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ScrollBar widget creation function"
   return(gxm_new_widget("XmCreateScrollBar", XmCreateScrollBar, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmGetXmScreen(XEN arg1)
+static Xen gxm_XmGetXmScreen(Xen arg1)
 {
   #define H_XmGetXmScreen "Widget XmGetXmScreen(Screen *screen): returns the XmScreen object ID for a specified screen"
   /* this is the Motif Screen "widget" */
@@ -6130,7 +6130,7 @@ static XEN gxm_XmGetXmScreen(XEN arg1)
   return(C_to_Xen_Widget(XmGetXmScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XmClipboardRegisterFormat(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmClipboardRegisterFormat(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmClipboardRegisterFormat "int XmClipboardRegisterFormat (display, format_name, format_length) registers a new format"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmClipboardRegisterFormat", "Display*");
@@ -6141,7 +6141,7 @@ static XEN gxm_XmClipboardRegisterFormat(XEN arg1, XEN arg2, XEN arg3)
 						Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XmClipboardInquirePendingItems(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmClipboardInquirePendingItems(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmClipboardInquirePendingItems "int XmClipboardInquirePendingItems (display, window, format_name) \
 returns a list of data ID/private ID pairs"
@@ -6150,7 +6150,7 @@ returns a list of data ID/private ID pairs"
   unsigned long len;
   XmClipboardPendingList clst;
   int i, loc, rtn;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmClipboardInquirePendingItems", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XmClipboardInquirePendingItems", "Window");
   Xen_check_type(Xen_is_string(arg3), arg3, 3, "XmClipboardInquirePendingItems", "char*");
@@ -6169,7 +6169,7 @@ returns a list of data ID/private ID pairs"
   return(lst);
 }
 
-static XEN gxm_XmClipboardInquireLength(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmClipboardInquireLength(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmClipboardInquireLength "int XmClipboardInquireLength (display, window, format_name): returns the length of the stored data"
   /* DIFF: XmClipboardInquireLength omit and rtn last arg
@@ -6184,13 +6184,13 @@ static XEN gxm_XmClipboardInquireLength(XEN arg1, XEN arg2, XEN arg3)
 		    C_ulong_to_Xen_ulong(len)));
 }
 
-static XEN gxm_XmClipboardInquireFormat(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmClipboardInquireFormat(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmClipboardInquireFormat "int XmClipboardInquireFormat (display, window, index, buffer_len) \
 returns a specified format name"
   /* DIFF: XmClipboardInquireFormat omits arg4 (XtPointer buffer) and arg6, returns them
    */
-  XEN res;
+  Xen res;
   XtPointer buf;
   unsigned long len, n;
   int val;
@@ -6210,7 +6210,7 @@ returns a specified format name"
   return(Xen_list_2(C_int_to_Xen_integer(val), res));
 }
 
-static XEN gxm_XmClipboardInquireCount(XEN arg1, XEN arg2)
+static Xen gxm_XmClipboardInquireCount(Xen arg1, Xen arg2)
 {
   #define H_XmClipboardInquireCount "int XmClipboardInquireCount (display, window): returns the number of data item formats"
   /* DIFF: XmClipboardInquireCount omits and rtns last 2 args
@@ -6227,7 +6227,7 @@ static XEN gxm_XmClipboardInquireCount(XEN arg1, XEN arg2)
 		    C_ulong_to_Xen_ulong(len)));
 }
 
-static XEN gxm_XmClipboardRetrieve(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmClipboardRetrieve(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmClipboardRetrieve "int XmClipboardRetrieve (display, window, format_name, length) retrieves a data item from the clipboard"
   /* DIFF: XmClipboardRetrieve omits buf arg, and last 2, returning them and a list of ulongs
@@ -6236,7 +6236,7 @@ static XEN gxm_XmClipboardRetrieve(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   long id;
   XtPointer buf;
   int len, val;
-  XEN str;
+  Xen str;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmClipboardRetrieve", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XmClipboardRetrieve", "Window");
   Xen_check_type(Xen_is_string(arg3), arg3, 3, "XmClipboardRetrieve", "char*");
@@ -6255,7 +6255,7 @@ static XEN gxm_XmClipboardRetrieve(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 		    C_ulong_to_Xen_ulong(id)));
 }
 
-static XEN gxm_XmClipboardEndRetrieve(XEN arg1, XEN arg2)
+static Xen gxm_XmClipboardEndRetrieve(Xen arg1, Xen arg2)
 {
   #define H_XmClipboardEndRetrieve "int XmClipboardEndRetrieve (display, window) completes retrieval of \
 data from the clipboard"
@@ -6264,7 +6264,7 @@ data from the clipboard"
   return(C_int_to_Xen_integer(XmClipboardEndRetrieve(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XmClipboardStartRetrieve(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmClipboardStartRetrieve(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmClipboardStartRetrieve "int XmClipboardStartRetrieve (display, window, timestamp) \
 prepares to retrieve data from the clipboard"
@@ -6274,7 +6274,7 @@ prepares to retrieve data from the clipboard"
   return(C_int_to_Xen_integer(XmClipboardStartRetrieve(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_to_C_Time(arg3))));
 }
 
-static XEN gxm_XmClipboardUnlock(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmClipboardUnlock(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmClipboardUnlock "int XmClipboardUnlock (display, window, remove_all_locks) unlocks the clipboard"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmClipboardUnlock", "Display*");
@@ -6283,7 +6283,7 @@ static XEN gxm_XmClipboardUnlock(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XmClipboardUnlock(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_boolean_to_C_bool(arg3))));
 }
 
-static XEN gxm_XmClipboardLock(XEN arg1, XEN arg2)
+static Xen gxm_XmClipboardLock(Xen arg1, Xen arg2)
 {
   #define H_XmClipboardLock "int XmClipboardLock (display, window) locks the clipboard"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmClipboardLock", "Display*");
@@ -6291,7 +6291,7 @@ static XEN gxm_XmClipboardLock(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XmClipboardLock(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XmClipboardUndoCopy(XEN arg1, XEN arg2)
+static Xen gxm_XmClipboardUndoCopy(Xen arg1, Xen arg2)
 {
   #define H_XmClipboardUndoCopy "int XmClipboardUndoCopy (display, window) deletes the last item placed on the clipboard"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmClipboardUndoCopy", "Display*");
@@ -6299,7 +6299,7 @@ static XEN gxm_XmClipboardUndoCopy(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XmClipboardUndoCopy(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XmClipboardCopyByName(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XmClipboardCopyByName(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XmClipboardCopyByName "int XmClipboardCopyByName (display, window, data_id,  buf, len, id) copies a data item passed by name"
   /* DIFF: XmClipboardCopyByName arg4 is string
@@ -6316,7 +6316,7 @@ static XEN gxm_XmClipboardCopyByName(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN
 					    (unsigned long)arg6)));
 }
 
-static XEN gxm_XmClipboardWithdrawFormat(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmClipboardWithdrawFormat(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmClipboardWithdrawFormat "int XmClipboardWithdrawFormat (display, window, data_id) \
 indicates that the application no longer wants to supply a data item"
@@ -6326,7 +6326,7 @@ indicates that the application no longer wants to supply a data item"
   return(C_int_to_Xen_integer(XmClipboardWithdrawFormat(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XmClipboardCancelCopy(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmClipboardCancelCopy(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmClipboardCancelCopy "int XmClipboardCancelCopy (display, window, item_id) cancels a copy to the clipboard"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmClipboardCancelCopy", "Display*");
@@ -6335,7 +6335,7 @@ static XEN gxm_XmClipboardCancelCopy(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XmClipboardCancelCopy(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XmClipboardEndCopy(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmClipboardEndCopy(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmClipboardEndCopy "int XmClipboardEndCopy (display, window, item_id) completes the \
 copying of data to the clipboard"
@@ -6345,7 +6345,7 @@ copying of data to the clipboard"
   return(C_int_to_Xen_integer(XmClipboardEndCopy(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XmClipboardCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XmClipboardCopy(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XmClipboardCopy "int XmClipboardCopy (display, window, item_id, format_name, buffer, len, id) copies a data item \
 to temporary storage for later copying to clipboard"
@@ -6369,7 +6369,7 @@ to temporary storage for later copying to clipboard"
 }
 
 /* There's just one clipboard, I think, so these callbacks must be globals */
-static XEN xm_XmCutPasteProc;
+static Xen xm_XmCutPasteProc;
 
 static void gxm_XmCutPasteProc(Widget w, long *data, long *privater, int *reason)
 {
@@ -6381,7 +6381,7 @@ static void gxm_XmCutPasteProc(Widget w, long *data, long *privater, int *reason
 	     __func__);
 }
 
-static XEN gxm_XmClipboardStartCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XmClipboardStartCopy(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XmClipboardStartCopy "int XmClipboardStartCopy (display, window, clip_label, timestamp, widget, callback) \
 sets up a storage and data structure, returns id"
@@ -6404,7 +6404,7 @@ sets up a storage and data structure, returns id"
 		    C_int_to_Xen_integer(id)));
 }
 
-static XEN xm_XmVoidProc;
+static Xen xm_XmVoidProc;
 
 static void gxm_XmVoidProc(Widget w, int *data, int *privater, int *reason)
 {
@@ -6416,7 +6416,7 @@ static void gxm_XmVoidProc(Widget w, int *data, int *privater, int *reason)
 	     __func__);
 }
 
-static XEN gxm_XmClipboardBeginCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmClipboardBeginCopy(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmClipboardBeginCopy "int XmClipboardBeginCopy(display, window, XmString label, widget, callback)"
   /* DIFF: XmClipboardBeinCopy omits and returns last arg
@@ -6440,7 +6440,7 @@ static XEN gxm_XmClipboardBeginCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
 
 #define Xen_is_ScaleWidget(Arg) (Xen_is_Widget(Arg) && XmIsScale(Xen_to_C_Widget(Arg)))
 
-static XEN gxm_XmScaleSetTicks(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XmScaleSetTicks(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XmScaleSetTicks "void XmScaleSetTicks(Widget scale, int big_every, Cardinal num_medium, Cardinal num_small, Dimension size_big, \
 Dimension size_medium, Dimension size_small) controls Scale tick marks"
@@ -6457,14 +6457,14 @@ Dimension size_medium, Dimension size_small) controls Scale tick marks"
   return(Xen_false);
 }
 
-static XEN gxm_XmCreateScale(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateScale(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateScale "Widget XmCreateScale(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Scale widget creation function"
   return(gxm_new_widget("XmCreateScale", XmCreateScale, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmScaleGetValue(XEN arg1)
+static Xen gxm_XmScaleGetValue(Xen arg1)
 {
   #define H_XmScaleGetValue "void XmScaleGetValue(Widget widget): returns the current (scale) slider position"
   /* DIFF: XmScaleGetValue omits and returns arg2
@@ -6475,7 +6475,7 @@ static XEN gxm_XmScaleGetValue(XEN arg1)
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XmScaleSetValue(XEN arg1, XEN arg2)
+static Xen gxm_XmScaleSetValue(Xen arg1, Xen arg2)
 {
   #define H_XmScaleSetValue "void XmScaleSetValue(Widget widget, int value) sets a Scale slider value"
   Xen_check_type(Xen_is_ScaleWidget(arg1), arg1, 1, "XmScaleSetValue", "Scale Widget");
@@ -6486,14 +6486,14 @@ static XEN gxm_XmScaleSetValue(XEN arg1, XEN arg2)
 
 #define Xen_is_ContainerWidget(Arg) (Xen_is_Widget(Arg) && XmIsContainer(Xen_to_C_Widget(Arg)))
 
-static XEN gxm_XmContainerPasteLink(XEN arg1)
+static Xen gxm_XmContainerPasteLink(Xen arg1)
 {
   #define H_XmContainerPasteLink "Boolean XmContainerPasteLink(Widget container) container function to insert links from the clipboard"
   Xen_check_type(Xen_is_ContainerWidget(arg1), arg1, 1, "XmContainerPasteLink", "Container Widget");
   return(C_bool_to_Xen_boolean(XmContainerPasteLink(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmContainerCopyLink(XEN arg1, XEN arg2)
+static Xen gxm_XmContainerCopyLink(Xen arg1, Xen arg2)
 {
   #define H_XmContainerCopyLink "Boolean XmContainerCopyLink(Widget container, Time timestamp) Container function to copy links to the clipboard"
   Xen_check_type(Xen_is_ContainerWidget(arg1), arg1, 1, "XmContainerCopyLink", "Container Widget");
@@ -6501,14 +6501,14 @@ static XEN gxm_XmContainerCopyLink(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmContainerCopyLink(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmContainerPaste(XEN arg1)
+static Xen gxm_XmContainerPaste(Xen arg1)
 {
   #define H_XmContainerPaste "Boolean XmContainerPaste(Widget container) Container function to insert items from the clipboard"
   Xen_check_type(Xen_is_ContainerWidget(arg1), arg1, 1, "XmContainerPaste", "Container Widget");
   return(C_bool_to_Xen_boolean(XmContainerPaste(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmContainerCopy(XEN arg1, XEN arg2)
+static Xen gxm_XmContainerCopy(Xen arg1, Xen arg2)
 {
   #define H_XmContainerCopy "Boolean XmContainerCopy(Widget container, Time timestamp) Container function to copy primary selection to the clipboard"
   Xen_check_type(Xen_is_ContainerWidget(arg1), arg1, 1, "XmContainerCopy", "Container Widget");
@@ -6516,7 +6516,7 @@ static XEN gxm_XmContainerCopy(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmContainerCopy(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmContainerCut(XEN arg1, XEN arg2)
+static Xen gxm_XmContainerCut(Xen arg1, Xen arg2)
 {
   #define H_XmContainerCut "Boolean XmContainerCut(Widget container, Time timestamp) Container function to move items to the clipboard"
   Xen_check_type(Xen_is_ContainerWidget(arg1), arg1, 1, "XmContainerCut", "Container Widget");
@@ -6524,7 +6524,7 @@ static XEN gxm_XmContainerCut(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XmContainerCut(Xen_to_C_Widget(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XmContainerReorder(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmContainerReorder(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmContainerReorder "void XmContainerReorder(Widget container, WidgetList widgets, int num_widgets) Container function to reorder children"
   /* DIFF: XmContainerReorder arg2 is list of Widgets
@@ -6549,7 +6549,7 @@ static XEN gxm_XmContainerReorder(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XmContainerRelayout(XEN arg1)
+static Xen gxm_XmContainerRelayout(Xen arg1)
 {
   #define H_XmContainerRelayout "void XmContainerRelayout(Widget container) Container relayout function"
   Xen_check_type(Xen_is_ContainerWidget(arg1), arg1, 1, "XmContainerRelayout", "Container Widget");
@@ -6557,7 +6557,7 @@ static XEN gxm_XmContainerRelayout(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmContainerGetItemChildren(XEN arg1, XEN arg2)
+static Xen gxm_XmContainerGetItemChildren(Xen arg1, Xen arg2)
 {
   #define H_XmContainerGetItemChildren "int XmContainerGetItemChildren(Widget container, Widget item) \
 returns a list of all children of an item"
@@ -6571,49 +6571,49 @@ returns a list of all children of an item"
   return(C_to_Xen_Widgets(ws, len));
 }
 
-static XEN gxm_XmCreateContainer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateContainer(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateContainer "Widget XmCreateContainer(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Container creation function"
   return(gxm_new_widget("XmCreateContainer", XmCreateContainer, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmGetTearOffControl(XEN arg1)
+static Xen gxm_XmGetTearOffControl(Xen arg1)
 {
   #define H_XmGetTearOffControl "Widget XmGetTearOffControl(Widget menu) obtains the widget ID for the tear-off control in a menu"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmGetTearOffControl", "Widget");
   return(C_to_Xen_Widget(XmGetTearOffControl(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmGetPostedFromWidget(XEN arg1)
+static Xen gxm_XmGetPostedFromWidget(Xen arg1)
 {
   #define H_XmGetPostedFromWidget "Widget XmGetPostedFromWidget(Widget menu): returns the widget from which a menu was posted"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmGetPostedFromWidget", "Widget");
   return(C_to_Xen_Widget(XmGetPostedFromWidget(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmCreatePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreatePulldownMenu(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreatePulldownMenu "Widget XmCreatePulldownMenu(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
   return(gxm_new_widget("XmCreatePulldownMenu", XmCreatePulldownMenu, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreatePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreatePopupMenu(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreatePopupMenu "Widget XmCreatePopupMenu(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
   return(gxm_new_widget("XmCreatePopupMenu", XmCreatePopupMenu, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateMenuBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateMenuBar(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateMenuBar "Widget XmCreateMenuBar(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
   return(gxm_new_widget("XmCreateMenuBar", XmCreateMenuBar, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmOptionButtonGadget(XEN arg1)
+static Xen gxm_XmOptionButtonGadget(Xen arg1)
 {
   #define H_XmOptionButtonGadget "Widget XmOptionButtonGadget(Widget option_menu) obtains \
 the widget ID for the CascadeButtonGadget in an OptionMenu"
@@ -6621,7 +6621,7 @@ the widget ID for the CascadeButtonGadget in an OptionMenu"
   return(C_to_Xen_Widget(XmOptionButtonGadget(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmOptionLabelGadget(XEN arg1)
+static Xen gxm_XmOptionLabelGadget(Xen arg1)
 {
   #define H_XmOptionLabelGadget "Widget XmOptionLabelGadget(Widget option_menu) obtains the \
 widget ID for the LabelGadget in an OptionMenu"
@@ -6629,35 +6629,35 @@ widget ID for the LabelGadget in an OptionMenu"
   return(C_to_Xen_Widget(XmOptionLabelGadget(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XmCreateOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateOptionMenu(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateOptionMenu "Widget XmCreateOptionMenu(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
   return(gxm_new_widget("XmCreateOptionMenu", XmCreateOptionMenu, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateRadioBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateRadioBox "Widget XmCreateRadioBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
   return(gxm_new_widget("XmCreateRadioBox", XmCreateRadioBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateWorkArea(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateWorkArea(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateWorkArea "Widget XmCreateWorkArea(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 creates a RowColumn WorkArea"
   return(gxm_new_widget("XmCreateWorkArea", XmCreateWorkArea, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateRowColumn(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateRowColumn(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateRowColumn "Widget XmCreateRowColumn(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The RowColumn widget creation function"
   return(gxm_new_widget("XmCreateRowColumn", XmCreateRowColumn, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmMenuPosition(XEN arg1, XEN arg2)
+static Xen gxm_XmMenuPosition(Xen arg1, Xen arg2)
 {
   #define H_XmMenuPosition "void XmMenuPosition(Widget menu, XButtonPressedEvent *event) positions a Popup menu pane"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmMenuPosition", "Widget");
@@ -6666,7 +6666,7 @@ static XEN gxm_XmMenuPosition(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmCreateCommandDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateCommandDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateCommandDialog "Widget XmCreateCommandDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Command CommandDialog creation function"
@@ -6675,7 +6675,7 @@ The Command CommandDialog creation function"
 
 #define Xen_is_CommandWidget(Arg) (Xen_is_Widget(Arg) && XmIsCommand(Xen_to_C_Widget(Arg)))
 
-static XEN gxm_XmCommandError(XEN arg1, XEN arg2)
+static Xen gxm_XmCommandError(Xen arg1, Xen arg2)
 {
   #define H_XmCommandError "void XmCommandError(Widget widget, XmString error) Command function that displays an error message"
   Xen_check_type(Xen_is_CommandWidget(arg1), arg1, 1, "XmCommandError", "Command Widget");
@@ -6684,7 +6684,7 @@ static XEN gxm_XmCommandError(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmCommandAppendValue(XEN arg1, XEN arg2)
+static Xen gxm_XmCommandAppendValue(Xen arg1, Xen arg2)
 {
   #define H_XmCommandAppendValue "void XmCommandAppendValue(Widget widget, XmString command) \
 appends the passed XmString to the end of the string displayed in the command area of the widget"
@@ -6694,7 +6694,7 @@ appends the passed XmString to the end of the string displayed in the command ar
   return(Xen_false);
 }
 
-static XEN gxm_XmCommandSetValue(XEN arg1, XEN arg2)
+static Xen gxm_XmCommandSetValue(Xen arg1, Xen arg2)
 {
   #define H_XmCommandSetValue "void XmCommandSetValue(Widget widget, XmString command) A Command function that replaces a displayed string"
   Xen_check_type(Xen_is_CommandWidget(arg1), arg1, 1, "XmCommandSetValue", "Command Widget");
@@ -6703,7 +6703,7 @@ static XEN gxm_XmCommandSetValue(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmCommandGetChild(XEN arg1, XEN arg2)
+static Xen gxm_XmCommandGetChild(Xen arg1, Xen arg2)
 {
   #define H_XmCommandGetChild "Widget XmCommandGetChild(Widget widget, unsigned char child) A Command function that is used to access a component"
   Xen_check_type(Xen_is_CommandWidget(arg1), arg1, 1, "XmCommandGetChild", "Command Widget");
@@ -6711,7 +6711,7 @@ static XEN gxm_XmCommandGetChild(XEN arg1, XEN arg2)
   return(C_to_Xen_Widget(XmCommandGetChild(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
-static XEN gxm_XmCreateCommand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateCommand(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateCommand "Widget XmCreateCommand(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Command widget creation function"
@@ -6720,7 +6720,7 @@ The Command widget creation function"
 
 #define Xen_is_ComboBoxWidget(Arg) (Xen_is_Widget(Arg) && XmIsComboBox(Xen_to_C_Widget(Arg)))
 
-static XEN gxm_XmComboBoxUpdate(XEN arg1)
+static Xen gxm_XmComboBoxUpdate(Xen arg1)
 {
   #define H_XmComboBoxUpdate "void XmComboBoxUpdate(Widget widget) A ComboBox function that resynchronizes data"
   Xen_check_type(Xen_is_ComboBoxWidget(arg1), arg1, 1, "XmComboBoxUpdate", "ComboBox Widget");
@@ -6728,7 +6728,7 @@ static XEN gxm_XmComboBoxUpdate(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XmComboBoxSetItem(XEN arg1, XEN arg2)
+static Xen gxm_XmComboBoxSetItem(Xen arg1, Xen arg2)
 {
   #define H_XmComboBoxSetItem "void XmComboBoxSetItem(Widget w, XmString item) set an item in the XmComboBox list"
   Xen_check_type(Xen_is_ComboBoxWidget(arg1), arg1, 1, "XmComboBoxSetItem", "ComboBox Widget");
@@ -6737,7 +6737,7 @@ static XEN gxm_XmComboBoxSetItem(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmComboBoxSelectItem(XEN arg1, XEN arg2)
+static Xen gxm_XmComboBoxSelectItem(Xen arg1, Xen arg2)
 {
   #define H_XmComboBoxSelectItem "void XmComboBoxSelectItem(Widget w, XmString item) select a XmComboBox item"
   Xen_check_type(Xen_is_ComboBoxWidget(arg1), arg1, 1, "XmComboBoxSelectItem", "ComboBox Widget");
@@ -6746,7 +6746,7 @@ static XEN gxm_XmComboBoxSelectItem(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmComboBoxDeletePos(XEN arg1, XEN arg2)
+static Xen gxm_XmComboBoxDeletePos(Xen arg1, Xen arg2)
 {
   #define H_XmComboBoxDeletePos "void XmComboBoxDeletePos(Widget w, int pos)  Delete a XmComboBox item"
   Xen_check_type(Xen_is_ComboBoxWidget(arg1), arg1, 1, "XmComboBoxDeletePos", "ComboBox Widget");
@@ -6755,7 +6755,7 @@ static XEN gxm_XmComboBoxDeletePos(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XmComboBoxAddItem(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmComboBoxAddItem(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmComboBoxAddItem "void XmComboBoxAddItem(Widget w, XmString item, int pos, Boolean unique) add an item to the ComboBox widget"
   Xen_check_type(Xen_is_ComboBoxWidget(arg1), arg1, 1, "XmComboBoxAddItem", "ComboBox Widget");
@@ -6766,42 +6766,42 @@ static XEN gxm_XmComboBoxAddItem(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(Xen_false);
 }
 
-static XEN gxm_XmCreateDropDownList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateDropDownList(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateDropDownList "Widget XmCreateDropDownList(Widget parent, String name, ArgList arglist, Cardinal arg_count) \
 The Drop-down list ComboBox widget creation function"
   return(gxm_new_widget("XmCreateDropDownList", XmCreateDropDownList, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateDropDownComboBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateDropDownComboBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateDropDownComboBox "Widget XmCreateDropDownComboBox(Widget parent, String name, ArgList arglist, Cardinal arg_count) \
 The Drop-down ComboBox widget creation function"
   return(gxm_new_widget("XmCreateDropDownComboBox", XmCreateDropDownComboBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateComboBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateComboBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateComboBox "Widget XmCreateComboBox(Widget parent, String name, ArgList arglist, Cardinal arg_count) \
 The default ComboBox widget creation function"
   return(gxm_new_widget("XmCreateComboBox", XmCreateComboBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreatePushButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreatePushButton(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreatePushButton "Widget XmCreatePushButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The PushButton widget creation function"
   return(gxm_new_widget("XmCreatePushButton", XmCreatePushButton, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreatePushButtonGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreatePushButtonGadget(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreatePushButtonGadget "Widget XmCreatePushButtonGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The PushButtonGadget creation function"
   return(gxm_new_widget("XmCreatePushButtonGadget", XmCreatePushButtonGadget, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCascadeButtonHighlight(XEN arg1, XEN arg2)
+static Xen gxm_XmCascadeButtonHighlight(Xen arg1, Xen arg2)
 {
   #define H_XmCascadeButtonHighlight "void XmCascadeButtonHighlight(Widget cascadeButton, Boolean highlight) A CascadeButton and \
 CascadeButtonGadget function that sets the highlight state"
@@ -6811,7 +6811,7 @@ CascadeButtonGadget function that sets the highlight state"
   return(Xen_false);
 }
 
-static XEN gxm_XmCreateCascadeButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateCascadeButton(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateCascadeButton "Widget XmCreateCascadeButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The CascadeButton widget creation function"
@@ -6820,7 +6820,7 @@ The CascadeButton widget creation function"
 
 static void gxm_ProtocolProc(Widget w, XtPointer context, XtPointer info)
 {
-  XEN descr = (XEN)context;
+  Xen descr = (Xen)context;
   Xen_call_with_3_args(Xen_cadr(descr),
 	     C_to_Xen_Widget(w),
 	     Xen_caddr(descr),
@@ -6836,12 +6836,12 @@ static void gxm_ProtocolProc(Widget w, XtPointer context, XtPointer info)
   Xen_list_5(C_string_to_Xen_symbol("ProtocolProc"), Code, Context, PropertyAtom, ProtocolAtom)
 #define XM_is_ProtocolProc(Arg) is_wrapped("ProtocolProc", Arg)
 
-static XEN gxm_XmSetProtocolHooks(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XmSetProtocolHooks(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XmSetProtocolHooks "void XmSetProtocolHooks(Widget shell, Atom property, Atom protocol, XtCallbackProc prehook, \
 XtPointer pre_closure, XtCallbackProc posthook, XtPointer post_closure) A VendorShell function that allows preactions and postactions \
 to be executed when a protocol message is received from MWM"
-  XEN descr1, descr2;
+  Xen descr1, descr2;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmSetProtocolHooks", "Widget");
   Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmSetProtocolHooks", "Atom");
   Xen_check_type(Xen_is_Atom(arg3), arg3, 3, "XmSetProtocolHooks", "Atom");
@@ -6857,7 +6857,7 @@ to be executed when a protocol message is received from MWM"
   return(Xen_false);
 }
 
-static XEN gxm_XmDeactivateProtocol(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmDeactivateProtocol(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmDeactivateProtocol "void XmDeactivateProtocol(Widget shell, Atom property, Atom protocol) \
 deactivates a protocol without removing it"
@@ -6868,7 +6868,7 @@ deactivates a protocol without removing it"
   return(Xen_false);
 }
 
-static XEN gxm_XmActivateProtocol(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmActivateProtocol(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmActivateProtocol "oid XmActivateProtocol(Widget shell, Atom property, Atom protocol) activates a protocol"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmActivateProtocol", "Widget");
@@ -6878,9 +6878,9 @@ static XEN gxm_XmActivateProtocol(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static bool unprotect_protocolproc(XEN val, int loc, unsigned long udescr)
+static bool unprotect_protocolproc(Xen val, int loc, unsigned long udescr)
 {
-  XEN descr = (XEN)udescr; /* ('protocolproc func data propatom protoatom) */
+  Xen descr = (Xen)udescr; /* ('protocolproc func data propatom protoatom) */
   return((XM_is_ProtocolProc(val)) &&
 	 (Xen_ulong_to_C_ulong(Xen_cadr(val)) == Xen_ulong_to_C_ulong(Xen_cadr(descr))) &&
 	 (Xen_ulong_to_C_ulong(Xen_caddr(val)) == Xen_ulong_to_C_ulong(Xen_caddr(descr))) &&
@@ -6888,11 +6888,11 @@ static bool unprotect_protocolproc(XEN val, int loc, unsigned long udescr)
 	 (Xen_to_C_Atom(Xen_list_ref(val, 4)) == Xen_to_C_Atom(Xen_list_ref(val,4))));
 }
 
-static XEN gxm_XmRemoveProtocolCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmRemoveProtocolCallback(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmRemoveProtocolCallback "void XmRemoveProtocolCallback(Widget shell, Atom property, Atom protocol, XtCallbackProc callback, \
 XtPointer closure) removes a callback from the internal list"
-  XEN descr;
+  Xen descr;
   int loc, dloc;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmRemoveProtocolCallback", "Widget");
   Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmRemoveProtocolCallback", "Atom");
@@ -6912,11 +6912,11 @@ XtPointer closure) removes a callback from the internal list"
   return(Xen_false);
 }
 
-static XEN gxm_XmAddProtocolCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XmAddProtocolCallback(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmAddProtocolCallback "void XmAddProtocolCallback(Widget shell, Atom property, Atom protocol, XtCallbackProc callback, \
 XtPointer closure) adds client callbacks for a protocol"
-  XEN descr;
+  Xen descr;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmAddProtocolCallback", "Widget");
   Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmAddProtocolCallback", "Atom");
   Xen_check_type(Xen_is_Atom(arg3), arg3, 3, "XmAddProtocolCallback", "Atom");
@@ -6931,7 +6931,7 @@ XtPointer closure) adds client callbacks for a protocol"
   return(Xen_false);
 }
 
-static XEN gxm_XmRemoveProtocols(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmRemoveProtocols(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmRemoveProtocols "void XmRemoveProtocols(Widget shell, Atom property, Atom *protocols, Cardinal num_protocols) \
 removes the protocols from the protocol manager and deallocates the internal tables"
@@ -6951,7 +6951,7 @@ removes the protocols from the protocol manager and deallocates the internal tab
   return(Xen_false);
 }
 
-static XEN gxm_XmAddProtocols(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmAddProtocols(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmAddProtocols "void XmAddProtocols(Widget shell, Atom property, Atom *protocols, Cardinal num_protocols) \
 adds the protocols to the protocol manager and allocates the internal tables"
@@ -6971,7 +6971,7 @@ adds the protocols to the protocol manager and allocates the internal tables"
   return(Xen_false);
 }
 
-static XEN gxm_XmCascadeButtonGadgetHighlight(XEN arg1, XEN arg2)
+static Xen gxm_XmCascadeButtonGadgetHighlight(Xen arg1, Xen arg2)
 {
   #define H_XmCascadeButtonGadgetHighlight "void XmCascadeButtonGadgetHighlight(Widget cascadeButtonGadget, Boolean highlight) \
 A CascadeButtonGadget function that sets the highlight state"
@@ -6981,38 +6981,38 @@ A CascadeButtonGadget function that sets the highlight state"
   return(Xen_false);
 }
 
-static XEN gxm_XmCreateCascadeButtonGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateCascadeButtonGadget(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateCascadeButtonGadget "Widget XmCreateCascadeButtonGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The CascadeButtonGadget creation function"
   return(gxm_new_widget("XmCreateCascadeButtonGadget", XmCreateCascadeButtonGadget, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateBulletinBoardDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateBulletinBoardDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateBulletinBoardDialog "Widget XmCreateBulletinBoardDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The BulletinBoard BulletinBoardDialog creation function"
   return(gxm_new_widget("XmCreateBulletinBoardDialog", XmCreateBulletinBoardDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateBulletinBoard(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateBulletinBoard(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateBulletinBoard "Widget XmCreateBulletinBoard(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The BulletinBoard widget creation function"
   return(gxm_new_widget("XmCreateBulletinBoard", XmCreateBulletinBoard, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreatePanedWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreatePanedWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreatePanedWindow "Widget XmCreatePanedWindow(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The PanedWindow widget creation function"
   return(gxm_new_widget("XmCreatePanedWindow", XmCreatePanedWindow, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmGetAtomName(XEN arg1, XEN arg2)
+static Xen gxm_XmGetAtomName(Xen arg1, Xen arg2)
 {
   char *str;
-  XEN res;
+  Xen res;
   #define H_XmGetAtomName "String XmGetAtomName(Display *display, Atom atom)  returns the string representation for an atom"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmGetAtomName", "Display*");
   Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmGetAtomName", "Atom");
@@ -7022,7 +7022,7 @@ static XEN gxm_XmGetAtomName(XEN arg1, XEN arg2)
   return(res);
 }
 
-static XEN gxm_XmInternAtom(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XmInternAtom(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmInternAtom "A macro that returns an atom for a given name"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmInternAtom", "Display*");
@@ -7031,7 +7031,7 @@ static XEN gxm_XmInternAtom(XEN arg1, XEN arg2, XEN arg3)
   return(C_to_Xen_Atom(XmInternAtom(Xen_to_C_Display(arg1), (char *)Xen_string_to_C_string(arg2), Xen_boolean_to_C_bool(arg3))));
 }
 
-static XEN gxm_XmNotebookGetPageInfo(XEN arg1, XEN arg2)
+static Xen gxm_XmNotebookGetPageInfo(Xen arg1, Xen arg2)
 {
   #define H_XmNotebookGetPageInfo "XmNotebookPageStatus XmNotebookGetPageInfo(Widget notebook, int page_number) \
 A Notebook function that returns page information"
@@ -7044,27 +7044,27 @@ A Notebook function that returns page information"
   return(Xen_list_2(C_int_to_Xen_integer(err), C_to_Xen_XmNotebookPageInfo(info)));
 }
 
-static XEN gxm_XmCreateNotebook(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateNotebook(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateNotebook "void XmCreateNotebook(Widget parent, String name, ArgList arglist, Cardinal argcount) The Notebook widget creation function"
   return(gxm_new_widget("XmCreateNotebook", XmCreateNotebook, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateArrowButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateArrowButton(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateArrowButton "Widget XmCreateArrowButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ArrowButton widget creation function"
   return(gxm_new_widget("XmCreateArrowButton", XmCreateArrowButton, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateArrowButtonGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateArrowButtonGadget(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateArrowButtonGadget "Widget XmCreateArrowButtonGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ArrowButtonGadget creation function"
   return(gxm_new_widget("XmCreateArrowButtonGadget", XmCreateArrowButtonGadget, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmMessageBoxGetChild(XEN arg1, XEN arg2)
+static Xen gxm_XmMessageBoxGetChild(Xen arg1, Xen arg2)
 {
   #define H_XmMessageBoxGetChild "Widget XmMessageBoxGetChild(Widget widget, unsigned char child) A MessageBox function that is used to access a component"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmMessageBoxGetChild", "Widget");
@@ -7072,392 +7072,392 @@ static XEN gxm_XmMessageBoxGetChild(XEN arg1, XEN arg2)
   return(C_to_Xen_Widget(XmMessageBoxGetChild(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
-static XEN gxm_XmCreateTemplateDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateTemplateDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateTemplateDialog "Widget XmCreateTemplateDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A MessageBox TemplateDialog creation function"
   return(gxm_new_widget("XmCreateTemplateDialog", XmCreateTemplateDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateWorkingDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateWorkingDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateWorkingDialog "Widget XmCreateWorkingDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox WorkingDialog creation function"
   return(gxm_new_widget("XmCreateWorkingDialog", XmCreateWorkingDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateWarningDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateWarningDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateWarningDialog "Widget XmCreateWarningDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox WarningDialog creation function"
   return(gxm_new_widget("XmCreateWarningDialog", XmCreateWarningDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateQuestionDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateQuestionDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateQuestionDialog "Widget XmCreateQuestionDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox QuestionDialog creation function"
   return(gxm_new_widget("XmCreateQuestionDialog", XmCreateQuestionDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateInformationDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateInformationDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateInformationDialog "Widget XmCreateInformationDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox InformationDialog creation function"
   return(gxm_new_widget("XmCreateInformationDialog", XmCreateInformationDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateErrorDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateErrorDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateErrorDialog "Widget XmCreateErrorDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox ErrorDialog creation function"
   return(gxm_new_widget("XmCreateErrorDialog", XmCreateErrorDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateMessageDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateMessageDialog(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateMessageDialog "Widget XmCreateMessageDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox MessageDialog creation function"
   return(gxm_new_widget("XmCreateMessageDialog", XmCreateMessageDialog, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmCreateMessageBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XmCreateMessageBox(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmCreateMessageBox "Widget XmCreateMessageBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox widget creation function"
   return(gxm_new_widget("XmCreateMessageBox", XmCreateMessageBox, arg1, arg2, arg3, arg4));
 }
 
-static XEN gxm_XmIsMessageBox(XEN arg)
+static Xen gxm_XmIsMessageBox(Xen arg)
 {
   #define H_XmIsMessageBox "XmIsMessageBox(arg): " PROC_TRUE " if arg is a MessageBox widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsMessageBox", "Widget");
   return(C_bool_to_Xen_boolean(XmIsMessageBox(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsArrowButtonGadget(XEN arg)
+static Xen gxm_XmIsArrowButtonGadget(Xen arg)
 {
   #define H_XmIsArrowButtonGadget "XmIsArrowButtonGadget(arg): " PROC_TRUE " if arg is an ArrowButton gadget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsArrowButtonGadget", "Widget");
   return(C_bool_to_Xen_boolean(XmIsArrowButtonGadget(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsArrowButton(XEN arg)
+static Xen gxm_XmIsArrowButton(Xen arg)
 {
   #define H_XmIsArrowButton "XmIsArrowButton(arg): " PROC_TRUE " if arg is an ArrowButton widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsArrowButton", "Widget");
   return(C_bool_to_Xen_boolean(XmIsArrowButton(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsNotebook(XEN arg)
+static Xen gxm_XmIsNotebook(Xen arg)
 {
   #define H_XmIsNotebook "XmIsNotebook(arg): " PROC_TRUE " if arg is a Notebook widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsNotebook", "Widget");
   return(C_bool_to_Xen_boolean(XmIsNotebook(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsPanedWindow(XEN arg)
+static Xen gxm_XmIsPanedWindow(Xen arg)
 {
   #define H_XmIsPanedWindow "XmIsPanedWindow(arg): " PROC_TRUE " if arg is a PanedWindow widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsPanedWindow", "Widget");
   return(C_bool_to_Xen_boolean(XmIsPanedWindow(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsBulletinBoard(XEN arg)
+static Xen gxm_XmIsBulletinBoard(Xen arg)
 {
   #define H_XmIsBulletinBoard "XmIsBulletinBoard(arg): " PROC_TRUE " if arg is a BulletinBoard widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsBulletinBoard", "Widget");
   return(C_bool_to_Xen_boolean(XmIsBulletinBoard(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsPrimitive(XEN arg)
+static Xen gxm_XmIsPrimitive(Xen arg)
 {
   #define H_XmIsPrimitive "XmIsPrimitive(arg): " PROC_TRUE " if arg is a Primitive widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsPrimitive", "Widget");
   return(C_bool_to_Xen_boolean(XmIsPrimitive(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsCascadeButtonGadget(XEN arg)
+static Xen gxm_XmIsCascadeButtonGadget(Xen arg)
 {
   #define H_XmIsCascadeButtonGadget "XmIsCascadeButtonGadget(arg): " PROC_TRUE " if arg is a CascadeButtonGadget gadget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsCascadeButtonGadget", "Widget");
   return(C_bool_to_Xen_boolean(XmIsCascadeButtonGadget(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsCascadeButton(XEN arg)
+static Xen gxm_XmIsCascadeButton(Xen arg)
 {
   #define H_XmIsCascadeButton "XmIsCascadeButton(arg): " PROC_TRUE " if arg is a CascadeButton widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsCascadeButton", "Widget");
   return(C_bool_to_Xen_boolean(XmIsCascadeButton(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsPushButtonGadget(XEN arg)
+static Xen gxm_XmIsPushButtonGadget(Xen arg)
 {
   #define H_XmIsPushButtonGadget "XmIsPushButtonGadget(arg): " PROC_TRUE " if arg is a PushButtonGadget gadget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsPushButtonGadget", "Widget");
   return(C_bool_to_Xen_boolean(XmIsPushButtonGadget(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsPushButton(XEN arg)
+static Xen gxm_XmIsPushButton(Xen arg)
 {
   #define H_XmIsPushButton "XmIsPushButton(arg): " PROC_TRUE " if arg is a PushButton widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsPushButton", "Widget");
   return(C_bool_to_Xen_boolean(XmIsPushButton(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsComboBox(XEN arg)
+static Xen gxm_XmIsComboBox(Xen arg)
 {
   #define H_XmIsComboBox "XmIsComboBox(arg): " PROC_TRUE " if arg is a ComboBox widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsComboBox", "Widget");
   return(C_bool_to_Xen_boolean(XmIsComboBox(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsCommand(XEN arg)
+static Xen gxm_XmIsCommand(Xen arg)
 {
   #define H_XmIsCommand "XmIsCommand(arg): " PROC_TRUE " if arg is a Command widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsCommand", "Widget");
   return(C_bool_to_Xen_boolean(XmIsCommand(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsRowColumn(XEN arg)
+static Xen gxm_XmIsRowColumn(Xen arg)
 {
   #define H_XmIsRowColumn "XmIsRowColumn(arg): " PROC_TRUE " if arg is a RowColumn widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsRowColumn", "Widget");
   return(C_bool_to_Xen_boolean(XmIsRowColumn(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsContainer(XEN arg)
+static Xen gxm_XmIsContainer(Xen arg)
 {
   #define H_XmIsContainer "XmIsContainer(arg): " PROC_TRUE " if arg is a Container widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsContainer", "Widget");
   return(C_bool_to_Xen_boolean(XmIsContainer(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsScreen(XEN arg)
+static Xen gxm_XmIsScreen(Xen arg)
 {
   #define H_XmIsScreen "XmIsScreen(arg): " PROC_TRUE " if arg is a Screen widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsScreen", "Widget");
   return(C_bool_to_Xen_boolean(XmIsScreen(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsScale(XEN arg)
+static Xen gxm_XmIsScale(Xen arg)
 {
   #define H_XmIsScale "XmIsScale(arg): " PROC_TRUE " if arg is a Scale widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsScale", "Widget");
   return(C_bool_to_Xen_boolean(XmIsScale(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsScrollBar(XEN arg)
+static Xen gxm_XmIsScrollBar(Xen arg)
 {
   #define H_XmIsScrollBar "XmIsScrollBar(arg): " PROC_TRUE " if arg is a ScrollBar widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsScrollBar", "Widget");
   return(C_bool_to_Xen_boolean(XmIsScrollBar(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsDialogShell(XEN arg)
+static Xen gxm_XmIsDialogShell(Xen arg)
 {
   #define H_XmIsDialogShell "XmIsDialogShell(arg): " PROC_TRUE " if arg is a DialogShell widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsDialogShell", "Widget");
   return(C_bool_to_Xen_boolean(XmIsDialogShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsScrolledWindow(XEN arg)
+static Xen gxm_XmIsScrolledWindow(Xen arg)
 {
   #define H_XmIsScrolledWindow "XmIsScrolledWindow(arg): " PROC_TRUE " if arg is a ScrolledWindow widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsScrolledWindow", "Widget");
   return(C_bool_to_Xen_boolean(XmIsScrolledWindow(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsDisplay(XEN arg)
+static Xen gxm_XmIsDisplay(Xen arg)
 {
   #define H_XmIsDisplay "XmIsDisplay(arg): " PROC_TRUE " if arg is a Display widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsDisplay", "Widget");
   return(C_bool_to_Xen_boolean(XmIsDisplay(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsSelectionBox(XEN arg)
+static Xen gxm_XmIsSelectionBox(Xen arg)
 {
   #define H_XmIsSelectionBox "XmIsSelectionBox(arg): " PROC_TRUE " if arg is a SelectionBox widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsSelectionBox", "Widget");
   return(C_bool_to_Xen_boolean(XmIsSelectionBox(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsDragContext(XEN arg)
+static Xen gxm_XmIsDragContext(Xen arg)
 {
   #define H_XmIsDragContext "XmIsDragContext(arg): " PROC_TRUE " if arg is a DragContext widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsDragContext", "Widget");
   return(C_bool_to_Xen_boolean(XmIsDragContext(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsSeparatorGadget(XEN arg)
+static Xen gxm_XmIsSeparatorGadget(Xen arg)
 {
   #define H_XmIsSeparatorGadget "XmIsSeparatorGadget(arg): " PROC_TRUE " if arg is a SeparatorGadget gadget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsSeparatorGadget", "Widget");
   return(C_bool_to_Xen_boolean(XmIsSeparatorGadget(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsDragIconObjectClass(XEN arg)
+static Xen gxm_XmIsDragIconObjectClass(Xen arg)
 {
   #define H_XmIsDragIconObjectClass "XmIsDragIconObjectClass(arg): " PROC_TRUE " if arg is a DragIconObjectClass widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsDragIconObjectClass", "Widget");
   return(C_bool_to_Xen_boolean(XmIsDragIconObjectClass(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsSeparator(XEN arg)
+static Xen gxm_XmIsSeparator(Xen arg)
 {
   #define H_XmIsSeparator "XmIsSeparator(arg): " PROC_TRUE " if arg is a Separator widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsSeparator", "Widget");
   return(C_bool_to_Xen_boolean(XmIsSeparator(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsDrawingArea(XEN arg)
+static Xen gxm_XmIsDrawingArea(Xen arg)
 {
   #define H_XmIsDrawingArea "XmIsDrawingArea(arg): " PROC_TRUE " if arg is a DrawingArea widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsDrawingArea", "Widget");
   return(C_bool_to_Xen_boolean(XmIsDrawingArea(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsDrawnButton(XEN arg)
+static Xen gxm_XmIsDrawnButton(Xen arg)
 {
   #define H_XmIsDrawnButton "XmIsDrawnButton(arg): " PROC_TRUE " if arg is a DrawnButton widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsDrawnButton", "Widget");
   return(C_bool_to_Xen_boolean(XmIsDrawnButton(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsDropSiteManager(XEN arg)
+static Xen gxm_XmIsDropSiteManager(Xen arg)
 {
   #define H_XmIsDropSiteManager "XmIsDropSiteManager(arg): " PROC_TRUE " if arg is a DropSiteManager widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsDropSiteManager", "Widget");
   return(C_bool_to_Xen_boolean(XmIsDropSiteManager(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsDropTransfer(XEN arg)
+static Xen gxm_XmIsDropTransfer(Xen arg)
 {
   #define H_XmIsDropTransfer "XmIsDropTransfer(arg): " PROC_TRUE " if arg is a DropTransfer widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsDropTransfer", "Widget");
   return(C_bool_to_Xen_boolean(XmIsDropTransfer(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsTextField(XEN arg)
+static Xen gxm_XmIsTextField(Xen arg)
 {
   #define H_XmIsTextField "XmIsTextField(arg): " PROC_TRUE " if arg is a TextField widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsTextField", "Widget");
   return(C_bool_to_Xen_boolean(XmIsTextField(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsFileSelectionBox(XEN arg)
+static Xen gxm_XmIsFileSelectionBox(Xen arg)
 {
   #define H_XmIsFileSelectionBox "XmIsFileSelectionBox(arg): " PROC_TRUE " if arg is a FileSelectionBox widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsFileSelectionBox", "Widget");
   return(C_bool_to_Xen_boolean(XmIsFileSelectionBox(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsText(XEN arg)
+static Xen gxm_XmIsText(Xen arg)
 {
   #define H_XmIsText "XmIsText(arg): " PROC_TRUE " if arg is a Text widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsText", "Widget");
   return(C_bool_to_Xen_boolean(XmIsText(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsForm(XEN arg)
+static Xen gxm_XmIsForm(Xen arg)
 {
   #define H_XmIsForm "XmIsForm(arg): " PROC_TRUE " if arg is a Form widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsForm", "Widget");
   return(C_bool_to_Xen_boolean(XmIsForm(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsFrame(XEN arg)
+static Xen gxm_XmIsFrame(Xen arg)
 {
   #define H_XmIsFrame "XmIsFrame(arg): " PROC_TRUE " if arg is a Frame widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsFrame", "Widget");
   return(C_bool_to_Xen_boolean(XmIsFrame(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsGadget(XEN arg)
+static Xen gxm_XmIsGadget(Xen arg)
 {
   #define H_XmIsGadget "XmIsGadget(arg): " PROC_TRUE " if arg is a Gadget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsGadget", "Widget");
   return(C_bool_to_Xen_boolean(XmIsGadget(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsToggleButtonGadget(XEN arg)
+static Xen gxm_XmIsToggleButtonGadget(Xen arg)
 {
   #define H_XmIsToggleButtonGadget "XmIsToggleButtonGadget(arg): " PROC_TRUE " if arg is a ToggleButtonGadget gadget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsToggleButtonGadget", "Widget");
   return(C_bool_to_Xen_boolean(XmIsToggleButtonGadget(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsGrabShell(XEN arg)
+static Xen gxm_XmIsGrabShell(Xen arg)
 {
   #define H_XmIsGrabShell "XmIsGrabShell(arg): " PROC_TRUE " if arg is a GrabShell widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsGrabShell", "Widget");
   return(C_bool_to_Xen_boolean(XmIsGrabShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsToggleButton(XEN arg)
+static Xen gxm_XmIsToggleButton(Xen arg)
 {
   #define H_XmIsToggleButton "XmIsToggleButton(arg): " PROC_TRUE " if arg is a ToggleButton widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsToggleButton", "Widget");
   return(C_bool_to_Xen_boolean(XmIsToggleButton(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsIconGadget(XEN arg)
+static Xen gxm_XmIsIconGadget(Xen arg)
 {
   #define H_XmIsIconGadget "XmIsIconGadget(arg): " PROC_TRUE " if arg is a IconGadget widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsIconGadget", "Widget");
   return(C_bool_to_Xen_boolean(XmIsIconGadget(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsIconHeader(XEN arg)
+static Xen gxm_XmIsIconHeader(Xen arg)
 {
   #define H_XmIsIconHeader "XmIsIconHeader(arg): " PROC_TRUE " if arg is a IconHeader widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsIconHeader", "Widget");
   return(C_bool_to_Xen_boolean(XmIsIconHeader(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsLabelGadget(XEN arg)
+static Xen gxm_XmIsLabelGadget(Xen arg)
 {
   #define H_XmIsLabelGadget "XmIsLabelGadget(arg): " PROC_TRUE " if arg is a LabelGadget widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsLabelGadget", "Widget");
   return(C_bool_to_Xen_boolean(XmIsLabelGadget(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsLabel(XEN arg)
+static Xen gxm_XmIsLabel(Xen arg)
 {
   #define H_XmIsLabel "XmIsLabel(arg): " PROC_TRUE " if arg is a Label widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsLabel", "Widget");
   return(C_bool_to_Xen_boolean(XmIsLabel(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsVendorShell(XEN arg)
+static Xen gxm_XmIsVendorShell(Xen arg)
 {
   #define H_XmIsVendorShell "XmIsVendorShell(arg): " PROC_TRUE " if arg is a VendorShell widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsVendorShell", "Widget");
   return(C_bool_to_Xen_boolean(XmIsVendorShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsList(XEN arg)
+static Xen gxm_XmIsList(Xen arg)
 {
   #define H_XmIsList "XmIsList(arg): " PROC_TRUE " if arg is a List widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsList", "Widget");
   return(C_bool_to_Xen_boolean(XmIsList(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsMainWindow(XEN arg)
+static Xen gxm_XmIsMainWindow(Xen arg)
 {
   #define H_XmIsMainWindow "XmIsMainWindow(arg): " PROC_TRUE " if arg is a MainWindow widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsMainWindow", "Widget");
   return(C_bool_to_Xen_boolean(XmIsMainWindow(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsManager(XEN arg)
+static Xen gxm_XmIsManager(Xen arg)
 {
   #define H_XmIsManager "XmIsManager(arg): " PROC_TRUE " if arg is a Manager widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsManager", "Widget");
   return(C_bool_to_Xen_boolean(XmIsManager(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XmIsMenuShell(XEN arg)
+static Xen gxm_XmIsMenuShell(Xen arg)
 {
   #define H_XmIsMenuShell "XmIsMenuShell(arg): " PROC_TRUE " if arg is a MenuShell widget"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XmIsMenuShell", "Widget");
@@ -7484,7 +7484,7 @@ static XEN gxm_XmIsMenuShell(XEN arg)
  * ----------------------------------------------------------------------------------------------------
  */
 
-static XEN gxm_XXorRegion(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XXorRegion(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XXorRegion "XXorRegion(sra, srb, dr_return) calculates the difference between the union and intersection of two regions."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XXorRegion", "Region");
@@ -7493,7 +7493,7 @@ static XEN gxm_XXorRegion(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XXorRegion(Xen_to_C_Region(arg1), Xen_to_C_Region(arg2), Xen_to_C_Region(arg3))));
 }
 
-static XEN gxm_XUnionRegion(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XUnionRegion(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XUnionRegion "XUnionRegion(sra, srb, dr_return) computes the union of two regions."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XUnionRegion", "Region");
@@ -7502,7 +7502,7 @@ static XEN gxm_XUnionRegion(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XUnionRegion(Xen_to_C_Region(arg1), Xen_to_C_Region(arg2), Xen_to_C_Region(arg3))));
 }
 
-static XEN gxm_XUnionRectWithRegion(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XUnionRectWithRegion(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XUnionRectWithRegion "XUnionRectWithRegion(rectangle, src_region, dest_region_return) updates the destination region from a \
 union of the specified rectangle and the specified source region."
@@ -7512,7 +7512,7 @@ union of the specified rectangle and the specified source region."
   return(C_int_to_Xen_integer(XUnionRectWithRegion(Xen_to_C_XRectangle(arg1), Xen_to_C_Region(arg2), Xen_to_C_Region(arg3))));
 }
 
-static XEN gxm_XSubtractRegion(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSubtractRegion(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSubtractRegion "XSubtractRegion(sra, srb, dr_return) subtracts srb from sra and stores the results in dr_return."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XSubtractRegion", "Region");
@@ -7521,7 +7521,7 @@ static XEN gxm_XSubtractRegion(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSubtractRegion(Xen_to_C_Region(arg1), Xen_to_C_Region(arg2), Xen_to_C_Region(arg3))));
 }
 
-static XEN gxm_XShrinkRegion(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XShrinkRegion(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XShrinkRegion "XShrinkRegion(r, dx, dy) reduces the specified region by a specified amount."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XShrinkRegion", "Region");
@@ -7530,7 +7530,7 @@ static XEN gxm_XShrinkRegion(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XShrinkRegion(Xen_to_C_Region(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XSetWMProperties(XEN dpy, XEN win, XEN win_name, XEN icon_name, XEN argv, XEN argc, XEN normal_hints, XEN wm_hints)
+static Xen gxm_XSetWMProperties(Xen dpy, Xen win, Xen win_name, Xen icon_name, Xen argv, Xen argc, Xen normal_hints, Xen wm_hints)
 {
   /* last arg omitted -- XClassHint not supported */
   #define H_XSetWMProperties "XSetWMProperties(dpy, win, win_name, icon_name, argv, argc, normal_hints wm_hints) sets the window properties"
@@ -7575,7 +7575,7 @@ static XEN gxm_XSetWMProperties(XEN dpy, XEN win, XEN win_name, XEN icon_name, X
   return(Xen_false);
 }
 
-static XEN gxm_XSetRegion(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetRegion(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetRegion "XSetRegion(display, gc, r) sets the clip-mask in the GC to the specified region."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetRegion", "Display*");
@@ -7584,7 +7584,7 @@ static XEN gxm_XSetRegion(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetRegion(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_to_C_Region(arg3))));
 }
 
-static XEN gxm_XSetWMHints(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetWMHints(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetWMHints "XSetWMHints(display, w, wmhints) sets the window manager hints that include icon information and location, the \
 initial state of the window, and whether the application relies on the window manager to get keyboard input."
@@ -7594,7 +7594,7 @@ initial state of the window, and whether the application relies on the window ma
   return(C_int_to_Xen_integer(XSetWMHints(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_to_C_XWMHints(arg3))));
 }
 
-static XEN gxm_XSetRGBColormaps(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XSetRGBColormaps(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XSetRGBColormaps "void XSetRGBColormaps(display, w, std_colormap, count, property) replaces the RGB colormap definition in the \
 specified property on the named window."
@@ -7611,13 +7611,13 @@ specified property on the named window."
   return(Xen_false);
 }
 
-static XEN gxm_XUniqueContext(void)
+static Xen gxm_XUniqueContext(void)
 {
   #define H_XUniqueContext "XContext XUniqueContext() creates a unique context type that may be used in subsequent calls to XSaveContext."
   return(C_to_Xen_XContext(XUniqueContext()));
 }
 
-static XEN gxm_XSaveContext(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XSaveContext(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XSaveContext "XSaveContext(dpy, rid, context) saves a context"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSaveContext", "Display*");
@@ -7626,7 +7626,7 @@ static XEN gxm_XSaveContext(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XSaveContext(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_XContext(arg3), (caddr_t)arg4)));
 }
 
-static XEN gxm_XRectInRegion(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XRectInRegion(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XRectInRegion "int XRectInRegion(r, x, y, width, height): returns RectangleIn if the rectangle is entirely in the specified region, \
 RectangleOut if the rectangle is entirely out of the specified region, and RectanglePart if the rectangle is partially in the specified region. "
@@ -7638,7 +7638,7 @@ RectangleOut if the rectangle is entirely out of the specified region, and Recta
   return(C_int_to_Xen_integer(XRectInRegion(Xen_to_C_Region(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3), Xen_ulong_to_C_ulong(arg4), Xen_ulong_to_C_ulong(arg5))));
 }
 
-static XEN gxm_XPolygonRegion(XEN larg1, XEN arg2, XEN arg3)
+static Xen gxm_XPolygonRegion(Xen larg1, Xen arg2, Xen arg3)
 {
   #define H_XPolygonRegion "Region XPolygonRegion(points, n, fill_rule): returns a region for the polygon defined by the points list."
   /* DIFF: XPolygonRegion XPoint* arg (arg 1) is list of XPoints
@@ -7646,7 +7646,7 @@ static XEN gxm_XPolygonRegion(XEN larg1, XEN arg2, XEN arg3)
   XPoint *pt, *pt1;
   int i, len;
   Region res;
-  XEN arg1;
+  Xen arg1;
   Xen_check_type(Xen_is_list(larg1), larg1, 1, "XPolygonRegion", "list of XPoints");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XPolygonRegion", "int");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XPolygonRegion", "int");
@@ -7656,7 +7656,7 @@ static XEN gxm_XPolygonRegion(XEN larg1, XEN arg2, XEN arg3)
   pt = (XPoint *)calloc(len, sizeof(XPoint));
   for (i = 0; (i < len) && (!Xen_is_null(arg1)); i++, arg1 = Xen_cdr(arg1))
     {
-      XEN xp;
+      Xen xp;
       xp = Xen_car(arg1);
       if (!(Xen_is_XPoint(xp))) {free(pt); Xen_check_type(0, xp, i, "XPolygonRegion", "XPoint"); return(Xen_false);}
       pt1 = Xen_to_C_XPoint(Xen_car(arg1));
@@ -7668,7 +7668,7 @@ static XEN gxm_XPolygonRegion(XEN larg1, XEN arg2, XEN arg3)
   return(C_to_Xen_Region(res));
 }
 
-static XEN gxm_XPointInRegion(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XPointInRegion(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XPointInRegion "Bool XPointInRegion(r, x, y): returns " PROC_TRUE " if the point (x, y) is contained in the region r."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XPointInRegion", "Region");
@@ -7677,7 +7677,7 @@ static XEN gxm_XPointInRegion(XEN arg1, XEN arg2, XEN arg3)
   return(C_bool_to_Xen_boolean(XPointInRegion(Xen_to_C_Region(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XOffsetRegion(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XOffsetRegion(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XOffsetRegion "XOffsetRegion(r, dx, dy) moves the specified region by a specified amount."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XOffsetRegion", "Region");
@@ -7687,7 +7687,7 @@ static XEN gxm_XOffsetRegion(XEN arg1, XEN arg2, XEN arg3)
 }
 
 static XVisualInfo *match_visual_info;
-static XEN gxm_XMatchVisualInfo(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XMatchVisualInfo(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XMatchVisualInfo "Status XMatchVisualInfo(display, screen, depth, class): returns the visual information for a \
 visual that matches the specified depth and class for a screen."
@@ -7705,7 +7705,7 @@ visual that matches the specified depth and class for a screen."
   return(Xen_false);
 }
 
-static XEN gxm_XLookupString(XEN arg1)
+static Xen gxm_XLookupString(Xen arg1)
 {
   #define H_XLookupString "int XLookupString(event_struct) translates a key event to a KeySym and a string -> (len str keysym)."
   /* DIFF: XLookupString last arg is ignored, keyevent and all but last omitted -> (list len str keysym)
@@ -7713,7 +7713,7 @@ static XEN gxm_XLookupString(XEN arg1)
   KeySym key;
   char *str;
   int len;
-  XEN res;
+  Xen res;
   Xen_check_type(Xen_is_XKeyEvent(arg1), arg1, 1, "XLookupString", "XKeyEvent*");/* user-created */
   str = (char *)calloc(16, sizeof(char));
   len = XLookupString(Xen_to_C_XKeyEvent(arg1), str, 16, &key, NULL);
@@ -7724,7 +7724,7 @@ static XEN gxm_XLookupString(XEN arg1)
   return(res);
 }
 
-static XEN gxm_XConvertCase(XEN arg1)
+static Xen gxm_XConvertCase(Xen arg1)
 {
   #define H_XConvertCase "void XConvertCase(keysym): returns the uppercase and lowercase forms of the specified \
 Keysym, if the KeySym is subject to case conversion; otherwise, the specified KeySym is returned to both lower_return and upper_return."
@@ -7737,7 +7737,7 @@ Keysym, if the KeySym is subject to case conversion; otherwise, the specified Ke
 		    C_to_Xen_KeySym(k2)));
 }
 
-static XEN gxm_XIntersectRegion(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XIntersectRegion(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XIntersectRegion "XIntersectRegion(sra, srb, dr_return) computes the intersection of two regions."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XIntersectRegion", "Region");
@@ -7746,7 +7746,7 @@ static XEN gxm_XIntersectRegion(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XIntersectRegion(Xen_to_C_Region(arg1), Xen_to_C_Region(arg2), Xen_to_C_Region(arg3))));
 }
 
-static XEN gxm_XGetWMHints(XEN arg1, XEN arg2)
+static Xen gxm_XGetWMHints(Xen arg1, Xen arg2)
 {
   #define H_XGetWMHints "XWMHints *XGetWMHints(display, w) reads the window manager hints and returns NULL if no WM_HINTS property was \
 set on the window or returns a pointer to a XWMHints structure if it succeeds."
@@ -7755,7 +7755,7 @@ set on the window or returns a pointer to a XWMHints structure if it succeeds."
   return(C_to_Xen_XWMHints(XGetWMHints(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XGetVisualInfo(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XGetVisualInfo(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XGetVisualInfo "XVisualInfo *XGetVisualInfo(display, vinfo_mask, vinfo_template): returns a list of visual \
 structures that have attributes equal to the attributes specified by vinfo_template."
@@ -7763,7 +7763,7 @@ structures that have attributes equal to the attributes specified by vinfo_templ
    */
   XVisualInfo *v;
   int len;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
 
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetVisualInfo", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XGetVisualInfo", "long");
@@ -7782,7 +7782,7 @@ structures that have attributes equal to the attributes specified by vinfo_templ
   return(lst);
 }
 
-static XEN gxm_XGetRGBColormaps(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XGetRGBColormaps(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XGetRGBColormaps "Status XGetRGBColormaps(display, w, property): returns the RGB colormap \
 definitions stored in the specified property on the named window."
@@ -7790,7 +7790,7 @@ definitions stored in the specified property on the named window."
    */
   int len, i, loc;
   Status val;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   XStandardColormap **cs = NULL; /* do I allocate this?? */
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetRGBColormaps", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XGetRGBColormaps", "Window");
@@ -7808,7 +7808,7 @@ definitions stored in the specified property on the named window."
   return(lst);
 }
 
-static XEN gxm_XGetIconSizes(XEN arg1, XEN arg2)
+static Xen gxm_XGetIconSizes(Xen arg1, Xen arg2)
 {
   #define H_XGetIconSizes "Status XGetIconSizes(display, w): returns " PROC_FALSE " if the window manager has not \
 set icon sizes; otherwise, it return nonzero and a list of XIconSize structs."
@@ -7816,7 +7816,7 @@ set icon sizes; otherwise, it return nonzero and a list of XIconSize structs."
    */
   XIconSize *sizes;
   int i, len, val, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetIconSizes", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XGetIconSizes", "Window");
   val = XGetIconSizes(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), &sizes, &len);
@@ -7831,7 +7831,7 @@ set icon sizes; otherwise, it return nonzero and a list of XIconSize structs."
 		    lst));
 }
 
-static XEN gxm_XFindContext(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XFindContext(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XFindContext "XFindContext(dpy, rid, context) gets data from the context manager"
   /* DIFF: XFindContext last arg omitted, val returned
@@ -7843,10 +7843,10 @@ static XEN gxm_XFindContext(XEN arg1, XEN arg2, XEN arg3)
   Xen_check_type(Xen_is_XContext(arg3), arg3, 3, "XFindContext", "XContext");
   val = XFindContext(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_XContext(arg3), &x);
   return(Xen_list_2(C_int_to_Xen_integer(val),
-		    (XEN)x));
+		    (Xen)x));
 }
 
-static XEN gxm_XEqualRegion(XEN arg1, XEN arg2)
+static Xen gxm_XEqualRegion(Xen arg1, Xen arg2)
 {
   #define H_XEqualRegion "Bool XEqualRegion(r1, r2): returns " PROC_TRUE " if the two regions have the same offset, size, and shape."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XEqualRegion", "Region");
@@ -7854,21 +7854,21 @@ static XEN gxm_XEqualRegion(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XEqualRegion(Xen_to_C_Region(arg1), Xen_to_C_Region(arg2))));
 }
 
-static XEN gxm_XEmptyRegion(XEN arg1)
+static Xen gxm_XEmptyRegion(Xen arg1)
 {
   #define H_XEmptyRegion "Bool XEmptyRegion(r): returns " PROC_TRUE " if the region is empty."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XEmptyRegion", "Region");
   return(C_bool_to_Xen_boolean(XEmptyRegion(Xen_to_C_Region(arg1))));
 }
 
-static XEN gxm_XDestroyRegion(XEN arg1)
+static Xen gxm_XDestroyRegion(Xen arg1)
 {
   #define H_XDestroyRegion "XDestroyRegion(r) deallocates the storage associated with a specified region."
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XDestroyRegion", "Region");
   return(C_int_to_Xen_integer(XDestroyRegion(Xen_to_C_Region(arg1))));
 }
 
-static XEN gxm_XDeleteContext(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XDeleteContext(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XDeleteContext "int XDeleteContext(display, rid, context) deletes the entry for the given resource ID and type from the data structure."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDeleteContext", "Display*");
@@ -7877,19 +7877,19 @@ static XEN gxm_XDeleteContext(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XDeleteContext(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_XContext(arg3))));
 }
 
-static XEN gxm_XDefaultString(void)
+static Xen gxm_XDefaultString(void)
 {
   #define H_XDefaultString "char *XDefaultString(): returns the default string used by Xlib for text conversion"
   return(C_string_to_Xen_string(XDefaultString()));
 }
 
-static XEN gxm_XCreateRegion(void)
+static Xen gxm_XCreateRegion(void)
 {
   #define H_XCreateRegion "Region XCreateRegion()"
   return(C_to_Xen_Region(XCreateRegion()));
 }
 
-static XEN gxm_XClipBox(XEN arg1)
+static Xen gxm_XClipBox(Xen arg1)
 {
   #define H_XClipBox "XClipBox(r): returns the smallest rectangle enclosing the specified region."
   /* DIFF: XClipBox region [rectangle] -> (list val rectangle)
@@ -7902,25 +7902,25 @@ static XEN gxm_XClipBox(XEN arg1)
   return(Xen_list_2(C_int_to_Xen_integer(val), C_to_Xen_XRectangle(r)));
 }
 
-static XEN gxm_XAllocWMHints(void)
+static Xen gxm_XAllocWMHints(void)
 {
   #define H_XAllocWMHints "XAllocWMHints() allocates a window manager hints structure"
   return(C_to_Xen_XWMHints(XAllocWMHints()));
 }
 
-static XEN gxm_XAllocStandardColormap(void)
+static Xen gxm_XAllocStandardColormap(void)
 {
   #define H_XAllocStandardColormap "XStandardColormap *XAllocStandardColormap() allocates and returns a pointer to a XStandardColormap structure."
   return(C_to_Xen_XStandardColormap(XAllocStandardColormap()));
 }
 
-static XEN gxm_XAllocIconSize(void)
+static Xen gxm_XAllocIconSize(void)
 {
   #define H_XAllocIconSize "XIconSize *XAllocIconSize() allocates and returns a pointer to a XIconSize structure."
   return(C_to_Xen_XIconSize(XAllocIconSize()));
 }
 
-static XEN gxm_XFilterEvent(XEN arg1, XEN arg2)
+static Xen gxm_XFilterEvent(Xen arg1, Xen arg2)
 {
   #define H_XFilterEvent "Bool XFilterEvent(event, w) passes the event to any filters registered for it in the given window"
   Xen_check_type(Xen_is_XEvent(arg1), arg1, 1, "XFilterEvent", "XEvent*");
@@ -7928,14 +7928,14 @@ static XEN gxm_XFilterEvent(XEN arg1, XEN arg2)
   return(C_bool_to_Xen_boolean(XFilterEvent(Xen_to_C_XEvent(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XContextualDrawing(XEN arg1)
+static Xen gxm_XContextualDrawing(Xen arg1)
 {
   #define H_XContextualDrawing "Bool XContextualDrawing(font_set): returns " PROC_TRUE " if text drawn with the font set might include context-dependent drawing."
   Xen_check_type(Xen_is_XFontSet(arg1), arg1, 1, "XContextualDrawing", "XFontSet");
   return(C_bool_to_Xen_boolean(XContextualDrawing(Xen_to_C_XFontSet(arg1))));
 }
 
-static XEN gxm_XDirectionalDependentDrawing(XEN arg1)
+static Xen gxm_XDirectionalDependentDrawing(Xen arg1)
 {
   #define H_XDirectionalDependentDrawing "Bool XDirectionalDependentDrawing(font_set): returns " PROC_TRUE " if the drawing functions implement \
 implicit text directionality."
@@ -7943,7 +7943,7 @@ implicit text directionality."
   return(C_bool_to_Xen_boolean(XDirectionalDependentDrawing(Xen_to_C_XFontSet(arg1))));
 }
 
-static XEN gxm_XContextDependentDrawing(XEN arg1)
+static Xen gxm_XContextDependentDrawing(Xen arg1)
 {
   #define H_XContextDependentDrawing "Bool XContextDependentDrawing(font_set): returns " PROC_TRUE " if the drawing functions implement implicit \
 text directionality or if text drawn with the font_set might include context-dependent drawing."
@@ -7951,7 +7951,7 @@ text directionality or if text drawn with the font_set might include context-dep
   return(C_bool_to_Xen_boolean(XContextDependentDrawing(Xen_to_C_XFontSet(arg1))));
 }
 
-static XEN gxm_XLocaleOfFontSet(XEN arg1)
+static Xen gxm_XLocaleOfFontSet(Xen arg1)
 {
   #define H_XLocaleOfFontSet "char *XLocaleOfFontSet(font_set): returns the name of the locale bound to the specified XFontSet, as a \
 null-terminated string."
@@ -7959,7 +7959,7 @@ null-terminated string."
   return(C_string_to_Xen_string(XLocaleOfFontSet(Xen_to_C_XFontSet(arg1))));
 }
 
-static XEN gxm_XBaseFontNameListOfFontSet(XEN arg1)
+static Xen gxm_XBaseFontNameListOfFontSet(Xen arg1)
 {
   #define H_XBaseFontNameListOfFontSet "char *XBaseFontNameListOfFontSet(font_set): returns the original base font name list supplied \
 by the client when the  XFontSet was created."
@@ -7967,7 +7967,7 @@ by the client when the  XFontSet was created."
   return(C_string_to_Xen_string(XBaseFontNameListOfFontSet(Xen_to_C_XFontSet(arg1))));
 }
 
-static XEN gxm_XFontsOfFontSet(XEN arg1)
+static Xen gxm_XFontsOfFontSet(Xen arg1)
 {
   #define H_XFontsOfFontSet "int XFontsOfFontSet(font_set): returns a list of one or more \
 XFontStructs and font names for the fonts used by the Xmb and Xwc layers, for the given font set."
@@ -7975,7 +7975,7 @@ XFontStructs and font names for the fonts used by the Xmb and Xwc layers, for th
    */
   int i, len, loc1, loc2;
   char **names;
-  XEN lst1 = Xen_empty_list, lst2 = Xen_empty_list;
+  Xen lst1 = Xen_empty_list, lst2 = Xen_empty_list;
   XFontStruct **fs;
   Xen_check_type(Xen_is_XFontSet(arg1), arg1, 1, "XFontsOfFontSet", "XFontSet");
   len = XFontsOfFontSet(Xen_to_C_XFontSet(arg1), &fs, &names);
@@ -7991,7 +7991,7 @@ XFontStructs and font names for the fonts used by the Xmb and Xwc layers, for th
   return(Xen_list_2(lst1, lst2));
 }
 
-static XEN gxm_XFreeFontSet(XEN arg1, XEN arg2)
+static Xen gxm_XFreeFontSet(Xen arg1, Xen arg2)
 {
   #define H_XFreeFontSet "void XFreeFontSet(display, font_set) frees the specified font set."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFreeFontSet", "Display*");
@@ -8000,7 +8000,7 @@ static XEN gxm_XFreeFontSet(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XCreateFontSet(XEN arg1, XEN arg2)
+static Xen gxm_XCreateFontSet(Xen arg1, Xen arg2)
 {
   #define H_XCreateFontSet "XFontSet XCreateFontSet(display, base_font_name_list) creates a font set for the specified display."
   /* DIFF: XCreateFontSet ignores (omits) the 3 trailing missing glyph args
@@ -8013,20 +8013,20 @@ static XEN gxm_XCreateFontSet(XEN arg1, XEN arg2)
   return(C_to_Xen_XFontSet(XCreateFontSet(Xen_to_C_Display(arg1), (char *)Xen_string_to_C_string(arg2), &cs, &len, &str)));
 }
 
-static XEN gxm_XSetLocaleModifiers(XEN arg1)
+static Xen gxm_XSetLocaleModifiers(Xen arg1)
 {
   #define H_XSetLocaleModifiers "char *XSetLocaleModifiers(modifier_list) sets the X modifiers for the current locale setting."
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XSetLocaleModifiers", "char*");
   return(C_string_to_Xen_string(XSetLocaleModifiers(Xen_string_to_C_string(arg1))));
 }
 
-static XEN gxm_XSupportsLocale(void)
+static Xen gxm_XSupportsLocale(void)
 {
   #define H_XSupportsLocale "Bool XSupportsLocale(): returns " PROC_TRUE " if Xlib functions are capable of operating under the current locale."
   return(C_bool_to_Xen_boolean(XSupportsLocale()));
 }
 
-static XEN gxm_XWriteBitmapFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XWriteBitmapFile(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XWriteBitmapFile "int XWriteBitmapFile(display, filename, bitmap, width, height, x_hot, y_hot) writes a bitmap out to a file in \
 the X Version 11 format."
@@ -8044,7 +8044,7 @@ the X Version 11 format."
 				       Xen_integer_to_C_int(arg6), Xen_integer_to_C_int(arg7))));
 }
 
-static XEN gxm_XWindowEvent(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XWindowEvent(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XWindowEvent "XWindowEvent(display, w, event_mask) searches the event queue for an event that matches both \
 the specified window and event mask, and removes it or waits until it arrives."
@@ -8060,21 +8060,21 @@ the specified window and event mask, and removes it or waits until it arrives."
   return(Xen_list_2(C_int_to_Xen_integer(val), C_to_Xen_XEvent_OBJ(e)));
 }
 
-static XEN gxm_XWidthOfScreen(XEN arg1)
+static Xen gxm_XWidthOfScreen(Xen arg1)
 {
   #define H_WidthOfScreen "XWidthOfScreen(screen): returns the width of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XWidthOfScreen", "Screen*");
   return(C_int_to_Xen_integer(XWidthOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XWidthMMOfScreen(XEN arg1)
+static Xen gxm_XWidthMMOfScreen(Xen arg1)
 {
   #define H_WidthMMOfScreen "XWidthMMOfScreen(screen): returns the width of the specified screen in millimeters."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XWidthMMOfScreen", "Screen*");
   return(C_int_to_Xen_integer(XWidthMMOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XWarpPointer(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
+static Xen gxm_XWarpPointer(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8, Xen arg9)
 {
   #define H_XWarpPointer "XWarpPointer(display, src_w, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XWarpPointer", "Display*");
@@ -8093,14 +8093,14 @@ static XEN gxm_XWarpPointer(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
 				   Xen_integer_to_C_int(arg8), Xen_integer_to_C_int(arg9))));
 }
 
-static XEN gxm_XVendorRelease(XEN arg1)
+static Xen gxm_XVendorRelease(Xen arg1)
 {
   #define H_VendorRelease "VendorRelease(display): returns a number related to a vendor's release of the X server."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XVendorRelease", "Display*");
   return(C_int_to_Xen_integer(XVendorRelease(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XUnmapWindow(XEN arg1, XEN arg2)
+static Xen gxm_XUnmapWindow(Xen arg1, Xen arg2)
 {
   #define H_XUnmapWindow "XUnmapWindow(display, w) unmaps the specified window and causes the X server to generate an UnmapNotify event."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XUnmapWindow", "Display*");
@@ -8108,7 +8108,7 @@ static XEN gxm_XUnmapWindow(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XUnmapWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XUnmapSubwindows(XEN arg1, XEN arg2)
+static Xen gxm_XUnmapSubwindows(Xen arg1, Xen arg2)
 {
   #define H_XUnmapSubwindows "XUnmapSubwindows(display, w) unmaps all subwindows for the specified window in bottom-to-top stacking order."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XUnmapSubwindows", "Display*");
@@ -8116,7 +8116,7 @@ static XEN gxm_XUnmapSubwindows(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XUnmapSubwindows(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XUnloadFont(XEN arg1, XEN arg2)
+static Xen gxm_XUnloadFont(Xen arg1, Xen arg2)
 {
   #define H_XUnloadFont "XUnloadFont(display, font) deletes the association between the font resource ID and the specified font."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XUnloadFont", "Display*");
@@ -8124,7 +8124,7 @@ static XEN gxm_XUnloadFont(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XUnloadFont(Xen_to_C_Display(arg1), Xen_to_C_Font(arg2))));
 }
 
-static XEN gxm_XUninstallColormap(XEN arg1, XEN arg2)
+static Xen gxm_XUninstallColormap(Xen arg1, Xen arg2)
 {
   #define H_XUninstallColormap "XUninstallColormap(display, colormap) removes the specified colormap from the required list for its screen."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XUninstallColormap", "Display*");
@@ -8132,14 +8132,14 @@ static XEN gxm_XUninstallColormap(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XUninstallColormap(Xen_to_C_Display(arg1), Xen_to_C_Colormap(arg2))));
 }
 
-static XEN gxm_XUngrabServer(XEN arg1)
+static Xen gxm_XUngrabServer(Xen arg1)
 {
   #define H_XUngrabServer "XUngrabServer(display) restarts processing of requests and close downs on other connections."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XUngrabServer", "Display*");
   return(C_int_to_Xen_integer(XUngrabServer(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XUngrabPointer(XEN arg1, XEN arg2)
+static Xen gxm_XUngrabPointer(Xen arg1, Xen arg2)
 {
   #define H_XUngrabPointer "XUngrabPointer(display, time) releases the pointer and any queued events if this client has actively grabbed the \
 pointer from XGrabPointer, XGrabButton,or from a normal button press."
@@ -8148,7 +8148,7 @@ pointer from XGrabPointer, XGrabButton,or from a normal button press."
   return(C_int_to_Xen_integer(XUngrabPointer(Xen_to_C_Display(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XUngrabKeyboard(XEN arg1, XEN arg2)
+static Xen gxm_XUngrabKeyboard(Xen arg1, Xen arg2)
 {
   #define H_XUngrabKeyboard "XUngrabKeyboard(display, time) releases the keyboard and any queued events if this client has it actively grabbed \
 from either XGrabKeyboard or XGrabKey."
@@ -8157,7 +8157,7 @@ from either XGrabKeyboard or XGrabKey."
   return(C_int_to_Xen_integer(XUngrabKeyboard(Xen_to_C_Display(arg1), Xen_to_C_Time(arg2))));
 }
 
-static XEN gxm_XUngrabKey(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XUngrabKey(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XUngrabKey "XUngrabKey(display, keycode, modifiers, grab_window) releases the key combination on the specified window if it was \
 grabbed by this client."
@@ -8168,7 +8168,7 @@ grabbed by this client."
   return(C_int_to_Xen_integer(XUngrabKey(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_Window(arg4))));
 }
 
-static XEN gxm_XUngrabButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XUngrabButton(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XUngrabButton "XUngrabButton(display, button, modifiers, grab_window) releases the passive button/key combination on the specified \
 window if it was grabbed by this client."
@@ -8179,7 +8179,7 @@ window if it was grabbed by this client."
   return(C_int_to_Xen_integer(XUngrabButton(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_Window(arg4))));
 }
 
-static XEN gxm_XUndefineCursor(XEN arg1, XEN arg2)
+static Xen gxm_XUndefineCursor(Xen arg1, Xen arg2)
 {
   #define H_XUndefineCursor "XUndefineCursor(display, w) undoes the effect of a previous XDefineCursor for this window."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XUndefineCursor", "Display*");
@@ -8187,7 +8187,7 @@ static XEN gxm_XUndefineCursor(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XUndefineCursor(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XTranslateCoordinates(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XTranslateCoordinates(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XTranslateCoordinates "Bool XTranslateCoordinates(display, src_w, dest_w, src_x, src_y) \
 takes the src_x and src_y coordinates relative to the source window's origin and returns these coordinates to dest_x_return and dest_y_return \
@@ -8212,7 +8212,7 @@ relative to the destination window's origin -> (rtn x y win)."
 		    C_to_Xen_Window(w)));
 }
 
-static XEN gxm_XTextWidth(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XTextWidth(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XTextWidth "int XTextWidth(font_struct, string, count): returns the width of the specified 8-bit string."
   Xen_check_type(Xen_is_XFontStruct(arg1), arg1, 1, "XTextWidth", "XFontStruct*");
@@ -8221,7 +8221,7 @@ static XEN gxm_XTextWidth(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XTextWidth(Xen_to_C_XFontStruct(arg1), (char *)Xen_string_to_C_string(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XTextExtents(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XTextExtents(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XTextExtents "XTextExtents(font_struct, string, nchars): returns an XCharStruct structure describing the text."
   /* DIFF: XTextExtents omit final 4 args and returns them [Xcharset returned as embedded list)
@@ -8247,7 +8247,7 @@ static XEN gxm_XTextExtents(XEN arg1, XEN arg2, XEN arg3)
 			       C_int_to_Xen_integer((int)(val.attributes)))));
 }
 
-static XEN gxm_XSync(XEN arg1, XEN arg2)
+static Xen gxm_XSync(Xen arg1, Xen arg2)
 {
   #define H_XSync "XSync(display, discard) flushes the output buffer and then waits until all requests have been received and processed by the X server."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSync", "Display*");
@@ -8255,7 +8255,7 @@ static XEN gxm_XSync(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XSync(Xen_to_C_Display(arg1), Xen_boolean_to_C_bool(arg2))));
 }
 
-static XEN gxm_XStoreNamedColor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XStoreNamedColor(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XStoreNamedColor "XStoreNamedColor(display, colormap, color, pixel, flags) looks up the named color with respect to the screen \
 associated with the colormap and stores the result in the specified colormap."
@@ -8269,7 +8269,7 @@ associated with the colormap and stores the result in the specified colormap."
 				       (char *)Xen_string_to_C_string(arg3), Xen_ulong_to_C_ulong(arg4), Xen_integer_to_C_int(arg5))));
 }
 
-static XEN gxm_XStoreName(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XStoreName(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XStoreName "XStoreName(display, w, window_name) assigns the name passed to window_name to the specified window."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XStoreName", "Display*");
@@ -8278,7 +8278,7 @@ static XEN gxm_XStoreName(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XStoreName(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), (char *)Xen_string_to_C_string(arg3))));
 }
 
-static XEN gxm_XStoreColors(XEN arg1, XEN arg2, XEN larg3, XEN arg4)
+static Xen gxm_XStoreColors(Xen arg1, Xen arg2, Xen larg3, Xen arg4)
 {
   #define H_XStoreColors "XStoreColors(display, colormap, color, ncolors) changes the colormap entries of the pixel values specified in the \
 pixel members of the XColor structures."
@@ -8286,7 +8286,7 @@ pixel members of the XColor structures."
    */
   XColor *xc;
   int i, len;
-  XEN arg3;
+  Xen arg3;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XStoreColors", "Display*");
   Xen_check_type(Xen_is_Colormap(arg2), arg2, 2, "XStoreColors", "Colormap");
   Xen_check_type(Xen_is_list(larg3), larg3, 3, "XStoreColors", "list of XColor");
@@ -8313,7 +8313,7 @@ pixel members of the XColor structures."
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XStoreColor(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XStoreColor(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XStoreColor "XStoreColor(display, colormap, color) changes the colormap entry of the pixel value specified in the pixel member \
 of the XColor structure."
@@ -8323,7 +8323,7 @@ of the XColor structure."
   return(C_int_to_Xen_integer(XStoreColor(Xen_to_C_Display(arg1), Xen_to_C_Colormap(arg2), Xen_to_C_XColor(arg3))));
 }
 
-static XEN gxm_XStoreBytes(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XStoreBytes(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XStoreBytes "XStoreBytes(display, bytes, nbytes)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XStoreBytes", "Display*");
@@ -8332,7 +8332,7 @@ static XEN gxm_XStoreBytes(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XStoreBytes(Xen_to_C_Display(arg1), (char *)Xen_string_to_C_string(arg2), Xen_integer_to_C_int(arg3) + 1)));
 }
 
-static XEN gxm_XStoreBuffer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XStoreBuffer(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XStoreBuffer "XStoreBuffer(display, bytes, nbytes, buffer)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XStoreBuffer", "Display*");
@@ -8342,7 +8342,7 @@ static XEN gxm_XStoreBuffer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XStoreBuffer(Xen_to_C_Display(arg1), (char *)Xen_string_to_C_string(arg2), Xen_integer_to_C_int(arg3) + 1, Xen_integer_to_C_int(arg4))));
 }
 
-static XEN gxm_XSetWindowColormap(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetWindowColormap(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetWindowColormap "XSetWindowColormap(display, w, colormap) sets the specified colormap of the specified window."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetWindowColormap", "Display*");
@@ -8351,7 +8351,7 @@ static XEN gxm_XSetWindowColormap(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetWindowColormap(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_to_C_Colormap(arg3))));
 }
 
-static XEN gxm_XSetWindowBorderWidth(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetWindowBorderWidth(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetWindowBorderWidth "XSetWindowBorderWidth(display, w, width) sets the specified window's border width to the specified width."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetWindowBorderWidth", "Display*");
@@ -8360,7 +8360,7 @@ static XEN gxm_XSetWindowBorderWidth(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetWindowBorderWidth(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_ulong_to_C_ulong(arg3))));
 }
 
-static XEN gxm_XSetWindowBorderPixmap(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetWindowBorderPixmap(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetWindowBorderPixmap "XSetWindowBorderPixmap(display, w, border_pixmap) sets the border pixmap of the window to the pixmap you specify."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetWindowBorderPixmap", "Display*");
@@ -8371,7 +8371,7 @@ static XEN gxm_XSetWindowBorderPixmap(XEN arg1, XEN arg2, XEN arg3)
 					     (Xen_is_Pixmap(arg3)) ? Xen_to_C_Pixmap(arg3) : CopyFromParent)));
 }
 
-static XEN gxm_XSetWindowBorder(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetWindowBorder(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetWindowBorder "XSetWindowBorder(display, w, border_pixel) sets the border of the window to the pixel value you specify."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetWindowBorder", "Display*");
@@ -8380,7 +8380,7 @@ static XEN gxm_XSetWindowBorder(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetWindowBorder(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_to_C_Pixel(arg3))));
 }
 
-static XEN gxm_XSetWindowBackgroundPixmap(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetWindowBackgroundPixmap(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetWindowBackgroundPixmap "XSetWindowBackgroundPixmap(display, w, background_pixmap) sets the background pixmap of the window to \
 the specified pixmap."
@@ -8392,7 +8392,7 @@ the specified pixmap."
 						 (Xen_is_Pixmap(arg3)) ? Xen_to_C_Pixmap(arg3) : Xen_ulong_to_C_ulong(arg3))));
 }
 
-static XEN gxm_XSetWindowBackground(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetWindowBackground(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetWindowBackground "XSetWindowBackground(display, w, background_pixel) sets the background of the window to the specified pixel value."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetWindowBackground", "Display*");
@@ -8401,7 +8401,7 @@ static XEN gxm_XSetWindowBackground(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetWindowBackground(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_to_C_Pixel(arg3))));
 }
 
-static XEN gxm_XSetTile(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetTile(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetTile "XSetTile(display, gc, tile) sets the fill tile in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetTile", "Display*");
@@ -8410,7 +8410,7 @@ static XEN gxm_XSetTile(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetTile(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_to_C_Pixmap(arg3))));
 }
 
-static XEN gxm_XSetTSOrigin(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XSetTSOrigin(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XSetTSOrigin "XSetTSOrigin(display, gc, ts_x_origin, ts_y_origin) sets the tile/stipple origin in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetTSOrigin", "Display*");
@@ -8420,7 +8420,7 @@ static XEN gxm_XSetTSOrigin(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XSetTSOrigin(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_integer_to_C_int(arg3), Xen_integer_to_C_int(arg4))));
 }
 
-static XEN gxm_XSetSubwindowMode(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetSubwindowMode(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetSubwindowMode "XSetSubwindowMode(display, gc, subwindow_mode) sets the subwindow mode in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetSubwindowMode", "Display*");
@@ -8429,7 +8429,7 @@ static XEN gxm_XSetSubwindowMode(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetSubwindowMode(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XSetStipple(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetStipple(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetStipple "XSetStipple(display, gc, stipple) sets the stipple in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetStipple", "Display*");
@@ -8438,7 +8438,7 @@ static XEN gxm_XSetStipple(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetStipple(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_to_C_Pixmap(arg3))));
 }
 
-static XEN gxm_XSetState(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XSetState(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XSetState "XSetState(display, gc, foreground, background, function, plane_mask) sets the foreground, background, plane mask, and \
 function components for the specified GC."
@@ -8454,7 +8454,7 @@ function components for the specified GC."
 				Xen_integer_to_C_int(arg5), Xen_ulong_to_C_ulong(arg6))));
 }
 
-static XEN gxm_XSetSelectionOwner(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XSetSelectionOwner(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XSetSelectionOwner "XSetSelectionOwner(display, selection, owner, time) changes the owner and last-change time for the specified selection"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetSelectionOwner", "Display*");
@@ -8464,7 +8464,7 @@ static XEN gxm_XSetSelectionOwner(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XSetSelectionOwner(Xen_to_C_Display(arg1), Xen_to_C_Atom(arg2), Xen_to_C_Window(arg3), Xen_to_C_Time(arg4))));
 }
 
-static XEN gxm_XSetScreenSaver(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XSetScreenSaver(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XSetScreenSaver "XSetScreenSaver(display, timeout, interval, prefer_blanking, allow_exposures) enables the screen saver."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetScreenSaver", "Display*");
@@ -8475,7 +8475,7 @@ static XEN gxm_XSetScreenSaver(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   return(C_int_to_Xen_integer(XSetScreenSaver(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3), Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5))));
 }
 
-static XEN gxm_XSetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetPointerMapping(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetPointerMapping "int XSetPointerMapping(display, map, nmap) sets the mapping of the pointer."
   int i, len, rtn;
@@ -8492,7 +8492,7 @@ static XEN gxm_XSetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(rtn));
 }
 
-static XEN gxm_XSetPlaneMask(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetPlaneMask(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetPlaneMask "XSetPlaneMask(display, gc, plane_mask) sets the plane mask in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetPlaneMask", "Display*");
@@ -8501,7 +8501,7 @@ static XEN gxm_XSetPlaneMask(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetPlaneMask(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_ulong_to_C_ulong(arg3))));
 }
 
-static XEN gxm_XSetModifierMapping(XEN arg1, XEN arg2)
+static Xen gxm_XSetModifierMapping(Xen arg1, Xen arg2)
 {
   #define H_XSetModifierMapping "int XSetModifierMapping(display, modmap) specifies the KeyCodes of the keys (if any) that are to be used as modifiers."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetModifierMapping", "Display*");
@@ -8509,7 +8509,7 @@ static XEN gxm_XSetModifierMapping(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XSetModifierMapping(Xen_to_C_Display(arg1), Xen_to_C_XModifierKeymap(arg2))));
 }
 
-static XEN gxm_XSetLineAttributes(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XSetLineAttributes(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XSetLineAttributes "XSetLineAttributes(display, gc, line_width, line_style, cap_style, join_style) sets the line drawing components \
 in the specified GC."
@@ -8524,7 +8524,7 @@ in the specified GC."
 					 Xen_ulong_to_C_ulong(arg3), Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5), Xen_integer_to_C_int(arg6))));
 }
 
-static XEN gxm_XSetInputFocus(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XSetInputFocus(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XSetInputFocus "XSetInputFocus(display, focus, revert_to, time) changes the input focus and the last-focus-change time."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetInputFocus", "Display*");
@@ -8534,7 +8534,7 @@ static XEN gxm_XSetInputFocus(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XSetInputFocus(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3), Xen_to_C_Time(arg4))));
 }
 
-static XEN gxm_XSetIconName(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetIconName(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetIconName "XSetIconName(display, w, icon_name) sets the name to be displayed in a window's icon."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetIconName", "Display*");
@@ -8543,7 +8543,7 @@ static XEN gxm_XSetIconName(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetIconName(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), (char *)Xen_string_to_C_string(arg3))));
 }
 
-static XEN gxm_XSetGraphicsExposures(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetGraphicsExposures(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetGraphicsExposures "XSetGraphicsExposures(display, gc, graphics_exposures) sets the graphics-exposures flag in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetGraphicsExposures", "Display*");
@@ -8552,7 +8552,7 @@ static XEN gxm_XSetGraphicsExposures(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetGraphicsExposures(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_boolean_to_C_bool(arg3))));
 }
 
-static XEN gxm_XSetFunction(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetFunction(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetFunction "XSetFunction(display, gc, function) sets a specified value in the specified GC"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetFunction", "Display*");
@@ -8561,7 +8561,7 @@ static XEN gxm_XSetFunction(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetFunction(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XSetForeground(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetForeground(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetForeground "XSetForeground(display, gc, foreground) sets the foreground in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetForeground", "Display*");
@@ -8570,7 +8570,7 @@ static XEN gxm_XSetForeground(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetForeground(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_to_C_Pixel(arg3))));
 }
 
-static XEN gxm_XSetFontPath(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetFontPath(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetFontPath "XSetFontPath(display, directories, ndirs) defines the directory search path for font lookup."
   /* DIFF: XSetFontPath arg2 is list of strings
@@ -8589,7 +8589,7 @@ static XEN gxm_XSetFontPath(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(rtn));
 }
 
-static XEN gxm_XSetFont(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetFont(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetFont "XSetFont(display, gc, font) sets the current font in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetFont", "Display*");
@@ -8598,7 +8598,7 @@ static XEN gxm_XSetFont(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetFont(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_to_C_Font(arg3))));
 }
 
-static XEN gxm_XSetFillStyle(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetFillStyle(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetFillStyle "XSetFillStyle(display, gc, fill_style) sets the fill-style in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetFillStyle", "Display*");
@@ -8607,7 +8607,7 @@ static XEN gxm_XSetFillStyle(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetFillStyle(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XSetFillRule(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetFillRule(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetFillRule "XSetFillRule(display, gc, fill_rule) sets the fill-rule in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetFillRule", "Display*");
@@ -8616,7 +8616,7 @@ static XEN gxm_XSetFillRule(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetFillRule(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XSetDashes(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XSetDashes(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XSetDashes "XSetDashes(display, gc, dash_offset, dash_list, n) sets the dash-offset and dash-list attributes for dashed line styles \
 in the specified GC."
@@ -8639,7 +8639,7 @@ in the specified GC."
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XSetCommand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XSetCommand(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XSetCommand "XSetCommand(display, w, argv, argc) sets the command and arguments used to invoke the application."
   /* DIFF: XSetCommand argv is list of strings
@@ -8658,7 +8658,7 @@ static XEN gxm_XSetCommand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XSetCloseDownMode(XEN arg1, XEN arg2)
+static Xen gxm_XSetCloseDownMode(Xen arg1, Xen arg2)
 {
   #define H_XSetCloseDownMode "XSetCloseDownMode(display, close_mode) defines what will happen to the client's resources at connection close."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetCloseDownMode", "Display*");
@@ -8666,7 +8666,7 @@ static XEN gxm_XSetCloseDownMode(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XSetCloseDownMode(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XSetClipRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN larg5, XEN arg6, XEN arg7)
+static Xen gxm_XSetClipRectangles(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen larg5, Xen arg6, Xen arg7)
 {
   #define H_XSetClipRectangles "XSetClipRectangles(display, gc, clip_x_origin, clip_y_origin, rectangles, n, ordering) changes the clip-mask in \
 the specified GC to the specified list of rectangles and sets the clip origin."
@@ -8674,7 +8674,7 @@ the specified GC to the specified list of rectangles and sets the clip origin."
    */
   XRectangle *pt;
   int i, len;
-  XEN arg5;
+  Xen arg5;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetClipRectangles", "Display*");
   Xen_check_type(Xen_is_GC(arg2), arg2, 2, "XSetClipRectangles", "GC");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XSetClipRectangles", "int");
@@ -8705,7 +8705,7 @@ the specified GC to the specified list of rectangles and sets the clip origin."
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XSetClipOrigin(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XSetClipOrigin(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XSetClipOrigin "XSetClipOrigin(display, gc, clip_x_origin, clip_y_origin) sets the clip origin in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetClipOrigin", "Display*");
@@ -8715,7 +8715,7 @@ static XEN gxm_XSetClipOrigin(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XSetClipOrigin(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_integer_to_C_int(arg3), Xen_integer_to_C_int(arg4))));
 }
 
-static XEN gxm_XSetClipMask(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetClipMask(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetClipMask "XSetClipMask(display, gc, pixmap) sets the clip-mask in the specified GC to the specified pixmap."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetClipMask", "Display*");
@@ -8726,7 +8726,7 @@ static XEN gxm_XSetClipMask(XEN arg1, XEN arg2, XEN arg3)
 				   (Xen_is_Pixmap(arg3)) ? Xen_to_C_Pixmap(arg3) : None)));
 }
 
-static XEN gxm_XSetBackground(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetBackground(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetBackground "XSetBackground(display, gc, background) sets the background in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetBackground", "Display*");
@@ -8735,7 +8735,7 @@ static XEN gxm_XSetBackground(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetBackground(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_to_C_Pixel(arg3))));
 }
 
-static XEN gxm_XSetArcMode(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetArcMode(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetArcMode "XSetArcMode(display, gc, arc_mode)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetArcMode", "Display*");
@@ -8744,7 +8744,7 @@ static XEN gxm_XSetArcMode(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSetArcMode(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XSetAccessControl(XEN arg1, XEN arg2)
+static Xen gxm_XSetAccessControl(Xen arg1, Xen arg2)
 {
   #define H_XSetAccessControl "XSetAccessControl(display, mode) either enables or disables the use of the access control list at each connection setup."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetAccessControl", "Display*");
@@ -8752,7 +8752,7 @@ static XEN gxm_XSetAccessControl(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XSetAccessControl(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XSendEvent(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XSendEvent(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XSendEvent "Status XSendEvent(display, w, propagate, event_mask, event_send) identifies the destination window, determines which \
 clients should receive the specified events, "
@@ -8766,7 +8766,7 @@ clients should receive the specified events, "
 				 Xen_boolean_to_C_bool(arg3), Xen_integer_to_C_int(arg4), Xen_to_C_XEvent(arg5))));
 }
 
-static XEN gxm_XSelectInput(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSelectInput(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSelectInput "XSelectInput(dpy, window, event_mask) selects input events"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSelectInput", "Display*");
@@ -8775,14 +8775,14 @@ static XEN gxm_XSelectInput(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XSelectInput(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XScreenCount(XEN arg1)
+static Xen gxm_XScreenCount(Xen arg1)
 {
   #define H_ScreenCount "returns the number of available screens."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XScreenCount", "Display*");
   return(C_int_to_Xen_integer(XScreenCount(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XRotateWindowProperties(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XRotateWindowProperties(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XRotateWindowProperties "XRotateWindowProperties(display, w, properties, num_prop, npositions) allows you to rotate properties on a \
 window and causes the X server to generate PropertyNotify events."
@@ -8803,7 +8803,7 @@ window and causes the X server to generate PropertyNotify events."
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XRotateBuffers(XEN arg1, XEN arg2)
+static Xen gxm_XRotateBuffers(Xen arg1, Xen arg2)
 {
   #define H_XRotateBuffers "XRotateBuffers(display, rotate) rotates the cut buffers, such that buffer 0 becomes buffer n, buffer 1 becomes n + 1 \
 mod 8, and so on. "
@@ -8812,7 +8812,7 @@ mod 8, and so on. "
   return(C_int_to_Xen_integer(XRotateBuffers(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XRestackWindows(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XRestackWindows(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XRestackWindows "XRestackWindows(display, windows, nwindows) restacks the windows in the order specified, from top to bottom."
   /* DIFF: XRestackWindows arg2 is list of Windows
@@ -8830,7 +8830,7 @@ static XEN gxm_XRestackWindows(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(rtn));
 }
 
-static XEN gxm_XResizeWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XResizeWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XResizeWindow "XResizeWindow(display, w, width, height) changes the inside dimensions of the specified window, not including its borders."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XResizeWindow", "Display*");
@@ -8840,14 +8840,14 @@ static XEN gxm_XResizeWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XResizeWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_ulong_to_C_ulong(arg3), Xen_ulong_to_C_ulong(arg4))));
 }
 
-static XEN gxm_XResetScreenSaver(XEN arg1)
+static Xen gxm_XResetScreenSaver(Xen arg1)
 {
   #define H_XResetScreenSaver "XResetScreenSaver(display) resets the screen saver."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XResetScreenSaver", "Display*");
   return(C_int_to_Xen_integer(XResetScreenSaver(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XReparentWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XReparentWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XReparentWindow "XReparentWindow(display, w, parent, x, y)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XReparentWindow", "Display*");
@@ -8861,14 +8861,14 @@ static XEN gxm_XReparentWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 				      Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5))));
 }
 
-static XEN gxm_XRefreshKeyboardMapping(XEN arg1)
+static Xen gxm_XRefreshKeyboardMapping(Xen arg1)
 {
   #define H_XRefreshKeyboardMapping "XRefreshKeyboardMapping(event_map) refreshes the stored modifier and keymap information."
   Xen_check_type(Xen_is_XMappingEvent(arg1), arg1, 1, "XRefreshKeyboardMapping", "XMappingEvent*");
   return(C_int_to_Xen_integer(XRefreshKeyboardMapping(Xen_to_C_XMappingEvent(arg1))));
 }
 
-static XEN gxm_XRecolorCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XRecolorCursor(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XRecolorCursor "XRecolorCursor(display, cursor, foreground_color, background_color) changes the color of the specified cursor, and if \
 the cursor is being displayed on a screen, the change is visible immediately."
@@ -8880,7 +8880,7 @@ the cursor is being displayed on a screen, the change is visible immediately."
 				     Xen_to_C_XColor(arg3), Xen_to_C_XColor(arg4))));
 }
 
-static XEN gxm_XRebindKeysym(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XRebindKeysym(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XRebindKeysym "XRebindKeysym(display, keysym, list, mod_count, string, num_bytes) can be used to rebind the meaning of a KeySym for the client."
   /* DIFF: XRebindKeysym mod_list is list of keysyms
@@ -8904,7 +8904,7 @@ static XEN gxm_XRebindKeysym(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, X
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XReadBitmapFileData(XEN arg1)
+static Xen gxm_XReadBitmapFileData(Xen arg1)
 {
   #define H_XReadBitmapFileData "int XReadBitmapFileData(filename) reads in a \
 file containing a bitmap, in the same manner as XReadBitmapFile, but returns the data directly rather than creating a pixmap in the server."
@@ -8914,7 +8914,7 @@ file containing a bitmap, in the same manner as XReadBitmapFile, but returns the
   int x, y;
   unsigned char **str = NULL; /* allocated by X? */
   int val, loc;
-  XEN bits = Xen_empty_list;
+  Xen bits = Xen_empty_list;
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XReadBitmapFileData", "char*");
   val = XReadBitmapFileData((char *)Xen_string_to_C_string(arg1), &w, &h, str, &x, &y);
   loc = xm_protect(bits);
@@ -8931,7 +8931,7 @@ file containing a bitmap, in the same manner as XReadBitmapFile, but returns the
 		    C_int_to_Xen_integer((int)y)));
 }
 
-static XEN gxm_XReadBitmapFile(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XReadBitmapFile(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XReadBitmapFile "int XReadBitmapFile(display, d, filename) reads in a file containing a bitmap."
   /* DIFF: XReadBitmapFile omits last 5 args, returns as list
@@ -8952,7 +8952,7 @@ static XEN gxm_XReadBitmapFile(XEN arg1, XEN arg2, XEN arg3)
 		    C_int_to_Xen_integer((int)y)));
 }
 
-static XEN gxm_XRaiseWindow(XEN arg1, XEN arg2)
+static Xen gxm_XRaiseWindow(Xen arg1, Xen arg2)
 {
   #define H_XRaiseWindow "XRaiseWindow(display, w)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XRaiseWindow", "Display*");
@@ -8960,7 +8960,7 @@ static XEN gxm_XRaiseWindow(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XRaiseWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XQueryTree(XEN arg1, XEN arg2)
+static Xen gxm_XQueryTree(Xen arg1, Xen arg2)
 {
   #define H_XQueryTree "Status XQueryTree(display, w): returns the root ID, the \
 parent window ID, a pointer to the list of children windows and the number of children in the list for the specified window."
@@ -8970,7 +8970,7 @@ parent window ID, a pointer to the list of children windows and the number of ch
   Window *ws;
   Window root, parent;
   int i, val, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XQueryTree", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XQueryTree", "Window");
   val = XQueryTree(Xen_to_C_Display(arg1), 
@@ -8987,7 +8987,7 @@ parent window ID, a pointer to the list of children windows and the number of ch
 		    lst));
 }
 
-static XEN gxm_XQueryTextExtents(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XQueryTextExtents(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XQueryTextExtents "XQueryTextExtents(display, font, string): returns the bounding box of the specified 8-bit string."
   /* DIFF: XQueryTextExtents omits last 5 args, returns list 
@@ -9010,7 +9010,7 @@ static XEN gxm_XQueryTextExtents(XEN arg1, XEN arg2, XEN arg3)
 		    wrap_for_Xen_OBJ("XCharStruct", c)));
 }
 
-static XEN gxm_XQueryPointer(XEN arg1, XEN arg2)
+static Xen gxm_XQueryPointer(Xen arg1, Xen arg2)
 {
   #define H_XQueryPointer "Bool XQueryPointer(display, w): returns the root window the pointer is logically on and the pointer \
 coordinates relative to the root window's origin."
@@ -9035,7 +9035,7 @@ coordinates relative to the root window's origin."
 		    C_ulong_to_Xen_ulong((unsigned long)mask)));
 }
 
-static XEN gxm_XQueryKeymap(XEN arg1)
+static Xen gxm_XQueryKeymap(Xen arg1)
 {
   #define H_XQueryKeymap "XQueryKeymap(display): returns a bit vector for the logical state of the keyboard, where each bit \
 set to 1 indicates that the corresponding key is currently pressed down."
@@ -9043,7 +9043,7 @@ set to 1 indicates that the corresponding key is currently pressed down."
    */
   char keys[32];
   int val, i, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XQueryKeymap", "Display*");
   val = XQueryKeymap(Xen_to_C_Display(arg1), keys);
   loc = xm_protect(lst);
@@ -9053,7 +9053,7 @@ set to 1 indicates that the corresponding key is currently pressed down."
   return(Xen_cons(C_int_to_Xen_integer(val), lst));
 }
 
-static XEN gxm_XQueryExtension(XEN arg1, XEN arg2)
+static Xen gxm_XQueryExtension(Xen arg1, Xen arg2)
 {
   #define H_XQueryExtension "Bool XQueryExtension(dpy, name) gets extension version information"
   /* DIFF: XQueryExtension dpy name [op er er] -> (list val op er er)
@@ -9068,11 +9068,11 @@ static XEN gxm_XQueryExtension(XEN arg1, XEN arg2)
 		    C_int_to_Xen_integer(err2)));
 }
 
-static XEN gxm_XQueryColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XQueryColors(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XQueryColors "XQueryColors(display, colormap, defs_in_out, ncolors)"
   int i, len, rtn;
-  XEN lst;
+  Xen lst;
   XColor *cols;
   XColor *col;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XQueryColors", "Display*");
@@ -9104,7 +9104,7 @@ static XEN gxm_XQueryColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(rtn));
 }
 
-static XEN gxm_XQueryColor(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XQueryColor(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XQueryColor "XQueryColor(display, colormap, def_in_out): returns the current RGB value for the pixel in the XColor structure \
 and sets the DoRed, DoGreen, DoBlue flags."
@@ -9114,7 +9114,7 @@ and sets the DoRed, DoGreen, DoBlue flags."
   return(C_int_to_Xen_integer(XQueryColor(Xen_to_C_Display(arg1), Xen_to_C_Colormap(arg2), Xen_to_C_XColor(arg3))));
 }
 
-static XEN gxm_XQueryBestTile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XQueryBestTile(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XQueryBestTile "Status XQueryBestTile(display, which_screen, width, height)  returns the best or \
 closest size, that is, the size that can be tiled fastest on the screen specified by which_screen."
@@ -9133,7 +9133,7 @@ closest size, that is, the size that can be tiled fastest on the screen specifie
 		    C_ulong_to_Xen_ulong(h)));
 }
 
-static XEN gxm_XQueryBestStipple(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XQueryBestStipple(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XQueryBestStipple "Status XQueryBestStipple(display, which_screen, width, height)  returns the \
 best or closest size, that is, the size that can be stippled fastest on the screen specified by which_screen."
@@ -9153,7 +9153,7 @@ best or closest size, that is, the size that can be stippled fastest on the scre
 		    C_ulong_to_Xen_ulong(h)));
 }
 
-static XEN gxm_XQueryBestSize(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XQueryBestSize(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XQueryBestSize "Status XQueryBestSize(display, class, which_screen, width, height)  returns the \
 best or closest size to the specified size."
@@ -9174,7 +9174,7 @@ best or closest size to the specified size."
 		    C_ulong_to_Xen_ulong(h)));
 }
 
-static XEN gxm_XQueryBestCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XQueryBestCursor(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XQueryBestCursor "Status XQueryBestCursor(display, d, width, height) provides a way to find \
 out what size cursors are actually possible on the display."
@@ -9194,18 +9194,18 @@ out what size cursors are actually possible on the display."
 		    C_ulong_to_Xen_ulong(h)));
 }
 
-static XEN gxm_XQLength(XEN arg1)
+static Xen gxm_XQLength(Xen arg1)
 {
   #define H_QLength "returns the length of the event queue for the connected display."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XQLength", "Display*");
   return(C_int_to_Xen_integer(XQLength(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XPutImage(XEN args)
+static Xen gxm_XPutImage(Xen args)
 {
   #define H_XPutImage "XPutImage(display, d, gc, image, src_x, src_y, dest_x, dest_y, width, height) combines an image with a rectangle \
 of the specified drawable."
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -9231,7 +9231,7 @@ of the specified drawable."
 				Xen_integer_to_C_int(arg7), Xen_integer_to_C_int(arg8), Xen_ulong_to_C_ulong(arg9), Xen_ulong_to_C_ulong(arg10))));
 }
 
-static XEN gxm_XPutBackEvent(XEN arg1, XEN arg2)
+static Xen gxm_XPutBackEvent(Xen arg1, Xen arg2)
 {
   #define H_XPutBackEvent "XPutBackEvent(display, event) pushes an event back onto the head of the display's event queue by copying the event into the queue."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XPutBackEvent", "Display*");
@@ -9239,28 +9239,28 @@ static XEN gxm_XPutBackEvent(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XPutBackEvent(Xen_to_C_Display(arg1), Xen_to_C_XEvent(arg2))));
 }
 
-static XEN gxm_XProtocolVersion(XEN arg1)
+static Xen gxm_XProtocolVersion(Xen arg1)
 {
   #define H_ProtocolVersion "ProtocolVersion(display): returns the major version number (11) of the X protocol associated with the connected display."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XProtocolVersion", "Display*");
   return(C_int_to_Xen_integer(XProtocolVersion(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XProtocolRevision(XEN arg1)
+static Xen gxm_XProtocolRevision(Xen arg1)
 {
   #define H_ProtocolRevision "ProtocolRevision(display): returns the minor protocol revision number of the X server."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XProtocolRevision", "Display*");
   return(C_int_to_Xen_integer(XProtocolRevision(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XPlanesOfScreen(XEN arg1)
+static Xen gxm_XPlanesOfScreen(Xen arg1)
 {
   #define H_PlanesOfScreen "PlanesOfScreen(screen): returns the number of planes in the root window of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XPlanesOfScreen", "Screen*");
   return(C_int_to_Xen_integer(XPlanesOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XPending(XEN arg1)
+static Xen gxm_XPending(Xen arg1)
 {
   #define H_XPending "int XPending(display): returns the number of events that have been received from the X server but have not been removed \
 from the event queue."
@@ -9268,14 +9268,14 @@ from the event queue."
   return(C_int_to_Xen_integer(XPending(Xen_to_C_Display(arg1))));
 }
 
-static XEN xm_XPeekIfEventProc;
+static Xen xm_XPeekIfEventProc;
 
 static Bool gxm_XPeekIfEventProc(Display *dpy, XEvent *e, XtPointer p)
 {
-  return(Xen_boolean_to_C_bool(Xen_call_with_3_args(xm_XPeekIfEventProc, C_to_Xen_Display(dpy), C_to_Xen_XEvent(e), (XEN)(p), __func__)));
+  return(Xen_boolean_to_C_bool(Xen_call_with_3_args(xm_XPeekIfEventProc, C_to_Xen_Display(dpy), C_to_Xen_XEvent(e), (Xen)(p), __func__)));
 }
 
-static XEN gxm_XPeekIfEvent(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XPeekIfEvent(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XPeekIfEvent "XPeekIfEvent(display, predicate, arg): returns only when the specified predicate procedure returns " PROC_TRUE " for an event."
   /* DIFF: XPeekIfEvent dpy [evrtn] proc ptr -> (list val evrtn)
@@ -9292,7 +9292,7 @@ static XEN gxm_XPeekIfEvent(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_list_2(C_int_to_Xen_integer(val), C_to_Xen_XEvent_OBJ(e)));
 }
 
-static XEN gxm_XPeekEvent(XEN arg1)
+static Xen gxm_XPeekEvent(Xen arg1)
 {
   #define H_XPeekEvent "XPeekEvent(display): returns the first event from the event queue, but it does not remove the event from the queue."
   /* DIFF: XPeekEvent dpy [ev] -> (list int event)
@@ -9305,7 +9305,7 @@ static XEN gxm_XPeekEvent(XEN arg1)
   return(Xen_list_2(C_int_to_Xen_integer(val), C_to_Xen_XEvent_OBJ(e)));
 }
 
-static XEN gxm_XParseGeometry(XEN arg1)
+static Xen gxm_XParseGeometry(Xen arg1)
 {
   #define H_XParseGeometry "int XParseGeometry(parsestring): returns a bitmask that \
 indicates which of the four values (width, height, xoffset, and yoffset) were actually found in the string and whether the x and y values are negative. "
@@ -9322,7 +9322,7 @@ indicates which of the four values (width, height, xoffset, and yoffset) were ac
 		    C_int_to_Xen_integer(h)));
 }
 
-static XEN gxm_XParseColor(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XParseColor(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XParseColor "Status XParseColor(display, colormap, spec, exact_def_return) looks up the string name of a color with respect \
 to the screen associated with the specified colormap."
@@ -9333,14 +9333,14 @@ to the screen associated with the specified colormap."
   return(C_int_to_Xen_integer(XParseColor(Xen_to_C_Display(arg1), Xen_to_C_Colormap(arg2), (char *)Xen_string_to_C_string(arg3), Xen_to_C_XColor(arg4))));
 }
 
-static XEN gxm_XNoOp(XEN arg1)
+static Xen gxm_XNoOp(Xen arg1)
 {
   #define H_XNoOp "XNoOp(dpy) sends the server a no-op for exercise"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XNoOp", "Display*");
   return(C_int_to_Xen_integer(XNoOp(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XNextEvent(XEN arg1)
+static Xen gxm_XNextEvent(Xen arg1)
 {
   #define H_XNextEvent "XNextEvent(display) copies the first event from the event queue into the specified XEvent structure \
 and then removes it from the queue."
@@ -9354,7 +9354,7 @@ and then removes it from the queue."
   return(Xen_list_2(C_int_to_Xen_integer(val), C_to_Xen_XEvent_OBJ(e)));
 }
 
-static XEN gxm_XMoveWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XMoveWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XMoveWindow "XMoveWindow(display, w, x, y) moves the specified window to the specified x and y coordinates, but it does not \
 change the window's size, raise the window, or change the mapping state of the window."
@@ -9365,7 +9365,7 @@ change the window's size, raise the window, or change the mapping state of the w
   return(C_int_to_Xen_integer(XMoveWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3), Xen_integer_to_C_int(arg4))));
 }
 
-static XEN gxm_XMoveResizeWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XMoveResizeWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XMoveResizeWindow "XMoveResizeWindow(display, w, x, y, width, height) changes the size and location of the specified window without raising it."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XMoveResizeWindow", "Display*");
@@ -9380,21 +9380,21 @@ static XEN gxm_XMoveResizeWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 					Xen_ulong_to_C_ulong(arg5), Xen_ulong_to_C_ulong(arg6))));
 }
 
-static XEN gxm_XMinCmapsOfScreen(XEN arg1)
+static Xen gxm_XMinCmapsOfScreen(Xen arg1)
 {
   #define H_MinCmapsOfScreen "returns the minimum number of installed colormaps supported by the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XMinCmapsOfScreen", "Screen*");
   return(C_int_to_Xen_integer(XMinCmapsOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XMaxCmapsOfScreen(XEN arg1)
+static Xen gxm_XMaxCmapsOfScreen(Xen arg1)
 {
   #define H_MaxCmapsOfScreen "returns the maximum number of installed colormaps supported by the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XMaxCmapsOfScreen", "Screen*");
   return(C_int_to_Xen_integer(XMaxCmapsOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XMaskEvent(XEN arg1, XEN arg2)
+static Xen gxm_XMaskEvent(Xen arg1, Xen arg2)
 {
   #define H_XMaskEvent "XMaskEvent(display, event_mask) searches the event queue for the events associated with the specified mask."
   /* DIFF: XMaskEvent dpy mask [ev] -> (list val ev)
@@ -9408,7 +9408,7 @@ static XEN gxm_XMaskEvent(XEN arg1, XEN arg2)
   return(Xen_list_2(C_int_to_Xen_integer(val), C_to_Xen_XEvent_OBJ(e)));
 }
 
-static XEN gxm_XMapWindow(XEN arg1, XEN arg2)
+static Xen gxm_XMapWindow(Xen arg1, Xen arg2)
 {
   #define H_XMapWindow "XMapWindow(display, w) maps the window and all of its subwindows that have had map requests."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XMapWindow", "Display*");
@@ -9416,7 +9416,7 @@ static XEN gxm_XMapWindow(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XMapWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XMapSubwindows(XEN arg1, XEN arg2)
+static Xen gxm_XMapSubwindows(Xen arg1, Xen arg2)
 {
   #define H_XMapSubwindows "XMapSubwindows(display, w) maps all subwindows for a specified window in top-to-bottom stacking order."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XMapSubwindows", "Display*");
@@ -9424,7 +9424,7 @@ static XEN gxm_XMapSubwindows(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XMapSubwindows(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XMapRaised(XEN arg1, XEN arg2)
+static Xen gxm_XMapRaised(Xen arg1, Xen arg2)
 {
   #define H_XMapRaised "XMapRaised(display, w) maps the window and all of its subwindows that have had map requests, and raises the \
 specified window to the top of the stack."
@@ -9433,7 +9433,7 @@ specified window to the top of the stack."
   return(C_int_to_Xen_integer(XMapRaised(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XLowerWindow(XEN arg1, XEN arg2)
+static Xen gxm_XLowerWindow(Xen arg1, Xen arg2)
 {
   #define H_XLowerWindow "XLowerWindow(display, w) lowers the specified window to the bottom of the stack so that it does not obscure any sibling windows."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XLowerWindow", "Display*");
@@ -9441,7 +9441,7 @@ static XEN gxm_XLowerWindow(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XLowerWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XLookupColor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XLookupColor(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XLookupColor "Status XLookupColor(display, colormap, color_name, exact_def_return, screen_def_return) looks up the string name \
 of a color with respect to the screen associated with the specified colormap."
@@ -9456,7 +9456,7 @@ of a color with respect to the screen associated with the specified colormap."
 				   Xen_to_C_XColor(arg4), Xen_to_C_XColor(arg5))));
 }
 
-static XEN gxm_XKillClient(XEN arg1, XEN arg2)
+static Xen gxm_XKillClient(Xen arg1, Xen arg2)
 {
   #define H_XKillClient "XKillClient(display, resource) forces a close-down of the client that created the resource"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XKillClient", "Display*");
@@ -9464,7 +9464,7 @@ static XEN gxm_XKillClient(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XKillClient(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
-static XEN gxm_XKeysymToKeycode(XEN arg1, XEN arg2)
+static Xen gxm_XKeysymToKeycode(Xen arg1, Xen arg2)
 {
   #define H_XKeysymToKeycode "KeyCode XKeysymToKeycode(display, keysym)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XKeysymToKeycode", "Display*");
@@ -9472,7 +9472,7 @@ static XEN gxm_XKeysymToKeycode(XEN arg1, XEN arg2)
   return(C_to_Xen_KeyCode(XKeysymToKeycode(Xen_to_C_Display(arg1), Xen_to_C_KeySym(arg2))));
 }
 
-static XEN gxm_XInstallColormap(XEN arg1, XEN arg2)
+static Xen gxm_XInstallColormap(Xen arg1, Xen arg2)
 {
   #define H_XInstallColormap "XInstallColormap(display, colormap) installs the specified colormap for its associated screen."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XInstallColormap", "Display*");
@@ -9480,14 +9480,14 @@ static XEN gxm_XInstallColormap(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XInstallColormap(Xen_to_C_Display(arg1), Xen_to_C_Colormap(arg2))));
 }
 
-static XEN gxm_XImageByteOrder(XEN arg1)
+static Xen gxm_XImageByteOrder(Xen arg1)
 {
   #define H_ImageByteOrder "specifies the required byte order for images for each scanline unit in XY format (bitmap) or for each pixel value in Z format."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XImageByteOrder", "Display*");
   return(C_int_to_Xen_integer(XImageByteOrder(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XIfEvent(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XIfEvent(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XIfEvent "XIfEvent(display, predicate, arg) completes only when the specified predicate procedure returns " PROC_TRUE " for \
 an event, which indicates an event in the queue matches."
@@ -9505,28 +9505,28 @@ an event, which indicates an event in the queue matches."
   return(Xen_list_2(C_int_to_Xen_integer(val), C_to_Xen_XEvent_OBJ(e)));
 }
 
-static XEN gxm_XHeightOfScreen(XEN arg1)
+static Xen gxm_XHeightOfScreen(Xen arg1)
 {
   #define H_HeightOfScreen "XHeightOfScreen(screen): returns the height of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XHeightOfScreen", "Screen*");
   return(C_int_to_Xen_integer(XHeightOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XHeightMMOfScreen(XEN arg1)
+static Xen gxm_XHeightMMOfScreen(Xen arg1)
 {
   #define H_HeightMMOfScreen "XHeightMMOfScreen(screen): returns the height of the specified screen in millimeters."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XHeightMMOfScreen", "Screen*");
   return(C_int_to_Xen_integer(XHeightMMOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XGrabServer(XEN arg1)
+static Xen gxm_XGrabServer(Xen arg1)
 {
   #define H_XGrabServer "XGrabServer(display) disables processing of requests and close downs on all other connections than the one this request arrived on."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGrabServer", "Display*");
   return(C_int_to_Xen_integer(XGrabServer(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XGrabPointer(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
+static Xen gxm_XGrabPointer(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8, Xen arg9)
 {
   #define H_XGrabPointer "int XGrabPointer(display, grab_window, owner_events, event_mask, pointer_mode, keyboard_mode, confine_to, cursor, time) \
 actively grabs control of the pointer and returns GrabSuccess if the grab was successful."
@@ -9547,7 +9547,7 @@ actively grabs control of the pointer and returns GrabSuccess if the grab was su
 				   Xen_to_C_Time(arg9))));
 }
 
-static XEN gxm_XGrabKeyboard(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XGrabKeyboard(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XGrabKeyboard "int XGrabKeyboard(display, grab_window, owner_events, pointer_mode, keyboard_mode, time) actively grabs control of \
 the keyboard and generates FocusIn and FocusOut events."
@@ -9563,7 +9563,7 @@ the keyboard and generates FocusIn and FocusOut events."
 				    Xen_to_C_Time(arg6))));
 }
 
-static XEN gxm_XGrabKey(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XGrabKey(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XGrabKey "XGrabKey(display, keycode, modifiers, grab_window, owner_events, pointer_mode, keyboard_mode) establishes a passive \
 grab on the keyboard."
@@ -9580,11 +9580,11 @@ grab on the keyboard."
 			       Xen_boolean_to_C_bool(arg5), Xen_integer_to_C_int(arg6), Xen_integer_to_C_int(arg7))));
 }
 
-static XEN gxm_XGrabButton(XEN args)
+static Xen gxm_XGrabButton(Xen args)
 {
   #define H_XGrabButton "XGrabButton(display, button, modifiers, grab_window, owner_events, event_mask, pointer_mode, keyboard_mode, confine_to, cursor) \
 establishes a passive grab."
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -9613,7 +9613,7 @@ establishes a passive grab."
 				  Xen_to_C_Window(arg9), Xen_to_C_Cursor(arg10))));
 }
 
-static XEN gxm_XGetWindowAttributes(XEN arg1, XEN arg2)
+static Xen gxm_XGetWindowAttributes(Xen arg1, Xen arg2)
 { 
   #define H_XGetWindowAttributes "Status XGetWindowAttributes(display, w): returns the current attributes for the \
 specified window to an XWindowAttributes structure."
@@ -9627,7 +9627,7 @@ specified window to an XWindowAttributes structure."
   return(C_to_Xen_XWindowAttributes(w));
 }
 
-static XEN gxm_XGetWindowProperty(XEN args)
+static Xen gxm_XGetWindowProperty(Xen args)
 {
   #define H_XGetWindowProperty "int XGetWindowProperty(display, w, property, long_offset, long_length, delete, req_type) \
 returns the actual type of the property; the actual format of the property; the \
@@ -9635,8 +9635,8 @@ number of 8-bit, 16-bit, or 32-bit items transferred; the number of bytes remain
 actually returned."
   /* DIFF: XGetWindowProperty omit trailing 5 args, rtn as list
    */
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7; 
-  XEN result = Xen_false;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7; 
+  Xen result = Xen_false;
   Atom a;
   int ret, val;
   unsigned long len = 0, bytes;
@@ -9678,7 +9678,7 @@ actually returned."
 		    result));
 }
 
-static XEN gxm_XGetTransientForHint(XEN arg1, XEN arg2)
+static Xen gxm_XGetTransientForHint(Xen arg1, Xen arg2)
 {
   #define H_XGetTransientForHint "Status XGetTransientForHint(display, w): returns the WM_TRANSIENT_FOR property for the specified window."
   /* DIFF: XGetTransientForHint omit and rtn last arg
@@ -9692,7 +9692,7 @@ static XEN gxm_XGetTransientForHint(XEN arg1, XEN arg2)
 		    C_to_Xen_Window(w)));
 }
 
-static XEN gxm_XGetScreenSaver(XEN arg1)
+static Xen gxm_XGetScreenSaver(Xen arg1)
 {
   #define H_XGetScreenSaver "XGetScreenSaver(display) gets the current screen saver values."
   /* DIFF: XGetScreenSaver omit and rtn last 4 args
@@ -9707,7 +9707,7 @@ static XEN gxm_XGetScreenSaver(XEN arg1)
 		    C_int_to_Xen_integer(d)));
 }
 
-static XEN gxm_XGetPointerMapping(XEN arg1, XEN ignore, XEN arg3)
+static Xen gxm_XGetPointerMapping(Xen arg1, Xen ignore, Xen arg3)
 {
   #define H_XGetPointerMapping "int XGetPointerMapping(display, ignored, len): returns the current mapping of the pointer."
   /* DIFF: XGetPointerMapping ignores arg2, returns list
@@ -9715,7 +9715,7 @@ static XEN gxm_XGetPointerMapping(XEN arg1, XEN ignore, XEN arg3)
    */
   int i, len, loc, rtn;
   unsigned char *map;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetPointerMapping", "Display*");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XGetPointerMapping", "int");
   len = Xen_integer_to_C_int(arg3);
@@ -9731,7 +9731,7 @@ static XEN gxm_XGetPointerMapping(XEN arg1, XEN ignore, XEN arg3)
   return(lst);
 }
 
-static XEN gxm_XGetPointerControl(XEN arg1)
+static Xen gxm_XGetPointerControl(Xen arg1)
 {
   #define H_XGetPointerControl "XGetPointerControl(display) \
 returns the pointer's current acceleration multiplier and acceleration threshold."
@@ -9746,14 +9746,14 @@ returns the pointer's current acceleration multiplier and acceleration threshold
 		    C_int_to_Xen_integer(thresh)));
 }
 
-static XEN gxm_XGetKeyboardControl(XEN arg1)
+static Xen gxm_XGetKeyboardControl(Xen arg1)
 {
   #define H_XGetKeyboardControl "XGetKeyboardControl(display): returns the current control values for the keyboard \
 to the XKeyboardState structure."
   /* DIFF: XGetKeyboardControl omits arg2 and rtns list of fields
    */
   XKeyboardState ks;
-  XEN v;
+  Xen v;
   int i, loc;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetKeyboardControl", "Display*");
   XGetKeyboardControl(Xen_to_C_Display(arg1), &ks);
@@ -9771,7 +9771,7 @@ to the XKeyboardState structure."
 		    v));
 }
 
-static XEN gxm_XGetInputFocus(XEN arg1)
+static Xen gxm_XGetInputFocus(Xen arg1)
 {
   #define H_XGetInputFocus "XGetInputFocus(display): returns the focus window and the current focus state."
   /* DIFF: XGetInputFocus omit and rtn last 2 args
@@ -9785,14 +9785,14 @@ static XEN gxm_XGetInputFocus(XEN arg1)
 		    C_int_to_Xen_integer(r)));
 }
 
-static XEN gxm_XGetIconName(XEN arg1, XEN arg2)
+static Xen gxm_XGetIconName(Xen arg1, Xen arg2)
 {
   #define H_XGetIconName "Status XGetIconName(display, w): returns the name to be displayed in the specified window's icon."
   /* DIFF: XGetIconName omits and returns arg3
    */
   char *str;
   int val;
-  XEN res = Xen_false;
+  Xen res = Xen_false;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetIconName", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XGetIconName", "Window");
   val = XGetIconName(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), &str);
@@ -9804,7 +9804,7 @@ static XEN gxm_XGetIconName(XEN arg1, XEN arg2)
   return(res);
 }
 
-static XEN gxm_XGetGeometry(XEN arg1, XEN arg2)
+static Xen gxm_XGetGeometry(Xen arg1, Xen arg2)
 {
   #define H_XGetGeometry "Status XGetGeometry(display, d): returns the root window and the current geometry of the drawable."
   /* DIFF: XGetGeometry omits last 7 args and returns list
@@ -9826,7 +9826,7 @@ static XEN gxm_XGetGeometry(XEN arg1, XEN arg2)
 		    C_ulong_to_Xen_ulong(dr)));
 }
 
-static XEN gxm_XGetGCValues(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XGetGCValues(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XGetGCValues "Status XGetGCValues(display, gc, valuemask): returns the components specified by valuemask for the specified GC."
   /* DIFF: XGetGCValues omits and returns last arg
@@ -9842,7 +9842,7 @@ static XEN gxm_XGetGCValues(XEN arg1, XEN arg2, XEN arg3)
 		    C_to_Xen_XGCValues(val)));
 }
 
-static XEN gxm_XGetFontProperty(XEN arg1, XEN arg2)
+static Xen gxm_XGetFontProperty(Xen arg1, Xen arg2)
 {
   #define H_XGetFontProperty "Bool XGetFontProperty(font_struct, atom): returns the value of the specified font property. "
   /* DIFF: XGetFontProperty omits and rtns last arg
@@ -9856,7 +9856,7 @@ static XEN gxm_XGetFontProperty(XEN arg1, XEN arg2)
 		    C_ulong_to_Xen_ulong(prop)));
 }
 
-static XEN gxm_XGetErrorText(XEN arg1, XEN arg2, XEN ignore, XEN arg4)
+static Xen gxm_XGetErrorText(Xen arg1, Xen arg2, Xen ignore, Xen arg4)
 {
   #define H_XGetErrorText "XGetErrorText(display, code, buffer_return, length) copies a null-terminated string describing the specified error \
 code into the specified buffer."
@@ -9864,7 +9864,7 @@ code into the specified buffer."
    */
   char *buf;
   int len, val;
-  XEN str;
+  Xen str;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetErrorText", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XGetErrorText", "int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XGetErrorText", "int");
@@ -9878,14 +9878,14 @@ code into the specified buffer."
 		    str));
 }
 
-static XEN gxm_XGeometry(XEN args)
+static Xen gxm_XGeometry(Xen args)
 {
   #define H_XGeometry "int XGeometry(dpy, screen, position, default_position, bwidth, fwidth, fheight, xadder, yadder) calculates \
 window geometry given user geometry string and default geometry"
   /* DIFF: XGetGeometry omits trailing 4 args and returns them
    */
   int x, y, w, h, val;
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -9921,7 +9921,7 @@ window geometry given user geometry string and default geometry"
 		    C_int_to_Xen_integer(h)));
 }
 
-static XEN gxm_XFreePixmap(XEN arg1, XEN arg2)
+static Xen gxm_XFreePixmap(Xen arg1, Xen arg2)
 {
   #define H_XFreePixmap "XFreePixmap(display, pixmap) first deletes the association between the pixmap ID and the pixmap."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFreePixmap", "Display*");
@@ -9929,14 +9929,14 @@ static XEN gxm_XFreePixmap(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XFreePixmap(Xen_to_C_Display(arg1), Xen_to_C_Pixmap(arg2))));
 }
 
-static XEN gxm_XFreeModifiermap(XEN arg1)
+static Xen gxm_XFreeModifiermap(Xen arg1)
 {
   #define H_XFreeModifiermap "XFreeModifiermap(modmap) frees the specified XModifierKeymap structure."
   Xen_check_type(Xen_is_XModifierKeymap(arg1), arg1, 1, "XFreeModifiermap", "XModifierKeymap*");
   return(C_int_to_Xen_integer(XFreeModifiermap(Xen_to_C_XModifierKeymap(arg1))));
 }
 
-static XEN gxm_XFreeGC(XEN arg1, XEN arg2)
+static Xen gxm_XFreeGC(Xen arg1, Xen arg2)
 {
   #define H_XFreeGC "XFreeGC(display, gc) destroys the specified GC as well as all the associated storage."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFreeGC", "Display*");
@@ -9944,7 +9944,7 @@ static XEN gxm_XFreeGC(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XFreeGC(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2))));
 }
 
-static XEN gxm_XFreeFontPath(XEN ignore)
+static Xen gxm_XFreeFontPath(Xen ignore)
 {
   #define H_XFreeFontPath "XFreeFontPath(list) frees the data allocated by XGetFontPath (a no-op in xm)."
   /* DIFF: XFreeFontPath is no-op
@@ -9952,7 +9952,7 @@ static XEN gxm_XFreeFontPath(XEN ignore)
   return(Xen_false);
 }
 
-static XEN gxm_XFreeFontNames(XEN ignore)
+static Xen gxm_XFreeFontNames(Xen ignore)
 {
   #define H_XFreeFontNames "XFreeFontNames(list) frees the array and strings returned by XListFonts or XListFontsWithInfo (a no-op in xm)."
   /* DIFF: XFreeFontNames is no-op
@@ -9960,7 +9960,7 @@ static XEN gxm_XFreeFontNames(XEN ignore)
   return(Xen_false);
 }
 
-static XEN gxm_XFreeFontInfo(XEN ignore1, XEN ignore2, XEN ignore3)
+static Xen gxm_XFreeFontInfo(Xen ignore1, Xen ignore2, Xen ignore3)
 {
   #define H_XFreeFontInfo "XFreeFontInfo(names, free_info, actual_count) frees a font structure or an array of font structures, and \
 optionally an array of font names (a no-op in xm)."
@@ -9969,7 +9969,7 @@ optionally an array of font names (a no-op in xm)."
   return(Xen_false);
 }
 
-static XEN gxm_XFreeFont(XEN arg1, XEN arg2)
+static Xen gxm_XFreeFont(Xen arg1, Xen arg2)
 {
   #define H_XFreeFont "XFreeFont(display, font_struct) deletes the association between the font resource ID and the specified font and \
 frees the XFontStruct structure."
@@ -9978,14 +9978,14 @@ frees the XFontStruct structure."
   return(C_int_to_Xen_integer(XFreeFont(Xen_to_C_Display(arg1), Xen_to_C_XFontStruct(arg2))));
 }
 
-static XEN gxm_XFreeExtensionList(XEN ignore)
+static Xen gxm_XFreeExtensionList(Xen ignore)
 {
   /* DIFF: XFreeExtensionList is a no-op
    */
   return(Xen_false);
 }
 
-static XEN gxm_XFreeCursor(XEN arg1, XEN arg2)
+static Xen gxm_XFreeCursor(Xen arg1, Xen arg2)
 {
   #define H_XFreeCursor "XFreeCursor(display, cursor) deletes the association between the cursor resource ID and the specified cursor."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFreeCursor", "Display*");
@@ -9993,7 +9993,7 @@ static XEN gxm_XFreeCursor(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XFreeCursor(Xen_to_C_Display(arg1), Xen_to_C_Cursor(arg2))));
 }
 
-static XEN gxm_XFreeColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XFreeColors(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XFreeColors "XFreeColors(display, colormap, pixels, npixels, planes) frees the cells represented by pixels whose values are in the pixels array."
   /* DIFF: XFreeColors pixel array (arg3) is list of pixels
@@ -10016,7 +10016,7 @@ static XEN gxm_XFreeColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XFreeColormap(XEN arg1, XEN arg2)
+static Xen gxm_XFreeColormap(Xen arg1, Xen arg2)
 {
   #define H_XFreeColormap "XFreeColormap(display, colormap) deletes the association between the colormap resource ID and the colormap and \
 frees the colormap storage."
@@ -10025,7 +10025,7 @@ frees the colormap storage."
   return(C_int_to_Xen_integer(XFreeColormap(Xen_to_C_Display(arg1), Xen_to_C_Colormap(arg2))));
 }
 
-static XEN gxm_XFree(XEN arg1)
+static Xen gxm_XFree(Xen arg1)
 {
   #define H_XFree "XFree(data) is a general-purpose Xlib routine that frees the specified data."
   Xen_check_type(Xen_is_wrapped_c_pointer(arg1) || Xen_is_list(arg1), arg1, 1, "XFree", "void* or xm entity");
@@ -10036,7 +10036,7 @@ static XEN gxm_XFree(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XForceScreenSaver(XEN arg1, XEN arg2)
+static Xen gxm_XForceScreenSaver(Xen arg1, Xen arg2)
 {
   #define H_XForceScreenSaver "XForceScreenSaver(display, mode) activates the screen saver"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XForceScreenSaver", "Display*");
@@ -10044,7 +10044,7 @@ static XEN gxm_XForceScreenSaver(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XForceScreenSaver(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XFlush(XEN arg1)
+static Xen gxm_XFlush(Xen arg1)
 {
   #define H_XFlush "XFlush(display) flushes the output buffer."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFlush", "Display*");
@@ -10052,14 +10052,14 @@ static XEN gxm_XFlush(XEN arg1)
 }
 
 
-static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
+static Xen gxm_XFillRectangles(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5)
 {
   #define H_XFillRectangles "XFillRectangles(display, d, gc, rectangles, nrectangles)"
   /* DIFF: XFillRectangles XRectangle* arg (arg 4) is list of XRectangles
    */
   XRectangle *pt;
   int i, len;
-  XEN arg4;
+  Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFillRectangles", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XFillRectangles", "Drawable");
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XFillRectangles", "GC");
@@ -10086,7 +10086,7 @@ static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XFillRectangle(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XFillRectangle(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XFillRectangle "XFillRectangle(display, d, gc, x, y, width, height)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFillRectangle", "Display*");
@@ -10101,14 +10101,14 @@ static XEN gxm_XFillRectangle(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, 
 				     Xen_ulong_to_C_ulong(arg6), Xen_ulong_to_C_ulong(arg7))));
 }
 
-static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XFillPolygon(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XFillPolygon "XFillPolygon(display, d, gc, points, npoints, shape, mode)"
   /* DIFF: XFillPolygon Point* arg (arg 4) is list of XPoint
    */
   XPoint *pt, *pt1;
   int i, len;
-  XEN arg4;
+  Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFillPolygon", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XFillPolygon", "Drawable");
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XFillPolygon", "GC");
@@ -10122,7 +10122,7 @@ static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, X
   pt = (XPoint *)calloc(len, sizeof(XPoint));
   for (i = 0; (i < len) && (!Xen_is_null(arg4)); i++, arg4 = Xen_cdr(arg4))
     {
-      XEN xp;
+      Xen xp;
       xp = Xen_car(arg4);
       if (!(Xen_is_XPoint(xp))) Xen_check_type(0, xp, i, "XFillRegion", "XPoint");
       pt1 = Xen_to_C_XPoint(xp);
@@ -10139,7 +10139,7 @@ static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, X
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
+static Xen gxm_XFillArcs(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5)
 {
   #define H_XFillArcs "XFillArcs(display, d, gc, arcs, narcs)"
   /* DIFF: XFillArcs Arc* arg (arg 4) is list of XArcs
@@ -10148,7 +10148,7 @@ static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   Display *dpy;
   Drawable draw;
   GC gc;
-  XEN arg4;
+  Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFillArcs", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XFillArcs", "Drawable");
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XFillArcs", "GC");
@@ -10169,7 +10169,7 @@ static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XFillArc(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
+static Xen gxm_XFillArc(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8, Xen arg9)
 {
   #define H_XFillArc "XFillArc(display, d, gc, x, y, width, height, angle1, angle2) fills the region described by the specified arc."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFillArc", "Display*");
@@ -10187,14 +10187,14 @@ static XEN gxm_XFillArc(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN ar
 			       Xen_integer_to_C_int(arg8), Xen_integer_to_C_int(arg9))));
 }
 
-static XEN gxm_XFetchName(XEN arg1, XEN arg2)
+static Xen gxm_XFetchName(Xen arg1, Xen arg2)
 {
   #define H_XFetchName "Status XFetchName(display, w): returns the name of the specified window."
   /* DIFF: XFetchName omits and rtns arg3
    */
   char *name;
   int val;
-  XEN str;
+  Xen str;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFetchName", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XFetchName", "Window");
   val = XFetchName(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), &name);
@@ -10205,7 +10205,7 @@ static XEN gxm_XFetchName(XEN arg1, XEN arg2)
   return(str);
 }
 
-static XEN gxm_XEventsQueued(XEN arg1, XEN arg2)
+static Xen gxm_XEventsQueued(Xen arg1, Xen arg2)
 {
   #define H_XEventsQueued "int XEventsQueued(display, mode)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XEventsQueued", "Display*");
@@ -10213,19 +10213,19 @@ static XEN gxm_XEventsQueued(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XEventsQueued(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XEnableAccessControl(XEN arg1)
+static Xen gxm_XEnableAccessControl(Xen arg1)
 {
   #define H_XEnableAccessControl "XEnableAccessControl(display) enables the use of the access control list at each connection setup."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XEnableAccessControl", "Display*");
   return(C_int_to_Xen_integer(XEnableAccessControl(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XDrawText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XDrawText(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XDrawText "XDrawText(display, d, gc, x, y, items, nitems) draws text"
   int i, len = 0, res;
   XTextItem *items;
-  XEN lst;
+  Xen lst;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawText", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XDrawText", "Drawable");
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XDrawText", "GC");
@@ -10254,7 +10254,7 @@ static XEN gxm_XDrawText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN a
   return(C_int_to_Xen_integer(res));
 }
 
-static XEN gxm_XDrawString(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XDrawString(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XDrawString "XDrawString(display, d, gc, x, y, string, length)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawString", "Display*");
@@ -10271,14 +10271,14 @@ static XEN gxm_XDrawString(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN
 				  (char *)Xen_string_to_C_string(arg6), Xen_integer_to_C_int(arg7))));
 }
 
-static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
+static Xen gxm_XDrawSegments(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5)
 {
   #define H_XDrawSegments "XDrawSegments(display, d, gc, segments, nsegments) draws multiple, unconnected lines. "
   /* DIFF: XDrawSegments XSegment* arg (arg 4) is list of XSegments
    */
   XSegment *pt;
   int i, len;
-  XEN arg4;
+  Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawSegments", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XDrawSegments", "Drawable");
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XDrawSegments", "GC");
@@ -10305,14 +10305,14 @@ static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XDrawRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
+static Xen gxm_XDrawRectangles(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5)
 {
   #define H_XDrawRectangles "XDrawRectangles(display, d, gc, rectangles, nrectangles) draws the outlines of the specified rectangles."
   /* DIFF: XDrawRectangles XRectangle* arg (arg 4) is list of XRectangles
    */
   XRectangle *pt;
   int i, len;
-  XEN arg4;
+  Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawRectangles", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XDrawRectangles", "Drawable");
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XDrawRectangles", "GC");
@@ -10339,7 +10339,7 @@ static XEN gxm_XDrawRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XDrawRectangle(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XDrawRectangle(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XDrawRectangle "XDrawRectangle(display, d, gc, x, y, width, height) draws the outlines of the specified rectangle."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawRectangle", "Display*");
@@ -10355,14 +10355,14 @@ static XEN gxm_XDrawRectangle(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, 
 				     Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5), Xen_ulong_to_C_ulong(arg6), Xen_ulong_to_C_ulong(arg7))));
 }
 
-static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XEN arg6)
+static Xen gxm_XDrawPoints(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5, Xen arg6)
 {
   #define H_XDrawPoints "XDrawPoints(display, d, gc, points, npoints, mode) draws multiple points."
   /* DIFF: XDrawPoints XPoint* arg (arg 4) is list of XPoints
    */
   XPoint *pt, *pt1;
   int i, len;
-  XEN arg4;
+  Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawPoints", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XDrawPoints", "Drawable");
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XDrawPoints", "GC");
@@ -10375,7 +10375,7 @@ static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XE
   pt = (XPoint *)calloc(len, sizeof(XPoint));
   for (i = 0; (i < len) && (!Xen_is_null(arg4)); i++, arg4 = Xen_cdr(arg4))
     {
-      XEN xp;
+      Xen xp;
       xp = Xen_car(arg4);
       if (!(Xen_is_XPoint(xp))) Xen_check_type(0, xp, i, "XDrawPoints", "XPoint");
       pt1 = Xen_to_C_XPoint(xp);
@@ -10391,7 +10391,7 @@ static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XE
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XDrawPoint(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XDrawPoint(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XDrawPoint "XDrawPoint(display, d, gc, x, y) uses the foreground pixel and function components of the GC to draw a single \
 point into the specified drawable."
@@ -10406,7 +10406,7 @@ point into the specified drawable."
 				 Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5))));
 }
 
-static XEN gxm_XDrawLines(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XEN arg6)
+static Xen gxm_XDrawLines(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5, Xen arg6)
 {
   #define H_XDrawLines "XDrawLines(display, d, gc, points, npoints, mode) uses the components of the specified GC to draw npoints lines \
 between each pair of points (point[i], point[i+1]) in the array of XPoint structures."
@@ -10414,7 +10414,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
    */
   XPoint *pt, *pt1;
   int i, len;
-  XEN arg4;
+  Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawLines", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XDrawLines", "Drawable");
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XDrawLines", "GC");
@@ -10427,7 +10427,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
   pt = (XPoint *)calloc(len, sizeof(XPoint));
   for (i = 0; (i < len) && (!Xen_is_null(arg4)); i++, arg4 = Xen_cdr(arg4))
     {
-      XEN xp;
+      Xen xp;
       xp = Xen_car(arg4);
       if (!(Xen_is_XPoint(xp))) Xen_check_type(0, xp, i, "XDrawLines", "XPoint");
       pt1 = Xen_to_C_XPoint(xp);
@@ -10443,7 +10443,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XDrawLinesDirect(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XDrawLinesDirect(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XDrawLinesDirect "XDrawLinesDirect is the same as XDrawLines but takes an (opaque) pointer to an XPoint array"
   XPoint *pt;
@@ -10465,7 +10465,7 @@ static XEN gxm_XDrawLinesDirect(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_Vector2XPoints(XEN arg1)
+static Xen gxm_Vector2XPoints(Xen arg1)
 {
   #define H_vector2XPoints "(vector->XPoints vect) packages point data in vect as (opaque) array of XPoints"
   int i, j, len;
@@ -10484,7 +10484,7 @@ static XEN gxm_Vector2XPoints(XEN arg1)
   return(Xen_wrap_C_pointer(pt));
 }
 
-static XEN gxm_FreeXPoints(XEN arg1)
+static Xen gxm_FreeXPoints(Xen arg1)
 {
   void *pts;
   #define H_freeXPoints "(freeXPoints vect) frees an (opaque) XPoint array created by vector->Xpoints"
@@ -10495,7 +10495,7 @@ static XEN gxm_FreeXPoints(XEN arg1)
 }
 
 
-static XEN gxm_XDrawLine(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XDrawLine(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XDrawLine "XDrawLine(display, d, gc, x1, y1, x2, y2) uses the components of the specified GC to draw a line between the \
 specified set of points (x1, y1) and (x2, y2)."
@@ -10512,7 +10512,7 @@ specified set of points (x1, y1) and (x2, y2)."
 				Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5), Xen_integer_to_C_int(arg6), Xen_integer_to_C_int(arg7))));
 }
 
-static XEN gxm_XDrawImageString(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XDrawImageString(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XDrawImageString "XDrawImageString(display, d, gc, x, y, string, length)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawImageString", "Display*");
@@ -10528,7 +10528,7 @@ static XEN gxm_XDrawImageString(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
 				       Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5), (char *)Xen_string_to_C_string(arg6), Xen_integer_to_C_int(arg7))));
 }
 
-static XEN gxm_XDrawArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
+static Xen gxm_XDrawArcs(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5)
 {
   #define H_XDrawArcs "XDrawArcs(display, d, gc, arcs, narcs) draws multiple circular or elliptical arcs."
   /* DIFF: XDrawArcs Arc* arg (arg 4) is list of XArcs
@@ -10537,7 +10537,7 @@ static XEN gxm_XDrawArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   Display *dpy;
   Drawable draw;
   GC gc;
-  XEN arg4;
+  Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawArcs", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XDrawArcs", "Drawable");
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XDrawArcs", "GC");
@@ -10557,7 +10557,7 @@ static XEN gxm_XDrawArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   return(C_int_to_Xen_integer(len));
 }
 
-static XEN gxm_XDrawArc(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
+static Xen gxm_XDrawArc(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8, Xen arg9)
 {
   #define H_XDrawArc "XDrawArc(display, d, gc, x, y, width, height, angle1, angle2) draws a single circular or elliptical arc."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawArc", "Display*");
@@ -10576,7 +10576,7 @@ static XEN gxm_XDrawArc(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN ar
 			       Xen_ulong_to_C_ulong(arg6), Xen_ulong_to_C_ulong(arg7), Xen_integer_to_C_int(arg8), Xen_integer_to_C_int(arg9))));
 }
 
-static XEN gxm_XDisplayWidthMM(XEN arg1, XEN arg2)
+static Xen gxm_XDisplayWidthMM(Xen arg1, Xen arg2)
 {
   #define H_DisplayWidthMM "DisplayWidthMM(display, screen_number): returns the width of the specified screen in millimeters."
   #define H_XDisplayWidthMM "XDisplayWidthMM(display, screen_number): returns the width of the specified screen in millimeters."
@@ -10585,7 +10585,7 @@ static XEN gxm_XDisplayWidthMM(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XDisplayWidthMM(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDisplayWidth(XEN arg1, XEN arg2)
+static Xen gxm_XDisplayWidth(Xen arg1, Xen arg2)
 {
   #define H_DisplayWidth "DisplayWidth(display, screen_number): returns the width of the screen in pixels."
   #define H_XDisplayWidth "XDisplayWidth(display, screen_number): returns the width of the screen in pixels."
@@ -10594,7 +10594,7 @@ static XEN gxm_XDisplayWidth(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XDisplayWidth(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDisplayPlanes(XEN arg1, XEN arg2)
+static Xen gxm_XDisplayPlanes(Xen arg1, Xen arg2)
 {
   #define H_DisplayPlanes "DisplayPlanes(display, screen_number): returns the depth of the root window of the specified screen."
   #define H_XDisplayPlanes "XDisplayPlanes(display, screen_number): returns the depth of the root window of the specified screen."
@@ -10603,7 +10603,7 @@ static XEN gxm_XDisplayPlanes(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XDisplayPlanes(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDisplayKeycodes(XEN arg1)
+static Xen gxm_XDisplayKeycodes(Xen arg1)
 {
   #define H_XDisplayKeycodes "XDisplayKeycodes(display): returns the min-keycodes and max-keycodes supported by the specified display."
   /* DIFF: XDisplayKeycodes omit and rtn arg 2 and 3
@@ -10616,7 +10616,7 @@ static XEN gxm_XDisplayKeycodes(XEN arg1)
 		    C_int_to_Xen_integer(m2)));
 }
 
-static XEN gxm_XDisplayHeightMM(XEN arg1, XEN arg2)
+static Xen gxm_XDisplayHeightMM(Xen arg1, Xen arg2)
 {
   #define H_DisplayHeightMM "DisplayHeightMM(display, screen_number): returns the height of the specified screen in millimeters."
   #define H_XDisplayHeightMM "XDisplayHeightMM(display, screen_number): returns the height of the specified screen in millimeters."
@@ -10625,7 +10625,7 @@ static XEN gxm_XDisplayHeightMM(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XDisplayHeightMM(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDisplayHeight(XEN arg1, XEN arg2)
+static Xen gxm_XDisplayHeight(Xen arg1, Xen arg2)
 {
   #define H_DisplayHeight "DisplayHeight(display, screen_number): returns the height of the specified screen in pixels."
   #define H_XDisplayHeight "XDisplayHeight(display, screen_number): returns the height of the specified screen in pixels."
@@ -10634,7 +10634,7 @@ static XEN gxm_XDisplayHeight(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XDisplayHeight(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDisplayCells(XEN arg1, XEN arg2)
+static Xen gxm_XDisplayCells(Xen arg1, Xen arg2)
 {
   #define H_DisplayCells "DisplayCells(display, screen_number): returns the number of entries in the default colormap."
   #define H_XDisplayCells "XDisplayCells(display, screen_number): returns the number of entries in the default colormap."
@@ -10643,14 +10643,14 @@ static XEN gxm_XDisplayCells(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XDisplayCells(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDisableAccessControl(XEN arg1)
+static Xen gxm_XDisableAccessControl(Xen arg1)
 {
   #define H_XDisableAccessControl "XDisableAccessControl(display) disables the use of the access control list at each connection setup."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDisableAccessControl", "Display*");
   return(C_int_to_Xen_integer(XDisableAccessControl(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XDoesSaveUnders(XEN arg1)
+static Xen gxm_XDoesSaveUnders(Xen arg1)
 {
   #define H_DoesSaveUnders "DoesSaveUnders(screen): returns a Boolean value indicating whether the screen supports save unders."
   #define H_XDoesSaveUnders "XDoesSaveUnders(screen): returns a Boolean value indicating whether the screen supports save unders."
@@ -10658,7 +10658,7 @@ static XEN gxm_XDoesSaveUnders(XEN arg1)
   return(C_bool_to_Xen_boolean(XDoesSaveUnders(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XDoesBackingStore(XEN arg1)
+static Xen gxm_XDoesBackingStore(Xen arg1)
 {
   #define H_DoesBackingStore "DoesBackingStore(screen): returns WhenMapped, NotUseful,or Always,which indicate whether the screen supports backing stores."
   #define H_XDoesBackingStore "XDoesBackingStore(screen): returns WhenMapped, NotUseful,or Always,which indicate whether the screen supports backing stores."
@@ -10666,7 +10666,7 @@ static XEN gxm_XDoesBackingStore(XEN arg1)
   return(C_bool_to_Xen_boolean(XDoesBackingStore(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XDestroySubwindows(XEN arg1, XEN arg2)
+static Xen gxm_XDestroySubwindows(Xen arg1, Xen arg2)
 {
   #define H_XDestroySubwindows "XDestroySubwindows(display, w) destroys all inferior windows of the specified window, in bottom-to-top stacking order."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDestroySubwindows", "Display*");
@@ -10674,7 +10674,7 @@ static XEN gxm_XDestroySubwindows(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XDestroySubwindows(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XDestroyWindow(XEN arg1, XEN arg2)
+static Xen gxm_XDestroyWindow(Xen arg1, Xen arg2)
 {
   #define H_XDestroyWindow "XDestroyWindow(display, w) destroys the specified window as well as all of its subwindows and causes the X server \
 to generate a DestroyNotify event for each window."
@@ -10683,7 +10683,7 @@ to generate a DestroyNotify event for each window."
   return(C_int_to_Xen_integer(XDestroyWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XDeleteProperty(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XDeleteProperty(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XDeleteProperty "XDeleteProperty(display, w, property) deletes the specified property only if the property was defined on the specified \
 window and causes the X server to generate a PropertyNotify event on the window unless the property does not exist."
@@ -10693,7 +10693,7 @@ window and causes the X server to generate a PropertyNotify event on the window 
   return(C_int_to_Xen_integer(XDeleteProperty(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_to_C_Atom(arg3))));
 }
 
-static XEN gxm_XDefineCursor(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XDefineCursor(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XDefineCursor "XDefineCursor(display, w, cursor)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDefineCursor", "Display*");
@@ -10702,7 +10702,7 @@ static XEN gxm_XDefineCursor(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XDefineCursor(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_to_C_Cursor(arg3))));
 }
 
-static XEN gxm_XDefaultScreen(XEN arg1)
+static Xen gxm_XDefaultScreen(Xen arg1)
 {
   #define H_XDefaultScreen "XDefaultScreen(display)"
   #define H_XDefaultScreenOfDisplay "returns the default screen of the specified display."
@@ -10710,7 +10710,7 @@ static XEN gxm_XDefaultScreen(XEN arg1)
   return(C_int_to_Xen_integer(XDefaultScreen(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XDefaultDepthOfScreen(XEN arg1)
+static Xen gxm_XDefaultDepthOfScreen(Xen arg1)
 {
   #define H_DefaultDepthOfScreen "returns the default depth of the root window of the specified screen."
   #define H_XDefaultDepthOfScreen "returns the default depth of the root window of the specified screen."
@@ -10718,7 +10718,7 @@ static XEN gxm_XDefaultDepthOfScreen(XEN arg1)
   return(C_int_to_Xen_integer(XDefaultDepthOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XDefaultDepth(XEN arg1, XEN arg2)
+static Xen gxm_XDefaultDepth(Xen arg1, Xen arg2)
 {
   #define H_DefaultDepth "returns the depth (number of planes) of the default root window for the specified screen."
   #define H_XDefaultDepth "returns the depth (number of planes) of the default root window for the specified screen."
@@ -10727,11 +10727,11 @@ static XEN gxm_XDefaultDepth(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XDefaultDepth(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XCopyPlane(XEN args)
+static Xen gxm_XCopyPlane(Xen args)
 {
   #define H_XCopyPlane "XCopyPlane(display, src, dest, gc, src_x, src_y, width, height, dest_x, dest_y, plane) uses a single bit plane of the \
 specified source rectangle combined with the specified GC to modify the specified rectangle of dest."
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -10763,7 +10763,7 @@ specified source rectangle combined with the specified GC to modify the specifie
 				 Xen_integer_to_C_int(arg10), Xen_ulong_to_C_ulong(arg11))));
 }
 
-static XEN gxm_XCopyGC(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XCopyGC(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XCopyGC "XCopyGC(display, src, valuemask, dest) copies the specified components from the source GC to the destination GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCopyGC", "Display*");
@@ -10773,11 +10773,11 @@ static XEN gxm_XCopyGC(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XCopyGC(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_GC(arg4))));
 }
 
-static XEN gxm_XCopyArea(XEN args)
+static Xen gxm_XCopyArea(Xen args)
 {
   #define H_XCopyArea "XCopyArea(display, src, dest, gc, src_x, src_y, width, height, dest_x, dest_y) combines the specified rectangle of src \
 with the specified rectangle of dest."
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -10806,7 +10806,7 @@ with the specified rectangle of dest."
 				Xen_ulong_to_C_ulong(arg8), Xen_integer_to_C_int(arg9), Xen_integer_to_C_int(arg10))));
 }
 
-static XEN gxm_XConvertSelection(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XConvertSelection(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XConvertSelection "void XConvertSelection(display, selection, target, property, requestor, time)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XConvertSelection", "Display*");
@@ -10820,14 +10820,14 @@ static XEN gxm_XConvertSelection(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 					Xen_to_C_Window(arg5), Xen_to_C_Time(arg6))));
 }
 
-static XEN gxm_XConnectionNumber(XEN arg1)
+static Xen gxm_XConnectionNumber(Xen arg1)
 {
   #define H_XConnectionNumber "returns a connection number for the specified display."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XConnectionNumber", "Display*");
   return(C_int_to_Xen_integer(XConnectionNumber(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XConfigureWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XConfigureWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XConfigureWindow "XConfigureWindow(display, w, value_mask, values) uses the values specified in the XWindowChanges structure to \
 reconfigure a window's size, position, border, and stacking order."
@@ -10839,7 +10839,7 @@ reconfigure a window's size, position, border, and stacking order."
 				       Xen_to_C_Window(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_XWindowChanges(arg4))));
 }
 
-static XEN gxm_XCloseDisplay(XEN arg1)
+static Xen gxm_XCloseDisplay(Xen arg1)
 {
   #define H_XCloseDisplay "XCloseDisplay(display) closes the connection to the X server for the display specified in the Display structure and \
 destroys all windows, resource IDs etc."
@@ -10847,7 +10847,7 @@ destroys all windows, resource IDs etc."
   return(C_int_to_Xen_integer(XCloseDisplay(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XClearWindow(XEN arg1, XEN arg2)
+static Xen gxm_XClearWindow(Xen arg1, Xen arg2)
 {
   #define H_XClearWindow "XClearWindow(display, w) clears the entire area in the specified window."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XClearWindow", "Display*");
@@ -10855,7 +10855,7 @@ static XEN gxm_XClearWindow(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XClearWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XClearArea(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XClearArea(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XClearArea "XClearArea(display, w, x, y, width, height, exposures) paints a rectangular area in the specified window according to the \
 specified dimensions with the window's background pixel or pixmap."
@@ -10872,7 +10872,7 @@ specified dimensions with the window's background pixel or pixmap."
 				 Xen_ulong_to_C_ulong(arg5), Xen_ulong_to_C_ulong(arg6), Xen_boolean_to_C_bool(arg7))));
 }
 
-static XEN gxm_XCirculateSubwindowsUp(XEN arg1, XEN arg2)
+static Xen gxm_XCirculateSubwindowsUp(Xen arg1, Xen arg2)
 {
   #define H_XCirculateSubwindowsUp "XCirculateSubwindowsUp(display, w) raises the lowest mapped child of the specified window that is partially or \
 completely occluded by another child."
@@ -10881,7 +10881,7 @@ completely occluded by another child."
   return(C_int_to_Xen_integer(XCirculateSubwindowsUp(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XCirculateSubwindowsDown(XEN arg1, XEN arg2)
+static Xen gxm_XCirculateSubwindowsDown(Xen arg1, Xen arg2)
 {
   #define H_XCirculateSubwindowsDown "XCirculateSubwindowsDown(display, w) lowers the highest mapped child of the specified window that partially or \
 completely occludes another child."
@@ -10890,7 +10890,7 @@ completely occludes another child."
   return(C_int_to_Xen_integer(XCirculateSubwindowsDown(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XCirculateSubwindows(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XCirculateSubwindows(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XCirculateSubwindows "XCirculateSubwindows(display, w, direction) circulates children of the specified window in the specified direction."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCirculateSubwindows", "Display*");
@@ -10899,7 +10899,7 @@ static XEN gxm_XCirculateSubwindows(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XCirculateSubwindows(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XCheckWindowEvent(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XCheckWindowEvent(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XCheckWindowEvent "Bool XCheckWindowEvent(display, w, event_mask) searches the event queue and then the events available \
 on the server connection for the first event that matches the specified window and event mask."
@@ -10921,7 +10921,7 @@ on the server connection for the first event that matches the specified window a
     }
 }
 
-static XEN gxm_XCheckTypedWindowEvent(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XCheckTypedWindowEvent(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XCheckTypedWindowEvent "Bool XCheckTypedWindowEvent(display, w, event_type) searches the event queue and then any events \
 available on the server connection for the first event that matches the specified event mask"
@@ -10943,7 +10943,7 @@ available on the server connection for the first event that matches the specifie
     }
 }
 
-static XEN gxm_XCheckTypedEvent(XEN arg1, XEN arg2)
+static Xen gxm_XCheckTypedEvent(Xen arg1, Xen arg2)
 {
   #define H_XCheckTypedEvent "Bool XCheckTypedEvent(display, event_type) searches the event queue and then any events available  \
 on the server connection for the first event that matches the specified type."
@@ -10964,7 +10964,7 @@ on the server connection for the first event that matches the specified type."
     }
 }
 
-static XEN gxm_XCheckMaskEvent(XEN arg1, XEN arg2)
+static Xen gxm_XCheckMaskEvent(Xen arg1, Xen arg2)
 {
   #define H_XCheckMaskEvent "Bool XCheckMaskEvent(display, event_mask) searches the event queue and then any events available on \
 the server connection for the first event that matches the specified mask."
@@ -10985,7 +10985,7 @@ the server connection for the first event that matches the specified mask."
     }
 }
 
-static XEN gxm_XCheckIfEvent(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XCheckIfEvent(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XCheckIfEvent "Bool XCheckIfEvent(display, predicate, arg)"
   /* DIFF: XCheckIfEvent dpy [ev] proc ptr -> (list val ev)
@@ -11008,7 +11008,7 @@ static XEN gxm_XCheckIfEvent(XEN arg1, XEN arg2, XEN arg3)
     }
 }
 
-static XEN gxm_XChangeWindowAttributes(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XChangeWindowAttributes(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XChangeWindowAttributes "XChangeWindowAttributes(display, w, valuemask, attributes) uses the window attributes in the XSetWindowAttributes \
 structure to change the specified window attributes."
@@ -11020,14 +11020,14 @@ structure to change the specified window attributes."
 					      Xen_to_C_XSetWindowAttributes(arg4))));
 }
 
-static XEN gxm_XChangeProperty(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static Xen gxm_XChangeProperty(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
   #define H_XChangeProperty "XChangeProperty(display, w, property, type, format, mode, data, nelements) alters the property for the specified \
 window and causes the X server to generate a PropertyNotify event on that window."
   unsigned char *command;
   int len;
   int *data = NULL;
-  XEN rtn;
+  Xen rtn;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XChangeProperty", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XChangeProperty", "Window");
   Xen_check_type(Xen_is_Atom(arg3), arg3, 3, "XChangeProperty", "Atom");
@@ -11055,7 +11055,7 @@ window and causes the X server to generate a PropertyNotify event on that window
   return(rtn);
 }
 
-static XEN gxm_XChangePointerControl(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XChangePointerControl(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XChangePointerControl "XChangePointerControl(display, do_accel, do_threshold, accel_numerator, accel_denominator, threshold) \
 defines how the pointing device moves."
@@ -11070,7 +11070,7 @@ defines how the pointing device moves."
 					    Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5), Xen_integer_to_C_int(arg6))));
 }
 
-static XEN gxm_XChangeKeyboardMapping(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XChangeKeyboardMapping(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XChangeKeyboardMapping "XChangeKeyboardMapping(display, first_keycode, keysyms_per_keycode, keysyms, num_codes) defines the \
 symbols for the specified number of KeyCodes starting with first_keycode."
@@ -11091,13 +11091,13 @@ symbols for the specified number of KeyCodes starting with first_keycode."
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XChangeKeyboardControl(XEN arg1, XEN arg2, XEN larg3)
+static Xen gxm_XChangeKeyboardControl(Xen arg1, Xen arg2, Xen larg3)
 {
   #define H_XChangeKeyboardControl "XChangeKeyboardControl(display, value_mask, values) controls the keyboard characteristics defined by \
 the XKeyboardControl structure."
   /* DIFF: XChangeKeyboardControl arg3 is list of XKeyboardControl fields
    */
-  XEN arg3;
+  Xen arg3;
   XKeyboardControl kc;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XChangeKeyboardControl", "Display*");
   Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XChangeKeyboardControl", "ulong");
@@ -11129,7 +11129,7 @@ the XKeyboardControl structure."
   return(C_int_to_Xen_integer(XChangeKeyboardControl(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), &kc)));
 }
 
-static XEN gxm_XChangeGC(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XChangeGC(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XChangeGC "XChangeGC(display, gc, valuemask, values) changes the components specified by valuemask for the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XChangeGC", "Display*");
@@ -11139,7 +11139,7 @@ static XEN gxm_XChangeGC(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XChangeGC(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_XGCValues(arg4))));
 }
 
-static XEN gxm_XChangeActivePointerGrab(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XChangeActivePointerGrab(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XChangeActivePointerGrab "XChangeActivePointerGrab(display, event_mask, cursor, time) changes the specified dynamic parameters \
 if the pointer is actively grabbed by the client and if the specified time is no earlier than the last-pointer-grab time and no later than \
@@ -11151,28 +11151,28 @@ the current X server time."
   return(C_int_to_Xen_integer(XChangeActivePointerGrab(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_Cursor(arg3), Xen_to_C_Time(arg4))));
 }
 
-static XEN gxm_XCellsOfScreen(XEN arg1)
+static Xen gxm_XCellsOfScreen(Xen arg1)
 {
   #define H_CellsOfScreen "CellsOfScreen(screen): returns the number of colormap cells in the default colormap of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XCellsOfScreen", "Screen*");
   return(C_int_to_Xen_integer(XCellsOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XBitmapUnit(XEN arg1)
+static Xen gxm_XBitmapUnit(Xen arg1)
 {
   #define H_BitmapUnit "BitmapUnit(display): returns the size of a bitmap's scanline unit in bits."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XBitmapUnit", "Display*");
   return(C_int_to_Xen_integer(XBitmapUnit(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XBitmapPad(XEN arg1)
+static Xen gxm_XBitmapPad(Xen arg1)
 {
   #define H_BitmapPad "BitmapPad(display): returns the number of bits that each scanline must be padded."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XBitmapPad", "Display*");
   return(C_int_to_Xen_integer(XBitmapPad(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XBitmapBitOrder(XEN arg1)
+static Xen gxm_XBitmapBitOrder(Xen arg1)
 {
   #define H_BitmapBitOrder "BitmapBitOrder(display): returns LSBFirst or MSBFirst to indicate whether the leftmost bit in the bitmap as \
 displayed on the screen is the least or most significant bit in the unit."
@@ -11180,7 +11180,7 @@ displayed on the screen is the least or most significant bit in the unit."
   return(C_int_to_Xen_integer(XBitmapBitOrder(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XBell(XEN arg1, XEN arg2)
+static Xen gxm_XBell(Xen arg1, Xen arg2)
 {
   #define H_XBell "XBell(display, percent) rings the bell on the keyboard on the specified display, if possible."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XBell", "Display*");
@@ -11188,21 +11188,21 @@ static XEN gxm_XBell(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XBell(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XAutoRepeatOn(XEN arg1)
+static Xen gxm_XAutoRepeatOn(Xen arg1)
 {
   #define H_XAutoRepeatOn "XAutoRepeatOn(display) turns on auto-repeat for the keyboard on the specified display."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XAutoRepeatOn", "Display*");
   return(C_int_to_Xen_integer(XAutoRepeatOn(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XAutoRepeatOff(XEN arg1)
+static Xen gxm_XAutoRepeatOff(Xen arg1)
 {
   #define H_XAutoRepeatOff "XAutoRepeatOff(display) turns off auto-repeat for the keyboard on the specified display."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XAutoRepeatOff", "Display*");
   return(C_int_to_Xen_integer(XAutoRepeatOff(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XAllowEvents(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XAllowEvents(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XAllowEvents "XAllowEvents(display, event_mode, time)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XAllowEvents", "Display*");
@@ -11211,7 +11211,7 @@ static XEN gxm_XAllowEvents(XEN arg1, XEN arg2, XEN arg3)
   return(C_int_to_Xen_integer(XAllowEvents(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2), Xen_to_C_Time(arg3))));
 }
 
-static XEN gxm_XAllocNamedColor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XAllocNamedColor(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XAllocNamedColor "Status XAllocNamedColor(display, colormap, color_name, screen_def_return, exact_def_return) looks up the \
 named color with respect to the screen that is associated with the specified colormap."
@@ -11226,7 +11226,7 @@ named color with respect to the screen that is associated with the specified col
 				       Xen_to_C_XColor(arg4), Xen_to_C_XColor(arg5))));
 }
 
-static XEN gxm_XAllocColorPlanes(XEN args)
+static Xen gxm_XAllocColorPlanes(Xen args)
 {
   #define H_XAllocColorPlanes "Status XAllocColorPlanes(display, colormap, contig, ncolors, nreds, ngreens, nblues)"
   /* DIFF: XAllocColorPlanes omits pixel array (arg4) and trailing 3 args, returns them and embedded list of pixels
@@ -11234,8 +11234,8 @@ static XEN gxm_XAllocColorPlanes(XEN args)
   unsigned long r,g,b;
   unsigned long *ps;
   int i, len, val;
-  XEN lst = Xen_false;
-  XEN arg1, arg2, arg3, arg5, arg6, arg7, arg8;
+  Xen lst = Xen_false;
+  Xen arg1, arg2, arg3, arg5, arg6, arg7, arg8;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -11261,7 +11261,7 @@ static XEN gxm_XAllocColorPlanes(XEN args)
 			  &r, &g, &b);
   if (val != 0)
     {
-      XEN plist = Xen_empty_list;
+      Xen plist = Xen_empty_list;
       int loc;
       loc = xm_protect(plist);
       for (i = len - 1; i >= 0; i--)
@@ -11277,14 +11277,14 @@ static XEN gxm_XAllocColorPlanes(XEN args)
   return(lst);
 }
 
-static XEN gxm_XAllocColorCells(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XAllocColorCells(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XAllocColorCells "Status XAllocColorCells(display, colormap, contig, nplanes, npixels) \
 allocates read/write color cells."
   /* DIFF: XAllocColorCells arg 4 and 6 omitted and returned as (embedded) lists 
    */
   int mlen, plen, i, val;
-  XEN mlst = Xen_empty_list, plst = Xen_empty_list;
+  Xen mlst = Xen_empty_list, plst = Xen_empty_list;
   unsigned long *ms, *ps;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XAllocColorCells", "Display*");
   Xen_check_type(Xen_is_Colormap(arg2), arg2, 2, "XAllocColorCells", "Colormap");
@@ -11323,7 +11323,7 @@ allocates read/write color cells."
   return(Xen_false);
 }
 
-static XEN gxm_XAllocColor(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XAllocColor(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XAllocColor "Status XAllocColor(display, colormap, screen_in_out) allocates a read-only colormap entry corresponding to the \
 closest RGB value supported by the hardware."
@@ -11333,14 +11333,14 @@ closest RGB value supported by the hardware."
   return(C_int_to_Xen_integer(XAllocColor(Xen_to_C_Display(arg1), Xen_to_C_Colormap(arg2), Xen_to_C_XColor(arg3))));
 }
 
-static XEN gxm_XActivateScreenSaver(XEN arg1)
+static Xen gxm_XActivateScreenSaver(Xen arg1)
 {
   #define H_XActivateScreenSaver "XActivateScreenSaver(display) activates the screen saver."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XActivateScreenSaver", "Display*");
   return(C_int_to_Xen_integer(XActivateScreenSaver(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XSetTransientForHint(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XSetTransientForHint(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XSetTransientForHint "XSetTransientForHint(display, w, prop_window) sets the WM_TRANSIENT_FOR property of the specified \
 window to the specified prop_window."
@@ -11350,7 +11350,7 @@ window to the specified prop_window."
   return(C_int_to_Xen_integer(XSetTransientForHint(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_to_C_Window(arg3))));
 }
 
-static XEN gxm_XSetWMColormapWindows(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XSetWMColormapWindows(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XSetWMColormapWindows "Status XSetWMColormapWindows(display, w, colormap_windows, count) replaces the WM_COLORMAP_WINDOWS property \
 on the specified window with the list of windows specified by the colormap_windows argument."
@@ -11372,13 +11372,13 @@ on the specified window with the list of windows specified by the colormap_windo
   return(C_int_to_Xen_integer(rtn));
 }
 
-static XEN gxm_XGetWMColormapWindows(XEN arg1, XEN arg2)
+static Xen gxm_XGetWMColormapWindows(Xen arg1, Xen arg2)
 {
   #define H_XGetWMColormapWindows "Status XGetWMColormapWindows(display, w): returns the list of \
 window identifiers stored in the WM_COLORMAP_WINDOWS property on the specified window."
   /* DIFF: XGetWMColormapWindows omit last 2 args, return list of windows
    */
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   int i, len, rtn, loc;
   Window *ws;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetWMColormapWindows", "Display*");
@@ -11396,7 +11396,7 @@ window identifiers stored in the WM_COLORMAP_WINDOWS property on the specified w
   return(lst);
 }
 
-static XEN gxm_XGetCommand(XEN arg1, XEN arg2)
+static Xen gxm_XGetCommand(Xen arg1, Xen arg2)
 {
   #define H_XGetCommand "Status XGetCommand(display, w) reads the WM_COMMAND property from the specified window \
 and returns a string list."
@@ -11404,7 +11404,7 @@ and returns a string list."
    */
   char **argv;
   int argc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Status err;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetCommand", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XGetCommand", "Window");
@@ -11421,7 +11421,7 @@ and returns a string list."
   return(lst);
 }
 
-static XEN gxm_XWithdrawWindow(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XWithdrawWindow(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XWithdrawWindow "Status XWithdrawWindow(display, w, screen_number) unmaps the specified window and sends a synthetic  \
 UnmapNotify event to the root window of the specified screen."
@@ -11431,7 +11431,7 @@ UnmapNotify event to the root window of the specified screen."
   return(C_int_to_Xen_integer(XWithdrawWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XIconifyWindow(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XIconifyWindow(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XIconifyWindow "Status XIconifyWindow(display, w, screen_number) sends a WM_CHANGE_STATE  ClientMessage event with a format of \
 32 and a first data element of IconicState to the root window of the specified screen with an event mask set to \
@@ -11442,7 +11442,7 @@ SubstructureNotifyMask | SubstructureRedirectMask."
   return(C_int_to_Xen_integer(XIconifyWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XSetWMProtocols(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XSetWMProtocols(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XSetWMProtocols "Status XSetWMProtocols(display, w, protocols, count) replaces the WM_PROTOCOLS property on the \
 specified window with the list of atoms specified by the protocols argument."
@@ -11462,7 +11462,7 @@ specified window with the list of atoms specified by the protocols argument."
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XGetWMProtocols(XEN arg1, XEN arg2)
+static Xen gxm_XGetWMProtocols(Xen arg1, Xen arg2)
 {
   #define H_XGetWMProtocols "Status XGetWMProtocols(display, w): returns the list of atoms stored in the \
 WM_PROTOCOLS property on the specified window."
@@ -11470,7 +11470,7 @@ WM_PROTOCOLS property on the specified window."
    */
   Atom *ats;
   int len, i, val, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetWMProtocols", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XGetWMProtocols", "Window");
   val = XGetWMProtocols(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), &ats, &len);
@@ -11484,7 +11484,7 @@ WM_PROTOCOLS property on the specified window."
   return(lst);
 }
 
-static XEN gxm_XReconfigureWMWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XReconfigureWMWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XReconfigureWMWindow "Status XReconfigureWMWindow(display, w, screen_number, value_mask, values) issues a  ConfigureWindow \
 request on the specified top-level window."
@@ -11497,13 +11497,13 @@ request on the specified top-level window."
 					   Xen_to_C_XWindowChanges(arg5))));
 }
 
-static XEN gxm_XListDepths(XEN arg1, XEN arg2)
+static Xen gxm_XListDepths(Xen arg1, Xen arg2)
 {
   #define H_XListDepths "int *XListDepths(display, screen_number): returns the array of depths that are available on the \
 specified screen."
   /* DIFF: XListDepths omits last arg, returns list of depths
    */
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   int i, len, loc;
   int *ds;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XListDepths", "Display*");
@@ -11517,7 +11517,7 @@ specified screen."
   return(lst);
 }
 
-static XEN gxm_XListPixmapFormats(XEN arg1)
+static Xen gxm_XListPixmapFormats(Xen arg1)
 {
   #define H_XListPixmapFormats "XPixmapFormatValues *XListPixmapFormats(display): returns an array of XPixmapFormatValues \
 structures that describe the types of Z format images supported by the specified display."
@@ -11525,7 +11525,7 @@ structures that describe the types of Z format images supported by the specified
    */
   XPixmapFormatValues *ps;
   int len, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XListPixmapFormats", "Display*");
   ps = XListPixmapFormats(Xen_to_C_Display(arg1), &len);
   loc = xm_protect(lst);
@@ -11544,17 +11544,17 @@ structures that describe the types of Z format images supported by the specified
 }
 
 
-static XEN xm_XIOErrorHandler;
+static Xen xm_XIOErrorHandler;
 static int gxm_XIOErrorHandler(Display *dpy)
 {
   Xen_call_with_1_arg(xm_XIOErrorHandler, C_to_Xen_Display(dpy), __func__);
   return(0); /* never happens */
 }
 
-static XEN gxm_XSetIOErrorHandler(XEN arg1)
+static Xen gxm_XSetIOErrorHandler(Xen arg1)
 {
   #define H_XSetIOErrorHandler "int (*XSetIOErrorHandler(handler))() sets the fatal I/O error handler. "
-  XEN old_val;
+  Xen old_val;
   Xen_check_type(Xen_is_false(arg1) || Xen_is_procedure(arg1), arg1, 1, "XSetIOErrorHandler", PROC_FALSE "=null or function of 1 arg");
   xm_protect(arg1);
   old_val = xm_XIOErrorHandler;
@@ -11566,7 +11566,7 @@ static XEN gxm_XSetIOErrorHandler(XEN arg1)
   return(old_val);
 }
 
-static XEN xm_XErrorHandler;
+static Xen xm_XErrorHandler;
 
 static int gxm_XErrorHandler(Display *dpy, XErrorEvent *e)
 {
@@ -11574,10 +11574,10 @@ static int gxm_XErrorHandler(Display *dpy, XErrorEvent *e)
   return(0); /* never happens */
 }
 
-static XEN gxm_XSetErrorHandler(XEN arg1)
+static Xen gxm_XSetErrorHandler(Xen arg1)
 {
   #define H_XSetErrorHandler "XSetErrorHandler(proc) causes proc to be called if an error occurs"
-  XEN old_val;
+  Xen old_val;
   Xen_check_type(Xen_is_false(arg1) || Xen_is_procedure(arg1), arg1, 1, "XSetErrorHandler", PROC_FALSE "=null or function of 2 args");
   xm_protect(arg1);
   old_val = xm_XErrorHandler;
@@ -11589,28 +11589,28 @@ static XEN gxm_XSetErrorHandler(XEN arg1)
   return(old_val);
 }
 
-static XEN gxm_XScreenNumberOfScreen(XEN arg1)
+static Xen gxm_XScreenNumberOfScreen(Xen arg1)
 {
   #define H_XScreenNumberOfScreen "int XScreenNumberOfScreen(screen): returns the screen index number of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XScreenNumberOfScreen", "Screen*");
   return(C_int_to_Xen_integer(XScreenNumberOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XEventMaskOfScreen(XEN arg1)
+static Xen gxm_XEventMaskOfScreen(Xen arg1)
 {
   #define H_EventMaskOfScreen "EventMaskOfScreen(screen): returns the root event mask of the root window for the specified screen at connection setup."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XEventMaskOfScreen", "Screen*");
   return(C_ulong_to_Xen_ulong(XEventMaskOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XDefaultScreenOfDisplay(XEN arg1)
+static Xen gxm_XDefaultScreenOfDisplay(Xen arg1)
 {
   /* #define DefaultScreenOfDisplay(display) */
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDefaultScreenOfDisplay", "Display*");
   return(C_to_Xen_Screen(XDefaultScreenOfDisplay(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XScreenOfDisplay(XEN arg1, XEN arg2)
+static Xen gxm_XScreenOfDisplay(Xen arg1, Xen arg2)
 {
   #define H_ScreenOfDisplay "ScreenOfDisplay(display, screen_number): returns a pointer to the screen of the specified display."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XScreenOfDisplay", "Display*");
@@ -11618,21 +11618,21 @@ static XEN gxm_XScreenOfDisplay(XEN arg1, XEN arg2)
   return(C_to_Xen_Screen(XScreenOfDisplay(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDisplayOfScreen(XEN arg1)
+static Xen gxm_XDisplayOfScreen(Xen arg1)
 {
   #define H_DisplayOfScreen "DisplayOfScreen(screen): returns the display of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XDisplayOfScreen", "Screen*");
   return(C_to_Xen_Display(XDisplayOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XDefaultColormapOfScreen(XEN arg1)
+static Xen gxm_XDefaultColormapOfScreen(Xen arg1)
 {
   #define H_DefaultColormapOfScreen "DefaultColormapOfScreen(screen): returns the default colormap of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XDefaultColormapOfScreen", "Screen*");
   return(C_to_Xen_Colormap(XDefaultColormapOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XDefaultColormap(XEN arg1, XEN arg2)
+static Xen gxm_XDefaultColormap(Xen arg1, Xen arg2)
 {
   #define H_DefaultColormap "DefaultColormap(display, screen_number): returns the default colormap ID for allocation on the specified screen."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDefaultColormap", "Display*");
@@ -11640,14 +11640,14 @@ static XEN gxm_XDefaultColormap(XEN arg1, XEN arg2)
   return(C_to_Xen_Colormap(XDefaultColormap(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDisplayString(XEN arg1)
+static Xen gxm_XDisplayString(Xen arg1)
 {
   #define H_DisplayString "DisplayString(display): returns the string that was passed to XOpenDisplay when the current display was opened."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDisplayString", "Display*");
   return(C_string_to_Xen_string(XDisplayString(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XServerVendor(XEN arg1)
+static Xen gxm_XServerVendor(Xen arg1)
 {
   #define H_ServerVendor "ServerVendor(display): returns a pointer to a null-terminated string that provides some identification of the \
 owner of the X server implementation."
@@ -11655,7 +11655,7 @@ owner of the X server implementation."
   return(C_string_to_Xen_string(XServerVendor(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XLastKnownRequestProcessed(XEN arg1)
+static Xen gxm_XLastKnownRequestProcessed(Xen arg1)
 {
   #define H_LastKnownRequestProcessed "LastKnownRequestProcessed(display) extracts the full serial number of the last request known by Xlib \
 to have been processed by the X server."
@@ -11663,34 +11663,34 @@ to have been processed by the X server."
   return(C_ulong_to_Xen_ulong(XLastKnownRequestProcessed(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XNextRequest(XEN arg1)
+static Xen gxm_XNextRequest(Xen arg1)
 {
   #define H_NextRequest "NextRequest(display) extracts the full serial number that is to be used for the next request."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XNextRequest", "Display*");
   return(C_ulong_to_Xen_ulong(XNextRequest(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XWhitePixelOfScreen(XEN arg1)
+static Xen gxm_XWhitePixelOfScreen(Xen arg1)
 {
   #define H_WhitePixelOfScreen "WhitePixelOfScreen(screen): returns the white pixel value of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XWhitePixelOfScreen", "Screen*");
   return(C_to_Xen_Pixel(XWhitePixelOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XBlackPixelOfScreen(XEN arg1)
+static Xen gxm_XBlackPixelOfScreen(Xen arg1)
 {
   #define H_BlackPixelOfScreen "BlackPixelOfScreen(screen): returns the black pixel value of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XBlackPixelOfScreen", "Screen*");
   return(C_to_Xen_Pixel(XBlackPixelOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XAllPlanes(void)
+static Xen gxm_XAllPlanes(void)
 {
   #define H_AllPlanes "Allplanes(): returns a value with all bits set to 1 suitable for use in a plane argument to a procedure."
   return(C_ulong_to_Xen_ulong(XAllPlanes()));
 }
 
-static XEN gxm_XWhitePixel(XEN arg1, XEN arg2)
+static Xen gxm_XWhitePixel(Xen arg1, Xen arg2)
 {
   #define H_WhitePixel "WhitePixel(display, screen_number): returns the white pixel value for the specified screen."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XWhitePixel", "Display*");
@@ -11698,7 +11698,7 @@ static XEN gxm_XWhitePixel(XEN arg1, XEN arg2)
   return(C_to_Xen_Pixel(XWhitePixel(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XBlackPixel(XEN arg1, XEN arg2)
+static Xen gxm_XBlackPixel(Xen arg1, Xen arg2)
 {
   #define H_BlackPixel "BlackPixel(display, screen_number): returns the black pixel value for the specified screen."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XBlackPixel", "Display*");
@@ -11706,7 +11706,7 @@ static XEN gxm_XBlackPixel(XEN arg1, XEN arg2)
   return(C_to_Xen_Pixel(XBlackPixel(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDefaultGCOfScreen(XEN arg1)
+static Xen gxm_XDefaultGCOfScreen(Xen arg1)
 {
   #define H_DefaultGCOfScreen "DefaultGCOfScreen(screen): returns the default GC of the specified screen, which has the same depth as the root \
 window of the screen."
@@ -11714,7 +11714,7 @@ window of the screen."
   return(C_to_Xen_GC(XDefaultGCOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XDefaultGC(XEN arg1, XEN arg2)
+static Xen gxm_XDefaultGC(Xen arg1, Xen arg2)
 {
   #define H_DefaultGC "DefaultGC(display, screen_number): returns the default GC for the root window of the "
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDefaultGC", "Display*");
@@ -11722,14 +11722,14 @@ static XEN gxm_XDefaultGC(XEN arg1, XEN arg2)
   return(C_to_Xen_GC(XDefaultGC(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XDefaultVisualOfScreen(XEN arg1)
+static Xen gxm_XDefaultVisualOfScreen(Xen arg1)
 {
   #define H_DefaultVisualOfScreen "DefaultVisualOfScreen(screen): returns the default visual of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XDefaultVisualOfScreen", "Screen*");
   return(C_to_Xen_Visual(XDefaultVisualOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XDefaultVisual(XEN arg1, XEN arg2)
+static Xen gxm_XDefaultVisual(Xen arg1, Xen arg2)
 {
   #define H_DefaultVisual "DefaultVisual(display, screen_number): returns the default visual type for the specified screen."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDefaultVisual", "Display*");
@@ -11737,21 +11737,21 @@ static XEN gxm_XDefaultVisual(XEN arg1, XEN arg2)
   return(C_to_Xen_Visual(XDefaultVisual(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XRootWindowOfScreen(XEN arg1)
+static Xen gxm_XRootWindowOfScreen(Xen arg1)
 {
   #define H_RootWindowOfScreen "RootWindowOfScreen(screen): returns the root window of the specified screen."
   Xen_check_type(Xen_is_Screen(arg1), arg1, 1, "XRootWindowOfScreen", "Screen*");
   return(C_to_Xen_Window(XRootWindowOfScreen(Xen_to_C_Screen(arg1))));
 }
 
-static XEN gxm_XDefaultRootWindow(XEN arg1)
+static Xen gxm_XDefaultRootWindow(Xen arg1)
 {
   #define H_DefaultRootWindow "DefaultRootWindow(display): returns the root window for the default screen."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDefaultRootWindow", "Display*");
   return(C_to_Xen_Window(XDefaultRootWindow(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XRootWindow(XEN arg1, XEN arg2)
+static Xen gxm_XRootWindow(Xen arg1, Xen arg2)
 {
   #define H_RootWindow "RootWindow(display, screen_number): returns the root window."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XRootWindow", "Display*");
@@ -11759,21 +11759,21 @@ static XEN gxm_XRootWindow(XEN arg1, XEN arg2)
   return(C_to_Xen_Window(XRootWindow(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XVisualIDFromVisual(XEN arg1)
+static Xen gxm_XVisualIDFromVisual(Xen arg1)
 {
   #define H_XVisualIDFromVisual "VisualID XVisualIDFromVisual(visual): returns the visual ID for the specified visual type."
   Xen_check_type(Xen_is_Visual(arg1), arg1, 1, "XVisualIDFromVisual", "Visual*");
   return(C_ulong_to_Xen_ulong(XVisualIDFromVisual(Xen_to_C_Visual(arg1))));
 }
 
-static XEN gxm_XDisplayMotionBufferSize(XEN arg1)
+static Xen gxm_XDisplayMotionBufferSize(Xen arg1)
 {
   #define H_XDisplayMotionBufferSize "unsigned long XDisplayMotionBufferSize(display)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDisplayMotionBufferSize", "Display*");
   return(C_ulong_to_Xen_ulong(XDisplayMotionBufferSize(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XExtendedMaxRequestSize(XEN arg1)
+static Xen gxm_XExtendedMaxRequestSize(Xen arg1)
 {
   #define H_XExtendedMaxRequestSize "long XExtendedMaxRequestSize(display): returns zero if the specified display does not support an \
 extended-length protocol encoding; otherwise, it returns the maximum request size (in 4-byte units) supported by the server using the \
@@ -11782,7 +11782,7 @@ extended-length encoding."
   return(C_int_to_Xen_integer(XExtendedMaxRequestSize(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XMaxRequestSize(XEN arg1)
+static Xen gxm_XMaxRequestSize(Xen arg1)
 {
   #define H_XMaxRequestSize "long XMaxRequestSize(display): returns the maximum request size (in 4-byte units) supported by the server \
 without using an extended-length protocol encoding."
@@ -11790,14 +11790,14 @@ without using an extended-length protocol encoding."
   return(C_int_to_Xen_integer(XMaxRequestSize(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XStringToKeysym(XEN arg1)
+static Xen gxm_XStringToKeysym(Xen arg1)
 {
   #define H_XStringToKeysym "KeySym XStringToKeysym(string)"
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XStringToKeysym", "char*");
   return(C_to_Xen_KeySym(XStringToKeysym((char *)Xen_string_to_C_string(arg1))));
 }
 
-static XEN gxm_XGetKeyboardMapping(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XGetKeyboardMapping(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XGetKeyboardMapping "KeySym *XGetKeyboardMapping(display, first_keycode, keycode_count): returns \
 the symbols for the specified number of KeyCodes starting with first_keycode."
@@ -11805,7 +11805,7 @@ the symbols for the specified number of KeyCodes starting with first_keycode."
    */
   int n, i, len, count, loc;
   KeySym *keys;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetKeyboardMapping", "Display*");
   Xen_check_type(Xen_is_KeyCode(arg2), arg2, 2, "XGetKeyboardMapping", "KeyCode");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XGetKeyboardMapping", "int");
@@ -11820,7 +11820,7 @@ the symbols for the specified number of KeyCodes starting with first_keycode."
   return(lst);
 }
 
-static XEN gxm_XLookupKeysym(XEN arg1, XEN arg2)
+static Xen gxm_XLookupKeysym(Xen arg1, Xen arg2)
 {
   #define H_XLookupKeysym "KeySym XLookupKeysym(key_event, index) uses a given keyboard event and the index you specified to return \
 the KeySym from the list that corresponds to the KeyCode member in the XKeyPressedEvent or XKeyReleasedEvent structure."
@@ -11831,7 +11831,7 @@ the KeySym from the list that corresponds to the KeyCode member in the XKeyPress
 
 #if 0
 /* this has been deprecated for XkbKeycodeToKeysym */
-static XEN gxm_XKeycodeToKeysym(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XKeycodeToKeysym(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XKeycodeToKeysym "KeySym XKeycodeToKeysym(display, keycode, index) uses internal Xlib tables and returns the KeySym defined \
 for the specified KeyCode and the element of the KeyCode vector."
@@ -11842,14 +11842,14 @@ for the specified KeyCode and the element of the KeyCode vector."
 }
 #endif
 
-static XEN gxm_XListProperties(XEN arg1, XEN arg2)
+static Xen gxm_XListProperties(Xen arg1, Xen arg2)
 {
   #define H_XListProperties "Atom *XListProperties(display, w): returns a pointer to an array of atom properties that \
 are defined for the specified window or returns NULL if no properties were found."
   /* DIFF: XListProperties returns list, no arg3
    */
   int i, len, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Atom *ats;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XListProperties", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XListProperties", "Window");
@@ -11864,13 +11864,13 @@ are defined for the specified window or returns NULL if no properties were found
   return(lst);
 }
 
-static XEN gxm_XListExtensions(XEN arg1)
+static Xen gxm_XListExtensions(Xen arg1)
 {
   #define H_XListExtensions "XListExtensions(dpy): list of strings describing available extensions"
   /* DIFF: XListExtensions omits arg2, returns list
    */
   int i, len, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   char **str;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XListExtensions", "Display*");
   str = XListExtensions(Xen_to_C_Display(arg1), &len);
@@ -11882,13 +11882,13 @@ static XEN gxm_XListExtensions(XEN arg1)
   return(lst);
 }
 
-static XEN gxm_XGetFontPath(XEN arg1)
+static Xen gxm_XGetFontPath(Xen arg1)
 {
   #define H_XGetFontPath "char **XGetFontPath(display) allocates and returns an array of strings containing the search path."
   /* DIFF: XGetFontPath omits arg2, returns list
    */
   int i, len, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   char **str;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetFontPath", "Display*");
   str = XGetFontPath(Xen_to_C_Display(arg1), &len);
@@ -11900,7 +11900,7 @@ static XEN gxm_XGetFontPath(XEN arg1)
   return(lst);
 }
 
-static XEN gxm_XListFontsWithInfo(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XListFontsWithInfo(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XListFontsWithInfo "char **XListFontsWithInfo(display, pattern, maxnames): returns a list of \
 font names that match the specified pattern and their associated font information."
@@ -11909,7 +11909,7 @@ font names that match the specified pattern and their associated font informatio
   int i, count, loc;
   XFontStruct *info;
   char **val;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XListFontsWithInfo", "Display*");
   Xen_check_type(Xen_is_string(arg2), arg2, 2, "XListFontsWithInfo", "char*");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XListFontsWithInfo", "int");
@@ -11925,14 +11925,14 @@ font names that match the specified pattern and their associated font informatio
   return(lst);
 }
 
-static XEN gxm_XListFonts(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XListFonts(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XListFonts "char **XListFonts(display, pattern, maxnames): returns an array of available font names that match \
 the string you passed to the pattern argument."
   /* DIFF: XListFonts omits arg4, returns list
    */
   int i, len, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   char **str;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XListFonts", "Display*");
   Xen_check_type(Xen_is_string(arg2), arg2, 2, "XListFonts", "char*");
@@ -11946,7 +11946,7 @@ the string you passed to the pattern argument."
   return(lst);
 }
 
-static XEN gxm_XListInstalledColormaps(XEN arg1, XEN arg2)
+static Xen gxm_XListInstalledColormaps(Xen arg1, Xen arg2)
 {
   #define H_XListInstalledColormaps "Colormap *XListInstalledColormaps(display, w): returns a list of the currently installed \
 colormaps for the screen of the specified window."
@@ -11954,7 +11954,7 @@ colormaps for the screen of the specified window."
    */
   Colormap *cm;
   int i, len, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XListInstalledColormaps", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XListInstalledColormaps", "Window");
   cm = XListInstalledColormaps(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), &len);
@@ -11966,12 +11966,12 @@ colormaps for the screen of the specified window."
   return(lst);
 }
 
-static XEN gxm_XCreateWindow(XEN args)
+static Xen gxm_XCreateWindow(Xen args)
 {
   #define H_XCreateWindow "Window XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) \
 creates an unmapped subwindow for a specified parent window, returns the window ID of the created window, and causes the X server to generate \
 a CreateNotify event."
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -12006,7 +12006,7 @@ a CreateNotify event."
 				       Xen_to_C_XSetWindowAttributes(arg12))));
 }
 
-static XEN gxm_XGetSelectionOwner(XEN arg1, XEN arg2)
+static Xen gxm_XGetSelectionOwner(Xen arg1, Xen arg2)
 {
   #define H_XGetSelectionOwner "Window XGetSelectionOwner(display, selection): returns the window ID associated with the window that \
 currently owns the specified selection."
@@ -12015,7 +12015,7 @@ currently owns the specified selection."
   return(C_to_Xen_Window(XGetSelectionOwner(Xen_to_C_Display(arg1), Xen_to_C_Atom(arg2))));
 }
 
-static XEN gxm_XCreateSimpleWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
+static Xen gxm_XCreateSimpleWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8, Xen arg9)
 {
   #define H_XCreateSimpleWindow "Window XCreateSimpleWindow(display, parent, x, y, width, height, border_width, border, background) \
 creates an unmapped InputOutput subwindow for a specified parent window, returns the window ID of the created window, and causes the X \
@@ -12037,7 +12037,7 @@ server to generate a CreateNotify event."
 					     Xen_to_C_Pixel(arg9))));
 }
 
-static XEN gxm_XCreatePixmapFromBitmapData(XEN arg1, XEN arg2, XEN larg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static Xen gxm_XCreatePixmapFromBitmapData(Xen arg1, Xen arg2, Xen larg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
   #define H_XCreatePixmapFromBitmapData "Pixmap XCreatePixmapFromBitmapData(display, d, data, width, height, fg, bg, depth) creates a \
 pixmap of the given depth and then does a bitmap-format XPutImage of the data into it."
@@ -12046,7 +12046,7 @@ pixmap of the given depth and then does a bitmap-format XPutImage of the data in
   char *bits;
   int i, len;
   Pixmap p;
-  XEN arg3;
+  Xen arg3;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreatePixmapFromBitmapData", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XCreatePixmapFromBitmapData", "Drawable");
   Xen_check_type(Xen_is_list(larg3), larg3, 3, "XCreatePixmapFromBitmapData", "list of char");
@@ -12071,7 +12071,7 @@ pixmap of the given depth and then does a bitmap-format XPutImage of the data in
   return(C_to_Xen_Pixmap(p));
 }
 
-static XEN gxm_XCreateBitmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg4, XEN arg5)
+static Xen gxm_XCreateBitmapFromData(Xen arg1, Xen arg2, Xen larg3, Xen arg4, Xen arg5)
 {
   #define H_XCreateBitmapFromData "Pixmap XCreateBitmapFromData(display, d, data, width, height) allows you to include in your C \
 program a bitmap file that was written out by XWriteBitmapFile"
@@ -12080,7 +12080,7 @@ program a bitmap file that was written out by XWriteBitmapFile"
   char *bits;
   int i, len;
   Pixmap p;
-  XEN arg3;
+  Xen arg3;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreateBitmapFromData", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XCreateBitmapFromData", "Drawable");
   Xen_check_type(Xen_is_list(larg3), larg3, 3, "XCreateBitmapFromData", "list of char");
@@ -12101,7 +12101,7 @@ program a bitmap file that was written out by XWriteBitmapFile"
   return(C_to_Xen_Pixmap(p));
 }
 
-static XEN gxm_XCreatePixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XCreatePixmap(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XCreatePixmap "Pixmap XCreatePixmap(display, d, width, height, depth)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreatePixmap", "Display*");
@@ -12113,7 +12113,7 @@ static XEN gxm_XCreatePixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 				       Xen_ulong_to_C_ulong(arg3), Xen_ulong_to_C_ulong(arg4), Xen_ulong_to_C_ulong(arg5))));
 }
 
-static XEN gxm_XFlushGC(XEN arg1, XEN arg2)
+static Xen gxm_XFlushGC(Xen arg1, Xen arg2)
 {
   #define H_XFlushGC "XFlushGC(dpy, gc) forces cached GC changes to X server"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFlushGC", "Display*");
@@ -12122,7 +12122,7 @@ static XEN gxm_XFlushGC(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XCreateGC(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XCreateGC(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XCreateGC "GC XCreateGC(display, d, valuemask, values) creates a graphics context and returns a GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreateGC", "Display*");
@@ -12132,7 +12132,7 @@ static XEN gxm_XCreateGC(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_to_Xen_GC(XCreateGC(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_XGCValues(arg4))));
 }
 
-static XEN gxm_XLoadFont(XEN arg1, XEN arg2)
+static Xen gxm_XLoadFont(Xen arg1, Xen arg2)
 {
   #define H_XLoadFont "Font XLoadFont(display, name) loads the specified font and returns its associated font ID."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XLoadFont", "Display*");
@@ -12140,7 +12140,7 @@ static XEN gxm_XLoadFont(XEN arg1, XEN arg2)
   return(C_to_Xen_Font(XLoadFont(Xen_to_C_Display(arg1), (char *)Xen_string_to_C_string(arg2))));
 }
 
-static XEN gxm_XCreateFontCursor(XEN arg1, XEN arg2)
+static Xen gxm_XCreateFontCursor(Xen arg1, Xen arg2)
 {
   #define H_XCreateFontCursor "Cursor XCreateFontCursor(display, shape)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreateFontCursor", "Display*");
@@ -12148,7 +12148,7 @@ static XEN gxm_XCreateFontCursor(XEN arg1, XEN arg2)
   return(C_to_Xen_Cursor(XCreateFontCursor(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
-static XEN gxm_XCreateGlyphCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XCreateGlyphCursor(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XCreateGlyphCursor "Cursor XCreateGlyphCursor(display, source_font, mask_font, source_char, mask_char, foreground_color, \
 background_color) is similar to XCreatePixmapCursor except that the source and mask bitmaps are obtained from the specified font glyphs."
@@ -12166,7 +12166,7 @@ background_color) is similar to XCreatePixmapCursor except that the source and m
 					    Xen_to_C_XColor(arg6), Xen_to_C_XColor(arg7))));
 }
 
-static XEN gxm_XCreatePixmapCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XCreatePixmapCursor(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XCreatePixmapCursor "Cursor XCreatePixmapCursor(display, source, mask, foreground_color, background_color, x, y) creates \
 a cursor and returns the cursor ID associated with it."
@@ -12185,7 +12185,7 @@ a cursor and returns the cursor ID associated with it."
 					     Xen_ulong_to_C_ulong(arg6), Xen_ulong_to_C_ulong(arg7))));
 }
 
-static XEN gxm_XCreateColormap(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XCreateColormap(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XCreateColormap "Colormap XCreateColormap(display, w, visual, alloc) creates a colormap of the specified visual type for \
 the screen on which the specified window resides and returns the colormap ID associated with it."
@@ -12196,7 +12196,7 @@ the screen on which the specified window resides and returns the colormap ID ass
   return(C_to_Xen_Colormap(XCreateColormap(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_to_C_Visual(arg3), Xen_integer_to_C_int(arg4))));
 }
 
-static XEN gxm_XCopyColormapAndFree(XEN arg1, XEN arg2)
+static Xen gxm_XCopyColormapAndFree(Xen arg1, Xen arg2)
 {
   #define H_XCopyColormapAndFree "Colormap XCopyColormapAndFree(display, colormap) creates a colormap of the same visual type and \
 for the same screen as the specified colormap and returns the new colormap ID."
@@ -12205,7 +12205,7 @@ for the same screen as the specified colormap and returns the new colormap ID."
   return(C_to_Xen_Colormap(XCopyColormapAndFree(Xen_to_C_Display(arg1), Xen_to_C_Colormap(arg2))));
 }
 
-static XEN gxm_XInternAtom(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XInternAtom(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XInternAtom "Atom XInternAtom(display, atom_name, only_if_exists): returns the atom identifier associated with the specified atom_name string."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XInternAtom", "Display*");
@@ -12214,7 +12214,7 @@ static XEN gxm_XInternAtom(XEN arg1, XEN arg2, XEN arg3)
   return(C_to_Xen_Atom(XInternAtom(Xen_to_C_Display(arg1), (char *)Xen_string_to_C_string(arg2), Xen_boolean_to_C_bool(arg3))));
 }
 
-static XEN xm_AfterFunction;
+static Xen xm_AfterFunction;
 
 static int default_after_function(Display *ignore) {return(0);}
 
@@ -12225,10 +12225,10 @@ static int gxm_AfterFunction(Display *dpy)
 				 __func__)));
 }
 
-static XEN gxm_XSetAfterFunction(XEN arg1, XEN arg2)
+static Xen gxm_XSetAfterFunction(Xen arg1, Xen arg2)
 {
   #define H_XSetAfterFunction "XSetAfterFunction(dpy, proc) sets a function (one arg: dpy) to be called after every X function call"
-  XEN old_func;
+  Xen old_func;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetAfterFunction", "Display*");
   xm_protect(arg2);
   old_func = xm_AfterFunction;
@@ -12240,7 +12240,7 @@ static XEN gxm_XSetAfterFunction(XEN arg1, XEN arg2)
   return(old_func);
 }
 
-static XEN gxm_XSynchronize(XEN arg1, XEN arg2)
+static Xen gxm_XSynchronize(Xen arg1, Xen arg2)
 {
   #define H_XSynchronize "int (*XSynchronize(display, onoff))() turns on/off synchronous behavior."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSynchronize", "Display*");
@@ -12250,25 +12250,25 @@ static XEN gxm_XSynchronize(XEN arg1, XEN arg2)
   return(xm_AfterFunction);
 }
 
-static XEN gxm_XKeysymToString(XEN arg1)
+static Xen gxm_XKeysymToString(Xen arg1)
 {
   #define H_XKeysymToString "char *XKeysymToString(keysym)"
   Xen_check_type(Xen_is_KeySym(arg1), arg1, 1, "XKeysymToString", "KeySym");
   return(C_string_to_Xen_string(XKeysymToString(Xen_to_C_KeySym(arg1))));
 }
 
-static XEN gxm_XDisplayName(XEN arg1)
+static Xen gxm_XDisplayName(Xen arg1)
 {
   #define H_XDisplayName "char *XDisplayName(string): returns the name of the display that  XOpenDisplay would attempt to use."
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XDisplayName", "char*");
   return(C_string_to_Xen_string(XDisplayName((char *)Xen_string_to_C_string(arg1))));
 }
 
-static XEN gxm_XGetAtomName(XEN arg1, XEN arg2)
+static Xen gxm_XGetAtomName(Xen arg1, Xen arg2)
 {
   #define H_XGetAtomName "char *XGetAtomName(display, atom): returns the name associated with the specified atom."
   char *str;
-  XEN res;
+  Xen res;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetAtomName", "Display*");
   Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XGetAtomName", "Atom");
   str = XGetAtomName(Xen_to_C_Display(arg1), Xen_to_C_Atom(arg2));
@@ -12277,13 +12277,13 @@ static XEN gxm_XGetAtomName(XEN arg1, XEN arg2)
   return(res);
 }
 
-static XEN gxm_XFetchBuffer(XEN arg1, XEN arg2)
+static Xen gxm_XFetchBuffer(Xen arg1, Xen arg2)
 {
   #define H_XFetchBuffer "char *XFetchBuffer(display, buffer): returns " PROC_FALSE " if there \
 is no data in the buffer or if an invalid buffer is specified, otherwise a string."
   int len = 0;
   char *buf;
-  XEN lst = Xen_false;
+  Xen lst = Xen_false;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFetchBuffer", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XFetchBuffer", "int");
   buf = XFetchBuffer(Xen_to_C_Display(arg1), &len, Xen_integer_to_C_int(arg2));
@@ -12295,14 +12295,14 @@ is no data in the buffer or if an invalid buffer is specified, otherwise a strin
   return(lst);
 }
 
-static XEN gxm_XFetchBytes(XEN arg1)
+static Xen gxm_XFetchBytes(Xen arg1)
 {
   #define H_XFetchBytes "char *XFetchBytes(display): returns the string in cut buffer 0"
   /* DIFF: XFetchBytes returns string, omits arg2
    */
   int len = 0;
   char *buf;
-  XEN lst = Xen_false;
+  Xen lst = Xen_false;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFetchBytes", "Display*");
   buf = XFetchBytes(Xen_to_C_Display(arg1), &len);
   if (len > 0) 
@@ -12313,7 +12313,7 @@ static XEN gxm_XFetchBytes(XEN arg1)
   return(lst);
 }
 
-static XEN gxm_XOpenDisplay(XEN arg1)
+static Xen gxm_XOpenDisplay(Xen arg1)
 {
   #define H_XOpenDisplay "Display *XOpenDisplay(display_name): returns a Display structure that serves as the connection to the X server \
 and that contains all the information about that X server."
@@ -12325,11 +12325,11 @@ and that contains all the information about that X server."
   return(Xen_false);
 }
 
-static XEN gxm_XGetSubImage(XEN args)
+static Xen gxm_XGetSubImage(Xen args)
 {
   #define H_XGetSubImage "XImage *XGetSubImage(display, d, x, y, width, height, plane_mask, format, dest_image, dest_x, dest_y) updates \
 dest_image with the specified subimage in the same manner as "
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -12361,7 +12361,7 @@ dest_image with the specified subimage in the same manner as "
 				      Xen_integer_to_C_int(arg10), Xen_integer_to_C_int(arg11))));
 }
 
-static XEN gxm_XGetImage(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static Xen gxm_XGetImage(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
   #define H_XGetImage "XImage *XGetImage(display, d, x, y, width, height, plane_mask, format): returns a pointer to an XImage structure."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetImage", "Display*");
@@ -12379,11 +12379,11 @@ static XEN gxm_XGetImage(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN a
 				   Xen_ulong_to_C_ulong(arg7), Xen_integer_to_C_int(arg8))));
 }
 
-static XEN gxm_XCreateImage(XEN args)
+static Xen gxm_XCreateImage(Xen args)
 {
   #define H_XCreateImage "XImage *XCreateImage(display, visual, depth, format, offset, data, width, height, bitmap_pad, bytes_per_line) \
 allocates the memory needed for an XImage structure for the specified display but does not allocate space for the image itself."
-  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
+  Xen arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
   arg1 = Xen_list_ref(args, 0);
   arg2 = Xen_list_ref(args, 1);
   arg3 = Xen_list_ref(args, 2);
@@ -12412,14 +12412,14 @@ allocates the memory needed for an XImage structure for the specified display bu
 				      Xen_integer_to_C_int(arg9), Xen_integer_to_C_int(arg10))));
 }
 
-static XEN gxm_XNewModifiermap(XEN arg1)
+static Xen gxm_XNewModifiermap(Xen arg1)
 {
   #define H_XNewModifiermap "XModifierKeymap *XNewModifiermap(max_keys_per_mod): returns a pointer to XModifierKeymap structure for later use."
   Xen_check_type(Xen_is_integer(arg1), arg1, 1, "XNewModifiermap", "int");
   return(C_to_Xen_XModifierKeymap(XNewModifiermap(Xen_integer_to_C_int(arg1))));
 }
 
-static XEN gxm_XInsertModifiermapEntry(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XInsertModifiermapEntry(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XInsertModifiermapEntry "XModifierKeymap *XInsertModifiermapEntry(modmap, keycode_entry, modifier) adds the specified KeyCode to \
 the set that controls the specified modifier and returns the resulting XModifierKeymap structure (expanded as needed)."
@@ -12429,7 +12429,7 @@ the set that controls the specified modifier and returns the resulting XModifier
   return(C_to_Xen_XModifierKeymap(XInsertModifiermapEntry(Xen_to_C_XModifierKeymap(arg1), Xen_to_C_KeyCode(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XGetModifierMapping(XEN arg1)
+static Xen gxm_XGetModifierMapping(Xen arg1)
 {
   #define H_XGetModifierMapping "XModifierKeymap *XGetModifierMapping(display): returns a pointer to a newly created XModifierKeymap structure \
 that contains the keys being used as modifiers."
@@ -12437,7 +12437,7 @@ that contains the keys being used as modifiers."
   return(C_to_Xen_XModifierKeymap(XGetModifierMapping(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XDeleteModifiermapEntry(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XDeleteModifiermapEntry(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XDeleteModifiermapEntry "XModifierKeymap *XDeleteModifiermapEntry(modmap, keycode_entry, modifier) deletes the specified KeyCode \
 from the set that controls the specified modifier and returns a pointer to the resulting XModifierKeymap structure."
@@ -12447,7 +12447,7 @@ from the set that controls the specified modifier and returns a pointer to the r
   return(C_to_Xen_XModifierKeymap(XDeleteModifiermapEntry(Xen_to_C_XModifierKeymap(arg1), Xen_to_C_KeyCode(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XGetMotionEvents(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XGetMotionEvents(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XGetMotionEvents "XTimeCoord *XGetMotionEvents(display, w, start, stop): returns all events in the motion history \
 buffer that fall between the specified start and stop times, inclusive, and that have coordinates that lie within the specified window \
@@ -12456,7 +12456,7 @@ buffer that fall between the specified start and stop times, inclusive, and that
    */
   int n, i, loc;
   XTimeCoord *tcs;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetMotionEvents", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XGetMotionEvents", "Window");
   Xen_check_type(Xen_is_Time(arg3), arg3, 3, "XGetMotionEvents", "Time");
@@ -12473,7 +12473,7 @@ buffer that fall between the specified start and stop times, inclusive, and that
   return(lst);
 }
 
-static XEN gxm_XQueryFont(XEN arg1, XEN arg2)
+static Xen gxm_XQueryFont(Xen arg1, Xen arg2)
 {
   #define H_XQueryFont "XFontStruct *XQueryFont(display, font): returns a pointer to the XFontStruct structure, which contains information \
 associated with the font."
@@ -12482,7 +12482,7 @@ associated with the font."
   return(C_to_Xen_XFontStruct(XQueryFont(Xen_to_C_Display(arg1), Xen_to_C_Font(arg2))));
 }
 
-static XEN gxm_XLoadQueryFont(XEN arg1, XEN arg2)
+static Xen gxm_XLoadQueryFont(Xen arg1, Xen arg2)
 {
   #define H_XLoadQueryFont "XFontStruct *XLoadQueryFont(display, name) provides the most common way for accessing a font. XLoadQueryFont \
 both opens (loads) the specified font and returns a pointer to the appropriate XFontStruct structure."
@@ -12491,316 +12491,316 @@ both opens (loads) the specified font and returns a pointer to the appropriate X
   return(C_to_Xen_XFontStruct(XLoadQueryFont(Xen_to_C_Display(arg1), (char *)Xen_string_to_C_string(arg2))));
 }
 
-static XEN gxm_DefaultScreen(XEN arg)
+static Xen gxm_DefaultScreen(Xen arg)
 {
   #define H_DefaultScreen "returns the default screen number referenced in the XOpenDisplay routine."
   Xen_check_type(Xen_is_Display(arg), arg, 0, "DefaultScreen", "Display*");
   return(C_int_to_Xen_integer(DefaultScreen(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_DefaultRootWindow(XEN arg)
+static Xen gxm_DefaultRootWindow(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "DefaultRootWindow", "Display*");
   return(C_to_Xen_Window(DefaultRootWindow(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_QLength(XEN arg)
+static Xen gxm_QLength(Xen arg)
 {
   /* QLength(display) */
   Xen_check_type(Xen_is_Display(arg), arg, 0, "QLength", "Display*");
   return(C_int_to_Xen_integer(QLength(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_ScreenCount(XEN arg1)
+static Xen gxm_ScreenCount(Xen arg1)
 {
   /* ScreenCount(display) */
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "ScreenCount", "Display*");
   return(C_int_to_Xen_integer(XScreenCount(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_ServerVendor(XEN arg)
+static Xen gxm_ServerVendor(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "ServerVendor", "Display*");
   return(C_string_to_Xen_string(ServerVendor(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_ProtocolVersion(XEN arg)
+static Xen gxm_ProtocolVersion(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "ProtocolVersion", "Display*");
   return(C_int_to_Xen_integer(ProtocolVersion(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_ProtocolRevision(XEN arg)
+static Xen gxm_ProtocolRevision(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "ProtocolRevision", "Display*");
   return(C_int_to_Xen_integer(ProtocolRevision(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_VendorRelease(XEN arg)
+static Xen gxm_VendorRelease(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "VendorRelease", "Display*");
   return(C_int_to_Xen_integer(VendorRelease(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_DisplayString(XEN arg)
+static Xen gxm_DisplayString(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "DisplayString", "Display*");
   return(C_string_to_Xen_string(DisplayString(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_BitmapUnit(XEN arg)
+static Xen gxm_BitmapUnit(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "BitmapUnit", "Display*");
   return(C_int_to_Xen_integer(BitmapUnit(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_BitmapBitOrder(XEN arg)
+static Xen gxm_BitmapBitOrder(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "BitmapBitOrder", "Display*");
   return(C_int_to_Xen_integer(BitmapBitOrder(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_BitmapPad(XEN arg)
+static Xen gxm_BitmapPad(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "BitmapPad", "Display*");
   return(C_int_to_Xen_integer(BitmapPad(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_ImageByteOrder(XEN arg)
+static Xen gxm_ImageByteOrder(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "ImageByteOrder", "Display*");
   return(C_int_to_Xen_integer(ImageByteOrder(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_NextRequest(XEN arg)
+static Xen gxm_NextRequest(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "NextRequest", "Display*");
   return(C_ulong_to_Xen_ulong(NextRequest(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_LastKnownRequestProcessed(XEN arg)
+static Xen gxm_LastKnownRequestProcessed(Xen arg)
 {
   Xen_check_type(Xen_is_Display(arg), arg, 0, "LastKnownRequestProcessed", "Display*");
   return(C_ulong_to_Xen_ulong(LastKnownRequestProcessed(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_DefaultScreenOfDisplay(XEN arg)
+static Xen gxm_DefaultScreenOfDisplay(Xen arg)
 {
   #define H_DefaultScreenOfDisplay "returns the default screen of the specified display."
   Xen_check_type(Xen_is_Display(arg), arg, 0, "DefaultScreenOfDisplay", "Display");
   return(C_to_Xen_Screen(DefaultScreenOfDisplay(Xen_to_C_Display(arg))));
 }
 
-static XEN gxm_DisplayOfScreen(XEN arg)
+static Xen gxm_DisplayOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "DisplayOfScreen", "Screen");
   return(C_to_Xen_Display(DisplayOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_RootWindowOfScreen(XEN arg)
+static Xen gxm_RootWindowOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "RootWindowOfScreen", "Screen");
   return(C_to_Xen_Window(RootWindowOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_BlackPixelOfScreen(XEN arg)
+static Xen gxm_BlackPixelOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "BlackPixelOfScreen", "Screen");
   return(C_to_Xen_Pixel(BlackPixelOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_WhitePixelOfScreen(XEN arg)
+static Xen gxm_WhitePixelOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "WhitePixelOfScreen", "Screen");
   return(C_to_Xen_Pixel(WhitePixelOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_DefaultColormapOfScreen(XEN arg)
+static Xen gxm_DefaultColormapOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "DefaultColormapOfScreen", "Screen");
   return(C_to_Xen_Colormap(DefaultColormapOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_DefaultDepthOfScreen(XEN arg)
+static Xen gxm_DefaultDepthOfScreen(Xen arg)
 {
   /* DefaultDepthOfScreen(screen) */
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "DefaultDepthOfScreen", "Screen");
   return(C_int_to_Xen_integer(DefaultDepthOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_DefaultGCOfScreen(XEN arg)
+static Xen gxm_DefaultGCOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "DefaultGCOfScreen", "Screen");
   return(C_to_Xen_GC(DefaultGCOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_DefaultVisualOfScreen(XEN arg)
+static Xen gxm_DefaultVisualOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "DefaultVisualOfScreen", "Screen");
   return(C_to_Xen_Visual(DefaultVisualOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_WidthOfScreen(XEN arg)
+static Xen gxm_WidthOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "WidthOfScreen", "Screen");
   return(C_int_to_Xen_integer(WidthOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_HeightOfScreen(XEN arg)
+static Xen gxm_HeightOfScreen(Xen arg)
 {
   /* HeightOfScreen(screen) */
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "HeightOfScreen", "Screen");
   return(C_int_to_Xen_integer(HeightOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_WidthMMOfScreen(XEN arg)
+static Xen gxm_WidthMMOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "WidthMMOfScreen", "Screen");
   return(C_int_to_Xen_integer(WidthMMOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_HeightMMOfScreen(XEN arg)
+static Xen gxm_HeightMMOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "HeightMMOfScreen", "Screen");
   return(C_int_to_Xen_integer(HeightMMOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_PlanesOfScreen(XEN arg)
+static Xen gxm_PlanesOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "PlanesOfScreen", "Screen");
   return(C_int_to_Xen_integer(PlanesOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_CellsOfScreen(XEN arg)
+static Xen gxm_CellsOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "CellsOfScreen", "Screen");
   return(C_int_to_Xen_integer(CellsOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_MinCmapsOfScreen(XEN arg)
+static Xen gxm_MinCmapsOfScreen(Xen arg)
 {
   /* MinCmapsOfScreen(screen) */
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "MinCmapsOfScreen", "Screen");
   return(C_int_to_Xen_integer(MinCmapsOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_MaxCmapsOfScreen(XEN arg)
+static Xen gxm_MaxCmapsOfScreen(Xen arg)
 {
   /* MaxCmapsOfScreen(screen) */
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "MaxCmapsOfScreen", "Screen");
   return(C_int_to_Xen_integer(MaxCmapsOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_DoesSaveUnders(XEN arg)
+static Xen gxm_DoesSaveUnders(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "DoesSaveUnders", "Screen");
   return(C_bool_to_Xen_boolean(DoesSaveUnders(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_DoesBackingStore(XEN arg)
+static Xen gxm_DoesBackingStore(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "DoesBackingStore", "Screen");
   return(C_bool_to_Xen_boolean(DoesBackingStore(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_EventMaskOfScreen(XEN arg)
+static Xen gxm_EventMaskOfScreen(Xen arg)
 {
   Xen_check_type(Xen_is_Screen(arg), arg, 0, "EventMaskOfScreen", "Screen");
   return(C_ulong_to_Xen_ulong(EventMaskOfScreen(Xen_to_C_Screen(arg))));
 }
 
-static XEN gxm_RootWindow(XEN arg1, XEN arg2)
+static Xen gxm_RootWindow(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "RootWindow", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "RootWindow", "int");
   return(C_to_Xen_Window(RootWindow(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DefaultVisual(XEN arg1, XEN arg2)
+static Xen gxm_DefaultVisual(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DefaultVisual", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "DefaultVisual", "int");
   return(C_to_Xen_Visual(DefaultVisual(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DefaultGC(XEN arg1, XEN arg2)
+static Xen gxm_DefaultGC(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DefaultGC", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "DefaultGC", "int");
   return(C_to_Xen_GC(DefaultGC(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_BlackPixel(XEN arg1, XEN arg2)
+static Xen gxm_BlackPixel(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "BlackPixel", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "BlackPixel", "int");
   return(C_to_Xen_Pixel(BlackPixel(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_WhitePixel(XEN arg1, XEN arg2)
+static Xen gxm_WhitePixel(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "WhitePixel", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "WhitePixel", "int");
   return(C_to_Xen_Pixel(WhitePixel(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DisplayWidth(XEN arg1, XEN arg2)
+static Xen gxm_DisplayWidth(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DisplayWidth", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "DisplayWidth", "int");
   return(C_int_to_Xen_integer(DisplayWidth(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DisplayHeight(XEN arg1, XEN arg2)
+static Xen gxm_DisplayHeight(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DisplayHeight", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "DisplayHeight", "int");
   return(C_int_to_Xen_integer(DisplayHeight(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DisplayWidthMM(XEN arg1, XEN arg2)
+static Xen gxm_DisplayWidthMM(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DisplayWidthMM", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "DisplayWidthMM", "int");
   return(C_int_to_Xen_integer(DisplayWidthMM(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DisplayHeightMM(XEN arg1, XEN arg2)
+static Xen gxm_DisplayHeightMM(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DisplayHeightMM", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "DisplayHeightMM", "int");
   return(C_int_to_Xen_integer(DisplayHeightMM(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DisplayPlanes(XEN arg1, XEN arg2)
+static Xen gxm_DisplayPlanes(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DisplayPlanes", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "DisplayPlanes", "int");
   return(C_int_to_Xen_integer(DisplayPlanes(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DisplayCells(XEN arg1, XEN arg2)
+static Xen gxm_DisplayCells(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DisplayCells", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "DisplayCells", "int");
   return(C_int_to_Xen_integer(DisplayCells(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DefaultColormap(XEN arg1, XEN arg2)
+static Xen gxm_DefaultColormap(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DefaultColormap", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "DefaultColormap", "int");
   return(C_to_Xen_Colormap(DefaultColormap(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_ScreenOfDisplay(XEN arg1, XEN arg2)
+static Xen gxm_ScreenOfDisplay(Xen arg1, Xen arg2)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "ScreenOfDisplay", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "ScreenOfDisplay", "int");
   return(C_to_Xen_Screen(ScreenOfDisplay(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_DefaultDepth(XEN arg1, XEN arg2)
+static Xen gxm_DefaultDepth(Xen arg1, Xen arg2)
 {
   /* DefaultDepth(display, screen_number) */
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "DefaultDepth", "Display*");
@@ -12808,56 +12808,56 @@ static XEN gxm_DefaultDepth(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(DefaultDepth(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_IsKeypadKey(XEN arg)
+static Xen gxm_IsKeypadKey(Xen arg)
 {
   #define H_IsKeypadKey "IsKeypadKey(keysym): returns " PROC_TRUE " if the specified KeySym is a keypad key."
   Xen_check_type(Xen_is_KeySym(arg), arg, 0, "IsKeypadKey", "KeySym");
   return(C_bool_to_Xen_boolean(IsKeypadKey(Xen_to_C_KeySym(arg))));
 }
 
-static XEN gxm_IsPrivateKeypadKey(XEN arg)
+static Xen gxm_IsPrivateKeypadKey(Xen arg)
 {
   #define H_IsPrivateKeypadKey "IsPrivateKeypadKey(keysym): returns " PROC_TRUE " if the specified KeySym is a vendor-private keypad key."
   Xen_check_type(Xen_is_KeySym(arg), arg, 0, "IsPrivateKeypadKey", "KeySym");
   return(C_bool_to_Xen_boolean(IsPrivateKeypadKey(Xen_to_C_KeySym(arg))));
 }
 
-static XEN gxm_IsCursorKey(XEN arg)
+static Xen gxm_IsCursorKey(Xen arg)
 {
   #define H_IsCursorKey "IsCursorKey(keysym): returns " PROC_TRUE " if the specified KeySym is a cursor key."
   Xen_check_type(Xen_is_KeySym(arg), arg, 0, "IsCursorKey", "KeySym");
   return(C_bool_to_Xen_boolean(IsCursorKey(Xen_to_C_KeySym(arg))));
 }
 
-static XEN gxm_IsPFKey(XEN arg)
+static Xen gxm_IsPFKey(Xen arg)
 {
   #define H_IsPFKey "IsPFKey(keysym): returns " PROC_TRUE " if the specified KeySym is a PF key."
   Xen_check_type(Xen_is_KeySym(arg), arg, 0, "IsPFKey", "KeySym");
   return(C_bool_to_Xen_boolean(IsPFKey(Xen_to_C_KeySym(arg))));
 }
 
-static XEN gxm_IsFunctionKey(XEN arg)
+static Xen gxm_IsFunctionKey(Xen arg)
 {
   #define H_IsFunctionKey "IsFunctionKey(keysym): returns " PROC_TRUE " if the KeySym is a function key."
   Xen_check_type(Xen_is_KeySym(arg), arg, 0, "IsFunctionKey", "KeySym");
   return(C_bool_to_Xen_boolean(IsFunctionKey(Xen_to_C_KeySym(arg))));
 }
 
-static XEN gxm_IsMiscFunctionKey(XEN arg)
+static Xen gxm_IsMiscFunctionKey(Xen arg)
 {
   #define H_IsMiscFunctionKey "IsMiscFunctionKey(keysym): returns " PROC_TRUE " if the specified KeySym is a miscellaneous function key."
   Xen_check_type(Xen_is_KeySym(arg), arg, 0, "IsMiscFunctionKey", "KeySym");
   return(C_bool_to_Xen_boolean(IsMiscFunctionKey(Xen_to_C_KeySym(arg))));
 }
 
-static XEN gxm_IsModifierKey(XEN arg)
+static Xen gxm_IsModifierKey(Xen arg)
 {
   #define H_IsModifierKey "IsModifierKey(keysym): returns " PROC_TRUE " if the specified KeySym is a modifier key."
   Xen_check_type(Xen_is_KeySym(arg), arg, 0, "IsModifierKey", "KeySym");
   return(C_bool_to_Xen_boolean(IsModifierKey(Xen_to_C_KeySym(arg))));
 }
 
-static XEN gxm_XAddPixel(XEN arg1, XEN arg2)
+static Xen gxm_XAddPixel(Xen arg1, Xen arg2)
 {
   #define H_XAddPixel "XAddPixel(ximage, value) adds a constant value to every pixel in an image."
   Xen_check_type(Xen_is_XImage(arg1), arg1, 1, "XAddPixel", "XImage*");
@@ -12865,7 +12865,7 @@ static XEN gxm_XAddPixel(XEN arg1, XEN arg2)
   return(C_int_to_Xen_integer(XAddPixel(Xen_to_C_XImage(arg1), Xen_integer_to_C_int(arg2))));
 }
 
-static XEN gxm_XSubImage(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XSubImage(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XSubImage "XImage *XSubImage(ximage, x, y, subimage_width, subimage_height) creates a new image that is a subsection of an existing one."
   Xen_check_type(Xen_is_XImage(arg1), arg1, 1, "XSubImage", "XImage*");
@@ -12876,7 +12876,7 @@ static XEN gxm_XSubImage(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   return(C_to_Xen_XImage(XSubImage(Xen_to_C_XImage(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3), Xen_ulong_to_C_ulong(arg4), Xen_ulong_to_C_ulong(arg5))));
 }
 
-static XEN gxm_XPutPixel(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XPutPixel(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XPutPixel "XPutPixel(ximage, x, y, pixel) overwrites the pixel in the named image with the specified pixel value."
   Xen_check_type(Xen_is_XImage(arg1), arg1, 1, "XPutPixel", "XImage*");
@@ -12886,7 +12886,7 @@ static XEN gxm_XPutPixel(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_int_to_Xen_integer(XPutPixel(Xen_to_C_XImage(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3), Xen_to_C_Pixel(arg4))));
 }
 
-static XEN gxm_XGetPixel(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XGetPixel(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XGetPixel "Pixel XGetPixel(ximage, x, y): returns the specified pixel from the named image."
   Xen_check_type(Xen_is_XImage(arg1), arg1, 1, "XGetPixel", "XImage*");
@@ -12895,7 +12895,7 @@ static XEN gxm_XGetPixel(XEN arg1, XEN arg2, XEN arg3)
   return(C_to_Xen_Pixel(XGetPixel(Xen_to_C_XImage(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3))));
 }
 
-static XEN gxm_XDestroyImage(XEN arg1)
+static Xen gxm_XDestroyImage(Xen arg1)
 {
   #define H_XDestroyImage "XDestroyImage(ximage) deallocates the memory associated with the XImage structure."
   Xen_check_type(Xen_is_XImage(arg1), arg1, 1, "XDestroyImage", "XImage*");
@@ -12924,7 +12924,7 @@ static XEN gxm_XDestroyImage(XEN arg1)
 
 /* thanks to Michael Scholz! */
 
-static XEN gxm_XShapeQueryExtension(XEN dpy)
+static Xen gxm_XShapeQueryExtension(Xen dpy)
 {
   #define H_XShapeQueryExtension "(XShapeQueryExtension dpy): returns list of (Bool event_base error_base)"
   /* DIFF: (proposal)
@@ -12938,7 +12938,7 @@ static XEN gxm_XShapeQueryExtension(XEN dpy)
   return(Xen_list_3(C_bool_to_Xen_boolean(ret), C_int_to_Xen_integer(event_base), C_int_to_Xen_integer(error_base)));
 }
 
-static XEN gxm_XShapeQueryVersion(XEN dpy)
+static Xen gxm_XShapeQueryVersion(Xen dpy)
 {
   #define H_XShapeQueryVersion "(XShapeQueryVersion dpy): returns list of (Bool major_version minor_version)"
   int major = 0, minor = 0;
@@ -12948,7 +12948,7 @@ static XEN gxm_XShapeQueryVersion(XEN dpy)
   return(Xen_list_3(C_bool_to_Xen_boolean(ret), C_int_to_Xen_integer(major), C_int_to_Xen_integer(minor)));
 }
 
-static XEN gxm_XShapeQueryExtents(XEN dpy, XEN win)
+static Xen gxm_XShapeQueryExtents(Xen dpy, Xen win)
 {
   #define H_XShapeQueryExtents "(XShapeQueryExtents dpy win): returns list of (status bounding_shaped x_bound y_bound w_bound \
 h_bound clip_shaped x_clip y_clip w_clip h_clip)"
@@ -12981,7 +12981,7 @@ h_bound clip_shaped x_clip y_clip w_clip h_clip)"
 				      C_int_to_Xen_integer(h_clip)))));
 }
 
-static XEN gxm_XShapeGetRectangles(XEN dpy, XEN win, XEN kind)
+static Xen gxm_XShapeGetRectangles(Xen dpy, Xen win, Xen kind)
 {
   #define H_XShapeGetRectangles "(XShapeGetRectangles dpy win kind): returns list of (xrectangles ordering)"
   int count = 0, ordering = 0;
@@ -12993,7 +12993,7 @@ static XEN gxm_XShapeGetRectangles(XEN dpy, XEN win, XEN kind)
   return(Xen_list_2(C_to_Xen_XRectangles(res, count), C_int_to_Xen_integer(ordering)));
 }
 
-static XEN gxm_XShapeOffsetShape(XEN dpy, XEN win, XEN kind, XEN x, XEN y)
+static Xen gxm_XShapeOffsetShape(Xen dpy, Xen win, Xen kind, Xen x, Xen y)
 {
   #define H_XShapeOffsetShape "(XShapeOffsetShape dpy win kind x-off y-off)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "XShapeOffsetShape", "Display*");
@@ -13006,7 +13006,7 @@ static XEN gxm_XShapeOffsetShape(XEN dpy, XEN win, XEN kind, XEN x, XEN y)
   return(Xen_false);
 }
 
-static XEN gxm_XShapeCombineRegion(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN reg, XEN op)
+static Xen gxm_XShapeCombineRegion(Xen dpy, Xen win, Xen kind, Xen x, Xen y, Xen reg, Xen op)
 {
   #define H_XShapeCombineRegion "(XShapeCombineRegion dpy win kind x-off y-off region op)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "XShapeCombineRegion", "Display*");
@@ -13023,7 +13023,7 @@ static XEN gxm_XShapeCombineRegion(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN
   return(Xen_false);
 }
 
-static XEN gxm_XShapeCombineMask(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN pix, XEN op)
+static Xen gxm_XShapeCombineMask(Xen dpy, Xen win, Xen kind, Xen x, Xen y, Xen pix, Xen op)
 {
   #define H_XShapeCombineMask "(XShapeCombineMask dpy win kind x-off y-off pixmap op)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "XShapeCombineMask", "Display*");
@@ -13040,7 +13040,7 @@ static XEN gxm_XShapeCombineMask(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN p
   return(Xen_false);
 }
 
-static XEN gxm_XShapeCombineShape(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN src, XEN src_kind, XEN op)
+static Xen gxm_XShapeCombineShape(Xen dpy, Xen win, Xen kind, Xen x, Xen y, Xen src, Xen src_kind, Xen op)
 {
   #define H_XShapeCombineShape "(XShapeCombineShape dpy win kind x-off y-off src src_kind op)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "XShapeCombineShape", "Display*");
@@ -13058,7 +13058,7 @@ static XEN gxm_XShapeCombineShape(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN 
   return(Xen_false);
 }
 
-static XEN gxm_XShapeCombineRectangles(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN rects, XEN n_rects, XEN op, XEN ordering)
+static Xen gxm_XShapeCombineRectangles(Xen dpy, Xen win, Xen kind, Xen x, Xen y, Xen rects, Xen n_rects, Xen op, Xen ordering)
 {
   #define H_XShapeCombineRectangles "(XShapeCombineRectangles dpy win kind x-off y-off rectangles n-rects op ordering)"
   XRectangle *cr = NULL;
@@ -13106,13 +13106,13 @@ typedef enum {CANCEL_CONVERT, CONVERT, LOSE, DONE, CONVERT_INCR, LOSE_INCR, DONE
 typedef struct {
   Widget w;
   xm_selmap_t type;
-  XEN proc;
+  Xen proc;
 } selmap;
 
 static selmap *selmaps = NULL;
 static int selmap_size = 0;
 static int selmap_ctr = 0;
-static void add_selmap(Widget w, xm_selmap_t type, XEN proc)
+static void add_selmap(Widget w, xm_selmap_t type, Xen proc)
 {
   if (selmap_size == 0)
     selmaps = (selmap *)calloc(8, sizeof(selmap));
@@ -13132,7 +13132,7 @@ static void add_selmap(Widget w, xm_selmap_t type, XEN proc)
   selmaps[selmap_ctr++].proc = proc;
 }
 
-static XEN unselmap(Widget w, xm_selmap_t type)
+static Xen unselmap(Widget w, xm_selmap_t type)
 {
   int i;
   for (i = 0; i < selmap_ctr; i++)
@@ -13144,7 +13144,7 @@ static XEN unselmap(Widget w, xm_selmap_t type)
 
 static void gxm_XtCancelConvertSelectionProc(Widget w, Atom *a1, Atom *a2, XtRequestId *id, XtPointer x) 
 {
-  XEN proc;
+  Xen proc;
   proc = unselmap(w, CANCEL_CONVERT);
   if (Xen_is_procedure(proc))
     Xen_call_with_5_args(proc,
@@ -13152,13 +13152,13 @@ static void gxm_XtCancelConvertSelectionProc(Widget w, Atom *a1, Atom *a2, XtReq
 	       C_to_Xen_Atom(*a1),
 	       C_to_Xen_Atom(*a2),
 	       C_to_Xen_XtRequestId(*id),
-	       (XEN)x,
+	       (Xen)x,
 	       "CancelConvert");
 } 
 
 static Boolean gxm_XtConvertSelectionProc(Widget w, Atom *a1, Atom *a2, Atom *a3, XtPointer* x, unsigned long *l, int *i) 
 {
-  XEN proc, val;
+  Xen proc, val;
   proc = unselmap(w, CONVERT);
   if (Xen_is_procedure(proc))
     {
@@ -13178,19 +13178,19 @@ static Boolean gxm_XtConvertSelectionProc(Widget w, Atom *a1, Atom *a2, Atom *a3
 
 static void gxm_XtLoseSelectionIncrProc(Widget w, Atom *a, XtPointer x) 
 {
-  XEN proc;
+  Xen proc;
   proc = unselmap(w, LOSE_INCR);
   if (Xen_is_procedure(proc))
     Xen_call_with_3_args(proc,
 	       C_to_Xen_Widget(w),
 	       C_to_Xen_Atom(*a),
-	       (XEN)x,
+	       (Xen)x,
 	       "LoseSelectionIncr");
 }
 
 static void gxm_XtLoseSelectionProc(Widget w, Atom *a) 
 {
-  XEN proc;
+  Xen proc;
   proc = unselmap(w, LOSE);
   if (Xen_is_procedure(proc))
     Xen_call_with_2_args(proc,
@@ -13201,7 +13201,7 @@ static void gxm_XtLoseSelectionProc(Widget w, Atom *a)
 
 static void gxm_XtSelectionDoneProc(Widget w, Atom *a1, Atom *a2) 
 {
-  XEN proc;
+  Xen proc;
   proc = unselmap(w, DONE);
   if (Xen_is_procedure(proc))
     Xen_call_with_3_args(proc,
@@ -13213,7 +13213,7 @@ static void gxm_XtSelectionDoneProc(Widget w, Atom *a1, Atom *a2)
 
 static void gxm_XtSelectionDoneIncrProc(Widget w, Atom *a1, Atom *a2, XtRequestId *i, XtPointer x) 
 {
-  XEN proc;
+  Xen proc;
   proc = unselmap(w, DONE_INCR);
   if (Xen_is_procedure(proc))
     Xen_call_with_5_args(proc,
@@ -13221,11 +13221,11 @@ static void gxm_XtSelectionDoneIncrProc(Widget w, Atom *a1, Atom *a2, XtRequestI
 	       C_to_Xen_Atom(*a1),
 	       C_to_Xen_Atom(*a2),
 	       C_to_Xen_XtRequestId(*i),
-	       (XEN)x,
+	       (Xen)x,
 	       "DoneSelectionIncr");
 }
 
-static XEN gxm_XtAppUnlock(XEN arg1)
+static Xen gxm_XtAppUnlock(Xen arg1)
 {
   #define H_XtAppUnlock "void XtAppUnlock(app_context) unlocks the application context."
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppUnlock", "XtAppContext");
@@ -13233,7 +13233,7 @@ static XEN gxm_XtAppUnlock(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtAppLock(XEN arg1)
+static Xen gxm_XtAppLock(Xen arg1)
 {
   #define H_XtAppLock "void XtAppLock(app_context) locks the application context including all its related displays and widgets."
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppLock", "XtAppContext");
@@ -13241,13 +13241,13 @@ static XEN gxm_XtAppLock(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtToolkitThreadInitialize(void)
+static Xen gxm_XtToolkitThreadInitialize(void)
 {
   #define H_XtToolkitThreadInitialize "Boolean XtToolkitThreadInitialize()"
   return(C_bool_to_Xen_boolean(XtToolkitThreadInitialize()));
 }
 
-static XEN gxm_XtGetDisplays(XEN arg1)
+static Xen gxm_XtGetDisplays(Xen arg1)
 {
   #define H_XtGetDisplays "void XtGetDisplays(app_context): list of displays"
   /* DIFF: XtGetDisplays not arg2 arg3 returns list
@@ -13255,7 +13255,7 @@ static XEN gxm_XtGetDisplays(XEN arg1)
   unsigned int x;
   Display **ds;
   int i, loc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtGetDisplays", "XtAppContext");
   XtGetDisplays(Xen_to_C_XtAppContext(arg1), &ds, &x);
   loc = xm_protect(lst);
@@ -13265,7 +13265,7 @@ static XEN gxm_XtGetDisplays(XEN arg1)
   return(lst);
 }
 
-static XEN gxm_XtGetApplicationNameAndClass(XEN arg1)
+static Xen gxm_XtGetApplicationNameAndClass(Xen arg1)
 {
   #define H_XtGetApplicationNameAndClass "void XtGetApplicationNameAndClass(display): returns the application name \
 and class passed to XtDisplayInitialize for the specified display."
@@ -13278,7 +13278,7 @@ and class passed to XtDisplayInitialize for the specified display."
 		    C_string_to_Xen_string(clas)));
 }
 
-static XEN gxm_XtUngrabPointer(XEN arg1, XEN arg2)
+static Xen gxm_XtUngrabPointer(Xen arg1, Xen arg2)
 {
   #define H_XtUngrabPointer "void XtUngrabPointer(widget, time) calls XUngrabPointer with the specified time."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtUngrabPointer", "Widget");
@@ -13287,7 +13287,7 @@ static XEN gxm_XtUngrabPointer(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtGrabPointer(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static Xen gxm_XtGrabPointer(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
   #define H_XtGrabPointer "int XtGrabPointer(widget, owner_events, event_mask, pointer_mode, keyboard_mode, confine_to, cursor, time) calls \
 XGrabPointer specifying the widget's window as the grab window."
@@ -13306,7 +13306,7 @@ XGrabPointer specifying the widget's window as the grab window."
 				    Xen_to_C_Time(arg8))));
 }
 
-static XEN gxm_XtUngrabButton(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtUngrabButton(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtUngrabButton "void XtUngrabButton(widget, button, modifiers) calls XUngrabButton specifying the widget's window as the ungrab \
 window if the widget is realized. "
@@ -13317,7 +13317,7 @@ window if the widget is realized. "
   return(Xen_false);
 }
 
-static XEN gxm_XtGrabButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
+static Xen gxm_XtGrabButton(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8, Xen arg9)
 {
   #define H_XtGrabButton "void XtGrabButton(widget, button, modifiers, owner_events, event_mask, pointer_mode, keyboard_mode, confine_to, cursor) \
 calls XGrabButton specifying the widget's window as the grab window if the widget is realized."
@@ -13336,7 +13336,7 @@ calls XGrabButton specifying the widget's window as the grab window if the widge
   return(Xen_false);
 }
 
-static XEN gxm_XtUngrabKeyboard(XEN arg1, XEN arg2)
+static Xen gxm_XtUngrabKeyboard(Xen arg1, Xen arg2)
 {
   #define H_XtUngrabKeyboard "void XtUngrabKeyboard(widget, time) calls XUngrabKeyboard with the specified time."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtUngrabKeyboard", "Widget");
@@ -13345,7 +13345,7 @@ static XEN gxm_XtUngrabKeyboard(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtGrabKeyboard(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtGrabKeyboard(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtGrabKeyboard "int XtGrabKeyboard(widget, owner_events, pointer_mode, keyboard_mode, time)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtGrabKeyboard", "Widget");
@@ -13356,7 +13356,7 @@ static XEN gxm_XtGrabKeyboard(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   return(C_int_to_Xen_integer(XtGrabKeyboard(Xen_to_C_Widget(arg1), Xen_boolean_to_C_bool(arg2), Xen_integer_to_C_int(arg3), Xen_integer_to_C_int(arg4), Xen_to_C_Time(arg5))));
 }
 
-static XEN gxm_XtUngrabKey(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtUngrabKey(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtUngrabKey "void XtUngrabKey(widget, keycode, modifiers) calls XUngrabKey specifying the widget's window as the ungrab window \
 if the widget is realized."
@@ -13367,7 +13367,7 @@ if the widget is realized."
   return(Xen_false);
 }
 
-static XEN gxm_XtGrabKey(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XtGrabKey(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XtGrabKey "void XtGrabKey(widget, keycode, modifiers, owner_events, pointer_mode, keyboard_mode) calls XGrabKey specifying the \
 widget's window as the grab window if the widget is realized."
@@ -13381,7 +13381,7 @@ widget's window as the grab window if the widget is realized."
   return(Xen_false);
 }
 
-static XEN gxm_XtCancelSelectionRequest(XEN arg1, XEN arg2)
+static Xen gxm_XtCancelSelectionRequest(Xen arg1, Xen arg2)
 {
   #define H_XtCancelSelectionRequest "void XtCancelSelectionRequest(requestor, selection)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtCancelSelectionRequest", "Widget");
@@ -13390,7 +13390,7 @@ static XEN gxm_XtCancelSelectionRequest(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtSendSelectionRequest(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtSendSelectionRequest(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtSendSelectionRequest "void XtSendSelectionRequest(requestor, selection, time)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtSendSelectionRequest", "Widget");
@@ -13400,7 +13400,7 @@ static XEN gxm_XtSendSelectionRequest(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XtCreateSelectionRequest(XEN arg1, XEN arg2)
+static Xen gxm_XtCreateSelectionRequest(Xen arg1, Xen arg2)
 {
   #define H_XtCreateSelectionRequest "void XtCreateSelectionRequest(requestor, selection)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtCreateSelectionRequest", "Widget");
@@ -13409,7 +13409,7 @@ static XEN gxm_XtCreateSelectionRequest(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtGetSelectionValuesIncremental(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XtGetSelectionValuesIncremental(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XtGetSelectionValuesIncremental "void XtGetSelectionValuesIncremental(w, selection, targets, count, callback, client_data, time) \
 is similar to XtGetSelectionValueIncremental except that it takes a list of target types and a list of client data and obtains the current \
@@ -13438,7 +13438,7 @@ value of the selection converted to each of the targets."
   return(Xen_false);
 }  
 
-static XEN gxm_XtGetSelectionValueIncremental(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XtGetSelectionValueIncremental(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XtGetSelectionValueIncremental "void XtGetSelectionValueIncremental(w, selection, target, callback, client_data, time) is similar \
 to XtGetSelectionValue except that the selection_callback procedure will be called repeatedly upon delivery of multiple segments of the selection value."
@@ -13458,7 +13458,7 @@ to XtGetSelectionValue except that the selection_callback procedure will be call
   return(Xen_false);
 }
 
-static XEN gxm_XtGetSelectionRequest(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtGetSelectionRequest(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtGetSelectionRequest "XSelectionRequestEvent* XtGetSelectionRequest(w, selection, request_id)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtGetSelectionRequest", "Widget");
@@ -13467,14 +13467,14 @@ static XEN gxm_XtGetSelectionRequest(XEN arg1, XEN arg2, XEN arg3)
   return(C_to_Xen_XSelectionRequestEvent(XtGetSelectionRequest(Xen_to_C_Widget(arg1), Xen_to_C_Atom(arg2), Xen_to_C_XtRequestId(arg3))));
 }
 
-static XEN gxm_XtAppGetSelectionTimeout(XEN arg1)
+static Xen gxm_XtAppGetSelectionTimeout(Xen arg1)
 {
   #define H_XtAppGetSelectionTimeout "unsigned long XtAppGetSelectionTimeout(app_context): returns the current selection timeout value, in milliseconds."
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppGetSelectionTimeout", "XtAppContext");
   return(C_ulong_to_Xen_ulong(XtAppGetSelectionTimeout(Xen_to_C_XtAppContext(arg1))));
 }
 
-static XEN gxm_XtAppSetSelectionTimeout(XEN arg1, XEN arg2)
+static Xen gxm_XtAppSetSelectionTimeout(Xen arg1, Xen arg2)
 {
   #define H_XtAppSetSelectionTimeout "void XtAppSetSelectionTimeout(app_context, timeout) sets the app's selection timeout mechanism."
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppSetSelectionTimeout", "XtAppContext");
@@ -13483,7 +13483,7 @@ static XEN gxm_XtAppSetSelectionTimeout(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtGetSelectionValues(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XtGetSelectionValues(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XtGetSelectionValues "void XtGetSelectionValues(w, selection, targets, count, callback, client_data, time) is similar to \
 XtGetSelectionValue except that it takes a list of target types and a list of client data and obtains the current value of the selection \
@@ -13512,7 +13512,7 @@ converted to each of the targets."
   return(Xen_false);
 }
 
-static XEN gxm_XtGetSelectionValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XtGetSelectionValue(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XtGetSelectionValue "void XtGetSelectionValue(w, selection, target, callback, client_data, time) requests the value of the \
 selection that has been converted to the target type. "
@@ -13533,7 +13533,7 @@ selection that has been converted to the target type. "
   return(Xen_false);
 }
 
-static XEN gxm_XtDisownSelection(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtDisownSelection(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtDisownSelection "void XtDisownSelection(w, selection, time) informs the selection mechanism that the specified widget is to \
 lose ownership of the selection."
@@ -13549,7 +13549,7 @@ lose ownership of the selection."
 
 /* a "Substitution" is a list '(char substitute), so pass a list of such lists below where a substitution array is required */
 
-static XEN xm_filepredicate_proc;
+static Xen xm_filepredicate_proc;
 
 static Boolean gxm_XtFilePredicate(String filename) 
 {
@@ -13558,7 +13558,7 @@ static Boolean gxm_XtFilePredicate(String filename)
 				     __func__)));
 }
 
-static SubstitutionRec *gxm_make_subs(XEN lst_1)
+static SubstitutionRec *gxm_make_subs(Xen lst_1)
 {
   int len;
   SubstitutionRec *subs = NULL;
@@ -13566,7 +13566,7 @@ static SubstitutionRec *gxm_make_subs(XEN lst_1)
   if (len > 0)
     {
       int i;
-      XEN lst;
+      Xen lst;
       lst = Xen_copy_arg(lst_1);
       subs = (SubstitutionRec *)calloc(len, sizeof(SubstitutionRec));
       for (i = 0; i < len; i++, lst = Xen_cdr(lst))
@@ -13585,14 +13585,14 @@ static SubstitutionRec *gxm_make_subs(XEN lst_1)
 
 /* (XtFindFile "/lib/%N:/usr/lib/%N:/usr/local/lib/%N" (list (list #\N "libxm.so")) 1 file-exists?) */
 
-static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static Xen gxm_XtResolvePathname(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
   #define H_XtResolvePathname "String XtResolvePathname(display, type, filename, suffix, path, substitutions, num_substitutions, predicate)"
   /* DIFF: XtResolvePathname args use #f for NULL
    *       (XtResolvePathname (XtDisplay (cadr (main-widgets))) "app-defaults" #f #f #f #f 0 #f)
    */
   int arg8_loc = -1;
-  XEN res;
+  Xen res;
   char *str;
   SubstitutionRec *subs = NULL;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XtResolvePathname", "Display*");
@@ -13637,12 +13637,12 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
   return(res);
 }
 
-static XEN gxm_XtFindFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XtFindFile(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XtFindFile "String XtFindFile(path, substitutions, num_substitutions, predicate) \
 searches for a file using substitutions in the path list"
   char *str;
-  XEN res;
+  Xen res;
   int arg4_loc = -1;
   SubstitutionRec *subs = NULL;
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XtFindFile", "char*");
@@ -13679,7 +13679,7 @@ searches for a file using substitutions in the path list"
   return(res);
 }
 
-static XEN gxm_XtReleaseGC(XEN arg1, XEN arg2)
+static Xen gxm_XtReleaseGC(Xen arg1, Xen arg2)
 {
   #define H_XtReleaseGC "void XtReleaseGC(w, gc) deallocate the specified shared GC."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtReleaseGC", "Widget");
@@ -13688,7 +13688,7 @@ static XEN gxm_XtReleaseGC(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtDestroyGC(XEN arg1)
+static Xen gxm_XtDestroyGC(Xen arg1)
 {
   #define H_XtDestroyGC "XtDestroyGC(gc) is obsolete -- use XtReleaseGC"
   Xen_check_type(Xen_is_GC(arg1), arg1, 1, "XtDestroyGC", "GC");
@@ -13696,7 +13696,7 @@ static XEN gxm_XtDestroyGC(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtAllocateGC(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XtAllocateGC(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XtAllocateGC "GC XtAllocateGC(w, depth, value_mask, values, dynamic_mask, unused_mask): returns a sharable GC that may be modified by the client."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtAllocateGC", "Widget");
@@ -13710,7 +13710,7 @@ static XEN gxm_XtAllocateGC(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
 				  Xen_ulong_to_C_ulong(arg5), Xen_ulong_to_C_ulong(arg6))));
 }
 
-static XEN gxm_XtGetGC(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtGetGC(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtGetGC "GC XtGetGC(w, value_mask, values): returns a sharable, read-only GC."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtGetGC", "Widget");
@@ -13732,7 +13732,7 @@ static Boolean gxm_XtWorkProc(XtPointer cdata)
 {
   /* if true, quits */
   int val;
-  XEN descr = (XEN)cdata;
+  Xen descr = (Xen)cdata;
   /* (list 'Background function context gc-loc id) */
   val = Xen_boolean_to_C_bool(Xen_call_with_1_arg(Xen_cadr(descr), 
 				    Xen_caddr(descr),
@@ -13741,7 +13741,7 @@ static Boolean gxm_XtWorkProc(XtPointer cdata)
   return(val);
 }
 
-static bool unprotect_workproc(XEN val, int loc, unsigned long id)
+static bool unprotect_workproc(Xen val, int loc, unsigned long id)
 {
   if ((XM_is_Background(val)) &&
       ((XtWorkProcId)Xen_ulong_to_C_ulong(Xen_list_ref(val, 4)) == id))
@@ -13752,7 +13752,7 @@ static bool unprotect_workproc(XEN val, int loc, unsigned long id)
   return(false);
 }
 
-static XEN gxm_XtRemoveWorkProc(XEN arg1)
+static Xen gxm_XtRemoveWorkProc(Xen arg1)
 {
   #define H_XtRemoveWorkProc "void XtRemoveWorkProc(id) explicitly removes the specified background work procedure."
   XtWorkProcId id;
@@ -13763,13 +13763,13 @@ static XEN gxm_XtRemoveWorkProc(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtAppAddWorkProc(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtAppAddWorkProc(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtAppAddWorkProc "XtWorkProcId XtAppAddWorkProc(app_context, proc, client_data) adds the specified work procedure for the \
 application identified by app_context."
   XtWorkProcId id;
   int gc_loc;
-  XEN descr;
+  Xen descr;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppAddWorkProc", "XtAppContext");
   Xen_check_type(Xen_is_procedure(arg2) && (Xen_is_aritable(arg2, 1)), arg2, 2, "XtAppAddWorkProc", "(XtWorkProc data)");
   
@@ -13786,7 +13786,7 @@ application identified by app_context."
 /* the next 4 are needed where the caller allocates a block of memory, but X frees it (XCreateImage) --
  *   can't use Scheme-allocated memory here etc
  */
-static XEN gxm_XtFree(XEN arg1)
+static Xen gxm_XtFree(Xen arg1)
 {
   #define H_XtFree "void XtFree(ptr)"
   char *ptr;
@@ -13798,7 +13798,7 @@ static XEN gxm_XtFree(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtRealloc(XEN arg1, XEN arg2)
+static Xen gxm_XtRealloc(Xen arg1, Xen arg2)
 {
   #define H_XtRealloc "char *XtRealloc(ptr, num)"
   int num;
@@ -13816,7 +13816,7 @@ static XEN gxm_XtRealloc(XEN arg1, XEN arg2)
   return(C_ulong_to_Xen_ulong(XtRealloc(ptr, num)));
 }
 
-static XEN gxm_XtCalloc(XEN arg1, XEN arg2)
+static Xen gxm_XtCalloc(Xen arg1, Xen arg2)
 {
   #define H_XtCalloc "char *XtCalloc(num, size)"
   int num, size;
@@ -13833,7 +13833,7 @@ static XEN gxm_XtCalloc(XEN arg1, XEN arg2)
   return(Xen_wrap_C_pointer(XtCalloc(num, size))); /* dumb thing simply exits the main program on error! */
 }
 
-static XEN gxm_XtMalloc(XEN arg1)
+static Xen gxm_XtMalloc(Xen arg1)
 {
   #define H_XtMalloc "char *XtMalloc(size)"
   int size;
@@ -13846,8 +13846,8 @@ static XEN gxm_XtMalloc(XEN arg1)
   return(Xen_wrap_C_pointer(XtMalloc(size)));
 }
 
-static XEN xm_XtErrorHandler;
-static XEN xm_XtWarningHandler;
+static Xen xm_XtErrorHandler;
+static Xen xm_XtWarningHandler;
 
 static void gxm_XtErrorHandler(String msg)
 {
@@ -13857,11 +13857,11 @@ static void gxm_XtErrorHandler(String msg)
 	       __func__);
 }
 
-static XEN gxm_XtAppSetErrorHandler(XEN arg1, XEN arg2)
+static Xen gxm_XtAppSetErrorHandler(Xen arg1, Xen arg2)
 {
   #define H_XtAppSetErrorHandler "void XtAppSetErrorHandler(app_context, handler) registers the specified procedure, which is called when \
 a fatal error condition occurs."
-  XEN old_val;
+  Xen old_val;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppSetErrorHandler", "XtAppContext");
   old_val = xm_XtErrorHandler;
   xm_protect(arg2);
@@ -13879,11 +13879,11 @@ static void gxm_XtWarningHandler(String msg)
 	       __func__);
 }
 
-static XEN gxm_XtAppSetWarningHandler(XEN arg1, XEN arg2)
+static Xen gxm_XtAppSetWarningHandler(Xen arg1, Xen arg2)
 {
   #define H_XtAppSetWarningHandler "void XtAppSetWarningHandler(app_context, handler) registers the specified procedure, which is called \
 when a nonfatal error condition occurs."
-  XEN old_val;
+  Xen old_val;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppSetWarningHandler", "XtAppContext");
   old_val = xm_XtWarningHandler;
   xm_protect(arg2);
@@ -13893,7 +13893,7 @@ when a nonfatal error condition occurs."
   return(old_val);
 }
 
-static XEN gxm_XtAppError(XEN arg1, XEN arg2)
+static Xen gxm_XtAppError(Xen arg1, Xen arg2)
 {
   #define H_XtAppError "void XtAppError(app_context, message) calls the installed error procedure and passes the specified message."
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppError", "XtAppContext");
@@ -13903,7 +13903,7 @@ static XEN gxm_XtAppError(XEN arg1, XEN arg2)
 }
 
 
-static XEN gxm_XtAppWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XtAppWarningMsg(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XtAppWarningMsg "void XtAppWarningMsg(app_context, name, type, class, default, params, num_params) calls the high-level error \
 handler and passes the specified information."
@@ -13930,7 +13930,7 @@ handler and passes the specified information."
   return(Xen_false);
 }
 
-static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static Xen gxm_XtAppErrorMsg(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7)
 {
   #define H_XtAppErrorMsg "void XtAppErrorMsg(app_context, name, type, class, default, params, num_params) calls the high-level error \
 handler and passes the specified information."
@@ -13957,8 +13957,8 @@ handler and passes the specified information."
   return(Xen_false);
 }
 
-static XEN xm_XtErrorMsgHandler;
-static XEN xm_XtWarningMsgHandler;
+static Xen xm_XtErrorMsgHandler;
+static Xen xm_XtWarningMsgHandler;
 
 static void gxm_XtErrorMsgHandler(String name, String type, String clas, String defp, String *pars, Cardinal *num)
 {
@@ -13966,7 +13966,7 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
    */
   if ((Xen_is_procedure(xm_XtErrorMsgHandler)) && (num) && ((pars) || (*num == 0)))
     {
-      XEN lst = Xen_empty_list;
+      Xen lst = Xen_empty_list;
       int i, len, loc;
       loc = xm_protect(lst);
       len = (*num);
@@ -13984,11 +13984,11 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
     }
 }
 
-static XEN gxm_XtAppSetErrorMsgHandler(XEN arg1, XEN arg2)
+static Xen gxm_XtAppSetErrorMsgHandler(Xen arg1, Xen arg2)
 {
   #define H_XtAppSetErrorMsgHandler "void XtAppSetErrorMsgHandler(app_context, msg_handler) registers the specified procedure, which is called \
 when a fatal error occurs."
-  XEN old_val;
+  Xen old_val;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppSetErrorMsgHandler", "XtAppContext");
   old_val = xm_XtErrorMsgHandler;
   xm_protect(arg2);
@@ -14005,7 +14005,7 @@ static void gxm_XtWarningMsgHandler(String name, String type, String clas, Strin
    */
   if ((Xen_is_procedure(xm_XtWarningMsgHandler)) && (num) && ((pars) || (*num == 0)))
     {
-      XEN lst = Xen_empty_list;
+      Xen lst = Xen_empty_list;
       int i, len, loc;
       loc = xm_protect(lst);
       len = (*num);
@@ -14023,11 +14023,11 @@ static void gxm_XtWarningMsgHandler(String name, String type, String clas, Strin
     }
 }
 
-static XEN gxm_XtAppSetWarningMsgHandler(XEN arg1, XEN arg2)
+static Xen gxm_XtAppSetWarningMsgHandler(Xen arg1, Xen arg2)
 {
   #define H_XtAppSetWarningMsgHandler "void XtAppSetWarningMsgHandler(app_context, msg_handler) registers the specified procedure, which \
 is called when a nonfatal error condition occurs."
-  XEN old_val;
+  Xen old_val;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppSetWarningMsgHandler", "XtAppContext");
   old_val = xm_XtWarningMsgHandler;
   xm_protect(arg2);
@@ -14037,7 +14037,7 @@ is called when a nonfatal error condition occurs."
   return(old_val);
 }
 
-static XEN gxm_XtGetValues(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtGetValues(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtGetValues "void XtGetValues(Widget w, ArgList args, Cardinal num_args): returns the values of the \
 resources specified for the widget w.  In xm, 'args' is a list of resource names followed by a placeholder \
@@ -14052,7 +14052,7 @@ width 321).  If the resource value is an array in C, it is returned as a list."
   return(gxm_XtGetValues_1(arg1, arg2, Xen_to_C_INT_DEF(arg3, arg2)));
 }
 
-static XEN gxm_XtVaGetValues(XEN arg1, XEN arg2)
+static Xen gxm_XtVaGetValues(Xen arg1, Xen arg2)
 {
   #define H_XtVaGetValues "void XtVaGetValues(w, ...) in xm is the same as XtGetValues."
   /* DIFF: XtVaGetValues -> returns original list with vals in place 
@@ -14062,7 +14062,7 @@ static XEN gxm_XtVaGetValues(XEN arg1, XEN arg2)
   return(gxm_XtGetValues_1(arg1, arg2, Xen_list_length(arg2) / 2));
 }
 
-static XEN gxm_XtVaSetValues(XEN arg1, XEN arg2)
+static Xen gxm_XtVaSetValues(Xen arg1, Xen arg2)
 {
   #define H_XtVaSetValues "void XtVaSetValues(w, ...) in xm is the same as XtSetValues."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtVaSetValues", "Widget");
@@ -14084,7 +14084,7 @@ static XEN gxm_XtVaSetValues(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtSetValues(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtSetValues(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtSetValues "void XtSetValues(Widget w, ArgList args, Cardinal num_args) sets the values of the \
 resources specified for the widget w.  In xm, 'args' is a list of resource names followed by the new value, \
@@ -14112,7 +14112,7 @@ of a widget, (" XM_PREFIX "XtSetValues" XM_POSTFIX " w (list " XM_PREFIX "XmNhei
   return(Xen_false);
 }
 
-static XEN gxm_XtCloseDisplay(XEN arg1)
+static Xen gxm_XtCloseDisplay(Xen arg1)
 {
   #define H_XtCloseDisplay "void XtCloseDisplay(display) closes the specified display as soon as it is safe to do so."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XtCloseDisplay", "Display*");
@@ -14120,21 +14120,21 @@ static XEN gxm_XtCloseDisplay(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtDisplayToApplicationContext(XEN arg1)
+static Xen gxm_XtDisplayToApplicationContext(Xen arg1)
 {
   #define H_XtDisplayToApplicationContext "XtAppContext XtDisplayToApplicationContext(dpy): returns the application context for the specified display."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XtDisplayToApplicationContext", "Display*");
   return(C_to_Xen_XtAppContext(XtDisplayToApplicationContext(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XtWidgetToApplicationContext(XEN arg1)
+static Xen gxm_XtWidgetToApplicationContext(Xen arg1)
 {
   #define H_XtWidgetToApplicationContext "XtAppContext XtWidgetToApplicationContext(w): returns the application context for the specified widget."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtWidgetToApplicationContext", "Widget");
   return(C_to_Xen_XtAppContext(XtWidgetToApplicationContext(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtInitializeWidgetClass(XEN arg1)
+static Xen gxm_XtInitializeWidgetClass(Xen arg1)
 {
   #define H_XtInitializeWidgetClass "void XtInitializeWidgetClass(object_class)"
   Xen_check_type(Xen_is_WidgetClass(arg1), arg1, 1, "XtInitializeWidgetClass", "WidgetClass");
@@ -14142,7 +14142,7 @@ static XEN gxm_XtInitializeWidgetClass(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtDestroyApplicationContext(XEN arg1)
+static Xen gxm_XtDestroyApplicationContext(Xen arg1)
 {
   #define H_XtDestroyApplicationContext "void XtDestroyApplicationContext(app_context) destroys the specified application context as soon as it is safe to do so."
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtDestroyApplicationContext", "XtAppContext");
@@ -14150,13 +14150,13 @@ static XEN gxm_XtDestroyApplicationContext(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtCreateApplicationContext(void)
+static Xen gxm_XtCreateApplicationContext(void)
 {
   #define H_XtCreateApplicationContext "XtAppContext XtCreateApplicationContext()"
   return(C_to_Xen_XtAppContext(XtCreateApplicationContext()));
 }
 
-static XEN gxm_argv_to_list(XEN lst, int argc, char **argv)
+static Xen gxm_argv_to_list(Xen lst, int argc, char **argv)
 {
   int i, loc;
   if (argc == 0) return(lst);
@@ -14168,7 +14168,7 @@ static XEN gxm_argv_to_list(XEN lst, int argc, char **argv)
   return(lst);
 }
 
-static XEN gxm_XtOpenDisplay(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg7, XEN arg8)
+static Xen gxm_XtOpenDisplay(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg7, Xen arg8)
 {
   #define H_XtOpenDisplay "Display *XtOpenDisplay(app_context, display_string, application_name, application_class, argc, argv) \
 calls XOpenDisplay the specified display name."
@@ -14176,7 +14176,7 @@ calls XOpenDisplay the specified display name."
    */
   char **argv = NULL;
   int argc;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Display *dpy;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtOpenDisplay", "XtAppContext");
   Xen_check_type(Xen_is_string(arg2) || Xen_is_false(arg2), arg2, 2, "XtOpenDisplay", "char*");
@@ -14198,13 +14198,13 @@ calls XOpenDisplay the specified display name."
   return(gxm_argv_to_list(lst, argc, argv));
 }
 
-static XEN gxm_XtAppSetFallbackResources(XEN app, XEN specs)
+static Xen gxm_XtAppSetFallbackResources(Xen app, Xen specs)
 {
   #define H_XtAppSetFallbackResources "XtAppSetFallbackResources(app, list-of-strings) sets the app's default resource values \
 from the list of strings"
   char **fallbacks;
   int i, len;
-  XEN lst;
+  Xen lst;
   Xen_check_type(Xen_is_XtAppContext(app), app, 1, "XtAppSetFallbackResources", "XtAppContext");
   Xen_check_type(Xen_is_list(specs), specs, 2, "XtAppSetFallbackResources", "list of char*");
   len = Xen_list_length(specs);
@@ -14217,7 +14217,7 @@ from the list of strings"
   return(app);
 }
 
-static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8, XEN specs)
+static Xen gxm_XtVaAppInitialize(Xen arg2, Xen arg5, Xen arg6, Xen arg8, Xen specs)
 {
   #define H_XtVaAppInitialize "Widget XtVaAppInitialize(application_class, argc_in_out, argv_in_out, args, fallbacks) -- the order \
 of the arguments is slightly different from the C Xt call.  The final arg is an (optional) list of strings."
@@ -14231,7 +14231,7 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
   int i, len = 0, argc, arglen;
   char **argv = NULL;
   char **fallbacks = NULL;
-  XEN lst;
+  Xen lst;
   Xen_check_type(Xen_is_string(arg2), arg2, 1, "XtVaAppInitialize", "char*");
   Xen_check_type(Xen_is_integer(arg5), arg5, 2, "XtVaAppInitialize", "int");
   Xen_check_type(Xen_is_list(arg6), arg6, 3, "XtVaAppInitialize", "list of String");
@@ -14288,7 +14288,7 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
 }
 
 
-static XEN gxm_XtAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8, XEN arg9)
+static Xen gxm_XtAppInitialize(Xen arg2, Xen arg5, Xen arg6, Xen arg8, Xen arg9)
 {
   #define H_XtAppInitialize "Widget XtAppInitialize(application_class, argc_in_out, argv_in_out, \
 args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext ,then calls XtOpenDisplay with \
@@ -14305,7 +14305,7 @@ and the specified args and num_args and returns the created shell.  The num_args
   char **argv = NULL;
   char **fallbacks = NULL;
   int i, len = 0;
-  XEN lst;
+  Xen lst;
   Xen_check_type(Xen_is_string(arg2), arg2, 1, "XtAppInitialize", "char*");
   Xen_check_type(Xen_is_integer(arg5), arg5, 2, "XtAppInitialize", "int");
   Xen_check_type(Xen_is_list(arg6), arg6, 3, "XtAppInitialize", "list of String*");
@@ -14352,7 +14352,7 @@ and the specified args and num_args and returns the created shell.  The num_args
 		    gxm_argv_to_list(Xen_empty_list, argc, argv)));
 }
 
-static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN arg8, XEN specs)
+static Xen gxm_XtVaOpenApplication(Xen arg1, Xen arg4, Xen arg5, Xen arg7, Xen arg8, Xen specs)
 {
   #define H_XtVaOpenApplication "Widget XtVaOpenApplication(application_class, argc_in_out, argv_in_out, widget_class, args, fallbacks)"
   /* DIFF: XtVaOpenApplication [app] name {options numopts} {argc} argv resources class args -> (list widget app), argc is int not int* options/num ignored
@@ -14366,7 +14366,7 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
   char **argv = NULL;
   char **fallbacks = NULL;
   int i, len = 0;
-  XEN lst;
+  Xen lst;
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XtVaOpenApplication", "char*");
   Xen_check_type(Xen_is_integer(arg4), arg4, 2, "XtVaOpenApplication", "int"); /* was arg3 by mistake, 11-Oct-02 */
   Xen_check_type(Xen_is_list(arg5), arg5, 3, "XtVaOpenApplication", "list of String");
@@ -14415,7 +14415,7 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
 		    gxm_argv_to_list(Xen_empty_list, argc, argv)));
 }
 
-static XEN gxm_XtOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN arg8, XEN arg9)
+static Xen gxm_XtOpenApplication(Xen arg1, Xen arg4, Xen arg5, Xen arg7, Xen arg8, Xen arg9)
 {
   #define H_XtOpenApplication "Widget XtOpenApplication(application_class, argc_in_out, argv_in_out, \
 widget_class, args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext , then calls XtOpenDisplay \
@@ -14431,7 +14431,7 @@ of fallback resources."
   char **argv;
   char **fallbacks = NULL;
   int i, len = 0;
-  XEN lst;
+  Xen lst;
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XtOpenApplication", "char*");
   Xen_check_type(Xen_is_integer(arg4), arg4, 2, "XtOpenApplication", "int");
   Xen_check_type(Xen_is_list(arg5), arg5, 3, "XtOpenApplication", "list of String*");
@@ -14473,7 +14473,7 @@ of fallback resources."
 		    gxm_argv_to_list(Xen_empty_list, argc, argv)));
 }
 
-static XEN gxm_XtDisplayInitialize(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg7, XEN arg8)
+static Xen gxm_XtDisplayInitialize(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg7, Xen arg8)
 {
   #define H_XtDisplayInitialize "void XtDisplayInitialize(app_context, display, application_name, application_class, argc, argv) \
 builds the resource database, calls the Xlib XrmParseCommand to parse the command line, and performs other per display initialization."
@@ -14501,7 +14501,7 @@ builds the resource database, calls the Xlib XrmParseCommand to parse the comman
 /* -------- XtLanguage callback -------- */
 /* (456) a global */
 
-static XEN xm_language_proc;
+static Xen xm_language_proc;
 
 static String gxm_XtLanguageProc(Display* d, String s, XtPointer context) 
 {
@@ -14509,20 +14509,20 @@ static String gxm_XtLanguageProc(Display* d, String s, XtPointer context)
   res = (char *)Xen_string_to_C_string(Xen_call_with_3_args(xm_language_proc,
 				   C_to_Xen_Display(d),
 				   C_string_to_Xen_string(s),
-				   (XEN)context,
+				   (Xen)context,
 				   __func__));
   if (res)
     return(xen_strdup(res));
   return(NULL);
 }
 
-static XEN gxm_XtSetLanguageProc(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtSetLanguageProc(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtSetLanguageProc "Widget XtSetLanguageProc(app_context, proc, client_data)"
   /* arg can be null -> use default */
   /* DIFF: XtSetLanguageProc args1 and 2 use #f for NULL, return of #f means none was set
    */
-  XEN previous_proc = Xen_false;
+  Xen previous_proc = Xen_false;
   Xen_check_type(Xen_is_false(arg1) || Xen_is_XtAppContext(arg1), arg1, 1, "XtSetLanguageProc", "XtAppContext");
   Xen_check_type(Xen_is_false(arg2) || (Xen_is_procedure(arg2) && (Xen_is_aritable(arg2, 3))), arg2, 2, "XtSetLanguageProc", "XtLanguageProc");
   previous_proc = xm_language_proc;
@@ -14549,14 +14549,14 @@ static XEN gxm_XtSetLanguageProc(XEN arg1, XEN arg2, XEN arg3)
   return(previous_proc);
 }
 
-static XEN gxm_XtToolkitInitialize(void)
+static Xen gxm_XtToolkitInitialize(void)
 {
   #define H_XtToolkitInitialize "void XtToolkitInitialize()"
   XtToolkitInitialize();
   return(Xen_false);
 }
 
-static XEN gxm_XtVaAppCreateShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtVaAppCreateShell(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtVaAppCreateShell "Widget XtVaAppCreateShell(application_name, application_class, widget_class, display, ...)"
   Arg *args;
@@ -14583,7 +14583,7 @@ static XEN gxm_XtVaAppCreateShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XtAppCreateShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XtAppCreateShell(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XtAppCreateShell "Widget XtAppCreateShell(application_name, application_class, widget_class, display, args, num_args) saves \
 the specified application name and application class for qualifying all widget resource specifiers."
@@ -14612,7 +14612,7 @@ the specified application name and application class for qualifying all widget r
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XtVaCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XtVaCreateManagedWidget(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XtVaCreateManagedWidget "Widget XtVaCreateManagedWidget(name, widget_class, parent, ...)"
   Arg *args;
@@ -14637,7 +14637,7 @@ static XEN gxm_XtVaCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XtVaCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XtVaCreateWidget(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XtVaCreateWidget "Widget XtVaCreateWidget(name, widget_class, parent, ...)"
   Arg *args;
@@ -14662,7 +14662,7 @@ static XEN gxm_XtVaCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XtCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtCreateManagedWidget(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtCreateManagedWidget "Widget XtCreateManagedWidget(name, widget_class, parent, args, num_args) is a routine \
 that calls XtCreateWidget and XtManageChild."
@@ -14688,7 +14688,7 @@ that calls XtCreateWidget and XtManageChild."
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XtCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtCreateWidget(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtCreateWidget "Widget XtCreateWidget(name, widget_class, parent, args, num_args) performs much of the boilerplate operations of widget creation."
   Arg *args;
@@ -14713,7 +14713,7 @@ static XEN gxm_XtCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XtCallbackPopdown(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtCallbackPopdown(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtCallbackPopdown "void XtCallbackPopdown(w, client_data, call_data) calls XtPopdown with the specified shell_widget and then \
 calls XtSetSensitive to resensitize the enable_widget."
@@ -14722,7 +14722,7 @@ calls XtSetSensitive to resensitize the enable_widget."
   return(Xen_false);
 }
 
-static XEN gxm_XtPopdown(XEN arg1)
+static Xen gxm_XtPopdown(Xen arg1)
 {
   #define H_XtPopdown "void XtPopdown(popup_shell)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtPopdown", "Widget");
@@ -14730,7 +14730,7 @@ static XEN gxm_XtPopdown(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtCallbackExclusive(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtCallbackExclusive(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtCallbackExclusive "void XtCallbackExclusive(w, client_data, call_data)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtCallbackExclusive", "Widget");
@@ -14738,7 +14738,7 @@ static XEN gxm_XtCallbackExclusive(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XtCallbackNonexclusive(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtCallbackNonexclusive(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtCallbackNonexclusive "void XtCallbackNonexclusive(w, client_data, call_data)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtCallbackNonexclusive", "Widget");
@@ -14746,7 +14746,7 @@ static XEN gxm_XtCallbackNonexclusive(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XtCallbackNone(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtCallbackNone(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtCallbackNone "void XtCallbackNone(w, client_data, call_data)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtCallbackNone", "Widget");
@@ -14754,7 +14754,7 @@ static XEN gxm_XtCallbackNone(XEN arg1, XEN arg2, XEN arg3)
   return(Xen_false);
 }
 
-static XEN gxm_XtPopupSpringLoaded(XEN arg1)
+static Xen gxm_XtPopupSpringLoaded(Xen arg1)
 {
   #define H_XtPopupSpringLoaded "void XtPopupSpringLoaded(popup_shell)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtPopupSpringLoaded", "Widget");
@@ -14762,7 +14762,7 @@ static XEN gxm_XtPopupSpringLoaded(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtPopup(XEN arg1, XEN arg2)
+static Xen gxm_XtPopup(Xen arg1, Xen arg2)
 {
   #define H_XtPopup "void XtPopup(popup_shell, grab_kind)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtPopup", "Widget");
@@ -14771,7 +14771,7 @@ static XEN gxm_XtPopup(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtVaCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XtVaCreatePopupShell(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XtVaCreatePopupShell "Widget XtVaCreatePopupShell(name, widget_class, parent, ...)"
   Arg *args;
@@ -14796,7 +14796,7 @@ static XEN gxm_XtVaCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XtCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtCreatePopupShell(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtCreatePopupShell "Widget XtCreatePopupShell(name, widget_class, parent, args, num_args) ensures that the specified \
 class is a subclass of Shell and, rather than using insert_child to attach the widget to the parent's children list, attaches the shell \
@@ -14825,7 +14825,7 @@ to the parent's pop-ups list directly."
   return(C_to_Xen_Widget(w));
 }
 
-static XEN gxm_XtHasCallbacks(XEN arg1, XEN arg2)
+static Xen gxm_XtHasCallbacks(Xen arg1, Xen arg2)
 {
   #define H_XtHasCallbacks "XtCallbackStatus XtHasCallbacks(w, callback_name) first checks to see if the widget has a callback \
 list identified by callback_name; returns XtCallbackNoList or XtCallbackHasNone if none, else XtCallbackHasSome"
@@ -14834,7 +14834,7 @@ list identified by callback_name; returns XtCallbackNoList or XtCallbackHasNone 
   return(C_int_to_Xen_integer(XtHasCallbacks(Xen_to_C_Widget(arg1), (char *)Xen_string_to_C_string(arg2))));
 }
 
-static XEN gxm_XtCallCallbacks(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtCallCallbacks(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtCallCallbacks "void XtCallCallbacks(w, callback_name, call_data) calls each procedure that is registered in the \
 specified widget's callback list. The call_data arg is assumed to be a callback struct reference"
@@ -14846,7 +14846,7 @@ specified widget's callback list. The call_data arg is assumed to be a callback 
   return(Xen_false);
 }
 
-static XEN gxm_XtRemoveAllCallbacks(XEN arg1, XEN arg2)
+static Xen gxm_XtRemoveAllCallbacks(Xen arg1, Xen arg2)
 {
   #define H_XtRemoveAllCallbacks "void XtRemoveAllCallbacks(w, callback_name) removes all the callback procedures from the specified widget's callback list."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtRemoveAllCallbacks", "Widget");
@@ -14855,7 +14855,7 @@ static XEN gxm_XtRemoveAllCallbacks(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtRemoveCallback(XEN arg1, XEN arg2, XEN arg4)
+static Xen gxm_XtRemoveCallback(Xen arg1, Xen arg2, Xen arg4)
 {
   #define H_XtRemoveCallback "void XtRemoveCallback(w, callback_name, client_data) removes a callback"
   /* DIFF: XtRemoveCallback omits proc arg and is passed whatever XtAddCallback returned
@@ -14867,13 +14867,13 @@ static XEN gxm_XtRemoveCallback(XEN arg1, XEN arg2, XEN arg4)
   return(Xen_false);
 }
 
-static XEN gxm_XtRemoveCallbacks(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtRemoveCallbacks(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtRemoveCallbacks "void XtRemoveCallbacks(w, callback_name, callbacks) removes the specified callback procedures from the \
 specified widget's callback list. (The 3rd arg is a list of descriptors returned by XtAddCallback)."
   /* DIFF: XtRemoveCallbacks takes list of descriptors as arg3
    */
-  XEN lst;
+  Xen lst;
   int i, len;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtRemoveCallbacks", "Widget");
   Xen_check_type(Xen_is_string(arg2), arg2, 2, "XtRemoveCallbacks", "char*");
@@ -14896,7 +14896,7 @@ enum {
   GXM_Traverse, GXM_Verify
 };
 
-static XEN wrap_callback_struct(int type, XtPointer info)
+static Xen wrap_callback_struct(int type, XtPointer info)
 {
   switch (type)
     {
@@ -14997,7 +14997,7 @@ static int callback_struct_type(Widget w, const char *name)
   return(GXM_Any);
 }
 
-static XEN gxm_XtAddCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XtAddCallback(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XtAddCallback "void XtAddCallback(w, callback_name, callback, client_data) adds the specified callback procedure to \
 the specified widget's callback list.  In xm, the client-data is optional, defaulting to " PROC_FALSE ". The callback procedure takes \
@@ -15007,7 +15007,7 @@ the specified widget's callback list.  In xm, the client-data is optional, defau
   char *name;
   Widget w;
   int gc_loc;
-  XEN call_descr = Xen_empty_list;
+  Xen call_descr = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtAddCallback", "Widget");
   Xen_check_type(Xen_is_string(arg2), arg2, 2, "XtAddCallback", "char*");
   Xen_check_type(Xen_is_procedure(arg3) && (Xen_is_aritable(arg3, 3)), arg3, 3, "XtAddCallback", "(XtCallbackProc widget data callb)");
@@ -15021,13 +15021,13 @@ the specified widget's callback list.  In xm, the client-data is optional, defau
   return(call_descr);
 }
 
-static XEN gxm_XtAddCallbacks(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtAddCallbacks(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtAddCallbacks "void XtAddCallbacks(w, callback_name, callbacks) add the specified list of callbacks to the specified widget's callback list. \
 It returns a list of callback descriptors for use with XtRemoveCallback(s)."
   /* DIFF: XtAddCallbacks takes list of (func data) pairs as arg3
    */
-  XEN res = Xen_empty_list, lst;
+  Xen res = Xen_empty_list, lst;
   int i, len;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtAddCallbacks", "Widget");
   Xen_check_type(Xen_is_string(arg2), arg2, 2, "XtAddCallbacks", "char*");
@@ -15040,14 +15040,14 @@ It returns a list of callback descriptors for use with XtRemoveCallback(s)."
   return(res);
 }
 
-static XEN gxm_XtParent(XEN arg1)
+static Xen gxm_XtParent(Xen arg1)
 {
   #define H_XtParent "Widget XtParent(w): returns the widget's parent widget ID."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtParent", "Widget");
   return(C_to_Xen_Widget(XtParent(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtClass(XEN arg1)
+static Xen gxm_XtClass(Xen arg1)
 {
   #define H_XtClass "WidgetClass XtClass(w)"
   #define H_XtSuperclass "WidgetClass XtSuperclass(w): returns a pointer to the widget's superclass class structure."
@@ -15055,62 +15055,62 @@ static XEN gxm_XtClass(XEN arg1)
   return(C_to_Xen_WidgetClass(XtClass(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtSuperclass(XEN arg1)
+static Xen gxm_XtSuperclass(Xen arg1)
 {
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtSuperclass", "Widget");
   return(C_to_Xen_WidgetClass(XtSuperclass(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtName(XEN arg1)
+static Xen gxm_XtName(Xen arg1)
 {
   #define H_XtName "Widget XtName(w): returns the widget's name."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtName", "Widget");
   return(C_string_to_Xen_string(XtName(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtWindowOfObject(XEN arg1)
+static Xen gxm_XtWindowOfObject(Xen arg1)
 {
   #define H_XtWindowOfObject "Window XtWindowOfObject(object): returns the window of the specified object."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtWindowOfObject", "Widget");
   return(C_to_Xen_Window(XtWindowOfObject(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtWindow(XEN arg1)
+static Xen gxm_XtWindow(Xen arg1)
 {
   #define H_XtWindow "Window XtWindow(w): returns the window of the specified widget."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtWindow", "Widget");
   return(C_to_Xen_Window(XtWindow(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtScreenOfObject(XEN arg1)
+static Xen gxm_XtScreenOfObject(Xen arg1)
 {
   #define H_XtScreenOfObject "Screen *XtScreenOfObject(object): returns the screen pointer for the specified object."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtScreenOfObject", "Widget");
   return(C_to_Xen_Screen(XtScreenOfObject(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtScreen(XEN arg1)
+static Xen gxm_XtScreen(Xen arg1)
 {
   #define H_XtScreen "Screen* XtScreen(w): returns the screen pointer for the specified widget."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtScreen", "Widget");
   return(C_to_Xen_Screen(XtScreen(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtDisplayOfObject(XEN arg1)
+static Xen gxm_XtDisplayOfObject(Xen arg1)
 {
   #define H_XtDisplayOfObject "Display *XtDisplayOfObject(object): returns the display pointer for the specified object."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtDisplayOfObject", "Widget");
   return(C_to_Xen_Display(XtDisplayOfObject(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtDisplay(XEN arg1)
+static Xen gxm_XtDisplay(Xen arg1)
 {
   #define H_XtDisplay "Display* XtDisplay(w)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtDisplay", "Widget");
   return(C_to_Xen_Display(XtDisplay(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtVaCreateArgsList(XEN arg1, XEN ignore2)
+static Xen gxm_XtVaCreateArgsList(Xen arg1, Xen ignore2)
 {
   #define H_XtVaCreateArgsList "XtVarArgsList XtVaCreateArgsList(unused, ...) allocates memory and copies its arguments into a single \
 list pointer, which may be used with XtVaNestedList."
@@ -15119,7 +15119,7 @@ list pointer, which may be used with XtVaNestedList."
   return(arg1);
 }
 
-static XEN gxm_XtMergeArgLists(XEN arg1, XEN ignore2, XEN arg3, XEN ignore4)
+static Xen gxm_XtMergeArgLists(Xen arg1, Xen ignore2, Xen arg3, Xen ignore4)
 {
   #define H_XtMergeArgLists "ArgList XtMergeArgLists(args1, num_args1, args2, num_args2) allocates enough storage to hold the combined \
 ArgList structures and copies them into it."
@@ -15129,7 +15129,7 @@ ArgList structures and copies them into it."
   return(Xen_append(arg1, arg3));
 }
 
-static XEN gxm_XtWindowToWidget(XEN arg1, XEN arg2)
+static Xen gxm_XtWindowToWidget(Xen arg1, Xen arg2)
 {
   #define H_XtWindowToWidget "Widget XtWindowToWidget(display, window) translates the specified window and display pointer into the appropriate widget instance."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XtWindowToWidget", "Display*");
@@ -15137,7 +15137,7 @@ static XEN gxm_XtWindowToWidget(XEN arg1, XEN arg2)
   return(C_to_Xen_Widget(XtWindowToWidget(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2))));
 }
 
-static XEN gxm_XtNameToWidget(XEN arg1, XEN arg2)
+static Xen gxm_XtNameToWidget(Xen arg1, Xen arg2)
 {
   #define H_XtNameToWidget "Widget XtNameToWidget(reference, names) looks for a widget whose name is the first component in the specified names"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtNameToWidget", "Widget");
@@ -15145,7 +15145,7 @@ static XEN gxm_XtNameToWidget(XEN arg1, XEN arg2)
   return(C_to_Xen_Widget(XtNameToWidget(Xen_to_C_Widget(arg1), (char *)Xen_string_to_C_string(arg2))));
 }
 
-static XEN gxm_XtSetSensitive(XEN arg1, XEN arg2)
+static Xen gxm_XtSetSensitive(Xen arg1, Xen arg2)
 {
   #define H_XtSetSensitive "void XtSetSensitive(w, sensitive)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtSetSensitive", "Widget");
@@ -15154,7 +15154,7 @@ static XEN gxm_XtSetSensitive(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtDestroyWidget(XEN arg1)
+static Xen gxm_XtDestroyWidget(Xen arg1)
 {
   #define H_XtDestroyWidget "void XtDestroyWidget(w) provides the only method of destroying a widget, including widgets that need to destroy themselves."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtDestroyWidget", "Widget");
@@ -15162,7 +15162,7 @@ static XEN gxm_XtDestroyWidget(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtUnrealizeWidget(XEN arg1)
+static Xen gxm_XtUnrealizeWidget(Xen arg1)
 {
   #define H_XtUnrealizeWidget "void XtUnrealizeWidget(w) destroys the windows of an existing widget and all of its children (recursively down the widget tree)."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtUnrealizeWidget", "Widget");
@@ -15170,7 +15170,7 @@ static XEN gxm_XtUnrealizeWidget(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtRealizeWidget(XEN arg1)
+static Xen gxm_XtRealizeWidget(Xen arg1)
 {
   #define H_XtRealizeWidget "void XtRealizeWidget(w) maps the widget window."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtRealizeWidget", "Widget");
@@ -15178,7 +15178,7 @@ static XEN gxm_XtRealizeWidget(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtAppPending(XEN arg1)
+static Xen gxm_XtAppPending(Xen arg1)
 {
   #define H_XtAppPending "XtInputMask XtAppPending(app_context): returns a nonzero value if there are events pending from the X server, timer \
 pending, or other input sources pending. "
@@ -15186,7 +15186,7 @@ pending, or other input sources pending. "
   return(C_ulong_to_Xen_ulong(XtAppPending(Xen_to_C_XtAppContext(arg1))));
 }
 
-static XEN gxm_XtAppNextEvent(XEN arg1)
+static Xen gxm_XtAppNextEvent(Xen arg1)
 {
   #define H_XtAppNextEvent "void XtAppNextEvent(app_context) flushes the X output buffers of each Display in the application \
 context and waits for an event while looking at the other input sources, timeout timeout values, and signal handlers and calling any callback \
@@ -15212,7 +15212,7 @@ procedures triggered by them -> event."
 
 static void gxm_XtInputCallbackProc(XtPointer cdata, int *fileno, XtInputId *id) 
 {
-  XEN descr = (XEN)cdata;
+  Xen descr = (Xen)cdata;
   /* (list 'Input function context gc-loc id) */
   Xen_call_with_3_args(Xen_cadr(descr), 
 	     Xen_caddr(descr), 
@@ -15221,7 +15221,7 @@ static void gxm_XtInputCallbackProc(XtPointer cdata, int *fileno, XtInputId *id)
 	     __func__);
 }
 
-static bool unprotect_inputproc(XEN val, int loc, unsigned long id)
+static bool unprotect_inputproc(Xen val, int loc, unsigned long id)
 {
   if ((XM_is_Input(val)) &&
       ((XtInputId)Xen_ulong_to_C_ulong(Xen_list_ref(val, 4)) == id))
@@ -15232,7 +15232,7 @@ static bool unprotect_inputproc(XEN val, int loc, unsigned long id)
   return(false);
 }
 
-static XEN gxm_XtRemoveInput(XEN arg1)
+static Xen gxm_XtRemoveInput(Xen arg1)
 {
   #define H_XtRemoveInput "void XtRemoveInput(id) causes the read routine to stop watching for input from the input source."
   XtInputId id;
@@ -15243,13 +15243,13 @@ static XEN gxm_XtRemoveInput(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtAppAddInput(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtAppAddInput(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtAppAddInput "XtInputId XtAppAddInput(app_context, source, condition, proc, client_data) registers with the read routine a \
 new source of events, which is usually file input but can also be file output."
   XtInputId id;
   int gc_loc;
-  XEN descr;
+  Xen descr;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppAddInput", "XtAppContext");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XtAppAddInput", "int");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XtAppAddInput", "int");
@@ -15279,7 +15279,7 @@ new source of events, which is usually file input but can also be file output."
 
 static void gxm_XtTimerCallbackProc(XtPointer cdata, XtIntervalId* i) 
 {
-  XEN descr = (XEN)cdata;
+  Xen descr = (Xen)cdata;
   /* (list 'TimeOut function context gc-loc id) */
   int gc_loc;
   gc_loc = Xen_integer_to_C_int(Xen_list_ref(descr, 3));
@@ -15290,7 +15290,7 @@ static void gxm_XtTimerCallbackProc(XtPointer cdata, XtIntervalId* i)
   xm_unprotect_at(gc_loc);
 }
 
-static bool unprotect_timeoutproc(XEN val, int loc, unsigned long id)
+static bool unprotect_timeoutproc(Xen val, int loc, unsigned long id)
 {
   if ((XM_is_TimeOut(val)) &&
       ((XtIntervalId)Xen_ulong_to_C_ulong(Xen_list_ref(val, 4)) == id))
@@ -15301,7 +15301,7 @@ static bool unprotect_timeoutproc(XEN val, int loc, unsigned long id)
   return(false);
 }
 
-static XEN gxm_XtRemoveTimeOut(XEN arg1)
+static Xen gxm_XtRemoveTimeOut(Xen arg1)
 {
   #define H_XtRemoveTimeOut "void XtRemoveTimeOut(timer) removes the timeout."
   XtIntervalId id;
@@ -15312,12 +15312,12 @@ static XEN gxm_XtRemoveTimeOut(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtAppAddTimeOut(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XtAppAddTimeOut(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XtAppAddTimeOut "XtIntervalId XtAppAddTimeOut(app_context, interval, proc, client_data) creates a timeout and returns an identifier for it."
   XtIntervalId id;
   int gc_loc;
-  XEN descr;
+  Xen descr;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppAddTimeOut", "XtAppContext");
   Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtAppAddTimeOut", "ulong");
   Xen_check_type(Xen_is_procedure(arg3) && (Xen_is_aritable(arg3, 2)), arg3, 3, "XtAppAddTimeOut", "(XtTimerCallbackProc data id)");
@@ -15332,14 +15332,14 @@ static XEN gxm_XtAppAddTimeOut(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_to_Xen_XtIntervalId(id));
 }
 
-static XEN gxm_XtLastTimestampProcessed(XEN arg1)
+static Xen gxm_XtLastTimestampProcessed(Xen arg1)
 {
   #define H_XtLastTimestampProcessed "Time XtLastTimestampProcessed(display): returns the timestamp of the last event"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XtLastTimestampProcessed", "Display*");
   return(C_to_Xen_Time(XtLastTimestampProcessed(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XtLastEventProcessed(XEN arg1)
+static Xen gxm_XtLastEventProcessed(Xen arg1)
 {
   #define H_XtLastEventProcessed "XEvent* XtLastEventProcessed(display): returns the last event passed to XtDispatchEvent for the \
 specified display and NULL if there has been no event. "
@@ -15347,7 +15347,7 @@ specified display and NULL if there has been no event. "
   return(C_to_Xen_XEvent(XtLastEventProcessed(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XtGetKeyboardFocusWidget(XEN arg1)
+static Xen gxm_XtGetKeyboardFocusWidget(Xen arg1)
 {
   #define H_XtGetKeyboardFocusWidget "Widget XtGetKeyboardFocusWidget(widget): returns the widget that would be the end result of keyboard \
 event forwarding for a keyboard event for the specified widget."
@@ -15355,7 +15355,7 @@ event forwarding for a keyboard event for the specified widget."
   return(C_to_Xen_Widget(XtGetKeyboardFocusWidget(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtSetKeyboardFocus(XEN arg1, XEN arg2)
+static Xen gxm_XtSetKeyboardFocus(Xen arg1, Xen arg2)
 {
   #define H_XtSetKeyboardFocus "XtSetKeyboardFocus(subtree descendant) causes XtDispatchEvent to remap and send the event to the specified \
 descendant widget."
@@ -15365,7 +15365,7 @@ descendant widget."
   return(Xen_false);
 }
 
-static XEN gxm_XtAddExposureToRegion(XEN arg1, XEN arg2)
+static Xen gxm_XtAddExposureToRegion(Xen arg1, Xen arg2)
 {
   #define H_XtAddExposureToRegion "void XtAddExposureToRegion(event, region) computes the union of the rectangle defined by the exposure event \
 and the specified region. Then, it stores the results back in region."
@@ -15375,7 +15375,7 @@ and the specified region. Then, it stores the results back in region."
   return(Xen_false);
 }
 
-static XEN gxm_XtAppMainLoop(XEN arg1)
+static Xen gxm_XtAppMainLoop(Xen arg1)
 {
 
   #define H_XtAppMainLoop "void XtAppMainLoop(app_context) first reads the next incoming X event by calling XtAppNextEvent and then it dispatches \
@@ -15385,7 +15385,7 @@ the event to the appropriate registered procedure by calling XtDispatchEvent."
   return(Xen_false);
 }
 
-static XEN gxm_XtAppProcessEvent(XEN arg1, XEN arg2)
+static Xen gxm_XtAppProcessEvent(Xen arg1, Xen arg2)
 {
   #define H_XtAppProcessEvent "void XtAppProcessEvent(app_context, mask) processes one timer, alternate input, signal source, or X event. \
 If there is nothing of the appropriate type to process, XtAppProcessEvent blocks until there is."
@@ -15395,7 +15395,7 @@ If there is nothing of the appropriate type to process, XtAppProcessEvent blocks
   return(Xen_false);
 }
 
-static XEN gxm_XtRemoveGrab(XEN arg1)
+static Xen gxm_XtRemoveGrab(Xen arg1)
 {
   #define H_XtRemoveGrab "void XtRemoveGrab(w) removes widgets from the modal cascade starting at the most recent widget up to and \
 including the specified widget. "
@@ -15404,7 +15404,7 @@ including the specified widget. "
   return(Xen_false);
 }
 
-static XEN gxm_XtAddGrab(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtAddGrab(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtAddGrab "void XtAddGrab(w, exclusive, spring_loaded) appends the widget (and associated parameters) to the modal cascade and \
 checks that exclusive is " PROC_TRUE " if spring_loaded is " PROC_TRUE "."
@@ -15415,14 +15415,14 @@ checks that exclusive is " PROC_TRUE " if spring_loaded is " PROC_TRUE "."
   return(Xen_false);
 }
 
-static XEN gxm_XtBuildEventMask(XEN arg1)
+static Xen gxm_XtBuildEventMask(Xen arg1)
 {
   #define H_XtBuildEventMask "EventMask XtBuildEventMask(w): widget's event mask"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtBuildEventMask", "Widget");
   return(C_ulong_to_Xen_ulong(XtBuildEventMask(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtDispatchEventToWidget(XEN arg1, XEN arg2)
+static Xen gxm_XtDispatchEventToWidget(Xen arg1, Xen arg2)
 {
   #define H_XtDispatchEventToWidget "Boolean XtDispatchEventToWidget(widget, event) scans the list of registered event handlers for the \
 specified widget and calls each handler that has been registered for the specified event type, subject to the continue_to_dispatch value \
@@ -15440,8 +15440,8 @@ enum {EVENT_HANDLER_TYPE, EVENT_HANDLER_FUNC, EVENT_HANDLER_DATA, EVENT_HANDLER_
 
 static void gxm_XtEventHandler(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  XEN result;
-  XEN descr = (XEN)context;
+  Xen result;
+  Xen descr = (Xen)context;
   result = Xen_call_with_4_args(Xen_list_ref(descr, EVENT_HANDLER_FUNC),
 		      C_to_Xen_Widget(w),
 		      Xen_list_ref(descr, EVENT_HANDLER_DATA),
@@ -15452,12 +15452,12 @@ static void gxm_XtEventHandler(Widget w, XtPointer context, XEvent *event, Boole
     (*flag) = false;
 }
 
-static bool find_xteventproc_1(XEN val, int loc, unsigned long wd)
+static bool find_xteventproc_1(Xen val, int loc, unsigned long wd)
 {
-  XEN lst = (XEN)wd;
+  Xen lst = (Xen)wd;
   unsigned long w;
-  XEN code;
-  XEN data;
+  Xen code;
+  Xen data;
   w = Xen_ulong_to_C_ulong(Xen_car(lst));
   code = Xen_cadr(lst);
   data = Xen_caddr(lst);
@@ -15468,10 +15468,10 @@ static bool find_xteventproc_1(XEN val, int loc, unsigned long wd)
 	 (Xen_is_eq(data, Xen_list_ref(val, EVENT_HANDLER_DATA))));
 }
 
-static XEN find_xteventproc(Widget w, XEN code, XEN data)
+static Xen find_xteventproc(Widget w, Xen code, Xen data)
 {
   /* here we again have to go by the widget */
-  XEN lst;
+  Xen lst;
   int i, loc;
   lst = Xen_list_3(C_ulong_to_Xen_ulong((unsigned long)w),code, data);
   loc = xm_protect(lst);
@@ -15482,11 +15482,11 @@ static XEN find_xteventproc(Widget w, XEN code, XEN data)
   return(Xen_false);
 }
 
-static XEN gxm_XtInsertRawEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XtInsertRawEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XtInsertRawEventHandler "void XtInsertRawEventHandler(w, event_mask, nonmaskable, proc, client_data, position) is similar to \
 XtInsertEventHandler except that it does not modify the widget's event mask and never causes an XSelectInput for the specified events."
-  XEN call_descr = Xen_empty_list;
+  Xen call_descr = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtInsertRawEventHandler", "Widget");
   Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtInsertRawEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtInsertRawEventHandler", "boolean");
@@ -15503,11 +15503,11 @@ XtInsertEventHandler except that it does not modify the widget's event mask and 
   return(Xen_false);
 }
 
-static XEN gxm_XtInsertEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XtInsertEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XtInsertEventHandler "void XtInsertEventHandler(w, event_mask, nonmaskable, proc, client_data, position) is identical to \
 XtAddEventHandler with the additional position argument. "
-  XEN call_descr = Xen_empty_list;
+  Xen call_descr = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtInsertEventHandler", "Widget");
   Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtInsertEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtInsertEventHandler", "boolean");
@@ -15524,7 +15524,7 @@ XtAddEventHandler with the additional position argument. "
   return(Xen_false);
 }
 
-static XEN gxm_XtRemoveRawEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtRemoveRawEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtRemoveRawEventHandler "void XtRemoveRawEventHandler(w, event_mask, nonmaskable, proc, client_data) stops the specified \
 procedure from receiving the specified events."
@@ -15540,11 +15540,11 @@ procedure from receiving the specified events."
   return(Xen_false);
 }
 
-static XEN gxm_XtAddRawEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtAddRawEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtAddRawEventHandler "void XtAddRawEventHandler(w, event_mask, nonmaskable, proc, client_data) is similar to XtAddEventHandler \
 except that it does not affect the widget's mask and never causes an XSelectInput for its events."
-  XEN call_descr = Xen_empty_list;
+  Xen call_descr = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtAddRawEventHandler", "Widget");
   Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtAddRawEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtAddRawEventHandler", "boolean");
@@ -15559,7 +15559,7 @@ except that it does not affect the widget's mask and never causes an XSelectInpu
   return(Xen_false);
 }
 
-static XEN gxm_XtRemoveEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtRemoveEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtRemoveEventHandler "XtRemoveEventHandler(w, event_mask, nonmaskable, proc, client_data)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtRemoveEventHandler", "Widget");
@@ -15574,12 +15574,12 @@ static XEN gxm_XtRemoveEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
   return(Xen_false);
 }
 
-static XEN gxm_XtAddEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtAddEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtAddEventHandler "void XtAddEventHandler(w, event_mask, nonmaskable, proc, client_data) registers a procedure with the dispatch \
 mechanism that is to be called when an event that matches the mask occurs on the specified widget.  To set the 'continue_to_dispatch' \
 flag to 'false', return the symbol 'done from the event handler."
-  XEN call_descr = Xen_empty_list;
+  Xen call_descr = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtAddEventHandler", "Widget");
   Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtAddEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtAddEventHandler", "boolean");
@@ -15594,7 +15594,7 @@ flag to 'false', return the symbol 'done from the event handler."
   return(Xen_false);
 }
 
-static XEN gxm_XtConvertCase(XEN arg1, XEN arg2)
+static Xen gxm_XtConvertCase(Xen arg1, Xen arg2)
 {
   #define H_XtConvertCase "void XtConvertCase(display, keysym) calls the appropriate converter and returns the results."
   /* DIFF: XtConvertCase dpy keysym [k1 k2] -> (list k1 k2)
@@ -15611,11 +15611,11 @@ static XEN gxm_XtConvertCase(XEN arg1, XEN arg2)
 
 /* (424) convert case XtRegisterCaseConverter global */
 
-static XEN xm_XtCaseProc;
+static Xen xm_XtCaseProc;
 
 static void gxm_XtCaseProc(Display* d, KeySym k1, KeySym* k2, KeySym* k3)
 {
-  XEN val;
+  Xen val;
   int loc;
   val = Xen_call_with_2_args(xm_XtCaseProc,
 		   C_to_Xen_Display(d),
@@ -15630,7 +15630,7 @@ static void gxm_XtCaseProc(Display* d, KeySym k1, KeySym* k2, KeySym* k3)
   xm_unprotect_at(loc);
 }
 
-static XEN gxm_XtRegisterCaseConverter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XtRegisterCaseConverter(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XtRegisterCaseConverter "void XtRegisterCaseConverter(display, proc, start, stop) registers the specified case converter."
   /* DIFF: XtRegisterCaseConverter user XtCaseProc should return the new KeySyms as a list (not as ref args)
@@ -15650,11 +15650,11 @@ static XEN gxm_XtRegisterCaseConverter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 /* -------- keyproc -------- */
 /* (454) XtSetKeyTranslator global */
 
-static XEN xm_XtKeyProc;
+static Xen xm_XtKeyProc;
 
 static void gxm_XtKeyProc(Display *dpy, KeyCode c, Modifiers m, Modifiers *mp, KeySym *sym)
 {
-  XEN val;
+  Xen val;
   int loc;
   val = Xen_call_with_3_args(xm_XtKeyProc,
 		   C_to_Xen_Display(dpy),
@@ -15672,7 +15672,7 @@ static void gxm_XtKeyProc(Display *dpy, KeyCode c, Modifiers m, Modifiers *mp, K
   xm_unprotect_at(loc);
 }
 
-static XEN gxm_XtSetKeyTranslator(XEN arg1, XEN arg2)
+static Xen gxm_XtSetKeyTranslator(Xen arg1, Xen arg2)
 {
   #define H_XtSetKeyTranslator "void XtSetKeyTranslator(display, proc) sets the specified procedure as the current key translator. "
   /* DIFF: XtSetKeyTranslator user XtKeyProc should return the new Modifiers and KeySym as a list (not as ref arg), set arg2 #f to get default proc
@@ -15691,7 +15691,7 @@ static XEN gxm_XtSetKeyTranslator(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtTranslateKey(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtTranslateKey(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtTranslateKey "XtTranslateKey(Display *, XtKeyCode, Modifiers): modifiers and keysym"
   /* DIFF: XtTranslateKey omit and rtn last 2 args
@@ -15706,7 +15706,7 @@ static XEN gxm_XtTranslateKey(XEN arg1, XEN arg2, XEN arg3)
 		    C_to_Xen_KeySym(k)));
 }
 
-static XEN gxm_XtTranslateKeycode(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtTranslateKeycode(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtTranslateKeycode "void XtTranslateKeycode(display, keycode, modifiers) passes the specified \
 arguments directly to the currently registered KeyCode to KeySym translator, returns (modifiers keysym)."
@@ -15722,7 +15722,7 @@ arguments directly to the currently registered KeyCode to KeySym translator, ret
 		    C_to_Xen_KeySym(k)));
 }
 
-static XEN gxm_XtGetActionKeysym(XEN arg1)
+static Xen gxm_XtGetActionKeysym(Xen arg1)
 {
   #define H_XtGetActionKeysym "KeySym XtGetActionKeysym(event): (keysym modifiers)"
   /* DIFF: XtGetActionKeysym omit and rtn last arg
@@ -15735,10 +15735,10 @@ static XEN gxm_XtGetActionKeysym(XEN arg1)
 		    C_to_Xen_Modifiers(m)));
 }
 
-static XEN gxm_XtGetResourceList(XEN widget_class)
+static Xen gxm_XtGetResourceList(Xen widget_class)
 {
   #define H_XtGetResourceList "XtGetResourceList(widget-class): returns the widget class's resource list"
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Cardinal len = 0;
   int i;
   XtResourceList resources;
@@ -15760,7 +15760,7 @@ static XEN gxm_XtGetResourceList(XEN widget_class)
   return(lst);
 }
 
-static XEN gxm_XtGetMultiClickTime(XEN arg1)
+static Xen gxm_XtGetMultiClickTime(Xen arg1)
 {
   #define H_XtGetMultiClickTime "int XtGetMultiClickTime(display): returns the time in milliseconds that the translation manager uses to \
 determine if multiple events are to be interpreted as a repeated event "
@@ -15768,7 +15768,7 @@ determine if multiple events are to be interpreted as a repeated event "
   return(C_int_to_Xen_integer(XtGetMultiClickTime(Xen_to_C_Display(arg1))));
 }
 
-static XEN gxm_XtSetMultiClickTime(XEN arg1, XEN arg2)
+static Xen gxm_XtSetMultiClickTime(Xen arg1, Xen arg2)
 {
   #define H_XtSetMultiClickTime "void XtSetMultiClickTime(display, time) sets the time interval used by the translation manager to determine \
 when multiple events are interpreted as a repeated event."
@@ -15778,7 +15778,7 @@ when multiple events are interpreted as a repeated event."
   return(Xen_false);
 }
 
-static XEN register_proc;
+static Xen register_proc;
 
 static void gxm_XtRegisterGrabActionProc(Widget w, XEvent* e, String* s, Cardinal* c) 
 {
@@ -15789,7 +15789,7 @@ static void gxm_XtRegisterGrabActionProc(Widget w, XEvent* e, String* s, Cardina
 	     __func__);
 }
 
-static XEN gxm_XtRegisterGrabAction(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtRegisterGrabAction(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtRegisterGrabAction "void XtRegisterGrabAction(action_proc, owner_events, event_mask, pointer_mode, keyboard_mode) adds the \
 specified action_proc to a list known to the translation manager."
@@ -15804,7 +15804,7 @@ specified action_proc to a list known to the translation manager."
   return(Xen_false);
 }
 
-static XEN gxm_XtCallActionProc(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XtCallActionProc(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XtCallActionProc "void XtCallActionProc(widget, action, event, params, num_params) searches for the named action routine in the \
 same manner and order as translation tables are bound. If found, the action routine is invoked with the specified widget, event pointer, \
@@ -15841,14 +15841,14 @@ and parameters."
   return(Xen_false);
 }
 
-static XEN gxm_XtGetActionList(XEN arg1)
+static Xen gxm_XtGetActionList(Xen arg1)
 {
   #define H_XtGetActionList "void XtGetActionList(widget_class): list of actions"
   /* DIFF: XtGetActionList omit arg2 and 3, return list of lists
    */
   unsigned int len;
   XtActionList act;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   Xen_check_type(Xen_is_WidgetClass(arg1), arg1, 1, "XtGetActionList", "WidgetClass");
   XtGetActionList(Xen_to_C_WidgetClass(arg1), &act, &len);
   if (len > 0)
@@ -15867,7 +15867,7 @@ static XEN gxm_XtGetActionList(XEN arg1)
   Xen_list_5(C_string_to_Xen_symbol("ActionHook"), Code, Context, Xen_integer_zero, Xen_integer_zero)
 #define XM_is_ActionHook(Arg) is_wrapped("ActionHook", Arg)
 
-static bool unprotect_actionhook(XEN val, int loc, unsigned long id)
+static bool unprotect_actionhook(Xen val, int loc, unsigned long id)
 {
   if ((XM_is_ActionHook(val)) &&
       ((XtActionHookId)Xen_ulong_to_C_ulong(Xen_list_ref(val, 4)) == (XtActionHookId)id))
@@ -15878,7 +15878,7 @@ static bool unprotect_actionhook(XEN val, int loc, unsigned long id)
   return(false);
 }
 
-static XEN gxm_XtRemoveActionHook(XEN arg1)
+static Xen gxm_XtRemoveActionHook(Xen arg1)
 {
   #define H_XtRemoveActionHook "void XtRemoveActionHook(idP) removes the specified action hook procedure from the list in which it was registered."
   XtActionHookId id;
@@ -15893,7 +15893,7 @@ static void gxm_XtActionHookProc(Widget w, XtPointer p, String s, XEvent* e, Str
 {
   /* DIFF: XtActionHookProc takes 5 args (last is string list)
    */
-  XEN descr = (XEN)p;
+  Xen descr = (Xen)p;
   /* (list 'ActionHook function context gc-loc id) */
   Xen_call_with_5_args(Xen_cadr(descr), 
 	     C_to_Xen_Widget(w),
@@ -15904,13 +15904,13 @@ static void gxm_XtActionHookProc(Widget w, XtPointer p, String s, XEvent* e, Str
 	     __func__);
 }
 
-static XEN gxm_XtAppAddActionHook(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtAppAddActionHook(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtAppAddActionHook "XtActionHookId XtAppAddActionHook(app_context, proc, client_data) adds the specified procedure to the front of \
 a list maintained in the application context."
   XtActionHookId id;
   int gc_loc;
-  XEN descr;
+  Xen descr;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppAddActionHook", "XtAppContext");
   Xen_check_type(Xen_is_procedure(arg2) && (Xen_is_aritable(arg2, 5)), arg2, 2, "XtAppAddActionHook", "XtActionHookProc");
   descr = C_to_Xen_XM_ActionHook(arg2, (Xen_is_bound(arg3)) ? arg3 : Xen_false);
@@ -15937,7 +15937,7 @@ a list maintained in the application context."
  *     struct _XtStateRec *current_state;  
  */
 
-static XEN xtactionprocs[9];
+static Xen xtactionprocs[9];
 static void gxm_XtActionProc0(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
   Xen_call_with_3_args(xtactionprocs[0], C_to_Xen_Widget(w), C_to_Xen_XEvent(e), C_to_Xen_Strings(args, *argn), __func__);
@@ -15976,17 +15976,17 @@ static void gxm_XtActionProc8(Widget w, XEvent *e, char **args, Cardinal *argn)
 }
 static int xm_action_ctr = 0;
 
-static XtActionsRec *make_action_rec(int len, XEN larg2)
+static XtActionsRec *make_action_rec(int len, Xen larg2)
 {
   int i, gcloc;
   XtActionsRec *act;
-  XEN arg2;
+  Xen arg2;
   arg2 = Xen_copy_arg(larg2);
   gcloc = xm_protect(arg2);
   act = (XtActionsRec *)calloc(len, sizeof(XtActionsRec));
   for (i = 0; i < len; i++, arg2 = Xen_cdr(arg2))
     {
-      XEN pair;
+      Xen pair;
       pair = Xen_car(arg2);
       act[i].string = (String)xen_strdup(Xen_string_to_C_string(Xen_car(pair)));
       if (xm_action_ctr >= 8)
@@ -16017,7 +16017,7 @@ static XtActionsRec *make_action_rec(int len, XEN larg2)
   return(act);
 }
 
-static XEN gxm_XtAppAddActions(XEN arg1, XEN arg2)
+static Xen gxm_XtAppAddActions(Xen arg1, Xen arg2)
 {
   #define H_XtAppAddActions "void XtAppAddActions(app_context, actions, num_actions) adds the specified action table and registers it \
 with the translation manager."
@@ -16038,7 +16038,7 @@ with the translation manager."
   return(arg1);
 }
 
-static XEN gxm_XtUninstallTranslations(XEN arg1)
+static Xen gxm_XtUninstallTranslations(Xen arg1)
 {
   #define H_XtUninstallTranslations "void XtUninstallTranslations(w) causes the entire translation table for widget to be removed."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtUninstallTranslations", "Widget");
@@ -16046,7 +16046,7 @@ static XEN gxm_XtUninstallTranslations(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtInstallAllAccelerators(XEN arg1, XEN arg2)
+static Xen gxm_XtInstallAllAccelerators(Xen arg1, Xen arg2)
 {
   #define H_XtInstallAllAccelerators "void XtInstallAllAccelerators(destination, source)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtInstallAllAccelerators", "Widget");
@@ -16055,7 +16055,7 @@ static XEN gxm_XtInstallAllAccelerators(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtInstallAccelerators(XEN arg1, XEN arg2)
+static Xen gxm_XtInstallAccelerators(Xen arg1, Xen arg2)
 {
   #define H_XtInstallAccelerators "void XtInstallAccelerators(destination, source) installs the accelerators from source onto destination by \
 augmenting the destination translations with the source accelerators."
@@ -16065,7 +16065,7 @@ augmenting the destination translations with the source accelerators."
   return(Xen_false);
 }
 
-static XEN gxm_XtAugmentTranslations(XEN arg1, XEN arg2)
+static Xen gxm_XtAugmentTranslations(Xen arg1, Xen arg2)
 {
   #define H_XtAugmentTranslations "void XtAugmentTranslations(w, translations) nondestructively merges the new translations into the existing \
 widget translations."
@@ -16075,7 +16075,7 @@ widget translations."
   return(Xen_false);
 }
 
-static XEN gxm_XtOverrideTranslations(XEN arg1, XEN arg2)
+static Xen gxm_XtOverrideTranslations(Xen arg1, Xen arg2)
 {
   #define H_XtOverrideTranslations "void XtOverrideTranslations(w, translations) destructively merges the new translations into the existing \
 widget translations."
@@ -16085,14 +16085,14 @@ widget translations."
   return(Xen_false);
 }
 
-static XEN gxm_XtParseAcceleratorTable(XEN arg1)
+static Xen gxm_XtParseAcceleratorTable(Xen arg1)
 {
   #define H_XtParseAcceleratorTable "XtAccelerators XtParseAcceleratorTable(const char *source) compiles source"
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XtParseAcceleratorTable", "char*");
   return(C_ulong_to_Xen_ulong(XtParseAcceleratorTable((char *)Xen_string_to_C_string(arg1))));
 }
 
-static XEN gxm_XtParseTranslationTable(XEN arg1)
+static Xen gxm_XtParseTranslationTable(Xen arg1)
 {
   #define H_XtParseTranslationTable "XtTranslations XtParseTranslationTable(table) compiles the translation table into the opaque internal \
 representation of type XtTranslations."
@@ -16100,7 +16100,7 @@ representation of type XtTranslations."
   return(C_to_Xen_XtTranslations(XtParseTranslationTable((char *)Xen_string_to_C_string(arg1))));
 }
 
-static XEN gxm_XtKeysymToKeycodeList(XEN arg1, XEN arg2)
+static Xen gxm_XtKeysymToKeycodeList(Xen arg1, Xen arg2)
 {
   #define H_XtKeysymToKeycodeList "void XtKeysymToKeycodeList(display, keysym) procedure returns all the \
 KeyCodes that have keysym in their entry for the keyboard mapping table associated with display -> (keycodes)."
@@ -16108,7 +16108,7 @@ KeyCodes that have keysym in their entry for the keyboard mapping table associat
    */
   unsigned int len;
   KeyCode *kr;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   int loc;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XtKeysymToKeycodeList", "Display*");
   Xen_check_type(Xen_is_KeySym(arg2), arg2, 2, "XtKeysymToKeycodeList", "KeySym");
@@ -16125,7 +16125,7 @@ KeyCodes that have keysym in their entry for the keyboard mapping table associat
   return(lst);
 }
 
-static XEN gxm_XtTranslateCoords(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtTranslateCoords(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtTranslateCoords "void XtTranslateCoords(w, x, y): (root_x root_y)"
   /* DIFF: XtTranslateCoords omits and returns last 2 args
@@ -16139,7 +16139,7 @@ static XEN gxm_XtTranslateCoords(XEN arg1, XEN arg2, XEN arg3)
 		    C_to_Xen_Position(y)));
 }
 
-static XEN gxm_XtMakeResizeRequest(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtMakeResizeRequest(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtMakeResizeRequest "XtGeometryResult XtMakeResizeRequest(w, width, height): (res width height)"
   /* DIFF: XtMakeResizeRequest w wid hgt [rtnw rtn] -> (list res w h)
@@ -16158,7 +16158,7 @@ static XEN gxm_XtMakeResizeRequest(XEN arg1, XEN arg2, XEN arg3)
 		    C_to_Xen_Dimension(h)));
 }
 
-static XEN gxm_XtOwnSelectionIncremental(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static Xen gxm_XtOwnSelectionIncremental(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
   #define H_XtOwnSelectionIncremental "Boolean XtOwnSelectionIncremental(w, selection, time, convert_callback, lose_callback, \
 done_callback, cancel_callback, client_data)"
@@ -16183,7 +16183,7 @@ done_callback, cancel_callback, client_data)"
 						    (XtPointer)arg8)));
 }
 
-static XEN gxm_XtOwnSelection(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static Xen gxm_XtOwnSelection(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   #define H_XtOwnSelection "Boolean XtOwnSelection(w, selection, time, convert_proc, lose_selection, done_proc) informs the selection \
 mechanism that a widget believes it owns a selection."
@@ -16204,35 +16204,35 @@ mechanism that a widget believes it owns a selection."
 					 gxm_XtSelectionDoneProc)));
 }
 
-static XEN gxm_XtIsSensitive(XEN arg1)
+static Xen gxm_XtIsSensitive(Xen arg1)
 {
   #define H_XtIsSensitive "Boolean XtIsSensitive(w): returns " PROC_TRUE " if user input events are being dispatched."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtIsSensitive", "Widget");
   return(C_bool_to_Xen_boolean(XtIsSensitive(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtIsRealized(XEN arg1)
+static Xen gxm_XtIsRealized(Xen arg1)
 {
   #define H_XtIsRealized "Boolean XtIsRealized(w): returns " PROC_TRUE " if the widget has been realized,"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtIsRealized", "Widget");
   return(C_bool_to_Xen_boolean(XtIsRealized(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtIsManaged(XEN arg1)
+static Xen gxm_XtIsManaged(Xen arg1)
 {
   #define H_XtIsManaged "Boolean XtIsManaged(widget): returns " PROC_TRUE " if the specified widget is of class RectObj or any subclass thereof and is managed."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtIsManaged", "Widget");
   return(C_bool_to_Xen_boolean(XtIsManaged(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtIsObject(XEN arg1)
+static Xen gxm_XtIsObject(Xen arg1)
 {
   #define H_XtIsObject "Boolean XtIsObject(w)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtIsObject", "Widget");
   return(C_bool_to_Xen_boolean(XtIsObject(Xen_to_C_Widget(arg1))));
 }
 
-static XEN gxm_XtIsSubclass(XEN arg1, XEN arg2)
+static Xen gxm_XtIsSubclass(Xen arg1, Xen arg2)
 {
   #define H_XtIsSubclass "Boolean XtIsSubclass(w, widget_class): returns " PROC_TRUE " if the class of the specified widget is equal to or is a \
 subclass of the specified class."
@@ -16241,7 +16241,7 @@ subclass of the specified class."
   return(C_bool_to_Xen_boolean(XtIsSubclass(Xen_to_C_Widget(arg1), Xen_to_C_WidgetClass(arg2))));
 }
 
-static XEN gxm_XtAppPeekEvent(XEN arg1)
+static Xen gxm_XtAppPeekEvent(Xen arg1)
 {
   #define H_XtAppPeekEvent "Boolean XtAppPeekEvent(app_context) fills in the event and returns a nonzero value. If no X \
 input is on the queue, XtAppPeekEvent flushes the output buffer and blocks until input is available."
@@ -16255,7 +16255,7 @@ input is on the queue, XtAppPeekEvent flushes the output buffer and blocks until
   return(Xen_list_2(C_bool_to_Xen_boolean(val), C_to_Xen_XEvent_OBJ(e)));
 }
 
-static XEN gxm_XtCallAcceptFocus(XEN arg1, XEN arg2)
+static Xen gxm_XtCallAcceptFocus(Xen arg1, Xen arg2)
 {
   #define H_XtCallAcceptFocus "Boolean XtCallAcceptFocus(w, time) calls the specified widget's accept_focus procedure, passing it the \
 specified widget and time, and returns what the accept_focus procedure returns."
@@ -16268,7 +16268,7 @@ specified widget and time, and returns what the accept_focus procedure returns."
   return(C_bool_to_Xen_boolean(XtCallAcceptFocus(Xen_to_C_Widget(arg1), &tm)));
 }
 
-static XEN gxm_XtDispatchEvent(XEN arg1)
+static Xen gxm_XtDispatchEvent(Xen arg1)
 {
   #define H_XtDispatchEvent "Boolean XtDispatchEvent(event) sends those events to the event handler functions that have been previously \
 registered with the dispatch routine."
@@ -16276,7 +16276,7 @@ registered with the dispatch routine."
   return(C_bool_to_Xen_boolean(XtDispatchEvent(Xen_to_C_XEvent(arg1))));
 }
 
-static XEN gxm_XtUnmanageChild(XEN arg1)
+static Xen gxm_XtUnmanageChild(Xen arg1)
 {
   #define H_XtUnmanageChild "void XtUnmanageChild(child)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtUnmanageChild", "Widget");
@@ -16284,7 +16284,7 @@ static XEN gxm_XtUnmanageChild(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtUnmanageChildren(XEN arg1, XEN arg2)
+static Xen gxm_XtUnmanageChildren(Xen arg1, Xen arg2)
 {
   #define H_XtUnmanageChildren "void XtUnmanageChildren(children, num_children)"
   /* DIFF: XtUnmanageChildren arg1 is list of widgets
@@ -16308,7 +16308,7 @@ static XEN gxm_XtUnmanageChildren(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtManageChild(XEN arg1)
+static Xen gxm_XtManageChild(Xen arg1)
 {
   #define H_XtManageChild "void XtManageChild(child)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtManageChild", "Widget");
@@ -16316,7 +16316,7 @@ static XEN gxm_XtManageChild(XEN arg1)
   return(Xen_false);
 }
 
-static XEN gxm_XtManageChildren(XEN arg1, XEN arg2)
+static Xen gxm_XtManageChildren(Xen arg1, Xen arg2)
 {
   #define H_XtManageChildren "void XtManageChildren(children, num_children)"
   /* DIFF: XtManageChildren arg1 is list of widgets
@@ -16340,91 +16340,91 @@ static XEN gxm_XtManageChildren(XEN arg1, XEN arg2)
   return(Xen_false);
 }
 
-static XEN gxm_XtIsRectObj(XEN arg)
+static Xen gxm_XtIsRectObj(Xen arg)
 {
   #define H_XtIsRectObj "Boolean XtIsRectObj(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsRectObj", "Widget");
   return(C_bool_to_Xen_boolean(XtIsRectObj(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsWidget(XEN arg)
+static Xen gxm_XtIsWidget(Xen arg)
 {
   #define H_XtIsWidget "Boolean XtIsWidget(w)"
   return(C_bool_to_Xen_boolean(is_wrapped("Widget", arg) && 
 			  (XtIsWidget(Xen_to_C_Widget(arg)))));
 }
 
-static XEN gxm_XtIsComposite(XEN arg)
+static Xen gxm_XtIsComposite(Xen arg)
 {
   #define H_XtIsComposite "Boolean XtIsComposite(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsComposite", "Widget");
   return(C_bool_to_Xen_boolean(XtIsComposite(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsConstraint(XEN arg)
+static Xen gxm_XtIsConstraint(Xen arg)
 {
   #define H_XtIsConstraint "Boolean XtIsConstraint(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsConstraint", "Widget");
   return(C_bool_to_Xen_boolean(XtIsConstraint(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsShell(XEN arg)
+static Xen gxm_XtIsShell(Xen arg)
 {
   #define H_XtIsShell "Boolean XtIsShell(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsShell", "Widget");
   return(C_bool_to_Xen_boolean(XtIsShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsOverrideShell(XEN arg)
+static Xen gxm_XtIsOverrideShell(Xen arg)
 {
   #define H_XtIsOverrideShell "Boolean XtIsOverrideShell(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsOverrideShell", "Widget");
   return(C_bool_to_Xen_boolean(XtIsOverrideShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsWMShell(XEN arg)
+static Xen gxm_XtIsWMShell(Xen arg)
 {
   #define H_XtIsWMShell "Boolean XtIsWMShell(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsWMShell", "Widget");
   return(C_bool_to_Xen_boolean(XtIsWMShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsVendorShell(XEN arg)
+static Xen gxm_XtIsVendorShell(Xen arg)
 {
   #define H_XtIsVendorShell "Boolean XtIsVendorShell(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsVendorShell", "Widget");
   return(C_bool_to_Xen_boolean(XtIsVendorShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsTransientShell(XEN arg)
+static Xen gxm_XtIsTransientShell(Xen arg)
 {
   #define H_XtIsTransientShell "Boolean XtIsTransientShell(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsTransientShell", "Widget");
   return(C_bool_to_Xen_boolean(XtIsTransientShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsTopLevelShell(XEN arg)
+static Xen gxm_XtIsTopLevelShell(Xen arg)
 {
   #define H_XtIsTopLevelShell "Boolean XtIsTopLevelShell(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsTopLevelShell", "Widget");
   return(C_bool_to_Xen_boolean(XtIsTopLevelShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsApplicationShell(XEN arg)
+static Xen gxm_XtIsApplicationShell(Xen arg)
 {
   #define H_XtIsApplicationShell "Boolean XtIsApplicationShell(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsApplicationShell", "Widget");
   return(C_bool_to_Xen_boolean(XtIsApplicationShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtIsSessionShell(XEN arg)
+static Xen gxm_XtIsSessionShell(Xen arg)
 {
   #define H_XtIsSessionShell "Boolean XtIsSessionShell(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtIsSessionShell", "Widget");
   return(C_bool_to_Xen_boolean(XtIsSessionShell(Xen_to_C_Widget(arg))));
 }
 
-static XEN gxm_XtMapWidget(XEN arg)
+static Xen gxm_XtMapWidget(Xen arg)
 {
   #define H_XtMapWidget "XtMapWidget(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtMapWidget", "Widget");
@@ -16432,7 +16432,7 @@ static XEN gxm_XtMapWidget(XEN arg)
   return(Xen_false);
 }
 
-static XEN gxm_XtUnmapWidget(XEN arg)
+static Xen gxm_XtUnmapWidget(Xen arg)
 {
   #define H_XtUnmapWidget "XtUnmapWidget(w)"
   Xen_check_type(Xen_is_Widget(arg), arg, 0, "XtUnmapWidget", "Widget");
@@ -16440,7 +16440,7 @@ static XEN gxm_XtUnmapWidget(XEN arg)
   return(Xen_false);
 }
 
-static XEN gxm_XtSetArg(XEN arg1, XEN arg2, XEN arg3)
+static Xen gxm_XtSetArg(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtSetArg "XtSetArg in xm is useless -- it returns its arguments as a list"
   return(Xen_list_3(arg1, arg2, arg3));
@@ -16455,7 +16455,7 @@ XM_TYPE_PTR_NO_C2X(XpmImage, XpmImage *)
 XM_TYPE_PTR_NO_C2X(XpmAttributes, XpmAttributes *) /* _OBJ?? */
 XM_TYPE_PTR_NO_C2X(XpmColorSymbol, XpmColorSymbol *)
 
-static XEN gxm_XpmCreateXpmImageFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg5)
+static Xen gxm_XpmCreateXpmImageFromPixmap(Xen arg1, Xen arg2, Xen arg3, Xen arg5)
 {
   XpmImage *image;
   int val;
@@ -16475,7 +16475,7 @@ static XEN gxm_XpmCreateXpmImageFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XpmCreatePixmapFromXpmImage(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static Xen gxm_XpmCreatePixmapFromXpmImage(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   /* DIFF: XpmCreatePixmapFromXpmImage omits and returns pixmap args
    */
@@ -16495,7 +16495,7 @@ static XEN gxm_XpmCreatePixmapFromXpmImage(XEN arg1, XEN arg2, XEN arg3, XEN arg
 		    C_to_Xen_Pixmap(p2)));
 }
 
-static XEN gxm_XpmReadFileToPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
+static Xen gxm_XpmReadFileToPixmap(Xen arg1, Xen arg2, Xen arg3, Xen arg6)
 {
   /* DIFF: XpmReadFileToPixmap omits and returns pixmap args
    */
@@ -16515,7 +16515,7 @@ static XEN gxm_XpmReadFileToPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
 		    C_to_Xen_Pixmap(p2)));
 }
 
-static XEN gxm_XpmReadFileToXpmImage(XEN arg1)
+static Xen gxm_XpmReadFileToXpmImage(Xen arg1)
 {
   int val;
   XpmImage *image;
@@ -16528,14 +16528,14 @@ static XEN gxm_XpmReadFileToXpmImage(XEN arg1)
   return(C_int_to_Xen_integer(val));
 }
 
-static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg6)
+static Xen gxm_XpmCreatePixmapFromData(Xen arg1, Xen arg2, Xen larg3, Xen arg6)
 {
   /* DIFF: XpmCreatePixmapFromData omits and returns pixmap args, arg3 (bits) is list of strings
    */
   Pixmap p1, p2;
   int val, i, len;
   char **bits;
-  XEN arg3;
+  Xen arg3;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XpmCreatePixmapFromData", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XpmCreatePixmapFromData", "Drawable");
   Xen_check_type(Xen_is_list(larg3), larg3, 3, "XpmCreatePixmapFromData", "list of char*");
@@ -16559,7 +16559,7 @@ static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg6)
 		    C_to_Xen_Pixmap(p2)));
 }
 
-static XEN gxm_XpmWriteFileFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XpmWriteFileFromPixmap(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XpmWriteFileFromPixmap", "Display*");
   Xen_check_type(Xen_is_string(arg2), arg2, 2, "XpmWriteFileFromPixmap", "char*");
@@ -16571,7 +16571,7 @@ static XEN gxm_XpmWriteFileFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XE
 					     (Xen_is_false(arg5)) ? NULL : Xen_to_C_XpmAttributes(arg5))));
 }
 
-static XEN gxm_XpmCreateDataFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
+static Xen gxm_XpmCreateDataFromPixmap(Xen arg1, Xen arg3, Xen arg4, Xen arg5)
 {
   /* DIFF: XpmCreateDataFromPixmap arg2 omitted and rtn'd
    */
@@ -16589,14 +16589,14 @@ static XEN gxm_XpmCreateDataFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
 		    Xen_wrap_C_pointer(buf)));
 }
 
-static XEN gxm_XpmGetErrorString(XEN err)
+static Xen gxm_XpmGetErrorString(Xen err)
 {
   #define H_XpmGetErrorString "(XpmGetErrorString err): string describing error"
   Xen_check_type(Xen_is_integer(err), err, 1, "XpmGetErrorString", "an Xpm status code");
   return(C_string_to_Xen_string(XpmGetErrorString(Xen_integer_to_C_int(err))));
 }
 
-static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
+static Xen gxm_XpmColorSymbol(Xen name, Xen value, Xen pixel)
 {
   XpmColorSymbol *r;
   #define H_XpmColorSymbol "(XpmColorSymbol name val pix): new XpmColorSymbol struct"
@@ -16610,7 +16610,7 @@ static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
   return(wrap_for_Xen_OBJ("XpmColorSymbol",r));
 }
 
-static XEN gxm_XpmImage(XEN width, XEN height, XEN cpp, XEN ncolors, XEN data)
+static Xen gxm_XpmImage(Xen width, Xen height, Xen cpp, Xen ncolors, Xen data)
 {
   XpmImage *r;
   #define H_XpmImage "(XpmImage w h cpp n data): new XpmImage struct"
@@ -16628,21 +16628,21 @@ static XEN gxm_XpmImage(XEN width, XEN height, XEN cpp, XEN ncolors, XEN data)
   return(wrap_for_Xen_OBJ("XpmImage", r));
 }
 
-static XEN gxm_XpmAttributes(void)
+static Xen gxm_XpmAttributes(void)
 {
   #define H_XpmAttributes "(XpmAttributes): new XpmAttributes struct"
   return(wrap_for_Xen_OBJ("XpmAttributes", 
 			  (XpmAttributes *)calloc(1, sizeof(XpmAttributes))));
 }
 
-static XEN gxm_cpp(XEN ptr)
+static Xen gxm_cpp(Xen ptr)
 {
   XM_field_assert_type((Xen_is_XpmImage(ptr)) || (Xen_is_XpmAttributes(ptr)), ptr, 1, "cpp", "XpmImage");
   if (Xen_is_XpmImage(ptr)) return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XpmImage(ptr))->cpp)));
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XpmAttributes(ptr))->cpp)));
 }
 
-static XEN gxm_set_cpp(XEN ptr, XEN val)
+static Xen gxm_set_cpp(Xen ptr, Xen val)
 {
   XM_set_field_assert_type((Xen_is_XpmImage(ptr)) || (Xen_is_XpmAttributes(ptr)), ptr, 1, "cpp", "XpmImage");
   if (Xen_is_XpmImage(ptr)) (Xen_to_C_XpmImage(ptr))->cpp = Xen_ulong_to_C_ulong(val);
@@ -16650,14 +16650,14 @@ static XEN gxm_set_cpp(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_ncolors(XEN ptr)
+static Xen gxm_ncolors(Xen ptr)
 {
   XM_field_assert_type((Xen_is_XpmImage(ptr)) || (Xen_is_XpmAttributes(ptr)), ptr, 1, "ncolors", "XpmImage");
   if (Xen_is_XpmImage(ptr)) return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XpmImage(ptr))->ncolors)));
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XpmAttributes(ptr))->ncolors)));
 }
 
-static XEN gxm_set_ncolors(XEN ptr, XEN val)
+static Xen gxm_set_ncolors(Xen ptr, Xen val)
 {
   XM_set_field_assert_type((Xen_is_XpmImage(ptr)) || (Xen_is_XpmAttributes(ptr)), ptr, 1, "ncolors", "XpmImage");
   if (Xen_is_XpmImage(ptr)) (Xen_to_C_XpmImage(ptr))->ncolors = Xen_ulong_to_C_ulong(val);
@@ -16666,7 +16666,7 @@ static XEN gxm_set_ncolors(XEN ptr, XEN val)
 }
 
 #if 0
-static XEN gxm_set_data(XEN ptr, XEN val)
+static Xen gxm_set_data(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XpmImage(ptr), ptr, 1, "data", "XpmImage");
   (Xen_to_C_XpmImage(ptr))->data = (unsigned int *)Xen_unwrap_C_pointer(val);
@@ -16674,50 +16674,50 @@ static XEN gxm_set_data(XEN ptr, XEN val)
 }
 #endif
 
-static XEN gxm_valuemask(XEN ptr)
+static Xen gxm_valuemask(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "valuemask", "XpmAttributes");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XpmAttributes(ptr))->valuemask)));
 }
 
-static XEN gxm_set_valuemask(XEN ptr, XEN val)
+static Xen gxm_set_valuemask(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "valuemask", "XpmAttributes");
   (Xen_to_C_XpmAttributes(ptr))->valuemask = Xen_ulong_to_C_ulong(val);
   return(val);
 }
 
-static XEN gxm_x_hotspot(XEN ptr)
+static Xen gxm_x_hotspot(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "x_hotspot", "XpmAttributes");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XpmAttributes(ptr))->x_hotspot)));
 }
 
-static XEN gxm_set_x_hotspot(XEN ptr, XEN val)
+static Xen gxm_set_x_hotspot(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "x_hotspot", "XpmAttributes");
   (Xen_to_C_XpmAttributes(ptr))->x_hotspot = Xen_ulong_to_C_ulong(val);
   return(val);
 }
 
-static XEN gxm_y_hotspot(XEN ptr)
+static Xen gxm_y_hotspot(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "y_hotspot", "XpmAttributes");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XpmAttributes(ptr))->y_hotspot)));
 }
 
-static XEN gxm_set_y_hotspot(XEN ptr, XEN val)
+static Xen gxm_set_y_hotspot(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "y_hotspot", "XpmAttributes");
   (Xen_to_C_XpmAttributes(ptr))->y_hotspot = Xen_ulong_to_C_ulong(val);
   return(val);
 }
 
-static XEN gxm_colorsymbols(XEN ptr)
+static Xen gxm_colorsymbols(Xen ptr)
 {
   XpmAttributes *atr;
   int i, len;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   XM_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "colorsymbols", "XpmAttributes");
   atr = Xen_to_C_XpmAttributes(ptr);
   len = atr->numsymbols;
@@ -16731,11 +16731,11 @@ static XEN gxm_colorsymbols(XEN ptr)
   return(lst);
 }
 
-static XEN gxm_set_colorsymbols(XEN ptr, XEN vals)
+static Xen gxm_set_colorsymbols(Xen ptr, Xen vals)
 {
   XpmAttributes *atr;
   int i, len;
-  XEN lst;
+  Xen lst;
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "colorsymbols", "XpmAttributes");
   XM_set_field_assert_type(Xen_is_list(vals), vals, 2, "colorsymbols", "list of XpmColorSymbols");
   atr = Xen_to_C_XpmAttributes(ptr);
@@ -16756,13 +16756,13 @@ static XEN gxm_set_colorsymbols(XEN ptr, XEN vals)
   return(vals);
 }
 
-static XEN gxm_numsymbols(XEN ptr)
+static Xen gxm_numsymbols(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "numsymbols", "XpmAttributes");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XpmAttributes(ptr))->numsymbols)));
 }
 
-static XEN gxm_set_numsymbols(XEN ptr, XEN val)
+static Xen gxm_set_numsymbols(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "numsymbols", "XpmAttributes");
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "numsymbols", "integer");
@@ -16771,13 +16771,13 @@ static XEN gxm_set_numsymbols(XEN ptr, XEN val)
 }
 
 /* pixels is the list -- not sure what good npixels is without pixels */
-static XEN gxm_npixels(XEN ptr)
+static Xen gxm_npixels(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "npixels", "XpmAttributes");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XpmAttributes(ptr))->npixels)));
 }
 
-static XEN gxm_set_npixels(XEN ptr, XEN val)
+static Xen gxm_set_npixels(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "npixels", "XpmAttributes");
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "npixels", "integer");
@@ -16787,7 +16787,7 @@ static XEN gxm_set_npixels(XEN ptr, XEN val)
 
 
 #if WITH_EDITRES
-static XEN gxm_XEditResCheckMessages(XEN widget, XEN data, XEN event, XEN cont)
+static Xen gxm_XEditResCheckMessages(Xen widget, Xen data, Xen event, Xen cont)
 {
   Boolean flag;
   Xen_check_type(Xen_is_Widget(widget), widget, 1, "widget", "_XEditResCheckMessages");
@@ -16808,7 +16808,7 @@ static XEN gxm_XEditResCheckMessages(XEN widget, XEN data, XEN event, XEN cont)
 
 /* XRectangle */
 
-static XEN gxm_XRectangle(XEN x, XEN y, XEN width, XEN height)
+static Xen gxm_XRectangle(Xen x, Xen y, Xen width, Xen height)
 {
   #define H_XRectangle "(XRectangle x y width height): returns the given XRectangle"
   XRectangle *r;
@@ -16826,7 +16826,7 @@ static XEN gxm_XRectangle(XEN x, XEN y, XEN width, XEN height)
 
 /* XSegment */
 
-static XEN gxm_XSegment(XEN x1, XEN y1, XEN x2, XEN y2)
+static Xen gxm_XSegment(Xen x1, Xen y1, Xen x2, Xen y2)
 {
   XSegment *r;
 #define H_XSegment "(XSegment x1 y1 x2 y2): new XSegment struct"
@@ -16842,14 +16842,14 @@ static XEN gxm_XSegment(XEN x1, XEN y1, XEN x2, XEN y2)
   return(C_to_Xen_XSegment(r));
 }
 
-static XEN gxm_y2(XEN ptr)
+static Xen gxm_y2(Xen ptr)
 {
   if (Xen_is_XSegment(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XSegment(ptr))->y2)));
   XM_field_assert_type(0, ptr, 1, "y2", "XSegment");
   return(Xen_false);
 }
 
-static XEN gxm_set_y2(XEN ptr, XEN val)
+static Xen gxm_set_y2(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 1, "y2", "an integer");
   XM_set_field_assert_type(Xen_is_XSegment(ptr), ptr, 2, "y2", "XSegment");
@@ -16857,14 +16857,14 @@ static XEN gxm_set_y2(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_x2(XEN ptr)
+static Xen gxm_x2(Xen ptr)
 {
   if (Xen_is_XSegment(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XSegment(ptr))->x2)));
   XM_field_assert_type(0, ptr, 1, "x2", "XSegment");
   return(Xen_false);
 }
 
-static XEN gxm_set_x2(XEN ptr, XEN val)
+static Xen gxm_set_x2(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 1, "x2", "an integer");
   XM_set_field_assert_type(Xen_is_XSegment(ptr), ptr, 2, "x2", "XSegment");
@@ -16872,14 +16872,14 @@ static XEN gxm_set_x2(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_y1(XEN ptr)
+static Xen gxm_y1(Xen ptr)
 {
   if (Xen_is_XSegment(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XSegment(ptr))->y1)));
   XM_field_assert_type(0, ptr, 1, "y1", "XSegment");
   return(Xen_false);
 }
 
-static XEN gxm_set_y1(XEN ptr, XEN val)
+static Xen gxm_set_y1(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 1, "y1", "an integer");
   XM_set_field_assert_type(Xen_is_XSegment(ptr), ptr, 2, "y1", "XSegment");
@@ -16887,14 +16887,14 @@ static XEN gxm_set_y1(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_x1(XEN ptr)
+static Xen gxm_x1(Xen ptr)
 {
   if (Xen_is_XSegment(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XSegment(ptr))->x1)));
   XM_field_assert_type(0, ptr, 1, "x1", "XSegment");
   return(Xen_false);
 }
 
-static XEN gxm_set_x1(XEN ptr, XEN val)
+static Xen gxm_set_x1(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 1, "x1", "an integer");
   XM_set_field_assert_type(Xen_is_XSegment(ptr), ptr, 2, "x1", "XSegment");
@@ -16904,7 +16904,7 @@ static XEN gxm_set_x1(XEN ptr, XEN val)
 
 /* XPoint */
 
-static XEN gxm_XPoint(XEN x, XEN y)
+static Xen gxm_XPoint(Xen x, Xen y)
 {
   XPoint *r;
   #define H_XPoint "(XPoint x y): new XPoint struct"
@@ -16918,7 +16918,7 @@ static XEN gxm_XPoint(XEN x, XEN y)
 
 /* XArc */
 
-static XEN gxm_XArc(XEN x, XEN y, XEN width, XEN height, XEN angle1, XEN angle2)
+static Xen gxm_XArc(Xen x, Xen y, Xen width, Xen height, Xen angle1, Xen angle2)
 {
   XArc *r;
   #define H_XArc "(XArc x y w h ang1 ang2): new XArc struct"
@@ -16938,13 +16938,13 @@ static XEN gxm_XArc(XEN x, XEN y, XEN width, XEN height, XEN angle1, XEN angle2)
   return(C_to_Xen_XArc(r));
 }
 
-static XEN gxm_angle2(XEN ptr)
+static Xen gxm_angle2(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XArc(ptr), ptr, 1, "angle2", "XArc");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XArc(ptr))->angle2)));
 }
 
-static XEN gxm_set_angle2(XEN ptr, XEN val)
+static Xen gxm_set_angle2(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 1, "angle2", "an integer");
   XM_set_field_assert_type(Xen_is_XArc(ptr), ptr, 2, "angle2", "XArc");
@@ -16952,13 +16952,13 @@ static XEN gxm_set_angle2(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_angle1(XEN ptr)
+static Xen gxm_angle1(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XArc(ptr), ptr, 1, "angle1", "XArc");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XArc(ptr))->angle1)));
 }
 
-static XEN gxm_set_angle1(XEN ptr, XEN val)
+static Xen gxm_set_angle1(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 1, "angle1", "an integer");
   XM_set_field_assert_type(Xen_is_XArc(ptr), ptr, 2, "angle1", "XArc");
@@ -16968,7 +16968,7 @@ static XEN gxm_set_angle1(XEN ptr, XEN val)
 
 /* XColor */
 
-static XEN gxm_XColor(XEN pixel, XEN red, XEN green, XEN blue, XEN flags, XEN pad)
+static Xen gxm_XColor(Xen pixel, Xen red, Xen green, Xen blue, Xen flags, Xen pad)
 {
   XColor *r;
   #define H_XColor "(XColor pixel red green blue flags pad): new XColor struct"
@@ -16988,13 +16988,13 @@ static XEN gxm_XColor(XEN pixel, XEN red, XEN green, XEN blue, XEN flags, XEN pa
   return(C_to_Xen_XColor(r));
 }
 
-static XEN gxm_pad(XEN ptr)
+static Xen gxm_pad(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XColor(ptr), ptr, 1, "pad", "XColor");
   return(C_int_to_Xen_integer((char)((Xen_to_C_XColor(ptr))->pad)));
 }
 
-static XEN gxm_set_pad(XEN ptr, XEN val)
+static Xen gxm_set_pad(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XColor(ptr), ptr, 1, "pad", "XColor");
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "pad", "char");
@@ -17002,14 +17002,14 @@ static XEN gxm_set_pad(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_blue(XEN ptr)
+static Xen gxm_blue(Xen ptr)
 {
   if (Xen_is_XColor(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XColor(ptr))->blue)));
   XM_field_assert_type(0, ptr, 1, "blue", "XColor");
   return(Xen_false);
 }
 
-static XEN gxm_set_blue(XEN ptr, XEN val)
+static Xen gxm_set_blue(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "blue", "an integer");
   if (Xen_is_XColor(ptr)) (Xen_to_C_XColor(ptr))->blue = Xen_integer_to_C_int(val);
@@ -17017,14 +17017,14 @@ static XEN gxm_set_blue(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_green(XEN ptr)
+static Xen gxm_green(Xen ptr)
 {
   if (Xen_is_XColor(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XColor(ptr))->green)));
   XM_field_assert_type(0, ptr, 1, "green", "XColor");
   return(Xen_false);
 }
 
-static XEN gxm_set_green(XEN ptr, XEN val)
+static Xen gxm_set_green(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "green", "an integer");
   if (Xen_is_XColor(ptr)) (Xen_to_C_XColor(ptr))->green = Xen_integer_to_C_int(val);
@@ -17032,14 +17032,14 @@ static XEN gxm_set_green(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_red(XEN ptr)
+static Xen gxm_red(Xen ptr)
 {
   if (Xen_is_XColor(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XColor(ptr))->red)));
   XM_field_assert_type(0, ptr, 1, "red", "XColor");
   return(Xen_false);
 }
 
-static XEN gxm_set_red(XEN ptr, XEN val)
+static Xen gxm_set_red(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "red", "an integer");
   if (Xen_is_XColor(ptr)) (Xen_to_C_XColor(ptr))->red = Xen_integer_to_C_int(val);
@@ -17047,7 +17047,7 @@ static XEN gxm_set_red(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_XWindowChanges(XEN x, XEN y, XEN width, XEN height, XEN border_width, XEN sibling, XEN stack_mode)
+static Xen gxm_XWindowChanges(Xen x, Xen y, Xen width, Xen height, Xen border_width, Xen sibling, Xen stack_mode)
 {
   XWindowChanges *r;
   #define H_XWindowChanges "(XWindowChanges x y w h border sib stack_mode): new XWindowChanges struct"
@@ -17069,7 +17069,7 @@ static XEN gxm_XWindowChanges(XEN x, XEN y, XEN width, XEN height, XEN border_wi
   return(C_to_Xen_XWindowChanges(r));
 }
 
-static XEN gxm_XSetWindowAttributes(XEN arglist)
+static Xen gxm_XSetWindowAttributes(Xen arglist)
 {
   int len;
   XSetWindowAttributes *r;
@@ -17094,62 +17094,62 @@ static XEN gxm_XSetWindowAttributes(XEN arglist)
   return(C_to_Xen_XSetWindowAttributes(r));
 }
 
-static XEN gxm_stack_mode(XEN ptr)
+static Xen gxm_stack_mode(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowChanges(ptr), ptr, 1, "stack_mode", "XWindowChanges");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XWindowChanges(ptr))->stack_mode)));
 }
 
-static XEN gxm_sibling(XEN ptr)
+static Xen gxm_sibling(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowChanges(ptr), ptr, 1, "sibling", "XWindowChanges");
   return(C_to_Xen_Window((Window)((Xen_to_C_XWindowChanges(ptr))->sibling)));
 }
 
-static XEN gxm_obdata(XEN ptr)
+static Xen gxm_obdata(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XImage(ptr), ptr, 1, "obdata", "XImage");
   return(Xen_wrap_C_pointer((XPointer)((Xen_to_C_XImage(ptr))->obdata)));
 }
 
-static XEN gxm_bytes_per_line(XEN ptr)
+static Xen gxm_bytes_per_line(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XImage(ptr), ptr, 1, "bytes_per_line", "XImage");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XImage(ptr))->bytes_per_line)));
 }
 
-static XEN gxm_bitmap_pad(XEN ptr)
+static Xen gxm_bitmap_pad(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XImage(ptr), ptr, 1, "bitmap_pad", "XImage");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XImage(ptr))->bitmap_pad)));
 }
 
-static XEN gxm_bitmap_bit_order(XEN ptr)
+static Xen gxm_bitmap_bit_order(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XImage(ptr), ptr, 1, "bitmap_bit_order", "XImage");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XImage(ptr))->bitmap_bit_order)));
 }
 
-static XEN gxm_bitmap_unit(XEN ptr)
+static Xen gxm_bitmap_unit(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XImage(ptr), ptr, 1, "bitmap_unit", "XImage");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XImage(ptr))->bitmap_unit)));
 }
 
-static XEN gxm_byte_order(XEN ptr)
+static Xen gxm_byte_order(Xen ptr)
 {
   if (Xen_is_XImage(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XImage(ptr))->byte_order)));
   XM_field_assert_type(0, ptr, 1, "byte_order", "XImage");
   return(Xen_false);
 }
 
-static XEN gxm_xoffset(XEN ptr)
+static Xen gxm_xoffset(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XImage(ptr), ptr, 1, "xoffset", "XImage");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XImage(ptr))->xoffset)));
 }
 
-static XEN gxm_screen(XEN ptr)
+static Xen gxm_screen(Xen ptr)
 {
   if (Xen_is_XWindowAttributes(ptr)) return(C_to_Xen_Screen((Screen *)((Xen_to_C_XWindowAttributes(ptr))->screen)));
   if (Xen_is_XmTopLevelEnterCallbackStruct(ptr)) return(C_to_Xen_Screen((Screen *)((Xen_to_C_XmTopLevelEnterCallbackStruct(ptr))->screen)));
@@ -17159,31 +17159,31 @@ static XEN gxm_screen(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_your_event_mask(XEN ptr)
+static Xen gxm_your_event_mask(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowAttributes(ptr), ptr, 1, "your_event_mask", "XWindowAttributes");
   return(C_int_to_Xen_integer((long)((Xen_to_C_XWindowAttributes(ptr))->your_event_mask)));
 }
 
-static XEN gxm_all_event_masks(XEN ptr)
+static Xen gxm_all_event_masks(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowAttributes(ptr), ptr, 1, "all_event_masks", "XWindowAttributes");
   return(C_int_to_Xen_integer((long)((Xen_to_C_XWindowAttributes(ptr))->all_event_masks)));
 }
 
-static XEN gxm_map_state(XEN ptr)
+static Xen gxm_map_state(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowAttributes(ptr), ptr, 1, "map_state", "XWindowAttributes");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XWindowAttributes(ptr))->map_state)));
 }
 
-static XEN gxm_map_installed(XEN ptr)
+static Xen gxm_map_installed(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowAttributes(ptr), ptr, 1, "map_installed", "XWindowAttributes");
   return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XWindowAttributes(ptr))->map_installed)));
 }
 
-static XEN gxm_set_visual(XEN ptr, XEN val)
+static Xen gxm_set_visual(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Visual(val), val, 2, "visual", "Visual");
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "visual", "Visual");
@@ -17191,7 +17191,7 @@ static XEN gxm_set_visual(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_visual(XEN ptr)
+static Xen gxm_visual(Xen ptr)
 {
   if (Xen_is_XWindowAttributes(ptr)) return(C_to_Xen_Visual((Visual *)((Xen_to_C_XWindowAttributes(ptr))->visual)));
   if (Xen_is_XpmAttributes(ptr)) return(C_to_Xen_Visual((Visual *)((Xen_to_C_XpmAttributes(ptr))->visual)));
@@ -17199,14 +17199,14 @@ static XEN gxm_visual(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_cursor(XEN ptr)
+static Xen gxm_cursor(Xen ptr)
 {
   if (Xen_is_XSetWindowAttributes(ptr)) return(C_to_Xen_Cursor((Cursor)((Xen_to_C_XSetWindowAttributes(ptr))->cursor)));
   XM_field_assert_type(0, ptr, 1, "cursor", "XSetWindowAttributes");
   return(Xen_false);
 }
 
-static XEN gxm_set_cursor(XEN ptr, XEN val)
+static Xen gxm_set_cursor(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XSetWindowAttributes(ptr), ptr, 1, "cursor", "XSetWindowAttributes");
   XM_set_field_assert_type(Xen_is_Cursor(val), val, 2, "cursor", "a Cursor");
@@ -17214,7 +17214,7 @@ static XEN gxm_set_cursor(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_do_not_propagate_mask(XEN ptr)
+static Xen gxm_do_not_propagate_mask(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowAttributes(ptr) || Xen_is_XSetWindowAttributes(ptr), 
 		       ptr, 1, "do_not_propagate_mask", "a struct with a do_not_propagate_mask field");
@@ -17222,14 +17222,14 @@ static XEN gxm_do_not_propagate_mask(XEN ptr)
   return(C_int_to_Xen_integer((long)((Xen_to_C_XSetWindowAttributes(ptr))->do_not_propagate_mask)));
 }
 
-static XEN gxm_event_mask(XEN ptr)
+static Xen gxm_event_mask(Xen ptr)
 {
   if (Xen_is_XSetWindowAttributes(ptr)) return(C_int_to_Xen_integer((long)((Xen_to_C_XSetWindowAttributes(ptr))->event_mask)));
   XM_field_assert_type(0, ptr, 1, "event_mask", "XSetWindowAttributes");
   return(Xen_false);
 }
 
-static XEN gxm_set_event_mask(XEN ptr, XEN val)
+static Xen gxm_set_event_mask(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XSetWindowAttributes(ptr), ptr, 1, "event_mask", "XSetWindowAttributes");
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "event_mask", "an integer");
@@ -17237,14 +17237,14 @@ static XEN gxm_set_event_mask(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_save_under(XEN ptr)
+static Xen gxm_save_under(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowAttributes(ptr) || Xen_is_XSetWindowAttributes(ptr), ptr, 1, "save_under", "a struct with a save_under field");
   if (Xen_is_XWindowAttributes(ptr)) return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XWindowAttributes(ptr))->save_under)));
   return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XSetWindowAttributes(ptr))->save_under)));
 }
 
-static XEN gxm_set_save_under(XEN ptr, XEN val)
+static Xen gxm_set_save_under(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XWindowAttributes(ptr) || Xen_is_XSetWindowAttributes(ptr), ptr, 1, "save_under", "a struct with a save_under field");
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "save_under", "a Boolean");
@@ -17255,21 +17255,21 @@ static XEN gxm_set_save_under(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_backing_pixel(XEN ptr)
+static Xen gxm_backing_pixel(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowAttributes(ptr) || Xen_is_XSetWindowAttributes(ptr), ptr, 1, "backing_pixel", "a struct with a backing_pixel field");
   if (Xen_is_XWindowAttributes(ptr)) return(C_to_Xen_Pixel((unsigned long)((Xen_to_C_XWindowAttributes(ptr))->backing_pixel)));
   return(C_to_Xen_Pixel((unsigned long)((Xen_to_C_XSetWindowAttributes(ptr))->backing_pixel)));
 }
 
-static XEN gxm_backing_planes(XEN ptr)
+static Xen gxm_backing_planes(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowAttributes(ptr) || Xen_is_XSetWindowAttributes(ptr), ptr, 1, "backing_planes", "a struct with a backing_planes field");
   if (Xen_is_XWindowAttributes(ptr)) return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XWindowAttributes(ptr))->backing_planes)));
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XSetWindowAttributes(ptr))->backing_planes)));
 }
 
-static XEN gxm_win_gravity(XEN ptr)
+static Xen gxm_win_gravity(Xen ptr)
 {
   if (Xen_is_XWindowAttributes(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XWindowAttributes(ptr))->win_gravity)));
   if (Xen_is_XWindowAttributes(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XSetWindowAttributes(ptr))->win_gravity)));
@@ -17277,14 +17277,14 @@ static XEN gxm_win_gravity(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_bit_gravity(XEN ptr)
+static Xen gxm_bit_gravity(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWindowAttributes(ptr) || Xen_is_XSetWindowAttributes(ptr), ptr, 1, "bit_gravity", "a struct with a bit_gravity field");
   if (Xen_is_XWindowAttributes(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XWindowAttributes(ptr))->bit_gravity)));
   return(C_int_to_Xen_integer((int)((Xen_to_C_XSetWindowAttributes(ptr))->bit_gravity)));
 }
 
-static XEN gxm_set_bit_gravity(XEN ptr, XEN val)
+static Xen gxm_set_bit_gravity(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XWindowAttributes(ptr) || Xen_is_XSetWindowAttributes(ptr), ptr, 1, "bit_gravity", "a struct with a bit_gravity field");
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "bit_gravity", "an integer");
@@ -17295,13 +17295,13 @@ static XEN gxm_set_bit_gravity(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_border_pixel(XEN ptr)
+static Xen gxm_border_pixel(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XSetWindowAttributes(ptr), ptr, 1, "border_pixel", "XSetWindowAttributes");
   return(C_to_Xen_Pixel((unsigned long)((Xen_to_C_XSetWindowAttributes(ptr))->border_pixel)));
 }
 
-static XEN gxm_set_border_pixel(XEN ptr, XEN val)
+static Xen gxm_set_border_pixel(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XSetWindowAttributes(ptr), ptr, 1, "border_pixel", "XSetWindowAttributes");
   XM_set_field_assert_type(Xen_is_Pixel(val), val, 2, "border_pixel", "a Pixel");
@@ -17309,19 +17309,19 @@ static XEN gxm_set_border_pixel(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_border_pixmap(XEN ptr)
+static Xen gxm_border_pixmap(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XSetWindowAttributes(ptr), ptr, 1, "border_pixmap", "XSetWindowAttributes");
   return(C_to_Xen_Pixmap((Pixmap)((Xen_to_C_XSetWindowAttributes(ptr))->border_pixmap)));
 }
 
-static XEN gxm_background_pixel(XEN ptr)
+static Xen gxm_background_pixel(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XSetWindowAttributes(ptr), ptr, 1, "background_pixel", "XSetWindowAttributes");
   return(C_to_Xen_Pixel((unsigned long)((Xen_to_C_XSetWindowAttributes(ptr))->background_pixel)));
 }
 
-static XEN gxm_set_background_pixel(XEN ptr, XEN val)
+static Xen gxm_set_background_pixel(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XSetWindowAttributes(ptr), ptr, 1, "background_pixel", "XSetWindowAttributes");
   XM_set_field_assert_type(Xen_is_Pixel(val), val, 2, "background_pixel", "a Pixel");
@@ -17329,25 +17329,25 @@ static XEN gxm_set_background_pixel(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_background_pixmap(XEN ptr)
+static Xen gxm_background_pixmap(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XSetWindowAttributes(ptr), ptr, 1, "background_pixmap", "XSetWindowAttributes");
   return(C_to_Xen_Pixmap((Pixmap)((Xen_to_C_XSetWindowAttributes(ptr))->background_pixmap)));
 }
 
-static XEN gxm_bits_per_pixel(XEN ptr)
+static Xen gxm_bits_per_pixel(Xen ptr)
 {
   if (Xen_is_XImage(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XImage(ptr))->bits_per_pixel)));
   XM_field_assert_type(0, ptr, 1, "bits_per_pixel", "XImage");
   return(Xen_false);
 }
 
-static XEN gxm_visuals(XEN ptr)
+static Xen gxm_visuals(Xen ptr)
 {
   Depth *dps;
   Visual *vs;
   int i, len;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   XM_field_assert_type(Xen_is_Depth(ptr), ptr, 1, "visuals", "Depth");
   dps = Xen_to_C_Depth(ptr);
   len = dps->nvisuals;
@@ -17360,20 +17360,20 @@ static XEN gxm_visuals(XEN ptr)
   return(lst);
 }
 
-static XEN gxm_nvisuals(XEN ptr)
+static Xen gxm_nvisuals(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Depth(ptr), ptr, 1, "nvisuals", "Depth");
   return(C_int_to_Xen_integer((int)((Xen_to_C_Depth(ptr))->nvisuals)));
 }
 
-static XEN gxm_set_depth(XEN ptr, XEN val)
+static Xen gxm_set_depth(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "depth", "XpmAttributes");
   (Xen_to_C_XpmAttributes(ptr))->depth = Xen_ulong_to_C_ulong(val);
   return(val);
 }
 
-static XEN gxm_depth(XEN ptr)
+static Xen gxm_depth(Xen ptr)
 {
   if (Xen_is_XImage(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XImage(ptr))->depth)));
   if (Xen_is_XWindowAttributes(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XWindowAttributes(ptr))->depth)));
@@ -17384,13 +17384,13 @@ static XEN gxm_depth(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_map_entries(XEN ptr)
+static Xen gxm_map_entries(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Visual(ptr), ptr, 1, "map_entries", "Visual");
   return(C_int_to_Xen_integer((int)((Xen_to_C_Visual(ptr))->map_entries)));
 }
 
-static XEN gxm_bits_per_rgb(XEN ptr)
+static Xen gxm_bits_per_rgb(Xen ptr)
 {
   if (Xen_is_XVisualInfo(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XVisualInfo(ptr))->bits_per_rgb)));
   if (Xen_is_Visual(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_Visual(ptr))->bits_per_rgb)));
@@ -17398,7 +17398,7 @@ static XEN gxm_bits_per_rgb(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_blue_mask(XEN ptr)
+static Xen gxm_blue_mask(Xen ptr)
 {
   if (Xen_is_XImage(ptr)) return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XImage(ptr))->blue_mask)));
   if (Xen_is_XVisualInfo(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XVisualInfo(ptr))->blue_mask)));
@@ -17407,7 +17407,7 @@ static XEN gxm_blue_mask(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_green_mask(XEN ptr)
+static Xen gxm_green_mask(Xen ptr)
 {
   if (Xen_is_XImage(ptr)) return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XImage(ptr))->green_mask)));
   if (Xen_is_XVisualInfo(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XVisualInfo(ptr))->green_mask)));
@@ -17416,7 +17416,7 @@ static XEN gxm_green_mask(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_red_mask(XEN ptr)
+static Xen gxm_red_mask(Xen ptr)
 {
   if (Xen_is_XImage(ptr)) return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XImage(ptr))->red_mask)));
   if (Xen_is_XVisualInfo(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XVisualInfo(ptr))->red_mask)));
@@ -17425,14 +17425,14 @@ static XEN gxm_red_mask(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_colormap_size(XEN ptr)
+static Xen gxm_colormap_size(Xen ptr)
 {
   if (Xen_is_XVisualInfo(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XVisualInfo(ptr))->colormap_size)));
   XM_field_assert_type(0, ptr, 1, "colormap_size", "XVisualInfo*");
   return(Xen_false);
 }
 
-static XEN gxm_class(XEN ptr)
+static Xen gxm_class(Xen ptr)
 {
 #ifndef __cplusplus
   if (Xen_is_XWindowAttributes(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XWindowAttributes(ptr))->class)));
@@ -17443,7 +17443,7 @@ static XEN gxm_class(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_visualid(XEN ptr)
+static Xen gxm_visualid(Xen ptr)
 {
   if (Xen_is_Visual(ptr)) return(C_ulong_to_Xen_ulong((VisualID)((Xen_to_C_Visual(ptr))->visualid)));
   if (Xen_is_XStandardColormap(ptr)) return(C_ulong_to_Xen_ulong((VisualID)((Xen_to_C_XStandardColormap(ptr))->visualid)));
@@ -17452,7 +17452,7 @@ static XEN gxm_visualid(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_pixel(XEN ptr, XEN val)
+static Xen gxm_set_pixel(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Pixel(val), val, 2, "pixel", "a Pixel");  
   if (Xen_is_XColor(ptr)) (Xen_to_C_XColor(ptr))->pixel = Xen_to_C_Pixel(val);
@@ -17460,7 +17460,7 @@ static XEN gxm_set_pixel(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_pixel(XEN ptr)
+static Xen gxm_pixel(Xen ptr)
 {
   if (Xen_is_XColor(ptr)) return(C_to_Xen_Pixel((Pixel)((Xen_to_C_XColor(ptr))->pixel)));
   if (Xen_is_XmScrollBarCallbackStruct(ptr)) return(C_to_Xen_Pixel((Pixel)((Xen_to_C_XmScrollBarCallbackStruct(ptr))->pixel)));
@@ -17469,49 +17469,49 @@ static XEN gxm_pixel(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_window_group(XEN ptr)
+static Xen gxm_window_group(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "window_group", "XWMHints");
   return(C_ulong_to_Xen_ulong((XID)((Xen_to_C_XWMHints(ptr))->window_group)));
 }
 
-static XEN gxm_icon_mask(XEN ptr)
+static Xen gxm_icon_mask(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "icon_mask", "XWMHints");
   return(C_to_Xen_Pixmap((Pixmap)((Xen_to_C_XWMHints(ptr))->icon_mask)));
 }
 
-static XEN gxm_icon_y(XEN ptr)
+static Xen gxm_icon_y(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "icon_y", "XWMHints");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XWMHints(ptr))->icon_y)));
 }
 
-static XEN gxm_icon_x(XEN ptr)
+static Xen gxm_icon_x(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "icon_x", "XWMHints");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XWMHints(ptr))->icon_x)));
 }
 
-static XEN gxm_icon_window(XEN ptr)
+static Xen gxm_icon_window(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "icon_window", "XWMHints");
   return(C_to_Xen_Window((Window)((Xen_to_C_XWMHints(ptr))->icon_window)));
 }
 
-static XEN gxm_icon_pixmap(XEN ptr)
+static Xen gxm_icon_pixmap(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "icon_pixmap", "XWMHints");
   return(C_to_Xen_Pixmap((Pixmap)((Xen_to_C_XWMHints(ptr))->icon_pixmap)));
 }
 
-static XEN gxm_initial_state(XEN ptr)
+static Xen gxm_initial_state(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "initial_state", "XWMHints");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XWMHints(ptr))->initial_state)));
 }
 
-static XEN gxm_set_initial_state(XEN ptr, XEN val)
+static Xen gxm_set_initial_state(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "initial_state", "XWMHints");
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "initial_state", "an integer");
@@ -17519,13 +17519,13 @@ static XEN gxm_set_initial_state(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_input(XEN ptr)
+static Xen gxm_input(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "input", "XWMHints");
   return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XWMHints(ptr))->input)));
 }
 
-static XEN gxm_set_input(XEN ptr, XEN val)
+static Xen gxm_set_input(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XWMHints(ptr), ptr, 1, "input", "XWMHints");
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "input", "a boolean");
@@ -17533,7 +17533,7 @@ static XEN gxm_set_input(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_flags(XEN ptr)
+static Xen gxm_flags(Xen ptr)
 {
   if (Xen_is_XColor(ptr)) return(C_int_to_Xen_integer((char)((Xen_to_C_XColor(ptr))->flags)));
   if (Xen_is_XmSelectionCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmSelectionCallbackStruct(ptr))->flags)));
@@ -17544,7 +17544,7 @@ static XEN gxm_flags(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_flags(XEN ptr, XEN val)
+static Xen gxm_set_flags(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XColor(ptr) || Xen_is_XWMHints(ptr), ptr, 1, "flags", "XColor or XWMHints");
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "input", "a char (int)");
@@ -17553,72 +17553,72 @@ static XEN gxm_set_flags(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_per_char(XEN ptr)
+static Xen gxm_per_char(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XFontStruct(ptr), ptr, 1, "per_char", "XFontStruct");
   return(C_to_Xen_XCharStruct((XCharStruct *)((Xen_to_C_XFontStruct(ptr))->per_char)));
 }
 
-static XEN gxm_max_bounds(XEN ptr)
+static Xen gxm_max_bounds(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XFontStruct(ptr), ptr, 1, "max_bounds", "XFontStruct");
   return(C_to_Xen_XCharStruct((XCharStruct *)(&(Xen_to_C_XFontStruct(ptr))->max_bounds)));
 }
 
-static XEN gxm_min_bounds(XEN ptr)
+static Xen gxm_min_bounds(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XFontStruct(ptr), ptr, 1, "min_bounds", "XFontStruct");
   return(C_to_Xen_XCharStruct((XCharStruct *)(&(Xen_to_C_XFontStruct(ptr))->min_bounds)));
 }
 
-static XEN gxm_min_height(XEN ptr)
+static Xen gxm_min_height(Xen ptr)
 {
   if (Xen_is_XIconSize(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XIconSize(ptr))->min_height)));
   XM_field_assert_type(0, ptr, 1, "min_height", "XIconSize");
   return(Xen_false);
 }
 
-static XEN gxm_min_width(XEN ptr)
+static Xen gxm_min_width(Xen ptr)
 {
   if (Xen_is_XIconSize(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XIconSize(ptr))->min_width)));
   XM_field_assert_type(0, ptr, 1, "min_width", "XIconSize");
   return(Xen_false);
 }
 
-static XEN gxm_max_height(XEN ptr)
+static Xen gxm_max_height(Xen ptr)
 {
   if (Xen_is_XIconSize(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XIconSize(ptr))->max_height)));
   XM_field_assert_type(0, ptr, 1, "max_height", "XIconSize");
   return(Xen_false);
 }
 
-static XEN gxm_max_width(XEN ptr)
+static Xen gxm_max_width(Xen ptr)
 {
   if (Xen_is_XIconSize(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XIconSize(ptr))->max_width)));
   XM_field_assert_type(0, ptr, 1, "max_width", "XIconSize");
   return(Xen_false);
 }
 
-static XEN gxm_height_inc(XEN ptr)
+static Xen gxm_height_inc(Xen ptr)
 {
   if (Xen_is_XIconSize(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XIconSize(ptr))->height_inc)));
   XM_field_assert_type(0, ptr, 1, "height_inc", "XIconSize");
   return(Xen_false);
 }
 
-static XEN gxm_width_inc(XEN ptr)
+static Xen gxm_width_inc(Xen ptr)
 {
   if (Xen_is_XIconSize(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XIconSize(ptr))->width_inc)));
   XM_field_assert_type(0, ptr, 1, "width_inc", "XIconSize");
   return(Xen_false);
 }
 
-static XEN gxm_properties(XEN ptr)
+static Xen gxm_properties(Xen ptr)
 {
   int i, len;
   XFontStruct *fs;
   XFontProp *props;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   XM_field_assert_type(Xen_is_XFontStruct(ptr), ptr, 1, "properties", "XFontStruct");
   fs = Xen_to_C_XFontStruct(ptr);
   len = fs->n_properties;
@@ -17628,19 +17628,19 @@ static XEN gxm_properties(XEN ptr)
   return(lst);
 }
 
-static XEN gxm_fid(XEN ptr)
+static Xen gxm_fid(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XFontStruct(ptr), ptr, 1, "fid", "XFontStruct");
   return(C_to_Xen_Font((Font)((Xen_to_C_XFontStruct(ptr))->fid)));
 }
 
-static XEN gxm_card32(XEN ptr)
+static Xen gxm_card32(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XFontProp(ptr), ptr, 1, "card32", "XFontProp");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XFontProp(ptr))->card32)));
 }
 
-static XEN gxm_set_name(XEN ptr, XEN val)
+static Xen gxm_set_name(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_string(val), val, 2, "name", "a string");
   XM_set_field_assert_type(Xen_is_XpmColorSymbol(ptr), ptr, 1, "name", "XpmColorSymbol");
@@ -17648,7 +17648,7 @@ static XEN gxm_set_name(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_name(XEN ptr)
+static Xen gxm_name(Xen ptr)
 {
   if (Xen_is_XFontProp(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XFontProp(ptr))->name)));
   if (Xen_is_XpmColorSymbol(ptr)) return(C_string_to_Xen_string((char *)((Xen_to_C_XpmColorSymbol(ptr))->name)));
@@ -17656,13 +17656,13 @@ static XEN gxm_name(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_attributes(XEN ptr)
+static Xen gxm_attributes(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XCharStruct(ptr), ptr, 1, "attributes", "XCharStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XCharStruct(ptr))->attributes)));
 }
 
-static XEN gxm_descent(XEN ptr)
+static Xen gxm_descent(Xen ptr)
 {
   if (Xen_is_XFontStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XFontStruct(ptr))->descent)));
   if (Xen_is_XCharStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XCharStruct(ptr))->descent)));
@@ -17670,7 +17670,7 @@ static XEN gxm_descent(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_ascent(XEN ptr)
+static Xen gxm_ascent(Xen ptr)
 {
   if (Xen_is_XFontStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XFontStruct(ptr))->ascent)));
   if (Xen_is_XCharStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XCharStruct(ptr))->ascent)));
@@ -17678,25 +17678,25 @@ static XEN gxm_ascent(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_rbearing(XEN ptr)
+static Xen gxm_rbearing(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XCharStruct(ptr), ptr, 1, "rbearing", "XCharStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XCharStruct(ptr))->rbearing)));
 }
 
-static XEN gxm_lbearing(XEN ptr)
+static Xen gxm_lbearing(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XCharStruct(ptr), ptr, 1, "lbearing", "XCharStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XCharStruct(ptr))->lbearing)));
 }
 
-static XEN gxm_request_code(XEN ptr)
+static Xen gxm_request_code(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XErrorEvent(ptr), ptr, 1, "request_code", "XErrorEvent");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XErrorEvent(ptr))->request_code)));
 }
 
-static XEN gxm_set_request_code(XEN ptr, XEN val)
+static Xen gxm_set_request_code(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "request_code", "an integer");
   XM_set_field_assert_type(Xen_is_XErrorEvent(ptr), ptr, 1, "request_code", "XErrorEvent");
@@ -17704,13 +17704,13 @@ static XEN gxm_set_request_code(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_error_code(XEN ptr)
+static Xen gxm_error_code(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XErrorEvent(ptr), ptr, 1, "error_code", "XErrorEvent");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XErrorEvent(ptr))->error_code)));
 }
 
-static XEN gxm_set_error_code(XEN ptr, XEN val)
+static Xen gxm_set_error_code(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "error_code", "an integer");
   XM_set_field_assert_type(Xen_is_XErrorEvent(ptr), ptr, 1, "error_code", "XErrorEvent");
@@ -17718,13 +17718,13 @@ static XEN gxm_set_error_code(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_resourceid(XEN ptr)
+static Xen gxm_resourceid(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XErrorEvent(ptr), ptr, 1, "resourceid", "XErrorEvent");
   return(C_ulong_to_Xen_ulong((XID)((Xen_to_C_XErrorEvent(ptr))->resourceid)));
 }
 
-static XEN gxm_set_resourceid(XEN ptr, XEN val)
+static Xen gxm_set_resourceid(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_ulong_int(val), val, 2, "resourceid", "an XID");
   XM_set_field_assert_type(Xen_is_XErrorEvent(ptr), ptr, 1, "resourceid", "XErrorEvent");
@@ -17732,13 +17732,13 @@ static XEN gxm_set_resourceid(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_first_keycode(XEN ptr)
+static Xen gxm_first_keycode(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XMappingEvent(ptr), ptr, 1, "first_keycode", "XMappingEvent");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XMappingEvent(ptr))->first_keycode)));
 }
 
-static XEN gxm_set_first_keycode(XEN ptr, XEN val)
+static Xen gxm_set_first_keycode(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "first_keycode", "an integer");
   XM_set_field_assert_type(Xen_is_XMappingEvent(ptr), ptr, 1, "first_keycode", "XMappingEvent");
@@ -17746,13 +17746,13 @@ static XEN gxm_set_first_keycode(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_request(XEN ptr)
+static Xen gxm_request(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XMappingEvent(ptr), ptr, 1, "request", "XMappingEvent");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XMappingEvent(ptr))->request)));
 }
 
-static XEN gxm_set_request(XEN ptr, XEN val)
+static Xen gxm_set_request(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "request", "an integer");
   XM_set_field_assert_type(Xen_is_XMappingEvent(ptr), ptr, 1, "request", "XMappingEvent");
@@ -17760,7 +17760,7 @@ static XEN gxm_set_request(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_format(XEN ptr)
+static Xen gxm_format(Xen ptr)
 {
   if (Xen_is_XImage(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XImage(ptr))->format)));
   if (Xen_is_XmSelectionCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmSelectionCallbackStruct(ptr))->format)));
@@ -17771,7 +17771,7 @@ static XEN gxm_format(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_format(XEN ptr, XEN val)
+static Xen gxm_set_format(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "format", "an integer");
   if (Xen_is_XClientMessageEvent(ptr)) (Xen_to_C_XClientMessageEvent(ptr))->format = Xen_integer_to_C_int(val);
@@ -17780,13 +17780,13 @@ static XEN gxm_set_format(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_message_type(XEN ptr)
+static Xen gxm_message_type(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XClientMessageEvent(ptr), ptr, 1, "message_type", "XClientMessageEvent");
   return(C_to_Xen_Atom((Atom)((Xen_to_C_XClientMessageEvent(ptr))->message_type)));
 }
 
-static XEN gxm_set_message_type(XEN ptr, XEN val)
+static Xen gxm_set_message_type(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Atom(val), val, 2, "message_type", "an Atom");
   XM_set_field_assert_type(Xen_is_XClientMessageEvent(ptr), ptr, 1, "message_type", "XClientMessageEvent");
@@ -17794,7 +17794,7 @@ static XEN gxm_set_message_type(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_new(XEN ptr)
+static Xen gxm_new(Xen ptr)
 {
 #ifndef __cplusplus
   XM_field_assert_type(Xen_is_XColormapEvent(ptr), ptr, 1, "new", "XColormapEvent");
@@ -17803,7 +17803,7 @@ static XEN gxm_new(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_new(XEN ptr, XEN val)
+static Xen gxm_set_new(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "new", "a boolean");
 #ifndef __cplusplus
@@ -17813,7 +17813,7 @@ static XEN gxm_set_new(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_colormap(XEN ptr)
+static Xen gxm_colormap(Xen ptr)
 {
   if (Xen_is_XWindowAttributes(ptr)) return(C_to_Xen_Colormap((Colormap)((Xen_to_C_XWindowAttributes(ptr))->colormap)));
   if (Xen_is_XSetWindowAttributes(ptr)) return(C_to_Xen_Colormap((Colormap)((Xen_to_C_XSetWindowAttributes(ptr))->colormap)));
@@ -17824,7 +17824,7 @@ static XEN gxm_colormap(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_colormap(XEN ptr, XEN val)
+static Xen gxm_set_colormap(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Colormap(val), val, 2, "colormap", "a Colormap");
   if (Xen_is_XpmAttributes(ptr)) (Xen_to_C_XpmAttributes(ptr))->colormap = Xen_to_C_Colormap(val);
@@ -17836,7 +17836,7 @@ static XEN gxm_set_colormap(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_property(XEN ptr)
+static Xen gxm_property(Xen ptr)
 {
   if (Xen_is_XSelectionEvent(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XSelectionEvent(ptr))->property)));
   if (Xen_is_XSelectionRequestEvent(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XSelectionRequestEvent(ptr))->property)));
@@ -17844,7 +17844,7 @@ static XEN gxm_property(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_property(XEN ptr, XEN val)
+static Xen gxm_set_property(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Atom(val), val, 2, "property", "an Atom");
   if (Xen_is_XSelectionEvent(ptr)) (Xen_to_C_XSelectionEvent(ptr))->property = Xen_to_C_Atom(val);
@@ -17853,7 +17853,7 @@ static XEN gxm_set_property(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_target(XEN ptr)
+static Xen gxm_target(Xen ptr)
 {
   if (Xen_is_XmPopupHandlerCallbackStruct(ptr)) return(C_to_Xen_Widget((Widget)((Xen_to_C_XmPopupHandlerCallbackStruct(ptr))->target)));
   if (Xen_is_XmSelectionCallbackStruct(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XmSelectionCallbackStruct(ptr))->target)));
@@ -17864,7 +17864,7 @@ static XEN gxm_target(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_target(XEN ptr, XEN val)
+static Xen gxm_set_target(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Atom(val), val, 2, "target", "an Atom");
   if (Xen_is_XSelectionEvent(ptr)) (Xen_to_C_XSelectionEvent(ptr))->target = Xen_to_C_Atom(val);
@@ -17873,7 +17873,7 @@ static XEN gxm_set_target(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_requestor(XEN ptr)
+static Xen gxm_requestor(Xen ptr)
 {
   if (Xen_is_XSelectionEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XSelectionEvent(ptr))->requestor)));
   if (Xen_is_XSelectionRequestEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XSelectionRequestEvent(ptr))->requestor)));
@@ -17881,7 +17881,7 @@ static XEN gxm_requestor(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_requestor(XEN ptr, XEN val)
+static Xen gxm_set_requestor(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Window(val), val, 2, "requestor", "a Window");
   if (Xen_is_XSelectionEvent(ptr)) (Xen_to_C_XSelectionEvent(ptr))->requestor = Xen_to_C_Window(val);
@@ -17890,13 +17890,13 @@ static XEN gxm_set_requestor(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_owner(XEN ptr)
+static Xen gxm_owner(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XSelectionRequestEvent(ptr), ptr, 1, "owner", "XSelectionRequestEvent");
   return(C_to_Xen_Window((Window)((Xen_to_C_XSelectionRequestEvent(ptr))->owner)));
 }
 
-static XEN gxm_set_owner(XEN ptr, XEN val)
+static Xen gxm_set_owner(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Window(val), val, 2, "owner", "a Window");
   XM_set_field_assert_type(Xen_is_XSelectionRequestEvent(ptr), ptr, 1, "owner", "XSelectionRequestEvent");
@@ -17904,7 +17904,7 @@ static XEN gxm_set_owner(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_selection(XEN ptr)
+static Xen gxm_selection(Xen ptr)
 {
   if (Xen_is_XmTransferDoneCallbackStruct(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XmTransferDoneCallbackStruct(ptr))->selection)));
   if (Xen_is_XmSelectionCallbackStruct(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XmSelectionCallbackStruct(ptr))->selection)));
@@ -17917,7 +17917,7 @@ static XEN gxm_selection(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_selection(XEN ptr, XEN val)
+static Xen gxm_set_selection(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Atom(val), val, 2, "selection", "an Atom");
   if (Xen_is_XSelectionEvent(ptr)) (Xen_to_C_XSelectionEvent(ptr))->selection = Xen_to_C_Atom(val);
@@ -17927,14 +17927,14 @@ static XEN gxm_set_selection(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_atom(XEN ptr)
+static Xen gxm_atom(Xen ptr)
 {
   if (Xen_is_XPropertyEvent(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XPropertyEvent(ptr))->atom)));
   XM_field_assert_type(0, ptr, 1, "atom", "XPropertyEvent");
   return(Xen_false);
 }
 
-static XEN gxm_set_atom(XEN ptr, XEN val)
+static Xen gxm_set_atom(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Atom(val), val, 2, "atom", "an Atom");
   XM_set_field_assert_type(Xen_is_XPropertyEvent(ptr), ptr, 1, "atom", "XPropertyEvent");
@@ -17942,14 +17942,14 @@ static XEN gxm_set_atom(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_place(XEN ptr)
+static Xen gxm_place(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XCirculateRequestEvent(ptr) || Xen_is_XCirculateEvent(ptr), ptr, 1, "place", "a struct with a place field");
   if (Xen_is_XCirculateRequestEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XCirculateRequestEvent(ptr))->place)));
   return(C_int_to_Xen_integer((int)((Xen_to_C_XCirculateEvent(ptr))->place)));
 }
 
-static XEN gxm_set_place(XEN ptr, XEN val)
+static Xen gxm_set_place(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "place", "an integer");
   if (Xen_is_XCirculateRequestEvent(ptr)) (Xen_to_C_XCirculateRequestEvent(ptr))->place = Xen_integer_to_C_int(val);
@@ -17958,13 +17958,13 @@ static XEN gxm_set_place(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_value_mask(XEN ptr)
+static Xen gxm_value_mask(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XConfigureRequestEvent(ptr), ptr, 1, "value_mask", "XConfigureRequestEvent");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XConfigureRequestEvent(ptr))->value_mask)));
 }
 
-static XEN gxm_set_value_mask(XEN ptr, XEN val)
+static Xen gxm_set_value_mask(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_ulong_int(val), val, 2, "value_mask", "an unsigned long");
   XM_set_field_assert_type(Xen_is_XConfigureRequestEvent(ptr), ptr, 1, "value_mask", "XConfigureRequestEvent");
@@ -17972,14 +17972,14 @@ static XEN gxm_set_value_mask(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_above(XEN ptr)
+static Xen gxm_above(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XConfigureRequestEvent(ptr) || Xen_is_XConfigureEvent(ptr), ptr, 1, "above", "a struct with an above field");
   if (Xen_is_XConfigureRequestEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XConfigureRequestEvent(ptr))->above)));
   return(C_to_Xen_Window((Window)((Xen_to_C_XConfigureEvent(ptr))->above)));
 }
 
-static XEN gxm_set_above(XEN ptr, XEN val)
+static Xen gxm_set_above(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Window(val), val, 2, "above", "a Window");
   if (Xen_is_XConfigureRequestEvent(ptr)) (Xen_to_C_XConfigureRequestEvent(ptr))->above = Xen_to_C_Window(val);
@@ -17988,13 +17988,13 @@ static XEN gxm_set_above(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_from_configure(XEN ptr)
+static Xen gxm_from_configure(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XUnmapEvent(ptr), ptr, 1, "from_configure", "XUnmapEvent");
   return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XUnmapEvent(ptr))->from_configure)));
 }
 
-static XEN gxm_set_from_configure(XEN ptr, XEN val)
+static Xen gxm_set_from_configure(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "from_configure", "a boolean");
   XM_set_field_assert_type(Xen_is_XUnmapEvent(ptr), ptr, 1, "from_configure", "XUnmapEvent");
@@ -18003,7 +18003,7 @@ static XEN gxm_set_from_configure(XEN ptr, XEN val)
 }
 
 
-static XEN gxm_event(XEN ptr)
+static Xen gxm_event(Xen ptr)
 {
   /* Xlib.h says event is a window in these cases -- kinda strange looking */
   if (Xen_is_XCirculateEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XCirculateEvent(ptr))->event)));
@@ -18018,7 +18018,7 @@ static XEN gxm_event(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_event(XEN ptr, XEN val)
+static Xen gxm_set_event(Xen ptr, Xen val)
 {
   if (Xen_is_XCirculateEvent(ptr)) (Xen_to_C_XCirculateEvent(ptr))->event = Xen_to_C_Window(val); else
   if (Xen_is_XGravityEvent(ptr)) (Xen_to_C_XGravityEvent(ptr))->event = Xen_to_C_Window(val); else
@@ -18032,7 +18032,7 @@ static XEN gxm_set_event(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_override_redirect(XEN ptr)
+static Xen gxm_override_redirect(Xen ptr)
 {
   if (Xen_is_XWindowAttributes(ptr)) return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XWindowAttributes(ptr))->override_redirect)));
   if (Xen_is_XSetWindowAttributes(ptr)) return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XSetWindowAttributes(ptr))->override_redirect)));
@@ -18044,7 +18044,7 @@ static XEN gxm_override_redirect(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_override_redirect(XEN ptr, XEN val)
+static Xen gxm_set_override_redirect(Xen ptr, Xen val)
 {
   Bool b;
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "override_redirect", "a boolean");
@@ -18057,7 +18057,7 @@ static XEN gxm_set_override_redirect(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_border_width(XEN ptr)
+static Xen gxm_border_width(Xen ptr)
 {
   if (Xen_is_XWindowChanges(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XWindowChanges(ptr))->border_width)));
   if (Xen_is_XWindowAttributes(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XWindowAttributes(ptr))->border_width)));
@@ -18068,7 +18068,7 @@ static XEN gxm_border_width(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_border_width(XEN ptr, XEN val)
+static Xen gxm_set_border_width(Xen ptr, Xen val)
 {
   int wid;
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "border_width", "an integer");
@@ -18080,7 +18080,7 @@ static XEN gxm_set_border_width(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_parent(XEN ptr)
+static Xen gxm_parent(Xen ptr)
 {
   if (Xen_is_XCirculateRequestEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XCirculateRequestEvent(ptr))->parent)));
   if (Xen_is_XConfigureRequestEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XConfigureRequestEvent(ptr))->parent)));
@@ -18091,7 +18091,7 @@ static XEN gxm_parent(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_parent(XEN ptr, XEN val)
+static Xen gxm_set_parent(Xen ptr, Xen val)
 {
   Window w;
   XM_set_field_assert_type(Xen_is_Window(val), val, 2, "parent", "a Window");
@@ -18105,7 +18105,7 @@ static XEN gxm_set_parent(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_minor_code(XEN ptr)
+static Xen gxm_minor_code(Xen ptr)
 {
   if (Xen_is_XErrorEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XErrorEvent(ptr))->minor_code)));
   if (Xen_is_XNoExposeEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XNoExposeEvent(ptr))->minor_code)));
@@ -18114,7 +18114,7 @@ static XEN gxm_minor_code(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_minor_code(XEN ptr, XEN val)
+static Xen gxm_set_minor_code(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "minor_code", "an integer");
   if (Xen_is_XErrorEvent(ptr)) (Xen_to_C_XErrorEvent(ptr))->minor_code = Xen_integer_to_C_int(val);
@@ -18124,14 +18124,14 @@ static XEN gxm_set_minor_code(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_major_code(XEN ptr)
+static Xen gxm_major_code(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XNoExposeEvent(ptr) || Xen_is_XGraphicsExposeEvent(ptr), ptr, 1, "major_code", "a struct with a major_code field");
   if (Xen_is_XNoExposeEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XNoExposeEvent(ptr))->major_code)));
   return(C_int_to_Xen_integer((int)((Xen_to_C_XGraphicsExposeEvent(ptr))->major_code)));
 }
 
-static XEN gxm_set_major_code(XEN ptr, XEN val)
+static Xen gxm_set_major_code(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "major_code", "an integer");
   if (Xen_is_XNoExposeEvent(ptr)) (Xen_to_C_XNoExposeEvent(ptr))->major_code = Xen_integer_to_C_int(val);
@@ -18140,14 +18140,14 @@ static XEN gxm_set_major_code(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_drawable(XEN ptr)
+static Xen gxm_drawable(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XNoExposeEvent(ptr) || Xen_is_XGraphicsExposeEvent(ptr), ptr, 1, "drawable", "a struct with a drawable field");
   if (Xen_is_XNoExposeEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XNoExposeEvent(ptr))->drawable)));
   return(C_to_Xen_Window((Window)((Xen_to_C_XGraphicsExposeEvent(ptr))->drawable)));
 }
 
-static XEN gxm_set_drawable(XEN ptr, XEN val)
+static Xen gxm_set_drawable(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Window(val), val, 2, "drawable", "a Window");
   if (Xen_is_XNoExposeEvent(ptr)) (Xen_to_C_XNoExposeEvent(ptr))->drawable = Xen_to_C_Window(val);
@@ -18156,7 +18156,7 @@ static XEN gxm_set_drawable(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_count(XEN ptr)
+static Xen gxm_count(Xen ptr)
 {
   if (Xen_is_XMappingEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XMappingEvent(ptr))->count)));
   if (Xen_is_XGraphicsExposeEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGraphicsExposeEvent(ptr))->count)));
@@ -18165,7 +18165,7 @@ static XEN gxm_count(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_count(XEN ptr, XEN val)
+static Xen gxm_set_count(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "count", "an integer");
   if (Xen_is_XMappingEvent(ptr)) (Xen_to_C_XMappingEvent(ptr))->count = Xen_integer_to_C_int(val);
@@ -18175,13 +18175,13 @@ static XEN gxm_set_count(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_key_vector(XEN ptr)
+static Xen gxm_key_vector(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XKeymapEvent(ptr), ptr, 1, "key_vector", "XKeymapEvent");
   return(C_string_to_Xen_string((char *)((Xen_to_C_XKeymapEvent(ptr))->key_vector)));
 }
 
-static XEN gxm_set_key_vector(XEN ptr, XEN val)
+static Xen gxm_set_key_vector(Xen ptr, Xen val)
 {
   char *keys;
   int i, lim = 0;
@@ -18201,14 +18201,14 @@ static XEN gxm_set_key_vector(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_focus(XEN ptr)
+static Xen gxm_focus(Xen ptr)
 {
   if (Xen_is_XCrossingEvent(ptr)) return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XCrossingEvent(ptr))->focus)));
   XM_field_assert_type(0, ptr, 1, "focus", "XCrossingEvent");
   return(Xen_false);
 }
 
-static XEN gxm_set_focus(XEN ptr, XEN val)
+static Xen gxm_set_focus(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "focus", "a boolean");
   XM_set_field_assert_type(Xen_is_XCrossingEvent(ptr), ptr, 1, "focus", "XCrossingEvent");
@@ -18216,7 +18216,7 @@ static XEN gxm_set_focus(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_detail(XEN ptr)
+static Xen gxm_detail(Xen ptr)
 {
   if (Xen_is_XConfigureRequestEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XConfigureRequestEvent(ptr))->detail)));
   if (Xen_is_XFocusChangeEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XFocusChangeEvent(ptr))->detail)));
@@ -18225,7 +18225,7 @@ static XEN gxm_detail(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_detail(XEN ptr, XEN val)
+static Xen gxm_set_detail(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "detail", "an integer");
   if (Xen_is_XConfigureRequestEvent(ptr)) (Xen_to_C_XConfigureRequestEvent(ptr))->detail = Xen_integer_to_C_int(val);
@@ -18235,7 +18235,7 @@ static XEN gxm_set_detail(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_mode(XEN ptr)
+static Xen gxm_mode(Xen ptr)
 {
   if (Xen_is_XFocusChangeEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XFocusChangeEvent(ptr))->mode)));
   if (Xen_is_XCrossingEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XCrossingEvent(ptr))->mode)));
@@ -18243,7 +18243,7 @@ static XEN gxm_mode(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_mode(XEN ptr, XEN val)
+static Xen gxm_set_mode(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "mode", "an integer");
   if (Xen_is_XFocusChangeEvent(ptr)) (Xen_to_C_XFocusChangeEvent(ptr))->mode = Xen_integer_to_C_int(val);
@@ -18252,14 +18252,14 @@ static XEN gxm_set_mode(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_is_hint(XEN ptr)
+static Xen gxm_is_hint(Xen ptr)
 {
   if (Xen_is_XMotionEvent(ptr)) return(C_int_to_Xen_integer((char)((Xen_to_C_XMotionEvent(ptr))->is_hint)));
   XM_field_assert_type(0, ptr, 1, "is_hint", "XMotionEvent");
   return(Xen_false);
 }
 
-static XEN gxm_set_is_hint(XEN ptr, XEN val)
+static Xen gxm_set_is_hint(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "is_hint", "an integer");
   XM_set_field_assert_type(Xen_is_XMotionEvent(ptr), ptr, 1, "is_hint", "XMotionEvent");
@@ -18267,14 +18267,14 @@ static XEN gxm_set_is_hint(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_button(XEN ptr)
+static Xen gxm_button(Xen ptr)
 {
   if (Xen_is_XButtonEvent(ptr)) return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XButtonEvent(ptr))->button)));
   XM_field_assert_type(0, ptr, 1, "button", "XButtonEvent");
   return(Xen_false);
 }
 
-static XEN gxm_set_button(XEN ptr, XEN val)
+static Xen gxm_set_button(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_ulong_int(val), val, 2, "button", "an unsigned long");
   XM_set_field_assert_type(Xen_is_XButtonEvent(ptr), ptr, 1, "button", "XButtonEvent");
@@ -18282,7 +18282,7 @@ static XEN gxm_set_button(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_same_screen(XEN ptr)
+static Xen gxm_same_screen(Xen ptr)
 {
   if (Xen_is_XCrossingEvent(ptr)) return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XCrossingEvent(ptr))->same_screen)));
   if (Xen_is_XMotionEvent(ptr)) return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XMotionEvent(ptr))->same_screen)));
@@ -18292,7 +18292,7 @@ static XEN gxm_same_screen(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_same_screen(XEN ptr, XEN val)
+static Xen gxm_set_same_screen(Xen ptr, Xen val)
 {
   Bool b;
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "same_screen", "a boolean");
@@ -18305,14 +18305,14 @@ static XEN gxm_set_same_screen(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_keycode(XEN ptr)
+static Xen gxm_keycode(Xen ptr)
 {
   if (Xen_is_XKeyEvent(ptr)) return(C_to_Xen_KeyCode((Xen_to_C_XKeyEvent(ptr))->keycode));
   XM_field_assert_type(0, ptr, 1, "keycode", "XKeyEvent");
   return(Xen_false);
 }
 
-static XEN gxm_set_keycode(XEN ptr, XEN val)
+static Xen gxm_set_keycode(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_KeyCode(val), val, 2, "keycode", "a KeyCode");
   XM_set_field_assert_type(Xen_is_XKeyEvent(ptr), ptr, 1, "keycode", "XKeyEvent");
@@ -18320,7 +18320,7 @@ static XEN gxm_set_keycode(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_state(XEN ptr)
+static Xen gxm_state(Xen ptr)
 {
   if (Xen_is_XColormapEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XColormapEvent(ptr))->state)));
   if (Xen_is_XPropertyEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XPropertyEvent(ptr))->state)));
@@ -18333,7 +18333,7 @@ static XEN gxm_state(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_state(XEN ptr, XEN val)
+static Xen gxm_set_state(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val) || Xen_is_ulong_int(val), val, 2, "state", "an integer");
   if (Xen_is_XColormapEvent(ptr)) (Xen_to_C_XColormapEvent(ptr))->state = Xen_integer_to_C_int(val);
@@ -18347,7 +18347,7 @@ static XEN gxm_set_state(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_y_root(XEN ptr)
+static Xen gxm_y_root(Xen ptr)
 {
   if (Xen_is_XCrossingEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XCrossingEvent(ptr))->y_root)));
   if (Xen_is_XMotionEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XMotionEvent(ptr))->y_root)));
@@ -18357,7 +18357,7 @@ static XEN gxm_y_root(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_y_root(XEN ptr, XEN val)
+static Xen gxm_set_y_root(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "y_root", "an integer");
   if (Xen_is_XCrossingEvent(ptr)) (Xen_to_C_XCrossingEvent(ptr))->y_root = Xen_integer_to_C_int(val);
@@ -18368,7 +18368,7 @@ static XEN gxm_set_y_root(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_x_root(XEN ptr)
+static Xen gxm_x_root(Xen ptr)
 {
   if (Xen_is_XCrossingEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XCrossingEvent(ptr))->x_root)));
   if (Xen_is_XMotionEvent(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XMotionEvent(ptr))->x_root)));
@@ -18378,7 +18378,7 @@ static XEN gxm_x_root(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_x_root(XEN ptr, XEN val)
+static Xen gxm_set_x_root(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "x_root", "an integer");
   if (Xen_is_XCrossingEvent(ptr)) (Xen_to_C_XCrossingEvent(ptr))->x_root = Xen_integer_to_C_int(val);
@@ -18389,7 +18389,7 @@ static XEN gxm_set_x_root(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_set_x(XEN ptr, XEN val)
+static Xen gxm_set_x(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "x", "an integer");
   if (Xen_is_XRectangle(ptr)) (Xen_to_C_XRectangle(ptr))->x = (short)Xen_integer_to_C_int(val);
@@ -18410,7 +18410,7 @@ static XEN gxm_set_x(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_set_y(XEN ptr, XEN val)
+static Xen gxm_set_y(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "y", "an integer");
   if (Xen_is_XRectangle(ptr)) (Xen_to_C_XRectangle(ptr))->y = (short)Xen_integer_to_C_int(val);
@@ -18431,7 +18431,7 @@ static XEN gxm_set_y(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_y(XEN ptr)
+static Xen gxm_y(Xen ptr)
 {
   if (Xen_is_XRectangle(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XRectangle(ptr))->y)));
   if (Xen_is_XPoint(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XPoint(ptr))->y)));
@@ -18459,7 +18459,7 @@ static XEN gxm_y(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_x(XEN ptr)
+static Xen gxm_x(Xen ptr)
 {
   if (Xen_is_XRectangle(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XRectangle(ptr))->x)));
   if (Xen_is_XPoint(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XPoint(ptr))->x)));
@@ -18487,7 +18487,7 @@ static XEN gxm_x(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_time(XEN ptr)
+static Xen gxm_time(Xen ptr)
 {
   if (Xen_is_XmDestinationCallbackStruct(ptr)) return(C_to_Xen_Time((Time)((Xen_to_C_XmDestinationCallbackStruct(ptr))->time)));
   if (Xen_is_XSelectionEvent(ptr)) return(C_to_Xen_Time((Time)((Xen_to_C_XSelectionEvent(ptr))->time)));
@@ -18502,7 +18502,7 @@ static XEN gxm_time(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_time(XEN ptr, XEN val)
+static Xen gxm_set_time(Xen ptr, Xen val)
 {
   Time tm;
   XM_set_field_assert_type(Xen_is_Time(val), val, 2, "time", "Time");
@@ -18519,7 +18519,7 @@ static XEN gxm_set_time(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_subwindow(XEN ptr)
+static Xen gxm_subwindow(Xen ptr)
 {
   if (Xen_is_XCrossingEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XCrossingEvent(ptr))->subwindow)));
   if (Xen_is_XMotionEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XMotionEvent(ptr))->subwindow)));
@@ -18529,7 +18529,7 @@ static XEN gxm_subwindow(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_subwindow(XEN ptr, XEN val)
+static Xen gxm_set_subwindow(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Window(val), val, 2, "subwindow", "a Window");
   if (Xen_is_XCrossingEvent(ptr)) (Xen_to_C_XCrossingEvent(ptr))->subwindow = Xen_to_C_Window(val);
@@ -18540,7 +18540,7 @@ static XEN gxm_set_subwindow(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_window(XEN ptr)
+static Xen gxm_window(Xen ptr)
 {
   if (Xen_is_XmDrawnButtonCallbackStruct(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XmDrawnButtonCallbackStruct(ptr))->window)));
   if (Xen_is_XmDrawingAreaCallbackStruct(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XmDrawingAreaCallbackStruct(ptr))->window)));
@@ -18552,7 +18552,7 @@ static XEN gxm_window(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_window(XEN ptr, XEN val)
+static Xen gxm_set_window(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Window(val), val, 2, "window", "a Window");
   XM_set_field_assert_type(Xen_is_XEvent(ptr), ptr, 1, "window", "XEvent");
@@ -18560,14 +18560,14 @@ static XEN gxm_set_window(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_send_event(XEN ptr)
+static Xen gxm_send_event(Xen ptr)
 {
   if (Xen_is_XEvent(ptr)) return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XAnyEvent(ptr))->send_event)));
   XM_field_assert_type(0, ptr, 1, "send_event", "XEvent");
   return(Xen_false);
 }
 
-static XEN gxm_set_send_event(XEN ptr, XEN val)
+static Xen gxm_set_send_event(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "send_event", "a boolean");
   XM_set_field_assert_type(Xen_is_XEvent(ptr), ptr, 1, "send_event", "XEvent");
@@ -18575,20 +18575,20 @@ static XEN gxm_set_send_event(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_serial(XEN ptr)
+static Xen gxm_serial(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XEvent(ptr), ptr, 1, "serial", "XEvent");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XAnyEvent(ptr))->serial)));
 }
 
-static XEN gxm_set_serial(XEN ptr, XEN val)
+static Xen gxm_set_serial(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XEvent(ptr), ptr, 1, "serial", "XEvent");
   (Xen_to_C_XAnyEvent(ptr))->serial = Xen_ulong_to_C_ulong(val);
   return(val);
 }
 
-static XEN gxm_type(XEN ptr)
+static Xen gxm_type(Xen ptr)
 {
   if (Xen_is_XmSelectionCallbackStruct(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XmSelectionCallbackStruct(ptr))->type)));
   if (Xen_is_XmConvertCallbackStruct(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XmConvertCallbackStruct(ptr))->type)));
@@ -18597,7 +18597,7 @@ static XEN gxm_type(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_type(XEN ptr, XEN val)
+static Xen gxm_set_type(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XEvent(ptr), ptr, 1, "type", "XEvent");
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "type", "integer");
@@ -18605,19 +18605,19 @@ static XEN gxm_set_type(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_root_input_mask(XEN ptr)
+static Xen gxm_root_input_mask(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "root_input_mask", "Screen");
   return(C_int_to_Xen_integer((long)((Xen_to_C_Screen(ptr))->root_input_mask)));
 }
 
-static XEN gxm_save_unders(XEN ptr)
+static Xen gxm_save_unders(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "save_unders", "Screen");
   return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_Screen(ptr))->save_unders)));
 }
 
-static XEN gxm_backing_store(XEN ptr)
+static Xen gxm_backing_store(Xen ptr)
 {
   if (Xen_is_XWindowAttributes(ptr)) return(C_bool_to_Xen_boolean((int)((Xen_to_C_XWindowAttributes(ptr))->backing_store)));
   if (Xen_is_XSetWindowAttributes(ptr)) return(C_bool_to_Xen_boolean((int)((Xen_to_C_XSetWindowAttributes(ptr))->backing_store)));
@@ -18626,7 +18626,7 @@ static XEN gxm_backing_store(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_backing_store(XEN ptr, XEN val)
+static Xen gxm_set_backing_store(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XSetWindowAttributes(ptr) || Xen_is_XWindowAttributes(ptr) || Xen_is_Screen(ptr), 
 			   ptr, 1, "backing_store", "a struct with a backing_store field");
@@ -18640,60 +18640,60 @@ static XEN gxm_set_backing_store(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_min_maps(XEN ptr)
+static Xen gxm_min_maps(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "min_maps", "Screen");
   return(C_int_to_Xen_integer((int)((Xen_to_C_Screen(ptr))->min_maps)));
 }
 
-static XEN gxm_max_maps(XEN ptr)
+static Xen gxm_max_maps(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "max_maps", "Screen");
   return(C_int_to_Xen_integer((int)((Xen_to_C_Screen(ptr))->max_maps)));
 }
 
-static XEN gxm_black_pixel(XEN ptr)
+static Xen gxm_black_pixel(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "black_pixel", "Screen");
   return(C_to_Xen_Pixel((Xen_to_C_Screen(ptr))->black_pixel));
 }
 
-static XEN gxm_white_pixel(XEN ptr)
+static Xen gxm_white_pixel(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "white_pixel", "Screen");
   return(C_to_Xen_Pixel((Xen_to_C_Screen(ptr))->white_pixel));
 }
 
-static XEN gxm_cmap(XEN ptr)
+static Xen gxm_cmap(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "cmap", "Screen");
   return(C_to_Xen_Colormap((Colormap)((Xen_to_C_Screen(ptr))->cmap)));
 }
 
-static XEN gxm_default_gc(XEN ptr)
+static Xen gxm_default_gc(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "default_gc", "Screen");
   return(C_to_Xen_GC((GC)((Xen_to_C_Screen(ptr))->default_gc)));
 }
 
-static XEN gxm_root_visual(XEN ptr)
+static Xen gxm_root_visual(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "root_visual", "Screen");
   return(C_to_Xen_Visual((Visual *)((Xen_to_C_Screen(ptr))->root_visual)));
 }
 
-static XEN gxm_root_depth(XEN ptr)
+static Xen gxm_root_depth(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "root_depth", "Screen");
   return(C_int_to_Xen_integer((int)((Xen_to_C_Screen(ptr))->root_depth)));
 }
 
-static XEN gxm_depths(XEN ptr)
+static Xen gxm_depths(Xen ptr)
 {
   Depth *dps;
   Screen *scr;
   int i, len;
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "depths", "Screen");
   scr = Xen_to_C_Screen(ptr);
   len = scr->ndepths;
@@ -18706,26 +18706,26 @@ static XEN gxm_depths(XEN ptr)
   return(lst);
 }
 
-static XEN gxm_ndepths(XEN ptr)
+static Xen gxm_ndepths(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "ndepths", "Screen");
   return(C_int_to_Xen_integer((int)((Xen_to_C_Screen(ptr))->ndepths)));
 }
 
-static XEN gxm_mheight(XEN ptr)
+static Xen gxm_mheight(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "mheight", "Screen");
   return(C_int_to_Xen_integer((int)((Xen_to_C_Screen(ptr))->mheight)));
 }
 
-static XEN gxm_mwidth(XEN ptr)
+static Xen gxm_mwidth(Xen ptr)
 {
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "mwidth", "Screen");
   return(C_int_to_Xen_integer((int)((Xen_to_C_Screen(ptr))->mwidth)));
 }
 
 
-static XEN gxm_set_height(XEN ptr, XEN val)
+static Xen gxm_set_height(Xen ptr, Xen val)
 {
   if (Xen_is_XRectangle(ptr)) (Xen_to_C_XRectangle(ptr))->height = Xen_integer_to_C_int(val);
   else if (Xen_is_XArc(ptr)) (Xen_to_C_XArc(ptr))->height = Xen_integer_to_C_int(val);
@@ -18741,7 +18741,7 @@ static XEN gxm_set_height(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_set_width(XEN ptr, XEN val)
+static Xen gxm_set_width(Xen ptr, Xen val)
 {
   if (Xen_is_XRectangle(ptr)) (Xen_to_C_XRectangle(ptr))->width = Xen_integer_to_C_int(val);
   else if (Xen_is_XArc(ptr)) (Xen_to_C_XArc(ptr))->width = Xen_integer_to_C_int(val);
@@ -18757,7 +18757,7 @@ static XEN gxm_set_width(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_height(XEN ptr)
+static Xen gxm_height(Xen ptr)
 {
   if (Xen_is_XRectangle(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XRectangle(ptr))->height)));
   if (Xen_is_XArc(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XArc(ptr))->height)));
@@ -18777,7 +18777,7 @@ static XEN gxm_height(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_width(XEN ptr)
+static Xen gxm_width(Xen ptr)
 {
   if (Xen_is_XRectangle(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XRectangle(ptr))->width)));
   if (Xen_is_XArc(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XArc(ptr))->width)));
@@ -18798,7 +18798,7 @@ static XEN gxm_width(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_root(XEN ptr)
+static Xen gxm_root(Xen ptr)
 {
   if (Xen_is_XWindowAttributes(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XWindowAttributes(ptr))->root)));
   if (Xen_is_XCrossingEvent(ptr)) return(C_to_Xen_Window((Window)((Xen_to_C_XCrossingEvent(ptr))->root)));
@@ -18810,7 +18810,7 @@ static XEN gxm_root(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_root(XEN ptr, XEN val)
+static Xen gxm_set_root(Xen ptr, Xen val)
 {
   Window w;
   XM_set_field_assert_type(Xen_is_Window(val), val, 2, "root", "a Window");
@@ -18825,14 +18825,14 @@ static XEN gxm_set_root(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_display(XEN ptr)
+static Xen gxm_display(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XEvent(ptr) || Xen_is_Screen(ptr), ptr, 1, "display", "XEvent or Screen");
   if (Xen_is_XEvent(ptr)) return(C_to_Xen_Display((Display *)((Xen_to_C_XAnyEvent(ptr))->display)));
   return(C_to_Xen_Display((Display *)((Xen_to_C_Screen(ptr))->display)));
 }
 
-static XEN gxm_set_display(XEN ptr, XEN val)
+static Xen gxm_set_display(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Display(val), val, 2, "display", "a Display*");
   XM_set_field_assert_type(Xen_is_XEvent(ptr), ptr, 1, "display", "XEvent");
@@ -18840,14 +18840,14 @@ static XEN gxm_set_display(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_function(XEN ptr)
+static Xen gxm_function(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->function)));
   XM_field_assert_type(0, ptr, 1, "function", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_function(XEN ptr, XEN val)
+static Xen gxm_set_function(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "function", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "function", "XGCValues");
@@ -18855,27 +18855,27 @@ static XEN gxm_set_function(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_plane_mask(XEN ptr)
+static Xen gxm_plane_mask(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "plane_mask", "XGCValues");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XGCValues(ptr))->plane_mask)));
 }
 
-static XEN gxm_set_plane_mask(XEN ptr, XEN val)
+static Xen gxm_set_plane_mask(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "plane_mask", "XGCValues");
   (Xen_to_C_XGCValues(ptr))->plane_mask = Xen_ulong_to_C_ulong(val);
   return(val);
 }
 
-static XEN gxm_foreground(XEN ptr)
+static Xen gxm_foreground(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_to_Xen_Pixel((Pixel)((Xen_to_C_XGCValues(ptr))->foreground)));
   XM_field_assert_type(0, ptr, 1, "foreground", "a struct with a foreground field");
   return(Xen_false);
 }
 
-static XEN gxm_set_foreground(XEN ptr, XEN val)
+static Xen gxm_set_foreground(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Pixel(val), val, 2, "foreground", "a Pixel");  
   XM_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "foreground", "XGCValues");
@@ -18883,14 +18883,14 @@ static XEN gxm_set_foreground(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_background(XEN ptr)
+static Xen gxm_background(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_to_Xen_Pixel((Pixel)((Xen_to_C_XGCValues(ptr))->background)));
   XM_field_assert_type(0, ptr, 1, "background", "a struct with a background field");
   return(Xen_false);
 }
 
-static XEN gxm_set_background(XEN ptr, XEN val)
+static Xen gxm_set_background(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Pixel(val), val, 2, "background", "a Pixel");  
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "background", "XGCValues");
@@ -18898,14 +18898,14 @@ static XEN gxm_set_background(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_line_width(XEN ptr)
+static Xen gxm_line_width(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->line_width)));
   XM_field_assert_type(0, ptr, 1, "line_width", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_line_width(XEN ptr, XEN val)
+static Xen gxm_set_line_width(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "line_width", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "line_width", "XGCValues");
@@ -18913,14 +18913,14 @@ static XEN gxm_set_line_width(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_line_style(XEN ptr)
+static Xen gxm_line_style(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->line_style)));
   XM_field_assert_type(0, ptr, 1, "line_style", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_line_style(XEN ptr, XEN val)
+static Xen gxm_set_line_style(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "line_style", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "line_style", "XGCValues");
@@ -18928,14 +18928,14 @@ static XEN gxm_set_line_style(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_cap_style(XEN ptr)
+static Xen gxm_cap_style(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->cap_style)));
   XM_field_assert_type(0, ptr, 1, "cap_style", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_cap_style(XEN ptr, XEN val)
+static Xen gxm_set_cap_style(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "cap_style", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "cap_style", "XGCValues");
@@ -18943,14 +18943,14 @@ static XEN gxm_set_cap_style(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_join_style(XEN ptr)
+static Xen gxm_join_style(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->join_style)));
   XM_field_assert_type(0, ptr, 1, "join_style", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_join_style(XEN ptr, XEN val)
+static Xen gxm_set_join_style(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "join_style", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "join_style", "XGCValues");
@@ -18958,13 +18958,13 @@ static XEN gxm_set_join_style(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_fill_style(XEN ptr)
+static Xen gxm_fill_style(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "fill_style", "XGCValues");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->fill_style)));
 }
 
-static XEN gxm_set_fill_style(XEN ptr, XEN val)
+static Xen gxm_set_fill_style(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "fill_style", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "fill_style", "XGCValues");
@@ -18972,13 +18972,13 @@ static XEN gxm_set_fill_style(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_fill_rule(XEN ptr)
+static Xen gxm_fill_rule(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "fill_rule", "XGCValues");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->fill_rule)));
 }
 
-static XEN gxm_set_fill_rule(XEN ptr, XEN val)
+static Xen gxm_set_fill_rule(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "fill_rule", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "fill_rule", "XGCValues");
@@ -18986,13 +18986,13 @@ static XEN gxm_set_fill_rule(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_arc_mode(XEN ptr)
+static Xen gxm_arc_mode(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "arc_mode", "XGCValues");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->arc_mode)));
 }
 
-static XEN gxm_set_arc_mode(XEN ptr, XEN val)
+static Xen gxm_set_arc_mode(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "arc_mode", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "arc_mode", "XGCValues");
@@ -19000,14 +19000,14 @@ static XEN gxm_set_arc_mode(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_tile(XEN ptr)
+static Xen gxm_tile(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_to_Xen_Pixmap((Pixmap)((Xen_to_C_XGCValues(ptr))->tile)));
   XM_field_assert_type(0, ptr, 1, "tile", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_tile(XEN ptr, XEN val)
+static Xen gxm_set_tile(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Pixmap(val), val, 2, "tile", "a Pixmap");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "tile", "XGCValues");
@@ -19015,14 +19015,14 @@ static XEN gxm_set_tile(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_stipple(XEN ptr)
+static Xen gxm_stipple(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_to_Xen_Pixmap((Pixmap)((Xen_to_C_XGCValues(ptr))->stipple)));
   XM_field_assert_type(0, ptr, 1, "stipple", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_stipple(XEN ptr, XEN val)
+static Xen gxm_set_stipple(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Pixmap(val), val, 2, "stipple", "a Pixmap");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "stipple", "XGCValues");
@@ -19030,14 +19030,14 @@ static XEN gxm_set_stipple(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_ts_x_origin(XEN ptr)
+static Xen gxm_ts_x_origin(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->ts_x_origin)));
   XM_field_assert_type(0, ptr, 1, "ts_x_origin", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_ts_x_origin(XEN ptr, XEN val)
+static Xen gxm_set_ts_x_origin(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "ts_x_origin", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "ts_x_origin", "XGCValues");
@@ -19045,14 +19045,14 @@ static XEN gxm_set_ts_x_origin(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_ts_y_origin(XEN ptr)
+static Xen gxm_ts_y_origin(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->ts_y_origin)));
   XM_field_assert_type(0, ptr, 1, "ts_y_origin", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_ts_y_origin(XEN ptr, XEN val)
+static Xen gxm_set_ts_y_origin(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "ts_y_origin", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "ts_y_origin", "XGCValues");
@@ -19060,7 +19060,7 @@ static XEN gxm_set_ts_y_origin(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_font(XEN ptr)
+static Xen gxm_font(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_to_Xen_Font((Font)((Xen_to_C_XGCValues(ptr))->font)));
   if (Xen_is_XTextItem(ptr)) return(C_to_Xen_Font((Font)((Xen_to_C_XTextItem(ptr))->font)));
@@ -19068,7 +19068,7 @@ static XEN gxm_font(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_font(XEN ptr, XEN val)
+static Xen gxm_set_font(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Font(val), val, 2, "font", "a font");
   if (Xen_is_XGCValues(ptr)) (Xen_to_C_XGCValues(ptr))->font = Xen_to_C_Font(val);
@@ -19077,14 +19077,14 @@ static XEN gxm_set_font(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_subwindow_mode(XEN ptr)
+static Xen gxm_subwindow_mode(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->subwindow_mode)));
   XM_field_assert_type(0, ptr, 1, "subwindow_mode", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_subwindow_mode(XEN ptr, XEN val)
+static Xen gxm_set_subwindow_mode(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "subwindow_mode", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "subwindow_mode", "XGCValues");
@@ -19092,14 +19092,14 @@ static XEN gxm_set_subwindow_mode(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_graphics_exposures(XEN ptr)
+static Xen gxm_graphics_exposures(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_bool_to_Xen_boolean((Bool)((Xen_to_C_XGCValues(ptr))->graphics_exposures)));
   XM_field_assert_type(0, ptr, 1, "graphics_exposures", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_graphics_exposures(XEN ptr, XEN val)
+static Xen gxm_set_graphics_exposures(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "graphics_exposures", "a boolean");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "graphics_exposure", "XGCValues");
@@ -19107,14 +19107,14 @@ static XEN gxm_set_graphics_exposures(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_clip_x_origin(XEN ptr)
+static Xen gxm_clip_x_origin(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->clip_x_origin)));
   XM_field_assert_type(0, ptr, 1, "clip_x_origin", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_clip_x_origin(XEN ptr, XEN val)
+static Xen gxm_set_clip_x_origin(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "clip_x_origin", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "clip_x_origin", "XGCValues");
@@ -19122,14 +19122,14 @@ static XEN gxm_set_clip_x_origin(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_clip_y_origin(XEN ptr)
+static Xen gxm_clip_y_origin(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->clip_y_origin)));
   XM_field_assert_type(0, ptr, 1, "clip_y_origin", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_clip_y_origin(XEN ptr, XEN val)
+static Xen gxm_set_clip_y_origin(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "clip_y_origin", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "clip_y_origin", "XGCValues");
@@ -19137,14 +19137,14 @@ static XEN gxm_set_clip_y_origin(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_clip_mask(XEN ptr)
+static Xen gxm_clip_mask(Xen ptr)
 {
   if (Xen_is_XGCValues(ptr)) return(C_to_Xen_Pixmap((Pixmap)((Xen_to_C_XGCValues(ptr))->clip_mask)));
   XM_field_assert_type(0, ptr, 1, "clip_mask", "XGCValues");
   return(Xen_false);
 }
 
-static XEN gxm_set_clip_mask(XEN ptr, XEN val)
+static Xen gxm_set_clip_mask(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_Pixmap(val), val, 2, "clip_mask", "a Pixmap");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "clip_mask", "XGCValues");
@@ -19152,13 +19152,13 @@ static XEN gxm_set_clip_mask(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_dash_offset(XEN ptr)
+static Xen gxm_dash_offset(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "dash_offset", "XGCValues");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XGCValues(ptr))->dash_offset)));
 }
 
-static XEN gxm_set_dash_offset(XEN ptr, XEN val)
+static Xen gxm_set_dash_offset(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "dash_offset", "an integer");
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "dash_offset", "XGCValues");
@@ -19166,13 +19166,13 @@ static XEN gxm_set_dash_offset(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_dashes(XEN ptr)
+static Xen gxm_dashes(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "dashes", "XGCValues");
   return(C_int_to_Xen_integer((char)((Xen_to_C_XGCValues(ptr))->dashes)));
 }
 
-static XEN gxm_set_dashes(XEN ptr, XEN val)
+static Xen gxm_set_dashes(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XGCValues(ptr), ptr, 1, "dashes", "XGCValues");
   (Xen_to_C_XGCValues(ptr))->dashes = (char)Xen_integer_to_C_int(val);
@@ -19180,55 +19180,55 @@ static XEN gxm_set_dashes(XEN ptr, XEN val)
 }
 
 
-static XEN gxm_killid(XEN ptr)
+static Xen gxm_killid(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XStandardColormap(ptr), ptr, 1, "killid", "XStandardColormap");
   return(C_int_to_Xen_integer((long)((Xen_to_C_XStandardColormap(ptr))->killid)));
 }
 
-static XEN gxm_base_pixel(XEN ptr)
+static Xen gxm_base_pixel(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XStandardColormap(ptr), ptr, 1, "base_pixel", "XStandardColormap");
   return(C_to_Xen_Pixel((unsigned long)((Xen_to_C_XStandardColormap(ptr))->base_pixel)));
 }
 
-static XEN gxm_blue_mult(XEN ptr)
+static Xen gxm_blue_mult(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XStandardColormap(ptr), ptr, 1, "blue_mult", "XStandardColormap");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XStandardColormap(ptr))->blue_mult)));
 }
 
-static XEN gxm_blue_max(XEN ptr)
+static Xen gxm_blue_max(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XStandardColormap(ptr), ptr, 1, "blue_max", "XStandardColormap");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XStandardColormap(ptr))->blue_max)));
 }
 
-static XEN gxm_green_mult(XEN ptr)
+static Xen gxm_green_mult(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XStandardColormap(ptr), ptr, 1, "green_mult", "XStandardColormap");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XStandardColormap(ptr))->green_mult)));
 }
 
-static XEN gxm_green_max(XEN ptr)
+static Xen gxm_green_max(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XStandardColormap(ptr), ptr, 1, "green_max", "XStandardColormap");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XStandardColormap(ptr))->green_max)));
 }
 
-static XEN gxm_red_mult(XEN ptr)
+static Xen gxm_red_mult(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XStandardColormap(ptr), ptr, 1, "red_mult", "XStandardColormap");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XStandardColormap(ptr))->red_mult)));
 }
 
-static XEN gxm_red_max(XEN ptr)
+static Xen gxm_red_max(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XStandardColormap(ptr), ptr, 1, "red_max", "XStandardColormap");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XStandardColormap(ptr))->red_max)));
 }
 
-static XEN gxm_XTextItem(XEN chars, XEN nchars, XEN delta, XEN font)
+static Xen gxm_XTextItem(Xen chars, Xen nchars, Xen delta, Xen font)
 {
   XTextItem *r;
   #define H_XTextItem "(XTextItem chars len delta font): new XTextItem struct"
@@ -19244,13 +19244,13 @@ static XEN gxm_XTextItem(XEN chars, XEN nchars, XEN delta, XEN font)
   return(wrap_for_Xen_OBJ("XTextItem", (XTextItem *)r));
 }
 
-static XEN gxm_chars(XEN ptr)
+static Xen gxm_chars(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XTextItem(ptr), ptr, 1, "chars", "XTextItem");
   return(C_string_to_Xen_string((char *)((Xen_to_C_XTextItem(ptr))->chars)));
 }
 
-static XEN gxm_set_chars(XEN ptr, XEN val)
+static Xen gxm_set_chars(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_string(val), val, 2, "chars", "a string");
   XM_set_field_assert_type(Xen_is_XTextItem(ptr), ptr, 1, "chars", "XTextItem");
@@ -19258,13 +19258,13 @@ static XEN gxm_set_chars(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_nchars(XEN ptr)
+static Xen gxm_nchars(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XTextItem(ptr), ptr, 1, "nchars", "XTextItem");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XTextItem(ptr))->nchars)));
 }
 
-static XEN gxm_set_nchars(XEN ptr, XEN val)
+static Xen gxm_set_nchars(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "nchars", "an integer");
   XM_set_field_assert_type(Xen_is_XTextItem(ptr), ptr, 1, "nchars", "XTextItem");
@@ -19272,13 +19272,13 @@ static XEN gxm_set_nchars(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_delta(XEN ptr)
+static Xen gxm_delta(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XTextItem(ptr), ptr, 1, "delta", "XTextItem");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XTextItem(ptr))->delta)));
 }
 
-static XEN gxm_set_delta(XEN ptr, XEN val)
+static Xen gxm_set_delta(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "delta", "an integer");
   XM_set_field_assert_type(Xen_is_XTextItem(ptr), ptr, 1, "delta", "XTextItem");
@@ -19286,7 +19286,7 @@ static XEN gxm_set_delta(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_data(XEN ptr)
+static Xen gxm_data(Xen ptr)
 {
   if (Xen_is_XImage(ptr)) return(C_string_to_Xen_string((char *)((Xen_to_C_XImage(ptr))->data)));
   if (Xen_is_XClientMessageEvent(ptr)) return(C_string_to_Xen_string((char *)((Xen_to_C_XClientMessageEvent(ptr))->data.b)));
@@ -19296,7 +19296,7 @@ static XEN gxm_data(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_data(XEN ptr, XEN val)
+static Xen gxm_set_data(Xen ptr, Xen val)
 {
   int i, len = 0;
   char *str;
@@ -19326,7 +19326,7 @@ static XEN gxm_set_data(XEN ptr, XEN val)
 
 /* -------------------------------------------------------------------------------- */
 
-static XEN gxm_text(XEN ptr)
+static Xen gxm_text(Xen ptr)
 {
   /* DIFF: TextVerifyCallbackStruct text field returns list (string format)
    */
@@ -19343,97 +19343,97 @@ static XEN gxm_text(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_endPos(XEN ptr)
+static Xen gxm_endPos(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTextVerifyCallbackStruct(ptr), ptr, 1, "endPos", "XmTextVerifyCallbackStruct");
   return(C_int_to_Xen_integer((long)((Xen_to_C_XmTextVerifyCallbackStruct(ptr))->endPos)));
 }
 
-static XEN gxm_startPos(XEN ptr)
+static Xen gxm_startPos(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTextVerifyCallbackStruct(ptr), ptr, 1, "startPos", "XmTextVerifyCallbackStruct");
   return(C_int_to_Xen_integer((long)((Xen_to_C_XmTextVerifyCallbackStruct(ptr))->startPos)));
 }
 
-static XEN gxm_newInsert(XEN ptr)
+static Xen gxm_newInsert(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTextVerifyCallbackStruct(ptr), ptr, 1, "newInsert", "XmTextVerifyCallbackStruct");
   return(C_int_to_Xen_integer((long)((Xen_to_C_XmTextVerifyCallbackStruct(ptr))->newInsert)));
 }
 
-static XEN gxm_currInsert(XEN ptr)
+static Xen gxm_currInsert(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTextVerifyCallbackStruct(ptr), ptr, 1, "currInsert", "XmTextVerifyCallbackStruct");
   return(C_int_to_Xen_integer((long)((Xen_to_C_XmTextVerifyCallbackStruct(ptr))->currInsert)));
 }
 
-static XEN gxm_crossed_boundary(XEN ptr)
+static Xen gxm_crossed_boundary(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmSpinBoxCallbackStruct(ptr), ptr, 1, "crossed_boundary", "XmSpinBoxCallbackStruct");
   return(C_bool_to_Xen_boolean((Boolean)((Xen_to_C_XmSpinBoxCallbackStruct(ptr))->crossed_boundary)));
 }
 
-static XEN gxm_position(XEN ptr)
+static Xen gxm_position(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmSpinBoxCallbackStruct(ptr), ptr, 1, "position", "XmSpinBoxCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmSpinBoxCallbackStruct(ptr))->position)));
 }
 
-static XEN gxm_tag(XEN ptr)
+static Xen gxm_tag(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmDisplayCallbackStruct(ptr), ptr, 1, "tag", "XmDisplayCallbackStruct");
   return(C_string_to_Xen_string((XmStringTag)((Xen_to_C_XmDisplayCallbackStruct(ptr))->tag)));
 }
 
-static XEN gxm_render_table(XEN ptr)
+static Xen gxm_render_table(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmDisplayCallbackStruct(ptr), ptr, 1, "render_table", "XmDisplayCallbackStruct");
   return(C_to_Xen_XmRenderTable((XmRenderTable)((Xen_to_C_XmDisplayCallbackStruct(ptr))->render_table)));
 }
 
-static XEN gxm_font_name(XEN ptr)
+static Xen gxm_font_name(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmDisplayCallbackStruct(ptr), ptr, 1, "font_name", "XmDisplayCallbackStruct");
   return(C_string_to_Xen_string((char *)((Xen_to_C_XmDisplayCallbackStruct(ptr))->font_name)));
 }
 
-static XEN gxm_rendition(XEN ptr)
+static Xen gxm_rendition(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmDisplayCallbackStruct(ptr), ptr, 1, "rendition", "XmDisplayCallbackStruct");
   return(C_to_Xen_XmRendition((XmRendition)((Xen_to_C_XmDisplayCallbackStruct(ptr))->rendition)));
 }
 
-static XEN gxm_prev_page_widget(XEN ptr)
+static Xen gxm_prev_page_widget(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmNotebookCallbackStruct(ptr), ptr, 1, "prev_page_widget", "XmNotebookCallbackStruct");
   return(C_to_Xen_Widget((Widget)((Xen_to_C_XmNotebookCallbackStruct(ptr))->prev_page_widget)));
 }
 
-static XEN gxm_prev_page_number(XEN ptr)
+static Xen gxm_prev_page_number(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmNotebookCallbackStruct(ptr), ptr, 1, "prev_page_number", "XmNotebookCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmNotebookCallbackStruct(ptr))->prev_page_number)));
 }
 
-static XEN gxm_new_outline_state(XEN ptr)
+static Xen gxm_new_outline_state(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmContainerOutlineCallbackStruct(ptr), ptr, 1, "new_outline_state", "XmContainerOutlineCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmContainerOutlineCallbackStruct(ptr))->new_outline_state)));
 }
 
-static XEN gxm_postIt(XEN ptr)
+static Xen gxm_postIt(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmPopupHandlerCallbackStruct(ptr), ptr, 1, "postIt", "XmPopupHandlerCallbackStruct");
   return(C_bool_to_Xen_boolean((Boolean)((Xen_to_C_XmPopupHandlerCallbackStruct(ptr))->postIt)));
 }
 
-static XEN gxm_menuToPost(XEN ptr)
+static Xen gxm_menuToPost(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmPopupHandlerCallbackStruct(ptr), ptr, 1, "menuToPost", "XmPopupHandlerCallbackStruct");
   return(C_to_Xen_Widget((Widget)((Xen_to_C_XmPopupHandlerCallbackStruct(ptr))->menuToPost)));
 }
 
-static XEN gxm_set_postIt(XEN ptr, XEN post)
+static Xen gxm_set_postIt(Xen ptr, Xen post)
 {
   XM_set_field_assert_type(Xen_is_boolean(post), post, 2, "postIt", "a boolean");
   XM_set_field_assert_type(Xen_is_XmPopupHandlerCallbackStruct(ptr), ptr, 1, "postIt", "XmPopupHandler");
@@ -19441,7 +19441,7 @@ static XEN gxm_set_postIt(XEN ptr, XEN post)
   return(post);
 }
 
-static XEN gxm_set_menuToPost(XEN ptr, XEN menu)
+static Xen gxm_set_menuToPost(Xen ptr, Xen menu)
 {
   XM_set_field_assert_type(Xen_is_Widget(menu), menu, 2, "menuToPost", "a Widget");
   XM_set_field_assert_type(Xen_is_XmPopupHandlerCallbackStruct(ptr), ptr, 1, "menuToPost", "XmPopupHandler");
@@ -19449,43 +19449,43 @@ static XEN gxm_set_menuToPost(XEN ptr, XEN menu)
   return(menu);
 }
 
-static XEN gxm_pattern_length(XEN ptr)
+static Xen gxm_pattern_length(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmFileSelectionBoxCallbackStruct(ptr), ptr, 1, "pattern_length", "XmFileSelectionBoxCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmFileSelectionBoxCallbackStruct(ptr))->pattern_length)));
 }
 
-static XEN gxm_pattern(XEN ptr)
+static Xen gxm_pattern(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmFileSelectionBoxCallbackStruct(ptr), ptr, 1, "pattern", "XmFileSelectionBoxCallbackStruct");
   return(C_to_Xen_XmString((XmString)((Xen_to_C_XmFileSelectionBoxCallbackStruct(ptr))->pattern)));
 }
 
-static XEN gxm_dir_length(XEN ptr)
+static Xen gxm_dir_length(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmFileSelectionBoxCallbackStruct(ptr), ptr, 1, "dir_length", "XmFileSelectionBoxCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmFileSelectionBoxCallbackStruct(ptr))->dir_length)));
 }
 
-static XEN gxm_dir(XEN ptr)
+static Xen gxm_dir(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmFileSelectionBoxCallbackStruct(ptr), ptr, 1, "dir", "XmFileSelectionBoxCallbackStruct");
   return(C_to_Xen_XmString((XmString)((Xen_to_C_XmFileSelectionBoxCallbackStruct(ptr))->dir)));
 }
 
-static XEN gxm_mask_length(XEN ptr)
+static Xen gxm_mask_length(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmFileSelectionBoxCallbackStruct(ptr), ptr, 1, "mask_length", "XmFileSelectionBoxCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmFileSelectionBoxCallbackStruct(ptr))->mask_length)));
 }
 
-static XEN gxm_mask(XEN ptr)
+static Xen gxm_mask(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmFileSelectionBoxCallbackStruct(ptr), ptr, 1, "mask", "XmFileSelectionBoxCallbackStruct");
   return(C_to_Xen_XmString((XmString)((Xen_to_C_XmFileSelectionBoxCallbackStruct(ptr))->mask)));
 }
 
-static XEN gxm_auto_selection_type(XEN ptr)
+static Xen gxm_auto_selection_type(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmContainerSelectCallbackStruct(ptr) || Xen_is_XmListCallbackStruct(ptr), 
 		  ptr, 1, "auto_selection_type", "a struct with an auto_selection_type field");
@@ -19493,13 +19493,13 @@ static XEN gxm_auto_selection_type(XEN ptr)
   return(C_int_to_Xen_integer((char)((Xen_to_C_XmListCallbackStruct(ptr))->auto_selection_type)));
 }
 
-static XEN gxm_selection_type(XEN ptr)
+static Xen gxm_selection_type(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmListCallbackStruct(ptr), ptr, 1, "selection_type", "XmListCallbackStruct");
   return(C_int_to_Xen_integer((char)((Xen_to_C_XmListCallbackStruct(ptr))->selection_type)));
 }
 
-static XEN gxm_selected_item_positions(XEN ptr)
+static Xen gxm_selected_item_positions(Xen ptr)
 {
   /* DIFF: selected_item_positions is a list of ints
    */
@@ -19510,7 +19510,7 @@ static XEN gxm_selected_item_positions(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_selected_item_count(XEN ptr)
+static Xen gxm_selected_item_count(Xen ptr)
 {
   if (Xen_is_XmContainerSelectCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmContainerSelectCallbackStruct(ptr))->selected_item_count)));
   if (Xen_is_XmListCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmListCallbackStruct(ptr))->selected_item_count)));
@@ -19518,7 +19518,7 @@ static XEN gxm_selected_item_count(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_selected_items(XEN ptr)
+static Xen gxm_selected_items(Xen ptr)
 {
   /* DIFF selected_items field returns list
    */
@@ -19532,13 +19532,13 @@ static XEN gxm_selected_items(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_item_length(XEN ptr)
+static Xen gxm_item_length(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmListCallbackStruct(ptr), ptr, 1, "item_length", "XmListCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmListCallbackStruct(ptr))->item_length)));
 }
 
-static XEN gxm_item(XEN ptr)
+static Xen gxm_item(Xen ptr)
 {
   if (Xen_is_XmContainerOutlineCallbackStruct(ptr)) return(C_to_Xen_Widget((Widget)((Xen_to_C_XmContainerOutlineCallbackStruct(ptr))->item)));
   if (Xen_is_XmListCallbackStruct(ptr)) return(C_to_Xen_XmString((XmString)((Xen_to_C_XmListCallbackStruct(ptr))->item)));
@@ -19547,13 +19547,13 @@ static XEN gxm_item(XEN ptr)
 }
 
 /* in Motif 2, this field is an int: XmSET to XmINDETERMINATE -- should we change? */
-static XEN gxm_set(XEN ptr)
+static Xen gxm_set(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmToggleButtonCallbackStruct(ptr), ptr, 1, "set", "XmToggleButtonCallbackStruct");
   return(C_bool_to_Xen_boolean((int)((Xen_to_C_XmToggleButtonCallbackStruct(ptr))->set)));
 }
 
-static XEN gxm_set_set(XEN ptr, XEN val)
+static Xen gxm_set_set(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_boolean(val) || Xen_is_integer(val), val, 2, "set", "a boolean");
   XM_set_field_assert_type(Xen_is_XmToggleButtonCallbackStruct(ptr), ptr, 1, "set", "XmToggleButtonCallbackStruct");
@@ -19561,13 +19561,13 @@ static XEN gxm_set_set(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_callbackstruct(XEN ptr)
+static Xen gxm_callbackstruct(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmRowColumnCallbackStruct(ptr), ptr, 1, "callbackstruct", "XmRowColumnCallbackStruct");
   return(C_string_to_Xen_string((char *)((Xen_to_C_XmRowColumnCallbackStruct(ptr))->callbackstruct)));
 }
 
-static XEN gxm_item_position(XEN ptr)
+static Xen gxm_item_position(Xen ptr)
 {
   if (Xen_is_XmListCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmListCallbackStruct(ptr))->item_position)));
   if (Xen_is_XmComboBoxCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmComboBoxCallbackStruct(ptr))->item_position)));
@@ -19575,13 +19575,13 @@ static XEN gxm_item_position(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_item_or_text(XEN ptr)
+static Xen gxm_item_or_text(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmComboBoxCallbackStruct(ptr), ptr, 1, "item_or_text", "XmComboBoxCallbackStruct");
   return(C_to_Xen_XmString((XmString)((Xen_to_C_XmComboBoxCallbackStruct(ptr))->item_or_text)));
 }
 
-static XEN gxm_doit(XEN ptr)
+static Xen gxm_doit(Xen ptr)
 {
   if (Xen_is_XmTextVerifyCallbackStruct(ptr)) return(C_bool_to_Xen_boolean((Boolean)((Xen_to_C_XmTextVerifyCallbackStruct(ptr))->doit)));
   if (Xen_is_XmSpinBoxCallbackStruct(ptr)) return(C_bool_to_Xen_boolean((Boolean)((Xen_to_C_XmSpinBoxCallbackStruct(ptr))->doit)));
@@ -19590,7 +19590,7 @@ static XEN gxm_doit(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_doit(XEN ptr, XEN val)
+static Xen gxm_set_doit(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_boolean(val), val, 2, "doit", "a boolean");
   if (Xen_is_XmTextVerifyCallbackStruct(ptr)) (Xen_to_C_XmTextVerifyCallbackStruct(ptr))->doit = Xen_boolean_to_C_bool(val);
@@ -19600,7 +19600,7 @@ static XEN gxm_set_doit(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_widget(XEN ptr)
+static Xen gxm_widget(Xen ptr)
 {
   if (Xen_is_XmSpinBoxCallbackStruct(ptr)) return(C_to_Xen_Widget((Widget)((Xen_to_C_XmSpinBoxCallbackStruct(ptr))->widget)));
   if (Xen_is_XmDragStartCallbackStruct(ptr)) return(C_to_Xen_Widget((Widget)((Xen_to_C_XmDragStartCallbackStruct(ptr))->widget)));
@@ -19609,7 +19609,7 @@ static XEN gxm_widget(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_click_count(XEN ptr)
+static Xen gxm_click_count(Xen ptr)
 {
   if (Xen_is_XmPushButtonCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmPushButtonCallbackStruct(ptr))->click_count)));
   if (Xen_is_XmDrawnButtonCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmDrawnButtonCallbackStruct(ptr))->click_count)));
@@ -19618,7 +19618,7 @@ static XEN gxm_click_count(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_click_count(XEN ptr, XEN val)
+static Xen gxm_set_click_count(Xen ptr, Xen val)
 {
   int count;
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "click_count", "int");
@@ -19630,20 +19630,20 @@ static XEN gxm_set_click_count(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_remaining(XEN ptr)
+static Xen gxm_remaining(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmSelectionCallbackStruct(ptr), ptr, 1, "remaining", "XmSelectionCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmSelectionCallbackStruct(ptr))->remaining)));
 }
 
-static XEN gxm_destination_data(XEN ptr)
+static Xen gxm_destination_data(Xen ptr)
 {
   /* widget-class specific interpretation -- is it worth untangling? */
   XM_field_assert_type(Xen_is_XmDestinationCallbackStruct(ptr), ptr, 1, "destination_data", "XmDestinationCallbackStruct");
   return(Xen_wrap_C_pointer(((Xen_to_C_XmDestinationCallbackStruct(ptr))->destination_data)));
 }
 
-static XEN gxm_transfer_id(XEN ptr)
+static Xen gxm_transfer_id(Xen ptr)
 {
   if (Xen_is_XmTransferDoneCallbackStruct(ptr)) return(Xen_wrap_C_pointer(((Xen_to_C_XmTransferDoneCallbackStruct(ptr))->transfer_id)));
   if (Xen_is_XmSelectionCallbackStruct(ptr)) return(Xen_wrap_C_pointer(((Xen_to_C_XmSelectionCallbackStruct(ptr))->transfer_id)));
@@ -19652,7 +19652,7 @@ static XEN gxm_transfer_id(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_length(XEN ptr)
+static Xen gxm_length(Xen ptr)
 {
   if (Xen_is_XmFileSelectionBoxCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmFileSelectionBoxCallbackStruct(ptr))->length)));
   if (Xen_is_XmCommandCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmCommandCallbackStruct(ptr))->length)));
@@ -19664,7 +19664,7 @@ static XEN gxm_length(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_length(XEN ptr, XEN val)
+static Xen gxm_set_length(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XmTextBlock(ptr), ptr, 1, "length", "XmTextBlock");
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "length", "int");
@@ -19672,13 +19672,13 @@ static XEN gxm_set_length(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_ptr(XEN ptr)
+static Xen gxm_ptr(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTextBlock(ptr), ptr, 1, "ptr", "XmTextBlock");
   return(C_string_to_Xen_string((Xen_to_C_XmTextBlock(ptr))->ptr));
 }
 
-static XEN gxm_set_ptr(XEN pt, XEN val)
+static Xen gxm_set_ptr(Xen pt, Xen val)
 {
   XM_set_field_assert_type(Xen_is_XmTextBlock(pt), pt, 1, "ptr", "XmTextBlock");
   XM_set_field_assert_type(Xen_is_string(val), val, 2, "length", "char*");
@@ -19686,7 +19686,7 @@ static XEN gxm_set_ptr(XEN pt, XEN val)
   return(val);
 }
 
-static XEN gxm_value(XEN ptr)
+static Xen gxm_value(Xen ptr)
 {
   if (Xen_is_XmSpinBoxCallbackStruct(ptr)) return(C_to_Xen_XmString((XmString)((Xen_to_C_XmSpinBoxCallbackStruct(ptr))->value)));
   if (Xen_is_XmSelectionBoxCallbackStruct(ptr)) return(C_to_Xen_XmString((XmString)((Xen_to_C_XmSelectionBoxCallbackStruct(ptr))->value)));
@@ -19701,7 +19701,7 @@ static XEN gxm_value(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_value(XEN ptr, XEN val)
+static Xen gxm_set_value(Xen ptr, Xen val)
 {
   if (Xen_is_XmScaleCallbackStruct(ptr)) (Xen_to_C_XmScaleCallbackStruct(ptr))->value = Xen_integer_to_C_int(val); else
   if (Xen_is_XmFileSelectionBoxCallbackStruct(ptr)) (Xen_to_C_XmFileSelectionBoxCallbackStruct(ptr))->value = Xen_to_C_XmString(val); else
@@ -19716,38 +19716,38 @@ static XEN gxm_set_value(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_status(XEN ptr)
+static Xen gxm_status(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTransferDoneCallbackStruct(ptr) || Xen_is_XmConvertCallbackStruct(ptr), ptr, 1, "status", "a struct with a status field");
   if (Xen_is_XmTransferDoneCallbackStruct(ptr)) return(C_int_to_Xen_integer((XmTransferStatus)((Xen_to_C_XmTransferDoneCallbackStruct(ptr))->status)));
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmConvertCallbackStruct(ptr))->status)));
 }
 
-static XEN gxm_parm_type(XEN ptr)
+static Xen gxm_parm_type(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmConvertCallbackStruct(ptr), ptr, 1, "parm_type", "XmConvertCallbackStruct");
   return(C_to_Xen_Atom((Atom)((Xen_to_C_XmConvertCallbackStruct(ptr))->parm_type)));
 }
 
-static XEN gxm_parm_length(XEN ptr)
+static Xen gxm_parm_length(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmConvertCallbackStruct(ptr), ptr, 1, "parm_length", "XmConvertCallbackStruct");
   return(C_ulong_to_Xen_ulong((unsigned long)((Xen_to_C_XmConvertCallbackStruct(ptr))->parm_length)));
 }
 
-static XEN gxm_parm_format(XEN ptr)
+static Xen gxm_parm_format(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmConvertCallbackStruct(ptr), ptr, 1, "parm_format", "XmConvertCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmConvertCallbackStruct(ptr))->parm_format)));
 }
 
-static XEN gxm_parm(XEN ptr)
+static Xen gxm_parm(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmConvertCallbackStruct(ptr), ptr, 1, "parm", "XmConvertCallbackStruct");
   return(Xen_wrap_C_pointer((XtPointer)((Xen_to_C_XmConvertCallbackStruct(ptr))->parm)));
 }
 
-static XEN gxm_location_data(XEN ptr)
+static Xen gxm_location_data(Xen ptr)
 {
   /* widget-class specific interpretation -- is it worth untangling? */
   XM_field_assert_type(Xen_is_XmDestinationCallbackStruct(ptr) || Xen_is_XmConvertCallbackStruct(ptr), 
@@ -19756,38 +19756,38 @@ static XEN gxm_location_data(XEN ptr)
   return(Xen_wrap_C_pointer((XtPointer)((Xen_to_C_XmConvertCallbackStruct(ptr))->location_data)));
 }
 
-static XEN gxm_source_data(XEN ptr)
+static Xen gxm_source_data(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmConvertCallbackStruct(ptr), ptr, 1, "source_data", "XmConvertCallbackStruct");
   return(Xen_wrap_C_pointer((XtPointer)((Xen_to_C_XmConvertCallbackStruct(ptr))->source_data)));
 }
 
-static XEN gxm_client_data(XEN ptr)
+static Xen gxm_client_data(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTransferDoneCallbackStruct(ptr), ptr, 1, "client_data", "XmTransferDoneCallbackStruct");
   return(Xen_wrap_C_pointer((XtPointer)((Xen_to_C_XmTransferDoneCallbackStruct(ptr))->client_data)));
 }
 
-static XEN gxm_animate(XEN ptr)
+static Xen gxm_animate(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmDragProcCallbackStruct(ptr), ptr, 1, "animate", "XmDragProcCallbackStruct");
   return(C_bool_to_Xen_boolean((Boolean)((Xen_to_C_XmDragProcCallbackStruct(ptr))->animate)));
 }
 
-static XEN gxm_dragContext(XEN ptr)
+static Xen gxm_dragContext(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmDropProcCallbackStruct(ptr) || Xen_is_XmDragProcCallbackStruct(ptr), ptr, 1, "dragContext", "a struct with a dragContext field");
   if (Xen_is_XmDropProcCallbackStruct(ptr)) return(C_to_Xen_Widget((Widget)((Xen_to_C_XmDropProcCallbackStruct(ptr))->dragContext)));
   return(C_to_Xen_Widget((Widget)((Xen_to_C_XmDragProcCallbackStruct(ptr))->dragContext)));
 }
 
-static XEN gxm_completionStatus(XEN ptr)
+static Xen gxm_completionStatus(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmDropFinishCallbackStruct(ptr), ptr, 1, "completionStatus", "XmDropFinishCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmDropFinishCallbackStruct(ptr))->completionStatus)));
 }
 
-static XEN gxm_iccHandle(XEN ptr)
+static Xen gxm_iccHandle(Xen ptr)
 {
   if (Xen_is_XmDropStartCallbackStruct(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XmDropStartCallbackStruct(ptr))->iccHandle)));
   if (Xen_is_XmTopLevelEnterCallbackStruct(ptr)) return(C_to_Xen_Atom((Atom)((Xen_to_C_XmTopLevelEnterCallbackStruct(ptr))->iccHandle)));
@@ -19795,7 +19795,7 @@ static XEN gxm_iccHandle(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_dropAction(XEN ptr)
+static Xen gxm_dropAction(Xen ptr)
 {
   if (Xen_is_XmDropProcCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmDropProcCallbackStruct(ptr))->dropAction)));
   if (Xen_is_XmDropFinishCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmDropFinishCallbackStruct(ptr))->dropAction)));
@@ -19804,7 +19804,7 @@ static XEN gxm_dropAction(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_dropSiteStatus(XEN ptr)
+static Xen gxm_dropSiteStatus(Xen ptr)
 {
   if (Xen_is_XmDropProcCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmDropProcCallbackStruct(ptr))->dropSiteStatus)));
   if (Xen_is_XmDragProcCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmDragProcCallbackStruct(ptr))->dropSiteStatus)));
@@ -19817,7 +19817,7 @@ static XEN gxm_dropSiteStatus(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_dropSiteStatus(XEN ptr, XEN val)
+static Xen gxm_set_dropSiteStatus(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "dropSiteStatus", "an integer");
   if (Xen_is_XmDropProcCallbackStruct(ptr)) (Xen_to_C_XmDropProcCallbackStruct(ptr))->dropSiteStatus = Xen_integer_to_C_int(val); else
@@ -19831,7 +19831,7 @@ static XEN gxm_set_dropSiteStatus(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_operations(XEN ptr)
+static Xen gxm_operations(Xen ptr)
 {
   if (Xen_is_XmDropProcCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmDropProcCallbackStruct(ptr))->operations)));
   if (Xen_is_XmDragProcCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmDragProcCallbackStruct(ptr))->operations)));
@@ -19844,7 +19844,7 @@ static XEN gxm_operations(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_operation(XEN ptr)
+static Xen gxm_operation(Xen ptr)
 {
   if (Xen_is_XmDestinationCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmDestinationCallbackStruct(ptr))->operation)));
   if (Xen_is_XmDropProcCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmDropProcCallbackStruct(ptr))->operation)));
@@ -19858,7 +19858,7 @@ static XEN gxm_operation(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_set_operation(XEN ptr, XEN val)
+static Xen gxm_set_operation(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "operation", "an integer");
   if (Xen_is_XmDestinationCallbackStruct(ptr)) (Xen_to_C_XmDestinationCallbackStruct(ptr))->operation = Xen_integer_to_C_int(val); else
@@ -19873,7 +19873,7 @@ static XEN gxm_set_operation(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_timeStamp(XEN ptr)
+static Xen gxm_timeStamp(Xen ptr)
 {
   if (Xen_is_XmDropProcCallbackStruct(ptr)) return(C_to_Xen_Time((Time)((Xen_to_C_XmDropProcCallbackStruct(ptr))->timeStamp)));
   if (Xen_is_XmDragProcCallbackStruct(ptr)) return(C_to_Xen_Time((Time)((Xen_to_C_XmDragProcCallbackStruct(ptr))->timeStamp)));
@@ -19890,13 +19890,13 @@ static XEN gxm_timeStamp(XEN ptr)
   return(Xen_false);
 }
 
-static XEN gxm_reason(XEN ptr)
+static Xen gxm_reason(Xen ptr)
 {
   XM_field_assert_type(Xen_is_AnyCallbackStruct(ptr), ptr, 1, "reason", "a callbackstruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmAnyCallbackStruct(ptr))->reason)));
 }
 
-static XEN gxm_set_reason(XEN ptr, XEN val)
+static Xen gxm_set_reason(Xen ptr, Xen val)
 {
   XM_set_field_assert_type(Xen_is_integer(val), val, 2, "reason", "integer");
   XM_set_field_assert_type(Xen_is_AnyCallbackStruct(ptr), ptr, 1, "reason", "a callbackstruct");
@@ -19904,50 +19904,50 @@ static XEN gxm_set_reason(XEN ptr, XEN val)
   return(val);
 }
 
-static XEN gxm_direction(XEN ptr)
+static Xen gxm_direction(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTraverseObscuredCallbackStruct(ptr), ptr, 1, "direction", "XmTraverseObscuredCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmTraverseObscuredCallbackStruct(ptr))->direction)));
 }
 
-static XEN gxm_dragProtocolStyle(XEN ptr)
+static Xen gxm_dragProtocolStyle(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTopLevelEnterCallbackStruct(ptr), ptr, 1, "dragProtocolStyle", "XmTopLevelEnterCallbackStruct");
   return(C_int_to_Xen_integer((int)((Xen_to_C_XmTopLevelEnterCallbackStruct(ptr))->dragProtocolStyle)));
 }
 
-static XEN gxm_traversal_destination(XEN ptr)
+static Xen gxm_traversal_destination(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmTraverseObscuredCallbackStruct(ptr), ptr, 1, "traversal_destination", "XmTraverseObscuredCallbackStruct");
   return(C_to_Xen_Widget((Widget)((Xen_to_C_XmTraverseObscuredCallbackStruct(ptr))->traversal_destination)));
 }
 
-static XEN gxm_minor_tab_widget(XEN ptr)
+static Xen gxm_minor_tab_widget(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmNotebookPageInfo(ptr), ptr, 1, "minor_tab_widget", "XmNotebookPageInfo");
   return(C_to_Xen_Widget((Widget)((Xen_to_C_XmNotebookPageInfo(ptr))->minor_tab_widget)));
 }
 
-static XEN gxm_major_tab_widget(XEN ptr)
+static Xen gxm_major_tab_widget(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmNotebookPageInfo(ptr), ptr, 1, "major_tab_widget", "XmNotebookPageInfo");
   return(C_to_Xen_Widget((Widget)((Xen_to_C_XmNotebookPageInfo(ptr))->major_tab_widget)));
 }
 
-static XEN gxm_status_area_widget(XEN ptr)
+static Xen gxm_status_area_widget(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmNotebookPageInfo(ptr), ptr, 1, "status_area_widget", "XmNotebookPageInfo");
   return(C_to_Xen_Widget((Widget)((Xen_to_C_XmNotebookPageInfo(ptr))->status_area_widget)));
 }
 
-static XEN gxm_page_widget(XEN ptr)
+static Xen gxm_page_widget(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmNotebookCallbackStruct(ptr) || Xen_is_XmNotebookPageInfo(ptr), ptr, 1, "page_widget", "a struct with a page_widget field");
   if (Xen_is_XmNotebookCallbackStruct(ptr)) return(C_to_Xen_Widget((Widget)((Xen_to_C_XmNotebookCallbackStruct(ptr))->page_widget)));
   return(C_to_Xen_Widget((Widget)((Xen_to_C_XmNotebookPageInfo(ptr))->page_widget)));
 }
 
-static XEN gxm_page_number(XEN ptr)
+static Xen gxm_page_number(Xen ptr)
 {
   XM_field_assert_type(Xen_is_XmNotebookCallbackStruct(ptr) || Xen_is_XmNotebookPageInfo(ptr), ptr, 1, "page_number", "a struct with a page_number field");
   if (Xen_is_XmNotebookCallbackStruct(ptr)) return(C_int_to_Xen_integer((int)((Xen_to_C_XmNotebookCallbackStruct(ptr))->page_number)));
@@ -23707,7 +23707,7 @@ static void define_strings(void)
 
 #define S_add_resource "add-resource"
 
-static XEN g_add_resource(XEN nam, XEN typ)
+static Xen g_add_resource(Xen nam, Xen typ)
 {
   #define H_add_resource "(" S_add_resource " name type) adds the resource 'name' with the libxm type 'type'. \
 The types are defined in xm.c around line 679.  To add XmNhiho as an integer: \n\

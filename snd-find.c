@@ -49,7 +49,7 @@ static mus_long_t channel_find_backward(chan_info *cp)
   bool reported = false;
   mus_long_t i, start, passes;
   snd_fd *sf = NULL;
-  XEN res = Xen_false;
+  Xen res = Xen_false;
 
   start = CURSOR(cp) - 1;
   if (start < 0)
@@ -159,7 +159,7 @@ static char *global_search(read_direction_t direction, bool repeating)
 #if HAVE_EXTENSION_LANGUAGE
 void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
 {
-  XEN proc;
+  Xen proc;
   bool repeating_search = false;
 
   if (search_in_progress) 
@@ -236,17 +236,17 @@ void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
 
 /* -------------------------------------------------------------------------------- */
 
-static XEN g_search_procedure(void)
+static Xen g_search_procedure(void)
 {
   #define H_search_procedure "(" S_search_procedure "): the function used by the find dialog or C-s if none is otherwise specified."
   return(ss->search_proc);
 }
 
 
-static XEN g_set_search_procedure(XEN proc)
+static Xen g_set_search_procedure(Xen proc)
 {
   char *error = NULL;
-  XEN errstr;
+  Xen errstr;
 
   /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> as "proc" */
   

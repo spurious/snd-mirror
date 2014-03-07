@@ -415,7 +415,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
 
 /* -------- color/orientation browser -------- */
 
-static XEN color_hook;
+static Xen color_hook;
 
 static void check_color_hook(void)
 {
@@ -594,7 +594,7 @@ void reflect_color_list(bool setup_time)
 }
 
 
-static XEN orientation_hook;
+static Xen orientation_hook;
 
 static void check_orientation_hook(void)
 {

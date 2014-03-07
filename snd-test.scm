@@ -20567,13 +20567,6 @@ EDITS: 2
 	(let ((rd (vector (make-readin "flat.snd"))))
 	  (mus-mix-with-envs rd 0 1000 (mixer 0.5) (mixer 0.1) #f #f #f)))
       
-      (if (not (provided? 'snd-gtk))
-	  (let ((ind (find-sound "mix.snd")))
-	    (if (sound? ind)
-		(if (fneq (sample 7525 ind) 0.025)
-		    (snd-display #__line__ ";mus-mix-with-envs 6: ~A" (sample 7525 ind)))
-		(snd-display #__line__ ";mus-mix-with envs 6: no output? ~A" (map short-file-name (sounds))))))
-      
       (with-sound (:output "mix.snd" :reverb jc-reverb)
 	(let* ((rd (vector (make-readin "flat.snd") 
 			   (make-readin "flat.snd"))) 

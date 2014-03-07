@@ -23,7 +23,7 @@ static void free_sync_state(sync_state *sc)
 }
 
 
-int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
+int to_c_edit_position(chan_info *cp, Xen edpos, const char *caller, int arg_pos)
 {
   int pos = AT_CURRENT_EDIT_POSITION;
   /* need to allow #f here for optargs */
@@ -43,7 +43,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
       errmsg = procedure_ok(edpos, 2, caller, "edit position", arg_pos);
       if (errmsg)
 	{
-	  XEN errstr;
+	  Xen errstr;
 	  errstr = C_string_to_Xen_string(errmsg);
 	  free(errmsg);
 	  snd_bad_arity_error(caller, errstr, edpos);
@@ -51,7 +51,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 	}
 
       pos = Xen_integer_to_C_int(Xen_call_with_2_args(edpos, 
-				    C_INT_TO_XEN_SOUND(cp->sound->index), 
+				    C_int_to_Xen_sound(cp->sound->index), 
 				    C_int_to_Xen_integer(cp->chan),
 				    caller));
       
@@ -78,7 +78,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 			 C_string_to_Xen_string(caller),
 			 C_int_to_Xen_integer(pos),
 			 edpos,
-			 C_INT_TO_XEN_SOUND(cp->sound->index),
+			 C_int_to_Xen_sound(cp->sound->index),
 			 C_string_to_Xen_string(cp->sound->short_filename),
 			 C_int_to_Xen_integer(cp->chan),
 			 C_int_to_Xen_integer(cp->edit_ctr)));
@@ -86,13 +86,13 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 }
 
 
-mus_long_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
+mus_long_t to_c_edit_samples(chan_info *cp, Xen edpos, const char *caller, int arg_pos)
 {
   return(cp->edits[to_c_edit_position(cp, edpos, caller, arg_pos)]->samples);
 }
 
 
-mus_long_t beg_to_sample(XEN beg, const char *caller)
+mus_long_t beg_to_sample(Xen beg, const char *caller)
 {
   if (Xen_is_integer(beg))
     {
@@ -108,7 +108,7 @@ mus_long_t beg_to_sample(XEN beg, const char *caller)
 }
 
 
-mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller)
+mus_long_t dur_to_samples(Xen dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller)
 {
   if (Xen_is_integer(dur))
     {
@@ -124,7 +124,7 @@ mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int
 }
 
 
-static mus_long_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
+static mus_long_t end_to_sample(Xen end, chan_info *cp, int edpos, const char *caller)
 {
   if (Xen_is_integer(end))
     {
@@ -141,7 +141,7 @@ static mus_long_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *c
 
 
 static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, mus_long_t beg, bool over_selection, 
-				    read_direction_t forwards, mus_long_t prebeg, XEN edpos, const char *caller, int arg_pos)
+				    read_direction_t forwards, mus_long_t prebeg, Xen edpos, const char *caller, int arg_pos)
 {
   /* can return NULL if over_selection and no current selection */
   sync_info *si = NULL;
@@ -220,7 +220,7 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, mus_long_t beg,
 
 
 static sync_state *get_sync_state(snd_info *sp, chan_info *cp, mus_long_t beg, bool over_selection, 
-				  read_direction_t forwards, XEN edpos, const char *caller, int arg_pos)
+				  read_direction_t forwards, Xen edpos, const char *caller, int arg_pos)
 {
   return(get_sync_state_1(sp, cp, beg, over_selection, forwards, 0, edpos, caller, arg_pos));
 }
@@ -264,7 +264,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, m
 }
 
 
-static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *cp, XEN edpos, int arg_pos)
+static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *cp, Xen edpos, int arg_pos)
 {
   /* if string returned, needs to be freed */
   /* amp == 0.0 means unnormalized, cp == NULL means current selection */
@@ -779,7 +779,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 
 mus_float_t previous_sample_value_unscaled_and_unchecked(snd_fd *sf);
 
-static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long_t dur, XEN edp, const char *caller, int arg_pos)
+static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long_t dur, Xen edp, const char *caller, int arg_pos)
 {
   snd_info *sp;
   peak_env_info *ep = NULL;
@@ -914,7 +914,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 }
 
 
-void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos)
+void reverse_sound(chan_info *ncp, bool over_selection, Xen edpos, int arg_pos)
 {
   sync_state *sc;
   sync_info *si;
@@ -1419,7 +1419,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 
 
 void src_env_or_num(chan_info *cp, env *e, mus_float_t ratio, bool just_num, 
-		    const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos)
+		    const char *origin, bool over_selection, mus_any *gen, Xen edpos, int arg_pos)
 {
   snd_info *sp = NULL;
   sync_state *sc;
@@ -2381,7 +2381,7 @@ static char *filter_channel(chan_info *cp, int order, env *e, mus_long_t beg, mu
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, 
 				   const char *caller, const char *origin, bool over_selection, mus_float_t *ur_a, 
-				   mus_any *gen, XEN edpos, int arg_pos, bool truncate, bool *clm_error)
+				   mus_any *gen, Xen edpos, int arg_pos, bool truncate, bool *clm_error)
 {
   /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
@@ -2515,7 +2515,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e,
 
 void apply_filter(chan_info *ncp, int order, env *e,
 		  const char *caller, const char *origin, bool over_selection, mus_float_t *ur_a, mus_any *gen, 
-		  XEN edpos, int arg_pos, bool truncate)
+		  Xen edpos, int arg_pos, bool truncate)
 {
   char *error;
   bool err_type; /* ignored in this context */
@@ -2570,7 +2570,7 @@ static char *edit_list_envelope(mus_any *egen, mus_long_t beg, mus_long_t env_du
 
 
 void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_selection, 
-	       const char *origin, mus_any *gen, XEN edpos, int arg_pos)
+	       const char *origin, mus_any *gen, Xen edpos, int arg_pos)
 {
   /* basic cases: if env has 1 y value, use scale-channel,
    *              if step env (base == 0.0), use sequence of scale-channels,
@@ -3473,7 +3473,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 #endif
 
 
-static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
+static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
 {
   /* TODO: fold this into map_channel_to_buffer, or use its scheme opts once they settle down */
   snd_info *sp;
@@ -3484,7 +3484,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
   int j = 0;
   bool reporting = false;
   io_error_t io_err = IO_NO_ERROR;
-  XEN res = Xen_false;
+  Xen res = Xen_false;
 
   sampler_set_safe(sf, num);
   sp = cp->sound;
@@ -3641,13 +3641,13 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 }
 
 
-static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
+static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
 {
   /* not temp_file -- use resizable buffer */
   int i, data_pos = 0, kp;
   mus_long_t cur_size;
   mus_float_t *data = NULL;
-  XEN res = Xen_false;
+  Xen res = Xen_false;
 
 #if HAVE_SCHEME
   mus_float_t *in_data;
@@ -3923,7 +3923,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 }
 
 
-static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, const char *fallback_caller) 
+static Xen g_map_chan_1(Xen proc_and_list, Xen s_beg, Xen s_end, Xen org, Xen snd, Xen chn, Xen edpos, Xen s_dur, const char *fallback_caller) 
 { 
   chan_info *cp;
   const char *caller;
@@ -3931,8 +3931,8 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   mus_long_t num;
   int pos;
   bool temp_file = false, backup = false;
-  XEN res = Xen_false;
-  XEN proc = Xen_false;
+  Xen res = Xen_false;
+  Xen proc = Xen_false;
 
   proc = proc_and_list;
 
@@ -3970,7 +3970,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       errmsg = procedure_ok(proc, 1, caller, "", 1);
       if (errmsg)
 	{
-	  XEN errstr;
+	  Xen errstr;
 	  errstr = C_string_to_Xen_string(errmsg);
 	  free(errmsg);
 	  return(snd_bad_arity_error(caller, errstr, proc));
@@ -4003,19 +4003,19 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 }
 
 
-static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, const char *caller, bool counting, XEN edpos, int arg_pos, XEN s_dur)
+static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, const char *caller, bool counting, Xen edpos, int arg_pos, Xen s_dur)
 {
   chan_info *cp;
   mus_long_t beg = 0, end = 0, dur = 0;
   snd_info *sp;
   snd_fd *sf;
-  XEN errstr;
+  Xen errstr;
   mus_long_t kp, num;
   int rpt = 0, rpt4 = 0;
   bool reporting = false;
   int counts = 0, pos;
   char *errmsg;
-  XEN proc = Xen_false;
+  Xen proc = Xen_false;
 
   proc = proc_and_list;
 
@@ -4280,7 +4280,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 
   for (kp = 0; kp < num; kp++)
     {
-      XEN res;
+      Xen res;
       if (use_apply)
 	{
 	  s7_set_car(arg_list, s7_make_real(s7, read_sample(sf)));
@@ -4297,7 +4297,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 #else
   for (kp = 0; kp < num; kp++)
     {
-      XEN res;
+      Xen res;
       res = Xen_unprotected_call_with_1_arg(proc, C_double_to_Xen_real((double)read_sample(sf)));
 #endif
       /* leak here -- if reader active and error occurs, we jump out without cleanup */
@@ -4352,9 +4352,9 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 }
 
 
-mus_long_t scan_channel(chan_info *cp, mus_long_t start, mus_long_t end, XEN proc)
+mus_long_t scan_channel(chan_info *cp, mus_long_t start, mus_long_t end, Xen proc)
 {
-  XEN result;
+  Xen result;
   result = g_sp_scan(proc, C_llong_to_Xen_llong(start), C_llong_to_Xen_llong(end),
 		     Xen_false, Xen_false, "search procedure", false, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0, Xen_false);
   if (Xen_is_long_long_int(result))
@@ -4363,7 +4363,7 @@ mus_long_t scan_channel(chan_info *cp, mus_long_t start, mus_long_t end, XEN pro
 }
 
 #if (!HAVE_SCHEME)
-static XEN g_scan_chan(XEN proc, XEN beg, XEN end, XEN snd, XEN chn, XEN edpos) 
+static Xen g_scan_chan(Xen proc, Xen beg, Xen end, Xen snd, Xen chn, Xen edpos) 
 { 
   #if HAVE_SCHEME
     #define scan_chan_example "(scan-chan (lambda (y) (> y .1)))"
@@ -4385,7 +4385,7 @@ if 'func' returns non-" PROC_FALSE ", the scan stops, and the current sample num
 }
 #endif
 
-static XEN g_scan_channel(XEN proc, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpos) 
+static Xen g_scan_channel(Xen proc, Xen beg, Xen dur, Xen snd, Xen chn, Xen edpos) 
 { 
   #if HAVE_SCHEME
     #define scan_channel_example "(scan-channel (lambda (y) (> y .1)))"
@@ -4407,7 +4407,7 @@ if func returns non-" PROC_FALSE ", the scan stops, and the current sample numbe
 }
 
 
-static XEN g_map_chan(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos) 
+static Xen g_map_chan(Xen proc, Xen s_beg, Xen s_end, Xen org, Xen snd, Xen chn, Xen edpos) 
 {
   #if HAVE_SCHEME
     #define map_chan_example "(map-chan (lambda (y) (* y 2.0)))"
@@ -4426,7 +4426,7 @@ apply func to samples in current channel; edname is the edit history name for th
 }
 
 
-static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org) 
+static Xen g_map_channel(Xen proc, Xen s_beg, Xen s_dur, Xen snd, Xen chn, Xen edpos, Xen org) 
 {
   #if HAVE_SCHEME
     #define map_channel_example "(map-channel (lambda (y) (* y 2.0)))"
@@ -4446,7 +4446,7 @@ apply func to samples in current channel; edname is the edit history name for th
 
 
 #if (!HAVE_SCHEME)
-static XEN g_find_channel(XEN expr, XEN sample, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_find_channel(Xen expr, Xen sample, Xen snd, Xen chn_n, Xen edpos)
 {
   #if HAVE_SCHEME
     #define find_channel_example "(find-channel (lambda (y) (> y .1)))"
@@ -4468,7 +4468,7 @@ the current sample, to each sample in snd's channel chn, starting at 'start-samp
 #endif
 
 
-static XEN g_count_matches(XEN expr, XEN sample, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_count_matches(Xen expr, Xen sample, Xen snd, Xen chn_n, Xen edpos)
 {
   #if HAVE_SCHEME
     #define count_matches_example "(count-matches (lambda (y) (> y .1)))"
@@ -4488,7 +4488,7 @@ samples satisfy func (a function of one argument, the current sample, returning 
 }
 
 
-static XEN g_smooth_sound(XEN beg, XEN num, XEN snd, XEN chn_n)
+static Xen g_smooth_sound(Xen beg, Xen num, Xen snd, Xen chn_n)
 {
   #define H_smooth_sound "(" S_smooth_sound " :optional (start-samp 0) (samps len) snd chn): smooth \
 data from start-samp for samps in snd's channel chn"
@@ -4510,7 +4510,7 @@ data from start-samp for samps in snd's channel chn"
 }
 
 
-static XEN g_smooth_channel(XEN beg, XEN dur, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_smooth_channel(Xen beg, Xen dur, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_smooth_channel "(" S_smooth_channel " :optional (beg 0) (dur len) snd chn edpos): \
 smooth data from beg for dur in snd's channel chn"
@@ -4536,7 +4536,7 @@ smooth data from beg for dur in snd's channel chn"
 }
 
 
-static XEN g_smooth_selection(void)
+static Xen g_smooth_selection(void)
 {
   #define H_smooth_selection "(" S_smooth_selection "): smooth the data in the currently selected portion"
   chan_info *cp;
@@ -4601,7 +4601,7 @@ void cut_and_smooth(chan_info *cp)
 }
 
 
-static XEN g_delete_selection_and_smooth(void)
+static Xen g_delete_selection_and_smooth(void)
 {
   #define H_delete_selection_and_smooth "(" S_delete_selection_and_smooth ") deletes the current selection, and tries to \
 make the splice-point smooth."
@@ -4614,7 +4614,7 @@ make the splice-point smooth."
 
 
 
-static XEN g_delete_samples_and_smooth(XEN samp_n, XEN samps, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_delete_samples_and_smooth(Xen samp_n, Xen samps, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_delete_samples_and_smooth "(" S_delete_samples_and_smooth " start-samp samps :optional snd chn edpos): \
 delete 'samps' samples from snd's channel chn starting at 'start-samp', then try to smooth-over the splice"
@@ -4647,7 +4647,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
 
 
 
-static XEN g_reverse_sound(XEN snd, XEN chn_n, XEN edpos)
+static Xen g_reverse_sound(Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_reverse_sound "(" S_reverse_sound " :optional snd chn edpos): reverse snd's channel chn"
   chan_info *cp;
@@ -4662,7 +4662,7 @@ static XEN g_reverse_sound(XEN snd, XEN chn_n, XEN edpos)
 }
 
 
-static XEN g_reverse_selection(void)
+static Xen g_reverse_selection(void)
 {
   #define H_reverse_selection "(" S_reverse_selection "): reverse the data in the currently selected portion"
   chan_info *cp;
@@ -4679,7 +4679,7 @@ static XEN g_reverse_selection(void)
 }
 
 
-static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_reverse_channel(Xen s_beg, Xen s_dur, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_reverse_channel "(" S_reverse_channel " :optional (beg 0) (dur len) snd chn edpos): reverse a portion of snd's channel chn"
   chan_info *cp;
@@ -4708,7 +4708,7 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd, XEN chn_n, XEN edpos
   free_snd_fd(sf);
   if (errmsg)
     {
-      XEN str;
+      Xen str;
       str = C_string_to_Xen_string(errmsg);
       free(errmsg);
       Xen_error(Xen_make_error_type("IO-error"),
@@ -4719,7 +4719,7 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd, XEN chn_n, XEN edpos
 }
 
 
-static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
+static Xen g_insert_silence(Xen beg, Xen num, Xen snd, Xen chn)
 {
   #define H_insert_silence "(" S_insert_silence " beg num :optional snd chn): insert num zeros at beg in snd's chn"
   chan_info *cp; /* follows sync */
@@ -4744,7 +4744,7 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
 }
 
 
-static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
+static Xen g_pad_channel(Xen beg, Xen num, Xen snd, Xen chn, Xen edpos)
 {
   #define H_pad_channel "(" S_pad_channel " beg dur :optional snd chn edpos): insert dur zeros at beg in snd's chn"
   chan_info *cp;
@@ -4774,7 +4774,7 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 }
 
 
-static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN dur, XEN edpos0, XEN edpos1)
+static Xen g_swap_channels(Xen snd0, Xen chn0, Xen snd1, Xen chn1, Xen beg, Xen dur, Xen edpos0, Xen edpos1)
 {
   #define H_swap_channels "(" S_swap_channels " :optional snd0 chn0 snd1 chn1 (beg 0) (dur len) edpos0 edpos1): \
 swap the indicated channels"
@@ -4873,7 +4873,7 @@ swap the indicated channels"
 }
 
 
-static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *caller)
+static mus_float_t *load_mus_float_ts(Xen scalers, int *result_len, const char *caller)
 {
   int len = 0, i;
   mus_float_t *scls;
@@ -4911,7 +4911,7 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
     {
       if (Xen_is_list(scalers))
 	{
-	  XEN lst;
+	  Xen lst;
 	  for (i = 0, lst = Xen_copy_arg(scalers); i < len; i++, lst = Xen_cdr(lst)) 
 	    scls[i] = (mus_float_t)Xen_real_to_C_double(Xen_car(lst));
 	}
@@ -4922,7 +4922,7 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
 }
 
 
-static XEN g_scale_to(XEN scalers, XEN snd, XEN chn_n)
+static Xen g_scale_to(Xen scalers, Xen snd, Xen chn_n)
 {
   #define H_scale_to "(" S_scale_to " :optional (norms 1.0) snd chn): \
 normalize snd to norms (following sync); norms can be a float or a vct/list of floats"
@@ -4947,7 +4947,7 @@ normalize snd to norms (following sync); norms can be a float or a vct/list of f
 }
 
 
-static XEN g_scale_by(XEN scalers, XEN snd, XEN chn_n)
+static Xen g_scale_by(Xen scalers, Xen snd, Xen chn_n)
 {
   #define H_scale_by "(" S_scale_by " scalers :optional snd chn): \
 scale snd by scalers (following sync); scalers can be a float or a vct/list of floats"
@@ -4977,7 +4977,7 @@ scale snd by scalers (following sync); scalers can be a float or a vct/list of f
 }
 
 
-static XEN g_scale_selection_to(XEN scalers)
+static Xen g_scale_selection_to(Xen scalers)
 {
   #define H_scale_selection_to "(" S_scale_selection_to " norms): normalize selected portion to norms"
   if (selection_is_active())
@@ -4998,7 +4998,7 @@ static XEN g_scale_selection_to(XEN scalers)
 }
 
 
-XEN g_scale_selection_by(XEN scalers)
+Xen g_scale_selection_by(Xen scalers)
 {
   #define H_scale_selection_by "(" S_scale_selection_by " scalers): scale selected portion by scalers"
   if (selection_is_active())
@@ -5016,7 +5016,7 @@ XEN g_scale_selection_by(XEN scalers)
 }
 
 
-static XEN g_clm_channel(XEN gen, XEN samp_n, XEN samps, XEN snd, XEN chn_n, XEN edpos, XEN overlap, XEN origin)
+static Xen g_clm_channel(Xen gen, Xen samp_n, Xen samps, Xen snd, Xen chn_n, Xen edpos, Xen overlap, Xen origin)
 {
   #define H_clm_channel "(" S_clm_channel " gen :optional (beg 0) (dur len) snd chn edpos (overlap 0) origin): \
 apply gen to snd's channel chn starting at beg for dur samples. overlap is the 'ring' time, if any."
@@ -5040,7 +5040,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_clm_channel);
   if (dur == 0) return(Xen_false);
   Xen_check_type(mus_is_xen(gen), gen, 1, S_clm_channel, "a clm generator");
-  egen = XEN_TO_MUS_ANY(gen);
+  egen = Xen_to_mus_any(gen);
   if (Xen_is_string(origin)) caller = mus_strdup(Xen_string_to_C_string(origin)); else caller = mus_strdup(S_clm_channel);
 
   errmsg = clm_channel(cp, egen, beg, dur, pos, (Xen_is_long_long_int(overlap)) ? Xen_llong_to_C_llong(overlap) : 0, caller);
@@ -5048,7 +5048,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   free(caller);
   if (errmsg)
     {
-      XEN str;
+      Xen str;
       str = C_string_to_Xen_string(errmsg);
       free(errmsg);
       Xen_error(Xen_make_error_type("IO-error"),
@@ -5059,7 +5059,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
 }
 
 
-static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, chan_info *cp, XEN edpos, const char *caller, bool over_selection)
+static Xen g_apply_env_1(Xen edata, mus_long_t beg, mus_long_t dur, Xen ebase, chan_info *cp, Xen edpos, const char *caller, bool over_selection)
 {
   if (Xen_is_list(edata))
     {
@@ -5085,7 +5085,7 @@ static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, c
   else
     {
       mus_any *egen = NULL;
-      Xen_check_type((mus_is_xen(edata)) && (mus_is_env(egen = XEN_TO_MUS_ANY(edata))), edata, 1, caller, "an env generator or a list");
+      Xen_check_type((mus_is_xen(edata)) && (mus_is_env(egen = Xen_to_mus_any(edata))), edata, 1, caller, "an env generator or a list");
       apply_env(cp, NULL, beg, dur, over_selection, caller, egen, edpos, 7);
       return(edata);
     }
@@ -5093,7 +5093,7 @@ static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, c
 }
 
 
-static XEN g_env_selection(XEN edata, XEN base)
+static Xen g_env_selection(Xen edata, Xen base)
 {
   #define H_env_selection "(" S_env_selection " env :optional (env-base 1.0)): \
 apply envelope to the selection using env-base to determine how breakpoints are connected"
@@ -5107,7 +5107,7 @@ apply envelope to the selection using env-base to determine how breakpoints are 
 }
 
 
-static XEN g_env_sound(XEN edata, XEN samp_n, XEN samps, XEN base, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_env_sound(Xen edata, Xen samp_n, Xen samps, Xen base, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_env_sound "(" S_env_sound " env :optional (start-samp 0) (samps len) (env-base 1.0) snd chn edpos): \
 apply amplitude envelope (a list of breakpoints or a CLM env) to snd's channel chn starting at start-samp, going \
@@ -5131,7 +5131,7 @@ either to the end of the sound or for samps samples, with segments interpolating
 }
 
 
-static XEN g_env_channel(XEN gen, XEN samp_n, XEN samps, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_env_channel(Xen gen, Xen samp_n, Xen samps, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_env_channel "(" S_env_channel " clm-env-gen-or-envelope :optional (beg 0) (dur len) snd chn edpos): \
 apply amplitude envelope to snd's channel chn starting at beg for dur samples."
@@ -5140,7 +5140,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   snd_info *sp;
   mus_long_t beg = 0, dur;
   int old_sync = 0, pos;
-  XEN val;
+  Xen val;
 
   ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, 2);
   ASSERT_SAMPLE_TYPE(S_env_channel, samps, 3);
@@ -5164,7 +5164,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
 }
 
 
-static XEN g_env_channel_with_base(XEN gen, XEN base, XEN samp_n, XEN samps, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_env_channel_with_base(Xen gen, Xen base, Xen samp_n, Xen samps, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_env_channel_with_base "(" S_env_channel_with_base " clm-env-gen-or-envelope :optional (base 1.0) (beg 0) (dur len) snd chn edpos): \
 apply amplitude envelope to snd's channel chn starting at beg for dur samples."
@@ -5173,7 +5173,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   snd_info *sp;
   mus_long_t beg = 0, dur;
   int old_sync = 0, pos;
-  XEN val;
+  Xen val;
 
   ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, 2);
   ASSERT_SAMPLE_TYPE(S_env_channel, samps, 3);
@@ -5197,7 +5197,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
 }
 
 
-static XEN g_ramp_channel(XEN rmp0, XEN rmp1, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
+static Xen g_ramp_channel(Xen rmp0, Xen rmp1, Xen beg, Xen num, Xen snd, Xen chn, Xen edpos)
 {
   #define H_ramp_channel "(" S_ramp_channel " rmp0 rmp1 :optional (beg 0) (dur len) snd chn edpos): \
 scale samples in the given sound/channel between beg and beg + num by a ramp going from rmp0 to rmp1."
@@ -5223,7 +5223,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
     {
       snd_info *sp;
       int old_sync;
-      XEN val;
+      Xen val;
 
       sp = cp->sound;
       old_sync = sp->sync;
@@ -5264,7 +5264,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
 }			  
 
 
-static XEN g_xramp_channel(XEN rmp0, XEN rmp1, XEN base, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
+static Xen g_xramp_channel(Xen rmp0, Xen rmp1, Xen base, Xen beg, Xen num, Xen snd, Xen chn, Xen edpos)
 {
   #define H_xramp_channel "(" S_xramp_channel " rmp0 rmp1 base :optional (beg 0) (dur len) snd chn edpos): \
 scale samples in the given sound/channel between beg and beg + num by an exponential ramp going from rmp0 to rmp1 with curvature set by base."
@@ -5297,7 +5297,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
     {
       snd_info *sp;
       int old_sync;
-      XEN val;
+      Xen val;
       sp = cp->sound;
       old_sync = sp->sync;
       sp->sync = 0;
@@ -5359,7 +5359,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 }			  
 
 
-static XEN g_fft(XEN reals, XEN imag, XEN sign)
+static Xen g_fft(Xen reals, Xen imag, Xen sign)
 {
   #define H_fft "(" S_fft " reals imags :optional (sign 1)): fft the data returning the result in reals. \
 If sign is -1, perform inverse fft.  Incoming data is in vcts."
@@ -5411,7 +5411,7 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
 }
 
 
-static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB, XEN beta, XEN in_place, XEN normalized)
+static Xen g_snd_spectrum(Xen data, Xen win, Xen len, Xen linear_or_dB, Xen beta, Xen in_place, Xen normalized)
 {
   #define H_snd_spectrum "(" S_snd_spectrum " data :optional (window " S_rectangular_window ") (len data-len) (linear " PROC_TRUE ") (beta 0.0) in-place (normalized " PROC_TRUE ")): \
 magnitude spectrum of data (a vct), in data if in-place, using fft-window win and fft length len."
@@ -5524,7 +5524,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
 }
 
 
-static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, const char *caller)
+static Xen g_convolve_with_1(Xen file, Xen new_amp, chan_info *cp, Xen edpos, const char *caller)
 {
   /* cp NULL -> selection (see above) */
   mus_float_t amp;
@@ -5551,7 +5551,7 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
 
       if (error)
 	{
-	  XEN errstr;
+	  Xen errstr;
 	  errstr = C_string_to_Xen_string(error);
 	  free(error);
 	  Xen_error(Xen_make_error_type("IO-error"),
@@ -5565,7 +5565,7 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
 }
 
 
-static XEN g_convolve_with(XEN file, XEN new_amp, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_convolve_with(Xen file, Xen new_amp, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_convolve_with "(" S_convolve_with " file :optional (amp 1.0) snd chn edpos): \
 convolve file with snd's channel chn (or the currently sync'd channels); amp is the resultant peak amp"
@@ -5578,7 +5578,7 @@ convolve file with snd's channel chn (or the currently sync'd channels); amp is 
 }
 
 
-static XEN g_convolve_selection_with(XEN file, XEN new_amp)
+static Xen g_convolve_selection_with(Xen file, Xen new_amp)
 {
   #define H_convolve_selection_with "(" S_convolve_selection_with " file :optional (amp 1.0)): \
 convolve the selection with file; amp is the resultant peak amp"
@@ -5632,7 +5632,7 @@ static mus_float_t check_src_envelope(int pts, mus_float_t *data, int *error)
 
 static bool is_NaN(double x) {return(x != x);}
 
-static XEN g_src_channel(XEN ratio_or_env, XEN beg_n, XEN dur_n, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_src_channel(Xen ratio_or_env, Xen beg_n, Xen dur_n, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_src_channel "(" S_src_channel " ratio-or-env :optional (beg 0) (dur len) snd chn edpos): \
 sampling-rate convert snd's channel chn by ratio, or following an envelope (a list or a CLM env generator)."
@@ -5650,7 +5650,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   Xen_check_type((Xen_is_number(ratio_or_env)) || 
 		  (Xen_is_list(ratio_or_env)) ||
 		  ((mus_is_xen(ratio_or_env)) && 
-		   (mus_is_env(egen = XEN_TO_MUS_ANY(ratio_or_env)))),
+		   (mus_is_env(egen = Xen_to_mus_any(ratio_or_env)))),
 		  ratio_or_env, 1, S_src_channel, "a number, an envelope, or a CLM env generator");
   ASSERT_SAMPLE_TYPE(S_src_channel, beg_n, 2);
   ASSERT_SAMPLE_TYPE(S_src_channel, dur_n, 3);
@@ -5688,7 +5688,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
       check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), &error);
       if (error != SRC_ENV_NO_ERROR)
 	{
-	  XEN data;
+	  Xen data;
 
 	  data = mus_array_to_list(mus_data(egen), 0, mus_env_breakpoints(egen) * 2);
 	  if (need_free) 
@@ -5712,7 +5712,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   if (need_free) mus_free(egen);
   if (errmsg)
     {
-      XEN err;
+      Xen err;
       err = C_string_to_Xen_string(errmsg);
       free(errmsg);
       Xen_error(Xen_make_error_type((clm_err) ? "mus-error" : "IO-error"),
@@ -5727,7 +5727,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   static bool isinf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
 #endif
 
-static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, const char *caller, bool over_selection)
+static Xen g_src_1(Xen ratio_or_env, Xen ebase, Xen snd, Xen chn_n, Xen edpos, const char *caller, bool over_selection)
 {
   chan_info *cp;
 
@@ -5764,7 +5764,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	  e_ratio = check_src_envelope(e->pts, e->data, &error);
 	  if (error != SRC_ENV_NO_ERROR)
 	    {
-	      XEN data;
+	      Xen data;
 	      data = mus_array_to_list(e->data, 0, e->pts * 2);
 	      free_env(e);
 	      if (error == SRC_ENV_HIT_ZERO)
@@ -5781,13 +5781,13 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	{
 	  mus_any *egen;
 	  Xen_check_type(mus_is_xen(ratio_or_env), ratio_or_env, 1, caller, "a number, list, or env generator");
-	  egen = XEN_TO_MUS_ANY(ratio_or_env);
+	  egen = Xen_to_mus_any(ratio_or_env);
 	  Xen_check_type(mus_is_env(egen), ratio_or_env, 1, caller, "a number, list, or env generator");
 
 	  check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), &error);
 	  if (error != SRC_ENV_NO_ERROR)
 	    {
-	      XEN data;
+	      Xen data;
 	      data = mus_array_to_list(mus_data(egen), 0, mus_env_breakpoints(egen) * 2);
 	      if (error == SRC_ENV_HIT_ZERO)
 		Xen_out_of_range_error(S_src_channel, 1, data, "envelope hits 0.0");
@@ -5804,7 +5804,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 }
 
 
-static XEN g_src_sound(XEN ratio_or_env, XEN base, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_src_sound(Xen ratio_or_env, Xen base, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_src_sound "(" S_src_sound " ratio-or-env :optional (base 1.0) snd chn edpos): \
 sampling-rate convert snd's channel chn by ratio, or following an envelope. A negative ratio reverses the sound"
@@ -5813,7 +5813,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope. A ne
 }
 
 
-static XEN g_src_selection(XEN ratio_or_env, XEN base)
+static Xen g_src_selection(Xen ratio_or_env, Xen base)
 {
   #define H_src_selection "(" S_src_selection " ratio-or-env :optional (base 1.0)): \
 sampling-rate convert the currently selected data by ratio (which can be an envelope)"
@@ -5824,7 +5824,7 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
 }
 
 
-static XEN g_filter_channel(XEN e, XEN order, XEN beg, XEN dur, XEN snd, XEN chn_n, XEN edpos, XEN truncate, XEN origin)
+static Xen g_filter_channel(Xen e, Xen order, Xen beg, Xen dur, Xen snd, Xen chn_n, Xen edpos, Xen truncate, Xen origin)
 {
   #define H_filter_channel "(" S_filter_channel " env :optional order beg dur snd chn edpos (truncate " PROC_TRUE ") origin): \
 applies an FIR filter to snd's channel chn. 'env' is the frequency response envelope, or a vct with the coefficients."
@@ -5883,7 +5883,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   if (e_1) free_env(e_1);
   if (errstr)
     {
-      XEN str;
+      Xen str;
       str = C_string_to_Xen_string(errstr);
       free(errstr);
       Xen_error(Xen_make_error_type("IO-error"),
@@ -5894,7 +5894,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
 }
 
 
-static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const char *caller, const char *origin, bool over_selection, bool truncate)
+static Xen g_filter_1(Xen e, Xen order, Xen snd, Xen chn_n, Xen edpos, const char *caller, const char *origin, bool over_selection, bool truncate)
 {
   chan_info *cp;
   ASSERT_CHANNEL(caller, snd, chn_n, 3);
@@ -5904,10 +5904,10 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
     {
       char *error;
       bool clm_err = false;
-      error = apply_filter_or_error(cp, 0, NULL, caller, origin, over_selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5, truncate, &clm_err);
+      error = apply_filter_or_error(cp, 0, NULL, caller, origin, over_selection, NULL, Xen_to_mus_any(e), edpos, 5, truncate, &clm_err);
       if (error)
 	{
-	  XEN errstr;
+	  Xen errstr;
 	  errstr = C_string_to_Xen_string(error);
 	  free(error);
 	  Xen_error(Xen_make_error_type((clm_err) ? "mus-error" : "IO-error"),
@@ -5987,7 +5987,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 }
 
 
-static XEN g_filter_sound(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, XEN origin)
+static Xen g_filter_sound(Xen e, Xen order, Xen snd, Xen chn_n, Xen edpos, Xen origin)
 {
   #define H_filter_sound "(" S_filter_sound " filter :optional order snd chn edpos origin): \
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct with the actual coefficients"
@@ -5999,7 +5999,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 }
 
 
-static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
+static Xen g_filter_selection(Xen e, Xen order, Xen truncate)
 {
   #define H_filter_selection "(" S_filter_selection " filter :optional order (truncate " PROC_TRUE ")): apply filter to selection. If truncate, \
 cut off filter output at end of selection, else mix"
@@ -6014,9 +6014,9 @@ cut off filter output at end of selection, else mix"
 }
 
 
-static XEN g_sinc_width(void) {return(C_int_to_Xen_integer(sinc_width(ss)));}
+static Xen g_sinc_width(void) {return(C_int_to_Xen_integer(sinc_width(ss)));}
 
-static XEN g_set_sinc_width(XEN val) 
+static Xen g_set_sinc_width(Xen val) 
 {
   #define H_sinc_width "(" S_sinc_width "): sampling rate conversion sinc width (10). \
 The higher this number, the better the src low-pass filter, but the slower \
@@ -6040,7 +6040,7 @@ frequency whistles leaking through."
 
 #define S_find_min_peak_phases "find-min-peak-phases"
 
-static XEN g_find_min_peak_phases(XEN arglist)
+static Xen g_find_min_peak_phases(Xen arglist)
 {
   #define H_find_min_peak_phases "(" S_find_min_peak_phases " dist vcts...) returns a vector of (sample-wise) offsets \
 that give a minimum peak amplitude when the signals are added together."
@@ -6104,7 +6104,7 @@ that give a minimum peak amplitude when the signals are added together."
 
   int i;
   mus_float_t cmax;
-  XEN result = Xen_empty_list;
+  Xen result = Xen_empty_list;
 
   n = (Xen_list_length(arglist) - 1);
   if (n < 2) return(Xen_list_1(Xen_integer_zero));
@@ -6370,7 +6370,7 @@ typedef struct {
 
 #define S_fpsap "fpsap"
 
-static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_increment)
+static Xen g_fpsap(Xen x_choice, Xen x_n, Xen start_phases, Xen x_size, Xen x_increment)
 {
   #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
@@ -6853,7 +6853,7 @@ static s7_pointer g_phases_get_peak(s7_scheme *sc, s7_pointer args)
 }
 
 
-static XEN g_fpsap_1(XEN x_choice, XEN x_n, XEN start_phases, XEN x_amps, XEN x_size, XEN x_increment)
+static Xen g_fpsap_1(Xen x_choice, Xen x_n, Xen start_phases, Xen x_amps, Xen x_size, Xen x_increment)
 {
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0

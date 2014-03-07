@@ -141,7 +141,7 @@ static void main_snd_help(const char *subject, ...)
 
 static char *xm_version(void)
 {
-  XEN xm_val = Xen_false;
+  Xen xm_val = Xen_false;
 
 #if HAVE_SCHEME
   #if USE_MOTIF
@@ -192,7 +192,7 @@ void Init_libgl(void);
 
 static char *gl_version(void)
 {
-  XEN gl_val = Xen_false;
+  Xen gl_val = Xen_false;
   Init_libgl(); /* define the version string, if ./snd --version */
 
 #if HAVE_SCHEME
@@ -1387,7 +1387,7 @@ static void show_key_help(int key, int state, bool cx, char *help)
 }
 
 
-static bool find_unbuckified_keys(int key, int state, bool cx, XEN func)
+static bool find_unbuckified_keys(int key, int state, bool cx, Xen func)
 {
   if ((key > 256) && (state == 0) && (!cx) && (Xen_is_bound(func)))
     show_key_help(key, state, cx, key_description(key, state, cx));
@@ -1395,7 +1395,7 @@ static bool find_unbuckified_keys(int key, int state, bool cx, XEN func)
 }
 
 
-static bool find_buckified_keys(int key, int state, bool cx, XEN func)
+static bool find_buckified_keys(int key, int state, bool cx, Xen func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (!cx) && (Xen_is_bound(func)))
     show_key_help(key, state, cx, key_description(key, state, cx));
@@ -1403,7 +1403,7 @@ static bool find_buckified_keys(int key, int state, bool cx, XEN func)
 }
 
 
-static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func)
+static bool find_unbuckified_cx_keys(int key, int state, bool cx, Xen func)
 {
   if ((key > 256) && (state == 0) && (cx) && (Xen_is_bound(func)))
     show_key_help(key, state, cx, key_description(key, state, cx));
@@ -1411,7 +1411,7 @@ static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func)
 }
 
 
-static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func)
+static bool find_buckified_cx_keys(int key, int state, bool cx, Xen func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (cx) && (Xen_is_bound(func)))
     show_key_help(key, state, cx, key_description(key, state, cx));
@@ -1419,7 +1419,7 @@ static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func)
 }
 
 
-static bool find_leftover_keys(int key, int state, bool cx, XEN func)
+static bool find_leftover_keys(int key, int state, bool cx, Xen func)
 {
   if ((key > 256) && (state & snd_MetaMask))
     show_key_help(key, state, cx, key_description(key, state, cx));
@@ -2988,7 +2988,7 @@ static char *snd_finder(const char *name, bool got_help)
   char *fgrep = NULL, *tempfile = NULL, *command = NULL;
   bool is_defined = false;
   int a_def = 0, dir_len = 0, i;
-  XEN dirs = Xen_empty_list;
+  Xen dirs = Xen_empty_list;
 
 #if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
   #define NUM_DEFINES 7
@@ -3428,22 +3428,22 @@ void name_to_html_viewer(const char *red_text)
 }
 
 
-static XEN output_comment_hook;
+static Xen output_comment_hook;
 
 char *output_comment(file_info *hdr)
 {
-  XEN hook;
+  Xen hook;
   hook = output_comment_hook;
   if (Xen_hook_has_list(hook))
     {
-      XEN result;
+      Xen result;
       result = C_string_to_Xen_string((hdr) ? hdr->comment : NULL);
 
 #if HAVE_SCHEME
       result = s7_call(s7, hook, s7_cons(s7, result, s7_nil(s7)));
 #else		
       {
-	XEN procs;
+	Xen procs;
 	procs = Xen_hook_list(hook);
 	while (!Xen_is_null(procs))
 	  {
@@ -3459,9 +3459,9 @@ char *output_comment(file_info *hdr)
 }
 
 
-static XEN help_hook;
+static Xen help_hook;
 
-XEN g_snd_help_with_search(XEN text, int widget_wid, bool search)
+Xen g_snd_help_with_search(Xen text, int widget_wid, bool search)
 {
   /* snd-help but no search for misspelled name if search=false */
 
@@ -3532,7 +3532,7 @@ and its value is returned."
 
 #if HAVE_SCHEME
   {
-    XEN sym = Xen_false;
+    Xen sym = Xen_false;
     if (Xen_is_string(text))
       {
 	subject = (char *)Xen_string_to_C_string(text);
@@ -3632,15 +3632,15 @@ and its value is returned."
 	}
       if (str)
 	{
-	  XEN help_text = Xen_false;  /* so that we can free "str" */
+	  Xen help_text = Xen_false;  /* so that we can free "str" */
 	  char *new_str = NULL;
 	  if (subject)
 	    {
-	      XEN hook;
+	      Xen hook;
 	      hook = help_hook;
 	      if (Xen_hook_has_list(hook))
 		{
-		  XEN result, subj;
+		  Xen result, subj;
 
 		  result = C_string_to_Xen_string(str);
 		  subj = C_string_to_Xen_string(subject);
@@ -3649,7 +3649,7 @@ and its value is returned."
 		  result = s7_call(s7, hook, s7_cons(s7, subj, s7_cons(s7, result, s7_nil(s7))));
 #else		       
 		  {
-		    XEN procs;
+		    Xen procs;
 		    procs = Xen_hook_list(hook);
 		    while (!Xen_is_null(procs))
 		      {
@@ -3691,13 +3691,13 @@ and its value is returned."
 }
 
 
-XEN g_snd_help(XEN text, int widget_wid)
+Xen g_snd_help(Xen text, int widget_wid)
 {
   return(g_snd_help_with_search(text, widget_wid, true));
 }
 
 
-static XEN g_listener_help(XEN arg, XEN formatted)
+static Xen g_listener_help(Xen arg, Xen formatted)
 {
   Xen_check_type(Xen_is_boolean_or_unbound(formatted), formatted, 2, S_snd_help, "a boolean");
   if (Xen_is_false(formatted))
@@ -3713,14 +3713,14 @@ void set_html_dir(char *new_dir)
 }
 
 
-static XEN g_html_dir(void) 
+static Xen g_html_dir(void) 
 {
   #define H_html_dir "(" S_html_dir "): location of Snd documentation"
   return(C_string_to_Xen_string(html_dir(ss)));
 }
 
 
-static XEN g_set_html_dir(XEN val) 
+static Xen g_set_html_dir(Xen val) 
 {
   Xen_check_type(Xen_is_string(val), val, 1, S_setB S_html_dir, "a string");
   set_html_dir(mus_strdup(Xen_string_to_C_string(val))); 
@@ -3728,14 +3728,14 @@ static XEN g_set_html_dir(XEN val)
 }
 
 
-static XEN g_html_program(void) 
+static Xen g_html_program(void) 
 {
   #define H_html_program "(" S_html_program "): name of documentation reader (mozilla, by default)"
   return(C_string_to_Xen_string(html_program(ss)));
 }
 
 
-static XEN g_set_html_program(XEN val) 
+static Xen g_set_html_program(Xen val) 
 {
   Xen_check_type(Xen_is_string(val), val, 1, S_setB S_html_program, "a string");
   if (html_program(ss)) free(html_program(ss));
@@ -3744,7 +3744,7 @@ static XEN g_set_html_program(XEN val)
 }
 
 
-static XEN g_snd_url(XEN name)
+static Xen g_snd_url(Xen name)
 {
   #define H_snd_url "(" S_snd_url " name): url corresponding to 'name'"
   /* given Snd entity ('open-sound) as symbol or string return associated url */
@@ -3755,10 +3755,10 @@ static XEN g_snd_url(XEN name)
 }
 
 
-static XEN g_snd_urls(void)
+static Xen g_snd_urls(void)
 {
   #define H_snd_urls "(" S_snd_urls "): list of all snd names with the associated url (a list of lists)"
-  XEN lst = Xen_empty_list;
+  Xen lst = Xen_empty_list;
 #if HAVE_EXTENSION_LANGUAGE
   int i;
   for (i = 0; i < HELP_NAMES_SIZE; i++)
@@ -3772,7 +3772,7 @@ static XEN g_snd_urls(void)
 
 static const char **refs = NULL, **urls = NULL;
 
-static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
+static Xen g_help_dialog(Xen subject, Xen msg, Xen xrefs, Xen xurls)
 {
   #define H_help_dialog "(" S_help_dialog " subject message xrefs urls): start the Help window with subject and message"
 
@@ -3805,13 +3805,13 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 	    if (Xen_is_string(Xen_list_ref(xurls, i)))
 	      urls[i] = Xen_string_to_C_string(Xen_list_ref(xurls, i));
 	}
-      return(XEN_WRAP_WIDGET(snd_help_with_xrefs(Xen_string_to_C_string(subject),
+      return(Xen_wrap_widget(snd_help_with_xrefs(Xen_string_to_C_string(subject),
 						 Xen_string_to_C_string(msg), 
 						 WITH_WORD_WRAP,
 						 refs,
 						 urls)));
     }
-  return(XEN_WRAP_WIDGET(snd_help(Xen_string_to_C_string(subject), 
+  return(Xen_wrap_widget(snd_help(Xen_string_to_C_string(subject), 
 				  Xen_string_to_C_string(msg), 
 				  WITH_WORD_WRAP)));
 }

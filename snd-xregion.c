@@ -335,7 +335,7 @@ static void region_play_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static XEN reflect_file_in_region_browser(XEN hook_or_reason)
+static Xen reflect_file_in_region_browser(Xen hook_or_reason)
 {
   if (region_dialog)
     {
@@ -760,12 +760,12 @@ int region_dialog_region(void)
 }
 
 
-static XEN g_view_regions_dialog(void) 
+static Xen g_view_regions_dialog(void) 
 {
   #define H_view_regions_dialog "(" S_view_regions_dialog "): start the region dialog"
   if (snd_regions() > 0) 
     view_region_callback(MAIN_PANE(ss), NULL, NULL);
-  return(XEN_WRAP_WIDGET(region_dialog));
+  return(Xen_wrap_widget(region_dialog));
 }
 
 

@@ -63,7 +63,7 @@
 	(glClearDepth 1.0)
 	(glClearColor 1.0 1.0 1.0 1.0) ; todo: bg color here
 	(glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-	;;gl_spectrogram(XEN data, XEN gl_list, XEN cutoff, XEN use_dB, XEN min_dB, XEN scale, XEN br, XEN bg, XEN bb)
+	;;gl_spectrogram(Xen data, Xen gl_list, Xen cutoff, Xen use_dB, Xen min_dB, Xen scale, Xen br, Xen bg, Xen bb)
 	(glSpectrogram data gl-list cutoff #f -60.0 scaler 65535 65535 65535)
 	(let ((vals (XtVaGetValues drawer (list XmNwidth 0 XmNheight 0))))
 	  (glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))

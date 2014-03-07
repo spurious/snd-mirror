@@ -765,7 +765,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
  * 30-July:    renamed average to moving_average.
  * 28-July:    renamed make_ppolar and make_zpolar to make_two_pole|zero_from_radius_and_frequency.
  *             added mus_scaler and mus_frequency methods for two_pole and two_zero.
- * 21-July:    removed mus_wrapper field -- old way can't work since we need the original XEN object.
+ * 21-July:    removed mus_wrapper field -- old way can't work since we need the original Xen object.
  * 3-July:     mus_move_sound (dlocsig) generator.
  *             changed return type of mus_locsig to float.
  * 28-June:    mus_filtered_comb generator.

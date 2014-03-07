@@ -60,10 +60,10 @@ static int completions(const char *text)
 
 
 #if HAVE_RUBY
-static XEN snd_rb_methods(void)
+static Xen snd_rb_methods(void)
 {
   /* returns all the functions we defined */
-  XEN argv[1];
+  Xen argv[1];
   argv[0] = Xen_true;
   return(rb_class_private_instance_methods(1, argv, rb_mKernel));
   /* rb_ary_new here -- should we free? */
@@ -72,7 +72,7 @@ static XEN snd_rb_methods(void)
 
 static int completions(const char *text)
 {
-  XEN tab;
+  Xen tab;
   int i, n, len, matches = 0;
 
   tab = snd_rb_methods();
@@ -82,7 +82,7 @@ static int completions(const char *text)
   for (i = 0; i < n; ++i)
     {
       char *sym;
-      XEN handle;
+      Xen handle;
 
       handle = Xen_vector_ref(tab, i);
       sym = Xen_object_to_C_string(handle);
@@ -117,7 +117,7 @@ static int completions(const char *text)
 #if HAVE_FORTH
 static int completions(const char *text)
 {
-  XEN tab = fth_find_in_wordlist(text);
+  Xen tab = fth_find_in_wordlist(text);
   int i, matches = Xen_vector_length(tab);
 
   for (i = 0; i < matches; i++)

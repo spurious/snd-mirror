@@ -4,9 +4,9 @@ typedef struct {
   int size;
   char *name;
   rgb_t *r, *g, *b;
-  XEN lambda;
+  Xen lambda;
   int gc_loc;
-  mus_float_t **(*make_rgb)(int size, XEN func);
+  mus_float_t **(*make_rgb)(int size, Xen func);
   void (*get_rgb)(float x, rgb_t *r, rgb_t *g, rgb_t *b);
 } cmap;
 
@@ -179,7 +179,7 @@ static cmap *new_cmap(const char *name, int size, mus_float_t **rgb)
 
 
 static cmap *make_builtin_cmap(int size, const char *name, 
-			       mus_float_t **(*make_rgb)(int size, XEN ignored),
+			       mus_float_t **(*make_rgb)(int size, Xen ignored),
 			       void (*get_rgb)(float x, rgb_t *r, rgb_t *g, rgb_t *b))
 {
   mus_float_t **rgb = NULL;
@@ -219,9 +219,9 @@ static void add_colormap_func_error(const char *msg, void *data)
 }
 
 
-static mus_float_t **make_xen_colormap(int size, XEN lambda)
+static mus_float_t **make_xen_colormap(int size, Xen lambda)
 {
-  XEN xrgb;
+  Xen xrgb;
   mus_float_t **rgb = NULL;
   add_colormap_func_hit_error = false;
   redirect_xen_error_to(add_colormap_func_error, NULL);
@@ -231,7 +231,7 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
   redirect_xen_error_to(NULL, NULL);
   if (add_colormap_func_hit_error)
     {
-      XEN str;
+      Xen str;
       if (add_colormap_func_error_msg)
 	{
 	  str = C_string_to_Xen_string(add_colormap_func_error_msg);
@@ -289,7 +289,7 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
 }
 
 
-static int add_colormap(const char *name, XEN func)
+static int add_colormap(const char *name, Xen func)
 {
   cmap *c;
   mus_float_t **rgb;
@@ -320,7 +320,7 @@ static int add_colormap(const char *name, XEN func)
 }
 
 
-static mus_float_t **make_black_and_white_colormap(int size, XEN ignored)
+static mus_float_t **make_black_and_white_colormap(int size, Xen ignored)
 {
   /* (r 0) (g 0) (b 0) */
   return(make_base_rgb(size));
@@ -341,7 +341,7 @@ static void black_and_white_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 
 /* colormap functions taken mostly from (GPL) octave-forge code written by Kai Habel <kai.habel@gmx.de> */
 
-static mus_float_t **make_gray_colormap(int size, XEN ignored)
+static mus_float_t **make_gray_colormap(int size, Xen ignored)
 {
   /* (r x) (g x) (b x) */
   mus_float_t **rgb;
@@ -371,7 +371,7 @@ static void gray_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_autumn_colormap(int size, XEN ignored)
+static mus_float_t **make_autumn_colormap(int size, Xen ignored)
 {
   /* (r 1.0) (g x) (b 0.0) */
   mus_float_t **rgb;
@@ -401,7 +401,7 @@ static void autumn_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_spring_colormap(int size, XEN ignored)
+static mus_float_t **make_spring_colormap(int size, Xen ignored)
 {
   /* (r 1.0) (g x) (b (- 1.0 x)) */
   mus_float_t **rgb;
@@ -431,7 +431,7 @@ static void spring_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_winter_colormap(int size, XEN ignored)
+static mus_float_t **make_winter_colormap(int size, Xen ignored)
 {
   /* (r 0.0) (g x) (b (- 1.0 (/ x 2))) */
   mus_float_t **rgb;
@@ -461,7 +461,7 @@ static void winter_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_summer_colormap(int size, XEN ignored)
+static mus_float_t **make_summer_colormap(int size, Xen ignored)
 {
   /* (r x) (g (+ 0.5 (/ x 2))) (b 0.4) */
   mus_float_t **rgb;
@@ -491,7 +491,7 @@ static void summer_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_cool_colormap(int size, XEN ignored)
+static mus_float_t **make_cool_colormap(int size, Xen ignored)
 {
   /* (r x) (g (- 1.0 x)) (b 1.0) */
   mus_float_t **rgb;
@@ -521,7 +521,7 @@ static void cool_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_copper_colormap(int size, XEN ignored)
+static mus_float_t **make_copper_colormap(int size, Xen ignored)
 {
   /* (r (if (< x 4/5) (* 5/4 x) 1.0)) (g (* 4/5 x)) (b (* 1/2 x)) */
   mus_float_t **rgb;
@@ -551,7 +551,7 @@ static void copper_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_flag_colormap(int size, XEN ignored)
+static mus_float_t **make_flag_colormap(int size, Xen ignored)
 {
   /* (r (if (or (= k 0) (= k 1)) 1.0 0.0)) (g (if (= k 1) 1.0 0.0)) (b (if (or (= k 1) (= k 2)) 1.0 0.0)) */
   mus_float_t **rgb;
@@ -583,7 +583,7 @@ static void flag_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_prism_colormap(int size, XEN ignored)
+static mus_float_t **make_prism_colormap(int size, Xen ignored)
 {
   /* (r (list-ref (list 1 1 1 0 0 2/3) k)) (g (list-ref (list 0 1/2 1 1 0 0) k)) (b (list-ref (list 0 0 0 0 1 1) k)) */
   mus_float_t **rgb;
@@ -622,7 +622,7 @@ static void prism_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_bone_colormap(int size, XEN ignored)
+static mus_float_t **make_bone_colormap(int size, Xen ignored)
 {
   /* (r (if (< x 3/4) (* 7/8 x) (- (* 11/8 x) 3/8)))
      (g (if (< x 3/8) (* 7/8 x) (if (< x 3/4) (- (* 29/24 x) 1/8) (+ (* 7/8 x) 1/8))))
@@ -655,7 +655,7 @@ static void bone_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_hot_colormap(int size, XEN ignored)
+static mus_float_t **make_hot_colormap(int size, Xen ignored)
 {
   /* (mimicking matlab here, not octave)
      (r (if (< x 3/8) (* 8/3 x) 1.0))
@@ -689,7 +689,7 @@ static void hot_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_jet_colormap(int size, XEN ignored)
+static mus_float_t **make_jet_colormap(int size, Xen ignored)
 {
   /* 
      (r (if (< x 3/8) 0.0 (if (< x 5/8) (- (* 4 x) 3/2) (if (< x 7/8) 1.0 (+ (* -4 x) 9/2)))))
@@ -723,7 +723,7 @@ static void jet_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_pink_colormap(int size, XEN ignored)
+static mus_float_t **make_pink_colormap(int size, Xen ignored)
 {
   /* matlab uses log here, or something like that -- this version is quite different
      (r (if (< x 3/8) (* 14/9 x) (+ (* 2/3 x) 1/3)))
@@ -757,7 +757,7 @@ static void pink_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_rainbow_colormap(int size, XEN ignored)
+static mus_float_t **make_rainbow_colormap(int size, Xen ignored)
 {
   /* 
      (r (if (< x 2/5) 1.0 (if (< x 3/5) (+ (* -5 x) 3) (if (< x 4/5) 0.0 (- (* 10/3 x) 8/3)))))
@@ -791,7 +791,7 @@ static void rainbow_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static mus_float_t **make_phases_colormap(int size, XEN ignored)
+static mus_float_t **make_phases_colormap(int size, Xen ignored)
 {
   /* 0 and pi: blue->green, pi/2 and 3pi/2: red->black */
   mus_float_t **rgb;
@@ -884,21 +884,21 @@ typedef struct {
 } xen_colormap;
 
 
-#define XEN_TO_XEN_COLORMAP(arg) ((xen_colormap *)Xen_object_ref(arg))
+#define Xen_to_xen_colormap(arg) ((xen_colormap *)Xen_object_ref(arg))
 
-static int xen_colormap_to_int(XEN n)
+static int xen_colormap_to_int(Xen n)
 {
   xen_colormap *col;
-  col = XEN_TO_XEN_COLORMAP(n);
+  col = Xen_to_xen_colormap(n);
   return(col->n);
 }
 
-#define XEN_COLORMAP_TO_C_INT(n) xen_colormap_to_int(n)
+#define Xen_colormap_to_C_int(n) xen_colormap_to_int(n)
 
 
 static Xen_object_type_t xen_colormap_tag;
 
-static bool xen_is_colormap(XEN obj) 
+static bool xen_is_colormap(Xen obj) 
 {
   return(Xen_c_object_is_type(obj, xen_colormap_tag));
 }
@@ -911,11 +911,11 @@ Xen_wrap_free(xen_colormap, free_xen_colormap, xen_colormap_free)
 
 static char *xen_colormap_to_string(xen_colormap *v)
 {
-  #define xen_is_colormapRINT_BUFFER_SIZE 64
+  #define COLORMAP_PRINT_BUFFER_SIZE 64
   char *buf;
   if (v == NULL) return(NULL);
-  buf = (char *)calloc(xen_is_colormapRINT_BUFFER_SIZE, sizeof(char));
-  snprintf(buf, xen_is_colormapRINT_BUFFER_SIZE, "#<colormap %s>", colormap_name(v->n));
+  buf = (char *)calloc(COLORMAP_PRINT_BUFFER_SIZE, sizeof(char));
+  snprintf(buf, COLORMAP_PRINT_BUFFER_SIZE, "#<colormap %s>", colormap_name(v->n));
   return(buf);
 }
 
@@ -923,15 +923,15 @@ Xen_wrap_print(xen_colormap, print_xen_colormap, xen_colormap_to_string)
 
 
 #if HAVE_FORTH || HAVE_RUBY
-static XEN g_xen_colormap_to_string(XEN obj)
+static Xen g_xen_colormap_to_string(Xen obj)
 {
   char *vstr;
-  XEN result;
+  Xen result;
   #define S_xen_colormap_to_string "colormap->string"
 
   Xen_check_type(xen_is_colormap(obj), obj, 1, S_xen_colormap_to_string, "a colormap");
 
-  vstr = xen_colormap_to_string(XEN_TO_XEN_COLORMAP(obj));
+  vstr = xen_colormap_to_string(Xen_to_xen_colormap(obj));
   result = C_string_to_Xen_string(vstr);
   free(vstr);
   return(result);
@@ -946,10 +946,10 @@ static bool xen_colormap_equalp(xen_colormap *v1, xen_colormap *v2)
 	 (v1->n == v2->n));
 }
 
-static XEN equalp_xen_colormap(XEN obj1, XEN obj2)
+static Xen equalp_xen_colormap(Xen obj1, Xen obj2)
 {
   if ((!(xen_is_colormap(obj1))) || (!(xen_is_colormap(obj2)))) return(Xen_false);
-  return(C_bool_to_Xen_boolean(xen_colormap_equalp(XEN_TO_XEN_COLORMAP(obj1), XEN_TO_XEN_COLORMAP(obj2))));
+  return(C_bool_to_Xen_boolean(xen_colormap_equalp(Xen_to_xen_colormap(obj1), Xen_to_xen_colormap(obj2))));
 }
 #endif
 
@@ -963,7 +963,7 @@ static xen_colormap *xen_colormap_make(int n)
 }
 
 
-static XEN new_xen_colormap(int n)
+static Xen new_xen_colormap(int n)
 {
   xen_colormap *mx;
   if (n < 0)
@@ -973,7 +973,7 @@ static XEN new_xen_colormap(int n)
   return(Xen_make_object(xen_colormap_tag, mx, 0, free_xen_colormap));
 }
 
-#define C_INT_TO_XEN_COLORMAP(Val) new_xen_colormap(Val)
+#define C_int_to_Xen_colormap(Val) new_xen_colormap(Val)
 
 
 #if HAVE_SCHEME
@@ -984,14 +984,14 @@ static bool s7_xen_colormap_equalp(void *obj1, void *obj2)
 }
 
 
-static XEN s7_xen_colormap_length(s7_scheme *sc, XEN obj)
+static Xen s7_xen_colormap_length(s7_scheme *sc, Xen obj)
 {
   return(C_int_to_Xen_integer(color_map_size(ss)));
 }
 
 
-static XEN g_colormap_ref(XEN map, XEN pos);
-static XEN s7_colormap_apply(s7_scheme *sc, XEN obj, XEN args)
+static Xen g_colormap_ref(Xen map, Xen pos);
+static Xen s7_colormap_apply(s7_scheme *sc, Xen obj, Xen args)
 {
   return(g_colormap_ref(obj, Xen_car(args)));
 }
@@ -1019,17 +1019,17 @@ static void init_xen_colormap(void)
 #endif
 
 #if HAVE_RUBY
-  rb_define_method(xen_colormap_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_colormap, 0);
-  rb_define_method(xen_colormap_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_colormap, 1);
-  rb_define_method(xen_colormap_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_colormap, 1);
-  rb_define_method(xen_colormap_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_colormap_to_string, 0);
+  rb_define_method(xen_colormap_tag, "to_s",     Xen_procedure_cast print_xen_colormap, 0);
+  rb_define_method(xen_colormap_tag, "eql?",     Xen_procedure_cast equalp_xen_colormap, 1);
+  rb_define_method(xen_colormap_tag, "==",       Xen_procedure_cast equalp_xen_colormap, 1);
+  rb_define_method(xen_colormap_tag, "to_str",   Xen_procedure_cast g_xen_colormap_to_string, 0);
 #endif
 }
 
 
 /* -------------------------------------------------------------------------------- */
 
-static XEN g_integer_to_colormap(XEN n)
+static Xen g_integer_to_colormap(Xen n)
 {
   #define H_integer_to_colormap "(" S_integer_to_colormap " n) returns a colormap object corresponding to the given integer"
   Xen_check_type(Xen_is_integer(n), n, 1, S_integer_to_colormap, "an integer");
@@ -1037,7 +1037,7 @@ static XEN g_integer_to_colormap(XEN n)
 }
 
 
-static XEN g_colormap_to_integer(XEN n)
+static Xen g_colormap_to_integer(Xen n)
 {
   #define H_colormap_to_integer "(" S_colormap_to_integer " id) returns the integer corresponding to the given colormap"
   Xen_check_type(xen_is_colormap(n), n, 1, S_colormap_to_integer, "a colormap");
@@ -1046,7 +1046,7 @@ static XEN g_colormap_to_integer(XEN n)
 
 
 
-static XEN g_colormap_ref(XEN map, XEN pos)
+static Xen g_colormap_ref(Xen map, Xen pos)
 {
   int index;
   mus_float_t x;
@@ -1057,7 +1057,7 @@ static XEN g_colormap_ref(XEN map, XEN pos)
   Xen_check_type(xen_is_colormap(map), map, 1, S_colormap_ref, "a colormap object");
   Xen_check_type(Xen_is_number(pos), pos, 2, S_colormap_ref, "a number between 0.0 and 1.0");
 
-  index = XEN_COLORMAP_TO_C_INT(map);
+  index = Xen_colormap_to_C_int(map);
   if (!(is_colormap(index)))
     Xen_error(NO_SUCH_COLORMAP,
 	      Xen_list_2(C_string_to_Xen_string(S_colormap_ref ": no such colormap: ~A"),
@@ -1076,19 +1076,19 @@ static XEN g_colormap_ref(XEN map, XEN pos)
 /* can't use Colormap -- it's the X type name */
 
 
-static XEN g_colormap(void) 
+static Xen g_colormap(void) 
 {
   #define H_colormap "(" S_colormap "): current colormap choice."
-  return(C_INT_TO_XEN_COLORMAP(color_map(ss)));
+  return(C_int_to_Xen_colormap(color_map(ss)));
 }
 
-static XEN g_set_colormap(XEN val) 
+static Xen g_set_colormap(Xen val) 
 {
   int index;
 
   Xen_check_type(xen_is_colormap(val), val, 1, S_setB S_colormap, "a colormap"); 
 
-  index = XEN_COLORMAP_TO_C_INT(val);
+  index = Xen_colormap_to_C_int(val);
   if (!(is_colormap(index)))
     Xen_error(NO_SUCH_COLORMAP,
 	      Xen_list_2(C_string_to_Xen_string(S_colormap ": no such colormap: ~A"),
@@ -1099,9 +1099,9 @@ static XEN g_set_colormap(XEN val)
 }
 
 
-static XEN g_colormap_size(void) {return(C_int_to_Xen_integer(color_map_size(ss)));}
+static Xen g_colormap_size(void) {return(C_int_to_Xen_integer(color_map_size(ss)));}
 
-static XEN g_set_colormap_size(XEN val) 
+static Xen g_set_colormap_size(Xen val) 
 {
   int size;
   #define H_colormap_size "(" S_colormap_size "): current colormap size; default is 512."
@@ -1121,14 +1121,14 @@ static XEN g_set_colormap_size(XEN val)
 }
 
 
-static XEN g_colormap_name(XEN col)
+static Xen g_colormap_name(Xen col)
 {
   int map;
   #define H_colormap_name "(" S_colormap_name " colormap) returns the colormap's name (used in the Color/Orientation dialog)."
 
   Xen_check_type(xen_is_colormap(col), col, 1, S_colormap_name, "a colormap"); 
 
-  map = XEN_COLORMAP_TO_C_INT(col);
+  map = Xen_colormap_to_C_int(col);
   if (!(is_colormap(map)))
     Xen_error(NO_SUCH_COLORMAP,
 	      Xen_list_2(C_string_to_Xen_string(S_colormap_name ": no such colormap: ~A"),
@@ -1138,22 +1138,22 @@ static XEN g_colormap_name(XEN col)
 }
 
 
-static XEN g_is_colormap(XEN obj)
+static Xen g_is_colormap(Xen obj)
 {
   #define H_is_colormap "(" S_is_colormap " obj) -> " PROC_TRUE " if 'obj' is a colormap."
   return(C_bool_to_Xen_boolean(xen_is_colormap(obj) && 
-			  is_colormap(XEN_COLORMAP_TO_C_INT(obj))));
+			  is_colormap(Xen_colormap_to_C_int(obj))));
 }
 
 
-static XEN g_delete_colormap(XEN col)
+static Xen g_delete_colormap(Xen col)
 {
   int map;
   #define H_delete_colormap "(" S_delete_colormap " colormap) frees the specified colormap."
 
   Xen_check_type(xen_is_colormap(col), col, 1, S_delete_colormap, "a colormap"); 
 
-  map = XEN_COLORMAP_TO_C_INT(col);
+  map = Xen_colormap_to_C_int(col);
   if (!(is_colormap(map)))
     Xen_error(NO_SUCH_COLORMAP,
 	      Xen_list_2(C_string_to_Xen_string(S_delete_colormap ": no such colormap: ~A"),
@@ -1169,7 +1169,7 @@ static XEN g_delete_colormap(XEN col)
 
 #include "clm2xen.h"
 
-static XEN g_add_colormap(XEN name, XEN func)
+static Xen g_add_colormap(Xen name, Xen func)
 {
   int index;
   #define H_add_colormap "(" S_add_colormap " name func) adds the colormap created by func to the colormap table, \
@@ -1186,7 +1186,7 @@ returning the new colormap. 'name' is the colormap's name in the View:Color/Orie
   index = add_colormap(Xen_string_to_C_string(name), func);
   reflect_color_list(false);
 
-  return(C_INT_TO_XEN_COLORMAP(index));
+  return(C_int_to_Xen_colormap(index));
 }
 
 
@@ -1203,7 +1203,7 @@ Xen_wrap_1_arg(g_integer_to_colormap_w, g_integer_to_colormap)
 Xen_wrap_1_arg(g_colormap_to_integer_w, g_colormap_to_integer)
 
 #if (!HAVE_SCHEME)
-static XEN colormap_temp[16]; /* static for Ruby's sake */
+static Xen colormap_temp[16]; /* static for Ruby's sake */
 #endif
 
 void g_init_gxcolormaps(void)
@@ -1231,39 +1231,39 @@ void g_init_gxcolormaps(void)
   cmaps[PHASES_COLORMAP] =  make_builtin_cmap(1, "phases",  make_phases_colormap,  phases_rgb); 
 
 #if HAVE_SCHEME
-  s7_define_constant(s7, "black-and-white-colormap", C_INT_TO_XEN_COLORMAP(0));
-  s7_define_constant(s7, "gray-colormap",            C_INT_TO_XEN_COLORMAP(1));
-  s7_define_constant(s7, "hot-colormap",             C_INT_TO_XEN_COLORMAP(2));
-  s7_define_constant(s7, "cool-colormap",            C_INT_TO_XEN_COLORMAP(3));
-  s7_define_constant(s7, "bone-colormap",            C_INT_TO_XEN_COLORMAP(4));
-  s7_define_constant(s7, "copper-colormap",          C_INT_TO_XEN_COLORMAP(5));
-  s7_define_constant(s7, "pink-colormap",            C_INT_TO_XEN_COLORMAP(6));
-  s7_define_constant(s7, "jet-colormap",             C_INT_TO_XEN_COLORMAP(7));
-  s7_define_constant(s7, "prism-colormap",           C_INT_TO_XEN_COLORMAP(8));
-  s7_define_constant(s7, "autumn-colormap",          C_INT_TO_XEN_COLORMAP(9));
-  s7_define_constant(s7, "winter-colormap",          C_INT_TO_XEN_COLORMAP(10));
-  s7_define_constant(s7, "spring-colormap",          C_INT_TO_XEN_COLORMAP(11));
-  s7_define_constant(s7, "summer-colormap",          C_INT_TO_XEN_COLORMAP(12));
-  s7_define_constant(s7, "rainbow-colormap",         C_INT_TO_XEN_COLORMAP(13));
-  s7_define_constant(s7, "flag-colormap",            C_INT_TO_XEN_COLORMAP(14));
-  s7_define_constant(s7, "phases-colormap",          C_INT_TO_XEN_COLORMAP(15));
+  s7_define_constant(s7, "black-and-white-colormap", C_int_to_Xen_colormap(0));
+  s7_define_constant(s7, "gray-colormap",            C_int_to_Xen_colormap(1));
+  s7_define_constant(s7, "hot-colormap",             C_int_to_Xen_colormap(2));
+  s7_define_constant(s7, "cool-colormap",            C_int_to_Xen_colormap(3));
+  s7_define_constant(s7, "bone-colormap",            C_int_to_Xen_colormap(4));
+  s7_define_constant(s7, "copper-colormap",          C_int_to_Xen_colormap(5));
+  s7_define_constant(s7, "pink-colormap",            C_int_to_Xen_colormap(6));
+  s7_define_constant(s7, "jet-colormap",             C_int_to_Xen_colormap(7));
+  s7_define_constant(s7, "prism-colormap",           C_int_to_Xen_colormap(8));
+  s7_define_constant(s7, "autumn-colormap",          C_int_to_Xen_colormap(9));
+  s7_define_constant(s7, "winter-colormap",          C_int_to_Xen_colormap(10));
+  s7_define_constant(s7, "spring-colormap",          C_int_to_Xen_colormap(11));
+  s7_define_constant(s7, "summer-colormap",          C_int_to_Xen_colormap(12));
+  s7_define_constant(s7, "rainbow-colormap",         C_int_to_Xen_colormap(13));
+  s7_define_constant(s7, "flag-colormap",            C_int_to_Xen_colormap(14));
+  s7_define_constant(s7, "phases-colormap",          C_int_to_Xen_colormap(15));
 #else
-  Xen_define_variable("black-and-white-colormap", colormap_temp[0], C_INT_TO_XEN_COLORMAP(0));
-  Xen_define_variable("gray-colormap",            colormap_temp[1], C_INT_TO_XEN_COLORMAP(1));
-  Xen_define_variable("hot-colormap",             colormap_temp[2], C_INT_TO_XEN_COLORMAP(2));
-  Xen_define_variable("cool-colormap",            colormap_temp[3], C_INT_TO_XEN_COLORMAP(3));
-  Xen_define_variable("bone-colormap",            colormap_temp[4], C_INT_TO_XEN_COLORMAP(4));
-  Xen_define_variable("copper-colormap",          colormap_temp[5], C_INT_TO_XEN_COLORMAP(5));
-  Xen_define_variable("pink-colormap",            colormap_temp[6], C_INT_TO_XEN_COLORMAP(6));
-  Xen_define_variable("jet-colormap",             colormap_temp[7], C_INT_TO_XEN_COLORMAP(7));
-  Xen_define_variable("prism-colormap",           colormap_temp[8], C_INT_TO_XEN_COLORMAP(8));
-  Xen_define_variable("autumn-colormap",          colormap_temp[9], C_INT_TO_XEN_COLORMAP(9));
-  Xen_define_variable("winter-colormap",          colormap_temp[10], C_INT_TO_XEN_COLORMAP(10));
-  Xen_define_variable("spring-colormap",          colormap_temp[11], C_INT_TO_XEN_COLORMAP(11));
-  Xen_define_variable("summer-colormap",          colormap_temp[12], C_INT_TO_XEN_COLORMAP(12));
-  Xen_define_variable("rainbow-colormap",         colormap_temp[13], C_INT_TO_XEN_COLORMAP(13));
-  Xen_define_variable("flag-colormap",            colormap_temp[14], C_INT_TO_XEN_COLORMAP(14));
-  Xen_define_variable("phases-colormap",          colormap_temp[15], C_INT_TO_XEN_COLORMAP(15));
+  Xen_define_variable("black-and-white-colormap", colormap_temp[0], C_int_to_Xen_colormap(0));
+  Xen_define_variable("gray-colormap",            colormap_temp[1], C_int_to_Xen_colormap(1));
+  Xen_define_variable("hot-colormap",             colormap_temp[2], C_int_to_Xen_colormap(2));
+  Xen_define_variable("cool-colormap",            colormap_temp[3], C_int_to_Xen_colormap(3));
+  Xen_define_variable("bone-colormap",            colormap_temp[4], C_int_to_Xen_colormap(4));
+  Xen_define_variable("copper-colormap",          colormap_temp[5], C_int_to_Xen_colormap(5));
+  Xen_define_variable("pink-colormap",            colormap_temp[6], C_int_to_Xen_colormap(6));
+  Xen_define_variable("jet-colormap",             colormap_temp[7], C_int_to_Xen_colormap(7));
+  Xen_define_variable("prism-colormap",           colormap_temp[8], C_int_to_Xen_colormap(8));
+  Xen_define_variable("autumn-colormap",          colormap_temp[9], C_int_to_Xen_colormap(9));
+  Xen_define_variable("winter-colormap",          colormap_temp[10], C_int_to_Xen_colormap(10));
+  Xen_define_variable("spring-colormap",          colormap_temp[11], C_int_to_Xen_colormap(11));
+  Xen_define_variable("summer-colormap",          colormap_temp[12], C_int_to_Xen_colormap(12));
+  Xen_define_variable("rainbow-colormap",         colormap_temp[13], C_int_to_Xen_colormap(13));
+  Xen_define_variable("flag-colormap",            colormap_temp[14], C_int_to_Xen_colormap(14));
+  Xen_define_variable("phases-colormap",          colormap_temp[15], C_int_to_Xen_colormap(15));
 #endif
 
   Xen_define_procedure(S_is_colormap, g_is_colormap_w,         1, 0, 0, H_is_colormap);

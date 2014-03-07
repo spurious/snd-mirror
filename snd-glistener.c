@@ -28,9 +28,9 @@ void listener_append_and_prompt(const char *msg)
 }
 
 
-static XEN listener_click_hook; 
-static XEN mouse_enter_listener_hook;
-static XEN mouse_leave_listener_hook;
+static Xen listener_click_hook; 
+static Xen mouse_enter_listener_hook;
+static Xen mouse_leave_listener_hook;
 
 static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
@@ -39,7 +39,7 @@ static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoi
 
   if (Xen_hook_has_list(mouse_enter_listener_hook))
     run_hook(mouse_enter_listener_hook,
-	     Xen_list_1(XEN_WRAP_WIDGET(listener_text)),
+	     Xen_list_1(Xen_wrap_widget(listener_text)),
 	     S_mouse_enter_listener_hook);
   cursor_set_blinks(w, true);
   return(false);
@@ -50,7 +50,7 @@ static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 {
   if (Xen_hook_has_list(mouse_leave_listener_hook))
     run_hook(mouse_leave_listener_hook,
-	     Xen_list_1(XEN_WRAP_WIDGET(listener_text)),
+	     Xen_list_1(Xen_wrap_widget(listener_text)),
 	     S_mouse_leave_listener_hook);
   cursor_set_blinks(w, false);
   return(false);
@@ -611,7 +611,7 @@ void color_listener(color_info *pix)
 {
   ss->listener_color = pix;
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, ss->listener_color_symbol, XEN_WRAP_PIXEL(pix));
+  s7_symbol_set_value(s7, ss->listener_color_symbol, Xen_wrap_pixel(pix));
 #endif
 #if (!HAVE_GTK_3)
   glistener_set_background_color(ss->listener, rgb_to_gdk_color(ss->listener_color));
@@ -625,7 +625,7 @@ void color_listener_text(color_info *pix)
 {
   ss->listener_text_color = pix;
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, ss->listener_text_color_symbol, XEN_WRAP_PIXEL(pix));
+  s7_symbol_set_value(s7, ss->listener_text_color_symbol, Xen_wrap_pixel(pix));
 #endif
 #if (!HAVE_GTK_3)
   glistener_set_text_color(ss->listener, rgb_to_gdk_color(ss->listener_text_color));
@@ -683,10 +683,10 @@ int listener_width(void)
 }
 
 
-static XEN g_listener_selection(void)
+static Xen g_listener_selection(void)
 {
   #define H_listener_selection "(" S_listener_selection "): currently selected text in listener or " PROC_FALSE
-  XEN res = Xen_false;
+  Xen res = Xen_false;
   if (listener_text)
     {
       GtkTextIter start, end;
@@ -712,7 +712,7 @@ void set_listener_text_font(void)
 }
 
 
-static XEN g_reset_listener_cursor(void)
+static Xen g_reset_listener_cursor(void)
 {
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
   if (listener_text)
@@ -748,7 +748,7 @@ int save_listener_text(FILE *fp)
 }
 
 
-static XEN g_goto_listener_end(void)
+static Xen g_goto_listener_end(void)
 {
   #define H_goto_listener_end "(" S_goto_listener_end "): move cursor and scroll to bottom of listener pane"
   if (ss->listener)

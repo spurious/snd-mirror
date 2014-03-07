@@ -113,7 +113,7 @@ static void listener_help_at_cursor(char *buf, int name_curpos, int len, int pro
 
   if (name_end > name_start)
     {
-      XEN help;
+      Xen help;
       char *new_text;
 
       buf[name_end + 1] = '\0';
@@ -546,7 +546,7 @@ static void listener_return(widget_t w, int last_prompt)
   GUI_TEXT_POSITION_TYPE cmd_eot = 0;
   char *str = NULL, *full_str = NULL;
   int i, j;
-  XEN form = Xen_undefined;
+  Xen form = Xen_undefined;
   GUI_TEXT_POSITION_TYPE last_position = 0, current_position = 0;
 
 #if (!HAVE_RUBY && !HAVE_FORTH)
@@ -569,7 +569,7 @@ static void listener_return(widget_t w, int last_prompt)
 #if (!HAVE_SCHEME)
   if (have_read_hook())
     {
-      XEN result;
+      Xen result;
       int len;
       len = last_position - last_prompt;
       if (len > 0)
@@ -1219,7 +1219,7 @@ static void Delete_region(Widget w, XEvent *ev, char **str, Cardinal *num)
 
 
 static XmTextPosition down_pos, last_pos;
-static XEN listener_click_hook; 
+static Xen listener_click_hook; 
 
 static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
@@ -1748,8 +1748,8 @@ void add_completer_to_builtin_textfield(Widget w, int completer)
 
 /* -------- text related widgets -------- */
 
-static XEN mouse_enter_text_hook;
-static XEN mouse_leave_text_hook;
+static Xen mouse_enter_text_hook;
+static Xen mouse_leave_text_hook;
 
 void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
@@ -1758,7 +1758,7 @@ void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boole
 
   if (Xen_hook_has_list(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
-	     Xen_list_1(XEN_WRAP_WIDGET(w)),
+	     Xen_list_1(Xen_wrap_widget(w)),
 	     S_mouse_enter_text_hook);
 }
 
@@ -1767,7 +1767,7 @@ void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boole
 {
   if (Xen_hook_has_list(mouse_leave_text_hook))
     run_hook(mouse_leave_text_hook,
-	     Xen_list_1(XEN_WRAP_WIDGET(w)),
+	     Xen_list_1(Xen_wrap_widget(w)),
 	     S_mouse_leave_text_hook);
 }
 
@@ -1996,8 +1996,8 @@ static void listener_modify_callback(Widget w, XtPointer context, XtPointer info
 }
 
 
-static XEN mouse_enter_listener_hook;
-static XEN mouse_leave_listener_hook;
+static Xen mouse_enter_listener_hook;
+static Xen mouse_leave_listener_hook;
 
 static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
@@ -2006,7 +2006,7 @@ static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, 
 
   if (Xen_hook_has_list(mouse_enter_listener_hook))
     run_hook(mouse_enter_listener_hook,
-	     Xen_list_1(XEN_WRAP_WIDGET(listener_text)), /* not w */
+	     Xen_list_1(Xen_wrap_widget(listener_text)), /* not w */
 	     S_mouse_enter_listener_hook);
 }
 
@@ -2015,7 +2015,7 @@ static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event
 {
   if (Xen_hook_has_list(mouse_leave_listener_hook))
     run_hook(mouse_leave_listener_hook,
-	     Xen_list_1(XEN_WRAP_WIDGET(listener_text)), /* not w */
+	     Xen_list_1(Xen_wrap_widget(listener_text)), /* not w */
 	     S_mouse_leave_listener_hook);
 }
 
@@ -2197,7 +2197,7 @@ void color_listener(Pixel pix)
 {
   ss->listener_color = pix;
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, ss->listener_color_symbol, XEN_WRAP_PIXEL(pix));
+  s7_symbol_set_value(s7, ss->listener_color_symbol, Xen_wrap_pixel(pix));
 #endif
   if (listener_text)
     XmChangeColor(listener_text, pix);
@@ -2208,7 +2208,7 @@ void color_listener_text(Pixel pix)
 {
   ss->listener_text_color = pix;
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, ss->listener_text_color_symbol, XEN_WRAP_PIXEL(pix));
+  s7_symbol_set_value(s7, ss->listener_text_color_symbol, Xen_wrap_pixel(pix));
 #endif
   if (listener_text)
     XtVaSetValues(listener_text, XmNforeground, pix, NULL);
@@ -2294,10 +2294,10 @@ Widget make_pushbutton_widget(const char *name, Widget parent, Arg *args, int n)
 }
 
 
-static XEN g_listener_selection(void)
+static Xen g_listener_selection(void)
 {
   #define H_listener_selection "(" S_listener_selection "): currently selected text in listener or " PROC_FALSE
-  XEN res = Xen_false;
+  Xen res = Xen_false;
   if (listener_text)
     {
       char *txt;
@@ -2312,7 +2312,7 @@ static XEN g_listener_selection(void)
 }
 
 
-static XEN g_reset_listener_cursor(void)
+static Xen g_reset_listener_cursor(void)
 {
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
   if (listener_text)
@@ -2342,7 +2342,7 @@ void set_listener_text_font(void)
 }
 
 
-static XEN g_goto_listener_end(void)
+static Xen g_goto_listener_end(void)
 {
   #define H_goto_listener_end "(" S_goto_listener_end "): move cursor and scroll to bottom of listener pane"
   if (listener_text)

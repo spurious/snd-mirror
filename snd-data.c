@@ -831,8 +831,8 @@ chan_info *selected_channel(void)
 }
 
 
-static XEN select_sound_hook;
-static XEN select_channel_hook;
+static Xen select_sound_hook;
+static Xen select_channel_hook;
 static int current_selectpos = 0;
 
 static void select_sound(snd_info *sp)
@@ -841,7 +841,7 @@ static void select_sound(snd_info *sp)
 
   if (Xen_hook_has_list(select_sound_hook))
     run_hook(select_sound_hook,
-	     Xen_list_1(C_INT_TO_XEN_SOUND(sp->index)),
+	     Xen_list_1(C_int_to_Xen_sound(sp->index)),
 	     S_select_sound_hook);
 
   if (ss->selected_sound != sp->index)
@@ -888,7 +888,7 @@ void select_channel(snd_info *sp, int chan)
 	}
       if (Xen_hook_has_list(select_channel_hook))
 	run_hook(select_channel_hook,
-		 Xen_list_2(C_INT_TO_XEN_SOUND(sp->index),
+		 Xen_list_2(C_int_to_Xen_sound(sp->index),
 			    C_int_to_Xen_integer(chan)),
 		 S_select_channel_hook);
       ncp = color_selected_channel(sp);

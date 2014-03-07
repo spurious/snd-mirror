@@ -77,7 +77,7 @@ typedef struct {
   int key; 
   int state; 
   int args; 
-  XEN func; 
+  Xen func; 
   bool cx_extended; /* Sun/Forte C defines "extended" somewhere */
   const char *origin, *prefs_info;
   int gc_loc;
@@ -186,7 +186,7 @@ static key_entry built_in_keys[NUM_BUILT_IN_KEYS] = {
 };
 
 
-void map_over_keys(bool (*func)(int key, int state, bool cx, XEN xf))
+void map_over_keys(bool (*func)(int key, int state, bool cx, Xen xf))
 {
   int i;
   for (i = 0; i < keymap_top; i++)
@@ -262,7 +262,7 @@ char *key_description(int key, int state, bool cx_extended)
 }
 
 
-void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info)
+void set_keymap_entry(int key, int state, int args, Xen func, bool cx_extended, const char *origin, const char *prefs_info)
 {
   int i;
   i = in_keymap(key, state, cx_extended);
@@ -1509,7 +1509,7 @@ char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
 }
 
 
-static int key_name_to_key(XEN key, const char *caller)
+static int key_name_to_key(Xen key, const char *caller)
 {
   /* Ruby thinks chars are strings */
   if (Xen_is_integer(key))
@@ -1530,7 +1530,7 @@ static int key_name_to_key(XEN key, const char *caller)
 }
 
 
-static XEN check_for_key_error(int k, int s, const char *caller)
+static Xen check_for_key_error(int k, int s, const char *caller)
 {
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
@@ -1543,7 +1543,7 @@ static XEN check_for_key_error(int k, int s, const char *caller)
 }
 
 
-static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
+static Xen g_key_binding(Xen key, Xen state, Xen cx_extended)
 {
   #define H_key_binding "(" S_key_binding " key :optional (state 0) extended): function bound to this key and associated \
 modifiers.  As in " S_bind_key ", state is the logical 'or' of ctrl=4, meta=8, and 'extended' is " PROC_TRUE " if the key is \
@@ -1565,7 +1565,7 @@ prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an in
 }
 
 
-static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, XEN prefs_info, const char *caller)
+static Xen g_bind_key_1(Xen key, Xen state, Xen code, Xen cx_extended, Xen origin, Xen prefs_info, const char *caller)
 {
   int args, k = 0, s;
   bool e;
@@ -1591,7 +1591,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
       args = Xen_required_args(code);
       if (args > 1)
 	{
-	  XEN errmsg;
+	  Xen errmsg;
 	  char *errstr;
 	  errstr = mus_format(S_bind_key " function arg should take either zero or one args, not %d", args);
 	  errmsg = C_string_to_Xen_string(errstr);
@@ -1608,7 +1608,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 }
 
 
-static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, XEN prefs_info)
+static Xen g_bind_key(Xen key, Xen state, Xen code, Xen cx_extended, Xen origin, Xen prefs_info)
 {
   #define H_bind_key "(" S_bind_key " key modifiers func :optional extended origin prefs-info): \
 causes 'key' (an integer, character, or string) \
@@ -1624,14 +1624,14 @@ or \"<char> a\" in Forth)."
 }
 
 
-static XEN g_unbind_key(XEN key, XEN state, XEN cx_extended)
+static Xen g_unbind_key(Xen key, Xen state, Xen cx_extended)
 {
   #define H_unbind_key "(" S_unbind_key " key state :optional extended): undo the effect of a prior " S_bind_key " call."
   return(g_bind_key_1(key, state, Xen_false, cx_extended, Xen_undefined, Xen_undefined, S_unbind_key));
 }
 
 
-static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
+static Xen g_key(Xen kbd, Xen buckybits, Xen snd, Xen chn)
 {
   #define H_key "(" S_key " key modifiers :optional snd chn): simulate typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;

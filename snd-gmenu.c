@@ -2040,15 +2040,15 @@ int g_remove_from_menu(int which_menu, const char *label)
 }
 
 
-static XEN g_menu_widgets(void)
+static Xen g_menu_widgets(void)
 {
   #define H_menu_widgets "(" S_menu_widgets "): a list of the top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help)"
-  return(Xen_cons(XEN_WRAP_WIDGET(main_menu),
-	  Xen_cons(XEN_WRAP_WIDGET(file_menu),
-           Xen_cons(XEN_WRAP_WIDGET(edit_menu),
-            Xen_cons(XEN_WRAP_WIDGET(view_menu),
-             Xen_cons(XEN_WRAP_WIDGET(options_menu),
-              Xen_cons(XEN_WRAP_WIDGET(help_menu),
+  return(Xen_cons(Xen_wrap_widget(main_menu),
+	  Xen_cons(Xen_wrap_widget(file_menu),
+           Xen_cons(Xen_wrap_widget(edit_menu),
+            Xen_cons(Xen_wrap_widget(view_menu),
+             Xen_cons(Xen_wrap_widget(options_menu),
+              Xen_cons(Xen_wrap_widget(help_menu),
 	       Xen_empty_list)))))));
 }
 

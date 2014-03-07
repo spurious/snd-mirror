@@ -365,7 +365,7 @@ void color_cursor(Pixel color)
 {
   ss->cursor_color = color;
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, ss->cursor_color_symbol, XEN_WRAP_PIXEL(color));
+  s7_symbol_set_value(s7, ss->cursor_color_symbol, Xen_wrap_pixel(color));
 #endif
   XSetForeground(MAIN_DISPLAY(ss), ss->cursor_gc, (Pixel)(XOR(color, ss->graph_color)));
   XSetForeground(MAIN_DISPLAY(ss), ss->selected_cursor_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
@@ -376,7 +376,7 @@ void color_marks(Pixel color)
 {
   ss->mark_color = color;
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, ss->mark_color_symbol, XEN_WRAP_PIXEL(color));
+  s7_symbol_set_value(s7, ss->mark_color_symbol, Xen_wrap_pixel(color));
 #endif
   XSetForeground(MAIN_DISPLAY(ss), ss->mark_gc, (Pixel)(XOR(color, ss->graph_color)));
   XSetForeground(MAIN_DISPLAY(ss), ss->selected_mark_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
@@ -387,7 +387,7 @@ void color_selection(Pixel color)
 {
   ss->selection_color = color;
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, ss->selection_color_symbol, XEN_WRAP_PIXEL(color));
+  s7_symbol_set_value(s7, ss->selection_color_symbol, Xen_wrap_pixel(color));
 #endif
   XSetForeground(MAIN_DISPLAY(ss), ss->selection_gc, (Pixel)(XOR(color, ss->graph_color)));
   XSetForeground(MAIN_DISPLAY(ss), ss->selected_selection_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
@@ -448,7 +448,7 @@ void set_mix_color(Pixel color)
   dpy = MAIN_DISPLAY(ss);
   ss->mix_color = color;
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, ss->mix_color_symbol, XEN_WRAP_PIXEL(color));
+  s7_symbol_set_value(s7, ss->mix_color_symbol, Xen_wrap_pixel(color));
 #endif
   XSetForeground(dpy, ss->mix_gc, color);
   

@@ -244,7 +244,7 @@ void save_state_from_menu(void)
 
 /* ---------------- extlang tie-ins ---------------- */
 
-static XEN snd_no_such_menu_error(const char *caller, XEN id)
+static Xen snd_no_such_menu_error(const char *caller, Xen id)
 {
   Xen_error(Xen_make_error_type("no-such-menu"),
 	    Xen_list_3(C_string_to_Xen_string("~A: no such menu, ~A"),
@@ -254,7 +254,7 @@ static XEN snd_no_such_menu_error(const char *caller, XEN id)
 }
 
 
-static XEN *menu_functions = NULL;
+static Xen *menu_functions = NULL;
 static int *menu_functions_loc = NULL;
 static int callbacks_size = 0;
 static int callb = 0;
@@ -272,14 +272,14 @@ static int make_callback_slot(void)
       callbacks_size += CALLBACK_INCR;
       if (callb == 0)
 	{
-	  menu_functions = (XEN *)calloc(callbacks_size, sizeof(XEN));
+	  menu_functions = (Xen *)calloc(callbacks_size, sizeof(Xen));
 	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = Xen_undefined;
 	  menu_functions_loc = (int *)calloc(callbacks_size, sizeof(int));
 	  for (i = 0; i < callbacks_size; i++) menu_functions_loc[i] = NOT_A_GC_LOC;
 	}
       else 
 	{
-	  menu_functions = (XEN *)realloc(menu_functions, callbacks_size * sizeof(XEN));
+	  menu_functions = (Xen *)realloc(menu_functions, callbacks_size * sizeof(Xen));
 	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = Xen_undefined;
 	  menu_functions_loc = (int *)realloc(menu_functions_loc, callbacks_size * sizeof(int));
 	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions_loc[i] = NOT_A_GC_LOC;
@@ -291,7 +291,7 @@ static int make_callback_slot(void)
 }
 
 
-static void add_callback(int slot, XEN callback)
+static void add_callback(int slot, Xen callback)
 {
   if ((slot >= 0) && (slot < callbacks_size))
     {
@@ -316,7 +316,7 @@ void unprotect_callback(int slot)
 }
 
 
-static XEN gl_add_to_main_menu(XEN label, XEN callback)
+static Xen gl_add_to_main_menu(Xen label, Xen callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label :optional callback): adds label to the main (top-level) menu, returning its index"
   int slot = -1;
@@ -330,7 +330,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 	add_callback(slot, callback);
       else 
 	{
-	  XEN errm;
+	  Xen errm;
 	  errm = C_string_to_Xen_string(err);
 	  free(err);
 	  return(snd_bad_arity_error(S_add_to_main_menu, errm, callback));
@@ -341,7 +341,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 }
 
 
-static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback, XEN gpos)
+static Xen gl_add_to_menu(Xen menu, Xen label, Xen callback, Xen gpos)
 {
   #define H_add_to_menu "(" S_add_to_menu " menu label func :optional position): adds label to menu (a main menu index), invokes \
 func (a function of no args) when the new menu is activated. Returns the new menu label widget."
@@ -380,12 +380,12 @@ func (a function of no args) when the new menu is activated. Returns the new men
     }
   else 
     {
-      XEN errm;
+      Xen errm;
       errm = C_string_to_Xen_string(errmsg);
       free(errmsg);
       return(snd_bad_arity_error(S_add_to_menu, errm, callback));
     }
-  return(XEN_WRAP_WIDGET(result));
+  return(Xen_wrap_widget(result));
 #else
   return(Xen_false);
 #endif
@@ -399,7 +399,7 @@ void g_menu_callback(int callb)
 }
 
 
-static XEN gl_remove_from_menu(XEN menu, XEN label)
+static Xen gl_remove_from_menu(Xen menu, Xen label)
 {
   #define H_remove_from_menu "(" S_remove_from_menu " menu label): removes menu item label from menu"
   int m;
@@ -414,7 +414,7 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
 }
 
 
-static XEN g_main_menu(XEN which)
+static Xen g_main_menu(Xen which)
 {
   #define H_main_menu "(" S_main_menu " menu): the top-level menu widget referred to by menu"
   int which_menu;
@@ -425,7 +425,7 @@ static XEN g_main_menu(XEN which)
     Xen_error(Xen_make_error_type("no-such-menu"),
 	      Xen_list_2(C_string_to_Xen_string(S_main_menu ": no such menu, ~A"),
 			 which));
-  return(XEN_WRAP_WIDGET(menu_widget(which_menu)));
+  return(Xen_wrap_widget(menu_widget(which_menu)));
 }
 
 

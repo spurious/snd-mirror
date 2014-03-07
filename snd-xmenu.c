@@ -1886,15 +1886,15 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 }
 
 
-static XEN g_menu_widgets(void)
+static Xen g_menu_widgets(void)
 {
   #define H_menu_widgets "(" S_menu_widgets "): a list of top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help)"
-  return(Xen_cons(XEN_WRAP_WIDGET(main_menu),
-	  Xen_cons(XEN_WRAP_WIDGET(file_cascade_menu),
-           Xen_cons(XEN_WRAP_WIDGET(edit_cascade_menu),
-            Xen_cons(XEN_WRAP_WIDGET(view_cascade_menu),
-             Xen_cons(XEN_WRAP_WIDGET(options_cascade_menu),
-              Xen_cons(XEN_WRAP_WIDGET(help_cascade_menu),
+  return(Xen_cons(Xen_wrap_widget(main_menu),
+	  Xen_cons(Xen_wrap_widget(file_cascade_menu),
+           Xen_cons(Xen_wrap_widget(edit_cascade_menu),
+            Xen_cons(Xen_wrap_widget(view_cascade_menu),
+             Xen_cons(Xen_wrap_widget(options_cascade_menu),
+              Xen_cons(Xen_wrap_widget(help_cascade_menu),
 	       Xen_empty_list)))))));
 }
 

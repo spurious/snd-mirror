@@ -1495,7 +1495,7 @@ static axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
 		         C_string_to_Xen_string("~A: no such axis: ~A of sound ~A (~A), chan: ~A does not exist, probably because output is squelched"),
 		       C_string_to_Xen_string(caller),
 		       C_int_to_Xen_integer((int)(ap_id)),
-		       C_INT_TO_XEN_SOUND(cp->sound->index),
+		       C_int_to_Xen_sound(cp->sound->index),
 		       C_string_to_Xen_string(cp->sound->short_filename),
 		       C_int_to_Xen_integer(cp->chan)));
   return(NULL);
@@ -1504,7 +1504,7 @@ static axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
 #define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) get_ap(get_cp(Snd, Chn, Caller), (Xen_is_integer(Ap)) ? (axis_info_t)Xen_integer_to_C_int(Ap) : TIME_AXIS_INFO, Caller)
 
 
-static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
+static Xen g_x_to_position(Xen val, Xen snd, Xen chn, Xen ap)
 {
   #define H_x_to_position "(" S_x_to_position " val :optional snd chn (ax " S_time_graph ")): x pixel loc of val"
   Xen_check_type(Xen_is_number(val), val, 1, S_x_to_position, "a number");
@@ -1515,7 +1515,7 @@ static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 }
 
 
-static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
+static Xen g_y_to_position(Xen val, Xen snd, Xen chn, Xen ap)
 {
   #define H_y_to_position "(" S_y_to_position " val :optional snd chn (ax " S_time_graph ")): y pixel loc of val"
   Xen_check_type(Xen_is_number(val), val, 1, S_y_to_position, "a number");
@@ -1526,7 +1526,7 @@ static XEN g_y_to_position(XEN val, XEN snd, XEN chn, XEN ap)
 }
 
 
-static XEN g_position_to_x(XEN val, XEN snd, XEN chn, XEN ap)
+static Xen g_position_to_x(Xen val, Xen snd, Xen chn, Xen ap)
 {
   #define H_position_to_x "(" S_position_to_x " val :optional snd chn (ax " S_time_graph ")): x axis value corresponding to pixel val"
   Xen_check_type(Xen_is_integer(val), val, 1, S_position_to_x, "an integer");
@@ -1537,7 +1537,7 @@ static XEN g_position_to_x(XEN val, XEN snd, XEN chn, XEN ap)
 }
 
 
-static XEN g_position_to_y(XEN val, XEN snd, XEN chn, XEN ap)
+static Xen g_position_to_y(Xen val, Xen snd, Xen chn, Xen ap)
 {
   #define H_position_to_y "(" S_position_to_y " val :optional snd chn (ax " S_time_graph ")): y axis value corresponding to pixel val"
   Xen_check_type(Xen_is_integer(val), val, 1, S_position_to_y, "an integer");
@@ -1548,7 +1548,7 @@ static XEN g_position_to_y(XEN val, XEN snd, XEN chn, XEN ap)
 }
 
 
-static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
+static Xen g_axis_info(Xen snd, Xen chn, Xen ap_id)
 {
   #define H_axis_info "(" S_axis_info " :optional snd chn (ax " S_time_graph ")): info about axis: (list losamp hisamp \
 x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale xlabel ylabel new-peaks)"
@@ -1582,24 +1582,24 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 
 
 #if USE_MOTIF
-  #define XEN_UNWRAP_SND_GC(Value) XEN_UNWRAP_C_POINTER(Xen_cadr(Value))
+  #define Xen_unwrap_snd_gc(Value) Xen_unwrap_C_pointer(Xen_cadr(Value))
   #define Xen_is_GC(Value) (Xen_is_list(Value) && (Xen_list_length(Value) >= 2) && \
                           (Xen_is_symbol(Xen_car(Value))) && \
 			  (strcmp("GC", Xen_symbol_to_C_string(Xen_car(Value))) == 0))
 #else
   #if USE_GTK
-      #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_UNWRAP_C_POINTER(Xen_cadr(Value)))
+      #define Xen_unwrap_snd_gc(Value) (gc_t *)(Xen_unwrap_C_pointer(Xen_cadr(Value)))
       #define Xen_is_GC(Value) (Xen_is_list(Value) && (Xen_list_length(Value) >= 2) && \
                               (Xen_is_symbol(Xen_car(Value))) && \
 			      (strcmp("gc_t_", Xen_symbol_to_C_string(Xen_car(Value))) == 0))
   #else
-    #define XEN_UNWRAP_SND_GC(Value) 0
+    #define Xen_unwrap_snd_gc(Value) 0
     #define Xen_is_GC(Value) 0
   #endif
 #endif
 
 
-static XEN g_draw_axes(XEN args)
+static Xen g_draw_axes(Xen args)
 {
   #define H_draw_axes "(" S_draw_axes " wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style " S_x_axis_in_seconds ") (axes " S_show_all_axes ")): \
 draws axes in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label' \
@@ -1616,7 +1616,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   gc_t *gc;
 #endif
 
-  XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes, label_ref;
+  Xen val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes, label_ref;
   double x0 = 0.0, x1 = 1.0; 
   mus_float_t y0 = -1.0, y1 = 1.0; 
   x_axis_style_t x_style = X_AXIS_IN_SECONDS;
@@ -1638,12 +1638,12 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   Xen_check_type(Xen_is_GC(xgc), xgc, 2, S_draw_axes, "snd-gc");
 
 #if USE_MOTIF
-  w = (Widget)(XEN_UNWRAP_WIDGET(xwid));
-  gc = (GC)(XEN_UNWRAP_SND_GC(xgc));
+  w = (Widget)(Xen_unwrap_widget(xwid));
+  gc = (GC)(Xen_unwrap_snd_gc(xgc));
 #endif
 #if USE_GTK
-  w = (GtkWidget *)(XEN_UNWRAP_WIDGET(xwid));
-  gc = (gc_t *)(XEN_UNWRAP_SND_GC(xgc));
+  w = (GtkWidget *)(Xen_unwrap_widget(xwid));
+  gc = (gc_t *)(Xen_unwrap_snd_gc(xgc));
 #endif
 
   label_ref = Xen_list_ref(args, 2);
@@ -1687,7 +1687,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 			  axes = (show_axes_t)Xen_integer_to_C_int(xaxes);
 #if USE_GTK
 			  if (len > 9)
-			    ss->cr = (cairo_t *)XEN_UNWRAP_C_POINTER(Xen_cadr(Xen_list_ref(args, 9)));
+			    ss->cr = (cairo_t *)Xen_unwrap_C_pointer(Xen_cadr(Xen_list_ref(args, 9)));
 #endif
 			}}}}}}
 
@@ -1741,7 +1741,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 }
 
 
-static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
+static Xen g_x_axis_label(Xen snd, Xen chn, Xen ax)
 {
   #define H_x_axis_label "(" S_x_axis_label " :optional snd chn (ax " S_time_graph ")): current x axis label"
   axis_info *ap;
@@ -1754,7 +1754,7 @@ static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
 }
 
 
-static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
+static Xen g_set_x_axis_label(Xen label, Xen snd, Xen chn, Xen ax)
 {
   axis_info *ap;
 
@@ -1786,7 +1786,7 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 WITH_FOUR_SETTER_ARGS(g_set_x_axis_label_reversed, g_set_x_axis_label)
   
 
-static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
+static Xen g_y_axis_label(Xen snd, Xen chn, Xen ax)
 {
   #define H_y_axis_label "(" S_y_axis_label " :optional snd chn (ax " S_time_graph ")): current y axis label"
   axis_info *ap;
@@ -1798,7 +1798,7 @@ static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
   return(C_string_to_Xen_string(ap->ylabel));
 }
 
-static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
+static Xen g_set_y_axis_label(Xen label, Xen snd, Xen chn, Xen ax)
 {
   axis_info *ap;
 
@@ -1821,7 +1821,7 @@ WITH_FOUR_SETTER_ARGS(g_set_y_axis_label_reversed, g_set_y_axis_label)
 
 
 
-static XEN g_x_bounds(XEN snd, XEN chn, XEN ax)
+static Xen g_x_bounds(Xen snd, Xen chn, Xen ax)
 {
   #define H_x_bounds "(" S_x_bounds " :optional snd chn axis): a list (x0 x1) giving the current x axis bounds of snd channel chn"
   axis_info *ap;
@@ -1836,7 +1836,7 @@ static XEN g_x_bounds(XEN snd, XEN chn, XEN ax)
 }
 
 
-static XEN g_set_x_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
+static Xen g_set_x_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
 {
   chan_info *cp;
   axis_info *ap;
@@ -1895,7 +1895,7 @@ WITH_FOUR_SETTER_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
 
 
 
-static XEN g_y_bounds(XEN snd, XEN chn, XEN ax)
+static Xen g_y_bounds(Xen snd, Xen chn, Xen ax)
 {
   #define H_y_bounds "(" S_y_bounds " :optional snd chn axis): a list (y0 y1) giving the current y axis bounds of snd channel chn"
   axis_info *ap;
@@ -1909,13 +1909,13 @@ static XEN g_y_bounds(XEN snd, XEN chn, XEN ax)
 }
 
 
-static XEN g_set_y_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
+static Xen g_set_y_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
 {
   chan_info *cp;
   axis_info *ap;
   mus_float_t low = 0.0, hi = 0.0;
   int len = 0;
-  XEN y0 = Xen_undefined, y1 = Xen_undefined;
+  Xen y0 = Xen_undefined, y1 = Xen_undefined;
 
   ASSERT_CHANNEL(S_setB S_y_bounds, snd, chn, 2);
   Xen_check_type((Xen_is_number(bounds)) || (Xen_is_list(bounds)), bounds, 1, S_setB S_y_bounds, "a list or a number");

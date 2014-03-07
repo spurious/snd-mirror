@@ -83,7 +83,7 @@ static bool new_help(const char *pattern, bool complain)
   if (url)
     {
       /* given name, find doc string, if any */
-      XEN xstr;
+      Xen xstr;
       xstr = g_snd_help(C_string_to_Xen_string(pattern), 0);
       if (Xen_is_string(xstr))
 	{

@@ -334,10 +334,10 @@ void snd_exit(int val)
 #if HAVE_SCHEME
 #define S_file_to_string "file->string"
 
-static XEN g_file_to_string(XEN name)
+static Xen g_file_to_string(Xen name)
 { 
   char *contents;
-  XEN val = Xen_false;
+  Xen val = Xen_false;
   Xen_check_type(Xen_is_string(name), name, 1, S_file_to_string, "a string");
   contents = file_to_string(Xen_string_to_C_string(name));
   val = C_string_to_Xen_string(contents);

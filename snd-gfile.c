@@ -575,7 +575,7 @@ static gboolean file_filter_callback(const GtkFileFilterInfo *filter_info, gpoin
 {
   /* return true => include this file */
   if (filter_info)
-    return(Xen_boolean_to_C_bool(Xen_call_with_1_arg((XEN)data, C_string_to_Xen_string(filter_info->filename), "filter func")));
+    return(Xen_boolean_to_C_bool(Xen_call_with_1_arg((Xen)data, C_string_to_Xen_string(filter_info->filename), "filter func")));
   return(false);
 }
 
@@ -699,7 +699,7 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 	{
 	  const char *filter_name;
 	  GtkFileFilter *nfilt;
-	  XEN filter_func;
+	  Xen filter_func;
 
 	  filter_name = Xen_string_to_C_string(Xen_car(Xen_vector_ref(ss->file_filters, i)));
 	  filter_func = Xen_cadr(Xen_vector_ref(ss->file_filters, i));
@@ -3880,7 +3880,7 @@ static GtkTargetEntry target_table[] = {
   {(char *)"text/uri-list", 0, TARGET_URL}
 };
 
-static XEN drop_hook;
+static Xen drop_hook;
 
 
 #if HAVE_GTK_ADJUSTMENT_GET_UPPER

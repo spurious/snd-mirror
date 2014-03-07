@@ -1258,7 +1258,7 @@ void save_envelope_editor_state(FILE *fd)
 }
 
 
-env *xen_to_env(XEN res)
+env *xen_to_env(Xen res)
 {
   env *rtn = NULL;
   if (Xen_is_list(res))
@@ -1269,14 +1269,14 @@ env *xen_to_env(XEN res)
 	{
 	  int i;
 	  mus_float_t *data = NULL;
-	  XEN lst;
+	  Xen lst;
 	  
 	  if (Xen_is_number(Xen_car(res)))
 	    {
 	      data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	      for (i = 0, lst = Xen_copy_arg(res); i < len; i++, lst = Xen_cdr(lst))
 		{
-		  XEN el;
+		  Xen el;
 		  el = Xen_car(lst);
 		  data[i] = Xen_real_to_C_double(el);
 		}
@@ -1290,7 +1290,7 @@ env *xen_to_env(XEN res)
 		  data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 		  for (i = 0, lst = Xen_copy_arg(res); i < len; i += 2, lst = Xen_cdr(lst))
 		    {
-		      XEN el;
+		      Xen el;
 		      el = Xen_car(lst);
 		      if ((!(Xen_is_number(Xen_car(el)))) ||
 			  (!(Xen_is_number(Xen_cadr(el)))))
@@ -1320,10 +1320,10 @@ env *xen_to_env(XEN res)
 }
 
 
-static bool x_increases(XEN res)
+static bool x_increases(Xen res)
 {
   int i, len;
-  XEN lst;
+  Xen lst;
   mus_float_t x;
   len = Xen_list_length(res);
   x = Xen_real_to_C_double(Xen_car(res));
@@ -1349,7 +1349,7 @@ static bool x_increases(XEN res)
 env *string_to_env(const char *str) 
 {
 #if HAVE_EXTENSION_LANGUAGE
-  XEN res;
+  Xen res;
   int len = 0;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->env");
   if (Xen_is_list(res))
@@ -1434,12 +1434,12 @@ env *name_to_env(const char *str)
 
 #if HAVE_RUBY
 #define SND_ENV_MAX_VARS 100
-static XEN snd_env_array[SND_ENV_MAX_VARS];
+static Xen snd_env_array[SND_ENV_MAX_VARS];
 static int env_index = -1;
 #endif
 
 
-static XEN g_define_envelope(XEN name, XEN data, XEN base)
+static Xen g_define_envelope(Xen name, Xen data, Xen base)
 {
   env *e;
   const char *ename;
@@ -1477,7 +1477,7 @@ into the envelope editor."
 
 #if HAVE_SCHEME || HAVE_FORTH
   {
-    XEN temp;
+    Xen temp;
     alert_envelope_editor(ename, e);
     Xen_define_variable(ename, temp, data); /* already gc protected */
     return(temp);
@@ -1490,7 +1490,7 @@ into the envelope editor."
 }
 
 
-XEN env_to_xen(env *e)
+Xen env_to_xen(env *e)
 {
   if (e) 
     return(mus_array_to_list(e->data, 0, e->pts * 2));
@@ -1518,18 +1518,18 @@ void add_or_edit_symbol(const char *name, env *val)
 #endif
 
 #if HAVE_SCHEME
-  XEN e;
+  Xen e;
   if (!val) return;
   if (Xen_is_defined(name))
     {
-      e = XEN_NAME_AS_C_STRING_TO_VARIABLE(name);
+      e = s7_make_symbol(s7, name);
       Xen_variable_set(e, env_to_xen(val));
     }
   else Xen_define_variable(name, e, env_to_xen(val));
 #endif
 
 #if HAVE_FORTH
-  XEN e;
+  Xen e;
   if (!val) return;
   if (Xen_is_defined(name))
     Xen_variable_set(name, env_to_xen(val));
@@ -1538,7 +1538,7 @@ void add_or_edit_symbol(const char *name, env *val)
 }
 
 
-env *get_env(XEN e, const char *origin) /* list in e */
+env *get_env(Xen e, const char *origin) /* list in e */
 {
   int i, len = 0;
   env *new_env;
@@ -1559,7 +1559,7 @@ env *get_env(XEN e, const char *origin) /* list in e */
   for (i = 2; i < new_env->pts * 2; i += 2)
     if (new_env->data[i - 2] > new_env->data[i])
       {
-	XEN msg;
+	Xen msg;
 	char *buf;
 	buf = (char *)calloc(1024, sizeof(char));
 	snprintf(buf, 1024, "%s: env at breakpoint %d: x axis value %f > %f", origin, i / 2, new_env->data[i - 2], new_env->data[i]);
@@ -1575,7 +1575,7 @@ env *get_env(XEN e, const char *origin) /* list in e */
 }
 
 
-static XEN g_save_envelopes(XEN filename)
+static Xen g_save_envelopes(Xen filename)
 {
   #define H_save_envelopes "(" S_save_envelopes " :optional filename): save the envelopes known to the envelope editor in filename"
   char *name = NULL;
@@ -1609,14 +1609,14 @@ static XEN g_save_envelopes(XEN filename)
 }
 
 
-static XEN enved_hook;
+static Xen enved_hook;
 
 static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enved_point_t reason)
 {
   if (Xen_hook_has_list(enved_hook))
     {
       int len = 0;
-      XEN result = Xen_false;
+      Xen result = Xen_false;
       /* if hook procedure returns a list, that is the new contents of the
        * envelope -- if its length doesn't match current, we need to remake
        * current. Otherwise return 0, and assume the caller will handle default
@@ -1631,12 +1631,12 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 				  C_int_to_Xen_integer((int)reason)));
 #else
       {
-	XEN procs, env_list;
+	Xen procs, env_list;
 	env_list = env_to_xen(e);
 	procs = Xen_hook_list(enved_hook);
 	while (!Xen_is_null(procs))
 	  {
-	    XEN temp;
+	    Xen temp;
 	    temp = Xen_apply(Xen_car(procs), 
 			       Xen_list_5(env_list,
 					  C_int_to_Xen_integer(pos),
@@ -1649,14 +1649,14 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 		result = temp;
 		env_list = temp;
 	      }
-	    procs = XEN_CDR (procs);
+	    procs = Xen_cdr(procs);
 	  }
       }
 #endif
       if (Xen_is_list(result))
 	{
 	  int i;
-	  XEN lst;
+	  Xen lst;
 	  len = Xen_list_length(result);
 	  if (len > e->data_size)
 	    {
@@ -1674,9 +1674,9 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 }
 
 
-static XEN g_enved_base(void) {return(C_double_to_Xen_real(enved_base(ss)));}
+static Xen g_enved_base(void) {return(C_double_to_Xen_real(enved_base(ss)));}
 
-static XEN g_set_enved_base(XEN val) 
+static Xen g_set_enved_base(Xen val) 
 {
   #define H_enved_base "(" S_enved_base "): envelope editor exponential base value (1.0)"
   Xen_check_type(Xen_is_number(val), val, 1, S_setB S_enved_base, "a number"); 
@@ -1685,9 +1685,9 @@ static XEN g_set_enved_base(XEN val)
 }
 
 
-static XEN g_enved_power(void) {return(C_double_to_Xen_real(enved_power(ss)));}
+static Xen g_enved_power(void) {return(C_double_to_Xen_real(enved_power(ss)));}
 
-static XEN g_set_enved_power(XEN val) 
+static Xen g_set_enved_power(Xen val) 
 {
   #define H_enved_power "(" S_enved_power "): envelope editor base scale range (9.0^power)"
   Xen_check_type(Xen_is_number(val), val, 1, S_setB S_enved_power, "a number"); 
@@ -1696,9 +1696,9 @@ static XEN g_set_enved_power(XEN val)
 }
 
 
-static XEN g_enved_clipping(void) {return(C_bool_to_Xen_boolean(enved_clipping(ss)));}
+static Xen g_enved_clipping(void) {return(C_bool_to_Xen_boolean(enved_clipping(ss)));}
 
-static XEN g_set_enved_clipping(XEN on)
+static Xen g_set_enved_clipping(Xen on)
 {
   #define H_enved_clipping "(" S_enved_clipping "): envelope editor clip button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
@@ -1709,9 +1709,9 @@ if clipping, the motion of the mouse is restricted to the current graph bounds."
 }
 
 
-static XEN g_enved_style(void) {return(C_int_to_Xen_integer(enved_style(ss)));}
+static Xen g_enved_style(void) {return(C_int_to_Xen_integer(enved_style(ss)));}
 
-static XEN g_set_enved_style(XEN val) 
+static Xen g_set_enved_style(Xen val) 
 {
   #define H_enved_style "(" S_enved_style "): envelope editor breakpoint connection choice: can \
 be " S_envelope_linear ", or " S_envelope_exponential
@@ -1729,9 +1729,9 @@ be " S_envelope_linear ", or " S_envelope_exponential
 }
 
 
-static XEN g_enved_target(void) {return(C_int_to_Xen_integer((int)enved_target(ss)));}
+static Xen g_enved_target(void) {return(C_int_to_Xen_integer((int)enved_target(ss)));}
 
-static XEN g_set_enved_target(XEN val) 
+static Xen g_set_enved_target(Xen val) 
 {
   enved_target_t n;
   int in_n;
@@ -1750,9 +1750,9 @@ choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_en
 }
 
 
-static XEN g_enved_with_wave(void) {return(C_bool_to_Xen_boolean(enved_with_wave(ss)));}
+static Xen g_enved_with_wave(void) {return(C_bool_to_Xen_boolean(enved_with_wave(ss)));}
 
-static XEN g_set_enved_with_wave(XEN val) 
+static Xen g_set_enved_with_wave(Xen val) 
 {
   #define H_enved_with_wave "(" S_enved_with_wave "): " PROC_TRUE " if the envelope editor is displaying the waveform to be edited"
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_enved_with_wave, "a boolean");
@@ -1761,9 +1761,9 @@ static XEN g_set_enved_with_wave(XEN val)
 }
 
 
-static XEN g_enved_in_dB(void) {return(C_bool_to_Xen_boolean(enved_in_dB(ss)));}
+static Xen g_enved_in_dB(void) {return(C_bool_to_Xen_boolean(enved_in_dB(ss)));}
 
-static XEN g_set_enved_in_dB(XEN val) 
+static Xen g_set_enved_in_dB(Xen val) 
 {
   #define H_enved_in_dB "(" S_enved_in_dB "): " PROC_TRUE " if the envelope editor is using dB"
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_enved_in_dB, "a boolean");
@@ -1772,9 +1772,9 @@ static XEN g_set_enved_in_dB(XEN val)
 }
 
 
-static XEN g_enved_filter_order(void) {return(C_int_to_Xen_integer(enved_filter_order(ss)));}
+static Xen g_enved_filter_order(void) {return(C_int_to_Xen_integer(enved_filter_order(ss)));}
 
-static XEN g_set_enved_filter_order(XEN val) 
+static Xen g_set_enved_filter_order(Xen val) 
 {
   #define H_enved_filter_order "(" S_enved_filter_order "): envelope editor's FIR filter order (40)"
   Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_enved_filter_order, "an integer"); 
@@ -1783,10 +1783,10 @@ static XEN g_set_enved_filter_order(XEN val)
 }
 
 
-static XEN g_enved_dialog(void) 
+static Xen g_enved_dialog(void) 
 {
   #define H_enved_dialog "(" S_enved_dialog "): start the Envelope Editor"
-  return(XEN_WRAP_WIDGET(create_envelope_editor()));
+  return(Xen_wrap_widget(create_envelope_editor()));
 }
 
 

@@ -6,7 +6,7 @@ bool listener_is_visible(void)
 }
 
 
-static XEN read_hook;
+static Xen read_hook;
 
 #if HAVE_SCHEME && (!USE_NO_GUI)
 
@@ -70,7 +70,7 @@ bool have_read_hook(void)
 }
 
 
-XEN run_read_hook(char *str)
+Xen run_read_hook(char *str)
 {
   return(run_or_hook(read_hook, 
 		     Xen_list_1(C_string_to_Xen_string(str)),
@@ -80,7 +80,7 @@ XEN run_read_hook(char *str)
 #if HAVE_FORTH || HAVE_RUBY
 void call_read_hook_or_eval(const char *text)
 {
-  XEN form;
+  Xen form;
   if (Xen_hook_has_list(read_hook))
     {
       form = run_or_hook(read_hook, 
@@ -95,7 +95,7 @@ void call_read_hook_or_eval(const char *text)
 #endif
 
 
-static XEN g_save_listener(XEN filename)
+static Xen g_save_listener(Xen filename)
 {
   #define H_save_listener "(" S_save_listener " filename): saves the current listener text in filename"
   FILE *fp = NULL;
@@ -118,7 +118,7 @@ static XEN g_save_listener(XEN filename)
 }
 
 
-static XEN g_clear_listener(void)
+static Xen g_clear_listener(void)
 {
   #define H_clear_listener "(" S_clear_listener "): removes listener text from the beginning to the cursor"
   clear_listener();
@@ -126,14 +126,14 @@ static XEN g_clear_listener(void)
 }
 
 
-static XEN g_show_listener(void) 
+static Xen g_show_listener(void) 
 {
   #define H_show_listener "(" S_show_listener ") returns " PROC_TRUE " if the listener is open, otherwise " PROC_FALSE "."
   return(C_bool_to_Xen_boolean(listener_is_visible()));
 }
 
 
-static XEN g_set_show_listener(XEN val)
+static Xen g_set_show_listener(Xen val)
 {
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_show_listener, "a boolean");
   handle_listener(Xen_boolean_to_C_bool(val));
@@ -182,9 +182,9 @@ void set_listener_prompt(const char *new_prompt)
 }
 
 
-static XEN g_listener_prompt(void) {return(C_string_to_Xen_string(listener_prompt(ss)));}
+static Xen g_listener_prompt(void) {return(C_string_to_Xen_string(listener_prompt(ss)));}
 
-static XEN g_set_listener_prompt(XEN val) 
+static Xen g_set_listener_prompt(Xen val) 
 {
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
 
@@ -197,11 +197,11 @@ static XEN g_set_listener_prompt(XEN val)
 }
 
 
-static XEN g_snd_completion(XEN text)
+static Xen g_snd_completion(Xen text)
 {
   /* perhaps callable from emacs? */
   char *str, *temp;
-  XEN res;
+  Xen res;
 
   Xen_check_type(Xen_is_string(text), text, 1, "snd-completion", "a string"); 
 
@@ -216,7 +216,7 @@ static XEN g_snd_completion(XEN text)
 }
 
 
-static XEN g_listener_colorized(void) 
+static Xen g_listener_colorized(void) 
 {
   #define H_listener_colorized "(" S_listener_colorized ") returns #t if the listener is highlighting syntax."
 #if USE_GTK
@@ -226,7 +226,7 @@ static XEN g_listener_colorized(void)
 #endif
 }
 
-static XEN g_listener_set_colorized(XEN val) 
+static Xen g_listener_set_colorized(Xen val) 
 {
 #if USE_GTK
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_listener_colorized, "a boolean");

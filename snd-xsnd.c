@@ -2752,7 +2752,7 @@ void snd_info_cleanup(snd_info *sp)
 }
 
 
-static XEN reflect_file_close_in_sync(XEN hook_or_reason)
+static Xen reflect_file_close_in_sync(Xen hook_or_reason)
 {
   int reason;
 #if HAVE_SCHEME
@@ -3246,7 +3246,7 @@ void make_controls_dialog(void)
 
 /* ---------------------------------------- */
 
-static XEN g_sound_widgets(XEN snd)
+static Xen g_sound_widgets(Xen snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " :optional snd): a list of \
 widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon (9)sync-button"
@@ -3261,20 +3261,20 @@ widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filte
   if (!HAS_WIDGETS(sp))
     return(Xen_empty_list);
 
-  return(Xen_cons(XEN_WRAP_WIDGET(SND_PANE(sp)),
-	  Xen_cons(XEN_WRAP_WIDGET(SND_NAME(sp)),
-           Xen_cons(XEN_WRAP_WIDGET(CONTROLS(sp)),
-	    Xen_cons(XEN_WRAP_WIDGET(STATUS_AREA(sp)),
+  return(Xen_cons(Xen_wrap_widget(SND_PANE(sp)),
+	  Xen_cons(Xen_wrap_widget(SND_NAME(sp)),
+           Xen_cons(Xen_wrap_widget(CONTROLS(sp)),
+	    Xen_cons(Xen_wrap_widget(STATUS_AREA(sp)),
 #if WITH_AUDIO
-	     Xen_cons(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
+	     Xen_cons(Xen_wrap_widget(PLAY_BUTTON(sp)),
 #else
 	     Xen_cons(Xen_false,
 #endif
-	      Xen_cons(XEN_WRAP_WIDGET(FILTER_GRAPH(sp)), /* this is the drawingarea widget */
-	       Xen_cons(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
+	      Xen_cons(Xen_wrap_widget(FILTER_GRAPH(sp)), /* this is the drawingarea widget */
+	       Xen_cons(Xen_wrap_widget(UNITE_BUTTON(sp)),
 		Xen_cons(Xen_false,
-	         Xen_cons(XEN_WRAP_WIDGET(LOCK_OR_BOMB(sp)),
-	          Xen_cons(XEN_WRAP_WIDGET(SYNC_BUTTON(sp)),
+	         Xen_cons(Xen_wrap_widget(LOCK_OR_BOMB(sp)),
+	          Xen_cons(Xen_wrap_widget(SYNC_BUTTON(sp)),
 	           Xen_empty_list)))))))))));
 }
 

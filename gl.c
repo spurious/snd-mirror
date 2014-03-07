@@ -65,27 +65,27 @@
   #define XL_POST ""
 #endif
 
-#define WRAP_FOR_XEN(Name, Value) Xen_list_2(C_string_to_Xen_symbol(Name), XEN_WRAP_C_POINTER(Value))
-#define IS_WRAPPED(Name, Value) (Xen_is_list(Value) && \
+#define wrap_for_Xen(Name, Value) Xen_list_2(C_string_to_Xen_symbol(Name), Xen_wrap_C_pointer(Value))
+#define is_wrapped(Name, Value) (Xen_is_list(Value) && \
                             (Xen_list_length(Value) >= 2) && \
                             (Xen_is_symbol(Xen_car(Value))) && \
                             (strcmp(Name, Xen_symbol_to_C_string(Xen_car(Value))) == 0))
 
 #define XL_TYPE(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));}
+  static Xen C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \
+  static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}
 #define XL_TYPE_1(Name, XType) \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));}
+  static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}
 
 #define XL_TYPE_PTR(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(Xen_false);} \
-  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));} /* if NULL ok, should be explicit */
+  static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
+  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return(NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} /* if NULL ok, should be explicit */
 #define XL_TYPE_PTR_1(Name, XType) \
-  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(Xen_cadr(val)));} \
-  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));} /* if NULL ok, should be explicit */
+  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return(NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
+  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} /* if NULL ok, should be explicit */
 
 
 /* ---------------------------------------- types ---------------------------------------- */
@@ -93,63 +93,63 @@
 #if USE_MOTIF
 XL_TYPE_PTR(XVisualInfo, XVisualInfo*)
 XL_TYPE_PTR(Display, Display*)
-#define C_TO_XEN_int(Arg) C_int_to_Xen_integer(Arg)
-#define XEN_TO_C_int(Arg) (int)(Xen_integer_to_C_int(Arg))
+#define C_to_Xen_int(Arg) C_int_to_Xen_integer(Arg)
+#define Xen_to_C_int(Arg) (int)(Xen_integer_to_C_int(Arg))
 #define Xen_is_int(Arg) Xen_is_integer(Arg)
 XL_TYPE_PTR_1(int_, int*)
 XL_TYPE_PTR(GLXContext, GLXContext)
-#define XEN_TO_C_unsigned_long(Arg) (unsigned_long)(Xen_ulong_to_C_ulong(Arg))
+#define Xen_to_C_unsigned_long(Arg) (unsigned_long)(Xen_ulong_to_C_ulong(Arg))
 #define Xen_is_unsigned_long(Arg) Xen_is_ulong_int(Arg)
-#define C_TO_XEN_Bool(Arg) C_bool_to_Xen_boolean(Arg)
-#define XEN_TO_C_Bool(Arg) (Bool)(Xen_boolean_to_C_bool(Arg))
+#define C_to_Xen_Bool(Arg) C_bool_to_Xen_boolean(Arg)
+#define Xen_to_C_Bool(Arg) (Bool)(Xen_boolean_to_C_bool(Arg))
 #define Xen_is_Bool(Arg) Xen_is_boolean(Arg)
 XL_TYPE(GLXPixmap, GLXPixmap)
 XL_TYPE_1(Pixmap, Pixmap)
 XL_TYPE(Window, Window)
 XL_TYPE_1(Font, Font)
-#define C_TO_XEN_char_(Arg) C_string_to_Xen_string(Arg)
-#define XEN_TO_C_char_(Arg) (char*)(Xen_string_to_C_string(Arg))
+#define C_to_Xen_char_(Arg) C_string_to_Xen_string(Arg)
+#define Xen_to_C_char_(Arg) (char*)(Xen_string_to_C_string(Arg))
 #define Xen_is_char_(Arg) Xen_is_string(Arg)
 #endif
-#define C_TO_XEN_GLfloat(Arg) C_double_to_Xen_real(Arg)
-#define XEN_TO_C_GLfloat(Arg) (GLfloat)(Xen_real_to_C_double(Arg))
+#define C_to_Xen_GLfloat(Arg) C_double_to_Xen_real(Arg)
+#define Xen_to_C_GLfloat(Arg) (GLfloat)(Xen_real_to_C_double(Arg))
 #define Xen_is_GLfloat(Arg) Xen_is_number(Arg)
-#define XEN_TO_C_GLclampf(Arg) (GLclampf)(Xen_real_to_C_double(Arg))
+#define Xen_to_C_GLclampf(Arg) (GLclampf)(Xen_real_to_C_double(Arg))
 #define Xen_is_GLclampf(Arg) Xen_is_number(Arg)
-#define XEN_TO_C_GLbitfield(Arg) (GLbitfield)(Xen_ulong_to_C_ulong(Arg))
+#define Xen_to_C_GLbitfield(Arg) (GLbitfield)(Xen_ulong_to_C_ulong(Arg))
 #define Xen_is_GLbitfield(Arg) Xen_is_ulong_int(Arg)
-#define C_TO_XEN_GLuint(Arg) C_ulong_to_Xen_ulong(Arg)
-#define XEN_TO_C_GLuint(Arg) (GLuint)(Xen_ulong_to_C_ulong(Arg))
+#define C_to_Xen_GLuint(Arg) C_ulong_to_Xen_ulong(Arg)
+#define Xen_to_C_GLuint(Arg) (GLuint)(Xen_ulong_to_C_ulong(Arg))
 #define Xen_is_GLuint(Arg) Xen_is_ulong_int(Arg)
-#define C_TO_XEN_GLboolean(Arg) C_bool_to_Xen_boolean(Arg)
-#define XEN_TO_C_GLboolean(Arg) (GLboolean)(Xen_boolean_to_C_bool(Arg))
+#define C_to_Xen_GLboolean(Arg) C_bool_to_Xen_boolean(Arg)
+#define Xen_to_C_GLboolean(Arg) (GLboolean)(Xen_boolean_to_C_bool(Arg))
 #define Xen_is_GLboolean(Arg) Xen_is_boolean(Arg)
-#define C_TO_XEN_GLenum(Arg) C_int_to_Xen_integer(Arg)
-#define XEN_TO_C_GLenum(Arg) (GLenum)(Xen_integer_to_C_int(Arg))
+#define C_to_Xen_GLenum(Arg) C_int_to_Xen_integer(Arg)
+#define Xen_to_C_GLenum(Arg) (GLenum)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GLenum(Arg) Xen_is_integer(Arg)
-#define C_TO_XEN_GLint(Arg) C_int_to_Xen_integer(Arg)
-#define XEN_TO_C_GLint(Arg) (GLint)(Xen_integer_to_C_int(Arg))
+#define C_to_Xen_GLint(Arg) C_int_to_Xen_integer(Arg)
+#define Xen_to_C_GLint(Arg) (GLint)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GLint(Arg) Xen_is_integer(Arg)
-#define C_TO_XEN_GLushort(Arg) C_int_to_Xen_integer(Arg)
-#define XEN_TO_C_GLushort(Arg) (GLushort)(Xen_integer_to_C_int(Arg))
+#define C_to_Xen_GLushort(Arg) C_int_to_Xen_integer(Arg)
+#define Xen_to_C_GLushort(Arg) (GLushort)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GLushort(Arg) Xen_is_integer(Arg)
 XL_TYPE_PTR_1(GLubyte_, GLubyte*)
-#define XEN_TO_C_GLsizei(Arg) (GLsizei)(Xen_integer_to_C_int(Arg))
+#define Xen_to_C_GLsizei(Arg) (GLsizei)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GLsizei(Arg) Xen_is_integer(Arg)
 XL_TYPE_PTR_1(GLdouble_, GLdouble*)
-#define C_TO_XEN_GLdouble(Arg) C_double_to_Xen_real(Arg)
-#define XEN_TO_C_GLdouble(Arg) (GLdouble)(Xen_real_to_C_double(Arg))
+#define C_to_Xen_GLdouble(Arg) C_double_to_Xen_real(Arg)
+#define Xen_to_C_GLdouble(Arg) (GLdouble)(Xen_real_to_C_double(Arg))
 #define Xen_is_GLdouble(Arg) Xen_is_number(Arg)
-#define C_TO_XEN_constchar_(Arg) C_string_to_Xen_string((char *)(Arg))
-#define XEN_TO_C_GLclampd(Arg) (GLclampd)(Xen_real_to_C_double(Arg))
+#define C_to_Xen_constchar_(Arg) C_string_to_Xen_string((char *)(Arg))
+#define Xen_to_C_GLclampd(Arg) (GLclampd)(Xen_real_to_C_double(Arg))
 #define Xen_is_GLclampd(Arg) Xen_is_number(Arg)
 XL_TYPE_PTR_1(GLfloat_, GLfloat*)
 XL_TYPE_PTR_1(GLvoid_, GLvoid*)
-#define XEN_TO_C_GLshort(Arg) (GLshort)(Xen_integer_to_C_int(Arg))
+#define Xen_to_C_GLshort(Arg) (GLshort)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GLshort(Arg) Xen_is_integer(Arg)
-#define XEN_TO_C_GLbyte(Arg) (GLbyte)(Xen_integer_to_C_int(Arg))
+#define Xen_to_C_GLbyte(Arg) (GLbyte)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GLbyte(Arg) Xen_is_integer(Arg)
-#define XEN_TO_C_GLubyte(Arg) (GLubyte)(Xen_integer_to_C_int(Arg))
+#define Xen_to_C_GLubyte(Arg) (GLubyte)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GLubyte(Arg) Xen_is_integer(Arg)
 XL_TYPE_PTR(void_, void*)
 XL_TYPE_PTR_1(GLuint_, GLuint*)
@@ -214,27 +214,27 @@ static int how_many_vals(GLenum gl)
 /* ---------------------------------------- functions ---------------------------------------- */
 
 #if USE_MOTIF
-static XEN gxg_glXChooseVisual(XEN dpy, XEN screen, XEN attribList)
+static Xen gxg_glXChooseVisual(Xen dpy, Xen screen, Xen attribList)
 {
   #define H_glXChooseVisual "XVisualInfo* glXChooseVisual(Display* dpy, int screen, int* attribList)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXChooseVisual", "Display*");
   Xen_check_type(Xen_is_int(screen), screen, 2, "glXChooseVisual", "int");
   Xen_check_type(Xen_is_int_(attribList), attribList, 3, "glXChooseVisual", "int*");
-  return(C_TO_XEN_XVisualInfo(glXChooseVisual(XEN_TO_C_Display(dpy), XEN_TO_C_int(screen), XEN_TO_C_int_(attribList))));
+  return(C_to_Xen_XVisualInfo(glXChooseVisual(Xen_to_C_Display(dpy), Xen_to_C_int(screen), Xen_to_C_int_(attribList))));
 }
 
-static XEN gxg_glXCopyContext(XEN dpy, XEN src, XEN dst, XEN mask)
+static Xen gxg_glXCopyContext(Xen dpy, Xen src, Xen dst, Xen mask)
 {
   #define H_glXCopyContext "void glXCopyContext(Display* dpy, GLXContext src, GLXContext dst, unsigned_long mask)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXCopyContext", "Display*");
   Xen_check_type(Xen_is_GLXContext(src), src, 2, "glXCopyContext", "GLXContext");
   Xen_check_type(Xen_is_GLXContext(dst), dst, 3, "glXCopyContext", "GLXContext");
   Xen_check_type(Xen_is_unsigned_long(mask), mask, 4, "glXCopyContext", "unsigned_long");
-  glXCopyContext(XEN_TO_C_Display(dpy), XEN_TO_C_GLXContext(src), XEN_TO_C_GLXContext(dst), XEN_TO_C_unsigned_long(mask));
+  glXCopyContext(Xen_to_C_Display(dpy), Xen_to_C_GLXContext(src), Xen_to_C_GLXContext(dst), Xen_to_C_unsigned_long(mask));
   return(Xen_false);
 }
 
-static XEN gxg_glXCreateContext(XEN dpy, XEN vis, XEN shareList, XEN direct)
+static Xen gxg_glXCreateContext(Xen dpy, Xen vis, Xen shareList, Xen direct)
 {
   #define H_glXCreateContext "GLXContext glXCreateContext(Display* dpy, XVisualInfo* vis, GLXContext shareList, \
 Bool direct)"
@@ -242,38 +242,38 @@ Bool direct)"
   Xen_check_type(Xen_is_XVisualInfo(vis), vis, 2, "glXCreateContext", "XVisualInfo*");
   Xen_check_type(Xen_is_GLXContext(shareList), shareList, 3, "glXCreateContext", "GLXContext");
   Xen_check_type(Xen_is_Bool(direct), direct, 4, "glXCreateContext", "Bool");
-  return(C_TO_XEN_GLXContext(glXCreateContext(XEN_TO_C_Display(dpy), XEN_TO_C_XVisualInfo(vis), XEN_TO_C_GLXContext(shareList), 
-                                              XEN_TO_C_Bool(direct))));
+  return(C_to_Xen_GLXContext(glXCreateContext(Xen_to_C_Display(dpy), Xen_to_C_XVisualInfo(vis), Xen_to_C_GLXContext(shareList), 
+                                              Xen_to_C_Bool(direct))));
 }
 
-static XEN gxg_glXCreateGLXPixmap(XEN dpy, XEN vis, XEN pixmap)
+static Xen gxg_glXCreateGLXPixmap(Xen dpy, Xen vis, Xen pixmap)
 {
   #define H_glXCreateGLXPixmap "GLXPixmap glXCreateGLXPixmap(Display* dpy, XVisualInfo* vis, Pixmap pixmap)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXCreateGLXPixmap", "Display*");
   Xen_check_type(Xen_is_XVisualInfo(vis), vis, 2, "glXCreateGLXPixmap", "XVisualInfo*");
   Xen_check_type(Xen_is_Pixmap(pixmap), pixmap, 3, "glXCreateGLXPixmap", "Pixmap");
-  return(C_TO_XEN_GLXPixmap(glXCreateGLXPixmap(XEN_TO_C_Display(dpy), XEN_TO_C_XVisualInfo(vis), XEN_TO_C_Pixmap(pixmap))));
+  return(C_to_Xen_GLXPixmap(glXCreateGLXPixmap(Xen_to_C_Display(dpy), Xen_to_C_XVisualInfo(vis), Xen_to_C_Pixmap(pixmap))));
 }
 
-static XEN gxg_glXDestroyContext(XEN dpy, XEN ctx)
+static Xen gxg_glXDestroyContext(Xen dpy, Xen ctx)
 {
   #define H_glXDestroyContext "void glXDestroyContext(Display* dpy, GLXContext ctx)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXDestroyContext", "Display*");
   Xen_check_type(Xen_is_GLXContext(ctx), ctx, 2, "glXDestroyContext", "GLXContext");
-  glXDestroyContext(XEN_TO_C_Display(dpy), XEN_TO_C_GLXContext(ctx));
+  glXDestroyContext(Xen_to_C_Display(dpy), Xen_to_C_GLXContext(ctx));
   return(Xen_false);
 }
 
-static XEN gxg_glXDestroyGLXPixmap(XEN dpy, XEN pix)
+static Xen gxg_glXDestroyGLXPixmap(Xen dpy, Xen pix)
 {
   #define H_glXDestroyGLXPixmap "void glXDestroyGLXPixmap(Display* dpy, GLXPixmap pix)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXDestroyGLXPixmap", "Display*");
   Xen_check_type(Xen_is_GLXPixmap(pix), pix, 2, "glXDestroyGLXPixmap", "GLXPixmap");
-  glXDestroyGLXPixmap(XEN_TO_C_Display(dpy), XEN_TO_C_GLXPixmap(pix));
+  glXDestroyGLXPixmap(Xen_to_C_Display(dpy), Xen_to_C_GLXPixmap(pix));
   return(Xen_false);
 }
 
-static XEN gxg_glXGetConfig(XEN dpy, XEN vis, XEN attrib, XEN value)
+static Xen gxg_glXGetConfig(Xen dpy, Xen vis, Xen attrib, Xen value)
 {
   #define H_glXGetConfig "int glXGetConfig(Display* dpy, XVisualInfo* vis, int attrib, int* [value])"
   int ref_value[1];
@@ -281,553 +281,553 @@ static XEN gxg_glXGetConfig(XEN dpy, XEN vis, XEN attrib, XEN value)
   Xen_check_type(Xen_is_XVisualInfo(vis), vis, 2, "glXGetConfig", "XVisualInfo*");
   Xen_check_type(Xen_is_int(attrib), attrib, 3, "glXGetConfig", "int");
   {
-    XEN result = Xen_false;
-    result = C_TO_XEN_int(glXGetConfig(XEN_TO_C_Display(dpy), XEN_TO_C_XVisualInfo(vis), XEN_TO_C_int(attrib), ref_value));
-    return(Xen_list_2(result, C_TO_XEN_int(ref_value[0])));
+    Xen result = Xen_false;
+    result = C_to_Xen_int(glXGetConfig(Xen_to_C_Display(dpy), Xen_to_C_XVisualInfo(vis), Xen_to_C_int(attrib), ref_value));
+    return(Xen_list_2(result, C_to_Xen_int(ref_value[0])));
    }
 }
 
-static XEN gxg_glXGetCurrentContext(void)
+static Xen gxg_glXGetCurrentContext(void)
 {
   #define H_glXGetCurrentContext "GLXContext glXGetCurrentContext( void)"
-  return(C_TO_XEN_GLXContext(glXGetCurrentContext()));
+  return(C_to_Xen_GLXContext(glXGetCurrentContext()));
 }
 
-static XEN gxg_glXGetCurrentDrawable(void)
+static Xen gxg_glXGetCurrentDrawable(void)
 {
   #define H_glXGetCurrentDrawable "Window glXGetCurrentDrawable( void)"
-  return(C_TO_XEN_Window(glXGetCurrentDrawable()));
+  return(C_to_Xen_Window(glXGetCurrentDrawable()));
 }
 
-static XEN gxg_glXIsDirect(XEN dpy, XEN ctx)
+static Xen gxg_glXIsDirect(Xen dpy, Xen ctx)
 {
   #define H_glXIsDirect "Bool glXIsDirect(Display* dpy, GLXContext ctx)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXIsDirect", "Display*");
   Xen_check_type(Xen_is_GLXContext(ctx), ctx, 2, "glXIsDirect", "GLXContext");
-  return(C_TO_XEN_Bool(glXIsDirect(XEN_TO_C_Display(dpy), XEN_TO_C_GLXContext(ctx))));
+  return(C_to_Xen_Bool(glXIsDirect(Xen_to_C_Display(dpy), Xen_to_C_GLXContext(ctx))));
 }
 
-static XEN gxg_glXMakeCurrent(XEN dpy, XEN drawable, XEN ctx)
+static Xen gxg_glXMakeCurrent(Xen dpy, Xen drawable, Xen ctx)
 {
   #define H_glXMakeCurrent "Bool glXMakeCurrent(Display* dpy, Window drawable, GLXContext ctx)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXMakeCurrent", "Display*");
   Xen_check_type(Xen_is_Window(drawable), drawable, 2, "glXMakeCurrent", "Window");
   Xen_check_type(Xen_is_GLXContext(ctx), ctx, 3, "glXMakeCurrent", "GLXContext");
-  return(C_TO_XEN_Bool(glXMakeCurrent(XEN_TO_C_Display(dpy), XEN_TO_C_Window(drawable), XEN_TO_C_GLXContext(ctx))));
+  return(C_to_Xen_Bool(glXMakeCurrent(Xen_to_C_Display(dpy), Xen_to_C_Window(drawable), Xen_to_C_GLXContext(ctx))));
 }
 
-static XEN gxg_glXQueryExtension(XEN dpy, XEN errorBase, XEN eventBase)
+static Xen gxg_glXQueryExtension(Xen dpy, Xen errorBase, Xen eventBase)
 {
   #define H_glXQueryExtension "Bool glXQueryExtension(Display* dpy, int* [errorBase], int* [eventBase])"
   int ref_errorBase[1];
   int ref_eventBase[1];
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXQueryExtension", "Display*");
   {
-    XEN result = Xen_false;
-    result = C_TO_XEN_Bool(glXQueryExtension(XEN_TO_C_Display(dpy), ref_errorBase, ref_eventBase));
-    return(Xen_list_3(result, C_TO_XEN_int(ref_errorBase[0]), C_TO_XEN_int(ref_eventBase[0])));
+    Xen result = Xen_false;
+    result = C_to_Xen_Bool(glXQueryExtension(Xen_to_C_Display(dpy), ref_errorBase, ref_eventBase));
+    return(Xen_list_3(result, C_to_Xen_int(ref_errorBase[0]), C_to_Xen_int(ref_eventBase[0])));
    }
 }
 
-static XEN gxg_glXQueryVersion(XEN dpy, XEN major, XEN minor)
+static Xen gxg_glXQueryVersion(Xen dpy, Xen major, Xen minor)
 {
   #define H_glXQueryVersion "Bool glXQueryVersion(Display* dpy, int* [major], int* [minor])"
   int ref_major[1];
   int ref_minor[1];
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXQueryVersion", "Display*");
   {
-    XEN result = Xen_false;
-    result = C_TO_XEN_Bool(glXQueryVersion(XEN_TO_C_Display(dpy), ref_major, ref_minor));
-    return(Xen_list_3(result, C_TO_XEN_int(ref_major[0]), C_TO_XEN_int(ref_minor[0])));
+    Xen result = Xen_false;
+    result = C_to_Xen_Bool(glXQueryVersion(Xen_to_C_Display(dpy), ref_major, ref_minor));
+    return(Xen_list_3(result, C_to_Xen_int(ref_major[0]), C_to_Xen_int(ref_minor[0])));
    }
 }
 
-static XEN gxg_glXSwapBuffers(XEN dpy, XEN drawable)
+static Xen gxg_glXSwapBuffers(Xen dpy, Xen drawable)
 {
   #define H_glXSwapBuffers "void glXSwapBuffers(Display* dpy, Window drawable)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXSwapBuffers", "Display*");
   Xen_check_type(Xen_is_Window(drawable), drawable, 2, "glXSwapBuffers", "Window");
-  glXSwapBuffers(XEN_TO_C_Display(dpy), XEN_TO_C_Window(drawable));
+  glXSwapBuffers(Xen_to_C_Display(dpy), Xen_to_C_Window(drawable));
   return(Xen_false);
 }
 
-static XEN gxg_glXUseXFont(XEN font, XEN first, XEN count, XEN listBase)
+static Xen gxg_glXUseXFont(Xen font, Xen first, Xen count, Xen listBase)
 {
   #define H_glXUseXFont "void glXUseXFont(Font font, int first, int count, int listBase)"
   Xen_check_type(Xen_is_Font(font), font, 1, "glXUseXFont", "Font");
   Xen_check_type(Xen_is_int(first), first, 2, "glXUseXFont", "int");
   Xen_check_type(Xen_is_int(count), count, 3, "glXUseXFont", "int");
   Xen_check_type(Xen_is_int(listBase), listBase, 4, "glXUseXFont", "int");
-  glXUseXFont(XEN_TO_C_Font(font), XEN_TO_C_int(first), XEN_TO_C_int(count), XEN_TO_C_int(listBase));
+  glXUseXFont(Xen_to_C_Font(font), Xen_to_C_int(first), Xen_to_C_int(count), Xen_to_C_int(listBase));
   return(Xen_false);
 }
 
-static XEN gxg_glXWaitGL(void)
+static Xen gxg_glXWaitGL(void)
 {
   #define H_glXWaitGL "void glXWaitGL( void)"
   glXWaitGL();
   return(Xen_false);
 }
 
-static XEN gxg_glXWaitX(void)
+static Xen gxg_glXWaitX(void)
 {
   #define H_glXWaitX "void glXWaitX( void)"
   glXWaitX();
   return(Xen_false);
 }
 
-static XEN gxg_glXGetClientString(XEN dpy, XEN name)
+static Xen gxg_glXGetClientString(Xen dpy, Xen name)
 {
   #define H_glXGetClientString "char* glXGetClientString(Display* dpy, int name)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXGetClientString", "Display*");
   Xen_check_type(Xen_is_int(name), name, 2, "glXGetClientString", "int");
-  return(C_TO_XEN_char_(glXGetClientString(XEN_TO_C_Display(dpy), XEN_TO_C_int(name))));
+  return(C_to_Xen_char_(glXGetClientString(Xen_to_C_Display(dpy), Xen_to_C_int(name))));
 }
 
-static XEN gxg_glXQueryServerString(XEN dpy, XEN screen, XEN name)
+static Xen gxg_glXQueryServerString(Xen dpy, Xen screen, Xen name)
 {
   #define H_glXQueryServerString "char* glXQueryServerString(Display* dpy, int screen, int name)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXQueryServerString", "Display*");
   Xen_check_type(Xen_is_int(screen), screen, 2, "glXQueryServerString", "int");
   Xen_check_type(Xen_is_int(name), name, 3, "glXQueryServerString", "int");
-  return(C_TO_XEN_char_(glXQueryServerString(XEN_TO_C_Display(dpy), XEN_TO_C_int(screen), XEN_TO_C_int(name))));
+  return(C_to_Xen_char_(glXQueryServerString(Xen_to_C_Display(dpy), Xen_to_C_int(screen), Xen_to_C_int(name))));
 }
 
-static XEN gxg_glXQueryExtensionsString(XEN dpy, XEN screen)
+static Xen gxg_glXQueryExtensionsString(Xen dpy, Xen screen)
 {
   #define H_glXQueryExtensionsString "char* glXQueryExtensionsString(Display* dpy, int screen)"
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXQueryExtensionsString", "Display*");
   Xen_check_type(Xen_is_int(screen), screen, 2, "glXQueryExtensionsString", "int");
-  return(C_TO_XEN_char_(glXQueryExtensionsString(XEN_TO_C_Display(dpy), XEN_TO_C_int(screen))));
+  return(C_to_Xen_char_(glXQueryExtensionsString(Xen_to_C_Display(dpy), Xen_to_C_int(screen))));
 }
 
 #endif
-static XEN gxg_glClearIndex(XEN c)
+static Xen gxg_glClearIndex(Xen c)
 {
   #define H_glClearIndex "void glClearIndex(GLfloat c)"
   Xen_check_type(Xen_is_GLfloat(c), c, 1, "glClearIndex", "GLfloat");
-  glClearIndex(XEN_TO_C_GLfloat(c));
+  glClearIndex(Xen_to_C_GLfloat(c));
   return(Xen_false);
 }
 
-static XEN gxg_glClearColor(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glClearColor(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glClearColor "void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)"
   Xen_check_type(Xen_is_GLclampf(red), red, 1, "glClearColor", "GLclampf");
   Xen_check_type(Xen_is_GLclampf(green), green, 2, "glClearColor", "GLclampf");
   Xen_check_type(Xen_is_GLclampf(blue), blue, 3, "glClearColor", "GLclampf");
   Xen_check_type(Xen_is_GLclampf(alpha), alpha, 4, "glClearColor", "GLclampf");
-  glClearColor(XEN_TO_C_GLclampf(red), XEN_TO_C_GLclampf(green), XEN_TO_C_GLclampf(blue), XEN_TO_C_GLclampf(alpha));
+  glClearColor(Xen_to_C_GLclampf(red), Xen_to_C_GLclampf(green), Xen_to_C_GLclampf(blue), Xen_to_C_GLclampf(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glClear(XEN mask)
+static Xen gxg_glClear(Xen mask)
 {
   #define H_glClear "void glClear(GLbitfield mask)"
   Xen_check_type(Xen_is_GLbitfield(mask), mask, 1, "glClear", "GLbitfield");
-  glClear(XEN_TO_C_GLbitfield(mask));
+  glClear(Xen_to_C_GLbitfield(mask));
   return(Xen_false);
 }
 
-static XEN gxg_glIndexMask(XEN mask)
+static Xen gxg_glIndexMask(Xen mask)
 {
   #define H_glIndexMask "void glIndexMask(GLuint mask)"
   Xen_check_type(Xen_is_GLuint(mask), mask, 1, "glIndexMask", "GLuint");
-  glIndexMask(XEN_TO_C_GLuint(mask));
+  glIndexMask(Xen_to_C_GLuint(mask));
   return(Xen_false);
 }
 
-static XEN gxg_glColorMask(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glColorMask(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glColorMask "void glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)"
   Xen_check_type(Xen_is_GLboolean(red), red, 1, "glColorMask", "GLboolean");
   Xen_check_type(Xen_is_GLboolean(green), green, 2, "glColorMask", "GLboolean");
   Xen_check_type(Xen_is_GLboolean(blue), blue, 3, "glColorMask", "GLboolean");
   Xen_check_type(Xen_is_GLboolean(alpha), alpha, 4, "glColorMask", "GLboolean");
-  glColorMask(XEN_TO_C_GLboolean(red), XEN_TO_C_GLboolean(green), XEN_TO_C_GLboolean(blue), XEN_TO_C_GLboolean(alpha));
+  glColorMask(Xen_to_C_GLboolean(red), Xen_to_C_GLboolean(green), Xen_to_C_GLboolean(blue), Xen_to_C_GLboolean(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glAlphaFunc(XEN func, XEN ref)
+static Xen gxg_glAlphaFunc(Xen func, Xen ref)
 {
   #define H_glAlphaFunc "void glAlphaFunc(GLenum func, GLclampf ref)"
   Xen_check_type(Xen_is_GLenum(func), func, 1, "glAlphaFunc", "GLenum");
   Xen_check_type(Xen_is_GLclampf(ref), ref, 2, "glAlphaFunc", "GLclampf");
-  glAlphaFunc(XEN_TO_C_GLenum(func), XEN_TO_C_GLclampf(ref));
+  glAlphaFunc(Xen_to_C_GLenum(func), Xen_to_C_GLclampf(ref));
   return(Xen_false);
 }
 
-static XEN gxg_glBlendFunc(XEN sfactor, XEN dfactor)
+static Xen gxg_glBlendFunc(Xen sfactor, Xen dfactor)
 {
   #define H_glBlendFunc "void glBlendFunc(GLenum sfactor, GLenum dfactor)"
   Xen_check_type(Xen_is_GLenum(sfactor), sfactor, 1, "glBlendFunc", "GLenum");
   Xen_check_type(Xen_is_GLenum(dfactor), dfactor, 2, "glBlendFunc", "GLenum");
-  glBlendFunc(XEN_TO_C_GLenum(sfactor), XEN_TO_C_GLenum(dfactor));
+  glBlendFunc(Xen_to_C_GLenum(sfactor), Xen_to_C_GLenum(dfactor));
   return(Xen_false);
 }
 
-static XEN gxg_glLogicOp(XEN opcode)
+static Xen gxg_glLogicOp(Xen opcode)
 {
   #define H_glLogicOp "void glLogicOp(GLenum opcode)"
   Xen_check_type(Xen_is_GLenum(opcode), opcode, 1, "glLogicOp", "GLenum");
-  glLogicOp(XEN_TO_C_GLenum(opcode));
+  glLogicOp(Xen_to_C_GLenum(opcode));
   return(Xen_false);
 }
 
-static XEN gxg_glCullFace(XEN mode)
+static Xen gxg_glCullFace(Xen mode)
 {
   #define H_glCullFace "void glCullFace(GLenum mode)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glCullFace", "GLenum");
-  glCullFace(XEN_TO_C_GLenum(mode));
+  glCullFace(Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glFrontFace(XEN mode)
+static Xen gxg_glFrontFace(Xen mode)
 {
   #define H_glFrontFace "void glFrontFace(GLenum mode)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glFrontFace", "GLenum");
-  glFrontFace(XEN_TO_C_GLenum(mode));
+  glFrontFace(Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glPointSize(XEN size)
+static Xen gxg_glPointSize(Xen size)
 {
   #define H_glPointSize "void glPointSize(GLfloat size)"
   Xen_check_type(Xen_is_GLfloat(size), size, 1, "glPointSize", "GLfloat");
-  glPointSize(XEN_TO_C_GLfloat(size));
+  glPointSize(Xen_to_C_GLfloat(size));
   return(Xen_false);
 }
 
-static XEN gxg_glLineWidth(XEN width)
+static Xen gxg_glLineWidth(Xen width)
 {
   #define H_glLineWidth "void glLineWidth(GLfloat width)"
   Xen_check_type(Xen_is_GLfloat(width), width, 1, "glLineWidth", "GLfloat");
-  glLineWidth(XEN_TO_C_GLfloat(width));
+  glLineWidth(Xen_to_C_GLfloat(width));
   return(Xen_false);
 }
 
-static XEN gxg_glLineStipple(XEN factor, XEN pattern)
+static Xen gxg_glLineStipple(Xen factor, Xen pattern)
 {
   #define H_glLineStipple "void glLineStipple(GLint factor, GLushort pattern)"
   Xen_check_type(Xen_is_GLint(factor), factor, 1, "glLineStipple", "GLint");
   Xen_check_type(Xen_is_GLushort(pattern), pattern, 2, "glLineStipple", "GLushort");
-  glLineStipple(XEN_TO_C_GLint(factor), XEN_TO_C_GLushort(pattern));
+  glLineStipple(Xen_to_C_GLint(factor), Xen_to_C_GLushort(pattern));
   return(Xen_false);
 }
 
-static XEN gxg_glPolygonMode(XEN face, XEN mode)
+static Xen gxg_glPolygonMode(Xen face, Xen mode)
 {
   #define H_glPolygonMode "void glPolygonMode(GLenum face, GLenum mode)"
   Xen_check_type(Xen_is_GLenum(face), face, 1, "glPolygonMode", "GLenum");
   Xen_check_type(Xen_is_GLenum(mode), mode, 2, "glPolygonMode", "GLenum");
-  glPolygonMode(XEN_TO_C_GLenum(face), XEN_TO_C_GLenum(mode));
+  glPolygonMode(Xen_to_C_GLenum(face), Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glPolygonOffset(XEN factor, XEN units)
+static Xen gxg_glPolygonOffset(Xen factor, Xen units)
 {
   #define H_glPolygonOffset "void glPolygonOffset(GLfloat factor, GLfloat units)"
   Xen_check_type(Xen_is_GLfloat(factor), factor, 1, "glPolygonOffset", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(units), units, 2, "glPolygonOffset", "GLfloat");
-  glPolygonOffset(XEN_TO_C_GLfloat(factor), XEN_TO_C_GLfloat(units));
+  glPolygonOffset(Xen_to_C_GLfloat(factor), Xen_to_C_GLfloat(units));
   return(Xen_false);
 }
 
-static XEN gxg_glPolygonStipple(XEN mask)
+static Xen gxg_glPolygonStipple(Xen mask)
 {
   #define H_glPolygonStipple "void glPolygonStipple(GLubyte* mask)"
   Xen_check_type(Xen_is_GLubyte_(mask), mask, 1, "glPolygonStipple", "GLubyte*");
-  glPolygonStipple(XEN_TO_C_GLubyte_(mask));
+  glPolygonStipple(Xen_to_C_GLubyte_(mask));
   return(Xen_false);
 }
 
-static XEN gxg_glEdgeFlag(XEN flag)
+static Xen gxg_glEdgeFlag(Xen flag)
 {
   #define H_glEdgeFlag "void glEdgeFlag(GLboolean flag)"
   Xen_check_type(Xen_is_GLboolean(flag), flag, 1, "glEdgeFlag", "GLboolean");
-  glEdgeFlag(XEN_TO_C_GLboolean(flag));
+  glEdgeFlag(Xen_to_C_GLboolean(flag));
   return(Xen_false);
 }
 
-static XEN gxg_glScissor(XEN x, XEN y, XEN width, XEN height)
+static Xen gxg_glScissor(Xen x, Xen y, Xen width, Xen height)
 {
   #define H_glScissor "void glScissor(GLint x, GLint y, GLsizei width, GLsizei height)"
   Xen_check_type(Xen_is_GLint(x), x, 1, "glScissor", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 2, "glScissor", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 3, "glScissor", "GLsizei");
   Xen_check_type(Xen_is_GLsizei(height), height, 4, "glScissor", "GLsizei");
-  glScissor(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height));
+  glScissor(Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height));
   return(Xen_false);
 }
 
-static XEN gxg_glClipPlane(XEN plane, XEN equation)
+static Xen gxg_glClipPlane(Xen plane, Xen equation)
 {
   #define H_glClipPlane "void glClipPlane(GLenum plane, GLdouble* equation)"
   Xen_check_type(Xen_is_GLenum(plane), plane, 1, "glClipPlane", "GLenum");
   Xen_check_type(Xen_is_GLdouble_(equation), equation, 2, "glClipPlane", "GLdouble*");
-  glClipPlane(XEN_TO_C_GLenum(plane), XEN_TO_C_GLdouble_(equation));
+  glClipPlane(Xen_to_C_GLenum(plane), Xen_to_C_GLdouble_(equation));
   return(Xen_false);
 }
 
-static XEN gxg_glGetClipPlane(XEN plane, XEN equation)
+static Xen gxg_glGetClipPlane(Xen plane, Xen equation)
 {
   #define H_glGetClipPlane "void glGetClipPlane(GLenum plane, GLdouble* [equation])"
   GLdouble ref_equation[1];
   Xen_check_type(Xen_is_GLenum(plane), plane, 1, "glGetClipPlane", "GLenum");
-  glGetClipPlane(XEN_TO_C_GLenum(plane), ref_equation);
-  return(Xen_list_1(C_TO_XEN_GLdouble(ref_equation[0])));
+  glGetClipPlane(Xen_to_C_GLenum(plane), ref_equation);
+  return(Xen_list_1(C_to_Xen_GLdouble(ref_equation[0])));
 }
 
-static XEN gxg_glDrawBuffer(XEN mode)
+static Xen gxg_glDrawBuffer(Xen mode)
 {
   #define H_glDrawBuffer "void glDrawBuffer(GLenum mode)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glDrawBuffer", "GLenum");
-  glDrawBuffer(XEN_TO_C_GLenum(mode));
+  glDrawBuffer(Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glReadBuffer(XEN mode)
+static Xen gxg_glReadBuffer(Xen mode)
 {
   #define H_glReadBuffer "void glReadBuffer(GLenum mode)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glReadBuffer", "GLenum");
-  glReadBuffer(XEN_TO_C_GLenum(mode));
+  glReadBuffer(Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glEnable(XEN cap)
+static Xen gxg_glEnable(Xen cap)
 {
   #define H_glEnable "void glEnable(GLenum cap)"
   Xen_check_type(Xen_is_GLenum(cap), cap, 1, "glEnable", "GLenum");
-  glEnable(XEN_TO_C_GLenum(cap));
+  glEnable(Xen_to_C_GLenum(cap));
   return(Xen_false);
 }
 
-static XEN gxg_glDisable(XEN cap)
+static Xen gxg_glDisable(Xen cap)
 {
   #define H_glDisable "void glDisable(GLenum cap)"
   Xen_check_type(Xen_is_GLenum(cap), cap, 1, "glDisable", "GLenum");
-  glDisable(XEN_TO_C_GLenum(cap));
+  glDisable(Xen_to_C_GLenum(cap));
   return(Xen_false);
 }
 
-static XEN gxg_glIsEnabled(XEN cap)
+static Xen gxg_glIsEnabled(Xen cap)
 {
   #define H_glIsEnabled "GLboolean glIsEnabled(GLenum cap)"
   Xen_check_type(Xen_is_GLenum(cap), cap, 1, "glIsEnabled", "GLenum");
-  return(C_TO_XEN_GLboolean(glIsEnabled(XEN_TO_C_GLenum(cap))));
+  return(C_to_Xen_GLboolean(glIsEnabled(Xen_to_C_GLenum(cap))));
 }
 
-static XEN gxg_glEnableClientState(XEN cap)
+static Xen gxg_glEnableClientState(Xen cap)
 {
   #define H_glEnableClientState "void glEnableClientState(GLenum cap)"
   Xen_check_type(Xen_is_GLenum(cap), cap, 1, "glEnableClientState", "GLenum");
-  glEnableClientState(XEN_TO_C_GLenum(cap));
+  glEnableClientState(Xen_to_C_GLenum(cap));
   return(Xen_false);
 }
 
-static XEN gxg_glDisableClientState(XEN cap)
+static Xen gxg_glDisableClientState(Xen cap)
 {
   #define H_glDisableClientState "void glDisableClientState(GLenum cap)"
   Xen_check_type(Xen_is_GLenum(cap), cap, 1, "glDisableClientState", "GLenum");
-  glDisableClientState(XEN_TO_C_GLenum(cap));
+  glDisableClientState(Xen_to_C_GLenum(cap));
   return(Xen_false);
 }
 
-static XEN gxg_glGetBooleanv(XEN pname, XEN params)
+static Xen gxg_glGetBooleanv(Xen pname, Xen params)
 {
   #define H_glGetBooleanv "void glGetBooleanv(GLenum pname, GLboolean* [params])"
   GLboolean ref_params[16];
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glGetBooleanv", "GLenum");
-  glGetBooleanv(XEN_TO_C_GLenum(pname), ref_params);
+  glGetBooleanv(Xen_to_C_GLenum(pname), ref_params);
   {
-    XEN result;
+    Xen result;
     int i, vals;
-    vals = how_many_vals(XEN_TO_C_GLenum(pname));
+    vals = how_many_vals(Xen_to_C_GLenum(pname));
     result = Xen_empty_list;
     for (i = 0; i < vals; i++)
-      result = Xen_cons(C_TO_XEN_GLboolean(ref_params[i]), result);
+      result = Xen_cons(C_to_Xen_GLboolean(ref_params[i]), result);
     return(result);
   }
 }
 
-static XEN gxg_glGetDoublev(XEN pname, XEN params)
+static Xen gxg_glGetDoublev(Xen pname, Xen params)
 {
   #define H_glGetDoublev "void glGetDoublev(GLenum pname, GLdouble* [params])"
   GLdouble ref_params[1];
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glGetDoublev", "GLenum");
-  glGetDoublev(XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLdouble(ref_params[0])));
+  glGetDoublev(Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLdouble(ref_params[0])));
 }
 
-static XEN gxg_glGetFloatv(XEN pname, XEN params)
+static Xen gxg_glGetFloatv(Xen pname, Xen params)
 {
   #define H_glGetFloatv "void glGetFloatv(GLenum pname, GLfloat* [params])"
   GLfloat ref_params[16];
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glGetFloatv", "GLenum");
-  glGetFloatv(XEN_TO_C_GLenum(pname), ref_params);
+  glGetFloatv(Xen_to_C_GLenum(pname), ref_params);
   {
-    XEN result;
+    Xen result;
     int i, vals;
-    vals = how_many_vals(XEN_TO_C_GLenum(pname));
+    vals = how_many_vals(Xen_to_C_GLenum(pname));
     result = Xen_empty_list;
     for (i = 0; i < vals; i++)
-      result = Xen_cons(C_TO_XEN_GLfloat(ref_params[i]), result);
+      result = Xen_cons(C_to_Xen_GLfloat(ref_params[i]), result);
     return(result);
   }
 }
 
-static XEN gxg_glGetIntegerv(XEN pname, XEN params)
+static Xen gxg_glGetIntegerv(Xen pname, Xen params)
 {
   #define H_glGetIntegerv "void glGetIntegerv(GLenum pname, GLint* [params])"
   GLint ref_params[16];
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glGetIntegerv", "GLenum");
-  glGetIntegerv(XEN_TO_C_GLenum(pname), ref_params);
+  glGetIntegerv(Xen_to_C_GLenum(pname), ref_params);
   {
-    XEN result;
+    Xen result;
     int i, vals;
-    vals = how_many_vals(XEN_TO_C_GLenum(pname));
+    vals = how_many_vals(Xen_to_C_GLenum(pname));
     result = Xen_empty_list;
     for (i = 0; i < vals; i++)
-      result = Xen_cons(C_TO_XEN_GLint(ref_params[i]), result);
+      result = Xen_cons(C_to_Xen_GLint(ref_params[i]), result);
     return(result);
   }
 }
 
-static XEN gxg_glPushAttrib(XEN mask)
+static Xen gxg_glPushAttrib(Xen mask)
 {
   #define H_glPushAttrib "void glPushAttrib(GLbitfield mask)"
   Xen_check_type(Xen_is_GLbitfield(mask), mask, 1, "glPushAttrib", "GLbitfield");
-  glPushAttrib(XEN_TO_C_GLbitfield(mask));
+  glPushAttrib(Xen_to_C_GLbitfield(mask));
   return(Xen_false);
 }
 
-static XEN gxg_glPopAttrib(void)
+static Xen gxg_glPopAttrib(void)
 {
   #define H_glPopAttrib "void glPopAttrib( void)"
   glPopAttrib();
   return(Xen_false);
 }
 
-static XEN gxg_glPushClientAttrib(XEN mask)
+static Xen gxg_glPushClientAttrib(Xen mask)
 {
   #define H_glPushClientAttrib "void glPushClientAttrib(GLbitfield mask)"
   Xen_check_type(Xen_is_GLbitfield(mask), mask, 1, "glPushClientAttrib", "GLbitfield");
-  glPushClientAttrib(XEN_TO_C_GLbitfield(mask));
+  glPushClientAttrib(Xen_to_C_GLbitfield(mask));
   return(Xen_false);
 }
 
-static XEN gxg_glPopClientAttrib(void)
+static Xen gxg_glPopClientAttrib(void)
 {
   #define H_glPopClientAttrib "void glPopClientAttrib( void)"
   glPopClientAttrib();
   return(Xen_false);
 }
 
-static XEN gxg_glRenderMode(XEN mode)
+static Xen gxg_glRenderMode(Xen mode)
 {
   #define H_glRenderMode "GLint glRenderMode(GLenum mode)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glRenderMode", "GLenum");
-  return(C_TO_XEN_GLint(glRenderMode(XEN_TO_C_GLenum(mode))));
+  return(C_to_Xen_GLint(glRenderMode(Xen_to_C_GLenum(mode))));
 }
 
-static XEN gxg_glGetError(void)
+static Xen gxg_glGetError(void)
 {
   #define H_glGetError "GLenum glGetError( void)"
-  return(C_TO_XEN_GLenum(glGetError()));
+  return(C_to_Xen_GLenum(glGetError()));
 }
 
-static XEN gxg_glGetString(XEN name)
+static Xen gxg_glGetString(Xen name)
 {
   #define H_glGetString "constchar* glGetString(GLenum name)"
   Xen_check_type(Xen_is_GLenum(name), name, 1, "glGetString", "GLenum");
-  return(C_TO_XEN_constchar_(glGetString(XEN_TO_C_GLenum(name))));
+  return(C_to_Xen_constchar_(glGetString(Xen_to_C_GLenum(name))));
 }
 
-static XEN gxg_glFinish(void)
+static Xen gxg_glFinish(void)
 {
   #define H_glFinish "void glFinish( void)"
   glFinish();
   return(Xen_false);
 }
 
-static XEN gxg_glFlush(void)
+static Xen gxg_glFlush(void)
 {
   #define H_glFlush "void glFlush( void)"
   glFlush();
   return(Xen_false);
 }
 
-static XEN gxg_glHint(XEN target, XEN mode)
+static Xen gxg_glHint(Xen target, Xen mode)
 {
   #define H_glHint "void glHint(GLenum target, GLenum mode)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glHint", "GLenum");
   Xen_check_type(Xen_is_GLenum(mode), mode, 2, "glHint", "GLenum");
-  glHint(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(mode));
+  glHint(Xen_to_C_GLenum(target), Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glClearDepth(XEN depth)
+static Xen gxg_glClearDepth(Xen depth)
 {
   #define H_glClearDepth "void glClearDepth(GLclampd depth)"
   Xen_check_type(Xen_is_GLclampd(depth), depth, 1, "glClearDepth", "GLclampd");
-  glClearDepth(XEN_TO_C_GLclampd(depth));
+  glClearDepth(Xen_to_C_GLclampd(depth));
   return(Xen_false);
 }
 
-static XEN gxg_glDepthFunc(XEN func)
+static Xen gxg_glDepthFunc(Xen func)
 {
   #define H_glDepthFunc "void glDepthFunc(GLenum func)"
   Xen_check_type(Xen_is_GLenum(func), func, 1, "glDepthFunc", "GLenum");
-  glDepthFunc(XEN_TO_C_GLenum(func));
+  glDepthFunc(Xen_to_C_GLenum(func));
   return(Xen_false);
 }
 
-static XEN gxg_glDepthMask(XEN flag)
+static Xen gxg_glDepthMask(Xen flag)
 {
   #define H_glDepthMask "void glDepthMask(GLboolean flag)"
   Xen_check_type(Xen_is_GLboolean(flag), flag, 1, "glDepthMask", "GLboolean");
-  glDepthMask(XEN_TO_C_GLboolean(flag));
+  glDepthMask(Xen_to_C_GLboolean(flag));
   return(Xen_false);
 }
 
-static XEN gxg_glDepthRange(XEN near_val, XEN far_val)
+static Xen gxg_glDepthRange(Xen near_val, Xen far_val)
 {
   #define H_glDepthRange "void glDepthRange(GLclampd near_val, GLclampd far_val)"
   Xen_check_type(Xen_is_GLclampd(near_val), near_val, 1, "glDepthRange", "GLclampd");
   Xen_check_type(Xen_is_GLclampd(far_val), far_val, 2, "glDepthRange", "GLclampd");
-  glDepthRange(XEN_TO_C_GLclampd(near_val), XEN_TO_C_GLclampd(far_val));
+  glDepthRange(Xen_to_C_GLclampd(near_val), Xen_to_C_GLclampd(far_val));
   return(Xen_false);
 }
 
-static XEN gxg_glClearAccum(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glClearAccum(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glClearAccum "void glClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)"
   Xen_check_type(Xen_is_GLfloat(red), red, 1, "glClearAccum", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(green), green, 2, "glClearAccum", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(blue), blue, 3, "glClearAccum", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(alpha), alpha, 4, "glClearAccum", "GLfloat");
-  glClearAccum(XEN_TO_C_GLfloat(red), XEN_TO_C_GLfloat(green), XEN_TO_C_GLfloat(blue), XEN_TO_C_GLfloat(alpha));
+  glClearAccum(Xen_to_C_GLfloat(red), Xen_to_C_GLfloat(green), Xen_to_C_GLfloat(blue), Xen_to_C_GLfloat(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glAccum(XEN op, XEN value)
+static Xen gxg_glAccum(Xen op, Xen value)
 {
   #define H_glAccum "void glAccum(GLenum op, GLfloat value)"
   Xen_check_type(Xen_is_GLenum(op), op, 1, "glAccum", "GLenum");
   Xen_check_type(Xen_is_GLfloat(value), value, 2, "glAccum", "GLfloat");
-  glAccum(XEN_TO_C_GLenum(op), XEN_TO_C_GLfloat(value));
+  glAccum(Xen_to_C_GLenum(op), Xen_to_C_GLfloat(value));
   return(Xen_false);
 }
 
-static XEN gxg_glMatrixMode(XEN mode)
+static Xen gxg_glMatrixMode(Xen mode)
 {
   #define H_glMatrixMode "void glMatrixMode(GLenum mode)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glMatrixMode", "GLenum");
-  glMatrixMode(XEN_TO_C_GLenum(mode));
+  glMatrixMode(Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glOrtho(XEN left, XEN right, XEN bottom, XEN top, XEN near_val, XEN far_val)
+static Xen gxg_glOrtho(Xen left, Xen right, Xen bottom, Xen top, Xen near_val, Xen far_val)
 {
   #define H_glOrtho "void glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, \
 GLdouble far_val)"
@@ -837,12 +837,12 @@ GLdouble far_val)"
   Xen_check_type(Xen_is_GLdouble(top), top, 4, "glOrtho", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(near_val), near_val, 5, "glOrtho", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(far_val), far_val, 6, "glOrtho", "GLdouble");
-  glOrtho(XEN_TO_C_GLdouble(left), XEN_TO_C_GLdouble(right), XEN_TO_C_GLdouble(bottom), XEN_TO_C_GLdouble(top), XEN_TO_C_GLdouble(near_val), 
-          XEN_TO_C_GLdouble(far_val));
+  glOrtho(Xen_to_C_GLdouble(left), Xen_to_C_GLdouble(right), Xen_to_C_GLdouble(bottom), Xen_to_C_GLdouble(top), Xen_to_C_GLdouble(near_val), 
+          Xen_to_C_GLdouble(far_val));
   return(Xen_false);
 }
 
-static XEN gxg_glFrustum(XEN left, XEN right, XEN bottom, XEN top, XEN near_val, XEN far_val)
+static Xen gxg_glFrustum(Xen left, Xen right, Xen bottom, Xen top, Xen near_val, Xen far_val)
 {
   #define H_glFrustum "void glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, \
 GLdouble far_val)"
@@ -852,1225 +852,1225 @@ GLdouble far_val)"
   Xen_check_type(Xen_is_GLdouble(top), top, 4, "glFrustum", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(near_val), near_val, 5, "glFrustum", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(far_val), far_val, 6, "glFrustum", "GLdouble");
-  glFrustum(XEN_TO_C_GLdouble(left), XEN_TO_C_GLdouble(right), XEN_TO_C_GLdouble(bottom), XEN_TO_C_GLdouble(top), XEN_TO_C_GLdouble(near_val), 
-            XEN_TO_C_GLdouble(far_val));
+  glFrustum(Xen_to_C_GLdouble(left), Xen_to_C_GLdouble(right), Xen_to_C_GLdouble(bottom), Xen_to_C_GLdouble(top), Xen_to_C_GLdouble(near_val), 
+            Xen_to_C_GLdouble(far_val));
   return(Xen_false);
 }
 
-static XEN gxg_glViewport(XEN x, XEN y, XEN width, XEN height)
+static Xen gxg_glViewport(Xen x, Xen y, Xen width, Xen height)
 {
   #define H_glViewport "void glViewport(GLint x, GLint y, GLsizei width, GLsizei height)"
   Xen_check_type(Xen_is_GLint(x), x, 1, "glViewport", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 2, "glViewport", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 3, "glViewport", "GLsizei");
   Xen_check_type(Xen_is_GLsizei(height), height, 4, "glViewport", "GLsizei");
-  glViewport(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height));
+  glViewport(Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height));
   return(Xen_false);
 }
 
-static XEN gxg_glPushMatrix(void)
+static Xen gxg_glPushMatrix(void)
 {
   #define H_glPushMatrix "void glPushMatrix( void)"
   glPushMatrix();
   return(Xen_false);
 }
 
-static XEN gxg_glPopMatrix(void)
+static Xen gxg_glPopMatrix(void)
 {
   #define H_glPopMatrix "void glPopMatrix( void)"
   glPopMatrix();
   return(Xen_false);
 }
 
-static XEN gxg_glLoadIdentity(void)
+static Xen gxg_glLoadIdentity(void)
 {
   #define H_glLoadIdentity "void glLoadIdentity( void)"
   glLoadIdentity();
   return(Xen_false);
 }
 
-static XEN gxg_glLoadMatrixd(XEN m)
+static Xen gxg_glLoadMatrixd(Xen m)
 {
   #define H_glLoadMatrixd "void glLoadMatrixd(GLdouble* m)"
   Xen_check_type(Xen_is_GLdouble_(m), m, 1, "glLoadMatrixd", "GLdouble*");
-  glLoadMatrixd(XEN_TO_C_GLdouble_(m));
+  glLoadMatrixd(Xen_to_C_GLdouble_(m));
   return(Xen_false);
 }
 
-static XEN gxg_glLoadMatrixf(XEN m)
+static Xen gxg_glLoadMatrixf(Xen m)
 {
   #define H_glLoadMatrixf "void glLoadMatrixf(GLfloat* m)"
   Xen_check_type(Xen_is_GLfloat_(m), m, 1, "glLoadMatrixf", "GLfloat*");
-  glLoadMatrixf(XEN_TO_C_GLfloat_(m));
+  glLoadMatrixf(Xen_to_C_GLfloat_(m));
   return(Xen_false);
 }
 
-static XEN gxg_glMultMatrixd(XEN m)
+static Xen gxg_glMultMatrixd(Xen m)
 {
   #define H_glMultMatrixd "void glMultMatrixd(GLdouble* m)"
   Xen_check_type(Xen_is_GLdouble_(m), m, 1, "glMultMatrixd", "GLdouble*");
-  glMultMatrixd(XEN_TO_C_GLdouble_(m));
+  glMultMatrixd(Xen_to_C_GLdouble_(m));
   return(Xen_false);
 }
 
-static XEN gxg_glMultMatrixf(XEN m)
+static Xen gxg_glMultMatrixf(Xen m)
 {
   #define H_glMultMatrixf "void glMultMatrixf(GLfloat* m)"
   Xen_check_type(Xen_is_GLfloat_(m), m, 1, "glMultMatrixf", "GLfloat*");
-  glMultMatrixf(XEN_TO_C_GLfloat_(m));
+  glMultMatrixf(Xen_to_C_GLfloat_(m));
   return(Xen_false);
 }
 
-static XEN gxg_glRotated(XEN angle, XEN x, XEN y, XEN z)
+static Xen gxg_glRotated(Xen angle, Xen x, Xen y, Xen z)
 {
   #define H_glRotated "void glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)"
   Xen_check_type(Xen_is_GLdouble(angle), angle, 1, "glRotated", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(x), x, 2, "glRotated", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y), y, 3, "glRotated", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(z), z, 4, "glRotated", "GLdouble");
-  glRotated(XEN_TO_C_GLdouble(angle), XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y), XEN_TO_C_GLdouble(z));
+  glRotated(Xen_to_C_GLdouble(angle), Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y), Xen_to_C_GLdouble(z));
   return(Xen_false);
 }
 
-static XEN gxg_glRotatef(XEN angle, XEN x, XEN y, XEN z)
+static Xen gxg_glRotatef(Xen angle, Xen x, Xen y, Xen z)
 {
   #define H_glRotatef "void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)"
   Xen_check_type(Xen_is_GLfloat(angle), angle, 1, "glRotatef", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(x), x, 2, "glRotatef", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y), y, 3, "glRotatef", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(z), z, 4, "glRotatef", "GLfloat");
-  glRotatef(XEN_TO_C_GLfloat(angle), XEN_TO_C_GLfloat(x), XEN_TO_C_GLfloat(y), XEN_TO_C_GLfloat(z));
+  glRotatef(Xen_to_C_GLfloat(angle), Xen_to_C_GLfloat(x), Xen_to_C_GLfloat(y), Xen_to_C_GLfloat(z));
   return(Xen_false);
 }
 
-static XEN gxg_glScaled(XEN x, XEN y, XEN z)
+static Xen gxg_glScaled(Xen x, Xen y, Xen z)
 {
   #define H_glScaled "void glScaled(GLdouble x, GLdouble y, GLdouble z)"
   Xen_check_type(Xen_is_GLdouble(x), x, 1, "glScaled", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y), y, 2, "glScaled", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(z), z, 3, "glScaled", "GLdouble");
-  glScaled(XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y), XEN_TO_C_GLdouble(z));
+  glScaled(Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y), Xen_to_C_GLdouble(z));
   return(Xen_false);
 }
 
-static XEN gxg_glScalef(XEN x, XEN y, XEN z)
+static Xen gxg_glScalef(Xen x, Xen y, Xen z)
 {
   #define H_glScalef "void glScalef(GLfloat x, GLfloat y, GLfloat z)"
   Xen_check_type(Xen_is_GLfloat(x), x, 1, "glScalef", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y), y, 2, "glScalef", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(z), z, 3, "glScalef", "GLfloat");
-  glScalef(XEN_TO_C_GLfloat(x), XEN_TO_C_GLfloat(y), XEN_TO_C_GLfloat(z));
+  glScalef(Xen_to_C_GLfloat(x), Xen_to_C_GLfloat(y), Xen_to_C_GLfloat(z));
   return(Xen_false);
 }
 
-static XEN gxg_glTranslated(XEN x, XEN y, XEN z)
+static Xen gxg_glTranslated(Xen x, Xen y, Xen z)
 {
   #define H_glTranslated "void glTranslated(GLdouble x, GLdouble y, GLdouble z)"
   Xen_check_type(Xen_is_GLdouble(x), x, 1, "glTranslated", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y), y, 2, "glTranslated", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(z), z, 3, "glTranslated", "GLdouble");
-  glTranslated(XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y), XEN_TO_C_GLdouble(z));
+  glTranslated(Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y), Xen_to_C_GLdouble(z));
   return(Xen_false);
 }
 
-static XEN gxg_glTranslatef(XEN x, XEN y, XEN z)
+static Xen gxg_glTranslatef(Xen x, Xen y, Xen z)
 {
   #define H_glTranslatef "void glTranslatef(GLfloat x, GLfloat y, GLfloat z)"
   Xen_check_type(Xen_is_GLfloat(x), x, 1, "glTranslatef", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y), y, 2, "glTranslatef", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(z), z, 3, "glTranslatef", "GLfloat");
-  glTranslatef(XEN_TO_C_GLfloat(x), XEN_TO_C_GLfloat(y), XEN_TO_C_GLfloat(z));
+  glTranslatef(Xen_to_C_GLfloat(x), Xen_to_C_GLfloat(y), Xen_to_C_GLfloat(z));
   return(Xen_false);
 }
 
-static XEN gxg_glIsList(XEN list)
+static Xen gxg_glIsList(Xen list)
 {
   #define H_glIsList "GLboolean glIsList(GLuint list)"
   Xen_check_type(Xen_is_GLuint(list), list, 1, "glIsList", "GLuint");
-  return(C_TO_XEN_GLboolean(glIsList(XEN_TO_C_GLuint(list))));
+  return(C_to_Xen_GLboolean(glIsList(Xen_to_C_GLuint(list))));
 }
 
-static XEN gxg_glDeleteLists(XEN list, XEN range)
+static Xen gxg_glDeleteLists(Xen list, Xen range)
 {
   #define H_glDeleteLists "void glDeleteLists(GLuint list, GLsizei range)"
   Xen_check_type(Xen_is_GLuint(list), list, 1, "glDeleteLists", "GLuint");
   Xen_check_type(Xen_is_GLsizei(range), range, 2, "glDeleteLists", "GLsizei");
-  glDeleteLists(XEN_TO_C_GLuint(list), XEN_TO_C_GLsizei(range));
+  glDeleteLists(Xen_to_C_GLuint(list), Xen_to_C_GLsizei(range));
   return(Xen_false);
 }
 
-static XEN gxg_glGenLists(XEN range)
+static Xen gxg_glGenLists(Xen range)
 {
   #define H_glGenLists "GLuint glGenLists(GLsizei range)"
   Xen_check_type(Xen_is_GLsizei(range), range, 1, "glGenLists", "GLsizei");
-  return(C_TO_XEN_GLuint(glGenLists(XEN_TO_C_GLsizei(range))));
+  return(C_to_Xen_GLuint(glGenLists(Xen_to_C_GLsizei(range))));
 }
 
-static XEN gxg_glNewList(XEN list, XEN mode)
+static Xen gxg_glNewList(Xen list, Xen mode)
 {
   #define H_glNewList "void glNewList(GLuint list, GLenum mode)"
   Xen_check_type(Xen_is_GLuint(list), list, 1, "glNewList", "GLuint");
   Xen_check_type(Xen_is_GLenum(mode), mode, 2, "glNewList", "GLenum");
-  glNewList(XEN_TO_C_GLuint(list), XEN_TO_C_GLenum(mode));
+  glNewList(Xen_to_C_GLuint(list), Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glEndList(void)
+static Xen gxg_glEndList(void)
 {
   #define H_glEndList "void glEndList( void)"
   glEndList();
   return(Xen_false);
 }
 
-static XEN gxg_glCallList(XEN list)
+static Xen gxg_glCallList(Xen list)
 {
   #define H_glCallList "void glCallList(GLuint list)"
   Xen_check_type(Xen_is_GLuint(list), list, 1, "glCallList", "GLuint");
-  glCallList(XEN_TO_C_GLuint(list));
+  glCallList(Xen_to_C_GLuint(list));
   return(Xen_false);
 }
 
-static XEN gxg_glCallLists(XEN n, XEN type, XEN lists)
+static Xen gxg_glCallLists(Xen n, Xen type, Xen lists)
 {
   #define H_glCallLists "void glCallLists(GLsizei n, GLenum type, GLvoid* lists)"
   Xen_check_type(Xen_is_GLsizei(n), n, 1, "glCallLists", "GLsizei");
   Xen_check_type(Xen_is_GLenum(type), type, 2, "glCallLists", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(lists), lists, 3, "glCallLists", "GLvoid*");
-  glCallLists(XEN_TO_C_GLsizei(n), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(lists));
+  glCallLists(Xen_to_C_GLsizei(n), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(lists));
   return(Xen_false);
 }
 
-static XEN gxg_glListBase(XEN base)
+static Xen gxg_glListBase(Xen base)
 {
   #define H_glListBase "void glListBase(GLuint base)"
   Xen_check_type(Xen_is_GLuint(base), base, 1, "glListBase", "GLuint");
-  glListBase(XEN_TO_C_GLuint(base));
+  glListBase(Xen_to_C_GLuint(base));
   return(Xen_false);
 }
 
-static XEN gxg_glBegin(XEN mode)
+static Xen gxg_glBegin(Xen mode)
 {
   #define H_glBegin "void glBegin(GLenum mode)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glBegin", "GLenum");
-  glBegin(XEN_TO_C_GLenum(mode));
+  glBegin(Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glEnd(void)
+static Xen gxg_glEnd(void)
 {
   #define H_glEnd "void glEnd( void)"
   glEnd();
   return(Xen_false);
 }
 
-static XEN gxg_glVertex2d(XEN x, XEN y)
+static Xen gxg_glVertex2d(Xen x, Xen y)
 {
   #define H_glVertex2d "void glVertex2d(GLdouble x, GLdouble y)"
   Xen_check_type(Xen_is_GLdouble(x), x, 1, "glVertex2d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y), y, 2, "glVertex2d", "GLdouble");
-  glVertex2d(XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y));
+  glVertex2d(Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex2f(XEN x, XEN y)
+static Xen gxg_glVertex2f(Xen x, Xen y)
 {
   #define H_glVertex2f "void glVertex2f(GLfloat x, GLfloat y)"
   Xen_check_type(Xen_is_GLfloat(x), x, 1, "glVertex2f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y), y, 2, "glVertex2f", "GLfloat");
-  glVertex2f(XEN_TO_C_GLfloat(x), XEN_TO_C_GLfloat(y));
+  glVertex2f(Xen_to_C_GLfloat(x), Xen_to_C_GLfloat(y));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex2i(XEN x, XEN y)
+static Xen gxg_glVertex2i(Xen x, Xen y)
 {
   #define H_glVertex2i "void glVertex2i(GLint x, GLint y)"
   Xen_check_type(Xen_is_GLint(x), x, 1, "glVertex2i", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 2, "glVertex2i", "GLint");
-  glVertex2i(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y));
+  glVertex2i(Xen_to_C_GLint(x), Xen_to_C_GLint(y));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex2s(XEN x, XEN y)
+static Xen gxg_glVertex2s(Xen x, Xen y)
 {
   #define H_glVertex2s "void glVertex2s(GLshort x, GLshort y)"
   Xen_check_type(Xen_is_GLshort(x), x, 1, "glVertex2s", "GLshort");
   Xen_check_type(Xen_is_GLshort(y), y, 2, "glVertex2s", "GLshort");
-  glVertex2s(XEN_TO_C_GLshort(x), XEN_TO_C_GLshort(y));
+  glVertex2s(Xen_to_C_GLshort(x), Xen_to_C_GLshort(y));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex3d(XEN x, XEN y, XEN z)
+static Xen gxg_glVertex3d(Xen x, Xen y, Xen z)
 {
   #define H_glVertex3d "void glVertex3d(GLdouble x, GLdouble y, GLdouble z)"
   Xen_check_type(Xen_is_GLdouble(x), x, 1, "glVertex3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y), y, 2, "glVertex3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(z), z, 3, "glVertex3d", "GLdouble");
-  glVertex3d(XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y), XEN_TO_C_GLdouble(z));
+  glVertex3d(Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y), Xen_to_C_GLdouble(z));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex3f(XEN x, XEN y, XEN z)
+static Xen gxg_glVertex3f(Xen x, Xen y, Xen z)
 {
   #define H_glVertex3f "void glVertex3f(GLfloat x, GLfloat y, GLfloat z)"
   Xen_check_type(Xen_is_GLfloat(x), x, 1, "glVertex3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y), y, 2, "glVertex3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(z), z, 3, "glVertex3f", "GLfloat");
-  glVertex3f(XEN_TO_C_GLfloat(x), XEN_TO_C_GLfloat(y), XEN_TO_C_GLfloat(z));
+  glVertex3f(Xen_to_C_GLfloat(x), Xen_to_C_GLfloat(y), Xen_to_C_GLfloat(z));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex3i(XEN x, XEN y, XEN z)
+static Xen gxg_glVertex3i(Xen x, Xen y, Xen z)
 {
   #define H_glVertex3i "void glVertex3i(GLint x, GLint y, GLint z)"
   Xen_check_type(Xen_is_GLint(x), x, 1, "glVertex3i", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 2, "glVertex3i", "GLint");
   Xen_check_type(Xen_is_GLint(z), z, 3, "glVertex3i", "GLint");
-  glVertex3i(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLint(z));
+  glVertex3i(Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLint(z));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex3s(XEN x, XEN y, XEN z)
+static Xen gxg_glVertex3s(Xen x, Xen y, Xen z)
 {
   #define H_glVertex3s "void glVertex3s(GLshort x, GLshort y, GLshort z)"
   Xen_check_type(Xen_is_GLshort(x), x, 1, "glVertex3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(y), y, 2, "glVertex3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(z), z, 3, "glVertex3s", "GLshort");
-  glVertex3s(XEN_TO_C_GLshort(x), XEN_TO_C_GLshort(y), XEN_TO_C_GLshort(z));
+  glVertex3s(Xen_to_C_GLshort(x), Xen_to_C_GLshort(y), Xen_to_C_GLshort(z));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex4d(XEN x, XEN y, XEN z, XEN w)
+static Xen gxg_glVertex4d(Xen x, Xen y, Xen z, Xen w)
 {
   #define H_glVertex4d "void glVertex4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)"
   Xen_check_type(Xen_is_GLdouble(x), x, 1, "glVertex4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y), y, 2, "glVertex4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(z), z, 3, "glVertex4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(w), w, 4, "glVertex4d", "GLdouble");
-  glVertex4d(XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y), XEN_TO_C_GLdouble(z), XEN_TO_C_GLdouble(w));
+  glVertex4d(Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y), Xen_to_C_GLdouble(z), Xen_to_C_GLdouble(w));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex4f(XEN x, XEN y, XEN z, XEN w)
+static Xen gxg_glVertex4f(Xen x, Xen y, Xen z, Xen w)
 {
   #define H_glVertex4f "void glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)"
   Xen_check_type(Xen_is_GLfloat(x), x, 1, "glVertex4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y), y, 2, "glVertex4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(z), z, 3, "glVertex4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(w), w, 4, "glVertex4f", "GLfloat");
-  glVertex4f(XEN_TO_C_GLfloat(x), XEN_TO_C_GLfloat(y), XEN_TO_C_GLfloat(z), XEN_TO_C_GLfloat(w));
+  glVertex4f(Xen_to_C_GLfloat(x), Xen_to_C_GLfloat(y), Xen_to_C_GLfloat(z), Xen_to_C_GLfloat(w));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex4i(XEN x, XEN y, XEN z, XEN w)
+static Xen gxg_glVertex4i(Xen x, Xen y, Xen z, Xen w)
 {
   #define H_glVertex4i "void glVertex4i(GLint x, GLint y, GLint z, GLint w)"
   Xen_check_type(Xen_is_GLint(x), x, 1, "glVertex4i", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 2, "glVertex4i", "GLint");
   Xen_check_type(Xen_is_GLint(z), z, 3, "glVertex4i", "GLint");
   Xen_check_type(Xen_is_GLint(w), w, 4, "glVertex4i", "GLint");
-  glVertex4i(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLint(z), XEN_TO_C_GLint(w));
+  glVertex4i(Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLint(z), Xen_to_C_GLint(w));
   return(Xen_false);
 }
 
-static XEN gxg_glVertex4s(XEN x, XEN y, XEN z, XEN w)
+static Xen gxg_glVertex4s(Xen x, Xen y, Xen z, Xen w)
 {
   #define H_glVertex4s "void glVertex4s(GLshort x, GLshort y, GLshort z, GLshort w)"
   Xen_check_type(Xen_is_GLshort(x), x, 1, "glVertex4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(y), y, 2, "glVertex4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(z), z, 3, "glVertex4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(w), w, 4, "glVertex4s", "GLshort");
-  glVertex4s(XEN_TO_C_GLshort(x), XEN_TO_C_GLshort(y), XEN_TO_C_GLshort(z), XEN_TO_C_GLshort(w));
+  glVertex4s(Xen_to_C_GLshort(x), Xen_to_C_GLshort(y), Xen_to_C_GLshort(z), Xen_to_C_GLshort(w));
   return(Xen_false);
 }
 
-static XEN gxg_glNormal3b(XEN nx, XEN ny, XEN nz)
+static Xen gxg_glNormal3b(Xen nx, Xen ny, Xen nz)
 {
   #define H_glNormal3b "void glNormal3b(GLbyte nx, GLbyte ny, GLbyte nz)"
   Xen_check_type(Xen_is_GLbyte(nx), nx, 1, "glNormal3b", "GLbyte");
   Xen_check_type(Xen_is_GLbyte(ny), ny, 2, "glNormal3b", "GLbyte");
   Xen_check_type(Xen_is_GLbyte(nz), nz, 3, "glNormal3b", "GLbyte");
-  glNormal3b(XEN_TO_C_GLbyte(nx), XEN_TO_C_GLbyte(ny), XEN_TO_C_GLbyte(nz));
+  glNormal3b(Xen_to_C_GLbyte(nx), Xen_to_C_GLbyte(ny), Xen_to_C_GLbyte(nz));
   return(Xen_false);
 }
 
-static XEN gxg_glNormal3d(XEN nx, XEN ny, XEN nz)
+static Xen gxg_glNormal3d(Xen nx, Xen ny, Xen nz)
 {
   #define H_glNormal3d "void glNormal3d(GLdouble nx, GLdouble ny, GLdouble nz)"
   Xen_check_type(Xen_is_GLdouble(nx), nx, 1, "glNormal3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(ny), ny, 2, "glNormal3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(nz), nz, 3, "glNormal3d", "GLdouble");
-  glNormal3d(XEN_TO_C_GLdouble(nx), XEN_TO_C_GLdouble(ny), XEN_TO_C_GLdouble(nz));
+  glNormal3d(Xen_to_C_GLdouble(nx), Xen_to_C_GLdouble(ny), Xen_to_C_GLdouble(nz));
   return(Xen_false);
 }
 
-static XEN gxg_glNormal3f(XEN nx, XEN ny, XEN nz)
+static Xen gxg_glNormal3f(Xen nx, Xen ny, Xen nz)
 {
   #define H_glNormal3f "void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)"
   Xen_check_type(Xen_is_GLfloat(nx), nx, 1, "glNormal3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(ny), ny, 2, "glNormal3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(nz), nz, 3, "glNormal3f", "GLfloat");
-  glNormal3f(XEN_TO_C_GLfloat(nx), XEN_TO_C_GLfloat(ny), XEN_TO_C_GLfloat(nz));
+  glNormal3f(Xen_to_C_GLfloat(nx), Xen_to_C_GLfloat(ny), Xen_to_C_GLfloat(nz));
   return(Xen_false);
 }
 
-static XEN gxg_glNormal3i(XEN nx, XEN ny, XEN nz)
+static Xen gxg_glNormal3i(Xen nx, Xen ny, Xen nz)
 {
   #define H_glNormal3i "void glNormal3i(GLint nx, GLint ny, GLint nz)"
   Xen_check_type(Xen_is_GLint(nx), nx, 1, "glNormal3i", "GLint");
   Xen_check_type(Xen_is_GLint(ny), ny, 2, "glNormal3i", "GLint");
   Xen_check_type(Xen_is_GLint(nz), nz, 3, "glNormal3i", "GLint");
-  glNormal3i(XEN_TO_C_GLint(nx), XEN_TO_C_GLint(ny), XEN_TO_C_GLint(nz));
+  glNormal3i(Xen_to_C_GLint(nx), Xen_to_C_GLint(ny), Xen_to_C_GLint(nz));
   return(Xen_false);
 }
 
-static XEN gxg_glNormal3s(XEN nx, XEN ny, XEN nz)
+static Xen gxg_glNormal3s(Xen nx, Xen ny, Xen nz)
 {
   #define H_glNormal3s "void glNormal3s(GLshort nx, GLshort ny, GLshort nz)"
   Xen_check_type(Xen_is_GLshort(nx), nx, 1, "glNormal3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(ny), ny, 2, "glNormal3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(nz), nz, 3, "glNormal3s", "GLshort");
-  glNormal3s(XEN_TO_C_GLshort(nx), XEN_TO_C_GLshort(ny), XEN_TO_C_GLshort(nz));
+  glNormal3s(Xen_to_C_GLshort(nx), Xen_to_C_GLshort(ny), Xen_to_C_GLshort(nz));
   return(Xen_false);
 }
 
-static XEN gxg_glIndexd(XEN c)
+static Xen gxg_glIndexd(Xen c)
 {
   #define H_glIndexd "void glIndexd(GLdouble c)"
   Xen_check_type(Xen_is_GLdouble(c), c, 1, "glIndexd", "GLdouble");
-  glIndexd(XEN_TO_C_GLdouble(c));
+  glIndexd(Xen_to_C_GLdouble(c));
   return(Xen_false);
 }
 
-static XEN gxg_glIndexf(XEN c)
+static Xen gxg_glIndexf(Xen c)
 {
   #define H_glIndexf "void glIndexf(GLfloat c)"
   Xen_check_type(Xen_is_GLfloat(c), c, 1, "glIndexf", "GLfloat");
-  glIndexf(XEN_TO_C_GLfloat(c));
+  glIndexf(Xen_to_C_GLfloat(c));
   return(Xen_false);
 }
 
-static XEN gxg_glIndexi(XEN c)
+static Xen gxg_glIndexi(Xen c)
 {
   #define H_glIndexi "void glIndexi(GLint c)"
   Xen_check_type(Xen_is_GLint(c), c, 1, "glIndexi", "GLint");
-  glIndexi(XEN_TO_C_GLint(c));
+  glIndexi(Xen_to_C_GLint(c));
   return(Xen_false);
 }
 
-static XEN gxg_glIndexs(XEN c)
+static Xen gxg_glIndexs(Xen c)
 {
   #define H_glIndexs "void glIndexs(GLshort c)"
   Xen_check_type(Xen_is_GLshort(c), c, 1, "glIndexs", "GLshort");
-  glIndexs(XEN_TO_C_GLshort(c));
+  glIndexs(Xen_to_C_GLshort(c));
   return(Xen_false);
 }
 
-static XEN gxg_glIndexub(XEN c)
+static Xen gxg_glIndexub(Xen c)
 {
   #define H_glIndexub "void glIndexub(GLubyte c)"
   Xen_check_type(Xen_is_GLubyte(c), c, 1, "glIndexub", "GLubyte");
-  glIndexub(XEN_TO_C_GLubyte(c));
+  glIndexub(Xen_to_C_GLubyte(c));
   return(Xen_false);
 }
 
-static XEN gxg_glColor3b(XEN red, XEN green, XEN blue)
+static Xen gxg_glColor3b(Xen red, Xen green, Xen blue)
 {
   #define H_glColor3b "void glColor3b(GLbyte red, GLbyte green, GLbyte blue)"
   Xen_check_type(Xen_is_GLbyte(red), red, 1, "glColor3b", "GLbyte");
   Xen_check_type(Xen_is_GLbyte(green), green, 2, "glColor3b", "GLbyte");
   Xen_check_type(Xen_is_GLbyte(blue), blue, 3, "glColor3b", "GLbyte");
-  glColor3b(XEN_TO_C_GLbyte(red), XEN_TO_C_GLbyte(green), XEN_TO_C_GLbyte(blue));
+  glColor3b(Xen_to_C_GLbyte(red), Xen_to_C_GLbyte(green), Xen_to_C_GLbyte(blue));
   return(Xen_false);
 }
 
-static XEN gxg_glColor3d(XEN red, XEN green, XEN blue)
+static Xen gxg_glColor3d(Xen red, Xen green, Xen blue)
 {
   #define H_glColor3d "void glColor3d(GLdouble red, GLdouble green, GLdouble blue)"
   Xen_check_type(Xen_is_GLdouble(red), red, 1, "glColor3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(green), green, 2, "glColor3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(blue), blue, 3, "glColor3d", "GLdouble");
-  glColor3d(XEN_TO_C_GLdouble(red), XEN_TO_C_GLdouble(green), XEN_TO_C_GLdouble(blue));
+  glColor3d(Xen_to_C_GLdouble(red), Xen_to_C_GLdouble(green), Xen_to_C_GLdouble(blue));
   return(Xen_false);
 }
 
-static XEN gxg_glColor3f(XEN red, XEN green, XEN blue)
+static Xen gxg_glColor3f(Xen red, Xen green, Xen blue)
 {
   #define H_glColor3f "void glColor3f(GLfloat red, GLfloat green, GLfloat blue)"
   Xen_check_type(Xen_is_GLfloat(red), red, 1, "glColor3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(green), green, 2, "glColor3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(blue), blue, 3, "glColor3f", "GLfloat");
-  glColor3f(XEN_TO_C_GLfloat(red), XEN_TO_C_GLfloat(green), XEN_TO_C_GLfloat(blue));
+  glColor3f(Xen_to_C_GLfloat(red), Xen_to_C_GLfloat(green), Xen_to_C_GLfloat(blue));
   return(Xen_false);
 }
 
-static XEN gxg_glColor3i(XEN red, XEN green, XEN blue)
+static Xen gxg_glColor3i(Xen red, Xen green, Xen blue)
 {
   #define H_glColor3i "void glColor3i(GLint red, GLint green, GLint blue)"
   Xen_check_type(Xen_is_GLint(red), red, 1, "glColor3i", "GLint");
   Xen_check_type(Xen_is_GLint(green), green, 2, "glColor3i", "GLint");
   Xen_check_type(Xen_is_GLint(blue), blue, 3, "glColor3i", "GLint");
-  glColor3i(XEN_TO_C_GLint(red), XEN_TO_C_GLint(green), XEN_TO_C_GLint(blue));
+  glColor3i(Xen_to_C_GLint(red), Xen_to_C_GLint(green), Xen_to_C_GLint(blue));
   return(Xen_false);
 }
 
-static XEN gxg_glColor3s(XEN red, XEN green, XEN blue)
+static Xen gxg_glColor3s(Xen red, Xen green, Xen blue)
 {
   #define H_glColor3s "void glColor3s(GLshort red, GLshort green, GLshort blue)"
   Xen_check_type(Xen_is_GLshort(red), red, 1, "glColor3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(green), green, 2, "glColor3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(blue), blue, 3, "glColor3s", "GLshort");
-  glColor3s(XEN_TO_C_GLshort(red), XEN_TO_C_GLshort(green), XEN_TO_C_GLshort(blue));
+  glColor3s(Xen_to_C_GLshort(red), Xen_to_C_GLshort(green), Xen_to_C_GLshort(blue));
   return(Xen_false);
 }
 
-static XEN gxg_glColor3ub(XEN red, XEN green, XEN blue)
+static Xen gxg_glColor3ub(Xen red, Xen green, Xen blue)
 {
   #define H_glColor3ub "void glColor3ub(GLubyte red, GLubyte green, GLubyte blue)"
   Xen_check_type(Xen_is_GLubyte(red), red, 1, "glColor3ub", "GLubyte");
   Xen_check_type(Xen_is_GLubyte(green), green, 2, "glColor3ub", "GLubyte");
   Xen_check_type(Xen_is_GLubyte(blue), blue, 3, "glColor3ub", "GLubyte");
-  glColor3ub(XEN_TO_C_GLubyte(red), XEN_TO_C_GLubyte(green), XEN_TO_C_GLubyte(blue));
+  glColor3ub(Xen_to_C_GLubyte(red), Xen_to_C_GLubyte(green), Xen_to_C_GLubyte(blue));
   return(Xen_false);
 }
 
-static XEN gxg_glColor3ui(XEN red, XEN green, XEN blue)
+static Xen gxg_glColor3ui(Xen red, Xen green, Xen blue)
 {
   #define H_glColor3ui "void glColor3ui(GLuint red, GLuint green, GLuint blue)"
   Xen_check_type(Xen_is_GLuint(red), red, 1, "glColor3ui", "GLuint");
   Xen_check_type(Xen_is_GLuint(green), green, 2, "glColor3ui", "GLuint");
   Xen_check_type(Xen_is_GLuint(blue), blue, 3, "glColor3ui", "GLuint");
-  glColor3ui(XEN_TO_C_GLuint(red), XEN_TO_C_GLuint(green), XEN_TO_C_GLuint(blue));
+  glColor3ui(Xen_to_C_GLuint(red), Xen_to_C_GLuint(green), Xen_to_C_GLuint(blue));
   return(Xen_false);
 }
 
-static XEN gxg_glColor3us(XEN red, XEN green, XEN blue)
+static Xen gxg_glColor3us(Xen red, Xen green, Xen blue)
 {
   #define H_glColor3us "void glColor3us(GLushort red, GLushort green, GLushort blue)"
   Xen_check_type(Xen_is_GLushort(red), red, 1, "glColor3us", "GLushort");
   Xen_check_type(Xen_is_GLushort(green), green, 2, "glColor3us", "GLushort");
   Xen_check_type(Xen_is_GLushort(blue), blue, 3, "glColor3us", "GLushort");
-  glColor3us(XEN_TO_C_GLushort(red), XEN_TO_C_GLushort(green), XEN_TO_C_GLushort(blue));
+  glColor3us(Xen_to_C_GLushort(red), Xen_to_C_GLushort(green), Xen_to_C_GLushort(blue));
   return(Xen_false);
 }
 
-static XEN gxg_glColor4b(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glColor4b(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glColor4b "void glColor4b(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha)"
   Xen_check_type(Xen_is_GLbyte(red), red, 1, "glColor4b", "GLbyte");
   Xen_check_type(Xen_is_GLbyte(green), green, 2, "glColor4b", "GLbyte");
   Xen_check_type(Xen_is_GLbyte(blue), blue, 3, "glColor4b", "GLbyte");
   Xen_check_type(Xen_is_GLbyte(alpha), alpha, 4, "glColor4b", "GLbyte");
-  glColor4b(XEN_TO_C_GLbyte(red), XEN_TO_C_GLbyte(green), XEN_TO_C_GLbyte(blue), XEN_TO_C_GLbyte(alpha));
+  glColor4b(Xen_to_C_GLbyte(red), Xen_to_C_GLbyte(green), Xen_to_C_GLbyte(blue), Xen_to_C_GLbyte(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glColor4d(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glColor4d(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glColor4d "void glColor4d(GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha)"
   Xen_check_type(Xen_is_GLdouble(red), red, 1, "glColor4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(green), green, 2, "glColor4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(blue), blue, 3, "glColor4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(alpha), alpha, 4, "glColor4d", "GLdouble");
-  glColor4d(XEN_TO_C_GLdouble(red), XEN_TO_C_GLdouble(green), XEN_TO_C_GLdouble(blue), XEN_TO_C_GLdouble(alpha));
+  glColor4d(Xen_to_C_GLdouble(red), Xen_to_C_GLdouble(green), Xen_to_C_GLdouble(blue), Xen_to_C_GLdouble(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glColor4f(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glColor4f(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glColor4f "void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)"
   Xen_check_type(Xen_is_GLfloat(red), red, 1, "glColor4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(green), green, 2, "glColor4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(blue), blue, 3, "glColor4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(alpha), alpha, 4, "glColor4f", "GLfloat");
-  glColor4f(XEN_TO_C_GLfloat(red), XEN_TO_C_GLfloat(green), XEN_TO_C_GLfloat(blue), XEN_TO_C_GLfloat(alpha));
+  glColor4f(Xen_to_C_GLfloat(red), Xen_to_C_GLfloat(green), Xen_to_C_GLfloat(blue), Xen_to_C_GLfloat(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glColor4i(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glColor4i(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glColor4i "void glColor4i(GLint red, GLint green, GLint blue, GLint alpha)"
   Xen_check_type(Xen_is_GLint(red), red, 1, "glColor4i", "GLint");
   Xen_check_type(Xen_is_GLint(green), green, 2, "glColor4i", "GLint");
   Xen_check_type(Xen_is_GLint(blue), blue, 3, "glColor4i", "GLint");
   Xen_check_type(Xen_is_GLint(alpha), alpha, 4, "glColor4i", "GLint");
-  glColor4i(XEN_TO_C_GLint(red), XEN_TO_C_GLint(green), XEN_TO_C_GLint(blue), XEN_TO_C_GLint(alpha));
+  glColor4i(Xen_to_C_GLint(red), Xen_to_C_GLint(green), Xen_to_C_GLint(blue), Xen_to_C_GLint(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glColor4s(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glColor4s(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glColor4s "void glColor4s(GLshort red, GLshort green, GLshort blue, GLshort alpha)"
   Xen_check_type(Xen_is_GLshort(red), red, 1, "glColor4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(green), green, 2, "glColor4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(blue), blue, 3, "glColor4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(alpha), alpha, 4, "glColor4s", "GLshort");
-  glColor4s(XEN_TO_C_GLshort(red), XEN_TO_C_GLshort(green), XEN_TO_C_GLshort(blue), XEN_TO_C_GLshort(alpha));
+  glColor4s(Xen_to_C_GLshort(red), Xen_to_C_GLshort(green), Xen_to_C_GLshort(blue), Xen_to_C_GLshort(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glColor4ub(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glColor4ub(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glColor4ub "void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)"
   Xen_check_type(Xen_is_GLubyte(red), red, 1, "glColor4ub", "GLubyte");
   Xen_check_type(Xen_is_GLubyte(green), green, 2, "glColor4ub", "GLubyte");
   Xen_check_type(Xen_is_GLubyte(blue), blue, 3, "glColor4ub", "GLubyte");
   Xen_check_type(Xen_is_GLubyte(alpha), alpha, 4, "glColor4ub", "GLubyte");
-  glColor4ub(XEN_TO_C_GLubyte(red), XEN_TO_C_GLubyte(green), XEN_TO_C_GLubyte(blue), XEN_TO_C_GLubyte(alpha));
+  glColor4ub(Xen_to_C_GLubyte(red), Xen_to_C_GLubyte(green), Xen_to_C_GLubyte(blue), Xen_to_C_GLubyte(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glColor4ui(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glColor4ui(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glColor4ui "void glColor4ui(GLuint red, GLuint green, GLuint blue, GLuint alpha)"
   Xen_check_type(Xen_is_GLuint(red), red, 1, "glColor4ui", "GLuint");
   Xen_check_type(Xen_is_GLuint(green), green, 2, "glColor4ui", "GLuint");
   Xen_check_type(Xen_is_GLuint(blue), blue, 3, "glColor4ui", "GLuint");
   Xen_check_type(Xen_is_GLuint(alpha), alpha, 4, "glColor4ui", "GLuint");
-  glColor4ui(XEN_TO_C_GLuint(red), XEN_TO_C_GLuint(green), XEN_TO_C_GLuint(blue), XEN_TO_C_GLuint(alpha));
+  glColor4ui(Xen_to_C_GLuint(red), Xen_to_C_GLuint(green), Xen_to_C_GLuint(blue), Xen_to_C_GLuint(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glColor4us(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glColor4us(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glColor4us "void glColor4us(GLushort red, GLushort green, GLushort blue, GLushort alpha)"
   Xen_check_type(Xen_is_GLushort(red), red, 1, "glColor4us", "GLushort");
   Xen_check_type(Xen_is_GLushort(green), green, 2, "glColor4us", "GLushort");
   Xen_check_type(Xen_is_GLushort(blue), blue, 3, "glColor4us", "GLushort");
   Xen_check_type(Xen_is_GLushort(alpha), alpha, 4, "glColor4us", "GLushort");
-  glColor4us(XEN_TO_C_GLushort(red), XEN_TO_C_GLushort(green), XEN_TO_C_GLushort(blue), XEN_TO_C_GLushort(alpha));
+  glColor4us(Xen_to_C_GLushort(red), Xen_to_C_GLushort(green), Xen_to_C_GLushort(blue), Xen_to_C_GLushort(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord1d(XEN s)
+static Xen gxg_glTexCoord1d(Xen s)
 {
   #define H_glTexCoord1d "void glTexCoord1d(GLdouble s)"
   Xen_check_type(Xen_is_GLdouble(s), s, 1, "glTexCoord1d", "GLdouble");
-  glTexCoord1d(XEN_TO_C_GLdouble(s));
+  glTexCoord1d(Xen_to_C_GLdouble(s));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord1f(XEN s)
+static Xen gxg_glTexCoord1f(Xen s)
 {
   #define H_glTexCoord1f "void glTexCoord1f(GLfloat s)"
   Xen_check_type(Xen_is_GLfloat(s), s, 1, "glTexCoord1f", "GLfloat");
-  glTexCoord1f(XEN_TO_C_GLfloat(s));
+  glTexCoord1f(Xen_to_C_GLfloat(s));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord1i(XEN s)
+static Xen gxg_glTexCoord1i(Xen s)
 {
   #define H_glTexCoord1i "void glTexCoord1i(GLint s)"
   Xen_check_type(Xen_is_GLint(s), s, 1, "glTexCoord1i", "GLint");
-  glTexCoord1i(XEN_TO_C_GLint(s));
+  glTexCoord1i(Xen_to_C_GLint(s));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord1s(XEN s)
+static Xen gxg_glTexCoord1s(Xen s)
 {
   #define H_glTexCoord1s "void glTexCoord1s(GLshort s)"
   Xen_check_type(Xen_is_GLshort(s), s, 1, "glTexCoord1s", "GLshort");
-  glTexCoord1s(XEN_TO_C_GLshort(s));
+  glTexCoord1s(Xen_to_C_GLshort(s));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord2d(XEN s, XEN t)
+static Xen gxg_glTexCoord2d(Xen s, Xen t)
 {
   #define H_glTexCoord2d "void glTexCoord2d(GLdouble s, GLdouble t)"
   Xen_check_type(Xen_is_GLdouble(s), s, 1, "glTexCoord2d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(t), t, 2, "glTexCoord2d", "GLdouble");
-  glTexCoord2d(XEN_TO_C_GLdouble(s), XEN_TO_C_GLdouble(t));
+  glTexCoord2d(Xen_to_C_GLdouble(s), Xen_to_C_GLdouble(t));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord2f(XEN s, XEN t)
+static Xen gxg_glTexCoord2f(Xen s, Xen t)
 {
   #define H_glTexCoord2f "void glTexCoord2f(GLfloat s, GLfloat t)"
   Xen_check_type(Xen_is_GLfloat(s), s, 1, "glTexCoord2f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(t), t, 2, "glTexCoord2f", "GLfloat");
-  glTexCoord2f(XEN_TO_C_GLfloat(s), XEN_TO_C_GLfloat(t));
+  glTexCoord2f(Xen_to_C_GLfloat(s), Xen_to_C_GLfloat(t));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord2i(XEN s, XEN t)
+static Xen gxg_glTexCoord2i(Xen s, Xen t)
 {
   #define H_glTexCoord2i "void glTexCoord2i(GLint s, GLint t)"
   Xen_check_type(Xen_is_GLint(s), s, 1, "glTexCoord2i", "GLint");
   Xen_check_type(Xen_is_GLint(t), t, 2, "glTexCoord2i", "GLint");
-  glTexCoord2i(XEN_TO_C_GLint(s), XEN_TO_C_GLint(t));
+  glTexCoord2i(Xen_to_C_GLint(s), Xen_to_C_GLint(t));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord2s(XEN s, XEN t)
+static Xen gxg_glTexCoord2s(Xen s, Xen t)
 {
   #define H_glTexCoord2s "void glTexCoord2s(GLshort s, GLshort t)"
   Xen_check_type(Xen_is_GLshort(s), s, 1, "glTexCoord2s", "GLshort");
   Xen_check_type(Xen_is_GLshort(t), t, 2, "glTexCoord2s", "GLshort");
-  glTexCoord2s(XEN_TO_C_GLshort(s), XEN_TO_C_GLshort(t));
+  glTexCoord2s(Xen_to_C_GLshort(s), Xen_to_C_GLshort(t));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord3d(XEN s, XEN t, XEN r)
+static Xen gxg_glTexCoord3d(Xen s, Xen t, Xen r)
 {
   #define H_glTexCoord3d "void glTexCoord3d(GLdouble s, GLdouble t, GLdouble r)"
   Xen_check_type(Xen_is_GLdouble(s), s, 1, "glTexCoord3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(t), t, 2, "glTexCoord3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(r), r, 3, "glTexCoord3d", "GLdouble");
-  glTexCoord3d(XEN_TO_C_GLdouble(s), XEN_TO_C_GLdouble(t), XEN_TO_C_GLdouble(r));
+  glTexCoord3d(Xen_to_C_GLdouble(s), Xen_to_C_GLdouble(t), Xen_to_C_GLdouble(r));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord3f(XEN s, XEN t, XEN r)
+static Xen gxg_glTexCoord3f(Xen s, Xen t, Xen r)
 {
   #define H_glTexCoord3f "void glTexCoord3f(GLfloat s, GLfloat t, GLfloat r)"
   Xen_check_type(Xen_is_GLfloat(s), s, 1, "glTexCoord3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(t), t, 2, "glTexCoord3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(r), r, 3, "glTexCoord3f", "GLfloat");
-  glTexCoord3f(XEN_TO_C_GLfloat(s), XEN_TO_C_GLfloat(t), XEN_TO_C_GLfloat(r));
+  glTexCoord3f(Xen_to_C_GLfloat(s), Xen_to_C_GLfloat(t), Xen_to_C_GLfloat(r));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord3i(XEN s, XEN t, XEN r)
+static Xen gxg_glTexCoord3i(Xen s, Xen t, Xen r)
 {
   #define H_glTexCoord3i "void glTexCoord3i(GLint s, GLint t, GLint r)"
   Xen_check_type(Xen_is_GLint(s), s, 1, "glTexCoord3i", "GLint");
   Xen_check_type(Xen_is_GLint(t), t, 2, "glTexCoord3i", "GLint");
   Xen_check_type(Xen_is_GLint(r), r, 3, "glTexCoord3i", "GLint");
-  glTexCoord3i(XEN_TO_C_GLint(s), XEN_TO_C_GLint(t), XEN_TO_C_GLint(r));
+  glTexCoord3i(Xen_to_C_GLint(s), Xen_to_C_GLint(t), Xen_to_C_GLint(r));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord3s(XEN s, XEN t, XEN r)
+static Xen gxg_glTexCoord3s(Xen s, Xen t, Xen r)
 {
   #define H_glTexCoord3s "void glTexCoord3s(GLshort s, GLshort t, GLshort r)"
   Xen_check_type(Xen_is_GLshort(s), s, 1, "glTexCoord3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(t), t, 2, "glTexCoord3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(r), r, 3, "glTexCoord3s", "GLshort");
-  glTexCoord3s(XEN_TO_C_GLshort(s), XEN_TO_C_GLshort(t), XEN_TO_C_GLshort(r));
+  glTexCoord3s(Xen_to_C_GLshort(s), Xen_to_C_GLshort(t), Xen_to_C_GLshort(r));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord4d(XEN s, XEN t, XEN r, XEN q)
+static Xen gxg_glTexCoord4d(Xen s, Xen t, Xen r, Xen q)
 {
   #define H_glTexCoord4d "void glTexCoord4d(GLdouble s, GLdouble t, GLdouble r, GLdouble q)"
   Xen_check_type(Xen_is_GLdouble(s), s, 1, "glTexCoord4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(t), t, 2, "glTexCoord4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(r), r, 3, "glTexCoord4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(q), q, 4, "glTexCoord4d", "GLdouble");
-  glTexCoord4d(XEN_TO_C_GLdouble(s), XEN_TO_C_GLdouble(t), XEN_TO_C_GLdouble(r), XEN_TO_C_GLdouble(q));
+  glTexCoord4d(Xen_to_C_GLdouble(s), Xen_to_C_GLdouble(t), Xen_to_C_GLdouble(r), Xen_to_C_GLdouble(q));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord4f(XEN s, XEN t, XEN r, XEN q)
+static Xen gxg_glTexCoord4f(Xen s, Xen t, Xen r, Xen q)
 {
   #define H_glTexCoord4f "void glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)"
   Xen_check_type(Xen_is_GLfloat(s), s, 1, "glTexCoord4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(t), t, 2, "glTexCoord4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(r), r, 3, "glTexCoord4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(q), q, 4, "glTexCoord4f", "GLfloat");
-  glTexCoord4f(XEN_TO_C_GLfloat(s), XEN_TO_C_GLfloat(t), XEN_TO_C_GLfloat(r), XEN_TO_C_GLfloat(q));
+  glTexCoord4f(Xen_to_C_GLfloat(s), Xen_to_C_GLfloat(t), Xen_to_C_GLfloat(r), Xen_to_C_GLfloat(q));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord4i(XEN s, XEN t, XEN r, XEN q)
+static Xen gxg_glTexCoord4i(Xen s, Xen t, Xen r, Xen q)
 {
   #define H_glTexCoord4i "void glTexCoord4i(GLint s, GLint t, GLint r, GLint q)"
   Xen_check_type(Xen_is_GLint(s), s, 1, "glTexCoord4i", "GLint");
   Xen_check_type(Xen_is_GLint(t), t, 2, "glTexCoord4i", "GLint");
   Xen_check_type(Xen_is_GLint(r), r, 3, "glTexCoord4i", "GLint");
   Xen_check_type(Xen_is_GLint(q), q, 4, "glTexCoord4i", "GLint");
-  glTexCoord4i(XEN_TO_C_GLint(s), XEN_TO_C_GLint(t), XEN_TO_C_GLint(r), XEN_TO_C_GLint(q));
+  glTexCoord4i(Xen_to_C_GLint(s), Xen_to_C_GLint(t), Xen_to_C_GLint(r), Xen_to_C_GLint(q));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoord4s(XEN s, XEN t, XEN r, XEN q)
+static Xen gxg_glTexCoord4s(Xen s, Xen t, Xen r, Xen q)
 {
   #define H_glTexCoord4s "void glTexCoord4s(GLshort s, GLshort t, GLshort r, GLshort q)"
   Xen_check_type(Xen_is_GLshort(s), s, 1, "glTexCoord4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(t), t, 2, "glTexCoord4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(r), r, 3, "glTexCoord4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(q), q, 4, "glTexCoord4s", "GLshort");
-  glTexCoord4s(XEN_TO_C_GLshort(s), XEN_TO_C_GLshort(t), XEN_TO_C_GLshort(r), XEN_TO_C_GLshort(q));
+  glTexCoord4s(Xen_to_C_GLshort(s), Xen_to_C_GLshort(t), Xen_to_C_GLshort(r), Xen_to_C_GLshort(q));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos2d(XEN x, XEN y)
+static Xen gxg_glRasterPos2d(Xen x, Xen y)
 {
   #define H_glRasterPos2d "void glRasterPos2d(GLdouble x, GLdouble y)"
   Xen_check_type(Xen_is_GLdouble(x), x, 1, "glRasterPos2d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y), y, 2, "glRasterPos2d", "GLdouble");
-  glRasterPos2d(XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y));
+  glRasterPos2d(Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos2f(XEN x, XEN y)
+static Xen gxg_glRasterPos2f(Xen x, Xen y)
 {
   #define H_glRasterPos2f "void glRasterPos2f(GLfloat x, GLfloat y)"
   Xen_check_type(Xen_is_GLfloat(x), x, 1, "glRasterPos2f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y), y, 2, "glRasterPos2f", "GLfloat");
-  glRasterPos2f(XEN_TO_C_GLfloat(x), XEN_TO_C_GLfloat(y));
+  glRasterPos2f(Xen_to_C_GLfloat(x), Xen_to_C_GLfloat(y));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos2i(XEN x, XEN y)
+static Xen gxg_glRasterPos2i(Xen x, Xen y)
 {
   #define H_glRasterPos2i "void glRasterPos2i(GLint x, GLint y)"
   Xen_check_type(Xen_is_GLint(x), x, 1, "glRasterPos2i", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 2, "glRasterPos2i", "GLint");
-  glRasterPos2i(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y));
+  glRasterPos2i(Xen_to_C_GLint(x), Xen_to_C_GLint(y));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos2s(XEN x, XEN y)
+static Xen gxg_glRasterPos2s(Xen x, Xen y)
 {
   #define H_glRasterPos2s "void glRasterPos2s(GLshort x, GLshort y)"
   Xen_check_type(Xen_is_GLshort(x), x, 1, "glRasterPos2s", "GLshort");
   Xen_check_type(Xen_is_GLshort(y), y, 2, "glRasterPos2s", "GLshort");
-  glRasterPos2s(XEN_TO_C_GLshort(x), XEN_TO_C_GLshort(y));
+  glRasterPos2s(Xen_to_C_GLshort(x), Xen_to_C_GLshort(y));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos3d(XEN x, XEN y, XEN z)
+static Xen gxg_glRasterPos3d(Xen x, Xen y, Xen z)
 {
   #define H_glRasterPos3d "void glRasterPos3d(GLdouble x, GLdouble y, GLdouble z)"
   Xen_check_type(Xen_is_GLdouble(x), x, 1, "glRasterPos3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y), y, 2, "glRasterPos3d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(z), z, 3, "glRasterPos3d", "GLdouble");
-  glRasterPos3d(XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y), XEN_TO_C_GLdouble(z));
+  glRasterPos3d(Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y), Xen_to_C_GLdouble(z));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos3f(XEN x, XEN y, XEN z)
+static Xen gxg_glRasterPos3f(Xen x, Xen y, Xen z)
 {
   #define H_glRasterPos3f "void glRasterPos3f(GLfloat x, GLfloat y, GLfloat z)"
   Xen_check_type(Xen_is_GLfloat(x), x, 1, "glRasterPos3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y), y, 2, "glRasterPos3f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(z), z, 3, "glRasterPos3f", "GLfloat");
-  glRasterPos3f(XEN_TO_C_GLfloat(x), XEN_TO_C_GLfloat(y), XEN_TO_C_GLfloat(z));
+  glRasterPos3f(Xen_to_C_GLfloat(x), Xen_to_C_GLfloat(y), Xen_to_C_GLfloat(z));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos3i(XEN x, XEN y, XEN z)
+static Xen gxg_glRasterPos3i(Xen x, Xen y, Xen z)
 {
   #define H_glRasterPos3i "void glRasterPos3i(GLint x, GLint y, GLint z)"
   Xen_check_type(Xen_is_GLint(x), x, 1, "glRasterPos3i", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 2, "glRasterPos3i", "GLint");
   Xen_check_type(Xen_is_GLint(z), z, 3, "glRasterPos3i", "GLint");
-  glRasterPos3i(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLint(z));
+  glRasterPos3i(Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLint(z));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos3s(XEN x, XEN y, XEN z)
+static Xen gxg_glRasterPos3s(Xen x, Xen y, Xen z)
 {
   #define H_glRasterPos3s "void glRasterPos3s(GLshort x, GLshort y, GLshort z)"
   Xen_check_type(Xen_is_GLshort(x), x, 1, "glRasterPos3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(y), y, 2, "glRasterPos3s", "GLshort");
   Xen_check_type(Xen_is_GLshort(z), z, 3, "glRasterPos3s", "GLshort");
-  glRasterPos3s(XEN_TO_C_GLshort(x), XEN_TO_C_GLshort(y), XEN_TO_C_GLshort(z));
+  glRasterPos3s(Xen_to_C_GLshort(x), Xen_to_C_GLshort(y), Xen_to_C_GLshort(z));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos4d(XEN x, XEN y, XEN z, XEN w)
+static Xen gxg_glRasterPos4d(Xen x, Xen y, Xen z, Xen w)
 {
   #define H_glRasterPos4d "void glRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)"
   Xen_check_type(Xen_is_GLdouble(x), x, 1, "glRasterPos4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y), y, 2, "glRasterPos4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(z), z, 3, "glRasterPos4d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(w), w, 4, "glRasterPos4d", "GLdouble");
-  glRasterPos4d(XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y), XEN_TO_C_GLdouble(z), XEN_TO_C_GLdouble(w));
+  glRasterPos4d(Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y), Xen_to_C_GLdouble(z), Xen_to_C_GLdouble(w));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos4f(XEN x, XEN y, XEN z, XEN w)
+static Xen gxg_glRasterPos4f(Xen x, Xen y, Xen z, Xen w)
 {
   #define H_glRasterPos4f "void glRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)"
   Xen_check_type(Xen_is_GLfloat(x), x, 1, "glRasterPos4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y), y, 2, "glRasterPos4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(z), z, 3, "glRasterPos4f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(w), w, 4, "glRasterPos4f", "GLfloat");
-  glRasterPos4f(XEN_TO_C_GLfloat(x), XEN_TO_C_GLfloat(y), XEN_TO_C_GLfloat(z), XEN_TO_C_GLfloat(w));
+  glRasterPos4f(Xen_to_C_GLfloat(x), Xen_to_C_GLfloat(y), Xen_to_C_GLfloat(z), Xen_to_C_GLfloat(w));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos4i(XEN x, XEN y, XEN z, XEN w)
+static Xen gxg_glRasterPos4i(Xen x, Xen y, Xen z, Xen w)
 {
   #define H_glRasterPos4i "void glRasterPos4i(GLint x, GLint y, GLint z, GLint w)"
   Xen_check_type(Xen_is_GLint(x), x, 1, "glRasterPos4i", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 2, "glRasterPos4i", "GLint");
   Xen_check_type(Xen_is_GLint(z), z, 3, "glRasterPos4i", "GLint");
   Xen_check_type(Xen_is_GLint(w), w, 4, "glRasterPos4i", "GLint");
-  glRasterPos4i(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLint(z), XEN_TO_C_GLint(w));
+  glRasterPos4i(Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLint(z), Xen_to_C_GLint(w));
   return(Xen_false);
 }
 
-static XEN gxg_glRasterPos4s(XEN x, XEN y, XEN z, XEN w)
+static Xen gxg_glRasterPos4s(Xen x, Xen y, Xen z, Xen w)
 {
   #define H_glRasterPos4s "void glRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)"
   Xen_check_type(Xen_is_GLshort(x), x, 1, "glRasterPos4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(y), y, 2, "glRasterPos4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(z), z, 3, "glRasterPos4s", "GLshort");
   Xen_check_type(Xen_is_GLshort(w), w, 4, "glRasterPos4s", "GLshort");
-  glRasterPos4s(XEN_TO_C_GLshort(x), XEN_TO_C_GLshort(y), XEN_TO_C_GLshort(z), XEN_TO_C_GLshort(w));
+  glRasterPos4s(Xen_to_C_GLshort(x), Xen_to_C_GLshort(y), Xen_to_C_GLshort(z), Xen_to_C_GLshort(w));
   return(Xen_false);
 }
 
-static XEN gxg_glRectd(XEN x1, XEN y1, XEN x2, XEN y2)
+static Xen gxg_glRectd(Xen x1, Xen y1, Xen x2, Xen y2)
 {
   #define H_glRectd "void glRectd(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2)"
   Xen_check_type(Xen_is_GLdouble(x1), x1, 1, "glRectd", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y1), y1, 2, "glRectd", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(x2), x2, 3, "glRectd", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(y2), y2, 4, "glRectd", "GLdouble");
-  glRectd(XEN_TO_C_GLdouble(x1), XEN_TO_C_GLdouble(y1), XEN_TO_C_GLdouble(x2), XEN_TO_C_GLdouble(y2));
+  glRectd(Xen_to_C_GLdouble(x1), Xen_to_C_GLdouble(y1), Xen_to_C_GLdouble(x2), Xen_to_C_GLdouble(y2));
   return(Xen_false);
 }
 
-static XEN gxg_glRectf(XEN x1, XEN y1, XEN x2, XEN y2)
+static Xen gxg_glRectf(Xen x1, Xen y1, Xen x2, Xen y2)
 {
   #define H_glRectf "void glRectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)"
   Xen_check_type(Xen_is_GLfloat(x1), x1, 1, "glRectf", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y1), y1, 2, "glRectf", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(x2), x2, 3, "glRectf", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(y2), y2, 4, "glRectf", "GLfloat");
-  glRectf(XEN_TO_C_GLfloat(x1), XEN_TO_C_GLfloat(y1), XEN_TO_C_GLfloat(x2), XEN_TO_C_GLfloat(y2));
+  glRectf(Xen_to_C_GLfloat(x1), Xen_to_C_GLfloat(y1), Xen_to_C_GLfloat(x2), Xen_to_C_GLfloat(y2));
   return(Xen_false);
 }
 
-static XEN gxg_glRecti(XEN x1, XEN y1, XEN x2, XEN y2)
+static Xen gxg_glRecti(Xen x1, Xen y1, Xen x2, Xen y2)
 {
   #define H_glRecti "void glRecti(GLint x1, GLint y1, GLint x2, GLint y2)"
   Xen_check_type(Xen_is_GLint(x1), x1, 1, "glRecti", "GLint");
   Xen_check_type(Xen_is_GLint(y1), y1, 2, "glRecti", "GLint");
   Xen_check_type(Xen_is_GLint(x2), x2, 3, "glRecti", "GLint");
   Xen_check_type(Xen_is_GLint(y2), y2, 4, "glRecti", "GLint");
-  glRecti(XEN_TO_C_GLint(x1), XEN_TO_C_GLint(y1), XEN_TO_C_GLint(x2), XEN_TO_C_GLint(y2));
+  glRecti(Xen_to_C_GLint(x1), Xen_to_C_GLint(y1), Xen_to_C_GLint(x2), Xen_to_C_GLint(y2));
   return(Xen_false);
 }
 
-static XEN gxg_glRects(XEN x1, XEN y1, XEN x2, XEN y2)
+static Xen gxg_glRects(Xen x1, Xen y1, Xen x2, Xen y2)
 {
   #define H_glRects "void glRects(GLshort x1, GLshort y1, GLshort x2, GLshort y2)"
   Xen_check_type(Xen_is_GLshort(x1), x1, 1, "glRects", "GLshort");
   Xen_check_type(Xen_is_GLshort(y1), y1, 2, "glRects", "GLshort");
   Xen_check_type(Xen_is_GLshort(x2), x2, 3, "glRects", "GLshort");
   Xen_check_type(Xen_is_GLshort(y2), y2, 4, "glRects", "GLshort");
-  glRects(XEN_TO_C_GLshort(x1), XEN_TO_C_GLshort(y1), XEN_TO_C_GLshort(x2), XEN_TO_C_GLshort(y2));
+  glRects(Xen_to_C_GLshort(x1), Xen_to_C_GLshort(y1), Xen_to_C_GLshort(x2), Xen_to_C_GLshort(y2));
   return(Xen_false);
 }
 
-static XEN gxg_glVertexPointer(XEN size, XEN type, XEN stride, XEN ptr)
+static Xen gxg_glVertexPointer(Xen size, Xen type, Xen stride, Xen ptr)
 {
   #define H_glVertexPointer "void glVertexPointer(GLint size, GLenum type, GLsizei stride, GLvoid* ptr)"
   Xen_check_type(Xen_is_GLint(size), size, 1, "glVertexPointer", "GLint");
   Xen_check_type(Xen_is_GLenum(type), type, 2, "glVertexPointer", "GLenum");
   Xen_check_type(Xen_is_GLsizei(stride), stride, 3, "glVertexPointer", "GLsizei");
   Xen_check_type(Xen_is_GLvoid_(ptr), ptr, 4, "glVertexPointer", "GLvoid*");
-  glVertexPointer(XEN_TO_C_GLint(size), XEN_TO_C_GLenum(type), XEN_TO_C_GLsizei(stride), XEN_TO_C_GLvoid_(ptr));
+  glVertexPointer(Xen_to_C_GLint(size), Xen_to_C_GLenum(type), Xen_to_C_GLsizei(stride), Xen_to_C_GLvoid_(ptr));
   return(Xen_false);
 }
 
-static XEN gxg_glNormalPointer(XEN type, XEN stride, XEN ptr)
+static Xen gxg_glNormalPointer(Xen type, Xen stride, Xen ptr)
 {
   #define H_glNormalPointer "void glNormalPointer(GLenum type, GLsizei stride, GLvoid* ptr)"
   Xen_check_type(Xen_is_GLenum(type), type, 1, "glNormalPointer", "GLenum");
   Xen_check_type(Xen_is_GLsizei(stride), stride, 2, "glNormalPointer", "GLsizei");
   Xen_check_type(Xen_is_GLvoid_(ptr), ptr, 3, "glNormalPointer", "GLvoid*");
-  glNormalPointer(XEN_TO_C_GLenum(type), XEN_TO_C_GLsizei(stride), XEN_TO_C_GLvoid_(ptr));
+  glNormalPointer(Xen_to_C_GLenum(type), Xen_to_C_GLsizei(stride), Xen_to_C_GLvoid_(ptr));
   return(Xen_false);
 }
 
-static XEN gxg_glColorPointer(XEN size, XEN type, XEN stride, XEN ptr)
+static Xen gxg_glColorPointer(Xen size, Xen type, Xen stride, Xen ptr)
 {
   #define H_glColorPointer "void glColorPointer(GLint size, GLenum type, GLsizei stride, GLvoid* ptr)"
   Xen_check_type(Xen_is_GLint(size), size, 1, "glColorPointer", "GLint");
   Xen_check_type(Xen_is_GLenum(type), type, 2, "glColorPointer", "GLenum");
   Xen_check_type(Xen_is_GLsizei(stride), stride, 3, "glColorPointer", "GLsizei");
   Xen_check_type(Xen_is_GLvoid_(ptr), ptr, 4, "glColorPointer", "GLvoid*");
-  glColorPointer(XEN_TO_C_GLint(size), XEN_TO_C_GLenum(type), XEN_TO_C_GLsizei(stride), XEN_TO_C_GLvoid_(ptr));
+  glColorPointer(Xen_to_C_GLint(size), Xen_to_C_GLenum(type), Xen_to_C_GLsizei(stride), Xen_to_C_GLvoid_(ptr));
   return(Xen_false);
 }
 
-static XEN gxg_glIndexPointer(XEN type, XEN stride, XEN ptr)
+static Xen gxg_glIndexPointer(Xen type, Xen stride, Xen ptr)
 {
   #define H_glIndexPointer "void glIndexPointer(GLenum type, GLsizei stride, GLvoid* ptr)"
   Xen_check_type(Xen_is_GLenum(type), type, 1, "glIndexPointer", "GLenum");
   Xen_check_type(Xen_is_GLsizei(stride), stride, 2, "glIndexPointer", "GLsizei");
   Xen_check_type(Xen_is_GLvoid_(ptr), ptr, 3, "glIndexPointer", "GLvoid*");
-  glIndexPointer(XEN_TO_C_GLenum(type), XEN_TO_C_GLsizei(stride), XEN_TO_C_GLvoid_(ptr));
+  glIndexPointer(Xen_to_C_GLenum(type), Xen_to_C_GLsizei(stride), Xen_to_C_GLvoid_(ptr));
   return(Xen_false);
 }
 
-static XEN gxg_glTexCoordPointer(XEN size, XEN type, XEN stride, XEN ptr)
+static Xen gxg_glTexCoordPointer(Xen size, Xen type, Xen stride, Xen ptr)
 {
   #define H_glTexCoordPointer "void glTexCoordPointer(GLint size, GLenum type, GLsizei stride, GLvoid* ptr)"
   Xen_check_type(Xen_is_GLint(size), size, 1, "glTexCoordPointer", "GLint");
   Xen_check_type(Xen_is_GLenum(type), type, 2, "glTexCoordPointer", "GLenum");
   Xen_check_type(Xen_is_GLsizei(stride), stride, 3, "glTexCoordPointer", "GLsizei");
   Xen_check_type(Xen_is_GLvoid_(ptr), ptr, 4, "glTexCoordPointer", "GLvoid*");
-  glTexCoordPointer(XEN_TO_C_GLint(size), XEN_TO_C_GLenum(type), XEN_TO_C_GLsizei(stride), XEN_TO_C_GLvoid_(ptr));
+  glTexCoordPointer(Xen_to_C_GLint(size), Xen_to_C_GLenum(type), Xen_to_C_GLsizei(stride), Xen_to_C_GLvoid_(ptr));
   return(Xen_false);
 }
 
-static XEN gxg_glEdgeFlagPointer(XEN stride, XEN ptr)
+static Xen gxg_glEdgeFlagPointer(Xen stride, Xen ptr)
 {
   #define H_glEdgeFlagPointer "void glEdgeFlagPointer(GLsizei stride, GLvoid* ptr)"
   Xen_check_type(Xen_is_GLsizei(stride), stride, 1, "glEdgeFlagPointer", "GLsizei");
   Xen_check_type(Xen_is_GLvoid_(ptr), ptr, 2, "glEdgeFlagPointer", "GLvoid*");
-  glEdgeFlagPointer(XEN_TO_C_GLsizei(stride), XEN_TO_C_GLvoid_(ptr));
+  glEdgeFlagPointer(Xen_to_C_GLsizei(stride), Xen_to_C_GLvoid_(ptr));
   return(Xen_false);
 }
 
-static XEN gxg_glGetPointerv(XEN pname, XEN params)
+static Xen gxg_glGetPointerv(Xen pname, Xen params)
 {
   #define H_glGetPointerv "void glGetPointerv(GLenum pname, void** [params])"
   void* ref_params[1];
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glGetPointerv", "GLenum");
-  glGetPointerv(XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_void_(ref_params[0])));
+  glGetPointerv(Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_void_(ref_params[0])));
 }
 
-static XEN gxg_glArrayElement(XEN i)
+static Xen gxg_glArrayElement(Xen i)
 {
   #define H_glArrayElement "void glArrayElement(GLint i)"
   Xen_check_type(Xen_is_GLint(i), i, 1, "glArrayElement", "GLint");
-  glArrayElement(XEN_TO_C_GLint(i));
+  glArrayElement(Xen_to_C_GLint(i));
   return(Xen_false);
 }
 
-static XEN gxg_glDrawArrays(XEN mode, XEN first, XEN count)
+static Xen gxg_glDrawArrays(Xen mode, Xen first, Xen count)
 {
   #define H_glDrawArrays "void glDrawArrays(GLenum mode, GLint first, GLsizei count)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glDrawArrays", "GLenum");
   Xen_check_type(Xen_is_GLint(first), first, 2, "glDrawArrays", "GLint");
   Xen_check_type(Xen_is_GLsizei(count), count, 3, "glDrawArrays", "GLsizei");
-  glDrawArrays(XEN_TO_C_GLenum(mode), XEN_TO_C_GLint(first), XEN_TO_C_GLsizei(count));
+  glDrawArrays(Xen_to_C_GLenum(mode), Xen_to_C_GLint(first), Xen_to_C_GLsizei(count));
   return(Xen_false);
 }
 
-static XEN gxg_glDrawElements(XEN mode, XEN count, XEN type, XEN indices)
+static Xen gxg_glDrawElements(Xen mode, Xen count, Xen type, Xen indices)
 {
   #define H_glDrawElements "void glDrawElements(GLenum mode, GLsizei count, GLenum type, GLvoid* indices)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glDrawElements", "GLenum");
   Xen_check_type(Xen_is_GLsizei(count), count, 2, "glDrawElements", "GLsizei");
   Xen_check_type(Xen_is_GLenum(type), type, 3, "glDrawElements", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(indices), indices, 4, "glDrawElements", "GLvoid*");
-  glDrawElements(XEN_TO_C_GLenum(mode), XEN_TO_C_GLsizei(count), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(indices));
+  glDrawElements(Xen_to_C_GLenum(mode), Xen_to_C_GLsizei(count), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(indices));
   return(Xen_false);
 }
 
-static XEN gxg_glInterleavedArrays(XEN format, XEN stride, XEN pointer)
+static Xen gxg_glInterleavedArrays(Xen format, Xen stride, Xen pointer)
 {
   #define H_glInterleavedArrays "void glInterleavedArrays(GLenum format, GLsizei stride, GLvoid* pointer)"
   Xen_check_type(Xen_is_GLenum(format), format, 1, "glInterleavedArrays", "GLenum");
   Xen_check_type(Xen_is_GLsizei(stride), stride, 2, "glInterleavedArrays", "GLsizei");
   Xen_check_type(Xen_is_GLvoid_(pointer), pointer, 3, "glInterleavedArrays", "GLvoid*");
-  glInterleavedArrays(XEN_TO_C_GLenum(format), XEN_TO_C_GLsizei(stride), XEN_TO_C_GLvoid_(pointer));
+  glInterleavedArrays(Xen_to_C_GLenum(format), Xen_to_C_GLsizei(stride), Xen_to_C_GLvoid_(pointer));
   return(Xen_false);
 }
 
-static XEN gxg_glShadeModel(XEN mode)
+static Xen gxg_glShadeModel(Xen mode)
 {
   #define H_glShadeModel "void glShadeModel(GLenum mode)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glShadeModel", "GLenum");
-  glShadeModel(XEN_TO_C_GLenum(mode));
+  glShadeModel(Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glLightf(XEN light, XEN pname, XEN param)
+static Xen gxg_glLightf(Xen light, Xen pname, Xen param)
 {
   #define H_glLightf "void glLightf(GLenum light, GLenum pname, GLfloat param)"
   Xen_check_type(Xen_is_GLenum(light), light, 1, "glLightf", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glLightf", "GLenum");
   Xen_check_type(Xen_is_GLfloat(param), param, 3, "glLightf", "GLfloat");
-  glLightf(XEN_TO_C_GLenum(light), XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(param));
+  glLightf(Xen_to_C_GLenum(light), Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(param));
   return(Xen_false);
 }
 
-static XEN gxg_glLighti(XEN light, XEN pname, XEN param)
+static Xen gxg_glLighti(Xen light, Xen pname, Xen param)
 {
   #define H_glLighti "void glLighti(GLenum light, GLenum pname, GLint param)"
   Xen_check_type(Xen_is_GLenum(light), light, 1, "glLighti", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glLighti", "GLenum");
   Xen_check_type(Xen_is_GLint(param), param, 3, "glLighti", "GLint");
-  glLighti(XEN_TO_C_GLenum(light), XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
+  glLighti(Xen_to_C_GLenum(light), Xen_to_C_GLenum(pname), Xen_to_C_GLint(param));
   return(Xen_false);
 }
 
-static XEN gxg_glGetLightfv(XEN light, XEN pname, XEN params)
+static Xen gxg_glGetLightfv(Xen light, Xen pname, Xen params)
 {
   #define H_glGetLightfv "void glGetLightfv(GLenum light, GLenum pname, GLfloat* [params])"
   GLfloat ref_params[16];
   Xen_check_type(Xen_is_GLenum(light), light, 1, "glGetLightfv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetLightfv", "GLenum");
-  glGetLightfv(XEN_TO_C_GLenum(light), XEN_TO_C_GLenum(pname), ref_params);
+  glGetLightfv(Xen_to_C_GLenum(light), Xen_to_C_GLenum(pname), ref_params);
   {
-    XEN result;
+    Xen result;
     int i, vals;
-    vals = how_many_vals(XEN_TO_C_GLenum(pname));
+    vals = how_many_vals(Xen_to_C_GLenum(pname));
     result = Xen_empty_list;
     for (i = 0; i < vals; i++)
-      result = Xen_cons(C_TO_XEN_GLfloat(ref_params[i]), result);
+      result = Xen_cons(C_to_Xen_GLfloat(ref_params[i]), result);
     return(result);
   }
 }
 
-static XEN gxg_glGetLightiv(XEN light, XEN pname, XEN params)
+static Xen gxg_glGetLightiv(Xen light, Xen pname, Xen params)
 {
   #define H_glGetLightiv "void glGetLightiv(GLenum light, GLenum pname, GLint* [params])"
   GLint ref_params[1];
   Xen_check_type(Xen_is_GLenum(light), light, 1, "glGetLightiv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetLightiv", "GLenum");
-  glGetLightiv(XEN_TO_C_GLenum(light), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_params[0])));
+  glGetLightiv(Xen_to_C_GLenum(light), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static XEN gxg_glLightModelf(XEN pname, XEN param)
+static Xen gxg_glLightModelf(Xen pname, Xen param)
 {
   #define H_glLightModelf "void glLightModelf(GLenum pname, GLfloat param)"
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glLightModelf", "GLenum");
   Xen_check_type(Xen_is_GLfloat(param), param, 2, "glLightModelf", "GLfloat");
-  glLightModelf(XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(param));
+  glLightModelf(Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(param));
   return(Xen_false);
 }
 
-static XEN gxg_glLightModeli(XEN pname, XEN param)
+static Xen gxg_glLightModeli(Xen pname, Xen param)
 {
   #define H_glLightModeli "void glLightModeli(GLenum pname, GLint param)"
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glLightModeli", "GLenum");
   Xen_check_type(Xen_is_GLint(param), param, 2, "glLightModeli", "GLint");
-  glLightModeli(XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
+  glLightModeli(Xen_to_C_GLenum(pname), Xen_to_C_GLint(param));
   return(Xen_false);
 }
 
-static XEN gxg_glMaterialf(XEN face, XEN pname, XEN param)
+static Xen gxg_glMaterialf(Xen face, Xen pname, Xen param)
 {
   #define H_glMaterialf "void glMaterialf(GLenum face, GLenum pname, GLfloat param)"
   Xen_check_type(Xen_is_GLenum(face), face, 1, "glMaterialf", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glMaterialf", "GLenum");
   Xen_check_type(Xen_is_GLfloat(param), param, 3, "glMaterialf", "GLfloat");
-  glMaterialf(XEN_TO_C_GLenum(face), XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(param));
+  glMaterialf(Xen_to_C_GLenum(face), Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(param));
   return(Xen_false);
 }
 
-static XEN gxg_glMateriali(XEN face, XEN pname, XEN param)
+static Xen gxg_glMateriali(Xen face, Xen pname, Xen param)
 {
   #define H_glMateriali "void glMateriali(GLenum face, GLenum pname, GLint param)"
   Xen_check_type(Xen_is_GLenum(face), face, 1, "glMateriali", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glMateriali", "GLenum");
   Xen_check_type(Xen_is_GLint(param), param, 3, "glMateriali", "GLint");
-  glMateriali(XEN_TO_C_GLenum(face), XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
+  glMateriali(Xen_to_C_GLenum(face), Xen_to_C_GLenum(pname), Xen_to_C_GLint(param));
   return(Xen_false);
 }
 
-static XEN gxg_glGetMaterialfv(XEN face, XEN pname, XEN params)
+static Xen gxg_glGetMaterialfv(Xen face, Xen pname, Xen params)
 {
   #define H_glGetMaterialfv "void glGetMaterialfv(GLenum face, GLenum pname, GLfloat* [params])"
   GLfloat ref_params[16];
   Xen_check_type(Xen_is_GLenum(face), face, 1, "glGetMaterialfv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetMaterialfv", "GLenum");
-  glGetMaterialfv(XEN_TO_C_GLenum(face), XEN_TO_C_GLenum(pname), ref_params);
+  glGetMaterialfv(Xen_to_C_GLenum(face), Xen_to_C_GLenum(pname), ref_params);
   {
-    XEN result;
+    Xen result;
     int i, vals;
-    vals = how_many_vals(XEN_TO_C_GLenum(pname));
+    vals = how_many_vals(Xen_to_C_GLenum(pname));
     result = Xen_empty_list;
     for (i = 0; i < vals; i++)
-      result = Xen_cons(C_TO_XEN_GLfloat(ref_params[i]), result);
+      result = Xen_cons(C_to_Xen_GLfloat(ref_params[i]), result);
     return(result);
   }
 }
 
-static XEN gxg_glGetMaterialiv(XEN face, XEN pname, XEN params)
+static Xen gxg_glGetMaterialiv(Xen face, Xen pname, Xen params)
 {
   #define H_glGetMaterialiv "void glGetMaterialiv(GLenum face, GLenum pname, GLint* [params])"
   GLint ref_params[1];
   Xen_check_type(Xen_is_GLenum(face), face, 1, "glGetMaterialiv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetMaterialiv", "GLenum");
-  glGetMaterialiv(XEN_TO_C_GLenum(face), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_params[0])));
+  glGetMaterialiv(Xen_to_C_GLenum(face), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static XEN gxg_glColorMaterial(XEN face, XEN mode)
+static Xen gxg_glColorMaterial(Xen face, Xen mode)
 {
   #define H_glColorMaterial "void glColorMaterial(GLenum face, GLenum mode)"
   Xen_check_type(Xen_is_GLenum(face), face, 1, "glColorMaterial", "GLenum");
   Xen_check_type(Xen_is_GLenum(mode), mode, 2, "glColorMaterial", "GLenum");
-  glColorMaterial(XEN_TO_C_GLenum(face), XEN_TO_C_GLenum(mode));
+  glColorMaterial(Xen_to_C_GLenum(face), Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glPixelZoom(XEN xfactor, XEN yfactor)
+static Xen gxg_glPixelZoom(Xen xfactor, Xen yfactor)
 {
   #define H_glPixelZoom "void glPixelZoom(GLfloat xfactor, GLfloat yfactor)"
   Xen_check_type(Xen_is_GLfloat(xfactor), xfactor, 1, "glPixelZoom", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(yfactor), yfactor, 2, "glPixelZoom", "GLfloat");
-  glPixelZoom(XEN_TO_C_GLfloat(xfactor), XEN_TO_C_GLfloat(yfactor));
+  glPixelZoom(Xen_to_C_GLfloat(xfactor), Xen_to_C_GLfloat(yfactor));
   return(Xen_false);
 }
 
-static XEN gxg_glPixelStoref(XEN pname, XEN param)
+static Xen gxg_glPixelStoref(Xen pname, Xen param)
 {
   #define H_glPixelStoref "void glPixelStoref(GLenum pname, GLfloat param)"
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glPixelStoref", "GLenum");
   Xen_check_type(Xen_is_GLfloat(param), param, 2, "glPixelStoref", "GLfloat");
-  glPixelStoref(XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(param));
+  glPixelStoref(Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(param));
   return(Xen_false);
 }
 
-static XEN gxg_glPixelStorei(XEN pname, XEN param)
+static Xen gxg_glPixelStorei(Xen pname, Xen param)
 {
   #define H_glPixelStorei "void glPixelStorei(GLenum pname, GLint param)"
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glPixelStorei", "GLenum");
   Xen_check_type(Xen_is_GLint(param), param, 2, "glPixelStorei", "GLint");
-  glPixelStorei(XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
+  glPixelStorei(Xen_to_C_GLenum(pname), Xen_to_C_GLint(param));
   return(Xen_false);
 }
 
-static XEN gxg_glPixelTransferf(XEN pname, XEN param)
+static Xen gxg_glPixelTransferf(Xen pname, Xen param)
 {
   #define H_glPixelTransferf "void glPixelTransferf(GLenum pname, GLfloat param)"
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glPixelTransferf", "GLenum");
   Xen_check_type(Xen_is_GLfloat(param), param, 2, "glPixelTransferf", "GLfloat");
-  glPixelTransferf(XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(param));
+  glPixelTransferf(Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(param));
   return(Xen_false);
 }
 
-static XEN gxg_glPixelTransferi(XEN pname, XEN param)
+static Xen gxg_glPixelTransferi(Xen pname, Xen param)
 {
   #define H_glPixelTransferi "void glPixelTransferi(GLenum pname, GLint param)"
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glPixelTransferi", "GLenum");
   Xen_check_type(Xen_is_GLint(param), param, 2, "glPixelTransferi", "GLint");
-  glPixelTransferi(XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
+  glPixelTransferi(Xen_to_C_GLenum(pname), Xen_to_C_GLint(param));
   return(Xen_false);
 }
 
-static XEN gxg_glGetPixelMapfv(XEN map, XEN values)
+static Xen gxg_glGetPixelMapfv(Xen map, Xen values)
 {
   #define H_glGetPixelMapfv "void glGetPixelMapfv(GLenum map, GLfloat* [values])"
   GLfloat ref_values[1];
   Xen_check_type(Xen_is_GLenum(map), map, 1, "glGetPixelMapfv", "GLenum");
-  glGetPixelMapfv(XEN_TO_C_GLenum(map), ref_values);
-  return(Xen_list_1(C_TO_XEN_GLfloat(ref_values[0])));
+  glGetPixelMapfv(Xen_to_C_GLenum(map), ref_values);
+  return(Xen_list_1(C_to_Xen_GLfloat(ref_values[0])));
 }
 
-static XEN gxg_glGetPixelMapuiv(XEN map, XEN values)
+static Xen gxg_glGetPixelMapuiv(Xen map, Xen values)
 {
   #define H_glGetPixelMapuiv "void glGetPixelMapuiv(GLenum map, GLuint* [values])"
   GLuint ref_values[1];
   Xen_check_type(Xen_is_GLenum(map), map, 1, "glGetPixelMapuiv", "GLenum");
-  glGetPixelMapuiv(XEN_TO_C_GLenum(map), ref_values);
-  return(Xen_list_1(C_TO_XEN_GLuint(ref_values[0])));
+  glGetPixelMapuiv(Xen_to_C_GLenum(map), ref_values);
+  return(Xen_list_1(C_to_Xen_GLuint(ref_values[0])));
 }
 
-static XEN gxg_glGetPixelMapusv(XEN map, XEN values)
+static Xen gxg_glGetPixelMapusv(Xen map, Xen values)
 {
   #define H_glGetPixelMapusv "void glGetPixelMapusv(GLenum map, GLushort* [values])"
   GLushort ref_values[1];
   Xen_check_type(Xen_is_GLenum(map), map, 1, "glGetPixelMapusv", "GLenum");
-  glGetPixelMapusv(XEN_TO_C_GLenum(map), ref_values);
-  return(Xen_list_1(C_TO_XEN_GLushort(ref_values[0])));
+  glGetPixelMapusv(Xen_to_C_GLenum(map), ref_values);
+  return(Xen_list_1(C_to_Xen_GLushort(ref_values[0])));
 }
 
-static XEN gxg_glBitmap(XEN width, XEN height, XEN xorig, XEN yorig, XEN xmove, XEN ymove, XEN bitmap)
+static Xen gxg_glBitmap(Xen width, Xen height, Xen xorig, Xen yorig, Xen xmove, Xen ymove, Xen bitmap)
 {
   #define H_glBitmap "void glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, \
 GLfloat ymove, GLubyte* bitmap)"
@@ -2081,12 +2081,12 @@ GLfloat ymove, GLubyte* bitmap)"
   Xen_check_type(Xen_is_GLfloat(xmove), xmove, 5, "glBitmap", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(ymove), ymove, 6, "glBitmap", "GLfloat");
   Xen_check_type(Xen_is_GLubyte_(bitmap), bitmap, 7, "glBitmap", "GLubyte*");
-  glBitmap(XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), XEN_TO_C_GLfloat(xorig), XEN_TO_C_GLfloat(yorig), XEN_TO_C_GLfloat(xmove), 
-           XEN_TO_C_GLfloat(ymove), XEN_TO_C_GLubyte_(bitmap));
+  glBitmap(Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), Xen_to_C_GLfloat(xorig), Xen_to_C_GLfloat(yorig), Xen_to_C_GLfloat(xmove), 
+           Xen_to_C_GLfloat(ymove), Xen_to_C_GLubyte_(bitmap));
   return(Xen_false);
 }
 
-static XEN gxg_glReadPixels(XEN x, XEN y, XEN width, XEN height, XEN format, XEN type, XEN pixels)
+static Xen gxg_glReadPixels(Xen x, Xen y, Xen width, Xen height, Xen format, Xen type, Xen pixels)
 {
   #define H_glReadPixels "void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, \
 GLenum type, GLvoid* pixels)"
@@ -2097,12 +2097,12 @@ GLenum type, GLvoid* pixels)"
   Xen_check_type(Xen_is_GLenum(format), format, 5, "glReadPixels", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 6, "glReadPixels", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(pixels), pixels, 7, "glReadPixels", "GLvoid*");
-  glReadPixels(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(format), 
-               XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
+  glReadPixels(Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), Xen_to_C_GLenum(format), 
+               Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(pixels));
   return(Xen_false);
 }
 
-static XEN gxg_glDrawPixels(XEN width, XEN height, XEN format, XEN type, XEN pixels)
+static Xen gxg_glDrawPixels(Xen width, Xen height, Xen format, Xen type, Xen pixels)
 {
   #define H_glDrawPixels "void glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, \
 GLvoid* pixels)"
@@ -2111,11 +2111,11 @@ GLvoid* pixels)"
   Xen_check_type(Xen_is_GLenum(format), format, 3, "glDrawPixels", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 4, "glDrawPixels", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(pixels), pixels, 5, "glDrawPixels", "GLvoid*");
-  glDrawPixels(XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
+  glDrawPixels(Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(pixels));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyPixels(XEN x, XEN y, XEN width, XEN height, XEN type)
+static Xen gxg_glCopyPixels(Xen x, Xen y, Xen width, Xen height, Xen type)
 {
   #define H_glCopyPixels "void glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)"
   Xen_check_type(Xen_is_GLint(x), x, 1, "glCopyPixels", "GLint");
@@ -2123,187 +2123,187 @@ static XEN gxg_glCopyPixels(XEN x, XEN y, XEN width, XEN height, XEN type)
   Xen_check_type(Xen_is_GLsizei(width), width, 3, "glCopyPixels", "GLsizei");
   Xen_check_type(Xen_is_GLsizei(height), height, 4, "glCopyPixels", "GLsizei");
   Xen_check_type(Xen_is_GLenum(type), type, 5, "glCopyPixels", "GLenum");
-  glCopyPixels(XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(type));
+  glCopyPixels(Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), Xen_to_C_GLenum(type));
   return(Xen_false);
 }
 
-static XEN gxg_glStencilFunc(XEN func, XEN ref, XEN mask)
+static Xen gxg_glStencilFunc(Xen func, Xen ref, Xen mask)
 {
   #define H_glStencilFunc "void glStencilFunc(GLenum func, GLint ref, GLuint mask)"
   Xen_check_type(Xen_is_GLenum(func), func, 1, "glStencilFunc", "GLenum");
   Xen_check_type(Xen_is_GLint(ref), ref, 2, "glStencilFunc", "GLint");
   Xen_check_type(Xen_is_GLuint(mask), mask, 3, "glStencilFunc", "GLuint");
-  glStencilFunc(XEN_TO_C_GLenum(func), XEN_TO_C_GLint(ref), XEN_TO_C_GLuint(mask));
+  glStencilFunc(Xen_to_C_GLenum(func), Xen_to_C_GLint(ref), Xen_to_C_GLuint(mask));
   return(Xen_false);
 }
 
-static XEN gxg_glStencilMask(XEN mask)
+static Xen gxg_glStencilMask(Xen mask)
 {
   #define H_glStencilMask "void glStencilMask(GLuint mask)"
   Xen_check_type(Xen_is_GLuint(mask), mask, 1, "glStencilMask", "GLuint");
-  glStencilMask(XEN_TO_C_GLuint(mask));
+  glStencilMask(Xen_to_C_GLuint(mask));
   return(Xen_false);
 }
 
-static XEN gxg_glStencilOp(XEN fail, XEN zfail, XEN zpass)
+static Xen gxg_glStencilOp(Xen fail, Xen zfail, Xen zpass)
 {
   #define H_glStencilOp "void glStencilOp(GLenum fail, GLenum zfail, GLenum zpass)"
   Xen_check_type(Xen_is_GLenum(fail), fail, 1, "glStencilOp", "GLenum");
   Xen_check_type(Xen_is_GLenum(zfail), zfail, 2, "glStencilOp", "GLenum");
   Xen_check_type(Xen_is_GLenum(zpass), zpass, 3, "glStencilOp", "GLenum");
-  glStencilOp(XEN_TO_C_GLenum(fail), XEN_TO_C_GLenum(zfail), XEN_TO_C_GLenum(zpass));
+  glStencilOp(Xen_to_C_GLenum(fail), Xen_to_C_GLenum(zfail), Xen_to_C_GLenum(zpass));
   return(Xen_false);
 }
 
-static XEN gxg_glClearStencil(XEN s)
+static Xen gxg_glClearStencil(Xen s)
 {
   #define H_glClearStencil "void glClearStencil(GLint s)"
   Xen_check_type(Xen_is_GLint(s), s, 1, "glClearStencil", "GLint");
-  glClearStencil(XEN_TO_C_GLint(s));
+  glClearStencil(Xen_to_C_GLint(s));
   return(Xen_false);
 }
 
-static XEN gxg_glTexGend(XEN coord, XEN pname, XEN param)
+static Xen gxg_glTexGend(Xen coord, Xen pname, Xen param)
 {
   #define H_glTexGend "void glTexGend(GLenum coord, GLenum pname, GLdouble param)"
   Xen_check_type(Xen_is_GLenum(coord), coord, 1, "glTexGend", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glTexGend", "GLenum");
   Xen_check_type(Xen_is_GLdouble(param), param, 3, "glTexGend", "GLdouble");
-  glTexGend(XEN_TO_C_GLenum(coord), XEN_TO_C_GLenum(pname), XEN_TO_C_GLdouble(param));
+  glTexGend(Xen_to_C_GLenum(coord), Xen_to_C_GLenum(pname), Xen_to_C_GLdouble(param));
   return(Xen_false);
 }
 
-static XEN gxg_glTexGenf(XEN coord, XEN pname, XEN param)
+static Xen gxg_glTexGenf(Xen coord, Xen pname, Xen param)
 {
   #define H_glTexGenf "void glTexGenf(GLenum coord, GLenum pname, GLfloat param)"
   Xen_check_type(Xen_is_GLenum(coord), coord, 1, "glTexGenf", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glTexGenf", "GLenum");
   Xen_check_type(Xen_is_GLfloat(param), param, 3, "glTexGenf", "GLfloat");
-  glTexGenf(XEN_TO_C_GLenum(coord), XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(param));
+  glTexGenf(Xen_to_C_GLenum(coord), Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(param));
   return(Xen_false);
 }
 
-static XEN gxg_glTexGeni(XEN coord, XEN pname, XEN param)
+static Xen gxg_glTexGeni(Xen coord, Xen pname, Xen param)
 {
   #define H_glTexGeni "void glTexGeni(GLenum coord, GLenum pname, GLint param)"
   Xen_check_type(Xen_is_GLenum(coord), coord, 1, "glTexGeni", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glTexGeni", "GLenum");
   Xen_check_type(Xen_is_GLint(param), param, 3, "glTexGeni", "GLint");
-  glTexGeni(XEN_TO_C_GLenum(coord), XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
+  glTexGeni(Xen_to_C_GLenum(coord), Xen_to_C_GLenum(pname), Xen_to_C_GLint(param));
   return(Xen_false);
 }
 
-static XEN gxg_glGetTexGendv(XEN coord, XEN pname, XEN params)
+static Xen gxg_glGetTexGendv(Xen coord, Xen pname, Xen params)
 {
   #define H_glGetTexGendv "void glGetTexGendv(GLenum coord, GLenum pname, GLdouble* [params])"
   GLdouble ref_params[1];
   Xen_check_type(Xen_is_GLenum(coord), coord, 1, "glGetTexGendv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetTexGendv", "GLenum");
-  glGetTexGendv(XEN_TO_C_GLenum(coord), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLdouble(ref_params[0])));
+  glGetTexGendv(Xen_to_C_GLenum(coord), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLdouble(ref_params[0])));
 }
 
-static XEN gxg_glGetTexGenfv(XEN coord, XEN pname, XEN params)
+static Xen gxg_glGetTexGenfv(Xen coord, Xen pname, Xen params)
 {
   #define H_glGetTexGenfv "void glGetTexGenfv(GLenum coord, GLenum pname, GLfloat* [params])"
   GLfloat ref_params[1];
   Xen_check_type(Xen_is_GLenum(coord), coord, 1, "glGetTexGenfv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetTexGenfv", "GLenum");
-  glGetTexGenfv(XEN_TO_C_GLenum(coord), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLfloat(ref_params[0])));
+  glGetTexGenfv(Xen_to_C_GLenum(coord), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLfloat(ref_params[0])));
 }
 
-static XEN gxg_glGetTexGeniv(XEN coord, XEN pname, XEN params)
+static Xen gxg_glGetTexGeniv(Xen coord, Xen pname, Xen params)
 {
   #define H_glGetTexGeniv "void glGetTexGeniv(GLenum coord, GLenum pname, GLint* [params])"
   GLint ref_params[1];
   Xen_check_type(Xen_is_GLenum(coord), coord, 1, "glGetTexGeniv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetTexGeniv", "GLenum");
-  glGetTexGeniv(XEN_TO_C_GLenum(coord), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_params[0])));
+  glGetTexGeniv(Xen_to_C_GLenum(coord), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static XEN gxg_glTexEnvf(XEN target, XEN pname, XEN param)
+static Xen gxg_glTexEnvf(Xen target, Xen pname, Xen param)
 {
   #define H_glTexEnvf "void glTexEnvf(GLenum target, GLenum pname, GLfloat param)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glTexEnvf", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glTexEnvf", "GLenum");
   Xen_check_type(Xen_is_GLfloat(param), param, 3, "glTexEnvf", "GLfloat");
-  glTexEnvf(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(param));
+  glTexEnvf(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(param));
   return(Xen_false);
 }
 
-static XEN gxg_glTexEnvi(XEN target, XEN pname, XEN param)
+static Xen gxg_glTexEnvi(Xen target, Xen pname, Xen param)
 {
   #define H_glTexEnvi "void glTexEnvi(GLenum target, GLenum pname, GLint param)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glTexEnvi", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glTexEnvi", "GLenum");
   Xen_check_type(Xen_is_GLint(param), param, 3, "glTexEnvi", "GLint");
-  glTexEnvi(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
+  glTexEnvi(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), Xen_to_C_GLint(param));
   return(Xen_false);
 }
 
-static XEN gxg_glGetTexEnvfv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetTexEnvfv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetTexEnvfv "void glGetTexEnvfv(GLenum target, GLenum pname, GLfloat* [params])"
   GLfloat ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetTexEnvfv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetTexEnvfv", "GLenum");
-  glGetTexEnvfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLfloat(ref_params[0])));
+  glGetTexEnvfv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLfloat(ref_params[0])));
 }
 
-static XEN gxg_glGetTexEnviv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetTexEnviv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetTexEnviv "void glGetTexEnviv(GLenum target, GLenum pname, GLint* [params])"
   GLint ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetTexEnviv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetTexEnviv", "GLenum");
-  glGetTexEnviv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_params[0])));
+  glGetTexEnviv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static XEN gxg_glTexParameterf(XEN target, XEN pname, XEN param)
+static Xen gxg_glTexParameterf(Xen target, Xen pname, Xen param)
 {
   #define H_glTexParameterf "void glTexParameterf(GLenum target, GLenum pname, GLfloat param)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glTexParameterf", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glTexParameterf", "GLenum");
   Xen_check_type(Xen_is_GLfloat(param), param, 3, "glTexParameterf", "GLfloat");
-  glTexParameterf(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(param));
+  glTexParameterf(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(param));
   return(Xen_false);
 }
 
-static XEN gxg_glTexParameteri(XEN target, XEN pname, XEN param)
+static Xen gxg_glTexParameteri(Xen target, Xen pname, Xen param)
 {
   #define H_glTexParameteri "void glTexParameteri(GLenum target, GLenum pname, GLint param)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glTexParameteri", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glTexParameteri", "GLenum");
   Xen_check_type(Xen_is_GLint(param), param, 3, "glTexParameteri", "GLint");
-  glTexParameteri(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
+  glTexParameteri(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), Xen_to_C_GLint(param));
   return(Xen_false);
 }
 
-static XEN gxg_glGetTexParameterfv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetTexParameterfv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetTexParameterfv "void glGetTexParameterfv(GLenum target, GLenum pname, GLfloat* [params])"
   GLfloat ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetTexParameterfv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetTexParameterfv", "GLenum");
-  glGetTexParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLfloat(ref_params[0])));
+  glGetTexParameterfv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLfloat(ref_params[0])));
 }
 
-static XEN gxg_glGetTexParameteriv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetTexParameteriv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetTexParameteriv "void glGetTexParameteriv(GLenum target, GLenum pname, GLint* [params])"
   GLint ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetTexParameteriv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetTexParameteriv", "GLenum");
-  glGetTexParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_params[0])));
+  glGetTexParameteriv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static XEN gxg_glGetTexLevelParameterfv(XEN target, XEN level, XEN pname, XEN params)
+static Xen gxg_glGetTexLevelParameterfv(Xen target, Xen level, Xen pname, Xen params)
 {
   #define H_glGetTexLevelParameterfv "void glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, \
 GLfloat* [params])"
@@ -2311,11 +2311,11 @@ GLfloat* [params])"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetTexLevelParameterfv", "GLenum");
   Xen_check_type(Xen_is_GLint(level), level, 2, "glGetTexLevelParameterfv", "GLint");
   Xen_check_type(Xen_is_GLenum(pname), pname, 3, "glGetTexLevelParameterfv", "GLenum");
-  glGetTexLevelParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLfloat(ref_params[0])));
+  glGetTexLevelParameterfv(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLfloat(ref_params[0])));
 }
 
-static XEN gxg_glGetTexLevelParameteriv(XEN target, XEN level, XEN pname, XEN params)
+static Xen gxg_glGetTexLevelParameteriv(Xen target, Xen level, Xen pname, Xen params)
 {
   #define H_glGetTexLevelParameteriv "void glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, \
 GLint* [params])"
@@ -2323,11 +2323,11 @@ GLint* [params])"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetTexLevelParameteriv", "GLenum");
   Xen_check_type(Xen_is_GLint(level), level, 2, "glGetTexLevelParameteriv", "GLint");
   Xen_check_type(Xen_is_GLenum(pname), pname, 3, "glGetTexLevelParameteriv", "GLenum");
-  glGetTexLevelParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_params[0])));
+  glGetTexLevelParameteriv(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static XEN gxg_glTexImage1D(XEN target, XEN level, XEN internalFormat, XEN width, XEN border, XEN format, XEN type, XEN pixels)
+static Xen gxg_glTexImage1D(Xen target, Xen level, Xen internalFormat, Xen width, Xen border, Xen format, Xen type, Xen pixels)
 {
   #define H_glTexImage1D "void glTexImage1D(GLenum target, GLint level, GLint internalFormat, GLsizei width, \
 GLint border, GLenum format, GLenum type, GLvoid* pixels)"
@@ -2339,12 +2339,12 @@ GLint border, GLenum format, GLenum type, GLvoid* pixels)"
   Xen_check_type(Xen_is_GLenum(format), format, 6, "glTexImage1D", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 7, "glTexImage1D", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(pixels), pixels, 8, "glTexImage1D", "GLvoid*");
-  glTexImage1D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), XEN_TO_C_GLint(border), 
-               XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
+  glTexImage1D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLint(internalFormat), Xen_to_C_GLsizei(width), Xen_to_C_GLint(border), 
+               Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(pixels));
   return(Xen_false);
 }
 
-static XEN gxg_glTexImage2D(XEN target, XEN level, XEN internalFormat, XEN width, XEN height, XEN border, XEN format, XEN type, XEN pixels)
+static Xen gxg_glTexImage2D(Xen target, Xen level, Xen internalFormat, Xen width, Xen height, Xen border, Xen format, Xen type, Xen pixels)
 {
   #define H_glTexImage2D "void glTexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, \
 GLsizei height, GLint border, GLenum format, GLenum type, GLvoid* pixels)"
@@ -2357,55 +2357,55 @@ GLsizei height, GLint border, GLenum format, GLenum type, GLvoid* pixels)"
   Xen_check_type(Xen_is_GLenum(format), format, 7, "glTexImage2D", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 8, "glTexImage2D", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(pixels), pixels, 9, "glTexImage2D", "GLvoid*");
-  glTexImage2D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), 
-               XEN_TO_C_GLint(border), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
+  glTexImage2D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLint(internalFormat), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), 
+               Xen_to_C_GLint(border), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(pixels));
   return(Xen_false);
 }
 
-static XEN gxg_glGenTextures(XEN n, XEN textures)
+static Xen gxg_glGenTextures(Xen n, Xen textures)
 {
   #define H_glGenTextures "void glGenTextures(GLsizei n, GLuint* textures)"
   Xen_check_type(Xen_is_GLsizei(n), n, 1, "glGenTextures", "GLsizei");
   Xen_check_type(Xen_is_GLuint_(textures), textures, 2, "glGenTextures", "GLuint*");
-  glGenTextures(XEN_TO_C_GLsizei(n), XEN_TO_C_GLuint_(textures));
+  glGenTextures(Xen_to_C_GLsizei(n), Xen_to_C_GLuint_(textures));
   return(Xen_false);
 }
 
-static XEN gxg_glDeleteTextures(XEN n, XEN textures)
+static Xen gxg_glDeleteTextures(Xen n, Xen textures)
 {
   #define H_glDeleteTextures "void glDeleteTextures(GLsizei n, GLuint* textures)"
   Xen_check_type(Xen_is_GLsizei(n), n, 1, "glDeleteTextures", "GLsizei");
   Xen_check_type(Xen_is_GLuint_(textures), textures, 2, "glDeleteTextures", "GLuint*");
-  glDeleteTextures(XEN_TO_C_GLsizei(n), XEN_TO_C_GLuint_(textures));
+  glDeleteTextures(Xen_to_C_GLsizei(n), Xen_to_C_GLuint_(textures));
   return(Xen_false);
 }
 
-static XEN gxg_glBindTexture(XEN target, XEN texture)
+static Xen gxg_glBindTexture(Xen target, Xen texture)
 {
   #define H_glBindTexture "void glBindTexture(GLenum target, GLuint texture)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glBindTexture", "GLenum");
   Xen_check_type(Xen_is_GLuint(texture), texture, 2, "glBindTexture", "GLuint");
-  glBindTexture(XEN_TO_C_GLenum(target), XEN_TO_C_GLuint(texture));
+  glBindTexture(Xen_to_C_GLenum(target), Xen_to_C_GLuint(texture));
   return(Xen_false);
 }
 
-static XEN gxg_glAreTexturesResident(XEN n, XEN textures, XEN residences)
+static Xen gxg_glAreTexturesResident(Xen n, Xen textures, Xen residences)
 {
   #define H_glAreTexturesResident "GLboolean glAreTexturesResident(GLsizei n, GLuint* textures, GLboolean* residences)"
   Xen_check_type(Xen_is_GLsizei(n), n, 1, "glAreTexturesResident", "GLsizei");
   Xen_check_type(Xen_is_GLuint_(textures), textures, 2, "glAreTexturesResident", "GLuint*");
   Xen_check_type(Xen_is_GLboolean_(residences), residences, 3, "glAreTexturesResident", "GLboolean*");
-  return(C_TO_XEN_GLboolean(glAreTexturesResident(XEN_TO_C_GLsizei(n), XEN_TO_C_GLuint_(textures), XEN_TO_C_GLboolean_(residences))));
+  return(C_to_Xen_GLboolean(glAreTexturesResident(Xen_to_C_GLsizei(n), Xen_to_C_GLuint_(textures), Xen_to_C_GLboolean_(residences))));
 }
 
-static XEN gxg_glIsTexture(XEN texture)
+static Xen gxg_glIsTexture(Xen texture)
 {
   #define H_glIsTexture "GLboolean glIsTexture(GLuint texture)"
   Xen_check_type(Xen_is_GLuint(texture), texture, 1, "glIsTexture", "GLuint");
-  return(C_TO_XEN_GLboolean(glIsTexture(XEN_TO_C_GLuint(texture))));
+  return(C_to_Xen_GLboolean(glIsTexture(Xen_to_C_GLuint(texture))));
 }
 
-static XEN gxg_glTexSubImage1D(XEN target, XEN level, XEN xoffset, XEN width, XEN format, XEN type, XEN pixels)
+static Xen gxg_glTexSubImage1D(Xen target, Xen level, Xen xoffset, Xen width, Xen format, Xen type, Xen pixels)
 {
   #define H_glTexSubImage1D "void glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, \
 GLenum format, GLenum type, GLvoid* pixels)"
@@ -2416,12 +2416,12 @@ GLenum format, GLenum type, GLvoid* pixels)"
   Xen_check_type(Xen_is_GLenum(format), format, 5, "glTexSubImage1D", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 6, "glTexSubImage1D", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(pixels), pixels, 7, "glTexSubImage1D", "GLvoid*");
-  glTexSubImage1D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(xoffset), XEN_TO_C_GLsizei(width), XEN_TO_C_GLenum(format), 
-                  XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
+  glTexSubImage1D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLint(xoffset), Xen_to_C_GLsizei(width), Xen_to_C_GLenum(format), 
+                  Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(pixels));
   return(Xen_false);
 }
 
-static XEN gxg_glTexSubImage2D(XEN target, XEN level, XEN xoffset, XEN yoffset, XEN width, XEN height, XEN format, XEN type, XEN pixels)
+static Xen gxg_glTexSubImage2D(Xen target, Xen level, Xen xoffset, Xen yoffset, Xen width, Xen height, Xen format, Xen type, Xen pixels)
 {
   #define H_glTexSubImage2D "void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, \
 GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels)"
@@ -2434,12 +2434,12 @@ GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels)"
   Xen_check_type(Xen_is_GLenum(format), format, 7, "glTexSubImage2D", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 8, "glTexSubImage2D", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(pixels), pixels, 9, "glTexSubImage2D", "GLvoid*");
-  glTexSubImage2D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(xoffset), XEN_TO_C_GLint(yoffset), XEN_TO_C_GLsizei(width), 
-                  XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
+  glTexSubImage2D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLint(xoffset), Xen_to_C_GLint(yoffset), Xen_to_C_GLsizei(width), 
+                  Xen_to_C_GLsizei(height), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(pixels));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyTexImage1D(XEN target, XEN level, XEN internalformat, XEN x, XEN y, XEN width, XEN border)
+static Xen gxg_glCopyTexImage1D(Xen target, Xen level, Xen internalformat, Xen x, Xen y, Xen width, Xen border)
 {
   #define H_glCopyTexImage1D "void glCopyTexImage1D(GLenum target, GLint level, GLenum internalformat, \
 GLint x, GLint y, GLsizei width, GLint border)"
@@ -2450,12 +2450,12 @@ GLint x, GLint y, GLsizei width, GLint border)"
   Xen_check_type(Xen_is_GLint(y), y, 5, "glCopyTexImage1D", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 6, "glCopyTexImage1D", "GLsizei");
   Xen_check_type(Xen_is_GLint(border), border, 7, "glCopyTexImage1D", "GLint");
-  glCopyTexImage1D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), 
-                   XEN_TO_C_GLsizei(width), XEN_TO_C_GLint(border));
+  glCopyTexImage1D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLenum(internalformat), Xen_to_C_GLint(x), Xen_to_C_GLint(y), 
+                   Xen_to_C_GLsizei(width), Xen_to_C_GLint(border));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyTexImage2D(XEN target, XEN level, XEN internalformat, XEN x, XEN y, XEN width, XEN height, XEN border)
+static Xen gxg_glCopyTexImage2D(Xen target, Xen level, Xen internalformat, Xen x, Xen y, Xen width, Xen height, Xen border)
 {
   #define H_glCopyTexImage2D "void glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat, \
 GLint x, GLint y, GLsizei width, GLsizei height, GLint border)"
@@ -2467,12 +2467,12 @@ GLint x, GLint y, GLsizei width, GLsizei height, GLint border)"
   Xen_check_type(Xen_is_GLsizei(width), width, 6, "glCopyTexImage2D", "GLsizei");
   Xen_check_type(Xen_is_GLsizei(height), height, 7, "glCopyTexImage2D", "GLsizei");
   Xen_check_type(Xen_is_GLint(border), border, 8, "glCopyTexImage2D", "GLint");
-  glCopyTexImage2D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), 
-                   XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), XEN_TO_C_GLint(border));
+  glCopyTexImage2D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLenum(internalformat), Xen_to_C_GLint(x), Xen_to_C_GLint(y), 
+                   Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), Xen_to_C_GLint(border));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyTexSubImage1D(XEN target, XEN level, XEN xoffset, XEN x, XEN y, XEN width)
+static Xen gxg_glCopyTexSubImage1D(Xen target, Xen level, Xen xoffset, Xen x, Xen y, Xen width)
 {
   #define H_glCopyTexSubImage1D "void glCopyTexSubImage1D(GLenum target, GLint level, GLint xoffset, \
 GLint x, GLint y, GLsizei width)"
@@ -2482,12 +2482,12 @@ GLint x, GLint y, GLsizei width)"
   Xen_check_type(Xen_is_GLint(x), x, 4, "glCopyTexSubImage1D", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 5, "glCopyTexSubImage1D", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 6, "glCopyTexSubImage1D", "GLsizei");
-  glCopyTexSubImage1D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(xoffset), XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), 
-                      XEN_TO_C_GLsizei(width));
+  glCopyTexSubImage1D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLint(xoffset), Xen_to_C_GLint(x), Xen_to_C_GLint(y), 
+                      Xen_to_C_GLsizei(width));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyTexSubImage2D(XEN target, XEN level, XEN xoffset, XEN yoffset, XEN x, XEN y, XEN width, XEN height)
+static Xen gxg_glCopyTexSubImage2D(Xen target, Xen level, Xen xoffset, Xen yoffset, Xen x, Xen y, Xen width, Xen height)
 {
   #define H_glCopyTexSubImage2D "void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, \
 GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)"
@@ -2499,12 +2499,12 @@ GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)"
   Xen_check_type(Xen_is_GLint(y), y, 6, "glCopyTexSubImage2D", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 7, "glCopyTexSubImage2D", "GLsizei");
   Xen_check_type(Xen_is_GLsizei(height), height, 8, "glCopyTexSubImage2D", "GLsizei");
-  glCopyTexSubImage2D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(xoffset), XEN_TO_C_GLint(yoffset), XEN_TO_C_GLint(x), 
-                      XEN_TO_C_GLint(y), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height));
+  glCopyTexSubImage2D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLint(xoffset), Xen_to_C_GLint(yoffset), Xen_to_C_GLint(x), 
+                      Xen_to_C_GLint(y), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height));
   return(Xen_false);
 }
 
-static XEN gxg_glMap1d(XEN target, XEN u1, XEN u2, XEN stride, XEN order, XEN points)
+static Xen gxg_glMap1d(Xen target, Xen u1, Xen u2, Xen stride, Xen order, Xen points)
 {
   #define H_glMap1d "void glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, \
 GLdouble* points)"
@@ -2514,12 +2514,12 @@ GLdouble* points)"
   Xen_check_type(Xen_is_GLint(stride), stride, 4, "glMap1d", "GLint");
   Xen_check_type(Xen_is_GLint(order), order, 5, "glMap1d", "GLint");
   Xen_check_type(Xen_is_GLdouble_(points), points, 6, "glMap1d", "GLdouble*");
-  glMap1d(XEN_TO_C_GLenum(target), XEN_TO_C_GLdouble(u1), XEN_TO_C_GLdouble(u2), XEN_TO_C_GLint(stride), XEN_TO_C_GLint(order), 
-          XEN_TO_C_GLdouble_(points));
+  glMap1d(Xen_to_C_GLenum(target), Xen_to_C_GLdouble(u1), Xen_to_C_GLdouble(u2), Xen_to_C_GLint(stride), Xen_to_C_GLint(order), 
+          Xen_to_C_GLdouble_(points));
   return(Xen_false);
 }
 
-static XEN gxg_glMap1f(XEN target, XEN u1, XEN u2, XEN stride, XEN order, XEN points)
+static Xen gxg_glMap1f(Xen target, Xen u1, Xen u2, Xen stride, Xen order, Xen points)
 {
   #define H_glMap1f "void glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, GLfloat* points)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glMap1f", "GLenum");
@@ -2528,16 +2528,16 @@ static XEN gxg_glMap1f(XEN target, XEN u1, XEN u2, XEN stride, XEN order, XEN po
   Xen_check_type(Xen_is_GLint(stride), stride, 4, "glMap1f", "GLint");
   Xen_check_type(Xen_is_GLint(order), order, 5, "glMap1f", "GLint");
   Xen_check_type(Xen_is_GLfloat_(points), points, 6, "glMap1f", "GLfloat*");
-  glMap1f(XEN_TO_C_GLenum(target), XEN_TO_C_GLfloat(u1), XEN_TO_C_GLfloat(u2), XEN_TO_C_GLint(stride), XEN_TO_C_GLint(order), 
-          XEN_TO_C_GLfloat_(points));
+  glMap1f(Xen_to_C_GLenum(target), Xen_to_C_GLfloat(u1), Xen_to_C_GLfloat(u2), Xen_to_C_GLint(stride), Xen_to_C_GLint(order), 
+          Xen_to_C_GLfloat_(points));
   return(Xen_false);
 }
 
-static XEN gxg_glMap2d(XEN arglist)
+static Xen gxg_glMap2d(Xen arglist)
 {
   #define H_glMap2d "void glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, \
 GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble* points)"
-  XEN target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points;
+  Xen target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points;
   target = Xen_list_ref(arglist, 0);
   u1 = Xen_list_ref(arglist, 1);
   u2 = Xen_list_ref(arglist, 2);
@@ -2558,16 +2558,16 @@ GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble* points)"
   Xen_check_type(Xen_is_GLint(vstride), vstride, 8, "glMap2d", "GLint");
   Xen_check_type(Xen_is_GLint(vorder), vorder, 9, "glMap2d", "GLint");
   Xen_check_type(Xen_is_GLdouble_(points), points, 10, "glMap2d", "GLdouble*");
-  glMap2d(XEN_TO_C_GLenum(target), XEN_TO_C_GLdouble(u1), XEN_TO_C_GLdouble(u2), XEN_TO_C_GLint(ustride), XEN_TO_C_GLint(uorder), 
-          XEN_TO_C_GLdouble(v1), XEN_TO_C_GLdouble(v2), XEN_TO_C_GLint(vstride), XEN_TO_C_GLint(vorder), XEN_TO_C_GLdouble_(points));
+  glMap2d(Xen_to_C_GLenum(target), Xen_to_C_GLdouble(u1), Xen_to_C_GLdouble(u2), Xen_to_C_GLint(ustride), Xen_to_C_GLint(uorder), 
+          Xen_to_C_GLdouble(v1), Xen_to_C_GLdouble(v2), Xen_to_C_GLint(vstride), Xen_to_C_GLint(vorder), Xen_to_C_GLdouble_(points));
   return(Xen_false);
 }
 
-static XEN gxg_glMap2f(XEN arglist)
+static Xen gxg_glMap2f(Xen arglist)
 {
   #define H_glMap2f "void glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, \
 GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat* points)"
-  XEN target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points;
+  Xen target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points;
   target = Xen_list_ref(arglist, 0);
   u1 = Xen_list_ref(arglist, 1);
   u2 = Xen_list_ref(arglist, 2);
@@ -2588,96 +2588,96 @@ GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat* points)"
   Xen_check_type(Xen_is_GLint(vstride), vstride, 8, "glMap2f", "GLint");
   Xen_check_type(Xen_is_GLint(vorder), vorder, 9, "glMap2f", "GLint");
   Xen_check_type(Xen_is_GLfloat_(points), points, 10, "glMap2f", "GLfloat*");
-  glMap2f(XEN_TO_C_GLenum(target), XEN_TO_C_GLfloat(u1), XEN_TO_C_GLfloat(u2), XEN_TO_C_GLint(ustride), XEN_TO_C_GLint(uorder), 
-          XEN_TO_C_GLfloat(v1), XEN_TO_C_GLfloat(v2), XEN_TO_C_GLint(vstride), XEN_TO_C_GLint(vorder), XEN_TO_C_GLfloat_(points));
+  glMap2f(Xen_to_C_GLenum(target), Xen_to_C_GLfloat(u1), Xen_to_C_GLfloat(u2), Xen_to_C_GLint(ustride), Xen_to_C_GLint(uorder), 
+          Xen_to_C_GLfloat(v1), Xen_to_C_GLfloat(v2), Xen_to_C_GLint(vstride), Xen_to_C_GLint(vorder), Xen_to_C_GLfloat_(points));
   return(Xen_false);
 }
 
-static XEN gxg_glGetMapdv(XEN target, XEN query, XEN v)
+static Xen gxg_glGetMapdv(Xen target, Xen query, Xen v)
 {
   #define H_glGetMapdv "void glGetMapdv(GLenum target, GLenum query, GLdouble* [v])"
   GLdouble ref_v[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetMapdv", "GLenum");
   Xen_check_type(Xen_is_GLenum(query), query, 2, "glGetMapdv", "GLenum");
-  glGetMapdv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(query), ref_v);
-  return(Xen_list_1(C_TO_XEN_GLdouble(ref_v[0])));
+  glGetMapdv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(query), ref_v);
+  return(Xen_list_1(C_to_Xen_GLdouble(ref_v[0])));
 }
 
-static XEN gxg_glGetMapfv(XEN target, XEN query, XEN v)
+static Xen gxg_glGetMapfv(Xen target, Xen query, Xen v)
 {
   #define H_glGetMapfv "void glGetMapfv(GLenum target, GLenum query, GLfloat* [v])"
   GLfloat ref_v[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetMapfv", "GLenum");
   Xen_check_type(Xen_is_GLenum(query), query, 2, "glGetMapfv", "GLenum");
-  glGetMapfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(query), ref_v);
-  return(Xen_list_1(C_TO_XEN_GLfloat(ref_v[0])));
+  glGetMapfv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(query), ref_v);
+  return(Xen_list_1(C_to_Xen_GLfloat(ref_v[0])));
 }
 
-static XEN gxg_glGetMapiv(XEN target, XEN query, XEN v)
+static Xen gxg_glGetMapiv(Xen target, Xen query, Xen v)
 {
   #define H_glGetMapiv "void glGetMapiv(GLenum target, GLenum query, GLint* [v])"
   GLint ref_v[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetMapiv", "GLenum");
   Xen_check_type(Xen_is_GLenum(query), query, 2, "glGetMapiv", "GLenum");
-  glGetMapiv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(query), ref_v);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_v[0])));
+  glGetMapiv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(query), ref_v);
+  return(Xen_list_1(C_to_Xen_GLint(ref_v[0])));
 }
 
-static XEN gxg_glEvalCoord1d(XEN u)
+static Xen gxg_glEvalCoord1d(Xen u)
 {
   #define H_glEvalCoord1d "void glEvalCoord1d(GLdouble u)"
   Xen_check_type(Xen_is_GLdouble(u), u, 1, "glEvalCoord1d", "GLdouble");
-  glEvalCoord1d(XEN_TO_C_GLdouble(u));
+  glEvalCoord1d(Xen_to_C_GLdouble(u));
   return(Xen_false);
 }
 
-static XEN gxg_glEvalCoord1f(XEN u)
+static Xen gxg_glEvalCoord1f(Xen u)
 {
   #define H_glEvalCoord1f "void glEvalCoord1f(GLfloat u)"
   Xen_check_type(Xen_is_GLfloat(u), u, 1, "glEvalCoord1f", "GLfloat");
-  glEvalCoord1f(XEN_TO_C_GLfloat(u));
+  glEvalCoord1f(Xen_to_C_GLfloat(u));
   return(Xen_false);
 }
 
-static XEN gxg_glEvalCoord2d(XEN u, XEN v)
+static Xen gxg_glEvalCoord2d(Xen u, Xen v)
 {
   #define H_glEvalCoord2d "void glEvalCoord2d(GLdouble u, GLdouble v)"
   Xen_check_type(Xen_is_GLdouble(u), u, 1, "glEvalCoord2d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(v), v, 2, "glEvalCoord2d", "GLdouble");
-  glEvalCoord2d(XEN_TO_C_GLdouble(u), XEN_TO_C_GLdouble(v));
+  glEvalCoord2d(Xen_to_C_GLdouble(u), Xen_to_C_GLdouble(v));
   return(Xen_false);
 }
 
-static XEN gxg_glEvalCoord2f(XEN u, XEN v)
+static Xen gxg_glEvalCoord2f(Xen u, Xen v)
 {
   #define H_glEvalCoord2f "void glEvalCoord2f(GLfloat u, GLfloat v)"
   Xen_check_type(Xen_is_GLfloat(u), u, 1, "glEvalCoord2f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(v), v, 2, "glEvalCoord2f", "GLfloat");
-  glEvalCoord2f(XEN_TO_C_GLfloat(u), XEN_TO_C_GLfloat(v));
+  glEvalCoord2f(Xen_to_C_GLfloat(u), Xen_to_C_GLfloat(v));
   return(Xen_false);
 }
 
-static XEN gxg_glMapGrid1d(XEN un, XEN u1, XEN u2)
+static Xen gxg_glMapGrid1d(Xen un, Xen u1, Xen u2)
 {
   #define H_glMapGrid1d "void glMapGrid1d(GLint un, GLdouble u1, GLdouble u2)"
   Xen_check_type(Xen_is_GLint(un), un, 1, "glMapGrid1d", "GLint");
   Xen_check_type(Xen_is_GLdouble(u1), u1, 2, "glMapGrid1d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(u2), u2, 3, "glMapGrid1d", "GLdouble");
-  glMapGrid1d(XEN_TO_C_GLint(un), XEN_TO_C_GLdouble(u1), XEN_TO_C_GLdouble(u2));
+  glMapGrid1d(Xen_to_C_GLint(un), Xen_to_C_GLdouble(u1), Xen_to_C_GLdouble(u2));
   return(Xen_false);
 }
 
-static XEN gxg_glMapGrid1f(XEN un, XEN u1, XEN u2)
+static Xen gxg_glMapGrid1f(Xen un, Xen u1, Xen u2)
 {
   #define H_glMapGrid1f "void glMapGrid1f(GLint un, GLfloat u1, GLfloat u2)"
   Xen_check_type(Xen_is_GLint(un), un, 1, "glMapGrid1f", "GLint");
   Xen_check_type(Xen_is_GLfloat(u1), u1, 2, "glMapGrid1f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(u2), u2, 3, "glMapGrid1f", "GLfloat");
-  glMapGrid1f(XEN_TO_C_GLint(un), XEN_TO_C_GLfloat(u1), XEN_TO_C_GLfloat(u2));
+  glMapGrid1f(Xen_to_C_GLint(un), Xen_to_C_GLfloat(u1), Xen_to_C_GLfloat(u2));
   return(Xen_false);
 }
 
-static XEN gxg_glMapGrid2d(XEN un, XEN u1, XEN u2, XEN vn, XEN v1, XEN v2)
+static Xen gxg_glMapGrid2d(Xen un, Xen u1, Xen u2, Xen vn, Xen v1, Xen v2)
 {
   #define H_glMapGrid2d "void glMapGrid2d(GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, \
 GLdouble v2)"
@@ -2687,12 +2687,12 @@ GLdouble v2)"
   Xen_check_type(Xen_is_GLint(vn), vn, 4, "glMapGrid2d", "GLint");
   Xen_check_type(Xen_is_GLdouble(v1), v1, 5, "glMapGrid2d", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(v2), v2, 6, "glMapGrid2d", "GLdouble");
-  glMapGrid2d(XEN_TO_C_GLint(un), XEN_TO_C_GLdouble(u1), XEN_TO_C_GLdouble(u2), XEN_TO_C_GLint(vn), XEN_TO_C_GLdouble(v1), 
-              XEN_TO_C_GLdouble(v2));
+  glMapGrid2d(Xen_to_C_GLint(un), Xen_to_C_GLdouble(u1), Xen_to_C_GLdouble(u2), Xen_to_C_GLint(vn), Xen_to_C_GLdouble(v1), 
+              Xen_to_C_GLdouble(v2));
   return(Xen_false);
 }
 
-static XEN gxg_glMapGrid2f(XEN un, XEN u1, XEN u2, XEN vn, XEN v1, XEN v2)
+static Xen gxg_glMapGrid2f(Xen un, Xen u1, Xen u2, Xen vn, Xen v1, Xen v2)
 {
   #define H_glMapGrid2f "void glMapGrid2f(GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2)"
   Xen_check_type(Xen_is_GLint(un), un, 1, "glMapGrid2f", "GLint");
@@ -2701,38 +2701,38 @@ static XEN gxg_glMapGrid2f(XEN un, XEN u1, XEN u2, XEN vn, XEN v1, XEN v2)
   Xen_check_type(Xen_is_GLint(vn), vn, 4, "glMapGrid2f", "GLint");
   Xen_check_type(Xen_is_GLfloat(v1), v1, 5, "glMapGrid2f", "GLfloat");
   Xen_check_type(Xen_is_GLfloat(v2), v2, 6, "glMapGrid2f", "GLfloat");
-  glMapGrid2f(XEN_TO_C_GLint(un), XEN_TO_C_GLfloat(u1), XEN_TO_C_GLfloat(u2), XEN_TO_C_GLint(vn), XEN_TO_C_GLfloat(v1), XEN_TO_C_GLfloat(v2));
+  glMapGrid2f(Xen_to_C_GLint(un), Xen_to_C_GLfloat(u1), Xen_to_C_GLfloat(u2), Xen_to_C_GLint(vn), Xen_to_C_GLfloat(v1), Xen_to_C_GLfloat(v2));
   return(Xen_false);
 }
 
-static XEN gxg_glEvalPoint1(XEN i)
+static Xen gxg_glEvalPoint1(Xen i)
 {
   #define H_glEvalPoint1 "void glEvalPoint1(GLint i)"
   Xen_check_type(Xen_is_GLint(i), i, 1, "glEvalPoint1", "GLint");
-  glEvalPoint1(XEN_TO_C_GLint(i));
+  glEvalPoint1(Xen_to_C_GLint(i));
   return(Xen_false);
 }
 
-static XEN gxg_glEvalPoint2(XEN i, XEN j)
+static Xen gxg_glEvalPoint2(Xen i, Xen j)
 {
   #define H_glEvalPoint2 "void glEvalPoint2(GLint i, GLint j)"
   Xen_check_type(Xen_is_GLint(i), i, 1, "glEvalPoint2", "GLint");
   Xen_check_type(Xen_is_GLint(j), j, 2, "glEvalPoint2", "GLint");
-  glEvalPoint2(XEN_TO_C_GLint(i), XEN_TO_C_GLint(j));
+  glEvalPoint2(Xen_to_C_GLint(i), Xen_to_C_GLint(j));
   return(Xen_false);
 }
 
-static XEN gxg_glEvalMesh1(XEN mode, XEN i1, XEN i2)
+static Xen gxg_glEvalMesh1(Xen mode, Xen i1, Xen i2)
 {
   #define H_glEvalMesh1 "void glEvalMesh1(GLenum mode, GLint i1, GLint i2)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glEvalMesh1", "GLenum");
   Xen_check_type(Xen_is_GLint(i1), i1, 2, "glEvalMesh1", "GLint");
   Xen_check_type(Xen_is_GLint(i2), i2, 3, "glEvalMesh1", "GLint");
-  glEvalMesh1(XEN_TO_C_GLenum(mode), XEN_TO_C_GLint(i1), XEN_TO_C_GLint(i2));
+  glEvalMesh1(Xen_to_C_GLenum(mode), Xen_to_C_GLint(i1), Xen_to_C_GLint(i2));
   return(Xen_false);
 }
 
-static XEN gxg_glEvalMesh2(XEN mode, XEN i1, XEN i2, XEN j1, XEN j2)
+static Xen gxg_glEvalMesh2(Xen mode, Xen i1, Xen i2, Xen j1, Xen j2)
 {
   #define H_glEvalMesh2 "void glEvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glEvalMesh2", "GLenum");
@@ -2740,86 +2740,86 @@ static XEN gxg_glEvalMesh2(XEN mode, XEN i1, XEN i2, XEN j1, XEN j2)
   Xen_check_type(Xen_is_GLint(i2), i2, 3, "glEvalMesh2", "GLint");
   Xen_check_type(Xen_is_GLint(j1), j1, 4, "glEvalMesh2", "GLint");
   Xen_check_type(Xen_is_GLint(j2), j2, 5, "glEvalMesh2", "GLint");
-  glEvalMesh2(XEN_TO_C_GLenum(mode), XEN_TO_C_GLint(i1), XEN_TO_C_GLint(i2), XEN_TO_C_GLint(j1), XEN_TO_C_GLint(j2));
+  glEvalMesh2(Xen_to_C_GLenum(mode), Xen_to_C_GLint(i1), Xen_to_C_GLint(i2), Xen_to_C_GLint(j1), Xen_to_C_GLint(j2));
   return(Xen_false);
 }
 
-static XEN gxg_glFogf(XEN pname, XEN param)
+static Xen gxg_glFogf(Xen pname, Xen param)
 {
   #define H_glFogf "void glFogf(GLenum pname, GLfloat param)"
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glFogf", "GLenum");
   Xen_check_type(Xen_is_GLfloat(param), param, 2, "glFogf", "GLfloat");
-  glFogf(XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(param));
+  glFogf(Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(param));
   return(Xen_false);
 }
 
-static XEN gxg_glFogi(XEN pname, XEN param)
+static Xen gxg_glFogi(Xen pname, Xen param)
 {
   #define H_glFogi "void glFogi(GLenum pname, GLint param)"
   Xen_check_type(Xen_is_GLenum(pname), pname, 1, "glFogi", "GLenum");
   Xen_check_type(Xen_is_GLint(param), param, 2, "glFogi", "GLint");
-  glFogi(XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
+  glFogi(Xen_to_C_GLenum(pname), Xen_to_C_GLint(param));
   return(Xen_false);
 }
 
-static XEN gxg_glFeedbackBuffer(XEN size, XEN type, XEN buffer)
+static Xen gxg_glFeedbackBuffer(Xen size, Xen type, Xen buffer)
 {
   #define H_glFeedbackBuffer "void glFeedbackBuffer(GLsizei size, GLenum type, GLfloat* buffer)"
   Xen_check_type(Xen_is_GLsizei(size), size, 1, "glFeedbackBuffer", "GLsizei");
   Xen_check_type(Xen_is_GLenum(type), type, 2, "glFeedbackBuffer", "GLenum");
   Xen_check_type(Xen_is_GLfloat_(buffer), buffer, 3, "glFeedbackBuffer", "GLfloat*");
-  glFeedbackBuffer(XEN_TO_C_GLsizei(size), XEN_TO_C_GLenum(type), XEN_TO_C_GLfloat_(buffer));
+  glFeedbackBuffer(Xen_to_C_GLsizei(size), Xen_to_C_GLenum(type), Xen_to_C_GLfloat_(buffer));
   return(Xen_false);
 }
 
-static XEN gxg_glPassThrough(XEN token)
+static Xen gxg_glPassThrough(Xen token)
 {
   #define H_glPassThrough "void glPassThrough(GLfloat token)"
   Xen_check_type(Xen_is_GLfloat(token), token, 1, "glPassThrough", "GLfloat");
-  glPassThrough(XEN_TO_C_GLfloat(token));
+  glPassThrough(Xen_to_C_GLfloat(token));
   return(Xen_false);
 }
 
-static XEN gxg_glSelectBuffer(XEN size, XEN buffer)
+static Xen gxg_glSelectBuffer(Xen size, Xen buffer)
 {
   #define H_glSelectBuffer "void glSelectBuffer(GLsizei size, GLuint* buffer)"
   Xen_check_type(Xen_is_GLsizei(size), size, 1, "glSelectBuffer", "GLsizei");
   Xen_check_type(Xen_is_GLuint_(buffer), buffer, 2, "glSelectBuffer", "GLuint*");
-  glSelectBuffer(XEN_TO_C_GLsizei(size), XEN_TO_C_GLuint_(buffer));
+  glSelectBuffer(Xen_to_C_GLsizei(size), Xen_to_C_GLuint_(buffer));
   return(Xen_false);
 }
 
-static XEN gxg_glInitNames(void)
+static Xen gxg_glInitNames(void)
 {
   #define H_glInitNames "void glInitNames( void)"
   glInitNames();
   return(Xen_false);
 }
 
-static XEN gxg_glLoadName(XEN name)
+static Xen gxg_glLoadName(Xen name)
 {
   #define H_glLoadName "void glLoadName(GLuint name)"
   Xen_check_type(Xen_is_GLuint(name), name, 1, "glLoadName", "GLuint");
-  glLoadName(XEN_TO_C_GLuint(name));
+  glLoadName(Xen_to_C_GLuint(name));
   return(Xen_false);
 }
 
-static XEN gxg_glPushName(XEN name)
+static Xen gxg_glPushName(Xen name)
 {
   #define H_glPushName "void glPushName(GLuint name)"
   Xen_check_type(Xen_is_GLuint(name), name, 1, "glPushName", "GLuint");
-  glPushName(XEN_TO_C_GLuint(name));
+  glPushName(Xen_to_C_GLuint(name));
   return(Xen_false);
 }
 
-static XEN gxg_glPopName(void)
+static Xen gxg_glPopName(void)
 {
   #define H_glPopName "void glPopName( void)"
   glPopName();
   return(Xen_false);
 }
 
-static XEN gxg_glDrawRangeElements(XEN mode, XEN start, XEN end, XEN count, XEN type, XEN indices)
+static Xen gxg_glDrawRangeElements(Xen mode, Xen start, Xen end, Xen count, Xen type, Xen indices)
 {
   #define H_glDrawRangeElements "void glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, \
 GLenum type, GLvoid* indices)"
@@ -2829,16 +2829,16 @@ GLenum type, GLvoid* indices)"
   Xen_check_type(Xen_is_GLsizei(count), count, 4, "glDrawRangeElements", "GLsizei");
   Xen_check_type(Xen_is_GLenum(type), type, 5, "glDrawRangeElements", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(indices), indices, 6, "glDrawRangeElements", "GLvoid*");
-  glDrawRangeElements(XEN_TO_C_GLenum(mode), XEN_TO_C_GLuint(start), XEN_TO_C_GLuint(end), XEN_TO_C_GLsizei(count), XEN_TO_C_GLenum(type), 
-                      XEN_TO_C_GLvoid_(indices));
+  glDrawRangeElements(Xen_to_C_GLenum(mode), Xen_to_C_GLuint(start), Xen_to_C_GLuint(end), Xen_to_C_GLsizei(count), Xen_to_C_GLenum(type), 
+                      Xen_to_C_GLvoid_(indices));
   return(Xen_false);
 }
 
-static XEN gxg_glTexImage3D(XEN arglist)
+static Xen gxg_glTexImage3D(Xen arglist)
 {
   #define H_glTexImage3D "void glTexImage3D(GLenum target, GLint level, GLint internalFormat, GLsizei width, \
 GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, GLvoid* pixels)"
-  XEN target, level, internalFormat, width, height, depth, border, format, type, pixels;
+  Xen target, level, internalFormat, width, height, depth, border, format, type, pixels;
   target = Xen_list_ref(arglist, 0);
   level = Xen_list_ref(arglist, 1);
   internalFormat = Xen_list_ref(arglist, 2);
@@ -2859,16 +2859,16 @@ GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, GLvoid*
   Xen_check_type(Xen_is_GLenum(format), format, 8, "glTexImage3D", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 9, "glTexImage3D", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(pixels), pixels, 10, "glTexImage3D", "GLvoid*");
-  glTexImage3D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), 
-               XEN_TO_C_GLsizei(depth), XEN_TO_C_GLint(border), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
+  glTexImage3D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLint(internalFormat), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), 
+               Xen_to_C_GLsizei(depth), Xen_to_C_GLint(border), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(pixels));
   return(Xen_false);
 }
 
-static XEN gxg_glTexSubImage3D(XEN arglist)
+static Xen gxg_glTexSubImage3D(Xen arglist)
 {
   #define H_glTexSubImage3D "void glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, \
 GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLvoid* pixels)"
-  XEN target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels;
+  Xen target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels;
   target = Xen_list_ref(arglist, 0);
   level = Xen_list_ref(arglist, 1);
   xoffset = Xen_list_ref(arglist, 2);
@@ -2891,13 +2891,13 @@ GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLen
   Xen_check_type(Xen_is_GLenum(format), format, 9, "glTexSubImage3D", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 10, "glTexSubImage3D", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(pixels), pixels, 11, "glTexSubImage3D", "GLvoid*");
-  glTexSubImage3D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(xoffset), XEN_TO_C_GLint(yoffset), XEN_TO_C_GLint(zoffset), 
-                  XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), XEN_TO_C_GLsizei(depth), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), 
-                  XEN_TO_C_GLvoid_(pixels));
+  glTexSubImage3D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLint(xoffset), Xen_to_C_GLint(yoffset), Xen_to_C_GLint(zoffset), 
+                  Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), Xen_to_C_GLsizei(depth), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), 
+                  Xen_to_C_GLvoid_(pixels));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyTexSubImage3D(XEN target, XEN level, XEN xoffset, XEN yoffset, XEN zoffset, XEN x, XEN y, XEN width, XEN height)
+static Xen gxg_glCopyTexSubImage3D(Xen target, Xen level, Xen xoffset, Xen yoffset, Xen zoffset, Xen x, Xen y, Xen width, Xen height)
 {
   #define H_glCopyTexSubImage3D "void glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, \
 GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height)"
@@ -2910,12 +2910,12 @@ GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height)"
   Xen_check_type(Xen_is_GLint(y), y, 7, "glCopyTexSubImage3D", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 8, "glCopyTexSubImage3D", "GLsizei");
   Xen_check_type(Xen_is_GLsizei(height), height, 9, "glCopyTexSubImage3D", "GLsizei");
-  glCopyTexSubImage3D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(xoffset), XEN_TO_C_GLint(yoffset), XEN_TO_C_GLint(zoffset), 
-                      XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height));
+  glCopyTexSubImage3D(Xen_to_C_GLenum(target), Xen_to_C_GLint(level), Xen_to_C_GLint(xoffset), Xen_to_C_GLint(yoffset), Xen_to_C_GLint(zoffset), 
+                      Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height));
   return(Xen_false);
 }
 
-static XEN gxg_glColorTable(XEN target, XEN internalformat, XEN width, XEN format, XEN type, XEN table)
+static Xen gxg_glColorTable(Xen target, Xen internalformat, Xen width, Xen format, Xen type, Xen table)
 {
   #define H_glColorTable "void glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, \
 GLenum type, GLvoid* table)"
@@ -2925,12 +2925,12 @@ GLenum type, GLvoid* table)"
   Xen_check_type(Xen_is_GLenum(format), format, 4, "glColorTable", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 5, "glColorTable", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(table), table, 6, "glColorTable", "GLvoid*");
-  glColorTable(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLsizei(width), XEN_TO_C_GLenum(format), 
-               XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(table));
+  glColorTable(Xen_to_C_GLenum(target), Xen_to_C_GLenum(internalformat), Xen_to_C_GLsizei(width), Xen_to_C_GLenum(format), 
+               Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(table));
   return(Xen_false);
 }
 
-static XEN gxg_glColorSubTable(XEN target, XEN start, XEN count, XEN format, XEN type, XEN data)
+static Xen gxg_glColorSubTable(Xen target, Xen start, Xen count, Xen format, Xen type, Xen data)
 {
   #define H_glColorSubTable "void glColorSubTable(GLenum target, GLsizei start, GLsizei count, GLenum format, \
 GLenum type, GLvoid* data)"
@@ -2940,12 +2940,12 @@ GLenum type, GLvoid* data)"
   Xen_check_type(Xen_is_GLenum(format), format, 4, "glColorSubTable", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 5, "glColorSubTable", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(data), data, 6, "glColorSubTable", "GLvoid*");
-  glColorSubTable(XEN_TO_C_GLenum(target), XEN_TO_C_GLsizei(start), XEN_TO_C_GLsizei(count), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), 
-                  XEN_TO_C_GLvoid_(data));
+  glColorSubTable(Xen_to_C_GLenum(target), Xen_to_C_GLsizei(start), Xen_to_C_GLsizei(count), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), 
+                  Xen_to_C_GLvoid_(data));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyColorSubTable(XEN target, XEN start, XEN x, XEN y, XEN width)
+static Xen gxg_glCopyColorSubTable(Xen target, Xen start, Xen x, Xen y, Xen width)
 {
   #define H_glCopyColorSubTable "void glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y, \
 GLsizei width)"
@@ -2954,11 +2954,11 @@ GLsizei width)"
   Xen_check_type(Xen_is_GLint(x), x, 3, "glCopyColorSubTable", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 4, "glCopyColorSubTable", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 5, "glCopyColorSubTable", "GLsizei");
-  glCopyColorSubTable(XEN_TO_C_GLenum(target), XEN_TO_C_GLsizei(start), XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLsizei(width));
+  glCopyColorSubTable(Xen_to_C_GLenum(target), Xen_to_C_GLsizei(start), Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLsizei(width));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyColorTable(XEN target, XEN internalformat, XEN x, XEN y, XEN width)
+static Xen gxg_glCopyColorTable(Xen target, Xen internalformat, Xen x, Xen y, Xen width)
 {
   #define H_glCopyColorTable "void glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y, \
 GLsizei width)"
@@ -2967,71 +2967,71 @@ GLsizei width)"
   Xen_check_type(Xen_is_GLint(x), x, 3, "glCopyColorTable", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 4, "glCopyColorTable", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 5, "glCopyColorTable", "GLsizei");
-  glCopyColorTable(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), XEN_TO_C_GLsizei(width));
+  glCopyColorTable(Xen_to_C_GLenum(target), Xen_to_C_GLenum(internalformat), Xen_to_C_GLint(x), Xen_to_C_GLint(y), Xen_to_C_GLsizei(width));
   return(Xen_false);
 }
 
-static XEN gxg_glGetColorTableParameterfv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetColorTableParameterfv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetColorTableParameterfv "void glGetColorTableParameterfv(GLenum target, GLenum pname, \
 GLfloat* [params])"
   GLfloat ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetColorTableParameterfv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetColorTableParameterfv", "GLenum");
-  glGetColorTableParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLfloat(ref_params[0])));
+  glGetColorTableParameterfv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLfloat(ref_params[0])));
 }
 
-static XEN gxg_glGetColorTableParameteriv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetColorTableParameteriv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetColorTableParameteriv "void glGetColorTableParameteriv(GLenum target, GLenum pname, \
 GLint* [params])"
   GLint ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetColorTableParameteriv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetColorTableParameteriv", "GLenum");
-  glGetColorTableParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_params[0])));
+  glGetColorTableParameteriv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static XEN gxg_glBlendEquation(XEN mode)
+static Xen gxg_glBlendEquation(Xen mode)
 {
   #define H_glBlendEquation "void glBlendEquation(GLenum mode)"
   Xen_check_type(Xen_is_GLenum(mode), mode, 1, "glBlendEquation", "GLenum");
-  glBlendEquation(XEN_TO_C_GLenum(mode));
+  glBlendEquation(Xen_to_C_GLenum(mode));
   return(Xen_false);
 }
 
-static XEN gxg_glBlendColor(XEN red, XEN green, XEN blue, XEN alpha)
+static Xen gxg_glBlendColor(Xen red, Xen green, Xen blue, Xen alpha)
 {
   #define H_glBlendColor "void glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)"
   Xen_check_type(Xen_is_GLclampf(red), red, 1, "glBlendColor", "GLclampf");
   Xen_check_type(Xen_is_GLclampf(green), green, 2, "glBlendColor", "GLclampf");
   Xen_check_type(Xen_is_GLclampf(blue), blue, 3, "glBlendColor", "GLclampf");
   Xen_check_type(Xen_is_GLclampf(alpha), alpha, 4, "glBlendColor", "GLclampf");
-  glBlendColor(XEN_TO_C_GLclampf(red), XEN_TO_C_GLclampf(green), XEN_TO_C_GLclampf(blue), XEN_TO_C_GLclampf(alpha));
+  glBlendColor(Xen_to_C_GLclampf(red), Xen_to_C_GLclampf(green), Xen_to_C_GLclampf(blue), Xen_to_C_GLclampf(alpha));
   return(Xen_false);
 }
 
-static XEN gxg_glHistogram(XEN target, XEN width, XEN internalformat, XEN sink)
+static Xen gxg_glHistogram(Xen target, Xen width, Xen internalformat, Xen sink)
 {
   #define H_glHistogram "void glHistogram(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glHistogram", "GLenum");
   Xen_check_type(Xen_is_GLsizei(width), width, 2, "glHistogram", "GLsizei");
   Xen_check_type(Xen_is_GLenum(internalformat), internalformat, 3, "glHistogram", "GLenum");
   Xen_check_type(Xen_is_GLboolean(sink), sink, 4, "glHistogram", "GLboolean");
-  glHistogram(XEN_TO_C_GLenum(target), XEN_TO_C_GLsizei(width), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLboolean(sink));
+  glHistogram(Xen_to_C_GLenum(target), Xen_to_C_GLsizei(width), Xen_to_C_GLenum(internalformat), Xen_to_C_GLboolean(sink));
   return(Xen_false);
 }
 
-static XEN gxg_glResetHistogram(XEN target)
+static Xen gxg_glResetHistogram(Xen target)
 {
   #define H_glResetHistogram "void glResetHistogram(GLenum target)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glResetHistogram", "GLenum");
-  glResetHistogram(XEN_TO_C_GLenum(target));
+  glResetHistogram(Xen_to_C_GLenum(target));
   return(Xen_false);
 }
 
-static XEN gxg_glGetHistogram(XEN target, XEN reset, XEN format, XEN type, XEN values)
+static Xen gxg_glGetHistogram(Xen target, Xen reset, Xen format, Xen type, Xen values)
 {
   #define H_glGetHistogram "void glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, \
 GLvoid* values)"
@@ -3040,49 +3040,49 @@ GLvoid* values)"
   Xen_check_type(Xen_is_GLenum(format), format, 3, "glGetHistogram", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 4, "glGetHistogram", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(values), values, 5, "glGetHistogram", "GLvoid*");
-  glGetHistogram(XEN_TO_C_GLenum(target), XEN_TO_C_GLboolean(reset), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(values));
+  glGetHistogram(Xen_to_C_GLenum(target), Xen_to_C_GLboolean(reset), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(values));
   return(Xen_false);
 }
 
-static XEN gxg_glGetHistogramParameterfv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetHistogramParameterfv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetHistogramParameterfv "void glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat* [params])"
   GLfloat ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetHistogramParameterfv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetHistogramParameterfv", "GLenum");
-  glGetHistogramParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLfloat(ref_params[0])));
+  glGetHistogramParameterfv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLfloat(ref_params[0])));
 }
 
-static XEN gxg_glGetHistogramParameteriv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetHistogramParameteriv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetHistogramParameteriv "void glGetHistogramParameteriv(GLenum target, GLenum pname, GLint* [params])"
   GLint ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetHistogramParameteriv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetHistogramParameteriv", "GLenum");
-  glGetHistogramParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_params[0])));
+  glGetHistogramParameteriv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static XEN gxg_glMinmax(XEN target, XEN internalformat, XEN sink)
+static Xen gxg_glMinmax(Xen target, Xen internalformat, Xen sink)
 {
   #define H_glMinmax "void glMinmax(GLenum target, GLenum internalformat, GLboolean sink)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glMinmax", "GLenum");
   Xen_check_type(Xen_is_GLenum(internalformat), internalformat, 2, "glMinmax", "GLenum");
   Xen_check_type(Xen_is_GLboolean(sink), sink, 3, "glMinmax", "GLboolean");
-  glMinmax(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLboolean(sink));
+  glMinmax(Xen_to_C_GLenum(target), Xen_to_C_GLenum(internalformat), Xen_to_C_GLboolean(sink));
   return(Xen_false);
 }
 
-static XEN gxg_glResetMinmax(XEN target)
+static Xen gxg_glResetMinmax(Xen target)
 {
   #define H_glResetMinmax "void glResetMinmax(GLenum target)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glResetMinmax", "GLenum");
-  glResetMinmax(XEN_TO_C_GLenum(target));
+  glResetMinmax(Xen_to_C_GLenum(target));
   return(Xen_false);
 }
 
-static XEN gxg_glGetMinmax(XEN target, XEN reset, XEN format, XEN types, XEN values)
+static Xen gxg_glGetMinmax(Xen target, Xen reset, Xen format, Xen types, Xen values)
 {
   #define H_glGetMinmax "void glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum types, \
 GLvoid* values)"
@@ -3091,31 +3091,31 @@ GLvoid* values)"
   Xen_check_type(Xen_is_GLenum(format), format, 3, "glGetMinmax", "GLenum");
   Xen_check_type(Xen_is_GLenum(types), types, 4, "glGetMinmax", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(values), values, 5, "glGetMinmax", "GLvoid*");
-  glGetMinmax(XEN_TO_C_GLenum(target), XEN_TO_C_GLboolean(reset), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(types), XEN_TO_C_GLvoid_(values));
+  glGetMinmax(Xen_to_C_GLenum(target), Xen_to_C_GLboolean(reset), Xen_to_C_GLenum(format), Xen_to_C_GLenum(types), Xen_to_C_GLvoid_(values));
   return(Xen_false);
 }
 
-static XEN gxg_glGetMinmaxParameterfv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetMinmaxParameterfv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetMinmaxParameterfv "void glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat* [params])"
   GLfloat ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetMinmaxParameterfv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetMinmaxParameterfv", "GLenum");
-  glGetMinmaxParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLfloat(ref_params[0])));
+  glGetMinmaxParameterfv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLfloat(ref_params[0])));
 }
 
-static XEN gxg_glGetMinmaxParameteriv(XEN target, XEN pname, XEN params)
+static Xen gxg_glGetMinmaxParameteriv(Xen target, Xen pname, Xen params)
 {
   #define H_glGetMinmaxParameteriv "void glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint* [params])"
   GLint ref_params[1];
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glGetMinmaxParameteriv", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glGetMinmaxParameteriv", "GLenum");
-  glGetMinmaxParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), ref_params);
-  return(Xen_list_1(C_TO_XEN_GLint(ref_params[0])));
+  glGetMinmaxParameteriv(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), ref_params);
+  return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static XEN gxg_glConvolutionFilter1D(XEN target, XEN internalformat, XEN width, XEN format, XEN type, XEN image)
+static Xen gxg_glConvolutionFilter1D(Xen target, Xen internalformat, Xen width, Xen format, Xen type, Xen image)
 {
   #define H_glConvolutionFilter1D "void glConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width, \
 GLenum format, GLenum type, GLvoid* image)"
@@ -3125,12 +3125,12 @@ GLenum format, GLenum type, GLvoid* image)"
   Xen_check_type(Xen_is_GLenum(format), format, 4, "glConvolutionFilter1D", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 5, "glConvolutionFilter1D", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(image), image, 6, "glConvolutionFilter1D", "GLvoid*");
-  glConvolutionFilter1D(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLsizei(width), XEN_TO_C_GLenum(format), 
-                        XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(image));
+  glConvolutionFilter1D(Xen_to_C_GLenum(target), Xen_to_C_GLenum(internalformat), Xen_to_C_GLsizei(width), Xen_to_C_GLenum(format), 
+                        Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(image));
   return(Xen_false);
 }
 
-static XEN gxg_glConvolutionFilter2D(XEN target, XEN internalformat, XEN width, XEN height, XEN format, XEN type, XEN image)
+static Xen gxg_glConvolutionFilter2D(Xen target, Xen internalformat, Xen width, Xen height, Xen format, Xen type, Xen image)
 {
   #define H_glConvolutionFilter2D "void glConvolutionFilter2D(GLenum target, GLenum internalformat, GLsizei width, \
 GLsizei height, GLenum format, GLenum type, GLvoid* image)"
@@ -3141,32 +3141,32 @@ GLsizei height, GLenum format, GLenum type, GLvoid* image)"
   Xen_check_type(Xen_is_GLenum(format), format, 5, "glConvolutionFilter2D", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 6, "glConvolutionFilter2D", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(image), image, 7, "glConvolutionFilter2D", "GLvoid*");
-  glConvolutionFilter2D(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), 
-                        XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(image));
+  glConvolutionFilter2D(Xen_to_C_GLenum(target), Xen_to_C_GLenum(internalformat), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), 
+                        Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(image));
   return(Xen_false);
 }
 
-static XEN gxg_glConvolutionParameterf(XEN target, XEN pname, XEN params)
+static Xen gxg_glConvolutionParameterf(Xen target, Xen pname, Xen params)
 {
   #define H_glConvolutionParameterf "void glConvolutionParameterf(GLenum target, GLenum pname, GLfloat params)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glConvolutionParameterf", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glConvolutionParameterf", "GLenum");
   Xen_check_type(Xen_is_GLfloat(params), params, 3, "glConvolutionParameterf", "GLfloat");
-  glConvolutionParameterf(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat(params));
+  glConvolutionParameterf(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), Xen_to_C_GLfloat(params));
   return(Xen_false);
 }
 
-static XEN gxg_glConvolutionParameteri(XEN target, XEN pname, XEN params)
+static Xen gxg_glConvolutionParameteri(Xen target, Xen pname, Xen params)
 {
   #define H_glConvolutionParameteri "void glConvolutionParameteri(GLenum target, GLenum pname, GLint params)"
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glConvolutionParameteri", "GLenum");
   Xen_check_type(Xen_is_GLenum(pname), pname, 2, "glConvolutionParameteri", "GLenum");
   Xen_check_type(Xen_is_GLint(params), params, 3, "glConvolutionParameteri", "GLint");
-  glConvolutionParameteri(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(params));
+  glConvolutionParameteri(Xen_to_C_GLenum(target), Xen_to_C_GLenum(pname), Xen_to_C_GLint(params));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyConvolutionFilter1D(XEN target, XEN internalformat, XEN x, XEN y, XEN width)
+static Xen gxg_glCopyConvolutionFilter1D(Xen target, Xen internalformat, Xen x, Xen y, Xen width)
 {
   #define H_glCopyConvolutionFilter1D "void glCopyConvolutionFilter1D(GLenum target, GLenum internalformat, \
 GLint x, GLint y, GLsizei width)"
@@ -3175,12 +3175,12 @@ GLint x, GLint y, GLsizei width)"
   Xen_check_type(Xen_is_GLint(x), x, 3, "glCopyConvolutionFilter1D", "GLint");
   Xen_check_type(Xen_is_GLint(y), y, 4, "glCopyConvolutionFilter1D", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 5, "glCopyConvolutionFilter1D", "GLsizei");
-  glCopyConvolutionFilter1D(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), 
-                            XEN_TO_C_GLsizei(width));
+  glCopyConvolutionFilter1D(Xen_to_C_GLenum(target), Xen_to_C_GLenum(internalformat), Xen_to_C_GLint(x), Xen_to_C_GLint(y), 
+                            Xen_to_C_GLsizei(width));
   return(Xen_false);
 }
 
-static XEN gxg_glCopyConvolutionFilter2D(XEN target, XEN internalformat, XEN x, XEN y, XEN width, XEN height)
+static Xen gxg_glCopyConvolutionFilter2D(Xen target, Xen internalformat, Xen x, Xen y, Xen width, Xen height)
 {
   #define H_glCopyConvolutionFilter2D "void glCopyConvolutionFilter2D(GLenum target, GLenum internalformat, \
 GLint x, GLint y, GLsizei width, GLsizei height)"
@@ -3190,12 +3190,12 @@ GLint x, GLint y, GLsizei width, GLsizei height)"
   Xen_check_type(Xen_is_GLint(y), y, 4, "glCopyConvolutionFilter2D", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 5, "glCopyConvolutionFilter2D", "GLsizei");
   Xen_check_type(Xen_is_GLsizei(height), height, 6, "glCopyConvolutionFilter2D", "GLsizei");
-  glCopyConvolutionFilter2D(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLint(x), XEN_TO_C_GLint(y), 
-                            XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height));
+  glCopyConvolutionFilter2D(Xen_to_C_GLenum(target), Xen_to_C_GLenum(internalformat), Xen_to_C_GLint(x), Xen_to_C_GLint(y), 
+                            Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height));
   return(Xen_false);
 }
 
-static XEN gxg_glSeparableFilter2D(XEN target, XEN internalformat, XEN width, XEN height, XEN format, XEN type, XEN row, XEN column)
+static Xen gxg_glSeparableFilter2D(Xen target, Xen internalformat, Xen width, Xen height, Xen format, Xen type, Xen row, Xen column)
 {
   #define H_glSeparableFilter2D "void glSeparableFilter2D(GLenum target, GLenum internalformat, GLsizei width, \
 GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column)"
@@ -3207,47 +3207,47 @@ GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column)"
   Xen_check_type(Xen_is_GLenum(type), type, 6, "glSeparableFilter2D", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(row), row, 7, "glSeparableFilter2D", "GLvoid*");
   Xen_check_type(Xen_is_GLvoid_(column), column, 8, "glSeparableFilter2D", "GLvoid*");
-  glSeparableFilter2D(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(internalformat), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), 
-                      XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(row), XEN_TO_C_GLvoid_(column));
+  glSeparableFilter2D(Xen_to_C_GLenum(target), Xen_to_C_GLenum(internalformat), Xen_to_C_GLsizei(width), Xen_to_C_GLsizei(height), 
+                      Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_GLvoid_(row), Xen_to_C_GLvoid_(column));
   return(Xen_false);
 }
 
 #if HAVE_GLU
-static XEN gxg_gluBeginCurve(XEN nurb)
+static Xen gxg_gluBeginCurve(Xen nurb)
 {
   #define H_gluBeginCurve "void gluBeginCurve(GLUnurbs* nurb)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluBeginCurve", "GLUnurbs*");
-  gluBeginCurve(XEN_TO_C_GLUnurbs_(nurb));
+  gluBeginCurve(Xen_to_C_GLUnurbs_(nurb));
   return(Xen_false);
 }
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluBeginPolygon(XEN tess)
+static Xen gxg_gluBeginPolygon(Xen tess)
 {
   #define H_gluBeginPolygon "void gluBeginPolygon(GLUtesselator* tess)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluBeginPolygon", "GLUtesselator*");
-  gluBeginPolygon(XEN_TO_C_GLUtesselator_(tess));
+  gluBeginPolygon(Xen_to_C_GLUtesselator_(tess));
   return(Xen_false);
 }
 #endif
 
-static XEN gxg_gluBeginSurface(XEN nurb)
+static Xen gxg_gluBeginSurface(Xen nurb)
 {
   #define H_gluBeginSurface "void gluBeginSurface(GLUnurbs* nurb)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluBeginSurface", "GLUnurbs*");
-  gluBeginSurface(XEN_TO_C_GLUnurbs_(nurb));
+  gluBeginSurface(Xen_to_C_GLUnurbs_(nurb));
   return(Xen_false);
 }
 
-static XEN gxg_gluBeginTrim(XEN nurb)
+static Xen gxg_gluBeginTrim(Xen nurb)
 {
   #define H_gluBeginTrim "void gluBeginTrim(GLUnurbs* nurb)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluBeginTrim", "GLUnurbs*");
-  gluBeginTrim(XEN_TO_C_GLUnurbs_(nurb));
+  gluBeginTrim(Xen_to_C_GLUnurbs_(nurb));
   return(Xen_false);
 }
 
-static XEN gxg_gluBuild1DMipmapLevels(XEN target, XEN internalFormat, XEN width, XEN format, XEN type, XEN level, XEN base, XEN max, XEN data)
+static Xen gxg_gluBuild1DMipmapLevels(Xen target, Xen internalFormat, Xen width, Xen format, Xen type, Xen level, Xen base, Xen max, Xen data)
 {
   #define H_gluBuild1DMipmapLevels "GLint gluBuild1DMipmapLevels(GLenum target, GLint internalFormat, \
 GLsizei width, GLenum format, GLenum type, GLint level, GLint base, GLint max, void* data)"
@@ -3260,12 +3260,12 @@ GLsizei width, GLenum format, GLenum type, GLint level, GLint base, GLint max, v
   Xen_check_type(Xen_is_GLint(base), base, 7, "gluBuild1DMipmapLevels", "GLint");
   Xen_check_type(Xen_is_GLint(max), max, 8, "gluBuild1DMipmapLevels", "GLint");
   Xen_check_type(Xen_is_void_(data), data, 9, "gluBuild1DMipmapLevels", "void*");
-  return(C_TO_XEN_GLint(gluBuild1DMipmapLevels(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
-                                               XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLint(level), XEN_TO_C_GLint(base), 
-                                               XEN_TO_C_GLint(max), XEN_TO_C_void_(data))));
+  return(C_to_Xen_GLint(gluBuild1DMipmapLevels(Xen_to_C_GLenum(target), Xen_to_C_GLint(internalFormat), Xen_to_C_GLsizei(width), 
+                                               Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_GLint(level), Xen_to_C_GLint(base), 
+                                               Xen_to_C_GLint(max), Xen_to_C_void_(data))));
 }
 
-static XEN gxg_gluBuild1DMipmaps(XEN target, XEN internalFormat, XEN width, XEN format, XEN type, XEN data)
+static Xen gxg_gluBuild1DMipmaps(Xen target, Xen internalFormat, Xen width, Xen format, Xen type, Xen data)
 {
   #define H_gluBuild1DMipmaps "GLint gluBuild1DMipmaps(GLenum target, GLint internalFormat, GLsizei width, \
 GLenum format, GLenum type, void* data)"
@@ -3275,15 +3275,15 @@ GLenum format, GLenum type, void* data)"
   Xen_check_type(Xen_is_GLenum(format), format, 4, "gluBuild1DMipmaps", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 5, "gluBuild1DMipmaps", "GLenum");
   Xen_check_type(Xen_is_void_(data), data, 6, "gluBuild1DMipmaps", "void*");
-  return(C_TO_XEN_GLint(gluBuild1DMipmaps(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
-                                          XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_void_(data))));
+  return(C_to_Xen_GLint(gluBuild1DMipmaps(Xen_to_C_GLenum(target), Xen_to_C_GLint(internalFormat), Xen_to_C_GLsizei(width), 
+                                          Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_void_(data))));
 }
 
-static XEN gxg_gluBuild2DMipmapLevels(XEN arglist)
+static Xen gxg_gluBuild2DMipmapLevels(Xen arglist)
 {
   #define H_gluBuild2DMipmapLevels "GLint gluBuild2DMipmapLevels(GLenum target, GLint internalFormat, \
 GLsizei width, GLsizei height, GLenum format, GLenum type, GLint level, GLint base, GLint max, void* data)"
-  XEN target, internalFormat, width, height, format, type, level, base, max, data;
+  Xen target, internalFormat, width, height, format, type, level, base, max, data;
   target = Xen_list_ref(arglist, 0);
   internalFormat = Xen_list_ref(arglist, 1);
   width = Xen_list_ref(arglist, 2);
@@ -3304,12 +3304,12 @@ GLsizei width, GLsizei height, GLenum format, GLenum type, GLint level, GLint ba
   Xen_check_type(Xen_is_GLint(base), base, 8, "gluBuild2DMipmapLevels", "GLint");
   Xen_check_type(Xen_is_GLint(max), max, 9, "gluBuild2DMipmapLevels", "GLint");
   Xen_check_type(Xen_is_void_(data), data, 10, "gluBuild2DMipmapLevels", "void*");
-  return(C_TO_XEN_GLint(gluBuild2DMipmapLevels(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
-                                               XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), 
-                                               XEN_TO_C_GLint(level), XEN_TO_C_GLint(base), XEN_TO_C_GLint(max), XEN_TO_C_void_(data))));
+  return(C_to_Xen_GLint(gluBuild2DMipmapLevels(Xen_to_C_GLenum(target), Xen_to_C_GLint(internalFormat), Xen_to_C_GLsizei(width), 
+                                               Xen_to_C_GLsizei(height), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), 
+                                               Xen_to_C_GLint(level), Xen_to_C_GLint(base), Xen_to_C_GLint(max), Xen_to_C_void_(data))));
 }
 
-static XEN gxg_gluBuild2DMipmaps(XEN target, XEN internalFormat, XEN width, XEN height, XEN format, XEN type, XEN data)
+static Xen gxg_gluBuild2DMipmaps(Xen target, Xen internalFormat, Xen width, Xen height, Xen format, Xen type, Xen data)
 {
   #define H_gluBuild2DMipmaps "GLint gluBuild2DMipmaps(GLenum target, GLint internalFormat, GLsizei width, \
 GLsizei height, GLenum format, GLenum type, void* data)"
@@ -3320,16 +3320,16 @@ GLsizei height, GLenum format, GLenum type, void* data)"
   Xen_check_type(Xen_is_GLenum(format), format, 5, "gluBuild2DMipmaps", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 6, "gluBuild2DMipmaps", "GLenum");
   Xen_check_type(Xen_is_void_(data), data, 7, "gluBuild2DMipmaps", "void*");
-  return(C_TO_XEN_GLint(gluBuild2DMipmaps(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
-                                          XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_void_(data))));
+  return(C_to_Xen_GLint(gluBuild2DMipmaps(Xen_to_C_GLenum(target), Xen_to_C_GLint(internalFormat), Xen_to_C_GLsizei(width), 
+                                          Xen_to_C_GLsizei(height), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), Xen_to_C_void_(data))));
 }
 
-static XEN gxg_gluBuild3DMipmapLevels(XEN arglist)
+static Xen gxg_gluBuild3DMipmapLevels(Xen arglist)
 {
   #define H_gluBuild3DMipmapLevels "GLint gluBuild3DMipmapLevels(GLenum target, GLint internalFormat, \
 GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLint level, GLint base, GLint max, \
 void* data)"
-  XEN target, internalFormat, width, height, depth, format, type, level, base, max, data;
+  Xen target, internalFormat, width, height, depth, format, type, level, base, max, data;
   target = Xen_list_ref(arglist, 0);
   internalFormat = Xen_list_ref(arglist, 1);
   width = Xen_list_ref(arglist, 2);
@@ -3352,13 +3352,13 @@ void* data)"
   Xen_check_type(Xen_is_GLint(base), base, 9, "gluBuild3DMipmapLevels", "GLint");
   Xen_check_type(Xen_is_GLint(max), max, 10, "gluBuild3DMipmapLevels", "GLint");
   Xen_check_type(Xen_is_void_(data), data, 11, "gluBuild3DMipmapLevels", "void*");
-  return(C_TO_XEN_GLint(gluBuild3DMipmapLevels(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
-                                               XEN_TO_C_GLsizei(height), XEN_TO_C_GLsizei(depth), XEN_TO_C_GLenum(format), 
-                                               XEN_TO_C_GLenum(type), XEN_TO_C_GLint(level), XEN_TO_C_GLint(base), XEN_TO_C_GLint(max), 
-                                               XEN_TO_C_void_(data))));
+  return(C_to_Xen_GLint(gluBuild3DMipmapLevels(Xen_to_C_GLenum(target), Xen_to_C_GLint(internalFormat), Xen_to_C_GLsizei(width), 
+                                               Xen_to_C_GLsizei(height), Xen_to_C_GLsizei(depth), Xen_to_C_GLenum(format), 
+                                               Xen_to_C_GLenum(type), Xen_to_C_GLint(level), Xen_to_C_GLint(base), Xen_to_C_GLint(max), 
+                                               Xen_to_C_void_(data))));
 }
 
-static XEN gxg_gluBuild3DMipmaps(XEN target, XEN internalFormat, XEN width, XEN height, XEN depth, XEN format, XEN type, XEN data)
+static Xen gxg_gluBuild3DMipmaps(Xen target, Xen internalFormat, Xen width, Xen height, Xen depth, Xen format, Xen type, Xen data)
 {
   #define H_gluBuild3DMipmaps "GLint gluBuild3DMipmaps(GLenum target, GLint internalFormat, GLsizei width, \
 GLsizei height, GLsizei depth, GLenum format, GLenum type, void* data)"
@@ -3370,20 +3370,20 @@ GLsizei height, GLsizei depth, GLenum format, GLenum type, void* data)"
   Xen_check_type(Xen_is_GLenum(format), format, 6, "gluBuild3DMipmaps", "GLenum");
   Xen_check_type(Xen_is_GLenum(type), type, 7, "gluBuild3DMipmaps", "GLenum");
   Xen_check_type(Xen_is_void_(data), data, 8, "gluBuild3DMipmaps", "void*");
-  return(C_TO_XEN_GLint(gluBuild3DMipmaps(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
-                                          XEN_TO_C_GLsizei(height), XEN_TO_C_GLsizei(depth), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), 
-                                          XEN_TO_C_void_(data))));
+  return(C_to_Xen_GLint(gluBuild3DMipmaps(Xen_to_C_GLenum(target), Xen_to_C_GLint(internalFormat), Xen_to_C_GLsizei(width), 
+                                          Xen_to_C_GLsizei(height), Xen_to_C_GLsizei(depth), Xen_to_C_GLenum(format), Xen_to_C_GLenum(type), 
+                                          Xen_to_C_void_(data))));
 }
 
-static XEN gxg_gluCheckExtension(XEN extName, XEN extString)
+static Xen gxg_gluCheckExtension(Xen extName, Xen extString)
 {
   #define H_gluCheckExtension "GLboolean gluCheckExtension(GLubyte* extName, GLubyte* extString)"
   Xen_check_type(Xen_is_GLubyte_(extName), extName, 1, "gluCheckExtension", "GLubyte*");
   Xen_check_type(Xen_is_GLubyte_(extString), extString, 2, "gluCheckExtension", "GLubyte*");
-  return(C_TO_XEN_GLboolean(gluCheckExtension(XEN_TO_C_GLubyte_(extName), XEN_TO_C_GLubyte_(extString))));
+  return(C_to_Xen_GLboolean(gluCheckExtension(Xen_to_C_GLubyte_(extName), Xen_to_C_GLubyte_(extString))));
 }
 
-static XEN gxg_gluCylinder(XEN quad, XEN base, XEN top, XEN height, XEN slices, XEN stacks)
+static Xen gxg_gluCylinder(Xen quad, Xen base, Xen top, Xen height, Xen slices, Xen stacks)
 {
   #define H_gluCylinder "void gluCylinder(GLUquadric* quad, GLdouble base, GLdouble top, GLdouble height, \
 GLint slices, GLint stacks)"
@@ -3393,38 +3393,38 @@ GLint slices, GLint stacks)"
   Xen_check_type(Xen_is_GLdouble(height), height, 4, "gluCylinder", "GLdouble");
   Xen_check_type(Xen_is_GLint(slices), slices, 5, "gluCylinder", "GLint");
   Xen_check_type(Xen_is_GLint(stacks), stacks, 6, "gluCylinder", "GLint");
-  gluCylinder(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLdouble(base), XEN_TO_C_GLdouble(top), XEN_TO_C_GLdouble(height), XEN_TO_C_GLint(slices), 
-              XEN_TO_C_GLint(stacks));
+  gluCylinder(Xen_to_C_GLUquadric_(quad), Xen_to_C_GLdouble(base), Xen_to_C_GLdouble(top), Xen_to_C_GLdouble(height), Xen_to_C_GLint(slices), 
+              Xen_to_C_GLint(stacks));
   return(Xen_false);
 }
 
-static XEN gxg_gluDeleteNurbsRenderer(XEN nurb)
+static Xen gxg_gluDeleteNurbsRenderer(Xen nurb)
 {
   #define H_gluDeleteNurbsRenderer "void gluDeleteNurbsRenderer(GLUnurbs* nurb)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluDeleteNurbsRenderer", "GLUnurbs*");
-  gluDeleteNurbsRenderer(XEN_TO_C_GLUnurbs_(nurb));
+  gluDeleteNurbsRenderer(Xen_to_C_GLUnurbs_(nurb));
   return(Xen_false);
 }
 
-static XEN gxg_gluDeleteQuadric(XEN quad)
+static Xen gxg_gluDeleteQuadric(Xen quad)
 {
   #define H_gluDeleteQuadric "void gluDeleteQuadric(GLUquadric* quad)"
   Xen_check_type(Xen_is_GLUquadric_(quad), quad, 1, "gluDeleteQuadric", "GLUquadric*");
-  gluDeleteQuadric(XEN_TO_C_GLUquadric_(quad));
+  gluDeleteQuadric(Xen_to_C_GLUquadric_(quad));
   return(Xen_false);
 }
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluDeleteTess(XEN tess)
+static Xen gxg_gluDeleteTess(Xen tess)
 {
   #define H_gluDeleteTess "void gluDeleteTess(GLUtesselator* tess)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluDeleteTess", "GLUtesselator*");
-  gluDeleteTess(XEN_TO_C_GLUtesselator_(tess));
+  gluDeleteTess(Xen_to_C_GLUtesselator_(tess));
   return(Xen_false);
 }
 #endif
 
-static XEN gxg_gluDisk(XEN quad, XEN inner, XEN outer, XEN slices, XEN loops)
+static Xen gxg_gluDisk(Xen quad, Xen inner, Xen outer, Xen slices, Xen loops)
 {
   #define H_gluDisk "void gluDisk(GLUquadric* quad, GLdouble inner, GLdouble outer, GLint slices, GLint loops)"
   Xen_check_type(Xen_is_GLUquadric_(quad), quad, 1, "gluDisk", "GLUquadric*");
@@ -3432,81 +3432,81 @@ static XEN gxg_gluDisk(XEN quad, XEN inner, XEN outer, XEN slices, XEN loops)
   Xen_check_type(Xen_is_GLdouble(outer), outer, 3, "gluDisk", "GLdouble");
   Xen_check_type(Xen_is_GLint(slices), slices, 4, "gluDisk", "GLint");
   Xen_check_type(Xen_is_GLint(loops), loops, 5, "gluDisk", "GLint");
-  gluDisk(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLdouble(inner), XEN_TO_C_GLdouble(outer), XEN_TO_C_GLint(slices), XEN_TO_C_GLint(loops));
+  gluDisk(Xen_to_C_GLUquadric_(quad), Xen_to_C_GLdouble(inner), Xen_to_C_GLdouble(outer), Xen_to_C_GLint(slices), Xen_to_C_GLint(loops));
   return(Xen_false);
 }
 
-static XEN gxg_gluEndCurve(XEN nurb)
+static Xen gxg_gluEndCurve(Xen nurb)
 {
   #define H_gluEndCurve "void gluEndCurve(GLUnurbs* nurb)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluEndCurve", "GLUnurbs*");
-  gluEndCurve(XEN_TO_C_GLUnurbs_(nurb));
+  gluEndCurve(Xen_to_C_GLUnurbs_(nurb));
   return(Xen_false);
 }
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluEndPolygon(XEN tess)
+static Xen gxg_gluEndPolygon(Xen tess)
 {
   #define H_gluEndPolygon "void gluEndPolygon(GLUtesselator* tess)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluEndPolygon", "GLUtesselator*");
-  gluEndPolygon(XEN_TO_C_GLUtesselator_(tess));
+  gluEndPolygon(Xen_to_C_GLUtesselator_(tess));
   return(Xen_false);
 }
 #endif
 
-static XEN gxg_gluEndSurface(XEN nurb)
+static Xen gxg_gluEndSurface(Xen nurb)
 {
   #define H_gluEndSurface "void gluEndSurface(GLUnurbs* nurb)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluEndSurface", "GLUnurbs*");
-  gluEndSurface(XEN_TO_C_GLUnurbs_(nurb));
+  gluEndSurface(Xen_to_C_GLUnurbs_(nurb));
   return(Xen_false);
 }
 
-static XEN gxg_gluEndTrim(XEN nurb)
+static Xen gxg_gluEndTrim(Xen nurb)
 {
   #define H_gluEndTrim "void gluEndTrim(GLUnurbs* nurb)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluEndTrim", "GLUnurbs*");
-  gluEndTrim(XEN_TO_C_GLUnurbs_(nurb));
+  gluEndTrim(Xen_to_C_GLUnurbs_(nurb));
   return(Xen_false);
 }
 
-static XEN gxg_gluErrorString(XEN error)
+static Xen gxg_gluErrorString(Xen error)
 {
   #define H_gluErrorString "constchar* gluErrorString(GLenum error)"
   Xen_check_type(Xen_is_GLenum(error), error, 1, "gluErrorString", "GLenum");
-  return(C_TO_XEN_constchar_(gluErrorString(XEN_TO_C_GLenum(error))));
+  return(C_to_Xen_constchar_(gluErrorString(Xen_to_C_GLenum(error))));
 }
 
-static XEN gxg_gluGetNurbsProperty(XEN nurb, XEN property, XEN data)
+static Xen gxg_gluGetNurbsProperty(Xen nurb, Xen property, Xen data)
 {
   #define H_gluGetNurbsProperty "void gluGetNurbsProperty(GLUnurbs* nurb, GLenum property, GLfloat* data)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluGetNurbsProperty", "GLUnurbs*");
   Xen_check_type(Xen_is_GLenum(property), property, 2, "gluGetNurbsProperty", "GLenum");
   Xen_check_type(Xen_is_GLfloat_(data), data, 3, "gluGetNurbsProperty", "GLfloat*");
-  gluGetNurbsProperty(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLenum(property), XEN_TO_C_GLfloat_(data));
+  gluGetNurbsProperty(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLenum(property), Xen_to_C_GLfloat_(data));
   return(Xen_false);
 }
 
-static XEN gxg_gluGetString(XEN name)
+static Xen gxg_gluGetString(Xen name)
 {
   #define H_gluGetString "constchar* gluGetString(GLenum name)"
   Xen_check_type(Xen_is_GLenum(name), name, 1, "gluGetString", "GLenum");
-  return(C_TO_XEN_constchar_(gluGetString(XEN_TO_C_GLenum(name))));
+  return(C_to_Xen_constchar_(gluGetString(Xen_to_C_GLenum(name))));
 }
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluGetTessProperty(XEN tess, XEN which, XEN data)
+static Xen gxg_gluGetTessProperty(Xen tess, Xen which, Xen data)
 {
   #define H_gluGetTessProperty "void gluGetTessProperty(GLUtesselator* tess, GLenum which, GLdouble* data)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluGetTessProperty", "GLUtesselator*");
   Xen_check_type(Xen_is_GLenum(which), which, 2, "gluGetTessProperty", "GLenum");
   Xen_check_type(Xen_is_GLdouble_(data), data, 3, "gluGetTessProperty", "GLdouble*");
-  gluGetTessProperty(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLenum(which), XEN_TO_C_GLdouble_(data));
+  gluGetTessProperty(Xen_to_C_GLUtesselator_(tess), Xen_to_C_GLenum(which), Xen_to_C_GLdouble_(data));
   return(Xen_false);
 }
 #endif
 
-static XEN gxg_gluLoadSamplingMatrices(XEN nurb, XEN model, XEN perspective, XEN view)
+static Xen gxg_gluLoadSamplingMatrices(Xen nurb, Xen model, Xen perspective, Xen view)
 {
   #define H_gluLoadSamplingMatrices "void gluLoadSamplingMatrices(GLUnurbs* nurb, GLfloat* model, GLfloat* perspective, \
 GLint* view)"
@@ -3514,11 +3514,11 @@ GLint* view)"
   Xen_check_type(Xen_is_GLfloat_(model), model, 2, "gluLoadSamplingMatrices", "GLfloat*");
   Xen_check_type(Xen_is_GLfloat_(perspective), perspective, 3, "gluLoadSamplingMatrices", "GLfloat*");
   Xen_check_type(Xen_is_GLint_(view), view, 4, "gluLoadSamplingMatrices", "GLint*");
-  gluLoadSamplingMatrices(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLfloat_(model), XEN_TO_C_GLfloat_(perspective), XEN_TO_C_GLint_(view));
+  gluLoadSamplingMatrices(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLfloat_(model), Xen_to_C_GLfloat_(perspective), Xen_to_C_GLint_(view));
   return(Xen_false);
 }
 
-static XEN gxg_gluLookAt(XEN eyeX, XEN eyeY, XEN eyeZ, XEN centerX, XEN centerY, XEN centerZ, XEN upX, XEN upY, XEN upZ)
+static Xen gxg_gluLookAt(Xen eyeX, Xen eyeY, Xen eyeZ, Xen centerX, Xen centerY, Xen centerZ, Xen upX, Xen upY, Xen upZ)
 {
   #define H_gluLookAt "void gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ, GLdouble centerX, \
 GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ)"
@@ -3531,71 +3531,71 @@ GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ)"
   Xen_check_type(Xen_is_GLdouble(upX), upX, 7, "gluLookAt", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(upY), upY, 8, "gluLookAt", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(upZ), upZ, 9, "gluLookAt", "GLdouble");
-  gluLookAt(XEN_TO_C_GLdouble(eyeX), XEN_TO_C_GLdouble(eyeY), XEN_TO_C_GLdouble(eyeZ), XEN_TO_C_GLdouble(centerX), XEN_TO_C_GLdouble(centerY), 
-            XEN_TO_C_GLdouble(centerZ), XEN_TO_C_GLdouble(upX), XEN_TO_C_GLdouble(upY), XEN_TO_C_GLdouble(upZ));
+  gluLookAt(Xen_to_C_GLdouble(eyeX), Xen_to_C_GLdouble(eyeY), Xen_to_C_GLdouble(eyeZ), Xen_to_C_GLdouble(centerX), Xen_to_C_GLdouble(centerY), 
+            Xen_to_C_GLdouble(centerZ), Xen_to_C_GLdouble(upX), Xen_to_C_GLdouble(upY), Xen_to_C_GLdouble(upZ));
   return(Xen_false);
 }
 
-static XEN gxg_gluNewNurbsRenderer(void)
+static Xen gxg_gluNewNurbsRenderer(void)
 {
   #define H_gluNewNurbsRenderer "GLUnurbs* gluNewNurbsRenderer( void)"
-  return(C_TO_XEN_GLUnurbs_(gluNewNurbsRenderer()));
+  return(C_to_Xen_GLUnurbs_(gluNewNurbsRenderer()));
 }
 
-static XEN gxg_gluNewQuadric(void)
+static Xen gxg_gluNewQuadric(void)
 {
   #define H_gluNewQuadric "GLUquadric* gluNewQuadric( void)"
-  return(C_TO_XEN_GLUquadric_(gluNewQuadric()));
+  return(C_to_Xen_GLUquadric_(gluNewQuadric()));
 }
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluNewTess(void)
+static Xen gxg_gluNewTess(void)
 {
   #define H_gluNewTess "GLUtesselator* gluNewTess( void)"
-  return(C_TO_XEN_GLUtesselator_(gluNewTess()));
+  return(C_to_Xen_GLUtesselator_(gluNewTess()));
 }
 #endif
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluNextContour(XEN tess, XEN type)
+static Xen gxg_gluNextContour(Xen tess, Xen type)
 {
   #define H_gluNextContour "void gluNextContour(GLUtesselator* tess, GLenum type)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluNextContour", "GLUtesselator*");
   Xen_check_type(Xen_is_GLenum(type), type, 2, "gluNextContour", "GLenum");
-  gluNextContour(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLenum(type));
+  gluNextContour(Xen_to_C_GLUtesselator_(tess), Xen_to_C_GLenum(type));
   return(Xen_false);
 }
 #endif
 
-static XEN gxg_gluNurbsCallback(XEN nurb, XEN which, XEN CallBackFunc)
+static Xen gxg_gluNurbsCallback(Xen nurb, Xen which, Xen CallBackFunc)
 {
   #define H_gluNurbsCallback "void gluNurbsCallback(GLUnurbs* nurb, GLenum which, _GLUfuncptr CallBackFunc)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluNurbsCallback", "GLUnurbs*");
   Xen_check_type(Xen_is_GLenum(which), which, 2, "gluNurbsCallback", "GLenum");
   Xen_check_type(Xen_is__GLUfuncptr(CallBackFunc), CallBackFunc, 3, "gluNurbsCallback", "_GLUfuncptr");
-  gluNurbsCallback(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLenum(which), XEN_TO_C__GLUfuncptr(CallBackFunc));
+  gluNurbsCallback(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLenum(which), Xen_to_C__GLUfuncptr(CallBackFunc));
   return(Xen_false);
 }
 
-static XEN gxg_gluNurbsCallbackData(XEN nurb, XEN userData)
+static Xen gxg_gluNurbsCallbackData(Xen nurb, Xen userData)
 {
   #define H_gluNurbsCallbackData "void gluNurbsCallbackData(GLUnurbs* nurb, GLvoid* userData)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluNurbsCallbackData", "GLUnurbs*");
   Xen_check_type(Xen_is_GLvoid_(userData), userData, 2, "gluNurbsCallbackData", "GLvoid*");
-  gluNurbsCallbackData(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLvoid_(userData));
+  gluNurbsCallbackData(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLvoid_(userData));
   return(Xen_false);
 }
 
-static XEN gxg_gluNurbsCallbackDataEXT(XEN nurb, XEN userData)
+static Xen gxg_gluNurbsCallbackDataEXT(Xen nurb, Xen userData)
 {
   #define H_gluNurbsCallbackDataEXT "void gluNurbsCallbackDataEXT(GLUnurbs* nurb, GLvoid* userData)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluNurbsCallbackDataEXT", "GLUnurbs*");
   Xen_check_type(Xen_is_GLvoid_(userData), userData, 2, "gluNurbsCallbackDataEXT", "GLvoid*");
-  gluNurbsCallbackDataEXT(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLvoid_(userData));
+  gluNurbsCallbackDataEXT(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLvoid_(userData));
   return(Xen_false);
 }
 
-static XEN gxg_gluNurbsCurve(XEN nurb, XEN knotCount, XEN knots, XEN stride, XEN control, XEN order, XEN type)
+static Xen gxg_gluNurbsCurve(Xen nurb, Xen knotCount, Xen knots, Xen stride, Xen control, Xen order, Xen type)
 {
   #define H_gluNurbsCurve "void gluNurbsCurve(GLUnurbs* nurb, GLint knotCount, GLfloat* knots, GLint stride, \
 GLfloat* control, GLint order, GLenum type)"
@@ -3606,27 +3606,27 @@ GLfloat* control, GLint order, GLenum type)"
   Xen_check_type(Xen_is_GLfloat_(control), control, 5, "gluNurbsCurve", "GLfloat*");
   Xen_check_type(Xen_is_GLint(order), order, 6, "gluNurbsCurve", "GLint");
   Xen_check_type(Xen_is_GLenum(type), type, 7, "gluNurbsCurve", "GLenum");
-  gluNurbsCurve(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLint(knotCount), XEN_TO_C_GLfloat_(knots), XEN_TO_C_GLint(stride), XEN_TO_C_GLfloat_(control), 
-                XEN_TO_C_GLint(order), XEN_TO_C_GLenum(type));
+  gluNurbsCurve(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLint(knotCount), Xen_to_C_GLfloat_(knots), Xen_to_C_GLint(stride), Xen_to_C_GLfloat_(control), 
+                Xen_to_C_GLint(order), Xen_to_C_GLenum(type));
   return(Xen_false);
 }
 
-static XEN gxg_gluNurbsProperty(XEN nurb, XEN property, XEN value)
+static Xen gxg_gluNurbsProperty(Xen nurb, Xen property, Xen value)
 {
   #define H_gluNurbsProperty "void gluNurbsProperty(GLUnurbs* nurb, GLenum property, GLfloat value)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluNurbsProperty", "GLUnurbs*");
   Xen_check_type(Xen_is_GLenum(property), property, 2, "gluNurbsProperty", "GLenum");
   Xen_check_type(Xen_is_GLfloat(value), value, 3, "gluNurbsProperty", "GLfloat");
-  gluNurbsProperty(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLenum(property), XEN_TO_C_GLfloat(value));
+  gluNurbsProperty(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLenum(property), Xen_to_C_GLfloat(value));
   return(Xen_false);
 }
 
-static XEN gxg_gluNurbsSurface(XEN arglist)
+static Xen gxg_gluNurbsSurface(Xen arglist)
 {
   #define H_gluNurbsSurface "void gluNurbsSurface(GLUnurbs* nurb, GLint sKnotCount, GLfloat* sKnots, \
 GLint tKnotCount, GLfloat* tKnots, GLint sStride, GLint tStride, GLfloat* control, GLint sOrder, GLint tOrder, \
 GLenum type)"
-  XEN nurb, sKnotCount, sKnots, tKnotCount, tKnots, sStride, tStride, control, sOrder, tOrder, type;
+  Xen nurb, sKnotCount, sKnots, tKnotCount, tKnots, sStride, tStride, control, sOrder, tOrder, type;
   nurb = Xen_list_ref(arglist, 0);
   sKnotCount = Xen_list_ref(arglist, 1);
   sKnots = Xen_list_ref(arglist, 2);
@@ -3649,24 +3649,24 @@ GLenum type)"
   Xen_check_type(Xen_is_GLint(sOrder), sOrder, 9, "gluNurbsSurface", "GLint");
   Xen_check_type(Xen_is_GLint(tOrder), tOrder, 10, "gluNurbsSurface", "GLint");
   Xen_check_type(Xen_is_GLenum(type), type, 11, "gluNurbsSurface", "GLenum");
-  gluNurbsSurface(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLint(sKnotCount), XEN_TO_C_GLfloat_(sKnots), XEN_TO_C_GLint(tKnotCount), 
-                  XEN_TO_C_GLfloat_(tKnots), XEN_TO_C_GLint(sStride), XEN_TO_C_GLint(tStride), XEN_TO_C_GLfloat_(control), 
-                  XEN_TO_C_GLint(sOrder), XEN_TO_C_GLint(tOrder), XEN_TO_C_GLenum(type));
+  gluNurbsSurface(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLint(sKnotCount), Xen_to_C_GLfloat_(sKnots), Xen_to_C_GLint(tKnotCount), 
+                  Xen_to_C_GLfloat_(tKnots), Xen_to_C_GLint(sStride), Xen_to_C_GLint(tStride), Xen_to_C_GLfloat_(control), 
+                  Xen_to_C_GLint(sOrder), Xen_to_C_GLint(tOrder), Xen_to_C_GLenum(type));
   return(Xen_false);
 }
 
-static XEN gxg_gluOrtho2D(XEN left, XEN right, XEN bottom, XEN top)
+static Xen gxg_gluOrtho2D(Xen left, Xen right, Xen bottom, Xen top)
 {
   #define H_gluOrtho2D "void gluOrtho2D(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top)"
   Xen_check_type(Xen_is_GLdouble(left), left, 1, "gluOrtho2D", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(right), right, 2, "gluOrtho2D", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(bottom), bottom, 3, "gluOrtho2D", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(top), top, 4, "gluOrtho2D", "GLdouble");
-  gluOrtho2D(XEN_TO_C_GLdouble(left), XEN_TO_C_GLdouble(right), XEN_TO_C_GLdouble(bottom), XEN_TO_C_GLdouble(top));
+  gluOrtho2D(Xen_to_C_GLdouble(left), Xen_to_C_GLdouble(right), Xen_to_C_GLdouble(bottom), Xen_to_C_GLdouble(top));
   return(Xen_false);
 }
 
-static XEN gxg_gluPartialDisk(XEN quad, XEN inner, XEN outer, XEN slices, XEN loops, XEN start, XEN sweep)
+static Xen gxg_gluPartialDisk(Xen quad, Xen inner, Xen outer, Xen slices, Xen loops, Xen start, Xen sweep)
 {
   #define H_gluPartialDisk "void gluPartialDisk(GLUquadric* quad, GLdouble inner, GLdouble outer, GLint slices, \
 GLint loops, GLdouble start, GLdouble sweep)"
@@ -3677,23 +3677,23 @@ GLint loops, GLdouble start, GLdouble sweep)"
   Xen_check_type(Xen_is_GLint(loops), loops, 5, "gluPartialDisk", "GLint");
   Xen_check_type(Xen_is_GLdouble(start), start, 6, "gluPartialDisk", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(sweep), sweep, 7, "gluPartialDisk", "GLdouble");
-  gluPartialDisk(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLdouble(inner), XEN_TO_C_GLdouble(outer), XEN_TO_C_GLint(slices), 
-                 XEN_TO_C_GLint(loops), XEN_TO_C_GLdouble(start), XEN_TO_C_GLdouble(sweep));
+  gluPartialDisk(Xen_to_C_GLUquadric_(quad), Xen_to_C_GLdouble(inner), Xen_to_C_GLdouble(outer), Xen_to_C_GLint(slices), 
+                 Xen_to_C_GLint(loops), Xen_to_C_GLdouble(start), Xen_to_C_GLdouble(sweep));
   return(Xen_false);
 }
 
-static XEN gxg_gluPerspective(XEN fovy, XEN aspect, XEN zNear, XEN zFar)
+static Xen gxg_gluPerspective(Xen fovy, Xen aspect, Xen zNear, Xen zFar)
 {
   #define H_gluPerspective "void gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)"
   Xen_check_type(Xen_is_GLdouble(fovy), fovy, 1, "gluPerspective", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(aspect), aspect, 2, "gluPerspective", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(zNear), zNear, 3, "gluPerspective", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(zFar), zFar, 4, "gluPerspective", "GLdouble");
-  gluPerspective(XEN_TO_C_GLdouble(fovy), XEN_TO_C_GLdouble(aspect), XEN_TO_C_GLdouble(zNear), XEN_TO_C_GLdouble(zFar));
+  gluPerspective(Xen_to_C_GLdouble(fovy), Xen_to_C_GLdouble(aspect), Xen_to_C_GLdouble(zNear), Xen_to_C_GLdouble(zFar));
   return(Xen_false);
 }
 
-static XEN gxg_gluPickMatrix(XEN x, XEN y, XEN delX, XEN delY, XEN viewport)
+static Xen gxg_gluPickMatrix(Xen x, Xen y, Xen delX, Xen delY, Xen viewport)
 {
   #define H_gluPickMatrix "void gluPickMatrix(GLdouble x, GLdouble y, GLdouble delX, GLdouble delY, GLint* viewport)"
   Xen_check_type(Xen_is_GLdouble(x), x, 1, "gluPickMatrix", "GLdouble");
@@ -3701,11 +3701,11 @@ static XEN gxg_gluPickMatrix(XEN x, XEN y, XEN delX, XEN delY, XEN viewport)
   Xen_check_type(Xen_is_GLdouble(delX), delX, 3, "gluPickMatrix", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(delY), delY, 4, "gluPickMatrix", "GLdouble");
   Xen_check_type(Xen_is_GLint_(viewport), viewport, 5, "gluPickMatrix", "GLint*");
-  gluPickMatrix(XEN_TO_C_GLdouble(x), XEN_TO_C_GLdouble(y), XEN_TO_C_GLdouble(delX), XEN_TO_C_GLdouble(delY), XEN_TO_C_GLint_(viewport));
+  gluPickMatrix(Xen_to_C_GLdouble(x), Xen_to_C_GLdouble(y), Xen_to_C_GLdouble(delX), Xen_to_C_GLdouble(delY), Xen_to_C_GLint_(viewport));
   return(Xen_false);
 }
 
-static XEN gxg_gluProject(XEN objX, XEN objY, XEN objZ, XEN model, XEN proj, XEN view, XEN winX, XEN winY, XEN winZ)
+static Xen gxg_gluProject(Xen objX, Xen objY, Xen objZ, Xen model, Xen proj, Xen view, Xen winX, Xen winY, Xen winZ)
 {
   #define H_gluProject "GLint gluProject(GLdouble objX, GLdouble objY, GLdouble objZ, GLdouble* model, \
 GLdouble* proj, GLint* view, GLdouble* [winX], GLdouble* [winY], GLdouble* [winZ])"
@@ -3719,14 +3719,14 @@ GLdouble* proj, GLint* view, GLdouble* [winX], GLdouble* [winY], GLdouble* [winZ
   Xen_check_type(Xen_is_GLdouble_(proj), proj, 5, "gluProject", "GLdouble*");
   Xen_check_type(Xen_is_GLint_(view), view, 6, "gluProject", "GLint*");
   {
-    XEN result = Xen_false;
-    result = C_TO_XEN_GLint(gluProject(XEN_TO_C_GLdouble(objX), XEN_TO_C_GLdouble(objY), XEN_TO_C_GLdouble(objZ), XEN_TO_C_GLdouble_(model), 
-                                       XEN_TO_C_GLdouble_(proj), XEN_TO_C_GLint_(view), ref_winX, ref_winY, ref_winZ));
-    return(Xen_list_4(result, C_TO_XEN_GLdouble(ref_winX[0]), C_TO_XEN_GLdouble(ref_winY[0]), C_TO_XEN_GLdouble(ref_winZ[0])));
+    Xen result = Xen_false;
+    result = C_to_Xen_GLint(gluProject(Xen_to_C_GLdouble(objX), Xen_to_C_GLdouble(objY), Xen_to_C_GLdouble(objZ), Xen_to_C_GLdouble_(model), 
+                                       Xen_to_C_GLdouble_(proj), Xen_to_C_GLint_(view), ref_winX, ref_winY, ref_winZ));
+    return(Xen_list_4(result, C_to_Xen_GLdouble(ref_winX[0]), C_to_Xen_GLdouble(ref_winY[0]), C_to_Xen_GLdouble(ref_winZ[0])));
    }
 }
 
-static XEN gxg_gluPwlCurve(XEN nurb, XEN count, XEN data, XEN stride, XEN type)
+static Xen gxg_gluPwlCurve(Xen nurb, Xen count, Xen data, Xen stride, Xen type)
 {
   #define H_gluPwlCurve "void gluPwlCurve(GLUnurbs* nurb, GLint count, GLfloat* data, GLint stride, GLenum type)"
   Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluPwlCurve", "GLUnurbs*");
@@ -3734,57 +3734,57 @@ static XEN gxg_gluPwlCurve(XEN nurb, XEN count, XEN data, XEN stride, XEN type)
   Xen_check_type(Xen_is_GLfloat_(data), data, 3, "gluPwlCurve", "GLfloat*");
   Xen_check_type(Xen_is_GLint(stride), stride, 4, "gluPwlCurve", "GLint");
   Xen_check_type(Xen_is_GLenum(type), type, 5, "gluPwlCurve", "GLenum");
-  gluPwlCurve(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLint(count), XEN_TO_C_GLfloat_(data), XEN_TO_C_GLint(stride), XEN_TO_C_GLenum(type));
+  gluPwlCurve(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLint(count), Xen_to_C_GLfloat_(data), Xen_to_C_GLint(stride), Xen_to_C_GLenum(type));
   return(Xen_false);
 }
 
-static XEN gxg_gluQuadricCallback(XEN quad, XEN which, XEN CallBackFunc)
+static Xen gxg_gluQuadricCallback(Xen quad, Xen which, Xen CallBackFunc)
 {
   #define H_gluQuadricCallback "void gluQuadricCallback(GLUquadric* quad, GLenum which, _GLUfuncptr CallBackFunc)"
   Xen_check_type(Xen_is_GLUquadric_(quad), quad, 1, "gluQuadricCallback", "GLUquadric*");
   Xen_check_type(Xen_is_GLenum(which), which, 2, "gluQuadricCallback", "GLenum");
   Xen_check_type(Xen_is__GLUfuncptr(CallBackFunc), CallBackFunc, 3, "gluQuadricCallback", "_GLUfuncptr");
-  gluQuadricCallback(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLenum(which), XEN_TO_C__GLUfuncptr(CallBackFunc));
+  gluQuadricCallback(Xen_to_C_GLUquadric_(quad), Xen_to_C_GLenum(which), Xen_to_C__GLUfuncptr(CallBackFunc));
   return(Xen_false);
 }
 
-static XEN gxg_gluQuadricDrawStyle(XEN quad, XEN draw)
+static Xen gxg_gluQuadricDrawStyle(Xen quad, Xen draw)
 {
   #define H_gluQuadricDrawStyle "void gluQuadricDrawStyle(GLUquadric* quad, GLenum draw)"
   Xen_check_type(Xen_is_GLUquadric_(quad), quad, 1, "gluQuadricDrawStyle", "GLUquadric*");
   Xen_check_type(Xen_is_GLenum(draw), draw, 2, "gluQuadricDrawStyle", "GLenum");
-  gluQuadricDrawStyle(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLenum(draw));
+  gluQuadricDrawStyle(Xen_to_C_GLUquadric_(quad), Xen_to_C_GLenum(draw));
   return(Xen_false);
 }
 
-static XEN gxg_gluQuadricNormals(XEN quad, XEN normal)
+static Xen gxg_gluQuadricNormals(Xen quad, Xen normal)
 {
   #define H_gluQuadricNormals "void gluQuadricNormals(GLUquadric* quad, GLenum normal)"
   Xen_check_type(Xen_is_GLUquadric_(quad), quad, 1, "gluQuadricNormals", "GLUquadric*");
   Xen_check_type(Xen_is_GLenum(normal), normal, 2, "gluQuadricNormals", "GLenum");
-  gluQuadricNormals(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLenum(normal));
+  gluQuadricNormals(Xen_to_C_GLUquadric_(quad), Xen_to_C_GLenum(normal));
   return(Xen_false);
 }
 
-static XEN gxg_gluQuadricOrientation(XEN quad, XEN orientation)
+static Xen gxg_gluQuadricOrientation(Xen quad, Xen orientation)
 {
   #define H_gluQuadricOrientation "void gluQuadricOrientation(GLUquadric* quad, GLenum orientation)"
   Xen_check_type(Xen_is_GLUquadric_(quad), quad, 1, "gluQuadricOrientation", "GLUquadric*");
   Xen_check_type(Xen_is_GLenum(orientation), orientation, 2, "gluQuadricOrientation", "GLenum");
-  gluQuadricOrientation(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLenum(orientation));
+  gluQuadricOrientation(Xen_to_C_GLUquadric_(quad), Xen_to_C_GLenum(orientation));
   return(Xen_false);
 }
 
-static XEN gxg_gluQuadricTexture(XEN quad, XEN texture)
+static Xen gxg_gluQuadricTexture(Xen quad, Xen texture)
 {
   #define H_gluQuadricTexture "void gluQuadricTexture(GLUquadric* quad, GLboolean texture)"
   Xen_check_type(Xen_is_GLUquadric_(quad), quad, 1, "gluQuadricTexture", "GLUquadric*");
   Xen_check_type(Xen_is_GLboolean(texture), texture, 2, "gluQuadricTexture", "GLboolean");
-  gluQuadricTexture(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLboolean(texture));
+  gluQuadricTexture(Xen_to_C_GLUquadric_(quad), Xen_to_C_GLboolean(texture));
   return(Xen_false);
 }
 
-static XEN gxg_gluScaleImage(XEN format, XEN wIn, XEN hIn, XEN typeIn, XEN dataIn, XEN wOut, XEN hOut, XEN typeOut, XEN dataOut)
+static Xen gxg_gluScaleImage(Xen format, Xen wIn, Xen hIn, Xen typeIn, Xen dataIn, Xen wOut, Xen hOut, Xen typeOut, Xen dataOut)
 {
   #define H_gluScaleImage "GLint gluScaleImage(GLenum format, GLsizei wIn, GLsizei hIn, GLenum typeIn, \
 void* dataIn, GLsizei wOut, GLsizei hOut, GLenum typeOut, GLvoid* dataOut)"
@@ -3797,75 +3797,75 @@ void* dataIn, GLsizei wOut, GLsizei hOut, GLenum typeOut, GLvoid* dataOut)"
   Xen_check_type(Xen_is_GLsizei(hOut), hOut, 7, "gluScaleImage", "GLsizei");
   Xen_check_type(Xen_is_GLenum(typeOut), typeOut, 8, "gluScaleImage", "GLenum");
   Xen_check_type(Xen_is_GLvoid_(dataOut), dataOut, 9, "gluScaleImage", "GLvoid*");
-  return(C_TO_XEN_GLint(gluScaleImage(XEN_TO_C_GLenum(format), XEN_TO_C_GLsizei(wIn), XEN_TO_C_GLsizei(hIn), XEN_TO_C_GLenum(typeIn), 
-                                      XEN_TO_C_void_(dataIn), XEN_TO_C_GLsizei(wOut), XEN_TO_C_GLsizei(hOut), XEN_TO_C_GLenum(typeOut), 
-                                      XEN_TO_C_GLvoid_(dataOut))));
+  return(C_to_Xen_GLint(gluScaleImage(Xen_to_C_GLenum(format), Xen_to_C_GLsizei(wIn), Xen_to_C_GLsizei(hIn), Xen_to_C_GLenum(typeIn), 
+                                      Xen_to_C_void_(dataIn), Xen_to_C_GLsizei(wOut), Xen_to_C_GLsizei(hOut), Xen_to_C_GLenum(typeOut), 
+                                      Xen_to_C_GLvoid_(dataOut))));
 }
 
-static XEN gxg_gluSphere(XEN quad, XEN radius, XEN slices, XEN stacks)
+static Xen gxg_gluSphere(Xen quad, Xen radius, Xen slices, Xen stacks)
 {
   #define H_gluSphere "void gluSphere(GLUquadric* quad, GLdouble radius, GLint slices, GLint stacks)"
   Xen_check_type(Xen_is_GLUquadric_(quad), quad, 1, "gluSphere", "GLUquadric*");
   Xen_check_type(Xen_is_GLdouble(radius), radius, 2, "gluSphere", "GLdouble");
   Xen_check_type(Xen_is_GLint(slices), slices, 3, "gluSphere", "GLint");
   Xen_check_type(Xen_is_GLint(stacks), stacks, 4, "gluSphere", "GLint");
-  gluSphere(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLdouble(radius), XEN_TO_C_GLint(slices), XEN_TO_C_GLint(stacks));
+  gluSphere(Xen_to_C_GLUquadric_(quad), Xen_to_C_GLdouble(radius), Xen_to_C_GLint(slices), Xen_to_C_GLint(stacks));
   return(Xen_false);
 }
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluTessBeginContour(XEN tess)
+static Xen gxg_gluTessBeginContour(Xen tess)
 {
   #define H_gluTessBeginContour "void gluTessBeginContour(GLUtesselator* tess)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluTessBeginContour", "GLUtesselator*");
-  gluTessBeginContour(XEN_TO_C_GLUtesselator_(tess));
+  gluTessBeginContour(Xen_to_C_GLUtesselator_(tess));
   return(Xen_false);
 }
 #endif
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluTessBeginPolygon(XEN tess, XEN data)
+static Xen gxg_gluTessBeginPolygon(Xen tess, Xen data)
 {
   #define H_gluTessBeginPolygon "void gluTessBeginPolygon(GLUtesselator* tess, GLvoid* data)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluTessBeginPolygon", "GLUtesselator*");
   Xen_check_type(Xen_is_GLvoid_(data), data, 2, "gluTessBeginPolygon", "GLvoid*");
-  gluTessBeginPolygon(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLvoid_(data));
+  gluTessBeginPolygon(Xen_to_C_GLUtesselator_(tess), Xen_to_C_GLvoid_(data));
   return(Xen_false);
 }
 #endif
 
-static XEN gxg_gluTessCallback(XEN tess, XEN which, XEN CallBackFunc)
+static Xen gxg_gluTessCallback(Xen tess, Xen which, Xen CallBackFunc)
 {
   #define H_gluTessCallback "void gluTessCallback(GLUtesselator* tess, GLenum which, _GLUfuncptr CallBackFunc)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluTessCallback", "GLUtesselator*");
   Xen_check_type(Xen_is_GLenum(which), which, 2, "gluTessCallback", "GLenum");
   Xen_check_type(Xen_is__GLUfuncptr(CallBackFunc), CallBackFunc, 3, "gluTessCallback", "_GLUfuncptr");
-  gluTessCallback(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLenum(which), XEN_TO_C__GLUfuncptr(CallBackFunc));
+  gluTessCallback(Xen_to_C_GLUtesselator_(tess), Xen_to_C_GLenum(which), Xen_to_C__GLUfuncptr(CallBackFunc));
   return(Xen_false);
 }
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluTessEndContour(XEN tess)
+static Xen gxg_gluTessEndContour(Xen tess)
 {
   #define H_gluTessEndContour "void gluTessEndContour(GLUtesselator* tess)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluTessEndContour", "GLUtesselator*");
-  gluTessEndContour(XEN_TO_C_GLUtesselator_(tess));
+  gluTessEndContour(Xen_to_C_GLUtesselator_(tess));
   return(Xen_false);
 }
 #endif
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluTessEndPolygon(XEN tess)
+static Xen gxg_gluTessEndPolygon(Xen tess)
 {
   #define H_gluTessEndPolygon "void gluTessEndPolygon(GLUtesselator* tess)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluTessEndPolygon", "GLUtesselator*");
-  gluTessEndPolygon(XEN_TO_C_GLUtesselator_(tess));
+  gluTessEndPolygon(Xen_to_C_GLUtesselator_(tess));
   return(Xen_false);
 }
 #endif
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluTessNormal(XEN tess, XEN valueX, XEN valueY, XEN valueZ)
+static Xen gxg_gluTessNormal(Xen tess, Xen valueX, Xen valueY, Xen valueZ)
 {
   #define H_gluTessNormal "void gluTessNormal(GLUtesselator* tess, GLdouble valueX, GLdouble valueY, \
 GLdouble valueZ)"
@@ -3873,36 +3873,36 @@ GLdouble valueZ)"
   Xen_check_type(Xen_is_GLdouble(valueX), valueX, 2, "gluTessNormal", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(valueY), valueY, 3, "gluTessNormal", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(valueZ), valueZ, 4, "gluTessNormal", "GLdouble");
-  gluTessNormal(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLdouble(valueX), XEN_TO_C_GLdouble(valueY), XEN_TO_C_GLdouble(valueZ));
+  gluTessNormal(Xen_to_C_GLUtesselator_(tess), Xen_to_C_GLdouble(valueX), Xen_to_C_GLdouble(valueY), Xen_to_C_GLdouble(valueZ));
   return(Xen_false);
 }
 #endif
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluTessProperty(XEN tess, XEN which, XEN data)
+static Xen gxg_gluTessProperty(Xen tess, Xen which, Xen data)
 {
   #define H_gluTessProperty "void gluTessProperty(GLUtesselator* tess, GLenum which, GLdouble data)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluTessProperty", "GLUtesselator*");
   Xen_check_type(Xen_is_GLenum(which), which, 2, "gluTessProperty", "GLenum");
   Xen_check_type(Xen_is_GLdouble(data), data, 3, "gluTessProperty", "GLdouble");
-  gluTessProperty(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLenum(which), XEN_TO_C_GLdouble(data));
+  gluTessProperty(Xen_to_C_GLUtesselator_(tess), Xen_to_C_GLenum(which), Xen_to_C_GLdouble(data));
   return(Xen_false);
 }
 #endif
 
 #ifdef GLU_VERSION_1_2
-static XEN gxg_gluTessVertex(XEN tess, XEN location, XEN data)
+static Xen gxg_gluTessVertex(Xen tess, Xen location, Xen data)
 {
   #define H_gluTessVertex "void gluTessVertex(GLUtesselator* tess, GLdouble* location, GLvoid* data)"
   Xen_check_type(Xen_is_GLUtesselator_(tess), tess, 1, "gluTessVertex", "GLUtesselator*");
   Xen_check_type(Xen_is_GLdouble_(location), location, 2, "gluTessVertex", "GLdouble*");
   Xen_check_type(Xen_is_GLvoid_(data), data, 3, "gluTessVertex", "GLvoid*");
-  gluTessVertex(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLdouble_(location), XEN_TO_C_GLvoid_(data));
+  gluTessVertex(Xen_to_C_GLUtesselator_(tess), Xen_to_C_GLdouble_(location), Xen_to_C_GLvoid_(data));
   return(Xen_false);
 }
 #endif
 
-static XEN gxg_gluUnProject(XEN winX, XEN winY, XEN winZ, XEN model, XEN proj, XEN view, XEN objX, XEN objY, XEN objZ)
+static Xen gxg_gluUnProject(Xen winX, Xen winY, Xen winZ, Xen model, Xen proj, Xen view, Xen objX, Xen objY, Xen objZ)
 {
   #define H_gluUnProject "GLint gluUnProject(GLdouble winX, GLdouble winY, GLdouble winZ, GLdouble* model, \
 GLdouble* proj, GLint* view, GLdouble* [objX], GLdouble* [objY], GLdouble* [objZ])"
@@ -3916,14 +3916,14 @@ GLdouble* proj, GLint* view, GLdouble* [objX], GLdouble* [objY], GLdouble* [objZ
   Xen_check_type(Xen_is_GLdouble_(proj), proj, 5, "gluUnProject", "GLdouble*");
   Xen_check_type(Xen_is_GLint_(view), view, 6, "gluUnProject", "GLint*");
   {
-    XEN result = Xen_false;
-    result = C_TO_XEN_GLint(gluUnProject(XEN_TO_C_GLdouble(winX), XEN_TO_C_GLdouble(winY), XEN_TO_C_GLdouble(winZ), XEN_TO_C_GLdouble_(model), 
-                                         XEN_TO_C_GLdouble_(proj), XEN_TO_C_GLint_(view), ref_objX, ref_objY, ref_objZ));
-    return(Xen_list_4(result, C_TO_XEN_GLdouble(ref_objX[0]), C_TO_XEN_GLdouble(ref_objY[0]), C_TO_XEN_GLdouble(ref_objZ[0])));
+    Xen result = Xen_false;
+    result = C_to_Xen_GLint(gluUnProject(Xen_to_C_GLdouble(winX), Xen_to_C_GLdouble(winY), Xen_to_C_GLdouble(winZ), Xen_to_C_GLdouble_(model), 
+                                         Xen_to_C_GLdouble_(proj), Xen_to_C_GLint_(view), ref_objX, ref_objY, ref_objZ));
+    return(Xen_list_4(result, C_to_Xen_GLdouble(ref_objX[0]), C_to_Xen_GLdouble(ref_objY[0]), C_to_Xen_GLdouble(ref_objZ[0])));
    }
 }
 
-static XEN gxg_gluUnProject4(XEN arglist)
+static Xen gxg_gluUnProject4(Xen arglist)
 {
   #define H_gluUnProject4 "GLint gluUnProject4(GLdouble winX, GLdouble winY, GLdouble winZ, GLdouble clipW, \
 GLdouble* model, GLdouble* proj, GLint* view, GLdouble near, GLdouble far, GLdouble* [objX], GLdouble* [objY], \
@@ -3932,7 +3932,7 @@ GLdouble* [objZ], GLdouble* [objW])"
   GLdouble ref_objY[1];
   GLdouble ref_objZ[1];
   GLdouble ref_objW[1];
-  XEN winX, winY, winZ, clipW, model, proj, view, near, far;
+  Xen winX, winY, winZ, clipW, model, proj, view, near, far;
   winX = Xen_list_ref(arglist, 0);
   winY = Xen_list_ref(arglist, 1);
   winZ = Xen_list_ref(arglist, 2);
@@ -3952,11 +3952,11 @@ GLdouble* [objZ], GLdouble* [objW])"
   Xen_check_type(Xen_is_GLdouble(near), near, 8, "gluUnProject4", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(far), far, 9, "gluUnProject4", "GLdouble");
   {
-    XEN result = Xen_false;
-    result = C_TO_XEN_GLint(gluUnProject4(XEN_TO_C_GLdouble(winX), XEN_TO_C_GLdouble(winY), XEN_TO_C_GLdouble(winZ), XEN_TO_C_GLdouble(clipW), 
-                                          XEN_TO_C_GLdouble_(model), XEN_TO_C_GLdouble_(proj), XEN_TO_C_GLint_(view), XEN_TO_C_GLdouble(near), 
-                                          XEN_TO_C_GLdouble(far), ref_objX, ref_objY, ref_objZ, ref_objW));
-    return(Xen_list_5(result, C_TO_XEN_GLdouble(ref_objX[0]), C_TO_XEN_GLdouble(ref_objY[0]), C_TO_XEN_GLdouble(ref_objZ[0]), C_TO_XEN_GLdouble(ref_objW[0])));
+    Xen result = Xen_false;
+    result = C_to_Xen_GLint(gluUnProject4(Xen_to_C_GLdouble(winX), Xen_to_C_GLdouble(winY), Xen_to_C_GLdouble(winZ), Xen_to_C_GLdouble(clipW), 
+                                          Xen_to_C_GLdouble_(model), Xen_to_C_GLdouble_(proj), Xen_to_C_GLint_(view), Xen_to_C_GLdouble(near), 
+                                          Xen_to_C_GLdouble(far), ref_objX, ref_objY, ref_objZ, ref_objW));
+    return(Xen_list_5(result, C_to_Xen_GLdouble(ref_objX[0]), C_to_Xen_GLdouble(ref_objY[0]), C_to_Xen_GLdouble(ref_objZ[0]), C_to_Xen_GLdouble(ref_objW[0])));
    }
 }
 
@@ -5563,7 +5563,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("21-Feb-14"));
+      Xen_define("gl-version", C_string_to_Xen_string("07-Mar-14"));
       gl_already_inited = true;
     }
 }

@@ -290,6 +290,26 @@
 		  "gluGetTessProperty" "gluTessBeginContour" "gluTessBeginPolygon" "gluTessEndContour" "gluTessEndPolygon"
 		  "gluTessNormal" "gluTessProperty" "gluNewTess"))
 
+(define (c-to-xen-macro-name typ str)
+  (if (string=? str "INT") "C_int_to_Xen_integer"
+      (if (string=? str "DOUBLE") "C_double_to_Xen_real"
+	  (if (string=? str "BOOLEAN") "C_bool_to_Xen_boolean"
+	      (if (string=? str "ULONG") "C_ulong_to_Xen_ulong"
+		  (if (or (string=? str "String") (string=? str "STRING"))
+		      (if (string=? (car typ) "guchar*") 
+			  "C_to_Xen_String"
+			  "C_string_to_Xen_string")
+		      (format #f "~A unknown" str)))))))
+
+(define (xen-to-c-macro-name str)
+  (if (string=? str "INT") "Xen_integer_to_C_int"
+      (if (string=? str "DOUBLE") "Xen_real_to_C_double"
+	  (if (string=? str "BOOLEAN") "Xen_boolean_to_C_bool"
+	      (if (string=? str "ULONG") "Xen_ulong_to_C_ulong"
+		  (if (or (string=? str "String") (string=? str "STRING"))
+		      "Xen_string_to_C_string"
+		      (format #f "~A unknown" str)))))))
+
 (define (type-it type)
   (let ((typ (assoc type direct-types)))
     (if typ
@@ -305,12 +325,13 @@
 					   "unsigned_long"
 					   "void**")))
 			(if (string=? (car typ) "constchar*")
-			    (hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A((char *)(Arg))~%" (no-stars (car typ)) (cdr typ))
-			    (hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A(Arg)~%" (no-stars (car typ)) (cdr typ))))
+			    (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars (car typ)))
+			    (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ)))))
+
 		    (if (not (member (car typ)
 				     (list "constchar*")))
-			(hey "#define XEN_TO_C_~A(Arg) (~A)(XEN_TO_C_~A(Arg))~%" 
-			     (no-stars (car typ)) (car typ) (cdr typ)))
+			(hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
+
 		    (if (not (member (car typ)
 				     (list "constchar*")))
 			(hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
@@ -324,7 +345,7 @@
 					 (apply string (map char-downcase (cdr typ)))))))))
 		  (begin
 		    (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ)))
-		    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
+		    (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
 
 	(if (not (or (string=? type "Display*")     ; why are these 2 handled specially?
 		     (string=? type "XVisualInfo*")
@@ -483,8 +504,8 @@
 (hey "#endif~%")
 (hey "~%")
 
-(hey "#define WRAP_FOR_XEN(Name, Value) Xen_list_2(C_string_to_Xen_symbol(Name), XEN_WRAP_C_POINTER(Value))~%")
-(hey "#define IS_WRAPPED(Name, Value) (Xen_is_list(Value) && \\~%")
+(hey "#define wrap_for_Xen(Name, Value) Xen_list_2(C_string_to_Xen_symbol(Name), Xen_wrap_C_pointer(Value))~%")
+(hey "#define is_wrapped(Name, Value) (Xen_is_list(Value) && \\~%")
 (hey "                            (Xen_list_length(Value) >= 2) && \\~%")
 (hey "                            (Xen_is_symbol(Xen_car(Value))) && \\~%")
 (hey "                            (strcmp(Name, Xen_symbol_to_C_string(Xen_car(Value))) == 0))~%")
@@ -492,24 +513,24 @@
 
 ;;; these have to match the choices in xm.c 
 (hey "#define XL_TYPE(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \\~%")
-(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));}~%")
+(hey "  static Xen C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \\~%")
+(hey "  static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \\~%")
+(hey "  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}~%")
 (hey "#define XL_TYPE_1(Name, XType) \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \\~%")
-(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));}~%")
+(hey "  static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \\~%")
+(hey "  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}~%")
 (hey "~%")
 (hey "#define XL_TYPE_PTR(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(Xen_false);} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(Xen_cadr(val)));} \\~%")
-(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));} /* if NULL ok, should be explicit */~%")
+(hey "  static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \\~%")
+(hey "  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return(NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \\~%")
+(hey "  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} /* if NULL ok, should be explicit */~%")
 (hey "#define XL_TYPE_PTR_1(Name, XType) \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (Xen_is_false(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(Xen_cadr(val)));} \\~%")
-(hey "  static bool Xen_is_ ## Name (XEN val) {return(IS_WRAPPED(#Name, val));} /* if NULL ok, should be explicit */~%")
+(hey "  static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return(NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \\~%")
+(hey "  static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} /* if NULL ok, should be explicit */~%")
 
 ;XL_TYPE_PTR_2 was for "GdkVisual*" "PangoFont*" "GdkColormap*"
 ;(hey "#define XL_TYPE_PTR_2(Name, XType) \\~%")
-;(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(Xen_false);}~%")
+;(hey "  static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);}~%")
 
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")
@@ -617,12 +638,12 @@
      (if (and (> (length data) 4)
 	      (eq? (data 4) 'if))
 	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (data 5)))))
-     (hey "static XEN gxg_~A(" name)
+     (hey "static Xen gxg_~A(" name)
      (if (= (length args) 0)
 	 (heyc "void")
 	 (if (>= (length args) max-args)
 	     (begin
-	       (heyc "XEN arglist"))
+	       (heyc "Xen arglist"))
 	     (let ((previous-arg #f))
 	       (for-each 
 		(lambda (arg)
@@ -631,7 +652,7 @@
 			)
 		    (if previous-arg (heyc ", "))
 		    (set! previous-arg #t)
-		    (hey "XEN ~A" argname)))
+		    (hey "Xen ~A" argname)))
 		args))))
      (hey ")~%{~%")
      (helpify name return-type argstr)
@@ -646,7 +667,7 @@
      (if (and (>= (length args) max-args)
 	      (> xgargs 0))
 	 (let ((previous-arg #f))
-	   (heyc "  XEN ")
+	   (heyc "  Xen ")
 	   (for-each
 	    (lambda (arg)
 	      (if (not (ref-arg? arg)) ;(< (length arg) 3)
@@ -688,12 +709,12 @@
        (if using-result
 	   (begin
 	     (hey "  {~%")
-	     (hey "    XEN result = Xen_false;~%")))
+	     (hey "    Xen result = Xen_false;~%")))
        (hey-start)
        (if (not (string=? return-type "void"))
 	   (if (= refargs 0)
-	       (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type))
-	       (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type)))
+	       (hey-on "  return(C_to_Xen_~A(" (no-stars return-type))
+	       (hey-on "    result = C_to_Xen_~A(" (no-stars return-type)))
 	   (hey-on "  "))
 
        (hey-on "~A(" name)
@@ -712,7 +733,7 @@
 		  (set! previous-arg #t)
 		  (if (ref-arg? arg)
 		      (hey-on "~A" (deref-name arg))
-		      (hey-on "XEN_TO_C_~A(~A)" (no-stars argtype) argname))))
+		      (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname))))
 	      args)))
 
        (if (> refargs 0)
@@ -725,25 +746,25 @@
 		 (begin
 		   (hey "  {~%")
 		   (if (not using-result)
-		       (hey "    XEN result;~%"))
+		       (hey "    Xen result;~%"))
 		   (hey "    int i, vals;~%")
-		   (hey "    vals = how_many_vals(XEN_TO_C_GLenum(pname));~%")
+		   (hey "    vals = how_many_vals(Xen_to_C_GLenum(pname));~%")
 		   (hey "    result = Xen_empty_list;~%")
 		   (hey "    for (i = 0; i < vals; i++)~%")
-		   (hey "      result = Xen_cons(C_TO_XEN_~A(~A[i]), result);~%" 
+		   (hey "      result = Xen_cons(C_to_Xen_~A(~A[i]), result);~%" 
 			(no-stars (deref-type (args (- (length args) 1))))
 			(deref-name (args (- (length args) 1))))
 		   (hey "    return(result);~%")
 		   (hey "  }~%"))
 		 (begin
-		   (hey "  return(XEN_LIST_~D(" (+ refargs (if using-result 1 0)))
+		   (hey "  return(Xen_list_~D(" (+ refargs (if using-result 1 0)))
 		   (if using-result (heyc "result"))
 		   (for-each 
 		    (lambda (arg)
 		      (if (ref-arg? arg)
 			  (begin
 			    (if previous-arg (heyc ", "))
-			    (hey "C_TO_XEN_~A(~A[0])" (no-stars (deref-type arg)) (deref-name arg))
+			    (hey "C_to_Xen_~A(~A[0])" (no-stars (deref-type arg)) (deref-name arg))
 			    (set! previous-arg #t))))
 		    args)
 		   (hey "));~%")))
@@ -781,11 +802,11 @@
     (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
     (if if-fnc
 	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (func 5)))))
-    (hey "XEN_~A(gxg_~A_w, gxg_~A)~%" 
-	 (if (>= cargs 10) "VARGIFY"
+    (hey "Xen_wrap_~A(gxg_~A_w, gxg_~A)~%" 
+	 (if (>= cargs 10) "any_args"
 	     (if (> refargs 0)
-		 (format #f "ARGIFY_~D" cargs)
-		 (format #f "NARGIFY_~D" cargs)))
+		 (format #f "~D_optional_arg~A" cargs (if (= cargs 1) "" "s"))
+		 (format #f "~A_arg~A" (if (zero? cargs) "no" (number->string cargs)) (if (= cargs 1) "" "s"))))
 	 (car func) (car func))
     (if if-fnc
 	(hey "#endif~%"))

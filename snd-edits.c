@@ -1,13 +1,13 @@
 #include "snd.h"
 
-static XEN save_hook;
+static Xen save_hook;
 
 static bool dont_save(snd_info *sp, const char *newname)
 {
-  XEN res = Xen_false;
+  Xen res = Xen_false;
   if (Xen_hook_has_list(save_hook))
     res = run_or_hook(save_hook,
-		      Xen_list_2(C_INT_TO_XEN_SOUND(sp->index),
+		      Xen_list_2(C_int_to_Xen_sound(sp->index),
 				 (newname) ? C_string_to_Xen_string(newname) : Xen_false),
 		      S_save_hook);
   return(Xen_is_true(res));
@@ -123,7 +123,7 @@ bool is_editable(chan_info *cp)
   if ((Xen_is_hook(cp->edit_hook)) &&
       (Xen_hook_has_list(cp->edit_hook)))
     {
-      XEN res;
+      Xen res;
       res = run_or_hook(cp->edit_hook, Xen_empty_list, S_edit_hook);
       if (Xen_is_true(res)) 
 	return(false);
@@ -238,7 +238,7 @@ static void check_for_first_edit(chan_info *cp)
 }
 
 
-static XEN save_state_hook;
+static Xen save_state_hook;
 
 char *run_save_state_hook(const char *file)
 {
@@ -246,7 +246,7 @@ char *run_save_state_hook(const char *file)
   filename = mus_strdup(file);
   if (Xen_hook_has_list(save_state_hook))
     {
-      XEN result;
+      Xen result;
 #if HAVE_SCHEME
       result = s7_call(s7, save_state_hook, s7_cons(s7, C_string_to_Xen_string(filename), s7_nil(s7)));
       if (Xen_is_string(result))
@@ -255,7 +255,7 @@ char *run_save_state_hook(const char *file)
 	  filename = mus_strdup(Xen_string_to_C_string(result));
 	}
 #else
-      XEN procs, fname;
+      Xen procs, fname;
       fname = C_string_to_Xen_string(filename);
       procs = Xen_hook_list(save_state_hook);
       while (!Xen_is_null(procs))
@@ -266,7 +266,7 @@ char *run_save_state_hook(const char *file)
 	      free(filename);
 	      filename = mus_strdup(Xen_string_to_C_string(result));
 	    }
-	  procs = XEN_CDR (procs);
+	  procs = Xen_cdr(procs);
 	}
 #endif
     }
@@ -6570,7 +6570,7 @@ void end_mix_op(chan_info *cp, mus_long_t old_beg, mus_long_t old_len)
 
 /* ----------------------- Xen connection -------------------------------- */
 
-static XEN g_display_edits(XEN snd, XEN chn, XEN edpos)
+static Xen g_display_edits(Xen snd, Xen chn, Xen edpos)
 {
   #define H_display_edits "(" S_display_edits " :optional snd chn edpos): current edit tree"
   FILE *tmp = NULL;
@@ -6578,7 +6578,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos)
   chan_info *cp;
   int fd, pos = AT_CURRENT_EDIT_POSITION;
   mus_long_t len;
-  XEN res;
+  Xen res;
   ssize_t bytes;
 
   ASSERT_CHANNEL(S_display_edits, snd, chn, 1);
@@ -6624,7 +6624,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos)
 }
 
 
-static XEN g_edit_fragment(XEN uctr, XEN snd, XEN chn)
+static Xen g_edit_fragment(Xen uctr, Xen snd, Xen chn)
 {
   #define H_edit_fragment "(" S_edit_fragment " :optional (ctr " S_current_edit_position ") snd chn): edit history entry at ctr \
 associated with snd's channel chn; the returned value is a list (origin type start-sample samps)"
@@ -6655,7 +6655,7 @@ associated with snd's channel chn; the returned value is a list (origin type sta
 }
 
 
-static XEN g_edit_tree(XEN snd, XEN chn, XEN upos)
+static Xen g_edit_tree(Xen snd, Xen chn, Xen upos)
 {
   #define H_edit_tree "(" S_edit_tree " :optional snd chn edpos): \
 the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type-name)...)"
@@ -6663,7 +6663,7 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type-
   int i, len, pos;
   chan_info *cp;
   ed_list *eds;
-  XEN res = Xen_empty_list;
+  Xen res = Xen_empty_list;
 
   ASSERT_CHANNEL(S_edit_tree, snd, chn, 1);
   cp = get_cp(snd, chn, S_edit_tree);
@@ -6702,7 +6702,7 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type-
 
 
 #define S_edit_fragment_type_name "edit-fragment-type-name"
-static XEN g_edit_fragment_type_name(XEN type)
+static Xen g_edit_fragment_type_name(Xen type)
 {
   int typ;
   Xen_check_type(Xen_is_integer(type), type, 1, S_edit_fragment_type_name, "an int");
@@ -6718,14 +6718,14 @@ static XEN g_edit_fragment_type_name(XEN type)
 
 static Xen_object_type_t sf_tag;
 
-bool is_sampler(XEN obj) {return(Xen_c_object_is_type(obj, sf_tag));}
+bool is_sampler(Xen obj) {return(Xen_c_object_is_type(obj, sf_tag));}
 
 #define is_any_sampler(Obj) ((is_sampler(Obj)) || (is_mix_sampler(Obj)))
 
 
-snd_fd *xen_to_sampler(XEN obj) {if (is_sampler(obj)) return((snd_fd *)Xen_object_ref(obj)); else return(NULL);}
+snd_fd *xen_to_sampler(Xen obj) {if (is_sampler(obj)) return((snd_fd *)Xen_object_ref(obj)); else return(NULL);}
 
-#define XEN_TO_SAMPLER(obj) ((snd_fd *)Xen_object_ref(obj))
+#define Xen_to_C_sampler(obj) ((snd_fd *)Xen_object_ref(obj))
 
 
 #if HAVE_SCHEME
@@ -6888,7 +6888,7 @@ Xen_wrap_free(snd_fd, free_sf, sf_free)
 /* sf_free is original, free_sf is wrapped form */
 
 
-static XEN g_sampler_at_end(XEN obj) 
+static Xen g_sampler_at_end(Xen obj) 
 {
   #define H_sampler_at_end "(" S_is_sampler_at_end " obj): " PROC_TRUE " if sampler has reached the end of its data"
   Xen_check_type(is_any_sampler(obj), obj, 1, S_is_sampler_at_end, "a sampler (of any kind)");
@@ -6896,7 +6896,7 @@ static XEN g_sampler_at_end(XEN obj)
   if (is_sampler(obj))
     {
       snd_fd *sf;
-      sf = XEN_TO_SAMPLER(obj);
+      sf = Xen_to_C_sampler(obj);
       return(C_bool_to_Xen_boolean(sf->at_eof));
     }
 
@@ -6915,7 +6915,7 @@ static XEN g_sampler_at_end(XEN obj)
  *   (the only thing we avoid is choose_accessor)
  */
 
-static XEN g_sampler_position(XEN obj) 
+static Xen g_sampler_position(Xen obj) 
 {
   #define H_sampler_position "(" S_sampler_position " obj): current (sample-wise) location of sampler"
   Xen_check_type(is_any_sampler(obj), obj, 1, S_sampler_position, "a sampler (of any kind)");
@@ -6923,7 +6923,7 @@ static XEN g_sampler_position(XEN obj)
   if (is_sampler(obj))
     {
       snd_fd *fd = NULL;
-      fd = XEN_TO_SAMPLER(obj);
+      fd = Xen_to_C_sampler(obj);
       if (fd->at_eof) return(Xen_integer_zero); /* -1? frames? */
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
@@ -6942,7 +6942,7 @@ static XEN g_sampler_position(XEN obj)
 }
 
 
-static XEN g_sampler_home(XEN obj)
+static Xen g_sampler_home(Xen obj)
 {
   #define H_sampler_home "(" S_sampler_home " obj): (list sound-index chan-num) associated with a sound reader, or \
 if 'obj' is a mix-sampler, the id of underlying mix"
@@ -6951,16 +6951,16 @@ if 'obj' is a mix-sampler, the id of underlying mix"
   if (is_sampler(obj))
     {
       snd_fd *fd = NULL;
-      fd = XEN_TO_SAMPLER(obj);
+      fd = Xen_to_C_sampler(obj);
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
 	  (fd->cp->sound))
 	{
 	  if (fd->type == SAMPLER)
-	    return(Xen_list_2(C_INT_TO_XEN_SOUND(fd->cp->sound->index),
+	    return(Xen_list_2(C_int_to_Xen_sound(fd->cp->sound->index),
 			      C_int_to_Xen_integer(fd->cp->chan)));
 
-	  return(Xen_list_2(C_INT_TO_XEN_REGION(fd->region),
+	  return(Xen_list_2(C_int_to_Xen_region(fd->region),
 			    C_int_to_Xen_integer(fd->cp->chan)));
 	}
     }
@@ -6972,12 +6972,12 @@ if 'obj' is a mix-sampler, the id of underlying mix"
 }
 
 
-XEN g_sampler_file_name(XEN obj)
+Xen g_sampler_file_name(Xen obj)
 {
   if (is_sampler(obj))
     {
       snd_fd *fd = NULL;
-      fd = XEN_TO_SAMPLER(obj);
+      fd = Xen_to_C_sampler(obj);
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
 	  (fd->cp->sound))
@@ -6985,17 +6985,17 @@ XEN g_sampler_file_name(XEN obj)
       return(Xen_false);
     }
 
-  return(C_string_to_Xen_string(mix_file_name(XEN_MIX_TO_C_INT(obj))));
+  return(C_string_to_Xen_string(mix_file_name(Xen_mix_to_C_int(obj))));
 }
 
 
-XEN g_c_make_sampler(snd_fd *fd)
+Xen g_c_make_sampler(snd_fd *fd)
 {
   return(Xen_make_object(sf_tag, fd, 0, free_sf));
 }
 
 
-static XEN g_make_region_sampler(XEN reg, XEN samp_n, XEN chn, XEN dir1)
+static Xen g_make_region_sampler(Xen reg, Xen samp_n, Xen chn, Xen dir1)
 {
   #define H_make_region_sampler "(" S_make_region_sampler " reg :optional (start-samp 0) (chn 0) (dir 1)): \
 return a reader ready to access region's channel chn data starting at start-samp going in direction dir"
@@ -7009,7 +7009,7 @@ return a reader ready to access region's channel chn data starting at start-samp
   Xen_check_type(Xen_is_integer_or_unbound(samp_n), samp_n, 2, S_make_region_sampler, "an integer");
   Xen_check_type(Xen_is_integer_or_unbound(chn), chn, 3, S_make_region_sampler, "an integer");
   Xen_check_type(Xen_is_integer_boolean_or_unbound(dir1), dir1, 4, S_make_region_sampler, "an integer");
-  reg_n = XEN_REGION_TO_C_INT(reg);
+  reg_n = Xen_region_to_C_int(reg);
 
   if (!(region_ok(reg_n))) 
     Xen_error(Xen_make_error_type("no-such-region"),
@@ -7048,7 +7048,7 @@ return a reader ready to access region's channel chn data starting at start-samp
 }
 
 
-static XEN g_make_sampler(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos) /* "dir" confuses Mac OS-X Objective-C! */
+static Xen g_make_sampler(Xen samp_n, Xen snd, Xen chn, Xen dir1, Xen pos) /* "dir" confuses Mac OS-X Objective-C! */
 {
   #define H_make_sampler "(" S_make_sampler " :optional (start-samp 0) snd chn (dir 1) edpos): \
 return a reader ready to access snd's channel chn's data starting at start-samp, going in direction dir (1 = \
@@ -7120,14 +7120,14 @@ snd can be a filename, a mix, a region, or a sound index number."
 }
 
 
-static XEN g_is_sampler(XEN obj)
+static Xen g_is_sampler(Xen obj)
 {
   #define H_is_sampler "(" S_is_sampler " obj): " PROC_TRUE " if obj is a sound sampler."
 
   if (is_sampler(obj))
     {
       snd_fd *fd;
-      fd = XEN_TO_SAMPLER(obj);
+      fd = Xen_to_C_sampler(obj);
       return(C_bool_to_Xen_boolean(fd->type == SAMPLER));
     }
 
@@ -7138,20 +7138,20 @@ static XEN g_is_sampler(XEN obj)
 }
 
 
-static XEN g_region_is_sampler(XEN obj)
+static Xen g_region_is_sampler(Xen obj)
 {
   #define H_region_is_sampler "(" S_is_region_sampler " obj): " PROC_TRUE " if obj is a region sampler."
   if (is_sampler(obj))
     {
       snd_fd *fd;
-      fd = XEN_TO_SAMPLER(obj);
+      fd = Xen_to_C_sampler(obj);
       return(C_bool_to_Xen_boolean(fd->type == REGION_READER));
     }
   return(Xen_false);
 }
 
 
-static XEN g_copy_sampler(XEN obj)
+static Xen g_copy_sampler(Xen obj)
 {
   #define H_copy_sampler "(" S_copy_sampler " reader): return a copy of reader"
   Xen_check_type(is_any_sampler(obj), obj, 1, S_copy_sampler, "a sampler (of any kind)");
@@ -7159,19 +7159,19 @@ static XEN g_copy_sampler(XEN obj)
   if (is_sampler(obj))
     {
       snd_fd *fd = NULL;
-      fd = XEN_TO_SAMPLER(obj);
+      fd = Xen_to_C_sampler(obj);
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
 	  (fd->cp->sound))
 	{
 	  if (fd->type == SAMPLER)
 	    return(g_make_sampler(C_llong_to_Xen_llong(current_location(fd)),
-				  C_INT_TO_XEN_SOUND(fd->cp->sound->index),
+				  C_int_to_Xen_sound(fd->cp->sound->index),
 				  C_int_to_Xen_integer(fd->cp->chan),
 				  C_int_to_Xen_integer((fd->direction == READ_FORWARD) ? 1 : -1), /* Scheme side is different from C side */
 				  C_int_to_Xen_integer(fd->edit_ctr)));
 
-	  return(g_make_region_sampler(C_INT_TO_XEN_REGION(fd->region),
+	  return(g_make_region_sampler(C_int_to_Xen_region(fd->region),
 				       C_llong_to_Xen_llong(region_current_location(fd)),
 				       C_int_to_Xen_integer(fd->cp->chan),
 				       C_int_to_Xen_integer((fd->direction == READ_FORWARD) ? 1 : -1)));
@@ -7193,7 +7193,7 @@ static mus_float_t next_sample_direct(void *p)
 }
 #endif
 
-static XEN g_next_sample(XEN obj)
+static Xen g_next_sample(Xen obj)
 {
   #define H_next_sample "(" S_next_sample " reader): next sample from reader"
 
@@ -7223,7 +7223,7 @@ mus_float_t read_sample_with_direction(void *p, int dir)
 }
 
 
-static XEN g_read_sample(XEN obj)
+static Xen g_read_sample(Xen obj)
 {
   #define H_read_sample "(" S_read_sample " reader): read sample from reader"
   if (is_sampler(obj))
@@ -7237,7 +7237,7 @@ static XEN g_read_sample(XEN obj)
 
 #define S_read_sample_with_direction "read-sample-with-direction"
 
-static XEN g_read_sample_with_direction(XEN obj, XEN dir)
+static Xen g_read_sample_with_direction(Xen obj, Xen dir)
 {
   #define H_read_sample_with_direction "(" S_read_sample_with_direction " reader dir): read sample from reader following dir (next/previous choice)"
   Xen_check_type(Xen_is_integer(dir), dir, 1, S_read_sample_with_direction, "an integer");
@@ -7252,7 +7252,7 @@ static XEN g_read_sample_with_direction(XEN obj, XEN dir)
 
 
 #if HAVE_SCHEME
-static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
+static Xen s7_read_sample(s7_scheme *sc, Xen obj, Xen args)
 {
   /* we can only get here if obj is already known to be a sampler */
   return(C_double_to_Xen_real(read_sample((snd_fd *)Xen_object_ref(obj))));
@@ -7260,7 +7260,7 @@ static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
 #endif
 
 
-static XEN g_previous_sample(XEN obj)
+static Xen g_previous_sample(Xen obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader): previous sample from reader"
   if (is_sampler(obj))
@@ -7273,7 +7273,7 @@ static XEN g_previous_sample(XEN obj)
 }
 
 
-static XEN g_free_sampler(XEN obj)
+static Xen g_free_sampler(Xen obj)
 {
   #define H_free_sampler "(" S_free_sampler " reader): free a sampler (of any kind)"
   Xen_check_type(is_any_sampler(obj), obj, 1, S_free_sampler, "a sampler");
@@ -7282,7 +7282,7 @@ static XEN g_free_sampler(XEN obj)
     {
       snd_info *sp = NULL;
       snd_fd *fd;
-      fd = XEN_TO_SAMPLER(obj);
+      fd = Xen_to_C_sampler(obj);
       unlist_reader(fd);
       sp = fd->local_sp; 
       fd->local_sp = NULL;
@@ -7296,7 +7296,7 @@ static XEN g_free_sampler(XEN obj)
 }
 
 
-static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
+static Xen g_save_edit_history(Xen filename, Xen snd, Xen chn)
 {
   #define H_save_edit_history "(" S_save_edit_history " filename :optional snd chn): save snd channel's chn edit history in filename"
   FILE *fd;
@@ -7359,7 +7359,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 }
 
 
-static XEN g_undo(XEN ed_n, XEN snd, XEN chn_n) /* opt ed_n */
+static Xen g_undo(Xen ed_n, Xen snd, Xen chn_n) /* opt ed_n */
 {
   #define H_undo "(" S_undo " :optional (count 1) snd chn): undo 'count' edits in snd's channel chn"
   chan_info *cp;
@@ -7384,7 +7384,7 @@ static XEN g_undo(XEN ed_n, XEN snd, XEN chn_n) /* opt ed_n */
 }
 
 
-static XEN g_redo(XEN ed_n, XEN snd, XEN chn_n) /* opt ed_n */
+static Xen g_redo(Xen ed_n, Xen snd, Xen chn_n) /* opt ed_n */
 {
   #define H_redo "(" S_redo " :optional (count 1) snd chn): redo 'count' edits in snd's channel chn"
   chan_info *cp;
@@ -7493,12 +7493,12 @@ static void finish_as_one_edit(chan_info *cp)
 }
 
 
-static XEN g_as_one_edit(XEN proc, XEN origin)
+static Xen g_as_one_edit(Xen proc, Xen origin)
 {
   #define H_as_one_edit "(" S_as_one_edit " thunk :optional origin): evaluate thunk, collecting all edits into one from the edit history's point of view"
-  XEN result = Xen_false;
+  Xen result = Xen_false;
   char *errmsg, *as_one_edit_origin = NULL;
-  XEN errstr;
+  Xen errstr;
 #if HAVE_SCHEME
   int loc = -1;
 #endif
@@ -7540,7 +7540,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 }
 
 
-static XEN g_scale_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
+static Xen g_scale_channel(Xen scl, Xen beg, Xen num, Xen snd, Xen chn, Xen edpos)
 {
   #define H_scale_channel "(" S_scale_channel " scaler :optional (beg 0) (dur len) snd chn edpos): \
 scale samples in the given sound/channel between beg and beg + num by scaler."
@@ -7567,7 +7567,7 @@ scale samples in the given sound/channel between beg and beg + num by scaler."
 }
 			  
 
-static XEN g_normalize_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
+static Xen g_normalize_channel(Xen scl, Xen beg, Xen num, Xen snd, Xen chn, Xen edpos)
 {
   #define H_normalize_channel "(" S_normalize_channel " norm :optional (beg 0) (dur len) snd chn edpos): \
 scale samples in the given sound/channel between beg and beg + num to norm."
@@ -7838,14 +7838,14 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 }
 
 
-static mus_float_t *g_floats_to_samples(XEN obj, int *size, const char *caller, int position)
+static mus_float_t *g_floats_to_samples(Xen obj, int *size, const char *caller, int position)
 {
   mus_float_t *vals = NULL;
   int i, num = 0;
 
   if (Xen_is_list(obj))
     {
-      XEN lst;
+      Xen lst;
       num = Xen_list_length(obj);
       if (num == 0) return(NULL);
       if (((*size) > 0) && (num > (*size))) 
@@ -7890,7 +7890,7 @@ static mus_float_t *g_floats_to_samples(XEN obj, int *size, const char *caller, 
 }
 
 
-static XEN g_sample(XEN samp_n, XEN snd, XEN chn_n, XEN pos_n)
+static Xen g_sample(Xen samp_n, Xen snd, Xen chn_n, Xen pos_n)
 {
   #define H_sample "(" S_sample " samp :optional snd chn edpos): \
 return sample samp in snd's channel chn (this is a slow access -- use samplers for speed)"
@@ -7902,7 +7902,7 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
 
   if (Xen_is_true(chn_n)) /* a convenience! */
     {
-      XEN lst = Xen_empty_list;
+      Xen lst = Xen_empty_list;
       int i, loc;
       snd_info *sp;
 
@@ -7942,7 +7942,7 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
 }
 
 
-static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_set_sample(Xen samp_n, Xen val, Xen snd, Xen chn_n, Xen edpos)
 {
   /* each call consitutes a separate edit from the undo/redo point-of-view */
   chan_info *cp;
@@ -7985,7 +7985,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
 
 
 #if HAVE_SCHEME
-static XEN g_set_sample_reversed(s7_scheme *sc, s7_pointer args)
+static Xen g_set_sample_reversed(s7_scheme *sc, s7_pointer args)
 {
   int len;
   len = Xen_list_length(args);
@@ -8006,7 +8006,7 @@ static XEN g_set_sample_reversed(s7_scheme *sc, s7_pointer args)
 }
 #endif
 
-file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller)
+file_delete_t xen_to_file_delete_t(Xen auto_delete, const char *caller)
 {
   if (Xen_is_boolean(auto_delete))
     {
@@ -8032,8 +8032,8 @@ file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller)
 }
 
 
-static XEN g_set_samples_with_origin(XEN samp_0, XEN samps, XEN vect, XEN snd, XEN chn_n, XEN truncate, 
-				     const char *edname, XEN infile_chan, XEN edpos, XEN auto_delete)
+static Xen g_set_samples_with_origin(Xen samp_0, Xen samps, Xen vect, Xen snd, Xen chn_n, Xen truncate, 
+				     const char *edname, Xen infile_chan, Xen edpos, Xen auto_delete)
 {
   #define H_set_samples "(set-" S_samples " start-samp samps data :optional snd chn truncate edname (infile-chan 0) edpos auto-delete): \
 set snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename)); \
@@ -8122,7 +8122,7 @@ the new data's end."
 }
 
 
-static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos, XEN auto_delete)
+static Xen g_set_samples(Xen samp_0, Xen samps, Xen vect, Xen snd, Xen chn_n, Xen truncate, Xen edname, Xen infile_chan, Xen edpos, Xen auto_delete)
 {
   Xen_check_type(!Xen_is_bound(edname) || Xen_is_string(edname) || Xen_is_false(edname), edname, 7, "set-samples", "a string");
   return(g_set_samples_with_origin(samp_0, samps, vect, snd, chn_n, truncate,
@@ -8131,7 +8131,7 @@ static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd, XEN chn_n, XE
 }
 
 
-void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
+void check_saved_temp_file(const char *type, Xen filename, Xen date_and_length)
 {
   const char *file;
   time_t old_time, new_time;
@@ -8173,14 +8173,14 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
 }
 
 
-static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd, XEN chn_n, XEN origin, XEN date)
+static Xen g_override_samples_with_origin(Xen filename, Xen samps, Xen snd, Xen chn_n, Xen origin, Xen date)
 {
   check_saved_temp_file("sound", filename, date);
   return(g_set_samples(Xen_integer_zero, samps, filename, snd, chn_n, Xen_true, origin, Xen_integer_zero, Xen_false, Xen_false));
 }
 
 
-static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd, XEN chn_n, XEN edpos, XEN origin)
+static Xen g_vct_to_channel(Xen v, Xen beg, Xen dur, Xen snd, Xen chn_n, Xen edpos, Xen origin)
 {
   #define H_vct_to_channel "(" S_vct_to_channel " vct :optional (beg 0) (dur len) snd chn edpos origin): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
@@ -8318,7 +8318,7 @@ vct *samples_to_vct_with_reader(mus_long_t len, mus_float_t *buf, snd_fd *reader
 }
 
 
-static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos, const char *caller)
+static Xen samples_to_vct_1(Xen samp_0, Xen samps, Xen snd, Xen chn_n, Xen edpos, const char *caller)
 {
   chan_info *cp;
   mus_long_t len, beg;
@@ -8340,7 +8340,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos
 }
 
 
-static XEN g_channel_to_vct(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_channel_to_vct(Xen samp_0, Xen samps, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_channel_to_vct "(" S_channel_to_vct " :optional (beg 0) (dur len) snd chn edpos): \
 return a vct containing snd channel chn's data starting at beg for dur samps"
@@ -8349,7 +8349,7 @@ return a vct containing snd channel chn's data starting at beg for dur samps"
 }
 
 
-static XEN g_samples(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_samples(Xen samp_0, Xen samps, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_samples "(" S_samples " :optional (start-samp 0) (samps len) snd chn edpos): \
 return a vct containing snd channel chn's samples starting at start-samp for samps samples; edpos is the edit \
@@ -8424,7 +8424,7 @@ history position to read (defaults to current position). snd can be a filename, 
 
 
 #if HAVE_SCHEME
-static XEN g_set_samples_reversed(s7_scheme *sc, s7_pointer args)
+static Xen g_set_samples_reversed(s7_scheme *sc, s7_pointer args)
 {
   int len;
   len = Xen_list_length(args);
@@ -8470,7 +8470,7 @@ static XEN g_set_samples_reversed(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN vect, XEN snd, XEN chn_n, XEN edpos, XEN date)
+static Xen g_change_samples_with_origin(Xen samp_0, Xen samps, Xen origin, Xen vect, Xen snd, Xen chn_n, Xen edpos, Xen date)
 {
   chan_info *cp;
   int pos;
@@ -8502,7 +8502,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 }
 
 
-static XEN g_insert_sound(XEN file, XEN ubeg, XEN file_chn, XEN snd, XEN chn_n, XEN edpos, XEN auto_delete)
+static Xen g_insert_sound(Xen file, Xen ubeg, Xen file_chn, Xen snd, Xen chn_n, Xen edpos, Xen auto_delete)
 {
   #if HAVE_SCHEME
     #define insert_sound_example "(" S_insert_sound " \"oboe.snd\" 1000)"
@@ -8605,7 +8605,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 }
 
 
-static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_insert_sample(Xen samp_n, Xen val, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_insert_sample "(" S_insert_sample " sample value :optional snd chn edpos): insert 'value' at 'sample' in snd's channel chn"
   chan_info *cp;
@@ -8636,7 +8636,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
 }
 
 
-static XEN g_insert_samples(XEN samp, XEN samps, XEN vect, XEN snd, XEN chn_n, XEN edpos, XEN auto_delete, XEN caller)
+static Xen g_insert_samples(Xen samp, Xen samps, Xen vect, Xen snd, Xen chn_n, Xen edpos, Xen auto_delete, Xen caller)
 {
   #define H_insert_samples "(" S_insert_samples " start-samp samps data :optional snd chn edpos auto-delete origin): \
 insert data (either a vct, a list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
@@ -8712,7 +8712,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 }
 
 
-static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vect, XEN snd, XEN chn_n, XEN edpos, XEN date)
+static Xen g_insert_samples_with_origin(Xen samp, Xen samps, Xen origin, Xen vect, Xen snd, Xen chn_n, Xen edpos, Xen date)
 {
   chan_info *cp;
   int pos;
@@ -8739,7 +8739,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
 }
 
 
-static XEN g_delete_sample(XEN samp_n, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_delete_sample(Xen samp_n, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_delete_sample "(" S_delete_sample " samp :optional snd chn edpos): delete sample 'samp' from snd's channel chn"
   chan_info *cp;
@@ -8765,7 +8765,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd, XEN chn_n, XEN edpos)
 }
 
 
-static XEN g_delete_samples(XEN samp_n, XEN samps, XEN snd, XEN chn_n, XEN edpos)
+static Xen g_delete_samples(Xen samp_n, Xen samps, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_delete_samples "(" S_delete_samples " start-samp samps :optional snd chn edpos): \
 delete 'samps' samples from snd's channel chn starting at 'start-samp'"
@@ -8939,27 +8939,27 @@ static mus_any *make_snd_to_sample(snd_info *sp)
 }
 
 
-static XEN g_is_snd_to_sample(XEN os) 
+static Xen g_is_snd_to_sample(Xen os) 
 {
   #define H_is_snd_to_sample "(" S_is_snd_to_sample " gen): " PROC_TRUE " if gen is an " S_snd_to_sample " generator"
   return(C_bool_to_Xen_boolean((mus_is_xen(os)) && 
-			  (is_snd_to_sample(XEN_TO_MUS_ANY(os)))));
+			  (is_snd_to_sample(Xen_to_mus_any(os)))));
 }
 
 
-static XEN g_snd_to_sample(XEN os, XEN frame, XEN chan)
+static Xen g_snd_to_sample(Xen os, Xen frame, Xen chan)
 {
   #define H_snd_to_sample "(" S_snd_to_sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
-  Xen_check_type((mus_is_xen(os)) && (is_snd_to_sample(XEN_TO_MUS_ANY(os))), os, 1, S_snd_to_sample, "a " S_snd_to_sample " gen");
+  Xen_check_type((mus_is_xen(os)) && (is_snd_to_sample(Xen_to_mus_any(os))), os, 1, S_snd_to_sample, "a " S_snd_to_sample " gen");
   Xen_check_type(Xen_is_long_long_int(frame), frame, 2, S_snd_to_sample, "an integer");
   Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 3, S_snd_to_sample, "an integer");
-  return(C_double_to_Xen_real(snd_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), 
+  return(C_double_to_Xen_real(snd_to_sample_read((mus_any *)Xen_to_mus_any(os), 
 					    Xen_llong_to_C_llong(frame), 
 					    (Xen_is_integer(chan)) ? Xen_integer_to_C_int(chan) : 0)));
 }
 
 
-static XEN g_make_snd_to_sample(XEN snd)
+static Xen g_make_snd_to_sample(Xen snd)
 {
   #define H_make_snd_to_sample "(" S_make_snd_to_sample " snd): return a new " S_snd_to_sample " (Snd to CLM input) generator"
   mus_any *ge;
@@ -8978,12 +8978,12 @@ static XEN g_make_snd_to_sample(XEN snd)
 }
 
 
-static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
+static Xen g_edit_list_to_function(Xen snd, Xen chn, Xen start, Xen end)
 {
   #define H_edit_list_to_function "(" S_edit_list_to_function " :optional snd chn start end): function encapsulating edits"
   chan_info *cp;
   char *funcstr = NULL;
-  XEN func;
+  Xen func;
   int start_pos = 1, end_pos = -1;
 
   ASSERT_CHANNEL(S_edit_list_to_function, snd, chn, 1);
@@ -9118,7 +9118,7 @@ Xen_wrap_4_optional_args(g_edit_list_to_function_w, g_edit_list_to_function)
 Xen_wrap_1_arg(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 
 #if HAVE_SCHEME
-#define XEN_DEFINE_DIRECT_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+#define Xen_define_direct_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
   s7_pointer sym, f;							\
   sym = s7_define_safe_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc); \
@@ -9126,7 +9126,7 @@ Xen_wrap_1_arg(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
   s7_function_set_returns_temp(f);\
   } while (0)
 #else
-#define XEN_DEFINE_DIRECT_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#define Xen_define_direct_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #endif
 
 
@@ -9139,25 +9139,25 @@ void g_init_edits(void)
 #endif
 
 #if HAVE_RUBY
-  rb_define_method(sf_tag, "to_s", XEN_PROCEDURE_CAST print_sf, 0);
-  rb_define_method(sf_tag, "call", XEN_PROCEDURE_CAST g_read_sample, 0);
+  rb_define_method(sf_tag, "to_s", Xen_procedure_cast print_sf, 0);
+  rb_define_method(sf_tag, "call", Xen_procedure_cast g_read_sample, 0);
 #endif
 
 #if HAVE_FORTH
   fth_set_object_inspect(sf_tag, print_sf);
   fth_set_object_free(sf_tag, free_sf);
-  fth_set_object_apply(sf_tag, XEN_PROCEDURE_CAST g_read_sample, 0, 0, 0);
+  fth_set_object_apply(sf_tag, Xen_procedure_cast g_read_sample, 0, 0, 0);
 #endif
 
   Xen_define_constant(S_current_edit_position,   AT_CURRENT_EDIT_POSITION,  "represents the current edit history list position (-1)");
 
   Xen_define_safe_procedure(S_make_sampler,           g_make_sampler_w,           0, 5, 0, H_make_sampler);
   Xen_define_safe_procedure(S_make_region_sampler,    g_make_region_sampler_w,    1, 3, 0, H_make_region_sampler);
-  XEN_DEFINE_DIRECT_PROCEDURE(S_read_sample,          g_read_sample_w,            1, 0, 0, H_read_sample);
-  XEN_DEFINE_DIRECT_PROCEDURE(S_read_sample_with_direction, g_read_sample_with_direction_w, 2, 0, 0, H_read_sample_with_direction);
+  Xen_define_direct_procedure(S_read_sample,          g_read_sample_w,            1, 0, 0, H_read_sample);
+  Xen_define_direct_procedure(S_read_sample_with_direction, g_read_sample_with_direction_w, 2, 0, 0, H_read_sample_with_direction);
   Xen_define_safe_procedure(S_read_region_sample,     g_read_sample_w,            1, 0, 0, H_read_sample);
-  XEN_DEFINE_DIRECT_PROCEDURE(S_next_sample,          g_next_sample_w,            1, 0, 0, H_next_sample);
-  XEN_DEFINE_DIRECT_PROCEDURE(S_previous_sample,      g_previous_sample_w,        1, 0, 0, H_previous_sample);
+  Xen_define_direct_procedure(S_next_sample,          g_next_sample_w,            1, 0, 0, H_next_sample);
+  Xen_define_direct_procedure(S_previous_sample,      g_previous_sample_w,        1, 0, 0, H_previous_sample);
   Xen_define_safe_procedure(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
   Xen_define_safe_procedure(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
   Xen_define_safe_procedure(S_is_sampler,             g_is_sampler_w,              1, 0, 0, H_is_sampler);

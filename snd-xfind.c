@@ -301,7 +301,7 @@ void save_find_dialog_state(FILE *fd)
 }
 
 
-static XEN g_find_dialog(XEN managed, XEN text)
+static Xen g_find_dialog(Xen managed, Xen text)
 {
   #define H_find_dialog "(" S_find_dialog " :optional managed text): create and activate the Edit:Find dialog, return the dialog widget. \
 If 'text' is included, it is preloaded into the find dialog text widget."
@@ -313,18 +313,18 @@ If 'text' is included, it is preloaded into the find dialog text widget."
   if ((edit_find_text) && (Xen_is_string(text)))
     XmTextSetString(edit_find_text, (char *)Xen_string_to_C_string(text));
 
-  return(XEN_WRAP_WIDGET(edit_find_dialog));
+  return(Xen_wrap_widget(edit_find_dialog));
 }
 
 
-static XEN g_find_dialog_widgets(void)
+static Xen g_find_dialog_widgets(void)
 {
   if (edit_find_dialog)
-    return(Xen_cons(XEN_WRAP_WIDGET(edit_find_dialog),
-	     Xen_cons(XEN_WRAP_WIDGET(edit_find_text),
-  	       Xen_cons(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),           /* find next */
-		 Xen_cons(XEN_WRAP_WIDGET(previousB),                                                          /* find previous */
-		   Xen_cons(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)),   /* go away */
+    return(Xen_cons(Xen_wrap_widget(edit_find_dialog),
+	     Xen_cons(Xen_wrap_widget(edit_find_text),
+  	       Xen_cons(Xen_wrap_widget(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),           /* find next */
+		 Xen_cons(Xen_wrap_widget(previousB),                                                          /* find previous */
+		   Xen_cons(Xen_wrap_widget(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)),   /* go away */
 		     Xen_empty_list))))));
   return(Xen_empty_list);
 }

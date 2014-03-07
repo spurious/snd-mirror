@@ -18,9 +18,9 @@
 #define activate_widget(Wid) Wid = 0
 #define deactivate_widget(Wid) Wid = 0
 
-#define XEN_WRAP_WIDGET(Value) Xen_false
-#define XEN_WRAP_WINDOW(Value) Xen_false
-#define XEN_UNWRAP_WIDGET(Value) 0
+#define Xen_wrap_widget(Value) Xen_false
+#define Xen_wrap_window(Value) Xen_false
+#define Xen_unwrap_widget(Value) 0
 #define Xen_is_widget(Value) 0
 #define NULL_WIDGET 0
 #define LOTSA_PIXELS 10000

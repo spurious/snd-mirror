@@ -215,7 +215,7 @@ static char **load_path_to_string_array(int *len)
 {
   char **cdirs = NULL;
   int dir_len = 0, i, j = 0;
-  XEN dirs;
+  Xen dirs;
 
   dirs = Xen_load_path;
   dir_len = Xen_list_length(dirs);
@@ -3691,7 +3691,7 @@ static char *find_sources(void) /* returns directory name where it finds extensi
   /* mimic Forth code below -- get *load-path* value and run through it */
   {
       int i, len, base_len;
-      XEN load_path;
+      Xen load_path;
       load_path = Xen_load_path;
       len = Xen_list_length(load_path);
       base_len = strlen(BASE_FILE);
@@ -3715,7 +3715,7 @@ static char *find_sources(void) /* returns directory name where it finds extensi
 
 #if HAVE_RUBY
   {
-    XEN xfile;
+    Xen xfile;
     xfile = rb_find_file(C_string_to_Xen_string(BASE_FILE));
     if (Xen_is_string(xfile))
       file = mus_expand_filename(Xen_string_to_C_string(xfile));
@@ -3726,7 +3726,7 @@ static char *find_sources(void) /* returns directory name where it finds extensi
     {
       /* taken from fth/src/misc.c -- fth_find_file looks for an already-loaded file */
       int i, len, base_len;
-      XEN load_path;
+      Xen load_path;
       load_path = Xen_load_path;
       len = fth_array_length(load_path);
       base_len = strlen(BASE_FILE);
