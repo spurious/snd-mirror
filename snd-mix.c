@@ -3244,7 +3244,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   else edname = S_mix_vct;
 
   bg = beg_to_sample(beg, S_mix_vct);
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
   len = mus_vct_length(v);
 
   with_mixer = virtual_mix_ok(cp, cp->edit_ctr);

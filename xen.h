@@ -1618,6 +1618,8 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define C_string_to_Xen_value(a)         XEN_NAME_AS_C_STRING_TO_VALUE(a)
 #define Xen_ulong_to_C_ulong(a)          XEN_TO_C_ULONG(a)
 #define Xen_ullong_to_C_ullong(a)        XEN_TO_C_ULONG_LONG(a)
+#define Xen_wrap_C_pointer(a)            XEN_WRAP_C_POINTER(a)
+#define Xen_unwrap_C_pointer(a)          XEN_UNWRAP_C_POINTER(a)
 #define Xen_load(a)                      XEN_LOAD_FILE(a)
 #define Xen_documentation(a)             XEN_OBJECT_HELP(a)
 #define Xen_vector_rank(a)               XEN_VECTOR_RANK(a)

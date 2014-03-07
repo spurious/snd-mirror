@@ -149,7 +149,7 @@ int mus_vct_print_length(void)
 vct *xen_to_vct(XEN arg)
 {
   if (mus_is_vct(arg))
-    return((vct *)XEN_TO_VCT(arg));
+    return((vct *)Xen_to_vct(arg));
   return(NULL);
 }
 
@@ -260,7 +260,7 @@ static XEN g_vct_to_readable_string(XEN obj)
 
   Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_to_string, "a vct");
 
-  vstr = mus_vct_to_readable_string(XEN_TO_VCT(obj));
+  vstr = mus_vct_to_readable_string(Xen_to_vct(obj));
   result = C_string_to_Xen_string(vstr);
   free(vstr);
   return(result);
@@ -289,7 +289,7 @@ Xen_wrap_print(vct, print_vct, mus_vct_to_string)
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
   if ((!(mus_is_vct(obj1))) || (!(mus_is_vct(obj2)))) return(Xen_false);
-  return(C_bool_to_Xen_boolean(mus_vct_is_equal(XEN_TO_VCT(obj1), XEN_TO_VCT(obj2))));
+  return(C_bool_to_Xen_boolean(mus_vct_is_equal(Xen_to_vct(obj1), Xen_to_vct(obj2))));
 }
 
 vct *mus_vct_make(mus_long_t len)
@@ -397,7 +397,7 @@ static XEN g_vct_length(XEN obj)
   #define H_vct_length "(" S_vct_length " v): length of vct v"
   vct *v;
   Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_length, "a vct");
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
   return(C_llong_to_Xen_llong(mus_vct_length(v)));
 }
 
@@ -411,7 +411,7 @@ static XEN g_vct_copy(XEN obj)
 
   Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_copy, "a vct");
 
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
   len = mus_vct_length(v);
   if (len > 0)
     {
@@ -471,7 +471,7 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
   Xen_check_type(Xen_is_long_long_int(oldi), oldi, 3, S_vct_moveB, "an integer");
   Xen_check_type(Xen_is_boolean_or_unbound(backwards), backwards, 4, S_vct_moveB, "a boolean");
 
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
   d = mus_vct_data(v);
   ni = Xen_llong_to_C_llong(newi);
   nj = Xen_llong_to_C_llong(oldi);
@@ -510,7 +510,7 @@ static XEN g_vct_ref(XEN obj, XEN pos)
   Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_ref, "a vct");
   Xen_check_type(Xen_is_long_long_int(pos), pos, 2, S_vct_ref, "an integer");
 
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
   loc = Xen_llong_to_C_llong(pos);
 
   if (loc < 0)
@@ -535,7 +535,7 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
   Xen_check_type(Xen_is_number(val), val, 3, S_vct_setB, "a real number");
 
   x = Xen_real_to_C_double(val);
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
   loc = Xen_llong_to_C_llong(pos);
 
   if (loc < 0)
@@ -559,8 +559,8 @@ static XEN g_vct_multiply(XEN obj1, XEN obj2)
   Xen_check_type(mus_is_vct(obj1), obj1, 1, S_vct_multiplyB, "a vct");
   Xen_check_type(mus_is_vct(obj2), obj2, 2, S_vct_multiplyB, "a vct");
 
-  v1 = XEN_TO_VCT(obj1);
-  v2 = XEN_TO_VCT(obj2);
+  v1 = Xen_to_vct(obj1);
+  v2 = Xen_to_vct(obj2);
   d1 = mus_vct_data(v1);
   d2 = mus_vct_data(v2);
   lim = MIN(mus_vct_length(v1), mus_vct_length(v2));
@@ -580,8 +580,8 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
   Xen_check_type(mus_is_vct(obj2), obj2, 2, S_vct_addB, "a vct");
   Xen_check_type(Xen_is_long_long_or_unbound(offs), offs, 3, S_vct_addB, "an integer");
 
-  v1 = XEN_TO_VCT(obj1);
-  v2 = XEN_TO_VCT(obj2);
+  v1 = Xen_to_vct(obj1);
+  v2 = Xen_to_vct(obj2);
   d1 = mus_vct_data(v1);
   d2 = mus_vct_data(v2);
   len1 = mus_vct_length(v1);
@@ -643,8 +643,8 @@ static XEN g_vct_subtract(XEN obj1, XEN obj2)
   Xen_check_type(mus_is_vct(obj1), obj1, 1, S_vct_subtractB, "a vct");
   Xen_check_type(mus_is_vct(obj2), obj2, 2, S_vct_subtractB, "a vct");
 
-  v1 = XEN_TO_VCT(obj1);
-  v2 = XEN_TO_VCT(obj2);
+  v1 = Xen_to_vct(obj1);
+  v2 = Xen_to_vct(obj2);
   d1 = mus_vct_data(v1);
   d2 = mus_vct_data(v2);
   lim = MIN(mus_vct_length(v1), mus_vct_length(v2));
@@ -681,7 +681,7 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
   Xen_check_type(mus_is_vct(obj1), obj1, 1, S_vct_scaleB, "a vct");
   Xen_check_type(Xen_is_number(obj2), obj2, 2, S_vct_scaleB, "a number");
 
-  v1 = XEN_TO_VCT(obj1);
+  v1 = Xen_to_vct(obj1);
   if (mus_vct_length(v1) == 0) return(obj1);
   d = mus_vct_data(v1);
 
@@ -723,7 +723,7 @@ static XEN g_vct_offset(XEN obj1, XEN obj2)
   Xen_check_type(mus_is_vct(obj1), obj1, 1, S_vct_offsetB, "a vct");
   Xen_check_type(Xen_is_number(obj2), obj2, 2, S_vct_offsetB, "a number");
 
-  v1 = XEN_TO_VCT(obj1);
+  v1 = Xen_to_vct(obj1);
   if (mus_vct_length(v1) == 0) return(obj1);
   d = mus_vct_data(v1);
 
@@ -747,7 +747,7 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
   Xen_check_type(mus_is_vct(obj1), obj1, 1, S_vct_fillB, "a vct");
   Xen_check_type(Xen_is_number(obj2), obj2, 2, S_vct_fillB, "a number");
 
-  v1 = XEN_TO_VCT(obj1);
+  v1 = Xen_to_vct(obj1);
   if (mus_vct_length(v1) == 0) return(obj1);
   d = mus_vct_data(v1);
 
@@ -817,7 +817,7 @@ XEN g_vct_peak(XEN obj)
 {
   #define H_vct_peak "(" S_vct_peak " v): max of abs of elements of v"
   Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_peak, "a vct");
-  return(C_double_to_Xen_real(mus_vct_peak(XEN_TO_VCT(obj))));
+  return(C_double_to_Xen_real(mus_vct_peak(Xen_to_vct(obj))));
 }
 
 
@@ -832,7 +832,7 @@ static XEN g_vct_peak_and_location(XEN obj)
   mus_float_t *d;
 
   Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_peak, "a vct");
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
   d = mus_vct_data(v);
 
   for (i = 0; i < mus_vct_length(v); i++)
@@ -864,7 +864,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   if (istart < 0)
     Xen_out_of_range_error(S_vct_subseq, 2, start, "start < 0?");
 
-  vold = XEN_TO_VCT(vobj);
+  vold = Xen_to_vct(vobj);
   old_len = mus_vct_length(vold);
 
   if (Xen_is_long_long_int(end))
@@ -884,7 +884,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   if (mus_is_vct(newv))
     res = newv;
   else res = xen_make_vct(new_len, (mus_float_t *)calloc(new_len, sizeof(mus_float_t)));
-  vnew = XEN_TO_VCT(res);
+  vnew = Xen_to_vct(res);
 
   if (new_len > mus_vct_length(vnew)) 
     new_len = mus_vct_length(vnew);
@@ -912,7 +912,7 @@ XEN xen_list_to_vct(XEN lst)
     scv = xen_make_vct(len, (mus_float_t *)calloc(len, sizeof(mus_float_t)));
   else scv = xen_make_vct(0, NULL);
 
-  v = XEN_TO_VCT(scv);
+  v = Xen_to_vct(scv);
   d = mus_vct_data(v);
   for (i = 0, lst1 = Xen_copy_arg(lst); i < len; i++, lst1 = Xen_cdr(lst1)) 
     {
@@ -949,7 +949,7 @@ static XEN g_vct_to_list(XEN vobj)
   vct *v;
   Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_to_list, "a vct");
 
-  v = XEN_TO_VCT(vobj);
+  v = Xen_to_vct(vobj);
   if (mus_vct_length(v) == 0)
     return(Xen_empty_list);
 
@@ -972,7 +972,7 @@ static XEN g_vector_to_vct(XEN vect)
     scv = xen_make_vct(len, (mus_float_t *)calloc(len, sizeof(mus_float_t)));
   else scv = xen_make_vct(0, NULL);
 
-  v = XEN_TO_VCT(scv);
+  v = Xen_to_vct(scv);
   d = mus_vct_data(v);
   for (i = 0; i < len; i++) 
     d[i] = (mus_float_t)Xen_real_to_C_double(Xen_vector_ref(vect, i));
@@ -990,7 +990,7 @@ static XEN g_vct_to_vector(XEN vobj)
   XEN new_vect;
 
   Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_to_vector, "a vct");
-  v = XEN_TO_VCT(vobj);
+  v = Xen_to_vct(vobj);
   len = mus_vct_length(v);
   new_vect = Xen_make_vector(len, C_double_to_Xen_real(0.0));
 
@@ -1024,7 +1024,7 @@ static XEN g_vct_reverse(XEN vobj, XEN size)
   Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_reverse, "a vct");
   Xen_check_type(Xen_is_long_long_or_unbound(size), size, 2, S_vct_reverse, "an integer");
 
-  v = XEN_TO_VCT(vobj);
+  v = Xen_to_vct(vobj);
   if (Xen_is_long_long_int(size))
     len = Xen_llong_to_C_llong(size);
   if ((len <= 0) || (len > mus_vct_length(v)))
@@ -1054,7 +1054,7 @@ static XEN g_vct_max(XEN vobj)
   mus_float_t mx = 0.0;
 
   Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_max, "a vct");
-  v = XEN_TO_VCT(vobj);
+  v = Xen_to_vct(vobj);
 
   len = mus_vct_length(v);
   if (len > 0)
@@ -1079,7 +1079,7 @@ static XEN g_vct_min(XEN vobj)
   mus_float_t mx = 0.0;
 
   Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_min, "a vct");
-  v = XEN_TO_VCT(vobj);
+  v = Xen_to_vct(vobj);
 
   len = mus_vct_length(v);
   if (len > 0)
@@ -1126,7 +1126,7 @@ static XEN g_vct_each(XEN obj)
   vct *v;
   mus_float_t *d;
 
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
   d = mus_vct_data(v);
 
   for (i = 0; i < mus_vct_length(v); i++)
@@ -1143,8 +1143,8 @@ static XEN g_vct_compare(XEN vr1, XEN vr2)
 
   if ((mus_is_vct(vr1)) && (mus_is_vct(vr2)))
     {
-      v1 = XEN_TO_VCT(vr1);
-      v2 = XEN_TO_VCT(vr2);
+      v1 = Xen_to_vct(vr1);
+      v2 = Xen_to_vct(vr2);
       d1 = mus_vct_data(v1);
       d2 = mus_vct_data(v2);
 
@@ -1195,7 +1195,7 @@ static XEN g_vct_map(XEN obj)
       vct *v;
       mus_float_t *d;
       
-      v = XEN_TO_VCT(obj);
+      v = Xen_to_vct(obj);
       d = mus_vct_data(v);
       mus_float_t *buffer = (mus_float_t *)calloc(mus_vct_length(v), sizeof(mus_float_t));
 
@@ -1215,7 +1215,7 @@ static XEN g_vct_map_store(XEN obj)
       vct *v;
       mus_float_t *d;
 
-      v = XEN_TO_VCT(obj);
+      v = Xen_to_vct(obj);
       d = mus_vct_data(v);
 
       for (i = 0; i < mus_vct_length(v); i++)
@@ -1341,13 +1341,13 @@ static XEN rb_set_vct_first(XEN obj, XEN val)
 
 static XEN rb_vct_last(XEN obj)
 {
-  return g_vct_ref(obj, C_int_to_Xen_integer(mus_vct_length(XEN_TO_VCT(obj)) - 1));
+  return g_vct_ref(obj, C_int_to_Xen_integer(mus_vct_length(Xen_to_vct(obj)) - 1));
 }
 
 
 static XEN rb_set_vct_last(XEN obj, XEN val)
 {
-  return g_vct_set(obj, C_int_to_Xen_integer(mus_vct_length(XEN_TO_VCT(obj)) - 1), val);
+  return g_vct_set(obj, C_int_to_Xen_integer(mus_vct_length(Xen_to_vct(obj)) - 1), val);
 }
 #endif
 

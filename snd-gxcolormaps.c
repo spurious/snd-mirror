@@ -264,16 +264,16 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
 		  Xen_list_2(C_string_to_Xen_string(S_add_colormap ": function did not return a list of vcts! ~A"),
 			     xrgb));
 
-      xr = XEN_TO_VCT(Xen_list_ref(xrgb, 0));
+      xr = Xen_to_vct(Xen_list_ref(xrgb, 0));
       xrdata = mus_vct_data(xr);
       if (mus_vct_length(xr) < size)
 	Xen_error(Xen_make_error_type("colormap-error"),
 		  Xen_list_2(C_string_to_Xen_string(S_add_colormap ": function did not return a list of vcts of the correct size: ~A"),
 			     xrgb));
 
-      xg = XEN_TO_VCT(Xen_list_ref(xrgb, 1));
+      xg = Xen_to_vct(Xen_list_ref(xrgb, 1));
       xgdata = mus_vct_data(xg);
-      xb = XEN_TO_VCT(Xen_list_ref(xrgb, 2));
+      xb = Xen_to_vct(Xen_list_ref(xrgb, 2));
       xbdata = mus_vct_data(xb);
       rgb = make_base_rgb(size);
       for (i = 0; i < size; i++)

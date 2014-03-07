@@ -8827,7 +8827,7 @@
 (CFNC-3.12 "void gtk_action_bar_pack_end GtkActionBar* bar GtkWidget* child")
 (CFNC-3.12 "void gtk_header_bar_set_has_subtitle GtkHeaderBar* bar gboolean setting")
 (CFNC-3.12 "gboolean gtk_header_bar_get_has_subtitle GtkHeaderBar* bar")
-(CFNC-3.12 "void gtk_header_bar_set_decoration_layout GtkHeaderBar* bar const gchar* layout")
+(CFNC-3.12 "void gtk_header_bar_set_decoration_layout GtkHeaderBar* bar gchar* layout" 'const)
 (CFNC-3.12 "gchar* gtk_header_bar_get_decoration_layout GtkHeaderBar* bar" 'const)
 (CFNC-3.12 "gboolean gtk_icon_info_is_symbolic GtkIconInfo* icon_info")
 (CFNC-3.12 "GtkTextDirection gtk_get_locale_direction void")

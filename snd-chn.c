@@ -7444,7 +7444,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
 	return(C_llong_to_Xen_llong(mus_sound_data_length(XEN_TO_SOUND_DATA(snd))));
 
       if (mus_is_vct(snd))                        /* vct-length */
-	return(C_llong_to_Xen_llong(mus_vct_length(XEN_TO_VCT(snd))));
+	return(C_llong_to_Xen_llong(mus_vct_length(Xen_to_vct(snd))));
 
       if (xen_is_mix(snd))                        /* mix-length */
 	return(g_mix_length(snd));
@@ -9412,7 +9412,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  if (Xen_is_list(ldata))
 	    data = Xen_list_ref(ldata, graph);
 	  else data = ldata;
-	  v = XEN_TO_VCT(data);
+	  v = Xen_to_vct(data);
 	  len = mus_vct_length(v);
 	  if (lg->len[graph] != len)
 	    {

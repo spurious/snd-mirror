@@ -1186,7 +1186,7 @@ static XEN g_ladspa_connect_port(XEN desc, XEN ptr, XEN port, XEN data)
   Xen_check_type(Xen_is_ulong_int(port), port, 3, S_ladspa_connect_port, "unsigned long");
   Xen_check_type(mus_is_vct(data), data, 4, S_ladspa_connect_port, "vct");
   descriptor = XEN_TO_C_Ladspa_Descriptor(desc);
-  samples = XEN_TO_VCT(data);
+  samples = Xen_to_vct(data);
   if (descriptor->connect_port) 
     descriptor->connect_port(XEN_TO_C_Ladspa_Handle(ptr),
 			     Xen_ulong_to_C_ulong(port),

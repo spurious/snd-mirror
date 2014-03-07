@@ -858,7 +858,7 @@ static void apply_fft(fft_state *fs)
 	gc_loc = snd_protect(res);
 	if (mus_is_vct(res))
 	  {
-	    v = XEN_TO_VCT(res);
+	    v = Xen_to_vct(res);
 	    len = mus_vct_length(v);
 	    memcpy((void *)fft_data, (void *)(mus_vct_data(v)), len * sizeof(mus_float_t));
 	  }
@@ -2256,7 +2256,7 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
   if ((trf < 0) || (trf > HAAR))
     Xen_out_of_range_error("snd-transform", 1, type, "invalid transform choice");
 
-  v = XEN_TO_VCT(data);
+  v = Xen_to_vct(data);
   vlen = mus_vct_length(v);
   vdata = mus_vct_data(v);
 

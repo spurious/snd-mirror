@@ -1500,7 +1500,7 @@ srate and channels.  'len' samples are written."
   Xen_check_type(Xen_is_integer(srate), srate, 4, S_array_to_file, "an integer");
   Xen_check_type(Xen_is_integer(channels), channels, 5, S_array_to_file, "an integer");
 
-  v = XEN_TO_VCT(data);
+  v = Xen_to_vct(data);
   samps = Xen_llong_to_C_llong(len);
   if (samps <= 0)
     Xen_out_of_range_error(S_array_to_file, 3, len, "samples <= 0?");
@@ -1540,7 +1540,7 @@ at frame 'start' and reading 'samples' samples altogether."
 			 filename,
 			 C_string_to_Xen_string(STRERROR(errno))));
 
-  v = XEN_TO_VCT(data);
+  v = Xen_to_vct(data);
 
   samps = Xen_llong_to_C_llong(samples);
   if (samps <= 0) 
@@ -2205,7 +2205,7 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
 
   if (!(mus_is_vct(vobj))) 
     vobj = xen_make_vct(sdlen, (mus_float_t *)calloc(sdlen, sizeof(mus_float_t)));
-  v = XEN_TO_VCT(vobj);
+  v = Xen_to_vct(vobj);
 
   if (sdlen < mus_vct_length(v)) 
     len = sdlen; 
@@ -2230,7 +2230,7 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   Xen_check_type(!Xen_is_bound(sdobj) || xen_is_sound_data(sdobj), sdobj, 2, S_vct_to_sound_data, "a sound-data object");
   Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 3, S_vct_to_sound_data, "an integer");
 
-  v = XEN_TO_VCT(vobj);
+  v = Xen_to_vct(vobj);
   chn = (Xen_is_integer(chan)) ? Xen_integer_to_C_int(chan) : 0;
   if (chn < 0)
     Xen_out_of_range_error(S_vct_to_sound_data, 3, chan, "invalid channel");

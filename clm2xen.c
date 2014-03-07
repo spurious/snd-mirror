@@ -112,21 +112,21 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 
 #if (!HAVE_SCHEME)
 
-#define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) \
+#define Xen_real_to_C_double_if_bound(Xen_Arg, C_Val, Caller, ArgNum) \
   if (Xen_is_bound(Xen_Arg)) {if (Xen_is_number(Xen_Arg)) C_Val = Xen_real_to_C_double(Xen_Arg); else Xen_check_type(false, Xen_Arg, ArgNum, Caller, "a number");}
 
-#define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
+#define Xen_to_C_double_or_error(Xen_Arg, C_Val, Caller, ArgNum) \
    if (Xen_is_number(Xen_Arg)) C_Val = Xen_real_to_C_double(Xen_Arg); else Xen_check_type(false, Xen_Arg, ArgNum, Caller, "a number")
 
-#define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
+#define Xen_to_C_integer_or_error(Xen_Arg, C_Val, Caller, ArgNum) \
   if (Xen_is_integer(Xen_Arg)) C_Val = Xen_integer_to_C_int(Xen_Arg); else Xen_check_type(false, Xen_Arg, ArgNum, Caller, "an integer")
 
 #define XEN_NULL 0
 
 #if (HAVE_FORTH) || (HAVE_RUBY)
-  #define XEN_OBJECT_REF_CHECKED(Obj, Type) (Xen_c_object_is_type(Obj, Type) ? Xen_object_ref(Obj) : NULL)
+  #define Xen_object_ref_checked(Obj, Type) (Xen_c_object_is_type(Obj, Type) ? Xen_object_ref(Obj) : NULL)
 #else
-  #define XEN_OBJECT_REF_CHECKED(Obj, Type) NULL
+  #define Xen_object_ref_checked(Obj, Type) NULL
 #endif
 #endif
 
@@ -134,12 +134,12 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #if HAVE_SCHEME
 #define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
 
-#define XEN_OBJECT_REF_CHECKED(Obj, Type) imported_s7_object_value_checked(Obj, Type)
+#define Xen_object_ref_checked(Obj, Type) imported_s7_object_value_checked(Obj, Type)
 #define XEN_NULL NULL
 
-#define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) if (Xen_is_bound(Xen_Arg)) C_Val = Xen_real_to_C_double(Xen_Arg)
-#define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) C_Val = Xen_real_to_C_double(Xen_Arg)
-#define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) C_Val = Xen_integer_to_C_int(Xen_Arg)
+#define Xen_real_to_C_double_if_bound(Xen_Arg, C_Val, Caller, ArgNum) if (Xen_is_bound(Xen_Arg)) C_Val = Xen_real_to_C_double(Xen_Arg)
+#define Xen_to_C_double_or_error(Xen_Arg, C_Val, Caller, ArgNum) C_Val = Xen_real_to_C_double(Xen_Arg)
+#define Xen_to_C_integer_or_error(Xen_Arg, C_Val, Caller, ArgNum) C_Val = Xen_integer_to_C_int(Xen_Arg)
 #endif
 
 
@@ -314,7 +314,7 @@ static vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def)
   if ((!(Xen_is_keyword(key))) && (!(Xen_is_false(key))))
     {
       Xen_check_type(mus_is_vct(key), key, n, caller, "a vct");
-      return(XEN_TO_VCT(key));
+      return(Xen_to_vct(key));
     }
   return(def);
 }
@@ -547,7 +547,7 @@ static XEN g_radians_to_hz(XEN val)
 {
   #define H_radians_to_hz "(" S_radians_to_hz " rads): convert radians per sample to frequency in Hz: rads * srate / (2 * pi)"
   mus_float_t x = 0.0;
-  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_radians_to_hz, 1);
+  Xen_to_C_double_or_error(val, x, S_radians_to_hz, 1);
   return(C_double_to_Xen_real(mus_radians_to_hz(x)));
 }
 
@@ -556,7 +556,7 @@ static XEN g_hz_to_radians(XEN val)
 {
   #define H_hz_to_radians "(" S_hz_to_radians " hz): convert frequency in Hz to radians per sample: hz * 2 * pi / srate"
   mus_float_t x = 0.0;
-  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_hz_to_radians, 1);
+  Xen_to_C_double_or_error(val, x, S_hz_to_radians, 1);
   return(C_double_to_Xen_real(mus_hz_to_radians(x)));
 }
 
@@ -565,7 +565,7 @@ static XEN g_radians_to_degrees(XEN val)
 {
   #define H_radians_to_degrees "(" S_radians_to_degrees " rads): convert radians to degrees: rads * 360 / (2 * pi)"
   mus_float_t x = 0.0;
-  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_radians_to_degrees, 1);
+  Xen_to_C_double_or_error(val, x, S_radians_to_degrees, 1);
   return(C_double_to_Xen_real(mus_radians_to_degrees(x)));
 }
 
@@ -574,7 +574,7 @@ static XEN g_degrees_to_radians(XEN val)
 {
   #define H_degrees_to_radians "(" S_degrees_to_radians " deg): convert degrees to radians: deg * 2 * pi / 360"
   mus_float_t x = 0.0;
-  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_degrees_to_radians, 1);
+  Xen_to_C_double_or_error(val, x, S_degrees_to_radians, 1);
   return(C_double_to_Xen_real(mus_degrees_to_radians(x)));
 }
 
@@ -583,7 +583,7 @@ static XEN g_db_to_linear(XEN val)
 {
   #define H_db_to_linear "(" S_db_to_linear " db): convert decibel value db to linear value: pow(10, db / 20)"
   mus_float_t x = 0.0;
-  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_db_to_linear, 1);
+  Xen_to_C_double_or_error(val, x, S_db_to_linear, 1);
   return(C_double_to_Xen_real(mus_db_to_linear(x)));
 }
 
@@ -592,7 +592,7 @@ static XEN g_linear_to_db(XEN val)
 {
   #define H_linear_to_db "(" S_linear_to_db " lin): convert linear value to decibels: 20 * log10(lin)"
   mus_float_t x = 0.0;
-  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_linear_to_db, 1);
+  Xen_to_C_double_or_error(val, x, S_linear_to_db, 1);
   return(C_double_to_Xen_real(mus_linear_to_db(x)));
 }
 
@@ -601,7 +601,7 @@ static XEN g_seconds_to_samples(XEN val)
 {
   #define H_seconds_to_samples "(" S_seconds_to_samples " secs): use " S_mus_srate " to convert seconds to samples"
   mus_float_t x = 0.0;
-  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_seconds_to_samples, 1);
+  Xen_to_C_double_or_error(val, x, S_seconds_to_samples, 1);
   return(C_llong_to_Xen_llong(mus_seconds_to_samples(x)));
 }
 
@@ -734,8 +734,8 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
   Xen_check_type(mus_is_vct(val2), val2, 2, S_dot_product, "a vct");
   Xen_check_type(Xen_is_long_long_or_unbound(size), size, 3, S_dot_product, "an integer");
 
-  v1 = XEN_TO_VCT(val1);
-  v2 = XEN_TO_VCT(val2);
+  v1 = Xen_to_vct(val1);
+  v2 = Xen_to_vct(val2);
   if (Xen_is_long_long_int(size))
     {
       len = Xen_llong_to_C_llong(size);
@@ -775,7 +775,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
   freq = Xen_complex_to_C_complex(val1);
   if (mus_is_vct(val2))
     {
-      v = XEN_TO_VCT(val2);
+      v = Xen_to_vct(val2);
       len = mus_vct_length(v);
     }
   else
@@ -813,8 +813,8 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
   Xen_check_type(mus_is_vct(val2), val2, 2, caller, "a vct");
   Xen_check_type(Xen_is_long_long_or_unbound(ulen), ulen, 3, caller, "an integer");
 
-  v1 = XEN_TO_VCT(val1);
-  v2 = XEN_TO_VCT(val2);
+  v1 = Xen_to_vct(val1);
+  v2 = Xen_to_vct(val2);
   if (Xen_is_long_long_int(ulen))
     {
       len = Xen_llong_to_C_llong(ulen);
@@ -882,8 +882,8 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
   Xen_check_type((mus_is_vct(url)), url, 1, S_mus_fft, "a vct");
   Xen_check_type((mus_is_vct(uim)), uim, 2, S_mus_fft, "a vct");
 
-  v1 = XEN_TO_VCT(url);
-  v2 = XEN_TO_VCT(uim);
+  v1 = Xen_to_vct(url);
+  v2 = Xen_to_vct(uim);
 
   if (Xen_is_integer(usign)) 
     sign = Xen_integer_to_C_int(usign); 
@@ -987,9 +987,9 @@ and type determines how the spectral data is scaled:\n\
   Xen_check_type((mus_is_vct(uim)), uim, 2, S_spectrum, "a vct");
   if (!Xen_is_false(uwin)) Xen_check_type((mus_is_vct(uwin)), uwin, 3, S_spectrum, "a vct or " PROC_FALSE);
 
-  v1 = XEN_TO_VCT(url);
-  v2 = XEN_TO_VCT(uim);
-  if (!Xen_is_false(uwin)) v3 = XEN_TO_VCT(uwin);
+  v1 = Xen_to_vct(url);
+  v2 = Xen_to_vct(uim);
+  if (!Xen_is_false(uwin)) v3 = Xen_to_vct(uwin);
 
   n = mus_vct_length(v1);
   if (n > mus_vct_length(v2))
@@ -1024,7 +1024,7 @@ static XEN g_autocorrelate(XEN reals)
   /* assumes length is power of 2 */
   vct *v1 = NULL;
   Xen_check_type(mus_is_vct(reals), reals, 1, S_autocorrelate, "a vct");
-  v1 = XEN_TO_VCT(reals);
+  v1 = Xen_to_vct(reals);
   if (mus_vct_length(v1) > 0)
     mus_autocorrelate(mus_vct_data(v1), mus_vct_length(v1));
   return(reals);
@@ -1040,8 +1040,8 @@ static XEN g_correlate(XEN data1, XEN data2)
   Xen_check_type(mus_is_vct(data1), data1, 1, S_correlate, "a vct");
   Xen_check_type(mus_is_vct(data2), data2, 2, S_correlate, "a vct");
 
-  v1 = XEN_TO_VCT(data1);
-  v2 = XEN_TO_VCT(data2);
+  v1 = Xen_to_vct(data1);
+  v2 = Xen_to_vct(data2);
   if (mus_vct_length(v1) < mus_vct_length(v2))
     size = mus_vct_length(v1);
   else size = mus_vct_length(v2);
@@ -1063,8 +1063,8 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
   Xen_check_type((mus_is_vct(url1)), url1, 1, S_convolution, "a vct");
   Xen_check_type((mus_is_vct(url2)), url2, 2, S_convolution, "a vct");
 
-  v1 = XEN_TO_VCT(url1);
-  v2 = XEN_TO_VCT(url2);
+  v1 = Xen_to_vct(url1);
+  v2 = Xen_to_vct(url2);
 
   if (Xen_is_integer(un)) 
     {
@@ -1098,7 +1098,7 @@ static XEN g_clear_array(XEN arr)
   #define H_clear_array "(" S_clear_array " v): clear vct v: v[i] = 0.0"
   vct *v;
   Xen_check_type(mus_is_vct(arr), arr, 1, S_clear_array, "a vct");
-  v = XEN_TO_VCT(arr);
+  v = Xen_to_vct(arr);
   if (mus_vct_length(v) > 0)
     memset((void *)(mus_vct_data(v)), 0, mus_vct_length(v) * sizeof(mus_float_t));
   return(arr);
@@ -1116,7 +1116,7 @@ of degree, so coeff[0] is the constant term."
   if (mus_is_vct(arr))
     {
       vct *v;
-      v = XEN_TO_VCT(arr);
+      v = Xen_to_vct(arr);
       return(C_double_to_Xen_real(mus_polynomial(mus_vct_data(v), Xen_real_to_C_double(x), mus_vct_length(v))));
     }
 
@@ -1152,7 +1152,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
 #endif
   Xen_check_type(Xen_is_long_long_or_unbound(size), size, 3, S_array_interp, "an integer");
 
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
   if (Xen_is_bound(size)) 
     {
       len = Xen_llong_to_C_llong(size); 
@@ -1188,7 +1188,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   if (!(mus_is_interp_type(itype)))
     Xen_out_of_range_error(S_mus_interpolate, 1, type, "unknown interp type");
 
-  v = XEN_TO_VCT(obj);
+  v = Xen_to_vct(obj);
 
   if (Xen_is_bound(size)) 
     {
@@ -1217,10 +1217,10 @@ static Xen_object_type_t mus_xen_tag;
 bool mus_is_xen(XEN obj) {return(Xen_c_object_is_type(obj, mus_xen_tag));}
 
 #define XEN_TO_C_GENERATOR(Xen_Arg, X_Val, C_Val, Checker, Caller, Descr) \
-  Xen_check_type((X_Val = (mus_xen *)XEN_OBJECT_REF_CHECKED(Xen_Arg, mus_xen_tag)) && (Checker(C_Val = (mus_any *)MUS_XEN_TO_MUS_ANY(X_Val))), Xen_Arg, 1, Caller, Descr)
+  Xen_check_type((X_Val = (mus_xen *)Xen_object_ref_checked(Xen_Arg, mus_xen_tag)) && (Checker(C_Val = (mus_any *)MUS_XEN_TO_MUS_ANY(X_Val))), Xen_Arg, 1, Caller, Descr)
 
 #define XEN_TO_C_ANY_GENERATOR(Xen_Arg, X_Val, C_Val, Caller, Descr) \
-  Xen_check_type((X_Val = (mus_xen *)XEN_OBJECT_REF_CHECKED(Xen_Arg, mus_xen_tag)) && (C_Val = (mus_any *)MUS_XEN_TO_MUS_ANY(X_Val)), Xen_Arg, 1, Caller, Descr)
+  Xen_check_type((X_Val = (mus_xen *)Xen_object_ref_checked(Xen_Arg, mus_xen_tag)) && (C_Val = (mus_any *)MUS_XEN_TO_MUS_ANY(X_Val)), Xen_Arg, 1, Caller, Descr)
 
 
 
@@ -1561,7 +1561,7 @@ static XEN g_mus_reset(XEN gen)
 {
   #define H_mus_reset "(" S_mus_reset " gen): clear out gen, setting it to its default starting state"
   mus_xen *ms;
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms)
     {
       mus_reset(ms->gen);
@@ -1590,12 +1590,12 @@ static XEN g_mus_run(XEN gen, XEN arg1, XEN arg2)
   #define H_mus_run "(" S_mus_run " gen (arg1 0.0) (arg2 0.0)): apply gen to arg1 and arg2"
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms)
     {
       mus_float_t a1 = 0.0, a2 = 0.0;
-      XEN_TO_C_DOUBLE_IF_BOUND(arg1, a1, S_mus_run, 2);
-      XEN_TO_C_DOUBLE_IF_BOUND(arg2, a2, S_mus_run, 3);
+      Xen_real_to_C_double_if_bound(arg1, a1, S_mus_run, 2);
+      Xen_real_to_C_double_if_bound(arg2, a2, S_mus_run, 3);
       return(C_double_to_Xen_real(mus_run(ms->gen, a1, a2)));
     }
 #if HAVE_SCHEME
@@ -1623,7 +1623,7 @@ static XEN g_mus_apply(XEN arglist)
     return(C_double_to_Xen_real(0.0));
 
   gen = Xen_car(arglist);
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms)
     {
       mus_any *g;
@@ -1657,7 +1657,7 @@ static XEN g_mus_describe(XEN gen)
   #define H_mus_describe "(" S_mus_describe " gen): return a string describing the state of CLM generator generator"
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms)
     {
       XEN result;
@@ -1683,7 +1683,7 @@ static XEN g_mus_describe(XEN gen)
 #if HAVE_SCHEME
 #define MUS_DOUBLE_GENERIC(Caller, CLM_case, Symbol)				\
   mus_xen *gn;                                                                \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (gn) return(C_double_to_Xen_real(CLM_case(gn->gen))); \
   if (s7_is_open_environment(gen)) \
     { \
@@ -1696,7 +1696,7 @@ static XEN g_mus_describe(XEN gen)
 
 #define MUS_SET_DOUBLE_GENERIC(Caller, CLM_case)                   \
   mus_xen *gn;                                                             \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   Xen_check_type(Xen_is_double(val), val, 2, S_setB Caller, "a float");   \
   if (gn) {CLM_case(gn->gen, Xen_real_to_C_double(val)); return(val);}	\
   if (s7_is_open_environment(gen)) \
@@ -1711,7 +1711,7 @@ static XEN g_mus_describe(XEN gen)
 
 #define MUS_LONG_LONG_GENERIC(Caller, CLM_case)                       \
   mus_xen *gn;                                                                \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (gn) return(C_llong_to_Xen_llong(CLM_case(gn->gen))); \
   if (s7_is_open_environment(gen)) \
     { \
@@ -1724,7 +1724,7 @@ static XEN g_mus_describe(XEN gen)
 
 #define MUS_SET_LONG_LONG_GENERIC(Caller, CLM_case)                \
   mus_xen *gn;                                                             \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   Xen_check_type(Xen_is_integer(val), val, 2, Caller, "an integer"); \
   if (gn) {CLM_case(gn->gen, Xen_llong_to_C_llong(val)); return(val);}	\
   if (s7_is_open_environment(gen)) \
@@ -1739,7 +1739,7 @@ static XEN g_mus_describe(XEN gen)
 
 #define MUS_INT_GENERIC(Caller, CLM_case)                             \
   mus_xen *gn;                                                                \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (gn) return(C_int_to_Xen_integer(CLM_case(gn->gen)));			\
   if (s7_is_open_environment(gen)) \
     { \
@@ -1754,13 +1754,13 @@ static XEN g_mus_describe(XEN gen)
 
 #define MUS_DOUBLE_GENERIC(Caller, CLM_case, Symbol)				\
   mus_xen *gn;                                                                \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (!gn) Xen_check_type(false, gen, 1, Caller, "a generator");  \
   return(C_double_to_Xen_real(CLM_case(gn->gen)));
 
 #define MUS_SET_DOUBLE_GENERIC(Caller, CLM_case)                   \
   mus_xen *gn;                                                             \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (!gn) Xen_check_type(false, gen, 1, S_setB Caller, "a generator");  \
   Xen_check_type(Xen_is_double(val), val, 2, S_setB Caller, "a float");   \
   CLM_case(gn->gen, Xen_real_to_C_double(val));				   \
@@ -1768,13 +1768,13 @@ static XEN g_mus_describe(XEN gen)
 
 #define MUS_LONG_LONG_GENERIC(Caller, CLM_case)                          \
   mus_xen *gn;                                                                \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (!gn) Xen_check_type(false, gen, 1, Caller, "a generator");  \
   return(C_llong_to_Xen_llong(CLM_case(gn->gen)));
 
 #define MUS_SET_LONG_LONG_GENERIC(Caller, CLM_case)                   \
   mus_xen *gn;                                                             \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (!gn) Xen_check_type(false, gen, 1, S_setB Caller, "a generator");  \
   Xen_check_type(Xen_is_integer(val), val, 2, S_setB Caller, "a float");   \
   CLM_case(gn->gen, Xen_llong_to_C_llong(val));				   \
@@ -1782,7 +1782,7 @@ static XEN g_mus_describe(XEN gen)
 
 #define MUS_INT_GENERIC(Caller, CLM_case)                             \
   mus_xen *gn;                                                                \
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (!gn) Xen_check_type(false, gen, 1, Caller, "a generator");  \
   return(C_int_to_Xen_integer(CLM_case(gn->gen))); 
 
@@ -1957,7 +1957,7 @@ static XEN g_mus_name(XEN gen)
   #define H_mus_name "(" S_mus_name " gen): gen's (type) name, if any"
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms) 
     return(C_string_to_Xen_string(mus_name(MUS_XEN_TO_MUS_ANY(ms))));
 #if HAVE_SCHEME
@@ -1976,7 +1976,7 @@ static XEN g_mus_name(XEN gen)
 static XEN g_mus_set_name(XEN gen, XEN name) 
 {
   mus_xen *ms;
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms)
     {
       Xen_check_type(Xen_is_string(name), name, 2, S_setB S_mus_name, "a string");
@@ -2001,7 +2001,7 @@ XEN g_mus_file_name(XEN gen)
 {
   #define H_mus_file_name "(" S_mus_file_name " gen): file associated with gen, if any"
   mus_xen *gn;             
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (gn) 
     return(C_string_to_Xen_string(mus_file_name(gn->gen)));
 #if HAVE_SCHEME
@@ -2022,7 +2022,7 @@ XEN g_mus_data(XEN gen)
   #define H_mus_data "(" S_mus_data " gen): gen's internal data (a vct), if any"
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms) 
     {
       if (ms->vcts)
@@ -2046,7 +2046,7 @@ static XEN g_mus_set_data(XEN gen, XEN val)
 {
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms) 
     {
       Xen_check_type((mus_is_vct(val)), val, 2, S_setB S_mus_data, "a vct");
@@ -2054,7 +2054,7 @@ static XEN g_mus_set_data(XEN gen, XEN val)
 	{
 	  vct *v;
 	  mus_any *ma;
-	  v = XEN_TO_VCT(val);
+	  v = Xen_to_vct(val);
 	  ma = ms->gen;
 	  mus_set_data(ma, mus_vct_data(v));  /* TO REMEMBER: if allocated, should have freed, and set to not allocated */
 	  ms->vcts[MUS_DATA_WRAPPER] = val;
@@ -2085,7 +2085,7 @@ static XEN g_mus_xcoeffs(XEN gen)
   #define H_mus_xcoeffs "(" S_mus_xcoeffs " gen): gen's filter xcoeffs (vct of coefficients on inputs)"
   mus_xen *ms;
   
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms) 
     {
       mus_any *g;
@@ -2122,7 +2122,7 @@ static XEN g_mus_ycoeffs(XEN gen)
   #define H_mus_ycoeffs "(" S_mus_ycoeffs " gen): gen's filter ycoeffs (vct of coefficients on outputs)"
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms) 
     {
       mus_any *g;
@@ -2159,11 +2159,11 @@ static XEN g_mus_xcoeff(XEN gen, XEN index)
   #define H_mus_xcoeff "(" S_mus_xcoeff " gen index): gen's filter xcoeff value at index (0-based)"
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms) 
     {
       int ind = 0;
-      XEN_TO_C_INTEGER_OR_ERROR(index, ind, S_mus_xcoeff, 2);
+      Xen_to_C_integer_or_error(index, ind, S_mus_xcoeff, 2);
       if (ind < 0)
 	Xen_out_of_range_error(S_mus_xcoeff, 2, index, "index must be non-negative");
       return(C_double_to_Xen_real(mus_xcoeff(MUS_XEN_TO_MUS_ANY(ms), ind)));
@@ -2185,13 +2185,13 @@ static XEN g_mus_set_xcoeff(XEN gen, XEN index, XEN val)
 {
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms) 
     {
       int ind = 0;
       mus_float_t x = 0.0;
-      XEN_TO_C_INTEGER_OR_ERROR(index, ind, S_setB S_mus_xcoeff, 2);
-      XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_setB S_mus_xcoeff, 3);
+      Xen_to_C_integer_or_error(index, ind, S_setB S_mus_xcoeff, 2);
+      Xen_to_C_double_or_error(val, x, S_setB S_mus_xcoeff, 3);
       if (ind < 0)
 	Xen_out_of_range_error(S_setB S_mus_xcoeff, 2, index, "index must be non-negative");
       mus_set_xcoeff(MUS_XEN_TO_MUS_ANY(ms), ind, x);
@@ -2216,11 +2216,11 @@ static XEN g_mus_ycoeff(XEN gen, XEN index)
   #define H_mus_ycoeff "(" S_mus_ycoeff " gen index): gen's filter ycoeff value at index (0-based)"
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms) 
     {
       int ind = 0;
-      XEN_TO_C_INTEGER_OR_ERROR(index, ind, S_mus_ycoeff, 2);
+      Xen_to_C_integer_or_error(index, ind, S_mus_ycoeff, 2);
       if (ind < 0)
 	Xen_out_of_range_error(S_mus_ycoeff, 2, index, "index must be non-negative");
       return(C_double_to_Xen_real(mus_ycoeff(MUS_XEN_TO_MUS_ANY(ms), ind)));
@@ -2242,13 +2242,13 @@ static XEN g_mus_set_ycoeff(XEN gen, XEN index, XEN val)
 {
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms) 
     {
       int ind = 0;
       mus_float_t x = 0.0;
-      XEN_TO_C_INTEGER_OR_ERROR(index, ind, S_setB S_mus_ycoeff, 2);
-      XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_setB S_mus_ycoeff, 3);
+      Xen_to_C_integer_or_error(index, ind, S_setB S_mus_ycoeff, 2);
+      Xen_to_C_double_or_error(val, x, S_setB S_mus_ycoeff, 3);
       if (ind < 0)
 	Xen_out_of_range_error(S_setB S_mus_ycoeff, 2, index, "index must be non-negative");
       mus_set_ycoeff(MUS_XEN_TO_MUS_ANY(ms), ind, x);
@@ -2273,7 +2273,7 @@ XEN g_mus_channels(XEN gen)
   #define H_mus_channels "(" S_mus_channels " gen): gen's " S_mus_channels " field, if any"
   mus_xen *gn;
 
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (gn)
     return(C_int_to_Xen_integer(mus_channels(gn->gen)));
 
@@ -2302,7 +2302,7 @@ XEN g_mus_length(XEN gen)
   #define H_mus_length "(" S_mus_length " gen): gen's length, if any"
   mus_xen *gn;
 
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (gn)
     return(C_llong_to_Xen_llong(mus_length(gn->gen)));
 
@@ -2310,7 +2310,7 @@ XEN g_mus_length(XEN gen)
     return(C_int_to_Xen_integer(mus_sound_data_length(XEN_TO_SOUND_DATA(gen))));
 
   if (mus_is_vct(gen))
-    return(C_int_to_Xen_integer(mus_vct_length(XEN_TO_VCT(gen))));
+    return(C_int_to_Xen_integer(mus_vct_length(Xen_to_vct(gen))));
 
 #if HAVE_SCHEME
   if (s7_is_open_environment(gen)) 
@@ -2330,13 +2330,13 @@ static XEN g_mus_set_length(XEN gen, XEN val)
 {
   mus_xen *ms;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (ms)
     {
       mus_long_t len = 0;
       mus_any *ptr = NULL;
 
-      XEN_TO_C_INTEGER_OR_ERROR(val, len, S_setB S_mus_length, 2);
+      Xen_to_C_integer_or_error(val, len, S_setB S_mus_length, 2);
       if (len <= 0)
 	Xen_out_of_range_error(S_setB S_mus_length, 1, val, "must be > 0");
 
@@ -2346,7 +2346,7 @@ static XEN g_mus_set_length(XEN gen, XEN val)
 	  if ((ms->vcts) && (!(Xen_is_eq(ms->vcts[MUS_DATA_WRAPPER], Xen_undefined))))
 	    {
 	      vct *v;
-	      v = XEN_TO_VCT(ms->vcts[MUS_DATA_WRAPPER]);
+	      v = Xen_to_vct(ms->vcts[MUS_DATA_WRAPPER]);
 	      if ((v) && (len > mus_vct_length(v)))
 		Xen_out_of_range_error(S_setB S_mus_length, 1, val, "must be <= current data size");
 	      /* set_offset refers only to env, set_width only to square_wave et al, set_location only readin */
@@ -2455,9 +2455,9 @@ static XEN g_make_oscil_bank(XEN freqs, XEN phases, XEN amps)
   Xen_check_type(mus_is_vct(freqs), freqs, 1, S_make_oscil_bank, "a vct");
   Xen_check_type(mus_is_vct(phases), phases, 2, S_make_oscil_bank, "a vct");
 
-  f = XEN_TO_VCT(freqs);
-  p = XEN_TO_VCT(phases);
-  if (mus_is_vct(amps)) a = XEN_TO_VCT(amps);
+  f = Xen_to_vct(freqs);
+  p = Xen_to_vct(phases);
+  if (mus_is_vct(amps)) a = Xen_to_vct(amps);
   
   ge = mus_make_oscil_bank(mus_vct_length(f), mus_vct_data(f), mus_vct_data(p), (a) ? mus_vct_data(a) : NULL);
 
@@ -2628,7 +2628,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 				   "initial-contents and initial-element in same call?");
 	  if (mus_is_vct(keys[initial_contents_key]))
 	    {
-	      initial_contents = XEN_TO_VCT(keys[initial_contents_key]);
+	      initial_contents = Xen_to_vct(keys[initial_contents_key]);
 	      orig_v = keys[initial_contents_key];
 	    }
 	  else
@@ -2642,7 +2642,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 					 C_string_to_Xen_string(caller)));
 
 		  orig_v = xen_list_to_vct(keys[initial_contents_key]);
-		  initial_contents = XEN_TO_VCT(orig_v);
+		  initial_contents = Xen_to_vct(orig_v);
 		  /* do I need to protect this until we read its contents? -- no extlang stuff except error returns */
 		}
 	      else Xen_check_type(Xen_is_false(keys[initial_contents_key]), 
@@ -2827,7 +2827,7 @@ The argument 'val' is returned."
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_delay, S_delay_tick, "a delay line");
-  XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_delay_tick, 2);
+  Xen_real_to_C_double_if_bound(input, in1, S_delay_tick, 2);
 
   return(C_double_to_Xen_real(mus_delay_tick(g, in1)));
 }
@@ -2842,8 +2842,8 @@ static XEN g_notch(XEN obj, XEN input, XEN pm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_notch, S_notch, "a notch filter");
-  XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_notch, 2);
-  XEN_TO_C_DOUBLE_IF_BOUND(pm, pm1, S_notch, 3);
+  Xen_real_to_C_double_if_bound(input, in1, S_notch, 2);
+  Xen_real_to_C_double_if_bound(pm, pm1, S_notch, 3);
 
   return(C_double_to_Xen_real(mus_notch(g, in1, pm1)));
 }
@@ -2857,8 +2857,8 @@ static XEN g_comb(XEN obj, XEN input, XEN pm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_comb, S_comb, "a comb generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_comb, 2);
-  XEN_TO_C_DOUBLE_IF_BOUND(pm, pm1, S_comb, 3);
+  Xen_real_to_C_double_if_bound(input, in1, S_comb, 2);
+  Xen_real_to_C_double_if_bound(pm, pm1, S_comb, 3);
 
   return(C_double_to_Xen_real(mus_comb(g, in1, pm1)));
 }
@@ -2931,8 +2931,8 @@ static XEN g_filtered_comb(XEN obj, XEN input, XEN pm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_filtered_comb, S_filtered_comb, "a filtered-comb generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_filtered_comb, 2);
-  XEN_TO_C_DOUBLE_IF_BOUND(pm, pm1, S_filtered_comb, 3);
+  Xen_real_to_C_double_if_bound(input, in1, S_filtered_comb, 2);
+  Xen_real_to_C_double_if_bound(pm, pm1, S_filtered_comb, 3);
 
   return(C_double_to_Xen_real(mus_filtered_comb(g, in1, pm1)));
 }
@@ -3005,8 +3005,8 @@ static XEN g_all_pass(XEN obj, XEN input, XEN pm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_all_pass, S_all_pass, "an all-pass filter");
-  XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_all_pass, 2);
-  XEN_TO_C_DOUBLE_IF_BOUND(pm, pm1, S_all_pass, 3);
+  Xen_real_to_C_double_if_bound(input, in1, S_all_pass, 2);
+  Xen_real_to_C_double_if_bound(pm, pm1, S_all_pass, 3);
 
   return(C_double_to_Xen_real(mus_all_pass(g, in1, pm1)));
 }
@@ -3079,7 +3079,7 @@ static XEN g_moving_average(XEN obj, XEN input)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_moving_average, S_moving_average, "a moving-average generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_moving_average, 2);
+  Xen_real_to_C_double_if_bound(input, in1, S_moving_average, 2);
 
   return(C_double_to_Xen_real(mus_moving_average(g, in1)));
 }
@@ -3093,7 +3093,7 @@ static XEN g_moving_max(XEN obj, XEN input)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_moving_max, S_moving_max, "a moving-max generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_moving_max, 2);
+  Xen_real_to_C_double_if_bound(input, in1, S_moving_max, 2);
 
   return(C_double_to_Xen_real(mus_moving_max(g, in1)));
 }
@@ -3107,7 +3107,7 @@ static XEN g_tap(XEN obj, XEN loc)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_tap, S_tap, "a delay line tap");
-  XEN_TO_C_DOUBLE_IF_BOUND(loc, dloc, S_tap, 3);
+  Xen_real_to_C_double_if_bound(loc, dloc, S_tap, 3);
 
   return(C_double_to_Xen_real(mus_tap(g, dloc)));
 }
@@ -3224,7 +3224,7 @@ static XEN g_ncos(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_ncos, S_ncos, "an ncos generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_ncos, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_ncos, 2);
 
   return(C_double_to_Xen_real(mus_ncos(g, fm1)));
 }
@@ -3286,7 +3286,7 @@ static XEN g_nsin(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_nsin, S_nsin, "an nsin generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_nsin, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_nsin, 2);
 
   return(C_double_to_Xen_real(mus_nsin(g, fm1)));
 }
@@ -3498,7 +3498,7 @@ fm modulates the rate at which the current number is changed."
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_rand, S_rand, "a rand generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_rand, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_rand, 2);
 
   return(C_double_to_Xen_real(mus_rand(g, fm1)));
 }
@@ -3521,7 +3521,7 @@ fm modulates the rate at which new segment end-points are chosen."
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_rand_interp, S_rand_interp, "a rand-interp generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_rand_interp, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_rand_interp, 2);
 
   return(C_double_to_Xen_real(mus_rand_interp(g, fm1)));
 }
@@ -3540,7 +3540,7 @@ static XEN g_mus_random(XEN a)
 the built-in 'random' function returns values between 0 and its argument"
   mus_float_t x = 0.0;
 
-  XEN_TO_C_DOUBLE_OR_ERROR(a, x, S_mus_random, 1);
+  Xen_to_C_double_or_error(a, x, S_mus_random, 1);
   return(C_double_to_Xen_real(mus_random(x)));
 }
 
@@ -3597,7 +3597,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   if (mus_is_vct(partials))
     {
       vct *v;
-      v = XEN_TO_VCT(partials);
+      v = Xen_to_vct(partials);
       partial_data = mus_vct_data(v);
       len = mus_vct_length(v);
       partials_allocated = false;
@@ -3633,7 +3633,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   gc_loc = s7_gc_protect(s7, table);
 #endif
 
-  f = XEN_TO_VCT(table);
+  f = Xen_to_vct(table);
 
   if (!partial_data)
     {
@@ -3690,7 +3690,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   if (mus_is_vct(partials))
     {
       vct *v;
-      v = XEN_TO_VCT(partials);
+      v = Xen_to_vct(partials);
       partial_data = mus_vct_data(v);
       len = mus_vct_length(v);
       partials_allocated = false;
@@ -3725,7 +3725,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   gc_loc = s7_gc_protect(s7, table);
 #endif
 
-  f = XEN_TO_VCT(table);
+  f = Xen_to_vct(table);
 
   if (!partial_data)
     {
@@ -3838,7 +3838,7 @@ with 'wrap-around' when gen's phase marches off either end of its table."
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_table_lookup, S_table_lookup, "a table-lookup generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_table_lookup, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_table_lookup, 2);
 
   return(C_double_to_Xen_real(mus_table_lookup(g, fm1)));
 }
@@ -3943,7 +3943,7 @@ static XEN g_sawtooth_wave(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_sawtooth_wave, S_sawtooth_wave, "a sawtooth-wave generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_sawtooth_wave, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_sawtooth_wave, 2);
 
   return(C_double_to_Xen_real(mus_sawtooth_wave(g, fm1)));
 }
@@ -3957,7 +3957,7 @@ static XEN g_square_wave(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_square_wave, S_square_wave, "a square-wave generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_square_wave, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_square_wave, 2);
 
   return(C_double_to_Xen_real(mus_square_wave(g, fm1)));
 }
@@ -3971,7 +3971,7 @@ static XEN g_triangle_wave(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_triangle_wave, S_triangle_wave, "a triangle-wave generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_triangle_wave, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_triangle_wave, 2);
 
   return(C_double_to_Xen_real(mus_triangle_wave(g, fm1)));
 }
@@ -3985,7 +3985,7 @@ static XEN g_pulse_train(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_pulse_train, S_pulse_train, "a pulse-train generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_pulse_train, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_pulse_train, 2);
 
   return(C_double_to_Xen_real(mus_pulse_train(g, fm1)));
 }
@@ -4071,8 +4071,8 @@ static XEN g_asymmetric_fm(XEN obj, XEN index, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_asymmetric_fm, S_asymmetric_fm, "an asymmetric-fm generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_asymmetric_fm, 2);
-  XEN_TO_C_DOUBLE_IF_BOUND(index, index1, S_asymmetric_fm, 3);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_asymmetric_fm, 2);
+  Xen_real_to_C_double_if_bound(index, index1, S_asymmetric_fm, 3);
 
   return(C_double_to_Xen_real(mus_asymmetric_fm(g, index1, fm1)));
 }
@@ -4247,7 +4247,7 @@ static XEN g_one_zero(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_one_zero, S_one_zero, "a one-zero filter");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_one_zero, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_one_zero, 2);
 
   return(C_double_to_Xen_real(mus_one_zero(g, fm1)));
 }
@@ -4261,7 +4261,7 @@ static XEN g_one_pole(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_one_pole, S_one_pole, "a one-pole filter");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_one_pole, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_one_pole, 2);
 
   return(C_double_to_Xen_real(mus_one_pole(g, fm1)));
 }
@@ -4275,7 +4275,7 @@ static XEN g_two_zero(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_two_zero, S_two_zero, "a two-zero filter");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_two_zero, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_two_zero, 2);
 
   return(C_double_to_Xen_real(mus_two_zero(g, fm1)));
 }
@@ -4289,7 +4289,7 @@ static XEN g_two_pole(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_two_pole, S_two_pole, "a two-pole filter");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_two_pole, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_two_pole, 2);
 
   return(C_double_to_Xen_real(mus_two_pole(g, fm1)));
 }
@@ -4382,7 +4382,7 @@ static XEN g_formant(XEN gen, XEN input, XEN freq)
 
   XEN_TO_C_GENERATOR(gen, gn, g, mus_is_formant, S_formant, "a formant generator");
 
-  XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_formant, 2);
+  Xen_real_to_C_double_if_bound(input, in1, S_formant, 2);
   if (Xen_is_bound(freq))
     return(C_double_to_Xen_real(mus_formant_with_frequency(g, in1, Xen_real_to_C_double(freq))));
 
@@ -4417,8 +4417,8 @@ generator gen's radius and frequency"
 
   XEN_TO_C_GENERATOR(gen, gn, g, mus_is_formant, S_mus_set_formant_radius_and_frequency, "a formant generator");
 
-  XEN_TO_C_DOUBLE_OR_ERROR(rad, radius, S_mus_set_formant_radius_and_frequency, 2);
-  XEN_TO_C_DOUBLE_OR_ERROR(frq, frequency, S_mus_set_formant_radius_and_frequency, 3);
+  Xen_to_C_double_or_error(rad, radius, S_mus_set_formant_radius_and_frequency, 2);
+  Xen_to_C_double_or_error(frq, frequency, S_mus_set_formant_radius_and_frequency, 3);
 
   mus_set_formant_radius_and_frequency(g, radius, frequency);
   return(rad);
@@ -4433,7 +4433,7 @@ static XEN g_set_formant_frequency(XEN gen, XEN frq)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(gen, gn, g, mus_is_formant, S_mus_set_formant_frequency, "a formant generator");
-  XEN_TO_C_DOUBLE_OR_ERROR(frq, frequency, S_mus_set_formant_frequency, 2);
+  Xen_to_C_double_or_error(frq, frequency, S_mus_set_formant_frequency, 2);
 
   mus_set_formant_frequency(g, frequency);
   return(frq);
@@ -4458,7 +4458,7 @@ static XEN g_make_formant_bank(XEN frms, XEN amps)
 
   if (Xen_is_bound(amps))
     {
-      v = XEN_TO_VCT(amps);
+      v = Xen_to_vct(amps);
       if (!v) Xen_check_type(false, amps, 2, S_make_formant_bank, "a vct if anything");
     }
 
@@ -4506,7 +4506,7 @@ static XEN g_formant_bank(XEN gens, XEN inp)
 
   if (Xen_is_number(inp))
     return(C_double_to_Xen_real(mus_formant_bank(bank, Xen_real_to_C_double(inp))));
-  return(C_double_to_Xen_real(mus_formant_bank_with_inputs(bank, mus_vct_data(XEN_TO_VCT(inp)))));
+  return(C_double_to_Xen_real(mus_formant_bank_with_inputs(bank, mus_vct_data(Xen_to_vct(inp)))));
 }
 
 
@@ -4553,7 +4553,7 @@ static XEN g_one_pole_all_pass(XEN gen, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(gen, gn, g, mus_is_one_pole_all_pass, S_one_pole_all_pass, "a one-pole-all-pass generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, in1, S_one_pole_all_pass, 2);
+  Xen_real_to_C_double_if_bound(fm, in1, S_one_pole_all_pass, 2);
   return(C_double_to_Xen_real(mus_one_pole_all_pass(g, in1)));
 }
 
@@ -4588,7 +4588,7 @@ static XEN g_firmant(XEN gen, XEN input, XEN freq)
 
   XEN_TO_C_GENERATOR(gen, gn, g, mus_is_firmant, S_firmant, "a firmant generator");
 
-  XEN_TO_C_DOUBLE_IF_BOUND(input, in1, S_firmant, 2);
+  Xen_real_to_C_double_if_bound(input, in1, S_firmant, 2);
   if (Xen_is_bound(freq)) 
     return(C_double_to_Xen_real(mus_firmant_with_frequency(g, in1, Xen_real_to_C_double(freq))));
 
@@ -4803,7 +4803,7 @@ static XEN g_frame_ref(XEN uf1, XEN uchan)
   XEN_TO_C_GENERATOR(uf1, gn, g, mus_is_frame, S_frame_ref, "a frame");
 #endif
 
-  XEN_TO_C_INTEGER_OR_ERROR(uchan, chan, S_frame_ref, 2);
+  Xen_to_C_integer_or_error(uchan, chan, S_frame_ref, 2);
   return(C_double_to_Xen_real(mus_frame_ref(g, chan)));
 }
 
@@ -4826,8 +4826,8 @@ static XEN g_frame_set(XEN uf1, XEN uchan, XEN val)
   XEN_TO_C_GENERATOR(uf1, gn, g, mus_is_frame, S_frame_set, "a frame");
 #endif
 
-  XEN_TO_C_INTEGER_OR_ERROR(uchan, chan, S_frame_set, 2);
-  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_frame_set, 3);
+  Xen_to_C_integer_or_error(uchan, chan, S_frame_set, 2);
+  Xen_to_C_double_or_error(val, x, S_frame_set, 3);
 
   mus_frame_set(g, chan, x);
   return(val);
@@ -4853,8 +4853,8 @@ static XEN g_mixer_ref(XEN uf1, XEN in, XEN out)
 
   XEN_TO_C_GENERATOR(uf1, gn, g, mus_is_mixer, S_mixer_ref, "a mixer");
 
-  XEN_TO_C_INTEGER_OR_ERROR(in, i_chan, S_mixer_ref, 2);
-  XEN_TO_C_INTEGER_OR_ERROR(out, o_chan, S_mixer_ref, 3);
+  Xen_to_C_integer_or_error(in, i_chan, S_mixer_ref, 2);
+  Xen_to_C_integer_or_error(out, o_chan, S_mixer_ref, 3);
 
   return(C_double_to_Xen_real(mus_mixer_ref(g, i_chan, o_chan)));
 }
@@ -4870,9 +4870,9 @@ static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val)
 
   XEN_TO_C_GENERATOR(uf1, gn, g, mus_is_mixer, S_mixer_set, "a mixer");
 
-  XEN_TO_C_INTEGER_OR_ERROR(in, i_chan, S_mixer_set, 2);
-  XEN_TO_C_INTEGER_OR_ERROR(out, o_chan, S_mixer_set, 3);
-  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_mixer_set, 4);
+  Xen_to_C_integer_or_error(in, i_chan, S_mixer_set, 2);
+  Xen_to_C_integer_or_error(out, o_chan, S_mixer_set, 3);
+  Xen_to_C_double_or_error(val, x, S_mixer_set, 4);
 
   mus_mixer_set(g, i_chan, o_chan, x);
   return(val);
@@ -5040,13 +5040,13 @@ returning frame outf (creating it if necessary)"
   mus_any *res = NULL, *nf = NULL, *gen;
   mus_xen *gn, *outgn;
 
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(mx, mus_xen_tag);
+  gn = (mus_xen *)Xen_object_ref_checked(mx, mus_xen_tag);
   if (!gn) Xen_check_type(false, mx, 1, S_sample_to_frame, "a frame or mixer");
   gen = gn->gen;
 
   Xen_check_type(Xen_is_number(insp), insp, 2, S_sample_to_frame, "a number");
 
-  outgn = (mus_xen *)XEN_OBJECT_REF_CHECKED(outfr, mus_xen_tag);
+  outgn = (mus_xen *)Xen_object_ref_checked(outfr, mus_xen_tag);
   if ((outgn) &&
       (mus_is_frame(outgn->gen)))
     res = outgn->gen;
@@ -5213,7 +5213,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
 
   if (!Xen_is_vector(mx))
     {
-      gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(mx, mus_xen_tag);
+      gn = (mus_xen *)Xen_object_ref_checked(mx, mus_xen_tag);
       if (!gn) Xen_check_type(false, mx, 4, S_mus_mix_with_envs, "a mixer");
       mix = gn->gen;
       Xen_check_type(mus_is_mixer(mix), mx, 4, S_mus_mix_with_envs, "a mixer");
@@ -5222,7 +5222,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
     {
       if (!Xen_is_false(revmx))
 	{
-	  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(revmx, mus_xen_tag);
+	  gn = (mus_xen *)Xen_object_ref_checked(revmx, mus_xen_tag);
 	  if (!gn) Xen_check_type(false, mx, 5, S_mus_mix_with_envs, "a mixer");
 	  rev_mix = gn->gen;
 	  Xen_check_type(mus_is_mixer(rev_mix), revmx, 5, S_mus_mix_with_envs, "a mixer");
@@ -5231,7 +5231,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
 
   if (!Xen_is_false(srcenv))
     {
-      gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(srcenv, mus_xen_tag);
+      gn = (mus_xen *)Xen_object_ref_checked(srcenv, mus_xen_tag);
       if (!gn) Xen_check_type(false, srcenv, 8, S_mus_mix_with_envs, "an env generator");
       s_env = gn->gen;
       Xen_check_type(mus_is_env(s_env), srcenv, 8, S_mus_mix_with_envs, "an env generator");
@@ -5239,7 +5239,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
 
   if (Xen_is_bound(outstream))
     {
-      gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(outstream, mus_xen_tag);
+      gn = (mus_xen *)Xen_object_ref_checked(outstream, mus_xen_tag);
       ostr = gn->gen;
     }
   else ostr = XEN_TO_MUS_ANY(mus_clm_output());
@@ -5249,7 +5249,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
     {
       if (Xen_is_bound(revstream))
 	{
-	  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(revstream, mus_xen_tag);
+	  gn = (mus_xen *)Xen_object_ref_checked(revstream, mus_xen_tag);
 	  rstr = gn->gen;
 	}
       else rstr = XEN_TO_MUS_ANY(mus_clm_reverb());
@@ -5411,7 +5411,7 @@ static XEN g_pink_noise(XEN gens)
   mus_float_t *data;
 
   Xen_check_type(mus_is_vct(gens), gens, 1, S_pink_noise, "a vct");
-  v = XEN_TO_VCT(gens);
+  v = Xen_to_vct(gens);
 
   size = mus_vct_length(v);
   Xen_check_type((size & 1) == 0, gens, 1, S_pink_noise, "an even length vct");
@@ -5524,7 +5524,7 @@ static XEN g_wave_train(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_wave_train, S_wave_train, "a wave-train generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_wave_train, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_wave_train, 2);
 
   return(C_double_to_Xen_real(mus_wave_train(g, fm1)));
 }
@@ -5758,7 +5758,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
     }
   
   if (mus_is_vct(amps))
-    partials = mus_vct_to_partials(XEN_TO_VCT(amps), &npartials, &error);
+    partials = mus_vct_to_partials(Xen_to_vct(amps), &npartials, &error);
   else partials = list_to_partials(amps, &npartials, &error);
 
   if (partials == NULL)
@@ -5785,7 +5785,7 @@ partial amplitudes in the vct or list 'partials' by the inverse of their sum (so
   if (mus_is_vct(partials))
     xv = partials;
   else xv = xen_list_to_vct(partials);
-  v = XEN_TO_VCT(xv);
+  v = Xen_to_vct(xv);
 
   if ((mus_vct_length(v) > 1) &&
       ((mus_vct_length(v) & 1) == 0))
@@ -5825,9 +5825,9 @@ Chebyshev polynomials Tn and Un (vectors or vcts), with phase x."
       (mus_is_vct(un)))
     {
       vct *Tn, *Un;
-      Tn = XEN_TO_VCT(tn);
+      Tn = Xen_to_vct(tn);
       tdata = mus_vct_data(Tn);
-      Un = XEN_TO_VCT(un);
+      Un = Xen_to_vct(un);
       udata = mus_vct_data(Un);
       len = mus_vct_length(Tn);
       if (len == 0) return(C_double_to_Xen_real(0.0));
@@ -5876,7 +5876,7 @@ Chebyshev polynomials Tn (a vct)."
   if (mus_is_vct(tn))
     {
       vct *Tn;
-      Tn = XEN_TO_VCT(tn);
+      Tn = Xen_to_vct(tn);
       data = mus_vct_data(Tn);
       len = mus_vct_length(Tn);
       if (len == 0) return(C_double_to_Xen_real(0.0));
@@ -5914,7 +5914,7 @@ Chebyshev polynomials Un (a vct)."
   if (mus_is_vct(un))
     {
       vct *Un;
-      Un = XEN_TO_VCT(un);
+      Un = Xen_to_vct(un);
       len = mus_vct_length(Un);
       if (len == 0) return(C_double_to_Xen_real(0.0));
       data = mus_vct_data(Un);
@@ -5949,8 +5949,8 @@ static XEN g_polyshape(XEN obj, XEN index, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_polyshape, S_polyshape, "a polyshape generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(index, index1, S_polyshape, 2);
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_polyshape, 3);
+  Xen_real_to_C_double_if_bound(index, index1, S_polyshape, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_polyshape, 3);
 
   return(C_double_to_Xen_real(mus_polyshape(g, index1, fm1)));
 }
@@ -6032,7 +6032,7 @@ is the same in effect as " S_make_oscil
 	    {
 	      int error = NO_PROBLEM_IN_LIST;
 	      if (mus_is_vct(keys[3]))
-		partials = mus_vct_to_partials(XEN_TO_VCT(keys[3]), &npartials, &error);
+		partials = mus_vct_to_partials(Xen_to_vct(keys[3]), &npartials, &error);
 	      else
 		{
 		  Xen_check_type(Xen_is_list(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list or a vct");
@@ -6082,7 +6082,7 @@ static XEN g_polywave(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_polywave, S_polywave, "a polywave generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_polywave, 3);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_polywave, 3);
 
   return(C_double_to_Xen_real(mus_polywave(g, fm1)));
 }
@@ -6144,7 +6144,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
       if (!(Xen_is_keyword(keys[1]))) /* partials were supplied */
 	{
 	  if (mus_is_vct(keys[1]))
-	    partials = mus_vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
+	    partials = mus_vct_to_partials(Xen_to_vct(keys[1]), &npartials, &error);
 	  else
 	    {
 	      if (Xen_is_vector(keys[1]))
@@ -6171,7 +6171,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
         {
 	  Xen_check_type(mus_is_vct(keys[3]), keys[3], orig_arg[3], S_make_polywave, "a vct");
 	  orig_x = keys[3];
-	  v = XEN_TO_VCT(orig_x);
+	  v = Xen_to_vct(orig_x);
 	  n = mus_vct_length(v);
 	  xcoeffs = mus_vct_data(v);
         }
@@ -6182,7 +6182,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 	  int yn;
 	  Xen_check_type(mus_is_vct(keys[4]), keys[4], orig_arg[4], S_make_polywave, "a vct");
 	  orig_y = keys[4];
-	  v = XEN_TO_VCT(orig_y);
+	  v = Xen_to_vct(orig_y);
 	  yn = mus_vct_length(v);
 	  if ((n == 0) || (yn < n))
 	    n = yn;
@@ -6239,7 +6239,7 @@ static XEN g_nrxysin(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_nrxysin, S_nrxysin, "an nrxysin generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_nrxysin, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_nrxysin, 2);
 
   return(C_double_to_Xen_real(mus_nrxysin(g, fm1)));
 }
@@ -6252,7 +6252,7 @@ static XEN g_nrxycos(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_nrxycos, S_nrxycos, "an nrxycos generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_nrxycos, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_nrxycos, 2);
 
   return(C_double_to_Xen_real(mus_nrxycos(g, fm1)));
 }
@@ -6353,7 +6353,7 @@ static XEN g_rxyksin(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_rxyksin, S_rxyksin, "an rxyksin generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_rxyksin, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_rxyksin, 2);
 
   return(C_double_to_Xen_real(mus_rxyksin(g, fm1)));
 }
@@ -6366,7 +6366,7 @@ static XEN g_rxykcos(XEN obj, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_rxykcos, S_rxykcos, "an rxykcos generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_rxykcos, 2);
+  Xen_real_to_C_double_if_bound(fm, fm1, S_rxykcos, 2);
 
   return(C_double_to_Xen_real(mus_rxykcos(g, fm1)));
 }
@@ -6444,7 +6444,7 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
   Xen_check_type(Xen_is_integer(order), order, 1, S_make_fir_coeffs, "int");
   Xen_check_type(mus_is_vct(envl), envl, 2, S_make_fir_coeffs, "a vct");
 
-  v = XEN_TO_VCT(envl);
+  v = Xen_to_vct(envl);
 
   size = Xen_integer_to_C_int(order);
   if (size != mus_vct_length(v))
@@ -6559,12 +6559,12 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	  if (choice == G_IIR_FILTER)
 	    {
 	      ywave = keys[1];
-	      y = XEN_TO_VCT(ywave);
+	      y = Xen_to_vct(ywave);
 	    }
 	  else
 	    {
 	      xwave = keys[1];
-	      x = XEN_TO_VCT(xwave);
+	      x = Xen_to_vct(xwave);
 	    }
         }
 
@@ -6572,7 +6572,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	{
 	  Xen_check_type(mus_is_vct(keys[2]), keys[2], orig_arg[2], caller, "a vct");
 	  ywave = keys[2];
-	  y = XEN_TO_VCT(ywave);
+	  y = Xen_to_vct(ywave);
 	}
 
       if ((choice != G_FILTER) && (!(Xen_is_keyword(keys[3]))))
@@ -6762,7 +6762,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	  XEN vect = XEN_NULL;
 	  if (mus_is_vct(keys[0]))
 	    {
-	      v = XEN_TO_VCT(keys[0]);
+	      v = Xen_to_vct(keys[0]);
 	      len = mus_vct_length(v);
 	      if ((len < 2) || (len & 1))
 		Xen_error(BAD_TYPE,
@@ -7133,7 +7133,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
     {
       vct *v;
       mus_float_t *vdata;
-      v = XEN_TO_VCT(inp);
+      v = Xen_to_vct(inp);
       vdata = mus_vct_data(v);
       if (pos < mus_vct_length(v))
 	return(C_double_to_Xen_real(vdata[pos]));
@@ -7180,7 +7180,7 @@ static XEN fallback_out_any_2(XEN outp, mus_long_t pos, mus_float_t inv, int chn
 {
   mus_xen *gn;
 
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(outp, mus_xen_tag);
+  gn = (mus_xen *)Xen_object_ref_checked(outp, mus_xen_tag);
   if (gn)
     {
       /* mus_out_any will check the writer so output_p is pointless */
@@ -7289,7 +7289,7 @@ static s7_pointer g_clm_output_set(s7_scheme *sc, s7_pointer args)
   s7_pointer new_output;
   new_output = s7_cadr(args);
 
-  clm_output_gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(new_output, mus_xen_tag);
+  clm_output_gn = (mus_xen *)Xen_object_ref_checked(new_output, mus_xen_tag);
   if (clm_output_gn)
     {
       out_any_2 = out_any_2_to_mus_xen;
@@ -7382,7 +7382,7 @@ static s7_pointer g_clm_reverb_set(s7_scheme *sc, s7_pointer args)
   s7_pointer new_input;
   new_input = s7_cadr(args);
 
-  clm_input_gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(new_input, mus_xen_tag);
+  clm_input_gn = (mus_xen *)Xen_object_ref_checked(new_input, mus_xen_tag);
   if (clm_input_gn)
     {
       in_any_2 = in_any_2_to_mus_xen;
@@ -7463,11 +7463,11 @@ static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp
   if (chn < 0)
     Xen_out_of_range_error(caller, 3, C_int_to_Xen_integer(chn), "must be >= 0");    
 
-  XEN_TO_C_INTEGER_OR_ERROR(frame, pos, caller, 1);
+  Xen_to_C_integer_or_error(frame, pos, caller, 1);
   if (pos < 0) 
     Xen_out_of_range_error(caller, 1, frame, "must be >= 0");    
 
-  XEN_TO_C_DOUBLE_OR_ERROR(val, inv, caller, 2);
+  Xen_to_C_double_or_error(val, inv, caller, 2);
 
   if (!Xen_is_bound(outp))
 #if (!HAVE_SCHEME)
@@ -7786,11 +7786,11 @@ static XEN g_frame_to_file(XEN obj, XEN samp, XEN val)
 handled by the output generator 'obj' at frame 'samp'"
   mus_xen *gn, *frm;
 
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(obj, mus_xen_tag);
+  gn = (mus_xen *)Xen_object_ref_checked(obj, mus_xen_tag);
   Xen_check_type(((gn) && (mus_is_output(gn->gen))), obj, 1, S_frame_to_file, "an output generator");
   Xen_check_type(Xen_is_integer(samp), samp, 2, S_frame_to_file, "an integer");
 
-  frm = (mus_xen *)XEN_OBJECT_REF_CHECKED(val, mus_xen_tag);
+  frm = (mus_xen *)Xen_object_ref_checked(val, mus_xen_tag);
   Xen_check_type((frm) && (mus_is_frame(frm->gen)), val, 3, S_frame_to_file, "a frame");
 
   mus_frame_to_file(gn->gen, Xen_llong_to_C_llong(samp), frm->gen);
@@ -7807,7 +7807,7 @@ static XEN g_float_vector_to_file(XEN obj, XEN samp, XEN val)
 handled by the output generator 'obj' at frame 'samp'"
   mus_xen *gn;
 
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(obj, mus_xen_tag);
+  gn = (mus_xen *)Xen_object_ref_checked(obj, mus_xen_tag);
   Xen_check_type(((gn) && (mus_is_output(gn->gen))), obj, 1, S_float_vector_to_file, "an output generator");
   Xen_check_type(Xen_is_integer(samp), samp, 2, S_float_vector_to_file, "an integer");
   Xen_check_type(s7_is_float_vector(val), val, 3, S_float_vector_to_file, "a float-vector");
@@ -8084,7 +8084,7 @@ static XEN g_locsig(XEN xobj, XEN xpos, XEN xval)
   mus_long_t pos;
   mus_float_t fval;
 
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(xobj, mus_xen_tag);
+  ms = (mus_xen *)Xen_object_ref_checked(xobj, mus_xen_tag);
   if (!ms) Xen_check_type(false, xobj, 1, S_locsig, "a locsig generator");
   loc_gen = ms->gen;
   Xen_check_type(mus_is_locsig(loc_gen), xobj, 1, S_locsig, "a locsig generator");
@@ -8756,7 +8756,7 @@ included an 'input' argument, input-function is ignored."
   mus_any *g = NULL;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_src, S_src, "an src generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(pm, pm1, S_src, 2);
+  Xen_real_to_C_double_if_bound(pm, pm1, S_src, 2);
 
   /* if sr_change (pm1) is ridiculous, complain! */
   if ((pm1 > SRC_CHANGE_MAX) || (pm1 < -SRC_CHANGE_MAX))
@@ -9725,7 +9725,7 @@ static XEN g_ssb_am(XEN obj, XEN insig, XEN fm)
   mus_xen *gn;
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_is_ssb_am, S_ssb_am, "an ssb-am generator");
-  XEN_TO_C_DOUBLE_IF_BOUND(insig, insig1, S_ssb_am, 2);
+  Xen_real_to_C_double_if_bound(insig, insig1, S_ssb_am, 2);
 
   if (Xen_is_bound(fm))
     {
@@ -9778,6 +9778,7 @@ Xen_wrap_no_args(g_get_internal_real_time_w, g_get_internal_real_time)
 /* -------------------------------- scheme-side optimization -------------------------------- */
 
 #if HAVE_SCHEME
+/* maany of these are not in xen.h */
 #define car(E)    s7_car(E)
 #define caar(E)   s7_caar(E)
 #define cdr(E)    s7_cdr(E)
@@ -14186,7 +14187,6 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	  gen2 = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
 	  if (!gen2) 
 	    {
-	      mus_any *grn;
 	      mus_xen *gn;
 	      /* special case (for now?) granulate check */
 	      if ((its_gf) && 
@@ -14199,7 +14199,6 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 		      (mus_is_granulate((mus_any *)(gn->gen))))
 		    {
 		      s7_pointer func;
-		      grn = gn->gen;
 		      func = s7_symbol_value(s7, caddr(expr));
 		      if (Xen_is_procedure(func))
 			{

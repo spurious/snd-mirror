@@ -3542,7 +3542,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 			  mus_long_t vlen;
 			  mus_float_t *vdata;
 
-			  v = XEN_TO_VCT(res);
+			  v = Xen_to_vct(res);
 			  vlen = mus_vct_length(v);
 			  vdata = mus_vct_data(v);
 
@@ -3857,7 +3857,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 		      mus_long_t vlen;
 		      mus_float_t *vdata;
 
-		      v = XEN_TO_VCT(res);
+		      v = Xen_to_vct(res);
 		      vlen = mus_vct_length(v);
 		      vdata = mus_vct_data(v);
 
@@ -4884,7 +4884,7 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
     {
       if (mus_is_vct(scalers))
 	{
-	  v = XEN_TO_VCT(scalers);
+	  v = Xen_to_vct(scalers);
 	  len = mus_vct_length(v);
 	}
       else
@@ -5374,8 +5374,8 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   Xen_check_type(mus_is_vct(imag), imag, 2, S_fft, "vct");
 
   isign = (Xen_is_integer(sign)) ? Xen_integer_to_C_int(sign) : 1;
-  v1 = XEN_TO_VCT(reals);
-  v2 = XEN_TO_VCT(imag);
+  v1 = Xen_to_vct(reals);
+  v2 = Xen_to_vct(imag);
 
   n = mus_vct_length(v1);
   if (mus_vct_length(v2) < n) n = mus_vct_length(v2);
@@ -5430,7 +5430,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   Xen_check_type(Xen_is_boolean_or_unbound(in_place), in_place, 6, S_snd_spectrum, "a boolean");
   Xen_check_type(Xen_is_boolean_or_unbound(normalized), normalized, 7, S_snd_spectrum, "a boolean");
 
-  v = XEN_TO_VCT(data);
+  v = Xen_to_vct(data);
   n = (Xen_is_integer(len)) ? Xen_integer_to_C_int(len) : mus_vct_length(v);
   if (n > mus_vct_length(v)) n = mus_vct_length(v);
   if (n <= 0)
@@ -5871,7 +5871,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
     }
   else 
     {
-      v = XEN_TO_VCT(e);
+      v = Xen_to_vct(e);
       coeffs = mus_vct_data(v);
       if (order_1 == 0) order_1 = mus_vct_length(v);
     }
@@ -5930,7 +5930,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	{
 	  vct *v;
 	  char *new_origin = NULL, *estr = NULL;
-	  v = XEN_TO_VCT(e);
+	  v = Xen_to_vct(e);
 	  if (len > mus_vct_length(v)) 
 	    Xen_out_of_range_error(caller, 2, order, "order > length coeffs");
 	  else
@@ -6122,7 +6122,7 @@ that give a minimum peak amplitude when the signals are added together."
     {
       vct *v;
       current_max[i] = 0.0;
-      v = XEN_TO_VCT(Xen_list_ref(arglist, i));
+      v = Xen_to_vct(Xen_list_ref(arglist, i));
       sines[i] = mus_vct_data(v);
       sizes[i] = mus_vct_length(v);
       if (sizes[i] > size)
