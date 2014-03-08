@@ -48561,6 +48561,7 @@ enum {DOX_STEP_DEFAULT, DOX_STEP_SS, DOX_STEP_S, DOX_STEP_ADD, DOX_STEP_SUBTRACT
 static s7_pointer check_do(s7_scheme *sc)
 {
   s7_pointer x;
+  /* fprintf(stderr, "check do: %s\n", DISPLAY(sc->code)); */
   
   if ((!is_pair(sc->code)) ||                             /* (do . 1) */
       ((!is_pair(car(sc->code))) &&                       /* (do 123) */
@@ -48714,7 +48715,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			  (is_syntactic(caar(body))))
 			{
 			  lifted_op(car(body)) = syntax_opcode(caar(body));
-			  /* fprintf(stderr, "choose simple_do_p\n"); */
+			  /* fprintf(stderr, "choose simple_do_p\n");  */
 			  set_syntax_op(sc->code, sc->SIMPLE_DO_P);
 			  set_fcdr(sc->code, caddr(caar(sc->code)));
 #if (!WITH_GMP)
@@ -48755,7 +48756,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			      if ((!has_set) &&
 				  (c_function_class(ecdr(end)) == equal_class))
 				{
-				  /* fprintf(stderr, "dotimes\n"); */
+				  /* fprintf(stderr, "dotimes\n");  */
 				  set_syntax_op(sc->code, sc->SAFE_DOTIMES);
 				  
 				  /* what are the most common cases here?
@@ -49045,6 +49046,7 @@ static s7_pointer check_define_macro(s7_scheme *sc)
 static void fixup_macro_overlay(s7_scheme *sc, s7_pointer p)
 {
   if ((is_pair(p)) &&
+      (is_proper_list(sc, p)) &&
       (!is_overlaid(sc->code)))
     {
       if (is_pair(cdr(p)))
@@ -50455,7 +50457,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer arg;
 	/*
-101888: (((k 0 (+ k 1))) ((= k N2)) (float-vector-set! freqs k (* 0.5 (+ (* pscl...
+    [101888: (((k 0 (+ k 1))) ((= k N2)) (float-vector-set! freqs k (* 0.5 (+ (* pscl...]
 9922: (((i start (+ i 1))) ((= i end)) (outa i (* amp (src sr 0.0 src-func))))
 9922: (((i start (+ i 1))) ((= i end)) (outa i (* amp (phase-vocoder sr #f #f f1...
 	 */
@@ -51242,7 +51244,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer ctr, now, end, code, end_test;
 	/*
-204312: (((i 0 (+ i 1))) ((= i len)) (if (> (float-vector-ref data i) 0.9999) (if...
+204312: (((i 0 (+ i 1))) ((= i len)) (if (> (float-vector-ref data i) 0.9999) (if... dsp clipped-channel
 131200: (((i 0 (+ i 1))) ((= i fsize)) (if (< (magnitude (make-rectangular (rdata i)...
 50828: (((i 0 (+ i 1))) ((= i len) bins) (let ((bin (floor (* (abs (next-sample...
 50827: (((i 0 (+ i 1))) ((= i 50827)) (if (not (= (if (odd? i) (next-sample vr)...
@@ -51757,7 +51759,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       /*
 91658: ((set! samp0 samp1) (set! samp1 samp2) (set! samp2 (next-sample reader)) (let...
-22050: ((outa k (* (one-zero g1 (+ 0.0 (readin g0))) (env g2))))
+22050: ((outa k (* (one-zero g1 (+ 0.0 (readin g0))) (env g2)))) -- chain-dsps
 11025: ((outa k (* (oscil g0 0.0) (env g1))))
 4000: ((let ((y (random range))) (if (not (chker y)) (format-logged #t ";(random...
 2386: ()
@@ -58086,7 +58088,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       
     APPLY:
-      /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args));  */
+      /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
 
       switch (type(sc->code))
 	{
@@ -58505,6 +58507,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_SYNTAX:                            /* -------- syntactic keyword as applicable object -------- */
 	  sc->op = (opcode_t)syntax_opcode(sc->code);                       /* (apply begin '((define x 3) (+ x 2))) */
 	  sc->code = sc->args;
+	  fixup_macro_overlay(sc, sc->code);
 	  goto START_WITHOUT_POP_STACK;
 	  
 	  
@@ -69413,14 +69416,6 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  *
- * Xen_to_float_vector? (for xen_to_vct)
-
-xen_false to Xen_false?
-s/Xen /Xen /
-ulong_int inconsistent
-xm by hand
-4251 XEN_* left in *.c
-all internal Snd XEN_ macros
-
+ * xen_false to Xen_false? ulong_int inconsistent
  */
 

@@ -1135,11 +1135,9 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 to produce a sound at a new pitch but at the original tempo.  It returns a function for map-channel."
   (let* ((rd (make-sampler 0 snd chn))
 	 (gr (make-granulate :expansion rate
-			     :input (lambda (dir) 
-				      (read-sample-with-direction rd dir))))
+			     :input (lambda (dir) (read-sample rd))))
 	 (sr (make-src :srate rate
-		       :input (lambda (dir)
-				(granulate gr)))))
+		       :input (lambda (dir) (granulate gr)))))
     (lambda (inval)
       (src sr 0.0))))
 
@@ -1834,19 +1832,26 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	      (gname (string->symbol (format #f "g~D" i))))
 	  (set! closure (cons `(,gname (dsp-chain ,i)) closure))
 	  (if (env? g)
-	      (set! body `(* ,body (env ,gname)))
+	      (set! body `(* (env ,gname) ,body))
 	      (if (readin? g)
-		  (set! body `(+ ,body (readin ,gname)))
+		  (set! body (if (equal? body 0.0)
+				 `(readin ,gname)
+				 `(+ ,body (readin ,gname))))
 		  (if (mus-generator? g)
-		      (set! body (list (string->symbol (mus-name g)) gname body))
+		      (set! body (if (equal? body 0.0)
+				     (list (string->symbol (mus-name g)) gname)
+				     (list (string->symbol (mus-name g)) gname body)))
 		      (set! body (list gname body)))))))
 
       ;; now patch the two together (the apply let below) and evaluate the resultant thunk
-      ((apply let closure 
-	      `((lambda ()
-		  (do ((k ,start (+ k 1)))
-		      ((= k ,end))
-		    (outa k ,body)))))))))
+      (define inner (apply let closure 
+			   `((define (_)
+			      (do ((k ,start (+ k 1)))
+				  ((= k ,end))
+				(outa k ,body)))
+			     _)))
+      (format *stderr* "~A~%" (procedure-source inner))
+      (inner))))
 #|
 (with-sound ()
   (chain-dsps 0 1.0 '(0 0 1 .5 2 0) (make-oscil 440))

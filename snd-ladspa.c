@@ -922,13 +922,13 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 #define DEFINE_READER(Name, Value, Doc) Xen_define_procedure(FIELD_PREFIX #Name, Value, 1, 0, 0, Doc)
 
 
-#define C-_to_Xen_Ladspa_Descriptor(Value) \
+#define C_to_Xen_Ladspa_Descriptor(Value) \
   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("Ladspa-Descriptor"), Xen_wrap_C_pointer(Value)) : Xen_false)
 #define Xen_to_C_Ladspa_Descriptor(Value) ((LADSPA_Descriptor *)(Xen_unwrap_C_pointer(Xen_cadr(Value))))
 #define Xen_is_Ladspa_Descriptor(Value) (Xen_is_list(Value) && (Xen_list_length(Value) >= 2) && (Xen_is_symbol(Xen_car(Value))) && \
 					 (strcmp("Ladspa-Descriptor", Xen_symbol_to_C_string(Xen_car(Value))) == 0))
   
-#define C-_to_Xen_Ladspa_Handle(Value) \
+#define C_to_Xen_Ladspa_Handle(Value) \
   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("Ladspa-Handle"), Xen_wrap_C_pointer(Value)) : Xen_false)
 #define Xen_to_C_Ladspa_Handle(Value) ((LADSPA_Handle *)(Xen_unwrap_C_pointer(Xen_cadr(Value))))
 #define Xen_is_Ladspa_Handle(Value) (Xen_is_list(Value) && (Xen_list_length(Value) >= 2) && (Xen_is_symbol(Xen_car(Value))) && \
@@ -953,7 +953,7 @@ associated with the given plugin."
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
   free(pcFilename);
   if (!psDescriptor) return(Xen_false);
-  return(C-_to_Xen_Ladspa_Descriptor(psDescriptor));
+  return(C_to_Xen_Ladspa_Descriptor(psDescriptor));
 }
 
 
@@ -1073,7 +1073,7 @@ static Xen g_ladspa_instantiate(Xen ptr, Xen srate)
   Xen_check_type(Xen_is_ulong_int(srate), srate, 2, S_ladspa_instantiate, "int");
   descriptor = Xen_to_C_Ladspa_Descriptor(ptr);
   handle = descriptor->instantiate(descriptor, Xen_ulong_to_C_ulong(srate));
-  return(C-_to_Xen_Ladspa_Handle(handle));
+  return(C_to_Xen_Ladspa_Handle(handle));
 }
 
 

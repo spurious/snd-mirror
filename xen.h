@@ -1444,7 +1444,6 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
-#define XEN_VECTOR_RANK(a) 1
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #ifdef __cplusplus
