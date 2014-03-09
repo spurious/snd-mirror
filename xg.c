@@ -304,7 +304,6 @@ static Xen xg_cairo_rectangle_int_t_symbol, xg_GtkPopover__symbol, xg_GtkActionB
 #define C_to_Xen_GtkTreeViewSearchPositionFunc(Arg) wrap_for_Xen(GtkTreeViewSearchPositionFunc, Arg)
 #define C_to_Xen_GtkTreeViewSearchEqualFunc(Arg) wrap_for_Xen(GtkTreeViewSearchEqualFunc, Arg)
 #define Xen_to_C_GdkFilterReturn(Arg) (GdkFilterReturn)Xen_integer_to_C_int(Arg)
-#define Xen_to_C_String(Arg) Xen_string_to_C_string(Arg)
 #define C_to_Xen_String(Arg) C_string_to_Xen_string((char *)Arg)
 static Xen C_to_Xen_GError_(GError *err)
 {
@@ -44284,7 +44283,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("07-Mar-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("08-Mar-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

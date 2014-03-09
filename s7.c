@@ -1583,6 +1583,7 @@ static void init_types(void)
   t_opt_all_x[HOP_SAFE_C_C] = true;
   t_opt_all_x[HOP_SAFE_C_Q] = true;
   t_opt_all_x[HOP_SAFE_C_A] = true;
+  t_opt_all_x[HOP_SAFE_C_SSA] = true; 
   t_opt_all_x[HOP_SAFE_C_SS] = true;
   t_opt_all_x[HOP_SAFE_C_SSS] = true;
   t_opt_all_x[HOP_SAFE_C_SC] = true;
@@ -42663,6 +42664,15 @@ static s7_pointer all_x_c_a(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T1_1));
 }
 
+static s7_pointer all_x_c_ssa(s7_scheme *sc, s7_pointer arg)
+{
+  sc->temp4 = ((s7_function)fcdr(cdddr(arg)))(sc, cadddr(arg));
+  car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
+  car(sc->T3_2) = find_symbol_checked(sc, caddr(arg));
+  car(sc->T3_3) = sc->temp4;
+  return(c_call(arg)(sc, sc->T3_1));
+}
+
 static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 {
   if (is_pair(arg))
@@ -42676,6 +42686,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	    case HOP_SAFE_C_C:         return(all_x_c_c);
 	    case HOP_SAFE_C_Q:         return(all_x_c_q);
 	    case HOP_SAFE_C_A:         return(all_x_c_a);
+	    case HOP_SAFE_C_SSA:       return(all_x_c_ssa);
 	    case HOP_SAFE_C_S:         
 	      if (car(arg) == sc->CDR)
 		return(all_x_cdr_s);
@@ -48761,71 +48772,77 @@ static s7_pointer check_do(s7_scheme *sc)
 				  
 				  /* what are the most common cases here?
 				   */
-				  
 				  if (one_line)
 				    {
 				      if ((is_optimized(car(body))) &&
-					  (optimize_data(car(body)) == HOP_SAFE_C_C))
+					  (!c_function_looped(ecdr(car(body)))))
 					{
-					  /* fprintf(stderr, "dotimes_c_c: %s\n", DISPLAY(body)); */
-					  set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_C);
-					}
-				      else
-					{
-					  /* fprintf(stderr, "car(body): %s, step_expr: %s\n", DISPLAY(car(body)), DISPLAY(vars)); */
-					  if ((is_optimized(car(body))) &&
-					      (is_all_x_op(optimize_data(car(body)))))
+					  if (optimize_data(car(body)) == HOP_SAFE_C_C)
 					    {
-					      /* fprintf(stderr, "dotimes_c_a: %s %s\n", DISPLAY(body), opt_name(car(body))); */
-					      annotate_arg(sc, body);
-					      set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_A);
+					      /* fprintf(stderr, "dotimes_c_c: %s\n", DISPLAY(body)); */
+					      set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_C);
 					    }
 					  else
 					    {
-					      /* fprintf(stderr, "perhaps safe: %s\n", DISPLAY(body)); */
-					      if ((is_syntactic(caar(body))) &&
-						  (syntax_opcode(caar(body)) == OP_LET) &&
-						  (!is_null(cadar(body))) && /* it has at least one let var */
-						  (is_null(cdadar(body))))   /* but only one */
+					      /* fprintf(stderr, "car(body): %s, step_expr: %s\n", DISPLAY(car(body)), DISPLAY(vars)); */
+					      if (is_all_x_op(optimize_data(car(body))))
 						{
-						  s7_pointer x;
-						  x = cddar(body);
-						  
-						  if ((is_pair(car(x))) &&
-						      (is_optimized(car(x))) &&
-						      (is_null(cdr(x))) && /* one liner? */
-						      (optimize_data(car(x)) == HOP_SAFE_C_C))
-						    {
-						      x = cadar(cadar(body));
-						      if ((is_pair(x)) &&
-							  (is_optimized(x)) &&
-							  (returns_temp(ecdr(x))) &&
-							  (optimize_data(x) == HOP_SAFE_C_C)) /* all_x_safe doesn't happen much here */
-							set_syntax_op(sc->code, sc->SIMPLE_SAFE_DOTIMES);
-						    }
+						  /*
+						    fprintf(stderr, "dotimes_c_a: %s %s %d %p\n", DISPLAY(body), opt_name(car(body)), 
+						    is_all_x_op(optimize_data(car(body))),
+						    c_function_looped(ecdr(car(body))));
+						  */
+						  annotate_arg(sc, body);
+						  set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_A);
+						}
+					    }
+					}
+				      else
+					{
+					  /* fprintf(stderr, "perhaps safe: %s\n", DISPLAY(body)); */
+					  if ((is_syntactic(caar(body))) &&
+					      (syntax_opcode(caar(body)) == OP_LET) &&
+					      (!is_null(cadar(body))) && /* it has at least one let var */
+					      (is_null(cdadar(body))))   /* but only one */
+					    {
+					      s7_pointer x;
+					      x = cddar(body);
+					      
+					      if ((is_pair(car(x))) &&
+						  (is_optimized(car(x))) &&
+						  (is_null(cdr(x))) && /* one liner? */
+						  (optimize_data(car(x)) == HOP_SAFE_C_C))
+						{
+						  x = cadar(cadar(body));
+						  if ((is_pair(x)) &&
+						      (is_optimized(x)) &&
+						      (returns_temp(ecdr(x))) &&
+						      (optimize_data(x) == HOP_SAFE_C_C)) /* all_x_safe doesn't happen much here */
+						    set_syntax_op(sc->code, sc->SIMPLE_SAFE_DOTIMES);
 						}
 					    }
 					}
 				    }
-				  else /* else not one line -- might be 0! */
-				    {
-				      s7_pointer p;
-				      bool happy = true;
-				      for (p = body; is_pair(p); p = cdr(p))
-					if ((is_pair(car(p))) &&
-					    ((!is_optimized(car(p))) ||
-					     (!is_all_x_op(optimize_data(car(p))))))
-					  {
-					    happy = false;
-					    break;
-					  }
-				      if (happy)
+				      else /* else not one line -- might be 0! */
 					{
-					  annotate_args(sc, body);
-					  set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_A);
+					  s7_pointer p;
+					  bool happy = true;
+					  for (p = body; is_pair(p); p = cdr(p))
+					    if ((is_pair(car(p))) &&
+						((!is_optimized(car(p))) ||
+						 (!is_all_x_op(optimize_data(car(p))))))
+					      {
+						happy = false;
+						break;
+					      }
+					  if (happy)
+					    {
+					      annotate_args(sc, body);
+					      set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_A);
+					    }
 					}
 				    }
-				}
+
 			      /* else fprintf(stderr, "unsafe: %s\n", DISPLAY_80(sc->code)); */
 			    }
 			}
@@ -50209,6 +50226,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    func = (s7_function)(fcdr(body));
 		    body = car(body);
+
 		    if (func == all_x_c_s)
 		      {
 			environment_dox1(sc->envir) = find_symbol(sc, cadr(caddr(sc->code)));
@@ -50286,34 +50304,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer obj;
 		    
 		    sc->code = car(sc->code);
-		    
 		    /* fprintf(stderr, "safe dotimes: check %s\n", DISPLAY(sc->code)); */
 		    
-		    if ((sc->ex_fallback) &&
-			(!is_unsafe_do(sc->code)) &&
-			((car(sc->code) == sc->VECTOR_SET) || (car(sc->code) == sc->FLOAT_VECTOR_SET)) &&
-			(is_symbol(cadr(sc->code))) &&
-			(caddr(sc->code) == caaar(code)) &&
-			(is_null(cddddr(sc->code))) &&
-			(is_float_vector(obj = find_symbol_unchecked(sc, cadr(sc->code)))))
-		      {
-			e = sc->ex_fallback(sc, cadddr(sc->code), sc->envir);
-			if (e)
-			  {
-			    s7_Int i, start, lim;
-			    lim = s7_integer(end_val);
-			    start = s7_integer(init_val);
-			    for (i = start; i < lim; i++)
-			      float_vector_element(obj, i) = e->f(e);
-			    e->free(e);
-			    sc->code = cdr(cadr(code));
-			    goto DO_END_CLAUSES;
-			  }
-		      }
-		    set_unsafe_do(sc->code);
-
 		    set_fcdr(code, sc->code);
-
 		    if ((typesflag(sc->code) == SYNTACTIC_PAIR) || 
 			(typeflag(car(sc->code)) == SYNTACTIC_TYPE))
 		      {
@@ -50329,6 +50322,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    /* if (syntax_opcode(car(sc->code)) == OP_LET_STAR) fprintf(stderr, "%s\n", DISPLAY(sc->code)); */
 
 			    /* it's a let of some sort, and one-line body */
+
+			    /* try let-looped */
 			    if ((is_optimized(caddr(sc->code))) &&
 				(c_function_let_looped(ecdr(caddr(sc->code)))))
 			      {
@@ -50393,11 +50388,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    else
 		      {
 			/* fprintf(stderr, "%d %p %s\n", is_optimized(sc->code), c_function_looped(ecdr(sc->code)), DISPLAY(sc->code)); */
+
+			/* try direct looper */
 			if ((is_optimized(sc->code)) &&
 			    (c_function_looped(ecdr(sc->code))))
 			  {
 			    s7_pointer body, stepper, result;
 			    s7_function f;
+
+			    /* fprintf(stderr, "direct: %s\n", DISPLAY(sc->code)); */
 
 			    stepper = slot_value(sc->args);
 			    body = cdr(sc->code);
@@ -50411,6 +50410,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      }
 			  }
 
+			/* try ex_fallback (gf*) (no calls) */
+			if ((sc->ex_fallback) &&
+			    (!is_unsafe_do(sc->code)) &&
+			    ((car(sc->code) == sc->VECTOR_SET) || (car(sc->code) == sc->FLOAT_VECTOR_SET)) &&
+			    (is_symbol(cadr(sc->code))) &&
+			    (caddr(sc->code) == caaar(code)) &&
+			    (is_null(cddddr(sc->code))) &&
+			    (is_float_vector(obj = find_symbol_unchecked(sc, cadr(sc->code)))))
+			  {
+			    e = sc->ex_fallback(sc, cadddr(sc->code), sc->envir);
+			    if (e)
+			      {
+				s7_Int i, start, lim;
+				lim = s7_integer(end_val);
+				start = s7_integer(init_val);
+				for (i = start; i < lim; i++)
+				  float_vector_element(obj, i) = e->f(e);
+				e->free(e);
+				sc->code = cdr(cadr(code));
+				goto DO_END_CLAUSES;
+			      }
+			  }
+			set_unsafe_do(sc->code);
+			
 			/* fprintf(stderr, "%d %s\n", __LINE__, DISPLAY_80(sc->code)); */
 			push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, code);
 			goto NS_EVAL;
@@ -50582,6 +50605,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_ex *e = NULL;
 	    s7_pointer obj, body;
 	    body = car(sc->code);
+	    /* very few calls */
 	    if ((sc->ex_fallback) &&
 		(!is_unsafe_do(sc->code)) &&
 		(car(body) == sc->SET) &&
@@ -50713,7 +50737,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer args, code, slot;
 	/*
 264600: (((k 0 (+ k 1))) ((= k 3)) (set! frm0 (/ (env (vector-ref frmfs k)) frq))...
-244142: (((i 0 (+ i 1))) ((= i len)) (let ((x0 (next-sample reader)))...
+    [244142: (((i 0 (+ i 1))) ((= i len)) (let ((x0 (next-sample reader)))...]
 194107: (((i 0 (+ i 1))) ((= i len)) (float-vector-set! out-data i (granulate gr))...
 193314: (((i 0 (+ i 1))) ((= i len)) (let ((inval (next-sample reader))) (set! lasty...
 132300: (((i beg (+ i 1))) ((= i end)) (set! degval (env deg-env)) (set! dist-scaler...
@@ -51667,7 +51691,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 105848: (((k 0 (+ k 1)) (j 1 (+ j 1))) ((= j tractlength)) (set! tk tj) (if (zero?...
 98301: (((i 1 (+ i 1)) (j (- fftlen 1) (- j 1))) ((= i fftlen2)) (set! (im i) (func...
 94928: (((k 0 (+ k 1)) (j i (+ j 1))) ((= k ctr)) (float-vector-add! spectr fdr)...
-50000: (((loc 0 (+ loc 1)) (val (read-line in-fd) (read-line in-fd))) ((eof-object?...
+    [50000: (((loc 0 (+ loc 1)) (val (read-line in-fd) (read-line in-fd))) ((eof-object?...]
 44100: (((i start (+ i 1)) (x 0.0 (+ x x-incr))) ((= i end)) (set! y (+ x (* index...
 32767: (((i 1 (+ i 1)) (j (- fsize 1) (- j 1))) ((= i fsize2)) (float-vector-set! vf...
 29482: (((e-bin 0 (+ e-bin 1))) ((or (not happy) (= e-bin e-size)) happy) (do ((k 0...
@@ -51758,9 +51782,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   '(((+ i 1) . 0))
        */
       /*
-91658: ((set! samp0 samp1) (set! samp1 samp2) (set! samp2 (next-sample reader)) (let...
-22050: ((outa k (* (one-zero g1 (+ 0.0 (readin g0))) (env g2)))) -- chain-dsps
-11025: ((outa k (* (oscil g0 0.0) (env g1))))
+91658: ((set! samp0 samp1) (set! samp1 samp2) (set! samp2 (next-sample reader)) (let... ; clean? (examp case seems ok)
+    [22050: ((outa k (* (one-zero g1 (+ 0.0 (readin g0))) (env g2)))) -- chain-dsps]
+    [11025: ((outa k (* (oscil g0 0.0) (env g1))))]
 4000: ((let ((y (random range))) (if (not (chker y)) (format-logged #t ";(random...
 2386: ()
 -----
@@ -69396,7 +69420,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.9
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.7
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.5
  *            153 with run macro (eval_ptree)
  */
 /* caveats: callgrind is confused about sincos, and does not count file IO delays
@@ -69415,6 +69439,7 @@ int main(int argc, char **argv)
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
+ * Motif version crashes with X error 
  *
  * xen_false to Xen_false? ulong_int inconsistent
  */

@@ -409,23 +409,24 @@
 read an ASCII sound file"
   (let ((in-fd (open-input-file in-filename))
 	(out-fd (new-sound out-filename out-type out-format out-srate 1 (format #f "created by read-ascii: ~A" in-filename)))
-	(bufsize 8192))
+	(bufsize 8192)
+	(bufsize1 8191))
     (as-one-edit
      (lambda ()
        (let ((data (make-float-vector bufsize))
-	     (frame 0)
 	     (short->float (/ 1.0 32768.0)))
-	 (do ((loc 0 (+ loc 1))
-	      (val (read-line in-fd) (read-line in-fd)))
-	     ((eof-object? val)
-	      (if (> loc 0)
-		  (float-vector->channel data frame loc out-fd 0)))
-	   (if (= loc bufsize)
-	       (begin
-		 (float-vector->channel data frame bufsize out-fd 0)
-		 (set! frame (+ frame bufsize))
-		 (set! loc 0)))
-	   (float-vector-set! data loc (* (string->number val) short->float))))))
+	 (do ((fr 0 (+ fr bufsize)))
+	     ((eof-object? (peek-char in-fd)))
+	   (do ((loc 0 (+ loc 1))
+		(val (read-line in-fd) (read-line in-fd)))
+	       ((or (eof-object? val)
+		    (= loc bufsize1)) ; bufsize-1 so that we don't throw away a sample at the buffer end
+		(if (number? val)
+		    (begin
+		      (float-vector-set! data loc (* (string->number val) short->float))
+		      (float-vector->channel data fr (+ loc 1) out-fd 0))
+		    (float-vector->channel data fr loc out-fd 0)))
+	     (float-vector-set! data loc (* (string->number val) short->float)))))))
     (close-input-port in-fd)
     out-fd))
 
@@ -592,7 +593,7 @@ otherwise it moves the cursor to the first offending sample"
     (do ((i 0 (+ i 1)))
 	((= i len) bins)
       (let ((bin (floor (* (abs (next-sample reader)) nbins))))
-	(set! (bins bin) (+ (bins bin) 1))))))
+	(vector-set! bins bin (+ (vector-ref bins bin) 1))))))
 
 
 
@@ -1541,7 +1542,6 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 		    (< (abs (- samp0 samp2)) (/ local-max 2)))
 	       (return (- ctr 1)))))))))
 
-
 (define (remove-clicks)
   "(remove-clicks) tries to find and smooth-over clicks"
   ;; this is very conservative -- the click detection limits above could be set much tighter in many cases
@@ -1832,7 +1832,9 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	      (gname (string->symbol (format #f "g~D" i))))
 	  (set! closure (cons `(,gname (dsp-chain ,i)) closure))
 	  (if (env? g)
-	      (set! body `(* (env ,gname) ,body))
+	      (set! body (if (equal? body 0.0)
+			     `(env ,gname)
+			     `(* (env ,gname) ,body)))
 	      (if (readin? g)
 		  (set! body (if (equal? body 0.0)
 				 `(readin ,gname)
@@ -1844,19 +1846,17 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 		      (set! body (list gname body)))))))
 
       ;; now patch the two together (the apply let below) and evaluate the resultant thunk
+
       (define inner (apply let closure 
-			   `((define (_)
+			   `((lambda ()
 			      (do ((k ,start (+ k 1)))
 				  ((= k ,end))
-				(outa k ,body)))
-			     _)))
-      (format *stderr* "~A~%" (procedure-source inner))
+				(outa k ,body))))))
       (inner))))
 #|
 (with-sound ()
   (chain-dsps 0 1.0 '(0 0 1 .5 2 0) (make-oscil 440))
   (chain-dsps 1 1.0 '(0 0 1 4 2 0) (make-one-zero .5) (make-readin "oboe.snd"))
-  ;; next call not currently optimizable
   (chain-dsps 2 1.0 '(0 0 1 .5 2 0) (let ((osc1 (make-oscil 220)) 
 					  (osc2 (make-oscil 440))) 
 				      (lambda (val) (+ (osc1 val) 

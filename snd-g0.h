@@ -520,49 +520,52 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #endif
 
 
-#if GTK_CHECK_VERSION(3, 12, 0)
-/* these are deprecated from 3.10.0 but I apparently have to create my own goddamn icons?? */
+#if GTK_CHECK_VERSION(3, 10, 0)
+
+/* see the "Icon Naming Specification" */
 #define ICON_ADD             "Add"
 #define ICON_APPLY           "Apply"
-#define ICON_CANCEL          "Cancel"
-#define ICON_CLEAR           "Clear"
-#define ICON_CLOSE           "Close"
-#define ICON_COPY            "Copy"
-#define ICON_CUT             "Cut"
+#define ICON_CANCEL          "process-stop"
+#define ICON_CLEAR           "edit-clear"
+#define ICON_CLOSE           "window-close"
+#define ICON_COPY            "edit-copy"
+#define ICON_CUT             "edit-cut"
 #define ICON_EDIT            "Edit"
-#define ICON_FIND            "Find"
-#define ICON_FULLSCREEN      "Full screen"
-#define ICON_GOTO_FIRST      "Go to start"
-#define ICON_GOTO_LAST       "Go to end"
-#define ICON_GO_BACK         "Backward"
-#define ICON_GO_FORWARD      "Forward"
-#define ICON_HELP            "Help"
-#define ICON_MEDIA_FORWARD   "Fast forward"
-#define ICON_MEDIA_PLAY      "Play"
-#define ICON_MEDIA_STOP      "Stop"
-#define ICON_NEW             "New"
+#define ICON_FIND            "edit-find"
+#define ICON_FULLSCREEN      "view-fullscreen"
+#define ICON_GOTO_FIRST      "go-first"
+#define ICON_GOTO_LAST       "go-last"
+#define ICON_GO_BACK         "go-previous"
+#define ICON_GO_FORWARD      "go-next"
+#define ICON_HELP            "help-browser"
+#define ICON_MEDIA_FORWARD   "media-skip-forward"
+#define ICON_MEDIA_PLAY      "media-playback-start"
+#define ICON_MEDIA_STOP      "media-playback-stop"
+#define ICON_NEW             "document-new"
 #define ICON_OK              "Ok"
-#define ICON_OPEN            "Open"
-#define ICON_PASTE           "Paste"
+#define ICON_OPEN            "document-open"
+#define ICON_PASTE           "edit-paste"
 #define ICON_PREFERENCES     "Preferences"
-#define ICON_PRINT           "Print"
-#define ICON_QUIT            "Quit"
-#define ICON_REDO            "Redo"
-#define ICON_REFRESH         "Refresh"
-#define ICON_REVERT_TO_SAVED "Revert"
-#define ICON_SAVE            "Save"
-#define ICON_SAVE_AS         "Save as"
-#define ICON_SELECT_ALL      "Select all"
+#define ICON_PRINT           "document-print"
+#define ICON_QUIT            "application-exit"
+#define ICON_REDO            "edit-redo"
+#define ICON_REFRESH         "view-refresh"
+#define ICON_REVERT_TO_SAVED "document-revert"
+#define ICON_SAVE            "document-save"
+#define ICON_SAVE_AS         "document-save-as"
+#define ICON_SELECT_ALL      "edit-select-all"
 #define ICON_SELECT_COLOR    "Select color"
-#define ICON_UNDO            "Undo"
-#define ICON_ZOOM_IN         "Zoom in"
-#define ICON_ZOOM_OUT        "Zoom out"
+#define ICON_UNDO            "edit-undo"
+#define ICON_ZOOM_IN         "zoom-in"
+#define ICON_ZOOM_OUT        "zoom-out"
 
-#define button_new_with_icon(Icon)      gtk_button_new_with_label(Icon)
-#define tool_button_new_with_icon(Icon) gtk_tool_button_new(NULL, Icon)
+/* TODO: this is no longer correct -- we have to set the icon/label by hand now */
+/* #define button_new_with_icon(Icon)      gtk_button_new_with_label(Icon) */
+GtkWidget *button_new_with_icon(const gchar *label);
 #define image_new_with_icon(Icon, Size) gtk_image_new_from_icon_name(Icon, Size)
 
 #else
+
 #define ICON_ADD             GTK_STOCK_ADD
 #define ICON_APPLY           GTK_STOCK_APPLY
 #define ICON_CANCEL          GTK_STOCK_CANCEL
@@ -600,7 +603,6 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define ICON_ZOOM_OUT        GTK_STOCK_ZOOM_OUT
 
 #define button_new_with_icon(Icon)      gtk_button_new_from_stock(Icon)
-#define tool_button_new_with_icon(Icon) gtk_tool_button_new_from_stock(Icon)
 #define image_new_with_icon(Icon, Size) gtk_image_new_from_stock(Icon, Size)
 
 #endif

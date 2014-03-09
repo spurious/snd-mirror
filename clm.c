@@ -6754,6 +6754,7 @@ mus_float_t mus_one_pole(mus_any *ptr, mus_float_t input)
   return(gen->y1);
 }
 
+/* incrementer: (make-one-pole 1.0 -1.0) */
 
 static mus_float_t run_one_pole(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_one_pole(ptr, input));}
 

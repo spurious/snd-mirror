@@ -47395,28 +47395,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-5-Mar-14:
-36,709,624,133
-5,739,812,299  s7.c:eval [/home/bil/gtk-snd/snd]
-2,258,508,257  ???:sin [/lib64/libm-2.12.so]
-2,029,047,261  ???:cos [/lib64/libm-2.12.so]
+8-Mar-14:
+36,545,223,026
+5,720,502,950  s7.c:eval [/home/bil/gtk-snd/snd]
+2,256,893,133  ???:sin [/lib64/libm-2.12.so]
+2,027,255,916  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,036,157,588  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  890,710,228  ???:t2_32 [/home/bil/gtk-snd/snd]
-  858,175,164  s7.c:gc [/home/bil/gtk-snd/snd]
-  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
-  660,956,223  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  649,478,855  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,039,402,583  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  886,342,692  ???:t2_32 [/home/bil/gtk-snd/snd]
+  852,073,665  s7.c:gc [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
   648,381,221  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  613,918,655  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  565,843,433  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,851,360  ???:n1_64 [/home/bil/gtk-snd/snd]
-  415,883,525  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  591,885,554  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  565,119,052  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,551,144  ???:n1_64 [/home/bil/gtk-snd/snd]
+  417,130,542  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  372,982,030  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  374,096,158  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  299,928,449  ???:memcpy [/lib64/ld-2.12.so]
+  303,011,961  ???:memcpy [/lib64/ld-2.12.so]
 |#
 
 

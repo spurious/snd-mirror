@@ -1711,7 +1711,7 @@
 					;(hey "#define C_to_Xen_GtkDestroyNotify(Arg) wrap_for_Xen(GtkDestroyNotify, Arg)~%")
 (hey "#define Xen_to_C_GdkFilterReturn(Arg) (GdkFilterReturn)Xen_integer_to_C_int(Arg)~%")
 
-(hey "#define Xen_to_C_String(Arg) Xen_string_to_C_string(Arg)~%")
+;(hey "#define Xen_to_C_String(Arg) Xen_string_to_C_string(Arg)~%")
 (hey "#define C_to_Xen_String(Arg) C_string_to_Xen_string((char *)Arg)~%")
 
 (hey "static Xen C_to_Xen_GError_(GError *err)~%")

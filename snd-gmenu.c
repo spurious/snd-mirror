@@ -1266,7 +1266,18 @@ void add_tooltip(GtkWidget *w, const char *tip)
 static GtkWidget *add_to_toolbar(GtkWidget *bar, const gchar *stock, const char *tip, GCallback callback)
 {
   GtkToolItem *w;
-  w = tool_button_new_with_icon(stock);
+#if GTK_CHECK_VERSION(3, 10, 0)
+  GtkWidget *pw;
+  GtkIconTheme *icon_theme; 
+  GdkPixbuf *pixbuf; 
+  icon_theme = gtk_icon_theme_get_default();
+  pixbuf = gtk_icon_theme_load_icon(icon_theme, stock, 16, 0, NULL); 
+  pw = gtk_image_new_from_pixbuf(pixbuf);
+  gtk_widget_show(pw);
+  w = gtk_tool_button_new(pw, NULL);
+#else
+  w = gtk_tool_button_new_from_stock(stock);
+#endif
   add_toolbar_style(GTK_WIDGET(w)); 
   gtk_toolbar_insert(GTK_TOOLBAR(bar), w, -1); /* -1 = at end */
   add_tooltip(GTK_WIDGET(w), tip);
@@ -1275,22 +1286,6 @@ static GtkWidget *add_to_toolbar(GtkWidget *bar, const gchar *stock, const char 
   return(GTK_WIDGET(w));
 }
 
-/* in 3.10.* maybe need TODO: fix toolbar
- *   GtkIconTheme *icon_theme; icon_theme = gtk_icon_theme_get_default();
- *   GdkPixbuf *pixbuf; pixbuf = gtk_icon_theme_load_icon(icon_theme, NAME, 16, 0, NULL); 24/32 name=GTK_STOCK_*? 0 for GTK_ICON_LOOKUP_GENERIC_FALLBACK
- * now turn it into an image?
- *   gtk_tool_button_new(Image, NAME?) then show both the widget and the image?
- *   gtk_tool_button_set_icon_name(w, NAME)
- widget = gtk_image_new_from_pixbuf (pixbuf)
- gtk_tool_button_new(widget, NAME)
-
- item = gtk_tool_button_new (NULL, NULL);
-  gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (item), "document-new");
-  gtk_tool_button_set_label (GTK_TOOL_BUTTON (item), "Custom label");
-  add_item_to_list (store, item, "New");
-  gtk_toolbar_insert (GTK_TOOLBAR (toolbar), item, -1);
-
- */
 
 static void add_separator_to_toolbar(GtkWidget *bar)
 {

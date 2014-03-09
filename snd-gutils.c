@@ -321,6 +321,78 @@ void set_button_label(GtkWidget *label, const char *str)
 }
 
 
+#if GTK_CHECK_VERSION(3, 10, 0)
+static const char *icon_to_label(const char *label)
+{
+  /* these are the new-style labels in snd-g0.h */
+
+  fprintf(stderr, "label: [%s]\n", label);
+  switch (label[0])
+    {
+    case 'A': case 'E': case 'O': case 'P': case 'S':
+      return(label);
+      
+    case 'a': return("Exit");
+
+    case 'd':
+      if (strcmp(label, "document-new") == 0) return("New"); else
+	if (strcmp(label, "document-open") == 0) return("Open"); else
+	  if (strcmp(label, "document-print") == 0) return("Print"); else
+	    if (strcmp(label, "document-revert") == 0) return("Revert"); else
+	      if (strcmp(label, "document-save") == 0) return("Save"); else
+		if (strcmp(label, "document-save-as") == 0) return("Save as");
+      break;
+
+    case 'e':
+      if (strcmp(label, "edit-clear") == 0) return("Clear"); else
+	if (strcmp(label, "edit-copy") == 0) return("Copy"); else
+	  if (strcmp(label, "edit-cut") == 0) return("Cut"); else
+	    if (strcmp(label, "edit-find") == 0) return("Find"); else
+	      if (strcmp(label, "edit-paste") == 0) return("Paste"); else
+		if (strcmp(label, "edit-redo") == 0) return("Redo"); else
+		  if (strcmp(label, "edit-select-all") == 0) return("Select all"); else
+		    if (strcmp(label, "edit-undo") == 0) return("Undo"); 
+      break;
+
+    case 'g':
+      if (strcmp(label, "go-first") == 0) return("Go to start"); else
+	if (strcmp(label, "go-last") == 0) return("Go to end"); else
+	  if (strcmp(label, "go-next") == 0) return("Next"); else
+	    if (strcmp(label, "go-previous") == 0) return("Previous"); 
+      break;
+
+    case 'h': return("Help");
+
+    case 'm':
+      if (strcmp(label, "media-playback-start") == 0) return("Play"); else
+	if (strcmp(label, "media-playback-stop") == 0) return("Stop playing"); else
+	  if (strcmp(label, "media-playback-forward") == 0) return("Play from cursor");
+      break;
+
+    case 'p': return("Stop");
+
+    case 'v':
+      if (strcmp(label, "view-fullscreen") == 0) return("Show all"); else
+	if (strcmp(label, "view-refresh") == 0) return("Show again");
+      break;
+
+    case 'w': return("Close");
+
+    case 'z':
+      if (strcmp(label, "zoom-in") == 0) return("Zoom in"); else
+	if (strcmp(label, "zoom-out") == 0) return("Zoom out");
+      break;
+    }
+  return(label);
+}
+
+GtkWidget *button_new_with_icon(const gchar *label)
+{
+  return(gtk_button_new_with_label(icon_to_label(label)));
+}
+#endif
+
+
 void set_label(GtkWidget *label, const char *str)
 {
   gtk_label_set_text(GTK_LABEL(label), str);
@@ -865,6 +937,7 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 
 GtkWidget *sg_button_new_with_label_and_icon(const char *text, const gchar *stock_id)
 {
+#if GTK_CHECK_VERSION(3, 10, 0)
   /* borrowed from gtk/gtkbutton.c */
   GtkWidget *button, *image, *label, *hbox, *align;
 
@@ -882,6 +955,9 @@ GtkWidget *sg_button_new_with_label_and_icon(const char *text, const gchar *stoc
 
   g_object_unref(image);
   return(button);
+#else
+  return(gtk_button_new_with_label(text));
+#endif
 }
   
 

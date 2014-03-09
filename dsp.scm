@@ -304,6 +304,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;;
 ;;; makes sound more spikey -- sometimes a nice effect
 
+#|
 (define* (spike snd chn)
   "(spike snd chn) multiplies successive samples together to make a sound more spikey"
   (let* ((len (frames snd chn))
@@ -320,6 +321,22 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	  (set! x2 x1)
 	  (set! x1 (abs x0))))
       (float-vector->channel (float-vector-scale! data amp1) 0 len snd chn current-edit-position "spike"))))
+|#
+(define* (spike snd chn)
+  "(spike snd chn) multiplies successive samples together to make a sound more spikey"
+  (let* ((len (frames snd chn))
+	 (data (channel->float-vector 0 (+ len 2) snd chn))
+	 (amp (maxamp snd chn))) ; keep resultant peak at maxamp
+    ;; multiply x[0]*x[1]*x[2]
+    (let ((data1 (make-float-vector (+ len 1))))
+      (copy data data1 1)
+      (float-vector-multiply! data1 data)
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(float-vector-set! data1 i (abs (float-vector-ref data1 i))))
+      (float-vector-multiply! data (make-shared-vector data1 (list len) 1))
+      (let ((amp1 (/ amp (float-vector-peak data))))
+	(float-vector->channel (float-vector-scale! data amp1) 0 len snd chn current-edit-position "spike")))))
 
 ;;; the more successive samples we include in the product, the more we
 ;;;   limit the output to pulses placed at (just after) wave peaks
