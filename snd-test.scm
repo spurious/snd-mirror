@@ -18459,12 +18459,14 @@ EDITS: 2
 	(float-vector-set! data i (mus-random 1.0)))
       (let* ((ndat (snd-spectrum data rectangular-window 65536 #t 0.0 #f #f))
 	     (peak (float-vector-peak ndat))
-	     (sum 0.0))
+	     (sum 0.0)
+	     (incr (make-one-pole 1.0 -1.0)))
 	(if (> peak 1000.0)
 	    (snd-display #__line__ ";mus-random spectral peak: ~A" peak))
 	(do ((i 0 (+ i 1)))
 	    ((= i 32768))
-	  (set! sum (+ sum (float-vector-ref ndat i))))
+	  (one-pole incr (float-vector-ref ndat i)))
+	(set! sum (one-pole incr 0.0))
 	(if (> (/ sum 32768.0) 200.0)
 	    (snd-display #__line__ ";random average: ~A ~A" (/ sum 32768.0) (ndat 0)))
 	(do ((i 0 (+ i 1)))
@@ -18475,10 +18477,11 @@ EDITS: 2
 	(let ((pk (float-vector-peak data)))
 	  (if (> pk 1000)
 	      (snd-display #__line__ ";random autocorrelate peak: ~A" (float-vector-peak data)))
-	  (set! sum 0.0)
+	  (set! incr (make-one-pole 1.0 -1.0))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 32768))
-	    (set! sum (+ sum (abs (data i)))))
+	    (one-pole incr (abs (float-vector-ref data i))))
+	  (set! sum (one-pole incr 0.0))
 	  (if (> (/ sum 32768.0) 200.0)
 	      (snd-display #__line__ ";random autocorrelate average: ~A" (/ sum 32768.0))))))
     
@@ -25034,7 +25037,7 @@ EDITS: 2
 ;;; ---------------- test 12: extensions ----------------
 
 (define (snd_test_12)
-  
+
   (define (spectral-difference snd1 snd2)
     (let* ((size (max (frames snd1) (frames snd2)))
 	   (pow2 (ceiling (log size 2)))
@@ -25043,13 +25046,13 @@ EDITS: 2
 	   (fdr2 (channel->float-vector 0 fftlen snd2 0)))
       (let* ((spectr1 (snd-spectrum fdr1 blackman2-window fftlen #t))
 	     (spectr2 (snd-spectrum fdr2 blackman2-window fftlen #t))
-	     (diff 0.0)
 	     (diffs (float-vector-subtract! spectr1 spectr2))
-	     (len (length diffs)))
+	     (len (length diffs))
+	     (incr (make-one-pole 1.0 -1.0)))
 	(do ((i 0 (+ i 1)))
-	    ((= i len) diff)
-	  (set! diff (+ diff (abs (float-vector-ref diffs i))))))))
-  
+	    ((= i len) (one-pole incr 0.0))
+	  (one-pole incr (abs (float-vector-ref diffs i)))))))
+
   (define (test-spectral-difference snd1 snd2 maxok)
     (let ((s1 (open-sound snd1))
 	  (s2 (open-sound snd2)))
@@ -25061,7 +25064,6 @@ EDITS: 2
 	(close-sound s2)
 	(if (> diff maxok)
 	    (snd-display #__line__ ";translate spectral difference ~A ~A: ~A > ~A?" snd1 snd2 diff maxok)))))
-  
   
   (define (remove-if p l)
     (cond ((null? l) ())
@@ -27675,21 +27677,19 @@ EDITS: 2
     (let* ((diff 0.0)
 	   (pos (edit-position ind 0))
 	   (old-reader (make-sampler beg ind 0 1 (- pos 1)))
-	   (new-reader (make-sampler beg ind 0 1 pos)))
+	   (new-reader (make-sampler beg ind 0 1 pos))
+	   (incr (make-one-pole 1.0 -1.0)))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(let* ((ov (* scaler (next-sample old-reader)))
-	       (nv (next-sample new-reader))
-	       (val (abs (- ov nv))))
-	  (set! diff (+ diff val))))
+	(one-pole incr (abs (- (* scaler (next-sample old-reader)) (next-sample new-reader)))))
+      (set! diff (one-pole incr 0.0))
       (if (> diff 0.0) (snd-display #__line__ ";diff (~D ~D): ~A" beg len diff))
       (set! diff 0.0)
+      (set! incr (make-one-pole 1.0 -1.0))
       (do ((i 0 (+ i 1)))
 	  ((= i 100))
-	(let* ((ov (next-sample old-reader))
-	       (nv (next-sample new-reader))
-	       (val (abs (- ov nv))))
-	  (set! diff (+ diff val))))
+	(one-pole incr (abs (- (next-sample old-reader) (next-sample new-reader)))))
+      (set! diff (one-pole incr 0.0))
       (if (> diff 0.0) (snd-display #__line__ ";zdiff (~D ~D): ~A" beg len diff))
       (free-sampler old-reader)
       (free-sampler new-reader)))
@@ -29665,7 +29665,7 @@ EDITS: 2
 	     diffs))))
   
   (define* (edit-distance s1 c1 e1 e2 (offset 0))
-    (let* ((sum 0.0)
+    (let* ((incr (make-one-pole 1.0 -1.0))
 	   (N (frames s1 c1 e1))
 	   (d1 (samples 0 N s1 c1 e1))
 	   (d2 (samples 0 N s1 c1 e2)))
@@ -29674,8 +29674,8 @@ EDITS: 2
       (float-vector-subtract! d1 d2)
       (do ((i 0 (+ i 1)))
 	  ((= i N))
-	(set! sum (+ sum (abs (float-vector-ref d1 i)))))
-      (sqrt sum)))
+	(one-pole incr (abs (float-vector-ref d1 i))))
+      (sqrt (one-pole incr 0.0))))
   
   
   (define (check-edit-tree expected-tree expected-vals name)
@@ -39068,7 +39068,9 @@ EDITS: 1
 	(if (or (not (= (srate ind) 22050)) 
 		(not (= (mus-sound-srate "test1.snd") 22050))) 
 	    (snd-display #__line__ ";with-sound srate (1): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
-	(if (not (= (frames ind) 2205)) (snd-display #__line__ ";with-sound frames (1): ~A" (frames ind)))
+	(if (and (not (= (frames ind) 2205)) 
+		 (not (= (frames ind) 2206)))
+	    (snd-display #__line__ ";with-sound frames (1): ~A" (frames ind)))
 	(if (or (not (= (chans ind) 2))
 		(not (= (mus-sound-chans "test1.snd") 2)))
 	    (snd-display #__line__ ";with-sound chans (1): ~A" (chans ind))))
@@ -47395,28 +47397,27 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-8-Mar-14:
-36,545,223,026
-5,720,502,950  s7.c:eval [/home/bil/gtk-snd/snd]
-2,256,893,133  ???:sin [/lib64/libm-2.12.so]
-2,027,255,916  ???:cos [/lib64/libm-2.12.so]
+10-Mar-14:
+36,386,570,224
+5,671,424,025  s7.c:eval [/home/bil/gtk-snd/snd]
+2,256,730,722  ???:sin [/lib64/libm-2.12.so]
+2,034,829,538  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,039,402,583  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  886,342,692  ???:t2_32 [/home/bil/gtk-snd/snd]
-  852,073,665  s7.c:gc [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+1,035,229,179  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  887,161,572  ???:t2_32 [/home/bil/gtk-snd/snd]
+  845,053,159  s7.c:gc [/home/bil/gtk-snd/snd]
+  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
   648,381,221  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  613,918,655  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  607,503,337  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  591,885,554  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  565,119,052  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,551,144  ???:n1_64 [/home/bil/gtk-snd/snd]
-  417,130,542  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  591,734,332  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  565,339,088  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,776,292  ???:n1_64 [/home/bil/gtk-snd/snd]
+  415,440,256  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  374,096,158  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  367,202,308  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  303,011,961  ???:memcpy [/lib64/ld-2.12.so]
 |#
 
 

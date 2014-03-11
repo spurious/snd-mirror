@@ -368,7 +368,7 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 	  (do ((j 0 (+ j 1))
 	       (s xmin (+ s step)))
 	      ((= j (- n 1)))
-	    (set! (x j) s))
+	    (float-vector-set! x j s))
 	  (set! (x (- n 1)) xmax))
 	(do ((j 0 (+ j 1)))
 	    ((= j n))

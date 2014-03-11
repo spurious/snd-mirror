@@ -7222,6 +7222,9 @@ static Xen fallback_out_any_2(Xen outp, mus_long_t pos, mus_float_t inv, int chn
 
 static Xen (*out_any_2)(mus_long_t pos, mus_float_t inv, int chn, const char *caller);
 
+bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO);
+bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *IO);
+
 static mus_xen *clm_output_gn = NULL;
 static mus_any *clm_output_gen = NULL;
 static vct *clm_output_vct;
@@ -7236,12 +7239,17 @@ static Xen out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, const 
   return(xen_zero);
 }
 
-bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO);
-
 static Xen safe_out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
   if (!mus_simple_out_any_to_file(pos, inv, chn, clm_output_gen))
     mus_safe_out_any_to_file(pos, inv, chn, clm_output_gen);
+  return(xen_zero);
+}
+
+static Xen safe_outa_2_to_mus_xen(mus_long_t pos, mus_float_t inv, const char *caller)
+{
+  if (!mus_simple_outa_to_file(pos, inv, clm_output_gen))
+    mus_safe_out_any_to_file(pos, inv, 0, clm_output_gen);
   return(xen_zero);
 }
 
@@ -11933,9 +11941,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 	      for (; pos < end;)
 		{
 		  vibrato = simple_triangle_wave(s) + rf(r);
-		  mus_safe_out_any_to_file(pos, f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))), 0, outp);
-		  pos++;
-		  
+		  mus_safe_out_any_to_file(pos++, f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))), 0, outp);
 		  dstart = mus_out_any_data_start(outp);
 		  dend = mus_out_any_data_end(outp);
 		  if (dend > end)
@@ -11946,17 +11952,15 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		    {
 		      vibrato = simple_triangle_wave(s) + rf(r);
 		      buf[dpos++] += f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
-		      pos++;
 		      vibrato = simple_triangle_wave(s) + rf(r);
 		      buf[dpos++] += f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
-		      pos++;
 		    }
 		  while (dpos < dlen)
 		    {
 		      vibrato = simple_triangle_wave(s) + rf(r);
 		      buf[dpos++] += f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
-		      pos++;
 		    }
+		  pos += (dlen - pos + dstart);
 		  mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
 		}
 	    }
@@ -11994,14 +11998,14 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  buf[dpos] += f1 * x;
 			  buf2[dpos++] += f2 * x;
-			  if (!mus_simple_out_any_to_file(pos, r1 * x, 0, revp))
+			  if (!mus_simple_outa_to_file(pos, r1 * x, revp))
 			    mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
 			  pos++;
 			  vibrato = simple_triangle_wave(s) + rf(r);
 			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  buf[dpos] += f1 * x;
 			  buf2[dpos++] += f2 * x;
-			  if (!mus_simple_out_any_to_file(pos, r1 * x, 0, revp))
+			  if (!mus_simple_outa_to_file(pos, r1 * x, revp))
 			    mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
 			  pos++;
 			}
@@ -12011,7 +12015,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  buf[dpos] += f1 * x;
 			  buf2[dpos++] += f2 * x;
-			  if (!mus_simple_out_any_to_file(pos, r1 * x, 0, revp))
+			  if (!mus_simple_outa_to_file(pos, r1 * x, revp))
 			    mus_safe_out_any_to_file(pos, r1 * x, 0, revp);
 			  pos++;
 			}
@@ -12022,10 +12026,53 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		{
 		  /* this is used for 20 secs of 2/0 and 40 of 1/1 in t502, but splitting out theses cases saves (say) 20 or 30
 		   */
-		  for (; pos < end; pos++)
+		  if ((chans == 2) &&
+		      (rev_chans == 0))
 		    {
-		      vibrato = simple_triangle_wave(s) + rf(r);
-		      mus_locsig(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
+		      mus_float_t x;
+		      mus_long_t dlen2;
+
+		      f2 = mus_locsig_ref(lc, 1);
+		      buf2 = ob[1];
+
+		      for (; pos < end;)
+			{
+			  vibrato = simple_triangle_wave(s) + rf(r);
+			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
+			  mus_safe_out_any_to_file(pos, f1 * x, 0, outp);
+			  mus_safe_out_any_to_file(pos, f2 * x, 1, outp);
+			  pos++;
+			  dstart = mus_out_any_data_start(outp);
+			  dend = mus_out_any_data_end(outp);
+			  if (dend > end)
+			    dlen = end - dstart;
+			  dlen2 = dlen - 2;
+			  dpos = pos - dstart;
+			  while (dpos < dlen2)
+			    {
+			      vibrato = simple_triangle_wave(s) + rf(r);
+			      x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
+			      buf[dpos] += f1 * x;
+			      buf2[dpos++] += f2 * x;
+			    }
+			  while (dpos < dlen)
+			    {
+			      vibrato = simple_triangle_wave(s) + rf(r);
+			      x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
+			      buf[dpos] += f1 * x;
+			      buf2[dpos++] += f2 * x;
+			    }
+			  pos += (dlen - pos + dstart);
+			  mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
+			}
+		    }
+		  else
+		    {
+		      for (; pos < end; pos++)
+			{
+			  vibrato = simple_triangle_wave(s) + rf(r);
+			  mus_locsig(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
+			}
 		    }
 		}
 	    }
@@ -12512,6 +12559,60 @@ static gf *fixup_hz_to_radians(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	}
       
       if (g1) gf_free(g1);
+    }
+  return(NULL);
+}
+
+
+/* -------- remainder -------- */
+
+static mus_float_t gf_remainder(mus_float_t x, mus_float_t y)
+{
+  /* checked in advance that y is not 0.0
+   */
+  s7_Int quo;
+  s7_Double pre_quo;
+  pre_quo = x / y;
+  if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
+  return(x - (y * quo));
+}
+
+static mus_float_t gf_remainder_g1_x1(void *p) {gf *g = (gf *)p; return(gf_remainder(g->f1(g->g1), g->x1));}
+
+static gf *fixup_remainder(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
+{
+  if (s7_list_length(sc, expr) == 3)
+    {
+      gf *g, *g1 = NULL;
+      int typ;
+      double x, x1 = 0.0;
+      double *rx;
+      s7_pointer r, s, y;
+      
+      y = caddr(expr);
+      if ((s7_is_symbol(y)) &&
+	  (!s7_is_local_variable(sc, y, locals)))
+	{
+	  r = s7_symbol_value(sc, y);
+	  if (s7_is_real(r))
+	    x1 = s7_number_to_real(sc, r);
+	  else return(NULL);
+	}
+
+      if (x1 != 0.0)
+	{
+	  typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
+	  if (typ == GF_G)
+	    {
+	      g = gf_alloc();
+	      g->func = gf_remainder_g1_x1;
+	      g->x1 = x1;
+	      g->f1 = g1->func;
+	      g->g1 = g1;
+	      return(g);
+	    }
+	  if (g1) gf_free(g1);
+	}
     }
   return(NULL);
 }
@@ -14208,7 +14309,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 			}
 		      else 
 			{
-			  if (func != xen_false)
+			  if (func != Xen_false)
 			    return_null(expr);
 			}
 		      p = gf_alloc();
@@ -14331,7 +14432,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 			f1 = s7_symbol_value(s7, caddr(expr));
 		      else 
 			{
-			  if (caddr(expr) != xen_false)
+			  if (caddr(expr) != Xen_false)
 			    return_null(expr);
 			  f1 = NULL;
 			}
@@ -14339,7 +14440,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 			f2 = s7_symbol_value(s7, cadddr(expr));
 		      else 
 			{
-			  if (cadddr(expr) != xen_false)
+			  if (cadddr(expr) != Xen_false)
 			    return_null(expr);
 			  f2 = NULL;
 			}
@@ -15629,6 +15730,16 @@ static void outa_2(void *p)
   out_any_2(pos, ep->func(ep->g), ep->chan, "outa");
 }
 
+static void safe_outa_2(void *p)
+{
+  s7_ex *e = (s7_ex *)p;
+  outa_ex *ep;
+  mus_long_t pos;
+  ep = (outa_ex *)(e->data);
+  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
+  safe_outa_2_to_mus_xen(pos, ep->func(ep->g), "outa");
+}
+
 
 static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
 {
@@ -15697,7 +15808,9 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
 	{
 	  p->func = gf1->func;
 	  p->g = gf1;
-	  e->func = outa_2; /* TODO: go down a step here (even skip chan check) */
+	  if (out_any_2 == safe_out_any_2_to_mus_xen)
+	    e->func = safe_outa_2;
+	  else e->func = outa_2;
 	  return(e);
 	}
 
@@ -17523,13 +17636,12 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       arg2 = caddr(expr);
 
       if ((s7_is_symbol(arg1)) &&
-	  (s7_is_pair(arg2)))
+	  (s7_is_pair(arg2)) &&
+	  (s7_function_choice(sc, arg2) == g_env_polywave) &&
+	  (arg1 == caddr(caddr(arg2))))            /* might be (+ z (* (env e2) (polywave o x))) not (+ vibrato (* (env e) (polywave o vibrato))) */
 	{
-	  if (s7_function_choice(sc, arg2) == g_env_polywave)
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(fm_violin_modulation);
-	    }
+	  s7_function_choice_set_direct(sc, expr);
+	  return(fm_violin_modulation);
 	}
 
       if ((s7_is_pair(arg1)) &&
@@ -18366,7 +18478,7 @@ static s7_pointer src_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
       (s7_real(caddr(expr)) == 0.0) &&
       ((args == 2) ||
        ((args == 3) && 
-	(cadddr(expr) == xen_false))))
+	(cadddr(expr) == Xen_false))))
     {
       s7_function_choice_set_direct(sc, expr);
       return(src_3);
@@ -20654,6 +20766,9 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "contrast-enhancement");
   store_gf_fixup(s7, f, fixup_contrast_enhancement);
+
+  f = s7_name_to_value(sc, "remainder");
+  store_gf_fixup(s7, f, fixup_remainder);
 
   f = s7_name_to_value(sc, "hz->radians");
   store_gf_fixup(s7, f, fixup_hz_to_radians);

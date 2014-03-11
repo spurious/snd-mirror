@@ -559,8 +559,6 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define ICON_ZOOM_IN         "zoom-in"
 #define ICON_ZOOM_OUT        "zoom-out"
 
-/* TODO: this is no longer correct -- we have to set the icon/label by hand now */
-/* #define button_new_with_icon(Icon)      gtk_button_new_with_label(Icon) */
 GtkWidget *button_new_with_icon(const gchar *label);
 #define image_new_with_icon(Icon, Size) gtk_image_new_from_icon_name(Icon, Size)
 

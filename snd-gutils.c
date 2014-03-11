@@ -326,7 +326,7 @@ static const char *icon_to_label(const char *label)
 {
   /* these are the new-style labels in snd-g0.h */
 
-  fprintf(stderr, "label: [%s]\n", label);
+  /* fprintf(stderr, "label: [%s]\n", label); */
   switch (label[0])
     {
     case 'A': case 'E': case 'O': case 'P': case 'S':

@@ -529,7 +529,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "do", "do", "do", "do", "do", 
    "do", "do", "do", "do", "do", "do",
    "do", "do", "do", "do", "do",
-   "do", "do", "do",
+   "do", "do", "do", "do", "do",
    "do", "do", "do",
    "if", "if", "if", "if",
    "if", "if", "if", "if", "if", 
@@ -9818,7 +9818,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 	return((want_symbol) ? make_symbol(sc, q) : sc->F); 
       break;
 
-    case '0':        /* these two are always digits */ /* PERHAPS: rest of single digits (and table for 2 digits?) */
+    case '0':        /* these two are always digits */
     case '1':
       break;
 
@@ -40768,6 +40768,7 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	    }
 	  if ((is_pair(arg2)) &&
 	      (is_optimized(arg2)) &&
+	      (optimize_data(arg2) == HOP_SAFE_C_C) &&
 	      (fcdr(arg2) == (s7_pointer)g_multiply_sf))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
@@ -40775,6 +40776,7 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	    }
 	  if ((is_pair(arg2)) &&
 	      (is_optimized(arg2)) &&
+	      (optimize_data(arg2) == HOP_SAFE_C_C) &&
 	      (fcdr(arg2) == (s7_pointer)g_sqr_ss))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
@@ -41041,6 +41043,7 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	    }
 	  if ((is_pair(arg1)) &&
 	      (is_safely_optimized(arg1)) &&
+	      (optimize_data(arg1) == HOP_SAFE_C_C) &&
 	      (c_call(arg1) == g_multiply_sf))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
@@ -41162,6 +41165,7 @@ static s7_pointer is_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 #if (!WITH_GMP)
   if ((args == 1) &&
       (is_safely_optimized(cadr(expr))) &&
+      (optimize_data(cadr(expr)) == HOP_SAFE_C_C) &&
       (c_call(cadr(expr)) == g_mod_si))
     {
       set_optimize_data(expr, HOP_SAFE_C_C);
@@ -44214,7 +44218,9 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 		    {
 		      if (is_symbol(cadar_x))
 			{
-			  if ((c_call(caddar_x) == g_cdr) &&
+			  if ((is_optimized(caddar_x)) &&
+			      (is_optimized(cadddar_x)) &&
+			      (c_call(caddar_x) == g_cdr) &&
 			      (c_call(cadddar_x) == g_cdr) &&
 			      (symbol_id(sc->CDR) == 0))
 			    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S_CDR_CDR);
@@ -44775,9 +44781,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 		  s7_pointer car_x, sym = NULL;
 		  bool c_s_is_ok = true;
 
-		  
 		  car_x = car(x);
-
 		  for (args = 0, p = cdar(x); is_pair(p); p = cdr(p), args++)
 		    {
 		      if (is_symbol(car(p)))
@@ -44862,6 +44866,8 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 		    }
 		  return(true);
 		}
+	      /* else we could check other if cases here (test is often all_x_safe) 
+	       */
 	    }
 	}
     }
@@ -49997,6 +50003,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* -------------------------------- DO -------------------------------- */
 
+      /* opt order should probably be looped, ex_fallback, direct */
+
       /* this is the fm-violin optimization */
     SIMPLE_SAFE_DOTIMES:
     case OP_SIMPLE_SAFE_DOTIMES:
@@ -50136,6 +50144,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto DO_END_CLAUSES;
 		      }
 		    /* else fall into the ordinary loop */
+		  }
+
+		if (sc->ex_fallback)
+		  {
+		    s7_ex *e = NULL;
+		    e = sc->ex_fallback(sc, func, sc->envir);
+		    if (e)
+		      {
+			while (true)
+			  {
+			    e->f(e);
+			    numerator(stepper)++;
+			    if (numerator(stepper) == denominator(stepper))
+			      {
+				e->free(e);
+				sc->code = cdr(cadr(sc->code));
+				goto DO_END_CLAUSES;
+			      }
+			  }
+		      }
 		  }
 
 		while (true)
@@ -50301,12 +50329,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    (is_pair(car(sc->code))))
 		  {
 		    s7_ex *e = NULL;
-		    s7_pointer obj;
-		    
+
 		    sc->code = car(sc->code);
-		    /* fprintf(stderr, "safe dotimes: check %s\n", DISPLAY(sc->code)); */
-		    
 		    set_fcdr(code, sc->code);
+
 		    if ((typesflag(sc->code) == SYNTACTIC_PAIR) || 
 			(typeflag(car(sc->code)) == SYNTACTIC_TYPE))
 		      {
@@ -50410,26 +50436,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      }
 			  }
 
-			/* try ex_fallback (gf*) (no calls) */
+			/* try ex_fallback (gf*) */ 
 			if ((sc->ex_fallback) &&
-			    (!is_unsafe_do(sc->code)) &&
-			    ((car(sc->code) == sc->VECTOR_SET) || (car(sc->code) == sc->FLOAT_VECTOR_SET)) &&
-			    (is_symbol(cadr(sc->code))) &&
-			    (caddr(sc->code) == caaar(code)) &&
-			    (is_null(cddddr(sc->code))) &&
-			    (is_float_vector(obj = find_symbol_unchecked(sc, cadr(sc->code)))))
-			  {
-			    e = sc->ex_fallback(sc, cadddr(sc->code), sc->envir);
+			    (!is_unsafe_do(sc->code)))
+			  { 
+			    e = sc->ex_fallback(sc, sc->code, sc->envir);
 			    if (e)
 			      {
-				s7_Int i, start, lim;
-				lim = s7_integer(end_val);
-				start = s7_integer(init_val);
-				for (i = start; i < lim; i++)
-				  float_vector_element(obj, i) = e->f(e);
-				e->free(e);
-				sc->code = cdr(cadr(code));
-				goto DO_END_CLAUSES;
+				s7_pointer stepper;
+				stepper = slot_value(sc->args);
+				while (true)
+				  {
+				    e->f(e);
+				    numerator(stepper)++;
+				    if (numerator(stepper) == denominator(stepper))
+				      {
+					e->free(e);
+					sc->code = cdr(cadr(code));
+					goto DO_END_CLAUSES;
+				      }
+				  }
 			      }
 			  }
 			set_unsafe_do(sc->code);
@@ -50455,11 +50481,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SAFE_DOTIMES_STEP_P:
       {
 	s7_pointer arg;
-	/*
-176400: (((i beg (+ i 1))) ((= i end)) (let ((gliss (env frqf))) (outa i (* (env...
-50828: (((k beg (+ k 1))) ((= k end)) (let ((frq (env menv))) (outa k (formant-bank...
-35721: (((i start (+ i 1))) ((= i stop)) (let ((frq (+ (env frqf) (rand-interp...
-	 */
 	arg = slot_value(sc->args);
 	numerator(arg)++;
 	if (numerator(arg) == denominator(arg))
@@ -50479,11 +50500,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SAFE_DOTIMES_STEP_O:
       {
 	s7_pointer arg;
-	/*
-    [101888: (((k 0 (+ k 1))) ((= k N2)) (float-vector-set! freqs k (* 0.5 (+ (* pscl...]
-9922: (((i start (+ i 1))) ((= i end)) (outa i (* amp (src sr 0.0 src-func))))
-9922: (((i start (+ i 1))) ((= i end)) (outa i (* amp (phase-vocoder sr #f #f f1...
-	 */
 	arg = slot_value(sc->args);
 	numerator(arg)++;
 	if (numerator(arg) == denominator(arg))
@@ -50524,9 +50540,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SAFE_DOTIMES_STEP:
       {
 	s7_pointer arg;
-	/*
-44100: (((i start (+ i 1))) ((= i end)) (if (> ampa 0.0) (outa i (* ampa (ina i...
-	 */
 	arg = slot_value(sc->args);
 	numerator(arg)++;
 	if (numerator(arg) == denominator(arg))
@@ -50669,6 +50682,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		end_slot = environment_dox2(sc->envir);
 
 #if (!WITH_GMP)
+		/* TODO: this ecdr might be unset -- how to catch that? */
 		use_geq = (ecdr(caadr(code)) == geq_2);
 #endif
 		if (lifted_op(body) == OP_INCREMENT_1)
@@ -50735,39 +50749,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_Int step, end;
 	s7_pointer args, code, slot;
-	/*
-264600: (((k 0 (+ k 1))) ((= k 3)) (set! frm0 (/ (env (vector-ref frmfs k)) frq))...
-    [244142: (((i 0 (+ i 1))) ((= i len)) (let ((x0 (next-sample reader)))...]
-194107: (((i 0 (+ i 1))) ((= i len)) (float-vector-set! out-data i (granulate gr))...
-193314: (((i 0 (+ i 1))) ((= i len)) (let ((inval (next-sample reader))) (set! lasty...
-132300: (((i beg (+ i 1))) ((= i end)) (set! degval (env deg-env)) (set! dist-scaler...
-132300: (((k 0 (+ k 1))) ((= k fs)) (set! frm0 (/ (env (vector-ref frmfs k)) rfrq))...
-96776: (((i 0 (+ i 1))) ((= i len)) (let ((samp0 (next-sample sr0)) (samp1...
-88200: (((i start (+ i 1))) ((= i end)) (set! harmfrq (env pitch-env)) (set!...
-88200: (((i start (+ i 1))) ((= i end)) (set! frq (+ freq (triangle-wave per-vib)...
-80555: (((i 0 (+ i 1))) ((= i len)) (let ((ov (* scaler (next-sample old-reader)))...
-68905: (((k 0 (+ k 1))) ((= k samps)) (set! valA0 valA1) (set! valA1 (* vol...
-66150: (((k 0 (+ k 1))) ((= k fs)) (set! frm0 (/ (env (vector-ref frmfs k)) frq))...
-65406: (((i 0 (+ i 1))) ((= i N)) (set! sum (+ sum (next-sample reader))))
-55125: (((i st (+ i 1))) ((= i nd)) (let ((sl (env lenenv))) (set! vol (env ampe))...
-50828: (((i 0 (+ i 1))) ((= i len) count) (if (> (next-sample reader) 0.1) (set!...
-44100: (((i ramp-start (+ i 1))) ((= i ramp-end)) (let ((inval1 (read-sample fil1))...
-44100: (((i beg (+ i 1))) ((= i end)) (let ((vol (env ampenv)) (resa (env srenv)))...
-44100: (((i start (+ i 1))) ((= i end)) (set! rfrq (+ (env freqf) (triangle-wave...
-44098: (((k 0 (+ k 1))) ((= k samps)) (set! sample-0-0 sample-1-0) (set! sample-1-0...
-40000: (((i 0 (+ i 1))) ((= i 40000)) (set! (mus-scaler gen) (env indr)) (outa i...
-33792: (((i 0 (+ i 1))) ((= i len) diff) (set! diff (+ diff (abs (float-vector-ref...
-33075: (((i st (+ i 1))) ((= i nd)) (outa i (* (env ampenv) (bes-j1 car-ph))) (set!...
-33069: (((j 0 (+ j 1))) ((= j resn)) (set! sum (+ sum (two-pole (vector-ref tzs j)...
-32703: (((i 0 (+ i 1))) ((= i N)) (set! sum (+ sum (expt (abs (next-sample reader))...
-27562: (((i beg (+ i 1))) ((= i end)) (if is-release-time (set! loop-gain (+...
-27562: (((i st (+ i 1))) ((= i nd)) (let ((x1 (- x (* dt (+ y z))))) (set! y (+ y (*...
-23648: (((i 0 (+ i 1))) ((= i dur)) (let ((samp (next-sample reader))) (set! sw (+...
-22051: (((i 0 (+ i 1))) ((= i len) count) (if (> (next-sample reader) 0.03) (set!...
-22051: (((i 0 (+ i 1))) ((= i len) count) (if (> (next-sample reader) 0.03) (set!...
-22050: (((i start (+ i 1))) ((= i end)) (set! frq (+ (env freqf) (triangle-wave...
-22050: (((i st (+ i 1))) ((= i nd)) (set! fm (one-zero low (* (env betaenv) (oscil...
-	 */
+
 	args = sc->envir;
 	code = sc->code;
 	slot = environment_dox1(args);
@@ -50975,10 +50957,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SIMPLE_DO_STEP:
       {
 	s7_pointer step, ctr, end, code;
-	/*
-22051: (((i start (+ i 1))) ((> i end)) (set! vib (+ (env freqenv) (* (env pervenv)...
-3872: (((i chntop (- i 1))) ((< i 0)) (set! sndlist (cons snd sndlist)) (set!...
-	 */
+
 	ctr = environment_dox1(sc->envir);
 	end = environment_dox2(sc->envir);
 	code = sc->code;
@@ -51019,37 +50998,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 * (((i 0 (+ i 1))) ((= i 20)) (outa i (sine-env e)))
 	 */
 	s7_pointer val, ctr, end, code;
-	/*
-170010: (((i 0 (+ i 1))) ((= i dur)) (float-vector-set! v1 i (e)))
-162871: (((k 0 (+ k 1))) ((= k ramp-ctr)) (set! rk (ramps k)) (set! sp (vector-ref...
-90402: (((i beg (+ i 1))) ((= i end)) (file->float-vector *reverb* i f-in) (if (>...
-88200: (((i start (+ i 1))) ((= i stop)) (set! (gen 'r) (+ (abs (* (env bouncef)...
-88200: (((i start (+ i 1))) ((= i end)) (set! ctr (+ ctr 1)) (if (> ctr trigger)...
-66150: (((i start (+ i 1))) ((= i stop)) (outa i (* (env ampf) (r2k!cos gen))))
-44100: (((i start (+ i 1))) ((= i stop)) (set! (gen 'r) (+ (abs (* (env bouncef)...
-44100: (((i beg (+ i 1))) ((= i end)) (outa i (* (env e) (+ 1.0 (green-noise-interp...
-44100: (((i beg (+ i 1))) ((= i end)) (outa i (* amp (oscil osc (+ (env e)...
-44100: (((i start (+ i 1))) ((= i end)) (outa i (* amp (sndscm-osc carrier (* index...
-44100: (((i start (+ i 1))) ((= i end)) (outa i (* amp (sndscm-osc1 carrier (* index...
-44100: (((i start (+ i 1))) ((= i end)) (outa i (* amp (sndscm-osc2 carrier (* index...
-40000: (((i 0 (+ i 1))) ((= i 40000)) (set! (mus-scaler gen) (env indr)) (outa i...
-40000: (((i 0 (+ i 1))) ((= i 2000)) (moving-spectrum sv))
-30030: (((i 0 (+ i 1))) ((= i dur)) (float-vector-set! v0 i (e)))
-30000: (((i 0 (+ i 1))) ((= i 30000)) (outa i (nkssb gen (polywave vib))))
-30000: (((i 0 (+ i 1))) ((= i 30000)) (outa i (nkssb-interp gen (polywave vib) (env...
-30000: (((i 0 (+ i 1))) ((= i 30000)) (outa i (izcos gen)))
-30000: (((i 0 (+ i 1))) ((= i 30000)) (outa i (nchoosekcos gen)))
-22144: (((k 0 (+ k 1))) ((= k highest-bin-1)) (set! la ca) (set! ca ra) (set! ra...
-22050: (((i 0 (+ i 1))) ((= i 22050)) (outa i (zipper zp reader0 reader1)))
-22050: (((i 0 (+ i 1))) ((= i 22050)) (outa i (adjustable-triangle-wave gen)))
-22050: (((i 0 (+ i 1))) ((= i 22050)) (outa i (adjustable-sawtooth-wave gen)))
-22050: (((i start (+ i 1))) ((= i stop)) (outa i (* (env ampf) (nkssb-interp gen...
-22050: (((i start (+ i 1))) ((= i stop)) (set! (mus-scaler clang) (env crf)) (set!...
-22050: (((i start (+ i 1))) ((= i stop)) (set! r (env t-env)) (set! cosh-t (cosh r))...
-22050: (((i start (+ i 1))) ((= i stop)) (set! (knock 'index) (env indf)) (outa i (+...
-22050: (((i start (+ i 1))) ((= i end)) (flocsig floc i (pulse-train os)))
-22050: (((i bg (+ i 1))) ((= i nd)) (if (= i next-offset) (begin (set! offset (+...
-	 */
+
 	code = sc->code;
 	ctr = environment_dox1(sc->envir);
 	val = slot_value(ctr);
@@ -51178,12 +51127,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SIMPLE_DO_STEP_P:
       {
 	s7_pointer step, ctr, code;
-	/*
-35400: (((m start (+ m 1))) ((> m end)) (set! sum (+ sum (* (h m) (x (- n m))))))
-26068: (((k 1 (+ k 1))) ((> k ncof)) (let ((jf (logand n1 (+ ni k))) (jr (logand n1...
-17860: (((k 1 (+ k 1))) ((> k ncof)) (let ((jf (logand n1 (+ ni k))) (jr (logand n1...
-11328: (((k (- m 1) (- k 1))) ((= k 0)) (set! (reg k) (reg (- k 1))))
-	 */
+
 	code = sc->code;
 	ctr = environment_dox1(sc->envir);
 
@@ -51267,33 +51211,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DOTIMES_STEP_P:
       {
 	s7_pointer ctr, now, end, code, end_test;
-	/*
-204312: (((i 0 (+ i 1))) ((= i len)) (if (> (float-vector-ref data i) 0.9999) (if... dsp clipped-channel
-131200: (((i 0 (+ i 1))) ((= i fsize)) (if (< (magnitude (make-rectangular (rdata i)...
-50828: (((i 0 (+ i 1))) ((= i len) bins) (let ((bin (floor (* (abs (next-sample...
-50827: (((i 0 (+ i 1))) ((= i 50827)) (if (not (= (if (odd? i) (next-sample vr)...
-45227: (((i 0 (+ i 1))) ((= i len) #t) (if (not (proc (next-sample reader))) (begin...
-44999: (((k i (+ k 1))) ((= k reset-stop)) (let ((val (* pulse-amp (env pulsef)...
-44121: (((i 0 (+ i 1))) ((= i len)) (let ((samp1 (next-sample sr0))) (if (and (<=...
-44121: (((i 0 (+ i 1))) ((= i len)) (let ((samp1 (next-sample sr0))) (if (and (<=...
-44100: (((k 0 (+ k 1))) ((= k numformants)) (set! outsum (+ outsum (* (env...
-44100: (((i beg (+ i 1))) ((= i end)) (let ((val 0.0)) (if (= i out1) (begin (set!...
-32768: (((i 0 (+ i 1))) ((= i 32768)) (set! sum (+ sum (abs (data i)))))
-32703: (((i 0 (+ i 1))) ((= i len)) (let ((y (next-sample reader))) (let...
-28672: (((j 0 (+ j 1))) ((= j max-peaks-1)) (if (> (last-peak-amps j) 0.0) (let...
-26880: (((j 1 (+ j 1))) ((= j max-peaks-1)) (if (> (peak-amps j) maxpk) (begin (set!...
-26416: (((i 0 (+ i 1))) ((= i len)) (let ((start nvals)) (set! nvals (cdr nvals))...
-22050: (((i start (+ i 1))) ((= i stop)) (let* ((vol (* (+ 0.8 (rand-interp avib))...
-22050: (((i start (+ i 1))) ((= i stop)) (let ((ind (env index))) (set! (gen 'r)...
-22050: (((i beg (+ i 1))) ((= i end)) (let ((inval (file->sample file samp))) (set!...
-22050: (((i beg (+ i 1))) ((= i end)) (let ((outsum 0.0) (vib (+ (env frqf)...
-20000: (((i 0 (+ i 1))) ((= i 10000)) (let ((fm (env frqf))) (set! (mus-frequency...
-18522: (((i start (+ i 1))) ((= i stop)) (let ((frq (+ (env frqf) (rand-interp rnd2)...
-16823: (((i 0 (+ i 1))) ((= i len)) (if (or (null? (channel-gains i)) (> time (cadr...
-16800: (((j 0 (+ j 1))) ((= j n)) (let ((ft (f (x j) arg1 arg2))) (if (< ft fx)...
-10000: (((i 0 (+ i 1))) ((= i 10000)) (let ((sig (env e))) (outa i (balance rg sig...
-10000: (((i 0 (+ i 1))) ((= i 10000)) (if (moving-fft ft) (begin...
-	 */
+
 	code = sc->code;
 	ctr = environment_dox1(sc->envir);
 	now = slot_value(ctr);
@@ -51684,26 +51602,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       case OP_DOX_STEP:
 	{
 	  s7_pointer slot;
-	  /*
-204242: (((i 0 (+ i 1)) (angle 0.0 (+ angle incr))) ((= i len)) (float-vector-set!... extensions?
-131131: (((k (- fftlen 1) (- k 1)) (j fft-1 (- j 1))) ((= k fftlen2)) (set! (rl2 j)... dsp down-oct
-131068: (((i 1 (+ i 1)) (k (- fftlen 1) (- k 1))) ((= i fftlen2)) (set! c1...
-105848: (((k 0 (+ k 1)) (j 1 (+ j 1))) ((= j tractlength)) (set! tk tj) (if (zero?...
-98301: (((i 1 (+ i 1)) (j (- fftlen 1) (- j 1))) ((= i fftlen2)) (set! (im i) (func...
-94928: (((k 0 (+ k 1)) (j i (+ j 1))) ((= k ctr)) (float-vector-add! spectr fdr)...
-    [50000: (((loc 0 (+ loc 1)) (val (read-line in-fd) (read-line in-fd))) ((eof-object?...]
-44100: (((i start (+ i 1)) (x 0.0 (+ x x-incr))) ((= i end)) (set! y (+ x (* index...
-32767: (((i 1 (+ i 1)) (j (- fsize 1) (- j 1))) ((= i fsize2)) (float-vector-set! vf...
-29482: (((e-bin 0 (+ e-bin 1))) ((or (not happy) (= e-bin e-size)) happy) (do ((k 0...
-24600: (((samp 0 (+ samp 1))) ((sampler-at-end? rd)) (outa samp (src s incr)) (if (=...
-23732: (((k 0 (+ k 2)) (j i (+ j 2))) ((>= k ctr)) (float-vector-add! spectr fdr)...
-22050: (((j 2 (+ j 1)) (k 1 (+ k 1))) ((= j noseposition)) (set! x (float-vector-ref...
-22050: (((k 0 (+ k 1)) (f frq (+ f frq))) ((= k 5)) (float-vector-set! amps k (env...
-14332: (((i start (+ i 1)) (ctr 0 (+ ctr 1))) ((= i end)) (outa i (* amp...
-10010: (((k 1 (+ k 1)) (kx x (+ kx x))) ((> k harms)) (float-vector-set! glot-table...
-10001: (((i 0 (+ i 1)) (freq 0.0 (+ freq incr))) ((= i len)) (float-vector-set! data...
-10000: (((i 0 (+ i 1)) (k 0.0) (kincr (/ 1.0 recompute-samps))) ((= i dur)) (if (>=...
-	   */
 
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 	    if (is_pair(slot_expression(slot)))
@@ -51725,26 +51623,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       case OP_DOX_STEP_P:
 	{
 	  s7_pointer slot;
-	  /*
-88200: (((j (+ noseposition 1) (+ j 1)) (k noseposition (+ k 1))) ((= j...
-81365: (((i attack-stop (+ i 1)) (j 0 (+ j 1))) ((= i stop)) (if (> (pulse-train...
-80128: (((i 0 (+ i 1)) (ks 0.0 (+ ks kscl))) ((= i n2)) (let ((diff (modulo (-...
-60000: (((i beg (+ i 1))) ((= i (+ beg dur))) (let ((inval (read-sample rd))) (outa...
-51023: (((i 0 (+ i 1))) ((or (> diffs 10) (= i len))) (if (> (abs (diff i)) 1e-05)...
-50831: (((i 0 (+ i 1))) ((or (>= pos 0) (= i len))) (if (not (= (v1 i) 0.0)) (set!...
-50688: (((i 0 (+ i 1))) ((= i (/ size 2)) (list (/ (* (+ pk0loc (if (> pk0loc 0)...
-27695: (((k chunk-len (+ k 1)) (start-ctr 0.0 (+ start-ctr samp1))) ((= k...
-27013: (((j 1 (+ 1 j))) ((or happy (= j len4))) (if (and (< (data j) (data (+ j 1)))...
-26854: (((k 0 (+ k 1)) (start-ctr 0.0 (+ start-ctr samp2))) ((= k chunk-len)) (let...
-22057: (((i beg (+ i 1))) ((>= turn-i turns)) (let ((val (src rd 0.0 func))) (if (=...
-22052: (((k 0 (+ 1 k)) (i writestart (+ i 1))) ((or eow-flag (= k winsamps))) (if (>...
-18356: (((j 0 (+ j 1))) ((or (not (= new-place -1)) (= j max-oscils))) (if (and (=...
-15960: (((j 0 (+ j 1)) (s xmin (+ s step))) ((= j (- n 1))) (set! (x j) s))
-14030: (((n 0 (+ n 1))) ((= n (+ L M))) (let ((sum 0.0) (start (max 0 (- n (+ L...
-13508: (((j 0 (+ j 1)) (nj 0)) ((= j old-n)) (if (not (= j col)) (begin (set! (nmx...
-12656: (((jj 0 (+ jj 1)) (i ii (+ i mmax)) (j (+ ii prev) (+ j mmax))) ((>= jj pow))...
-11840: (((i 0 (+ i 1))) ((or (not happy) (= i chans))) (if (> (abs (- (locsig-ref...	    
-	   */
 
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 	    if (is_pair(slot_expression(slot)))
@@ -51780,17 +51658,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   (do ((i 0 (+ i 1)) (j 2)) ...)
        *   arrives here with sc->args:
        *   '(((+ i 1) . 0))
-       */
-      /*
-91658: ((set! samp0 samp1) (set! samp1 samp2) (set! samp2 (next-sample reader)) (let... ; clean? (examp case seems ok)
-    [22050: ((outa k (* (one-zero g1 (+ 0.0 (readin g0))) (env g2)))) -- chain-dsps]
-    [11025: ((outa k (* (oscil g0 0.0) (env g1))))]
-4000: ((let ((y (random range))) (if (not (chker y)) (format-logged #t ";(random...
-2386: ()
------
-851822: ((if (not (= k newk)) (set! nw (+ nw 1))))
-45609: ((set-car! a i))
-9979: ()
        */
       push_stack(sc, OP_DO_END, sc->args, sc->code);
       sc->args = car(sc->args);                /* the var data lists */
@@ -52800,7 +52667,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 *   we checked at optimize time that this closure takes only 2 args.
 		 */
 		arg = cddr(code);
-		arg = ((s7_function)fcdr(arg))(sc, car(arg));
+		arg = ((s7_function)fcdr(arg))(sc, car(arg)); 
 		sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), find_symbol_checked(sc, cadr(code)), arg);
 		
 		sc->code = closure_body(ecdr(code));
@@ -62636,7 +62503,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_GET_OUTPUT_STRING:          /* from call-with-output-string and with-output-to-string -- return the string */
-      sc->value = s7_make_string(sc, s7_get_output_string(sc, sc->code));
+      sc->value = s7_make_string_with_length(sc, port_string(sc->code), port_string_point(sc->code));
+      /* sc->value = s7_make_string(sc, s7_get_output_string(sc, sc->code)); */
       goto START;
 
 
@@ -69419,16 +69287,20 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
- * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.9
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.5
+ * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4
  *            153 with run macro (eval_ptree)
  */
 /* caveats: callgrind is confused about sincos, and does not count file IO delays
  */
 
 /* letrec* built-in (not macro)
+ *
  * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
- *   (and=> expr func) or (if=> ...)
+ *   (and=> expr func) or (if=> ...) -- cumulative? (and expr => expr => expr...)
+ *   (define (and=> arg . funcs) (if (null? funcs) arg (and arg (and=> ((car funcs) arg) (cdr funcs)))))
+ *   (define-macro (and=> . exprs) (define (wrap e) (if (null? (cdr e)) (car e) `(let ((_ ,(car e))) (and _ ,(wrap (cdr e)))))) (wrap exprs))
+ *
  * (member x hash-table) -> x exists as key in hash-table?
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
@@ -69440,7 +69312,6 @@ int main(int argc, char **argv)
  * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
- *
- * xen_false to Xen_false? ulong_int inconsistent
+ * ulong_int inconsistent
  */
 

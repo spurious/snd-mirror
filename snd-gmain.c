@@ -98,21 +98,24 @@ static guint auto_update_proc = 0;
 
 static gint auto_update_check(gpointer context)
 {
+  if (auto_update_proc != 0)
+    {
+      g_source_remove(auto_update_proc);
+      auto_update_proc = 0;
+    }
   if (auto_update_interval(ss) > 0.0)
     {
       if (!(play_in_progress()))
 	for_each_sound(sound_not_current);
       auto_update_proc = g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, context, NULL);
     }
-  else auto_update_proc = 0;
   return(0);
 }
-
 
 void auto_update_restart(void)
 {
   if (auto_update_proc == 0)
-    g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
+    auto_update_proc = g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
 }
 
 

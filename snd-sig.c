@@ -4085,10 +4085,10 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 	  s7_function f;
 
 	  res = s7_car(body);
-	  if (res == xen_false)		       
+	  if (res == Xen_false)		       
 	    {
 	      free_snd_fd(sf);
-	      return(xen_false);
+	      return(Xen_false);
 	    }
 	  if (!s7_is_pair(res))
 	    {
@@ -4118,9 +4118,9 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 		    {
 		      (*ry) = read_sample(sf);
 		      val = f(s7, args);
-		      if (val != xen_false)
+		      if (val != Xen_false)
 			{
-			  if ((counting) && (val == xen_true))
+			  if ((counting) && (val == Xen_true))
 			    counts++;
 			  else break;
 			}
@@ -4131,7 +4131,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 		    return(s7_make_integer(s7, counts));
 		  if (kp < num)
 		    return(s7_make_integer(s7, kp + beg));
-		  return(xen_false);
+		  return(Xen_false);
 		}
 	      else
 		{
@@ -4183,9 +4183,9 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 			    {
 			      (*ry) = fabs(read_sample(sf));
 			      val = f(s7, args);
-			      if (val != xen_false)
+			      if (val != Xen_false)
 				{
-				  if ((counting) && (val == xen_true))
+				  if ((counting) && (val == Xen_true))
 				    counts++;
 				  else break;
 				}
@@ -4216,9 +4216,9 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 				{
 				  (*ry) = read_sample(sf);
 				  val = f(s7, args);
-				  if (val != xen_false)
+				  if (val != Xen_false)
 				    {
-				      if ((counting) && (val == xen_true))
+				      if ((counting) && (val == Xen_true))
 					counts++;
 				      else break;
 				    }
@@ -4231,7 +4231,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 			return(s7_make_integer(s7, counts));
 		      if (kp < num)
 			return(s7_make_integer(s7, kp + beg));
-		      return(xen_false);
+		      return(Xen_false);
 		    }
 		}
 	    }

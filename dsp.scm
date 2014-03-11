@@ -143,8 +143,8 @@
       (do ((k (- fftlen 1) (- k 1))
 	   (j fft-1 (- j 1)))
 	  ((= k fftlen2))
-	(set! (rl2 j) (rl1 k))
-	(set! (im2 j) (im1 k)))
+	(float-vector-set! rl2 j (float-vector-ref rl1 k))
+	(float-vector-set! im2 j (float-vector-ref im1 k)))
       (fft rl2 im2 -1)
       (float-vector->channel rl2 0 (* n len) snd chn #f (format #f "down-oct ~A" n)))))
 
@@ -1215,16 +1215,20 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define* (find-sine freq beg dur snd)
   "(find-sine freq beg dur snd) returns the amplitude and initial-phase (for sin) at freq"
   (let ((incr (/ (* freq 2 pi) (srate snd)))
-	(sw 0.0)
-	(cw 0.0)
-	(reader (make-sampler beg snd)))
-     (do ((i 0 (+ i 1))) ; this could also use edot-product
+	(sw (make-one-pole 1.0 -1.0))
+	(cw (make-one-pole 1.0 -1.0))
+	(reader (make-sampler beg snd))
+	(samp 0.0))
+     (do ((i 0 (+ i 1)) ; this could also use edot-product
+	  (x 0.0 (+ x incr)))
 	 ((= i dur))
-       (let ((samp (next-sample reader)))
-	 (set! sw (+ sw (* samp (sin (* i incr)))))
-	 (set! cw (+ cw (* samp (cos (* i incr)))))))
-    (list (* 2 (/ (sqrt (+ (* sw sw) (* cw cw))) dur))
-	  (atan cw sw))))
+       (set! samp (next-sample reader))
+       (one-pole sw (* samp (sin x)))
+       (one-pole cw (* samp (cos x))))
+     (set! sw (one-pole sw 0.0))
+     (set! cw (one-pole cw 0.0))
+     (list (* 2 (/ (sqrt (+ (* sw sw) (* cw cw))) dur))
+	   (atan cw sw))))
 
 ;;; this is a faster version of find-sine using the "Goertzel algorithm" taken from R Lyons "Understanding DSP" p 529
 ;;; it returns the same result as find-sine above if you take (* 2 (/ (goertzel...) dur)) -- see snd-test.scm examples
@@ -1358,11 +1362,12 @@ the era when computers were human beings"
   "(channel-mean snd chn) returns the average of the samples in the given channel: <f,1>/n"
   (let ((sum 0.0)
 	(N (frames snd chn))
-	(reader (make-sampler 0 snd chn)))
+	(reader (make-sampler 0 snd chn))
+	(incr (make-one-pole 1.0 -1.0)))
     (do ((i 0 (+ i 1)))
 	((= i N))
-      (set! sum (+ sum (next-sample reader))))
-    (/ sum N)))
+      (one-pole incr (next-sample reader)))
+    (/ (one-pole incr 0.0) N)))
 
 (define* (channel-total-energy snd chn)    ; <f, f>
   (let ((data (samples 0 (frames snd chn) snd chn)))
@@ -1400,13 +1405,13 @@ the era when computers were human beings"
 
 (define* (channel-lp p snd chn)
   "(channel-lp p snd chn) returns the Lp norm of the samples in the given channel"
-  (let ((sum 0.0)
+  (let ((incr (make-one-pole 1.0 -1.0))
 	(N (frames snd chn))
 	(reader (make-sampler 0 snd chn)))
     (do ((i 0 (+ i 1)))
 	((= i N))
-      (set! sum (+ sum (expt (abs (next-sample reader)) p))))
-    (expt sum (/ 1.0 p))))
+      (one-pole incr (expt (abs (next-sample reader)) p)))
+    (expt (one-pole incr 0.0) (/ 1.0 p))))
 
 (define channel-lp-inf maxamp)
 #|

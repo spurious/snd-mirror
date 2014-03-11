@@ -6138,9 +6138,12 @@ mus_float_t mus_pulse_train(mus_any *ptr, mus_float_t fm)
 mus_float_t mus_pulse_train_unmodulated(mus_any *ptr)
 {
   sw *gen = (sw *)ptr;
-  if (gen->phase >= TWO_PI)
+  /* here unfortunately, we might get any phase: (pulse-train p (+ (pulse-train p) -1.0))
+   */
+  if ((gen->phase >= TWO_PI) || (gen->phase < 0.0))
     {
-      gen->phase -= TWO_PI;
+      gen->phase = fmod(gen->phase, TWO_PI);
+      if (gen->phase < 0.0) gen->phase += TWO_PI;
       gen->current_value = gen->base;
     }
   else gen->current_value = 0.0;
@@ -11886,6 +11889,22 @@ bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_
       (samp >= gen->data_start))
     {
       gen->obufs[chan][samp - gen->data_start] += val;
+      if (samp > gen->out_end) 
+	gen->out_end = samp;
+      return(true);
+    }
+  return(false);
+}
+
+
+bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *IO);
+bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *IO)
+{
+  rdout *gen = (rdout *)IO;
+  if ((samp <= gen->data_end) &&
+      (samp >= gen->data_start))
+    {
+      gen->obufs[0][samp - gen->data_start] += val;
       if (samp > gen->out_end) 
 	gen->out_end = samp;
       return(true);

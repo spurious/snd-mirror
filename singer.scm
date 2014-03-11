@@ -474,6 +474,8 @@
 		
 	      (set! (dline1 (- j 1)) temp)
 	      (set! temp nose-last-plus-refl)
+	      
+	      ;; j always starts at 4, goes to 8 so this loop can be unrolled, but doing so doesn't make a big difference
 	      (do ((j (+ noseposition 1) (+ j 1))
 		   (k noseposition (+ k 1)))
 		  ((= j tractlength-1))
@@ -482,6 +484,7 @@
 		  (set! temp1 temp)
 		  (set! temp (+ (dline1 k) (- (dline2 j) x)))
 		  (set! (dline1 k) temp1)))
+
 	      (set! (dline2 tractlength-1) (+ last-lip-refl (* (coeffs tractlength-1) (- (dline1 tractlength-2) last-lip-refl))))
 	      (set! (dline1 tractlength-1) (+ (dline1 tractlength-2) (- (dline2 tractlength-1) last-lip-refl)))
 	      (set! (dline1 tractlength-2) temp)
@@ -499,7 +502,7 @@
 #|
 (with-sound (:statistics #t) (singer 0 .1 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
 
-(with-sound ()
+(with-sound (:statistics #t)
 	    (singer 0 .1 (list (list .05 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 			       (list .15 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 			       (list .05 kkk.shp test.glt 523.0 0.0 0.0 .01) 
