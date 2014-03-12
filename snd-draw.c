@@ -672,8 +672,8 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
 
   return(make_graph_data(cp,
 			 to_c_edit_position(cp, edpos, S_make_graph_data, 3),
-			 (Xen_is_long_long_int(lo)) ? Xen_llong_to_C_llong(lo) : -1,
-			 (Xen_is_long_long_int(hi)) ? Xen_llong_to_C_llong(hi) : -1));
+			 (Xen_is_llong(lo)) ? Xen_llong_to_C_llong(lo) : -1,
+			 (Xen_is_llong(hi)) ? Xen_llong_to_C_llong(hi) : -1));
 }
 
 
@@ -699,8 +699,8 @@ data in the recipient's graph between points low and high in the drawing mode gr
 		  (mus_is_vct(data)), 
 		  data, 1, S_graph_data, "a list of 2 vcts or vct");
   Xen_check_type(Xen_is_integer_boolean_or_unbound(ax), ax, 4, S_graph_data, "an integer");
-  Xen_check_type(Xen_is_long_long_int(lo) || Xen_is_false(lo) || !Xen_is_bound(lo), lo, 5, S_graph_data, "a sample number");
-  Xen_check_type(Xen_is_long_long_int(hi) || Xen_is_false(hi) || !Xen_is_bound(hi), hi, 6, S_graph_data, "a sample number");
+  Xen_check_type(Xen_is_llong(lo) || Xen_is_false(lo) || !Xen_is_bound(lo), lo, 5, S_graph_data, "a sample number");
+  Xen_check_type(Xen_is_llong(hi) || Xen_is_false(hi) || !Xen_is_bound(hi), hi, 6, S_graph_data, "a sample number");
   Xen_check_type(Xen_is_integer_boolean_or_unbound(style), style, 7, S_graph_data, "an integer");
 
   if (Xen_is_list(data))
@@ -711,8 +711,8 @@ data in the recipient's graph between points low and high in the drawing mode gr
   else v0 = xen_to_vct(data);
 
   draw_graph_data(cp, 
-		  (Xen_is_long_long_int(lo)) ? Xen_llong_to_C_llong(lo) : -1,
-		  (Xen_is_long_long_int(hi)) ? Xen_llong_to_C_llong(hi) : -1,
+		  (Xen_is_llong(lo)) ? Xen_llong_to_C_llong(lo) : -1,
+		  (Xen_is_llong(hi)) ? Xen_llong_to_C_llong(hi) : -1,
 		  mus_vct_length(v0),
 		  mus_vct_data(v0),
 		  (v1) ? (mus_vct_data(v1)) : NULL,

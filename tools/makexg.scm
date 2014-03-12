@@ -873,7 +873,7 @@
 				 (if (string=? (cdr typ) "DOUBLE")
 				     "number"
 				     (if (string=? (cdr typ) "ULONG")
-					 "ulong_int"
+					 "ulong"
 					 (apply string (map char-downcase (cdr typ)))))))))
 		  (begin
 		    (if (not (cdr typ)) ; void special case

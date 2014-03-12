@@ -6661,7 +6661,7 @@ static int g_imin(int mn, Xen val, int def)
 static int g_omin(mus_long_t mn, Xen val, mus_long_t def)
 {
   mus_long_t nval;
-  if (Xen_is_long_long_int(val)) nval = Xen_llong_to_C_llong(val); else nval = def;
+  if (Xen_is_llong(val)) nval = Xen_llong_to_C_llong(val); else nval = def;
   if (nval >= mn) return(nval);
   return(mn);
 }
@@ -6751,7 +6751,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
     case CP_CURSOR:
       {
 	mus_long_t samp = 0;
-	if (Xen_is_long_long_int(on)) samp = Xen_llong_to_C_llong(on);
+	if (Xen_is_llong(on)) samp = Xen_llong_to_C_llong(on);
 	if (samp < 0)
 	  {
 	    cp->cursor_on = false;
@@ -6771,7 +6771,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	int pos;
 	mus_long_t samp = 0;
 	pos = to_c_edit_position(cp, cp_edpos, caller, 3);
-	if (Xen_is_long_long_int(on)) samp = Xen_llong_to_C_llong(on);
+	if (Xen_is_llong(on)) samp = Xen_llong_to_C_llong(on);
 	if (samp < 0)
 	  {
 	    cp->cursor_on = false;
@@ -7058,7 +7058,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	  bool need_update = true;
 	  /* if less than current, delete, else zero pad */
 	  curlen = CURRENT_SAMPLES(cp);
-	  newlen = (Xen_is_long_long_int(on)) ? Xen_llong_to_C_llong(on) : curlen;
+	  newlen = (Xen_is_llong(on)) ? Xen_llong_to_C_llong(on) : curlen;
 	  if (newlen < 0)
 	    Xen_out_of_range_error(S_setB S_frames, 1, on, "frames < 0?");
 	  if (curlen > newlen)
@@ -7285,7 +7285,7 @@ static Xen g_cursor(Xen snd, Xen chn_n, Xen edpos)
 
 static Xen g_set_cursor(Xen on, Xen snd, Xen chn_n, Xen edpos) 
 {
-  Xen_check_type(Xen_is_long_long_int(on) || !Xen_is_bound(on), on, 1, S_setB S_cursor, "an integer");
+  Xen_check_type(Xen_is_llong(on) || !Xen_is_bound(on), on, 1, S_setB S_cursor, "an integer");
   if (Xen_is_bound(edpos))
     {
       Xen res;
@@ -8493,7 +8493,7 @@ static Xen g_set_transform_size(Xen val, Xen snd, Xen chn)
 {
   mus_long_t len;
 
-  Xen_check_type(Xen_is_long_long_int(val), val, 1, S_setB S_transform_size, "an integer"); 
+  Xen_check_type(Xen_is_llong(val), val, 1, S_setB S_transform_size, "an integer"); 
   len = Xen_llong_to_C_llong(val);
   if (len <= 0)
     Xen_out_of_range_error(S_setB S_transform_size, 1, val, "size must be > 0");
@@ -9124,7 +9124,7 @@ static Xen g_left_sample(Xen snd, Xen chn_n)
 
 static Xen g_set_left_sample(Xen on, Xen snd, Xen chn_n) 
 {
-  Xen_check_type(Xen_is_long_long_int(on) || !Xen_is_bound(on), on, 1, S_setB S_left_sample, "an integer");
+  Xen_check_type(Xen_is_llong(on) || !Xen_is_bound(on), on, 1, S_setB S_left_sample, "an integer");
   return(channel_set(snd, chn_n, on, CP_AP_LOSAMP, S_setB S_left_sample));
 }
 
@@ -9140,7 +9140,7 @@ static Xen g_right_sample(Xen snd, Xen chn_n)
 
 static Xen g_set_right_sample(Xen on, Xen snd, Xen chn_n) 
 {
-  Xen_check_type(Xen_is_long_long_int(on) || !Xen_is_bound(on), on, 1, S_setB S_right_sample, "an integer");
+  Xen_check_type(Xen_is_llong(on) || !Xen_is_bound(on), on, 1, S_setB S_right_sample, "an integer");
   return(channel_set(snd, chn_n, on, CP_AP_HISAMP, S_setB S_right_sample));
 }
 

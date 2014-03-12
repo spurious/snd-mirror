@@ -8476,8 +8476,8 @@ static Xen g_change_samples_with_origin(Xen samp_0, Xen samps, Xen origin, Xen v
   int pos;
   mus_long_t beg, len = 0;
 
-  Xen_check_type(Xen_is_long_long_int(samp_0), samp_0, 1, S_change_samples_with_origin, "an integer");
-  Xen_check_type(Xen_is_long_long_int(samps), samps, 2, S_change_samples_with_origin, "an integer");
+  Xen_check_type(Xen_is_llong(samp_0), samp_0, 1, S_change_samples_with_origin, "an integer");
+  Xen_check_type(Xen_is_llong(samps), samps, 2, S_change_samples_with_origin, "an integer");
   Xen_check_type(Xen_is_string(origin), origin, 3, S_change_samples_with_origin, "a string");
   Xen_check_type(Xen_is_string(vect), vect, 4, S_change_samples_with_origin, "a filename");
 
@@ -8486,7 +8486,7 @@ static Xen g_change_samples_with_origin(Xen samp_0, Xen samps, Xen origin, Xen v
   if (!cp) return(Xen_false);
 
   beg = beg_to_sample(samp_0, S_change_samples_with_origin);
-  if (Xen_is_long_long_int(samps)) len = Xen_llong_to_C_llong(samps);
+  if (Xen_is_llong(samps)) len = Xen_llong_to_C_llong(samps);
   if (len <= 0) return(Xen_false);
 
   pos = to_c_edit_position(cp, edpos, S_change_samples_with_origin, 7);
@@ -8951,7 +8951,7 @@ static Xen g_snd_to_sample(Xen os, Xen frame, Xen chan)
 {
   #define H_snd_to_sample "(" S_snd_to_sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
   Xen_check_type((mus_is_xen(os)) && (is_snd_to_sample(Xen_to_mus_any(os))), os, 1, S_snd_to_sample, "a " S_snd_to_sample " gen");
-  Xen_check_type(Xen_is_long_long_int(frame), frame, 2, S_snd_to_sample, "an integer");
+  Xen_check_type(Xen_is_llong(frame), frame, 2, S_snd_to_sample, "an integer");
   Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 3, S_snd_to_sample, "an integer");
   return(C_double_to_Xen_real(snd_to_sample_read((mus_any *)Xen_to_mus_any(os), 
 					    Xen_llong_to_C_llong(frame), 

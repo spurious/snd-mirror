@@ -790,7 +790,7 @@ static void apply_fft(fft_state *fs)
 			       Xen_list_2(C_int_to_Xen_sound(cp->sound->index), 
 					  C_int_to_Xen_integer(cp->chan)),
 			       S_before_transform_hook);
-	  if (Xen_is_long_long_int(res))
+	  if (Xen_is_llong(res))
 	    ind0 = Xen_llong_to_C_llong(res) + fs->beg;
 	  else ind0 = cp->axis->losamp + fs->beg;
 	}
@@ -1957,8 +1957,8 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 
   chan_info *cp;
 
-  Xen_check_type(Xen_is_long_long_or_unbound(bin), bin, 1, S_transform_sample, "an integer");
-  Xen_check_type(Xen_is_long_long_or_unbound(slice), slice, 2, S_transform_sample, "an integer");
+  Xen_check_type(Xen_is_llong_or_unbound(bin), bin, 1, S_transform_sample, "an integer");
+  Xen_check_type(Xen_is_llong_or_unbound(slice), slice, 2, S_transform_sample, "an integer");
 
   ASSERT_CHANNEL(S_transform_sample, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_transform_sample);
@@ -1971,7 +1971,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
       if (fp)
 	{
 	  mus_long_t fbin = 0;
-	  if (Xen_is_long_long_int(bin)) fbin = Xen_llong_to_C_llong(bin);
+	  if (Xen_is_llong(bin)) fbin = Xen_llong_to_C_llong(bin);
 
 	  if (fbin < fp->current_size)
 	    {
@@ -1982,7 +1982,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 		  mus_long_t fslice = 0;
 		  sono_info *si;
 
-		  if (Xen_is_long_long_int(slice)) fslice = Xen_llong_to_C_llong(slice);
+		  if (Xen_is_llong(slice)) fslice = Xen_llong_to_C_llong(slice);
 		  si = cp->sonogram_data;
 
 		  if ((si) && 

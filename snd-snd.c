@@ -4874,8 +4874,8 @@ where each inner list entry can also be " PROC_FALSE "."
 
   Xen_check_type(Xen_is_list(settings), settings, 1, S_controls_to_channel, "a list");
   ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
-  Xen_check_type(Xen_is_long_long_int(beg) || Xen_is_false(beg) || !Xen_is_bound(beg), beg, 2, S_controls_to_channel, "an integer");
-  Xen_check_type(Xen_is_long_long_int(dur) || Xen_is_false(dur) || !Xen_is_bound(dur), dur, 3, S_controls_to_channel, "an integer");
+  Xen_check_type(Xen_is_llong(beg) || Xen_is_false(beg) || !Xen_is_bound(beg), beg, 2, S_controls_to_channel, "an integer");
+  Xen_check_type(Xen_is_llong(dur) || Xen_is_false(dur) || !Xen_is_bound(dur), dur, 3, S_controls_to_channel, "an integer");
   Xen_check_type(Xen_is_string_or_unbound(origin), origin, 7, S_controls_to_channel, "a string");
 
   sp = get_sp(snd); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
@@ -4890,8 +4890,8 @@ where each inner list entry can also be " PROC_FALSE "."
 	  Xen_error(Xen_make_error_type("cannot-apply-controls"),
 		    Xen_list_1(C_string_to_Xen_string(S_controls_to_channel ": already applying controls")));
 	}
-      if (Xen_is_long_long_int(beg)) apply_beg = Xen_llong_to_C_llong(beg); else apply_beg = 0;
-      if (Xen_is_long_long_int(dur)) apply_dur = Xen_llong_to_C_llong(dur); else apply_dur = 0;
+      if (Xen_is_llong(beg)) apply_beg = Xen_llong_to_C_llong(beg); else apply_beg = 0;
+      if (Xen_is_llong(dur)) apply_dur = Xen_llong_to_C_llong(dur); else apply_dur = 0;
       cp = get_cp(snd, chn, S_controls_to_channel);
       old_selected_channel = sp->selected_channel;
       sp->selected_channel = cp->chan;
@@ -5048,8 +5048,8 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 		    Xen_list_1(C_string_to_Xen_string(S_apply_controls ": already applying controls")));
 	}
 
-      if (Xen_is_long_long_int(beg)) apply_beg = Xen_llong_to_C_llong(beg); else apply_beg = 0;
-      if (Xen_is_long_long_int(dur)) apply_dur = Xen_llong_to_C_llong(dur); else apply_dur = 0;
+      if (Xen_is_llong(beg)) apply_beg = Xen_llong_to_C_llong(beg); else apply_beg = 0;
+      if (Xen_is_llong(dur)) apply_dur = Xen_llong_to_C_llong(dur); else apply_dur = 0;
 
       if (Xen_is_integer(choice))
 	cur_choice = (snd_apply_t)Xen_integer_to_C_int(choice);

@@ -28931,6 +28931,12 @@ bool s7_is_vector(s7_pointer p)
 }
 
 
+bool s7_is_sundry_vector(s7_pointer p)    
+{ 
+  return(type(p) == T_VECTOR);
+}
+
+
 bool s7_is_float_vector(s7_pointer p)    
 { 
   return(type(p) == T_FLOAT_VECTOR);
@@ -62504,7 +62510,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_GET_OUTPUT_STRING:          /* from call-with-output-string and with-output-to-string -- return the string */
       sc->value = s7_make_string_with_length(sc, port_string(sc->code), port_string_point(sc->code));
-      /* sc->value = s7_make_string(sc, s7_get_output_string(sc, sc->code)); */
       goto START;
 
 
@@ -69291,7 +69296,7 @@ int main(int argc, char **argv)
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4
  *            153 with run macro (eval_ptree)
  */
-/* caveats: callgrind is confused about sincos, and does not count file IO delays
+/* callgrind is confused about sincos, and does not count file IO delays
  */
 
 /* letrec* built-in (not macro)
@@ -69300,6 +69305,9 @@ int main(int argc, char **argv)
  *   (and=> expr func) or (if=> ...) -- cumulative? (and expr => expr => expr...)
  *   (define (and=> arg . funcs) (if (null? funcs) arg (and arg (and=> ((car funcs) arg) (cdr funcs)))))
  *   (define-macro (and=> . exprs) (define (wrap e) (if (null? (cdr e)) (car e) `(let ((_ ,(car e))) (and _ ,(wrap (cdr e)))))) (wrap exprs))
+ *   using cond => here is tricky see t812
+ *   why not extend the cond syntax (cond ((expr => f1 f2 ...))), also in case?
+ *   or even (=> ...) evals and passes to next (=> 49 sqrt even?) so it should be named "forth"!
  *
  * (member x hash-table) -> x exists as key in hash-table?
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
@@ -69309,9 +69317,7 @@ int main(int argc, char **argv)
  *
  * help info for *-float-vector-* still uses vct
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
- * snd-trans.c could be folded into sound.c or somewhere.
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
- * ulong_int inconsistent
  */
 

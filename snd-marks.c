@@ -2177,7 +2177,7 @@ static Xen mark_set(Xen mark_n, Xen val, mark_field_t fld, const char *caller)
     {
     case MARK_SAMPLE: 
       m->samp = mus_oclamp(0, 
-			   (Xen_is_long_long_int(val)) ? Xen_llong_to_C_llong(val) : 0,
+			   (Xen_is_llong(val)) ? Xen_llong_to_C_llong(val) : 0,
 			   CURRENT_SAMPLES(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       run_mark_hook(cp[0], m->id, MARK_MOVE);
@@ -2225,7 +2225,7 @@ static Xen g_mark_sample(Xen mark_n, Xen pos_n)
 static Xen g_set_mark_sample(Xen mark_n, Xen samp_n) 
 {
   Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_setB S_mark_sample, "a mark");
-  Xen_check_type(Xen_is_long_long_int(samp_n) || !Xen_is_bound(samp_n), samp_n, 2, S_setB S_mark_sample, "an integer");
+  Xen_check_type(Xen_is_llong(samp_n) || !Xen_is_bound(samp_n), samp_n, 2, S_setB S_mark_sample, "an integer");
   return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_setB S_mark_sample));
 }
 
@@ -2284,7 +2284,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   int pos;
   chan_info *cp = NULL;
 
-  Xen_check_type((Xen_is_long_long_int(samp_n) || Xen_is_string(samp_n) || (Xen_is_false(samp_n))), samp_n, 1, S_find_mark, "an integer or string or " PROC_FALSE);
+  Xen_check_type((Xen_is_llong(samp_n) || Xen_is_string(samp_n) || (Xen_is_false(samp_n))), samp_n, 1, S_find_mark, "an integer or string or " PROC_FALSE);
   ASSERT_CHANNEL(S_find_mark, snd, chn_n, 2); 
 
   cp = get_cp(snd, chn_n, S_find_mark);
@@ -2301,7 +2301,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 	name = Xen_string_to_C_string(samp_n);
       else 
 	{
-	  if (Xen_is_long_long_int(samp_n))
+	  if (Xen_is_llong(samp_n))
 	    samp = Xen_llong_to_C_llong(samp_n);
 	}
       if (name)
@@ -2332,7 +2332,7 @@ static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool
   int msync = 0;
   const char *mname = NULL;
 
-  Xen_check_type(Xen_is_long_long_int(samp_n) || !Xen_is_bound(samp_n), samp_n, 1, S_add_mark, "an integer");
+  Xen_check_type(Xen_is_llong(samp_n) || !Xen_is_bound(samp_n), samp_n, 1, S_add_mark, "an integer");
   Xen_check_type(Xen_is_string_or_unbound(name) || Xen_is_false(name), name, 4, S_add_mark, "a string");
   Xen_check_type(Xen_is_integer_or_unbound(sync), sync, 5, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd, chn_n, 2);
@@ -2340,7 +2340,7 @@ static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool
   cp = get_cp(snd, chn_n, S_add_mark);
   if (!cp) return(Xen_false);
 
-  if (Xen_is_long_long_int(samp_n)) loc = Xen_llong_to_C_llong(samp_n);
+  if (Xen_is_llong(samp_n)) loc = Xen_llong_to_C_llong(samp_n);
 
   if ((!check_sample) &&
       (loc >= CURRENT_SAMPLES(cp)))

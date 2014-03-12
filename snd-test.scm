@@ -2352,7 +2352,7 @@
 		       'make-src 'make-ssb-am 'make-ncos 'make-nsin 'make-table-lookup
 		       'make-triangle-wave 'make-two-pole 'make-two-zero
 		       'make-variable-graph 'make-float-vector 'make-wave-train 
-		       'map-chan 'map-channel 'mark-click-hook 'mark-color 'mark-context
+		       'map-channel 'mark-click-hook 'mark-color 'mark-context
 		       'mark-drag-hook 'mark-home 'mark-hook 'mark-name 'mark-properties 'mark-property
 		       'mark-sample 'mark-sync 'mark-sync-max 'mark-tag-height 'mark-tag-width
 		       'mark? 'marks 'max-regions 'max-transform-peaks 'maxamp
@@ -4935,6 +4935,7 @@
       (float-vector-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
       f1))
   
+#|
   (define* (cosine-channel (beg 0) dur snd chn edpos)
     (let ((samps (or dur (frames snd chn))))
       (map-channel
@@ -4944,6 +4945,18 @@
 	   (let ((val (* y (cos angle))))
 	     (set! angle (+ angle incr))
 	     val)))
+       beg dur snd chn edpos)
+      ))
+|#
+  (define* (cosine-channel (beg 0) dur snd chn edpos)
+    (let ((samps (or dur (frames snd chn))))
+      (map-channel
+       (let ((incr (/ pi samps))
+	     (angle (* -0.5 pi))
+	     (p (make-one-pole 1.0 -1.0)))
+	 (one-pole p (- angle incr))
+	 (lambda (y)
+	   (* y (cos (one-pole p incr)))))
        beg dur snd chn edpos)
       ))
 
@@ -5754,8 +5767,9 @@ EDITS: 5
 "))
 	      (snd-display #__line__ ";xramp 7: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 0)
-	  (let ((baddy (scan-channel (lambda (y) (if (fneq y (* 0.5 (vals ctr))) #t (begin (set! ctr (+ ctr 1)) #f))))))
-	    (if baddy (snd-display #__line__ ";trouble in xramp 7: ~A" baddy)))
+	  (let ((p (make-one-pole 1.0 -1.0)))
+	    (let ((baddy (scan-channel (lambda (y) (fneq y (* 0.5 (float-vector-ref vals (floor (- (one-pole p 1.0) 1.0)))))))))
+	    (if baddy (snd-display #__line__ ";trouble in xramp 7: ~A" baddy))))
 	  (undo)
 	  (delete-sample 0)
 	  (if (not (string-=? (safe-display-edits ind 0 3) "
@@ -5765,8 +5779,9 @@ EDITS: 5
 "))
 	      (snd-display #__line__ ";xramp 8: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 1)
-	  (let ((baddy (scan-channel (lambda (y) (if (fneq y (vals ctr)) #t (begin (set! ctr (+ ctr 1)) #f))))))
-	    (if baddy (snd-display #__line__ ";trouble in xramp 8: ~A" baddy)))
+	  (let ((p (make-one-pole 1.0 -1.0)))
+	    (let ((baddy (scan-channel (lambda (y) (fneq y (float-vector-ref vals (floor (one-pole p 1.0))))))))
+	    (if baddy (snd-display #__line__ ";trouble in xramp 8: ~A" baddy))))
 	  (undo)
 	  (delete-samples 0 2)
 	  (if (not (string-=? (safe-display-edits ind 0 3) "
@@ -5776,8 +5791,10 @@ EDITS: 5
 "))
 	      (snd-display #__line__ ";xramp 9: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 2)
-	  (let ((baddy (scan-channel (lambda (y) (if (fneq y (vals ctr)) #t (begin (set! ctr (+ ctr 1)) #f))))))
-	    (if baddy (snd-display #__line__ ";trouble in xramp 9: ~A" baddy)))
+	  (let ((p (make-one-pole 1.0 -1.0)))
+	    (one-pole p 1.0)
+	    (let ((baddy (scan-channel (lambda (y) (fneq y (float-vector-ref vals (floor (one-pole p 1.0))))))))
+	    (if baddy (snd-display #__line__ ";trouble in xramp 9: ~A" baddy))))
 	  (undo)
 	  (delete-sample 0)
 	  (delete-sample 0)
@@ -7340,7 +7357,7 @@ EDITS: 5
 				      (lambda (y) 
 					(and (set! outp (not outp)) (* y 0.5))))))
 		     'map-channel ind1)
-	  (test-orig (lambda (snd) (map-chan (lambda (n) (* n 2.0)))) (lambda (snd) (map-chan (lambda (n) (* n 0.5)))) 'map-chan ind1)
+	  (test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)))) (lambda (snd) (map-channel (lambda (n) (* n 0.5)))) 'map-channel ind1)
 	  (test-orig (lambda (snd) (pad-channel 1000 2000 ind1)) (lambda (snd) (delete-samples 1000 2000 ind1)) 'pad-channel ind1)
 	  (test-orig (lambda (snd) (clm-channel (make-one-zero :a0 2.0 :a1 0.0)))
 		     (lambda (snd) (clm-channel (make-one-zero :a0 0.5 :a1 0.0))) 'clm-channel ind1)
@@ -7512,28 +7529,25 @@ EDITS: 5
 	(let* ((ind1 (open-sound "oboe.snd"))
 	       (len (frames ind1))
 	       (ctr #f))
-	  (map-chan (lambda (n)
-		      (and (set! ctr (not ctr))
-			   (* n 2.0)))
-		    0 (frames ind1) "ignore: cut 2" ind1 0)
-	  (if (> (frames ind1) (+ (* len 2) 1))
-	      (snd-display #__line__ ";map-chan cut: ~A ~A?" len (frames ind1)))
+	  (map-channel (lambda (n)
+			 (and (set! ctr (not ctr))
+			      (* n 2.0))))
+	  (if (> (frames ind1) (+ (/ len 2) 1))
+	      (snd-display #__line__ ";map-channel cut: ~A ~A?" len (frames ind1)))
 	  (revert-sound ind1)
 	  (set! ctr 0)
-	  (map-chan (lambda (n)
-		      (or (> (set! ctr (+ ctr 1)) 3) n))
-		    0 (frames ind1) "ignore: cut none" ind1 0)
+	  (map-channel (lambda (n)
+			 (or (> (set! ctr (+ ctr 1)) 3) n)))
 	  (if (> ctr 4)
-	      (snd-display #__line__ ";map-chan no-edit count: ~A?" ctr))
+	      (snd-display #__line__ ";map-channel no-edit count: ~A?" ctr))
 	  (revert-sound ind1)
 	  (let ((v1 (make-float-vector 2)))
-	    (map-chan (lambda (n)
-			(set! (v1 0) n)
-			(set! (v1 1) (* n 3))
-			v1)
-		      0 (frames ind1) "ignore: cut 2" ind1 0))
+	    (map-channel (lambda (n)
+			   (set! (v1 0) n)
+			   (set! (v1 1) (* n 3))
+			   v1)))
 	  (if (> (abs (- (frames ind1) (* len 2))) 3)
-	      (snd-display #__line__ ";map-chan double: ~A ~A?" len (frames ind1)))
+	      (snd-display #__line__ ";map-channel double: ~A ~A?" len (frames ind1)))
 	  (revert-sound ind1)
 	  (let ((otime (maxamp-position ind1)))
 	    (set! (sample 1234) .9)
@@ -7578,12 +7592,12 @@ EDITS: 5
 	   ind1)
 	  (test-edpos 
 	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) 
-		    (let ((samp 0)) 
+		    (let ((p (make-one-pole 1.0 -1.0)))
 		      (scan-channel (lambda (n3) 
 				      (or (> n3 .1) 
-					  (not (set! samp (+ samp 1)))))
+					  (not (one-pole p 1.0))))
 				 0 (frames snd chn) snd chn edpos)
-		      samp))
+		      (floor (one-pole p 0.0))))
 	   'scan-chan
 	   (lambda () (delete-samples 0 100 ind1 0))
 	   ind1)
@@ -7717,7 +7731,7 @@ EDITS: 5
 		  (if (fneq (maxamp ind 0) (* 3 mx)) 
 		      (snd-display #__line__ ";maxamp after selection scale: ~A ~A" mx (maxamp ind 0)))
 		  (peak-env-equal? "selection peak" ind e1 .0001))
-		(map-chan abs 0 #f "test" ind 0)
+		(map-channel abs)
 		(let* ((e1 (channel-amp-envs ind 0 2))
 		       (mx3 (float-vector-peak (car e1)))
 		       (mx4 (float-vector-peak (cadr e1))))
@@ -7727,7 +7741,7 @@ EDITS: 5
 		      (snd-display #__line__ ";maxamp after abs selection scale: ~A ~A" mx (maxamp ind 0)))
 		  (if (ffneq mx3 0.03)
 		      (snd-display #__line__ ";abs max: ~A ~A" mx3 mx4))
-		  (peak-env-equal? "map-chan peak" ind e1 .0001))
+		  (peak-env-equal? "map-channel peak" ind e1 .0001))
 		(delete-samples 10000 5000)
 		(let* ((e1 (channel-amp-envs ind 0))
 		       (mx3 (float-vector-peak (car e1)))
@@ -7836,7 +7850,7 @@ EDITS: 5
 	  (close-sound ind))
 	
 	(let ((ind (new-sound "test.snd")))
-	  (map-chan (lambda (y) 1.0) 0 50000)
+	  (map-channel (lambda (y) 1.0) 0 50001)
 	  (ramp-channel 0.5 1.0 1000 4000)
 	  (let* ((peaks (channel-amp-envs ind 0))
 		 (mx (cadr peaks))
@@ -7849,7 +7863,7 @@ EDITS: 5
 		 (if (< (mn i) 0.5) (begin (snd-display #__line__ ";peak min: ~A ~A" (mn i) i) (break #f)))
 		 (if (< (mx i) 0.5) (begin (snd-display #__line__ ";peak max: ~A ~A" (mx i) i) (break #f)))))))
 	  (undo 2)
-	  (map-chan (lambda (y) -1.0) 0 50000)
+	  (map-channel (lambda (y) -1.0) 0 50001)
 	  (ramp-channel 0.5 1.0 1000 4000)
 	  (let* ((peaks (channel-amp-envs ind 0))
 		 (mx (cadr peaks))
@@ -8602,7 +8616,7 @@ EDITS: 5
 		(close-sound ind))))
 	
 	(let ((ind (new-sound "test.snd")))
-	  (map-chan (lambda (y) 1.0) 0 1000)
+	  (map-channel (lambda (y) 1.0) 0 1001)
 	  (env-channel (make-env '(0 1 1 1) :scaler .5 :length 1001))
 	  (check-maxamp #__line__ ind .5 "simple scaler")
 	  (check-env-vals "simple scaler" (make-env '(0 1 1 1) :scaler .5 :length 1001))
@@ -8622,10 +8636,7 @@ EDITS: 5
 	  (env-channel (make-env '(0 -0.5 1 0 2 -1) :offset .5 :scaler 2.0 :length 1001))
 	  (check-maxamp #__line__ ind 1.5 "off+scl #2")
 	  (let ((mx -12.0))
-	    (scan-channel (lambda (y) 
-			 (if (> y mx) 
-			     (set! mx y))
-			 #f))
+	    (scan-channel (lambda (y) (not (set! mx (max mx y)))))
 	    (if (fneq mx 0.5) (snd-display #__line__ ";non abs max: ~A (correct: 0.5)" mx)))
 	  (check-env-vals "off+scl #2" (make-env '(0 -0.5 1 0 2 -1) :offset .5 :scaler 2.0 :length 1001))
 	  (undo)
@@ -11136,15 +11147,13 @@ EDITS: 2
 	(close-sound ind))
 
       (let ((ind (new-sound "sweep.snd" mus-next mus-ldouble 22050 1 #f 22050)))
-	(let ((phase 0.0)
-	      (freq 0.0)
-	      (incr (/ pi 22050)))
-	  (map-channel 
+	(let ((ph (make-one-pole 1.0 -1.0))
+	      (fq (make-one-pole 1.0 -1.0))
+	      (incr (/ pi 22050.0)))
+	  (map-channel
 	   (lambda (y)
-	     (let ((val (sin phase))) 
-	       (set! phase (+ phase freq)) 
-	       (set! freq (+ freq incr))
-	       (* .5 val)))))
+	     (* .5 (sin (one-pole ph (one-pole fq incr)))))
+	   2)) ; make it look like the old form
 	(save-sound ind)
 	(close-sound ind))
       
@@ -11907,7 +11916,7 @@ EDITS: 2
   
   ;; ----------------
   (define (fltit)
-    "(fltit) returns a time-varying filter: (map-chan (fltit))"
+    "(fltit) returns a time-varying filter: (map-channel (fltit))"
     (let* ((coeffs (float-vector .1 .2 .3 .4 .4 .3 .2 .1))
 	   (flt (make-fir-filter 8 coeffs))
 	   (xcof (mus-xcoeffs flt)) ; maybe a copy?
@@ -11926,15 +11935,14 @@ EDITS: 2
   
   ;; ----------------
   (define (freq-sweep dur)
-    (let ((phase 0.0)
+    (let ((ph (make-one-pole 1.0 -1.0))
+	  (fq (make-one-pole 1.0 -1.0))
 	  (incr (/ pi (* dur 1.05 *clm-srate*)))
 	  (len (frames)))
       (let ((data (make-float-vector len)))
-	(do ((i 0 (+ i 1))
-	     (freq 0.0 (+ freq incr)))
+	(do ((i 2 (+ i 1)))
 	    ((= i len))
-	  (float-vector-set! data i (sin phase))
-	  (set! phase (+ phase freq)))
+	  (float-vector-set! data i (sin (one-pole ph (one-pole fq incr)))))
 	(float-vector->channel (float-vector-scale! data 0.5)))))
 
   
@@ -11970,12 +11978,11 @@ EDITS: 2
 	   (beg 0 (+ beg 1000))
 	   (end 999 (+ end 1000)))
 	  ((= i 10))
-	(let ((g (make-moving-average 1001)))
-	  (set! (mus-increment g) 1.0)
+	(let ((g (make-one-pole 1.0 -1.0)))
 	  (do ((j beg (+ j 1)))
 	      ((= j end))
-	    (moving-average g (float-vector-ref data j)))
-	  (float-vector-set! spect i (moving-average g (float-vector-ref data end)))))
+	    (one-pole g (float-vector-ref data j)))
+	  (float-vector-set! spect i (one-pole g (float-vector-ref data end)))))
       (float-vector-scale! spect (/ 1.0 (float-vector-peak spect)))))
 #|
   (define (old-rough-spectrum ind)
@@ -15771,7 +15778,7 @@ EDITS: 2
 	    (let ((outval (* gain (formant filt (* amp y)))))
 	      (mus-set-formant-radius-and-frequency filt (env re) (env fe))
 	      outval))))
-      (map-chan (poltergeist 300 0.1 0.0 30.0 '(0 100 1 4000.0) '(0 0.99 1 .9)))  ;; should sound like "whyieee?"
+      (map-channel (poltergeist 300 0.1 0.0 30.0 '(0 100 1 4000.0) '(0 0.99 1 .9)))  ;; should sound like "whyieee?"
       (play ob :wait #t)
       (close-sound ob))
     
@@ -20216,7 +20223,7 @@ EDITS: 2
 	(play nind :wait #t)
 	(voiced->unvoiced 1.0 256 2.0 2.0) 
 	(pulse-voice 80 20.0 1.0 1024 0.01)
-	(map-chan (fltit))
+	(map-channel (fltit))
 	(close-sound oboe-index))
       (if (not (sound? nind)) (snd-display #__line__ ";close sound clobbered ~A?" nind))
       (let ((fr (frames nind 0)))
@@ -20275,7 +20282,7 @@ EDITS: 2
     (let ((nind (new-sound "fmv.snd" mus-riff mus-lshort 22050 1 "this is a comment" 22050)))
       (if (not (= (frames nind) 22050)) (snd-display #__line__ "; new-sound initial-length: ~A" (frames nind)))
       (mix "pistol.snd") 
-      (map-chan (expsrc 2.0 nind)) 
+      (map-channel (expsrc 2.0 nind)) 
       (undo) 
       (let ((eds (edits)))
 	(if (or (not (= (car eds) 1)) (not (= (cadr eds) 1)))
@@ -20283,9 +20290,9 @@ EDITS: 2
 	(if (not (= (edit-position) (car eds)))
 	    (snd-display #__line__ ";undo edit-position: ~A ~A?" (edit-position) eds)))
       (expsnd '(0 1 2 .4)) 
-      (map-chan (comb-chord .95 100 .3)) 
-      (map-chan (formants .99 900 .02 1800 .01 2700)) 
-      (map-chan (moving-formant .99 '(0 1200 1 2400))) 
+      (map-channel (comb-chord .95 100 .3)) 
+      (map-channel (formants .99 900 .02 1800 .01 2700)) 
+      (map-channel (moving-formant .99 '(0 1200 1 2400))) 
       (scale-to .3) 
       (let ((eds (edits)))
 	(if (or (not (= (car eds) 6)) (not (= (cadr eds) 0)))
@@ -20300,8 +20307,8 @@ EDITS: 2
 	  (snd-display #__line__ ";set edit-position(4): ~A?" (edit-position)))
       (revert-sound nind)
       (mix "pistol.snd") 
-      (map-chan (zecho .5 .75 6 10.0) 0 65000) 
-      (map-chan (am 440)) 
+      (map-channel (zecho .5 .75 6 10.0) 0 65000) 
+      (map-channel (am 440)) 
       (add-mark 1200)
       (add-mark 2300)
       (key (char->integer #\x) 4)
@@ -20613,7 +20620,7 @@ EDITS: 2
 	(if (not (= val 120)) (snd-display #__line__ ";pv set outctr: ~A" val)))
       
       (select-sound ind)
-      (map-chan (lambda (val) (phase-vocoder pv)))
+      (map-channel (lambda (val) (phase-vocoder pv)))
       (float-vector-set! (phase-vocoder-amp-increments pv) 0 .1)
       (if (fneq ((phase-vocoder-amp-increments pv) 0) .1)
 	  (snd-display #__line__ ";set phase-vocoder-amp-increments: ~A?" ((phase-vocoder-amp-increments pv) 0)))
@@ -20656,7 +20663,7 @@ EDITS: 2
 				     efunc
 				     #f ; no change to synthesis
 				     ))
-	(map-chan (lambda (val) (phase-vocoder pv))))
+	(map-channel (lambda (val) (phase-vocoder pv))))
       (undo 1)
       (free-sampler reader)
       (set! reader (make-sampler 0))
@@ -26374,8 +26381,8 @@ EDITS: 2
 						    (insert-silence 123 456 ind 0)))
 			    (list 'insert-sound (lambda () 
 						  (insert-sound "1a.snd" 123)))
-			    (list 'map-chan (lambda () 
-					      (map-chan (lambda (y) (+ y .2)))))
+			    (list 'map-channel (lambda () 
+						 (map-channel (lambda (y) (+ y .2)))))
 			    (list 'map-channel (lambda () 
 						 (map-channel (lambda (y) (+ y .2)))))
 			    (list 'mix (lambda () 
@@ -27310,7 +27317,7 @@ EDITS: 2
 		(set! (x-bounds) '(.1 .2))
 		(hook-remove graph-hook display-correlation)))
 	  (set! (lisp-graph?) #f)
-	  (map-chan 
+	  (map-channel 
 	   (let ((buffer (make-delay 128))
 		 (gen (make-moving-average 128))
 		 (current-sample 0)
@@ -27339,7 +27346,7 @@ EDITS: 2
 		      ((= i (edit-position)))
 		    (snd-display #__line__ ";~D: ~A ~A" i (maxamp #f 0 i) (edit-fragment i))))))
 	  
-	  (map-chan (echo .5 .75) 0 60000)
+	  (map-channel (echo .5 .75) 0 60000)
 	  (set! (hook-functions after-transform-hook) ())
 	  (set! (hook-functions lisp-graph-hook) ())
 	  
@@ -30202,27 +30209,6 @@ EDITS: 2
 										    (caddr args)
 										    (selected-sound)))))
 						  args))))
-	  (funcs-equal? "map-chan"
-			(lambda args (map-chan (lambda (n) (* n 2.0)) 
-					       (if (> (length args) 0) (car args) 0)
-					       (if (and (> (length args) 1) 
-							(number? (cadr args)))
-						   (- (cadr args) 1)
-						   #f)
-					       "testing..."
-					       (if (> (length args) 2)
-						   (caddr args)
-						   (selected-sound))))
-			(lambda args (map-channel (lambda (n) (* n 2.0))
-						  (if (> (length args) 0) (car args) 0)
-						  (if (and (> (length args) 1) 
-							   (number? (cadr args)))
-						      (- (cadr args) 1)
-						      #f)
-						  (if (> (length args) 2)
-						      (caddr args)
-						      (selected-sound)))))
-	  
 	  (funcs-equal? "src-sound"
 			(lambda args (apply src-sound (list 2.0 1.0 (if (> (length args) 2) (caddr args) #f))))
 			(lambda args (apply src-channel (cons 2.0 args))))
@@ -30262,7 +30248,7 @@ EDITS: 2
 	  (set! (save-dir) old-save-dir))
 	
 	(let ((ind (new-sound "test.snd")))
-	  (map-chan (lambda (y) (random 1.0)) 0 10)
+	  (map-channel (lambda (y) (random 1.0)) 0 10)
 	  (ramp-channel 0.0 1.0)
 	  (zigzag-check "ramp" ind 0)
 	  (undo)
@@ -33775,8 +33761,8 @@ EDITS: 1
 	
 	;; map-channel as backup
 	(lambda (ind)
-	  (let ((ctr 0))
-	    (map-channel (lambda (y) (if (even? (set! ctr (+ ctr 1))) .1 #f)))))
+	  (let ((p (make-one-pole 1.0 -1.0)))
+	    (map-channel (lambda (y) (and (even? (floor (one-pole p 1.0))) .1)))))
 	
 	;; as-one-edit
 	(lambda (ind)
@@ -36837,7 +36823,7 @@ EDITS: 1
 	
 	(let ((ind (new-sound "test.snd" :size 100))
 	      (gen (make-oscil 440.0)))
-	  (map-chan (lambda (y) (oscil gen)))
+	  (map-channel (lambda (y) (oscil gen)))
 	  (down-oct 2)
 	  (if (not (= (frames) 200)) (snd-display #__line__ ";down-oct new len: ~A" (frames)))
 	  (let ((r1 (make-sampler 0 ind 0 1 1))
@@ -45618,7 +45604,7 @@ EDITS: 1
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
 		     left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
 		     main-widgets make-color make-graph-data make-mix-sampler make-player make-region
-		     make-region-sampler make-sampler map-chan mark-color mark-name mark-properties mark-property
+		     make-region-sampler make-sampler mark-color mark-name mark-properties mark-property
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
 		     maxamp maxamp-position menu-widgets min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-color mix-length mix? view-mixes-dialog mix-position
@@ -46189,7 +46175,7 @@ EDITS: 1
 			  fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph?
 			  graph graph-style lisp-graph? (lambda (a) (insert-region 0 a)) insert-sound
 			  time-graph-style lisp-graph-style transform-graph-style
-			  left-sample make-graph-data map-chan max-transform-peaks maxamp-position min-dB mix-region
+			  left-sample make-graph-data max-transform-peaks maxamp-position min-dB mix-region
 			  transform-normalization peaks ;play
 			  position->x position->y reverse-sound
 			  revert-sound right-sample sample save-sound save-sound-as 
@@ -46214,7 +46200,7 @@ EDITS: 1
 			  transform-size transform-graph-type fft-window transform-graph?
 			  graph graph-style lisp-graph? insert-region insert-sound left-sample
 			  time-graph-style lisp-graph-style transform-graph-style
-			  make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
+			  make-graph-data max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
 			  peaks play position->x position->y reverse-sound right-sample sample
 			  save-sound-as show-axes show-transform-peaks show-marks
 			  show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
@@ -46634,7 +46620,7 @@ EDITS: 1
 		  (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 123)))
 		  (check-error-tag 'no-such-channel (lambda () (set! (selected-channel ind) 123)))
 		  (check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) #t))))
-		  (check-error-tag 'bad-arity (lambda () (map-chan (lambda (a b c) 1.0))))
+		  (check-error-tag 'bad-arity (lambda () (map-channel (lambda (a b c) 1.0))))
 		  (check-error-tag 'bad-arity (lambda () (scan-channel (lambda (a b c) 1.0))))
 		  (check-error-tag 'bad-arity (lambda () (set! (cursor-style ind 0) (lambda (a) 32))))
 		  (check-error-tag 'no-such-graphics-context (lambda () (draw-line 0 0 1 1 ind 0 1234)))

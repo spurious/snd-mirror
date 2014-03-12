@@ -462,7 +462,7 @@ static Xen g_set_clm_table_size(Xen val)
 {
   mus_long_t size;
   #define H_clm_table_size "(" S_clm_table_size "): the default table size for most generators (512)"
-  Xen_check_type(Xen_is_long_long_int(val), val, 1, S_setB S_clm_table_size, "an integer");
+  Xen_check_type(Xen_is_llong(val), val, 1, S_setB S_clm_table_size, "an integer");
   size = Xen_llong_to_C_llong(val);
   if ((size <= 0) || 
       (size > mus_max_table_size()))
@@ -531,7 +531,7 @@ static Xen g_mus_file_buffer_size(void)
 static Xen g_mus_set_file_buffer_size(Xen val)
 {
   mus_long_t len;
-  Xen_check_type(Xen_is_long_long_int(val), val, 1, S_setB S_mus_file_buffer_size, "an integer");
+  Xen_check_type(Xen_is_llong(val), val, 1, S_setB S_mus_file_buffer_size, "an integer");
   len = Xen_llong_to_C_llong(val);
   if (len <= 0) 
     Xen_out_of_range_error(S_setB S_mus_file_buffer_size, 1, val, "must be > 0");
@@ -609,7 +609,7 @@ static Xen g_seconds_to_samples(Xen val)
 static Xen g_samples_to_seconds(Xen val) 
 {
   #define H_samples_to_seconds "(" S_samples_to_seconds " samps): use " S_mus_srate " to convert samples to seconds"
-  Xen_check_type(Xen_is_long_long_int(val), val, 1, S_samples_to_seconds, "a number");
+  Xen_check_type(Xen_is_llong(val), val, 1, S_samples_to_seconds, "a number");
   return(C_double_to_Xen_real(mus_samples_to_seconds(Xen_llong_to_C_llong(val))));
 }
 
@@ -732,11 +732,11 @@ static Xen g_dot_product(Xen val1, Xen val2, Xen size)
 
   Xen_check_type(mus_is_vct(val1), val1, 1, S_dot_product, "a vct");
   Xen_check_type(mus_is_vct(val2), val2, 2, S_dot_product, "a vct");
-  Xen_check_type(Xen_is_long_long_or_unbound(size), size, 3, S_dot_product, "an integer");
+  Xen_check_type(Xen_is_llong_or_unbound(size), size, 3, S_dot_product, "an integer");
 
   v1 = Xen_to_vct(val1);
   v2 = Xen_to_vct(val2);
-  if (Xen_is_long_long_int(size))
+  if (Xen_is_llong(size))
     {
       len = Xen_llong_to_C_llong(size);
       if (len == 0) return(C_double_to_Xen_real(0.0));
@@ -811,11 +811,11 @@ static Xen g_fft_window_1(xclm_window_t choice, Xen val1, Xen val2, Xen ulen, co
 
   Xen_check_type(mus_is_vct(val1), val1, 1, caller, "a vct");
   Xen_check_type(mus_is_vct(val2), val2, 2, caller, "a vct");
-  Xen_check_type(Xen_is_long_long_or_unbound(ulen), ulen, 3, caller, "an integer");
+  Xen_check_type(Xen_is_llong_or_unbound(ulen), ulen, 3, caller, "an integer");
 
   v1 = Xen_to_vct(val1);
   v2 = Xen_to_vct(val2);
-  if (Xen_is_long_long_int(ulen))
+  if (Xen_is_llong(ulen))
     {
       len = Xen_llong_to_C_llong(ulen);
       if (len == 0) return(Xen_false);
@@ -889,7 +889,7 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
     sign = Xen_integer_to_C_int(usign); 
   else sign = 1;
 
-  if (Xen_is_long_long_int(len)) 
+  if (Xen_is_llong(len)) 
     {
       n = Xen_llong_to_C_llong(len); 
       if (n <= 0)
@@ -948,7 +948,7 @@ is the window family parameter, if any:\n  " make_window_example
   mus_float_t *data;
 
   Xen_check_type(Xen_is_integer(type), type, 1, S_make_fft_window, "an integer (window type)");
-  Xen_check_type(Xen_is_long_long_int(size), size, 2, S_make_fft_window, "an integer");
+  Xen_check_type(Xen_is_llong(size), size, 2, S_make_fft_window, "an integer");
 
   if (Xen_is_number(ubeta)) beta = Xen_real_to_C_double(ubeta);
   if (Xen_is_number(ualpha)) alpha = Xen_real_to_C_double(ualpha);
@@ -1150,7 +1150,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
 #if (!HAVE_SCHEME)
   Xen_check_type(Xen_is_number(phase), phase, 2, S_array_interp, "a number");
 #endif
-  Xen_check_type(Xen_is_long_long_or_unbound(size), size, 3, S_array_interp, "an integer");
+  Xen_check_type(Xen_is_llong_or_unbound(size), size, 3, S_array_interp, "an integer");
 
   v = Xen_to_vct(obj);
   if (Xen_is_bound(size)) 
@@ -1181,7 +1181,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   Xen_check_type(Xen_is_integer(type), type, 1, S_mus_interpolate, "an integer (interp type such as " S_mus_interp_all_pass ")");
   Xen_check_type(Xen_is_number(x), x, 2, S_mus_interpolate, "a number");
   Xen_check_type(mus_is_vct(obj), obj, 3, S_mus_interpolate, "a vct");
-  Xen_check_type(Xen_is_long_long_or_unbound(size), size, 4, S_mus_interpolate, "an integer");
+  Xen_check_type(Xen_is_llong_or_unbound(size), size, 4, S_mus_interpolate, "an integer");
   Xen_check_type(Xen_is_number_or_unbound(yn1), yn1, 5, S_mus_interpolate, "a number");
 
   itype = Xen_integer_to_C_int(type);
@@ -7550,7 +7550,7 @@ static Xen g_make_file_to_sample(Xen name, Xen buffer_size)
   mus_long_t size;
 
   Xen_check_type(Xen_is_string(name), name, 1, S_make_file_to_sample, "a string");
-  Xen_check_type(Xen_is_long_long_or_unbound(buffer_size), buffer_size, 2, S_make_file_to_sample, "an integer");
+  Xen_check_type(Xen_is_llong_or_unbound(buffer_size), buffer_size, 2, S_make_file_to_sample, "an integer");
 
   if (!(mus_file_probe(Xen_string_to_C_string(name))))
     Xen_error(NO_SUCH_FILE,
@@ -7558,7 +7558,7 @@ static Xen g_make_file_to_sample(Xen name, Xen buffer_size)
 			 name,
 			 C_string_to_Xen_string(STRERROR(errno))));
 
-  if (Xen_is_long_long_int(buffer_size))
+  if (Xen_is_llong(buffer_size))
     {
       size = Xen_llong_to_C_llong(buffer_size);
       if (size <= 0)
@@ -7580,7 +7580,7 @@ static Xen g_file_to_sample(Xen obj, Xen samp, Xen chan)
   mus_xen *gn;
 
   Xen_to_C_generator(obj, gn, g, mus_is_input, S_file_to_sample, "an input generator");
-  Xen_check_type(Xen_is_long_long_int(samp), samp, 2, S_file_to_sample, "an integer");
+  Xen_check_type(Xen_is_llong(samp), samp, 2, S_file_to_sample, "an integer");
 
   if (Xen_is_bound(chan))
     {
@@ -7701,7 +7701,7 @@ static Xen g_make_file_to_frame(Xen name, Xen buffer_size)
   mus_long_t size;
 
   Xen_check_type(Xen_is_string(name), name, 1, S_make_file_to_frame, "a string");
-  Xen_check_type(Xen_is_long_long_or_unbound(buffer_size), buffer_size, 2, S_make_file_to_frame, "an integer");
+  Xen_check_type(Xen_is_llong_or_unbound(buffer_size), buffer_size, 2, S_make_file_to_frame, "an integer");
 
   if (!(mus_file_probe(Xen_string_to_C_string(name))))
     Xen_error(NO_SUCH_FILE,
@@ -7709,7 +7709,7 @@ static Xen g_make_file_to_frame(Xen name, Xen buffer_size)
 			 name,
 			 C_string_to_Xen_string(STRERROR(errno))));
 
-  if (Xen_is_long_long_int(buffer_size))
+  if (Xen_is_llong(buffer_size))
     {
       size = Xen_llong_to_C_llong(buffer_size);
       if (size <= 0)
@@ -8447,11 +8447,11 @@ static Xen g_make_move_sound(Xen dloc_list, Xen outp, Xen revp)
     }
 
   ref = Xen_list_ref(dloc_list, 0);
-  Xen_check_type(Xen_is_long_long_int(ref), ref, 1, S_make_move_sound, "dlocsig list[0] (start): a sample number");
+  Xen_check_type(Xen_is_llong(ref), ref, 1, S_make_move_sound, "dlocsig list[0] (start): a sample number");
   start = Xen_llong_to_C_llong(ref);
 
   ref = Xen_list_ref(dloc_list, 1);
-  Xen_check_type(Xen_is_long_long_int(ref), ref, 1, S_make_move_sound, "dlocsig list[1] (end): a sample number");
+  Xen_check_type(Xen_is_llong(ref), ref, 1, S_make_move_sound, "dlocsig list[1] (end): a sample number");
   end = Xen_llong_to_C_llong(ref);
 
   ref = Xen_list_ref(dloc_list, 2);
@@ -13813,6 +13813,31 @@ static gf *fixup_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 static int gen_list_size = 0, gen_list_top = 0;
 static mus_any **gen_list = NULL;
 
+static void add_gen(mus_any *g)
+{
+  if ((mus_is_oscil(g)) || 
+      (mus_is_polywave(g)))
+    {
+      if (!gen_list)
+	{
+	  gen_list = (mus_any **)calloc(4, sizeof(mus_any *));
+	  gen_list_size = 4;
+	  gen_list_top = 0;
+	}
+      else
+	{
+	  if (gen_list_top == gen_list_size)
+	    {
+	      int i;
+	      gen_list_size *= 2;
+	      gen_list = (mus_any **)realloc(gen_list, gen_list_size * sizeof(mus_any *));
+	      for (i = gen_list_top; i < gen_list_size; i++) gen_list[i] = NULL;
+	    }
+	}
+      gen_list[gen_list_top++] = g;
+    }
+}
+
 static void gen_list_walk(s7_scheme *sc, s7_pointer tree)
 {
   if (s7_is_symbol(tree))
@@ -13821,28 +13846,30 @@ static void gen_list_walk(s7_scheme *sc, s7_pointer tree)
       mus_xen *gn;
       gp = s7_symbol_value(s7, tree); /* not s7_value because that will complain about currently undefined local vars in the tree */
       gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag);
-      if ((gn) && (gn->gen) && 
-	  ((mus_is_oscil(gn->gen)) || 
-	   (mus_is_polywave(gn->gen))))
+      if (gn)
 	{
-	  if (!gen_list)
+	  if (gn->gen)
+	    add_gen(gn->gen);
+	}
+#if 0
+      else
+	{
+	  /* this is actually not necessary right now -- if we get a vector of gens, the gf* process gives up */
+	  if (s7_is_sundry_vector(gp))
 	    {
-	      gen_list = (mus_any **)calloc(4, sizeof(mus_any *));
-	      gen_list_size = 4;
-	      gen_list_top = 0;
-	    }
-	  else
-	    {
-	      if (gen_list_top == gen_list_size)
+	      int i, len;
+	      s7_pointer *gens;
+	      len = s7_vector_length(gp);
+	      gens = s7_vector_elements(gp);
+	      for (i = 0; i < len; i++)
 		{
-		  int i;
-		  gen_list_size *= 2;
-		  gen_list = (mus_any **)realloc(gen_list, gen_list_size * sizeof(mus_any *));
-		  for (i = gen_list_top; i < gen_list_size; i++) gen_list[i] = NULL;
+		  gn = (mus_xen *)s7_object_value_checked(gens[i], mus_xen_tag);
+		  if ((gn) && (gn->gen))
+		    add_gen(gn->gen);
 		}
 	    }
-	  gen_list[gen_list_top++] = gn->gen;
 	}
+#endif
     }
   if (s7_is_pair(tree))
     {

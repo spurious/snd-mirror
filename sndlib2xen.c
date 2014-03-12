@@ -915,7 +915,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
   Xen_check_type(Xen_is_integer_boolean_or_unbound(chans), chans, 2, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
   Xen_check_type(Xen_is_integer_boolean_or_unbound(data_format), data_format, 3, S_mus_sound_reopen_output, "a data-format or " PROC_FALSE);
   Xen_check_type(Xen_is_integer_boolean_or_unbound(header_type), header_type, 4, S_mus_sound_reopen_output, "a header-type or " PROC_FALSE);
-  Xen_check_type(Xen_is_long_long_int(data_loc) || Xen_is_false(data_loc) || !Xen_is_bound(data_loc), 
+  Xen_check_type(Xen_is_llong(data_loc) || Xen_is_false(data_loc) || !Xen_is_bound(data_loc), 
 		  data_loc, 5, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
 
   filename = mus_expand_filename(Xen_string_to_C_string(file));
@@ -958,7 +958,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	  if (chns > 0)
 	    {
 	      mus_long_t dloc;
-	      if (Xen_is_long_long_int(data_loc))
+	      if (Xen_is_llong(data_loc))
 		dloc = Xen_llong_to_C_llong(data_loc);
 	      else
 		{
@@ -1010,7 +1010,7 @@ that was opened by " S_mus_sound_open_output " after updating its header (if any
 
   int nfd;
   Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_sound_close_output, "an integer");
-  Xen_check_type(Xen_is_long_long_int(bytes), bytes, 2, S_mus_sound_close_output, "an integer");
+  Xen_check_type(Xen_is_llong(bytes), bytes, 2, S_mus_sound_close_output, "an integer");
   nfd = Xen_integer_to_C_int(fd);
   if ((nfd < 0) || (nfd == STDIN_FILENO) || (nfd == STDOUT_FILENO) || (nfd == STDERR_FILENO))
     Xen_out_of_range_error(S_mus_sound_close_output, 1, fd, "invalid file number");
@@ -1030,8 +1030,8 @@ filling sound-data sdata's buffers starting at frame beg in the file, and writin
   mus_float_t **bufs;
 
   Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_sound_read, "an integer");
-  Xen_check_type(Xen_is_long_long_int(beg), beg, 2, S_mus_sound_read, "an integer");
-  Xen_check_type(Xen_is_long_long_int(num), num, 3, S_mus_sound_read, "an integer");
+  Xen_check_type(Xen_is_llong(beg), beg, 2, S_mus_sound_read, "an integer");
+  Xen_check_type(Xen_is_llong(num), num, 3, S_mus_sound_read, "an integer");
   Xen_check_type(Xen_is_integer(chans), chans, 4, S_mus_sound_read, "an integer");
   Xen_check_type(xen_is_sound_data(sv), sv, 5, S_mus_sound_read, "a sound-data object");
 
@@ -1068,8 +1068,8 @@ starting at beg (buffer location), going to end"
   mus_float_t **bufs;
 
   Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_sound_write, "an integer");
-  Xen_check_type(Xen_is_long_long_int(beg), beg, 2, S_mus_sound_write, "an integer");
-  Xen_check_type(Xen_is_long_long_int(end), end, 3, S_mus_sound_write, "an integer");
+  Xen_check_type(Xen_is_llong(beg), beg, 2, S_mus_sound_write, "an integer");
+  Xen_check_type(Xen_is_llong(end), end, 3, S_mus_sound_write, "an integer");
   Xen_check_type(Xen_is_integer(chans), chans, 4, S_mus_sound_write, "an integer");
   Xen_check_type(xen_is_sound_data(sv), sv, 5, S_mus_sound_write, "a sound-data object");
 
@@ -1102,7 +1102,7 @@ static Xen g_mus_sound_seek_frame(Xen fd, Xen offset)
 to the frame offset"
 
   Xen_check_type(Xen_is_integer(fd), fd, 1, S_mus_sound_seek_frame, "an integer");
-  Xen_check_type(Xen_is_long_long_int(offset), offset, 2, S_mus_sound_seek_frame, "an integer");
+  Xen_check_type(Xen_is_llong(offset), offset, 2, S_mus_sound_seek_frame, "an integer");
   return(C_llong_to_Xen_llong(mus_file_seek_frame(Xen_integer_to_C_int(fd),
 					    Xen_llong_to_C_llong(offset))));
 }
@@ -1313,8 +1313,8 @@ to the audio line from sound-data sdata."
 
   Xen_check_type(Xen_is_integer(line), line, 1, S_mus_audio_write, "an integer");
   Xen_check_type(xen_is_sound_data(sdata), sdata, 2, S_mus_audio_write, "a sound-data object");
-  Xen_check_type(Xen_is_long_long_int(frames), frames, 3, S_mus_audio_write, "an integer");
-  Xen_check_type(Xen_is_long_long_int(start) || !Xen_is_bound(start), start, 4, S_mus_audio_write, "an integer");
+  Xen_check_type(Xen_is_llong(frames), frames, 3, S_mus_audio_write, "an integer");
+  Xen_check_type(Xen_is_llong(start) || !Xen_is_bound(start), start, 4, S_mus_audio_write, "an integer");
 
   sd = Xen_to_sound_data(sdata);
   frms = Xen_llong_to_C_llong(frames);
@@ -1358,7 +1358,7 @@ from the audio line into sound-data sdata."
 
   Xen_check_type(Xen_is_integer(line), line, 1, S_mus_audio_read, "an integer");
   Xen_check_type(xen_is_sound_data(sdata), sdata, 2, S_mus_audio_read, "a sound-data object");
-  Xen_check_type(Xen_is_long_long_int(frames), frames, 3, S_mus_audio_read, "an integer");
+  Xen_check_type(Xen_is_llong(frames), frames, 3, S_mus_audio_read, "an integer");
 
   sd = Xen_to_sound_data(sdata);
   frms = Xen_llong_to_C_llong(frames);
@@ -1496,7 +1496,7 @@ srate and channels.  'len' samples are written."
 
   Xen_check_type(Xen_is_string(filename), filename, 1, S_array_to_file, "a string");
   Xen_check_type(mus_is_vct(data), data, 2, S_array_to_file, "a vct");
-  Xen_check_type(Xen_is_long_long_int(len), len, 3, S_array_to_file, "an integer");
+  Xen_check_type(Xen_is_llong(len), len, 3, S_array_to_file, "an integer");
   Xen_check_type(Xen_is_integer(srate), srate, 4, S_array_to_file, "an integer");
   Xen_check_type(Xen_is_integer(channels), channels, 5, S_array_to_file, "an integer");
 
@@ -1529,8 +1529,8 @@ at frame 'start' and reading 'samples' samples altogether."
 
   Xen_check_type(Xen_is_string(filename), filename, 1, S_file_to_array, "a string");
   Xen_check_type(Xen_is_integer(chan), chan, 2, S_file_to_array, "an integer");
-  Xen_check_type(Xen_is_long_long_int(start), start, 3, S_file_to_array, "an integer");
-  Xen_check_type(Xen_is_long_long_int(samples), samples, 4, S_file_to_array, "an integer");
+  Xen_check_type(Xen_is_llong(start), start, 3, S_file_to_array, "an integer");
+  Xen_check_type(Xen_is_llong(samples), samples, 4, S_file_to_array, "an integer");
   Xen_check_type((mus_is_vct(data)), data, 5, S_file_to_array, "a vct");
 
   name = Xen_string_to_C_string(filename);
@@ -1731,7 +1731,7 @@ static Xen g_make_sound_data(Xen chans, Xen frames)
   mus_long_t frms;
 
   Xen_check_type(Xen_is_integer(chans), chans, 1, S_make_sound_data, "an integer");
-  Xen_check_type(Xen_is_long_long_int(frames), frames, 2, S_make_sound_data, "an integer");
+  Xen_check_type(Xen_is_llong(frames), frames, 2, S_make_sound_data, "an integer");
 
   chns = Xen_integer_to_C_int(chans);
   if (chns <= 0)
@@ -1759,7 +1759,7 @@ static Xen g_sound_data_ref(Xen obj, Xen chan, Xen frame_num)
 
   Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_ref, "a sound-data object");
   Xen_check_type(Xen_is_integer(chan), chan, 2, S_sound_data_ref, "an integer");
-  Xen_check_type(Xen_is_long_long_int(frame_num), frame_num, 3, S_sound_data_ref, "an integer");
+  Xen_check_type(Xen_is_llong(frame_num), frame_num, 3, S_sound_data_ref, "an integer");
 
   sd = Xen_to_sound_data(obj);
 
@@ -1890,7 +1890,7 @@ static Xen g_sound_data_set(Xen obj, Xen chan, Xen frame_num, Xen val)
 
   Xen_check_type(xen_is_sound_data(obj), obj, 1, S_sound_data_setB, "a sound-data object");
   Xen_check_type(Xen_is_integer(chan), chan, 2, S_sound_data_setB, "an integer");
-  Xen_check_type(Xen_is_long_long_int(frame_num), frame_num, 3, S_sound_data_setB, "an integer");
+  Xen_check_type(Xen_is_llong(frame_num), frame_num, 3, S_sound_data_setB, "an integer");
   Xen_check_type(Xen_is_number(val), val, 4, S_sound_data_setB, "a number");
 
   sd = Xen_to_sound_data(obj);
@@ -2389,7 +2389,7 @@ static Xen g_mus_max_malloc(void)
 static Xen g_mus_set_max_malloc(Xen val)
 {
   mus_long_t size;
-  Xen_check_type(Xen_is_long_long_int(val), val, 1, S_setB S_mus_max_malloc, "an integer");
+  Xen_check_type(Xen_is_llong(val), val, 1, S_setB S_mus_max_malloc, "an integer");
   size = Xen_llong_to_C_llong(val);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, mus_max_malloc_symbol, s7_make_integer(s7, size));
@@ -2413,7 +2413,7 @@ static Xen g_mus_max_table_size(void)
 static Xen g_mus_set_max_table_size(Xen val)
 {
   mus_long_t size;
-  Xen_check_type(Xen_is_long_long_int(val), val, 1, S_setB S_mus_max_table_size, "an integer");
+  Xen_check_type(Xen_is_llong(val), val, 1, S_setB S_mus_max_table_size, "an integer");
   size = Xen_llong_to_C_llong(val);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, mus_max_table_size_symbol, s7_make_integer(s7, size));

@@ -1070,7 +1070,7 @@ static Xen g_ladspa_instantiate(Xen ptr, Xen srate)
   const LADSPA_Descriptor *descriptor;
   LADSPA_Handle handle;
   Xen_check_type(Xen_is_Ladspa_Descriptor(ptr), ptr, 1, S_ladspa_instantiate, "Ladspa descriptor");
-  Xen_check_type(Xen_is_ulong_int(srate), srate, 2, S_ladspa_instantiate, "int");
+  Xen_check_type(Xen_is_ulong(srate), srate, 2, S_ladspa_instantiate, "int");
   descriptor = Xen_to_C_Ladspa_Descriptor(ptr);
   handle = descriptor->instantiate(descriptor, Xen_ulong_to_C_ulong(srate));
   return(C_to_Xen_Ladspa_Handle(handle));
@@ -1127,7 +1127,7 @@ static Xen g_ladspa_run(Xen desc, Xen ptr, Xen count)
   const LADSPA_Descriptor *descriptor;
   Xen_check_type(Xen_is_Ladspa_Descriptor(desc), desc, 1, S_ladspa_run, "Ladspa descriptor");
   Xen_check_type(Xen_is_Ladspa_Handle(ptr), ptr, 2, S_ladspa_run, "Ladspa handle");
-  Xen_check_type(Xen_is_ulong_int(count), count, 3, S_ladspa_run, "unsigned long");
+  Xen_check_type(Xen_is_ulong(count), count, 3, S_ladspa_run, "unsigned long");
   descriptor = Xen_to_C_Ladspa_Descriptor(desc);
   if (descriptor->run) descriptor->run(Xen_to_C_Ladspa_Handle(ptr), Xen_ulong_to_C_ulong(count));
   return(Xen_false);
@@ -1142,7 +1142,7 @@ static Xen g_ladspa_run_adding(Xen desc, Xen ptr, Xen count)
   const LADSPA_Descriptor *descriptor;
   Xen_check_type(Xen_is_Ladspa_Descriptor(desc), desc, 1, S_ladspa_run_adding, "Ladspa descriptor");
   Xen_check_type(Xen_is_Ladspa_Handle(ptr), ptr, 2, S_ladspa_run_adding, "Ladspa handle");
-  Xen_check_type(Xen_is_ulong_int(count), count, 3, S_ladspa_run_adding, "unsigned long");
+  Xen_check_type(Xen_is_ulong(count), count, 3, S_ladspa_run_adding, "unsigned long");
   descriptor = Xen_to_C_Ladspa_Descriptor(desc);
   if (descriptor->run_adding) descriptor->run_adding(Xen_to_C_Ladspa_Handle(ptr), Xen_ulong_to_C_ulong(count));
   return(Xen_false);
@@ -1183,7 +1183,7 @@ static Xen g_ladspa_connect_port(Xen desc, Xen ptr, Xen port, Xen data)
   vct *samples;
   Xen_check_type(Xen_is_Ladspa_Descriptor(desc), desc, 1, S_ladspa_connect_port, "Ladspa descriptor");
   Xen_check_type(Xen_is_Ladspa_Handle(ptr), ptr, 2, S_ladspa_connect_port, "Ladspa handle");
-  Xen_check_type(Xen_is_ulong_int(port), port, 3, S_ladspa_connect_port, "unsigned long");
+  Xen_check_type(Xen_is_ulong(port), port, 3, S_ladspa_connect_port, "unsigned long");
   Xen_check_type(mus_is_vct(data), data, 4, S_ladspa_connect_port, "vct");
   descriptor = Xen_to_C_Ladspa_Descriptor(desc);
   samples = Xen_to_vct(data);

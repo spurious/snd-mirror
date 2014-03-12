@@ -1532,7 +1532,7 @@ static Xen g_set_selection_frames(Xen samps, Xen snd, Xen chn)
   chan_info *cp;
   mus_long_t len;
 
-  Xen_check_type(Xen_is_long_long_int(samps), samps, 1, S_setB S_selection_frames, "an integer");
+  Xen_check_type(Xen_is_llong(samps), samps, 1, S_setB S_selection_frames, "an integer");
   len = Xen_llong_to_C_llong(samps);
   if (len <= 0)
     Xen_wrong_type_arg_error(S_setB S_selection_frames, 1, samps, "a positive integer");

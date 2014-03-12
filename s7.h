@@ -359,7 +359,7 @@ s7_Int s7_vector_length(s7_pointer vec);                                    /* (
 int s7_vector_rank(s7_pointer vect);                                        /* number of dimensions in vect */
 s7_Int *s7_vector_dimensions(s7_pointer vec);                               /* dimensions */
 s7_Int *s7_vector_offsets(s7_pointer vec);                                  /* precalculated offsets to speed-up addressing */
-
+bool s7_is_sundry_vector(s7_pointer p);
 s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
 s7_Int *s7_int_vector_elements(s7_pointer vec);
 s7_Double *s7_float_vector_elements(s7_pointer vec);

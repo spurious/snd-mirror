@@ -2740,7 +2740,7 @@ static Xen g_set_mix_position(Xen n, Xen pos)
   int id;
   mus_long_t beg;
   Xen_check_type(xen_is_mix(n), n, 1, S_setB S_mix_position, "a mix");
-  Xen_check_type(Xen_is_long_long_int(pos), pos, 2, S_setB S_mix_position, "an integer");
+  Xen_check_type(Xen_is_llong(pos), pos, 2, S_setB S_mix_position, "an integer");
 
   id = Xen_mix_to_C_int(n);
   if (!(mix_is_active(id)))
@@ -3346,7 +3346,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   cp = get_cp(snd_n, chn_n, S_mix);
   if (!cp) return(Xen_false);
 
-  if (Xen_is_long_long_int(chn_samp_n))
+  if (Xen_is_llong(chn_samp_n))
     beg = Xen_llong_to_C_llong(chn_samp_n);
 
   chans = mus_sound_chans(name);

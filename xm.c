@@ -466,7 +466,7 @@ static void define_xm_obj(void)
 
 #define Xen_to_C_Modifiers(Arg)  (Modifiers)(Xen_ulong_to_C_ulong(Arg))
 #define C_to_Xen_Modifiers(Arg)  (C_ulong_to_Xen_ulong(Arg))
-#define Xen_is_Modifiers(Arg)     (Xen_is_ulong_int(Arg))
+#define Xen_is_Modifiers(Arg)     (Xen_is_ulong(Arg))
 
 XM_TYPE(Cursor, Cursor)
 XM_TYPE_PTR(Screen, Screen *)
@@ -2020,7 +2020,7 @@ static Arg *Xen_to_C_Args(Xen inargl)
 	  break;
 
 	default:
-	  if (Xen_is_ulong_int(value))
+	  if (Xen_is_ulong(value))
 	    XtSetArg(args[i], name, (XtArgVal)(Xen_ulong_to_C_ulong(value)));
 	  else if (Xen_is_integer(value))
 	    XtSetArg(args[i], name, (XtArgVal)(Xen_integer_to_C_int(value)));
@@ -2520,7 +2520,7 @@ unsigned long parm_length, Atom parm_type)  establishes parameters to be passed 
   Xen_check_type(Xen_is_wrapped_c_pointer(arg1), arg1, 1, "XmTransferSetParameters", "XtPointer");
   Xen_check_type(Xen_is_wrapped_c_pointer(arg2), arg2, 2, "XmTransferSetParameters", "XtPointer");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XmTransferSetParameters", "an integer");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XmTransferSetParameters", "unsigned long");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XmTransferSetParameters", "unsigned long");
   Xen_check_type(Xen_is_Atom(arg5), arg5, 5, "XmTransferSetParameters", "an Atom");
   XmTransferSetParameters((XtPointer)Xen_unwrap_C_pointer(arg1), 
 			  (XtPointer)Xen_unwrap_C_pointer(arg2), 
@@ -2892,7 +2892,7 @@ static Xen gxm_XmRenderTableCvtFromProp(Xen arg1, Xen arg2, Xen arg3)
 converts from a string representation to a render table"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmRenderTableCvtFromProp", "Widget");
   Xen_check_type(Xen_is_string(arg2), arg2, 2, "XmRenderTableCvtFromProp", "char*");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XmRenderTableCvtFromProp", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XmRenderTableCvtFromProp", "unsigned int");
   str = (char *)Xen_string_to_C_string(arg2);
   len = Xen_ulong_to_C_ulong(arg3);
   if ((str) || ((int)strlen(str) == len))
@@ -3469,7 +3469,7 @@ static Xen gxm_XmStringComponentCreate(Xen arg1, Xen arg2, Xen arg3)
   #define H_XmStringComponentCreate "XmString XmStringComponentCreate(XmStringComponentType c_type, unsigned int length, XtPointer value) \
 creates arbitrary components"
   Xen_check_type(Xen_is_integer(arg1), arg1, 1, "XmStringComponentCreate", "XmStringComponentType");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XmStringComponentCreate", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XmStringComponentCreate", "unsigned int");
   Xen_check_type(Xen_is_string(arg3) || Xen_is_false(arg3), arg3, 3, "XmStringComponentCreate", "XtPointer");
   return(C_to_Xen_XmString(XmStringComponentCreate(Xen_integer_to_C_int(arg1), 
 						   Xen_ulong_to_C_ulong(arg2), 
@@ -3526,8 +3526,8 @@ underlines a string drawn in an X Window"
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XmStringDrawUnderline", "int");
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XmStringDrawUnderline", "int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XmStringDrawUnderline", "int");
-  Xen_check_type(Xen_is_ulong_int(arg9), arg9, 9, "XmStringDrawUnderline", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg10), arg10, 10, "XmStringDrawUnderline", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg9), arg9, 9, "XmStringDrawUnderline", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg10), arg10, 10, "XmStringDrawUnderline", "unsigned int");
   Xen_check_type(Xen_is_XRectangle(arg11), arg11, 11, "XmStringDrawUnderline", "XRectangle");
   Xen_check_type(Xen_is_XmString(arg12), arg12, 12, "XmStringDrawUnderline", "XmString");
   XmStringDrawUnderline(Xen_to_C_Display(arg1), 
@@ -3567,8 +3567,8 @@ draws a compound string in an X Window and creates an image"
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XmStringDrawImage", "int");
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XmStringDrawImage", "int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XmStringDrawImage", "int");
-  Xen_check_type(Xen_is_ulong_int(arg9), arg9, 9, "XmStringDrawImage", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg10), arg10, 10, "XmStringDrawImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg9), arg9, 9, "XmStringDrawImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg10), arg10, 10, "XmStringDrawImage", "unsigned int");
   Xen_check_type(Xen_is_XRectangle(arg11), arg11, 11, "XmStringDrawImage", "XRectangle*");
   XmStringDrawImage(Xen_to_C_Display(arg1), 
 		    Xen_to_C_Window(arg2), 
@@ -3606,8 +3606,8 @@ string in an X window"
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XmStringDraw", "int");
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XmStringDraw", "int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XmStringDraw", "int");
-  Xen_check_type(Xen_is_ulong_int(arg9), arg9, 9, "XmStringDraw", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg10), arg10, 10, "XmStringDraw", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg9), arg9, 9, "XmStringDraw", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg10), arg10, 10, "XmStringDraw", "unsigned int");
   Xen_check_type(Xen_is_XRectangle(arg11), arg11, 11, "XmStringDraw", "XRectangle*");
   XmStringDraw(Xen_to_C_Display(arg1), 
 	       Xen_to_C_Window(arg2), 
@@ -5353,7 +5353,7 @@ static Xen gxm_XmFileSelectionBoxGetChild(Xen arg1, Xen arg2)
   #define H_XmFileSelectionBoxGetChild "Widget XmFileSelectionBoxGetChild(Widget widget, unsigned char child) \
 used to access a component"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmFileSelectionBoxGetChild", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XmFileSelectionBoxGetChild", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XmFileSelectionBoxGetChild", "unsigned int");
   return(C_to_Xen_Widget(XmFileSelectionBoxGetChild(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
@@ -6037,7 +6037,7 @@ static Xen gxm_XmSelectionBoxGetChild(Xen arg1, Xen arg2)
 {
   #define H_XmSelectionBoxGetChild "Widget XmSelectionBoxGetChild(Widget widget, unsigned char child) used to access a SelectionBox component"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmSelectionBoxGetChild", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XmSelectionBoxGetChild", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XmSelectionBoxGetChild", "unsigned int");
   return(C_to_Xen_Widget(XmSelectionBoxGetChild(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
@@ -6197,7 +6197,7 @@ returns a specified format name"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmClipboardInquireFormat", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XmClipboardInquireFormat", "Window");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XmClipboardInquireFormat", "int");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XmClipboardInquireFormat", "ulong");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XmClipboardInquireFormat", "ulong");
   len = Xen_ulong_to_C_ulong(arg4);
   if (len == 0) return(Xen_false);
   buf = (XtPointer)calloc(len + 1, sizeof(char));
@@ -6240,7 +6240,7 @@ static Xen gxm_XmClipboardRetrieve(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XmClipboardRetrieve", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XmClipboardRetrieve", "Window");
   Xen_check_type(Xen_is_string(arg3), arg3, 3, "XmClipboardRetrieve", "char*");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XmClipboardRetrieve", "ulong");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XmClipboardRetrieve", "ulong");
   len = Xen_ulong_to_C_ulong(arg4);
   if (len <= 0) return(Xen_false);
   buf = (XtPointer)malloc(len);
@@ -6308,7 +6308,7 @@ static Xen gxm_XmClipboardCopyByName(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XmClipboardCopyByName", "Window");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XmClipboardCopyByName", "long");
   Xen_check_type(Xen_is_string(arg4), arg4, 4, "XmClipboardCopyByName", "XtPointer");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XmClipboardCopyByName", "ulong");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XmClipboardCopyByName", "ulong");
   return(C_int_to_Xen_integer(XmClipboardCopyByName(Xen_to_C_Display(arg1), 
 					    Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3), 
 					    (XtPointer)Xen_string_to_C_string(arg4), 
@@ -6358,7 +6358,7 @@ to temporary storage for later copying to clipboard"
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XmClipboardCopy", "long");
   Xen_check_type(Xen_is_string(arg4), arg4, 4, "XmClipboardCopy", "char*");
   Xen_check_type(Xen_is_string(arg5), arg5, 5, "XmClipboardCopy", "XtPointer");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XmClipboardCopy", "ulong");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XmClipboardCopy", "ulong");
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XmClipboardCopy", "long");
   val = XmClipboardCopy(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), 
 			Xen_integer_to_C_int(arg3), (char *)Xen_string_to_C_string(arg4), 
@@ -6707,7 +6707,7 @@ static Xen gxm_XmCommandGetChild(Xen arg1, Xen arg2)
 {
   #define H_XmCommandGetChild "Widget XmCommandGetChild(Widget widget, unsigned char child) A Command function that is used to access a component"
   Xen_check_type(Xen_is_CommandWidget(arg1), arg1, 1, "XmCommandGetChild", "Command Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XmCommandGetChild", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XmCommandGetChild", "unsigned int");
   return(C_to_Xen_Widget(XmCommandGetChild(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
@@ -7068,7 +7068,7 @@ static Xen gxm_XmMessageBoxGetChild(Xen arg1, Xen arg2)
 {
   #define H_XmMessageBoxGetChild "Widget XmMessageBoxGetChild(Widget widget, unsigned char child) A MessageBox function that is used to access a component"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmMessageBoxGetChild", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XmMessageBoxGetChild", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XmMessageBoxGetChild", "unsigned int");
   return(C_to_Xen_Widget(XmMessageBoxGetChild(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
@@ -7621,7 +7621,7 @@ static Xen gxm_XSaveContext(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XSaveContext "XSaveContext(dpy, rid, context) saves a context"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSaveContext", "Display*");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XSaveContext", "XID");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XSaveContext", "XID");
   Xen_check_type(Xen_is_XContext(arg3), arg3, 3, "XSaveContext", "XContext");
   return(C_int_to_Xen_integer(XSaveContext(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_XContext(arg3), (caddr_t)arg4)));
 }
@@ -7633,8 +7633,8 @@ RectangleOut if the rectangle is entirely out of the specified region, and Recta
   Xen_check_type(Xen_is_Region(arg1), arg1, 1, "XRectInRegion", "Region");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XRectInRegion", "int");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XRectInRegion", "int");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XRectInRegion", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XRectInRegion", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XRectInRegion", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XRectInRegion", "unsigned int");
   return(C_int_to_Xen_integer(XRectInRegion(Xen_to_C_Region(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3), Xen_ulong_to_C_ulong(arg4), Xen_ulong_to_C_ulong(arg5))));
 }
 
@@ -7839,7 +7839,7 @@ static Xen gxm_XFindContext(Xen arg1, Xen arg2, Xen arg3)
   caddr_t x;
   int val;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFindContext", "Display*");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XFindContext", "XID");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XFindContext", "XID");
   Xen_check_type(Xen_is_XContext(arg3), arg3, 3, "XFindContext", "XContext");
   val = XFindContext(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_XContext(arg3), &x);
   return(Xen_list_2(C_int_to_Xen_integer(val),
@@ -7872,7 +7872,7 @@ static Xen gxm_XDeleteContext(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XDeleteContext "int XDeleteContext(display, rid, context) deletes the entry for the given resource ID and type from the data structure."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDeleteContext", "Display*");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XDeleteContext", "XID");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XDeleteContext", "XID");
   Xen_check_type(Xen_is_XContext(arg3), arg3, 3, "XDeleteContext", "XContext");
   return(C_int_to_Xen_integer(XDeleteContext(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_XContext(arg3))));
 }
@@ -8033,8 +8033,8 @@ the X Version 11 format."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XWriteBitmapFile", "Display*");
   Xen_check_type(Xen_is_string(arg2), arg2, 2, "XWriteBitmapFile", "char*");
   Xen_check_type(Xen_is_Pixmap(arg3), arg3, 3, "XWriteBitmapFile", "Pixmap");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XWriteBitmapFile", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XWriteBitmapFile", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XWriteBitmapFile", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XWriteBitmapFile", "unsigned int");
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XWriteBitmapFile", "int");
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XWriteBitmapFile", "int");
   return(C_int_to_Xen_integer(XWriteBitmapFile(Xen_to_C_Display(arg1), 
@@ -8082,8 +8082,8 @@ static Xen gxm_XWarpPointer(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xe
   Xen_check_type(Xen_is_Window(arg3), arg3, 3, "XWarpPointer", "Window");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XWarpPointer", "int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XWarpPointer", "int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XWarpPointer", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XWarpPointer", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XWarpPointer", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XWarpPointer", "unsigned int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XWarpPointer", "int");
   Xen_check_type(Xen_is_integer(arg9), arg9, 9, "XWarpPointer", "int");
   return(C_int_to_Xen_integer(XWarpPointer(Xen_to_C_Display(arg1), 
@@ -8163,7 +8163,7 @@ static Xen gxm_XUngrabKey(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 grabbed by this client."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XUngrabKey", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XUngrabKey", "int");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XUngrabKey", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XUngrabKey", "unsigned int");
   Xen_check_type(Xen_is_Window(arg4), arg4, 4, "XUngrabKey", "Window");
   return(C_int_to_Xen_integer(XUngrabKey(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_Window(arg4))));
 }
@@ -8173,8 +8173,8 @@ static Xen gxm_XUngrabButton(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
   #define H_XUngrabButton "XUngrabButton(display, button, modifiers, grab_window) releases the passive button/key combination on the specified \
 window if it was grabbed by this client."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XUngrabButton", "Display*");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XUngrabButton", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XUngrabButton", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XUngrabButton", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XUngrabButton", "unsigned int");
   Xen_check_type(Xen_is_Window(arg4), arg4, 4, "XUngrabButton", "Window");
   return(C_int_to_Xen_integer(XUngrabButton(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_Window(arg4))));
 }
@@ -8262,7 +8262,7 @@ associated with the colormap and stores the result in the specified colormap."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XStoreNamedColor", "Display*");
   Xen_check_type(Xen_is_Colormap(arg2), arg2, 2, "XStoreNamedColor", "Colormap");
   Xen_check_type(Xen_is_string(arg3), arg3, 3, "XStoreNamedColor", "char*");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XStoreNamedColor", "ulong"); /* this is explicitly an index into the colormap, so I'll leave it as is */
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XStoreNamedColor", "ulong"); /* this is explicitly an index into the colormap, so I'll leave it as is */
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XStoreNamedColor", "int");
   return(C_int_to_Xen_integer(XStoreNamedColor(Xen_to_C_Display(arg1), 
 				       Xen_to_C_Colormap(arg2), 
@@ -8356,7 +8356,7 @@ static Xen gxm_XSetWindowBorderWidth(Xen arg1, Xen arg2, Xen arg3)
   #define H_XSetWindowBorderWidth "XSetWindowBorderWidth(display, w, width) sets the specified window's border width to the specified width."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetWindowBorderWidth", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XSetWindowBorderWidth", "Window");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XSetWindowBorderWidth", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XSetWindowBorderWidth", "unsigned int");
   return(C_int_to_Xen_integer(XSetWindowBorderWidth(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_ulong_to_C_ulong(arg3))));
 }
 
@@ -8447,7 +8447,7 @@ function components for the specified GC."
   Xen_check_type(Xen_is_Pixel(arg3), arg3, 3, "XSetState", "Pixel");
   Xen_check_type(Xen_is_Pixel(arg4), arg4, 4, "XSetState", "Pixel");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XSetState", "int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XSetState", "ulong");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XSetState", "ulong");
   return(C_int_to_Xen_integer(XSetState(Xen_to_C_Display(arg1), 
 				Xen_to_C_GC(arg2), 
 				Xen_to_C_Pixel(arg3), Xen_to_C_Pixel(arg4), 
@@ -8497,7 +8497,7 @@ static Xen gxm_XSetPlaneMask(Xen arg1, Xen arg2, Xen arg3)
   #define H_XSetPlaneMask "XSetPlaneMask(display, gc, plane_mask) sets the plane mask in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetPlaneMask", "Display*");
   Xen_check_type(Xen_is_GC(arg2), arg2, 2, "XSetPlaneMask", "GC");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XSetPlaneMask", "ulong");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XSetPlaneMask", "ulong");
   return(C_int_to_Xen_integer(XSetPlaneMask(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_ulong_to_C_ulong(arg3))));
 }
 
@@ -8515,7 +8515,7 @@ static Xen gxm_XSetLineAttributes(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen ar
 in the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetLineAttributes", "Display*");
   Xen_check_type(Xen_is_GC(arg2), arg2, 2, "XSetLineAttributes", "GC");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XSetLineAttributes", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XSetLineAttributes", "unsigned int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XSetLineAttributes", "int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XSetLineAttributes", "int");
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XSetLineAttributes", "int");
@@ -8835,8 +8835,8 @@ static Xen gxm_XResizeWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
   #define H_XResizeWindow "XResizeWindow(display, w, width, height) changes the inside dimensions of the specified window, not including its borders."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XResizeWindow", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XResizeWindow", "Window");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XResizeWindow", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XResizeWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XResizeWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XResizeWindow", "unsigned int");
   return(C_int_to_Xen_integer(XResizeWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_ulong_to_C_ulong(arg3), Xen_ulong_to_C_ulong(arg4))));
 }
 
@@ -9124,8 +9124,8 @@ closest size, that is, the size that can be tiled fastest on the screen specifie
   int val;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XQueryBestTile", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XQueryBestTile", "Drawable");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XQueryBestTile", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XQueryBestTile", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XQueryBestTile", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XQueryBestTile", "unsigned int");
   val = XQueryBestTile(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), 
 		       Xen_ulong_to_C_ulong(arg3), Xen_ulong_to_C_ulong(arg4), &w, &h);
   return(Xen_list_3(C_int_to_Xen_integer(val),
@@ -9143,8 +9143,8 @@ best or closest size, that is, the size that can be stippled fastest on the scre
   int val;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XQueryBestStipple", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XQueryBestStipple", "Drawable");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XQueryBestStipple", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XQueryBestStipple", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XQueryBestStipple", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XQueryBestStipple", "unsigned int");
   val = XQueryBestStipple(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), 
 			  Xen_ulong_to_C_ulong(arg3), Xen_ulong_to_C_ulong(arg4), 
 			  &w, &h);
@@ -9164,8 +9164,8 @@ best or closest size to the specified size."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XQueryBestSize", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XQueryBestSize", "int");
   Xen_check_type(Xen_is_Window(arg3), arg3, 3, "XQueryBestSize", "Drawable");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XQueryBestSize", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XQueryBestSize", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XQueryBestSize", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XQueryBestSize", "unsigned int");
   val = XQueryBestSize(Xen_to_C_Display(arg1), Xen_integer_to_C_int(arg2), Xen_to_C_Window(arg3), 
 		       Xen_ulong_to_C_ulong(arg4), Xen_ulong_to_C_ulong(arg5), 
 		       &w, &h);
@@ -9184,8 +9184,8 @@ out what size cursors are actually possible on the display."
   int val;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XQueryBestCursor", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XQueryBestCursor", "Drawable");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XQueryBestCursor", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XQueryBestCursor", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XQueryBestCursor", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XQueryBestCursor", "unsigned int");
   val = XQueryBestCursor(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), 
 			 Xen_ulong_to_C_ulong(arg3), Xen_ulong_to_C_ulong(arg4), 
 			 &w, &h);
@@ -9224,8 +9224,8 @@ of the specified drawable."
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XPutImage", "int");
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XPutImage", "int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XPutImage", "int");
-  Xen_check_type(Xen_is_ulong_int(arg9), arg9, 9, "XPutImage", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg10), arg10, 10, "XPutImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg9), arg9, 9, "XPutImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg10), arg10, 10, "XPutImage", "unsigned int");
   return(C_int_to_Xen_integer(XPutImage(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), 
 				Xen_to_C_GC(arg3), Xen_to_C_XImage(arg4), Xen_integer_to_C_int(arg5), Xen_integer_to_C_int(arg6), 
 				Xen_integer_to_C_int(arg7), Xen_integer_to_C_int(arg8), Xen_ulong_to_C_ulong(arg9), Xen_ulong_to_C_ulong(arg10))));
@@ -9372,8 +9372,8 @@ static Xen gxm_XMoveResizeWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XMoveResizeWindow", "Window");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XMoveResizeWindow", "int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XMoveResizeWindow", "int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XMoveResizeWindow", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XMoveResizeWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XMoveResizeWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XMoveResizeWindow", "unsigned int");
   return(C_int_to_Xen_integer(XMoveResizeWindow(Xen_to_C_Display(arg1), 
 					Xen_to_C_Window(arg2), 
 					Xen_integer_to_C_int(arg3), Xen_integer_to_C_int(arg4), 
@@ -9460,7 +9460,7 @@ static Xen gxm_XKillClient(Xen arg1, Xen arg2)
 {
   #define H_XKillClient "XKillClient(display, resource) forces a close-down of the client that created the resource"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XKillClient", "Display*");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XKillClient", "XID");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XKillClient", "XID");
   return(C_int_to_Xen_integer(XKillClient(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
@@ -9533,7 +9533,7 @@ actively grabs control of the pointer and returns GrabSuccess if the grab was su
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGrabPointer", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XGrabPointer", "Window");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XGrabPointer", "Bool");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XGrabPointer", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XGrabPointer", "unsigned int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XGrabPointer", "int");
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XGrabPointer", "int");
   Xen_check_type(Xen_is_Window(arg7), arg7, 7, "XGrabPointer", "Window");
@@ -9569,7 +9569,7 @@ static Xen gxm_XGrabKey(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen ar
 grab on the keyboard."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGrabKey", "Display*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XGrabKey", "int");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XGrabKey", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XGrabKey", "unsigned int");
   Xen_check_type(Xen_is_Window(arg4), arg4, 4, "XGrabKey", "Window");
   Xen_check_type(Xen_is_boolean(arg5), arg5, 5, "XGrabKey", "Bool");
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XGrabKey", "int");
@@ -9596,11 +9596,11 @@ establishes a passive grab."
   arg9 = Xen_list_ref(args, 8);
   arg10 = Xen_list_ref(args, 9);
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGrabButton", "Display*");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XGrabButton", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XGrabButton", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XGrabButton", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XGrabButton", "unsigned int");
   Xen_check_type(Xen_is_Window(arg4), arg4, 4, "XGrabButton", "Window");
   Xen_check_type(Xen_is_boolean(arg5), arg5, 5, "XGrabButton", "Bool");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XGrabButton", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XGrabButton", "unsigned int");
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XGrabButton", "int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XGrabButton", "int");
   Xen_check_type(Xen_is_Window(arg9), arg9, 9, "XGrabButton", "Window");
@@ -9835,7 +9835,7 @@ static Xen gxm_XGetGCValues(Xen arg1, Xen arg2, Xen arg3)
   int rtn;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XGetGCValues", "Display*");
   Xen_check_type(Xen_is_GC(arg2), arg2, 2, "XGetGCValues", "GC");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XGetGCValues", "ulong");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XGetGCValues", "ulong");
   val = (XGCValues *)calloc(1, sizeof(XGCValues));
   rtn = XGetGCValues(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_ulong_to_C_ulong(arg3), val);
   return(Xen_list_2(C_int_to_Xen_integer(rtn),
@@ -9899,9 +9899,9 @@ window geometry given user geometry string and default geometry"
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XGeometry", "int");
   Xen_check_type(Xen_is_string(arg3), arg3, 3, "XGeometry", "char*");
   Xen_check_type(Xen_is_string(arg4), arg4, 4, "XGeometry", "char*");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XGeometry", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XGeometry", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XGeometry", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XGeometry", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XGeometry", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XGeometry", "unsigned int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XGeometry", "int");
   Xen_check_type(Xen_is_integer(arg9), arg9, 9, "XGeometry", "int");
   val = XGeometry(Xen_to_C_Display(arg1), 
@@ -10004,7 +10004,7 @@ static Xen gxm_XFreeColors(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
   Xen_check_type(Xen_is_Colormap(arg2), arg2, 2, "XFreeColors", "Colormap");
   Xen_check_type(Xen_is_list(arg3), arg3, 3, "XFreeColors", "list of pixel");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XFreeColors", "int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XFreeColors", "ulong");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XFreeColors", "ulong");
   len = Xen_integer_to_C_int(arg4);
   if (len <= 0) return(Xen_false);
   ps = Xen_to_C_Pixels(arg3, len);
@@ -10094,8 +10094,8 @@ static Xen gxm_XFillRectangle(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, 
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XFillRectangle", "GC");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XFillRectangle", "int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XFillRectangle", "int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XFillRectangle", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XFillRectangle", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XFillRectangle", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XFillRectangle", "unsigned int");
   return(C_int_to_Xen_integer(XFillRectangle(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), 
 				     Xen_to_C_GC(arg3), Xen_integer_to_C_int(arg4), Xen_integer_to_C_int(arg5), 
 				     Xen_ulong_to_C_ulong(arg6), Xen_ulong_to_C_ulong(arg7))));
@@ -10177,8 +10177,8 @@ static Xen gxm_XFillArc(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen ar
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XFillArc", "GC");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XFillArc", "int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XFillArc", "int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XFillArc", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XFillArc", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XFillArc", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XFillArc", "unsigned int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XFillArc", "int");
   Xen_check_type(Xen_is_integer(arg9), arg9, 9, "XFillArc", "int");
   return(C_int_to_Xen_integer(XFillArc(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), 
@@ -10347,8 +10347,8 @@ static Xen gxm_XDrawRectangle(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, 
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XDrawRectangle", "GC");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XDrawRectangle", "int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XDrawRectangle", "int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XDrawRectangle", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XDrawRectangle", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XDrawRectangle", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XDrawRectangle", "unsigned int");
   return(C_int_to_Xen_integer(XDrawRectangle(Xen_to_C_Display(arg1), 
 				     Xen_to_C_Window(arg2), 
 				     Xen_to_C_GC(arg3), 
@@ -10565,8 +10565,8 @@ static Xen gxm_XDrawArc(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen ar
   Xen_check_type(Xen_is_GC(arg3), arg3, 3, "XDrawArc", "GC");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XDrawArc", "int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XDrawArc", "int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XDrawArc", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XDrawArc", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XDrawArc", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XDrawArc", "unsigned int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XDrawArc", "int");
   Xen_check_type(Xen_is_integer(arg9), arg9, 9, "XDrawArc", "int");
   return(C_int_to_Xen_integer(XDrawArc(Xen_to_C_Display(arg1), 
@@ -10749,11 +10749,11 @@ specified source rectangle combined with the specified GC to modify the specifie
   Xen_check_type(Xen_is_GC(arg4), arg4, 4, "XCopyPlane", "GC");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XCopyPlane", "int");
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XCopyPlane", "int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XCopyPlane", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg8), arg8, 8, "XCopyPlane", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XCopyPlane", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg8), arg8, 8, "XCopyPlane", "unsigned int");
   Xen_check_type(Xen_is_integer(arg9), arg9, 9, "XCopyPlane", "int");
   Xen_check_type(Xen_is_integer(arg10), arg10, 10, "XCopyPlane", "int");
-  Xen_check_type(Xen_is_ulong_int(arg11), arg11, 11, "XCopyPlane", "ulong");
+  Xen_check_type(Xen_is_ulong(arg11), arg11, 11, "XCopyPlane", "ulong");
   return(C_int_to_Xen_integer(XCopyPlane(Xen_to_C_Display(arg1), 
 				 Xen_to_C_Window(arg2), 
 				 Xen_to_C_Window(arg3), 
@@ -10768,7 +10768,7 @@ static Xen gxm_XCopyGC(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
   #define H_XCopyGC "XCopyGC(display, src, valuemask, dest) copies the specified components from the source GC to the destination GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCopyGC", "Display*");
   Xen_check_type(Xen_is_GC(arg2), arg2, 2, "XCopyGC", "GC");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XCopyGC", "ulong");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XCopyGC", "ulong");
   Xen_check_type(Xen_is_GC(arg4), arg4, 4, "XCopyGC", "GC");
   return(C_int_to_Xen_integer(XCopyGC(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_GC(arg4))));
 }
@@ -10794,8 +10794,8 @@ with the specified rectangle of dest."
   Xen_check_type(Xen_is_GC(arg4), arg4, 4, "XCopyArea", "GC");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XCopyArea", "int");
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XCopyArea", "int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XCopyArea", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg8), arg8, 8, "XCopyArea", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XCopyArea", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg8), arg8, 8, "XCopyArea", "unsigned int");
   Xen_check_type(Xen_is_integer(arg9), arg9, 9, "XCopyArea", "int");
   Xen_check_type(Xen_is_integer(arg10), arg10, 10, "XCopyArea", "int");
   return(C_int_to_Xen_integer(XCopyArea(Xen_to_C_Display(arg1), 
@@ -10833,7 +10833,7 @@ static Xen gxm_XConfigureWindow(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 reconfigure a window's size, position, border, and stacking order."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XConfigureWindow", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XConfigureWindow", "Window");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XConfigureWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XConfigureWindow", "unsigned int");
   Xen_check_type(Xen_is_XWindowChanges(arg4), arg4, 4, "XConfigureWindow", "XWindowChanges*");
   return(C_int_to_Xen_integer(XConfigureWindow(Xen_to_C_Display(arg1), 
 				       Xen_to_C_Window(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_XWindowChanges(arg4))));
@@ -10863,8 +10863,8 @@ specified dimensions with the window's background pixel or pixmap."
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XClearArea", "Window");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XClearArea", "int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XClearArea", "int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XClearArea", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XClearArea", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XClearArea", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XClearArea", "unsigned int");
   Xen_check_type(Xen_is_boolean(arg7), arg7, 7, "XClearArea", "Bool");
   return(C_int_to_Xen_integer(XClearArea(Xen_to_C_Display(arg1), 
 				 Xen_to_C_Window(arg2), 
@@ -11014,7 +11014,7 @@ static Xen gxm_XChangeWindowAttributes(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 structure to change the specified window attributes."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XChangeWindowAttributes", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XChangeWindowAttributes", "Window");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XChangeWindowAttributes", "ulong");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XChangeWindowAttributes", "ulong");
   Xen_check_type(Xen_is_XSetWindowAttributes(arg4), arg4, 4, "XChangeWindowAttributes", "XSetWindowAttributes*");
   return(C_int_to_Xen_integer(XChangeWindowAttributes(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_ulong_to_C_ulong(arg3), 
 					      Xen_to_C_XSetWindowAttributes(arg4))));
@@ -11100,7 +11100,7 @@ the XKeyboardControl structure."
   Xen arg3;
   XKeyboardControl kc;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XChangeKeyboardControl", "Display*");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XChangeKeyboardControl", "ulong");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XChangeKeyboardControl", "ulong");
   Xen_check_type(Xen_is_list(larg3), larg3, 3, "XChangeKeyboardControl", "XKeyboardControl*");
   arg3 = Xen_copy_arg(larg3);
   kc.key_click_percent = Xen_integer_to_C_int(Xen_car(arg3)); arg3 = Xen_cdr(arg3);
@@ -11134,7 +11134,7 @@ static Xen gxm_XChangeGC(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
   #define H_XChangeGC "XChangeGC(display, gc, valuemask, values) changes the components specified by valuemask for the specified GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XChangeGC", "Display*");
   Xen_check_type(Xen_is_GC(arg2), arg2, 2, "XChangeGC", "GC");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XChangeGC", "ulong");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XChangeGC", "ulong");
   Xen_check_type(Xen_is_XGCValues(arg4), arg4, 4, "XChangeGC", "XGCValues*");
   return(C_int_to_Xen_integer(XChangeGC(Xen_to_C_Display(arg1), Xen_to_C_GC(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_XGCValues(arg4))));
 }
@@ -11145,7 +11145,7 @@ static Xen gxm_XChangeActivePointerGrab(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 if the pointer is actively grabbed by the client and if the specified time is no earlier than the last-pointer-grab time and no later than \
 the current X server time."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XChangeActivePointerGrab", "Display*");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XChangeActivePointerGrab", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XChangeActivePointerGrab", "unsigned int");
   Xen_check_type(Xen_is_Cursor(arg3), arg3, 3, "XChangeActivePointerGrab", "Cursor");
   Xen_check_type(Xen_is_Time(arg4), arg4, 4, "XChangeActivePointerGrab", "Time");
   return(C_int_to_Xen_integer(XChangeActivePointerGrab(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_Cursor(arg3), Xen_to_C_Time(arg4))));
@@ -11289,8 +11289,8 @@ allocates read/write color cells."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XAllocColorCells", "Display*");
   Xen_check_type(Xen_is_Colormap(arg2), arg2, 2, "XAllocColorCells", "Colormap");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XAllocColorCells", "Bool");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XAllocColorCells", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XAllocColorCells", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XAllocColorCells", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XAllocColorCells", "unsigned int");
   mlen = Xen_integer_to_C_int(arg4);
   if (mlen <= 0) return(Xen_false);
   plen = Xen_integer_to_C_int(arg5);
@@ -11491,7 +11491,7 @@ request on the specified top-level window."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XReconfigureWMWindow", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XReconfigureWMWindow", "Window");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XReconfigureWMWindow", "int");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XReconfigureWMWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XReconfigureWMWindow", "unsigned int");
   Xen_check_type(Xen_is_XWindowChanges(arg5), arg5, 5, "XReconfigureWMWindow", "XWindowChanges*");
   return(C_int_to_Xen_integer(XReconfigureWMWindow(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_integer_to_C_int(arg3), Xen_ulong_to_C_ulong(arg4), 
 					   Xen_to_C_XWindowChanges(arg5))));
@@ -11988,13 +11988,13 @@ a CreateNotify event."
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XCreateWindow", "Window");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XCreateWindow", "int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XCreateWindow", "int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XCreateWindow", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XCreateWindow", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XCreateWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XCreateWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XCreateWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XCreateWindow", "unsigned int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XCreateWindow", "int");
-  Xen_check_type(Xen_is_ulong_int(arg9), arg9, 9, "XCreateWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg9), arg9, 9, "XCreateWindow", "unsigned int");
   Xen_check_type(Xen_is_Visual(arg10), arg10, 10, "XCreateWindow", "Visual*");
-  Xen_check_type(Xen_is_ulong_int(arg11), arg11, 11, "XCreateWindow", "ulong");
+  Xen_check_type(Xen_is_ulong(arg11), arg11, 11, "XCreateWindow", "ulong");
   Xen_check_type(Xen_is_XSetWindowAttributes(arg12), arg12, 12, "XCreateWindow", "XSetWindowAttributes*");
   return(C_to_Xen_Window(XCreateWindow(Xen_to_C_Display(arg1), 
 				       Xen_to_C_Window(arg2), 
@@ -12024,9 +12024,9 @@ server to generate a CreateNotify event."
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XCreateSimpleWindow", "Window");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XCreateSimpleWindow", "int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XCreateSimpleWindow", "int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XCreateSimpleWindow", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XCreateSimpleWindow", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XCreateSimpleWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XCreateSimpleWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XCreateSimpleWindow", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XCreateSimpleWindow", "unsigned int");
   Xen_check_type(Xen_is_Pixel(arg8), arg8, 8, "XCreateSimpleWindow", "Pixel");
   Xen_check_type(Xen_is_Pixel(arg9), arg9, 9, "XCreateSimpleWindow", "Pixel");
   return(C_to_Xen_Window(XCreateSimpleWindow(Xen_to_C_Display(arg1), 
@@ -12050,11 +12050,11 @@ pixmap of the given depth and then does a bitmap-format XPutImage of the data in
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreatePixmapFromBitmapData", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XCreatePixmapFromBitmapData", "Drawable");
   Xen_check_type(Xen_is_list(larg3), larg3, 3, "XCreatePixmapFromBitmapData", "list of char");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XCreatePixmapFromBitmapData", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XCreatePixmapFromBitmapData", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XCreatePixmapFromBitmapData", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XCreatePixmapFromBitmapData", "unsigned int");
   Xen_check_type(Xen_is_Pixel(arg6), arg6, 6, "XCreatePixmapFromBitmapData", "pixel");
   Xen_check_type(Xen_is_Pixel(arg7), arg7, 7, "XCreatePixmapFromBitmapData", "pixel");
-  Xen_check_type(Xen_is_ulong_int(arg8), arg8, 8, "XCreatePixmapFromBitmapData", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg8), arg8, 8, "XCreatePixmapFromBitmapData", "unsigned int");
   len = Xen_list_length(larg3);
   if (len <= 0) Xen_check_type(0, larg3, 3, "XCreatePixmapFromBitmapData", "positive integer");
   arg3 = Xen_copy_arg(larg3);
@@ -12084,8 +12084,8 @@ program a bitmap file that was written out by XWriteBitmapFile"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreateBitmapFromData", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XCreateBitmapFromData", "Drawable");
   Xen_check_type(Xen_is_list(larg3), larg3, 3, "XCreateBitmapFromData", "list of char");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XCreateBitmapFromData", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XCreateBitmapFromData", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XCreateBitmapFromData", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XCreateBitmapFromData", "unsigned int");
   len = Xen_list_length(larg3);
   if (len <= 0) Xen_check_type(0, larg3, 3, "XCreateBitmapFromData", "positive integer");
   arg3 = Xen_copy_arg(larg3);
@@ -12106,9 +12106,9 @@ static Xen gxm_XCreatePixmap(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
   #define H_XCreatePixmap "Pixmap XCreatePixmap(display, d, width, height, depth)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreatePixmap", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XCreatePixmap", "Drawable");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XCreatePixmap", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XCreatePixmap", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XCreatePixmap", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XCreatePixmap", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XCreatePixmap", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XCreatePixmap", "unsigned int");
   return(C_to_Xen_Pixmap(XCreatePixmap(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), 
 				       Xen_ulong_to_C_ulong(arg3), Xen_ulong_to_C_ulong(arg4), Xen_ulong_to_C_ulong(arg5))));
 }
@@ -12127,7 +12127,7 @@ static Xen gxm_XCreateGC(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
   #define H_XCreateGC "GC XCreateGC(display, d, valuemask, values) creates a graphics context and returns a GC."
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreateGC", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XCreateGC", "Drawable");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XCreateGC", "ulong");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XCreateGC", "ulong");
   Xen_check_type(Xen_is_XGCValues(arg4), arg4, 4, "XCreateGC", "XGCValues*");
   return(C_to_Xen_GC(XCreateGC(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), Xen_ulong_to_C_ulong(arg3), Xen_to_C_XGCValues(arg4))));
 }
@@ -12144,7 +12144,7 @@ static Xen gxm_XCreateFontCursor(Xen arg1, Xen arg2)
 {
   #define H_XCreateFontCursor "Cursor XCreateFontCursor(display, shape)"
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreateFontCursor", "Display*");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XCreateFontCursor", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XCreateFontCursor", "unsigned int");
   return(C_to_Xen_Cursor(XCreateFontCursor(Xen_to_C_Display(arg1), Xen_ulong_to_C_ulong(arg2))));
 }
 
@@ -12155,8 +12155,8 @@ background_color) is similar to XCreatePixmapCursor except that the source and m
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreateGlyphCursor", "Display*");
   Xen_check_type(Xen_is_Font(arg2), arg2, 2, "XCreateGlyphCursor", "Font");
   Xen_check_type(Xen_is_Font(arg3) || Xen_is_integer(arg3) || Xen_is_false(arg3), arg3, 3, "XCreateGlyphCursor", "Font");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XCreateGlyphCursor", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XCreateGlyphCursor", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XCreateGlyphCursor", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XCreateGlyphCursor", "unsigned int");
   Xen_check_type(Xen_is_XColor(arg6), arg6, 6, "XCreateGlyphCursor", "XColor");
   Xen_check_type(Xen_is_XColor(arg7), arg7, 7, "XCreateGlyphCursor", "XColor");
   return(C_to_Xen_Cursor(XCreateGlyphCursor(Xen_to_C_Display(arg1), Xen_to_C_Font(arg2), 
@@ -12175,8 +12175,8 @@ a cursor and returns the cursor ID associated with it."
   Xen_check_type(Xen_is_Pixmap(arg3) || Xen_is_integer(arg3) || Xen_is_false(arg3), arg3, 3, "XCreatePixmapCursor", "Pixmap");
   Xen_check_type(Xen_is_XColor(arg4), arg4, 4, "XCreatePixmapCursor", "XColor");
   Xen_check_type(Xen_is_XColor(arg5), arg5, 5, "XCreatePixmapCursor", "XColor");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XCreatePixmapCursor", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XCreatePixmapCursor", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XCreatePixmapCursor", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XCreatePixmapCursor", "unsigned int");
   return(C_to_Xen_Cursor(XCreatePixmapCursor(Xen_to_C_Display(arg1), 
 					     Xen_to_C_Pixmap(arg2), 
 					     (Xen_is_Pixmap(arg3)) ? Xen_to_C_Pixmap(arg3) : None,
@@ -12345,9 +12345,9 @@ dest_image with the specified subimage in the same manner as "
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XGetSubImage", "Drawable");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XGetSubImage", "int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XGetSubImage", "int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XGetSubImage", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XGetSubImage", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XGetSubImage", "ulong");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XGetSubImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XGetSubImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XGetSubImage", "ulong");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XGetSubImage", "int");
   Xen_check_type(Xen_is_XImage(arg9), arg9, 9, "XGetSubImage", "XImage*");
   Xen_check_type(Xen_is_integer(arg10), arg10, 10, "XGetSubImage", "int");
@@ -12368,9 +12368,9 @@ static Xen gxm_XGetImage(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen a
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XGetImage", "Drawable");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XGetImage", "int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XGetImage", "int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XGetImage", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XGetImage", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XGetImage", "ulong");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XGetImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XGetImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XGetImage", "ulong");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XGetImage", "int");
   return(C_to_Xen_XImage(XGetImage(Xen_to_C_Display(arg1), 
 				   Xen_to_C_Window(arg2), 
@@ -12396,12 +12396,12 @@ allocates the memory needed for an XImage structure for the specified display bu
   arg10 = Xen_list_ref(args, 9);
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreateImage", "Display*");
   Xen_check_type(Xen_is_Visual(arg2), arg2, 2, "XCreateImage", "Visual*");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XCreateImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XCreateImage", "unsigned int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XCreateImage", "int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XCreateImage", "int");
   Xen_check_type(Xen_is_wrapped_c_pointer(arg6), arg6, 6, "XCreateImage", "pointer");
-  Xen_check_type(Xen_is_ulong_int(arg7), arg7, 7, "XCreateImage", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg8), arg8, 8, "XCreateImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg7), arg7, 7, "XCreateImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg8), arg8, 8, "XCreateImage", "unsigned int");
   Xen_check_type(Xen_is_integer(arg9), arg9, 9, "XCreateImage", "int");
   Xen_check_type(Xen_is_integer(arg10), arg10, 10, "XCreateImage", "int");
   return(C_to_Xen_XImage(XCreateImage(Xen_to_C_Display(arg1), 
@@ -12871,8 +12871,8 @@ static Xen gxm_XSubImage(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
   Xen_check_type(Xen_is_XImage(arg1), arg1, 1, "XSubImage", "XImage*");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XSubImage", "int");
   Xen_check_type(Xen_is_integer(arg3), arg3, 3, "XSubImage", "int");
-  Xen_check_type(Xen_is_ulong_int(arg4), arg4, 4, "XSubImage", "unsigned int");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XSubImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XSubImage", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XSubImage", "unsigned int");
   return(C_to_Xen_XImage(XSubImage(Xen_to_C_XImage(arg1), Xen_integer_to_C_int(arg2), Xen_integer_to_C_int(arg3), Xen_ulong_to_C_ulong(arg4), Xen_ulong_to_C_ulong(arg5))));
 }
 
@@ -13293,7 +13293,7 @@ static Xen gxm_XtGrabPointer(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, X
 XGrabPointer specifying the widget's window as the grab window."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtGrabPointer", "Widget");
   Xen_check_type(Xen_is_boolean(arg2), arg2, 2, "XtGrabPointer", "boolean");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XtGrabPointer", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XtGrabPointer", "unsigned int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XtGrabPointer", "int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XtGrabPointer", "int");
   Xen_check_type(Xen_is_Window(arg6), arg6, 6, "XtGrabPointer", "Window");
@@ -13311,7 +13311,7 @@ static Xen gxm_XtUngrabButton(Xen arg1, Xen arg2, Xen arg3)
   #define H_XtUngrabButton "void XtUngrabButton(widget, button, modifiers) calls XUngrabButton specifying the widget's window as the ungrab \
 window if the widget is realized. "
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtUngrabButton", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtUngrabButton", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtUngrabButton", "unsigned int");
   Xen_check_type(Xen_is_Modifiers(arg3), arg3, 3, "XtUngrabButton", "Modifiers");
   XtUngrabButton(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_Modifiers(arg3));
   return(Xen_false);
@@ -13325,7 +13325,7 @@ calls XGrabButton specifying the widget's window as the grab window if the widge
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XtGrabButton", "int");
   Xen_check_type(Xen_is_Modifiers(arg3), arg3, 3, "XtGrabButton", "Modifiers");
   Xen_check_type(Xen_is_boolean(arg4), arg4, 4, "XtGrabButton", "boolean");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XtGrabButton", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XtGrabButton", "unsigned int");
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XtGrabButton", "int");
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XtGrabButton", "int");
   Xen_check_type(Xen_is_Window(arg8), arg8, 8, "XtGrabButton", "Window");
@@ -13478,7 +13478,7 @@ static Xen gxm_XtAppSetSelectionTimeout(Xen arg1, Xen arg2)
 {
   #define H_XtAppSetSelectionTimeout "void XtAppSetSelectionTimeout(app_context, timeout) sets the app's selection timeout mechanism."
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppSetSelectionTimeout", "XtAppContext");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtAppSetSelectionTimeout", "ulong");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtAppSetSelectionTimeout", "ulong");
   XtAppSetSelectionTimeout(Xen_to_C_XtAppContext(arg1), Xen_ulong_to_C_ulong(arg2));
   return(Xen_false);
 }
@@ -13701,10 +13701,10 @@ static Xen gxm_XtAllocateGC(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xe
   #define H_XtAllocateGC "GC XtAllocateGC(w, depth, value_mask, values, dynamic_mask, unused_mask): returns a sharable GC that may be modified by the client."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtAllocateGC", "Widget");
   Xen_check_type(Xen_is_integer(arg2), arg2, 2, "XtAllocateGC", "int");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XtAllocateGC", "XtGCMask");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XtAllocateGC", "XtGCMask");
   Xen_check_type(Xen_is_XGCValues(arg4), arg4, 4, "XtAllocateGC", "XGCValues*");
-  Xen_check_type(Xen_is_ulong_int(arg5), arg5, 5, "XtAllocateGC", "XtGCMask");
-  Xen_check_type(Xen_is_ulong_int(arg6), arg6, 6, "XtAllocateGC", "XtGCMask");
+  Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XtAllocateGC", "XtGCMask");
+  Xen_check_type(Xen_is_ulong(arg6), arg6, 6, "XtAllocateGC", "XtGCMask");
   return(C_to_Xen_GC(XtAllocateGC(Xen_to_C_Widget(arg1), Xen_integer_to_C_int(arg2), 
 				  Xen_ulong_to_C_ulong(arg3), Xen_to_C_XGCValues(arg4), 
 				  Xen_ulong_to_C_ulong(arg5), Xen_ulong_to_C_ulong(arg6))));
@@ -13714,7 +13714,7 @@ static Xen gxm_XtGetGC(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XtGetGC "GC XtGetGC(w, value_mask, values): returns a sharable, read-only GC."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtGetGC", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtGetGC", "XtGCMask");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtGetGC", "XtGCMask");
   Xen_check_type(Xen_is_XGCValues(arg3), arg3, 3, "XtGetGC", "XGCValues*");
   return(C_to_Xen_GC(XtGetGC(Xen_to_C_Widget(arg1), Xen_ulong_to_C_ulong(arg2), Xen_to_C_XGCValues(arg3))));
 }
@@ -15319,7 +15319,7 @@ static Xen gxm_XtAppAddTimeOut(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
   int gc_loc;
   Xen descr;
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppAddTimeOut", "XtAppContext");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtAppAddTimeOut", "ulong");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtAppAddTimeOut", "ulong");
   Xen_check_type(Xen_is_procedure(arg3) && (Xen_is_aritable(arg3, 2)), arg3, 3, "XtAppAddTimeOut", "(XtTimerCallbackProc data id)");
   descr = C_to_Xen_XM_TimeOut(arg3, (Xen_is_bound(arg4)) ? arg4 : Xen_false);
   gc_loc = xm_protect(descr);
@@ -15390,7 +15390,7 @@ static Xen gxm_XtAppProcessEvent(Xen arg1, Xen arg2)
   #define H_XtAppProcessEvent "void XtAppProcessEvent(app_context, mask) processes one timer, alternate input, signal source, or X event. \
 If there is nothing of the appropriate type to process, XtAppProcessEvent blocks until there is."
   Xen_check_type(Xen_is_XtAppContext(arg1), arg1, 1, "XtAppProcessEvent", "XtAppContext");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtAppProcessEvent", "XtInputMask");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtAppProcessEvent", "XtInputMask");
   XtAppProcessEvent(Xen_to_C_XtAppContext(arg1), Xen_ulong_to_C_ulong(arg2));
   return(Xen_false);
 }
@@ -15488,7 +15488,7 @@ static Xen gxm_XtInsertRawEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, X
 XtInsertEventHandler except that it does not modify the widget's event mask and never causes an XSelectInput for the specified events."
   Xen call_descr = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtInsertRawEventHandler", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtInsertRawEventHandler", "EventMask");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtInsertRawEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtInsertRawEventHandler", "boolean");
   Xen_check_type(Xen_is_procedure(arg4) && (Xen_is_aritable(arg4, 4)), arg4, 4, "XtInsertRawEventHandler", "XtEventHandler");
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XtInsertRawEventHandler", "XtListPosition");
@@ -15509,7 +15509,7 @@ static Xen gxm_XtInsertEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen 
 XtAddEventHandler with the additional position argument. "
   Xen call_descr = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtInsertEventHandler", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtInsertEventHandler", "EventMask");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtInsertEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtInsertEventHandler", "boolean");
   Xen_check_type(Xen_is_procedure(arg4) && (Xen_is_aritable(arg4, 4)), arg4, 4, "XtInsertEventHandler", "XtEventHandler");
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XtInsertEventHandler", "XtListPosition");
@@ -15529,7 +15529,7 @@ static Xen gxm_XtRemoveRawEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, X
   #define H_XtRemoveRawEventHandler "void XtRemoveRawEventHandler(w, event_mask, nonmaskable, proc, client_data) stops the specified \
 procedure from receiving the specified events."
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtRemoveRawEventHandler", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtRemoveRawEventHandler", "EventMask");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtRemoveRawEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtRemoveRawEventHandler", "boolean");
   Xen_check_type(Xen_is_procedure(arg4) && (Xen_is_aritable(arg4, 4)), arg4, 4, "XtRemoveRawEventHandler", "XtEventHandler");
   XtRemoveRawEventHandler(Xen_to_C_Widget(arg1), 
@@ -15546,7 +15546,7 @@ static Xen gxm_XtAddRawEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen 
 except that it does not affect the widget's mask and never causes an XSelectInput for its events."
   Xen call_descr = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtAddRawEventHandler", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtAddRawEventHandler", "EventMask");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtAddRawEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtAddRawEventHandler", "boolean");
   Xen_check_type(Xen_is_procedure(arg4) && (Xen_is_aritable(arg4, 4)), arg4, 4, "XtAddRawEventHandler", "XtEventHandler");
   call_descr = C_to_Xen_XM_XtEventHandler(arg4, (Xen_is_bound(arg5)) ? arg5 : Xen_false, arg1, arg2);
@@ -15563,7 +15563,7 @@ static Xen gxm_XtRemoveEventHandler(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen 
 {
   #define H_XtRemoveEventHandler "XtRemoveEventHandler(w, event_mask, nonmaskable, proc, client_data)"
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtRemoveEventHandler", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtRemoveEventHandler", "EventMask");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtRemoveEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtRemoveEventHandler", "boolean");
   Xen_check_type(Xen_is_procedure(arg4) && (Xen_is_aritable(arg4, 4)), arg4, 4, "XtRemoveEventHandler", "XtEventHandler");
   XtRemoveEventHandler(Xen_to_C_Widget(arg1), 
@@ -15581,7 +15581,7 @@ mechanism that is to be called when an event that matches the mask occurs on the
 flag to 'false', return the symbol 'done from the event handler."
   Xen call_descr = Xen_empty_list;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtAddEventHandler", "Widget");
-  Xen_check_type(Xen_is_ulong_int(arg2), arg2, 2, "XtAddEventHandler", "EventMask");
+  Xen_check_type(Xen_is_ulong(arg2), arg2, 2, "XtAddEventHandler", "EventMask");
   Xen_check_type(Xen_is_boolean(arg3), arg3, 3, "XtAddEventHandler", "boolean");
   Xen_check_type(Xen_is_procedure(arg4) && (Xen_is_aritable(arg4, 4)), arg4, 4, "XtAddEventHandler", "XtEventHandler");
   call_descr = C_to_Xen_XM_XtEventHandler(arg4, (Xen_is_bound(arg5)) ? arg5 : Xen_false, arg1, arg2);
@@ -15795,7 +15795,7 @@ static Xen gxm_XtRegisterGrabAction(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen 
 specified action_proc to a list known to the translation manager."
   Xen_check_type(Xen_is_procedure(arg1) && (Xen_is_aritable(arg1, 3)), arg1, 1, "XtRegisterGrabAction", "XtActionProc");
   Xen_check_type(Xen_is_boolean(arg2), arg2, 2, "XtRegisterGrabAction", "boolean");
-  Xen_check_type(Xen_is_ulong_int(arg3), arg3, 3, "XtRegisterGrabAction", "unsigned int");
+  Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XtRegisterGrabAction", "unsigned int");
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XtRegisterGrabAction", "int");
   Xen_check_type(Xen_is_integer(arg5), arg5, 5, "XtRegisterGrabAction", "int");
   xm_protect(arg1);
@@ -16614,11 +16614,11 @@ static Xen gxm_XpmImage(Xen width, Xen height, Xen cpp, Xen ncolors, Xen data)
 {
   XpmImage *r;
   #define H_XpmImage "(XpmImage w h cpp n data): new XpmImage struct"
-  Xen_check_type(Xen_is_ulong_int(width), width, 1, "XpmImage", "ulong");
-  Xen_check_type(Xen_is_ulong_int(height), height, 2, "XpmImage", "ulong");
-  Xen_check_type(Xen_is_ulong_int(cpp), cpp, 3, "XpmImage", "ulong");
-  Xen_check_type(Xen_is_ulong_int(ncolors), ncolors, 4, "XpmImage", "ulong");
-  Xen_check_type(Xen_is_ulong_int(data), data, 5, "XpmImage", "ulong");
+  Xen_check_type(Xen_is_ulong(width), width, 1, "XpmImage", "ulong");
+  Xen_check_type(Xen_is_ulong(height), height, 2, "XpmImage", "ulong");
+  Xen_check_type(Xen_is_ulong(cpp), cpp, 3, "XpmImage", "ulong");
+  Xen_check_type(Xen_is_ulong(ncolors), ncolors, 4, "XpmImage", "ulong");
+  Xen_check_type(Xen_is_ulong(data), data, 5, "XpmImage", "ulong");
   r = (XpmImage *)calloc(1, sizeof(XpmImage));
   r->width = Xen_ulong_to_C_ulong(width);
   r->height = Xen_ulong_to_C_ulong(height);
@@ -16972,7 +16972,7 @@ static Xen gxm_XColor(Xen pixel, Xen red, Xen green, Xen blue, Xen flags, Xen pa
 {
   XColor *r;
   #define H_XColor "(XColor pixel red green blue flags pad): new XColor struct"
-  Xen_check_type(Xen_is_ulong_int(pixel) || !Xen_is_bound(pixel), pixel, 1, "XColor", "ulong");
+  Xen_check_type(Xen_is_ulong(pixel) || !Xen_is_bound(pixel), pixel, 1, "XColor", "ulong");
   Xen_check_type(Xen_is_integer_or_unbound(red), red, 2, "XColor", "int");
   Xen_check_type(Xen_is_integer_or_unbound(green), green, 3, "XColor", "int");
   Xen_check_type(Xen_is_integer_or_unbound(blue), blue, 4, "XColor", "int");
@@ -17083,7 +17083,7 @@ static Xen gxm_XSetWindowAttributes(Xen arglist)
   if ((len > 4) && (Xen_is_integer(Xen_list_ref(arglist, 4)))) r->bit_gravity = Xen_integer_to_C_int(Xen_list_ref(arglist, 4));
   if ((len > 5) && (Xen_is_integer(Xen_list_ref(arglist, 5)))) r->win_gravity = Xen_integer_to_C_int(Xen_list_ref(arglist, 5));
   if ((len > 6) && (Xen_is_integer(Xen_list_ref(arglist, 6)))) r->backing_store = Xen_integer_to_C_int(Xen_list_ref(arglist, 6));
-  if ((len > 7) && (Xen_is_ulong_int(Xen_list_ref(arglist, 7)))) r->backing_planes = Xen_ulong_to_C_ulong(Xen_list_ref(arglist, 7));
+  if ((len > 7) && (Xen_is_ulong(Xen_list_ref(arglist, 7)))) r->backing_planes = Xen_ulong_to_C_ulong(Xen_list_ref(arglist, 7));
   if ((len > 8) && (Xen_is_Pixel(Xen_list_ref(arglist, 8)))) r->backing_pixel = Xen_to_C_Pixel(Xen_list_ref(arglist, 8));
   if ((len > 9) && (Xen_is_boolean(Xen_list_ref(arglist, 9)))) r->save_under = Xen_boolean_to_C_bool(Xen_list_ref(arglist, 9));
   if ((len > 10) && (Xen_is_integer(Xen_list_ref(arglist, 10)))) r->event_mask = Xen_integer_to_C_int(Xen_list_ref(arglist, 10));
@@ -17726,7 +17726,7 @@ static Xen gxm_resourceid(Xen ptr)
 
 static Xen gxm_set_resourceid(Xen ptr, Xen val)
 {
-  XM_set_field_assert_type(Xen_is_ulong_int(val), val, 2, "resourceid", "an XID");
+  XM_set_field_assert_type(Xen_is_ulong(val), val, 2, "resourceid", "an XID");
   XM_set_field_assert_type(Xen_is_XErrorEvent(ptr), ptr, 1, "resourceid", "XErrorEvent");
   (Xen_to_C_XErrorEvent(ptr))->resourceid = (XID)Xen_ulong_to_C_ulong(val);
   return(val);
@@ -17966,7 +17966,7 @@ static Xen gxm_value_mask(Xen ptr)
 
 static Xen gxm_set_value_mask(Xen ptr, Xen val)
 {
-  XM_set_field_assert_type(Xen_is_ulong_int(val), val, 2, "value_mask", "an unsigned long");
+  XM_set_field_assert_type(Xen_is_ulong(val), val, 2, "value_mask", "an unsigned long");
   XM_set_field_assert_type(Xen_is_XConfigureRequestEvent(ptr), ptr, 1, "value_mask", "XConfigureRequestEvent");
   (Xen_to_C_XConfigureRequestEvent(ptr))->value_mask = Xen_ulong_to_C_ulong(val);
   return(val);
@@ -18276,7 +18276,7 @@ static Xen gxm_button(Xen ptr)
 
 static Xen gxm_set_button(Xen ptr, Xen val)
 {
-  XM_set_field_assert_type(Xen_is_ulong_int(val), val, 2, "button", "an unsigned long");
+  XM_set_field_assert_type(Xen_is_ulong(val), val, 2, "button", "an unsigned long");
   XM_set_field_assert_type(Xen_is_XButtonEvent(ptr), ptr, 1, "button", "XButtonEvent");
   (Xen_to_C_XButtonEvent(ptr))->button = Xen_ulong_to_C_ulong(val);
   return(val);
@@ -18335,7 +18335,7 @@ static Xen gxm_state(Xen ptr)
 
 static Xen gxm_set_state(Xen ptr, Xen val)
 {
-  XM_set_field_assert_type(Xen_is_integer(val) || Xen_is_ulong_int(val), val, 2, "state", "an integer");
+  XM_set_field_assert_type(Xen_is_integer(val) || Xen_is_ulong(val), val, 2, "state", "an integer");
   if (Xen_is_XColormapEvent(ptr)) (Xen_to_C_XColormapEvent(ptr))->state = Xen_integer_to_C_int(val);
   else if (Xen_is_XPropertyEvent(ptr)) (Xen_to_C_XPropertyEvent(ptr))->state = Xen_integer_to_C_int(val);
   else if (Xen_is_XVisibilityEvent(ptr)) (Xen_to_C_XVisibilityEvent(ptr))->state = Xen_integer_to_C_int(val);

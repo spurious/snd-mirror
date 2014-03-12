@@ -99,7 +99,7 @@ XL_TYPE_PTR(Display, Display*)
 XL_TYPE_PTR_1(int_, int*)
 XL_TYPE_PTR(GLXContext, GLXContext)
 #define Xen_to_C_unsigned_long(Arg) (unsigned_long)(Xen_ulong_to_C_ulong(Arg))
-#define Xen_is_unsigned_long(Arg) Xen_is_ulong_int(Arg)
+#define Xen_is_unsigned_long(Arg) Xen_is_ulong(Arg)
 #define C_to_Xen_Bool(Arg) C_bool_to_Xen_boolean(Arg)
 #define Xen_to_C_Bool(Arg) (Bool)(Xen_boolean_to_C_bool(Arg))
 #define Xen_is_Bool(Arg) Xen_is_boolean(Arg)
@@ -117,10 +117,10 @@ XL_TYPE_1(Font, Font)
 #define Xen_to_C_GLclampf(Arg) (GLclampf)(Xen_real_to_C_double(Arg))
 #define Xen_is_GLclampf(Arg) Xen_is_number(Arg)
 #define Xen_to_C_GLbitfield(Arg) (GLbitfield)(Xen_ulong_to_C_ulong(Arg))
-#define Xen_is_GLbitfield(Arg) Xen_is_ulong_int(Arg)
+#define Xen_is_GLbitfield(Arg) Xen_is_ulong(Arg)
 #define C_to_Xen_GLuint(Arg) C_ulong_to_Xen_ulong(Arg)
 #define Xen_to_C_GLuint(Arg) (GLuint)(Xen_ulong_to_C_ulong(Arg))
-#define Xen_is_GLuint(Arg) Xen_is_ulong_int(Arg)
+#define Xen_is_GLuint(Arg) Xen_is_ulong(Arg)
 #define C_to_Xen_GLboolean(Arg) C_bool_to_Xen_boolean(Arg)
 #define Xen_to_C_GLboolean(Arg) (GLboolean)(Xen_boolean_to_C_bool(Arg))
 #define Xen_is_GLboolean(Arg) Xen_is_boolean(Arg)
@@ -5563,7 +5563,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("07-Mar-14"));
+      Xen_define("gl-version", C_string_to_Xen_string("11-Mar-14"));
       gl_already_inited = true;
     }
 }

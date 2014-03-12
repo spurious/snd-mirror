@@ -3199,7 +3199,7 @@ channel number in the sound that contains the channel being played."
   dp = add_channel_to_play_list(cp,
 				sp, /* this is not cp->sound! */
 				beg_to_sample(start, S_add_player),
-				(Xen_is_long_long_int(end)) ? Xen_llong_to_C_llong(end) : NO_END_SPECIFIED,
+				(Xen_is_llong(end)) ? Xen_llong_to_C_llong(end) : NO_END_SPECIFIED,
 				pos,
 				ochan);
   if (dp == NULL) return(Xen_false);

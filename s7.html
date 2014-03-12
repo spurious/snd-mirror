@@ -5422,6 +5422,10 @@ This should be named define-reader-macro.
 <!-- null-environment does not fit very well; how to shadow earlier define-constant for example
      one of which is initial-environment; perhaps make a special environment at init time? 
      the code for that is save_null_environment, but it is untested and commented out.
+
+     (define (f1 a) a) (define (f2) (f1 2)) (define (f1 a) (+ a 1)) (f2) returns 3,
+     but this is only guaranteed in s7 for closures -- built-in functions may be optimized
+     away before a redefinition comes along.
 -->
 
 <div class="indented">
@@ -5454,8 +5458,8 @@ This should be named define-reader-macro.
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy).
 <li>add typeq? and perhaps make null? generic.
-<li>add <code>(if expr =&gt; f)</code> mimicking <code>(cond (expr =&gt; f)...)</code>
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
+<li>let =&gt; be followed by any number of functions, and change its name to "forth".
 </ul>
 
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,

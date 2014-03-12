@@ -589,12 +589,17 @@ otherwise it moves the cursor to the first offending sample"
   "(sort-samples bins) provides a histogram in 'bins' bins"
   (let ((bins (make-vector nbins 0))
 	(reader (make-sampler))
-	(len (frames)))
+	(len (frames))
+	(ops (make-vector nbins)))
     (do ((i 0 (+ i 1)))
-	((= i len) bins)
-      (let ((bin (floor (* (abs (next-sample reader)) nbins))))
-	(vector-set! bins bin (+ (vector-ref bins bin) 1))))))
-
+	((= i nbins))
+      (set! (ops i) (make-one-pole 1.0 -1.0)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (one-pole (vector-ref ops (floor (* nbins (abs (next-sample reader))))) 1.0))
+    (do ((i 0 (+ i 1)))
+	((= i nbins) bins)
+      (set! (bins i) (floor (one-pole (ops i) 0.0))))))
 
 
 ;;; -------- mix mono sound into stereo sound panning according to env
@@ -710,7 +715,7 @@ then inverse ffts."
   ;;  factor of the sound data -- the ramp gen produces a ramp up when 'up' is #t, sticking
   ;;  at 1.0, and a ramp down when 'up' is #f, sticking at 0.0
   ;;
-  ;; this could use the moving-average generator, though the resultant envelopes would be slightly less bumpy
+  ;; this could use the moving-average generator (or one-pole?)
 
   (environment-set! gen 'up up)
   (with-environment gen

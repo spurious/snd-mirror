@@ -4357,7 +4357,7 @@ mus_long_t scan_channel(chan_info *cp, mus_long_t start, mus_long_t end, Xen pro
   Xen result;
   result = g_sp_scan(proc, C_llong_to_Xen_llong(start), C_llong_to_Xen_llong(end),
 		     Xen_false, Xen_false, "search procedure", false, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0, Xen_false);
-  if (Xen_is_long_long_int(result))
+  if (Xen_is_llong(result))
     return(Xen_llong_to_C_llong(result));
   return(-1);
 }
@@ -4407,6 +4407,7 @@ if func returns non-" PROC_FALSE ", the scan stops, and the current sample numbe
 }
 
 
+#if (!HAVE_SCHEME)
 static Xen g_map_chan(Xen proc, Xen s_beg, Xen s_end, Xen org, Xen snd, Xen chn, Xen edpos) 
 {
   #if HAVE_SCHEME
@@ -4424,6 +4425,7 @@ apply func to samples in current channel; edname is the edit history name for th
 
   return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, Xen_false, S_map_chan));
 }
+#endif
 
 
 static Xen g_map_channel(Xen proc, Xen s_beg, Xen s_dur, Xen snd, Xen chn, Xen edpos, Xen org) 
@@ -4624,7 +4626,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
   mus_long_t samp, len;
 
   Xen_check_type(Xen_is_integer(samp_n), samp_n, 1, S_delete_samples_and_smooth, "an integer");
-  Xen_check_type(Xen_is_long_long_int(samps), samps, 2, S_delete_samples_and_smooth, "an integer");
+  Xen_check_type(Xen_is_llong(samps), samps, 2, S_delete_samples_and_smooth, "an integer");
 
   ASSERT_CHANNEL(S_delete_samples_and_smooth, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_delete_samples_and_smooth);
@@ -5043,7 +5045,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   egen = Xen_to_mus_any(gen);
   if (Xen_is_string(origin)) caller = mus_strdup(Xen_string_to_C_string(origin)); else caller = mus_strdup(S_clm_channel);
 
-  errmsg = clm_channel(cp, egen, beg, dur, pos, (Xen_is_long_long_int(overlap)) ? Xen_llong_to_C_llong(overlap) : 0, caller);
+  errmsg = clm_channel(cp, egen, beg, dur, pos, (Xen_is_llong(overlap)) ? Xen_llong_to_C_llong(overlap) : 0, caller);
 
   free(caller);
   if (errmsg)
@@ -7221,10 +7223,10 @@ static Xen g_fpsap_1(Xen x_choice, Xen x_n, Xen start_phases, Xen x_amps, Xen x_
 
 
 
-Xen_wrap_7_optional_args(g_map_chan_w, g_map_chan)
 Xen_wrap_6_optional_args(g_scan_channel_w, g_scan_channel)
 Xen_wrap_7_optional_args(g_map_channel_w, g_map_channel)
 #if (!HAVE_SCHEME)
+Xen_wrap_7_optional_args(g_map_chan_w, g_map_chan)
 Xen_wrap_6_optional_args(g_scan_chan_w, g_scan_chan)
 Xen_wrap_5_optional_args(g_find_channel_w, g_find_channel)
 #endif
@@ -7278,9 +7280,9 @@ void g_init_sig(void)
 #if (!HAVE_SCHEME)
   Xen_define_procedure(S_scan_chan,                   g_scan_chan_w,                   1, 5, 0, H_scan_chan);
   Xen_define_procedure(S_find_channel,                g_find_channel_w,                1, 4, 0, H_find_channel);
+  Xen_define_procedure(S_map_chan,                    g_map_chan_w,                    1, 6, 0, H_map_chan);
 #endif
   Xen_define_procedure(S_count_matches,               g_count_matches_w,               1, 4, 0, H_count_matches);
-  Xen_define_procedure(S_map_chan,                    g_map_chan_w,                    1, 6, 0, H_map_chan);
   Xen_define_procedure(S_map_channel,                 g_map_channel_w,                 1, 6, 0, H_map_channel);
 
   Xen_define_procedure(S_smooth_sound,                g_smooth_sound_w,                0, 4, 0, H_smooth_sound);

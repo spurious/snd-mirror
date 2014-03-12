@@ -1534,7 +1534,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 
 #define Xen_is_number(Arg)               XEN_NUMBER_P(Arg)
 #define Xen_is_integer(Arg)              XEN_INTEGER_P(Arg)
-#define Xen_is_long_long_int(Arg)        XEN_LONG_LONG_P(Arg)
+#define Xen_is_llong(Arg)                XEN_LONG_LONG_P(Arg)
 #define Xen_is_keyword(Arg)              XEN_KEYWORD_P(Arg)
 #define Xen_is_true(Arg)                 XEN_TRUE_P(Arg)
 #define Xen_is_false(Arg)                XEN_FALSE_P(Arg)
@@ -1548,8 +1548,8 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_is_string(Arg)               XEN_STRING_P(Arg)
 #define Xen_is_double(Arg)               XEN_DOUBLE_P(Arg)
 #define Xen_is_complex(Arg)              XEN_COMPLEX_P(Arg)
-#define Xen_is_ulong_int(Arg)            XEN_ULONG_P(Arg)
-#define Xen_is_ulong_long_int(Arg)       XEN_ULONG_LONG_P(Arg)
+#define Xen_is_ulong(Arg)                XEN_ULONG_P(Arg)
+#define Xen_is_ullong(Arg)               XEN_ULONG_LONG_P(Arg)
 #define Xen_is_wrapped_c_pointer(Arg)    XEN_WRAPPED_C_POINTER_P(Arg)
 #define Xen_is_procedure(Arg)            XEN_PROCEDURE_P(Arg)
 #define Xen_c_object_is_type(Obj, Tag)   XEN_OBJECT_TYPE_P(Obj, Tag)
@@ -1561,7 +1561,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_is_defined(Arg)              XEN_DEFINED_P(Arg)
 #define Xen_is_ratio(Arg)                XEN_RATIO_P(Arg)
 
-#define Xen_is_long_long_or_unbound(Arg) XEN_LONG_LONG_IF_BOUND_P(Arg)
+#define Xen_is_llong_or_unbound(Arg)     XEN_LONG_LONG_IF_BOUND_P(Arg)
 #define Xen_is_boolean_or_unbound(Arg)   XEN_BOOLEAN_IF_BOUND_P(Arg)
 #define Xen_is_integer_or_unbound(Arg)   XEN_INTEGER_IF_BOUND_P(Arg)
 #define Xen_is_number_or_unbound(Arg)    XEN_NUMBER_IF_BOUND_P(Arg)

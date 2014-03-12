@@ -339,7 +339,7 @@
 			     (if (string=? (cdr typ) "INT") 
 				 "integer" 
 				 (if (string=? (cdr typ) "ULONG")
-				     "ulong_int"
+				     "ulong"
 				     (if (string=? (cdr typ) "DOUBLE")
 					 "number"
 					 (apply string (map char-downcase (cdr typ)))))))))
