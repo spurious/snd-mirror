@@ -1215,18 +1215,16 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define* (find-sine freq beg dur snd)
   "(find-sine freq beg dur snd) returns the amplitude and initial-phase (for sin) at freq"
   (let ((incr (/ (* freq 2 pi) (srate snd)))
-	(sw (make-one-pole 1.0 -1.0))
-	(cw (make-one-pole 1.0 -1.0))
+	(sw 0.0)
+	(cw 0.0)
 	(reader (make-sampler beg snd))
 	(samp 0.0))
      (do ((i 0 (+ i 1)) ; this could also use edot-product
 	  (x 0.0 (+ x incr)))
 	 ((= i dur))
        (set! samp (next-sample reader))
-       (one-pole sw (* samp (sin x)))
-       (one-pole cw (* samp (cos x))))
-     (set! sw (one-pole sw 0.0))
-     (set! cw (one-pole cw 0.0))
+       (set! sw (+ sw (* samp (sin x))))
+       (set! cw (+ cw (* samp (cos x)))))
      (list (* 2 (/ (sqrt (+ (* sw sw) (* cw cw))) dur))
 	   (atan cw sw))))
 
@@ -2228,7 +2226,6 @@ is assumed to be outside -1.0 to 1.0."
 	(data (channel->float-vector 0 #f snd chn))
 	(clip-size 1000)
 	(clip-data (make-vector 1000 0)))
-
     ;; count clipped portions
     (let ((in-clip #f)
 	  (clip-beg 0))
@@ -2243,7 +2240,7 @@ is assumed to be outside -1.0 to 1.0."
 		  (set! in-clip #t)
 		  (set! clip-beg i)))
 	    (begin                            ; not clipped
-	      (set! unclipped-max (max unclipped-max (float-vector-ref data i)))
+	      (set! unclipped-max (max unclipped-max (float-vector-ref data i))) ; this is not the same as (float-vector-peak ...)
 	      (if in-clip
 		  (begin
 		    (set! in-clip #f)

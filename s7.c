@@ -696,7 +696,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_CLOSURE_S_opSq, HOP_SAFE_CLOSURE_S_opSq, OP_SAFE_CLOSURE_S_opSSq, HOP_SAFE_CLOSURE_S_opSSq, OP_SAFE_CLOSURE_opSSq_S, HOP_SAFE_CLOSURE_opSSq_S, 
       OP_SAFE_CLOSURE_SSS, HOP_SAFE_CLOSURE_SSS, OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, OP_SAFE_CLOSURE_S_CDR_CDR, HOP_SAFE_CLOSURE_S_CDR_CDR,
       OP_SAFE_CLOSURE_CAR_CAR, HOP_SAFE_CLOSURE_CAR_CAR, OP_SAFE_CLOSURE_CDR_CDR, HOP_SAFE_CLOSURE_CDR_CDR, 
-      OP_SAFE_CLOSURE_ALL_C, HOP_SAFE_CLOSURE_ALL_C, OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, 
+      OP_SAFE_CLOSURE_ALL_C, HOP_SAFE_CLOSURE_ALL_C, OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, OP_SAFE_CLOSURE_AA, HOP_SAFE_CLOSURE_AA, 
       OP_SAFE_CLOSURE_S_Z, HOP_SAFE_CLOSURE_S_Z, OP_SAFE_CLOSURE_S_P, HOP_SAFE_CLOSURE_S_P,
 
       OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
@@ -807,7 +807,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_closure_s_opsq", "h_safe_closure_s_opsq", "safe_closure_s_opssq", "h_safe_closure_s_opssq", "safe_closure_opssq_s", "h_safe_closure_opssq_s", 
       "safe_closure_sss", "h_safe_closure_sss", "safe_closure_saa", "h_safe_closure_saa", "safe_closure_s_cdr_cdr", "h_safe_closure_s_cdr_cdr",
       "safe_closure_car_car", "h_safe_closure_car_car", "safe_closure_cdr_cdr", "h_safe_closure_cdr_cdr", 
-      "safe_closure_all_c", "h_safe_closure_all_c", "safe_closure_all_x", "h_safe_closure_all_x", 
+      "safe_closure_all_c", "h_safe_closure_all_c", "safe_closure_all_x", "h_safe_closure_all_x", "safe_closure_aa", "h_safe_closure_aa", 
       "safe_closure_s_z", "h_safe_closure_s_z", "safe_closure_s_p", "h_safe_closure_s_p",
 
       "safe_closure_star_s", "h_safe_closure_star_s", "safe_closure_star_ss", "h_safe_closure_star_ss", 
@@ -1047,7 +1047,7 @@ typedef struct s7_cell {
       unsigned int length;
       unsigned int hash;  
       char *svalue;
-      bool needs_free;
+      bool needs_free; /* unsigned int: needs_free=1 then which free list or use_free_list=2? there's room here for symbol info */
 
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
       unsigned int tag;
@@ -1132,8 +1132,8 @@ typedef struct s7_cell {
   } object;
 
 #if DEBUGGING
-  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits;
-  const char *current_alloc_func, *previous_alloc_func;
+  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, uses;
+  const char *current_alloc_func, *previous_alloc_func, *gc_func;
 #endif
 
 } s7_cell;
@@ -1248,7 +1248,8 @@ struct s7_scheme {
   bool longjmp_ok;
   void (*begin_hook)(s7_scheme *sc, bool *val);
   
-  int no_values, current_line, s7_call_line, safety, class_name_location;
+  int no_values, current_line, s7_call_line, safety;
+  unsigned int class_name_location, class_name_hash;
   const char *current_file, *s7_call_file, *s7_call_name;
 
   shared_info *circle_info;
@@ -1898,10 +1899,13 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
       p->current_alloc_line = __LINE__; \
       p->current_alloc_func = __func__; \
       p->current_alloc_type = f; \
+      p->uses++; \
       typeflag(p) = f; \
     } while (0)
+#define clear_type(p) do {p->gc_line = __LINE__; p->gc_func = __func__; typeflag(p) = 0;} while (0)
 #else
   #define set_type(p, f)              typeflag(p) = f
+#define clear_type(p)                 typeflag(p) = 0
 #endif
 
 #define heap_location(p)              (p)->hloc
@@ -2056,6 +2060,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define list_4(Sc, A, B, C, D)        cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons_unchecked(Sc, C, cons(Sc, D, sc->NIL))))
 
 #define pair_line_number(p)           (p)->object.cons.line
+#define pair_raw_hash(p)              (p)->object.cons.line
 
 #define is_string(p)                  (type(p) == T_STRING)
 #define string_value(p)               (p)->object.string.svalue
@@ -2602,7 +2607,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 
 #if WITH_COUNTS
 #if 0
-#if 1
+#if 0
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
@@ -2637,7 +2642,7 @@ static void report_counts(s7_scheme *sc)
     }
 }
 #else
-#if 1
+#if 0
 #define NUM_COUNTS 1000
 static int counts[NUM_COUNTS][NUM_COUNTS];
 static void clear_counts(void) {int i, j; for (i = 0; i < NUM_COUNTS; i++) for (j = 0; j < NUM_COUNTS; j++) counts[i][j] = 0;}
@@ -3129,6 +3134,19 @@ static void sweep(s7_scheme *sc)
 	  s1 = sc->strings[i];
 	  if (type(s1) == 0)
 	    {
+	      /* lengths:
+		 0: 1126       21038     6
+		 1: 4079       16854  1850
+		 2: 4629       12008  8783
+		 3: 15965      15697   996
+		 4: 27581       9154   
+		 5: 18437       3741
+		 6: 4135       15021
+		 7: 2256        etc up to maybe 60
+		 8: 12507
+		 9: 49517
+		 etc up to 60
+	       */
 	      if (string_needs_free(s1))
 		free(string_value(s1));
 	    }
@@ -3865,11 +3883,23 @@ void s7_mark_object(s7_pointer p)
   static struct timezone z0;
 #endif
 
+#if DEBUGGING
+static int gc_last_line;
+static const char *gc_last_func;
+#define gc(Sc) gc_1(Sc, __func__, __LINE__)
+static int gc_1(s7_scheme *sc, const char *func, int line)
+#else
 static int gc(s7_scheme *sc)
+#endif
 {
   s7_cell **old_free_heap_top;
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   #define GC_CALL(P, Tp) p = (*tp++); if (is_marked(p)) clear_mark(p); else {if (typeflag(p) != 0) {typeflag(p) = 0; (*fp++) = p;}}
+
+#if DEBUGGING
+  gc_last_line = line;
+  gc_last_func = func;
+#endif
 
   if (sc->gc_stats)
     {
@@ -3981,7 +4011,7 @@ static int gc(s7_scheme *sc)
 #if DEBUGGING
 		p->debugger_bits = 0;
 #endif
-		typeflag(p) = 0;  /* (this is needed -- otherwise we try to free some objects twice) */
+		clear_type(p); /* typeflag(p) = 0; */ /* (this is needed -- otherwise we try to free some objects twice) */
 		(*fp++) = p;
 	      }
 	  }
@@ -4064,13 +4094,12 @@ int s7_gc_freed(s7_scheme *sc)
 }
 
 
-#define WITH_DUMP_HEAP 0
+#define WITH_DUMP_HEAP DEBUGGING
 #if WITH_DUMP_HEAP
 static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 {
   FILE *fd;
   s7_pointer *tp;
-  int i;
 
   gc(sc);
 
@@ -4270,7 +4299,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_PAIR:
       heap_location(x) = NOT_IN_HEAP;
       p = alloc_pointer();
-      typeflag(p) = 0;
+      clear_type(p);
       sc->heap[loc] = p;
       (*sc->free_heap_top++) = p;
       heap_location(p) = loc;
@@ -4288,6 +4317,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	 */
 	heap_location(x) = NOT_IN_HEAP;
 	sc->heap[loc] = alloc_pointer();
+	clear_type(sc->heap[loc]);
 	(*sc->free_heap_top++) = sc->heap[loc];
 	heap_location(sc->heap[loc]) = loc;
 
@@ -4308,6 +4338,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       if (is_gensym(x))
 	{
 	  sc->heap[loc] = alloc_pointer();
+	  clear_type(sc->heap[loc]);
 	  (*sc->free_heap_top++) = sc->heap[loc];
 	  heap_location(sc->heap[loc]) = loc;
 	  clear_gensym(x);
@@ -4326,7 +4357,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_BACRO:
       heap_location(x) = NOT_IN_HEAP;
       p = alloc_pointer();
-      typeflag(p) = 0;
+      clear_type(p);
       sc->heap[loc] = p;
       (*sc->free_heap_top++) = p;
       heap_location(p) = loc;
@@ -4341,7 +4372,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 
   heap_location(x) = NOT_IN_HEAP;
   p = alloc_pointer();
-  typeflag(p) = 0;
+  clear_type(p);
   sc->heap[loc] = p;
   (*sc->free_heap_top++) = p;
   heap_location(p) = loc;
@@ -4526,22 +4557,21 @@ static s7_pointer g_stack(s7_scheme *sc, s7_pointer args)
 
 #define HASH_MULT 4
 
-static int symbol_table_hash(const char *key) 
+static unsigned int raw_string_hash(const unsigned char *key) 
 { 
   unsigned int hashed = 0;
-  const char *c; 
+  const unsigned char *c; 
   for (c = key; *c; c++) 
     hashed = *c + hashed * HASH_MULT;
-  return(hashed % SYMBOL_TABLE_SIZE); 
-  /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
+  return(hashed); 
 } 
 
 
 static s7_pointer make_symbol(s7_scheme *sc, const char *name);
 
-static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location) 
+static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int hash, unsigned int location) 
 { 
-  s7_pointer x, str; 
+  s7_pointer x, str, p; 
 
   str = s7_make_permanent_string(name);
   x = alloc_pointer();
@@ -4580,21 +4610,26 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
 	}
     }
 
-  vector_element(sc->symbol_table, location) = permanent_cons(x, vector_element(sc->symbol_table, location), 
-							      T_PAIR | T_IMMUTABLE);
+
+  p = permanent_cons(x, vector_element(sc->symbol_table, location), T_PAIR | T_IMMUTABLE);
+  vector_element(sc->symbol_table, location) = p;
+  pair_raw_hash(p) = hash;
   return(x); 
 } 
 
 
-static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int location) 
+static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, unsigned int hash, unsigned int location) 
 { 
   s7_pointer x; 
   for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
     { 
-      const char *s; 
-      s = symbol_name(car(x)); 
-      if ((s) && (*s == *name) && (strings_are_equal(name, s)))
-	return(car(x)); 
+      if (hash == pair_raw_hash(x))
+	{
+	  const char *s; 
+	  s = symbol_name(car(x)); 
+	  if ((s) && (*s == *name) && (strings_are_equal(name, s)))
+	    return(car(x)); 
+	}
     }
   return(sc->NIL); 
 } 
@@ -4676,17 +4711,19 @@ static s7_pointer g_set_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
 static s7_pointer make_symbol(s7_scheme *sc, const char *name) 
 {
   s7_pointer x; 
-  int location;
+  unsigned int hash, location;
 
-  location = symbol_table_hash(name); 
-  x = symbol_table_find_by_name(sc, name, location); 
+  hash = raw_string_hash((const unsigned char *)name); 
+  location = hash % SYMBOL_TABLE_SIZE;
+
+  x = symbol_table_find_by_name(sc, name, hash, location); 
   if (is_not_null(x)) 
     return(x); 
 
   if (sc->symbol_table_is_locked)
     return(s7_error(sc, sc->ERROR, sc->NIL));
 
-  x = new_symbol(sc, name, location); 
+  x = new_symbol(sc, name, hash, location); 
   symbol_hash(x) = location;
   return(x);
 } 
@@ -4701,12 +4738,15 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 
 s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name)
 {
-  int location;
+  unsigned int hash, location;
   s7_pointer result;
-  location = symbol_table_hash(name); 
-  result = symbol_table_find_by_name(sc, name, location); 
+
+  hash = raw_string_hash((const unsigned char *)name); 
+  location = hash % SYMBOL_TABLE_SIZE;
+  result = symbol_table_find_by_name(sc, name, hash, location); 
   if (is_null(result))
     return(NULL);
+
   return(result);
 }
 
@@ -4721,7 +4761,11 @@ static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
   if (car(x) == sym)
     {
       vector_element(sc->symbol_table, loc) = cdr(x);
-      free(x);
+      free(x); 
+      /* a gensym is put in the symbol table, then later freed, and its link freed here -- was allocated specially
+       *   in g_gensym. line 3151 we call remove, but call/cc is somehow confusing this.
+       *   still looking...
+       */
     }
   else
     {
@@ -4741,17 +4785,18 @@ static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
 s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 { 
   char *name;
-  int len, location;
+  unsigned int len, hash, location;
   s7_pointer x;
   
   len = safe_strlen(prefix) + 32;
-  name = (char *)calloc(len, sizeof(char));
+  name = (char *)malloc(len * sizeof(char));
   /* there's no point in heroic efforts here to avoid name collisions --
    *    the user can screw up no matter what we do.
    */
-  snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
-  location = symbol_table_hash(name); 
-  x = new_symbol(sc, name, location);  /* not T_GENSYM -- might be called from outside */
+  snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++);
+  hash = raw_string_hash((const unsigned char *)name);
+  location = hash % SYMBOL_TABLE_SIZE;
+  x = new_symbol(sc, name, hash, location);  /* not T_GENSYM -- might be called from outside */
   symbol_hash(x) = location;
   free(name);
   return(x); 
@@ -4766,7 +4811,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 
   const char *prefix;
   char *name;
-  int len, location;
+  unsigned int len, hash, location;
   s7_pointer x, str, stc;
 
   /* get symbol name */
@@ -4781,9 +4826,10 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
     }
   else prefix = "gensym";
   len = safe_strlen(prefix) + 32;
-  name = (char *)calloc(len, sizeof(char));
+  name = (char *)malloc(len * sizeof(char));
   snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
-  location = symbol_table_hash(name); 
+  hash = raw_string_hash((const unsigned char *)name);
+  location = hash % SYMBOL_TABLE_SIZE;
       
   /* make-string for symbol name */
   str = (s7_cell *)calloc(1, sizeof(s7_cell));
@@ -4810,6 +4856,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   set_type(stc, T_PAIR | T_IMMUTABLE);
   cdr(stc) = vector_element(sc->symbol_table, location);
   vector_element(sc->symbol_table, location) = stc;
+  pair_raw_hash(stc) = hash;
 
   add_gensym(sc, x);
   return(x); 
@@ -6712,6 +6759,10 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   nloc = heap_location(nobj);
   memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
   heap_location(nobj) = nloc;
+
+#if DEBUGGING
+  set_type(nobj, type(obj));
+#endif
   
   /* nobj is safe here because the gc is off */
   if (dont_copy(car(obj)))
@@ -21562,28 +21613,28 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
        *    expanded for speed
        */
       {
-	int location;
 	s7_pointer x; 
-	unsigned int loc = 0;
-	const char *c; 
-	
-	for (c = orig_str; *c; c++) 
-	  loc = *c + loc * HASH_MULT;
+	unsigned int loc, location;
+
+	loc = raw_string_hash((const unsigned char *)orig_str);
 	location = loc % SYMBOL_TABLE_SIZE; 
 	
 	result = sc->NIL;
 	for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
 	  { 
-	    const char *s; 
-	    s = symbol_name(car(x)); 
-	    if ((s[0] == orig_str[0]) &&
-		(strings_are_equal(orig_str, s)))
-	      /* the string lengths here are k (for orig_str) and symbol_name_length(car(x)),
-	       *   but checking that these are equal before calling strcmp is slower?!?
-	       */
+	    if (loc == pair_raw_hash(x))
 	      {
-		result = car(x);
-		break;
+		const char *s; 
+		s = symbol_name(car(x)); 
+		if ((s[0] == orig_str[0]) &&
+		    (strings_are_equal(orig_str, s)))
+		  /* the string lengths here are k (for orig_str) and symbol_name_length(car(x)),
+		   *   but checking that these are equal before calling strcmp is slower?!?
+		   */
+		  {
+		    result = car(x);
+		    break;
+		  }
 	      }
 	  }
 
@@ -21593,7 +21644,7 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 	      result = sc->F;
 	    else 
 	      {
-		result = new_symbol(sc, orig_str, location); 
+		result = new_symbol(sc, orig_str, loc, location); 
 		symbol_hash(result) = location; /* was loc */
 	      }
 	  }
@@ -22142,7 +22193,7 @@ static void pop_input_port(s7_scheme *sc)
       sc->input_port = car(sc->input_port_stack);
 
       /* is this safe? */
-      typeflag(sc->input_port_stack) = 0;
+      clear_type(sc->input_port_stack);
       (*(sc->free_heap_top++)) = sc->input_port_stack;
 
       sc->input_port_stack = cdr(sc->input_port_stack);
@@ -23085,12 +23136,19 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 }
 
 
+#if DEBUGGING
+static const char *last_eval_string;
+#endif
+
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval_string "(eval-string str (env (current-environment))) returns the result of evaluating the string str as Scheme code"
   s7_pointer port, str;
   
   str = car(args);
+#if DEBUGGING
+  last_eval_string = string_value(str);
+#endif
   if (!is_string(str))
     {
       CHECK_METHOD(sc, str, sc->EVAL_STRING, args);
@@ -23410,7 +23468,7 @@ enum {NO_ARTICLE, DEFINITE_ARTICLE, INDEFINITE_ARTICLE};
 static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 {
   char *buf;
-  buf = (char *)calloc(512, sizeof(char));
+  buf = (char *)malloc(512 * sizeof(char));
   snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(sc, obj, NO_ARTICLE),
@@ -24817,7 +24875,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	  char *symstr;
 	  str = slashify_string(sc, symbol_name(obj), symbol_name_length(obj), NOT_IN_QUOTES, &nlen);
 	  nlen += 16;
-	  symstr = (char *)calloc(nlen, sizeof(char));
+	  symstr = (char *)malloc(nlen * sizeof(char));
 	  nlen = snprintf(symstr, nlen, "(symbol \"%s\")", str);
 	  port_write_string(port)(sc, symstr, nlen, port);
 	  free(symstr);
@@ -25014,14 +25072,15 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	len = safe_strlen(excl_name) + 
           safe_strlen(current_bits) + safe_strlen(allocated_bits) + safe_strlen(previous_bits) + 
           safe_strlen(obj->previous_alloc_func) + safe_strlen(obj->current_alloc_func) + 512;
-	str = (char *)calloc(len, sizeof(char));
+	str = (char *)malloc(len, sizeof(char));
 	
 	nlen = snprintf(str, len, 
-			"\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d>", 
+			"\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), last gc: %s[%d], %s[%d]>", 
 			excl_name, current_bits, 
 			obj->current_alloc_func, obj->current_alloc_line, allocated_bits,
 			obj->previous_alloc_func, obj->previous_alloc_line, previous_bits,
-			heap_location(obj));
+			heap_location(obj), obj->uses,
+			gc_last_func, gc_last_line, obj->gc_func, obj->gc_line);
 
 	free(current_bits);
 	free(allocated_bits);
@@ -29177,7 +29236,7 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   switch (type(vec))
     {
     case T_FLOAT_VECTOR:
-      if (!is_real(obj))
+      if (!s7_is_real(obj))
 	s7_wrong_type_arg_error(sc, "(float) vector-fill!", 2, obj, "a real");
       else
 	{
@@ -30317,7 +30376,7 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
 		result_type = T_INT_VECTOR;
 	      else
 		{
-		  if (is_real(fill))
+		  if (s7_is_real(fill)) /* might be gmp with big_real by accident */
 		    result_type = T_FLOAT_VECTOR;
 		  else return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(2), fill,
 							    make_protected_string(sc, "an integer or a real since 'homogenous' is #t")));
@@ -31100,25 +31159,30 @@ static int hash_float_location(s7_Double x)
 }
 
 
-static int hash_loc(s7_scheme *sc, s7_pointer key)
+static unsigned int hash_loc(s7_scheme *sc, s7_pointer key)
 {
-  int loc = 0;
+  unsigned int loc = 0;
+#if 0
   const unsigned char *c;  /* need "unsigned" here else (hash-table-index #u8(255 0)) -> -1 */
+#endif
 
   switch (type(key))
     {
     case T_STRING:
       if (string_hash(key) != 0)
 	return(string_hash(key));
+#if 0
       for (c = (const unsigned char *)string_value(key); *c; c++)
 	loc = *c + loc * HASH_MULT;
+#endif
+      loc = raw_string_hash((const unsigned char *)string_value(key));
       string_hash(key) = loc;
       return(loc);
 
     case T_INTEGER:
-      loc = (int)integer(key); /* overflow possible! */
-      if (loc < 0) return(-loc);
-      return(loc);
+      if (integer(key) < 0)
+	return((unsigned int)(-integer(key)));
+      return((unsigned int)integer(key)); /* overflow possible! */
 
     case T_REAL:
       return(hash_float_location(real(key)));
@@ -31131,7 +31195,7 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
        */
 
     case T_RATIO:
-      loc = (int)denominator(key); /* overflow possible */
+      loc = (unsigned int)denominator(key); /* overflow possible */
       if (loc < 0) return(-loc);
       return(loc);
 
@@ -31217,13 +31281,14 @@ static s7_pointer hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
     {
       s7_Int keyval;
       s7_pointer x;
-      unsigned int hash_len, loc;
+      unsigned int loc;
+      unsigned long long int hash_len;
 
-      hash_len = (int)hash_table_length(table) - 1;
+      hash_len = (unsigned long long int)hash_table_length(table) - 1;
       keyval = integer(key);
       if (keyval < 0)
-	loc = (-keyval) & hash_len;
-      else loc = keyval & hash_len;
+	loc = (unsigned int)((-keyval) & hash_len);
+      else loc = (unsigned int)(keyval & hash_len);
 
       for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (integer(fcdr(x)) == keyval)
@@ -31246,9 +31311,12 @@ static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
       loc = string_hash(key);
       if (loc == 0)
 	{
+#if 0
 	  const char *c; 
 	  for (c = string_value(key); *c; c++) 
 	    loc = *c + loc * HASH_MULT;
+#endif
+	  loc = raw_string_hash((const unsigned char *)string_value(key));
 	  string_hash(key) = loc;
 	}
       orig = loc;
@@ -31405,11 +31473,11 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 static s7_pointer hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   s7_pointer x;
-  int hash_len, loc;
+  unsigned int hash_len, loc;
   s7_function f;
 
   f = c_function_call(hash_table_eq_function(table));
-  hash_len = (int)hash_table_length(table) - 1;
+  hash_len = (unsigned int)hash_table_length(table) - 1;
   loc = hash_loc(sc, key) & hash_len;
 
   car(sc->T2_1) = key;
@@ -31572,7 +31640,8 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
     cdr(x) = value;
   else
     {
-      int hash_len, loc, typ;
+      unsigned int hash_len, loc;
+      int typ;
 
       hash_len = hash_table_length(table) - 1;
       loc = hash_loc(sc, key) & hash_len;
@@ -31920,7 +31989,7 @@ static int ht_iter_tag = 0;
 static char *print_ht_iter(s7_scheme *sc, void *val)
 {
   char *str;
-  str = (char *)calloc(32, sizeof(char));
+  str = (char *)malloc(32 * sizeof(char));
   snprintf(str, 32, "#<hash-table-iterator>");
   return(str);
 }
@@ -32211,7 +32280,7 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
 #endif
   if (is_simple_real(temp)) /* i.e. not immutable, not integer or something else unexpected */
     {
-      typeflag(temp) = 0;
+      clear_type(temp);
       (*(sc->free_heap_top++)) = temp;
     }
   return(val);
@@ -32520,7 +32589,7 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
   s7_pointer local_args;
   
   arglist_len = safe_strlen(arglist);
-  internal_arglist = (char *)calloc(arglist_len + 64, sizeof(char));
+  internal_arglist = (char *)malloc((arglist_len + 64) * sizeof(char));
   snprintf(internal_arglist, arglist_len + 64, "(map (lambda (arg) (if (symbol? arg) arg (car arg))) '(%s))", arglist);
   local_args = s7_eval_c_string(sc, internal_arglist);
   free(internal_arglist);
@@ -32534,7 +32603,7 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
   s7_define_function(sc, local_sym, fnc, args, 0, 0, NULL);
 
   len = 32 + 2 * arglist_len + safe_strlen(doc) + safe_strlen(name) + safe_strlen(local_sym);
-  internal_function = (char *)calloc(len, sizeof(char));
+  internal_function = (char *)malloc(len * sizeof(char));
   snprintf(internal_function, len, "(define* (%s %s) \"%s\" (%s %s)", name, arglist, doc, local_sym, internal_arglist);
   s7_eval_c_string(sc, internal_function);
 
@@ -32574,7 +32643,7 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
       if (help) return(help);
 
       if (!arglist)
-	arglist = (char *)calloc(ARGLIST_SIZE, sizeof(char));
+	arglist = (char *)malloc(ARGLIST_SIZE * sizeof(char));
       args = s7_object_to_c_string(sc, closure_args(x));
       if (args)
 	{
@@ -33091,7 +33160,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
   int len;
 
   len = 16 + safe_strlen(name);
-  internal_set_name = (char *)calloc(len, sizeof(char));
+  internal_set_name = (char *)malloc(len * sizeof(char));
   snprintf(internal_set_name, len, "[set-%s]", name);
 
   get_func = s7_make_function(sc, name, getter, get_req_args, get_opt_args, false, documentation); 
@@ -35741,7 +35810,7 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
 		  if (new_notes_line)
 		    {
 		      new_note_len += (4 + notes_start_col + ((notes) ? strlen(notes) : 0));
-		      str = (char *)calloc(new_note_len, sizeof(char));
+		      str = (char *)malloc(new_note_len * sizeof(char));
 		      snprintf(str, new_note_len, "%s\n%s%s%s%s: %s", 
 			       (notes) ? notes : "", 
 			       (as_comment) ? "; " : "",
@@ -35753,7 +35822,7 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
 		  else
 		    {
 		      new_note_len += ((notes) ? strlen(notes) : 0) + 4;
-		      str = (char *)calloc(new_note_len, sizeof(char));
+		      str = (char *)malloc(new_note_len * sizeof(char));
 		      snprintf(str, new_note_len, "%s%s%s: %s", 
 			       (notes) ? notes : "", 
 			       (notes) ? ", " : " ; ",
@@ -35790,20 +35859,20 @@ static char *stacktrace_add_func(s7_scheme *sc, s7_pointer f, s7_pointer code, c
       (f != car(code)))
     {
       newlen = symbol_name_length(f) + errlen + 10;
-      newstr = (char *)calloc(newlen, sizeof(char));
+      newstr = (char *)malloc(newlen * sizeof(char));
       errlen = snprintf(newstr, newlen, "%s: %s", symbol_name(f), errstr);
     }
   else
     {
       newlen = errlen + 8;
-      newstr = (char *)calloc(newlen, sizeof(char));
+      newstr = (char *)malloc(newlen * sizeof(char));
       if ((errlen > 2) && (errstr[2] == '('))
 	errlen = snprintf(newstr, newlen, "  %s", errstr);
       else errlen = snprintf(newstr, newlen, "%s", errstr);
     }
 
   newlen = code_max + 8 + ((notes) ? strlen(notes) : 0);
-  str = (char *)calloc(newlen, sizeof(char));
+  str = (char *)malloc(newlen * sizeof(char));
 
   if (errlen >= code_max)
     {
@@ -35902,7 +35971,7 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
 		      if (notes) free(notes);
 
 		      newlen = strlen(newstr) + 1 + ((str) ? strlen(str) : 0);
-		      codestr = (char *)calloc(newlen, sizeof(char));
+		      codestr = (char *)malloc(newlen * sizeof(char));
 		      snprintf(codestr, newlen, "%s%s", (str) ? str : "", newstr);
 		      if (str) free(str);
 		      free(newstr);
@@ -36122,7 +36191,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
     case T_ENVIRONMENT:  
       if (has_methods(arg))
 	{
-	  class_sym = symbol_table_find_by_name(sc, "class-name", sc->class_name_location);
+	  class_sym = symbol_table_find_by_name(sc, "class-name", sc->class_name_hash, sc->class_name_location);
 	  if (!is_null(class_sym))
 	    {
 	      s7_pointer class_name;
@@ -36138,7 +36207,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
     case T_CLOSURE_STAR: 
       if (has_methods(arg))
 	{
-	  class_sym = symbol_table_find_by_name(sc, "class-name", sc->class_name_location);
+	  class_sym = symbol_table_find_by_name(sc, "class-name", sc->class_name_hash, sc->class_name_location);
 	  if (!is_null(class_sym))
 	    {
 	      s7_pointer class_name;
@@ -37291,7 +37360,7 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 		  form = object_to_truncated_string(sc, car(p), 80);
 		  form_len = safe_strlen(form);
 		  msg_len = form_len + 128;
-		  msg = (char *)calloc(msg_len, sizeof(char));
+		  msg = (char *)malloc(msg_len * sizeof(char));
 		  snprintf(msg, msg_len, ";  this looks bogus: %s", form);
 		  free(form);
 
@@ -39670,10 +39739,11 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x, syn;
-  unsigned int loc;
+  unsigned int hash, loc;
 
-  loc = symbol_table_hash(name);
-  x = new_symbol(sc, name, loc);
+  hash = raw_string_hash((const unsigned char *)name);
+  loc = hash % SYMBOL_TABLE_SIZE;
+  x = new_symbol(sc, name, hash, loc);
   symbol_hash(x) = loc;
 
   syn = alloc_pointer();
@@ -39694,7 +39764,6 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x, str, syn; 
-  unsigned int loc;
 
   str = s7_make_permanent_string(name);
 
@@ -39705,8 +39774,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
 
   global_slot(x) = sc->NIL;
   initial_slot(x) = sc->UNDEFINED;
-  loc = symbol_table_hash(name); 
-  symbol_hash(x) = loc;
+  symbol_hash(x) = (raw_string_hash((const unsigned char *)name) % SYMBOL_TABLE_SIZE);
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_accessor(x) = -1;
 
@@ -44011,7 +44079,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		    {
 		      if (is_symbol(cadar_x))
 			set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_SA);
-		      else set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_ALL_X);
+		      else set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_AA);
 		    }
 		  else set_optimize_data(car_x, hop + OP_CLOSURE_ALL_X);
 		}
@@ -49723,7 +49791,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	  }
 	sc->value = safe_reverse_in_place(sc, counter_result(args));
-	typeflag(args) = 0;
+	clear_type(args);
 	(*(sc->free_heap_top++)) = args;
 	sc->args = sc->NIL;
 	goto START;
@@ -49750,7 +49818,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       sc->value = safe_reverse_in_place(sc, counter_result(sc->args));
-      typeflag(sc->args) = 0;
+      clear_type(sc->args);
       (*(sc->free_heap_top++)) = sc->args;
       sc->args = sc->NIL;
       goto START;
@@ -49896,7 +49964,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       sc->value = sc->UNSPECIFIED;
-      typeflag(sc->args) = 0;
+      clear_type(sc->args);
       (*(sc->free_heap_top++)) = sc->args;
       sc->args = sc->NIL;
       goto START;
@@ -51929,7 +51997,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  sc->code = cddr(sc->args);                /* result expr (a list -- implicit begin) */
 	  
-	  typeflag(sc->args) = 0;
+	  clear_type(sc->args);
 	  (*(sc->free_heap_top++)) = sc->args;
 	  sc->args = sc->NIL;
 
@@ -52294,6 +52362,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto EVAL;
 	      }
 	      
+
+	    case OP_SAFE_CLOSURE_AA:
+	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2))
+		{
+		  set_optimize_data(code, OP_UNKNOWN_ALL_X);
+		  goto OPT_EVAL;
+		}
+
+	    case HOP_SAFE_CLOSURE_AA:
+	      {
+		s7_pointer args, y, z;
+		args = cdr(code);
+		y = ((s7_function)fcdr(args))(sc, car(args));
+		args = cdr(args);
+		z = ((s7_function)fcdr(args))(sc, car(args));
+		sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), y, z);
+		code = closure_body(ecdr(code));
+		if (is_pair(cdr(code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(code));
+		sc->code = car(code);
+		goto EVAL;
+	      }
 	      
 
 	    case OP_SAFE_CLOSURE_opSq_opSq:
@@ -54053,7 +54143,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				      set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_SAFE_CLOSURE_S_CDR_CDR);
 				    else set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_SAFE_CLOSURE_SAA);
 				  }
-				else set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_SAFE_CLOSURE_ALL_X);
+				else set_optimize_data(code, 
+						       ((is_global(car(code))) ? 1 : 0) + 
+						       (num_args == 2) ? OP_SAFE_CLOSURE_AA : OP_SAFE_CLOSURE_ALL_X);
 			      }
 			    else set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_CLOSURE_ALL_X);
 			    set_ecdr(code, f);
@@ -58027,6 +58119,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    unsigned int len;
 	    len = safe_list_length(sc, sc->args);
+#if DEBUGGING
+	    {
+	      int i;
+	      s7_pointer p;
+	      for (i = 1, p = sc->args; is_pair(p); p = cdr(p), i++);
+	      if (type(p) == 0)
+		fprintf(stderr, "%s line %d: sc->args arg %d is a free cell: %p\n", DISPLAY(sc->code), __LINE__, i, p);
+	    }
+#endif
 	    if (len < c_function_required_args(sc->code))
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
@@ -59147,6 +59248,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	/* ([set!] ctr (+ ctr 1)) */
 	s7_pointer y;
+
 	y = find_symbol(sc, car(sc->code));
 	if (is_slot(y))
 	  {
@@ -59243,6 +59345,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_INCREMENT_C_TEMP:
       {
 	s7_pointer sym, arg1, arg2, code;
+
 	code = sc->code;
 	sym = find_symbol(sc, car(code));
 	if (is_slot(sym)) 
@@ -59278,6 +59381,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_INCREMENT_SS:
       /* ([set!] x (+ x i)) */
+
       sc->y = find_symbol(sc, car(sc->code));
       if (is_slot(sc->y)) 
 	{
@@ -59291,6 +59395,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_INCREMENT_SSS:
       /* ([set!] x (+ x y z)) -- nearly always involves reals */
+
       sc->y = find_symbol(sc, car(sc->code));
       if (is_slot(sc->y))
 	{
@@ -59447,6 +59552,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_INCREMENT_SA:
       {
 	s7_pointer sym;
+
 	sym = find_symbol(sc, car(sc->code));
 	if (is_slot(sym))
 	  {
@@ -59466,6 +59572,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_INCREMENT_SAA:
       {
 	s7_pointer sym;
+
 	sym = find_symbol(sc, car(sc->code));
 	if (is_slot(sym))
 	  {
@@ -59486,6 +59593,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_INCREMENT_SZ:
       {
 	s7_pointer sym;
+
 	sym = find_symbol(sc, car(sc->code));
 	if (is_slot(sym))
 	  {
@@ -62163,7 +62271,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
 	eval_error(sc, "lambda*: no args or no body? ~A", sc->code);
-      
+
       car(sc->code) = check_lambda_star_args(sc, car(sc->code), NULL);
       clear_syms_in_list();
       optimize(sc, cdr(sc->code), 0, sc->NIL);
@@ -64234,14 +64342,11 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   /* if the same bignum object is assigned to each element, different vector elements
    *    are actually the same -- we need to make a copy of obj for each one
    */
-  if (is_big_number(obj))
+  if ((type(vec) == T_VECTOR) && (is_big_number(obj)))
     {
       int gc_loc;
       s7_Int i, len;
       s7_pointer *tp;
-
-      if (type(vec) != T_VECTOR)
-	wrong_type_argument_with_type(sc, sc->VECTOR_FILL, small_int(1), vec, make_protected_string(sc, "a normal vector"));
 
       len = vector_length(vec);
       tp = (s7_pointer *)(vector_elements(vec));
@@ -67847,7 +67952,8 @@ s7_scheme *s7_init(void)
   sc->s7_call_name = NULL;
   sc->safety = 0;
 
-  sc->class_name_location = symbol_table_hash("class-name"); 
+  sc->class_name_hash = raw_string_hash((const unsigned char *)"class-name");
+  sc->class_name_location = sc->class_name_hash % SYMBOL_TABLE_SIZE;
 
   sc->circle_info = NULL;
   sc->fdats = (format_data **)calloc(8, sizeof(format_data *));
@@ -69236,7 +69342,7 @@ int main(int argc, char **argv)
   if (COLS > 80)
     {
       char *str;
-      str = (char *)calloc(128, sizeof(char));
+      str = (char *)malloc(128 * sizeof(char));
       snprintf(str, 128, "(with-environment *stacktrace* (set! code-cols %d) (set! total-cols %d) (set! notes-start-col %d))",
 	       COLS - 45, COLS, COLS - 45);
       s7_eval_c_string(s7, str);
@@ -69319,5 +69425,7 @@ int main(int argc, char **argv)
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
+ *
+ * aren't two empty output string ports morally equal? (or input? or input if string+point are same?)
  */
 

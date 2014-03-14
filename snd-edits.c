@@ -632,7 +632,8 @@ static mus_float_t previous_sample_value(snd_fd *sf)
   else return(sf->data[sf->loc--] * sf->fscaler);
 }
 
-static mus_float_t previous_sample_value_unchecked(snd_fd *sf) 
+mus_float_t previous_sample_value_unchecked(snd_fd *sf) ;
+mus_float_t previous_sample_value_unchecked(snd_fd *sf) 
 {
   return(sf->data[sf->loc--] * sf->fscaler);
 }
@@ -658,7 +659,8 @@ mus_float_t next_sample_value_unscaled_and_unchecked(snd_fd *sf)
   return(sf->data[sf->loc++]);
 }
 
-static mus_float_t previous_sample_value_unscaled(snd_fd *sf) 
+mus_float_t previous_sample_value_unscaled(snd_fd *sf) ;
+mus_float_t previous_sample_value_unscaled(snd_fd *sf) 
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -5124,6 +5126,8 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
 	       * many times per sample) anyway, so we copy the IO buffer, allocate a relatively
 	       * small(?? -- is this obsolete) data buffer, and then free all the copied snd_data stuff as soon as
 	       * the current reader is done.
+	       *
+	       * but if all the data is in the current buffer, it won't be moving?
 	       */
 	      if ((first_snd->inuse) ||
 		  (bufsize > FILE_BUFFER_SIZE))
@@ -8206,6 +8210,30 @@ vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_
   /* if reader, beg, cp, and pos are ignored */
   snd_fd *sf;
   vct *v = NULL;
+  mus_float_t **d;
+  mus_long_t i;
+  mus_float_t *fvals;
+
+  if (!buf)
+    {
+      v = mus_vct_make(len);
+      fvals = mus_vct_data(v);
+    }
+  else
+    {
+      v = mus_vct_wrap(len, buf);
+      fvals = buf;
+    }
+
+  if ((pos == 0) &&
+      (beg + len <= cp->edits[0]->samples) &&
+      (d = mus_sound_saved_data(cp->sound->filename)))
+    {
+      mus_float_t *dc;
+      dc = d[cp->chan];
+      memcpy((void *)fvals, (void *)(dc + beg), len * sizeof(mus_float_t));
+      return(v);
+    }
 
   if (!reader)
     sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, len);
@@ -8213,19 +8241,6 @@ vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_
 
   if (sf)
     {
-      mus_long_t i;
-      mus_float_t *fvals;
-
-      if (!buf)
-	{
-	  v = mus_vct_make(len);
-	  fvals = mus_vct_data(v);
-	}
-      else
-	{
-	  v = mus_vct_wrap(len, buf);
-	  fvals = buf;
-	}
       i = 0;
       while (true)
 	{

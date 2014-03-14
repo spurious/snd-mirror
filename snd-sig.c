@@ -778,6 +778,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 /* -------- reverse-channel -------- */
 
 mus_float_t previous_sample_value_unscaled_and_unchecked(snd_fd *sf);
+mus_float_t previous_sample_value_unscaled(snd_fd *sf);
+mus_float_t previous_sample_value_unchecked(snd_fd *sf);
 
 static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long_t dur, Xen edp, const char *caller, int arg_pos)
 {
@@ -891,16 +893,43 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
     }
   else 
     {
-      if (sf->runf == previous_sample_value_unscaled_and_unchecked)
-	{
 	  mus_long_t n;
+      if ((sf->runf == previous_sample_value_unscaled_and_unchecked) ||
+	  ((sf->runf == previous_sample_value_unscaled) &&
+	   (sf->loc - sf->first >= (dur - 1))))
+	{
 	  for (n = sf->loc, k = 0; k < dur; k++, n--)
 	    idata[k] = sf->data[n];
 	}
       else
 	{
-	  for (k = 0; k < dur; k++)
-	    idata[k] = read_sample(sf);
+	  if (sf->runf == previous_sample_value_unchecked)
+	    {
+	      for (n = sf->loc, k = 0; k < dur; k++, n--)
+		idata[k] = sf->data[n] * sf->fscaler;
+	    }
+	  else
+	    {
+	      /* beg is begin time of the edit, not where the reverse read starts */
+	      /* independent of sf, if edpos is 0, and saved_data is available, and beg+dur < saved_data length, just use it.
+	       */
+	      mus_float_t **d;
+	      if ((sf->runf == previous_sample_value_unscaled) &&
+		  (edpos == 0) &&
+		  (beg + dur <= cp->edits[0]->samples) &&
+		  (d = mus_sound_saved_data(sp->filename)))
+		{
+		  mus_float_t *dc;
+		  dc = d[cp->chan];
+		  for (n = beg + dur, k = 0; k < dur; k++, n--)
+		    idata[k] = dc[n];
+		}
+	      else
+		{
+		  for (k = 0; k < dur; k++)
+		    idata[k] = read_sample(sf);
+		}
+	    }
 	}
       change_samples(beg, dur, idata, cp, origin, edpos, -1.0);
     }

@@ -287,7 +287,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
   if (loc < 0) loc = 0;
 
   base = (char *)calloc(size, sizeof(char));
-  str = (char *)calloc(STR_SIZE, sizeof(char));
+  str = (char *)malloc(STR_SIZE * sizeof(char));
 
   if (len > 0)
     {
@@ -353,7 +353,7 @@ static char *clm_array_to_string(mus_any **gens, int num_gens, const char *name,
 	  len += strlen(descrs[i]);
 	}
       len += (64 + strlen(name));
-      descr = (char *)calloc(len, sizeof(char));
+      descr = (char *)malloc(len * sizeof(char));
       snprintf(descr, len, "%s[%d]:", name, num_gens);
       for (i = 0; i < num_gens; i++)
 	{
@@ -364,7 +364,7 @@ static char *clm_array_to_string(mus_any **gens, int num_gens, const char *name,
     }
   else
     {
-      descr = (char *)calloc(128, sizeof(char));
+      descr = (char *)malloc(128 * sizeof(char));
       snprintf(descr, 128, "%s: nil", name);
     }
   return(descr);
@@ -381,7 +381,7 @@ static char *int_array_to_string(int *arr, int num_ints, const char *name)
       char *intstr;
       len = num_ints * MAX_INT_SIZE + 64;
       descr = (char *)calloc(len, sizeof(char));
-      intstr = (char *)calloc(MAX_INT_SIZE, sizeof(char));
+      intstr = (char *)malloc(MAX_INT_SIZE * sizeof(char));
       snprintf(descr, len, "%s[%d]: (", name, num_ints);      
       for (i = 0; i < num_ints - 1; i++)
 	{
@@ -394,7 +394,7 @@ static char *int_array_to_string(int *arr, int num_ints, const char *name)
     }
   else
     {
-      descr = (char *)calloc(128, sizeof(char));
+      descr = (char *)malloc(128 * sizeof(char));
       snprintf(descr, 128, "%s: nil", name);
     }
   return(descr);
@@ -12941,7 +12941,7 @@ static char *describe_move_sound(mus_any *ptr)
 
   len = 64 + strlen(starts) + strlen(dopdly) + strlen(dopenv) + strlen(revenv) + 
     strlen(outdlys) + strlen(outenvs) + strlen(revenvs) + strlen(outmap);
-  allstr = (char *)calloc(len, sizeof(char));
+  allstr = (char *)malloc(len * sizeof(char));
   snprintf(allstr, len, "%s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  free: arrays: %s, gens: %s\n",
 		      starts, dopdly, dopenv, revenv, outdlys, outenvs, revenvs, outmap,
 		      (gen->free_arrays) ? "true" : "false",
