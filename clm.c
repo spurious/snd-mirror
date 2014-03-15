@@ -10797,7 +10797,12 @@ static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 }
 
 
-static mus_float_t run_file_to_sample(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) {return(mus_in_any_from_file(ptr, (int)arg1, (int)arg2));} /* mus_read_sample here? */
+static mus_float_t run_file_to_sample(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) 
+{
+  /* mus_read_sample here? */
+  return(mus_in_any_from_file(ptr, (int)arg1, (int)arg2));
+} 
+
 
 static int file_to_sample_end(mus_any *ptr)
 {
@@ -11387,7 +11392,6 @@ static void flush_buffers(rdout *gen)
 	       *   in advance.  In Linux, malloc returns a non-null pointer even when
 	       *   there's no memory available, so you have to touch the memory to force
 	       *   the OS to deal with it, then the next allocation returns null.
-	       *   So, here we go...
 	       */
 	      addbufs[i] = (mus_float_t *)malloc(clm_file_buffer_size * sizeof(mus_float_t));
 	      if (addbufs[i])
@@ -11549,7 +11553,7 @@ static void flush_buffers(rdout *gen)
 	  mus_file_seek_frame(fd, gen->data_start);
 	  mus_file_write(fd, 0, frames_to_add, gen->chans, addbufs);
 	  for (i = 0; i < gen->chans; i++) 
-	    free(addbufs[i]);  /* used calloc above to make sure we can check for unsuccessful allocation */
+	    free(addbufs[i]); 
 	  free(addbufs);
 	}
       else
@@ -14081,7 +14085,7 @@ mus_any *mus_make_granulate(mus_float_t (*input)(void *arg, int direction),
   spd->out_data_len = outlen;
   spd->out_data = (mus_float_t *)calloc(spd->out_data_len, sizeof(mus_float_t));
   spd->in_data_len = outlen + spd->s20 + 1;
-  spd->in_data = (mus_float_t *)calloc(spd->in_data_len, sizeof(mus_float_t));
+  spd->in_data = (mus_float_t *)malloc(spd->in_data_len * sizeof(mus_float_t));
   spd->rd = input;
   spd->closure = closure;
   spd->edit = edit;
@@ -16953,6 +16957,6 @@ void mus_initialize(void)
 #else
   data_format_zero[MUS_UBSHORT] = 0x8000;
   data_format_zero[MUS_ULSHORT] = 0x80;
-#endif  
+#endif 
 }
 

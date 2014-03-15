@@ -111,7 +111,7 @@
 ;;;   hence the extra let below.
 
 (define (vequal v1 v2)
-  (< (/ (float-vector-peak (float-vector-subtract! (copy v1) v2)) (float-vector-peak v1)) 1e-6))
+  (< (/ (float-vector-peak (float-vector-subtract! (copy v1) v2)) (max .001 (float-vector-peak v1))) 1e-6))
 
 (define (test-gen gen)
 

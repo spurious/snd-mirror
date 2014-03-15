@@ -9048,7 +9048,7 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
 <pre class="indented">
 (define* (silly-reverse snd)
   (let* ((len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd 0))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
+	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rl (channel-&gt;float-vector 0 fsize snd 0))
 	 (im (make-vector fsize 0.0 #t)))
     (<a class=quiet href="sndclm.html#fft" onmouseout="UnTip()" onmouseover="Tip(sndclm_fft_tip)">mus-fft</a> rl im fsize)

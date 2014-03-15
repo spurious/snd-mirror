@@ -893,7 +893,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
     }
   else 
     {
-	  mus_long_t n;
+      mus_long_t n;
       if ((sf->runf == previous_sample_value_unscaled_and_unchecked) ||
 	  ((sf->runf == previous_sample_value_unscaled) &&
 	   (sf->loc - sf->first >= (dur - 1))))
@@ -919,10 +919,17 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 		  (beg + dur <= cp->edits[0]->samples) &&
 		  (d = mus_sound_saved_data(sp->filename)))
 		{
+		  mus_long_t d2;
 		  mus_float_t *dc;
+
 		  dc = d[cp->chan];
-		  for (n = beg + dur, k = 0; k < dur; k++, n--)
-		    idata[k] = dc[n];
+		  if (dur & 1) d2 = dur - 1; else d2 = dur;
+		  for (n = beg + dur, k = 0; k < d2; )
+		    {
+		      idata[k++] = dc[n--];
+		      idata[k++] = dc[n--];
+		    }
+		  if (k < dur) idata[k] = dc[n];
 		}
 	      else
 		{

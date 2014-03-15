@@ -2684,13 +2684,16 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 
   if (initial_contents == NULL)
     {
-      line = (mus_float_t *)calloc(max_size, sizeof(mus_float_t));
+      line = (mus_float_t *)malloc(max_size * sizeof(mus_float_t));
       if (line == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
       orig_v = xen_make_vct(max_size, line);
-      if (initial_element != 0.0) 
-	for (i = 0; i < max_size; i++) 
-	  line[i] = initial_element;
+      if (initial_element != 0.0)
+	{
+	  for (i = 0; i < max_size; i++) 
+	    line[i] = initial_element;
+	}
+      else memset((void *)line, 0, max_size * sizeof(mus_float_t));
     }
   else
     {
@@ -7246,12 +7249,14 @@ static Xen safe_out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, c
   return(xen_zero);
 }
 
+#if (!WITH_GMP)
 static Xen safe_outa_2_to_mus_xen(mus_long_t pos, mus_float_t inv, const char *caller)
 {
   if (!mus_simple_outa_to_file(pos, inv, clm_output_gen))
     mus_safe_out_any_to_file(pos, inv, 0, clm_output_gen);
   return(xen_zero);
 }
+#endif
 
 static Xen out_any_2_to_vct(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
@@ -10237,6 +10242,25 @@ typedef struct vcset_ex {
 
 
 static vcset_ex *vex_free_list = NULL;
+static s7_ex *s7ex_free_list = NULL;
+
+static void s7ex_free(s7_ex *p)
+{
+  p->data = (void *)s7ex_free_list;
+  s7ex_free_list = p;
+}
+
+static s7_ex *s7ex_alloc(void)
+{
+  if (s7ex_free_list)
+    {
+      s7_ex *p;
+      p = s7ex_free_list;
+      s7ex_free_list = (s7_ex *)(p->data);
+      return(p);
+    }
+  return((s7_ex *)malloc(sizeof(s7_ex)));
+}
 
 static void vcset_free(void *p)
 {
@@ -10246,7 +10270,7 @@ static void vcset_free(void *p)
   if (ep->g) gf_free(ep->g);
   ep->next = (struct vcset_ex *)vex_free_list;
   vex_free_list = ep;
-  free(e);
+  s7ex_free(e);
 }
 
 
@@ -10364,7 +10388,7 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
   if (!s7_is_pair(val_arg))
     {
       p = allocate_vcset_ex();
-      e = (s7_ex *)malloc(sizeof(s7_ex));
+      e = s7ex_alloc();
       e->free = vcset_free;
       e->data = p;
       p->v_len = mus_vct_length(v);
@@ -10409,7 +10433,7 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
 		      x2 = s7_cell_real(xp);                        /* x1 and x2 are real */
 
 		      p = allocate_vcset_ex();
-		      e = (s7_ex *)malloc(sizeof(s7_ex));
+		      e = s7ex_alloc();
 		      e->free = vcset_free;
 		      e->data = p;
 		      p->v_len = mus_vct_length(v);
@@ -10430,7 +10454,7 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
   if (gf1)
     {
       p = allocate_vcset_ex();
-      e = (s7_ex *)malloc(sizeof(s7_ex));
+      e = s7ex_alloc();
       e->free = vcset_free;
       e->data = p;
       p->v_len = mus_vct_length(v);
@@ -14736,6 +14760,8 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 }
 
 
+#if (!WITH_GMP)
+
 static s7_Double exfunc(void *p)
 {
   s7_ex *e = (s7_ex *)p;
@@ -14748,7 +14774,7 @@ static void exfree(void *p)
 {
   s7_ex *e = (s7_ex *)p;
   if (e->data) gf_free((gf *)(e->data));
-  free(e);
+  s7ex_free(e);
 }
 
 static s7_ex *find_ex_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
@@ -14760,7 +14786,7 @@ static s7_ex *find_ex_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer loc
   if (g)
     {
       s7_ex *e;
-      e = (s7_ex *)malloc(sizeof(s7_ex));
+      e = s7ex_alloc();
       e->free = exfree;
       e->data = (void *)g;
       e->f = exfunc;
@@ -14769,8 +14795,6 @@ static s7_ex *find_ex_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer loc
   return(NULL);
 }
 
-
-#if (!WITH_GMP)
 
 static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, void (*mover)(mus_any *ptr, mus_long_t loc, mus_float_t uval))
 {
@@ -15691,6 +15715,8 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------------------------------------------------------- */
 
+#if (!WITH_GMP)
+
 typedef struct {
   s7_pointer i_slot, val_slot;
   mus_float_t x1;
@@ -15710,7 +15736,7 @@ static void outa_ex_free(void *p)
   ep = (outa_ex *)(e->data);
   if (ep->g) gf_free(ep->g);
   free(ep);
-  free(e);
+  s7ex_free(e);
 }
 
 
@@ -15789,7 +15815,7 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
   if (!s7_is_pair(val_arg))
     {
       p = (outa_ex *)calloc(1, sizeof(outa_ex));
-      e = (s7_ex *)malloc(sizeof(s7_ex));
+      e = s7ex_alloc();
       e->free = outa_ex_free;
       e->data = p;
       p->i_slot = i_slot;
@@ -15814,7 +15840,7 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
   if (gf1)
     {
       p = (outa_ex *)calloc(1, sizeof(outa_ex));
-      e = (s7_ex *)malloc(sizeof(s7_ex));
+      e = s7ex_alloc();
       e->free = outa_ex_free;
       e->data = p;
       p->i_slot = i_slot;
@@ -15849,9 +15875,6 @@ static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
   return(NULL);
 }
 
-
-
-#if (!WITH_GMP)
 
 static s7_pointer indirect_outa_2_looped;
 static s7_pointer g_indirect_outa_2_looped(s7_scheme *sc, s7_pointer args)
@@ -19886,7 +19909,9 @@ static void init_choosers(s7_scheme *sc)
 {
   s7_pointer f;
 
+#if (!WITH_GMP)
   s7_set_ex_fallback(sc, find_ex_with_locals);
+#endif
 
   abs_symbol = s7_make_symbol(sc, "abs");
   env_symbol = s7_make_symbol(sc, "env");
@@ -20705,7 +20730,9 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "outa");
   s7_function_set_chooser(sc, f, outa_chooser);
+#if (!WITH_GMP)
   s7_function_set_ex_parser(f, outa_ex_parser);
+#endif
   s7_function_set_step_safe(f);
 
   outa_mul_s_delay = clm_make_function_no_choice(sc, "outa", g_outa_mul_s_delay, 2, 0, false, "outa optimization", f);
@@ -20757,7 +20784,9 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "outb");
   s7_function_set_chooser(sc, f, outb_chooser);
+#if (!WITH_GMP)
   s7_function_set_ex_parser(f, outa_ex_parser);
+#endif
 
   outb_mul_s_delay = clm_make_function_no_choice(sc, "outb", g_outb_mul_s_delay, 2, 0, false, "outb optimization", f);
   outb_two = clm_make_function_no_choice(sc, "outb", g_outb_two, 2, 0, false, "outb optimization", f);

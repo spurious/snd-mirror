@@ -710,7 +710,21 @@
 			  (not (pair? (car form)))
 			  (not (vector? (car form)))))
 		 (just-constants? (cdr form) env))))
+
       
+      (define (equal-ignoring-constants? a b)
+	(or (equal? a b)
+	    (and (symbol? a)
+		 (constant? a) 
+		 (morally-equal? (symbol->value a) b))
+	    (and (symbol? b)
+		 (constant? b)
+		 (morally-equal? (symbol->value b) a))
+	    (and (pair? a)
+		 (pair? b)
+		 (equal-ignoring-constants? (car a) (car b))
+		 (equal-ignoring-constants? (cdr a) (cdr b)))))
+
       
       (define (just-symbols? form)
 	(or (null? form)
@@ -1245,7 +1259,7 @@
 				     (and (pair? arg)
 					  (symbol? (car arg))
 					  (not (hash-table-ref globals (car arg)))
-					  (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f)))
+					  (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f integer-or-f)))
 					  (not (assq (car arg) env))))
 				 #f
 				 (if (and (pair? arg)
@@ -1444,20 +1458,25 @@
 		     (just-integers? (cdr form)))))
 	  
 	  (define (simplify-arg x)
-	    (if (or (number? x)
-		    (not (pair? x))
-		    (hash-table-ref globals (car x))
-		    (not (hash-table-ref no-side-effect-functions (car x)))
-		    (assq (car x) env))
+	    (if (number? x)
 		x
-		(let ((f (simplify-numerics x env)))
-		  (if (and (pair? f)
-			   (just-rationals? f))
-		      (catch #t
-			(lambda ()
-			  (eval f))
-			(lambda ignore f))
-		      f))))
+		(if (not (pair? x))
+		    (if (and (symbol? x)
+			     (constant? x))
+			(symbol->value x)
+			x)
+		    (if (or (hash-table-ref globals (car x))
+			    (not (hash-table-ref no-side-effect-functions (car x)))
+			    (assq (car x) env))
+			x
+			(let ((f (simplify-numerics x env)))
+			  (if (and (pair? f)
+				   (just-rationals? f))
+			      (catch #t
+				(lambda ()
+				  (eval f))
+				(lambda ignore f))
+			      f))))))
 	  
 	  (let* ((args (map simplify-arg (cdr form)))
 		 (len (length args)))
@@ -2085,7 +2104,7 @@
 			(let ((call-args (length (cdr form)))
 			      (decl-args (max 0 (- (length pargs) (keywords pargs) (if rst 1 0)))))
 			  
-			  (let ((req (if (memq type '(define lambda)) decl-args 0)) ; this is not right -- built-in define*'s for example
+			  (let ((req (if (memq type '(define lambda)) decl-args 0))
 				(opt (if (memq type '(define lambda)) 0 decl-args)))
 			    (if (< call-args req)
 				(lint-format "~A needs ~D argument~A:~A" 
@@ -2904,6 +2923,12 @@
 				 (lint-walk-body name head (cddr form) (append vars env))
 				 (lint-walk-body name head (cdddr form) (append vars env)))
 			     (report-usage name 'variable head vars)))
+
+		       ;; if while walking the do loop body we see an expression involving
+		       ;;    no-side-effect-function[but not random] + args-not-local-or-step-vars
+		       ;; can that be lifted out of the body?
+
+
 		       env))
 		    
 		    ;; ---------------- let ----------------		  
@@ -3200,7 +3225,7 @@
 					  (hash-table-ref numeric-ops head)
 					  (not (assq head env)))
 				     (let ((val (simplify-numerics form env)))
-				       (if (not (equal? form val))
+				       (if (not (equal-ignoring-constants? form val))
 					   (begin
 					     (set! last-simplify-numeric-line-number line-number)
 					     (lint-format "possible simplification:~A"
@@ -3333,7 +3358,6 @@
 ;;;   or flag vars that are declared at too high a level
 
 ;;; if function arg or local var collides with built-in, warn?
-;;; simplifications currently don't notice pi in many cases (and lots of similar cases)
 
 
 

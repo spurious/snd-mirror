@@ -565,7 +565,28 @@ typedef struct {
   bool saved;
   mus_long_t frames;
   mus_float_t **saved_data;
+  void *next;
 } io_fd;
+
+static io_fd *io_fd_free_list = NULL;
+
+static io_fd *io_fd_alloc(void)
+{
+  if (io_fd_free_list)
+    {
+      io_fd *p;
+      p = io_fd_free_list;
+      io_fd_free_list = (io_fd *)(p->next);
+      return(p);
+    }
+  return((io_fd *)malloc(sizeof(io_fd)));
+}
+
+static void io_fd_free(io_fd *p)
+{
+  p->next = (void *)io_fd_free_list;
+  io_fd_free_list = p;
+}
 
 static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
@@ -593,7 +614,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	}
 
       if (io_fds[tfd] == NULL)
-	io_fds[tfd] = (io_fd *)malloc(sizeof(io_fd));
+	io_fds[tfd] = io_fd_alloc();
 
       if (io_fds[tfd])
 	{
@@ -806,7 +827,7 @@ int mus_file_close(int fd)
 #endif
 
   if (fdp->name) {free(fdp->name); fdp->name = NULL;}
-  free(fdp);
+  io_fd_free(fdp);
   io_fds[fd] = NULL;
 
   if (close_result < 0)

@@ -4539,13 +4539,13 @@ map-with-exit would be
 <pre class="indented">
 (define-macro (catch-case clauses . body)
   (let ((base `(lambda () ,@body)))
-    (map (lambda (clause)
-	   (let ((tag (car clause)))
-	     (set! base `(lambda () 
-			   (catch ',(if (eq? tag 'else) #t tag)
-			     ,base 
-			     ,@(cdr clause))))))
-	 clauses)
+    (for-each (lambda (clause)
+	        (let ((tag (car clause)))
+	          (set! base `(lambda () 
+			        (catch ',(if (eq? tag 'else) #t tag)
+			          ,base 
+			          ,@(cdr clause))))))
+	      clauses)
     (caddr base)))
 
 ;;; the code above becomes:
@@ -5511,8 +5511,6 @@ Better ideas are always welcome!
 <li>*unbound-variable-hook* *load-hook* *error-hook*
 </ul>
 </div>
-
-
 
 
 <div class="indented">

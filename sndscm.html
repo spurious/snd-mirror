@@ -8098,7 +8098,7 @@ If this worked in general, we could use it to speed up our search by following a
   (let ((phases (vector 0.0 0.0 1.0)))
     (do ((x 0.1 (+ x .1)))
 	((&gt;= x 1.0))
-      (let ((p (fpsap x 0 n 1000 0.1 50 #f #t phases)))
+      (let ((p (fpsap x 0 n 1000 0.1 50 #f #t phases))) ; args may change without warning.
 	(format #t ";~A: ~A~%" x p)
 	(do ((k 0 (+ k 1)))
 	    ((= k n))

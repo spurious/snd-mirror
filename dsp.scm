@@ -1358,8 +1358,7 @@ the era when computers were human beings"
 
 (define* (channel-mean snd chn)            ; <f, 1> / n
   "(channel-mean snd chn) returns the average of the samples in the given channel: <f,1>/n"
-  (let ((sum 0.0)
-	(N (frames snd chn))
+  (let ((N (frames snd chn))
 	(reader (make-sampler 0 snd chn))
 	(incr (make-one-pole 1.0 -1.0)))
     (do ((i 0 (+ i 1)))
@@ -1823,7 +1822,6 @@ and replaces it with the spectrum given in coeffs"
 	(startup 40)
 	(len (- (or dur (frames snd chn edpos)) beg)))
     (let ((adder (make-float-vector len))
-	  (divider (make-float-vector len))
 	  (summer (make-float-vector len))
 	  (indata (channel->float-vector beg len snd chn edpos)))
       
