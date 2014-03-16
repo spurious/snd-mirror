@@ -1271,7 +1271,7 @@ static GtkWidget *add_to_toolbar(GtkWidget *bar, const gchar *stock, const char 
   GtkIconTheme *icon_theme; 
   GdkPixbuf *pixbuf; 
   icon_theme = gtk_icon_theme_get_default();
-  pixbuf = gtk_icon_theme_load_icon(icon_theme, stock, 16, 0, NULL); 
+  pixbuf = gtk_icon_theme_load_icon(icon_theme, stock, 16, (GtkIconLookupFlags)0, NULL); 
   pw = gtk_image_new_from_pixbuf(pixbuf);
   gtk_widget_show(pw);
   w = gtk_tool_button_new(pw, NULL);

@@ -3364,7 +3364,13 @@ of 'or' and 'and'.
           (begin ,@body))))
 </pre>
 
-<p>At the top-level, since there's nothing to splice into, you simply get your values back:
+<p>Finally, a macro can return multiple values; these are evaluated and spliced,
+exactly like a normal macro,
+so you can use <code>(values '(define a 1) '(define b 2))</code> to
+splice multiple definitions at the macro invocation point.  
+</p>
+
+<p>At the top-level (in the REPL), since there's nothing to splice into, you simply get your values back:
 </p>
 
 <pre class="indented">

@@ -438,7 +438,7 @@ enum {OP_NO_OP,
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
       OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
       OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
-      OP_EVAL_ARGS_SSP_1, OP_EVAL_ARGS_SSP_MV, 
+      OP_EVAL_ARGS_SSP_1, OP_EVAL_ARGS_SSP_MV, OP_EVAL_MACRO_MV,
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CONS, 
       OP_INCREMENT_SS, OP_INCREMENT_SSS, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP, OP_INCREMENT_SA, OP_INCREMENT_SAA,
       OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_Z_P, OP_LET_O2, OP_LET_O_O, OP_LET_Z_O, OP_LET_O3, 
@@ -625,7 +625,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_C_P_1", "OP_SAFE_C_PP_1", "OP_SAFE_C_PP_2", "OP_SAFE_C_PP_3", "OP_SAFE_C_PP_4", "OP_SAFE_C_PP_5", "OP_SAFE_C_PP_6", 
   "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_1_MV", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_2_MV", 
   "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_3_MV", "OP_EVAL_ARGS_P_4_MV", 
-  "OP_EVAL_ARGS_SSP_1", "OP_EVAL_ARGS_SSP_MV", 
+  "OP_EVAL_ARGS_SSP_1", "OP_EVAL_ARGS_SSP_MV", "OP_EVAL_MACRO_MV",
   "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CONS", 
   "OP_INCREMENT_SS", "OP_INCREMENT_SSS", "OP_INCREMENT_SZ", "OP_INCREMENT_C_TEMP", "OP_INCREMENT_SA", "OP_INCREMENT_SAA",
   "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_Z_P", "OP_LET_O2", "OP_LET_O_O", "OP_LET_Z_O", "OP_LET_O3", 
@@ -38660,7 +38660,9 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	   *   otherwise the multiple-values bit gets set in some innocent list and never unset:
 	   *   :(let ((x '((1 2)))) (eval `(apply apply values x)) x)
            *   ((values 1 2))
-	   * the catch case is much more obscure. I think the begin check handles others like for-each(?).
+	   * other cases: (+ 1 (begin (values 5 6) (values 2 3)) 4) -> 10 -- the (5 6) is dropped
+	   *              (let () (values 1 2 3) 4) but (+ (let () (values 1 2))) -> 3
+	   * what was the catch case??
 	   */
 	  return(args);
 
@@ -62139,7 +62141,34 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * (hi 2)
        * here with value: (+ 2 1)
        */
-      sc->code = sc->value;
+      if (is_multiple_value(sc->value))
+	{
+	  /* a normal macro's result is evaluated (below) and its value replaces the macro invocation,
+	   *   so if a macro returns multiple values, evaluate each one, then replace the macro 
+	   *   invocation with (apply values evaluated-results-in-a-list).  We need to save the
+	   *   new list of results, and where we are in the macro's output list, so code=macro output,
+	   *   args=new list.  If it returns (values), should we use #<unspecified>?  I think that
+	   *   happens now without generating a multiple_value object:
+	   *       (define-macro (hi) (values)) (hi) -> #<unspecified>
+	   *
+	   *   (define-macro (ho) (values '(+ 1 2) '(* 3 4))) (+ 1 (ho) 3) -> 19
+	   *   (define-macro (ha) (values '(define a 1) '(define b 2))) (let () (ha) (+ a b)) -> 3
+	   */
+	  push_stack(sc, OP_EVAL_MACRO_MV, sc->NIL, cdr(sc->value));
+	  sc->code = car(sc->value);
+	}
+      else sc->code = sc->value;
+      goto EVAL;
+
+
+    case OP_EVAL_MACRO_MV:
+      if (is_null(sc->code)) /* end of values list */
+	{
+	  sc->value = splice_in_values(sc, multiple_value(safe_reverse_in_place(sc, cons(sc, sc->value, sc->args))));
+	  goto START;
+	}
+      push_stack(sc, OP_EVAL_MACRO_MV, cons(sc, sc->value, sc->args), cdr(sc->code));
+      sc->code = car(sc->code);
       goto EVAL;
 
 
@@ -69432,5 +69461,25 @@ int main(int argc, char **argv)
  * file->float-vector should accept 2nd and 3rd opt args
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
+ *
+ * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
+ *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
+ *   how to pass this into scheme from c (returns_temp is a kludge)? -- can we make it automatically from xen_assert and c_to_xen_*?
+ *   then (info obj) -> env with as much as we can find?
+ *   #define R_oscil by addition from xen_assert?
+ *   also want to know free vars used/affected and is func val the same if args are the same [side-effects]
+ *   and for catch what errors it might raise
+ *   how to gather this from the xen macros?
+ *
+ * doc (let ((p (open-input-string "hiho")) (c (read-char))) c) in the named let* section?
+ *   but this doesn't work as I expected!! -- #<eof> not #\h, unoh -- this looks like a bug:
+ *   (let* ((p (open-input-string "hiho")) (c (read-char))) c) -> #<eof>
+ *   (let ((p (open-input-string "hiho"))) (let ((c (read-char))) c)) -> #>eof>
+ *   (let ((p (open-input-string "hiho"))) (current-input-port)) -> <input-string-port (closed)>!!
+ *   (let ((p (open-input-file "s7test.scm"))) (current-input-port)) -> same ??
+ *   (let ((p (open-input-file "s7test.scm"))) (list (port-closed? (current-input-port)) (read-char p))) -> (#f #\;)
+ * what is the current-input-port??
+ *   (let ((p (open-output-string)) (c (write-char #\x))) (get-output-string p)) -> ""
+ *   (let* ((p (open-output-string)) (c (write-char #\x p))) (get-output-string p)) -> "x"
  */
 

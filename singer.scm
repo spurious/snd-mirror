@@ -21,6 +21,8 @@
     (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
     (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
+(define-constant two-pi (* 2 pi))
+
 (definstrument (singer beg amp data)
   ;; data is a list of lists very similar to the sequence of synthesize calls in Perry's original implementation.
   ;;    Each imbedded list has the form: dur shape glot pitch glotamp noiseamps vibramt.
@@ -98,7 +100,6 @@
 	    (noselength 6)
 	    (table-size 1000)		; size of glottis wave-table
 	    (dpole 0.998)
-	    (two-pi (* 2 pi))
 	    (bg (seconds->samples beg))
 	    (tong-hump-pole 0.998)
 	    (tong-tip-pole 0.998))

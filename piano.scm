@@ -16,7 +16,7 @@
 (define loop-gain-env-t60 .05)
 (define loop-gain-default .9999)
 (define nstrings 3)
-(define two-pi (* 2 pi))
+(define-constant two-pi (* 2 pi))
 
 ;;keyNum indexed parameter tables
 ;;these should all be &key variable defaults for p instrument

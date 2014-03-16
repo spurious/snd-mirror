@@ -6,7 +6,7 @@
     (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
     (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
-(define two-pi (* 2 pi))
+(define-constant two-pi (* 2 pi))
 
 (definstrument (maraca beg dur (amp .1) 
 		 (sound-decay 0.95) 

@@ -3006,6 +3006,14 @@
 				 (lint-format "let* could be let:~A" 
 					      name 
 					      (truncated-list->string form)))
+
+			     ;; in s7, let evaluates var values top down, so this message is correct
+			     ;;   even in cases like (let ((ind (open-sound...)) (mx (maxamp))) ...)
+			     ;; in r7rs, the order is not specified (section 4.2.2 of the spec), so
+			     ;;   here we would restrict this message to cases where there is only
+			     ;;   one variable, or where subsequent values are known to be independent.
+			     ;; if each function could tell us what globals it depends on or affects,
+			     ;;   we could make this work in all cases.
 			     
 			     (let* ((cur-env (append vars env))
 				    (e (lint-walk-body name head (if named-let (cdddr form) (cddr form)) cur-env))

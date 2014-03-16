@@ -43,7 +43,7 @@
 
 (define open-input make-file->sample)
 
-(define two-pi (* 2 pi))
+(define-constant two-pi (* 2 pi))
 
 (define (simple-out beg dur freq amp)
   "(simple-out beg dur freq amp) test instrument for outa"
