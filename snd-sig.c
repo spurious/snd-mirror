@@ -3706,10 +3706,11 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
       if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  s7_pointer old_e;
+#if (!WITH_GMP)
 	  s7_ex *gf1;
 	  s7_pointer y;
 	  s7_Double *ry;
-
+#endif
 	  res = s7_car(body);
 	  arg = s7_caadar(source);
 
@@ -3776,6 +3777,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      return(res);
 	    }
 	  
+#if (!WITH_GMP)
 	  {
 	    s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
 	    fallback = s7_ex_fallback(s7);
@@ -3815,6 +3817,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      }
 	    s7_set_current_environment(s7, old_e);
 	  }
+#endif
 	}
       /* (let ((rd (make-sampler 0))) (map-channel (lambda (y) (+ (next-sample rd) y)))) */
 

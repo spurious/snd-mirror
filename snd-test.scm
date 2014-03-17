@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [542]
-;;;  test 1: defaults                           [1248]
-;;;  test 2: headers                            [1612]
-;;;  test 3: variables                          [1927]
-;;;  test 4: sndlib                             [2494]
-;;;  test 5: simple overall checks              [4846]
-;;;  test 6: float-vectors                      [9585]
-;;;  test 7: colors                             [9877]
-;;;  test 8: clm                                [10396]
-;;;  test 9: mix                                [22020]
-;;;  test 10: marks                             [23811]
-;;;  test 11: dialogs                           [24759]
-;;;  test 12: extensions                        [24933]
-;;;  test 13: menus, edit lists, hooks, etc     [25199]
-;;;  test 14: all together now                  [26569]
-;;;  test 15: chan-local vars                   [27440]
-;;;  test 16: regularized funcs                 [29193]
-;;;  test 17: dialogs and graphics              [33018]
-;;;  test 18: save and restore                  [33131]
-;;;  test 19: transforms                        [34783]
-;;;  test 20: new stuff                         [36890]
-;;;  test 21: optimizer                         [38091]
-;;;  test 22: with-sound                        [38615]
-;;;  test 23: X/Xt/Xm                           [41567]
-;;;  test 24: GL                                [45249]
-;;;  test 25: errors                            [45373]
-;;;  test 26: s7                                [46903]
-;;;  test all done                              [46969]
-;;;  test the end                               [47180]
+;;;  test 0: constants                          [549]
+;;;  test 1: defaults                           [1255]
+;;;  test 2: headers                            [1619]
+;;;  test 3: variables                          [1934]
+;;;  test 4: sndlib                             [2501]
+;;;  test 5: simple overall checks              [4853]
+;;;  test 6: float-vectors                      [9605]
+;;;  test 7: colors                             [9897]
+;;;  test 8: clm                                [10416]
+;;;  test 9: mix                                [22111]
+;;;  test 10: marks                             [23902]
+;;;  test 11: dialogs                           [24847]
+;;;  test 12: extensions                        [25020]
+;;;  test 13: menus, edit lists, hooks, etc     [25285]
+;;;  test 14: all together now                  [26654]
+;;;  test 15: chan-local vars                   [27525]
+;;;  test 16: regularized funcs                 [29277]
+;;;  test 17: dialogs and graphics              [33082]
+;;;  test 18: save and restore                  [33195]
+;;;  test 19: transforms                        [34847]
+;;;  test 20: new stuff                         [36954]
+;;;  test 21: optimizer                         [38155]
+;;;  test 22: with-sound                        [38679]
+;;;  test 23: X/Xt/Xm                           [41633]
+;;;  test 24: GL                                [45315]
+;;;  test 25: errors                            [45439]
+;;;  test 26: s7                                [46969]
+;;;  test all done                              [47035]
+;;;  test the end                               [47246]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -39964,12 +39964,6 @@ EDITS: 1
 	      (sample-pvoc5 7.25 .2 .1 256 "oboe.snd" 440.0)
 	      )
   
-  (if all-args
-      (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
-	     (mx (mus-sound-maxamp outfile)))
-	(if (fneq (cadr mx) 0.0)
-	    (snd-display #__line__ ";pvoc a-e: ~A" mx))))
-  
   (let* ((file (with-sound (:clipped #f :data-format mus-lfloat :header-type mus-next)
 			   (fm-violin 0 .1 440 pi)))
 	 (ind (find-sound file))
@@ -47081,7 +47075,7 @@ EDITS: 1
 ;; 14-Apr-13: #(1 1 2 2 31  88 4 1 288 1 16 1 2 10 17 1  77 1 1 110 39  73 1  975 0 0 0 1 2 75)  ;  18
 ;; 21-Apr-13: #(1 1 2 2 27  88 4 1 266 1 15 1 2 10 15 1  78 1 1  97 39  69 1  917 0 0 0 1 2 77)  ;  17
 ;; 24-Feb-14: #(1 1 2 1 22  74 2 1 162 2  9 1 3  8  9 2  54 2    70 33  24 2  791     0 0 1 82)  ;  14
-
+;; 15-Mar-14: #(1 2 3 2 25  71 3 2 129 1  8 1 2  8 14 2  45 2    74 32  25 1  781     0 0 2 81)  ;  13
 
 ;;; -------- cleanup temp files
 

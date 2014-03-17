@@ -157,15 +157,15 @@ int main(int argc, char **argv)
 
   s7_eval_c_string(s7, "(define (add1 a) (+ a 1))");
   
-  fprintf(stderr, "an-integer: %d\n", 
+  fprintf(stderr, "an-integer: %lld\n", 
 	  s7_integer(s7_name_to_value(s7, "an-integer")));
 
   s7_symbol_set_value(s7, s7_make_symbol(s7, "an-integer"), s7_make_integer(s7, 32));
 
-  fprintf(stderr, "now an-integer: %d\n", 
+  fprintf(stderr, "now an-integer: %lld\n", 
 	  s7_integer(s7_name_to_value(s7, "an-integer")));
 
-  fprintf(stderr, "(add1 2): %d\n", 
+  fprintf(stderr, "(add1 2): %lld\n", 
 	  s7_integer(s7_call(s7, 
 			     s7_name_to_value(s7, "add1"), 
 			     s7_cons(s7, s7_make_integer(s7, 2), s7_NIL(s7)))));
@@ -219,7 +219,7 @@ int main(int argc, const char* argv[])
 
 /* --------------------------------------------------------------------------------
  *
- * here's an example that loads sndlib using the Xen functions and macros into an s7 repl:
+ * here's an example that loads sndlib using the XEN functions and macros into an s7 repl:
  */
 
 #if EX4
@@ -246,7 +246,7 @@ static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 /* the next functions are needed for either with-sound or many standard instruments, like fm-violin */
 /*   (these are in the xen-style FFI) */
 
-static Xen g_file_exists_p(Xen name)
+static XEN g_file_exists_p(XEN name)
 {
   #define H_file_exists_p "(file-exists? filename): #t if the file exists"
   Xen_check_type(Xen_is_string(name), name, 1, "file-exists?", "a string");
@@ -255,7 +255,7 @@ static Xen g_file_exists_p(Xen name)
 
 Xen_wrap_1_arg(g_file_exists_p_w, g_file_exists_p)
 
-static Xen g_delete_file(Xen name)
+static XEN g_delete_file(XEN name)
 {
   #define H_delete_file "(delete-file filename): deletes the file"
   Xen_check_type(Xen_is_string(name), name, 1, "delete-file", "a string");
@@ -264,7 +264,7 @@ static Xen g_delete_file(Xen name)
 
 Xen_wrap_1_arg(g_delete_file_w, g_delete_file)
 
-static Xen g_random(Xen val)
+static XEN g_random(XEN val)
 {
   if (Xen_is_integer(val))
     return(C_int_to_Xen_integer(mus_irandom(Xen_integer_to_C_int(val))));

@@ -1,6 +1,6 @@
 #!/bin/csh -f
 
-echo ' -------------------------------- without-gui --with-ladspa -------------------------------- '
+echo ' -------------------------------- without-gui -------------------------------- '
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -I/usr/local/include" --without-gui
@@ -28,6 +28,21 @@ gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -ldl -lm
 echo ' '
 echo ' '
 echo ' -------------------------------- that was s7 t456 -------------------------------- '
+echo ' '
+echo ' '
+
+echo ' -------------------------------- without-gui DEBUGGING=1 -------------------------------- '
+rm -f snd
+rm -f config.cache
+./configure --quiet CFLAGS="-Wall -I/usr/local/include -DDEBUGGING" --without-gui --disable-deprecated
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test without-gui debbuging -------------------------------- '
 echo ' '
 echo ' '
 
@@ -260,7 +275,7 @@ echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
-./configure --quiet CFLAGS="-Wall" --with-gtk --without-ladspa --without-audio
+./configure --quiet CFLAGS="-Wall" --with-gtk --with-ladspa --without-audio
 make
 echo ' '
 echo ' '
@@ -268,7 +283,7 @@ echo ' '
 ./snd -l snd-test
 echo ' '
 echo ' '
-echo ' -------------------------------- that was snd-test full gtk -------------------------------- '
+echo ' -------------------------------- that was snd-test full gtk ladspa-------------------------------- '
 echo ' '
 echo ' '
 

@@ -43,7 +43,7 @@
 
 (define open-input make-file->sample)
 
-(define-constant two-pi (* 2 pi))
+(define two-pi (* 2 pi))
 
 (define (simple-out beg dur freq amp)
   "(simple-out beg dur freq amp) test instrument for outa"
@@ -1221,103 +1221,6 @@
     (do ((i start (+ i 1))) ((= i end))
       (outa i (* amp (phase-vocoder sr))))))
 
-(define (pvoc-b beg dur amp size file)
-  "(pvoc-b beg dur amp size file) test instrument for phase-vocoder"
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(sr (make-phase-vocoder (make-readin file) :fft-size size :interp (/ size 4) :overlap 4)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (phase-vocoder sr))))))
-
-#|
-(let ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-b 0 2.3 -1 256 "oboe.snd")))
-      (mx (mus-sound-maxamp outfile)))
-  (if (fneq (cadr mx) 0.0)
-      (format #t ";pvoc a-b: ~A" mx)))
-|#
-
-(define (pvoc-c beg dur amp size file)
-  "(pvoc-c beg dur amp size file) test instrument for phase-vocoder"
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(sr (make-phase-vocoder (make-readin file) :fft-size size :interp (/ size 4) :overlap 4))
-	(N2 (floor (/ size 2))))
-    (let ((amps (phase-vocoder-amps sr))
-	  (paincrs (phase-vocoder-amp-increments sr))
-	  (ppincrs (phase-vocoder-phase-increments sr))
-	  (phases (phase-vocoder-phases sr))
-	  (freqs (phase-vocoder-freqs sr)))
-      (do ((i start (+ i 1))) 
-	  ((= i end))
-	(outa i 
-	      (* amp
-		 (phase-vocoder sr 
-				#f
-			      #f
-			      #f
-			      (lambda (closure)
-				(float-vector-add! amps paincrs)
-				(float-vector-add! ppincrs freqs)
-				(float-vector-add! phases ppincrs)
-				(clm23-sine-bank amps phases N2))
-			      )))))))
-
-#|
-(let ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-c 0 2.3 -1 256 "oboe.snd")))
-      (mx (mus-sound-maxamp outfile)))
-  (if (fneq (cadr mx) 0.0)
-      (format #t ";pvoc a-c: ~A" mx)))
-|#
-
-
-(define (pvoc-d beg dur amp size file)
-  "(pvoc-d beg dur amp size file) test instrument for phase-vocoder"
-  (let ((N2 (floor (/ size 2))))
-    (let ((start (seconds->samples beg))
-	  (end (seconds->samples (+ beg dur)))
-	  (sr (make-phase-vocoder (make-readin file) :fft-size size :interp (/ size 4) :overlap 4))
-	  (lastphases (make-float-vector N2))
-	  (two-pi (* 2 pi)))
-    (let ((amps (phase-vocoder-amps sr))
-	  (paincrs (phase-vocoder-amp-increments sr))
-	  (ppincrs (phase-vocoder-phase-increments sr))
-	  (phases (phase-vocoder-phases sr))
-	  (freqs (phase-vocoder-freqs sr)))
-      (do ((i start (+ i 1))) 
-	  ((= i end))
-	(outa i 
-	      (* amp
-		 (phase-vocoder sr 
-				#f
-				#f
-				(lambda (closure)
-				  (let* ((D (floor (/ size 4))) ; overlap = 4
-					 (pscl (/ 1.0 D))
-					 (kscl (/ two-pi size)))
-				    (do ((k 0 (+ k 1))
-					 (ks 0.0 (+ ks kscl)))
-					((= k N2))
-				      (let* ((freq ((phase-vocoder-freqs sr) k))
-					     (diff (- freq (lastphases k))))
-					(set! (lastphases k) freq)
-					(if (> diff pi) (set! diff (- diff two-pi)))
-					(if (< diff (- pi)) (set! diff (+ diff two-pi)))
-					(set! ((phase-vocoder-freqs sr) k) (+ (* diff  pscl) ks))))
-				    #f))
-				(lambda (closure)
-				  (float-vector-add! amps paincrs)
-				  (float-vector-add! ppincrs freqs)
-				  (float-vector-add! phases ppincrs)
-				  (clm23-sine-bank amps phases N2))
-				))))))))
-
-#|
-(let ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-d 0 2.3 -1 256 "oboe.snd")))
-      (mx (mus-sound-maxamp outfile)))
-  (if (fneq (cadr mx) 0.0)
-      (format #t ";pvoc a-d: ~A" mx)))
-|#
-
 (define (pvoc-e beg dur amp size file)
   "(pvoc-e beg dur amp size file) test instrument for phase-vocoder"
   (let ((N2 (floor (/ size 2)))
@@ -1327,7 +1230,6 @@
 	  (sr (make-phase-vocoder rd :fft-size size :interp (/ size 4) :overlap 4))
 	  (lastphases (make-float-vector N2))
 	  (in-data (make-float-vector size))
-	  (two-pi (* 2 pi))
 	  (filptr 0)
 	  (window (make-fft-window hamming-window size 0.0))
 	  (D (floor (/ size 4)))) ; overlap = 4
@@ -1343,7 +1245,7 @@
 	      (* amp
 		 (phase-vocoder sr 
 				#f
-				
+
 				(lambda (closure input)
 				  (let ((buf (modulo filptr size)))
 				    (clear-array freqs)
@@ -1389,13 +1291,6 @@
 				  (float-vector-add! phases ppincrs)
 				  (clm23-sine-bank amps phases N2))
 				))))))))
-
-#|
-(let ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
-      (mx (mus-sound-maxamp outfile)))
-  (if (fneq (cadr mx) 0.0)
-      (format #t ";pvoc a-e: ~A" mx)))
-|#
 
 (define (or1)
   "(or1) test function for or"

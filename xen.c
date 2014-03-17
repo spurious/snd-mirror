@@ -1408,7 +1408,7 @@ static char **xen_completion(const char *text, int start, int end)
 void xen_repl(int argc, char **argv)
 {
 #if (WITH_READLINE)
-  rl_readline_name = "xen";
+  rl_readline_name = (char *)"xen";
   rl_attempted_completion_function = xen_completion;
   rl_initialize(); /* get the current COLS value */
   if (COLS > 80)

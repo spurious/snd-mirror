@@ -51,7 +51,8 @@
 (define (make-two-zero-1 size) (make-two-zero .9 .4 .1))
 
 (define table-lookup-1 table-lookup)
-(define (make-table-lookup-1 size) (make-table-lookup size :wave (partials->wave '(1 1.0))))
+(define table-lookup-table (partials->wave '(1 1.0)))
+(define (make-table-lookup-1 size) (make-table-lookup size :wave table-lookup-table))
 
 (define formant-1 formant)
 (define (make-formant-1 size) (make-formant size .1))
@@ -111,7 +112,7 @@
 ;;;   hence the extra let below.
 
 (define (vequal v1 v2)
-  (< (/ (float-vector-peak (float-vector-subtract! (copy v1) v2)) (max .001 (float-vector-peak v1))) 1e-6))
+  (< (/ (float-vector-peak (float-vector-subtract! (copy v1) v2)) (max .001 (float-vector-peak v1))) 1e-5))
 
 (define (test-gen gen)
 

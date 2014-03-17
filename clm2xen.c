@@ -17167,7 +17167,7 @@ static void store_gf_fixup(s7_scheme *sc, s7_pointer f, gf *(*fixup)(s7_scheme *
 
 static void init_choices(void)
 {
-  s7_pointer * choices;
+  s7_pointer *choices;
 
 #define SET_GEN_1(Gen) \
   do {\

@@ -1,30 +1,11 @@
-Snd 14.4: 
+Snd 14.5:
 
-Mike Scholz updated sndins.c.
+CLM: Lispworks port thanks to Anders Vinjar.
 
-s7: changed lambda* arg handling slightly to mimic CL.
-    added when and unless (for r7rs; these were macros).
+many internal changes (13 Mbytes in the changelog), 
+  but none visible, I hope.
 
-CLM: Frank Zalkow donated lw-all.lisp.
+checked: gtk 3.11.6|7|8, sbcl-1.1.16
 
-checked: gtk 3.11.4|5, sbcl 1.1.15.
-
-Thanks!: Rick, Mike, Frank Zalkow, James Hearon.
-
-
-Just a progress report, some timings:
-
-  version     12.x  13.0  14.4
-
-  snd-test     359   275  39.7  (no gui)
-  s7test      1721  1358   974  (hard to optimize)
-  make-index 44300  3291  1382  (hooray for char-position)
-  t455|6       265    89   5.2  (the s7.html torture tester)
-  t502          90    43  13.6  (pure clm)
-  bench      42736  8752  3447  (the standard Gabriel tests)
-  lat          229    63  30.4  (old-style academistry)
-
-These are callgrind numbers.  Currently if you're running the 
-gtk Snd, nearly all the time is going to gtk and cairo.
-
+Thanks!: Rick, Anders, Tito Latini.
 

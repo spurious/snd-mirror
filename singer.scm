@@ -21,7 +21,7 @@
     (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
     (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
-(define-constant two-pi (* 2 pi))
+(define two-pi (* 2 pi))
 
 (definstrument (singer beg amp data)
   ;; data is a list of lists very similar to the sequence of synthesize calls in Perry's original implementation.

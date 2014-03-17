@@ -4601,7 +4601,7 @@ mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mu
     }
   else 
     {
-      gen->line = (mus_float_t *)calloc(line_size, sizeof(mus_float_t));
+      gen->line = (mus_float_t *)calloc((line_size <= 0) ? 1 : line_size, sizeof(mus_float_t));
       gen->line_allocated = true;
     }
   gen->zloc = line_size - size;

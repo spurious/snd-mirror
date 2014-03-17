@@ -6524,15 +6524,15 @@ int main(int argc, char **argv)
   s7_define_variable(s7, "an-integer", s7_make_integer(s7, 1));
   s7_eval_c_string(s7, "(define (add1 a) (+ a 1))");
   
-  fprintf(stderr, "an-integer: %d\n", 
+  fprintf(stderr, "an-integer: %lld\n", 
 	  s7_integer(<em class=red>s7_name_to_value</em>(s7, "an-integer")));
 
   <em class=red>s7_symbol_set_value</em>(s7, <em class=red>s7_make_symbol</em>(s7, "an-integer"), s7_make_integer(s7, 32));
 
-  fprintf(stderr, "now an-integer: %d\n", 
+  fprintf(stderr, "now an-integer: %lld\n", 
 	  s7_integer(<em class=red>s7_name_to_value</em>(s7, "an-integer")));
 
-  fprintf(stderr, "(add1 2): %d\n", 
+  fprintf(stderr, "(add1 2): %lld\n", 
 	  s7_integer(<em class=red>s7_call</em>(s7, 
 			     s7_name_to_value(s7, "add1"), 
 			     s7_cons(s7, s7_make_integer(s7, 2), s7_nil(s7)))));

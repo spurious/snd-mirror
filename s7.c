@@ -540,7 +540,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "c_p_1", "c_pp_1", "c_pp_2", "c_pp_3", "c_pp_4", "c_pp_5", "c_pp_6", 
    "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
    "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
-   "eval_args_ssp_1", "eval_args_ssp_mv", 
+   "eval_args_ssp_1", "eval_args_ssp_mv", "eval_macro_mv",
    "increment_1", "decrement_1", "set_cons", 
    "increment_ss", "increment_sss", "increment_sz", "increment_c_temp", "increment_sa", "increment_saa",
    "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", 
@@ -25071,7 +25071,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	len = safe_strlen(excl_name) + 
           safe_strlen(current_bits) + safe_strlen(allocated_bits) + safe_strlen(previous_bits) + 
           safe_strlen(obj->previous_alloc_func) + safe_strlen(obj->current_alloc_func) + 512;
-	str = (char *)malloc(len, sizeof(char));
+	str = (char *)malloc(len * sizeof(char));
 	
 	nlen = snprintf(str, len, 
 			"\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), last gc: %s[%d], %s[%d]>", 
@@ -69462,6 +69462,9 @@ int main(int argc, char **argv)
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
  *
+ * type pun choice problem in clm2xen via struct
+ * add pvoc func tests
+ *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
  *   how to pass this into scheme from c (returns_temp is a kludge)? -- can we make it automatically from xen_assert and c_to_xen_*?
@@ -69469,17 +69472,7 @@ int main(int argc, char **argv)
  *   #define R_oscil by addition from xen_assert?
  *   also want to know free vars used/affected and is func val the same if args are the same [side-effects]
  *   and for catch what errors it might raise
- *   how to gather this from the xen macros?
- *
- * doc (let ((p (open-input-string "hiho")) (c (read-char))) c) in the named let* section?
- *   but this doesn't work as I expected!! -- #<eof> not #\h, unoh -- this looks like a bug:
- *   (let* ((p (open-input-string "hiho")) (c (read-char))) c) -> #<eof>
- *   (let ((p (open-input-string "hiho"))) (let ((c (read-char))) c)) -> #>eof>
- *   (let ((p (open-input-string "hiho"))) (current-input-port)) -> <input-string-port (closed)>!!
- *   (let ((p (open-input-file "s7test.scm"))) (current-input-port)) -> same ??
- *   (let ((p (open-input-file "s7test.scm"))) (list (port-closed? (current-input-port)) (read-char p))) -> (#f #\;)
- * what is the current-input-port??
- *   (let ((p (open-output-string)) (c (write-char #\x))) (get-output-string p)) -> ""
- *   (let* ((p (open-output-string)) (c (write-char #\x p))) (get-output-string p)) -> "x"
+ *     frames: (integer? define ( ...) (selected-sound selected-channel)??)
+ *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  */
 
