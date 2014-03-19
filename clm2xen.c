@@ -97,11 +97,39 @@ struct mus_xen {
   mus_any *gen;
   int nvcts;
   Xen *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
+  struct mus_xen *next;
 #if HAVE_SCHEME
   int type; /* currently only oscil/formant type checks */
   gf *g;
 #endif
 };
+
+
+static mus_xen *mx_free_list = NULL;
+
+static mus_xen *mx_alloc(void)
+{
+  if (mx_free_list)
+    {
+      mus_xen *p;
+      p = mx_free_list;
+      mx_free_list = p->next;
+      /* memset((void *)p, 0, sizeof(mus_xen)); */
+#if HAVE_SCHEME
+      p->g = NULL;
+#endif
+      return(p);
+    }
+  return((mus_xen *)calloc(1, sizeof(mus_xen)));
+}
+
+
+static void mx_free(mus_xen *p)
+{
+  p->next = mx_free_list;
+  mx_free_list = p;
+}
+
 
 #define FORMANT_TAG 1
 #define FRAME_TAG 2
@@ -145,7 +173,6 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 
 #define MAX_ARGLIST_LEN 24
 /* try to accommodate &other-keys essentially */
-
 
 static int local_error_type = MUS_NO_ERROR;
 static char *local_error_msg = NULL;
@@ -1285,7 +1312,7 @@ static void mus_xen_free(mus_xen *ms)
 #if HAVE_SCHEME
   if (ms->g) {gf_free(ms->g); ms->g = NULL;}
 #endif
-  free(ms);
+  mx_free(ms);
 }
 
 Xen_wrap_free(mus_xen, free_mus_xen, mus_xen_free)
@@ -1511,7 +1538,7 @@ static Xen mus_optkey_to_input_procedure(Xen key, const char *caller, int n, Xen
 mus_xen *mus_any_to_mus_xen(mus_any *ge)
 {
   mus_xen *gn;
-  gn = (mus_xen *)malloc(sizeof(mus_xen));
+  gn = mx_alloc();
   gn->gen = ge;
   gn->nvcts = 0;
   gn->vcts = NULL;
@@ -1525,7 +1552,7 @@ mus_xen *mus_any_to_mus_xen(mus_any *ge)
 mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, Xen v)
 {
   mus_xen *gn;
-  gn = (mus_xen *)malloc(sizeof(mus_xen));
+  gn = mx_alloc();
   gn->gen = ge;
   gn->nvcts = 1;
   gn->vcts = make_vcts(gn->nvcts);
@@ -1540,7 +1567,7 @@ mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, Xen v)
 mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, Xen v1, Xen v2)
 {
   mus_xen *gn;
-  gn = (mus_xen *)malloc(sizeof(mus_xen));
+  gn = mx_alloc();
   gn->gen = ge;
   gn->nvcts = 2;
   gn->vcts = make_vcts(gn->nvcts);
@@ -2461,7 +2488,7 @@ static Xen g_make_oscil_bank(Xen freqs, Xen phases, Xen amps)
   
   ge = mus_make_oscil_bank(mus_vct_length(f), mus_vct_data(f), mus_vct_data(p), (a) ? mus_vct_data(a) : NULL);
 
-  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+  gn = mx_alloc();
   gn->gen = ge;
   gn->nvcts = 3;
   gn->vcts = make_vcts(gn->nvcts);
@@ -2542,12 +2569,15 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
   interp_type_key = argn;      keys[argn++] = kw_type;
   filter_key = argn;           keys[argn++] = kw_filter;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(caller, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(caller, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
   vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
 
   if (vals > 0)
@@ -3399,12 +3429,15 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
   keys[3] = kw_distribution;
   keys[4] = kw_size;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(caller, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(caller, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(caller, 5, keys, args, orig_arg);
   if (vals > 0)
@@ -3780,12 +3813,15 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   keys[3] = kw_size;
   keys[4] = kw_type;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_table_lookup, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_table_lookup, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_table_lookup, 5, keys, args, orig_arg);
   if (vals > 0)
@@ -5466,12 +5502,15 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   keys[3] = kw_size;
   keys[4] = kw_type;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_wave_train, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_wave_train, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_wave_train, 5, keys, args, orig_arg);
   if (vals > 0)
@@ -6001,12 +6040,15 @@ is the same in effect as " S_make_oscil
   keys[3] = kw_partials;
   keys[4] = kw_kind;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_polyshape, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_polyshape, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_polyshape, 5, keys, args, orig_arg);
   if (vals > 0)
@@ -6124,12 +6166,15 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
   keys[3] = kw_x_coeffs;
   keys[4] = kw_y_coeffs;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_polywave, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_polywave, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_polywave, 5, keys, args, orig_arg);
   if (vals > 0)
@@ -6278,12 +6323,15 @@ static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
   keys[2] = kw_n;
   keys[3] = kw_r;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(caller, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(caller, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(caller, 4, keys, args, orig_arg);
   if (vals > 0)
@@ -6390,12 +6438,15 @@ static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
   keys[1] = kw_ratio;
   keys[2] = kw_r;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(caller, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(caller, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(caller, 3, keys, args, orig_arg);
   if (vals > 0)
@@ -6644,7 +6695,7 @@ static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen 
     }
   if (fgen)
     {
-      gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+      gn = mx_alloc();
       gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
       gn->nvcts = 3;
       gn->vcts = make_vcts(gn->nvcts);
@@ -6728,12 +6779,15 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   keys[5] = kw_end;
   keys[6] = kw_length;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_env, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_env, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_env, 7, keys, args, orig_arg);
   if (vals > 0)
@@ -7917,12 +7971,15 @@ return a new readin (file input) generator reading the sound file 'file' startin
   buffer_size = mus_file_buffer_size();
   /* this is only 8192! (clm.h MUS_DEFAULT_FILE_BUFFER_SIZE) */
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_readin, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_readin, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_readin, 5, keys, args, orig_arg);
   if (vals > 0)
@@ -8174,12 +8231,15 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   keys[5] = kw_channels;
   keys[6] = kw_type;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_locsig, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_locsig, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_locsig, 7, keys, args, orig_arg);
   if (vals > 0)
@@ -8274,7 +8334,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 
   if (ge)
     {
-      gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+      gn = mx_alloc();
 
       if (((Xen_is_bound(ov)) && (!Xen_is_false(ov))) || 
 	  ((Xen_is_bound(rv)) && (!Xen_is_false(rv))))
@@ -8515,7 +8575,7 @@ static Xen g_make_move_sound(Xen dloc_list, Xen outp, Xen revp)
 			   true, false);                  /* free outer arrays but not gens */
   if (ge)
     {
-      gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+      gn = mx_alloc();
       if (((Xen_is_bound(ov)) && (!Xen_is_false(ov))) || 
 	  ((Xen_is_bound(rv)) && (!Xen_is_false(rv))))
 	gn->nvcts = 4;
@@ -8830,7 +8890,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 	Xen_out_of_range_error(S_make_src, orig_arg[2], keys[2], "width > 2000?");
     }
 
-  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+  gn = mx_alloc();
   /* mus_make_src assumes it can invoke the input function! */
   gn->nvcts = MUS_MAX_VCTS;
   gn->vcts = make_vcts(gn->nvcts);
@@ -8957,12 +9017,15 @@ The edit function, if any, should return the length in samples of the grain, or 
   keys[7] = kw_max_size;
   keys[8] = kw_edit;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_granulate, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_granulate, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_granulate, 9, keys, args, orig_arg);
   if (vals > 0)
@@ -9005,7 +9068,7 @@ The edit function, if any, should return the length in samples of the grain, or 
       edit_obj = mus_optkey_to_procedure(keys[8], S_make_granulate, orig_arg[8], Xen_undefined, 1, "granulate edit procedure takes 1 arg");
     }
 
-  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+  gn = mx_alloc();
   gn->nvcts = MUS_MAX_VCTS;
   gn->vcts = make_vcts(gn->nvcts);
 
@@ -9089,12 +9152,15 @@ return a new convolution generator which convolves its input with the impulse re
   keys[1] = kw_filter;
   keys[2] = kw_fft_size;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_convolve, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_convolve, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_convolve, 3, keys, args, orig_arg);
   if (vals > 0)
@@ -9120,7 +9186,7 @@ return a new convolution generator which convolves its input with the impulse re
   else fftlen = (mus_long_t)pow(2.0, 1 + (int)(log((mus_float_t)(mus_vct_length(filter) + 1)) / log(2.0)));
   if (fft_size < fftlen) fft_size = fftlen;
 
-  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+  gn = mx_alloc();
   gn->nvcts = MUS_MAX_VCTS;
   gn->vcts = make_vcts(gn->nvcts);
 
@@ -9336,12 +9402,15 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   keys[6] = kw_edit;
   keys[7] = kw_synthesize;
 
-  arglist_len = Xen_list_length(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    clm_error(S_make_phase_vocoder, "too many args!", arglist);
+  {
+    Xen p;
+    arglist_len = Xen_list_length(arglist);
+    if (arglist_len > MAX_ARGLIST_LEN)
+      clm_error(S_make_phase_vocoder, "too many args!", arglist);
 
-  for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+  }
 
   vals = mus_optkey_unscramble(S_make_phase_vocoder, 8, keys, args, orig_arg);
   if (vals > 0)
@@ -9371,7 +9440,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
       synthesize_obj = mus_optkey_to_procedure(keys[7], S_make_phase_vocoder, orig_arg[7], Xen_undefined, 1, S_phase_vocoder " synthesize procedure takes 1 arg");
     }
 
-  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+  gn = mx_alloc();
   gn->nvcts = MUS_MAX_VCTS;
   gn->vcts = make_vcts(gn->nvcts);
 
@@ -12275,22 +12344,16 @@ static s7_pointer g_indirect_move_sound_3(s7_scheme *sc, s7_pointer args)
 
 /* ---------------------------------------- */
 
-#define MUL_C_GEN 0
-#define MUL_S_GEN 1
-#define ENV_GEN 2
+typedef struct {
+  s7_pointer mul_c_gen, mul_c_gen_1, mul_s_gen, mul_s_gen_1, env_gen, env_gen_1;
 
-#define MUL_C_GEN_1 3
-#define MUL_S_GEN_1 4
-#define ENV_GEN_1 5
+  mus_float_t (*gen_direct_1)(mus_xen *p);
+  mus_float_t (*gen_direct_2)(mus_xen *p, mus_float_t f1);
+  mus_float_t (*gen_direct_3)(mus_xen *p, mus_float_t f1, mus_float_t f2);
+  bool (*gen_direct_checker)(s7_pointer obj);
 
-#define GEN_DIRECT_1 6
-#define GEN_DIRECT_2 7
-#define GEN_DIRECT_3 8
-#define GEN_DIRECT_CHECKER 9
-#define GEN_DIRECT_FIXUP 10
-
-#define NUM_CHOICES 11
-
+  gf *(*gen_direct_fixup)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
+} gen_choices;
 
 #define s7_cell_s1_to_real(g) s7_number_to_real((s7_scheme *)(g->gen1), s7_cell_slot_value(g->s1))
 #define s7_cell_s2_to_real(g) s7_number_to_real((s7_scheme *)(g->gen1), s7_cell_slot_value(g->s2))
@@ -14129,7 +14192,7 @@ bool mus_env_is_constant(mus_any *ptr);
 
 static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  s7_pointer *choices;
+  gen_choices *choices;
   s7_pointer op;
 
   /* fprintf(stderr, "%d: %s %s\n", __LINE__, DISPLAY(expr), DISPLAY(locals)); */
@@ -14149,8 +14212,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
     }
 
   op = s7_car_value(sc, expr);
-  choices = (s7_pointer *)s7_function_chooser_data_direct(op);
-
+  choices = (gen_choices *)s7_function_chooser_data_direct(op);
   if (choices)
     {
       int len;
@@ -14163,14 +14225,14 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 
       /* check for special case handlers */
 
-      fixup_gf = (gf* (*)(s7_scheme *sc, s7_pointer p, s7_pointer locals))(choices[GEN_DIRECT_FIXUP]);
+      fixup_gf = choices->gen_direct_fixup;
       if (fixup_gf)
 	{
 	  p = fixup_gf(sc, expr, locals); /* special gf cases like fixup_abs */
 	  if (!p) return_null(expr);
 	  return(p);
 	}
-      is_gen = (bool (*)(s7_pointer p))choices[GEN_DIRECT_CHECKER];
+      is_gen = choices->gen_direct_checker;
       if (!is_gen) return_null(expr);
 
       obj = cadr(expr);
@@ -14210,20 +14272,20 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
       /* -------- (oscil osc) -------- */
       if (len == 2)
 	{
-	  mus_float_t (*gen1)(void *p);
+	  mus_float_t (*gen1)(mus_xen *p);
 
-	  gen1 = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+	  gen1 = choices->gen_direct_1;
 	  if (!gen1) return_null(expr);
 
 	  p = gf_alloc();            /* (gen g) */
-	  p->func_1 = gen1;
+	  p->func_1 = (mus_float_t (*)(void *p))gen1;
 	  if (its_gf)
 	    {
 	      p->func = gf_1;
 	      if (s7_is_object(obj))
 		p->gen = s7_object_value(obj);
 	      else p->gen = (void *)obj;
-	      if (gen1 == (mus_float_t (*)(void *p))wrapped_env_1)
+	      if (gen1 == (mus_float_t (*)(mus_xen *p))wrapped_env_1)
 		{
 		  p->gen = ((mus_xen *)(p->gen))->gen;
 		  if (mus_env_is_constant((mus_any *)(p->gen)))
@@ -14238,7 +14300,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 		    }
 		  p->func_1 = NULL;
 		}
-	      if (gen1 == (mus_float_t (*)(void *p))wrapped_oscil_1)
+	      if (gen1 == (mus_float_t (*)(mus_xen *p))wrapped_oscil_1)
 		{
 		  p->gen = ((mus_xen *)(p->gen))->gen;
 #if HAVE_SINCOS
@@ -14265,7 +14327,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 		  p->func_1 = NULL;
 		}
 #if HAVE_SINCOS
-	      if (gen1 == (mus_float_t (*)(void *p))wrapped_polywave_1)
+	      if (gen1 == (mus_float_t (*)(mus_xen *p))wrapped_polywave_1)
 		{
 		  mus_any *pw;
 		  pw = ((mus_xen *)(p->gen))->gen;
@@ -14329,14 +14391,14 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
       /* -------- (oscil osc fm) -------- */
       if (len == 3)
 	{
-	  mus_float_t (*gen2)(void *p, mus_float_t x);
+	  mus_float_t (*gen2)(mus_xen *p, mus_float_t x);
 	  int typ;
 	  double x;
 	  double *rx;
 	  s7_pointer s;
 	  gf *g1 = NULL;
 
-	  gen2 = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
+	  gen2 = choices->gen_direct_2;
 	  if (!gen2) 
 	    {
 	      mus_xen *gn;
@@ -14374,7 +14436,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	    }
 
 	  p = gf_alloc();
-	  p->func_2 = gen2;
+	  p->func_2 = (mus_float_t (*)(void *p, mus_float_t))gen2;
 	  if (its_gf)
 	    {
 	      if (s7_is_object(obj))
@@ -14394,7 +14456,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	      p->func = (its_gf) ? gf_2_x1 : vf_2_x1;                     /* (gen g s|c) */
 	      p->x1 = x;
 #if HAVE_SINCOS
-	      if (gen2 == (mus_float_t (*)(void *p, mus_float_t x))wrapped_oscil_2)
+	      if (gen2 == (mus_float_t (*)(mus_xen *p, mus_float_t x))wrapped_oscil_2)
 		{
 		  mus_any *o;
 		  /* x is just a frequency change here, not FM, so if gen_is_ok, use gen_unmod_oscil with a different freq (freq+x),
@@ -14460,9 +14522,9 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	  double *rx1, *rx2;
 	  int typ1 = GF_G, typ2 = GF_G;
 	  s7_pointer s1, s2, arg1, arg2;
-	  mus_float_t (*gen3)(void *p, mus_float_t x, mus_float_t y);
+	  mus_float_t (*gen3)(mus_xen *p, mus_float_t x, mus_float_t y);
 
-	  gen3 = (mus_float_t (*)(void *p, mus_float_t x, mus_float_t y))(choices[GEN_DIRECT_3]);
+	  gen3 = choices->gen_direct_3;
 	  if (!gen3) 
 	    {
 	      mus_any *grn;
@@ -14537,7 +14599,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	  p = gf_alloc();
 	  if (its_gf)
 	    {
-	      p->func_3 = gen3;
+	      p->func_3 = (mus_float_t (*)(void *p, mus_float_t, mus_float_t))gen3;
 	      if (s7_is_object(obj))
 		p->gen = s7_object_value(obj);
 	      else p->gen = (void *)obj;
@@ -17098,82 +17160,96 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
 #endif
 /* !WITH_GMP */
 
-static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e, s7_pointer mul_c1, s7_pointer mul_s1, s7_pointer e1)
+
+static gen_choices *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e, s7_pointer mul_c1, s7_pointer mul_s1, s7_pointer e1)
 {
-  s7_pointer *choices;
-  choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
-  choices[MUL_C_GEN] = mul_c;
-  choices[MUL_S_GEN] = mul_s;
-  choices[ENV_GEN] = e;
-  choices[MUL_C_GEN_1] = mul_c1;
-  choices[MUL_S_GEN_1] = mul_s1;
-  choices[ENV_GEN_1] = e1;
+  gen_choices *choices;
+  choices = (gen_choices *)calloc(1, sizeof(gen_choices));
+  choices->mul_c_gen = mul_c;
+  choices->mul_s_gen = mul_s;
+  choices->env_gen = e;
+  choices->mul_c_gen_1 = mul_c1;
+  choices->mul_s_gen_1 = mul_s1;
+  choices->env_gen_1 = e1;
   return(choices);
 }
 
-void store_choices(s7_scheme *sc, s7_pointer base_f, s7_pointer g1, s7_pointer g2, s7_pointer g3, s7_pointer isg)
+void store_choices(s7_scheme *sc, 
+		   s7_pointer base_f, 
+		   mus_float_t (*g1)(mus_xen *p),
+		   mus_float_t (*g2)(mus_xen *p, mus_float_t f1),
+		   mus_float_t (*g3)(mus_xen *p, mus_float_t f1, mus_float_t f2),
+		   bool (*isg)(s7_pointer obj))
 {
-  s7_pointer *choices;
-  choices = (s7_pointer *)s7_function_chooser_data(sc, base_f);
+  gen_choices *choices;
+  choices = (gen_choices *)s7_function_chooser_data(sc, base_f);
   if (!choices)
     {
-      choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
+      choices = (gen_choices *)calloc(1, sizeof(gen_choices));
       s7_function_chooser_set_data(sc, base_f, (void *)choices);
     }
-  choices[GEN_DIRECT_1] = g1;
-  choices[GEN_DIRECT_2] = g2;
-  choices[GEN_DIRECT_3] = g3;
-  choices[GEN_DIRECT_CHECKER] = isg;
+  choices->gen_direct_1 = g1;
+  choices->gen_direct_2 = g2;
+  choices->gen_direct_3 = g3;
+  choices->gen_direct_checker = isg;
 }
 
-static void direct_choice_1(s7_scheme *sc, s7_pointer f, s7_pointer g1, s7_pointer isg)
+static void direct_choice_1(s7_scheme *sc, 
+			    s7_pointer f, 
+			    mus_float_t (*g1)(mus_xen *p),
+			    bool (*isg)(s7_pointer obj))
 {
-  s7_pointer *choices;
-  choices = (s7_pointer *)s7_function_chooser_data(sc, f);
+  gen_choices *choices;
+  choices = (gen_choices *)s7_function_chooser_data(sc, f);
   if (!choices)
     {
-      choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
+      choices = (gen_choices *)calloc(1, sizeof(gen_choices));
       s7_function_chooser_set_data(sc, f, (void *)choices);
     }
-  choices[GEN_DIRECT_1] = g1;
-  choices[GEN_DIRECT_CHECKER] = isg;
+  choices->gen_direct_1 = g1;
+  choices->gen_direct_checker = isg;
 }
 
-static void direct_choice_2(s7_scheme *sc, s7_pointer f, s7_pointer g2, s7_pointer isg)
+static void direct_choice_2(s7_scheme *sc, 
+			    s7_pointer f, 
+			    mus_float_t (*g2)(mus_xen *p, mus_float_t f1),
+			    bool (*isg)(s7_pointer obj))
 {
-  s7_pointer *choices;
-  choices = (s7_pointer *)s7_function_chooser_data(sc, f);
+  gen_choices *choices;
+  choices = (gen_choices *)s7_function_chooser_data(sc, f);
   if (!choices)
     {
-      choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
+      choices = (gen_choices *)calloc(1, sizeof(gen_choices));
       s7_function_chooser_set_data(sc, f, (void *)choices);
     }
-  choices[GEN_DIRECT_2] = g2;
-  choices[GEN_DIRECT_CHECKER] = isg;
+  choices->gen_direct_2 = g2;
+  choices->gen_direct_checker = isg;
 }
 
-static void store_gf_fixup(s7_scheme *sc, s7_pointer f, gf *(*fixup)(s7_scheme *sc, s7_pointer expr, s7_pointer locals))
+static void store_gf_fixup(s7_scheme *sc, 
+			   s7_pointer f,
+			   gf *(*fixup)(s7_scheme *sc, s7_pointer expr, s7_pointer locals))
 {
-  s7_pointer *choices;
-  choices = (s7_pointer *)s7_function_chooser_data(sc, f);
+  gen_choices *choices;
+  choices = (gen_choices *)s7_function_chooser_data(sc, f);
   if (!choices)
     {
-      choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
+      choices = (gen_choices *)calloc(1, sizeof(gen_choices));
       s7_function_chooser_set_data(sc, f, (void *)choices);
     }
-  choices[GEN_DIRECT_FIXUP] = (s7_pointer)fixup;
+  choices->gen_direct_fixup = fixup;
 }
 
 
 static void init_choices(void)
 {
-  s7_pointer *choices;
+  gen_choices *choices;
 
 #define SET_GEN_1(Gen) \
   do {\
-    choices = (s7_pointer *)s7_function_chooser_data_direct(Gen ## _1); \
-    choices[GEN_DIRECT_1] = (s7_pointer)wrapped_ ## Gen ## _1; \
-    choices[GEN_DIRECT_CHECKER] = (s7_pointer)wrapped_ ## Gen ## _p; \
+    choices = (gen_choices *)s7_function_chooser_data_direct(Gen ## _1); \
+    choices->gen_direct_1 = wrapped_ ## Gen ## _1; \
+    choices->gen_direct_checker = wrapped_ ## Gen ## _p; \
   } while (0)
 
   SET_GEN_1(oscil);
@@ -17203,9 +17279,9 @@ static void init_choices(void)
 
 #define SET_GEN_2(Gen) \
   do {\
-    choices = (s7_pointer *)s7_function_chooser_data_direct(Gen ## _2); \
-    choices[GEN_DIRECT_2] = (s7_pointer)wrapped_ ## Gen ## _2; \
-    choices[GEN_DIRECT_CHECKER] = (s7_pointer)wrapped_ ## Gen ## _p; \
+    choices = (gen_choices *)s7_function_chooser_data_direct(Gen ## _2); \
+    choices->gen_direct_2 = wrapped_ ## Gen ## _2; \
+    choices->gen_direct_checker = wrapped_ ## Gen ## _p; \
   } while(0)
 
   SET_GEN_2(polywave);
@@ -17926,22 +18002,22 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	    {
 	      /* (* num (gen...))
 	       */
-	      s7_pointer *choices;
-	      choices = (s7_pointer *)s7_function_chooser_data(sc, arg2);
+	      gen_choices *choices;
+	      choices = (gen_choices *)s7_function_chooser_data(sc, arg2);
 	      if (choices)
 		{
-		  if (choices[MUL_C_GEN])
+		  if (choices->mul_c_gen)
 		    {
 		      s7_function_choice_set_direct(sc, expr);
 		      /* fprintf(stderr, "mul_c_gen\n"); */
-		      return(choices[MUL_C_GEN]);
+		      return(choices->mul_c_gen);
 		    }
 		  
-		  if (choices[MUL_C_GEN_1])
+		  if (choices->mul_c_gen_1)
 		    {
 		      s7_function_choice_set_direct(sc, expr);
 		      /* fprintf(stderr, "mul_c_gen_1\n"); */
-		      return(choices[MUL_C_GEN_1]);
+		      return(choices->mul_c_gen_1);
 		    }
 
 		  if (s7_function_choice_is_direct_to_real(sc, arg2))
@@ -17962,21 +18038,21 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  (s7_is_pair(cddr(expr))) &&          /* (* + '(vector?)) -- this is the optimizer's fault */
 	  (s7_is_pair(caddr(expr))))
 	{
-	  s7_pointer *choices;
-	  choices = (s7_pointer *)s7_function_chooser_data(sc, caddr(expr));
+	  gen_choices *choices;
+	  choices = (gen_choices *)s7_function_chooser_data(sc, caddr(expr));
 	  if (choices)
 	    {
-	      if (choices[MUL_S_GEN])
+	      if (choices->mul_s_gen)
 		{
 		  s7_function_choice_set_direct(sc, expr);
 		  /* fprintf(stderr, "mul_s_gen\n"); */
-		  return(choices[MUL_S_GEN]);
+		  return(choices->mul_s_gen);
 		}
-	      if (choices[MUL_S_GEN_1])
+	      if (choices->mul_s_gen_1)
 		{
 		  s7_function_choice_set_direct(sc, expr);
 		  /* fprintf(stderr, "mul_s_gen_1\n"); */
-		  return(choices[MUL_S_GEN_1]);
+		  return(choices->mul_s_gen_1);
 		}
 	    }
 	}
@@ -17985,21 +18061,21 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	{
 	  if (caadr(expr) == env_symbol)
 	    {
-	      s7_pointer *choices;
-	      choices = (s7_pointer *)s7_function_chooser_data(sc, caddr(expr));
+	      gen_choices *choices;
+	      choices = (gen_choices *)s7_function_chooser_data(sc, caddr(expr));
 	      if (choices)
 		{
-		  if (choices[ENV_GEN])
+		  if (choices->env_gen)
 		    {
 		      /* fprintf(stderr, "env_gen\n"); */
 		      s7_function_choice_set_direct(sc, expr);
-		      return(choices[ENV_GEN]);
+		      return(choices->env_gen);
 		    }
-		  if (choices[ENV_GEN_1])
+		  if (choices->env_gen_1)
 		    {
 		      /* fprintf(stderr, "env_gen_1\n"); */
 		      s7_function_choice_set_direct(sc, expr);
-		      return(choices[ENV_GEN_1]);
+		      return(choices->env_gen_1);
 		    }
 		}
 	      if (s7_function_choice_is_direct_to_real(sc, caddr(expr)))
@@ -19871,7 +19947,12 @@ static s7_pointer frame_to_file_chooser(s7_scheme *sc, s7_pointer f, int args, s
 static s7_pointer clm_make_temp_function(s7_scheme *sc, const char *name, s7_function f, 
 					 int required_args, int optional_args, bool rest_arg, const char *doc,
 					 s7_pointer base_f,
-					 s7_pointer mul_c, s7_pointer mul_s, s7_pointer e, s7_pointer mul_c1, s7_pointer mul_s1, s7_pointer e1)
+					 s7_pointer mul_c, 
+					 s7_pointer mul_s, 
+					 s7_pointer e, 
+					 s7_pointer mul_c1,
+					 s7_pointer mul_s1, 
+					 s7_pointer e1)
 {		
   s7_pointer fin;
   fin = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
@@ -20208,27 +20289,27 @@ static void init_choosers(s7_scheme *sc)
 #define GEN_F(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  store_choices(sc, f, (s7_pointer)wrapped_ ## Type ## _1, (s7_pointer)wrapped_ ## Type ## _2, NULL, (s7_pointer)wrapped_ ## Type ## _p);
+  store_choices(sc, f, wrapped_ ## Type ## _1, wrapped_ ## Type ## _2, NULL, wrapped_ ## Type ## _p);
   
 #define GEN_F1(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  store_choices(sc, f, (s7_pointer)wrapped_ ## Type ## _1, NULL, NULL, (s7_pointer)wrapped_ ## Type ## _p);
+  store_choices(sc, f, wrapped_ ## Type ## _1, NULL, NULL, wrapped_ ## Type ## _p);
   
 #define GEN_F2(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  store_choices(sc, f, NULL, (s7_pointer)wrapped_ ## Type ## _2, NULL, (s7_pointer)wrapped_ ## Type ## _p);
+  store_choices(sc, f, NULL, wrapped_ ## Type ## _2, NULL, wrapped_ ## Type ## _p);
 
 #define GEN_F3(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  store_choices(sc, f, (s7_pointer)wrapped_ ## Type ## _1, (s7_pointer)wrapped_ ## Type ## _2, (s7_pointer)wrapped_ ## Type ## _3, (s7_pointer)wrapped_ ## Type ## _p);
+  store_choices(sc, f, wrapped_ ## Type ## _1, wrapped_ ## Type ## _2, wrapped_ ## Type ## _3, wrapped_ ## Type ## _p);
 
 #define GEN_F2_3(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  store_choices(sc, f, NULL, (s7_pointer)wrapped_ ## Type ## _2, (s7_pointer)wrapped_ ## Type ## _3, (s7_pointer)wrapped_ ## Type ## _p);
+  store_choices(sc, f, NULL, wrapped_ ## Type ## _2, wrapped_ ## Type ## _3, wrapped_ ## Type ## _p);
   
 
   /* oscil */
@@ -20389,13 +20470,13 @@ static void init_choosers(s7_scheme *sc)
 
 
   GEN_F1("env", env);
-  store_choices(sc, f, (s7_pointer)wrapped_env_1, NULL, NULL, (s7_pointer)wrapped_env_p);
+  store_choices(sc, f, wrapped_env_1, NULL, NULL, wrapped_env_p);
   env_1 = clm_make_temp_function(sc, "env", g_env_1, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
   env_vss = clm_make_temp_function_no_choice(sc, "env", g_env_vss, 1, 0, false, "env optimization", f);
 
 
   GEN_F1("readin", readin);
-  store_choices(sc, f, (s7_pointer)wrapped_readin_1, NULL, NULL, (s7_pointer)wrapped_readin_p);
+  store_choices(sc, f, wrapped_readin_1, NULL, NULL, wrapped_readin_p);
   readin_1 = clm_make_temp_function(sc, "readin", g_readin_1, 1, 0, false, "readin optimization", f,
 			       NULL, NULL, NULL, mul_c_readin_1, mul_s_readin_1, env_readin_1);
 
@@ -20410,7 +20491,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   f = s7_name_to_value(sc, "tap");
-  store_choices(sc, f, (s7_pointer)wrapped_tap_1, NULL, NULL, (s7_pointer)wrapped_tap_p);
+  store_choices(sc, f, wrapped_tap_1, NULL, NULL, wrapped_tap_p);
 
 
   GEN_F2_3("comb", comb);
@@ -20547,7 +20628,7 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "mus-random");
   s7_function_set_chooser(sc, f, mus_random_chooser);
   mus_random_c = clm_make_temp_function_no_choice(sc, "mus-random", g_mus_random_c, 1, 0, false, "mus-random optimization", f);
-  direct_choice_1(sc, f, (s7_pointer)wrapped_mus_random_1, (s7_pointer)wrapped_mus_random_p);
+  direct_choice_1(sc, f, (mus_float_t (*)(mus_xen *))wrapped_mus_random_1, wrapped_mus_random_p);
 
 
   GEN_F("rand", rand);
@@ -20580,7 +20661,7 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "formant-bank");
   s7_function_set_chooser(sc, f, formant_bank_chooser);
-  direct_choice_2(sc, f, (s7_pointer)wrapped_formant_bank_2, (s7_pointer)wrapped_formant_bank_p);
+  direct_choice_2(sc, f, wrapped_formant_bank_2, wrapped_formant_bank_p);
   formant_bank_ss = clm_make_temp_function_no_choice(sc, "formant", g_formant_bank_ss, 3, 0, false, "formant-bank optimization", f);
   formant_bank_sz = clm_make_temp_function_no_choice(sc, "formant", g_formant_bank_sz, 3, 0, false, "formant-bank optimization", f);
 
@@ -20624,7 +20705,7 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "polynomial");
   s7_function_set_chooser(sc, f, polynomial_chooser);
-  direct_choice_2(sc, f, (s7_pointer)wrapped_polynomial_2, (s7_pointer)wrapped_polynomial_p);
+  direct_choice_2(sc, f, (mus_float_t (*)(mus_xen *, mus_float_t))wrapped_polynomial_2, wrapped_polynomial_p);
   polynomial_temp = clm_make_function_no_choice(sc, "polynomial", g_polynomial_temp, 2, 0, false, "polynomial optimization", f);
   polynomial_cos = clm_make_function_no_choice(sc, "polynomial", g_polynomial_cos, 2, 0, false, "polynomial optimization", f);
 
@@ -21906,7 +21987,6 @@ Xen_eval_C_string("<'> fth-print alias clm-print ( fmt args -- )");
   Xen_eval_C_string("(define (clm-print . args) (apply format #t args))");
 #endif
 #endif
-
 
   Xen_provide_feature("clm");
   {

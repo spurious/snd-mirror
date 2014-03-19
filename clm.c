@@ -15674,8 +15674,8 @@ mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_f
   gen->fftsize = fftsize;
   gen->fftsize2 = gen->fftsize / 2;
   gen->ctr = gen->fftsize2;
-  gen->rl1 = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
-  gen->rl2 = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
+  gen->rl1 = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
+  gen->rl2 = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
   gen->buf = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
   return((mus_any *)gen);
 }
@@ -15937,6 +15937,9 @@ static mus_any_class PHASE_VOCODER_CLASS = {
 };
 
 
+static int pv_last_fftsize = -1;
+static mus_float_t *pv_last_window = NULL;
+
 mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction), 
 				int fftsize, int overlap, int interp,
 				mus_float_t pitch,
@@ -15980,13 +15983,22 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv->synthesize = synthesize;
   pv->calc = true;
 
-  pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW, fftsize, 0.0);
-  scl = 2.0 / (0.54 * (mus_float_t)fftsize);
-  if (pv->win) /* clm2xen traps errors for later reporting (to clean up local allocation),
-		*   so calloc might return NULL in all the cases here
-		*/
-    for (i = 0; i < fftsize; i++) 
-      pv->win[i] *= scl;
+  if ((fftsize == pv_last_fftsize) && (pv_last_window))
+    {
+      pv->win = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
+      memcpy((void *)(pv->win), (const void *)pv_last_window, fftsize * sizeof(mus_float_t));
+    }
+  else
+    {
+      if (pv_last_window) free(pv_last_window);
+      pv_last_fftsize = fftsize;
+      pv_last_window = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
+      pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW, fftsize, 0.0);
+      scl = 2.0 / (0.54 * (mus_float_t)fftsize);
+      for (i = 0; i < fftsize; i++) 
+	pv->win[i] *= scl;
+      memcpy((void *)pv_last_window, (const void *)(pv->win), fftsize * sizeof(mus_float_t));
+    }
 
 #if HAVE_SINCOS
   /* in some cases, sincos is slower than sin+cos? Callgrind is seriously confused by it!
@@ -16518,6 +16530,9 @@ static mus_any_class SSB_AM_CLASS = {
 };
 
 
+static int ssb_am_last_flen = -1;
+static mus_float_t *ssb_am_last_coeffs = NULL;
+
 mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 {
   ssbam *gen;
@@ -16543,18 +16558,32 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
   len = order * 2 + 1;
   flen = len + 1; /* even -- need 4 */
   if ((flen & 2) != 0) flen += 2; 
-  
-  gen->coeffs = (mus_float_t *)calloc(flen, sizeof(mus_float_t));
-  for (i = -order, k = 0; i <= order; i++, k++)
+
+  if ((flen == ssb_am_last_flen) && (ssb_am_last_coeffs))
     {
-      mus_float_t denom, num;
-      denom = i * M_PI;
-      num = 1.0 - cos(denom);
-      if (i == 0)
-	gen->coeffs[k] = 0.0;
-      else gen->coeffs[k] = (num / denom) * (0.54 + (0.46 * cos(denom / order)));
+      gen->coeffs = (mus_float_t *)malloc(flen * sizeof(mus_float_t));
+      memcpy((void *)(gen->coeffs), (const void *)ssb_am_last_coeffs, flen * sizeof(mus_float_t));
     }
-  /* so odd numbered coeffs are zero */
+  else
+    {
+      gen->coeffs = (mus_float_t *)calloc(flen, sizeof(mus_float_t));
+      for (i = -order, k = 0; i <= order; i++, k++)
+	{
+	  mus_float_t denom, num;
+	  denom = i * M_PI;
+	  num = 1.0 - cos(denom);
+	  if (i == 0)
+	    gen->coeffs[k] = 0.0;
+	  else gen->coeffs[k] = (num / denom) * (0.54 + (0.46 * cos(denom / order)));
+	}
+      /* so odd numbered coeffs are zero */
+      
+      /* can't be too fancy here because there might be several of these gens running in parallel at different sizes */
+      if (ssb_am_last_coeffs) free(ssb_am_last_coeffs);
+      ssb_am_last_flen = flen;
+      ssb_am_last_coeffs = (mus_float_t *)malloc(flen * sizeof(mus_float_t));
+      memcpy((void *)(ssb_am_last_coeffs), (const void *)(gen->coeffs), flen * sizeof(mus_float_t));
+    }
 
   gen->hilbert = mus_make_fir_filter(flen, gen->coeffs, NULL);
   return((mus_any *)gen);

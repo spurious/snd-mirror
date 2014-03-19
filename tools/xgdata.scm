@@ -8861,6 +8861,9 @@
 (CFNC-3.12 "gint gtk_entry_get_max_width_chars GtkEntry* entry")
 
 
+;;; 3.11.9
+(CFNC-3.12 "GdkWindow* gdk_device_get_last_event_window GdkDevice* device")
+
 
 ;;; --------------------------------------------------------------------------------
 #|

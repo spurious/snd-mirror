@@ -42464,6 +42464,11 @@ static s7_pointer all_x_s(s7_scheme *sc, s7_pointer arg)
   return(find_symbol_checked(sc, arg));
 }
 
+static s7_pointer all_x_k(s7_scheme *sc, s7_pointer arg)
+{
+  return(arg);
+}
+
 static s7_pointer all_x_c_c(s7_scheme *sc, s7_pointer arg)
 {
   return(c_call(arg)(sc, cdr(arg)));
@@ -42796,7 +42801,11 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
       return(all_x_q);
     }
   if (is_symbol(arg))
-    return(all_x_s);
+    {
+      if (is_keyword(arg))
+	return(all_x_k);
+      return(all_x_s);
+    }
   return(all_x_c);
 }
 
@@ -55082,6 +55091,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_PAIR_S:
 	      {
 		s7_pointer s, ind;
+		/*
+10722: (ints i) s7test log-n-of and variants
+6464: (gains i) dlocsig
+6200: (e i)
+6200: (e (+ i 1)) dlocsig (etc)
+3599: (vals i) snd-test probably
+3367: (e (+ i 2))
+3367: (e (+ i 3))
+		 */
 		s = find_symbol_checked(sc, car(code));
 		if (!is_pair(s))
 		  break;
@@ -69427,29 +69445,18 @@ int main(int argc, char **argv)
 /* -------------------------------------------------------------------------------- */
 
 /*
- * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5
+ * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.2  5.2
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 36.3
  *            153 with run macro (eval_ptree)
- */
-/* callgrind is confused about sincos, and does not count file IO delays
  */
 
 /* letrec* built-in (not macro)
- *
- * why not (if expr => f) to parallel (cond (expr => p))? can be disambiguated just as in cond
- *   (and=> expr func) or (if=> ...) -- cumulative? (and expr => expr => expr...)
- *   (define (and=> arg . funcs) (if (null? funcs) arg (and arg (and=> ((car funcs) arg) (cdr funcs)))))
- *   (define-macro (and=> . exprs) (define (wrap e) (if (null? (cdr e)) (car e) `(let ((_ ,(car e))) (and _ ,(wrap (cdr e)))))) (wrap exprs))
- *   using cond => here is tricky see t812
- *   why not extend the cond syntax (cond ((expr => f1 f2 ...))), also in case?
- *   or even (=> ...) evals and passes to next (=> 49 sqrt even?) so it should be named "forth"!
- *
  * (member x hash-table) -> x exists as key in hash-table?
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
@@ -69458,12 +69465,8 @@ int main(int argc, char **argv)
  *
  * help info for *-float-vector-* still uses vct
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
- * file->float-vector should accept 2nd and 3rd opt args
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
- *
- * type pun choice problem in clm2xen via struct
- * add pvoc func tests
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
@@ -69474,5 +69477,28 @@ int main(int argc, char **argv)
  *   and for catch what errors it might raise
  *     frames: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
+ *
+ * make-env-chooser could see the keywords in advance: (make-env '(...) :length 100) etc -- pre-unscramble
+ *   what is the most common pattern here?
+ *  t502: 
+10587: make-polywave
+10580: (make-env (or fm1-env default-index-env) norm :duration dur)
+10580: (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude...
+10580: (make-env (or amp-env default-amp-env) :scaler amplitude :base base :duration...
+10580: (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl))
+10580: (make-locsig (or degree (random 90.0)) distance reverb-amount)
+10580: (make-env gliss-env (* glissando-amount frq-scl) :duration dur)
+ * i.e v.scm
+ * t816:
+1603584: (make-env '(0 0.1 1 1) :length 100)
+144768: (make-pulsed-env '(0 0 1 1) 0.01 1000.0)
+72384: (make-iir-filter 3 (float-vector 0.1 -0.2 0.3))
+72384: (make-filtered-comb 0.9 4)
+* so we call unscramble even when there are no keywords!
+* calls:
+* similar (make-env q :dur s) (make-env q :length c) (make-env e e :duration s) (make-polywave c q) -- if q=list, it can't be key
+* surely in s7 these are all define*'s
+*
+* all_x_pi? 
  */
 

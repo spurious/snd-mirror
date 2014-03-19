@@ -9,26 +9,26 @@
 ;;;  test 6: float-vectors                      [9605]
 ;;;  test 7: colors                             [9897]
 ;;;  test 8: clm                                [10416]
-;;;  test 9: mix                                [22111]
-;;;  test 10: marks                             [23902]
-;;;  test 11: dialogs                           [24847]
-;;;  test 12: extensions                        [25020]
-;;;  test 13: menus, edit lists, hooks, etc     [25285]
-;;;  test 14: all together now                  [26654]
-;;;  test 15: chan-local vars                   [27525]
-;;;  test 16: regularized funcs                 [29277]
-;;;  test 17: dialogs and graphics              [33082]
-;;;  test 18: save and restore                  [33195]
-;;;  test 19: transforms                        [34847]
-;;;  test 20: new stuff                         [36954]
-;;;  test 21: optimizer                         [38155]
-;;;  test 22: with-sound                        [38679]
-;;;  test 23: X/Xt/Xm                           [41633]
-;;;  test 24: GL                                [45315]
-;;;  test 25: errors                            [45439]
-;;;  test 26: s7                                [46969]
-;;;  test all done                              [47035]
-;;;  test the end                               [47246]
+;;;  test 9: mix                                [22171]
+;;;  test 10: marks                             [23962]
+;;;  test 11: dialogs                           [24907]
+;;;  test 12: extensions                        [25080]
+;;;  test 13: menus, edit lists, hooks, etc     [25345]
+;;;  test 14: all together now                  [26714]
+;;;  test 15: chan-local vars                   [27585]
+;;;  test 16: regularized funcs                 [29337]
+;;;  test 17: dialogs and graphics              [33142]
+;;;  test 18: save and restore                  [33255]
+;;;  test 19: transforms                        [34907]
+;;;  test 20: new stuff                         [37014]
+;;;  test 21: optimizer                         [38215]
+;;;  test 22: with-sound                        [38739]
+;;;  test 23: X/Xt/Xm                           [41687]
+;;;  test 24: GL                                [45369]
+;;;  test 25: errors                            [45493]
+;;;  test 26: s7                                [47023]
+;;;  test all done                              [47089]
+;;;  test the end                               [47300]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -20791,6 +20791,66 @@ EDITS: 2
       (close-sound ind)
       (set! *mus-float-equal-fudge-factor* old-fudge))
     
+    (let ()
+      (define (pvoc-d beg dur amp size)
+	(let ((N2 (floor (/ size 2))))
+	  (let ((start (seconds->samples beg))
+		(end (seconds->samples (+ beg dur)))
+		(sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4))
+		(lastphases (make-float-vector N2))
+		(two-pi (* 2 pi)))
+	    (let ((amps (phase-vocoder-amps sr))
+		  (paincrs (phase-vocoder-amp-increments sr))
+		  (ppincrs (phase-vocoder-phase-increments sr))
+		  (phases (phase-vocoder-phases sr))
+		  (freqs (phase-vocoder-freqs sr))
+		  (osc (make-oscil 1000.0)))
+	      
+	      (define (ifunc dir)
+		(oscil osc))
+	      
+	      (define (efunc c)
+		(let* ((D (floor (/ size 4))) ; overlap = 4
+		       (pscl (/ 1.0 D))
+		       (kscl (/ two-pi size)))
+		  (do ((k 0 (+ k 1))
+		       (ks 0.0 (+ ks kscl)))
+		      ((= k N2))
+		    (let* ((freq (freqs k))
+			   (diff (- freq (lastphases k))))
+		      (set! (lastphases k) freq)
+		      (if (> diff pi) (set! diff (- diff two-pi)))
+		      (if (< diff (- pi)) (set! diff (+ diff two-pi)))
+		      (set! (freqs k) (+ (* diff  pscl) ks))))
+		  #f))
+	      
+	      (define (sfunc c)
+		(float-vector-add! amps paincrs)
+		(float-vector-add! ppincrs freqs)
+		(float-vector-add! phases ppincrs)
+		(let ((sum 0.0))
+		  (do ((i 0 (+ i 1)))
+		      ((= i N2))
+		    (if (> (amps i) .75)
+			(set! sum (+ sum (* (amps i) (if (> (modulo (phases i) two-pi) pi) 1.0 -1.0))))))
+		  sum))
+	      
+	      (do ((i start (+ i 1))) 
+		  ((= i end))
+		(outa i (* amp (phase-vocoder sr ifunc #f efunc sfunc))))))))
+      
+      (let ((v (make-float-vector 200)))
+	(let ((ind (with-sound (:output v :srate 44100) (pvoc-d 0 .0025 .2 128))))
+	  (do ((i 55 (+ i 1)))
+	      ((= i 65))
+	    (if (> (abs (- (v i) .196)) .01)
+		(snd-display #__line__ ";pvoc-d at ~D: ~A~%" i (v i))))
+	  (do ((i 75 (+ i 1)))
+	      ((= i 85))
+	    (if (> (abs (- (v i) -.196)) .01)
+		(snd-display #__line__ ";pvoc-d at ~D: ~A~%" i (v i)))))
+	))
+
     (let ((ind (open-sound "oboe.snd")))
       (let ((gen (make-moog-filter 500.0 .1)))
 	(if (fneq 500.0 (moog-frequency gen)) (snd-display #__line__ ";moog freq: ~A" (moog-frequency gen))) ; moog-frequency is a separate function
@@ -47351,25 +47411,25 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-10-Mar-14:
-36,386,570,224
-5,671,424,025  s7.c:eval [/home/bil/gtk-snd/snd]
-2,256,730,722  ???:sin [/lib64/libm-2.12.so]
-2,034,829,538  ???:cos [/lib64/libm-2.12.so]
+18-Mar-14:
+36,274,846,745
+5,642,270,909  s7.c:eval [/home/bil/gtk-snd/snd]
+2,256,990,422  ???:sin [/lib64/libm-2.12.so]
+2,032,961,921  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,035,229,179  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  887,161,572  ???:t2_32 [/home/bil/gtk-snd/snd]
-  845,053,159  s7.c:gc [/home/bil/gtk-snd/snd]
-  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
-  648,381,221  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  607,503,337  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+1,033,458,178  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  885,359,904  ???:t2_32 [/home/bil/gtk-snd/snd]
+  840,619,160  s7.c:gc [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+  648,406,214  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  604,288,870  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  591,734,332  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  565,339,088  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,776,292  ???:n1_64 [/home/bil/gtk-snd/snd]
-  415,440,256  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
-  413,937,260  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  367,202,308  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  584,859,320  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  564,642,854  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  449,476,076  ???:n1_64 [/home/bil/gtk-snd/snd]
+  415,067,325  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  414,027,948  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+  365,712,118  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 |#

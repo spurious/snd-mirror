@@ -42,7 +42,12 @@ MUS_EXPORT Xen g_mus_file_name(Xen gen);
 MUS_EXPORT Xen g_mus_data(Xen gen);
 
 #if HAVE_SCHEME
-MUS_EXPORT void store_choices(s7_scheme *sc, s7_pointer base_f, s7_pointer g1, s7_pointer g2, s7_pointer g3, s7_pointer isg);
+MUS_EXPORT void store_choices(s7_scheme *sc, 
+			      s7_pointer base_f, 
+			      mus_float_t (*g1)(mus_xen *p),
+			      mus_float_t (*g2)(mus_xen *p, mus_float_t f1),
+			      mus_float_t (*g3)(mus_xen *p, mus_float_t f1, mus_float_t f2),
+			      bool (*isg)(s7_pointer obj));
 MUS_EXPORT void s7_init_sndlib(s7_scheme *sc);
 #endif
 
