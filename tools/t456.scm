@@ -43,9 +43,10 @@
      (if (>= args-now low)
 	 (catch #t 
 	   (lambda () 
-	     (cond ((apply func args) => (lambda (val) 
-					   (if data-file 
-					       (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))))
+	     (cond ((apply func args) => 
+		    (lambda (val) 
+		      (if data-file 
+			  (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))))
 	   (lambda any
 	     (if (or (eq? (car any) 'wrong-type-arg)
 		     (not (memq func (list map for-each /))))
@@ -55,17 +56,16 @@
        (copy args c-args)
 
        (let ((p (list-tail c-args args-now)))
-
 	 (if (= args-left 1)
-
 	     (call-with-exit
 	      (lambda (quit)
 		(set-car! p (car constants))
 		(catch #t
 		  (lambda ()
-		    (cond ((apply func c-args) => (lambda (val)
-						    (if data-file 
-							(format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
+		    (cond ((apply func c-args) => 
+			   (lambda (val)
+			     (if data-file 
+				 (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
 		  (lambda any 
 		    (if (and (eq? (car any) 'wrong-type-arg)
 			     (integer? (caddr (cadr any))) ; if just 1 arg, arg num can be omitted
@@ -77,50 +77,55 @@
 		   (catch #t 
 		     (lambda () 
 		       (set-car! p c)
-		       (cond ((apply func c-args) => (lambda (val)
-						       (if data-file 
-							   (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
+		       (cond ((apply func c-args) => 
+			      (lambda (val)
+				(if data-file 
+				    (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
 		     (lambda any 
 		       'error)))
 		 (cdr constants))))
-
+	   
 	     (for-each
 	      (lambda (c)
 		(set-car! p c)
 		(autotest func c-args (+ args-now 1) (- args-left 1)))
 	      constants)))))))
 
+;(set! low 3)
+;(autotest string-set! () 0 3)
 
-(let ((st (symbol-table)))
-  (do ((i 0 (+ i 1))) 
-      ((= i (length st))
-       (if data-file (close-output-port data-file))
-       (format #t "~%all done~%"))
-    (let ((lst (st i)))
-      (for-each 
-       (lambda (sym)
-	 (if (defined? sym)
-	     (let ((f (symbol->value sym)))
+(define (test-sym sym)
+  (if (defined? sym)
+      (let ((f (symbol->value sym)))
+	(let ((argn (and (procedure? f) (arity f))))
+	  (if argn
+	      (let ((bottom (car argn))
+		    (top (min (cdr argn) max-args))
+		    (strname (symbol->string sym)))
+		(if (not (or (memq (strname 0) '(#\{ #\[ #\())
+			     (member strname '("exit" "emergency-exit" "abort" "unoptimize" "autotest" 
+					       "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
+					       "augment-environment!" "make-procedure-with-setter" 
+					       "open-environment" "eval" "vector" "list" "cons"))))
+		    (begin
+		      (if (< top bottom)
+			  (format *stderr* ";~A ~A ~A...~%" sym bottom top)
+			  (format *stderr* ";~A...~%" sym))
+		      (format data-file ";~A...~%" sym)
+		      (set! low bottom)
+		      (if (zero? (cdr argn))
+			  (let ((val (f)))
+			    (if (and val data-file)
+				(format data-file "(~S) -> ~S~%" sym val)))
+			  (autotest f () 0 top))))))))))
 
-	       (let ((argn (and (procedure? f) (arity f))))
-		 (if argn
-		     (let ((bottom (car argn))
-			   (top (min (cdr argn) max-args))
-			   (strname (symbol->string sym)))
-		       (if (not (or (member (strname 0) '(#\{ #\[ #\())
-				    (member strname '("exit" "emergency-exit" "abort" "unoptimize" "autotest" "delete-file" "system" "set-cdr!" "stacktrace"
-						      "augment-environment!" "make-procedure-with-setter" "open-environment" "eval"
-						      "vector" "list" "cons"))))
-			   (begin
-			     (if (< top bottom)
-				 (format *stderr* ";~A ~A ~A...~%" sym bottom top)
-				 (format *stderr* ";~A...~%" sym))
-			     (format data-file ";~A...~%" sym)
-			     (set! low bottom)
-			     (if (zero? (cdr argn))
-				 (let ((val (f)))
-				   (if (and val data-file)
-				       (format data-file "(~S) -> ~S~%" sym val)))
-				 (autotest f () 0 top))))))))))
-       lst))))
+(define (all)
+  (let ((st (symbol-table))
+	(st-len (length (symbol-table))))
+    (do ((i 0 (+ i 1))) 
+	((= i st-len)
+	 (if data-file (close-output-port data-file))
+	 (format #t "~%all done~%"))
+      (for-each test-sym (st i)))))
 
+(all)

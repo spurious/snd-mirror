@@ -6768,8 +6768,9 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   mus_float_t base = 1.0, scaler = 1.0, offset = 0.0, duration = 0.0;
   mus_long_t end = 0, dur = -1;
   int npts = 0;
-  mus_float_t *brkpts = NULL, *odata = NULL;
+  mus_float_t *brkpts = NULL;
   Xen lst;
+  vct *v = NULL;
 
   keys[0] = kw_envelope;
   keys[1] = kw_scaler;
@@ -6810,12 +6811,11 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 
       dur = mus_optkey_to_mus_long_t(keys[6], S_make_env, orig_arg[6], 0);
       if (dur < 0) 
-	Xen_out_of_range_error(S_make_env, orig_arg[6], keys[6], "dur < 0?");
+	Xen_out_of_range_error(S_make_env, orig_arg[6], keys[6], "length < 0?");
 
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(Xen_is_keyword(keys[0])))
         {
-	  vct *v = NULL;
 	  Xen vect = XEN_NULL;
 	  if (mus_is_vct(keys[0]))
 	    {
@@ -6864,17 +6864,13 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	    }
 #endif
 	  npts = len / 2;
-	  brkpts = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-	  if (brkpts == NULL)
-	    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list"));
-	  odata = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-	  if (odata == NULL)
-	    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env copy"));
-
 	  if (v)
-	    memcpy((void *)brkpts, (void *)(mus_vct_data(v)), len * sizeof(mus_float_t));
+	    brkpts = mus_vct_data(v);
 	  else
 	    {
+	      brkpts = (mus_float_t *)malloc(len * sizeof(mus_float_t));
+	      if (brkpts == NULL)
+		return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list"));
 	      if (vect)
 		{
 		  for (i = 0; i < len; i++)
@@ -6903,7 +6899,6 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 			    }
 			  else 
 			    {
-			      if (odata) free(odata);
 			      Xen_error(BAD_TYPE, 
 					Xen_list_2(C_string_to_Xen_string(S_make_env ": odd breakpoints list? ~A"), 
 						    keys[0]));
@@ -6912,13 +6907,11 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 		    }
 		}
 	    }
-	  memcpy((void *)odata, (void *)brkpts, len * sizeof(mus_float_t));
         }
     }
 
   if (brkpts == NULL) 
     {
-      if (odata) free(odata);
       Xen_error(NO_DATA,
 		Xen_list_1(C_string_to_Xen_string(S_make_env ": no envelope?"))); 
     }
@@ -6927,8 +6920,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     {
       if ((end > 0) && ((end + 1) != dur))
 	{
-	  if (brkpts) {free(brkpts); brkpts = NULL;}
-	  if (odata) {free(odata); odata = NULL;}
+	  if ((!v) && (brkpts)) {free(brkpts); brkpts = NULL;}
 	  Xen_error(CLM_ERROR,
 		    Xen_list_3(C_string_to_Xen_string(S_make_env ": end, ~A, and dur, ~A, specified, but dur != end+1"),
 			       keys[5], 
@@ -6947,15 +6939,53 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, end, odata);
+    ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, end, NULL);
     mus_error_set_handler(old_error_handler);
   }
-
-  free(brkpts);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct(mus_env_breakpoints(ge) * 2, odata))));
-  free(odata);
+  
+  if (ge) 
+    {
+      if (v) 
+	return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
+      return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct(mus_env_breakpoints(ge) * 2, brkpts))));
+    }
   return(clm_mus_error(local_error_type, local_error_msg));
 }
+
+#if HAVE_SCHEME
+static Xen make_env_q_length;
+static Xen g_make_env_q_length(s7_scheme *sc, s7_pointer args)
+{
+  /* (define (hi) (let ((e (make-env (float-vector 0 0 1 1) :length 10))) (env e))) */
+  mus_any *ge;
+  mus_long_t flen;
+  mus_error_handler_t *old_error_handler;
+  int npts, v_len;
+  Xen len, v;
+ 
+  v = Xen_car(args);
+  if (!s7_is_float_vector(v))
+    return(g_make_env(args));
+
+  len = Xen_caddr(args);
+  Xen_check_type(Xen_is_integer(len), len, 3, S_make_env, "an integer");
+  flen = Xen_llong_to_C_llong(len);
+
+  v_len = s7_vector_length(v); 
+  if ((v_len == 0) || ((v_len & 1) != 0))
+    return(g_make_env(args));
+  npts = v_len / 2; 
+
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  ge = mus_make_env(mus_vct_data(v), npts, 1.0, 0.0, 1.0, 0.0, flen - 1, NULL);
+  mus_error_set_handler(old_error_handler);
+
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
+  return(clm_mus_error(local_error_type, local_error_msg));
+}
+
+#endif
 
 
 static Xen g_env_interp(Xen x, Xen env1) /* "env" causes trouble in Objective-C!! */
@@ -18833,6 +18863,18 @@ static s7_pointer env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
   return(f);
 }
 
+
+static s7_pointer make_env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 3)
+    {
+      if (caddr(expr) == kw_length)
+	return(make_env_q_length);
+    }
+  return(f);
+}
+
+
 static s7_pointer readin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 1) &&
@@ -20884,6 +20926,10 @@ static void init_choosers(s7_scheme *sc)
   mul_s_ina_reverb_2 = clm_make_function_no_choice(sc, "*", g_mul_s_ina_reverb_2, 2, 0, false, "* optimization", f);
   s7_function_chooser_set_data(sc, ina_reverb_2, (void *)make_choices(NULL, mul_s_ina_reverb_2, NULL, NULL, NULL, NULL));
 
+  f = s7_name_to_value(sc, "make-env");
+  s7_function_set_chooser(sc, f, make_env_chooser);
+  make_env_q_length = clm_make_function_no_choice(sc, "make-env", g_make_env_q_length, 3, 0, false, "make-env optimization", f);
+
   store_gf_fixup(s7, f, fixup_ina);
 
   f = s7_name_to_value(sc, "inb");
@@ -20933,7 +20979,6 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "frame-ref");
   store_gf_fixup(s7, f, fixup_frame_ref);
-
 
   {
     s7_pointer f;

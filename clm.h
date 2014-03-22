@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 21
-#define MUS_DATE "17-Feb-14"
+#define MUS_REVISION 22
+#define MUS_DATE "19-Mar-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -399,7 +399,6 @@ MUS_EXPORT double mus_env_scaler(mus_any *gen);        /* for Snd */
 MUS_EXPORT double mus_env_initial_power(mus_any *gen); /* for Snd */
 MUS_EXPORT int mus_env_breakpoints(mus_any *gen);      /* for Snd */
 MUS_EXPORT mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t val));
-#define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
 MUS_EXPORT mus_float_t (*mus_env_function(mus_any *g))(mus_any *gen);
 
 MUS_EXPORT mus_any *mus_make_pulsed_env(mus_any *e, mus_any *p);
@@ -652,6 +651,9 @@ MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 #define mus_granulate_p(Gen) mus_is_granulate(Gen)
 #define mus_phase_vocoder_p(Gen) mus_is_phase_vocoder(Gen)
 #define mus_ssb_am_p(Gen) mus_is_ssb_am(Gen)
+
+#define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
+
 #endif
 
 /* used only in run.lisp */
@@ -667,6 +669,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 19-Mar-14:  deprecate mus_make_env_with_length.
  * 17-Feb-14:  mus_*_p -> mus_is_*.
  * --------
  * 7-Dec:      mus_set_formant_frequency, mus_src_20 and mus_src_05 changed.  Removed mus_in_any_from_file.

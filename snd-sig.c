@@ -1500,7 +1500,7 @@ void src_env_or_num(chan_info *cp, env *e, mus_float_t ratio, bool just_num,
 	  if (!just_num)
 	    {
 	      if (e)
-		egen = mus_make_env_with_length(e->data, e->pts, 1.0, 0.0, e->base, dur);
+		egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, dur - 1, NULL);
 	      else egen = gen;
 	      if (egen) ratio = 0.0;            /* added 14-Mar-01 otherwise the envelope is an offset? */
 	    }
@@ -2681,7 +2681,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
     }
 
   if (e)
-    egen = mus_make_env_with_length(e->data, e->pts, 1.0, 0.0, e->base, dur);
+    egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, dur - 1, NULL);
   else egen = gen;
   len = mus_env_breakpoints(egen);
   passes = mus_env_passes(egen);
@@ -3427,7 +3427,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
   else  new_dur = dur;
 
   if (!(is_default_env(amp_env)))
-    e = mus_make_env_with_length(amp_env->data, amp_env->pts, amp, 0.0, 1.0, new_dur);
+    e = mus_make_env(amp_env->data, amp_env->pts, amp, 0.0, 1.0, 0.0, new_dur - 1, NULL);
 
   j = 0;
   if (!sgens)
@@ -5294,7 +5294,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
 	  else 
 	    {
 	      mus_any *egen;
-	      egen = mus_make_env_with_length(data, 2, 1.0, 0.0, 1.0, samps);
+	      egen = mus_make_env(data, 2, 1.0, 0.0, 1.0, 0.0, samps - 1, NULL);
 	      amp_env_env_selection_by(cp, egen, samp, samps, pos);
 	      mus_free(egen);
 	    }
@@ -5371,7 +5371,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	      data[1] = seg0;
 	      data[2] = 1.0;
 	      data[3] = seg1;
-	      e = mus_make_env_with_length(data, 2, 1.0, 0.0, ebase, samps);
+	      e = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, samps - 1, NULL);
 
 	      rates = mus_env_rates(e);
 	      if (xramp_channel(cp, mus_env_initial_power(e), rates[0], mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, NOT_IN_AS_ONE_EDIT, e, 0))
@@ -5384,7 +5384,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 		      else 
 			{
 			  mus_any *egen;
-			  egen = mus_make_env_with_length(data, 2, 1.0, 0.0, ebase, samps);
+			  egen = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, samps - 1, NULL);
 			  amp_env_env_selection_by(cp, egen, samp, samps, pos);
 			  mus_free(egen);
 			}
@@ -5687,6 +5687,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   mus_any *egen = NULL;
   bool need_free = false;
   mus_float_t ratio = 0.0; /* not 1.0 here! -- the zero is significant */
+  env *e = NULL;
 
   Xen_check_type((Xen_is_number(ratio_or_env)) || 
 		  (Xen_is_list(ratio_or_env)) ||
@@ -5720,17 +5721,15 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
       int error = SRC_ENV_NO_ERROR;
       if (egen == NULL)
 	{
-	  env *e;
 	  e = get_env(ratio_or_env, S_src_channel);
-	  egen = mus_make_env_with_length(e->data, e->pts, 1.0, 0.0, e->base, dur);
+	  egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, dur - 1, NULL);
 	  need_free = true;
-	  free_env(e);
 	}
       check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), &error);
       if (error != SRC_ENV_NO_ERROR)
 	{
 	  Xen data;
-
+	  if (e) free_env(e);
 	  data = mus_array_to_list(mus_data(egen), 0, mus_env_breakpoints(egen) * 2);
 	  if (need_free) 
 	    mus_free(egen); 
@@ -5751,6 +5750,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, S_src_channel, OVER_SOUND, &clm_err);
   sf = free_snd_fd(sf);
   if (need_free) mus_free(egen);
+  if (e) free_env(e);
   if (errmsg)
     {
       Xen err;

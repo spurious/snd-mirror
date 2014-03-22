@@ -899,7 +899,7 @@ void c_bird(double start, double dur, double frequency, double freqskew, double 
 </td></tr></table>
 
 
-<p>Many of the synthesis functions in this document try to make it
+<p>Many of the CLM synthesis functions try to make it
 faster or more convenient to produce a lot of sinusoids, but there
 are times when nothing but a ton of oscils will do:
 </p>
@@ -956,7 +956,7 @@ are times when nothing but a ton of oscils will do:
   (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) sum))))))
 </pre>
 
-<p>Actually, we could do this with <a href="#mus-chebyshev-tu-sum">mus-chebyshev-t-sum</a>:
+<p>oscil-bank here would be faster, or <a href="#mus-chebyshev-tu-sum">mus-chebyshev-t-sum</a>:
 </p>
 
 <pre class="indented">
@@ -1020,7 +1020,7 @@ are times when nothing but a ton of oscils will do:
 -->
 
 
-<p>but it seems a bit unnatural.
+<p>
 Related generators are 
 <a href="#ncos">ncos</a>, 
 <a href="#nsin">nsin</a>,
@@ -8693,7 +8693,7 @@ So j0evencos produces a spectral sweep that is like FM's but smoother.
 	(set! (<em class=red>jmd 'index</em>) ind)
 	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* vol (- (cos (* ind (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> fmd))) 
                           (<a class=quiet href="extsnd.html#besj0" onmouseout="UnTip()" onmouseover="Tip(extsnd_besj0_tip)">bes-j0</a> ind)))) ; subtract out DC (see cos(B sin x) above)
-	(<a class=quiet href="#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_outb_tip)">outb</a> i (* vol (<em class=red>j0evencos</em> jmd))))))))
+	(<a class=quiet href="#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_outb_tip)">outb</a> i (* vol (<em class=red>j0evencos</em> jmd)))))))
 </pre>
 
 <!--

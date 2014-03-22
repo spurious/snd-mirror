@@ -5430,7 +5430,7 @@ This should be named define-reader-macro.
      the code for that is save_null_environment, but it is untested and commented out.
 
      (define (f1 a) a) (define (f2) (f1 2)) (define (f1 a) (+ a 1)) (f2) returns 3,
-     but this is only guaranteed in s7 for closures -- built-in functions may be optimized
+     but this is only guaranteed in s7 for closures; built-in functions may be optimized
      away before a redefinition comes along.
 -->
 
@@ -6078,6 +6078,7 @@ in which they occur, and in the environment at the point of the evaluation.  I t
 of it as being a little REPL.  begin does not introduce a new frame in
 the current environment, so defines happen in the enclosing environment.
 </p>
+</div>
 
 
 <div class="indented">
@@ -6087,7 +6088,6 @@ as r7rs grew, this section got too large.  In general, all the conversion routin
 r7rs are handled in s7 via generic functions, records are classes, bytevectors are
 strings, and so on. 
 </p>
-
 </div>
 
 
@@ -6125,6 +6125,7 @@ waste a lot of time fixing this, I chose to flush multithreading.
 (do ((do do do)) (do do do))
 (*(*)(*) (+)(+) 1)
 </pre>
+
 </div>
 </blockquote>
 <br><br>

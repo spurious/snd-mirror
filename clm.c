@@ -9044,7 +9044,6 @@ typedef struct {
   mus_long_t loc, end;
   mus_env_t style;
   int index, size;
-  bool data_allocated;
   mus_float_t *original_data;
   double *rates;
   mus_long_t *locs;
@@ -9184,7 +9183,7 @@ static mus_float_t run_env(mus_any *ptr, mus_float_t unused1, mus_float_t unused
 }
 
 
-static void dmagify_env(seg *e, mus_float_t *data, int pts, mus_long_t dur, double scaler)
+static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur, double scaler)
 { 
   int i, j;
   double xscl = 1.0, cur_loc = 0.0, y1 = 0.0;
@@ -9266,7 +9265,7 @@ static void dmagify_env(seg *e, mus_float_t *data, int pts, mus_long_t dur, doub
 }
 
 
-static mus_float_t *fixup_exp_env(seg *e, mus_float_t *data, int pts, double offset, double scaler, double base)
+static mus_float_t *fixup_exp_env(seg *e, const mus_float_t *data, int pts, double offset, double scaler, double base)
 {
   double min_y, max_y, val = 0.0, tmp = 0.0, b1;
   int len, i;
@@ -9368,14 +9367,13 @@ static int free_env_gen(mus_any *pt)
     {
       if (ptr->locs) {free(ptr->locs); ptr->locs = NULL;}
       if (ptr->rates) {free(ptr->rates); ptr->rates = NULL;}
-      if ((ptr->original_data) && (ptr->data_allocated)) {free(ptr->original_data); ptr->original_data = NULL;}
       free(ptr); 
     }
   return(0);
 }
 
 
-static mus_float_t *env_data(mus_any *ptr) {return(((seg *)ptr)->original_data);} /* mus-data */
+static mus_float_t *env_data(mus_any *ptr) {return(((seg *)ptr)->original_data);}    /* mus-data */
 
 static mus_float_t env_scaler(mus_any *ptr) {return(((seg *)ptr)->original_scaler);} /* "mus_float_t" for mus-scaler */
 
@@ -9383,7 +9381,7 @@ static mus_float_t env_offset(mus_any *ptr) {return(((seg *)ptr)->original_offse
 
 int mus_env_breakpoints(mus_any *ptr) {return(((seg *)ptr)->size);}
 
-static mus_long_t env_length(mus_any *ptr) {return((((seg *)ptr)->end + 1));} /* this needs to match the :length arg to make-env (changed to +1, 20-Feb-08) */
+static mus_long_t env_length(mus_any *ptr) {return((((seg *)ptr)->end + 1));}        /* this needs to match the :length arg to make-env (changed to +1, 20-Feb-08) */
 
 static mus_float_t env_current_value(mus_any *ptr) {return(((seg *)ptr)->current_value);}
 
@@ -9433,7 +9431,7 @@ static void rebuild_env(seg *e, mus_float_t scl, mus_float_t off, mus_long_t end
 {
   seg *new_e;
 
-  new_e = (seg *)mus_make_env(e->original_data, e->size, scl, off, e->base, 0.0, end, e->original_data);
+  new_e = (seg *)mus_make_env(e->original_data, e->size, scl, off, e->base, 0.0, end, NULL);
   if (e->locs) free(e->locs);
   if (e->rates) free(e->rates);
   e->locs = new_e->locs;
@@ -9508,6 +9506,8 @@ static mus_any_class ENV_CLASS = {
 
 mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offset, double base, double duration, mus_long_t end, mus_float_t *odata)
 {
+  /* odata is ignored, brkpts are not freed by the new env gen when it is freed, but should be protected during its existence
+   */
   int i;
   mus_long_t dur_in_samples;
   mus_float_t *edata;
@@ -9520,7 +9520,6 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
       e->current_value = offset + scaler * brkpts[1];
       e->env_func = mus_env_line;
       e->original_data = brkpts;
-      e->data_allocated = false;
       return((mus_any *)e);
     }
 
@@ -9537,6 +9536,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 
   e = (seg *)malloc(sizeof(seg));
   e->core = &ENV_CLASS;
+  e->original_data = brkpts;
 
   if (duration != 0.0)
     dur_in_samples = (mus_long_t)(duration * sampling_rate);
@@ -9553,20 +9553,6 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
   e->end = (dur_in_samples - 1);
   e->loc = 0;
   e->index = 0;
-
-  if (odata)
-    {
-      e->original_data = odata;
-      e->data_allocated = false;
-    }
-  else
-    {      
-      e->original_data  = (mus_float_t *)calloc(npts * 2, sizeof(mus_float_t));
-      e->data_allocated = true;
-    }
-
-  if (e->original_data != brkpts)
-    memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 * sizeof(mus_float_t));
 
   if (base == 1.0)
     {
@@ -9596,7 +9582,6 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 	  edata = fixup_exp_env(e, brkpts, npts, offset, scaler, base);
 	  if (edata == NULL)
 	    {
-	      if ((e->original_data) && (e->data_allocated)) free(e->original_data);
 	      free(e);
 	      return(NULL);
 	    }
@@ -16539,7 +16524,7 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
   int i, k, len, flen;
 
   if ((order & 1) == 0) order++; /* if order is even, the first Hilbert coeff is 0.0 */
-  gen = (ssbam *)calloc(1, sizeof(ssbam));
+  gen = (ssbam *)malloc(sizeof(ssbam));
   gen->core = &SSB_AM_CLASS;
 
   if (freq > 0)
