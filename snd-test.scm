@@ -9,26 +9,26 @@
 ;;;  test 6: float-vectors                      [9605]
 ;;;  test 7: colors                             [9897]
 ;;;  test 8: clm                                [10416]
-;;;  test 9: mix                                [22171]
-;;;  test 10: marks                             [23962]
-;;;  test 11: dialogs                           [24907]
-;;;  test 12: extensions                        [25080]
-;;;  test 13: menus, edit lists, hooks, etc     [25345]
-;;;  test 14: all together now                  [26714]
-;;;  test 15: chan-local vars                   [27585]
-;;;  test 16: regularized funcs                 [29337]
-;;;  test 17: dialogs and graphics              [33142]
-;;;  test 18: save and restore                  [33255]
-;;;  test 19: transforms                        [34907]
-;;;  test 20: new stuff                         [37014]
-;;;  test 21: optimizer                         [38215]
-;;;  test 22: with-sound                        [38739]
-;;;  test 23: X/Xt/Xm                           [41687]
-;;;  test 24: GL                                [45369]
-;;;  test 25: errors                            [45493]
-;;;  test 26: s7                                [47023]
-;;;  test all done                              [47089]
-;;;  test the end                               [47300]
+;;;  test 9: mix                                [22263]
+;;;  test 10: marks                             [24054]
+;;;  test 11: dialogs                           [24999]
+;;;  test 12: extensions                        [25172]
+;;;  test 13: menus, edit lists, hooks, etc     [25437]
+;;;  test 14: all together now                  [26806]
+;;;  test 15: chan-local vars                   [27677]
+;;;  test 16: regularized funcs                 [29429]
+;;;  test 17: dialogs and graphics              [33234]
+;;;  test 18: save and restore                  [33347]
+;;;  test 19: transforms                        [34999]
+;;;  test 20: new stuff                         [37106]
+;;;  test 21: optimizer                         [38307]
+;;;  test 22: with-sound                        [38831]
+;;;  test 23: X/Xt/Xm                           [41779]
+;;;  test 24: GL                                [45461]
+;;;  test 25: errors                            [45585]
+;;;  test 26: s7                                [47115]
+;;;  test all done                              [47181]
+;;;  test the end                               [47392]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -16305,6 +16305,98 @@ EDITS: 2
 	  (if (not (vequal v (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.625 0.250 -0.125 -0.500)))
 	      (snd-display #__line__ ";simple pyr -.5 embedded: ~A" v)))
 	(let ((e (make-env '(0 0 1 1 2 -.5) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.625 0.250 -0.125 -0.500)))
+	      (snd-display #__line__ ";simple pyr -.5: ~A" v))))
+      
+      (let ((v (make-float-vector 10)))
+	(let ((e (make-env (float-vector 0 0 1 1) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.111 0.222 0.333 0.444 0.556 0.667 0.778 0.889 1.000)))
+	      (snd-display #__line__ ";simple ramp: ~A" v)))
+	(let ((v (make-float-vector 10)))
+	  (let ((e (make-env (float-vector 0 0 1 1) :base 0 :length 8)))
+	    (do ((i 0 (+ i 1)))
+		((= i 10))
+	      (float-vector-set! v i (env e)))
+	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000)))
+		(snd-display #__line__ ";simple ramp, base 0: ~A" v))))
+	(let ((v (make-float-vector 10)))
+	  (let ((e (make-env (float-vector 0 0 1 1 2 .5) :base 0 :length 8)))
+	    (do ((i 0 (+ i 1)))
+		((= i 10))
+	      (float-vector-set! v i (env e)))
+	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 0.500 0.500)))
+		(snd-display #__line__ ";two-step, base 0: ~A" v))))
+	(let ((e (make-env (float-vector 0 1 1 0) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 1.000 0.889 0.778 0.667 0.556 0.444 0.333 0.222 0.111 0.000)))
+	      (snd-display #__line__ ";simple ramp down: ~A" v)))
+	(let ((e (make-env (float-vector 0 0 1 1 2 0) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.750 0.500 0.250 0.000)))
+	      (snd-display #__line__ ";simple pyr: ~A" v)))
+	(let ((e (make-env (float-vector 0 0 1 1 2 -.5) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.625 0.250 -0.125 -0.500)))
+	      (snd-display #__line__ ";simple pyr -.5: ~A" v)))
+	(let ((e (make-env (float-vector 0 0 1 1 2 -.5) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.625 0.250 -0.125 -0.500)))
+	      (snd-display #__line__ ";simple pyr -.5: ~A" v))))
+      
+      (let ((v (make-float-vector 10)))
+	(let ((e (make-env (vector 0 0 1 1) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.111 0.222 0.333 0.444 0.556 0.667 0.778 0.889 1.000)))
+	      (snd-display #__line__ ";simple ramp: ~A" v)))
+	(let ((v (make-float-vector 10)))
+	  (let ((e (make-env (vector 0 0 1 1) :base 0 :length 8)))
+	    (do ((i 0 (+ i 1)))
+		((= i 10))
+	      (float-vector-set! v i (env e)))
+	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000)))
+		(snd-display #__line__ ";simple ramp, base 0: ~A" v))))
+	(let ((v (make-float-vector 10)))
+	  (let ((e (make-env (vector 0 0 1 1 2 .5) :base 0 :length 8)))
+	    (do ((i 0 (+ i 1)))
+		((= i 10))
+	      (float-vector-set! v i (env e)))
+	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 0.500 0.500)))
+		(snd-display #__line__ ";two-step, base 0: ~A" v))))
+	(let ((e (make-env (vector 0 1 1 0) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 1.000 0.889 0.778 0.667 0.556 0.444 0.333 0.222 0.111 0.000)))
+	      (snd-display #__line__ ";simple ramp down: ~A" v)))
+	(let ((e (make-env (vector 0 0 1 1 2 0) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.750 0.500 0.250 0.000)))
+	      (snd-display #__line__ ";simple pyr: ~A" v)))
+	(let ((e (make-env (vector 0 0 1 1 2 -.5) :length 10)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (float-vector-set! v i (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.625 0.250 -0.125 -0.500)))
+	      (snd-display #__line__ ";simple pyr -.5: ~A" v)))
+	(let ((e (make-env (vector 0 0 1 1 2 -.5) :length 10)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 10))
 	    (float-vector-set! v i (env e)))

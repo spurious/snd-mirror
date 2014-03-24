@@ -1634,7 +1634,7 @@ mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, 
 {
   ob *gen;
 
-  gen = (ob *)calloc(1, sizeof(ob));
+  gen = (ob *)malloc(sizeof(ob));
   gen->core = &OSCIL_BANK_CLASS;
   gen->orig_size = size;
   gen->size = size;
@@ -2462,7 +2462,7 @@ static mus_any_class NRXYSIN_CLASS = {
 mus_any *mus_make_nrxysin(mus_float_t frequency, mus_float_t y_over_x, int n, mus_float_t r)
 {
   nrxy *gen;
-  gen = (nrxy *)calloc(1, sizeof(nrxy));
+  gen = (nrxy *)malloc(sizeof(nrxy));
   gen->core = &NRXYSIN_CLASS;
   gen->freq = mus_hz_to_radians(frequency);
   gen->y_over_x = y_over_x;
@@ -2699,7 +2699,7 @@ static mus_any_class RXYKCOS_CLASS = {
 mus_any *mus_make_rxykcos(mus_float_t freq, mus_float_t phase, mus_float_t r, mus_float_t ratio) /* r default 0.5, ratio 1.0 */
 {
  rxyk *gen = NULL;
- gen = (rxyk *)calloc(1, sizeof(rxyk));
+ gen = (rxyk *)malloc(sizeof(rxyk));
  gen->core = &RXYKCOS_CLASS;
  gen->freq = mus_hz_to_radians(freq);
  gen->phase = phase;
@@ -2761,7 +2761,7 @@ static mus_any_class RXYKSIN_CLASS = {
 mus_any *mus_make_rxyksin(mus_float_t freq, mus_float_t phase, mus_float_t r, mus_float_t ratio) /* r default 0.5, ratio 1.0 */
 {
  rxyk *gen = NULL;
- gen = (rxyk *)calloc(1, sizeof(rxyk));
+ gen = (rxyk *)malloc(sizeof(rxyk));
  gen->core = &RXYKSIN_CLASS;
  gen->freq = mus_hz_to_radians(freq);
  gen->phase = phase;
@@ -3043,7 +3043,7 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
 mus_any *mus_make_table_lookup(mus_float_t freq, mus_float_t phase, mus_float_t *table, mus_long_t table_size, mus_interp_t type)
 {
   tbl *gen;
-  gen = (tbl *)calloc(1, sizeof(tbl));
+  gen = (tbl *)malloc(sizeof(tbl));
   gen->core = &TABLE_LOOKUP_CLASS;
   gen->table_size = table_size;
   gen->internal_mag = table_size / TWO_PI;
@@ -4282,7 +4282,7 @@ static mus_any_class WAVE_TRAIN_CLASS = {
 mus_any *mus_make_wave_train(mus_float_t freq, mus_float_t phase, mus_float_t *wave, mus_long_t wave_size, mus_interp_t type)
 {
   wt *gen;
-  gen = (wt *)calloc(1, sizeof(wt));
+  gen = (wt *)malloc(sizeof(wt));
   gen->core = &WAVE_TRAIN_CLASS;
   gen->freq = freq;
   gen->phase = (wave_size * fmod(phase, TWO_PI)) / TWO_PI;
@@ -4872,7 +4872,7 @@ mus_any *mus_make_comb_bank(int size, mus_any **combs)
   cmb_bank *gen;
   int i;
 
-  gen = (cmb_bank *)calloc(1, sizeof(cmb_bank));
+  gen = (cmb_bank *)malloc(sizeof(cmb_bank));
   gen->core = &COMB_BANK_CLASS;
   gen->size = size;
 
@@ -5251,7 +5251,7 @@ mus_any *mus_make_all_pass_bank(int size, mus_any **all_passs)
   allp_bank *gen;
   int i;
 
-  gen = (allp_bank *)calloc(1, sizeof(allp_bank));
+  gen = (allp_bank *)malloc(sizeof(allp_bank));
   gen->core = &ALL_PASS_BANK_CLASS;
   gen->size = size;
 
@@ -5744,7 +5744,7 @@ mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
   int i;
   bool zdly = false, oz = true;
 
-  gen = (fltcmb_bank *)calloc(1, sizeof(fltcmb_bank));
+  gen = (fltcmb_bank *)malloc(sizeof(fltcmb_bank));
   gen->core = &FILTERED_COMB_BANK_CLASS;
   gen->size = size;
 
@@ -7804,7 +7804,7 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
   frm_bank *gen;
   int i;
 
-  gen = (frm_bank *)calloc(1, sizeof(frm_bank));
+  gen = (frm_bank *)malloc(sizeof(frm_bank));
   gen->core = &FORMANT_BANK_CLASS;
   gen->size = size;
   gen->mctr = 0;
@@ -11767,7 +11767,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 	  gen->chans = out_chans;
 	  gen->output_data_format = out_format;
 	  gen->output_header_type = out_type;
-	  gen->obufs = (mus_float_t **)calloc(gen->chans, sizeof(mus_float_t *));
+	  gen->obufs = (mus_float_t **)malloc(gen->chans * sizeof(mus_float_t *));
 	  for (i = 0; i < gen->chans; i++) 
 	    gen->obufs[i] = (mus_float_t *)calloc(clm_file_buffer_size, sizeof(mus_float_t));
 	  gen->obuf0 = gen->obufs[0];
@@ -12145,7 +12145,7 @@ static char *describe_locsig(mus_any *ptr)
   snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s chans %d, outn: [", 
 	       mus_name(ptr),
 	       gen->chans);
-  str = (char *)calloc(STR_SIZE, sizeof(char));
+  str = (char *)malloc(STR_SIZE * sizeof(char));
 
   if (gen->outn)
     {
@@ -15156,7 +15156,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	if (beta < 0.2) beta = 0.2;
 	alpha = creal(ccosh(cacosh(pow(10.0, beta)) / (mus_float_t)size));
 
-	rl = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+	rl = (mus_float_t *)malloc(size * sizeof(mus_float_t));
 	im = (mus_float_t *)calloc(size, sizeof(mus_float_t));
 
 	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
@@ -15218,7 +15218,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 			     gsl_complex_arccosh_real(pow(10.0, beta)),
 			     (double)(1.0 / (mus_float_t)size))));
 
-	rl = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+	rl = (mus_float_t *)malloc(size * sizeof(mus_float_t));
 	im = (mus_float_t *)calloc(size, sizeof(mus_float_t));
 
 	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
@@ -15637,7 +15637,7 @@ bool mus_is_convolve(mus_any *ptr)
 mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_float_t *filter, mus_long_t fftsize, mus_long_t filtersize, void *closure)
 {
   conv *gen = NULL;
-  gen = (conv *)calloc(1, sizeof(conv));
+  gen = (conv *)malloc(sizeof(conv));
   gen->core = &CONVOLVE_CLASS;
   gen->feeder = input;
   gen->closure = closure;
@@ -15945,7 +15945,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   D = fftsize / overlap;
   if (D == 0) return(NULL);
 
-  pv = (pv_info *)calloc(1, sizeof(pv_info));
+  pv = (pv_info *)malloc(sizeof(pv_info));
   pv->core = &PHASE_VOCODER_CLASS;
   pv->N = fftsize;
   pv->D = D;

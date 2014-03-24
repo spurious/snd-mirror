@@ -2213,9 +2213,12 @@ char *mus_expand_filename(const char *filename)
 #if defined(_MSC_VER) && (!(defined(__CYGWIN__)))
   return(mus_strdup(filename));
 #else
+
   char *file_name_buf = NULL;
   char *tok = NULL, *orig = NULL;
   int i, j = 0, len = 0;
+
+  /* realpath does not speed this up */
 
   if ((filename) && (*filename)) 
     len = strlen(filename); 

@@ -21394,13 +21394,13 @@ static int file_read_white_space(s7_scheme *sc, s7_pointer port)
 
 static int string_read_white_space(s7_scheme *sc, s7_pointer pt)
 {
-  char *orig_str, *str;
+  unsigned char *str;
   unsigned char c1;
 
   if (port_data_size(pt) <= port_position(pt))
     return(EOF);
 
-  str = (char *)(port_data(pt) + port_position(pt));
+  str = (unsigned char *)(port_data(pt) + port_position(pt));
 
   /* we can't depend on the extra 0 of padding at the end of an input string port --
    *   eval_string and others take the given string without copying or padding.
@@ -21408,17 +21408,12 @@ static int string_read_white_space(s7_scheme *sc, s7_pointer pt)
   /* half the time this is called, the initial character is not white space, but splitting that out
    *   is slower.
    */
-  orig_str = str;
-  while (white_space[c1 = (unsigned char)(*str++)]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
+
+  while (white_space[c1 = *str++]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
     if (c1 == '\n')
       port_line_number(pt)++;
 
-  if (c1 == 0)
-    {
-      port_position(pt) += (str - orig_str - 1);
-      return(EOF);
-    }
-  port_position(pt) += (str - orig_str);
+  port_position(pt) = str - port_data(pt);
   return((int)c1);
 }
 
@@ -21481,10 +21476,43 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool at
 
   unsigned int k = 0;
   char *orig_str, *str;
-  
-  orig_str = (char *)(port_data(pt) + port_position(pt) - 1);
-  str = (char *)(orig_str + 1);
-  
+
+  str = (char *)(port_data(pt) + port_position(pt));
+
+  if (!char_ok_in_a_name[(unsigned char)*str])
+    {
+      if (atom_case)
+	{
+	  s7_pointer result;
+	  result = sc->singletons[(unsigned char)(sc->strbuf[0])];
+	  if (!result)
+	    {
+	      sc->strbuf[1] = '\0';
+	      result = make_symbol(sc, sc->strbuf);
+	      sc->singletons[(unsigned char)(sc->strbuf[0])] = result;
+	    }
+	  return(result);
+	}
+      else
+	{
+	  if (sc->strbuf[0] == 'f')
+	    return(sc->F);
+	  if (sc->strbuf[0] == 't')
+	    return(sc->T);
+	  if (sc->strbuf[0] == '\\')
+	    {
+	      /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
+	      sc->strbuf[1] = str[0];
+	      sc->strbuf[2] = '\0';
+	      port_position(pt)++;
+	    }
+	  else sc->strbuf[1] = '\0';
+	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
+	}
+    }
+
+  orig_str = (char *)(str - 1);
+  str++;
   while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
   k = str - orig_str;
 
@@ -21500,32 +21528,6 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool at
    */
 
   port_position(pt) += k;
-  
-  if (k == 1)
-    {
-      if (atom_case)
-	{
-	  s7_pointer result;
-	  result = sc->singletons[(unsigned char)*orig_str];
-	  if (!result)
-	    {
-	      sc->strbuf[1] = '\0';
-	      result = make_symbol(sc, sc->strbuf);
-	      sc->singletons[(unsigned char)(*orig_str)] = result;
-	    }
-	  if (*str) port_position(pt)--;
-	  return(result);
-	}
-
-      if (*orig_str == '\\')              /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
-	{
-	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
-	  sc->strbuf[1] = orig_str[1];
-	  sc->strbuf[2] = '\0';
-	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
-	}
-    }
-
   /* if k=2, ca 140 numbers, a dozen built-ins */
 
   /* eval_c_string string is a constant so we can't set and unset the token's end char */
@@ -21550,46 +21552,52 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
   char *orig_str, *str;
   char endc;
   
+  /* PERHAPS: figure out how to split token+read_white_space (why sc->tok -- read_expression)
+   */
   str = (char *)(port_data(pt) + port_position(pt));
+
+  if (!char_ok_in_a_name[(unsigned char)*str])
+    {
+      unsigned char c;
+      c = sc->strbuf[0];
+      if (atom_case)
+	{
+	  s7_pointer result;
+	  result = sc->singletons[c];
+	  if (!result)
+	    {
+	      sc->strbuf[1] = '\0';
+	      result = make_symbol(sc, sc->strbuf);
+	      sc->singletons[c] = result;
+	    }
+	  return(result);
+	}
+      else
+	{
+	  if (c == 'f')
+	    return(sc->F);
+	  if (c == 't')
+	    return(sc->T);
+	  if (c == '\\')  /* there's a bizarre special case here(? -- somewhere anyway), \ with the next char #\null: (eval-string "(list \\\x00 1)") */
+	    {
+	      /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
+	      sc->strbuf[1] = str[0];
+	      sc->strbuf[2] = '\0';
+	      port_position(pt)++;
+	    }
+	  else sc->strbuf[1] = '\0';
+	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
+	}
+    }
+
   orig_str = (char *)(str - 1);
-  
+  str++;
   while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
   k = str - orig_str;
   port_position(pt) += k;
   
-  if (!atom_case)             /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
+  if (!atom_case) 
     {
-      if (k == 1)
-	{
-	  /* most common case (#f etc)
-	   */
-	  if (*orig_str == '\\')
-	    {
-	      /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
-	      sc->strbuf[1] = orig_str[1];
-	      sc->strbuf[2] = '\0';
-	    }
-	  else
-	    {
-	      if (*str != 0) port_position(pt)--;
-	      if (*orig_str == 'f') return(sc->F);
-	      if (*orig_str == 't') return(sc->T);
-	      sc->strbuf[0] = orig_str[0];
-	      sc->strbuf[1] = '\0';
-	    }
-	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
-	}
-#if 0
-      /* port_string was allocated (and read from a file) so we can mess with it directly 
-       * but this doesn't work with *#reader* internal reads
-       */
-      endc = orig_str[k];
-      orig_str[k] = '\0';
-      if (endc != 0) port_position(pt)--; 
-      result = make_sharp_constant(sc, orig_str, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR);
-      orig_str[k] = endc;
-      return(result);
-#else
       if ((k + 1) >= sc->strbuf_size)
 	resize_strbuf(sc);
   
@@ -21598,23 +21606,6 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
       sc->strbuf[k] = '\0';
 
       return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
-#endif
-    }
-
-  if (k == 1)
-    {
-      result = sc->singletons[(unsigned char)(*orig_str)];
-      if (!result)
-	{
-	  endc = (*str);
-	  (*str) = '\0';
-	  result = make_symbol(sc, orig_str);
-	  sc->singletons[(unsigned char)(*orig_str)] = result;
-	  (*str) = endc;
-	  if (endc != 0) port_position(pt)--;
-	}
-      else if (*str) port_position(pt)--;
-      return(result);
     }
 
   endc = (*str);
@@ -39333,6 +39324,7 @@ static token_t token(s7_scheme *sc)
     case '#':
       return(read_sharp(sc, pt));
 
+    case '\0':
     case EOF:
       return(TOKEN_EOF);
 
@@ -47445,7 +47437,7 @@ static s7_pointer check_define(s7_scheme *sc)
       if ((arity >= 0) &&
 	  (arity < NUM_SMALL_INTS))
 	set_fcdr(sc->code, small_int(arity));
-      else set_fcdr(sc->code, make_permanent_integer(arity));
+      else set_fcdr(sc->code, make_permanent_integer(arity)); /* TODO: if this function is GC'd, do we free this int? */
       
       if (sc->op == OP_DEFINE)
 	{
@@ -62935,6 +62927,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->tok = read_sharp(sc, pt);
 	    break;
 
+	  case '\0':
 	  case EOF:
 	    return(missing_close_paren_error(sc));
 	    
@@ -69426,11 +69419,13 @@ int main(int argc, char **argv)
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3547
+ * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
- * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.8
+ * t816          |                                    |  69.5                52.7
+ * lg            |                                    |  7757                7787
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 36.3
  *            153 with run macro (eval_ptree)
  */
@@ -69447,10 +69442,12 @@ int main(int argc, char **argv)
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
- * add fv in make-env tests to snd-test
- *   (can these be "certified" so no rechecks?) [vct_is_constant flag?]
- *   (pulsed-env to q_len? add s s :dur s case?)
  * need as_needed_input_to_buffer to optimize that process, but how to call from clm.c?
+ * read_name could be split to separate out the #... case
+ * symbol_table_find might have a singletons front -- last seen case checked first? (then if none, it's obviously not in the table)
+ * extend mx_free|alloc to track nvcts 0..7 (in ms) (are other free-list cases combinable? port+string)
+ *   why can't port_heap use a local(port_t) next pointer rather than an array?
+ *   free list for seg*?
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))

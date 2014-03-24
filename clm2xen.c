@@ -1257,6 +1257,9 @@ static Xen g_is_mus_generator(Xen obj)
   return(C_bool_to_Xen_boolean(mus_is_xen(obj)));
 }
 
+
+enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER, MUS_INPUT_DATA, MUS_MAX_VCTS};
+
 static Xen *make_vcts(int size)
 {
   int i;
@@ -1266,9 +1269,6 @@ static Xen *make_vcts(int size)
     vcts[i] = Xen_undefined;
   return(vcts);
 }
-
-
-enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER, MUS_INPUT_DATA, MUS_MAX_VCTS};
 
 #if HAVE_SCHEME
 static Xen_object_mark_t mark_mus_xen(void *obj) 
@@ -3673,7 +3673,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (!partial_data)
     {
-      partial_data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
+      partial_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
       if (partial_data == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
       for (i = 0, lst = Xen_copy_arg(partials); i < len; i++, lst = Xen_cdr(lst)) 
@@ -3765,7 +3765,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (!partial_data)
     {
-      partial_data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
+      partial_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
       if (partial_data == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
       for (i = 0, lst = Xen_copy_arg(partials); i < len; i++, lst = Xen_cdr(lst)) 
@@ -6099,7 +6099,7 @@ is the same in effect as " S_make_oscil
     {
       /* clm.html says '(1 1) is the default */
       mus_float_t *data;
-      data = (mus_float_t *)calloc(2, sizeof(mus_float_t));
+      data = (mus_float_t *)malloc(2 * sizeof(mus_float_t));
       data[0] = 0.0;
       data[1] = 1.0;
       coeffs = mus_partials_to_polynomial(2, data, kind);
@@ -6242,7 +6242,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
     {
       /* clm.html says '(1 1) is the default but table-lookup is 0? */
       mus_float_t *data;
-      data = (mus_float_t *)calloc(2, sizeof(mus_float_t));
+      data = (mus_float_t *)malloc(2 * sizeof(mus_float_t));
       data[0] = 0.0;
       data[1] = 1.0;
       xcoeffs = data;
@@ -9699,7 +9699,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       out_len = Xen_vector_length(Xen_vector_ref(envs, 0));
       if (in_len < in_chans) in_size = in_chans; else in_size = in_len;
       if (out_len < out_chans) out_size = out_chans; else out_size = out_len;
-      envs1 = (mus_any ***)calloc(in_size, sizeof(mus_any **));
+      envs1 = (mus_any ***)malloc(in_size * sizeof(mus_any **));
       for (i = 0; i < in_size; i++) envs1[i] = (mus_any **)calloc(out_size, sizeof(mus_any *));
       for (i = 0; i < in_len; i++)
 	{
@@ -11801,7 +11801,7 @@ static smptri *make_simple_triangle_wave(mus_any *w)
   double base, freq, cur_val;
   smptri *gen;
 
-  gen = (smptri *)calloc(1, sizeof(smptri));
+  gen = (smptri *)malloc(sizeof(smptri));
   base = mus_scaler(w);                       /* not normalized */
   freq = mus_frequency(w);                    /* hz */
   cur_val = mus_triangle_wave_unmodulated(w); /* includes effect of possible :initial-phase */
