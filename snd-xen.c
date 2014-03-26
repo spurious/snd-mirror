@@ -1430,7 +1430,8 @@ static Xen g_dlinit(Xen handle, Xen func)
 #if HAVE_SCHEME
 static s7_pointer g_line_reader(s7_scheme *sc, s7_pointer args)
 {
-  const char *str;
+  const char *str;  
+  Xen_check_type(Xen_is_string(s7_car(args)), s7_car(args), 1, "#__line__", "a string");
   str = s7_string(s7_car(args));
   if ((str) && (strcmp(str, "__line__") == 0))
     return(s7_make_integer(sc, s7_port_line_number(s7_current_input_port(sc))));

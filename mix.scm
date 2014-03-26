@@ -74,7 +74,6 @@
 	v)
       (error 'no-such-mix (list "mix->float-vector" id))))
 |#
-(define mix->vct mix->float-vector)
 
 
 ;;; 12-Nov-09: moved save-mix to C (snd-mix.c)
@@ -552,8 +551,6 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
     (mus-sound-write fd 0 (- (length v) 1) 1 (make-shared-vector v (list 1 (length v))))
     (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
     (pan-mix temp-file beg pan snd #t)))
-
-(define pan-mix-vct pan-mix-float-vector)
 
 
 

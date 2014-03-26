@@ -383,15 +383,15 @@ void snd_doit(int argc, char **argv)
   Xen_eval_C_string("(define (" S_free_cairo " . args) #f)");
   Xen_eval_C_string("(define (" S_axis_info " . args) #f)");
   Xen_eval_C_string("(define (" S_channel_widgets " . args) #f)");
-  Xen_eval_C_string("(define (" S_is_color " . args) #f)");
-  Xen_eval_C_string("(define (" S_color_to_list " .args) #f)");
-  Xen_eval_C_string("(define (" S_is_colormap " . args) #f)");
+  Xen_eval_C_string("(define (" S_is_color " obj) #f)");
+  Xen_eval_C_string("(define (" S_color_to_list " obj) #f)");
+  Xen_eval_C_string("(define (" S_is_colormap " obj) #f)");
   Xen_eval_C_string("(define (" S_current_font " . args) #f)");
   Xen_eval_C_string("(define (" S_dialog_widgets ") #f)");
   Xen_eval_C_string("(define (" S_graph_data " . args) #f)");
 
   Xen_eval_C_string("(define (" S_in " . args) #f)"); 
-  Xen_eval_C_string("(define (" S_main_widgets " . args) #f)");
+  Xen_eval_C_string("(define (" S_main_widgets ") #f)");
   Xen_eval_C_string("(define (" S_make_color " . args) #f)");
   Xen_eval_C_string("(define (" S_make_graph_data " . args) #f)");
   Xen_eval_C_string("(define (" S_menu_widgets " . args) #f)");
@@ -408,8 +408,8 @@ void snd_doit(int argc, char **argv)
   Xen_eval_C_string("(define (" S_position_to_y " . args) #f)");
   Xen_eval_C_string("(define (" S_position_to_x " . args) #f)");
   Xen_eval_C_string("(define (" S_listener_selection " . args) #f)");
-  Xen_eval_C_string("(define (" S_hide_widget " . args) #f)");
-  Xen_eval_C_string("(define (" S_focus_widget " . args) #f)");
+  Xen_eval_C_string("(define (" S_hide_widget " arg) #f)");
+  Xen_eval_C_string("(define (" S_focus_widget " arg) #f)");
   Xen_eval_C_string("(define (" S_fill_rectangle " . args) #f)");
   Xen_eval_C_string("(define (" S_fill_polygon " . args) #f)");
   Xen_eval_C_string("(define (" S_draw_string " . args) #f)");
@@ -420,7 +420,7 @@ void snd_doit(int argc, char **argv)
   Xen_eval_C_string("(define (" S_draw_axes " . args) #f)");
   Xen_eval_C_string("(define (" S_delete_colormap " . args) #f)");
   Xen_eval_C_string("(define (" S_colormap_ref " . args) #f)");
-  Xen_eval_C_string("(define (" S_colormap_name " . args) #f)");
+  Xen_eval_C_string("(define (" S_colormap_name " arg) #f)");
   Xen_eval_C_string("(define (" S_add_colormap " . args) #f)");
 
   Xen_eval_C_string("(define " S_x_bounds " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");

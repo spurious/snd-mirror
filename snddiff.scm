@@ -45,8 +45,6 @@
 (define (float-vector-size v)
   (sqrt (dot-product v v)))
 
-(define vct-size float-vector-size)
-
 (define (unconvolve-1 v0 v1 impulse-response)  ; assume here that v0 is the original and that we're aligned, and both are trimmed at the front
   (let ((pos -1)
 	(len (length v0)))

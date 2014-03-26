@@ -105,29 +105,45 @@ struct mus_xen {
 };
 
 
-static mus_xen *mx_free_list = NULL;
+enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER, MUS_INPUT_DATA, MUS_MAX_VCTS};
 
-static mus_xen *mx_alloc(void)
+static mus_xen *mx_free_lists[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+
+static mus_xen *mx_alloc(int vcts)
 {
-  if (mx_free_list)
+  int i;
+  mus_xen *p;
+  if (mx_free_lists[vcts])
     {
-      mus_xen *p;
-      p = mx_free_list;
-      mx_free_list = p->next;
-      /* memset((void *)p, 0, sizeof(mus_xen)); */
+      p = mx_free_lists[vcts];
+      mx_free_lists[vcts] = p->next;
 #if HAVE_SCHEME
       p->g = NULL;
 #endif
+      for (i = 0; i < vcts; i++)
+	p->vcts[i] = Xen_undefined;
       return(p);
     }
-  return((mus_xen *)calloc(1, sizeof(mus_xen)));
+  p = (mus_xen *)calloc(1, sizeof(mus_xen));
+  p->nvcts = vcts;
+  if (vcts > 0)
+    {
+      p->vcts = (Xen *)malloc(vcts * sizeof(Xen));
+      for (i = 0; i < vcts; i++)
+	p->vcts[i] = Xen_undefined;
+    }
+  else p->vcts = NULL;
+#if HAVE_SCHEME
+  p->g = NULL;
+#endif
+  return(p);
 }
 
 
 static void mx_free(mus_xen *p)
 {
-  p->next = mx_free_list;
-  mx_free_list = p;
+  p->next = mx_free_lists[p->nvcts];
+  mx_free_lists[p->nvcts] = p;
 }
 
 
@@ -1258,18 +1274,6 @@ static Xen g_is_mus_generator(Xen obj)
 }
 
 
-enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER, MUS_INPUT_DATA, MUS_MAX_VCTS};
-
-static Xen *make_vcts(int size)
-{
-  int i;
-  Xen *vcts;
-  vcts = (Xen *)malloc(size * sizeof(Xen));
-  for (i = 0; i < size; i++)
-    vcts[i] = Xen_undefined;
-  return(vcts);
-}
-
 #if HAVE_SCHEME
 static Xen_object_mark_t mark_mus_xen(void *obj) 
 #else
@@ -1306,9 +1310,6 @@ static void mus_xen_free(mus_xen *ms)
 {
   mus_free(ms->gen);
   ms->gen = NULL;
-  if (ms->vcts) free(ms->vcts);
-  ms->vcts = NULL;
-  ms->nvcts = 0;
 #if HAVE_SCHEME
   if (ms->g) {gf_free(ms->g); ms->g = NULL;}
 #endif
@@ -1538,13 +1539,8 @@ static Xen mus_optkey_to_input_procedure(Xen key, const char *caller, int n, Xen
 mus_xen *mus_any_to_mus_xen(mus_any *ge)
 {
   mus_xen *gn;
-  gn = mx_alloc();
+  gn = mx_alloc(0);
   gn->gen = ge;
-  gn->nvcts = 0;
-  gn->vcts = NULL;
-#if HAVE_SCHEME
-  gn->g = NULL;
-#endif
   return(gn);
 }
 
@@ -1552,14 +1548,9 @@ mus_xen *mus_any_to_mus_xen(mus_any *ge)
 mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, Xen v)
 {
   mus_xen *gn;
-  gn = mx_alloc();
+  gn = mx_alloc(1);
   gn->gen = ge;
-  gn->nvcts = 1;
-  gn->vcts = make_vcts(gn->nvcts);
   gn->vcts[MUS_DATA_WRAPPER] = v;
-#if HAVE_SCHEME
-  gn->g = NULL;
-#endif
   return(gn);
 }
 
@@ -1567,15 +1558,10 @@ mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, Xen v)
 mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, Xen v1, Xen v2)
 {
   mus_xen *gn;
-  gn = mx_alloc();
+  gn = mx_alloc(2);
   gn->gen = ge;
-  gn->nvcts = 2;
-  gn->vcts = make_vcts(gn->nvcts);
   gn->vcts[MUS_DATA_WRAPPER] = v1;
   gn->vcts[MUS_INPUT_FUNCTION] = v2;
-#if HAVE_SCHEME
-  gn->g = NULL;
-#endif
   return(gn);
 }
 
@@ -1803,7 +1789,7 @@ static Xen g_mus_describe(Xen gen)
   mus_xen *gn;                                                             \
   gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (!gn) Xen_check_type(false, gen, 1, S_setB Caller, "a generator");  \
-  Xen_check_type(Xen_is_integer(val), val, 2, S_setB Caller, "a float");   \
+  Xen_check_type(Xen_is_integer(val), val, 2, S_setB Caller, "an integer");   \
   CLM_case(gn->gen, Xen_llong_to_C_llong(val));				   \
   return(val);
 
@@ -2488,10 +2474,8 @@ static Xen g_make_oscil_bank(Xen freqs, Xen phases, Xen amps)
   
   ge = mus_make_oscil_bank(mus_vct_length(f), mus_vct_data(f), mus_vct_data(p), (a) ? mus_vct_data(a) : NULL);
 
-  gn = mx_alloc();
+  gn = mx_alloc(3);
   gn->gen = ge;
-  gn->nvcts = 3;
-  gn->vcts = make_vcts(gn->nvcts);
   gn->vcts[0] = freqs;
   gn->vcts[1] = phases;
   gn->vcts[2] = amps;
@@ -2764,6 +2748,33 @@ If the delay length will be changing at run-time, max-size sets its maximum leng
    (" S_make_delay " len :max-size (+ len 10))\n\
 provides 10 extra elements of delay for subsequent phasing or flanging. \
 initial-contents can be either a list or a vct."
+
+  if ((Xen_is_pair(args)) && (!Xen_is_pair(Xen_cdr(args))))
+    {
+      Xen val, v;
+      mus_any *ge;
+      mus_long_t size, max_size;
+      mus_float_t *line;
+      mus_error_handler_t *old_error_handler;
+
+      val = Xen_car(args);
+      Xen_check_type(Xen_is_integer(val), val, 1, S_make_delay, "an integer");
+      size = Xen_integer_to_C_int(val);
+      if (size < 0)
+	Xen_out_of_range_error(S_make_delay, 1, val, "size < 0?");
+      if (size > mus_max_table_size())
+	Xen_out_of_range_error(S_make_delay, 1, val, "size too large (see mus-max-table-size)");
+      if (size == 0) max_size = 1; else max_size = size;
+
+      line = (mus_float_t *)calloc(max_size, sizeof(mus_float_t));
+      v = xen_make_vct(max_size, line); /* we need this for mus-data */
+
+      old_error_handler = mus_error_set_handler(local_mus_error);
+      ge = mus_make_delay(size, line, max_size, MUS_INTERP_NONE);
+      mus_error_set_handler(old_error_handler);
+      if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
+      return(clm_mus_error(local_error_type, local_error_msg));
+    }
 
   return(g_make_delay_1(G_DELAY, args));
 }
@@ -6695,10 +6706,8 @@ static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen 
     }
   if (fgen)
     {
-      gn = mx_alloc();
+      gn = mx_alloc(3);
       gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
-      gn->nvcts = 3;
-      gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[G_FILTER_STATE] = xen_make_vct_wrapper(order, mus_data(fgen));
       gn->vcts[G_FILTER_XCOEFFS] = xwave;
       gn->vcts[G_FILTER_YCOEFFS] = ywave;
@@ -6946,7 +6955,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   if (ge) 
     {
       if (v) 
-	return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
+	return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, keys[0]))); /* in s7, keys[0] == v */
       return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct(mus_env_breakpoints(ge) * 2, brkpts))));
     }
   return(clm_mus_error(local_error_type, local_error_msg));
@@ -8364,13 +8373,10 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 
   if (ge)
     {
-      gn = mx_alloc();
-
       if (((Xen_is_bound(ov)) && (!Xen_is_false(ov))) || 
 	  ((Xen_is_bound(rv)) && (!Xen_is_false(rv))))
-	gn->nvcts = 4;
-      else gn->nvcts = 2;
-      gn->vcts = make_vcts(gn->nvcts);
+	gn = mx_alloc(4);
+      else gn = mx_alloc(2);
 
       /* these two are for the mus-data and mus-xcoeffs methods in Scheme (etc) = MUS_DATA_WRAPPER and G_FILTER_XCOEFFS */
       if (out_chans > 0)
@@ -8605,12 +8611,10 @@ static Xen g_make_move_sound(Xen dloc_list, Xen outp, Xen revp)
 			   true, false);                  /* free outer arrays but not gens */
   if (ge)
     {
-      gn = mx_alloc();
       if (((Xen_is_bound(ov)) && (!Xen_is_false(ov))) || 
 	  ((Xen_is_bound(rv)) && (!Xen_is_false(rv))))
-	gn->nvcts = 4;
-      else gn->nvcts = 1;
-      gn->vcts = make_vcts(gn->nvcts);
+	gn = mx_alloc(4);
+      else gn = mx_alloc(1);
       gn->vcts[G_LOCSIG_DATA] = dloc_list; /* it is crucial that the list be gc-protected! */
       if (gn->nvcts == 4)
 	{
@@ -8920,10 +8924,8 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 	Xen_out_of_range_error(S_make_src, orig_arg[2], keys[2], "width > 2000?");
     }
 
-  gn = mx_alloc();
+  gn = mx_alloc(MUS_MAX_VCTS);
   /* mus_make_src assumes it can invoke the input function! */
-  gn->nvcts = MUS_MAX_VCTS;
-  gn->vcts = make_vcts(gn->nvcts);
   gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
 
   {
@@ -9098,9 +9100,7 @@ The edit function, if any, should return the length in samples of the grain, or 
       edit_obj = mus_optkey_to_procedure(keys[8], S_make_granulate, orig_arg[8], Xen_undefined, 1, "granulate edit procedure takes 1 arg");
     }
 
-  gn = mx_alloc();
-  gn->nvcts = MUS_MAX_VCTS;
-  gn->vcts = make_vcts(gn->nvcts);
+  gn = mx_alloc(MUS_MAX_VCTS);
 
   {
     mus_error_handler_t *old_error_handler;
@@ -9216,9 +9216,7 @@ return a new convolution generator which convolves its input with the impulse re
   else fftlen = (mus_long_t)pow(2.0, 1 + (int)(log((mus_float_t)(mus_vct_length(filter) + 1)) / log(2.0)));
   if (fft_size < fftlen) fft_size = fftlen;
 
-  gn = mx_alloc();
-  gn->nvcts = MUS_MAX_VCTS;
-  gn->vcts = make_vcts(gn->nvcts);
+  gn = mx_alloc(MUS_MAX_VCTS);
 
   {
     mus_error_handler_t *old_error_handler;
@@ -9470,9 +9468,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
       synthesize_obj = mus_optkey_to_procedure(keys[7], S_make_phase_vocoder, orig_arg[7], Xen_undefined, 1, S_phase_vocoder " synthesize procedure takes 1 arg");
     }
 
-  gn = mx_alloc();
-  gn->nvcts = MUS_MAX_VCTS;
-  gn->vcts = make_vcts(gn->nvcts);
+  gn = mx_alloc(MUS_MAX_VCTS);
 
   {
     mus_error_handler_t *old_error_handler;
@@ -13219,6 +13215,7 @@ static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	      g->s1 = s2;
 	      return(g);
 	    }
+	  break;
 
 	case GF_RX:
 	  g = gf_alloc();
@@ -13248,7 +13245,9 @@ static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	      g->s1 = s2;
 	      return(g);
 	    }
+	  break;
 	}
+      if (g) gf_free(g);
       if (g1) gf_free(g1);
       if (g2) gf_free(g2);
     }
@@ -13559,6 +13558,7 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
 	      return(g);
 	    }
 	}
+      if (g) gf_free(g);
     }
 
   if (len == 4)
@@ -13820,6 +13820,7 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
 		}
 	    }
 	}
+      if (g) gf_free(g);
     }
 
   if (len == 2)
@@ -14190,9 +14191,7 @@ static void gf_free(void *p)
   if (g->g3) gf_free(g->g3);
   if (g->g4) gf_free(g->g4);
   if (g->g5) gf_free(g->g5);
-  if (gf_free_list)
-    g->nxt = gf_free_list;
-  else g->nxt = NULL;
+  g->nxt = gf_free_list;
   gf_free_list = g;
 }
 

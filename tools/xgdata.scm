@@ -8864,6 +8864,7 @@
 ;;; 3.11.9
 (CFNC-3.12 "GdkWindow* gdk_device_get_last_event_window GdkDevice* device")
 
+;;; 3.12.0 -- no changes
 
 ;;; --------------------------------------------------------------------------------
 #|

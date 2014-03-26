@@ -8167,12 +8167,12 @@ EDITS: 5
 	     (set! (sample 50) .5)
 	     (set! (sample 51) -.5)
 	     (src-channel sr)
-	     (let ((v1 (channel->vct)))
+	     (let ((v1 (channel->float-vector)))
 	       (revert-sound ind)
 	       (set! (sample 50) .5)
 	       (set! (sample 51) -.5)
 	       (src-channel (+ sr .00001))
-	       (let ((v2 (channel->vct)))
+	       (let ((v2 (channel->float-vector)))
 		 (let ((sum 0.0)
 		       (len (min (length v1) (length v2)))
 		       (mx 0.0))
@@ -11074,7 +11074,7 @@ EDITS: 2
   ;; ----------------
   (define (analog-filter-tests)
     
-    (define v (make-vct 1000))
+    (define v (make-float-vector 1000))
 
     (define (sweep->bins flt bins)
       (let ((ind (open-sound "sweep.snd")))
@@ -27431,7 +27431,7 @@ EDITS: 2
 					   ((= i len) v)
 					 (let ((bin (round (* 16.0 (abs (next-sample fd))))))
 					   (if (< bin steps)
-					       (vct-offset! (make-shared-vector v (list steps) bin) step)))))))))
+					       (float-vector-offset! (make-shared-vector v (list steps) bin) step)))))))))
 	  (set! (x-bounds) '(.1 .2))
 	  (set! (transform-type) fourier-transform)
 	  (set! (x-bounds) '(.1 .2))
@@ -32976,7 +32976,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 3) .5)
 	    (src-channel 2.0)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector -0.05016523320247118 0.1581800948824515 0.1581800948824515 
 						-0.05016523320247118 0.02716944826115516 -0.01652926966015632)))
 		  (snd-display #__line__ ";src 2, 10 3 10: ~A" v)))
@@ -32985,7 +32985,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 2) .5)
 	    (src-channel 2.0)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.0 0.25 0.0 0.0 0.0 0.0)))
 		  (snd-display #__line__ ";src 2, 10 2 10: ~A" v)))
 	    (close-sound res))
@@ -32993,7 +32993,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 0) .5)
 	    (src-channel 2.0)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.25 0.0 0.0 0.0 0.0 0.0)))
 		  (snd-display #__line__ ";src 2, 10 0 10: ~A" v)))
 	    (close-sound res))
@@ -33001,7 +33001,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 11)))
 	    (set! (sample 3) .5)
 	    (src-channel 2.0)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector -0.05016523320247118 0.1581800948824515 0.1581800948824515 
 						-0.05016523320247118 0.02716944826115516 -0.01652926966015632 0.01022512563738671)))
 		  (snd-display #__line__ ";src 2, 11 3 10: ~A" v)))
@@ -33010,7 +33010,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 11)))
 	    (set! (sample 2) .5)
 	    (src-channel 2.0)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.0 0.25 0.0 0.0 0.0 0.0 0.0)))
 		  (snd-display #__line__ ";src 2, 11 2 10: ~A" v)))
 	    (close-sound res))
@@ -33018,7 +33018,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 11)))
 	    (set! (sample 0) .5)
 	    (src-channel 2.0)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.25 0.0 0.0 0.0 0.0 0.0 0.0)))
 		  (snd-display #__line__ ";src 2, 11 0 10: ~A" v)))
 	    (close-sound res))
@@ -33029,7 +33029,7 @@ EDITS: 1
 	      (set! (sample i) (* i .05))
 	      (set! (sample (- 39 i)) (* i .05)))
 	    (src-channel 2.0)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.01198528796961999 0.1035793306415383 0.2059748594814547 0.3060708098272395 0.4072307780331241 
 						0.5077603318367317 0.6062448605128621 0.7086656575233007 0.8045885470214085 0.9128440616541418 
 						0.9536620711423869 0.8562080426776515 0.7579855746854125 0.6566287955350736 0.5575138524566664 
@@ -33042,7 +33042,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 15)))
 	    (set! (sample 3) .5)
 	    (src-channel 2.0)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector -0.05103248958541851 0.1584755057631961 0.1584755057631961 
 						-0.05103248958541851 0.02854464095499105 -0.01828991864619797 0.01222560572178551 -0.008180460967128276 0.0)))
 		  (snd-display #__line__ ";src 2, 15 3 11: ~A" v)))
@@ -33051,7 +33051,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 15)))
 	    (set! (sample 0) .5)
 	    (src-channel 2.0)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.25 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
 		  (snd-display #__line__ ";src 2, 15 0 11: ~A" v)))
 	    (close-sound res))
@@ -33065,7 +33065,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 3) .5)
 	    (src-channel 0.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.0 0.05433889652231032 0.0 -0.1003304664049424 0.0 0.316360189764903 0.5 
 						0.316360189764903 0.0 -0.1003304664049424 0.0 0.05433889652231032 0.0 -0.03305853932031265 0.0 
 						0.02045025127477342 0.0 -0.01220523861007159 0.0 0.006688908032246622 0.0)))
@@ -33075,7 +33075,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 2) .5)
 	    (src-channel 0.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.0 -0.1003304664049424 0.0 0.316360189764903 0.5 0.316360189764903 0.0 -0.1003304664049424 
 						0.0 0.05433889652231032 0.0 -0.03305853932031265 0.0 0.02045025127477342 0.0 
 						-0.01220523861007159 0.0 0.006688908032246622 0.0 -0.003110640428161881 0.0)))
@@ -33085,7 +33085,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 0) .5)
 	    (src-channel 0.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.5 0.316360189764903 0.0 -0.1003304664049424 0.0 0.05433889652231032 0.0 -0.03305853932031265 
 						0.0 0.02045025127477342 0.0 -0.01220523861007159 0.0 0.006688908032246622 0.0 
 						-0.003110640428161881 0.0 0.001022072692939124 0.0 -0.000103644775079492 0.0)))
@@ -33096,7 +33096,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 11)))
 	    (set! (sample 3) .5)
 	    (src-channel 0.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.0 0.05433889652231032 0.0 -0.1003304664049424 0.0 0.316360189764903 0.5 0.316360189764903 
 						0.0 -0.1003304664049424 0.0 0.05433889652231032 0.0 -0.03305853932031265 0.0 0.02045025127477342 
 						0.0 -0.01220523861007159 0.0 0.006688908032246622 0.0 -0.003110640428161881 0.0)))
@@ -33106,7 +33106,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 11)))
 	    (set! (sample 2) .5)
 	    (src-channel 0.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.0 -0.1003304664049424 0.0 0.316360189764903 0.5 0.316360189764903 0.0 -0.1003304664049424 
 						0.0 0.05433889652231032 0.0 -0.03305853932031265 0.0 0.02045025127477342 0.0 -0.01220523861007159 
 						0.0 0.006688908032246622 0.0 -0.003110640428161881 0.0 0.001022072692939124 0.0)))
@@ -33116,7 +33116,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 11)))
 	    (set! (sample 0) .5)
 	    (src-channel 0.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.5 0.316360189764903 0.0 -0.1003304664049424 0.0 0.05433889652231032 0.0 -0.03305853932031265 
 						0.0 0.02045025127477342 0.0 -0.01220523861007159 0.0 0.006688908032246622 0.0 
 						-0.003110640428161881 0.0 0.001022072692939124 0.0 -0.000103644775079492 0.0 0.0 0.0)))
@@ -33130,7 +33130,7 @@ EDITS: 1
 	      (set! (sample i) (* i .05))
 	      (set! (sample (- 39 i)) (* i .05)))
 	    (src-channel 0.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.0 0.02056010532402247 0.05 0.07720130317537323 0.1 0.1238094543862298 0.15 0.1758514952493174 
 						0.2 0.2245876821803736 0.25 0.2753688942389073 0.3 0.3249295824364337 0.35 0.3751591614371849 
 						0.4 0.4250776763951197 0.45 0.4750983986223486 0.5 0.5251191208495776 0.55 0.5750480002850203 
@@ -33151,7 +33151,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 15)))
 	    (set! (sample 3) .5)
 	    (src-channel 0.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.0 0.05588873297652781 0.0 -0.1013169884822853 0.0 0.3166955736757819 0.5 0.3166955736757819 
 						0.0 -0.1013169884822853 0.0 0.05588873297652781 0.0 -0.03503207135776369 0.0 0.02267085373675465 
 						0.0 -0.01446863119016991 0.0 0.008794782253203336 0.0 -0.004875864375201019 0.0 0.002288656235197179
@@ -33162,7 +33162,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 15)))
 	    (set! (sample 0) .5)
 	    (src-channel 0.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 0.5 0.3166955736757819 0.0 -0.1013169884822853 0.0 0.05588873297652781 0.0 -0.03503207135776369 0.0 
 						0.02267085373675465 0.0 -0.01446863119016991 0.0 0.008794782253203336 0.0 -0.004875864375201019 0.0 
 						0.002288656235197179 0.0 -0.0007570986863940245 0.0 7.729542250127452e-05 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
@@ -33174,7 +33174,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 2) .5)
 	    (src-channel 1.5)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector -0.0659173000292574 0.2750218141864232 0.1361775290259087 -0.05140008051946586 0.02873817799080515 
 						-0.01761592377597271 0.01086818222156537 -0.006418849681280971)))
 		  (format *stderr* "src 1.5, 10 0 10: ~A~%" v)))
@@ -33183,7 +33183,7 @@ EDITS: 1
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 2) .5)
 	    (src-channel 0.3)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector -2.309626927862667e-14 -0.07046687722856798 -0.1029821798386912 -0.04339187529883121 
 						0.1151049838606023 0.316360189764903 0.4672831482919799 0.4916944808321784 0.3769307110649516 
 						0.1817344234767786 1.953289539319582e-14 -0.09498013189693179 -0.08875244041152466 
@@ -33201,7 +33201,7 @@ EDITS: 1
 	    (set! (sample 1) .5)
 	    (set! (sample 8) .5)
 	    (src-channel e)
-	    (let ((v (channel->vct)))
+	    (let ((v (channel->float-vector)))
 	      (if (not (vvequal v (float-vector 3.511360236100833e-14 0.499999999999969 0.03245693012152732 -0.04426423670248926
 						0.05693627592759216 -0.06869987735399859 0.1364034106143399 0.2654607053632132 -0.04771168369895742)))
 		  (format *stderr* "src e, 10 0 10: ~A~%" v)))
@@ -33836,10 +33836,10 @@ EDITS: 1
     
     (let ((ind0 (open-sound "oboe.snd"))
 	  (ind1 (open-sound "oboe.snd")))
-      (if (not (equal? (find-sound "oboe.snd" 0) ind0))
-	  (snd-display #__line__ ";find-sound 0: ~A ~A" ind0 (find-sound "oboe.snd" 0)))
-      (if (not (equal? (find-sound "oboe.snd" 1) ind1))
-	  (snd-display #__line__ ";find-sound 1: ~A ~A" ind1 (find-sound "oboe.snd" 1)))
+      (if (not (member (find-sound "oboe.snd" 0) (list ind0 ind1)))
+	  (snd-display #__line__ ";find-sound 0: ~A ~A" (list ind0 ind1) (find-sound "oboe.snd" 0)))
+      (if (not (member (find-sound "oboe.snd" 1) (list ind0 ind1)))
+	  (snd-display #__line__ ";find-sound 1: ~A ~A" (list ind0 ind1) (find-sound "oboe.snd" 1)))
       (add-mark 123 ind0)
       (add-mark 321 ind1)
       (if (file-exists? "s61.scm") (delete-file "s61.scm"))

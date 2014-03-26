@@ -278,8 +278,8 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
   int i, lim, k, size = 256;
   if (arr == NULL) 
     {
-      str = (char *)calloc(4, sizeof(char));
-      sprintf(str, "nil");
+      str = (char *)malloc(4 * sizeof(char));
+      snprintf(str, 4, "nil");
       return(str);
     }
   lim = (array_print_length + 4) * MAX_NUM_SIZE; /* 4 for possible bounds below */
@@ -9048,6 +9048,7 @@ typedef struct {
   double *rates;
   mus_long_t *locs;
   mus_float_t (*env_func)(mus_any *g);
+  void *next;
 } seg;
 
 /* I used to use exp directly, but:
@@ -9188,14 +9189,9 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
   int i, j;
   double xscl = 1.0, cur_loc = 0.0, y1 = 0.0;
 
-  e->size = pts;
-
   if ((pts > 1) &&
       (data[pts * 2 - 2] != data[0]))
     xscl = (double)(dur - 1) / (double)(data[pts * 2 - 2] - data[0]); /* was dur, 7-Apr-02 */
-
-  e->rates = (double *)malloc(pts * sizeof(double));
-  e->locs = (mus_long_t *)malloc((pts + 1) * sizeof(mus_long_t));
 
   for (j = 0, i = 2; i < pts * 2; i += 2, j++) /* if pts == 1, no loop */
     {
@@ -9360,14 +9356,35 @@ static char *describe_env(mus_any *ptr)
 }
 
 
+static seg *e2_free_list = NULL, *e3_free_list = NULL, *e4_free_list = NULL;
+
 static int free_env_gen(mus_any *pt) 
 {
   seg *ptr = (seg *)pt;
   if (ptr) 
     {
-      if (ptr->locs) {free(ptr->locs); ptr->locs = NULL;}
-      if (ptr->rates) {free(ptr->rates); ptr->rates = NULL;}
-      free(ptr); 
+      switch (ptr->size)
+	{
+	case 2:
+	  ptr->next = e2_free_list;
+	  e2_free_list = ptr;
+	  break;
+
+	case 3:
+	  ptr->next = e3_free_list;
+	  e3_free_list = ptr;
+	  break;
+
+	case 4:
+	  ptr->next = e4_free_list;
+	  e4_free_list = ptr;
+	  break;
+
+	default:
+	  if (ptr->locs) {free(ptr->locs); ptr->locs = NULL;}
+	  if (ptr->rates) {free(ptr->rates); ptr->rates = NULL;}
+	  free(ptr); 
+	}
     }
   return(0);
 }
@@ -9511,17 +9528,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
   int i;
   mus_long_t dur_in_samples;
   mus_float_t *edata;
-  seg *e;
-
-  if (npts == 1)
-    {
-      e = (seg *)calloc(1, sizeof(seg));
-      e->core = &ENV_CLASS;
-      e->current_value = offset + scaler * brkpts[1];
-      e->env_func = mus_env_line;
-      e->original_data = brkpts;
-      return((mus_any *)e);
-    }
+  seg *e = NULL;
 
   for (i = 2; i < npts * 2; i += 2)
     if (brkpts[i - 2] >= brkpts[i])
@@ -9534,8 +9541,53 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 	return(NULL);
       }
 
-  e = (seg *)malloc(sizeof(seg));
-  e->core = &ENV_CLASS;
+  switch (npts)
+    {
+    case 1:
+      e = (seg *)calloc(1, sizeof(seg));
+      e->core = &ENV_CLASS;
+      e->current_value = offset + scaler * brkpts[1];
+      e->env_func = mus_env_line;
+      e->original_data = brkpts;
+      return((mus_any *)e);
+
+    case 2:
+      if (e2_free_list)
+	{
+	  e = e2_free_list;
+	  e2_free_list = e->next;
+	}
+      break;
+
+    case 3:
+      if (e3_free_list)
+	{
+	  e = e3_free_list;
+	  e3_free_list = e->next;
+	}
+      break;
+      
+    case 4:
+      if (e4_free_list)
+	{
+	  e = e4_free_list;
+	  e4_free_list = e->next;
+	}
+      break;
+      
+    default:
+      break;
+    }
+  
+  if (!e)
+    {
+      e = (seg *)malloc(sizeof(seg));
+      e->core = &ENV_CLASS;
+      e->size = npts;
+      e->rates = (double *)malloc(npts * sizeof(double));
+      e->locs = (mus_long_t *)malloc((npts + 1) * sizeof(mus_long_t));
+    }
+
   e->original_data = brkpts;
 
   if (duration != 0.0)

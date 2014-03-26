@@ -68,6 +68,7 @@
 				 (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
 		  (lambda any 
 		    (if (and (eq? (car any) 'wrong-type-arg)
+			     (pair? (cddr (cadr any)))
 			     (integer? (caddr (cadr any))) ; if just 1 arg, arg num can be omitted
 			     (< (caddr (cadr any)) low))
 			(quit))))

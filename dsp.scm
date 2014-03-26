@@ -1618,8 +1618,6 @@ shift the given channel in pitch without changing its length.  The higher 'order
       (float-vector-offset! (float-vector-multiply! new-v v) (coeffs i)))
     new-v))
 
-(define vct-polynomial float-vector-polynomial)
-
 
 (define* (channel-polynomial coeffs snd chn)
   (let ((len (frames snd chn)))

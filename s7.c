@@ -872,6 +872,7 @@ typedef struct s7_port_t {
   FILE *file;
   char *filename;
   int filename_length, gc_loc;
+  void *next;
   s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
   void (*output_function)(s7_scheme *sc, unsigned char c, s7_pointer port);
   /* a version of string ports using a pointer to the current location and a pointer to the end
@@ -883,7 +884,8 @@ typedef struct s7_port_t {
   void (*write_string)(s7_scheme *sc, const char *str, int len, s7_pointer port); /* function to write a string of known length */
   token_t (*read_semicolon)(s7_scheme *sc, s7_pointer port);             /* internal skip-to-semicolon reader */
   int (*read_white_space)(s7_scheme *sc, s7_pointer port);               /* internal skip white space reader */
-  s7_pointer (*read_name)(s7_scheme *sc, s7_pointer pt, bool atom_case); /* internal get-next-name reader */
+  s7_pointer (*read_name)(s7_scheme *sc, s7_pointer pt);                 /* internal get-next-name reader */
+  s7_pointer (*read_sharp)(s7_scheme *sc, s7_pointer pt);                /* internal get-next-sharp-constant reader */
   s7_pointer (*read_line)(s7_scheme *sc, s7_pointer pt, bool eol_case);  /* function to display or write a string up to \n */
   void (*display)(s7_scheme *sc, const char *s, s7_pointer pt);
 } s7_port_t;
@@ -1358,9 +1360,7 @@ struct s7_scheme {
   int *autoload_names_sizes;
   bool **autoloaded_already;
   int autoload_names_loc, autoload_names_top;
-
-  unsigned int port_heap_size, port_heap_loc;
-  s7_port_t **port_heap;
+  s7_port_t *port_heap;
 
   int format_depth;
   int slash_str_size;
@@ -2208,6 +2208,7 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #define port_read_semicolon(p)        port_port(p)->read_semicolon
 #define port_read_white_space(p)      port_port(p)->read_white_space
 #define port_read_name(p)             port_port(p)->read_name
+#define port_read_sharp(p)            port_port(p)->read_sharp
 #define port_gc_loc(p)                port_port(p)->gc_loc
 
 #define is_c_function(f)              (type(f) >= T_C_FUNCTION)
@@ -2459,10 +2460,6 @@ static int safe_strlen5(const char *str)
   while ((*tmp++) && (tmp < end)) {};
   return(tmp - str - 1);
 }
-
-
-#define strcopy(Dest, Src, Len) snprintf(Dest, Len, "%s", Src)
-/* rather than futz around with str*cpy */
 
 
 static char *copy_string_with_len(const char *str, int len)
@@ -3094,28 +3091,21 @@ static void mark_symbol(s7_pointer p)
 
 static s7_port_t *alloc_port(s7_scheme *sc)
 {
-  if (sc->port_heap_loc > 0)
-    return(sc->port_heap[--sc->port_heap_loc]);
+  if (sc->port_heap)
+    {
+      s7_port_t *p;
+      p = sc->port_heap;
+      sc->port_heap = (s7_port_t *)(p->next);
+      return(p);
+    }
   return((s7_port_t *)calloc(1, sizeof(s7_port_t)));
 }
 
 
 static void free_port(s7_scheme *sc, s7_port_t *p)
 {
-  if (sc->port_heap_loc == sc->port_heap_size)
-    {
-      if (sc->port_heap_size == 0)
-	{
-	  sc->port_heap_size = 8;
-	  sc->port_heap = (s7_port_t **)malloc(sc->port_heap_size * sizeof(s7_port_t *));
-	}
-      else
-	{
-	  sc->port_heap_size *= 2;
-	  sc->port_heap = (s7_port_t **)realloc(sc->port_heap, sc->port_heap_size * sizeof(s7_port_t *));
-	}
-    }
-  sc->port_heap[sc->port_heap_loc++] = p;
+  p->next = (void *)(sc->port_heap);
+  sc->port_heap = p;
 }
 
 
@@ -4700,9 +4690,16 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
   hash = raw_string_hash((const unsigned char *)name); 
   location = hash % SYMBOL_TABLE_SIZE;
 
-  x = symbol_table_find_by_name(sc, name, hash, location); 
-  if (is_not_null(x)) 
-    return(x); 
+  for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
+    { 
+      if (hash == pair_raw_hash(x))
+	{
+	  const char *s; 
+	  s = symbol_name(car(x)); 
+	  if ((*s == *name) && (strings_are_equal(name, s)))
+	    return(car(x)); 
+	}
+    }
 
   if (sc->symbol_table_is_locked)
     return(s7_error(sc, sc->ERROR, sc->NIL));
@@ -8653,11 +8650,10 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
     case T_REAL:
       {
 	const char *frmt;
-
 	if (sizeof(double) >= sizeof(s7_Double))
 	  frmt = (float_choice == 'g') ? "%*.*g" : ((float_choice == 'f') ? "%*.*f" : "%*.*e");
 	else frmt = (float_choice == 'g') ? "%*.*Lg" : ((float_choice == 'f') ? "%*.*Lf" : "%*.*Le");
-
+	
 	len = snprintf(num_to_str, num_to_str_size, frmt, width, precision, s7_real(obj));
 	(*nlen) = len;
 	floatify(num_to_str, nlen);
@@ -8943,7 +8939,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 
 #define CTABLE_SIZE 256
-static bool *exponent_table, *slashify_table, *char_ok_in_a_name, *white_space;
+static bool *exponent_table, *slashify_table, *char_ok_in_a_name, *white_space, *number_table;
 static int *digits;
 
 static void init_ctables(void)
@@ -8954,8 +8950,9 @@ static void init_ctables(void)
   slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   char_ok_in_a_name = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   white_space = (bool *)calloc(CTABLE_SIZE + 1, sizeof(bool));
-  white_space++;    /* leave white_space[-1] false for white_space[EOF] */
-  
+  white_space++;      /* leave white_space[-1] false for white_space[EOF] */
+  number_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+
   for (i = 1; i < CTABLE_SIZE; i++)
     char_ok_in_a_name[i] = true;
   char_ok_in_a_name[0] = false;
@@ -9012,6 +9009,24 @@ static void init_ctables(void)
   digits[(unsigned char)'d'] = 13; digits[(unsigned char)'D'] = 13;
   digits[(unsigned char)'e'] = 14; digits[(unsigned char)'E'] = 14;
   digits[(unsigned char)'f'] = 15; digits[(unsigned char)'F'] = 15;
+
+  for (i = 0; i < CTABLE_SIZE; i++)
+    number_table[i] = false;
+  number_table[(unsigned char)'0'] = true;
+  number_table[(unsigned char)'1'] = true;
+  number_table[(unsigned char)'2'] = true;
+  number_table[(unsigned char)'3'] = true;
+  number_table[(unsigned char)'4'] = true;
+  number_table[(unsigned char)'5'] = true;
+  number_table[(unsigned char)'6'] = true;
+  number_table[(unsigned char)'7'] = true;
+  number_table[(unsigned char)'8'] = true;
+  number_table[(unsigned char)'9'] = true;
+  number_table[(unsigned char)'.'] = true;
+  number_table[(unsigned char)'+'] = true;
+  number_table[(unsigned char)'-'] = true;
+  number_table[(unsigned char)'#'] = true;
+
 }
 
 
@@ -21430,7 +21445,7 @@ static void resize_strbuf(s7_scheme *sc)
 }
 
 
-static s7_pointer file_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
+static s7_pointer file_read_name_or_sharp(s7_scheme *sc, s7_pointer pt, bool atom_case)
 {
   int c;
   unsigned i = 1;
@@ -21466,55 +21481,46 @@ static s7_pointer file_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
   return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
 }
 
+static s7_pointer file_read_name(s7_scheme *sc, s7_pointer pt)
+{
+  return(file_read_name_or_sharp(sc, pt, true));
+}
 
-#define WITH_SHARP false
-#define NO_SHARP true
+static s7_pointer file_read_sharp(s7_scheme *sc, s7_pointer pt)
+{
+  return(file_read_name_or_sharp(sc, pt, false));
+}
 
-static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool atom_case)
+
+static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt)
 {
   /* sc->strbuf[0] has the first char of the string we're reading */
 
-  unsigned int k = 0;
+  unsigned int k;
   char *orig_str, *str;
 
   str = (char *)(port_data(pt) + port_position(pt));
 
   if (!char_ok_in_a_name[(unsigned char)*str])
     {
-      if (atom_case)
+      s7_pointer result;
+      result = sc->singletons[(unsigned char)(sc->strbuf[0])];
+      if (!result)
 	{
-	  s7_pointer result;
-	  result = sc->singletons[(unsigned char)(sc->strbuf[0])];
-	  if (!result)
-	    {
-	      sc->strbuf[1] = '\0';
-	      result = make_symbol(sc, sc->strbuf);
-	      sc->singletons[(unsigned char)(sc->strbuf[0])] = result;
-	    }
-	  return(result);
+	  sc->strbuf[1] = '\0';
+	  result = make_symbol(sc, sc->strbuf);
+	  sc->singletons[(unsigned char)(sc->strbuf[0])] = result;
 	}
-      else
-	{
-	  if (sc->strbuf[0] == 'f')
-	    return(sc->F);
-	  if (sc->strbuf[0] == 't')
-	    return(sc->T);
-	  if (sc->strbuf[0] == '\\')
-	    {
-	      /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
-	      sc->strbuf[1] = str[0];
-	      sc->strbuf[2] = '\0';
-	      port_position(pt)++;
-	    }
-	  else sc->strbuf[1] = '\0';
-	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
-	}
+      return(result);
     }
 
   orig_str = (char *)(str - 1);
   str++;
   while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
   k = str - orig_str;
+  if (*str != 0) 
+    port_position(pt) += (k - 1);
+  else port_position(pt) += k;
 
   /* this is equivalent to:
    *    str = strpbrk(str, "(); \"\t\r\n");
@@ -21527,162 +21533,143 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool at
    * but slightly faster.
    */
 
-  port_position(pt) += k;
-  /* if k=2, ca 140 numbers, a dozen built-ins */
-
   /* eval_c_string string is a constant so we can't set and unset the token's end char */
   if ((k + 1) >= sc->strbuf_size)
     resize_strbuf(sc);
   
   memcpy((void *)(sc->strbuf), (void *)orig_str, k);
-  if (*str != 0) port_position(pt)--;
   sc->strbuf[k] = '\0';
 
-  if (atom_case)
-    return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR));
-  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
+  if (!number_table[(unsigned char)(sc->strbuf[0])])
+    return(make_symbol(sc, sc->strbuf));
+  return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR));
 }
 
 
-static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
+static s7_pointer string_read_sharp_no_free(s7_scheme *sc, s7_pointer pt)
 {
-  /* port_string was allocated (and read from a file) so we can mess with it directly */
-  s7_pointer result;
-  unsigned int k = 0;
+  /* sc->strbuf[0] has the first char of the string we're reading */
+
+  unsigned int k;
   char *orig_str, *str;
-  char endc;
-  
-  /* PERHAPS: figure out how to split token+read_white_space (why sc->tok -- read_expression)
-   */
+
   str = (char *)(port_data(pt) + port_position(pt));
 
   if (!char_ok_in_a_name[(unsigned char)*str])
     {
-      unsigned char c;
-      c = sc->strbuf[0];
-      if (atom_case)
+      if (sc->strbuf[0] == 'f')
+	return(sc->F);
+      if (sc->strbuf[0] == 't')
+	return(sc->T);
+      if (sc->strbuf[0] == '\\')
 	{
-	  s7_pointer result;
-	  result = sc->singletons[c];
-	  if (!result)
-	    {
-	      sc->strbuf[1] = '\0';
-	      result = make_symbol(sc, sc->strbuf);
-	      sc->singletons[c] = result;
-	    }
-	  return(result);
+	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
+	  sc->strbuf[1] = str[0];
+	  sc->strbuf[2] = '\0';
+	  port_position(pt)++;
 	}
-      else
-	{
-	  if (c == 'f')
-	    return(sc->F);
-	  if (c == 't')
-	    return(sc->T);
-	  if (c == '\\')  /* there's a bizarre special case here(? -- somewhere anyway), \ with the next char #\null: (eval-string "(list \\\x00 1)") */
-	    {
-	      /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
-	      sc->strbuf[1] = str[0];
-	      sc->strbuf[2] = '\0';
-	      port_position(pt)++;
-	    }
-	  else sc->strbuf[1] = '\0';
-	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
-	}
+      else sc->strbuf[1] = '\0';
+      return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
     }
 
   orig_str = (char *)(str - 1);
   str++;
   while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
   k = str - orig_str;
-  port_position(pt) += k;
-  
-  if (!atom_case) 
-    {
-      if ((k + 1) >= sc->strbuf_size)
-	resize_strbuf(sc);
-  
-      memcpy((void *)(sc->strbuf), (void *)orig_str, k);
-      if (*str != 0) port_position(pt)--;
-      sc->strbuf[k] = '\0';
+  if (*str != 0) 
+    port_position(pt) += (k - 1);
+  else port_position(pt) += k;
 
+  if ((k + 1) >= sc->strbuf_size)
+    resize_strbuf(sc);
+  
+  memcpy((void *)(sc->strbuf), (void *)orig_str, k);
+  sc->strbuf[k] = '\0';
+
+  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
+}
+
+
+static s7_pointer string_read_sharp(s7_scheme *sc, s7_pointer pt)
+{
+  /* port_string was allocated (and read from a file) so we can mess with it directly */
+  unsigned int k;
+  char *orig_str, *str;
+
+  str = (char *)(port_data(pt) + port_position(pt));
+
+  if (!char_ok_in_a_name[(unsigned char)*str])
+    {
+      if (sc->strbuf[0] == 'f')
+	return(sc->F);
+      if (sc->strbuf[0] == 't')
+	return(sc->T);
+      if (sc->strbuf[0] == '\\')
+	{
+	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
+	  sc->strbuf[1] = str[0];
+	  sc->strbuf[2] = '\0';
+	  port_position(pt)++;
+	}
+      else sc->strbuf[1] = '\0';
       return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
     }
 
+  orig_str = (char *)(str - 1);
+  str++;
+  while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
+  k = str - orig_str;
+  if (*str != 0) 
+    port_position(pt) += (k - 1);
+  else port_position(pt) += k;
+  
+  if ((k + 1) >= sc->strbuf_size)
+    resize_strbuf(sc);
+  
+  memcpy((void *)(sc->strbuf), (void *)orig_str, k);
+  sc->strbuf[k] = '\0';
+
+  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
+}
+
+
+static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt)
+{
+  /* port_string was allocated (and read from a file) so we can mess with it directly */
+  s7_pointer result;
+  unsigned int k;
+  char *orig_str, *str;
+  char endc;
+  
+  str = (char *)(port_data(pt) + port_position(pt));
+
+  if (!char_ok_in_a_name[(unsigned char)*str])
+    {
+      s7_pointer result;
+      result = sc->singletons[(unsigned char)(sc->strbuf[0])];
+      if (!result)
+	{
+	  sc->strbuf[1] = '\0';
+	  result = make_symbol(sc, sc->strbuf);
+	  sc->singletons[(unsigned char)(sc->strbuf[0])] = result;
+	}
+      return(result);
+    }
+
+  orig_str = (char *)(str - 1);
+  str++;
+  while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
+  k = str - orig_str;
+  if (*str != 0) 
+    port_position(pt) += (k - 1);
+  else port_position(pt) += k;
+
   endc = (*str);
   (*str) = '\0';
-  
-  switch (*orig_str)
-    {
-    case '0': case '1': case '2': case '3': case '4':
-    case '5': case '6': case '7': case '8': case '9':
-      /* check here for 2 digit ints costs more than it saves */
-    case '.': case '+': case '-':
-      result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR);
-      break;
-      
-    case '#':
-      result = make_sharp_constant(sc, (char *)(orig_str + 1), UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR);
-      break;
-      
-    default:
-      /* result = make_symbol(sc, orig_str); 
-       *    expanded for speed
-       */
-      {
-	s7_pointer x; 
-	unsigned int loc, location;
-
-	loc = raw_string_hash((const unsigned char *)orig_str);
-	location = loc % SYMBOL_TABLE_SIZE; 
-	
-	result = sc->NIL;
-	for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
-	  { 
-	    if (loc == pair_raw_hash(x))
-	      {
-		const char *s; 
-		s = symbol_name(car(x)); 
-		if ((s[0] == orig_str[0]) &&
-		    (strings_are_equal(orig_str, s)))
-		  /* the string lengths here are k (for orig_str) and symbol_name_length(car(x)),
-		   *   but checking that these are equal before calling strcmp is slower?!?
-		   */
-		  {
-		    result = car(x);
-		    break;
-		  }
-	      }
-	  }
-
-	if (is_null(result))
-	  {
-	    if (sc->symbol_table_is_locked)
-	      result = sc->F;
-	    else 
-	      {
-		result = new_symbol(sc, orig_str, loc, location); 
-		symbol_hash(result) = location; /* was loc */
-	      }
-	  }
-	/* tried catching sc->PI here and returning real_pi => read-time lookup,
-	 *   but it's not faster in actual code (as opposed to timing tests), and
-	 *   requires tricky checks in OP_READ_QUOTE and QUASIQUOTE so that, for example,
-	 *   (defined? 'pi) is not an error.  Most pi's occur in (* pi 2) or (/ pi 2) etc
-	 *   so perhaps we could predefine 2*pi and pi/2 or some such names? Adding an
-	 *   opt * as multiply_pi_direct for (* pi n) got no hits.  I think sc->PI is
-	 *   not currently used.
-	 */
-      }
-      break;
-    }
-  
+  if (!number_table[(unsigned char)(*orig_str)])
+    result = make_symbol(sc, orig_str);
+  else result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR);
   (*str) = endc;
-  if (endc != 0) port_position(pt)--;
-
-  /* skipping the null has one minor consequence:
-   *    (let ((str "(+ 1 2 3)")) (set! (str 2) #\null) (eval-string str)) ; "(+\x001 2 3)" -> 6
-   *    (let ((str "(+ 1 2 3)")) (set! (str 3) #\null) (eval-string str)) ; "(+ \x00 2 3)" -> missing paren error
-   */
   return(result);
 }
 
@@ -21753,6 +21740,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       port_read_semicolon(port) = string_read_semicolon;
       port_read_white_space(port) = string_read_white_space;
       port_read_name(port) = string_read_name;
+      port_read_sharp(port) = string_read_sharp;
     }
   else
     {
@@ -21765,6 +21753,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       port_read_semicolon(port) = file_read_semicolon;
       port_read_white_space(port) = file_read_white_space;
       port_read_name(port) = file_read_name;
+      port_read_sharp(port) = string_read_sharp;
     }
 #else
   /* _stat64 is no better than the fseek/ftell route, and 
@@ -21780,6 +21769,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   port_read_semicolon(port) = file_read_semicolon;
   port_read_white_space(port) = file_read_white_space;
   port_read_name(port) = file_read_name;
+  port_read_sharp(port) = file_read_sharp;
 #endif
 
   s7_gc_unprotect_at(sc, port_loc);
@@ -21838,9 +21828,8 @@ static s7_pointer open_input_file_1(s7_scheme *sc, const char *name, const char 
 	      char *filename;
 	      int len;
 	      len = safe_strlen(name) + safe_strlen(home) + 1;
-	      filename = (char *)calloc(len, sizeof(char));
-	      strcopy(filename, home, len);
-	      strcat(filename, (char *)(name + 1));
+	      filename = (char *)malloc(len * sizeof(char));
+	      snprintf(filename, len, "%s%s", home, (char *)(name + 1));
 	      fp = fopen(filename, "r");
 	      free(filename);
 	      if (fp)
@@ -21952,6 +21941,7 @@ static void make_standard_ports(s7_scheme *sc)
   port_read_semicolon(x) = file_read_semicolon;
   port_read_white_space(x) = file_read_white_space;
   port_read_name(x) = file_read_name;
+  port_read_sharp(x) = file_read_sharp;
   port_write_character(x) = input_write_char;
   port_write_string(x) = input_write_string;
   sc->standard_input = x;
@@ -22057,6 +22047,7 @@ static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int
   port_read_semicolon(x) = string_read_semicolon;
   port_read_white_space(x) = string_read_white_space;
   port_read_name(x) = string_read_name_no_free;
+  port_read_sharp(x) = string_read_sharp_no_free;
   port_write_character(x) = input_write_char;
   port_write_string(x) = input_write_string;
   add_input_port(sc, x);
@@ -22728,14 +22719,13 @@ static char *full_filename(const char *filename)
   char *pwd, *rtn;
   pwd = getcwd(NULL, 0); /* docs say this means it will return a new string of the right size */
   len = safe_strlen(pwd) + safe_strlen(filename) + 8;
-  rtn = (char *)calloc(len, sizeof(char));
+  rtn = (char *)malloc(len * sizeof(char));
   if (pwd)
     {
-      strcopy(rtn, pwd, len);
+      snprintf(rtn, len, "%s/%s", pwd, filename);
       free(pwd);
-      strcat(rtn, "/");
     }
-  strcat(rtn, filename);
+  else snprintf(rtn, len, "%s", filename);
   return(rtn);
 }
 #endif
@@ -22843,9 +22833,8 @@ defaults to the global environment.  To load into the current environment instea
 	      char *filename;
 	      int len;
 	      len = safe_strlen(fname) + safe_strlen(home) + 1;
-	      filename = (char *)calloc(len, sizeof(char));
-	      strcopy(filename, home, len);
-	      strcat(filename, (char *)(fname + 1));
+	      filename = (char *)malloc(len * sizeof(char));
+	      snprintf(filename, len, "%s%s", home, (char *)(fname + 1));
 	      fp = fopen(filename, "r");
 	      free(filename);
 	    }
@@ -31342,11 +31331,6 @@ static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
       loc = string_hash(key);
       if (loc == 0)
 	{
-#if 0
-	  const char *c; 
-	  for (c = string_value(key); *c; c++) 
-	    loc = *c + loc * HASH_MULT;
-#endif
 	  loc = raw_string_hash((const unsigned char *)string_value(key));
 	  string_hash(key) = loc;
 	}
@@ -36111,21 +36095,36 @@ static const char *make_type_name(const char *name, int article)
 {
   static char *typnam = NULL;
   static int typnam_len = 0;
-  static const char *articles[3] =      {"", "the ", "a "};
-  int len;
+  int i, len;
+  char *s;
 
   len = safe_strlen(name) + 8;
   if (len > typnam_len)
     {
       if (typnam) free(typnam);
-      typnam = (char *)calloc(len, sizeof(char));
+      typnam = (char *)malloc(len * sizeof(char));
       typnam_len = len;
     }
-  if ((article == INDEFINITE_ARTICLE) &&
-      ((name[0] == 'a') || (name[0] == 'e') || (name[0] == 'i') || (name[0] == 'o') || (name[0] == 'u')))
-    strcopy(typnam, "an ", typnam_len);
-  else strcopy(typnam, articles[article], typnam_len);
-  strcat(typnam, name);
+  if (article == INDEFINITE_ARTICLE)
+    {
+      i = 1;
+      typnam[0] = 'a';
+      if ((name[0] == 'a') || (name[0] == 'e') || (name[0] == 'i') || (name[0] == 'o') || (name[0] == 'u'))
+	typnam[i++] = 'n'; 
+      typnam[i++] = ' ';
+    }
+  else
+    {
+      if (article == DEFINITE_ARTICLE)
+	{
+	  typnam[0] = 't'; typnam[1] = 'h'; typnam[2] = 'e'; typnam[3] = ' '; 
+	  i = 4;
+	}
+      else i = 0;
+    }
+  for (s = (char *)name; *s; s++)
+    typnam[i++] = *s;
+  typnam[i] = '\0';
   return(typnam);
 }
 
@@ -39290,11 +39289,7 @@ static token_t read_dot(s7_scheme *sc, s7_pointer pt)
 static token_t token(s7_scheme *sc)
 {
   int c;
-  s7_pointer pt;
-
-  pt = sc->input_port;
-  c = port_read_white_space(pt)(sc, pt);
-
+  c = port_read_white_space(sc->input_port)(sc, sc->input_port);
   switch (c) 
     {
     case '(':
@@ -39304,13 +39299,13 @@ static token_t token(s7_scheme *sc)
       return(TOKEN_RIGHT_PAREN);
       
     case '.':
-      return(read_dot(sc, pt));
+      return(read_dot(sc, sc->input_port));
 
     case '\'':
       return(TOKEN_QUOTE);
       
     case ';':
-      return(port_read_semicolon(pt)(sc, pt));
+      return(port_read_semicolon(sc->input_port)(sc, sc->input_port));
 
     case '"':
       return(TOKEN_DOUBLE_QUOTE);
@@ -39319,16 +39314,16 @@ static token_t token(s7_scheme *sc)
       return(TOKEN_BACK_QUOTE);
       
     case ',':
-      return(read_comma(sc, pt));
+      return(read_comma(sc, sc->input_port));
       
     case '#':
-      return(read_sharp(sc, pt));
+      return(read_sharp(sc, sc->input_port));
 
     case '\0':
     case EOF:
       return(TOKEN_EOF);
 
-    default: 
+    default:
       sc->strbuf[0] = c; /* every TOKEN_ATOM return goes to port_read_name, so we save a backchar/inchar shuffle by starting the read here */
       return(TOKEN_ATOM);
     }
@@ -39573,7 +39568,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  break;
 	  
 	case TOKEN_ATOM:
-	  return(port_read_name(sc->input_port)(sc, sc->input_port, NO_SHARP));
+	  return(port_read_name(sc->input_port)(sc, sc->input_port));
 	  /* If reading list (from lparen), this will finally get us to op_read_list */
 	  
 	case TOKEN_DOUBLE_QUOTE:
@@ -39587,7 +39582,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(sc->value);
 	  
 	case TOKEN_SHARP_CONST:
-	  sc->value = port_read_name(sc->input_port)(sc, sc->input_port, WITH_SHARP);
+	  sc->value = port_read_sharp(sc->input_port)(sc, sc->input_port);
 
 	  /* here we need the following character and form 
 	   *   strbuf[0] == '#', false above = # case, not an atom
@@ -44781,24 +44776,25 @@ static s7_pointer check_for_global_set(s7_scheme *sc, s7_pointer tree, s7_pointe
    *   otherwise be optimized as h_safe, but if that set happens in a loop, or perhaps call/cc,
    *   the second time through we should get the new value.  See gset-test in s7test.scm.
    */
-  if (is_pair(tree))
+
+  /* we've already checked that tree is a pair.  I'm ignoring '(set! + ...) because it almost
+   *    never occurs, slows us down, and anyone doing that deserves an unoptimized loop.
+   */
+
+  if (!is_checked_1(tree))
     {
-      if (is_checked_1(tree))
-	return(e);
+      s7_pointer p;
       set_checked_1(tree);
-      if (car(tree) != sc->QUOTE)
-	{
-	  if ((car(tree) == sc->SET) &&
-	      (is_pair(cdr(tree))) &&
-	      (is_symbol(cadr(tree))) &&
-	      (is_global(cadr(tree))))
-	    return(cons(sc, add_sym_to_list(cadr(tree)), e));
-	  
-	  if (is_pair(car(tree)))
-	    e = check_for_global_set(sc, car(tree), e);
-	  if (is_pair(cdr(tree)))
-	    return(check_for_global_set(sc, cdr(tree), e));
-	}
+      
+      if ((car(tree) == sc->SET) &&
+	  (is_pair(cdr(tree))) &&
+	  (is_symbol(cadr(tree))) &&
+	  (is_global(cadr(tree))))
+	return(cons(sc, add_sym_to_list(cadr(tree)), e));
+      
+      for (p = tree; is_pair(p); p = cdr(p))
+	if (is_pair(car(p)))
+	  e = check_for_global_set(sc, car(p), e);
     }
   return(e);
 }
@@ -45030,8 +45026,6 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_po
 static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e)
 {
   s7_pointer y, car_x;
-
-  /* fprintf(stderr, "opt expr %s %d\n", DISPLAY_80(car(x)), hop); */
 
   car_x = car(x);
   set_checked(car_x);
@@ -62854,7 +62848,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		push_stack_no_code(sc, OP_READ_LIST, sc->args);
 		CHECK_STACK_SIZE(sc);
-		sc->value = port_read_name(sc->input_port)(sc, sc->input_port, NO_SHARP);
+		sc->value = port_read_name(pt)(sc, pt);
 		sc->args = sc->NIL;
 		goto READ_LIST;
 	      }
@@ -62870,7 +62864,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    if (sc->tok == TOKEN_DOT) 
 	      {
-		do {c = inchar(sc->input_port);} while ((c != ')') && (c != EOF));
+		do {c = inchar(pt);} while ((c != ')') && (c != EOF));
 		return(read_error(sc, "stray dot after '('?"));         /* (car '( . )) */
 	      }
 	    
@@ -62904,7 +62898,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	  case '"':
 	    sc->tok = TOKEN_DOUBLE_QUOTE;
-	    sc->value = read_string_constant(sc, sc->input_port);
+	    sc->value = read_string_constant(sc, pt);
 	    if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
 	      return(read_error(sc, "end of input encountered while in a string"));
 	    if (sc->value == sc->T)
@@ -62933,7 +62927,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	  default: 
 	    sc->strbuf[0] = c; 
-	    sc->value = port_read_name(pt)(sc, pt, NO_SHARP);
+	    sc->value = port_read_name(pt)(sc, pt);
 	    goto READ_LIST;
 	  }
       }
@@ -63013,12 +63007,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  return(missing_close_paren_error(sc));
 
 	case TOKEN_ATOM:
-	  sc->value = port_read_name(sc->input_port)(sc, sc->input_port, NO_SHARP);
+	  sc->value = port_read_name(sc->input_port)(sc, sc->input_port);
 	  goto READ_LIST;
 	  break;
 
 	case TOKEN_SHARP_CONST:
-	  sc->value = port_read_name(sc->input_port)(sc, sc->input_port, WITH_SHARP);
+	  sc->value = port_read_sharp(sc->input_port)(sc, sc->input_port);
 	  if (is_null(sc->value))
 	    return(read_error(sc, "undefined # expression"));
 	  if (sc->value == sc->NO_VALUE)
@@ -67920,8 +67914,6 @@ s7_scheme *s7_init(void)
   sc->autoloaded_already = NULL;
   sc->autoload_names_loc = 0;
 
-  sc->port_heap_size = 0;
-  sc->port_heap_loc = 0;
   sc->port_heap = NULL;
   
   sc->heap_size = INITIAL_HEAP_SIZE;
@@ -69418,14 +69410,14 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3547
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3543
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.8
- * t816          |                                    |  69.5                52.7
- * lg            |                                    |  7757                7787
+ * t816          |                                    |  69.5                47.5
+ * lg            |                                    |  7757                7760
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 36.3
  *            153 with run macro (eval_ptree)
  */
@@ -69440,14 +69432,11 @@ int main(int argc, char **argv)
  * help info for *-float-vector-* still uses vct
  * float-vector-ref|set! need to be defined here, not in clm2xen
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
+ * I think mixer and frame are still separate (generator!) types
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
  * need as_needed_input_to_buffer to optimize that process, but how to call from clm.c?
- * read_name could be split to separate out the #... case
  * symbol_table_find might have a singletons front -- last seen case checked first? (then if none, it's obviously not in the table)
- * extend mx_free|alloc to track nvcts 0..7 (in ms) (are other free-list cases combinable? port+string)
- *   why can't port_heap use a local(port_t) next pointer rather than an array?
- *   free list for seg*?
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
@@ -69458,5 +69447,6 @@ int main(int argc, char **argv)
  *   and for catch what errors it might raise
  *     frames: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
+ *  maybe port-specific token to get around the EOF stupidity of fgetc, and port init structs to handle all the funcs
  */
 

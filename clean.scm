@@ -125,8 +125,6 @@
 	((= i dur))
       (set! (data (+ beg i)) (+ off (* scale (cos (+ angle (* i incr)))))))))
 
-(define smooth-vct smooth-float-vector)
-
 (define* (remove-pops (size 8) snd chn)
   (let* ((reader (make-sampler 0 snd chn))
 	 (dly0 (make-delay (* 4 size)))
