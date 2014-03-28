@@ -62,7 +62,6 @@ void setup_gen_list(s7_scheme *sc, s7_pointer tree);
 void clear_gen_list(void);
 static void gen_list_walk(s7_scheme *sc, s7_pointer tree);
 
-
 typedef struct gf {
   void *g1, *g2, *g3, *g4, *g5; /* gf's -- freed */
   mus_float_t (*func)(void *p);
@@ -2394,7 +2393,6 @@ static Xen g_make_oscil(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
   mus_any *ge;
   mus_float_t freq, phase = 0.0;
 
-  /* PERHAPS: if (undefined(arg2) and (is_number(arg1)) {freq=number->real(arg); return make_oscil -- skip all thw fancy stuff} esp make-env too */
   freq = clm_default_frequency;
   if (Xen_is_bound(arg1))
     {
@@ -6993,7 +6991,6 @@ static Xen g_make_env_q_length(s7_scheme *sc, s7_pointer args)
     return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
   return(clm_mus_error(local_error_type, local_error_msg));
 }
-
 #endif
 
 

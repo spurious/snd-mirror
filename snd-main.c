@@ -1429,7 +1429,8 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	  (strcmp("--separate", argname) == 0) ||
 	  (strcmp("-nostdin", argname) == 0) ||
 	  (strcmp("-noglob", argname) == 0) ||
-	  (strcmp("-noinit", argname) == 0))
+	  (strcmp("-noinit", argname) == 0) ||
+	  (strcmp("--noinit", argname) == 0))
 	return(auto_open_ctr + 1);
       else
 	{
@@ -1538,10 +1539,18 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				  if (snd_open_file(argname, FILE_READ_WRITE) == NULL)
 				    {
 				      /* non-existent file at startup */
-				      fprintf(stdout, "can't open %s\n", argname);
-				      if (ss->startup_errors)
-					ss->startup_errors = mus_format("%s\n%s ;%s\"%s\"\n", ss->startup_errors, listener_prompt(ss), "can't open ", argname);
-				      else ss->startup_errors = mus_format(";%s\"%s\"\n", "can't open ", argname);
+				      if (argname[0] == '-')
+					{
+					  /* probably a bad option */
+					  fprintf(stdout, "bad option: %s\n", argname);
+					}
+				      else
+					{
+					  fprintf(stdout, "can't open %s\n", argname);
+					  if (ss->startup_errors)
+					    ss->startup_errors = mus_format("%s\n%s ;%s\"%s\"\n", ss->startup_errors, listener_prompt(ss), "can't open ", argname);
+					  else ss->startup_errors = mus_format(";%s\"%s\"\n", "can't open ", argname);
+					}
 				    }
 				}
 			    }

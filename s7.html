@@ -880,7 +880,8 @@ f
 <p><em class=def id="definemacro">define-macro</em>, 
 <em class=def id="definemacrostar">define-macro*</em>, 
 defmacro, defmacro*, <em class=def id="macroexpand">macroexpand</em>, 
-<em class=def id="gensym">gensym</em>, and 
+<em class=def id="gensym">gensym</em>, 
+<em class=def id="gensym?">gensym?</em>, and 
 <em class=def id="macrop">macro?</em>
 implement the standard old-time macros.  
 </p>
@@ -912,7 +913,7 @@ add-1
 </pre>
 
 <p>gensym returns a symbol that is guaranteed to be unused.  It takes an optional string argument
-giving the new symbol name's prefix.
+giving the new symbol name's prefix.  gensym? returns #t if its argument is a symbol created by gensym.
 </p>
 
 <pre class="indented">
@@ -4046,7 +4047,7 @@ arity and aritable?.  arity takes any object and returns either #f if it is not 
 or a cons containing the minimum and maximum number of arguments acceptable.  If the maximum reported
 is a really big number, that means any number of arguments is ok.
 aritable? takes two arguments, an object and an integer, and returns #t if the object can be
-applied to that many arguments.
+applied to that many arguments. 
 </p>
 
 <pre class="indented">
@@ -4195,6 +4196,19 @@ so I implemented parameter docstrings such as:
 <code>(define* (add-1 (arg 0 "arg should be an integer")) (+ arg 1))</code>,
 but then decided not to go that way after all.
 </p>
+
+</div>
+
+<div class="indented">
+
+<p>A minor footnote: there are cases in s7 where aritable? can't tell whether
+a given number of arguments can be applied to an object.  For example,
+<code>((list 1 (list 2 3)) 0 1)</code> is an error, but
+<code>((list 1 (list 2 3)) 1 1)</code> is 3.  So 
+<code>(aritable? (list 1 (list 2 3)) 2)</code> depdends on
+what actual arguments you pass.  In these cases, aritable? returns <code>#f</code>.
+</p>
+
 </div>
 
 

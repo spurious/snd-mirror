@@ -1736,6 +1736,12 @@ static int t_optimized = T_OPTIMIZED;
 /* pair in question has line/file info added during read, or the environment has function placement info
  */
 
+#define T_LOADER_PORT                 T_LINE_NUMBER
+#define is_loader_port(p)             ((typeflag(p) & T_LOADER_PORT) != 0)
+#define set_loader_port(p)            typeflag(p) |= T_LOADER_PORT
+#define clear_loader_port(p)          typeflag(p) &= (~T_LOADER_PORT)
+/* to block random load-time reads from screwing up the load process, this bit marks a port used by the loader
+ */
 
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
 #define set_overlay(p)                typeflag(p) |= T_OVERLAY
@@ -1858,12 +1864,14 @@ static int t_optimized = T_OPTIMIZED;
 #define T_DOCUMENTED                  T_GENSYM
 #define is_documented(p)              ((typeflag(p) & T_DOCUMENTED) != 0)
 #define set_documented(p)             typeflag(p) |= T_DOCUMENTED
-
+/* this marks a symbol that has documentation 
+ */
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
 #define set_has_methods(p)            typeflag(p) |= T_HAS_METHODS
-/* this marks an environment or closure that is "opened" up to generic functions etc */
+/* this marks an environment or closure that is "opened" up to generic functions etc 
+ */
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
@@ -4784,8 +4792,13 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 } 
 
 
-/* should there be a built-in gensym? function?  I can't think of a use for it.
- */
+static s7_pointer g_is_gensym(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_is_gensym "(gensym? sym) returns #t if sym is a gensym"
+  return(make_boolean(sc, ((is_symbol(car(args))) && (is_gensym(car(args))))));
+}
+
+
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
   #define H_gensym "(gensym (prefix \"gensym\")) returns a new, unused symbol"
@@ -9049,6 +9062,10 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
    * This search happens after #|, #t, and #f (and #nD for multivectors?).
    */
 
+  clear_loader_port(sc->input_port);
+  /* normally read* can't read from sc->input_port if it is in use by the loader,
+   *   but here we are deliberately making that possible.
+   */
   for (reader = slot_value(sc->sharp_readers); is_not_null(reader); reader = cdr(reader))
     {
       if (name[0] == s7_character(caar(reader)))
@@ -9061,6 +9078,7 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 	    break;
 	}
     }
+  set_loader_port(sc->input_port);
   return(value);
 }
 
@@ -12574,7 +12592,7 @@ static s7_pointer g_mod_si(s7_scheme *sc, s7_pointer args)
       return(make_integer(sc, z));
     }
   
-  if (is_real(x))
+  if (is_simple_real(x))
     {
       s7_Double a, b;
       a = real(x);
@@ -12604,7 +12622,7 @@ static s7_pointer g_mod_si_is_zero(s7_scheme *sc, s7_pointer args)
   if (is_integer(x))
     return(make_boolean(sc, (integer(x) % y) == 0));
   
-  if (is_real(x))
+  if (is_simple_real(x))
     return(make_boolean(sc, (fmod(real(x), (s7_Double)y) == 0.0)));
 
   if (s7_is_ratio(x))
@@ -14267,7 +14285,7 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	{
 	  switch (type(x))
 	    {
-	    case T_INTEGER: return(make_integer(sc, integer(x) * integer(y)));
+	    case T_INTEGER: return(make_integer(sc, integer(x) * integer(y))); /* TODO: this is ignoring overflow */
 	    case T_RATIO:   return(g_multiply(sc, args));
 	    case T_REAL:    return(make_real(sc, real(x) * real(y)));
 	    case T_COMPLEX: 
@@ -14366,6 +14384,10 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
+/* TODO: all of these mess up if overflows occur 
+ *  (let () (define (f x) (* x 9223372036854775806)) (f -63)) -> -9223372036854775682, but (* -63 9223372036854775806) -> -5.810724383218509e+20
+ *  how to catch this?  (affects * - +)
+ */
 
 static s7_pointer g_multiply_si(s7_scheme *sc, s7_pointer args)
 {
@@ -22278,7 +22300,12 @@ static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
 
   if (is_not_null(args))
     port = car(args);
-  else port = sc->input_port;
+  else 
+    {
+      port = sc->input_port;
+      if (is_loader_port(port))
+	return(sc->EOF_OBJECT);
+    }
   if (!is_input_port(port))
     {
       CHECK_METHOD(sc, port, sc->READ_CHAR, args);
@@ -22402,7 +22429,12 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
   
   if (is_not_null(args))
     port = car(args);
-  else port = sc->input_port;
+  else 
+    {
+      port = sc->input_port;
+      if (is_loader_port(port))
+	return(sc->EOF_OBJECT);
+    }
 
   if (!is_input_port(port))
     {
@@ -22473,7 +22505,12 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 	    with_eol = true;
 	}
     }
-  else port = sc->input_port;
+  else 
+    {
+      port = sc->input_port;
+      if (is_loader_port(port))
+	return(sc->EOF_OBJECT);
+    }
   return(port_read_line(port)(sc, port, with_eol));
 }
 
@@ -22503,10 +22540,13 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 	  return(wrong_type_argument_with_type(sc, sc->READ_STRING, small_int(2), port, AN_INPUT_PORT));
 	}
     }
-  else port = sc->input_port;
-  /* it is possible to read from the file currently being loaded here! 
-   *   port defaults to (current-input-port) but load is not supposed to affect that port
-   */
+  else 
+    {
+      port = sc->input_port;
+      if (is_loader_port(port))
+	return(sc->EOF_OBJECT);
+    }
+
   if ((chars == 0) && 
       (port == sc->standard_input))
     return(make_empty_string(sc, 0, 0));
@@ -22591,7 +22631,12 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
   
   if (is_not_null(args))
     port = car(args);
-  else port = sc->input_port;
+  else 
+    {
+      port = sc->input_port;
+      if (is_loader_port(port))
+	return(sc->EOF_OBJECT);
+    }
   
   if (!is_input_port(port)) /* was also not stdin */
     {
@@ -22670,6 +22715,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 
   port = load_file(sc, fp, filename);
   port_file_number(port) = remember_file_name(sc, filename);
+  set_loader_port(port);
   push_input_port(sc, port);
   
   /* it's possible to call this recursively (s7_load is Xen_load_file which can be invoked via s7_call)
@@ -22851,9 +22897,8 @@ defaults to the global environment.  To load into the current environment instea
 
   port = load_file(sc, fp, fname);
   port_file_number(port) = remember_file_name(sc, fname);
+  set_loader_port(port);
   push_input_port(sc, port); 
-  /* the r7rs spec says this is wrong, and it means a subsequent read-string can read the currently loading file
-   */
 
   push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->NIL, sc->NIL);  /* was pushing args and code, but I don't think they're used later */
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
@@ -33772,22 +33817,23 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
       return(true);
 
     case T_STRING:
-    case T_ENVIRONMENT:
-      return(args == 1);
+      return((args == 1) &&
+	     (string_length(x) > 0)); /* ("" 0) -> error */
       
     case T_C_OBJECT:
       return(is_procedure(x));
 
-    case T_HASH_TABLE:
-    case T_PAIR:
     case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
     case T_VECTOR:
-      return(args > 0);
-      /* but that means 
-       *   (aritable? '(1) 9223372036854775807) -> #t
-       *   (aritable? '(()) 6) -> #t
-       */
+      return((args > 0) &&
+	     (vector_length(x) > 0) &&   /* (#() 0) -> error */
+	     (args <= vector_rank(x)));
+
+    case T_ENVIRONMENT:
+    case T_HASH_TABLE:
+    case T_PAIR:
+      return(args == 1);
 
     case T_SYNTAX:
       switch (syntax_opcode(x))
@@ -35245,8 +35291,6 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
   if ((start == 0) && (source == dest))
     return(dest);
   source_len = end - start;
-  if (source_len == 0)
-    return(dest);
 
   switch (type(dest))
     {
@@ -35278,8 +35322,9 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument_with_type(sc, sc->COPY, small_int(2), dest, make_protected_string(sc, "a sequence")));
     }
   
-  if (dest_len == 0)
+  if ((source_len == 0) || (dest_len == 0))
     return(dest);
+
   /* end is source_len if not set explicitly */
   if (dest_len < (end - start))
     end = dest_len + start;
@@ -35351,6 +35396,10 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 
   for (i = start, j = 0; i < end; i++, j++)
     set(sc, dest, j, get(sc, source, i));
+
+  /* some choices probably should raise an error, but don't:
+   *   (copy (make-hash-table) "1") ; nothing to copy (empty hash table), so no error
+   */
 
   return(dest);
 }
@@ -38949,6 +38998,11 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
     bool dotted = false;
 
     len = s7_list_length(sc, form);
+    if (len == 0)
+      {
+	/* a circular form, apparently */
+	return(list_2(sc, sc->QUOTE, form));
+      }
     if (len < 0)
       {
 	len = -len;
@@ -38968,7 +39022,7 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
       {
 	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
 	  {
-	    if ((is_pair(cdr(orig))) &&   /* this was is_pair(orig) which seems to be always the case */
+	    if ((is_pair(cdr(orig))) &&            /* this was is_pair(orig) which seems to be always the case */
 		(cadr(orig) == sc->UNQUOTE))
 	      {
 		/* `(1 . ,(+ 1 1)) -> '(1 unquote (+ 1 1)) -> '(1 . 2) 
@@ -40839,7 +40893,8 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  return(add_s1);
 	}
 
-      if (s7_is_integer(arg2))
+      if ((s7_is_integer(arg2)) &&
+	  (integer_length(integer(arg2)) < 31))
 	{
 	  if (is_symbol(arg1))
 	    {
@@ -40856,6 +40911,7 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	}
 
       if ((s7_is_integer(arg1)) &&
+	  (integer_length(integer(arg1)) < 31) &&
 	  (is_symbol(arg2)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
@@ -40971,14 +41027,16 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       arg2 = caddr(expr);
 
       if ((is_symbol(arg1)) &&
-	  (s7_is_integer(arg2)))
+	  (s7_is_integer(arg2)) &&
+	  (integer_length(integer(arg2)) < 31))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(multiply_si);
 	}
 
       if ((is_symbol(arg2)) &&
-	  (s7_is_integer(arg1)))
+	  (s7_is_integer(arg1)) &&
+	  (integer_length(integer(arg1)) < 31))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(multiply_is);
@@ -57319,6 +57377,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* main cases here seem to be symbols from set!? 
        */
+
       if (is_pair(sc->code))
 	{
 	  if (typeflag(car(sc->code)) == SYNTACTIC_TYPE) /* this is much faster than checking is_syntactic */
@@ -57356,7 +57415,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* very uncommon case: car is either itself a pair or some non-symbol */
 		if (is_pair(carc))
 		  {
-		    /* evaluate the inner list */
+		    /* evaluate the inner list but that list can be circular: carc: #1=(#1# #1#)!
+		     */
+		    if ((sc->code == carc) || (cdr(sc->code) == carc) || (cdr(sc->code) == sc->code))
+		      return(eval_error(sc, "attempt to evaluate a circular list: ~A", carc));
+#if DEBUGGING
+		    if (sc->stack_end >= sc->stack_resize_trigger)
+		      fprintf(stderr, "stack overflow imminent\n");
+#endif
 		    push_stack(sc, OP_EVAL_ARGS, sc->NIL, cdr(sc->code));
 		    if (typeflag(car(carc)) == SYNTACTIC_TYPE) 
 		      /* was checking for is_syntactic here but that can be confused by successive optimizer passes:
@@ -68372,6 +68438,7 @@ s7_scheme *s7_init(void)
   sc->gc_off = false;
 
   sc->GENSYM =                s7_define_safe_function(sc, "gensym",                  g_gensym,                 0, 1, false, H_gensym);
+                              s7_define_safe_function(sc, "gensym?",                 g_is_gensym,              1, 0, false, H_is_gensym);
                               s7_define_safe_function(sc, "symbol-table",            g_symbol_table,           0, 0, false, H_symbol_table);
   sc->IS_SYMBOL =             s7_define_safe_function(sc, "symbol?",                 g_is_symbol,              1, 0, false, H_is_symbol);
   sc->SYMBOL_TO_STRING =      s7_define_safe_function(sc, "symbol->string",          g_symbol_to_string,       1, 0, false, H_symbol_to_string);
@@ -68537,9 +68604,6 @@ s7_scheme *s7_init(void)
   sc->INEXACT_TO_EXACT =      s7_define_safe_function(sc, "inexact->exact",          g_inexact_to_exact,       1, 0, false, H_inexact_to_exact);
   sc->EXACT_TO_INEXACT =      s7_define_safe_function(sc, "exact->inexact",          g_exact_to_inexact,       1, 0, false, H_exact_to_inexact);
 
-  sc->RANDOM =                s7_define_safe_function(sc, "random",                  g_random,                 1, 1, false, H_random);
-  sc->MAKE_RANDOM_STATE =     s7_define_safe_function(sc, "make-random-state",       s7_make_random_state,     1, 1, false, H_make_random_state);
-
   sc->INTEGER_LENGTH =        s7_define_safe_function(sc, "integer-length",          g_integer_length,         1, 0, false, H_integer_length);
   sc->LOGIOR =                s7_define_safe_function(sc, "logior",                  g_logior,                 0, 0, true,  H_logior);
   sc->LOGXOR =                s7_define_safe_function(sc, "logxor",                  g_logxor,                 0, 0, true,  H_logxor);
@@ -68554,6 +68618,8 @@ s7_scheme *s7_init(void)
   s7_set_object_print_readably(rng_tag, print_rng_readably);
   sc->IS_RANDOM_STATE =       s7_define_safe_function(sc, "random-state?",           g_is_random_state,        1, 0, false, H_is_random_state);
   sc->RANDOM_STATE_TO_LIST =  s7_define_safe_function(sc, "random-state->list",      s7_random_state_to_list,  0, 1, false, H_random_state_to_list);
+  sc->MAKE_RANDOM_STATE =     s7_define_safe_function(sc, "make-random-state",       s7_make_random_state,     1, 1, false, H_make_random_state);
+  sc->RANDOM =                s7_define_safe_function(sc, "random",                  g_random,                 1, 1, false, H_random);
 
   sc->IS_NUMBER =             s7_define_safe_function(sc, "number?",                 g_is_number,              1, 0, false, H_is_number);
   sc->IS_INTEGER =            s7_define_safe_function(sc, "integer?",                g_is_integer,             1, 0, false, H_is_integer);
@@ -69416,7 +69482,7 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.8
- * t816          |                                    |  69.5                47.5
+ * t816          |                                    |  69.5                47.3
  * lg            |                                    |  7757                7760
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 36.3
  *            153 with run macro (eval_ptree)
@@ -69447,6 +69513,8 @@ int main(int argc, char **argv)
  *   and for catch what errors it might raise
  *     frames: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
- *  maybe port-specific token to get around the EOF stupidity of fgetc, and port init structs to handle all the funcs
+ *
+ * string->symbol of string proc could skip making the intermediate string, or mark it as a temp (string-append does thie?)
+ *   (string->symbol (procedure-name|string-append...))
  */
 

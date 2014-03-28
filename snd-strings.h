@@ -715,32 +715,4 @@
 #define S_zoom_focus_right              "zoom-focus-right"
 #define S_zoom_focus_style              "zoom-focus-style"
 
-#if (!DISABLE_DEPRECATED)
-#define S_colormap_p S_is_colormap
-#define S_color_p S_is_color
-#define S_contrast_control_p S_contrast_control_on
-#define S_enved_clip_p S_enved_clipping
-#define S_enved_wave_p S_enved_with_wave
-#define S_expand_control_p S_expand_control_on
-#define S_filter_control_p S_filter_control_on
-#define S_lisp_graph_p S_lisp_graph_on
-#define S_mark_p S_is_mark
-#define S_mix_sampler_p S_is_mix_sampler
-#define S_mix_p S_is_mix
-#define S_player_p S_is_player
-#define S_region_p S_is_region
-#define S_region_sampler_p S_is_region_sampler
-#define S_reverb_control_p S_is_reverb_control
-#define S_sampler_at_end_p S_is_sampler_at_end
-#define S_sampler_p S_is_sampler
-#define S_selection_p S_is_selection
-#define S_snd_to_sample_p S_is_snd_to_sample
-#define S_sound_file_p S_is_sound_file
-#define S_sound_p S_is_sound
-#define S_time_graph_p S_time_graph_on
-#define S_transform_graph_p S_transform_graph_on
-#define S_transform_p S_is_transform
-#define S_variable_graph_p S_is_variable_graph
-#endif
-
 #endif

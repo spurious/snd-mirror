@@ -43,6 +43,7 @@ typedef double s7_Double;
    *    *unbound-variable-hook* hook called when an unbound symbol is accessed.
    *    *#readers*              #... readers
    *    *gc-stats*              #t to turn on GC statistics
+   *    *maximum-stack-size*    largest stack allowed
    *    __func__                equivalent to C's __func__.  Data about the current function.
    *
    * s7 constants:
@@ -68,12 +69,13 @@ typedef double s7_Double;
    *    procedure-source        returns the source (a list) of a procedure
    *    help                    tries to find a help string associated with its argument
    *    symbol-calls            if profiling is enabled, returns the number of times its argument (a symbol) has been called
-   *    macro?                  returns #t is its argument is a macro or a symbol whose value is a macro
+   *    macro?                  returns #t if its argument is a macro or a symbol whose value is a macro
+   *    gensym?                 returns #t if its argument is a symbol created by make-gensym
    *    with-baffle             limit scope of continuations
    *
    *    and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    *    stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
-   *    such as multiprecision arithmetic, multidimensional vectors, initial heap and stack size, etc.
+   *    such as multiprecision arithmetic, initial heap and stack size, etc.
    *
    *    The functions map, for-each, length, reverse, copy, and fill! are generic.
    *
@@ -876,7 +878,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  *        s7 changes
  *		
  * 5-Mar:     s7_heap_size, s7_gc_freed.
- * 22-Jan:    s7_vector_ref_object_value_checked.
+ * 22-Jan-14: s7_vector_ref_object_value_checked.
  * --------
  * 8-Nov:     s7_symbol_documentation, s7_define_constant_with_documentation.
  * 17-Oct:    bignum-precision (procedure-with-setter) is now an integer variable named *bignum-precision*.
@@ -894,7 +896,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  *              exit, emergency-exit.
  * 7-Apr:     removed s7_scheme* arg from s7_slot_value, added s7_is_local_variable.
  * 25-Mar:    char-position, string-position, environment-ref, environment-set! added to the scheme side.
- * 9-Jan:     s7_cos, s7_sin, other optimization changes.
+ * 9-Jan-13:  s7_cos, s7_sin, other optimization changes.
  * --------
  * 24-Dec:    s7_set_object_array_info and other such changes.
  * 20-Nov:    removed s7_set_error_exiter and s7_error_and_exit which I think have never been used.

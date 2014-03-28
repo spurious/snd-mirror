@@ -479,22 +479,20 @@ const char *mus_set_name(mus_any *ptr, const char *new_name)
 
 int mus_free(mus_any *gen)
 {
-  if ((check_gen(gen, "mus-free")) &&
-      (gen->core->release))
+  if (gen)
     {
-      int release_result = 0;
-      mus_any_class *local_class = NULL;
-
       if (gen->core->original_class)
-	local_class = (mus_any_class *)(gen->core);
-
-      release_result = ((*(gen->core->release))(gen));
-
-      if (local_class) 
-	free(local_class);
-      return(release_result);
+	{
+	  int release_result;
+	  mus_any_class *local_class = NULL;
+	  local_class = (mus_any_class *)(gen->core);
+	  release_result = ((*(gen->core->release))(gen));
+	  free(local_class);
+	  return(release_result);
+	}
+      return((*(gen->core->release))(gen));
     }
-  return(mus_error(MUS_NO_FREE, "can't free %s", mus_name(gen)));
+  return(0);
 }
 
 
@@ -6575,7 +6573,7 @@ mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base)
   noi *gen;
   gen = (noi *)calloc(1, sizeof(noi));
   gen->core = &RAND_INTERP_CLASS;
-  gen->distribution = NULL;
+  /* gen->distribution = NULL; */
   if (freq < 0.0) freq = -freq;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = base;
@@ -9187,13 +9185,15 @@ static mus_float_t run_env(mus_any *ptr, mus_float_t unused1, mus_float_t unused
 static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur, double scaler)
 { 
   int i, j;
-  double xscl = 1.0, cur_loc = 0.0, y1 = 0.0;
+  double xscl, cur_loc, y1;
+  /* pts > 1 if we get here, so the loop below is always exercised */
 
-  if ((pts > 1) &&
-      (data[pts * 2 - 2] != data[0]))
+  if (data[pts * 2 - 2] != data[0])
     xscl = (double)(dur - 1) / (double)(data[pts * 2 - 2] - data[0]); /* was dur, 7-Apr-02 */
+  else xscl = 1.0;
+  e->locs[pts - 2] = e->end;
 
-  for (j = 0, i = 2; i < pts * 2; i += 2, j++) /* if pts == 1, no loop */
+  for (j = 0, i = 2, cur_loc = 0.0; i < pts * 2; i += 2, j++)
     {
       mus_long_t samps;
       double cur_dx, x0, y0, x1;
@@ -9235,26 +9235,8 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
 	}
     }
 
-  if (pts > 1)
-    e->locs[pts - 2] = e->end;
-
-  if (pts > 1)
-    {
-      switch (e->style)
-      {
-      case MUS_ENV_STEP:
-	e->rates[pts - 1] = e->offset + (scaler * y1); /* stick at last value, which in this case is the value (not an increment) */
-	break;
-
-      case MUS_ENV_LINEAR:
-	e->rates[pts - 1] = 0.0;
-	break;
-
-      case MUS_ENV_EXPONENTIAL:
-	e->rates[pts - 1] = 1.0;
-	break;
-      }
-    }
+  if (e->style == MUS_ENV_STEP)
+    e->rates[pts - 1] = e->offset + (scaler * y1); /* stick at last value, which in this case is the value (not an increment) */
 
   e->locs[pts - 1] = 1000000000;
   e->locs[pts] = 1000000000; /* guard cell at end to make bounds check simpler */
@@ -9616,6 +9598,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
       e->power = 0.0;
       e->init_power = 0.0;
       dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
+      e->rates[npts - 1] = 0.0;
     }
   else
     {
@@ -9638,6 +9621,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 	      return(NULL);
 	    }
 	  dmagify_env(e, edata, npts, dur_in_samples, 1.0);
+	  e->rates[npts - 1] = 1.0;
 	  e->power = exp(edata[1]);
 	  e->init_power = e->power;
 	  e->offset -= e->scaler;
@@ -14107,7 +14091,7 @@ mus_any *mus_make_granulate(mus_float_t (*input)(void *arg, int direction),
       mus_error(MUS_ARG_OUT_OF_RANGE, S_make_granulate " expansion (%f) must be < hop * srate (%f)", expansion, hop * sampling_rate);
       return(NULL);
     }
-  spd = (grn_info *)calloc(1, sizeof(grn_info));
+  spd = (grn_info *)malloc(sizeof(grn_info));
   spd->core = &GRANULATE_CLASS;
   spd->cur_out = 0;
   spd->ctr = 0;
@@ -14126,7 +14110,7 @@ mus_any *mus_make_granulate(mus_float_t (*input)(void *arg, int direction),
   spd->rd = input;
   spd->closure = closure;
   spd->edit = edit;
-  spd->grain = (mus_float_t *)calloc(spd->in_data_len, sizeof(mus_float_t));
+  spd->grain = (mus_float_t *)malloc(spd->in_data_len * sizeof(mus_float_t));
   spd->first_samp = true;
   spd->randx = mus_rand_seed(); /* caller can override this via the mus_location method */
   next_random();
@@ -14169,8 +14153,17 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
       if (spd->first_samp)
 	{
 	  /* fill up in_data, out_data is already cleared */
-	  for (i = 0; i < spd->in_data_len; i++)
-	    spd->in_data[i] = spd->rd(spd->closure, 1);
+	  int lim4;
+	  lim4 = spd->in_data_len - 4;
+	  for (i = 0; i <= lim4;)
+	    {
+	      spd->in_data[i++] = spd->rd(spd->closure, 1);
+	      spd->in_data[i++] = spd->rd(spd->closure, 1);
+	      spd->in_data[i++] = spd->rd(spd->closure, 1);
+	      spd->in_data[i++] = spd->rd(spd->closure, 1);
+	    }
+	  for (; i < spd->in_data_len;)
+	    spd->in_data[i++] = spd->rd(spd->closure, 1);
 	}
       else
 	{
