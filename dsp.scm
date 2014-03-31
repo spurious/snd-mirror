@@ -1641,15 +1641,15 @@ shift the given channel in pitch without changing its length.  The higher 'order
 		      (expt 2 (ceiling (log (* (- num-coeffs 1) len) 2)))))
 	 (rl1 (make-float-vector fft-len 0.0))
 	 (rl2 (make-float-vector fft-len 0.0))
-	 (new-sound (make-float-vector fft-len)))
+	 (newv (make-float-vector fft-len)))
     (if (> (coeffs 0) 0.0)
 	(let ((dither (coeffs 0)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i fft-len))
-	    (set! (new-sound i) (mus-random dither)))))
+	    (set! (newv i) (mus-random dither)))))
     (if (> num-coeffs 1)
 	(begin
-	  (float-vector-add! new-sound (float-vector-scale! (copy sound) (coeffs 1)))
+	  (float-vector-add! newv (float-vector-scale! (copy sound) (coeffs 1)))
 	  (if (> num-coeffs 2)
 	      (let ((peak (maxamp snd chn)))
 		(float-vector-add! (float-vector-scale! rl1 0.0) sound)
@@ -1657,10 +1657,10 @@ shift the given channel in pitch without changing its length.  The higher 'order
 		    ((= i num-coeffs))
 		  (convolution rl1 (float-vector-add! (float-vector-scale! rl2 0.0) sound) fft-len)
 		  (let ((pk (float-vector-peak rl1)))
-		    (float-vector-add! new-sound (float-vector-scale! (copy rl1) (/ (* (coeffs i) peak) pk)))))
-		(let ((pk (float-vector-peak new-sound)))
-		  (float-vector-scale! new-sound (/ peak pk)))))))
-    (float-vector->channel new-sound 0 (max len (* len (- num-coeffs 1))) snd chn #f (format #f "spectral-polynomial ~A" (float-vector->string coeffs)))))
+		    (float-vector-add! newv (float-vector-scale! (copy rl1) (/ (* (coeffs i) peak) pk)))))
+		(let ((pk (float-vector-peak newv)))
+		  (float-vector-scale! newv (/ peak pk)))))))
+    (float-vector->channel newv 0 (max len (* len (- num-coeffs 1))) snd chn #f (format #f "spectral-polynomial ~A" (float-vector->string coeffs)))))
 
 
 ;;; ----------------

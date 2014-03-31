@@ -1812,8 +1812,7 @@ static mus_float_t convolve_next_sample(void *ptr, int dir)
 {
   return(read_sample(((snd_fd *)ptr)));
 }
-/* PERHAPS: since this is always unchecked/unscaled, convolve_[to_]buffer?
- */
+
 
 
 static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_long_t beg, mus_long_t dur, 

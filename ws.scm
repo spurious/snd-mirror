@@ -797,7 +797,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
        (define ,(string->symbol (string-append sname "?")) #f)
        (define ,(string->symbol (string-append "make-" sname)) #f)
 
-       (let ((gen-type ',(string->symbol (string-append (string (integer->char 27)) sname (string (integer->char 12))))))
+       (let ((gen-type ',(string->symbol (string-append "+" sname "+"))))
 	 
 	 (set! ,(string->symbol (string-append sname "?"))
 	       (lambda (obj)

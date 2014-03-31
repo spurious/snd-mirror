@@ -9193,7 +9193,7 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
   else xscl = 1.0;
   e->locs[pts - 2] = e->end;
 
-  for (j = 0, i = 2, cur_loc = 0.0; i < pts * 2; i += 2, j++)
+  for (j = 0, i = 2, cur_loc = 0.0, y1 = 0.0; i < pts * 2; i += 2, j++)
     {
       mus_long_t samps;
       double cur_dx, x0, y0, x1;
@@ -9537,7 +9537,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
       if (e2_free_list)
 	{
 	  e = e2_free_list;
-	  e2_free_list = e->next;
+	  e2_free_list = (seg *)(e->next);
 	}
       break;
 
@@ -9545,7 +9545,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
       if (e3_free_list)
 	{
 	  e = e3_free_list;
-	  e3_free_list = e->next;
+	  e3_free_list = (seg *)(e->next);
 	}
       break;
       
@@ -9553,7 +9553,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
       if (e4_free_list)
 	{
 	  e = e4_free_list;
-	  e4_free_list = e->next;
+	  e4_free_list = (seg *)(e->next);
 	}
       break;
       
@@ -15772,7 +15772,7 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
       int c1 = 0, c2 = 0, chan;
 
       samps = (mus_float_t *)calloc(totallen, sizeof(mus_float_t));
-      outdat = (mus_float_t *)calloc(totallen, sizeof(mus_float_t));
+      outdat = (mus_float_t *)malloc(totallen * sizeof(mus_float_t));
 
       for (chan = 0; chan < output_chans; chan++)
 	{
@@ -15999,8 +15999,8 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv->outctr = interp;
   pv->filptr = 0;
   pv->pitch = pitch;
-  pv->ampinc = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
-  pv->freqs = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
+  pv->ampinc = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
+  pv->freqs = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
   pv->amps = (mus_float_t *)calloc(N2, sizeof(mus_float_t));
   pv->phases = (mus_float_t *)calloc(N2, sizeof(mus_float_t));
   pv->lastphase = (mus_float_t *)calloc(N2, sizeof(mus_float_t));
@@ -16035,8 +16035,8 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
    *   in Linux at least, sincos is faster than sin+sin -- in my timing tests, although
    *   callgrind is crazy, the actual runtimes are about 25% faster (sincos vs sin+sin).
    */
-  pv->cs = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
-  pv->sn = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
+  pv->cs = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
+  pv->sn = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
   pv->sc_safe = (bool *)calloc(fftsize, sizeof(bool));
   pv->indices = (int *)malloc(N2 * sizeof(int));
 #endif
@@ -16077,7 +16077,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	  mus_clear_array(pv->freqs, pv->N);
 	  if (pv->in_data == NULL)
 	    {
-	      pv->in_data = (mus_float_t *)calloc(pv->N, sizeof(mus_float_t));
+	      pv->in_data = (mus_float_t *)malloc(pv->N * sizeof(mus_float_t));
 	      for (i = 0; i < pv->N; i++) 
 		pv->in_data[i] = pv->input(pv->closure, 1);
 	    }

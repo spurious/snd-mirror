@@ -112,14 +112,11 @@
 
 (define (x-norm e xmax)
   "(x-norm e xmax) changes 'e' x axis values so that they run to 'xmax'"
-  (let ((scl (/ xmax (e (- (length e) 2))))
-	(val ())
-	(len (length e)))
-    (do ((i 0 (+ i 2)))
-	((>= i len))
-      (set! val (cons (* (e i) scl) val))
-      (set! val (cons (e (+ i 1)) val)))
-    (reverse val)))
+  (define (x-norm-1 e scl new-e)
+    (if (null? e)
+	(reverse! new-e)
+	(x-norm-1 (cddr e) scl (cons (cadr e) (cons (* scl (car e)) new-e)))))
+  (x-norm-1 e (/ xmax (e (- (length e) 2))) ()))
 
 
 

@@ -31166,6 +31166,13 @@ static Xen gxg_gtk_entry_get_max_width_chars(Xen entry)
   return(C_to_Xen_gint(gtk_entry_get_max_width_chars(Xen_to_C_GtkEntry_(entry))));
 }
 
+static Xen gxg_gdk_device_get_last_event_window(Xen device)
+{
+  #define H_gdk_device_get_last_event_window "GdkWindow* gdk_device_get_last_event_window(GdkDevice* device)"
+  Xen_check_type(Xen_is_GdkDevice_(device), device, 1, "gdk_device_get_last_event_window", "GdkDevice*");
+  return(C_to_Xen_GdkWindow_(gdk_device_get_last_event_window(Xen_to_C_GdkDevice_(device))));
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -37655,6 +37662,7 @@ Xen_wrap_2_args(gxg_gtk_box_set_center_widget_w, gxg_gtk_box_set_center_widget)
 Xen_wrap_1_arg(gxg_gtk_box_get_center_widget_w, gxg_gtk_box_get_center_widget)
 Xen_wrap_2_args(gxg_gtk_entry_set_max_width_chars_w, gxg_gtk_entry_set_max_width_chars)
 Xen_wrap_1_arg(gxg_gtk_entry_get_max_width_chars_w, gxg_gtk_entry_get_max_width_chars)
+Xen_wrap_1_arg(gxg_gdk_device_get_last_event_window_w, gxg_gdk_device_get_last_event_window)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -41627,6 +41635,7 @@ static void define_functions(void)
   Xg_define_procedure(gtk_box_get_center_widget, gxg_gtk_box_get_center_widget_w, 1, 0, 0, H_gtk_box_get_center_widget);
   Xg_define_procedure(gtk_entry_set_max_width_chars, gxg_gtk_entry_set_max_width_chars_w, 2, 0, 0, H_gtk_entry_set_max_width_chars);
   Xg_define_procedure(gtk_entry_get_max_width_chars, gxg_gtk_entry_get_max_width_chars_w, 1, 0, 0, H_gtk_entry_get_max_width_chars);
+  Xg_define_procedure(gdk_device_get_last_event_window, gxg_gdk_device_get_last_event_window_w, 1, 0, 0, H_gdk_device_get_last_event_window);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -44283,7 +44292,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("11-Mar-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("29-Mar-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

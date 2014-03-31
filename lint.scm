@@ -130,7 +130,7 @@
 		  defined? denominator do dynamic-wind 
 		  environment environment-ref environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
 		  floor for-each 
-		  gcd gensym global-environment 
+		  gcd gensym gensym? global-environment 
 		  hash-table hash-table-ref hash-table-size hash-table? hash-table-iterator? hook-functions 
 		  if imag-part inexact->exact inexact? infinite? initial-environment input-port? integer->char integer-decode-float 
 		  integer-length integer? 
@@ -236,6 +236,7 @@
 			   (cons 'for-each +unspecified+)
 			   (cons 'gcd +number+)
 			   (cons 'gensym +symbol+)
+			   (cons 'gensym? +boolean+)
 			   (cons 'global-environment +environment+)
 			   (cons 'hash-table +hash-table+)
 			   (cons 'hash-table? +boolean+)

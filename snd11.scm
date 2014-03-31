@@ -146,7 +146,7 @@
 			     (let ((old-to-snd *to-snd*))
 			       (set! *to-snd* #f)
 			       (if *clm-verbose* (snd-print (format #f "remake ~S at ~,3F~%" chkpt-file beg)))
-			       (let ((new-sound 
+			       (let ((new-snd 
 				      (apply with-sound-helper 
 					     (lambda () ,@body) 
 					     (append (list :output 
@@ -163,7 +163,7 @@
 							 ())
 						     ',options))))
 				 (set! *to-snd* old-to-snd)
-				 (mus-mix *output* new-sound beg)
+				 (mus-mix *output* new-snd beg)
 				 (if revf (mus-mix *reverb* revf beg)))))))))))))
 
 

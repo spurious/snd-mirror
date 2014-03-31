@@ -363,36 +363,22 @@ Xen snd_catch_any(Xen_catch_t body, void *body_data, const char *caller)
 
 bool procedure_arity_ok(Xen proc, int args)
 {
+#if HAVE_SCHEME
+  return(s7_is_aritable(s7, proc, args));
+#else
   Xen arity;
   int rargs;
   arity = Xen_arity(proc);
+  rargs = Xen_integer_to_C_int(arity);
 
 #if HAVE_RUBY
-  rargs = Xen_integer_to_C_int(arity);
   return(xen_rb_arity_ok(rargs, args));
 #endif
 
 #if HAVE_FORTH
-  rargs = Xen_integer_to_C_int(arity);
-  if (rargs != args)
-    return(false);
+  return(rargs == args);
 #endif
-
-#if HAVE_SCHEME
-  {
-    int oargs, restargs, gc_loc;
-
-    gc_loc = s7_gc_protect(s7, arity);
-    rargs = Xen_integer_to_C_int(Xen_car(arity));
-    oargs = Xen_integer_to_C_int(Xen_cadr(arity));
-    restargs = ((Xen_is_true(Xen_caddr(arity))) ? 1 : 0);
-    s7_gc_unprotect_at(s7, gc_loc);
-
-    if (rargs > args) return(false);
-    if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
-  }
 #endif
-
   return(true);
 }
 

@@ -1025,7 +1025,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_BOUND_P(Arg)                           ((Arg) != xen_undefined)
 #define XEN_EMPTY_LIST                             xen_nil
 #define XEN_UNDEFINED                              xen_undefined
-#define XEN_EQ_P(Arg1, Arg2)                       s7_is_eq(Arg1, Arg2)
+#define XEN_EQ_P(Arg1, Arg2)                       ((Arg1) == (Arg2))
 
 #define XEN_CONS_P(Arg)                            s7_cons_p(Arg)
 #define XEN_CONS(Arg1, Arg2)                       s7_cons(s7, Arg1, Arg2)
@@ -1132,7 +1132,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define C_TO_XEN_CHAR(Arg)                         s7_make_character(s7, Arg)
 
 #define XEN_KEYWORD_P(Obj)                         s7_is_keyword(Obj)
-#define XEN_KEYWORD_EQ_P(k1, k2)                   s7_is_eq(k1, k2)
+#define XEN_KEYWORD_EQ_P(k1, k2)                   ((k1) == (k2))
 #define XEN_MAKE_KEYWORD(Arg)                      s7_make_keyword(s7, Arg)
 
 #define XEN_PROCEDURE_P(Arg)                       s7_is_procedure(Arg)
