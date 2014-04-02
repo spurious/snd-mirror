@@ -3787,7 +3787,6 @@ black-and-white-colormap constant *better-colormap*
      "no phase method"
      "null gen arg to method"
      "no length method"
-     "no free method"
      "no describe method"
      "no data method"
      "no scaler method"

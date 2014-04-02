@@ -3124,7 +3124,7 @@ static bool srates_differ(int srate, save_as_dialog_info *sd)
   switch (sd->type)
     {
     case SOUND_SAVE_AS:
-      return(SND_SRATE(any_selected_sound()) != srate);
+      return(snd_srate(any_selected_sound()) != srate);
       
     case SELECTION_SAVE_AS:
       return(selection_srate() != srate);
@@ -3142,7 +3142,7 @@ static double srate_ratio(int srate, save_as_dialog_info *sd)
   switch (sd->type)
     {
     case SOUND_SAVE_AS:
-      return((double)(SND_SRATE(any_selected_sound())) / (double)srate);
+      return((double)(snd_srate(any_selected_sound())) / (double)srate);
       
     case SELECTION_SAVE_AS:
       return((double)selection_srate() / (double)srate);

@@ -87,7 +87,7 @@ int snd_pane_height(snd_info *sp)
 
 void set_status(snd_info *sp, const char *str, bool update) 
 {
-  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
+  if ((sp->inuse != SOUND_NORMAL) || (!has_widgets(sp))) return;
   XmTextSetString(STATUS_AREA(sp), (char *)str);
   /* updating clears the entire graph widget and triggers an expose event -- this is evil if we're currently displaying! */
   /* there's also a bug in libxcb (fixed, but not propagated yet) that causes a segfault here if more than
@@ -160,7 +160,7 @@ static int scroll_to_amp(snd_info *sp, int val)
 
 void set_amp(snd_info *sp, mus_float_t val)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->amp_control = val;
   else XtVaSetValues(AMP_SCROLLBAR(sp),
 		     XmNvalue,
@@ -237,7 +237,7 @@ static int scroll_to_speed(snd_info *sp, int ival)
 
 void set_speed(snd_info *sp, mus_float_t val)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->speed_control = val;
   else XtVaSetValues(SPEED_SCROLLBAR(sp),
 		     XmNvalue,
@@ -308,7 +308,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 
 void toggle_direction_arrow(snd_info *sp, bool state)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->speed_control_direction = ((state) ? -1 : 1);
   else XmToggleButtonSetState(SPEED_ARROW(sp), (Boolean)state, true);
 }
@@ -346,7 +346,7 @@ static int scroll_to_expand(snd_info *sp, int val)
 
 void set_expand(snd_info *sp, mus_float_t val)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->expand_control = val;
   else XtVaSetValues(EXPAND_SCROLLBAR(sp),
 		     XmNvalue,
@@ -396,7 +396,7 @@ static void expand_button_callback(Widget w, XtPointer context, XtPointer info)
 
 void toggle_expand_button(snd_info *sp, bool state)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->expand_control_on = state;
   else XmToggleButtonSetState(EXPAND_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
@@ -424,7 +424,7 @@ static int scroll_to_contrast(snd_info *sp, int val)
 
 void set_contrast(snd_info *sp, mus_float_t val)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->contrast_control = val;
   else XtVaSetValues(CONTRAST_SCROLLBAR(sp),
 		     XmNvalue,
@@ -472,7 +472,7 @@ static void contrast_button_callback(Widget w, XtPointer context, XtPointer info
 
 void toggle_contrast_button(snd_info *sp, bool state)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->contrast_control_on = state;
   else XmToggleButtonSetState(CONTRAST_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
@@ -514,7 +514,7 @@ static int scroll_to_revscl(snd_info *sp, int val)
 
 void set_revscl(snd_info *sp, mus_float_t val)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->reverb_control_scale = val;
   else XtVaSetValues(REVSCL_SCROLLBAR(sp),
 		     XmNvalue,
@@ -575,7 +575,7 @@ static int scroll_to_revlen(snd_info *sp, int val)
 
 void set_revlen(snd_info *sp, mus_float_t val)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->reverb_control_length = val;
   else XtVaSetValues(REVLEN_SCROLLBAR(sp),
 		     XmNvalue,
@@ -624,7 +624,7 @@ static void reverb_button_callback(Widget w, XtPointer context, XtPointer info)
 
 void toggle_reverb_button(snd_info *sp, bool state)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->reverb_control_on = state;
   else XmToggleButtonSetState(REVERB_BUTTON(sp), (Boolean)state, true);
 }
@@ -642,7 +642,7 @@ static void filter_button_callback(Widget w, XtPointer context, XtPointer info)
 
 void toggle_filter_button(snd_info *sp, bool state)
 {
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     sp->filter_control_on = state;
   else XmToggleButtonSetState(FILTER_BUTTON(sp), (Boolean)state, true);
 }
@@ -684,7 +684,7 @@ void display_filter_env(snd_info *sp)
   edp->with_dots = true;
 
   if (sp->filter_control_in_hz)
-    sp->filter_control_xmax = (mus_float_t)(SND_SRATE(sp) / 2);
+    sp->filter_control_xmax = (mus_float_t)(snd_srate(sp) / 2);
   else sp->filter_control_xmax = 1.0;
 
   if (sp->filter_control_envelope == NULL) 
@@ -705,7 +705,7 @@ void display_filter_env(snd_info *sp)
 
 void set_filter_text(snd_info *sp, const char *str)
 {
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     XmTextSetString(FILTER_COEFFS_TEXT(sp), (char *)str);
 }
 
@@ -778,7 +778,7 @@ static void filter_dB_callback(Widget w, XtPointer context, XtPointer info)
 void set_filter_in_dB(snd_info *sp, bool val)
 {
   sp->filter_control_in_dB = val;
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     {
       XmToggleButtonSetState(FILTER_DB_BUTTON(sp), (Boolean)val, false);
       display_filter_env(sp);
@@ -790,7 +790,7 @@ static void new_in_hz(snd_info *sp, bool val)
 {
   sp->filter_control_in_hz = val;
   if (val)
-    sp->filter_control_xmax = (mus_float_t)(SND_SRATE(sp) / 2);
+    sp->filter_control_xmax = (mus_float_t)(snd_srate(sp) / 2);
   else sp->filter_control_xmax = 1.0;
   if (sp->filter_control_envelope) free_env(sp->filter_control_envelope);
   sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
@@ -809,7 +809,7 @@ static void filter_hz_callback(Widget w, XtPointer context, XtPointer info)
 void set_filter_in_hz(snd_info *sp, bool val)
 {
   new_in_hz(sp, val);
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     {
       XmToggleButtonSetState(FILTER_HZ_BUTTON(sp), (Boolean)val, false);
       display_filter_env(sp);
@@ -822,7 +822,7 @@ void set_filter_order(snd_info *sp, int order)
   if (order & 1) order++;
   if (order <= 0) order = 2;
   sp->filter_control_order = order;
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     {
       widget_int_to_text(FILTER_ORDER_TEXT(sp), order);
       display_filter_env(sp);
@@ -906,7 +906,7 @@ static void filter_order_activate_callback(Widget w, XtPointer context, XtPointe
 void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     {
       char *tmpstr = NULL;
       XmTextSetString(FILTER_COEFFS_TEXT(sp), tmpstr = env_to_string(e));
@@ -923,7 +923,7 @@ void filter_env_changed(snd_info *sp, env *e)
 void set_play_button(snd_info *sp, bool val)
 {
 #if WITH_AUDIO
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     XmToggleButtonSetState(PLAY_BUTTON(sp), (Boolean)val, false);
   set_open_file_play_button(val);
 #endif
@@ -963,7 +963,7 @@ typedef struct {bool pausing; } pause_data;
 #if WITH_AUDIO
 static void set_play_button_pause(snd_info *sp, void *ptr)
 {
-  if ((sp->playing) && (HAS_WIDGETS(sp)))
+  if ((sp->playing) && (has_widgets(sp)))
     {
       pause_data *pd = (pause_data *)ptr;
       Widget w;
@@ -991,7 +991,7 @@ void play_button_pause(bool pausing)
 void set_control_panel_play_button(snd_info *sp)
 {
 #if WITH_AUDIO
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     {
       set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
       XtVaSetValues(PLAY_BUTTON(sp), XmNselectColor, ss->selection_color, NULL);
@@ -1033,7 +1033,7 @@ void syncb(snd_info *sp, int on)
 {
   sp->sync = on;
   if (on > ss->sound_sync_max) ss->sound_sync_max = on;
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     {
       set_sync_color(sp);
       XmToggleButtonSetState(SYNC_BUTTON(sp), (on != 0), false); /* need actual bool here, not a cast! */
@@ -1380,7 +1380,7 @@ static Pixmap stop_sign = 0;
 
 void show_lock(snd_info *sp)
 {
-  if (!HAS_WIDGETS(sp)) return;
+  if (!has_widgets(sp)) return;
   if (mini_lock)
     XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, mini_lock, NULL);
 }
@@ -1388,7 +1388,7 @@ void show_lock(snd_info *sp)
 
 void hide_lock(snd_info *sp)
 {
-  if (!HAS_WIDGETS(sp)) return;
+  if (!has_widgets(sp)) return;
   if (mini_lock)
     XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
   /* these Pixmaps can be null if the colormap is screwed up */
@@ -1397,7 +1397,7 @@ void hide_lock(snd_info *sp)
 
 static void show_stop_sign(snd_info *sp)
 {
-  if (!HAS_WIDGETS(sp)) return;
+  if (!has_widgets(sp)) return;
   if (stop_sign)
     XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, stop_sign, NULL);
 }
@@ -1405,7 +1405,7 @@ static void show_stop_sign(snd_info *sp)
 
 static void hide_stop_sign(snd_info *sp)
 {
-  if (!HAS_WIDGETS(sp)) return;
+  if (!has_widgets(sp)) return;
   if (blank_pixmap)
     XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
 }
@@ -1413,7 +1413,7 @@ static void hide_stop_sign(snd_info *sp)
 
 static void show_bomb(snd_info *sp)
 {
-  if (!HAS_WIDGETS(sp)) return;
+  if (!has_widgets(sp)) return;
   if (sp->bomb_ctr >= NUM_BOMBS) 
     sp->bomb_ctr = 0;
   if (bombs[sp->bomb_ctr])
@@ -1424,7 +1424,7 @@ static void show_bomb(snd_info *sp)
 
 static void hide_bomb(snd_info *sp)
 {
-  if (!HAS_WIDGETS(sp)) return;
+  if (!has_widgets(sp)) return;
   XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
   sp->bomb_ctr = 0;
 }
@@ -1435,7 +1435,7 @@ static void hide_bomb(snd_info *sp)
 static void tick_bomb(XtPointer context, XtIntervalId *id)
 {
   snd_info *sp = (snd_info *)context;
-  if (!HAS_WIDGETS(sp)) return;
+  if (!has_widgets(sp)) return;
   if ((sp->need_update) || (sp->file_unreadable))
     {
       show_bomb(sp);
@@ -1454,7 +1454,7 @@ static void tick_bomb(XtPointer context, XtIntervalId *id)
 
 void start_bomb(snd_info *sp)
 {
-  if (!HAS_WIDGETS(sp)) return;
+  if (!has_widgets(sp)) return;
   sp->bomb_ctr = 0;
   if (!(sp->bomb_in_progress))
     {
@@ -1469,7 +1469,7 @@ void start_bomb(snd_info *sp)
 
 void stop_bomb(snd_info *sp)
 {
-  if (!HAS_WIDGETS(sp)) return;
+  if (!has_widgets(sp)) return;
   hide_bomb(sp);
   sp->bomb_in_progress = false;
 }
@@ -2719,13 +2719,13 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 void update_sound_label(snd_info *sp)
 {
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     set_button_label(NAME_LABEL(sp), shortname_indexed(sp));  
 }
 
 void snd_info_cleanup(snd_info *sp)
 {
-  if (HAS_WIDGETS(sp))
+  if (has_widgets(sp))
     {
       clear_status_area(sp);
       if (SYNC_BUTTON(sp))
@@ -2874,7 +2874,7 @@ void progress_report(chan_info *cp, mus_float_t pct)
   snd_info *sp;
   sp = cp->sound;
 
-  if ((!HAS_WIDGETS(sp)) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!has_widgets(sp)) || (sp->inuse != SOUND_NORMAL)) return;
 
   which = (int)(pct * NUM_HOURGLASSES);
   if (which >= NUM_HOURGLASSES) which = NUM_HOURGLASSES - 1;
@@ -2897,7 +2897,7 @@ void finish_progress_report(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
 
-  if ((!HAS_WIDGETS(sp)) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!has_widgets(sp)) || (sp->inuse != SOUND_NORMAL)) return;
 
   if ((cp->chan < sp->num_progress_widgets) &&
       ((cp->chan == 0) ||
@@ -2915,7 +2915,7 @@ void start_progress_report(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
 
-  if ((!HAS_WIDGETS(sp)) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!has_widgets(sp)) || (sp->inuse != SOUND_NORMAL)) return;
 
   if ((cp->chan < sp->num_progress_widgets) &&
       ((cp->chan == 0) ||
@@ -3253,12 +3253,12 @@ widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filte
 
   snd_info *sp;
 
-  ASSERT_SOUND(S_sound_widgets, snd, 1);
+  Snd_assert_sound(S_sound_widgets, snd, 1);
 
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
-  if (!HAS_WIDGETS(sp))
+  if (!has_widgets(sp))
     return(Xen_empty_list);
 
   return(Xen_cons(Xen_wrap_widget(SND_PANE(sp)),

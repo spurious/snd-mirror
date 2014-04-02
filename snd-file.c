@@ -1236,7 +1236,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 
   if (sp) 
     {
-      add_srate_to_completion_list(SND_SRATE(sp));
+      add_srate_to_completion_list(snd_srate(sp));
       if ((selected) &&
 	  (sp->active) &&
 	  (sp->inuse == SOUND_NORMAL))
@@ -2876,9 +2876,9 @@ void display_info(snd_info *sp)
 
       snprintf(buffer, INFO_BUFFER_SIZE, 
 		   "srate: %d\nchans: %d\nlength: %.3f (%lld %s)\n%s\n",
-		   SND_SRATE(sp),
+		   snd_srate(sp),
 		   sp->nchans,
-		   (double)(CURRENT_SAMPLES(sp->chans[0])) / (double)SND_SRATE(sp),
+		   (double)(CURRENT_SAMPLES(sp->chans[0])) / (double)snd_srate(sp),
 		   CURRENT_SAMPLES(sp->chans[0]),
 		   (sp->nchans == 1) ? "samples" : "frames",
 		   ampstr = display_sound_maxamps(sp));
@@ -2915,7 +2915,7 @@ void display_info(snd_info *sp)
 		   snd_strftime(STRFTIME_FORMAT, sp->write_date));
       post_it_append(buffer);
 
-      if (hdr->srate != SND_SRATE(sp))
+      if (hdr->srate != snd_srate(sp))
 	{
 	  snprintf(buffer, INFO_BUFFER_SIZE, "    original srate: %d\n", hdr->srate);
 	  post_it_append(buffer);
@@ -3053,7 +3053,7 @@ static Xen g_sound_loop_info(Xen snd)
 list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   snd_info *sp;
-  ASSERT_SOUND(S_sound_loop_info, snd, 1);
+  Snd_assert_sound(S_sound_loop_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
@@ -3088,7 +3088,7 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
     }
   else 
     {
-      ASSERT_SOUND(S_setB S_sound_loop_info, snd, 1);
+      Snd_assert_sound(S_setB S_sound_loop_info, snd, 1);
       sp = get_sp(snd);
     }
   len = Xen_list_length(vals);
@@ -3227,7 +3227,7 @@ each inner list has the form: (name start loopstart loopend)"
 
   Xen outlist = Xen_empty_list;
   snd_info *sp;
-  ASSERT_SOUND(S_soundfont_info, snd, 1);
+  Snd_assert_sound(S_soundfont_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_soundfont_info, snd));
@@ -3412,18 +3412,20 @@ static Xen g_set_auto_update_interval(Xen val)
 This value only matters if " S_auto_update " is " PROC_TRUE
 
   Xen_check_type(Xen_is_number(val), val, 1, S_setB S_auto_update_interval, "a number"); 
-
   ctime = Xen_real_to_C_double(val);
-  if ((ctime < 0.0) || (ctime > (24 * 3600)))
-    Xen_out_of_range_error(S_setB S_auto_update_interval, 1, val, "invalid time");
+  if (ctime != auto_update_interval(ss))
+    {
+      if ((ctime < 0.0) || (ctime > (24 * 3600)))
+	Xen_out_of_range_error(S_setB S_auto_update_interval, 1, val, "invalid time");
 
-  old_time = auto_update_interval(ss);
-  set_auto_update_interval(ctime);
-  /* if new value is 0.0, auto_update_check will notice that, and not run or re-start the update check */
-  /* if new value is not 0.0, and old value was 0.0, we need to restart the timeout proc, unless it's still on the queue */
-
-  if ((ctime > 0.0) && (old_time == 0.0))
-    auto_update_restart();
+      old_time = auto_update_interval(ss);
+      set_auto_update_interval(ctime);
+      /* if new value is 0.0, auto_update_check will notice that, and not run or re-start the update check */
+      /* if new value is not 0.0, and old value was 0.0, we need to restart the timeout proc, unless it's still on the queue */
+      
+      if ((ctime > 0.0) && (old_time == 0.0))
+	auto_update_restart();
+    }
   return(C_double_to_Xen_real(auto_update_interval(ss)));
 }
 

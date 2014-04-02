@@ -994,10 +994,10 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
       ap->y0 = 0.0;
       ap->y1 = ef->scale;
       ap->x0 = 0.0;
-      ap->x1 = SND_SRATE(cp->sound) / 2;
+      ap->x1 = snd_srate(cp->sound) / 2;
       init_axis_scales(ap);
       hisamp = ef->size / 2;
-      incr = (mus_float_t)SND_SRATE(cp->sound) / (mus_float_t)(ef->size);
+      incr = (mus_float_t)snd_srate(cp->sound) / (mus_float_t)(ef->size);
       samples_per_pixel = (mus_float_t)((double)hisamp / (mus_float_t)(ap->x_axis_x1 - ap->x_axis_x0));
       if ((samples_per_pixel < 4.0) &&
 	  (hisamp < POINT_BUFFER_SIZE))
@@ -1153,7 +1153,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	{
 	  /* show current channel overall view in gray scale */
 	  samps = CURRENT_SAMPLES(active_channel);
-	  srate = SND_SRATE(active_channel->sound);
+	  srate = snd_srate(active_channel->sound);
 	  gray_ap->losamp = 0;
 	  gray_ap->hisamp = samps - 1;
 	  if (active_channel->time_graph_type == GRAPH_AS_WAVOGRAM)

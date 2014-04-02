@@ -49,7 +49,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
     }
 
   ofile = snd_tempnam();
-  ohdr = make_temp_header(ofile, SND_SRATE(cp->sound), 1, 0, (char *)origin);
+  ohdr = make_temp_header(ofile, snd_srate(cp->sound), 1, 0, (char *)origin);
   ofd = open_temp_file(ofile, 1, ohdr, &io_err);
   if (ofd == -1) 
     {
@@ -178,7 +178,7 @@ void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y)
 	  chn = cp->chan;
 	}
       select_channel(sp, chn);
-      sample = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(sp)));
+      sample = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(snd_srate(sp)));
       if (sample < 0) sample = 0;
       fullname = mus_expand_filename(filename);
       mix_complete_file(sp, sample, fullname, with_mix_tags(ss), DONT_DELETE_ME, MIX_FOLLOWS_SYNC, NULL);
@@ -1217,7 +1217,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
       int j = 0;
       
       temp_file = snd_tempnam();
-      hdr = make_temp_header(temp_file, SND_SRATE(cp->sound), 1, len, S_setB S_mix_amp_env);
+      hdr = make_temp_header(temp_file, snd_srate(cp->sound), 1, len, S_setB S_mix_amp_env);
       fd = open_temp_file(temp_file, 1, hdr, &io_err);
       data = (mus_float_t **)malloc(sizeof(mus_float_t *));
       new_buffer = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
@@ -1550,7 +1550,7 @@ int hit_mix(chan_info *cp, int x, int y) /* mix tag press in snd-chn.c */
 	      int mx, my;
 	      mx = mix_infos[ms->mix_id]->tag_x;
 	      if (mx <= 0)
-		mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
+		mx = grf_x((double)(ms->beg) / (double)(snd_srate(cp->sound)), cp->axis);
 	      my = mix_infos[ms->mix_id]->tag_y + MIX_TAG_Y_OFFSET + cp->axis->y_offset;
 	      if ((x + SLOPPY_MOUSE >= (mx - width / 2)) && 
 		  (x - SLOPPY_MOUSE <= (mx + width / 2)) &&
@@ -1590,7 +1590,7 @@ int hit_mix_triangle(chan_info *cp, int x, int y)
 	      int mx, my;
 	      mx = mix_infos[ms->mix_id]->tag_x;
 	      if (mx <= 0)
-		mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
+		mx = grf_x((double)(ms->beg) / (double)(snd_srate(cp->sound)), cp->axis);
 	      my = mix_infos[ms->mix_id]->tag_y + MIX_TAG_Y_OFFSET + STRING_HEIGHT + cp->axis->y_offset;
 	      if ((mx < (x + HIT_SLOP)) &&
 		  ((mx + play_arrow_size(ss) + HIT_SLOP) >= x) &&
@@ -2018,7 +2018,7 @@ int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
   x1 = ap->x1;
   y0 = ap->y0;
   y1 = ap->y1;
-  cur_srate = (double)SND_SRATE(md->cp->sound);
+  cur_srate = (double)snd_srate(md->cp->sound);
   ms = current_mix_state(md);
   ap->losamp = ms->beg;
   ap->hisamp = ms->beg + ms->len;
@@ -2073,7 +2073,7 @@ static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
     {
       bool two_sided = false;
       int pts;
-      pts = prepare_mix_waveform(md, ms, ap, mix_waveform_height(ss), y + STRING_HEIGHT / 2, (double)SND_SRATE(cp->sound), &two_sided);
+      pts = prepare_mix_waveform(md, ms, ap, mix_waveform_height(ss), y + STRING_HEIGHT / 2, (double)snd_srate(cp->sound), &two_sided);
       if (pts > 0)
 	{
 	  graphics_context *ax;
@@ -2096,7 +2096,7 @@ static void display_one_mix_with_bounds(mix_state *ms, chan_info *cp, axis_info 
       mix_info *md;
       int x;
       md = mix_infos[ms->mix_id];
-      x = grf_x((double)(ms->beg) / (double)SND_SRATE(cp->sound), ap);
+      x = grf_x((double)(ms->beg) / (double)snd_srate(cp->sound), ap);
       if ((x + mix_tag_width(ss)) <= ap->x_axis_x1)  /* not cut off on right */
 	draw_mix_tag_and_waveform(md, ms, x);
     }
@@ -2216,7 +2216,7 @@ void move_mix_tag(int mix_id, int x, int y)
       keep_dragging_syncd_mixes(mix_id);
     }
   
-  pos = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
+  pos = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(snd_srate(cp->sound)));
   mix_set_position_edit(mix_id, pos);
 
   mix_dragged = true;
@@ -2329,7 +2329,7 @@ void finish_moving_mix_tag(int mix_id, int x)
   if (!md) return;
   cp = md->cp;
   
-  pos = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
+  pos = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(snd_srate(cp->sound)));
   if (pos < 0) pos = 0;
   cp->hookable = hookable_before_drag;
   
@@ -3177,7 +3177,7 @@ static Xen g_mixes(Xen snd, Xen chn)
   int i, j;
   Xen res1 = Xen_empty_list;
   
-  ASSERT_CHANNEL(S_mixes, snd, chn, 0);
+  Snd_assert_channel(S_mixes, snd, chn, 0);
 
   if (Xen_is_integer(snd) || xen_is_sound(snd))
     {
@@ -3230,7 +3230,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   bool with_mixer;
 
   Xen_check_type(mus_is_vct(obj), obj, 1, S_mix_vct, "a vct");
-  ASSERT_CHANNEL(S_mix_vct, snd, chn, 3);
+  Snd_assert_channel(S_mix_vct, snd, chn, 3);
   Xen_check_type(Xen_is_integer_or_unbound(beg), beg, 2, S_mix_vct, "an integer");
   Xen_check_type(Xen_is_boolean_or_unbound(with_tag), with_tag, 5, S_mix_vct, "a boolean");
   Xen_check_type(Xen_is_string_or_unbound(origin), origin, 6, S_mix_vct, "a string");
@@ -3334,7 +3334,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   Xen_check_type(Xen_is_string(file), file, 1, S_mix, "a string");
   Xen_check_type(Xen_is_number_or_unbound(chn_samp_n), chn_samp_n, 2, S_mix, "an integer");
   Xen_check_type(Xen_is_integer_boolean_or_unbound(file_chn), file_chn, 3, S_mix, "an integer or " PROC_TRUE);
-  ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
+  Snd_assert_channel(S_mix, snd_n, chn_n, 4);
   Xen_check_type(Xen_is_boolean_or_unbound(tag), tag, 6, S_mix, "a boolean");
   Xen_check_type(Xen_is_integer_boolean_or_unbound(auto_delete), auto_delete, 7, S_mix, "a boolean or an integer");
   if (name) free(name);
@@ -3565,7 +3565,7 @@ Xen g_make_mix_sampler(Xen mix_id, Xen ubeg)
   mus_long_t beg;
 
   Xen_check_type(xen_is_mix(mix_id), mix_id, 1, S_make_mix_sampler, "a mix");
-  ASSERT_SAMPLE_TYPE(S_make_mix_sampler, ubeg, 2);
+  Snd_assert_sample_type(S_make_mix_sampler, ubeg, 2);
 
   md = md_from_id(Xen_mix_to_C_int(mix_id));
   if (md == NULL)
@@ -3685,7 +3685,7 @@ static io_error_t save_mix(int id, const char *name, int type, int format)
   ms = current_mix_state(md);
   frames = ms->len;
 
-  io_err = snd_write_header(name, type, SND_SRATE(sp), 1, frames, format, NULL, NULL);
+  io_err = snd_write_header(name, type, snd_srate(sp), 1, frames, format, NULL, NULL);
 
   if (io_err == IO_NO_ERROR)
     {

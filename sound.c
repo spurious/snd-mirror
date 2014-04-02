@@ -132,7 +132,7 @@ void mus_print(const char *format, ...)
 
 static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
   "no error", "no frequency method", "no phase method", "null gen arg to method", "no length method",
-  "no free method", "no describe method", "no data method", "no scaler method",
+  "no describe method", "no data method", "no scaler method",
   "memory allocation failed", 
   "can't open file", "no sample input", "no sample output",
   "no such channel", "no file name provided", "no location method", "no channel method",

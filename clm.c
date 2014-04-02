@@ -4585,7 +4585,7 @@ mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mu
   /* if preloaded_line null, allocated locally */
   /* if size == line_size, normal (non-interpolating) delay */
   dly *gen;
-  gen = (dly *)calloc(1, sizeof(dly));
+  gen = (dly *)malloc(sizeof(dly));
   gen->core = &DELAY_CLASS;
   gen->loc = 0;
   gen->size = size;
@@ -4605,6 +4605,10 @@ mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mu
   gen->zloc = line_size - size;
   gen->filt = NULL;
   gen->filt_allocated = false;
+  gen->xscl = 0.0;
+  gen->yscl = 0.0;
+  gen->yn1 = 0.0;
+  gen->runf = NULL;
   return((mus_any *)gen);
 }
 
@@ -7815,9 +7819,9 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
   gen->y2 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->amps = amps;
 
-  gen->rr = (mus_float_t *)calloc(size, sizeof(mus_float_t));
-  gen->fdbk = (mus_float_t *)calloc(size, sizeof(mus_float_t));
-  gen->gain = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->rr = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+  gen->fdbk = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+  gen->gain = (mus_float_t *)malloc(size * sizeof(mus_float_t));
 
   if (amps)
     {
@@ -8710,9 +8714,12 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, mus
   else
     {
       flt *gen;
-      gen = (flt *)calloc(1, sizeof(flt));
+      gen = (flt *)malloc(sizeof(flt));
       if (state)
-	gen->state = state;
+	{
+	  gen->state = state;
+	  gen->state_allocated = false;
+	}
       else 
 	{
 	  gen->state = (mus_float_t *)calloc(order * 2, sizeof(mus_float_t));
@@ -8735,6 +8742,7 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, mus
       gen->allocated_size = order;
       gen->x = xcoeffs;
       gen->y = ycoeffs;
+      gen->filtw = NULL;
       set_filter_function(gen);
       return((mus_any *)gen);
     }
@@ -9002,7 +9010,7 @@ mus_any *mus_make_one_pole_all_pass(int size, mus_float_t coeff)
 {
   onepall *gen;
 
-  gen = (onepall *)calloc(1, sizeof(onepall));
+  gen = (onepall *)malloc(sizeof(onepall));
   gen->core = &ONE_POLE_ALL_PASS_CLASS;
   gen->size = size;
 
@@ -9811,7 +9819,7 @@ mus_any *mus_make_pulsed_env(mus_any *e, mus_any *p)
 {
   plenv *gen;
 
-  gen = (plenv *)calloc(1, sizeof(plenv));
+  gen = (plenv *)malloc(sizeof(plenv));
   gen->core = &PULSED_ENV_CLASS;
   gen->e = e;
   gen->p = p;
@@ -10893,7 +10901,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
       gen = (rdin *)calloc(1, sizeof(rdin));
       gen->core = &FILE_TO_SAMPLE_CLASS;
 
-      gen->file_name = (char *)calloc(strlen(filename) + 1, sizeof(char));
+      gen->file_name = (char *)malloc((strlen(filename) + 1) * sizeof(char));
       strcpy(gen->file_name, filename);
       gen->data_end = -1; /* force initial read */
 

@@ -300,7 +300,7 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
   if (mp->samp < ap->losamp) return(NULL);
   if (mp->samp > ap->hisamp) return(md->all_done); /* grf_x clips so we can be confused by off-screen marks */
 
-  mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
+  mx = grf_x((double)(mp->samp) / (double)snd_srate(cp->sound), cp->axis);
   if (mx > (md->x + mark_tag_width(ss))) return(md->all_done); /* past it */
   if (mx < (md->x - mark_tag_width(ss))) return(NULL);         /* before it */
   if (mp->name == NULL)                                    /* check y if unnamed */
@@ -328,7 +328,7 @@ static mark *hit_mark_triangle_1(chan_info *cp, mark *mp, void *m)
   if (mp->samp < ap->losamp) return(NULL);
   if (mp->samp > ap->hisamp) return(md->all_done); /* grf_x clips so we can be confused by off-screen marks */
 
-  mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
+  mx = grf_x((double)(mp->samp) / (double)snd_srate(cp->sound), cp->axis);
   if (mx > (md->x + HIT_SLOP)) return(md->all_done);
   if ((mx + play_arrow_size(ss) + HIT_SLOP) < md->x) return(NULL);
   y = md->y - ap->y_axis_y0 - play_arrow_size(ss);
@@ -441,7 +441,7 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
 	}
     }
 
-  mp->samp = (mus_long_t)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));
+  mp->samp = (mus_long_t)(ungrf_x(ap, nx) * snd_srate(cp->sound));
   if (mp->samp < 0) mp->samp = 0;
 
   samps = CURRENT_SAMPLES(cp);
@@ -1701,7 +1701,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 
   sp = cp->sound;
   ap = cp->axis;
-  cur_srate = (double)SND_SRATE(sp);
+  cur_srate = (double)snd_srate(sp);
   ap->losamp = (mus_long_t)(ap->x0 * cur_srate);
   if (ap->losamp < 0) ap->losamp = 0;
   if (ap->x0 != ((double)(ap->losamp) / cur_srate)) ap->losamp++;
@@ -1908,7 +1908,7 @@ static void show_mark(chan_info *cp, mark *mp, bool show)
   y1 = top;
   y0 = ap->y_axis_y0;
   if (mp->name) top += 10;
-  cx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), ap);
+  cx = grf_x((double)(mp->samp) / (double)snd_srate(cp->sound), ap);
 
   ax = mark_tag_context(cp);
 #if USE_GTK
@@ -2285,7 +2285,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   chan_info *cp = NULL;
 
   Xen_check_type((Xen_is_llong(samp_n) || Xen_is_string(samp_n) || (Xen_is_false(samp_n))), samp_n, 1, S_find_mark, "an integer or string or " PROC_FALSE);
-  ASSERT_CHANNEL(S_find_mark, snd, chn_n, 2); 
+  Snd_assert_channel(S_find_mark, snd, chn_n, 2); 
 
   cp = get_cp(snd, chn_n, S_find_mark);
   if (!cp) return(Xen_false);
@@ -2335,7 +2335,7 @@ static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool
   Xen_check_type(Xen_is_llong(samp_n) || !Xen_is_bound(samp_n), samp_n, 1, S_add_mark, "an integer");
   Xen_check_type(Xen_is_string_or_unbound(name) || Xen_is_false(name), name, 4, S_add_mark, "a string");
   Xen_check_type(Xen_is_integer_or_unbound(sync), sync, 5, S_add_mark, "an integer");
-  ASSERT_CHANNEL(S_add_mark, snd, chn_n, 2);
+  Snd_assert_channel(S_add_mark, snd, chn_n, 2);
 
   cp = get_cp(snd, chn_n, S_add_mark);
   if (!cp) return(Xen_false);
@@ -2407,7 +2407,7 @@ static Xen g_delete_marks(Xen snd, Xen chn_n)
 {
   #define H_delete_marks "(" S_delete_marks " :optional snd chn): delete all marks in snd's channel chn"
   chan_info *cp;
-  ASSERT_CHANNEL(S_delete_marks, snd, chn_n, 1);
+  Snd_assert_channel(S_delete_marks, snd, chn_n, 1);
   cp = get_cp(snd, chn_n, S_delete_marks);
   if (!cp) return(Xen_false);
   delete_marks(cp);
@@ -2518,7 +2518,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
   snd_info *sp;
   Xen res1 = Xen_empty_list;
 
-  ASSERT_CHANNEL(S_marks, snd, chn_n, 0);
+  Snd_assert_channel(S_marks, snd, chn_n, 0);
 
   if (Xen_is_integer(snd) || xen_is_sound(snd))
       {
@@ -2757,7 +2757,7 @@ The saved file is " Xen_language " code, so to restore the marks, load that file
   snd_info *sp;
   Xen res = Xen_false;
 
-  ASSERT_SOUND(S_save_marks, snd, 1);
+  Snd_assert_sound(S_save_marks, snd, 1);
   Xen_check_type(Xen_is_string_or_unbound(filename), filename, 2, S_save_marks, "a string");  
 
   sp = get_sp(snd);

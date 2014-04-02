@@ -190,7 +190,7 @@ int selection_chans(void)
 static mus_long_t selection_srate_1(chan_info *cp, mus_long_t *ignored)
 {
   if (cp_has_selection(cp)) 
-    return((mus_long_t)SND_SRATE(cp->sound));
+    return((mus_long_t)snd_srate(cp->sound));
   return(0);
 }
 
@@ -372,7 +372,7 @@ static int mix_selection(chan_info *cp, sync_info *si_out, mus_long_t beg, io_er
   io_error_t io_err = IO_NO_ERROR;
 
   tempfile = snd_tempnam();
-  io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
+  io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, snd_srate(cp->sound), NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
 #if HAVE_FORTH
@@ -434,7 +434,7 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t 
     out_format = cp->sound->hdr->format;
   tempfile = snd_tempnam();
 
-  io_err = save_selection(tempfile, MUS_NEXT, out_format, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
+  io_err = save_selection(tempfile, MUS_NEXT, out_format, snd_srate(cp->sound), NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
       sync_info *si_in;
@@ -558,7 +558,7 @@ static void cp_redraw_selection(chan_info *cp)
   ap = cp->axis;
   beg = selection_beg(cp);
   end = selection_end(cp);
-  sp_srate = (double)SND_SRATE(cp->sound);
+  sp_srate = (double)snd_srate(cp->sound);
 
   if (ap->losamp < beg)
     x0 = grf_x((double)beg / sp_srate, ap);
@@ -830,7 +830,7 @@ bool hit_selection_triangle(chan_info *cp, int x, int y)
   if (beg < ap->losamp) return(false);
   if (beg > ap->hisamp) return(false);
 
-  mx = grf_x((double)beg / (double)SND_SRATE(cp->sound), ap);
+  mx = grf_x((double)beg / (double)snd_srate(cp->sound), ap);
 
   if (mx > (x + HIT_SLOP)) return(false);                                /* click point is to the left of the triangle */
   if ((mx + play_arrow_size(ss) + HIT_SLOP) < x) return(false);  /* click point is to the right of the triangle */
@@ -852,7 +852,7 @@ bool hit_selection_loop_triangle(chan_info *cp, int x, int y)
   if (end < ap->losamp) return(false);
   if (end > ap->hisamp) return(false);
 
-  mx = grf_x((double)end / (double)SND_SRATE(cp->sound), ap);
+  mx = grf_x((double)end / (double)snd_srate(cp->sound), ap);
 
   if ((mx - play_arrow_size(ss) - HIT_SLOP) > x) return(false); 
   if (mx < (x - HIT_SLOP)) return(false);
@@ -1303,7 +1303,7 @@ static Xen g_insert_selection(Xen beg, Xen snd, Xen chn)
       io_error_t io_err = IO_NO_ERROR;
       sync_info *si_out;
 
-      ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
+      Snd_assert_channel(S_insert_selection, snd, chn, 2);
       Xen_check_type(Xen_is_integer_or_unbound(beg), beg, 1, S_insert_selection, "an integer");
 
       cp = get_cp(snd, chn, S_insert_selection);
@@ -1339,7 +1339,7 @@ static Xen g_mix_selection(Xen beg, Xen snd, Xen chn, Xen sel_chan)
       sync_info *si_out;
       Xen result = Xen_empty_list;
 
-      ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
+      Snd_assert_channel(S_mix_selection, snd, chn, 2);
       Xen_check_type(Xen_is_integer_or_unbound(beg), beg, 1, S_mix_selection, "an integer");
       Xen_check_type(Xen_is_integer_boolean_or_unbound(sel_chan), sel_chan, 4, S_mix_selection, "an integer or " PROC_TRUE);
 
@@ -1387,7 +1387,7 @@ static Xen g_selection_to_mix(void)
       cp = si_out->cps[0];
 
       tempfile = snd_tempnam();
-      io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
+      io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, snd_srate(cp->sound), NULL, SAVE_ALL_CHANS);
       if (SERIOUS_IO_ERROR(io_err))
 	{
 	  if (tempfile) free(tempfile);
@@ -1457,7 +1457,7 @@ static Xen g_selection_position(Xen snd, Xen chn)
       else
 	{
 	  chan_info *cp;
-	  ASSERT_CHANNEL(S_selection_position, snd, chn, 1);
+	  Snd_assert_channel(S_selection_position, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_position);
 	  if (!cp) return(Xen_false);
 	  return(C_llong_to_Xen_llong(selection_beg(cp)));
@@ -1472,7 +1472,7 @@ static Xen g_set_selection_position(Xen pos, Xen snd, Xen chn)
   chan_info *cp;
   mus_long_t beg;
 
-  ASSERT_CHANNEL(S_setB S_selection_position, snd, chn, 2);
+  Snd_assert_channel(S_setB S_selection_position, snd, chn, 2);
   Xen_check_type(Xen_is_integer(pos), pos, 1, S_selection_position, "an integer");
 
   beg = beg_to_sample(pos, S_setB S_selection_position);
@@ -1504,7 +1504,7 @@ static Xen g_set_selection_position(Xen pos, Xen snd, Xen chn)
   return(pos);
 }
 
-WITH_THREE_SETTER_ARGS(g_set_selection_position_reversed, g_set_selection_position)
+with_three_setter_args(g_set_selection_position_reversed, g_set_selection_position)
 
 
 Xen g_selection_frames(Xen snd, Xen chn)
@@ -1517,7 +1517,7 @@ Xen g_selection_frames(Xen snd, Xen chn)
       else
 	{
 	  chan_info *cp;
-	  ASSERT_CHANNEL(S_selection_frames, snd, chn, 1);
+	  Snd_assert_channel(S_selection_frames, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_frames);
 	  if (!cp) return(Xen_false);
 	  return(C_llong_to_Xen_llong(cp_selection_len(cp, NULL)));
@@ -1556,7 +1556,7 @@ static Xen g_set_selection_frames(Xen samps, Xen snd, Xen chn)
     }
   else 
     {
-      ASSERT_CHANNEL(S_setB S_selection_frames, snd, chn, 2);
+      Snd_assert_channel(S_setB S_selection_frames, snd, chn, 2);
       cp = get_cp(snd, chn, S_setB S_selection_frames);
       if (!cp) return(Xen_false);
       cp_set_selection_len(cp, len);
@@ -1565,14 +1565,14 @@ static Xen g_set_selection_frames(Xen samps, Xen snd, Xen chn)
   return(samps);
 }
 
-WITH_THREE_SETTER_ARGS(g_set_selection_frames_reversed, g_set_selection_frames)
+with_three_setter_args(g_set_selection_frames_reversed, g_set_selection_frames)
 
 
 static Xen g_selection_member(Xen snd, Xen chn)
 {
   #define H_selection_member "(" S_selection_member " :optional snd chn): " PROC_TRUE " if snd's channel chn is a member of the current selection"
   chan_info *cp;
-  ASSERT_CHANNEL(S_selection_member, snd, chn, 1);
+  Snd_assert_channel(S_selection_member, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_member);
   if (!cp) return(Xen_false);
   return(C_bool_to_Xen_boolean(selection_is_active_in_channel(cp)));
@@ -1587,7 +1587,7 @@ static Xen g_set_selection_member(Xen on, Xen snd, Xen chn)
   else
     {
       chan_info *cp;
-      ASSERT_CHANNEL(S_setB S_selection_member, snd, chn, 2);
+      Snd_assert_channel(S_setB S_selection_member, snd, chn, 2);
       cp = get_cp(snd, chn, S_setB S_selection_member);
       if (!cp) return(Xen_false);
       if (Xen_is_true(on))
@@ -1609,7 +1609,7 @@ static Xen g_set_selection_member(Xen on, Xen snd, Xen chn)
   return(on);
 }
 
-WITH_THREE_SETTER_ARGS(g_set_selection_member_reversed, g_set_selection_member)
+with_three_setter_args(g_set_selection_member_reversed, g_set_selection_member)
 
 
 static Xen g_select_all(Xen snd_n, Xen chn_n)
@@ -1619,7 +1619,7 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
   chan_info *cp;
   int id;
 
-  ASSERT_CHANNEL(S_select_all, snd_n, chn_n, 1);
+  Snd_assert_channel(S_select_all, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_select_all);
   if (!cp) return(Xen_false);
 
@@ -1741,7 +1741,7 @@ Xen g_selection_maxamp(Xen snd, Xen chn)
   if (Xen_is_bound(snd))
     {
       chan_info *cp;
-      ASSERT_CHANNEL(S_selection_maxamp, snd, chn, 1);
+      Snd_assert_channel(S_selection_maxamp, snd, chn, 1);
       cp = get_cp(snd, chn, S_selection_maxamp);
       if (!cp) return(Xen_false);
       return(C_double_to_Xen_real(selection_maxamp(cp)));
@@ -1771,7 +1771,7 @@ static Xen g_selection_maxamp_position(Xen snd, Xen chn)
 {
   #define H_selection_maxamp_position "(" S_selection_maxamp_position " :optional snd chn): location of selection maxamp (0 = start of selection)"
   chan_info *cp;
-  ASSERT_CHANNEL(S_selection_maxamp_position, snd, chn, 1);
+  Snd_assert_channel(S_selection_maxamp_position, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_maxamp_position);
   if (!cp) return(Xen_false);
   return(C_llong_to_Xen_llong(selection_maxamp_position(cp)));
@@ -1787,11 +1787,11 @@ static bool get_selection_bounds(chan_info *cp)
       mus_long_t samp;
       double x;
       samp = selection_beg(cp);
-      x = (double)samp / SND_SRATE(cp->sound);
+      x = (double)samp / snd_srate(cp->sound);
       if ((sel_beg < 0.0) || (x < sel_beg))
 	sel_beg = x;
       samp = selection_end(cp);
-      x = (double)samp / SND_SRATE(cp->sound);
+      x = (double)samp / snd_srate(cp->sound);
       if ((sel_end < 0.0) || (x > sel_end))
 	sel_end = x;
     }

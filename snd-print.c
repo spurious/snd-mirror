@@ -659,7 +659,7 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   Xen_check_type(Xen_is_string_or_unbound(filename), filename, 1, S_gl_graph_to_ps, "a string (filename)");
   Xen_check_type(Xen_is_integer_or_unbound(output_type), output_type, 2, S_gl_graph_to_ps, "an integer, 0=eps");
 
-  ASSERT_CHANNEL(S_gl_graph_to_ps, snd, chn, 3);
+  Snd_assert_channel(S_gl_graph_to_ps, snd, chn, 3);
   cp = get_cp(snd, chn, S_gl_graph_to_ps);
   if (!cp) return(Xen_false);
 

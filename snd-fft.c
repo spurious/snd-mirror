@@ -645,10 +645,10 @@ static void make_sonogram_axes(chan_info *cp)
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
-	  max_freq = cp->spectrum_end * (mus_float_t)SND_SRATE(cp->sound) * 0.5;
-	  if ((cp->fft_log_frequency) && ((SND_SRATE(cp->sound) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
+	  max_freq = cp->spectrum_end * (mus_float_t)snd_srate(cp->sound) * 0.5;
+	  if ((cp->fft_log_frequency) && ((snd_srate(cp->sound) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
 	    min_freq = log_freq_start(ss);
-	  else min_freq = cp->spectrum_start * (mus_float_t)SND_SRATE(cp->sound) * 0.5;
+	  else min_freq = cp->spectrum_start * (mus_float_t)snd_srate(cp->sound) * 0.5;
 	}
       else 
 	{
@@ -905,10 +905,10 @@ static void display_fft(fft_state *fs)
   switch (cp->transform_type)
     {
     case FOURIER: 
-      max_freq = ((mus_float_t)(SND_SRATE(sp)) * 0.5 * cp->spectrum_end);
-      if ((cp->fft_log_frequency) && ((SND_SRATE(sp) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
+      max_freq = ((mus_float_t)(snd_srate(sp)) * 0.5 * cp->spectrum_end);
+      if ((cp->fft_log_frequency) && ((snd_srate(sp) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
 	min_freq = log_freq_start(ss);
-      else min_freq = ((mus_float_t)(SND_SRATE(sp)) * 0.5 * cp->spectrum_start);
+      else min_freq = ((mus_float_t)(snd_srate(sp)) * 0.5 * cp->spectrum_start);
       break;
       
     case WAVELET: case WALSH: case HAAR:
@@ -1933,7 +1933,7 @@ and otherwise return a list (spectrum-cutoff time-slices fft-bins)"
   chan_info *cp;
   sono_info *si;
 
-  ASSERT_CHANNEL(S_transform_frames, snd, chn, 1);
+  Snd_assert_channel(S_transform_frames, snd, chn, 1);
   cp = get_cp(snd, chn, S_transform_frames);
   if (!cp) return(Xen_false);
   if (!(cp->graph_transform_on)) 
@@ -1960,7 +1960,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
   Xen_check_type(Xen_is_llong_or_unbound(bin), bin, 1, S_transform_sample, "an integer");
   Xen_check_type(Xen_is_llong_or_unbound(slice), slice, 2, S_transform_sample, "an integer");
 
-  ASSERT_CHANNEL(S_transform_sample, snd, chn_n, 3);
+  Snd_assert_channel(S_transform_sample, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_transform_sample);
   if (!cp) return(Xen_false);
 
@@ -2022,7 +2022,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
   vct *v1;
   v1 = xen_to_vct(v);
 
-  ASSERT_CHANNEL(S_transform_to_vct, snd, chn_n, 1);
+  Snd_assert_channel(S_transform_to_vct, snd, chn_n, 1);
   cp = get_cp(snd, chn_n, S_transform_to_vct);
   if (!cp) return(Xen_false);
 

@@ -1204,7 +1204,7 @@ edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gs
   #define Xen_wrap_adj(Value) ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GtkAdjustment_"), Xen_wrap_C_pointer(Value)) : Xen_false)
 
   chan_info *cp;
-  ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
+  Snd_assert_channel(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
   if (!cp) return(Xen_false);
   return(Xen_cons(Xen_wrap_widget(channel_graph(cp)),

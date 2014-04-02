@@ -133,7 +133,7 @@ static int max_expand_control_len(snd_info *sp)
 {
   if (sp->expand_control_length > .5)
     return(0);
-  return((int)(SND_SRATE(sp) * .5));
+  return((int)(snd_srate(sp) * .5));
 }
 
 
@@ -308,7 +308,7 @@ static rev_info *make_nrev(snd_info *sp, int chans)
 
   if (sp == NULL) return(NULL);
 
-  srscale = sp->reverb_control_length * SND_SRATE(sp) / 25641.0;
+  srscale = sp->reverb_control_length * snd_srate(sp) / 25641.0;
   for (i = 0; i < BASE_DLY_LEN; i++) 
     dly_len[i] = get_prime((int)(srscale * base_dly_len[i]));
   r = (rev_info *)calloc(1, sizeof(rev_info));
@@ -503,7 +503,7 @@ static void dac_set_field(snd_info *sp, mus_float_t newval, dac_field_t field)
 			case DAC_EXPAND_LENGTH: /* segment length */
 			  if (dp->spd)
 			    {
-			      val = (int)(SND_SRATE(sp) * newval);
+			      val = (int)(snd_srate(sp) * newval);
 			      mus_set_length(dp->spd->gen, val);
 			      mus_set_ramp(dp->spd->gen, (int)(val * sp->expand_control_ramp));
 			    }
@@ -512,7 +512,7 @@ static void dac_set_field(snd_info *sp, mus_float_t newval, dac_field_t field)
 			case DAC_EXPAND_RAMP: 
 			  if (dp->spd)
 			    {
-			      val = (int)(newval * sp->expand_control_length * SND_SRATE(sp));
+			      val = (int)(newval * sp->expand_control_length * snd_srate(sp));
 			      mus_set_ramp(dp->spd->gen, val); 
 			    }
 			  break;
@@ -520,7 +520,7 @@ static void dac_set_field(snd_info *sp, mus_float_t newval, dac_field_t field)
 			case DAC_EXPAND_HOP: /* output hop */
 			  if (dp->spd)
 			    {
-			      val = (int)(SND_SRATE(sp) * newval);
+			      val = (int)(snd_srate(sp) * newval);
 			      mus_set_hop(dp->spd->gen, val); 
 			      mus_set_increment(dp->spd->gen, sp->expand_control);
 			    }
@@ -733,7 +733,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 	}
     }
 
-  if ((sp) && (IS_PLAYER_SOUND(sp))) 
+  if ((sp) && (is_player_sound(sp))) 
     {
       int k;
       bool free_ok = true;
@@ -992,7 +992,7 @@ static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd
       if (dp->expanding) 
 	{
 	  dp->spd = (spd_info *)make_expand(sp, sp->expand_control, dp);
-	  dp->expand_ring_frames = (int)(SND_SRATE(sp) * sp->expand_control * sp->expand_control_length * 2);
+	  dp->expand_ring_frames = (int)(snd_srate(sp) * sp->expand_control * sp->expand_control_length * 2);
 	}
 
       if (dp->filtering)
@@ -1140,7 +1140,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
 	{
 	  sp->playing++;
 	  if ((ss->tracking) && 
-	      (!(IS_PLAYER_SOUND(sp))))
+	      (!(is_player_sound(sp))))
 	    {
 	      cp->original_cursor = CURSOR(cp);
 	      if (cp->axis)
@@ -1229,7 +1229,7 @@ bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mi
 	    {
 	      dp->mix_id = ms->index; /* any valid mix id will do */
 	      if (start_playing)
-		start_dac(SND_SRATE(cp->sound), 1, NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
+		start_dac(snd_srate(cp->sound), 1, NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
 	      return(true);
 	    }
 	}
@@ -1329,7 +1329,7 @@ static dac_info *play_channel_1(chan_info *cp, mus_long_t start, mus_long_t end,
       if (Xen_is_procedure(stop_proc))
 	dp->stop_procedure_gc_loc = snd_protect(stop_proc);
       set_play_button(sp, true);
-      start_dac(SND_SRATE(sp), 1, background, sp->reverb_control_decay);
+      start_dac(snd_srate(sp), 1, background, sp->reverb_control_decay);
     }
   return(dp);
 }
@@ -1365,7 +1365,7 @@ static dac_info *play_sound_1(snd_info *sp, mus_long_t start, mus_long_t end, pl
       if (Xen_is_procedure(stop_proc))
 	rtn_dp->stop_procedure_gc_loc = snd_protect(stop_proc);
       set_play_button(sp, true);
-      start_dac(SND_SRATE(sp), sp->nchans, background, sp->reverb_control_decay);
+      start_dac(snd_srate(sp), sp->nchans, background, sp->reverb_control_decay);
     }
   return(rtn_dp);
 }
@@ -1427,7 +1427,7 @@ static dac_info *play_channels_1(chan_info **cps, int chans, mus_long_t *starts,
       if (Xen_is_procedure(stop_proc))
 	rtn_dp->stop_procedure_gc_loc = snd_protect(stop_proc);
       set_play_button(sp, true);
-      start_dac(SND_SRATE(sp), chans, background, sp->reverb_control_decay);
+      start_dac(snd_srate(sp), chans, background, sp->reverb_control_decay);
     }
   return(rtn_dp);
 }
@@ -1449,7 +1449,7 @@ void play_channel_with_sync(chan_info *cp, mus_long_t start, mus_long_t end)
 
   sp = cp->sound;
   if ((sp->sync == 0) ||
-      (IS_PLAYER_SOUND(sp)))
+      (is_player_sound(sp)))
     {
       play_channel(cp, start, end);
       return;
@@ -2511,7 +2511,7 @@ void initialize_apply(snd_info *sp, int chans, mus_long_t beg, mus_long_t dur)
 
   snd_dacp = (dac_state *)calloc(1, sizeof(dac_state));
   snd_dacp->slice = 0;
-  snd_dacp->srate = SND_SRATE(sp);
+  snd_dacp->srate = snd_srate(sp);
   snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
   if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
   snd_dacp->channels = chans;
@@ -2655,7 +2655,7 @@ void clear_players(void)
 		      free_dac_info(dp, PLAY_CLOSE); /* calls stop-function, if any. used in snd-data.c in free_snd_info */
 		    }
 		}
-	      if (IS_PLAYER_SOUND(sp)) free_player_sound(sp);
+	      if (is_player_sound(sp)) free_player_sound(sp);
 	      break;
 	    }
     }
@@ -3013,7 +3013,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 
   if ((with_sync) && 
       (sp->sync != 0) && 
-      (!(IS_PLAYER_SOUND(sp))))
+      (!(is_player_sound(sp))))
     {
       sync_info *si;
       mus_long_t *ends = NULL;
@@ -3112,7 +3112,7 @@ to be played (via " S_start_playing ")."
   snd_info *true_sp, *new_sp;
   chan_info *cp;
 
-  ASSERT_CHANNEL(S_make_player, snd, chn, 1);
+  Snd_assert_channel(S_make_player, snd, chn, 1);
   true_sp = get_sp(snd);
   if (true_sp == NULL) 
     return(snd_no_such_sound_error(S_make_player, snd));

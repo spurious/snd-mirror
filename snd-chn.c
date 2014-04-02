@@ -557,7 +557,7 @@ static void update_graph_1(chan_info *cp, bool warn)
   ap = cp->axis;
   if (ap)
     {
-      cur_srate = (double)(SND_SRATE(sp));
+      cur_srate = (double)(snd_srate(sp));
       ap->losamp = snd_round_mus_long_t(ap->x0 * cur_srate); 
       if (ap->losamp < 0) ap->losamp = 0;
       ap->hisamp = (mus_long_t)(ap->x1 * cur_srate);
@@ -1000,7 +1000,7 @@ static void set_x_axis_x0(chan_info *cp, mus_long_t left)
 	{
 	  double x1x0;
 	  x1x0 = ap->x1 - ap->x0; 
-	  ap->x0 = (double)left / (double)SND_SRATE(cp->sound); 
+	  ap->x0 = (double)left / (double)snd_srate(cp->sound); 
 	  if (is_NaN(ap->x0)) ap->x0 = 0.0;
 	  set_x_axis_x0x1(cp, ap->x0, ap->x0 + x1x0);
 	}
@@ -1018,7 +1018,7 @@ static void set_x_axis_x1(chan_info *cp, mus_long_t right)
 	{
 	  double x1x0;
 	  x1x0 = ap->x1 - ap->x0; 
-	  ap->x1 = (double)right / (double)SND_SRATE(cp->sound); 
+	  ap->x1 = (double)right / (double)snd_srate(cp->sound); 
 	  set_x_axis_x0x1(cp, ap->x1 - x1x0, ap->x1);
 	}
     }
@@ -1219,7 +1219,7 @@ void focus_x_axis_change(chan_info *cp, int focus_style)
 	  if (newf != NO_ZOOM_FOCUS_LOCATION)
 	    {
 	      double loc, pos;
-	      loc = (double)newf / (double)SND_SRATE(ncp->sound);
+	      loc = (double)newf / (double)snd_srate(ncp->sound);
 	      if ((loc > ap->x0) && 
 		  (loc < ap->x1) && 
 		  (ap->x1 > ap->x0))
@@ -1607,7 +1607,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
     {
       /* take min, max */
       if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
-	j = peak_env_graph(cp, samples_per_pixel, (graph_choice != ENVED_GRAPH) ? ((int)SND_SRATE(sp)) : 1);
+	j = peak_env_graph(cp, samples_per_pixel, (graph_choice != ENVED_GRAPH) ? ((int)snd_srate(sp)) : 1);
       else
 	{
 	  mus_float_t ymin, ymax;
@@ -1716,13 +1716,13 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 
 static int make_graph(chan_info *cp) 
 {
-  return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), NORMAL_GRAPH, NULL));
+  return(make_graph_1(cp, (double)(snd_srate(cp->sound)), NORMAL_GRAPH, NULL));
 }
 
 
 int make_dragged_marks_graph(chan_info *cp) 
 {
-  return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), MARKS_GRAPH, NULL));
+  return(make_graph_1(cp, (double)(snd_srate(cp->sound)), MARKS_GRAPH, NULL));
 }
 
 
@@ -1748,7 +1748,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
   graphics_context *ax = NULL;
 
   sp = cp->sound;
-  cur_srate = (double)SND_SRATE(sp);
+  cur_srate = (double)snd_srate(sp);
   ap = cp->axis;
   ax = copy_context(cp);
   if (!(ap->ax))
@@ -1798,7 +1798,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
   else
     {
       if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
-	j = peak_env_partial_graph(cp, beg, end, samples_per_pixel, (int)SND_SRATE(sp));
+	j = peak_env_partial_graph(cp, beg, end, samples_per_pixel, (int)snd_srate(sp));
       else
 	{
 	  mus_float_t ymin, ymax;
@@ -2022,7 +2022,7 @@ void draw_graph_data(chan_info *cp, mus_long_t losamp, mus_long_t hisamp, int da
     {
       double start_time = 0.0, cur_srate = 1.0;
 
-      cur_srate = (double)SND_SRATE(sp);
+      cur_srate = (double)snd_srate(sp);
       if (losamp == -1)
 	losamp = snd_round_mus_long_t(ap->x0 * cur_srate);
       start_time = (double)(losamp) / cur_srate;
@@ -2279,10 +2279,10 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, graphics_context *ax, 
     {
       hisamp = fp->current_size * cp->spectrum_end / 2;
       if ((cp->fft_log_frequency) && 
-	  ((SND_SRATE(sp) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
-	losamp = (mus_long_t)(ceil(fp->current_size * log_freq_start(ss) / (mus_float_t)SND_SRATE(sp)));
+	  ((snd_srate(sp) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
+	losamp = (mus_long_t)(ceil(fp->current_size * log_freq_start(ss) / (mus_float_t)snd_srate(sp)));
       else losamp = fp->current_size * cp->spectrum_start / 2;
-      incr = (mus_float_t)SND_SRATE(sp) / (mus_float_t)(fp->current_size);
+      incr = (mus_float_t)snd_srate(sp) / (mus_float_t)(fp->current_size);
     }
   else
     {
@@ -2565,8 +2565,8 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, graphics_context *ax, 
     {
       if (cp->transform_type == FOURIER)
 	display_peaks(cp, fap, data, 
-		      SND_SRATE(sp) * cp->spectrum_start / 2,
-		      SND_SRATE(sp) * cp->spectrum_end / 2, 
+		      snd_srate(sp) * cp->spectrum_start / 2,
+		      snd_srate(sp) * cp->spectrum_end / 2, 
 		      losamp, hisamp, 
 		      samples_per_pixel, true, scale);
       else display_peaks(cp, fap, data, 
@@ -2713,7 +2713,7 @@ void make_sonogram(chan_info *cp)
 	      log_range = (maxlx - minlx);
 	      lscale = fap_range / log_range;
 	    }
-	  yfincr = cp->spectrum_end * (mus_float_t)SND_SRATE(cp->sound) * 0.5 / (mus_float_t)bins;
+	  yfincr = cp->spectrum_end * (mus_float_t)snd_srate(cp->sound) * 0.5 / (mus_float_t)bins;
 	}
       else yfincr = 1.0;
 
@@ -3155,8 +3155,8 @@ static bool make_gl_spectrogram(chan_info *cp)
 
   {
     double frq0, frq1;
-    frq0 = SND_SRATE(sp) * cp->spectrum_start / 2.0;
-    frq1 = SND_SRATE(sp) * cp->spectrum_end / 2.0;
+    frq0 = snd_srate(sp) * cp->spectrum_start / 2.0;
+    frq1 = snd_srate(sp) * cp->spectrum_end / 2.0;
     make_axis_info(cp,
 		   cp->axis->x0, cp->axis->x1,
 		   frq0, frq1,
@@ -3367,7 +3367,7 @@ static int make_wavogram(chan_info *cp)
 
   sp = cp->sound;
   ap = cp->axis;
-  if (sp) ap->losamp = (mus_long_t)(ap->x0 * SND_SRATE(sp));
+  if (sp) ap->losamp = (mus_long_t)(ap->x0 * snd_srate(sp));
 
 #if HAVE_GL
   if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
@@ -3617,7 +3617,7 @@ static int make_wavogram(chan_info *cp)
   if (sf == NULL) return(0);
 
   /* set up the graph width and so on */
-  make_axes_1(ap, cp->x_axis_style, SND_SRATE(sp), SHOW_NO_AXES, NOT_PRINTING, NO_X_AXIS, NO_GRID, WITH_LINEAR_AXES, 1.0);
+  make_axes_1(ap, cp->x_axis_style, snd_srate(sp), SHOW_NO_AXES, NOT_PRINTING, NO_X_AXIS, NO_GRID, WITH_LINEAR_AXES, 1.0);
   erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
 
   if (cp->printing) ps_allocate_grf_points();
@@ -3901,7 +3901,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 
   make_axes_1(ap, 
 	      x_style, 
-	      SND_SRATE(sp), 
+	      snd_srate(sp), 
 	      axes, 
 	      cp->printing,
 	      (((sp->channel_style != CHANNELS_COMBINED) || 
@@ -4093,8 +4093,8 @@ static void display_channel_data_with_size(chan_info *cp,
 	      if (ap->y_axis_y0 == ap->y_axis_y1) 
 		make_axes(cp, ap, cp->x_axis_style, DONT_CLEAR_GRAPH, cp->show_grid, WITH_LINEAR_AXES, cp->show_axes); /* first time needs setup */
 	      ap->y0 = ap->x0;
-	      ap->y1 = ap->y0 + (mus_float_t)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((mus_float_t)(cp->wavo_hop) * SND_SRATE(sp));
-	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)SND_SRATE(sp);
+	      ap->y1 = ap->y0 + (mus_float_t)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((mus_float_t)(cp->wavo_hop) * snd_srate(sp));
+	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)snd_srate(sp);
 	      points = make_wavogram(cp);
 	    }
 	  else
@@ -4209,8 +4209,8 @@ static void display_channel_data_with_size(chan_info *cp,
 
       if ((!with_time) || (just_fft))
 	{ /* make_graph does this -- sets losamp needed by fft to find its starting point */
-	  ap->losamp = (mus_long_t)(ap->x0 * (double)SND_SRATE(sp));
-	  ap->hisamp = (mus_long_t)(ap->x1 * (double)SND_SRATE(sp));
+	  ap->losamp = (mus_long_t)(ap->x0 * (double)snd_srate(sp));
+	  ap->hisamp = (mus_long_t)(ap->x1 * (double)snd_srate(sp));
 	}
 
       switch (cp->transform_graph_type)
@@ -4269,8 +4269,8 @@ static void display_channel_data_with_size(chan_info *cp,
       Xen pixel_list = Xen_false;
       if ((just_lisp) || ((!with_time) && (!(with_fft))))
 	{
-	  ap->losamp = (mus_long_t)(ap->x0 * (double)SND_SRATE(sp));
-	  ap->hisamp = (mus_long_t)(ap->x1 * (double)SND_SRATE(sp));
+	  ap->losamp = (mus_long_t)(ap->x0 * (double)snd_srate(sp));
+	  ap->hisamp = (mus_long_t)(ap->x1 * (double)snd_srate(sp));
 	}
       if ((cp->hookable == WITH_HOOK) &&
 	  (!(ss->lisp_graph_hook_active)) &&
@@ -4484,7 +4484,7 @@ static void draw_graph_cursor(chan_info *cp)
   if (cp->cursor_visible) 
     erase_cursor(cp);
 
-  cp->cx = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
+  cp->cx = local_grf_x((double)(CURSOR(cp)) / (double)snd_srate(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
   if (cp->just_zero)
     {
       cp->cy = local_grf_y(0.0, ap);
@@ -4540,7 +4540,7 @@ static void draw_sonogram_cursor(chan_info *cp)
       (cp->transform_graph_type == GRAPH_AS_SONOGRAM))
     {
       if (cp->fft_cursor_visible) draw_sonogram_cursor_1(cp);
-      cp->fft_cx = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), cp->fft->axis);
+      cp->fft_cx = local_grf_x((double)(CURSOR(cp)) / (double)snd_srate(cp->sound), cp->fft->axis);
       draw_sonogram_cursor_1(cp);
       cp->fft_cursor_visible = true;
     }
@@ -4597,15 +4597,15 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 	  switch (redisplay)
 	    {
 	    case CURSOR_ON_LEFT: 
-	      gx = (double)(CURSOR(cp)) / (double)SND_SRATE(sp); 
+	      gx = (double)(CURSOR(cp)) / (double)snd_srate(sp); 
 	      break;
 
 	    case CURSOR_ON_RIGHT: 
-	      gx = (double)(CURSOR(cp)) / (double)SND_SRATE(sp) - ap->zx * ap->x_ambit; 
+	      gx = (double)(CURSOR(cp)) / (double)snd_srate(sp) - ap->zx * ap->x_ambit; 
 	      break;
 
 	    case CURSOR_IN_MIDDLE: 
-	      gx = (double)(CURSOR(cp)) / (double)SND_SRATE(sp) - ap->zx * 0.5 * ap->x_ambit; 
+	      gx = (double)(CURSOR(cp)) / (double)snd_srate(sp) - ap->zx * 0.5 * ap->x_ambit; 
 	      break;
 
 	    default:
@@ -4737,8 +4737,8 @@ void cursor_moveto_with_window(chan_info *cp, mus_long_t samp, mus_long_t left_s
   CURSOR(cp) = samp;
   current_window_size = ap->hisamp - ap->losamp;
   if (snd_abs_mus_long_t(current_window_size - window_size) < (mus_long_t)(0.1 * (double)window_size))
-    gx = (double)(left_samp) / (double)SND_SRATE(sp);
-  else gx = (double)(samp) / (double)SND_SRATE(sp) - ap->zx * 0.5 * ap->x_ambit; 
+    gx = (double)(left_samp) / (double)snd_srate(sp);
+  else gx = (double)(samp) / (double)snd_srate(sp) - ap->zx * 0.5 * ap->x_ambit; 
   if (gx < 0.0) gx = 0.0;
   if (ap->x_ambit != 0.0)
     reset_x_display(cp, (gx - ap->xmin) / ap->x_ambit, ap->zx);
@@ -4787,7 +4787,7 @@ void show_cursor_info(chan_info *cp)
 
   if (sp->nchans == 1)
     snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %lld) = %s",
-		 s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
+		 s1 = x_axis_location_to_string(cp, (double)samp / (double)snd_srate(sp)),
 		 samp,
 		 s2 = prettyf(y, digits));
   else
@@ -4795,7 +4795,7 @@ void show_cursor_info(chan_info *cp)
       if (sp->sync == 0)
 	snprintf(expr_str, PRINT_BUFFER_SIZE, "chan %d, cursor at %s (sample %lld) = %s",
 		     cp->chan + 1,
-		     s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
+		     s1 = x_axis_location_to_string(cp, (double)samp / (double)snd_srate(sp)),
 		     samp,
 		     s2 = prettyf(y, digits));
       else
@@ -4803,7 +4803,7 @@ void show_cursor_info(chan_info *cp)
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
 	  snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %lld): %s",
-		       s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
+		       s1 = x_axis_location_to_string(cp, (double)samp / (double)snd_srate(sp)),
 		       samp,
 		       s2 = prettyf(y, digits));
 	  for (i = 1; i < sp->nchans; i++)
@@ -4862,7 +4862,7 @@ static bool hit_cursor_triangle(chan_info *cp, int x, int y)
       (samp > ap->hisamp))
     return(false);
 
-  cx = grf_x((double)samp / (double)SND_SRATE(cp->sound), ap);
+  cx = grf_x((double)samp / (double)snd_srate(cp->sound), ap);
   if ((cx > (x + HIT_SLOP)) ||
       ((cx + play_arrow_size(ss) + HIT_SLOP) < x))
     return(false);
@@ -4949,7 +4949,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	    {
 	      mus_long_t bpos, epos, xpos;
 	      double sr;
-	      sr = (double)SND_SRATE(cp->sound);
+	      sr = (double)snd_srate(cp->sound);
 	      bpos = selection_beg(cp);
 	      epos = selection_end(cp);
 
@@ -5160,9 +5160,9 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	      mus_float_t minlx = 0.0;
 	      if (ap->x0 > 1.0) minlx = log(ap->x0); else minlx = 0.0;
 	      xf = exp(minlx + ((xf - ap->x0) * (log(ap->x1) - minlx) / (ap->x1 - ap->x0)));
-	      ind = (int)((fp->current_size * xf) / (mus_float_t)SND_SRATE(cp->sound));
+	      ind = (int)((fp->current_size * xf) / (mus_float_t)snd_srate(cp->sound));
 	    }
-	  else ind = (int)((fp->current_size * xf) / (mus_float_t)SND_SRATE(cp->sound));
+	  else ind = (int)((fp->current_size * xf) / (mus_float_t)snd_srate(cp->sound));
 	}
       else ind = (int)xf;
       if (ind >= fp->current_size) ind = fp->current_size - 1;
@@ -5204,9 +5204,9 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 		  mus_float_t minlx = 0.0;
 		  if (ap->y0 > 1.0) minlx = log(ap->y0); else minlx = 0.0;
 		  yf = exp(minlx + ((yf - ap->y0) * (log(ap->y1) - minlx) / (ap->y1 - ap->y0)));
-		  ind = (int)((fp->current_size * yf) / (mus_float_t)SND_SRATE(cp->sound));
+		  ind = (int)((fp->current_size * yf) / (mus_float_t)snd_srate(cp->sound));
 		}
-	      else ind = (int)((fp->current_size * yf) / (mus_float_t)SND_SRATE(cp->sound));
+	      else ind = (int)((fp->current_size * yf) / (mus_float_t)snd_srate(cp->sound));
 	    }
 	  else ind = (int)yf;
 	  if (ind >= si->total_bins) ind = si->total_bins - 1;
@@ -5661,7 +5661,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  if (button == BUTTON_2) /* the middle button */
 	    {
 	      cp->cursor_on = true;
-	      cursor_moveto(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)SND_SRATE(sp)));
+	      cursor_moveto(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)snd_srate(sp)));
 	      paste_region(region_list_position_to_id(0), cp);
 	    }
 	  else 
@@ -5679,7 +5679,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      if (key_state & snd_ControlMask) ap->zx *= .5;
 		      if (key_state & snd_MetaMask) ap->zx *= .5;
 		      if (ap->x_ambit != 0.0)
-			ap->sx = (((double)(CURSOR(cp)) / (double)SND_SRATE(sp) - 
+			ap->sx = (((double)(CURSOR(cp)) / (double)snd_srate(sp) - 
 				   ap->zx * 0.5 * (ap->xmax - ap->xmin)) - ap->xmin) / ap->x_ambit;
 		      apply_x_axis_change(cp);
 		      resize_sx_and_zx(cp);
@@ -5688,7 +5688,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      else
 		{
 		  cp->cursor_on = true;
-		  cursor_moveto(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)SND_SRATE(sp)));
+		  cursor_moveto(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)snd_srate(sp)));
 		  if (mouse_mark)
 		    {
 		      Xen res = Xen_false;
@@ -5706,13 +5706,13 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			    status_report(sp, "mark %d at sample %lld (%3f secs): %3f", 
 						 mark_to_int(mouse_mark), 
 						 samp,
-						 (double)samp / (double)(SND_SRATE(sp)),
+						 (double)samp / (double)(snd_srate(sp)),
 						 chn_sample(samp, cp, cp->edit_ctr));
 			  else
 			    status_report(sp, "mark %d at sample %lld (%3f secs): %3f, (sync: %d)", 
 						 mark_to_int(mouse_mark), 
 						 samp,
-						 (double)samp / (double)(SND_SRATE(sp)),
+						 (double)samp / (double)(snd_srate(sp)),
 						 chn_sample(samp, cp, cp->edit_ctr),
 						 sync);
 			}
@@ -5846,10 +5846,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	status_report(sp, "%.4f", ungrf_x(cp->axis, x));
       
       if (!dragged) 
-	start_selection_creation(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
+	start_selection_creation(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * snd_srate(sp)));
       else 
 	{
-	  update_possible_selection_in_progress(snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
+	  update_possible_selection_in_progress(snd_round_mus_long_t(ungrf_x(cp->axis, x) * snd_srate(sp)));
 	  move_selection(cp, x);
 	}
 
@@ -6491,7 +6491,7 @@ static Xen channel_get(Xen snd, Xen chn_n, cp_field_t fld, const char *caller)
 	}
       else
 	{
-	  ASSERT_CHANNEL(caller, snd, chn_n, 1);
+	  Snd_assert_channel(caller, snd, chn_n, 1);
 	  cp = get_cp(snd, chn_n, caller);
 	  if (!cp) return(Xen_false); /* perhaps snd-error-hook cancelled the error? */
 	  switch (fld)
@@ -6717,7 +6717,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	res = Xen_cons(channel_set(snd, C_int_to_Xen_integer(i), on, fld, caller), res);
       return(res);
     }
-  ASSERT_CHANNEL(caller, snd, chn_n, 2);
+  Snd_assert_channel(caller, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, caller);
   if (!cp) return(Xen_false);
 
@@ -7213,7 +7213,7 @@ static Xen g_set_edit_position(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_EDIT_CTR, S_setB S_edit_position));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_edit_position_reversed, g_set_edit_position)
+with_three_setter_args(g_set_edit_position_reversed, g_set_edit_position)
 
 
 
@@ -7229,7 +7229,7 @@ static Xen g_set_transform_graph_on(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_GRAPH_TRANSFORM_ON, S_setB S_transform_graph_on));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_transform_graph_on_reversed, g_set_transform_graph_on)
+with_three_setter_args(g_set_transform_graph_on_reversed, g_set_transform_graph_on)
 
 
 
@@ -7245,7 +7245,7 @@ static Xen g_set_timer_graph_on(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_GRAPH_TIME_ON, S_setB S_time_graph_on));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_timer_graph_on_reversed, g_set_timer_graph_on)
+with_three_setter_args(g_set_timer_graph_on_reversed, g_set_timer_graph_on)
 
 
 
@@ -7261,7 +7261,7 @@ static Xen g_set_lisp_graph_on(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_GRAPH_LISP_ON, S_setB S_lisp_graph_on));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_lisp_graph_on_reversed, g_set_lisp_graph_on)
+with_three_setter_args(g_set_lisp_graph_on_reversed, g_set_lisp_graph_on)
 
 
 
@@ -7301,7 +7301,7 @@ static Xen g_set_cursor(Xen on, Xen snd, Xen chn_n, Xen edpos)
   return(channel_set(snd, chn_n, on, CP_CURSOR, S_setB S_cursor));
 }
 
-WITH_FOUR_SETTER_ARGS(g_set_cursor_reversed, g_set_cursor)
+with_four_setter_args(g_set_cursor_reversed, g_set_cursor)
 
 
 
@@ -7362,7 +7362,7 @@ static Xen g_set_cursor_style(Xen on, Xen snd, Xen chn_n)
     }
 }
 
-WITH_THREE_SETTER_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
+with_three_setter_args(g_set_cursor_style_reversed, g_set_cursor_style)
 
 
 
@@ -7393,7 +7393,7 @@ static Xen g_set_tracking_cursor_style(Xen on, Xen snd, Xen chn_n)
   return(on);
 }
 
-WITH_THREE_SETTER_ARGS(g_set_tracking_cursor_style_reversed, g_set_tracking_cursor_style)
+with_three_setter_args(g_set_tracking_cursor_style_reversed, g_set_tracking_cursor_style)
 
 
 
@@ -7414,7 +7414,7 @@ static Xen g_set_cursor_size(Xen on, Xen snd, Xen chn_n)
   return(C_int_to_Xen_integer(cursor_size(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_cursor_size_reversed, g_set_cursor_size)
+with_three_setter_args(g_set_cursor_size_reversed, g_set_cursor_size)
 
 
 
@@ -7486,7 +7486,7 @@ static Xen g_set_frames(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_FRAMES, S_setB S_frames));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_frames_reversed, g_set_frames)
+with_three_setter_args(g_set_frames_reversed, g_set_frames)
 
 
 static Xen g_vector_maxamp(Xen obj)
@@ -7586,7 +7586,7 @@ static Xen g_maxamp(Xen snd, Xen chn_n, Xen edpos)
       (Xen_is_true(snd)))
     return(channel_get(snd, chn_n, CP_MAXAMP, S_maxamp)); /* calls channel_maxamp */
 
-  ASSERT_SOUND(S_maxamp, snd, 0);
+  Snd_assert_sound(S_maxamp, snd, 0);
   {
     snd_info *sp;
     sp = get_sp(snd);
@@ -7645,7 +7645,7 @@ static Xen g_set_maxamp(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_MAXAMP, S_setB S_maxamp));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_maxamp_reversed, g_set_maxamp)
+with_three_setter_args(g_set_maxamp_reversed, g_set_maxamp)
 
 
 
@@ -7680,7 +7680,7 @@ static Xen g_set_squelch_update(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_SQUELCH_UPDATE, S_setB S_squelch_update));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_squelch_update_reversed, g_set_squelch_update)
+with_three_setter_args(g_set_squelch_update_reversed, g_set_squelch_update)
 
 
 
@@ -7696,7 +7696,7 @@ static Xen g_set_ap_sx(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_AP_SX, S_setB S_x_position_slider));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_ap_sx_reversed, g_set_ap_sx)
+with_three_setter_args(g_set_ap_sx_reversed, g_set_ap_sx)
 
 
 
@@ -7712,7 +7712,7 @@ static Xen g_set_ap_sy(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_AP_SY, S_setB S_y_position_slider));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_ap_sy_reversed, g_set_ap_sy)
+with_three_setter_args(g_set_ap_sy_reversed, g_set_ap_sy)
 
 
 
@@ -7728,7 +7728,7 @@ static Xen g_set_ap_zx(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_AP_ZX, S_setB S_x_zoom_slider));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_ap_zx_reversed, g_set_ap_zx)
+with_three_setter_args(g_set_ap_zx_reversed, g_set_ap_zx)
 
 
 
@@ -7744,7 +7744,7 @@ static Xen g_set_ap_zy(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_AP_ZY, S_setB S_y_zoom_slider));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
+with_three_setter_args(g_set_ap_zy_reversed, g_set_ap_zy)
 
 
 
@@ -7825,7 +7825,7 @@ static Xen g_set_show_y_zero(Xen on, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(show_y_zero(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_show_y_zero_reversed, g_set_show_y_zero)
+with_three_setter_args(g_set_show_y_zero_reversed, g_set_show_y_zero)
 
 
 
@@ -7846,7 +7846,7 @@ static Xen g_set_show_grid(Xen on, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean((bool)show_grid(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_show_grid_reversed, g_set_show_grid)
+with_three_setter_args(g_set_show_grid_reversed, g_set_show_grid)
 
 
 
@@ -7871,7 +7871,7 @@ static Xen g_set_grid_density(Xen on, Xen snd, Xen chn)
   return(C_double_to_Xen_real(grid_density(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_grid_density_reversed, g_set_grid_density)
+with_three_setter_args(g_set_grid_density_reversed, g_set_grid_density)
 
 
 
@@ -7892,7 +7892,7 @@ static Xen g_set_show_sonogram_cursor(Xen on, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(show_sonogram_cursor(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_show_sonogram_cursor_reversed, g_set_show_sonogram_cursor)
+with_three_setter_args(g_set_show_sonogram_cursor_reversed, g_set_show_sonogram_cursor)
 
 
 
@@ -7944,7 +7944,7 @@ static Xen g_set_min_dB(Xen val, Xen snd, Xen chn)
     }
 }
 
-WITH_THREE_SETTER_ARGS(g_set_min_dB_reversed, g_set_min_dB)
+with_three_setter_args(g_set_min_dB_reversed, g_set_min_dB)
 
 
 
@@ -7969,7 +7969,7 @@ static Xen g_set_fft_window_beta(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(fft_window_beta(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_fft_window_beta_reversed, g_set_fft_window_beta)
+with_three_setter_args(g_set_fft_window_beta_reversed, g_set_fft_window_beta)
 
 
 
@@ -7994,7 +7994,7 @@ static Xen g_set_fft_window_alpha(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(fft_window_alpha(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_fft_window_alpha_reversed, g_set_fft_window_alpha)
+with_three_setter_args(g_set_fft_window_alpha_reversed, g_set_fft_window_alpha)
 
 
 
@@ -8019,7 +8019,7 @@ static Xen g_set_spectrum_end(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(spectrum_end(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectrum_end_reversed, g_set_spectrum_end)
+with_three_setter_args(g_set_spectrum_end_reversed, g_set_spectrum_end)
 
 
 
@@ -8044,7 +8044,7 @@ static Xen g_set_spectrum_start(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(spectrum_start(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectrum_start_reversed, g_set_spectrum_start)
+with_three_setter_args(g_set_spectrum_start_reversed, g_set_spectrum_start)
 
 
 
@@ -8065,7 +8065,7 @@ static Xen g_set_spectro_x_angle(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(spectro_x_angle(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectro_x_angle_reversed, g_set_spectro_x_angle)
+with_three_setter_args(g_set_spectro_x_angle_reversed, g_set_spectro_x_angle)
 
 
 
@@ -8086,7 +8086,7 @@ static Xen g_set_spectro_x_scale(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(spectro_x_scale(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectro_x_scale_reversed, g_set_spectro_x_scale)
+with_three_setter_args(g_set_spectro_x_scale_reversed, g_set_spectro_x_scale)
 
 
 
@@ -8107,7 +8107,7 @@ static Xen g_set_spectro_y_angle(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(spectro_y_angle(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectro_y_angle_reversed, g_set_spectro_y_angle)
+with_three_setter_args(g_set_spectro_y_angle_reversed, g_set_spectro_y_angle)
 
 
 
@@ -8128,7 +8128,7 @@ static Xen g_set_spectro_y_scale(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(spectro_y_scale(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectro_y_scale_reversed, g_set_spectro_y_scale)
+with_three_setter_args(g_set_spectro_y_scale_reversed, g_set_spectro_y_scale)
 
 
 
@@ -8149,7 +8149,7 @@ static Xen g_set_spectro_z_angle(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(spectro_z_angle(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectro_z_angle_reversed, g_set_spectro_z_angle)
+with_three_setter_args(g_set_spectro_z_angle_reversed, g_set_spectro_z_angle)
 
 
 
@@ -8170,7 +8170,7 @@ static Xen g_set_spectro_z_scale(Xen val, Xen snd, Xen chn)
   return(C_double_to_Xen_real(spectro_z_scale(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectro_z_scale_reversed, g_set_spectro_z_scale)
+with_three_setter_args(g_set_spectro_z_scale_reversed, g_set_spectro_z_scale)
 
 
 
@@ -8191,7 +8191,7 @@ static Xen g_set_spectro_hop(Xen val, Xen snd, Xen chn)
   return(C_int_to_Xen_integer(spectro_hop(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectro_hop_reversed, g_set_spectro_hop)
+with_three_setter_args(g_set_spectro_hop_reversed, g_set_spectro_hop)
 
 
 
@@ -8224,7 +8224,7 @@ static Xen g_set_show_marks(Xen on, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(show_marks(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_show_marks_reversed, g_set_show_marks)
+with_three_setter_args(g_set_show_marks_reversed, g_set_show_marks)
 
 
 
@@ -8245,7 +8245,7 @@ static Xen g_set_show_transform_peaks(Xen val, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(show_transform_peaks(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_show_transform_peaks_reversed, g_set_show_transform_peaks)
+with_three_setter_args(g_set_show_transform_peaks_reversed, g_set_show_transform_peaks)
 
 
 
@@ -8266,7 +8266,7 @@ static Xen g_set_zero_pad(Xen val, Xen snd, Xen chn)
   return(C_int_to_Xen_integer(zero_pad(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_zero_pad_reversed, g_set_zero_pad)
+with_three_setter_args(g_set_zero_pad_reversed, g_set_zero_pad)
 
 
 
@@ -8291,7 +8291,7 @@ static Xen g_set_wavelet_type(Xen val, Xen snd, Xen chn)
   return(C_int_to_Xen_integer(wavelet_type(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_wavelet_type_reversed, g_set_wavelet_type)
+with_three_setter_args(g_set_wavelet_type_reversed, g_set_wavelet_type)
 
 
 
@@ -8312,7 +8312,7 @@ static Xen g_set_fft_log_frequency(Xen on, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(fft_log_frequency(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_fft_log_frequency_reversed, g_set_fft_log_frequency)
+with_three_setter_args(g_set_fft_log_frequency_reversed, g_set_fft_log_frequency)
 
 
 
@@ -8333,7 +8333,7 @@ static Xen g_set_fft_log_magnitude(Xen on, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(fft_log_magnitude(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_fft_log_magnitude_reversed, g_set_fft_log_magnitude)
+with_three_setter_args(g_set_fft_log_magnitude_reversed, g_set_fft_log_magnitude)
 
 
 
@@ -8354,7 +8354,7 @@ static Xen g_set_fft_with_phases(Xen on, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(fft_with_phases(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_fft_with_phases_reversed, g_set_fft_with_phases)
+with_three_setter_args(g_set_fft_with_phases_reversed, g_set_fft_with_phases)
 
 
 
@@ -8375,7 +8375,7 @@ static Xen g_set_show_mix_waveforms(Xen on, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(show_mix_waveforms(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_show_mix_waveforms_reversed, g_set_show_mix_waveforms)
+with_three_setter_args(g_set_show_mix_waveforms_reversed, g_set_show_mix_waveforms)
 
 
 
@@ -8409,7 +8409,7 @@ static Xen g_set_with_verbose_cursor(Xen on, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(with_verbose_cursor(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_with_verbose_cursor_reversed, g_set_with_verbose_cursor)
+with_three_setter_args(g_set_with_verbose_cursor_reversed, g_set_with_verbose_cursor)
 
 
 
@@ -8435,7 +8435,7 @@ static Xen g_set_time_graph_type(Xen val, Xen snd, Xen chn)
   return(C_int_to_Xen_integer((int)time_graph_type(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_time_graph_type_reversed, g_set_time_graph_type)
+with_three_setter_args(g_set_time_graph_type_reversed, g_set_time_graph_type)
 
 
 
@@ -8456,7 +8456,7 @@ static Xen g_set_wavo_hop(Xen val, Xen snd, Xen chn)
   return(val);
 }
 
-WITH_THREE_SETTER_ARGS(g_set_wavo_hop_reversed, g_set_wavo_hop)
+with_three_setter_args(g_set_wavo_hop_reversed, g_set_wavo_hop)
 
 
 
@@ -8477,7 +8477,7 @@ static Xen g_set_wavo_trace(Xen val, Xen snd, Xen chn)
   return(C_int_to_Xen_integer(wavo_trace(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
+with_three_setter_args(g_set_wavo_trace_reversed, g_set_wavo_trace)
 
 
 
@@ -8506,7 +8506,7 @@ static Xen g_set_transform_size(Xen val, Xen snd, Xen chn)
   return(C_llong_to_Xen_llong(transform_size(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_transform_size_reversed, g_set_transform_size)
+with_three_setter_args(g_set_transform_size_reversed, g_set_transform_size)
 
 
 
@@ -8534,7 +8534,7 @@ static Xen g_set_transform_graph_type(Xen val, Xen snd, Xen chn)
   return(C_int_to_Xen_integer((int)transform_graph_type(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_transform_graph_type_reversed, g_set_transform_graph_type)
+with_three_setter_args(g_set_transform_graph_type_reversed, g_set_transform_graph_type)
 
 
 
@@ -8570,7 +8570,7 @@ static Xen g_set_fft_window(Xen val, Xen snd, Xen chn)
   return(C_int_to_Xen_integer((int)fft_window(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_fft_window_reversed, g_set_fft_window)
+with_three_setter_args(g_set_fft_window_reversed, g_set_fft_window)
 
 
 
@@ -8601,7 +8601,7 @@ static Xen g_set_transform_type(Xen val, Xen snd, Xen chn)
   return(C_int_to_Xen_transform(transform_type(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_transform_type_reversed, g_set_transform_type)
+with_three_setter_args(g_set_transform_type_reversed, g_set_transform_type)
 
 
 
@@ -8630,7 +8630,7 @@ static Xen g_set_transform_normalization(Xen val, Xen snd, Xen chn)
   return(C_int_to_Xen_integer((int)transform_normalization(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_transform_normalization_reversed, g_set_transform_normalization)
+with_three_setter_args(g_set_transform_normalization_reversed, g_set_transform_normalization)
 
 
 
@@ -8660,7 +8660,7 @@ static Xen g_set_max_transform_peaks(Xen n, Xen snd, Xen chn)
     }
 }
 
-WITH_THREE_SETTER_ARGS(g_set_max_transform_peaks_reversed, g_set_max_transform_peaks)
+with_three_setter_args(g_set_max_transform_peaks_reversed, g_set_max_transform_peaks)
 
 
 
@@ -8713,7 +8713,7 @@ static Xen g_set_graph_style(Xen style, Xen snd, Xen chn)
   return(C_int_to_Xen_integer((int)(graph_style(ss))));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_graph_style_reversed, g_set_graph_style)
+with_three_setter_args(g_set_graph_style_reversed, g_set_graph_style)
 
 
 
@@ -8721,7 +8721,7 @@ static Xen g_time_graph_style(Xen snd, Xen chn)
 {
   #define H_time_graph_style "(" S_time_graph_style " snd chn): time domain graph drawing style. \
 one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
-  ASSERT_SOUND(S_time_graph_style, snd, 0);
+  Snd_assert_sound(S_time_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_TIME_GRAPH_STYLE, S_time_graph_style));
 }
 
@@ -8730,7 +8730,7 @@ static Xen g_set_time_graph_style(Xen style, Xen snd, Xen chn)
   int val;
 
   Xen_check_type(Xen_is_integer(style), style, 1, S_setB S_time_graph_style, "an integer"); 
-  ASSERT_SOUND(S_time_graph_style, snd, 0);
+  Snd_assert_sound(S_time_graph_style, snd, 0);
 
   val = Xen_integer_to_C_int(style);
   if (!(is_graph_style(val)))
@@ -8739,7 +8739,7 @@ static Xen g_set_time_graph_style(Xen style, Xen snd, Xen chn)
   return(channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, S_setB S_time_graph_style));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_time_graph_style_reversed, g_set_time_graph_style)
+with_three_setter_args(g_set_time_graph_style_reversed, g_set_time_graph_style)
 
 
 
@@ -8747,7 +8747,7 @@ static Xen g_lisp_graph_style(Xen snd, Xen chn)
 {
   #define H_lisp_graph_style "(" S_lisp_graph_style " snd chn): lisp graph drawing style. \
 one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
-  ASSERT_SOUND(S_lisp_graph_style, snd, 0);
+  Snd_assert_sound(S_lisp_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_LISP_GRAPH_STYLE, S_lisp_graph_style));
 }
 
@@ -8756,7 +8756,7 @@ static Xen g_set_lisp_graph_style(Xen style, Xen snd, Xen chn)
   int val;
 
   Xen_check_type(Xen_is_integer(style), style, 1, S_setB S_lisp_graph_style, "an integer"); 
-  ASSERT_SOUND(S_lisp_graph_style, snd, 0);
+  Snd_assert_sound(S_lisp_graph_style, snd, 0);
 
   val = Xen_integer_to_C_int(style);
   if (!(is_graph_style(val)))
@@ -8765,7 +8765,7 @@ static Xen g_set_lisp_graph_style(Xen style, Xen snd, Xen chn)
   return(channel_set(snd, chn, style, CP_LISP_GRAPH_STYLE, S_setB S_lisp_graph_style));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_lisp_graph_style_reversed, g_set_lisp_graph_style)
+with_three_setter_args(g_set_lisp_graph_style_reversed, g_set_lisp_graph_style)
 
 
 
@@ -8773,7 +8773,7 @@ static Xen g_transform_graph_style(Xen snd, Xen chn)
 {
   #define H_transform_graph_style "(" S_transform_graph_style " snd chn): fft graph drawing style, one \
 of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
-  ASSERT_SOUND(S_transform_graph_style, snd, 0);
+  Snd_assert_sound(S_transform_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_TRANSFORM_GRAPH_STYLE, S_transform_graph_style));
 }
 
@@ -8782,7 +8782,7 @@ static Xen g_set_transform_graph_style(Xen style, Xen snd, Xen chn)
   int val;
 
   Xen_check_type(Xen_is_integer(style), style, 1, S_setB S_transform_graph_style, "an integer"); 
-  ASSERT_SOUND(S_transform_graph_style, snd, 0);
+  Snd_assert_sound(S_transform_graph_style, snd, 0);
 
   val = Xen_integer_to_C_int(style);
 
@@ -8792,7 +8792,7 @@ static Xen g_set_transform_graph_style(Xen style, Xen snd, Xen chn)
   return(channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, S_setB S_transform_graph_style));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_transform_graph_style_reversed, g_set_transform_graph_style)
+with_three_setter_args(g_set_transform_graph_style_reversed, g_set_transform_graph_style)
 
 
 
@@ -8813,7 +8813,7 @@ static Xen g_set_dot_size(Xen size, Xen snd, Xen chn)
   return(C_int_to_Xen_integer(dot_size(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_dot_size_reversed, g_set_dot_size)
+with_three_setter_args(g_set_dot_size_reversed, g_set_dot_size)
 
 
 
@@ -8880,7 +8880,7 @@ static Xen g_set_x_axis_style(Xen style, Xen snd, Xen chn)
   return(C_int_to_Xen_integer((int)x_axis_style(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_x_axis_style_reversed, g_set_x_axis_style)
+with_three_setter_args(g_set_x_axis_style_reversed, g_set_x_axis_style)
 
 
 
@@ -8907,7 +8907,7 @@ static Xen g_set_beats_per_minute(Xen beats, Xen snd, Xen chn)
     }
 }
 
-WITH_THREE_SETTER_ARGS(g_set_beats_per_minute_reversed, g_set_beats_per_minute)
+with_three_setter_args(g_set_beats_per_minute_reversed, g_set_beats_per_minute)
 
 
 
@@ -8932,7 +8932,7 @@ static Xen g_set_beats_per_measure(Xen beats, Xen snd, Xen chn)
   return(C_int_to_Xen_integer(beats_per_measure(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_beats_per_measure_reversed, g_set_beats_per_measure)
+with_three_setter_args(g_set_beats_per_measure_reversed, g_set_beats_per_measure)
 
 
 
@@ -8964,7 +8964,7 @@ static Xen g_set_show_axes(Xen on, Xen snd, Xen chn)
   return(C_int_to_Xen_integer((int)show_axes(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_show_axes_reversed, g_set_show_axes)
+with_three_setter_args(g_set_show_axes_reversed, g_set_show_axes)
 
 
 
@@ -8985,7 +8985,7 @@ static Xen g_set_graphs_horizontal(Xen val, Xen snd, Xen chn)
   return(C_bool_to_Xen_boolean(graphs_horizontal(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_graphs_horizontal_reversed, g_set_graphs_horizontal)
+with_three_setter_args(g_set_graphs_horizontal_reversed, g_set_graphs_horizontal)
 
 
 
@@ -9026,7 +9026,7 @@ void write_transform_peaks(FILE *fd, chan_info *ucp)
 	      ap = cp->axis;
 	      sp = cp->sound;
 	      data = fp->data;
-	      srate = SND_SRATE(sp);
+	      srate = snd_srate(sp);
 	      srate2 = (mus_float_t)srate * .5;
 	      samps = (int)(fp->current_size * 0.5);
 
@@ -9073,7 +9073,7 @@ to the info dialog if filename is omitted"
 
   Xen_check_type((Xen_is_string(filename) || (Xen_is_false(filename)) || (!Xen_is_bound(filename))), filename, 1, S_peaks, "a string or " PROC_FALSE);
 
-  ASSERT_CHANNEL(S_peaks, snd, chn_n, 2);
+  Snd_assert_channel(S_peaks, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_peaks);
   if (!cp) return(Xen_false);
 
@@ -9128,7 +9128,7 @@ static Xen g_set_left_sample(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_AP_LOSAMP, S_setB S_left_sample));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_left_sample_reversed, g_set_left_sample)
+with_three_setter_args(g_set_left_sample_reversed, g_set_left_sample)
 
 
 
@@ -9144,7 +9144,7 @@ static Xen g_set_right_sample(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_AP_HISAMP, S_setB S_right_sample));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_right_sample_reversed, g_set_right_sample)
+with_three_setter_args(g_set_right_sample_reversed, g_set_right_sample)
 
 
 
@@ -9162,7 +9162,7 @@ static Xen g_set_channel_properties(Xen on, Xen snd, Xen chn_n)
   return(channel_set(snd, chn_n, on, CP_PROPERTIES, S_setB S_channel_properties));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_channel_properties_reversed, g_set_channel_properties)
+with_three_setter_args(g_set_channel_properties_reversed, g_set_channel_properties)
 
 
 static Xen g_channel_property(Xen key, Xen snd, Xen chn) 
@@ -9182,7 +9182,7 @@ static Xen g_set_channel_property(Xen key, Xen val, Xen snd, Xen chn)
   return(val);
 }
 
-WITH_FOUR_SETTER_ARGS(g_set_channel_property_reversed, g_set_channel_property)
+with_four_setter_args(g_set_channel_property_reversed, g_set_channel_property)
 
 
 
@@ -9194,7 +9194,7 @@ A property list associated with the given edit. It is set to () at the time an e
   chan_info *cp;
   int edpos;
 
-  ASSERT_CHANNEL(S_edit_properties, snd, chn_n, 1);
+  Snd_assert_channel(S_edit_properties, snd, chn_n, 1);
 
   cp = get_cp(snd, chn_n, S_edit_properties);
   if (!cp) return(Xen_false);
@@ -9213,7 +9213,7 @@ static Xen g_set_edit_properties(Xen on, Xen snd, Xen chn_n, Xen pos)
   chan_info *cp;
   int edpos;
 
-  ASSERT_CHANNEL(S_setB S_edit_properties, snd, chn_n, 1);
+  Snd_assert_channel(S_setB S_edit_properties, snd, chn_n, 1);
 
   cp = get_cp(snd, chn_n, S_setB S_edit_properties);
   if (!cp) return(Xen_false);
@@ -9228,7 +9228,7 @@ static Xen g_set_edit_properties(Xen on, Xen snd, Xen chn_n, Xen pos)
   return(Xen_vector_ref(cp->edits[edpos]->properties, 0));
 }
 
-WITH_FOUR_SETTER_ARGS(g_set_edit_properties_reversed, g_set_edit_properties)
+with_four_setter_args(g_set_edit_properties_reversed, g_set_edit_properties)
 
 
 static Xen g_edit_property(Xen key, Xen snd, Xen chn, Xen pos) 
@@ -9270,7 +9270,7 @@ static Xen g_edits(Xen snd, Xen chn_n)
   #define H_edits "(" S_edits " :optional snd chn): -> (list undoable-edits redoable-edits) in snd's channel chn"
   chan_info *cp;
   int i;
-  ASSERT_CHANNEL(S_edits, snd, chn_n, 1);
+  Snd_assert_channel(S_edits, snd, chn_n, 1);
   cp = get_cp(snd, chn_n, S_edits);
   if (!cp) return(Xen_false);
   for (i = cp->edit_ctr + 1; i < cp->edit_size; i++)
@@ -9312,7 +9312,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   Xen_check_type(Xen_is_boolean_or_unbound(force_display), force_display, 9, S_graph, "a boolean (force-display)");
   Xen_check_type(Xen_is_integer_or_unbound(show_axes), show_axes, 10, S_graph, "an integer (show-axes choice)");
 
-  ASSERT_CHANNEL(S_graph, snd, chn_n, 7);
+  Snd_assert_channel(S_graph, snd, chn_n, 7);
   cp = get_cp(snd, chn_n, S_graph);
   if (!cp) return(Xen_false);
 
@@ -9515,7 +9515,7 @@ static Xen g_channel_data(Xen snd, Xen chn)
 given channel.  Currently, this must be a channel (sound) created by " S_make_variable_graph "."
   chan_info *cp;
 
-  ASSERT_CHANNEL(S_channel_data, snd, chn, 1);
+  Snd_assert_channel(S_channel_data, snd, chn, 1);
 
   cp = get_cp(snd, chn, S_channel_data);
   if ((cp) && 

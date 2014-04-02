@@ -121,7 +121,7 @@
        (set! *clm-notehook* notehook)
        (set! (locsig-type) *clm-locsig-type*)
        (set! (mus-array-print-length) *clm-array-print-length*)
-       (set! (auto-update-interval) 0.0) ; turn it off
+       (set! (auto-update-interval) 0.0) 
        (if (equal? clipped 'unset)
 	   (if (and (or scaled-by scaled-to)
 		    (member data-format (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
@@ -813,8 +813,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		   ,(if methods
 		       `(augment-environment 
 			   (apply environment ,methods)
-			 (environment (cons 'mus-generator-type gen-type) ,@(list->bindings (reverse fields))))
-		       `(environment (cons 'mus-generator-type gen-type) ,@(list->bindings (reverse fields))))))))))))
+			 (environment ,@(list->bindings (reverse fields)) (cons 'mus-generator-type gen-type)))
+		       `(environment ,@(list->bindings (reverse fields)) (cons 'mus-generator-type gen-type)))))))))))
+
 
 
 ;;; -------- clm-display-globals --------

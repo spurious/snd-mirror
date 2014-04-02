@@ -1508,7 +1508,7 @@ static Xen g_x_to_position(Xen val, Xen snd, Xen chn, Xen ap)
 {
   #define H_x_to_position "(" S_x_to_position " val :optional snd chn (ax " S_time_graph ")): x pixel loc of val"
   Xen_check_type(Xen_is_number(val), val, 1, S_x_to_position, "a number");
-  ASSERT_CHANNEL(S_x_to_position, snd, chn, 2);
+  Snd_assert_channel(S_x_to_position, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_x_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_int_to_Xen_integer(grf_x(Xen_real_to_C_double(val),
 			    TO_C_AXIS_INFO(snd, chn, ap, S_x_to_position))));
@@ -1519,7 +1519,7 @@ static Xen g_y_to_position(Xen val, Xen snd, Xen chn, Xen ap)
 {
   #define H_y_to_position "(" S_y_to_position " val :optional snd chn (ax " S_time_graph ")): y pixel loc of val"
   Xen_check_type(Xen_is_number(val), val, 1, S_y_to_position, "a number");
-  ASSERT_CHANNEL(S_y_to_position, snd, chn, 2);
+  Snd_assert_channel(S_y_to_position, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_y_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_int_to_Xen_integer(grf_y(Xen_real_to_C_double(val),
 			    TO_C_AXIS_INFO(snd, chn, ap, S_y_to_position))));
@@ -1530,7 +1530,7 @@ static Xen g_position_to_x(Xen val, Xen snd, Xen chn, Xen ap)
 {
   #define H_position_to_x "(" S_position_to_x " val :optional snd chn (ax " S_time_graph ")): x axis value corresponding to pixel val"
   Xen_check_type(Xen_is_integer(val), val, 1, S_position_to_x, "an integer");
-  ASSERT_CHANNEL(S_position_to_x, snd, chn, 2);
+  Snd_assert_channel(S_position_to_x, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_position_to_x, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_double_to_Xen_real(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_x),
 				 Xen_integer_to_C_int(val))));
@@ -1541,7 +1541,7 @@ static Xen g_position_to_y(Xen val, Xen snd, Xen chn, Xen ap)
 {
   #define H_position_to_y "(" S_position_to_y " val :optional snd chn (ax " S_time_graph ")): y axis value corresponding to pixel val"
   Xen_check_type(Xen_is_integer(val), val, 1, S_position_to_y, "an integer");
-  ASSERT_CHANNEL(S_position_to_y, snd, chn, 2);
+  Snd_assert_channel(S_position_to_y, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_position_to_y, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_double_to_Xen_real(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_y),
 				 Xen_integer_to_C_int(val))));
@@ -1553,7 +1553,7 @@ static Xen g_axis_info(Xen snd, Xen chn, Xen ap_id)
   #define H_axis_info "(" S_axis_info " :optional snd chn (ax " S_time_graph ")): info about axis: (list losamp hisamp \
 x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale xlabel ylabel new-peaks)"
   axis_info *ap;
-  ASSERT_CHANNEL(S_axis_info, snd, chn, 1);
+  Snd_assert_channel(S_axis_info, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(ap_id), ap_id, 3, S_axis_info, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, S_axis_info);
   if (ap == NULL) return(Xen_empty_list);
@@ -1746,7 +1746,7 @@ static Xen g_x_axis_label(Xen snd, Xen chn, Xen ax)
   #define H_x_axis_label "(" S_x_axis_label " :optional snd chn (ax " S_time_graph ")): current x axis label"
   axis_info *ap;
 
-  ASSERT_CHANNEL(S_x_axis_label, snd, chn, 1);
+  Snd_assert_channel(S_x_axis_label, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 3, S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
 
@@ -1758,7 +1758,7 @@ static Xen g_set_x_axis_label(Xen label, Xen snd, Xen chn, Xen ax)
 {
   axis_info *ap;
 
-  ASSERT_CHANNEL(S_setB S_x_axis_label, snd, chn, 2);
+  Snd_assert_channel(S_setB S_x_axis_label, snd, chn, 2);
   Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 1, S_setB S_x_axis_label, "a string");
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
 
@@ -1783,7 +1783,7 @@ static Xen g_set_x_axis_label(Xen label, Xen snd, Xen chn, Xen ax)
   return(label);
 }
 
-WITH_FOUR_SETTER_ARGS(g_set_x_axis_label_reversed, g_set_x_axis_label)
+with_four_setter_args(g_set_x_axis_label_reversed, g_set_x_axis_label)
   
 
 static Xen g_y_axis_label(Xen snd, Xen chn, Xen ax)
@@ -1791,7 +1791,7 @@ static Xen g_y_axis_label(Xen snd, Xen chn, Xen ax)
   #define H_y_axis_label "(" S_y_axis_label " :optional snd chn (ax " S_time_graph ")): current y axis label"
   axis_info *ap;
 
-  ASSERT_CHANNEL(S_y_axis_label, snd, chn, 1);
+  Snd_assert_channel(S_y_axis_label, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 3, S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
 
@@ -1802,7 +1802,7 @@ static Xen g_set_y_axis_label(Xen label, Xen snd, Xen chn, Xen ax)
 {
   axis_info *ap;
 
-  ASSERT_CHANNEL(S_setB S_y_axis_label, snd, chn, 2);
+  Snd_assert_channel(S_setB S_y_axis_label, snd, chn, 2);
   Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 1, S_setB S_y_axis_label, "a string");
 
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
@@ -1817,7 +1817,7 @@ static Xen g_set_y_axis_label(Xen label, Xen snd, Xen chn, Xen ax)
   return(label);
 }
 
-WITH_FOUR_SETTER_ARGS(g_set_y_axis_label_reversed, g_set_y_axis_label)
+with_four_setter_args(g_set_y_axis_label_reversed, g_set_y_axis_label)
 
 
 
@@ -1826,7 +1826,7 @@ static Xen g_x_bounds(Xen snd, Xen chn, Xen ax)
   #define H_x_bounds "(" S_x_bounds " :optional snd chn axis): a list (x0 x1) giving the current x axis bounds of snd channel chn"
   axis_info *ap;
 
-  ASSERT_CHANNEL(S_x_bounds, snd, chn, 1);
+  Snd_assert_channel(S_x_bounds, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_bounds);
 
@@ -1842,7 +1842,7 @@ static Xen g_set_x_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
   axis_info *ap;
   mus_float_t x0 = 0.0, x1 = 0.0;
 
-  ASSERT_CHANNEL(S_setB S_x_bounds, snd, chn, 2);
+  Snd_assert_channel(S_setB S_x_bounds, snd, chn, 2);
   Xen_check_type(Xen_is_number(bounds) || (Xen_is_list(bounds) && (Xen_list_length(bounds) == 2)), bounds, 1, S_setB S_x_bounds, "a list: (x0 x1) or a number");
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_setB S_x_bounds);
@@ -1891,7 +1891,7 @@ static Xen g_set_x_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
   return(bounds);
 }
 
-WITH_FOUR_SETTER_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
+with_four_setter_args(g_set_x_bounds_reversed, g_set_x_bounds)
 
 
 
@@ -1900,7 +1900,7 @@ static Xen g_y_bounds(Xen snd, Xen chn, Xen ax)
   #define H_y_bounds "(" S_y_bounds " :optional snd chn axis): a list (y0 y1) giving the current y axis bounds of snd channel chn"
   axis_info *ap;
 
-  ASSERT_CHANNEL(S_y_bounds, snd, chn, 1);
+  Snd_assert_channel(S_y_bounds, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_bounds);
 
@@ -1917,7 +1917,7 @@ static Xen g_set_y_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
   int len = 0;
   Xen y0 = Xen_undefined, y1 = Xen_undefined;
 
-  ASSERT_CHANNEL(S_setB S_y_bounds, snd, chn, 2);
+  Snd_assert_channel(S_setB S_y_bounds, snd, chn, 2);
   Xen_check_type((Xen_is_number(bounds)) || (Xen_is_list(bounds)), bounds, 1, S_setB S_y_bounds, "a list or a number");
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_setB S_y_bounds);
@@ -1987,7 +1987,7 @@ static Xen g_set_y_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
   return(bounds);
 }
 
-WITH_FOUR_SETTER_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
+with_four_setter_args(g_set_y_bounds_reversed, g_set_y_bounds)
 
 
   

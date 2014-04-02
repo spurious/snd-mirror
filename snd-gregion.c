@@ -506,7 +506,7 @@ static bool query_callback(GtkTooltip *tooltip, const char *which)
 	{
 	  tip = mus_format("%s the selected region at the cursor (at time %.3f) in %s",
 			   which,
-			   ((double)CURSOR(cp)) / ((double)(SND_SRATE(sp))),
+			   ((double)CURSOR(cp)) / ((double)(snd_srate(sp))),
 			   sp->short_filename);
 	  gtk_tooltip_set_text(tooltip, tip);
 	  free(tip);

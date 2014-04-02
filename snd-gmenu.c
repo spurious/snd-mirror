@@ -1589,7 +1589,7 @@ static gboolean play_selected_from_cursor_tooltip(GtkWidget *w, gint x, gint y, 
       char *tip;
       chan_info *cp;
       cp = any_selected_channel(sp);
-      tip = mus_format("play %s from the cursor (%.3f seconds in)", sp->short_filename, ((double)CURSOR(cp)) / ((double)(SND_SRATE(sp))));
+      tip = mus_format("play %s from the cursor (%.3f seconds in)", sp->short_filename, ((double)CURSOR(cp)) / ((double)(snd_srate(sp))));
       gtk_tooltip_set_text(tooltip, tip);
       free(tip);
     }
@@ -1741,7 +1741,7 @@ static gboolean insert_selection_tooltip(GtkWidget *w, gint x, gint y, gboolean 
       cp = any_selected_channel(sp);
 
       tip = mus_format("insert the selected portion at the cursor (at time %.3f) in %s",
-		       ((double)CURSOR(cp)) / ((double)(SND_SRATE(sp))),
+		       ((double)CURSOR(cp)) / ((double)(snd_srate(sp))),
 		       sp->short_filename);
       gtk_tooltip_set_text(tooltip, tip);
       free(tip);

@@ -294,7 +294,7 @@ static Xen g_draw_line(Xen x0, Xen y0, Xen x1, Xen y1, Xen snd, Xen chn, Xen ax,
 {
   #define H_draw_line "(" S_draw_line " x0 y0 x1 y1 :optional snd chn (ax " S_time_graph ") cr): draw a line"
 
-  ASSERT_CHANNEL(S_draw_line, snd, chn, 5);
+  Snd_assert_channel(S_draw_line, snd, chn, 5);
   Xen_check_type(Xen_is_number(x0), x0, 1, S_draw_line, "a number");
   Xen_check_type(Xen_is_number(y0), y0, 2, S_draw_line, "a number");
   Xen_check_type(Xen_is_number(x1), x1, 3, S_draw_line, "a number");
@@ -314,7 +314,7 @@ static Xen g_draw_dot(Xen x0, Xen y0, Xen size, Xen snd, Xen chn, Xen ax, Xen xc
 {
   #define H_draw_dot "(" S_draw_dot " x0 y0 size :optional snd chn (ax " S_time_graph ") cr): draw a dot"
  
-  ASSERT_CHANNEL(S_draw_dot, snd, chn, 4);
+  Snd_assert_channel(S_draw_dot, snd, chn, 4);
   Xen_check_type(Xen_is_integer(x0), x0, 1, S_draw_dot, "an integer");
   Xen_check_type(Xen_is_integer(y0), y0, 2, S_draw_dot, "an integer");
   Xen_check_type(Xen_is_integer(size), size, 3, S_draw_dot, "an integer");
@@ -332,7 +332,7 @@ static Xen g_fill_rectangle(Xen x0, Xen y0, Xen width, Xen height, Xen snd, Xen 
 {
   #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height :optional snd chn (ax " S_time_graph ") erase cr): draw a filled rectangle"
 
-  ASSERT_CHANNEL(S_fill_rectangle, snd, chn, 5);
+  Snd_assert_channel(S_fill_rectangle, snd, chn, 5);
   Xen_check_type(Xen_is_number(x0), x0, 1, S_fill_rectangle, "a number");
   Xen_check_type(Xen_is_number(y0), y0, 2, S_fill_rectangle, "a number");
   Xen_check_type(Xen_is_number(width), width, 3, S_fill_rectangle, "a number");
@@ -362,7 +362,7 @@ static Xen g_draw_string(Xen text, Xen x0, Xen y0, Xen snd, Xen chn, Xen ax, Xen
   #define H_draw_string "(" S_draw_string " text x0 y0 :optional snd chn (ax " S_time_graph ") cr): draw a string"
   
   const char *tmp = NULL;
-  ASSERT_CHANNEL(S_draw_string, snd, chn, 4);
+  Snd_assert_channel(S_draw_string, snd, chn, 4);
   Xen_check_type(Xen_is_string(text), text, 1, S_draw_string, "a string");
   Xen_check_type(Xen_is_number(x0), x0, 2, S_draw_string, "a number");
   Xen_check_type(Xen_is_number(y0), y0, 3, S_draw_string, "a number");
@@ -422,7 +422,7 @@ static point_t *vector_to_points(Xen pts, const char *caller, int *vector_len)
   graphics_context *ax1;
   int vlen = 0;
 
-  ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
+  Snd_assert_channel(S_draw_lines, snd, chn, 2);
   Xen_check_type(Xen_is_vector(pts), pts, 1, S_draw_lines, "a vector");
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_draw_lines, "an integer such as " S_time_graph);
 
@@ -445,7 +445,7 @@ static point_t *vector_to_points(Xen pts, const char *caller, int *vector_len)
   graphics_context *ax1;
   int vlen = 0;
 
-  ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
+  Snd_assert_channel(S_draw_dots, snd, chn, 3);
   Xen_check_type(Xen_is_vector(pts), pts, 1, S_draw_dots, "a vector");
   Xen_check_type(Xen_is_integer_or_unbound(size), size, 2, S_draw_dots, "an integer");
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 5, S_draw_dots, "an integer such as " S_time_graph);
@@ -471,7 +471,7 @@ static point_t *vector_to_points(Xen pts, const char *caller, int *vector_len)
   graphics_context *ax;
   int vlen = 0;
 
-  ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
+  Snd_assert_channel(S_fill_polygon, snd, chn, 2);
   Xen_check_type(Xen_is_vector(pts), pts, 1, S_fill_polygon, "a vector");
   Xen_check_type(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_fill_polygon, "an integer such as " S_time_graph);
 
@@ -542,7 +542,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   chan_info *cp;
   graphics_context *ax;
 
-  ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
+  Snd_assert_channel(S_foreground_color, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(xax), xax, 3, S_foreground_color, "an integer");
 
   cp = get_cp(snd, chn, S_foreground_color);
@@ -557,7 +557,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
 {
   chan_info *cp;
 
-  ASSERT_CHANNEL(S_setB S_foreground_color, snd, chn, 2);
+  Snd_assert_channel(S_setB S_foreground_color, snd, chn, 2);
   Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_foreground_color, "a color");
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_foreground_color, "an integer");
 
@@ -569,7 +569,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   return(color);
 }
 
-WITH_FOUR_SETTER_ARGS(g_set_foreground_color_reversed, g_set_foreground_color)
+with_four_setter_args(g_set_foreground_color_reversed, g_set_foreground_color)
 
 
 #if USE_MOTIF
@@ -578,7 +578,7 @@ static Xen g_set_current_font(Xen id, Xen snd, Xen chn, Xen ax_id)
 {
   graphics_context *ax;
 
-  ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
+  Snd_assert_channel(S_setB S_current_font, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
   Xen_check_type((Xen_is_list(id)) &&
 		  (Xen_list_length(id) >= 2) &&
@@ -598,7 +598,7 @@ static Xen g_current_font(Xen snd, Xen chn, Xen ax_id)
   graphics_context *ax;
   chan_info *cp;
 
-  ASSERT_CHANNEL(S_current_font, snd, chn, 1);
+  Snd_assert_channel(S_current_font, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(ax_id), ax_id, 3, S_current_font, "an integer such as time-graph");
   cp = get_cp(snd, chn, S_current_font);
   if (!cp) return(Xen_false);
@@ -622,7 +622,7 @@ static Xen g_set_current_font(Xen id, Xen snd, Xen chn, Xen ax_id)
 {
   graphics_context *ax;
 
-  ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
+  Snd_assert_channel(S_setB S_current_font, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
 
   ax = TO_C_AXIS_CONTEXT_NO_CR(snd, chn, ax_id, S_setB S_current_font);
@@ -643,7 +643,7 @@ static Xen g_current_font(Xen snd, Xen chn, Xen ax_id)
 {
   #define H_current_font "(" S_current_font " :optional snd chn (ax " S_time_graph ")): current font id"
   graphics_context *ax;
-  ASSERT_CHANNEL(S_current_font, snd, chn, 1);
+  Snd_assert_channel(S_current_font, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(ax_id), ax_id, 3, S_current_font, "an integer such as time-graph");
   ax = TO_C_AXIS_CONTEXT_NO_CR(snd, chn, ax_id, S_current_font);
   return(Xen_wrap_C_pointer(ax->current_font));
@@ -651,7 +651,7 @@ static Xen g_current_font(Xen snd, Xen chn, Xen ax_id)
 
 #endif
 
-WITH_FOUR_SETTER_ARGS(g_set_current_font_reversed, g_set_current_font)
+with_four_setter_args(g_set_current_font_reversed, g_set_current_font)
 
 
 static Xen g_make_graph_data(Xen snd, Xen chn, Xen edpos, Xen lo, Xen hi)
@@ -663,7 +663,7 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
 
   chan_info *cp;
 
-  ASSERT_CHANNEL(S_make_graph_data, snd, chn, 1);
+  Snd_assert_channel(S_make_graph_data, snd, chn, 1);
   cp = get_cp(snd, chn, S_make_graph_data);
   if (!cp) return(Xen_false);
 
@@ -686,7 +686,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
   chan_info *cp;
   vct *v0, *v1 = NULL;
 
-  ASSERT_CHANNEL(S_graph_data, snd, chn, 2);
+  Snd_assert_channel(S_graph_data, snd, chn, 2);
 
   cp = get_cp(snd, chn, S_graph_data);
   if (!cp) return(Xen_false);
@@ -1869,7 +1869,7 @@ static Xen g_set_mix_color(Xen color, Xen mix_id)
   return(color);
 }
 
-WITH_TWO_SETTER_ARGS(g_set_mix_color_reversed, g_set_mix_color)
+with_two_setter_args(g_set_mix_color_reversed, g_set_mix_color)
 
 
 bool foreground_color_ok(Xen color, graphics_context *ax)
@@ -1889,7 +1889,7 @@ static Xen g_combined_data_color(Xen snd, Xen chn)
   #define H_combined_data_color "(" S_combined_data_color " snd chn): color of this channel's data if graphed with channels-combined"
   chan_info *cp;
 
-  ASSERT_CHANNEL(S_combined_data_color, snd, chn, 1);
+  Snd_assert_channel(S_combined_data_color, snd, chn, 1);
   cp = get_cp(snd, chn, S_combined_data_color);
   if (!cp) return(Xen_false);
 
@@ -1902,7 +1902,7 @@ static Xen g_set_combined_data_color(Xen color, Xen snd, Xen chn)
   chan_info *cp;
 
   Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_combined_data_color, "a color"); 
-  ASSERT_CHANNEL(S_combined_data_color, snd, chn, 1);
+  Snd_assert_channel(S_combined_data_color, snd, chn, 1);
   cp = get_cp(snd, chn, S_combined_data_color);
   if (!cp) return(Xen_false);
 
@@ -1911,7 +1911,7 @@ static Xen g_set_combined_data_color(Xen color, Xen snd, Xen chn)
   return(color);
 }
 
-WITH_THREE_SETTER_ARGS(g_set_combined_data_color_reversed, g_set_combined_data_color)
+with_three_setter_args(g_set_combined_data_color_reversed, g_set_combined_data_color)
 
 
 

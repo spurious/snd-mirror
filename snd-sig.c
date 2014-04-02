@@ -659,7 +659,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
       alloc_len = REPORTING_SIZE;
       temp_file = true; 
       ofile0 = snd_tempnam();
-      hdr0 = make_temp_header(ofile0, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
+      hdr0 = make_temp_header(ofile0, snd_srate(sp0), 1, dur, (char *)S_swap_channels);
       ofd0 = open_temp_file(ofile0, 1, hdr0, &io_err);
       if (ofd0 == -1)
 	{
@@ -672,7 +672,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 	}
       datumb = mus_bytes_per_sample(hdr0->format);
       ofile1 = snd_tempnam();
-      hdr1 = make_temp_header(ofile1, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
+      hdr1 = make_temp_header(ofile1, snd_srate(sp0), 1, dur, (char *)S_swap_channels);
       ofd1 = open_temp_file(ofile1, 1, hdr1, &io_err);
       if (ofd1 == -1)
 	{
@@ -809,7 +809,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
       temp_file = true; 
       alloc_len = REPORTING_SIZE;
       ofile = snd_tempnam();
-      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, caller);
+      hdr = make_temp_header(ofile, snd_srate(sp), 1, dur, caller);
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
@@ -1143,7 +1143,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
   if (reporting) start_progress_report(cp);
 
   ofile = snd_tempnam();
-  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
+  hdr = make_temp_header(ofile, snd_srate(sp), 1, dur, (char *)origin);
   ofd = open_temp_file(ofile, 1, hdr, &io_err);
   if (ofd == -1)
     {
@@ -1723,7 +1723,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
       alloc_len = REPORTING_SIZE;
       temp_file = true; 
       ofile = snd_tempnam();
-      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, S_clm_channel);
+      hdr = make_temp_header(ofile, snd_srate(sp), 1, dur + overlap, S_clm_channel);
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
@@ -1835,7 +1835,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
   else fsize = TWO_30;
 
   ofile = snd_tempnam();
-  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
+  hdr = make_temp_header(ofile, snd_srate(sp), 1, dur, (char *)origin);
 
 #if MUS_LITTLE_ENDIAN
   if (sizeof(mus_float_t) == 4)
@@ -2015,7 +2015,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       alloc_len = REPORTING_SIZE;
       temp_file = true; 
       ofile = snd_tempnam();
-      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, total_dur, (char *)origin);
+      hdr = make_temp_header(ofile, snd_srate(sp), 1, total_dur, (char *)origin);
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
@@ -2215,7 +2215,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
     {
       temp_file = true; 
       ofile = snd_tempnam();
-      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
+      hdr = make_temp_header(ofile, snd_srate(sp), 1, dur, (char *)origin);
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
@@ -2786,7 +2786,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	  alloc_len = MAX_BUFFER_SIZE;
 	  temp_file = true; 
 	  ofile = snd_tempnam(); 
-	  hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur, (char *)origin);
+	  hdr = make_temp_header(ofile, snd_srate(sp), si->chans, dur, (char *)origin);
 	  ofd = open_temp_file(ofile, si->chans, hdr, &io_err);
 	  if (ofd == -1)
 	    {
@@ -3528,7 +3528,7 @@ static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_lon
   rpt4 = MAX_BUFFER_SIZE / 4;
   
   filename = snd_tempnam();
-  hdr = make_temp_header(filename, SND_SRATE(cp->sound), 1, 0, S_map_channel);
+  hdr = make_temp_header(filename, snd_srate(cp->sound), 1, 0, S_map_channel);
   datumb = mus_bytes_per_sample(hdr->format);
 
   ofd = open_temp_file(filename, 1, hdr, &io_err);
@@ -3979,10 +3979,10 @@ static Xen g_map_chan_1(Xen proc_and_list, Xen s_beg, Xen s_end, Xen org, Xen sn
   else caller = fallback_caller;
 
   Xen_check_type((Xen_is_procedure(proc)) || (mus_is_xen(proc)), proc, 1, caller, "a procedure");
-  ASSERT_SAMPLE_TYPE(caller, s_beg, 2);
-  ASSERT_SAMPLE_TYPE(caller, s_end, 3);
-  ASSERT_SAMPLE_TYPE(caller, s_dur, 3);
-  ASSERT_CHANNEL(caller, snd, chn, 5); 
+  Snd_assert_sample_type(caller, s_beg, 2);
+  Snd_assert_sample_type(caller, s_end, 3);
+  Snd_assert_sample_type(caller, s_dur, 3);
+  Snd_assert_channel(caller, snd, chn, 5); 
 
   cp = get_cp(snd, chn, caller);
   if (!cp) return(Xen_false);
@@ -4058,10 +4058,10 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   proc = proc_and_list;
 
   Xen_check_type((Xen_is_procedure(proc)), proc, 1, caller, "a procedure");
-  ASSERT_SAMPLE_TYPE(caller, s_beg, 2);
-  ASSERT_SAMPLE_TYPE(caller, s_end, 3);
-  ASSERT_SAMPLE_TYPE(caller, s_dur, 3);
-  ASSERT_CHANNEL(caller, snd, chn, 4);
+  Snd_assert_sample_type(caller, s_beg, 2);
+  Snd_assert_sample_type(caller, s_end, 3);
+  Snd_assert_sample_type(caller, s_dur, 3);
+  Snd_assert_channel(caller, snd, chn, 4);
 
   cp = get_cp(snd, chn, caller);
   if (!cp) return(Xen_false);
@@ -4418,7 +4418,7 @@ apply 'func' to samples in current channel (or the specified channel). \
 'func' is a function of one argument, the current sample. \
 if 'func' returns non-" PROC_FALSE ", the scan stops, and the current sample number is returned.\n  " scan_chan_example
 
-  ASSERT_CHANNEL(S_scan_chan, snd, chn, 4); 
+  Snd_assert_channel(S_scan_chan, snd, chn, 4); 
   return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, false, edpos, 6, Xen_false));
 }
 #endif
@@ -4440,7 +4440,7 @@ apply func to samples in current channel (or the specified channel). \
 func is a function of one argument, the current sample. \
 if func returns non-" PROC_FALSE ", the scan stops, and the current sample number is returned. \n  " scan_channel_example
 
-  ASSERT_CHANNEL(S_scan_channel, snd, chn, 4); 
+  Snd_assert_channel(S_scan_channel, snd, chn, 4); 
   return(g_sp_scan(proc, beg, Xen_false, snd, chn, S_scan_channel, false, edpos, 6, (Xen_is_bound(dur)) ? dur : Xen_false));
 }
 
@@ -4502,7 +4502,7 @@ static Xen g_find_channel(Xen expr, Xen sample, Xen snd, Xen chn_n, Xen edpos)
 the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns something other than " PROC_FALSE ": \n  " find_channel_example
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
-  ASSERT_CHANNEL(S_find_channel, snd, chn_n, 3);
+  Snd_assert_channel(S_find_channel, snd, chn_n, 3);
   return(g_sp_scan(expr, sample, Xen_false, snd, chn_n, S_find_channel, false, edpos, 5, Xen_false));
 }
 #endif
@@ -4523,7 +4523,7 @@ static Xen g_count_matches(Xen expr, Xen sample, Xen snd, Xen chn_n, Xen edpos)
   #define H_count_matches "(" S_count_matches " func :optional (start-samp 0) snd chn edpos): return how many \
 samples satisfy func (a function of one argument, the current sample, returning " PROC_TRUE " upon match):\n  " count_matches_example
 
-  ASSERT_CHANNEL(S_count_matches, snd, chn_n, 3);
+  Snd_assert_channel(S_count_matches, snd, chn_n, 3);
   return(g_sp_scan(expr, sample, Xen_false, snd, chn_n, S_count_matches, true, edpos, 5, Xen_false));
 }
 
@@ -4535,9 +4535,9 @@ data from start-samp for samps in snd's channel chn"
   chan_info *cp;
   mus_long_t start, samps;
 
-  ASSERT_SAMPLE_TYPE(S_smooth_sound, beg, 1);
-  ASSERT_SAMPLE_TYPE(S_smooth_sound, num, 2);
-  ASSERT_CHANNEL(S_smooth_sound, snd, chn_n, 3);
+  Snd_assert_sample_type(S_smooth_sound, beg, 1);
+  Snd_assert_sample_type(S_smooth_sound, num, 2);
+  Snd_assert_channel(S_smooth_sound, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, S_smooth_sound);
   if (!cp) return(Xen_false);
@@ -4558,9 +4558,9 @@ smooth data from beg for dur in snd's channel chn"
   mus_long_t start, num;
   int pos;
 
-  ASSERT_SAMPLE_TYPE(S_smooth_channel, beg, 1);
-  ASSERT_SAMPLE_TYPE(S_smooth_channel, dur, 2);
-  ASSERT_CHANNEL(S_smooth_channel, snd, chn_n, 3);
+  Snd_assert_sample_type(S_smooth_channel, beg, 1);
+  Snd_assert_sample_type(S_smooth_channel, dur, 2);
+  Snd_assert_channel(S_smooth_channel, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, S_smooth_channel);
   if (!cp) return(Xen_false);
@@ -4666,7 +4666,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
   Xen_check_type(Xen_is_integer(samp_n), samp_n, 1, S_delete_samples_and_smooth, "an integer");
   Xen_check_type(Xen_is_llong(samps), samps, 2, S_delete_samples_and_smooth, "an integer");
 
-  ASSERT_CHANNEL(S_delete_samples_and_smooth, snd, chn_n, 3);
+  Snd_assert_channel(S_delete_samples_and_smooth, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_delete_samples_and_smooth);
   if (!cp) return(Xen_false);
 
@@ -4692,7 +4692,7 @@ static Xen g_reverse_sound(Xen snd, Xen chn_n, Xen edpos)
   #define H_reverse_sound "(" S_reverse_sound " :optional snd chn edpos): reverse snd's channel chn"
   chan_info *cp;
 
-  ASSERT_CHANNEL(S_reverse_sound, snd, chn_n, 1);
+  Snd_assert_channel(S_reverse_sound, snd, chn_n, 1);
   cp = get_cp(snd, chn_n, S_reverse_sound);
   if (!cp) return(Xen_false);
 
@@ -4728,9 +4728,9 @@ static Xen g_reverse_channel(Xen s_beg, Xen s_dur, Xen snd, Xen chn_n, Xen edpos
   int pos;
   snd_fd *sf;
 
-  ASSERT_SAMPLE_TYPE(S_reverse_channel, s_beg, 1);
-  ASSERT_SAMPLE_TYPE(S_reverse_channel, s_dur, 2);
-  ASSERT_CHANNEL(S_reverse_channel, snd, chn_n, 3);
+  Snd_assert_sample_type(S_reverse_channel, s_beg, 1);
+  Snd_assert_sample_type(S_reverse_channel, s_dur, 2);
+  Snd_assert_channel(S_reverse_channel, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, S_reverse_channel);
   if (!cp) return(Xen_false);
@@ -4767,7 +4767,7 @@ static Xen g_insert_silence(Xen beg, Xen num, Xen snd, Xen chn)
 
   Xen_check_type(Xen_is_integer(beg), beg, 1, S_insert_silence, "an integer");
   Xen_check_type(Xen_is_integer(num), num, 2, S_insert_silence, "an integer");
-  ASSERT_CHANNEL(S_insert_silence, snd, chn, 3);
+  Snd_assert_channel(S_insert_silence, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_insert_silence);
   if (!cp) return(Xen_false);
@@ -4793,7 +4793,7 @@ static Xen g_pad_channel(Xen beg, Xen num, Xen snd, Xen chn, Xen edpos)
 
   Xen_check_type(Xen_is_integer(beg), beg, 1, S_pad_channel, "an integer");
   Xen_check_type(Xen_is_integer(num), num, 2, S_pad_channel, "an integer");
-  ASSERT_CHANNEL(S_pad_channel, snd, chn, 3);
+  Snd_assert_channel(S_pad_channel, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_pad_channel);
   if (!cp) return(Xen_false);
@@ -4821,7 +4821,7 @@ swap the indicated channels"
   chan_info *cp0 = NULL, *cp1 = NULL;
   snd_info *sp = NULL;
 
-  ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
+  Snd_assert_channel(S_swap_channels, snd0, chn0, 1);
 
   cp0 = get_cp(snd0, chn0, S_swap_channels);
   if (!cp0) return(Xen_false);
@@ -4829,7 +4829,7 @@ swap the indicated channels"
 
   if (Xen_is_integer(chn1))
     {
-      ASSERT_CHANNEL(S_swap_channels, snd1, chn1, 3);
+      Snd_assert_channel(S_swap_channels, snd1, chn1, 3);
       cp1 = get_cp(snd1, chn1, S_swap_channels);
     }
   else
@@ -4973,7 +4973,7 @@ normalize snd to norms (following sync); norms can be a float or a vct/list of f
   int len[1];
   mus_float_t *scls;
 
-  ASSERT_CHANNEL(S_scale_to, snd, chn_n, 2);
+  Snd_assert_channel(S_scale_to, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_scale_to);
   if (!cp) return(Xen_false);
 
@@ -4997,7 +4997,7 @@ scale snd by scalers (following sync); scalers can be a float or a vct/list of f
   int len[1];
   mus_float_t *scls;
 
-  ASSERT_CHANNEL(S_scale_by, snd, chn_n, 2);
+  Snd_assert_channel(S_scale_by, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_scale_by);
   if (!cp) return(Xen_false);
   len[0] = 0;
@@ -5067,11 +5067,11 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   mus_any *egen;
   char *errmsg = NULL, *caller = NULL;
 
-  ASSERT_SAMPLE_TYPE(S_clm_channel, samp_n, 2);
-  ASSERT_SAMPLE_TYPE(S_clm_channel, samps, 3);
+  Snd_assert_sample_type(S_clm_channel, samp_n, 2);
+  Snd_assert_sample_type(S_clm_channel, samps, 3);
   Xen_check_type(Xen_is_integer(overlap) || Xen_is_false(overlap) || !Xen_is_bound(overlap), overlap, 7, S_clm_channel, "an integer or " PROC_FALSE);
   Xen_check_type(Xen_is_string_or_unbound(origin), origin, 8, S_clm_channel, "a string");
-  ASSERT_CHANNEL(S_clm_channel, snd, chn_n, 4);
+  Snd_assert_channel(S_clm_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_clm_channel);
   if (!cp) return(Xen_false);
@@ -5157,9 +5157,9 @@ either to the end of the sound or for samps samples, with segments interpolating
   int pos;
   chan_info *cp;
 
-  ASSERT_SAMPLE_TYPE(S_env_sound, samp_n, 2);
-  ASSERT_SAMPLE_TYPE(S_env_sound, samps, 3);
-  ASSERT_CHANNEL(S_env_sound, snd, chn_n, 5);
+  Snd_assert_sample_type(S_env_sound, samp_n, 2);
+  Snd_assert_sample_type(S_env_sound, samps, 3);
+  Snd_assert_channel(S_env_sound, snd, chn_n, 5);
 
   cp = get_cp(snd, chn_n, S_env_sound);
   if (!cp) return(Xen_false);
@@ -5182,9 +5182,9 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   int old_sync = 0, pos;
   Xen val;
 
-  ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, 2);
-  ASSERT_SAMPLE_TYPE(S_env_channel, samps, 3);
-  ASSERT_CHANNEL(S_env_channel, snd, chn_n, 4);
+  Snd_assert_sample_type(S_env_channel, samp_n, 2);
+  Snd_assert_sample_type(S_env_channel, samps, 3);
+  Snd_assert_channel(S_env_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_env_channel);
   if (!cp) return(Xen_false);
@@ -5215,9 +5215,9 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   int old_sync = 0, pos;
   Xen val;
 
-  ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, 2);
-  ASSERT_SAMPLE_TYPE(S_env_channel, samps, 3);
-  ASSERT_CHANNEL(S_env_channel, snd, chn_n, 4);
+  Snd_assert_sample_type(S_env_channel, samp_n, 2);
+  Snd_assert_sample_type(S_env_channel, samps, 3);
+  Snd_assert_channel(S_env_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_env_channel);
   if (!cp) return(Xen_false);
@@ -5249,9 +5249,9 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
 
   Xen_check_type(Xen_is_number(rmp0), rmp0, 1, S_ramp_channel, "a number");
   Xen_check_type(Xen_is_number(rmp1), rmp1, 2, S_ramp_channel, "a number");
-  ASSERT_SAMPLE_TYPE(S_ramp_channel, beg, 3);
-  ASSERT_SAMPLE_TYPE(S_ramp_channel, num, 4);
-  ASSERT_SOUND(S_ramp_channel, snd, 5);
+  Snd_assert_sample_type(S_ramp_channel, beg, 3);
+  Snd_assert_sample_type(S_ramp_channel, num, 4);
+  Snd_assert_sound(S_ramp_channel, snd, 5);
 
   samp = beg_to_sample(beg, S_ramp_channel);
   cp = get_cp(snd, chn, S_ramp_channel);
@@ -5317,9 +5317,9 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   Xen_check_type(Xen_is_number(rmp0), rmp0, 1, S_xramp_channel, "a number");
   Xen_check_type(Xen_is_number(rmp1), rmp1, 2, S_xramp_channel, "a number");
   Xen_check_type(Xen_is_number(base), base, 3, S_xramp_channel, "a number");
-  ASSERT_SAMPLE_TYPE(S_xramp_channel, beg, 4);
-  ASSERT_SAMPLE_TYPE(S_xramp_channel, num, 5);
-  ASSERT_SOUND(S_xramp_channel, snd, 6);
+  Snd_assert_sample_type(S_xramp_channel, beg, 4);
+  Snd_assert_sample_type(S_xramp_channel, num, 5);
+  Snd_assert_sound(S_xramp_channel, snd, 6);
 
   samp = beg_to_sample(beg, S_xramp_channel);
   cp = get_cp(snd, chn, S_xramp_channel);
@@ -5611,7 +5611,7 @@ static Xen g_convolve_with(Xen file, Xen new_amp, Xen snd, Xen chn_n, Xen edpos)
 convolve file with snd's channel chn (or the currently sync'd channels); amp is the resultant peak amp"
 
   chan_info *cp;
-  ASSERT_CHANNEL(S_convolve_with, snd, chn_n, 3);
+  Snd_assert_channel(S_convolve_with, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_convolve_with);
   if (!cp) return(Xen_false);
   return(g_convolve_with_1(file, new_amp, cp, edpos, S_convolve_with));
@@ -5693,9 +5693,9 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 		  ((mus_is_xen(ratio_or_env)) && 
 		   (mus_is_env(egen = Xen_to_mus_any(ratio_or_env)))),
 		  ratio_or_env, 1, S_src_channel, "a number, an envelope, or a CLM env generator");
-  ASSERT_SAMPLE_TYPE(S_src_channel, beg_n, 2);
-  ASSERT_SAMPLE_TYPE(S_src_channel, dur_n, 3);
-  ASSERT_CHANNEL(S_src_channel, snd, chn_n, 4);
+  Snd_assert_sample_type(S_src_channel, beg_n, 2);
+  Snd_assert_sample_type(S_src_channel, dur_n, 3);
+  Snd_assert_channel(S_src_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_src_channel);
   if (!cp) return(Xen_false);
@@ -5771,7 +5771,7 @@ static Xen g_src_1(Xen ratio_or_env, Xen ebase, Xen snd, Xen chn_n, Xen edpos, c
 {
   chan_info *cp;
 
-  ASSERT_CHANNEL(caller, snd, chn_n, 3);
+  Snd_assert_channel(caller, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, caller);
   if (!cp) return(Xen_false);
 
@@ -5889,15 +5889,15 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
       if (order_1 < 0) 
 	Xen_out_of_range_error(S_filter_channel, 2, order, "order should not be negative");
     }
-  ASSERT_CHANNEL(S_filter_channel, snd, chn_n, 5);
+  Snd_assert_channel(S_filter_channel, snd, chn_n, 5);
   cp = get_cp(snd, chn_n, S_filter_channel);
   if (!cp) return(Xen_false);
 
   Xen_check_type(Xen_is_boolean_or_unbound(truncate), truncate, 8, S_filter_channel, "boolean");
   if (Xen_is_boolean(truncate)) truncate_1 = Xen_boolean_to_C_bool(truncate);
 
-  ASSERT_SAMPLE_TYPE(S_filter_channel, beg, 3);
-  ASSERT_SAMPLE_TYPE(S_filter_channel, dur, 4);
+  Snd_assert_sample_type(S_filter_channel, beg, 3);
+  Snd_assert_sample_type(S_filter_channel, dur, 4);
 
   beg_1 = beg_to_sample(beg, S_filter_channel);
   edpos_1 = to_c_edit_position(cp, edpos, S_filter_channel, 7);
@@ -5937,7 +5937,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
 static Xen g_filter_1(Xen e, Xen order, Xen snd, Xen chn_n, Xen edpos, const char *caller, const char *origin, bool over_selection, bool truncate)
 {
   chan_info *cp;
-  ASSERT_CHANNEL(caller, snd, chn_n, 3);
+  Snd_assert_channel(caller, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, caller);
   if (!cp) return(Xen_false);
   if (mus_is_xen(e))

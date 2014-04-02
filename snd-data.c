@@ -305,7 +305,7 @@ void initialize_control_panel(snd_info *sp)
   sp->filter_control_in_dB = filter_control_in_dB(ss);
   sp->filter_control_in_hz = filter_control_in_hz(ss);
   if (sp->filter_control_in_hz)
-    sp->filter_control_xmax = (mus_float_t)(SND_SRATE(sp) / 2);
+    sp->filter_control_xmax = (mus_float_t)(snd_srate(sp) / 2);
   else sp->filter_control_xmax = 1.0;
   sp->filter_control_changed = false;
   sp->saved_controls = NULL;

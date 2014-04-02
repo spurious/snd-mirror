@@ -675,8 +675,8 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, 
       
       OP_THUNK, HOP_THUNK, 
-      OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_Sp, HOP_CLOSURE_Sp, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
-      OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SSb, HOP_CLOSURE_SSb, OP_CLOSURE_SSp, HOP_CLOSURE_SSp, 
+      OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
+      OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SSb, HOP_CLOSURE_SSb, 
       OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS, 
       OP_CLOSURE_opSq, HOP_CLOSURE_opSq, OP_CLOSURE_opCq, HOP_CLOSURE_opCq, 
       OP_CLOSURE_opSq_S, HOP_CLOSURE_opSq_S, OP_CLOSURE_opSq_opSq, HOP_CLOSURE_opSq_opSq, 
@@ -697,7 +697,6 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_CLOSURE_SSS, HOP_SAFE_CLOSURE_SSS, OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, OP_SAFE_CLOSURE_S_CDR_CDR, HOP_SAFE_CLOSURE_S_CDR_CDR,
       OP_SAFE_CLOSURE_CAR_CAR, HOP_SAFE_CLOSURE_CAR_CAR, OP_SAFE_CLOSURE_CDR_CDR, HOP_SAFE_CLOSURE_CDR_CDR, 
       OP_SAFE_CLOSURE_ALL_C, HOP_SAFE_CLOSURE_ALL_C, OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, OP_SAFE_CLOSURE_AA, HOP_SAFE_CLOSURE_AA, 
-      OP_SAFE_CLOSURE_S_Z, HOP_SAFE_CLOSURE_S_Z, OP_SAFE_CLOSURE_S_P, HOP_SAFE_CLOSURE_S_P,
 
       OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
       OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC, OP_SAFE_CLOSURE_STAR_SA, HOP_SAFE_CLOSURE_STAR_SA, OP_SAFE_CLOSURE_STAR_S0, HOP_SAFE_CLOSURE_STAR_S0,
@@ -786,8 +785,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", 
 
       "thunk", "h_thunk", 
-      "closure_s", "h_closure_s", "closure_sp", "h_closure_sp", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
-      "closure_ss", "h_closure_ss", "closure_ssb", "h_closure_ssb", "closure_ssp", "h_closure_ssp", 
+      "closure_s", "h_closure_s", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
+      "closure_ss", "h_closure_ss", "closure_ssb", "h_closure_ssb",
       "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs", 
       "closure_opsq", "h_closure_opsq", "closure_opcq", "h_closure_opcq", 
       "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq", 
@@ -808,7 +807,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_closure_sss", "h_safe_closure_sss", "safe_closure_saa", "h_safe_closure_saa", "safe_closure_s_cdr_cdr", "h_safe_closure_s_cdr_cdr",
       "safe_closure_car_car", "h_safe_closure_car_car", "safe_closure_cdr_cdr", "h_safe_closure_cdr_cdr", 
       "safe_closure_all_c", "h_safe_closure_all_c", "safe_closure_all_x", "h_safe_closure_all_x", "safe_closure_aa", "h_safe_closure_aa", 
-      "safe_closure_s_z", "h_safe_closure_s_z", "safe_closure_s_p", "h_safe_closure_s_p",
 
       "safe_closure_star_s", "h_safe_closure_star_s", "safe_closure_star_ss", "h_safe_closure_star_ss", 
       "safe_closure_star_sc", "h_safe_closure_star_sc", "safe_closure_star_sa", "h_safe_closure_star_sa", "safe_closure_star_s0", "h_safe_closure_star_s0",
@@ -1161,7 +1159,7 @@ typedef struct {
 
 
 static s7_pointer *small_ints, *chars;
-static s7_pointer real_zero, real_NaN, real_pi, real_one; 
+static s7_pointer real_zero, real_NaN, real_pi, real_one, arity_not_set; 
 
 
 struct s7_scheme {  
@@ -1800,20 +1798,13 @@ static int t_optimized = T_OPTIMIZED;
 /* optimizer flag for a pair that has all_x_* info
  */
 
-
-#define T_ONE_LINER                   (1 << (TYPE_BITS + 18))
-#define is_one_liner(p)               ((typeflag(p) & T_ONE_LINER) != 0)
-#define set_one_liner(p)              typeflag(p) |= T_ONE_LINER
-/* this comes and goes... (currently used in the no-hop closure checker)
- */
-
-#define T_MUTABLE                     T_ONE_LINER
+#define T_MUTABLE                     (1 << (TYPE_BITS + 18))
 #define is_mutable(p)                 ((typeflag(p) & T_MUTABLE) != 0)
 /* #define set_mutable(p)             typeflag(p) |= T_MUTABLE */
 #define clear_mutable(p)              typeflag(p) &= (~T_MUTABLE)
 /* used for mutable numbers in clm2xen */
 
-#define T_BYTEVECTOR                  T_ONE_LINER
+#define T_BYTEVECTOR                  T_MUTABLE
 #define is_bytevector(p)              ((typeflag(p) & T_BYTEVECTOR) != 0)
 #define set_bytevector(p)             typeflag(p) |= T_BYTEVECTOR
 /* marks a string that the caller considers a bytevector 
@@ -4591,8 +4582,6 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int hash,
 	    }
 	}
     }
-
-
   p = permanent_cons(x, vector_element(sc->symbol_table, location), T_PAIR | T_IMMUTABLE);
   vector_element(sc->symbol_table, location) = p;
   pair_raw_hash(p) = hash;
@@ -4604,15 +4593,9 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, uns
 { 
   s7_pointer x; 
   for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
-    { 
-      if (hash == pair_raw_hash(x))
-	{
-	  const char *s; 
-	  s = symbol_name(car(x)); 
-	  if ((s) && (*s == *name) && (strings_are_equal(name, s)))
-	    return(car(x)); 
-	}
-    }
+    if ((hash == pair_raw_hash(x)) &&
+	(strings_are_equal(name, symbol_name(car(x)))))
+      return(car(x)); 
   return(sc->NIL); 
 } 
 
@@ -4699,15 +4682,9 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
   location = hash % SYMBOL_TABLE_SIZE;
 
   for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
-    { 
-      if (hash == pair_raw_hash(x))
-	{
-	  const char *s; 
-	  s = symbol_name(car(x)); 
-	  if ((*s == *name) && (strings_are_equal(name, s)))
-	    return(car(x)); 
-	}
-    }
+    if ((hash == pair_raw_hash(x)) &&
+	(strings_are_equal(name, symbol_name(car(x)))))
+      return(car(x)); 
 
   if (sc->symbol_table_is_locked)
     return(s7_error(sc, sc->ERROR, sc->NIL));
@@ -6323,7 +6300,6 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
 	set_type(x, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS);
       else set_type(x, T_CLOSURE_STAR | T_PROCEDURE);
     }
-  if (is_null(cdr(code))) set_one_liner(x);
   sc->capture_env_counter++;
   return(x);
 }
@@ -6354,7 +6330,6 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
        if (is_safe_closure(closure_body(X))) \
           set_type(X, T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS); \
        else set_type(X, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); \
-       if (is_null(cdr(Code))) set_one_liner(X); \
        sc->capture_env_counter++; \
       } while (0)
 
@@ -6370,7 +6345,6 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
        if (is_safe_closure(closure_body(X))) \
           set_type(X, T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS); \
        else set_type(X, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); \
-       if (is_null(cdr(Code))) set_one_liner(X); \
       } while (0)
 
 
@@ -9937,23 +9911,22 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 	      {
 		/* -------- decimal point -------- */
 	      case '.':
-		if (((has_dec_point1) ||
-		     (slash1)) &&
-		    (has_plus_or_minus == 0)) /* 1.. or 1/2. */
-		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
-		
-		if (((has_dec_point2) ||
-		     (slash2)) &&
-		    (has_plus_or_minus != 0)) /* 1+1.. or 1+1/2. */
-		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
-		
 		if ((!IS_DIGIT(p[1], current_radix)) &&
 		    (!IS_DIGIT(p[-1], current_radix))) 
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
-		
+
 		if (has_plus_or_minus == 0)
-		  has_dec_point1 = true;
-		else has_dec_point2 = true;
+		  {
+		    if ((has_dec_point1) || (slash1))
+		      return((want_symbol) ? make_symbol(sc, q) : sc->F); 
+		    has_dec_point1 = true;
+		  }
+		else
+		  {
+		    if ((has_dec_point2) || (slash2))
+		      return((want_symbol) ? make_symbol(sc, q) : sc->F); 
+		    has_dec_point2 = true;
+		  }
 		continue;
 
 		
@@ -21436,27 +21409,33 @@ static int file_read_white_space(s7_scheme *sc, s7_pointer port)
 
 static int string_read_white_space(s7_scheme *sc, s7_pointer pt)
 {
+  /* is this ever called? */
   unsigned char *str;
   unsigned char c1;
-
-  if (port_data_size(pt) <= port_position(pt))
-    return(EOF);
-
+  if (port_data_size(pt) <= port_position(pt)) return(EOF);
   str = (unsigned char *)(port_data(pt) + port_position(pt));
-
-  /* we can't depend on the extra 0 of padding at the end of an input string port --
-   *   eval_string and others take the given string without copying or padding.
-   */
-  /* half the time this is called, the initial character is not white space, but splitting that out
-   *   is slower.
-   */
-
   while (white_space[c1 = *str++]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
     if (c1 == '\n')
       port_line_number(pt)++;
-
   port_position(pt) = str - port_data(pt);
   return((int)c1);
+}
+
+
+static int terminated_string_read_white_space(s7_scheme *sc, s7_pointer pt)
+{
+  unsigned char *str;
+  unsigned char c;
+  /* here we know we have null termination and white_space[#\null] is false.
+   * half the time this is called, the initial character is not white space, 
+   *   but splitting that out is (slightly) slower.
+   */
+  str = (unsigned char *)(port_data(pt) + port_position(pt));
+  while (white_space[c = *str++]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
+    if (c == '\n')
+      port_line_number(pt)++;
+  port_position(pt) = str - port_data(pt);
+  return((int)c);
 }
 
 
@@ -21568,7 +21547,7 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt)
   sc->strbuf[k] = '\0';
 
   if (!number_table[(unsigned char)(sc->strbuf[0])])
-    return(make_symbol(sc, sc->strbuf));
+    return(make_symbol(sc, sc->strbuf)); /* expanded here is slower? */
   return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR));
 }
 
@@ -21765,7 +21744,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       port_read_line(port) = string_read_line;
       port_display(port) = input_display;
       port_read_semicolon(port) = string_read_semicolon;
-      port_read_white_space(port) = string_read_white_space;
+      port_read_white_space(port) = terminated_string_read_white_space;
       port_read_name(port) = string_read_name;
       port_read_sharp(port) = string_read_sharp;
     }
@@ -22072,7 +22051,10 @@ static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int
   port_read_line(x) = string_read_line;
   port_display(x) = input_display;
   port_read_semicolon(x) = string_read_semicolon;
-  port_read_white_space(x) = string_read_white_space;
+  if (input_string[len] == '\0')
+    port_read_white_space(x) = terminated_string_read_white_space;
+  else port_read_white_space(x) = string_read_white_space;
+  /* input_string[len] is apparently normally 0, but does it belong to the string? */
   port_read_name(x) = string_read_name_no_free;
   port_read_sharp(x) = string_read_sharp_no_free;
   port_write_character(x) = input_write_char;
@@ -43341,28 +43323,12 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		  safe_case = is_safe_closure(func);
 		  if (safe_case)
 		    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S);
-		  else
-		    {
-		      if ((is_null(cdr(closure_body(func)))) &&
-			  (!symbol_has_accessor(car(closure_args(func)))))
-			set_optimize_data(car_x, hop + OP_CLOSURE_Sp);
-		      else set_optimize_data(car_x, hop + OP_CLOSURE_S);
-		    }
+		  else set_optimize_data(car_x, hop + OP_CLOSURE_S);
 		}
 	      else set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_C : OP_CLOSURE_C));
 	      set_ecdr(car_x, func);
 	      set_fcdr(car_x, cadar_x);
 	      set_unsafely_optimized(car_x);
-
-	      if ((optimize_data_match(car_x, OP_SAFE_CLOSURE_S)) &&
-		  (is_null(cdr(closure_body(func)))))
-		{
-		  s7_pointer body;
-		  body = closure_body(func);
-		  if (is_h_optimized(car(body)))
-		    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S_Z);
-		  else set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S_P);
-		}
 	      return(false); 
 	    }
 	  else /* not closure with normal arglist */
@@ -43685,7 +43651,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  else
 		    {
 		      if (!arglist_has_accessed_symbol(closure_args(func)))
-			set_optimize_data(car_x, hop + ((is_null(cdr(closure_body(func)))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
+			set_optimize_data(car_x, hop + OP_CLOSURE_SSb);
 		      else set_optimize_data(car_x, hop + OP_CLOSURE_SS);
 		    }
 		}
@@ -47497,7 +47463,7 @@ static s7_pointer check_define(s7_scheme *sc)
       if ((arity >= 0) &&
 	  (arity < NUM_SMALL_INTS))
 	set_fcdr(sc->code, small_int(arity));
-      else set_fcdr(sc->code, make_permanent_integer(arity)); /* TODO: if this function is GC'd, do we free this int? */
+      else set_fcdr(sc->code, (arity == CLOSURE_ARITY_NOT_SET) ? arity_not_set : make_permanent_integer(arity));
       
       if (sc->op == OP_DEFINE)
 	{
@@ -49358,7 +49324,6 @@ static s7_pointer check_cond(s7_scheme *sc)
 #if (!WITH_GCC)
 #define closure_is_ok(Sc, Code, Type, Args)          (find_symbol_unchecked(Sc, car(Code)) == ecdr(Code))
 #define closure_star_is_ok(Sc, Code, Type, Args)     (find_symbol_unchecked(Sc, car(Code)) == ecdr(Code))
-#define one_line_closure_is_ok(Sc, Code, Type, Args) (find_symbol_unchecked(Sc, car(Code)) == ecdr(Code))
 #else
 
 /* it is almost never the case that we already have the value and can see it in the current environment directly,
@@ -49370,16 +49335,6 @@ static s7_pointer check_cond(s7_scheme *sc)
       ((typesflag(_val_) == (unsigned short)Type) &&			\
        ((closure_arity(_val_) == Args) || (closure_arity_to_int(Sc, _val_) == Args)) && \
        (set_ecdr(_code_, _val_)))); })
-
-#define one_line_closure_is_ok(Sc, Code, Type, Args)			\
-      ({ s7_pointer _val_; _val_ = find_symbol_unchecked(Sc, car(Code)); \
-       ((_val_ == ecdr(Code)) || \
-        ((typeflag(_val_) == (Type | T_ONE_LINER | T_COPY_ARGS)) &&	\
-         ((closure_arity(_val_) == Args) || (closure_arity_to_int(Sc, _val_) == Args)) && \
-         (set_ecdr(Code, _val_)))); })
-/* T_ONE_LINER is on if the body has only one form, T_COPY_ARGS is on in both UNSAFE and SAFE closures (but not on in the closure* cases)
- *   we ignore T_COPY_ARGS above because it is redundant given _STAR and it is not in the lower 2 bytes.
- */
 
 #define closure_star_is_ok(Sc, Code, Type, Args) \
   ({ s7_pointer _val_; _val_ = find_symbol_unchecked(Sc, car(Code));			\
@@ -52304,37 +52259,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = car(sc->code);
 	      goto EVAL;
 	      
-
-	    case OP_SAFE_CLOSURE_S_Z:
-	      /* this is a one line safe closure taking one symbol arg 
-	       *   of course, it's possible it isn't any such thing (sigh), but we'll be ok anyway
-	       *   because the switch in opt_eval will default to falling into the backup evaluator.
-	       */
-	      if (!one_line_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_S);
-		  goto OPT_EVAL;
-		}
 	      
-	    case HOP_SAFE_CLOSURE_S_Z:
-	      sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), find_symbol_checked(sc, fcdr(code)));
-	      sc->code = car(closure_body(ecdr(code)));
-	      goto OPT_EVAL; 
-	      
-
-	    case OP_SAFE_CLOSURE_S_P:
-	      if (!one_line_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_S);
-		  goto OPT_EVAL;
-		}
-	      
-	    case HOP_SAFE_CLOSURE_S_P:
-	      sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), find_symbol_checked(sc, fcdr(code)));
-	      sc->code = car(closure_body(ecdr(code)));
-	      goto EVAL; 
-	      
-
 	    case OP_SAFE_CLOSURE_C:
 	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1))
 		{
@@ -53186,43 +53111,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL;
 	      
 
-	    case OP_CLOSURE_Sp:
-	      if (!one_line_closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_S);
-		  goto OPT_EVAL;
-		}
-	      
-	    case HOP_CLOSURE_Sp:
-	      CHECK_STACK_SIZE(sc);
-	      sc->value = find_symbol_checked(sc, cadr(code));
-	      code = ecdr(code);
-	      NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->value); 
-	      sc->code = car(closure_body(code));
-	      goto EVAL;  
-
-
-	    case OP_CLOSURE_SSp:
-	      if (!one_line_closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_SS);
-		  goto OPT_EVAL;
-		}
-	      
-	    case HOP_CLOSURE_SSp:
-	      {
-		s7_pointer p;
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
-		sc->value = find_symbol_checked(sc, cadr(code));
-		sc->z = find_symbol_checked(sc, fcdr(code));
-		code = ecdr(code);
-		p = closure_args(code);
-		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p), sc->value, cadr(p), sc->z);
-		sc->code = car(closure_body(code));
-		goto EVAL;  
-	      }
-
 	    case OP_CLOSURE_SSb:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2))
 		{
@@ -53822,24 +53710,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			set_fcdr(code, cadr(code));
 			if (is_safe_closure(f))
-			  {
-			    s7_pointer body;
-			    body = closure_body(f);
-			    if (is_null(cdr(body)))
-			      {
-				if (is_h_optimized(car(body)))
-				  set_optimize_data(code, OP_SAFE_CLOSURE_S_Z);
-				else set_optimize_data(code, OP_SAFE_CLOSURE_S_P);
-			      }
-			    else set_optimize_data(code, OP_SAFE_CLOSURE_S);
-			  }
-			else 
-			  {
-			    set_optimize_data(code, OP_CLOSURE_S);
-			    if ((is_null(cdr(closure_body(f)))) &&
-				(!symbol_has_accessor(car(closure_args(f)))))
-			      set_optimize_data(code, OP_CLOSURE_Sp);
-			  }
+			  set_optimize_data(code, OP_SAFE_CLOSURE_S);
+			else set_optimize_data(code, OP_CLOSURE_S);
 			if (is_global(car(code)))
 			  set_hopping(code);
 			set_ecdr(code, f);
@@ -53962,7 +53834,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      {
 				set_optimize_data(code, OP_CLOSURE_SS);
 				if (!arglist_has_accessed_symbol(closure_args(f)))
-				  set_optimize_data(code, ((is_null(cdr(closure_body(f)))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
+				  set_optimize_data(code, OP_CLOSURE_SSb);
 			      }
 			    if (is_global(car(code)))
 			      set_hopping(code);
@@ -58625,7 +58497,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_safe_closure(cdr(sc->code)))
 	  set_type(x, T_CLOSURE_STAR | T_PROCEDURE | T_SAFE_CLOSURE);
 	else set_type(x, T_CLOSURE_STAR | T_PROCEDURE);
-	if (is_null(cdr(closure_body(x)))) set_one_liner(x);
 	sc->capture_env_counter++;
 	sc->value = x;
 	sc->code = caar(sc->code);
@@ -58650,7 +58521,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	closure_setter(new_func) = sc->F; 
 	closure_arity(new_func) = integer(fcdr(sc->code));
 	set_type(new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
-	if (is_null(cdr(closure_body(new_func)))) set_one_liner(new_func);
 	sc->capture_env_counter++; 
 	
 	if (is_safe_closure(cdr(sc->code)))
@@ -68084,6 +67954,7 @@ s7_scheme *s7_init(void)
   real_one = make_permanent_real(1.0);
   real_NaN = make_permanent_real(NAN);
   real_pi = make_permanent_real(3.1415926535897932384626433832795029L); /* M_PI is not good enough for s7_Double = long double */
+  arity_not_set = make_permanent_integer(CLOSURE_ARITY_NOT_SET);
 
   /* keep the characters out of the heap */
   chars = (s7_pointer *)malloc((NUM_CHARS + 1) * sizeof(s7_pointer));
@@ -69486,15 +69357,15 @@ int main(int argc, char **argv)
 /* -------------------------------------------------------------------------------- */
 
 /*
- * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6
+ *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.8
- * t816          |                                    |  69.5                46.5
- * lg            |                                    |  7757                7760
+ * t816          |                                    |  69.5                45.4
+ * lg            |                                    |  7757                7723
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 36.3
  *            153 with run macro (eval_ptree)
  */
@@ -69505,14 +69376,18 @@ int main(int argc, char **argv)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
  * for-each over sound(etc) -> sampler, similarly member/map
+ * open-output|input-object|function?
  *
  * help info for *-float-vector-* still uses vct
  * float-vector-ref|set! need to be defined here, not in clm2xen
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
- * I think mixer and frame are still separate (generator!) types
+ * mixer and frame are still separate (generator!) types
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
  * need as_needed_input_to_buffer to optimize that process, but how to call from clm.c?
+ * unexpected eof can be from forgotten double-quote -- can we catch this?
+ *   start at last top and look for odd number of dq's?
+ *   look for '" ' at start (missed start) '")' also at start [37458]
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
@@ -69526,6 +69401,8 @@ int main(int argc, char **argv)
  *
  * string->symbol of string proc could skip making the intermediate string, or mark it as a temp (string-append does this?)
  *   (string->symbol (procedure-name|string-append...))
- * s7test for big sequences in reader all cases
+ * make-<gen> in defgenerator uses cons to pass args to the new environment -- surely there's a better way!
+ *   (and it's considered unsafe for some reason -- cons?)
+ * auto-update is a mess (interval used for temp cancel?) -- does ws.scm even need to worry about it? (bg process won't be called anyway!)
  */
 

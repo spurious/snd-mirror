@@ -684,12 +684,15 @@ static Xen g_mus_set_srate(Xen val)
   mus_float_t sr;
   Xen_check_type(Xen_is_number(val), val, 1, S_setB S_mus_srate, "a number");
   sr = Xen_real_to_C_double(val);
-  if (sr <= 0.0) 
-    Xen_out_of_range_error(S_setB S_mus_srate, 1, val, "must be > 0.0");
-  mus_set_srate(sr);
+  if (sr != mus_srate())
+    {
+      if (sr <= 0.0) 
+	Xen_out_of_range_error(S_setB S_mus_srate, 1, val, "must be > 0.0");
+      mus_set_srate(sr);
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, clm_srate_symbol, s7_make_real(s7, sr));
+      s7_symbol_set_value(s7, clm_srate_symbol, s7_make_real(s7, sr));
 #endif
+    }
   return(val);
 }
 
@@ -710,10 +713,13 @@ static Xen g_mus_set_float_equal_fudge_factor(Xen val)
   mus_float_t factor;
   Xen_check_type(Xen_is_number(val), val, 1, S_setB S_mus_float_equal_fudge_factor, "a number");
   factor = Xen_real_to_C_double(val);
-  mus_set_float_equal_fudge_factor(factor);
+  if (factor != mus_float_equal_fudge_factor())
+    {
+      mus_set_float_equal_fudge_factor(factor);
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, mus_float_equal_fudge_factor_symbol, s7_make_real(s7, factor));
+      s7_symbol_set_value(s7, mus_float_equal_fudge_factor_symbol, s7_make_real(s7, factor));
 #endif
+    }
   return(val);
 }
 
@@ -735,12 +741,15 @@ static Xen g_mus_set_array_print_length(Xen val)
   int len;
   Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_mus_array_print_length, "an integer");
   len = Xen_integer_to_C_int(val);
-  if (len < 0)
-    Xen_out_of_range_error(S_setB S_mus_array_print_length, 1, val, "must be >= 0");
-  mus_set_array_print_length(len);
+  if (len != mus_array_print_length())
+    {
+      if (len < 0)
+	Xen_out_of_range_error(S_setB S_mus_array_print_length, 1, val, "must be >= 0");
+      mus_set_array_print_length(len);
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, mus_array_print_length_symbol, s7_make_integer(s7, len));
+      s7_symbol_set_value(s7, mus_array_print_length_symbol, s7_make_integer(s7, len));
 #endif
+    }
   return(val);
 }
 
@@ -8736,59 +8745,53 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 	{
 #if HAVE_SCHEME
 	  mus_float_t result;
-	  /* I think this is not needed by the input function
-	  if (mus_is_xen(gn->vcts[MUS_SELF_WRAPPER]))
-	  */
+	  s7_pointer source, arg, body, res;
+	  source = s7_procedure_source(s7, in_obj);
+	  if (s7_is_pair(source))
 	    {
-	      s7_pointer source, arg, body, res;
-	      source = s7_procedure_source(s7, in_obj);
-	      if (s7_is_pair(source))
+	      body = s7_cddar(source);
+	      if (s7_is_null(s7, s7_cdr(body)))
 		{
-		  body = s7_cddar(source);
-		  if (s7_is_null(s7, s7_cdr(body)))
+		  res = s7_car(body);
+		  if (s7_is_real(res))
 		    {
-		      res = s7_car(body);
-		      if (s7_is_real(res))
-			{
-			  gn->vcts[MUS_INPUT_DATA] = res;
-			  mus_generator_set_feeder(gn->gen, as_needed_input_float);
-			  return(s7_real(res));
-			}
-		      arg = s7_caadar(source);
-		      if (s7_is_pair(res))
-			{
+		      gn->vcts[MUS_INPUT_DATA] = res;
+		      mus_generator_set_feeder(gn->gen, as_needed_input_float);
+		      return(s7_real(res));
+		    }
+		  arg = s7_caadar(source);
+		  if (s7_is_pair(res))
+		    {
 #if USE_SND
-			  if ((arg == s7_caddr(res)) &&
-			      (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
-			    {
-			      gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_cdr(source)));
-			      mus_generator_set_feeder(gn->gen, as_needed_input_sampler_with_direction);
-			      return(read_sample_with_direction((snd_fd *)(gn->vcts[MUS_INPUT_DATA]), direction));
-			    }
+		      if ((arg == s7_caddr(res)) &&
+			  (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
+			{
+			  gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_cdr(source)));
+			  mus_generator_set_feeder(gn->gen, as_needed_input_sampler_with_direction);
+			  return(read_sample_with_direction((snd_fd *)(gn->vcts[MUS_INPUT_DATA]), direction));
+			}
 #endif
-			  if (!s7_tree_memq(s7, arg, res))
+		      if (!s7_tree_memq(s7, arg, res))
+			{
+			  gf *g;
+			  /* here we need to make sure the function's environment is set up correctly */
+			  s7_pointer old_e;
+			  old_e = s7_set_current_environment(s7, s7_cdr(source));
+			  setup_gen_list(s7, res);
+			  g = find_gf(s7, res);
+			  s7_set_current_environment(s7, old_e);
+			  if (g)
 			    {
-			      gf *g;
-			      /* here we need to make sure the function's environment is set up correctly */
-			      s7_pointer old_e;
-			      old_e = s7_set_current_environment(s7, s7_cdr(source));
-			      setup_gen_list(s7, res);
-			      g = find_gf(s7, res);
-			      s7_set_current_environment(s7, old_e);
-			      if (g)
-				{
-				  gn->g = g;
-				  mus_generator_set_feeder(gn->gen, as_needed_input_f1);
-				  clear_gen_list();
-				  return(g->func(g));
-				}
+			      gn->g = g;
+			      mus_generator_set_feeder(gn->gen, as_needed_input_f1);
 			      clear_gen_list();
+			      return(g->func(g));
 			    }
+			  clear_gen_list();
 			}
 		    }
 		}
 	    }
-
 #if USE_SND
 	  /* check for a sampler (snd-edits.c) */
 	  if (is_sampler(in_obj))

@@ -3,11 +3,11 @@
 
 #define WITH_RELATIVE_PANES (USE_MOTIF && (XmVERSION > 1))
 
-#define ASSERT_SOUND(Origin, Snd, Offset) \
+#define Snd_assert_sound(Origin, Snd, Offset) \
   if (!((Xen_is_integer(Snd)) || (xen_is_sound(Snd)) || (Xen_is_false(Snd)) || (!Xen_is_bound(Snd)))) \
     Xen_wrong_type_arg_error(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE);
 
-#define ASSERT_CHANNEL(Origin, Snd, Chn, Offset) \
+#define Snd_assert_channel(Origin, Snd, Chn, Offset) \
   if (!((Xen_is_integer(Snd)) || (xen_is_sound(Snd)) || (Xen_is_false(Snd)) || (!Xen_is_bound(Snd)))) \
     Xen_wrong_type_arg_error(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE); \
   else \
@@ -18,7 +18,7 @@
 #if HAVE_SCHEME
 /* these macros fix up argument order for setter procs in Scheme: (set! (proc a b) c) */
 
-#define WITH_TWO_SETTER_ARGS(name_reversed, name)	   \
+#define with_two_setter_args(name_reversed, name)	   \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)   \
   {                                                        \
     if (Xen_is_null(Xen_cdr(args)))		   \
@@ -26,7 +26,7 @@
     return(name(Xen_cadr(args), Xen_car(args)));	   \
   }
 
-#define WITH_THREE_SETTER_ARGS(name_reversed, name)                      \
+#define with_three_setter_args(name_reversed, name)                      \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)                 \
   {							                 \
     if (Xen_is_null(Xen_cdr(args)))		                 \
@@ -37,7 +37,7 @@
       else return(name(Xen_caddr(args), Xen_car(args), Xen_cadr(args))); \
   }}
 
-#define WITH_FOUR_SETTER_ARGS(name_reversed, name)                                         \
+#define with_four_setter_args(name_reversed, name)                                         \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)                                   \
 {							                                   \
   if (Xen_is_null(Xen_cdr(args)))					                   \
@@ -53,12 +53,12 @@
 
 #else
 
-#define WITH_TWO_SETTER_ARGS(name_reversed, name)
-#define WITH_THREE_SETTER_ARGS(name_reversed, name)
-#define WITH_FOUR_SETTER_ARGS(name_reversed, name)
+#define with_two_setter_args(name_reversed, name)
+#define with_three_setter_args(name_reversed, name)
+#define with_four_setter_args(name_reversed, name)
 #endif
 
-#define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \
+#define Snd_assert_sample_type(Origin, Beg, Offset) \
   Xen_check_type(Xen_is_integer(Beg) || Xen_is_false(Beg) || (!Xen_is_bound(Beg)), Beg, Offset, Origin, "an integer or " PROC_FALSE)
 
 typedef struct {
@@ -419,8 +419,8 @@ typedef struct snd_info {
   bool writing, bomb_in_progress;
 } snd_info;
 
-#define SND_SRATE(Sp) (((Sp)->hdr)->srate)
-#define HAS_WIDGETS(Sp) ((Sp) && ((Sp)->snd_widgets))
+#define snd_srate(Sp) (((Sp)->hdr)->srate)
+#define has_widgets(Sp) ((Sp) && ((Sp)->snd_widgets))
 
 typedef struct snd_state {
   int selected_sound;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
@@ -1373,7 +1373,7 @@ void g_init_dac(void);
 void clear_players(void);
 
 bool xen_is_player(Xen obj);
-#define IS_PLAYER_SOUND(Sp) ((Sp) && ((Sp)->index < 0))
+#define is_player_sound(Sp) ((Sp) && ((Sp)->index < 0))
 snd_info *get_player_sound(Xen player);
 Xen no_such_player_error(const char *caller, Xen player);
 

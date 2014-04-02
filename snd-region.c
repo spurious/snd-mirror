@@ -762,7 +762,7 @@ int define_region(sync_info *si, mus_long_t *ends)
   else regions[0] = r;
 
   r->header_type = (sp0->hdr)->type;
-  r->srate = SND_SRATE(sp0);
+  r->srate = snd_srate(sp0);
   r->maxamp = -1.0;
   r->maxamp_position = -1;
   r->editor_copy = NULL;
@@ -1580,7 +1580,7 @@ insert region data into snd's channel chn starting at start-samp"
   Xen_check_type(xen_is_region(reg_n), reg_n, 1, S_insert_region, "a region id");
   Xen_check_type(Xen_is_integer_or_unbound(samp_n), samp_n, 2, S_insert_region, "an integer");
 
-  ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
+  Snd_assert_channel(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
   if (!cp) return(Xen_false);
 
@@ -1956,7 +1956,7 @@ it returns a list of the new mixes"
   Xen_check_type(xen_is_region(reg_n), reg_n, 1, S_mix_region, "a region");
   Xen_check_type(Xen_is_integer_or_unbound(chn_samp_n), chn_samp_n, 2, S_mix_region, "an integer");
   Xen_check_type(Xen_is_integer_boolean_or_unbound(reg_chn), reg_chn, 5, S_mix_region, "an integer or " PROC_TRUE);
-  ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
+  Snd_assert_channel(S_mix_region, snd_n, chn_n, 3);
 
   rg = Xen_region_to_C_int(reg_n);
   if (!(region_ok(rg)))

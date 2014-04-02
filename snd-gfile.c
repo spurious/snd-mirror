@@ -426,7 +426,7 @@ static void sketch_1(file_dialog_info *fd, bool new_data)
       ap->graph_active = true;
       
       fd->samps = CURRENT_SAMPLES(active_channel);
-      fd->srate = SND_SRATE(active_channel->sound);
+      fd->srate = snd_srate(active_channel->sound);
       
       ap->losamp = 0;
       ap->hisamp = fd->samps - 1;
@@ -1964,7 +1964,7 @@ static bool srates_differ(int srate, file_dialog_info *fd)
   switch (fd->type)
     {
     case SOUND_SAVE_AS:
-      return(SND_SRATE(any_selected_sound()) != srate);
+      return(snd_srate(any_selected_sound()) != srate);
       
     case SELECTION_SAVE_AS:
       return(selection_srate() != srate);
@@ -1982,7 +1982,7 @@ static double srate_ratio(int srate, file_dialog_info *fd)
   switch (fd->type)
     {
     case SOUND_SAVE_AS:
-      return((double)(SND_SRATE(any_selected_sound())) / (double)srate);
+      return((double)(snd_srate(any_selected_sound())) / (double)srate);
       
     case SELECTION_SAVE_AS:
       return((double)selection_srate() / (double)srate);

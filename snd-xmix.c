@@ -426,7 +426,7 @@ static void beg_activated(void)
 	{
 	  mus_long_t pos, old_pos;
 	  old_pos = mix_position_from_id(mix_dialog_id);
-	  pos = (mus_long_t)(beg * SND_SRATE(cp->sound));
+	  pos = (mus_long_t)(beg * snd_srate(cp->sound));
 	  mix_set_position_edit(mix_dialog_id, pos);
 	  syncd_mix_change_position(mix_dialog_id, pos - old_pos);
 	}
@@ -1085,8 +1085,8 @@ void reflect_mix_change(int mix_id)
 	      beg = mix_position_from_id(mix_dialog_id);
 	      len = mix_length_from_id(mix_dialog_id);
 	      snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
-			   (float)((double)beg / (float)SND_SRATE(cp->sound)),
-			   (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)),
+			   (float)((double)beg / (float)snd_srate(cp->sound)),
+			   (float)((double)(beg + len) / (float)snd_srate(cp->sound)),
 			   (mix_is_active(mix_dialog_id)) ? "" : " (locked)");
 	      XmTextSetString(w_beg, lab);
 	      

@@ -1534,7 +1534,7 @@ static Xen g_channel_widgets(Xen snd, Xen chn)
 {
   #define H_channel_widgets "(" S_channel_widgets " :optional snd chn): a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)"
   chan_info *cp;
-  ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
+  Snd_assert_channel(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
   if (!cp) return(Xen_false);
   return(Xen_cons(Xen_wrap_widget(channel_graph(cp)),

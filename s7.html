@@ -5175,19 +5175,17 @@ Here we scan the symbol table looking for any function that doesn't have documen
 </p>
 
 <pre class="indented">
-(let ((st (<em class=red>symbol-table</em>)))
-  (do ((i 0 (+ i 1))) 
-      ((= i (length st)))
-    (let ((lst (st i)))
-      (for-each 
-        (lambda (sym)
+(for-each
+  (lambda (lst)
+    (for-each 
+       (lambda (sym)
           (if (<em class=red>defined?</em> sym)
               (let ((val (<em class=red>symbol-&gt;value</em> sym)))
                 (if (and (procedure? val)
                          (string=? "" (procedure-documentation val)))
-                    (format #t "~A " sym)))))
-        lst)))
-  (newline))
+                    (format *stderr* "~A " sym)))))
+        lst))
+  (<em class=red>symbol-table</em>))
 </pre>
 
 
@@ -5208,12 +5206,10 @@ Here's a better example, an automatic software torture tester.
 	   (autotest func (cons c args) (- args-left 1)))
 	 constants)))
 
-  (let ((st (<em class=red>symbol-table</em>)))
-    (do ((i 0 (+ i 1))) 
-	((= i (length st)))
-      (let ((lst (st i)))
-	(for-each 
-	 (lambda (sym)
+  (for-each
+    (lambda (lst)
+      (for-each 
+	(lambda (sym)
 	   (if (<em class=red>defined?</em> sym)
 	       (let ((val (<em class=red>symbol-&gt;value</em> sym)))
 		 (if (procedure? val)
@@ -5227,7 +5223,8 @@ Here's a better example, an automatic software torture tester.
 			   (begin
 			     (format #t ";whack on ~A...~%" sym)
 			     (autotest val () (+ req opt 1 (if rst 1 0))))))))))
-	 lst)))))
+	 lst))
+    (<em class=red>symbol-table</em>)))
 </pre>
 
 <p>Equally useful, a profiler:
@@ -5245,11 +5242,9 @@ The function takes one argument, the environment in which loads and evals should
     (set! (cdr (calls n)) (+ (cdr (calls n)) 1)))
   
   (define (wrap-all)
-    (let ((st (<em class=red>symbol-table</em>))
-	  (e (environment)))
-      (do ((i 0 (+ i 1))) 
-	  ((= i (length st)))
-	(let ((lst (st i)))
+    (let ((e (environment)))
+      (for-each
+        (lambda (lst)
 	  (for-each 
 	   (lambda (sym)
 	     (if (and (<em class=red>defined?</em> sym)
@@ -5262,7 +5257,8 @@ The function takes one argument, the environment in which loads and evals should
 			 (if (procedure-setter val)
 			     (set! (procedure-setter new-val) (procedure-setter val)))
 			 (augment-environment! e (cons sym new-val)))))))
-	   lst)))
+	   lst))
+        (<em class=red>symbol-table</em>))
       e))
 
   (expression (wrap-all))

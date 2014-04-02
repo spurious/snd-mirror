@@ -616,7 +616,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 		  4,
 		  S_apply_ladspa, "a string");
 
-  ASSERT_CHANNEL(S_apply_ladspa, snd, chn, 5);
+  Snd_assert_channel(S_apply_ladspa, snd, chn, 5);
 
   /* Plugin. */
   pcTmp = Xen_string_to_C_string(Xen_car(ladspa_plugin_configuration));
@@ -707,7 +707,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 
   /* Create initial header for output file */
   hdr = make_temp_header(ofile,
-			 SND_SRATE(sp),
+			 snd_srate(sp),
 			 outchans,
 			 num,
 			 Xen_string_to_C_string(origin));

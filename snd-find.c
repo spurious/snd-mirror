@@ -74,7 +74,7 @@ static mus_long_t channel_find_backward(chan_info *cp)
 	  if (!(ss->stopped_explicitly))
 	    {
 	      char *msg;
-	      msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(cp->sound) * 60)));
+	      msg = mus_format("search at minute %d", (int)floor(i / (snd_srate(cp->sound) * 60)));
 	      find_report(cp, msg);
 	      free(msg);
 	      reported = true;
@@ -110,7 +110,7 @@ static char *channel_search(chan_info *cp, read_direction_t direction)
     return(NULL);
 
   s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
-  s2 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(cp->sound));
+  s2 = x_axis_location_to_string(cp, (double)samp / (double)snd_srate(cp->sound));
   msg = mus_format("%s at %s (%lld)", s1, s2, samp);
   cursor_moveto_without_verbosity(cp, samp);
   free(s1);

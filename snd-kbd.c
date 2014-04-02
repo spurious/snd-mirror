@@ -365,7 +365,7 @@ static void set_window_bounds(chan_info *cp, int count)
   if (ap->x_ambit != 0.0)
     {
       double sx;
-      sx = (((double)count / (double)SND_SRATE(cp->sound)) - ap->xmin) / ap->x_ambit;
+      sx = (((double)count / (double)snd_srate(cp->sound)) - ap->xmin) / ap->x_ambit;
       reset_x_display(cp, sx, ap->zx);
     }
 }
@@ -379,7 +379,7 @@ static void set_window_size(chan_info *cp, int count)
   if (ap->x_ambit != 0.0)
     {
       double zx;
-      zx = ((double)count / (((double)SND_SRATE(cp->sound)) * ap->x_ambit));
+      zx = ((double)count / (((double)snd_srate(cp->sound)) * ap->x_ambit));
       reset_x_display(cp, ap->sx, zx);
     }
 }
@@ -391,7 +391,7 @@ static void set_window_percentage(chan_info *cp, int count)
   axis_info *ap;
   double zx;
   ap = cp->axis;
-  zx = (double)count / (double)SND_SRATE(cp->sound);
+  zx = (double)count / (double)snd_srate(cp->sound);
   reset_x_display(cp, ap->sx, zx);
 }
 
@@ -400,8 +400,8 @@ static void window_frames_selection(chan_info *cp)
 {
   double x0, x1;
   int i;
-  x0 = (((double)(selection_beg(cp))) / ((double)SND_SRATE(cp->sound)));
-  x1 = x0 + ((double)(selection_len())) / ((double)(SND_SRATE(cp->sound)));
+  x0 = (((double)(selection_beg(cp))) / ((double)snd_srate(cp->sound)));
+  x1 = x0 + ((double)(selection_len())) / ((double)(snd_srate(cp->sound)));
   set_x_axis_x0x1(cp, x0, x1);
   for (i = 0; i < ss->max_sounds; i++)
     {
@@ -573,7 +573,7 @@ static mus_long_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen
 	  snd_error("invalid number: %s", number_buffer);
 	  return(0);
 	}
-      return((mus_long_t)(f * SND_SRATE(cp->sound)));
+      return((mus_long_t)(f * snd_srate(cp->sound)));
     }
   if (!(sscanf(number_buffer, "%d", &i)))
     {
@@ -787,7 +787,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    {
 	    case snd_K_A: case snd_K_a: 
 	      cp->cursor_on = true; 
-	      loc = (mus_long_t)(ap->x0 * SND_SRATE(sp)); 
+	      loc = (mus_long_t)(ap->x0 * snd_srate(sp)); 
 	      if ((loc + 1) == ap->losamp) loc = ap->losamp; /* handle dumb rounding problem */
 	      cursor_moveto(cp, loc); 
 	      break;
@@ -815,7 +815,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 	    case snd_K_E: case snd_K_e:
 	      cp->cursor_on = true; 
-	      loc = (mus_long_t)(ap->x1 * (double)SND_SRATE(sp));
+	      loc = (mus_long_t)(ap->x1 * (double)snd_srate(sp));
 	      if ((loc + 1) == ap->hisamp) loc = ap->hisamp;
 	      cursor_moveto(cp, loc); 
 	      break;
@@ -1639,7 +1639,7 @@ static Xen g_key(Xen kbd, Xen buckybits, Xen snd, Xen chn)
 
   Xen_check_type(Xen_is_integer(kbd) || Xen_is_char(kbd) || Xen_is_string(kbd), kbd, 1, S_key, "an integer, character, or string");
   Xen_check_type(Xen_is_integer(buckybits), buckybits, 2, S_key, "an integer");
-  ASSERT_CHANNEL(S_key, snd, chn, 3);
+  Snd_assert_channel(S_key, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_key);
   if (!cp) return(Xen_false);
