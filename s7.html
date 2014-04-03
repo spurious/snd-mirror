@@ -2532,6 +2532,7 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="initialenvironment">initial-environment</em>)           the current environment, but all built-in functions have their original values
 
 (<em class=def id="environment">environment</em> . bindings)        make a new environment with the given bindings
+(<em class=def id="environmentstar">environment*</em> symbol value ...) make a new environment with the given symbols/values
 (<em class=def id="augmentenvironment">augment-environment</em> env . bindings-or-envs)   add bindings to env
 (<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings-or-env)
 
@@ -6658,7 +6659,7 @@ int main(int argc, char **argv)
  *   (load "v.scm")
  *   (with-sound () (fm-violin 0 .1 440 .1))
  *
- * you might also need -lgsl -lgslcblas
+ * you might also need -lgsl -lgslcblas -lfftw3
  */
 </pre></div>
 

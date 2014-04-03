@@ -444,7 +444,7 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
   mp->samp = (mus_long_t)(ungrf_x(ap, nx) * snd_srate(cp->sound));
   if (mp->samp < 0) mp->samp = 0;
 
-  samps = CURRENT_SAMPLES(cp);
+  samps = current_samples(cp);
   if (mp->samp > samps) mp->samp = samps;
 
   if (Xen_hook_has_list(mark_drag_hook))
@@ -784,7 +784,7 @@ static mark *find_nth_mark(chan_info *cp, int count)
   mark *mp = NULL;
   if ((!cp) || (!cp->edits[cp->edit_ctr]->marks)) return(NULL);
   if (count > 0) c = count; else c = -count;
-  samp = CURSOR(cp);
+  samp = cursor_sample(cp);
   for (i = 0; i < c; i++)
     {
       if (count > 0) mp = find_next_mark(samp, cp);
@@ -966,7 +966,7 @@ bool mark_define_region(chan_info *cp, int count)
 	{
 	  mus_long_t beg;
 	  mark *mp;
-	  beg = CURSOR(cp);
+	  beg = cursor_sample(cp);
 	  mp = find_nth_mark(cp, count);
 	  if (mp)
 	    {
@@ -1021,7 +1021,7 @@ void reverse_marks(chan_info *cp, mus_long_t beg, mus_long_t dur) /* beg -1 for 
       mps = ed->marks;
       if (beg == -1)
 	{
-	  m = make_mark_1(CURRENT_SAMPLES(cp) - 1, NULL, 0, 0);
+	  m = make_mark_1(current_samples(cp) - 1, NULL, 0, 0);
 	  map_over_marks(cp, reverse_mark_1, (void *)m, READ_FORWARD);
 	  free_mark(m);
 	}
@@ -1545,7 +1545,7 @@ static bool move_syncd_mark(chan_info *cp, mark *m, int x)
 		    erase_mark(ncp, mp);
 		  mp->samp += diff;
 		  if (mp->samp < 0) mp->samp = 0;
-		  samps = CURRENT_SAMPLES(ncp);
+		  samps = current_samples(ncp);
 		  if (mp->samp > samps) mp->samp = samps;
 		  if (mark_control_clicked)
 		    make_mark_graph(ncp, mark_sd->initial_samples[i], mp->samp, i);
@@ -1932,7 +1932,7 @@ static void show_mark(chan_info *cp, mark *mp, bool show)
 		 2 * mark_tag_width(ss), mark_tag_height(ss));
   draw_line(ax, cx, top + 4, cx, y0);
 
-  if (mp->samp != CURSOR(cp))
+  if (mp->samp != cursor_sample(cp))
     fill_polygon(ax, 4,
 		 cx, y0,
 		 cx + play_arrow_size(ss), y0 + play_arrow_size(ss),
@@ -2178,7 +2178,7 @@ static Xen mark_set(Xen mark_n, Xen val, mark_field_t fld, const char *caller)
     case MARK_SAMPLE: 
       m->samp = mus_oclamp(0, 
 			   (Xen_is_llong(val)) ? Xen_llong_to_C_llong(val) : 0,
-			   CURRENT_SAMPLES(cp[0]));
+			   current_samples(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       run_mark_hook(cp[0], m->id, MARK_MOVE);
       update_graph(cp[0]);
@@ -2343,11 +2343,11 @@ static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool
   if (Xen_is_llong(samp_n)) loc = Xen_llong_to_C_llong(samp_n);
 
   if ((!check_sample) &&
-      (loc >= CURRENT_SAMPLES(cp)))
+      (loc >= current_samples(cp)))
     return(Xen_false);
 
   if ((loc < 0) || 
-      (loc >= CURRENT_SAMPLES(cp)))
+      (loc >= current_samples(cp)))
     Xen_error(NO_SUCH_SAMPLE,
 	      Xen_list_2(C_string_to_Xen_string(S_add_mark ": no such sample, ~A"),
 			 samp_n));

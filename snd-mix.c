@@ -138,7 +138,7 @@ int mix_complete_file_at_cursor(snd_info *sp, const char *filename)
       char *fullname;
       fullname = mus_expand_filename(filename);
       cp = any_selected_channel(sp);
-      err = mix_complete_file(sp, CURSOR(cp), fullname, with_mix_tags(ss), DONT_DELETE_ME, MIX_FOLLOWS_SYNC, NULL);
+      err = mix_complete_file(sp, cursor_sample(cp), fullname, with_mix_tags(ss), DONT_DELETE_ME, MIX_FOLLOWS_SYNC, NULL);
       if (err == MIX_FILE_NO_FILE) 
 	snd_error("can't mix file: %s, %s", filename, snd_io_strerror());
       else
@@ -831,11 +831,11 @@ void goto_mix(chan_info *cp, int count)
 	  else
 	    {
 	      qsort((void *)begs, j, sizeof(mus_long_t), compare_mix_positions);
-	      /* now find where we are via CURSOR(cp) and go forward or back as per count */
+	      /* now find where we are via cursor_sample(cp) and go forward or back as per count */
 	      if (count > 0)
 		{
 		  for (i = 0; i < j; i++)
-		    if (begs[i] > CURSOR(cp))
+		    if (begs[i] > cursor_sample(cp))
 		      {
 			count--;
 			if (count == 0)
@@ -844,13 +844,13 @@ void goto_mix(chan_info *cp, int count)
 			    break;
 			  }
 		      }
-		  if ((count > 0) && (CURSOR(cp) < begs[j - 1]))
+		  if ((count > 0) && (cursor_sample(cp) < begs[j - 1]))
 		    cursor_moveto(cp, begs[j - 1]);
 		}
 	      else
 		{
 		  for (i = j - 1; i >= 0; i--)
-		    if (begs[i] < CURSOR(cp))
+		    if (begs[i] < cursor_sample(cp))
 		      {
 			count++;
 			if (count == 0)
@@ -859,7 +859,7 @@ void goto_mix(chan_info *cp, int count)
 			    break;
 			  }
 		      }
-		  if ((count < 0) && (CURSOR(cp) > begs[0]))
+		  if ((count < 0) && (cursor_sample(cp) > begs[0]))
 		    cursor_moveto(cp, begs[0]);
 		}
 	    }
@@ -2349,7 +2349,7 @@ void finish_moving_mix_tag(int mix_id, int x)
       old_pos = mix_position_from_id(mix_id);
       if (mix_set_position_edit(mix_id, pos))
 	{
-	  CURSOR(cp) = pos;
+	  cursor_sample(cp) = pos;
 	  after_edit(cp);
 	  update_graph(cp); /* this causes flashing, but it's next to impossible to fix
 			     *   display_channel_id assumes previous id was erased, as does any after_graph_hook function

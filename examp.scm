@@ -727,8 +727,7 @@ then inverse ffts."
     (set! val (min 1.0 (max 0.0 (+ val (if up incr (- incr))))))))
 
 (define* (make-ramp (size 128))
-  "(make-ramp (size 128)) returns a ramp generator"
-  (environment (cons 'val 0.0) (cons 'incr (/ 1.0 size)) (cons 'up 1)))
+  (environment* 'val 0.0 'incr (/ 1.0 size) 'up 1))
 
 ;;; (let ((r (make-ramp))) (map-channel (lambda (y) (* y (ramp r (> (random 1.0) 0.5))))))
 

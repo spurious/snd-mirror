@@ -334,12 +334,18 @@
   
   (find-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5))))
 
+(define noddsin-maxes (make-float-vector 100))
 
 (defgenerator (noddsin 
 	       :make-wrapper (lambda (g)
 			       (if (< (g 'n) 1) (set! (g 'n) 1))
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       (set! (g 'norm) (/ 1.0 (find-noddsin-max (g 'n)))) ; these could be precomputed
+			       (if (and (< (g 'n) 100)
+					(> (noddsin-maxes (g 'n)) 0.0))
+				   (set! (g 'norm) (/ 1.0 (noddsin-maxes (g 'n))))
+				   (begin
+				     (set! (noddsin-maxes (g 'n)) (find-noddsin-max (g 'n)))
+				     (set! (g 'norm) (/ 1.0 (noddsin-maxes (g 'n))))))
 			       g))
   (frequency *clm-default-frequency*) (n 1) (angle 0.0) (norm 1.0) fm)
 
@@ -5983,13 +5989,19 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; ---------------- moving-fft ----------------
 
+(define last-moving-fft-window #f)
+
 (defgenerator (moving-fft
 	       :make-wrapper (lambda (g)
 			       (let ((n (g 'n)))
 				 (set! (g 'rl) (make-float-vector n))
 				 (set! (g 'im) (make-float-vector n))
 				 (set! (g 'data) (make-float-vector n))
-				 (set! (g 'window) (make-fft-window hamming-window n))
+				 (set! (g 'window) 
+				       (if (and last-moving-fft-window
+						(= n (length last-moving-fft-window)))
+					   last-moving-fft-window
+					   (set! last-moving-fft-window (make-fft-window hamming-window n))))
 				 (float-vector-scale! (g 'window) (/ 2.0 (* 0.54 n)))
 				 (set! (g 'outctr) (+ n 1)) ; first time fill flag
 				 g))

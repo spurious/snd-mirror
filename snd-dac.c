@@ -667,17 +667,17 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 			    }
 			  else
 			    {
-			      if (samp > CURRENT_SAMPLES(cp))
-				samp = CURRENT_SAMPLES(cp);
+			      if (samp > current_samples(cp))
+				samp = current_samples(cp);
 			    }
-			  CURSOR(cp) = samp - 1;
+			  cursor_sample(cp) = samp - 1;
 			}
-		      cp->original_left_sample = CURSOR(cp) - (cp->original_window_size / 2);
+		      cp->original_left_sample = cursor_sample(cp) - (cp->original_window_size / 2);
 		      if (cp->original_left_sample < 0)
 			cp->original_left_sample = 0;
 		    }
-		  else CURSOR(cp) = cp->original_cursor;
-		  cursor_moveto_with_window(cp, CURSOR(cp), cp->original_left_sample, cp->original_window_size);
+		  else cursor_sample(cp) = cp->original_cursor;
+		  cursor_moveto_with_window(cp, cursor_sample(cp), cp->original_left_sample, cp->original_window_size);
 		  update_graph(cp); 
 		}
 	    }
@@ -1142,7 +1142,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
 	  if ((ss->tracking) && 
 	      (!(is_player_sound(sp))))
 	    {
-	      cp->original_cursor = CURSOR(cp);
+	      cp->original_cursor = cursor_sample(cp);
 	      if (cp->axis)
 		{
 		  cp->original_left_sample = cp->axis->losamp;
@@ -2780,7 +2780,7 @@ static Xen s7_xen_player_length(s7_scheme *sc, Xen player)
   int index;
   index = Xen_player_to_C_int(player);
   cp = players[index]->chans[player_chans[index]];
-  return(C_llong_to_Xen_llong(CURRENT_SAMPLES(cp)));
+  return(C_llong_to_Xen_llong(current_samples(cp)));
 }
 #endif
 

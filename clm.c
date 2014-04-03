@@ -5381,6 +5381,20 @@ mus_any *mus_make_moving_average(int size, mus_float_t *line)
   return(NULL);
 }
 
+mus_any *mus_make_moving_average_with_initial_sum(int size, mus_float_t *line, mus_float_t sum)
+{
+  dly *gen;
+  gen = (dly *)mus_make_delay(size, line, size, MUS_INTERP_NONE);
+  if (gen)
+    {
+      gen->core = &MOVING_AVERAGE_CLASS;
+      gen->xscl = sum;
+      gen->yscl = 1.0 / (mus_float_t)size;
+      return((mus_any *)gen);
+    }
+  return(NULL);
+}
+
 
 /* -------- moving-max -------- */
 
@@ -12768,6 +12782,11 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
   if (chans <= 0)
     {
       mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", chans);
+      return(NULL);
+    }
+  if (isnan(degree))
+    {
+      mus_error(MUS_ARG_OUT_OF_RANGE, "degree: %f", degree);
       return(NULL);
     }
 

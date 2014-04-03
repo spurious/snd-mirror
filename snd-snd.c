@@ -296,7 +296,7 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 
 void start_peak_env_state(chan_info *cp)
 {
-  cp->peak_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
+  cp->peak_env_state = make_env_state(cp, current_samples(cp));
 }
 
 
@@ -517,7 +517,7 @@ idle_func_t get_peak_env(any_pointer_t ptr)
     }
 
   if (!(cp->peak_env_state)) 
-    cp->peak_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
+    cp->peak_env_state = make_env_state(cp, current_samples(cp));
 
   es = cp->peak_env_state;
   if (es)
@@ -602,7 +602,7 @@ bool peak_env_usable(chan_info *cp, mus_float_t samples_per_pixel, mus_long_t hi
 
   if ((start_new) &&
       (!(cp->peak_env_in_progress)) && 
-      (CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
+      (current_samples(cp) > PEAK_ENV_CUTOFF) &&
       (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
     start_peak_env(cp);
   return(false);
@@ -1102,7 +1102,7 @@ void peak_env_insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int po
       if (new_ep) new_ep = free_peak_env(cp, cp->edit_ctr);
 
       old_samps = cp->edits[pos]->samples;
-      cur_samps = CURRENT_SAMPLES(cp);
+      cur_samps = current_samples(cp);
       val = (int)(log((double)(cur_samps)));
       if (val > 20) val = 20;
       val = snd_int_pow2(val);
@@ -1695,13 +1695,13 @@ static bool apply_controls(apply_state *ap)
 	      if (sp->selected_channel != NO_SELECTION) 
 		curchan = sp->selected_channel;
 	      if (apply_dur == 0)
-		apply_dur = CURRENT_SAMPLES(sp->chans[curchan]) - apply_beg;
+		apply_dur = current_samples(sp->chans[curchan]) - apply_beg;
 	      break;
 
 	    case APPLY_TO_SOUND:     
 	      ap->hdr->chans = sp->nchans; 
 	      if (apply_dur == 0)
-		apply_dur = CURRENT_SAMPLES(sp->chans[0]) - apply_beg;
+		apply_dur = current_samples(sp->chans[0]) - apply_beg;
 	      break;
 
 	    case APPLY_TO_SELECTION: 
@@ -2267,7 +2267,7 @@ static Xen s7_xen_sound_fill(s7_scheme *sc, Xen obj, Xen val)
 	  for (i = 0; i < sp->nchans; i++)
 	    {
 	      cp = sp->chans[i];
-	      scale_channel(cp, 0.0, 0, CURRENT_SAMPLES(cp), cp->edit_ctr, false);
+	      scale_channel(cp, 0.0, 0, current_samples(cp), cp->edit_ctr, false);
 	      update_graph(cp);
 	    }
 	}
@@ -2282,9 +2282,9 @@ static Xen s7_xen_sound_fill(s7_scheme *sc, Xen obj, Xen val)
 	  for (i = 0; i < sp->nchans; i++)
 	    {
 	      cp = sp->chans[i];
-	      if ((!data) || (CURRENT_SAMPLES(cp) != len))
+	      if ((!data) || (current_samples(cp) != len))
 		{
-		  len = CURRENT_SAMPLES(cp);
+		  len = current_samples(cp);
 		  if (data) free(data);
 		  data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 		  for (j = 0; j < len; j++)
@@ -2782,7 +2782,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 	      /* reset x axis bounds */
 	      int i;
 	      for (i = 0; i < sp->nchans; i++)
-		set_x_axis_x0x1(sp->chans[i], 0.0, (double)(CURRENT_SAMPLES(sp->chans[i])) / (double)ival);
+		set_x_axis_x0x1(sp->chans[i], 0.0, (double)(current_samples(sp->chans[i])) / (double)ival);
 	    }
 	}
       break;

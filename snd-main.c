@@ -1059,7 +1059,7 @@ void save_sound_state(snd_info *sp, void *ptr)
 	  if (((ap->x0 != 0.0) || (ap->x1 != 0.1)) && (ap->x1 > .0005)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
 	  if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
 	}
-      if (CURSOR(cp) != 0) pcp_sod(fd, S_cursor, CURSOR(cp), chan);
+      if (cursor_sample(cp) != 0) pcp_sod(fd, S_cursor, cursor_sample(cp), chan);
       if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
       if (cp->cursor_style != DEFAULT_CURSOR_STYLE) pcp_ss(fd, S_cursor_style, cursor_style_name(cp->cursor_style), chan);
       if (cp->tracking_cursor_style != DEFAULT_TRACKING_CURSOR_STYLE) pcp_ss(fd, S_tracking_cursor_style, cursor_style_name(cp->tracking_cursor_style), chan);

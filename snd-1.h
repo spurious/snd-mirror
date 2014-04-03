@@ -340,8 +340,8 @@ typedef struct chan_info {
 #endif
 } chan_info;
 
-#define CURRENT_SAMPLES(Cp) (Cp)->edits[(Cp)->edit_ctr]->samples
-#define CURSOR(Cp) (Cp)->edits[(Cp)->edit_ctr]->cursor
+#define current_samples(Cp) (Cp)->edits[(Cp)->edit_ctr]->samples
+#define cursor_sample(Cp) (Cp)->edits[(Cp)->edit_ctr]->cursor
 
 typedef struct snd_info {
   sound_inuse_t inuse;

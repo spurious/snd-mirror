@@ -1123,7 +1123,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 			{
 			  chan_info *ncp;
 			  ncp = sp->chans[i];
-			  CURSOR(ncp) = CURSOR(selected_cp);
+			  cursor_sample(ncp) = cursor_sample(selected_cp);
 			  if (selected_cp->graph_transform_on != ncp->graph_transform_on)
 			    {
 			      ncp->graph_transform_on = selected_cp->graph_transform_on;

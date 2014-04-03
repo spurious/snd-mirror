@@ -491,7 +491,7 @@ void scale_by(chan_info *cp, mus_float_t *ur_scalers, int len, bool over_selecti
       else
 	{
 	  beg = 0;
-	  frames = CURRENT_SAMPLES(ncp);
+	  frames = current_samples(ncp);
 	}
       scale_channel(ncp, ur_scalers[j], beg, frames, ncp->edit_ctr, NOT_IN_AS_ONE_EDIT);
       j++;
@@ -614,7 +614,7 @@ bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *ur_scalers, int len, boo
 	  else
 	    {
 	      beg = 0;
-	      frames = CURRENT_SAMPLES(ncp);
+	      frames = current_samples(ncp);
 #if HAVE_FORTH
 	      origin = mus_format("%.3f 0 " PROC_FALSE " %s", norm, S_normalize_channel);
 #else
@@ -1137,7 +1137,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
       (mus_phase(egen) < 0.0))
     sr->dir = -1;
 
-  full_chan = ((beg == 0) && (dur == cp->edits[sf->edit_ctr]->samples)); /* not CURRENT_SAMPLES here! */
+  full_chan = ((beg == 0) && (dur == cp->edits[sf->edit_ctr]->samples)); /* not current_samples here! */
 
   reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(cp);
@@ -2733,7 +2733,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	    {
 	      as_one_edit(si->cps[i], local_edpos + 1);
 	      if (cp->edits[cp->edit_ctr]->origin) free(cp->edits[cp->edit_ctr]->origin);
-	      cp->edits[cp->edit_ctr]->origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
+	      cp->edits[cp->edit_ctr]->origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, current_samples(si->cps[i]), base);
 	      after_edit(cp);
 	      update_graph(si->cps[i]);
 	      reflect_edit_history_change(si->cps[i]);
@@ -2918,7 +2918,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	    {
 	      int pos;
 	      pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
-	      new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
+	      new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, current_samples(si->cps[i]), base);
 	      if (temp_file)
 		{
 		  file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
@@ -3054,7 +3054,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	      si->cps[i]->edits[si->cps[i]->edit_ctr]->origin = edit_list_envelope(egen, 
 										   si->begs[i], (len > 1) ? (passes[len - 2]) : dur, 
 										   dur, 
-										   CURRENT_SAMPLES(si->cps[i]), 
+										   current_samples(si->cps[i]), 
 										   base);
 	      after_edit(cp);
 	      update_graph(si->cps[i]);
@@ -3073,11 +3073,11 @@ void cursor_delete(chan_info *cp, mus_long_t count)
   snd_info *sp;
   if (count == 0) return;
   if (count > 0)
-    beg = CURSOR(cp);
+    beg = cursor_sample(cp);
   else
     {
       count = -count;
-      beg = CURSOR(cp) - count;
+      beg = cursor_sample(cp) - count;
       if (beg < 0)
 	{
 	  count += beg;
@@ -3097,7 +3097,7 @@ void cursor_delete(chan_info *cp, mus_long_t count)
 	{
 	  if (delete_samples(beg, count, cps[i], cps[i]->edit_ctr))
 	    {
-	      CURSOR(cps[i]) = beg;
+	      cursor_sample(cps[i]) = beg;
 	      update_graph(si->cps[i]);
 	    }
 	}
@@ -3107,7 +3107,7 @@ void cursor_delete(chan_info *cp, mus_long_t count)
     {
       if (delete_samples(beg, count, cp, cp->edit_ctr))
 	{
-	  CURSOR(cp) = beg;
+	  cursor_sample(cp) = beg;
 	  update_graph(cp);
 	}
     }
@@ -3135,7 +3135,7 @@ void cursor_insert(chan_info *cp, mus_long_t beg, mus_long_t count)
 	{
 	  if ((count > 0) &&
 	      (extend_with_zeros(cps[i], 
-				 mus_oclamp(0, beg, CURRENT_SAMPLES(si->cps[i])), 
+				 mus_oclamp(0, beg, current_samples(si->cps[i])), 
 				 count, 
 				 cps[i]->edit_ctr,
 				 "cursor insert")))
@@ -3147,7 +3147,7 @@ void cursor_insert(chan_info *cp, mus_long_t beg, mus_long_t count)
     {
       if ((count > 0) &&
 	  (extend_with_zeros(cp, 
-			     mus_oclamp(0, beg, CURRENT_SAMPLES(cp)), 
+			     mus_oclamp(0, beg, current_samples(cp)), 
 			     count, 
 			     cp->edit_ctr,
 			     "cursor insert")))
@@ -3172,7 +3172,7 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
     {
       si = snd_sync(sp->sync);
       for (i = 0; i < si->chans; i++) 
-	si->begs[i] = CURSOR(cp);
+	si->begs[i] = cursor_sample(cp);
     }
   else
     {
@@ -3183,14 +3183,14 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
 	}
     }
 
-  if (!si) si = make_simple_sync(cp, CURSOR(cp));
+  if (!si) si = make_simple_sync(cp, cursor_sample(cp));
 
   for (i = 0; i < si->chans; i++)
     {
       /* if zeroing entire sound, set scalers and remake peak_env */
       ncp = si->cps[i];
       if ((si->begs[i] == 0) && 
-	  (num >= CURRENT_SAMPLES(ncp)))
+	  (num >= current_samples(ncp)))
 	{
 	  mus_float_t scaler[1];
 	  snd_info *nsp;
@@ -3212,7 +3212,7 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
 	  /* special case 1 sample -- if already 0, treat as no-op */
 
 	  if ((count != 1) || 
-	      (beg >= CURRENT_SAMPLES(ncp)) || 
+	      (beg >= current_samples(ncp)) || 
 	      (chn_sample(beg, ncp, ncp->edit_ctr) != 0.0))
 	    scale_channel(ncp, 0.0, beg, num, ncp->edit_ctr, NOT_IN_AS_ONE_EDIT);
 	}

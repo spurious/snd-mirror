@@ -723,13 +723,13 @@ static io_error_t paste_region_2(int n, chan_info *cp, bool add, mus_long_t beg)
 
 io_error_t paste_region(int n, chan_info *cp) 
 {
-  return(paste_region_2(n, cp, false, CURSOR(cp)));
+  return(paste_region_2(n, cp, false, cursor_sample(cp)));
 }
 
 
 io_error_t add_region(int n, chan_info *cp) 
 {
-  return(paste_region_2(n, cp, true, CURSOR(cp)));
+  return(paste_region_2(n, cp, true, cursor_sample(cp)));
 }
 
 
@@ -1234,7 +1234,7 @@ void save_region_backpointer(snd_info *sp)
   r->use_temp_file = REGION_FILE;
   r->maxamp = 0.0;
   r->maxamp_position = -1;
-  r->frames = CURRENT_SAMPLES(sp->chans[0]);
+  r->frames = current_samples(sp->chans[0]);
 
   for (i = 0; i < sp->nchans; i++)
     {
@@ -1835,8 +1835,8 @@ selection is used."
       ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
       for (i = 0; i < si->chans; i++)
 	{
-	  if (CURRENT_SAMPLES(si->cps[i]) - 1 < iend)
-	    ends[i] = CURRENT_SAMPLES(si->cps[i]) - 1;
+	  if (current_samples(si->cps[i]) - 1 < iend)
+	    ends[i] = current_samples(si->cps[i]) - 1;
 	  else ends[i] = iend;
 	  si->begs[i] = ibeg;
 	  if (ends[i] < ibeg) 
@@ -1967,7 +1967,7 @@ it returns a list of the new mixes"
 
   if (Xen_is_bound(chn_samp_n))
     samp = beg_to_sample(chn_samp_n, S_mix_region);
-  else samp = CURSOR(cp);
+  else samp = cursor_sample(cp);
 
   if (Xen_is_integer(reg_chn))
     reg_chan = Xen_integer_to_C_int(reg_chn);

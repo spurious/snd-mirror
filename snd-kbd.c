@@ -353,7 +353,7 @@ static void call_keymap(int hashedsym, int count)
 
 static void cursor_moveto_end(chan_info *cp)
 {
-  cursor_moveto(cp, CURRENT_SAMPLES(cp) - 1);
+  cursor_moveto(cp, current_samples(cp) - 1);
 }
 
 
@@ -589,11 +589,11 @@ static mus_long_t get_count(char *number_buffer, int number_ctr, bool dot_seen, 
   mus_long_t val, old_cursor;
   val = get_count_1(number_buffer, number_ctr, dot_seen, cp);
   if (!mark_wise) return(val);
-  old_cursor = CURSOR(cp);
+  old_cursor = cursor_sample(cp);
   if (!(goto_mark(cp, val)))
     set_status(cp->sound, "no such mark", false);
-  val = CURSOR(cp) - old_cursor; /* will be 0 if no relevant marks */
-  CURSOR(cp) = old_cursor;
+  val = cursor_sample(cp) - old_cursor; /* will be 0 if no relevant marks */
+  cursor_sample(cp) = old_cursor;
   return(val);
 }
 
@@ -873,13 +873,13 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  {
 		    cp->cursor_on = true;
 		    set_show_marks(true);
-		    mk = add_mark(CURSOR(cp), NULL, cp);
+		    mk = add_mark(cursor_sample(cp), NULL, cp);
 		    display_channel_marks(cp);
 		  }
 		else 
 		  {
-		    if (!(delete_mark_samp(CURSOR(cp), cp)))
-		      status_report(cp->sound, "no mark at sample %lld", CURSOR(cp));
+		    if (!(delete_mark_samp(cursor_sample(cp), cp)))
+		      status_report(cp->sound, "no mark at sample %lld", cursor_sample(cp));
 		  }
 		if ((keysym == snd_K_M) && 
 		    (cp->sound->sync != 0))
@@ -894,7 +894,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 			{
 			  if (count > 0)
 			    {
-			      mk = add_mark(CURSOR(cp), NULL, si->cps[i]);
+			      mk = add_mark(cursor_sample(cp), NULL, si->cps[i]);
 			      if (mk)
 				{
 				  set_mark_sync(mk, sync_num);
@@ -903,8 +903,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 			    }
 			  else 
 			    {
-			      if (!(delete_mark_samp(CURSOR(cp), si->cps[i])))
-				status_report(cp->sound, "no mark at sample %lld", CURSOR(cp));
+			      if (!(delete_mark_samp(cursor_sample(cp), si->cps[i])))
+				status_report(cp->sound, "no mark at sample %lld", cursor_sample(cp));
 			    }
 			}
 		    si = free_sync_info(si);
@@ -919,7 +919,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 	    case snd_K_O: case snd_K_o: 
 	      cp->cursor_on = true; 
-	      cursor_insert(cp, CURSOR(cp), count); 
+	      cursor_insert(cp, cursor_sample(cp), count); 
 	      break;
 
 	    case snd_K_P: case snd_K_p: 
@@ -928,7 +928,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_K_Q: case snd_K_q: 
-	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED);
+	      play_channel(cp, cursor_sample(cp), NO_END_SPECIFIED);
 	      break;
 
 #if HAVE_EXTENSION_LANGUAGE && (!USE_NO_GUI)
@@ -1026,8 +1026,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_space: 
 	      if (count > 0)
 		{
-		  start_selection_creation(cp, CURSOR(cp));
-		  status_report(sp, "selection starts at %lld", CURSOR(cp));
+		  start_selection_creation(cp, cursor_sample(cp));
+		  status_report(sp, "selection starts at %lld", cursor_sample(cp));
 		}
 	      break;
 
@@ -1137,7 +1137,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = true; 
-	      cos_smooth(cp, CURSOR(cp), ext_count, OVER_SOUND); 
+	      cos_smooth(cp, cursor_sample(cp), ext_count, OVER_SOUND); 
 	      break;
 
 	    case snd_K_Right: 
@@ -1235,7 +1235,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_space: 
 	      if (play_in_progress())
 		toggle_dac_pausing(); 
-	      else play_sound(sp, CURSOR(cp), NO_END_SPECIFIED); /* was deactivate_selection */
+	      else play_sound(sp, cursor_sample(cp), NO_END_SPECIFIED); /* was deactivate_selection */
 	      break;
 
 	    case snd_keypad_Add:
@@ -1430,7 +1430,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 		case snd_K_Z: case snd_K_z: 
 		  if (selection_is_active_in_channel(cp))
-		    cos_smooth(cp, CURSOR(cp), (!got_ext_count) ? 1 : ext_count, OVER_SELECTION); 
+		    cos_smooth(cp, cursor_sample(cp), (!got_ext_count) ? 1 : ext_count, OVER_SELECTION); 
 		  else set_status(sp, "no active selection", false);
 		  break;
 

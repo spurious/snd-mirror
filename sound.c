@@ -577,7 +577,7 @@ void mus_sound_report_cache(FILE *fp)
   int i, j, sound_table_size;
   sound_file **sound_table;
 
-  fprintf(fp, "sound table:\n");
+  fprintf(fp, "sound table:");
   for (j = 0; j < NUM_SOUND_TABLES; j++)
     {
       sound_table = sound_tables[j];
@@ -588,12 +588,15 @@ void mus_sound_report_cache(FILE *fp)
 	  sf = sound_table[i];
 	  if (sf) 
 	    {
+	      if (entries == 0) fprintf(fp, "\n");
 	      display_sound_file_entry(fp, sf->file_name, sf);
 	      entries++;
 	    }
 	}
     }
-  fprintf(fp, "\nentries: %d\n", entries); 
+  if (entries > 0)
+    fprintf(fp, "\nentries: %d\n", entries); 
+  else fprintf(fp, " empty");
   fflush(fp);
 }
 

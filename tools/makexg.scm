@@ -1441,7 +1441,7 @@
 (hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *     6-Mar:     changed most macros.~%")
-(hey " *     21-Feb_14: changed _p to _is_.~%")
+(hey " *     21-Feb-14: changed _p to _is_.~%")
 (hey " *     --------~%")
 (hey " *     3-Sep:     use symbol directly in type checks, not the symbol name.~%")
 (hey " *     18-Aug:    changed the gtk version macros to reflect the version number.~%")

@@ -1834,7 +1834,7 @@ snd_info *snd_update(snd_info *sp)
       chan_info *ncp;
       int k;
       ncp = sp->chans[i];
-      old_cursors[i] = CURSOR(ncp);
+      old_cursors[i] = cursor_sample(ncp);
       for (k = 0; k < ncp->edit_size; k++)
 	{
 	  ed_list *ed;
@@ -1893,7 +1893,7 @@ snd_info *snd_update(snd_info *sp)
       sound_restore_marks(nsp, ms);
 
       for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) 
-	CURSOR(nsp->chans[i]) = old_cursors[i];
+	cursor_sample(nsp->chans[i]) = old_cursors[i];
 
       if ((nsp->nchans > 1) && 
 	  (old_channel_style != CHANNELS_SEPARATE)) /* we set it to separate before the update */
@@ -2878,8 +2878,8 @@ void display_info(snd_info *sp)
 		   "srate: %d\nchans: %d\nlength: %.3f (%lld %s)\n%s\n",
 		   snd_srate(sp),
 		   sp->nchans,
-		   (double)(CURRENT_SAMPLES(sp->chans[0])) / (double)snd_srate(sp),
-		   CURRENT_SAMPLES(sp->chans[0]),
+		   (double)(current_samples(sp->chans[0])) / (double)snd_srate(sp),
+		   current_samples(sp->chans[0]),
 		   (sp->nchans == 1) ? "samples" : "frames",
 		   ampstr = display_sound_maxamps(sp));
       post_it(sp->short_filename, buffer);

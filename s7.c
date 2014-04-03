@@ -644,13 +644,13 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
 
 typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
 
-enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
-      OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, 
+enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, 
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
       OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ, 
       OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC, 
       OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS, OP_SAFE_C_SSC, HOP_SAFE_C_SSC, OP_SAFE_C_CSS, HOP_SAFE_C_CSS,
-      OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, OP_SAFE_C_SSA, HOP_SAFE_C_SSA, OP_SAFE_C_CSA, HOP_SAFE_C_CSA,
+      OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, OP_SAFE_C_SSA, HOP_SAFE_C_SSA, 
+      OP_SAFE_C_CSA, HOP_SAFE_C_CSA, OP_SAFE_C_SCA, HOP_SAFE_C_SCA,
       OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA, 
       OP_SAFE_C_AZ, HOP_SAFE_C_AZ, OP_SAFE_C_ZA, HOP_SAFE_C_ZA, OP_SAFE_C_SQS, HOP_SAFE_C_SQS, 
 
@@ -753,14 +753,13 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
 
 /* also for debugging */
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
-  {  
-      "not_an_op", "h_not_an_op",
-      "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", 
+  {   "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", 
       "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
       "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq", 
       "safe_c_cq", "h_safe_c_cq", "safe_c_qc", "h_safe_c_qc", 
       "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs", "safe_c_ssc", "h_safe_c_ssc", "safe_c_css", "h_safe_c_css",
-      "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", "safe_c_csa", "h_safe_c_csa",
+      "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", 
+      "safe_c_csa", "h_safe_c_csa", "safe_c_sca", "h_safe_c_sca",
       "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa", 
       "safe_c_az", "h_safe_c_az", "safe_c_za", "h_safe_c_za", "safe_c_sqs", "h_safe_c_sqs",
       
@@ -1279,7 +1278,7 @@ struct s7_scheme {
   s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, IS_CHAR_ALPHABETIC, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
   s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, IS_CHAR_LOWER_CASE, IS_CHAR_NUMERIC, IS_CHAR_READY, CHAR_UPCASE, IS_CHAR_UPPER_CASE;
   s7_pointer IS_CHAR_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, IS_COMPLEX, CONS, IS_CONSTANT, IS_CONTINUATION, COPY, COS, COSH, C_POINTER, C_POINTERP;
-  s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_ENVIRONMENT, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_TO_LIST;
+  s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_ENVIRONMENT, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_STAR, ENVIRONMENT_TO_LIST;
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
@@ -5506,7 +5505,7 @@ static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e
   if (new_e != sc->global_env)
     {
       for (x = environment_slots(old_e); is_slot(x); x = next_slot(x))
-	s7_make_slot(sc, new_e, slot_symbol(x), slot_value(x));
+	ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
     }
   else
     {
@@ -5739,6 +5738,37 @@ new environment."
 	  }
       }
   return(s7_augment_environment(sc, sc->global_env, args));
+}
+
+
+static s7_pointer g_environment_star(s7_scheme *sc, s7_pointer args)
+{
+  #define H_environment_star "(environment* ...) adds its arguments to a new environment, and returns the \
+new environment.  The arguments should be in the order symbol its-value."
+
+  s7_pointer new_e, new_s, p, q;
+  int gc_loc;
+
+  new_e = new_frame_in_env(sc, sc->NIL);
+  gc_loc = s7_gc_protect(sc, new_e);
+  for (p = args; is_not_null(p); p = cdr(q))
+    {
+      q = cdr(p);
+      if (!is_pair(q))
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_protected_string(sc, "environment* symbol ~S has no value"), car(p))));
+
+      new_s = car(p);
+      if (!is_symbol(new_s))
+	{
+	  s7_gc_unprotect_at(sc, gc_loc);
+	  return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_STAR, new_s, A_SYMBOL));
+	}
+
+      ADD_SLOT(new_e, new_s, car(q));         /* new_frame_in_env checks the gc triggers so this should be somewhat safe */
+    }
+  s7_gc_unprotect_at(sc, gc_loc);
+
+  return(new_e);
 }
 
 
@@ -21407,20 +21437,6 @@ static int file_read_white_space(s7_scheme *sc, s7_pointer port)
   return(c);
 }
 
-static int string_read_white_space(s7_scheme *sc, s7_pointer pt)
-{
-  /* is this ever called? */
-  unsigned char *str;
-  unsigned char c1;
-  if (port_data_size(pt) <= port_position(pt)) return(EOF);
-  str = (unsigned char *)(port_data(pt) + port_position(pt));
-  while (white_space[c1 = *str++]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
-    if (c1 == '\n')
-      port_line_number(pt)++;
-  port_position(pt) = str - port_data(pt);
-  return((int)c1);
-}
-
 
 static int terminated_string_read_white_space(s7_scheme *sc, s7_pointer pt)
 {
@@ -22051,10 +22067,11 @@ static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int
   port_read_line(x) = string_read_line;
   port_display(x) = input_display;
   port_read_semicolon(x) = string_read_semicolon;
+#if DEBUGGING
   if (input_string[len] == '\0')
-    port_read_white_space(x) = terminated_string_read_white_space;
-  else port_read_white_space(x) = string_read_white_space;
-  /* input_string[len] is apparently normally 0, but does it belong to the string? */
+    fprintf(stderr, "read_white_space string is not terminated!");
+#endif
+  port_read_white_space(x) = terminated_string_read_white_space;
   port_read_name(x) = string_read_name_no_free;
   port_read_sharp(x) = string_read_sharp_no_free;
   port_write_character(x) = input_write_char;
@@ -24532,9 +24549,9 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
     {
       /* circles can happen here: 
        *    (let () (let ((b (current-environment))) (current-environment)))
-       *    #<environment #<slot: b #<environment>>>
+       *    #<environment 'b #<environment>>
        * or (let ((b #f)) (set! b (current-environment)) (current-environment))
-       *    #1=#<environment #<slot: b #1#>>
+       *    #1=#<environment 'b #1#>
        */
       s7_pointer x;
       
@@ -25076,11 +25093,10 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       if (use_write == USE_READABLE_WRITE)
 	write_readably_error(sc, "an internal slot");
 
-      port_write_string(port)(sc, "#<slot: ", 8, port);
+      port_write_character(port)(sc, '\'', port);
       port_write_string(port)(sc, symbol_name(slot_symbol(obj)), symbol_name_length(slot_symbol(obj)), port);
       port_write_character(port)(sc, ' ', port);
       object_to_port_with_circle_check(sc, slot_value(obj), port, use_write, to_file, ci);
-      port_write_character(port)(sc, '>', port);
       break;
 
     default:
@@ -37605,6 +37621,11 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
 }
 
 
+static s7_pointer apply_list_error(s7_scheme *sc, s7_pointer lst)
+{
+  return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_protected_string(sc, "apply's last argument should be a proper list: ~S"), lst)));
+}
+
 static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
@@ -37629,10 +37650,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 	  /* the last arg is supposed to be a list, it will be spliced onto the end of the previous arg list (if any) below */
 
 	  if (!is_proper_list(sc, car(p)))        /* (apply + #f) etc */
-	    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			    list_2(sc, 
-				   make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
-				   args)));
+	    return(apply_list_error(sc, args));
 	  cdr(q) = car(p);   
 	  /* this would work: if (is_c_function(sc->code)) return(c_function_call(sc->code)(sc, cdr(args)));
 	   *   but it omits the arg number check 
@@ -37648,10 +37666,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 	  else sc->args = apply_list_star(sc, cdr(args));
 
 	  if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
-	    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			    list_2(sc, 
-				   make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
-				   args)));
+	    return(apply_list_error(sc, args));
 	}
     }
 
@@ -38889,10 +38904,7 @@ static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
   else x = apply_list_star(sc, args);
 
   if (!is_proper_list(sc, x))
-    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-		    list_2(sc, 
-			   make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
-			   args)));
+    return(apply_list_error(sc, args));
   if (is_null(x))
     {
       sc->no_values++;
@@ -43064,6 +43076,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  return(OP_SAFE_C_S_opAAq);
 
 	case OP_SAFE_C_CSA:
+	case OP_SAFE_C_SCA:
 	case OP_SAFE_C_SSA:
 	case OP_SAFE_C_AAA:
 	  return(OP_SAFE_C_S_opAAAq);
@@ -44329,9 +44342,12 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 
 	      if ((pairs == 1) &&
 		  (symbols == 1) &&
-		  (is_symbol(caddar_x)) &&
-		  (!is_pair(cadar_x)))
-		set_optimize_data(car_x, hop + OP_SAFE_C_CSA);
+		  (is_pair(cadddar_x)))
+		{
+		  if (is_symbol(caddar_x))
+		    set_optimize_data(car_x, hop + OP_SAFE_C_CSA);
+		  else set_optimize_data(car_x, hop + OP_SAFE_C_SCA);
+		}
 	      else
 		{
 		  if ((is_symbol(cadar_x)) &&
@@ -52199,10 +52215,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  switch (optimize_op(code))
 	    {
-	    case OP_NOT_AN_OP:
-	    case HOP_NOT_AN_OP:
-	      break;
-	      
 	    case OP_THUNK:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 0))
 		{
@@ -55709,6 +55721,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 
 
+	    case OP_SAFE_C_SCA:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_SAFE_C_SCA:
+	      {
+		s7_pointer arg;
+		arg = cdr(code);
+		car(sc->A3_1) = find_symbol_checked(sc, car(arg));
+		arg = cdr(arg);
+		car(sc->A3_2) = car(arg);
+		arg = cdr(arg);
+		car(sc->A3_3) = ((s7_function)fcdr(arg))(sc, car(arg));
+		sc->value = c_call(code)(sc, sc->A3_1);
+		goto START;
+	      }
+
+
 	    case OP_SAFE_C_AAAA:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -56994,10 +57024,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = find_symbol_checked(sc, cadr(code)); /* global search here was slower */
 	      sc->args = find_symbol_checked(sc, fcdr(code));
 	      if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
-		return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				list_2(sc, 
-				       make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
-				       sc->args)));
+		return(apply_list_error(sc, sc->args));
 	      if (needs_copied_args(sc->code))
 		{
 		  if (!is_null(sc->args))
@@ -68339,7 +68366,8 @@ s7_scheme *s7_init(void)
   sc->AUGMENT_ENVIRONMENT =   s7_define_function(sc,      "augment-environment",     g_augment_environment,    1, 0, true,  H_augment_environment);
   sc->AUGMENT_ENVIRONMENTB =  s7_define_function(sc,      "augment-environment!",    g_augment_environment_direct, 1, 0, true, H_augment_environment_direct);
   sc->ENVIRONMENT =           s7_define_safe_function(sc, "environment",             g_environment,            0, 0, true,  H_environment);
-  sc->IS_ENVIRONMENT =          s7_define_safe_function(sc, "environment?",            g_is_environment,         1, 0, false, H_is_environment);
+  sc->ENVIRONMENT_STAR =      s7_define_safe_function(sc, "environment*",            g_environment_star,       0, 0, true,  H_environment_star);
+  sc->IS_ENVIRONMENT =        s7_define_safe_function(sc, "environment?",            g_is_environment,         1, 0, false, H_is_environment);
   sc->ENVIRONMENT_TO_LIST =   s7_define_safe_function(sc, "environment->list",       g_environment_to_list,    1, 0, false, H_environment_to_list);
                               s7_define_safe_function(sc, "error-environment",       g_error_environment,      0, 0, false, H_error_environment);
   sc->OPEN_ENVIRONMENT =      s7_define_safe_function(sc, "open-environment",        g_open_environment,       1, 0, false, H_open_environment);
@@ -69364,7 +69392,7 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.8
- * t816          |                                    |  69.5                45.4
+ * t816          |                                    |  69.5                44.9
  * lg            |                                    |  7757                7723
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 36.3
  *            153 with run macro (eval_ptree)
@@ -69401,8 +69429,6 @@ int main(int argc, char **argv)
  *
  * string->symbol of string proc could skip making the intermediate string, or mark it as a temp (string-append does this?)
  *   (string->symbol (procedure-name|string-append...))
- * make-<gen> in defgenerator uses cons to pass args to the new environment -- surely there's a better way!
- *   (and it's considered unsafe for some reason -- cons?)
  * auto-update is a mess (interval used for temp cancel?) -- does ws.scm even need to worry about it? (bg process won't be called anyway!)
  */
 

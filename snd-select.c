@@ -126,7 +126,7 @@ static void cp_set_selection_beg(chan_info *cp, mus_long_t beg)
   mus_long_t len;
 
   ed = cp->edits[cp->edit_ctr];
-  len = CURRENT_SAMPLES(cp);
+  len = current_samples(cp);
   if (beg < len)
     ed->selection_beg = beg;
   else ed->selection_beg = len - 1;
@@ -164,7 +164,7 @@ static void cp_set_selection_len(chan_info *cp, mus_long_t len)
   ed_list *ed;
   mus_long_t cplen;
   ed = cp->edits[cp->edit_ctr];
-  cplen = CURRENT_SAMPLES(cp);
+  cplen = current_samples(cp);
   ed->selection_end = ed->selection_beg + len - 1;
   if (ed->selection_end >= cplen) ed->selection_end = cplen - 1;
   ed->selection_maxamp = -1.0;
@@ -291,7 +291,7 @@ void reactivate_selection(chan_info *cp, mus_long_t beg, mus_long_t end)
   mus_long_t len;
 
   ed = cp->edits[cp->edit_ctr];
-  len = CURRENT_SAMPLES(cp) - 1;
+  len = current_samples(cp) - 1;
   if (beg < 0) beg = 0;
   if (end < 0) end = 0;
   if (beg > len) beg = len;
@@ -410,7 +410,7 @@ void add_selection_or_region(int reg, chan_info *cp)
 	    {
 	      sync_info *si_out;
 	      si_out = sync_to_chan(cp);
-	      mix_selection(cp, si_out, CURSOR(cp), &io_err, 0);
+	      mix_selection(cp, si_out, cursor_sample(cp), &io_err, 0);
 	      free_sync_info(si_out);
 	    }
 	  else io_err = add_region(reg, cp);
@@ -481,7 +481,7 @@ static void insert_selection_or_region(int reg, chan_info *cp)
 	{
 	  sync_info *si_out;
 	  si_out = sync_to_chan(cp);
-	  err = insert_selection(cp, si_out, CURSOR(cp));
+	  err = insert_selection(cp, si_out, cursor_sample(cp));
 	  free_sync_info(si_out);
 	}
       else err = paste_region(reg, cp);
@@ -665,8 +665,8 @@ void update_possible_selection_in_progress(mus_long_t samp)
 	  ed = cp->edits[cp->edit_ctr];
 	  ed->selection_maxamp = -1.0;
 	  ed->selection_maxamp_position = -1;
-	  if (samp > CURRENT_SAMPLES(cp))
-	    new_end = CURRENT_SAMPLES(cp);
+	  if (samp > current_samples(cp))
+	    new_end = current_samples(cp);
 	  else new_end = samp;
 
 	  if (new_end < original_beg)
@@ -721,9 +721,9 @@ int select_all(chan_info *cp)
       si = sync_to_chan(cp);
       for (i = 0; i < si->chans; i++)
 	{
-	  if (CURRENT_SAMPLES(si->cps[i]) > 0)
+	  if (current_samples(si->cps[i]) > 0)
 	    {
-	      reactivate_selection(si->cps[i], 0, CURRENT_SAMPLES(si->cps[i]));
+	      reactivate_selection(si->cps[i], 0, current_samples(si->cps[i]));
 	      update_graph(si->cps[i]);
 	    }
 	}

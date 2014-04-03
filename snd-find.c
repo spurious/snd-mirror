@@ -32,8 +32,8 @@ static mus_long_t channel_find_forward(chan_info *cp)
 {
   mus_long_t i, end, start;
 
-  end = CURRENT_SAMPLES(cp);
-  start = CURSOR(cp) + 1;
+  end = current_samples(cp);
+  start = cursor_sample(cp) + 1;
   if (start >= end)
     start = 0;
   i = scan_channel(cp, start, end, ss->search_proc);
@@ -51,9 +51,9 @@ static mus_long_t channel_find_backward(chan_info *cp)
   snd_fd *sf = NULL;
   Xen res = Xen_false;
 
-  start = CURSOR(cp) - 1;
+  start = cursor_sample(cp) - 1;
   if (start < 0)
-    start = CURRENT_SAMPLES(cp) - 1;
+    start = current_samples(cp) - 1;
 
   sf = init_sample_read(start, cp, READ_BACKWARD);
   if (!sf)

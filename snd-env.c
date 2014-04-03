@@ -1152,7 +1152,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
       else
 	{
 	  /* show current channel overall view in gray scale */
-	  samps = CURRENT_SAMPLES(active_channel);
+	  samps = current_samples(active_channel);
 	  srate = snd_srate(active_channel->sound);
 	  gray_ap->losamp = 0;
 	  gray_ap->hisamp = samps - 1;

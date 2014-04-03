@@ -521,7 +521,7 @@ static void sync_button_click(GtkWidget *w, gpointer data)
       cp = sp->lacp;
       if (cp == NULL) cp = any_selected_channel(sp);
       goto_graph(cp);
-      if (cp->cursor_on) sync_cursors(cp, CURSOR(cp));
+      if (cp->cursor_on) sync_cursors(cp, cursor_sample(cp));
       apply_x_axis_change(cp);
     }
 }

@@ -4671,13 +4671,24 @@
     (mus-sound-forget "test.aif")
 
     (let ((files (sound-files-in-directory cwd)))
+      (define (difference a b)
+	(let ((diffs ()))
+	  (for-each
+	   (lambda (f)
+	     (if (not (member f b)) (set! diffs (cons f diffs))))
+	   a)
+	  (for-each
+	   (lambda (f)
+	     (if (not (member f a)) (set! diffs (cons f diffs))))
+	   b)
+	  diffs))
       (if (null? files) (snd-display #__line__ ";no sound files in ~A?" cwd))
       (let ((files1 (sound-files-in-directory)))
-	(if (not (equal? files files1)) (snd-display #__line__ ";different sound files in ~A and default?" cwd))
+	(if (not (equal? files files1)) (snd-display #__line__ ";different sound files in ~A and default?~%    ~A~%    ~A~%" cwd files files1))
 	(let ((files2 (sound-files-in-directory ".")))
 	  (if (or (not (equal? files1 files2))
 		  (not (equal? files files2)))
-	      (snd-display #__line__ ";sound-files-in-directory dot: ~A but ~A" files2 files)))))
+	      (snd-display #__line__ ";sound-files-in-directory dot: ~A~%    ~A~% but ~A" (difference files2 files) files2 files)))))
     
     (set! (hook-functions bad-header-hook) ())
     (set! (hook-functions open-raw-sound-hook) ())
@@ -46641,6 +46652,7 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (set! (default-output-header-type) mus-soundfont)))
 		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
 		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
+		(check-error-tag 'mus-error (lambda () (make-locsig 1/0 :channels 2)))
 		(if (provided? 'snd-motif)
 		    (begin
 		      (check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported

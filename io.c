@@ -2214,21 +2214,40 @@ char *mus_expand_filename(const char *filename)
   return(mus_strdup(filename));
 #else
 
-  char *file_name_buf = NULL;
-  char *tok = NULL, *orig = NULL;
-  int i, j = 0, len = 0;
+  char *file_name_buf;
+  char *tok, *orig;
+  int i, j, len;
 
   /* realpath does not speed this up */
 
   if ((filename) && (*filename)) 
     len = strlen(filename); 
   else return(NULL);
-  if (len == 0) return(NULL);
+
+  if ((len == 1) && (filename[0] == '.'))
+    {
+      orig = mus_getcwd();
+      file_name_buf = (char *)malloc((sndlib_strlen(orig) + 4) * sizeof(char));
+      strcpy(file_name_buf, orig);
+      strcat(file_name_buf, "/");
+      return(file_name_buf);
+    }
+     
+  tok = strchr(filename, (int)'/');
+  if (!tok)
+    {
+      orig = mus_getcwd();
+      file_name_buf = (char *)malloc((len + sndlib_strlen(orig) + 4) * sizeof(char));
+      strcpy(file_name_buf, orig);
+      strcat(file_name_buf, "/");
+      strcat(file_name_buf, filename);
+      return(file_name_buf);
+    }
 
   orig = mus_strdup(filename);
   tok = orig;
   /* get rid of "//" */
-  for (i = 0; i < len - 1; i++)
+  for (i = 0, j = 0; i < len - 1; i++)
     {
       if ((tok[i] == '/') && 
 	  (tok[i + 1] == '/')) 

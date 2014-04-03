@@ -879,7 +879,7 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
     }
   else
     {
-      if ((CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
+      if ((current_samples(cp) > PEAK_ENV_CUTOFF) &&
 	  (cp->edits[0]->peak_env == NULL) &&              /* perhaps created at initial graph time */
 	  (sp->short_filename != NULL))                    /* region browser jumped in too soon during autotest */
 	start_peak_env(cp);
@@ -1095,7 +1095,7 @@ void apply_x_axis_change(chan_info *cp)
 static mus_long_t zoom_focus_location(chan_info *cp)
 {
   if (cp->cursor_visible)
-    return(CURSOR(cp));
+    return(cursor_sample(cp));
 
   if (selection_is_visible_in_channel(cp)) 
     /* this is complicated!  We want the relative position of the focussed-upon thing
@@ -1260,7 +1260,7 @@ void zx_incremented(chan_info *cp, double amount)
   /* kbd arrows etc -- needs to be able to return to original */
   axis_info *ap;
   mus_long_t samps;
-  samps = CURRENT_SAMPLES(cp);
+  samps = current_samples(cp);
   ap = cp->axis;
   if ((amount >= 1.0) || 
       ((samps > 0) && ((ap->zx * (double)samps) > (amount / 2.0))))
@@ -1612,7 +1612,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	{
 	  mus_float_t ymin, ymax;
 	  mus_long_t ioff;
-	  if ((ap->hisamp - ap->losamp) > (CURRENT_SAMPLES(cp) / 4))
+	  if ((ap->hisamp - ap->losamp) > (current_samples(cp) / 4))
 	    {    
                                              /* we're trying to view a large portion of the (large) sound */
 	      if (cp->peak_env_in_progress)
@@ -1705,8 +1705,8 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	}
       if ((cp->with_verbose_cursor) && 
 	  (cp->cursor_on) &&
-	  (CURSOR(cp) >= ap->losamp) && 
-	  (CURSOR(cp) <= ap->hisamp))
+	  (cursor_sample(cp) >= ap->losamp) && 
+	  (cursor_sample(cp) <= ap->hisamp))
 	show_cursor_info(cp); 
     }
 
@@ -1803,7 +1803,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 	{
 	  mus_float_t ymin, ymax;
 	  mus_long_t ioff;
-	  if ((end - beg) > (CURRENT_SAMPLES(cp) / 4))
+	  if ((end - beg) > (current_samples(cp) / 4))
 	    {    
                                              /* we're trying to view a large portion of the (large) sound */
 	      if (cp->peak_env_in_progress)
@@ -1859,8 +1859,8 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
       
   if ((cp->with_verbose_cursor) && 
       (cp->cursor_on) &&
-      (CURSOR(cp) >= beg) && 
-      (CURSOR(cp) <= end))
+      (cursor_sample(cp) >= beg) && 
+      (cursor_sample(cp) <= end))
     show_cursor_info(cp); 
 
 #if USE_GTK
@@ -4467,8 +4467,8 @@ static void draw_graph_cursor(chan_info *cp)
   axis_info *ap;
 
   ap = cp->axis;
-  if ((CURSOR(cp) < ap->losamp) || 
-      (CURSOR(cp) > ap->hisamp) ||
+  if ((cursor_sample(cp) < ap->losamp) || 
+      (cursor_sample(cp) > ap->hisamp) ||
       (!(ap->ax)))
     return;
 
@@ -4484,13 +4484,13 @@ static void draw_graph_cursor(chan_info *cp)
   if (cp->cursor_visible) 
     erase_cursor(cp);
 
-  cp->cx = local_grf_x((double)(CURSOR(cp)) / (double)snd_srate(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
+  cp->cx = local_grf_x((double)(cursor_sample(cp)) / (double)snd_srate(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
   if (cp->just_zero)
     {
       cp->cy = local_grf_y(0.0, ap);
-      cp->old_cy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), ap);
+      cp->old_cy = local_grf_y(chn_sample(cursor_sample(cp), cp, cp->edit_ctr), ap);
     }
-  else cp->cy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), ap);
+  else cp->cy = local_grf_y(chn_sample(cursor_sample(cp), cp, cp->edit_ctr), ap);
   
   draw_cursor(cp);
   cp->cursor_visible = true;
@@ -4540,7 +4540,7 @@ static void draw_sonogram_cursor(chan_info *cp)
       (cp->transform_graph_type == GRAPH_AS_SONOGRAM))
     {
       if (cp->fft_cursor_visible) draw_sonogram_cursor_1(cp);
-      cp->fft_cx = local_grf_x((double)(CURSOR(cp)) / (double)snd_srate(cp->sound), cp->fft->axis);
+      cp->fft_cx = local_grf_x((double)(cursor_sample(cp)) / (double)snd_srate(cp->sound), cp->fft->axis);
       draw_sonogram_cursor_1(cp);
       cp->fft_cursor_visible = true;
     }
@@ -4550,12 +4550,12 @@ static void draw_sonogram_cursor(chan_info *cp)
 kbd_cursor_t cursor_decision(chan_info *cp)
 {
   mus_long_t len;
-  len = CURRENT_SAMPLES(cp);
-  if (CURSOR(cp) >= len) CURSOR(cp) = len - 1; /* zero based, but in 0-length files, len = 0 */
-  if (CURSOR(cp) < 0) CURSOR(cp) = 0;          /* perhaps the cursor should be forced off in empty files? */
-  if (CURSOR(cp) < cp->axis->losamp)
+  len = current_samples(cp);
+  if (cursor_sample(cp) >= len) cursor_sample(cp) = len - 1; /* zero based, but in 0-length files, len = 0 */
+  if (cursor_sample(cp) < 0) cursor_sample(cp) = 0;          /* perhaps the cursor should be forced off in empty files? */
+  if (cursor_sample(cp) < cp->axis->losamp)
     {
-      if (CURSOR(cp) == 0) return(CURSOR_ON_LEFT);
+      if (cursor_sample(cp) == 0) return(CURSOR_ON_LEFT);
       else 
 	{
 	  if (cp->sound->playing)
@@ -4563,9 +4563,9 @@ kbd_cursor_t cursor_decision(chan_info *cp)
 	  return(CURSOR_IN_MIDDLE);
 	}
     }
-  if (CURSOR(cp) > cp->axis->hisamp)
+  if (cursor_sample(cp) > cp->axis->hisamp)
     {
-      if (CURSOR(cp) >= (len - 1)) return(CURSOR_ON_RIGHT);
+      if (cursor_sample(cp) >= (len - 1)) return(CURSOR_ON_RIGHT);
       else 
 	{
 	  if (cp->sound->playing)
@@ -4597,15 +4597,15 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 	  switch (redisplay)
 	    {
 	    case CURSOR_ON_LEFT: 
-	      gx = (double)(CURSOR(cp)) / (double)snd_srate(sp); 
+	      gx = (double)(cursor_sample(cp)) / (double)snd_srate(sp); 
 	      break;
 
 	    case CURSOR_ON_RIGHT: 
-	      gx = (double)(CURSOR(cp)) / (double)snd_srate(sp) - ap->zx * ap->x_ambit; 
+	      gx = (double)(cursor_sample(cp)) / (double)snd_srate(sp) - ap->zx * ap->x_ambit; 
 	      break;
 
 	    case CURSOR_IN_MIDDLE: 
-	      gx = (double)(CURSOR(cp)) / (double)snd_srate(sp) - ap->zx * 0.5 * ap->x_ambit; 
+	      gx = (double)(cursor_sample(cp)) / (double)snd_srate(sp) - ap->zx * 0.5 * ap->x_ambit; 
 	      break;
 
 	    default:
@@ -4634,9 +4634,9 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
     int i;
     for (i = 0; i < cp->edit_size; i++) 
       if (cp->edits[i]) 
-	cp->edits[i]->cursor = CURSOR(cp);
+	cp->edits[i]->cursor = cursor_sample(cp);
   }
-  update_possible_selection_in_progress(CURSOR(cp));
+  update_possible_selection_in_progress(cursor_sample(cp));
 }
 
 
@@ -4670,14 +4670,14 @@ void cursor_moveto(chan_info *cp, mus_long_t samp)
 	{
 	  chan_info *ncp;
 	  ncp = si->cps[i];
-	  CURSOR(ncp) = samp;
+	  cursor_sample(ncp) = samp;
 	  handle_cursor(ncp, cursor_decision(ncp)); /* checks len */
 	}
       si = free_sync_info(si);
     }
   else 
     {
-      CURSOR(cp) = samp;
+      cursor_sample(cp) = samp;
       handle_cursor(cp, cursor_decision(cp));
     }
 }
@@ -4685,7 +4685,7 @@ void cursor_moveto(chan_info *cp, mus_long_t samp)
 
 void cursor_move(chan_info *cp, mus_long_t samps)
 {
-  cursor_moveto(cp, CURSOR(cp) + samps);
+  cursor_moveto(cp, cursor_sample(cp) + samps);
 }
 
 
@@ -4734,7 +4734,7 @@ void cursor_moveto_with_window(chan_info *cp, mus_long_t samp, mus_long_t left_s
       cp->fft_cursor_visible = false; /* don't redraw at old location */
     }
 
-  CURSOR(cp) = samp;
+  cursor_sample(cp) = samp;
   current_window_size = ap->hisamp - ap->losamp;
   if (snd_abs_mus_long_t(current_window_size - window_size) < (mus_long_t)(0.1 * (double)window_size))
     gx = (double)(left_samp) / (double)snd_srate(sp);
@@ -4755,10 +4755,10 @@ void sync_cursors(chan_info *cp, mus_long_t samp)
       sync_info *si;
       si = snd_sync(sp->sync);
       for (i = 0; i < si->chans; i++)
-	CURSOR(si->cps[i]) = samp;
+	cursor_sample(si->cps[i]) = samp;
       si = free_sync_info(si);
     }
-  else CURSOR(cp) = samp;
+  else cursor_sample(cp) = samp;
 }
 
 
@@ -4775,7 +4775,7 @@ void show_cursor_info(chan_info *cp)
   sp = cp->sound;
   if ((sp->sync != 0) && (cp->chan != 0)) return;
 
-  samp = CURSOR(cp);
+  samp = cursor_sample(cp);
   y = chn_sample(samp, cp, cp->edit_ctr);
   absy = fabs(y);
   if (absy < .0001) digits = 5;
@@ -4856,7 +4856,7 @@ static bool hit_cursor_triangle(chan_info *cp, int x, int y)
   int cx;
 
   ap = cp->axis;
-  samp = CURSOR(cp);
+  samp = cursor_sample(cp);
 
   if ((samp < ap->losamp) ||
       (samp > ap->hisamp))
@@ -5107,7 +5107,7 @@ void check_cursor_shape(chan_info *cp, int x, int y)
     case CLICK_MARK_PLAY:
       if (cp->current_cursor != ss->play_cursor)
 	{
-	  ncp->original_cursor = CURSOR(ncp);
+	  ncp->original_cursor = cursor_sample(ncp);
 	  cp->current_cursor = ss->play_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->play_cursor);
 	}
@@ -5563,7 +5563,7 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
 	      break;
 	      
 	    case CLICK_CURSOR_PLAY:
-	      play_channel_with_sync(cp, CURSOR(cp), NO_END_SPECIFIED);
+	      play_channel_with_sync(cp, cursor_sample(cp), NO_END_SPECIFIED);
 	      break;
 	      
 	    case CLICK_SELECTION_LOOP_PLAY:
@@ -5637,7 +5637,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	case CLICK_INSET_GRAPH:
 	  {
 	    mus_long_t samp;
-	    samp = snd_round_mus_long_t(CURRENT_SAMPLES(cp) * ((double)(x - cp->inset_graph->x0) / (double)(cp->inset_graph->width)));
+	    samp = snd_round_mus_long_t(current_samples(cp) * ((double)(x - cp->inset_graph->x0) / (double)(cp->inset_graph->width)));
 	    cursor_moveto(cp, samp);
 	    if ((samp < cp->axis->losamp) ||
 		(samp > cp->axis->hisamp))
@@ -5645,7 +5645,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		mus_long_t rsamp;
 		rsamp = samp + snd_round_mus_long_t(0.5 * (cp->axis->hisamp - cp->axis->losamp));
 		if (rsamp < 0) rsamp = 0;
-		if (rsamp > CURRENT_SAMPLES(cp)) rsamp = CURRENT_SAMPLES(cp);
+		if (rsamp > current_samples(cp)) rsamp = current_samples(cp);
 		set_x_axis_x1(cp, rsamp);
 		update_graph(cp);
 	      }
@@ -5672,14 +5672,14 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		  axis_info *ap;
 		  /* zoom request -> each added key zooms closer, as does each successive click */
 		  ap = cp->axis;
-		  samps = CURRENT_SAMPLES(cp);
+		  samps = current_samples(cp);
 		  if ((samps > 0) && ((ap->zx * (double)samps) > 1.0))
 		    {
 		      if (key_state & snd_ShiftMask) ap->zx *= .5;
 		      if (key_state & snd_ControlMask) ap->zx *= .5;
 		      if (key_state & snd_MetaMask) ap->zx *= .5;
 		      if (ap->x_ambit != 0.0)
-			ap->sx = (((double)(CURSOR(cp)) / (double)snd_srate(sp) - 
+			ap->sx = (((double)(cursor_sample(cp)) / (double)snd_srate(sp) - 
 				   ap->zx * 0.5 * (ap->xmax - ap->xmin)) - ap->xmin) / ap->x_ambit;
 		      apply_x_axis_change(cp);
 		      resize_sx_and_zx(cp);
@@ -6183,7 +6183,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 
       new_peaks = ((cp->axis->cp) && (cp->axis->cp->new_peaks));
       /* new_peaks is set during update_graph if we just finished a new peak-env */
-      frames = CURRENT_SAMPLES(cp);
+      frames = current_samples(cp);
 
       if ((width > 10) &&
 	  (height > 10) &&
@@ -6499,9 +6499,9 @@ static Xen channel_get(Xen snd, Xen chn_n, cp_field_t fld, const char *caller)
 	    case CP_EDIT_CTR:                return(C_int_to_Xen_integer(cp->edit_ctr));                               break;
 	    case CP_GRAPH_TRANSFORM_ON:       return(C_bool_to_Xen_boolean(cp->graph_transform_on));                  break;
 	    case CP_GRAPH_TIME_ON:            return(C_bool_to_Xen_boolean(cp->graph_time_on));                       break;
-	    case CP_CURSOR:                  return(C_llong_to_Xen_llong(CURSOR(cp)));                           break;
+	    case CP_CURSOR:                  return(C_llong_to_Xen_llong(cursor_sample(cp)));                           break;
 	    case CP_EDPOS_CURSOR:            return(C_llong_to_Xen_llong(cp->edits[to_c_edit_position(cp, cp_edpos, S_cursor, 3)]->cursor)); break;
-	    case CP_FRAMES:                  return(C_llong_to_Xen_llong(CURRENT_SAMPLES(cp)));                  break;
+	    case CP_FRAMES:                  return(C_llong_to_Xen_llong(current_samples(cp)));                  break;
 	    case CP_GRAPH_LISP_ON:            return(C_bool_to_Xen_boolean(cp->graph_lisp_on));                       break;
 	    case CP_AP_LOSAMP:               if (cp->axis) return(C_llong_to_Xen_llong(cp->axis->losamp));       break;
 	    case CP_AP_HISAMP:               if (cp->axis) return(C_llong_to_Xen_llong(cp->axis->hisamp));       break;
@@ -7057,7 +7057,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	{
 	  bool need_update = true;
 	  /* if less than current, delete, else zero pad */
-	  curlen = CURRENT_SAMPLES(cp);
+	  curlen = current_samples(cp);
 	  newlen = (Xen_is_llong(on)) ? Xen_llong_to_C_llong(on) : curlen;
 	  if (newlen < 0)
 	    Xen_out_of_range_error(S_setB S_frames, 1, on, "frames < 0?");
@@ -7456,7 +7456,7 @@ Xen g_frames(Xen snd, Xen chn, Xen edpos)
 	{
 	  snd_info *sp;
 	  sp = get_player_sound(snd);
-	  return(C_llong_to_Xen_llong(CURRENT_SAMPLES(sp->chans[0])));
+	  return(C_llong_to_Xen_llong(current_samples(sp->chans[0])));
 	}
     }
 

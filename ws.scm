@@ -765,12 +765,18 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 (define-macro (defgenerator struct-name . fields)
 
   (define (list->bindings lst)
-    (if (null? lst)
-	()
-	(cons (if (pair? (car lst))
-		  (list 'cons (list 'quote (caar lst)) (caar lst))
-		  (list 'cons (list 'quote (car lst)) (car lst)))
-	      (list->bindings (cdr lst)))))
+    (let ((len (length lst)))
+      (let ((nlst (make-list (* len 2))))
+	(do ((old lst (cdr old))
+	     (nsym nlst (cddr nsym)))
+	    ((null? old) nlst)
+	  (if (pair? (car old))
+	      (begin
+		(set-car! (cdr nsym) (caar old))
+		(set-car! nsym (list 'quote (caar old))))
+	      (begin
+		(set-car! (cdr nsym) (car old))
+		(set-car! nsym (list 'quote (car old)))))))))
 
   (let* ((name (if (list? struct-name) 
 		   (car struct-name) 
@@ -813,8 +819,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		   ,(if methods
 		       `(augment-environment 
 			   (apply environment ,methods)
-			 (environment ,@(list->bindings (reverse fields)) (cons 'mus-generator-type gen-type)))
-		       `(environment ,@(list->bindings (reverse fields)) (cons 'mus-generator-type gen-type)))))))))))
+			 (environment* ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
+		       `(environment* 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
 
 
 

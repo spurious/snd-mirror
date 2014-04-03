@@ -7241,7 +7241,7 @@ static mus_long_t vf_location(view_files_info *vdat)
       if (sp)
 	{
 	  cp = any_selected_channel(sp);
-	  return(CURSOR(cp));
+	  return(cursor_sample(cp));
 	}
       break;
 
@@ -7250,7 +7250,7 @@ static mus_long_t vf_location(view_files_info *vdat)
       if (sp)
 	{
 	  cp = any_selected_channel(sp);
-	  return(CURRENT_SAMPLES(cp));
+	  return(current_samples(cp));
 	}
       break;
 

@@ -1038,7 +1038,7 @@ static void crop(chan_info *cp)
   if (selection_is_active_in_channel(cp))
     {
       mus_long_t beg, end, frames;
-      frames = CURRENT_SAMPLES(cp);
+      frames = current_samples(cp);
       beg = selection_beg(cp);
       end = selection_end(cp);
       if (beg > 0)
@@ -1499,7 +1499,7 @@ static void play_from_cursor_callback(Widget w, XtPointer info, XtPointer contex
       chan_info *cp;
       cp = any_selected_channel(sp);
       if (cp)
-	play_sound(sp, CURSOR(cp), NO_END_SPECIFIED);
+	play_sound(sp, cursor_sample(cp), NO_END_SPECIFIED);
     }
 }
 

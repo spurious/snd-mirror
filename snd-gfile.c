@@ -425,7 +425,7 @@ static void sketch_1(file_dialog_info *fd, bool new_data)
       active_ap = active_channel->axis;
       ap->graph_active = true;
       
-      fd->samps = CURRENT_SAMPLES(active_channel);
+      fd->samps = current_samples(active_channel);
       fd->srate = snd_srate(active_channel->sound);
       
       ap->losamp = 0;

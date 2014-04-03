@@ -181,7 +181,7 @@ static void reflect_sample_change_in_axis(chan_info *cp)
   if (ap)
     {
       mus_long_t samps;
-      samps = CURRENT_SAMPLES(cp);
+      samps = current_samples(cp);
       ap->xmax = (double)samps / (double)snd_srate(cp->sound);
       ap->x_ambit = ap->xmax - ap->xmin;
       if (ap->x1 > ap->xmax) ap->x1 = ap->xmax;
@@ -3463,7 +3463,7 @@ bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *inserted_fi
       if (!(extend_with_zeros(cp, len, beg - len, edpos, origin)))
 	return(false);
       edpos = cp->edit_ctr;
-      len = CURRENT_SAMPLES(cp);
+      len = current_samples(cp);
       backup++;
     }
   if (!(prepare_edit_list(cp, edpos, origin))) 
@@ -3559,7 +3559,7 @@ bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
       if (!(extend_with_zeros(cp, len, beg - len, edpos, origin)))
 	return(false);
       edpos = cp->edit_ctr;
-      len = CURRENT_SAMPLES(cp);
+      len = current_samples(cp);
       backup++;
     }
 
@@ -3678,7 +3678,7 @@ bool insert_complete_file_at_cursor(snd_info *sp, const char *filename)
 {
   chan_info *ncp;
   ncp = any_selected_channel(sp);
-  return(insert_complete_file(sp, filename, CURSOR(ncp), DONT_DELETE_ME));
+  return(insert_complete_file(sp, filename, cursor_sample(ncp), DONT_DELETE_ME));
 }
 
 
@@ -3933,7 +3933,7 @@ bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, c
 	    }
 	  backup++;
 	  edpos = cp->edit_ctr;
-	  prev_len = CURRENT_SAMPLES(cp);
+	  prev_len = current_samples(cp);
 	}
       new_len = beg + num;
       if (new_len < prev_len) new_len = prev_len;
@@ -4095,7 +4095,7 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
       if (!(extend_with_zeros(cp, prev_len, beg - prev_len, edpos, origin))) 
 	return(false);
       edpos = cp->edit_ctr;
-      prev_len = CURRENT_SAMPLES(cp);
+      prev_len = current_samples(cp);
       backup++;
     }
   new_len = beg + num;
@@ -5554,8 +5554,8 @@ io_error_t save_edits_and_update_display(snd_info *sp)
 	  free(sf);
 	  return(IO_BAD_CHANNEL);
 	}
-      if (samples < CURRENT_SAMPLES(sp->chans[i]))
-	samples = CURRENT_SAMPLES(sp->chans[i]);
+      if (samples < current_samples(sp->chans[i]))
+	samples = current_samples(sp->chans[i]);
     }
   
   /* write the new file */
@@ -5582,7 +5582,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   for (i = 0; i < sp->nchans; i++)
     {
       cp = sp->chans[i];
-      old_cursors[i] = CURSOR(cp);        /* depends on edit_ctr -- set to -1 by free_edit_list below */
+      old_cursors[i] = cursor_sample(cp);        /* depends on edit_ctr -- set to -1 by free_edit_list below */
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, -1);
       if (cp->edits) free_edit_list(cp); /* sets cp->edits to NULL */
@@ -5633,7 +5633,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   sound_restore_marks(sp, ms);
   sa = free_axes_data(sa);
   for (i = 0; i < sp->nchans; i++)
-    CURSOR(sp->chans[i]) = old_cursors[i];
+    cursor_sample(sp->chans[i]) = old_cursors[i];
   free(old_cursors);
   reflect_file_revert_in_label(sp);
   if (ofile) 
@@ -7940,7 +7940,7 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
   pos = to_c_edit_position(cp, pos_n, S_sample, 4);
   if (Xen_is_bound(samp_n))
     beg = beg_to_sample(samp_n, S_sample);
-  else beg = CURSOR(cp);
+  else beg = cursor_sample(cp);
 
   return(C_double_to_Xen_real(chn_sample(beg, cp, pos)));
 }
@@ -7968,7 +7968,7 @@ static Xen g_set_sample(Xen samp_n, Xen val, Xen snd, Xen chn_n, Xen edpos)
 			 edpos));
   if (Xen_is_bound(samp_n))
     beg = beg_to_sample(samp_n, S_setB S_sample);
-  else beg = CURSOR(cp);
+  else beg = cursor_sample(cp);
 
   fval = Xen_real_to_C_double(val);
   if ((fval == 1.0) && 
@@ -8570,7 +8570,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 
   if (Xen_is_integer(ubeg))
     beg = beg_to_sample(ubeg, S_insert_sound);
-  else beg = CURSOR(cp);
+  else beg = cursor_sample(cp);
 
   if (Xen_is_integer(file_chn))
     {
@@ -8833,7 +8833,7 @@ static mus_long_t snd_to_sample_location(mus_any *ptr) {return(((snd_to_sample *
 
 static char *snd_to_sample_file_name(mus_any *ptr) {return(((snd_to_sample *)ptr)->sp->filename);}
 
-static mus_long_t snd_to_sample_length(mus_any *ptr) {return(CURRENT_SAMPLES(((snd_to_sample *)ptr)->sp->chans[0]));}
+static mus_long_t snd_to_sample_length(mus_any *ptr) {return(current_samples(((snd_to_sample *)ptr)->sp->chans[0]));}
 
 static int snd_to_sample_free(mus_any *ptr)
 {

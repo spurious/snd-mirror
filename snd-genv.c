@@ -170,7 +170,7 @@ static void apply_enved(void)
 				  (apply_to_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 #endif
 	      apply_env(active_channel, active_env, 0, 
-			CURRENT_SAMPLES(active_channel),
+			current_samples(active_channel),
 			apply_to_selection, 
 			origin, NULL,
 			C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), 0);

@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 22
-#define MUS_DATE "19-Mar-14"
+#define MUS_REVISION 23
+#define MUS_DATE "2-Apr-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -244,6 +244,7 @@ MUS_EXPORT mus_any *mus_make_all_pass_bank(int size, mus_any **combs);
 MUS_EXPORT bool mus_is_all_pass_bank(mus_any *g);
 
 MUS_EXPORT mus_any *mus_make_moving_average(int size, mus_float_t *line);
+MUS_EXPORT mus_any *mus_make_moving_average_with_initial_sum(int size, mus_float_t *line, mus_float_t sum);
 MUS_EXPORT bool mus_is_moving_average(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_moving_average(mus_any *ptr, mus_float_t input);
 
@@ -669,7 +670,8 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
- * 19-Mar-14:  deprecate mus_make_env_with_length.
+ * 2-Apr:      mus_make_moving_average_with_sum.
+ * 19-Mar:     deprecate mus_make_env_with_length.
  * 17-Feb-14:  mus_*_p -> mus_is_*.
  * --------
  * 7-Dec:      mus_set_formant_frequency, mus_src_20 and mus_src_05 changed.  Removed mus_in_any_from_file.

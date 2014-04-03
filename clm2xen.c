@@ -186,9 +186,6 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #endif
 
 
-#define MAX_ARGLIST_LEN 24
-/* try to accommodate &other-keys essentially */
-
 static int local_error_type = MUS_NO_ERROR;
 static char *local_error_msg = NULL;
 
@@ -2532,7 +2529,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 {
   mus_any *ge = NULL, *filt = NULL;
   const char *caller = NULL;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[18];
   Xen keys[9];
   Xen xen_filt = Xen_false;
   int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_NONE, 0};
@@ -2540,7 +2537,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
   mus_long_t max_size = -1, size = -1;
   int interp_type = (int)MUS_INTERP_NONE;
   mus_float_t *line = NULL;
-  mus_float_t scaler = 0.0, feedback = 0.0, feedforward = 0.0;
+  mus_float_t scaler = 0.0, feedback = 0.0, feedforward = 0.0, sum = 0.0;
   vct *initial_contents = NULL;
   Xen orig_v = Xen_false;            /* initial-contents can be a vct */
   mus_float_t initial_element = 0.0;
@@ -2575,11 +2572,9 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(caller, "too many args!", arglist);
-
+    if (arglist_len > 18) clm_error(caller, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 18; i++) args[i] = Xen_undefined;
   }
   vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
 
@@ -2669,9 +2664,9 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	      if (Xen_is_list(keys[initial_contents_key]))
 		{
 		  len = Xen_list_length(keys[initial_contents_key]);
-		  if (len == 0) 
+		  if (len <= 0) 
 		    Xen_error(NO_DATA,
-			      Xen_list_2(C_string_to_Xen_string("~A: initial-contents list empty?"),
+			      Xen_list_2(C_string_to_Xen_string("~A: initial-contents not a proper list?"),
 					 C_string_to_Xen_string(caller)));
 
 		  orig_v = xen_list_to_vct(keys[initial_contents_key]);
@@ -2725,12 +2720,19 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	{
 	  for (i = 0; i < max_size; i++) 
 	    line[i] = initial_element;
+	  sum = initial_element * size;
 	}
       else memset((void *)line, 0, max_size * sizeof(mus_float_t));
     }
   else
     {
       line = mus_vct_data(initial_contents);
+      if ((line) && (choice == G_MOVING_AVERAGE))
+	{
+	  sum = line[0];
+	  for (i = 1; i < size; i++)
+	    sum += line[i];
+	}
     }
 
   {
@@ -2738,13 +2740,13 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
     old_error_handler = mus_error_set_handler(local_mus_error);
     switch (choice)
       {
-      case G_DELAY:    ge = mus_make_delay(size, line, max_size, (mus_interp_t)interp_type);                           break;
-      case G_MOVING_AVERAGE:  ge = mus_make_moving_average(size, line);                                                break;
-      case G_MOVING_MAX:  ge = mus_make_moving_max(size, line);                                                        break;
-      case G_COMB:     ge = mus_make_comb(scaler, size, line, max_size, (mus_interp_t)interp_type);                    break;
-      case G_NOTCH:    ge = mus_make_notch(scaler, size, line, max_size, (mus_interp_t)interp_type);                   break;
-      case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, (mus_interp_t)interp_type); break;
-      case G_FCOMB:    ge = mus_make_filtered_comb(scaler, size, line, max_size, (mus_interp_t)interp_type, filt);     break;
+      case G_DELAY:           ge = mus_make_delay(size, line, max_size, (mus_interp_t)interp_type);                           break;
+      case G_MOVING_AVERAGE:  ge = mus_make_moving_average_with_initial_sum(size, line, sum);                                 break;
+      case G_MOVING_MAX:      ge = mus_make_moving_max(size, line);                                                           break;
+      case G_COMB:            ge = mus_make_comb(scaler, size, line, max_size, (mus_interp_t)interp_type);                    break;
+      case G_NOTCH:           ge = mus_make_notch(scaler, size, line, max_size, (mus_interp_t)interp_type);                   break;
+      case G_ALL_PASS:        ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, (mus_interp_t)interp_type); break;
+      case G_FCOMB:           ge = mus_make_filtered_comb(scaler, size, line, max_size, (mus_interp_t)interp_type, filt);     break;
       }
     mus_error_set_handler(old_error_handler);
   }
@@ -3441,7 +3443,7 @@ static mus_float_t *inverse_integrate(Xen dist, int data_size)
 static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
 {
   mus_any *ge = NULL;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
   int i, vals, arglist_len;
@@ -3462,11 +3464,9 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(caller, "too many args!", arglist);
-
+    if (arglist_len > 10) clm_error(caller, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(caller, 5, keys, args, orig_arg);
@@ -3826,7 +3826,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   mus_any *ge;
   int vals, i, arglist_len;
   mus_long_t table_size = clm_table_size;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
   mus_float_t freq, phase = 0.0;
@@ -3846,11 +3846,9 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_table_lookup, "too many args!", arglist);
-
+    if (arglist_len > 10) clm_error(S_make_table_lookup, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_table_lookup, 5, keys, args, orig_arg);
@@ -5513,7 +5511,7 @@ return a new wave-train generator (an extension of pulse-train).   Frequency is 
 the repetition rate of the wave found in wave. Successive waves can overlap."
 
   mus_any *ge;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
   int vals, i, arglist_len;
@@ -5535,11 +5533,9 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_wave_train, "too many args!", arglist);
-
+    if (arglist_len > 10) clm_error(S_make_wave_train, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_wave_train, 5, keys, args, orig_arg);
@@ -6043,7 +6039,7 @@ return a new polynomial-based waveshaping generator:\n\
 is the same in effect as " S_make_oscil
 
   mus_any *ge;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[10];
   int arglist_len;
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
@@ -6073,11 +6069,9 @@ is the same in effect as " S_make_oscil
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_polyshape, "too many args!", arglist);
-
+    if (arglist_len > 10) clm_error(S_make_polyshape, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_polyshape, 5, keys, args, orig_arg);
@@ -6176,7 +6170,7 @@ static Xen g_make_polywave(Xen arglist)
 return a new polynomial-based waveshaping generator.  (" S_make_polywave " :partials (vct 1 1.0)) is the same in effect as " S_make_oscil "."
 
   mus_any *ge;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[10];
   int arglist_len;
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
@@ -6199,11 +6193,9 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_polywave, "too many args!", arglist);
-
+    if (arglist_len > 10) clm_error(S_make_polywave, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_polywave, 5, keys, args, orig_arg);
@@ -6339,7 +6331,7 @@ static Xen g_nrxycos(Xen obj, Xen fm)
 static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
 {
   mus_any *ge;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[8];
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals, i, arglist_len;
@@ -6356,11 +6348,9 @@ static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(caller, "too many args!", arglist);
-
+    if (arglist_len > 8) clm_error(caller, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 8; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(caller, 4, keys, args, orig_arg);
@@ -6456,7 +6446,7 @@ static Xen g_rxykcos(Xen obj, Xen fm)
 static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
 {
   mus_any *ge;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[6];
   Xen keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals, i, arglist_len;
@@ -6471,11 +6461,9 @@ static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(caller, "too many args!", arglist);
-
+    if (arglist_len > 6) clm_error(caller, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 6; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(caller, 3, keys, args, orig_arg);
@@ -6789,7 +6777,7 @@ either 'duration' (seconds) or 'length' (samples).  If 'base' is 1.0, the connec
 are linear, if 0.0 you get a step function, and anything else produces an exponential connecting segment."
 
   mus_any *ge;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[14];
   Xen keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, len = 0, arglist_len;
@@ -6811,11 +6799,9 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_env, "too many args!", arglist);
-
+    if (arglist_len > 14) clm_error(S_make_env, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 14; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_env, 7, keys, args, orig_arg);
@@ -7555,6 +7541,8 @@ sends that output to the output channels in the vector order (the first generato
   mus_long_t pos;
   int i, size;
   double x = 0.0;
+  mus_any *g = NULL;
+  mus_xen *gn;
 
   Xen_check_type(Xen_is_integer(loc), loc, 2, S_out_bank, "an integer");
   pos = Xen_llong_to_C_llong(loc);
@@ -7569,10 +7557,16 @@ sends that output to the output channels in the vector order (the first generato
 
 #if HAVE_SCHEME  
   for (i = 0; i < size; i++)
-    out_any_2(pos, mus_apply(Xen_to_mus_any(Xen_vector_ref(gens, i)), x, 0.0), i, "out-bank");
+    {
+      Xen_to_C_any_generator(Xen_vector_ref(gens, i), gn, g, "out-bank", "an output generator");
+      out_any_2(pos, mus_apply(g, x, 0.0), i, "out-bank");
+    }
 #else
   for (i = 0; i < size; i++)
-    out_any_2(CLM_OUTPUT, pos, mus_apply(Xen_to_mus_any(Xen_vector_ref(gens, i)), x, 0.0), i, "out-bank");
+    {
+      Xen_to_C_any_generator(Xen_vector_ref(gens, i), gn, g, "out-bank", "an output generator");
+      out_any_2(CLM_OUTPUT, pos, mus_apply(g, x, 0.0), i, "out-bank");
+    }
 #endif
 
   return(inval);
@@ -8011,7 +8005,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
 
   mus_any *ge;
   const char *file = NULL;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
   int i, vals, arglist_len;
@@ -8031,11 +8025,9 @@ return a new readin (file input) generator reading the sound file 'file' startin
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_readin, "too many args!", arglist);
-
+    if (arglist_len > 10) clm_error(S_make_readin, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_readin, 5, keys, args, orig_arg);
@@ -8269,7 +8261,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   mus_xen *gn;
   mus_any *ge;
   mus_any *outp = NULL, *revp = NULL;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[14];
   Xen keys[7];
   Xen ov = Xen_undefined, rv = Xen_undefined;
   Xen keys3 = Xen_undefined, keys4 = Xen_undefined;
@@ -8291,11 +8283,9 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_locsig, "too many args!", arglist);
-
+    if (arglist_len > 14) clm_error(S_make_locsig, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 14; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_locsig, 7, keys, args, orig_arg);
@@ -9040,7 +9030,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   Xen in_obj = Xen_undefined;
   mus_xen *gn;
   mus_any *ge;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[18];
   Xen keys[9];
   int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len, maxsize = 0;
@@ -9061,11 +9051,9 @@ The edit function, if any, should return the length in samples of the grain, or 
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_granulate, "too many args!", arglist);
-
+    if (arglist_len > 18) clm_error(S_make_granulate, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 18; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_granulate, 9, keys, args, orig_arg);
@@ -9179,7 +9167,7 @@ return a new convolution generator which convolves its input with the impulse re
 
   mus_xen *gn;
   mus_any *ge;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[6];
   Xen keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals, i, arglist_len;
@@ -9194,11 +9182,9 @@ return a new convolution generator which convolves its input with the impulse re
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_convolve, "too many args!", arglist);
-
+    if (arglist_len > 6) clm_error(S_make_convolve, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 6; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_convolve, 3, keys, args, orig_arg);
@@ -9422,7 +9408,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   Xen in_obj = Xen_undefined, edit_obj = Xen_undefined, synthesize_obj = Xen_undefined, analyze_obj = Xen_undefined;
   mus_xen *gn;
   mus_any *ge;
-  Xen args[MAX_ARGLIST_LEN]; 
+  Xen args[16];
   Xen keys[8];
   Xen pv_obj;
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -9442,11 +9428,9 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   {
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > MAX_ARGLIST_LEN)
-      clm_error(S_make_phase_vocoder, "too many args!", arglist);
-
+    if (arglist_len > 16) clm_error(S_make_phase_vocoder, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < 16; i++) args[i] = Xen_undefined;
   }
 
   vals = mus_optkey_unscramble(S_make_phase_vocoder, 8, keys, args, orig_arg);

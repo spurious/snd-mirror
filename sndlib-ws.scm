@@ -452,14 +452,25 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 (define-macro (defgenerator struct-name . fields)
 
   (define (list->bindings lst)
-    (if (null? lst)
-	()
-	(cons (if (pair? (car lst))
-		  (list 'cons (list 'quote (caar lst)) (caar lst))
-		  (list 'cons (list 'quote (car lst)) (car lst)))
-	      (list->bindings (cdr lst)))))
+    (let ((len (length lst)))
+      (let ((nlst (make-list (* len 2))))
+	(do ((old lst (cdr old))
+	     (nsym nlst (cddr nsym)))
+	    ((null? old) nlst)
+	  (if (pair? (car old))
+	      (begin
+		(set-car! (cdr nsym) (caar old))
+		(set-car! nsym (list 'quote (caar old))))
+	      (begin
+		(set-car! (cdr nsym) (car old))
+		(set-car! nsym (list 'quote (car old)))))))))
 
-  (let* ((name (if (list? struct-name) (car struct-name) struct-name))
+  (let* ((name (if (list? struct-name) 
+		   (car struct-name) 
+		   struct-name))
+	 (sname (if (string? name) 
+		    name 
+		    (symbol->string name)))
 	 (wrapper (or (and (list? struct-name)
 			   (or (and (> (length struct-name) 2)
 				    (equal? (struct-name 1) :make-wrapper)
@@ -468,8 +479,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				    (equal? (struct-name 3) :make-wrapper)
 				    (struct-name 4))))
 		      (lambda (gen) gen)))
-
-	 (sname (if (string? name) name (symbol->string name)))
 	 (methods (and (list? struct-name)
 		       (or (and (> (length struct-name) 2)
 				(equal? (struct-name 1) :methods)
@@ -481,7 +490,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
        (define ,(string->symbol (string-append sname "?")) #f)
        (define ,(string->symbol (string-append "make-" sname)) #f)
 
-       (let ((gen-type (gensym)))
+       (let ((gen-type ',(string->symbol (string-append "+" sname "+"))))
 	 
 	 (set! ,(string->symbol (string-append sname "?"))
 	       (lambda (obj)
@@ -497,8 +506,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		   ,(if methods
 		       `(augment-environment 
 			   (apply environment ,methods)
-			 (environment ,@(list->bindings fields) (cons 'mus-generator-type gen-type)))
-		       `(environment ,@(list->bindings fields) (cons 'mus-generator-type gen-type)))))))))))
+			 (environment* ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
+		       `(environment* 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
 
 
 ;;; --------------------------------------------------------------------------------
