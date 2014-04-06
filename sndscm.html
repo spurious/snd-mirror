@@ -434,7 +434,7 @@ in terms of srate = 1.0 (for convenience):
 	(freq 0.0)
 	(incr (/ (* 2 pi) 44100.0))
         (samps (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> 0.5)))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i samps))
       (let ((sval (* .8 (sin phase))))
 	(set! phase (+ phase freq)) 
@@ -464,7 +464,7 @@ in terms of srate = 1.0 (for convenience):
 	(incr (/ (* 2 pi) 44100.0))
 	(samps (seconds->samples 0.5)))
 
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i samps))
 
       (let ((sval (* .8 (sin phase))))
@@ -508,7 +508,7 @@ in terms of srate = 1.0 (for convenience):
 (set! (selected-data-color) (make-color 0 0 0))
 (set! (axis-label-font) "9x15")
 
-(do ((i 0 (+ 1 i)))
+(do ((i 0 (+ i 1)))
     ((= i 4))
   (do ((k 0 (+ 1 k)))
       ((= k 5))
@@ -597,7 +597,7 @@ in the duration.
 	 (gen1 (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a>))
 	 (frqf (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '                               ; ditto
 			 :duration dur :scaler (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 1.0))))
-   (do ((i start (+ 1 i)))
+   (do ((i start (+ i 1)))
        ((= i stop))
      (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)                           ; just a first guess at the synthesis algorithm
 	        (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen1 (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf)))))))
@@ -667,7 +667,7 @@ the top of the FFT graph in Hz; it is 10KHz in this case.
 			   0.826 0.427 0.848 0.366 0.889 0.345 0.913 0.232 1.000 0.198)
 			 :duration dur :scaler (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 10000.0)))
 	 (gen1 (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a>)))
-   (do ((i start (+ 1 i)))
+   (do ((i start (+ i 1)))
        ((= i stop))
      (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)
 	        (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen1 (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf)))))))
@@ -719,7 +719,7 @@ there's a set of components moving together at half the steady state frequency, 
 	 (gen1 (<a class=quiet href="sndclm.html#make-polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_polywave_tip)">make-polywave</a> :partials (list 1 .9  2 .09  3 .01)))
 	 (gen2 (<a class=quiet href="sndclm.html#make-polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_polywave_tip)">make-polywave</a> :partials (list 1 .2  2 .1  3 .1  4 .1  5 .1  6 .05  7 .01))) ; attack and decay
 	 (ampf2 (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 1  .3 1  .4 0 .75 0 .8 1  1 1) :duration dur :scaler 1.0)))      ; its amplitude
-    (do ((i start (+ 1 i)))
+    (do ((i start (+ i 1)))
         ((= i stop))
       (let ((frq (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf)))
         (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)
@@ -1042,12 +1042,12 @@ end points.  (This is also "just-good-enough" software).
 		 (amp (* .125 (+ (abs (- samp0 samp00)) (abs (- samp1 samp11))) dist)))
 	    (if (&gt; samp0 0.0)
                 ;; clipped at 1.0
-		(do ((i (+ 1 clip-beg) (+ 1 i))
+		(do ((i (+ 1 clip-beg) (+ i 1))
 		     (angle incr (+ angle incr)))
 		    ((= i clip-end))
 		  (set! (samps i) (+ 1.0 (* amp (sin angle)))))
                 ;; clipped at -1.0
-		(do ((i (+ 1 clip-beg) (+ 1 i))
+		(do ((i (+ 1 clip-beg) (+ i 1))
 		     (angle incr (+ angle incr)))
 		    ((= i clip-end))
 		  (set! (samps i) (- -1.0 (* amp (sin angle))))))
@@ -1058,7 +1058,7 @@ end points.  (This is also "just-good-enough" software).
 (define (fix-it n)
   ;; turn off graphics and fix all the clipped sections
   (set! (<a class=quiet href="extsnd.html#squelchupdate" onmouseout="UnTip()" onmouseover="Tip(extsnd_squelchupdate_tip)">squelch-update</a>) #t)
-  (do ((i 0 (+ 1 i)))
+  (do ((i 0 (+ i 1)))
       ((= i n))
       ;; "clips" here is a list form of the earlier vector of clip locations
     (fix-clip (clips (* i 2)) 
@@ -2246,7 +2246,7 @@ tracks the RMS signal.  An example is worth a zillion words:
           (e1 (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :length 10000))
           (e2 (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 0 10 0) :length 10000))
           (o (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440.0)))
-      (do ((i 0 (+ 1 i)))
+      (do ((i 0 (+ i 1)))
           ((= i 10000))
         (let ((sig (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> e)))
           (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (balance rg sig (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> e2)))
@@ -2629,7 +2629,7 @@ An instrument that uses dlocsig is:
 	 (end (caddr vals)))
     (let ((osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq))
 	  (aenv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> amp-env :scaler amp :duration duration)))
-      (do ((i beg (+ 1 i)))
+      (do ((i beg (+ i 1)))
           ((= i end))
 	(<em class=red>dlocsig</em> dloc i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> aenv) (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc)))))))
 
@@ -3271,7 +3271,7 @@ given the index 'a', and harmonic coefficients 'coeffs' (the 0th element is DC a
 <pre class="indented">
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
   (let ((gen (<a class=quiet href="sndclm.html#make-polyshape" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_polyshape_tip)">make-polyshape</a> 1000.0 :partials (list 1 .5  2 .25  3 .125  4 .125))))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
         ((= i 88200))
       (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<a class=quiet href="sndclm.html#polyshape" onmouseout="UnTip()" onmouseover="Tip(sndclm_polyshape_tip)">polyshape</a> gen 0.25))))))
 (<em class=red>cheby-hka</em> 1 0.25 (float-vector 0 .5 .25 .125 .125)) ; returns first partial (fundamental) amplitude
@@ -3712,11 +3712,11 @@ then
        (x0 (make-vector size 0.0 #t))	   
        (x1 (make-vector size 0.0 #t))	   
        (x2 (make-vector size 0.0 #t)))
-  (do ((i 0 (+ 1 i)))
+  (do ((i 0 (+ i 1)))
       ((= i 12))
     (let ((val (sin (/ (* 2 pi i) 12.0))))
       (set! (x1 (+ i (- (/ size 4) 6))) val)))
-  (do ((i 0 (+ 1 i)))
+  (do ((i 0 (+ i 1)))
       ((= i 1024))
     (<em class=red>compute-uniform-circular-string</em> size x0 x1 x2 1.0 0.1 0.0)
     (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> x0 "string" 0 1.0 -10.0 10.0)))
@@ -8032,7 +8032,7 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
     (let* ((beg (seconds-&gt;samples start))
 	   (end (+ beg (seconds-&gt;samples dur)))
 	   (osc (make-oscil freq phase)))
-     (do ((i beg (+ 1 i))) 
+     (do ((i beg (+ i 1))) 
 	 ((= i end))
        (outa i (oscil osc)))))
 
@@ -9152,7 +9152,7 @@ The actual instrument name is 'p':
 
 <pre class="indented">
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (do ((i 0 (+ 1 i))) ((= i 7))
+  (do ((i 0 (+ i 1))) ((= i 7))
     (p (* i .5) :duration .5                    ; generate a sequence of 1/2 second tones
                 :keyNum (+ 24 (* 12 i))         ; jump by octaves
                 :strike-velocity .5             ; 0 to 1, 0 is softest played note, 1 is loud note
@@ -9215,7 +9215,7 @@ goof around with them.
 
 <pre class="indented">
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (do ((i 0 (+ 1 i))) ((= i 8))
+  (do ((i 0 (+ i 1))) ((= i 8))
     (p (* i .5) :duration .5 :keyNum (+ 24 (* 12 i)) :strike-velocity .5 :amp .4 :DryPedalResonanceFactor .25
      :detuningFactor-table '(24 5 36 7.0 48 7.5 60 12.0 72 20 84 30 96 100 108 300)
 		    ; scales the above detuning values so 1.0 is nominal detuning, 
@@ -9500,7 +9500,7 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 				  #f ;no change to analysis
 				  (lambda (v)
 				    (let ((N (length v)))
-				      (do ((i 0 (+ 1 i)))
+				      (do ((i 0 (+ i 1)))
 					  ((= i N))
 					(if (&lt; ((phase-vocoder-amp-increments v) i) gate)
 					    (set! ((phase-vocoder-amp-increments v) i) 0.0)))
@@ -10304,7 +10304,7 @@ widget:
 <pre class="indented">
 (define wid (make-variable-display "do-loop" "i*2" 'text))
 (define wid1 (make-variable-display "do-loop" "i" 'text))
-(do ((i 0 (+ 1 i)))
+(do ((i 0 (+ i 1)))
     ((= i 10))
   (variable-display (* (variable-display i wid1) 2) wid))
 </pre>
@@ -10346,7 +10346,7 @@ putting it in a text display:
 	 (dur 1000)
 	 (end (+ beg dur))
 	 (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440.0)))
-    (do ((i beg (+ 1 i)))
+    (do ((i beg (+ i 1)))
 	((= i end))
       (variable-display i wid1)
       (variable-display
@@ -10797,7 +10797,7 @@ in fmv.scm, the simpler one being:
 					  :length dur)))
 			 (lambda () (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> e)))))
 	  (data (channel-&gt;float-vector beg dur)))
-      (do ((i 0 (+ 1 i)))
+      (do ((i 0 (+ i 1)))
 	  ((= i dur))
 	(set! (data i) (+ (data i)
                           (<em class=red>v</em>))))
@@ -11579,11 +11579,11 @@ we want to hear an arpeggio from the fm-violin:
 
 <pre class="indented">
 (with-sound ()
-  (do ((i 0 (+ 1 i)))
+  (do ((i 0 (+ i 1)))
       ((= i 4))                ; 4 notes in all
     (fm-violin (* i 0.25)      ; notes 1/4 secs apart
                0.25            ; each note 1/4 sec long
-               (* 220.0 (+ 1 i)); go up by 220 Hz on each note
+               (* 220.0 (+ i 1)); go up by 220 Hz on each note
                .1)))           ; all notes .1 amp
 </pre>
 
@@ -11666,7 +11666,7 @@ compute time: 0.030
 
 <pre class="indented">
 (with-sound (:scale-to .5) 
-  (do ((i 0 (+ 1 i))) ((= i 10)) (fm-violin 0 i 440.0 (random 1.0))))
+  (do ((i 0 (+ i 1))) ((= i 10)) (fm-violin 0 i 440.0 (random 1.0))))
 </pre>
 
 
@@ -11830,7 +11830,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
 <pre class="indented">
 (definstrument (ins args)
   (let ...
-    (do ((i start (+ 1 i)))
+    (do ((i start (+ i 1)))
         ((= i end))
       (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i ...))))
 </pre>
@@ -11841,7 +11841,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
 <pre class="indented">
 (definstrument (simp beg dur (frequency 440.0) (amplitude 0.1))
   (let ((os (make-oscil frequency)))
-     (do ((i 0 (+ 1 i))) ((= i dur))
+     (do ((i 0 (+ i 1))) ((= i dur))
        (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> (+ i beg) (* amplitude (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> os))))))
 
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
@@ -11859,14 +11859,14 @@ by calling the oscils and whatnot directly in the with-sound body:
   (let ((x 0.0)
 	(incr .000001)               ; sets speed of glissandoes
 	(oscs (make-vector 12)))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i 12))
       (set! (oscs i) (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> :frequency 0.0)))
     (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:srate 44100)
      (do ((samp 0 (+ 1 samp)))
          ((= samp 300000))
        (let ((sum 0.0))
-	 (do ((i 0 (+ 1 i)))
+	 (do ((i 0 (+ i 1)))
 	     ((= i 12))
 	   (let ((loc (+ x (/ i 12.0))))  ; location of current oscil in overall trajectory
 	     (if (&gt; loc 1.0) (set! loc (- loc 1.0)))
@@ -12126,11 +12126,11 @@ an upward ramp and a downward ramp, then zips them together:
 (define (ramp-test)
   (let ((data (make-vector 10000 0.0 #t)))
     (<a class=quiet href="extsnd.html#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "new-0.snd")
-    (do ((i 0 (+ 1 i))) ((= i 10000)) 
+    (do ((i 0 (+ i 1))) ((= i 10000)) 
       (set! (data i) (* i .0001)))
     (float-vector-&gt;channel data 0 10000 0)
     (<a class=quiet href="extsnd.html#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "new-1.snd")
-    (do ((i 0 (+ 1 i))) ((= i 10000)) 
+    (do ((i 0 (+ i 1))) ((= i 10000)) 
       (set! (data i) (- 1.0 (* i .0001))))
     (float-vector-&gt;channel data 0 10000 1)
     (let* ((dur (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))

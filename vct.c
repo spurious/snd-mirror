@@ -65,7 +65,6 @@
 #include "vct.h"
 
 #if (!HAVE_SCHEME)
-
 struct vct {
   mus_long_t length;
   mus_float_t *data;
@@ -74,12 +73,6 @@ struct vct {
 
 mus_long_t mus_vct_length(vct *v) {return(v->length);}
 mus_float_t *mus_vct_data(vct *v) {return(v->data);}
-
-#else
-
-mus_long_t mus_vct_length(vct *v) {return((mus_long_t)s7_vector_length((s7_pointer)v));}
-mus_float_t *mus_vct_data(vct *v) {return((mus_float_t *)s7_float_vector_elements((s7_pointer)v));}
-
 #endif
 
 #define S_make_vct       "make-vct"
@@ -422,13 +415,6 @@ static Xen g_vct_copy(Xen obj)
 }
 
 #else /* HAVE_SCHEME */
-
-bool mus_is_vct(Xen obj) 
-{
-  return(s7_is_float_vector(obj));
-  /* (s7_vector_rank(obj) == 1) */
-}
-
 vct *mus_vct_make(mus_long_t len)
 {
   s7_Int di[1];
@@ -452,9 +438,6 @@ vct *mus_vct_wrap(mus_long_t len, mus_float_t *data)
 {
   return(xen_make_vct_wrapper(len, data));
 }
-
-Xen vct_to_xen(vct *v) {return((XEN)v);}
-
 #endif
 
 
@@ -1528,6 +1511,7 @@ void mus_vct_init(void)
   Xen_define_safe_procedure(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
   Xen_define_safe_procedure(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
 #else
+#if (!DISABLE_DEPRECATED)
   s7_eval_c_string(s7, "(define vct-copy copy)");
   s7_eval_c_string(s7, "(define vct-fill! fill!)");
   s7_eval_c_string(s7, "(define vct float-vector)");
@@ -1539,7 +1523,7 @@ void mus_vct_init(void)
   s7_eval_c_string(s7, "(define (vector->vct v) (copy v (make-vector (length v) 0.0 #t)))");
   s7_eval_c_string(s7, "(define (vct->vector v) (copy v (make-vector (length v) 0.0)))");
   s7_eval_c_string(s7, "(define vct? float-vector?)");
-
+#endif
   s7_eval_c_string(s7, "(define float-vector-multiply! " S_vct_multiplyB ")");
   s7_eval_c_string(s7, "(define float-vector-scale! " S_vct_scaleB ")");
   s7_eval_c_string(s7, "(define float-vector-add! " S_vct_addB ")");

@@ -9207,7 +9207,9 @@ static mus_float_t run_env(mus_any *ptr, mus_float_t unused1, mus_float_t unused
 static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur, double scaler)
 { 
   int i, j;
-  double xscl, cur_loc, y1;
+  double xscl, cur_loc, cur_dx, x0, y0, x1, y1;
+  mus_long_t samps, pre_loc;
+
   /* pts > 1 if we get here, so the loop below is always exercised */
 
   if (data[pts * 2 - 2] != data[0])
@@ -9215,50 +9217,50 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
   else xscl = 1.0;
   e->locs[pts - 2] = e->end;
 
-  for (j = 0, i = 2, cur_loc = 0.0, y1 = 0.0; i < pts * 2; i += 2, j++)
-    {
-      mus_long_t samps;
-      double cur_dx, x0, y0, x1;
+  x1 = data[0];
+  y1 = data[1];
+  pre_loc = 0;
 
-      x0 = data[i - 2];
+  for (j = 0, i = 2, cur_loc = 0.0; i < pts * 2; i += 2, j++)
+    {
+      x0 = x1;
       x1 = data[i];
-      y0 = data[i - 1];
+      y0 = y1;
       y1 = data[i + 1];
 
       cur_dx = xscl * (x1 - x0);
-      if (cur_dx < 1.0) cur_dx = 1.0;
-      cur_loc += cur_dx;
-
-      if (e->style == MUS_ENV_STEP)
-	e->locs[j] = (mus_long_t)cur_loc; /* this is the change boundary (confusing...) */
-      else e->locs[j] = (mus_long_t)(cur_loc + 0.5);
-
-      if (j == 0) 
-	samps = e->locs[0]; 
-      else samps = e->locs[j] - e->locs[j - 1];
+      if (cur_dx < 1.0)
+	cur_loc += 1.0;
+      else cur_loc += cur_dx;
 
       switch (e->style)
 	{
 	case MUS_ENV_LINEAR:
-	  if ((y0 == y1) || (samps == 0))
+	  e->locs[j] = (mus_long_t)(cur_loc + 0.5);
+	  samps = e->locs[j] - pre_loc;
+	  pre_loc = e->locs[j];
+
+	  if (samps == 0)
 	    e->rates[j] = 0.0;
 	  else e->rates[j] = scaler * (y1 - y0) / (double)samps;
 	  break;
 
 	case MUS_ENV_EXPONENTIAL:
-	  if ((y0 == y1) || (samps == 0))
+	  e->locs[j] = (mus_long_t)(cur_loc + 0.5);
+	  samps = e->locs[j] - pre_loc;
+	  pre_loc = e->locs[j];
+
+	  if (samps == 0)
 	    e->rates[j] = 1.0;
 	  else e->rates[j] = exp((y1 - y0) / (double)samps);
 	  break;
 
 	case MUS_ENV_STEP:
+	  e->locs[j] = (mus_long_t)cur_loc;               /* this is the change boundary (confusing...) */  
 	  e->rates[j] = e->offset + (scaler * y0);
 	  break;
 	}
     }
-
-  if (e->style == MUS_ENV_STEP)
-    e->rates[pts - 1] = e->offset + (scaler * y1); /* stick at last value, which in this case is the value (not an increment) */
 
   e->locs[pts - 1] = 1000000000;
   e->locs[pts] = 1000000000; /* guard cell at end to make bounds check simpler */
@@ -9631,6 +9633,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 	  e->power = 0.0;
 	  e->init_power = 0.0;
 	  dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
+	  e->rates[npts - 1] = e->offset + (scaler * brkpts[npts * 2 - 1]); /* stick at last value, which in this case is the value (not an increment) */
 	}
       else
 	{

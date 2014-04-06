@@ -729,20 +729,23 @@
 ;;;
 ;;; n sinusoids scaled by r: nrsin, nrcos, nrssb
 
+(define nrsin-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'gen)))
+	  (lambda (g val) (set! (mus-frequency (g 'gen)) val))))
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-scaler (g 'gen)))
+	  (lambda (g val) (set! (mus-scaler (g 'gen)) val))))))
+
 (defgenerator (nrsin
 	       :make-wrapper (lambda (g)
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       (set! (g 'gen) (make-nrxysin (g 'frequency) 1.0 (g 'n) (g 'r)))
 			       g)
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'gen)))
-				(lambda (g val) (set! (mus-frequency (g 'gen)) val))))
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (mus-scaler (g 'gen)))
-				(lambda (g val) (set! (mus-scaler (g 'gen)) val))))))
+	       :methods nrsin-methods)
   (frequency *clm-default-frequency*) (n 1) (r 0.5) 
   (gen #f))
 
@@ -754,6 +757,36 @@
   (nrxysin (gen 'gen) fm))
 
 
+(define nrcos-methods
+  (list
+   (cons 'mus-order
+	 (make-procedure-with-setter
+	  (lambda (g) (- (g 'n) 1))
+	  (lambda (g val) 
+	    (set! (g 'n) (+ 1 val))
+	    (set! (g 'e1) (expt (g 'r) (g 'n)))
+	    (set! (g 'e2) (expt (g 'r) (+ (g 'n) 1)))
+	    (set! (g 'norm) (- (/ (- (expt (abs (g 'r)) (g 'n)) 1) (- (abs (g 'r)) 1)) 1.0))
+	    (set! (g 'trouble) (or (= (g 'n) 1) (< (abs (g 'r)) nearly-zero)))
+	    val)))
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (radians->hz (g 'frequency)))
+	  (lambda (g val) (set! (g 'frequency) (hz->radians val)))))
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) 
+	    (g 'r))
+	  (lambda (g val)
+	    (set! (g 'r) (min 0.999999 (max -0.999999 val)))
+	    (with-environment g
+	      (let ((absr (abs r)))
+		(set! rr (* r r))
+		(set! r1 (+ 1.0 rr))
+		(set! norm (- (/ (- (expt absr n) 1) (- absr 1)) 1.0))
+		(set! trouble (or (= n 1) 
+				  (< absr 1.0e-12)))))
+	    val)))))
 
 (defgenerator (nrcos
 	       :make-wrapper (lambda (g)
@@ -767,35 +800,7 @@
 			       (set! (g 'norm) (- (/ (- (expt (abs (g 'r)) (g 'n)) 1) (- (abs (g 'r)) 1)) 1.0)) ; n+1??
 			       (set! (g 'trouble) (or (= (g 'n) 1) (< (abs (g 'r)) nearly-zero)))
 			       g)
-	       :methods (list
-			 (cons 'mus-order
-			       (make-procedure-with-setter
-				(lambda (g) (- (g 'n) 1))
-				(lambda (g val) 
-				  (set! (g 'n) (+ 1 val))
-				  (set! (g 'e1) (expt (g 'r) (g 'n)))
-				  (set! (g 'e2) (expt (g 'r) (+ (g 'n) 1)))
-				  (set! (g 'norm) (- (/ (- (expt (abs (g 'r)) (g 'n)) 1) (- (abs (g 'r)) 1)) 1.0))
-				  (set! (g 'trouble) (or (= (g 'n) 1) (< (abs (g 'r)) nearly-zero)))
-				  val)))
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (radians->hz (g 'frequency)))
-				(lambda (g val) (set! (g 'frequency) (hz->radians val)))))
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) 
-				  (g 'r))
-				(lambda (g val)
-				  (set! (g 'r) (min 0.999999 (max -0.999999 val)))
-				  (with-environment g
-				    (let ((absr (abs r)))
-				      (set! rr (* r r))
-				      (set! r1 (+ 1.0 rr))
-				      (set! norm (- (/ (- (expt absr n) 1) (- absr 1)) 1.0))
-				      (set! trouble (or (= n 1) 
-							(< absr 1.0e-12)))))
-				    val)))))
+	       :methods nrcos-methods)
   (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0) fm rr r1 e1 e2 norm trouble)
 
 
@@ -1043,19 +1048,22 @@
 
 ;;; G&R 1st col ksinkx cases
 
+(define nkssb-methods
+  (list
+   (cons 'mus-order
+	 (make-procedure-with-setter
+	  (lambda (g) (- (g 'n) 1))
+	  (lambda (g val) 
+	    (set! (g 'n) (+ 1 val))
+	    (set! (g 'norm) (/ (* 0.5 val (- val 1))))))))) ; nominal n is off by 1
+
 (defgenerator (nkssb
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'n) (+ 1 (g 'n))) ; sum goes 1 to n-1
 			       (set! (g 'norm) (/ (* 0.5 (g 'n) (- (g 'n) 1))))
 			       g)
-	       :methods (list
-			 (cons 'mus-order
-			       (make-procedure-with-setter
-				(lambda (g) (- (g 'n) 1))
-				(lambda (g val) 
-				  (set! (g 'n) (+ 1 val))
-				  (set! (g 'norm) (/ (* 0.5 val (- val 1))))))))) ; nominal n is off by 1
+	       :methods nkssb-methods)
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm interp norm)
 
 
@@ -1376,6 +1384,33 @@
 ;;;
 ;;; inf sinusoids scaled by r: rcos, rssb
 
+(define rcos-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'osc)))
+	  (lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+   
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val) 
+	    (set! (g 'r) (generator-clamp-r val))
+	    (set! (g 'rr) (* (g 'r) (g 'r)))
+	    (set! (g 'rr+1) (+ 1.0 (g 'rr)))
+	    (set! (g 'rr-1) (- 1.0 (g 'rr)))
+	    (set! (g 'r2) (* 2.0 (g 'r)))
+	    (let ((absr (abs (g 'r))))
+	      (if (< absr nearly-zero)
+		  (set! (g 'norm) 0.0)
+		  (set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))))
+	    val)))
+   
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'osc)))
+	  (lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+
 (defgenerator (rcos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'osc) (make-oscil (g 'frequency) (* 0.5 pi)))
@@ -1389,31 +1424,7 @@
 				     (set! (g 'norm) 0.0)
 				     (set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))))
 			       g)
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'osc)))
-				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
-
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-				(lambda (g val) 
-				  (set! (g 'r) (generator-clamp-r val))
-				  (set! (g 'rr) (* (g 'r) (g 'r)))
-				  (set! (g 'rr+1) (+ 1.0 (g 'rr)))
-				  (set! (g 'rr-1) (- 1.0 (g 'rr)))
-				  (set! (g 'r2) (* 2.0 (g 'r)))
-				  (let ((absr (abs (g 'r))))
-				    (if (< absr nearly-zero)
-					(set! (g 'norm) 0.0)
-					(set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))))
-				  val)))
-				  
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'osc)))
-				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+	       :methods rcos-methods)
   (frequency *clm-default-frequency*) (r 0.5) fm
   (osc #f) rr norm rr+1 rr-1 r2)
 
@@ -1506,6 +1517,12 @@
 |#
 
 
+(define rssb-methods
+  (list
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
 
 (defgenerator (rssb 
 	       :make-wrapper (lambda (g)
@@ -1513,11 +1530,7 @@
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       g)
 	       
-	       :methods (list
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+	       :methods rssb-methods)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm interp)
 
 
@@ -1692,6 +1705,16 @@
 ;;;
 ;;; similar to rssb: (JO 1st)
 
+(define rxysin-methods
+  (list
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val) 
+	    (set! (g 'r) (generator-clamp-r val))
+	    (set! (g 'r2) (* -2.0 (g 'r)))
+	    (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r)))))))))
+  
 (defgenerator (rxysin
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
@@ -1699,15 +1722,7 @@
 			       (set! (g 'r2) (* -2.0 (g 'r)))
 			       (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r))))
 			       g)
-	       :methods (list
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-				(lambda (g val) 
-				  (set! (g 'r) (generator-clamp-r val))
-				  (set! (g 'r2) (* -2.0 (g 'r)))
-				  (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r)))))))))
-  
+	       :methods rxysin-methods)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm rr r2)
 
 
@@ -1733,6 +1748,17 @@
 |#
 
 
+(define rxycos-methods
+  (list
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val) 
+	    (set! (g 'r) (generator-clamp-r val))
+	    (set! (g 'r2) (* -2.0 (g 'r)))
+	    (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r))))
+	    (set! (g 'norm) (- 1.0 (abs (g 'r)))))))))
+
 (defgenerator (rxycos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
@@ -1741,15 +1767,7 @@
 			       (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r))))
 			       (set! (g 'norm) (- 1.0 (abs (g 'r)))) ; abs for negative r
 			       g)
-	       :methods (list
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-				(lambda (g val) 
-				  (set! (g 'r) (generator-clamp-r val))
-				  (set! (g 'r2) (* -2.0 (g 'r)))
-				  (set! (g 'rr) (+ 1.0 (* (g 'r) (g 'r))))
-				  (set! (g 'norm) (- 1.0 (abs (g 'r)))))))))
+	       :methods rxycos-methods)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm norm rr r2)
 
 
@@ -1788,33 +1806,35 @@
 	  (min r maxr)
 	  (max r (- maxr))))))
 
+(define safe-rxycos-methods
+  (list
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val)
+	    (set! (g 'r) val)
+	    (set! (g 'r) (clamp-rxycos-r g 0.0)))))
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (radians->hz (g 'frequency)))
+	  (lambda (g val)
+	    (set! (g 'frequency) (hz->radians val))
+	    (set! (g 'r) (clamp-rxycos-r g 0.0))
+	    val)))
+   (cons 'mus-offset ; ratio accessor in defgenerator
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'ratio))
+	  (lambda (g val)
+	    (set! (g 'ratio) val)
+	    (set! (g 'r) (clamp-rxycos-r g 0.0))
+	    val)))))
+
 (defgenerator (safe-rxycos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'r) (clamp-rxycos-r g 0.0))
 			       g)
-	       :methods (list
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-				(lambda (g val)
-				  (set! (g 'r) val)
-				  (set! (g 'r) (clamp-rxycos-r g 0.0)))))
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (radians->hz (g 'frequency)))
-				(lambda (g val)
-				  (set! (g 'frequency) (hz->radians val))
-				  (set! (g 'r) (clamp-rxycos-r g 0.0))
-				  val)))
-			 (cons 'mus-offset ; ratio accessor in defgenerator
-			       (make-procedure-with-setter
-				(lambda (g) (g 'ratio))
-				(lambda (g val)
-				  (set! (g 'ratio) val)
-				  (set! (g 'r) (clamp-rxycos-r g 0.0))
-				  val)))))
-  
+	       :methods safe-rxycos-methods)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) (cutoff 0.001) fm)
 
 
@@ -1858,6 +1878,17 @@
 
 ;;; sndclm.html G&R 2nd col last row (with normalization)
 
+(define ercos-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'osc)))
+	  (lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'osc)))
+	  (lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+  
 (defgenerator (ercos
 	       :make-wrapper (lambda (g)
 			       (if (<= (g 'r) 0.0) (set! (g 'r) 0.00001))
@@ -1867,16 +1898,7 @@
 				 (set! (g 'offset) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
 				 (set! (g 'scaler) (* (sinh (g 'r)) (g 'offset))))
 			       g)
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'osc)))
-				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'osc)))
-				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
-  
+	       :methods ercos-methods)
   (frequency *clm-default-frequency*) (r 1.0) fm
   (osc #f) scaler offset cosh-t)
 
@@ -2109,19 +2131,22 @@
 
 ;;; this is the cos side of rkoddssb with r=e^-a
 
+(define eoddcos-methods
+  (list
+   (cons 'mus-frequency 
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'osc)))
+	  (lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+   (cons 'mus-phase 
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'osc)))
+	  (lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+
 (defgenerator (eoddcos 
 	       :make-wrapper (lambda (g)
 			       (set! (g 'osc) (make-oscil (g 'frequency) (* 0.5 pi)))
 			       g)
-	       :methods (list
-			 (cons 'mus-frequency 
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'osc)))
-				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
-			 (cons 'mus-phase 
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'osc)))
-				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+	       :methods eoddcos-methods)
   (frequency *clm-default-frequency*) (r 1.0) fm
   (osc #f))
 
@@ -2203,24 +2228,27 @@
 ;;; G&R 2nd col 6th row, also J 536
 ;;; r^k/k -- this sums to ln(1/(1-x)) if x<1 (J 118)
 
+(define rkcos-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'osc)))
+	  (lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val) (set! (g 'r) (generator-clamp-r val)))))
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'osc)))
+	  (lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+
 (defgenerator (rkcos 
 	       :make-wrapper (lambda (g)
 			       (set! (g 'osc) (make-oscil (g 'frequency) (* 0.5 pi)))
 			       (set! (g 'r) (generator-clamp-r (g 'r))) ; or clip at 0.0?
 			       g)
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'osc)))
-				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'osc)))
-				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+	       :methods rkcos-methods)
   (frequency *clm-default-frequency*) (r 0.5) fm
   (osc #f))
 
@@ -2246,15 +2274,18 @@
 |#
 
 
+(define rksin-methods
+  (list
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+
 (defgenerator (rksin
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g)
-	       :methods (list
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+	       :methods rksin-methods)
   (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 ;;; normalization based on 0 of derivative of atan arg (for max) at cos x = r,
@@ -2283,15 +2314,18 @@
 
 
 
+(define rkssb-methods
+  (list
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+
 (defgenerator (rkssb
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g)
-	       :methods (list
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+	       :methods rkssb-methods)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
@@ -2331,16 +2365,19 @@
 
 ;;; G&R 2nd col 3rd from last (simplified)
 
+(define rk!cos-methods
+  (list
+   (cons 'mus-phase 
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'angle))
+	  (lambda (g val) (set! (g 'angle) val))))))
+
 (defgenerator (rk!cos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'norm) (/ 1.0 (- (exp (abs r)) 1.0)))
 			       g)
-	       :methods (list
-			 (cons 'mus-phase 
-			       (make-procedure-with-setter
-				(lambda (g) (g 'angle))
-				(lambda (g val) (set! (g 'angle) val))))))
+	       :methods rk!cos-methods)
   (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm norm)
 
 
@@ -2600,6 +2637,17 @@
 ;;; this gives a sum of cosines of decreasing amp where the "k" parameter determines
 ;;;   the "index" (in FM nomenclature) -- higher k = more cosines
 
+(define r2k!cos-methods
+  (list 
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'osc)))
+	  (lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'osc)))
+	  (lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+
 (defgenerator (r2k!cos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'rr1) (+ 1.0 (* (g 'r) (g 'r))))
@@ -2608,15 +2656,7 @@
 			       (set! (g 'osc) (make-polywave (g 'frequency) (list 0 (g 'rr1) 1 (- (g 'r2))) mus-chebyshev-second-kind))
 			       (set! (g 'k) (- (g 'k)))
 			       g)
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'osc)))
-				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'osc)))
-				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+	       :methods r2k!cos-methods)
   (frequency *clm-default-frequency*) (r 0.5) (k 0.0) rr1 r2 norm fm
   (osc #f))
 
@@ -2816,15 +2856,18 @@
 ;;;   it produces sum r^k sin(2k-1)x
 ;;;   (not normalized)
 
+(define dblsum-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (radians->hz (* 0.5 (g 'frequency))))
+	  (lambda (g val) (set! (g 'frequency) (hz->radians (* 2 val))) val)))))
+
 (defgenerator (dblsum
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (* 2 (g 'frequency))))
 			       g)
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (radians->hz (* 0.5 (g 'frequency))))
-				(lambda (g val) (set! (g 'frequency) (hz->radians (* 2 val))) val)))))
+	       :methods dblsum-methods)
   (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 
@@ -2856,6 +2899,16 @@
 
 ;;;  G&R 2nd col rows 7&8 (odd r^k/k) 
 
+(define rkoddssb-methods
+  (list
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val) 
+	    (set! (g 'r) (generator-clamp-r val))
+	    (set! (g 'rr1) (+ 1.0 (* (g 'r) (g 'r))))
+	    (set! (g 'norm) (/ 1.0 (- (log (+ 1.0 (g 'r))) (log (- 1.0 (g 'r)))))))))))
+
 (defgenerator (rkoddssb
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
@@ -2863,15 +2916,7 @@
 			       (set! (g 'rr1) (+ 1.0 (* (g 'r) (g 'r))))
 			       (set! (g 'norm) (/ 1.0 (- (log (+ 1.0 (g 'r))) (log (- 1.0 (g 'r))))))
 			       g)
-	       
-	       :methods (list
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-				(lambda (g val) 
-				  (set! (g 'r) (generator-clamp-r val))
-				  (set! (g 'rr1) (+ 1.0 (* (g 'r) (g 'r))))
-				  (set! (g 'norm) (/ 1.0 (- (log (+ 1.0 (g 'r))) (log (- 1.0 (g 'r)))))))))))
+	       :methods rkoddssb-methods)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm rr1 norm)
 
 
@@ -3017,19 +3062,22 @@
 
 ;;; Zygmund 2nd -- not actually very useful, but shows cos 2nx of abs
 
+(define abssin-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'osc)))
+	  (lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'osc)))
+	  (lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+
 (defgenerator (abssin
 	       :make-wrapper (lambda (g)
 			       (set! (g 'osc) (make-oscil (g 'frequency)))
 			       g)	       
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'osc)))
-				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'osc)))
-				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+	       :methods abssin-methods)
   (frequency *clm-default-frequency*) fm
   (osc #f))
 
@@ -4346,6 +4394,13 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; k3sin
 
+(define k3sin-methods
+  (list
+   (cons 'mus-reset
+	 (lambda (g)
+	   (set! (g 'frequency) 0.0)
+	   (set! (g 'angle) 0.0)))))
+
 (defgenerator (k3sin
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
@@ -4354,11 +4409,7 @@ index 10 (so 10/2 is the bes-jn arg):
 						      (/ pi -4.0)
 						      (/ 12.0)))
 			       g)
-	       :methods (list
-			 (cons 'mus-reset
-			       (lambda (g)
-				 (set! (g 'frequency) 0.0)
-				 (set! (g 'angle) 0.0)))))
+	       :methods k3sin-methods)
   (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f) fm)
 
 
@@ -4388,6 +4439,18 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; I(z) case A&S
 
+(define izcos-methods
+  (list
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'r))
+	  (lambda (g val)
+	    (set! (g 'r) val)
+	    (set! (g 'dc) (bes-i0 val))
+	    (set! (g 'norm) (- (exp val) (g 'dc)))
+	    (set! (g 'inorm) (/ (g 'norm)))
+	    val)))))
+
 (defgenerator (izcos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
@@ -4395,16 +4458,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (set! (g 'norm) (- (exp (g 'r)) (g 'dc)))
 			       (set! (g 'inorm) (/ (g 'norm)))
 			       g)
-	       :methods (list
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
-			       (lambda (g val)
-				 (set! (g 'r) val)
-				 (set! (g 'dc) (bes-i0 val))
-				 (set! (g 'norm) (- (exp val) (g 'dc)))
-				 (set! (g 'inorm) (/ (g 'norm)))
-				 val)))))
+	       :methods izcos-methods)
   (frequency *clm-default-frequency*) (r 1.0) (angle 0.0)
   (dc 0.0) (norm 1.0) inorm fm)
 
@@ -4503,6 +4557,24 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 
+(define adjustable-square-wave-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'p1)))
+	  (lambda (g val) (set! (mus-frequency (g 'p1)) val))))
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'p1)))
+	  (lambda (g val) (set! (mus-phase (g 'p1)) val))))
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'duty-factor))
+	  (lambda (g val)
+	    (set! (g 'duty-factor) val)
+	    (set! (mus-phase (g 'p2)) (* two-pi (- 1.0 (g 'duty-factor))))
+	    val)))))
+
 (defgenerator (adjustable-square-wave 
 	       :make-wrapper 
 	       (lambda (g)
@@ -4514,24 +4586,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				(- (g 'amplitude))
 				(* two-pi (- 1.0 (g 'duty-factor)))))
 		 g)
-	       
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'p1)))
-				(lambda (g val) (set! (mus-frequency (g 'p1)) val))))
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'p1)))
-				(lambda (g val) (set! (mus-phase (g 'p1)) val))))
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'duty-factor))
-				(lambda (g val)
-				  (set! (g 'duty-factor) val)
-				  (set! (mus-phase (g 'p2)) (* two-pi (- 1.0 (g 'duty-factor))))
-				  val)))))
-  
+	       :methods adjustable-square-wave-methods)
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0)
   (sum 0.0) (p1 #f) (p2 #f) fm)
 
@@ -4555,6 +4610,26 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
+(define adjustable-triangle-wave-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'gen)))
+	  (lambda (g val) (set! (mus-frequency (g 'gen)) val))))
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'gen)))
+	  (lambda (g val) (set! (mus-phase (g 'gen)) val))))
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'duty-factor))
+	  (lambda (g val)
+	    (set! (g 'duty-factor) val)
+	    (set! (g 'top) (- 1.0 val))
+	    (if (not (= val 0.0))
+		(set! (g 'scl) (/ (g 'amplitude) val)))
+	    val)))))
+  
 (defgenerator (adjustable-triangle-wave 
 	       :make-wrapper 
 	       (lambda (g)
@@ -4564,26 +4639,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		   (if (not (= df 0.0))
 		       (set! (g 'scl) (/ (g 'amplitude) df)))
 		   g))
-	       
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'gen)))
-				(lambda (g val) (set! (mus-frequency (g 'gen)) val))))
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'gen)))
-				(lambda (g val) (set! (mus-phase (g 'gen)) val))))
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'duty-factor))
-				(lambda (g val)
-				  (set! (g 'duty-factor) val)
-				  (set! (g 'top) (- 1.0 val))
-				  (if (not (= val 0.0))
-				      (set! (g 'scl) (/ (g 'amplitude) val)))
-				  val)))))
-  
+	       :methods adjustable-triangle-wave-methods)
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
   (gen #f) (top 0.0) (scl 0.0) fm)
 
@@ -4606,6 +4662,26 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
+(define adjustable-sawtooth-wave-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'gen)))
+	  (lambda (g val) (set! (mus-frequency (g 'gen)) val))))
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'gen)))
+	  (lambda (g val) (set! (mus-phase (g 'gen)) val))))
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'duty-factor))
+	  (lambda (g val)
+	    (set! (g 'duty-factor) val)
+	    (set! (g 'top) (- 1.0 val))
+	    (if (not (= val 0.0))
+		(set! (g 'scl) (/ (g 'amplitude) val)))
+	    val)))))
+  
 (defgenerator (adjustable-sawtooth-wave 
 	       :make-wrapper 
 	       (lambda (g)
@@ -4615,26 +4691,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		   (if (not (= df 0.0))
 		       (set! (g 'scl) (/ (g 'amplitude) df)))
 		   g))
-	       
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'gen)))
-				(lambda (g val) (set! (mus-frequency (g 'gen)) val))))
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'gen)))
-				(lambda (g val) (set! (mus-phase (g 'gen)) val))))
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'duty-factor))
-				(lambda (g val)
-				  (set! (g 'duty-factor) val)
-				  (set! (g 'top) (- 1.0 val))
-				  (if (not (= val 0.0))
-				      (set! (g 'scl) (/ (g 'amplitude) val)))
-				  val)))))
-  
+	       :methods adjustable-sawtooth-wave-methods)
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
   (gen #f) (top 0.0) (scl 0.0) fm)
 
@@ -4658,6 +4715,26 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; and just for laughs... (almost anything would fit in this hack)
+(define adjustable-oscil-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'gen)))
+	  (lambda (g val) (set! (mus-frequency (g 'gen)) val))))
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'gen)))
+	  (lambda (g val) (set! (mus-phase (g 'gen)) val))))
+   (cons 'mus-scaler
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'duty-factor))
+	  (lambda (g val)
+	    (set! (g 'duty-factor) val)
+	    (set! (g 'top) (- 1.0 val))
+	    (if (not (= val 0.0))
+		(set! (g 'scl) (/ val)))
+	    val)))))
+  
 (defgenerator (adjustable-oscil 
 	       :make-wrapper (lambda (g)
 			       (let ((df (g 'duty-factor)))
@@ -4666,26 +4743,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (if (not (= df 0.0))
 				     (set! (g 'scl) (/ df)))
 				 g))
-	       
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'gen)))
-				(lambda (g val) (set! (mus-frequency (g 'gen)) val))))
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'gen)))
-				(lambda (g val) (set! (mus-phase (g 'gen)) val))))
-			 (cons 'mus-scaler
-			       (make-procedure-with-setter
-				(lambda (g) (g 'duty-factor))
-				(lambda (g val)
-				  (set! (g 'duty-factor) val)
-				  (set! (g 'top) (- 1.0 val))
-				  (if (not (= val 0.0))
-				      (set! (g 'scl) (/ val)))
-				  val)))))
-  
+	       :methods adjustable-oscil-methods)
   (frequency *clm-default-frequency*) (duty-factor 0.5)
   (gen #f) (top 0.0) (scl 0.0) fm)
 
@@ -4734,21 +4792,23 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 
+(define round-interp-methods
+  (list
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-frequency (g 'rnd)))
+	  (lambda (g val) (set! (mus-frequency (g 'rnd)) val))))
+   (cons 'mus-phase
+	 (make-procedure-with-setter
+	  (lambda (g) (mus-phase (g 'rnd)))
+	  (lambda (g val) (set! (mus-phase (g 'rnd)) val))))))
+
 (defgenerator (round-interp 
 	       :make-wrapper (lambda (g)
 			       (set! (g 'rnd) (make-rand-interp (g 'frequency) (g 'amplitude)))
 			       (set! (g 'flt) (make-moving-average (g 'n)))
 			       g)
-	       :methods (list
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (mus-frequency (g 'rnd)))
-				(lambda (g val) (set! (mus-frequency (g 'rnd)) val))))
-			 (cons 'mus-phase
-			       (make-procedure-with-setter
-				(lambda (g) (mus-phase (g 'rnd)))
-				(lambda (g val) (set! (mus-phase (g 'rnd)) val))))))
-  
+	       :methods round-interp-methods)
   (frequency *clm-default-frequency*) (n 1) (amplitude 1.0)
   (rnd #f) (flt #f) fm)
 
@@ -4865,6 +4925,29 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;
 ;;; sinc-train
 
+(define sinc-train-methods
+  (list
+   (cons 'mus-order
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'original-n))
+	  (lambda (g val)
+	    (if (<= val 0)
+		(begin
+		  (set! (g 'original-n) 1)
+		  (set! (g 'n) 3))
+		(begin
+		  (set! (g 'original-n) val)
+		  (set! (g 'n) (+ 1 (* 2 val)))))
+	    (set! (g 'frequency) (* 0.5 (g 'n) (hz->radians (g 'original-frequency))))
+	    (g 'original-n))))
+   (cons 'mus-frequency
+	 (make-procedure-with-setter
+	  (lambda (g) (g 'original-frequency))
+	  (lambda (g val)
+	    (set! (g 'original-frequency) val)
+	    (set! (g 'frequency) (* 0.5 (g 'n) (hz->radians val)))
+	    val)))))
+
 (defgenerator (sinc-train 
 	       :make-wrapper (lambda (g)
 			       (if (<= (g 'n) 0)
@@ -4876,30 +4959,8 @@ index 10 (so 10/2 is the bes-jn arg):
 				     (set! (g 'n) (+ 1 (* 2 (g 'n)))))) ; mimic ncos
 			       (set! (g 'original-frequency) (g 'frequency))
 			       (set! (g 'frequency) (* 0.5 (g 'n) (hz->radians (g 'frequency))))
-			       g)
-	       
-	       :methods (list
-			 (cons 'mus-order
-			       (make-procedure-with-setter
-				(lambda (g) (g 'original-n))
-				(lambda (g val)
-				  (if (<= val 0)
-				      (begin
-					(set! (g 'original-n) 1)
-					(set! (g 'n) 3))
-				      (begin
-					(set! (g 'original-n) val)
-					(set! (g 'n) (+ 1 (* 2 val)))))
-				  (set! (g 'frequency) (* 0.5 (g 'n) (hz->radians (g 'original-frequency))))
-				  (g 'original-n))))
-			 (cons 'mus-frequency
-			       (make-procedure-with-setter
-				(lambda (g) (g 'original-frequency))
-				(lambda (g val)
-				  (set! (g 'original-frequency) val)
-				  (set! (g 'frequency) (* 0.5 (g 'n) (hz->radians val)))
-				  val)))))
-  
+			       g)	       
+	       :methods sinc-train-methods)  
   (frequency *clm-default-frequency*) (n 1) (angle 0.0)
   (original-n 1) (original-frequency 0.0) fm)
 
@@ -5991,6 +6052,13 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define last-moving-fft-window #f)
 
+(define moving-fft-methods
+  (list
+   (cons 'mus-data (lambda (g) (g 'data)))
+   (cons 'mus-xcoeffs (lambda (g) (g 'rl)))
+   (cons 'mus-ycoeffs (lambda (g) (g 'im)))
+   (cons 'mus-run (lambda (g arg1 arg2) (moving-fft g)))))
+
 (defgenerator (moving-fft
 	       :make-wrapper (lambda (g)
 			       (let ((n (g 'n)))
@@ -6005,11 +6073,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (float-vector-scale! (g 'window) (/ 2.0 (* 0.54 n)))
 				 (set! (g 'outctr) (+ n 1)) ; first time fill flag
 				 g))
-	       :methods (list
-			 (cons 'mus-data (lambda (g) (g 'data)))
-			 (cons 'mus-xcoeffs (lambda (g) (g 'rl)))
-			 (cons 'mus-ycoeffs (lambda (g) (g 'im)))
-			 (cons 'mus-run (lambda (g arg1 arg2) (moving-fft g)))))
+	       :methods moving-fft-methods)
   (input #f) (n 512) (hop 128) (outctr 0)
   (rl #f) (im #f) (data #f) 
   (window #f))
@@ -6288,6 +6352,11 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; ---------------- moving-autocorrelation ----------------
 
+(define moving-autocorrelation-methods
+  (list
+   (cons 'mus-run (lambda (g arg1 arg2) (moving-autocorrelation g)))
+   (cons 'mus-data (lambda (g) (g 'rl)))))
+
 (defgenerator (moving-autocorrelation
 	       :make-wrapper (lambda (g)
 			       (let ((n (g 'n)))
@@ -6296,9 +6365,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (g 'data) (make-float-vector n))
 				 (set! (g 'outctr) (+ n 1)) ; first time fill flag
 				 g))
-	       :methods (list
-			 (cons 'mus-run (lambda (g arg1 arg2) (moving-autocorrelation g)))
-			 (cons 'mus-data (lambda (g) (g 'rl)))))
+	       :methods moving-autocorrelation-methods)
   (input #f) (n 512) (hop 128) (outctr 0)
   (rl #f) (im #f) (data #f))
 
@@ -6335,6 +6402,10 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; ---------------- moving-pitch ----------------
 
+(define moving-pitch-methods
+  (list
+   (cons 'mus-run (lambda (g arg1 arg2) (moving-pitch g)))))
+
 (defgenerator (moving-pitch
 	       :make-wrapper (lambda (g)
 			       (set! (g 'ac) (make-moving-autocorrelation
@@ -6342,9 +6413,7 @@ index 10 (so 10/2 is the bes-jn arg):
 					      (g 'n)
 					      (g 'hop)))
 			       g)
-	       :methods (list
-			 (cons 'mus-run (lambda (g arg1 arg2) (moving-pitch g)))))
-  
+	       :methods moving-pitch-methods)
   (input #f) (n 512) (hop 128)
   (ac #f) (val 0.0))
 

@@ -174,7 +174,7 @@
  */
 #endif
 
-#define SYMBOL_TABLE_SIZE 19259
+#define SYMBOL_TABLE_SIZE 13567 /* 19259 */
 /* names are hashed into the symbol table (a vector) and collisions are chained as lists. 
  */
 
@@ -1102,8 +1102,6 @@ typedef struct s7_cell {
       int type;
       void *value;         /*  the value the caller associates with the object */
       s7_pointer e;        /*   the method list, if any (open environment) */
-      s7_Int array_length;
-      s7_Double *array;
     } c_obj;
     
     struct {
@@ -1759,12 +1757,7 @@ static int t_optimized = T_OPTIMIZED;
 #define is_checked(p)                 ((typeflag(p) & T_CHECKED) != 0)
 #define is_not_checked(p)             ((typeflag(p) & T_CHECKED) == 0)
 
-#define T_CHECKED_1                   (1 << (TYPE_BITS + 11))
-#define set_checked_1(p)              typeflag(p) |= T_CHECKED_1
-#define is_checked_1(p)               ((typeflag(p) & T_CHECKED_1) != 0)
-/* optimizer flags that an expression has been checked for possible optimization 
- *    (trying to avoid circular lists during the optimization scan)
- */
+/* bit 11 is unused I think */
 
 #define T_UNSAFE                      (1 << (TYPE_BITS + 15))
 #define set_unsafe(p)                 typeflag(p) |= T_UNSAFE
@@ -4509,19 +4502,6 @@ static s7_pointer g_stack_top(s7_scheme *sc, s7_pointer args)
   return(s7_make_integer(sc, (sc->stack_end - sc->stack_start) / 4));
 }
 
-#if 0
-static s7_pointer g_stack(s7_scheme *sc, s7_pointer args)
-{
-  int loc;
-  /* if this is ever exported, check here for wrong type arg */
-  loc = (int)(s7_integer(car(args)) + 1) * 4 - 1;
-  /* stack op is not a valid s7_pointer (it's the op enum), and args can be invalid
-   *   since it is not always set and might have been gc'd previously.
-   */
-  return(list_2(sc, stack_code(sc->stack, loc), stack_environment(sc->stack, loc)));
-}
-#endif
-
 
 
 
@@ -4533,9 +4513,18 @@ static unsigned int raw_string_hash(const unsigned char *key)
 { 
   unsigned int hashed = 0;
   const unsigned char *c; 
+
   for (c = key; *c; c++) 
     hashed = *c + hashed * HASH_MULT;
-  return(hashed); 
+  return(hashed);
+
+  /* hash_mult 4 just adding new: snd-test: H: 1136155, s: 786385, f: 572859
+   *           4 add, add0 at end:          H: 2208589, s:1936257, f: 572814, z: 27708
+   *           13:                          H: 1123916, s: 612287, f: 572909, z: 27631 [0 5652 1 6454 2 4148 top 8]!
+   *           37:                          H: 1076203, s: 573052, f: 572851, z: 27708![0 5152 1 6818 2 4536 top 9]!
+   * so 37 wins at hashing, we save 9 in strcmp, we lose 7 here to multiply by 37 -- we win 2 (callgrind says 5)
+   * But 37 loses big in other cases -- not sure what to do!
+   */
 } 
 
 
@@ -4588,13 +4577,14 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int hash,
 } 
 
 
+
 static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, unsigned int hash, unsigned int location) 
 { 
   s7_pointer x; 
   for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
     if ((hash == pair_raw_hash(x)) &&
 	(strings_are_equal(name, symbol_name(car(x)))))
-      return(car(x)); 
+      return(car(x));
   return(sc->NIL); 
 } 
 
@@ -4683,7 +4673,7 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
   for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
     if ((hash == pair_raw_hash(x)) &&
 	(strings_are_equal(name, symbol_name(car(x)))))
-      return(car(x)); 
+      return(car(x));
 
   if (sc->symbol_table_is_locked)
     return(s7_error(sc, sc->ERROR, sc->NIL));
@@ -5634,16 +5624,17 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
   if (!is_null(bindings))
     {
       s7_pointer x;
-      int gc_loc;
-      gc_loc = s7_gc_protect(sc, new_e);
+      sc->temp4 = new_e;
 
       for (x = bindings; is_not_null(x); x = cdr(x))
 	{
 	  s7_pointer p;
+
 	  p = car(x);
 	  if (is_pair(p))
 	    s7_make_slot(sc, new_e, car(p), cdr(p));
 	  else append_environment(sc, new_e, p);
+
 	  /* env as arg for common case: 
 	   *   (with-environment (augment-environment (current-environment) (c-object-environment obj)) ...)
 	   * to bring in all of obj's fields/methods but keep access to the surrounding context.
@@ -5651,7 +5642,6 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 	   *  are being set -- we've made a new slot!  Not sure how to handle this.
 	   */
 	}
-      s7_gc_unprotect_at(sc, gc_loc);
     }
 
   return(new_e);
@@ -5747,10 +5737,9 @@ static s7_pointer g_environment_star(s7_scheme *sc, s7_pointer args)
 new environment.  The arguments should be in the order symbol its-value."
 
   s7_pointer new_e, new_s, p, q;
-  int gc_loc;
 
   new_e = new_frame_in_env(sc, sc->NIL);
-  gc_loc = s7_gc_protect(sc, new_e);
+  sc->temp4 = new_e; /* GC protect it */
   for (p = args; is_not_null(p); p = cdr(q))
     {
       q = cdr(p);
@@ -5759,15 +5748,10 @@ new environment.  The arguments should be in the order symbol its-value."
 
       new_s = car(p);
       if (!is_symbol(new_s))
-	{
-	  s7_gc_unprotect_at(sc, gc_loc);
-	  return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_STAR, new_s, A_SYMBOL));
-	}
+	return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_STAR, new_s, A_SYMBOL));
 
       ADD_SLOT(new_e, new_s, car(q));         /* new_frame_in_env checks the gc triggers so this should be somewhat safe */
     }
-  s7_gc_unprotect_at(sc, gc_loc);
-
   return(new_e);
 }
 
@@ -5940,7 +5924,6 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
   if (is_environment(env))
     {
       s7_pointer x, new_e;
-      int gc_loc;
 
       if (env == sc->global_env)   /* (copy (global-environment)) or (copy (procedure-environment abs)) etc */
 	return(sc->global_env);
@@ -5956,13 +5939,12 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 	  set_has_methods(new_e);
 	}
       else new_e = new_frame_in_env(sc, next_environment(env));
-      gc_loc = s7_gc_protect(sc, new_e);
+      sc->temp4 = new_e;
 
       for (x = environment_slots(env); is_slot(x); x = next_slot(x))
 	ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
       environment_slots(new_e) = reverse_slots(sc, environment_slots(new_e));
-      
-      s7_gc_unprotect_at(sc, gc_loc);      
+
       return(new_e);
     }
   return(sc->NIL);
@@ -31222,19 +31204,12 @@ static int hash_float_location(s7_Double x)
 static unsigned int hash_loc(s7_scheme *sc, s7_pointer key)
 {
   unsigned int loc = 0;
-#if 0
-  const unsigned char *c;  /* need "unsigned" here else (hash-table-index #u8(255 0)) -> -1 */
-#endif
 
   switch (type(key))
     {
     case T_STRING:
       if (string_hash(key) != 0)
 	return(string_hash(key));
-#if 0
-      for (c = (const unsigned char *)string_value(key); *c; c++)
-	loc = *c + loc * HASH_MULT;
-#endif
       loc = raw_string_hash((const unsigned char *)string_value(key));
       string_hash(key) = loc;
       return(loc);
@@ -44816,36 +44791,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 }
 
 
-static s7_pointer check_for_global_set(s7_scheme *sc, s7_pointer tree, s7_pointer e)
-{
-  /* I think the main use of this is to check for set! of a built-in function that might
-   *   otherwise be optimized as h_safe, but if that set happens in a loop, or perhaps call/cc,
-   *   the second time through we should get the new value.  See gset-test in s7test.scm.
-   */
-
-  /* we've already checked that tree is a pair.  I'm ignoring '(set! + ...) because it almost
-   *    never occurs, slows us down, and anyone doing that deserves an unoptimized loop.
-   */
-
-  if (!is_checked_1(tree))
-    {
-      s7_pointer p;
-      set_checked_1(tree);
-      
-      if ((car(tree) == sc->SET) &&
-	  (is_pair(cdr(tree))) &&
-	  (is_symbol(cadr(tree))) &&
-	  (is_global(cadr(tree))))
-	return(cons(sc, add_sym_to_list(cadr(tree)), e));
-      
-      for (p = tree; is_pair(p); p = cdr(p))
-	if (is_pair(car(p)))
-	  e = check_for_global_set(sc, car(p), e);
-    }
-  return(e);
-}
-
-
 static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int hop, s7_pointer e)
 {
   s7_pointer p;
@@ -44923,118 +44868,113 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       break;
     }
   
-  if (is_pair(cdar(x)))
+  for (p = cdar(x); is_pair(p); p = cdr(p))
+    if ((is_pair(car(p))) &&
+	(!is_checked(car(p))))
+      optimize_expression(sc, p, hop, sc->w);
+  
+  if (symbol_id(caar(x)) == 0) 
     {
-      bool happy = true;
-      sc->w = check_for_global_set(sc, cdar(x), sc->w);
-
-      for (p = cdar(x); is_pair(p); p = cdr(p))
-	if ((is_pair(car(p))) &&
-	    (!is_checked(car(p))))
-	  optimize_expression(sc, p, hop, sc->w);
-      
-      if (symbol_id(caar(x)) == 0) 
+      if ((op == OP_IF) || (op == OP_OR) || (op == OP_AND))
 	{
-	  if ((op == OP_IF) || (op == OP_OR) || (op == OP_AND))
+	  bool happy = true;
+	  for (p = cdar(x); (happy) && (is_pair(p)); p = cdr(p))
+	    happy = is_all_x_safe(sc, car(p));
+	  
+	  if ((happy) &&
+	      (is_null(p)))    /* catch the syntax error later: (or #f . 2) etc */
 	    {
-	      for (p = cdar(x); (happy) && (is_pair(p)); p = cdr(p))
-		happy = is_all_x_safe(sc, car(p));
-
-	      if ((happy) &&
-		  (is_null(p)))    /* catch the syntax error later: (or #f . 2) etc */
+	      int args, symbols = 0, pairs = 0, rest = 0;
+	      s7_pointer car_x, sym = NULL;
+	      bool c_s_is_ok = true;
+	      
+	      car_x = car(x);
+	      for (args = 0, p = cdar(x); is_pair(p); p = cdr(p), args++)
 		{
-		  int args, symbols = 0, pairs = 0, rest = 0;
-		  s7_pointer car_x, sym = NULL;
-		  bool c_s_is_ok = true;
-
-		  car_x = car(x);
-		  for (args = 0, p = cdar(x); is_pair(p); p = cdr(p), args++)
+		  if (is_symbol(car(p)))
+		    symbols++;
+		  else
 		    {
-		      if (is_symbol(car(p)))
-			symbols++;
-		      else
+		      if (!is_pair(car(p)))
+			rest++;
+		      else 
 			{
-			  if (!is_pair(car(p)))
-			    rest++;
-			  else 
-			    {
-			      pairs++;
-			      if ((c_s_is_ok) &&
-				  ((!is_h_safe_c_s(car(p))) ||
-				   ((sym) && (sym != cadar(p)))))
-				c_s_is_ok = false;
-			      else sym = cadar(p);
-			    }
+			  pairs++;
+			  if ((c_s_is_ok) &&
+			      ((!is_h_safe_c_s(car(p))) ||
+			       ((sym) && (sym != cadar(p)))))
+			    c_s_is_ok = false;
+			  else sym = cadar(p);
 			}
 		    }
-
-		  if ((op == OP_IF) &&
-		      ((args < 2) || (args > 3))) /* syntax error */
-		    return(false); 
-
-		  set_optimized(car_x);
-		  set_optimize_data(car_x, hop + OP_SAFE_C_C);
-
-		  if (pairs == 0)
-		    {
-		      if (op == OP_OR)
-			set_c_function(car_x, or_direct);
-		      else
-			{
-			  if (op == OP_AND)
-			    set_c_function(car_x, and_direct);
-			  else set_c_function(car_x, if_direct);
-			}
-		      return(true);
-		    }
-
-		  if ((pairs == args) && 
-		      (c_s_is_ok)) 
-		    {
-		      if (op == OP_OR)
-			set_c_function(car_x, or_s_direct);
-		      else
-			{
-			  if (op == OP_AND)
-			    set_c_function(car_x, and_s_direct);
-			  else set_c_function(car_x, if_s_direct);
-			}
-		      return(true);
-		    }
-
-		  /* fprintf(stderr, "%s: %d -> %d %d %d\n", DISPLAY(car(x)), args, rest, symbols, pairs); */
-		  for (p = cdar(x); is_pair(p); p = cdr(p))
-		    set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p)));
-		  
+		}
+	      
+	      if ((op == OP_IF) &&
+		  ((args < 2) || (args > 3))) /* syntax error */
+		return(false); 
+	      
+	      set_optimized(car_x);
+	      set_optimize_data(car_x, hop + OP_SAFE_C_C);
+	      
+	      if (pairs == 0)
+		{
 		  if (op == OP_OR)
-		    set_c_function(car_x, or_all_x);
+		    set_c_function(car_x, or_direct);
 		  else
 		    {
 		      if (op == OP_AND)
-			set_c_function(car_x, and_all_x);
-		      else 
-			{
-			  if ((fcdr(cddr(car_x)) == (s7_pointer)all_x_q) &&
-			      (is_pair(cdddr(car_x))))
-			    {
-			      if (fcdr(cdddr(car_x)) == (s7_pointer)all_x_q)
-				set_c_function(car_x, if_all_x_qq);
-			      else set_c_function(car_x, if_all_x_qa);
-			    }
-			  else 
-			    {
-			      if (is_null(cdddr(car_x)))
-				set_c_function(car_x, if_all_x1);
-			      else set_c_function(car_x, if_all_x2);
-			    }
-			}
-		      /* fprintf(stderr, "  -> %s\n", opt_name(car_x)); */
+			set_c_function(car_x, and_direct);
+		      else set_c_function(car_x, if_direct);
 		    }
 		  return(true);
 		}
-	      /* else we could check other if cases here (test is often all_x_safe) 
-	       */
+	      
+	      if ((pairs == args) && 
+		  (c_s_is_ok)) 
+		{
+		  if (op == OP_OR)
+		    set_c_function(car_x, or_s_direct);
+		  else
+		    {
+		      if (op == OP_AND)
+			set_c_function(car_x, and_s_direct);
+		      else set_c_function(car_x, if_s_direct);
+		    }
+		  return(true);
+		}
+	      
+	      /* fprintf(stderr, "%s: %d -> %d %d %d\n", DISPLAY(car(x)), args, rest, symbols, pairs); */
+	      for (p = cdar(x); is_pair(p); p = cdr(p))
+		set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p)));
+	      
+	      if (op == OP_OR)
+		set_c_function(car_x, or_all_x);
+	      else
+		{
+		  if (op == OP_AND)
+		    set_c_function(car_x, and_all_x);
+		  else 
+		    {
+		      if ((fcdr(cddr(car_x)) == (s7_pointer)all_x_q) &&
+			  (is_pair(cdddr(car_x))))
+			{
+			  if (fcdr(cdddr(car_x)) == (s7_pointer)all_x_q)
+			    set_c_function(car_x, if_all_x_qq);
+			  else set_c_function(car_x, if_all_x_qa);
+			}
+		      else 
+			{
+			  if (is_null(cdddr(car_x)))
+			    set_c_function(car_x, if_all_x1);
+			  else set_c_function(car_x, if_all_x2);
+			}
+		    }
+		  /* fprintf(stderr, "  -> %s\n", opt_name(car_x)); */
+		}
+	      return(true);
 	    }
+	  /* else we could check other if cases here (test is often all_x_safe) 
+	   */
 	}
     }
   return(false);
@@ -45110,6 +45050,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	/* else maybe it's something like a let variable binding: (sqrtfreq (sqrt frequency)) */
 	s7_pointer p;
 	int len = 0, pairs = 0, symbols = 0, quotes = 0;
+
 	for (p = cdar(x); is_pair(p); p = cdr(p), len++)
 	  {
 	    if (is_pair(car(p)))
@@ -45173,7 +45114,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		      }
 		    return(false); 
 		  }
-		
+
 		if (len == 2)
 		  {
 		    set_unsafely_optimized(car_x);
@@ -45193,7 +45134,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		    set_ecdr(car_x, NULL);
 		    return(false); 
 		  }
-		
+
 		if ((len == 3) &&
 		    (symbols == 3))
 		  {
@@ -45223,87 +45164,92 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		  fprintf(stderr, "%s is unknown (%d %d %d %s)\n", DISPLAY_80(car_x), pairs, len, 
 		  is_optimized(cadar_x), (is_optimized(cadar_x)) ? opt_names[optimize_data(cadar_x)] : "");
 		*/
-		if ((pairs == 1) &&
-		    (len == 1) &&
-		    (is_safe_c_s(cadar_x)))
+		if (pairs == 1)
 		  {
-		    set_unsafely_optimized(car_x);
-		    set_optimize_data(car_x, hop + OP_UNKNOWN_opSq);
-		    set_ecdr(car_x, NULL);
-		    return(false); 
-		  }
-		
-		if ((pairs == 1) &&
-		    (len == 1) &&
-		    (optimize_data_match(cadar_x, OP_SAFE_C_C)))
-		  {
-		    set_unsafely_optimized(car_x);
-		    set_optimize_data(car_x, hop + OP_UNKNOWN_opCq);
-		    set_ecdr(car_x, NULL);
-		    return(false); 
-		  }
-
-		if ((pairs == 1) &&
-		    (quotes == 1) &&
-		    (len == 1))
-		  {
-		    set_unsafely_optimized(car_x);
-		    set_optimize_data(car_x, hop + OP_UNKNOWN_Q);
-		    set_ecdr(car_x, NULL);
-		    return(false); 
-		  }
-		
-		if ((pairs == 1) &&
-		    (len == 2) &&
-		    (symbols == 1))
-		  {
-		    if ((is_pair(cadar_x)) &&
-			(is_safe_c_s(cadar_x)))
+		    if (len == 1)
 		      {
-			set_unsafely_optimized(car_x);
-			set_optimize_data(car_x, hop + OP_UNKNOWN_opSq_S);
-			set_ecdr(car_x, NULL);
-			return(false); 
+			if (is_safe_c_s(cadar_x))
+			  {
+			    set_unsafely_optimized(car_x);
+			    set_optimize_data(car_x, hop + OP_UNKNOWN_opSq);
+			    set_ecdr(car_x, NULL);
+			    return(false); 
+			  }
+		
+			if (optimize_data_match(cadar_x, OP_SAFE_C_C))
+			  {
+			    set_unsafely_optimized(car_x);
+			    set_optimize_data(car_x, hop + OP_UNKNOWN_opCq);
+			    set_ecdr(car_x, NULL);
+			    return(false); 
+			  }
+
+			if (quotes == 1)
+			  {
+			    set_unsafely_optimized(car_x);
+			    set_optimize_data(car_x, hop + OP_UNKNOWN_Q);
+			    set_ecdr(car_x, NULL);
+			    return(false); 
+			  }
 		      }
-		    if ((is_pair(caddar(x))) &&
+		    else
+		      {
+			if (len == 2)
+			  {
+			    if (symbols == 1)
+			      {
+				if ((is_pair(cadar_x)) &&
+				    (is_safe_c_s(cadar_x)))
+				  {
+				    set_unsafely_optimized(car_x);
+				    set_optimize_data(car_x, hop + OP_UNKNOWN_opSq_S);
+				    set_ecdr(car_x, NULL);
+				    return(false); 
+				  }
+				if ((is_pair(caddar(x))) &&
+				    (is_safe_c_s(caddar(x))))
+				  {
+				    set_unsafely_optimized(car_x);
+				    set_optimize_data(car_x, hop + OP_UNKNOWN_S_opSq);
+				    set_ecdr(car_x, NULL);
+				    return(false); 
+				  }
+				if ((is_pair(caddar(x))) &&
+				    (is_optimized(caddar(x))) &&
+				    (op_no_hop(caddar(x)) == OP_SAFE_C_SS))
+				  {
+				    set_unsafely_optimized(car_x);
+				    set_optimize_data(car_x, hop + OP_UNKNOWN_S_opSSq);
+				    set_ecdr(car_x, NULL);
+				    return(false); 
+				  }
+				
+				if ((is_pair(cadar_x)) &&
+				    (is_optimized(cadar_x)) &&
+				    (op_no_hop(cadar_x) == OP_SAFE_C_SS))
+				  {
+				    set_unsafely_optimized(car_x);
+				    set_optimize_data(car_x, hop + OP_UNKNOWN_opSSq_S);
+				    set_ecdr(car_x, NULL);
+				    return(false); 
+				  }
+			      }
+			  }
+		      }
+		  }
+		else
+		  {
+		    if ((pairs == 2) &&
+			(len == 2) &&
+			(is_safe_c_s(cadar_x)) &&
 			(is_safe_c_s(caddar(x))))
 		      {
 			set_unsafely_optimized(car_x);
-			set_optimize_data(car_x, hop + OP_UNKNOWN_S_opSq);
-			set_ecdr(car_x, NULL);
-			return(false); 
-		      }
-		    if ((is_pair(caddar(x))) &&
-			(is_optimized(caddar(x))) &&
-			(op_no_hop(caddar(x)) == OP_SAFE_C_SS))
-		      {
-			set_unsafely_optimized(car_x);
-			set_optimize_data(car_x, hop + OP_UNKNOWN_S_opSSq);
-			set_ecdr(car_x, NULL);
-			return(false); 
-		      }
-		    
-		    if ((is_pair(cadar_x)) &&
-			(is_optimized(cadar_x)) &&
-			(op_no_hop(cadar_x) == OP_SAFE_C_SS))
-		      {
-			set_unsafely_optimized(car_x);
-			set_optimize_data(car_x, hop + OP_UNKNOWN_opSSq_S);
+			set_optimize_data(car_x, hop + OP_UNKNOWN_opSq_opSq);
 			set_ecdr(car_x, NULL);
 			return(false); 
 		      }
 		  }
-		if ((pairs == 2) &&
-		    (len == 2) &&
-		    (is_safe_c_s(cadar_x)) &&
-		    (is_safe_c_s(caddar(x))))
-		  {
-		    set_unsafely_optimized(car_x);
-		    set_optimize_data(car_x, hop + OP_UNKNOWN_opSq_opSq);
-		    set_ecdr(car_x, NULL);
-		    return(false); 
-		  }
-
 		if ((len < GC_TRIGGER_SIZE) &&
 		    (pairs == (quotes + all_x_count(car_x))))
 		  {
@@ -45316,7 +45262,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		    else set_arglist_length(car_x, make_permanent_integer(len));
 		    return(false); 
 		  }
-
 	      }
 	  }
       }
@@ -69392,7 +69337,7 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.8
- * t816          |                                    |  69.5                44.9
+ * t816          |                                    |  69.5                43.5
  * lg            |                                    |  7757                7723
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 36.3
  *            153 with run macro (eval_ptree)
@@ -69429,6 +69374,5 @@ int main(int argc, char **argv)
  *
  * string->symbol of string proc could skip making the intermediate string, or mark it as a temp (string-append does this?)
  *   (string->symbol (procedure-name|string-append...))
- * auto-update is a mess (interval used for temp cancel?) -- does ws.scm even need to worry about it? (bg process won't be called anyway!)
  */
 

@@ -97,7 +97,6 @@
 			    (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 			    (scaled-by #f)
 			    (ignore-output #f))
-  "with-sound-helper is the business portion of the with-sound macro"
   (let ((old-srate *clm-srate*)
 	(old-*output* *output*)
 	(old-*reverb* *reverb*)

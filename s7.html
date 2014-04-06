@@ -5434,15 +5434,20 @@ This should be named define-reader-macro.
 <li>when and unless (for r7rs), returning the value of the last form.
 </ul>
 
+<p>In s7 if a built-in function like gcd is referred to in a function
+body, the optimizer is free to replace it with #_function.  That is, <code>(gcd ...)</code> can be changed
+to <code>(#_gcd ...)</code> at s7's whim, if gcd has its original value at the time the optimizer
+sees the expression using it.  A subsequent <code>(set! gcd +)</code> does not affect this optimized call.
+I think I could wave my hands and mumble about "aggressive lexical scope" or something, but actually the
+choice here is that speed trumps that ol' hobgoblin consistency.  If you want to change gcd to +, do it before
+loading code that calls gcd. 
+</p>
+
 </div>
 
 <!-- null-environment does not fit very well; how to shadow earlier define-constant for example
      one of which is initial-environment; perhaps make a special environment at init time? 
      the code for that is save_null_environment, but it is untested and commented out.
-
-     (define (f1 a) a) (define (f2) (f1 2)) (define (f1 a) (+ a 1)) (f2) returns 3,
-     but this is only guaranteed in s7 for closures; built-in functions may be optimized
-     away before a redefinition comes along.
 -->
 
 <div class="indented">

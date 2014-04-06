@@ -2048,11 +2048,11 @@ we're saving the selection.
     ((lambda (index filename sr htype dformat comment)
       (if (not (= sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index)))
           (let ((chns (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> index)))
-	    (do ((i 0 (+ 1 i)))
+	    (do ((i 0 (+ i 1)))
 	        ((= i chns))
 	      (<a class=quiet href="#srcchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_srcchannel_tip)">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index) sr)) 0 #f index i))
 	    (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> filename index :header-type htype :data-format dformat :srate sr :comment comment) 
-	    (do ((i 0 (+ 1 i)))
+	    (do ((i 0 (+ i 1)))
 	        ((= i chns))
 	      (<a class=quiet href="#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> 1 index i))
 	    (set! (hook 'result) #t)))) ; tell Snd that the sound is already saved
@@ -3295,7 +3295,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
     (let ((old-snd (hook 'snd)))  ; (hook 'snd) is the sound about to be updated
       (set! (hook 'result) 
            (lambda (snd)
-              (do ((i 0 (+ 1 i)))
+              (do ((i 0 (+ i 1)))
 	          ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd)))
 	        (let ((mx (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> snd i)))
 	        (if (&gt; mx 1.0)
@@ -3638,7 +3638,7 @@ in the Scheme, Ruby, and Forth files.
 	  (let* ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
 		 (len (<a class=quiet href="#regionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionframes_tip)">region-frames</a> reg))
 		 (data (make-vector len 0.0 #t)))
-	    (do ((i 0 (+ 1 i)))
+	    (do ((i 0 (+ i 1)))
 		((= i len) data)
 	      (set! (data i) (<em class=red>reader</em>))))
 	  (error 'no-such-channel (list "region-&gt;float-vector" reg chn)))
@@ -5570,7 +5570,7 @@ the second:
 		              (dloc (car vals))
 		              (beg (cadr vals))
 		              (end (caddr vals)))
-		         (do ((i beg (+ 1 i)))
+		         (do ((i beg (+ i 1)))
 		             ((= i end))
 		           (<em class=red>dlocsig</em> dloc i (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd)))))))
 
@@ -6435,7 +6435,7 @@ The Edit:Mix selection menu choice is (mix-selection (cursor)).
         (old-sync (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a>)))
     (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a>) 1) ; save all chans
     (do ((i 0 (+ i hop))
-	 (j 0 (+ 1 j)))
+	 (j 0 (+ j 1)))
 	((&gt;= i len))
       (<a class=quiet href="sndscm.html#makeselection" onmouseout="UnTip()" onmouseover="Tip(sndscm_makeselection_tip)">make-selection</a> i (+ i hop)) ; in extensions.scm
       (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j))))
@@ -6915,7 +6915,7 @@ then restore that state upon "Page Up":
 	    (let ((last-page-state 
 	            (map (lambda (snd) 
 			   (let ((data (list snd (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd))))
-			     (do ((i 0 (+ 1 i)))
+			     (do ((i 0 (+ i 1)))
  				 ((= i (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> snd)) data)
 			       (set! data (append data (list (cons i (<em class=red>axis-info</em> snd i))))))))
 		         (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
@@ -8387,7 +8387,7 @@ is an example of this.
 
 <pre class="indented">
 (define* (map-sound-chans proc (beg 0) dur snd edpos origin)
-  (do ((i 0 (+ 1 i)))
+  (do ((i 0 (+ i 1)))
       ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd)))
     (<em class=red>map-channel</em> proc beg dur snd i edpos origin)))
 </pre>
@@ -9289,7 +9289,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
   (<a class=quiet href="sndclm.html#fft" onmouseout="UnTip()" onmouseover="Tip(sndclm_fft_tip)">mus-fft</a> rl im fsize)
   (float-vector-&gt;channel (float-vector-scale! rl (/ 2.0 (* fsize fsize))) 0 len))
 
-(do ((i 0 (+ 1 i)))
+(do ((i 0 (+ i 1)))
     ((= i (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)))
   ;; don't actually do this! &mdash; it involves a separate edit on each sample
   (set! (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> i) (* 2 (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> i))))
@@ -9623,7 +9623,7 @@ the end points:
 	 (angle (if (&gt; y1 y0) pi 0.0)) 
 	 (off (* .5 (+ y0 y1))) 
 	 (scale (* 0.5 (abs (- y1 y0)))))
-     (do ((i 0 (+ 1 i)))
+     (do ((i 0 (+ i 1)))
          ((= i num) v)
        (set! (v i) (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
 </pre>
@@ -10126,7 +10126,7 @@ For example, the following function reverses the channel order:
     (let ((swaps (floor (/ chns 2))))
       (<a class=quiet href="#asoneedit" onmouseout="UnTip()" onmouseover="Tip(extsnd_asoneedit_tip)">as-one-edit</a>
        (lambda ()
-	 (do ((i 0 (+ 1 i))
+	 (do ((i 0 (+ i 1))
 	      (j (- chns 1) (- j 1)))
 	     ((= i swaps))
 	   (<em class=red>swap-channels</em> ind i ind j)))))))
@@ -10200,8 +10200,8 @@ graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines
 
 
 <!--
-(with-sound (:channels 5) (do ((i 0 (+ 1 i))) ((= i 5)) (fm-violin 0 .4 (* (+ 1 i) 100) .1 :degree (* i 72))))
-(do ((i 0 (+ 1 i))) ((= i 5)) (set! (time-graph-style 0 i) i))
+(with-sound (:channels 5) (do ((i 0 (+ i 1))) ((= i 5)) (fm-violin 0 .4 (* (+ i 1) 100) .1 :degree (* i 72))))
+(do ((i 0 (+ i 1))) ((= i 5)) (set! (time-graph-style 0 i) i))
 (set! (dot-size) 4)
 (set! (selected-graph-color) (make-color 1 1 1))
 (set! (selected-data-color) (make-color 0 0 0))
@@ -10649,7 +10649,7 @@ To set all channels at once using the selected sound's maxamp:
 
 <pre class="indented">
 (let ((maxval (apply max (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> #f #t)))) 
-  (do ((i 0 (+ 1 i))) 
+  (do ((i 0 (+ i 1))) 
       ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a>))) 
     (set! (<em class=red>y-bounds</em> #f i) (list (- maxval) maxval))))
 </pre>
@@ -10658,7 +10658,7 @@ To set all channels at once using the selected sound's maxamp:
 </p>
 
 <pre class="indented">
-(do ((i 0 (+ 1 i))) 
+(do ((i 0 (+ i 1))) 
     ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a>)))
   (let ((maxval (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> #f i))) 
     (set! (<em class=red>y-bounds</em> #f i) (list (- maxval) maxval))))
@@ -11624,11 +11624,11 @@ Here's an example that displays a histogram of the current values in 16 bins:
     (let ((v (make-vector len 0.0 #t))
           (steps (/ len 16))
           (step (/ 1.0 len)))
-      (do ((i 0 (+ 1 i))) 
+      (do ((i 0 (+ i 1))) 
           ((= i len) v)
         (let* ((val (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> fd))
                (bin (floor (* (abs val) 16.0))))
-          (do ((j 0 (+ 1 j))) 
+          (do ((j 0 (+ j 1))) 
               ((= j steps))
             (set! (v (+ j bin)) (+ step (v (+ j bin))))))))))
 </pre>
@@ -11640,7 +11640,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
 (<em class=red>add-transform</em> "Hankel" "Hankel" 0.0 1.0
    (lambda (n rd)
       (let ((v (make-vector n 0.0 #t)))
-         (do ((i 0 (+ 1 i))) ((= i n)) (set! (v i) (rd)))
+         (do ((i 0 (+ i 1))) ((= i n)) (set! (v i) (rd)))
          (gsl-dht n v 1.0 1.0)
          v)))
 </pre>
@@ -14113,7 +14113,7 @@ of FractInt's royal colormap):
 	  (er (list 0 60 60 116 128 252 192 252 256 60))
 	  (eg (list 0 0  64 0   128 252 192 252 256 0))
 	  (eb (list 0 80        128 252 192 0   256 80)))
-      (do ((i 0 (+ 1 i))
+      (do ((i 0 (+ i 1))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
         (set! (r i) (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x er) 256.0)) ; from env.scm
@@ -14128,7 +14128,7 @@ of FractInt's royal colormap):
 	  (g (make-vector size 0.0 #t))
 	  (b (make-vector size 0.0 #t))
 	  (incr (/ 3.14159 size)))
-      (do ((i 0 (+ 1 i))
+      (do ((i 0 (+ i 1))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
 	(set! (r i) (abs (sin (* 1.5 x))))
@@ -14591,7 +14591,7 @@ The result can be used in the lisp graph:
 	      (if (&lt; val .001)
 	          -60.0
 	          (* 20.0 (log10 val))))
-            (do ((i 0 (+ 1 i)))
+            (do ((i 0 (+ i 1)))
 	        ((= i len))
 	      (set! (data i) (+ 60.0 (dB (abs (data i))))))
               (<a class=quiet href="#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> data "dB" 

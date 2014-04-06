@@ -970,13 +970,13 @@ these declarations in ~/.snd:
 (define data (make-vector data-size 0.0 #t))
 
 (define (run-gen func)        ; func is a function of no arguments (a "thunk")
-  (do ((i 0 (+ 1 i))) 
+  (do ((i 0 (+ i 1))) 
       ((= i data-size))
     (set! (data i) (func))) ; fill data float-vector with output of 'func'
   (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> data))               ; display data as a graph
 
 (define (run-fft func)
-  (do ((i 0 (+ 1 i))) 
+  (do ((i 0 (+ i 1))) 
       ((= i data-size))
     (set! (data i) (func)))
   (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> (<a class=quiet href="extsnd.html#sndspectrum" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndspectrum_tip)">snd-spectrum</a> data blackman2-window data-size #t)))
@@ -1203,7 +1203,7 @@ but in the following example, I'll start -noinit, and load it explicitly.
    (let* ((o (make-oscil freq))
           (st (seconds-&gt;samples beg))
           (nd (+ st (seconds-&gt;samples dur))))
-     (do ((i st (+ 1 i)))
+     (do ((i st (+ i 1)))
          ((= i nd))
        (outa i (* amp (oscil o))))))
 #&lt;values ()&gt;
@@ -1760,7 +1760,7 @@ into a bunch of mono files:
 	 (chns (channels name)))
     (if (&gt; chns 1)
 	(let ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> name)))
-	  (do ((i 0 (+ 1 i)))
+	  (do ((i 0 (+ i 1)))
 	      ((= i chns))
 	    (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A.~D " name i))
 	    (<a class=quiet href="extsnd.html#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A.~D" name i)
