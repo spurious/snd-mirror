@@ -5403,7 +5403,7 @@ static Xen g_channel_amp_envs(Xen filename, Xen chan, Xen pts, Xen peak_func, Xe
    *   if done_func set workproc that calls it when done
    */
   #define H_channel_amp_envs "(" S_channel_amp_envs " :optional file (chan 0) size peak-file-func work-proc-func): \
-return two vcts of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
+return two " S_vct "s of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
 'peak-file-func' is used to get the name of the associated peak_env_info file if the file is very large. \
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background. \
 If 'filename' is a sound index or a sound object, 'size' is interpreted as an edit-position, and the current amp envs are returned."

@@ -75,6 +75,31 @@ mus_long_t mus_vct_length(vct *v) {return(v->length);}
 mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 #endif
 
+#if HAVE_SCHEME
+#define S_make_vct       "make-float-vector"
+#define S_vct_addB       "float-vector-add!"
+#define S_vct_subtractB  "float-vector-subtract!"
+#define S_vct_copy       "float-vector-copy"
+#define S_vct_length     "float-vector-length"
+#define S_vct_multiplyB  "float-vector-multiply!"
+#define S_vct_offsetB    "float-vector-offset!"
+#define S_vct_ref        "float-vector-ref"
+#define S_vct_scaleB     "float-vector-scale!"
+#define S_vct_fillB      "float-vector-fill!"
+#define S_vct_setB       "float-vector-set!"
+#define S_vct_peak       "float-vector-peak"
+#define S_is_vct         "float-vector?"
+#define S_list_to_vct    "list->float-vector"
+#define S_vct_to_list    "float-vector->list"
+#define S_vector_to_vct  "vector->float-vector"
+#define S_vct_to_vector  "float-vector->vector"
+#define S_vct_moveB      "float-vector-move!"
+#define S_vct_subseq     "float-vector-subseq"
+#define S_vct_reverse    "float-vector-reverse!"
+#define S_vct_to_string  "float-vector->string"
+#define S_vct_times    "float-vector*"
+#define S_vct_plus     "float-vector+"
+#else
 #define S_make_vct       "make-vct"
 #define S_vct_addB       "vct-add!"
 #define S_vct_subtractB  "vct-subtract!"
@@ -94,7 +119,6 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 #define S_vct_to_vector  "vct->vector"
 #define S_vct_moveB      "vct-move!"
 #define S_vct_subseq     "vct-subseq"
-#define S_vct            "vct"
 #define S_vct_reverse    "vct-reverse!"
 #define S_vct_to_string  "vct->string"
 #if HAVE_RUBY
@@ -103,6 +127,7 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 #else
   #define S_vct_times    "vct*"
   #define S_vct_plus     "vct+"
+#endif
 #endif
 
 #ifndef PROC_FALSE
@@ -273,7 +298,7 @@ bool mus_vct_is_equal(vct *v1, vct *v2)
 
 static Xen g_is_vct(Xen obj) 
 {
-  #define H_is_vct "(" S_is_vct " obj): is obj a vct"
+  #define H_is_vct "(" S_is_vct " obj): is obj a " S_vct
   return(C_bool_to_Xen_boolean(mus_is_vct(obj)));
 }
 
@@ -362,8 +387,11 @@ static Xen g_make_vct(Xen len, Xen filler)
   #if HAVE_FORTH
     #define vct_make_example "32 1.0 make-vct value v"
   #endif
+  #if HAVE_SCHEME
+    #define vct_make_example "(make-float-vector 32 1.0)"
+  #endif
 
-  #define H_make_vct "(" S_make_vct " len :optional (initial-element 0)): returns a new vct of length len filled with \
+  #define H_make_vct "(" S_make_vct " len :optional (initial-element 0)): returns a new " S_vct " of length len filled with \
 initial-element: \n  " vct_make_example
 
   mus_long_t size;
@@ -387,7 +415,7 @@ initial-element: \n  " vct_make_example
 
 static Xen g_vct_length(Xen obj)
 {
-  #define H_vct_length "(" S_vct_length " v): length of vct v"
+  #define H_vct_length "(" S_vct_length " v): length of " S_vct " v"
   vct *v;
   Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_length, "a vct");
   v = Xen_to_vct(obj);
@@ -397,7 +425,7 @@ static Xen g_vct_length(Xen obj)
 
 static Xen g_vct_copy(Xen obj)
 {
-  #define H_vct_copy "(" S_vct_copy " v): returns a copy of vct v"
+  #define H_vct_copy "(" S_vct_copy " v): returns a copy of " S_vct " v"
   vct *v;
   mus_float_t *copied_data = NULL;
   mus_long_t len;
@@ -443,7 +471,7 @@ vct *mus_vct_wrap(mus_long_t len, mus_float_t *data)
 
 static Xen g_vct_move(Xen obj, Xen newi, Xen oldi, Xen backwards)
 {
-  #define H_vct_moveB "(" S_vct_moveB " obj new old :optional backwards): moves vct obj data from old to new: v[new++] = v[old++], or \
+  #define H_vct_moveB "(" S_vct_moveB " obj new old :optional backwards): moves " S_vct " obj data from old to new: v[new++] = v[old++], or \
 v[new--] = v[old--] if backwards is " PROC_FALSE "."
   vct *v;
   mus_long_t i, j, ni, nj;
@@ -486,7 +514,7 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
 
 static Xen g_vct_ref(Xen obj, Xen pos)
 {
-  #define H_vct_ref "(" S_vct_ref " v n): element n of vct v, v[n]"
+  #define H_vct_ref "(" S_vct_ref " v n): element n of " S_vct " v, v[n]"
   vct *v;
   mus_long_t loc;
 
@@ -507,7 +535,7 @@ static Xen g_vct_ref(Xen obj, Xen pos)
 
 static Xen g_vct_set(Xen obj, Xen pos, Xen val)
 {
-  #define H_vct_setB "(" S_vct_setB " v n val): sets element of vct v to val, v[n] = val"
+  #define H_vct_setB "(" S_vct_setB " v n val): sets element of " S_vct " v to val, v[n] = val"
   vct *v;
   mus_long_t loc;
   double x;
@@ -534,7 +562,7 @@ static Xen g_vct_set(Xen obj, Xen pos, Xen val)
 
 static Xen g_vct_multiply(Xen obj1, Xen obj2)
 {
-  #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2): element-wise multiply of vcts v1 and v2: v1[i] *= v2[i], returns v1"
+  #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2): element-wise multiply of " S_vct "s v1 and v2: v1[i] *= v2[i], returns v1"
   mus_long_t i, lim;
   vct *v1, *v2;
   mus_float_t *d1, *d2;
@@ -554,7 +582,7 @@ static Xen g_vct_multiply(Xen obj1, Xen obj2)
 
 static Xen g_vct_add(Xen obj1, Xen obj2, Xen offs)
 {
-  #define H_vct_addB "(" S_vct_addB " v1 v2 :optional (offset 0)): element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1"
+  #define H_vct_addB "(" S_vct_addB " v1 v2 :optional (offset 0)): element-wise add of " S_vct "s v1 and v2: v1[i + offset] += v2[i], returns v1"
   mus_long_t i, lim, j, len1;
   vct *v1, *v2;
   mus_float_t *d1, *d2;
@@ -618,7 +646,7 @@ static Xen g_vct_add(Xen obj1, Xen obj2, Xen offs)
 
 static Xen g_vct_subtract(Xen obj1, Xen obj2)
 {
-  #define H_vct_subtractB "(" S_vct_subtractB " v1 v2): element-wise subtract of vcts v1 and v2: v1[i] -= v2[i], returns v1"
+  #define H_vct_subtractB "(" S_vct_subtractB " v1 v2): element-wise subtract of " S_vct "s v1 and v2: v1[i] -= v2[i], returns v1"
   mus_long_t i, lim, lim4;
   vct *v1, *v2;
   mus_float_t *d1, *d2;
@@ -804,7 +832,11 @@ Xen g_vct_peak(Xen obj)
 }
 
 
+#if HAVE_SCHEME
+#define S_vct_peak_and_location "float-vector-peak-and-location"
+#else
 #define S_vct_peak_and_location "vct-peak-and-location"
+#endif
 
 static Xen g_vct_peak_and_location(Xen obj)
 {
@@ -814,7 +846,7 @@ static Xen g_vct_peak_and_location(Xen obj)
   vct *v;
   mus_float_t *d;
 
-  Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_peak, "a vct");
+  Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_peak_and_location, "a " S_vct);
   v = Xen_to_vct(obj);
   d = mus_vct_data(v);
 
@@ -833,7 +865,7 @@ static Xen g_vct_peak_and_location(Xen obj)
 
 static Xen g_vct_subseq(Xen vobj, Xen start, Xen end, Xen newv)
 {
-  #define H_vct_subseq "(" S_vct_subseq " v start :optional end vnew): v[start..end], placed in vnew if given or new vct"
+  #define H_vct_subseq "(" S_vct_subseq " v start :optional end vnew): v[start..end], placed in vnew if given or new " S_vct
   vct *vold, *vnew;
   mus_float_t *dnew, *dold;
   Xen res;
@@ -883,7 +915,7 @@ static Xen g_vct_subseq(Xen vobj, Xen start, Xen end, Xen newv)
 
 Xen xen_list_to_vct(Xen lst)
 {
-  #define H_list_to_vct "(" S_list_to_vct " lst): returns a new vct filled with elements of list lst"
+  #define H_list_to_vct "(" S_list_to_vct " lst): returns a new " S_vct " filled with elements of list lst"
   mus_long_t len = 0, i;
   vct *v;
   mus_float_t *d;
@@ -921,14 +953,14 @@ Xen mus_array_to_list(mus_float_t *arr, mus_long_t i, mus_long_t len)
 #if (!HAVE_SCHEME)
 static Xen g_vct(Xen args) 
 {
-  #define H_vct "(" S_vct " args...): returns a new vct with args as contents; same as " S_list_to_vct ": (vct 1 2 3)"
+  #define H_vct "(" S_vct " args...): returns a new " S_vct " with args as contents; same as " S_list_to_vct ": (" S_vct " 1 2 3)"
   return(xen_list_to_vct(args));
 }
 
 
 static Xen g_vct_to_list(Xen vobj)
 {
-  #define H_vct_to_list "(" S_vct_to_list " v): returns a new list with elements of vct v"
+  #define H_vct_to_list "(" S_vct_to_list " v): returns a new list with elements of " S_vct " v"
   vct *v;
   Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_to_list, "a vct");
 
@@ -942,7 +974,7 @@ static Xen g_vct_to_list(Xen vobj)
 
 static Xen g_vector_to_vct(Xen vect)
 {
-  #define H_vector_to_vct "(" S_vector_to_vct " vect): returns a new vct with the elements of vector vect"
+  #define H_vector_to_vct "(" S_vector_to_vct " vect): returns a new " S_vct " with the elements of vector vect"
   mus_long_t len, i;
   vct *v;
   mus_float_t *d;
@@ -966,7 +998,7 @@ static Xen g_vector_to_vct(Xen vect)
 
 static Xen g_vct_to_vector(Xen vobj)
 {
-  #define H_vct_to_vector "(" S_vct_to_vector " vct): returns a new vector with the elements of vct"
+  #define H_vct_to_vector "(" S_vct_to_vector " v): returns a new vector with the elements of " S_vct
   vct *v;
   mus_float_t *d;
   mus_long_t i, len;
@@ -999,7 +1031,7 @@ static Xen g_vct_to_vector(Xen vobj)
 
 static Xen g_vct_reverse(Xen vobj, Xen size)
 {
-  #define H_vct_reverse "(" S_vct_reverse " vct len): in-place reversal of vct contents"
+  #define H_vct_reverse "(" S_vct_reverse " v len): in-place reversal of " S_vct " contents"
   vct *v;
   mus_float_t *d;
   mus_long_t i, j, len = -1;
@@ -1027,10 +1059,17 @@ static Xen g_vct_reverse(Xen vobj, Xen size)
 #endif
 
 
+#if HAVE_SCHEME
+#define S_vct_max "float-vector-max"
+#define S_vct_min "float-vector-min"
+#else
 #define S_vct_max "vct-max"
+#define S_vct_min "vct-min"
+#endif
+
 static Xen g_vct_max(Xen vobj)
 {
-  #define H_vct_max "(" S_vct_max " vct): returns the maximum element of vct"
+  #define H_vct_max "(" S_vct_max " v): returns the maximum element of " S_vct
   vct *v;
   mus_float_t *d;
   mus_long_t i, len;
@@ -1052,10 +1091,9 @@ static Xen g_vct_max(Xen vobj)
 }
 
 
-#define S_vct_min "vct-min"
 static Xen g_vct_min(Xen vobj)
 {
-  #define H_vct_min "(" S_vct_min " vct): returns the minimum element of vct"
+  #define H_vct_min "(" S_vct_min " v): returns the minimum element of " S_vct
   vct *v;
   mus_float_t *d;
   mus_long_t i, len;
@@ -1524,21 +1562,21 @@ void mus_vct_init(void)
   s7_eval_c_string(s7, "(define (vct->vector v) (copy v (make-vector (length v) 0.0)))");
   s7_eval_c_string(s7, "(define vct? float-vector?)");
 #endif
-  s7_eval_c_string(s7, "(define float-vector-multiply! " S_vct_multiplyB ")");
-  s7_eval_c_string(s7, "(define float-vector-scale! " S_vct_scaleB ")");
-  s7_eval_c_string(s7, "(define float-vector-add! " S_vct_addB ")");
-  s7_eval_c_string(s7, "(define float-vector-subtract! " S_vct_subtractB ")");
-  s7_eval_c_string(s7, "(define float-vector-offset! " S_vct_offsetB ")");
-  s7_eval_c_string(s7, "(define float-vector-peak " S_vct_peak ")");
-  s7_eval_c_string(s7, "(define float-vector-peak-and-location " S_vct_peak_and_location ")");
-  s7_eval_c_string(s7, "(define float-vector-move! " S_vct_moveB ")");
-  s7_eval_c_string(s7, "(define float-vector-subseq " S_vct_subseq ")");
-  s7_eval_c_string(s7, "(define float-vector-ref " S_vct_ref ")");
-  s7_eval_c_string(s7, "(define float-vector->string " S_vct_to_string ")");
-  s7_eval_c_string(s7, "(define float-vector-set! " S_vct_setB ")");
-  s7_eval_c_string(s7, "(define float-vector* " S_vct_times ")");
-  s7_eval_c_string(s7, "(define float-vector+ " S_vct_plus ")");
-  s7_eval_c_string(s7, "(define float-vector-max " S_vct_max ")");
-  s7_eval_c_string(s7, "(define float-vector-min " S_vct_min ")");
+  s7_eval_c_string(s7, "(define vct-multiply! float-vector-multiply!)");
+  s7_eval_c_string(s7, "(define vct-scale! float-vector-scale!)");
+  s7_eval_c_string(s7, "(define vct-add! float-vector-add!)");
+  s7_eval_c_string(s7, "(define vct-subtract! float-vector-subtract!)");
+  s7_eval_c_string(s7, "(define vct-offset! float-vector-offset!)");
+  s7_eval_c_string(s7, "(define vct-peak float-vector-peak)");
+  s7_eval_c_string(s7, "(define vct-peak-and-location float-vector-peak-and-location)");
+  s7_eval_c_string(s7, "(define vct-move! float-vector-move!)");
+  s7_eval_c_string(s7, "(define vct-subseq float-vector-subseq)");
+  s7_eval_c_string(s7, "(define vct-ref float-vector-ref)");
+  s7_eval_c_string(s7, "(define vct->string float-vector->string)");
+  s7_eval_c_string(s7, "(define vct-set! float-vector-set!)");
+  s7_eval_c_string(s7, "(define vct* float-vector*)");
+  s7_eval_c_string(s7, "(define vct+ float-vector+)");
+  s7_eval_c_string(s7, "(define vct-max float-vector-max)");
+  s7_eval_c_string(s7, "(define vct-min float-vector-min)");
 #endif
 }

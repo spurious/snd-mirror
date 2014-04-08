@@ -1148,19 +1148,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_PROVIDE(Feature)                       s7_provide(s7, Feature)
 #define XEN_PROTECT_FROM_GC(Arg)                   s7_gc_protect(s7, Arg)
 
-/* an experiment: */
-#if (defined(__GNUC__) || defined(__clang__))
-#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
-  ({							   \
-    static s7_pointer _caller_ = NULL, _descr_ = NULL; \
-    if (!_caller_) _caller_ = s7_make_permanent_string(Caller); \
-    if (!_descr_) _descr_ = s7_make_permanent_string(Descr); \
-    s7_wrong_type_arg_error_prepackaged(s7, _caller_, ArgN, Arg, _descr_); \
-  })
-#else
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) s7_wrong_type_arg_error(s7, Caller, ArgN, Arg, Descr)
-#endif					       
-
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)   s7_out_of_range_error(s7, Caller, ArgN, Arg, Descr)
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) if (!(Assertion)) XEN_WRONG_TYPE_ARG_ERROR(Caller, Position, Arg, Correct_Type)

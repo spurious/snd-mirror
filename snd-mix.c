@@ -3219,7 +3219,7 @@ static Xen g_mixes(Xen snd, Xen chn)
 static Xen g_mix_vct(Xen obj, Xen beg, Xen snd, Xen chn, Xen with_tag, Xen origin)
 {
   #define H_mix_vct "(" S_mix_vct " data :optional (beg 0) snd chn (with-tag " S_with_mix_tags ") origin): \
-mix data (a vct) into snd's channel chn starting at beg; return the new mix id, if any"
+mix data (a " S_vct ") into snd's channel chn starting at beg; return the new mix id, if any"
 
   vct *v;
   mus_long_t bg;
@@ -3229,7 +3229,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   int len, mix_id = NO_MIX_TAG;
   bool with_mixer;
 
-  Xen_check_type(mus_is_vct(obj), obj, 1, S_mix_vct, "a vct");
+  Xen_check_type(mus_is_vct(obj), obj, 1, S_mix_vct, "a " S_vct);
   Snd_assert_channel(S_mix_vct, snd, chn, 3);
   Xen_check_type(Xen_is_integer_or_unbound(beg), beg, 2, S_mix_vct, "an integer");
   Xen_check_type(Xen_is_boolean_or_unbound(with_tag), with_tag, 5, S_mix_vct, "a boolean");
@@ -3524,7 +3524,7 @@ static char *mix_sampler_to_string(mix_fd *fd)
 		       fd->sf->initial_samp,
 		       fd->sf->loc,
 		       (fd->sf->at_eof) ? ", at eof" : "",
-		       (md->in_filename) ? md->in_filename : "<vct>");
+		       (md->in_filename) ? md->in_filename : S_vct);
 	}
       else snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sampler: inactive>");
     }
@@ -3863,7 +3863,12 @@ bool play_mix_from_id(int mix_id)
 }
 
 
-#define S_mix_to_vct "mix->vct"
+#if HAVE_SCHEME
+  #define S_mix_to_vct "mix->float-vector"
+#else
+  #define S_mix_to_vct "mix->vct"
+#endif
+
 Xen g_mix_to_vct(Xen mix_n, Xen beg_n, Xen num)
 {
   mus_float_t *data;
@@ -3989,7 +3994,7 @@ void g_init_mix(void)
   Xen_define_procedure(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);
   Xen_define_procedure(S_mix_vct,                g_mix_vct_w,                1, 5, 0, H_mix_vct);
 #if HAVE_SCHEME
-  s7_eval_c_string(s7, "(define mix-float-vector mix-vct)");
+  s7_eval_c_string(s7, "(define mix-vct mix-float-vector)");
 #endif
   Xen_define_procedure(S_mixes,                  g_mixes_w,                  0, 2, 0, H_mixes);
   Xen_define_procedure(S_mix_home,               g_mix_home_w,               1, 0, 0, H_mix_home);

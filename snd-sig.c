@@ -4935,7 +4935,7 @@ static mus_float_t *load_mus_float_ts(Xen scalers, int *result_len, const char *
 	      if (len < 0)
 		Xen_wrong_type_arg_error(caller, 1, scalers, "a proper list");
 	    }
-	  else Xen_wrong_type_arg_error(caller, 1, scalers, "a number, list, or vct");
+	  else Xen_wrong_type_arg_error(caller, 1, scalers, "a number, list, or " S_vct);
 	}
 
       if (len == 0) 
@@ -4965,7 +4965,7 @@ static mus_float_t *load_mus_float_ts(Xen scalers, int *result_len, const char *
 static Xen g_scale_to(Xen scalers, Xen snd, Xen chn_n)
 {
   #define H_scale_to "(" S_scale_to " :optional (norms 1.0) snd chn): \
-normalize snd to norms (following sync); norms can be a float or a vct/list of floats"
+normalize snd to norms (following sync); norms can be a float or a " S_vct "/list of floats"
 
   /* chn_n irrelevant if sync */
   chan_info *cp;
@@ -4990,7 +4990,7 @@ normalize snd to norms (following sync); norms can be a float or a vct/list of f
 static Xen g_scale_by(Xen scalers, Xen snd, Xen chn_n)
 {
   #define H_scale_by "(" S_scale_by " scalers :optional snd chn): \
-scale snd by scalers (following sync); scalers can be a float or a vct/list of floats"
+scale snd by scalers (following sync); scalers can be a float or a " S_vct "/list of floats"
 
   /* chn_n irrelevant if sync */
   chan_info *cp;
@@ -5402,7 +5402,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 static Xen g_fft(Xen reals, Xen imag, Xen sign)
 {
   #define H_fft "(" S_fft " reals imags :optional (sign 1)): fft the data returning the result in reals. \
-If sign is -1, perform inverse fft.  Incoming data is in vcts."
+If sign is -1, perform inverse fft.  Incoming data is in " S_vct "s."
 
   vct *v1 = NULL, *v2 = NULL;
   int n = 0, n2 = 0, isign = 1;
@@ -5410,8 +5410,8 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   mus_float_t *rl = NULL, *im = NULL;
 
   Xen_check_type(Xen_is_integer_or_unbound(sign), sign, 3, S_fft, "an integer");
-  Xen_check_type(mus_is_vct(reals), reals, 1, S_fft, "vct");
-  Xen_check_type(mus_is_vct(imag), imag, 2, S_fft, "vct");
+  Xen_check_type(mus_is_vct(reals), reals, 1, S_fft, S_vct);
+  Xen_check_type(mus_is_vct(imag), imag, 2, S_fft, S_vct);
 
   isign = (Xen_is_integer(sign)) ? Xen_integer_to_C_int(sign) : 1;
   v1 = Xen_to_vct(reals);
@@ -5454,7 +5454,7 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
 static Xen g_snd_spectrum(Xen data, Xen win, Xen len, Xen linear_or_dB, Xen beta, Xen in_place, Xen normalized)
 {
   #define H_snd_spectrum "(" S_snd_spectrum " data :optional (window " S_rectangular_window ") (len data-len) (linear " PROC_TRUE ") (beta 0.0) in-place (normalized " PROC_TRUE ")): \
-magnitude spectrum of data (a vct), in data if in-place, using fft-window win and fft length len."
+magnitude spectrum of data (a " S_vct "), in data if in-place, using fft-window win and fft length len."
 
   bool linear = true, in_data = false, normed = true;
   int i, j, n, n2, wtype;
@@ -5462,7 +5462,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   mus_float_t *rdat;
   vct *v;
 
-  Xen_check_type((mus_is_vct(data)), data, 1, S_snd_spectrum, "a vct");
+  Xen_check_type((mus_is_vct(data)), data, 1, S_snd_spectrum, "a " S_vct);
   Xen_check_type(Xen_is_integer_or_unbound(win), win, 2, S_snd_spectrum, "an integer");
   Xen_check_type(Xen_is_integer_or_unbound(len), len, 3, S_snd_spectrum, "an integer");
   Xen_check_type(Xen_is_boolean_or_unbound(linear_or_dB), linear_or_dB, 4, S_snd_spectrum, "a boolean");
@@ -5474,7 +5474,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   n = (Xen_is_integer(len)) ? Xen_integer_to_C_int(len) : mus_vct_length(v);
   if (n > mus_vct_length(v)) n = mus_vct_length(v);
   if (n <= 0)
-    Xen_out_of_range_error(S_snd_spectrum, 3, len, "length <= 0 or vct length == 0?");
+    Xen_out_of_range_error(S_snd_spectrum, 3, len, "length <= 0 or " S_vct " length == 0?");
 
   if (Xen_is_boolean(linear_or_dB)) linear = Xen_boolean_to_C_bool(linear_or_dB);
   if (Xen_is_boolean(in_place)) in_data = Xen_boolean_to_C_bool(in_place);
@@ -5867,7 +5867,7 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
 static Xen g_filter_channel(Xen e, Xen order, Xen beg, Xen dur, Xen snd, Xen chn_n, Xen edpos, Xen truncate, Xen origin)
 {
   #define H_filter_channel "(" S_filter_channel " env :optional order beg dur snd chn edpos (truncate " PROC_TRUE ") origin): \
-applies an FIR filter to snd's channel chn. 'env' is the frequency response envelope, or a vct with the coefficients."
+applies an FIR filter to snd's channel chn. 'env' is the frequency response envelope, or a " S_vct " with the coefficients."
 
   chan_info *cp;
   char *errstr = NULL;
@@ -5879,7 +5879,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   vct *v = NULL;
   mus_float_t *coeffs = NULL;
 
-  Xen_check_type(Xen_is_list(e) || mus_is_vct(e), e, 1, S_filter_channel, "an envelope or a vct");
+  Xen_check_type(Xen_is_list(e) || mus_is_vct(e), e, 1, S_filter_channel, "an envelope or a " S_vct);
   Xen_check_type(Xen_is_integer_or_unbound(order), order, 2, S_filter_channel, "an integer");
   Xen_check_type(Xen_is_string_or_unbound(origin), origin, 9, S_filter_channel, "a string");
 
@@ -6000,7 +6000,7 @@ static Xen g_filter_1(Xen e, Xen order, Xen snd, Xen chn_n, Xen edpos, const cha
 	{
 	  env *ne = NULL;
 	  char *new_origin = NULL, *estr = NULL;
-	  Xen_check_type(Xen_is_list(e), e, 1, caller, "a list, vct, or env generator");
+	  Xen_check_type(Xen_is_list(e), e, 1, caller, "a list, " S_vct ", or env generator");
 	  ne = get_env(e, caller); /* arg here must be a list */
 	  if (!origin)
 	    {
@@ -6030,7 +6030,7 @@ static Xen g_filter_1(Xen e, Xen order, Xen snd, Xen chn_n, Xen edpos, const cha
 static Xen g_filter_sound(Xen e, Xen order, Xen snd, Xen chn_n, Xen edpos, Xen origin)
 {
   #define H_filter_sound "(" S_filter_sound " filter :optional order snd chn edpos origin): \
-applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct with the actual coefficients"
+applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a " S_vct " with the actual coefficients"
 
   Xen_check_type(Xen_is_string_or_unbound(origin), origin, 6, S_filter_sound, "a string");
   return(g_filter_1(e, order, snd, chn_n, edpos, 
@@ -6082,7 +6082,7 @@ frequency whistles leaking through."
 
 static Xen g_find_min_peak_phases(Xen arglist)
 {
-  #define H_find_min_peak_phases "(" S_find_min_peak_phases " dist vcts...) returns a vector of (sample-wise) offsets \
+  #define H_find_min_peak_phases "(" S_find_min_peak_phases " dist " S_vct "s...) returns a vector of (sample-wise) offsets \
 that give a minimum peak amplitude when the signals are added together."
 
   mus_float_t best = 0.0;

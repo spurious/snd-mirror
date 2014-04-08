@@ -247,7 +247,7 @@ static mus_float_t **make_xen_colormap(int size, Xen lambda)
 
   if (!(Xen_is_list(xrgb)))
     Xen_error(Xen_make_error_type("colormap-error"),
-	      Xen_list_3(C_string_to_Xen_string(S_add_colormap ": colormap function, ~A, returned ~A, but should return a list of 3 vcts"),
+	      Xen_list_3(C_string_to_Xen_string(S_add_colormap ": colormap function, ~A, returned ~A, but should return a list of 3 " S_vct "s"),
 			 lambda,
 			 xrgb));
   else
@@ -261,14 +261,14 @@ static mus_float_t **make_xen_colormap(int size, Xen lambda)
 
       if (!(mus_is_vct(Xen_list_ref(xrgb, 0)))) 
 	Xen_error(Xen_make_error_type("colormap-error"),
-		  Xen_list_2(C_string_to_Xen_string(S_add_colormap ": function did not return a list of vcts! ~A"),
+		  Xen_list_2(C_string_to_Xen_string(S_add_colormap ": function did not return a list of " S_vct "s! ~A"),
 			     xrgb));
 
       xr = Xen_to_vct(Xen_list_ref(xrgb, 0));
       xrdata = mus_vct_data(xr);
       if (mus_vct_length(xr) < size)
 	Xen_error(Xen_make_error_type("colormap-error"),
-		  Xen_list_2(C_string_to_Xen_string(S_add_colormap ": function did not return a list of vcts of the correct size: ~A"),
+		  Xen_list_2(C_string_to_Xen_string(S_add_colormap ": function did not return a list of " S_vct "s of the correct size: ~A"),
 			     xrgb));
 
       xg = Xen_to_vct(Xen_list_ref(xrgb, 1));

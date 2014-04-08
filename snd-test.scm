@@ -11981,17 +11981,18 @@ EDITS: 2
 
   (define (rough-spectrum ind)
     (let ((data (channel->float-vector 0 10000 ind 0))
-	  (spect (make-float-vector 10)))
+	  (spect (make-float-vector 10))
+	  (g (make-one-pole 1.0 -1.0)))
       (float-vector-multiply! data data)
       (do ((i 0 (+ i 1))
 	   (beg 0 (+ beg 1000))
 	   (end 999 (+ end 1000)))
 	  ((= i 10))
-	(let ((g (make-one-pole 1.0 -1.0)))
-	  (do ((j beg (+ j 1)))
-	      ((= j end))
-	    (one-pole g (float-vector-ref data j)))
-	  (float-vector-set! spect i (one-pole g (float-vector-ref data end)))))
+	(mus-reset g)
+	(do ((j beg (+ j 1)))
+	    ((= j end))
+	  (one-pole g (float-vector-ref data j)))
+	(float-vector-set! spect i (one-pole g (float-vector-ref data end))))
       (float-vector-scale! spect (/ 1.0 (float-vector-peak spect)))))
   
   ;; ----------------
@@ -13328,9 +13329,9 @@ EDITS: 2
 	(set! impulse 0.0))
       (if (not (vequal data (float-vector 1 0 0 0 0)))
 	  (snd-display #__line__ ";delay size 0: ~A" data))
-      
-      (if (fneq (delay dly1 0.5) 0.5)
-	  (snd-display #__line__ ";delay size 0 0.5: ~A" (delay dly1 0.5)))
+      (let ((x (delay dly1 0.5)))
+	(if (fneq x 0.5)
+	    (snd-display #__line__ ";delay size 0 0.5: ~A" x)))
       )
     
     (let ((gen (make-delay :size 0 :max-size 100))
@@ -13459,6 +13460,12 @@ EDITS: 2
     (let ((err (catch #t (lambda () (make-moving-average :size -1)) (lambda args args))))
       (if (not (eq? (car err) 'out-of-range))
 	  (snd-display #__line__ ";make-average bad size error message: ~A" err)))
+    (let ((err (catch #t (lambda () (make-moving-average :size 0)) (lambda args args))))
+      (if (not (eq? (car err) 'out-of-range))
+	  (snd-display #__line__ ";make-average size==0 error message: ~A" err)))
+    (let ((err (catch #t (lambda () (make-moving-average :max-size 0)) (lambda args args))))
+      (if (not (eq? (car err) 'out-of-range))
+	  (snd-display #__line__ ";make-average max-size error message: ~A" err)))
     
 
     (let ((gen (make-moving-max 4))
@@ -13519,6 +13526,12 @@ EDITS: 2
     (let ((err (catch #t (lambda () (make-moving-max :size -1)) (lambda args args))))
       (if (not (eq? (car err) 'out-of-range))
 	  (snd-display #__line__ ";make-max bad size error message: ~A" err)))
+    (let ((err (catch #t (lambda () (make-moving-max :size 0)) (lambda args args))))
+      (if (not (eq? (car err) 'out-of-range))
+	  (snd-display #__line__ ";make-max size==0 error message: ~A" err)))
+    (let ((err (catch #t (lambda () (make-moving-max :max-size 0)) (lambda args args))))
+      (if (not (eq? (car err) 'out-of-range))
+	  (snd-display #__line__ ";make-max max-size error message: ~A" err)))
     
 
 
@@ -46614,6 +46627,7 @@ EDITS: 1
 	  (if (= test-28 0) 
 	      (begin
 		(check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
+		(check-error-tag 'wrong-type-arg (lambda () (envelope-interp 1.0 '(0 0 .5))))
 		(check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
 		(check-error-tag 'cannot-save (lambda () (mus-sound-report-cache "/bad/baddy")))
 		(check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
@@ -47383,8 +47397,11 @@ EDITS: 1
 	(if (>= len 100) (set! len 99))
 	(set! (counts len) (+ (counts len) 1))))
     (do ((i 0 (+ i 1)))
-	((= i 100))
+	((or (= i 100))
+	 (= (counts i) 0))
       (format *stderr* "~D ~D~%" i (counts i)))))
+|#
+#|
 0 8581
 1 6358
 2 2687

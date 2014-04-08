@@ -111,8 +111,14 @@
 #define S_sound_data_reverseB           "sound-data-reverse!"
 #define S_sound_data_scaleB             "sound-data-scale!"
 #define S_sound_data_setB               "sound-data-set!"
-#define S_sound_data_to_vct             "sound-data->vct"
-#define S_vct_to_sound_data             "vct->sound-data"
+
+#if HAVE_SCHEME
+  #define S_sound_data_to_vct           "sound-data->float-vector"
+  #define S_vct_to_sound_data           "float-vector->sound-data"
+#else
+  #define S_sound_data_to_vct           "sound-data->vct"
+  #define S_vct_to_sound_data           "vct->sound-data"
+#endif
 #if HAVE_RUBY
   #define S_sound_data_multiply         "sound_data_multiply"
   #define S_sound_data_add              "sound_data_add"

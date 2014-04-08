@@ -653,11 +653,10 @@ static Xen g_current_font(Xen snd, Xen chn, Xen ax_id)
 
 with_four_setter_args(g_set_current_font_reversed, g_set_current_font)
 
-
 static Xen g_make_graph_data(Xen snd, Xen chn, Xen edpos, Xen lo, Xen hi)
 {
   #define H_make_graph_data "(" S_make_graph_data " :optional snd chn edpos low high): \
-return either a vct (if the graph has one trace), or a list of two vcts (the two sides of the envelope graph). \
+return either a " S_vct " (if the graph has one trace), or a list of two " S_vct "s (the two sides of the envelope graph). \
 'edpos' defaults to the " S_current_edit_position ", 'low' defaults to the current window left sample, and \
 'high' defaults to the current rightmost sample. (" S_graph_data " (" S_make_graph_data ")) reimplements the time domain graph."
 
@@ -697,7 +696,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
 		   (mus_is_vct(Xen_car(data))) &&
 		   (mus_is_vct(Xen_cadr(data)))) || 
 		  (mus_is_vct(data)), 
-		  data, 1, S_graph_data, "a list of 2 vcts or vct");
+		  data, 1, S_graph_data, "a list of 2 " S_vct "s or a " S_vct);
   Xen_check_type(Xen_is_integer_boolean_or_unbound(ax), ax, 4, S_graph_data, "an integer");
   Xen_check_type(Xen_is_llong(lo) || Xen_is_false(lo) || !Xen_is_bound(lo), lo, 5, S_graph_data, "a sample number");
   Xen_check_type(Xen_is_llong(hi) || Xen_is_false(hi) || !Xen_is_bound(hi), hi, 6, S_graph_data, "a sample number");

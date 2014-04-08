@@ -7886,7 +7886,7 @@ static mus_float_t *g_floats_to_samples(Xen obj, int *size, const char *caller, 
 	      for (i = 0; i < num; i++) 
 		vals[i] = (vdata[i]);
 	    }
-	  else Xen_check_type(0, obj, position, caller, "a vct, vector, or list");
+	  else Xen_check_type(0, obj, position, caller, "a " S_vct ", vector, or list");
 	}
     }
   (*size) = num;
@@ -8040,7 +8040,7 @@ static Xen g_set_samples_with_origin(Xen samp_0, Xen samps, Xen vect, Xen snd, X
 				     const char *edname, Xen infile_chan, Xen edpos, Xen auto_delete)
 {
   #define H_set_samples "(set-" S_samples " start-samp samps data :optional snd chn truncate edname (infile-chan 0) edpos auto-delete): \
-set snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename)); \
+set snd's channel chn's samples starting at start-samp for samps from data (a " S_vct ", vector, or string (filename)); \
 start-samp can be beyond current data end; if truncate is " PROC_TRUE " and start-samp is 0, the end of the file is set to match \
 the new data's end."
 
@@ -8186,10 +8186,10 @@ static Xen g_override_samples_with_origin(Xen filename, Xen samps, Xen snd, Xen 
 
 static Xen g_vct_to_channel(Xen v, Xen beg, Xen dur, Xen snd, Xen chn_n, Xen edpos, Xen origin)
 {
-  #define H_vct_to_channel "(" S_vct_to_channel " vct :optional (beg 0) (dur len) snd chn edpos origin): \
-set snd's channel chn's samples starting at beg for dur samps from vct data"
+  #define H_vct_to_channel "(" S_vct_to_channel " v :optional (beg 0) (dur len) snd chn edpos origin): \
+set snd's channel chn's samples starting at beg for dur samps from " S_vct " v"
   const char *caller;
-  Xen_check_type(mus_is_vct(v), v, 1, S_vct_to_channel, "a vct");
+  Xen_check_type(mus_is_vct(v), v, 1, S_vct_to_channel, "a " S_vct);
   Xen_check_type(Xen_is_string_or_unbound(origin), origin, 7, S_vct_to_channel, "a string");
   if (!Xen_is_bound(beg)) beg = Xen_integer_zero;
   if (!Xen_is_bound(dur)) 
@@ -8358,7 +8358,7 @@ static Xen samples_to_vct_1(Xen samp_0, Xen samps, Xen snd, Xen chn_n, Xen edpos
 static Xen g_channel_to_vct(Xen samp_0, Xen samps, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_channel_to_vct "(" S_channel_to_vct " :optional (beg 0) (dur len) snd chn edpos): \
-return a vct containing snd channel chn's data starting at beg for dur samps"
+return a " S_vct " containing snd channel chn's data starting at beg for dur samps"
 
   return(samples_to_vct_1(samp_0, samps, snd, chn_n, edpos, S_channel_to_vct));
 }
@@ -8367,7 +8367,7 @@ return a vct containing snd channel chn's data starting at beg for dur samps"
 static Xen g_samples(Xen samp_0, Xen samps, Xen snd, Xen chn_n, Xen edpos)
 {
   #define H_samples "(" S_samples " :optional (start-samp 0) (samps len) snd chn edpos): \
-return a vct containing snd channel chn's samples starting at start-samp for samps samples; edpos is the edit \
+return a " S_vct " containing snd channel chn's samples starting at start-samp for samps samples; edpos is the edit \
 history position to read (defaults to current position). snd can be a filename, a mix, a region, or a sound index number."
 
   chan_info *cp;
@@ -8654,7 +8654,7 @@ static Xen g_insert_sample(Xen samp_n, Xen val, Xen snd, Xen chn_n, Xen edpos)
 static Xen g_insert_samples(Xen samp, Xen samps, Xen vect, Xen snd, Xen chn_n, Xen edpos, Xen auto_delete, Xen caller)
 {
   #define H_insert_samples "(" S_insert_samples " start-samp samps data :optional snd chn edpos auto-delete origin): \
-insert data (either a vct, a list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
+insert data (either a " S_vct ", a list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
 
   chan_info *cp;
   int pos;
@@ -9205,8 +9205,8 @@ void g_init_edits(void)
   Xen_define_safe_procedure(S_normalize_channel,      g_normalize_channel_w,            1, 5, 0, H_normalize_channel);
 
 #if HAVE_SCHEME
-  s7_eval_c_string(s7, "(define float-vector->channel vct->channel)");
-  s7_eval_c_string(s7, "(define channel->float-vector channel->vct)");
+  s7_eval_c_string(s7, "(define vct->channel float-vector->channel)");
+  s7_eval_c_string(s7, "(define channel->vct channel->float-vector)");
 #endif
 
   Xen_define_procedure(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");

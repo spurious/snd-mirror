@@ -2233,7 +2233,7 @@ char *mus_expand_filename(const char *filename)
       return(file_name_buf);
     }
      
-  tok = strchr(filename, (int)'/');
+  tok = (char *)strchr(filename, (int)'/');
   if (!tok)
     {
       orig = mus_getcwd();

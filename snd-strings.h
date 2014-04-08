@@ -59,7 +59,6 @@
 #define S_channel_properties            "channel-properties"
 #define S_channel_property              "channel-property"
 #define S_channel_style                 "channel-style"
-#define S_channel_to_vct                "channel->vct"
 #define S_channel_widgets               "channel-widgets"
 #define S_channels                      "channels"
 #define S_channels_combined             "channels-combined"
@@ -364,7 +363,6 @@
 #define S_mix_tag_width                 "mix-tag-width"
 #define S_mix_tag_y                     "mix-tag-y"
 #define S_mix_to_integer                "mix->integer"
-#define S_mix_vct                       "mix-vct"
 #define S_mix_waveform_height           "mix-waveform-height"
 #define S_mixes                         "mixes"
 #define S_mouse_click_hook              "mouse-click-hook"
@@ -441,7 +439,6 @@
 #define S_is_region_sampler             "region-sampler?"
 #define S_region_srate                  "region-srate"
 #define S_region_to_integer             "region->integer"
-#define S_region_to_vct                 "region->vct"
 #define S_regions                       "regions"
 #define S_remember_sound_state          "remember-sound-state"
 #define S_remove_from_menu              "remove-from-menu"
@@ -638,7 +635,6 @@
 #define S_transform_sample              "transform-sample"
 #define S_transform_size                "transform-size"
 #define S_transform_to_integer          "transform->integer"
-#define S_transform_to_vct              "transform->vct"
 #define S_transform_type                "transform-type"
 #define S_unbind_key                    "unbind-key"  
 #define S_undo                          "undo"
@@ -650,7 +646,6 @@
 #define S_update_time_graph             "update-time-graph"
 #define S_update_transform_graph        "update-transform-graph"
 #define S_is_variable_graph             "variable-graph?"
-#define S_vct_to_channel                "vct->channel"
 #define S_view_files_amp                "view-files-amp"
 #define S_view_files_amp_env            "view-files-amp-env"
 #define S_view_files_dialog             "view-files-dialog"
@@ -714,5 +709,19 @@
 #define S_zoom_focus_middle             "zoom-focus-middle"
 #define S_zoom_focus_right              "zoom-focus-right"
 #define S_zoom_focus_style              "zoom-focus-style"
+
+#if HAVE_SCHEME
+#define S_channel_to_vct                "channel->float-vector"
+#define S_mix_vct                       "mix-float-vector"
+#define S_region_to_vct                 "region->float-vector"
+#define S_transform_to_vct              "transform->float-vector"
+#define S_vct_to_channel                "float-vector->channel"
+#else
+#define S_channel_to_vct                "channel->vct"
+#define S_mix_vct                       "mix-vct"
+#define S_region_to_vct                 "region->vct"
+#define S_transform_to_vct              "transform->vct"
+#define S_vct_to_channel                "vct->channel"
+#endif
 
 #endif

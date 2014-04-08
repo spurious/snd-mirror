@@ -324,6 +324,7 @@ s7_Double s7_real(s7_pointer p);                                             /* 
 s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> Scheme real */
 s7_pointer s7_make_mutable_real(s7_scheme *sc, s7_Double n);
 s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x);                    /* x can be any kind of number */
+s7_Double s7_number_to_real_with_caller(s7_scheme *sc, s7_pointer x, const char *caller);
 s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x);
 bool s7_is_mutable(s7_pointer p);
 

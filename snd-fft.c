@@ -2016,7 +2016,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 static Xen g_transform_to_vct(Xen snd, Xen chn_n, Xen v)
 {
   #define H_transform_to_vct "(" S_transform_to_vct " :optional snd chn obj): \
-return a vct (obj if it's passed), with the current transform data from snd's channel chn"
+return a " S_vct " (obj if it's passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
   vct *v1;
@@ -2241,7 +2241,7 @@ static Xen g_is_transform(Xen type)
 static Xen g_snd_transform(Xen type, Xen data, Xen hint)
 {
   #define H_snd_transform "(snd-transform type data choice) calls whatever FFT is being used by the \
-display.  'type' is a transform object such as " S_fourier_transform "; 'data' is a vct. In the wavelet case, \
+display.  'type' is a transform object such as " S_fourier_transform "; 'data' is a " S_vct ". In the wavelet case, \
 'choice' is the wavelet to use."
 
   int trf, hnt;
@@ -2250,7 +2250,7 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
   mus_float_t *dat, *vdata;
 
   Xen_check_type(xen_is_transform(type), type, 1, "snd-transform", "a transform object");
-  Xen_check_type(mus_is_vct(data), data, 2, "snd-transform", "a vct");
+  Xen_check_type(mus_is_vct(data), data, 2, "snd-transform", "a " S_vct);
 
   trf = Xen_transform_to_C_int(type);
   if ((trf < 0) || (trf > HAAR))
@@ -2306,7 +2306,7 @@ static Xen g_add_transform(Xen name, Xen xlabel, Xen lo, Xen hi, Xen proc)
 {
   #define H_add_transform "(" S_add_transform " name x-label low high func): add the transform func \
 to the transform lists; func should be a function of two arguments, the length of the transform \
-and a sampler to get the data, and should return a vct containing the transform results. \
+and a sampler to get the data, and should return a " S_vct " containing the transform results. \
 name is the transform's name, x-label is its x-axis label, and the relevant returned data \
 to be displayed goes from low to high (normally 0.0 to 1.0).  " S_add_transform " returns the new transform object."
 
@@ -2480,7 +2480,7 @@ of a moving mark:\n\
   Xen_define_procedure(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
   Xen_define_procedure(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
   Xen_define_procedure(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
-  Xen_define_procedure(S_is_transform,          g_is_transform_w,      1, 0, 0, H_is_transform);
+  Xen_define_procedure(S_is_transform,         g_is_transform_w,     1, 0, 0, H_is_transform);
   Xen_define_procedure(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
   Xen_define_procedure("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
 
@@ -2494,7 +2494,7 @@ of a moving mark:\n\
   Xen_define_procedure(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer);
 
 #if HAVE_SCHEME
-  s7_eval_c_string(s7, "(define transform->float-vector transform->vct)");
+  s7_eval_c_string(s7, "(define transform->vct transform->float-vector)");
 #endif
 }
 

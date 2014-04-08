@@ -30,12 +30,14 @@ MUS_EXPORT Xen g_vct_peak(Xen obj);
 MUS_EXPORT vct *mus_vct_wrap(mus_long_t len, mus_float_t *data);
 
 #if HAVE_SCHEME
+  #define S_vct             "float-vector"
   #define Xen_to_vct(Obj)   (vct *)Obj
   #define mus_vct_length(V) s7_vector_length((s7_pointer)V)
   #define mus_vct_data(V)   s7_float_vector_elements((s7_pointer)V)
   #define mus_is_vct(Obj)   s7_is_float_vector(Obj)
   #define vct_to_xen(V)     (Xen)V
 #else
+  #define S_vct "vct"
   #define Xen_to_vct(arg) ((vct *)Xen_object_ref(arg))
   MUS_EXPORT mus_long_t mus_vct_length(vct *v);
   MUS_EXPORT mus_float_t *mus_vct_data(vct *v);

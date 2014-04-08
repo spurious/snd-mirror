@@ -2323,7 +2323,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 }
 
 
-static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool check_sample) 
+static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool check_sample, const char *caller) 
 {
   #define H_add_mark "(" S_add_mark " samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark."
   mark *m = NULL;
@@ -2332,12 +2332,12 @@ static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool
   int msync = 0;
   const char *mname = NULL;
 
-  Xen_check_type(Xen_is_llong(samp_n) || !Xen_is_bound(samp_n), samp_n, 1, S_add_mark, "an integer");
-  Xen_check_type(Xen_is_string_or_unbound(name) || Xen_is_false(name), name, 4, S_add_mark, "a string");
-  Xen_check_type(Xen_is_integer_or_unbound(sync), sync, 5, S_add_mark, "an integer");
-  Snd_assert_channel(S_add_mark, snd, chn_n, 2);
+  Xen_check_type(Xen_is_llong(samp_n) || !Xen_is_bound(samp_n), samp_n, 1, caller, "an integer");
+  Xen_check_type(Xen_is_string_or_unbound(name) || Xen_is_false(name), name, 4, caller, "a string");
+  Xen_check_type(Xen_is_integer_or_unbound(sync), sync, 5, caller, "an integer");
+  Snd_assert_channel(caller, snd, chn_n, 2);
 
-  cp = get_cp(snd, chn_n, S_add_mark);
+  cp = get_cp(snd, chn_n, caller);
   if (!cp) return(Xen_false);
 
   if (Xen_is_llong(samp_n)) loc = Xen_llong_to_C_llong(samp_n);
@@ -2349,7 +2349,7 @@ static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool
   if ((loc < 0) || 
       (loc >= current_samples(cp)))
     Xen_error(NO_SUCH_SAMPLE,
-	      Xen_list_2(C_string_to_Xen_string(S_add_mark ": no such sample, ~A"),
+	      Xen_list_2(C_string_to_Xen_string(S_add_mark ": no such sample, ~A"), 
 			 samp_n));
 
   if (Xen_is_string(name)) mname = Xen_string_to_C_string(name);
@@ -2368,7 +2368,7 @@ static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool
 
 static Xen g_add_mark(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync)
 {
-  return(g_add_mark_1(samp_n, snd, chn_n, name, sync, true));
+  return(g_add_mark_1(samp_n, snd, chn_n, name, sync, true, S_add_mark));
 }
 
 
@@ -2377,7 +2377,7 @@ static Xen g_add_mark_unchecked(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sy
   #define H_add_mark_unchecked "(add-mark! samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark.\
 Unlike add-mark, add-mark! does not check for an invalid sample number."
 
-  return(g_add_mark_1(samp_n, snd, chn_n, name, sync, false));
+  return(g_add_mark_1(samp_n, snd, chn_n, name, sync, false, S_add_mark "!"));
 }
 
 

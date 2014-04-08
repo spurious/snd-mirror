@@ -1483,7 +1483,7 @@ static Xen g_mus_error_type_to_string(Xen err)
 static Xen g_array_to_file(Xen filename, Xen data, Xen len, Xen srate, Xen channels)
 {
   #define H_array_to_file "(" S_array_to_file " filename data len srate channels): write 'data', \
-a vct of interleaved samples, to the sound file 'filename' set up to have the given \
+a " S_vct " of interleaved samples, to the sound file 'filename' set up to have the given \
 srate and channels.  'len' samples are written."
 
   /* this exists for compatibility with the Common Lisp version of CLM. Ideally, we'd get rid
@@ -1495,7 +1495,7 @@ srate and channels.  'len' samples are written."
   vct *v;
 
   Xen_check_type(Xen_is_string(filename), filename, 1, S_array_to_file, "a string");
-  Xen_check_type(mus_is_vct(data), data, 2, S_array_to_file, "a vct");
+  Xen_check_type(mus_is_vct(data), data, 2, S_array_to_file, "a " S_vct);
   Xen_check_type(Xen_is_llong(len), len, 3, S_array_to_file, "an integer");
   Xen_check_type(Xen_is_integer(srate), srate, 4, S_array_to_file, "an integer");
   Xen_check_type(Xen_is_integer(channels), channels, 5, S_array_to_file, "an integer");
@@ -1519,7 +1519,7 @@ srate and channels.  'len' samples are written."
 static Xen g_file_to_array(Xen filename, Xen chan, Xen start, Xen samples, Xen data)
 {
   #define H_file_to_array "(" S_file_to_array " filename chan start samples data): read the sound file \
-'filename' placing samples from channel 'chan' into the vct 'data' starting in the file \
+'filename' placing samples from channel 'chan' into the " S_vct " 'data' starting in the file \
 at frame 'start' and reading 'samples' samples altogether."
 
   int chn;
@@ -1531,7 +1531,7 @@ at frame 'start' and reading 'samples' samples altogether."
   Xen_check_type(Xen_is_integer(chan), chan, 2, S_file_to_array, "an integer");
   Xen_check_type(Xen_is_llong(start), start, 3, S_file_to_array, "an integer");
   Xen_check_type(Xen_is_llong(samples), samples, 4, S_file_to_array, "an integer");
-  Xen_check_type((mus_is_vct(data)), data, 5, S_file_to_array, "a vct");
+  Xen_check_type((mus_is_vct(data)), data, 5, S_file_to_array, "a " S_vct);
 
   name = Xen_string_to_C_string(filename);
   if (!(mus_file_probe(name)))
@@ -2181,7 +2181,7 @@ static Xen g_sound_data_multiply(Xen obj1, Xen obj2)
 
 static Xen g_sound_data_to_vct(Xen sdobj, Xen chan, Xen vobj)
 {
-  #define H_sound_data_to_vct "(" S_sound_data_to_vct " sd chan v): copies sound-data sd's channel chan data into vct v"
+  #define H_sound_data_to_vct "(" S_sound_data_to_vct " sd chan v): copies sound-data sd's channel chan data into the " S_vct " v"
   vct *v;
   sound_data *sd;
   int chn;
@@ -2189,7 +2189,7 @@ static Xen g_sound_data_to_vct(Xen sdobj, Xen chan, Xen vobj)
 
   Xen_check_type(xen_is_sound_data(sdobj), sdobj, 1, S_sound_data_to_vct, "a sound-data object");
   Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 2, S_sound_data_to_vct, "an integer");
-  Xen_check_type(!Xen_is_bound(vobj) || mus_is_vct(vobj), vobj, 3, S_sound_data_to_vct, "a vct");
+  Xen_check_type(!Xen_is_bound(vobj) || mus_is_vct(vobj), vobj, 3, S_sound_data_to_vct, "a " S_vct);
 
   sd = Xen_to_sound_data(sdobj);
   sdlen = mus_sound_data_length(sd);
@@ -2219,14 +2219,14 @@ static Xen g_sound_data_to_vct(Xen sdobj, Xen chan, Xen vobj)
 
 static Xen g_vct_to_sound_data(Xen vobj, Xen sdobj, Xen chan)
 {
-  #define H_vct_to_sound_data "(" S_vct_to_sound_data " v sd chan): copies vct v's data into sound-data sd's channel chan"
+  #define H_vct_to_sound_data "(" S_vct_to_sound_data " v sd chan): copies " S_vct v "'s data into sound-data sd's channel chan"
   vct *v;
   sound_data *sd;
   Xen obj = Xen_false;
   int chn;
   mus_long_t len;
 
-  Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_to_sound_data, "a vct");
+  Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_to_sound_data, "a " S_vct);
   Xen_check_type(!Xen_is_bound(sdobj) || xen_is_sound_data(sdobj), sdobj, 2, S_vct_to_sound_data, "a sound-data object");
   Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 3, S_vct_to_sound_data, "an integer");
 

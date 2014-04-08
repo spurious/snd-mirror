@@ -3216,8 +3216,8 @@ static mus_float_t *pw_set_data(mus_any *ptr, mus_float_t *val) {((pw *)ptr)->co
 static mus_float_t pw_xcoeff(mus_any *ptr, int index) {return(((pw *)ptr)->coeffs[index]);}
 static mus_float_t pw_set_xcoeff(mus_any *ptr, int index, mus_float_t val) {((pw *)ptr)->coeffs[index] = val; return(val);}
 
-static mus_float_t pw_ycoeff(mus_any *ptr, int index) {return(((pw *)ptr)->ucoeffs[index]);}
-static mus_float_t pw_set_ycoeff(mus_any *ptr, int index, mus_float_t val) {((pw *)ptr)->ucoeffs[index] = val; return(val);}
+static mus_float_t pw_ycoeff(mus_any *ptr, int index) {if (((pw *)ptr)->ucoeffs) return(((pw *)ptr)->ucoeffs[index]); return(0.0);}
+static mus_float_t pw_set_ycoeff(mus_any *ptr, int index, mus_float_t val) {if (((pw *)ptr)->ucoeffs) ((pw *)ptr)->ucoeffs[index] = val; return(val);}
 
 static mus_float_t pw_index(mus_any *ptr) {return(((pw *)ptr)->index);}
 static mus_float_t pw_set_index(mus_any *ptr, mus_float_t val) {((pw *)ptr)->index = val; return(val);}
@@ -4318,35 +4318,79 @@ typedef struct {
   mus_interp_t type;
   mus_any *filt;
   mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
+  mus_float_t (*del)(mus_any *ptr, mus_float_t input);                 /* zdelay or normal tap */
+  mus_float_t (*delt)(mus_any *ptr, mus_float_t input);                /*   just tick */
+  mus_float_t (*delu)(mus_any *ptr, mus_float_t input);                /*   unmodulated */
 } dly;
+
 
 
 mus_float_t mus_delay_tick(mus_any *ptr, mus_float_t input)
 {
-  dly *gen = (dly *)ptr;
-  gen->line[gen->loc] = input;
-  gen->loc++;
-  if (gen->zdly)
-    {
-      if (gen->loc >= gen->zsize) gen->loc = 0;
-      gen->zloc++;
-      if (gen->zloc >= gen->zsize) gen->zloc = 0;
-    }
-  else
-    {
-      if (gen->loc >= gen->size) gen->loc = 0;
-    }
-  return(input);
+  return(((dly *)ptr)->delt(ptr, input));
 }
 
 
-static mus_float_t mus_delay_tick_noz(mus_any *ptr, mus_float_t input)
+mus_float_t mus_tap(mus_any *ptr, mus_float_t loc)
+{
+  return(((dly *)ptr)->del(ptr, loc));
+}
+
+
+mus_float_t mus_delay_unmodulated(mus_any *ptr, mus_float_t input)
+{
+  return(((dly *)ptr)->delu(ptr, input));
+}
+
+
+static mus_float_t ztap(mus_any *ptr, mus_float_t loc)
+{
+  dly *gen = (dly *)ptr;
+  /* this is almost always linear */
+  if (gen->type == MUS_INTERP_LINEAR)
+    return(mus_array_interp(gen->line, gen->zloc - loc, gen->zsize));
+  gen->yn1 = mus_interpolate(gen->type, gen->zloc - loc, gen->line, gen->zsize, gen->yn1);
+  return(gen->yn1);
+}
+
+
+static mus_float_t dtap(mus_any *ptr, mus_float_t loc)
+{
+  dly *gen = (dly *)ptr;
+  int taploc;
+  if (gen->size == 0) return(gen->line[0]);
+  if ((int)loc == 0) return(gen->line[gen->loc]);
+  taploc = (int)(gen->loc - (int)loc) % gen->size;
+  if (taploc < 0) taploc += gen->size;
+  return(gen->line[taploc]);
+}
+
+
+mus_float_t mus_tap_unmodulated(mus_any *ptr)
+{
+  dly *gen = (dly *)ptr;
+  return(gen->line[gen->loc]);
+}
+
+
+static mus_float_t zdelt(mus_any *ptr, mus_float_t input)
 {
   dly *gen = (dly *)ptr;
   gen->line[gen->loc] = input;
   gen->loc++;
-  if (gen->loc >= gen->size) 
-    gen->loc = 0;
+  if (gen->loc >= gen->zsize) gen->loc = 0;
+  gen->zloc++;
+  if (gen->zloc >= gen->zsize) gen->zloc = 0;
+  return(input);
+}
+
+
+static mus_float_t delt(mus_any *ptr, mus_float_t input)
+{
+  dly *gen = (dly *)ptr;
+  gen->line[gen->loc] = input;
+  gen->loc++;
+  if (gen->loc >= gen->size) gen->loc = 0;
   return(input);
 }
 
@@ -4363,22 +4407,19 @@ mus_float_t mus_delay(mus_any *ptr, mus_float_t input, mus_float_t pm)
 }
 
 
-mus_float_t mus_delay_unmodulated(mus_any *ptr, mus_float_t input)
+static mus_float_t zdelay_unmodulated(mus_any *ptr, mus_float_t input)
 {
   dly *gen = (dly *)ptr;
   mus_float_t result;
-  if (gen->zdly) 
-    {
-      if (gen->size == 0) return(input); /* no point in tick in this case */
-      result = gen->line[gen->zloc];
-      mus_delay_tick(ptr, input);
-    }
-  else 
-    {
-      result = gen->line[gen->loc];
-      mus_delay_tick_noz(ptr, input);
-    }
+  result = gen->line[gen->zloc];
+  mus_delay_tick(ptr, input);
   return(result);
+}
+
+
+static mus_float_t delay_unmodulated_zero(mus_any *ptr, mus_float_t input)
+{
+  return(input);
 }
 
 
@@ -4386,44 +4427,12 @@ mus_float_t mus_delay_unmodulated_noz(mus_any *ptr, mus_float_t input)
 {
   dly *gen = (dly *)ptr;
   mus_float_t result;
-  if (gen->size == 0)
-    return(input);
   result = gen->line[gen->loc];
   gen->line[gen->loc] = input;
   gen->loc++;
   if (gen->loc >= gen->size) 
     gen->loc = 0;
   return(result);
-}
-
-
-mus_float_t mus_tap(mus_any *ptr, mus_float_t loc)
-{
-  dly *gen = (dly *)ptr;
-  int taploc;
-  if (gen->zdly)
-    {
-      /* this is almost always linear */
-      if (gen->type == MUS_INTERP_LINEAR)
-	return(mus_array_interp(gen->line, gen->zloc - loc, gen->zsize));
-      gen->yn1 = mus_interpolate(gen->type, gen->zloc - loc, gen->line, gen->zsize, gen->yn1);
-      return(gen->yn1);
-    }
-  else
-    {
-      if (gen->size == 0) return(gen->line[0]);
-      if ((int)loc == 0) return(gen->line[gen->loc]);
-      taploc = (int)(gen->loc - (int)loc) % gen->size;
-      if (taploc < 0) taploc += gen->size;
-      return(gen->line[taploc]);
-    }
-}
-
-
-mus_float_t mus_tap_unmodulated(mus_any *ptr)
-{
-  dly *gen = (dly *)ptr;
-  return(gen->line[gen->loc]);
 }
 
 
@@ -4582,8 +4591,10 @@ static mus_any_class DELAY_CLASS = {
 
 mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mus_interp_t type) 
 {
-  /* if preloaded_line null, allocated locally */
-  /* if size == line_size, normal (non-interpolating) delay */
+  /* if preloaded_line null, allocated locally.
+   * if size == line_size, normal (non-interpolating) delay
+   *    in clm2xen.c, if size=0 and max-size unset, max-size=1 (line_size here)
+   */
   dly *gen;
   gen = (dly *)malloc(sizeof(dly));
   gen->core = &DELAY_CLASS;
@@ -4591,6 +4602,22 @@ mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mu
   gen->size = size;
   gen->zsize = line_size;
   gen->zdly = ((line_size != size) || (type != MUS_INTERP_NONE));
+  if (gen->zdly)
+    {
+      gen->del = ztap;
+      gen->delt = zdelt;
+      if (gen->size == 0)
+	gen->delu = delay_unmodulated_zero;
+      else gen->delu = zdelay_unmodulated;
+    }
+  else
+    {
+      gen->del = dtap;
+      gen->delt = delt;
+      if (gen->size == 0)
+	gen->delu = delay_unmodulated_zero;
+      else gen->delu = mus_delay_unmodulated_noz;
+    }
   gen->type = type;
   if (preloaded_line)
     {
@@ -4641,6 +4668,8 @@ mus_float_t mus_comb(mus_any *ptr, mus_float_t input, mus_float_t pm)
 mus_float_t mus_comb_unmodulated(mus_any *ptr, mus_float_t input) 
 {
   dly *gen = (dly *)ptr;
+  if (gen->zdly) /* TODO: split this */
+    return(mus_delay_unmodulated(ptr, input + (gen->line[gen->zloc] * gen->yscl)));
   return(mus_delay_unmodulated(ptr, input + (gen->line[gen->loc] * gen->yscl)));
 }
 
@@ -5026,7 +5055,9 @@ mus_float_t mus_all_pass_unmodulated(mus_any *ptr, mus_float_t input)
 {
   mus_float_t din;
   dly *gen = (dly *)ptr;
-  din = input + (gen->yscl * gen->line[gen->loc]);
+  if (gen->zdly)
+    din = input + (gen->yscl * gen->line[gen->zloc]);
+  else din = input + (gen->yscl * gen->line[gen->loc]);
   return(mus_delay_unmodulated(ptr, din) + (gen->xscl * din));
 }
 
@@ -11297,20 +11328,7 @@ mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *uf)
 /* in all output functions, the assumption is that we're adding to whatever already exists */
 /* also, the "end" methods need to flush the output buffer */
 
-typedef struct {
-  mus_any_class *core;
-  int chan;
-  mus_long_t loc;
-  char *file_name;
-  int chans;
-  mus_float_t **obufs;
-  mus_float_t *obuf0, *obuf1;
-  mus_long_t data_start, data_end;
-  mus_long_t out_end;
-  int output_data_format;
-  int output_header_type;
-} rdout;
-
+/* rdout struct is in clm.h */
 
 static char *describe_sample_to_file(mus_any *ptr)
 {
@@ -11927,39 +11945,6 @@ mus_float_t mus_out_any(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 		mus_name(IO));
     }
   return(val);
-}
-
-
-bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO);
-bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
-{
-  rdout *gen = (rdout *)IO;
-  if ((chan < gen->chans) &&
-      (samp <= gen->data_end) &&
-      (samp >= gen->data_start))
-    {
-      gen->obufs[chan][samp - gen->data_start] += val;
-      if (samp > gen->out_end) 
-	gen->out_end = samp;
-      return(true);
-    }
-  return(false);
-}
-
-
-bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *IO);
-bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *IO)
-{
-  rdout *gen = (rdout *)IO;
-  if ((samp <= gen->data_end) &&
-      (samp >= gen->data_start))
-    {
-      gen->obufs[0][samp - gen->data_start] += val;
-      if (samp > gen->out_end) 
-	gen->out_end = samp;
-      return(true);
-    }
-  return(false);
 }
 
 
@@ -14137,7 +14122,10 @@ mus_any *mus_make_granulate(mus_float_t (*input)(void *arg, int direction),
   spd->out_data = (mus_float_t *)calloc(spd->out_data_len, sizeof(mus_float_t));
   spd->in_data_len = outlen + spd->s20 + 1;
   spd->in_data = (mus_float_t *)malloc(spd->in_data_len * sizeof(mus_float_t));
-  spd->rd = input;
+  spd->rd = input;            
+  /* as_needed_input_choice(...) in make-granulate in clm2xen -> normally as_needed_input_func which calls mus_generator_set_feeder,
+   *   so even if we had spd->block_rd, we would have to call rd once to get block_rd set!  
+   */
   spd->closure = closure;
   spd->edit = edit;
   spd->grain = (mus_float_t *)malloc(spd->in_data_len * sizeof(mus_float_t));
@@ -17049,3 +17037,5 @@ void mus_initialize(void)
 #endif 
 }
 
+
+/* #include "clm2xen.c" */

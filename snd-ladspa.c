@@ -1178,13 +1178,13 @@ static float *double_to_float(mus_float_t *data, int data_size)
 
 static Xen g_ladspa_connect_port(Xen desc, Xen ptr, Xen port, Xen data)
 {
-  #define H_ladspa_connect_port "(" S_ladspa_connect_port " descriptor handle port vct-data): run plugin's connect_port function"
+  #define H_ladspa_connect_port "(" S_ladspa_connect_port " descriptor handle port data): run plugin's connect_port function"
   const LADSPA_Descriptor *descriptor;
   vct *samples;
   Xen_check_type(Xen_is_Ladspa_Descriptor(desc), desc, 1, S_ladspa_connect_port, "Ladspa descriptor");
   Xen_check_type(Xen_is_Ladspa_Handle(ptr), ptr, 2, S_ladspa_connect_port, "Ladspa handle");
   Xen_check_type(Xen_is_ulong(port), port, 3, S_ladspa_connect_port, "unsigned long");
-  Xen_check_type(mus_is_vct(data), data, 4, S_ladspa_connect_port, "vct");
+  Xen_check_type(mus_is_vct(data), data, 4, S_ladspa_connect_port, S_vct);
   descriptor = Xen_to_C_Ladspa_Descriptor(desc);
   samples = Xen_to_vct(data);
   if (descriptor->connect_port) 

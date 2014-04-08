@@ -1152,7 +1152,7 @@ void mix_help(void)
 {
   #if HAVE_SCHEME
     #define mix_example "(mix \"oboe.snd\" 1234)"
-    #define mix_vct_example "(mix-vct (vct 0 .1 .2) 1234)"
+    #define mix_vct_example "(mix-float-vector (float-vector 0 .1 .2) 1234)"
     #define mix_amp_example "(set! (mix-amp 0) .5)"
     #define mix_amp_env_example "(set! (mix-amp-env 0) '(0 0 1 1))"
   #endif
@@ -1200,8 +1200,8 @@ The main mix-related functions are:\n\
   " S_mix_region " (:optional samp reg snd chn region-channel)\n\
     mix region reg at sample samp (default is cursor sample)\n\
 \n\
-  " S_mix_vct " (vct :optional beg snd chn with-mix-tags origin)\n\
-    mix the contents of vct starting at beg:\n\
+  " S_mix_vct " (v :optional beg snd chn with-mix-tags origin)\n\
+    mix the contents of " S_vct " starting at beg:\n\
     " mix_vct_example "\n\
 \n\
   " S_mix_amp " (mix)\n\
@@ -1644,8 +1644,8 @@ void filter_help(void)
 {
   #if HAVE_SCHEME
     #define filter_sound_env_example "(filter-sound '(0 1 1 0) 1024)"
-    #define filter_sound_vct_example "(filter-sound (vct .1 .2 .3 .3 .2 .1) 6)"
-    #define filter_sound_clm_example "(filter-sound (make-filter 2 (vct 1 -1) (vct 0 -0.99)))"
+    #define filter_sound_vct_example "(filter-sound (float-vector .1 .2 .3 .3 .2 .1) 6)"
+    #define filter_sound_clm_example "(filter-sound (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99)))"
   #endif
   #if HAVE_RUBY
     #define filter_sound_env_example "filter_sound([0.0, 1.0, 1.0, 0.0], 1024)"
@@ -1825,7 +1825,7 @@ dialogs. The insertion-related functions are:\n\
     insert sample 'value' at sample 'samp'\n\
 \n\
   " S_insert_samples " (samp samps data :optional snd chn pos del org)\n\
-    insert 'samps' samples of 'data' (normally a vct) starting at\n\
+    insert 'samps' samples of 'data' (normally a " S_vct ") starting at\n\
     sample 'samp'.  'data' can also be a filename.\n\
 \n\
   " S_insert_sound " (file :optional beg in-chan snd chn pos del)\n\
@@ -1883,7 +1883,7 @@ functions are:\n\
 void region_help(void)
 {
   #if HAVE_SCHEME
-    #define region_to_vct_example "(region->vct 0 0 reg) ; len=0 => entire region"
+    #define region_to_vct_example "(region->float-vector 0 0 reg) ; len=0 => entire region"
     #define save_region_example "(save-region reg :file \"reg0.snd\" :header-type mus-next)"
   #endif
   #if HAVE_RUBY
@@ -1928,9 +1928,9 @@ The main region-related functions are:\n\
       " save_region_example "\n\
 \n\
   " S_region_to_vct " (:optional samp samps reg chn v)\n\
-    return a vct containing 'samps' samples starting at 'samp'\n\
-    in region 'reg's channel 'chn'. If 'v' (a vct) is provided,\n\
-    it is filled, rather than creating a new vct.\n\
+    return a " S_vct " containing 'samps' samples starting at 'samp'\n\
+    in region 'reg's channel 'chn'. If 'v' (a " S_vct ") is provided,\n\
+    it is filled, rather than creating a new " S_vct ".\n\
 \n\
       " region_to_vct_example "\n\
 \n\
@@ -2016,7 +2016,7 @@ The primary selection-related functions are:\n\
   " S_filter_selection " (env :optional order truncate)\n\
     apply an FIR filter with frequency response 'env' to the \n\
     selection. env can be the filter coefficients themselves in\n\
-    a vct with at least 'order' elements, or a CLM filter\n\
+    a " S_vct " with at least 'order' elements, or a CLM filter\n\
 \n\
   " S_insert_selection " (:optional beg snd chn)\n\
     insert (a copy of) selection starting at 'beg'\n\
@@ -2035,15 +2035,15 @@ The primary selection-related functions are:\n\
 \n\
   " S_scale_selection_by " (scalers)\n\
     scale the selection by 'scalers' which can be either a float,\n\
-    a list of floats, or a vct. In a multichannel selection, each\n\
-    member of the vct or list is applied to the next channel in the\n\
+    a list of floats, or a " S_vct ". In a multichannel selection, each\n\
+    member of the " S_vct " or list is applied to the next channel in the\n\
     selection. " scale_selection_list_example " scales the first\n\
     channel by 0.0, the second (if any) by 2.0.\n\
     " scale_selection_number_example " scales all channels by 2.0.\n\
 \n\
   " S_scale_selection_to " (norms)\n\
     normalize the selection to norms which can be either a float,\n\
-    a list of floats, or a vct.\n\
+    a list of floats, or a " S_vct ".\n\
 \n\
   " S_select_all " (:optional snd chn)\n\
     select all samples\n\
@@ -2791,12 +2791,17 @@ static void window_size_help(void)
 }
 
 
+#if HAVE_SCHEME
+  #define S_Vct "Float-vector"
+#else
+  #define S_Vct "Vct"
+#endif
 
 #include "snd-xref.c"
 
 #define NUM_TOPICS 37
 static const char *topic_names[NUM_TOPICS] = {
-  "Hook", "Vct", "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
+  "Hook", S_Vct, "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
   "Color", "Font", "Graphic", "Widget", "Emacs",
   "CLM", "Instrument", "CM", "CMN", "Sndlib", 
   "Motif", "Gtk", "Script", "Ruby", "s7", "LADSPA", "OpenGL", "Gdb", "Control panel",
@@ -3466,7 +3471,7 @@ Xen g_snd_help_with_search(Xen text, int widget_wid, bool search)
   /* snd-help but no search for misspelled name if search=false */
 
   #if HAVE_SCHEME
-    #define snd_help_example "(snd-help 'make-vct)"
+    #define snd_help_example "(snd-help 'make-float-vector)"
     #define snd_help_arg_type "can be a string, symbol, or in some cases, the object itself"
   #endif
   #if HAVE_RUBY
@@ -3479,7 +3484,7 @@ Xen g_snd_help_with_search(Xen text, int widget_wid, bool search)
   #endif
 
   #define H_snd_help "(" S_snd_help " :optional (arg 'snd-help) (formatted " PROC_TRUE ")): return the documentation \
-associated with its argument. " snd_help_example " for example, prints out a brief description of make-vct. \
+associated with its argument. " snd_help_example " for example, prints out a brief description of make-" S_vct ". \
 The argument " snd_help_arg_type ". \
 In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry. \
 A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index." Xen_file_extension " \

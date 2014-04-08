@@ -2014,7 +2014,7 @@ static Xen g_region_sample(Xen reg_n, Xen samp_n, Xen chn_n)
 Xen g_region_to_vct(Xen reg_n, Xen beg_n, Xen num, Xen chn_n, Xen v)
 {
   #define H_region_to_vct "(" S_region_to_vct " region :optional (beg 0) samps (chan 0) v): \
-write region's samples starting at beg for samps in channel chan to vct v; return v (or create a new one)"
+write region's samples starting at beg for samps in channel chan to " S_vct " v; return v (or create a new one)"
 
   mus_float_t *data;
   int reg, chn = 0;
@@ -2122,8 +2122,8 @@ void g_init_regions(void)
 
   init_region_keywords();
 
-  Xen_define_procedure(S_restore_region,         g_restore_region_w,         9, 1, 0, "internal func used in save-state, restores a region");
-  Xen_define_procedure(S_insert_region,          g_insert_region_w,          2, 2, 0, H_insert_region);
+  Xen_define_procedure(S_restore_region,              g_restore_region_w,         9, 1, 0, "internal func used in save-state, restores a region");
+  Xen_define_procedure(S_insert_region,               g_insert_region_w,          2, 2, 0, H_insert_region);
   Xen_define_safe_procedure(S_regions,                g_regions_w,                0, 0, 0, H_regions);
   Xen_define_safe_procedure(S_region_frames,          g_region_frames_w,          1, 1, 0, H_region_frames);
   Xen_define_safe_procedure(S_region_position,        g_region_position_w,        1, 1, 0, H_region_position);
@@ -2132,13 +2132,13 @@ void g_init_regions(void)
   Xen_define_safe_procedure(S_region_home,            g_region_home_w,            1, 0, 0, H_region_home);
   Xen_define_safe_procedure(S_region_maxamp,          g_region_maxamp_w,          1, 0, 0, H_region_maxamp);
   Xen_define_safe_procedure(S_region_maxamp_position, g_region_maxamp_position_w, 1, 0, 0, H_region_maxamp_position);
-  Xen_define_procedure(S_save_region,            g_save_region_w,            2, 7, 0, H_save_region);
-  Xen_define_procedure(S_forget_region,          g_forget_region_w,          1, 0, 0, H_forget_region);
-  Xen_define_procedure(S_make_region,            g_make_region_w,            0, 4, 0, H_make_region);
-  Xen_define_procedure(S_mix_region,             g_mix_region_w,             1, 4, 0, H_mix_region);
+  Xen_define_procedure(S_save_region,                 g_save_region_w,            2, 7, 0, H_save_region);
+  Xen_define_procedure(S_forget_region,               g_forget_region_w,          1, 0, 0, H_forget_region);
+  Xen_define_procedure(S_make_region,                 g_make_region_w,            0, 4, 0, H_make_region);
+  Xen_define_procedure(S_mix_region,                  g_mix_region_w,             1, 4, 0, H_mix_region);
   Xen_define_safe_procedure(S_region_sample,          g_region_sample_w,          2, 1, 0, H_region_sample);
   Xen_define_safe_procedure(S_region_to_vct,          g_region_to_vct_w,          1, 4, 0, H_region_to_vct);
-  Xen_define_safe_procedure(S_is_region,               g_is_region_w,               1, 0, 0, H_is_region);
+  Xen_define_safe_procedure(S_is_region,              g_is_region_w,              1, 0, 0, H_is_region);
 
   Xen_define_safe_procedure(S_integer_to_region,      g_integer_to_region_w,      1, 0, 0, H_integer_to_region);
   Xen_define_safe_procedure(S_region_to_integer,      g_region_to_integer_w,      1, 0, 0, H_region_to_integer);
@@ -2149,7 +2149,7 @@ void g_init_regions(void)
 				   S_setB S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
-  s7_eval_c_string(s7, "(define region->float-vector region->vct)");
+  s7_eval_c_string(s7, "(define region->vct region->float-vector)");
 #endif
 }
 

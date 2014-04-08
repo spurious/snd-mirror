@@ -1860,7 +1860,7 @@ and replaces it with the spectrum given in coeffs"
 	    (float-vector-set! adder k (* (moving-max pk (float-vector-ref adder k)) 
 					  (polynomial pcoeffs (/ (float-vector-ref adder k)
 								 (moving-average avg (max .01 (moving-max pk2 (float-vector-ref adder k)))))))))
-	  ;; TODO: moving-normalize generator
+	  ;; moving-normalize generator:
 	  ;; we're normalizing the polynomial input so its "index" is 1.0
 	  ;;   this might work better with len=256, max .1 -- we're assuming a well-behaved signal 
 	  ;;

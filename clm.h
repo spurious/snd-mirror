@@ -52,6 +52,24 @@ typedef enum {MUS_CHEBYSHEV_EITHER_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV
 #define MUS_MAX_CLM_SINC_WIDTH 65536
 #define MUS_MAX_CLM_SRC 65536.0
 
+
+/* this is internal -- for clm->clm2xen */
+typedef struct {
+  mus_any_class *core;
+  int chan;
+  mus_long_t loc;
+  char *file_name;
+  int chans;
+  mus_float_t **obufs;
+  mus_float_t *obuf0, *obuf1;
+  mus_long_t data_start, data_end;
+  mus_long_t out_end;
+  int output_data_format;
+  int output_header_type;
+} rdout;
+/* end internal stuff */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

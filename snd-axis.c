@@ -1902,7 +1902,7 @@ static Xen g_y_bounds(Xen snd, Xen chn, Xen ax)
 
   Snd_assert_channel(S_y_bounds, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
-  ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_bounds);
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_bounds);
 
   return(Xen_list_2(C_double_to_Xen_real(ap->y0),
 		    C_double_to_Xen_real(ap->y1)));

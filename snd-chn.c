@@ -9283,7 +9283,7 @@ static Xen g_edits(Xen snd, Xen chn_n)
 static Xen g_graph(Xen ldata, Xen xlabel, Xen x0, Xen x1, Xen y0, Xen y1, Xen snd, Xen chn_n, Xen force_display, Xen show_axes)
 {
   #define H_graph "(" S_graph " data :optional xlabel (x0 0.0) (x1 1.0) y0 y1 snd chn (force-display " PROC_TRUE ") show-axes): \
-displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list or a vct. \
+displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list or a " S_vct ". \
 If 'data' is a list of numbers, it is treated as an envelope."
 
   chan_info *cp;
@@ -9302,7 +9302,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   Xen_check_type(((mus_is_vct(ldata)) || 
 		   ((Xen_is_list(ldata)) && (Xen_list_length(ldata) > 0) && 
 		    ((Xen_is_number(Xen_car(ldata))) || (mus_is_vct(Xen_car(ldata)))))),
-		  ldata, 1, S_graph, "a vct or a list");
+		  ldata, 1, S_graph, "a " S_vct " or a list");
 
   Xen_check_type(Xen_is_string(xlabel) || !Xen_is_bound(xlabel), xlabel, 2, S_graph, "a string (x axis label)");
   Xen_check_type(Xen_is_number_or_unbound(x0), x0, 3, S_graph, "a number (x0)");
@@ -9473,7 +9473,7 @@ data and passes it to openGL.  See snd-gl.scm for an example."
   int i;
   vct *v;
 
-  Xen_check_type(Xen_is_vector(data), data, 1, S_glSpectrogram, "a vector of vcts");
+  Xen_check_type(Xen_is_vector(data), data, 1, S_glSpectrogram, "a vector of " S_vct "s");
   Xen_check_type(Xen_is_integer(gl_list), gl_list, 2, S_glSpectrogram, "an integer");
   Xen_check_type(Xen_is_number(cutoff), cutoff, 3, S_glSpectrogram, "a number");
   Xen_check_type(Xen_is_boolean(use_dB), use_dB, 4, S_glSpectrogram, "a boolean");
