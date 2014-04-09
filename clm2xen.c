@@ -1202,9 +1202,7 @@ static Xen g_polynomial(Xen arr, Xen x)
   #define H_polynomial "(" S_polynomial " coeffs x): evaluate a polynomial at x.  coeffs are in order \
 of degree, so coeff[0] is the constant term."
 
-#if (!HAVE_SCHEME)
   Xen_check_type(Xen_is_number(x), x, 2, S_polynomial, "a number");
-#endif
   if (mus_is_vct(arr))
     {
       vct *v;
@@ -1441,10 +1439,10 @@ static Xen mus_xen_apply(s7_scheme *sc, Xen gen, Xen args)
   mus_float_t arg1, arg2;
   if (s7_is_pair(args))
     {
-      arg1 = s7_number_to_real(sc, s7_car(args));
+      arg1 = s7_number_to_real_with_caller(sc, s7_car(args), "mus-apply");
       args = s7_cdr(args);
       if (s7_is_pair(args))
-	arg2 = s7_number_to_real(sc, s7_car(args));
+	arg2 = s7_number_to_real_with_caller(sc, s7_car(args), "mus-apply");
       else arg2 = 0.0;
       return(s7_make_real(s7, mus_run(Xen_to_mus_any(gen), arg1, arg2)));
     }
@@ -9954,25 +9952,22 @@ Xen_wrap_no_args(g_get_internal_real_time_w, g_get_internal_real_time)
 static s7_pointer vct_set_three;
 static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
 {
-  vct *v;
-  v = (vct *)car(args); /* TODO: this is not right! all of these forget the vct_tag check. */
-  if (v)
-    {
-      mus_long_t loc;
-      s7_pointer val;
-      mus_float_t *d;
+  s7_pointer v;
+  mus_long_t loc;
+  s7_pointer val;
+  mus_float_t *d;
 
-      loc = s7_number_to_integer(sc, cadr(args));
-      if ((loc < 0) || (loc>= mus_vct_length(v)))
-	Xen_out_of_range_error("float-vector-set!", 2, cadr(args), "index out of range");
+  v = car(args);
+  Xen_check_type(s7_is_float_vector(v), v, 1, "float-vector-set!", "a " S_vct);
 
-      val = caddr(args);
-      d = mus_vct_data(v);
-      d[loc] = Xen_real_to_C_double(val);
-      return(val);
-    }
-  Xen_check_type(false, s7_car_value(sc, args), 1, "float-vector-set!", "a " S_vct);
-  return(s7_f(sc));
+  loc = s7_number_to_integer(sc, cadr(args));
+  if ((loc < 0) || (loc>= mus_vct_length(v)))
+    Xen_out_of_range_error("float-vector-set!", 2, cadr(args), "index out of range");
+
+  val = caddr(args);
+  d = mus_vct_data(v);
+  d[loc] = Xen_real_to_C_double(val);
+  return(val);
 }
 
 
@@ -10010,7 +10005,7 @@ static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
 	Xen_out_of_range_error("float-vector-set!", 2, cadr(args), "index out of range");
 
       d = mus_vct_data(v);
-      d[loc] = s7_number_to_real(sc, val = s7_car_value(sc, cddr(args)));
+      d[loc] = s7_number_to_real_with_caller(sc, val = s7_car_value(sc, cddr(args)), "float-vector-set!");
       return(val);
     }
   Xen_check_type(false, s7_car_value(sc, args), 1, "float-vector-set!", "a " S_vct);
@@ -10123,7 +10118,7 @@ static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
 
       val = s7_call_direct(sc, caddr(args));
       d = mus_vct_data(v);
-      d[loc] = s7_number_to_real(sc, val);
+      d[loc] = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
       return(val);
     }
   Xen_check_type(false, s7_car_value(sc, args), 1, "float-vector-set!", "a " S_vct);
@@ -10451,7 +10446,7 @@ static void vcset_s(void *p)
   ep = (vcset_ex *)(e->data);
   pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
   if (pos < ep->v_len)
-    ep->v_data[pos] = s7_number_to_real(ep->sc, s7_cell_slot_value(ep->val_slot));
+    ep->v_data[pos] = s7_number_to_real_with_caller(ep->sc, s7_cell_slot_value(ep->val_slot), "float-vector-set!");
 }
 
 
@@ -10879,9 +10874,9 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
 
 
 #define GET_NUMBER(Obj, Caller, Val) Val = s7_car_value(s7, Obj)
-#define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real(sc, s7_car_value(s7, Obj))
+#define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real_with_caller(sc, s7_car_value(s7, Obj), #Caller)
 #define GET_NUMBER_CADR(Obj, Caller, Val) Val = s7_cadr_value(s7, Obj)
-#define GET_REAL_CADR(Obj, Caller, Val) Val = s7_number_to_real(sc, s7_cadr_value(s7, Obj))
+#define GET_REAL_CADR(Obj, Caller, Val) Val = s7_number_to_real_with_caller(sc, s7_cadr_value(s7, Obj), #Caller)
 #define GET_INTEGER_CADR(Obj, Caller, Val) Val = s7_cell_integer(s7_cadr_value(s7, Obj))
 
 #define GEN_1(Type, Func) \
@@ -11148,7 +11143,7 @@ static s7_pointer g_oscil_two(s7_scheme *sc, s7_pointer args)
   mus_xen *gn;
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if (gn)
-    return(s7_make_real(sc, mus_oscil_fm(gn->gen, s7_number_to_real(sc, cadr(args)))));
+    return(s7_make_real(sc, mus_oscil_fm(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), "oscil"))));
   Xen_check_type(false, car(args), 1, "oscil", "a generator");
   return(s7_f(sc));
 }
@@ -11159,7 +11154,7 @@ static s7_pointer g_oscil_three(s7_scheme *sc, s7_pointer args)
   mus_xen *gn;
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if (gn)
-    return(s7_make_real(sc, mus_oscil(gn->gen, s7_number_to_real(sc, cadr(args)), s7_number_to_real(sc, caddr(args)))));
+    return(s7_make_real(sc, mus_oscil(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), "oscil"), s7_number_to_real_with_caller(sc, caddr(args), "oscil"))));
   Xen_check_type(false, car(args), 1, "oscil", "a generator");
   return(s7_f(sc));
 }
@@ -11170,7 +11165,7 @@ static s7_pointer g_polyshape_three(s7_scheme *sc, s7_pointer args)
   mus_xen *gn;
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if (gn)
-    return(s7_make_real(sc, mus_polyshape(gn->gen, s7_number_to_real(sc, cadr(args)), s7_number_to_real(sc, caddr(args)))));
+    return(s7_make_real(sc, mus_polyshape(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), "polyshape"), s7_number_to_real_with_caller(sc, caddr(args), "polyshape"))));
   Xen_check_type(false, car(args), 1, "polyshape", "a generator");
   return(s7_f(sc));
 }
@@ -11196,7 +11191,7 @@ static s7_pointer g_polynomial_cos(s7_scheme *sc, s7_pointer args)
   cs = s7_cadr_value(sc, cadr(args));
   v = xen_to_vct(vc);
   if (v)
-    return(s7_make_real(sc, mus_polynomial(mus_vct_data(v), cos(s7_number_to_real(sc, cs)), mus_vct_length(v))));
+    return(s7_make_real(sc, mus_polynomial(mus_vct_data(v), cos(s7_number_to_real_with_caller(sc, cs, "cos")), mus_vct_length(v))));
   return(g_polynomial(vc, s7_cos(sc, cs)));
 }
 
@@ -11207,7 +11202,7 @@ static s7_pointer g_formant_two(s7_scheme *sc, s7_pointer args)
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if ((gn) &&
       (gn->type == FORMANT_TAG))
-    return(s7_make_real(sc, mus_formant(gn->gen, s7_number_to_real(sc, cadr(args)))));
+    return(s7_make_real(sc, mus_formant(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), "formant"))));
   Xen_check_type(false, car(args), 1, "formant", "a formant generator");
   return(s7_f(sc));
 }
@@ -11228,8 +11223,8 @@ static s7_pointer g_indirect_ssb_am_3(s7_scheme *sc, s7_pointer args)
 { 
   mus_any *_o_;	  
   double _a1_, _a2_;	
-  _a1_ = s7_number_to_real(sc, s7_call_direct(sc, cadr(args)));	
-  _a2_ = s7_number_to_real(sc, s7_call_direct(sc, caddr(args)));	
+  _a1_ = s7_number_to_real_with_caller(sc, s7_call_direct(sc, cadr(args)), "ssb-am");	
+  _a2_ = s7_number_to_real_with_caller(sc, s7_call_direct(sc, caddr(args)), "ssb-am");	
   GET_GENERATOR(args, ssb-am, _o_); 
   return(s7_make_real(sc, mus_ssb_am(_o_, _a1_, _a2_)));	
 }
@@ -11244,7 +11239,7 @@ static s7_pointer g_outa_two(s7_scheme *sc, s7_pointer args)
   if (pos < 0) 
     Xen_out_of_range_error("outa", 1, car(args), "must be >= 0");    
   x = cadr(args);
-  return(out_any_2(pos, s7_number_to_real(sc, x), 0, "outa"));
+  return(out_any_2(pos, s7_number_to_real_with_caller(sc, x, "outa"), 0, "outa"));
 }
 
 static s7_pointer outb_two;
@@ -11256,7 +11251,7 @@ static s7_pointer g_outb_two(s7_scheme *sc, s7_pointer args)
   if (pos < 0) 
     Xen_out_of_range_error("outa", 1, car(args), "must be >= 0");    
   x = cadr(args);
-  return(out_any_2(pos, s7_number_to_real(sc, x), 1, "outb"));
+  return(out_any_2(pos, s7_number_to_real_with_caller(sc, x, "outb"), 1, "outb"));
 }
 
 static s7_pointer src_one;
@@ -11285,7 +11280,9 @@ static s7_pointer g_asymmetric_fm_3(s7_scheme *sc, s7_pointer args)
   mus_any *o;
 
   GET_GENERATOR(args, asymmetric-fm, o);
-  return(s7_make_real(sc, mus_asymmetric_fm(o, s7_number_to_real(sc, cadr(args)), s7_number_to_real(sc, caddr(args)))));
+  return(s7_make_real(sc, mus_asymmetric_fm(o, 
+					    s7_number_to_real_with_caller(sc, cadr(args), "asymmetric-fm"), 
+					    s7_number_to_real_with_caller(sc, caddr(args), "asymmetric-fm"))));
 }
 
 static s7_pointer oscil_pm_direct;
@@ -11321,7 +11318,7 @@ static s7_pointer g_oscil_ss3_direct(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, oscil, o);
   fm = s7_cadr_value(sc, args);
   pm = s7_call_direct(sc, caddr(args));
-  return(s7_make_real(sc, mus_oscil(o, s7_number_to_real(sc, fm), s7_cell_real(pm))));
+  return(s7_make_real(sc, mus_oscil(o, s7_number_to_real_with_caller(sc, fm, "oscil"), s7_cell_real(pm))));
 }
 
 static s7_pointer oscil_mul_c_s;
@@ -11335,7 +11332,7 @@ static s7_pointer g_oscil_mul_c_s(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, oscil, o);
   vargs = cdadr(args);
   GET_REAL(cdr(vargs), oscil, x);
-  return(s7_make_real(sc, mus_oscil_fm(o, x * s7_number_to_real(sc, car(vargs)))));
+  return(s7_make_real(sc, mus_oscil_fm(o, x * s7_number_to_real_with_caller(sc, car(vargs), "oscil"))));
 }
 
 static s7_pointer mul_c_oscil_mul_c_s;
@@ -11346,7 +11343,7 @@ static s7_pointer g_mul_c_oscil_mul_c_s(s7_scheme *sc, s7_pointer args)
   double x1, x2;
   s7_pointer vargs;
 
-  x1 = s7_number_to_real(sc, car(args));
+  x1 = s7_number_to_real_with_caller(sc, car(args), "oscil");
   vargs = cdadr(args);
   GET_GENERATOR(vargs, oscil, o);
   vargs = cdadr(vargs);
@@ -11365,7 +11362,7 @@ static s7_pointer g_oscil_mul_s_c(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, oscil, o);
   vargs = cdadr(args);
   GET_REAL(vargs, oscil, x);
-  return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real(sc, cadr(vargs)) * x)));
+  return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real_with_caller(sc, cadr(vargs), "oscil") * x)));
 }
 
 static s7_pointer oscil_mul_ss;
@@ -11458,7 +11455,7 @@ static s7_pointer g_nrxysin_mul_c_s(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, nrxysin, o);
   vargs = cdadr(args);
   GET_REAL(cdr(vargs), nrxysin, x);
-  return(s7_make_real(sc, mus_nrxysin(o, x * s7_number_to_real(sc, car(vargs)))));
+  return(s7_make_real(sc, mus_nrxysin(o, x * s7_number_to_real_with_caller(sc, car(vargs), "nrxysin"))));
 }
 
 static s7_pointer polywave_mul_c_s;
@@ -11472,7 +11469,7 @@ static s7_pointer g_polywave_mul_c_s(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, polywave, o);
   vargs = cdadr(args);
   GET_REAL_CADR(vargs, polywave, x);
-  return(s7_make_real(sc, mus_polywave(o, x * s7_number_to_real(sc, car(vargs)))));
+  return(s7_make_real(sc, mus_polywave(o, x * s7_number_to_real_with_caller(sc, car(vargs), "polywave"))));
 }
 
 static s7_pointer polywave_add_cs_ss;
@@ -11486,7 +11483,7 @@ static s7_pointer g_polywave_add_cs_ss(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, polywave, o);
   vargs = cdadr(args);   /* ((* c s) (* s s)) */
   p = cdar(vargs);       /* (c s) */
-  x1 = s7_number_to_real(sc, car(p));
+  x1 = s7_number_to_real_with_caller(sc, car(p), "polywave");
   GET_REAL_CADR(p, *, x2);
   p = cdadr(vargs);
   GET_REAL(p, *, x3);
@@ -11505,14 +11502,14 @@ static s7_pointer g_polywave_add_cs_ssr(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, polywave, o);
   vargs = cdadr(args);   /* ((* c s) (* s s)) */
   p = cdar(vargs);       /* (c s) */
-  x1 = s7_number_to_real(sc, car(p));
+  x1 = s7_number_to_real_with_caller(sc, car(p), "polywave");
   GET_REAL_CADR(p, *, x2);
   p = cdadr(vargs);
   GET_REAL(p, *, x3);
   p = cdr(p);
   GET_REAL(p, *, x4);
   p = cdadr(p);
-  c = s7_number_to_real(sc, car(p));
+  c = s7_number_to_real_with_caller(sc, car(p), "polywave");
   p = cdadr(p);
   GET_GENERATOR(p, rand-interp, r);
   return(s7_make_real(sc, mus_polywave(o, (x1 * x2) + (x3 * x4 * (c + mus_rand_interp_unmodulated(r))))));
@@ -11590,7 +11587,7 @@ static s7_pointer g_fir_filter_temp(s7_scheme *sc, s7_pointer args)
   mus_xen *gn;
   Xen_to_C_generator(car(args), gn, g, mus_is_fir_filter, S_fir_filter, "an FIR filter");
   arg2 = cadr(args);
-  return(s7_remake_real(sc, arg2, mus_fir_filter(g, s7_number_to_real(sc, arg2))));
+  return(s7_remake_real(sc, arg2, mus_fir_filter(g, s7_number_to_real_with_caller(sc, arg2, "fir-filter"))));
 }
 
 static s7_pointer env_polywave;
@@ -12393,7 +12390,7 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, locsig, locs);
   GET_INTEGER_CADR(args, outa, pos);
   x = s7_call_direct(sc, caddr(args));
-  mus_locsig(locs, pos, s7_number_to_real(sc, x));
+  mus_locsig(locs, pos, s7_number_to_real_with_caller(sc, x, "locsig"));
   return(Xen_integer_zero);
 }
 
@@ -12408,7 +12405,7 @@ static s7_pointer g_indirect_move_sound_3(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, move-sound, locs);
   GET_INTEGER_CADR(args, outa, pos);
   x = s7_call_direct(sc, caddr(args));
-  mus_move_sound(locs, pos, s7_number_to_real(sc, x));
+  mus_move_sound(locs, pos, s7_number_to_real_with_caller(sc, x, "locsig"));
   return(Xen_integer_zero);
 }
 
@@ -15217,7 +15214,7 @@ static s7_pointer g_jc_reverb_out(s7_scheme *sc, s7_pointer args)
   p = caddr(p);
   GET_GENERATOR_CADR(p, all-pass-bank, allpasses);
   
-  x = s7_number_to_real(sc, vol) * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0)));
+  x = s7_number_to_real_with_caller(sc, vol, "jc-reverb") * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0)));
   for (i = 0; i < size; i++)
     out_any_2(pos, mus_apply(Xen_to_mus_any(Xen_vector_ref(fs, i)), x, 0.0), i, "out-bank");
 
@@ -15688,7 +15685,7 @@ static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   GET_INTEGER(args, outa, pos);
   x = s7_call_direct(sc, cadr(args));
-  return(out_any_2(pos, s7_number_to_real(sc, x), 0, "outa"));
+  return(out_any_2(pos, s7_number_to_real_with_caller(sc, x, "outa"), 0, "outa"));
 }
 
 
@@ -16940,7 +16937,7 @@ static s7_pointer g_indirect_outa_add_2(s7_scheme *sc, s7_pointer args)
   GET_INTEGER_CADR(car(args), outa, pos1);
   GET_INTEGER_CADR(cdar(args), outa, pos2);
   x = s7_call_direct(sc, cadr(args));
-  return(out_any_2(pos1 + pos2, s7_number_to_real(sc, x), 0, "outa"));
+  return(out_any_2(pos1 + pos2, s7_number_to_real_with_caller(sc, x, "outa"), 0, "outa"));
 }
 
 

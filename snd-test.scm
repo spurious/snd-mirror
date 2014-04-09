@@ -10763,7 +10763,7 @@ EDITS: 2
     "(make-dpss-window size w) returns a prolate spheriodal (slepian) window of the given size"
     ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
     ;; output checked using Julius Smith's dpssw.m, although my "w" is different
-    (let ((mat (make-vector (list n n) 0.0 #t))
+    (let ((mat (make-float-vector (list n n) 0.0))
 	  (cw (cos (* 2 pi w))))
       (do ((i 0 (+ i 1)))
 	  ((= i n))
@@ -10773,7 +10773,7 @@ EDITS: 2
 	      (set! (mat i (+ i 1)) (* 0.5 (+ i 1) (- n 1 i))))
 	  (if (> i 0)
 	      (set! (mat i (- i 1)) (* 0.5 i (- n i))))))
-      (let* ((vc (vector-ref (cadr (gsl-eigenvectors mat)) 0))
+      (let* ((vc (vector-ref (cadr (gsl-eigenvectors mat)) 0)) ; cadr->vector of fv-vectors
 	     (v (copy vc (make-float-vector (length vc))))
 	     (pk 0.0))
 	;; sign of eigenvalue is arbitrary, and eigenvector is scaled to sum to 1.0
@@ -17162,7 +17162,7 @@ EDITS: 2
 		(angle 0.0 (+ angle kincr)))
 	       ((= i 100))
 	     (float-vector-set! data3 i (cos angle)))
-	   (float-vector-scale! data3 (vector-ref amps k))
+	   (float-vector-scale! data3 (float-vector-ref amps k))
 	   (float-vector-add! data2 data3))
 
 	 (let ((fudge *mus-float-equal-fudge-factor*))
@@ -17199,7 +17199,7 @@ EDITS: 2
 		(angle 0.0 (+ angle kincr)))
 	       ((= i 100))
 	     (float-vector-set! data3 i (sin angle)))
-	   (float-vector-scale! data3 (vector-ref amps k))
+	   (float-vector-scale! data3 (float-vector-ref amps k))
 	   (float-vector-add! data2 data3))
 
 	 (let ((fudge *mus-float-equal-fudge-factor*))
@@ -17236,13 +17236,13 @@ EDITS: 2
 		(angle 0.0 (+ angle kincr)))
 	       ((= i 100))
 	     (float-vector-set! data3 i (sin angle)))
-	   (float-vector-scale! data3 (vector-ref samps k))
+	   (float-vector-scale! data3 (float-vector-ref samps k))
 	   (float-vector-add! data2 data3)
 	   (do ((i 0 (+ i 1))
 		(angle 0.0 (+ angle kincr)))
 	       ((= i 100))
 	     (float-vector-set! data3 i (cos angle)))
-	   (float-vector-scale! data3 (vector-ref camps k))
+	   (float-vector-scale! data3 (float-vector-ref camps k))
 	   (float-vector-add! data2 data3))
 
 	 (let ((fudge *mus-float-equal-fudge-factor*))
@@ -46947,6 +46947,29 @@ EDITS: 1
 		(check-error-tag 'no-such-mix (lambda () (mix-properties (integer->mix (+ 1 (mix-sync-max))))))
 		(check-error-tag 'no-such-mix (lambda () (set! (mix-properties (integer->mix (+ 1 (mix-sync-max)))) 1)))
 		))
+	  
+	  ;; xen.h over-optimization regression check
+	  (catch #t 
+	    (lambda ()
+	      (set! (x-zoom-slider -1) 123))
+	    (lambda args
+	      (let ((str (apply format #f (cadr args))))
+		(if (not (string=? str "set! x-zoom-slider: no such sound: -1"))
+		    (snd-display #__line__ ";x-zoom-slider error: ~S~%" str)))))
+	  (catch #t 
+	    (lambda ()
+	      (set! (y-zoom-slider -1) 123))
+	    (lambda args
+	      (let ((str (apply format #f (cadr args))))
+		(if (not (string=? str "set! y-zoom-slider: no such sound: -1"))
+		    (snd-display #__line__ ";y-zoom-slider error: ~S~%" str)))))
+	  (catch #t 
+	    (lambda ()
+	      (set! (beats-per-measure -1) 123))
+	    (lambda args
+	      (let ((str (apply format #f (cadr args))))
+		(if (not (string=? str "set! beats-per-measure: no such sound: -1"))
+		    (snd-display #__line__ ";beats-per-measure error: ~S~%" str)))))
 	  
 	  (if (not (null? (sounds)))
 	      (snd-display #__line__ ";sounds after error checks: ~A~%" (map short-file-name (sounds))))

@@ -5649,7 +5649,7 @@ mus_any *mus_make_filtered_comb(mus_float_t scaler, int size, mus_float_t *line,
 }
 
 
-/* ---------------- filtered_comb-bank ---------------- */
+/* ---------------- filtered-comb-bank ---------------- */
 
 typedef struct {
   mus_any_class *core;
@@ -17037,5 +17037,3 @@ void mus_initialize(void)
 #endif 
 }
 
-
-/* #include "clm2xen.c" */

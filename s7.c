@@ -11468,6 +11468,19 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
     }
 }
 
+#if (!HAVE_GMP)
+static s7_pointer sqrt_temp;
+static s7_pointer g_sqrt_temp(s7_scheme *sc, s7_pointer args)
+{
+  /* this is not called much */
+  s7_pointer arg1;
+  arg1 = car(args);
+  if (real(arg1) >= 0.0)
+    return(remake_real(sc, arg1, sqrt(real(arg1))));
+  return(s7_make_complex(sc, 0.0, sqrt(-real(arg1))));
+}
+#endif
+
 
 static s7_Int int_to_int(s7_Int x, s7_Int n)
 {
@@ -26520,70 +26533,11 @@ s7_pointer s7_apply_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointe
 
 s7_pointer s7_apply_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2))
 {
-  /*
-264600: (+ (* (float-vector-ref indices k) carg) (* frm-int frq1)) -- at least multiply_temp_s?
-262134: (set! c1 (make-rectangular (float-vector-ref rl i) (float-vector-ref im i))) 
-204312: (> (float-vector-ref data i) 0.9999)                                                        -- fvref is temp, so g_greater_vrefss|temp_f?
-204242: (* (float-vector-ref data i) (+ rmp0 (* scl (expt angle exponent))))
-203936: (set! unclipped-max (max unclipped-max (float-vector-ref data i)))
-    not vct-ref: 203312: (do ((i 0 (+ i 1)) (gfrq frq (+ gfrq frq))) ((= i num-formants))... clm23.scm
-194106: (set! (mus-increment gr) (env ge))
-    [169830: (do ((j beg (+ j 1))) ((= j end)) (one-pole g (float-vector-ref data j)))]
-132300: (+ (* (float-vector-ref indices k) carrier) (* frm-int rfrq))
-131200: (sqrt (float-vector-ref rd i))                                                              -- sqrt_temp
-98364: (float-vector-set! rl2 j (float-vector-ref rl1 k))                                           -- this should not copy!
-98364: (float-vector-set! im2 j (float-vector-ref im1 k))
-    not vct-ref: 94928: (float-vector-multiply! xcof es)
-88200: (min amp-time dist (- 1.0 dist))
-84338: (n arg1 arg2)
-79998: (set! (mus-scaler gen) (env indr))
-72828: (set! (n arg1) arg2)
-66150: (* carsin (polynomial (vector-ref sin-coeffs k) carcos))
-66149: (set! fax (polynomial (vector-ref cos-coeffs k) carcos))
-60999: (let ((result (/ (bes-jn n angle) norm))) (set! angle (+ angle frequency fm))...
-55388: (let ((y0 (float-vector-ref frame1 ictr)) (y1 (float-vector-ref frame1 (+...
-55125: (set! (mus-length exA) sl)
-55124: (set! (mus-frequency exA) (env hopenv))
-55124: (set! (mus-increment exA) (env expenv))
-55124: (set! (mus-ramp exA) (floor (* sl (env rampenv))))
-53706: (let ((y0 (float-vector-ref frame2 ictr)) (y1 (float-vector-ref frame2 (+...
-52659: (let ((result (float-vector-ref frame0 frame-loc))) (set! frame-loc (+...
-50828: (do ((j i (+ j 1))) ((= j jend)) (moving-average rms (float-vector-ref data j)))
-44100: (outb i (* ampb (inb i *reverb*)))
-44100: (+ (float-vector-ref dline1 k) (- (float-vector-ref dline2 j) x))
-44100: (+ x (* (float-vector-ref coeffs j) (- (float-vector-ref dline1 k) x)))
-41623: (mus-set-formant-frequency frm (env menv))
-35721: (mus-set-formant-frequency frm2 (env intrpf))
-35721: (rxyk!cos f4 (* 6.3 frq))
-32768: (+ sum (float-vector-ref ndat i))
-32768: (abs (float-vector-ref data i))                                                             -- abs vref in gf?
-22049: (set! (mus-scaler clang) (env crf))
-22049: (let ((nose2-1 (float-vector-ref nose2 1))) (set! nose-reftemp (+ (* alpha1...
-22049: (set! x (float-vector-ref dline2 (+ j 1)))
-19998: (set! (mus-frequency gen2) (+ 1000 (radians->hz fm)))
-18522: (cos (- x y))
-   */
   return(f2(car(args), cadr(args)));
 }
 
 s7_pointer s7_apply_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3))
 {
-  /*
-233730: (out-bank filts i (* (env envA) (fir-filter flt (comb-bank combs...
-180804: (float-vector->file *output* i (float-vector-mix f-out out-mix out-buf))
-132300: (locsig-reverb-set! loc 0 (* reverb-amount (sqrt dist-scaler)))
-132300: (locsig-set! loc 1 (* degval dist-scaler))
-132300: (locsig-set! loc 0 (* (- 1.0 degval) dist-scaler))
-90402: (file->float-vector *reverb* i f-in)
-88200: (float-vector->file *output* i (float-vector-mix invals mx outvals))
-67526: (* frac (oscil (vector-ref evens k) (+ fracf rfrq)))
-64774: (* frac (oscil (vector-ref odds k) (+ fracf rfrq)))
-50828: (mus-set-formant-radius-and-frequency filt (env re) (env fe))
-31250: (set! (n arg1 arg2) arg3)
-24255: (out-bank filts i (* (env envA) (comb-bank combs (all-pass-bank allpasses...
-22051: (oscil gens4 (+ cascadeout (* vib freqratios4)))
-22050: (locsig loc i outsum)
-   */
   s7_pointer a1;
   a1 = car(args);
   args = cdr(args);
@@ -30761,17 +30715,17 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
   return(v);
 }
 
-#if 0
-static g_float_vector_ref(s7_scheme *sc, s7_pointer args)
+
+static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 {
-  #define H_float_vector_ref "(float-vector-ref v ...) returns an element of the float vector v."
+  #define H_float_vector_ref "(float-vector-ref v ...) returns an element of the float-vector v."
 
   s7_pointer v, index;
   s7_Int ind;
 
   v = car(args);
   if (!is_float_vector(v))
-    return(s7_wrong_type_arg_error(sc, "float-vector-ref", 1, v, "a float vector")); 
+    return(wrong_type_argument(sc, sc->FLOAT_VECTOR_REF, small_int(1), v, T_FLOAT_VECTOR)); 
 
   if (vector_rank(v) == 1)
     {
@@ -30788,7 +30742,7 @@ static g_float_vector_ref(s7_scheme *sc, s7_pointer args)
     {
       unsigned int i;
       s7_pointer x;
-      int = 0;
+      ind = 0;
       for (x = cdr(args), i = 0; (is_not_null(x)) && (i < vector_ndims(v)); x = cdr(x), i++)
 	{
 	  s7_Int n;
@@ -30809,7 +30763,7 @@ static g_float_vector_ref(s7_scheme *sc, s7_pointer args)
       if (i < vector_ndims(v))
 	return(make_shared_vector(sc, v, i, ind));
     }
-  return(make_real(float_vector_element(v, ind)));
+  return(make_real(sc, float_vector_element(v, ind)));
 }
 
 
@@ -30869,9 +30823,10 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
     }
   
   float_vector_element(vec, index) = number_to_double(sc, val, "float-vector-set!");
+  /* currently this accepts a complex value and assigns real_part(val) to the float-vector -- maybe an error instead? */
   return(val);
 }
-#endif
+
 
 /* need float_vector_set_direct_looped[s7_function_set_looped=c_function_looped] (both vct/sound-data) -- does this require float-vector-set!?
  *   gsl uses gsl_vector_scale|add_constant|add(vectors) and sub/mul/div|minmax and minmax_index|max|min, set_zero|all all unoptimized
@@ -40908,6 +40863,17 @@ static s7_pointer abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
     }
   return(f);
 }
+
+static s7_pointer sqrt_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  s7_pointer arg;
+  arg = cadr(expr);
+  if ((is_pair(arg)) &&
+      (is_optimized(arg)) &&
+      (s7_function_returns_temp(sc, arg)))
+    return(sqrt_temp);
+  return(f);
+}
 #endif
 
 
@@ -42143,6 +42109,10 @@ static void init_choosers(s7_scheme *sc)
   /* expt */
   f = set_function_chooser(sc, sc->EXPT, expt_chooser);
   expt_temp_s = make_temp_function_with_class(sc, f, "expt", g_expt_temp_s, 2, 0, false, "expt optimization");
+
+  /* sqrt */
+  f = set_function_chooser(sc, sc->SQRT, sqrt_chooser);
+  sqrt_temp = make_temp_function_with_class(sc, f, "sqrt", g_sqrt_temp, 1, 0, false, "sqrt optimization");
 #endif
 
 
@@ -68713,9 +68683,6 @@ s7_scheme *s7_init(void)
   sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
   sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 2, false, H_vector_to_list);
   sc->IS_VECTOR =             s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
-  sc->IS_FLOAT_VECTOR =       s7_define_safe_function(sc, "float-vector?",           g_is_float_vector,        1, 0, false, H_is_float_vector);
-  sc->FLOAT_VECTOR =          s7_define_safe_function(sc, "float-vector",            g_float_vector,           0, 0, true,  H_float_vector);
-  sc->MAKE_FLOAT_VECTOR =     s7_define_safe_function(sc, "make-float-vector",       g_make_float_vector,      1, 1, false, H_make_float_vector);
   sc->VECTOR_APPEND =         s7_define_safe_function(sc, "vector-append",           g_vector_append,          0, 0, true,  H_vector_append);
   sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 2, false, H_vector_fill);
   sc->VECTOR_LENGTH =         s7_define_safe_function(sc, "vector-length",           g_vector_length,          1, 0, false, H_vector_length);
@@ -68728,6 +68695,13 @@ s7_scheme *s7_init(void)
   set_setter(sc->VECTOR); /* ?? */
   sc->Vector = s7_symbol_value(sc, sc->VECTOR);
   set_setter(sc->Vector);
+
+  sc->IS_FLOAT_VECTOR =       s7_define_safe_function(sc, "float-vector?",           g_is_float_vector,        1, 0, false, H_is_float_vector);
+  sc->FLOAT_VECTOR =          s7_define_safe_function(sc, "float-vector",            g_float_vector,           0, 0, true,  H_float_vector);
+  sc->MAKE_FLOAT_VECTOR =     s7_define_safe_function(sc, "make-float-vector",       g_make_float_vector,      1, 1, false, H_make_float_vector);
+  sc->FLOAT_VECTOR_SET =      s7_define_safe_function(sc, "float-vector-set!",       g_float_vector_set,       3, 0, true,  H_float_vector_set);
+  sc->FLOAT_VECTOR_REF =      s7_define_safe_function(sc, "float-vector-ref",        g_float_vector_ref,       2, 0, true,  H_float_vector_ref);
+  set_returns_temp(s7_symbol_value(sc, sc->FLOAT_VECTOR_REF));
 
                               s7_define_safe_function(sc, "bytevector?",             g_is_bytevector,          1, 0, false, H_is_bytevector);
   sc->TO_BYTEVECTOR =         s7_define_safe_function(sc, "->bytevector",            g_to_bytevector,          1, 0, false, H_to_bytevector);
@@ -68979,6 +68953,7 @@ s7_scheme *s7_init(void)
   sc->Vector_Set = s7_symbol_value(sc, sc->VECTOR_SET);
   set_setter(sc->Vector_Set);
   set_setter(sc->VECTOR_SET);
+  /* not float-vector-set! here */
   
   sc->List_Set = s7_symbol_value(sc, sc->LIST_SET);
   set_setter(sc->List_Set);
@@ -69015,6 +68990,7 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "cdr",                 "set-cdr!");
   s7_function_set_setter(sc, "hash-table-ref",      "hash-table-set!");
   s7_function_set_setter(sc, "vector-ref",          "vector-set!");
+  s7_function_set_setter(sc, "float-vector-ref",    "float-vector-set!");
   s7_function_set_setter(sc, "list-ref",            "list-set!");
   s7_function_set_setter(sc, "string-ref",          "string-set!");
   s7_function_set_setter(sc, "current-input-port",  "set-current-input-port");
@@ -69433,14 +69409,12 @@ int main(int argc, char **argv)
  */
 
 /* letrec* built-in (not macro)
- * (member x hash-table) -> x exists as key in hash-table?
  * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
- * for-each over sound(etc) -> sampler, similarly member/map
+ * for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
  * open-output|input-object|function?
  *
- * float-vector-ref|set! need to be defined here, not in clm2xen
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
  * mixer and frame are still separate (generator!) types
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
@@ -69459,9 +69433,5 @@ int main(int argc, char **argv)
  *   and for catch what errors it might raise
  *     frames: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
- *
- * need to use some of the t705 test results in snd-test/s7test
- * z-splits in clm2xen (local dly?)
- * is out-bank in gf? locsig-set! float-vector->file and reverse -- would they be hit?
  */
 

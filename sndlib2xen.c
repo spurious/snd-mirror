@@ -2648,8 +2648,8 @@ void mus_sndlib_xen_initialize(void)
   /* -------------------------------------------------------------------------------- */
   /* these are obsolete in scheme */
 #if HAVE_SCHEME
-  s7_eval_c_string(s7, "(define sound-data-ref vector-ref)");
-  s7_eval_c_string(s7, "(define sound-data-set! vector-set!)");
+  s7_eval_c_string(s7, "(define sound-data-ref float-vector-ref)");
+  s7_eval_c_string(s7, "(define sound-data-set! float-vector-set!)");
   s7_eval_c_string(s7, "(define sound-data? float-vector?)");
   s7_eval_c_string(s7, "(define sound-data-copy copy)");
   s7_eval_c_string(s7, "(define sound-data-fill! fill!)");

@@ -2158,17 +2158,29 @@ static Xen g_gsl_eigenvectors(Xen matrix)
       for (i = 0; i < len; i++)
 	{
 	  Xen vect;
+#if HAVE_SCHEME
+	  s7_Double *fv_data;
+#endif
 	  gsl_complex eval_i = gsl_vector_complex_get(eval, i);
 	  gsl_vector_complex_view evec_i = gsl_matrix_complex_column(evec, i);
 	  Xen_vector_set(values, i, C_double_to_Xen_real(GSL_REAL(eval_i)));
 	
+#if HAVE_SCHEME
+	  vect = s7_make_float_vector(s7, len, 1, NULL);
+	  fv_data = s7_float_vector_elements(vect);
+#else
 	  vect = Xen_make_vector(len, Xen_integer_zero);
+#endif
 	  Xen_vector_set(vectors, i, vect);
 
 	  for (j = 0; j < len; j++)
 	    {
 	      gsl_complex z = gsl_vector_complex_get(&evec_i.vector, j);
+#if HAVE_SCHEME
+	      fv_data[j] = GSL_REAL(z);
+#else
 	      Xen_vector_set(vect, j, C_double_to_Xen_real(GSL_REAL(z)));
+#endif
 	    }
 	}
       snd_unprotect_at(values_loc);

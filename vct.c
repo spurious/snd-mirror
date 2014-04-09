@@ -511,7 +511,7 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
   return(obj);
 }
 
-
+#if (!HAVE_SCHEME)
 static Xen g_vct_ref(Xen obj, Xen pos)
 {
   #define H_vct_ref "(" S_vct_ref " v n): element n of " S_vct " v, v[n]"
@@ -558,6 +558,7 @@ static Xen g_vct_set(Xen obj, Xen pos, Xen val)
   d[loc] = x;
   return(val);
 }
+#endif
 
 
 static Xen g_vct_multiply(Xen obj1, Xen obj2)
@@ -1422,9 +1423,9 @@ vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
   Xen_wrap_1_arg(g_vector_to_vct_w, g_vector_to_vct)
   Xen_wrap_1_arg(g_vct_to_vector_w, g_vct_to_vector)
   Xen_wrap_1_arg(g_is_vct_w, g_is_vct)
+  Xen_wrap_2_args(g_vct_ref_w, g_vct_ref)
+  Xen_wrap_3_args(g_vct_set_w, g_vct_set)
 #endif
-Xen_wrap_2_args(g_vct_ref_w, g_vct_ref)
-Xen_wrap_3_args(g_vct_set_w, g_vct_set)
 Xen_wrap_2_args(g_vct_multiply_w, g_vct_multiply)
 Xen_wrap_2_args(g_vct_scale_w, g_vct_scale)
 Xen_wrap_3_optional_args(g_vct_add_w, g_vct_add)
@@ -1517,19 +1518,12 @@ void mus_vct_init(void)
 #if HAVE_FORTH
   Xen_define_procedure_with_setter(S_vct_ref,    g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);
 #else
-#if HAVE_SCHEME
-  {
-    s7_pointer v;
-    v = Xen_define_procedure_with_setter(S_vct_ref,    g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);
-    s7_function_set_returns_temp(v);
-  }
-#else
+#if (!HAVE_SCHEME)
   Xen_define_procedure(S_vct_ref,                g_vct_ref_w,       2, 0, 0, H_vct_ref);
 #endif
 #endif
 
   Xen_define_safe_procedure(S_vct_to_string,     g_vct_to_readable_string_w, 1, 0, 0, H_vct_to_string);
-  Xen_define_safe_procedure(S_vct_setB,          g_vct_set_w,       3, 0, 0, H_vct_setB);
   Xen_define_safe_procedure(S_vct_times,         g_vct_times_w,     2, 0, 0, H_vct_times);
   Xen_define_safe_procedure(S_vct_plus,          g_vct_plus_w,      2, 0, 0, H_vct_plus);
   Xen_define_safe_procedure(S_vct_max,           g_vct_max_w,       1, 0, 0, H_vct_max);
@@ -1537,6 +1531,7 @@ void mus_vct_init(void)
   Xen_define_safe_procedure(S_vct_scaleB,        g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
 
 #if (!HAVE_SCHEME)
+  Xen_define_safe_procedure(S_vct_setB,          g_vct_set_w,       3, 0, 0, H_vct_setB);
   Xen_define_safe_procedure(S_is_vct,            g_is_vct_w,        1, 0, 0, H_is_vct);
   Xen_define_safe_procedure(S_vct_fillB,         g_vct_fill_w,      2, 0, 0, H_vct_fillB);
   Xen_define_safe_procedure(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy);
@@ -1571,12 +1566,12 @@ void mus_vct_init(void)
   s7_eval_c_string(s7, "(define vct-peak-and-location float-vector-peak-and-location)");
   s7_eval_c_string(s7, "(define vct-move! float-vector-move!)");
   s7_eval_c_string(s7, "(define vct-subseq float-vector-subseq)");
-  s7_eval_c_string(s7, "(define vct-ref float-vector-ref)");
   s7_eval_c_string(s7, "(define vct->string float-vector->string)");
-  s7_eval_c_string(s7, "(define vct-set! float-vector-set!)");
   s7_eval_c_string(s7, "(define vct* float-vector*)");
   s7_eval_c_string(s7, "(define vct+ float-vector+)");
   s7_eval_c_string(s7, "(define vct-max float-vector-max)");
   s7_eval_c_string(s7, "(define vct-min float-vector-min)");
+  s7_eval_c_string(s7, "(define vct-ref float-vector-ref)");
+  s7_eval_c_string(s7, "(define vct-set! float-vector-set!)");
 #endif
 }
