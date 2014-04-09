@@ -2219,7 +2219,7 @@ static Xen g_sound_data_to_vct(Xen sdobj, Xen chan, Xen vobj)
 
 static Xen g_vct_to_sound_data(Xen vobj, Xen sdobj, Xen chan)
 {
-  #define H_vct_to_sound_data "(" S_vct_to_sound_data " v sd chan): copies " S_vct v "'s data into sound-data sd's channel chan"
+  #define H_vct_to_sound_data "(" S_vct_to_sound_data " v sd chan): copies " S_vct "'s data into sound-data sd's channel chan"
   vct *v;
   sound_data *sd;
   Xen obj = Xen_false;
