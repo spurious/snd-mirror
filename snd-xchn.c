@@ -500,8 +500,8 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
 
   if (Xen_hook_has_list(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
-	     Xen_list_2(C_int_to_Xen_sound(UNPACK_SOUND(data)),
-			C_int_to_Xen_integer(UNPACK_CHANNEL(data))),
+	     Xen_list_2(C_int_to_Xen_sound(unpack_sound(data)),
+			C_int_to_Xen_integer(unpack_channel(data))),
 	     S_mouse_enter_graph_hook);
 
   check_cursor_shape((chan_info *)context, ev->x, ev->y);
@@ -516,8 +516,8 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (Xen_hook_has_list(mouse_leave_graph_hook))
     run_hook(mouse_leave_graph_hook,
-	     Xen_list_2(C_int_to_Xen_sound(UNPACK_SOUND(data)),
-			C_int_to_Xen_integer(UNPACK_CHANNEL(data))),
+	     Xen_list_2(C_int_to_Xen_sound(unpack_sound(data)),
+			C_int_to_Xen_integer(unpack_channel(data))),
 	     S_mouse_leave_graph_hook);
 
   /*
@@ -865,8 +865,8 @@ static void channel_drag_watcher(Widget w, const char *str, Position x, Position
   chan_info *cp;
   float seconds;
   XtVaGetValues(w, XmNuserData, &data, NULL);
-  chn = UNPACK_CHANNEL(data);
-  snd = UNPACK_SOUND(data);
+  chn = unpack_channel(data);
+  snd = unpack_sound(data);
 
   sp = ss->sounds[snd];
   if (snd_ok(sp))
@@ -1126,7 +1126,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, cw[W_left_scrollers]); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNuserData, PACK_SOUND_AND_CHANNEL(sp->index, cp->chan)); n++;
+      XtSetArg(args[n], XmNuserData, pack_sound_and_channel(sp->index, cp->chan)); n++;
       /* this collides with W_gzy below, but a consistent version came up with half a window blank */
       XtSetArg(args[n], XmNnavigationType, XmNONE); n++;
       cw[W_graph] = XtCreateManagedWidget("chn-graph", xmDrawingAreaWidgetClass, cw[W_main_window], args, n);
@@ -1149,7 +1149,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, false, graph_mouse_leave, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], KeyPressMask, false, cp_graph_key_press, (XtPointer)cp);
 
-	  data = (pointer_or_int_t)PACK_SOUND_AND_CHANNEL(sp->index, cp->chan);
+	  data = (pointer_or_int_t)pack_sound_and_channel(sp->index, cp->chan);
 	  add_drag_and_drop(cw[W_graph], channel_drop_watcher, channel_drag_watcher, (void *)data);
 	}
 

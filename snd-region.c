@@ -1591,7 +1591,7 @@ insert region data into snd's channel chn starting at start-samp"
   samp = beg_to_sample(samp_n, S_insert_region);
   err = paste_region_2(rg, cp, false, samp);
 
-  if (SERIOUS_IO_ERROR(err))
+  if (is_serious_io_error(err))
     Xen_error(Xen_make_error_type("IO-error"),
 	      Xen_list_3(C_string_to_Xen_string(S_insert_region ": can't edit ~A (region access problem?), ~A"),
 			 C_string_to_Xen_string(cp->sound->filename),
@@ -1975,7 +1975,7 @@ it returns a list of the new mixes"
   id = paste_region_1(rg, cp, true, samp, &err, reg_chan, &reg_chans);
 
   /* id might legitmately be invalid mix id if with_mix_tags is #f or virtual mix not ok */
-  if (SERIOUS_IO_ERROR(err))
+  if (is_serious_io_error(err))
     Xen_error(Xen_make_error_type("IO-error"),
 	      Xen_list_2(C_string_to_Xen_string(S_mix_region ": can't edit, ~A"),
 			 C_string_to_Xen_string(io_error_name(err))));

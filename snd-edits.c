@@ -5770,7 +5770,7 @@ io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
 	    snd_update(sp);
 	  else
 	    {
-	      if (SERIOUS_IO_ERROR(err))
+	      if (is_serious_io_error(err))
 		{
 		  free(nfile);
 		  nfile = NULL;

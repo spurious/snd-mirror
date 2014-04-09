@@ -2854,11 +2854,13 @@ static Xen g_set_mark_properties(Xen n, Xen val)
 static Xen g_mark_property(Xen key, Xen id) 
 {
   #define H_mark_property "(" S_mark_property " key id) returns the value associated with 'key' in the given mark's property list, or " PROC_FALSE "."
+  Xen_check_type(xen_is_mark(id), id, 2, S_mark_property, "a mark");
   return(Xen_assoc_ref(key, g_mark_properties(id)));
 }
 
 static Xen g_set_mark_property(Xen key, Xen id, Xen val) 
 {
+  Xen_check_type(xen_is_mark(id), id, 2, S_mark_property, "a mark");
   g_set_mark_properties(id, Xen_assoc_set(key, val, g_mark_properties(id)));
   return(val);
 }

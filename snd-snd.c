@@ -2242,7 +2242,7 @@ static Xen s7_xen_sound_copy(s7_scheme *sc, Xen obj)
       free(name);
       if (sp)
 	return(new_xen_sound(sp->index));
-      if (SERIOUS_IO_ERROR(err))
+      if (is_serious_io_error(err))
 	Xen_error(Xen_make_error_type("IO-error"),
 		  Xen_list_2(C_string_to_Xen_string("copy sound: can't save edits, ~A"),
 			     C_string_to_Xen_string(io_error_name(err))));
@@ -3855,7 +3855,7 @@ static Xen g_save_sound(Xen index)
   redirect_snd_warning_to(NULL, NULL);
 
   /* if err and we got here, report it */
-  if (SERIOUS_IO_ERROR(err))
+  if (is_serious_io_error(err))
     Xen_error(CANNOT_SAVE,
 	      Xen_list_2(C_string_to_Xen_string(S_save_sound ": IO error ~A"),
 			 C_string_to_Xen_string(io_error_name(err))));

@@ -443,8 +443,8 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
       int pdata;
       pdata = get_user_int_data(G_OBJECT(w));
       run_hook(mouse_enter_graph_hook,
-	       Xen_list_2(C_int_to_Xen_sound(UNPACK_SOUND(pdata)),
-			  C_int_to_Xen_integer(UNPACK_CHANNEL(pdata))),
+	       Xen_list_2(C_int_to_Xen_sound(unpack_sound(pdata)),
+			  C_int_to_Xen_integer(unpack_channel(pdata))),
 	       S_mouse_enter_graph_hook);
     }
 
@@ -460,8 +460,8 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
       int pdata;
       pdata = get_user_int_data(G_OBJECT(w));
       run_hook(mouse_leave_graph_hook,
-	       Xen_list_2(C_int_to_Xen_sound(UNPACK_SOUND(pdata)),
-			  C_int_to_Xen_integer(UNPACK_CHANNEL(pdata))),
+	       Xen_list_2(C_int_to_Xen_sound(unpack_sound(pdata)),
+			  C_int_to_Xen_integer(unpack_channel(pdata))),
 	       S_mouse_leave_graph_hook);
     }
 
@@ -731,8 +731,8 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
   float seconds;
 
   data = get_user_int_data(G_OBJECT(w));
-  chn = UNPACK_CHANNEL(data);
-  snd = UNPACK_SOUND(data);
+  chn = unpack_channel(data);
+  snd = unpack_sound(data);
   sp = ss->sounds[snd];
 
   if (snd_ok(sp))
@@ -817,7 +817,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 
       cw[W_graph] = gtk_drawing_area_new();
       add_drag_and_drop(cw[W_graph], channel_drop_watcher, channel_drag_watcher, NULL);
-      set_user_int_data(G_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));
+      set_user_int_data(G_OBJECT(cw[W_graph]), pack_sound_and_channel(sp->index, cp->chan));
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
       SET_CAN_FOCUS(cw[W_graph]);
 
@@ -1198,8 +1198,8 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
 static Xen g_channel_widgets(Xen snd, Xen chn)
 {
-  #define H_channel_widgets "(" S_channel_widgets " :optional snd chn): a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)\
-edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gsy_adj (16)gzy_adj"
+  #define H_channel_widgets "(" S_channel_widgets " :optional snd chn): a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy\
+(7)edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gsy_adj (16)gzy_adj)"
 
   #define Xen_wrap_adj(Value) ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GtkAdjustment_"), Xen_wrap_C_pointer(Value)) : Xen_false)
 

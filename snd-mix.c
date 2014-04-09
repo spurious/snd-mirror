@@ -156,8 +156,8 @@ int mix_complete_file_at_cursor(snd_info *sp, const char *filename)
 void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y)
 {
   int chn, snd;
-  chn = UNPACK_CHANNEL(data);
-  snd = UNPACK_SOUND(data);
+  chn = unpack_channel(data);
+  snd = unpack_sound(data);
   if ((snd >= 0) &&
       (snd < ss->max_sounds) && 
       (snd_ok(ss->sounds[snd])) &&
@@ -3006,11 +3006,13 @@ static Xen g_set_mix_properties(Xen n, Xen val)
 static Xen g_mix_property(Xen key, Xen id) 
 {
   #define H_mix_property "(" S_mix_property " key id) returns the value associated with 'key' in the given mix's property list, or " PROC_FALSE "."
+  Xen_check_type(xen_is_mix(id), id, 2, S_mix_property, "a mix");
   return(Xen_assoc_ref(key, g_mix_properties(id)));
 }
 
 static Xen g_set_mix_property(Xen key, Xen id, Xen val) 
 {
+  Xen_check_type(xen_is_mix(id), id, 2, S_mix_property, "a mix");
   g_set_mix_properties(id, Xen_assoc_set(key, val, g_mix_properties(id)));
   return(val);
 }

@@ -10928,29 +10928,6 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
    */
 }
 
-s7_pointer s7_sin(s7_scheme *sc, s7_pointer x)
-{
-  switch (type(x))
-    {
-    case T_REAL:
-      return(make_real(sc, sin(real(x))));
-
-    case T_INTEGER:
-      return(make_real(sc, sin((s7_Double)integer(x))));
-      
-    case T_RATIO:
-      return(make_real(sc, sin((s7_Double)(fraction(x)))));
-
-    case T_COMPLEX:
-#if HAVE_COMPLEX_NUMBERS
-      return(s7_from_c_complex(sc, csin(as_c_complex(x))));
-#endif
-
-    default:
-      return(simple_wrong_type_argument_with_type(sc, sc->SIN, x, A_NUMBER));
-    }
-}
-
 
 static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 {
@@ -36366,19 +36343,6 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 						 arg,
 						 make_protected_string(sc, type_name(sc, arg, INDEFINITE_ARTICLE)),
 						 make_protected_string(sc, descr)));
-}
-
-
-s7_pointer s7_wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, int arg_n, s7_pointer arg, s7_pointer descr)
-{
-  if (arg_n < 0) arg_n = 0;
-  if (arg_n > 0)
-    return(wrong_type_arg_error_prepackaged(sc, caller, make_integer(sc, arg_n), arg, 
-					    make_protected_string(sc, type_name(sc, arg, INDEFINITE_ARTICLE)),
-					    descr));
-  return(simple_wrong_type_arg_error_prepackaged(sc, caller, arg,
-						 make_protected_string(sc, type_name(sc, arg, INDEFINITE_ARTICLE)),
-						 descr));
 }
 
 
@@ -69402,7 +69366,7 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7
- * t816          |                                    |  69.5                43.6
+ * t816          |                                    |  69.5                43.4
  * lg            |                                    |  7757                7723
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 36.3
  *            153 with run macro (eval_ptree)
@@ -69419,6 +69383,7 @@ int main(int argc, char **argv)
  * mixer and frame are still separate (generator!) types
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
+ * fix rest of anonymous mus_error calls
  *
  * unexpected eof can be from forgotten double-quote -- can we catch this?
  *   start at last top and look for odd number of dq's?

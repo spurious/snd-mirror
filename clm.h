@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 23
-#define MUS_DATE "2-Apr-14"
+#define MUS_REVISION 24
+#define MUS_DATE "9-Apr-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -231,7 +231,6 @@ MUS_EXPORT mus_float_t mus_tap_unmodulated(mus_any *gen);
 MUS_EXPORT mus_any *mus_make_delay(int size, mus_float_t *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_is_delay(mus_any *ptr);
 MUS_EXPORT bool mus_is_tap(mus_any *ptr);
-MUS_EXPORT bool mus_is_delay_line(mus_any *gen); /* added 2-Mar-03 for tap error checks */
 MUS_EXPORT mus_float_t mus_delay_tick(mus_any *ptr, mus_float_t input);
 MUS_EXPORT mus_float_t mus_delay_unmodulated_noz(mus_any *ptr, mus_float_t input);
 
@@ -672,6 +671,7 @@ MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 #define mus_ssb_am_p(Gen) mus_is_ssb_am(Gen)
 
 #define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
+#define mus_is_delay_line(Gen) mus_is_tap(Gen)
 
 #endif
 
@@ -688,6 +688,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 9-Apr:      deprecated mus_is_delay_line.
  * 2-Apr:      mus_make_moving_average_with_sum.
  * 19-Mar:     deprecate mus_make_env_with_length.
  * 17-Feb-14:  mus_*_p -> mus_is_*.

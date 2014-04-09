@@ -1317,7 +1317,7 @@ static Xen g_insert_selection(Xen beg, Xen snd, Xen chn)
       io_err = insert_selection(cp, si_out, samp);
       free_sync_info(si_out);
 
-      if (SERIOUS_IO_ERROR(io_err))
+      if (is_serious_io_error(io_err))
 	Xen_error(Xen_make_error_type("IO-error"),
 		  Xen_list_2(C_string_to_Xen_string(S_insert_selection ": IO error ~A"),
 			     C_string_to_Xen_string(io_error_name(io_err))));
@@ -1357,7 +1357,7 @@ static Xen g_mix_selection(Xen beg, Xen snd, Xen chn, Xen sel_chan)
       chans = si_out->chans;                 /* save for loop below */
       free_sync_info(si_out);
 
-      if (SERIOUS_IO_ERROR(io_err))
+      if (is_serious_io_error(io_err))
 	Xen_error(Xen_make_error_type("IO-error"),
 		  Xen_list_2(C_string_to_Xen_string(S_mix_selection ": IO error ~A"),
 			     C_string_to_Xen_string(io_error_name(io_err))));
@@ -1388,7 +1388,7 @@ static Xen g_selection_to_mix(void)
 
       tempfile = snd_tempnam();
       io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, snd_srate(cp->sound), NULL, SAVE_ALL_CHANS);
-      if (SERIOUS_IO_ERROR(io_err))
+      if (is_serious_io_error(io_err))
 	{
 	  if (tempfile) free(tempfile);
 	  free_sync_info(si_out);

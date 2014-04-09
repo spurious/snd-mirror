@@ -175,7 +175,6 @@ bool s7_is_provided(s7_scheme *sc, const char *feature);             /* (provide
 s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info);
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
   /* set arg_n to 0 to indicate that caller takes only one argument (so the argument number need not be reported */
-s7_pointer s7_wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, int arg_n, s7_pointer arg, s7_pointer descr);
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args);
 s7_pointer s7_stacktrace(s7_scheme *sc);
@@ -352,8 +351,6 @@ s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b);        /* r
 s7_Double s7_real_part(s7_pointer z);                                       /* (real-part z) */
 s7_Double s7_imag_part(s7_pointer z);                                       /* (imag-part z) */
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (number->string obj radix) */
-
-s7_pointer s7_sin(s7_scheme *sc, s7_pointer z);                             /* (sin z) */
 s7_pointer s7_cos(s7_scheme *sc, s7_pointer z);                             /* (cos z) */
 
 

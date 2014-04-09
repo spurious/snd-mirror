@@ -1694,14 +1694,14 @@ void hide_toolbar(void)
 /* ---------------- ext lang tie-ins ---------------- */
 
 #define INVALID_MENU -1
-#define CALL_INDEX(Data) (Data >> 16)
-#define PACK_MENU_DATA(Slot, Menu) ((Slot << 16) | (Menu))
+#define call_index(Data) (Data >> 16)
+#define pack_menu_data(Slot, Menu) ((Slot << 16) | (Menu))
 
 static void menu_callback(Widget w, XtPointer info, XtPointer context) 
 {
   pointer_or_int_t callb;
   XtVaGetValues(w, XmNuserData, &callb, NULL);
-  g_menu_callback(CALL_INDEX(callb)); /* menu option activate callback */
+  g_menu_callback(call_index(callb)); /* menu option activate callback */
 }
 
 
@@ -1709,7 +1709,7 @@ static void GHC_callback(Widget w, XtPointer info, XtPointer context)
 {
   pointer_or_int_t slot;
   XtVaGetValues(w, XmNuserData, &slot, NULL);
-  g_menu_callback(CALL_INDEX(slot)); /* main menu cascading callback */
+  g_menu_callback(call_index(slot)); /* main menu cascading callback */
 }
 
 
@@ -1766,7 +1766,7 @@ static bool clobber_menu(Widget w, const char *name)
     {
       pointer_or_int_t slot;
       XtVaGetValues(w, XmNuserData, &slot, NULL);
-      unprotect_callback(CALL_INDEX(slot));
+      unprotect_callback(call_index(slot));
       XtUnmanageChild(w);
       return(true);
     }
@@ -1807,13 +1807,13 @@ int g_add_to_main_menu(const char *label, int slot)
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
-  XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
+  XtSetArg(args[n], XmNuserData, pack_menu_data(slot, new_menu)); n++;
   m = XmCreatePulldownMenu(main_menu, (char *)label, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNsubMenuId, m); n++;
-  XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
+  XtSetArg(args[n], XmNuserData, pack_menu_data(slot, new_menu)); n++;
   cas = XtCreateManagedWidget(label, xmCascadeButtonWidgetClass, main_menu, args, n);
   if (slot >= 0) XtAddCallback(cas, XmNcascadingCallback, GHC_callback, NULL);
 
@@ -1865,14 +1865,14 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 		  set_button_label(m, label);
 		}
 	      if (position >= 0) XtVaSetValues(m, XmNpositionIndex, position, NULL);
-	      XtVaSetValues(m, XmNuserData, PACK_MENU_DATA(callb, which_menu), NULL);
+	      XtVaSetValues(m, XmNuserData, pack_menu_data(callb, which_menu), NULL);
 	      XtManageChild(m);
 	      return(m);
 	    }
 	}
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
-      XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(callb, which_menu)); n++;
+      XtSetArg(args[n], XmNuserData, pack_menu_data(callb, which_menu)); n++;
       m = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menw, args, n);
       XtAddCallback(m, XmNactivateCallback, menu_callback, NULL);
     }

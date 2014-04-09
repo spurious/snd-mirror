@@ -35,12 +35,9 @@
 
 #define strcopy(Dest, Src, Len) snprintf(Dest, Len, "%s", Src)
 
-#define XOR(a, b) ((a) ^ (b))
-/* can't get used to this operator -- in the good old days, ^ meant exponentiation */
-
-#define UNPACK_SOUND(a) ((int)a >> 16)
-#define UNPACK_CHANNEL(a) ((int)a & 0xff)
-#define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
+#define unpack_sound(a) ((int)a >> 16)
+#define unpack_channel(a) ((int)a & 0xff)
+#define pack_sound_and_channel(a, b) ((a << 16) | b)
 
 #define POINT_BUFFER_SIZE 8192
 
@@ -146,12 +143,12 @@ enum {BLACK_AND_WHITE_COLORMAP, GRAY_COLORMAP, HOT_COLORMAP, COOL_COLORMAP, BONE
       AUTUMN_COLORMAP, WINTER_COLORMAP, SPRING_COLORMAP, SUMMER_COLORMAP, RAINBOW_COLORMAP, FLAG_COLORMAP, PHASES_COLORMAP, NUM_BUILTIN_COLORMAPS};
 
 
-#define SERIOUS_IO_ERROR(Err) ((Err != IO_NO_ERROR) && \
-                               (Err != IO_EDIT_HOOK_CANCELLATION) && \
-                               (Err != IO_SAVE_HOOK_CANCELLATION) && \
-                               (Err != IO_INTERRUPTED) && \
-                               (Err != IO_NEED_WRITE_CONFIRMATION) && \
-                               (Err != IO_NO_CHANGES))
+#define is_serious_io_error(Err) ((Err != IO_NO_ERROR) && \
+                                  (Err != IO_EDIT_HOOK_CANCELLATION) && \
+                                  (Err != IO_SAVE_HOOK_CANCELLATION) && \
+                                  (Err != IO_INTERRUPTED) && \
+                                  (Err != IO_NEED_WRITE_CONFIRMATION) && \
+                                  (Err != IO_NO_CHANGES))
 
 enum {FILE_OPENED, FILE_CLOSED};
 typedef enum {WITH_READABLE_HEADERS, WITH_WRITABLE_HEADERS, WITH_BUILTIN_HEADERS} header_choice_t;

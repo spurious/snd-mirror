@@ -3198,7 +3198,7 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
     else 
       {
 	err = move_file(tmp_file, sp->filename);
-	if (SERIOUS_IO_ERROR(err))
+	if (is_serious_io_error(err))
 	  {
 	    free(tmp_file);
 	    sp->writing = false;

@@ -2239,7 +2239,7 @@ mus_any *mus_make_asymmetric_fm(mus_float_t freq, mus_float_t phase, mus_float_t
 {
  asyfm *gen = NULL;
  if (r == 0.0)
-   mus_error(MUS_ARG_OUT_OF_RANGE, "r can't be 0.0");
+   mus_error(MUS_ARG_OUT_OF_RANGE, S_make_asymmetric_fm ": r can't be 0.0");
  else
    {
      gen = (asyfm *)malloc(sizeof(asyfm));
@@ -4536,12 +4536,6 @@ static mus_long_t delay_set_length(mus_any *ptr, mus_long_t val)
   return((mus_long_t)(gen->size));
 }
 
-
-bool mus_is_delay_line(mus_any *gen)
-{
-  return((gen) && 
-	 (gen->core->extended_type == MUS_DELAY_LINE));
-}
 
 bool mus_is_tap(mus_any *gen)
 {
@@ -8505,7 +8499,7 @@ int mus_filter_set_order(mus_any *ptr, int order)
 static mus_float_t filter_xcoeff(mus_any *ptr, int index) 
 {
   flt *gen = (flt *)ptr;
-  if (!(gen->x)) return((mus_float_t)mus_error(MUS_NO_XCOEFFS, "no xcoeffs"));
+  if (!(gen->x)) return((mus_float_t)mus_error(MUS_NO_XCOEFFS, S_mus_xcoeff ": no xcoeffs"));
   if ((index >= 0) && (index < gen->order))
     return(gen->x[index]);
   return((mus_float_t)mus_error(MUS_ARG_OUT_OF_RANGE, S_mus_xcoeff ": invalid index %d, order = %d?", index, gen->order));
@@ -8515,7 +8509,7 @@ static mus_float_t filter_xcoeff(mus_any *ptr, int index)
 static mus_float_t filter_set_xcoeff(mus_any *ptr, int index, mus_float_t val) 
 {
   flt *gen = (flt *)ptr;
-  if (!(gen->x)) return((mus_float_t)mus_error(MUS_NO_XCOEFFS, "no xcoeffs"));
+  if (!(gen->x)) return((mus_float_t)mus_error(MUS_NO_XCOEFFS, S_setB S_mus_xcoeff ": no xcoeffs"));
   if ((index >= 0) && (index < gen->order))
     {
       gen->x[index] = val;
@@ -8528,7 +8522,7 @@ static mus_float_t filter_set_xcoeff(mus_any *ptr, int index, mus_float_t val)
 static mus_float_t filter_ycoeff(mus_any *ptr, int index) 
 {
   flt *gen = (flt *)ptr;
-  if (!(gen->y)) return((mus_float_t)mus_error(MUS_NO_YCOEFFS, "no ycoeffs"));
+  if (!(gen->y)) return((mus_float_t)mus_error(MUS_NO_YCOEFFS, S_mus_ycoeff ": no ycoeffs"));
   if ((index >= 0) && (index < gen->order))
     return(gen->y[index]);
   return((mus_float_t)mus_error(MUS_ARG_OUT_OF_RANGE, S_mus_ycoeff ": invalid index %d, order = %d?", index, gen->order));
@@ -8538,7 +8532,7 @@ static mus_float_t filter_ycoeff(mus_any *ptr, int index)
 static mus_float_t filter_set_ycoeff(mus_any *ptr, int index, mus_float_t val) 
 {
   flt *gen = (flt *)ptr;
-  if (!(gen->y)) return((mus_float_t)mus_error(MUS_NO_YCOEFFS, "no ycoeffs"));
+  if (!(gen->y)) return((mus_float_t)mus_error(MUS_NO_YCOEFFS, S_setB S_mus_ycoeff ": no ycoeffs"));
   if ((index >= 0) && (index < gen->order))
     {
       gen->y[index] = val;
@@ -8755,7 +8749,7 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, mus
   /* if state is null, it is allocated locally, otherwise it's size should be at least 2 * order.
    */
   if (order <= 0)
-    mus_error(MUS_ARG_OUT_OF_RANGE, "%s order = %d?", name, order);
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_filter ": %s order = %d?", name, order);
   else
     {
       flt *gen;
@@ -10691,7 +10685,7 @@ static mus_float_t mus_read_sample(mus_any *fd, mus_long_t frame, int chan)
       ((fd->core)->read_sample))
     return(((*(fd->core)->read_sample))(fd, frame, chan));
   return((mus_float_t)mus_error(MUS_NO_SAMPLE_INPUT, 
-			  "can't find %s's sample input function", 
+			  S_read_sample ":can't find %s's sample input function", 
 			  mus_name(fd)));
 }
 
@@ -10955,11 +10949,11 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
 
       gen->chans = mus_sound_chans(gen->file_name);
       if (gen->chans <= 0) 
-	mus_error(MUS_NO_CHANNELS, "%s chans: %d", filename, gen->chans);
+	mus_error(MUS_NO_CHANNELS, S_make_file_to_sample ": %s chans: %d", filename, gen->chans);
 
       gen->file_end = mus_sound_frames(gen->file_name);
       if (gen->file_end < 0) 
-	mus_error(MUS_NO_LENGTH, "%s frames: %lld", filename, gen->file_end);
+	mus_error(MUS_NO_LENGTH, S_make_file_to_sample ": %s frames: %lld", filename, gen->file_end);
 
       if (buffer_size < gen->file_end)
 	gen->file_buffer_size = buffer_size;
@@ -11116,7 +11110,7 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
 {
   rdin *gen;
   if (chan >= mus_sound_chans(filename))
-    mus_error(MUS_NO_SUCH_CHANNEL, "make-readin %s, chan: %d, but chans: %d", filename, chan, mus_sound_chans(filename));
+    mus_error(MUS_NO_SUCH_CHANNEL, S_make_readin ": %s, chan: %d, but chans: %d", filename, chan, mus_sound_chans(filename));
   
   gen = (rdin *)mus_make_file_to_sample(filename);
   if (gen)
@@ -11829,7 +11823,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
       else fd = mus_sound_open_output(filename, (int)sampling_rate, out_chans, out_format, out_type, comment);
       if (fd == -1)
 	mus_error(MUS_CANT_OPEN_FILE, 
-		  "open(%s) -> %s", 
+		  S_make_sample_to_file ": open(%s) -> %s", 
 		  filename, STRERROR(errno));
       else
 	{
@@ -11857,7 +11851,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 	  /* clear previous, if any */
 	  if (mus_file_close(fd) != 0)
 	    mus_error(MUS_CANT_CLOSE_FILE, 
-		      "close(%d, %s) -> %s", 
+		      S_make_sample_to_file ": close(%d, %s) -> %s", 
 		      fd, gen->file_name, STRERROR(errno));
 
 	  return((mus_any *)gen);
@@ -11891,7 +11885,7 @@ mus_float_t mus_sample_to_file(mus_any *fd, mus_long_t samp, int chan, mus_float
       ((fd->core)->write_sample))
     return(((*(fd->core)->write_sample))(fd, samp, chan, val));
   mus_error(MUS_NO_SAMPLE_OUTPUT, 
-	    "can't find %s's sample output function", 
+	    S_sample_to_file ": can't find %s's sample output function", 
 	    mus_name(fd));
   return(val);
 }
@@ -12336,7 +12330,7 @@ mus_float_t mus_locsig_ref(mus_any *ptr, int chan)
 	  if (locsig_warned != gen->outn_writer)
 	    {
 	      mus_error(MUS_NO_SUCH_CHANNEL, 
-			S_locsig_ref " chan %d >= %d", 
+			S_locsig_ref ": chan %d >= %d", 
 			chan, gen->chans);
 	      locsig_warned = gen->outn_writer;
 	    }
@@ -12359,7 +12353,7 @@ mus_float_t mus_locsig_set(mus_any *ptr, int chan, mus_float_t val)
 	  if (locsig_warned != gen->outn_writer)
 	    {
 	      mus_error(MUS_NO_SUCH_CHANNEL, 
-			S_locsig_set " chan %d >= %d", 
+			S_locsig_set ": chan %d >= %d", 
 			chan, gen->chans);
 	      locsig_warned = gen->outn_writer;
 	    }
@@ -12382,7 +12376,7 @@ mus_float_t mus_locsig_reverb_ref(mus_any *ptr, int chan)
 	  if (locsig_warned != gen->outn_writer)
 	    {
 	      mus_error(MUS_NO_SUCH_CHANNEL, 
-			S_locsig_reverb_ref " chan %d, but this locsig has %d reverb chans", 
+			S_locsig_reverb_ref ": chan %d, but this locsig has %d reverb chans", 
 			chan, gen->rev_chans);
 	      locsig_warned = gen->outn_writer;
 	    }
@@ -12405,7 +12399,7 @@ mus_float_t mus_locsig_reverb_set(mus_any *ptr, int chan, mus_float_t val)
 	  if (locsig_warned != gen->outn_writer)
 	    {
 	      mus_error(MUS_NO_SUCH_CHANNEL, 
-			S_locsig_reverb_set " chan %d >= %d", 
+			S_locsig_reverb_set ": chan %d >= %d", 
 			chan, gen->rev_chans);
 	      locsig_warned = gen->outn_writer;
 	    }
@@ -12769,12 +12763,12 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
   mus_float_t dist;
   if (chans <= 0)
     {
-      mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", chans);
+      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_locsig ": chans: %d", chans);
       return(NULL);
     }
   if (isnan(degree))
     {
-      mus_error(MUS_ARG_OUT_OF_RANGE, "degree: %f", degree);
+      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_locsig ": degree: %f", degree);
       return(NULL);
     }
 
@@ -13156,7 +13150,7 @@ mus_any *mus_make_move_sound(mus_long_t start, mus_long_t end, int out_channels,
   dloc *gen;
   if (out_channels <= 0)
     {
-      mus_error(MUS_ARG_OUT_OF_RANGE, "move-sound: out chans: %d", out_channels);
+      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_move_sound ": out chans: %d", out_channels);
       return(NULL);
     }
   gen = (dloc *)calloc(1, sizeof(dloc));
@@ -13460,11 +13454,11 @@ mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), 
    */
 
   if (fabs(srate) > MUS_MAX_CLM_SRC)
-    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " srate arg invalid: %f", srate);
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src ": srate arg invalid: %f", srate);
   else
     {
       if ((width < 0) || (width > MUS_MAX_CLM_SINC_WIDTH))
-	mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " width arg invalid: %d", width);
+	mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src ": width arg invalid: %d", width);
       else
 	{
 	  sr *srp;
@@ -14093,17 +14087,17 @@ mus_any *mus_make_granulate(mus_float_t (*input)(void *arg, int direction),
   if (max_size > outlen) outlen = max_size;
   if (expansion <= 0.0)
     {
-      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_granulate " expansion must be > 0.0: %f", expansion);
+      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_granulate ": expansion must be > 0.0: %f", expansion);
       return(NULL);
     }
   if (outlen <= 0) 
     {
-      mus_error(MUS_NO_LENGTH, S_make_granulate " size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);
+      mus_error(MUS_NO_LENGTH, S_make_granulate ": size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);
       return(NULL);
     }
   if ((hop * sampling_rate) < expansion)
     {
-      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_granulate " expansion (%f) must be < hop * srate (%f)", expansion, hop * sampling_rate);
+      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_granulate ": expansion (%f) must be < hop * srate (%f)", expansion, hop * sampling_rate);
       return(NULL);
     }
   spd = (grn_info *)malloc(sizeof(grn_info));
@@ -15145,7 +15139,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	n1 = (size - 1) * 0.5;
 	if ((mus_long_t)(size * size * sizeof(double)) > mus_max_malloc())
 	  {
-	    mus_error(MUS_ARG_OUT_OF_RANGE, "dpss window requires size^2 * 8 bytes, but that exceeds the current mus-max-malloc amount");
+	    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_fft_window ": dpss window requires size^2 * 8 bytes, but that exceeds the current mus-max-malloc amount");
 	    return(window);
 	  }
 
@@ -15190,7 +15184,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	free(data);
       }
 #else
-      mus_error(MUS_NO_SUCH_FFT_WINDOW, "DPSS window needs GSL");
+      mus_error(MUS_NO_SUCH_FFT_WINDOW, S_make_fft_window ": DPSS window needs GSL");
 #endif
       break;
 
@@ -15337,13 +15331,13 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	free(im);
       }
 #else
-      mus_error(MUS_NO_SUCH_FFT_WINDOW, "Dolph-Chebyshev, Samaraki, and Ultraspherical windows need complex trig support");
+      mus_error(MUS_NO_SUCH_FFT_WINDOW, S_make_fft_window ": Dolph-Chebyshev, Samaraki, and Ultraspherical windows need complex trig support");
 #endif
 #endif
       break;
 
     default: 
-      mus_error(MUS_NO_SUCH_FFT_WINDOW, "unknown fft data window: %d", (int)type); 
+      mus_error(MUS_NO_SUCH_FFT_WINDOW, S_make_fft_window ": unknown fft data window: %d", (int)type); 
       break;
     }
   return(window);
@@ -15743,9 +15737,9 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
   if ((file1_len <= 0) || (file2_len <= 0)) return;
 
   file1_chans = mus_sound_chans(file1);
-  if (file1_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", file1, file1_chans);
+  if (file1_chans <= 0) mus_error(MUS_NO_CHANNELS, S_convolve_files ": %s chans: %d", file1, file1_chans);
   file2_chans = mus_sound_chans(file2);
-  if (file2_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", file2, file2_chans);
+  if (file2_chans <= 0) mus_error(MUS_NO_CHANNELS, S_convolve_files ": %s chans: %d", file2, file2_chans);
   output_chans = file1_chans; 
   if (file2_chans > output_chans) output_chans = file2_chans;
 
@@ -15835,7 +15829,7 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
   free(data2);
 
   if (errmsg)
-    mus_error(MUS_CANT_OPEN_FILE, "%s", errmsg);
+    mus_error(MUS_CANT_OPEN_FILE, S_convolve_files ": %s", errmsg);
 }
 
 
@@ -16703,11 +16697,11 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
 
   out_chans = mus_channels(outf);
   if (out_chans <= 0) 
-    mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(outf), out_chans);
+    mus_error(MUS_NO_CHANNELS, S_mus_mix ": %s chans: %d", mus_describe(outf), out_chans);
 
   in_chans = mus_channels(inf);
   if (in_chans <= 0) 
-    mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(inf), in_chans);
+    mus_error(MUS_NO_CHANNELS, S_mus_mix ": %s chans: %d", mus_describe(inf), in_chans);
 
   if (umx)
     {
@@ -16807,11 +16801,11 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
   out_chans = mus_sound_chans(outfile);
 
   if (out_chans <= 0) 
-    mus_error(MUS_NO_CHANNELS, "%s chans: %d", outfile, out_chans);
+    mus_error(MUS_NO_CHANNELS, S_mus_mix ": %s chans: %d", outfile, out_chans);
 
   in_chans = mus_sound_chans(infile);
   if (in_chans <= 0) 
-    mus_error(MUS_NO_CHANNELS, "%s chans: %d", infile, in_chans);
+    mus_error(MUS_NO_CHANNELS, S_mus_mix ": %s chans: %d", infile, in_chans);
   if (out_chans > in_chans) 
     min_chans = in_chans; else min_chans = out_chans;
 

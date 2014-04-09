@@ -9235,11 +9235,13 @@ static Xen g_edit_property(Xen key, Xen snd, Xen chn, Xen pos)
 {
   #define H_edit_property "(" S_edit_property " key snd chn pos) returns the value associated with 'key' in the \
 given edit's property list, or " PROC_FALSE "."
+  Snd_assert_channel(S_edit_property, snd, chn, 2);
   return(Xen_assoc_ref(key, g_edit_properties(snd, chn, pos)));
 }
 
 static Xen g_set_edit_property(Xen key, Xen val, Xen snd, Xen chn, Xen pos) 
 {
+  Snd_assert_channel(S_edit_property, snd, chn, 3);
   g_set_edit_properties(Xen_assoc_set(key, val, g_edit_properties(snd, chn, pos)), snd, chn, pos);
   return(val);
 }

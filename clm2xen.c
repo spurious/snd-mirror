@@ -200,6 +200,8 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define Xen_to_C_integer_or_error(Xen_Arg, C_Val, Caller, ArgNum) \
   if (Xen_is_number(Xen_Arg)) C_Val = Xen_integer_to_C_int(Xen_Arg); else Xen_check_type(false, Xen_Arg, ArgNum, Caller, "an integer")
 
+#define Xen_real_to_C_double_with_caller(Xen_Arg, Caller) Xen_real_to_C_double(Xen_Arg)
+
 #if (HAVE_FORTH) || (HAVE_RUBY)
   #define Xen_object_ref_checked(Obj, Type) (Xen_c_object_is_type(Obj, Type) ? Xen_object_ref(Obj) : NULL)
 #else
@@ -212,6 +214,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define Xen_real_to_C_double_if_bound(Xen_Arg, C_Val, Caller, ArgNum) if (Xen_is_bound(Xen_Arg)) C_Val = (double)s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
 #define Xen_to_C_double_or_error(Xen_Arg, C_Val, Caller, ArgNum) C_Val = (double)s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
 #define Xen_to_C_integer_or_error(Xen_Arg, C_Val, Caller, ArgNum) C_Val = s7_number_to_integer(s7, Xen_Arg)
+#define Xen_real_to_C_double_with_caller(Xen_Arg, Caller) s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
 
 #define Xen_object_ref_checked(Obj, Type) imported_s7_object_value_checked(Obj, Type)
 #define XEN_NULL NULL
@@ -229,9 +232,10 @@ static void local_mus_error(int type, char *msg)
 }
 
 
-static Xen clm_mus_error(int type, const char *msg)
+static Xen clm_mus_error(int type, const char *msg, const char *caller)
 {
-  mus_error(type, "%s", msg);
+  /* mus_error returns an int, which is a bother in this context */
+  mus_error(type, "%s: %s", caller, msg);
   return(Xen_false);
 }
 
@@ -1202,12 +1206,14 @@ static Xen g_polynomial(Xen arr, Xen x)
   #define H_polynomial "(" S_polynomial " coeffs x): evaluate a polynomial at x.  coeffs are in order \
 of degree, so coeff[0] is the constant term."
 
+#if (!HAVE_SCHEME)
   Xen_check_type(Xen_is_number(x), x, 2, S_polynomial, "a number");
+#endif
   if (mus_is_vct(arr))
     {
       vct *v;
       v = Xen_to_vct(arr);
-      return(C_double_to_Xen_real(mus_polynomial(mus_vct_data(v), Xen_real_to_C_double(x), mus_vct_length(v))));
+      return(C_double_to_Xen_real(mus_polynomial(mus_vct_data(v), Xen_real_to_C_double_with_caller(x, S_polynomial), mus_vct_length(v))));
     }
 
   Xen_check_type(Xen_is_vector(arr), arr, 1, S_polynomial, "a vector or " S_vct);
@@ -1219,10 +1225,10 @@ of degree, so coeff[0] is the constant term."
     if (ncoeffs <= 0) return(C_double_to_Xen_real(0.0));
     if (ncoeffs == 1) return(Xen_vector_ref(arr, 0)); /* just a constant term */
 
-    cx = Xen_real_to_C_double(x);
-    sum = Xen_real_to_C_double(Xen_vector_ref(arr, ncoeffs - 1));
+    cx = Xen_real_to_C_double_with_caller(x, S_polynomial);
+    sum = Xen_real_to_C_double_with_caller(Xen_vector_ref(arr, ncoeffs - 1), S_polynomial);
     for (i = ncoeffs - 2; i >= 0; i--) 
-      sum = (sum * cx) + Xen_real_to_C_double(Xen_vector_ref(arr, i));
+      sum = (sum * cx) + Xen_real_to_C_double_with_caller(Xen_vector_ref(arr, i), S_polynomial);
     return(C_double_to_Xen_real(sum));
   }
 }
@@ -1254,7 +1260,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
   else len = mus_vct_length(v);
   if (len == 0)
     return(C_double_to_Xen_real(0.0));
-  return(C_double_to_Xen_real(mus_array_interp(mus_vct_data(v), Xen_real_to_C_double(phase), len)));
+  return(C_double_to_Xen_real(mus_array_interp(mus_vct_data(v), Xen_real_to_C_double_with_caller(phase, S_array_interp), len)));
 }
 
 
@@ -1696,8 +1702,8 @@ static Xen g_mus_apply(Xen arglist)
 	return(C_double_to_Xen_real(mus_apply(g, Xen_real_to_C_double(Xen_cadr(arglist)), 0.0)));
 
       return(C_double_to_Xen_real(mus_apply(g, 
-				       Xen_real_to_C_double(Xen_cadr(arglist)), 
-				       Xen_real_to_C_double(Xen_caddr(arglist)))));
+					    Xen_real_to_C_double_with_caller(Xen_cadr(arglist), "mus-apply"), 
+					    Xen_real_to_C_double_with_caller(Xen_caddr(arglist), "mus-apply"))));
     }
 #if HAVE_SCHEME
   if (s7_is_open_environment(gen)) 
@@ -2745,7 +2751,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
     {
       line = (mus_float_t *)malloc(max_size * sizeof(mus_float_t));
       if (line == NULL)
-	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line", caller));
       orig_v = xen_make_vct(max_size, line);
       if (initial_element != 0.0)
 	{
@@ -2788,7 +2794,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
       return(mus_xen_to_object(mus_any_to_mus_xen_with_two_vcts(ge, orig_v, xen_filt)));
     }
-  return(clm_mus_error(local_error_type, local_error_msg));
+  return(clm_mus_error(local_error_type, local_error_msg, caller));
 }
 
 
@@ -2825,7 +2831,7 @@ initial-contents can be either a list or a " S_vct "."
       ge = mus_make_delay(size, line, max_size, MUS_INTERP_NONE);
       mus_error_set_handler(old_error_handler);
       if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
-      return(clm_mus_error(local_error_type, local_error_msg));
+      return(clm_mus_error(local_error_type, local_error_msg, S_make_delay));
     }
 
   return(g_make_delay_1(G_DELAY, args));
@@ -3724,7 +3730,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       mus_float_t *wave;
       wave = (mus_float_t *)calloc(clm_table_size, sizeof(mus_float_t));
       if (wave == NULL)
-	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table", S_partials_to_wave));
       table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
@@ -3739,7 +3745,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
     {
       partial_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
       if (partial_data == NULL)
-	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table", S_partials_to_wave));
       for (i = 0, lst = Xen_copy_arg(partials); i < len; i++, lst = Xen_cdr(lst)) 
 	partial_data[i] = Xen_real_to_C_double(Xen_car(lst));
     }
@@ -3816,7 +3822,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
     {
       wave = (mus_float_t *)calloc(clm_table_size, sizeof(mus_float_t));
       if (wave == NULL)
-	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table", S_phase_partials_to_wave));
       table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
@@ -3831,7 +3837,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
     {
       partial_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
       if (partial_data == NULL)
-	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table", S_phase_partials_to_wave));
       for (i = 0, lst = Xen_copy_arg(partials); i < len; i++, lst = Xen_cdr(lst)) 
 	partial_data[i] = Xen_real_to_C_double(Xen_car(lst));
     }
@@ -3921,7 +3927,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
     {
       table = (mus_float_t *)calloc(table_size, sizeof(mus_float_t));
       if (table == NULL)
-	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table"));
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table", S_make_table_lookup));
       orig_v = xen_make_vct(table_size, table);
     }
   ge = mus_make_table_lookup(freq, phase, table, table_size, (mus_interp_t)interp_type);
@@ -5610,7 +5616,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
     {
       wave = (mus_float_t *)calloc(wsize, sizeof(mus_float_t));
       if (wave == NULL)
-	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table"));
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table", S_make_wave_train));
       orig_v = xen_make_vct(wsize, wave);
     }
   ge = mus_make_wave_train(freq, phase, wave, wsize, (mus_interp_t)interp_type);
@@ -6924,7 +6930,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	    {
 	      brkpts = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	      if (brkpts == NULL)
-		return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list"));
+		return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list", S_make_env));
 	      if (vect)
 		{
 		  for (i = 0; i < len; i++)
@@ -7003,7 +7009,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, keys[0]))); /* in s7, keys[0] == v */
       return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct(mus_env_breakpoints(ge) * 2, brkpts))));
     }
-  return(clm_mus_error(local_error_type, local_error_msg));
+  return(clm_mus_error(local_error_type, local_error_msg, S_make_env));
 }
 
 #if HAVE_SCHEME
@@ -7036,7 +7042,7 @@ static Xen g_make_env_q_length(s7_scheme *sc, s7_pointer args)
 
   if (ge) 
     return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
-  return(clm_mus_error(local_error_type, local_error_msg));
+  return(clm_mus_error(local_error_type, local_error_msg, S_make_env));
 }
 #endif
 
@@ -9010,7 +9016,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 
   free(gn->vcts);
   free(gn);
-  return(clm_mus_error(local_error_type, local_error_msg));
+  return(clm_mus_error(local_error_type, local_error_msg, S_make_src));
 }
 
 
@@ -9172,7 +9178,7 @@ The edit function, if any, should return the length in samples of the grain, or 
 
   free(gn->vcts);
   free(gn);
-  return(clm_mus_error(local_error_type, local_error_msg));
+  return(clm_mus_error(local_error_type, local_error_msg, S_make_granulate));
 }
 
 
@@ -9283,7 +9289,7 @@ return a new convolution generator which convolves its input with the impulse re
 
   free(gn->vcts);
   free(gn);
-  return(clm_mus_error(local_error_type, local_error_msg));
+  return(clm_mus_error(local_error_type, local_error_msg, S_make_convolve));
 }
 
 
@@ -9540,7 +9546,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
 
   free(gn->vcts);
   free(gn);
-  return(clm_mus_error(local_error_type, local_error_msg));
+  return(clm_mus_error(local_error_type, local_error_msg, S_make_phase_vocoder));
 }
 
 
@@ -9890,7 +9896,7 @@ static Xen g_ssb_am(Xen obj, Xen insig, Xen fm)
 #define S_mus_frandom "mus-frandom"
 #define S_mus_irandom "mus-irandom"
 
-static Xen g_mus_frandom(Xen val) {return(C_double_to_Xen_real(mus_frandom(Xen_real_to_C_double(val))));}
+static Xen g_mus_frandom(Xen val) {return(C_double_to_Xen_real(mus_frandom(Xen_real_to_C_double_with_caller(val, S_mus_frandom))));}
 static Xen g_mus_irandom(Xen val) {return(C_int_to_Xen_integer(mus_irandom(Xen_integer_to_C_int(val))));}
 
 
@@ -11133,7 +11139,7 @@ static s7_pointer g_oscil_one(s7_scheme *sc, s7_pointer args)
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if (gn)
     return(s7_make_real(sc, mus_oscil_unmodulated(gn->gen)));
-  Xen_check_type(false, car(args), 1, "oscil", "a generator");
+  Xen_check_type(false, car(args), 1, S_oscil, "a generator");
   return(s7_f(sc));
 }
 
@@ -11143,8 +11149,8 @@ static s7_pointer g_oscil_two(s7_scheme *sc, s7_pointer args)
   mus_xen *gn;
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if (gn)
-    return(s7_make_real(sc, mus_oscil_fm(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), "oscil"))));
-  Xen_check_type(false, car(args), 1, "oscil", "a generator");
+    return(s7_make_real(sc, mus_oscil_fm(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), S_oscil))));
+  Xen_check_type(false, car(args), 1, S_oscil, "a generator");
   return(s7_f(sc));
 }
 
@@ -11154,8 +11160,8 @@ static s7_pointer g_oscil_three(s7_scheme *sc, s7_pointer args)
   mus_xen *gn;
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if (gn)
-    return(s7_make_real(sc, mus_oscil(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), "oscil"), s7_number_to_real_with_caller(sc, caddr(args), "oscil"))));
-  Xen_check_type(false, car(args), 1, "oscil", "a generator");
+    return(s7_make_real(sc, mus_oscil(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), S_oscil), s7_number_to_real_with_caller(sc, caddr(args), S_oscil))));
+  Xen_check_type(false, car(args), 1, S_oscil, "a generator");
   return(s7_f(sc));
 }
 
@@ -11165,8 +11171,8 @@ static s7_pointer g_polyshape_three(s7_scheme *sc, s7_pointer args)
   mus_xen *gn;
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if (gn)
-    return(s7_make_real(sc, mus_polyshape(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), "polyshape"), s7_number_to_real_with_caller(sc, caddr(args), "polyshape"))));
-  Xen_check_type(false, car(args), 1, "polyshape", "a generator");
+    return(s7_make_real(sc, mus_polyshape(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), S_polyshape), s7_number_to_real_with_caller(sc, caddr(args), S_polyshape))));
+  Xen_check_type(false, car(args), 1, S_polyshape, "a generator");
   return(s7_f(sc));
 }
 
@@ -11202,8 +11208,8 @@ static s7_pointer g_formant_two(s7_scheme *sc, s7_pointer args)
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if ((gn) &&
       (gn->type == FORMANT_TAG))
-    return(s7_make_real(sc, mus_formant(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), "formant"))));
-  Xen_check_type(false, car(args), 1, "formant", "a formant generator");
+    return(s7_make_real(sc, mus_formant(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), S_formant))));
+  Xen_check_type(false, car(args), 1, S_formant, "a " S_formant " generator");
   return(s7_f(sc));
 }
 
@@ -11223,8 +11229,8 @@ static s7_pointer g_indirect_ssb_am_3(s7_scheme *sc, s7_pointer args)
 { 
   mus_any *_o_;	  
   double _a1_, _a2_;	
-  _a1_ = s7_number_to_real_with_caller(sc, s7_call_direct(sc, cadr(args)), "ssb-am");	
-  _a2_ = s7_number_to_real_with_caller(sc, s7_call_direct(sc, caddr(args)), "ssb-am");	
+  _a1_ = s7_number_to_real_with_caller(sc, s7_call_direct(sc, cadr(args)), S_ssb_am);	
+  _a2_ = s7_number_to_real_with_caller(sc, s7_call_direct(sc, caddr(args)), S_ssb_am);	
   GET_GENERATOR(args, ssb-am, _o_); 
   return(s7_make_real(sc, mus_ssb_am(_o_, _a1_, _a2_)));	
 }
@@ -11237,9 +11243,9 @@ static s7_pointer g_outa_two(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   pos = (mus_long_t)s7_number_to_integer(sc, car(args));
   if (pos < 0) 
-    Xen_out_of_range_error("outa", 1, car(args), "must be >= 0");    
+    Xen_out_of_range_error(S_outa, 1, car(args), "must be >= 0");    
   x = cadr(args);
-  return(out_any_2(pos, s7_number_to_real_with_caller(sc, x, "outa"), 0, "outa"));
+  return(out_any_2(pos, s7_number_to_real_with_caller(sc, x, S_outa), 0, S_outa));
 }
 
 static s7_pointer outb_two;
@@ -11249,9 +11255,9 @@ static s7_pointer g_outb_two(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   pos = (mus_long_t)s7_number_to_integer(sc, car(args));
   if (pos < 0) 
-    Xen_out_of_range_error("outa", 1, car(args), "must be >= 0");    
+    Xen_out_of_range_error(S_outb, 1, car(args), "must be >= 0");    
   x = cadr(args);
-  return(out_any_2(pos, s7_number_to_real_with_caller(sc, x, "outb"), 1, "outb"));
+  return(out_any_2(pos, s7_number_to_real_with_caller(sc, x, S_outb), 1, S_outb));
 }
 
 static s7_pointer src_one;
@@ -11261,7 +11267,7 @@ static s7_pointer g_src_one(s7_scheme *sc, s7_pointer args)
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if (gn)
     return(s7_make_real(sc, mus_src_simple(gn->gen)));
-  Xen_check_type(false, car(args), 1, "src", "a generator");
+  Xen_check_type(false, car(args), 1, S_src, "a src generator");
   return(s7_f(sc));
 }
 
@@ -11281,8 +11287,8 @@ static s7_pointer g_asymmetric_fm_3(s7_scheme *sc, s7_pointer args)
 
   GET_GENERATOR(args, asymmetric-fm, o);
   return(s7_make_real(sc, mus_asymmetric_fm(o, 
-					    s7_number_to_real_with_caller(sc, cadr(args), "asymmetric-fm"), 
-					    s7_number_to_real_with_caller(sc, caddr(args), "asymmetric-fm"))));
+					    s7_number_to_real_with_caller(sc, cadr(args), S_asymmetric_fm), 
+					    s7_number_to_real_with_caller(sc, caddr(args), S_asymmetric_fm))));
 }
 
 static s7_pointer oscil_pm_direct;
@@ -11318,7 +11324,7 @@ static s7_pointer g_oscil_ss3_direct(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, oscil, o);
   fm = s7_cadr_value(sc, args);
   pm = s7_call_direct(sc, caddr(args));
-  return(s7_make_real(sc, mus_oscil(o, s7_number_to_real_with_caller(sc, fm, "oscil"), s7_cell_real(pm))));
+  return(s7_make_real(sc, mus_oscil(o, s7_number_to_real_with_caller(sc, fm, S_oscil), s7_cell_real(pm))));
 }
 
 static s7_pointer oscil_mul_c_s;
@@ -11332,7 +11338,7 @@ static s7_pointer g_oscil_mul_c_s(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, oscil, o);
   vargs = cdadr(args);
   GET_REAL(cdr(vargs), oscil, x);
-  return(s7_make_real(sc, mus_oscil_fm(o, x * s7_number_to_real_with_caller(sc, car(vargs), "oscil"))));
+  return(s7_make_real(sc, mus_oscil_fm(o, x * s7_number_to_real_with_caller(sc, car(vargs), S_oscil))));
 }
 
 static s7_pointer mul_c_oscil_mul_c_s;
@@ -11343,7 +11349,7 @@ static s7_pointer g_mul_c_oscil_mul_c_s(s7_scheme *sc, s7_pointer args)
   double x1, x2;
   s7_pointer vargs;
 
-  x1 = s7_number_to_real_with_caller(sc, car(args), "oscil");
+  x1 = s7_number_to_real_with_caller(sc, car(args), S_oscil);
   vargs = cdadr(args);
   GET_GENERATOR(vargs, oscil, o);
   vargs = cdadr(vargs);
@@ -11362,7 +11368,7 @@ static s7_pointer g_oscil_mul_s_c(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, oscil, o);
   vargs = cdadr(args);
   GET_REAL(vargs, oscil, x);
-  return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real_with_caller(sc, cadr(vargs), "oscil") * x)));
+  return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real_with_caller(sc, cadr(vargs), S_oscil) * x)));
 }
 
 static s7_pointer oscil_mul_ss;
@@ -11455,7 +11461,7 @@ static s7_pointer g_nrxysin_mul_c_s(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, nrxysin, o);
   vargs = cdadr(args);
   GET_REAL(cdr(vargs), nrxysin, x);
-  return(s7_make_real(sc, mus_nrxysin(o, x * s7_number_to_real_with_caller(sc, car(vargs), "nrxysin"))));
+  return(s7_make_real(sc, mus_nrxysin(o, x * s7_number_to_real_with_caller(sc, car(vargs), S_nrxysin))));
 }
 
 static s7_pointer polywave_mul_c_s;
@@ -11469,7 +11475,7 @@ static s7_pointer g_polywave_mul_c_s(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, polywave, o);
   vargs = cdadr(args);
   GET_REAL_CADR(vargs, polywave, x);
-  return(s7_make_real(sc, mus_polywave(o, x * s7_number_to_real_with_caller(sc, car(vargs), "polywave"))));
+  return(s7_make_real(sc, mus_polywave(o, x * s7_number_to_real_with_caller(sc, car(vargs), S_polywave))));
 }
 
 static s7_pointer polywave_add_cs_ss;
@@ -11483,7 +11489,7 @@ static s7_pointer g_polywave_add_cs_ss(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, polywave, o);
   vargs = cdadr(args);   /* ((* c s) (* s s)) */
   p = cdar(vargs);       /* (c s) */
-  x1 = s7_number_to_real_with_caller(sc, car(p), "polywave");
+  x1 = s7_number_to_real_with_caller(sc, car(p), S_polywave);
   GET_REAL_CADR(p, *, x2);
   p = cdadr(vargs);
   GET_REAL(p, *, x3);
@@ -11502,14 +11508,14 @@ static s7_pointer g_polywave_add_cs_ssr(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, polywave, o);
   vargs = cdadr(args);   /* ((* c s) (* s s)) */
   p = cdar(vargs);       /* (c s) */
-  x1 = s7_number_to_real_with_caller(sc, car(p), "polywave");
+  x1 = s7_number_to_real_with_caller(sc, car(p), S_polywave);
   GET_REAL_CADR(p, *, x2);
   p = cdadr(vargs);
   GET_REAL(p, *, x3);
   p = cdr(p);
   GET_REAL(p, *, x4);
   p = cdadr(p);
-  c = s7_number_to_real_with_caller(sc, car(p), "polywave");
+  c = s7_number_to_real_with_caller(sc, car(p), S_polywave);
   p = cdadr(p);
   GET_GENERATOR(p, rand-interp, r);
   return(s7_make_real(sc, mus_polywave(o, (x1 * x2) + (x3 * x4 * (c + mus_rand_interp_unmodulated(r))))));
@@ -11587,7 +11593,7 @@ static s7_pointer g_fir_filter_temp(s7_scheme *sc, s7_pointer args)
   mus_xen *gn;
   Xen_to_C_generator(car(args), gn, g, mus_is_fir_filter, S_fir_filter, "an FIR filter");
   arg2 = cadr(args);
-  return(s7_remake_real(sc, arg2, mus_fir_filter(g, s7_number_to_real_with_caller(sc, arg2, "fir-filter"))));
+  return(s7_remake_real(sc, arg2, mus_fir_filter(g, s7_number_to_real_with_caller(sc, arg2, S_fir_filter))));
 }
 
 static s7_pointer env_polywave;
@@ -20399,28 +20405,28 @@ static void init_choosers(s7_scheme *sc)
   
 
   /* oscil */
-  GEN_F3("oscil", oscil);
+  GEN_F3(S_oscil, oscil);
 
-  oscil_1 = clm_make_temp_function(sc, "oscil", g_oscil_1, 1, 0, false, "oscil optimization", f, NULL, NULL, NULL, mul_c_oscil_1, mul_s_oscil_1, env_oscil_1);
-  oscil_2 = clm_make_temp_function(sc, "oscil", g_oscil_2, 2, 0, false, "oscil optimization", f, mul_c_oscil_2, mul_s_oscil_2, env_oscil_2, NULL, NULL, NULL);
+  oscil_1 = clm_make_temp_function(sc, S_oscil, g_oscil_1, 1, 0, false, "oscil optimization", f, NULL, NULL, NULL, mul_c_oscil_1, mul_s_oscil_1, env_oscil_1);
+  oscil_2 = clm_make_temp_function(sc, S_oscil, g_oscil_2, 2, 0, false, "oscil optimization", f, mul_c_oscil_2, mul_s_oscil_2, env_oscil_2, NULL, NULL, NULL);
 
-  direct_oscil_2 = clm_make_temp_function_no_choice(sc, "oscil", g_direct_oscil_2, 2, 0, false, "oscil optimization", f);
-  indirect_oscil_2 = clm_make_temp_function_no_choice(sc, "oscil", g_indirect_oscil_2, 2, 0, false, "oscil optimization", f);
-  oscil_pm_direct = clm_make_temp_function_no_choice(sc, "oscil", g_is_oscilm_direct, 3, 0, false, "oscil optimization", f);
-  oscil_3_direct = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_3_direct, 3, 0, false, "oscil optimization", f);
-  oscil_ss3_direct = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_ss3_direct, 3, 0, false, "oscil optimization", f);
-  oscil_one = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_one, 1, 0, false, "oscil optimization", f);
-  oscil_two = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_two, 2, 0, false, "oscil optimization", f);
-  oscil_three = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_three, 3, 0, false, "oscil optimization", f);
-  fm_violin_with_modulation = clm_make_temp_function_no_choice(sc, "oscil", g_fm_violin_with_modulation, 2, 0, false, "fm-violin optimization", f);
-  fm_violin_with_rats = clm_make_temp_function_no_choice(sc, "oscil", g_fm_violin_with_rats, 2, 0, false, "fm-violin optimization", f);
-  oscil_mul_c_s = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_mul_c_s, 2, 0, false, "oscil optimization", f);
-  oscil_mul_s_c = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_mul_s_c, 2, 0, false, "oscil optimization", f);
+  direct_oscil_2 = clm_make_temp_function_no_choice(sc, S_oscil, g_direct_oscil_2, 2, 0, false, "oscil optimization", f);
+  indirect_oscil_2 = clm_make_temp_function_no_choice(sc, S_oscil, g_indirect_oscil_2, 2, 0, false, "oscil optimization", f);
+  oscil_pm_direct = clm_make_temp_function_no_choice(sc, S_oscil, g_is_oscilm_direct, 3, 0, false, "oscil optimization", f);
+  oscil_3_direct = clm_make_temp_function_no_choice(sc, S_oscil, g_oscil_3_direct, 3, 0, false, "oscil optimization", f);
+  oscil_ss3_direct = clm_make_temp_function_no_choice(sc, S_oscil, g_oscil_ss3_direct, 3, 0, false, "oscil optimization", f);
+  oscil_one = clm_make_temp_function_no_choice(sc, S_oscil, g_oscil_one, 1, 0, false, "oscil optimization", f);
+  oscil_two = clm_make_temp_function_no_choice(sc, S_oscil, g_oscil_two, 2, 0, false, "oscil optimization", f);
+  oscil_three = clm_make_temp_function_no_choice(sc, S_oscil, g_oscil_three, 3, 0, false, "oscil optimization", f);
+  fm_violin_with_modulation = clm_make_temp_function_no_choice(sc, S_oscil, g_fm_violin_with_modulation, 2, 0, false, "fm-violin optimization", f);
+  fm_violin_with_rats = clm_make_temp_function_no_choice(sc, S_oscil, g_fm_violin_with_rats, 2, 0, false, "fm-violin optimization", f);
+  oscil_mul_c_s = clm_make_temp_function_no_choice(sc, S_oscil, g_oscil_mul_c_s, 2, 0, false, "oscil optimization", f);
+  oscil_mul_s_c = clm_make_temp_function_no_choice(sc, S_oscil, g_oscil_mul_s_c, 2, 0, false, "oscil optimization", f);
   env_oscil_mul_ss = clm_make_temp_function_no_choice(sc, "*", g_env_oscil_mul_ss, 2, 0, false, "* optimization", f);
-  oscil_mul_ss = clm_make_temp_function(sc, "oscil", g_oscil_mul_ss, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_ss, NULL, NULL, NULL);
+  oscil_mul_ss = clm_make_temp_function(sc, S_oscil, g_oscil_mul_ss, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_ss, NULL, NULL, NULL);
   env_oscil_mul_s_v = clm_make_temp_function_no_choice(sc, "*", g_env_oscil_mul_s_v, 2, 0, false, "* optimization", f);
-  oscil_mul_s_v = clm_make_temp_function(sc, "oscil", g_oscil_mul_s_v, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_s_v, NULL, NULL, NULL);
-  oscil_vss_s = clm_make_temp_function_no_choice(sc, "oscil", g_oscil_vss_s, 2, 0, false, "oscil optimization", f);
+  oscil_mul_s_v = clm_make_temp_function(sc, S_oscil, g_oscil_mul_s_v, 2, 0, false, "oscil optimization", f,  NULL, NULL, env_oscil_mul_s_v, NULL, NULL, NULL);
+  oscil_vss_s = clm_make_temp_function_no_choice(sc, S_oscil, g_oscil_vss_s, 2, 0, false, "oscil optimization", f);
 
 
   GEN_F1("oscil-bank", oscil_bank);
@@ -20429,29 +20435,29 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* polywave */
-  GEN_F("polywave", polywave);
+  GEN_F(S_polywave, polywave);
 
-  polywave_1 = clm_make_temp_function(sc, "polywave", g_polywave_1, 1, 0, false, "polywave optimization", f,
+  polywave_1 = clm_make_temp_function(sc, S_polywave, g_polywave_1, 1, 0, false, "polywave optimization", f,
 				 NULL, NULL, NULL, mul_c_polywave_1, mul_s_polywave_1, env_polywave_1);
-  polywave_2 = clm_make_temp_function(sc, "polywave", g_polywave_2, 2, 0, false, "polywave optimization", f,
+  polywave_2 = clm_make_temp_function(sc, S_polywave, g_polywave_2, 2, 0, false, "polywave optimization", f,
 				 mul_c_polywave_2, mul_s_polywave_2, env_polywave_2, NULL, NULL, NULL);
 
-  direct_polywave_2 = clm_make_temp_function_no_choice(sc, "polywave", g_direct_polywave_2, 2, 0, false, "polywave optimization", f);
-  indirect_polywave_2 = clm_make_temp_function_no_choice(sc, "polywave", g_indirect_polywave_2, 2, 0, false, "polywave optimization", f);
-  polywave_mul_c_s = clm_make_temp_function_no_choice(sc, "polywave", g_polywave_mul_c_s, 2, 0, false, "polywave optimization", f);
-  polywave_add_cs_ss = clm_make_temp_function_no_choice(sc, "polywave", g_polywave_add_cs_ss, 2, 0, false, "polywave optimization", f);
-  polywave_add_cs_ssr = clm_make_temp_function_no_choice(sc, "polywave", g_polywave_add_cs_ssr, 2, 0, false, "polywave optimization", f);
+  direct_polywave_2 = clm_make_temp_function_no_choice(sc, S_polywave, g_direct_polywave_2, 2, 0, false, "polywave optimization", f);
+  indirect_polywave_2 = clm_make_temp_function_no_choice(sc, S_polywave, g_indirect_polywave_2, 2, 0, false, "polywave optimization", f);
+  polywave_mul_c_s = clm_make_temp_function_no_choice(sc, S_polywave, g_polywave_mul_c_s, 2, 0, false, "polywave optimization", f);
+  polywave_add_cs_ss = clm_make_temp_function_no_choice(sc, S_polywave, g_polywave_add_cs_ss, 2, 0, false, "polywave optimization", f);
+  polywave_add_cs_ssr = clm_make_temp_function_no_choice(sc, S_polywave, g_polywave_add_cs_ssr, 2, 0, false, "polywave optimization", f);
 
 
   /* table-lookup */
-  GEN_F("table-lookup", table_lookup);
+  GEN_F(S_table_lookup, table_lookup);
 
-  table_lookup_1 = clm_make_temp_function(sc, "table-lookup", g_table_lookup_1, 1, 0, false, "table-lookup optimization", f,
+  table_lookup_1 = clm_make_temp_function(sc, S_table_lookup, g_table_lookup_1, 1, 0, false, "table-lookup optimization", f,
 				     NULL, NULL, NULL, mul_c_table_lookup_1, mul_s_table_lookup_1, env_table_lookup_1);
-  table_lookup_2 = clm_make_temp_function(sc, "table-lookup", g_table_lookup_2, 2, 0, false, "table-lookup optimization", f,
+  table_lookup_2 = clm_make_temp_function(sc, S_table_lookup, g_table_lookup_2, 2, 0, false, "table-lookup optimization", f,
 				     mul_c_table_lookup_2, mul_s_table_lookup_2, env_table_lookup_2, NULL, NULL, NULL);
-  direct_table_lookup_2 = clm_make_temp_function_no_choice(sc, "table-lookup", g_direct_table_lookup_2, 2, 0, false, "table-lookup optimization", f);
-  indirect_table_lookup_2 = clm_make_temp_function_no_choice(sc, "table-lookup", g_indirect_table_lookup_2, 2, 0, false, "table-lookup optimization", f);
+  direct_table_lookup_2 = clm_make_temp_function_no_choice(sc, S_table_lookup, g_direct_table_lookup_2, 2, 0, false, "table-lookup optimization", f);
+  indirect_table_lookup_2 = clm_make_temp_function_no_choice(sc, S_table_lookup, g_indirect_table_lookup_2, 2, 0, false, "table-lookup optimization", f);
 
 
   /* wave-train */

@@ -96,10 +96,10 @@ enum {MUS_AUDIO_IGNORED, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_LINE_OUT,
 };
 
 
-#define MUS_STANDARD_ERROR(Error_Type, Error_Message) \
+#define mus_standard_error(Error_Type, Error_Message) \
   mus_print("%s\n  [%s[%d] %s]", Error_Message, __FILE__, __LINE__, __func__)
 
-#define MUS_STANDARD_IO_ERROR(Error_Type, IO_Func, IO_Name) \
+#define mus_standard_io_error(Error_Type, IO_Func, IO_Name) \
   mus_print("%s %s: %s\n  [%s[%d] %s]", IO_Func, IO_Name, strerror(errno), __FILE__, __LINE__, __func__)
 
 
@@ -143,7 +143,7 @@ static bool audio_initialized = false;
  * might work on the Mac -- something for a rainy day...
  */
 
-#define RETURN_ERROR_EXIT(Message_Type, Audio_Line, Ur_Message) \
+#define return_error_exit(Message_Type, Audio_Line, Ur_Message) \
   do { \
        char *Message; Message = Ur_Message; \
        if (Audio_Line != -1) \
@@ -443,7 +443,7 @@ static int linux_audio_open_with_error(const char *pathname, int flags, mode_t m
       (!already_warned))
     {
       already_warned = true;
-      MUS_STANDARD_IO_ERROR(MUS_AUDIO_CANT_OPEN,
+      mus_standard_io_error(MUS_AUDIO_CANT_OPEN,
 			    ((mode == O_RDONLY) ? "open read" : 
 			     (mode == O_WRONLY) ? "open write" : "open read/write"),
 			    pathname);
@@ -478,7 +478,7 @@ static int linux_audio_close(int fd)
 	    }
 	}
       else err = close(fd);
-      if (err) RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE, -1,
+      if (err) return_error_exit(MUS_AUDIO_CANT_CLOSE, -1,
 				 mus_format("close %d failed: %s",
 					    fd, strerror(errno)));
     }
@@ -519,7 +519,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
   dev = MUS_AUDIO_DEVICE(ur_dev);
   oss_format = to_oss_format(format); 
   if (oss_format == MUS_ERROR) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d (%s) not available",
 				 format, 
 				 mus_data_format_name(format)));
@@ -562,26 +562,26 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
     }
   if ((ioctl(audio_out, MUS_OSS_SET_FORMAT, &oss_format) == -1) || 
       (oss_format != to_oss_format(format)))
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
+    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
 		      mus_format("data format %d (%s) not available on %s",
 				 format, 
 				 mus_data_format_name(format), 
 				 dev_name));
 #ifdef NEW_OSS
   if (ioctl(audio_out, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
+    return_error_exit(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
 		      mus_format("can't get %d channels on %s",
 				 chans, dev_name));
 #else
   if (chans == 2) stereo = 1; else stereo = 0;
   if ((ioctl(audio_out, SNDCTL_DSP_STEREO, &stereo) == -1) || 
       ((chans == 2) && (stereo == 0)))
-    RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
+    return_error_exit(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
 		      mus_format("can't get %d channels on %s",
 				 chans, dev_name));
 #endif
   if (ioctl(audio_out, MUS_OSS_WRITE_RATE, &srate) == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, audio_out,
+    return_error_exit(MUS_AUDIO_SRATE_NOT_AVAILABLE, audio_out,
 		      mus_format("can't set srate of %s to %d",
 				 dev_name, srate));
   /* http://www.4front-tech.com/pguide/audio.html says this order has to be followed */
@@ -597,9 +597,9 @@ static int oss_mus_audio_write(int line, char *buf, int bytes)
   if (err != bytes)
     {
       if (errno != 0)
-	RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
+	return_error_exit(MUS_AUDIO_WRITE_ERROR, -1,
 			  mus_format("write error: %s", strerror(errno)));
-      else RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
+      else return_error_exit(MUS_AUDIO_WRITE_ERROR, -1,
 			     mus_format("wrote %d bytes of requested %d", err, bytes));
     }
   return(MUS_NO_ERROR);
@@ -619,9 +619,9 @@ static int oss_mus_audio_read(int line, char *buf, int bytes)
   if (err != bytes) 
     {
       if (errno != 0)
-	RETURN_ERROR_EXIT(MUS_AUDIO_READ_ERROR, -1,
+	return_error_exit(MUS_AUDIO_READ_ERROR, -1,
 			  mus_format("read error: %s", strerror(errno)));
-      else RETURN_ERROR_EXIT(MUS_AUDIO_READ_ERROR, -1,
+      else return_error_exit(MUS_AUDIO_READ_ERROR, -1,
 			     mus_format("read %d bytes of requested %d", err, bytes));
     }
   return(MUS_NO_ERROR);
@@ -656,7 +656,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
   dev = MUS_AUDIO_DEVICE(ur_dev);
   oss_format = to_oss_format(format);
   if (oss_format == MUS_ERROR)
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d (%s) not available",
 				 format, 
 				 mus_data_format_name(format)));
@@ -668,17 +668,17 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
   if (audio_fd == -1)
     {
       if (dev == MUS_AUDIO_DUPLEX_DEFAULT)
-	RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, -1,
+	return_error_exit(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, -1,
 		       mus_format("can't open %s: %s",
 				  dev_name, strerror(errno)));
       if ((audio_fd = linux_audio_open(dev_name = dac_name(sys, 0), O_RDONLY, 0, sys)) == -1)
         {
           if ((errno == EACCES) || (errno == ENOENT))
-	    RETURN_ERROR_EXIT(MUS_AUDIO_NO_READ_PERMISSION, -1,
+	    return_error_exit(MUS_AUDIO_NO_READ_PERMISSION, -1,
 			      mus_format("can't open %s: %s\n  to get input in Linux, we need read permission on /dev/dsp",
 					 dev_name, 
 					 strerror(errno)));
-          else RETURN_ERROR_EXIT(MUS_AUDIO_NO_INPUT_AVAILABLE, -1,
+          else return_error_exit(MUS_AUDIO_NO_INPUT_AVAILABLE, -1,
 				 mus_format("can't open %s: %s",
 					    dev_name, 
 					    strerror(errno)));
@@ -718,25 +718,25 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
     }
   if ((ioctl(audio_fd, MUS_OSS_SET_FORMAT, &oss_format) == -1) ||
       (oss_format != to_oss_format(format)))
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
+    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't set %s format to %d (%s)",
 				 dev_name, format, 
 				 mus_data_format_name(format)));
 #ifdef NEW_OSS
   if (ioctl(audio_fd, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
+    return_error_exit(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't get %d channels on %s",
 				 chans, dev_name));
 #else
   if (chans == 2) stereo = 1; else stereo = 0;
   if ((ioctl(audio_fd, SNDCTL_DSP_STEREO, &stereo) == -1) || 
       ((chans == 2) && (stereo == 0))) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
+    return_error_exit(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't get %d channels on %s",
 				 chans, dev_name));
 #endif
   if (ioctl(audio_fd, MUS_OSS_WRITE_RATE, &srate) == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, audio_fd,
+    return_error_exit(MUS_AUDIO_SRATE_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't set srate to %d on %s",
 				 srate, dev_name));
   return(audio_fd);
@@ -755,7 +755,7 @@ static int oss_formats(int ur_dev, int *val)
   if (fd == -1) fd = open(DAC_NAME, O_WRONLY, 0);
   if (fd == -1) 
     {
-      RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
+      return_error_exit(MUS_AUDIO_CANT_OPEN, -1,
 			mus_format("can't open %s: %s",
 				   DAC_NAME, strerror(errno)));
       return(MUS_ERROR);
@@ -2258,12 +2258,12 @@ int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 #define DAC_NAME "/dev/audio"
 #define AUDIODEV_ENV "AUDIODEV"
 
-#define RETURN_ERROR_EXIT(Error_Type, Audio_Line, Ur_Error_Message) \
+#define return_error_exit(Error_Type, Audio_Line, Ur_Error_Message) \
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Audio_Line != -1) close(Audio_Line); \
     if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
+      {mus_standard_error(Error_Type, Error_Message); free(Error_Message);} \
+    else mus_standard_error(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
 
@@ -2345,7 +2345,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   dev = MUS_AUDIO_DEVICE(ur_dev);
   encode = to_sun_format(format);
   if (encode == MUS_ERROR) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d (%s) not available",
 				 format, 
 				 mus_data_format_name(format)));
@@ -2356,7 +2356,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     audio_fd = open(dev_name, O_WRONLY, 0);
   else audio_fd = open(dev_name, O_RDWR, 0);
   if (audio_fd == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
+    return_error_exit(MUS_AUDIO_CANT_OPEN, -1,
 		      mus_format("can't open output %s: %s",
 				 dev_name, strerror(errno)));
   AUDIO_INITINFO(&info);
@@ -2381,20 +2381,20 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       ioctl(audio_fd, AUDIO_GETINFO, &info); 
 
       if ((int)info.play.channels != chans) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
+	return_error_exit(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't set output %s channels to %d",
 				     dev_name, chans));
       
       if (((int)info.play.precision != bits) || 
 	  ((int)info.play.encoding != encode)) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
+	return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't set output %s format to %d bits, %d encode (%s)",
 				     dev_name,
 				     bits, encode, 
 				     mus_data_format_name(format)));
       
       if ((int)info.play.sample_rate != srate) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
+	return_error_exit(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't set output %s srate to %d",
 				     dev_name, srate));
     }
@@ -2409,7 +2409,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 int mus_audio_write(int line, char *buf, int bytes)
 {
   if (write(line, buf, bytes) != bytes) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
+    return_error_exit(MUS_AUDIO_WRITE_ERROR, -1,
 		      mus_format("write error: %s", strerror(errno)));
   return(MUS_NO_ERROR);
 }
@@ -2460,7 +2460,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   encode = to_sun_format(format);
   bits = 8 * mus_bytes_per_sample(format);
   if (encode == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d bits, %d encode (%s) not available",
 				 bits, encode, 
 				 mus_data_format_name(format)));
@@ -2471,7 +2471,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
     audio_fd = open(dev_name, O_RDONLY, 0);
   else audio_fd = open(dev_name, O_RDWR, 0);
   if (audio_fd == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
+    return_error_exit(MUS_AUDIO_CANT_OPEN, -1,
 		      mus_format("can't open input %s: %s",
 				 dev_name, strerror(errno)));
   AUDIO_INITINFO(&info);
@@ -2480,7 +2480,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   info.record.channels = chans;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_fd,
+    return_error_exit(MUS_AUDIO_CANT_OPEN, audio_fd,
 		      mus_format("can't set srate %d and chans %d for input %s",
 				 srate, chans,
 				 dev_name));
@@ -2498,7 +2498,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   info.record.encoding = encode;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_fd,
+    return_error_exit(MUS_AUDIO_CANT_OPEN, audio_fd,
 		      mus_format("can't set bits %d, encode %d (format %s) for input %s",
 				 bits, encode, mus_data_format_name(format),
 				 dev_name));
@@ -2511,30 +2511,30 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   info.record.port = indev;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
+    return_error_exit(MUS_AUDIO_CANT_WRITE, audio_fd,
 		      mus_format("can't set record.port to %d for %s",
 				 indev, dev_name));
   err = ioctl(audio_fd, AUDIO_GETINFO, &info);
   if (err == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
+    return_error_exit(MUS_AUDIO_CANT_READ, audio_fd,
 		      mus_format("can't getinfo on input %s (line: %d)",
 				 dev_name, 
 				 audio_fd));
   else 
     {
       if ((int)info.record.port != indev) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, audio_fd,
+	return_error_exit(MUS_AUDIO_DEVICE_NOT_AVAILABLE, audio_fd,
 			  mus_format("confusion in record.port: %d != %d (%s)",
 				     (int)info.record.port, indev,
 				     dev_name));
       if ((int)info.record.channels != chans) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
+	return_error_exit(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 			  mus_format("confusion in record.channels: %d != %d (%s)",
 				     (int)info.record.channels, chans,
 				     dev_name));
       if (((int)info.record.precision != bits) || 
 	  ((int)info.record.encoding != encode)) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
+	return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 			  mus_format("confusion in record.precision|encoding: %d != %d or %d != %d (%s)",
 				     (int)info.record.precision, bits,
 				     (int)info.record.encoding, encode,
@@ -2544,7 +2544,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   info.record.buffer_size = size;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
+    return_error_exit(MUS_AUDIO_CANT_WRITE, audio_fd,
 		      mus_format("can't set buffer size to %d on input %s",
 				 size,
 				 dev_name));
@@ -2696,11 +2696,11 @@ static void end_win_print(void)
   else mus_print_set_handler(old_handler);
 }
 
-#define RETURN_ERROR_EXIT(Error_Type, Ur_Error_Message) \
+#define return_error_exit(Error_Type, Ur_Error_Message) \
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
+      {mus_standard_error(Error_Type, Error_Message); free(Error_Message);} \
+    else mus_standard_error(Error_Type, mus_error_type_to_string(Error_Type)); \
     end_win_print(); \
     return(MUS_ERROR); \
   } while (false)
@@ -2746,7 +2746,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 #endif
   /* 0 here = user_data above, other case = WAVE_FORMAT_QUERY */
   if (win_out_err) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,
+    return_error_exit(MUS_AUDIO_DEVICE_NOT_AVAILABLE,
 		      mus_format("can't open %d", dev));
   waveOutPause(fd);
   if (size <= 0) 
@@ -2759,7 +2759,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   if ((wh[0].lpData) == 0) 
     {
       waveOutClose(fd); 
-      RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
+      return_error_exit(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 			mus_format("can't allocate buffer size %d for output %d", buffer_size, dev));
     }
   win_out_err = waveOutPrepareHeader(fd, &(wh[0]), sizeof(WAVEHDR));
@@ -2767,7 +2767,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     {
       free(wh[0].lpData); 
       waveOutClose(fd);  
-      RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
+      return_error_exit(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
 			mus_format("can't setup output 'header' for %d", dev));
     }
   db_state[0] = BUFFER_EMPTY;
@@ -2779,7 +2779,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     {
       free(wh[0].lpData); 
       waveOutClose(fd); 
-      RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
+      return_error_exit(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 			mus_format("can't allocate buffer size %d for output %d", buffer_size, dev));
     }
   win_out_err = waveOutPrepareHeader(fd, &(wh[1]), sizeof(WAVEHDR));
@@ -2789,7 +2789,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       free(wh[0].lpData); 
       free(wh[1].lpData); 
       waveOutClose(fd);  
-      RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
+      return_error_exit(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
 			mus_format("can't setup output 'header' for %d", dev));
     }
   db_state[1] = BUFFER_EMPTY;
@@ -2830,7 +2830,7 @@ int mus_audio_write(int line, char *buf, int bytes)
   int lim, leftover, start;
   start_win_print();
   if (line != OUTPUT_LINE) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,
+    return_error_exit(MUS_AUDIO_CANT_WRITE,
 		      mus_format("write error: line %d != %d?",
 				 line, OUTPUT_LINE));
   win_out_err = 0;
@@ -2849,12 +2849,12 @@ int mus_audio_write(int line, char *buf, int bytes)
       wait_for_empty_buffer(current_buf);
       win_out_err = fill_buffer(current_buf, buf, start, lim);
       if (win_out_err) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,
+	return_error_exit(MUS_AUDIO_CANT_WRITE,
 			  mus_format("write error on %d",
 				     line));
       win_out_err = waveOutWrite(fd, &wh[current_buf], sizeof(WAVEHDR));
       if (win_out_err) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,
+	return_error_exit(MUS_AUDIO_CANT_WRITE,
 			  mus_format("write error on %d",
 				     line));
       start += lim;
@@ -2962,7 +2962,7 @@ int mus_audio_close(int line)
           free(wh[0].lpData);
           free(wh[1].lpData);
           if (win_out_err) 
-	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,
+	    return_error_exit(MUS_AUDIO_CANT_CLOSE,
 			      mus_format("close failed on %d",
 					 line));
         }
@@ -2985,7 +2985,7 @@ int mus_audio_close(int line)
             }
         }
       else 
-	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,
+	return_error_exit(MUS_AUDIO_CANT_CLOSE,
 			  mus_format("can't close unrecognized line %d",
 				     line));
     }
@@ -3039,7 +3039,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   rec_wh.dwLoops = 0;
   rec_wh.lpData = (char *)calloc(rec_wh.dwBufferLength, sizeof(char));
   if ((rec_wh.lpData) == 0) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
+    return_error_exit(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 		      mus_format("can't allocated %d bytes for input buffer of %d", size, dev));
 #if _MSC_VER
   win_in_err = waveInOpen(&record_fd, WAVE_MAPPER, &wf, (DWORD (*)(HWAVEIN,UINT,DWORD,DWORD,DWORD))next_input_buffer, 0, CALLBACK_FUNCTION);
@@ -3050,7 +3050,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   if (win_in_err) 
     {
       free(rec_wh.lpData);
-      RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,
+      return_error_exit(MUS_AUDIO_DEVICE_NOT_AVAILABLE,
 			mus_format("can't open input device %d", dev));
     }
   win_in_err = waveInPrepareHeader(record_fd, &(rec_wh), sizeof(WAVEHDR));
@@ -3058,7 +3058,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
     {
       free(rec_wh.lpData);
       waveInClose(record_fd);
-      RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
+      return_error_exit(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
 			mus_format("can't prepare input 'header' for %d", dev));
     }
   return(MUS_NO_ERROR);
@@ -4639,12 +4639,12 @@ char *jack_mus_audio_moniker(void)
 #include <sys/audio.h>
 
 
-#define RETURN_ERROR_EXIT(Error_Type, Audio_Line, Ur_Error_Message) \
+#define return_error_exit(Error_Type, Audio_Line, Ur_Error_Message) \
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Audio_Line != -1) close(Audio_Line); \
     if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
+      {mus_standard_error(Error_Type, Error_Message); free(Error_Message);} \
+    else mus_standard_error(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
 
@@ -4663,7 +4663,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   dev = MUS_AUDIO_DEVICE(ur_dev);
   fd = open("/dev/audio", O_RDWR);
   if (fd == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
+    return_error_exit(MUS_AUDIO_CANT_OPEN, -1,
 		      mus_format("can't open /dev/audio for output: %s",
 				 strerror(errno)));
 
@@ -4686,7 +4686,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 	  if (format == MUS_ALAW)
 	    ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ALAW);
 	  else 
-	    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
+	    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
 			      mus_format("can't set output format to %d (%s) for %d",
 					 format, mus_data_format_to_string(format),
 					 dev));
@@ -4699,7 +4699,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       break;
 
   if (i == desc.nrates) 
-    RETURN_ERROR_EXIT(SRATE_NOT_AVAILABLE, fd,
+    return_error_exit(SRATE_NOT_AVAILABLE, fd,
 		      mus_format("can't set srate to %d on %d",
 				 srate, dev));
 
@@ -4741,7 +4741,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   dev = MUS_AUDIO_DEVICE(ur_dev);
   fd = open("/dev/audio", O_RDWR);
   if (fd == -1)
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, NULL,
+    return_error_exit(MUS_AUDIO_CANT_OPEN, NULL,
 		      mus_format("can't open /dev/audio for input: %s",
 				 strerror(errno)));
 
@@ -4761,7 +4761,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 	  if (format == MUS_ALAW)
 	    ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ALAW);
 	  else 
-	    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
+	    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
 			      mus_format("can't set input format to %d (%s) on %d",
 					 format, mus_data_format_to_string(format),
 					 dev));
@@ -4774,7 +4774,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
       break;
 
   if (i == desc.nrates) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, fd,
+    return_error_exit(MUS_AUDIO_SRATE_NOT_AVAILABLE, fd,
 		      mus_format("can't set srate to %d on %d",
 				 srate, dev));
 
@@ -4804,12 +4804,12 @@ int mus_audio_read(int line, char *buf, int bytes)
 #include <sys/ioctl.h>
 
 
-#define RETURN_ERROR_EXIT(Error_Type, Audio_Line, Ur_Error_Message) \
+#define return_error_exit(Error_Type, Audio_Line, Ur_Error_Message) \
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Audio_Line != -1) close(Audio_Line); \
     if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
+      {mus_standard_error(Error_Type, Error_Message); free(Error_Message);} \
+    else mus_standard_error(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
 
@@ -4922,7 +4922,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   /* a_info.blocksize = size; */
   encode = sndlib_format_to_bsd(format);
   if (encode == AUDIO_ENCODING_NONE)
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d (%s) not available",
 				 format, 
 				 mus_data_format_name(format)));
@@ -4978,12 +4978,12 @@ static int netbsd_formats(int ur_dev, int *val)
   AUDIO_INITINFO(&info);
   audio_fd = open("/dev/sound", O_RDONLY | O_NONBLOCK, 0);
   if (audio_fd == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, -1,
+    return_error_exit(MUS_AUDIO_CANT_READ, -1,
 		      mus_format("can't open /dev/sound: %s",
 				 strerror(errno)));
   err = ioctl(audio_fd, AUDIO_GETINFO, &info); 
   if (err == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
+    return_error_exit(MUS_AUDIO_CANT_READ, audio_fd,
 		      mus_format("can't get dac info"));
 
   for (i = 0; ; i++)
@@ -5008,7 +5008,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   encode = sndlib_format_to_bsd(format);
   bits = 8 * mus_bytes_per_sample(format);
   if (encode == AUDIO_ENCODING_NONE) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %s not available for recording",
 				 mus_data_format_name(format)));
 
@@ -5016,7 +5016,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
     audio_fd = open("/dev/sound", O_RDONLY, 0);
   else audio_fd = open("/dev/sound", O_RDWR, 0);
   if (audio_fd == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
+    return_error_exit(MUS_AUDIO_CANT_OPEN, -1,
 		      mus_format("can't open /dev/sound: %s",
 				 strerror(errno)));
 
@@ -5028,7 +5028,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   info.record.port = AUDIO_MICROPHONE;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
+    return_error_exit(MUS_AUDIO_CANT_WRITE, audio_fd,
 		      mus_format("can't set up for recording"));
   return(audio_fd);
 }

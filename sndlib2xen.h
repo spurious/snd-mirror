@@ -32,7 +32,6 @@ MUS_EXPORT void mus_sound_data_add_frame(sound_data *sd, mus_long_t pos, mus_flo
 
 #if HAVE_SCHEME
 #define Xen_to_sound_data(Obj) (sound_data *)Obj
-#define XEN_TO_SOUND_DATA(Obj) (sound_data *)Obj
 #else
 #define Xen_to_sound_data(Obj) (sound_data *)Xen_object_ref(Obj)
 #define XEN_TO_SOUND_DATA(Obj) (sound_data *)Xen_object_ref(Obj)

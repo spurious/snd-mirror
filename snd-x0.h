@@ -10,6 +10,9 @@
 #include <GL/glx.h>
 #endif
 
+#define XOR(a, b) ((a) ^ (b))
+/* can't get used to this operator -- in the good old days, ^ meant exponentiation */
+
 #define xm_font_t XmRenderTable
 #define XM_FONT_RESOURCE XmNrenderTable
 #define XM_FONT_FREE XmRenderTableFree
