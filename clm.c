@@ -248,6 +248,11 @@ mus_float_t mus_db_to_linear(mus_float_t x) {return(pow(10.0, x / 20.0));}
 mus_float_t mus_linear_to_db(mus_float_t x) {if (x > 0.0) return(20.0 * log10(x)); return(-100.0);}
 
 
+mus_float_t mus_odd_multiple(mus_float_t x, mus_float_t y)  {mus_long_t f; f = (mus_long_t)floor(x); return(y * ((f & 1) ? f : (f + 1)));}
+mus_float_t mus_even_multiple(mus_float_t x, mus_float_t y) {mus_long_t f; f = (mus_long_t)floor(x); return(y * ((f & 1) ? (f + 1) : f));}
+mus_float_t mus_odd_weight(mus_float_t x)  {mus_long_t f; f = (mus_long_t)floor(x); return(1.0 - fabs(x - ((f & 1) ? f : (f + 1))));}
+mus_float_t mus_even_weight(mus_float_t x) {mus_long_t f; f = (mus_long_t)floor(x); return(1.0 - fabs(x - ((f & 1) ? (f + 1) : f)));}
+
 mus_float_t mus_srate(void) {return(sampling_rate);}
 
 mus_float_t mus_set_srate(mus_float_t val) 

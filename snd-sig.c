@@ -5911,9 +5911,13 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
     }
   else 
     {
+      int len;
       v = Xen_to_vct(e);
+      len = mus_vct_length(v);
+      if (len == 0)
+	Xen_out_of_range_error(S_filter_channel, 1, e, "filter coeffs array is empty");
       coeffs = mus_vct_data(v);
-      if (order_1 == 0) order_1 = mus_vct_length(v);
+      if (order_1 == 0) order_1 = len;
     }
   if (Xen_is_string(origin))
     caller = Xen_string_to_C_string(origin);

@@ -3451,7 +3451,13 @@
 					      (format fout "~S~%" ncode)))
 					  (let ((outstr (call-with-output-string
 							 (lambda (p)
-							   (lint "t631-temp.scm" p)))))
+							   (let ((old-undef *report-undefined-variables*)
+								 (old-shadow *report-shadowed-variables*))
+							     ;(set! *report-undefined-variables* #t)
+							     (set! *report-shadowed-variables* #t)
+							     (lint "t631-temp.scm" p)
+							     ;(set! *report-undefined-variables* old-undef)
+							     (set! *report-shadowed-variables* old-shadow))))))
 					    (if (> (length outstr) 0)
 						(format #t ";~A ~D: ~A~%" file line-num outstr)))))
 				      (lambda args

@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 24
-#define MUS_DATE "9-Apr-14"
+#define MUS_REVISION 25
+#define MUS_DATE "11-Apr-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -102,6 +102,10 @@ MUS_EXPORT mus_float_t mus_degrees_to_radians(mus_float_t degrees);
 MUS_EXPORT mus_float_t mus_radians_to_degrees(mus_float_t radians);
 MUS_EXPORT mus_float_t mus_db_to_linear(mus_float_t x);
 MUS_EXPORT mus_float_t mus_linear_to_db(mus_float_t x);
+MUS_EXPORT mus_float_t mus_odd_multiple(mus_float_t x, mus_float_t y);
+MUS_EXPORT mus_float_t mus_even_multiple(mus_float_t x, mus_float_t y);
+MUS_EXPORT mus_float_t mus_odd_weight(mus_float_t x);
+MUS_EXPORT mus_float_t mus_even_weight(mus_float_t x);
 
 MUS_EXPORT mus_float_t mus_srate(void);
 MUS_EXPORT mus_float_t mus_set_srate(mus_float_t val);
@@ -688,6 +692,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 11-Apr:     mus_even|odd_weight|multiple.
  * 9-Apr:      deprecated mus_is_delay_line.
  * 2-Apr:      mus_make_moving_average_with_sum.
  * 19-Mar:     deprecate mus_make_env_with_length.

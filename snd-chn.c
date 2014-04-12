@@ -1285,14 +1285,14 @@ int move_axis(chan_info *cp, int x)
   if (x > ap->x_axis_x1)
     {
       off = x - ap->x_axis_x1;
-      ap->sx += (off * ap->zx / 1000.0);
+      ap->sx += (off * ap->zx / 4000.0); /* increase 4000.0 to make the axis move more slowly (and below) */
       if (ap->sx > (1.0 - ap->zx)) ap->sx = 1.0 - ap->zx;
       nx = ap->x_axis_x1;
     }
   else
     {
       off = ap->x_axis_x0 - x;
-      ap->sx -= (off * ap->zx / 1000.0);
+      ap->sx -= (off * ap->zx / 4000.0);
       if (ap->sx < 0.0) ap->sx = 0.0;
       nx = ap->x_axis_x0;
     }
@@ -2634,6 +2634,7 @@ void make_sonogram(chan_info *cp)
 
       ax = copy_context(cp);
       fap = cp->fft->axis;
+
       fwidth = fap->x_axis_x1 - fap->x_axis_x0;        /* these are the corners */
       fheight = fap->y_axis_y0 - fap->y_axis_y1;
       if ((fwidth == 0) || (fheight == 0)) return;
@@ -5846,7 +5847,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	status_report(sp, "%.4f", ungrf_x(cp->axis, x));
       
       if (!dragged) 
-	start_selection_creation(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * snd_srate(sp)));
+	{
+	  /* somehow... if there is already a selection, be reluctant to clobber it */
+	  start_selection_creation(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * snd_srate(sp)));
+	}
       else 
 	{
 	  update_possible_selection_in_progress(snd_round_mus_long_t(ungrf_x(cp->axis, x) * snd_srate(sp)));
@@ -9917,7 +9921,7 @@ void g_init_chn(void)
 {
   cp_edpos = Xen_undefined;
 
-  Xen_define_safe_procedure(S_is_variable_graph,        g_is_variable_graph_w,       1, 0, 0, H_is_variable_graph);
+  Xen_define_safe_procedure(S_is_variable_graph,       g_is_variable_graph_w,       1, 0, 0, H_is_variable_graph);
   Xen_define_safe_procedure(S_make_variable_graph,     g_make_variable_graph_w,    1, 3, 0, H_make_variable_graph);
   Xen_define_safe_procedure(S_channel_data,            g_channel_data_w,           0, 2, 0, H_channel_data);
 

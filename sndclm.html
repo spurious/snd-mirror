@@ -5529,12 +5529,12 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 	 (samps (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))
 	 (flta (<em class=red>make-formant</em> 100 .999))
 	 (fltc (<em class=red>make-firmant</em> 100 .999))
-	 (vib (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 10))
+	 (vibosc (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 10))
 	 (index (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 100))
 	 (click (<a class=quiet href="#make-ncos" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_ncos_tip)">make-ncos</a> 40 500)))
     (do ((i 0 (+ i 1)))
         ((= i samps))
-      (let ((vib (* index (+ 1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> vib))))
+      (let ((vib (* index (+ 1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> vibosc))))
             (pulse (<a class=quiet href="#ncos" onmouseout="UnTip()" onmouseover="Tip(sndclm_ncos_tip)">ncos</a> click)))
         (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* 10 (<em class=red>formant</em> flta pulse vib)))
         (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outb</a> i (* 10 (<em class=red>firmant</em> fltc pulse vib)))))))
@@ -9969,6 +9969,10 @@ There are many examples in generators.scm.
 <tr><td><em class=def id="radianstodegrees">radians-&gt;degrees</em><code> rads</code></td><td>convert radians to degrees: (rads * 360) / (2 * pi)</td></tr>
 <tr><td><em class=def id="clear-array">clear-array</em><code> arr</code></td><td>set all values in arr (a float-vector) to 0.0</td></tr>
 <tr><td><em class=def id="mussrate">mus-srate</em></td><td>sampling rate in with-sound (better known as *clm-srate*)</td></tr>
+<tr><td><em class=def id="oddweight">odd-weight</em><code> x</code></td><td>return a number between 0.0 (x is even) and 1.0 (x is odd)</td></tr>
+<tr><td><em class=def id="evenweight">even-weight</em><code> x</code></td><td>return a number between 0.0 (x is odd) and 1.0 (x is even)</td></tr>
+<tr><td><em class=def id="oddmultiple">odd-multiple</em><code> x y</code></td><td>return y times the nearest odd integer to x</td></tr>
+<tr><td><em class=def id="evenmultiple">even-multiple</em><code> x y</code></td><td>return y times the nearest even integer to x</td></tr>
 </table>
 
 <p>

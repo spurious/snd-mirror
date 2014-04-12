@@ -2212,15 +2212,31 @@ static Xen g_gsl_roots(Xen poly)
   gsl_poly_complex_workspace *w;
   Xen result;
 
-  Xen_check_type(Xen_is_vector(poly), poly, 1, "gsl-roots", "a vector");
+  /* gsl_roots: balance_companion_matrix gets hung if the vector is multidimensional */
+  Xen_check_type((Xen_is_vector(poly)) && (Xen_vector_rank(poly) == 1), poly, 1, "gsl-roots", "a vector");
 
   n = Xen_vector_length(poly);
   w = gsl_poly_complex_workspace_alloc(n);
   z = (double complex *)calloc(n, sizeof(double complex));
   p = (double *)calloc(n, sizeof(double));
 
+#if HAVE_SCHEME
+  if (s7_is_float_vector(poly))
+    {
+      s7_Double *e;
+      e = s7_float_vector_elements(poly);
+      for (i = 0; i < n; i++)
+	p[i] = e[i];
+    }
+  else
+    {
+      for (i = 0; i < n; i++)
+	p[i] = Xen_real_to_C_double(Xen_vector_ref(poly, i));
+    }
+#else
   for (i = 0; i < n; i++)
     p[i] = Xen_real_to_C_double(Xen_vector_ref(poly, i));
+#endif
 
   gsl_poly_complex_solve(p, n, w, (gsl_complex_packed_ptr)z);
   gsl_poly_complex_workspace_free (w);

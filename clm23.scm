@@ -1588,6 +1588,50 @@
       (set! y (+ x (* index (sin y)))) ; 2 statements better here than 1 -- opt sees (* s (sin s)) twice
       (outa i (* amp (sin y))))))
 
+
+(define* (fmdoc-vox beg dur freq amp (indices '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
+  (let ((start (seconds->samples beg))
+	(end (seconds->samples (+ beg dur)))
+	(car (make-oscil 0))
+	(per-vib (make-triangle-wave 6 :amplitude (* freq .03)))
+	(ran-vib (make-rand-interp 20 :amplitude (* freq .5 .02))))
+    
+    (let ((a0 (make-env '(0 0 25 1 75 1 100 0) :scaler (* amp (formant-amps 0)) :duration dur))
+	  (a1 (make-env '(0 0 25 1 75 1 100 0) :scaler (* amp (formant-amps 1)) :duration dur))
+	  (a2 (make-env '(0 0 25 1 75 1 100 0) :scaler (* amp (formant-amps 2)) :duration dur))
+	  (o0 (make-oscil 0.0))
+	  (o1 (make-oscil 0.0))
+	  (o2 (make-oscil 0.0))
+	  (e0 (make-oscil 0.0))
+	  (e1 (make-oscil 0.0))
+	  (e2 (make-oscil 0.0))
+	  (ind0 (indices 0))
+	  (ind1 (indices 1))
+	  (ind2 (indices 2))
+	  (f0 (make-env '(0 520 100 490) :duration dur))
+	  (f1 (make-env '(0 1190 100 1350) :duration dur))
+	  (f2 (make-env '(0 2390 100 1690) :duration dur)))
+      
+      (do ((i start (+ i 1)))
+	  ((= i end))
+	(let* ((frq (+ freq (triangle-wave per-vib) (rand-interp ran-vib)))
+	       (frq1 (hz->radians frq))
+	       (carg (oscil car frq1))
+	       (frm0 (/ (env f0) frq))
+	       (frm1 (/ (env f1) frq))
+	       (frm2 (/ (env f2) frq)))
+	  
+	  (outa i (+ 
+		   (* (env a0) 
+		      (+ (* (even-weight frm0) (oscil e0 (+ (* ind0 carg) (even-multiple frm0 frq1))))
+			 (* (odd-weight frm0) (oscil o0 (+ (* ind0 carg) (odd-multiple frm0 frq1))))))
+		   (* (env a1) 
+		      (+ (* (even-weight frm1) (oscil e1 (+ (* ind1 carg) (even-multiple frm1 frq1))))
+			 (* (odd-weight frm1) (oscil o1 (+ (* ind1 carg) (odd-multiple frm1 frq1))))))
+		   (* (env a2) 
+		      (+ (* (even-weight frm2) (oscil e2 (+ (* ind2 carg) (even-multiple frm2 frq1))))
+			 (* (odd-weight frm2) (oscil o2 (+ (* ind2 carg) (odd-multiple frm2 frq1)))))))))))))
+#|
 (define* (fmdoc-vox beg dur freq amp (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
@@ -1629,6 +1673,8 @@
 	    (outa i (* (env (vector-ref ampfs k))
 		       (+ (* frac (oscil (vector-ref evens k) (+ fracf frq1)))
 			  (* (- 1.0 frac) (oscil (vector-ref odds k) fracf))))))))))
+|#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2496,7 +2542,7 @@
     (sndclmdoc-simple-ina 4 1 .5 "oboe.snd")
     (sndclmdoc-env-sound "oboe.snd" 5 1.0 '(0 0 1 1 2 1 3 0)))
   (with-sound (:reverb jc-reverb :channels 2) 
-    (sndclmdoc-space "pistol.snd" 0 3 :distance-env '(0 1 1 2) :degree-env '(0 0 1 90)))
+    (sndclmdoc-space "pistol.snd" 0 1 :distance-env '(0 1 1 2) :degree-env '(0 0 1 90)))
   
   (with-sound ()
     (let ((gen (sndclmdoc-make-sum-of-odd-sines 440.0 10)))

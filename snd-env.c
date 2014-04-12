@@ -1124,10 +1124,23 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	  (active_channel->graph_transform_on))
 	{
 	  axis_info *old_ap;
+	  int x0, x1, y0, y1;
 	  old_ap = active_channel->axis;
+	  x0 = old_ap->x_axis_x0;
+	  x1 = old_ap->x_axis_x1;
+	  y0 = old_ap->y_axis_y0;
+	  y1 = old_ap->y_axis_y1;
 	  active_channel->axis = gray_ap;
+	  active_channel->fft->axis->x_axis_x0 = gray_ap->x_axis_x0;
+	  active_channel->fft->axis->x_axis_x1 = gray_ap->x_axis_x1;
+	  active_channel->fft->axis->y_axis_y0 = gray_ap->y_axis_y0;
+	  active_channel->fft->axis->y_axis_y1 = gray_ap->y_axis_y1;
 	  make_sonogram(active_channel);
 	  active_channel->axis = old_ap;
+	  old_ap->x_axis_x0 = x0;
+	  old_ap->x_axis_x1 = x1;
+	  old_ap->y_axis_y0 = y0;
+	  old_ap->y_axis_y1 = y1;
 	}
       else
 #endif

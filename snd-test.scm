@@ -2302,7 +2302,7 @@
 		       'enved-hook 'enved-in-dB 'enved-move-point 'enved-power 'enved-spectrum
 		       'enved-srate 'enved-style 'enved-target 'enved-wave? 'enved-waveform-color
 		       'envelope-exponential 'envelope-linear 'eps-bottom-margin 'eps-file
-		       'eps-left-margin 'eps-size 'exit 'exit-hook
+		       'eps-left-margin 'eps-size 'even-multiple 'even-weight 'exit 'exit-hook
 		       'expand-control 'expand-control-bounds 'expand-control-hop 'expand-control-jitter 'expand-control-length
 		       'expand-control-ramp 'expand-control? 'exponential-window 'fft 'fft-log-frequency
 		       'fft-log-magnitude 'fft-window 'fft-window-alpha 'fft-window-beta 'fft-with-phases 'file->array
@@ -2370,7 +2370,6 @@
 		       'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size 'mus-alsa-buffers
 		       'mus-alsa-capture-device 'mus-alsa-device 'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
 		       'mus-array-print-length 'mus-float-equal-fudge-factor 
-		       
 		       'mus-b24int 'mus-bdouble 'mus-bdouble-unscaled
 		       'mus-bfloat 'mus-bfloat-unscaled 'mus-bicsf 'mus-bint 'mus-bintn
 		       'mus-bshort 'mus-byte 'mus-bytes-per-sample 'mus-caff 'mus-channel 'mus-channels
@@ -2399,7 +2398,7 @@
 		       'mus-width 'mus-xcoeff 'mus-xcoeffs 'mus-ycoeff 'mus-ycoeffs
 		       'name-click-hook 'new-sound 'new-sound-dialog 'new-sound-hook 'new-widget-hook
 		       'next-sample 'normalize-by-channel 'normalize-by-sound 'normalize-channel 'normalize-globally
-		       'notch 'notch? 'one-pole 'one-pole? 'one-pole-all-pass 'one-pole-all-pass? 
+		       'notch 'notch? 'odd-multiple 'odd-weight 'one-pole 'one-pole? 'one-pole-all-pass 'one-pole-all-pass? 
 		       'one-zero 'one-zero? 'open-file-dialog 'open-file-dialog-directory 'open-hook 'open-raw-sound 'open-raw-sound-hook
 		       'open-sound
 		       'orientation-hook 'oscil 'oscil? 'out-any 'outa
@@ -12557,6 +12556,47 @@ EDITS: 2
     (if (fneq (degrees->radians 57.2957801818848) 1.0) (snd-display #__line__ ";degrees->radians: ~F?" (degrees->radians 57.2957801818848)))
     (if (fneq (linear->db .25) -12.0411996841431) (snd-display #__line__ ";linear->db: ~F?" (linear->db .25)))
     (if (fneq (db->linear -12.0411996841431) .25) (snd-display #__line__ ";db->linear: ~F?" (db->linear -12.0411996841431)))
+
+    (if (fneq (odd-weight 0.0) 0.0) (snd-display #__line__ ";odd-weight 0.0: ~F?" (odd-weight 0.0)))
+    (if (fneq (odd-weight 2.0) 0.0) (snd-display #__line__ ";odd-weight 2.0: ~F?" (odd-weight 2.0)))
+    (if (fneq (odd-weight 1.0) 1.0) (snd-display #__line__ ";odd-weight 1.0: ~F?" (odd-weight 1.0)))
+    (if (fneq (odd-weight 1.5) 0.5) (snd-display #__line__ ";odd-weight 1.5: ~F?" (odd-weight 1.5)))
+    (if (fneq (odd-weight 2.5) 0.5) (snd-display #__line__ ";odd-weight 2.5: ~F?" (odd-weight 2.5)))
+    (if (fneq (odd-weight 2.1) 0.1) (snd-display #__line__ ";odd-weight 2.1: ~F?" (odd-weight 2.1)))
+    (if (fneq (odd-weight 2.9) 0.9) (snd-display #__line__ ";odd-weight 2.9: ~F?" (odd-weight 2.9)))
+    (if (fneq (odd-weight 1.1) 0.9) (snd-display #__line__ ";odd-weight 1.1: ~F?" (odd-weight 1.1)))
+    (if (fneq (odd-weight 1.9) 0.1) (snd-display #__line__ ";odd-weight 1.9: ~F?" (odd-weight 1.9)))
+
+    (if (fneq (even-weight 0.0) 1.0) (snd-display #__line__ ";even-weight 0.0: ~F?" (even-weight 0.0)))
+    (if (fneq (even-weight 2.0) 1.0) (snd-display #__line__ ";even-weight 2.0: ~F?" (even-weight 2.0)))
+    (if (fneq (even-weight 1.0) 0.0) (snd-display #__line__ ";even-weight 1.0: ~F?" (even-weight 1.0)))
+    (if (fneq (even-weight 1.5) 0.5) (snd-display #__line__ ";even-weight 1.5: ~F?" (even-weight 1.5)))
+    (if (fneq (even-weight 2.5) 0.5) (snd-display #__line__ ";even-weight 2.5: ~F?" (even-weight 2.5)))
+    (if (fneq (even-weight 2.1) 0.9) (snd-display #__line__ ";even-weight 2.1: ~F?" (even-weight 2.1)))
+    (if (fneq (even-weight 2.9) 0.1) (snd-display #__line__ ";even-weight 2.9: ~F?" (even-weight 2.9)))
+    (if (fneq (even-weight 1.1) 0.1) (snd-display #__line__ ";even-weight 1.1: ~F?" (even-weight 1.1)))
+    (if (fneq (even-weight 1.9) 0.9) (snd-display #__line__ ";even-weight 1.9: ~F?" (even-weight 1.9)))
+
+    (if (fneq (odd-multiple 0.0 2.0) 2.0) (snd-display #__line__ ";odd-multiple 0.0: ~F?" (odd-multiple 0.0 2.0)))
+    (if (fneq (odd-multiple 2.0 2.0) 6.0) (snd-display #__line__ ";odd-multiple 2.0: ~F?" (odd-multiple 2.0 2.0)))
+    (if (fneq (odd-multiple 1.0 2.0) 2.0) (snd-display #__line__ ";odd-multiple 1.0: ~F?" (odd-multiple 1.0 2.0)))
+    (if (fneq (odd-multiple 1.5 2.0) 2.0) (snd-display #__line__ ";odd-multiple 1.5: ~F?" (odd-multiple 1.5 2.0)))
+    (if (fneq (odd-multiple 2.5 2.0) 6.0) (snd-display #__line__ ";odd-multiple 2.5: ~F?" (odd-multiple 2.5 2.0)))
+    (if (fneq (odd-multiple 2.1 2.0) 6.0) (snd-display #__line__ ";odd-multiple 2.1: ~F?" (odd-multiple 2.1 2.0)))
+    (if (fneq (odd-multiple 2.9 2.0) 6.0) (snd-display #__line__ ";odd-multiple 2.9: ~F?" (odd-multiple 2.9 2.0)))
+    (if (fneq (odd-multiple 1.1 2.0) 2.0) (snd-display #__line__ ";odd-multiple 1.1: ~F?" (odd-multiple 1.1 2.0)))
+    (if (fneq (odd-multiple 1.9 2.0) 2.0) (snd-display #__line__ ";odd-multiple 1.9: ~F?" (odd-multiple 1.9 2.0)))
+
+    (if (fneq (even-multiple 0.0 2.0) 0.0) (snd-display #__line__ ";even-multiple 0.0: ~F?" (even-multiple 0.0 2.0)))
+    (if (fneq (even-multiple 2.0 2.0) 4.0) (snd-display #__line__ ";even-multiple 2.0: ~F?" (even-multiple 2.0 2.0)))
+    (if (fneq (even-multiple 1.0 2.0) 4.0) (snd-display #__line__ ";even-multiple 1.0: ~F?" (even-multiple 1.0 2.0)))
+    (if (fneq (even-multiple 1.5 2.0) 4.0) (snd-display #__line__ ";even-multiple 1.5: ~F?" (even-multiple 1.5 2.0)))
+    (if (fneq (even-multiple 2.5 2.0) 4.0) (snd-display #__line__ ";even-multiple 2.5: ~F?" (even-multiple 2.5 2.0)))
+    (if (fneq (even-multiple 2.1 2.0) 4.0) (snd-display #__line__ ";even-multiple 2.1: ~F?" (even-multiple 2.1 2.0)))
+    (if (fneq (even-multiple 2.9 2.0) 4.0) (snd-display #__line__ ";even-multiple 2.9: ~F?" (even-multiple 2.9 2.0)))
+    (if (fneq (even-multiple 1.1 2.0) 4.0) (snd-display #__line__ ";even-multiple 1.1: ~F?" (even-multiple 1.1 2.0)))
+    (if (fneq (even-multiple 1.9 2.0) 4.0) (snd-display #__line__ ";even-multiple 1.9: ~F?" (even-multiple 1.9 2.0)))
+
     (if (fneq (ring-modulate .4 .5) .2) (snd-display #__line__ ";ring-modulate: ~F?" (ring-modulate .4 .5)))
     (if (fneq (amplitude-modulate 1.0 .5 .4) .7) (snd-display #__line__ ";amplitude-modulate: ~F?" (amplitude-modulate 1.0 .5 .4)))
     (if (fneq (contrast-enhancement 0.1 0.75) (sin (+ (* 0.1 (/ pi 2)) (* .75 (sin (* 0.1 2.0 pi))))))
@@ -45812,6 +45852,7 @@ EDITS: 1
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm?
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->float-vector file->float-vector?  file->sample
+		     even-multiple even-weight odd-multiple odd-weight
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? frame* frame+ firmant firmant?
 		     comb-bank make-comb-bank comb-bank? all-pass-bank make-all-pass-bank all-pass-bank? filtered-comb-bank make-filtered-comb-bank filtered-comb-bank?
 		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb 
@@ -46200,7 +46241,7 @@ EDITS: 1
 					     (not (eq? tag 'arg-error)))
 					(snd-display #__line__ ";clm ~A: tag: ~A arg: ~A" n tag arg))))
 				(list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average moving-max
-				      degrees->radians delay env formant firmant granulate hz->radians linear->db
+				      degrees->radians delay env formant firmant granulate hz->radians linear->db even-weight odd-weight
 				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
 				      make-file->float-vector make-file->sample make-filter make-fir-filter make-formant make-firmant 
 				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
@@ -47399,17 +47440,17 @@ EDITS: 1
 
 #|
 (let ((st (symbol-table)))
-  (do ((i 0 (+ i 1))) 
-      ((= i (vector-length st)))
-    (let ((lst (vector-ref st i)))
-      (for-each 
-       (lambda (sym)
-	 (if (defined? sym)
-	     (let ((val (symbol->value sym)))
-	       (if (and (procedure? val)
-			(string=? "" (procedure-documentation val)))
-		   (snd-display #__line__ "~A " sym)))))
-       lst))))
+  (for-each
+   (lambda (lst)
+     (for-each 
+      (lambda (sym)
+	(if (defined? sym)
+	    (let ((val (symbol->value sym)))
+	      (if (and (procedure? val)
+		       (string=? "" (procedure-documentation val)))
+		  (snd-display #__line__ "~A " sym)))))
+      lst))
+   st))
 |#
 
 (s7-version)

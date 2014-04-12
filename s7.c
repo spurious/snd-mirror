@@ -29105,7 +29105,11 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ)
 	    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), "should be less than about 2^28 probably"));
 	}
     }
-  if (len == 0) typ = T_VECTOR; /* all empty vectors are the same type */
+
+  /* if (len == 0) typ = T_VECTOR; *//* all empty vectors are the same type */
+  /* this produces odd results: (float-vector? (float-vector)) -> #f etc 
+   *   but keeping the type means equal? has to be smarter about empty vectors.
+   */
 
   /* this has to follow the error checks!  (else garbage in free_heap temps portion confuses GC when "vector" is finalized) */
   NEW_CELL(sc, x);                     
@@ -30710,7 +30714,7 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
       if (!s7_is_integer(index))
 	return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_REF, 2, index, T_INTEGER)); 
       ind = s7_integer(index);
-      if ((ind < 0) || (ind > vector_length(v)))
+      if ((ind < 0) || (ind >= vector_length(v)))
 	return(simple_out_of_range(sc, sc->FLOAT_VECTOR_REF, index, "between 0 and the vector length"));
       if (!is_null(cddr(args)))
 	return(out_of_range(sc, sc->FLOAT_VECTOR_REF, small_int(2), cdr(args), "too many indices"));
@@ -34357,8 +34361,16 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 #endif
 
   if (type(x) != type(y)) 
-    return(false);
-  
+    {
+      /* special case here: (equal? (vector) (float-vector)) -> #t
+       */
+      return((s7_is_vector(x)) &&
+	     (s7_is_vector(y)) &&
+	     (vector_length(x) == 0) &&
+	     (vector_length(y) == 0) &&
+	     (structures_are_equal(sc, x, y, NULL))); /* check dimensional info */
+    }
+
   switch (type(x))
     {
     case T_UNIQUE: 
@@ -49430,7 +49442,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 {
   /* sc->cur_code = sc->F; */
   sc->op = first_op;
-  
+
   /* this procedure can be entered recursively (via s7_call for example), so it's no place for a setjmp
    *   I don't think the recursion can hurt our continuations because s7_call is coming from hooks and
    *   callbacks that are implicit in our stack.
@@ -69368,7 +69380,7 @@ int main(int argc, char **argv)
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7
  * t816          |                                    |  69.5                43.4
  * lg            |                                    |  7757                7723
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 36.3
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.6
  *            153 with run macro (eval_ptree)
  */
 
@@ -69383,7 +69395,22 @@ int main(int argc, char **argv)
  * mixer and frame are still separate (generator!) types
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
- * fix rest of anonymous mus_error calls
+ * click to inspect/see source etc in listener?
+ * algebra of gens (max[n](max[m]) == max[n+m])? -- no (latter is lower freq):
+(let ((m1 (make-moving-max 3))
+      (m2 (make-moving-max 2))
+      (m3 (make-moving-max 5)))
+  (do ((i 0 (+ i 1)))
+      ((= i 10))
+    (let ((r (random 1.0)))
+      (format *stderr* "~A ~A~%" (moving-max m3 r) (moving-max m1 (moving-max m2 r))))))
+ * odd|even-weight|multiple ripple [pwqvox can use these also -- needs run-time polynomial(s1=fv, *rx1=rl), maybe vox]
+ * why can't y-bounds be channel-specific if channels-combined?
+ * why doesn't a new max take effect? [with-fullest-sound t844.scm]
+ * click-2 in separate channel => play just that channel
+ * make let_looped use arrays! (extend?)
+ * check not-3-formant case in clm-ins vox
+ * moving-normalize [isn't moving-max really -peak?]
  *
  * unexpected eof can be from forgotten double-quote -- can we catch this?
  *   start at last top and look for odd number of dq's?
