@@ -444,14 +444,14 @@ MUS_EXPORT mus_float_t mus_in_any(mus_long_t frample, int chan, mus_any *IO);
 MUS_EXPORT bool mus_in_any_is_safe(mus_any *IO);
 
   /* new 6.0 */
-MUS_EXPORT mus_float_t *mus_file_to_frample(mus_any *ptr, mus_long_t samp, mus_float_t *f, int out_chans);
+MUS_EXPORT mus_float_t *mus_file_to_frample(mus_any *ptr, mus_long_t samp, mus_float_t *f);
 MUS_EXPORT mus_any *mus_make_file_to_frample(const char *filename);
 MUS_EXPORT bool mus_is_file_to_frample(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_file_to_frample_with_buffer_size(const char *filename, mus_long_t buffer_size);
 MUS_EXPORT mus_float_t *mus_frample_to_frample(mus_float_t *matrix, mus_float_t *in_samps, int in_chans, mus_float_t *out_samps, int out_chans);
 
 MUS_EXPORT bool mus_is_frample_to_file(mus_any *ptr);
-MUS_EXPORT mus_float_t *mus_frample_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *data, int chans);
+MUS_EXPORT mus_float_t *mus_frample_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *data);
 MUS_EXPORT mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
 #define mus_make_frample_to_file(Filename, Chans, OutFormat, OutType) mus_make_frample_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
 MUS_EXPORT mus_any *mus_continue_frample_to_file(const char *filename);

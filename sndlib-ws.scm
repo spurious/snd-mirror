@@ -212,7 +212,7 @@
 				(set! mx (max mx (list-ref mx-lst i)))))))
 		       (out-file (substring output-1 0 (- (string-length output-1) 5))))
 		   (mus-sound-close-output (mus-sound-open-output out-file srate channels data-format header-type) 0)
-		   (mus-mix out-file output-1 0 (mus-sound-frames output-1) 0 (make-scalar-mixer channels scaling))
+		   (mus-mix out-file output-1 0 (mus-sound-framples output-1) 0 (make-scalar-mixer channels scaling))
 		   (delete-file output-1)
 		   (set! output-1 (substring output-1 0 (- (string-length output-1) 5))))
 
@@ -530,10 +530,10 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; I think length is handled by s7 for all types
 
-(define (frames . args)
+(define (framples . args)
   (let ((obj (car args)))
     (if (string? obj)
-	(mus-sound-frames obj)
+	(mus-sound-framples obj)
 	(length obj))))
 
 

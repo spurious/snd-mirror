@@ -39,7 +39,7 @@
 (define (append-selection)
   "(append-selection) appends the current selection"
   (if (selection?)
-      (insert-selection (frames))))
+      (insert-selection (framples))))
 
 (add-to-menu edit-menu "Append selection" append-selection 10)
 
@@ -91,7 +91,7 @@
       (if (< (length (marks snd chn)) 1)
 	  (status-report "trim-back needs a mark" snd)
 	  (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-	    (delete-samples (+ endpt 1) (- (frames snd chn) endpt)))))
+	    (delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
     (if (> snc 0)
 	(apply map
 	       (lambda (snd chn)
@@ -114,7 +114,7 @@
        (lambda ()
 	 (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
 	 (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-	   (delete-samples (+ endpt 1) (- (frames snd chn) endpt))))
+	   (delete-samples (+ endpt 1) (- (framples snd chn) endpt))))
        "crop-one-channel")))
 
 (define (crop)

@@ -157,7 +157,7 @@ name of the sound file.
 </p>
 <pre>
   mus_long_t mus_sound_samples (const char *arg)        /* samples of sound according to header */
-  mus_long_t mus_sound_frames (const char *arg)         /* samples per channel */
+  mus_long_t mus_sound_framples (const char *arg)         /* samples per channel */
   float mus_sound_duration (const char *arg)       /* sound duration in seconds */
   mus_long_t mus_sound_length (const char *arg)         /* true file length in bytes */
 
@@ -228,7 +228,7 @@ sound file data:</p>
   int mus_sound_close_output (int fd, mus_long_t bytes_of_data) 
   int mus_sound_read (int fd, int beg, int end, int chans, mus_float_t **bufs) 
   int mus_sound_write (int fd, int beg, int end, int chans, mus_float_t **bufs) 
-  mus_long_t mus_sound_seek_frame (int fd, mus_long_t frame)
+  mus_long_t mus_sound_seek_frample (int fd, mus_long_t frample)
 </pre>
 <p>mus_float_t defaults to float, but can also be int.  It is set when
 sndlib is built, and refers to Sndlib's internal representation of sample values.  
@@ -272,8 +272,8 @@ index beg to end with zero padding if necessary.
 starting for each of chans channels in obufs at
 beg and ending at end.</p>
 
-<p>mus_sound_seek_frame moves the read or write position for the
-file indicated by fd to the desired frame.
+<p>mus_sound_seek_frample moves the read or write position for the
+file indicated by fd to the desired frample.
 </p>
 
 
@@ -339,14 +339,7 @@ the generator, and the last examines some pointer to determine if it is
 that kind of generator.  In addition, there are a variety of generic
 functions that generators respond to: mus_free, for example, frees a
 generator, and mus_frequency returns its current frequency, if relevant.
-All generators are pointers to mus_any structs.  Finally, CLM has two
-special data types: frame and mixer.  A frame is an array that represents
-a multichannel sample (that is, in a stereo file, at time 0.0, there
-are two samples, one for each channel).  A mixer is a array of arrays
-that represents a set of input and output scalers, as if it were the
-current state of a mixing console's volume controls.  A frame (a multichannel
-input) can be mixed into a new frame (a multichannel output) by passing
-it through a mixer (a matrix, the operation being a matrix multiply).
+All generators are pointers to mus_any structs.  
 </p>
 
 <ul>
@@ -385,8 +378,8 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <li>wave_train: sequence of possibly overlapping waves
 <li>env: envelopes
 <li>polyshape, polywave: waveshaping
-<li>readin, file_to_sample, file_to_frame, in_any: file sample input
-<li>locsig, sample_to_file, frame_to_file, out_any: file sample output
+<li>readin, file_to_sample, file_to_frample, in_any: file sample input
+<li>locsig, sample_to_file, frample_to_file, out_any: file sample output
 <li>src: sampling rate conversion
 <li>granulate: granular synthesis
 <li>convolve: convolution
@@ -498,7 +491,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   int fd, afd, i, j, n, k, chans, srate, outbytes;
-  mus_long_t frames;
+  mus_long_t framples;
   mus_float_t **bufs;
   short *obuf;
   mus_sound_initialize();	
@@ -507,7 +500,7 @@ int main(int argc, char *argv[])
     {
       chans = mus_sound_chans(argv[1]);
       srate = mus_sound_srate(argv[1]);
-      frames = mus_sound_frames(argv[1]);
+      framples = mus_sound_framples(argv[1]);
       outbytes = BUFFER_SIZE * chans * 2;
       bufs = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
       for (i=0;i&lt;chans;i++) 
@@ -516,7 +509,7 @@ int main(int argc, char *argv[])
       afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_AUDIO_COMPATIBLE_FORMAT, outbytes);
       if (afd != -1)
 	{
-	  for (i = 0; i &lt; frames; i += BUFFER_SIZE)
+	  for (i = 0; i &lt; framples; i += BUFFER_SIZE)
 	    {
 	      mus_sound_read(fd, 0, BUFFER_SIZE - 1, chans, bufs);
 	      for (k = 0, j = 0; k &lt; BUFFER_SIZE; k++, j += chans)
@@ -546,19 +539,19 @@ containing a sine wave at 440 Hz.</p>
 <pre>
 int main(int argc, char *argv[])
 {
-  int fd, i, k, frames;
+  int fd, i, k, framples;
   float phase, incr;
   mus_float_t *obuf[1];
   mus_sound_initialize();	
   fd = mus_sound_open_output(argv[1], 22050, 1, MUS_BSHORT, MUS_NEXT, "created by sndsine");
   if (fd != -1)
     {
-      frames = 22050;
+      framples = 22050;
       phase = 0.0;
       incr = 2 * M_PI * 440.0 / 22050.0;
       obuf[0] = (mus_float_t *)calloc(BUFFER_SIZE, sizeof(mus_float_t));
       k = 0;
-      for (i = 0; i &lt; frames; i++)
+      for (i = 0; i &lt; framples; i++)
 	{
 	  obuf[0][k] = MUS_FLOAT_TO_SAMPLE(0.1 * sin(phase)); /* amp = .1 */
 	  phase += incr;
@@ -768,7 +761,7 @@ void src_file(const char *file, double ratio)
   header_type = mus_sound_header_type(file);
   comment = mus_sound_comment(file);
   buffer_size = mus_file_buffer_size();
-  old_samps = mus_sound_frames(file);
+  old_samps = mus_sound_framples(file);
   new_samps = old_samps / ratio;  /* old-srate/new-srate in-coming */
 
   temp_out = snd_tempnam();
@@ -865,7 +858,7 @@ or, at run time, use s7's loader and s7_init_sndlib:
   mus-ubshort mus-ulshort
 
   mus-sound-samples (filename)             samples of sound according to header (can be incorrect)
-  mus-sound-frames (filename)              frames of sound according to header (can be incorrect)
+  mus-sound-framples (filename)              framples of sound according to header (can be incorrect)
   mus-sound-duration (filename)            duration of sound in seconds
   mus-sound-datum-size (filename)          bytes per sample
   mus-sound-data-location (filename)       location of first sample (bytes)
@@ -897,7 +890,7 @@ or, at run time, use s7's loader and s7_init_sndlib:
   mus-sound-read (fd beg end chans sdata)  read data from sound file fd loading the data array from beg to end
                                            sdata is a float-vector that should be able to accommodate the read
   mus-sound-write (fd beg end chans sdata) write data to sound file fd
-  mus-sound-seek-frame (fd frame)          move to frame in sound file fd
+  mus-sound-seek-frample (fd frample)          move to frample in sound file fd
   mus-file-clipping (fd)                   whether output is clipped in file 'fd'
   mus-clipping ()                          global clipping choice
 
@@ -905,8 +898,8 @@ or, at run time, use s7's loader and s7_init_sndlib:
                                            open audio port device ready for output with the indicated attributes
   mus-audio-open-input (device srate chans format bufsize)
                                            open audio port device ready for input with the indicated attributes
-  mus-audio-write (line sdata frames)      write frames of data from float-vector sdata to port line
-  mus-audio-read (line sdata frames)       read frames of data into float-vector sdata from port line
+  mus-audio-write (line sdata framples)      write framples of data from float-vector sdata to port line
+  mus-audio-read (line sdata framples)       read framples of data into float-vector sdata from port line
   mus-audio-close (line)                   close audio port line
 
   mus-oss-set-buffers (num size)           in Linux (OSS) sets the number and size of the OSS "fragments"

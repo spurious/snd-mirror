@@ -264,7 +264,7 @@
 ;;; most cases won't work right because we're assuming real output and so on
 
 (define* (automorph a b c d snd chn)
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftlen2 (/ fftlen 2))

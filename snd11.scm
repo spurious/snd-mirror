@@ -217,8 +217,8 @@ but not anymore.
 	    (date (mus-sound-write-date "with-mix.snd"))
 	    (duration (mus-sound-duration "with-mix.snd")))
 	(if (fneq duration dur) (snd-display #__line__ ";with-mix (~A) dur: ~A ~A" num dur duration))
-	(if (fneq total-dur (/ (frames ind) (srate ind))) 
-	    (snd-display #__line__ ";with-mix (~A) total dur: ~A ~A" num total-dur (/ (frames ind) (srate ind))))
+	(if (fneq total-dur (/ (framples ind) (srate ind))) 
+	    (snd-display #__line__ ";with-mix (~A) total dur: ~A ~A" num total-dur (/ (framples ind) (srate ind))))
 	(if (and old-date
 		 (> (- date old-date) 1)) ; these can be off by some amount in Linux
 	    (snd-display #__line__ ";with-mix (~A) rewrote output?: ~A ~A ~A" num (- date old-date)

@@ -959,7 +959,7 @@ static Xen g_selection(void)
 #if HAVE_SCHEME
 static Xen s7_xen_selection_length(s7_scheme *sc, Xen obj)
 {
-  return(g_selection_frames(Xen_undefined, Xen_undefined));
+  return(g_selection_framples(Xen_undefined, Xen_undefined));
 }
 
 
@@ -1507,9 +1507,9 @@ static Xen g_set_selection_position(Xen pos, Xen snd, Xen chn)
 with_three_setter_args(g_set_selection_position_reversed, g_set_selection_position)
 
 
-Xen g_selection_frames(Xen snd, Xen chn)
+Xen g_selection_framples(Xen snd, Xen chn)
 {
-  #define H_selection_frames "(" S_selection_frames " :optional snd chn): selection length"
+  #define H_selection_framples "(" S_selection_framples " :optional snd chn): selection length"
   if (selection_is_active())
     {
       if (!Xen_is_bound(snd))
@@ -1517,25 +1517,25 @@ Xen g_selection_frames(Xen snd, Xen chn)
       else
 	{
 	  chan_info *cp;
-	  Snd_assert_channel(S_selection_frames, snd, chn, 1);
-	  cp = get_cp(snd, chn, S_selection_frames);
+	  Snd_assert_channel(S_selection_framples, snd, chn, 1);
+	  cp = get_cp(snd, chn, S_selection_framples);
 	  if (!cp) return(Xen_false);
 	  return(C_llong_to_Xen_llong(cp_selection_len(cp, NULL)));
 	}
     }
-  return(snd_no_active_selection_error(S_selection_frames));
+  return(snd_no_active_selection_error(S_selection_framples));
 }
 
 
-static Xen g_set_selection_frames(Xen samps, Xen snd, Xen chn)
+static Xen g_set_selection_framples(Xen samps, Xen snd, Xen chn)
 {
   chan_info *cp;
   mus_long_t len;
 
-  Xen_check_type(Xen_is_llong(samps), samps, 1, S_setB S_selection_frames, "an integer");
+  Xen_check_type(Xen_is_llong(samps), samps, 1, S_setB S_selection_framples, "an integer");
   len = Xen_llong_to_C_llong(samps);
   if (len <= 0)
-    Xen_wrong_type_arg_error(S_setB S_selection_frames, 1, samps, "a positive integer");
+    Xen_wrong_type_arg_error(S_setB S_selection_framples, 1, samps, "a positive integer");
   if (!Xen_is_bound(snd))
     {
       sync_info *si = NULL;
@@ -1556,8 +1556,8 @@ static Xen g_set_selection_frames(Xen samps, Xen snd, Xen chn)
     }
   else 
     {
-      Snd_assert_channel(S_setB S_selection_frames, snd, chn, 2);
-      cp = get_cp(snd, chn, S_setB S_selection_frames);
+      Snd_assert_channel(S_setB S_selection_framples, snd, chn, 2);
+      cp = get_cp(snd, chn, S_setB S_selection_framples);
       if (!cp) return(Xen_false);
       cp_set_selection_len(cp, len);
     }
@@ -1565,7 +1565,7 @@ static Xen g_set_selection_frames(Xen samps, Xen snd, Xen chn)
   return(samps);
 }
 
-with_three_setter_args(g_set_selection_frames_reversed, g_set_selection_frames)
+with_three_setter_args(g_set_selection_framples_reversed, g_set_selection_framples)
 
 
 static Xen g_selection_member(Xen snd, Xen chn)
@@ -1832,7 +1832,7 @@ static Xen g_unselect_all(void)
 
 
 Xen_wrap_2_optional_args(g_selection_position_w, g_selection_position)
-Xen_wrap_2_optional_args(g_selection_frames_w, g_selection_frames)
+Xen_wrap_2_optional_args(g_selection_framples_w, g_selection_framples)
 Xen_wrap_2_optional_args(g_selection_member_w, g_selection_member)
 Xen_wrap_no_args(g_selection_w, g_selection)
 Xen_wrap_1_optional_arg(g_is_selection_w, g_is_selection)
@@ -1850,11 +1850,11 @@ Xen_wrap_no_args(g_show_selection_w, g_show_selection)
 Xen_wrap_no_args(g_unselect_all_w, g_unselect_all)
 #if HAVE_SCHEME
 #define g_set_selection_position_w g_set_selection_position_reversed
-#define g_set_selection_frames_w g_set_selection_frames_reversed
+#define g_set_selection_framples_w g_set_selection_framples_reversed
 #define g_set_selection_member_w g_set_selection_member_reversed
 #else
 Xen_wrap_3_optional_args(g_set_selection_position_w, g_set_selection_position)
-Xen_wrap_3_optional_args(g_set_selection_frames_w, g_set_selection_frames)
+Xen_wrap_3_optional_args(g_set_selection_framples_w, g_set_selection_framples)
 Xen_wrap_3_optional_args(g_set_selection_member_w, g_set_selection_member)
 #endif
 
@@ -1864,7 +1864,8 @@ void g_init_selection(void)
   init_xen_selection();
 
   Xen_define_procedure_with_setter(S_selection_position, g_selection_position_w, H_selection_position, S_setB S_selection_position, g_set_selection_position_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_selection_frames, g_selection_frames_w, H_selection_frames, S_setB S_selection_frames, g_set_selection_frames_w, 0, 2, 1, 2);
+  Xen_define_procedure_with_setter(S_selection_framples, g_selection_framples_w, H_selection_framples, S_setB S_selection_framples, g_set_selection_framples_w, 0, 2, 1, 2);
+  Xen_define_procedure_with_setter("selection-frames", g_selection_framples_w, H_selection_framples, "set-selection-frames", g_set_selection_framples_w, 0, 2, 1, 2);
   Xen_define_procedure_with_setter(S_selection_member, g_selection_member_w, H_selection_member, S_setB S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
 
   Xen_define_safe_procedure(S_selection,        g_selection_w,        0, 0, 0, H_selection);

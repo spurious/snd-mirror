@@ -49,7 +49,7 @@
 	     ;; (outchans (cadr audio-info))
 	     (pframes (caddr audio-info)))
 	(if (not (= audio-fd -1))
-	    (let ((len (frames)))
+	    (let ((len (framples)))
 	      (do ((beg 0 (+ beg pframes)))
 		  ((> beg len))
 		(mus-audio-write audio-fd (make-shared-vector (func (channel->float-vector beg pframes)) (list 1 pframes)) pframes))

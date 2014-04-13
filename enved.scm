@@ -160,7 +160,7 @@
     (if (and (= key (char->integer #\.))
 	     (= state 4))
 	(begin
-	  (env-channel (channel-envelope snd chn) 0 (frames snd chn) snd chn)
+	  (env-channel (channel-envelope snd chn) 0 (framples snd chn) snd chn)
 	  (set! (hook 'result) #t))
 	(if (and (= key (char->integer #\g))
 		 (= state 4))
@@ -196,10 +196,10 @@
 	((= chan chans))
       (let ((player (make-player sound chan))
 	    (e (make-env (channel-envelope sound chan) 
-			 :length (floor (/ (frames sound chan) (dac-size))))))
+			 :length (floor (/ (framples sound chan) (dac-size))))))
 	(add-player player 0 -1 -1 (lambda (reason) (set! (hook-functions play-hook) ())))
 	(hook-push play-hook (lambda (hook)
-			       ;; if dac buffer size in frames is not dac-size, we should do something debonair
+			       ;; if dac buffer size in framples is not dac-size, we should do something debonair
 			       (set! (amp-control player) (env e))))))
     (start-playing chans (srate sound))))
 
@@ -210,7 +210,7 @@
 	 (bytes (* bufsize 4))
 	 (audio-fd (mus-audio-open-output mus-audio-default (srate sound) 2 mus-lshort bytes))
 	 (samp 0)
-	 (len (frames sound 0)))
+	 (len (framples sound 0)))
     (snd-print (format #f "audio-fd: ~A " audio-fd))
     (if (not (= audio-fd -1))
 	(let ((e (make-env (channel-envelope sound 0) :length (floor (/ len bufsize)))))

@@ -1106,7 +1106,7 @@ an oscil or a sawtooth-wave:
 (define zcomb
   (lambda (scaler size pm)
     (let ((cmb (<a class=quiet href="sndclm.html#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope" onmouseout="UnTip()" onmouseover="Tip(sndscm_maxenvelope_tip)">max-envelope</a> pm 0))))
-	  (penv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> pm :length (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))
+	  (penv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> pm :length (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>))))
       (lambda (x) (<a class=quiet href="sndclm.html#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> cmb x (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> penv))))))
 
 ; (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
@@ -1130,7 +1130,7 @@ an oscil or a sawtooth-wave:
 (define moving-formant
   (lambda (radius move)
     (let ((frm (<a class=quiet href="sndclm.html#make-formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_formant_tip)">make-formant</a> (cadr move) radius))
-	  (menv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> move :length (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))
+	  (menv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> move :length (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>))))
       (lambda (x)
         (let ((val (<a class=quiet href="sndclm.html#formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_formant_tip)">formant</a> frm x)))
 	  (set! (<a class=quiet href="sndclm.html#mus-frequency" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_frequency_tip)">mus-frequency</a> frm) (<a class=quiet href="sndclm.html#env" onmouseout="UnTip" onmouseover="Tip(sndclm_env_tip)">env</a> menv))
@@ -1534,7 +1534,7 @@ snd
 #&lt;sound 0&gt;
 :(mix "oboe.snd")
 (#&lt;mix 0&gt;)
-:(frames)
+:(framples)
 50828
 :(play)
 #f
@@ -1549,7 +1549,7 @@ snd
 0
 &gt; mix("oboe.snd")
 [#&lt;mix 0&gt;]
-&gt; frames
+&gt; framples
 50828
 &gt; play
 false
@@ -1564,7 +1564,7 @@ snd
 0 ok
 "oboe.snd" mix
 -1 ok
-frames
+framples
 50828 ok
 play
 #f ok
@@ -1732,7 +1732,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
     (let* ((name ((<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) arg)))
       (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> name) 40.0)
 	  (let* ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> name)))
-	    (set! (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> ind) (* 40 (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> ind)))
+	    (set! (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> ind) (* 40 (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> ind)))
 	    (<a class=quiet href="extsnd.html#savesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesound_tip)">save-sound</a> ind)
 	    (<a class=quiet href="extsnd.html#closesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_closesound_tip)">close-sound</a> ind))))))
 (<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
@@ -2056,7 +2056,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 
 <pre class="indented">
 (define* (ladspa-channel ladspa-data (beg 0) ndur snd chn (edpos -1))
-  (let ((dur (or ndur (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) beg)))
+  (let ((dur (or ndur (- (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> snd chn) beg)))
 	(reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> beg snd chn 1 edpos)))
     (let ((result (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa" snd chn)))
       (<a class=quiet href="extsnd.html#freesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesampler_tip)">free-sampler</a> reader)

@@ -1602,7 +1602,7 @@ the current selection (<a href="#selectionchans">selection-chans</a>),
 </pre>
 
 <p id="genericcopy">copy returns a copy of its argument.
-It works with strings, lists, vectors, hash tables, float-vectors, frames, mixers, sounds, the current selection, mixes, marks,
+It works with strings, lists, vectors, hash tables, float-vectors, sounds, the current selection, mixes, marks,
 bignums, and the non-gmp random state objects.
 </p>
 <div class="spacer"></div>
@@ -1628,26 +1628,25 @@ as well as handling mixes, regions, samplers, and the regular sound-oriented <a 
 </pre>
 
 <p id="genericfill">fill! fills obj with val (s7 only).
-fill! works with strings, vectors, hash-tables, float-vectors, lists, sounds, the selection, 
-frames, and mixers.
+fill! works with strings, vectors, hash-tables, float-vectors, lists, sounds, and the selection.
 </p>
 <div class="spacer"></div>
 
 
-<!-- frames -->
-<!-- INDEX genericframes:frames (generic) -->
+<!-- framples -->
+<!-- INDEX genericframples:framples (generic) -->
 <pre class="indented">
-<em class=def>frames</em> obj chn edpos
+<em class=def>framples</em> obj chn edpos
 </pre>
 
-<p id="genericframes">frames returns the number of "frames" in an object, that is,
-the number of samples per channel.  The frames function overlaps
-the <a href="#genericlength">length</a> function, but length of a string is string-length, whereas frames of a string
-treats the string as a sound file name and returns <a href="#mussoundframes">mus-sound-frames</a>.  frames can replace
-<a href="#mussoundframes">mus-sound-frames</a>, <a href="sndclm.html#genericfunctions">mus-length</a>, 
+<p id="genericframples">framples returns the number of "framples" in an object, that is,
+the number of samples per channel.  The framples function overlaps
+the <a href="#genericlength">length</a> function, but length of a string is string-length, whereas framples of a string
+treats the string as a sound file name and returns <a href="#mussoundframples">mus-sound-framples</a>.  framples can replace
+<a href="#mussoundframples">mus-sound-framples</a>, <a href="sndclm.html#genericfunctions">mus-length</a>, 
 <a href="#mixlength">mix-length</a>, 
-<a href="#regionframes">region-frames</a>, <a href="#selectionframes">selection-frames</a>,
-and the regular <a href="#frames">frames</a> function that handles sound objects and integers as sound indices.
+<a href="#regionframples">region-framples</a>, <a href="#selectionframples">selection-framples</a>,
+and the regular <a href="#framples">framples</a> function that handles sound objects and integers as sound indices.
 </p>
 <div class="spacer"></div>
 
@@ -1659,11 +1658,11 @@ and the regular <a href="#frames">frames</a> function that handles sound objects
 </pre>
 
 <p id="genericlength">length handles list length, string-length, vector-length, <a href="s7.html#hashtablesize">hash-table-size</a>,
-<a href="#frames">frames</a> (sound length), <a href="#colormapsize">colormap-size</a>,
+<a href="#framples">framples</a> (sound length), <a href="#colormapsize">colormap-size</a>,
 <a href="sndclm.html#genericfunctions">mus-length</a> (generators),
 <a href="#mixlength">mix-length</a>, <a href="#transformsize">transform-size</a>,
-<a href="#selectionframes">selection-frames</a>,
-and <a href="#regionframes">region-frames</a>.
+<a href="#selectionframples">selection-framples</a>,
+and <a href="#regionframples">region-framples</a>.
 </p>
 <div class="spacer"></div>
 
@@ -2403,7 +2402,7 @@ uses the maxamp data if it is already available or if the file is short:
           (chn (hook 'chn))
           (dur (hook 'duration)))
       (if (or (<a class=quiet href="#mussoundmaxampexists" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxampexists_tip)">mus-sound-maxamp-exists?</a> (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd))
-              (&lt; (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) 10000000))
+              (&lt; (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> snd chn) 10000000))
 	  (let* ((amp-vals (<a class=quiet href="#mussoundmaxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxamp_tip)">mus-sound-maxamp</a> (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd)))
 	         (max-val (max 1.0 (amp-vals (+ (* chn 2) 1)))))
                  ;; max amp data is list: (sample value sample value ...)
@@ -2683,7 +2682,7 @@ turning the wheel zooms the graph in or out:
       (if (and (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>)
 	       (or (= button 4) (= button 5))) ; mouse scroll wheel
   	  (let ((midpoint (* 0.5 (apply + (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))
-	        (dur (/ (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
+	        (dur (/ (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
 	        (range (if (= button 4)
 			   (* -0.25 (apply - (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))) ; zoom in
 			   (abs (apply - (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))))  ; zoom out
@@ -3382,7 +3381,7 @@ of sounds, each with a list of channels, each with lists of edits,
 marks, and mixes.  The sound data itself is accessed through
 a variety of structures and functions, each aimed at a particular
 kind of use.  The accessors from lowest level up are:
-samplers (one sample at a time iterators) and frame-readers (a "frame" is a multichannel sample),
+samplers (one sample at a time iterators) and frample-readers (a "frample" is a multichannel sample),
 channel-at-a-time blocks (float-vectors, map-channel, etc), multichannel blocks (map-sound, etc),
 a few historical leftovers that follow the "sync" field (scale-to, etc), and finally
 the top-level operations such as save-sound-as (these are used in the File menu, etc).
@@ -3636,7 +3635,7 @@ in the Scheme, Ruby, and Forth files.
   (if (<a class=quiet href="#regionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionok_tip)">region?</a> reg)
       (if (&lt; chn (channels reg))
 	  (let* ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
-		 (len (<a class=quiet href="#regionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionframes_tip)">region-frames</a> reg))
+		 (len (<a class=quiet href="#regionframples" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionframples_tip)">region-framples</a> reg))
 		 (data (make-vector len 0.0 #t)))
 	    (do ((i 0 (+ i 1)))
 		((= i len) data)
@@ -3750,7 +3749,7 @@ to Snd data, snd-&gt;sample.
 
 <!-- snd->sample -->
 <pre class="indented">
-<em class=def id="sndtosample">snd-&gt;sample</em> gen frame chan
+<em class=def id="sndtosample">snd-&gt;sample</em> gen frample chan
 </pre>
 
 <p>snd-&gt;sample gets the next sample from the data accessed by 'gen', similar to file-&gt;sample.
@@ -4119,7 +4118,7 @@ true
 <div class="header" id="sndsounddata">Sound-data</div>
 
 <p>Another Snd object containing sound samples is the sound-data object; it can be viewed either as an array of vcts, 
-each vct representing one channel's data, or as an array of frames, each frame holding a sample from
+each vct representing one channel's data, or as an array of framples, each frample holding a sample from
 each channel at that position in the sound.
 In Ruby, sound-data object partake in the Enumerable and Comparable classes.
 In s7, sound-data is just a synonym for float-vector, and the functions below are not implemented.
@@ -4131,10 +4130,10 @@ In s7, sound-data is just a synonym for float-vector, and the functions below ar
 
 <!-- make-sound-data -->
 <pre class="indented">
-<em class=def id="makesounddata">make-sound-data</em> chans frames
+<em class=def id="makesounddata">make-sound-data</em> chans framples
 </pre>
 
-<p>make-sound-data returns a new sound-data object with 'chans' arrays, each with 'frames' elements.
+<p>make-sound-data returns a new sound-data object with 'chans' arrays, each with 'framples' elements.
 </p>
 <div class="spacer"></div>
 
@@ -4231,10 +4230,10 @@ In s7, sound-data is just a synonym for float-vector, and the functions below ar
 
 <!-- sound-data-ref -->
 <pre class="indented">
-<em class=def id="sounddataref">sound-data-ref</em> sd chan frame
+<em class=def id="sounddataref">sound-data-ref</em> sd chan frample
 </pre>
 
-<p>sound-data-ref returns (as a float) the sample in channel chan at location frame.  In s7 you can omit the "sound-data-ref":
+<p>sound-data-ref returns (as a float) the sample in channel chan at location frample.  In s7 you can omit the "sound-data-ref":
 </p>
 <div class="spacer"></div>
 
@@ -4261,10 +4260,10 @@ In s7, sound-data is just a synonym for float-vector, and the functions below ar
 
 <!-- sound-data-set! -->
 <pre class="indented">
-<em class=def id="sounddataset">sound-data-set!</em> sd chan frame val
+<em class=def id="sounddataset">sound-data-set!</em> sd chan frample val
 </pre>
 
-<p>sound-data-set! sets sd's sample at 'frame' in channel 'chan' to val.
+<p>sound-data-set! sets sd's sample at 'frample' in channel 'chan' to val.
 </p>
 <div class="spacer"></div>
 
@@ -4414,20 +4413,20 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 
 <!-- mus-audio-read -->
 <pre class="indented">
-<em class=def id="musaudioread">mus-audio-read</em> line sd frames ; obsolete
+<em class=def id="musaudioread">mus-audio-read</em> line sd framples ; obsolete
 </pre>
 
-<p>mus-audio-read reads 'frames' frames of data into the float-vector 'sd' from the audio input port 'line'.  
+<p>mus-audio-read reads 'framples' framples of data into the float-vector 'sd' from the audio input port 'line'.  
 </p>
 <div class="spacer"></div>
 
 
 <!-- mus-audio-write -->
 <pre class="indented">
-<em class=def id="musaudiowrite">mus-audio-write</em> line sd frames (start 0) ; obsolete
+<em class=def id="musaudiowrite">mus-audio-write</em> line sd framples (start 0) ; obsolete
 </pre>
 
-<p>mus-audio-write writes 'frames' frames of data from the float-vector 'sd' to the audio output port 'line'.
+<p>mus-audio-write writes 'framples' framples of data from the float-vector 'sd' to the audio output port 'line'.
 If 'start' is given, it sets where to start reading in the float-vector buffers.
 </p>
 <div class="spacer"></div>
@@ -4733,12 +4732,12 @@ It is equivalent to (mus-bytes-per-sample (mus-sound-data-format filename)).
 <div class="spacer"></div>
 
 
-<!-- mus-sound-frames -->
+<!-- mus-sound-framples -->
 <pre class="indented">
-<em class=def id="mussoundframes">mus-sound-frames</em> filename
+<em class=def id="mussoundframples">mus-sound-framples</em> filename
 </pre>
 
-<p>mus-sound-frames returns the number of frames of sound data in the file 'filename' according to its header
+<p>mus-sound-framples returns the number of framples of sound data in the file 'filename' according to its header
 (this number is occasionally incorrect in mus-next headers).
 </p>
 <div class="spacer"></div>
@@ -4903,7 +4902,7 @@ stored in some odd format, and you use that file a lot, this can save some time.
 <em class=def id="mussoundread">mus-sound-read</em> fd beg-in-file num-to-read chans sd
 </pre>
 
-<p>mus-sound-read reads data from the sound file 'fd', starting at frame 'beg-in-file' (frame 0 is the first),
+<p>mus-sound-read reads data from the sound file 'fd', starting at frample 'beg-in-file' (frample 0 is the first),
 loading num-to-read samples into the float-vector 'sd' starting from 0 in that vector.
 </p>
 <div class="spacer"></div>
@@ -4944,12 +4943,12 @@ loading num-to-read samples into the float-vector 'sd' starting from 0 in that v
 <div class="spacer"></div>
 
 
-<!-- mus-sound-seek-frame -->
+<!-- mus-sound-seek-frample -->
 <pre class="indented">
-<em class=def id="mussoundseekframe">mus-sound-seek-frame</em> fd frame
+<em class=def id="mussoundseekframple">mus-sound-seek-frample</em> fd frample
 </pre>
 
-<p>mus-sound-seek-frame moves the input or output reading point to 'frame' in the sound file 'fd'.
+<p>mus-sound-seek-frample moves the input or output reading point to 'frample' in the sound file 'fd'.
 </p>
 <div class="spacer"></div>
 
@@ -6058,7 +6057,7 @@ function uses insert-region (and other region functions) to rotate the samples i
       (<a class=quiet href="#asoneedit" onmouseout="UnTip()" onmouseover="Tip(extsnd_asoneedit_tip)">as-one-edit</a>
        (lambda ()
 	 (<a class=quiet href="#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> 0 samps ind chan)
-	 (<em class=red>insert-region</em> reg (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> ind chan))))
+	 (<em class=red>insert-region</em> reg (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> ind chan))))
       (<em class=red>forget-region</em> reg))))
 </pre>
 <div class="spacer"></div>
@@ -6121,18 +6120,18 @@ It returns a list of mixes, one for each channel mixed.
 <div class="spacer"></div>
 
 
-<!-- region-frames -->
+<!-- region-framples -->
 <pre class="indented">
-<em class=def id="regionframes">region-frames</em> reg (chan 0)
+<em class=def id="regionframples">region-framples</em> reg (chan 0)
 </pre>
 
-<p>region-frames returns the number of frames in the region 'reg'.
+<p>region-framples returns the number of framples in the region 'reg'.
 </p>
 
 <pre class="indented">
 &gt; (make-region 100 200)
 #&lt;region 1&gt;
-&gt; (region-frames (integer-&gt;region 1))
+&gt; (region-framples (integer-&gt;region 1))
 101
 </pre>
 <div class="spacer"></div>
@@ -6162,7 +6161,7 @@ graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines
 </pre>
 
 <p>This returns a list with the name of the source file for the given region, its start time in the original
-data, and its length in frames.
+data, and its length in framples.
 </p>
 <div class="spacer"></div>
 
@@ -6264,7 +6263,7 @@ rather than creating a new vct.
 </pre>
 
 <p>regions returns a list of active regions.  The most recently created region is (car (regions)).
-(map region-frames (regions)) returns a list of region lengths.
+(map region-framples (regions)) returns a list of region lengths.
 The maximum length of this list is set by <a href="#maxregions">max-regions</a>.
 </p>
 <div class="spacer"></div>
@@ -6365,7 +6364,7 @@ These are equivalent:
 
 <pre class="indented">
 (env-selection '(0 0 1 1 2 0))
-(env-selection (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 0) :length (<a class=quiet href="#selectionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframes_tip)">selection-frames</a>)))
+(env-selection (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 0) :length (<a class=quiet href="#selectionframples" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframples_tip)">selection-framples</a>)))
 </pre>
 <div class="spacer"></div>
 
@@ -6431,7 +6430,7 @@ The Edit:Mix selection menu choice is (mix-selection (cursor)).
   "(brksnd dur base) divides the current sound into dur-sized pieces, 
    saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
   (let ((hop (floor (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) dur)))
-	(len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
+	(len (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>))
         (old-sync (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a>)))
     (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a>) 1) ; save all chans
     (do ((i 0 (+ i hop))
@@ -6452,7 +6451,7 @@ The Edit:Mix selection menu choice is (mix-selection (cursor)).
 	   (lambda (chan)
 	     (set! (<a class=quiet href="#selectionmember" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionmember_tip)">selection-member?</a> snd chan) #t)
 	     (set! (<a class=quiet href="#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a> snd chan) 0)
-	     (set! (<a class=quiet href="#selectionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframes_tip)">selection-frames</a> snd chan) (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chan)))
+	     (set! (<a class=quiet href="#selectionframples" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframples_tip)">selection-framples</a> snd chan) (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> snd chan)))
 	   chans)
 	  (<em class=red>save-selection</em> "test.snd")))))
 </pre>
@@ -6528,25 +6527,25 @@ selobj
 <div class="spacer"></div>
 
 
-<!-- selection-frames -->
+<!-- selection-framples -->
 <pre class="indented">
-<em class=def id="selectionframes">selection-frames</em> snd chn
+<em class=def id="selectionframples">selection-framples</em> snd chn
 </pre>
 
-<p>selection-frames returns the number of frames in the current selection (its length in samples).  
+<p>selection-framples returns the number of framples in the current selection (its length in samples).  
 You can set this to move the selection end point:
 </p>
 
 <pre class="indented">
 &gt; (select-all)                    ; grab all of current channel
 #&lt;region 1&gt;
-&gt; (selection-frames)
+&gt; (selection-framples)
 55240
-&gt; (set! (selection-frames) 10000) ; unselect all but the starting 10000
+&gt; (set! (selection-framples) 10000) ; unselect all but the starting 10000
 10000
-&gt; (selection-frames)
+&gt; (selection-framples)
 10000
-&gt; (set! (selection-frames) (* 2 (selection-frames))) ; double the selection length
+&gt; (set! (selection-framples) (* 2 (selection-framples))) ; double the selection length
 20000
 </pre>
 
@@ -6633,7 +6632,7 @@ has more than one channel.
 
 <p>selection-position is the sample where selection begins. 
 You can set this to move the selection's starting point to some arbitrary sample.
-If changed, the selection end point stays the same, while the length (<a class=quiet href="#selectionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframes_tip)">selection-frames</a>) changes to reflect the
+If changed, the selection end point stays the same, while the length (<a class=quiet href="#selectionframples" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframples_tip)">selection-framples</a>) changes to reflect the
 moved origin. 
 See <a href="sndscm.html#makeselection">make-selection</a> in extensions.scm.
 </p>
@@ -6746,7 +6745,7 @@ unselect everything: <a href="extsnd.html#unselectall">unselect-all</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 
-<p>The selected portion can be chosen, independent of any region, by setting selection-position and selection-frames.
+<p>The selected portion can be chosen, independent of any region, by setting selection-position and selection-framples.
 It's easy to extend the notion of a selection to an arbitrary list of sound portions:
 </p>
 
@@ -7098,7 +7097,7 @@ so the function call is:
 (define* (selection-&gt;vct snd chn)
   (if (<a class=quiet href="#selectionmember" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionmember_tip)">selection-member?</a> snd chn)
       (<em class=red>channel-&gt;vct</em> (<a class=quiet href="#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a> snd chn)
-		    (<a class=quiet href="#selectionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframes_tip)">selection-frames</a> snd chn)
+		    (<a class=quiet href="#selectionframples" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframples_tip)">selection-framples</a> snd chn)
 		    snd chn)
       (if (<a class=quiet href="#selectionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionok_tip)">selection?</a>)
           (error 'no-such-channel 
@@ -7142,7 +7141,7 @@ This is used by some of the <a class=quiet href="#regularizedargs" onmouseout="U
   (let* ((beg (or nbeg 0)) 
 	 (snd (or nsnd (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (car (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 	 (chn (or nchn (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>)))
-	 (dur (or ndur (- (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) beg)))
+	 (dur (or ndur (- (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> snd chn) beg)))
 	 (edpos (or nedpos current-edit-position))
 	 (reader (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> beg snd chn 1 edpos))
 	 (cgen (<a class=quiet href="sndclm.html#make-convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_convolve_tip)">make-convolve</a> :filter kernel 
@@ -7237,7 +7236,7 @@ Forth:  lambda: &lt;{ y }&gt; y 0.1 f- f0&lt; ; count-matches
 
 <pre class="indented">
 (define* (count-matches func (beg 0) snd chn edpos)
-  (let ((end (frames snd chn edpos))
+  (let ((end (framples snd chn edpos))
 	(matches 0)
 	(reader (make-sampler beg snd chn 1 edpos)))
     (do ((i beg (+ i 1)))
@@ -7526,7 +7525,7 @@ To get .1 seconds of attack and decay:
 </p>
 
 <pre class="indented">
-(let ((dur (/ (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))) 
+(let ((dur (/ (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))) 
   (<em class=red>env-channel</em> (list 0 0  .1 1  (- dur .1) 1  dur 0)))
 </pre>
 
@@ -7879,9 +7878,9 @@ See <a href="#progressreport">progress-report</a>.
 <div class="separator"></div>
 
 
-<!-- frames -->
+<!-- framples -->
 <pre class="indented">
-<em class=def id="frames">frames</em> snd chn edpos
+<em class=def id="framples">framples</em> snd chn edpos
 </pre>
 
 <p>This returns current length in samples of the channel 'chn'.  Used with set!, this either truncates 
@@ -8103,8 +8102,8 @@ channels are inserted. To append one sound to another, padding at the end with s
 
 <pre class="indented">
 (define* (append-sound file (silence 1.0))
-  (<em class=red>insert-sound</em> file (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
-  (<em class=red>insert-silence</em> (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (round (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) silence))))
+  (<em class=red>insert-sound</em> file (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>))
+  (<em class=red>insert-silence</em> (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>) (round (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) silence))))
 </pre>
 
 <p>'file' is not deleted by Snd unless 'auto-delete' is #t. 
@@ -8307,7 +8306,7 @@ then check to see how close our reconstruction is to the original:
 <pre class="indented">
 (define* (<em class="noem" id="cosinechannel">cosine-channel</em> (beg 0) dur snd chn edpos)
   (<em class=red>map-channel</em>
-   (let* ((samps (or dur (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn)))
+   (let* ((samps (or dur (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> snd chn)))
 	  (incr (/ pi samps))
 	  (angle (* -0.5 pi)))
      (lambda (y)
@@ -9047,7 +9046,7 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
 
 <pre class="indented">
 (define* (silly-reverse snd)
-  (let* ((len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd 0))
+  (let* ((len (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> snd 0))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rl (channel-&gt;float-vector 0 fsize snd 0))
 	 (im (make-vector fsize 0.0 #t)))
@@ -9113,7 +9112,7 @@ or <a href="#channeltovct">channel-&gt;vct</a> instead.  'samp' defaults to the 
 </pre>
 
 <p>This returns a vct of 'samps' samples starting at 'samp' in the given channel.
-'samp' defaults to 0.  'samps' defaults to frames - 'samp' (i.e. read to the end of the data).
+'samp' defaults to 0.  'samps' defaults to framples - 'samp' (i.e. read to the end of the data).
 'pos' is the edit history position to read (it defaults to the current position).
 This is settable (as is <a href="#sample">sample</a>):
 </p>
@@ -9260,7 +9259,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (val) (* val 2.0)))
 (set! (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a>) (* 2 (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a>)))
 (<a class=quiet href="#envsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_envsound_tip)">env-sound</a> '(0 2 1 2))
-(<a class=quiet href="#envchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_envchannel_tip)">env-channel</a> (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 1 1 1) :scaler 2.0 :length (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)))
+(<a class=quiet href="#envchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_envchannel_tip)">env-channel</a> (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 1 1 1) :scaler 2.0 :length (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>)))
 (<a class=quiet href="#clmchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_clmchannel_tip)">clm-channel</a> (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> :a0 2.0 :a1 0.0))
 (<a class=quiet href="#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (float-vector 2.0) 1)
 (float-vector-&gt;channel (float-vector-scale! (channel-&gt;float-vector) 2.0) 0)
@@ -9277,9 +9276,9 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
        (<a class=quiet href="sndclm.html#convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_convolve_tip)">convolve</a> cnv (lambda (dir) 
                        (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> sf)))))))
 
-(float-vector-&gt;channel (<a class=quiet href="sndscm.html#polydoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_poly_times_tip)">poly*</a> (channel-&gt;float-vector 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (float-vector 2.0))) ; poly.scm (sound = polynomial coeffs)
+(float-vector-&gt;channel (<a class=quiet href="sndscm.html#polydoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_poly_times_tip)">poly*</a> (channel-&gt;float-vector 0 (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>)) (float-vector 2.0))) ; poly.scm (sound = polynomial coeffs)
 
-(let* ((len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
+(let* ((len (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>))
        (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
        (rl (channel-&gt;float-vector 0 fsize))
        (im (make-vector fsize 0.0 #t)))
@@ -9290,7 +9289,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
   (float-vector-&gt;channel (float-vector-scale! rl (/ 2.0 (* fsize fsize))) 0 len))
 
 (do ((i 0 (+ i 1)))
-    ((= i (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)))
+    ((= i (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>)))
   ;; don't actually do this! &mdash; it involves a separate edit on each sample
   (set! (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> i) (* 2 (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> i))))
 
@@ -9303,8 +9302,8 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 			(if (&lt;= ctr end)
 			    (them us)))))
 	   us))))
-  ((make-scaler 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) 
-     (make-scaler 1 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))
+  ((make-scaler 0 (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>)) 
+     (make-scaler 1 (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>))))
 </pre>
 <div class="separator"></div>
 
@@ -9340,7 +9339,7 @@ If all the sound's samples are 0.0, scale-to returns #f and does not perform any
 
 <pre class="indented">
 (define* (scan-channel func (beg 0) dur snd chn edpos)
-  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn)))
+  (let ((end (if dur (min (+ beg dur) (framples snd chn)) (framples snd chn)))
 	(rd (make-sampler beg snd chn 1 edpos)))
     (do ((pos beg (+ pos 1)))
         ((or (&gt;= pos end)
@@ -9466,7 +9465,7 @@ file; 'auto-delete' set to #t asks Snd to handle cleanup).
 		       (<a class=quiet href="sndclm.html#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> samp (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))) 0)
 		       (if (= (modulo samp 2205) 0)
 			   (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))))))
-	 (len (<a class=quiet href="#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> tempfile)))
+	 (len (<a class=quiet href="#mussoundframples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframples_tip)">mus-sound-framples</a> tempfile)))
     (<em class=red>set-samples</em> 0 (- len 1) tempfile #f #f #t "step-src" 0 #f #t)))
 </pre>
 <div class="separator"></div>
@@ -9929,19 +9928,19 @@ This is the <a class=quiet href="#regularizedargs" onmouseout="UnTip()" onmouseo
 </p>
 
 <pre class="indented">
-&gt; (frames)                  ; current duration
+&gt; (framples)                  ; current duration
 50828
 &gt; (src-channel 2.0)         ; make it half as long
 2.0
-&gt; (frames)
+&gt; (framples)
 25415
 &gt; (src-channel '(0 .5 1 1)) ; start slow and speed up
 (0 0.5 1 1)
-&gt; (frames)
+&gt; (framples)
 35235
 &gt; (src-channel (make-env '(0 .5 1 1) :length 20000)) ; stick at 1 after sample 20000
 #&lt;env linear, pass: 35236 (dur: 20000), index: 1, scaler: 1.0000, offset: 0.0000, ...&gt;
-&gt; (frames)
+&gt; (framples)
 42964
 </pre>
 
@@ -10031,13 +10030,13 @@ how long the resultant note will be given an src envelope:
 ;;; (src-duration '(0 .5 .5 3 .6 1 .7 .1 .8 1.5 1 1)) -&gt; 1.02474349685432
 
 ;;; here we're using this in the Snd listener:
-&gt; (frames)
+&gt; (framples)
 220501
 &gt; (src-duration '(0 1 1 2))
 0.693147180559945
-&gt; (src-sound '(0 1 1 2)) ; should be about .693 * 220500 frames 
+&gt; (src-sound '(0 1 1 2)) ; should be about .693 * 220500 framples 
 (0 1 1 2)
-&gt; (frames)
+&gt; (framples)
 152842
 &gt; (/ 152842.0 220501)
 0.693157854159392       ; tada!
@@ -10237,9 +10236,9 @@ use the function choice for cursor-style (that function's third argument can tel
 <div class="separator"></div>
 
 
-<!-- transform-frames -->
+<!-- transform-framples -->
 <pre class="indented">
-<em class=def id="transformframes">transform-frames</em> snd chn
+<em class=def id="transformframples">transform-framples</em> snd chn
 </pre>
 
 <p>This returns either 0 if there is no transform, <a href="#transformsize">transform-size</a> if 
@@ -10250,15 +10249,15 @@ or (list spectrum-end time-slices fft-bins) if either a sonogram or a spectrogra
 <pre class="indented">
 &gt; (set! (transform-graph?) #t) ; turn on fft display
 #t
-&gt; (transform-frames)
+&gt; (transform-framples)
 512
 &gt; (set! (transform-graph-type) graph-as-sonogram)
 1                             ; 1 = graph-as-sonogram
-&gt; (transform-frames)
+&gt; (transform-framples)
 (1.0 375 256)                 ; 1.0 -&gt; full spectrum displayed
 &gt; (set! (transform-graph?) #f) ; turn off fft display
 #f
-&gt; (transform-frames)
+&gt; (transform-framples)
 0
 </pre>
 <div class="separator"></div>
@@ -10573,7 +10572,7 @@ is distinguished from the beat by having a longer tick mark.
 </p>
 
 <pre class="indented">
-(set! (x-bounds) (/ (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
+(set! (x-bounds) (/ (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
 </pre> 
 <div class="separator"></div>
 
@@ -11746,7 +11745,7 @@ If 'in-place' is #t, the spectrum is in 'data', otherwise snd-spectrum returns a
 <pre class="indented">
 <a href="#transformgraphp">transform-graph?</a>         <a href="#showtransformpeaks">show-transform-peaks</a>        <a href="#transformsample">transform-sample</a>
 <a href="#fftbeta">fft-window-beta</a>          <a href="#showselectiontransform">show-selection-transform</a>    <a href="#transformtovct">transform-&gt;vct</a>
-<a href="#aftertransformhook">after-transform-hook</a>     <a href="#spectrumend">spectrum-end</a>                <a href="#transformframes">transform-frames</a>
+<a href="#aftertransformhook">after-transform-hook</a>     <a href="#spectrumend">spectrum-end</a>                <a href="#transformframples">transform-framples</a>
 <a href="#fftlogfrequency">fft-log-frequency</a>        <a href="#spectrohop">spectro-hop</a>                 <a href="#transformtype">transform-type</a>
 <a href="#fftlogmagnitude">fft-log-magnitude</a>        <a href="#spectrumstart">spectrum-start</a>              <a href="#updatetransformgraph">update-transform-graph</a>
 <a href="#transformsize">transform-size</a>           <a href="#spectroxangle">spectro-x-angle</a>             <a href="#normalizefft">transform-normalization</a>
@@ -13076,11 +13075,11 @@ cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Dow
 </p>
 
 <pre class="indented">
-  Scheme: (bind-key "End" 0 (lambda () "view full sound" (set! (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))))
+  Scheme: (bind-key "End" 0 (lambda () "view full sound" (set! (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))))
 
-  Ruby: bind_key("End", 0, lambda do || set_x_bounds([0.0, frames.to_f / srate.to_f]) end)
+  Ruby: bind_key("End", 0, lambda do || set_x_bounds([0.0, framples.to_f / srate.to_f]) end)
 
-  Forth: "End" 0 lambda: 0.0 #f #f #f frames #f srate f/ 2 &gt;list set-x-bounds ; 0 make-proc bind-key
+  Forth: "End" 0 lambda: 0.0 #f #f #f framples #f srate f/ 2 &gt;list set-x-bounds ; 0 make-proc bind-key
 </pre>
 
 <pre class="indented">
@@ -13101,7 +13100,7 @@ cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Dow
 (<em class=red>bind-key</em> #\v 4
 	  (lambda ()
             "move ahead one window"
-	    (if (&lt; (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>) (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
+	    (if (&lt; (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>) (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>))
 		(set! (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>)))
 	    keyboard-no-action))
 
@@ -13160,7 +13159,7 @@ forward two samples in the graph each time we type "l":
 	 (hi-pix (ax 12))
 	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
 	 (change (if right 
-                     (- (min (+ hi samps-per-pixel) (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> s c)) hi)
+                     (- (min (+ hi samps-per-pixel) (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> s c)) hi)
                      (- (max 0 (- lo samps-per-pixel)) lo))))
     (set! (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (+ lo change))
     keyboard-no-action))
@@ -13182,7 +13181,7 @@ forward two samples in the graph each time we type "l":
 	 (lo-pix (ax 10))
 	 (hi-pix (ax 12))
 	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
-	 (len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> s c)))
+	 (len (<a class=quiet href="#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> s c)))
     (if in
 	(if (&gt; (- hi-pix lo-pix) samps-per-pixel)
 	    (begin

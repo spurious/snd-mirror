@@ -272,7 +272,7 @@
   (format #f "(~{~,3F~^ ~})" e))
 
 (define (seldur) 
-  (list (/ (selection-frames) 44100.0) 
+  (list (/ (selection-framples) 44100.0) 
 	(selection-maxamp)))
 
 (define (sp) 
@@ -303,7 +303,7 @@
 			   (begin
 			     (play (selection))
 			     #t)
-			   (if (> (frames snd) (* 10 (srate snd)))
+			   (if (> (framples snd) (* 10 (srate snd)))
 			       (let ((chn (or (selected-channel) 0)))
 				 (with-temporary-selection 
 				  (lambda () (play (selection)))
@@ -326,9 +326,9 @@
 	 (hi-pix (ax 12))
 	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
 	 (change (if right 
-		     (- (min (+ hi samps-per-pixel) (frames s c)) hi)
+		     (- (min (+ hi samps-per-pixel) (framples s c)) hi)
 		     (- (max 0 (- lo samps-per-pixel)) lo))))
-    (set! (left-sample) (min (max 0 (+ lo change)) (frames s c)))
+    (set! (left-sample) (min (max 0 (+ lo change)) (framples s c)))
     keyboard-no-action))
 
 (bind-key "Left" 0 (lambda () "move one pixel backward" (move-one-pixel (selected-sound) (selected-channel) #f)))
@@ -342,9 +342,9 @@
 	 (hi-pix (ax 12))
 	 (samps-per-pixel (* 8 (max 1 (round (/ (- hi lo) (- hi-pix lo-pix))))))
 	 (change (if right 
-		     (- (min (+ hi samps-per-pixel) (frames s c)) hi)
+		     (- (min (+ hi samps-per-pixel) (framples s c)) hi)
 		     (- (max 0 (- lo samps-per-pixel)) lo))))
-    (set! (left-sample) (min (max 0 (+ lo change)) (frames s c)))
+    (set! (left-sample) (min (max 0 (+ lo change)) (framples s c)))
     keyboard-no-action))
 
 (bind-key "Left" 4 (lambda () "move some pixels backward" (move-more-pixels (selected-sound) (selected-channel) #f)))
@@ -357,7 +357,7 @@
 	 (lo-pix (ax 10))
 	 (hi-pix (ax 12))
 	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
-	 (len (frames s c)))
+	 (len (framples s c)))
     (if in
 	(if (> (- hi-pix lo-pix) samps-per-pixel)
 	    (begin

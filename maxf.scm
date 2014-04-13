@@ -121,7 +121,7 @@ the desired phase.
    (numf 12)  12 filters
    (numf 13)  13 filters"
   (let ((beg (floor (* beg *clm-srate*)))
-	(dur (mus-sound-frames file)))
+	(dur (mus-sound-framples file)))
     (let ((formfil (make-mvm))
 	  (end (+ beg dur))
 	  (rdA (make-readin :file file :channel 0))

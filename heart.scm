@@ -52,6 +52,6 @@
 
   ;; print the average readings over the full sequence
   (snd-print (format #f ";average: ~A/~A~%" 
-		     (round (/ hpsum (frames)))
-		     (round (/ lpsum (frames))))))
+		     (round (/ hpsum (framples)))
+		     (round (/ lpsum (framples))))))
 

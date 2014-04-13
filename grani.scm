@@ -351,7 +351,7 @@
 
     (let ((beg (car ts))
 	  (end (cadr ts))
-	  (in-file-dur  (/ (frames file) in-file-sr))
+	  (in-file-dur  (/ (framples file) in-file-sr))
 	  (out-chans (channels *output*))
 	  (gr-samples 0)
 	  

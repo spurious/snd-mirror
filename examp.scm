@@ -62,8 +62,8 @@
 (define (selection-rms)
   "(selection-rms) -> rms of selection data using samplers"
   (if (selection?)
-      (let ((data (samples (selection-position) (selection-frames))))
-	(sqrt (/ (dot-product data data) (selection-frames))))
+      (let ((data (samples (selection-position) (selection-framples))))
+	(sqrt (/ (dot-product data data) (selection-framples))))
       (error 'no-active-selection (list "selection-rms-1"))))
 
 
@@ -171,8 +171,8 @@
   "(display-correlation hook) returns the correlation of snd's 2 channels (intended for use with graph-hook).  y0 and y1 are ignored."
   (let ((snd (hook 'snd)))
     (if (and (= (channels snd) 2)
-	     (> (frames snd 0) 1)
-	     (> (frames snd 1) 1))
+	     (> (framples snd 0) 1)
+	     (> (framples snd 1) 1))
 	(let* ((ls (left-sample snd 0))
 	       (rs (right-sample snd 0))
 	       (ilen (+ 1 (- rs ls)))
@@ -575,7 +575,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
   "(every-sample func) -> #t if func is not #f for all samples in the current channel, 
 otherwise it moves the cursor to the first offending sample"
   (let ((reader (make-sampler))
-	(len (frames)))
+	(len (framples)))
     (call-with-exit
      (lambda (quit)
        (do ((i 0 (+ i 1)))
@@ -589,7 +589,7 @@ otherwise it moves the cursor to the first offending sample"
   "(sort-samples bins) provides a histogram in 'bins' bins"
   (let ((bins (make-vector nbins 0))
 	(reader (make-sampler))
-	(len (frames))
+	(len (framples))
 	(ops (make-vector nbins)))
     (do ((i 0 (+ i 1)))
 	((= i nbins))
@@ -608,7 +608,7 @@ otherwise it moves the cursor to the first offending sample"
   "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
 it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
-  (let ((len (frames mono-snd)))
+  (let ((len (framples mono-snd)))
     (if (number? pan-env)
 	(let ((pos (/ pan-env 90.0))
 	      (reader0 (make-sampler 0 mono-snd))
@@ -639,7 +639,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
   "(fft-edit low-Hz high-Hz snd chn) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, 
 then inverse ffts."
   (let* ((sr (srate snd))
-	 (len (frames snd chn))
+	 (len (framples snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (fsize2 (/ fsize 2))
 	 (rdata (channel->float-vector 0 fsize snd chn))
@@ -664,7 +664,7 @@ then inverse ffts."
 
 (define* (fft-squelch squelch snd chn)
   "(fft-squelch squelch snd chn) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rdata (channel->float-vector 0 fsize snd chn))
 	 (idata (make-float-vector fsize))
@@ -695,7 +695,7 @@ then inverse ffts."
 (define* (fft-cancel lo-freq hi-freq snd chn)
   "(fft-cancel lo-freq hi-freq snd chn) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"
   (let* ((sr (srate snd))
-	 (len (frames snd chn))
+	 (len (framples snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rdata (channel->float-vector 0 fsize snd chn))
 	 (idata (make-float-vector fsize)))
@@ -773,7 +773,7 @@ then inverse ffts."
 
 (define* (fft-env-data fft-env snd chn)
   "(fft-env-data fft-env snd chn) applies fft-env as spectral env to current sound, returning float-vector of new data"
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rdata (channel->float-vector 0 fsize snd chn))
 	 (idata (make-float-vector fsize))
@@ -791,7 +791,7 @@ then inverse ffts."
 
 (define* (fft-env-edit fft-env snd chn)
   "(fft-env-edit fft-env snd chn) edits (filters) current chan using fft-env"
-  (float-vector->channel (fft-env-data fft-env snd chn) 0 (- (frames) 1) snd chn #f (format #f "fft-env-edit '~A" fft-env)))
+  (float-vector->channel (fft-env-data fft-env snd chn) 0 (- (framples) 1) snd chn #f (format #f "fft-env-edit '~A" fft-env)))
 
 
 (define* (fft-env-interp env1 env2 interp snd chn)
@@ -799,7 +799,7 @@ then inverse ffts."
 spectral envelopes) following interp (an env between 0 and 1)"
   (let* ((data1 (fft-env-data env1 snd chn))
 	 (data2 (fft-env-data env2 snd chn))
-	 (len (frames snd chn))
+	 (len (framples snd chn))
 	 (new-data (make-float-vector len))
 	 (e (make-env interp :length len))
 	 (erev (make-env (scale-envelope interp -1.0 1.0) :length len))) ; 1.0 - e
@@ -815,7 +815,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
   "(filter-fft flt normalize snd chn) gets the spectrum of all the data in the given channel, \
 applies the function 'flt' to it, then inverse ffts.  'flt' should take one argument, the \
 current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 y))) is like fft-squelch."
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (mx (maxamp snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (fsize2 (/ fsize 2))
@@ -940,7 +940,7 @@ envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))"
 	(max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
 
   (let ((cmb (make-comb scaler size :max-size (floor (+ size 1 (max-envelope-1 pm 0.0)))))
-	(penv (make-env pm :length (frames))))
+	(penv (make-env pm :length (framples))))
     (lambda (x)
       (comb cmb x (env penv)))))
 
@@ -976,7 +976,7 @@ is: (filter-sound (make-formant 2400 .99))"
 (define (moving-formant radius move)
   "(moving-formant radius move) returns a time-varying (in frequency) formant filter: (map-channel (moving-formant .99 '(0 1200 1 2400)))"
   (let ((frm (make-formant (cadr move) radius))
-	(menv (make-env move :length (frames))))
+	(menv (make-env move :length (framples))))
     (lambda (x)
       (let ((val (formant frm x)))
 	(mus-set-formant-frequency frm (env menv))
@@ -1066,7 +1066,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 (define (ring-mod freq gliss-env)
   "(ring-mod freq gliss-env) returns a time-varying ring-modulation filter: (map-channel (ring-mod 10 (list 0 0 1 (hz->radians 100))))"
   (let* ((os (make-oscil :frequency freq))
-	 (len (frames))
+	 (len (framples))
 	 (genv (make-env gliss-env :length len)))
     (lambda (inval)
       (* (oscil os (env genv)) inval))))
@@ -1097,7 +1097,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 (define* (hello-dentist frq amp snd chn)
   "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
-	 (len (frames))
+	 (len (framples))
 	 (rd (make-sampler 0 snd chn))
 	 (sr (make-src :srate 1.0 
 		       :input (lambda (dir) (read-sample-with-direction rd dir)))))
@@ -1158,7 +1158,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 
 (define* (expsnd gr-env snd chn)
   "(expsnd gr-env snd chn) uses the granulate generator to change tempo according to an envelope: (expsnd '(0 .5 2 2.0))"
-  (let* ((dur (/ (* (/ (frames snd chn) (srate snd)) 
+  (let* ((dur (/ (* (/ (framples snd chn) (srate snd)) 
 		    (integrate-envelope gr-env)) ; in env.scm
 		 (envelope-last-x gr-env)))
 	 (gr (make-granulate :expansion (cadr gr-env) 
@@ -1166,7 +1166,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 			     :input (make-sampler 0 snd chn)))
 	 (ge (make-env gr-env :duration dur))
 	 (sound-len (round (* (srate snd) dur)))
-	 (len (max sound-len (frames snd chn)))
+	 (len (max sound-len (framples snd chn)))
 	 (out-data (make-float-vector len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
@@ -1230,7 +1230,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (ctr 0)
 	 (radius (- 1.0 (/ r fftsize)))
 	 (bin (/ (srate snd) fftsize))
-	 (len (frames snd chn))
+	 (len (framples snd chn))
 	 (outlen (floor (/ len tempo)))
 	 (hop (floor (* freq-inc tempo)))
 	 (out-data (make-float-vector (max len outlen)))
@@ -1278,7 +1278,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (ctr 0)
 	 (radius (- 1.0 (/ r fftsize)))
 	 (bin (/ (srate snd) fftsize))
-	 (len (frames snd chn))
+	 (len (framples snd chn))
 	 (out-data (make-float-vector len))
 	 (formants (make-vector freq-inc))
 	 (old-peak-amp 0.0))
@@ -1320,8 +1320,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 
 (define (cnvtest snd0 snd1 amp)
   "(cnvtest snd0 snd1 amp) convolves snd0 and snd1, scaling by amp, returns new max amp: (cnvtest 0 1 .1)"
-  (let* ((flt-len (frames snd0))
-	 (total-len (+ flt-len (frames snd1)))
+  (let* ((flt-len (framples snd0))
+	 (total-len (+ flt-len (framples snd1)))
 	 (cnv (make-convolve :filter (channel->float-vector 0 flt-len snd0)
 			     :input (make-sampler 0 snd1)))
 	 (out-data (make-float-vector total-len)))
@@ -1373,7 +1373,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
     ;; use a sine wave to lookup the current sound
     (let ((osc (make-oscil :frequency freq :initial-phase (+ pi (/ pi 2))))
 	  (reader (make-sound-interp 0 0 0)) 
-	  (len (- (frames 0 0) 1)))
+	  (len (- (framples 0 0) 1)))
       (map-channel (lambda (val) 
 		     (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))))
 
@@ -1383,7 +1383,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 
 (define (sound-via-sound snd1 snd2) ; "sound composition"??
   (let* ((intrp (make-sound-interp 0 snd1 0))
-	 (len (- (frames snd1 0) 1))
+	 (len (- (framples snd1 0) 1))
 	 (rd (make-sampler 0 snd2 0))
 	 (mx (maxamp snd2 0)))
       (map-channel (lambda (val) 
@@ -1405,7 +1405,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
   "(env-sound-interp env (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"
   ;; since the old/new sounds can be any length, we'll write a temp file rather than trying to use map-channel
 
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (newlen (floor (* time-scale len))))
     (let ((new-snd (with-sound (:output (snd-tempnam) :to-snd #f :srate (srate snd))
 		     (let ((data (channel->float-vector 0 #f snd chn))
@@ -1429,7 +1429,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
   "(granulated-sound-interp envelope (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn) reads \
 the given channel following 'envelope' (as in env-sound-interp), using grains to create the re-tempo'd read"
 
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (newlen (floor (* time-scale len))))
     (let ((read-env (make-env envelope :length newlen :scaler len))
 	  (grain-frames (round (* grain-length (srate snd))))
@@ -1485,7 +1485,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 (define* (filtered-env e snd chn)
   "(filtered-env env snd chn) is a time-varying one-pole filter: when env is at 1.0, no filtering, 
 as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together"
-  (let* ((samps (frames))
+  (let* ((samps (framples))
 	 (flt (make-one-pole 1.0 0.0))
 	 (xc (mus-xcoeffs flt))
 	 (yc (mus-ycoeffs flt))
@@ -1537,7 +1537,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	(samp0 0.0)
 	(samp1 0.0)
 	(samp2 0.0)
-	(len (frames)))
+	(len (framples)))
     (call-with-exit
      (lambda (return)
        (do ((ctr loc (+ ctr 1)))
@@ -1651,7 +1651,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 
 ;;; -------- file->floats and a sort of cue-list, I think
 
-(define (file->floats file) (samples 0 (frames file) file))
+(define (file->floats file) (samples 0 (framples file) file))
 
 
 (define* (add-notes notes snd chn)
@@ -1693,7 +1693,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
      (map 
       (lambda (id)
 	(let ((cur time))
-	  (set! time (+ time (/ (frames id) (srate id))))
+	  (set! time (+ time (/ (framples id) (srate id))))
 	  (list cur id)))
       data))))
 
@@ -1710,7 +1710,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 			 (name (car vals))
 			 (start (cadr vals))
 			 (end (if (null? (cdr lst))
-				  (frames)
+				  (framples)
 				  (cadr (cadr lst))))
 			 (loop-start (- (caddr vals) start))
 			 (loop-end (- (cadddr vals) start))
@@ -1719,7 +1719,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 			(set! (selection-member? #t) #f)) ; clear entire current selection, if any
 		    (set! (selection-member?) #t)
 		    (set! (selection-position) start)
-		    (set! (selection-frames) (- end start))
+		    (set! (selection-framples) (- end start))
 		    (save-selection filename mus-aifc)
 		    (let ((temp (open-sound filename)))
 		      (set! (sound-loop-info temp) (list loop-start loop-end))
@@ -1927,7 +1927,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
        (set! (max-regions) 1024)
        (set! (with-mix-tags) #f))
      (lambda ()
-       (let ((len (frames))
+       (let ((len (framples))
 	     (reader (make-sampler)))
 	 (do ((i 0 (+ i 1)))
 	     ((= i len))
@@ -1937,7 +1937,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	       (if (not (eq? in-silence now-silent))
 		   (set! edges (cons i edges)))
 	       (set! in-silence now-silent)))))
-       (set! edges (append (reverse edges) (list (frames))))
+       (set! edges (append (reverse edges) (list (framples))))
        (let* ((len (length edges))
 	      (pieces (make-vector len #f))
 	      (start 0)
@@ -1971,7 +1971,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 			    (set! reg (pieces j))
 			    (if reg (set! (pieces j) #f))))))
 		(mix-region reg start)
-		(set! start (+ start (frames reg)))
+		(set! start (+ start (framples reg)))
 		(forget-region reg)))))))
      (lambda ()
        (set! (with-mix-tags) old-tags)
@@ -1982,7 +1982,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 
 (define* (reverse-by-blocks block-len snd chn)
   "(reverse-by-blocks block-len snd chn): divide sound into block-len blocks, recombine blocks in reverse order"
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (num-blocks (floor (/ len (* (srate snd) block-len)))))
     (if (> num-blocks 1)
 	(let* ((actual-block-len (ceiling (/ len num-blocks)))
@@ -2008,7 +2008,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 
 (define* (reverse-within-blocks block-len snd chn)
   "(reverse-within-blocks block-len snd chn): divide sound into blocks, recombine in order, but each block internally reversed"
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (num-blocks (floor (/ len (* (srate snd) block-len)))))
     (if (> num-blocks 1)
 	(let ((actual-block-len (ceiling (/ len num-blocks)))
@@ -2029,7 +2029,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 (define* (channel-clipped? snd chn)
   "(channel-clipped? snd chn) returns the sample number if it finds clipping"
   (let ((last-y 0.0)
-	(len (frames snd chn))
+	(len (framples snd chn))
 	(reader (make-sampler 0 snd chn)))
     (call-with-exit
      (lambda (quit)

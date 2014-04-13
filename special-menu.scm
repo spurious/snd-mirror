@@ -30,7 +30,7 @@
   (lambda ()
     (select-file
      (lambda (filename)
-        (insert-sound filename (frames))))))
+        (insert-sound filename (framples))))))
 
 (add-to-menu special-menu #f #f)
 

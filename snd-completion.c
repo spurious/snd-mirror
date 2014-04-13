@@ -270,7 +270,7 @@ void preload_best_completions(void)
   best_completions[n++] = mus_strdup(S_cursor);
   best_completions[n++] = mus_strdup(S_env_channel);
   best_completions[n++] = mus_strdup(S_file_name);
-  best_completions[n++] = mus_strdup(S_frames);
+  best_completions[n++] = mus_strdup(S_framples);
   best_completions[n++] = mus_strdup(S_map_channel);
   best_completions[n++] = mus_strdup(S_maxamp);
   best_completions[n++] = mus_strdup(S_play);

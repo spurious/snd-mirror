@@ -46,7 +46,7 @@
   (if (selection?)
       (if (= (selection-chans) 2)
 	  (let* ((beg (selection-position))
-		 (len (selection-frames))
+		 (len (selection-framples))
 		 (snd-chn0 (find-selection-sound ()))
 		 (snd-chn1 (find-selection-sound snd-chn0)))
 	    (if snd-chn1
@@ -62,7 +62,7 @@
 (define (replace-with-selection)
   "(replace-with-selection) replaces the samples from the cursor with the current selection"
   (let ((beg (cursor))
-	(len (selection-frames)))
+	(len (selection-framples)))
     (insert-selection beg) ; put in the selection before deletion, since delete-samples can deactivate the selection
     (delete-samples (+ beg len) len)))
 
@@ -99,7 +99,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
     (define (add-chan-to-selection s0 s1 s c)
       (set! (selection-member? s c) #t)
       (set! (selection-position s c) (or s0 0))
-      (set! (selection-frames s c) (- (or (and (number? s1) (+ 1 s1)) (frames s c)) (or s0 0))))
+      (set! (selection-framples s c) (- (or (and (number? s1) (+ 1 s1)) (framples s c)) (or s0 0))))
 
     (if (not (sound? current-sound))
 	(error 'no-such-sound "make-selection can't find sound"))
@@ -132,7 +132,7 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
   (let ((seldata (and (selection?) 
 		      (car (selection-members)))))
     (if (selection?)
-	(set! seldata (append seldata (list (selection-position) (selection-frames)))))
+	(set! seldata (append seldata (list (selection-position) (selection-framples)))))
     (make-selection beg (- (+ beg dur) 1) snd chn)
     (let ((result (thunk)))
       (if seldata
@@ -154,7 +154,7 @@ the selection, the smooths the edges with a ramp whose duration is 'ramp-dur' (i
     (save-selection temp-file)
     (let ((selsnd (open-sound temp-file)))
       (filter-sound flt (or order (length flt)) selsnd)
-      (let ((tmp-dur (samples->seconds (frames selsnd))))
+      (let ((tmp-dur (samples->seconds (framples selsnd))))
 	(set! (sync selsnd) (+ 1 (sync-max))) ; make sure env-sound hits all chans
 	(env-sound (list 0 0  ramp-dur 1  (- tmp-dur ramp-dur) 1  tmp-dur 0) 0 #f 1.0 selsnd)
 	(save-sound selsnd)

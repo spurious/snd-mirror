@@ -248,7 +248,7 @@
 
 (define (append-selection)
   (if (selection?)
-      (insert-selection (frames))))
+      (insert-selection (framples))))
 
 (add-to-menu 1 "Append Selection" append-selection)
 
@@ -257,7 +257,7 @@
 
 (define (replace-with-selection)
   (let ((beg (cursor))
-        (len (selection-frames)))
+        (len (selection-framples)))
     (delete-samples beg len)
     (insert-selection beg)))
 

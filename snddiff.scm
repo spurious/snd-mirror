@@ -2,8 +2,8 @@
 
 
 (define (cross-correlate snd0 chn0 snd1 chn1)
-  (let* ((len0 (frames snd0 chn0))
-	 (len1 (frames snd1 chn1))
+  (let* ((len0 (framples snd0 chn0))
+	 (len1 (framples snd1 chn1))
 	 (ilen (max len0 len1))
 	 (pow2 (ceiling (log ilen 2)))
 	 (fftlen (floor (expt 2 pow2))))
@@ -90,8 +90,8 @@
 
 (define (snddiff-2 snd0 chn0 snd1 chn1)
   ;; this can currently find initial delays, scaling differences, and scattered individual sample differences
-  (let ((len0 (frames snd0 chn0))
-	(len1 (frames snd1 chn1)))
+  (let ((len0 (framples snd0 chn0))
+	(len1 (framples snd1 chn1)))
 
     (or (and (= len0 len1)
 	     (let ((s0 (channel->float-vector 0 #f snd0 chn0))
@@ -129,8 +129,8 @@
 		    (if (> pre1 0.0)
 			(scale-channel 0.0 0 pad snd1 chn1)))))
 
-	  (set! len0 (frames snd0 chn0))
-	  (set! len1 (frames snd1 chn1))
+	  (set! len0 (framples snd0 chn0))
+	  (set! len1 (framples snd1 chn1))
 	  (if (> len0 len1)
 	      (let ((dur (- len0 len1)))
 		(set! post0 (float-vector-peak (channel->float-vector len1 dur snd0 chn0)))

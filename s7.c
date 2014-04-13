@@ -69397,12 +69397,9 @@ int main(int argc, char **argv)
  *   so we need float_vector<->file as gens in clm? but ruby/forth would still use the current stuff.
  *   perhaps start by removing internal uses of mus_mixer|frame (as in locsig: revf|outf->vals to rev|out_vals)
  *   why not samples<->file?  
- *   frame etc used also in *.lisp, *.ins
- *   mus_sound_frames uses that name 
- *   "frample" is the winner
+ *   frame etc used also in *.lisp, *.ins, [*.html], the js data file -- need snd-xref/index check at the end
  *   so remove frame/mixer from clm.c/h, use frample for the IO procs and header info (etc --region_frames...)
  *     use vectors of some sort for backwards compatibility in clm2xen
- *     remove mixers everywhere and use square vectors (float-matrix?)
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 

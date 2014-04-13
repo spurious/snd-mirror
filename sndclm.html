@@ -306,7 +306,7 @@ related documentation: &nbsp;
       <td class="ic"><a href="#in-anydoc">out-any</a></td><td class="ic">sound output</td></tr>
   <tr><td class="ic"><a href="#filetosampledoc">file-&gt;sample</a></td><td class="ic">input sample from file</td>
       <td class="ic"><a href="#phase-vocoderdoc">phase-vocoder</a></td><td class="ic">vocoder analysis and resynthesis</td></tr>
-  <tr><td class="ic"><a href="#filetoframe">file-&gt;frame</a></td><td class="ic">input frame from file</td>
+  <tr><td class="ic"><a href="#filetoframple">file-&gt;frample</a></td><td class="ic">input frample from file</td>
       <td class="ic"><a href="#polywavedoc">polyshape and polywave</a></td><td class="ic">waveshaping</td></tr>
   <tr><td class="ic"><a href="#filterdoc">filter</a></td><td class="ic">direct form FIR/IIR filter</td>
       <td class="ic"><a href="#sawtoothdoc">pulse-train</a></td><td class="ic">pulse train</td></tr>
@@ -316,7 +316,7 @@ related documentation: &nbsp;
       <td class="ic"><a href="#readindoc">readin</a></td><td class="ic">sound input</td></tr>
   <tr><td class="ic"><a href="#formantdoc">formant and firmant</a></td><td class="ic">resonance</td>
       <td class="ic"><a href="#sampletofile">sample-&gt;file</a></td><td class="ic">output sample to file</td></tr>
-  <tr><td class="ic"><a href="#frametofile">frame-&gt;file</a></td><td class="ic">output frame to file</td>
+  <tr><td class="ic"><a href="#frampletofile">frample-&gt;file</a></td><td class="ic">output frample to file</td>
       <td class="ic"><a href="#sawtoothdoc">sawtooth-wave</a></td><td class="ic">sawtooth</td></tr>
   <tr><td class="ic"><a href="#granulatedoc">granulate</a></td><td class="ic">granular synthesis</td>
       <td class="ic"><a href="#sawtoothdoc">square-wave</a></td><td class="ic">square wave</td></tr>
@@ -1670,7 +1670,7 @@ modulation deviation in samples:
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (fm-table file start dur amp read-speed modulator-freq index-in-samples)
   (let* ((beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
          (end (+ beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
-         (table-length (<a class=quiet href="extsnd.html#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> file))
+         (table-length (<a class=quiet href="extsnd.html#mussoundframples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframples_tip)">mus-sound-framples</a> file))
          (tab (<em class=red>make-table-lookup</em> :frequency (/ read-speed (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> file)) 
                                  :wave (<a class=quiet href="#filetoarray" onmouseout="UnTip()" onmouseover="Tip(sndclm_filetoarray_tip)">file-&gt;array</a> file 0 0 table-length (make-vector table-length 0.0 #t))))
          (osc (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> modulator-freq))
@@ -5463,7 +5463,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (move-formants start file amp radius move-env num-formants)
   (let* ((frms (make-vector num-formants))
 	 (beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
-	 (dur (<a class=quiet href="extsnd.html#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> file))
+	 (dur (<a class=quiet href="extsnd.html#mussoundframples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframples_tip)">mus-sound-framples</a> file))
 	 (end (+ beg dur))
 	 (rd (<a class=quiet href="#make-readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_readin_tip)">make-readin</a> file))
 	 (menv (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> move-env :length dur)))
@@ -6068,7 +6068,7 @@ delay line as the coefficients for an FIR filter:
 <pre class="indented">
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (flux start-time file frequency combs0 combs1 (scaler 0.99) (comb-len 32))
   (let* ((beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start-time))
-         (len (<a class=quiet href="extsnd.html#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> file))
+         (len (<a class=quiet href="extsnd.html#mussoundframples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframples_tip)">mus-sound-framples</a> file))
          (end (+ beg len))
          (num-combs0 (length combs0))
          (num-combs1 (length combs1))
@@ -6244,7 +6244,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
          (comb2 (make-comb 0.733 4999))
          (comb3 (make-comb 0.715 5399))
          (comb4 (make-comb 0.697 5801))
-         (file-dur (mus-sound-frames file))
+         (file-dur (mus-sound-framples file))
          (decay-dur *clm-srate*)
          (len (floor (+ decay-dur file-dur)))
          (rd (make-readin file)) ; the direct signal (via sound-let below)
@@ -6482,7 +6482,7 @@ ratio between the old sampling rate and the new;  an srate of 2 causes the sound
 <pre class="indented">
 (with-sound (:play #t :srate 22050)
   (let* ((rd (make-readin "oboe.snd"))
-         (len (* 2 (mus-sound-frames "oboe.snd")))
+         (len (* 2 (mus-sound-framples "oboe.snd")))
          (sr (make-src rd 0.5)))
     (do ((i 0 (+ i 1)))
         ((= i len))
@@ -6498,7 +6498,7 @@ ratio between the old sampling rate and the new;  an srate of 2 causes the sound
 <pre class="indented">
 with_sound(:play, true, :srate, 22050) do
   rd = make_readin("oboe.snd");
-  len = 2 * mus_sound_frames("oboe.snd");
+  len = 2 * mus_sound_framples("oboe.snd");
   sr = make_src(lambda do |dir| 
                  readin(rd) end, 0.5);
   len.times do |i|
@@ -6517,7 +6517,7 @@ with_sound(:play, true, :srate, 22050) do
 lambda: ( -- )
   "oboe.snd" make-readin { rd }
   rd 0.5 make-src { sr }
-  "oboe.snd" mus-sound-frames 2* ( len ) 0 do
+  "oboe.snd" mus-sound-framples 2* ( len ) 0 do
     i  sr 0 #f src  *output* outa drop
   loop
 ; :play #t :srate 22050 with-sound drop
@@ -6709,7 +6709,7 @@ called whenever convolve needs input.
 (with-sound (:play #t :statistics #t)
   (let ((cnv (make-convolve 
               (make-readin "pistol.snd")
-              (file-&gt;float-vector "oboe.snd" 0 (make-float-vector (frames "pistol.snd"))))))
+              (file-&gt;float-vector "oboe.snd" 0 (make-float-vector (framples "pistol.snd"))))))
     (do ((i 0 (+ i 1)))
 	((= i 88200))
       (outa i (* 0.25 (convolve cnv))))))
@@ -6761,7 +6761,7 @@ lambda: ( -- )
   (let* ((tempfile (convolve-files "oboe.snd" 
   		   		   "pistol.snd" 0.5 
 				   "convolved.snd"))
-	 (len (mus-sound-frames tempfile))
+	 (len (mus-sound-framples tempfile))
 	 (reader (make-readin tempfile)))
     (do ((i 0 (+ i 1)))
 	((= i len))
@@ -6780,7 +6780,7 @@ with_sound(:play, true) do
   tempfile = convolve_files("oboe.snd", 
   	                    "pistol.snd", 0.5, 
 			    "convolved.snd");
-  len = mus_sound_frames(tempfile);
+  len = mus_sound_framples(tempfile);
   reader = make_readin(tempfile);
   len.times do |i|
     outa(i, readin(reader), $output);
@@ -6799,7 +6799,7 @@ with_sound(:play, true) do
 lambda: ( -- )
   "oboe.snd" "pistol.snd" 0.5 "convolved.snd" convolve-files { tempfile }
   tempfile make-readin { reader }
-  tempfile mus-sound-frames ( len ) 0 do
+  tempfile mus-sound-framples ( len ) 0 do
     i  reader readin  *output* outa drop
   loop
   tempfile file-delete
@@ -7223,7 +7223,7 @@ lambda: ( -- )
 	     (make-readin "oboe.snd")
 	     :interp 256)) ; 2 * 512 / 4
         ;; 512: fft size, 4: overlap, new dur: 2 * old dur
-	(samps (* 2 (mus-sound-frames "oboe.snd"))))
+	(samps (* 2 (mus-sound-framples "oboe.snd"))))
     (do ((i 0 (+ i 1)))
 	((= i samps))
       (outa i (phase-vocoder pv)))))
@@ -7241,7 +7241,7 @@ with_sound(:play, true, :srate, 22050) do
   pv = make_phase_vocoder(
 	lambda do |dir| readin(rd) end,
         :interp, 2 * 512 / 4);
-  samps = 2 * mus_sound_frames("oboe.snd");
+  samps = 2 * mus_sound_framples("oboe.snd");
   samps.times do |i|
     outa(i, phase_vocoder(pv), $output);
     end
@@ -7257,7 +7257,7 @@ with_sound(:play, true, :srate, 22050) do
 <pre class="indented">
 lambda: ( -- )
   "oboe.snd" make-readin :interp 256 make-phase-vocoder { pv }
-  "oboe.snd" mus-sound-frames 2* ( samps ) 0 do
+  "oboe.snd" mus-sound-framples 2* ( samps ) 0 do
     i  pv #f #f #f #f phase-vocoder  *output* outa drop
   loop
 ; :play #t :srate 22050 with-sound drop
@@ -7441,76 +7441,11 @@ would be tricky to get time-varying indices.  In this instrument we sweep "r" wi
 
 
 
-
-<!-- INDEX framedoc:frames -->
-<!-- INDEX framedoc:mixers -->
-
-<!--  FRAME, MIXER  -->
-
-<div class="innerheader" id="framedoc">frames and mixers</div>
-
-<p>
-This section (frames and mixers) is now obsolete in scheme; use float-vectors instead.
-There are two special data types in CLM: frames and mixers.
-A frame is an array that represents
-a multichannel sample (that is, in a stereo file, at time 0.0, there
-are two samples, one for each channel, and the frame that represents it has 2 samples).  A mixer is a array of arrays
-that represents a set of input to output scalers, as if it were the
-current state of a mixing console's volume controls.  A frame (a multichannel
-input) can be mixed into a new frame (a multichannel output) by passing
-it through a mixer (a matrix, the operation being a (left) matrix multiply).
-These are combined with the notion of a sample (one datum of sampled music), and
-input/output ports (files, audio ports, etc) to handle all the 
-sound data input and output.
-</p>
-
-<table class="method">
-<tr><td class="inner"><em class=def id="make-frame">make-frame</em><code> chans :rest args</code></td><td>create frame and load it with args</td></tr>
-<tr><td class="inner"><em class=def id="make-frame!">make-frame!</em><code> chans :rest args</code></td><td>create frame of any size and load it with args</td></tr>
-<tr><td class="inner"><em class=def id="frame1">frame</em><code> :rest args</code></td><td>create frame and load it with args</td></tr>
-<tr><td class="inner"><em class=def id="frame?">frame?</em><code> obj</code></td><td>is obj a frame</td></tr>
-<tr><td class="inner"><em class=def id="frame-ref">frame-ref</em><code> f1 chan</code></td><td>return f1[chan]</td></tr>
-<tr><td class="inner"><em class=def id="frame-set!">frame-set!</em><code> f1 chan val</code></td><td>f1[chan] = val (also set! with frame-ref)</td></tr>
-<tr><td class="inner"><em class=def id="frame+">frame+</em><code> f1 f2 outf</code></td><td>add f1 and f2 element-wise, return new frame (or outf)</td></tr>
-<tr><td class="inner"><em class=def id="frame*">frame*</em><code> f1 f2 outf</code></td><td>multiply f1 and f2 element-size, return new frame (or outf)</td></tr>
-</table>
-<table class="method">	
-<tr><td class="inner"><em class=def id="make-mixer">make-mixer</em><code> chans :rest args</code></td><td>create a mixer and load it with args</td></tr>
-<tr><td class="inner"><em class=def id="make-mixer!">make-mixer!</em><code> chans :rest args</code></td><td>create a mixer of any size and load it with args</td></tr>
-<tr><td class="inner"><em class=def id="mixer1">mixer</em><code> :rest args</code></td><td>create a mixer and load it with args</td></tr>
-<tr><td class="inner"><em class=def id="make-scalar-mixer">make-scalar-mixer</em><code> chans scl</code></td><td>create a mixer with scl on the diagonal</td></tr>
-<tr><td class="inner"><em class=def id="mixer?">mixer?</em><code> obj</code></td><td>is obj a mixer</td></tr>
-<tr><td class="inner"><em class=def id="mixer-ref">mixer-ref</em><code> m1 in out</code></td><td>m1[in,out] (use set! to change)</td></tr>
-<tr><td class="inner"><em class=def id="mixer-set!">mixer-set!</em><code> m1 in out val</code></td><td>m1[in,out] = val (also set! with mixer-ref)</td></tr>
-<tr><td class="inner"><em class=def id="mixermultiply">mixer*</em><code> m1 m2 outm</code></td><td>matrix multiply of m1 and m2, return new mixer (or outm)</td></tr>
-<tr><td class="inner"><em class=def id="mixeradd">mixer+</em><code> m1 m2 outm</code></td><td>matrix add of m1 and m2, return new mixer (or outm)</td></tr>
-</table>
 <table class="method">		    
-<tr><td class="inner"><em class=def id="frametoframe">frame-&gt;frame</em><code> mf mf outf</code></td><td>pass frame through mixer, return new frame (or outf)</td></tr>
-<tr><td class="inner"><em class=def id="frametolist">frame-&gt;list</em><code> frame</code></td><td>return list of frame's contents</td></tr>
-<tr><td class="inner"><em class=def id="sampletoframe">sample-&gt;frame</em><code> mf sample outf</code></td><td>pass sample through mf (a frame or mixer), return new frame (or outf)</td></tr>
-<tr><td class="inner"><em class=def id="frametosample">frame-&gt;sample</em><code> mf frame</code></td><td>pass frame through mf (a frame or mixer), return sample</td></tr>
+<tr><td class="inner"><em class=def id="frampletoframple">frample-&gt;frample</em><code> mf inf outf</code></td><td>pass frample through a matrix multiply, return outf</td></tr>
 </table>
 
-<table class="method">
-<tr><td colspan=2 class="methodtitle">frame and mixer methods</td></tr>
-<tr><td class="inner"><em class=gen>mus-channels</em></td><td class="inner">number of channels accommodated</td></tr>
-<tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">same as mus-channels</td></tr>
-<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">frame data (float-vector)</td></tr>
-</table>
 
-<p>
-The arguments to frame*, frame+, mixer*, and mixer+ can be floats as well as mixers and
-frames. In that case, the mixer or frame is either scaled by the float, or the float is
-added to each element.  
-In matrix terminology, a mixer is a square matrix, a frame is a column (or row) vector, mixer* is a 
-matrix multiply, and so on. 
-The form <code>(frame-&gt;frame frame mixer frame)</code> multiplies a row vector (the first frame)
-by a matrix (the mixer), whereas <code>(frame-&gt;frame mixer frame frame)</code> multiplies
-a matrix by a column vector.
-See fullmix in clm-ins.scm for an extended example.
-In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_multiply.
-</p>
 
 
 
@@ -7518,8 +7453,8 @@ In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_mult
 
 <div class="innerheader" id="filetosampledoc">sound IO</div>
 
-<p>Sound file IO is based on a set of file readers and writers that deal either in samples, frames, or float-vectors.
-The six functions are file-&gt;sample, sample-&gt;file, file-&gt;frame, frame-&gt;file, array-&gt;file, and file-&gt;array.
+<p>Sound file IO is based on a set of file readers and writers that deal either in samples or float-vectors.
+The six functions are file-&gt;sample, sample-&gt;file, file-&gt;frample, frample-&gt;file, array-&gt;file, and file-&gt;array.
 The name "array" is used here, rather than "float-vector" for historical reasons (the CL version of CLM predates
 Snd by many years).
 These functions are then packaged up in more convenient forms as in-any, out-any, locsig, readin, etc.
@@ -7537,13 +7472,13 @@ object.
 <em class=def id="sampletofile">sample-&gt;file</em> obj samp chan val
 <em class=def id="continue-sampletofile">continue-sample-&gt;file</em> file
 
-<em class=def id="make-filetoframe">make-file-&gt;frame</em> name (buffer-size 8192)
-<em class=def id="make-frametofile">make-frame-&gt;file</em> name (chans 1) (format mus-lfloat) (type mus-next) comment
-<em class=def id="frametofile?">frame-&gt;file?</em> obj
-<em class=def id="filetoframe?">file-&gt;frame?</em> obj
-<em class=def id="filetoframe">file-&gt;frame</em> obj samp outf
-<em class=def id="frametofile">frame-&gt;file</em> obj samp val
-<em class=def id="continue-frametofile">continue-frame-&gt;file</em> file
+<em class=def id="make-filetoframple">make-file-&gt;frample</em> name (buffer-size 8192)
+<em class=def id="make-frampletofile">make-frample-&gt;file</em> name (chans 1) (format mus-lfloat) (type mus-next) comment
+<em class=def id="frampletofile?">frample-&gt;file?</em> obj
+<em class=def id="filetoframple?">file-&gt;frample?</em> obj
+<em class=def id="filetoframple">file-&gt;frample</em> obj samp outf
+<em class=def id="frampletofile">frample-&gt;file</em> obj samp val
+<em class=def id="continue-frampletofile">continue-frample-&gt;file</em> file
 
 <em class=def id="filetoarray">file-&gt;array</em> file channel beg dur array
 <em class=def id="arraytofile">array-&gt;file</em> file data len srate channels
@@ -7564,16 +7499,16 @@ object.
 <pre class="indented">
 (with-sound (:channels 2)
   ;; swap channels of stereo file
-  (let ((input (make-file-&gt;frame "stereo.snd"))
-	(len (mus-sound-frames "stereo.snd"))
-	(frame (make-vector 2 0.0 #t)))
+  (let ((input (make-file-&gt;frample "stereo.snd"))
+	(len (mus-sound-framples "stereo.snd"))
+	(frample (make-vector 2 0.0 #t)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (file-&gt;float-vector input i frame)
-      (let ((val (frame 0)))
-	(set! (frame 0) (frame 1))
-	(set! (frame 1) val))
-      (float-vector-&gt;file *output* i frame))))
+      (file-&gt;float-vector input i frample)
+      (let ((val (frample 0)))
+	(set! (frample 0) (frample 1))
+	(set! (frample 1) val))
+      (float-vector-&gt;file *output* i frample))))
 </pre>
 </div>
 </td>
@@ -7584,15 +7519,15 @@ object.
 <div class="ruby">
 <pre class="indented">
 with_sound(:channels, 2) do
-  input = make_file2frame("stereo.snd");
-  len = mus_sound_frames("stereo.snd");
-  frame = make_frame(2);
+  input = make_file2frample("stereo.snd");
+  len = mus_sound_framples("stereo.snd");
+  frample = make_frample(2);
   len.times do |i|
-    file2frame(input, i, frame);
-    val = frame_ref(frame, 0);
-    frame_set!(frame, 0, frame_ref(frame, 1));
-    frame_set!(frame, 1, val);
-    frame2file($output, i, frame);
+    file2frample(input, i, frample);
+    val = frample_ref(frample, 0);
+    frample_set!(frample, 0, frample_ref(frample, 1));
+    frample_set!(frample, 1, val);
+    frample2file($output, i, frample);
     end
   end.output
 </pre>
@@ -7605,13 +7540,13 @@ with_sound(:channels, 2) do
 <div class="forth">
 <pre class="indented">
 lambda: ( -- )
-  "stereo.snd" make-file-&gt;frame { input }
-  2 make-frame { frm }
-  "stereo.snd" mus-sound-frames ( len ) 0 do
-    input i frm file-&gt;frame ( frm ) 1 frame-ref ( val1 )
-    frm 0 frame-ref ( val0 ) frm 1 rot frame-set! drop
-    ( val1 ) frm 0 rot frame-set! drop
-    *output* i frm frame-&gt;file drop
+  "stereo.snd" make-file-&gt;frample { input }
+  2 make-frample { frm }
+  "stereo.snd" mus-sound-framples ( len ) 0 do
+    input i frm file-&gt;frample ( frm ) 1 frample-ref ( val1 )
+    frm 0 frample-ref ( val0 ) frm 1 rot frample-set! drop
+    ( val1 ) frm 0 rot frample-set! drop
+    *output* i frm frample-&gt;file drop
   loop
 ; :channels 2 :play #t with-sound drop
 </pre>
@@ -7621,12 +7556,12 @@ lambda: ( -- )
 </table>
 
 
-<p>file-&gt;sample writes a sample to a file, frame-&gt;file writes a frame, file-&gt;sample reads a sample
-from a file, and file-&gt;frame reads a frame.
-continue-frame-&gt;file and continue-sample-&gt;file reopen an existing file to continue adding sound data to it.
+<p>file-&gt;sample writes a sample to a file, frample-&gt;file writes a frample, file-&gt;sample reads a sample
+from a file, and file-&gt;frample reads a frample.
+continue-frample-&gt;file and continue-sample-&gt;file reopen an existing file to continue adding sound data to it.
 mus-output? returns #t is its argument is some sort of file writing generator, and mus-input? returns #t if its 
-argument is a file reader.  file-&gt;frame returns a new frame unless you pass it an "outf" argument (a frame).
-In make-file-&gt;sample and make-file-&gt;frame, the buffer-size defaults to *clm-file-buffer-size*.
+argument is a file reader.  
+In make-file-&gt;sample and make-file-&gt;frample, the buffer-size defaults to *clm-file-buffer-size*.
 There are many examples of these functions in snd-test.scm, clm-ins.scm, and clm23.scm.
 Here is one that uses file-&gt;sample to mix in a sound file (there are a zillion other ways to do this):
 </p>
@@ -7668,13 +7603,13 @@ and you forget to call mus-close, the GC will eventually do it for you.
 <tr><td class="inner"><em class=gen>mus-location</em></td><td class="inner">current location in file</td></tr>
 <tr><td class="inner"><em class=gen>mus-increment</em></td><td class="inner">sample increment (direction arg to make-readin)</td></tr>
 <tr><td class="inner"><em class=gen>mus-file-name</em></td><td class="inner">name of file associated with gen</td></tr>
-<tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">number of frames in file associated with gen</td></tr>
+<tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">number of framples in file associated with gen</td></tr>
 </table>
 
 <p>readin returns successive samples from a file; it is an elaboration of file-&gt;sample that keeps track of the
 current read location and channel number for you.
 Its "file" argument is the input file's name.
-"start" is the frame at which to start reading the input file. 
+"start" is the frample at which to start reading the input file. 
 "channel" is which channel to read (0-based).
 "size" is the read buffer size in samples.  It defaults to *clm-file-buffer-size*.
 </p>
@@ -7770,7 +7705,7 @@ readin and <a href="#env">env</a>:
 <p>These are the "generic" input and output functions.
 out-any adds its "data" argument (a sound sample) into the "output" object at sample
 position "loc".  
-The "output" argument can be a vector as well as the more usual frame-&gt;file object.
+The "output" argument can be a vector as well as the more usual frample-&gt;file object.
 or any output-capable CLM generator.
 In with-sound, the current output is *output* and the reverb output is *reverb*.
 outa is the same as out-any with a channel of 0.  It is not an error to try to write to a channel that doesn't exist;
@@ -7779,7 +7714,7 @@ the function just returns.
 
 <p>in-any returns the sample at position "loc" in
 "input".  ina is the same as in-any with a channel of 0.
-As in out-any and friends, the "input" argument can be a file-&gt;frame object, or a vector.
+As in out-any and friends, the "input" argument can be a file-&gt;frample object, or a vector.
 </p>
 
 <table>
@@ -7856,7 +7791,7 @@ use its :output argument:
 <pre class="indented">
 (let ((avg 0.0)
       (samps 0))
-  (with-sound (<em class=red>:output</em> (lambda (frame val chan) ; get the average of all the samples
+  (with-sound (<em class=red>:output</em> (lambda (frample val chan) ; get the average of all the samples
                          (set! avg (+ avg val))
                          (set! samps (+ 1 samps))
                 	 val))
@@ -7942,7 +7877,7 @@ be greater than or equal to 1.0.
 The mus-interp-sinusoidal
 case uses sin and cos to set the respective channel amplitudes (this is reported to
 help with the "hole-in-the-middle" problem).
-The "output" argument can be a vector as well as a frame-&gt;file generator.
+The "output" argument can be a vector as well as a frample-&gt;file generator.
 </p>
 
 
@@ -9775,7 +9710,7 @@ hopefully unobtrusively.  Here is an example, including a stereo reverb:
 	 (comb42 (make-comb 0.697 5801))
 	 (outdel12 (make-delay (seconds-&gt;samples .01)))
 						       
-	 (file-dur (frames *reverb*))
+	 (file-dur (framples *reverb*))
 	 (decay-dur *clm-srate*)
 	 (len (floor (+ decay-dur file-dur))))
     
@@ -10049,7 +9984,7 @@ an increment of a phase variable.
 </pre>
 
 <p>
-This function determines how many mixer (float-vector) elements are printed by mus-describe.
+This function determines how many float-vector elements are printed by mus-describe.
 </p>
 
 
@@ -10305,7 +10240,7 @@ only difference is that mus-fft includes the fft length as an argument, whereas
 </p>
 
 <pre class="indented">
-(let* ((len (mus-sound-frames "oboe.snd"))
+(let* ((len (mus-sound-framples "oboe.snd"))
        (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
        (rdata (make-vector fsize 0.0 #t))
        (idata (make-vector fsize 0.0 #t))

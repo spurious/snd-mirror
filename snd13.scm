@@ -186,7 +186,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	      (begin
 		(do ((i 0 (+ i 1)))
 		    ((= i files-len))
-		  (set! (pframes i) (frames (files i))))
+		  (set! (pframes i) (framples (files i))))
 		(catch #t
 		       (lambda ()
 			 (while reading
@@ -509,7 +509,7 @@ read, even if not playing.  'files' is a list of files to be played."
 
 
 (define (old-file->float-vector file)
-  (samples 0 (frames file) file))
+  (samples 0 (framples file) file))
 
 (define file->vct old-file->float-vector)
 
@@ -570,7 +570,7 @@ read, even if not playing.  'files' is a list of files to be played."
 			   (make-sync-frame-reader beg index)
 			   (make-frame-reader beg index)))
 	       (result #f)
-	       (len (frames index))
+	       (len (framples index))
 	       (end (if dur (min len (+ beg dur)) len)))
 	  (do ((i beg (+ i 1)))
 	      ((or result (= i end))
@@ -590,7 +590,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	       (reader (make-frame-reader beg index +read-forward+ edpos))
 	       (filename (snd-tempnam))
 	       (writer (make-frame->file filename out-chans))
-	       (len (frames index))
+	       (len (framples index))
 	       (end (if dur (min len (+ beg dur)) len))
 	       (loc 0))
 	  (do ((i beg (+ i 1))) 

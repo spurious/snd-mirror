@@ -6256,7 +6256,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (with-sound (:channels 2)
   (let* ((gen (make-moving-spectrum (make-readin "oboe.snd")))
 	 (pv (make-phase-vocoder (make-readin "oboe.snd")))
-	 (samps (frames "oboe.snd")))
+	 (samps (framples "oboe.snd")))
     (do ((i 0 (+ i 1)))
 	((= i samps))
       (moving-spectrum gen)

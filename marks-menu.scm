@@ -363,7 +363,7 @@
       (if (< (length (marks snd chn)) 1)
           (status-report "trim-back needs a mark" snd)
           (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-            (delete-samples (+ endpt 1) (- (frames snd chn) endpt)))))
+            (delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
     (if (> snc 0)
         (apply map
                (lambda (snd chn)
@@ -387,7 +387,7 @@
            (lambda ()
              (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
              (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-               (delete-samples (+ endpt 1) (- (frames snd chn) endpt))))
+               (delete-samples (+ endpt 1) (- (framples snd chn) endpt))))
            "crop")))
     (if (> snc 0)
         (apply map
@@ -505,7 +505,7 @@ using the granulate generator to fix up the selection duration (this still is no
               (chn (cadr m1sc)))
           (set! (selection-member? snd chn) #t)
           (set! (selection-position snd chn) beg)
-          (set! (selection-frames snd chn) (+ 1 (- end beg)))))))
+          (set! (selection-framples snd chn) (+ 1 (- end beg)))))))
 
 (define (cp-define-by-marks)
  (define-selection-via-marks (integer->mark define-by-mark-one) (integer->mark define-by-mark-two)))
@@ -881,22 +881,22 @@ using the granulate generator to fix up the selection duration (this still is no
 			  
 			  (XtAddCallback farright XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
+					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
 					     (set! (loop-data (+ loc (* offset 2))) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback stopright XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
+					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
 					     (set! (loop-data (+ loc (* offset 2))) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback lotsright XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
+					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
 					     (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 10)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback someright XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
+					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
 					     (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 1)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
 		      (list rowrighttop rowrightbottom)

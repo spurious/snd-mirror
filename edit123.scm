@@ -128,7 +128,7 @@
 	     (set! is-playing 0)))
 
 (define (eos )
-  (set! (cursor) (+ (selection-position) (selection-frames))))
+  (set! (cursor) (+ (selection-position) (selection-framples))))
 
 (define (mark-named name)
   (select-channel 0)
@@ -151,7 +151,7 @@
   (make-selection pos1 pos2)
 					;(set! (x-bounds) 
 					;    (list (/ (selection-position) (srate))
-					;          (/ (+ (selection-position) (selection-frames)) (srate))))
+					;          (/ (+ (selection-position) (selection-framples)) (srate))))
   (play (selection)))
 
 (define (test-mark-forw name  length)
@@ -199,7 +199,7 @@
   (make-selection (cursor)  (+ (cursor) length))
 					;(set! (x-bounds) 
 					;    (list (/ (selection-position) (srate))
-					;          (/ (+ (selection-position) (selection-frames)) (srate))))
+					;          (/ (+ (selection-position) (selection-framples)) (srate))))
   (play (selection)))
 
 
@@ -215,35 +215,35 @@
 
 (define (forward-selection)
   (if (not (selection?)) (make-selection (cursor)  (+ (cursor) 20000)))
-  (if (< (selection-frames) 2000) (make-selection  (- (cursor) 2000) (cursor)))
+  (if (< (selection-framples) 2000) (make-selection  (- (cursor) 2000) (cursor)))
 					; is cursor inside of selection ?
-  (if  (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-frames))))
+  (if  (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-framples))))
        (begin
-	 (make-selection (cursor)  (+ (cursor) (selection-frames)))
+	 (make-selection (cursor)  (+ (cursor) (selection-framples)))
 	 (stop-playing)
 	 (eos)))
-  (if  (and (>= (cursor) (selection-position)) (<= (cursor) (+ (selection-position) (selection-frames))))  
+  (if  (and (>= (cursor) (selection-position)) (<= (cursor) (+ (selection-position) (selection-framples))))  
        (begin  
 	 (stop-playing)
 	 (eos)
-	 (make-selection (cursor)  (+ (cursor) (selection-frames)))))
+	 (make-selection (cursor)  (+ (cursor) (selection-framples)))))
   (play (selection)))
 
 
 (define (backward-selection)
   (if (not (selection?)) (make-selection  (- (cursor) 20000) (cursor)))
-  (if (< (selection-frames) 2000) (make-selection  (- (cursor) 2000) (cursor)))
-  (if  (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-frames))))
+  (if (< (selection-framples) 2000) (make-selection  (- (cursor) 2000) (cursor)))
+  (if  (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-framples))))
        (begin
-	 (make-selection (cursor)  (- (cursor) (selection-frames)))
+	 (make-selection (cursor)  (- (cursor) (selection-framples)))
 	 (stop-playing)
 	 (set! (cursor) (selection-position))))
   
-  (if  (and (>= (cursor) (selection-position)) (<= (cursor) (+ (selection-position) (selection-frames))))  
+  (if  (and (>= (cursor) (selection-position)) (<= (cursor) (+ (selection-position) (selection-framples))))  
        (begin  
 	 (stop-playing)
 	 (set! (cursor) (selection-position))))
-  (make-selection  (- (cursor) (selection-frames)) (cursor) )
+  (make-selection  (- (cursor) (selection-framples)) (cursor) )
   (play (selection)))
 
 
@@ -310,14 +310,14 @@
 					;double-selection
 (define (double-selection)
   (set! (cursor) (selection-position))
-  (make-selection (selection-position) (+ (selection-position)(*  (selection-frames) 2)))
+  (make-selection (selection-position) (+ (selection-position)(*  (selection-framples) 2)))
   )
 
 
 					;half-selection
 (define (half-selection)
   (set! (cursor) (selection-position))
-  (make-selection (selection-position) (+ (selection-position)(/  (selection-frames) 2)))
+  (make-selection (selection-position) (+ (selection-position)(/  (selection-framples) 2)))
   )
 
 					;play-selection
@@ -472,7 +472,7 @@
 					; + zoom in 
 (bind-key (char->integer #\+) 0 (lambda () (set! (x-bounds) 
 						 (list (/ (selection-position) (srate))
-						       (/ (+ (selection-position) (selection-frames)) (srate)))) 
+						       (/ (+ (selection-position) (selection-framples)) (srate)))) 
 					(cursor-on-left)
 					)
 	  )

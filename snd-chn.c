@@ -7064,7 +7064,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	  curlen = current_samples(cp);
 	  newlen = (Xen_is_llong(on)) ? Xen_llong_to_C_llong(on) : curlen;
 	  if (newlen < 0)
-	    Xen_out_of_range_error(S_setB S_frames, 1, on, "frames < 0?");
+	    Xen_out_of_range_error(S_setB S_framples, 1, on, "frames < 0?");
 	  if (curlen > newlen)
 	    {
 	      if (newlen > 0)
@@ -7074,7 +7074,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	  else
 	    {
 	      if (newlen > curlen)
-		extend_with_zeros(cp, curlen, newlen - curlen, cp->edit_ctr, S_setB S_frames);
+		extend_with_zeros(cp, curlen, newlen - curlen, cp->edit_ctr, S_setB S_framples);
 	    }
 	  if (need_update)
 	    update_graph(cp);
@@ -7431,12 +7431,12 @@ static Xen g_cursor_position(Xen snd, Xen chn)
 
 Xen g_frames(Xen snd, Xen chn, Xen edpos)
 {
-  #define H_frames "(" S_frames " :optional snd-or-object chn edpos): number of frames of data in the given object or channel"
+  #define H_frames "(" S_framples " :optional snd-or-object chn edpos): number of frames of data in the given object or channel"
 
   if (!(Xen_is_bound(chn)))
     {
       if ((xen_is_sound(snd)) || (!Xen_is_bound(snd)))
-	return(channel_get(snd, chn, CP_FRAMES, S_frames));
+	return(channel_get(snd, chn, CP_FRAMES, S_framples));
 
       if (Xen_is_string(snd))
 	return(g_mus_sound_frames(snd));         /* mus-sound-frames */
@@ -7454,7 +7454,7 @@ Xen g_frames(Xen snd, Xen chn, Xen edpos)
 	return(g_mix_length(snd));
 
       if (xen_is_region(snd))                     /* region-frames */
-	return(g_region_frames(snd, Xen_integer_zero));
+	return(g_region_framples(snd, Xen_integer_zero));
 
       if (xen_is_player(snd))
 	{
@@ -7465,7 +7465,7 @@ Xen g_frames(Xen snd, Xen chn, Xen edpos)
     }
 
   if (xen_is_selection(snd))
-    return(g_selection_frames(chn, edpos));
+    return(g_selection_framples(chn, edpos));
 
   if (Xen_is_bound(edpos))
     {
@@ -7474,20 +7474,20 @@ Xen g_frames(Xen snd, Xen chn, Xen edpos)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
-      res = channel_get(snd, chn, CP_EDPOS_FRAMES, S_frames);
+      res = channel_get(snd, chn, CP_EDPOS_FRAMES, S_framples);
       snd_unprotect_at(cp_edpos_loc);
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
 
-  return(channel_get(snd, chn, CP_FRAMES, S_frames));
+  return(channel_get(snd, chn, CP_FRAMES, S_framples));
 }
 
 
 static Xen g_set_frames(Xen on, Xen snd, Xen chn_n) 
 {
-  Xen_check_type(Xen_is_number(on), on, 1, S_setB S_frames, "a number");
-  return(channel_set(snd, chn_n, on, CP_FRAMES, S_setB S_frames));
+  Xen_check_type(Xen_is_number(on), on, 1, S_setB S_framples, "a number");
+  return(channel_set(snd, chn_n, on, CP_FRAMES, S_setB S_framples));
 }
 
 with_three_setter_args(g_set_frames_reversed, g_set_frames)
@@ -9939,7 +9939,8 @@ void g_init_chn(void)
   Xen_define_procedure_with_setter(S_y_position_slider, g_ap_sy_w, H_y_position_slider, S_setB S_y_position_slider, g_set_ap_sy_w, 0, 2, 1, 2);
   Xen_define_procedure_with_setter(S_x_zoom_slider, g_ap_zx_w, H_x_zoom_slider, S_setB S_x_zoom_slider, g_set_ap_zx_w, 0, 2, 1, 2);
   Xen_define_procedure_with_setter(S_y_zoom_slider, g_ap_zy_w, H_y_zoom_slider, S_setB S_y_zoom_slider, g_set_ap_zy_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_frames, g_frames_w, H_frames, S_setB S_frames, g_set_frames_w, 0, 3, 1, 2);
+  Xen_define_procedure_with_setter(S_framples, g_frames_w, H_frames, S_setB S_framples, g_set_frames_w, 0, 3, 1, 2);
+  Xen_define_procedure_with_setter("frames", g_frames_w, H_frames, "set-frames", g_set_frames_w, 0, 3, 1, 2);
   Xen_define_procedure_with_setter(S_maxamp, g_maxamp_w, H_maxamp, S_setB S_maxamp, g_set_maxamp_w, 0, 3, 1, 2);
 
   Xen_define_safe_procedure(S_maxamp_position,   g_maxamp_position_w, 0, 3, 0,   H_maxamp_position);

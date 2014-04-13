@@ -43,7 +43,7 @@
 (define map-chan-over-target-with-sync
   ;; target: 'marks -> beg=closest marked sample, dur=samples to next mark
   ;;         'sound -> beg=0, dur=all samples in sound
-  ;;         'selection -> beg=selection-position, dur=selection-frames
+  ;;         'selection -> beg=selection-position, dur=selection-framples
   ;;         'cursor -> beg=cursor, dur=samples to end of sound
   ;; decay is how long to run the effect past the end of the sound
   (lambda (func target origin decay)
@@ -74,9 +74,9 @@
 			 (lambda (snd chn)
 			   (let ((end (if (or (eq? target 'sound)
 					      (eq? target 'cursor))
-					  (- (frames snd chn) 1)
+					  (- (framples snd chn) 1)
 					  (if (eq? target 'selection)
-					      (+ (selection-position) (selection-frames))
+					      (+ (selection-position) (selection-framples))
 					      (cadr ms)))))
 			     (if (= (sync snd) snc)
 				 (map-channel (func (- end beg)) beg (+ end overlap 1) snd chn #f
@@ -147,11 +147,11 @@
 	  (XtAddCallback trbutton XmNvalueChangedCallback (lambda (w c i) (truncate-callback (.set i))))))
     rc))
 
-(define (effect-frames target)
+(define (effect-framples target)
   (if (eq? target 'sound)
-      (- (frames) 1)
+      (- (framples) 1)
       (if (eq? target 'selection)
-          (selection-frames)
+          (selection-framples)
           (+ 1 (abs (apply - (plausible-mark-samples)))))))
 
 
@@ -437,7 +437,7 @@
 (define* (effects-echo input-samps-1 delay-time echo-amount beg dur snd chn)
   "(effects-echo input-samps-1 delay-time echo-amount beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let* ((del (make-delay (round (* delay-time (srate snd)))))
-	 (len (or dur (frames snd chn)))
+	 (len (or dur (framples snd chn)))
 	 (input-samps (or input-samps-1 len)))
     (as-one-edit
      (lambda ()
@@ -465,7 +465,7 @@
 				 (fir-filter flt (* scaler (+ (tap del) inval))))))
 		     beg #f snd chn #f
 		     (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg #f))
-	(let* ((cutoff (- (or input-samps-1 dur (frames snd chn)) 1))
+	(let* ((cutoff (- (or input-samps-1 dur (framples snd chn)) 1))
 	       (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 	  (map-channel (lambda (inval)
 			 (+ inval 
@@ -479,7 +479,7 @@
   (let* ((os (make-oscil frq))
 	 (len (round (* secs (srate snd))))
 	 (del (make-delay len :max-size (round (+ len amp 1))))
-	 (cutoff (- (or input-samps-1 dur (frames snd chn)) 1))
+	 (cutoff (- (or input-samps-1 dur (framples snd chn)) 1))
 	 (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
     (map-channel (lambda (inval)
 		   (+ inval 
@@ -1694,7 +1694,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (lambda (freq)
 	(let* ((os (make-oscil freq))
 	       (need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
-	       (e (and need-env (make-env (xe-envelope am-effect-envelope) :length (effect-frames am-effect-target)))))
+	       (e (and need-env (make-env (xe-envelope am-effect-envelope) :length (effect-framples am-effect-target)))))
 	  (if need-env
 	      (lambda (inval)
 		(amplitude-modulate 1.0 inval (* (env e) (oscil os))))
@@ -1791,7 +1791,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (lambda (freq gliss-env)
 	(let* ((os (make-oscil freq))
 	       (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))))
-	       (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-frames rm-target)))))
+	       (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-framples rm-target)))))
 	  (if need-env
 	      (lambda (inval)
 		(* inval (env e) (oscil os)))
@@ -1890,8 +1890,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 (define* (effects-cnv snd0-1 amp snd chn)
   "(effects-cnv snd0-1 amp snd chn) is used by the effects dialog to tie into edit-list->function"
   (let* ((snd0 (if (sound? snd0-1) snd0-1 (car (sounds))))
-	 (flt-len (frames snd0))
-	 (total-len (+ flt-len (frames snd chn)))
+	 (flt-len (framples snd0))
+	 (total-len (+ flt-len (framples snd chn)))
 	 (cnv (make-convolve :filter (channel->float-vector 0 flt-len snd0)
 			     :input (make-sampler 0 snd chn)))
 	 (out-data (make-float-vector total-len)))
@@ -1923,7 +1923,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	   (delay outdel1 (comb-bank combs (all-pass-bank allpasses (* inval (env e))))))))))
 
 (define* (effects-jc-reverb-1 volume beg dur snd chn)
-  (map-channel (effects-jc-reverb volume (or beg 0) (or dur (frames snd chn)) snd chn)
+  (map-channel (effects-jc-reverb volume (or beg 0) (or dur (framples snd chn)) snd chn)
 	       (or beg 0) dur snd chn #f
 	       (format #f "effects-jc-reverb-1 ~A ~A ~A" volume beg dur)))
 
@@ -2048,10 +2048,10 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		   jc-reverb-label
 		   
 		   (lambda (w context info) 
-		     ;(pad-channel (- (frames) 1) (srate))
+		     ;(pad-channel (- (framples) 1) (srate))
 		     (map-chan-over-target-with-sync
 		      (lambda (samps) 
-			(effects-jc-reverb jc-reverb-volume samps (frames)))
+			(effects-jc-reverb jc-reverb-volume samps (framples)))
 		      jc-reverb-target 
 		      (lambda (target samps) 
 			(format #f "effects-jc-reverb-1 ~A" jc-reverb-volume))
@@ -2174,30 +2174,30 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 (define* (effects-hello-dentist frq amp beg dur snd chn)
   "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
-	 (len (or dur (- (frames snd chn) beg)))
+	 (len (or dur (- (framples snd chn) beg)))
 	 (sf (make-sampler beg snd chn))
 	 (rd (make-src :srate 1.0 
 		       :input (lambda (dir) (read-sample-with-direction sf dir)))))
     (map-channel
      (lambda (y)
        (src rd (rand-interp rn)))
-     beg len snd chn #f (format #f "effects-hello-dentist ~A ~A ~A ~A" frq amp beg (if (= len (frames snd chn)) #f len)))))
+     beg len snd chn #f (format #f "effects-hello-dentist ~A ~A ~A ~A" frq amp beg (if (= len (framples snd chn)) #f len)))))
 
 
 (define* (effects-fp sr osamp osfrq beg dur snd chn)
   (let* ((os (make-oscil osfrq))
-	 (len (frames snd chn))
+	 (len (framples snd chn))
 	 (sf (make-sampler beg snd chn))
 	 (s (make-src :srate sr :input (lambda (dir) (read-sample-with-direction sf dir)))))
     (map-channel
      (lambda (y)
        (src s (* osamp (oscil os))))
-     beg len snd chn #f (format #f "effects-fp ~A ~A ~A ~A ~A" sr osamp osfrq beg (if (= len (frames snd chn)) #f len)))))
+     beg len snd chn #f (format #f "effects-fp ~A ~A ~A ~A ~A" sr osamp osfrq beg (if (= len (framples snd chn)) #f len)))))
      
 
 (define* (effects-position-sound mono-snd pos snd chn)
   "(effects-position-sound mono-snd pos-1 snd chn) is used by the effects dialog to tie into edit-list->function"
-  (let ((len (frames mono-snd))
+  (let ((len (framples mono-snd))
 	(reader1 (make-sampler 0 mono-snd)))
     (if (number? pos)
 	(map-channel (lambda (y)
@@ -2226,7 +2226,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 				    inval
 				    (rand-interp ri)))))
 		 beg dur snd chn #f (format #f "effects-flange ~A ~A ~A ~A ~A"
-					    amount speed time beg (if (and (number? dur) (not (= dur (frames snd chn)))) dur #f)))))
+					    amount speed time beg (if (and (number? dur) (not (= dur (framples snd chn)))) dur #f)))))
 
 (define (effects-cross-synthesis cross-snd amp fftsize r)
   "(effects-cross-synthesis cross-snd amp fftsize r) is used by the effects dialog to tie into edit-list->function"
@@ -2844,9 +2844,9 @@ the synthesis amplitude, the FFT size, and the radius value."))
 					   (selection-position)
 					   (car ms)))
 				   (if (eq? robotize-target 'sound)
-				       (frames)
+				       (framples)
 				       (if (eq? robotize-target 'selection)
-					   (selection-frames)
+					   (selection-framples)
 					   (- (cadr ms) (car ms)))))))
 		   
 		   (lambda (w context info)
@@ -2984,9 +2984,9 @@ the synthesis amplitude, the FFT size, and the radius value."))
 				(selection-position)
 				(car ms)))
 			(if (eq? wobble-target 'sound)
-			    (frames)
+			    (framples)
 			    (if (eq? wobble-target 'selection)
-				(selection-frames)
+				(selection-framples)
 				(- (cadr ms) (car ms)))))))
 		   
 		   (lambda (w context info)
@@ -3046,7 +3046,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (samp0 0.0)
 		       (samp1 0.0)
 		       (samp2 0.0)
-		       (len (frames)))
+		       (len (framples)))
 		   (call-with-exit
 		    (lambda (return)
 		      (do ((ctr loc (+ ctr 1)))
@@ -3068,7 +3068,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	       (remove-click 0)))
 
 (define* (effects-remove-dc snd chn)
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (data (make-float-vector len))
 	 (reader (make-sampler 0 snd chn)))
     (let ((lastx 0.0)
@@ -3088,7 +3088,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 (define* (effects-compand snd chn)
   (let ((tbl (float-vector -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
 		  0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
-    (let ((len (frames snd chn)))
+    (let ((len (framples snd chn)))
       (let ((reader (make-sampler 0 snd chn))
 	    (data (make-float-vector len)))
 	(do ((i 0 (+ i 1)))

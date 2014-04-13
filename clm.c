@@ -10507,14 +10507,14 @@ bool mus_is_file_to_frample(mus_any *ptr)
 }
 
 
-mus_float_t *mus_file_to_frample(mus_any *ptr, mus_long_t samp, mus_float_t *f, int out_chans)
+mus_float_t *mus_file_to_frample(mus_any *ptr, mus_long_t samp, mus_float_t *f)
 {
   rdin *gen = (rdin *)ptr;
   int i;
 
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start) &&
-      (gen->chans <= out_chans))
+      (gen->chans <= gen->chans))
     {
       mus_long_t pos;
       pos = samp - gen->data_start;
@@ -11272,26 +11272,21 @@ bool mus_is_frample_to_file(mus_any *ptr)
 }
 
 
-mus_float_t *mus_frample_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *data, int chans)
+mus_float_t *mus_frample_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *data)
 {
   rdout *gen = (rdout *)ptr;
+  if (!gen) return(data);
 
-  if (chans == 1)
+  if (gen->chans == 1)
     mus_outa_to_file(ptr, samp, data[0]);
   else
     {
-      if ((chans == 2) &&
-	  (gen->chans == 2))
+      if (gen->chans == 2)
 	{
 	  mus_outa_to_file(ptr, samp, data[0]);
 	  mus_outb_to_file(ptr, samp, data[1]);
 	}
-      else
-	{
-	  if (gen->chans < chans) 
-	    chans = gen->chans;
-	  mus_out_chans_to_file(gen, samp, chans, data);
-	}
+      else mus_out_chans_to_file(gen, samp, gen->chans, data);
     }
   return(data);
 }
@@ -11360,6 +11355,7 @@ mus_float_t *mus_file_to_vector(mus_any *ptr, mus_long_t samp, mus_float_t *vals
 
 mus_float_t *mus_frample_to_frample(mus_float_t *matrix, mus_float_t *in_samps, int in_chans, mus_float_t *out_samps, int out_chans)
 {
+  /* in->out conceptually, so left index is in_chan, it (j below) steps by out_chans */
   int i, j, offset;
   for (i = 0; i < out_chans; i++)
     {
@@ -12319,12 +12315,12 @@ mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t uval)
       else gen->revf[0] = val;
       
       if (gen->revn_writer)
-	mus_frample_to_file(gen->revn_writer, loc, gen->revf, gen->rev_channels);
+	mus_frample_to_file(gen->revn_writer, loc, gen->revf);
     }
 
   /* file output */
   if (gen->outn_writer)
-    mus_frample_to_file(gen->outn_writer, loc, gen->outf, gen->out_channels);
+    mus_frample_to_file(gen->outn_writer, loc, gen->outf);
 
   if (gen->detour)
     (*(gen->detour))(ptr, loc);
@@ -15883,6 +15879,336 @@ mus_float_t mus_apply(mus_any *gen, mus_float_t f1, mus_float_t f2)
 }
 
 
+/* ---------------- mix files ---------------- */
+
+/* a mixing "instrument" along the lines of the mix function in clm */
+/* this is a very commonly used function, so it's worth picking out the special cases for optimization */
+
+#define IDENTITY_MIX 0
+#define IDENTITY_MONO_MIX 1
+#define SCALED_MONO_MIX 2
+#define SCALED_MIX 3
+#define ENVELOPED_MONO_MIX 4
+#define ENVELOPED_MIX 5
+#define ALL_MIX 6
+
+static int mix_file_type(int out_chans, int in_chans, mus_float_t *mx, mus_any ***envs)
+{
+
+  if (envs)
+    {
+      if ((in_chans == 1) && (out_chans == 1)) 
+	{
+	  if (envs[0][0])
+	    return(ENVELOPED_MONO_MIX);
+	  return(SCALED_MONO_MIX);
+	}
+      else 
+	{
+	  if (mx)
+	    return(ALL_MIX);
+	  return(ENVELOPED_MIX); 
+	}
+    }
+  if (mx)
+    {
+      int i, j;
+      if ((in_chans == 1) && (out_chans == 1)) 
+	{
+	  if (mx[0] == 1.0)
+	    return(IDENTITY_MONO_MIX); 
+	  return(SCALED_MONO_MIX);
+	}
+      for (i = 0; i < out_chans; i++)
+	for (j = 0; j < in_chans; j++)
+	  if (((i == j) && (mx[i * in_chans + j] != 1.0)) ||
+	      ((i != j) && (mx[i * in_chans + j] != 0.0)))
+	    return(SCALED_MIX);
+    }
+  if ((in_chans == 1) && (out_chans == 1)) 
+    return(IDENTITY_MONO_MIX);
+  return(IDENTITY_MIX);
+}
+
+
+void mus_mix_file_with_reader_and_writer(mus_any *outf, mus_any *inf,
+					 mus_long_t out_start, mus_long_t out_framples, mus_long_t in_start, 
+					 mus_float_t *mx, mus_any ***envs)
+{
+  int i, mixtype, in_chans, out_chans;
+  mus_long_t inc, outc, out_end;
+  mus_float_t *out_data, *in_data, *local_mx;
+  
+  out_chans = mus_channels(outf);
+  if (out_chans <= 0) 
+    mus_error(MUS_NO_CHANNELS, S_mus_mix ": %s chans: %d", mus_describe(outf), out_chans);
+
+  in_chans = mus_channels(inf);
+  if (in_chans <= 0) 
+    mus_error(MUS_NO_CHANNELS, S_mus_mix ": %s chans: %d", mus_describe(inf), in_chans);
+
+  out_end = out_start + out_framples;
+  mixtype = mix_file_type(out_chans, in_chans, mx, envs);
+
+  in_data = (mus_float_t *)calloc(in_chans, sizeof(mus_float_t));
+  out_data = (mus_float_t *)calloc(out_chans, sizeof(mus_float_t));
+
+  local_mx = mx;
+
+  switch (mixtype)
+    {
+    case ENVELOPED_MONO_MIX:
+      {
+	mus_any *e;
+	e = envs[0][0];
+	for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
+	  {
+	    mus_file_to_frample(inf, inc, in_data);
+	    mus_outa_to_file(outf, outc, in_data[0] * mus_env(e));
+	  }
+      }
+      break;
+
+    case ENVELOPED_MIX:
+      if (mx == NULL) 
+	{
+	  local_mx = (mus_float_t *)calloc(in_chans * out_chans, sizeof(mus_float_t));
+	  for (i = 0; (i < in_chans) && (i < out_chans); i++)
+	    local_mx[i * out_chans + i] = 1.0;
+	}
+      /* fall through */
+
+    case ALL_MIX:
+      /* the general case -- possible envs/scalers on every mixer cell */
+      for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
+	{
+	  int j, k;
+	  for (j = 0; j < in_chans; j++)
+	    for (k = 0; k < out_chans; k++)
+	      if (envs[j][k])
+		local_mx[j * out_chans + k] = mus_env(envs[j][k]);
+	  mus_frample_to_file(outf, outc, mus_frample_to_frample(mus_file_to_frample(inf, inc, in_data), mx, in_chans, out_data, out_chans));
+	}
+      if (mx == NULL) free(local_mx);
+      break;
+
+    case IDENTITY_MONO_MIX:
+      for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
+	{
+	  mus_file_to_frample(inf, inc, in_data);
+	  mus_outa_to_file(outf, outc, in_data[0]);
+	}
+      break;
+
+    case IDENTITY_MIX:
+      for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
+	mus_frample_to_file(outf, outc, mus_file_to_frample(inf, inc, in_data));
+      break;
+
+    case SCALED_MONO_MIX:
+      {
+	mus_float_t scl;
+	scl = mx[0];
+	for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
+	  {
+	    mus_file_to_frample(inf, inc, in_data);
+	    mus_outa_to_file(outf, outc, scl * in_data[0]);
+	  }
+      }
+      break;
+
+    case SCALED_MIX:
+      for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
+	mus_frample_to_file(outf, outc, mus_frample_to_frample(mus_file_to_frample(inf, inc, in_data), mx, in_chans, out_data, out_chans));
+      break;
+
+    }
+  free(in_data);
+  free(out_data);
+}
+
+#if 0
+void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_long_t out_frames, mus_long_t in_start, mus_any *umx, mus_any ***envs)
+{
+  int in_chans, out_chans, min_chans, mixtype;
+  out_chans = mus_sound_chans(outfile);
+
+  if (out_chans <= 0) 
+    mus_error(MUS_NO_CHANNELS, S_mus_mix ": %s chans: %d", outfile, out_chans);
+
+  in_chans = mus_sound_chans(infile);
+  if (in_chans <= 0) 
+    mus_error(MUS_NO_CHANNELS, S_mus_mix ": %s chans: %d", infile, in_chans);
+  if (out_chans > in_chans) 
+    min_chans = in_chans; else min_chans = out_chans;
+
+  mixtype = mix_type(out_chans, in_chans, umx, envs);
+  if (mixtype == ALL_MIX)
+    {
+      mus_any *inf, *outf;
+      /* the general case -- possible envs/scalers on every mixer cell */
+      outf = mus_continue_sample_to_file(outfile);
+      inf = mus_make_file_to_frame(infile);
+      mus_mix_with_reader_and_writer(outf, inf, out_start, out_frames, in_start, umx, envs);
+      mus_free((mus_any *)inf);
+      mus_free((mus_any *)outf);
+    }
+  else
+    {
+      mus_mixer *mx = (mus_mixer *)umx;
+      mus_long_t j = 0;
+      int i, m, ofd, ifd;
+      mus_float_t scaler;
+      mus_any *e;
+      mus_float_t **obufs, **ibufs;
+      mus_long_t offk, curoutframes;
+
+      /* highly optimizable cases */
+      obufs = (mus_float_t **)malloc(out_chans * sizeof(mus_float_t *));
+      for (i = 0; i < out_chans; i++) 
+	obufs[i] = (mus_float_t *)malloc(clm_file_buffer_size * sizeof(mus_float_t));
+
+      ibufs = (mus_float_t **)malloc(in_chans * sizeof(mus_float_t *));
+      for (i = 0; i < in_chans; i++) 
+	ibufs[i] = (mus_float_t *)malloc(clm_file_buffer_size * sizeof(mus_float_t));
+
+      ifd = mus_sound_open_input(infile);
+      mus_file_seek_frample(ifd, in_start);
+      mus_file_read(ifd, in_start, clm_file_buffer_size, in_chans, ibufs);
+      ofd = mus_sound_reopen_output(outfile, 
+				    out_chans, 
+				    mus_sound_data_format(outfile), 
+				    mus_sound_header_type(outfile), 
+				    mus_sound_data_location(outfile));
+      curoutframes = mus_sound_frames(outfile);
+      mus_file_seek_frample(ofd, out_start);
+      mus_file_read(ofd, out_start, clm_file_buffer_size, out_chans, obufs);
+      mus_file_seek_frample(ofd, out_start);
+
+      switch (mixtype)
+	{
+	case IDENTITY_MONO_MIX:
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
+	    {
+	      if (j == clm_file_buffer_size)
+		{
+		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
+		  j = 0;
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
+		}
+	      obufs[0][j] += ibufs[0][j];
+	    }
+	  break;
+
+	case IDENTITY_MIX:
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
+	    {
+	      if (j == clm_file_buffer_size)
+		{
+		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
+		  j = 0;
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
+		}
+	      for (i = 0; i < min_chans; i++)
+		obufs[i][j] += ibufs[i][j];
+	    }
+	  break;
+
+	case SCALED_MONO_MIX:
+	  scaler = mx->vals[0][0];
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
+	    {
+	      if (j == clm_file_buffer_size)
+		{
+		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
+		  j = 0;
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
+		}
+	      obufs[0][j] += (mus_float_t)(scaler * ibufs[0][j]);
+	    }
+	  break;
+
+	case SCALED_MIX:
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
+	    {
+	      if (j == clm_file_buffer_size)
+		{
+		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
+		  j = 0;
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size , out_chans, obufs);
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
+		}
+	      for (i = 0; i < min_chans; i++)
+		for (m = 0; m < in_chans; m++)
+		  obufs[i][j] += (mus_float_t)(ibufs[m][j] * mx->vals[m][i]);
+	    }
+	  break;
+
+	case ENVELOPED_MONO_MIX:
+	  e = envs[0][0];
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
+	    {
+	      if (j == clm_file_buffer_size)
+		{
+		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
+		  j = 0;
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
+		}
+	      obufs[0][j] += (mus_float_t)(mus_env(e) * ibufs[0][j]);
+	    }
+	  break;
+
+	case ENVELOPED_MIX:
+	  e = envs[0][0];
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
+	    {
+	      if (j == clm_file_buffer_size)
+		{
+		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
+		  j = 0;
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
+		  mus_file_seek_frample(ofd, out_start + offk);
+		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
+		}
+	      scaler = mus_env(e);
+	      for (i = 0; i < min_chans; i++)
+		obufs[i][j] += (mus_float_t)(scaler * ibufs[i][j]);
+	    }
+	  break;
+
+	}
+
+      if (j > 0) 
+	mus_file_write(ofd, 0, j - 1, out_chans, obufs);
+      if (curoutframes < (out_frames + out_start)) 
+	curoutframes = out_frames + out_start;
+      mus_sound_close_output(ofd, 
+			     curoutframes * out_chans * mus_bytes_per_sample(mus_sound_data_format(outfile)));
+      mus_sound_close_input(ifd);
+      for (i = 0; i < in_chans; i++) free(ibufs[i]);
+      free(ibufs);
+      for (i = 0; i < out_chans; i++) free(obufs[i]);
+      free(obufs);
+    }
+}
+#endif
+
+
 /* ---------------- init clm ---------------- */
 
 void mus_initialize(void)
@@ -16738,13 +17064,13 @@ mus_any *mus_continue_frame_to_file(const char *filename)
 
 mus_any *mus_frame_to_file(mus_any *ptr, mus_long_t samp, mus_any *data)
 {
-  mus_frample_to_file(ptr, samp, ((mus_frame *)data)->vals, ((mus_frame *)data)->chans);
+  mus_frample_to_file(ptr, samp, ((mus_frame *)data)->vals);
   return(data);
 }
 
 mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *f)
 {
-  mus_file_to_frample(ptr, samp, ((mus_frame *)f)->vals, ((mus_frame *)f)->chans);
+  mus_file_to_frample(ptr, samp, ((mus_frame *)f)->vals);
   return(f);
 }
 
@@ -16845,7 +17171,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
 	e = envs[0][0];
 	for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	  {
-	    mus_file_to_frample(inf, inc, frin->vals, frin->chans);
+	    mus_file_to_frample(inf, inc, frin->vals);
 	    mus_outa_to_file(outf, outc, (*val0) * mus_env(e));
 	  }
       }
@@ -16875,7 +17201,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
       val0 = frin->vals;
       for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	{
-	  mus_file_to_frample(inf, inc, frin->vals, frin->chans);
+	  mus_file_to_frample(inf, inc, frin->vals);
 	  mus_outa_to_file(outf, outc, *val0);
 	}
       break;
@@ -16892,7 +17218,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
 	val0 = frin->vals;
 	for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	  {
-	    mus_file_to_frample(inf, inc, frin->vals, frin->chans);
+	    mus_file_to_frample(inf, inc, frin->vals);
 	    mus_outa_to_file(outf, outc, scl * (*val0));
 	  }
       }

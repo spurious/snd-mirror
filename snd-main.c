@@ -884,7 +884,7 @@ static void check_selection(FILE *fd, chan_info *cp)
       end = selection_end(cp);
       pcp_ss(fd, S_selection_member, b2s(true), cp->chan);
       pcp_sod(fd, S_selection_position, beg, cp->chan);
-      pcp_sod(fd, S_selection_frames, end - beg + 1, cp->chan);     
+      pcp_sod(fd, S_selection_framples, end - beg + 1, cp->chan);     
     }
 }
 
@@ -1272,7 +1272,7 @@ void save_state(const char *save_state_name)
    *   (change-samples-with-origin 1655 480 "set! -mix-1 (mix-selection 1655)" "/home/bil/zap/snd/snd_3309_10.snd" sfile 0 #f (list 1145009982 1964))
    *   (set! (selection-member? sfile 0) #t)
    *   (set! (selection-position sfile 0) 816)
-   *   (set! (selection-frames sfile 0) 480)
+   *   (set! (selection-framples sfile 0) 480)
    *
    *  which won't even work for the current selection case!  If we mix some piece of a sound
    *    being edited in another window, we'd need to keep all edits in sync during the restore!

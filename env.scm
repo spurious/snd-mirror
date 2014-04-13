@@ -401,7 +401,7 @@ repetition to be in reverse."
   "(powenv-channel envelope (beg 0) dur snd chn edpos) returns an envelope with a separate base for \
 each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
   (let* ((curbeg beg)
-	 (fulldur (or dur (frames snd chn edpos)))
+	 (fulldur (or dur (framples snd chn edpos)))
 	 (len (length envelope))
 	 (x1 (car envelope))
 	 (xrange (- (envelope (- len 3)) x1))
@@ -470,8 +470,8 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	 (start (round (* beg fsr)))
 	 (reader (make-sampler start file))
 	 (end (if dur (min (* 1.0 (+ start (round (* fsr dur))))
-			   (mus-sound-frames file))
-		  (mus-sound-frames file)))
+			   (mus-sound-framples file))
+		  (mus-sound-framples file)))
 	 (rms (make-moving-average incrsamps)) ; this could use make-moving-rms from dsp.scm
 	 (rms-val 0.0)
 	 (jend 0))

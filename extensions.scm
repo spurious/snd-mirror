@@ -68,7 +68,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define (enveloped-mix filename beg e)
   "(enveloped-mix filename beg e) mixes filename starting at beg with amplitude envelope e. (enveloped-mix \"pistol.snd\" 0 '(0 0 1 1 2 0))"
-  (let* ((len (frames filename))
+  (let* ((len (framples filename))
 	 (tmp-name (string-append (if (and (string? (temp-dir))
 					   (> (string-length (temp-dir)) 0))
 				      (string-append (temp-dir) "/")
@@ -154,8 +154,8 @@ a list (file-name-or-sound-object [beg [channel]])."
 			   0 
 			   (caddr input-data)))
 	 (len (or dur (- (if (string? input)
-			     (frames input) 
-			     (frames input input-channel))
+			     (framples input) 
+			     (framples input input-channel))
 			 input-beg)))
 	 (start (or beg 0)))
     (if (< start 0) 
@@ -180,7 +180,7 @@ a list (file-name-or-sound-object [beg [channel]])."
 
 		    ;; file input
 		    (if (and (= start 0) 
-			     (= len (frames input)))
+			     (= len (framples input)))
 
 			;; mixing entire file
 			(mix input start 0 snd chn #t #f) ; don't delete it!
@@ -205,7 +205,7 @@ a list (file-name-or-sound-object [beg [channel]])."
 			       (< (length file-data) 3))
 			   0 
 			   (caddr file-data)))
-	 (len (or dur (- (frames file-name) file-beg)))
+	 (len (or dur (- (framples file-name) file-beg)))
 	 (start (or beg 0)))
     (if (< start 0) (error 'no-such-sample "insert-channel: begin time < 0: ~A" beg))
     (if (> len 0)
@@ -250,7 +250,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		  (xrange (- (e (- (length e) 2)) (car e)))
 		  (ramp-beg beg)
 		  (ramp-dur 0))
-	      (if (not (number? dur)) (set! dur (frames snd chn)))
+	      (if (not (number? dur)) (set! dur (framples snd chn)))
 	      (as-one-edit 
 	       (lambda ()
 		 (do ((i 1 (+ 1 i))
@@ -271,7 +271,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
   "(sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"
-  (let ((len (if (number? dur) dur (- (frames snd chn) beg))))
+  (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
     (let ((data (samples beg len snd chn edpos))
 	  (incr (/ pi len))
 	  (scl (* 0.5 (- rmp1 rmp0))))
@@ -301,7 +301,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
   "(blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a blackman4-shaped envelope"
   ;; float-vector: angle incr off scl
-  (let ((len (if (number? dur) dur (- (frames snd chn) beg))))
+  (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
     (let ((incr (/ pi len))
 	  (data (samples beg len snd chn edpos))
 	  (coeffs (float-vector-scale! (float-vector 0.084037 -.29145 .375696 -.20762 .041194) (- rmp1 rmp0))))
@@ -326,7 +326,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos)
   "(ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"
   ;; float-vector: start incr off scl
-  (let ((len (if (number? dur) dur (- (frames snd chn) beg))))
+  (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
     (let ((incr (/ 1.0 len))
 	  (data (samples beg len snd chn edpos))
 	  (scl (- rmp1 rmp0)))
@@ -365,7 +365,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"
   ;; float-vector: start incr off scl exponent
   ;; a^x = exp(x * log(a))
-  (let ((len (if (number? dur) dur (- (frames snd chn) beg))))
+  (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
     (let ((incr (/ 1.0 len))
 	  (data (samples beg len snd chn edpos))
 	  (scl (- rmp1 rmp0)))
@@ -402,7 +402,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (offset-channel dc (beg 0) dur snd chn edpos)
   "(offset-channel amount (beg 0) dur snd chn edpos) adds amount to each sample"
-  (let ((len (if (number? dur) dur (- (frames snd chn) beg))))
+  (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
     (float-vector->channel (float-vector-offset! (samples beg len snd chn edpos) dc)
 			   beg len snd chn current-edit-position (format #f "offset-channel ~A ~A ~A" dc beg dur))))
 
@@ -439,7 +439,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (dither-channel (amount .00006) (beg 0) dur snd chn edpos)
   "(dither-channel (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"
   (let ((dither (* .5 amount)))
-    (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+    (let* ((len (if (number? dur) dur (- (framples snd chn) beg)))
 	   (data (samples beg len snd chn edpos)))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
@@ -463,7 +463,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (contrast-channel index (beg 0) dur snd chn edpos)
   "(contrast-channel index (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"
-  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+  (let* ((len (if (number? dur) dur (- (framples snd chn) beg)))
 	 (data (samples beg len snd chn edpos)))
     (do ((i 0 (+ i 1)))
 	((= i len))
@@ -522,8 +522,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
       (let ((mx1 (maxamp snd1 chn1))
 	    (mx2 (maxamp snd1 chn1)))
 	(and (<= (abs (- mx1 mx2)) allowable-difference)
-	     (let* ((len1 (frames snd1 chn1))
-		    (len2 (frames snd2 chn2))
+	     (let* ((len1 (framples snd1 chn1))
+		    (len2 (framples snd2 chn2))
 		    (first-longer (>= len1 len2)))
 	       (let ((len (if first-longer len1 len2))
 		     (s1 (if first-longer snd1 snd2))
@@ -537,8 +537,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (channels-equal? snd1 chn1 snd2 chn2 (allowable-difference 0.0))
   "(channels-equal? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff)"
-  (let ((len1 (frames snd1 chn1))
-	(len2 (frames snd2 chn2)))
+  (let ((len1 (framples snd1 chn1))
+	(len2 (framples snd2 chn2)))
     (if (not (= len1 len2))
 	#f
 	(channels=? snd1 chn1 snd2 chn2 allowable-difference))))

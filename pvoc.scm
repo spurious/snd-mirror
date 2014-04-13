@@ -208,7 +208,7 @@
 				   #f ;no change to synthesis
 				   ))
 	   (reader (make-sampler 0))
-	   (len (floor (* time (frames))))
+	   (len (floor (* time (framples))))
 	   (data (make-float-vector len))
 	   )
       (do ((i 0 (+ i 1)))
@@ -252,7 +252,7 @@
   'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than
   the gate value will not be synthesized), 'hoffset is a pitch offset in Hz."
 
-    (let* ((len (frames))
+    (let* ((len (framples))
 	   (filptr 0)           ; index into the file
 	   (pi2 (* 2 pi))       ; handy constant
 	   (sr (srate))

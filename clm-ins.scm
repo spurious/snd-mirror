@@ -948,7 +948,7 @@ is a physical model of a flute:
 	(if (even? val) (set! val (+ val 1)))
 	(set! (dly-len i) (next-prime val))))
 
-    (let ((len (+ (floor *clm-srate*) (frames *reverb*)))
+    (let ((len (+ (floor *clm-srate*) (framples *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (dly-len 2)))
@@ -2586,8 +2586,8 @@ mjkoskin@sci.fi
 (if (not (provided? 'snd-expandn.scm)) (load "expandn.scm"))
 
 (definstrument (cnvrev file impulse (rev-amt .1))
-  (let* ((file-len (mus-sound-frames file))
-	 (filter-len (mus-sound-frames impulse))
+  (let* ((file-len (mus-sound-framples file))
+	 (filter-len (mus-sound-framples impulse))
 	 (filter-chan0 (make-float-vector filter-len))
 	 (filter-chan1 (and (= (mus-channels *output*) 2) 
 			    (> (mus-sound-chans impulse) 1)

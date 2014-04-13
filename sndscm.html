@@ -2837,9 +2837,9 @@ extremely slow.
 </p>
 
 <pre class="indented">
-&gt; (find-sine 550.0 0.0 (frames))
+&gt; (find-sine 550.0 0.0 (framples))
 (0.00116420908413177 0.834196665512423)   ; car is amplitude, cadr is phase in radians
-&gt; (* (goertzel 550.0 0.0 (frames)) (/ 2.0 (frames)))
+&gt; (* (goertzel 550.0 0.0 (framples)) (/ 2.0 (framples)))
 0.00116630805062827
 </pre>
 
@@ -2866,7 +2866,7 @@ To paraphrase Brett:
 scentroid returns (in a float-vector) the continuous spectral centroid envelope of a sound.
 The spectral centroid is the "center of gravity" of the spectrum, and it
 has a rough correlation to our sense of "brightness" of a sound. 
-'db-floor' sets a lower limit on which frames are included in the analysis.
+'db-floor' sets a lower limit on which framples are included in the analysis.
 'rfreq' sets the number of  measurements per second.
 'fftsize' sets the fft window size (a power of 2).
 See also the <a href="sndclm.html#moving-scentroid">moving-scentroid</a> generator in generators.scm.
@@ -4274,7 +4274,7 @@ current spectrum value.
 <pre class="indented">
 (define (brfft lofrq hifrq)
   "(brfft lofrq hifrq) removes all frequencies between lofrq and hifrq: (brfft 1000.0 2000.0)"
-  (let* ((len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
+  (let* ((len (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (ctr -1)
 	 (lo (round (/ (* fsize lofrq) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))
@@ -4919,7 +4919,7 @@ Here we use a sine wave to lookup the current sound:
 <pre class="indented">
  (let ((osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> :frequency 0.5 :initial-phase (+ pi (/ pi 2))))
        (reader (make-sound-interp 0 0 0)) 
-       (len (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> 0 0) 1)))
+       (len (- (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> 0 0) 1)))
    (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (val) 
      (sound-interp reader (* len (+ 0.5 (* 0.5 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
 </pre>
@@ -6611,7 +6611,7 @@ It returns a list of all the marks it has added.
 <pre class="indented">
 &gt; (selection-position)
 360
-&gt; (selection-frames)
+&gt; (selection-framples)
 259
 &gt; (snap-marks)
 (#&lt;mark 0&gt; #&lt;mark 1&gt;)
@@ -7796,7 +7796,7 @@ or:
 (define (gad4)
   (do ((i 0 (+ i 1)))
       ((= i 8))
-    (map-channel (lambda (y) (/ (- (abs y) 2) 2)) 0 (frames) 0 i))
+    (map-channel (lambda (y) (/ (- (abs y) 2) 2)) 0 (framples) 0 i))
   (set! (selected-graph-color) (make-color 1 1 1))
   (set! (wavo-trace) 200)
   (set! (wavo-hop) 1)
@@ -7856,17 +7856,17 @@ sinusoids hand us the other three for free. See find-other-mins in peak-phases.s
 (set! (axis-label-font) "9x15")
 (define (window-bounds losamp hisamp snd chn)
   (set! (left-sample snd chn) losamp)
-  (set! (x-zoom-slider snd chn) (exact->inexact (/ (- hisamp losamp) (frames snd chn)))))
+  (set! (x-zoom-slider snd chn) (exact->inexact (/ (- hisamp losamp) (framples snd chn)))))
 (window-bounds  283820 310346 1 0)
 (set! (x-axis-label 0 0) "2's phase")
 (set! (y-zoom-slider 1 0) (y-zoom-slider 0 0))
 (set! (y-zoom-slider 2 0) (y-zoom-slider 0 0))
 (set! (selection-member? 0 0) #t)
 (set! (selection-position 0 0) 283820)
-(set! (selection-frames 0 0) (- 310346 283820))
+(set! (selection-framples 0 0) (- 310346 283820))
 (set! (selection-member? 1 0) #t)
 (set! (selection-position 1 0) 294528)
-(set! (selection-frames 1 0) (- 297881 294528))
+(set! (selection-framples 1 0) (- 297881 294528))
 (set! (x-axis-label 1 0) "2's phase")
 -->
 
@@ -7883,10 +7883,10 @@ sinusoids hand us the other three for free. See find-other-mins in peak-phases.s
 (window-bounds (- 436349 500) (+ 436349 500) 2 0)
 (set! (selection-member? 0 0) #t)
 (set! (selection-position 0 0) (- 436349 12000))
-(set! (selection-frames 0 0) 24000)
+(set! (selection-framples 0 0) 24000)
 (set! (selection-member? 1 0) #t)
 (set! (selection-position 1 0)(- 436349 500))
-(set! (selection-frames 1 0) 1000)
+(set! (selection-framples 1 0) 1000)
 -->
 
 <p>One of those minima might be the one we found near 2.04.
@@ -7950,7 +7950,7 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 	  (set! i (+ i 1))))))
 
 (define (gad5)
-  (do ((i 0 (+ i 1))) ((= i 64)) (map-channel (lambda (y) (/ (- (abs y) 2.3) (- 5.0 2.3))) 0 (frames) 0 i))
+  (do ((i 0 (+ i 1))) ((= i 64)) (map-channel (lambda (y) (/ (- (abs y) 2.3) (- 5.0 2.3))) 0 (framples) 0 i))
   (set! (wavo-trace) 400)
   (set! (wavo-hop) 1)
   (set! (spectro-x-angle) 10)
@@ -7997,7 +7997,7 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 
 
 (define (gad6)
-  (do ((i 0 (+ i 1))) ((= i 8)) (map-channel (lambda (y) (/ (- (abs y) 2.5) (- 6.0 2.5))) 0 (frames) 0 i))
+  (do ((i 0 (+ i 1))) ((= i 8)) (map-channel (lambda (y) (/ (- (abs y) 2.5) (- 6.0 2.5))) 0 (framples) 0 i))
   (set! (selected-graph-color) (make-color 1 1 1))
   (set! (wavo-trace) 100)
   (set! (wavo-hop) 1)
@@ -8055,7 +8055,7 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 (hook-push mix-drag-hook ; report the current maxamp as we drag a component
   (lambda (hook)
     (let ((beg 0)
-	  (end (frames))
+	  (end (framples))
 	  (mx 0.0))
       (for-each
        (lambda (sine)
@@ -9405,7 +9405,7 @@ convolution the infinitely slow way is poly*:
 </p>
 
 <pre class="indented">
-(float-vector-&gt;channel (poly* (channel-&gt;float-vector 0 (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (float-vector 2.0))) ; no, this is not serious
+(float-vector-&gt;channel (poly* (channel-&gt;float-vector 0 (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>)) (float-vector 2.0))) ; no, this is not serious
 </pre>
 
 
@@ -9784,8 +9784,7 @@ see also: &nbsp; <a href="#fofins" onmouseout="UnTip()" onmouseover="Tip('FOF sy
 
 <p>These files contain several procedures
 that were removed from or renamed in earlier versions of Snd (in Ruby, look in extensions.rb).  
-snd11.scm, for example, has the old sine-summation, make-sum-of-cosines, and make-sum-of-sines generators,
-and snd13.scm has the obsolete frame and mixer functions.
+snd11.scm, for example, has the old sine-summation, make-sum-of-cosines, and make-sum-of-sines generators.
 </p>
 
 
@@ -9861,7 +9860,7 @@ you could bind the arrow keys:
                      (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (max 0 (- (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) 1))) 
                      <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
 (<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> "Right" 0 (lambda () 
-                     (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (min (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (+ 1 (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>)))) 
+                     (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (min (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>) (+ 1 (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>)))) 
                      <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
 </pre>
 
@@ -11679,7 +11678,7 @@ compute time: 0.030
   end
 # filename: "test.snd"
 #    chans: 2, srate: 22050
-#   length: 2.000 (44100 frames)
+#   length: 2.000 (44100 framples)
 #   format: big endian short (16 bits) [Sun/Next]
 #     real: 2.248  (utime 2.240, stime 0.000)
 #    ratio: 1.12  (uratio 1.12)
@@ -11696,7 +11695,7 @@ snd&gt; 0.0 1.0 330.0 0.5 ' simp :play #f :channels 2 with-sound
 \ filename: test.snd
 \    chans: 2, srate: 22050
 \   format: little endian float (32 bits) [Sun/Next]
-\   length: 1.000  (22050 frames)
+\   length: 1.000  (22050 framples)
 \     real: 0.162  (utime 0.267, stime 0.000)
 \    ratio: 0.16  (uratio 0.27)
 \ maxamp A: 0.500 (near 0.680 secs)
@@ -11769,7 +11768,7 @@ use with-full-sound:
 <pre class="indented">
 (define-macro (with-full-sound args . body)
   `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
-     (set! (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a> *snd-opened-sound*) (list 0.0 (/ (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> *snd-opened-sound*) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> *snd-opened-sound*))))
+     (set! (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a> *snd-opened-sound*) (list 0.0 (/ (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a> *snd-opened-sound*) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> *snd-opened-sound*))))
      snd))
 </pre>
 
@@ -11983,17 +11982,17 @@ in the status area.
 
 
 <pre class="indented">
-<em class=def id="musmix">mus-mix</em> outfile infile (outloc 0) (frames) (inloc 0) mixer envs
+<em class=def id="musmix">mus-mix</em> outfile infile (outloc 0) (framples) (inloc 0) mixer envs
 </pre>
 
 
 <p>This function
 mixes 'infile' into 'outfile' starting at 'outloc' in 'outfile' and 'inloc' in 'infile',
-mixing 'frames' frames into 'outfile'.  'frames' defaults to the length of 'infile'. If 'mixer',
+mixing 'framples' framples into 'outfile'.  'framples' defaults to the length of 'infile'. If 'mixer',
 use it to scale the various channels; if 'envs' (an array of envelope generators), use
 it in conjunction with mixer to scale and envelope all the various ins and outs.
-'outfile' can also be a <a href="sndclm.html#frametofile">frame-&gt;file</a> generator, and 'infile' can be a 
-<a href="sndclm.html#filetoframe">file-&gt;frame</a> generator.
+'outfile' can also be a <a href="sndclm.html#frampletofile">frample-&gt;file</a> generator, and 'infile' can be a 
+<a href="sndclm.html#filetoframple">file-&gt;frample</a> generator.
 </p>
 
 <pre class="indented">
@@ -12131,7 +12130,7 @@ an upward ramp and a downward ramp, then zips them together:
     (do ((i 0 (+ i 1))) ((= i 10000)) 
       (set! (data i) (- 1.0 (* i .0001))))
     (float-vector-&gt;channel data 0 10000 1)
-    (let* ((dur (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
+    (let* ((dur (<a class=quiet href="extsnd.html#framples" onmouseout="UnTip()" onmouseover="Tip(extsnd_framples_tip)">framples</a>))
 	   (zp (<em class=red>make-zipper</em> (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :length dur)
 			    0.05
 			    (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> (list 0 (* (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) 0.05)) :length dur)))

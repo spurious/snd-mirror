@@ -40,7 +40,7 @@
 	      (if (even? val) (set! val (+ val 1)))
 	      (set! (dly-len i) (next-prime val))))))
 
-    (let ((len (+ (floor *clm-srate*) (frames *reverb*)))
+    (let ((len (+ (floor *clm-srate*) (framples *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (dly-len 2)))

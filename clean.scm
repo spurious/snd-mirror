@@ -9,7 +9,7 @@
 	 (rfreq (/ (* 2.0 pi freq) sr))
 	 (cs (* 2.0 (cos rfreq))))
     (let ((reader (make-sampler beg snd 0))
-	  (len (- (if (number? dur) dur (- (frames snd 0) beg)) 2))
+	  (len (- (if (number? dur) dur (- (framples snd 0) beg)) 2))
 	  (flt (make-two-pole 1.0 (- cs) 1.0)))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
@@ -22,7 +22,7 @@
 (define* (check-freq freq snd chn)
   (let ((hum 0.0))
     (do ((i 0 (+ i 1))
-	 (loc 0.0 (+ loc (round (/ (frames snd chn) 5)))))
+	 (loc 0.0 (+ loc (round (/ (framples snd chn) 5)))))
 	((= i 4))
       (set! hum (+ hum (goertzel-channel freq loc 2048 snd chn))))
     (/ hum 4.0)))
@@ -37,7 +37,7 @@
 	 (samp1 0.0)
 	 (samp2 0.0)
 	 (fixed 0)
-	 (len (frames snd chn))
+	 (len (framples snd chn))
 	 (block-size (min len (* 1024 1024))) ; do edits by blocks rather than sample-at-a-time (saves time, memory etc)
 	 (block-ctr 0)
 	 (block-beg 0)
@@ -139,7 +139,7 @@
 
 	 (last-case 0)
 	 (fixed 0)
-	 (len (frames snd chn))
+	 (len (framples snd chn))
 
 	 (pad (* 8 size))
 	 (block-size (min (+ len pad) (* 1024 1024)))
@@ -327,7 +327,7 @@
 
 
 (define* (tvf-channel snd chn)
-  (let* ((size (frames snd chn))
+  (let* ((size (framples snd chn))
 	 (avg-data (make-float-vector size))
 	 (ctr 0)
 	 (mx (maxamp snd chn))
@@ -416,14 +416,14 @@
 	 (hum (max hum60 hum55)))
     (if (> hum 30.0)
 	(let ((humf (if (> hum60 hum55) 60.0 55.0)))
-	  (notch-channel (list humf) 4096 0 (frames snd chn) snd chn #f #t 4)
+	  (notch-channel (list humf) 4096 0 (framples snd chn) snd chn #f #t 4)
 	  (format #t "~%; notch out ~D cycle hum: ~A -> ~A" (floor humf) hum (check-freq humf snd chn)))))
 
   ;; look for DC
   (let ((dc (check-freq 0.0 snd chn)))
     (if (> dc 30.0)
 	(let ((dcflt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))))
-	  (map-channel (lambda (y) (filter dcflt y)) 0 (frames snd chn) snd chn)
+	  (map-channel (lambda (y) (filter dcflt y)) 0 (framples snd chn) snd chn)
 	  (format #t "~%; block DC: ~A -> ~A" dc (check-freq 0.0 snd chn)))))
 
   ;; time-varying low-pass filter

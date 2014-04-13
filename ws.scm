@@ -328,7 +328,7 @@
 (define-macro (with-full-sound args . body)
   ;; with-sound but display full sound in Snd window
   `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
-     (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (frames *snd-opened-sound*) (srate *snd-opened-sound*))))
+     (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (framples *snd-opened-sound*) (srate *snd-opened-sound*))))
      (let ((mx (apply max (maxamp *snd-opened-sound* #t))))
        (if (> mx 1.0)
 	 (set! (y-bounds *snd-opened-sound*) (list (- mx) mx))))
@@ -870,7 +870,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 #|
 (with-sound ()
   (let ((fd (make-file->sample "oboe.snd"))
-	(len (mus-sound-frames "oboe.snd")))
+	(len (mus-sound-framples "oboe.snd")))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (outa i (* .5 (file->sample fd i 0))))))

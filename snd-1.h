@@ -1245,7 +1245,7 @@ bool xen_is_selection(Xen obj);
 Xen g_selection_chans(void);
 Xen g_selection_srate(void);
 Xen g_selection_maxamp(Xen snd, Xen chn);
-Xen g_selection_frames(Xen snd, Xen chn);
+Xen g_selection_framples(Xen snd, Xen chn);
 
 void g_init_selection(void);
   
@@ -1289,7 +1289,7 @@ int xen_region_to_int(Xen n);
 #define Xen_region_to_C_int(n) xen_region_to_int(n)
 Xen g_region_srate(Xen n);
 Xen g_region_chans(Xen n);
-Xen g_region_frames(Xen n, Xen chan);
+Xen g_region_framples(Xen n, Xen chan);
 Xen g_region_maxamp(Xen n);
 Xen g_play_region(Xen n, play_process_t back, Xen stop_proc);
 Xen g_region_to_vct(Xen reg_n, Xen beg_n, Xen num, Xen chn_n, Xen v);

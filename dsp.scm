@@ -125,7 +125,7 @@
   ;; I think this is "stretch" in DSP jargon -- to interpolate in the time domain we're squeezing the frequency domain
   ;;  the power-of-2 limitation is based on the underlying fft function's insistence on power-of-2 data sizes
   ;;  see stretch-sound-via-dft below for a general version
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftlen2 (/ fftlen 2))
@@ -152,7 +152,7 @@
   "(stretch-sound-via-dft factor snd chn) makes the given channel longer ('factor' should be > 1.0) by \
 squeezing in the frequency domain, then using the inverse DFT to get the time domain result."
   ;; this is very slow! factor>1.0
-  (let* ((n (frames snd chn))
+  (let* ((n (framples snd chn))
 	 (n2 (floor (/ n 2.0)))
 	 (out-n (round (* n factor)))
 	 (in-data (channel->float-vector 0 n snd chn))
@@ -279,7 +279,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define* (adsat size (beg 0) dur snd chn)
   "(adsat size beg dur snd chn) is an 'adaptive saturation' sound effect"
-  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+  (let* ((len (if (number? dur) dur (- (framples snd chn) beg)))
 	 (data (make-float-vector (* size (ceiling (/ len size))))))
     (let ((reader (make-sampler beg snd chn))
 	  (mn 0.0)
@@ -307,7 +307,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 #|
 (define* (spike snd chn)
   "(spike snd chn) multiplies successive samples together to make a sound more spikey"
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (data (make-float-vector len))
 	 (amp (maxamp snd chn))) ; keep resultant peak at maxamp
     (let ((reader (make-sampler 0 snd chn))
@@ -324,7 +324,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 |#
 (define* (spike snd chn)
   "(spike snd chn) multiplies successive samples together to make a sound more spikey"
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (data (channel->float-vector 0 (+ len 2) snd chn))
 	 (amp (maxamp snd chn))) ; keep resultant peak at maxamp
     ;; multiply x[0]*x[1]*x[2]
@@ -424,7 +424,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define* (zero-phase snd chn)
   "(zero-phase snd chn) calls fft, sets all phases to 0, and un-ffts"
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
@@ -443,7 +443,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define* (rotate-phase func snd chn)
   "(rotate-phase func snd chn) calls fft, applies func to each phase, then un-ffts"
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftlen2 (floor (/ fftlen 2)))
@@ -490,7 +490,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   "(brighten-slightly amount snd chn) is a form of contrast-enhancement ('amount' between ca .1 and 1)"
   (let* ((mx (maxamp))
 	 (brt (* 2 pi amount))
-	 (len (frames snd chn))
+	 (len (framples snd chn))
 	 (data (make-float-vector len))
 	 (reader (make-sampler 0 snd chn)))
     (do ((i 0 (+ i 1)))
@@ -502,7 +502,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   "(brighten-slightly-1 coeffs) is a form of contrast-enhancement: (brighten-slightly-1 '(1 .5 3 1))"
   (let ((pcoeffs (partials->polynomial coeffs))
 	(mx (maxamp))
-	(len (frames)))
+	(len (framples)))
     (let ((data (make-float-vector len))
 	  (reader (make-sampler 0)))
       (do ((i 0 (+ i 1)))
@@ -601,7 +601,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (hilbert-transform-via-fft snd chn)
   ;; same as FIR version but use FFT and change phases by hand
   ;; see snd-test.scm test 18 for a faster version
-  (let* ((size (frames snd chn))
+  (let* ((size (framples snd chn))
 	 (len (expt 2 (ceiling (log size 2.0))))
 	 (rl (make-float-vector len))
 	 (im (make-float-vector len))
@@ -1124,14 +1124,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define* (notch-channel freqs (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2))
   "(notch-channel freqs (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
   (filter-channel (make-notch-frequency-response (* 1.0 (srate snd)) freqs notch-width)
-		  (or filter-order (min (frames snd chn) (expt 2 (floor (log (/ (srate snd) notch-width) 2)))))
+		  (or filter-order (min (framples snd chn) (expt 2 (floor (log (/ (srate snd) notch-width) 2)))))
 		  beg dur snd chn edpos truncate
 		  (format #f "notch-channel '~A ~A ~A ~A" freqs filter-order beg dur)))
 
 (define* (notch-sound freqs filter-order snd chn (notch-width 2))
   "(notch-sound freqs filter-order snd chn (notch-width 2)) -> notch filter removing freqs"
   (filter-sound (make-notch-frequency-response (* 1.0 (srate snd)) freqs notch-width)
-		(or filter-order (min (frames snd chn) (expt 2 (floor (log (/ (srate snd) notch-width) 2)))))
+		(or filter-order (min (framples snd chn) (expt 2 (floor (log (/ (srate snd) notch-width) 2)))))
 		snd chn #f
 		(format #f "notch-channel '~A ~A 0 #f" freqs filter-order)))
 
@@ -1139,7 +1139,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(notch-selection freqs filter-order (notch-width 2)) -> notch filter removing freqs"
   (if (selection?)
       (filter-selection (make-notch-frequency-response (* 1.0 (selection-srate)) freqs notch-width)
-			(or filter-order (min (selection-frames) (expt 2 (floor (log (/ (selection-srate) notch-width) 2))))))))
+			(or filter-order (min (selection-framples) (expt 2 (floor (log (/ (selection-srate) notch-width) 2))))))))
 ;; apparently I'm using powers of 2 here so that mus_make_fir_coeffs, called from get_filter_coeffs, can use an fft
 ;;   the others use the fft internally for the fir filter, but not filter-selection
 
@@ -1237,7 +1237,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (rfreq (/ (* 2.0 pi freq) sr))
 	 (cs (* 2.0 (cos rfreq))))
     (let ((reader (make-sampler beg snd 0))
-	  (len (- (if (number? dur) dur (- (frames snd 0) beg)) 2))
+	  (len (- (if (number? dur) dur (- (framples snd 0) beg)) 2))
 	  (flt (make-two-pole 1.0 (- cs) 1.0)))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
@@ -1252,7 +1252,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	  (y1 0.0)
 	  (y0 0.0)
 	  (reader (make-sampler beg snd 0))
-	  (len (if (number? dur) dur (- (frames snd 0) beg))))
+	  (len (if (number? dur) dur (- (framples snd 0) beg))))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(set! y2 y1)
@@ -1358,7 +1358,7 @@ the era when computers were human beings"
 
 (define* (channel-mean snd chn)            ; <f, 1> / n
   "(channel-mean snd chn) returns the average of the samples in the given channel: <f,1>/n"
-  (let ((N (frames snd chn))
+  (let ((N (framples snd chn))
 	(reader (make-sampler 0 snd chn))
 	(incr (make-one-pole 1.0 -1.0)))
     (do ((i 0 (+ i 1)))
@@ -1367,12 +1367,12 @@ the era when computers were human beings"
     (/ (one-pole incr 0.0) N)))
 
 (define* (channel-total-energy snd chn)    ; <f, f>
-  (let ((data (samples 0 (frames snd chn) snd chn)))
+  (let ((data (samples 0 (framples snd chn) snd chn)))
     (dot-product data data)))
 #|
   "(channel-total-energy snd chn) returns the sum of the squares of all the samples in the given channel: <f,f>"
   (let ((sum 0.0)
-	(N (frames snd chn))
+	(N (framples snd chn))
 	(reader (make-sampler 0 snd chn)))
     (do ((i 0 (+ i 1)))
 	((= i N))
@@ -1383,7 +1383,7 @@ the era when computers were human beings"
 
 (define* (channel-average-power snd chn)   ; <f, f> / n
   "(channel-average-power snd chn) returns the average power in the given channel: <f,f>/n"
-  (/ (channel-total-energy snd chn) (frames snd chn)))
+  (/ (channel-total-energy snd chn) (framples snd chn)))
 
 (define* (channel-rms snd chn)             ; sqrt(<f, f> / n)
   "(channel-rms snd chn) returns the RMS value of the samples in the given channel: sqrt(<f,f>/n)"
@@ -1391,7 +1391,7 @@ the era when computers were human beings"
 
 (define* (channel-variance snd chn) ; "sample-variance" might be better, <f, f> - (<f, 1> / n) ^ 2 with quibbles
   "(channel-variance snd chn) returns the sample variance in the given channel: <f,f>-((<f,1>/ n)^2"
-  (let* ((N (frames snd chn))
+  (let* ((N (framples snd chn))
 	 (mu (* (/ N (- N 1)) (channel-mean snd chn))) ; avoid bias sez JOS
 	 (P (channel-total-energy snd chn)))
     (- P (* mu mu))))
@@ -1403,7 +1403,7 @@ the era when computers were human beings"
 (define* (channel-lp p snd chn)
   "(channel-lp p snd chn) returns the Lp norm of the samples in the given channel"
   (let ((incr (make-one-pole 1.0 -1.0))
-	(N (frames snd chn))
+	(N (framples snd chn))
 	(reader (make-sampler 0 snd chn)))
     (do ((i 0 (+ i 1)))
 	((= i N))
@@ -1414,7 +1414,7 @@ the era when computers were human beings"
 #|
   "(channel-lp-inf snd chn) returns the maxamp in the given channel (the name is just math jargon for maxamp)"
   (let ((mx 0.0)
-	(N (frames snd chn))
+	(N (framples snd chn))
 	(reader (make-sampler 0 snd chn)))
     (do ((i 0 (+ i 1)))
 	((= i N))
@@ -1423,10 +1423,10 @@ the era when computers were human beings"
 |#
 
 (define (channel2-inner-product s1 c1 s2 c2)         ; <f, g>
-  (dot-product (samples 0 (frames s1 c1) s1 c1) (samples 0 (frames s1 c1) s2 c2)))
+  (dot-product (samples 0 (framples s1 c1) s1 c1) (samples 0 (framples s1 c1) s2 c2)))
 #|
   "(channel2-inner-product s1 c1 s2 c2) returns the inner-product of the two channels: <f,g>"
-  (let ((N (frames s1 c1))
+  (let ((N (framples s1 c1))
 	(sum 0.0)
 	(r1 (make-sampler 0 s1 c1))
 	(r2 (make-sampler 0 s2 c2)))
@@ -1460,7 +1460,7 @@ the era when computers were human beings"
   (let ((r1 (make-sampler 0 s1 c1))
 	(r2 (make-sampler 0 s2 c2))
 	(sum 0.0)
-	(N (min (frames s1 c1) (frames s2 c2)))
+	(N (min (framples s1 c1) (framples s2 c2)))
 	(diff 0.0))
      (do ((i 0 (+ i 1)))
 	 ((= i N))
@@ -1470,7 +1470,7 @@ the era when computers were human beings"
 |#
 (define* (channel-distance (s1 0) (c1 0) (s2 1) (c2 0))    ; sqrt(<f - g, f - g>)
   "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
-  (let ((N (min (frames s1 c1) (frames s2 c2))))
+  (let ((N (min (framples s1 c1) (framples s2 c2))))
     (let ((data1 (samples 0 N s1 c1))
 	  (data2 (samples 0 N s2 c2)))
       (float-vector-subtract! data1 data2)
@@ -1479,7 +1479,7 @@ the era when computers were human beings"
 
 (define (periodogram N)
   "(periodogram N) displays an 'N' point Bartlett periodogram of the samples in the current channel"
-  (let* ((len (frames))
+  (let* ((len (framples))
 	 (average-data (make-float-vector N))
 	 (rd (make-sampler 0))
 	 (N2 (* 2 N))
@@ -1566,7 +1566,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 					     order))
 	(set! (frenvs (- i 1)) (make-env freq-env 
 					 :scaler (hz->radians i) 
-					 :length (frames)))))
+					 :length (framples)))))
     (let ((data (channel->float-vector beg dur snd chn edpos)))
       (let ((len (length data))
 	    (mx (float-vector-peak data)))
@@ -1591,7 +1591,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 ;;; a "bump function" (Stein and Shakarchi)
 (define (bumpy)
   (let* ((x 0.0) 
-	 (xi (/ 1.0 (frames)))
+	 (xi (/ 1.0 (framples)))
 	 (start 0)
 	 (end 1)
 	 (scl (exp (/ 4.0 (- end start))))) ; normalize it
@@ -1620,7 +1620,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 
 
 (define* (channel-polynomial coeffs snd chn)
-  (let ((len (frames snd chn)))
+  (let ((len (framples snd chn)))
     (float-vector->channel 
      (float-vector-polynomial 
       (channel->float-vector 0 len snd chn) 
@@ -1633,7 +1633,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 ;;; convolution -> * in freq
 
 (define* (spectral-polynomial coeffs snd chn)
-  (let* ((len (frames snd chn))
+  (let* ((len (framples snd chn))
 	 (sound (channel->float-vector 0 len snd chn))
 	 (num-coeffs (length coeffs))
 	 (fft-len (if (< num-coeffs 2) 
@@ -1700,7 +1700,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
   (let* ((fsr (srate file))
 	 (incrsamps (floor (/ fsr rfreq)))
 	 (start (floor (* beg fsr)))
-	 (end (+ start (if dur (floor (* dur fsr)) (- (frames file) beg))))
+	 (end (+ start (if dur (floor (* dur fsr)) (- (framples file) beg))))
 	 (fdr (make-float-vector fftsize))
 	 (fdi (make-float-vector fftsize))
 	 (scl (make-float-vector (/ fftsize 2)))
@@ -1818,7 +1818,7 @@ and replaces it with the spectrum given in coeffs"
 	(flt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.9)))
 	(old-mx (maxamp))
 	(startup 40)
-	(len (- (or dur (frames snd chn edpos)) beg)))
+	(len (- (or dur (framples snd chn edpos)) beg)))
     (let ((adder (make-float-vector len))
 	  (summer (make-float-vector len))
 	  (indata (channel->float-vector beg len snd chn edpos)))
@@ -1908,7 +1908,7 @@ and replaces it with the spectrum given in coeffs"
 		       (set! intrp (+ pos sr))
 		       (+ last (* pos (- next last))))
 		     ))))
-	 (len (frames tempfile)))
+	 (len (framples tempfile)))
     (set-samples 0 (- len 1) tempfile snd chn #t "linear-src" 0 #f #t)
     ;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
     ))
@@ -2218,7 +2218,7 @@ is assumed to be outside -1.0 to 1.0."
   "(unclip-channel snd chn) looks for clipped portions and tries to reconstruct the original using LPC"
   (let ((clips 0)                              ; number of clipped portions * 2
 	(unclipped-max 0.0)
-	(len (frames snd chn))
+	(len (framples snd chn))
 	(data (channel->float-vector 0 #f snd chn))
 	(clip-size 1000)
 	(clip-data (make-vector 1000 0)))
@@ -2269,7 +2269,7 @@ is assumed to be outside -1.0 to 1.0."
 		 (let ((forward-data-len data-len)
 		       (backward-data-len data-len)
 		       (previous-end (if (= clip 0) 0 (clip-data (- clip 1))))
-		       (next-beg (if (< clip (- clips 3)) (clip-data (+ clip 2)) (frames snd chn))))
+		       (next-beg (if (< clip (- clips 3)) (clip-data (+ clip 2)) (framples snd chn))))
 		   
 		   (if (< (- clip-beg data-len) previous-end)  ; current beg - data collides with previous
 		       (begin
@@ -2325,7 +2325,7 @@ is assumed to be outside -1.0 to 1.0."
 		       (float-vector->channel new-data clip-beg clip-len snd chn))))))))
 	    
 	  (if (> unclipped-max .95) (set! unclipped-max .999))
-	  (scale-channel (/ unclipped-max (maxamp snd chn)) 0 (frames snd chn) snd chn)
+	  (scale-channel (/ unclipped-max (maxamp snd chn)) 0 (framples snd chn) snd chn)
 	  (list 'max unclipped-max 'clips (/ clips 2) 'max-len max-len))
 	  
 	'no-clips)))
@@ -2343,7 +2343,7 @@ is assumed to be outside -1.0 to 1.0."
 
 (define* (kalman-filter-channel (Q 1.0e-5))
   ;; translated from http://www.scipy.org/Cookbook/KalmanFiltering by Andrew Straw (but "R" here is a signal)
-  (let ((size (frames))
+  (let ((size (framples))
 	(mx (maxamp))
 	(data (channel->float-vector 0))
 	(xhat 0.0)

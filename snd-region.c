@@ -40,7 +40,7 @@ static deferred_region *free_deferred_region(deferred_region *dr)
 
 typedef struct region {
   int chans;
-  mus_long_t frames;
+  mus_long_t framples;
   int srate;                /* for file save (i.e. region->file) */
   int header_type;          /* for file save */
   snd_info *rsp;
@@ -198,7 +198,7 @@ mus_long_t region_len(int n)
   region *r;
   r = id_to_region(n);
   if (r) 
-    return(r->frames); 
+    return(r->framples); 
   return(0);
 }
 
@@ -301,7 +301,7 @@ static mus_float_t region_sample(int reg, int chn, mus_long_t samp)
   r = id_to_region(reg);
   if (r)
     {
-      if ((samp < r->frames) && (chn < r->chans)) 
+      if ((samp < r->framples) && (chn < r->chans)) 
 	{
 	  snd_fd *sf;
 	  mus_float_t val;
@@ -349,7 +349,7 @@ static void region_samples(int reg, int chn, mus_long_t beg, mus_long_t num, mus
   r = id_to_region(reg);
   if (r)
     {
-      if ((beg < r->frames) && (chn < r->chans))
+      if ((beg < r->framples) && (chn < r->chans))
 	{
 	  snd_fd *sf;
 	  deferred_region *drp;
@@ -409,7 +409,7 @@ static void make_region_readable(region *r)
   regsp->inuse = SOUND_READER;
 
   hdr = regsp->hdr;
-  hdr->samples = r->frames * r->chans;
+  hdr->samples = r->framples * r->chans;
   hdr->srate = r->srate;
   hdr->chans = r->chans;
   hdr->comment = NULL;
@@ -426,7 +426,7 @@ static void make_region_readable(region *r)
 	  cp = make_chan_info(NULL, i, regsp);
 	  cp->editable = false;
 	  regsp->chans[i] = cp;
-	  add_channel_data_1(cp, r->srate, r->frames, WITHOUT_GRAPH);
+	  add_channel_data_1(cp, r->srate, r->framples, WITHOUT_GRAPH);
 	  cp->hookable = WITHOUT_HOOK;
 
 	  fd = snd_open_read(r->filename);
@@ -620,7 +620,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
 
   r = id_to_region(n);
   if ((r == NULL) || 
-      (r->frames == 0)) 
+      (r->framples == 0)) 
     return(INVALID_REGION);
 
   if (!(is_editable(cp))) 
@@ -660,7 +660,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
 	  if (si->chans > 1)
 	    remember_temp(newname, si->chans);
 
-	  id = mix_file(beg, r->frames, si->chans, si->cps, newname, 
+	  id = mix_file(beg, r->framples, si->chans, si->cps, newname, 
 			(si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 			origin, with_mix_tags(ss), start_chan);
 	  free(origin);
@@ -699,7 +699,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
 	{
 	  chan_info *ncp;
 	  ncp = si->cps[i];                       /* currently syncd chan that we might paste to */
-	  if (file_insert_samples(beg, r->frames, tempfile, ncp, i,
+	  if (file_insert_samples(beg, r->framples, tempfile, ncp, i,
 				  (r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 				  origin, ncp->edit_ctr))
 	    update_graph(si->cps[i]);
@@ -768,7 +768,7 @@ int define_region(sync_info *si, mus_long_t *ends)
   r->editor_copy = NULL;
   r->name = mus_strdup(sp0->short_filename);
   r->chans = si->chans;
-  r->frames = len;
+  r->framples = len;
   r->start = prettyf((double)(si->begs[0]) / (double)(r->srate), 2);
   r->end = prettyf((double)(ends[0]) / (double)(r->srate), 2);
   r->use_temp_file = REGION_DEFERRED;
@@ -1041,7 +1041,7 @@ snd_fd *init_region_read(mus_long_t beg, int n, int chan, read_direction_t direc
     {
       if ((beg == 0) && 
 	  (direction == READ_BACKWARD)) 
-	beg = r->frames - 1;
+	beg = r->framples - 1;
       if (r->use_temp_file == REGION_DEFERRED)
 	{
 	  deferred_region *drp;
@@ -1120,7 +1120,7 @@ void save_regions(FILE *fd)
 	    {
 #if HAVE_RUBY
 	      fprintf(fd, "%s(%d, %d, %lld, %d, %.4f, \"%s\", \"%s\", \"%s\", ",
-		      "restore_region", i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
+		      "restore_region", i, r->chans, r->framples, r->srate, r->maxamp, r->name, r->start, r->end);
 	      fprintf(fd, " \"%s\", [%d, %lld])\n",
 		      newname,
 		      (int)mus_sound_write_date(newname),
@@ -1128,7 +1128,7 @@ void save_regions(FILE *fd)
 #endif
 #if HAVE_SCHEME
 	      fprintf(fd, "(%s %d %d %lld %d %.4f \"%s\" \"%s\" \"%s\"",
-		      S_restore_region, i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
+		      S_restore_region, i, r->chans, r->framples, r->srate, r->maxamp, r->name, r->start, r->end);
 	      fprintf(fd, " \"%s\" (list %d %lld))\n",
 		      newname,
 		      (int)mus_sound_write_date(newname),
@@ -1136,7 +1136,7 @@ void save_regions(FILE *fd)
 #endif
 #if HAVE_FORTH
 	  fprintf(fd, "%d %d %lld %d %.4f \"%s\" \"%s\" \"%s\"",
-	          i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
+	          i, r->chans, r->framples, r->srate, r->maxamp, r->name, r->start, r->end);
  	  fprintf(fd, " \"%s\" '( %d %lld ) %s drop\n",
  		  newname,
  		  (int)mus_sound_write_date(newname),
@@ -1234,7 +1234,7 @@ void save_region_backpointer(snd_info *sp)
   r->use_temp_file = REGION_FILE;
   r->maxamp = 0.0;
   r->maxamp_position = -1;
-  r->frames = current_samples(sp->chans[0]);
+  r->framples = current_samples(sp->chans[0]);
 
   for (i = 0; i < sp->nchans; i++)
     {
@@ -1270,7 +1270,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
   if (r->use_temp_file == REGION_DEFERRED) 
     deferred_region_to_temp_file(r);
 
-  io_err = snd_write_header(name, type, region_srate(rg), r->chans, r->chans * r->frames, format, comment, NULL);
+  io_err = snd_write_header(name, type, region_srate(rg), r->chans, r->chans * r->framples, format, comment, NULL);
   if (io_err == IO_NO_ERROR)
     {
       mus_long_t oloc;
@@ -1289,12 +1289,12 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	  ifd = snd_open_read(r->filename);
 	  if (ifd != -1)
 	    {
-	      mus_long_t iloc, frames, cursamples;
+	      mus_long_t iloc, framples, cursamples;
 	      int chans, i, err = 0;
 	      mus_float_t **bufs;
 
 	      chans = mus_sound_chans(r->filename);
-	      frames = mus_sound_samples(r->filename) / chans;
+	      framples = mus_sound_samples(r->filename) / chans;
 	      iloc = mus_sound_data_location(r->filename);
 
 	      snd_file_open_descriptors(ifd,
@@ -1307,16 +1307,16 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	      bufs = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
 	      for (i = 0; i < chans; i++) bufs[i] = (mus_float_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_float_t));
 
-	      if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
+	      if (((framples * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
 		snd_warning("not enough space to save region? -- need %lld bytes",
-			    frames * chans * mus_sound_datum_size(r->filename));
+			    framples * chans * mus_sound_datum_size(r->filename));
 	      err = 0;
 
-	      for (ioff = 0; ioff < frames; ioff += FILE_BUFFER_SIZE)
+	      for (ioff = 0; ioff < framples; ioff += FILE_BUFFER_SIZE)
 		{
-		  if ((ioff + FILE_BUFFER_SIZE) < frames) 
+		  if ((ioff + FILE_BUFFER_SIZE) < framples) 
 		    cursamples = FILE_BUFFER_SIZE; 
-		  else cursamples = (frames - ioff);
+		  else cursamples = (framples - ioff);
 		  mus_file_read(ifd, ioff, cursamples, chans, bufs);
 		  err = mus_file_write(ofd, 0, cursamples - 1, chans, bufs);
 		  if (err != MUS_NO_ERROR) 
@@ -1463,7 +1463,7 @@ static bool s7_xen_region_equalp(void *obj1, void *obj2)
 
 static Xen s7_xen_region_length(s7_scheme *sc, Xen obj)
 {
-  return(g_region_frames(obj, Xen_integer_zero));
+  return(g_region_framples(obj, Xen_integer_zero));
 }
 #endif
 
@@ -1554,7 +1554,7 @@ static Xen g_restore_region(Xen pos, Xen chans, Xen len, Xen srate, Xen maxamp, 
   r->rsp = NULL;
   r->editor_copy = NULL;
   r->editor_name = NULL;
-  r->frames = Xen_llong_to_C_llong(len);
+  r->framples = Xen_llong_to_C_llong(len);
   r->srate = Xen_integer_to_C_int(srate);
   r->name = mus_strdup(Xen_string_to_C_string(name));
   r->start = mus_strdup(Xen_string_to_C_string(start));
@@ -1629,24 +1629,24 @@ static Xen g_is_region(Xen n)
 }
 
 
-Xen g_region_frames(Xen n, Xen chan) 
+Xen g_region_framples(Xen n, Xen chan) 
 {
   region *r;
   int rg, chn;
-  #define H_region_frames "(" S_region_frames " reg :optional (chan 0)): region length in frames"
+  #define H_region_framples "(" S_region_framples " reg :optional (chan 0)): region length in framples"
 
-  Xen_check_type(xen_is_region(n), n, 1, S_region_frames, "a region");
-  Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 2, S_region_frames, "an integer");
+  Xen_check_type(xen_is_region(n), n, 1, S_region_framples, "a region");
+  Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 2, S_region_framples, "an integer");
 
   rg = Xen_region_to_C_int(n);
   if (!(region_ok(rg)))
-    return(snd_no_such_region_error(S_region_frames, n));
+    return(snd_no_such_region_error(S_region_framples, n));
 
   if (!Xen_is_bound(chan))
     return(C_llong_to_Xen_llong(region_len(rg)));
   chn = Xen_integer_to_C_int(chan);
   if ((chn < 0) || (chn >= region_chans(rg)))
-    return(snd_no_such_channel_error(S_region_frames, Xen_list_1(n), chan));
+    return(snd_no_such_channel_error(S_region_framples, Xen_list_1(n), chan));
 
   r = id_to_region(rg);
   return(C_llong_to_Xen_llong(r->lens[chn] + 1));
@@ -2095,7 +2095,7 @@ and " S_graph_dots_and_lines "."
 Xen_wrap_10_optional_args(g_restore_region_w, g_restore_region)
 Xen_wrap_4_optional_args(g_insert_region_w, g_insert_region)
 Xen_wrap_no_args(g_regions_w, g_regions)
-Xen_wrap_2_optional_args(g_region_frames_w, g_region_frames)
+Xen_wrap_2_optional_args(g_region_framples_w, g_region_framples)
 Xen_wrap_2_optional_args(g_region_position_w, g_region_position)
 Xen_wrap_1_arg(g_region_srate_w, g_region_srate)
 Xen_wrap_1_arg(g_region_chans_w, g_region_chans)
@@ -2125,7 +2125,8 @@ void g_init_regions(void)
   Xen_define_procedure(S_restore_region,              g_restore_region_w,         9, 1, 0, "internal func used in save-state, restores a region");
   Xen_define_procedure(S_insert_region,               g_insert_region_w,          2, 2, 0, H_insert_region);
   Xen_define_safe_procedure(S_regions,                g_regions_w,                0, 0, 0, H_regions);
-  Xen_define_safe_procedure(S_region_frames,          g_region_frames_w,          1, 1, 0, H_region_frames);
+  Xen_define_safe_procedure(S_region_framples,        g_region_framples_w,        1, 1, 0, H_region_framples);
+  Xen_define_safe_procedure("region-frames",          g_region_framples_w,        1, 1, 0, H_region_framples);
   Xen_define_safe_procedure(S_region_position,        g_region_position_w,        1, 1, 0, H_region_position);
   Xen_define_safe_procedure(S_region_srate,           g_region_srate_w,           1, 0, 0, H_region_srate);
   Xen_define_safe_procedure(S_region_chans,           g_region_chans_w,           1, 0, 0, H_region_chans);

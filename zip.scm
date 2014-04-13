@@ -119,7 +119,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
     (new-sound "new-1.snd")
     (do ((i 0 (+ i 1))) ((= i 10000)) (set! (data i) (- 1.0 (* i .0001))))
     (float-vector->channel data 0 10000 1)
-    (let* ((dur (frames))
+    (let* ((dur (framples))
 	   (zp (make-zipper (make-env '(0 0 1 1) :length dur)
 			    0.05
 			    (make-env (list 0 (* (safe-srate) 0.05)) :length dur)))

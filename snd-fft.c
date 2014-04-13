@@ -1923,9 +1923,9 @@ static Xen g_set_show_selection_transform(Xen val)
 }
 
 
-static Xen g_transform_frames(Xen snd, Xen chn)
+static Xen g_transform_framples(Xen snd, Xen chn)
 {
-  #define H_transform_frames "(" S_transform_frames " :optional snd chn): \
+  #define H_transform_framples "(" S_transform_framples " :optional snd chn): \
 return a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
 If there is no transform graph, return 0; if " S_graph_once ", return " S_transform_size ",\
 and otherwise return a list (spectrum-cutoff time-slices fft-bins)"
@@ -1933,8 +1933,8 @@ and otherwise return a list (spectrum-cutoff time-slices fft-bins)"
   chan_info *cp;
   sono_info *si;
 
-  Snd_assert_channel(S_transform_frames, snd, chn, 1);
-  cp = get_cp(snd, chn, S_transform_frames);
+  Snd_assert_channel(S_transform_framples, snd, chn, 1);
+  cp = get_cp(snd, chn, S_transform_framples);
   if (!cp) return(Xen_false);
   if (!(cp->graph_transform_on)) 
     return(Xen_integer_zero);
@@ -2378,7 +2378,7 @@ static Xen g_delete_transform(Xen type)
 }
 
 
-Xen_wrap_2_optional_args(g_transform_frames_w, g_transform_frames)
+Xen_wrap_2_optional_args(g_transform_framples_w, g_transform_framples)
 Xen_wrap_4_optional_args(g_transform_sample_w, g_transform_sample)
 Xen_wrap_3_optional_args(g_transform_to_vct_w, g_transform_to_vct)
 Xen_wrap_5_args(g_add_transform_w, g_add_transform)
@@ -2476,7 +2476,8 @@ of a moving mark:\n\
   Xen_define_constant(S_normalize_by_sound,    NORMALIZE_BY_SOUND,   H_normalize_by_sound);
   Xen_define_constant(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
 
-  Xen_define_procedure(S_transform_frames,     g_transform_frames_w, 0, 2, 0, H_transform_frames);
+  Xen_define_procedure(S_transform_framples,   g_transform_framples_w, 0, 2, 0, H_transform_framples);
+  Xen_define_procedure("transform-frames",     g_transform_framples_w, 0, 2, 0, H_transform_framples);
   Xen_define_procedure(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
   Xen_define_procedure(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
   Xen_define_procedure(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);

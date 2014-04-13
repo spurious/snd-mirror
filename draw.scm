@@ -167,7 +167,7 @@ whenever they're in the current view."
   (let* ((beg (or ubeg 0))
 	 (snd (or usnd (selected-sound) (car (sounds))))
 	 (chn (or uchn (selected-channel snd) 0))
-	 (dur (or udur (- (frames snd chn) beg)))
+	 (dur (or udur (- (framples snd chn) beg)))
 	 (old-colors (or (channel-property 'colored-samples snd chn) ())))
     (set! (channel-property 'colored-samples snd chn) (cons (list color beg dur) old-colors))
     (update-time-graph snd chn)))

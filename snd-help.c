@@ -1949,7 +1949,7 @@ The main region-related functions are:\n\
   " S_selection_creates_region ": does making a selection create a region\n\
 \n\
   " S_region_chans " (:optional reg): region chans\n\
-  " S_region_frames " (:optional reg chan): region length\n\
+  " S_region_framples " (:optional reg chan): region length\n\
   " S_region_maxamp " (:optional reg): region maxamp\n\
   " S_region_maxamp_position " (:optional reg): maxamp location (sample number)\n\
   " S_region_position " (:optional reg chan): original begin time of region\n\
@@ -2063,7 +2063,7 @@ The primary selection-related functions are:\n\
 \n\
   " S_selection_chans ": chans in selection\n\
   " S_selection_color ": color to highlight selection\n\
-  " S_selection_frames " (:optional snd chn): length of selection\n\
+  " S_selection_framples " (:optional snd chn): length of selection\n\
   " S_selection_maxamp " (:optional snd chn): maxamp of selection\n\
   " S_selection_maxamp_position " (:optional snd chn): sample number of maxamp\n\
   " S_selection_member " (:optional snd chn): \n\

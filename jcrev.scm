@@ -16,7 +16,7 @@
 	(comb4 (make-comb 0.697 5801))
 	(decay-dur *clm-srate*)
 	(chns (channels *output*))
-	(file-dur (frames *reverb*)))
+	(file-dur (framples *reverb*)))
 
     (let ((len (floor (+ decay-dur file-dur)))
 	  (filts (if (= chns 1) 
