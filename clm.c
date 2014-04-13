@@ -104,12 +104,17 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT, 
       MUS_SRC, MUS_GRANULATE, MUS_WAVE_TRAIN, 
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
-      MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
-      MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
+      MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAMPLE,
+      MUS_SAMPLE_TO_FILE, MUS_FRAMPLE_TO_FILE, MUS_PHASE_VOCODER,
       MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT, MUS_FORMANT_BANK,
       MUS_ONE_POLE_ALL_PASS, MUS_COMB_BANK, MUS_ALL_PASS_BANK, MUS_FILTERED_COMB_BANK, MUS_OSCIL_BANK,
       MUS_PULSED_ENV, MUS_RXYKSIN, MUS_RXYKCOS,
+
+#if (!CLM_DISABLE_DEPRECATED)
+      MUS_FRAME, MUS_MIXER, 
+#endif
+
       MUS_INITIAL_GEN_TAG};
 
 mus_any_class *mus_generator_class(mus_any *ptr) {return(ptr->core);}
@@ -9902,795 +9907,16 @@ mus_float_t mus_pulsed_env_unmodulated(mus_any *g)
 
 
 
-/* ---------------- frame ---------------- */
-
-/* frame = vector, mixer = (square) matrix */
-
-typedef struct {
-  mus_any_class *core;
-  int chans;
-  mus_float_t *vals;
-  bool data_allocated;
-} mus_frame;
-
-
-static int free_frame(mus_any *pt)
-{
-  mus_frame *ptr = (mus_frame *)pt;
-  if (ptr)
-    {
-      if ((ptr->vals) && (ptr->data_allocated)) free(ptr->vals);
-      free(ptr);
-    }
-  return(0);
-}
-
-
-static char *describe_frame(mus_any *ptr)
-{
-  mus_frame *gen = (mus_frame *)ptr;
-  char *str = NULL;
-  char *describe_buffer;
-  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s[%d]: %s", 
-	       mus_name(ptr),
-	       gen->chans,
-	       str = float_array_to_string(gen->vals, gen->chans, 0));
-  if (str) free(str);
-  return(describe_buffer);
-}
-
-
-bool mus_is_frame(mus_any *ptr) 
-{
-  return((ptr) && 
-	 (ptr->core->type == MUS_FRAME));
-}
-
-
-bool mus_is_frame_or_mixer(mus_any *ptr) 
-{
-  return((ptr) && 
-	 ((ptr->core->type == MUS_FRAME) ||
-	  (ptr->core->type == MUS_MIXER)));
-}
-
-
-static bool equalp_frame(mus_any *p1, mus_any *p2)
-{
-  mus_frame *g1, *g2;
-  if (p1 == p2) return(true);
-  g1 = (mus_frame *)p1;
-  g2 = (mus_frame *)p2;
-  return(((g1->core)->type == (g2->core)->type) &&
-	 (g1->chans == g2->chans) &&
-	 (clm_arrays_are_equal(g1->vals, g2->vals, g1->chans)));
-}
-
-
-static mus_float_t run_frame(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) {return(mus_frame_ref(ptr, (int)arg1));}
-static mus_float_t *frame_data(mus_any *ptr) {return(((mus_frame *)ptr)->vals);}
-static mus_long_t frame_length(mus_any *ptr) {return(((mus_frame *)ptr)->chans);}
-static int frame_channels(mus_any *ptr) {return(((mus_frame *)ptr)->chans);}
-
-static void frame_reset(mus_any *ptr) 
-{
-  mus_frame *gen = (mus_frame *)ptr;
-  mus_clear_array(gen->vals, gen->chans);
-}
-
-static mus_any_class FRAME_CLASS = {
-  MUS_FRAME,
-  (char *)S_frame,
-  &free_frame,
-  &describe_frame,
-  &equalp_frame,
-  &frame_data, 0,
-  &frame_length, 0,
-  0, 0, 0, 0,
-  0, 0,
-  0, 0,
-  &run_frame,
-  MUS_NOT_SPECIAL, 
-  NULL,
-  &frame_channels,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0,
-  &frame_reset,
-  0
-};
-
-
-mus_any *mus_make_empty_frame(int chans)
-{
-  mus_frame *nf;
-  if (chans <= 0) return(NULL);
-  nf = (mus_frame *)malloc(sizeof(mus_frame));
-  nf->core = &FRAME_CLASS;
-  nf->chans = chans;
-  nf->vals = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
-  nf->data_allocated = true;
-  return((mus_any *)nf);
-}
-
-
-mus_any *mus_make_frame_with_data(int chans, mus_float_t *data)
-{
-  /* for CLM */
-  mus_frame *nf;
-  if (chans <= 0) return(NULL);
-  nf = (mus_frame *)malloc(sizeof(mus_frame));
-  nf->core = &FRAME_CLASS;
-  nf->chans = chans;
-  nf->vals = data;
-  nf->data_allocated = false;
-  return((mus_any *)nf);
-}
-
-
-mus_any *mus_make_frame(int chans, ...)
-{
-  if (chans <= 0)
-    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_frame ": chans: %d", chans);
-  else
-    {
-      mus_frame *nf = NULL;
-      nf = (mus_frame *)mus_make_empty_frame(chans);
-      if (nf)
-	{
-	  int i;
-	  va_list ap;
-	  va_start(ap, chans);
-	  for (i = 0; i < chans; i++)
-	    nf->vals[i] = (mus_float_t)(va_arg(ap, double)); /* float not safe here apparently */
-	  va_end(ap);
-	  return((mus_any *)nf);
-	}
-    }
-  return(NULL);
-}
-
-
-mus_any *mus_frame_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
-{
-  int chans, i;
-  mus_frame *f1 = (mus_frame *)uf1;
-  mus_frame *f2 = (mus_frame *)uf2;
-  mus_frame *res = (mus_frame *)ures;
-
-  chans = f1->chans;
-  if (f2->chans < chans) chans = f2->chans;
-  if (res)
-    {
-      if (res->chans < chans) chans = res->chans;
-    }
-  else res = (mus_frame *)mus_make_empty_frame(chans);
-  for (i = 0; i < chans; i++) 
-    res->vals[i] = f1->vals[i] + f2->vals[i];
-  return((mus_any *)res);
-}
-
-
-mus_any *mus_frame_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
-{
-  int chans, i;
-  mus_frame *f1 = (mus_frame *)uf1;
-  mus_frame *f2 = (mus_frame *)uf2;
-  mus_frame *res = (mus_frame *)ures;
-
-  chans = f1->chans;
-  if (f2->chans < chans) chans = f2->chans;
-  if (res)
-    {
-      if (res->chans < chans) 
-	chans = res->chans;
-    }
-  else res = (mus_frame *)mus_make_empty_frame(chans);
-  for (i = 0; i < chans; i++) 
-    res->vals[i] = f1->vals[i] * f2->vals[i];
-  return((mus_any *)res);
-}
-
-
-mus_any *mus_frame_scale(mus_any *uf1, mus_float_t scl, mus_any *ures)
-{
-  int chans, i;
-  mus_frame *f1 = (mus_frame *)uf1;
-  mus_frame *res = (mus_frame *)ures;
-
-  chans = f1->chans;
-  if (res)
-    {
-      if (res->chans < chans) 
-	chans = res->chans;
-    }
-  else res = (mus_frame *)mus_make_empty_frame(chans);
-  for (i = 0; i < chans; i++) 
-    res->vals[i] = f1->vals[i] * scl;
-  return((mus_any *)res);
-}
-
-
-mus_any *mus_frame_offset(mus_any *uf1, mus_float_t offset, mus_any *ures)
-{
-  int chans, i;
-  mus_frame *f1 = (mus_frame *)uf1;
-  mus_frame *res = (mus_frame *)ures;
-
-  chans = f1->chans;
-  if (res)
-    {
-      if (res->chans < chans) chans = res->chans;
-    }
-  else res = (mus_frame *)mus_make_empty_frame(chans);
-  for (i = 0; i < chans; i++) 
-    res->vals[i] = f1->vals[i] + offset;
-  return((mus_any *)res);
-}
-
-
-mus_float_t mus_frame_ref(mus_any *uf, int chan) 
-{
-  mus_frame *f = (mus_frame *)uf;
-  if ((chan >= 0) && (chan < f->chans))
-    return(f->vals[chan]);
-  return((mus_float_t)mus_error(MUS_ARG_OUT_OF_RANGE, 
-			  S_frame_ref ": invalid chan: %d (frame has %d chan%s)",
-			  chan, f->chans, (f->chans == 1) ? "" : "s"));
-}
-
-
-mus_float_t mus_frame_set(mus_any *uf, int chan, mus_float_t val) 
-{
-  mus_frame *f = (mus_frame *)uf;
-  if ((chan >= 0) && (chan < f->chans))
-    f->vals[chan] = val; 
-  else mus_error(MUS_ARG_OUT_OF_RANGE, 
-		 S_frame_set ": invalid chan: %d (frame has %d chan%s)",
-		 chan, f->chans, (f->chans == 1) ? "" : "s");
-  return(val);
-}
-
-
-mus_any *mus_frame_copy(mus_any *uf)
-{
-  mus_frame *f = (mus_frame *)uf;
-  mus_frame *nf;
-  nf = (mus_frame *)mus_make_empty_frame(f->chans);
-  memcpy((void *)(nf->vals), (void *)(f->vals), f->chans * sizeof(mus_float_t));
-  return((mus_any *)nf);
-}
-
-
-mus_float_t mus_frame_fill(mus_any *uf, mus_float_t val)
-{
-  int i;
-  mus_frame *f = (mus_frame *)uf;
-  for (i = 0; i < f->chans; i++)
-    f->vals[i] = val;
-  return(val);
-}
-
-
-
-/* ---------------- mixer ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  int chans;
-  mus_float_t **vals;
-  bool data_allocated;
-} mus_mixer;
-
-
-static int free_mixer(mus_any *pt)
-{
-  mus_mixer *ptr = (mus_mixer *)pt;
-  if (ptr)
-    {
-      if (ptr->vals)
-	{
-	  int i;
-	  if (ptr->data_allocated)
-	    for (i = 0; i < ptr->chans; i++) 
-	      free(ptr->vals[i]);
-	  free(ptr->vals);
-	}
-      free(ptr);
-    }
-  return(0);
-}
-
-
-static void mixer_reset(mus_any *ptr) 
-{
-  int i;
-  mus_mixer *gen = (mus_mixer *)ptr;
-  for (i = 0; i < gen->chans; i++) 
-    mus_clear_array(gen->vals[i], gen->chans);
-}
-
-
-static char *describe_mixer(mus_any *ptr)
-{
-  mus_mixer *gen = (mus_mixer *)ptr;
-  char *str;
-  int i, j, lim, bufsize;
-  char *describe_buffer;
-
-  lim = mus_array_print_length();
-  if (gen->chans < lim) lim = gen->chans;
-
-  bufsize = lim * lim * 16;
-  if (bufsize < DESCRIBE_BUFFER_SIZE) bufsize = DESCRIBE_BUFFER_SIZE;
-  if (bufsize > 65536) bufsize = 65536;
-
-  describe_buffer = (char *)malloc(bufsize);
-
-  if (gen->chans == 1)
-    snprintf(describe_buffer, bufsize, "%s chans: 1, [%.3f]", mus_name(ptr), gen->vals[0][0]);
-  else
-    {
-      snprintf(describe_buffer, bufsize, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
-      str = (char *)malloc(64 * sizeof(char));
-
-      for (i = 0; i < lim; i++)
-	for (j = 0; j < lim; j++)
-	  {
-	    snprintf(str, 64, "%.3f%s%s%s",
-			 gen->vals[i][j],
-			 ((j == (lim - 1)) && (lim < gen->chans)) ? "..." : "",
-			 (j == (lim - 1)) ? "\n" : "",
-			 ((i == (lim - 1)) && (j == (lim - 1))) ? "]" : " ");
-	    if ((int)(strlen(describe_buffer) + strlen(str)) < (bufsize - 1))
-	      strcat(describe_buffer, str);
-	    else break;
-	  }
-
-      free(str);
-    }
-
-  return(describe_buffer);
-}
-
-
-bool mus_is_mixer(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_MIXER));}
-
-
-static bool equalp_mixer(mus_any *p1, mus_any *p2)
-{
-  int i;
-  mus_mixer *g1, *g2;
-  if (p1 == p2) return(true);
-  if ((p1 == NULL) || (p2 == NULL)) return(false); /* is this needed? */
-  g1 = (mus_mixer *)p1;
-  g2 = (mus_mixer *)p2;
-  if (((g1->core)->type != (g2->core)->type) ||
-      (g1->chans != g2->chans))
-    return(false);
-  for (i = 0; i < g1->chans; i++)
-    if (!(clm_arrays_are_equal(g1->vals[i], g2->vals[i], g1->chans)))
-      return(false);
-  return(true);
-}
-
-
-static mus_float_t run_mixer(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) {return(mus_mixer_ref(ptr, (int)arg1, (int)arg2));}
-
-static mus_long_t mixer_length(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
-
-static mus_float_t *mixer_data(mus_any *ptr) {return((mus_float_t *)(((mus_mixer *)ptr)->vals));}
-
-static int mixer_channels(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
-
-static mus_any_class MIXER_CLASS = {
-  MUS_MIXER,
-  (char *)S_mixer,
-  &free_mixer,
-  &describe_mixer,
-  &equalp_mixer,
-  &mixer_data, 0,
-  &mixer_length,
-  0,
-  0, 0, 0, 0,
-  0, 0,
-  0, 0,
-  &run_mixer,
-  MUS_NOT_SPECIAL, 
-  NULL,
-  &mixer_channels,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0,
-  &mixer_reset,
-  0
-};
-
-
-mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data)
-{
-  /* for CLM */
-  mus_mixer *nf;
-  int i;
-  if (chans <= 0) return(NULL);
-  nf = (mus_mixer *)malloc(sizeof(mus_mixer));
-  nf->core = &MIXER_CLASS;
-  nf->chans = chans;
-  nf->vals = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
-  for (i = 0; i < chans; i++)
-    nf->vals[i] = (mus_float_t *)(data + (i * chans));
-  nf->data_allocated = false;
-  return((mus_any *)nf);
-}
-
-
-mus_any *mus_make_empty_mixer(int chans)
-{
-  mus_mixer *nf = NULL;
-  int i;
-  nf = (mus_mixer *)malloc(sizeof(mus_mixer));
-  nf->core = &MIXER_CLASS;
-  nf->chans = chans;
-  nf->vals = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
-  for (i = 0; i < chans; i++)
-    nf->vals[i] = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
-  nf->data_allocated = true;
-  return((mus_any *)nf);
-}
-
-
-mus_any *mus_make_scalar_mixer(int chans, mus_float_t scalar)
-{
-  mus_mixer *mx = NULL;
-  if (chans <= 0)
-    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_scalar_mixer ": chans: %d", chans);
-  else
-    {
-      int i;
-      mx = (mus_mixer *)mus_make_empty_mixer(chans);
-      if (mx) for (i = 0; i < chans; i++) mx->vals[i][i] = scalar;
-    }
-  return((mus_any *)mx);
-}
-
-
-mus_any *mus_make_identity_mixer(int chans)
-{
-  return(mus_make_scalar_mixer(chans, 1.0));
-}
-
-
-mus_any *mus_make_mixer(int chans, ...)
-{
-  mus_mixer *mx = NULL;
-  if (chans <= 0) 
-    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_mixer ": chans: %d", chans);
-  else
-    {
-      mx = (mus_mixer *)mus_make_empty_mixer(chans);
-      if (mx) 
-	{
-	  int i, j;
-	  va_list ap;
-	  va_start(ap, chans);
-	  for (i = 0; i < chans; i++)
-	    for (j = 0; j < chans; j++)
-	      mx->vals[i][j] = (mus_float_t)(va_arg(ap, double));
-	  va_end(ap);
-	}
-    }
-  return((mus_any *)mx);
-}
-
-
-mus_any *mus_mixer_copy(mus_any *uf)
-{
-  int i, j;
-  mus_mixer *f = (mus_mixer *)uf;
-  mus_mixer *nf;
-  nf = (mus_mixer *)mus_make_empty_mixer(f->chans);
-  for (i = 0; i < f->chans; i++)
-    for (j = 0; j < f->chans; j++)
-      nf->vals[i][j] = f->vals[i][j];
-  return((mus_any *)nf);
-}
-
-
-mus_float_t mus_mixer_fill(mus_any *uf, mus_float_t val)
-{
-  int i, j;
-  mus_mixer *f = (mus_mixer *)uf;
-  for (i = 0; i < f->chans; i++)
-    for (j = 0; j < f->chans; j++)
-      f->vals[i][j] = val;
-  return(val);
-}
-
-
-mus_float_t mus_mixer_ref(mus_any *uf, int in, int out) 
-{
-  mus_mixer *f = (mus_mixer *)uf;
-  if ((in >= 0) && (in < f->chans) &&
-      (out >= 0) && (out < f->chans))
-    return(f->vals[in][out]);
-  mus_error(MUS_ARG_OUT_OF_RANGE, 
-	    S_mixer_ref ": invalid chan: %d (mixer has %d chan%s)",
-	    ((in < 0) || (in >= f->chans)) ? in : out,
-	    f->chans,
-	    (f->chans == 1) ? "" : "s");
-  return(0.0);
-}
-
-
-mus_float_t mus_mixer_set(mus_any *uf, int in, int out, mus_float_t val) 
-{
-  mus_mixer *f = (mus_mixer *)uf;
-  if ((in >= 0) && (in < f->chans) &&
-      (out >= 0) && (out < f->chans))
-    f->vals[in][out] = val; 
-  else mus_error(MUS_ARG_OUT_OF_RANGE, 
-		 S_mixer_set ": invalid chan: %d (mixer has %d chan%s)",
-		 ((in < 0) || (in >= f->chans)) ? in : out,
-		 f->chans,
-		 (f->chans == 1) ? "" : "s");
-  return(val);
-}
-
-
-static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
-{
-  /* (frame->frame frame mixer frame) = frame * mixer -> frame -- this is the original form */
-  mus_mixer *mix = (mus_mixer *)arg2;
-  mus_frame *frame = (mus_frame *)arg1;
-  mus_frame *out = (mus_frame *)arg_out;
-  int i, j, in_chans, out_chans;
-
-  in_chans = frame->chans;
-  if (in_chans > mix->chans) 
-    in_chans = mix->chans;
-  out_chans = mix->chans;
-  if (out)
-    {
-      if (out->chans < out_chans) 
-	out_chans = out->chans;
-    }
-  else out = (mus_frame *)mus_make_empty_frame(out_chans);
-
-  for (i = 0; i < out_chans; i++)
-    {
-      out->vals[i] = (frame->vals[0] * mix->vals[0][i]);
-      for (j = 1; j < in_chans; j++)
-	out->vals[i] += (frame->vals[j] * mix->vals[j][i]);
-    }
-  return((mus_any *)out); /* not arg_out since out may be allocated above, and clm2xen.c expects this to be legit */
-}
-
-
-static mus_any *safe_frame_to_frame(mus_frame *f1, mus_mixer *mx, mus_frame *f2, int in_chans, int out_chans)
-{
-  int i, j;
-  for (i = 0; i < out_chans; i++)
-    {
-      f2->vals[i] = f1->vals[0] * mx->vals[0][i];
-      for (j = 1; j < in_chans; j++)
-	f2->vals[i] += f1->vals[j] * mx->vals[j][i];
-    }
-  return((mus_any *)f2);
-}
-
-
-static mus_any *frame_to_frame_left(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
-{
-  /* (frame->frame mixer frame frame) = mixer * frame -> frame */
-  mus_mixer *mix = (mus_mixer *)arg1;
-  mus_frame *frame = (mus_frame *)arg2;
-  mus_frame *out = (mus_frame *)arg_out;
-  int i, in_chans, out_chans;
-
-  in_chans = frame->chans;
-  if (in_chans > mix->chans) 
-    in_chans = mix->chans;
-  out_chans = mix->chans;
-  if (out)
-    {
-      if (out->chans < out_chans) 
-	out_chans = out->chans;
-    }
-  else out = (mus_frame *)mus_make_empty_frame(out_chans);
-  for (i = 0; i < out_chans; i++)
-    {
-      int j;
-      out->vals[i] = (mix->vals[i][0] * frame->vals[0]);
-      for (j = 1; j < in_chans; j++)
-	out->vals[i] += (mix->vals[i][j] * frame->vals[j]);
-    }
-  return((mus_any *)out);
-}
-
-
-mus_any *mus_frame_to_frame(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
-{
-  if (mus_is_mixer(arg2))
-    return(frame_to_frame_right(arg1, arg2, arg_out));
-  return(frame_to_frame_left(arg1, arg2, arg_out));
-}
-
-
-mus_any *mus_sample_to_frame(mus_any *f, mus_float_t in, mus_any *uout)
-{
-  int i, chans;
-  mus_frame *out = (mus_frame *)uout;
-  if (mus_is_frame(f))
-    {
-      mus_frame *fr;
-      fr = (mus_frame *)f;
-      chans = fr->chans;
-      if (out)
-	{
-	  if (out->chans < chans) 
-	    chans = out->chans;
-	}
-      else out = (mus_frame *)mus_make_empty_frame(chans);
-      for (i = 0; i < chans; i++)
-	out->vals[i] = (in * fr->vals[i]);
-      /* was += here and below? */
-    }
-  else
-    {
-      if (mus_is_mixer(f))
-	{
-	  mus_mixer *mx;
-	  mx = (mus_mixer *)f;
-	  chans = mx->chans;
-	  if (out)
-	    {
-	      if (out->chans < chans) 
-		chans = out->chans;
-	    }
-	  else out = (mus_frame *)mus_make_empty_frame(chans);
-	  for (i = 0; i < chans; i++)
-	    out->vals[i] = (in * mx->vals[0][i]);
-	}
-      else mus_error(MUS_ARG_OUT_OF_RANGE, S_sample_to_frame ": gen not frame or mixer");
-    }
-  return((mus_any *)out);
-}
-
-
-mus_float_t mus_frame_to_sample(mus_any *f, mus_any *uin)
-{
-  int i, chans;
-  mus_frame *in = (mus_frame *)uin;
-  mus_float_t val = 0.0;
-  if (mus_is_frame(f))
-    {
-      mus_frame *fr;
-      fr = (mus_frame *)f;
-      chans = in->chans;
-      if (fr->chans < chans) 
-	chans = fr->chans;
-      for (i = 0; i < chans; i++)
-	val += (in->vals[i] * fr->vals[i]); 
-    }
-  else
-    {
-      if (mus_is_mixer(f))
-	{
-	  mus_mixer *mx;
-	  mx = (mus_mixer *)f;
-	  chans = in->chans;
-	  if (mx->chans < chans) 
-	    chans = mx->chans;
-	  for (i = 0; i < chans; i++)
-	    val += (in->vals[i] * mx->vals[i][0]);
-	}
-      else mus_error(MUS_ARG_OUT_OF_RANGE, S_frame_to_sample ": gen not frame or mixer");
-    }
-  return(val);
-}
-
-
-mus_any *mus_mixer_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
-{
-  int i, j, chans;
-  mus_mixer *f1 = (mus_mixer *)uf1;
-  mus_mixer *f2 = (mus_mixer *)uf2;
-  mus_mixer *res = (mus_mixer *)ures;
-
-  chans = f1->chans;
-  if (f2->chans < chans) 
-    chans = f2->chans;
-  if (res)
-    {
-      if (res->chans < chans) 
-	chans = res->chans;
-    }
-  else res = (mus_mixer *)mus_make_empty_mixer(chans);
-  for (i = 0; i < chans; i++)
-    for (j = 0; j < chans; j++)
-      res->vals[i][j] = f1->vals[i][j] + f2->vals[i][j];
-  return((mus_any *)res);
-}
-
-
-mus_any *mus_mixer_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
-{
-  int i, j, k, chans;
-  mus_mixer *f1 = (mus_mixer *)uf1;
-  mus_mixer *f2 = (mus_mixer *)uf2;
-  mus_mixer *res = (mus_mixer *)ures;
-
-  chans = f1->chans;
-  if (f2->chans < chans) 
-    chans = f2->chans;
-  if (res)
-    {
-      if (res->chans < chans) 
-	chans = res->chans;
-    }
-  else res = (mus_mixer *)mus_make_empty_mixer(chans);
-  for (i = 0; i < chans; i++)
-    for (j = 0; j < chans; j++)
-      {
-	res->vals[i][j] = 0.0;
-	for (k = 0; k < chans; k++) 
-	  res->vals[i][j] += (f1->vals[i][k] * f2->vals[k][j]);
-      }
-  return((mus_any *)res);
-}
-
-
-mus_any *mus_mixer_scale(mus_any *uf1, mus_float_t scaler, mus_any *ures)
-{
-  int i, j, chans;
-  mus_mixer *f1 = (mus_mixer *)uf1;
-  mus_mixer *res = (mus_mixer *)ures;
-
-  chans = f1->chans;
-  if (res)
-    {
-      if (res->chans < chans) 
-	chans = res->chans;
-    }
-  else res = (mus_mixer *)mus_make_empty_mixer(chans);
-  for (i = 0; i < chans; i++)
-    for (j = 0; j < chans; j++)
-      res->vals[i][j] = f1->vals[i][j] * scaler;
-  return((mus_any *)res);
-}
-
-
-mus_any *mus_mixer_offset(mus_any *uf1, mus_float_t offset, mus_any *ures)
-{
-  int i, j, chans;
-  mus_mixer *f1 = (mus_mixer *)uf1;
-  mus_mixer *res = (mus_mixer *)ures;
-
-  chans = f1->chans;
-  if (res)
-    {
-      if (res->chans < chans) 
-	chans = res->chans;
-    }
-  else res = (mus_mixer *)mus_make_empty_mixer(chans);
-  for (i = 0; i < chans; i++)
-    for (j = 0; j < chans; j++)
-      res->vals[i][j] = f1->vals[i][j] + offset;
-  return((mus_any *)res);
-}
-
-
 
 /* ---------------- input/output ---------------- */
 
-static mus_float_t mus_read_sample(mus_any *fd, mus_long_t frame, int chan) 
+static mus_float_t mus_read_sample(mus_any *fd, mus_long_t frample, int chan) 
 {
   if ((check_gen(fd, "mus-read-sample")) &&
       ((fd->core)->read_sample))
-    return(((*(fd->core)->read_sample))(fd, frame, chan));
+    return(((*(fd->core)->read_sample))(fd, frample, chan));
   return((mus_float_t)mus_error(MUS_NO_SAMPLE_INPUT, 
-			  S_read_sample ":can't find %s's sample input function", 
+			  ":can't find %s's sample input function", 
 			  mus_name(fd)));
 }
 
@@ -10793,7 +10019,7 @@ static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 {
   /* check in-core buffer bounds,
    * if needed read new buffer (taking into account dir)
-   * return mus_float_t at samp (frame) 
+   * return mus_float_t at samp (frample) 
    */
   rdin *gen = (rdin *)ptr;
 
@@ -10847,7 +10073,7 @@ static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 	      for (i = 0; i < gen->chans; i++)
 		gen->ibufs[i] = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	    }
-	  mus_file_seek_frame(fd, gen->data_start);
+	  mus_file_seek_frample(fd, gen->data_start);
 
 	  if ((gen->data_start + gen->file_buffer_size) >= gen->file_end)
 	    mus_file_read_chans(fd, gen->data_start, gen->file_end - gen->data_start, gen->chans, gen->ibufs, gen->ibufs);
@@ -10859,7 +10085,7 @@ static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 	   *   but that can be far beyond the actual end of the sample data!  It is at this level that
 	   *   we know how much data is actually supposed to be in the file. 
 	   *
-	   * Also, file_end is the number of frames, so we should not read samp # file_end (see above).
+	   * Also, file_end is the number of framples, so we should not read samp # file_end (see above).
 	   */
 	  
 	  mus_sound_close_input(fd);
@@ -10956,9 +10182,9 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
       if (gen->chans <= 0) 
 	mus_error(MUS_NO_CHANNELS, S_make_file_to_sample ": %s chans: %d", filename, gen->chans);
 
-      gen->file_end = mus_sound_frames(gen->file_name);
+      gen->file_end = mus_sound_framples(gen->file_name);
       if (gen->file_end < 0) 
-	mus_error(MUS_NO_LENGTH, S_make_file_to_sample ": %s frames: %lld", filename, gen->file_end);
+	mus_error(MUS_NO_LENGTH, S_make_file_to_sample ": %s framples: %lld", filename, gen->file_end);
 
       if (buffer_size < gen->file_end)
 	gen->file_buffer_size = buffer_size;
@@ -11202,11 +10428,11 @@ bool mus_in_any_is_safe(mus_any *ptr)
 
 
 
-/* ---------------- file->frame ---------------- */
+/* ---------------- file->frample ---------------- */
 
 /* also built on file->sample */
 
-static char *describe_file_to_frame(mus_any *ptr)
+static char *describe_file_to_frample(mus_any *ptr)
 {
   rdin *gen = (rdin *)ptr;
   char *describe_buffer;
@@ -11218,18 +10444,18 @@ static char *describe_file_to_frame(mus_any *ptr)
 }
 
 
-static mus_float_t run_file_to_frame(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) 
+static mus_float_t run_file_to_frample(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) 
 {
-  mus_error(MUS_NO_RUN, "no run method for file->frame"); 
+  mus_error(MUS_NO_RUN, "no run method for file->frample"); 
   return(0.0);
 }
 
 
-static mus_any_class FILE_TO_FRAME_CLASS = {
-  MUS_FILE_TO_FRAME,
-  (char *)S_file_to_frame,
+static mus_any_class FILE_TO_FRAMPLE_CLASS = {
+  MUS_FILE_TO_FRAMPLE,
+  (char *)S_file_to_frample,
   &free_file_to_sample,
-  &describe_file_to_frame,
+  &describe_file_to_frample,
   &rdin_equalp,
   0, 0, 
   &file_to_sample_length, 0,
@@ -11237,7 +10463,7 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
   &fallback_scaler, 0,
   &file_to_sample_increment,     /* allow backward reads */ 
   &file_to_sample_set_increment, 
-  &run_file_to_frame,
+  &run_file_to_frample,
   MUS_INPUT,
   NULL,
   &file_to_sample_channels,
@@ -11255,51 +10481,46 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
 };
 
 
-mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, mus_long_t buffer_size)
+mus_any *mus_make_file_to_frample_with_buffer_size(const char *filename, mus_long_t buffer_size)
 {
   rdin *gen;
   gen = (rdin *)mus_make_file_to_sample_with_buffer_size(filename, buffer_size);
   if (gen) 
     {
-      gen->core = &FILE_TO_FRAME_CLASS;
+      gen->core = &FILE_TO_FRAMPLE_CLASS;
       return((mus_any *)gen);
     }
   return(NULL);
 }
 
 
-mus_any *mus_make_file_to_frame(const char *filename)
+mus_any *mus_make_file_to_frample(const char *filename)
 {
-  return(mus_make_file_to_frame_with_buffer_size(filename, clm_file_buffer_size));
+  return(mus_make_file_to_frample_with_buffer_size(filename, clm_file_buffer_size));
 }
 
 
-bool mus_is_file_to_frame(mus_any *ptr) 
+bool mus_is_file_to_frample(mus_any *ptr) 
 {
   return((ptr) && 
-	 (ptr->core->type == MUS_FILE_TO_FRAME));
+	 (ptr->core->type == MUS_FILE_TO_FRAMPLE));
 }
 
 
-mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *uf)
+mus_float_t *mus_file_to_frample(mus_any *ptr, mus_long_t samp, mus_float_t *f, int out_chans)
 {
-  mus_frame *f;
   rdin *gen = (rdin *)ptr;
   int i;
 
-  if (uf == NULL) 
-    f = (mus_frame *)mus_make_empty_frame(gen->chans); 
-  else f = (mus_frame *)uf;
-
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start) &&
-      (gen->chans <= f->chans))
+      (gen->chans <= out_chans))
     {
       mus_long_t pos;
       pos = samp - gen->data_start;
-      f->vals[0] = gen->ibufs[0][pos];
+      f[0] = gen->ibufs[0][pos];
       for (i = 1; i < gen->chans; i++) 
-	f->vals[i] = gen->ibufs[i][pos];
+	f[i] = gen->ibufs[i][pos];
     }
   else
     {
@@ -11307,18 +10528,17 @@ mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *uf)
 	  (samp >= gen->file_end))
 	{
 	  for (i = 0; i < gen->chans; i++) 
-	    f->vals[i] = 0.0;
+	    f[i] = 0.0;
 	}
       else
 	{
-	  f->vals[0] = mus_in_any_from_file(ptr, samp, 0);
+	  f[0] = mus_in_any_from_file(ptr, samp, 0);
 	  for (i = 1; i < gen->chans; i++) 
-	    f->vals[i] = mus_in_any_from_file(ptr, samp, i);
+	    f[i] = mus_in_any_from_file(ptr, samp, i);
 	}
     }
-  return((mus_any *)f);
+  return(f);
 }
-
 
 
 
@@ -11438,13 +10658,13 @@ static void flush_buffers(rdout *gen)
       /* get existing samples, add new output, write back to output */
       mus_float_t **addbufs = NULL;
       int i, j, data_format;
-      mus_long_t current_file_frames, frames_to_add;
+      mus_long_t current_file_framples, framples_to_add;
       
       data_format = mus_sound_data_format(gen->file_name);
-      current_file_frames = mus_sound_frames(gen->file_name);
+      current_file_framples = mus_sound_framples(gen->file_name);
       /* this is often 0 (brand-new file) */
       
-      if (current_file_frames > gen->data_start)
+      if (current_file_framples > gen->data_start)
 	{
 	  bool allocation_failed = false;
 	  addbufs = (mus_float_t **)calloc(gen->chans, sizeof(mus_float_t *));
@@ -11495,27 +10715,27 @@ static void flush_buffers(rdout *gen)
 	    }
 	}
       
-      frames_to_add = gen->out_end - gen->data_start;
+      framples_to_add = gen->out_end - gen->data_start;
       
-      /* if the caller reset clm_file_buffer_size during a run, frames_to_add might be greater than the assumed buffer size,
+      /* if the caller reset clm_file_buffer_size during a run, framples_to_add might be greater than the assumed buffer size,
        *   so we need to complain and fix up the limits.  In CLM, the size is set in sound.lisp, begin-with-sound.
        *   In Snd via mus_set_file_buffer_size in clm2xen.c.  The initial default is set in mus_initialize
        *   called in CLM by clm-initialize-links via in cmus.c, and in Snd in clm2xen.c when the module is setup.
        */
-      if (frames_to_add >= clm_file_buffer_size) 
+      if (framples_to_add >= clm_file_buffer_size) 
 	{
 	  mus_print("clm-file-buffer-size changed? %lld <= %lld (start: %lld, end: %lld, %lld)",
-		    clm_file_buffer_size, frames_to_add, gen->data_start, gen->data_end, gen->out_end);
+		    clm_file_buffer_size, framples_to_add, gen->data_start, gen->data_end, gen->out_end);
 	  
-	  frames_to_add = clm_file_buffer_size - 1;
+	  framples_to_add = clm_file_buffer_size - 1;
 	  /* this means we drop samples -- the other choice (short of throwing an error) would
 	   *   be to read/allocate the bigger size.
 	   */
 	}
       if (addbufs)
 	{
-	  mus_file_seek_frame(fd, gen->data_start);
-	  mus_file_read(fd, gen->data_start, frames_to_add + 1, gen->chans, addbufs);
+	  mus_file_seek_frample(fd, gen->data_start);
+	  mus_file_read(fd, gen->data_start, framples_to_add + 1, gen->chans, addbufs);
 	}
       mus_sound_close_input(fd); /* close previous mus_sound_open_input */
 
@@ -11523,10 +10743,10 @@ static void flush_buffers(rdout *gen)
 				   mus_sound_header_type(gen->file_name),
 				   mus_sound_data_location(gen->file_name));
       
-      if ((current_file_frames < gen->data_start) &&
+      if ((current_file_framples < gen->data_start) &&
 	  (data_format_zero[data_format] != 0))
 	{
-	  /* we're about to create a gap in the output file.  mus_file_seek_frame calls lseek which (man lseek):
+	  /* we're about to create a gap in the output file.  mus_file_seek_frample calls lseek which (man lseek):
 	   *
            *    "The lseek function allows the file offset to be set beyond the  end  of
            *    the existing end-of-file of the file (but this does not change the size
@@ -11549,8 +10769,8 @@ static void flush_buffers(rdout *gen)
 	  #define MAX_ZERO_SAMPLES 65536
 
 	  bps = mus_bytes_per_sample(data_format);
-	  filler = gen->data_start - current_file_frames; 
-	  mus_file_seek_frame(fd, current_file_frames);
+	  filler = gen->data_start - current_file_framples; 
+	  mus_file_seek_frample(fd, current_file_framples);
 
 	  if (filler > MAX_ZERO_SAMPLES)
 	    bytes = MAX_ZERO_SAMPLES * bps * gen->chans;
@@ -11596,7 +10816,7 @@ static void flush_buffers(rdout *gen)
 	      mus_long_t add4;
 	      adder = addbufs[j];
 	      vals = gen->obufs[j];
-	      add4 = frames_to_add - 4;
+	      add4 = framples_to_add - 4;
 	      i = 0;
 	      while (i <= add4)
 		{
@@ -11609,12 +10829,12 @@ static void flush_buffers(rdout *gen)
 		  adder[i] += vals[i];
 		  i++;
 		}
-	      for (; i <= frames_to_add; i++)
+	      for (; i <= framples_to_add; i++)
 		adder[i] += vals[i];
 	    }
 	  
-	  mus_file_seek_frame(fd, gen->data_start);
-	  mus_file_write(fd, 0, frames_to_add, gen->chans, addbufs);
+	  mus_file_seek_frample(fd, gen->data_start);
+	  mus_file_write(fd, 0, framples_to_add, gen->chans, addbufs);
 	  for (i = 0; i < gen->chans; i++) 
 	    free(addbufs[i]); 
 	  free(addbufs);
@@ -11622,38 +10842,38 @@ static void flush_buffers(rdout *gen)
       else
 	{
 	  /* output currently empty, so just flush out the gen->obufs */
-	  mus_file_seek_frame(fd, gen->data_start);
-	  mus_file_write(fd, 0, frames_to_add, gen->chans, gen->obufs);
+	  mus_file_seek_frample(fd, gen->data_start);
+	  mus_file_write(fd, 0, framples_to_add, gen->chans, gen->obufs);
 	}
       
-      if (current_file_frames <= gen->out_end) 
-	current_file_frames = gen->out_end + 1;
-      mus_sound_close_output(fd, current_file_frames * gen->chans * mus_bytes_per_sample(data_format));
+      if (current_file_framples <= gen->out_end) 
+	current_file_framples = gen->out_end + 1;
+      mus_sound_close_output(fd, current_file_framples * gen->chans * mus_bytes_per_sample(data_format));
     }
 }
 
 
 mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2)
 {
-  mus_long_t min_frames;
+  mus_long_t min_framples;
   rdout *dest = (rdout *)out1;
   rdout *in_coming = (rdout *)out2;
   int chn, min_chans;
 
   min_chans = dest->chans;
   if (in_coming->chans < min_chans) min_chans = in_coming->chans;
-  min_frames = in_coming->out_end;
+  min_framples = in_coming->out_end;
 
   for (chn = 0; chn < min_chans; chn++)
     {
       mus_long_t i;
-      for (i = 0; i < min_frames; i++)
+      for (i = 0; i < min_framples; i++)
 	dest->obufs[chn][i] += in_coming->obufs[chn][i];
-      memset((void *)(in_coming->obufs[chn]), 0, min_frames * sizeof(mus_float_t));
+      memset((void *)(in_coming->obufs[chn]), 0, min_framples * sizeof(mus_float_t));
     }
 
-  if (min_frames > dest->out_end)
-    dest->out_end = min_frames;
+  if (min_framples > dest->out_end)
+    dest->out_end = min_framples;
 
   in_coming->out_end = 0;
   in_coming->data_start = 0;
@@ -11988,9 +11208,9 @@ bool mus_out_any_is_safe(mus_any *IO)
 
 
 
-/* ---------------- frame->file ---------------- */
+/* ---------------- frample->file ---------------- */
 
-static char *describe_frame_to_file(mus_any *ptr)
+static char *describe_frample_to_file(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
   char *describe_buffer;
@@ -12002,25 +11222,25 @@ static char *describe_frame_to_file(mus_any *ptr)
 }
 
 
-static mus_float_t run_frame_to_file(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) 
+static mus_float_t run_frample_to_file(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) 
 {
-  mus_error(MUS_NO_RUN, "no run method for frame->file"); 
+  mus_error(MUS_NO_RUN, "no run method for frample->file"); 
   return(0.0);
 }
 
 
-static mus_any_class FRAME_TO_FILE_CLASS = {
-  MUS_FRAME_TO_FILE,
-  (char *)S_frame_to_file,
+static mus_any_class FRAMPLE_TO_FILE_CLASS = {
+  MUS_FRAMPLE_TO_FILE,
+  (char *)S_frample_to_file,
   &free_sample_to_file,
-  &describe_frame_to_file,
+  &describe_frample_to_file,
   &sample_to_file_equalp,
   0, 0,
   &bufferlen, &set_bufferlen,
   0, 0, 0, 0,
   &fallback_scaler, 0,
   0, 0,
-  &run_frame_to_file,
+  &run_frample_to_file,
   MUS_OUTPUT,
   NULL,
   &sample_to_file_channels,
@@ -12036,58 +11256,52 @@ static mus_any_class FRAME_TO_FILE_CLASS = {
 };
 
 
-mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment)
+mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment)
 {
   rdout *gen = NULL;
   gen = (rdout *)mus_make_sample_to_file_with_comment(filename, chans, out_format, out_type, comment);
-  if (gen) gen->core = &FRAME_TO_FILE_CLASS;
+  if (gen) gen->core = &FRAMPLE_TO_FILE_CLASS;
   return((mus_any *)gen);
 }
 
 
-bool mus_is_frame_to_file(mus_any *ptr) 
+bool mus_is_frample_to_file(mus_any *ptr) 
 {
   return((ptr) && 
-	 (ptr->core->type == MUS_FRAME_TO_FILE));
+	 (ptr->core->type == MUS_FRAMPLE_TO_FILE));
 }
 
 
-mus_any *mus_frame_to_file(mus_any *ptr, mus_long_t samp, mus_any *udata)
+mus_float_t *mus_frample_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *data, int chans)
 {
   rdout *gen = (rdout *)ptr;
-  mus_frame *data = (mus_frame *)udata;
 
-  if (data) 
+  if (chans == 1)
+    mus_outa_to_file(ptr, samp, data[0]);
+  else
     {
-      if (data->chans == 1)
-	mus_outa_to_file(ptr, samp, data->vals[0]);
+      if ((chans == 2) &&
+	  (gen->chans == 2))
+	{
+	  mus_outa_to_file(ptr, samp, data[0]);
+	  mus_outb_to_file(ptr, samp, data[1]);
+	}
       else
 	{
-	  if ((data->chans == 2) &&
-	      (gen->chans == 2))
-	    {
-	      mus_outa_to_file(ptr, samp, data->vals[0]);
-	      mus_outb_to_file(ptr, samp, data->vals[1]);
-	    }
-	  else
-	    {
-	      int chans;
-	      chans = data->chans;
-	      if (gen->chans < chans) 
-		chans = gen->chans;
-	      mus_out_chans_to_file(gen, samp, chans, data->vals);
-	    }
+	  if (gen->chans < chans) 
+	    chans = gen->chans;
+	  mus_out_chans_to_file(gen, samp, chans, data);
 	}
     }
-  return(udata);
+  return(data);
 }
 
 
-mus_any *mus_continue_frame_to_file(const char *filename)
+mus_any *mus_continue_frample_to_file(const char *filename)
 {
   rdout *gen = NULL;
   gen = (rdout *)mus_continue_sample_to_file(filename);
-  if (gen) gen->core = &FRAME_TO_FILE_CLASS;
+  if (gen) gen->core = &FRAMPLE_TO_FILE_CLASS;
   return((mus_any *)gen);
 }
 
@@ -12144,6 +11358,18 @@ mus_float_t *mus_file_to_vector(mus_any *ptr, mus_long_t samp, mus_float_t *vals
 }
 
 
+mus_float_t *mus_frample_to_frample(mus_float_t *matrix, mus_float_t *in_samps, int in_chans, mus_float_t *out_samps, int out_chans)
+{
+  int i, j, offset;
+  for (i = 0; i < out_chans; i++)
+    {
+      out_samps[i] = in_samps[0] * matrix[i];
+      for (j = 1, offset = out_chans; j < in_chans; j++, offset += out_chans)
+	out_samps[i] += in_samps[j] * matrix[offset + i];
+    }
+  return(out_samps);
+}
+
 
 
 /* ---------------- locsig ---------------- */
@@ -12152,7 +11378,7 @@ typedef struct {
   mus_any_class *core;
   mus_any *outn_writer;
   mus_any *revn_writer;
-  mus_frame *outf, *revf;
+  mus_float_t *outf, *revf;
   mus_float_t *outn;
   mus_float_t *revn;
   int chans, rev_chans;
@@ -12250,13 +11476,10 @@ static int free_locsig(mus_any *p)
 	  free(ptr->revn);
 	  ptr->revn = NULL;
 	}
-      mus_free((mus_any *)(ptr->outf));
+      if (ptr->outf) free(ptr->outf);
       ptr->outf = NULL;
-      if (ptr->revf) 
-	{
-	  mus_free((mus_any *)(ptr->revf));
-	  ptr->revf = NULL;
-	}
+      if (ptr->revf) free(ptr->revf);
+      ptr->revf = NULL;
       ptr->outn_writer = NULL;
       ptr->revn_writer = NULL;
       ptr->chans = 0;
@@ -12275,8 +11498,8 @@ static mus_float_t *locsig_data(mus_any *ptr) {return(((locs *)ptr)->outn);}
 
 static mus_float_t *locsig_xcoeffs(mus_any *ptr) {return(((locs *)ptr)->revn);}
 
-mus_any *mus_locsig_outf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outf));}  /* clm2xen.c */
-mus_any *mus_locsig_revf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revf));}
+mus_float_t *mus_locsig_outf(mus_any *ptr) {return(((locs *)ptr)->outf);}  /* clm2xen.c */
+mus_float_t *mus_locsig_revf(mus_any *ptr) {return(((locs *)ptr)->revf);}
 
 mus_any *mus_locsig_out_writer(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outn_writer));}
 mus_any *mus_locsig_rev_writer(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revn_writer));}
@@ -12553,16 +11776,16 @@ static void mus_locsig_any(mus_any *ptr, mus_long_t loc, mus_float_t val)
   rdout *writer = (rdout *)(gen->outn_writer);
   for (i = 0; i < gen->chans; i++)
     {
-      (gen->outf)->vals[i] = val * gen->outn[i];
+      gen->outf[i] = val * gen->outn[i];
       if (writer)
-	mus_out_any_to_file((mus_any *)writer, loc, i, gen->outf->vals[i]);
+	mus_out_any_to_file((mus_any *)writer, loc, i, gen->outf[i]);
     }
   writer = (rdout *)(gen->revn_writer);
   for (i = 0; i < gen->rev_chans; i++)
     {
-      (gen->revf)->vals[i] = val * gen->revn[i];
+      gen->revf[i] = val * gen->revn[i];
       if (writer)
-	mus_out_any_to_file((mus_any *)writer, loc, i, gen->revf->vals[i]);
+	mus_out_any_to_file((mus_any *)writer, loc, i, gen->revf[i]);
     }
 }
 
@@ -12672,10 +11895,10 @@ static void mus_locsig_detour(mus_any *ptr, mus_long_t loc, mus_float_t val)
   if (gen->detour)
     {
       for (i = 0; i < gen->chans; i++)
-	(gen->outf)->vals[i] = val * gen->outn[i];
+	gen->outf[i] = val * gen->outn[i];
       
       for (i = 0; i < gen->rev_chans; i++)
-	(gen->revf)->vals[i] = val * gen->revn[i];
+	gen->revf[i] = val * gen->revn[i];
       
       (*(gen->detour))(ptr, loc);
     }
@@ -12688,9 +11911,9 @@ static void mus_locsig_any_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t v
   rdout *writer = (rdout *)(gen->outn_writer);
   for (i = 0; i < gen->chans; i++)
     {
-      (gen->outf)->vals[i] = val * gen->outn[i];
+      gen->outf[i] = val * gen->outn[i];
       if (writer)
-	mus_out_any_to_file((mus_any *)writer, loc, i, gen->outf->vals[i]);
+	mus_out_any_to_file((mus_any *)writer, loc, i, gen->outf[i]);
     }
 }
 
@@ -12779,7 +12002,7 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
 
   gen = (locs *)calloc(1, sizeof(locs));
   gen->core = &LOCSIG_CLASS;
-  gen->outf = (mus_frame *)mus_make_empty_frame(chans);
+  gen->outf = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
 
   gen->type = type;
   gen->reverb = reverb;
@@ -12800,7 +12023,7 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
   if (gen->rev_chans > 0)
     {
       gen->revn = (mus_float_t *)calloc(gen->rev_chans, sizeof(mus_float_t));
-      gen->revf = (mus_frame *)mus_make_empty_frame(gen->rev_chans);
+      gen->revf = (mus_float_t *)calloc(gen->rev_chans, sizeof(mus_float_t));
       mus_locsig_fill(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
     }
 
@@ -12922,7 +12145,7 @@ typedef struct {
   mus_any_class *core;
   mus_any *outn_writer;
   mus_any *revn_writer;
-  mus_frame *outf, *revf;
+  mus_float_t *outf, *revf;
   int out_channels, rev_channels;
   mus_long_t start, end;
   mus_any *doppler_delay, *doppler_env, *rev_env;
@@ -12939,8 +12162,8 @@ static int move_sound_channels(mus_any *ptr) {return(((dloc *)ptr)->out_channels
 static mus_long_t move_sound_length(mus_any *ptr) {return(((dloc *)ptr)->out_channels);} /* need both because return types differ */
 static void move_sound_reset(mus_any *ptr) {}
 
-mus_any *mus_move_sound_outf(mus_any *ptr) {return((mus_any *)(((dloc *)ptr)->outf));}
-mus_any *mus_move_sound_revf(mus_any *ptr) {return((mus_any *)(((dloc *)ptr)->revf));}
+mus_float_t *mus_move_sound_outf(mus_any *ptr) {return(((dloc *)ptr)->outf);}
+mus_float_t *mus_move_sound_revf(mus_any *ptr) {return(((dloc *)ptr)->revf);}
 
 void *mus_move_sound_closure(mus_any *ptr) {return(((dloc *)ptr)->closure);}
 static void *move_sound_set_closure(mus_any *ptr, void *e) {((dloc *)ptr)->closure = e; return(e);}
@@ -13033,8 +12256,8 @@ static int free_move_sound(mus_any *p)
 	}
 
       /* we created these in make_move_sound, so it should always be safe to free them */
-      if (ptr->outf) mus_free((mus_any *)(ptr->outf));
-      if (ptr->revf) mus_free((mus_any *)(ptr->revf));
+      if (ptr->outf) free(ptr->outf);
+      if (ptr->revf) free(ptr->revf);
       free(ptr);
     }
   return(0);
@@ -13075,7 +12298,7 @@ mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t uval)
       sample = val * mus_env(gen->out_envs[chan]);
       if (gen->out_delays[chan])
 	sample = mus_delay_unmodulated(gen->out_delays[chan], sample);
-      gen->outf->vals[gen->out_map[chan]] = sample;
+      gen->outf[gen->out_map[chan]] = sample;
     }
 
   /* reverb */
@@ -13086,22 +12309,22 @@ mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t uval)
       if (gen->rev_envs)
 	{
 	  if (gen->rev_channels == 1)
-	    gen->revf->vals[0] = val * mus_env(gen->rev_envs[0]);
+	    gen->revf[0] = val * mus_env(gen->rev_envs[0]);
 	  else
 	    {
 	      for (chan = 0; chan < gen->rev_channels; chan++)
-		gen->revf->vals[gen->out_map[chan]] = val * mus_env(gen->rev_envs[chan]);
+		gen->revf[gen->out_map[chan]] = val * mus_env(gen->rev_envs[chan]);
 	    }
 	}
-      else gen->revf->vals[0] = val;
+      else gen->revf[0] = val;
       
       if (gen->revn_writer)
-	mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
+	mus_frample_to_file(gen->revn_writer, loc, gen->revf, gen->rev_channels);
     }
 
   /* file output */
   if (gen->outn_writer)
-    mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
+    mus_frample_to_file(gen->outn_writer, loc, gen->outf, gen->out_channels);
 
   if (gen->detour)
     (*(gen->detour))(ptr, loc);
@@ -13177,7 +12400,7 @@ mus_any *mus_make_move_sound(mus_long_t start, mus_long_t end, int out_channels,
   gen->free_gens = free_gens;
   gen->free_arrays = free_arrays;
 
-  gen->outf = (mus_frame *)mus_make_empty_frame(out_channels);
+  gen->outf = (mus_float_t *)calloc(out_channels, sizeof(mus_float_t));
   if (mus_is_output(output)) 
     gen->outn_writer = output;
 
@@ -13185,7 +12408,7 @@ mus_any *mus_make_move_sound(mus_long_t start, mus_long_t end, int out_channels,
     {
       if (mus_is_output(revput))
 	gen->revn_writer = revput;
-      gen->revf = (mus_frame *)mus_make_empty_frame(rev_channels);
+      gen->revf = (mus_float_t *)calloc(rev_channels, sizeof(mus_float_t));
     }
 
   return((mus_any *)gen);
@@ -15737,8 +14960,8 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
   mus_float_t maxval = 0.0;
   mus_long_t i, fftlen;
 
-  file1_len = mus_sound_frames(file1);
-  file2_len = mus_sound_frames(file2);
+  file1_len = mus_sound_framples(file1);
+  file2_len = mus_sound_framples(file2);
   if ((file1_len <= 0) || (file2_len <= 0)) return;
 
   file1_chans = mus_sound_chans(file1);
@@ -16640,6 +15863,892 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 
 
 
+
+
+/* ---------------- mus-apply ---------------- */
+
+mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_float_t arg2)
+{
+  if (g)
+    return(g->core->run);
+  return(NULL);
+}
+
+mus_float_t mus_apply(mus_any *gen, mus_float_t f1, mus_float_t f2)
+{
+  /* what about non-gen funcs such as polynomial, ring_modulate etc? */
+  if ((gen) && (gen->core->run))
+    return((*(gen->core->run))(gen, f1, f2));
+  return(0.0);
+}
+
+
+/* ---------------- init clm ---------------- */
+
+void mus_initialize(void)
+{
+  #define MULAW_ZERO 255
+  #define ALAW_ZERO 213
+  #define UBYTE_ZERO 128
+
+  mus_generator_type = MUS_INITIAL_GEN_TAG;
+  sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
+  w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
+  array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
+  clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
+
+#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG
+  last_c_fft_size = 0;
+  /* is there a problem if the caller built fftw with --enable-threads?  
+   *   How to tell via configure that we need to initialize the thread stuff in libfftw?
+   */
+#endif
+
+  sincs = 0;
+  locsig_warned = NULL;
+
+  data_format_zero = (int *)calloc(MUS_NUM_DATA_FORMATS, sizeof(int));
+  data_format_zero[MUS_MULAW] = MULAW_ZERO;
+  data_format_zero[MUS_ALAW] = ALAW_ZERO;
+  data_format_zero[MUS_UBYTE] = UBYTE_ZERO;
+#if MUS_LITTLE_ENDIAN
+  data_format_zero[MUS_UBSHORT] = 0x80;
+  data_format_zero[MUS_ULSHORT] = 0x8000;
+#else
+  data_format_zero[MUS_UBSHORT] = 0x8000;
+  data_format_zero[MUS_ULSHORT] = 0x80;
+#endif 
+}
+
+
+
+
+
+
+/* -------------------------------------------------------------------------------- */
+/*
+ * from here to the end of the file is the deprecated frame/mixer code 
+ */
+
+#if (!CLM_DISABLE_DEPRECATED)
+
+
+/* ---------------- frame ---------------- */
+
+/* frame = vector, mixer = (square) matrix */
+
+typedef struct {
+  mus_any_class *core;
+  int chans;
+  mus_float_t *vals;
+  bool data_allocated;
+} mus_frame;
+
+
+static int free_frame(mus_any *pt)
+{
+  mus_frame *ptr = (mus_frame *)pt;
+  if (ptr)
+    {
+      if ((ptr->vals) && (ptr->data_allocated)) free(ptr->vals);
+      free(ptr);
+    }
+  return(0);
+}
+
+
+static char *describe_frame(mus_any *ptr)
+{
+  mus_frame *gen = (mus_frame *)ptr;
+  char *str = NULL;
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s[%d]: %s", 
+	       mus_name(ptr),
+	       gen->chans,
+	       str = float_array_to_string(gen->vals, gen->chans, 0));
+  if (str) free(str);
+  return(describe_buffer);
+}
+
+
+bool mus_is_frame(mus_any *ptr) 
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_FRAME));
+}
+
+
+bool mus_is_frame_or_mixer(mus_any *ptr) 
+{
+  return((ptr) && 
+	 ((ptr->core->type == MUS_FRAME) ||
+	  (ptr->core->type == MUS_MIXER)));
+}
+
+
+static bool equalp_frame(mus_any *p1, mus_any *p2)
+{
+  mus_frame *g1, *g2;
+  if (p1 == p2) return(true);
+  g1 = (mus_frame *)p1;
+  g2 = (mus_frame *)p2;
+  return(((g1->core)->type == (g2->core)->type) &&
+	 (g1->chans == g2->chans) &&
+	 (clm_arrays_are_equal(g1->vals, g2->vals, g1->chans)));
+}
+
+
+static mus_float_t run_frame(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) {return(mus_frame_ref(ptr, (int)arg1));}
+static mus_float_t *frame_data(mus_any *ptr) {return(((mus_frame *)ptr)->vals);}
+static mus_long_t frame_length(mus_any *ptr) {return(((mus_frame *)ptr)->chans);}
+static int frame_channels(mus_any *ptr) {return(((mus_frame *)ptr)->chans);}
+
+static void frame_reset(mus_any *ptr) 
+{
+  mus_frame *gen = (mus_frame *)ptr;
+  mus_clear_array(gen->vals, gen->chans);
+}
+
+static mus_any_class FRAME_CLASS = {
+  MUS_FRAME,
+  (char *)S_frame,
+  &free_frame,
+  &describe_frame,
+  &equalp_frame,
+  &frame_data, 0,
+  &frame_length, 0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0,
+  &run_frame,
+  MUS_NOT_SPECIAL, 
+  NULL,
+  &frame_channels,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &frame_reset,
+  0
+};
+
+
+mus_any *mus_make_empty_frame(int chans)
+{
+  mus_frame *nf;
+  if (chans <= 0) return(NULL);
+  nf = (mus_frame *)malloc(sizeof(mus_frame));
+  nf->core = &FRAME_CLASS;
+  nf->chans = chans;
+  nf->vals = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
+  nf->data_allocated = true;
+  return((mus_any *)nf);
+}
+
+
+mus_any *mus_make_frame_with_data(int chans, mus_float_t *data)
+{
+  /* for CLM */
+  mus_frame *nf;
+  if (chans <= 0) return(NULL);
+  nf = (mus_frame *)malloc(sizeof(mus_frame));
+  nf->core = &FRAME_CLASS;
+  nf->chans = chans;
+  nf->vals = data;
+  nf->data_allocated = false;
+  return((mus_any *)nf);
+}
+
+
+mus_any *mus_make_frame(int chans, ...)
+{
+  if (chans <= 0)
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_frame ": chans: %d", chans);
+  else
+    {
+      mus_frame *nf = NULL;
+      nf = (mus_frame *)mus_make_empty_frame(chans);
+      if (nf)
+	{
+	  int i;
+	  va_list ap;
+	  va_start(ap, chans);
+	  for (i = 0; i < chans; i++)
+	    nf->vals[i] = (mus_float_t)(va_arg(ap, double)); /* float not safe here apparently */
+	  va_end(ap);
+	  return((mus_any *)nf);
+	}
+    }
+  return(NULL);
+}
+
+
+mus_any *mus_frame_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
+{
+  int chans, i;
+  mus_frame *f1 = (mus_frame *)uf1;
+  mus_frame *f2 = (mus_frame *)uf2;
+  mus_frame *res = (mus_frame *)ures;
+
+  chans = f1->chans;
+  if (f2->chans < chans) chans = f2->chans;
+  if (res)
+    {
+      if (res->chans < chans) chans = res->chans;
+    }
+  else res = (mus_frame *)mus_make_empty_frame(chans);
+  for (i = 0; i < chans; i++) 
+    res->vals[i] = f1->vals[i] + f2->vals[i];
+  return((mus_any *)res);
+}
+
+
+mus_any *mus_frame_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
+{
+  int chans, i;
+  mus_frame *f1 = (mus_frame *)uf1;
+  mus_frame *f2 = (mus_frame *)uf2;
+  mus_frame *res = (mus_frame *)ures;
+
+  chans = f1->chans;
+  if (f2->chans < chans) chans = f2->chans;
+  if (res)
+    {
+      if (res->chans < chans) 
+	chans = res->chans;
+    }
+  else res = (mus_frame *)mus_make_empty_frame(chans);
+  for (i = 0; i < chans; i++) 
+    res->vals[i] = f1->vals[i] * f2->vals[i];
+  return((mus_any *)res);
+}
+
+
+mus_any *mus_frame_scale(mus_any *uf1, mus_float_t scl, mus_any *ures)
+{
+  int chans, i;
+  mus_frame *f1 = (mus_frame *)uf1;
+  mus_frame *res = (mus_frame *)ures;
+
+  chans = f1->chans;
+  if (res)
+    {
+      if (res->chans < chans) 
+	chans = res->chans;
+    }
+  else res = (mus_frame *)mus_make_empty_frame(chans);
+  for (i = 0; i < chans; i++) 
+    res->vals[i] = f1->vals[i] * scl;
+  return((mus_any *)res);
+}
+
+
+mus_any *mus_frame_offset(mus_any *uf1, mus_float_t offset, mus_any *ures)
+{
+  int chans, i;
+  mus_frame *f1 = (mus_frame *)uf1;
+  mus_frame *res = (mus_frame *)ures;
+
+  chans = f1->chans;
+  if (res)
+    {
+      if (res->chans < chans) chans = res->chans;
+    }
+  else res = (mus_frame *)mus_make_empty_frame(chans);
+  for (i = 0; i < chans; i++) 
+    res->vals[i] = f1->vals[i] + offset;
+  return((mus_any *)res);
+}
+
+
+mus_float_t mus_frame_ref(mus_any *uf, int chan) 
+{
+  mus_frame *f = (mus_frame *)uf;
+  if ((chan >= 0) && (chan < f->chans))
+    return(f->vals[chan]);
+  return((mus_float_t)mus_error(MUS_ARG_OUT_OF_RANGE, 
+			  S_frame_ref ": invalid chan: %d (frame has %d chan%s)",
+			  chan, f->chans, (f->chans == 1) ? "" : "s"));
+}
+
+
+mus_float_t mus_frame_set(mus_any *uf, int chan, mus_float_t val) 
+{
+  mus_frame *f = (mus_frame *)uf;
+  if ((chan >= 0) && (chan < f->chans))
+    f->vals[chan] = val; 
+  else mus_error(MUS_ARG_OUT_OF_RANGE, 
+		 S_frame_set ": invalid chan: %d (frame has %d chan%s)",
+		 chan, f->chans, (f->chans == 1) ? "" : "s");
+  return(val);
+}
+
+
+mus_any *mus_frame_copy(mus_any *uf)
+{
+  mus_frame *f = (mus_frame *)uf;
+  mus_frame *nf;
+  nf = (mus_frame *)mus_make_empty_frame(f->chans);
+  memcpy((void *)(nf->vals), (void *)(f->vals), f->chans * sizeof(mus_float_t));
+  return((mus_any *)nf);
+}
+
+
+mus_float_t mus_frame_fill(mus_any *uf, mus_float_t val)
+{
+  int i;
+  mus_frame *f = (mus_frame *)uf;
+  for (i = 0; i < f->chans; i++)
+    f->vals[i] = val;
+  return(val);
+}
+
+
+
+/* ---------------- mixer ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  int chans;
+  mus_float_t **vals;
+  bool data_allocated;
+} mus_mixer;
+
+
+static int free_mixer(mus_any *pt)
+{
+  mus_mixer *ptr = (mus_mixer *)pt;
+  if (ptr)
+    {
+      if (ptr->vals)
+	{
+	  int i;
+	  if (ptr->data_allocated)
+	    for (i = 0; i < ptr->chans; i++) 
+	      free(ptr->vals[i]);
+	  free(ptr->vals);
+	}
+      free(ptr);
+    }
+  return(0);
+}
+
+
+static void mixer_reset(mus_any *ptr) 
+{
+  int i;
+  mus_mixer *gen = (mus_mixer *)ptr;
+  for (i = 0; i < gen->chans; i++) 
+    mus_clear_array(gen->vals[i], gen->chans);
+}
+
+
+static char *describe_mixer(mus_any *ptr)
+{
+  mus_mixer *gen = (mus_mixer *)ptr;
+  char *str;
+  int i, j, lim, bufsize;
+  char *describe_buffer;
+
+  lim = mus_array_print_length();
+  if (gen->chans < lim) lim = gen->chans;
+
+  bufsize = lim * lim * 16;
+  if (bufsize < DESCRIBE_BUFFER_SIZE) bufsize = DESCRIBE_BUFFER_SIZE;
+  if (bufsize > 65536) bufsize = 65536;
+
+  describe_buffer = (char *)malloc(bufsize);
+
+  if (gen->chans == 1)
+    snprintf(describe_buffer, bufsize, "%s chans: 1, [%.3f]", mus_name(ptr), gen->vals[0][0]);
+  else
+    {
+      snprintf(describe_buffer, bufsize, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
+      str = (char *)malloc(64 * sizeof(char));
+
+      for (i = 0; i < lim; i++)
+	for (j = 0; j < lim; j++)
+	  {
+	    snprintf(str, 64, "%.3f%s%s%s",
+			 gen->vals[i][j],
+			 ((j == (lim - 1)) && (lim < gen->chans)) ? "..." : "",
+			 (j == (lim - 1)) ? "\n" : "",
+			 ((i == (lim - 1)) && (j == (lim - 1))) ? "]" : " ");
+	    if ((int)(strlen(describe_buffer) + strlen(str)) < (bufsize - 1))
+	      strcat(describe_buffer, str);
+	    else break;
+	  }
+
+      free(str);
+    }
+
+  return(describe_buffer);
+}
+
+
+bool mus_is_mixer(mus_any *ptr) {return((ptr) && (ptr->core->type == MUS_MIXER));}
+
+
+static bool equalp_mixer(mus_any *p1, mus_any *p2)
+{
+  int i;
+  mus_mixer *g1, *g2;
+  if (p1 == p2) return(true);
+  if ((p1 == NULL) || (p2 == NULL)) return(false); /* is this needed? */
+  g1 = (mus_mixer *)p1;
+  g2 = (mus_mixer *)p2;
+  if (((g1->core)->type != (g2->core)->type) ||
+      (g1->chans != g2->chans))
+    return(false);
+  for (i = 0; i < g1->chans; i++)
+    if (!(clm_arrays_are_equal(g1->vals[i], g2->vals[i], g1->chans)))
+      return(false);
+  return(true);
+}
+
+
+static mus_float_t run_mixer(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) {return(mus_mixer_ref(ptr, (int)arg1, (int)arg2));}
+
+static mus_long_t mixer_length(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
+
+static mus_float_t *mixer_data(mus_any *ptr) {return((mus_float_t *)(((mus_mixer *)ptr)->vals));}
+
+static int mixer_channels(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
+
+static mus_any_class MIXER_CLASS = {
+  MUS_MIXER,
+  (char *)S_mixer,
+  &free_mixer,
+  &describe_mixer,
+  &equalp_mixer,
+  &mixer_data, 0,
+  &mixer_length,
+  0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0,
+  &run_mixer,
+  MUS_NOT_SPECIAL, 
+  NULL,
+  &mixer_channels,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &mixer_reset,
+  0
+};
+
+
+mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data)
+{
+  /* for CLM */
+  mus_mixer *nf;
+  int i;
+  if (chans <= 0) return(NULL);
+  nf = (mus_mixer *)malloc(sizeof(mus_mixer));
+  nf->core = &MIXER_CLASS;
+  nf->chans = chans;
+  nf->vals = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
+  for (i = 0; i < chans; i++)
+    nf->vals[i] = (mus_float_t *)(data + (i * chans));
+  nf->data_allocated = false;
+  return((mus_any *)nf);
+}
+
+
+mus_any *mus_make_empty_mixer(int chans)
+{
+  mus_mixer *nf = NULL;
+  int i;
+  nf = (mus_mixer *)malloc(sizeof(mus_mixer));
+  nf->core = &MIXER_CLASS;
+  nf->chans = chans;
+  nf->vals = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
+  for (i = 0; i < chans; i++)
+    nf->vals[i] = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
+  nf->data_allocated = true;
+  return((mus_any *)nf);
+}
+
+
+mus_any *mus_make_scalar_mixer(int chans, mus_float_t scalar)
+{
+  mus_mixer *mx = NULL;
+  if (chans <= 0)
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_scalar_mixer ": chans: %d", chans);
+  else
+    {
+      int i;
+      mx = (mus_mixer *)mus_make_empty_mixer(chans);
+      if (mx) for (i = 0; i < chans; i++) mx->vals[i][i] = scalar;
+    }
+  return((mus_any *)mx);
+}
+
+
+mus_any *mus_make_identity_mixer(int chans)
+{
+  return(mus_make_scalar_mixer(chans, 1.0));
+}
+
+
+mus_any *mus_make_mixer(int chans, ...)
+{
+  mus_mixer *mx = NULL;
+  if (chans <= 0) 
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_mixer ": chans: %d", chans);
+  else
+    {
+      mx = (mus_mixer *)mus_make_empty_mixer(chans);
+      if (mx) 
+	{
+	  int i, j;
+	  va_list ap;
+	  va_start(ap, chans);
+	  for (i = 0; i < chans; i++)
+	    for (j = 0; j < chans; j++)
+	      mx->vals[i][j] = (mus_float_t)(va_arg(ap, double));
+	  va_end(ap);
+	}
+    }
+  return((mus_any *)mx);
+}
+
+
+mus_any *mus_mixer_copy(mus_any *uf)
+{
+  int i, j;
+  mus_mixer *f = (mus_mixer *)uf;
+  mus_mixer *nf;
+  nf = (mus_mixer *)mus_make_empty_mixer(f->chans);
+  for (i = 0; i < f->chans; i++)
+    for (j = 0; j < f->chans; j++)
+      nf->vals[i][j] = f->vals[i][j];
+  return((mus_any *)nf);
+}
+
+
+mus_float_t mus_mixer_fill(mus_any *uf, mus_float_t val)
+{
+  int i, j;
+  mus_mixer *f = (mus_mixer *)uf;
+  for (i = 0; i < f->chans; i++)
+    for (j = 0; j < f->chans; j++)
+      f->vals[i][j] = val;
+  return(val);
+}
+
+
+mus_float_t mus_mixer_ref(mus_any *uf, int in, int out) 
+{
+  mus_mixer *f = (mus_mixer *)uf;
+  if ((in >= 0) && (in < f->chans) &&
+      (out >= 0) && (out < f->chans))
+    return(f->vals[in][out]);
+  mus_error(MUS_ARG_OUT_OF_RANGE, 
+	    S_mixer_ref ": invalid chan: %d (mixer has %d chan%s)",
+	    ((in < 0) || (in >= f->chans)) ? in : out,
+	    f->chans,
+	    (f->chans == 1) ? "" : "s");
+  return(0.0);
+}
+
+
+mus_float_t mus_mixer_set(mus_any *uf, int in, int out, mus_float_t val) 
+{
+  mus_mixer *f = (mus_mixer *)uf;
+  if ((in >= 0) && (in < f->chans) &&
+      (out >= 0) && (out < f->chans))
+    f->vals[in][out] = val; 
+  else mus_error(MUS_ARG_OUT_OF_RANGE, 
+		 S_mixer_set ": invalid chan: %d (mixer has %d chan%s)",
+		 ((in < 0) || (in >= f->chans)) ? in : out,
+		 f->chans,
+		 (f->chans == 1) ? "" : "s");
+  return(val);
+}
+
+
+static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
+{
+  /* (frame->frame frame mixer frame) = frame * mixer -> frame -- this is the original form */
+  mus_mixer *mix = (mus_mixer *)arg2;
+  mus_frame *frame = (mus_frame *)arg1;
+  mus_frame *out = (mus_frame *)arg_out;
+  int i, j, in_chans, out_chans;
+
+  in_chans = frame->chans;
+  if (in_chans > mix->chans) 
+    in_chans = mix->chans;
+  out_chans = mix->chans;
+  if (out)
+    {
+      if (out->chans < out_chans) 
+	out_chans = out->chans;
+    }
+  else out = (mus_frame *)mus_make_empty_frame(out_chans);
+
+  for (i = 0; i < out_chans; i++)
+    {
+      out->vals[i] = (frame->vals[0] * mix->vals[0][i]);
+      for (j = 1; j < in_chans; j++)
+	out->vals[i] += (frame->vals[j] * mix->vals[j][i]);
+    }
+  return((mus_any *)out); /* not arg_out since out may be allocated above, and clm2xen.c expects this to be legit */
+}
+
+
+static mus_any *safe_frame_to_frame(mus_frame *f1, mus_mixer *mx, mus_frame *f2, int in_chans, int out_chans)
+{
+  int i, j;
+  for (i = 0; i < out_chans; i++)
+    {
+      f2->vals[i] = f1->vals[0] * mx->vals[0][i];
+      for (j = 1; j < in_chans; j++)
+	f2->vals[i] += f1->vals[j] * mx->vals[j][i];
+    }
+  return((mus_any *)f2);
+}
+
+
+static mus_any *frame_to_frame_left(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
+{
+  /* (frame->frame mixer frame frame) = mixer * frame -> frame */
+  mus_mixer *mix = (mus_mixer *)arg1;
+  mus_frame *frame = (mus_frame *)arg2;
+  mus_frame *out = (mus_frame *)arg_out;
+  int i, in_chans, out_chans;
+
+  in_chans = frame->chans;
+  if (in_chans > mix->chans) 
+    in_chans = mix->chans;
+  out_chans = mix->chans;
+  if (out)
+    {
+      if (out->chans < out_chans) 
+	out_chans = out->chans;
+    }
+  else out = (mus_frame *)mus_make_empty_frame(out_chans);
+  for (i = 0; i < out_chans; i++)
+    {
+      int j;
+      out->vals[i] = (mix->vals[i][0] * frame->vals[0]);
+      for (j = 1; j < in_chans; j++)
+	out->vals[i] += (mix->vals[i][j] * frame->vals[j]);
+    }
+  return((mus_any *)out);
+}
+
+
+mus_any *mus_frame_to_frame(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
+{
+  if (mus_is_mixer(arg2))
+    return(frame_to_frame_right(arg1, arg2, arg_out));
+  return(frame_to_frame_left(arg1, arg2, arg_out));
+}
+
+
+mus_any *mus_sample_to_frame(mus_any *f, mus_float_t in, mus_any *uout)
+{
+  int i, chans;
+  mus_frame *out = (mus_frame *)uout;
+  if (mus_is_frame(f))
+    {
+      mus_frame *fr;
+      fr = (mus_frame *)f;
+      chans = fr->chans;
+      if (out)
+	{
+	  if (out->chans < chans) 
+	    chans = out->chans;
+	}
+      else out = (mus_frame *)mus_make_empty_frame(chans);
+      for (i = 0; i < chans; i++)
+	out->vals[i] = (in * fr->vals[i]);
+      /* was += here and below? */
+    }
+  else
+    {
+      if (mus_is_mixer(f))
+	{
+	  mus_mixer *mx;
+	  mx = (mus_mixer *)f;
+	  chans = mx->chans;
+	  if (out)
+	    {
+	      if (out->chans < chans) 
+		chans = out->chans;
+	    }
+	  else out = (mus_frame *)mus_make_empty_frame(chans);
+	  for (i = 0; i < chans; i++)
+	    out->vals[i] = (in * mx->vals[0][i]);
+	}
+      else mus_error(MUS_ARG_OUT_OF_RANGE, S_sample_to_frame ": gen not frame or mixer");
+    }
+  return((mus_any *)out);
+}
+
+
+mus_float_t mus_frame_to_sample(mus_any *f, mus_any *uin)
+{
+  int i, chans;
+  mus_frame *in = (mus_frame *)uin;
+  mus_float_t val = 0.0;
+  if (mus_is_frame(f))
+    {
+      mus_frame *fr;
+      fr = (mus_frame *)f;
+      chans = in->chans;
+      if (fr->chans < chans) 
+	chans = fr->chans;
+      for (i = 0; i < chans; i++)
+	val += (in->vals[i] * fr->vals[i]); 
+    }
+  else
+    {
+      if (mus_is_mixer(f))
+	{
+	  mus_mixer *mx;
+	  mx = (mus_mixer *)f;
+	  chans = in->chans;
+	  if (mx->chans < chans) 
+	    chans = mx->chans;
+	  for (i = 0; i < chans; i++)
+	    val += (in->vals[i] * mx->vals[i][0]);
+	}
+      else mus_error(MUS_ARG_OUT_OF_RANGE, S_frame_to_sample ": gen not frame or mixer");
+    }
+  return(val);
+}
+
+
+mus_any *mus_mixer_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
+{
+  int i, j, chans;
+  mus_mixer *f1 = (mus_mixer *)uf1;
+  mus_mixer *f2 = (mus_mixer *)uf2;
+  mus_mixer *res = (mus_mixer *)ures;
+
+  chans = f1->chans;
+  if (f2->chans < chans) 
+    chans = f2->chans;
+  if (res)
+    {
+      if (res->chans < chans) 
+	chans = res->chans;
+    }
+  else res = (mus_mixer *)mus_make_empty_mixer(chans);
+  for (i = 0; i < chans; i++)
+    for (j = 0; j < chans; j++)
+      res->vals[i][j] = f1->vals[i][j] + f2->vals[i][j];
+  return((mus_any *)res);
+}
+
+
+mus_any *mus_mixer_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
+{
+  int i, j, k, chans;
+  mus_mixer *f1 = (mus_mixer *)uf1;
+  mus_mixer *f2 = (mus_mixer *)uf2;
+  mus_mixer *res = (mus_mixer *)ures;
+
+  chans = f1->chans;
+  if (f2->chans < chans) 
+    chans = f2->chans;
+  if (res)
+    {
+      if (res->chans < chans) 
+	chans = res->chans;
+    }
+  else res = (mus_mixer *)mus_make_empty_mixer(chans);
+  for (i = 0; i < chans; i++)
+    for (j = 0; j < chans; j++)
+      {
+	res->vals[i][j] = 0.0;
+	for (k = 0; k < chans; k++) 
+	  res->vals[i][j] += (f1->vals[i][k] * f2->vals[k][j]);
+      }
+  return((mus_any *)res);
+}
+
+
+mus_any *mus_mixer_scale(mus_any *uf1, mus_float_t scaler, mus_any *ures)
+{
+  int i, j, chans;
+  mus_mixer *f1 = (mus_mixer *)uf1;
+  mus_mixer *res = (mus_mixer *)ures;
+
+  chans = f1->chans;
+  if (res)
+    {
+      if (res->chans < chans) 
+	chans = res->chans;
+    }
+  else res = (mus_mixer *)mus_make_empty_mixer(chans);
+  for (i = 0; i < chans; i++)
+    for (j = 0; j < chans; j++)
+      res->vals[i][j] = f1->vals[i][j] * scaler;
+  return((mus_any *)res);
+}
+
+
+mus_any *mus_mixer_offset(mus_any *uf1, mus_float_t offset, mus_any *ures)
+{
+  int i, j, chans;
+  mus_mixer *f1 = (mus_mixer *)uf1;
+  mus_mixer *res = (mus_mixer *)ures;
+
+  chans = f1->chans;
+  if (res)
+    {
+      if (res->chans < chans) 
+	chans = res->chans;
+    }
+  else res = (mus_mixer *)mus_make_empty_mixer(chans);
+  for (i = 0; i < chans; i++)
+    for (j = 0; j < chans; j++)
+      res->vals[i][j] = f1->vals[i][j] + offset;
+  return((mus_any *)res);
+}
+
+
+/* IO wrappers */
+bool mus_is_frame_to_file(mus_any *ptr) {return(mus_is_frample_to_file(ptr));}
+bool mus_is_file_to_frame(mus_any *ptr) {return(mus_is_file_to_frample(ptr));}
+
+mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, mus_long_t buffer_size)
+{
+  return(mus_make_file_to_frample_with_buffer_size(filename, buffer_size));
+}
+
+mus_any *mus_make_file_to_frame(const char *filename)
+{
+  return(mus_make_file_to_frample(filename));
+}
+
+mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment)
+{
+  return(mus_make_frample_to_file_with_comment(filename, chans, out_format, out_type, comment));
+}
+
+mus_any *mus_continue_frame_to_file(const char *filename)
+{
+  return(mus_continue_frample_to_file(filename));
+}
+
+mus_any *mus_frame_to_file(mus_any *ptr, mus_long_t samp, mus_any *data)
+{
+  mus_frample_to_file(ptr, samp, ((mus_frame *)data)->vals, ((mus_frame *)data)->chans);
+  return(data);
+}
+
+mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *f)
+{
+  mus_file_to_frample(ptr, samp, ((mus_frame *)f)->vals, ((mus_frame *)f)->chans);
+  return(f);
+}
+
+
 /* ---------------- mix files ---------------- */
 
 /* a mixing "instrument" along the lines of the mix function in clm */
@@ -16736,7 +16845,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
 	e = envs[0][0];
 	for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	  {
-	    mus_file_to_frame(inf, inc, (mus_any *)frin);
+	    mus_file_to_frample(inf, inc, frin->vals, frin->chans);
 	    mus_outa_to_file(outf, outc, (*val0) * mus_env(e));
 	  }
       }
@@ -16766,7 +16875,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
       val0 = frin->vals;
       for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	{
-	  mus_file_to_frame(inf, inc, (mus_any *)frin);
+	  mus_file_to_frample(inf, inc, frin->vals, frin->chans);
 	  mus_outa_to_file(outf, outc, *val0);
 	}
       break;
@@ -16783,7 +16892,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
 	val0 = frin->vals;
 	for (inc = in_start, outc = out_start; outc < out_end; inc++, outc++)
 	  {
-	    mus_file_to_frame(inf, inc, (mus_any *)frin);
+	    mus_file_to_frample(inf, inc, frin->vals, frin->chans);
 	    mus_outa_to_file(outf, outc, scl * (*val0));
 	  }
       }
@@ -16845,7 +16954,7 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 	ibufs[i] = (mus_float_t *)malloc(clm_file_buffer_size * sizeof(mus_float_t));
 
       ifd = mus_sound_open_input(infile);
-      mus_file_seek_frame(ifd, in_start);
+      mus_file_seek_frample(ifd, in_start);
       mus_file_read(ifd, in_start, clm_file_buffer_size, in_chans, ibufs);
       ofd = mus_sound_reopen_output(outfile, 
 				    out_chans, 
@@ -16853,9 +16962,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 				    mus_sound_header_type(outfile), 
 				    mus_sound_data_location(outfile));
       curoutframes = mus_sound_frames(outfile);
-      mus_file_seek_frame(ofd, out_start);
+      mus_file_seek_frample(ofd, out_start);
       mus_file_read(ofd, out_start, clm_file_buffer_size, out_chans, obufs);
-      mus_file_seek_frame(ofd, out_start);
+      mus_file_seek_frample(ofd, out_start);
 
       switch (mixtype)
 	{
@@ -16866,9 +16975,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		{
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      obufs[0][j] += ibufs[0][j];
@@ -16882,9 +16991,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		{
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      for (i = 0; i < min_chans; i++)
@@ -16900,9 +17009,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		{
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      obufs[0][j] += (mus_float_t)(scaler * ibufs[0][j]);
@@ -16916,9 +17025,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		{
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size , out_chans, obufs);
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      for (i = 0; i < min_chans; i++)
@@ -16935,9 +17044,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		{
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      obufs[0][j] += (mus_float_t)(mus_env(e) * ibufs[0][j]);
@@ -16952,9 +17061,9 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 		{
 		  mus_file_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ofd, out_start + offk, clm_file_buffer_size, out_chans, obufs);
-		  mus_file_seek_frame(ofd, out_start + offk);
+		  mus_file_seek_frample(ofd, out_start + offk);
 		  mus_file_read(ifd, in_start + offk, clm_file_buffer_size, in_chans, ibufs);
 		}
 	      scaler = mus_env(e);
@@ -16979,60 +17088,4 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
     }
 }
 
-
-
-/* ---------------- mus-apply ---------------- */
-
-mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_float_t arg2)
-{
-  if (g)
-    return(g->core->run);
-  return(NULL);
-}
-
-mus_float_t mus_apply(mus_any *gen, mus_float_t f1, mus_float_t f2)
-{
-  /* what about non-gen funcs such as polynomial, ring_modulate etc? */
-  if ((gen) && (gen->core->run))
-    return((*(gen->core->run))(gen, f1, f2));
-  return(0.0);
-}
-
-
-/* ---------------- init clm ---------------- */
-
-void mus_initialize(void)
-{
-  #define MULAW_ZERO 255
-  #define ALAW_ZERO 213
-  #define UBYTE_ZERO 128
-
-  mus_generator_type = MUS_INITIAL_GEN_TAG;
-  sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
-  w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
-  array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
-  clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
-
-#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG
-  last_c_fft_size = 0;
-  /* is there a problem if the caller built fftw with --enable-threads?  
-   *   How to tell via configure that we need to initialize the thread stuff in libfftw?
-   */
 #endif
-
-  sincs = 0;
-  locsig_warned = NULL;
-
-  data_format_zero = (int *)calloc(MUS_NUM_DATA_FORMATS, sizeof(int));
-  data_format_zero[MUS_MULAW] = MULAW_ZERO;
-  data_format_zero[MUS_ALAW] = ALAW_ZERO;
-  data_format_zero[MUS_UBYTE] = UBYTE_ZERO;
-#if MUS_LITTLE_ENDIAN
-  data_format_zero[MUS_UBSHORT] = 0x80;
-  data_format_zero[MUS_ULSHORT] = 0x8000;
-#else
-  data_format_zero[MUS_UBSHORT] = 0x8000;
-  data_format_zero[MUS_ULSHORT] = 0x80;
-#endif 
-}
-

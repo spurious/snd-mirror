@@ -35,7 +35,6 @@
 #define S_is_comb_bank               "comb-bank?"
 #define S_connes_window              "connes-window"
 #define S_continue_sample_to_file    "continue-sample->file"
-#define S_continue_frame_to_file     "continue-frame->file"
 #define S_contrast_enhancement       "contrast-enhancement"
 #define S_convolution                "convolution"
 #define S_convolve                   "convolve"
@@ -57,8 +56,6 @@
 #define S_even_multiple              "even-multiple"
 #define S_even_weight                "even-weight"
 #define S_exponential_window         "exponential-window"
-#define S_file_to_frame              "file->frame"
-#define S_is_file_to_frame           "file->frame?"
 #define S_file_to_sample             "file->sample"
 #define S_is_file_to_sample          "file->sample?"
 #define S_filter                     "filter"
@@ -76,22 +73,6 @@
 #define S_formant_bank               "formant-bank"
 #define S_is_formant_bank            "formant-bank?"
 #define S_is_formant                 "formant?"
-#define S_frame                      "frame"
-#define S_frame_to_file              "frame->file"
-#define S_is_frame_to_file           "frame->file?"
-#define S_frame_to_frame             "frame->frame"
-#define S_frame_to_list              "frame->list"
-#define S_frame_to_sample            "frame->sample"
-#if HAVE_RUBY
-  #define S_frame_add                "frame_add"
-  #define S_frame_multiply           "frame_multiply"
-#else
-  #define S_frame_add                "frame+"
-  #define S_frame_multiply           "frame*"
-#endif
-#define S_is_frame                   "frame?"
-#define S_frame_ref                  "frame-ref"
-#define S_frame_set                  "frame-set!"
 #define S_gaussian_window            "gaussian-window"
 #define S_granulate                  "granulate"
 #define S_is_granulate               "granulate?"
@@ -122,7 +103,6 @@
 #define S_make_delay                 "make-delay"
 #define S_make_env                   "make-env"
 #define S_make_fft_window            "make-fft-window"
-#define S_make_file_to_frame         "make-file->frame"
 #define S_make_file_to_sample        "make-file->sample"
 #define S_make_filter                "make-filter"
 #define S_make_filtered_comb         "make-filtered-comb"
@@ -132,12 +112,9 @@
 #define S_make_firmant               "make-firmant"
 #define S_make_formant               "make-formant"
 #define S_make_formant_bank          "make-formant-bank"
-#define S_make_frame                 "make-frame"
-#define S_make_frame_to_file         "make-frame->file"
 #define S_make_granulate             "make-granulate"
 #define S_make_iir_filter            "make-iir-filter"
 #define S_make_locsig                "make-locsig"
-#define S_make_mixer                 "make-mixer"
 #define S_make_move_sound            "make-move-sound"
 #define S_make_moving_average        "make-moving-average"
 #define S_make_moving_max            "make-moving-max"
@@ -163,7 +140,6 @@
 #define S_make_rxyksin               "make-rxyk!sin"
 #define S_make_sample_to_file        "make-sample->file"
 #define S_make_sawtooth_wave         "make-sawtooth-wave"
-#define S_make_scalar_mixer          "make-scalar-mixer"
 #define S_make_square_wave           "make-square-wave"
 #define S_make_src                   "make-src"
 #define S_make_ssb_am                "make-ssb-am"
@@ -172,17 +148,6 @@
 #define S_make_two_pole              "make-two-pole"
 #define S_make_two_zero              "make-two-zero"
 #define S_make_wave_train            "make-wave-train"
-#define S_mixer                      "mixer"
-#if HAVE_RUBY
-  #define S_mixer_multiply           "mixer_multiply"
-  #define S_mixer_add                "mixer_add"
-#else
-  #define S_mixer_multiply           "mixer*"
-  #define S_mixer_add                "mixer+"
-#endif
-#define S_is_mixer                   "mixer?"
-#define S_mixer_ref                  "mixer-ref"
-#define S_mixer_set                  "mixer-set!"
 #define S_mlt_sine_window            "mlt-sine-window"
 #define S_move_locsig                "move-locsig"
 #define S_move_sound                 "move-sound"
@@ -323,7 +288,6 @@
 #define S_sample_to_file             "sample->file"
 #define S_sample_to_file_add         "sample->file+"
 #define S_is_sample_to_file          "sample->file?"
-#define S_sample_to_frame            "sample->frame"
 #define S_samples_to_seconds         "samples->seconds"
 #define S_sawtooth_wave              "sawtooth-wave"
 #define S_is_sawtooth_wave           "sawtooth-wave?"
@@ -351,5 +315,56 @@
 #define S_wave_train                 "wave-train"
 #define S_is_wave_train              "wave-train?"
 #define S_welch_window               "welch-window"
+
+
+#define S_continue_frample_to_file   "continue-frample->file"
+#define S_file_to_frample            "file->frample"
+#define S_is_file_to_frample         "file->frample?"
+#define S_frample_to_file            "frample->file"
+#define S_is_frample_to_file         "frample->file?"
+#define S_frample_to_frample         "frample->frample"
+#define S_make_file_to_frample       "make-file->frample"
+#define S_make_frample_to_file       "make-frample->file"
+
+
+#if (!DISABLE_DEPRECATED)
+#define S_make_mixer                 "make-mixer"
+#define S_make_scalar_mixer          "make-scalar-mixer"
+#define S_mixer                      "mixer"
+#if HAVE_RUBY
+  #define S_mixer_multiply           "mixer_multiply"
+  #define S_mixer_add                "mixer_add"
+#else
+  #define S_mixer_multiply           "mixer*"
+  #define S_mixer_add                "mixer+"
+#endif
+#define S_is_mixer                   "mixer?"
+#define S_mixer_ref                  "mixer-ref"
+#define S_mixer_set                  "mixer-set!"
+
+#define S_continue_frame_to_file     "continue-frame->file"
+#define S_file_to_frame              "file->frame"
+#define S_is_file_to_frame           "file->frame?"
+#define S_frame                      "frame"
+#define S_frame_to_file              "frame->file"
+#define S_is_frame_to_file           "frame->file?"
+#define S_frame_to_frame             "frame->frame"
+#define S_frame_to_list              "frame->list"
+#define S_frame_to_sample            "frame->sample"
+#if HAVE_RUBY
+  #define S_frame_add                "frame_add"
+  #define S_frame_multiply           "frame_multiply"
+#else
+  #define S_frame_add                "frame+"
+  #define S_frame_multiply           "frame*"
+#endif
+#define S_is_frame                   "frame?"
+#define S_frame_ref                  "frame-ref"
+#define S_frame_set                  "frame-set!"
+#define S_make_file_to_frame         "make-file->frame"
+#define S_make_frame                 "make-frame"
+#define S_make_frame_to_file         "make-frame->file"
+#define S_sample_to_frame            "sample->frame"
+#endif
 
 #endif

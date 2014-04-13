@@ -791,7 +791,7 @@ static int mus_header_write_next_header(int fd, int wsrate, int wchans, int loc,
  *  The chunks we want are "COMM", "SSND", and "APPL".
  *
  * COMM: 0: chans
- *       2: frames
+ *       2: framples
  *       6: bits per sample
  *       8: srate as 80-bit IEEE float
  *  then if AIFC (not AIFF), 4 bytes giving compression id ("NONE"=not compressed)
@@ -902,7 +902,7 @@ static void double_to_ieee_80(double val, unsigned char *p)
 }
 
 
-static mus_long_t update_form_size, update_frames_location, update_ssnd_location, update_rf64_location;
+static mus_long_t update_form_size, update_framples_location, update_ssnd_location, update_rf64_location;
 
 static long long int seek_and_read(int fd, unsigned char *buf, mus_long_t offset, int nbytes)
 {
@@ -1062,12 +1062,12 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
-	  int frames;
+	  int framples;
 	  got_comm = true;
 
 	  chans = mus_char_to_bshort((unsigned char *)(hdrbuf + 8));
-	  frames = mus_char_to_ubint((unsigned char *)(hdrbuf + 10)); /* was bint 27-Jul-01 */
-	  update_frames_location = 10 + offset;
+	  framples = mus_char_to_ubint((unsigned char *)(hdrbuf + 10)); /* was bint 27-Jul-01 */
+	  update_framples_location = 10 + offset;
 
 	  original_data_format = mus_char_to_bshort((unsigned char *)(hdrbuf + 14));
 	  if ((original_data_format % 8) != 0) 
@@ -1184,7 +1184,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 		    }
 		}
 	    }
-	  data_size = (frames * mus_bytes_per_sample(data_format) * chans);
+	  data_size = (framples * mus_bytes_per_sample(data_format) * chans);
 	}
       else
 	{
@@ -1515,8 +1515,8 @@ char *mus_header_aiff_aux_comment(const char *name, mus_long_t *starts, mus_long
  *   28: format (int32)
  *   32: format flags
  *   36: bytes per "packet"
- *   40: frames per packet
- *   44: channels per frame
+ *   40: framples per packet
+ *   44: channels per frample
  *   48: bits per channel
  * audio data is in 'data' chunk
  */
@@ -1550,14 +1550,14 @@ static int read_caff_header(int fd)
       /* 'desc' is always the first chunk, but easier to handle in the loop */
       if (match_four_chars((unsigned char *)hdrbuf, I_desc))
 	{
-	  int format_flags, channels_per_frame, bits_per_channel;
+	  int format_flags, channels_per_frample, bits_per_channel;
 	  srate = (int)mus_char_to_bdouble((unsigned char *)(hdrbuf + 12));
 	  format_flags = mus_char_to_ubint((unsigned char *)(hdrbuf + 24));
 	  /* bytes_per_packet = mus_char_to_ubint((unsigned char *)(hdrbuf + 28)); */
-	  /* frames_per_packet = mus_char_to_ubint((unsigned char *)(hdrbuf + 32)); */
-	  channels_per_frame = mus_char_to_ubint((unsigned char *)(hdrbuf + 36));
+	  /* framples_per_packet = mus_char_to_ubint((unsigned char *)(hdrbuf + 32)); */
+	  channels_per_frample = mus_char_to_ubint((unsigned char *)(hdrbuf + 36));
 	  bits_per_channel = mus_char_to_ubint((unsigned char *)(hdrbuf + 40));
-	  chans = channels_per_frame;
+	  chans = channels_per_frample;
 
 	  /* format id can be 'lpcm' 'alaw' 'ulaw' and a bunch of others we ignore */
 	  original_data_format = mus_char_to_bint((unsigned char *)(hdrbuf + 20));	  
@@ -1656,7 +1656,7 @@ static int read_caff_header(int fd)
 	    {
 	      happy = true;
 	      data_location = offset + 16; /* skip the 4 bytes for "edit count" */
-	      update_frames_location = offset + 4;
+	      update_framples_location = offset + 4;
 
 	      /* here chunksize can be -1! */
 	      if (chunksize > 0)
@@ -1678,7 +1678,7 @@ static int read_caff_header(int fd)
 
 static int write_caff_header(int fd, int wsrate, int wchans, mus_long_t wsize, int format)
 {
-  int format_flags = 0, bytes_per_packet = 0, frames_per_packet = 1, bits_per_channel = 0;
+  int format_flags = 0, bytes_per_packet = 0, framples_per_packet = 1, bits_per_channel = 0;
 
   switch (format)
     {
@@ -1750,12 +1750,12 @@ static int write_caff_header(int fd, int wsrate, int wchans, mus_long_t wsize, i
     }
   mus_bint_to_char((unsigned char *)(hdrbuf + 32), format_flags);
   mus_bint_to_char((unsigned char *)(hdrbuf + 36), bytes_per_packet);
-  mus_bint_to_char((unsigned char *)(hdrbuf + 40), frames_per_packet);
+  mus_bint_to_char((unsigned char *)(hdrbuf + 40), framples_per_packet);
   mus_bint_to_char((unsigned char *)(hdrbuf + 44), wchans);
   mus_bint_to_char((unsigned char *)(hdrbuf + 48), bits_per_channel);
   write_four_chars((unsigned char *)(hdrbuf + 52), I_data);
   mus_blong_to_char((unsigned char *)(hdrbuf + 56), wsize);
-  update_frames_location = 56;
+  update_framples_location = 56;
   mus_bint_to_char((unsigned char *)(hdrbuf + 64), 0);
   data_location = 68;
   header_write(fd, hdrbuf, 68);
@@ -2000,7 +2000,7 @@ static int read_riff_header(const char *filename, int fd)
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
 	  got_fmt = true;
-	  update_frames_location = 12 + offset;
+	  update_framples_location = 12 + offset;
 	  read_riff_fmt_chunk(hdrbuf, little);
 	}
       else
@@ -2337,7 +2337,7 @@ static int read_rf64_header(const char *filename, int fd)
 	  if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	    {
 	      got_fmt = true;
-	      update_frames_location = 12 + offset;
+	      update_framples_location = 12 + offset;
 	      read_riff_fmt_chunk(hdrbuf, true);
 	    }
 	  else
@@ -2997,7 +2997,7 @@ static int write_nist_header(int fd, int wsrate, int wchans, mus_long_t size, in
  * followed by AIFF-style chunked header info with chunks like:
  *
  *   COMM size comment
- *   MAXA size {max amps (up to 4)} (frame offsets) time-tag unix msec counter
+ *   MAXA size {max amps (up to 4)} (frample offsets) time-tag unix msec counter
  *   CUE, PRNT, ENV etc 
  *
  * except in Paul Lansky's "hybrid" headers, according to MixViews.
@@ -3559,7 +3559,7 @@ static int read_nvf_header(const char *filename, int fd)
 
     The rest of the data is G.721 data nibble packing big-endian, 4bits per
     sample (nibble) single channel at 32kbit. When the Nomad records an NVF
-    file it does it in 92 sample (46 byte) frames or 0.0115sec.
+    file it does it in 92 sample (46 byte) framples or 0.0115sec.
   */
   if (mus_char_to_lint((unsigned char *)(hdrbuf + 4)) != 1) return(mus_error(MUS_HEADER_READ_FAILED, "%s: NVF[4] != 1", filename));
   if (!(match_four_chars((unsigned char *)(hdrbuf + 12), I_VFMT))) return(mus_error(MUS_HEADER_READ_FAILED, "%s: no VFMT chunk", filename));
@@ -3794,7 +3794,7 @@ static int read_smp_header(const char *filename, int fd)
  *     0   160    char   Text strings (2 * 80)
  *   160    80    char   Command line
  *   240     2    int    Domain (1-time, 2-freq, 3-qfreq)
- *   242     2    int    Frame size
+ *   242     2    int    Frample size
  *   244     4    float  Sampling frequency
  *   252     2    int    File identifier (i.e. #o100 #o303)
  *   254     2    int    Data type (0xfc0e = sampled data file)
@@ -6286,11 +6286,11 @@ int mus_header_change_data_size(const char *filename, int type, mus_long_t size)
       /* we apparently have to make sure the form size and the data size are correct 
        * assumed here that we'll only be updating our own AIFF files 
        * There are 3 such locations -- the 2nd word of the file which is the overall form size, 
-       * the frames variable in the COMM chunk, and the chunk-size variable in the SSND chunk 
+       * the framples variable in the COMM chunk, and the chunk-size variable in the SSND chunk 
        * an unexpected hassle for CLM is that we can open/close the output file many times if running mix,
        * so we have to update the various size fields taking into account the old size 
        */
-      /* read sets current update_form_size, data_size, data_format, update_frames_location, update_ssnd_location */
+      /* read sets current update_form_size, data_size, data_format, update_framples_location, update_ssnd_location */
       if (size > BIGGEST_4_BYTE_SIGNED_INT)
 	{
 	  err = MUS_BAD_SIZE;
@@ -6301,7 +6301,7 @@ int mus_header_change_data_size(const char *filename, int type, mus_long_t size)
       mus_bint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size));
       /* cancel old data_size from previous possible write */
       header_write(fd, hdrbuf, 4);
-      lseek(fd, update_frames_location, SEEK_SET);
+      lseek(fd, update_framples_location, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, (int)size / (chans * mus_bytes_per_sample(data_format)));
       header_write(fd, hdrbuf, 4);
       lseek(fd, update_ssnd_location, SEEK_SET);
@@ -6352,8 +6352,8 @@ int mus_header_change_data_size(const char *filename, int type, mus_long_t size)
       break;
 
     case MUS_CAFF:
-      if (update_frames_location < 56) update_frames_location = 56;
-      lseek(fd, update_frames_location, SEEK_SET);
+      if (update_framples_location < 56) update_framples_location = 56;
+      lseek(fd, update_framples_location, SEEK_SET);
       mus_blong_to_char((unsigned char *)(hdrbuf + 0), size);
       header_write(fd, hdrbuf, 8);
       break;
@@ -6372,7 +6372,7 @@ int mus_header_change_data_size(const char *filename, int type, mus_long_t size)
 int mus_header_change_chans(const char *filename, int type, int new_chans)
 {
   int err = MUS_NO_ERROR, fd;
-  mus_long_t new_frames;
+  mus_long_t new_framples;
   switch (type)
     {
     case MUS_AIFF:
@@ -6412,16 +6412,16 @@ int mus_header_change_chans(const char *filename, int type, int new_chans)
       break;
 
     case MUS_AIFF: case MUS_AIFC:
-      lseek(fd, update_frames_location - 2, SEEK_SET);
-      new_frames = data_size / new_chans;
+      lseek(fd, update_framples_location - 2, SEEK_SET);
+      new_framples = data_size / new_chans;
       mus_bshort_to_char((unsigned char *)hdrbuf, new_chans);
-      mus_bint_to_char((unsigned char *)(hdrbuf + 2), new_frames);
+      mus_bint_to_char((unsigned char *)(hdrbuf + 2), new_framples);
       header_write(fd, hdrbuf, 6);
       break;
 
     case MUS_RIFF:
     case MUS_RF64:
-      lseek(fd, update_frames_location - 2, SEEK_SET);
+      lseek(fd, update_framples_location - 2, SEEK_SET);
       if (little_endian)
 	mus_lshort_to_char((unsigned char *)hdrbuf, new_chans);
       else mus_bshort_to_char((unsigned char *)hdrbuf, new_chans);
@@ -6482,14 +6482,14 @@ int mus_header_change_srate(const char *filename, int type, int new_srate)
 
     case MUS_AIFF: 
     case MUS_AIFC:
-      lseek(fd, update_frames_location + 6, SEEK_SET);
+      lseek(fd, update_framples_location + 6, SEEK_SET);
       double_to_ieee_80((double)new_srate, (unsigned char *)hdrbuf);
       header_write(fd, hdrbuf, 10);
       break;
 
     case MUS_RIFF:
     case MUS_RF64:
-      lseek(fd, update_frames_location, SEEK_SET);
+      lseek(fd, update_framples_location, SEEK_SET);
       if (little_endian)
 	mus_lint_to_char((unsigned char *)hdrbuf, new_srate);
       else mus_bint_to_char((unsigned char *)hdrbuf, new_srate);
@@ -6604,7 +6604,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
     case MUS_AIFF: 
     case MUS_AIFC:
       old_bytes = data_size * mus_bytes_per_sample(data_format);
-      lseek(fd, update_frames_location, SEEK_SET);
+      lseek(fd, update_framples_location, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, old_bytes / (chans * mus_bytes_per_sample(new_format)));
       mus_bshort_to_char((unsigned char *)(hdrbuf + 4), sndlib_format_to_aiff_bits(new_format));
       header_write(fd, hdrbuf, 6);
@@ -6612,7 +6612,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
 	{
 	  const char *str;
 	  str = sndlib_format_to_aifc_name(new_format);
-	  lseek(fd, update_frames_location + 16, SEEK_SET);
+	  lseek(fd, update_framples_location + 16, SEEK_SET);
 	  write_four_chars((unsigned char *)(hdrbuf + 0), (const unsigned char *)str);
 	  (*(unsigned char *)(hdrbuf + 4)) = 4; /* final pad null not accounted-for */
 	  write_four_chars((unsigned char *)(hdrbuf + 5), (const unsigned char *)str);
@@ -6623,12 +6623,12 @@ int mus_header_change_format(const char *filename, int type, int new_format)
 
     case MUS_RIFF:
     case MUS_RF64:
-      lseek(fd, update_frames_location + 24, SEEK_SET);
+      lseek(fd, update_framples_location + 24, SEEK_SET);
       if (little_endian)
 	mus_lshort_to_char((unsigned char *)hdrbuf, sndlib_format_to_aiff_bits(new_format));
       else mus_bshort_to_char((unsigned char *)hdrbuf, sndlib_format_to_aiff_bits(new_format));
       header_write(fd, hdrbuf, 2);
-      lseek(fd, update_frames_location + 10, SEEK_SET);
+      lseek(fd, update_framples_location + 10, SEEK_SET);
       switch (new_format)
 	{
 	case MUS_MULAW: 

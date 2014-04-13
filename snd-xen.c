@@ -2126,16 +2126,11 @@ static Xen g_gsl_eigenvectors(Xen matrix)
   len = (int)sqrt(s7_vector_length(matrix));
   data = (double *)s7_float_vector_elements(matrix);
 #else
-  mus_any *u1;
-  Xen_check_type(mus_is_xen(matrix), matrix, 1, "gsl-eigenvectors", "a mixer (matrix)");
-  u1 = Xen_to_mus_any(matrix);
-  if (!mus_is_mixer(u1)) return(Xen_false);
-
-  len = mus_length(u1);
-  data = (double *)calloc(len * len, sizeof(double));
-  for (i = 0; i < len; i++)
-    for (j = 0; j < len; j++)
-      data[i * len + j] = mus_mixer_ref(u1, i, j);
+  vct *v;
+  Xen_check_type(mus_is_vct(matrix), matrix, 1, "gsl-eigenvectors", "a vct");
+  v = Xen_to_vct(matrix);
+  len = (int)sqrt(mus_vct_length(v));
+  data = mus_vct_data(v);
 #endif
 
   {

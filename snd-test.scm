@@ -9900,7 +9900,8 @@ EDITS: 2
 	  (do ((i 0 (+ i 1)))
 	      ((= i 100))
 	    (float-vector-set! x 0 (* (env e1) (oscil osc (float-vector-ref x 0))))))
-	
+
+	(let ((m (make-mixer 2)) (f (make-frame 2))) (catch #t (lambda () (mixer* m f m)) (lambda args 'error))) ; segfault...
 	))))
 
 
@@ -47599,25 +47600,25 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
 
-18-Mar-14:
-36,274,846,745
-5,642,270,909  s7.c:eval [/home/bil/gtk-snd/snd]
-2,256,990,422  ???:sin [/lib64/libm-2.12.so]
-2,032,961,921  ???:cos [/lib64/libm-2.12.so]
+10-Apr-14:
+35,619,416,179
+5,416,914,391  s7.c:eval [/home/bil/gtk-snd/snd]
+2,256,286,386  ???:sin [/lib64/libm-2.12.so]
+2,030,457,131  ???:cos [/lib64/libm-2.12.so]
 1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,033,458,178  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  885,359,904  ???:t2_32 [/home/bil/gtk-snd/snd]
-  840,619,160  s7.c:gc [/home/bil/gtk-snd/snd]
+1,096,023,303  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  901,303,892  ???:t2_32 [/home/bil/gtk-snd/snd]
+  785,597,992  s7.c:gc [/home/bil/gtk-snd/snd]
   781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+  664,377,340  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   648,406,214  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  604,288,870  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  584,859,320  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  564,642,854  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  449,476,076  ???:n1_64 [/home/bil/gtk-snd/snd]
-  415,067,325  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  565,781,514  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  454,355,496  ???:n1_64 [/home/bil/gtk-snd/snd]
+  453,855,997  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  437,664,958  s7.c:eval'2 [/home/bil/gtk-snd/snd]
   414,027,948  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  365,712,118  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  381,402,276  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 |#

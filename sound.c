@@ -710,7 +710,7 @@ mus_long_t mus_sound_samples(const char *arg)
 }
 
 
-mus_long_t mus_sound_frames(const char *arg)        
+mus_long_t mus_sound_framples(const char *arg)        
 {
   sound_file *sf;
   sf = get_sf(arg);
@@ -1232,7 +1232,7 @@ bool mus_sound_maxamp_exists(const char *ifile)
 
 mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mus_long_t *times)
 {
-  mus_long_t frames;
+  mus_long_t framples;
   int i, ichans, chn;
   sound_file *sf; 
     
@@ -1250,13 +1250,13 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
 	  times[chn] = sf->maxtimes[chn];
 	  vals[chn] = sf->maxamps[chn];
 	}
-      frames = sf->samples / sf->chans;
-      return(frames);
+      framples = sf->samples / sf->chans;
+      return(framples);
     }
 
   {
     int j, bufnum, ifd;
-    mus_long_t n, curframes;
+    mus_long_t n, curframples;
     mus_float_t *buffer, *samp;
     mus_long_t *time;
     mus_float_t **ibufs;
@@ -1264,14 +1264,14 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
     ifd = mus_sound_open_input(ifile);
     if (ifd == MUS_ERROR) return(MUS_ERROR);
     ichans = mus_sound_chans(ifile);
-    frames = mus_sound_frames(ifile);
-    if (frames == 0) 
+    framples = mus_sound_framples(ifile);
+    if (framples == 0) 
       {
 	mus_sound_close_input(ifd);
 	return(0);
       }
 
-    mus_file_seek_frame(ifd, 0);
+    mus_file_seek_frample(ifd, 0);
 
     ibufs = (mus_float_t **)calloc(ichans, sizeof(mus_float_t *));
     bufnum = 8192;
@@ -1281,16 +1281,16 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
     time = (mus_long_t *)calloc(ichans, sizeof(mus_long_t));
     samp = (mus_float_t *)calloc(ichans, sizeof(mus_float_t));
 
-    for (n = 0; n < frames; n += bufnum)
+    for (n = 0; n < framples; n += bufnum)
       {
-	if ((n + bufnum) < frames) 
-	  curframes = bufnum; 
-	else curframes = (frames - n);
-	mus_file_read(ifd, n, curframes, ichans, ibufs);
+	if ((n + bufnum) < framples) 
+	  curframples = bufnum; 
+	else curframples = (framples - n);
+	mus_file_read(ifd, n, curframples, ichans, ibufs);
 	for (chn = 0; chn < ichans; chn++)
 	  {
 	    buffer = (mus_float_t *)(ibufs[chn]);
-	    for (i = 0; i < curframes; i++) 
+	    for (i = 0; i < curframples; i++) 
 	      {
 		mus_float_t abs_samp;
 		abs_samp = fabs(buffer[i]);
@@ -1317,7 +1317,7 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
     free(samp);
     for (j = 0; j < ichans; j++) free(ibufs[j]);
     free(ibufs);
-    return(frames);
+    return(framples);
   }
 }
 
@@ -1447,7 +1447,7 @@ mus_long_t mus_file_to_array(const char *filename, int chan, mus_long_t start, m
   bufs = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
   bufs[chan] = array;
 
-  mus_file_seek_frame(ifd, start);
+  mus_file_seek_frample(ifd, start);
   total_read = mus_file_read_any(ifd, start, chans, samples, bufs, bufs);
 
   mus_sound_close_input(ifd);

@@ -563,7 +563,7 @@ typedef struct {
   bool clipping;
   mus_long_t data_location;
   bool saved;
-  mus_long_t frames;
+  mus_long_t framples;
   mus_float_t **saved_data;
   void *next;
 } io_fd;
@@ -620,7 +620,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	{
 	  io_fd *fd;
 	  fd = io_fds[tfd];
-	  fd->frames = 0;
+	  fd->framples = 0;
 	  fd->data_format = format;
 	  fd->bytes_per_sample = size;
 	  fd->data_location = location;
@@ -726,7 +726,7 @@ int mus_file_set_chans(int tfd, int chans)
 }
 
 
-void mus_file_save_data(int tfd, mus_long_t frames, mus_float_t **data)
+void mus_file_save_data(int tfd, mus_long_t framples, mus_float_t **data)
 {
   io_fd *fd;
   fd = io_fds[tfd];
@@ -735,7 +735,7 @@ void mus_file_save_data(int tfd, mus_long_t frames, mus_float_t **data)
       /* fprintf(stderr, "mus_file_save_data %d\n", tfd); */
 
       fd->saved = true;
-      fd->frames = frames;
+      fd->framples = framples;
       fd->saved_data = data;
     }
 }
@@ -839,25 +839,25 @@ int mus_file_close(int fd)
 
 /* ---------------- seek ---------------- */
 
-mus_long_t mus_file_seek_frame(int tfd, mus_long_t frame)
+mus_long_t mus_file_seek_frample(int tfd, mus_long_t frample)
 {
   io_fd *fd;
   if (io_fds == NULL) 
-    return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: no file descriptors!"));
+    return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frample: no file descriptors!"));
 
   if (tfd >= io_fd_size)
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		     "mus_file_seek_frame: file descriptors not realloc'd? (tfd: %d, io_fd_size: %d)", tfd, io_fd_size));
+		     "mus_file_seek_frample: file descriptors not realloc'd? (tfd: %d, io_fd_size: %d)", tfd, io_fd_size));
 
   if ((tfd < 0) || 
       (io_fds[tfd] == NULL))
-    return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: file descriptor = %d?", tfd));
+    return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frample: file descriptor = %d?", tfd));
 
   fd = io_fds[tfd];
   if (fd->data_format == MUS_UNKNOWN) 
-    return(mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek_frame: invalid data format for %s", fd->name));
+    return(mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek_frample: invalid data format for %s", fd->name));
 
-  return(lseek(tfd, fd->data_location + (fd->chans * frame * fd->bytes_per_sample), SEEK_SET));
+  return(lseek(tfd, fd->data_location + (fd->chans * frample * fd->bytes_per_sample), SEEK_SET));
 }
 
 
@@ -1046,11 +1046,11 @@ static void initialize_swapped_shorts(void)
 static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, mus_float_t **cm, char *inbuf)
 {
   /* beg no longer means buffer-relative start point (that is assumed to be 0): changed 18-Dec-13
-   * beg is now the starting frame number in the file data (first frame = 0)
+   * beg is now the starting frample number in the file data (first frample = 0)
    * so old form 
    *   mus_read_any_1(f, 0, ...)
    * is now
-   *   mus_read_any_1(f, frame, ...)
+   *   mus_read_any_1(f, frample, ...)
    */
   int format, siz, siz_chans;
   mus_long_t bytes, lim, leftover, total_read, k, loc, oldloc, buflim;
@@ -1101,8 +1101,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	  /* fprintf(stderr, "mus_read_any_1 %d use saved data\n", tfd); */
 
 	  lim = nints;
-	  if (lim > fd->frames)
-	    lim = fd->frames;
+	  if (lim > fd->framples)
+	    lim = fd->framples;
 	  bytes = lim * sizeof(mus_float_t);
 	  if (beg < 0) beg = 0;
 
@@ -1197,7 +1197,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	}
       else
 	{
-	  lim = nints; /* frames in this case */
+	  lim = nints; /* framples in this case */
 	  leftover = 0;
 	}
       total_read += lim;
@@ -1710,11 +1710,11 @@ mus_long_t mus_file_read_buffer(int charbuf_data_format, mus_long_t beg, int cha
 
 /* the next two were changed 19-Dec-13 (sndlib.h version 23.1)
  *   "end" is now actually "dur" -- the number of samples to read, not the end point in the buffer
- *   "beg" is the frame number to start at in the data, not the buffer location
+ *   "beg" is the frample number to start at in the data, not the buffer location
  * so old form
  *    mus_file_read(f, 0, 99...)
  * is now
- *    mus_file_read(f, frame, 100...)
+ *    mus_file_read(f, frample, 100...)
  */
 mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t num, int chans, mus_float_t **bufs)
 {
@@ -2449,13 +2449,13 @@ static void min_max_shorts(unsigned char *data, int bytes, int chan, int chans, 
 static void min_max_switch_shorts(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   short cur_min, cur_max;
-  /* frame based */
+  /* frample based */
   unsigned char *samp, *eod, *eod2;
-  int bytes_per_frame;
+  int bytes_per_frample;
 
-  bytes_per_frame = chans * SHORT_BYTES;
+  bytes_per_frample = chans * SHORT_BYTES;
   eod = (unsigned char *)(data + bytes);
-  eod2 = (unsigned char *)(eod - 2 * bytes_per_frame);
+  eod2 = (unsigned char *)(eod - 2 * bytes_per_frample);
 
 #if MUS_LITTLE_ENDIAN
   cur_min = big_endian_short((unsigned char *)(data + (chan * SHORT_BYTES)));
@@ -2470,17 +2470,17 @@ static void min_max_switch_shorts(unsigned char *data, int bytes, int chan, int 
 #if MUS_LITTLE_ENDIAN
       val = big_endian_short(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = big_endian_short(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #else
       val = little_endian_short(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = little_endian_short(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #endif
     }
   if (samp < eod)
@@ -2535,13 +2535,13 @@ static void min_max_ushorts(unsigned char *data, int bytes, int chan, int chans,
 static void min_max_switch_ushorts(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   unsigned short cur_min, cur_max;
-  /* frame based */
+  /* frample based */
   unsigned char *samp, *eod, *eod2;
-  int bytes_per_frame;
+  int bytes_per_frample;
 
-  bytes_per_frame = chans * SHORT_BYTES;
+  bytes_per_frample = chans * SHORT_BYTES;
   eod = (unsigned char *)(data + bytes);
-  eod2 = (unsigned char *)(eod - 2 * bytes_per_frame);
+  eod2 = (unsigned char *)(eod - 2 * bytes_per_frample);
 
 #if MUS_LITTLE_ENDIAN
   cur_min = big_endian_unsigned_short((unsigned char *)(data + (chan * SHORT_BYTES)));
@@ -2557,17 +2557,17 @@ static void min_max_switch_ushorts(unsigned char *data, int bytes, int chan, int
 #if MUS_LITTLE_ENDIAN
       val = big_endian_unsigned_short(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = big_endian_unsigned_short(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #else
       val = little_endian_unsigned_short(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = little_endian_unsigned_short(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #endif
     }
   if (samp < eod)
@@ -2632,13 +2632,13 @@ static void min_max_ints(unsigned char *data, int bytes, int chan, int chans, mu
 static void min_max_switch_ints(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool standard)
 {
   int cur_min, cur_max;
-  /* frame based */
+  /* frample based */
   unsigned char *samp, *eod, *eod2;
-  int bytes_per_frame;
+  int bytes_per_frample;
 
-  bytes_per_frame = chans * INT_BYTES;
+  bytes_per_frample = chans * INT_BYTES;
   eod = (unsigned char *)(data + bytes);
-  eod2 = (unsigned char *)(eod - 2 * bytes_per_frame);
+  eod2 = (unsigned char *)(eod - 2 * bytes_per_frample);
 
 #if MUS_LITTLE_ENDIAN
   cur_min = big_endian_int((unsigned char *)(data + (chan * INT_BYTES)));
@@ -2654,17 +2654,17 @@ static void min_max_switch_ints(unsigned char *data, int bytes, int chan, int ch
 #if MUS_LITTLE_ENDIAN
       val = big_endian_int(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = big_endian_int(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #else
       val = little_endian_int(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = little_endian_int(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #endif
     }
   if (samp < eod)
@@ -2738,13 +2738,13 @@ static void min_max_floats(unsigned char *data, int bytes, int chan, int chans, 
 static void min_max_switch_floats(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool unscaled)
 {
   float cur_min, cur_max;
-  /* frame based */
+  /* frample based */
   unsigned char *samp, *eod, *eod2;
-  int bytes_per_frame;
+  int bytes_per_frample;
 
-  bytes_per_frame = chans * FLOAT_BYTES;
+  bytes_per_frample = chans * FLOAT_BYTES;
   eod = (unsigned char *)(data + bytes);
-  eod2 = (unsigned char *)(eod - 2 * bytes_per_frame);
+  eod2 = (unsigned char *)(eod - 2 * bytes_per_frample);
 
 #if MUS_LITTLE_ENDIAN
   cur_min = big_endian_float((unsigned char *)(data + (chan * FLOAT_BYTES)));
@@ -2759,17 +2759,17 @@ static void min_max_switch_floats(unsigned char *data, int bytes, int chan, int 
 #if MUS_LITTLE_ENDIAN
       val = big_endian_float(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = big_endian_float(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #else
       val = little_endian_float(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = little_endian_float(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #endif
     }
 
@@ -2844,13 +2844,13 @@ static void min_max_doubles(unsigned char *data, int bytes, int chan, int chans,
 static void min_max_switch_doubles(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool unscaled)
 {
   double cur_min, cur_max;
-  /* frame based */
+  /* frample based */
   unsigned char *samp, *eod, *eod2;
-  int bytes_per_frame;
+  int bytes_per_frample;
 
-  bytes_per_frame = chans * DOUBLE_BYTES;
+  bytes_per_frample = chans * DOUBLE_BYTES;
   eod = (unsigned char *)(data + bytes);
-  eod2 = (unsigned char *)(eod - 2 * bytes_per_frame);
+  eod2 = (unsigned char *)(eod - 2 * bytes_per_frample);
 
 #if MUS_LITTLE_ENDIAN
   cur_min = big_endian_double((unsigned char *)(data + (chan * DOUBLE_BYTES)));
@@ -2865,17 +2865,17 @@ static void min_max_switch_doubles(unsigned char *data, int bytes, int chan, int
 #if MUS_LITTLE_ENDIAN
       val = big_endian_double(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = big_endian_double(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #else
       val = little_endian_double(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
       val = little_endian_double(samp);
       if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      samp += bytes_per_frame;
+      samp += bytes_per_frample;
 #endif
     }
   if (samp < eod)
@@ -2914,11 +2914,11 @@ static void min_max_switch_doubles(unsigned char *data, int bytes, int chan, int
 static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool big_endian)
 {
   int cur_min, cur_max;
-  int i, k, bytes_per_frame, len, len2, offset;
+  int i, k, bytes_per_frample, len, len2, offset;
 
-  bytes_per_frame = chans * THREE_BYTES;
-  len = bytes / bytes_per_frame;
-  len2 = len - 2 * bytes_per_frame;
+  bytes_per_frample = chans * THREE_BYTES;
+  len = bytes / bytes_per_frample;
+  len2 = len - 2 * bytes_per_frample;
   offset = chan * THREE_BYTES;
 
   k = offset;
@@ -2928,7 +2928,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
       cur_min = BIG_THREE(data, k);
       cur_max = cur_min;
       i = 0;
-      /* k += bytes_per_frame; */
+      /* k += bytes_per_frample; */
 
       while (i <= len2)
 	{
@@ -2936,11 +2936,11 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
 	  val = BIG_THREE(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
-	  k += bytes_per_frame;
+	  k += bytes_per_frample;
 	  val = BIG_THREE(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
-	  k += bytes_per_frame;
+	  k += bytes_per_frample;
 	}
       while (i < len)
 	{
@@ -2948,7 +2948,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
 	  val = BIG_THREE(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
-	  k += bytes_per_frame;
+	  k += bytes_per_frample;
 	}
     }
   else
@@ -2956,7 +2956,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
       cur_min = LITTLE_THREE(data, k);
       cur_max = cur_min;
       i = 0;
-      /* k += bytes_per_frame; */
+      /* k += bytes_per_frample; */
 
       while (i <= len2)
 	{
@@ -2964,11 +2964,11 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
 	  val = LITTLE_THREE(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
-	  k += bytes_per_frame;
+	  k += bytes_per_frample;
 	  val = LITTLE_THREE(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
-	  k += bytes_per_frame;
+	  k += bytes_per_frample;
 	}
       while (i < len)
 	{
@@ -2976,7 +2976,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
 	  val = LITTLE_THREE(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
-	  k += bytes_per_frame;
+	  k += bytes_per_frample;
 	}
     }
 

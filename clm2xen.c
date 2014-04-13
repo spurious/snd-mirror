@@ -5074,7 +5074,12 @@ returning the mixer outm, or creating a new mixer if outm is not given.  Either 
     {
       if ((u1_mixer) && (u2_mixer))
 	nm = mus_mixer_multiply(u1, u2, res);
-      else nm = mus_frame_to_frame(u1, u2, res);
+      else 
+	{
+	  /* here "res" should be a frame */
+	  Xen_check_type(mus_is_frame(res), ures, 3, S_mixer_multiply, "a frame since one of the other arguments is a frame");
+	  nm = mus_frame_to_frame(u1, u2, res);
+	}
     }
   if (res)
     return(ures);
@@ -8225,7 +8230,7 @@ enum {G_LOCSIG_DATA, G_LOCSIG_REVDATA, G_LOCSIG_OUT, G_LOCSIG_REVOUT};
 
 static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, mus_long_t pos, bool from_locsig)
 {
-  mus_any *outfr = NULL, *revfr = NULL;
+  mus_float_t *outfr = NULL, *revfr = NULL;
   Xen output, reverb;
   if (pos < 0) return;
 
@@ -8244,7 +8249,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
   if (outfr)
     {
       if (xen_is_sound_data(output))
-	mus_sound_data_add_frame(Xen_to_sound_data(output), pos, mus_data(outfr));
+	mus_sound_data_add_frame(Xen_to_sound_data(output), pos, outfr);
       else
 	{
 	  if (mus_is_vct(output))
@@ -8254,13 +8259,13 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	      v = xen_to_vct(output);
 	      vdata = mus_vct_data(v);
 	      if (pos < mus_vct_length(v))
-		vdata[pos] += mus_frame_ref(outfr, 0);
+		vdata[pos] += outfr[0];
 	    }
 	  else 
 	    {
 	      if ((Xen_is_vector(output)) &&
 		  (pos < Xen_vector_length(output)))
-		Xen_vector_set(output, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(output, pos)) + mus_frame_ref(outfr, 0)));
+		Xen_vector_set(output, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(output, pos)) + outfr[0]));
 	    }
 	}
     }
@@ -8270,7 +8275,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
     {
       reverb = ms->vcts[G_LOCSIG_REVOUT];
       if (xen_is_sound_data(reverb))
-	mus_sound_data_add_frame(Xen_to_sound_data(reverb), pos, mus_data(revfr));
+	mus_sound_data_add_frame(Xen_to_sound_data(reverb), pos, revfr);
       else
 	{
 	  if (mus_is_vct(reverb))
@@ -8280,13 +8285,13 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	      v = xen_to_vct(reverb);
 	      vdata = mus_vct_data(v);
 	      if (pos < mus_vct_length(v))
-		vdata[pos] += mus_frame_ref(revfr, 0);
+		vdata[pos] += revfr[0];
 	    }
 	  else 
 	    {
 	      if ((Xen_is_vector(reverb)) &&
 		  (pos < Xen_vector_length(reverb)))
-		Xen_vector_set(reverb, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(reverb, pos)) + mus_frame_ref(revfr, 0)));
+		Xen_vector_set(reverb, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(reverb, pos)) + revfr[0]));
 	    }
 	}
     }
@@ -10695,7 +10700,7 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
   callee = caddr(loc);
 
   num_vars = s7_list_length(sc, vars);
-  if (num_vars > 2) return(NULL);
+  if (num_vars > 2) return(NULL); /* currently this never happens, nor in any of the other cases */
 
   if (num_vars == 2)
     {
@@ -12800,6 +12805,7 @@ static gf *fixup_even_multiple(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 static gf *fixup_odd_multiple(s7_scheme *sc, s7_pointer expr, s7_pointer locals) {return(fixup_multiple(sc, expr, locals, false));}
 
 
+
 /* -------- remainder -------- */
 
 static mus_float_t gf_remainder(mus_float_t x, mus_float_t y)
@@ -13078,41 +13084,6 @@ static gf *fixup_in_any(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		      return(g);
 		    }
 		}
-	    }
-	}
-    }
-  return(NULL);
-}
-
-
-/* -------- frame-ref -------- */
-
-static mus_float_t gf_frame_ref_s1(void *p)
-{
-  gf *g = (gf *)p;
-  return(((mus_float_t *)(g->gen))[s7_cell_integer(s7_cell_slot_value(g->s1))]);
-}
-
-static gf *fixup_frame_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
-{
-  if (s7_list_length(sc, expr) == 3)
-    {
-      gf *g;
-      s7_pointer obj;
-      if ((s7_is_symbol(cadr(expr))) &&
-	  (!s7_is_local_variable(sc, cadr(expr), locals)) &&
-	  (s7_is_symbol(caddr(expr))))
-	{
-	  mus_any *f;
-	  obj = s7_cadr_value(sc, expr);
-	  f = Xen_to_mus_any(obj);
-	  if (mus_is_frame(f))
-	    {
-	      g = gf_alloc();
-	      g->func = gf_frame_ref_s1;
-	      g->gen = (void *)mus_data(f);
-	      g->s1 = s7_slot(sc, caddr(expr));
-	      return(g);
 	    }
 	}
     }
@@ -16290,8 +16261,6 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
   callee = caddr(body);
 
   num_vars = s7_list_length(sc, vars);
-  if (num_vars > 6) return(NULL);
-
   /* fprintf(stderr, "(out_two) %lld %s %s\n", end - pos, DISPLAY(vars), DISPLAY(body)); */
 
   setup_gen_list(sc, body);
@@ -16299,179 +16268,87 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
 
   if (num_vars > 1)
     {
-      gf *lf1, *lf2, *lf3 = NULL, *lf4 = NULL, *lf5 = NULL, *lf6 = NULL, *bg;
-      s7_pointer v1, v2, v3 = NULL, v4 = NULL, v5 = NULL, v6 = NULL;
-      s7_pointer x1, x2, x3, x4, x5, x6, y1, y2, y3, y4, y5, y6;
-      s7_Double *x1r, *x2r, *x3r = NULL, *x4r = NULL, *x5r = NULL, *x6r = NULL;
-      
-      v1 = car(vars);
-      x1 = s7_slot(sc, car(v1));
-      y1 = s7_make_mutable_real(sc, 1.5);
-      x1r = (s7_Double *)((unsigned char *)(y1) + xen_s7_number_location);
-      s7_slot_set_value(sc, x1, y1);
-      lf1 = find_gf_with_locals(sc, cadr(v1), old_e);
-      if (!lf1) {clear_gen_list(); return(NULL);}
+      gf **all_f;
+      gf *bg = NULL;
+      s7_pointer *v, *x, *y;
+      s7_Double **rx;
+      int i;
+      s7_pointer args;
 
-      v2 = cadr(vars);
-      x2 = s7_slot(sc, car(v2));
-      y2 = s7_make_mutable_real(sc, 1.5);
-      x2r = (s7_Double *)((unsigned char *)(y2) + xen_s7_number_location);
-      s7_slot_set_value(sc, x2, y2);
-      lf2 = find_gf_with_locals(sc, cadr(v2), old_e);
-      if (!lf2) {clear_gen_list(); gf_free(lf1); return(NULL);}
+      all_f = (gf **)calloc(num_vars, sizeof(gf *));
+      v = (s7_pointer *)calloc(num_vars, sizeof(s7_pointer));
+      x = (s7_pointer *)calloc(num_vars, sizeof(s7_pointer));
+      y = (s7_pointer *)calloc(num_vars, sizeof(s7_pointer));
+      rx = (s7_Double **)calloc(num_vars, sizeof(s7_Double *));
 
-      if (num_vars >= 3)
+      for (i = 0, args = vars; i < num_vars; i++, args = cdr(args))
 	{
-	  v3 = caddr(vars);
-	  x3 = s7_slot(sc, car(v3));
-	  y3 = s7_make_mutable_real(sc, 1.5);
-	  x3r = (s7_Double *)((unsigned char *)(y3) + xen_s7_number_location);
-	  s7_slot_set_value(sc, x3, y3);
-	  lf3 = find_gf_with_locals(sc, cadr(v3), old_e);
-	  if (!lf3) {clear_gen_list(); gf_free(lf1); gf_free(lf2); return(NULL);}
-
-	  if (num_vars > 3) 
-	    {
-	      v4 = cadddr(vars);
-	      x4 = s7_slot(sc, car(v4));
-	      y4 = s7_make_mutable_real(sc, 1.5);
-	      x4r = (s7_Double *)((unsigned char *)(y4) + xen_s7_number_location);
-	      s7_slot_set_value(sc, x4, y4);
-	      lf4 = find_gf_with_locals(sc, cadr(v4), old_e);
-	      if (!lf4) {clear_gen_list(); gf_free(lf1); gf_free(lf2); gf_free(lf3); return(NULL);}
-
-	      if (num_vars > 4)
-		{
-		  v5 = car(cddddr(vars));
-		  x5 = s7_slot(sc, car(v5));
-		  y5 = s7_make_mutable_real(sc, 1.5);
-		  x5r = (s7_Double *)((unsigned char *)(y5) + xen_s7_number_location);
-		  s7_slot_set_value(sc, x5, y5);
-		  lf5 = find_gf_with_locals(sc, cadr(v5), old_e);
-		  if (!lf5) {clear_gen_list(); gf_free(lf1); gf_free(lf2); gf_free(lf3); gf_free(lf4); return(NULL);}
-
-		  if (num_vars > 5)
-		    {
-		      v6 = cadr(cddddr(vars));
-		      x6 = s7_slot(sc, car(v6));
-		      y6 = s7_make_mutable_real(sc, 1.5);
-		      x6r = (s7_Double *)((unsigned char *)(y6) + xen_s7_number_location);
-		      s7_slot_set_value(sc, x6, y6);
-		      lf6 = find_gf_with_locals(sc, cadr(v6), old_e);
-		      if (!lf6) {clear_gen_list(); gf_free(lf1); gf_free(lf2); gf_free(lf3); gf_free(lf4); gf_free(lf5); return(NULL);}
-		    }
-		}
-	    }
+	  v[i] = car(args);
+	  x[i] = s7_slot(sc, car(v[i]));
+	  y[i] = s7_make_mutable_real(sc, 1.5);
+	  rx[i] = (s7_Double *)((unsigned char *)(y[i]) + xen_s7_number_location);
+	  s7_slot_set_value(sc, x[i], y[i]);
+	  all_f[i] = find_gf_with_locals(sc, cadr(v[i]), old_e);
+	  if (!all_f[i]) {args = NULL; break;}
 	}
 
-      bg = find_gf_with_locals(sc, callee, old_e);
-      
-      if ((bg) && (lf1->func) && (lf2->func) && (bg->func))
+      if (args)
 	{
-	  if ((lf3) && (lf3->func))
+	  bg = find_gf_with_locals(sc, callee, old_e);
+	  if ((bg) && (bg->func))
 	    {
-	      if ((lf4) && (lf4->func))
-		{
-		  if ((lf5) && (lf5->func))
-		    {
-		      if ((lf6) && (lf6->func))
-			{
-			  for (; pos < end; pos++)
-			    {
-			      (*step) = pos;
-			      (*x1r) = lf1->func(lf1);
-			      (*x2r) = lf2->func(lf2);
-			      (*x3r) = lf3->func(lf3);
-			      (*x4r) = lf4->func(lf4);
-			      (*x5r) = lf5->func(lf5);
-			      (*x6r) = lf6->func(lf6);
-			      out_any_2(pos, bg->func(bg), 0, S_outa);
-			    }
-			}
-		      else
-			{
-			  for (; pos < end; pos++)
-			    {
-			      (*step) = pos;
-			      (*x1r) = lf1->func(lf1);
-			      (*x2r) = lf2->func(lf2);
-			      (*x3r) = lf3->func(lf3);
-			      (*x4r) = lf4->func(lf4);
-			      (*x5r) = lf5->func(lf5);
-			      out_any_2(pos, bg->func(bg), 0, S_outa);
-			    }
-			}
-		    }
-		  else
-		    {
-		      for (; pos < end; pos++)
-			{
-			  (*step) = pos;
-			  (*x1r) = lf1->func(lf1);
-			  (*x2r) = lf2->func(lf2);
-			  (*x3r) = lf3->func(lf3);
-			  (*x4r) = lf4->func(lf4);
-			  out_any_2(pos, bg->func(bg), 0, S_outa);
-			}
-		    }
-		}
-	      else
+	      if (num_vars > 2)
 		{
 		  for (; pos < end; pos++)
 		    {
 		      (*step) = pos;
-		      (*x1r) = lf1->func(lf1);
-		      (*x2r) = lf2->func(lf2);
-		      (*x3r) = lf3->func(lf3);
+		      for (i = 0; i < num_vars; i++)
+			*rx[i] = all_f[i]->func(all_f[i]);
 		      out_any_2(pos, bg->func(bg), 0, S_outa);
 		    }
 		}
-	    }
-	  else
-	    {
-	      mus_float_t **ob;
-	      mus_float_t *buf = NULL;
-	      mus_long_t dstart, dend, dpos, dlen = 0;
-	  
-	      if (mus_out_any_is_safe(clm_output_gen))
+	      else
 		{
-		  ob = mus_out_any_buffers(clm_output_gen);
-		  buf = ob[0];
-		  dlen = mus_file_buffer_size();
+		  mus_float_t **ob;
+		  mus_float_t *buf = NULL;
+		  mus_long_t dstart, dend, dpos, dlen = 0;
+		  s7_Double *x1r, *x2r;
+		  gf *lf1, *lf2;
+		  
+		  lf1 = all_f[0];
+		  lf2 = all_f[1];
+		  x1r = rx[0];
+		  x2r = rx[1];
+		  
+		  if (mus_out_any_is_safe(clm_output_gen))
+		    {
+		      ob = mus_out_any_buffers(clm_output_gen);
+		      buf = ob[0];
+		      dlen = mus_file_buffer_size();
+		    }
+		  OUTA_LOOP_RX(lf1->func(lf1), lf2->func(lf2), bg->func(bg));
 		}
-	      OUTA_LOOP_RX(lf1->func(lf1), lf2->func(lf2), bg->func(bg));
-#if 0
-	      for (; pos < end; pos++)
-		{
-		  (*step) = pos;
-		  (*x1r) = lf1->func(lf1);
-		  (*x2r) = lf2->func(lf2);
-		  out_any_2(pos, bg->func(bg), 0, S_outa);
-		}
-#endif
 	    }
-	  gf_free(lf1);
-	  gf_free(lf2);
-	  if (lf3) gf_free(lf3);
-	  if (lf4) gf_free(lf4);
-	  gf_free(bg);
-
-	  clear_gen_list();
-	  return(args);
+	  else args = NULL;
 	}
-      if (lf1) gf_free(lf1);
-      if (lf2) gf_free(lf2);
-      if (lf3) gf_free(lf3);
-      if (lf4) gf_free(lf4);
+
+      for (i = 0; i < num_vars; i++)
+	if (all_f[i])
+	  gf_free(all_f[i]); 
+	else break;
       if (bg) gf_free(bg);
 
-      /* fprintf(stderr, "%lld: %s %s\n", end - pos, DISPLAY(vars), DISPLAY(callee)); 
-	 nothing here
-       */
-      clear_gen_list();
-      return(NULL);
-    }
+      free(all_f);
+      free(v);
+      free(x);
+      free(y);
+      free(rx);
 
+      clear_gen_list();
+      return(args);
+    }
+  
+  /* num_vars == 1 here */
   letp = cadar(vars);
   lets = s7_slot(sc, caar(vars));
 
@@ -19699,8 +19576,56 @@ static s7_pointer rand_interp_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
   return(f);
 }
 
+static s7_pointer polynomial_temp;
+static s7_pointer g_polynomial_temp(s7_scheme *sc, s7_pointer args)
+{
+  vct *v;
+  s7_pointer vc;
+  vc = s7_car_value(sc, args);
+  v = xen_to_vct(vc);
+  if (v)
+    return(s7_make_real(sc, mus_polynomial(mus_vct_data(v), s7_call_direct_to_real_and_free(sc, cadr(args)), mus_vct_length(v))));
+  return(g_polynomial(vc, s7_call_direct(sc, cadr(args))));
+}
+
+static s7_pointer polynomial_cos;
+static s7_pointer g_polynomial_cos(s7_scheme *sc, s7_pointer args)
+{
+  vct *v;
+  s7_pointer vc, cs;
+  vc = s7_car_value(sc, args);
+  cs = s7_cadr_value(sc, cadr(args));
+  v = xen_to_vct(vc);
+  if (v)
+    return(s7_make_real(sc, mus_polynomial(mus_vct_data(v), cos(s7_number_to_real_with_caller(sc, cs, "cos")), mus_vct_length(v))));
+  return(g_polynomial(vc, s7_cos(sc, cs)));
+}
+
 static s7_pointer polynomial_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  /* these choices are just placeholders to trigger further optimizations later -- the code above is not used. */
+  if (args == 2)
+    {
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_pair(caddr(expr))))
+	{
+	  if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
+	      (s7_function_returns_temp(sc, caddr(expr))))
+	    {
+	      /* this is not currently used anywhere */
+	      s7_function_choice_set_direct(sc, expr);
+	      return(polynomial_temp);
+	    }
+	  if ((car(caddr(expr)) == cos_symbol) &&
+	      (s7_is_symbol(cadr(caddr(expr)))))
+	    {
+	      /* aimed, I think, at (polynomial coeffs (cos x)) which is now built-in, so this is not used
+	       */
+	      s7_function_choice_set_direct(sc, expr);
+	      return(polynomial_cos);
+	    }
+	}
+    }
   return(f);
 }
 
@@ -20925,6 +20850,8 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "polynomial");
   s7_function_set_chooser(sc, f, polynomial_chooser);
   direct_choice_2(sc, f, (mus_float_t (*)(mus_xen *, mus_float_t))wrapped_polynomial_2, wrapped_polynomial_p);
+  polynomial_temp = clm_make_function_no_choice(sc, "polynomial", g_polynomial_temp, 2, 0, false, "polynomial optimization", f);
+  polynomial_cos = clm_make_function_no_choice(sc, "polynomial", g_polynomial_cos, 2, 0, false, "polynomial optimization", f);
 
 
   GEN_F2("polyshape", polyshape);
@@ -21163,9 +21090,6 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "amplitude-modulate");
   store_gf_fixup(s7, f, fixup_amplitude_modulate);
-
-  f = s7_name_to_value(sc, "frame-ref");
-  store_gf_fixup(s7, f, fixup_frame_ref);
 
   {
     s7_pointer f;

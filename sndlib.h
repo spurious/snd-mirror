@@ -1,9 +1,9 @@
 #ifndef SNDLIB_H
 #define SNDLIB_H
 
-#define SNDLIB_VERSION 23
-#define SNDLIB_REVISION 3
-#define SNDLIB_DATE "19-Feb-14"
+#define SNDLIB_VERSION 24
+#define SNDLIB_REVISION 0
+#define SNDLIB_DATE "14-Apr-14"
 
 #include <stdio.h>
 /* need FILE */
@@ -173,7 +173,8 @@ MUS_EXPORT mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip
 MUS_EXPORT mus_clip_handler_t *mus_clip_set_handler_and_checker(mus_clip_handler_t *new_clip_handler, bool (*checker)(void));
 
 MUS_EXPORT mus_long_t mus_sound_samples(const char *arg);
-MUS_EXPORT mus_long_t mus_sound_frames(const char *arg);
+MUS_EXPORT mus_long_t mus_sound_framples(const char *arg);
+#define mus_sound_frames(Arg) mus_sound_framples(Arg)
 MUS_EXPORT int mus_sound_datum_size(const char *arg);
 MUS_EXPORT mus_long_t mus_sound_data_location(const char *arg);
 MUS_EXPORT int mus_sound_chans(const char *arg);
@@ -219,7 +220,7 @@ MUS_EXPORT int mus_sound_open_output(const char *arg, int srate, int chans, int 
 MUS_EXPORT int mus_sound_reopen_output(const char *arg, int chans, int format, int type, mus_long_t data_loc);
 MUS_EXPORT int mus_sound_close_input(int fd);
 MUS_EXPORT int mus_sound_close_output(int fd, mus_long_t bytes_of_data);
-#define mus_sound_seek_frame(Ifd, Frm) mus_file_seek_frame(Ifd, Frm)
+#define mus_sound_seek_frame(Ifd, Frm) mus_file_seek_frample(Ifd, Frm)
 #define mus_sound_read(Fd, Beg, End, Chans, Bufs) mus_file_read(Fd, Beg, End, Chans, Bufs)
 #define mus_sound_write(Fd, Beg, End, Chans, Bufs) mus_file_write(Fd, Beg, End, Chans, Bufs)
 
@@ -237,7 +238,7 @@ MUS_EXPORT int mus_float_array_to_file(const char *filename, mus_float_t *ddata,
 
 MUS_EXPORT mus_float_t **mus_sound_saved_data(const char *arg);
 MUS_EXPORT void mus_sound_set_saved_data(const char *arg, mus_float_t **data);
-MUS_EXPORT void mus_file_save_data(int tfd, mus_long_t frames, mus_float_t **data);
+MUS_EXPORT void mus_file_save_data(int tfd, mus_long_t framples, mus_float_t **data);
 
 
 
@@ -289,7 +290,8 @@ MUS_EXPORT int mus_file_open_write(const char *arg);
 MUS_EXPORT int mus_file_create(const char *arg);
 MUS_EXPORT int mus_file_reopen_write(const char *arg);
 MUS_EXPORT int mus_file_close(int fd);
-MUS_EXPORT mus_long_t mus_file_seek_frame(int tfd, mus_long_t frame);
+MUS_EXPORT mus_long_t mus_file_seek_frample(int tfd, mus_long_t frample);
+#define mus_file_seek_frame(Fd, Fr) mus_file_seek_frample(Fd, Fr)
 MUS_EXPORT mus_long_t mus_file_read(int fd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs);
 MUS_EXPORT mus_long_t mus_file_read_chans(int fd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, mus_float_t **cm);
 MUS_EXPORT int mus_file_write(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs);

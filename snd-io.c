@@ -208,7 +208,7 @@ static void reposition_file_buffers_1(mus_long_t loc, snd_io *io)
     }
   else
     {
-      mus_file_seek_frame(io->fd, loc);
+      mus_file_seek_frample(io->fd, loc);
       io->beg = loc;
       mus_file_read_chans(io->fd,
 			  loc, frames,

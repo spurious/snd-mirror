@@ -1,9 +1,9 @@
 #ifndef CLM_H
 #define CLM_H
 
-#define MUS_VERSION 5
-#define MUS_REVISION 25
-#define MUS_DATE "11-Apr-14"
+#define MUS_VERSION 6
+#define MUS_REVISION 0
+#define MUS_DATE "14-Apr-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -428,36 +428,6 @@ MUS_EXPORT bool mus_is_pulsed_env(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_pulsed_env(mus_any *pl, mus_float_t inval);
 MUS_EXPORT mus_float_t mus_pulsed_env_unmodulated(mus_any *pl);
 
-MUS_EXPORT bool mus_is_frame(mus_any *ptr);
-MUS_EXPORT bool mus_is_frame_or_mixer(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_empty_frame(int chans);
-MUS_EXPORT mus_any *mus_make_frame(int chans, ...);
-MUS_EXPORT mus_any *mus_frame_add(mus_any *f1, mus_any *f2, mus_any *res);
-MUS_EXPORT mus_any *mus_frame_multiply(mus_any *f1, mus_any *f2, mus_any *res);
-MUS_EXPORT mus_any *mus_frame_scale(mus_any *uf1, mus_float_t scl, mus_any *ures);
-MUS_EXPORT mus_any *mus_frame_offset(mus_any *uf1, mus_float_t offset, mus_any *ures);
-MUS_EXPORT mus_float_t mus_frame_ref(mus_any *f, int chan);
-MUS_EXPORT mus_float_t mus_frame_set(mus_any *f, int chan, mus_float_t val);
-MUS_EXPORT mus_any *mus_frame_copy(mus_any *uf);
-MUS_EXPORT mus_float_t mus_frame_fill(mus_any *uf, mus_float_t val);
-
-MUS_EXPORT bool mus_is_mixer(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_empty_mixer(int chans);
-MUS_EXPORT mus_any *mus_make_identity_mixer(int chans);
-MUS_EXPORT mus_any *mus_make_mixer(int chans, ...);
-MUS_EXPORT mus_float_t mus_mixer_ref(mus_any *f, int in, int out);
-MUS_EXPORT mus_float_t mus_mixer_set(mus_any *f, int in, int out, mus_float_t val);
-MUS_EXPORT mus_any *mus_frame_to_frame(mus_any *f, mus_any *in, mus_any *out);
-MUS_EXPORT mus_any *mus_sample_to_frame(mus_any *f, mus_float_t in, mus_any *out);
-MUS_EXPORT mus_float_t mus_frame_to_sample(mus_any *f, mus_any *in);
-MUS_EXPORT mus_any *mus_mixer_multiply(mus_any *f1, mus_any *f2, mus_any *res);
-MUS_EXPORT mus_any *mus_mixer_add(mus_any *f1, mus_any *f2, mus_any *res);
-MUS_EXPORT mus_any *mus_mixer_scale(mus_any *uf1, mus_float_t scaler, mus_any *ures);
-MUS_EXPORT mus_any *mus_mixer_offset(mus_any *uf1, mus_float_t offset, mus_any *ures);
-MUS_EXPORT mus_any *mus_make_scalar_mixer(int chans, mus_float_t scalar);
-MUS_EXPORT mus_any *mus_mixer_copy(mus_any *uf);
-MUS_EXPORT mus_float_t mus_mixer_fill(mus_any *uf, mus_float_t val);
-
 MUS_EXPORT bool mus_is_file_to_sample(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_file_to_sample(const char *filename);
 MUS_EXPORT mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long_t buffer_size);
@@ -470,13 +440,21 @@ MUS_EXPORT bool mus_is_readin(mus_any *ptr);
 
 MUS_EXPORT bool mus_is_output(mus_any *ptr);
 MUS_EXPORT bool mus_is_input(mus_any *ptr);
-MUS_EXPORT mus_float_t mus_in_any(mus_long_t frame, int chan, mus_any *IO);
+MUS_EXPORT mus_float_t mus_in_any(mus_long_t frample, int chan, mus_any *IO);
 MUS_EXPORT bool mus_in_any_is_safe(mus_any *IO);
 
-MUS_EXPORT mus_any *mus_make_file_to_frame(const char *filename);
-MUS_EXPORT bool mus_is_file_to_frame(mus_any *ptr);
-MUS_EXPORT mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *f);
-MUS_EXPORT mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, mus_long_t buffer_size);
+  /* new 6.0 */
+MUS_EXPORT mus_float_t *mus_file_to_frample(mus_any *ptr, mus_long_t samp, mus_float_t *f, int out_chans);
+MUS_EXPORT mus_any *mus_make_file_to_frample(const char *filename);
+MUS_EXPORT bool mus_is_file_to_frample(mus_any *ptr);
+MUS_EXPORT mus_any *mus_make_file_to_frample_with_buffer_size(const char *filename, mus_long_t buffer_size);
+MUS_EXPORT mus_float_t *mus_frample_to_frample(mus_float_t *matrix, mus_float_t *in_samps, int in_chans, mus_float_t *out_samps, int out_chans);
+
+MUS_EXPORT bool mus_is_frample_to_file(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_frample_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *data, int chans);
+MUS_EXPORT mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
+#define mus_make_frample_to_file(Filename, Chans, OutFormat, OutType) mus_make_frample_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
+MUS_EXPORT mus_any *mus_continue_frample_to_file(const char *filename);
 
 MUS_EXPORT bool mus_is_sample_to_file(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment);
@@ -486,7 +464,7 @@ MUS_EXPORT mus_any *mus_continue_sample_to_file(const char *filename);
 MUS_EXPORT int mus_close_file(mus_any *ptr);
 MUS_EXPORT mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2);
 
-MUS_EXPORT mus_float_t mus_out_any(mus_long_t frame, mus_float_t val, int chan, mus_any *IO);
+MUS_EXPORT mus_float_t mus_out_any(mus_long_t frample, mus_float_t val, int chan, mus_any *IO);
 MUS_EXPORT mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO);
 MUS_EXPORT bool mus_out_any_is_safe(mus_any *IO);
 MUS_EXPORT mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val);
@@ -494,12 +472,6 @@ MUS_EXPORT mus_long_t mus_out_any_data_start(mus_any *IO);
 MUS_EXPORT mus_long_t mus_out_any_data_end(mus_any *IO);
 MUS_EXPORT mus_float_t **mus_out_any_buffers(mus_any *IO);
 MUS_EXPORT void mus_out_any_set_end(mus_any *IO, mus_long_t end);
-
-MUS_EXPORT bool mus_is_frame_to_file(mus_any *ptr);
-MUS_EXPORT mus_any *mus_frame_to_file(mus_any *ptr, mus_long_t samp, mus_any *data);
-MUS_EXPORT mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
-#define mus_make_frame_to_file(Filename, Chans, OutFormat, OutType) mus_make_frame_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
-MUS_EXPORT mus_any *mus_continue_frame_to_file(const char *filename);
 
 MUS_EXPORT mus_float_t mus_vector_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans);
 MUS_EXPORT mus_float_t *mus_vector_mix(int chans, mus_float_t *data, mus_float_t *mix, mus_float_t *result);
@@ -514,8 +486,8 @@ MUS_EXPORT mus_float_t mus_locsig_set(mus_any *ptr, int chan, mus_float_t val);
 MUS_EXPORT mus_float_t mus_locsig_reverb_ref(mus_any *ptr, int chan);
 MUS_EXPORT mus_float_t mus_locsig_reverb_set(mus_any *ptr, int chan, mus_float_t val);
 MUS_EXPORT void mus_move_locsig(mus_any *ptr, mus_float_t degree, mus_float_t distance);
-MUS_EXPORT mus_any *mus_locsig_outf(mus_any *ptr);
-MUS_EXPORT mus_any *mus_locsig_revf(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_locsig_outf(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_locsig_revf(mus_any *ptr);
 MUS_EXPORT void *mus_locsig_closure(mus_any *ptr);
 MUS_EXPORT void mus_locsig_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val));
 MUS_EXPORT bool mus_locsig_output_is_safe(mus_any *ptr);
@@ -530,8 +502,8 @@ MUS_EXPORT mus_any *mus_make_move_sound(mus_long_t start, mus_long_t end, int ou
 					mus_any *doppler_delay, mus_any *doppler_env, mus_any *rev_env,
 					mus_any **out_delays, mus_any **out_envs, mus_any **rev_envs,
 					int *out_map, mus_any *output, mus_any *revput, bool free_arrays, bool free_gens);
-MUS_EXPORT mus_any *mus_move_sound_outf(mus_any *ptr);
-MUS_EXPORT mus_any *mus_move_sound_revf(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_move_sound_outf(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_move_sound_revf(mus_any *ptr);
 MUS_EXPORT void *mus_move_sound_closure(mus_any *ptr);
 MUS_EXPORT void mus_move_sound_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val));
 
@@ -574,8 +546,6 @@ MUS_EXPORT void mus_granulate_set_edit_function(mus_any *ptr, int (*edit)(void *
 MUS_EXPORT mus_long_t mus_set_file_buffer_size(mus_long_t size);
 MUS_EXPORT mus_long_t mus_file_buffer_size(void);
 
-MUS_EXPORT void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_long_t out_samps, mus_long_t in_start, mus_any *mx, mus_any ***envs);
-MUS_EXPORT void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_start, mus_long_t out_frames, mus_long_t in_start, mus_any *umx, mus_any ***envs);
 MUS_EXPORT mus_float_t mus_apply(mus_any *gen, mus_float_t f1, mus_float_t f2);
 
 MUS_EXPORT bool mus_is_phase_vocoder(mus_any *ptr);
@@ -677,11 +647,56 @@ MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 #define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
 #define mus_is_delay_line(Gen) mus_is_tap(Gen)
 
-#endif
+
+MUS_EXPORT bool mus_is_frame(mus_any *ptr);
+MUS_EXPORT bool mus_is_frame_or_mixer(mus_any *ptr);
+MUS_EXPORT mus_any *mus_make_empty_frame(int chans);
+MUS_EXPORT mus_any *mus_make_frame(int chans, ...);
+MUS_EXPORT mus_any *mus_frame_add(mus_any *f1, mus_any *f2, mus_any *res);
+MUS_EXPORT mus_any *mus_frame_multiply(mus_any *f1, mus_any *f2, mus_any *res);
+MUS_EXPORT mus_any *mus_frame_scale(mus_any *uf1, mus_float_t scl, mus_any *ures);
+MUS_EXPORT mus_any *mus_frame_offset(mus_any *uf1, mus_float_t offset, mus_any *ures);
+MUS_EXPORT mus_float_t mus_frame_ref(mus_any *f, int chan);
+MUS_EXPORT mus_float_t mus_frame_set(mus_any *f, int chan, mus_float_t val);
+MUS_EXPORT mus_any *mus_frame_copy(mus_any *uf);
+MUS_EXPORT mus_float_t mus_frame_fill(mus_any *uf, mus_float_t val);
+
+MUS_EXPORT bool mus_is_mixer(mus_any *ptr);
+MUS_EXPORT mus_any *mus_make_empty_mixer(int chans);
+MUS_EXPORT mus_any *mus_make_identity_mixer(int chans);
+MUS_EXPORT mus_any *mus_make_mixer(int chans, ...);
+MUS_EXPORT mus_float_t mus_mixer_ref(mus_any *f, int in, int out);
+MUS_EXPORT mus_float_t mus_mixer_set(mus_any *f, int in, int out, mus_float_t val);
+MUS_EXPORT mus_any *mus_frame_to_frame(mus_any *f, mus_any *in, mus_any *out);
+MUS_EXPORT mus_any *mus_sample_to_frame(mus_any *f, mus_float_t in, mus_any *out);
+MUS_EXPORT mus_float_t mus_frame_to_sample(mus_any *f, mus_any *in);
+MUS_EXPORT mus_any *mus_mixer_multiply(mus_any *f1, mus_any *f2, mus_any *res);
+MUS_EXPORT mus_any *mus_mixer_add(mus_any *f1, mus_any *f2, mus_any *res);
+MUS_EXPORT mus_any *mus_mixer_scale(mus_any *uf1, mus_float_t scaler, mus_any *ures);
+MUS_EXPORT mus_any *mus_mixer_offset(mus_any *uf1, mus_float_t offset, mus_any *ures);
+MUS_EXPORT mus_any *mus_make_scalar_mixer(int chans, mus_float_t scalar);
+MUS_EXPORT mus_any *mus_mixer_copy(mus_any *uf);
+MUS_EXPORT mus_float_t mus_mixer_fill(mus_any *uf, mus_float_t val);
+
+MUS_EXPORT bool mus_is_frame_to_file(mus_any *ptr);
+MUS_EXPORT mus_any *mus_frame_to_file(mus_any *ptr, mus_long_t samp, mus_any *data);
+MUS_EXPORT mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
+#define mus_make_frame_to_file(Filename, Chans, OutFormat, OutType) mus_make_frame_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
+MUS_EXPORT mus_any *mus_continue_frame_to_file(const char *filename);
+
+MUS_EXPORT mus_any *mus_make_file_to_frame(const char *filename);
+MUS_EXPORT bool mus_is_file_to_frame(mus_any *ptr);
+MUS_EXPORT mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *f);
+MUS_EXPORT mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, mus_long_t buffer_size);
+
+MUS_EXPORT void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_long_t out_samps, mus_long_t in_start, mus_any *mx, mus_any ***envs);
+MUS_EXPORT void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_start, mus_long_t out_framples, mus_long_t in_start, mus_any *umx, mus_any ***envs);
 
 /* used only in run.lisp */
 MUS_EXPORT mus_any *mus_make_frame_with_data(int chans, mus_float_t *data);
 MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
+#endif
+
 
 #ifdef __cplusplus
 }
@@ -692,6 +707,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 14-Apr:     mus_frame and mus_mixer removed, "frame" replaced by "frample" in IO functions.
  * 11-Apr:     mus_even|odd_weight|multiple.
  * 9-Apr:      deprecated mus_is_delay_line.
  * 2-Apr:      mus_make_moving_average_with_sum.

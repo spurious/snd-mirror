@@ -69390,9 +69390,20 @@ int main(int argc, char **argv)
  * cmn->scm+gtk?
  * for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
  * open-output|input-object|function?
- *
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
- * mixer and frame are still separate (generator!) types
+ *
+ * mixer and frame are still separate (generator!) types, but they aren't used anywhere?!?
+ *   can we deprecate the whole business?  clm2xen still has make_frame_to_file_with_comment -> float_vector?
+ *   so we need float_vector<->file as gens in clm? but ruby/forth would still use the current stuff.
+ *   perhaps start by removing internal uses of mus_mixer|frame (as in locsig: revf|outf->vals to rev|out_vals)
+ *   why not samples<->file?  
+ *   frame etc used also in *.lisp, *.ins
+ *   mus_sound_frames uses that name 
+ *   "frample" is the winner
+ *   so remove frame/mixer from clm.c/h, use frample for the IO procs and header info (etc --region_frames...)
+ *     use vectors of some sort for backwards compatibility in clm2xen
+ *     remove mixers everywhere and use square vectors (float-matrix?)
+ *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
  * click to inspect/see source etc in listener?
@@ -69404,13 +69415,9 @@ int main(int argc, char **argv)
       ((= i 10))
     (let ((r (random 1.0)))
       (format *stderr* "~A ~A~%" (moving-max m3 r) (moving-max m1 (moving-max m2 r))))))
- * odd|even-weight|multiple ripple [pwqvox can use these also -- needs run-time polynomial(s1=fv, *rx1=rl), maybe vox]
  * why can't y-bounds be channel-specific if channels-combined?
  * why doesn't a new max take effect? [with-fullest-sound t844.scm]
  * click-2 in separate channel => play just that channel
- * make let_looped use arrays! (extend?)
- * check not-3-formant case in clm-ins vox
- * moving-normalize [isn't moving-max really -peak?]
  *
  * unexpected eof can be from forgotten double-quote -- can we catch this?
  *   start at last top and look for odd number of dq's?
