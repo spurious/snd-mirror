@@ -96,15 +96,15 @@
 			   v)
 			 envs)))
 	    ;; -------- no src
-	    (mus-mix *output* file st samps inloc mx mxe)
+	    (mus-file-mix *output* file st samps inloc mx mxe)
 	    (if rev-mx
-		(mus-mix *reverb* file st samps inloc rev-mx #f)))
+		(mus-file-mix *reverb* file st samps inloc rev-mx)))
 	  
 	  (let ((srcs (make-vector in-chans #f)))
 	    (do ((inp 0 (+ inp 1)))
 		((= inp in-chans))
 	      (vector-set! srcs inp (make-src :input (vector-ref file inp) :srate (if (number? srate) (abs srate) 0.0))))
-	    (mus-mix-with-envs file st samps mx rev-mx envs srcs srcenv *output* *reverb*)
+	    (mus-file-mix-with-envs file st samps mx rev-mx envs srcs srcenv *output* *reverb*)
 	    )))))
 
 #|

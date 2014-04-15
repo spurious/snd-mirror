@@ -192,7 +192,6 @@
 #define S_mus_interp_type            "mus-interp-type"
 #define S_mus_length                 "mus-length"
 #define S_mus_location               "mus-location"
-#define S_mus_mix                    "mus-mix"
 #define S_mus_name                   "mus-name"
 #define S_mus_offset                 "mus-offset"
 #define S_mus_order                  "mus-order"
@@ -326,8 +325,14 @@
 #define S_make_file_to_frample       "make-file->frample"
 #define S_make_frample_to_file       "make-frample->file"
 
+#define S_mus_file_mix               "mus-file-mix"
+#define S_mus_file_mix_with_envs     "mus-file-mix-with-envs"
+
 
 #if (!DISABLE_DEPRECATED)
+#define S_mus_mix                    "mus-mix"
+#define S_mus_mix_with_envs          "mus-mix-with-envs"
+
 #define S_make_mixer                 "make-mixer"
 #define S_make_scalar_mixer          "make-scalar-mixer"
 #define S_mixer                      "mixer"

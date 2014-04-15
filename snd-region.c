@@ -2126,7 +2126,9 @@ void g_init_regions(void)
   Xen_define_procedure(S_insert_region,               g_insert_region_w,          2, 2, 0, H_insert_region);
   Xen_define_safe_procedure(S_regions,                g_regions_w,                0, 0, 0, H_regions);
   Xen_define_safe_procedure(S_region_framples,        g_region_framples_w,        1, 1, 0, H_region_framples);
+#if (!DISABLE_DEPRECATED)
   Xen_define_safe_procedure("region-frames",          g_region_framples_w,        1, 1, 0, H_region_framples);
+#endif
   Xen_define_safe_procedure(S_region_position,        g_region_position_w,        1, 1, 0, H_region_position);
   Xen_define_safe_procedure(S_region_srate,           g_region_srate_w,           1, 0, 0, H_region_srate);
   Xen_define_safe_procedure(S_region_chans,           g_region_chans_w,           1, 0, 0, H_region_chans);

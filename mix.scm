@@ -336,20 +336,6 @@ last end of the mixes in 'mix-list'"
 	 (apply min (map mix-position mix-list)))))
 
   
-(define (save-mixes mix-list filename)
-  "(save-mixes mix-list filename) saves the data of the mixes in 'mix-list' in 'filename'"
-  (let* ((len (mixes-length mix-list))
-	 (beg (apply min (map mix-position mix-list)))
-	 (data (make-float-vector len)))
-    (for-each
-     (lambda (m)
-       (float-vector-add! data (mix->float-vector m) (- (mix-position m) beg)))
-     mix-list)
-    (let ((fd (mus-sound-open-output filename (srate) 1 #f #f "")))
-      (mus-sound-write fd 0 (- len 1) 1 (make-shared-vector data (list 1 len)))
-      (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length data))))))
-
-
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (define (env-mixes mix-list overall-amp-env)
@@ -545,11 +531,9 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
 
   "(pan-mix-float-vector v start pan-env snd) mixes the float-vector data into the sound 'snd' 
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
-
-  (let* ((temp-file (snd-tempnam))
-	 (fd (mus-sound-open-output temp-file (srate snd) 1 #f #f "")))
-    (mus-sound-write fd 0 (- (length v) 1) 1 (make-shared-vector v (list 1 (length v))))
-    (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
+  
+  (let ((temp-file (snd-tempnam)))
+    (array->file temp-file v (length v) (srate snd) 1)
     (pan-mix temp-file beg pan snd #t)))
 
 

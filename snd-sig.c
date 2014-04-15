@@ -1562,7 +1562,7 @@ void src_file(const char *file, double ratio)
   header_type = mus_sound_header_type(file);
   comment = mus_sound_comment(file);
   buffer_size = mus_file_buffer_size();
-  old_samps = mus_sound_frames(file);
+  old_samps = mus_sound_framples(file);
   new_samps = old_samps / ratio;  /* old-srate/new-srate in-coming */
 
   width = sinc_width(ss);
@@ -3366,7 +3366,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
       int fchans, fsrate;
       mus_long_t flen;
       fchans = mus_sound_chans(files[i]);
-      flen = mus_sound_frames(files[i]);
+      flen = mus_sound_framples(files[i]);
       fsrate = mus_sound_srate(files[i]);
       if (chans < fchans) chans = fchans;
       if (srate < fsrate) srate = fsrate;

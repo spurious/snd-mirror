@@ -48,6 +48,7 @@
 #endif
 
 
+#if (!DISABLE_DEPRECATED)
 #if (!HAVE_SCHEME)
 struct sound_data {
   mus_long_t length;
@@ -190,6 +191,7 @@ void mus_sound_data_add_frample(sound_data *sd, mus_long_t pos, mus_float_t *dat
 	d[pos] += data[i];
       }
 }
+#endif /* (!DISABLE_DEPRECATED) */
 
 
 /* originally I tried to simplify C GC by using global static strings that were 
@@ -787,6 +789,7 @@ static Xen g_mus_sound_set_maxamp(Xen file, Xen vals)
 }
 
 
+#if (!DISABLE_DEPRECATED)
 static Xen g_mus_sound_open_input(Xen file)
 {
   #define H_mus_sound_open_input "(" S_mus_sound_open_input " filename): open filename for (low-level) sound input, \
@@ -1106,6 +1109,7 @@ to the frample offset"
   return(C_llong_to_Xen_llong(mus_file_seek_frample(Xen_integer_to_C_int(fd),
 					    Xen_llong_to_C_llong(offset))));
 }
+#endif /* (!DISABLE_DEPRECATED) */
 
 
 #define S_mus_sound_preload "mus-sound-preload"
@@ -1305,6 +1309,7 @@ static Xen g_mus_audio_write(Xen line, Xen sdata, Xen framples, Xen start)
   #define H_mus_audio_write "(" S_mus_audio_write " line sdata framples (start 0)): write framples of data (channels * framples = samples) \
 to the audio line from sound-data sdata."
 
+#if 0
   char *obuf;
   sound_data *sd;
   int outbytes, val, fmt, fd, i, chans;
@@ -1342,6 +1347,9 @@ to the audio line from sound-data sdata."
   free(bufs);
 
   return(C_int_to_Xen_integer(val));
+#else
+  return(Xen_false);
+#endif
 }
 
 
@@ -1350,6 +1358,7 @@ static Xen g_mus_audio_read(Xen line, Xen sdata, Xen framples)
   #define H_mus_audio_read "(" S_mus_audio_read " line sdata framples): read framples of data (channels * framples = samples) \
 from the audio line into sound-data sdata."
 
+#if 0
   char *inbuf;
   sound_data *sd;
   int val, inbytes, fd, fmt, i, chans;
@@ -1379,6 +1388,9 @@ from the audio line into sound-data sdata."
   free(bufs);
 
   return(C_int_to_Xen_integer(val));
+#else
+  return(Xen_false);
+#endif
 }
 
 
@@ -1598,6 +1610,7 @@ static Xen g_mus_audio_reinitialize(void)
 #endif
 
 
+#if (!DISABLE_DEPRECATED)
 #if (!HAVE_SCHEME)
 static Xen_object_type_t sound_data_tag = 0;
 
@@ -2373,7 +2386,7 @@ static Xen g_rb_make_sound_data(Xen self, Xen chans, Xen framples)
   return(g_make_sound_data(chans, framples));
 }
 #endif
-
+#endif /* (!DISABLE_DEPRECATED) */
 
 
 static Xen g_mus_max_malloc(void)
@@ -2434,7 +2447,7 @@ static Xen g_mus_audio_output_properties_mutable(Xen mut)
 }
 #endif
 
-
+#if (!DISABLE_DEPRECATED)
 #if (!HAVE_SCHEME)
 Xen_wrap_1_arg(g_sound_data_copy_w, g_sound_data_copy)
 Xen_wrap_2_args(g_sound_data_fillB_w, g_sound_data_fillB)
@@ -2455,6 +2468,17 @@ Xen_wrap_4_args(g_sound_data_set_w, g_sound_data_set)
 Xen_wrap_1_arg(g_is_sound_data_w, g_is_sound_data)
 Xen_wrap_3_optional_args(g_sound_data_to_vct_w, g_sound_data_to_vct)
 Xen_wrap_3_optional_args(g_vct_to_sound_data_w, g_vct_to_sound_data)
+#endif
+
+Xen_wrap_1_arg(g_mus_sound_open_input_w, g_mus_sound_open_input)
+Xen_wrap_1_arg(g_mus_sound_close_input_w, g_mus_sound_close_input)
+Xen_wrap_6_optional_args(g_mus_sound_open_output_w, g_mus_sound_open_output)
+Xen_wrap_5_optional_args(g_mus_sound_reopen_output_w, g_mus_sound_reopen_output)
+Xen_wrap_2_args(g_mus_sound_close_output_w, g_mus_sound_close_output)
+Xen_wrap_5_args(g_mus_sound_read_w, g_mus_sound_read)
+Xen_wrap_5_args(g_mus_sound_write_w, g_mus_sound_write)
+Xen_wrap_2_args(g_mus_sound_seek_frample_w, g_mus_sound_seek_frample)
+
 #endif
 
 Xen_wrap_1_arg(g_mus_sound_samples_w, g_mus_sound_samples)
@@ -2486,8 +2510,6 @@ Xen_wrap_1_arg(g_mus_sound_mark_info_w, g_mus_sound_mark_info)
 Xen_wrap_1_arg(g_mus_sound_maxamp_w, g_mus_sound_maxamp)
 Xen_wrap_2_args(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
 Xen_wrap_1_arg(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
-Xen_wrap_1_arg(g_mus_sound_open_input_w, g_mus_sound_open_input)
-Xen_wrap_1_arg(g_mus_sound_close_input_w, g_mus_sound_close_input)
 Xen_wrap_1_arg(g_mus_sound_preload_w, g_mus_sound_preload)
 
 Xen_wrap_1_arg(g_mus_audio_close_w, g_mus_audio_close)
@@ -2504,12 +2526,6 @@ Xen_wrap_no_args(g_mus_header_raw_defaults_w, g_mus_header_raw_defaults)
 Xen_wrap_1_arg(g_mus_header_set_raw_defaults_w, g_mus_header_set_raw_defaults)
 Xen_wrap_2_args(g_mus_header_writable_w, g_mus_header_writable)
 Xen_wrap_1_arg(g_mus_expand_filename_w, g_mus_expand_filename)
-Xen_wrap_6_optional_args(g_mus_sound_open_output_w, g_mus_sound_open_output)
-Xen_wrap_5_optional_args(g_mus_sound_reopen_output_w, g_mus_sound_reopen_output)
-Xen_wrap_2_args(g_mus_sound_close_output_w, g_mus_sound_close_output)
-Xen_wrap_5_args(g_mus_sound_read_w, g_mus_sound_read)
-Xen_wrap_5_args(g_mus_sound_write_w, g_mus_sound_write)
-Xen_wrap_2_args(g_mus_sound_seek_frample_w, g_mus_sound_seek_frample)
 Xen_wrap_1_optional_arg(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 Xen_wrap_1_arg(g_mus_sound_forget_w, g_mus_sound_forget)
 Xen_wrap_no_args(g_mus_sound_prune_w, g_mus_sound_prune)
@@ -2545,10 +2561,12 @@ Xen_wrap_1_arg(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 
 
 
+
 void mus_sndlib_xen_initialize(void)
 {
   mus_sound_initialize();
 
+#if (!DISABLE_DEPRECATED)
 #if (!HAVE_SCHEME)
   sound_data_tag = Xen_make_object_type("SoundData", sizeof(sound_data));
 #endif
@@ -2563,7 +2581,6 @@ void mus_sndlib_xen_initialize(void)
 #endif
 
 #if HAVE_RUBY
-  Init_Hook();
   rb_include_module(sound_data_tag, rb_mComparable);
   rb_include_module(sound_data_tag, rb_mEnumerable);
   rb_define_method(sound_data_tag, "to_s",   Xen_procedure_cast print_sound_data,     0);
@@ -2587,6 +2604,11 @@ void mus_sndlib_xen_initialize(void)
   rb_define_method(sound_data_tag, "reverse!",  Xen_procedure_cast g_sound_data_reverseB,  0);
 
   rb_define_singleton_method(sound_data_tag, "new", Xen_procedure_cast g_rb_make_sound_data, 2);
+#endif
+#endif
+
+#if HAVE_RUBY
+  Init_Hook();
 #endif
 
   Xen_define_constant(S_mus_out_format,           MUS_OUT_FORMAT,           "sample format for fastest IO");
@@ -2646,7 +2668,8 @@ void mus_sndlib_xen_initialize(void)
 
 
   /* -------------------------------------------------------------------------------- */
-  /* these are obsolete in scheme */
+
+#if (!DISABLE_DEPRECATED)
 #if HAVE_SCHEME
   s7_eval_c_string(s7, "(define sound-data-ref float-vector-ref)");
   s7_eval_c_string(s7, "(define sound-data-set! float-vector-set!)");
@@ -2681,6 +2704,7 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_safe_procedure(S_sound_data_multiply,      g_sound_data_multiply_w,        2, 0, 0, H_sound_data_multiply);
   Xen_define_safe_procedure(S_sound_data_reverseB,      g_sound_data_reverseB_w,        1, 0, 0, H_sound_data_reverseB);
 #endif
+#endif
   /* -------------------------------------------------------------------------------- */
 
 
@@ -2703,8 +2727,18 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_safe_procedure(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists);
   Xen_define_safe_procedure(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
   Xen_define_safe_procedure(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
+
+#if (!DISABLE_DEPRECATED)
   Xen_define_safe_procedure(S_mus_sound_open_input,     g_mus_sound_open_input_w,       1, 0, 0, H_mus_sound_open_input);
   Xen_define_safe_procedure(S_mus_sound_close_input,    g_mus_sound_close_input_w,      1, 0, 0, H_mus_sound_close_input);
+  Xen_define_safe_procedure(S_mus_sound_open_output,    g_mus_sound_open_output_w,      1, 5, 0, H_mus_sound_open_output);
+  Xen_define_safe_procedure(S_mus_sound_reopen_output,  g_mus_sound_reopen_output_w,    1, 4, 0, H_mus_sound_reopen_output);
+  Xen_define_safe_procedure(S_mus_sound_close_output,   g_mus_sound_close_output_w,     2, 0, 0, H_mus_sound_close_output);
+  Xen_define_safe_procedure(S_mus_sound_read,           g_mus_sound_read_w,             5, 0, 0, H_mus_sound_read);
+  Xen_define_safe_procedure(S_mus_sound_write,          g_mus_sound_write_w,            5, 0, 0, H_mus_sound_write);
+  Xen_define_safe_procedure(S_mus_sound_seek_frample,   g_mus_sound_seek_frample_w,     2, 0, 0, H_mus_sound_seek_frample); 
+  Xen_define_safe_procedure("mus-sound-seek-frame",     g_mus_sound_seek_frample_w,     2, 0, 0, H_mus_sound_seek_frample); 
+#endif
 
   Xen_define_safe_procedure(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
   Xen_define_safe_procedure(S_mus_audio_write,          g_mus_audio_write_w,            3, 1, 0, H_mus_audio_write);
@@ -2713,13 +2747,6 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_safe_procedure(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);
 
   Xen_define_safe_procedure(S_mus_expand_filename,      g_mus_expand_filename_w,        1, 0, 0, H_mus_expand_filename);
-  Xen_define_safe_procedure(S_mus_sound_open_output,    g_mus_sound_open_output_w,      1, 5, 0, H_mus_sound_open_output);
-  Xen_define_safe_procedure(S_mus_sound_reopen_output,  g_mus_sound_reopen_output_w,    1, 4, 0, H_mus_sound_reopen_output);
-  Xen_define_safe_procedure(S_mus_sound_close_output,   g_mus_sound_close_output_w,     2, 0, 0, H_mus_sound_close_output);
-  Xen_define_safe_procedure(S_mus_sound_read,           g_mus_sound_read_w,             5, 0, 0, H_mus_sound_read);
-  Xen_define_safe_procedure(S_mus_sound_write,          g_mus_sound_write_w,            5, 0, 0, H_mus_sound_write);
-  Xen_define_safe_procedure(S_mus_sound_seek_frample,   g_mus_sound_seek_frample_w,     2, 0, 0, H_mus_sound_seek_frample); 
-  Xen_define_safe_procedure("mus-sound-seek-frame",     g_mus_sound_seek_frample_w,     2, 0, 0, H_mus_sound_seek_frample); 
   Xen_define_safe_procedure(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache);
   Xen_define_safe_procedure(S_mus_error_type_to_string, g_mus_error_type_to_string_w,   1, 0, 0, H_mus_error_type_to_string);
   Xen_define_safe_procedure(S_mus_oss_set_buffers,      g_mus_oss_set_buffers_w,        2, 0, 0, H_mus_oss_set_buffers);
@@ -2772,8 +2799,10 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_procedure(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);
 #endif
 
+#if (!DISABLE_DEPRECATED)
 #if HAVE_FORTH
   Xen_define_procedure(S_sound_data_to_vector, g_sound_data_to_vector /* no _w! */, 1, 0, 0, H_sound_data_to_vector);
+#endif
 #endif
 
 #if __APPLE__

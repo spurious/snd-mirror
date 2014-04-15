@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 
       out_chans = chans;
       srate = mus_sound_srate(name);
-      frames = mus_sound_frames(name);
+      frames = mus_sound_framples(name);
       sample_size = mus_bytes_per_sample(MUS_AUDIO_COMPATIBLE_FORMAT);
       start = (mus_long_t)(begin_time * srate);
       if (start > 0)

@@ -983,7 +983,7 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
   STARTUP(oldname, newname, blksiz, unsigned char);
   buf1 = (short *)calloc(blksiz * 2, sizeof(short));
   samps = mus_sound_fact_samples(oldname);
-  if (samps == 0) samps = (int)mus_sound_frames(oldname);
+  if (samps == 0) samps = (int)mus_sound_framples(oldname);
   srate = mus_sound_srate(oldname);
   mus_bint_to_char((unsigned char *)(hdr + 16), srate);
   mus_bint_to_char((unsigned char *)(hdr + 20), chans);

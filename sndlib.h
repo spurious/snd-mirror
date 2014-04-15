@@ -174,7 +174,6 @@ MUS_EXPORT mus_clip_handler_t *mus_clip_set_handler_and_checker(mus_clip_handler
 
 MUS_EXPORT mus_long_t mus_sound_samples(const char *arg);
 MUS_EXPORT mus_long_t mus_sound_framples(const char *arg);
-#define mus_sound_frames(Arg) mus_sound_framples(Arg)
 MUS_EXPORT int mus_sound_datum_size(const char *arg);
 MUS_EXPORT mus_long_t mus_sound_data_location(const char *arg);
 MUS_EXPORT int mus_sound_chans(const char *arg);
@@ -220,7 +219,6 @@ MUS_EXPORT int mus_sound_open_output(const char *arg, int srate, int chans, int 
 MUS_EXPORT int mus_sound_reopen_output(const char *arg, int chans, int format, int type, mus_long_t data_loc);
 MUS_EXPORT int mus_sound_close_input(int fd);
 MUS_EXPORT int mus_sound_close_output(int fd, mus_long_t bytes_of_data);
-#define mus_sound_seek_frame(Ifd, Frm) mus_file_seek_frample(Ifd, Frm)
 #define mus_sound_read(Fd, Beg, End, Chans, Bufs) mus_file_read(Fd, Beg, End, Chans, Bufs)
 #define mus_sound_write(Fd, Beg, End, Chans, Bufs) mus_file_write(Fd, Beg, End, Chans, Bufs)
 
@@ -291,7 +289,6 @@ MUS_EXPORT int mus_file_create(const char *arg);
 MUS_EXPORT int mus_file_reopen_write(const char *arg);
 MUS_EXPORT int mus_file_close(int fd);
 MUS_EXPORT mus_long_t mus_file_seek_frample(int tfd, mus_long_t frample);
-#define mus_file_seek_frame(Fd, Fr) mus_file_seek_frample(Fd, Fr)
 MUS_EXPORT mus_long_t mus_file_read(int fd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs);
 MUS_EXPORT mus_long_t mus_file_read_chans(int fd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, mus_float_t **cm);
 MUS_EXPORT int mus_file_write(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs);
@@ -401,6 +398,12 @@ MUS_EXPORT int mus_header_change_data_size(const char *filename, int type, mus_l
 
 typedef void mus_header_write_hook_t(const char *filename);
 MUS_EXPORT mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_hook);
+
+#if (!DISABLE_DEPRECATED)
+#define mus_sound_frames(Arg) mus_sound_framples(Arg)
+#define mus_sound_seek_frame(Ifd, Frm) mus_file_seek_frample(Ifd, Frm)
+#define mus_file_seek_frame(Fd, Fr) mus_file_seek_frample(Fd, Fr)
+#endif
 
 #ifdef __cplusplus
 }

@@ -63,28 +63,17 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 
 ;;;-------- mix with envelope on mixed-in file
-;;;
-;;; there are lots of ways to do this; this version uses functions from Snd, CLM, and Sndlib.
 
 (define (enveloped-mix filename beg e)
   "(enveloped-mix filename beg e) mixes filename starting at beg with amplitude envelope e. (enveloped-mix \"pistol.snd\" 0 '(0 0 1 1 2 0))"
   (let* ((len (framples filename))
-	 (tmp-name (string-append (if (and (string? (temp-dir))
-					   (> (string-length (temp-dir)) 0))
-				      (string-append (temp-dir) "/")
-				      "")
-				  "tmp.snd"))
-	 (tmpfil (mus-sound-open-output tmp-name 22050 1 mus-bshort mus-next ""))
-	 (mx (make-vector (list 1 1) 1.0 #t))
-	 (envs (make-vector 1))
-	 (inenvs (make-vector 1)))
-    (mus-sound-close-output tmpfil 0)
-    (set! (inenvs 0) (make-env e :length len))
-    (set! (envs 0) inenvs)
-    (mus-mix tmp-name filename 0 len 0 mx envs)
-    (mix tmp-name beg)
-    (delete-file tmp-name)))
-
+	 (amp-env (make-env e :length len))
+	 (rd (make-readin filename)))
+    (map-channel
+     (lambda (y)
+       (+ y (* (env amp-env) (readin rd))))
+     beg len)))
+    
 
 ;;; -------- map-sound-files, match-sound-files
 ;;;

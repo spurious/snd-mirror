@@ -3639,7 +3639,7 @@ bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, fi
   if (nc > 0)
     {
       mus_long_t len;
-      len = mus_sound_frames(filename);
+      len = mus_sound_framples(filename);
       if (len == 0)
 	snd_warning("%s has no data", str);
       else
@@ -6124,7 +6124,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, mus_long_t 
     return(NO_MIX_TAG);
 
   edpos = cp->edit_ctr;
-  file_len = mus_sound_frames(filename);
+  file_len = mus_sound_framples(filename);
   old_ed = cp->edits[edpos];
 
   if ((beg < 0) || 
@@ -8394,7 +8394,7 @@ history position to read (defaults to current position). snd can be a filename, 
       filename = Xen_string_to_C_string(snd);
       if (Xen_is_integer(samps))
 	len = Xen_integer_to_C_int(samps);
-      else len = mus_sound_frames(filename);
+      else len = mus_sound_framples(filename);
       if (len <= 0) return(Xen_false);
 
       if (mus_file_probe(filename))
@@ -8565,7 +8565,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 			   C_int_to_Xen_integer(nc)));
     }
 
-  len = mus_sound_frames(filename);
+  len = mus_sound_framples(filename);
   if (len <= 0) return(C_llong_to_Xen_llong(len));
 
   if (Xen_is_integer(ubeg))
@@ -8688,7 +8688,7 @@ insert data (either a " S_vct ", a list of samples, or a filename) into snd's ch
 	  free(filename);
 	  return(snd_no_such_file_error(S_insert_samples, vect));
 	}
-      if (mus_sound_frames(filename) <= 0) return(Xen_integer_zero);
+      if (mus_sound_framples(filename) <= 0) return(Xen_integer_zero);
 #if HAVE_FORTH
       if (!origin) origin = mus_format("%lld" PROC_SEP "%lld \"%s\" %s drop", beg, len, filename, S_insert_samples);
 #else

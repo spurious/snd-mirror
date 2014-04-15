@@ -9,7 +9,6 @@
 ;;; snd-clock-icon
 ;;; bring possibly-obscured dialog to top
 ;;; select-file
-;;; with-level-meters
 ;;; add delete and rename options to the file menu
 ;;; notebook-with-top-tabs
 ;;; make-font-selector-dialog
@@ -607,6 +606,8 @@
 ;;(select-file (lambda (n) (snd-print n)))
 
 
+
+#|
 ;;; -------- with-level-meters, make-level-meter, display-level
 
 (define (make-level-meter parent width height)
@@ -773,7 +774,7 @@
 		      (< ctr 200)))
 		  #f)))
     meter-list))
-
+|#
 
 
 

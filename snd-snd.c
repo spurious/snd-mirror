@@ -3220,7 +3220,9 @@ static Xen g_channels(Xen snd)
     return(g_mus_sound_chans(snd));              /* mus-sound-chans */
 
   if ((mus_is_xen(snd)) ||
+#if (!DISABLE_DEPRECATED)
       (xen_is_sound_data(snd)) ||                     /* sound-data-chans */
+#endif
       (mus_is_vct(snd)) ||
       (Xen_is_list(snd)))
     return(g_mus_channels(snd));                 /* mus-channels */

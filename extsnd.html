@@ -188,7 +188,6 @@ related documentation: &nbsp;
     <ul>
     <li><a href="#samplers" onmouseout="UnTip()" onmouseover="Tip('sound data iterators', WIDTH, 200)">Samplers</a>
     <li><a href="#Vcts" onmouseout="UnTip()" onmouseover="Tip('real arrays', WIDTH, 100)">Vcts</a>
-    <li><a href="#sndsounddata" onmouseout="UnTip()" onmouseover="Tip('arrays of vcts for multichannel data')">Sound-data</a>
     <li><a href="#extsndlib" onmouseout="UnTip()" onmouseover="Tip('the underlying library that handles sound data and files')">Sndlib</a>
     <li><a href="#sndmarks" onmouseout="UnTip()" onmouseover="Tip('location markers in sound data')">Marks</a>
     <li><a href="#sndmixes" onmouseout="UnTip()" onmouseover="Tip('mixed sounds and groups of mixed sounds')">Mixes</a>
@@ -1794,9 +1793,7 @@ some of these sequences.
     Play sound
         when a play request occurs: <a class=quiet href="#startplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_startplayinghook_tip)">start-playing-hook</a> &mdash; can cancel the request, also <a class=quiet href="#startplayingselectionhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_startplayingselectionhook_tip)">start-playing-selection-hook</a>
             (any number of sounds can be playing at once)
-        as each buffer is sent to the audio device: <a class=quiet href="#playhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_playhook_tip)">play-hook</a> and <a class=quiet href="#dachook" onmouseout="UnTip()" onmouseover="Tip(extsnd_dachook_tip)">dac-hook</a>
         as each sound ends: <a class=quiet href="#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a>, <a class=quiet href="#stopplayingselectionhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayingselectionhook_tip)">stop-playing-selection-hook</a>
-        close audio device: <a class=quiet href="#stopdachook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopdachook_tip)">stop-dac-hook</a>
     
 
     Close sound
@@ -2156,17 +2153,6 @@ The hook can return the new value.
 </p>
 <div class="spacer"></div>
 
-
-
-<!-- dac-hook -->
-<pre class="indented">
-<em class=def id="dachook">dac-hook</em> (data) 
-</pre>
-
-<p>This hook is called just before data is sent to DAC; 'data' is a list of float vectors.
-See <a href="sndscm.html#withlevelmeters">with-level-meters</a> in snd-motif.scm.
-</p>
-<div class="spacer"></div>
 
 
 <!-- draw-mark-hook -->
@@ -3229,18 +3215,6 @@ If its function returns #t, Snd does not play the selection.
 
 
 
-<!-- stop-dac-hook -->
-<pre class="indented">
-<em class=def id="stopdachook">stop-dac-hook</em> ()
-</pre>
-
-<p>This hook is called when Snd stops playing and turns off the DAC, normally upon <a href="#musaudioclose">mus-audio-close</a>.
-It is used by <a href="sndscm.html#withlevelmeters">with-level-meters</a> to start draining away the red bubble in the VU meter.
-</p>
-<div class="spacer"></div>
-
-
-
 <!-- stop-playing-hook -->
 <pre class="indented">
 <em class=def id="stopplayinghook">stop-playing-hook</em> (snd)
@@ -4110,192 +4084,6 @@ additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documenta
 true
 </pre>
 
-
-
-
-
-<!-- INDEX sndsounddata:sound-data -->
-<div class="header" id="sndsounddata">Sound-data</div>
-
-<p>Another Snd object containing sound samples is the sound-data object; it can be viewed either as an array of vcts, 
-each vct representing one channel's data, or as an array of framples, each frample holding a sample from
-each channel at that position in the sound.
-In Ruby, sound-data object partake in the Enumerable and Comparable classes.
-In s7, sound-data is just a synonym for float-vector, and the functions below are not implemented.
-</p>
-
-<!--  SOUND-DATA TABLE  -->
-
-<div class="spacer"></div>
-
-<!-- make-sound-data -->
-<pre class="indented">
-<em class=def id="makesounddata">make-sound-data</em> chans framples
-</pre>
-
-<p>make-sound-data returns a new sound-data object with 'chans' arrays, each with 'framples' elements.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-add! -->
-<pre class="indented">
-<em class=def id="sounddataadd">sound-data-add!</em> sd1 sd2
-</pre>
-
-<p>sound-data-add! adds the contents of sd2 into sd1 and returns sd1.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-chans -->
-<pre class="indented">
-<em class=def id="sounddatachans">sound-data-chans</em> sd
-</pre>
-
-<p>sound-data-chans returns the number of channels in sd.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-copy -->
-<pre class="indented">
-<em class=def id="sounddatacopy">sound-data-copy</em> sd
-</pre>
-
-<p>sound-data-copy returns a copy of the sound-data object sd.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-fill! -->
-<pre class="indented">
-<em class=def id="sounddatafill">sound-data-fill!</em> sd value
-</pre>
-
-<p>sound-data-fill! sets each element of sound-data object sd to 'value'.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-length -->
-<pre class="indented">
-<em class=def id="sounddatalength">sound-data-length</em> sd
-</pre>
-
-<p>sound-data-length returns the length (in samples) of each channel in the sound-data-object sd.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-maxamp -->
-<pre class="indented">
-<em class=def id="sounddatamaxamp">sound-data-maxamp</em> sd
-</pre>
-
-<p>sound-data-maxamp returns a list of maxamps (one for each channel) of the data in sd.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-multiply! -->
-<pre class="indented">
-<em class=def id="sounddatamultiply">sound-data-multiply!</em> sd1 sd2
-</pre>
-
-<p>sound-data-multiply! multiplies each element of sd2 by the corresponding element of sd2 and returns sd1.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-offset! -->
-<pre class="indented">
-<em class=def id="sounddataoffset">sound-data-offset!</em> sd off
-</pre>
-
-<p>sound-data-offset! adds the number 'off' to each element of sd and returns sd.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-peak -->
-<pre class="indented">
-<em class=def id="sounddatapeak">sound-data-peak</em> sd
-</pre>
-
-<p>sound-data-peak returns the overall maximum element in sd.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-ref -->
-<pre class="indented">
-<em class=def id="sounddataref">sound-data-ref</em> sd chan frample
-</pre>
-
-<p>sound-data-ref returns (as a float) the sample in channel chan at location frample.  In s7 you can omit the "sound-data-ref":
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-reverse! -->
-<pre class="indented">
-<em class=def id="sounddatareverse">sound-data-reverse!</em> sd
-</pre>
-
-<p>sound-data-reverse! reverses the elements of each channel of sd and returns sd.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-scale! -->
-<pre class="indented">
-<em class=def id="sounddatascale">sound-data-scale!</em> sd scaler
-</pre>
-
-<p>sound-data-scale! multiplies each sample in sd by scaler.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data-set! -->
-<pre class="indented">
-<em class=def id="sounddataset">sound-data-set!</em> sd chan frample val
-</pre>
-
-<p>sound-data-set! sets sd's sample at 'frample' in channel 'chan' to val.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data+ -->
-<pre class="indented">
-<em class=def id="sounddata+">sound-data+</em> val1 val2
-</pre>
-
-<p>sound-data+ adds val1 to val2 (either or both can be sound-data objects).
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data* -->
-<pre class="indented">
-<em class=def id="sounddata*">sound-data*</em> val1 val2
-</pre>
-
-<p>sound-data* multiplies val1 by val2 (either or both can be sound-data objects).
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data? -->
-<pre class="indented">
-<em class=def id="sounddata?">sound-data?</em> obj
-</pre>
-
-<p>sound-data? returns #t if obj is a sound-data object.
-</p>
-<div class="spacer"></div>
 
 
 
@@ -8854,9 +8642,7 @@ The hooks called during a play operation are:
 when a play request occurs: <a class=quiet href="#startplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_startplayinghook_tip)">start-playing-hook</a> &mdash; can cancel the request, 
                             also <a class=quiet href="#startplayingselectionhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_startplayingselectionhook_tip)">start-playing-selection-hook</a>
     (any number of sounds can be playing at once)
-as each buffer is sent to the audio device: <a class=quiet href="#playhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_playhook_tip)">play-hook</a> and <a class=quiet href="#dachook" onmouseout="UnTip()" onmouseover="Tip(extsnd_dachook_tip)">dac-hook</a>
 as each sound ends: <a class=quiet href="#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a>, <a class=quiet href="#stopplayingselectionhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayingselectionhook_tip)">stop-playing-selection-hook</a>
-close audio device: <a class=quiet href="#stopdachook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopdachook_tip)">stop-dac-hook</a>
 </pre>
 <div class="separator"></div>
 

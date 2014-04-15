@@ -117,7 +117,7 @@ var extsnd_cursorcontext_tip = "graphics context for the cursor";
 
 var extsnd_dachook_tip = "<code>dac-hook (sdobj)</code>: called just before data is sent to DAC passing data as sound-data object";
 
-var extsnd_dacsize_tip = "<code>(dac-size)</code>: the current DAC buffer size in frames (256)";
+var extsnd_dacsize_tip = "<code>(dac-size)</code>: the current DAC buffer size in framples (256)";
 
 var extsnd_datacolor_tip = "<code>(data-color)</code>: color used to draw unselected data";
 
@@ -210,7 +210,7 @@ var extsnd_filtersound_tip = "<code>(filter-sound filter order snd chn edpos ori
 
 var extsnd_focuswidget_tip = "<code>(focus-widget widget)</code>: cause widget to receive input focus";
 
-var extsnd_frames_tip = "<code>(frames snd chn edpos)</code>: number of frames of data in snd's channel chn";
+var extsnd_framples_tip = "<code>(framples snd chn edpos)</code>: number of framples of data in snd's channel chn";
 
 var extsnd_freesampler_tip = "<code>(free-sampler reader)</code>: free a sampler (of any kind)";
 
@@ -359,7 +359,7 @@ var extsnd_mussounddataformat_tip = "<code>(mus-sound-data-format filename)</cod
 
 var extsnd_mussoundduration_tip = "<code>(mus-sound-duration filename)</code>: duration (in seconds) of sound file";
 
-var extsnd_mussoundframes_tip = "<code>(mus-sound-frames filename)</code>: frames (samples / channel) in sound file";
+var extsnd_mussoundframples_tip = "<code>(mus-sound-framples filename)</code>: framples (samples / channel) in sound file";
 
 var extsnd_mussoundheadertype_tip = "<code>(mus-sound-header-type filename)</code>: header type (e.g. mus-aifc) of sound file";
 
@@ -375,7 +375,7 @@ var extsnd_mussoundmaxampexists_tip = "<code>(mus-sound-maxamp-exists? filename)
 var extsnd_mussoundopeninput_tip = "<code>(mus-sound-open-input filename)</code>: open filename for (low-level) sound input,<br>" +
                                    " return file descriptor (an integer)";
 
-var extsnd_mussoundsamples_tip = "<code>(mus-sound-samples filename)</code>: samples (frames * channels) in sound file";
+var extsnd_mussoundsamples_tip = "<code>(mus-sound-samples filename)</code>: samples (framples * channels) in sound file";
 
 var extsnd_mussoundsrate_tip = "<code>(mus-sound-srate filename)</code>: sampling rate of sound file";
 
@@ -438,7 +438,7 @@ var extsnd_readonly_tip = "<code>(read-only snd)</code>: whether snd is write-pr
 
 var extsnd_readsample_tip = "<code>(read-sample reader)</code>: get the next sample from the sampler";
 
-var extsnd_regionframes_tip = "<code>(region-frames (reg 0) (chan 0))</code>: region length in frames";
+var extsnd_regionframples_tip = "<code>(region-framples (reg 0) (chan 0))</code>: region length in framples";
 
 var extsnd_regionok_tip = "<code>(region? reg)</code>: #t if region is active";
 
@@ -524,7 +524,7 @@ var extsnd_selectedgraphcolor_tip = "<code>(selected-graph-color)</code>: backgr
 
 var extsnd_selectedsound_tip = "<code>(selected-sound)</code>: index of currently selected sound (or #f if none)";
 
-var extsnd_selectionframes_tip = "<code>(selection-frames snd chn)</code>: selection length";
+var extsnd_selectionframples_tip = "<code>(selection-framples snd chn)</code>: selection length";
 
 var extsnd_selectionmember_tip = "<code>(selection-member? snd chn)</code>: #t if snd's channel chn is a member of the current selection";
 
@@ -687,10 +687,10 @@ var sndclm_fft_tip = "<code>(mus-fft rl im len (dir 1))</code>:<br>" +
 
 var sndclm_filetoarray_tip = "<code>(file-&gt;array filename chan start samples data)</code>:<br>" +
                              " read the sound file 'filename' placing samples from channel 'chan'<br>" +
-                             " into the float-vector 'data' starting in the file at frame 'start'<br>" +
+                             " into the float-vector 'data' starting in the file at frample 'start'<br>" +
                              " and reading 'samples' samples altogether.";
 
-var sndclm_filetosample_tip = "<code>(file-&gt;sample obj frame chan)</code>: sample value in sound file read by 'obj' in channel chan at frame";
+var sndclm_filetosample_tip = "<code>(file-&gt;sample obj frample chan)</code>: sample value in sound file read by 'obj' in channel chan at frample";
 
 var sndclm_fir_filter_tip = "<code>(fir-filter gen (input 0.0))</code>: next sample from FIR filter";
 
@@ -700,11 +700,11 @@ var sndclm_granulate_tip = "<code>(granulate gen input-func edit-func)</code>: n
 
 var sndclm_hztoradians_tip = "<code>(hz-&gt;radians hz)</code>: convert frequency in Hz to radians per sample: hz * 2 * pi / srate";
 
-var sndclm_in_any_tip = "<code>(in-any frame chan stream)</code>: input stream sample at frame in channel chan";
+var sndclm_in_any_tip = "<code>(in-any frample chan stream)</code>: input stream sample at frample in channel chan";
 
-var sndclm_ina_tip = "<code>(ina frame stream)</code>: input stream sample in channel 0 at frame";
+var sndclm_ina_tip = "<code>(ina frample stream)</code>: input stream sample in channel 0 at frample";
 
-var sndclm_locsig_tip = "<code>(locsig gen loc val)</code>: add 'val' to the output of locsig at frame 'loc'";
+var sndclm_locsig_tip = "<code>(locsig gen loc val)</code>: add 'val' to the output of locsig at frample 'loc'";
 
 var sndclm_make_comb_tip = "<code>(make-comb :scaler :size :initial-contents (:initial-element 0.0) :max-size (:type mus-interp-linear))</code>:<br>" +
                            " return a new comb filter (a delay line with a scaler on the feedback) of size elements.<br>" +
@@ -811,7 +811,7 @@ var sndclm_make_rand_tip = "<code>(make-rand (:frequency *clm-default-frequency*
 
 var sndclm_make_readin_tip = "<code>(make-readin :file (:channel 0) (:start 0) (:direction 1) :size)</code>:<br>" +
                              " return a new readin (file input) generator reading the sound file 'file'<br>" +
-                             " starting at frame 'start' in channel 'channel' and reading forward if 'direction' is not -1";
+                             " starting at frample 'start' in channel 'channel' and reading forward if 'direction' is not -1";
 
 var sndclm_make_sampletofile_tip = "<code>(make-sample-&gt;file filename chans data-format header-type comment)</code>:<br>" +
                                    " return an output generator writing the sound file 'filename'<br>" +
@@ -853,11 +853,11 @@ var sndclm_ncos_tip = "<code>(ncos gen (fm 0.0))</code>: get the next sample fro
 var sndclm_oscil_tip = "<code>(oscil gen (fm 0.0) (pm 0.0))</code>:<br>" +
                        " next sample from oscil gen: val = sin(phase + pm); phase += (freq + fm)";
 
-var sndclm_out_any_tip = "<code>(out-any frame val chan stream)</code>: add val to output stream at frame in channel chan";
+var sndclm_out_any_tip = "<code>(out-any frample val chan stream)</code>: add val to output stream at frample in channel chan";
 
-var sndclm_outa_tip = "<code>(outa frame val stream)</code>: add val to output stream at frame in channel 0";
+var sndclm_outa_tip = "<code>(outa frample val stream)</code>: add val to output stream at frample in channel 0";
 
-var sndclm_outb_tip = "<code>(outb frame val stream)</code>: add val to output stream at frame in channel 1 (counting from 0)";
+var sndclm_outb_tip = "<code>(outb frample val stream)</code>: add val to output stream at frample in channel 1 (counting from 0)";
 
 var sndclm_output_tip = "<code>*output*</code> is the direct signal output stream.  The reverb input is sent to *reverb*.";
 
@@ -976,15 +976,15 @@ var sndscm_moogfilter_tip = "<code>(moog-filter gen input)</code>: return Moog-s
 var sndscm_mpg_tip = "<code>(mpg mpgfile rawfile)</code>: call mpg123 to translate an MPEG format sound file<br>" +
                      " to a headerless (\"raw\") file containing 16-bit samples.";
 
-var sndscm_musmix_tip = "<code>(mus-mix outfile infile (outloc 0) (frames) (inloc 0) mixer envs)</code>:<br>" +
+var sndscm_musmix_tip = "<code>(mus-mix outfile infile (outloc 0) (framples) (inloc 0) mixer envs)</code>:<br>" +
                         " mix 'infile' into 'outfile' starting at 'outloc' in 'outfile'<br>" +
-                        " and 'inloc' in 'infile', mixing 'frames' frames into 'outfile'.<br>" +
-                        " 'frames' defaults to the length of 'infile'.<br>" +
+                        " and 'inloc' in 'infile', mixing 'framples' framples into 'outfile'.<br>" +
+                        " 'framples' defaults to the length of 'infile'.<br>" +
                         " If 'mixer', use it to scale the various channels;<br>" +
                         " if 'envs' (an array of envelope generators), use it in conjunction with mixer<br>" +
                         " to scale and envelope all the various ins and outs.<br>" +
-                        " 'outfile' can also be a frame-&gt;file generator, and<br>" +
-                        " 'infile' can be a file-&gt;frame generator.";
+                        " 'outfile' can also be a frample-&gt;file generator, and<br>" +
+                        " 'infile' can be a file-&gt;frample generator.";
 
 var sndscm_poly_times_tip = "<code>(poly* p1 p2)</code> multiplies p1 by p2, both polynomials.";
 
@@ -1221,7 +1221,7 @@ var ws_doc_tip = "with-sound provides a simple way to package up a bunch of<br>"
 
 var zip_doc_tip = "The zipper marches through the two sounds taking equal short portions<br>" +
                   " of each, then abutting them while resampling so that as one sound<br>" +
-                  " takes less overall frame space, the other takes more.";
+                  " takes less overall frample space, the other takes more.";
 
 var scheme_format_tip = "<code>(format destination control-string :rest args)</code> produces formatted output.<br>" +
                         "If 'destination' is #f (the usual case in Snd), the output is a string.<br>" +

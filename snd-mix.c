@@ -195,7 +195,7 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
   mus_long_t len;
   sync_info *si = NULL;
 
-  len = mus_sound_frames(fullname);
+  len = mus_sound_framples(fullname);
   if (len < 0) return(MIX_FILE_NO_FILE);
   if (len == 0) return(MIX_FILE_NO_MIX);
 
@@ -3412,7 +3412,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	}
     }
 
-  len = mus_sound_frames(name);
+  len = mus_sound_framples(name);
   if (len <= 0) return(Xen_false);
 
   with_mixer = virtual_mix_ok(cp, cp->edit_ctr);

@@ -461,7 +461,7 @@ int snd_file_open_descriptors(int fd, const char *name, int format, mus_long_t l
     snd_warning("%s: open file descriptors: %s", name, mus_error_type_to_string(sl_err));
 
   if (mus_sound_saved_data(name))
-    mus_file_save_data(fd, mus_sound_frames(name), mus_sound_saved_data(name));
+    mus_file_save_data(fd, mus_sound_framples(name), mus_sound_saved_data(name));
 
   return(sl_err);
 }

@@ -10,7 +10,6 @@
 ;;; (add-mark-pane) adds a pane of mark locations to each channel that has marks
 ;;; (snd-clock-icon snd hour) show an animated clock icon
 ;;; (make-sound-box name parent select-func peak-func sounds args) makes a box of sound icons
-;;; (make-level-meter parent width height args), (display-level data), (with-level-meters n) -- VU meters
 ;;; (make-channel-drop-site snd chn) -- add a drop site
 ;;; (set-channel-drop drop snd chn) -- change given graph drop callback to drop
 ;;; (select-file func title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
@@ -1524,9 +1523,6 @@
 |#
 
 
-
-;;; -------- with-level-meters, make-level-meter, display-level
-
 (define red-pixel
   (let ((pix #f))
     (lambda ()
@@ -1541,6 +1537,9 @@
 		   (snd-error "can't allocate red!")
 		   (set! pix (.pixel col)))))
       pix)))
+
+#|
+;;; -------- with-level-meters, make-level-meter, display-level
 
 (define* (make-level-meter parent width height args (resizable #t))
   "(make-level-meter parent width height args (resizable #t)) makes a VU level meter"
@@ -1704,7 +1703,7 @@
 				       (> ctr 200))))))
     (XtSetValues meters (list XmNpaneMinimum 1))
     meter-list))
-
+|#
 
 
 ;;; -------- add a drop site

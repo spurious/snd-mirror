@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 	  if (length < 10.0)
 	    {
 	      int samps;
-	      samps = mus_sound_frames(argv[ctr]);
+	      samps = mus_sound_framples(argv[ctr]);
 	      fprintf(stdout, " (%d sample%s)", samps, (samps != 1) ? "s" : "");
 	    }
 	  fprintf(stdout, "\n");

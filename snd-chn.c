@@ -7439,13 +7439,15 @@ Xen g_frames(Xen snd, Xen chn, Xen edpos)
 	return(channel_get(snd, chn, CP_FRAMES, S_framples));
 
       if (Xen_is_string(snd))
-	return(g_mus_sound_frames(snd));         /* mus-sound-frames */
+	return(g_mus_sound_framples(snd));         /* mus-sound-framples */
       
       if (mus_is_xen(snd))                        /* mus-length */
 	return(g_mus_length(snd));
 
+#if (!DISABLE_DEPRECATED)
       if (xen_is_sound_data(snd))                     /* sound-data-length */
 	return(C_llong_to_Xen_llong(mus_sound_data_length(Xen_to_sound_data(snd))));
+#endif
 
       if (mus_is_vct(snd))                        /* vct-length */
 	return(C_llong_to_Xen_llong(mus_vct_length(Xen_to_vct(snd))));
@@ -7513,7 +7515,7 @@ static Xen g_vector_maxamp(Xen obj)
   return(C_double_to_Xen_real(mx));
 }
 
-
+#if (!DISABLE_DEPRECATED)
 static Xen g_list_maxamp(Xen obj)
 {
   double mx = 0.0;
@@ -7532,6 +7534,7 @@ static Xen g_list_maxamp(Xen obj)
     }
   return(C_double_to_Xen_real(mx));
 }
+#endif
 
 
 static Xen g_maxamp(Xen snd, Xen chn_n, Xen edpos) 
@@ -7551,8 +7554,10 @@ static Xen g_maxamp(Xen snd, Xen chn_n, Xen edpos)
 	    return(g_vct_peak(v));
 	}
 
+#if (!DISABLE_DEPRECATED)
       if (xen_is_sound_data(snd))
 	return(g_list_maxamp(g_sound_data_maxamp(snd)));
+#endif
 
       if (mus_is_vct(snd))                        /* vct-peak */
 	return(g_vct_peak(snd));
@@ -7565,9 +7570,10 @@ static Xen g_maxamp(Xen snd, Xen chn_n, Xen edpos)
 
       if (Xen_is_vector(snd))
 	return(g_vector_maxamp(snd));
-
+#if (!DISABLE_DEPRECATED)
       if (Xen_is_list(snd)) /* can this happen given defgenerator? */
 	return(g_list_maxamp(snd));
+#endif
     }
 
   if (xen_is_selection(snd))                      /* selection-maxamp where chn=snd and edpos=chn */
@@ -9530,7 +9536,7 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
       (cp->sounds) &&
       (cp->sounds[0]) &&
       (cp->sounds[0]->buffered_data))
-    return(wrap_sound_data(1, cp->edits[0]->samples, &(cp->sounds[0]->buffered_data)));
+    return(xen_make_vct_wrapper(cp->edits[0]->samples, cp->sounds[0]->buffered_data));
   return(Xen_false);
 }
 
@@ -9940,7 +9946,9 @@ void g_init_chn(void)
   Xen_define_procedure_with_setter(S_x_zoom_slider, g_ap_zx_w, H_x_zoom_slider, S_setB S_x_zoom_slider, g_set_ap_zx_w, 0, 2, 1, 2);
   Xen_define_procedure_with_setter(S_y_zoom_slider, g_ap_zy_w, H_y_zoom_slider, S_setB S_y_zoom_slider, g_set_ap_zy_w, 0, 2, 1, 2);
   Xen_define_procedure_with_setter(S_framples, g_frames_w, H_frames, S_setB S_framples, g_set_frames_w, 0, 3, 1, 2);
+#if (!DISABLE_DEPRECATED)
   Xen_define_procedure_with_setter("frames", g_frames_w, H_frames, "set-frames", g_set_frames_w, 0, 3, 1, 2);
+#endif
   Xen_define_procedure_with_setter(S_maxamp, g_maxamp_w, H_maxamp, S_setB S_maxamp, g_set_maxamp_w, 0, 3, 1, 2);
 
   Xen_define_safe_procedure(S_maxamp_position,   g_maxamp_position_w, 0, 3, 0,   H_maxamp_position);

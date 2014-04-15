@@ -448,13 +448,20 @@ MUS_EXPORT mus_float_t *mus_file_to_frample(mus_any *ptr, mus_long_t samp, mus_f
 MUS_EXPORT mus_any *mus_make_file_to_frample(const char *filename);
 MUS_EXPORT bool mus_is_file_to_frample(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_file_to_frample_with_buffer_size(const char *filename, mus_long_t buffer_size);
-MUS_EXPORT mus_float_t *mus_frample_to_frample(mus_float_t *matrix, mus_float_t *in_samps, int in_chans, mus_float_t *out_samps, int out_chans);
+MUS_EXPORT mus_float_t *mus_frample_to_frample(mus_float_t *matrix, int mx_chans, mus_float_t *in_samps, int in_chans, mus_float_t *out_samps, int out_chans);
 
 MUS_EXPORT bool mus_is_frample_to_file(mus_any *ptr);
 MUS_EXPORT mus_float_t *mus_frample_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *data);
 MUS_EXPORT mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
 #define mus_make_frample_to_file(Filename, Chans, OutFormat, OutType) mus_make_frample_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
 MUS_EXPORT mus_any *mus_continue_frample_to_file(const char *filename);
+
+MUS_EXPORT void mus_file_mix_with_reader_and_writer(mus_any *outf, mus_any *inf,
+						    mus_long_t out_start, mus_long_t out_framples, mus_long_t in_start, 
+						    mus_float_t *mx, int mx_chans, mus_any ***envs);
+MUS_EXPORT void mus_file_mix(const char *outfile, const char *infile, 
+			     mus_long_t out_start, mus_long_t out_framples, mus_long_t in_start, 
+			     mus_float_t *mx, int mx_chans, mus_any ***envs);
 
 MUS_EXPORT bool mus_is_sample_to_file(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment);
@@ -506,6 +513,8 @@ MUS_EXPORT mus_float_t *mus_move_sound_outf(mus_any *ptr);
 MUS_EXPORT mus_float_t *mus_move_sound_revf(mus_any *ptr);
 MUS_EXPORT void *mus_move_sound_closure(mus_any *ptr);
 MUS_EXPORT void mus_move_sound_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val));
+MUS_EXPORT int mus_move_sound_channels(mus_any *ptr);
+MUS_EXPORT int mus_move_sound_reverb_channels(mus_any *ptr);
 
 MUS_EXPORT mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure);
 MUS_EXPORT mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure, void (*init)(void *p, mus_any *g));
@@ -709,7 +718,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
  *
  * 14-Apr:     mus_frame and mus_mixer removed, "frame" replaced by "frample" in IO functions.
  * 11-Apr:     mus_even|odd_weight|multiple.
- * 9-Apr:      deprecated mus_is_delay_line.
+ * 9-Apr:      deprecate mus_is_delay_line.
  * 2-Apr:      mus_make_moving_average_with_sum.
  * 19-Mar:     deprecate mus_make_env_with_length.
  * 17-Feb-14:  mus_*_p -> mus_is_*.
