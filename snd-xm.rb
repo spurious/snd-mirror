@@ -620,180 +620,180 @@ module Snd_Gtk
   # 
   # with-level-meters, make-level-meter, display-level
   
-  class Level_meter
-    def initialize(parent, width, height, args = [], resizable = true)
-      @parent = parent
-      @width = width
-      @height = height
-      @meter = nil
-      @level = 0.0
-      @size = 1.0
-      @last_level = 0.0
-      @red_deg = 0.0
-    end
-    attr_accessor :level, :size
-    attr_reader :width, :height, :meter, :last_level, :red_deg
-
-    def inspect
-      format("make_level_meter(%s, %s, %s, [], true)", @parent, @width, @height)
-    end
-    
-    def make_meter
-      frame = Rgtk_frame_new(false)
-      Rgtk_widget_set_size_request(frame, @width, @height)
-      Rgtk_box_pack_start(RGTK_BOX(@parent), frame, true, true, 4)
-      Rgtk_widget_show(frame)
-      @meter = Rgtk_drawing_area_new()
-      Rgtk_widget_set_events(@meter, RGDK_EXPOSURE_MASK | RGDK_STRUCTURE_MASK)
-      Rgtk_container_add(RGTK_CONTAINER(frame), @meter)
-      Rgtk_widget_show(@meter)
-      add_event_handler(@meter, "expose_event") do |w, e, d| self.display end
-      add_event_handler(@meter, "configure_event") do |w, e, d|
-        xy = Rgdk_drawable_get_size(RGDK_DRAWABLE(Rgtk_widget_get_window(w)))
-        @width = xy.car
-        @height = xy.cadr
-        self.display
-      end
-    end
-
-    def display
-      win = RGDK_DRAWABLE(Rgtk_widget_get_window(@meter))
-      major_tick = (@width / 24.0).round
-      ang0 = 45 * 64
-      ang1 = 90 * 64
-      wid2 = (@width / 2.0).floor
-      gc = snd_gcs[0]
-      top = (@height / 3.2).round
-      Rgdk_gc_set_foreground(gc, white_pixel)
-      Rgdk_draw_rectangle(win, gc, true, 0, 0, @width, @height)
-      Rgdk_gc_set_foreground(gc, black_pixel)
-      Rgdk_draw_arc(win, gc, false, 0, top, @width, @width, ang0, ang1)
-      Rgdk_draw_arc(win, gc, false, 0, top - 1, @width, @width, ang0, ang1)
-      if @width > 100
-        Rgdk_draw_arc(win, gc, false, 0, top - 2, @width, @width, ang0, ang1)
-      end
-      Rgdk_draw_arc(win, gc, false, 4, top + 4, @width - 8, @width - 8, ang0, ang1)
-      5.times do |i|
-        rdeg = degrees2radians(45 - i * 22.5)
-        sinr = sin(rdeg)
-        cosr = cos(rdeg)
-        x0 = (wid2 + wid2 * sinr).round
-        y0 = ((wid2 + top) - wid2 * cosr).round
-        x1 = (wid2 + (wid2 + major_tick) * sinr).round
-        y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
-        Rgdk_draw_line(win, gc, x0, y0, x1, y1)
-        Rgdk_draw_line(win, gc, x0 + 1, y0, x1 + 1, y1)
-        if i < 4
-          1.upto(5) do |j|
-            rdeg = degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0))
-            sinr = sin(rdeg)
-            cosr = cos(rdeg)
-            x0 = (wid2 * (1.0 + sinr)).round
-            y0 = ((wid2 + top) - wid2 * cosr).round
-            x1 = (wid2 + (wid2 + major_tick) * sinr).round
-            y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
-            Rgdk_draw_line(win, gc, x0, y0, x1, y1)
-          end
-        end
-      end
-      needle_speed = 0.25
-      bubble_speed = 0.025
-      bubble_size = 15 * 64
-      val = @level * needle_speed + @last_level * (1.0 - needle_speed)
-      deg = val * 90.0 - 45.0
-      rdeg = degrees2radians(deg)
-      nx1 = (wid2 + (wid2 + major_tick) * sin(rdeg)).round
-      ny1 = ((wid2 + top) - (wid2 + major_tick) * cos(rdeg)).round
-      Rgdk_draw_line(win, gc, wid2, top + wid2, nx1, ny1)
-      @last_level = val
-      @red_deg = if val > @red_deg
-                   val
-                 else
-                   val * bubble_size + @red_deg * (1.0 - bubble_speed)
-                 end
-      if @red_deg > 0.01
-        Rgdk_gc_set_foreground(gc, red_pixel)
-        redx = (@red_deg * 90.0 * 64).floor
-        redy = [redx, bubble_size].min
-        4.times do |i|
-          width2 = @width - i * 2
-          Rgdk_draw_arc(win, gc, false, i, top + i, width2, width2, 135 * 64 - redx, redy)
-        end
-        Rgdk_gc_set_foreground(gc, black_pixel)
-      end
-    end
-  end
-  
-  def make_level_meter(parent, width, height, args = [], resizable = true)
-    lm = Level_meter.new(parent, width, height, args, resizable)
-    lm.make_meter
-    lm
-  end
-
-  def display_level(lm)
-    lm.display
-  end
-
-  def with_level_meters(n)
-    if widget?(parent = (main_widgets[Notebook_outer_pane] or main_widgets[Main_sound_pane]))
-      height = n > 2 ? 70 : 85
-      window = Rgtk_widget_get_window(parent)
-      width = (Rgdk_drawable_get_size(RGDK_DRAWABLE(window)).cadr / Float(n)).floor
-      meters = Rgtk_box_new(RGTK_ORIENTATION_HORIZONTAL, 4)
-      Rgtk_box_pack_start(RGTK_BOX(parent), meters, false, false, 4)
-      Rgtk_widget_set_size_request(meters, width, height)
-      Rgtk_widget_show(meters)
-      meter_list = make_array(n) do |i| make_level_meter(meters, width, height) end
-      $dac_hook.add_hook!(get_func_name) do |sd|
-        maxes = sound_data_maxamp(sd)
-        meter_list.each_with_index do |meter, i|
-          meter.level = (maxes[i] or 0.0)
-          meter.display
-        end
-      end
-      if defined? Rg_idle_add
-        $stop_dac_hook.add_hook!(get_func_name) do | |
-          Rg_idle_add(let(0) do |ctr|
-                        lambda do |ignored|
-                          meter_list.each do |meter|
-                            meter.level = 0.0
-                            meter.display
-                          end
-                          ctr += 1
-                          ctr < 200
-                        end
-                      end, false)
-        end
-      end
-      meter_list
-    end
-  end
-  
-  # body.arity == 3
-  # lambda do |w, e, d| ... end
-  # cclosure_new "GClosure* g_cclosure_new(GCallback func,
-  #                                        lambda_data func_data,
-  #                                        GClosureNotify destroy_data)"
-  def add_event_handler(parent, event, cb_data = false, &body)
-    Rg_signal_connect_closure_by_id(RGPOINTER(parent),
-                                    Rg_signal_lookup(event, RG_OBJECT_TYPE(RG_OBJECT(parent))),
-                                    0,
-                                    Rg_cclosure_new(lambda do |w, e, d|
-                                                      body.call(w, e, d)
-                                                    end, cb_data, false), false)
-  end
-
-  # body.arity == 2
-  # lambda do |w, d| ... end
-  def add_callback(parent, event, cb_data = false, &body)
-    Rg_signal_connect(parent, event, body, cb_data)
-  end
-  
-  def g_list_each(glist)
-    Rg_list_length(glist).times do |i|
-      yield(Rg_list_nth_data(glist, i))
-    end
-  end
+#  class Level_meter
+#    def initialize(parent, width, height, args = [], resizable = true)
+#      @parent = parent
+#      @width = width
+#      @height = height
+#      @meter = nil
+#      @level = 0.0
+#      @size = 1.0
+#      @last_level = 0.0
+#      @red_deg = 0.0
+#    end
+#    attr_accessor :level, :size
+#    attr_reader :width, :height, :meter, :last_level, :red_deg
+#
+#    def inspect
+#      format("make_level_meter(%s, %s, %s, [], true)", @parent, @width, @height)
+#    end
+#    
+#    def make_meter
+#      frame = Rgtk_frame_new(false)
+#      Rgtk_widget_set_size_request(frame, @width, @height)
+#      Rgtk_box_pack_start(RGTK_BOX(@parent), frame, true, true, 4)
+#      Rgtk_widget_show(frame)
+#      @meter = Rgtk_drawing_area_new()
+#      Rgtk_widget_set_events(@meter, RGDK_EXPOSURE_MASK | RGDK_STRUCTURE_MASK)
+#      Rgtk_container_add(RGTK_CONTAINER(frame), @meter)
+#      Rgtk_widget_show(@meter)
+#      add_event_handler(@meter, "expose_event") do |w, e, d| self.display end
+#      add_event_handler(@meter, "configure_event") do |w, e, d|
+#        xy = Rgdk_drawable_get_size(RGDK_DRAWABLE(Rgtk_widget_get_window(w)))
+#        @width = xy.car
+#        @height = xy.cadr
+#        self.display
+#      end
+#    end
+#
+#    def display
+#      win = RGDK_DRAWABLE(Rgtk_widget_get_window(@meter))
+#      major_tick = (@width / 24.0).round
+#      ang0 = 45 * 64
+#      ang1 = 90 * 64
+#      wid2 = (@width / 2.0).floor
+#      gc = snd_gcs[0]
+#      top = (@height / 3.2).round
+#      Rgdk_gc_set_foreground(gc, white_pixel)
+#      Rgdk_draw_rectangle(win, gc, true, 0, 0, @width, @height)
+#      Rgdk_gc_set_foreground(gc, black_pixel)
+#      Rgdk_draw_arc(win, gc, false, 0, top, @width, @width, ang0, ang1)
+#      Rgdk_draw_arc(win, gc, false, 0, top - 1, @width, @width, ang0, ang1)
+#      if @width > 100
+#        Rgdk_draw_arc(win, gc, false, 0, top - 2, @width, @width, ang0, ang1)
+#      end
+#      Rgdk_draw_arc(win, gc, false, 4, top + 4, @width - 8, @width - 8, ang0, ang1)
+#      5.times do |i|
+#        rdeg = degrees2radians(45 - i * 22.5)
+#        sinr = sin(rdeg)
+#        cosr = cos(rdeg)
+#        x0 = (wid2 + wid2 * sinr).round
+#        y0 = ((wid2 + top) - wid2 * cosr).round
+#        x1 = (wid2 + (wid2 + major_tick) * sinr).round
+#        y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
+#        Rgdk_draw_line(win, gc, x0, y0, x1, y1)
+#        Rgdk_draw_line(win, gc, x0 + 1, y0, x1 + 1, y1)
+#        if i < 4
+#          1.upto(5) do |j|
+#            rdeg = degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0))
+#            sinr = sin(rdeg)
+#            cosr = cos(rdeg)
+#            x0 = (wid2 * (1.0 + sinr)).round
+#            y0 = ((wid2 + top) - wid2 * cosr).round
+#            x1 = (wid2 + (wid2 + major_tick) * sinr).round
+#            y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
+#            Rgdk_draw_line(win, gc, x0, y0, x1, y1)
+#          end
+#        end
+#      end
+#      needle_speed = 0.25
+#      bubble_speed = 0.025
+#      bubble_size = 15 * 64
+#      val = @level * needle_speed + @last_level * (1.0 - needle_speed)
+#      deg = val * 90.0 - 45.0
+#      rdeg = degrees2radians(deg)
+#      nx1 = (wid2 + (wid2 + major_tick) * sin(rdeg)).round
+#      ny1 = ((wid2 + top) - (wid2 + major_tick) * cos(rdeg)).round
+#      Rgdk_draw_line(win, gc, wid2, top + wid2, nx1, ny1)
+#      @last_level = val
+#      @red_deg = if val > @red_deg
+#                   val
+#                 else
+#                   val * bubble_size + @red_deg * (1.0 - bubble_speed)
+#                 end
+#      if @red_deg > 0.01
+#        Rgdk_gc_set_foreground(gc, red_pixel)
+#        redx = (@red_deg * 90.0 * 64).floor
+#        redy = [redx, bubble_size].min
+#        4.times do |i|
+#          width2 = @width - i * 2
+#          Rgdk_draw_arc(win, gc, false, i, top + i, width2, width2, 135 * 64 - redx, redy)
+#        end
+#        Rgdk_gc_set_foreground(gc, black_pixel)
+#      end
+#    end
+#  end
+#  
+#  def make_level_meter(parent, width, height, args = [], resizable = true)
+#    lm = Level_meter.new(parent, width, height, args, resizable)
+#    lm.make_meter
+#    lm
+#  end
+#
+#  def display_level(lm)
+#    lm.display
+#  end
+#
+#  def with_level_meters(n)
+#    if widget?(parent = (main_widgets[Notebook_outer_pane] or main_widgets[Main_sound_pane]))
+#      height = n > 2 ? 70 : 85
+#      window = Rgtk_widget_get_window(parent)
+#      width = (Rgdk_drawable_get_size(RGDK_DRAWABLE(window)).cadr / Float(n)).floor
+#      meters = Rgtk_box_new(RGTK_ORIENTATION_HORIZONTAL, 4)
+#      Rgtk_box_pack_start(RGTK_BOX(parent), meters, false, false, 4)
+#      Rgtk_widget_set_size_request(meters, width, height)
+#      Rgtk_widget_show(meters)
+#      meter_list = make_array(n) do |i| make_level_meter(meters, width, height) end
+#      $dac_hook.add_hook!(get_func_name) do |sd|
+#        maxes = sound_data_maxamp(sd)
+#        meter_list.each_with_index do |meter, i|
+#          meter.level = (maxes[i] or 0.0)
+#          meter.display
+#        end
+#      end
+#      if defined? Rg_idle_add
+#        $stop_dac_hook.add_hook!(get_func_name) do | |
+#          Rg_idle_add(let(0) do |ctr|
+#                        lambda do |ignored|
+#                          meter_list.each do |meter|
+#                            meter.level = 0.0
+#                            meter.display
+#                          end
+#                          ctr += 1
+#                          ctr < 200
+#                        end
+#                      end, false)
+#        end
+#      end
+#      meter_list
+#    end
+#  end
+#  
+#  # body.arity == 3
+#  # lambda do |w, e, d| ... end
+#  # cclosure_new "GClosure* g_cclosure_new(GCallback func,
+#  #                                        lambda_data func_data,
+#  #                                        GClosureNotify destroy_data)"
+#  def add_event_handler(parent, event, cb_data = false, &body)
+#    Rg_signal_connect_closure_by_id(RGPOINTER(parent),
+#                                    Rg_signal_lookup(event, RG_OBJECT_TYPE(RG_OBJECT(parent))),
+#                                    0,
+#                                    Rg_cclosure_new(lambda do |w, e, d|
+#                                                      body.call(w, e, d)
+#                                                    end, cb_data, false), false)
+#  end
+#
+#  # body.arity == 2
+#  # lambda do |w, d| ... end
+#  def add_callback(parent, event, cb_data = false, &body)
+#    Rg_signal_connect(parent, event, body, cb_data)
+#  end
+#  
+#  def g_list_each(glist)
+#    Rg_list_length(glist).times do |i|
+#      yield(Rg_list_nth_data(glist, i))
+#    end
+#  end
   
   class Scale_widget
     include Snd_XM

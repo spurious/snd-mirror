@@ -7,6 +7,8 @@
  * 'gl is added to *features*
  *
  * HISTORY:
+ *
+ *     16-Apr-14: changed max-args to 8.
  *     --------
  *     16-Dec-09: removed Guile support.
  *     --------
@@ -2327,10 +2329,19 @@ GLint* [params])"
   return(Xen_list_1(C_to_Xen_GLint(ref_params[0])));
 }
 
-static Xen gxg_glTexImage1D(Xen target, Xen level, Xen internalFormat, Xen width, Xen border, Xen format, Xen type, Xen pixels)
+static Xen gxg_glTexImage1D(Xen arglist)
 {
   #define H_glTexImage1D "void glTexImage1D(GLenum target, GLint level, GLint internalFormat, GLsizei width, \
 GLint border, GLenum format, GLenum type, GLvoid* pixels)"
+  Xen target, level, internalFormat, width, border, format, type, pixels;
+  target = Xen_list_ref(arglist, 0);
+  level = Xen_list_ref(arglist, 1);
+  internalFormat = Xen_list_ref(arglist, 2);
+  width = Xen_list_ref(arglist, 3);
+  border = Xen_list_ref(arglist, 4);
+  format = Xen_list_ref(arglist, 5);
+  type = Xen_list_ref(arglist, 6);
+  pixels = Xen_list_ref(arglist, 7);
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glTexImage1D", "GLenum");
   Xen_check_type(Xen_is_GLint(level), level, 2, "glTexImage1D", "GLint");
   Xen_check_type(Xen_is_GLint(internalFormat), internalFormat, 3, "glTexImage1D", "GLint");
@@ -2344,10 +2355,20 @@ GLint border, GLenum format, GLenum type, GLvoid* pixels)"
   return(Xen_false);
 }
 
-static Xen gxg_glTexImage2D(Xen target, Xen level, Xen internalFormat, Xen width, Xen height, Xen border, Xen format, Xen type, Xen pixels)
+static Xen gxg_glTexImage2D(Xen arglist)
 {
   #define H_glTexImage2D "void glTexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, \
 GLsizei height, GLint border, GLenum format, GLenum type, GLvoid* pixels)"
+  Xen target, level, internalFormat, width, height, border, format, type, pixels;
+  target = Xen_list_ref(arglist, 0);
+  level = Xen_list_ref(arglist, 1);
+  internalFormat = Xen_list_ref(arglist, 2);
+  width = Xen_list_ref(arglist, 3);
+  height = Xen_list_ref(arglist, 4);
+  border = Xen_list_ref(arglist, 5);
+  format = Xen_list_ref(arglist, 6);
+  type = Xen_list_ref(arglist, 7);
+  pixels = Xen_list_ref(arglist, 8);
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glTexImage2D", "GLenum");
   Xen_check_type(Xen_is_GLint(level), level, 2, "glTexImage2D", "GLint");
   Xen_check_type(Xen_is_GLint(internalFormat), internalFormat, 3, "glTexImage2D", "GLint");
@@ -2421,10 +2442,20 @@ GLenum format, GLenum type, GLvoid* pixels)"
   return(Xen_false);
 }
 
-static Xen gxg_glTexSubImage2D(Xen target, Xen level, Xen xoffset, Xen yoffset, Xen width, Xen height, Xen format, Xen type, Xen pixels)
+static Xen gxg_glTexSubImage2D(Xen arglist)
 {
   #define H_glTexSubImage2D "void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, \
 GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels)"
+  Xen target, level, xoffset, yoffset, width, height, format, type, pixels;
+  target = Xen_list_ref(arglist, 0);
+  level = Xen_list_ref(arglist, 1);
+  xoffset = Xen_list_ref(arglist, 2);
+  yoffset = Xen_list_ref(arglist, 3);
+  width = Xen_list_ref(arglist, 4);
+  height = Xen_list_ref(arglist, 5);
+  format = Xen_list_ref(arglist, 6);
+  type = Xen_list_ref(arglist, 7);
+  pixels = Xen_list_ref(arglist, 8);
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glTexSubImage2D", "GLenum");
   Xen_check_type(Xen_is_GLint(level), level, 2, "glTexSubImage2D", "GLint");
   Xen_check_type(Xen_is_GLint(xoffset), xoffset, 3, "glTexSubImage2D", "GLint");
@@ -2455,10 +2486,19 @@ GLint x, GLint y, GLsizei width, GLint border)"
   return(Xen_false);
 }
 
-static Xen gxg_glCopyTexImage2D(Xen target, Xen level, Xen internalformat, Xen x, Xen y, Xen width, Xen height, Xen border)
+static Xen gxg_glCopyTexImage2D(Xen arglist)
 {
   #define H_glCopyTexImage2D "void glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat, \
 GLint x, GLint y, GLsizei width, GLsizei height, GLint border)"
+  Xen target, level, internalformat, x, y, width, height, border;
+  target = Xen_list_ref(arglist, 0);
+  level = Xen_list_ref(arglist, 1);
+  internalformat = Xen_list_ref(arglist, 2);
+  x = Xen_list_ref(arglist, 3);
+  y = Xen_list_ref(arglist, 4);
+  width = Xen_list_ref(arglist, 5);
+  height = Xen_list_ref(arglist, 6);
+  border = Xen_list_ref(arglist, 7);
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glCopyTexImage2D", "GLenum");
   Xen_check_type(Xen_is_GLint(level), level, 2, "glCopyTexImage2D", "GLint");
   Xen_check_type(Xen_is_GLenum(internalformat), internalformat, 3, "glCopyTexImage2D", "GLenum");
@@ -2487,10 +2527,19 @@ GLint x, GLint y, GLsizei width)"
   return(Xen_false);
 }
 
-static Xen gxg_glCopyTexSubImage2D(Xen target, Xen level, Xen xoffset, Xen yoffset, Xen x, Xen y, Xen width, Xen height)
+static Xen gxg_glCopyTexSubImage2D(Xen arglist)
 {
   #define H_glCopyTexSubImage2D "void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, \
 GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)"
+  Xen target, level, xoffset, yoffset, x, y, width, height;
+  target = Xen_list_ref(arglist, 0);
+  level = Xen_list_ref(arglist, 1);
+  xoffset = Xen_list_ref(arglist, 2);
+  yoffset = Xen_list_ref(arglist, 3);
+  x = Xen_list_ref(arglist, 4);
+  y = Xen_list_ref(arglist, 5);
+  width = Xen_list_ref(arglist, 6);
+  height = Xen_list_ref(arglist, 7);
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glCopyTexSubImage2D", "GLenum");
   Xen_check_type(Xen_is_GLint(level), level, 2, "glCopyTexSubImage2D", "GLint");
   Xen_check_type(Xen_is_GLint(xoffset), xoffset, 3, "glCopyTexSubImage2D", "GLint");
@@ -2897,10 +2946,20 @@ GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLen
   return(Xen_false);
 }
 
-static Xen gxg_glCopyTexSubImage3D(Xen target, Xen level, Xen xoffset, Xen yoffset, Xen zoffset, Xen x, Xen y, Xen width, Xen height)
+static Xen gxg_glCopyTexSubImage3D(Xen arglist)
 {
   #define H_glCopyTexSubImage3D "void glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, \
 GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height)"
+  Xen target, level, xoffset, yoffset, zoffset, x, y, width, height;
+  target = Xen_list_ref(arglist, 0);
+  level = Xen_list_ref(arglist, 1);
+  xoffset = Xen_list_ref(arglist, 2);
+  yoffset = Xen_list_ref(arglist, 3);
+  zoffset = Xen_list_ref(arglist, 4);
+  x = Xen_list_ref(arglist, 5);
+  y = Xen_list_ref(arglist, 6);
+  width = Xen_list_ref(arglist, 7);
+  height = Xen_list_ref(arglist, 8);
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glCopyTexSubImage3D", "GLenum");
   Xen_check_type(Xen_is_GLint(level), level, 2, "glCopyTexSubImage3D", "GLint");
   Xen_check_type(Xen_is_GLint(xoffset), xoffset, 3, "glCopyTexSubImage3D", "GLint");
@@ -3195,10 +3254,19 @@ GLint x, GLint y, GLsizei width, GLsizei height)"
   return(Xen_false);
 }
 
-static Xen gxg_glSeparableFilter2D(Xen target, Xen internalformat, Xen width, Xen height, Xen format, Xen type, Xen row, Xen column)
+static Xen gxg_glSeparableFilter2D(Xen arglist)
 {
   #define H_glSeparableFilter2D "void glSeparableFilter2D(GLenum target, GLenum internalformat, GLsizei width, \
 GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column)"
+  Xen target, internalformat, width, height, format, type, row, column;
+  target = Xen_list_ref(arglist, 0);
+  internalformat = Xen_list_ref(arglist, 1);
+  width = Xen_list_ref(arglist, 2);
+  height = Xen_list_ref(arglist, 3);
+  format = Xen_list_ref(arglist, 4);
+  type = Xen_list_ref(arglist, 5);
+  row = Xen_list_ref(arglist, 6);
+  column = Xen_list_ref(arglist, 7);
   Xen_check_type(Xen_is_GLenum(target), target, 1, "glSeparableFilter2D", "GLenum");
   Xen_check_type(Xen_is_GLenum(internalformat), internalformat, 2, "glSeparableFilter2D", "GLenum");
   Xen_check_type(Xen_is_GLsizei(width), width, 3, "glSeparableFilter2D", "GLsizei");
@@ -3247,10 +3315,20 @@ static Xen gxg_gluBeginTrim(Xen nurb)
   return(Xen_false);
 }
 
-static Xen gxg_gluBuild1DMipmapLevels(Xen target, Xen internalFormat, Xen width, Xen format, Xen type, Xen level, Xen base, Xen max, Xen data)
+static Xen gxg_gluBuild1DMipmapLevels(Xen arglist)
 {
   #define H_gluBuild1DMipmapLevels "GLint gluBuild1DMipmapLevels(GLenum target, GLint internalFormat, \
 GLsizei width, GLenum format, GLenum type, GLint level, GLint base, GLint max, void* data)"
+  Xen target, internalFormat, width, format, type, level, base, max, data;
+  target = Xen_list_ref(arglist, 0);
+  internalFormat = Xen_list_ref(arglist, 1);
+  width = Xen_list_ref(arglist, 2);
+  format = Xen_list_ref(arglist, 3);
+  type = Xen_list_ref(arglist, 4);
+  level = Xen_list_ref(arglist, 5);
+  base = Xen_list_ref(arglist, 6);
+  max = Xen_list_ref(arglist, 7);
+  data = Xen_list_ref(arglist, 8);
   Xen_check_type(Xen_is_GLenum(target), target, 1, "gluBuild1DMipmapLevels", "GLenum");
   Xen_check_type(Xen_is_GLint(internalFormat), internalFormat, 2, "gluBuild1DMipmapLevels", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 3, "gluBuild1DMipmapLevels", "GLsizei");
@@ -3358,10 +3436,19 @@ void* data)"
                                                Xen_to_C_void_(data))));
 }
 
-static Xen gxg_gluBuild3DMipmaps(Xen target, Xen internalFormat, Xen width, Xen height, Xen depth, Xen format, Xen type, Xen data)
+static Xen gxg_gluBuild3DMipmaps(Xen arglist)
 {
   #define H_gluBuild3DMipmaps "GLint gluBuild3DMipmaps(GLenum target, GLint internalFormat, GLsizei width, \
 GLsizei height, GLsizei depth, GLenum format, GLenum type, void* data)"
+  Xen target, internalFormat, width, height, depth, format, type, data;
+  target = Xen_list_ref(arglist, 0);
+  internalFormat = Xen_list_ref(arglist, 1);
+  width = Xen_list_ref(arglist, 2);
+  height = Xen_list_ref(arglist, 3);
+  depth = Xen_list_ref(arglist, 4);
+  format = Xen_list_ref(arglist, 5);
+  type = Xen_list_ref(arglist, 6);
+  data = Xen_list_ref(arglist, 7);
   Xen_check_type(Xen_is_GLenum(target), target, 1, "gluBuild3DMipmaps", "GLenum");
   Xen_check_type(Xen_is_GLint(internalFormat), internalFormat, 2, "gluBuild3DMipmaps", "GLint");
   Xen_check_type(Xen_is_GLsizei(width), width, 3, "gluBuild3DMipmaps", "GLsizei");
@@ -3518,10 +3605,20 @@ GLint* view)"
   return(Xen_false);
 }
 
-static Xen gxg_gluLookAt(Xen eyeX, Xen eyeY, Xen eyeZ, Xen centerX, Xen centerY, Xen centerZ, Xen upX, Xen upY, Xen upZ)
+static Xen gxg_gluLookAt(Xen arglist)
 {
   #define H_gluLookAt "void gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ, GLdouble centerX, \
 GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ)"
+  Xen eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ;
+  eyeX = Xen_list_ref(arglist, 0);
+  eyeY = Xen_list_ref(arglist, 1);
+  eyeZ = Xen_list_ref(arglist, 2);
+  centerX = Xen_list_ref(arglist, 3);
+  centerY = Xen_list_ref(arglist, 4);
+  centerZ = Xen_list_ref(arglist, 5);
+  upX = Xen_list_ref(arglist, 6);
+  upY = Xen_list_ref(arglist, 7);
+  upZ = Xen_list_ref(arglist, 8);
   Xen_check_type(Xen_is_GLdouble(eyeX), eyeX, 1, "gluLookAt", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(eyeY), eyeY, 2, "gluLookAt", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(eyeZ), eyeZ, 3, "gluLookAt", "GLdouble");
@@ -3705,13 +3802,20 @@ static Xen gxg_gluPickMatrix(Xen x, Xen y, Xen delX, Xen delY, Xen viewport)
   return(Xen_false);
 }
 
-static Xen gxg_gluProject(Xen objX, Xen objY, Xen objZ, Xen model, Xen proj, Xen view, Xen winX, Xen winY, Xen winZ)
+static Xen gxg_gluProject(Xen arglist)
 {
   #define H_gluProject "GLint gluProject(GLdouble objX, GLdouble objY, GLdouble objZ, GLdouble* model, \
 GLdouble* proj, GLint* view, GLdouble* [winX], GLdouble* [winY], GLdouble* [winZ])"
   GLdouble ref_winX[1];
   GLdouble ref_winY[1];
   GLdouble ref_winZ[1];
+  Xen objX, objY, objZ, model, proj, view;
+  objX = Xen_list_ref(arglist, 0);
+  objY = Xen_list_ref(arglist, 1);
+  objZ = Xen_list_ref(arglist, 2);
+  model = Xen_list_ref(arglist, 3);
+  proj = Xen_list_ref(arglist, 4);
+  view = Xen_list_ref(arglist, 5);
   Xen_check_type(Xen_is_GLdouble(objX), objX, 1, "gluProject", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(objY), objY, 2, "gluProject", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(objZ), objZ, 3, "gluProject", "GLdouble");
@@ -3784,10 +3888,20 @@ static Xen gxg_gluQuadricTexture(Xen quad, Xen texture)
   return(Xen_false);
 }
 
-static Xen gxg_gluScaleImage(Xen format, Xen wIn, Xen hIn, Xen typeIn, Xen dataIn, Xen wOut, Xen hOut, Xen typeOut, Xen dataOut)
+static Xen gxg_gluScaleImage(Xen arglist)
 {
   #define H_gluScaleImage "GLint gluScaleImage(GLenum format, GLsizei wIn, GLsizei hIn, GLenum typeIn, \
 void* dataIn, GLsizei wOut, GLsizei hOut, GLenum typeOut, GLvoid* dataOut)"
+  Xen format, wIn, hIn, typeIn, dataIn, wOut, hOut, typeOut, dataOut;
+  format = Xen_list_ref(arglist, 0);
+  wIn = Xen_list_ref(arglist, 1);
+  hIn = Xen_list_ref(arglist, 2);
+  typeIn = Xen_list_ref(arglist, 3);
+  dataIn = Xen_list_ref(arglist, 4);
+  wOut = Xen_list_ref(arglist, 5);
+  hOut = Xen_list_ref(arglist, 6);
+  typeOut = Xen_list_ref(arglist, 7);
+  dataOut = Xen_list_ref(arglist, 8);
   Xen_check_type(Xen_is_GLenum(format), format, 1, "gluScaleImage", "GLenum");
   Xen_check_type(Xen_is_GLsizei(wIn), wIn, 2, "gluScaleImage", "GLsizei");
   Xen_check_type(Xen_is_GLsizei(hIn), hIn, 3, "gluScaleImage", "GLsizei");
@@ -3902,13 +4016,20 @@ static Xen gxg_gluTessVertex(Xen tess, Xen location, Xen data)
 }
 #endif
 
-static Xen gxg_gluUnProject(Xen winX, Xen winY, Xen winZ, Xen model, Xen proj, Xen view, Xen objX, Xen objY, Xen objZ)
+static Xen gxg_gluUnProject(Xen arglist)
 {
   #define H_gluUnProject "GLint gluUnProject(GLdouble winX, GLdouble winY, GLdouble winZ, GLdouble* model, \
 GLdouble* proj, GLint* view, GLdouble* [objX], GLdouble* [objY], GLdouble* [objZ])"
   GLdouble ref_objX[1];
   GLdouble ref_objY[1];
   GLdouble ref_objZ[1];
+  Xen winX, winY, winZ, model, proj, view;
+  winX = Xen_list_ref(arglist, 0);
+  winY = Xen_list_ref(arglist, 1);
+  winZ = Xen_list_ref(arglist, 2);
+  model = Xen_list_ref(arglist, 3);
+  proj = Xen_list_ref(arglist, 4);
+  view = Xen_list_ref(arglist, 5);
   Xen_check_type(Xen_is_GLdouble(winX), winX, 1, "gluUnProject", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(winY), winY, 2, "gluUnProject", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(winZ), winZ, 3, "gluUnProject", "GLdouble");
@@ -4182,19 +4303,19 @@ Xen_wrap_3_optional_args(gxg_glGetTexParameterfv_w, gxg_glGetTexParameterfv)
 Xen_wrap_3_optional_args(gxg_glGetTexParameteriv_w, gxg_glGetTexParameteriv)
 Xen_wrap_4_optional_args(gxg_glGetTexLevelParameterfv_w, gxg_glGetTexLevelParameterfv)
 Xen_wrap_4_optional_args(gxg_glGetTexLevelParameteriv_w, gxg_glGetTexLevelParameteriv)
-Xen_wrap_8_args(gxg_glTexImage1D_w, gxg_glTexImage1D)
-Xen_wrap_9_args(gxg_glTexImage2D_w, gxg_glTexImage2D)
+Xen_wrap_any_args(gxg_glTexImage1D_w, gxg_glTexImage1D)
+Xen_wrap_any_args(gxg_glTexImage2D_w, gxg_glTexImage2D)
 Xen_wrap_2_args(gxg_glGenTextures_w, gxg_glGenTextures)
 Xen_wrap_2_args(gxg_glDeleteTextures_w, gxg_glDeleteTextures)
 Xen_wrap_2_args(gxg_glBindTexture_w, gxg_glBindTexture)
 Xen_wrap_3_args(gxg_glAreTexturesResident_w, gxg_glAreTexturesResident)
 Xen_wrap_1_arg(gxg_glIsTexture_w, gxg_glIsTexture)
 Xen_wrap_7_args(gxg_glTexSubImage1D_w, gxg_glTexSubImage1D)
-Xen_wrap_9_args(gxg_glTexSubImage2D_w, gxg_glTexSubImage2D)
+Xen_wrap_any_args(gxg_glTexSubImage2D_w, gxg_glTexSubImage2D)
 Xen_wrap_7_args(gxg_glCopyTexImage1D_w, gxg_glCopyTexImage1D)
-Xen_wrap_8_args(gxg_glCopyTexImage2D_w, gxg_glCopyTexImage2D)
+Xen_wrap_any_args(gxg_glCopyTexImage2D_w, gxg_glCopyTexImage2D)
 Xen_wrap_6_args(gxg_glCopyTexSubImage1D_w, gxg_glCopyTexSubImage1D)
-Xen_wrap_8_args(gxg_glCopyTexSubImage2D_w, gxg_glCopyTexSubImage2D)
+Xen_wrap_any_args(gxg_glCopyTexSubImage2D_w, gxg_glCopyTexSubImage2D)
 Xen_wrap_6_args(gxg_glMap1d_w, gxg_glMap1d)
 Xen_wrap_6_args(gxg_glMap1f_w, gxg_glMap1f)
 Xen_wrap_any_args(gxg_glMap2d_w, gxg_glMap2d)
@@ -4226,7 +4347,7 @@ Xen_wrap_no_args(gxg_glPopName_w, gxg_glPopName)
 Xen_wrap_6_args(gxg_glDrawRangeElements_w, gxg_glDrawRangeElements)
 Xen_wrap_any_args(gxg_glTexImage3D_w, gxg_glTexImage3D)
 Xen_wrap_any_args(gxg_glTexSubImage3D_w, gxg_glTexSubImage3D)
-Xen_wrap_9_args(gxg_glCopyTexSubImage3D_w, gxg_glCopyTexSubImage3D)
+Xen_wrap_any_args(gxg_glCopyTexSubImage3D_w, gxg_glCopyTexSubImage3D)
 Xen_wrap_6_args(gxg_glColorTable_w, gxg_glColorTable)
 Xen_wrap_6_args(gxg_glColorSubTable_w, gxg_glColorSubTable)
 Xen_wrap_5_args(gxg_glCopyColorSubTable_w, gxg_glCopyColorSubTable)
@@ -4251,7 +4372,7 @@ Xen_wrap_3_args(gxg_glConvolutionParameterf_w, gxg_glConvolutionParameterf)
 Xen_wrap_3_args(gxg_glConvolutionParameteri_w, gxg_glConvolutionParameteri)
 Xen_wrap_5_args(gxg_glCopyConvolutionFilter1D_w, gxg_glCopyConvolutionFilter1D)
 Xen_wrap_6_args(gxg_glCopyConvolutionFilter2D_w, gxg_glCopyConvolutionFilter2D)
-Xen_wrap_8_args(gxg_glSeparableFilter2D_w, gxg_glSeparableFilter2D)
+Xen_wrap_any_args(gxg_glSeparableFilter2D_w, gxg_glSeparableFilter2D)
 #if HAVE_GLU
 Xen_wrap_1_arg(gxg_gluBeginCurve_w, gxg_gluBeginCurve)
 #ifdef GLU_VERSION_1_2
@@ -4259,12 +4380,12 @@ Xen_wrap_1_arg(gxg_gluBeginPolygon_w, gxg_gluBeginPolygon)
 #endif
 Xen_wrap_1_arg(gxg_gluBeginSurface_w, gxg_gluBeginSurface)
 Xen_wrap_1_arg(gxg_gluBeginTrim_w, gxg_gluBeginTrim)
-Xen_wrap_9_args(gxg_gluBuild1DMipmapLevels_w, gxg_gluBuild1DMipmapLevels)
+Xen_wrap_any_args(gxg_gluBuild1DMipmapLevels_w, gxg_gluBuild1DMipmapLevels)
 Xen_wrap_6_args(gxg_gluBuild1DMipmaps_w, gxg_gluBuild1DMipmaps)
 Xen_wrap_any_args(gxg_gluBuild2DMipmapLevels_w, gxg_gluBuild2DMipmapLevels)
 Xen_wrap_7_args(gxg_gluBuild2DMipmaps_w, gxg_gluBuild2DMipmaps)
 Xen_wrap_any_args(gxg_gluBuild3DMipmapLevels_w, gxg_gluBuild3DMipmapLevels)
-Xen_wrap_8_args(gxg_gluBuild3DMipmaps_w, gxg_gluBuild3DMipmaps)
+Xen_wrap_any_args(gxg_gluBuild3DMipmaps_w, gxg_gluBuild3DMipmaps)
 Xen_wrap_2_args(gxg_gluCheckExtension_w, gxg_gluCheckExtension)
 Xen_wrap_6_args(gxg_gluCylinder_w, gxg_gluCylinder)
 Xen_wrap_1_arg(gxg_gluDeleteNurbsRenderer_w, gxg_gluDeleteNurbsRenderer)
@@ -4286,7 +4407,7 @@ Xen_wrap_1_arg(gxg_gluGetString_w, gxg_gluGetString)
 Xen_wrap_3_args(gxg_gluGetTessProperty_w, gxg_gluGetTessProperty)
 #endif
 Xen_wrap_4_args(gxg_gluLoadSamplingMatrices_w, gxg_gluLoadSamplingMatrices)
-Xen_wrap_9_args(gxg_gluLookAt_w, gxg_gluLookAt)
+Xen_wrap_any_args(gxg_gluLookAt_w, gxg_gluLookAt)
 Xen_wrap_no_args(gxg_gluNewNurbsRenderer_w, gxg_gluNewNurbsRenderer)
 Xen_wrap_no_args(gxg_gluNewQuadric_w, gxg_gluNewQuadric)
 #ifdef GLU_VERSION_1_2
@@ -4305,14 +4426,14 @@ Xen_wrap_4_args(gxg_gluOrtho2D_w, gxg_gluOrtho2D)
 Xen_wrap_7_args(gxg_gluPartialDisk_w, gxg_gluPartialDisk)
 Xen_wrap_4_args(gxg_gluPerspective_w, gxg_gluPerspective)
 Xen_wrap_5_args(gxg_gluPickMatrix_w, gxg_gluPickMatrix)
-Xen_wrap_9_optional_args(gxg_gluProject_w, gxg_gluProject)
+Xen_wrap_any_args(gxg_gluProject_w, gxg_gluProject)
 Xen_wrap_5_args(gxg_gluPwlCurve_w, gxg_gluPwlCurve)
 Xen_wrap_3_args(gxg_gluQuadricCallback_w, gxg_gluQuadricCallback)
 Xen_wrap_2_args(gxg_gluQuadricDrawStyle_w, gxg_gluQuadricDrawStyle)
 Xen_wrap_2_args(gxg_gluQuadricNormals_w, gxg_gluQuadricNormals)
 Xen_wrap_2_args(gxg_gluQuadricOrientation_w, gxg_gluQuadricOrientation)
 Xen_wrap_2_args(gxg_gluQuadricTexture_w, gxg_gluQuadricTexture)
-Xen_wrap_9_args(gxg_gluScaleImage_w, gxg_gluScaleImage)
+Xen_wrap_any_args(gxg_gluScaleImage_w, gxg_gluScaleImage)
 Xen_wrap_4_args(gxg_gluSphere_w, gxg_gluSphere)
 #ifdef GLU_VERSION_1_2
 Xen_wrap_1_arg(gxg_gluTessBeginContour_w, gxg_gluTessBeginContour)
@@ -4336,7 +4457,7 @@ Xen_wrap_3_args(gxg_gluTessProperty_w, gxg_gluTessProperty)
 #ifdef GLU_VERSION_1_2
 Xen_wrap_3_args(gxg_gluTessVertex_w, gxg_gluTessVertex)
 #endif
-Xen_wrap_9_optional_args(gxg_gluUnProject_w, gxg_gluUnProject)
+Xen_wrap_any_args(gxg_gluUnProject_w, gxg_gluUnProject)
 Xen_wrap_any_args(gxg_gluUnProject4_w, gxg_gluUnProject4)
 #endif
 static void define_functions(void)
@@ -4563,19 +4684,19 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(glGetTexParameteriv, gxg_glGetTexParameteriv_w, 2, 1, 0, H_glGetTexParameteriv);
   GL_DEFINE_PROCEDURE(glGetTexLevelParameterfv, gxg_glGetTexLevelParameterfv_w, 3, 1, 0, H_glGetTexLevelParameterfv);
   GL_DEFINE_PROCEDURE(glGetTexLevelParameteriv, gxg_glGetTexLevelParameteriv_w, 3, 1, 0, H_glGetTexLevelParameteriv);
-  GL_DEFINE_PROCEDURE(glTexImage1D, gxg_glTexImage1D_w, 8, 0, 0, H_glTexImage1D);
-  GL_DEFINE_PROCEDURE(glTexImage2D, gxg_glTexImage2D_w, 9, 0, 0, H_glTexImage2D);
+  GL_DEFINE_PROCEDURE(glTexImage1D, gxg_glTexImage1D_w, 0, 0, 1, H_glTexImage1D);
+  GL_DEFINE_PROCEDURE(glTexImage2D, gxg_glTexImage2D_w, 0, 0, 1, H_glTexImage2D);
   GL_DEFINE_PROCEDURE(glGenTextures, gxg_glGenTextures_w, 2, 0, 0, H_glGenTextures);
   GL_DEFINE_PROCEDURE(glDeleteTextures, gxg_glDeleteTextures_w, 2, 0, 0, H_glDeleteTextures);
   GL_DEFINE_PROCEDURE(glBindTexture, gxg_glBindTexture_w, 2, 0, 0, H_glBindTexture);
   GL_DEFINE_PROCEDURE(glAreTexturesResident, gxg_glAreTexturesResident_w, 3, 0, 0, H_glAreTexturesResident);
   GL_DEFINE_PROCEDURE(glIsTexture, gxg_glIsTexture_w, 1, 0, 0, H_glIsTexture);
   GL_DEFINE_PROCEDURE(glTexSubImage1D, gxg_glTexSubImage1D_w, 7, 0, 0, H_glTexSubImage1D);
-  GL_DEFINE_PROCEDURE(glTexSubImage2D, gxg_glTexSubImage2D_w, 9, 0, 0, H_glTexSubImage2D);
+  GL_DEFINE_PROCEDURE(glTexSubImage2D, gxg_glTexSubImage2D_w, 0, 0, 1, H_glTexSubImage2D);
   GL_DEFINE_PROCEDURE(glCopyTexImage1D, gxg_glCopyTexImage1D_w, 7, 0, 0, H_glCopyTexImage1D);
-  GL_DEFINE_PROCEDURE(glCopyTexImage2D, gxg_glCopyTexImage2D_w, 8, 0, 0, H_glCopyTexImage2D);
+  GL_DEFINE_PROCEDURE(glCopyTexImage2D, gxg_glCopyTexImage2D_w, 0, 0, 1, H_glCopyTexImage2D);
   GL_DEFINE_PROCEDURE(glCopyTexSubImage1D, gxg_glCopyTexSubImage1D_w, 6, 0, 0, H_glCopyTexSubImage1D);
-  GL_DEFINE_PROCEDURE(glCopyTexSubImage2D, gxg_glCopyTexSubImage2D_w, 8, 0, 0, H_glCopyTexSubImage2D);
+  GL_DEFINE_PROCEDURE(glCopyTexSubImage2D, gxg_glCopyTexSubImage2D_w, 0, 0, 1, H_glCopyTexSubImage2D);
   GL_DEFINE_PROCEDURE(glMap1d, gxg_glMap1d_w, 6, 0, 0, H_glMap1d);
   GL_DEFINE_PROCEDURE(glMap1f, gxg_glMap1f_w, 6, 0, 0, H_glMap1f);
   GL_DEFINE_PROCEDURE(glMap2d, gxg_glMap2d_w, 0, 0, 1, H_glMap2d);
@@ -4607,7 +4728,7 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(glDrawRangeElements, gxg_glDrawRangeElements_w, 6, 0, 0, H_glDrawRangeElements);
   GL_DEFINE_PROCEDURE(glTexImage3D, gxg_glTexImage3D_w, 0, 0, 1, H_glTexImage3D);
   GL_DEFINE_PROCEDURE(glTexSubImage3D, gxg_glTexSubImage3D_w, 0, 0, 1, H_glTexSubImage3D);
-  GL_DEFINE_PROCEDURE(glCopyTexSubImage3D, gxg_glCopyTexSubImage3D_w, 9, 0, 0, H_glCopyTexSubImage3D);
+  GL_DEFINE_PROCEDURE(glCopyTexSubImage3D, gxg_glCopyTexSubImage3D_w, 0, 0, 1, H_glCopyTexSubImage3D);
   GL_DEFINE_PROCEDURE(glColorTable, gxg_glColorTable_w, 6, 0, 0, H_glColorTable);
   GL_DEFINE_PROCEDURE(glColorSubTable, gxg_glColorSubTable_w, 6, 0, 0, H_glColorSubTable);
   GL_DEFINE_PROCEDURE(glCopyColorSubTable, gxg_glCopyColorSubTable_w, 5, 0, 0, H_glCopyColorSubTable);
@@ -4632,7 +4753,7 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(glConvolutionParameteri, gxg_glConvolutionParameteri_w, 3, 0, 0, H_glConvolutionParameteri);
   GL_DEFINE_PROCEDURE(glCopyConvolutionFilter1D, gxg_glCopyConvolutionFilter1D_w, 5, 0, 0, H_glCopyConvolutionFilter1D);
   GL_DEFINE_PROCEDURE(glCopyConvolutionFilter2D, gxg_glCopyConvolutionFilter2D_w, 6, 0, 0, H_glCopyConvolutionFilter2D);
-  GL_DEFINE_PROCEDURE(glSeparableFilter2D, gxg_glSeparableFilter2D_w, 8, 0, 0, H_glSeparableFilter2D);
+  GL_DEFINE_PROCEDURE(glSeparableFilter2D, gxg_glSeparableFilter2D_w, 0, 0, 1, H_glSeparableFilter2D);
 #if HAVE_GLU
   GL_DEFINE_PROCEDURE(gluBeginCurve, gxg_gluBeginCurve_w, 1, 0, 0, H_gluBeginCurve);
 #ifdef GLU_VERSION_1_2
@@ -4640,12 +4761,12 @@ static void define_functions(void)
 #endif
   GL_DEFINE_PROCEDURE(gluBeginSurface, gxg_gluBeginSurface_w, 1, 0, 0, H_gluBeginSurface);
   GL_DEFINE_PROCEDURE(gluBeginTrim, gxg_gluBeginTrim_w, 1, 0, 0, H_gluBeginTrim);
-  GL_DEFINE_PROCEDURE(gluBuild1DMipmapLevels, gxg_gluBuild1DMipmapLevels_w, 9, 0, 0, H_gluBuild1DMipmapLevels);
+  GL_DEFINE_PROCEDURE(gluBuild1DMipmapLevels, gxg_gluBuild1DMipmapLevels_w, 0, 0, 1, H_gluBuild1DMipmapLevels);
   GL_DEFINE_PROCEDURE(gluBuild1DMipmaps, gxg_gluBuild1DMipmaps_w, 6, 0, 0, H_gluBuild1DMipmaps);
   GL_DEFINE_PROCEDURE(gluBuild2DMipmapLevels, gxg_gluBuild2DMipmapLevels_w, 0, 0, 1, H_gluBuild2DMipmapLevels);
   GL_DEFINE_PROCEDURE(gluBuild2DMipmaps, gxg_gluBuild2DMipmaps_w, 7, 0, 0, H_gluBuild2DMipmaps);
   GL_DEFINE_PROCEDURE(gluBuild3DMipmapLevels, gxg_gluBuild3DMipmapLevels_w, 0, 0, 1, H_gluBuild3DMipmapLevels);
-  GL_DEFINE_PROCEDURE(gluBuild3DMipmaps, gxg_gluBuild3DMipmaps_w, 8, 0, 0, H_gluBuild3DMipmaps);
+  GL_DEFINE_PROCEDURE(gluBuild3DMipmaps, gxg_gluBuild3DMipmaps_w, 0, 0, 1, H_gluBuild3DMipmaps);
   GL_DEFINE_PROCEDURE(gluCheckExtension, gxg_gluCheckExtension_w, 2, 0, 0, H_gluCheckExtension);
   GL_DEFINE_PROCEDURE(gluCylinder, gxg_gluCylinder_w, 6, 0, 0, H_gluCylinder);
   GL_DEFINE_PROCEDURE(gluDeleteNurbsRenderer, gxg_gluDeleteNurbsRenderer_w, 1, 0, 0, H_gluDeleteNurbsRenderer);
@@ -4667,7 +4788,7 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gluGetTessProperty, gxg_gluGetTessProperty_w, 3, 0, 0, H_gluGetTessProperty);
 #endif
   GL_DEFINE_PROCEDURE(gluLoadSamplingMatrices, gxg_gluLoadSamplingMatrices_w, 4, 0, 0, H_gluLoadSamplingMatrices);
-  GL_DEFINE_PROCEDURE(gluLookAt, gxg_gluLookAt_w, 9, 0, 0, H_gluLookAt);
+  GL_DEFINE_PROCEDURE(gluLookAt, gxg_gluLookAt_w, 0, 0, 1, H_gluLookAt);
   GL_DEFINE_PROCEDURE(gluNewNurbsRenderer, gxg_gluNewNurbsRenderer_w, 0, 0, 0, H_gluNewNurbsRenderer);
   GL_DEFINE_PROCEDURE(gluNewQuadric, gxg_gluNewQuadric_w, 0, 0, 0, H_gluNewQuadric);
 #ifdef GLU_VERSION_1_2
@@ -4686,14 +4807,14 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gluPartialDisk, gxg_gluPartialDisk_w, 7, 0, 0, H_gluPartialDisk);
   GL_DEFINE_PROCEDURE(gluPerspective, gxg_gluPerspective_w, 4, 0, 0, H_gluPerspective);
   GL_DEFINE_PROCEDURE(gluPickMatrix, gxg_gluPickMatrix_w, 5, 0, 0, H_gluPickMatrix);
-  GL_DEFINE_PROCEDURE(gluProject, gxg_gluProject_w, 6, 3, 0, H_gluProject);
+  GL_DEFINE_PROCEDURE(gluProject, gxg_gluProject_w, 0, 0, 1, H_gluProject);
   GL_DEFINE_PROCEDURE(gluPwlCurve, gxg_gluPwlCurve_w, 5, 0, 0, H_gluPwlCurve);
   GL_DEFINE_PROCEDURE(gluQuadricCallback, gxg_gluQuadricCallback_w, 3, 0, 0, H_gluQuadricCallback);
   GL_DEFINE_PROCEDURE(gluQuadricDrawStyle, gxg_gluQuadricDrawStyle_w, 2, 0, 0, H_gluQuadricDrawStyle);
   GL_DEFINE_PROCEDURE(gluQuadricNormals, gxg_gluQuadricNormals_w, 2, 0, 0, H_gluQuadricNormals);
   GL_DEFINE_PROCEDURE(gluQuadricOrientation, gxg_gluQuadricOrientation_w, 2, 0, 0, H_gluQuadricOrientation);
   GL_DEFINE_PROCEDURE(gluQuadricTexture, gxg_gluQuadricTexture_w, 2, 0, 0, H_gluQuadricTexture);
-  GL_DEFINE_PROCEDURE(gluScaleImage, gxg_gluScaleImage_w, 9, 0, 0, H_gluScaleImage);
+  GL_DEFINE_PROCEDURE(gluScaleImage, gxg_gluScaleImage_w, 0, 0, 1, H_gluScaleImage);
   GL_DEFINE_PROCEDURE(gluSphere, gxg_gluSphere_w, 4, 0, 0, H_gluSphere);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluTessBeginContour, gxg_gluTessBeginContour_w, 1, 0, 0, H_gluTessBeginContour);
@@ -4717,7 +4838,7 @@ static void define_functions(void)
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluTessVertex, gxg_gluTessVertex_w, 3, 0, 0, H_gluTessVertex);
 #endif
-  GL_DEFINE_PROCEDURE(gluUnProject, gxg_gluUnProject_w, 6, 3, 0, H_gluUnProject);
+  GL_DEFINE_PROCEDURE(gluUnProject, gxg_gluUnProject_w, 0, 0, 1, H_gluUnProject);
   GL_DEFINE_PROCEDURE(gluUnProject4, gxg_gluUnProject4_w, 0, 0, 1, H_gluUnProject4);
 #endif
 }
@@ -5563,7 +5684,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("11-Mar-14"));
+      Xen_define("gl-version", C_string_to_Xen_string("16-Apr-14"));
       gl_already_inited = true;
     }
 }

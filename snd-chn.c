@@ -9305,8 +9305,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
   double nominal_x0 = 0.0, nominal_x1 = 1.0;
   int old_height = 0, old_width = 0, ww = 0;
   int old_y_offset = 0, gx0 = 0;
-  Xen arg, ldata, xlabel, x0 = xen_undefined, x1 = xen_undefined, y0, y1;
-  Xen snd = xen_undefined, chn_n = xen_undefined, force_display = xen_undefined, show_axes = xen_undefined;
+  Xen arg, ldata, xlabel, x0 = Xen_undefined, x1 = Xen_undefined, y0, y1;
+  Xen snd = Xen_undefined, chn_n = Xen_undefined, force_display = Xen_undefined, show_axes = Xen_undefined;
 
   /* ldata can be a vct or a list of numbers or vcts */
   arg = args;

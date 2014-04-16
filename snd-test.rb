@@ -2459,7 +2459,7 @@ def test_03
    :cursor_context, :cursor_cross, :cursor_in_middle, :cursor_in_view,
    :cursor_line, :cursor_location_offset, :cursor_on_left, :cursor_on_right,
    :cursor_position, :cursor_size, :cursor_style, :cursor_update_interval,
-   :dac_combines_channels, :dac_hook, :dac_size, :data_color, :data_format,
+   :dac_combines_channels, :dac_size, :data_color, :data_format,
    :data_location, :data_size, :db2linear, :default_output_chans,
    :default_output_data_format, :default_output_header_type,
    :default_output_srate, :define_envelope, :degrees2radians, :delay,
@@ -2673,7 +2673,7 @@ def test_03
    :src_channel, :src_selection, :src_sound, :src?, :ssb_am, :ssb_am?,
    :start_hook, :start_playing, :start_playing_hook,
    :start_playing_selection_hook, :start_progress_report,
-   :status_report, :stop_dac_hook, :stop_player, :stop_playing,
+   :status_report, :stop_player, :stop_playing,
    :stop_playing_hook, :stop_playing_selection_hook, :ncos, :ncos?,
    :nsin, :nsin?, :swap_channels, :sync, :sync_style, :sync_none,
    :sync_all, :sync_by_sound, :sync_max, :syncd_marks, :table_lookup,
@@ -11005,45 +11005,6 @@ def test_06
   end
   snd_test_neq(speed_control(ind), 1.0, "apply_controls -1.0")
   ctr = 0
-  $dac_hook.add_hook!("snd-test") do |data|
-    ctr += 1
-    if ctr >= 3
-      set_playing(false)
-    end
-  end
-  play(selected_sound, :wait, true)
-  snd_test_neq(ctr, 3, "ctr after dac_hook")
-  set_speed_control(1.5)
-  apply_controls
-  $dac_hook.reset_hook!
-  revert_sound
-  set_speed_control(1.5)
-  ctr = 0
-  $dac_hook.add_hook!("snd-test") do |data|
-    ctr += 1
-    if ctr == 3
-      apply_controls()
-    end
-  end
-  play(selected_sound, :wait, true)
-  snd_test_neq(edit_position(ind, 0), 1, "apply_controls from hook")
-  $dac_hook.reset_hook!
-  revert_sound
-  set_speed_control(1.5)
-  stop_playing
-  $after_apply_controls_hook.add_hook!("snd-test") do |s|
-    snd_test_neq(Snd.catch do apply_controls() end.first,
-      :cannot_apply_controls,
-      "after_apply_controls_hook: recursive attempt apply_controls")
-  end
-  apply_controls
-  $after_apply_controls_hook.reset_hook!
-  $dac_hook.add_hook!("snd-test") do |s|
-    snd_test_neq(Snd.catch do apply_controls() end.first,
-      :cannot_apply_controls,
-      "dac_hook: recursive attempt apply_controls")
-  end
-  $dac_hook.reset_hook!
   revert_sound
   close_sound(ind)
   # 
@@ -24342,13 +24303,6 @@ def test_13_01
     set_reverb_control_feedback(reverb_control_feedback)
     ph = true
   end
-  $dac_hook.add_hook!("snd-test") do |n|
-    snd_test_neq(sound_data?(n), true, "$dac_hook data")
-    if n.length < 128
-      snd_test_neq(sound_data_length(n), 64, "$dac_hook data length")
-    end
-    ph1 = true
-  end
   set_expand_control?(true, ind)
   set_reverb_control?(true, ind)
   play(ind, :wait, true)
@@ -24363,14 +24317,10 @@ def test_13_01
   unless ph
     snd_display("$play_hook not called?")
   end
-  unless ph1
-    snd_display("$dac_hook not called?")
-  end
   $start_playing_hook.reset_hook!
   $start_playing_selection_hook.reset_hook!
   $stop_playing_hook.reset_hook!
   $play_hook.reset_hook!
-  $dac_hook.reset_hook!
   $play_hook.add_hook!("snd-test") do |n|
     set_expand_control_hop(0.02)
     set_expand_control_length(0.02)
@@ -24398,15 +24348,6 @@ def test_13_01
   $stop_playing_selection_hook.reset_hook!
   set_selection_creates_region(old_reg)
   ctr = 0
-  $dac_hook.add_hook!("snd-test") do |n|
-    ctr += 1
-    stop_playing
-  end
-  play(ind, :wait, true)
-  if ctr > 2
-    snd_display("stop_playing: %s?", ctr)
-  end
-  $dac_hook.reset_hook!
   #
   pl = make_player(ind, 0)
   ctr = 0
@@ -24416,22 +24357,11 @@ def test_13_01
   if (not players) # players returs nil if empty
     snd_display("players: %s?", players.inspect)
   end
-  $dac_hook.add_hook!("snd-test") do |n|
-    ctr += 1
-    if player?(pl)
-      stop_player(pl)
-    else
-      if ctr == 1
-        snd_display("player messed up")
-      end
-    end
-  end
   add_player(pl)
   start_playing(1, 22050, false)
   if ctr > 2
     snd_display("stop_player: %s?", ctr)
   end
-  $dac_hook.reset_hook!
   pl = make_player(ind, 0)
   free_player(pl)
   if player?(pl)
@@ -36491,7 +36421,7 @@ def test_28_01
     :draw_mix_hook, :mark_click_hook, :listener_click_hook, :mix_click_hook,
     :after_save_state_hook, :before_save_state_hook, :mark_hook, :mark_drag_hook,
     :mix_drag_hook, :name_click_hook, :after_apply_controls_hook,
-    :open_hook, :output_comment_hook, :help_hook, :play_hook, :dac_hook,
+    :open_hook, :output_comment_hook, :help_hook, :play_hook,
     :new_widget_hook, :read_hook, :bad_header_hook, :snd_error_hook,
     :snd_warning_hook, :start_hook, :start_playing_hook, :stop_playing_hook,
     :mouse_enter_listener_hook, :mouse_leave_listener_hook,
@@ -36505,7 +36435,7 @@ def test_28_01
       snd_display("%s: hooks (1) %s: %s", i, n, tag)
     end
   end
-  [:exit_hook, :stop_dac_hook, :stop_playing_selection_hook,
+  [:exit_hook, :stop_playing_selection_hook,
    :color_hook, :orientation_hook, :start_playing_selection_hook].each_with_index do |n, i|
     hook = eval("$#{n}")
     fnc = lambda do |a, b, c| a + b + c end

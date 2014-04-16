@@ -1440,6 +1440,8 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *~%")
+(hey " *     16-Apr:    changed max-args to 8.~%")
 (hey " *     6-Mar:     changed most macros.~%")
 (hey " *     21-Feb-14: changed _p to _is_.~%")
 (hey " *     --------~%")
@@ -1917,6 +1919,8 @@
 
 (hey "~%~%/* ---------------------------------------- functions ---------------------------------------- */~%~%")
 
+(define max-args 8)
+
 (define handle-func
   (lambda (data)
     (let* ((name (car data))
@@ -1936,8 +1940,7 @@
 	   (spec-data (and (> (length data) 5) (data 5)))
 	   (arg-start 0)
 	   (line-len 0)
-	   (line-max 120)
-	   (max-args 10)) 
+	   (line-max 120))
       
       (define (hey-start)
 	;; start of checked line
@@ -2721,7 +2724,8 @@
 	 ;(args (- cargs refargs))
 	 )
     (hey "Xen_wrap_~A(gxg_~A_w, gxg_~A)~%" 
-	 (if (>= cargs 10) "any_args"
+	 (if (>= cargs max-args) 
+	     "any_args"
 	     (if (> refargs 0)
 		 (format #f "~D_optional_arg~A" cargs (if (= cargs 1) "" "s"))
 		 (format #f "~A_arg~A" (if (zero? cargs) "no" (number->string cargs)) (if (= cargs 1) "" "s"))))
@@ -2828,9 +2832,9 @@
     
     (hey "  Xg_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
 	 (car func) (car func) 
-	 (if (>= cargs 10) 0 args)
-	 (if (>= cargs 10) 0 refargs)
-	 (if (>= cargs 10) 1 0)
+	 (if (>= cargs max-args) 0 args)
+	 (if (>= cargs max-args) 0 refargs)
+	 (if (>= cargs max-args) 1 0)
 	 (car func))))
 
 (for-each defun (reverse funcs))

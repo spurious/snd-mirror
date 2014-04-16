@@ -28,7 +28,7 @@ cast into outer darkness:
     frame->frame frame->list frame->sample frame-ref frame-set! frame? 
     frames frames frames stop-dac-hook continue-frame->file 
     transform-frames mixer mixer* mixer+ mixer-ref region-frames 
-    mixer-set! mixer? mixers dac-hooksample->frame save-mixes 
+    mixer-set! mixer? mixers dac-hook sample->frame save-mixes 
     with-level-meters mus-sound-frames mus-sound-seek-frame 
     make-file->frame make-level-meter 
 

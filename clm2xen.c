@@ -10009,7 +10009,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
   mus_any *s_env = NULL, *mix = NULL, *rev_mix = NULL, *ostr, *rstr = NULL;
   mus_any **mix_envs, **mix_srcs, **mix_rds;
   mus_xen *gn;
-  Xen ve, arg, file, beg, dur, mx, revmx, envs, srcs, srcenv, outstream = xen_undefined, revstream = xen_undefined;
+  Xen ve, arg, file, beg, dur, mx, revmx, envs, srcs, srcenv, outstream = Xen_undefined, revstream = Xen_undefined;
   bool need_mx_free = false, need_revmx_free = false;
   
   arg = args;         file = Xen_car(arg);

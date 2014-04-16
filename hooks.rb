@@ -151,7 +151,6 @@ need a String or Symbol, not %s"
   $before_transform_hook        = Hook.new("$before_transform_hook", 2)
   $clip_hook                    = Hook.new("$clip_hook", 1)
   $close_hook                   = Hook.new("$close_hook", 1)
-  $dac_hook                     = Hook.new("$dac_hook", 1)
   $draw_mark_hook               = Hook.new("$draw_mark_hook", 1)
   $draw_mix_hook                = Hook.new("$draw_mix_hook", 5)
   $drop_hook                    = Hook.new("$drop_hook", 1)
@@ -203,7 +202,6 @@ need a String or Symbol, not %s"
   $start_hook                   = Hook.new("$start_hook", 1)
   $start_playing_hook           = Hook.new("$start_playing_hook", 1)
   $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
-  $stop_dac_hook                = Hook.new("$stop_dac_hook", 0)
   $stop_playing_hook            = Hook.new("$stop_playing_hook", 1)
   $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
   $update_hook                  = Hook.new("$update_hook", 1)
@@ -274,7 +272,6 @@ if defined? $after_graph_hook
                $before_transform_hook,
                $clip_hook,
                $close_hook,
-               $dac_hook,
                $draw_mark_hook,
                $draw_mix_hook,
                $drop_hook,
@@ -326,7 +323,6 @@ if defined? $after_graph_hook
                $start_hook,
                $start_playing_hook,
                $start_playing_selection_hook,
-               $stop_dac_hook,
                $stop_playing_hook,
                $stop_playing_selection_hook,
                $update_hook]

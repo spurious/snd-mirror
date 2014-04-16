@@ -801,10 +801,11 @@ s7_pointer s7_apply_n_8(s7_scheme *sc, s7_pointer args,
 s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args, 
 		      s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
 				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9));
+#if (!DISABLE_DEPRECATED)
 s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args, 
 		      s7_pointer (*f10)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
 				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9, s7_pointer a10));
-
+#endif
 
 
 #if WITH_GMP

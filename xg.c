@@ -26,7 +26,7 @@
  *
  * HISTORY:
  *     6-Mar:     changed most macros.
- *     21-Feb_14: changed _p to _is_.
+ *     21-Feb-14: changed _p to _is_.
  *     --------
  *     3-Sep:     use symbol directly in type checks, not the symbol name.
  *     18-Aug:    changed the gtk version macros to reflect the version number.
@@ -3488,11 +3488,21 @@ static Xen gxg_gdk_pixbuf_new_from_file(Xen filename, Xen ignore_error)
    }
 }
 
-static Xen gxg_gdk_pixbuf_new_from_data(Xen data, Xen colorspace, Xen has_alpha, Xen bits_per_sample, Xen width, Xen height, Xen rowstride, Xen destroy_fn, Xen destroy_fn_data)
+static Xen gxg_gdk_pixbuf_new_from_data(Xen arglist)
 {
   #define H_gdk_pixbuf_new_from_data "GdkPixbuf* gdk_pixbuf_new_from_data(guchar* data, GdkColorspace colorspace, \
 gboolean has_alpha, int bits_per_sample, int width, int height, int rowstride, GdkPixbufDestroyNotify destroy_fn, \
 gpointer destroy_fn_data)"
+  Xen data, colorspace, has_alpha, bits_per_sample, width, height, rowstride, destroy_fn, destroy_fn_data;
+  data = Xen_list_ref(arglist, 0);
+  colorspace = Xen_list_ref(arglist, 1);
+  has_alpha = Xen_list_ref(arglist, 2);
+  bits_per_sample = Xen_list_ref(arglist, 3);
+  width = Xen_list_ref(arglist, 4);
+  height = Xen_list_ref(arglist, 5);
+  rowstride = Xen_list_ref(arglist, 6);
+  destroy_fn = Xen_list_ref(arglist, 7);
+  destroy_fn_data = Xen_list_ref(arglist, 8);
   Xen_check_type(Xen_is_guchar_(data), data, 1, "gdk_pixbuf_new_from_data", "guchar*");
   Xen_check_type(Xen_is_GdkColorspace(colorspace), colorspace, 2, "gdk_pixbuf_new_from_data", "GdkColorspace");
   Xen_check_type(Xen_is_gboolean(has_alpha), has_alpha, 3, "gdk_pixbuf_new_from_data", "gboolean");
@@ -3571,10 +3581,19 @@ guchar r, guchar g, guchar b)"
                                                   Xen_to_C_guchar(g), Xen_to_C_guchar(b))));
 }
 
-static Xen gxg_gdk_pixbuf_copy_area(Xen src_pixbuf, Xen src_x, Xen src_y, Xen width, Xen height, Xen dest_pixbuf, Xen dest_x, Xen dest_y)
+static Xen gxg_gdk_pixbuf_copy_area(Xen arglist)
 {
   #define H_gdk_pixbuf_copy_area "void gdk_pixbuf_copy_area(GdkPixbuf* src_pixbuf, int src_x, int src_y, \
 int width, int height, GdkPixbuf* dest_pixbuf, int dest_x, int dest_y)"
+  Xen src_pixbuf, src_x, src_y, width, height, dest_pixbuf, dest_x, dest_y;
+  src_pixbuf = Xen_list_ref(arglist, 0);
+  src_x = Xen_list_ref(arglist, 1);
+  src_y = Xen_list_ref(arglist, 2);
+  width = Xen_list_ref(arglist, 3);
+  height = Xen_list_ref(arglist, 4);
+  dest_pixbuf = Xen_list_ref(arglist, 5);
+  dest_x = Xen_list_ref(arglist, 6);
+  dest_y = Xen_list_ref(arglist, 7);
   Xen_check_type(Xen_is_GdkPixbuf_(src_pixbuf), src_pixbuf, 1, "gdk_pixbuf_copy_area", "GdkPixbuf*");
   Xen_check_type(Xen_is_int(src_x), src_x, 2, "gdk_pixbuf_copy_area", "int");
   Xen_check_type(Xen_is_int(src_y), src_y, 3, "gdk_pixbuf_copy_area", "int");
@@ -3730,11 +3749,20 @@ int dest_height, GdkInterpType interp_type)"
                                                      Xen_to_C_GdkInterpType(interp_type))));
 }
 
-static Xen gxg_gdk_pixbuf_composite_color_simple(Xen src, Xen dest_width, Xen dest_height, Xen interp_type, Xen overall_alpha, Xen check_size, Xen color1, Xen color2)
+static Xen gxg_gdk_pixbuf_composite_color_simple(Xen arglist)
 {
   #define H_gdk_pixbuf_composite_color_simple "GdkPixbuf* gdk_pixbuf_composite_color_simple(GdkPixbuf* src, \
 int dest_width, int dest_height, GdkInterpType interp_type, int overall_alpha, int check_size, guint32 color1, \
 guint32 color2)"
+  Xen src, dest_width, dest_height, interp_type, overall_alpha, check_size, color1, color2;
+  src = Xen_list_ref(arglist, 0);
+  dest_width = Xen_list_ref(arglist, 1);
+  dest_height = Xen_list_ref(arglist, 2);
+  interp_type = Xen_list_ref(arglist, 3);
+  overall_alpha = Xen_list_ref(arglist, 4);
+  check_size = Xen_list_ref(arglist, 5);
+  color1 = Xen_list_ref(arglist, 6);
+  color2 = Xen_list_ref(arglist, 7);
   Xen_check_type(Xen_is_GdkPixbuf_(src), src, 1, "gdk_pixbuf_composite_color_simple", "GdkPixbuf*");
   Xen_check_type(Xen_is_int(dest_width), dest_width, 2, "gdk_pixbuf_composite_color_simple", "int");
   Xen_check_type(Xen_is_int(dest_height), dest_height, 3, "gdk_pixbuf_composite_color_simple", "int");
@@ -19251,10 +19279,19 @@ int x, int y, int width, int height)"
   return(Xen_false);
 }
 
-static Xen gxg_pango_renderer_draw_trapezoid(Xen renderer, Xen part, Xen y1, Xen x11, Xen x21, Xen y2, Xen x12, Xen x22)
+static Xen gxg_pango_renderer_draw_trapezoid(Xen arglist)
 {
   #define H_pango_renderer_draw_trapezoid "void pango_renderer_draw_trapezoid(PangoRenderer* renderer, \
 PangoRenderPart part, double y1, double x11, double x21, double y2, double x12, double x22)"
+  Xen renderer, part, y1, x11, x21, y2, x12, x22;
+  renderer = Xen_list_ref(arglist, 0);
+  part = Xen_list_ref(arglist, 1);
+  y1 = Xen_list_ref(arglist, 2);
+  x11 = Xen_list_ref(arglist, 3);
+  x21 = Xen_list_ref(arglist, 4);
+  y2 = Xen_list_ref(arglist, 5);
+  x12 = Xen_list_ref(arglist, 6);
+  x22 = Xen_list_ref(arglist, 7);
   Xen_check_type(Xen_is_PangoRenderer_(renderer), renderer, 1, "pango_renderer_draw_trapezoid", "PangoRenderer*");
   Xen_check_type(Xen_is_PangoRenderPart(part), part, 2, "pango_renderer_draw_trapezoid", "PangoRenderPart");
   Xen_check_type(Xen_is_double(y1), y1, 3, "pango_renderer_draw_trapezoid", "double");
@@ -33127,10 +33164,19 @@ static Xen gxg_cairo_text_cluster_free(Xen clusters)
   return(Xen_false);
 }
 
-static Xen gxg_cairo_show_text_glyphs(Xen cr, Xen utf8, Xen utf8_len, Xen glyphs, Xen num_glyphs, Xen clusters, Xen num_clusters, Xen cluster_flags)
+static Xen gxg_cairo_show_text_glyphs(Xen arglist)
 {
   #define H_cairo_show_text_glyphs "void cairo_show_text_glyphs(cairo_t* cr, char* utf8, int utf8_len, \
 cairo_glyph_t* glyphs, int num_glyphs, cairo_text_cluster_t* clusters, int num_clusters, cairo_text_cluster_flags_t cluster_flags)"
+  Xen cr, utf8, utf8_len, glyphs, num_glyphs, clusters, num_clusters, cluster_flags;
+  cr = Xen_list_ref(arglist, 0);
+  utf8 = Xen_list_ref(arglist, 1);
+  utf8_len = Xen_list_ref(arglist, 2);
+  glyphs = Xen_list_ref(arglist, 3);
+  num_glyphs = Xen_list_ref(arglist, 4);
+  clusters = Xen_list_ref(arglist, 5);
+  num_clusters = Xen_list_ref(arglist, 6);
+  cluster_flags = Xen_list_ref(arglist, 7);
   Xen_check_type(Xen_is_cairo_t_(cr), cr, 1, "cairo_show_text_glyphs", "cairo_t*");
   Xen_check_type(Xen_is_char_(utf8), utf8, 2, "cairo_show_text_glyphs", "char*");
   Xen_check_type(Xen_is_int(utf8_len), utf8_len, 3, "cairo_show_text_glyphs", "int");
@@ -34613,19 +34659,19 @@ Xen_wrap_5_args(gxg_gdk_pixbuf_new_w, gxg_gdk_pixbuf_new)
 Xen_wrap_1_arg(gxg_gdk_pixbuf_copy_w, gxg_gdk_pixbuf_copy)
 Xen_wrap_5_args(gxg_gdk_pixbuf_new_subpixbuf_w, gxg_gdk_pixbuf_new_subpixbuf)
 Xen_wrap_2_optional_args(gxg_gdk_pixbuf_new_from_file_w, gxg_gdk_pixbuf_new_from_file)
-Xen_wrap_9_args(gxg_gdk_pixbuf_new_from_data_w, gxg_gdk_pixbuf_new_from_data)
+Xen_wrap_any_args(gxg_gdk_pixbuf_new_from_data_w, gxg_gdk_pixbuf_new_from_data)
 Xen_wrap_1_arg(gxg_gdk_pixbuf_new_from_xpm_data_w, gxg_gdk_pixbuf_new_from_xpm_data)
 Xen_wrap_4_optional_args(gxg_gdk_pixbuf_new_from_inline_w, gxg_gdk_pixbuf_new_from_inline)
 Xen_wrap_2_args(gxg_gdk_pixbuf_fill_w, gxg_gdk_pixbuf_fill)
 Xen_wrap_6_optional_args(gxg_gdk_pixbuf_savev_w, gxg_gdk_pixbuf_savev)
 Xen_wrap_5_args(gxg_gdk_pixbuf_add_alpha_w, gxg_gdk_pixbuf_add_alpha)
-Xen_wrap_8_args(gxg_gdk_pixbuf_copy_area_w, gxg_gdk_pixbuf_copy_area)
+Xen_wrap_any_args(gxg_gdk_pixbuf_copy_area_w, gxg_gdk_pixbuf_copy_area)
 Xen_wrap_4_args(gxg_gdk_pixbuf_saturate_and_pixelate_w, gxg_gdk_pixbuf_saturate_and_pixelate)
 Xen_wrap_any_args(gxg_gdk_pixbuf_scale_w, gxg_gdk_pixbuf_scale)
 Xen_wrap_any_args(gxg_gdk_pixbuf_composite_w, gxg_gdk_pixbuf_composite)
 Xen_wrap_any_args(gxg_gdk_pixbuf_composite_color_w, gxg_gdk_pixbuf_composite_color)
 Xen_wrap_4_args(gxg_gdk_pixbuf_scale_simple_w, gxg_gdk_pixbuf_scale_simple)
-Xen_wrap_8_args(gxg_gdk_pixbuf_composite_color_simple_w, gxg_gdk_pixbuf_composite_color_simple)
+Xen_wrap_any_args(gxg_gdk_pixbuf_composite_color_simple_w, gxg_gdk_pixbuf_composite_color_simple)
 Xen_wrap_2_optional_args(gxg_gdk_pixbuf_animation_new_from_file_w, gxg_gdk_pixbuf_animation_new_from_file)
 Xen_wrap_1_arg(gxg_gdk_pixbuf_animation_get_width_w, gxg_gdk_pixbuf_animation_get_width)
 Xen_wrap_1_arg(gxg_gdk_pixbuf_animation_get_height_w, gxg_gdk_pixbuf_animation_get_height)
@@ -36304,7 +36350,7 @@ Xen_wrap_4_args(gxg_pango_renderer_draw_layout_line_w, gxg_pango_renderer_draw_l
 Xen_wrap_5_args(gxg_pango_renderer_draw_glyphs_w, gxg_pango_renderer_draw_glyphs)
 Xen_wrap_6_args(gxg_pango_renderer_draw_rectangle_w, gxg_pango_renderer_draw_rectangle)
 Xen_wrap_5_args(gxg_pango_renderer_draw_error_underline_w, gxg_pango_renderer_draw_error_underline)
-Xen_wrap_8_args(gxg_pango_renderer_draw_trapezoid_w, gxg_pango_renderer_draw_trapezoid)
+Xen_wrap_any_args(gxg_pango_renderer_draw_trapezoid_w, gxg_pango_renderer_draw_trapezoid)
 Xen_wrap_5_args(gxg_pango_renderer_draw_glyph_w, gxg_pango_renderer_draw_glyph)
 Xen_wrap_1_arg(gxg_pango_renderer_activate_w, gxg_pango_renderer_activate)
 Xen_wrap_1_arg(gxg_pango_renderer_deactivate_w, gxg_pango_renderer_deactivate)
@@ -37877,7 +37923,7 @@ Xen_wrap_1_arg(gxg_cairo_glyph_allocate_w, gxg_cairo_glyph_allocate)
 Xen_wrap_1_arg(gxg_cairo_glyph_free_w, gxg_cairo_glyph_free)
 Xen_wrap_1_arg(gxg_cairo_text_cluster_allocate_w, gxg_cairo_text_cluster_allocate)
 Xen_wrap_1_arg(gxg_cairo_text_cluster_free_w, gxg_cairo_text_cluster_free)
-Xen_wrap_8_args(gxg_cairo_show_text_glyphs_w, gxg_cairo_show_text_glyphs)
+Xen_wrap_any_args(gxg_cairo_show_text_glyphs_w, gxg_cairo_show_text_glyphs)
 Xen_wrap_any_args(gxg_cairo_scaled_font_text_to_glyphs_w, gxg_cairo_scaled_font_text_to_glyphs)
 Xen_wrap_2_args(gxg_cairo_scaled_font_get_scale_matrix_w, gxg_cairo_scaled_font_get_scale_matrix)
 Xen_wrap_3_args(gxg_cairo_toy_font_face_create_w, gxg_cairo_toy_font_face_create)
@@ -38586,19 +38632,19 @@ static void define_functions(void)
   Xg_define_procedure(gdk_pixbuf_copy, gxg_gdk_pixbuf_copy_w, 1, 0, 0, H_gdk_pixbuf_copy);
   Xg_define_procedure(gdk_pixbuf_new_subpixbuf, gxg_gdk_pixbuf_new_subpixbuf_w, 5, 0, 0, H_gdk_pixbuf_new_subpixbuf);
   Xg_define_procedure(gdk_pixbuf_new_from_file, gxg_gdk_pixbuf_new_from_file_w, 1, 1, 0, H_gdk_pixbuf_new_from_file);
-  Xg_define_procedure(gdk_pixbuf_new_from_data, gxg_gdk_pixbuf_new_from_data_w, 9, 0, 0, H_gdk_pixbuf_new_from_data);
+  Xg_define_procedure(gdk_pixbuf_new_from_data, gxg_gdk_pixbuf_new_from_data_w, 0, 0, 1, H_gdk_pixbuf_new_from_data);
   Xg_define_procedure(gdk_pixbuf_new_from_xpm_data, gxg_gdk_pixbuf_new_from_xpm_data_w, 1, 0, 0, H_gdk_pixbuf_new_from_xpm_data);
   Xg_define_procedure(gdk_pixbuf_new_from_inline, gxg_gdk_pixbuf_new_from_inline_w, 3, 1, 0, H_gdk_pixbuf_new_from_inline);
   Xg_define_procedure(gdk_pixbuf_fill, gxg_gdk_pixbuf_fill_w, 2, 0, 0, H_gdk_pixbuf_fill);
   Xg_define_procedure(gdk_pixbuf_savev, gxg_gdk_pixbuf_savev_w, 5, 1, 0, H_gdk_pixbuf_savev);
   Xg_define_procedure(gdk_pixbuf_add_alpha, gxg_gdk_pixbuf_add_alpha_w, 5, 0, 0, H_gdk_pixbuf_add_alpha);
-  Xg_define_procedure(gdk_pixbuf_copy_area, gxg_gdk_pixbuf_copy_area_w, 8, 0, 0, H_gdk_pixbuf_copy_area);
+  Xg_define_procedure(gdk_pixbuf_copy_area, gxg_gdk_pixbuf_copy_area_w, 0, 0, 1, H_gdk_pixbuf_copy_area);
   Xg_define_procedure(gdk_pixbuf_saturate_and_pixelate, gxg_gdk_pixbuf_saturate_and_pixelate_w, 4, 0, 0, H_gdk_pixbuf_saturate_and_pixelate);
   Xg_define_procedure(gdk_pixbuf_scale, gxg_gdk_pixbuf_scale_w, 0, 0, 1, H_gdk_pixbuf_scale);
   Xg_define_procedure(gdk_pixbuf_composite, gxg_gdk_pixbuf_composite_w, 0, 0, 1, H_gdk_pixbuf_composite);
   Xg_define_procedure(gdk_pixbuf_composite_color, gxg_gdk_pixbuf_composite_color_w, 0, 0, 1, H_gdk_pixbuf_composite_color);
   Xg_define_procedure(gdk_pixbuf_scale_simple, gxg_gdk_pixbuf_scale_simple_w, 4, 0, 0, H_gdk_pixbuf_scale_simple);
-  Xg_define_procedure(gdk_pixbuf_composite_color_simple, gxg_gdk_pixbuf_composite_color_simple_w, 8, 0, 0, H_gdk_pixbuf_composite_color_simple);
+  Xg_define_procedure(gdk_pixbuf_composite_color_simple, gxg_gdk_pixbuf_composite_color_simple_w, 0, 0, 1, H_gdk_pixbuf_composite_color_simple);
   Xg_define_procedure(gdk_pixbuf_animation_new_from_file, gxg_gdk_pixbuf_animation_new_from_file_w, 1, 1, 0, H_gdk_pixbuf_animation_new_from_file);
   Xg_define_procedure(gdk_pixbuf_animation_get_width, gxg_gdk_pixbuf_animation_get_width_w, 1, 0, 0, H_gdk_pixbuf_animation_get_width);
   Xg_define_procedure(gdk_pixbuf_animation_get_height, gxg_gdk_pixbuf_animation_get_height_w, 1, 0, 0, H_gdk_pixbuf_animation_get_height);
@@ -40277,7 +40323,7 @@ static void define_functions(void)
   Xg_define_procedure(pango_renderer_draw_glyphs, gxg_pango_renderer_draw_glyphs_w, 5, 0, 0, H_pango_renderer_draw_glyphs);
   Xg_define_procedure(pango_renderer_draw_rectangle, gxg_pango_renderer_draw_rectangle_w, 6, 0, 0, H_pango_renderer_draw_rectangle);
   Xg_define_procedure(pango_renderer_draw_error_underline, gxg_pango_renderer_draw_error_underline_w, 5, 0, 0, H_pango_renderer_draw_error_underline);
-  Xg_define_procedure(pango_renderer_draw_trapezoid, gxg_pango_renderer_draw_trapezoid_w, 8, 0, 0, H_pango_renderer_draw_trapezoid);
+  Xg_define_procedure(pango_renderer_draw_trapezoid, gxg_pango_renderer_draw_trapezoid_w, 0, 0, 1, H_pango_renderer_draw_trapezoid);
   Xg_define_procedure(pango_renderer_draw_glyph, gxg_pango_renderer_draw_glyph_w, 5, 0, 0, H_pango_renderer_draw_glyph);
   Xg_define_procedure(pango_renderer_activate, gxg_pango_renderer_activate_w, 1, 0, 0, H_pango_renderer_activate);
   Xg_define_procedure(pango_renderer_deactivate, gxg_pango_renderer_deactivate_w, 1, 0, 0, H_pango_renderer_deactivate);
@@ -41850,7 +41896,7 @@ static void define_functions(void)
   Xg_define_procedure(cairo_glyph_free, gxg_cairo_glyph_free_w, 1, 0, 0, H_cairo_glyph_free);
   Xg_define_procedure(cairo_text_cluster_allocate, gxg_cairo_text_cluster_allocate_w, 1, 0, 0, H_cairo_text_cluster_allocate);
   Xg_define_procedure(cairo_text_cluster_free, gxg_cairo_text_cluster_free_w, 1, 0, 0, H_cairo_text_cluster_free);
-  Xg_define_procedure(cairo_show_text_glyphs, gxg_cairo_show_text_glyphs_w, 8, 0, 0, H_cairo_show_text_glyphs);
+  Xg_define_procedure(cairo_show_text_glyphs, gxg_cairo_show_text_glyphs_w, 0, 0, 1, H_cairo_show_text_glyphs);
   Xg_define_procedure(cairo_scaled_font_text_to_glyphs, gxg_cairo_scaled_font_text_to_glyphs_w, 0, 0, 1, H_cairo_scaled_font_text_to_glyphs);
   Xg_define_procedure(cairo_scaled_font_get_scale_matrix, gxg_cairo_scaled_font_get_scale_matrix_w, 2, 0, 0, H_cairo_scaled_font_get_scale_matrix);
   Xg_define_procedure(cairo_toy_font_face_create, gxg_cairo_toy_font_face_create_w, 3, 0, 0, H_cairo_toy_font_face_create);
@@ -44292,7 +44338,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("29-Mar-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("16-Apr-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

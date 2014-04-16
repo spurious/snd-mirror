@@ -26848,6 +26848,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
   return(f9(a1, a2, a3, a4, a5, a6, a7, a8, a9));
 }
 
+#if (!DISABLE_DEPRECATED)
 s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args, 
 			 s7_pointer (*f10)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
 					   s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8,
@@ -26895,6 +26896,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
 				    }}}}}}}}}
   return(f10(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
 }
+#endif
 
 /* -------------------------------------------------------------------------------- */
 
@@ -69385,7 +69387,6 @@ int main(int argc, char **argv)
  */
 
 /* letrec* built-in (not macro)
- * remove-duplicates could use the collected bit or symbol-tag (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
  * for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
@@ -69396,6 +69397,7 @@ int main(int argc, char **argv)
  *   frame etc used also in *.lisp, *.ins, *.rb, *.fs, cmus.c?
  *      this is tricky -- ws.rb for example
  *   in s7, the float-vector->file replacements are probably redundant now
+ *     I think they should be framples (there are 3 with mus_vector reflections in clm.c)
  *   eventually move from C to eval-string, then snd14
  *   2dim arr in ruby: NArray or matrix.rb: Array.new of array but indexing syntax is different I think
  *     (still ruby side has frame/mixer/sound_data -- is there any way to make these all ruby-level?)
@@ -69404,8 +69406,7 @@ int main(int argc, char **argv)
  *     perhaps split this into some other file?
  *
  * clear out apply_n n>5
- *   for 10: g_set_samples(twice?) -- this is much harder (sigh)
- *   for 9: about 20 cases, opt: gluProject, gluUnproject, fill_rectangle, save_region, filter_channel
+ *   for 9: about 10 cases, opt: fill_rectangle, save_region, filter_channel, unopt: gl_spectrogram and various Xm cases
  *   for 8 opt: about a dozen 
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)

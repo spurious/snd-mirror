@@ -443,6 +443,8 @@
 (hey " * 'gl is added to *features*~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *~%")
+(hey " *     16-Apr-14: changed max-args to 8.~%")
 (hey " *     --------~%")
 (hey " *     16-Dec-09: removed Guile support.~%")
 (hey " *     --------~%")
@@ -588,6 +590,7 @@
 
 (define need-vals-check (list "glGetIntegerv" "glGetFloatv" "glGetMaterialfv" "glGetLightfv" "glGetBooleanv"))
 
+(define max-args 8)
 
 (hey "~%~%/* ---------------------------------------- functions ---------------------------------------- */~%~%")
 
@@ -603,8 +606,7 @@
 	  ;(lambda-type (cdr (assoc name names)))
 	  (arg-start 0)
 	  (line-len 0)
-	  (line-max 120)
-	  (max-args 10)) 
+	  (line-max 120))
 
      (define (hey-start)
        ;; start of checked line
@@ -803,7 +805,8 @@
     (if if-fnc
 	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (func 5)))))
     (hey "Xen_wrap_~A(gxg_~A_w, gxg_~A)~%" 
-	 (if (>= cargs 10) "any_args"
+	 (if (>= cargs max-args) 
+	     "any_args"
 	     (if (> refargs 0)
 		 (format #f "~D_optional_arg~A" cargs (if (= cargs 1) "" "s"))
 		 (format #f "~A_arg~A" (if (zero? cargs) "no" (number->string cargs)) (if (= cargs 1) "" "s"))))
@@ -836,9 +839,9 @@
 
     (hey "  GL_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
-		     (if (>= cargs 10) 0 args)
-		     (if (>= cargs 10) 0 refargs) ; optional ignored
-		     (if (>= cargs 10) 1 0)
+		     (if (>= cargs max-args) 0 args)
+		     (if (>= cargs max-args) 0 refargs) ; optional ignored
+		     (if (>= cargs max-args) 1 0)
 		     (car func))
     (if (member (car func) glu-1-2) (hey "#endif~%"))
     ))

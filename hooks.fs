@@ -27,7 +27,6 @@ require examp
      clip-hook
      close-hook
      color-hook
-     dac-hook
      draw-mark-hook
      draw-mix-hook
      drop-hook
@@ -80,7 +79,6 @@ require examp
      start-hook
      start-playing-hook
      start-playing-selection-hook
-     stop-dac-hook
      stop-playing-hook
      stop-playing-selection-hook
      update-hook )
