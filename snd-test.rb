@@ -214,7 +214,7 @@ require "poly"
 require "dsp"
 require "analog-filter"
 require "rgb"
-require "effects"
+# require "effects"
 require "draw"
 require "musglyphs"
 
@@ -1818,7 +1818,7 @@ def test_headers(name, chns, sr, dur, typ, frm,
         (req + 1) < res
       snd_display_prev_caller(snd_format_neq(res, req, "%s length", name))
     end
-    fframes = mus_sound_frames(file)
+    fframes = mus_sound_framples(file)
     res = fframes.to_f / fsr
     if fneq(res, fdur)
       snd_display_prev_caller(snd_format_neq(res, fdur, "%s frames", name))
@@ -2497,9 +2497,9 @@ def test_03
    :comb_bank, :comb_bank?, :all_pass_bank, :all_pass_bank?,
    :filtered_comb_bank, :filtered_comb_bank?, :make_comb_bank,
    :make_all_pass_bank, :make_filtered_comb_bank,
-   :fourier_transform, :frame, :frame_multiply, :frame_add,
-   :frame2file, :frame2file?, :frame2frame, :frame2list, :frame2sample,
-   :frame_ref, :frame_set!, :frame?, :frames, :free_player, :free_sampler,
+   :fourier_transform, 
+   :frame2file, :frame2file?, :frame2frame,
+   :free_player, :free_sampler,
    :gaussian_window, :gc_off, :gc_on, :gl_graph2ps, :glSpectrogram,
    :goto_listener_end, :granulate, :granulate?, :graph, :graph2ps,
    :graph_as_sonogram, :graph_as_spectrogram, :graph_as_wavogram,
@@ -2530,14 +2530,14 @@ def test_03
    :make_file2sample, :make_filter, :make_fir_coeffs, :make_fir_filter,
    :make_formant, :make_firmant, :make_formant_bank, :make_frame,
    :make_frame2file, :make_granulate, :make_graph_data, :make_iir_filter,
-   :make_locsig, :make_mix_sampler, :make_mixer, :make_move_sound,
+   :make_locsig, :make_mix_sampler, :make_move_sound,
    :make_notch, :make_one_pole, :make_one_pole_all_pass, :make_one_zero,
    :make_oscil, :make_phase_vocoder, :make_player, :make_polyshape,
    :make_polywave, :make_pulse_train, :make_rand, :make_rand_interp,
    :make_readin, :make_region, :make_region_sampler, :make_sample2file,
    :make_sampler, :make_sawtooth_wave, :make_scalar_mixer, :make_nrxysin,
    :make_nrxycos, "make_rxyk!cos".intern, "make_rxyk!sin".intern,
-   :make_snd2sample, :make_sound_data, :make_square_wave,
+   :make_snd2sample, :make_square_wave,
    :make_src, :make_ssb_am, :make_ncos, :make_nsin, :make_table_lookup,
    :make_triangle_wave, :make_two_pole, :make_two_zero, :make_variable_graph,
    :make_vct, :make_wave_train, :map_chan, :map_channel, :mark_click_hook,
@@ -2550,8 +2550,7 @@ def test_03
    :mix_length, :mix_home, :mix_name, :mix_position, :mix_properties,
    :mix_property, :mix_region, :mix_release_hook, :mix_sync, :mix_sync_max,
    :mix_sampler?, :mix_selection, :mix_speed, :mix_tag_height,
-   :mix_tag_width, :mix_tag_y, :mix_vct, :mix_waveform_height, :mix?,
-   :mixer, :mixer_multiply, :mixer_add, :mixer_ref, :mixer_set!, :mixer?,
+   :mix_tag_width, :mix_tag_y, :mix_vct, :mix_waveform_height,
    :mixes, :mouse_click_hook, :mouse_drag_hook, :mouse_enter_graph_hook,
    :mouse_enter_label_hook, :mouse_enter_listener_hook,
    :mouse_enter_text_hook, :mouse_leave_graph_hook, :mouse_leave_label_hook,
@@ -2586,7 +2585,7 @@ def test_03
    :mus_sound_chans, :mus_sound_close_input, :mus_sound_close_output,
    :mus_sound_comment, :mus_sound_data_format, :mus_sound_data_location,
    :mus_sound_datum_size, :mus_sound_duration, :mus_sound_forget,
-   :mus_sound_frames, :mus_sound_header_type, :mus_sound_length,
+   :mus_sound_framples, :mus_sound_header_type, :mus_sound_length,
    :mus_sound_loop_info, :mus_sound_mark_info, :mus_sound_maxamp,
    :mus_sound_maxamp_exists?, :mus_sound_open_input, :mus_sound_open_output,
    :mus_sound_prune, :mus_sound_read, :mus_sound_reopen_output,
@@ -2617,7 +2616,7 @@ def test_03
    :rand, :rand_interp, :rand_interp?, :rand?, :read_mix_sample,
    :read_only, :read_region_sample, :read_sample, :readin, :readin?,
    :rectangular2magnitudes, :rectangular2polar, :rectangular_window,
-   :redo_edit, :region2vct, :region_chans, :region_home, :region_frames,
+   :redo_edit, :region2vct, :region_chans, :region_home, :region_framples,
    :region_graph_style, :region_maxamp, :region_maxamp_position,
    :region_position, :region_sample, :region_sampler?, :region_srate,
    :region?, :regions, :remember_sound_state, :remove_from_menu,
@@ -2641,7 +2640,7 @@ def test_03
    :select_channel, :select_channel_hook, :select_sound, :select_sound_hook,
    :selected_channel, :selected_data_color, :selected_graph_color,
    :selected_sound, :selection_chans, :selection_color,
-   :selection_context, :selection_creates_region, :selection_frames,
+   :selection_context, :selection_creates_region, :selection_framples,
    :selection_maxamp, :selection_maxamp_position, :selection_member?,
    :selection_position, :selection_srate, :selection?, :short_file_name,
    :show_all_axes, :show_all_axes_unlabelled, :show_bare_x_axis,
@@ -2681,7 +2680,7 @@ def test_03
    :table_lookup?, :tap, :tap?, :temp_dir, :text_focus_color, :time_graph,
    :time_graph_style, :time_graph_type, :time_graph?, :tiny_font,
    :tracking_cursor_style, :transform2vct, :transform_dialog,
-   :transform_frames, :transform_graph, :transform_graph_style,
+   :transform_framples, :transform_graph, :transform_graph_style,
    :transform_graph_type, :transform_graph?, :transform_normalization,
    :transform_sample, :transform_size, :transform_type, :transform?,
    :triangle_wave, :triangle_wave?, :tukey_window,
@@ -2738,7 +2737,7 @@ end
 def play_sound_1(file)
   sound_fd = mus_sound_open_input(file)
   chans = mus_sound_chans(file)
-  frames = mus_sound_frames(file)
+  frames = mus_sound_framples(file)
   srate = mus_sound_srate(file)
   bufsize = 256
   data = SoundData.new(chans, bufsize)
@@ -2772,7 +2771,7 @@ def test_04_00
   oboe_snd = "oboe.snd"
   chns = mus_sound_chans(oboe_snd)
   dl = mus_sound_data_location(oboe_snd)
-  fr = mus_sound_frames(oboe_snd)
+  fr = mus_sound_framples(oboe_snd)
   smps = mus_sound_samples(oboe_snd)
   len = mus_sound_length(oboe_snd)
   size = mus_sound_datum_size(oboe_snd)
@@ -2821,7 +2820,7 @@ def test_04_00
   req = 10
   snd_test_neq(chns, 1, "oboe: mus_sound_chans")
   snd_test_neq(dl, 28, "oboe: mus_sound_data_location")
-  snd_test_neq(fr, 50828, "oboe: mus_sound_frames")
+  snd_test_neq(fr, 50828, "oboe: mus_sound_framples")
   snd_test_neq(smps, 50828, "oboe: mus_sound_samples")
   snd_test_neq(len, 50828 * 2 + 28, "oboe: mus_sound_length")
   snd_test_neq(size, 2, "oboe: mus_sound_datum_size")
@@ -3376,7 +3375,7 @@ def test_04_00
       res = Snd.catch do
         [mus_sound_chans(fsnd),
          mus_sound_srate(fsnd),
-         mus_sound_frames(fsnd)]
+         mus_sound_framples(fsnd)]
       end.first
       if res != vals and res != :mus_error
         snd_display(snd_format_neq(res, vals, fsnd))
@@ -4185,8 +4184,8 @@ def test_04_04
     cur_samps = frames(ind)
     set_srate(ind, cur_srate * 2)
     snd_test_neq(srate(ind), cur_srate * 2, "%s set_srate", file)
-    set_frames(cur_samps * 2, ind)
-    snd_test_neq(frames(ind), cur_samps * 2, "%s set_frames", file)
+    set_framples(cur_samps * 2, ind)
+    snd_test_neq(frames(ind), cur_samps * 2, "%s set_framples", file)
     set_chans(ind, cur_chans * 2) # this can change the index
     xind = find_sound(file)
     if ind != xind
@@ -4200,7 +4199,7 @@ def test_04_04
     set_data_format(ind, Mus_lintn)
     snd_test_neq(data_format(ind), Mus_lintn, "%s set_data_format", file)
     set_srate(ind, cur_srate)
-    set_frames(cur_samps, ind)
+    set_framples(cur_samps, ind)
     set_channels(ind, cur_chans)
     set_data_location(ind, cur_loc)
     set_header_type(ind, cur_type)
@@ -4218,23 +4217,23 @@ end
 #   end
 # end
 
-$big_file_frames = 0
+$big_file_framples = 0
 
 def test_04_05
   if File.exists?($bigger_snd)
     # ; silence as last .9 secs, so it probably wasn't written
-    probable_frames = (44100 * 71999.1).floor
+    probable_framples = (44100 * 71999.1).floor
     snd_test_neq(mus_sound_samples($bigger_snd), 3175160310, "bigger samples")
-    snd_test_neq(mus_sound_frames($bigger_snd), 3175160310, "bigger frames")
-    snd_test_neq(mus_sound_frames($bigger_snd), probable_frames,
+    snd_test_neq(mus_sound_framples($bigger_snd), 3175160310, "bigger frames")
+    snd_test_neq(mus_sound_framples($bigger_snd), probable_framples,
                  "bigger frames (probable)")
     snd_test_neq(mus_sound_length($bigger_snd), 6350320648, "bigger length")
     snd_test_neq(mus_sound_duration($bigger_snd), 71999.1015, "bigger dur")
     ind = open_sound($bigger_snd)
     snd_test_neq(frames(ind), 3175160310, "bigger frames")
-    $big_file_frames = frames(ind)
-    snd_test_neq(frames(ind), probable_frames, "bigger frames (probable)")
-    snd_test_neq(frames(ind, 0, 0), $big_file_frames, "bigger edpos-frames")
+    $big_file_framples = frames(ind)
+    snd_test_neq(frames(ind), probable_framples, "bigger frames (probable)")
+    snd_test_neq(frames(ind, 0, 0), $big_file_framples, "bigger edpos-frames")
     m1 = add_mark(44100 * 50000, ind)
     snd_test_neq(mark_sample(m1), 44100 * 50000, "bigger mark at")
     set_mark_sample(m1, 44100 * 66000)
@@ -4254,12 +4253,12 @@ def test_04_05
     old_select = selection_creates_region
     set_selection_creates_region(false)
     select_all(ind)
-    snd_test_neq(selection_frames(), frames(ind), "bigger select all")
+    snd_test_neq(selection_framples(), frames(ind), "bigger select all")
     set_selection_position(44100 * 50000)
     snd_test_neq(selection_position(), 44100 * 50000, "bigger select pos")
     set_selection_position(0)
-    set_selection_frames(44100 * 65000)
-    snd_test_neq(selection_frames(), 44100 * 65000, "bigger select len")
+    set_selection_framples(44100 * 65000)
+    snd_test_neq(selection_framples(), 44100 * 65000, "bigger select len")
     set_selection_creates_region(old_select)
     set_cursor(44100 * 50000, ind)
     snd_test_neq(cursor(ind), 44100 * 50000, "bigger cursor")
@@ -4649,7 +4648,7 @@ def test_04_08
     snd_test_neq(mus_sound_comment("test.aif")[0..2], "bil",
                  "aifc trailing comt comments")
   end
-  snd_test_neq(mus_sound_frames("test.aif"), 2, "aifc trailing comt frames")
+  snd_test_neq(mus_sound_framples("test.aif"), 2, "aifc trailing comt frames")
   Snd.catch do
     ind = open_sound("test.aif")
     if fneq(sample(0), 0.00198) or
@@ -4693,7 +4692,7 @@ def test_04_08
   end
   snd_test_neq(mus_sound_comment("test.aif")[0..2], "bil",
                "aifc trailing comt comment")
-  snd_test_neq(mus_sound_frames("test.aif"), 2,
+  snd_test_neq(mus_sound_framples("test.aif"), 2,
                "aifc trailing comt (bogus) frames")
   Snd.catch do
     ind = open_sound("test.aif")
@@ -4814,7 +4813,7 @@ def test_04_08
     close_sound(res)
   end
   Snd.catch do
-    snd_test_neq(mus_sound_frames("test.aif"), 2, "chunked mus_sound_frames")
+    snd_test_neq(mus_sound_framples("test.aif"), 2, "chunked mus_sound_framples")
   end
   delete_file("test.aif")
   mus_sound_forget("test.aif")
@@ -4967,7 +4966,7 @@ def test_04_08
   close_sound(ind)
   ind = open_sound("test space.snd")
   snd_test_neq(short_file_name(ind), "test space.snd", "file name with space")
-  snd_test_neq(mus_sound_frames("test space.snd"), frames(ind),
+  snd_test_neq(mus_sound_framples("test space.snd"), frames(ind),
                "spaced filename frames")
   add_mark(1234, ind, 0)
   save_marks(ind)
@@ -7322,7 +7321,7 @@ def test_05_10
   if k != 1234567 and k != -1
     snd_display("disk_kspace of bogus file = %s", k)
   end
-  snd_test_neq(transform_frames, 0, "transform_frames")
+  snd_test_neq(transform_framples, 0, "transform_framples")
   set_transform_size(512)
   set_transform_graph?(true)
   set_time_graph?(true)
@@ -7406,8 +7405,8 @@ def test_05_10
     set_y_axis_label("hiho")
   end
   # 
-  if number?(transform_frames) and transform_frames.zero?
-    snd_display("transform_graph? transform-frames: %s?", trandform_frames)
+  if number?(transform_framples) and transform_framples.zero?
+    snd_display("transform_graph? transform-frames: %s?", trandform_framples)
   end
   update_transform_graph
   if (tag = Snd.catch do peaks("/baddy/hiho") end).first != :cant_open_file
@@ -7585,18 +7584,18 @@ def test_05_10
   end
   [[:region_srate, 22050],
    [:region_chans, 1],
-   [:region_frames, 50828],
+   [:region_framples, 50828],
    [:region_home, ["oboe.snd", 0, 50827]]].each do |func, req|
     snd_test_neq(snd_func(func, r0), req, "%s", func)
   end
-  snd_test_neq(selection_frames, 50828, "selection_frames")
+  snd_test_neq(selection_framples, 50828, "selection_framples")
   snd_test_neq(selection_position, 0, "selection_position")
   snd_test_neq(region_position(r0, 0), 0, "region_position")
   snd_test_neq(region_maxamp(r0), maxamp(ind), "region_maxamp (2)")
   snd_test_neq(selection_maxamp(ind, 0), maxamp(ind), "selection_maxamp (2)")
   [[:region_srate, 22050],
    [:region_chans, 1],
-   [:region_frames, 50828],
+   [:region_framples, 50828],
    [:region_maxamp, maxamp(ind)]].each do |func, req|
     snd_test_neq(snd_func(func, r0), req, "%s", func)
   end
@@ -7772,7 +7771,7 @@ def test_05_10
   s100 = sample(100)
   s40 = sample(40)
   len = frames
-  addlen = mus_sound_frames("fyow.snd")
+  addlen = mus_sound_framples("fyow.snd")
   old_csize = cursor_size
   old_cstyle = cursor_style
   set_cursor_style(Cursor_line)
@@ -7835,12 +7834,12 @@ def test_05_10
   save_region(id, "fmv.snd")
   region_srate(id)
   region_chans(id)
-  region_frames(id)
+  region_framples(id)
   [[:mus_sound_header_type, Mus_next],
    [:mus_sound_data_format, Mus_out_format],
    [:mus_sound_srate, region_srate(id)],
    [:mus_sound_chans, region_chans(id)],
-   [:mus_sound_frames, region_frames(id)]].each do |func, req|
+   [:mus_sound_framples, region_framples(id)]].each do |func, req|
     snd_test_neq(snd_func(func, "fmv.snd"), req, "save_region (1) %s", func)
   end
   if region_position(id, 0).nonzero?
@@ -7851,7 +7850,7 @@ def test_05_10
   [[:mus_sound_header_type, Mus_riff],
    [:mus_sound_data_format, Mus_lshort],
    [:mus_sound_comment, "this is a comment"],
-   [:mus_sound_frames, region_frames(id)]].each do |func, req|
+   [:mus_sound_framples, region_framples(id)]].each do |func, req|
     snd_test_neq(snd_func(func, "fmv.snd"), req, "save_region (2) %s", func)
   end
   delete_file("fmv.snd")
@@ -7863,7 +7862,7 @@ def test_05_10
   [[:mus_sound_header_type, Mus_riff],
    [:mus_sound_data_format, Mus_lshort],
    [:mus_sound_comment, "this is a comment"],
-   [:mus_sound_frames, region_frames(id)]].each do |func, req|
+   [:mus_sound_framples, region_framples(id)]].each do |func, req|
     snd_test_neq(snd_func(func, "fmv.snd"), req,
                  "save_region opt (3) %s", func)
   end
@@ -7876,7 +7875,7 @@ def test_05_10
   [[:mus_sound_header_type, Mus_riff],
    [:mus_sound_data_format, Mus_lshort],
    [:mus_sound_comment, "this is a comment"],
-   [:mus_sound_frames, region_frames(id)]].each do |func, req|
+   [:mus_sound_framples, region_framples(id)]].each do |func, req|
     snd_test_neq(snd_func(func, "fmv.snd"), req,
                  "save_region opt1 (4) %s", func)
   end
@@ -7884,7 +7883,7 @@ def test_05_10
   save_region(id, "fmv.snd", :data_format, Mus_bshort)
   [[:mus_sound_header_type, Mus_next],
    [:mus_sound_data_format, Mus_bshort],
-   [:mus_sound_frames, region_frames(id)]].each do |func, req|
+   [:mus_sound_framples, region_framples(id)]].each do |func, req|
     snd_test_neq(snd_func(func, "fmv.snd"), req,
                  "save_region opt2 (5) %s", func)
   end
@@ -7907,7 +7906,7 @@ def test_05_11
   if (res1 = frames(ind, 0)) != 1001 or (res2 = frames(ind, 1)) != 1001
     snd_display("saved silence 1: %s %s?", res1, res2)
   end
-  if (res = mus_sound_frames("fmv.snd")) != 1001
+  if (res = mus_sound_framples("fmv.snd")) != 1001
     snd_display("saved frames silence 1: %s?", res)
   end
   v0 = channel2vct(0, 1000, ind, 0)
@@ -8297,7 +8296,7 @@ def test_05_12
   mark_now = marks(obind, 0).length
   snd_test_neq(mark_num, mark_now, "mark lost after scaling")
   set_selection_position(0)
-  set_selection_frames(100)
+  set_selection_framples(100)
   scale_selection_to(0.5)
   mark_now = marks(obind, 0).length
   snd_test_neq(mark_num, mark_now, "mark lost after scaling scaling")
@@ -8534,11 +8533,11 @@ def test_05_14
   set_transform_graph?(true, ind, 0)
   set_transform_graph_type(Graph_as_sonogram, ind, 0)
   update_transform_graph(ind, 0)
-  res = transform_frames(ind, 0)
+  res = transform_framples(ind, 0)
   if (not list?(res)) or
     fneq(res.car, 1.0) or
     res.caddr != 256
-    snd_display("transform_frames: %s (%s)?",
+    snd_display("transform_framples: %s (%s)?",
                 res.inspect, transform_size(ind, 0))
   end
   close_sound(ind)
@@ -8903,9 +8902,9 @@ def test_05_16
   unless region?(id)
     snd_display("make_region argless: %s?", id)
   end
-  if (res1 = region_frames(id, 0)) != (res2 = selection_frames)
-    snd_display("region/selection_frames: %s %s (%s)?",
-                res1, res2, region_frames(id))
+  if (res1 = region_framples(id, 0)) != (res2 = selection_framples)
+    snd_display("region/selection_framples: %s %s (%s)?",
+                res1, res2, region_framples(id))
   end
   if (res1 = region_sample(id, 0)) != (res2 = sample(1000, ind1))
     snd_display("region_sample from make_region: %s %s?", res1, res2)
@@ -9189,13 +9188,13 @@ def test_05_20
   end).first != :no_such_channel
   snd_display("save_sound_as bad chan: %s", res)
   end
-  if (res0 = mus_sound_frames("fmv.snd")) != (res1 = frames(ind1, 0, 0))
+  if (res0 = mus_sound_framples("fmv.snd")) != (res1 = frames(ind1, 0, 0))
     snd_display("save_sound_as (edpos): %s %s?", res0, res1)
   end
-  if (res0 = mus_sound_frames("fmv1.snd")) != (res1 = frames(ind1, 0, 1))
+  if (res0 = mus_sound_framples("fmv1.snd")) != (res1 = frames(ind1, 0, 1))
     snd_display("save_sound_as (edpos 1): %s %s?", res0, res1)
   end
-  if (res0 = mus_sound_frames("fmv.snd")) == (res1 = frames(ind1, 0, 1))
+  if (res0 = mus_sound_framples("fmv.snd")) == (res1 = frames(ind1, 0, 1))
     snd_display("save_sound_as (edpos 1)(2): %s %s?", res0, res1)
   end
   ind2 = open_sound("fmv.snd")
@@ -9343,7 +9342,7 @@ def test_05_22
     set_selection_member?(false, true)
     set_selection_member?(true, ind, 0)
     set_selection_position(20000, ind, 0)
-    set_selection_frames(12000, ind, 0)
+    set_selection_framples(12000, ind, 0)
     scale_selection_by(3.0)
     e1 = channel_amp_envs(ind, 0, 1)
     mx3 = vct_peak(e1[0])
@@ -9727,7 +9726,7 @@ def test_05_23
   #
   old_max = maxamp(index, true)
   regdata = Snd.regions.map do |n| region2vct(n, 0, 10) end
-  old_reglen = Snd.regions.map do |n| region_frames(n) end
+  old_reglen = Snd.regions.map do |n| region_framples(n) end
   s61_files = []
   $save_state_hook.add_hook!("snd-test") do |file|
     s61_files.push(file)
@@ -9738,8 +9737,8 @@ def test_05_23
   close_sound(index)
   Snd.regions.apply(:forget_region)
   load("s61.rb")
-  if (res = Snd.regions.map do |n| region_frames(n) end) != old_reglen
-    snd_display("region_frames after save: %s %s?", old_reglen, res)
+  if (res = Snd.regions.map do |n| region_framples(n) end) != old_reglen
+    snd_display("region_framples after save: %s %s?", old_reglen, res)
   end
   Snd.catch(:all, lambda do |*args|
               snd_display("region2vct: %s", args.inspect)
@@ -9889,10 +9888,10 @@ def test_05_25
     set_selection_member?(false, true)
     set_selection_member?(true, ind, 0)
     set_selection_position(s1, ind, 0)
-    set_selection_frames(l1, ind, 0)
+    set_selection_framples(l1, ind, 0)
     set_selection_member?(true, ind, 1)
     set_selection_position(s2, ind, 1)
-    set_selection_frames(l2, ind, 1)
+    set_selection_framples(l2, ind, 1)
     rid2 = make_region
     rid20_data = region2vct_1(rid2, 0, l1)
     rid21_data = region2vct_1(rid2, 1, l2)
@@ -9973,7 +9972,7 @@ def test_05_25
   vct2channel(v, 0, 1000, ns, 0)
   set_selection_member?(true, ns, 0)
   set_selection_position(200, ns, 0)
-  set_selection_frames(300, ns, 0)
+  set_selection_framples(300, ns, 0)
   delete_selection_and_smooth
   snd_test_neq(frames(ns, 0), 700, "delete_selection_and_smooth frames")
   snd_test_neq(sample(167, ns, 0), 0.167, "delete_selection_and_smooth 167")
@@ -17792,7 +17791,7 @@ def test_08_11
   if (res = mus_sound_chans("fmv.snd")) != 2
     snd_display("sample2file chans: %s?", res)
   end
-  if (res = mus_sound_frames("fmv.snd")) != 10
+  if (res = mus_sound_framples("fmv.snd")) != 10
     snd_display("sample2file frames: %s?", res)
   end
   if (res = mus_sound_samples("fmv.snd")) != 20
@@ -17825,7 +17824,7 @@ def test_08_11
   if (res = mus_sound_chans("fmv.snd")) != 2
     snd_display("continue_sample2file chans: %s?", res)
   end
-  if (res = mus_sound_frames("fmv.snd")) != 15
+  if (res = mus_sound_framples("fmv.snd")) != 15
     snd_display("continue_sample2file frames: %s?", res)
   end
   if (res = mus_sound_samples("fmv.snd")) != 30
@@ -17863,7 +17862,7 @@ def test_08_11
   if (res = mus_sound_chans("fmv.snd")) != 2
     snd_display("frame2file chans: %s?", res)
   end
-  if (res = mus_sound_frames("fmv.snd")) != 10
+  if (res = mus_sound_framples("fmv.snd")) != 10
     snd_display("frame2file frames: %s?", res)
   end
   if (res = mus_sound_samples("fmv.snd")) != 20
@@ -17898,7 +17897,7 @@ def test_08_11
   if (res = mus_sound_chans("fmv.snd")) != 2
     snd_display("continue_frame2file chans: %s?", res)
   end
-  if (res = mus_sound_frames("fmv.snd")) != 15
+  if (res = mus_sound_framples("fmv.snd")) != 15
     snd_display("continue_frame2file frames: %s?", res)
   end
   if (res = mus_sound_samples("fmv.snd")) != 30
@@ -20515,7 +20514,7 @@ def test_08_20
     #
     delete_file("fmv.snd")
     v0 = make_vct(12)
-    len = mus_sound_frames("oboe.snd")
+    len = mus_sound_framples("oboe.snd")
     array2file("fmv.snd", v0, 12, 22050, 1)
     mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("oboe.snd", k))
     mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("oboe.snd", k),
@@ -20540,7 +20539,7 @@ def test_08_20
     # 
     delete_file("fmv.snd")
     v0 = make_vct(12)
-    len = mus_sound_frames("2.snd")
+    len = mus_sound_framples("2.snd")
     array2file("fmv.snd", v0, 12, 22050, 2)
     if (res = mus_sound_chans("fmv.snd")) != 2
       snd_display("%s array2file chans %s?", k, res)
@@ -21436,7 +21435,6 @@ def test_08_24
      :make_frame,
      :make_iir_filter,
      :make_locsig,
-     :make_mixer,
      :make_notch,
      :make_one_pole,
      :make_one_zero,
@@ -22146,7 +22144,7 @@ def test_09_04
   set_with_mix_tags(true)
   ind = open_sound("oboe.snd")
   mx = mix_vct(Vct.new(100, 0.1), 1000)
-  fr = mus_sound_frames("1a.snd")
+  fr = mus_sound_framples("1a.snd")
   [[lambda do pad_channel(0,     100) end, 1100, false, :pad0],
    [lambda do pad_channel(0,    2000) end, 3000, false, :pad20],
    [lambda do pad_channel(800,   100) end, 1100, false, :pad800],
@@ -22845,8 +22843,8 @@ def test_10_02
     if selection_position != 123
       snd_display("selection_position 123: %s?", selection_position)
     end
-    if selection_frames != 112
-      snd_display("selection_frames 112: %s?", selection_frames)
+    if selection_framples != 112
+      snd_display("selection_framples 112: %s?", selection_framples)
     end
   end
   m1 = add_mark(1000, ind, 0) 
@@ -22862,8 +22860,8 @@ def test_10_02
     if selection_position != 1000
       snd_display("selection_position 1000: %s?", selection_position)
     end
-    if selection_frames != 1001
-      snd_display("selection_frames 1001: %s?", selection_frames)
+    if selection_framples != 1001
+      snd_display("selection_framples 1001: %s?", selection_framples)
     end
   end
   set_selection_member?(false, true)
@@ -22872,7 +22870,7 @@ def test_10_02
   end
   set_selection_member?(true, ind, 0)
   set_selection_position(2000, ind, 0)
-  set_selection_frames(1234, ind, 0)
+  set_selection_framples(1234, ind, 0)
   snap_marks
   unless mark?(m1 = find_mark(2000, ind, 0))
     snd_display("snap_marks start: %s?", Snd.marks(ind, 0).map do |m| mark_sample(m) end)
@@ -23530,7 +23528,7 @@ def test_12
           mus_sound_chans(dir).between?(1, 255) and
             mus_sound_data_format(dir) >= 0 and
             mus_sound_srate(dir) > 0 and
-            mus_sound_frames(dir) >= 0 and
+            mus_sound_framples(dir) >= 0 and
             sf_dir_files.push(dir)
         end
       end
@@ -24024,14 +24022,14 @@ def test_13_00
   end
   $initial_graph_hook.reset_hook!
   set_selection_position(1000, fd, 1)
-  set_selection_frames(10, fd, 1)
+  set_selection_framples(10, fd, 1)
   set_selection_member?(true, fd, 1)
   if selection_member?(fd, 0)
     snd_display("chan 0 is selection_member?")
   end
   2.times do |chn|
     set_selection_position(1000, fd, chn)
-    set_selection_frames(10, fd, chn)
+    set_selection_framples(10, fd, chn)
     set_selection_member?(true, fd, chn)
   end
   scale_selection_to([0.5, 0.25].to_vct)
@@ -24958,7 +24956,7 @@ def test_14
   if $with_test_gui
     cur_dir_files = []
     sound_files_in_directory(".").each do |f|
-      if Snd.catch(:all, 0) do mus_sound_frames(f) end.first > 0
+      if Snd.catch(:all, 0) do mus_sound_framples(f) end.first > 0
         cur_dir_files.push(f)
       end
     end
@@ -24972,7 +24970,7 @@ def test_14
     cur_dir_files.each do |name|
       ht = mus_sound_header_type(name)
       df = mus_sound_data_format(name)
-      len = mus_sound_frames(name)
+      len = mus_sound_framples(name)
       if ht != Mus_raw and len.nonzero? and df != -1
         case mus_sound_chans(name)
         when 1
@@ -25912,7 +25910,7 @@ end
 def test_selection(ind, beg, len, scaler)
   set_selection_member?(true, ind, 0)
   set_selection_position(beg)
-  set_selection_frames(len)
+  set_selection_framples(len)
   scale_selection_by(scaler)
   diff = 0.0
   pos = edit_position(ind, 0)
@@ -25944,7 +25942,7 @@ end
 def test_selection_to(ind, beg, len, maxval)
   set_selection_member?(true, ind, 0)
   set_selection_position(beg)
-  set_selection_frames(len)
+  set_selection_framples(len)
   scale_selection_to(maxval)
   newmax = 0.0
   new_reader = make_sampler(beg, ind, 0)
@@ -26079,7 +26077,7 @@ def test_15_00
   snds = match_sound_files do |file|
     File.exists?(file) and # for $tests > 1
       mus_sound_chans(file) == 2 and
-      mus_sound_frames(file) > 1000
+      mus_sound_framples(file) > 1000
   end
   if snds.length > 0
     s2i = open_sound(snds.first)
@@ -26297,37 +26295,37 @@ def test_15_01
   id = open_sound("oboe.snd")
   fr = frames(id, 0)
   mx = maxamp(id, 0)
-  set_frames(25000, id, 0)
+  set_framples(25000, id, 0)
   if (res = frames(id, 0)) != 25000
-    snd_display("set_frames 25000: %s?", res)
+    snd_display("set_framples 25000: %s?", res)
   end
   if (res = edit_position(id, 0)) != 1
-    snd_display("set_frames 25000 edit: %s?", res)
+    snd_display("set_framples 25000 edit: %s?", res)
   end
-  set_frames(75000, id, 0)
+  set_framples(75000, id, 0)
   if (res = frames(id, 0)) != 75000
-    snd_display("set_frames 75000: %s?", res)
+    snd_display("set_framples 75000: %s?", res)
   end
   if (res = edit_position(id, 0)) != 2
-    snd_display("set_frames 75000 edit: %s?", res)
+    snd_display("set_framples 75000 edit: %s?", res)
   end
   if fneq(res = sample(30000, id, 0), 0.0)
-    snd_display("set_frames 75000 zeros: %s?", res)
+    snd_display("set_framples 75000 zeros: %s?", res)
   end
-  set_frames(0, id, 0)
+  set_framples(0, id, 0)
   if (res = frames(id, 0)) != 0
-    snd_display("set_frames 0: %s?", res)
+    snd_display("set_framples 0: %s?", res)
   end
-  set_frames(100, id, 0)
+  set_framples(100, id, 0)
   if (res = frames(id, 0)) != 100
-    snd_display("set_frames 100: %s?", res)
+    snd_display("set_framples 100: %s?", res)
   end
   revert_sound
   if fneq(res = sample(30000, id, 0), -0.0844)
-    snd_display("revert from set_frames: %s?", res)
+    snd_display("revert from set_framples: %s?", res)
   end
   if (res = frames(id, 0)) != fr
-    snd_display("revert set_frames: %s != %s?", res, fr)
+    snd_display("revert set_framples: %s != %s?", res, fr)
   end
   set_maxamp(0.5, id, 0)
   if fneq(res = maxamp(id, 0), 0.5)
@@ -26520,7 +26518,7 @@ def test_15_01
   snds = match_sound_files do |file|
     File.exists?(file) and # for $tests > 1
       mus_sound_chans(file) >= 2 and
-      mus_sound_frames(file) > 1000
+      mus_sound_framples(file) > 1000
   end
   if snds.length > 0
     id = open_sound(snds.first)
@@ -26735,12 +26733,12 @@ def test_15_02
   if (not (res1 = selection_member?(ind, 0))) or (not (res2 = selection_member?(ind)))
     snd_display("selection_member? %s %s %s?", res1, res2, selection?)
   end
-  if (res = selection_frames) != 1
-    snd_display("initial selection_frames: %s?", res)
+  if (res = selection_framples) != 1
+    snd_display("initial selection_framples: %s?", res)
   end
-  set_selection_frames(1200)
-  if (res = selection_frames) != 1200
-    snd_display("selection_frames 1200: %s?", res)
+  set_selection_framples(1200)
+  if (res = selection_framples) != 1200
+    snd_display("selection_framples 1200: %s?", res)
   end
   delete_selection
   if selection?
@@ -26753,27 +26751,27 @@ def test_15_02
   if (not (res1 = selection_member?(ind, 0))) or (not (res2 = selection_member?(ind)))
     snd_display("selection_member? after undo %s %s %s?", res1, res2, selection?)
   end
-  if (res1 = selection_frames) != 1200 or (res2 = selection_position) != 0
+  if (res1 = selection_framples) != 1200 or (res2 = selection_position) != 0
     snd_display("selection after undo: [0, 1200] [%s, %s]?", res2, res1)
   end
   set_selection_position(1000)
-  if (res1 = selection_frames) != 200 or (res2 = selection_position) != 1000
+  if (res1 = selection_framples) != 200 or (res2 = selection_position) != 1000
     snd_display("selection after undo: [1000, 200] [%s, %s]?", res2, res1)
   end
   reverse_selection
-  if (res1 = selection_frames) != 200 or (res2 = selection_position) != 1000
+  if (res1 = selection_framples) != 200 or (res2 = selection_position) != 1000
     snd_display("selection after reverse: [1000, 200] [%s, %s]?", res2, res1)
   end
-  old_frames = frames(ind)
+  old_framples = frames(ind)
   src_selection(0.5)
-  if (frames(ind) - (200 + old_frames)).abs > 5 or
-      ((res = selection_frames) - 400).abs > 5
+  if (frames(ind) - (200 + old_framples)).abs > 5 or
+      ((res = selection_framples) - 400).abs > 5
     snd_display("selection after src 0.5: [1000, 400] [%s, %s]?", res, selection_position)
   end
   undo_edit
   redo_edit
-  if (frames(ind) - (200 + old_frames)).abs > 5 or
-      ((res = selection_frames) - 400).abs > 5
+  if (frames(ind) - (200 + old_framples)).abs > 5 or
+      ((res = selection_framples) - 400).abs > 5
     snd_display("selection after src 0.5 with undo/redo: [1000, 400] [%s, %s]?",
                 res, selection_position)
   end
@@ -27076,8 +27074,8 @@ def test_15_03
       (not (res2 = selection_member?(ind, 1))) or
       (res3 = selection_position(ind, 0)) != 0 or
       (res4 = selection_position(ind, 1)) != 0 or
-      (res5 = selection_frames(ind, 0)) != frames(ind, 0) or
-      (res6 = selection_frames(ind, 1)) != frames(ind, 1)
+      (res5 = selection_framples(ind, 0)) != frames(ind, 0) or
+      (res6 = selection_framples(ind, 1)) != frames(ind, 1)
     snd_display("sync selection via <-: %s %s %s %s %s %s?", res1, res2, res3, res4, res5, res6)
   end
   key(key_to_int(?\s), 4)
@@ -27086,8 +27084,8 @@ def test_15_03
       (not (res2 = selection_member?(ind, 1))) or
       (res3 = selection_position(ind, 0)) != 0 or
       (res4 = selection_position(ind, 1)) != 0 or
-      (res5 = selection_frames(ind, 0)) != frames(ind, 0) or
-      (res6 = selection_frames(ind, 1)) != frames(ind, 1)
+      (res5 = selection_framples(ind, 0)) != frames(ind, 0) or
+      (res6 = selection_framples(ind, 1)) != frames(ind, 1)
     snd_display("sync selection via ->: %s %s %s %s %s %s?", res1, res2, res3, res4, res5, res6)
   end
   set_cursor(0, ind, 1)
@@ -27115,7 +27113,7 @@ def test_15_03
   unless selection?
     snd_display("no selection from 1 samp region?")
   end
-  if (res = selection_frames) != 1
+  if (res = selection_framples) != 1
     snd_display("1 samp selection: %s samps?", res)
   end
   scale_selection_to(1.0)
@@ -27125,23 +27123,23 @@ def test_15_03
   revert_sound(ind)
   id = make_region(500, 1000)
   src_selection(0.5)
-  if ((res = region_frames(id)) - 500).abs > 1
-    snd_display("region_frames after src_selection: %s?", res)
+  if ((res = region_framples(id)) - 500).abs > 1
+    snd_display("region_framples after src_selection: %s?", res)
   end
   reg_mix_id = mix_region(id, 1500, ind, 0).car
-  if (res1 = mix_length(reg_mix_id)) != (res2 = region_frames(id))
+  if (res1 = mix_length(reg_mix_id)) != (res2 = region_framples(id))
     snd_display("mix_region: %s != %s?", res1, res2)
   end
   if (res = mix_home(reg_mix_id)) != [ind, 0, false, 0]
     snd_display("mix_region mix_home %s [%s, 0, false, 0]?", res, ind)
   end
   sel_mix_id = mix_selection(2500, ind, 0).car
-  if (res1 = mix_length(sel_mix_id)) != (res2 = selection_frames)
+  if (res1 = mix_length(sel_mix_id)) != (res2 = selection_framples)
     snd_display("mix_selection frames: %s != %s?", res1, res2)
   end
   if ((res1 = mix_length(reg_mix_id)) * 2 - (res2 = mix_length(sel_mix_id))).abs > 3
     snd_display("mix selection and region: %s %s %s %s?",
-                res1, res2, region_frames(id), selection_frames)
+                res1, res2, region_framples(id), selection_framples)
   end
   if (res = mix_home(reg_mix_id)) != [ind, 0, false, 0]
     snd_display("mix_selection mix_home %s [%s, 0, false, 0]?", res, ind)
@@ -27388,7 +27386,7 @@ def test_15_04
   set_transform_graph?(true)
   make_selection(0, 200)
   set_show_selection_transform(true)
-  set_selection_frames(300)
+  set_selection_framples(300)
   update_transform_graph
   if vct?(data = transform2vct)
     pk = data.peak
@@ -27445,11 +27443,11 @@ def opt_test(choice)
   curchn = random(channels(cursnd))
   cur_maxamps = []
   cur_edits = []
-  cur_frames = []
+  cur_framples = []
   all_chans_zipped.each do |s, c|
     cur_maxamps << maxamp(s, c)
     cur_edits << edit_position(s, c)
-    cur_frames << frames(s, c)
+    cur_framples << frames(s, c)
   end
   cur_amp = maxamp(cursnd, curchn)
   cur_edit = edit_position(cursnd, curchn)
@@ -27477,7 +27475,7 @@ def opt_test(choice)
       snd_display("scale_channel %s[%s] cur_samp: %s %s?",
                   short_file_name(cursnd), curchn, res1, res2)
     end
-    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_frames) do |s, c, amp, ed, fr|
+    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_framples) do |s, c, amp, ed, fr|
       if (not s == cursnd and c == curchn)
         if (res = edit_position(s, c)) != ed
           snd_display("scale_channel %s[%s] wrong edit pos: %s %s?", short_file_name(s), c, res, ed)
@@ -27494,7 +27492,7 @@ def opt_test(choice)
     maxscl = cur_maxamps.max
     scaler = (maxscl < 1.0) ? (random(1.0) + 1.0) : (random(0.5) + 0.5)
     scale_by(scaler, cursnd, curchn)
-    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_frames) do |s, c, amp, ed, fr|
+    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_framples) do |s, c, amp, ed, fr|
       if (sync(cursnd) == 0 and (s != cursnd or c != curchn)) or (sync(s) != sync(cursnd))
         if (res = edit_position(s, c)) != ed
           snd_display("scale_by %s[%s] wrong edit pos: %s %s?", short_file_name(s), c, res, ed)
@@ -27537,11 +27535,11 @@ def opt_test(choice)
     if undo_env(cursnd, curchn)
       cur_maxamps = []
       cur_edits = []
-      cur_frames = []
+      cur_framples = []
       all_chans_zipped.each do |s, c|
         cur_maxamps << maxamp(s, c)
         cur_edits << edit_position(s, c)
-        cur_frames << frames(s, c)
+        cur_framples << frames(s, c)
         cur_amp = maxamp(cursnd, curchn)
         cur_edit = edit_position(cursnd, curchn)
         cur_frame = frames(cursnd, curchn)
@@ -27561,7 +27559,7 @@ def opt_test(choice)
                   short_file_name(cursnd), curchn, res1, res2, e)
       Snd.throw(:mus_error, "env_channel maxamp", short_file_name(cursnd))
     end
-    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_frames) do |s, c, amp, ed, fr|
+    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_framples) do |s, c, amp, ed, fr|
       unless s == cursnd and c == curchn
         if (res = edit_position(s, c)) != ed
           snd_display("env_channel %s[%s] wrong edit pos: %s %s?", short_file_name(s), c, res, ed)
@@ -27591,7 +27589,7 @@ def opt_test(choice)
       x += 0.01 + random(1.0)
     end
     recalc = false
-    minfr = cur_frames.min
+    minfr = cur_framples.min
     beg = random((minfr / 2.0).floor)
     all_chans_zipped.each do |s, c|
       unless (sync(cursnd) == 0 and (s != cursnd or c != curchn)) or sync(s) != sync(cursnd)
@@ -27601,18 +27599,18 @@ def opt_test(choice)
     if recalc
       cur_maxamps = []
       cur_edits = []
-      cur_frames = []
+      cur_framples = []
       all_chans_zipped.each do |s, c|
         cur_maxamps << maxamp(s, c)
         cur_edits << edit_position(s, c)
-        cur_frames << frames(s, c)
+        cur_framples << frames(s, c)
       end
       cur_amp = maxamp(cursnd, curchn)
       cur_edit = edit_position(cursnd, curchn)
       cur_frame = frames(cursnd, curchn)
     end
     env_sound(e, beg, [pts, minfr - beg].max, 1.0, cursnd, curchn)
-    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_frames) do |s, c, amp, ed, fr|
+    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_framples) do |s, c, amp, ed, fr|
       if (sync(cursnd) == 0 and (s != cursnd or c != curchn)) or sync(s) != sync(cursnd)
         if (res = edit_position(s, c)) != ed
           snd_display("env_sound %s[%s] wrong edit pos: %s %s?", short_file_name(s), c, res, ed)
@@ -27636,7 +27634,7 @@ def opt_test(choice)
     maxscl = cur_maxamps.max
     scaler = (maxscl < 1.0) ? (random(1.0) + 1.0) : (random(0.5) + 0.5)
     scale_sound_by(scaler, 1000, 1000, cursnd)
-    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_frames) do |s, c, amp, ed, fr|
+    snd_lst.zip(chn_lst, cur_maxamps, cur_edits, cur_framples) do |s, c, amp, ed, fr|
       if s != cursnd
         if (res = edit_position(s, c)) != ed
           snd_display("scale_sound_by %s[%s] wrong edit pos: %s %s?",
@@ -28524,7 +28522,7 @@ def test_16_02
                    [100, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "env_channel(15, 10) b")
   set_selection_position(5)
-  set_selection_frames(10)
+  set_selection_framples(10)
   scale_selection_to(0.5)
   5.upto(14) do |i| vals[i] *= 0.5 end
   check_edit_tree([[0, 1, 0, 4, 1.0, 0.0, 0.0, 0],
@@ -28603,7 +28601,7 @@ def test_16_02
     snd_display("selection_maxamp after: %s?", res)
   end
   set_selection_position(50)
-  set_selection_frames(10)
+  set_selection_framples(10)
   scale_selection_by(0.1)
   if fneq(res = selection_maxamp, 0.1)
     snd_display("re-selection_maxamp: %s?", res)
@@ -28733,7 +28731,7 @@ def test_16_02
                    [100, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "back set via map_channel")
   set_selection_position(20)
-  set_selection_frames(70)
+  set_selection_framples(70)
   env_selection([0, 0, 1, 1])
   if fneq(res = selection_maxamp(ind, 0), 1.0)
     snd_display("selection_maxamp after env_selection: %s?", res)
@@ -31035,7 +31033,7 @@ def test_19_02
     snd_display("edit_list2function func 10: %s?", res)
   end
   revert_sound(ind)
-  pfrs = mus_sound_frames("pistol.snd")
+  pfrs = mus_sound_framples("pistol.snd")
   insert_sound("pistol.snd", 1000)
   if (res = frames) != frs + pfrs
     snd_display("edit_list2function insert_sound frames: %s %s?", frs, res)
@@ -31052,7 +31050,7 @@ def test_19_02
     snd_display("edit_list2function called (10a): %s %s?", frs, res)
   end
   revert_sound(ind)
-  pfrs = mus_sound_frames("pistol.snd")
+  pfrs = mus_sound_framples("pistol.snd")
   insert_samples(1000, pfrs, "pistol.snd")
   if (res = frames) != frs + pfrs
     snd_display("edit_list2function insert_samples frames: %s %s?", frs, res)
@@ -33125,9 +33123,9 @@ def test_20_01
   set_transform_graph_type(Graph_as_sonogram, ind1, 0)
   set_transform_size(256)
   update_transform_graph
-  size = transform_frames(ind1, 0)
+  size = transform_framples(ind1, 0)
   if number?(size) or size.length != 3
-    snd_display("transform_frames of sonogram: %s?", size)
+    snd_display("transform_framples of sonogram: %s?", size)
   end
   graph2ps("aaa.eps")
   old_colormap = colormap
@@ -34285,7 +34283,7 @@ def test_21_02
   delete_files("test.snd", "fmv.snd")
   rdin = false
   rdout = false
-  len = mus_sound_frames("oboe.snd")
+  len = mus_sound_framples("oboe.snd")
   types = [Mus_riff, Mus_aifc, Mus_next, Mus_nist, Mus_ircam]
   forms = [Mus_lshort, Mus_bshort, Mus_b24int, Mus_l24int, Mus_bint]
   file_copy("oboe.snd", "fmv.snd")
@@ -34518,7 +34516,7 @@ def step_src
       samp += 1
     end
   end.output
-  len = mus_sound_frames(tempfile)
+  len = mus_sound_framples(tempfile)
   set_samples(0, len - 1, tempfile, false, false, true,
               get_func_name, 0, false, true)
 end
@@ -35783,7 +35781,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :previous_sample, :peaks, :player?, :players, :play_arrow_size, :position_color,
          :position2x, :position2y, :print_length, :progress_report, :read_only,
          :redo_edit, :region_chans, :view_regions_dialog, :region_home,
-         :region_graph_style, :region_frames, :region_position, :region_maxamp,
+         :region_graph_style, :region_framples, :region_position, :region_maxamp,
          :region_maxamp_position, :remember_sound_state, :selection_maxamp,
          :selection_maxamp_position, :region_sample, :region2vct, :region_srate, :regions, :region?,
          :remove_from_menu, :reset_controls, :restore_controls,
@@ -35797,7 +35795,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :scale_by, :scale_selection_by, :scale_selection_to, :scale_to,
          :search_procedure, :select_all, :select_channel, :select_sound, :selected_channel,
          :selected_data_color, :selected_graph_color, :selected_sound, :selection_position,
-         :selection_color, :selection_creates_region, :selection_frames, :selection_member?,
+         :selection_color, :selection_creates_region, :selection_framples, :selection_member?,
          :selection?, :short_file_name, :show_axes, :show_controls, :show_transform_peaks,
          :show_indices, :show_listener, :show_selection, :unselect_all, :show_marks,
          :show_mix_waveforms, :show_selection_transform, :show_y_zero, :sinc_width, :show_grid,
@@ -35810,7 +35808,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :stop_player, :stop_playing, :swap_channels, :syncd_marks, :sync, :sync_max,
          :sound_properties, :sound_property, :temp_dir, :text_focus_color, :tiny_font,
          :region_sampler?, :transform_dialog, :transform_sample, :transform2vct,
-         :transform_frames, :transform_type, :with_file_monitor,
+         :transform_framples, :transform_type, :with_file_monitor,
          :unbind_key, :update_transform_graph, :update_time_graph, :update_lisp_graph,
          :update_sound, :clm_table_size, :with_verbose_cursor, :view_sound, :wavelet_type,
          :with_inset_graph, :with_interrupts, :with_pointer_focus, :with_smpte_label,
@@ -35821,7 +35819,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :x_bounds, :x_position_slider, :x2position, :x_zoom_slider, :mus_header_type2string,
          :mus_data_format2string, :y_bounds, :y_position_slider, :y2position, :y_zoom_slider,
          :zero_pad, :zoom_color, :zoom_focus_style, :sync_style,
-         :mus_set_formant_radius_and_frequency, :mus_sound_samples, :mus_sound_frames,
+         :mus_set_formant_radius_and_frequency, :mus_sound_samples, :mus_sound_framples,
          :mus_sound_duration, :mus_sound_datum_size, :mus_sound_data_location, :data_size,
          :mus_sound_chans, :mus_sound_srate, :mus_sound_header_type, :mus_sound_data_format,
          :mus_sound_length, :mus_sound_type_specifier, :mus_header_type_name,
@@ -35830,11 +35828,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :mus_sound_maxamp, :mus_sound_maxamp_exists?,
          :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
          :moving_average, :moving_average?, :make_moving_average, :mus_expand_filename,
-         :make_sound_data, :sound_data_ref, :sound_data_set!, :sound_data_scale!,
-         :sound_data_fill!, :sound_data?, :sound_data_length, :sound_data_multiply!,
-         :sound_data_add!, :sound_data_offset!, :sound_data_copy, :sound_data_reverse!,
-         :sound_data_maxamp, :sound_data_chans, :sound_data2vct, :vct2sound_data,
-         :sound_data_peak, :all_pass, :all_pass?, :amplitude_modulate, :array2file,
+         :all_pass, :all_pass?, :amplitude_modulate, :array2file,
          :array_interp, :mus_interpolate, :asymmetric_fm, :asymmetric_fm?,
          :clear_array, :comb, :comb?, :filtered_comb,
          :filtered_comb?, :contrast_enhancement, :convolution, :convolve, :convolve?,
@@ -35842,19 +35836,18 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :env?, :file2array, :file2frame, :file2frame?, :file2sample, :file2sample?,
          :filter, :filter?, :fir_filter, :fir_filter?, :formant,
          :formant_bank, :formant_bank?, :formant?,
-         :frame_multiply, :frame_add, :frame2file, :frame2file?,
-         :frame2frame, :frame2list, :frame2sample, :frame_ref, :frame_set!, :frame?,
+         :frame2file, :frame2file?,
          :granulate, :granulate?, :hz2radians, :iir_filter, :iir_filter?, :in_any, :ina, :inb,
          :linear2db, :locsig, :locsig_ref, :locsig_reverb_ref, :locsig_reverb_set!, :locsig_set!,
          :locsig?, :make_all_pass, :make_asymmetric_fm, :make_comb, :make_convolve, :make_delay,
          :make_env, :make_fft_window, :make_file2frame, :make_file2sample, :make_filter,
          :make_fir_filter, :make_formant, :make_frame, :make_frame2file, :make_granulate,
-         :make_iir_filter, :make_locsig, :move_locsig, :make_mixer, :make_notch,
+         :make_iir_filter, :make_locsig, :move_locsig, :make_notch,
          :make_one_pole, :make_one_zero, :make_oscil, :make_pulse_train, :make_rand,
          :make_rand_interp, :make_readin, :make_sample2file, :make_sawtooth_wave,
          :make_square_wave, :make_src, :make_ssb_am, :make_table_lookup, :make_triangle_wave,
-         :make_two_pole, :make_two_zero, :make_wave_train, :mixer_multiply, :mixer_ref,
-         :mixer_set!, :mixer?, :mixer_add, :move_sound, :make_move_sound, :move_sound?,
+         :make_two_pole, :make_two_zero, :make_wave_train,
+         :move_sound, :make_move_sound, :move_sound?,
          :mus_float_equal_fudge_factor, :multiply_arrays, :mus_array_print_length, :mus_channel,
          :mus_channels, :make_polyshape, :polyshape, :polyshape?, :mus_close, :mus_data,
          :mus_feedback, :mus_feedforward, :mus_fft, :mus_frequency, :mus_hop, :mus_increment,
@@ -35945,7 +35938,7 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
              :data_size, :edit_position, :frames, :header_type, :maxamp,
              :read_only, :right_sample, :sample, :samples,
              :selected_channel, :colormap_size, :selected_sound, :selection_position,
-             :selection_frames, :selection_member?, :sound_loop_info, :srate, :time_graph_type,
+             :selection_framples, :selection_member?, :sound_loop_info, :srate, :time_graph_type,
              :x_position_slider, :x_zoom_slider, :y_position_slider, :y_zoom_slider,
              :sound_data_ref, :mus_array_print_length, :mus_float_equal_fudge_factor,
              :mus_feedback, :mus_feedforward, :mus_frequency, :mus_hop,
@@ -35960,7 +35953,7 @@ Make_procs = [
   :make_moving_max, :make_comb, :make_filtered_comb, :make_convolve,
   :make_delay, :make_env, :make_fft_window, :make_file2frame, :make_file2sample,
   :make_filter, :make_fir_filter, :make_formant, :make_frame, :make_frame2file,
-  :make_granulate, :make_iir_filter, :make_locsig, :make_mixer, :make_notch,
+  :make_granulate, :make_iir_filter, :make_locsig, :make_notch,
   :make_one_pole, :make_one_zero, :make_oscil, :make_pulse_train, :make_rand,
   :make_rand_interp, :make_readin, :make_sample2file, :make_sawtooth_wave,
   :make_square_wave, :make_src, :make_table_lookup, :make_triangle_wave,
@@ -36159,7 +36152,7 @@ def test_28_00
       snd_display("oscil?proc %s: %s", n, tag)
     end
   end
-  [:reverse_selection, :selection_position, :selection_frames, :smooth_selection,
+  [:reverse_selection, :selection_position, :selection_framples, :smooth_selection,
    :scale_selection_to, :insert_selection, :delete_selection, :delete_selection_and_smooth,
    :mix_selection].each do |n|
     if (tag = Snd.catch do snd_func(n) end).first != :no_active_selection
@@ -36201,7 +36194,7 @@ def test_28_00
    :convolution, :convolve, :moving_average, :moving_max, :convolve_files,
    :delay, :dot_product, :env_interp, :file2frame,
    :file2sample, :snd2sample, :filter, :fir_filter, :formant, :firmant, :formant_bank,
-   :frame_multiply, :frame_add, :frame2frame, :frame_ref, :frame2sample, :granulate,
+   :granulate,
    :iir_filter, :ina, :inb, :locsig_ref, :locsig_reverb_ref, :make_all_pass,
    :make_asymmetric_fm, :make_comb, :make_filtered_comb, :make_delay, :make_env, :make_fft_window,
    :make_filter, :make_fir_filter, :make_formant, :make_firmant, :make_frame, :make_granulate,
@@ -36232,7 +36225,7 @@ def test_28_00
       snd_display("mus_gen %s: %s", n, tag)
     end
   end
-  mus_procs = [:mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
+  mus_procs = [:mus_sound_samples, :mus_sound_framples, :mus_sound_duration, :mus_sound_datum_size,
                :mus_sound_data_location, :mus_sound_chans, :mus_sound_srate, :mus_sound_header_type,
                :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
                :mus_header_type_name, :mus_data_format_name, :mus_sound_comment,
@@ -36252,7 +36245,7 @@ def test_28_00
 end
 
 def test_28_01
-  [:mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
+  [:mus_sound_samples, :mus_sound_framples, :mus_sound_duration, :mus_sound_datum_size,
    :mus_sound_data_location, :mus_sound_chans, :mus_sound_srate, :mus_sound_header_type,
    :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
    :mus_sound_comment, :mus_sound_write_date, :mus_sound_maxamp,
@@ -36277,7 +36270,7 @@ def test_28_01
    :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
    :spectro_hop, :spectrum_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle,
    :grid_density, :spectro_y_scale, :spectro_z_angle, :spectro_z_scale, :squelch_update,
-   :transform_sample, :transform2vct, :transform_frames, :transform_type,
+   :transform_sample, :transform2vct, :transform_framples, :transform_type,
    :update_transform_graph, :update_time_graph, :update_lisp_graph, :update_sound,
    :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds,
    :x_position_slider, :x_zoom_slider, :x_axis_label, :y_axis_label, :y_bounds,
@@ -36302,7 +36295,7 @@ def test_28_01
    :show_marks, :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
    :spectro_hop, :spectrum_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle,
    :spectro_y_scale, :spectro_z_angle, :spectro_z_scale, :squelch_update, :grid_density,
-   :transform_sample, :transform2vct, :transform_frames, :transform_type,
+   :transform_sample, :transform2vct, :transform_framples, :transform_type,
    :update_transform_graph, :update_time_graph, :update_lisp_graph, :wavelet_type,
    :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds, :x_position_slider,
    :x_zoom_slider, :x_axis_label, :y_axis_label, :y_bounds, :y_position_slider,
@@ -36331,7 +36324,7 @@ def test_28_01
    :show_transform_peaks, :show_marks, :show_mix_waveforms, :show_y_zero, :show_grid,
    :show_sonogram_cursor, :grid_density, :spectrum_end, :spectro_hop, :spectrum_start,
    :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
-   :spectro_z_scale, :squelch_update, :transform2vct, :transform_frames, :transform_type,
+   :spectro_z_scale, :squelch_update, :transform2vct, :transform_framples, :transform_type,
    :update_transform_graph, :update_time_graph, :update_lisp_graph, :wavelet_type, :time_graph?,
    :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds, :x_position_slider, :x_axis_label,
    :x_zoom_slider, :y_bounds, :y_position_slider, :y_zoom_slider, :zero_pad,
@@ -36362,7 +36355,7 @@ def test_28_01
    :show_marks, :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor,
    :grid_density, :spectrum_end, :spectro_hop, :spectrum_start, :spectro_x_angle,
    :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
-   :spectro_z_scale, :squelch_update, :transform2vct, :transform_frames,
+   :spectro_z_scale, :squelch_update, :transform2vct, :transform_framples,
    :transform_type, :update_transform_graph, :update_time_graph, :update_lisp_graph,
    :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace,
    :x_bounds, :x_position_slider, :x_axis_label, :x_zoom_slider, :y_bounds,
@@ -36387,7 +36380,7 @@ def test_28_01
    :show_grid, :show_sonogram_cursor, :spectrum_end, :spectro_hop, :spectrum_start,
    :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
    :spectro_z_angle, :spectro_z_scale, :squelch_update, :transform2vct,
-   :transform_frames, :transform_type, :update_transform_graph, :update_time_graph,
+   :transform_framples, :transform_type, :update_transform_graph, :update_time_graph,
    :update_lisp_graph, :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop,
    :wavo_trace, :x_bounds, :x_position_slider, :x_zoom_slider, :y_bounds,
    :y_position_slider, :y_zoom_slider, :zero_pad, :x_axis_label].each_with_index do |n, i|
@@ -36443,7 +36436,7 @@ def test_28_01
   end
   close_sound(index)
   [[0, 1], sqrt(-1.0), "hiho", [0, 1]].each do |arg|
-    [:region_chans, :region_home, :region_frames, :region_position,
+    [:region_chans, :region_home, :region_framples, :region_position,
      :region_maxamp, :region_maxamp_position, :region_sample, :region2vct,
      :region_srate, :forget_region].each_with_index do |n, i|
       if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
@@ -36451,7 +36444,7 @@ def test_28_01
       end
     end
   end
-  [:region_chans, :region_home, :region_frames, :region_position,
+  [:region_chans, :region_home, :region_framples, :region_position,
    :region_maxamp, :region_maxamp_position, :region_srate,
    :forget_region].each_with_index do |n, i|
     if (tag = Snd.catch do snd_func(n, integer2region(1234)) end).first != :no_such_region
@@ -36534,9 +36527,6 @@ def test_28_02
     bind_key(key_to_int(?p), 0, lambda do |a, b| play_often([1, a].max) end)
   end
   check_error_tag(:bad_arity) do set_zoom_focus_style(lambda do |a| 0 end) end
-  check_error_tag(:wrong_type_arg) do
-    mus_mix("oboe.snd", "pistol.snd", 0, 12, 0, make_mixer(1, 1.0), "a string")
-  end
   check_error_tag(:bad_header) do mus_mix("oboe.snd", $sf_dir + "bad_chans.aifc") end
   check_error_tag(:mus_error) do mus_mix("oboe.snd", $sf_dir + "bad_length.aifc") end
   check_error_tag(:bad_header) do mus_mix($sf_dir + "bad_chans.aifc", "oboe.snd") end
@@ -36583,16 +36573,6 @@ def test_28_02
   check_error_tag(:out_of_range) do new_sound("hiho", 123) end
   check_error_tag(:out_of_range) do new_sound("hiho", Mus_nist, 123) end
   check_error_tag(:bad_header) do new_sound("hiho", Mus_nist, Mus_bfloat) end
-  check_error_tag(:out_of_range) do make_sound_data(0, 1) end
-  check_error_tag(:out_of_range) do make_sound_data(-2, 1) end
-  check_error_tag(:out_of_range) do make_sound_data(1, -1) end
-  check_error_tag(:out_of_range) do make_sound_data(1, 0) end
-  check_error_tag(:out_of_range) do mus_sound_close_output(0, 1) end
-  check_error_tag(:out_of_range) do mus_sound_close_output(1, 1) end
-  check_error_tag(:out_of_range) do mus_sound_close_output(2, 1) end
-  check_error_tag(:out_of_range) do mus_sound_close_input(0) end
-  check_error_tag(:out_of_range) do mus_sound_close_input(1) end
-  check_error_tag(:out_of_range) do mus_sound_close_input(2) end
   check_error_tag(:out_of_range) do set_mus_array_print_length(-1) end
   check_error_tag(:out_of_range) do set_print_length(-1) end
   check_error_tag(:out_of_range) do set_play_arrow_size(-1) end
@@ -36621,7 +36601,7 @@ def test_28_02
   check_error_tag(:out_of_range) do set_data_size(ind, -1) end
   check_error_tag(:no_such_sample) do set_sample(-1, -1) end
   check_error_tag(:no_such_sample) do sample(-1) end
-  check_error_tag(:out_of_range) do set_frames(-10) end
+  check_error_tag(:out_of_range) do set_framples(-10) end
   check_error_tag(:out_of_range) do set_min_dB(0.0) end
   check_error_tag(:out_of_range) do set_min_dB(0.0, ind, 0) end
   check_error_tag(:out_of_range) do start_playing(1, -22) end
@@ -36706,7 +36686,7 @@ def test_28_02
   check_error_tag(:no_such_sample) do delete_sample(2 * frames(ind)) end
   regions.empty? and make_region(0, 100)
   check_error_tag(:no_such_channel) do region_sample(regions.car, 0, 1234) end
-  check_error_tag(:no_such_channel) do region_frames(regions.car, 1234) end
+  check_error_tag(:no_such_channel) do region_framples(regions.car, 1234) end
   check_error_tag(:no_such_channel) do region_position(regions.car, 1234) end
   check_error_tag(:no_such_channel) do region2vct(regions.car, 0, 1, 1234) end
   check_error_tag(:cannot_save) do save_sound_as("/bad/baddy.snd") end
@@ -36732,8 +36712,8 @@ def test_28_02
   check_error_tag(:no_data) do scale_by([]) end
   check_error_tag(:no_data) do scale_to([]) end
   check_error_tag(:no_such_sample) do set_selection_position(-999, ind, 0) end
-  check_error_tag(:wrong_type_arg) do set_selection_frames(-999, ind, 0) end
-  check_error_tag(:wrong_type_arg) do set_selection_frames(0, ind, 0) end
+  check_error_tag(:wrong_type_arg) do set_selection_framples(-999, ind, 0) end
+  check_error_tag(:wrong_type_arg) do set_selection_framples(0, ind, 0) end
   check_error_tag(:no_such_edit) do edit_fragment(-1) end
   check_error_tag(:no_such_edit) do edit_fragment(101, ind, 0) end
   check_error_tag(:no_such_edit) do edit_tree(ind, 0, -2) end
@@ -36764,7 +36744,6 @@ def test_28_02
   check_error_tag(:out_of_range) do set_reverb_control_length_bounds([0.1, 0.01], ind) end
   check_error_tag(:out_of_range) do set_reverb_control_scale_bounds([0.1, 0.01], ind) end
   check_error_tag(:wrong_type_arg) do scale_by(false) end
-  check_error_tag(:wrong_type_arg) do scale_by(make_mixer(2, 0.1, 0.1, 0.2, 0.2)) end
   check_error_tag(:wrong_type_arg) do src_sound(3.0, 1.0, true) end
   check_error_tag(:wrong_type_arg) do src_sound(3.0, 1.0, ind, true) end
   check_error_tag(:no_such_edit) do display_edits(ind, 0, 123) end
@@ -36855,16 +36834,6 @@ def test_28_02
   end
   check_error_tag(:out_of_range) do make_locsig(:channels, 2 ** 30) end
   check_error_tag(:out_of_range) do make_src(:width, 3000) end
-  check_error_tag(:out_of_range) do make_frame(-1) end
-  check_error_tag(:mus_error) do
-    hi = make_frame(2, 0.1, 0.2)
-    frame_ref(hi, 3)
-  end
-  check_error_tag(:out_of_range) do make_scalar_mixer(0, 0.1) end
-  check_error_tag(:mus_error) do
-    m = make_mixer(2)
-    mixer_ref(m, 3, 4)
-  end
   check_error_tag(:bad_arity) do add_colormap("baddy", lambda do | | false end) end
   check_error_tag(:bad_arity) do add_colormap("baddy", lambda do |a, b, c| false end) end
   check_error_tag(:out_of_range) do

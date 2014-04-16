@@ -1524,21 +1524,53 @@ static Xen snd_no_such_region_error(const char *caller, Xen n)
 }
 
 
-static Xen g_restore_region(Xen pos, Xen chans, Xen len, Xen srate, Xen maxamp, Xen name, Xen start, Xen end, Xen filename, Xen date)
+/* Xen pos, Xen chans, Xen len, Xen srate, Xen maxamp, Xen name, Xen start, Xen end, Xen filename, Xen date */
+
+static Xen g_restore_region(Xen args)
 {
   /* internal function used by save-state mechanism -- not intended for external use */
   region *r;
   int regn;
-
+  Xen arg, pos, chans, len, srate, maxamp, name, start, end, filename, date;
+  
+  arg = args;
+  pos = Xen_car(arg);
   Xen_check_type(Xen_is_integer(pos), pos, 1, S_restore_region, "a region id");
+
+  arg = Xen_cdr(arg);
+  chans = Xen_car(arg);
   Xen_check_type(Xen_is_integer(chans), chans, 2, S_restore_region, "an integer");
+
+  arg = Xen_cdr(arg);
+  len = Xen_car(arg);
   Xen_check_type(Xen_is_number(len), len, 3, S_restore_region, "an integer");
+
+  arg = Xen_cdr(arg);
+  srate = Xen_car(arg);
   Xen_check_type(Xen_is_integer(srate), srate, 4, S_restore_region, "an integer");
+
+  arg = Xen_cdr(arg);
+  maxamp = Xen_car(arg);
   Xen_check_type(Xen_is_double(maxamp), maxamp, 5, S_restore_region, "a double");
+
+  arg = Xen_cdr(arg);
+  name = Xen_car(arg);
   Xen_check_type(Xen_is_string(name), name, 6, S_restore_region, "a string");
+
+  arg = Xen_cdr(arg);
+  start = Xen_car(arg);
   Xen_check_type(Xen_is_string(start), start, 7, S_restore_region, "a string");
+
+  arg = Xen_cdr(arg);
+  end = Xen_car(arg);
   Xen_check_type(Xen_is_string(end), end, 8, S_restore_region, "a string");
+
+  arg = Xen_cdr(arg);
+  filename = Xen_car(arg);
   Xen_check_type(Xen_is_string(filename), filename, 9, S_restore_region, "a string");
+
+  arg = Xen_cdr(arg);
+  date = Xen_car(arg);
   Xen_check_type(Xen_is_list(date) && (Xen_list_length(date) == 2), date, 10, S_restore_region, "a list: '(time bytes)");
 
   check_saved_temp_file("region", filename, date);
@@ -2092,7 +2124,7 @@ and " S_graph_dots_and_lines "."
 }
 
 
-Xen_wrap_10_optional_args(g_restore_region_w, g_restore_region)
+Xen_wrap_any_args(g_restore_region_w, g_restore_region)
 Xen_wrap_4_optional_args(g_insert_region_w, g_insert_region)
 Xen_wrap_no_args(g_regions_w, g_regions)
 Xen_wrap_2_optional_args(g_region_framples_w, g_region_framples)
@@ -2122,7 +2154,7 @@ void g_init_regions(void)
 
   init_region_keywords();
 
-  Xen_define_procedure(S_restore_region,              g_restore_region_w,         9, 1, 0, "internal func used in save-state, restores a region");
+  Xen_define_procedure(S_restore_region,              g_restore_region_w,         0, 0, 1, "internal func used in save-state, restores a region");
   Xen_define_procedure(S_insert_region,               g_insert_region_w,          2, 2, 0, H_insert_region);
   Xen_define_safe_procedure(S_regions,                g_regions_w,                0, 0, 0, H_regions);
   Xen_define_safe_procedure(S_region_framples,        g_region_framples_w,        1, 1, 0, H_region_framples);

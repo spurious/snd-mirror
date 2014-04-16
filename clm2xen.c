@@ -59,6 +59,7 @@
 
 
 /* -------------------------------------------------------------------------------- */
+#if HAVE_SCHEME
 static bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 {
   rdout *gen = (rdout *)IO;
@@ -88,7 +89,7 @@ static bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *I
     }
   return(false);
 }
-
+#endif
 /* -------------------------------------------------------------------------------- */
 
 
@@ -195,10 +196,10 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
   if (Xen_is_bound(Xen_Arg)) {if (Xen_is_number(Xen_Arg)) C_Val = Xen_real_to_C_double(Xen_Arg); else Xen_check_type(false, Xen_Arg, ArgNum, Caller, "a number");}
 
 #define Xen_to_C_double_or_error(Xen_Arg, C_Val, Caller, ArgNum) \
-   if (Xen_is_number(Xen_Arg)) C_Val = Xen_real_to_C_double(Xen_Arg); else Xen_check_type(false, Xen_Arg, ArgNum, Caller, "a number")
+  do {C_Val = 0.0; if (Xen_is_number(Xen_Arg)) C_Val = Xen_real_to_C_double(Xen_Arg); else Xen_check_type(false, Xen_Arg, ArgNum, Caller, "a number");} while (0)
 
 #define Xen_to_C_integer_or_error(Xen_Arg, C_Val, Caller, ArgNum) \
-  if (Xen_is_number(Xen_Arg)) C_Val = Xen_integer_to_C_int(Xen_Arg); else Xen_check_type(false, Xen_Arg, ArgNum, Caller, "an integer")
+  do {C_Val = 0; if (Xen_is_number(Xen_Arg)) C_Val = Xen_integer_to_C_int(Xen_Arg); else Xen_check_type(false, Xen_Arg, ArgNum, Caller, "an integer");} while (0)
 
 #define Xen_real_to_C_double_with_caller(Xen_Arg, Caller) Xen_real_to_C_double(Xen_Arg)
 
@@ -8212,22 +8213,28 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 {
   mus_float_t *outfr = NULL, *revfr = NULL;
   Xen output, reverb;
+#if HAVE_SCHEME
   int chans, rev_chans;
+#endif
   if (pos < 0) return;
 
   if (from_locsig)
     {
       outfr = mus_locsig_outf(loc_gen);
       revfr = mus_locsig_revf(loc_gen);
+#if HAVE_SCHEME
       chans = mus_locsig_channels(loc_gen);
       rev_chans = mus_locsig_reverb_channels(loc_gen);
+#endif
     }
   else
     {
       outfr = mus_move_sound_outf(loc_gen);
       revfr = mus_move_sound_revf(loc_gen);
+#if HAVE_SCHEME
       chans = mus_move_sound_channels(loc_gen);
       rev_chans = mus_move_sound_reverb_channels(loc_gen);
+#endif
     }
   output = ms->vcts[G_LOCSIG_OUT];
 
@@ -8302,7 +8309,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 		  if (pos < chan_len)
 		    {
 		      int i;
-		      for (i = 0; i < chans; i++)
+		      for (i = 0; i < rev_chans; i++)
 			vdata[i * chan_len + pos] += revfr[i];
 		    }
 		}
@@ -9989,8 +9996,9 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   return(Xen_true);
 }
 
+/* Xen file, Xen beg, Xen dur, Xen mx, Xen revmx, Xen envs, Xen srcs, Xen srcenv, Xen outstream, Xen revstream */
 
-static Xen g_mus_mix_with_envs(Xen file, Xen beg, Xen dur, Xen mx, Xen revmx, Xen envs, Xen srcs, Xen srcenv, Xen outstream, Xen revstream)
+static Xen g_mus_mix_with_envs(Xen args)
 {
   #define H_mus_mix_with_envs "(" S_mus_mix_with_envs " file beg dur mx revmx envs srcs srcenv out rev) is an extension of " S_mus_mix ", primarily \
 intended to speed up the fullmix instrument.  file is a vector of readin generators.  beg is the sample at which to start mixing \
@@ -10001,8 +10009,25 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
   mus_any *s_env = NULL, *mix = NULL, *rev_mix = NULL, *ostr, *rstr = NULL;
   mus_any **mix_envs, **mix_srcs, **mix_rds;
   mus_xen *gn;
-  Xen ve;
+  Xen ve, arg, file, beg, dur, mx, revmx, envs, srcs, srcenv, outstream = xen_undefined, revstream = xen_undefined;
   bool need_mx_free = false, need_revmx_free = false;
+  
+  arg = args;         file = Xen_car(arg);
+  arg = Xen_cdr(arg); beg = Xen_car(arg);
+  arg = Xen_cdr(arg); dur = Xen_car(arg);
+  arg = Xen_cdr(arg); mx = Xen_car(arg);
+  arg = Xen_cdr(arg); revmx = Xen_car(arg);
+  arg = Xen_cdr(arg); envs = Xen_car(arg);
+  arg = Xen_cdr(arg); srcs = Xen_car(arg);
+  arg = Xen_cdr(arg); srcenv = Xen_car(arg);
+  arg = Xen_cdr(arg);
+  if (!Xen_is_null(arg))
+    {
+      outstream = Xen_car(arg);
+      arg = Xen_cdr(arg);
+      if (!Xen_is_null(arg))
+	revstream = Xen_car(arg);
+    }
 
   Xen_check_type(Xen_is_vector(file), file, 1, S_mus_mix_with_envs, "a vector of readin generators");
   in_chans = Xen_vector_length(file);
@@ -18113,7 +18138,7 @@ static void init_choices(void)
 }
 
 #if 0
-/* TODO: revive these */
+/* TODO: revive these (actually they weren't used before) */
 static s7_pointer indirect_frample_to_file_3;
 static s7_pointer g_indirect_frample_to_file_3(s7_scheme *sc, s7_pointer args)
 {
@@ -22173,7 +22198,7 @@ Xen_wrap_8_optional_args(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 
 #if (!DISABLE_DEPRECATED)
 Xen_wrap_7_optional_args(g_mus_mix_w, g_mus_mix)
-Xen_wrap_10_optional_args(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
+Xen_wrap_any_args(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
 #endif
 Xen_wrap_any_args(g_mus_file_mix_w, g_mus_file_mix)
 Xen_wrap_any_args(g_mus_file_mix_with_envs_w, g_mus_file_mix_with_envs)
@@ -22805,7 +22830,7 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_sample_to_frame,      g_sample_to_frame_w,       2, 1, 0, H_sample_to_frame);
 
   Xen_define_safe_procedure(S_mus_mix,              g_mus_mix_w,               2, 5, 0, H_mus_mix);
-  Xen_define_safe_procedure(S_mus_mix_with_envs,    g_mus_mix_with_envs_w,     8, 2, 0, H_mus_mix_with_envs);
+  Xen_define_safe_procedure(S_mus_mix_with_envs,    g_mus_mix_with_envs_w,     0, 0, 1, H_mus_mix_with_envs);
 #endif
   Xen_define_safe_procedure(S_mus_file_mix,         g_mus_file_mix_w,          0, 0, 1, H_mus_file_mix);
   Xen_define_safe_procedure(S_mus_file_mix_with_envs, g_mus_file_mix_with_envs_w, 0, 0, 1, H_mus_file_mix_with_envs);

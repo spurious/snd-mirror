@@ -2584,7 +2584,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		  (sound? (car widget)))
 	      ;; graph/spectrum -- does this need an explicit update?
 	      (let* ((snd (car widget))
-		     (data (caadr widget))
+		     (data (cadr widget))
 		     (len (length data))
 		     (loc (cursor snd 0)))
 		(set! (data loc) var)

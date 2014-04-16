@@ -7570,10 +7570,6 @@ static Xen g_maxamp(Xen snd, Xen chn_n, Xen edpos)
 
       if (Xen_is_vector(snd))
 	return(g_vector_maxamp(snd));
-#if (!DISABLE_DEPRECATED)
-      if (Xen_is_list(snd)) /* can this happen given defgenerator? */
-	return(g_list_maxamp(snd));
-#endif
     }
 
   if (xen_is_selection(snd))                      /* selection-maxamp where chn=snd and edpos=chn */
@@ -9291,8 +9287,8 @@ static Xen g_edits(Xen snd, Xen chn_n)
 		    C_int_to_Xen_integer(i - cp->edit_ctr - 1)));
 }
 
-
-static Xen g_graph(Xen ldata, Xen xlabel, Xen x0, Xen x1, Xen y0, Xen y1, Xen snd, Xen chn_n, Xen force_display, Xen show_axes)
+/* Xen ldata, Xen xlabel, Xen x0, Xen x1, Xen y0, Xen y1, Xen snd, Xen chn_n, Xen force_display, Xen show_axes */
+static Xen g_graph(Xen args)
 {
   #define H_graph "(" S_graph " data :optional xlabel (x0 0.0) (x1 1.0) y0 y1 snd chn (force-display " PROC_TRUE ") show-axes): \
 displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list or a " S_vct ". \
@@ -9305,50 +9301,103 @@ If 'data' is a list of numbers, it is treated as an envelope."
   vct *v = NULL;
   int i, len = 0, graph, graphs;
   bool need_update = false;
-  mus_float_t ymin, ymax, val;
-  double nominal_x0, nominal_x1;
+  mus_float_t ymin = 32768.0, ymax = -32768.0, val;
+  double nominal_x0 = 0.0, nominal_x1 = 1.0;
   int old_height = 0, old_width = 0, ww = 0;
   int old_y_offset = 0, gx0 = 0;
+  Xen arg, ldata, xlabel, x0 = xen_undefined, x1 = xen_undefined, y0, y1;
+  Xen snd = xen_undefined, chn_n = xen_undefined, force_display = xen_undefined, show_axes = xen_undefined;
 
   /* ldata can be a vct or a list of numbers or vcts */
+  arg = args;
+  ldata = Xen_car(arg);
   Xen_check_type(((mus_is_vct(ldata)) || 
 		   ((Xen_is_list(ldata)) && (Xen_list_length(ldata) > 0) && 
 		    ((Xen_is_number(Xen_car(ldata))) || (mus_is_vct(Xen_car(ldata)))))),
 		  ldata, 1, S_graph, "a " S_vct " or a list");
-
-  Xen_check_type(Xen_is_string(xlabel) || !Xen_is_bound(xlabel), xlabel, 2, S_graph, "a string (x axis label)");
-  Xen_check_type(Xen_is_number_or_unbound(x0), x0, 3, S_graph, "a number (x0)");
-  Xen_check_type(Xen_is_number_or_unbound(x1), x1, 4, S_graph, "a number (x1)");
-  Xen_check_type(Xen_is_number_or_unbound(y0), y0, 5, S_graph, "a number (y0)");
-  Xen_check_type(Xen_is_number_or_unbound(y1), y1, 6, S_graph, "a number (y1)");
-  Xen_check_type(Xen_is_boolean_or_unbound(force_display), force_display, 9, S_graph, "a boolean (force-display)");
-  Xen_check_type(Xen_is_integer_or_unbound(show_axes), show_axes, 10, S_graph, "an integer (show-axes choice)");
-
-  Snd_assert_channel(S_graph, snd, chn_n, 7);
-  cp = get_cp(snd, chn_n, S_graph);
-  if (!cp) return(Xen_false);
-
-  ymin = 32768.0;
-  ymax = -32768.0;
-  if ((cp->sound_ctr == NOT_A_SOUND) || 
-      (cp->sounds == NULL) || 
-      (cp->sounds[cp->sound_ctr] == NULL) ||
-      (cp->axis == NULL))
-    return(Xen_false);
-
-  if (Xen_is_string(xlabel)) label = mus_strdup(Xen_string_to_C_string(xlabel)); 
-  if (Xen_is_number(x0)) nominal_x0 = Xen_real_to_C_double(x0); else nominal_x0 = 0.0;
-  if (Xen_is_number(x1)) nominal_x1 = Xen_real_to_C_double(x1); else nominal_x1 = 1.0;
-  if (Xen_is_number(y0)) ymin = Xen_real_to_C_double(y0);
-  if (Xen_is_number(y1)) ymax = Xen_real_to_C_double(y1);
 
   if ((!(Xen_is_list(ldata))) || 
       (Xen_is_number(Xen_car(ldata))))
     graphs = 1; 
   else graphs = Xen_list_length(ldata);
   if (graphs == 0) return(Xen_false);
-  lg = cp->lisp_info;
 
+  arg = Xen_cdr(arg);
+  if (!Xen_is_null(arg))
+    {
+      xlabel = Xen_car(arg);
+      Xen_check_type(Xen_is_string(xlabel), xlabel, 2, S_graph, "a string (x axis label)");
+      label = mus_strdup(Xen_string_to_C_string(xlabel)); 
+      
+      arg = Xen_cdr(arg);
+      if (!Xen_is_null(arg))
+	{
+	  x0 = Xen_car(arg);
+	  Xen_check_type(Xen_is_number(x0), x0, 3, S_graph, "a number (x0)");
+	  nominal_x0 = Xen_real_to_C_double(x0);
+
+	  arg = Xen_cdr(arg);
+	  if (!Xen_is_null(arg))
+	    {
+	      x1 = Xen_car(arg);
+	      Xen_check_type(Xen_is_number(x1), x1, 4, S_graph, "a number (x1)");
+	      nominal_x1 = Xen_real_to_C_double(x1); 
+
+	      arg = Xen_cdr(arg);
+	      if (!Xen_is_null(arg))
+		{
+		  y0 = Xen_car(arg);
+		  Xen_check_type(Xen_is_number(y0), y0, 5, S_graph, "a number (y0)");
+		  ymin = Xen_real_to_C_double(y0);
+
+		  arg = Xen_cdr(arg);
+		  if (!Xen_is_null(arg))
+		    {
+		      y1 = Xen_car(arg);
+		      Xen_check_type(Xen_is_number(y1), y1, 6, S_graph, "a number (y1)");
+		      ymax = Xen_real_to_C_double(y1);
+
+		      arg = Xen_cdr(arg);
+		      if (!Xen_is_null(arg))
+			{
+			  snd = Xen_car(arg);
+
+			  arg = Xen_cdr(arg);
+			  if (!Xen_is_null(arg))
+			    {
+			      chn_n = Xen_car(arg);
+
+			      arg = Xen_cdr(arg);
+			      if (!Xen_is_null(arg))
+				{
+				  force_display = Xen_car(arg);
+				  Xen_check_type(Xen_is_boolean(force_display), force_display, 9, S_graph, "a boolean (force-display)");
+
+				  arg = Xen_cdr(arg);
+				  if (!Xen_is_null(arg))
+				    {
+				      show_axes = Xen_car(arg);
+				      Xen_check_type(Xen_is_integer(show_axes), show_axes, 10, S_graph, "an integer (show-axes choice)");
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  Snd_assert_channel(S_graph, snd, chn_n, 7);
+  cp = get_cp(snd, chn_n, S_graph);
+  if (!cp) return(Xen_false);
+
+  if ((cp->sound_ctr == NOT_A_SOUND) || 
+      (cp->sounds == NULL) || 
+      (cp->sounds[cp->sound_ctr] == NULL) ||
+      (cp->axis == NULL))
+    return(Xen_false);
+
+  lg = cp->lisp_info;
   if (lg)
     {
       axis_info *uap = NULL;
@@ -9402,8 +9451,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	}
       for (i = 0, lst = Xen_copy_arg(ldata); i < len; i++, lst = Xen_cdr(lst))
 	lg->data[0][i] = Xen_real_to_C_double(Xen_car(lst));
-      if ((!Xen_is_number(y0)) || 
-	  (!Xen_is_number(y1)))
+      if (ymin > ymax)
 	{
 	  for (i = 1; i < len; i += 2)
 	    {
@@ -9433,8 +9481,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	      lg->len[graph] = len;
 	    }
 	  memcpy((void *)(lg->data[graph]), (void *)mus_vct_data(v), len * sizeof(mus_float_t));
-	  if ((!Xen_is_number(y0)) || 
-	      (!Xen_is_number(y1)))
+	  if (ymin > ymax)
 	    {
 	      for (i = 0; i < len; i++)
 		{
@@ -9524,7 +9571,7 @@ data and passes it to openGL.  See snd-gl.scm for an example."
 static Xen g_channel_data(Xen snd, Xen chn)
 {
   #define H_channel_data "(" S_channel_data " :optional snd chn) returns the in-core samples associated with the \
-given channel.  Currently, this must be a channel (sound) created by " S_make_variable_graph "."
+given channel."
   chan_info *cp;
 
   Snd_assert_channel(S_channel_data, snd, chn, 1);
@@ -9703,7 +9750,7 @@ Xen_wrap_1_arg(g_is_variable_graph_w, g_is_variable_graph)
 Xen_wrap_4_optional_args(g_make_variable_graph_w, g_make_variable_graph)
 Xen_wrap_2_optional_args(g_channel_data_w, g_channel_data)
 
-Xen_wrap_10_optional_args(g_graph_w, g_graph)
+Xen_wrap_any_args(g_graph_w, g_graph)
 Xen_wrap_2_optional_args(g_edits_w, g_edits)
 Xen_wrap_3_optional_args(g_peaks_w, g_peaks)
 Xen_wrap_2_optional_args(g_edit_hook_w, g_edit_hook)
@@ -9931,7 +9978,7 @@ void g_init_chn(void)
   Xen_define_safe_procedure(S_make_variable_graph,     g_make_variable_graph_w,    1, 3, 0, H_make_variable_graph);
   Xen_define_safe_procedure(S_channel_data,            g_channel_data_w,           0, 2, 0, H_channel_data);
 
-  Xen_define_safe_procedure(S_graph,                   g_graph_w,                  1, 9, 0, H_graph);
+  Xen_define_safe_procedure(S_graph,                   g_graph_w,                  0, 0, 1, H_graph);
   Xen_define_safe_procedure(S_edits,                   g_edits_w,                  0, 2, 0, H_edits);
   Xen_define_safe_procedure(S_peaks,                   g_peaks_w,                  0, 3, 0, H_peaks);
   Xen_define_safe_procedure(S_edit_hook,               g_edit_hook_w,              0, 2, 0, H_edit_hook);

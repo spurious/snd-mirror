@@ -1639,7 +1639,12 @@ fill! works with strings, vectors, hash-tables, float-vectors, lists, sounds, an
 </pre>
 
 <p id="genericframples">framples returns the number of "framples" in an object, that is,
-the number of samples per channel.  The framples function overlaps
+the number of samples per channel (a frample is a set of samples, representing
+each channel's value at a given sampling instant, a "sample frame" or a "frame of samples"
+in old time terminology).
+</p>
+<p>
+The framples function overlaps
 the <a href="#genericlength">length</a> function, but length of a string is string-length, whereas framples of a string
 treats the string as a sound file name and returns <a href="#mussoundframples">mus-sound-framples</a>.  framples can replace
 <a href="#mussoundframples">mus-sound-framples</a>, <a href="sndclm.html#genericfunctions">mus-length</a>, 

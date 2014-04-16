@@ -12,7 +12,6 @@
 \ silence-all-mixes	( -- )
 \ find-mix		( sample snd chn -- mx )
 \ mix->vct		( id -- vct )
-\ save-mix		( id filename -- )
 \ mix-maxamp		( id -- max-amp )
 \ snap-mix-to-beat	( at-tag-position -- )
 \
@@ -31,7 +30,6 @@
 \ mixes-maxamp		( mix-list -- mx )
 \ scale-tempo		( mix-list tempo-scl -- )
 \ mixes-length		( mix-list -- len )
-\ save-mixes		( mix-list filename -- )
 
 require clm
 require examp
@@ -97,16 +95,6 @@ previous
 		reader read-mix-sample
 	end-map
 	reader free-sampler drop
-;
-
-: save-mix ( id fname -- )
-	doc" Save mix data (as floats) in FILENAME."
-	{ id fname }
-	id mix->vct { v }
-	fname #f srate mus-sound-open-output { fd }
-	fd 0 v vct-length 1- 1 v undef undef vct->sound-data
-	    mus-sound-write drop
-	fd v vct-length 4 * mus-sound-close-output drop
 ;
 
 : mix-maxamp ( id -- max-amp )
@@ -336,20 +324,6 @@ previous
 	0 ( minlen ) mix-list each { mx }
 		( minlen ) mx mix-position min
 	end-each ( maxlen minlen ) - 1+
-;
-
-: save-mixes { mix-list filename -- }
-	mix-list mix-length { len }
-	0 mix-list each { mx }
-		mx mix-position min
-	end-each { beg }
-	len 0.0 make-vct { data }
-	mix-list each { mx }
-		data  mx mix->vct  mx mix-position beg -  vct-add! drop
-	end-each
-	filename #f srate 1 #f #f "" mus-sound-open-output { fd }
-	fd 0 len 1- 1 data vct->sound-data mus-sound-write drop
-	fd 4 data vct-length * mus-sound-close-output drop
 ;
 
 \ mix.fs ends here

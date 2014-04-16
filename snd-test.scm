@@ -16443,7 +16443,7 @@ EDITS: 2
       (let ((old-clip (clipping)))
 	(set! (clipping) #t)
 	(save-sound-as "tst.snd")
-	(let ((fvals (file->floats "tst.snd")) ; in frame.scm
+	(let ((fvals (file->floats "tst.snd")) 
 	      (vals (channel->float-vector)))
 	  (if (not (vequal vals fvals))
 	      (snd-display #__line__ ";file->floats: ~A ~A" vals fvals)))
@@ -20777,8 +20777,8 @@ EDITS: 2
 	 (let ((gen (make)))
 	   (if (not (ques gen)) (snd-display #__line__ ";~A: ~A -> ~A?" name make gen))
 	   (let ((tag (catch #t (lambda () (if arg (runp gen arg) (runp gen))) (lambda args args))))
-	     (if (and (not (number? tag)) 
-		      (not (frame? tag)))
+	     (if (and (not (number? tag))
+		      (not (vct? tag)))
 		 (snd-display #__line__ ";~A: ~A ~A ~A: ~A" name runp gen arg tag)))
 	   (for-each
 	    (lambda (func genname)
@@ -29002,7 +29002,6 @@ EDITS: 2
 	(let ((snd (open-sound "oboe.snd"))
 	      (v (float-vector .1 .2 .3))
 	      (vc (vector .1 .2 .3 .4))
-	      (lst (list 1 2 3 4 5))
 	      (sd (make-vector (list 1 10) 0.0 #t))
 	      (str "pistol.snd")) ; can't use oboe.snd since we messed with mus-sound-maxamp above
 	  (let ((mxv (mix-float-vector v 1000))
@@ -29018,7 +29017,6 @@ EDITS: 2
 	    (if (fneq (maxamp snd 0 0) .14724) (snd-display #__line__ ";maxamp of sound (0 0): ~A" (maxamp snd)))
 	    (if (fneq (maxamp v) .3) (snd-display #__line__ ";maxamp of float-vector: ~A" (maxamp v)))
 	    (if (fneq (maxamp vc) .4) (snd-display #__line__ ";maxamp of vector: ~A" (maxamp vc)))
-	    (if (fneq (maxamp lst) 5.0) (snd-display #__line__ ";maxamp of list: ~A" (maxamp lst)))
 	    (if (fneq (maxamp str) .49267) (snd-display #__line__ ";maxamp of string: ~A" (maxamp str)))
 	    (if (fneq (maxamp sd) 0.1) (snd-display #__line__ ";maxamp of vector2: ~A" (maxamp sd)))
 	    (if (fneq (maxamp mxv) .3) (snd-display #__line__ ";maxamp of mix: ~A" (maxamp mxv)))
@@ -43943,9 +43941,6 @@ EDITS: 1
 		  (XtSetValues container (list XmNinsertPosition func))
 		  (let ((func1 (cadr (XtGetValues container (list XmNinsertPosition 0)))))
 		    (if (not (equal? func func1)) (snd-display #__line__ ";XmNinsertPosition: ~A ~A" func func1))))))
-	    
-	    (with-level-meters 4)
-	    (play)
 	    (close-sound))
 	  
 	  ;; qualify proc is causing a segfault somehow
@@ -44491,7 +44486,7 @@ EDITS: 1
 		  (list XmNenableWarp XM_INT) (list XmNentryParent XM_WIDGET) (list XmNentryViewType XM_UCHAR)
 		  (list XmNexpandedStatePixmap XM_PIXMAP) (list XmNfileFilterStyle XM_INT) (list XmNfirstPageNumber XM_INT)
 		  (list XmNfontName XM_STRING) (list XmNfontType XM_UCHAR) (list XmNframeBackground XM_PIXEL)
-		  (list XmNframeChildType XM_UCHAR) (list XmNframpleshadowThickness XM_DIMENSION) (list XmNgrabStyle XM_INT)
+		  (list XmNframeChildType XM_UCHAR) (list XmNframeShadowThickness XM_DIMENSION) (list XmNgrabStyle XM_INT)
 		  (list XmNincludeStatus XM_INT) (list XmNincrementValue XM_INT) (list XmNindeterminateInsensitivePixmap XM_PIXMAP)
 		  (list XmNindeterminatePixmap XM_PIXMAP) (list XmNinnerMarginHeight XM_DIMENSION) (list XmNinnerMarginWidth XM_DIMENSION)
 		  (list XmNinputPolicy XM_ULONG) (list XmNinsensitiveStippleBitmap XM_PIXMAP) (list XmNinvokeParseProc XM_PARSE_CALLBACK)
@@ -45387,7 +45382,7 @@ EDITS: 1
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->float-vector file->float-vector?  file->sample
 		     even-multiple even-weight odd-multiple odd-weight
-		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? frame* frame+ firmant firmant?
+		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? firmant firmant?
 		     comb-bank make-comb-bank comb-bank? all-pass-bank make-all-pass-bank all-pass-bank? filtered-comb-bank make-filtered-comb-bank filtered-comb-bank?
 		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb 
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
@@ -45407,7 +45402,7 @@ EDITS: 1
 		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial normalize-partials
 		     partials->wave phase-partials->wave polynomial pulse-train pulse-train?
 		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin? rectangular->polar rectangular->magnitudes
-		     ring-modulate sample->file sample->file? sample->frame sawtooth-wave
+		     ring-modulate sample->file sample->file? sawtooth-wave
 		     sawtooth-wave? nrxysin nrxysin? nrxycos nrxycos? rxyk!cos rxyk!cos? rxyk!sin rxyk!sin?
 		     spectrum square-wave square-wave? src src? ncos nsin ssb-am
 		     ncos? nsin? ssb-am? table-lookup table-lookup? tap tap? triangle-wave triangle-wave? two-pole two-pole? two-zero
@@ -45714,7 +45709,7 @@ EDITS: 1
 				    (if tag
 					(snd-display #__line__ ";?proc ~A: ~A" n tag))))
 				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->float-vector? file->sample? snd->sample?
-				      filter? fir-filter? formant? formant-bank? firmant? float-vector->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
+				      filter? fir-filter? formant? formant-bank? firmant? float-vector->file? granulate? iir-filter? locsig? move-sound? mus-input? 
 				      mus-output? notch? one-pole? one-pole-all-pass? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				      sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 				      square-wave? src? ncos? nsin? tap? table-lookup? 
@@ -45732,7 +45727,7 @@ EDITS: 1
 			(if tag
 			    (snd-display #__line__ ";oscil?proc ~A: ~A" n tag))))
 		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->float-vector? file->sample? snd->sample?
-			  filter? fir-filter? formant? formant-bank? firmant? float-vector->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
+			  filter? fir-filter? formant? formant-bank? firmant? float-vector->file? granulate? iir-filter? locsig? move-sound? mus-input? 
 			  mus-output? notch? one-pole? one-pole-all-pass? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			  sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 			  square-wave? src? ncos? nsin? tap? table-lookup? 
@@ -45816,10 +45811,10 @@ EDITS: 1
 			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average make-moving-max
 			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src make-ncos 
 			  make-nsin make-table-lookup make-triangle-wave
-			  make-two-pole make-two-zero make-wave-train mixer* mixer+ multiply-arrays
+			  make-two-pole make-two-zero make-wave-train multiply-arrays
 			  notch one-pole one-pole-all-pass one-zero oscil partials->polynomial partials->wave make-polyshape make-polywave
 			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar rectangular->magnitudes
-			  ring-modulate sample->frame sawtooth-wave nrxysin nrxycos rxyk!cos rxyk!sin square-wave src ncos nsin
+			  ring-modulate sawtooth-wave nrxysin nrxycos rxyk!cos rxyk!sin square-wave src ncos nsin
 			  table-lookup tap triangle-wave two-pole two-zero wave-train ssb-am make-ssb-am))
 	  
 	  (for-each (lambda (n)
@@ -46259,12 +46254,6 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" 123)))
 		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" mus-nist 123)))
 		(check-error-tag 'bad-header (lambda () (new-sound "hiho" mus-nist mus-bfloat)))
-		(check-error-tag 'out-of-range (lambda () (mus-sound-close-output 0 1)))
-		(check-error-tag 'out-of-range (lambda () (mus-sound-close-output 1 1)))
-		(check-error-tag 'out-of-range (lambda () (mus-sound-close-output 2 1)))
-		(check-error-tag 'out-of-range (lambda () (mus-sound-close-input 0)))
-		(check-error-tag 'out-of-range (lambda () (mus-sound-close-input 1)))
-		(check-error-tag 'out-of-range (lambda () (mus-sound-close-input 2)))
 		(check-error-tag 'out-of-range (lambda () (set! *mus-array-print-length* -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (print-length) -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (play-arrow-size) -1)))

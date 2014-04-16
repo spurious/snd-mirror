@@ -69392,20 +69392,26 @@ int main(int argc, char **argv)
  * open-output|input-object|function?
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
  *
- * mixer and frame are still separate (generator!) types, but they aren't used anywhere?!?
- *   can we deprecate the whole business?  clm2xen still has make_frame_to_file_with_comment -> float_vector?
- *   so we need float_vector<->file as gens in clm? but ruby/forth would still use the current stuff.
- *   perhaps start by removing internal uses of mus_mixer|frame (as in locsig: revf|outf->vals to rev|out_vals)
- *   frame etc used also in *.lisp, *.ins, *.rb, *.fs, [*.html], need snd-xref/index check at the end
- *   so remove frame/mixer from clm.c/h, use frample for the IO procs and header info (etc --region_frames...)
- *     use vectors of some sort for backwards compatibility in clm2xen
- *   also get rid of the leftover sound-data stuff if possible
+ * finish frame removal:
+ *   frame etc used also in *.lisp, *.ins, *.rb, *.fs, cmus.c?
+ *      this is tricky -- ws.rb for example
  *   in s7, the float-vector->file replacements are probably redundant now
+ *   eventually move from C to eval-string, then snd14
+ *   2dim arr in ruby: NArray or matrix.rb: Array.new of array but indexing syntax is different I think
+ *     (still ruby side has frame/mixer/sound_data -- is there any way to make these all ruby-level?)
+ *   in lisp, we're using mixer/frame etc, but then mus.lisp has an implementation too?
+ *     mixer: expandn.ins, freeverb, fullmix, ug3 tests, frame: everywhere, no sound-data or mus_sound_open...
+ *     perhaps split this into some other file?
+ *
  * clear out apply_n n>5
+ *   for 10: g_set_samples(twice?) -- this is much harder (sigh)
+ *   for 9: about 20 cases, opt: gluProject, gluUnproject, fill_rectangle, save_region, filter_channel
+ *   for 8 opt: about a dozen 
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
  * click to inspect/see source etc in listener?
+ *
  * algebra of gens (max[n](max[m]) == max[n+m])? -- no (latter is lower freq):
 (let ((m1 (make-moving-max 3))
       (m2 (make-moving-max 2))
@@ -69414,6 +69420,7 @@ int main(int argc, char **argv)
       ((= i 10))
     (let ((r (random 1.0)))
       (format *stderr* "~A ~A~%" (moving-max m3 r) (moving-max m1 (moving-max m2 r))))))
+ *
  * why can't y-bounds be channel-specific if channels-combined?
  * why doesn't a new max take effect? [with-fullest-sound t844.scm]
  * click-2 in separate channel => play just that channel

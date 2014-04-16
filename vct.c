@@ -1446,6 +1446,13 @@ void mus_vct_init(void)
 
 #if (!HAVE_SCHEME)
   vct_tag = Xen_make_object_type("Vct", sizeof(vct));
+
+  /* for ruby and forth, I think we can define Frame, SoundData, and Mixer to be Vct's with
+   *   some handlers for the channel arg.  Then nothing in the *.rb|fs file has to change
+   *   except all the deprecated names like "region-frames" -> framples.
+   *
+   *   Not sure how to do this -- is it "alias" in Ruby?
+   */
 #endif
 
 #if HAVE_FORTH

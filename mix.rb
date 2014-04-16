@@ -13,7 +13,6 @@
 #  silence_all_mixes
 #  find_mix(sample, snd, chn)
 #  mix2vct(id)
-#  save_mix(id, filename)
 #  mix_maxamp(id)
 #  snap_mix_to_beat(at_tag_position)
 #
@@ -32,7 +31,6 @@
 #  mixes_maxamp(mix_list)
 #  scale_tempo(mix_list, tempo_scl)
 #  mixes_length(mix_list)
-#  save_mixes(mix_list, filename)
 #
 # module Mixer_matrix (see mixer.scm)
 #  mixer_copy(mx)
@@ -92,17 +90,6 @@ returns the id of the mix at the given sample, or nil.")
     v = Vct.new(len) do |i| read_mix_sample(rd) end
     free_sampler(rd)
     v
-  end
-
-  unless defined? save_mix
-    add_help(:save_mix, "save_mix(id, filename) saves mix data (as floats) in file FILENAME.")
-    def save_mix(id, filename)
-      Snd.raise(:no_such_mix, id) unless mix?(id)
-      v = mix2vct(id)
-      fd = mus_sound_open_output(filename, srate(), 1, false, false, "")
-      mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
-      mus_sound_close_output(fd, 4 * v.length)
-    end
   end
 
   add_help(:mix_maxamp, "mix_maxamp(id) returns the max amp in the given mix.")
@@ -292,18 +279,6 @@ transposes each mix in MIX_LIST by SEMITONES.")
     max_len = mix_list.map do |m| mix_position(m) + mix_length(m) end.max
     min_len = mix_list.map do |m| mix_position(m) end.min
     max_len - min_len + 1
-  end
-
-  def save_mixes(mix_list, filename)
-    len = mixes_length(mix_list)
-    beg = mix_list.map do |m| mix_position(m) end.min
-    data = Vct.new(len)
-    mix_list.each do |m|
-      vct_add!(data, mix2vct(m), mix_position(m) - beg)
-    end
-    fd = mus_sound_open_output(filename(srate(), 1, false, false, ""))
-    mus_sound_write(fd, 0, len - 1, vct2sound_data(data))
-    mus_sound_close_output(fd, 4 * data.length)
   end
 end
 

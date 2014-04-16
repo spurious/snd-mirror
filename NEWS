@@ -1,11 +1,40 @@
-Snd 14.5:
+Snd 14.6
 
-CLM: Lispworks port thanks to Anders Vinjar.
+s7: gensym? environment*
 
-many internal changes (13 Mbytes in the changelog), 
-  but none visible, I hope.
+clm: even|odd-weight|multiple (new built-in functions).
 
-checked: gtk 3.11.6|7|8, sbcl-1.1.16
+   deprecate frame and mixer generators -- use float vectors instead.
 
-Thanks!: Rick, Anders, Tito Latini.
+   finally deprecate sound-data objects -- this includes a bunch of
+      functions such as dac-hook, mus-sound-read, etc.
+
+   "frample" replaces "frame" wherever "frame" refers to
+      a set of samples that represent a single sampling instant
+      (also known as a "sample frame").  So, the generator once
+      known as "file->frame" is now "file->frample".
+
+    mus-mix -> mus-file-mix, 
+    mus-mix-with-envs -> mus-file-mix-with-envs.
+
+cast into outer darkness:
+    selection-frames make-frame make-frame! make-frame->file 
+    make-mixer make-mixer! file->frame file->frame? sound-data sound-data* 
+    sound-data+ sound-data-add! sound-data-chans sound-data-copy 
+    sound-data-fill! sound-data-length sound-data-maxamp sound-data-multiply! 
+    sound-data-offset! sound-data-peak sound-data-ref sound-data-reverse! 
+    sound-data-scale! sound-data-set! sound-data? make-scalar-mixer 
+    make-sound-data frame frame* frame+ frame->file frame->file? 
+    frame->frame frame->list frame->sample frame-ref frame-set! frame? 
+    frames frames frames stop-dac-hook continue-frame->file 
+    transform-frames mixer mixer* mixer+ mixer-ref region-frames 
+    mixer-set! mixer? mixers dac-hooksample->frame save-mixes 
+    with-level-meters mus-sound-frames mus-sound-seek-frame 
+    make-file->frame make-level-meter 
+
+
+checked: gtk 3.11.9|12.0|1, sbcl 1.1.17
+
+Thanks!: Mike Scholz.
+
 

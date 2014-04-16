@@ -211,9 +211,13 @@
 				  ((>= i (length mx-lst)) (/ scaled-to mx))
 				(set! mx (max mx (list-ref mx-lst i)))))))
 		       (out-file (substring output-1 0 (- (string-length output-1) 5))))
-		   ;; TODO: write header and use mus-file-mix here
-		   (mus-sound-close-output (mus-sound-open-output out-file srate channels data-format header-type) 0)
-		   (mus-mix out-file output-1 0 (mus-sound-framples output-1) 0 (make-scalar-mixer channels scaling))
+		   (let ((g (make-sample->file out-file channels data-format header-type #f)))
+		     (mus-close g))
+		   (mus-file-mix out-file output-1 0 (mus-sound-framples output-1) 0 
+				 (let ((mx (make-float-vector (list channels channels) 0.0)))
+				   (do ((i 0 (+ i 1)))
+				       ((= i channels) mx)
+				     (set! (mx i i) scaling))))
 		   (delete-file output-1)
 		   (set! output-1 (substring output-1 0 (- (string-length output-1) 5))))
 
