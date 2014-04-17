@@ -2338,7 +2338,7 @@
 		       'listener-prompt 'listener-selection 'listener-text-color 'little-endian? 'locsig
 		       'locsig-ref 'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
 		       'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
-		       'make-asymmetric-fm 'make-moving-average 'make-moving-max 'make-bezier 'make-color 'make-comb 'make-filtered-comb
+		       'make-asymmetric-fm 'make-moving-average 'make-moving-max 'make-moving-norm 'make-bezier 'make-color 'make-comb 'make-filtered-comb
 		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->float-vector
 		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant 'make-formant-bank
 		       'make-granulate 'make-graph-data 'make-iir-filter
@@ -2365,7 +2365,7 @@
 		       'mixes 'mouse-click-hook 'mouse-drag-hook 'mouse-enter-graph-hook
 		       'mouse-enter-label-hook 'mouse-enter-listener-hook 'mouse-enter-text-hook 'mouse-leave-graph-hook 'mouse-leave-label-hook
 		       'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'move-sound 'move-sound? 
-		       'moving-average 'moving-average? 'moving-max 'moving-max? 'multiply-arrays
+		       'moving-average 'moving-average? 'moving-max 'moving-max? 'moving-norm 'moving-norm? 'multiply-arrays
 		       'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size 'mus-alsa-buffers
 		       'mus-alsa-capture-device 'mus-alsa-device 'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
 		       'mus-array-print-length 'mus-float-equal-fudge-factor 
@@ -13170,6 +13170,60 @@ EDITS: 2
 	  (snd-display #__line__ ";make-max max-size error message: ~A" err)))
     
 
+    (let ((gen (make-moving-norm 4))
+	  (v0 (make-float-vector 10))
+	  (gen1 (make-moving-norm 4))
+	  (v1 (make-float-vector 10)))
+      (print-and-check gen 
+		       "moving-norm"
+		       "moving-norm, max 0.000, y1 5.000, weight 0.800, line[4]:[0.000 0.000 0.000 0.000]")
+      (do ((i 0 (+ i 1)))
+	  ((= i 10))
+	(float-vector-set! v0 i (moving-norm gen 1.0)))
+      (fill-float-vector v1 (if (moving-norm? gen1) (moving-norm gen1 1.0) -1.0))
+      (if (not (vequal v1 v0)) (snd-display #__line__ ";map norm: ~A ~A" v0 v1))
+      (if (not (moving-norm? gen)) (snd-display #__line__ ";~A not norm?" gen))
+      (if (not (= (mus-length gen) 4)) (snd-display #__line__ ";norm length: ~D?" (mus-length gen)))
+      (if (not (= (mus-order gen) 4)) (snd-display #__line__ ";norm order: ~D?" (mus-order gen))))
+    
+    (let* ((gen (make-moving-norm 8))
+	   (val (moving-norm gen)))
+      (if (fneq val 1.1236) (snd-display #__line__ ";empty norm: ~A" val))
+      (set! val (moving-norm gen 1.0))
+      (if (fneq val 1.1084) (snd-display #__line__ ";norm 1: ~A" val))
+      (set! val (moving-norm gen -0.5))
+      (if (fneq val 1.0952) (snd-display #__line__ ";norm 2: ~A" val))
+      (set! val (moving-norm gen -1.5))
+      (if (fneq val 1.0222) (snd-display #__line__ ";norm 2: ~A" val))
+      (do ((i 0 (+ i 1))) ((= i 5)) (set! val (moving-norm gen 0.0))) 
+      (if (fneq val 0.8261) (snd-display #__line__ ";norm 6: ~A" val))
+      (set! val (moving-norm gen 0.0))
+      (if (fneq val 0.8047) (snd-display #__line__ ";norm 7: ~A" val))
+      (set! val (moving-norm gen 0.0))
+      (if (fneq val 0.7866) (snd-display #__line__ ";norm 8: ~A" val))
+      (set! val (moving-norm gen 0.0))
+      (if (fneq val 0.8841) (snd-display #__line__ ";norm 9: ~A" val))
+      )
+    (let* ((gen (make-moving-norm 10 :initial-element .5))
+	   (val (moving-norm gen 0.5)))
+      (if (fneq val 1.0476) (snd-display #__line__ ";norm initial-element: ~A" val)))
+    (let* ((gen (make-moving-norm 3 :initial-contents '(1.0 1.0 1.0)))
+	   (val (moving-norm gen 1.0)))
+      (if (fneq val 1.0) (snd-display #__line__ ";norm initial-contents: ~A" val)))
+    
+    (test-gen-equal (let ((d1 (make-moving-norm 3))) (moving-norm d1 1.0) d1)
+		    (let ((d2 (make-moving-norm 3))) (moving-norm d2 1.0) d2) 
+		    (let ((d3 (make-moving-norm 4))) (moving-norm d3 1.0) d3))
+    (test-gen-equal (make-moving-norm 3 :scaler 1.0) 
+		    (make-moving-norm 3 :scaler 1.0) 
+		    (make-moving-norm 4 :scaler 1.0))
+    (let ((err (catch #t (lambda () (make-moving-norm :size -1)) (lambda args args))))
+      (if (not (eq? (car err) 'out-of-range))
+	  (snd-display #__line__ ";make-norm bad size error message: ~A" err)))
+    (let ((err (catch #t (lambda () (make-moving-norm :size 0)) (lambda args args))))
+      (if (not (eq? (car err) 'out-of-range))
+	  (snd-display #__line__ ";make-norm size==0 error message: ~A" err)))
+
 
     (let ((gen (make-comb .4 3))
 	  (v0 (make-float-vector 10))
@@ -20722,7 +20776,7 @@ EDITS: 2
 	(free-sampler reader)))
     
     (let ((make-procs (list
-		       make-all-pass make-asymmetric-fm make-moving-average make-moving-max
+		       make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-moving-norm
 		       make-comb (lambda () (make-convolve :filter (float-vector 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0) :length 10))
 		       (lambda () (make-filter :xcoeffs (float-vector 0 1 2))) (lambda () (make-fir-filter :xcoeffs (float-vector 0 1 2))) 
 		       (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
@@ -20734,7 +20788,7 @@ EDITS: 2
 		       make-two-pole make-two-zero make-wave-train make-polyshape make-phase-vocoder make-ssb-am
 		       (lambda () (make-filter :ycoeffs (float-vector 0 1 2)))
 		       (lambda () (make-filter :xcoeffs (float-vector 1 2 3) :ycoeffs (float-vector 0 1 2)))))
-	  (gen-procs (list all-pass asymmetric-fm moving-average moving-max
+	  (gen-procs (list all-pass asymmetric-fm moving-average moving-max moving-norm
 			   comb convolve delay env 
 			   filter fir-filter filtered-comb formant granulate
 			   iir-filter (lambda (gen a) (locsig gen 0 a)) notch one-pole one-pole-all-pass one-zero oscil 
@@ -20742,7 +20796,7 @@ EDITS: 2
 			   square-wave (lambda (gen a) (src gen 0.0 a)) table-lookup triangle-wave
 			   two-pole two-zero wave-train polyshape phase-vocoder ssb-am
 			   filter filter))
-	  (ques-procs (list all-pass? asymmetric-fm? moving-average? moving-max?
+	  (ques-procs (list all-pass? asymmetric-fm? moving-average? moving-max? moving-norm?
 			    comb? convolve? delay? env? 
 			    filter? fir-filter? filtered-comb? formant? granulate?
 			    iir-filter? locsig? notch? one-pole? one-pole-all-pass? one-zero? oscil? 
@@ -20750,7 +20804,7 @@ EDITS: 2
 			    square-wave? src? table-lookup? triangle-wave?
 			    two-pole? two-zero? wave-train? polyshape? phase-vocoder? ssb-am?
 			    filter? filter?))
-	  (func-names (list 'all-pass 'asymmetric-fm 'moving-average 'moving-max
+	  (func-names (list 'all-pass 'asymmetric-fm 'moving-average 'moving-max 'moving-norm
 			    'comb 'convolve 'delay 'env 
 			    'filter-x 'fir-filter 'filtered-comb 'formant 'granulate
 			    'iir-filter 'locsig 'notch 'one-pole 'one-pole-all-pass 'one-zero 'oscil
@@ -20758,7 +20812,7 @@ EDITS: 2
 			    'square-wave 'src 'table-lookup 'triangle-wave
 			    'two-pole 'two-zero 'wave-train 'polyshape 'phase-vocoder 'ssb-am
 			    'filter-y 'filter-xy))
-	  (gen-args (list 0.0 0.0 1.0 1.0
+	  (gen-args (list 0.0 0.0 1.0 1.0 1.0
 			  0.0 (lambda (dir) 0.0) 0.0 #f
 			  0.0 0.0 0.0 0.0 (lambda (dir) 0.0)
 			  0.0 0.0 0.0 0.0 0.0 0.0 0.0
@@ -20778,7 +20832,7 @@ EDITS: 2
 	   (if (not (ques gen)) (snd-display #__line__ ";~A: ~A -> ~A?" name make gen))
 	   (let ((tag (catch #t (lambda () (if arg (runp gen arg) (runp gen))) (lambda args args))))
 	     (if (and (not (number? tag))
-		      (not (vct? tag)))
+		      (not (float-vector? tag)))
 		 (snd-display #__line__ ";~A: ~A ~A ~A: ~A" name runp gen arg tag)))
 	   (for-each
 	    (lambda (func genname)
@@ -20812,7 +20866,7 @@ EDITS: 2
        make-procs gen-procs ques-procs gen-args func-names)
       
       (let ((make-procs (list
-			 make-all-pass make-asymmetric-fm make-moving-average make-moving-max
+			 make-all-pass make-asymmetric-fm make-moving-average make-moving-max 
 			 make-comb 
 			 (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
 			 (lambda () (make-convolve :filter (float-vector 0 1 2) :input (lambda (dir) 1.0))) 
@@ -20974,7 +21028,8 @@ EDITS: 2
 				1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .1 .2 .3)  #(0 1) 3/4 0+i (make-delay 32)
 				(lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 () 32 '(1 . 2)
 				))
-		  (gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-table-lookup make-triangle-wave
+		  (gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-moving-norm
+					make-table-lookup make-triangle-wave
 					make-comb ;make-convolve
 					make-delay make-env make-fft-window
 					make-filter make-filtered-comb make-fir-filter make-formant
@@ -21140,10 +21195,10 @@ EDITS: 2
 			   (lambda args (car args)))))
 	   (if (not (eq? tag 'mus-error))
 	       (snd-display #__line__ ";long arglist to ~A: ~A" name tag))))
-       (list make-wave-train make-polyshape make-delay make-moving-average make-moving-max make-comb make-filtered-comb make-notch
+       (list make-wave-train make-polyshape make-delay make-moving-average make-moving-max make-moving-norm make-comb make-filtered-comb make-notch
 	     make-rand make-rand-interp make-table-lookup make-env
 	     make-readin make-locsig make-granulate make-convolve make-phase-vocoder)
-       (list 'make-wave-train 'make-polyshape 'make-delay 'make-moving-average 'make-moving-max 'make-comb 'make-filtered-comb 'make-notch
+       (list 'make-wave-train 'make-polyshape 'make-delay 'make-moving-average 'make-moving-max 'make-moving-norm 'make-comb 'make-filtered-comb 'make-notch
 	     'make-rand 'make-rand-interp 'make-table-lookup 'make-env
 	     'make-readin 'make-locsig 'make-granulate 'make-convolve 'make-phase-vocoder)))
     
@@ -41298,7 +41353,7 @@ EDITS: 1
 	 j0j1cos 'jycos 'blackman 'fmssb 'k3sin 'izcos 'nchoosekcos 'n1cos
 	 adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
 	 round-interp 'sinc-train 'pink-noise 'green-noise 'brown-noise 'green-noise-interp
-	 moving-max 'moving-sum 'moving-rms 'moving-length 'weighted-moving-average 'exponentially-weighted-moving-average
+	 moving-max 'moving-norm 'moving-sum 'moving-rms 'moving-length 'weighted-moving-average 'exponentially-weighted-moving-average
 	 tanhsin 'moving-fft 'moving-scentroid 'moving-autocorrelation 'moving-pitch)
    
    (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
@@ -41309,7 +41364,7 @@ EDITS: 1
 	 make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos make-nchoosekcos make-n1cos
 	 make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
 	 make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
-	 make-moving-max make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
+	 make-moving-max make-moving-norm make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
 	 make-tanhsin make-moving-fft make-moving-scentroid make-moving-autocorrelation make-moving-pitch)
    
    (list nssb? nxysin? nxycos? nxy1cos? nxy1sin? noddsin? noddcos? noddssb? ncos2? npcos? 
@@ -41320,7 +41375,7 @@ EDITS: 1
 	 j0j1cos? jycos? blackman? fmssb? k3sin? izcos? nchoosekcos? n1cos? 
 	 adjustable-square-wave? adjustable-triangle-wave? adjustable-sawtooth-wave? adjustable-oscil? 
 	 round-interp? sinc-train? pink-noise? green-noise? brown-noise? green-noise-interp? 
-	 moving-max? moving-sum? moving-rms? moving-length? weighted-moving-average? exponentially-weighted-moving-average? 
+	 moving-max? moving-norm? moving-sum? moving-rms? moving-length? weighted-moving-average? exponentially-weighted-moving-average? 
 	 tanhsin? moving-fft? moving-scentroid? moving-autocorrelation? moving-pitch? )
    )
   
@@ -45376,7 +45431,7 @@ EDITS: 1
 		     mus-sound-maxamp mus-sound-maxamp-exists? 
 		     mus-clipping mus-file-clipping mus-header-raw-defaults 
 		     moving-average moving-average? make-moving-average moving-max moving-max? make-moving-max
-		     mus-expand-filename 
+		     make-moving-norm moving-norm moving-norm? mus-expand-filename 
 		     all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm?
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
@@ -45485,7 +45540,7 @@ EDITS: 1
 			 ))
 	     
 	     (make-procs (list
-			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max
+			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max make-moving-norm
 			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->float-vector
 			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-float-vector->file make-granulate
 			  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
@@ -45713,7 +45768,7 @@ EDITS: 1
 				      mus-output? notch? one-pole? one-pole-all-pass? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				      sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 				      square-wave? src? ncos? nsin? tap? table-lookup? 
-				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? moving-max? ssb-am?
+				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? moving-max? moving-norm? ssb-am?
 				      sampler? region-sampler? float-vector? )))
 		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1)))
 	  
@@ -45731,7 +45786,7 @@ EDITS: 1
 			  mus-output? notch? one-pole? one-pole-all-pass? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			  sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 			  square-wave? src? ncos? nsin? tap? table-lookup? 
-			  triangle-wave? two-pole? two-zero? wave-train? sound? color? mix-sampler? moving-average? moving-max? ssb-am?
+			  triangle-wave? two-pole? two-zero? wave-train? sound? color? mix-sampler? moving-average? moving-max? moving-norm? ssb-am?
 			  sampler? region-sampler? float-vector?))
 	  
 	  (for-each (lambda (n)
@@ -45769,7 +45824,7 @@ EDITS: 1
 					     (not (eq? tag 'error))
 					     (not (eq? tag 'arg-error)))
 					(snd-display #__line__ ";clm ~A: tag: ~A arg: ~A" n tag arg))))
-				(list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average moving-max
+				(list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average moving-max moving-norm
 				      degrees->radians delay env formant firmant granulate hz->radians linear->db even-weight odd-weight
 				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
 				      make-file->float-vector make-file->sample make-filter make-fir-filter make-formant make-firmant 
@@ -45781,7 +45836,8 @@ EDITS: 1
 				      mus-channel mus-channels make-polyshape make-polywave
 				      mus-data mus-feedback mus-feedforward mus-frequency mus-hop
 				      mus-increment mus-length mus-file-name mus-location mus-name mus-order mus-phase mus-ramp mus-random mus-run
-				      mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-pole-all-pass one-zero make-moving-average make-moving-max 
+				      mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-pole-all-pass one-zero 
+				      make-moving-average make-moving-max make-moving-norm
 				      seconds->samples samples->seconds
 				      oscil partials->polynomial partials->wave phase-partials->wave
 				      phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
@@ -45802,13 +45858,13 @@ EDITS: 1
 				     (eq? tag 'error)
 				     (eq? tag 'mus-error)))
 			    (snd-display #__line__ ";clm-1 ~A: ~A" n tag))))
-		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max
+		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max moving-norm
 			  convolve-files delay dot-product env-interp file->sample snd->sample filter fir-filter formant firmant
 			  formant-bank granulate iir-filter ina
 			  inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
 			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-granulate
 			  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil make-phase-vocoder
-			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average make-moving-max
+			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average make-moving-max make-moving-norm
 			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src make-ncos 
 			  make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train multiply-arrays

@@ -3,6 +3,7 @@ Snd 14.6
 s7: gensym? environment*
 
 clm: even|odd-weight|multiple (new built-in functions).
+     moving-norm (new generator).
 
    deprecate frame and mixer generators -- use float vectors instead.
 

@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 0
-#define MUS_DATE "14-Apr-14"
+#define MUS_REVISION 1
+#define MUS_DATE "17-Apr-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -272,6 +272,10 @@ MUS_EXPORT mus_float_t mus_moving_average(mus_any *ptr, mus_float_t input);
 MUS_EXPORT mus_any *mus_make_moving_max(int size, mus_float_t *line);
 MUS_EXPORT bool mus_is_moving_max(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_moving_max(mus_any *ptr, mus_float_t input);
+
+MUS_EXPORT mus_any *mus_make_moving_norm(int size, mus_float_t *line, mus_float_t norm);
+MUS_EXPORT bool mus_is_moving_norm(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_moving_norm(mus_any *ptr, mus_float_t input);
 
 MUS_EXPORT mus_float_t mus_table_lookup(mus_any *gen, mus_float_t fm);
 MUS_EXPORT mus_float_t mus_table_lookup_unmodulated(mus_any *gen);
@@ -716,6 +720,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 17-Apr:     moving_norm generator.
  * 14-Apr:     mus_frame and mus_mixer removed, "frame" replaced by "frample" in IO functions.
  * 11-Apr:     mus_even|odd_weight|multiple.
  * 9-Apr:      deprecate mus_is_delay_line.

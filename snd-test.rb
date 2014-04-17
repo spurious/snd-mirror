@@ -15636,540 +15636,540 @@ end
 include Mixer_matrix
 
 def test_08_07
-  gen = make_mixer(2, 0.5, 0.25, 0.125, 1.0)
-  fr0 = make_frame(2, 1.0, 1.0)
-  fr1 = make_frame(2, 0.0, 0.0)
-  print_and_check(gen,
-                  "mixer",
-                  "mixer chans: 2, [
- 0.500 0.250
- 0.125 1.000
-]")
-  ap = mus_array_print_length
-  mx = make_mixer(8)
-  set_mus_array_print_length(4)
-  mx.length.times do |i|
-    mx.length.times do |j|
-      mixer_set!(mx, i, j, j + i * 8)
-    end
-  end
-  print_and_check(mx,
-                  "mixer",
-                  "mixer chans: 8, [
- 0.000 1.000 2.000 3.000...
- 8.000 9.000 10.000 11.000...
- 16.000 17.000 18.000 19.000...
- 24.000 25.000 26.000 27.000...
-]")
-  set_mus_array_print_length(12)
-  print_and_check(mx,
-                  "mixer",
-                  "mixer chans: 8, [
- 0.000 1.000 2.000 3.000 4.000 5.000 6.000 7.000
- 8.000 9.000 10.000 11.000 12.000 13.000 14.000 15.000
- 16.000 17.000 18.000 19.000 20.000 21.000 22.000 23.000
- 24.000 25.000 26.000 27.000 28.000 29.000 30.000 31.000
- 32.000 33.000 34.000 35.000 36.000 37.000 38.000 39.000
- 40.000 41.000 42.000 43.000 44.000 45.000 46.000 47.000
- 48.000 49.000 50.000 51.000 52.000 53.000 54.000 55.000
- 56.000 57.000 58.000 59.000 60.000 61.000 62.000 63.000
-]")
-  set_mus_array_print_length(ap)
-  print_and_check(fr0, "frame", "frame[2]: [1.000 1.000]")
-  unless frame?(fr0)
-    snd_display("%s not a frame?", fr0)
-  end
-  unless mixer?(gen)
-    snd_display("%s not a mixer?", gen)
-  end
-  if fr0.eql?(fr1)
-    snd_display("frame=? %s %s?", fr0, fr1)
-  end
-  if fr0.channels != 2
-    snd_display("frame channels: %s?", fr0.channels)
-  end
-  if fr1.length != 2
-    snd_display("frame length: %s?", fr1.length)
-  end
-  if gen.channels != 2
-    snd_display("mixer channels: %s?", gen.channels)
-  end
-  frame2frame(fr0, gen, fr1)
-  if fneq(frame_ref(fr0, 0), 1.0) or
-      fneq(frame_ref(fr1, 1), 1.25) or
-      fneq(mixer_ref(gen, 0, 0), 0.5)
-    snd_display("fr0: %s?", fr0)
-  end
-  frame_set!(fr1, 0, 1.0)
-  fr3 = frame_add(fr0, fr1)
-  fr4 = frame_multiply(fr0, fr1)
-  fr5 = sample2frame(fr1, 0.5)
-  if fneq(frame_ref(fr3, 0), 2.0) or
-      fneq(frame_ref(fr4, 0), 1.0)
-    snd_display("fr+*: %s %s?", fr3, fr4)
-  end
-  if fneq(res = frame_ref(fr5, 0), 0.5)
-    snd_display("sample2frame: %s?", res)
-  end
-  sample2frame(fr1, 0.5, fr5)
-  if fneq(res = frame_ref(fr5, 0), 0.5)
-    snd_display("repeat sample2frame: %s?", res)
-  end
-  fr3 = make_frame(2)
-  fr4 = make_frame(4)
-  frame_set!(fr3, 0, 1.0)
-  frame_set!(fr4, 0, 0.5)
-  frame_set!(fr4, 2, 0.5)
-  unless vequal(frame2list(res = frame_add(fr3, fr4)), [1.5, 0.0])
-    snd_display("frame_add unequal chans: %s?", res)
-  end
-  fr3.reset
-  if fneq(frame_ref(fr3, 0), 0.0)
-    snd_display("reset frame: %s?", fr3)
-  end
-  fr3 = make_frame(2)
-  fr4 = make_frame(4)
-  frame_set!(fr3, 0, 1.0)
-  frame_set!(fr4, 0, 0.5)
-  frame_set!(fr4, 2, 1.0)
-  unless vequal(frame2list(res = frame_multiply(fr3, fr4)), [0.5, 0.0])
-    snd_display("frame_multiply unequal chans: %s?", res)
-  end
-  mx1 = make_mixer(2, 1.0, 0.0, 0.0, 1.0)
-  mx2 = mixer_multiply(gen, mx1)
-  fr4 = make_frame(2, 1.0, 1.0)
-  fr5 = make_frame(2, 1.0, 1.0)
-  if fneq(res = frame2sample(mx1, fr1), 1.0)
-    snd_display("frame2sample: %s?", res)
-  end
-  if fneq(res = frame2sample(fr5, fr4), 2.0)
-    snd_display("frame2sample: %s?", res)
-  end
-  unless (res = frame2list(fr1)).eql?([1.0, 1.25])
-    snd_display("frame2list: %s?", res)
-  end
-  if fneq(mixer_ref(mx2, 0, 1), 0.25) or fneq(mixer_ref(mx2, 1, 0), 0.125)
-    snd_display("mixer_multiply: %s?", mx2)
-  end
-  unless mx2.eql?(gen)
-    snd_display("mixer=? %s %s?", gen, mx2)
-  end
-  if mx2.eql?(mx1)
-    snd_display("mixer!=? %s %s?", mx1, mx2)
-  end
-  unless vct?(fr4.data)
-    snd_display("mus_data frame: %s?", fr4.data)
-  end
-  # mus-data doesn't apply from scheme (ruby) level here
-  # unless vct?(mx1.data)
-  #   snd_display("mus_data mixer: %s?", mx1.data)
-  # end
-  mixer_set!(mx2, 0, 0, 2.0)
-  if fneq(mixer_ref(mx2, 0, 0), 2.0)
-    snd_display("mixer_set!: %s?", mx2)
-  end
-  fr0 = sample2frame(mx2, 1.0)
-  if fneq(frame_ref(fr0, 0), 2.0) or fneq(frame_ref(fr0, 1), 0.25)
-    snd_display("sample2frame: %s?", fr0)
-  end
-  frout = make_frame(2)
-  sample2frame(mx2, 1.0, frout)
-  unless frout.eql?(fr0)
-    snd_display("sample2frame via frout: %s %s?", frout, fr0)
-  end
-  fr1 = make_frame(2, 0.1, 0.2)
-  val = frame_add(fr1, 1.0)
-  if fneq(frame_ref(val, 0), 1.1) or fneq(frame_ref(val, 1), 1.2)
-    snd_display("8 frame_offset: %s?", val)
-  end
-  val = frame_add(1.0, fr1)
-  if fneq(frame_ref(val, 0), 1.1) or fneq(frame_ref(val, 1), 1.2)
-    snd_display("8 frame_offset a: %s?", val)
-  end
-  val = frame_multiply(fr1, 2.0)
-  if fneq(frame_ref(val, 0), 0.2) or fneq(frame_ref(val, 1), 0.4)
-    snd_display("8 frame_scale: %s?", val)
-  end
-  val = frame_multiply(2.0, fr1)
-  if fneq(frame_ref(val, 0), 0.2) or fneq(frame_ref(val, 1), 0.4)
-    snd_display("8 frame_scale a: %s?", val)
-  end
-  val = frame_copy(fr1)
-  if fneq(frame_ref(val, 0), 0.1) or fneq(frame_ref(val, 1), 0.2)
-    snd_display("8 frame_copy: %s?", val)
-  end
-  #
-  mx1 = make_mixer(2, 1, 2, 3, 4)
-  mx2 = mixer_multiply(mx1, 2.0)
-  unless mx2.eql?(make_mixer(2, 2, 4, 6, 8))
-    snd_display("8 mixer_scale 2: %s?", mx2)
-  end
-  mx2 = mixer_multiply(2.0, mx1)
-  unless mx2.eql?(make_mixer(2, 2, 4, 6, 8))
-    snd_display("8 mixer_scale 2a: %s?", mx2)
-  end
-  mx2 = mixer_add(2.0, mx1)
-  unless mx2.eql?(make_mixer(2, 3, 4, 5, 6))
-    snd_display("8 mixer_scale 3: %s?", mx2)
-  end
-  mx2 = mixer_add(mx1, 2.0)
-  unless mx2.eql?(make_mixer(2, 3, 4, 5, 6))
-    snd_display("8 mixer_scale 3a: %s?", mx2)
-  end
-  # 
-  mx1 = make_scalar_mixer(2, 2.0)
-  mx2 = make_mixer(2, 0.1, 0.2, 0.3, 0.4)
-  nmx = mixer_add(mx1, mx2)
-  if fneq(mixer_ref(mx1, 0, 0), 2.0) or
-      fneq(mixer_ref(mx1, 0, 1), 0.0) or
-      fneq(mixer_ref(mx1, 1, 0), 0.0) or
-      fneq(mixer_ref(mx1, 1, 1), 2.0)
-    snd_display("make_scalar_mixer 2: %s?", mx1)
-  end
-  if fneq(mixer_ref(mx2, 0, 0), 0.1) or
-      fneq(mixer_ref(mx2, 0, 1), 0.2) or
-      fneq(mixer_ref(mx2, 1, 0), 0.3) or
-      fneq(mixer_ref(mx2, 1, 1), 0.4)
-    snd_display("make_mixer 0.1, 0.2, 0.3, 0.4: %s?", mx2)
-  end
-  if fneq(mixer_ref(nmx, 0, 0), 2.1) or
-      fneq(mixer_ref(nmx, 0, 1), 0.2) or
-      fneq(mixer_ref(nmx, 1, 0), 0.3) or
-      fneq(mixer_ref(nmx, 1, 1), 2.4)
-    snd_display("mixer_add: %s?", nmx)
-  end
-  mx1 = mixer_multiply(mx1, 0.5)
-  if fneq(mixer_ref(mx1, 0, 0), 1.0) or
-      fneq(mixer_ref(mx1, 0, 1), 0.0) or
-      fneq(mixer_ref(mx1, 1, 0), 0.0) or
-      fneq(mixer_ref(mx1, 1, 1), 1.0)
-    snd_display("mixer_multiply (identity): %s?", mx1)
-  end
-  mx1.reset
-  if fneq(mixer_ref(mx1, 0, 0), 0.0)
-    snd_display("reset mixer: %s?", mx1)
-  end
-  #
-  if (res = Snd.catch do make_mixer(2, 0.0, 0.0, 0.0, 0.0, 0.0) end).first != :mus_error
-    snd_display("make_mixer extra args: %s", res.inspect)
-  end
-  if (res = Snd.catch do
-        fr1 = make_frame(2, 1.0, 0.0)
-        frame2sample(make_oscil, fr1)
-      end).first != :mus_error
-    snd_display("frame2sample bad arg: %s", res.inspect)
-  end
-  hi = make_mixer(1, 1)
-  if (res = Snd.catch do mixer_set!(hi, 1, 1, 1.0) end).first != :mus_error
-    snd_display("mixer_set! 1 1 of 0: %s (%s)", res.inspect, hi)
-  end
-  hi = make_mixer(1)
-  if (res = Snd.catch do mixer_set!(hi, 1, 0, 1.0) end).first != :mus_error
-    snd_display("mixer_set! 1 0 of 0: %s (%s)", res.inspect, hi)
-  end
-  hi = make_mixer(1)
-  if (res = Snd.catch do mixer_set!(hi, 0, 1, 1.0) end).first != :mus_error
-    snd_display("mixer_set! 0 1 of 0: %s (%s)", res.inspect, hi)
-  end
-  hi = make_frame(1)
-  if (res = Snd.catch do frame_set!(hi, 1, 1.0) end).first != :mus_error
-    snd_display("frame_set! 1 of 0: %s (%s)", res.inspect, hi)
-  end
-  if (res = Snd.catch do make_frame(0) end).first != :out_of_range
-    snd_display("make_frame 0: %s", res.inspect)
-  end
-  if (res = Snd.catch do make_mixer(0) end).first != :out_of_range
-    snd_display("make_mixer 0: %s", res.inspect)
-  end
-  #
-  fr1 = make_frame(1, 1)
-  fr2 = make_frame(2, 1, 2)
-  fr4 = make_frame(4, 1, 2, 3, 4)
-  fr8 = make_frame(8, 1, 2, 3, 4, 5, 6, 7, 8)
-  mx1 = make_mixer(1, 5)
-  mx1id = make_mixer(1, 1)
-  mx2 = make_mixer(2, 1, 2, 3, 4)
-  mx2id = make_mixer(2, 1, 0, 0, 1)
-  mx4 = make_mixer(4)
-  mx4id = make_mixer(4)
-  mx8 = make_mixer(8)
-  mx8id = make_mixer(8)
-  4.times do |i|
-    mixer_set!(mx4id, i, i, 1)
-    mixer_set!(mx4, 0, i, 1)
-  end
-  8.times do |i|
-    mixer_set!(mx8id, i, i, 1)
-    mixer_set!(mx8, i, 0, 1)
-  end
-  unless (res = frame2frame(fr1, mx1id)).eql?(make_frame(1, 1))
-    snd_display("frame2frame 1 id: %s?", res)
-  end
-  unless (res = frame2frame(fr1, mx1)).eql?(make_frame(1, 5))
-    snd_display("frame2frame 1: %s?", res)
-  end
-  unless (res = frame2frame(fr1, mx2id)).eql?(make_frame(2, 1, 0))
-    snd_display("frame2frame 2 1 id: %s?", res)
-  end
-  unless (res = frame2frame(fr1, mx2)).eql?(make_frame(2, 1, 2))
-    snd_display("frame2frame 2 1: %s?", res)
-  end
-  unless (res = frame2frame(fr1, mx4)).eql?(make_frame(4, 1, 1, 1, 1))
-    snd_display("frame2frame 4 1: %s?", res)
-  end
-  unless (res = frame2frame(fr1, mx8)).eql?(make_frame(8, 1, 0, 0, 0, 0, 0, 0, 0))
-    snd_display("frame2frame 8 1: %s?", res)
-  end
-  unless (res = frame2frame(fr2, mx1)).eql?(make_frame(1, 5))
-    snd_display("frame2frame 1 2: %s?", res)
-  end
-  unless (res = frame2frame(fr2, mx2id)).eql?(make_frame(2, 1, 2))
-    snd_display("frame2frame 2 id 2: %s?", res)
-  end
-  unless (res = frame2frame(fr2, mx2)).eql?(make_frame(2, 7, 10))
-    snd_display("frame2frame 2 2: %s?", res)
-  end
-  unless (res = frame2frame(fr2, mx4id)).eql?(make_frame(4, 1, 2, 0, 0))
-    snd_display("frame2frame 4 id 2: %s?", res)
-  end
-  unless (res = frame2frame(fr2, mx8id)).eql?(make_frame(8, 1, 2, 0, 0, 0, 0, 0, 0))
-    snd_display("frame2frame 8 id 2: %s?", res)
-  end
-  unless (res = frame2frame(fr2, mx4)).eql?(make_frame(4, 1, 1, 1, 1))
-    snd_display("frame2frame 4 2: %s?", res)
-  end
-  unless (res = frame2frame(fr2, mx8)).eql?(make_frame(8, 3, 0, 0, 0, 0, 0, 0, 0))
-    snd_display("frame2frame 8 2: %s?", res)
-  end
-  unless (res = frame2frame(fr4, mx1)).eql?(make_frame(1, 5))
-    snd_display("frame2frame 1 4: %s?", res)
-  end
-  unless (res = frame2frame(fr8, mx1)).eql?(make_frame(1, 5))
-    snd_display("frame2frame 1 8: %s?", res)
-  end
-  unless (res = frame2frame(fr4, mx4)).eql?(make_frame(4, 1, 1, 1, 1))
-    snd_display("frame2frame 4 4: %s?", res)
-  end
-  unless (res = frame2frame(fr4, mx8)).eql?(make_frame(8, 10, 0, 0, 0, 0, 0, 0, 0))
-    snd_display("frame2frame 8 4: %s?", res)
-  end
-  #
-  fr1 = make_frame(2)
-  fr2 = make_frame(2)
-  mx1 = make_mixer(2)
-  mx2 = make_mixer(2)
-  frame_set!(fr1, 0, 0.1)
-  fradd = frame_add(fr1, fr1, fr2)
-  unless fr2.eql?(fradd)
-    snd_display("frame_add with res frame: %s %s?", fr2, fradd)
-  end
-  unless fr2.eql?(make_frame(2, 0.2, 0.0))
-    snd_display("frame_add res: %s?", fr2)
-  end
-  fradd = frame_multiply(fr1, fr1, fr2)
-  unless fr2.eql?(fradd)
-    snd_display("frame_multiply with res frame: %s %s?", fr2, fradd)
-  end
-  if fneq(frame_ref(fr2, 0), 0.01) or fneq(frame_ref(fr2, 1), 0.0)
-    snd_display("frame_multiply res: %s?", fr2)
-  end
-  mixer_set!(mx1, 0, 0, 0.1)
-  mxadd = mixer_multiply(mx1, mx1, mx2)
-  unless mx2.eql?(mxadd)
-    snd_display("mixer_multiply with res mixer: %s %s?", mx2, mxadd)
-  end
-  if fneq(mixer_ref(mx2, 0, 0), 0.01)
-    snd_display("mixer_multiply res: %s?", mx2)
-  end
-  #
-  [1, 2, 4, 8].each do |chans|
-    m1 = make_mixer(chans)
-    if m1.channels != chans or m1.length != chans
-      snd_display("mixer %s chans but: %s %s?", chans, m1.channels, m1.length)
-    end
-    chans.times do |i|
-      chans.times do |j|
-        mixer_set!(m1, i, j, i * 0.01 + j * 0.1)
-      end
-    end
-    chans.times do |i|
-      chans.times do |j|
-        if fneq(res0 = mixer_ref(m1, i, j), res1 = i * 0.01 + j * 0.1)
-          snd_display("mixer[%s %s] = %s (%s)?", i, j, res0, res1)
-        end
-      end
-    end
-    mempty = make_mixer(chans)
-    midentity = make_mixer(chans)
-    mpick = make_mixer(chans)
-    chans.times do |i| mixer_set!(midentity, i, i, 1.0) end
-    mixer_set!(mpick, chans - 1, chans - 1, 1.0)
-    mzero = mixer_multiply(m1, mempty)
-    msame = mixer_multiply(m1, midentity)
-    mone = mixer_multiply(m1, mpick)
-    chans.times do |i|
-      chans.times do |j|
-        if fneq(res = mixer_ref(mzero, i, j), 0.0)
-          snd_display("mzero %s %s = %s?", i, j, res)
-        end
-        if fneq(res0 = mixer_ref(m1, i, j), res1 = mixer_ref(msame, i, j))
-          snd_display("msame %s %s?", res0, res1)
-        end
-        if fneq(res = mixer_ref(mone, i, j), 0.0) and
-            i != chans - 1 and
-            j != chans - 1
-          snd_display("mone %s %s = %s?", i, j, res)
-        end
-      end
-    end
-  end
-  #
-  mx = make_mixer(4, 4)
-  if (res = Snd.catch do mx.length = 2 end).first != :mus_error
-    snd_display("set_mixer_length: %s %s", res.inspect, mx.length)
-  end
-  #
-  if fneq(res = mixer_determinant(make_mixer(2, 1, 2, 3, 4)), -2.0)
-    snd_display("mixer_determinant -2: %s?", res)
-  end
-  if fneq(res = mixer_determinant(make_mixer(3, 1, 2, 3, 4, 5, 6, 7, 8, 9)), 0.0)
-    snd_display("mixer_determinant 0: %s?", res)
-  end
-  if fneq(res = mixer_determinant(make_mixer(4, 1, 2, 3, 4, 8, 7, 6, 5, 1, 8, 2, 7, 3, 6, 4, 5)),
-          -144.0)
-    snd_display("mixer_determinant -144: %s?", res)
-  end
-  if fneq(res = mixer_determinant(make_mixer(5,  2, 3, 5, 7, 11,  13, 17, 19, 23, 29,
-                                             31, 37, 41, 43, 47,  53, 59, 61, 67, 71,
-                                             73, 79, 83, 89, 97)), -4656.0)
-    snd_display("mixer_determinant -4656: %s?", res)
-  end
-  if fneq(res = mixer_determinant(make_mixer(6,  2, 3, 5, 7, 11, 13,   17, 19, 23, 29, 31, 37,
-                                             41, 43, 47, 53, 59, 61,  67, 71, 73, 79, 83, 89,  
-                                             97, 101, 103, 107, 109, 113,
-                                             127, 131, 137, 139, 149, 151)), -14304.0)
-    snd_display("mixer_determinant -14304: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_transpose(make_mixer(2, 1, 2, 3, 4)),
-                      make_mixer(2, 1.0, 3.0, 2.0, 4.0))
-    snd_display("mixer_transpose 1: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_transpose(make_mixer(3, 1, 2, 3, 4, 5, 6, 7, 8, 9)),
-                      make_mixer(3, 1.0, 4.0, 7.0, 2.0, 5.0, 8.0, 3.0, 6.0, 9.0))
-    snd_display("mixer_transpose 2: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_multiply(make_mixer(2, 1, 0, 0, 1), make_mixer(2, 2, 0, 0, 2)),
-                      make_mixer(2, 2.0, 0.0, 0.0, 2.0))
-    snd_display("mixer_multiply 1: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_multiply(make_mixer(3, 2, 3, 5, 7, 11, 13, 19, 23, 29),
-                                           make_mixer(3, 41, 43, 47, 53, 59, 61, 67, 71, 73)),
-                      make_mixer(3, 576, 618, 642, 1741, 1873, 1949, 3941, 4233, 4413))
-    snd_display("mixer_multiply 2: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_inverse(make_mixer(2, 1, 0, 0, 1)), make_mixer(2, 1, 0, 0, 1))
-    snd_display("mixer_inverse 1: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_inverse(make_mixer(2, 2, 3, 5, 8)), make_mixer(2, 8, -3, -5, 2))
-    snd_display("mixer_inverse 2: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_inverse(make_mixer(3,  2, 3, 5,  7, 11, 13,  17, 19, 23)),
-                      make_mixer(3, -0.077, -0.333, 0.205, -0.769, 0.5, -0.115,
-                                 0.692, -0.167, -0.013))
-    snd_display("mixer_inverse 3: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_inverse(make_mixer(4,  2, 3, 5, 7,  17, 19, 23, 29,
-                                                     41, 43, 47, 53,  67, 71, 73, 97)),
-                      make_mixer(4, -7, 4.708, -1.042, -0.333, 9, -6.396, 1.396, 0.5, 
-                                 -1, 0.875, -0.042, -0.167, -1, 0.771, -0.271, 0))
-    snd_display("mixer_inverse 4: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_inverse(make_mixer(6,  2, 3, 5, 7, 11, 13,
-                                                     17, -19, 23, 29, 31, 37,
-                                                     41, 43, 47, 53, 59, 61,
-                                                     67, 71, 73, 79, 83, 89,
-                                                     97, 101, 103, 107, 109, 113,
-                                                     127, 131, 137, 139, 149, 151)), 
-                      make_mixer(6, -1.355, 0.02, -0, 1.09, -1.153, 0.333, 0.092,
-                                -0.025, 0, -0.042, 0.07, -0.029, 1.612,
-                                 0.006, -0.25, -1.205, 1.249, -0.264,
-                                 0.079, 0.002, 0.25, -0.314, 0.425, -0.241,
-                                 -0.551, -0.011, 0.25, 0.2, -0.476, 0.188,
-                                 0.068, 0.009, -0.25, 0.306, -0.145, 0.028))
-    snd_display("mixer_inverse 5: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_multiply(make_mixer(2, 2, 3, 5, 8),
-                                           mixer_inverse(make_mixer(2, 2, 3, 5, 8))),
-                      make_scalar_mixer(2, 1.0))
-    snd_display("mixer_inverse 6: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_multiply(make_mixer(3, 2, 3, 5, 7, 11, 13, 17, 19, 23),
-                                           mixer_inverse(make_mixer(3, 2, 3, 5,
-                                                                    7, 11, 13,
-                                                                    17, 19, 23))),
-                      make_scalar_mixer(3, 1.0))
-    snd_display("mixer_inverse 7: %s?", res)
-  end
-  unless mixer_diagonal?(make_scalar_mixer(2, 2.0))
-    snd_display("mixer_diagonal 1")
-  end
-  unless mixer_diagonal?(make_mixer(3, 1, 0, 0, 0, 1, 0, 0, 0, 1))
-    snd_display("mixer_diagonal 2")
-  end
-  if mixer_diagonal?(make_mixer(3, 1, 0, 0, 0, 1, 1, 0, 0, 1))
-    snd_display("mixer_diagonal 3")
-  end
-  unless mixer_diagonal?(make_mixer(3, 0, 0, 0, 0, 1, 0, 0, 0, 1))
-    snd_display("mixer_diagonal 4")
-  end
-  unless mixer_symmetric?(make_mixer(3, 0, 0, 0, 0, 1, 0, 0, 0, 1))
-    snd_display("mixer_symmetric 1")
-  end
-  unless mixer_symmetric?(make_mixer(3, 1, 2, 0, 2, 1, 0, 0, 0, 1))
-    snd_display("mixer_symmetric 2")
-  end
-  if mixer_symmetric?(make_mixer(3, 1, 2, 0, 2, 1, 0, 0, 2, 1))
-    snd_display("mixer_symmetric 3")
-  end
-  unless mixer_equal?(make_scalar_mixer(2, 2.0), make_mixer(2, 2.0, 0, 0, 2.0))
-    snd_display("mixer_equal? 1")
-  end
-  if mixer_equal?(make_mixer(2, 1, 2, 3, 4), make_mixer(3, 1, 2, 3, 4, 5, 6, 7, 8, 9))
-    snd_display("mixer_equal? 2")
-  end
-  if mixer_equal?(make_mixer(2, 1, 2, 3, 4), make_mixer(2, 1, 2, 3, 5))
-    snd_display("mixer_equal? 3")
-  end
-  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 0, 0, 1), 1, 1), make_mixer(2, 2, 0, 0, 2))
-    snd_display("mixer_poly 1: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_poly(make_mixer(1, 1), 1), make_mixer(1, 1))
-    snd_display("mixer_poly 2: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 0, 0, 1), 1, 0, 0),
-                      make_mixer(2, 1, 0, 0, 1))
-    snd_display("mixer_poly 3: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 0, 0), 
-                      make_mixer(2, 9, 8, 16, 17))
-    snd_display("mixer_poly 4: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 1, 0), 
-                      make_mixer(2, 10, 10, 20, 20))
-    snd_display("mixer_poly 5: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 1, 2), 
-                      make_mixer(2, 12, 10, 20, 22))
-    snd_display("mixer_poly 6: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 0, 0, 0), 
-                      make_mixer(2, 41, 42, 84, 83))
-    snd_display("mixer_poly 7: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 0, 1, 0), 
-                      make_mixer(2, 42, 44, 88, 86))
-    snd_display("mixer_poly 8: %s?", res)
-  end
+#  gen = make_mixer(2, 0.5, 0.25, 0.125, 1.0)
+#  fr0 = make_frame(2, 1.0, 1.0)
+#  fr1 = make_frame(2, 0.0, 0.0)
+#  print_and_check(gen,
+#                  "mixer",
+#                  "mixer chans: 2, [
+# 0.500 0.250
+# 0.125 1.000
+#]")
+#  ap = mus_array_print_length
+#  mx = make_mixer(8)
+#  set_mus_array_print_length(4)
+#  mx.length.times do |i|
+#    mx.length.times do |j|
+#      mixer_set!(mx, i, j, j + i * 8)
+#    end
+#  end
+#  print_and_check(mx,
+#                  "mixer",
+#                  "mixer chans: 8, [
+# 0.000 1.000 2.000 3.000...
+# 8.000 9.000 10.000 11.000...
+# 16.000 17.000 18.000 19.000...
+# 24.000 25.000 26.000 27.000...
+#]")
+#  set_mus_array_print_length(12)
+#  print_and_check(mx,
+#                  "mixer",
+#                  "mixer chans: 8, [
+# 0.000 1.000 2.000 3.000 4.000 5.000 6.000 7.000
+# 8.000 9.000 10.000 11.000 12.000 13.000 14.000 15.000
+# 16.000 17.000 18.000 19.000 20.000 21.000 22.000 23.000
+# 24.000 25.000 26.000 27.000 28.000 29.000 30.000 31.000
+# 32.000 33.000 34.000 35.000 36.000 37.000 38.000 39.000
+# 40.000 41.000 42.000 43.000 44.000 45.000 46.000 47.000
+# 48.000 49.000 50.000 51.000 52.000 53.000 54.000 55.000
+# 56.000 57.000 58.000 59.000 60.000 61.000 62.000 63.000
+#]")
+#  set_mus_array_print_length(ap)
+#  print_and_check(fr0, "frame", "frame[2]: [1.000 1.000]")
+#  unless frame?(fr0)
+#    snd_display("%s not a frame?", fr0)
+#  end
+#  unless mixer?(gen)
+#    snd_display("%s not a mixer?", gen)
+#  end
+#  if fr0.eql?(fr1)
+#    snd_display("frame=? %s %s?", fr0, fr1)
+#  end
+#  if fr0.channels != 2
+#    snd_display("frame channels: %s?", fr0.channels)
+#  end
+#  if fr1.length != 2
+#    snd_display("frame length: %s?", fr1.length)
+#  end
+#  if gen.channels != 2
+#    snd_display("mixer channels: %s?", gen.channels)
+#  end
+#  frame2frame(fr0, gen, fr1)
+#  if fneq(frame_ref(fr0, 0), 1.0) or
+#      fneq(frame_ref(fr1, 1), 1.25) or
+#      fneq(mixer_ref(gen, 0, 0), 0.5)
+#    snd_display("fr0: %s?", fr0)
+#  end
+#  frame_set!(fr1, 0, 1.0)
+#  fr3 = frame_add(fr0, fr1)
+#  fr4 = frame_multiply(fr0, fr1)
+#  fr5 = sample2frame(fr1, 0.5)
+#  if fneq(frame_ref(fr3, 0), 2.0) or
+#      fneq(frame_ref(fr4, 0), 1.0)
+#    snd_display("fr+*: %s %s?", fr3, fr4)
+#  end
+#  if fneq(res = frame_ref(fr5, 0), 0.5)
+#    snd_display("sample2frame: %s?", res)
+#  end
+#  sample2frame(fr1, 0.5, fr5)
+#  if fneq(res = frame_ref(fr5, 0), 0.5)
+#    snd_display("repeat sample2frame: %s?", res)
+#  end
+#  fr3 = make_frame(2)
+#  fr4 = make_frame(4)
+#  frame_set!(fr3, 0, 1.0)
+#  frame_set!(fr4, 0, 0.5)
+#  frame_set!(fr4, 2, 0.5)
+#  unless vequal(frame2list(res = frame_add(fr3, fr4)), [1.5, 0.0])
+#    snd_display("frame_add unequal chans: %s?", res)
+#  end
+#  fr3.reset
+#  if fneq(frame_ref(fr3, 0), 0.0)
+#    snd_display("reset frame: %s?", fr3)
+#  end
+#  fr3 = make_frame(2)
+#  fr4 = make_frame(4)
+#  frame_set!(fr3, 0, 1.0)
+#  frame_set!(fr4, 0, 0.5)
+#  frame_set!(fr4, 2, 1.0)
+#  unless vequal(frame2list(res = frame_multiply(fr3, fr4)), [0.5, 0.0])
+#    snd_display("frame_multiply unequal chans: %s?", res)
+#  end
+#  mx1 = make_mixer(2, 1.0, 0.0, 0.0, 1.0)
+#  mx2 = mixer_multiply(gen, mx1)
+#  fr4 = make_frame(2, 1.0, 1.0)
+#  fr5 = make_frame(2, 1.0, 1.0)
+#  if fneq(res = frame2sample(mx1, fr1), 1.0)
+#    snd_display("frame2sample: %s?", res)
+#  end
+#  if fneq(res = frame2sample(fr5, fr4), 2.0)
+#    snd_display("frame2sample: %s?", res)
+#  end
+#  unless (res = frame2list(fr1)).eql?([1.0, 1.25])
+#    snd_display("frame2list: %s?", res)
+#  end
+#  if fneq(mixer_ref(mx2, 0, 1), 0.25) or fneq(mixer_ref(mx2, 1, 0), 0.125)
+#    snd_display("mixer_multiply: %s?", mx2)
+#  end
+#  unless mx2.eql?(gen)
+#    snd_display("mixer=? %s %s?", gen, mx2)
+#  end
+#  if mx2.eql?(mx1)
+#    snd_display("mixer!=? %s %s?", mx1, mx2)
+#  end
+#  unless vct?(fr4.data)
+#    snd_display("mus_data frame: %s?", fr4.data)
+#  end
+#  # mus-data doesn't apply from scheme (ruby) level here
+#  # unless vct?(mx1.data)
+#  #   snd_display("mus_data mixer: %s?", mx1.data)
+#  # end
+#  mixer_set!(mx2, 0, 0, 2.0)
+#  if fneq(mixer_ref(mx2, 0, 0), 2.0)
+#    snd_display("mixer_set!: %s?", mx2)
+#  end
+#  fr0 = sample2frame(mx2, 1.0)
+#  if fneq(frame_ref(fr0, 0), 2.0) or fneq(frame_ref(fr0, 1), 0.25)
+#    snd_display("sample2frame: %s?", fr0)
+#  end
+#  frout = make_frame(2)
+#  sample2frame(mx2, 1.0, frout)
+#  unless frout.eql?(fr0)
+#    snd_display("sample2frame via frout: %s %s?", frout, fr0)
+#  end
+#  fr1 = make_frame(2, 0.1, 0.2)
+#  val = frame_add(fr1, 1.0)
+#  if fneq(frame_ref(val, 0), 1.1) or fneq(frame_ref(val, 1), 1.2)
+#    snd_display("8 frame_offset: %s?", val)
+#  end
+#  val = frame_add(1.0, fr1)
+#  if fneq(frame_ref(val, 0), 1.1) or fneq(frame_ref(val, 1), 1.2)
+#    snd_display("8 frame_offset a: %s?", val)
+#  end
+#  val = frame_multiply(fr1, 2.0)
+#  if fneq(frame_ref(val, 0), 0.2) or fneq(frame_ref(val, 1), 0.4)
+#    snd_display("8 frame_scale: %s?", val)
+#  end
+#  val = frame_multiply(2.0, fr1)
+#  if fneq(frame_ref(val, 0), 0.2) or fneq(frame_ref(val, 1), 0.4)
+#    snd_display("8 frame_scale a: %s?", val)
+#  end
+#  val = frame_copy(fr1)
+#  if fneq(frame_ref(val, 0), 0.1) or fneq(frame_ref(val, 1), 0.2)
+#    snd_display("8 frame_copy: %s?", val)
+#  end
+#  #
+#  mx1 = make_mixer(2, 1, 2, 3, 4)
+#  mx2 = mixer_multiply(mx1, 2.0)
+#  unless mx2.eql?(make_mixer(2, 2, 4, 6, 8))
+#    snd_display("8 mixer_scale 2: %s?", mx2)
+#  end
+#  mx2 = mixer_multiply(2.0, mx1)
+#  unless mx2.eql?(make_mixer(2, 2, 4, 6, 8))
+#    snd_display("8 mixer_scale 2a: %s?", mx2)
+#  end
+#  mx2 = mixer_add(2.0, mx1)
+#  unless mx2.eql?(make_mixer(2, 3, 4, 5, 6))
+#    snd_display("8 mixer_scale 3: %s?", mx2)
+#  end
+#  mx2 = mixer_add(mx1, 2.0)
+#  unless mx2.eql?(make_mixer(2, 3, 4, 5, 6))
+#    snd_display("8 mixer_scale 3a: %s?", mx2)
+#  end
+#  # 
+#  mx1 = make_scalar_mixer(2, 2.0)
+#  mx2 = make_mixer(2, 0.1, 0.2, 0.3, 0.4)
+#  nmx = mixer_add(mx1, mx2)
+#  if fneq(mixer_ref(mx1, 0, 0), 2.0) or
+#      fneq(mixer_ref(mx1, 0, 1), 0.0) or
+#      fneq(mixer_ref(mx1, 1, 0), 0.0) or
+#      fneq(mixer_ref(mx1, 1, 1), 2.0)
+#    snd_display("make_scalar_mixer 2: %s?", mx1)
+#  end
+#  if fneq(mixer_ref(mx2, 0, 0), 0.1) or
+#      fneq(mixer_ref(mx2, 0, 1), 0.2) or
+#      fneq(mixer_ref(mx2, 1, 0), 0.3) or
+#      fneq(mixer_ref(mx2, 1, 1), 0.4)
+#    snd_display("make_mixer 0.1, 0.2, 0.3, 0.4: %s?", mx2)
+#  end
+#  if fneq(mixer_ref(nmx, 0, 0), 2.1) or
+#      fneq(mixer_ref(nmx, 0, 1), 0.2) or
+#      fneq(mixer_ref(nmx, 1, 0), 0.3) or
+#      fneq(mixer_ref(nmx, 1, 1), 2.4)
+#    snd_display("mixer_add: %s?", nmx)
+#  end
+#  mx1 = mixer_multiply(mx1, 0.5)
+#  if fneq(mixer_ref(mx1, 0, 0), 1.0) or
+#      fneq(mixer_ref(mx1, 0, 1), 0.0) or
+#      fneq(mixer_ref(mx1, 1, 0), 0.0) or
+#      fneq(mixer_ref(mx1, 1, 1), 1.0)
+#    snd_display("mixer_multiply (identity): %s?", mx1)
+#  end
+#  mx1.reset
+#  if fneq(mixer_ref(mx1, 0, 0), 0.0)
+#    snd_display("reset mixer: %s?", mx1)
+#  end
+#  #
+#  if (res = Snd.catch do make_mixer(2, 0.0, 0.0, 0.0, 0.0, 0.0) end).first != :mus_error
+#    snd_display("make_mixer extra args: %s", res.inspect)
+#  end
+#  if (res = Snd.catch do
+#        fr1 = make_frame(2, 1.0, 0.0)
+#        frame2sample(make_oscil, fr1)
+#      end).first != :mus_error
+#    snd_display("frame2sample bad arg: %s", res.inspect)
+#  end
+#  hi = make_mixer(1, 1)
+#  if (res = Snd.catch do mixer_set!(hi, 1, 1, 1.0) end).first != :mus_error
+#    snd_display("mixer_set! 1 1 of 0: %s (%s)", res.inspect, hi)
+#  end
+#  hi = make_mixer(1)
+#  if (res = Snd.catch do mixer_set!(hi, 1, 0, 1.0) end).first != :mus_error
+#    snd_display("mixer_set! 1 0 of 0: %s (%s)", res.inspect, hi)
+#  end
+#  hi = make_mixer(1)
+#  if (res = Snd.catch do mixer_set!(hi, 0, 1, 1.0) end).first != :mus_error
+#    snd_display("mixer_set! 0 1 of 0: %s (%s)", res.inspect, hi)
+#  end
+#  hi = make_frame(1)
+#  if (res = Snd.catch do frame_set!(hi, 1, 1.0) end).first != :mus_error
+#    snd_display("frame_set! 1 of 0: %s (%s)", res.inspect, hi)
+#  end
+#  if (res = Snd.catch do make_frame(0) end).first != :out_of_range
+#    snd_display("make_frame 0: %s", res.inspect)
+#  end
+#  if (res = Snd.catch do make_mixer(0) end).first != :out_of_range
+#    snd_display("make_mixer 0: %s", res.inspect)
+#  end
+#  #
+#  fr1 = make_frame(1, 1)
+#  fr2 = make_frame(2, 1, 2)
+#  fr4 = make_frame(4, 1, 2, 3, 4)
+#  fr8 = make_frame(8, 1, 2, 3, 4, 5, 6, 7, 8)
+#  mx1 = make_mixer(1, 5)
+#  mx1id = make_mixer(1, 1)
+#  mx2 = make_mixer(2, 1, 2, 3, 4)
+#  mx2id = make_mixer(2, 1, 0, 0, 1)
+#  mx4 = make_mixer(4)
+#  mx4id = make_mixer(4)
+#  mx8 = make_mixer(8)
+#  mx8id = make_mixer(8)
+#  4.times do |i|
+#    mixer_set!(mx4id, i, i, 1)
+#    mixer_set!(mx4, 0, i, 1)
+#  end
+#  8.times do |i|
+#    mixer_set!(mx8id, i, i, 1)
+#    mixer_set!(mx8, i, 0, 1)
+#  end
+#  unless (res = frame2frame(fr1, mx1id)).eql?(make_frame(1, 1))
+#    snd_display("frame2frame 1 id: %s?", res)
+#  end
+#  unless (res = frame2frame(fr1, mx1)).eql?(make_frame(1, 5))
+#    snd_display("frame2frame 1: %s?", res)
+#  end
+#  unless (res = frame2frame(fr1, mx2id)).eql?(make_frame(2, 1, 0))
+#    snd_display("frame2frame 2 1 id: %s?", res)
+#  end
+#  unless (res = frame2frame(fr1, mx2)).eql?(make_frame(2, 1, 2))
+#    snd_display("frame2frame 2 1: %s?", res)
+#  end
+#  unless (res = frame2frame(fr1, mx4)).eql?(make_frame(4, 1, 1, 1, 1))
+#    snd_display("frame2frame 4 1: %s?", res)
+#  end
+#  unless (res = frame2frame(fr1, mx8)).eql?(make_frame(8, 1, 0, 0, 0, 0, 0, 0, 0))
+#    snd_display("frame2frame 8 1: %s?", res)
+#  end
+#  unless (res = frame2frame(fr2, mx1)).eql?(make_frame(1, 5))
+#    snd_display("frame2frame 1 2: %s?", res)
+#  end
+#  unless (res = frame2frame(fr2, mx2id)).eql?(make_frame(2, 1, 2))
+#    snd_display("frame2frame 2 id 2: %s?", res)
+#  end
+#  unless (res = frame2frame(fr2, mx2)).eql?(make_frame(2, 7, 10))
+#    snd_display("frame2frame 2 2: %s?", res)
+#  end
+#  unless (res = frame2frame(fr2, mx4id)).eql?(make_frame(4, 1, 2, 0, 0))
+#    snd_display("frame2frame 4 id 2: %s?", res)
+#  end
+#  unless (res = frame2frame(fr2, mx8id)).eql?(make_frame(8, 1, 2, 0, 0, 0, 0, 0, 0))
+#    snd_display("frame2frame 8 id 2: %s?", res)
+#  end
+#  unless (res = frame2frame(fr2, mx4)).eql?(make_frame(4, 1, 1, 1, 1))
+#    snd_display("frame2frame 4 2: %s?", res)
+#  end
+#  unless (res = frame2frame(fr2, mx8)).eql?(make_frame(8, 3, 0, 0, 0, 0, 0, 0, 0))
+#    snd_display("frame2frame 8 2: %s?", res)
+#  end
+#  unless (res = frame2frame(fr4, mx1)).eql?(make_frame(1, 5))
+#    snd_display("frame2frame 1 4: %s?", res)
+#  end
+#  unless (res = frame2frame(fr8, mx1)).eql?(make_frame(1, 5))
+#    snd_display("frame2frame 1 8: %s?", res)
+#  end
+#  unless (res = frame2frame(fr4, mx4)).eql?(make_frame(4, 1, 1, 1, 1))
+#    snd_display("frame2frame 4 4: %s?", res)
+#  end
+#  unless (res = frame2frame(fr4, mx8)).eql?(make_frame(8, 10, 0, 0, 0, 0, 0, 0, 0))
+#    snd_display("frame2frame 8 4: %s?", res)
+#  end
+#  #
+#  fr1 = make_frame(2)
+#  fr2 = make_frame(2)
+#  mx1 = make_mixer(2)
+#  mx2 = make_mixer(2)
+#  frame_set!(fr1, 0, 0.1)
+#  fradd = frame_add(fr1, fr1, fr2)
+#  unless fr2.eql?(fradd)
+#    snd_display("frame_add with res frame: %s %s?", fr2, fradd)
+#  end
+#  unless fr2.eql?(make_frame(2, 0.2, 0.0))
+#    snd_display("frame_add res: %s?", fr2)
+#  end
+#  fradd = frame_multiply(fr1, fr1, fr2)
+#  unless fr2.eql?(fradd)
+#    snd_display("frame_multiply with res frame: %s %s?", fr2, fradd)
+#  end
+#  if fneq(frame_ref(fr2, 0), 0.01) or fneq(frame_ref(fr2, 1), 0.0)
+#    snd_display("frame_multiply res: %s?", fr2)
+#  end
+#  mixer_set!(mx1, 0, 0, 0.1)
+#  mxadd = mixer_multiply(mx1, mx1, mx2)
+#  unless mx2.eql?(mxadd)
+#    snd_display("mixer_multiply with res mixer: %s %s?", mx2, mxadd)
+#  end
+#  if fneq(mixer_ref(mx2, 0, 0), 0.01)
+#    snd_display("mixer_multiply res: %s?", mx2)
+#  end
+#  #
+#  [1, 2, 4, 8].each do |chans|
+#    m1 = make_mixer(chans)
+#    if m1.channels != chans or m1.length != chans
+#      snd_display("mixer %s chans but: %s %s?", chans, m1.channels, m1.length)
+#    end
+#    chans.times do |i|
+#      chans.times do |j|
+#        mixer_set!(m1, i, j, i * 0.01 + j * 0.1)
+#      end
+#    end
+#    chans.times do |i|
+#      chans.times do |j|
+#        if fneq(res0 = mixer_ref(m1, i, j), res1 = i * 0.01 + j * 0.1)
+#          snd_display("mixer[%s %s] = %s (%s)?", i, j, res0, res1)
+#        end
+#      end
+#    end
+#    mempty = make_mixer(chans)
+#    midentity = make_mixer(chans)
+#    mpick = make_mixer(chans)
+#    chans.times do |i| mixer_set!(midentity, i, i, 1.0) end
+#    mixer_set!(mpick, chans - 1, chans - 1, 1.0)
+#    mzero = mixer_multiply(m1, mempty)
+#    msame = mixer_multiply(m1, midentity)
+#    mone = mixer_multiply(m1, mpick)
+#    chans.times do |i|
+#      chans.times do |j|
+#        if fneq(res = mixer_ref(mzero, i, j), 0.0)
+#          snd_display("mzero %s %s = %s?", i, j, res)
+#        end
+#        if fneq(res0 = mixer_ref(m1, i, j), res1 = mixer_ref(msame, i, j))
+#          snd_display("msame %s %s?", res0, res1)
+#        end
+#        if fneq(res = mixer_ref(mone, i, j), 0.0) and
+#            i != chans - 1 and
+#            j != chans - 1
+#          snd_display("mone %s %s = %s?", i, j, res)
+#        end
+#      end
+#    end
+#  end
+#  #
+#  mx = make_mixer(4, 4)
+#  if (res = Snd.catch do mx.length = 2 end).first != :mus_error
+#    snd_display("set_mixer_length: %s %s", res.inspect, mx.length)
+#  end
+#  #
+#  if fneq(res = mixer_determinant(make_mixer(2, 1, 2, 3, 4)), -2.0)
+#    snd_display("mixer_determinant -2: %s?", res)
+#  end
+#  if fneq(res = mixer_determinant(make_mixer(3, 1, 2, 3, 4, 5, 6, 7, 8, 9)), 0.0)
+#    snd_display("mixer_determinant 0: %s?", res)
+#  end
+#  if fneq(res = mixer_determinant(make_mixer(4, 1, 2, 3, 4, 8, 7, 6, 5, 1, 8, 2, 7, 3, 6, 4, 5)),
+#          -144.0)
+#    snd_display("mixer_determinant -144: %s?", res)
+#  end
+#  if fneq(res = mixer_determinant(make_mixer(5,  2, 3, 5, 7, 11,  13, 17, 19, 23, 29,
+#                                             31, 37, 41, 43, 47,  53, 59, 61, 67, 71,
+#                                             73, 79, 83, 89, 97)), -4656.0)
+#    snd_display("mixer_determinant -4656: %s?", res)
+#  end
+#  if fneq(res = mixer_determinant(make_mixer(6,  2, 3, 5, 7, 11, 13,   17, 19, 23, 29, 31, 37,
+#                                             41, 43, 47, 53, 59, 61,  67, 71, 73, 79, 83, 89,  
+#                                             97, 101, 103, 107, 109, 113,
+#                                             127, 131, 137, 139, 149, 151)), -14304.0)
+#    snd_display("mixer_determinant -14304: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_transpose(make_mixer(2, 1, 2, 3, 4)),
+#                      make_mixer(2, 1.0, 3.0, 2.0, 4.0))
+#    snd_display("mixer_transpose 1: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_transpose(make_mixer(3, 1, 2, 3, 4, 5, 6, 7, 8, 9)),
+#                      make_mixer(3, 1.0, 4.0, 7.0, 2.0, 5.0, 8.0, 3.0, 6.0, 9.0))
+#    snd_display("mixer_transpose 2: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_multiply(make_mixer(2, 1, 0, 0, 1), make_mixer(2, 2, 0, 0, 2)),
+#                      make_mixer(2, 2.0, 0.0, 0.0, 2.0))
+#    snd_display("mixer_multiply 1: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_multiply(make_mixer(3, 2, 3, 5, 7, 11, 13, 19, 23, 29),
+#                                           make_mixer(3, 41, 43, 47, 53, 59, 61, 67, 71, 73)),
+#                      make_mixer(3, 576, 618, 642, 1741, 1873, 1949, 3941, 4233, 4413))
+#    snd_display("mixer_multiply 2: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_inverse(make_mixer(2, 1, 0, 0, 1)), make_mixer(2, 1, 0, 0, 1))
+#    snd_display("mixer_inverse 1: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_inverse(make_mixer(2, 2, 3, 5, 8)), make_mixer(2, 8, -3, -5, 2))
+#    snd_display("mixer_inverse 2: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_inverse(make_mixer(3,  2, 3, 5,  7, 11, 13,  17, 19, 23)),
+#                      make_mixer(3, -0.077, -0.333, 0.205, -0.769, 0.5, -0.115,
+#                                 0.692, -0.167, -0.013))
+#    snd_display("mixer_inverse 3: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_inverse(make_mixer(4,  2, 3, 5, 7,  17, 19, 23, 29,
+#                                                     41, 43, 47, 53,  67, 71, 73, 97)),
+#                      make_mixer(4, -7, 4.708, -1.042, -0.333, 9, -6.396, 1.396, 0.5, 
+#                                 -1, 0.875, -0.042, -0.167, -1, 0.771, -0.271, 0))
+#    snd_display("mixer_inverse 4: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_inverse(make_mixer(6,  2, 3, 5, 7, 11, 13,
+#                                                     17, -19, 23, 29, 31, 37,
+#                                                     41, 43, 47, 53, 59, 61,
+#                                                     67, 71, 73, 79, 83, 89,
+#                                                     97, 101, 103, 107, 109, 113,
+#                                                     127, 131, 137, 139, 149, 151)), 
+#                      make_mixer(6, -1.355, 0.02, -0, 1.09, -1.153, 0.333, 0.092,
+#                                -0.025, 0, -0.042, 0.07, -0.029, 1.612,
+#                                 0.006, -0.25, -1.205, 1.249, -0.264,
+#                                 0.079, 0.002, 0.25, -0.314, 0.425, -0.241,
+#                                 -0.551, -0.011, 0.25, 0.2, -0.476, 0.188,
+#                                 0.068, 0.009, -0.25, 0.306, -0.145, 0.028))
+#    snd_display("mixer_inverse 5: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_multiply(make_mixer(2, 2, 3, 5, 8),
+#                                           mixer_inverse(make_mixer(2, 2, 3, 5, 8))),
+#                      make_scalar_mixer(2, 1.0))
+#    snd_display("mixer_inverse 6: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_multiply(make_mixer(3, 2, 3, 5, 7, 11, 13, 17, 19, 23),
+#                                           mixer_inverse(make_mixer(3, 2, 3, 5,
+#                                                                    7, 11, 13,
+#                                                                    17, 19, 23))),
+#                      make_scalar_mixer(3, 1.0))
+#    snd_display("mixer_inverse 7: %s?", res)
+#  end
+#  unless mixer_diagonal?(make_scalar_mixer(2, 2.0))
+#    snd_display("mixer_diagonal 1")
+#  end
+#  unless mixer_diagonal?(make_mixer(3, 1, 0, 0, 0, 1, 0, 0, 0, 1))
+#    snd_display("mixer_diagonal 2")
+#  end
+#  if mixer_diagonal?(make_mixer(3, 1, 0, 0, 0, 1, 1, 0, 0, 1))
+#    snd_display("mixer_diagonal 3")
+#  end
+#  unless mixer_diagonal?(make_mixer(3, 0, 0, 0, 0, 1, 0, 0, 0, 1))
+#    snd_display("mixer_diagonal 4")
+#  end
+#  unless mixer_symmetric?(make_mixer(3, 0, 0, 0, 0, 1, 0, 0, 0, 1))
+#    snd_display("mixer_symmetric 1")
+#  end
+#  unless mixer_symmetric?(make_mixer(3, 1, 2, 0, 2, 1, 0, 0, 0, 1))
+#    snd_display("mixer_symmetric 2")
+#  end
+#  if mixer_symmetric?(make_mixer(3, 1, 2, 0, 2, 1, 0, 0, 2, 1))
+#    snd_display("mixer_symmetric 3")
+#  end
+#  unless mixer_equal?(make_scalar_mixer(2, 2.0), make_mixer(2, 2.0, 0, 0, 2.0))
+#    snd_display("mixer_equal? 1")
+#  end
+#  if mixer_equal?(make_mixer(2, 1, 2, 3, 4), make_mixer(3, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+#    snd_display("mixer_equal? 2")
+#  end
+#  if mixer_equal?(make_mixer(2, 1, 2, 3, 4), make_mixer(2, 1, 2, 3, 5))
+#    snd_display("mixer_equal? 3")
+#  end
+#  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 0, 0, 1), 1, 1), make_mixer(2, 2, 0, 0, 2))
+#    snd_display("mixer_poly 1: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_poly(make_mixer(1, 1), 1), make_mixer(1, 1))
+#    snd_display("mixer_poly 2: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 0, 0, 1), 1, 0, 0),
+#                      make_mixer(2, 1, 0, 0, 1))
+#    snd_display("mixer_poly 3: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 0, 0), 
+#                      make_mixer(2, 9, 8, 16, 17))
+#    snd_display("mixer_poly 4: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 1, 0), 
+#                      make_mixer(2, 10, 10, 20, 20))
+#    snd_display("mixer_poly 5: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 1, 2), 
+#                      make_mixer(2, 12, 10, 20, 22))
+#    snd_display("mixer_poly 6: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 0, 0, 0), 
+#                      make_mixer(2, 41, 42, 84, 83))
+#    snd_display("mixer_poly 7: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 0, 1, 0), 
+#                      make_mixer(2, 42, 44, 88, 86))
+#    snd_display("mixer_poly 8: %s?", res)
+#  end
 end
 
 def test_08_08

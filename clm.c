@@ -106,7 +106,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAMPLE,
       MUS_SAMPLE_TO_FILE, MUS_FRAMPLE_TO_FILE, MUS_PHASE_VOCODER,
-      MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
+      MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_MOVING_NORM, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT, MUS_FORMANT_BANK,
       MUS_ONE_POLE_ALL_PASS, MUS_COMB_BANK, MUS_ALL_PASS_BANK, MUS_FILTERED_COMB_BANK, MUS_OSCIL_BANK,
       MUS_PULSED_ENV, MUS_RXYKSIN, MUS_RXYKCOS,
@@ -4324,7 +4324,7 @@ typedef struct {
   bool zdly, line_allocated, filt_allocated;
   mus_float_t *line;
   unsigned int zloc, zsize;
-  mus_float_t xscl, yscl, yn1;
+  mus_float_t xscl, yscl, yn1, y1, norm;
   mus_interp_t type;
   mus_any *filt;
   mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
@@ -5482,7 +5482,7 @@ static char *describe_moving_max(mus_any *ptr)
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
   snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %.3f, line[%d]:%s",
 	       mus_name(ptr),
-	       gen->xscl * gen->yscl, 
+	       gen->xscl, 
 	       gen->size, 
 	       str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) free(str);
@@ -5534,6 +5534,105 @@ mus_any *mus_make_moving_max(int size, mus_float_t *line)
     }
   return(NULL);
 }
+
+
+/* -------- moving-norm -------- */
+
+bool mus_is_moving_norm(mus_any *ptr) 
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_MOVING_NORM));
+}
+
+
+mus_float_t mus_moving_norm(mus_any *ptr, mus_float_t input)
+{
+  dly *gen = (dly *)ptr;
+  mus_float_t output, abs_input;
+
+  abs_input = fabs(input);
+  if (abs_input < 0.01) abs_input = 0.01; /* 0.01 sets the max norm output (~100) -- maybe a parameter to make-norm? */
+  output = mus_moving_max(ptr, abs_input);
+  gen->y1 = output + (gen->yscl * gen->y1);
+
+  return(gen->norm / gen->y1);
+}
+
+
+static mus_float_t run_mus_moving_norm(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_moving_norm(ptr, input));}
+
+
+static void moving_norm_reset(mus_any *ptr)
+{
+  dly *gen = (dly *)ptr;
+  delay_reset(ptr);
+  gen->xscl = 0.0;
+  gen->y1 = 0.0;
+}
+
+
+static char *describe_moving_norm(mus_any *ptr)
+{
+  char *str = NULL;
+  dly *gen = (dly *)ptr;
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s, max %.3f, y1 %.3f, weight %.3f, line[%d]:%s",
+	   mus_name(ptr),
+	   gen->xscl, gen->y1, gen->yscl,
+	   gen->size, 
+	   str = float_array_to_string(gen->line, gen->size, gen->loc));
+  if (str) free(str);
+  return(describe_buffer);
+}
+
+
+static mus_any_class MOVING_NORM_CLASS = {
+  MUS_MOVING_NORM,
+  (char *)S_moving_norm,
+  &free_delay,
+  &describe_moving_norm,
+  &delay_equalp,
+  &delay_data,
+  &delay_set_data,
+  &delay_length,
+  &delay_set_length,
+  0, 0, 0, 0, /* freq phase */
+  &delay_scaler,
+  &delay_set_scaler,
+  &delay_fb,
+  &delay_set_fb,
+  &run_mus_moving_norm,
+  MUS_DELAY_LINE,
+  NULL, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &delay_loc,
+  0, 0,
+  0, 0, 0, 0, 0,
+  &moving_norm_reset,
+  0
+};
+
+
+mus_any *mus_make_moving_norm(int size, mus_float_t *line, mus_float_t norm)
+{
+  dly *gen;
+  gen = (dly *)mus_make_moving_max(size, line);
+  if (gen)
+    {
+      gen->core = &MOVING_NORM_CLASS;
+      
+      gen->yscl = (mus_float_t)size / (size + 1.0); /* one-pole -b1 = -feedback so this is a lowpass filter */
+      gen->norm = norm * (size + 1.0);
+      gen->yn1 = 1.0 / size;
+      gen->y1 = size + 1.0;
+      
+      return((mus_any *)gen);
+    }
+  return(NULL);
+}
+ 
 
 
 

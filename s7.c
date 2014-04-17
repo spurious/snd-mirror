@@ -69405,10 +69405,6 @@ int main(int argc, char **argv)
  *     mixer: expandn.ins, freeverb, fullmix, ug3 tests, frame: everywhere, no sound-data or mus_sound_open...
  *     perhaps split this into some other file?
  *
- * clear out apply_n n>5
- *   for 9: about 10 cases, opt: fill_rectangle, save_region, filter_channel, unopt: gl_spectrogram and various Xm cases
- *   for 8 opt: about a dozen 
- *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
  * click to inspect/see source etc in listener?

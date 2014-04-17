@@ -1812,7 +1812,6 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 and replaces it with the spectrum given in coeffs"
   (let ((bands (make-vector pairs))
 	(pcoeffs (partials->polynomial coeffs))
-	(avgs (make-vector pairs))
 	(peaks (make-vector pairs))
 	(peaks2 (make-vector pairs))
 	(flt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.9)))
@@ -1828,8 +1827,7 @@ and replaces it with the spectrum given in coeffs"
 	(let ((aff (* (+ i 1) freq))
 	      (bwf (* bw (+ 1.0 (/ (+ i 1) (* 2 pairs))))))
 	  (set! (peaks i) (make-moving-max 128))
-	  (set! (peaks2 i) (make-moving-max 128))
-	  (set! (avgs i) (make-moving-average 128))
+	  (set! (peaks2 i) (make-moving-norm 128))
 	  (set! (bands i) (make-bandpass (hz->2pi (- aff bwf)) 
 					 (hz->2pi (+ aff bwf)) 
 					 order))))
@@ -1839,17 +1837,16 @@ and replaces it with the spectrum given in coeffs"
 	(let ((sum 0.0))
 	  (do ((i 0 (+ i 1)))
 	      ((= i pairs))
-	    (let* ((sig (bandpass (vector-ref bands i) (float-vector-ref indata k)))
-		   (mx (moving-max (vector-ref peaks i) sig)))
-	      (set! sum (+ sum (* mx (polynomial pcoeffs (/ sig (moving-average (vector-ref avgs i) (max 0.01 mx)))))))))
+	    (let ((sig (bandpass (vector-ref bands i) (float-vector-ref indata k))))
+	      (set! sum (+ sum (* (moving-max (vector-ref peaks i) sig)
+				  (polynomial pcoeffs (* sig (moving-norm (vector-ref peaks2 i) sig))))))))
 	  (filter flt sum)))
 
       (do ((pair 0 (+ pair 1)))
 	  ((= pair pairs))
 	(let ((bp (vector-ref bands pair))
 	      (pk (vector-ref peaks pair))
-	      (pk2 (vector-ref peaks2 pair))
-	      (avg (vector-ref avgs pair)))
+	      (pk2 (vector-ref peaks2 pair)))
 
 	  (do ((k startup (+ k 1)))
 	      ((= k len))
@@ -1857,15 +1854,11 @@ and replaces it with the spectrum given in coeffs"
 
 	  (do ((k startup (+ k 1)))
 	      ((= k len))
-	    (float-vector-set! adder k (* (moving-max pk (float-vector-ref adder k)) 
-					  (polynomial pcoeffs (/ (float-vector-ref adder k)
-								 (moving-average avg (max .01 (moving-max pk2 (float-vector-ref adder k)))))))))
-	  ;; moving-normalize generator:
-	  ;; we're normalizing the polynomial input so its "index" is 1.0
+	    (float-vector-set! adder k (* (moving-max pk (float-vector-ref adder k))
+					  (polynomial pcoeffs (* (float-vector-ref adder k)
+								 (moving-norm pk2 (float-vector-ref adder k)))))))
+	  ;; we're normalizing the polynomial input so its waveshaping index is more-or-less 1.0
 	  ;;   this might work better with len=256, max .1 -- we're assuming a well-behaved signal 
-	  ;;
-	  ;; (define* (make-moving-normalize (len 128) (mx 100.0)) (vector (make-moving-max len) (make-moving-average len) mx))
-	  ;; (define (moving-normalize gen sig) (/ sig (moving-average (gen 1) (moving-max (gen 0) (max (/ (gen 2)) sig)))))
 
 	  (float-vector-add! summer adder)))
 

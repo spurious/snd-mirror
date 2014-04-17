@@ -6305,9 +6305,9 @@ x(n) = y(n-1)
 
 
 
-<!--  MOVING-AVERAGE. MOVING-MAX  -->
+<!--  MOVING-AVERAGE. MOVING-MAX. MOVING-NORM.  -->
 
-<div class="innerheader" id="moving-averagedoc">moving-average, moving-max</div>
+<div class="innerheader" id="moving-averagedoc">moving-average, moving-max, moving-norm</div>
 
 <pre class="indented">
 <em class=def id="make-moving-average">make-moving-average</em> size initial-contents (initial-element 0.0)
@@ -6317,6 +6317,10 @@ x(n) = y(n-1)
 <em class=def id="make-moving-max">make-moving-max</em> size initial-contents (initial-element 0.0)
 <em class=def id="moving-max">moving-max</em> f input
 <em class=def id="moving-max?">moving-max?</em> f
+
+<em class=def id="make-moving-norm">make-moving-norm</em> size (scaler 1.0)
+<em class=def id="moving-norm">moving-norm</em> f input
+<em class=def id="moving-norm?">moving-norm?</em> f
 </pre>
 
 <table class="method">
@@ -6441,8 +6445,12 @@ upon output (to track the original sound's amplitude envelope):
                      (* amp (<a class=quiet href="#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a> (/ y amp) index)))))))
 </pre>
 
+<p>moving-norm specializes moving-max to provide automatic gain control.  It is essentially a one-pole (low-pass)
+filter on the output of moving-max, inverted and multiplied by a scaler.  <code>(* input-signal (moving-norm g input-signal))</code>
+is the normal usage.
+</p>
+
 <p>
-This can also be used for automatic gain control &mdash; see generators.scm for the agc function.
 See generators.scm for several related functions:
 <a href="#moving-rms">moving-rms</a>, <a href="#moving-sum">moving-sum</a>, 
 <a href="#moving-length">moving-length</a>, <a href="#weighted-moving-average">weighted-moving-average</a>, and 

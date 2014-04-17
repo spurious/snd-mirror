@@ -2617,7 +2617,7 @@ static Xen g_oscil_bank(Xen g)
 /* ---------------- delay ---------------- */
 
 
-typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_MOVING_AVERAGE, G_MOVING_MAX, G_FCOMB} xclm_delay_t;
+typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_MOVING_AVERAGE, G_MOVING_MAX, G_MOVING_NORM, G_FCOMB} xclm_delay_t;
 
 static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 {
@@ -2641,12 +2641,13 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 
   switch (choice)
     {
-    case G_DELAY:    caller = S_make_delay;                                                      break;
-    case G_MOVING_AVERAGE: caller = S_make_moving_average;                                       break;
-    case G_MOVING_MAX: caller = S_make_moving_max;                                               break;
-    case G_COMB:     caller = S_make_comb;     scaler_key = argn; keys[argn++] = kw_scaler;      break;
-    case G_FCOMB:    caller = S_make_filtered_comb; scaler_key = argn; keys[argn++] = kw_scaler; break;
-    case G_NOTCH:    caller = S_make_notch;    scaler_key = argn; keys[argn++] = kw_scaler;      break;
+    case G_DELAY:          caller = S_make_delay;                                                       break;
+    case G_MOVING_AVERAGE: caller = S_make_moving_average;                                              break;
+    case G_MOVING_MAX:     caller = S_make_moving_max;                                                  break;
+    case G_MOVING_NORM:    caller = S_make_moving_norm;    scaler = 1.0;                                break;
+    case G_COMB:           caller = S_make_comb;           scaler_key = argn; keys[argn++] = kw_scaler; break;
+    case G_FCOMB:          caller = S_make_filtered_comb;  scaler_key = argn; keys[argn++] = kw_scaler; break;
+    case G_NOTCH:          caller = S_make_notch;          scaler_key = argn; keys[argn++] = kw_scaler; break;
     case G_ALL_PASS: 
       caller = S_make_all_pass; 
       feedback_key = argn;
@@ -2656,7 +2657,12 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
       break;
     }
 
-  size_key = argn;             keys[argn++] = kw_size;
+  size_key = argn;                 keys[argn++] = kw_size;
+  if (choice == G_MOVING_NORM) 
+    {
+      scaler_key = argn;       keys[argn++] = kw_scaler;
+    }
+
   initial_contents_key = argn; keys[argn++] = kw_initial_contents;
   initial_element_key = argn;  keys[argn++] = kw_initial_element;
   max_size_key = argn;         keys[argn++] = kw_max_size;
@@ -2721,7 +2727,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	case G_MOVING_MAX:
 	  break;
 
-	case G_COMB: case G_NOTCH: case G_FCOMB:
+	case G_COMB: case G_NOTCH: case G_FCOMB: case G_MOVING_NORM:
 	  scaler = Xen_optkey_to_float(kw_scaler, keys[scaler_key], caller, orig_arg[scaler_key], scaler);
 	  break;
 
@@ -2797,7 +2803,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	max_size = 1;
       else max_size = size;
     }
-  if (((choice == G_MOVING_AVERAGE) || (choice == G_MOVING_MAX)) && 
+  if (((choice == G_MOVING_AVERAGE) || (choice == G_MOVING_MAX) || (choice == G_MOVING_NORM)) && 
       (max_size != size))
     {
       if (size == 0)
@@ -2838,6 +2844,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
       case G_DELAY:           ge = mus_make_delay(size, line, max_size, (mus_interp_t)interp_type);                           break;
       case G_MOVING_AVERAGE:  ge = mus_make_moving_average_with_initial_sum(size, line, sum);                                 break;
       case G_MOVING_MAX:      ge = mus_make_moving_max(size, line);                                                           break;
+      case G_MOVING_NORM:     ge = mus_make_moving_norm(size, line, scaler);                                                  break;
       case G_COMB:            ge = mus_make_comb(scaler, size, line, max_size, (mus_interp_t)interp_type);                    break;
       case G_NOTCH:           ge = mus_make_notch(scaler, size, line, max_size, (mus_interp_t)interp_type);                   break;
       case G_ALL_PASS:        ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, (mus_interp_t)interp_type); break;
@@ -2955,6 +2962,14 @@ static Xen g_make_moving_max(Xen args)
 return a new moving-max generator. initial-contents can be either a list or a " S_vct "."
 
   return(g_make_delay_1(G_MOVING_MAX, args));
+}
+
+
+static Xen g_make_moving_norm(Xen args) 
+{
+  #define H_make_moving_norm "(" S_make_moving_norm " (size (scaler 1.0))): return a new moving-norm generator."
+
+  return(g_make_delay_1(G_MOVING_NORM, args));
 }
 
 
@@ -3262,6 +3277,20 @@ static Xen g_moving_max(Xen obj, Xen input)
 }
 
 
+static Xen g_moving_norm(Xen obj, Xen input)
+{
+  #define H_moving_norm "(" S_moving_norm " gen (val 0.0)): moving window norm."
+  mus_float_t in1 = 0.0;
+  mus_any *g = NULL;
+  mus_xen *gn;
+
+  Xen_to_C_generator(obj, gn, g, mus_is_moving_norm, S_moving_norm, "a moving-norm generator");
+  Xen_real_to_C_double_if_bound(input, in1, S_moving_norm, 2);
+
+  return(C_double_to_Xen_real(mus_moving_norm(g, in1)));
+}
+
+
 static Xen g_tap(Xen obj, Xen loc)
 {
   #define H_tap "(" S_tap " gen (pm 0.0)): tap the " S_delay " generator offset by pm"
@@ -3329,6 +3358,13 @@ static Xen g_is_moving_max(Xen obj)
 {
   #define H_is_moving_max "(" S_is_moving_max " gen): " PROC_TRUE " if gen is a moving-max generator"
   return(C_bool_to_Xen_boolean((mus_is_xen(obj)) && (mus_is_moving_max(Xen_to_mus_any(obj)))));
+}
+
+
+static Xen g_is_moving_norm(Xen obj) 
+{
+  #define H_is_moving_norm "(" S_is_moving_norm " gen): " PROC_TRUE " if gen is a moving-norm generator"
+  return(C_bool_to_Xen_boolean((mus_is_xen(obj)) && (mus_is_moving_norm(Xen_to_mus_any(obj)))));
 }
 
 
@@ -11790,6 +11826,7 @@ GEN_2(delay, mus_delay_unmodulated)
 
 GEN_2(moving_average, mus_moving_average)
 GEN_2(moving_max, mus_moving_max)
+GEN_2(moving_norm, mus_moving_norm)
 GEN_2(rand, mus_rand)
 GEN_2(rand_interp, mus_rand_interp)
 GEN_2(ncos, mus_ncos)
@@ -18103,6 +18140,7 @@ static void init_choices(void)
   SET_GEN_2(delay);
   SET_GEN_2(moving_average);
   SET_GEN_2(moving_max);
+  SET_GEN_2(moving_norm);
   SET_GEN_2(rand);
   SET_GEN_2(rand_interp);
   SET_GEN_2(ncos);
@@ -19899,6 +19937,27 @@ static s7_pointer moving_max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
   return(f);
 }
 
+static s7_pointer moving_norm_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(moving_norm_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(sc, caddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_moving_norm_2);
+      return(indirect_moving_norm_2);
+    }
+  return(f);
+}
+
 static s7_pointer formant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -20892,6 +20951,7 @@ static void init_choosers(s7_scheme *sc)
   mul_c_delay_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_delay_2, 2, 0, false, "* opt", f);
   mul_c_moving_average_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_moving_average_2, 2, 0, false, "* opt", f);
   mul_c_moving_max_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_moving_max_2, 2, 0, false, "* opt", f);
+  mul_c_moving_norm_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_moving_norm_2, 2, 0, false, "* opt", f);
   mul_c_rand_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rand_2, 2, 0, false, "* opt", f);
   mul_c_rand_1 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rand_1, 1, 0, false, "* opt", f);
   mul_c_rand_interp_2 = clm_make_temp_function_no_choice(sc, "*", g_mul_c_rand_interp_2, 2, 0, false, "* opt", f);
@@ -20958,6 +21018,7 @@ static void init_choosers(s7_scheme *sc)
   mul_s_delay_2 = clm_make_function_no_choice(sc, "*", g_mul_s_delay_2, 2, 0, false, "* opt", f);
   mul_s_moving_average_2 = clm_make_function_no_choice(sc, "*", g_mul_s_moving_average_2, 2, 0, false, "* opt", f);
   mul_s_moving_max_2 = clm_make_function_no_choice(sc, "*", g_mul_s_moving_max_2, 2, 0, false, "* opt", f);
+  mul_s_moving_norm_2 = clm_make_function_no_choice(sc, "*", g_mul_s_moving_norm_2, 2, 0, false, "* opt", f);
   mul_s_rand_2 = clm_make_function_no_choice(sc, "*", g_mul_s_rand_2, 2, 0, false, "* opt", f);
   mul_s_rand_1 = clm_make_function_no_choice(sc, "*", g_mul_s_rand_1, 1, 0, false, "* opt", f);
   mul_s_rand_interp_2 = clm_make_function_no_choice(sc, "*", g_mul_s_rand_interp_2, 2, 0, false, "* opt", f);
@@ -21024,6 +21085,7 @@ static void init_choosers(s7_scheme *sc)
   env_delay_2 = clm_make_temp_function_no_choice(sc, "*", g_env_delay_2, 2, 0, false, "* opt", f);
   env_moving_average_2 = clm_make_temp_function_no_choice(sc, "*", g_env_moving_average_2, 2, 0, false, "* opt", f);
   env_moving_max_2 = clm_make_temp_function_no_choice(sc, "*", g_env_moving_max_2, 2, 0, false, "* opt", f);
+  env_moving_norm_2 = clm_make_temp_function_no_choice(sc, "*", g_env_moving_norm_2, 2, 0, false, "* opt", f);
   env_rand_2 = clm_make_temp_function_no_choice(sc, "*", g_env_rand_2, 2, 0, false, "* opt", f);
   env_rand_1 = clm_make_temp_function_no_choice(sc, "*", g_env_rand_1, 1, 0, false, "* opt", f);
   env_rand_interp_2 = clm_make_temp_function_no_choice(sc, "*", g_env_rand_interp_2, 2, 0, false, "* opt", f);
@@ -21385,6 +21447,13 @@ static void init_choosers(s7_scheme *sc)
 				       mul_c_moving_max_2, mul_s_moving_max_2, env_moving_max_2, NULL, NULL, NULL);
   direct_moving_max_2 = clm_make_temp_function_no_choice(sc, "moving-max", g_direct_moving_max_2, 2, 0, false, "moving-max opt", f);
   indirect_moving_max_2 = clm_make_temp_function_no_choice(sc, "moving-max", g_indirect_moving_max_2, 2, 0, false, "moving-max opt", f);
+
+  GEN_F2("moving-norm", moving_norm);
+
+  moving_norm_2 = clm_make_temp_function(sc, "moving-norm", g_moving_norm_2, 2, 0, false, "moving-norm opt", f,
+				       mul_c_moving_norm_2, mul_s_moving_norm_2, env_moving_norm_2, NULL, NULL, NULL);
+  direct_moving_norm_2 = clm_make_temp_function_no_choice(sc, "moving-norm", g_direct_moving_norm_2, 2, 0, false, "moving-norm opt", f);
+  indirect_moving_norm_2 = clm_make_temp_function_no_choice(sc, "moving-norm", g_indirect_moving_norm_2, 2, 0, false, "moving-norm opt", f);
 
   GEN_F2("filter", filter);
 
@@ -21922,6 +21991,7 @@ Xen_wrap_any_args(g_make_notch_w, g_make_notch)
 Xen_wrap_any_args(g_make_all_pass_w, g_make_all_pass)
 Xen_wrap_any_args(g_make_moving_average_w, g_make_moving_average)
 Xen_wrap_any_args(g_make_moving_max_w, g_make_moving_max)
+Xen_wrap_any_args(g_make_moving_norm_w, g_make_moving_norm)
 Xen_wrap_3_optional_args(g_delay_w, g_delay)
 Xen_wrap_2_optional_args(g_delay_tick_w, g_delay_tick)
 Xen_wrap_2_optional_args(g_tap_w, g_tap)
@@ -21931,6 +22001,7 @@ Xen_wrap_3_optional_args(g_filtered_comb_w, g_filtered_comb)
 Xen_wrap_3_optional_args(g_all_pass_w, g_all_pass)
 Xen_wrap_2_optional_args(g_moving_average_w, g_moving_average)
 Xen_wrap_2_optional_args(g_moving_max_w, g_moving_max)
+Xen_wrap_2_optional_args(g_moving_norm_w, g_moving_norm)
 Xen_wrap_1_arg(g_is_tap_w, g_is_tap)
 Xen_wrap_1_arg(g_is_delay_w, g_is_delay)
 Xen_wrap_1_arg(g_is_notch_w, g_is_notch)
@@ -21939,6 +22010,7 @@ Xen_wrap_1_arg(g_is_filtered_comb_w, g_is_filtered_comb)
 Xen_wrap_1_arg(g_is_all_pass_w, g_is_all_pass)
 Xen_wrap_1_arg(g_is_moving_average_w, g_is_moving_average)
 Xen_wrap_1_arg(g_is_moving_max_w, g_is_moving_max)
+Xen_wrap_1_arg(g_is_moving_norm_w, g_is_moving_norm)
 
 Xen_wrap_2_optional_args(g_ncos_w, g_ncos)
 Xen_wrap_1_arg(g_is_ncos_w, g_is_ncos)
@@ -22463,6 +22535,7 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_make_all_pass,        g_make_all_pass_w,         0, 0, 1, H_make_all_pass);
   Xen_define_safe_procedure(S_make_moving_average,  g_make_moving_average_w,   0, 0, 1, H_make_moving_average);
   Xen_define_safe_procedure(S_make_moving_max,      g_make_moving_max_w,       0, 0, 1, H_make_moving_max);
+  Xen_define_safe_procedure(S_make_moving_norm,     g_make_moving_norm_w,      0, 0, 1, H_make_moving_norm);
   Xen_define_real_procedure(S_delay,                g_delay_w,                 1, 2, 0, H_delay); 
   Xen_define_safe_procedure(S_delay_tick,           g_delay_tick_w,            1, 1, 0, H_delay_tick); 
   Xen_define_real_procedure(S_tap,                  g_tap_w,                   1, 1, 0, H_tap);
@@ -22472,6 +22545,7 @@ static void mus_xen_init(void)
   Xen_define_real_procedure(S_all_pass,             g_all_pass_w,              1, 2, 0, H_all_pass);
   Xen_define_real_procedure(S_moving_average,       g_moving_average_w,        1, 1, 0, H_moving_average);
   Xen_define_real_procedure(S_moving_max,           g_moving_max_w,            1, 1, 0, H_moving_max);
+  Xen_define_real_procedure(S_moving_norm,          g_moving_norm_w,           1, 1, 0, H_moving_norm);
   Xen_define_safe_procedure(S_is_tap,               g_is_tap_w,                1, 0, 0, H_is_tap);
   Xen_define_safe_procedure(S_is_delay,             g_is_delay_w,              1, 0, 0, H_is_delay);
   Xen_define_safe_procedure(S_is_notch,             g_is_notch_w,              1, 0, 0, H_is_notch);
@@ -22480,6 +22554,7 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_is_all_pass,          g_is_all_pass_w,           1, 0, 0, H_is_all_pass);
   Xen_define_safe_procedure(S_is_moving_average,    g_is_moving_average_w,     1, 0, 0, H_is_moving_average);
   Xen_define_safe_procedure(S_is_moving_max,        g_is_moving_max_w,         1, 0, 0, H_is_moving_max);
+  Xen_define_safe_procedure(S_is_moving_norm,       g_is_moving_norm_w,        1, 0, 0, H_is_moving_norm);
 
   Xen_define_real_procedure(S_comb_bank,            g_comb_bank_w,             2, 0, 0, H_comb_bank);
   Xen_define_safe_procedure(S_is_comb_bank,         g_is_comb_bank_w,          1, 0, 0, H_is_comb_bank);
