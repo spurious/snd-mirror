@@ -115,8 +115,6 @@ var extsnd_cursor_tip = "<code>(cursor snd chn edpos)</code>: current cursor loc
 
 var extsnd_cursorcontext_tip = "graphics context for the cursor";
 
-var extsnd_dachook_tip = "<code>dac-hook (sdobj)</code>: called just before data is sent to DAC passing data as sound-data object";
-
 var extsnd_dacsize_tip = "<code>(dac-size)</code>: the current DAC buffer size in framples (256)";
 
 var extsnd_datacolor_tip = "<code>(data-color)</code>: color used to draw unselected data";
@@ -426,8 +424,6 @@ var extsnd_play_tip = "<code>(play object :start :end :channel :edit-position :o
                       " If stop, call that function when the play process finishes.<br>" +
                       " If object is a string, it is assumed to be a file name.";
 
-var extsnd_playhook_tip = "<code>play-hook (samps)</code>: called each time a buffer is sent to the DAC.";
-
 var extsnd_positiontox_tip = "<code>(position-&gt;x val snd chn (ax time-graph))</code>: x axis value corresponding to pixel val";
 
 var extsnd_previoussample_tip = "<code>(previous-sample reader)</code>: previous sample from reader";
@@ -592,8 +588,6 @@ var extsnd_startplayinghook_tip = "<code>start-playing-hook (snd)</code>: called
                                   " If it returns #t, the sound is not played.";
 
 var extsnd_startplayingselectionhook_tip = "<code>start-playing-selection-hook ()</code>: called when the selection starts playing";
-
-var extsnd_stopdachook_tip = "<code>stop-dac-hook ()</code>: called upon mus_audio_close (when DAC is turned off)";
 
 var extsnd_stopplaying_tip = "<code>(stop-playing snd)</code>: stop play (DAC output) in progress";
 

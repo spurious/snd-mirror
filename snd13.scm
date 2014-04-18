@@ -271,7 +271,7 @@ read, even if not playing.  'files' is a list of files to be played."
 ;;;   make-region-frame-reader make-selection-frame-reader
 ;;;   make-sync-frame-reader
 ;;;
-;;; file->float-vector float-vector->file
+;;; file->frample frample->file
 ;;; frame->float-vector float-vector->frame
 ;;;
 ;;; insert-frame insert-float-vector
@@ -508,22 +508,22 @@ read, even if not playing.  'files' is a list of files to be played."
 			      v)))))
 
 
-(define (old-file->float-vector file)
+(define (old-file->frample file)
   (samples 0 (framples file) file))
 
-(define file->vct old-file->float-vector)
+(define file->vct old-file->frample)
 
 
-(define* (old-float-vector->file v file (srate 22050) (comment ""))
-  "(float-vector->file v file srate comment) writes the data in float-vector v to the specified sound file"
+(define* (old-frample->file v file (srate 22050) (comment ""))
+  "(frample->file v file srate comment) writes the data in float-vector v to the specified sound file"
   (if (float-vector? v)
       (let ((fd (mus-sound-open-output file srate 1 #f mus-riff comment)))
 	(mus-sound-write fd 0 (- (length v) 1) 1 (make-shared-vector v (list 1 (length v))))
 	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
 	file)
-      (error 'wrong-type-arg "file->float-vector: ~A" v)))
+      (error 'wrong-type-arg "file->frample: ~A" v)))
 
-(define vct->file old-float-vector->file)
+(define vct->file old-frample->file)
 
 
 (define* (insert-float-vector v (beg 0) dur snd chn edpos)

@@ -2302,6 +2302,7 @@
 	     (hash-table-set! globals (cadr form) (list (cadr form) #f #f (list head (caddr form)))))
 	    
 	    ((define define* definstrument define-expansion define-macro define-macro* define-bacro define-bacro*)
+	     ;(format *stderr* "define: ~A~%" form)
 	     (if (pair? (cadr form))
 		 (hash-table-set! globals (car (cadr form)) (list (car (cadr form)) #f #f (list head (cdr (cadr form)))))
 		 (hash-table-set! globals (cadr form) (list (cadr form) #f #f))))
@@ -2482,6 +2483,7 @@
       (define (lint-walk-function-body name head args arg-data body env)
 	;; walk function body, with possible doc string at the start
 	
+	;(format *stderr* "walk function body: ~A ~A ~A ~A~%" name head args arg-data)
 	(if (and (pair? body)
 		 (not (null? (cdr body)))
 		 (string? (car body)))
@@ -2536,7 +2538,7 @@
       (define (lint-walk-function head name args val env)
 	;; check out function arguments (adding them to the current env), then walk its body, (name == function name, val == body)
 	
-	;; (format outport "walk function ~A ~A ~A ~A ~A~%" head name args val (if (pair? env) (car env) ""))
+	;; (format *stderr* "line-walk-function ~A ~A ~A ~A ~A~%" head name args val (if (pair? env) (car env) ""))
 	
 	;; first check for (define (hi...) (ho...)) where ho has no opt args (and try to ignore possible string constant doc string)
 	(if (and *report-minor-stuff*
@@ -2568,44 +2570,52 @@
 			(lint-format "~A could be (define ~A ~A)"
 				     name name
 				     name cval))))))
-	
-	(if (null? args)
-	    (begin
-	      (if (memq head '(define* lambda* defmacro* define-macro* define-bacro*))
-		  (lint-format "~A could be ~A" 
-			       name head
-			       (symbol (substring (symbol->string head) 0 (- (length (symbol->string head)) 1)))))
-	      (lint-walk-function-body name head args () val env)
-	      (append (list (list name #f #f (list head args))) env))
+
+	(let ((ldata (and (not (memq head '(lambda lambda*)))
+			  (not (assq name env))
+			  (list name #f #f (list head args)))))
+	  ;(format *stderr* "ldata: ~A ~A ~A~%" ldata head name)
+	  (if (null? args)
+	      (begin
+		(if (memq head '(define* lambda* defmacro* define-macro* define-bacro*))
+		    (lint-format "~A could be ~A" 
+				 name head
+				 (symbol (substring (symbol->string head) 0 (- (length (symbol->string head)) 1)))))
+		(lint-walk-function-body name head args () val env)
+		(if ldata
+		    (append (list ldata) env)
+		    env))
 	    
-	    (if (or (symbol? args) 
-		    (pair? args))
-		(let ((arg-data (if (symbol? args)                            ; this is getting arg names to add to the environment
-				    (list (list args #f #f))
-				    (map
-				     (lambda (arg)
-				       (if (symbol? arg)
-					   (if (memq arg '(:optional :key :rest :allow-other-keys))
-					       (values)                  ; map omits this entry 
-					       (list arg #f #f))
-					   (if (or (not (pair? arg))
-						   (not (= (length arg) 2))
-						   (not (memq head '(define* lambda* defmacro* define-macro* define-bacro* definstrument))))
-					       (begin
-						 (lint-format "strange parameter for ~A: ~S" 
-							      name head arg)
-						 (values))
-					       (list (car arg) #f #f))))
-				     (proper-list args)))))
+	      (if (or (symbol? args) 
+		      (pair? args))
+		  (let ((arg-data (if (symbol? args)                            ; this is getting arg names to add to the environment
+				      (list (list args #f #f))
+				      (map
+				       (lambda (arg)
+					 (if (symbol? arg)
+					     (if (memq arg '(:optional :key :rest :allow-other-keys))
+						 (values)                  ; map omits this entry 
+						 (list arg #f #f))
+					     (if (or (not (pair? arg))
+						     (not (= (length arg) 2))
+						     (not (memq head '(define* lambda* defmacro* define-macro* define-bacro* definstrument))))
+						 (begin
+						   (lint-format "strange parameter for ~A: ~S" 
+								name head arg)
+						   (values))
+						 (list (car arg) #f #f))))
+				       (proper-list args)))))
 		  
-		  (lint-walk-function-body name head args arg-data val (append arg-data env))
-		  (if *report-unused-parameters* 
-		      (report-usage name 'parameter head arg-data))
-		  (append (list (list name #f #f (list head args))) env))
+		    (lint-walk-function-body name head args arg-data val (append arg-data (if ldata (append (list ldata) env) env)))
+		    (if *report-unused-parameters* 
+			(report-usage name 'parameter head arg-data))
+		    (if ldata 
+			(append (list ldata) env)
+			env))
 		
-		(begin
-		  (lint-format "strange ~A parameter list ~A" name head args)
-		  env))))
+		  (begin
+		    (lint-format "strange ~A parameter list ~A" name head args)
+		    env)))))
       
       
       (define (lint-walk name form env)
@@ -2642,6 +2652,8 @@
 		       define-constant defvar define-envelope
 		       define-expansion define-macro define-macro* define-bacro define-bacro*
 		       definstrument)
+
+		     ;(format *stderr* "define case: ~%~A~%" form)
 		     
 		     (if (< (length form) 2)
 			 (begin

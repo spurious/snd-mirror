@@ -4817,7 +4817,7 @@ changes them.  The symbol-accessor value is a list of three or more items, prima
 and third entries in the list respectively.
 These two functions take two arguments, the symbol in question
 and the value that it is about to be set or bound to.  The variable is set or bound to the value they return.
-We could replace define-constant, and add
+We could add
 local constants with:
 </p>
 
@@ -4831,23 +4831,36 @@ local constants with:
 	  (format #t "can't bind constant ~A to a new value, ~A" symbol new-value)
           'error)))
 
-(define-macro (define-constant symbol value)
-  `(begin
-     (define ,symbol ,value)
-     (set! (<em class=red>symbol-access</em> ',symbol) constant-access)
-     ',symbol))
-
 (define-macro (let-constant vars . body)
   (let ((varlist (map car vars)))
     `(let ,vars
-       ,@(map (lambda (var)
-		`(set! (<em class=red>symbol-access</em> ',var) constant-access))
-	      varlist)
-       ,@body)))
+       (let ((accessors ()))
+	 (with-baffle
+	   (dynamic-wind
+	       ;; save current accessors, if any
+	       (lambda ()
+		 (for-each
+		  (lambda (var)
+		    (set! accessors (cons (list var (symbol-access var)) accessors)))
+		  ',varlist))
+
+	       ;; make current let vars constant during evaluation of the body
+	       (lambda ()
+		 ,@(map (lambda (var)
+			  `(set! (symbol-access ',var) constant-access))
+			varlist)
+		 ,@body)
+	     
+	       ;; restore the old accessors
+	       (lambda ()
+		 (for-each
+		  (lambda (var)
+		    (set! (symbol-access var) (cadr (assq var accessors))))
+		  ',varlist))))))))
 </pre>
 
 
-<p>In the next example, we restrict the values a variable can take to integers:
+<p>Kinda ugly... In the next example, we restrict the values a variable can take to integers:
 </p>
 
 <pre class="indented">

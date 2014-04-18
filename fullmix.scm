@@ -42,7 +42,7 @@
 	  (file (if (or (not srate) 
 			(and (number? srate) 
 			     (= srate 1.0)))
-		    (make-file->float-vector in-file)
+		    (make-file->frample in-file)
 		    (let ((vect (make-vector in-chans #f)))
 		      (do ((i 0 (+ i 1)))
 			  ((= i in-chans))

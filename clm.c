@@ -11400,58 +11400,6 @@ mus_any *mus_continue_frample_to_file(const char *filename)
 }
 
 
-mus_float_t mus_vector_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans)
-{
-  rdout *gen = (rdout *)ptr;
-  
-  if (chans == 1)
-    return(mus_outa_to_file(ptr, samp, vals[0]));
-
-  if (chans > gen->chans) 
-    chans = gen->chans;
-  mus_out_chans_to_file(gen, samp, chans, vals);
-
-  return(vals[0]);
-}
-
-
-mus_float_t *mus_vector_mix(int chans, mus_float_t *data, mus_float_t *mix, mus_float_t *result)
-{
-  /* data * mix -> result (matrix multiply) */
-  int i, j, ji;
-
-  for (i = 0; i < chans; i++)
-    {
-      result[i] = data[0] * mix[i];
-      for (j = 1, ji = i + chans; j < chans; j++, ji += chans)
-	result[i] += (data[j] * mix[ji]);
-    }
-  return(result);
-}
-
-mus_float_t *mus_file_to_vector(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans)
-{
-  rdin *gen = (rdin *)ptr;
-  int i;
-
-  if ((samp <= gen->data_end) &&
-      (samp >= gen->data_start) &&
-      (chans <= gen->chans))
-    {
-      mus_long_t pos;
-      pos = samp - gen->data_start;
-      for (i = 0; i < chans; i++) 
-	vals[i] = gen->ibufs[i][pos];
-    }
-  else
-    {
-      for (i = 0; i < chans; i++) 
-	vals[i] = mus_in_any_from_file(ptr, samp, i);
-    }
-  return(vals);
-}
-
-
 mus_float_t *mus_frample_to_frample(mus_float_t *matrix, int mx_chans, mus_float_t *in_samps, int in_chans, mus_float_t *out_samps, int out_chans)
 {
   /* in->out conceptually, so left index is in_chan, it (j below) steps by out_chans */

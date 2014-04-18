@@ -8028,67 +8028,6 @@ handled by the output generator 'obj' at frample 'samp'"
 
 
 
-#if HAVE_SCHEME
-#define S_float_vector_to_file "float-vector->file"
-
-static Xen g_float_vector_to_file(Xen obj, Xen samp, Xen val)
-{
-  #define H_float_vector_to_file "(" S_float_vector_to_file " obj samp val): add float-vector 'val' to the output stream \
-handled by the output generator 'obj' at frame 'samp'"
-  mus_xen *gn;
-
-  gn = (mus_xen *)Xen_object_ref_checked(obj, mus_xen_tag);
-  Xen_check_type(((gn) && (mus_is_output(gn->gen))), obj, 1, S_float_vector_to_file, "an output generator");
-  Xen_check_type(Xen_is_integer(samp), samp, 2, S_float_vector_to_file, "an integer");
-  Xen_check_type(s7_is_float_vector(val), val, 3, S_float_vector_to_file, "a float-vector");
-
-  mus_vector_to_file(gn->gen, Xen_llong_to_C_llong(samp), (mus_float_t *)s7_float_vector_elements(val), s7_vector_length(val));
-  return(val);
-}
-
-
-#define S_float_vector_mix "float-vector-mix"
-
-static Xen g_float_vector_mix(Xen vec, Xen mat, Xen outvec)
-{
-  #define H_float_vector_mix "(" S_float_vector_mix " vector matrix output-vector): matrix multiply returning output-vector."
-  int chans;
-
-  Xen_check_type(s7_is_float_vector(vec), vec, 1, S_float_vector_mix, "a float-vector");
-  Xen_check_type(s7_is_float_vector(mat), mat, 2, S_float_vector_mix, "a float-vector");
-  Xen_check_type(s7_is_float_vector(outvec), outvec, 3, S_float_vector_mix, "a float-vector");
-
-  chans = s7_vector_length(vec);
-  if (chans == 0) return(outvec);
-  if (chans > s7_vector_length(outvec))
-    chans = s7_vector_length(outvec);
-  if (chans > s7_vector_dimensions(mat)[0])
-    chans = s7_vector_dimensions(mat)[0];
-
-  if ((chans > 0) &&
-      (s7_vector_length(mat) > 0))
-    mus_vector_mix(chans, (mus_float_t *)s7_float_vector_elements(vec), (mus_float_t *)s7_float_vector_elements(mat), (mus_float_t *)s7_float_vector_elements(outvec));
-
-  return(outvec);
-}
-
-
-#define S_file_to_float_vector "file->float-vector"
-
-static Xen g_file_to_float_vector(Xen obj, Xen samp, Xen val)
-{
-  #define H_file_to_float_vector "(" S_file_to_float_vector " obj samp outf): vector of samples at 'samp' in sound file read by 'obj'"
-  
-  Xen_check_type((mus_is_xen(obj)) && (mus_is_input(Xen_to_mus_any(obj))), obj, 1, S_file_to_float_vector, "an input generator");
-  Xen_check_type(Xen_is_integer(samp), samp, 2, S_file_to_float_vector, "an integer");
-  Xen_check_type(s7_is_float_vector(val), val, 3, S_file_to_float_vector, "a float-vector");
-
-  mus_file_to_vector(Xen_to_mus_any(obj), Xen_llong_to_C_llong(samp), s7_float_vector_elements(val), s7_vector_length(val));
-  return(val);
-}
-#endif
-
-
 
 /* ---------------- readin ---------------- */
 
@@ -19939,6 +19878,7 @@ static s7_pointer moving_max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 
 static s7_pointer moving_norm_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  /* these are not currently used */
   if ((args == 2) &&
       (s7_is_symbol(cadr(expr))) &&
       (s7_is_symbol(caddr(expr))))
@@ -22186,11 +22126,6 @@ Xen_wrap_3_args(g_frample_to_file_w, g_frample_to_file)
 Xen_wrap_5_optional_args(g_make_frample_to_file_w, g_make_frample_to_file)
 
 
-#if HAVE_SCHEME
-  Xen_wrap_3_args(g_float_vector_to_file_w, g_float_vector_to_file)
-  Xen_wrap_3_args(g_file_to_float_vector_w, g_file_to_float_vector)
-  Xen_wrap_3_args(g_float_vector_mix_w, g_float_vector_mix)
-#endif
 Xen_wrap_1_arg(g_is_mus_input_w, g_is_mus_input)
 Xen_wrap_1_arg(g_is_mus_output_w, g_is_mus_output)
 Xen_wrap_3_args(g_in_any_w, g_in_any)
@@ -22767,16 +22702,6 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_frample_to_file,        g_frample_to_file_w,         3, 0, 0, H_frample_to_file);
   Xen_define_safe_procedure(S_make_frample_to_file,   g_make_frample_to_file_w,    1, 4, 0, H_make_frample_to_file);
 
-#if HAVE_SCHEME
-  Xen_define_safe_procedure(S_float_vector_to_file, g_float_vector_to_file_w,  3, 0, 0, H_float_vector_to_file);
-  Xen_define_safe_procedure(S_file_to_float_vector, g_file_to_float_vector_w,  3, 0, 0, H_file_to_float_vector);
-  Xen_define_safe_procedure(S_float_vector_mix,     g_float_vector_mix_w,      3, 0, 0, H_float_vector_mix);
-  s7_eval_c_string(s7, "(define make-float-vector->file make-frample->file)");
-  s7_eval_c_string(s7, "(define make-file->float-vector make-file->frample)");
-  s7_eval_c_string(s7, "(define file->float-vector? file->frample?)");
-  s7_eval_c_string(s7, "(define float-vector->file? frample->file?)");
-  s7_eval_c_string(s7, "(define continue-float-vector->file continue-frample->file)");
-#endif
   Xen_define_safe_procedure(S_is_mus_input,         g_is_mus_input_w,          1, 0, 0, H_is_mus_input);
   Xen_define_safe_procedure(S_is_mus_output,        g_is_mus_output_w,         1, 0, 0, H_is_mus_output);
   Xen_define_real_procedure(S_in_any,               g_in_any_w,                3, 0, 0, H_in_any);

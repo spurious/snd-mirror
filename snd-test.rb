@@ -3466,255 +3466,255 @@ def test_04_00
 end
 
 def test_04_01
-  fmv5_snd = "fmv5.snd"
-  delete_file(fmv5_snd)
-  fd = mus_sound_open_output(fmv5_snd,
-    22050, 1, Mus_bshort, Mus_aiff, "no comment")
-  sdata = SoundData.new(1, 100)
-  100.times do |i| sdata[0, i] = i * 0.01 end
-  snd_test_neq(sdata.to_s,
-    "#<sound-data[chans=1, length=100]:
-    (0.000 0.010 0.020 0.030 0.040 0.050 0.060 0.070 0.080 0.090 0.100 0.110 ...)>",
-    "print sound_data")
-  edat = sdata
-  edat1 = SoundData.new(1, 100)
-  edat2 = SoundData.new(2, 100)
-  snd_test_neq(edat, sdata, "sound_data")
-  snd_test_eq(edat1, sdata, "sound_data 1")
-  snd_test_eq(edat1, edat2, "sound_data 2")
-  100.times do |i| edat1[0, i] = sdata[0, i] end
-  snd_test_neq(edat1, sdata, "sound_data 3")
-  v0 = make_vct(100)
-  v1 = make_vct(3)
-  sound_data2vct(sdata, 0, v0)
-  snd_test_neq(v0[10], 0.1, "sound_data2vct")
-  sound_data2vct(sdata, 0, v1)
-  snd_test_neq(v1[1], 0.01, "sound_data2(small)vct")
-  vct2sound_data(v0, sdata, 0)
-  snd_test_neq(sound_data_ref(sdata, 0, 10), 0.1, "vct2sound_data")
-  snd_test_neq(sdata[0, 10], 0.1, "vct2sound_data applied")
-  res = Snd.catch do sound_data2vct(sdata, 2, v0) end
-  if res.first != :out_of_range
-    snd_display("sound_data2vct bad chan: %s?", res.inspect)
-  end
-  res = Snd.catch do mus_audio_write(1, make_sound_data(3, 3), 123) end
-  if res.first != :out_of_range
-    snd_display("mus_audio_write bad frames: %s?", res.inspect)
-  end
-  #
-  v0 = make_vct(10)
-  vx = make_vct(3)
-  sdata2 = SoundData.new(2, 10)
-  10.times do |i|
-    sdata2[0, i] = 0.1
-    sdata2[1, i] = 0.2
-  end
-  sound_data2vct(sdata2, 0, v0)
-  sound_data2vct(sdata2, 0, vx)
-  snd_test_neq(v0[1], 0.1, "sound_data2vct[1]")
-  sound_data2vct(sdata2, 1, v0)
-  snd_test_neq(v0[1], 0.2, "sound_data2vct[2]")
-  vct2sound_data(v0, sdata2, 0)
-  snd_test_neq(sdata2[0, 1], 0.2, "vct2sound_data[2]")
-  vct_fill!(v0, 0.3)
-  vct2sound_data(v0, sdata2, 1)
-  snd_test_neq(sdata2[1, 1], 0.3, "vct2sound_data[3]")
-  vct2sound_data(vx, sdata2, 0)
-  mus_sound_write(fd, 0, 99, 1, sdata)
-  mus_sound_close_output(fd, 100 * mus_bytes_per_sample(Mus_bshort))
-  fd = mus_sound_reopen_output(fmv5_snd,
-    1, Mus_bshort, Mus_aiff, mus_sound_data_location(fmv5_snd))
-  mus_sound_close_output(fd, 100 * mus_bytes_per_sample(Mus_bshort))
-  fd = mus_sound_open_input(fmv5_snd)
-  mus_sound_read(fd, 0, 99, 1, sdata)
-  snd_test_neq(sdata[0, 10], 0.1, "mus_sound_write")
-  pos = mus_sound_seek_frame(fd, 20)
-  snd_test_neq(IO.open(fd).pos, pos, "1 mus_sound_seek_frame")
-  snd_test_neq(frame2byte(fmv5_snd, 20), pos, "2 mus_sound_seek_frame")
-  mus_sound_read(fd, 0, 10, 1, sdata)
-  snd_test_neq(sdata[0, 0], 0.2, "2 mus_sound_seek")
-  mus_sound_close_input(fd)
-  #
-  sd = make_sound_data(2, 10)
-  vct2sound_data(Vct.new(10, 0.25), sd, 0)
-  vct2sound_data(Vct.new(10, 0.50), sd, 1)
-  sound_data_scale!(sd, 2.0)
-  snd_test_neq(sound_data2vct(sd, 0), Vct.new(10, 0.5),
-    "sound_data_scale! chan 0")
-  snd_test_neq(sound_data2vct(sd, 1), Vct.new(10, 1.0),
-    "sound_data_scale! chan 1")
-  sd = make_sound_data(2, 10)
-  sound_data_fill!(sd, 2.0)
-  snd_test_neq(sound_data2vct(sd, 0), Vct.new(10, 2.0),
-    "sound_data_fill! chan 0")
-  snd_test_neq(sound_data2vct(sd, 1), Vct.new(10, 2.0),
-    "sound_data_fill! chan 1")
-  #
-  if (res = Snd.catch do
-        mus_sound_open_output("fmv.snd",
-          22050, -1, Mus_bshort, Mus_aiff, "no comment")
-      end).first != :out_of_range
-    snd_display("mus_sound_open_output bad chans: %s?", res)
-  end
-  if (res = Snd.catch do
-        mus_sound_open_output("fmv.snd",
-          22050, 1, -1, Mus_aiff, "no comment")
-      end).first != :out_of_range
-    snd_display("mus_sound_open_output bad format: %s?", res)
-  end
-  if (res = Snd.catch do
-        mus_sound_open_output("fmv.snd",
-          22050, 1, Mus_bshort, -1, "no comment")
-      end).first != :out_of_range
-    snd_display("mus_sound_open_output bad type: %s?", res)
-  end
-  if (res = Snd.catch do
-        mus_sound_reopen_output("fmv.snd", -1, Mus_bshort, Mus_aiff, false)
-      end).first != :out_of_range
-    snd_display("mus_sound_reopen_output bad chans: %s?", res)
-  end
-  if (res = Snd.catch do
-        mus_sound_reopen_output("fmv.snd", 1, -1, Mus_aiff, false)
-      end).first != :out_of_range
-    snd_display("mus_sound_reopen_output bad format: %s?", res)
-  end
-  if (res = Snd.catch do
-        mus_sound_reopen_output("fmv.snd", 1, Mus_bshort, -1, false)
-      end).first != :out_of_range
-    snd_display("mus_sound_reopen_output bad type: %s?", res)
-  end
-  #
-  sd = SoundData.new(2, 10)
-  sd.fill!(1.0)
-  snd_test_neq(sound_data2vct(sd, 0), Vct.new(10, 1.0), "sd.fill! chan 0")
-  snd_test_neq(sound_data2vct(sd, 1), Vct.new(10, 1.0), "sd.fill! chan 1")
-  sd1 = sd.dup
-  snd_test_neq(sd1, sd, "sd.dup (copy)")
-  #
-  ["trunc.snd",
-   "trunc.aiff",
-   "trunc.wav",
-   "trunc.sf",
-   "trunc.voc",
-   "trunc.nist",
-   "bad.wav",
-   "trunc1.aiff",
-   "badform.aiff"].each do |file|
-    with_file(file) do |fsnd|
-      res = Snd.catch do open_sound(fsnd) end
-      snd_test_neq(res.first, :mus_error, "open_sound %s", file)
-    end
-  end
-  $open_raw_sound_hook.add_hook!("snd-test-044") do |file, choice|
-    [1, 22050, Mus_bshort]
-  end
-  with_file("empty.snd") do |fsnd|
-    ind = open_sound(fsnd)
-    if data_format(ind) != Mus_bshort or
-        channels(ind) != 1 or
-        srate(ind) != 22050 or
-        data_location(ind) != 0 or
-        frames(ind) != 0
-      snd_display("open raw: %s %s %s %s %s?",
-                  data_format(ind),
-                  channels(ind),
-                  srate(ind),
-                  data_location(ind),
-                  frames(ind))
-    end
-    close_sound(ind)
-  end
-  $open_raw_sound_hook.reset_hook!
-  #
-  sd = SoundData.new(1, 1)
-  snd_test_neq(sd[0, 0], 0.0, "sound_data_ref")
-  sd[0, 0] = 1.0
-  snd_test_neq(sd[0, 0], 1.0, "sound_data_set")
-  sd1 = make_sound_data(1, 1)
-  sound_data_set!(sd1, 0, 0, 1.0)
-  snd_test_neq(sd, sd1, "sound_data_set")
-  #
-  sd = SoundData.new(2, 3)
-  snd_test_neq(sd[0, 0], 0.0, "sound_data_ref (1)")
-  sd[1, 0] = 1.0
-  snd_test_neq(sd[1, 0], 1.0, "sound_data_set (1 0)")
-  sd[1, 2] = 2.0
-  snd_test_neq(sd[1, 2], 2.0, "sound_data_set (1 2)")
-  sd1 = make_sound_data(2, 3)
-  sound_data_set!(sd1, 1, 0, 1.0)
-  sound_data_set!(sd1, 1, 2, 2.0)
-  snd_test_neq(sd, sd1, "sound_data_set (3)")
-  #
+#  fmv5_snd = "fmv5.snd"
+#  delete_file(fmv5_snd)
+#  fd = mus_sound_open_output(fmv5_snd,
+#    22050, 1, Mus_bshort, Mus_aiff, "no comment")
+#  sdata = SoundData.new(1, 100)
+#  100.times do |i| sdata[0, i] = i * 0.01 end
+#  snd_test_neq(sdata.to_s,
+#    "#<sound-data[chans=1, length=100]:
+#    (0.000 0.010 0.020 0.030 0.040 0.050 0.060 0.070 0.080 0.090 0.100 0.110 ...)>",
+#    "print sound_data")
+#  edat = sdata
+#  edat1 = SoundData.new(1, 100)
+#  edat2 = SoundData.new(2, 100)
+#  snd_test_neq(edat, sdata, "sound_data")
+#  snd_test_eq(edat1, sdata, "sound_data 1")
+#  snd_test_eq(edat1, edat2, "sound_data 2")
+#  100.times do |i| edat1[0, i] = sdata[0, i] end
+#  snd_test_neq(edat1, sdata, "sound_data 3")
+#  v0 = make_vct(100)
+#  v1 = make_vct(3)
+#  sound_data2vct(sdata, 0, v0)
+#  snd_test_neq(v0[10], 0.1, "sound_data2vct")
+#  sound_data2vct(sdata, 0, v1)
+#  snd_test_neq(v1[1], 0.01, "sound_data2(small)vct")
+#  vct2sound_data(v0, sdata, 0)
+#  snd_test_neq(sound_data_ref(sdata, 0, 10), 0.1, "vct2sound_data")
+#  snd_test_neq(sdata[0, 10], 0.1, "vct2sound_data applied")
+#  res = Snd.catch do sound_data2vct(sdata, 2, v0) end
+#  if res.first != :out_of_range
+#    snd_display("sound_data2vct bad chan: %s?", res.inspect)
+#  end
+#  res = Snd.catch do mus_audio_write(1, make_sound_data(3, 3), 123) end
+#  if res.first != :out_of_range
+#    snd_display("mus_audio_write bad frames: %s?", res.inspect)
+#  end
+#  #
+#  v0 = make_vct(10)
+#  vx = make_vct(3)
+#  sdata2 = SoundData.new(2, 10)
+#  10.times do |i|
+#    sdata2[0, i] = 0.1
+#    sdata2[1, i] = 0.2
+#  end
+#  sound_data2vct(sdata2, 0, v0)
+#  sound_data2vct(sdata2, 0, vx)
+#  snd_test_neq(v0[1], 0.1, "sound_data2vct[1]")
+#  sound_data2vct(sdata2, 1, v0)
+#  snd_test_neq(v0[1], 0.2, "sound_data2vct[2]")
+#  vct2sound_data(v0, sdata2, 0)
+#  snd_test_neq(sdata2[0, 1], 0.2, "vct2sound_data[2]")
+#  vct_fill!(v0, 0.3)
+#  vct2sound_data(v0, sdata2, 1)
+#  snd_test_neq(sdata2[1, 1], 0.3, "vct2sound_data[3]")
+#  vct2sound_data(vx, sdata2, 0)
+#  mus_sound_write(fd, 0, 99, 1, sdata)
+#  mus_sound_close_output(fd, 100 * mus_bytes_per_sample(Mus_bshort))
+#  fd = mus_sound_reopen_output(fmv5_snd,
+#    1, Mus_bshort, Mus_aiff, mus_sound_data_location(fmv5_snd))
+#  mus_sound_close_output(fd, 100 * mus_bytes_per_sample(Mus_bshort))
+#  fd = mus_sound_open_input(fmv5_snd)
+#  mus_sound_read(fd, 0, 99, 1, sdata)
+#  snd_test_neq(sdata[0, 10], 0.1, "mus_sound_write")
+#  pos = mus_sound_seek_frame(fd, 20)
+#  snd_test_neq(IO.open(fd).pos, pos, "1 mus_sound_seek_frame")
+#  snd_test_neq(frame2byte(fmv5_snd, 20), pos, "2 mus_sound_seek_frame")
+#  mus_sound_read(fd, 0, 10, 1, sdata)
+#  snd_test_neq(sdata[0, 0], 0.2, "2 mus_sound_seek")
+#  mus_sound_close_input(fd)
+#  #
+#  sd = make_sound_data(2, 10)
+#  vct2sound_data(Vct.new(10, 0.25), sd, 0)
+#  vct2sound_data(Vct.new(10, 0.50), sd, 1)
+#  sound_data_scale!(sd, 2.0)
+#  snd_test_neq(sound_data2vct(sd, 0), Vct.new(10, 0.5),
+#    "sound_data_scale! chan 0")
+#  snd_test_neq(sound_data2vct(sd, 1), Vct.new(10, 1.0),
+#    "sound_data_scale! chan 1")
+#  sd = make_sound_data(2, 10)
+#  sound_data_fill!(sd, 2.0)
+#  snd_test_neq(sound_data2vct(sd, 0), Vct.new(10, 2.0),
+#    "sound_data_fill! chan 0")
+#  snd_test_neq(sound_data2vct(sd, 1), Vct.new(10, 2.0),
+#    "sound_data_fill! chan 1")
+#  #
+#  if (res = Snd.catch do
+#        mus_sound_open_output("fmv.snd",
+#          22050, -1, Mus_bshort, Mus_aiff, "no comment")
+#      end).first != :out_of_range
+#    snd_display("mus_sound_open_output bad chans: %s?", res)
+#  end
+#  if (res = Snd.catch do
+#        mus_sound_open_output("fmv.snd",
+#          22050, 1, -1, Mus_aiff, "no comment")
+#      end).first != :out_of_range
+#    snd_display("mus_sound_open_output bad format: %s?", res)
+#  end
+#  if (res = Snd.catch do
+#        mus_sound_open_output("fmv.snd",
+#          22050, 1, Mus_bshort, -1, "no comment")
+#      end).first != :out_of_range
+#    snd_display("mus_sound_open_output bad type: %s?", res)
+#  end
+#  if (res = Snd.catch do
+#        mus_sound_reopen_output("fmv.snd", -1, Mus_bshort, Mus_aiff, false)
+#      end).first != :out_of_range
+#    snd_display("mus_sound_reopen_output bad chans: %s?", res)
+#  end
+#  if (res = Snd.catch do
+#        mus_sound_reopen_output("fmv.snd", 1, -1, Mus_aiff, false)
+#      end).first != :out_of_range
+#    snd_display("mus_sound_reopen_output bad format: %s?", res)
+#  end
+#  if (res = Snd.catch do
+#        mus_sound_reopen_output("fmv.snd", 1, Mus_bshort, -1, false)
+#      end).first != :out_of_range
+#    snd_display("mus_sound_reopen_output bad type: %s?", res)
+#  end
+#  #
+#  sd = SoundData.new(2, 10)
+#  sd.fill!(1.0)
+#  snd_test_neq(sound_data2vct(sd, 0), Vct.new(10, 1.0), "sd.fill! chan 0")
+#  snd_test_neq(sound_data2vct(sd, 1), Vct.new(10, 1.0), "sd.fill! chan 1")
+#  sd1 = sd.dup
+#  snd_test_neq(sd1, sd, "sd.dup (copy)")
+#  #
+#  ["trunc.snd",
+#   "trunc.aiff",
+#   "trunc.wav",
+#   "trunc.sf",
+#   "trunc.voc",
+#   "trunc.nist",
+#   "bad.wav",
+#   "trunc1.aiff",
+#   "badform.aiff"].each do |file|
+#    with_file(file) do |fsnd|
+#      res = Snd.catch do open_sound(fsnd) end
+#      snd_test_neq(res.first, :mus_error, "open_sound %s", file)
+#    end
+#  end
+#  $open_raw_sound_hook.add_hook!("snd-test-044") do |file, choice|
+#    [1, 22050, Mus_bshort]
+#  end
+#  with_file("empty.snd") do |fsnd|
+#    ind = open_sound(fsnd)
+#    if data_format(ind) != Mus_bshort or
+#        channels(ind) != 1 or
+#        srate(ind) != 22050 or
+#        data_location(ind) != 0 or
+#        frames(ind) != 0
+#      snd_display("open raw: %s %s %s %s %s?",
+#                  data_format(ind),
+#                  channels(ind),
+#                  srate(ind),
+#                  data_location(ind),
+#                  frames(ind))
+#    end
+#    close_sound(ind)
+#  end
+#  $open_raw_sound_hook.reset_hook!
+#  #
+#  sd = SoundData.new(1, 1)
+#  snd_test_neq(sd[0, 0], 0.0, "sound_data_ref")
+#  sd[0, 0] = 1.0
+#  snd_test_neq(sd[0, 0], 1.0, "sound_data_set")
+#  sd1 = make_sound_data(1, 1)
+#  sound_data_set!(sd1, 0, 0, 1.0)
+#  snd_test_neq(sd, sd1, "sound_data_set")
+#  #
+#  sd = SoundData.new(2, 3)
+#  snd_test_neq(sd[0, 0], 0.0, "sound_data_ref (1)")
+#  sd[1, 0] = 1.0
+#  snd_test_neq(sd[1, 0], 1.0, "sound_data_set (1 0)")
+#  sd[1, 2] = 2.0
+#  snd_test_neq(sd[1, 2], 2.0, "sound_data_set (1 2)")
+#  sd1 = make_sound_data(2, 3)
+#  sound_data_set!(sd1, 1, 0, 1.0)
+#  sound_data_set!(sd1, 1, 2, 2.0)
+#  snd_test_neq(sd, sd1, "sound_data_set (3)")
+#  #
 end
 
 def test_04_02
-  [1, 2, 4, 8].each do |chans|
-    [[Mus_bshort, Mus_next],
-     [Mus_bfloat, Mus_aifc],
-     [Mus_lshort, Mus_aifc],
-     [Mus_lfloat, Mus_riff],
-     [Mus_lshort, Mus_nist],
-     [Mus_bint, Mus_aiff],
-     [Mus_lint, Mus_next],
-     [Mus_bintn, Mus_next],
-     [Mus_lintn, Mus_next],
-     [Mus_b24int, Mus_aifc],
-     [Mus_l24int, Mus_riff],
-     [Mus_bfloat, Mus_ircam],
-     [Mus_bfloat_unscaled, Mus_next],
-     [Mus_lfloat_unscaled, Mus_next],
-     [Mus_bdouble_unscaled, Mus_next],
-     [Mus_ldouble_unscaled, Mus_next],
-     [Mus_bdouble, Mus_next],
-     [Mus_ldouble, Mus_next],
-     [Mus_ulshort, Mus_next],
-     [Mus_ubshort, Mus_next]].each do |df, ht|
-      samps = case chans
-              when 1
-                10000
-              when 2
-                5000
-              else
-                1000
-              end
-      delete_file("fmv5.snd")
-      fd = mus_sound_open_output("fmv5.snd",
-        22050, chans, df, ht, "no, comment")
-      sdata = SoundData.new(chans, samps)
-      ndata = SoundData.new(chans, samps)
-      chans.times do |chn|
-        samps.times do |i|
-          sdata[chn, i] = mus_random(1.0)
-        end
-      end
-      mus_sound_write(fd, 0, samps - 1, chans, sdata)
-      mus_sound_close_output(fd, samps * chans * mus_bytes_per_sample(df))
-      fd = mus_sound_open_input("fmv5.snd")
-      mus_sound_read(fd, 0, samps - 1, chans, ndata)
-      pos = mus_sound_seek_frame(fd, 100)
-      snd_test_neq(IO.open(fd).pos,
-                   pos,
-                   "mus_sound_seek_frame(%d) chans %d, (%s %s)",
-                   pos,
-                   chans,
-                   mus_header_type_name(ht),
-                   mus_data_format_name(df))
-      snd_test_neq(frame2byte("fmv5.snd", 100),
-        pos,
-        "mus_sound_seek_frame(100) chans %d, (%s %s)",
-        chans,
-        mus_header_type_name(ht),
-        mus_data_format_name(df))
-      mus_sound_close_input(fd)
-      chans.times do |chn|
-        snd_test_neq(sound_data2vct(sdata, chn), sound_data2vct(ndata, chn),
-          "read_write trouble: %s %s (chn %d)",
-          mus_data_format_name(df),
-          mus_header_type_name(ht),
-          chn)
-      end
-    end
-  end
+#  [1, 2, 4, 8].each do |chans|
+#    [[Mus_bshort, Mus_next],
+#     [Mus_bfloat, Mus_aifc],
+#     [Mus_lshort, Mus_aifc],
+#     [Mus_lfloat, Mus_riff],
+#     [Mus_lshort, Mus_nist],
+#     [Mus_bint, Mus_aiff],
+#     [Mus_lint, Mus_next],
+#     [Mus_bintn, Mus_next],
+#     [Mus_lintn, Mus_next],
+#     [Mus_b24int, Mus_aifc],
+#     [Mus_l24int, Mus_riff],
+#     [Mus_bfloat, Mus_ircam],
+#     [Mus_bfloat_unscaled, Mus_next],
+#     [Mus_lfloat_unscaled, Mus_next],
+#     [Mus_bdouble_unscaled, Mus_next],
+#     [Mus_ldouble_unscaled, Mus_next],
+#     [Mus_bdouble, Mus_next],
+#     [Mus_ldouble, Mus_next],
+#     [Mus_ulshort, Mus_next],
+#     [Mus_ubshort, Mus_next]].each do |df, ht|
+#      samps = case chans
+#              when 1
+#                10000
+#              when 2
+#                5000
+#              else
+#                1000
+#              end
+#      delete_file("fmv5.snd")
+#      fd = mus_sound_open_output("fmv5.snd",
+#        22050, chans, df, ht, "no, comment")
+#      sdata = SoundData.new(chans, samps)
+#      ndata = SoundData.new(chans, samps)
+#      chans.times do |chn|
+#        samps.times do |i|
+#          sdata[chn, i] = mus_random(1.0)
+#        end
+#      end
+#      mus_sound_write(fd, 0, samps - 1, chans, sdata)
+#      mus_sound_close_output(fd, samps * chans * mus_bytes_per_sample(df))
+#      fd = mus_sound_open_input("fmv5.snd")
+#      mus_sound_read(fd, 0, samps - 1, chans, ndata)
+#      pos = mus_sound_seek_frame(fd, 100)
+#      snd_test_neq(IO.open(fd).pos,
+#                   pos,
+#                   "mus_sound_seek_frame(%d) chans %d, (%s %s)",
+#                   pos,
+#                   chans,
+#                   mus_header_type_name(ht),
+#                   mus_data_format_name(df))
+#      snd_test_neq(frame2byte("fmv5.snd", 100),
+#        pos,
+#        "mus_sound_seek_frame(100) chans %d, (%s %s)",
+#        chans,
+#        mus_header_type_name(ht),
+#        mus_data_format_name(df))
+#      mus_sound_close_input(fd)
+#      chans.times do |chn|
+#        snd_test_neq(sound_data2vct(sdata, chn), sound_data2vct(ndata, chn),
+#          "read_write trouble: %s %s (chn %d)",
+#          mus_data_format_name(df),
+#          mus_header_type_name(ht),
+#          chn)
+#      end
+#    end
+#  end
 end
 
 def test_04_03
@@ -12740,39 +12740,39 @@ def fm_test(gen)
   end
 end
 
-def frame_equal?(f1, f2)
-  if f1 and f2 and (len = f1.length) == f2.length
-    len.times do |chn|
-      if fneq(frame_ref(f1, chn), frame_ref(f2, chn))
-        return false
-      end
-    end
-    true
-  else
-    false
-  end
-end
-
-def make_random_mixer(size)
-  mx = make_mixer(size)
-  size.times do |i|
-    size.times do |j|
-      mixer_set!(mx, i, j, mus_random(1.0))
-    end
-  end
-  mx
-end
-
-def mixer_copy(umx)
-  size = umx.length
-  mx = make_mixer(size)
-  size.times do |i|
-    size.times do |j|
-      mixer_set!(mx, i, j, mixer_ref(umx, i, j))
-    end
-  end
-  mx
-end
+#def frame_equal?(f1, f2)
+#  if f1 and f2 and (len = f1.length) == f2.length
+#    len.times do |chn|
+#      if fneq(frame_ref(f1, chn), frame_ref(f2, chn))
+#        return false
+#      end
+#    end
+#    true
+#  else
+#    false
+#  end
+#end
+#
+#def make_random_mixer(size)
+#  mx = make_mixer(size)
+#  size.times do |i|
+#    size.times do |j|
+#      mixer_set!(mx, i, j, mus_random(1.0))
+#    end
+#  end
+#  mx
+#end
+#
+#def mixer_copy(umx)
+#  size = umx.length
+#  mx = make_mixer(size)
+#  size.times do |i|
+#    size.times do |j|
+#      mixer_set!(mx, i, j, mixer_ref(umx, i, j))
+#    end
+#  end
+#  mx
+#end
 
 def test_08_00
   set_mus_srate(22050)
@@ -16176,66 +16176,66 @@ def test_08_08
   # 
   # try random input to mixer_inverse
   #
-  (2...20).each do |k|
-    mx = make_random_mixer(k)
-    imx = mixer_inverse(mixer_copy(mx))
-    mmx = mixer_multiply(mx, imx)
-    unless mixer_equal?(mmx, make_scalar_mixer(k, 1.0))
-      snd_display("mixer_inverse %s: %s * %s -> %s?", k, mx, imx, mmx)
-    end
-  end
-  unless frame_equal?(res = frame_reverse(make_frame(2, 0.5, 2.0)),
-                      make_frame(2, 2.0, 0.5))
-    snd_display("frame_reverse 2: %s?", res)
-  end
-  unless frame_equal?(res = frame_reverse(make_frame(3, 0.5, 1.0, 2.0)),
-                      make_frame(3, 2.0, 1.0, 0.5))
-    snd_display("frame_reverse 3: %s?", res)
-  end
-  #
-  hi = make_mixer(3, 10, 5, 1, 1, 20, 5, 1, 3, 7)
-  ho = make_mixer(3, 10, 5, 2, 1, 3, 2, 1, 3, 2)
-  unless mixer_equal?(res = mixer_multiply(hi, ho),
-                      make_mixer(3, 106, 68, 32, 35, 80, 52, 20, 35, 22))
-    snd_display("mixer_multiply 3x3 1: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_multiply(hi, mixer_transpose(ho)),
-                      make_mixer(3, 127, 27, 27, 120, 71, 71, 39, 24, 24))
-    snd_display("mixer_multiply 3x3 2: %s?", res)
-  end
-  unless mixer_equal?(res = mixer_multiply(mixer_transpose(hi), mixer_transpose(ho)),
-                      make_mixer(3, 107, 15, 15, 156, 71, 71, 49, 30, 30))
-    snd_display("mixer_multiply 3x3 3: %s?", res)
-  end
-  unless frame_equal?(res = mixer_solve(make_mixer(2, 0.001, 1, 1, 2), make_frame(2, 1, 3)),
-                      make_frame(2, 1.002, 0.999))
-    snd_display("mixer_solve G1: %s?", res)
-  end
-  unless frame_equal?(res = mixer_solve(make_mixer(2, 0.0001, 1, 1, 1), make_frame(2, 1, 3)),
-                      make_frame(2, 2, 1))
-    snd_display("mixer_solve G2: %s?", res)
-  end
-  unless frame_equal?(res = mixer_solve(make_mixer(2, 0.986, 0.579, 0.409, 0.237),
-                                        make_frame(2, 0.235, 0.107)),
-                      make_frame(2, 2, -3))
-    snd_display("mixer_solve G3: %s?", res)
-  end
-  # G4, G5 (invert_matrix) skipped
-  unless frame_equal?(res = mixer_solve(make_mixer(3, 1, 4, 7, 2, 5, 8, 3, 6, 10),
-                                        make_frame(3, 1, 1, 1)),
-                      make_frame(3, -0.333, 0.333, 0))
-    snd_display("mixer_solve G6: %s?", res)
-  end
-  unless frame_equal?(res = mixer_solve(make_mixer(2, 1, 0, 0, 1.0e-6), make_frame(2, 1, 1.0e-6)),
-                      make_frame(2, 1, 1))
-    snd_display("mixer_solve G7: %s?", res)
-  end
-  # G8, G9 (invert_matrix) skipped
-  unless frame_equal?(res = mixer_solve(make_mixer(2, 10, 100000, 1, 1), make_frame(2, 100000, 2)),
-                      make_frame(2, 1, 1))
-    snd_display("mixer_solve G10: %s?", res)
-  end
-  # 
+#  (2...20).each do |k|
+#    mx = make_random_mixer(k)
+#    imx = mixer_inverse(mixer_copy(mx))
+#    mmx = mixer_multiply(mx, imx)
+#    unless mixer_equal?(mmx, make_scalar_mixer(k, 1.0))
+#      snd_display("mixer_inverse %s: %s * %s -> %s?", k, mx, imx, mmx)
+#    end
+#  end
+#  unless frame_equal?(res = frame_reverse(make_frame(2, 0.5, 2.0)),
+#                      make_frame(2, 2.0, 0.5))
+#    snd_display("frame_reverse 2: %s?", res)
+#  end
+#  unless frame_equal?(res = frame_reverse(make_frame(3, 0.5, 1.0, 2.0)),
+#                      make_frame(3, 2.0, 1.0, 0.5))
+#    snd_display("frame_reverse 3: %s?", res)
+#  end
+#  #
+#  hi = make_mixer(3, 10, 5, 1, 1, 20, 5, 1, 3, 7)
+#  ho = make_mixer(3, 10, 5, 2, 1, 3, 2, 1, 3, 2)
+#  unless mixer_equal?(res = mixer_multiply(hi, ho),
+#                      make_mixer(3, 106, 68, 32, 35, 80, 52, 20, 35, 22))
+#    snd_display("mixer_multiply 3x3 1: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_multiply(hi, mixer_transpose(ho)),
+#                      make_mixer(3, 127, 27, 27, 120, 71, 71, 39, 24, 24))
+#    snd_display("mixer_multiply 3x3 2: %s?", res)
+#  end
+#  unless mixer_equal?(res = mixer_multiply(mixer_transpose(hi), mixer_transpose(ho)),
+#                      make_mixer(3, 107, 15, 15, 156, 71, 71, 49, 30, 30))
+#    snd_display("mixer_multiply 3x3 3: %s?", res)
+#  end
+#  unless frame_equal?(res = mixer_solve(make_mixer(2, 0.001, 1, 1, 2), make_frame(2, 1, 3)),
+#                      make_frame(2, 1.002, 0.999))
+#    snd_display("mixer_solve G1: %s?", res)
+#  end
+#  unless frame_equal?(res = mixer_solve(make_mixer(2, 0.0001, 1, 1, 1), make_frame(2, 1, 3)),
+#                      make_frame(2, 2, 1))
+#    snd_display("mixer_solve G2: %s?", res)
+#  end
+#  unless frame_equal?(res = mixer_solve(make_mixer(2, 0.986, 0.579, 0.409, 0.237),
+#                                        make_frame(2, 0.235, 0.107)),
+#                      make_frame(2, 2, -3))
+#    snd_display("mixer_solve G3: %s?", res)
+#  end
+#  # G4, G5 (invert_matrix) skipped
+#  unless frame_equal?(res = mixer_solve(make_mixer(3, 1, 4, 7, 2, 5, 8, 3, 6, 10),
+#                                        make_frame(3, 1, 1, 1)),
+#                      make_frame(3, -0.333, 0.333, 0))
+#    snd_display("mixer_solve G6: %s?", res)
+#  end
+#  unless frame_equal?(res = mixer_solve(make_mixer(2, 1, 0, 0, 1.0e-6), make_frame(2, 1, 1.0e-6)),
+#                      make_frame(2, 1, 1))
+#    snd_display("mixer_solve G7: %s?", res)
+#  end
+#  # G8, G9 (invert_matrix) skipped
+#  unless frame_equal?(res = mixer_solve(make_mixer(2, 10, 100000, 1, 1), make_frame(2, 100000, 2)),
+#                      make_frame(2, 1, 1))
+#    snd_display("mixer_solve G10: %s?", res)
+#  end
+#  # 
   [[:Hamming_window, 0.0,
      vct(0.080, 0.115, 0.215, 0.364, 0.540, 0.716, 0.865, 1.000,
         1.000, 0.865, 0.716, 0.540, 0.364, 0.215, 0.115, 0.080)],

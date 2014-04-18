@@ -211,10 +211,10 @@
 				  (set! (invals 0) (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))
 			      
 			      ;; output mixed result
-			      (float-vector->file *output* i (float-vector-mix invals mx outvals))
+			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
 			      ;; if reverb is turned on, output to the reverb streams
 			      (if rev-mx
-				  (float-vector->file *reverb* i (float-vector-mix outvals rev-mx revvals)))))))
+				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans)))))))
 		    
 		    (if (= in-chans 2)
 			(let ((sample-0-0 0.0)
@@ -283,10 +283,10 @@
 				    (set! (invals 1) (+ sample-0-1 (* (- next-samp ex-samp) (- sample-1-1 sample-0-1))))))
 			      
 			      ;; output mixed result
-			      (float-vector->file *output* i (float-vector-mix invals mx outvals))
+			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
 			      ;; if reverb is turned on, output to the reverb streams
 			      (if rev-mx
-				  (float-vector->file *reverb* i (float-vector-mix outvals rev-mx revvals))))))
+				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals revchans))))))
 			
 			(let ((samples-0 (make-vector in-chans 0.0))
 			      (samples-1 (make-vector in-chans 0.0)))
@@ -349,9 +349,9 @@
 					  (v1 (vector-ref samples-1 ix)))
 				      (set! (invals ix) (+ v0 (* (- next-samp ex-samp) (- v1 v0)))))))
 			      ;; output mixed result
-			      (float-vector->file *output* i (float-vector-mix invals mx outvals))
+			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
 			      ;; if reverb is turned on, output to the reverb streams
 			      (if rev-mx
-				  (float-vector->file *reverb* i (float-vector-mix outvals rev-mx revvals)))))))))))))))
+				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals revchans)))))))))))))))
 
 ;;; (with-sound () (expandn 0 1 "oboe.snd" 1 :expand 4))

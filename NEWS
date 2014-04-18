@@ -31,7 +31,9 @@ cast into outer darkness:
     transform-frames mixer mixer* mixer+ mixer-ref region-frames 
     mixer-set! mixer? mixers dac-hook sample->frame save-mixes 
     with-level-meters mus-sound-frames mus-sound-seek-frame 
-    make-file->frame make-level-meter 
+    make-file->frame make-level-meter float-vector->file file->float-vector
+    float-vector-mix make-float-vector->file make-file->float-vector
+    float-vector->file? file->float-vector? continue-float-vector->file
 
 
 checked: gtk 3.11.9|12.0|1, sbcl 1.1.17

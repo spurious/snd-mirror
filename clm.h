@@ -484,10 +484,6 @@ MUS_EXPORT mus_long_t mus_out_any_data_end(mus_any *IO);
 MUS_EXPORT mus_float_t **mus_out_any_buffers(mus_any *IO);
 MUS_EXPORT void mus_out_any_set_end(mus_any *IO, mus_long_t end);
 
-MUS_EXPORT mus_float_t mus_vector_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans);
-MUS_EXPORT mus_float_t *mus_vector_mix(int chans, mus_float_t *data, mus_float_t *mix, mus_float_t *result);
-MUS_EXPORT mus_float_t *mus_file_to_vector(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans);
-
 MUS_EXPORT void mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val);
 MUS_EXPORT mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t reverb, int chans, 
 				    mus_any *output, int rev_chans, mus_any *revput, mus_interp_t type);

@@ -2277,7 +2277,7 @@
 		       'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale
 		       'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
 		       'colormap? 'comb 'comb? 'combined-data-color 'comment 'connes-window
-		       'continue-float-vector->file 'continue-sample->file 'contrast-control 'contrast-control-amp 'contrast-control-bounds
+		       'continue-frample->file 'continue-sample->file 'contrast-control 'contrast-control-amp 'contrast-control-bounds
 		       'contrast-control? 'contrast-enhancement 'controls->channel 'convolution 'convolve
 		       'convolve-files 'convolve-selection-with 'convolve-with 'convolve? 'copy-context
 		       'copy-sampler 'current-edit-position
@@ -2305,7 +2305,7 @@
 		       'expand-control 'expand-control-bounds 'expand-control-hop 'expand-control-jitter 'expand-control-length
 		       'expand-control-ramp 'expand-control? 'exponential-window 'fft 'fft-log-frequency
 		       'fft-log-magnitude 'fft-window 'fft-window-alpha 'fft-window-beta 'fft-with-phases 'file->array
-		       'file->float-vector 'file->float-vector? 'file->sample 'file->sample? 'file->string
+		       'file->frample 'file->frample? 'file->sample 'file->sample? 'file->string
 		       'file-name 'file-write-date 'fill-polygon 'fill-rectangle 'filter
 		       'filtered-comb 'filtered-comb?
 		       'filter-channel 'filter-control-coeffs 'filter-control-envelope 'filter-control-in-dB 'filter-control-in-hz
@@ -2339,7 +2339,7 @@
 		       'locsig-ref 'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
 		       'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
 		       'make-asymmetric-fm 'make-moving-average 'make-moving-max 'make-moving-norm 'make-bezier 'make-color 'make-comb 'make-filtered-comb
-		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->float-vector
+		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frample
 		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant 'make-formant-bank
 		       'make-granulate 'make-graph-data 'make-iir-filter
 		       'make-locsig 'make-mix-sampler 'make-move-sound 'make-notch 'make-one-pole 'make-one-pole-all-pass
@@ -17565,21 +17565,21 @@ EDITS: 2
       (if (not (= (mus-location gen) 1499)) (snd-display #__line__ ";snd->sample location (2): ~A" (mus-location gen)))
       (close-sound ind))
     
-    (let ((gen (make-file->float-vector "oboe.snd"))
+    (let ((gen (make-file->frample "oboe.snd"))
 	  (v0 (make-float-vector 10))
 	  (g1 (float-vector 0.0)))
       (print-and-check gen 
 		       "file->frample"
-		       "file->float-vector oboe.snd"
+		       "file->frample oboe.snd"
 		       "file->frample oboe.snd")
       (if (not (mus-input? gen)) (snd-display #__line__ ";~A not input?" gen))
-      (if (not (= (mus-length gen) 50828)) (snd-display #__line__ ";file->float-vector length: ~A?" (mus-length gen)))
-      (if (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display #__line__ ";file->float-vector mus-file-name: ~A" (mus-file-name gen)))
+      (if (not (= (mus-length gen) 50828)) (snd-display #__line__ ";file->frample length: ~A?" (mus-length gen)))
+      (if (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display #__line__ ";file->frample mus-file-name: ~A" (mus-file-name gen)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
-	(float-vector-set! v0 i ((file->float-vector gen (+ 1490 i) g1) 0)))
-      (if (not (file->float-vector? gen)) (snd-display #__line__ ";~A not file->float-vector?" gen))
-      (if (or (fneq (v0 1) -0.009) (fneq (v0 7) .029)) (snd-display #__line__ ";file->float-vector output: ~A" v0)))
+	(float-vector-set! v0 i ((file->frample gen (+ 1490 i) g1) 0)))
+      (if (not (file->frample? gen)) (snd-display #__line__ ";~A not file->frample?" gen))
+      (if (or (fneq (v0 1) -0.009) (fneq (v0 7) .029)) (snd-display #__line__ ";file->frample output: ~A" v0)))
     
     (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
     (if (file-exists? "fmv1.snd") (delete-file "fmv1.snd"))
@@ -17898,72 +17898,72 @@ EDITS: 2
     (let ((f1 (float-vector 1.0 1.0))
 	  (f2 (float-vector 0.0 0.0))
 	  (m1 (float-vector .5 .25 .125 1.0)))
-      (let ((result (float-vector-mix f1 m1 f2)))
+      (let ((result (frample->frample m1 f1 2 f2 2)))
 	(if (not (equal? result (float-vector 0.625 1.25)))
-	  (snd-display #__line__ ";float-vector-mix: ~A" result))))
+	  (snd-display #__line__ ";frample->frample: ~A" result))))
 
     (let ((f1 (float-vector 1.0 2.0 3.0))
 	  (f2 (float-vector 0.0 0.0 0.0))
 	  (m1 (float-vector 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0)))
-      (let ((result (float-vector-mix f1 m1 f2)))
+      (let ((result (frample->frample m1 f1 3 f2 3)))
 	(if (not (equal? result (float-vector 30.0 36.0 42.0)))
-	  (snd-display #__line__ ";float-vector-mix 1: ~A" result))))
+	  (snd-display #__line__ ";frample->frample 1: ~A" result))))
 
-    (let ((sf (make-float-vector->file "fmv.snd" 2 mus-lfloat mus-riff "this is a comment")))
+    (let ((sf (make-frample->file "fmv.snd" 2 mus-lfloat mus-riff "this is a comment")))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
-	(float-vector->file sf i (float-vector (* i .1) (* i .01))))
+	(frample->file sf i (float-vector (* i .1) (* i .01))))
       (mus-close sf)
       (if (not (= (mus-sound-chans "fmv.snd") 2)) 
-	  (snd-display #__line__ ";float-vector->file chans: ~A" (mus-sound-chans "fmv.snd")))
+	  (snd-display #__line__ ";frample->file chans: ~A" (mus-sound-chans "fmv.snd")))
       (if (not (= (mus-sound-framples "fmv.snd") 10)) 
-	  (snd-display #__line__ ";float-vector->file framples: ~A" (mus-sound-framples "fmv.snd")))
+	  (snd-display #__line__ ";frample->file framples: ~A" (mus-sound-framples "fmv.snd")))
       (if (not (= (mus-sound-samples "fmv.snd") 20)) 
-	  (snd-display #__line__ ";float-vector->file samples: ~A" (mus-sound-samples "fmv.snd")))
+	  (snd-display #__line__ ";frample->file samples: ~A" (mus-sound-samples "fmv.snd")))
       (if (not (= (mus-sound-header-type "fmv.snd") mus-riff)) 
-	  (snd-display #__line__ ";float-vector->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
+	  (snd-display #__line__ ";frample->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
       (if (not (= (mus-sound-data-format "fmv.snd") mus-lfloat)) 
-	  (snd-display #__line__ ";float-vector->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+	  (snd-display #__line__ ";frample->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
       (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
-	  (snd-display #__line__ ";float-vector->file comment: ~A" (mus-sound-comment "fmv.snd")))
-      (let ((rd (make-file->float-vector "fmv.snd"))
+	  (snd-display #__line__ ";frample->file comment: ~A" (mus-sound-comment "fmv.snd")))
+      (let ((rd (make-file->frample "fmv.snd"))
 	    (f0 (float-vector 0.0 0.0))
 	    (happy #t))
 	(do ((i 0 (+ i 1)))
 	    ((or (not happy) (= i 10)))
-	  (file->float-vector rd i f0)
+	  (file->frample rd i f0)
 	  (if (or (not (= (mus-length f0) 2))
 		  (fneq (f0 0) (* i .1))
 		  (fneq (f0 1) (* i .01)))
 	      (begin
-		(snd-display #__line__ ";float-vector->file->float-vector at ~A: ~A" i f0)
+		(snd-display #__line__ ";frample->file->frample at ~A: ~A" i f0)
 		(set! happy #f))))
 	(mus-close rd))
-      (set! sf (continue-float-vector->file "fmv.snd"))
+      (set! sf (continue-frample->file "fmv.snd"))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
-	(float-vector->file sf (+ i 5) (float-vector (* i -.02) (* i -.01))))
+	(frample->file sf (+ i 5) (float-vector (* i -.02) (* i -.01))))
       (mus-close sf)
       (mus-sound-forget "fmv.snd")
       (if (not (= (mus-sound-chans "fmv.snd") 2)) 
-	  (snd-display #__line__ ";continue-float-vector->file chans: ~A" (mus-sound-chans "fmv.snd")))
+	  (snd-display #__line__ ";continue-frample->file chans: ~A" (mus-sound-chans "fmv.snd")))
       (if (not (= (mus-sound-framples "fmv.snd") 15)) 
-	  (snd-display #__line__ ";continue-float-vector->file framples: ~A" (mus-sound-framples "fmv.snd")))
+	  (snd-display #__line__ ";continue-frample->file framples: ~A" (mus-sound-framples "fmv.snd")))
       (if (not (= (mus-sound-samples "fmv.snd") 30)) 
-	  (snd-display #__line__ ";continue-float-vector->file samples: ~A" (mus-sound-samples "fmv.snd")))
+	  (snd-display #__line__ ";continue-frample->file samples: ~A" (mus-sound-samples "fmv.snd")))
       (if (not (= (mus-sound-header-type "fmv.snd") mus-riff)) 
-	  (snd-display #__line__ ";continue-float-vector->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
+	  (snd-display #__line__ ";continue-frample->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
       (if (not (= (mus-sound-data-format "fmv.snd") mus-lfloat)) 
-	  (snd-display #__line__ ";continue-float-vector->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+	  (snd-display #__line__ ";continue-frample->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
       (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
-	  (snd-display #__line__ ";continue-float-vector->file comment: ~A" (mus-sound-comment "fmv.snd")))
+	  (snd-display #__line__ ";continue-frample->file comment: ~A" (mus-sound-comment "fmv.snd")))
       (let ((ind (open-sound "fmv.snd")))
 	(let ((c0 (channel->float-vector 0 15 ind 0))
 	      (c1 (channel->float-vector 0 15 ind 1)))
 	  (if (not (vequal c0 (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.58 0.66 0.74 0.82 -0.1 -0.12 -0.14 -0.16 -0.18)))
-	      (snd-display #__line__ ";continue-float-vector->file (0): ~A" c0))
+	      (snd-display #__line__ ";continue-frample->file (0): ~A" c0))
 	  (if (not (vequal c1 (float-vector 0.0 0.01 0.02 0.03 0.04 0.05 0.05 0.05 0.05 0.05 -0.05 -0.06 -0.07 -0.08 -0.09)))
-	      (snd-display #__line__ ";continue-float-vector->file (1): ~A" c1)))
+	      (snd-display #__line__ ";continue-frample->file (1): ~A" c1)))
 	(close-sound ind))
       (delete-file "fmv.snd")
       (mus-sound-forget "fmv.snd"))
@@ -18466,8 +18466,8 @@ EDITS: 2
 	 (close-sound ind)))
      (list mus-caff mus-aifc mus-next mus-riff mus-rf64))
     
-    (let* ((gen (make-float-vector->file "fmv4.snd" 2 mus-bshort mus-next))
-	   (rev (make-float-vector->file "fmv4.reverb" 1 mus-bshort mus-next))
+    (let* ((gen (make-frample->file "fmv4.snd" 2 mus-bshort mus-next))
+	   (rev (make-frample->file "fmv4.reverb" 1 mus-bshort mus-next))
 	   (lc (make-locsig 60.0 :reverb .1 :channels 2 :output gen :revout rev)))
       (do ((i 0 (+ i 1)))
 	  ((= i 100))
@@ -18486,8 +18486,8 @@ EDITS: 2
 	(if (fneq (v2 0) .1) (snd-display #__line__ ";locsig reverb: ~A?" v2))
 	(if (fneq (* 2 (v0 0)) (v1 0)) (snd-display #__line__ ";locsig direct: ~A ~A?" (v0 0) (v1 0)))))
     
-    (let* ((gen (make-float-vector->file "fmv4.snd" 4 mus-bshort mus-next))
-	   (rev (make-float-vector->file "fmv4.reverb" 4 mus-bshort mus-next))
+    (let* ((gen (make-frample->file "fmv4.snd" 4 mus-bshort mus-next))
+	   (rev (make-frample->file "fmv4.reverb" 4 mus-bshort mus-next))
 	   (lc (make-locsig 60.0 :reverb .1 :channels 4 :distance 4.0 :output gen :revout rev)))
       (print-and-check lc
 		       "locsig"
@@ -18614,7 +18614,7 @@ EDITS: 2
        
        (if (file-exists? "test.reverb") (delete-file "test.reverb"))
        (let ((revfile (if (> rev-chans 0)
-			  (make-float-vector->file "test.reverb" rev-chans mus-bshort mus-next)
+			  (make-frample->file "test.reverb" rev-chans mus-bshort mus-next)
 			  #f))
 	     (happy #t))
 	 (for-each
@@ -18798,9 +18798,9 @@ EDITS: 2
 	  (snd-display #__line__ ";locsig(4)->sd chan 3 (0.5): ~A" (outp 3))))
 
     (set! *mus-array-print-length* 8)
-    (let* ((outf1 (make-float-vector->file "fmv.snd" 1 mus-ldouble mus-next))
-	   (outf4 (make-float-vector->file "fmv1.snd" 4 mus-ldouble mus-next))
-	   (revf (make-float-vector->file "fmv2.snd" 1 mus-ldouble mus-next))
+    (let* ((outf1 (make-frample->file "fmv.snd" 1 mus-ldouble mus-next))
+	   (outf4 (make-frample->file "fmv1.snd" 4 mus-ldouble mus-next))
+	   (revf (make-frample->file "fmv2.snd" 1 mus-ldouble mus-next))
 	   (start 0)
 	   (end 1000)
 	   (dur 1.0)
@@ -20122,7 +20122,7 @@ EDITS: 2
 	  (make-mix-input (lambda (name i)
 			    (if (or (= i 0) (= i 2))
 				name
-				(make-file->float-vector name)))))
+				(make-file->frample name)))))
       (define (mus-file-mix-1 outf . args)
 	(apply mus-file-mix outf args)	
 	(if (not (string? outf))
@@ -45435,14 +45435,14 @@ EDITS: 1
 		     all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm?
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
-		     delay delay? dot-product env env-interp env? file->array file->float-vector file->float-vector?  file->sample
+		     delay delay? dot-product env env-interp env? file->array file->frample file->frample?  file->sample
 		     even-multiple even-weight odd-multiple odd-weight
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? firmant firmant?
 		     comb-bank make-comb-bank comb-bank? all-pass-bank make-all-pass-bank all-pass-bank? filtered-comb-bank make-filtered-comb-bank filtered-comb-bank?
 		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb 
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
-		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->float-vector
-		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-float-vector->file make-granulate
+		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frample
+		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frample->file make-granulate
 		     make-iir-filter make-locsig move-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-nrxysin make-nrxycos make-square-wave make-src make-ncos make-rxyk!cos make-rxyk!sin 
@@ -45541,8 +45541,8 @@ EDITS: 1
 	     
 	     (make-procs (list
 			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max make-moving-norm
-			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->float-vector
-			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-float-vector->file make-granulate
+			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frample
+			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-frample->file make-granulate
 			  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave 
@@ -45763,8 +45763,8 @@ EDITS: 1
 					   (lambda args (car args)))))
 				    (if tag
 					(snd-display #__line__ ";?proc ~A: ~A" n tag))))
-				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->float-vector? file->sample? snd->sample?
-				      filter? fir-filter? formant? formant-bank? firmant? float-vector->file? granulate? iir-filter? locsig? move-sound? mus-input? 
+				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frample? file->sample? snd->sample?
+				      filter? fir-filter? formant? formant-bank? firmant? frample->file? granulate? iir-filter? locsig? move-sound? mus-input? 
 				      mus-output? notch? one-pole? one-pole-all-pass? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				      sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 				      square-wave? src? ncos? nsin? tap? table-lookup? 
@@ -45781,8 +45781,8 @@ EDITS: 1
 			       (lambda args (car args)))))
 			(if tag
 			    (snd-display #__line__ ";oscil?proc ~A: ~A" n tag))))
-		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->float-vector? file->sample? snd->sample?
-			  filter? fir-filter? formant? formant-bank? firmant? float-vector->file? granulate? iir-filter? locsig? move-sound? mus-input? 
+		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frample? file->sample? snd->sample?
+			  filter? fir-filter? formant? formant-bank? firmant? frample->file? granulate? iir-filter? locsig? move-sound? mus-input? 
 			  mus-output? notch? one-pole? one-pole-all-pass? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			  sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 			  square-wave? src? ncos? nsin? tap? table-lookup? 
@@ -45827,7 +45827,7 @@ EDITS: 1
 				(list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average moving-max moving-norm
 				      degrees->radians delay env formant firmant granulate hz->radians linear->db even-weight odd-weight
 				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
-				      make-file->float-vector make-file->sample make-filter make-fir-filter make-formant make-firmant 
+				      make-file->frample make-file->sample make-filter make-fir-filter make-formant make-firmant 
 				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
 				      make-oscil make-pulse-train make-rand make-rand-interp make-readin
 				      make-sawtooth-wave make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src 
@@ -46289,8 +46289,8 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size -1)))
 		(check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" 0)))
 		(check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" -1)))
-		(check-error-tag 'out-of-range (lambda () (make-file->float-vector "oboe.snd" 0)))
-		(check-error-tag 'out-of-range (lambda () (make-file->float-vector "oboe.snd" -1)))
+		(check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" 0)))
+		(check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (default-output-data-format) -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (default-output-header-type) mus-soundfont)))
 		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
@@ -47197,6 +47197,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   437,664,958  s7.c:eval'2 [/home/bil/gtk-snd/snd]
   414,027,948  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
   381,402,276  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
+  327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+
+16-Apr-14:
+35,402,421,773
+5,438,210,262  s7.c:eval [/home/bil/gtk-snd/snd]
+2,257,733,094  ???:sin [/lib64/libm-2.12.so]
+2,030,883,042  ???:cos [/lib64/libm-2.12.so]
+1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
+1,033,310,494  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  885,469,176  ???:t2_32 [/home/bil/gtk-snd/snd]
+  796,024,350  s7.c:gc [/home/bil/gtk-snd/snd]
+  781,898,497  ???:t2_64 [/home/bil/gtk-snd/snd]
+  648,406,214  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  641,166,509  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  557,836,931  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  457,737,487  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  449,626,184  ???:n1_64 [/home/bil/gtk-snd/snd]
+  414,027,948  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+  391,631,415  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  365,598,834  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 |#

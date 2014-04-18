@@ -88,7 +88,7 @@
 			(not (= count (- precount 1))))
 		   (format #t "calloc ~D->~D: ~A~%" precount count line))
 	       (loop (read-line file #t))))))))
- (list "CALLOC" "MALLOC" "REALLOC" "calloc" "malloc" "realloc"))
+ (list "calloc" "malloc" "realloc"))
 
 
 ;;; look for missing or unused tips

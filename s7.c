@@ -252,9 +252,13 @@
   /* this determines whether we include support for quasiquoted vector constants `#(...) */
 #endif
 
-
 #ifndef DEBUGGING
   #define DEBUGGING 0
+#endif
+
+/* an experiment */
+#if (((defined(__GNUC__)) && (((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6))))) || ((defined(__clang__)) && (__clang_major__ >= 3)))
+  _Static_assert(sizeof(void *) == sizeof(void(*)()), "object pointer must be the same size as function pointer");
 #endif
 
 #define BOLD_TEXT "\033[1m"
@@ -4438,6 +4442,7 @@ static void resize_op_stack(s7_scheme *sc)
 #define main_stack_code(Sc)           (Sc->stack_end[-4])
 #define pop_main_stack(Sc)            Sc->stack_end -= 4
 
+/* ideally we'd split out these cases in the optimizer, but for now... */
 #define IF_BEGIN_POP_STACK(Sc) do {if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; goto START;} while (0)
 #define IF_BEGIN_POP_STACK_ELSE_SET_VALUE(Sc, Sym) do {if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; sc->value = slot_value(Sym); goto START;} while (0)
 
@@ -69382,7 +69387,7 @@ int main(int argc, char **argv)
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7
  * t816          |                                    |  69.5                43.4
  * lg            |                                    |  7757                7723
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.6
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4
  *            153 with run macro (eval_ptree)
  */
 
@@ -69396,17 +69401,12 @@ int main(int argc, char **argv)
  * finish frame removal:
  *   frame etc used also in *.lisp, *.ins, *.rb, *.fs, cmus.c?
  *      this is tricky -- ws.rb for example
- *   in s7, the float-vector->file replacements are probably redundant now
- *     I think they should be framples (there are 3 with mus_vector reflections in clm.c)
  *   eventually move from C to eval-string, then snd14
  *   2dim arr in ruby: NArray or matrix.rb: Array.new of array but indexing syntax is different I think
  *     (still ruby side has frame/mixer/sound_data -- is there any way to make these all ruby-level?)
  *   in lisp, we're using mixer/frame etc, but then mus.lisp has an implementation too?
- *     mixer: expandn.ins, freeverb, fullmix, ug3 tests, frame: everywhere, no sound-data or mus_sound_open...
- *     perhaps split this into some other file?
+ *     mixer: expandn.ins, freeverb, fullmix, ug3(expandn), tests, frame: everywhere, no sound-data or mus_sound_open...
  *
- * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
- * Motif version crashes with X error 
  * click to inspect/see source etc in listener?
  *
  * algebra of gens (max[n](max[m]) == max[n+m])? -- no (latter is lower freq):
@@ -69418,6 +69418,8 @@ int main(int argc, char **argv)
     (let ((r (random 1.0)))
       (format *stderr* "~A ~A~%" (moving-max m3 r) (moving-max m1 (moving-max m2 r))))))
  *
+ * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
+ * Motif version crashes with X error 
  * why can't y-bounds be channel-specific if channels-combined?
  * why doesn't a new max take effect? [with-fullest-sound t844.scm]
  * click-2 in separate channel => play just that channel
@@ -69435,5 +69437,8 @@ int main(int argc, char **argv)
  *   and for catch what errors it might raise
  *     frames: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
+ *
+ * defines like cpp tokens? rather than let-constant, (let ((#:name value)) name here can't be changed) -- a sort of local keyword
+ *   need environment-specific accessors actually
  */
 
