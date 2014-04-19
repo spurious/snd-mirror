@@ -806,6 +806,18 @@ keep the spectra steady, and in the second, I fix up the PM index.
 				          (* <em class=red>(/ pm-index (+ 1 frq))</em> (oscil mod2 (* rfrq modpitch)))))))))))
 </pre>
 
+<p>And if you read somewhere that PM can't produce a frequency shift:
+</p>
+<pre class="indented">
+(with-sound ()
+  (let ((o (make-oscil 200.0))
+        (e (make-env '(0 0 1 1) :scaler 300.0 :duration 1.0)))
+    (do ((i 0 (+ i 1)))
+        ((= i 44100))
+      (outa i (oscil o 0.0 (env e))))))
+</pre>
+
+
 
 <p>To show CLM in its various embodiments, here are the Scheme, Common Lisp, Ruby, Forth, and C versions of the bird instrument;
 it produces a sinusoid with (usually very elaborate) amplitude and frequency envelopes.

@@ -1542,11 +1542,10 @@ void add_or_edit_symbol(const char *name, env *val)
 #endif
 
 #if HAVE_FORTH
-  Xen e;
   if (!val) return;
   if (Xen_is_defined(name))
     Xen_variable_set(name, env_to_xen(val));
-  else Xen_define_variable(name, e, env_to_xen(val));
+  else fth_define_variable(name, env_to_xen(val), NULL);
 #endif
 }
 

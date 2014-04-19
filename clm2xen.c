@@ -76,6 +76,7 @@ static bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int cha
 }
 
 
+#if (!WITH_GMP)
 static bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *IO)
 {
   rdout *gen = (rdout *)IO;
@@ -89,6 +90,7 @@ static bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *I
     }
   return(false);
 }
+#endif
 #endif
 /* -------------------------------------------------------------------------------- */
 
@@ -10396,7 +10398,7 @@ static Xen g_mus_file_mix_with_envs(Xen args)
 intended to speed up the fullmix instrument.  file is a vector of readin generators.  beg is the sample at which to start mixing \
 output, dur is the number of samples to write. mx is a matrix, revmx is either #f or a matrix. "
 
-  int i, in_chans, out_chans, mx_chans = 0, rev_chans = 0;
+  int i, in_chans, out_chans, mx_chans = 0, rev_chans = 0, rev_mix_chans = 0;
   mus_long_t st, nd;
   mus_any *s_env = NULL, *ostr, *rstr = NULL;
   mus_any **mix_envs, **mix_srcs, **mix_rds;
@@ -10432,7 +10434,7 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
   if (mus_is_vct(revmx))
     {
       rev_mix = mus_vct_data(Xen_to_vct(revmx));
-      rev_chans = (int)sqrt(mus_vct_length(Xen_to_vct(revmx)));
+      rev_mix_chans = (int)sqrt(mus_vct_length(Xen_to_vct(revmx)));
     }
 
   arg = Xen_cdr(arg);
@@ -10478,6 +10480,7 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
 	  rstr = gn->gen;
 	}
       else rstr = Xen_to_mus_any(mus_clm_reverb());
+      rev_chans = mus_channels(rstr);
     }
 
   mix_rds = (mus_any **)calloc(in_chans, sizeof(mus_any *));
@@ -10511,7 +10514,7 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
 
     infs = (mus_float_t *)calloc(in_chans, sizeof(mus_float_t));
     out_frame = (mus_float_t *)calloc(out_chans, sizeof(mus_float_t));
-    if (rev_mix) rev_frame = (mus_float_t *)calloc(1, sizeof(mus_float_t));
+    if (rev_mix) rev_frame = (mus_float_t *)calloc(rev_chans, sizeof(mus_float_t));
 
     if (in_chans == 1)
       {
@@ -10539,7 +10542,7 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
 		else infs[0] = 0.0;
 	      }
 	    mus_frample_to_file(ostr, samp, mus_frample_to_frample(mix, mx_chans, infs, in_chans, out_frame, out_chans));
-	    if (rev_mix) mus_frample_to_file(rstr, samp, mus_frample_to_frample(rev_mix, rev_chans, infs, in_chans, rev_frame, 1));
+	    if (rev_mix) mus_frample_to_file(rstr, samp, mus_frample_to_frample(rev_mix, rev_mix_chans, infs, in_chans, rev_frame, rev_chans));
 	  }
       }
     else
@@ -10571,7 +10574,7 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
 		  }
 	      }
 	    mus_frample_to_file(ostr, samp, mus_frample_to_frample(mix, mx_chans, infs, in_chans, out_frame, out_chans));
-	    if (rev_mix) mus_frample_to_file(rstr, samp, mus_frample_to_frample(rev_mix, rev_chans, infs, in_chans, rev_frame, 1));
+	    if (rev_mix) mus_frample_to_file(rstr, samp, mus_frample_to_frample(rev_mix, rev_mix_chans, infs, in_chans, rev_frame, rev_chans));
 	  }
       }
     free(infs);
@@ -10656,7 +10659,6 @@ Xen_wrap_no_args(g_get_internal_real_time_w, g_get_internal_real_time)
 #define cadadr(E) s7_cadadr(E)
 #define caadr(E)  s7_caadr(E)
 #define cadddr(E) s7_cadddr(E)
-#define cddddr(E) s7_cddddr(E)
 
 
 /* vct stuff (originally in vct.c) */

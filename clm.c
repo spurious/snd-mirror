@@ -10893,6 +10893,7 @@ static void flush_buffers(rdout *gen)
 	  /* (with-sound (:data-format mus-ulshort) (fm-violin 10 1 440 .1)) */
 	  while (filler > 0)
 	    {
+	      ssize_t wbytes;
 	      if (filler > MAX_ZERO_SAMPLES)
 		current_samps = MAX_ZERO_SAMPLES;
 	      else 
@@ -10900,7 +10901,8 @@ static void flush_buffers(rdout *gen)
 		  current_samps = filler;
 		  bytes = current_samps * bps * gen->chans;
 		}
-	      write(fd, zeros, bytes);
+	      wbytes = write(fd, zeros, bytes);
+	      if (wbytes != bytes) fprintf(stderr, "%s[%d]: write trouble\n", __func__, __LINE__);
 	      filler -= current_samps;
 	    }
 	  free(zeros);
@@ -11404,6 +11406,8 @@ mus_float_t *mus_frample_to_frample(mus_float_t *matrix, int mx_chans, mus_float
 {
   /* in->out conceptually, so left index is in_chan, it (j below) steps by out_chans */
   int i, j, offset;
+  if (mx_chans < out_chans) out_chans = mx_chans;
+  if (mx_chans < in_chans) in_chans = mx_chans;
   for (i = 0; i < out_chans; i++)
     {
       out_samps[i] = in_samps[0] * matrix[i];

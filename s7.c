@@ -256,11 +256,6 @@
   #define DEBUGGING 0
 #endif
 
-/* an experiment */
-#if (((defined(__GNUC__)) && (((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6))))) || ((defined(__clang__)) && (__clang_major__ >= 3)))
-  _Static_assert(sizeof(void *) == sizeof(void(*)()), "object pointer must be the same size as function pointer");
-#endif
-
 #define BOLD_TEXT "\033[1m"
 #define UNBOLD_TEXT "\033[22m"
 #define RED_TEXT "\033[31m"
@@ -21433,7 +21428,9 @@ static int terminated_string_read_white_space(s7_scheme *sc, s7_pointer pt)
   while (white_space[c = *str++]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
     if (c == '\n')
       port_line_number(pt)++;
-  port_position(pt) = str - port_data(pt);
+  if (c)
+    port_position(pt) = str - port_data(pt);
+  else port_position(pt) = port_data_size(pt);
   return((int)c);
 }
 
@@ -22051,8 +22048,8 @@ static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int
   port_display(x) = input_display;
   port_read_semicolon(x) = string_read_semicolon;
 #if DEBUGGING
-  if (input_string[len] == '\0')
-    fprintf(stderr, "read_white_space string is not terminated!");
+  if (input_string[len] != '\0')
+    fprintf(stderr, "read_white_space string is not terminated: %s", input_string);
 #endif
   port_read_white_space(x) = terminated_string_read_white_space;
   port_read_name(x) = string_read_name_no_free;
@@ -26160,15 +26157,18 @@ static bool is_columnizing(const char *str)
 	char c;
 	c = *p++;
 	if ((c == 't') || (c == 'T')) return(true);
+	if (!c) return(false); 
 	if ((c == ',') || ((c >= '0') && (c <= '9')))
 	  {
 	    while ((c >= '0') && (c <= '9')) c = *p++;
 	    if ((c == 't') || (c == 'T')) return(true);
+	    if (!c) return(false);                       /* ~,1 for example */
 	    if (c == ',')
 	      {
 		c = *p++;
 		while ((c >= '0') && (c <= '9')) c = *p++;
 		if ((c == 't') || (c == 'T')) return(true);
+		if (!c) return(false);
 	      }
 	  }
       }
@@ -49554,10 +49554,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    read and evaluate all exprs, then upon EOF, close current and pop input port stack
        */
     case OP_LOAD_CLOSE_AND_POP_IF_EOF:
-      if (sc->tok != TOKEN_EOF)
+      if (sc->tok != TOKEN_EOF) 
 	{
 	  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->NIL, sc->NIL); /* was push args, code */
-	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+	  if ((!is_string_port(sc->input_port)) ||
+	      (port_position(sc->input_port) < port_data_size(sc->input_port)))
+	    {
+	      push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+	    }
+	  else sc->tok = TOKEN_EOF;
 	  sc->code = sc->value;
 	  goto EVAL;             /* we read an expression, now evaluate it, and return to read the next */
 	}
@@ -69408,16 +69413,6 @@ int main(int argc, char **argv)
  *     mixer: expandn.ins, freeverb, fullmix, ug3(expandn), tests, frame: everywhere, no sound-data or mus_sound_open...
  *
  * click to inspect/see source etc in listener?
- *
- * algebra of gens (max[n](max[m]) == max[n+m])? -- no (latter is lower freq):
-(let ((m1 (make-moving-max 3))
-      (m2 (make-moving-max 2))
-      (m3 (make-moving-max 5)))
-  (do ((i 0 (+ i 1)))
-      ((= i 10))
-    (let ((r (random 1.0)))
-      (format *stderr* "~A ~A~%" (moving-max m3 r) (moving-max m1 (moving-max m2 r))))))
- *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
  * why can't y-bounds be channel-specific if channels-combined?

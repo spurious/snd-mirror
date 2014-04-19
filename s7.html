@@ -4860,7 +4860,10 @@ local constants with:
 </pre>
 
 
-<p>Kinda ugly... In the next example, we restrict the values a variable can take to integers:
+<p>Kinda ugly.  Maybe in a normal let (or whatever), binding #:name makes
+name a constant in the let body: <code>(let ((#:xyz 4)) (set! xyz 3)) ; error</code>.
+That reflects the way keywords are handled in s7, and isn't too horrible to contemplate.
+In the next example, we restrict the values a variable can take to integers:
 </p>
 
 <pre class="indented">

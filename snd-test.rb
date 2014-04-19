@@ -2655,13 +2655,8 @@ def test_03
    :smooth_sound, :snd2sample, :snd2sample?, :snd_error, :snd_error_hook,
    :snd_gcs, :snd_help, :snd_font, :snd_color, :snd_print, :snd_spectrum,
    :snd_tempnam, :snd_url, :snd_urls, :snd_version, :snd_warning,
-   :snd_warning_hook, :sound_data2vct,
-   :sound_data_chans, :sound_data_length, :sound_data_maxamp,
-   :sound_data_ref, :sound_data_peak, :sound_data_set!,
-   :sound_data_scale!, :sound_data_fill!, :sound_data?,
-   :sound_data_multiply!, :sound_data_add!, :sound_data_offset!,
-   :sound_data_multiply, :sound_data_add, :sound_data_copy,
-   :sound_data_reverse!, :sound_file_extensions, :sound_file?,
+   :snd_warning_hook, 
+   :sound_file_extensions, :sound_file?,
    :sound_files_in_directory, :sound_loop_info, :sound_properties,
    :sound_property, :sound_widgets, :sound?, :soundfont_info, :sounds,
    :spectrum_end, :spectro_hop, :spectrum_start, :spectro_x_angle,
@@ -3414,55 +3409,55 @@ def test_04_00
   close_sound(ind)
   Snd.sounds.apply(:close_sound)
   #
-  ob = open_sound(oboe_snd)
-  sd = vct2sound_data(channel2vct())
-  mx = sound_data_maxamp(sd)
-  snd_test_neq(sound_data_length(sd), 50828, "oboe->sd: len")
-  snd_test_neq(sd[0, 1000], 0.0328369, "oboe->sd[1000]")
-  snd_test_neq(mx.length, 1, "sound_data_maxamp oboe.snd len")
-  snd_test_neq(maxamp(ob, 0), mx[0], "sound_data_maxamp oboe.snd")
-  snd_test_neq(sound_data_peak(sd), mx[0], "sound_data_peak oboe.snd")
-  res = Snd.catch do set_selected_channel(1) end
-  if res.first != :no_such_channel
-    snd_display("set_selected_channel bad chan: %s?", res)
-  end
-  res = Snd.catch do set_selected_channel(123456, 1) end
-  if res.first != :no_such_sound
-    snd_display("set_selected_channel bad snd: %s?", res)
-  end
-  [[2, 1000],
-   [-1, 1000],
-   [0, -1],
-   [0, 10000000]].each do |chn, frm|
-    res = Snd.catch do sd[chn, frm] end
-    if res.first != :out_of_range
-      snd_display("sound_data_ref bad chan or frame: %s %s %s?", chn, frm, res)
-    end
-  end
-  [[2, 1000],
-   [0, 10000000]].each do |chn, frm|
-    if (res = Snd.catch do sd[chn, frm] = 1 end).first != :out_of_range
-      snd_display("sound_data_set! bad chan or frame: %s %s %s?", chn, frm, res)
-    end
-  end
-  v = make_vct(3)
-  if (res = Snd.catch do vct2sound_data(v, sd, 2) end).first != :out_of_range
-    snd_display("vct2sound_data set bad chan: %s?", res.inspect)
-  end
-  close_sound(ob)
-  #
-  if selected_sound
-    snd_display("selected_sound %s %s?", selected_sound, sounds.inspect)
-  end
-  #
-  with_file("a.sf2") do |fsnd|
-    fil = open_sound(fsnd)
-    loops = soundfont_info(fil)
-    if loops.nil? or loops[0][2] != 65390 or loops[1][1] != 65490
-      snd_display("soundfont_info: %s", loops.inspect)
-    end
-    close_sound(fil)
-  end
+#  ob = open_sound(oboe_snd)
+#  sd = vct2sound_data(channel2vct())
+#  mx = sound_data_maxamp(sd)
+#  snd_test_neq(sound_data_length(sd), 50828, "oboe->sd: len")
+#  snd_test_neq(sd[0, 1000], 0.0328369, "oboe->sd[1000]")
+#  snd_test_neq(mx.length, 1, "sound_data_maxamp oboe.snd len")
+#  snd_test_neq(maxamp(ob, 0), mx[0], "sound_data_maxamp oboe.snd")
+#  snd_test_neq(sound_data_peak(sd), mx[0], "sound_data_peak oboe.snd")
+#  res = Snd.catch do set_selected_channel(1) end
+#  if res.first != :no_such_channel
+#    snd_display("set_selected_channel bad chan: %s?", res)
+#  end
+#  res = Snd.catch do set_selected_channel(123456, 1) end
+#  if res.first != :no_such_sound
+#    snd_display("set_selected_channel bad snd: %s?", res)
+#  end
+#  [[2, 1000],
+#   [-1, 1000],
+#   [0, -1],
+#   [0, 10000000]].each do |chn, frm|
+#    res = Snd.catch do sd[chn, frm] end
+#    if res.first != :out_of_range
+#      snd_display("sound_data_ref bad chan or frame: %s %s %s?", chn, frm, res)
+#    end
+#  end
+#  [[2, 1000],
+#   [0, 10000000]].each do |chn, frm|
+#    if (res = Snd.catch do sd[chn, frm] = 1 end).first != :out_of_range
+#      snd_display("sound_data_set! bad chan or frame: %s %s %s?", chn, frm, res)
+#    end
+#  end
+#  v = make_vct(3)
+#  if (res = Snd.catch do vct2sound_data(v, sd, 2) end).first != :out_of_range
+#    snd_display("vct2sound_data set bad chan: %s?", res.inspect)
+#  end
+#  close_sound(ob)
+#  #
+#  if selected_sound
+#    snd_display("selected_sound %s %s?", selected_sound, sounds.inspect)
+#  end
+#  #
+#  with_file("a.sf2") do |fsnd|
+#    fil = open_sound(fsnd)
+#    loops = soundfont_info(fil)
+#    if loops.nil? or loops[0][2] != 65390 or loops[1][1] != 65490
+#      snd_display("soundfont_info: %s", loops.inspect)
+#    end
+#    close_sound(fil)
+#  end
 end
 
 def test_04_01
