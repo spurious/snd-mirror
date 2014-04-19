@@ -44,10 +44,10 @@
 int main(int argc, char *argv[])
 {
   int fd, afd, i, j, n, k, chans, srate;
-  mus_long_t frames, m;
+  mus_long_t framples, m;
   mus_float_t **bufs;
   OutSample *obuf;
-  int buffer_size = BUFFER_SIZE, curframes, sample_size, out_chans, outbytes;
+  int buffer_size = BUFFER_SIZE, curframples, sample_size, out_chans, outbytes;
   char *name = NULL;
   mus_long_t start = 0, end = 0;
   double begin_time = 0.0, end_time = 0.0;
@@ -151,41 +151,41 @@ int main(int argc, char *argv[])
 
       out_chans = chans;
       srate = mus_sound_srate(name);
-      frames = mus_sound_framples(name);
+      framples = mus_sound_framples(name);
       sample_size = mus_bytes_per_sample(MUS_AUDIO_COMPATIBLE_FORMAT);
       start = (mus_long_t)(begin_time * srate);
       if (start > 0)
-	mus_file_seek_frame(fd, start);
+	mus_file_seek_frample(fd, start);
       if (end_time > 0.0)
 	end = (mus_long_t)(end_time * srate);
-      else end = frames;
-      if ((end - start) < frames)
-	frames = end - start;
+      else end = framples;
+      if ((end - start) < framples)
+	framples = end - start;
 
       bufs = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
       for (i = 0; i < chans; i++) bufs[i] = (mus_float_t *)calloc(buffer_size, sizeof(mus_float_t));
       obuf = (OutSample *)calloc(buffer_size * out_chans, sizeof(OutSample));
       outbytes = buffer_size * out_chans * sample_size;
 
-      for (m = 0; m < frames; m += buffer_size)
+      for (m = 0; m < framples; m += buffer_size)
 	{
-	  if ((m + buffer_size) <= frames)
-	    curframes = buffer_size;
-	  else curframes = frames - m;
-	  mus_file_read(fd, start + m, curframes, chans, bufs); 
+	  if ((m + buffer_size) <= framples)
+	    curframples = buffer_size;
+	  else curframples = framples - m;
+	  mus_file_read(fd, start + m, curframples, chans, bufs); 
 	  /* some systems are happier if we read the file before opening the dac */
 	  /* at this point the data is in separate arrays of mus_sample_t's */
 
 	  if (chans == 1)
 	    {
-	      for (k = 0; k < curframes; k++) 
+	      for (k = 0; k < curframples; k++) 
 		obuf[k] = MUS_CONVERT(bufs[0][k]);
 	    }
 	  else
 	    {
 	      if (chans == 2)
 		{
-		  for (k = 0, n = 0; k < curframes; k++, n += 2) 
+		  for (k = 0, n = 0; k < curframples; k++, n += 2) 
 		    {
 		      obuf[n] = MUS_CONVERT(bufs[0][k]); 
 		      obuf[n + 1] = MUS_CONVERT(bufs[1][k]);
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 		}
 	      else
 		{
-		  for (k = 0, j = 0; k < curframes; k++, j += chans)
+		  for (k = 0, j = 0; k < curframples; k++, j += chans)
 		    {
 		      for (n = 0; n < chans; n++) 
 			obuf[j + n] = MUS_CONVERT(bufs[n][k]);
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 	      afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, out_chans, MUS_AUDIO_COMPATIBLE_FORMAT, outbytes);
 	      if (afd == -1) break;
 	    }
-	  outbytes = curframes * out_chans * sample_size;
+	  outbytes = curframples * out_chans * sample_size;
 	  mus_audio_write(afd, (char *)obuf, outbytes);
 	}
       if (afd != -1) mus_audio_close(afd);

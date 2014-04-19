@@ -69404,13 +69404,13 @@ int main(int argc, char **argv)
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
  *
  * finish frame removal:
- *   frame etc used also in *.lisp, *.ins, *.rb, *.fs, cmus.c?
+ *   frame etc used also in *.lisp, *.ins, *.rb, *.fs [clm.html also]
  *      this is tricky -- ws.rb for example
  *   eventually move from C to eval-string, then snd14
  *   2dim arr in ruby: NArray or matrix.rb: Array.new of array but indexing syntax is different I think
  *     (still ruby side has frame/mixer/sound_data -- is there any way to make these all ruby-level?)
  *   in lisp, we're using mixer/frame etc, but then mus.lisp has an implementation too?
- *     mixer: expandn.ins, freeverb, fullmix, ug3(expandn), tests, frame: everywhere, no sound-data or mus_sound_open...
+ *     mixer: expandn.ins, freeverb, fullmix, ug3(expandn), tests, frame: everywhere
  *
  * click to inspect/see source etc in listener?
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
@@ -69434,6 +69434,8 @@ int main(int argc, char **argv)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  *
  * defines like cpp tokens? rather than let-constant, (let ((#:name value)) name here can't be changed) -- a sort of local keyword
- *   need environment-specific accessors actually
+ *   need environment-specific accessors actually, so define-constant is (define #:name ...)?
+ *   if the accessor were slot-specific, not symbol-specific, no need for unwind checks etc
+ *   but then need only the set! function -- how to make a true constant?
  */
 
