@@ -47,3 +47,17 @@ checked: gtk 3.11.9|12.0|1, sbcl 1.1.17
 Thanks!: Mike Scholz.
 
 
+
+Some notes on updating:
+  the main instruments that changed are expandn, freeverb, and fullmix
+  
+  mixer -> 1-dim array of floats, size: chans * chans
+  frame -> same, size: chans
+  sound-data -> 2 dim array of floats, size: '(chans samples-per-chan)
+  array of floats = float-vector in scheme, double-array in CL
+  
+  "frame" -> "frample" in most cases, including mus-file-mix arg names
+  envs arg to mus-file-mix-with-envs has same layout as matrix arg
+  frample->frample arg order is '(matrix in-vector out-vector)
+  most mus-sound-read|write cases can be replaced by array->file and file->array
+  

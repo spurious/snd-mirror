@@ -69402,15 +69402,16 @@ int main(int argc, char **argv)
  * for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
  * open-output|input-object|function?
  * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
+ * sigprocmask to trap various errors?
  *
  * finish frame removal:
- *   frame etc used also in *.lisp, *.ins, *.rb, *.fs [clm.html also]
+ *   frame etc used also in *.rb, *.fs [clm.html also]
  *      this is tricky -- ws.rb for example
  *   eventually move from C to eval-string, then snd14
  *   2dim arr in ruby: NArray or matrix.rb: Array.new of array but indexing syntax is different I think
  *     (still ruby side has frame/mixer/sound_data -- is there any way to make these all ruby-level?)
  *   in lisp, we're using mixer/frame etc, but then mus.lisp has an implementation too?
- *     mixer: expandn.ins, freeverb, fullmix, ug3(expandn), tests, frame: everywhere
+ *     mixer: expandn.ins, freeverb, fullmix
  *
  * click to inspect/see source etc in listener?
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
