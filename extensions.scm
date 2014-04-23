@@ -398,9 +398,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (offset-sound off (beg 0) dur snd)
   "(offset-sound off beg dur snd) adds 'off' to every sample in 'snd'"
-  ;; the pretty but slow way:
-  ;; (map-sound (lambda (fr) (frame+ fr off)) beg dur snd)
-  ;;
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let ((out-chans (channels index)))

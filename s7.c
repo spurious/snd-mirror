@@ -8122,7 +8122,7 @@ s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x)
 }
 
 
-s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x)
+s7_Int s7_number_to_integer_with_caller(s7_scheme *sc, s7_pointer x, const char *caller)
 {
   /* this is called in xen.c */
   if (type(x) == T_INTEGER)
@@ -8156,8 +8156,13 @@ s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x)
       return((s7_Int)mpfr_get_d(mpc_realref(big_complex(x)), GMP_RNDN));
 #endif
     }
-  s7_wrong_type_arg_error(sc, "s7_number_to_integer", 0, x, "an integer");
+  s7_wrong_type_arg_error(sc, caller, 0, x, "an integer");
   return(0);
+}
+
+s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x)
+{
+  return(s7_number_to_integer_with_caller(sc, x, "s7_number_to_integer"));
 }
 
 
@@ -20899,7 +20904,10 @@ void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
       (port_file(p)))
     {
       if (port_position(p) > 0)
-	fwrite((void *)(port_data(p)), 1, port_position(p), port_file(p));
+	{
+	  if (fwrite((void *)(port_data(p)), 1, port_position(p), port_file(p)) != port_position(p))
+	    fprintf(stderr, "fwrite trouble in flush-output-port\n");
+	}
       port_position(p) = 0;
       fflush(port_file(p));
     }
@@ -20952,7 +20960,10 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
       if (port_file(p))
 	{
 	  if (port_position(p) > 0)
-	    fwrite((void *)(port_data(p)), 1, port_position(p), port_file(p));
+	    {
+	      if (fwrite((void *)(port_data(p)), 1, port_position(p), port_file(p)) != port_position(p))
+		fprintf(stderr, "fwrite trouble in close-output-port\n");
+	    }
 	  port_position(p) = 0;
 	  free(port_data(p));
 	  fflush(port_file(p));
@@ -21183,7 +21194,8 @@ static void file_write_char(s7_scheme *sc, int c, s7_pointer port)
 {
   if (port_position(port) == PORT_DATA_SIZE)
     {
-      fwrite((void *)(port_data(port)), 1, PORT_DATA_SIZE, port_file(port));
+      if (fwrite((void *)(port_data(port)), 1, PORT_DATA_SIZE, port_file(port)) != PORT_DATA_SIZE)
+	fprintf(stderr, "fwrite trouble during write-char\n");
       port_position(port) = 0;
     }
   port_data(port)[port_position(port)++] = (unsigned char)c;
@@ -21280,7 +21292,8 @@ static void file_display(s7_scheme *sc, const char *s, s7_pointer port)
     {
       if (port_position(port) > 0)
 	{
-	  fwrite((void *)(port_data(port)), 1, port_position(port), port_file(port));
+	  if (fwrite((void *)(port_data(port)), 1, port_position(port), port_file(port)) != port_position(port))
+	    fprintf(stderr, "fwrite trouble in display\n");
 	  port_position(port) = 0;
 	}
       if (fputs(s, port_file(port)) == EOF)
@@ -21296,10 +21309,12 @@ static void file_write_string(s7_scheme *sc, const char *str, int len, s7_pointe
     {
       if (port_position(pt) > 0)
 	{
-	  fwrite((void *)(port_data(pt)), 1, port_position(pt), port_file(pt));
+	  if (fwrite((void *)(port_data(pt)), 1, port_position(pt), port_file(pt)) != port_position(pt))
+	    fprintf(stderr, "fwrite trouble in write-string\n");
 	  port_position(pt) = 0;
 	}
-      fwrite((void *)str, 1, len, port_file(pt));
+      if (fwrite((void *)str, 1, len, port_file(pt)) != (size_t)len)
+	fprintf(stderr, "fwrite trouble in write-string\n");
     }
   else
     {
@@ -29066,7 +29081,7 @@ static s7_pointer default_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int lo
 
 static s7_pointer int_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val)
 {
-  int_vector_element(vec, loc) = s7_number_to_integer(sc, val);
+  int_vector_element(vec, loc) = s7_number_to_integer_with_caller(sc, val, "vector-set!");
   return(val);
 }
 
@@ -33937,15 +33952,21 @@ static bool is_thunkable(s7_scheme *sc, s7_pointer x)
 
 /* -------------------------------- symbol-access ------------------------------------------------ */
 /*
- * originally in Snd I wanted notification when a variable was set, and use it as a variable, not a procedure.
+ * notification when a variable was set, constants
  *
  * these are in the same realm:
  *   typed var: restrict set! to the desired type or do auto-conversions
  *   constant: disallow set!
  *   traced var: report set!
  *   keywords: can't set or bind
+ *
+ * it would be nice to have also a way to create local constants
+ *   defines like cpp tokens? rather than let-constant, (let ((#:name value)) name here can't be changed) -- a sort of local keyword
+ *   if the accessor were slot-specific, not symbol-specific, no need for unwind checks etc
+ *   but then need only the set! function -- how to make a true constant?
+ *   symbol_accessor is actually just a pointer in the gc_protected table or -1, so it could be localized.
+ *   but how to see that in the rest of s7, and where to store the index?
  */
-
 
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
 {
@@ -37196,7 +37217,7 @@ static s7_pointer eval_range_error(s7_scheme *sc, const char *errmsg, s7_pointer
 }
 
 
-static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
+static s7_pointer read_error_1(s7_scheme *sc, const char *errmsg, bool string_error)
 {
   /* reader errors happen before the evaluator gets involved, so forms such as:
    *   (catch #t (lambda () (car '( . ))) (lambda arg 'error))
@@ -37207,87 +37228,106 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
   s7_pointer pt;
   pt = sc->input_port;
 
-  /* make an heroic effort to find where we slid off the tracks */
-
-  if (is_string_port(sc->input_port))
+  if (!string_error)
     {
-      #define QUOTE_SIZE 40
-      unsigned int i, j, start = 0, end, slen;
-      char *recent_input = NULL;
-
-      /* we can run off the end in cases like (eval-string "(. . ,.)") or (eval-string " (@ . ,.)") */
-      if (port_position(pt) >= port_data_size(pt))        
-	port_position(pt) = port_data_size(pt) - 1;
-
-      /* start at current position and look back a few chars */
-      for (i = port_position(pt), j = 0; (i > 0) && (j < QUOTE_SIZE); i--, j++)
-	if ((port_data(pt)[i] == '\0') ||
-	    (port_data(pt)[i] == '\n') ||
-	    (port_data(pt)[i] == '\r'))
-	  break;
-      start = i;
-
-      /* start at current position and look ahead a few chars */
-      for (i = port_position(pt), j = 0; (i < port_data_size(pt)) && (j < QUOTE_SIZE); i++, j++)
-	if ((port_data(pt)[i] == '\0') ||
-	    (port_data(pt)[i] == '\n') ||
-	    (port_data(pt)[i] == '\r'))
-	  break;
-
-      end = i;
-      slen = end - start;
-      /* hopefully this is more or less the current line where the read error happened */
-
-      if (slen > 0)
-	{
-	  recent_input = (char *)calloc((slen + 9), sizeof(char));
-	  for (i = 0; i < (slen + 8); i++) recent_input[i] = '.';
-	  recent_input[3] = ' ';
-	  recent_input[slen + 4] = ' ';
-	  for (i = 0; i < slen; i++) recent_input[i + 4] = port_data(pt)[start + i];
-	}
-
-      if ((port_line_number(pt) > 0) &&
-	  (port_filename(pt)))
-	{
-	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + port_filename_length(pt) + safe_strlen(sc->current_file) + 64;
-	  msg = (char *)malloc(len * sizeof(char));
-	  len = snprintf(msg, len, "%s: %s %s[%d], last top-level form at: %s[%d]", 
-			 errmsg, (recent_input) ? recent_input : "", port_filename(pt), port_line_number(pt),
-			 sc->current_file, sc->current_line);
-	}
-      else
-	{
-	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + safe_strlen(sc->current_file) + 64;
-	  msg = (char *)malloc(len * sizeof(char));
-
-	  if ((sc->current_file) &&
-	      (sc->current_line >= 0))
-	    len = snprintf(msg, len, "%s: %s, last top-level form at %s[%d]", 
-			   errmsg, (recent_input) ? recent_input : "",
-			   sc->current_file, sc->current_line);
-	  else len = snprintf(msg, len, "%s: %s", errmsg, (recent_input) ? recent_input : "");
-	}
+      /* make an heroic effort to find where we slid off the tracks */
       
-      if (recent_input) free(recent_input);
-      return(s7_error(sc, sc->READ_ERROR, 
-		      list_1(sc, make_string_uncopied_with_length(sc, msg, len))));
+      if (is_string_port(sc->input_port))
+	{
+          #define QUOTE_SIZE 40
+	  unsigned int i, j, start = 0, end, slen;
+	  char *recent_input = NULL;
+	  
+	  /* we can run off the end in cases like (eval-string "(. . ,.)") or (eval-string " (@ . ,.)") */
+	  if (port_position(pt) >= port_data_size(pt))        
+	    port_position(pt) = port_data_size(pt) - 1;
+	  
+	  /* start at current position and look back a few chars */
+	  for (i = port_position(pt), j = 0; (i > 0) && (j < QUOTE_SIZE); i--, j++)
+	    if ((port_data(pt)[i] == '\0') ||
+		(port_data(pt)[i] == '\n') ||
+		(port_data(pt)[i] == '\r'))
+	      break;
+	  start = i;
+	  
+	  /* start at current position and look ahead a few chars */
+	  for (i = port_position(pt), j = 0; (i < port_data_size(pt)) && (j < QUOTE_SIZE); i++, j++)
+	    if ((port_data(pt)[i] == '\0') ||
+		(port_data(pt)[i] == '\n') ||
+		(port_data(pt)[i] == '\r'))
+	      break;
+	  
+	  end = i;
+	  slen = end - start;
+	  /* hopefully this is more or less the current line where the read error happened */
+	  
+	  if (slen > 0)
+	    {
+	      recent_input = (char *)calloc((slen + 9), sizeof(char));
+	      for (i = 0; i < (slen + 8); i++) recent_input[i] = '.';
+	      recent_input[3] = ' ';
+	      recent_input[slen + 4] = ' ';
+	      for (i = 0; i < slen; i++) recent_input[i + 4] = port_data(pt)[start + i];
+	    }
+	  
+	  if ((port_line_number(pt) > 0) &&
+	      (port_filename(pt)))
+	    {
+	      len = safe_strlen(recent_input) + safe_strlen(errmsg) + port_filename_length(pt) + safe_strlen(sc->current_file) + 64;
+	      msg = (char *)malloc(len * sizeof(char));
+	      len = snprintf(msg, len, "%s: %s %s[%d], last top-level form at: %s[%d]", 
+			     errmsg, (recent_input) ? recent_input : "", port_filename(pt), port_line_number(pt),
+			     sc->current_file, sc->current_line);
+	    }
+	  else
+	    {
+	      len = safe_strlen(recent_input) + safe_strlen(errmsg) + safe_strlen(sc->current_file) + 64;
+	      msg = (char *)malloc(len * sizeof(char));
+	      
+	      if ((sc->current_file) &&
+		  (sc->current_line >= 0))
+		len = snprintf(msg, len, "%s: %s, last top-level form at %s[%d]", 
+			       errmsg, (recent_input) ? recent_input : "",
+			       sc->current_file, sc->current_line);
+	      else len = snprintf(msg, len, "%s: %s", errmsg, (recent_input) ? recent_input : "");
+	    }
+	  
+	  if (recent_input) free(recent_input);
+	  return(s7_error(sc, sc->READ_ERROR, 
+			  list_1(sc, make_string_uncopied_with_length(sc, msg, len))));
+	}
     }
 
   if ((port_line_number(pt) > 0) &&
       (port_filename(pt)))
     {
-      len = safe_strlen(errmsg) + port_filename_length(pt) + safe_strlen(sc->current_file) + 64;
+      len = safe_strlen(errmsg) + port_filename_length(pt) + safe_strlen(sc->current_file) + 128;
       msg = (char *)malloc(len * sizeof(char));
-      len = snprintf(msg, len, "%s %s[%d], last top-level form at %s[%d]", 
-		     errmsg, port_filename(pt), port_line_number(pt), 
-		     sc->current_file, sc->current_line);
+
+      if (string_error)
+	len = snprintf(msg, len, "%s %s[%d],\n;  possible culprit: \"%s...\"\n;  last top-level form at %s[%d]", 
+		       errmsg, port_filename(pt), port_line_number(pt), 
+		       sc->strbuf,
+		       sc->current_file, sc->current_line);
+      else len = snprintf(msg, len, "%s %s[%d], last top-level form at %s[%d]", 
+			  errmsg, port_filename(pt), port_line_number(pt), 
+			  sc->current_file, sc->current_line);
       return(s7_error(sc, sc->READ_ERROR, 
 		      list_1(sc, make_string_uncopied_with_length(sc, msg, len))));
     }
 
   return(s7_error(sc, sc->READ_ERROR, 
 		  list_1(sc, make_protected_string(sc, (char *)errmsg))));
+}
+
+static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
+{
+  return(read_error_1(sc, errmsg, false));
+}
+
+static s7_pointer string_read_error(s7_scheme *sc, const char *errmsg)
+{
+  return(read_error_1(sc, errmsg, true));
 }
 
 
@@ -39410,7 +39450,11 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
       end = (char *)(port_data(pt) + port_data_size(pt));
       s = strpbrk(start, "\"\n\\");
       if ((!s) || (s >= end))                                 /* can this read a huge string constant from a file? */
-	return(sc->F);
+	{
+	  memcpy((void *)(sc->strbuf), (void *)start, (end - start > 8) ? 8 : (end - start));
+	  sc->strbuf[8] = '\0';
+	  return(sc->F);
+	}
       if (*s == '"')
 	{
 	  int len;
@@ -39468,6 +39512,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	  break;
 
 	case EOF:
+	  sc->strbuf[(i > 8) ? 8 : i] = '\0';
 	  return(sc->F);
 
 	case '"':
@@ -39477,7 +39522,10 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	  c = inchar(pt);
 
 	  if (c == EOF) 
-	    return(sc->F);
+	    {
+	      sc->strbuf[(i > 8) ? 8 : i] = '\0';
+	      return(sc->F);
+	    }
 
 	  if (c == '\\')
 	    sc->strbuf[i++] = '\\';
@@ -39610,7 +39658,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  sc->value = read_string_constant(sc, sc->input_port);
 
 	  if (sc->value == sc->F)                                   /* can happen if input code ends in the middle of a string */
-	    return(read_error(sc, "end of input encountered while in a string"));
+	    return(string_read_error(sc, "end of input encountered while in a string"));
 	  if (sc->value == sc->T)
 	    return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
 
@@ -62866,7 +62914,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->tok = TOKEN_DOUBLE_QUOTE;
 	    sc->value = read_string_constant(sc, pt);
 	    if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
-	      return(read_error(sc, "end of input encountered while in a string"));
+	      return(string_read_error(sc, "end of input encountered while in a string"));
 	    if (sc->value == sc->T)
 	      return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
 	    goto READ_LIST;
@@ -62996,7 +63044,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case TOKEN_DOUBLE_QUOTE:
 	  sc->value = read_string_constant(sc, sc->input_port);
 	  if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
-	    return(read_error(sc, "end of input encountered while in a string"));
+	    return(string_read_error(sc, "end of input encountered while in a string"));
 	  if (sc->value == sc->T)
 	    return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
 	  goto READ_LIST;
@@ -68663,7 +68711,7 @@ s7_scheme *s7_init(void)
 
   sc->LENGTH =                s7_define_safe_function(sc, "length",                  g_length,                 1, 0, false, H_length);
   sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 3, false, H_copy);
-  sc->FILL =                  s7_define_safe_function(sc, "fill!",                   g_fill,                   2, 0, false, H_fill);  /* was unsafe until 12-Feb-14 */
+  sc->FILL =                  s7_define_safe_function(sc, "fill!",                   g_fill,                   2, 2, false, H_fill);  /* was unsafe until 12-Feb-14 */
   sc->REVERSE =               s7_define_safe_function(sc, "reverse",                 g_reverse,                1, 0, false, H_reverse);
   sc->REVERSEB =              s7_define_function(sc,      "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place);
   sc->SORT =                  s7_define_function(sc,      "sort!",                   g_sort,                   2, 0, false, H_sort);
@@ -69390,7 +69438,7 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7
- * t816          |                                    |  69.5                43.4
+ * t816          |                                    |  70.6                44.5
  * lg            |                                    |  7757                7723
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4
  *            153 with run macro (eval_ptree)
@@ -69400,29 +69448,18 @@ int main(int argc, char **argv)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
  * for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
- * open-output|input-object|function?
- * vector-fill! has start/end args, and fill! passes args to it, but fill! complains if more than 2 args (copy?)
- * sigprocmask to trap various errors?
- *
- * finish frame removal:
- *   frame etc used also in *.rb, *.fs [clm.html also]
- *      this is tricky -- ws.rb for example
- *   eventually move from C to eval-string, then snd14
- *   2dim arr in ruby: NArray or matrix.rb: Array.new of array but indexing syntax is different I think
- *     (still ruby side has frame/mixer/sound_data -- is there any way to make these all ruby-level?)
- *   in lisp, we're using mixer/frame etc, but then mus.lisp has an implementation too?
- *     mixer: expandn.ins, freeverb, fullmix
- *
+ * open-output|input-object|function? -- what's the application?
  * click to inspect/see source etc in listener?
+ *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * Motif version crashes with X error 
  * why can't y-bounds be channel-specific if channels-combined?
  * why doesn't a new max take effect? [with-fullest-sound t844.scm]
  * click-2 in separate channel => play just that channel
- *
- * unexpected eof can be from forgotten double-quote -- can we catch this?
- *   start at last top and look for odd number of dq's?
- *   look for '" ' at start (missed start) '")' also at start [37458]
+ * clm opt accepts (env env)
+ * does *load-path* interpose "."?
+ * add gmp+debug to testsnd and find the free cell gmp bug
+ * remove the ruby sndlib case in compsnd
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
@@ -69434,9 +69471,13 @@ int main(int argc, char **argv)
  *     frames: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  *
- * defines like cpp tokens? rather than let-constant, (let ((#:name value)) name here can't be changed) -- a sort of local keyword
- *   need environment-specific accessors actually, so define-constant is (define #:name ...)?
- *   if the accessor were slot-specific, not symbol-specific, no need for unwind checks etc
- *   but then need only the set! function -- how to make a true constant?
+ * function parameter-list won't change, so it's an unchanging env -- we could preset access here,
+ *   given env-slot layout.  If no intervening env, 
+ *   (define (hi a b c) (current-environment))
+ *   (hi 1 2 3) -> #<environment 'c 3 'b 2 'a 1>
+ *   1-arg func, no inner, environment_slots(sc->envir) is the arg
+ *               if 1 inner, environment_slots(next_environment(sc->envir))
+ *   could this be all_x'd?  One obvious case:
+ *   (define (name v) (vector-ref v 0)) -> vector_getter(slot_value(environment_slots(sc->envir)), 0) but needs v type check
  */
 

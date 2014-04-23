@@ -277,7 +277,7 @@
 
 ;;; -------- sound-let --------
 ;;;
-;;; (with-sound () (sound-let ((a () (fm-violin 0 .1 440 .1))) (mus-mix "test.snd" a)))
+;;; (with-sound () (sound-let ((a () (fm-violin 0 .1 440 .1))) (mus-file-mix "test.snd" a)))
 
 (define-macro (sound-let snds . body) 
   `(let ((temp-files ()))

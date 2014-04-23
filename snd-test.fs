@@ -2165,7 +2165,7 @@ black-and-white-colormap constant *better-colormap*
      'cursor-context 'cursor-cross 'cursor-in-middle 'cursor-in-view
      'cursor-line 'cursor-location-offset 'cursor-on-left 'cursor-on-right
      'cursor-position 'cursor-size 'cursor-style 'cursor-update-interval
-     'dac-combines-channels 'dac-hook 'dac-size 'data-color 'data-format
+     'dac-combines-channels 'dac-size 'data-color 'data-format
      'data-location 'data-size 'db->linear 'default-output-chans 
      'default-output-data-format 'default-output-header-type
      'default-output-srate 'define-envelope 'degrees->radians 'delay
@@ -2289,15 +2289,15 @@ black-and-white-colormap constant *better-colormap*
      'mus-phase 'mus-ramp 'mus-rand-seed 'mus-random
      'mus-raw 'mus-reset 'mus-riff 'mus-run 'mus-scaler
      'mus-set-formant-radius-and-frequency 'mus-sound-chans
-     'mus-sound-close-input 'mus-sound-close-output 'mus-sound-comment 
+     'mus-sound-comment 
      'mus-sound-data-format 'mus-sound-data-location
      'mus-sound-datum-size 'mus-sound-duration 'mus-sound-forget 
      'mus-sound-frames 'mus-sound-header-type 'mus-sound-length 
      'mus-sound-loop-info 'mus-sound-mark-info 'mus-sound-maxamp 
-     'mus-sound-maxamp-exists? 'mus-sound-open-input 'mus-sound-open-output
-     'mus-sound-prune 'mus-sound-read 'mus-sound-reopen-output
-     'mus-sound-report-cache 'mus-sound-samples 'mus-sound-seek-frame
-     'mus-sound-srate 'mus-sound-type-specifier 'mus-sound-write
+     'mus-sound-maxamp-exists? 
+     'mus-sound-prune 
+     'mus-sound-report-cache 'mus-sound-samples 
+     'mus-sound-srate 'mus-sound-type-specifier 
      'mus-sound-write-date 'mus-soundfont 'mus-srate 'mus-svx
      'mus-ubshort 'mus-ubyte 'mus-ulshort 'mus-unknown 'mus-unsupported 
      'mus-voc 'mus-width 'mus-xcoeff 'mus-xcoeffs 'mus-ycoeff
@@ -2361,11 +2361,7 @@ black-and-white-colormap constant *better-colormap*
      'snd-error-hook 'snd-exit ( added ) 'snd-gcs 'snd-help 'snd-font
      'snd-color 'snd-print 'snd-spectrum 'snd-tempnam 'snd-url 'snd-urls
      'snd-version 'snd-warning 'snd-warning-hook
-     'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 
-     'sound-data-ref 'sound-data-peak 'sound-data-set! 'sound-data-scale!
-     'sound-data? 'sound-data-multiply! 'sound-data-add!
-     'sound-data-offset!  'sound-data* 'sound-data+
-     'sound-data-reverse! 'sound-file-extensions 'sound-file? 
+     'sound-file-extensions 'sound-file? 
      'sound-files-in-directory 'sound-loop-info 'sound-properties 
      'sound-property 'sound-widgets 'sound? 'soundfont-info 'sounds
      'spectrum-end 'spectro-hop 'spectrum-start 'spectro-x-angle
@@ -2376,7 +2372,7 @@ black-and-white-colormap constant *better-colormap*
      'squelch-update 'srate 'src 'src-channel 'src-selection 'src-sound
      'src? 'ssb-am 'ssb-am? 'start-hook 'start-playing 'start-playing-hook
      'start-playing-selection-hook 'start-progress-report 'status-report
-     'stop-dac-hook 'stop-player 'stop-playing 'stop-playing-hook 
+     'stop-player 'stop-playing 'stop-playing-hook 
      'stop-playing-selection-hook 'ncos 'ncos? 'nsin 'nsin?  'swap-channels
      'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound 'sync-max
      'syncd-marks 'table-lookup 'table-lookup? 'tap 'tap? 'temp-dir
@@ -6902,13 +6898,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> mus-clipping
    <'> mus-file-clipping <'> mus-header-raw-defaults <'> moving-average
    <'> moving-average? <'> make-moving-average <'> mus-expand-filename
-   <'> make-sound-data <'> sound-data-ref <'> sound-data-set!
-   <'> sound-data-scale! <'> sound-data?
-   <'> sound-data-length <'> sound-data-multiply! <'> sound-data-add!
-   <'> sound-data-offset! <'> sound-data* <'> sound-data+
-   <'> sound-data-reverse! <'> sound-data-maxamp 
-   <'> sound-data-chans <'> sound-data->vct <'> vct->sound-data
-   <'> sound-data-peak <'> all-pass <'> all-pass? <'> amplitude-modulate
+   <'> all-pass <'> all-pass? <'> amplitude-modulate
    <'> array->file <'> array-interp <'> mus-interpolate <'> asymmetric-fm
    <'> asymmetric-fm?  <'> clear-array <'> comb
    <'> comb?  <'> filtered-comb <'> filtered-comb? <'> contrast-enhancement
@@ -7046,7 +7036,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> selected-sound <'> selection-position <'> selection-frames 
    <'> selection-member? <'> sound-loop-info <'> srate <'> time-graph-type
    <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
-   <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length
+   <'> y-zoom-slider <'> mus-array-print-length
    <'> mus-float-equal-fudge-factor <'> mus-data <'> mus-feedback
    <'> mus-feedforward <'> mus-frequency <'> mus-hop <'> mus-increment
    <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp
@@ -7835,7 +7825,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   reset-almost-all-hooks
-  #( <'> exit-hook <'> stop-dac-hook <'> stop-playing-selection-hook
+  #( <'> exit-hook <'> stop-playing-selection-hook
      <'> color-hook <'> orientation-hook
      <'> start-playing-selection-hook ) each to hook
     hook <'> noop 3 make-proc <'> add-hook! #t nil fth-catch to tag
@@ -7903,16 +7893,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "hiho" 123 <'> new-sound 'out-of-range check-error-tag
   "hiho" mus-nist 123 <'> new-sound 'out-of-range check-error-tag
   "hiho" mus-nist mus-bfloat <'> new-sound 'bad-header check-error-tag
-  0 1 <'> make-sound-data 'out-of-range check-error-tag
-  -2 1 <'> make-sound-data 'out-of-range check-error-tag
-  1 -1 <'> make-sound-data 'out-of-range check-error-tag
-  1 0 <'> make-sound-data 'out-of-range check-error-tag
-  0 1 <'> mus-sound-close-output 'out-of-range check-error-tag
-  1 1 <'> mus-sound-close-output 'out-of-range check-error-tag
-  2 1 <'> mus-sound-close-output 'out-of-range check-error-tag
-  0 <'> mus-sound-close-input 'out-of-range check-error-tag
-  1 <'> mus-sound-close-input 'out-of-range check-error-tag
-  2 <'> mus-sound-close-input 'out-of-range check-error-tag
   -1 <'> set-mus-array-print-length 'out-of-range check-error-tag
   -1 <'> set-print-length 'out-of-range check-error-tag
   -1 <'> set-play-arrow-size 'out-of-range check-error-tag

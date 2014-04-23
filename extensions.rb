@@ -726,7 +726,7 @@ turns a sound-data object's data into a list of lists (one for each channel)")
     end
   end
   
-  alias mixer_scale mixer_multiply
+#  alias mixer_scale mixer_multiply
   alias mus_error_to_string mus_error_type2string
 
   def make_iir_low_pass_1(fc)
@@ -1161,19 +1161,11 @@ is like mix but the mix result has same peak amp as unmixed snd/chn (returns sca
            "enveloped_mix(filename, beg, env) \
 mixes filename starting at beg with amplitude envelope env. \
 enveloped_mix(\"pistol.snd\", 0, [0, 0, 1, 1, 2, 0])")
-  def enveloped_mix(fname, beg, env, del_tmp = true)
+  def enveloped_mix(fname, beg, amp_env, del_tmp = true)
     len = mus_sound_frames(fname)
-    if string?(tmp_name = temp_dir()) and tmp_name.length > 0
-      tmp_name += "/tmp.snd"
-    else
-      tmp_name = "tmp.snd"
-    end
-    tmpfil = mus_sound_open_output(tmp_name, 22050, 1, Mus_lshort, Mus_next, "")
-    mx = make_mixer(1, 1.0)
-    mus_sound_close_output(tmpfil, 0)
-    mus_mix(tmp_name, fname, 0, len, 0, mx, [[make_env(:envelope, env, :length, len)]])
-    mix(tmp_name, beg)
-    File.unlink(tmp_name) if del_tmp
+    e = make_env(:envelope, amp_env, :length, len)
+    rd = make_readin(fname)
+    map_channel(lambda { |y| y + env(e) * readin(rd) }, beg, len)
   end
   # enveloped_mix("pistol.snd", 0, [0, 0, 1, 1, 2, 0])
 

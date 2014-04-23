@@ -180,21 +180,21 @@ class Poly < Vec
   end
   # poly(0.5, 1.0, 2.0, 4.0).derivative ==> poly(1.0, 4.0, 12.0)
 
-  include Mixer_matrix
+#  include Mixer_matrix
   def resultant(other)
     m = self.length
     m1 = m - 1
     n = other.length
     n1 = n - 1
-    mat = make_mixer(n1 + m1)
+    mat = make_vct((n1 + m1) * (n1 + m1))
     n1.times do |i|
       m.times do |j|
-        mixer_set!(mat, i, i + j, self[m1 - j])
+        mat[(i * (n1 + m1)) + i + j] = self[m1 - j]
       end
     end
     m1.times do |i|
       n.times do |j|
-        mixer_set!(mat, i + n1, i + j, other[n1 - j])
+        mat[((i + n1) * (n1 + m1)) + i + j] = other[n1 - j]
       end
     end
     mixer_determinant(mat)

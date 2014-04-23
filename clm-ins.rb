@@ -1159,7 +1159,7 @@ def nrev_rb(*args)
   allpass6 = (chan2 ? make_all_pass(-0.7, 0.7, dly_len[12]) : nil)
   allpass7 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[13]) : nil)
   allpass8 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[14]) : nil)
-  reverb_frame = make_frame(@channels)
+  reverb_frame = make_vct(@channels)
   run_reverb() do |val, i|
     rev = volume * val
     outrev = all_pass(allpass4,
@@ -1173,10 +1173,10 @@ def nrev_rb(*args)
                                                           comb(comb4, rev) +
                                                           comb(comb5, rev) +
                                                           comb(comb6, rev))))))
-    frame_set!(reverb_frame, 0, all_pass(allpass5, outrev))
-    frame_set!(reverb_frame, 1, all_pass(allpass6, outrev)) if chan2
-    frame_set!(reverb_frame, 2, all_pass(allpass7, outrev)) if chan4
-    frame_set!(reverb_frame, 3, all_pass(allpass8, outrev)) if chan4
+    vct_set!(reverb_frame, 0, all_pass(allpass5, outrev))
+    vct_set!(reverb_frame, 1, all_pass(allpass6, outrev)) if chan2
+    vct_set!(reverb_frame, 2, all_pass(allpass7, outrev)) if chan4
+    vct_set!(reverb_frame, 3, all_pass(allpass8, outrev)) if chan4
     reverb_frame
   end
 end
@@ -1423,13 +1423,13 @@ def jl_reverb(*args)
   comb4 = make_comb(0.697, 11597)
   outdel1 = make_delay((0.013 * @srate).round)
   outdel2 = (@channels > 1 ? make_delay((0.011 * @srate).round) : false)
-  reverb_frame = make_frame(@channels)
+  reverb_frame = make_vct(@channels)
   run_reverb() do |ho, i|
     allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)))
     comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
                 comb(comb3, allpass_sum) + comb(comb4, allpass_sum))
-    frame_set!(reverb_frame, 0, delay(outdel1, comb_sum))
-    frame_set!(reverb_frame, 1, delay(outdel2, comb_sum)) if outdel2
+    vct_set!(reverb_frame, 0, delay(outdel1, comb_sum))
+    vct_set!(reverb_frame, 1, delay(outdel2, comb_sum)) if outdel2
     reverb_frame
   end
 end
@@ -3075,6 +3075,7 @@ def fullmix(in_file,
   in_chans = ws_channels(in_file)
   inloc = (Float(inbeg) * ws_srate(in_file)).round
   mx = file = envs = rev_mx = revframe = false
+  mx_chans = [in_chans, @channels].max
   if srate
     file = make_array(in_chans) do |chn|
       make_ws_reader(in_file, :start, inloc, :channel, chn)
@@ -3083,16 +3084,19 @@ def fullmix(in_file,
     file = in_file
   end
   mx = if matrix
-         make_mixer([in_chans, @channels].max)
+         make_vct(mx_chans * mx_chans)
        else
-         make_scalar_mixer([in_chans, @channels].max, 1.0)
+         make_vct(mx_chans * mx_chans)
+         mx_chans.times do |i|
+           mx[(i * mx_chans) + i] = 1.0
+         end
        end
   if @ws_reverb and reverb_amount.positive?
-    rev_mx = make_mixer(in_chans)
+    rev_mx = make_vct(in_chans * in_chans)
     in_chans.times do |chn|
-      mixer_set!(rev_mx, chn, 0, reverb_amount)
+      vct_set!(rev_mx, (chn * in_chans) + chn, 0, reverb_amount)
     end
-    revframe = make_frame(1)
+    revframe = make_vct(1)
   end
   case matrix
   when Array
@@ -3102,7 +3106,7 @@ def fullmix(in_file,
         outn = inlist[ochn]
         case outn
         when Numeric
-          mixer_set!(mx, ichn, ochn, outn)
+          vct_set!(mx, (ichn * mx_chans) + ochn, outn)
         when Array, Mus
           unless envs
             envs = make_array(in_chans) do
@@ -3123,7 +3127,7 @@ def fullmix(in_file,
     # matrix is a number in this case (a global scaler)
     in_chans.times do |i|
       if i < @channels
-        mixer_set!(mx, i, i, matrix)
+        vct_set!(mx, (i * mx_chans) + i, matrix)
       end
     end
   end
@@ -3142,11 +3146,11 @@ class Snd_Instrument
     samps = seconds2samples(dur)
     unless sr
       @out_snd = with_closed_sound(@out_snd) do |snd_name|
-        mus_mix(snd_name, file, beg, samps, inloc, mx, envs)
+        mus_file_mix(snd_name, file, beg, samps, inloc, mx, envs)
       end
       if rev_mx
         @rev_snd = with_closed_sound(@rev_snd) do |snd_name|
-          mus_mix(snd_name, file, beg, samps, inloc, rev_mx, false)
+          mus_file_mix(snd_name, file, beg, samps, inloc, rev_mx, false)
         end
       end
     else
@@ -3154,8 +3158,8 @@ class Snd_Instrument
       if rev_mx
         rev_data = make_sound_data(@reverb_channels, samps)
       end
-      inframe = make_frame(in_chans)
-      outframe = make_frame(@channels)
+      inframe = make_vct(in_chans)
+      outframe = make_vct(@channels)
       srcs = make_array(in_chans) do
         make_src(:srate, sr)
       end
@@ -3170,7 +3174,7 @@ class Snd_Instrument
           end
         end
         in_chans.times do |chn|
-          frame_set!(inframe, chn,
+          vct_set!(inframe, chn,
                      src(srcs[chn], 0.0,
                          lambda do |dir| ws_readin(file[chn]) end))
         end
@@ -3197,13 +3201,13 @@ class CLM_Instrument
     beg = seconds2samples(start)
     samps = seconds2samples(dur)
     unless sr
-      mus_mix(@ws_output, file, beg, samps, inloc, mx, envs)
+      mus_file_mix(@ws_output, file, beg, samps, inloc, mx, envs)
       if rev_mx
-        mus_mix(@ws_reverb, file, beg, samps, inloc, rev_mx, false)
+        mus_file_mix(@ws_reverb, file, beg, samps, inloc, rev_mx, false)
       end
     else
-      inframe = make_frame(in_chans)
-      outframe = make_frame(@channels)
+      inframe = make_vct(in_chans)
+      outframe = make_vct(@channels)
       srcs = make_array(in_chans) do
         make_src(:srate, sr)
       end
@@ -3212,19 +3216,19 @@ class CLM_Instrument
           in_chans.times do |chn|
             @channels.times do |ochn|
               if envs[chn] and env?(envs[chn][ochn])
-                mixer_set!(mx, chn, ochn, env(envs[chn][ochn]))
+                vct_set!(mx, (chn * in_chans) + ochn, env(envs[chn][ochn]))
               end
             end
           end
         end
         in_chans.times do |chn|
-          frame_set!(inframe, chn,
+          vct_set!(inframe, chn,
                      src(srcs[chn], 0.0,
                          lambda do |dir| readin(file[chn]) end))
         end
-        frame2file(@ws_output, i, frame2frame(inframe, mx, outframe))
+        frample2file(@ws_output, i, frample2frample(mx, inframe, outframe))
         if rev_mx
-          frame2file(@ws_reverb, i, frame2frame(inframe, rev_mx, revframe))
+          frample2file(@ws_reverb, i, frample2frample(rev_mx, inframe, revframe))
         end
       end
     end

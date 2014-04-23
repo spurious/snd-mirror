@@ -1481,31 +1481,16 @@ sample at loc (interpolated if necessary) from func created by make_sound_interp
            "env_sound_interp(env, [time_scale=1.0, [snd=false, [chn=false]]]) \
 reads snd's channel chn according to env and time-scale")
   def env_sound_interp(envelope, time_scale = 1.0, snd = false, chn = false)
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     newlen = (time_scale.to_f * len).floor
-    rd = make_sound_interp(0, snd, chn)
-    read_env = make_env(:envelope, envelope, :length, newlen, :scaler, len)
-    tempfilename = snd_tempnam
-    fil = mus_sound_open_output(tempfilename, srate(snd), 1, false, Mus_next,
-                                format("%s temp file", get_func_name))
-    bufsize = 8192
-    data = make_sound_data(1, bufsize)
-    data_ctr = 0
-    newlen.times do |i|
-      data[0, data_ctr] = sound_interp(rd, env(read_env))
-      data_ctr += 1
-      if bufsize == data_ctr
-        mus_sound_write(fil, 0, bufsize - 1, 1, data)
-        data_ctr = 0
-      end
-    end
-    if data_ctr > 0
-      mus_sound_write(fil, 0, data_ctr - 1, 1, data)
-    end
-    mus_sound_close_output(fil, 4 * newlen)
-    set_samples(0, newlen, tempfilename, snd, chn, false,
-                format("%s(%s, %s", get_func_name, envelope.inspect, time_scale))
-    File.unlink(tempfilename)
+    data = channel2vct(0, len)
+    read_env = make_env(:envelope, envelope, :length, newlen + 1, :scaler, len)
+    new_snd = (with_sound() do
+                 newlen.times do |i|
+                   outa(i, array_interp(data, env(read_env), len))
+                 end
+               end.output)
+    set_samples(0, newlen, new_snd, snd, chn, true, "env_sound_interp", 0, false, true);
   end
 
   def granulated_sound_interp(envelope,
@@ -1518,9 +1503,6 @@ reads snd's channel chn according to env and time-scale")
     len = frames(snd, chn)
     newlen = (time_scale * len).floor
     read_env = make_env(envelope, :length, newlen, :scaler, len)
-    tempfilename = snd_tempnam
-    fil = mus_sound_open_output(tempfilename, srate(snd), 1, false, Mus_next,
-                                "granulated_sound_interp temp file")
     grain_frames = (grain_length * srate).round
     hop_frames = (output_hop * srate).round
     num_readers = (grain_length / output_hop).round + 1
@@ -1528,38 +1510,28 @@ reads snd's channel chn according to env and time-scale")
     grain_envs = make_array(num_readers) do |i| make_env(grain_envelope, :length, grain_frames) end
     next_reader_starts_at = 0
     next_reader = 0
-    bufsize = 8192
-    data = make_sound_data(1, bufsize)
-    data_ctr = 0
     jitter = srate * 0.005
-    newlen.times do |i|
-      position_in_original = env(read_env)
-      if i >= next_reader_starts_at
-        readers[next_reader] =
-          make_sampler([0, (position_in_original + mus_random(jitter)).round].max, false)
-        grain_envs[next_reader].reset
-        next_reader += 1
-        if next_reader >= num_readers then next_reader = 0 end
-        next_reader_starts_at += hop_frames
-      end
-      sum = 0.0
-      readers.each_with_index do |rd, j|
-        if sampler?(rd)
-          sum = sum + env(grain_envs[j]) * next_sample(rd)
-        end
-      end
-      sound_data_set!(data, 0, data_ctr, sum)
-      data_ctr += 1
-      if bufsize == data_ctr
-        mus_sound_write(fil, 0, bufsize - 1, 1, data)
-        data_ctr = 0
-      end
-    end
-    if data_ctr > 0
-      mus_sound_write(fil, 0, data_ctr - 1, 1, data)
-    end
-    mus_sound_close_output(fil, 4 * newlen)
-    set_samples(0, newlen, tempfilename, snd, chn, true,
+    new_snd = (with_sound() do
+                newlen.times do |i|
+                  position_in_original = env(read_env)
+                  if i >= next_reader_starts_at
+                    readers[next_reader] =
+                      make_sampler([0, (position_in_original + mus_random(jitter)).round].max, false)
+                    grain_envs[next_reader].reset
+                    next_reader += 1
+                    if next_reader >= num_readers then next_reader = 0 end
+                    next_reader_starts_at += hop_frames
+                  end
+                  sum = 0.0
+                  readers.each_with_index do |rd, j|
+                    if sampler?(rd)
+                      sum = sum + env(grain_envs[j]) * next_sample(rd)
+                    end
+                  end
+                  outa(i, sum)
+                end
+              end.output)
+    set_samples(0, newlen, new_snd, snd, chn, true,
                 format("%s(%s, %s, %s, %s, %s",
                        get_func_name,
                        envelope.inspect,
@@ -1567,7 +1539,6 @@ reads snd's channel chn according to env and time-scale")
                        grain_length,
                        grain_envelope.inspect,
                        output_hop))
-    File.unlink(tempfilename)
   end
   # granulated_sound_interp([0, 0, 1, 0.1, 2, 1], 1.0, 0.2, [0, 0, 1, 1, 2, 0])
   # granulated_sound_interp([0, 0, 1, 1], 2.0)

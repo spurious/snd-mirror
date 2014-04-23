@@ -115,7 +115,7 @@
 		 (throw 'with-sound-interrupt (format #f "with-mix begin time (arg 3) for ~S = ~A?~%;" chkpt-file beg-1))
 		 (let ((beg (round (* *clm-srate* beg-1))))
 		   (if (null? ',body)
-		       (mus-mix *output* chkpt-file beg)
+		       (mus-file-mix *output* chkpt-file beg)
 		       (let* ((call-str (object->string ',body))
 			      (option-str (object->string ',options))
 			      (sndf (with-mix-find-file-with-extensions chkpt-file (list (with-mix-file-extension *clm-file-name* "snd") "snd")))
@@ -140,8 +140,8 @@
 				  (string=? (cadr mix-values) call-str))
 			     (begin
 			       (if *clm-verbose* (snd-print (format #f "mix ~S at ~,3F~%" sndf beg)))
-			       (mus-mix *output* sndf beg)
-			       (if revf (mus-mix *reverb* revf beg)))
+			       (mus-file-mix *output* sndf beg)
+			       (if revf (mus-file-mix *reverb* revf beg)))
 			     ;; else recompute
 			     (let ((old-to-snd *to-snd*))
 			       (set! *to-snd* #f)
@@ -163,8 +163,8 @@
 							 ())
 						     ',options))))
 				 (set! *to-snd* old-to-snd)
-				 (mus-mix *output* new-snd beg)
-				 (if revf (mus-mix *reverb* revf beg)))))))))))))
+				 (mus-file-mix *output* new-snd beg)
+				 (if revf (mus-file-mix *reverb* revf beg)))))))))))))
 
 
 #|
@@ -256,12 +256,12 @@ but not anymore.
     (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
     (with-sound ()
 		(with-mix () "with-mix" 0
-			  (sound-let ((tmp () (fm-violin 0 1 440 .1))) (mus-mix *output* tmp 0))))
-    (let ((old-date (check-with-mix 4 1 1 .1 "()" "((sound-let ((tmp () (fm-violin 0 1 440 0.1))) (mus-mix *output* tmp 0)))" #f #t)))
+			  (sound-let ((tmp () (fm-violin 0 1 440 .1))) (mus-file-mix *output* tmp 0))))
+    (let ((old-date (check-with-mix 4 1 1 .1 "()" "((sound-let ((tmp () (fm-violin 0 1 440 0.1))) (mus-file-mix *output* tmp 0)))" #f #t)))
       (with-sound ()
 		  (with-mix () "with-mix" 0
-			    (sound-let ((tmp () (fm-violin 0 1 440 .1))) (mus-mix *output* tmp 0))))
-      (check-with-mix 4 1 1 .1 "()" "((sound-let ((tmp () (fm-violin 0 1 440 0.1))) (mus-mix *output* tmp 0)))" old-date #t))
+			    (sound-let ((tmp () (fm-violin 0 1 440 .1))) (mus-file-mix *output* tmp 0))))
+      (check-with-mix 4 1 1 .1 "()" "((sound-let ((tmp () (fm-violin 0 1 440 0.1))) (mus-file-mix *output* tmp 0)))" old-date #t))
     
     (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
     (with-sound (:channels 2) (fm-violin 0 .1 440 .1 :degree 0) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3 :degree 90)))

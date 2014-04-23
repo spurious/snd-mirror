@@ -25,28 +25,79 @@ CL clm: bumped version number to 5 (I'll leave clm-4.tar.gz
     Also sound-frames -> sound-framples and so on.
 
 cast into outer darkness:
-    selection-frames make-frame make-frame! make-frame->file 
-    make-mixer make-mixer! file->frame file->frame? sound-data sound-data* 
-    sound-data+ sound-data-add! sound-data-chans sound-data-copy 
-    sound-data-fill! sound-data-length sound-data-maxamp sound-data-multiply! 
-    sound-data-offset! sound-data-peak sound-data-ref sound-data-reverse! 
-    sound-data-scale! sound-data-set! sound-data? make-scalar-mixer 
-    make-sound-data frame frame* frame+ frame->file frame->file? 
-    frame->frame frame->list frame->sample frame-ref frame-set! frame? 
-    frames frames frames stop-dac-hook continue-frame->file 
-    transform-frames mixer mixer* mixer+ mixer-ref region-frames 
-    mixer-set! mixer? mixers dac-hook sample->frame save-mixes 
-    with-level-meters mus-sound-frames mus-sound-seek-frame 
-    make-file->frame make-level-meter float-vector->file file->float-vector
-    float-vector-mix make-float-vector->file make-file->float-vector
-    float-vector->file? file->float-vector? continue-float-vector->file
-
-
-checked: gtk 3.11.9|12.0|1, sbcl 1.1.17
-
-Thanks!: Mike Scholz.
-
-
+    continue-float-vector->file 
+    continue-frame->file 
+    dac-hook 
+    file->float-vector
+    file->float-vector?  
+    file->frame
+    file->frame?
+    float-vector->file
+    float-vector->file?
+    float-vector-mix
+    frame
+    frame*
+    frame+
+    frame->file
+    frame->file?
+    frame->frame
+    frame->list
+    frame->sample
+    frame-ref
+    frame-set!
+    frame?
+    frames
+    make-file->float-vector
+    make-file->frame
+    make-float-vector->file
+    make-frame
+    make-frame!
+    make-frame->file
+    make-level-meter
+    make-mixer
+    make-mixer!
+    make-scalar-mixer
+    make-sound-data
+    mixer
+    mixer*
+    mixer+
+    mixer-ref
+    mixer-set!
+    mixer?
+    mus-sound-frames
+    mus-sound-close-input
+    mus-sound-close-output
+    mus-sound-open-input
+    mus-sound-open-output
+    mus-sound-read
+    mus-sound-reopen-output
+    mus-sound-seek-frame
+    mus-sound-write
+    region-frames
+    sample->frame
+    save-mixes
+    selection-frames
+    sound-data*
+    sound-data+
+    sound-data-add!
+    sound-data-chans
+    sound-data-copy
+    sound-data-fill!
+    sound-data-length
+    sound-data-maxamp
+    sound-data-multiply!
+    sound-data-offset!
+    sound-data-peak
+    sound-data-ref
+    sound-data-reverse!
+    sound-data-scale!
+    sound-data-set!
+    sound-data?
+    stop-dac-hook
+    transform-frames
+    with-level-meters
+(some backwards compatible replacements are in snd14.scm)
+    
 
 Some notes on updating:
   the main instruments that changed are expandn, freeverb, and fullmix
@@ -54,10 +105,17 @@ Some notes on updating:
   mixer -> 1-dim array of floats, size: chans * chans
   frame -> same, size: chans
   sound-data -> 2 dim array of floats, size: '(chans samples-per-chan)
-  array of floats = float-vector in scheme, double-array in CL
+  array of floats = float-vector in scheme, double-array in CL, vct elsewhere
   
   "frame" -> "frample" in most cases, including mus-file-mix arg names
   envs arg to mus-file-mix-with-envs has same layout as matrix arg
   frample->frample arg order is '(matrix in-vector out-vector)
   most mus-sound-read|write cases can be replaced by array->file and file->array
   
+    
+checked: gtk 3.11.9|12.0|1, sbcl 1.1.17
+    
+Thanks!: Mike Scholz.
+
+
+

@@ -533,7 +533,7 @@ if provided? :snd
                           get_args(args, :comment, ""))
   end
 
-  alias close_sound_file mus_sound_close_output
+#  alias close_sound_file mus_sound_close_output
 
   def vct2sound_file(fd, v, samps)
     mus_sound_write(fd, 0, samps - 1, 1, vct2sound_data(v))
@@ -1478,90 +1478,90 @@ class Float
   end
 end
 
-def SoundData(ary)
-  assert_type((array?(ary) and vct?(ary.first)), ary, 0, "an array of vcts")
-  sd = SoundData.new(ary.length, ary.first.length)
-  ary.each_with_index do |v, chn| vct2sound_data(v, sd, chn) end
-  sd
-end
-
-def sound_data2string(sd)
-  sd.to_a.to_s
-end
-
-def sound_data2vector(sd)
-  make_array(sd.chans) do |chn|
-    sound_data2vct(sd, chn).to_a
-  end
-end
-
-class SoundData
-  def name
-    "sound-data"
-  end
-  
-  def to_vct(chn = 0)
-    sound_data2vct(self, chn)
-  end
-  
-  # returns an array of sd.chans vcts
-  def to_a
-    sound_data2vector(self)
-  end
-
-  alias sd_length length
-  def length
-    self.size / self.chans
-  end
-
-  def fill!(val)
-    sound_data_fill!(self, val)
-  end
-  
-  alias sd_each each
-  def each(chn = nil)
-    if chn
-      self.length.times do |i| yield(self[chn, i]) end
-    else
-      self.sd_each do |val| yield(val) end
-    end
-  end
-
-  def each_with_index(chn = nil)
-    if chn
-      self.length.times do |i| yield(self[chn, i], i) end
-    else
-      self.length.times do |i|
-        self.chans.times do |j| yield(self[j, i], i) end
-      end
-    end
-  end
-  
-  def map(chn = nil)
-    sd = nil
-    if chn
-      sd = self.dup
-      self.each_with_index(chn) do |val, i| sd[chn, i] = yield(val) end
-    else
-      sd = SoundData.new(self.chans, self.length)
-      self.chans.times do |j|
-        self.each_with_index(j) do |val, i| sd[j, i] = yield(val) end
-      end
-    end
-    sd
-  end
-
-  def map!(chn = nil)
-    if chn
-      self.each_with_index(chn) do |val, i| self[chn, i] = yield(val) end
-    else
-      self.chans.times do |j|
-        self.each_with_index(j) do |val, i| self[j, i] = yield(val) end
-      end
-    end
-    self
-  end
-end
+# def SoundData(ary)
+#   assert_type((array?(ary) and vct?(ary.first)), ary, 0, "an array of vcts")
+#   sd = SoundData.new(ary.length, ary.first.length)
+#   ary.each_with_index do |v, chn| vct2sound_data(v, sd, chn) end
+#   sd
+# end
+# 
+# def sound_data2string(sd)
+#   sd.to_a.to_s
+# end
+# 
+# def sound_data2vector(sd)
+#   make_array(sd.chans) do |chn|
+#     sound_data2vct(sd, chn).to_a
+#   end
+# end
+# 
+# class SoundData
+#   def name
+#     "sound-data"
+#   end
+#   
+#   def to_vct(chn = 0)
+#     sound_data2vct(self, chn)
+#   end
+#   
+#   # returns an array of sd.chans vcts
+#   def to_a
+#     sound_data2vector(self)
+#   end
+# 
+#   alias sd_length length
+#   def length
+#     self.size / self.chans
+#   end
+# 
+#   def fill!(val)
+#     sound_data_fill!(self, val)
+#   end
+#   
+#   alias sd_each each
+#   def each(chn = nil)
+#     if chn
+#       self.length.times do |i| yield(self[chn, i]) end
+#     else
+#       self.sd_each do |val| yield(val) end
+#     end
+#   end
+# 
+#   def each_with_index(chn = nil)
+#     if chn
+#       self.length.times do |i| yield(self[chn, i], i) end
+#     else
+#       self.length.times do |i|
+#         self.chans.times do |j| yield(self[j, i], i) end
+#       end
+#     end
+#   end
+#   
+#   def map(chn = nil)
+#     sd = nil
+#     if chn
+#       sd = self.dup
+#       self.each_with_index(chn) do |val, i| sd[chn, i] = yield(val) end
+#     else
+#       sd = SoundData.new(self.chans, self.length)
+#       self.chans.times do |j|
+#         self.each_with_index(j) do |val, i| sd[j, i] = yield(val) end
+#       end
+#     end
+#     sd
+#   end
+# 
+#   def map!(chn = nil)
+#     if chn
+#       self.each_with_index(chn) do |val, i| self[chn, i] = yield(val) end
+#     else
+#       self.chans.times do |j|
+#         self.each_with_index(j) do |val, i| self[j, i] = yield(val) end
+#       end
+#     end
+#     self
+#   end
+# end
 
 def mus_a0(gen)
   mus_xcoeff(gen, 0)

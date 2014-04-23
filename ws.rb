@@ -1838,14 +1838,14 @@ class With_CLM < CLM_Instrument
     case chan
     when Integer
       (@ws_reverb.length + seconds2samples(@decay_time)).times do |samp|
-        frame2file(@ws_output, samp,
+        sample2file(@ws_output, samp,
                    yield(file2sample(@ws_reverb, samp, chan), samp))
       end
     when :frames
-      frm = make_frame(@reverb_channels)
+      frm = make_vct(@reverb_channels)
       (@ws_reverb.length + seconds2samples(@decay_time)).times do |samp|
-        frame2file(@ws_output, samp,
-                   yield(file2frame(@ws_reverb, samp, frm), samp))
+        frample2file(@ws_output, samp,
+                   yield(file2frample(@ws_reverb, samp, frm), samp))
       end
     end
   end
@@ -1861,10 +1861,10 @@ Example: clm_mix(\"tmp\")")
     optkey(args, binding,
            [:input_frame, 0],
            [:output_frame, 0],
-           [:frames, mus_sound_frames(filename)],
+           [:framples, mus_sound_framples(filename)],
            [:scale, 1.0])
-    mx = make_mixer(@channels, *(0...@channels * @channels).map do scale end)
-    mus_mix(@output, filename, output_frame, frames, input_frame, mx)
+    mx = make_vct(@channel * @channels, *(0...@channels * @channels).map do scale end)
+    mus_file_mix(@output, filename, output_frame, framples, input_frame, mx)
   end
   
   protected

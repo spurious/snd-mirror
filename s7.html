@@ -2085,7 +2085,7 @@ vector-dimensions returns a list of the dimensions.
 <p>make-vector also takes an optional fourth argument.  If it is #t, and the initial-value
 is either an integer or a real, make-vector produces a homogenous vector, a vector that
 can only hold elements of the same type as the initial value (either s7_Int or s7_Double
-internally).  Homogenous vectors are mostly useful in conjunction with C code.  Three
+internally).  Homogenous vectors are mostly useful in conjunction with C code.  Five
 homogenous float vector functions are currently built-in:
 </p>
 
@@ -2553,10 +2553,7 @@ As a quick example, here is a structure definition:
 <pre class="indented">
 (define* (make-tree (key 0) (left ()) (right ()))
   ;; make a tree structure with 3 fields, and a type indicator
-  (environment (cons 'key key) 
-	       (cons 'left left) 
-	       (cons 'right right)
-	       (cons 'type 'tree)))
+  (environment* 'key key 'left left 'right right 'type 'tree))
 
 (define (tree? obj)
   (and (environment? obj)

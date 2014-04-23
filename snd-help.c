@@ -407,6 +407,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+23-Apr: Snd 14.6.\n\
 18-Mar: Snd 14.5.\n\
 12-Feb: Snd 14.4.\n\
 4-Jan:  Snd 14.3.\n\

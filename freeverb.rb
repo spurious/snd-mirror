@@ -99,10 +99,10 @@ def freeverb_rb(*args)
          [:allpasstuning, [556, 441, 341, 225]],
          [:scale_damping, 0.4],
          [:stereo_spread, 23])
-  out_mix = (mixer?(output_mixer) ? output_mixer : make_mixer(@channels))
-  out_buf = make_frame(@channels)
+  out_mix = (vct?(output_mixer) ? output_mixer : make_vct(@channels * @channels))
+  out_buf = make_vct(@channels)
   out_gain = output_gain
-  f_out = make_frame(@channels)
+  f_out = make_vct(@channels)
   predelays = make_array(@reverb_channels)
   local_gain = (1.0 - global) * (1.0 - 1.0 / @channels) + 1.0 / @channels
   global_gain = (@channels - local_gain * @channels) / [(@channels * @channels - @channels), 1].max
@@ -115,17 +115,17 @@ def freeverb_rb(*args)
   if @reverb_channels > 1 and @reverb_channels != @channels
     error("input must be mono or input channels must equal output channels")
   end
-  unless mixer?(output_mixer)
+  unless vct?(output_mixer)
     if output_mixer.kind_of?(Array)
       @channels.times do |i|
         @channels.times do |j|
-          mixer_set!(out_mix, i, j, output_mixer[i][j])
+          vct_set!(out_mix, (i * @channels) + j, output_mixer[i][j])
         end
       end
     else
       @channels.times do |i|
         @channels.times do |j|
-          mixer_set!(out_mix, i, j, (out_gain * (i == j ? local_gain : global_gain)) / @channels)
+          vct_set!(out_mix, (i * @channels) + j, (out_gain * (i == j ? local_gain : global_gain)) / @channels)
         end
       end
     end
@@ -165,30 +165,30 @@ def freeverb_rb(*args)
       allpasses[c][i] = make_all_pass(:size, l, :feedforward, -1, :feedback, 0.5)
     end
   end
-  run_reverb(:frames) do |f_in, i|
+  run_reverb(:vcts) do |f_in, i|
     if @reverb_channels > 1
       @channels.times do |c|
-        frame_set!(f_in, c, delay(predelays[c], frame_ref(f_in, c)))
-        frame_set!(f_out, c, 0.0)
+        vct_set!(f_in, c, delay(predelays[c], vct_ref(f_in, c)))
+        vct_set!(f_out, c, 0.0)
         numcombs.times do |j|
-          frame_set!(f_out, c, frame_ref(f_out, c) + fcomb(combs[c][j], frame_ref(f_in, c)))
+          vct_set!(f_out, c, vct_ref(f_out, c) + fcomb(combs[c][j], vct_ref(f_in, c)))
         end
       end
     else
-      frame_set!(f_in, 0, delay(predelays[0], frame_ref(f_in, 0)))
+      vct_set!(f_in, 0, delay(predelays[0], vct_ref(f_in, 0)))
       @channels.times do |c|
-        frame_set!(f_out, c, 0.0)
+        vct_set!(f_out, c, 0.0)
         numcombs.times do |j|
-          frame_set!(f_out, c, frame_ref(f_out, c) + fcomb(combs[c][j], frame_ref(f_in, 0)))
+          vct_set!(f_out, c, vct_ref(f_out, c) + fcomb(combs[c][j], vct_ref(f_in, 0)))
         end
       end
     end
     @channels.times do |c|
       numallpasses.times do |j|
-        frame_set!(f_out, c, all_pass(allpasses[c][j], frame_ref(f_out, c)))
+        vct_set!(f_out, c, all_pass(allpasses[c][j], vct_ref(f_out, c)))
       end
     end
-    frame2frame(f_out, out_mix, out_buf)
+    frample2frample(out_mix, f_out, out_buf)
   end
 end
 

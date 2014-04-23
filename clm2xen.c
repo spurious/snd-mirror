@@ -216,7 +216,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 
 #define Xen_real_to_C_double_if_bound(Xen_Arg, C_Val, Caller, ArgNum) if (Xen_is_bound(Xen_Arg)) C_Val = (double)s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
 #define Xen_to_C_double_or_error(Xen_Arg, C_Val, Caller, ArgNum) C_Val = (double)s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
-#define Xen_to_C_integer_or_error(Xen_Arg, C_Val, Caller, ArgNum) C_Val = s7_number_to_integer(s7, Xen_Arg)
+#define Xen_to_C_integer_or_error(Xen_Arg, C_Val, Caller, ArgNum) C_Val = s7_number_to_integer_with_caller(s7, Xen_Arg, Caller)
 #define Xen_real_to_C_double_with_caller(Xen_Arg, Caller) s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
 
 #define Xen_object_ref_checked(Obj, Type) imported_s7_object_value_checked(Obj, Type)
@@ -10674,7 +10674,7 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
   v = car(args);
   Xen_check_type((s7_is_float_vector(v)) && (s7_vector_rank(v) == 1), v, 1, "float-vector-set!", "a " S_vct);
 
-  loc = s7_number_to_integer(sc, cadr(args));
+  loc = s7_number_to_integer_with_caller(sc, cadr(args), "float-vector-set!");
   if ((loc < 0) || (loc>= mus_vct_length(v)))
     Xen_out_of_range_error("float-vector-set!", 2, cadr(args), "index out of range");
 
@@ -10713,7 +10713,7 @@ static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
   val = cdadr(args);
   vect = s7_car_value(sc, val);
   vect_index = s7_cadr_value(sc, val);
-  loc = s7_number_to_integer(sc, s7_vector_ref(sc, vect, s7_integer(vect_index)));
+  loc = s7_number_to_integer_with_caller(sc, s7_vector_ref(sc, vect, s7_integer(vect_index)), "float-vector-set!");
   if ((loc < 0) || (loc>= mus_vct_length(v)))
     Xen_out_of_range_error("float-vector-set!", 2, cadr(args), "index out of range");
 
@@ -10814,7 +10814,7 @@ static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
   v = s7_car_value(sc, args);
   Xen_check_type((s7_is_float_vector(v)) && (s7_vector_rank(v) == 1), v, 1, "float-vector-set!", "a " S_vct);
 
-  loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
+  loc = s7_number_to_integer_with_caller(sc, s7_cadr_value(sc, args), "float-vector-set!");
   if ((loc < 0) || (loc>= mus_vct_length(v)))
     Xen_out_of_range_error("float-vector-set!", 2, cadr(args), "index out of range");
 
@@ -10834,7 +10834,7 @@ static s7_pointer g_vct_set_temp(s7_scheme *sc, s7_pointer args)
   v = s7_car_value(sc, args);
   Xen_check_type((s7_is_float_vector(v)) && (s7_vector_rank(v) == 1), v, 1, "float-vector-set!", "a " S_vct);
 
-  loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
+  loc = s7_number_to_integer_with_caller(sc, s7_cadr_value(sc, args), "float-vector-set!");
   if ((loc < 0) || (loc>= mus_vct_length(v)))
     Xen_out_of_range_error("float-vector-set!", 2, cadr(args), "index out of range");
 
@@ -11903,7 +11903,7 @@ static s7_pointer g_outa_two(s7_scheme *sc, s7_pointer args)
 {
   mus_long_t pos;
   s7_pointer x;
-  pos = (mus_long_t)s7_number_to_integer(sc, car(args));
+  pos = (mus_long_t)s7_number_to_integer_with_caller(sc, car(args), "outa");
   if (pos < 0) 
     Xen_out_of_range_error(S_outa, 1, car(args), "must be >= 0");    
   x = cadr(args);
@@ -11915,7 +11915,7 @@ static s7_pointer g_outb_two(s7_scheme *sc, s7_pointer args)
 {
   mus_long_t pos;
   s7_pointer x;
-  pos = (mus_long_t)s7_number_to_integer(sc, car(args));
+  pos = (mus_long_t)s7_number_to_integer_with_caller(sc, car(args), "outb");
   if (pos < 0) 
     Xen_out_of_range_error(S_outb, 1, car(args), "must be >= 0");    
   x = cadr(args);
@@ -18116,39 +18116,6 @@ static void init_choices(void)
   SET_GEN_2(filtered_comb_bank);
 }
 
-#if 0
-/* TODO: revive these (actually they weren't used before) */
-static s7_pointer indirect_frample_to_file_3;
-static s7_pointer g_indirect_frample_to_file_3(s7_scheme *sc, s7_pointer args)
-{
-  /* no need for the direct case -- this does not return anything new */
-  s7_Int pos;
-  s7_pointer data;
-
-  GET_INTEGER_CADR(args, frample_to_file, pos);
-  data = s7_call_direct(sc, caddr(args));
-  mus_frample_to_file(Xen_to_mus_any(CLM_OUTPUT), pos, s7_float_vector_elements(data));
-  return(data);
-}
-
-static s7_pointer frample_to_file_ff;
-static s7_pointer g_frample_to_file_ff(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer ff_expr;
-  s7_Int pos;
-  mus_any *ogen, *ff, *fmx, *fout;
-
-  GET_GENERATOR(args, frample_to_file, ogen);
-  GET_INTEGER_CADR(args, frample_to_file, pos);
-  ff_expr = cdaddr(args);
-  GET_GENERATOR(ff_expr, frample_or_mixer, ff);
-  GET_GENERATOR_CADR(ff_expr, frample_or_mixer, fmx);
-  GET_GENERATOR_CADR(cdr(ff_expr), frample, fout);
-  mus_frample_to_file(ogen, pos, mus_frample_to_frample(ff, fmx, fout));
-
-  return(Xen_false);
-}
-#endif
 
 
 

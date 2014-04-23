@@ -970,7 +970,7 @@ var sndscm_moogfilter_tip = "<code>(moog-filter gen input)</code>: return Moog-s
 var sndscm_mpg_tip = "<code>(mpg mpgfile rawfile)</code>: call mpg123 to translate an MPEG format sound file<br>" +
                      " to a headerless (\"raw\") file containing 16-bit samples.";
 
-var sndscm_musmix_tip = "<code>(mus-mix outfile infile (outloc 0) (framples) (inloc 0) mixer envs)</code>:<br>" +
+var sndscm_musfilemix_tip = "<code>(mus-file-mix outfile infile (outloc 0) (framples) (inloc 0) mixer envs)</code>:<br>" +
                         " mix 'infile' into 'outfile' starting at 'outloc' in 'outfile'<br>" +
                         " and 'inloc' in 'infile', mixing 'framples' framples into 'outfile'.<br>" +
                         " 'framples' defaults to the length of 'infile'.<br>" +

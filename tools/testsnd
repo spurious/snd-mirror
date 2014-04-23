@@ -42,7 +42,7 @@ echo ' '
 ./snd -l snd-test
 echo ' '
 echo ' '
-echo ' -------------------------------- that was snd-test without-gui debbuging -------------------------------- '
+echo ' -------------------------------- that was snd-test without-gui debugging -------------------------------- '
 echo ' '
 echo ' '
 
