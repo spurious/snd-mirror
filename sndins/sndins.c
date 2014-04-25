@@ -396,7 +396,7 @@ get_global_mus_gen(const char *name)
 		XEN value;
 
 		value = XEN_NAME_AS_C_STRING_TO_VALUE(name);
-		if (mus_xen_p(value))
+		if (mus_is_xen(value))
 			return (XEN_TO_MUS_ANY(value));
 	}
 	return (NULL);
@@ -893,7 +893,7 @@ Return " INS_TRUE " if GEN is an fcomb generator, otherwise " INS_FALSE "."
 #endif
 
 #define XEN_FCOMB_P(obj)						\
-	(mus_xen_p(obj) && mus_fcomb_p(XEN_TO_MUS_ANY(obj)))
+	(mus_is_xen(obj) && mus_fcomb_p(XEN_TO_MUS_ANY(obj)))
 
 static XEN
 c_fcomb_p(XEN obj)
@@ -1150,7 +1150,7 @@ ins_jc_reverb(mus_float_t start, mus_float_t dur, mus_float_t volume,
 		len = beg + mus_seconds_to_samples(dur);
 	else
 		len = beg + mus_seconds_to_samples(1.0) +
-		    mus_sound_frames(mus_file_name(rev));
+		    mus_sound_framples(mus_file_name(rev));
 	chans = mus_channels(out);
 	rev_chans = mus_channels(rev);
 	allpass1 = mus_make_all_pass(-0.7, 0.7, 1051, NULL, 1051,
@@ -1276,7 +1276,7 @@ ins_nrev(mus_float_t start, mus_float_t dur, mus_float_t reverb_factor,
 		len = beg + mus_seconds_to_samples(dur);
 	else
 		len = beg + mus_seconds_to_samples(1.0) +
-		    mus_sound_frames(mus_file_name(rev));
+		    mus_sound_framples(mus_file_name(rev));
 	chans = mus_channels(out);
 	rev_chans = mus_channels(rev);
 	env_a = mus_make_env(amp_env, amp_len / 2, output_scale, 0.0, 1.0,
@@ -1405,13 +1405,14 @@ ins_nrev(mus_float_t start, mus_float_t dur, mus_float_t reverb_factor,
 
 #define FV_WARN	"input must be mono or in channels must equal out channels"
 
+
 mus_long_t
 ins_freeverb(mus_float_t start, mus_float_t dur, mus_float_t room_decay,
     mus_float_t damping, mus_float_t global, mus_float_t predelay,
     mus_float_t output_gain, mus_float_t scale_room_decay,
     mus_float_t offset_room_decay, mus_float_t scale_damping,
     mus_float_t stereo_spread, int *combtuning, int comb_len,
-    int *allpasstuning, int all_len, mus_any *output_mixer,
+    int *allpasstuning, int all_len, mus_float_t *output_mixer,
     mus_any *out, mus_any *rev)
 {
 	mus_long_t i, beg, len;
@@ -1429,30 +1430,28 @@ ins_freeverb(mus_float_t start, mus_float_t dur, mus_float_t room_decay,
 		len = beg + mus_seconds_to_samples(dur);
 	else
 		len = beg + mus_seconds_to_samples(1.0) +
-		    mus_sound_frames(mus_file_name(rev));
+		    mus_sound_framples(mus_file_name(rev));
 	out_chans = mus_channels(out);
 	in_chans = mus_channels(rev);
 	if (in_chans > 1 && in_chans != out_chans)
 		INS_MISC_ERROR(S_freeverb, FV_WARN);
-	out_buf = mus_make_empty_frame(out_chans);
-	f_out = mus_make_empty_frame(out_chans);
-	f_in = mus_make_empty_frame(in_chans);
+	out_buf = mus_float_t *calloc(out_chans, sizeof(mus_float_t));
+	f_out = mus_float_t *calloc(out_chans, sizeof(mus_float_t));
+	f_in = mus_float_t *calloc(in_chans, sizeof(mus_float_t));
 	local_gain = (1.0 - global)*(1.0 - 1.0 / out_chans) + 1.0 / out_chans;
 	tmp = (out_chans * out_chans - out_chans);
 	if (tmp < 1.0)
 		tmp = 1.0;
 	global_gain = (out_chans - local_gain * out_chans) / tmp;
-	if (mus_mixer_p(output_mixer))
+	if (output_mixer)
 		out_mix = output_mixer;
 	else {
-		out_mix = mus_make_empty_mixer(out_chans);
+	  out_mix = (mus_float_t *)calloc(out_chans * out_chans, sizeof(mus_float_t));
 		for (i = 0; i < out_chans; i++) {
 			int j;
-
 			for (j = 0; j < out_chans; j++)
-				mus_mixer_set(out_mix, i, j,
-				    ((output_gain * ((i == j) ?
-				    local_gain : global_gain)) / out_chans));
+				out_mix[i * out_chans + j] = 
+				    ((output_gain * ((i == j) ? local_gain : global_gain)) / out_chans);
 		}
 	}
 	{
@@ -1511,41 +1510,26 @@ ins_freeverb(mus_float_t start, mus_float_t dur, mus_float_t room_decay,
 		}
 		/* run loop */
 		for (i = beg; i < len; i++) {
-			f_in = mus_file_to_frame(rev, i, f_in);
+			f_in = mus_file_to_frample(rev, i, f_in);
 			if (in_chans > 1) {
 				for (j = 0; j < out_chans; j++) {
-					mus_frame_set(f_in, j,
-					    mus_delay_unmodulated(predelays[j],
-					    mus_frame_ref(f_in, j)));
-					mus_frame_set(f_out, j, 0.0);
-					for (k = 0; k < comb_len; k++)
-						mus_frame_set(f_out, j,
-						    mus_frame_ref(f_out, j) +
-						    mus_fcomb(combs[j][k],
-						    mus_frame_ref(f_in, j),
-						    0.0));
-				}
+				  f_in[j] = mus_delay_unmodulated(predelays[j], f_in[j]);
+				  f_out[j] = 0.0;
+				  for (k = 0; k < comb_len; k++)
+				    f_out[j] += mus_fcomb(combs[j][k], f_in[j], 0.0);
+			                  }
 			} else {
-				mus_frame_set(f_in, 0,
-				    mus_delay_unmodulated(predelays[0],
-				    mus_frame_ref(f_in, 0)));
+				f_in[0] = mus_delay_unmodulated(predelays[0], f_in[0]);
 				for (j = 0; j < out_chans; j++) {
-					mus_frame_set(f_out, j, 0.0);
+					f_out[j] = 0.0;
 					for (k = 0; k < comb_len; k++)
-						mus_frame_set(f_out, j,
-						    mus_frame_ref(f_out, j) +
-						    mus_fcomb(combs[j][k],
-						    mus_frame_ref(f_in, 0),
-						    0.0));
+						f_out[j] += mus_fcomb(combs[j][k], f_in[0], 0.0);
 				}
 			}
 			for (j = 0; j < out_chans; j++)
 				for (k = 0; k < all_len; k++)
-					mus_frame_set(f_out, j,
-					    mus_all_pass_unmodulated(
-					    allpasses[j][k],
-					    mus_frame_ref(f_out, j)));
-			mus_frame_to_file(out, i, mus_frame_to_frame(out_mix,
+					f_out[j] = mus_all_pass_unmodulated(allpasses[j][k], f_out[j]);
+			mus_frample_to_file(out, i, mus_frample_to_frample(out_mix,
 			    f_out, out_buf));
 		}		/* run loop */
 		for (i = 0; i < in_chans; i++)
@@ -1563,10 +1547,10 @@ ins_freeverb(mus_float_t start, mus_float_t dur, mus_float_t room_decay,
 		free(allpasses);
 	}			/* block */
 	if (!output_mixer)
-		mus_free(out_mix);
-	mus_free(out_buf);
-	mus_free(f_out);
-	mus_free(f_in);
+		free(out_mix);
+	free(out_buf);
+	free(f_out);
+	free(f_in);
 	return (i);
 }
 
@@ -1886,7 +1870,7 @@ c_fm_violin(XEN args)
 		fm3_env = array2array(tfm_env, 8);
 		fm3_del = true;
 	}
-	if (!mus_output_p(out = get_global_mus_gen(INS_OUTPUT)))
+	if (!mus_is_output(out = get_global_mus_gen(INS_OUTPUT)))
 		INS_MISC_ERROR(S_fm_violin, "needs an output generator");
 	rev = get_global_mus_gen(INS_REVERB);
 	mode = get_global_int(INS_LOCSIG_TYPE, MUS_INTERP_LINEAR);
@@ -2028,9 +2012,9 @@ c_jc_reverb(XEN args)
 			amp_len = XEN_LIST_LENGTH(keys[i]);
 		}
 	}
-	if (!mus_output_p(out = get_global_mus_gen(INS_OUTPUT)))
+	if (!mus_is_output(out = get_global_mus_gen(INS_OUTPUT)))
 		INS_MISC_ERROR(S_jc_reverb, "needs an output generator");
-	if (!mus_input_p(rev = get_global_mus_gen(INS_REVERB)))
+	if (!mus_is_input(rev = get_global_mus_gen(INS_REVERB)))
 		INS_MISC_ERROR(S_jc_reverb, "needs an input generator");
 	if (get_global_boolean(INS_VERBOSE, false))
 		INS_REV_MSG(S_jc_reverb, mus_channels(rev), mus_channels(out));
@@ -2139,9 +2123,9 @@ c_nrev(XEN args)
 		amp_env = array2array(tamp_env, 4);
 		amp_del = true;
 	}
-	if (!mus_output_p(out = get_global_mus_gen(INS_OUTPUT)))
+	if (!mus_is_output(out = get_global_mus_gen(INS_OUTPUT)))
 		INS_MISC_ERROR(S_nrev, "needs an output generator");
-	if (!mus_input_p(rev = get_global_mus_gen(INS_REVERB)))
+	if (!mus_is_input(rev = get_global_mus_gen(INS_REVERB)))
 		INS_MISC_ERROR(S_nrev, "needs an input generator");
 	if (get_global_boolean(INS_VERBOSE, false))
 		INS_REV_MSG(S_nrev, mus_channels(rev), mus_channels(out));
