@@ -2477,9 +2477,6 @@ of a moving mark:\n\
   Xen_define_constant(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
 
   Xen_define_procedure(S_transform_framples,   g_transform_framples_w, 0, 2, 0, H_transform_framples);
-#if (!DISABLE_DEPRECATED)
-  Xen_define_procedure("transform-frames",     g_transform_framples_w, 0, 2, 0, H_transform_framples);
-#endif
   Xen_define_procedure(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
   Xen_define_procedure(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
   Xen_define_procedure(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);

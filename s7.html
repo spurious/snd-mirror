@@ -3386,6 +3386,10 @@ as soon as the arguments are spliced into some caller's arguments.
 </p>
 
 <p>Internally, s7 uses <code>(apply values ...)</code> to implement unquote splicing (",@") in quasiquote.
+<!--
+Is <code>(apply apply func arglist)</code> the same as <code>(apply func (apply values arglist))</code>,
+or (leaving aside <code>'(()))</code>, <code>(func (apply values (apply values arglist)))</code>?
+-->
 </p>
 </div>
 
@@ -6180,7 +6184,7 @@ WITH_AT_SIGN_AS_EXPONENT       1 if you want "@" to mark exponents (default is 1
 WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)
                                    if someone defends these exponent markers, ask him to read 1l11+11l1i
 WITH_SYSTEM_EXTRAS             1 if you want some additional OS-related functions built-in (default is 0)
-S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
+DISABLE_DEPRECATED             1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
 WITH_MAIN                      1 if you want s7.c to include a main program section that implements a REPL.
 </pre>
 

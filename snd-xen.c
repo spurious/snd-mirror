@@ -2709,13 +2709,6 @@ void g_xen_initialize(void)
                       end");
 #endif
 
-#if (!DISABLE_DEPRECATED)
-#if HAVE_SCHEME
-  Xen_eval_C_string("(define (clm-print . args) \"(clm-print . args) applies format to args and prints the result via snd-print\" \
-                       (snd-print (apply format #f args)))");
-#endif
-#endif
-
 #if HAVE_GL
   Xen_define_procedure("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");
 #endif

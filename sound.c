@@ -1028,7 +1028,7 @@ int mus_sound_open_input(const char *arg)
 {
   int fd = -1;
   if (!(mus_file_probe(arg)))
-    mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, STRERROR(errno));
+    mus_error(MUS_CANT_OPEN_FILE, "mus_sound_open_input: can't open %s: %s", arg, STRERROR(errno));
   else
     {
       sound_file *sf = NULL;
@@ -1038,7 +1038,7 @@ int mus_sound_open_input(const char *arg)
 	{
 	  fd = mus_file_open_read(arg);
 	  if (fd == -1)
-	    mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, STRERROR(errno));
+	    mus_error(MUS_CANT_OPEN_FILE, "mus_sound_open_input: can't open %s: %s", arg, STRERROR(errno));
 	  else
 	    {
 	      mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);

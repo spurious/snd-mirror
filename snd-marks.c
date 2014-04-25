@@ -2060,7 +2060,7 @@ static Xen s7_xen_mark_copy(s7_scheme *sc, s7_pointer obj)
 {
   int id;
   mark *m, *new_m;
-  chan_info *cps[1];
+  chan_info *cps[1] = {NULL};
   id = xen_mark_to_int(obj);
   m = find_mark_from_id(id, cps, AT_CURRENT_EDIT_POSITION);
   new_m = add_mark(m->samp, m->name, cps[0]);

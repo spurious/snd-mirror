@@ -7444,11 +7444,6 @@ Xen g_frames(Xen snd, Xen chn, Xen edpos)
       if (mus_is_xen(snd))                        /* mus-length */
 	return(g_mus_length(snd));
 
-#if (!DISABLE_DEPRECATED)
-      if (xen_is_sound_data(snd))                     /* sound-data-length */
-	return(C_llong_to_Xen_llong(mus_sound_data_length(Xen_to_sound_data(snd))));
-#endif
-
       if (mus_is_vct(snd))                        /* vct-length */
 	return(C_llong_to_Xen_llong(mus_vct_length(Xen_to_vct(snd))));
 
@@ -7515,28 +7510,6 @@ static Xen g_vector_maxamp(Xen obj)
   return(C_double_to_Xen_real(mx));
 }
 
-#if (!DISABLE_DEPRECATED)
-static Xen g_list_maxamp(Xen obj)
-{
-  double mx = 0.0;
-  int i, len;
-  len = Xen_list_length(obj);
-  for (i = 0; i < len; i++)
-    {
-      Xen el;
-      el = Xen_list_ref(obj, i);
-      if (Xen_is_number(el))
-	{
-	  double temp;
-	  temp = fabs(Xen_real_to_C_double(el));
-	  if (temp > mx) mx = temp;
-	}
-    }
-  return(C_double_to_Xen_real(mx));
-}
-#endif
-
-
 static Xen g_maxamp(Xen snd, Xen chn_n, Xen edpos) 
 {
   #define H_maxamp "(" S_maxamp " :optional snd chn edpos): maxamp of data in the object 'snd', or in snd's channel chn if snd is a sound"
@@ -7553,11 +7526,6 @@ static Xen g_maxamp(Xen snd, Xen chn_n, Xen edpos)
 	  if (mus_is_vct(v))
 	    return(g_vct_peak(v));
 	}
-
-#if (!DISABLE_DEPRECATED)
-      if (xen_is_sound_data(snd))
-	return(g_list_maxamp(g_sound_data_maxamp(snd)));
-#endif
 
       if (mus_is_vct(snd))                        /* vct-peak */
 	return(g_vct_peak(snd));
@@ -9993,9 +9961,6 @@ void g_init_chn(void)
   Xen_define_procedure_with_setter(S_x_zoom_slider, g_ap_zx_w, H_x_zoom_slider, S_setB S_x_zoom_slider, g_set_ap_zx_w, 0, 2, 1, 2);
   Xen_define_procedure_with_setter(S_y_zoom_slider, g_ap_zy_w, H_y_zoom_slider, S_setB S_y_zoom_slider, g_set_ap_zy_w, 0, 2, 1, 2);
   Xen_define_procedure_with_setter(S_framples, g_frames_w, H_frames, S_setB S_framples, g_set_frames_w, 0, 3, 1, 2);
-#if (!DISABLE_DEPRECATED)
-  Xen_define_procedure_with_setter("frames", g_frames_w, H_frames, "set-frames", g_set_frames_w, 0, 3, 1, 2);
-#endif
   Xen_define_procedure_with_setter(S_maxamp, g_maxamp_w, H_maxamp, S_setB S_maxamp, g_set_maxamp_w, 0, 3, 1, 2);
 
   Xen_define_safe_procedure(S_maxamp_position,   g_maxamp_position_w, 0, 3, 0,   H_maxamp_position);

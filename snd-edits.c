@@ -3193,7 +3193,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, mus_long_t beg, mus_lo
 	    {
 	      int fd;
 	      ed_list *new_ed;
-	      ed_fragment *cb;
+	      ed_fragment *cb = NULL;
 	      bool full_file;
 
 	      full_file = ((change_beg == 0) &&
@@ -3918,7 +3918,7 @@ bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, c
     {
       ed_list *ed, *old_ed;
       mus_long_t prev_len, new_len;
-      ed_fragment *cb;
+      ed_fragment *cb = NULL;
       int fd;
       int backup = 0;
 
@@ -8135,6 +8135,47 @@ static Xen g_set_samples(Xen samp_0, Xen samps, Xen vect, Xen snd, Xen chn_n, Xe
 }
 
 
+static Xen g_set_samples_any(Xen args)
+{
+  Xen arg;
+  Xen samp_0 = Xen_undefined, samps = Xen_undefined, vect = Xen_undefined;
+  Xen snd = Xen_undefined, chn_n = Xen_undefined, truncate = Xen_undefined;
+  Xen edname = Xen_undefined, infile_chan = Xen_undefined, edpos = Xen_undefined, auto_delete = Xen_undefined;
+  arg = args;
+  if (!Xen_is_null(arg))
+    {
+      samp_0 = Xen_car(arg); arg = Xen_cdr(arg);
+      if (!Xen_is_null(arg))
+	{
+	  samps = Xen_car(arg); arg = Xen_cdr(arg);
+	  if (!Xen_is_null(arg))
+	    {
+	      vect = Xen_car(arg); arg = Xen_cdr(arg);
+	      if (!Xen_is_null(arg))
+		{
+		  snd = Xen_car(arg); arg = Xen_cdr(arg);
+		  if (!Xen_is_null(arg))
+		    {
+		      chn_n = Xen_car(arg); arg = Xen_cdr(arg);
+		      if (!Xen_is_null(arg))
+			{
+			  truncate = Xen_car(arg); arg = Xen_cdr(arg);
+			  if (!Xen_is_null(arg))
+			    {
+			      edname = Xen_car(arg); arg = Xen_cdr(arg);
+			      if (!Xen_is_null(arg))
+				{
+				  infile_chan = Xen_car(arg); arg = Xen_cdr(arg);
+				  if (!Xen_is_null(arg))
+				    {
+				      edpos = Xen_car(arg); arg = Xen_cdr(arg);
+				      if (!Xen_is_null(arg))
+					auto_delete = Xen_car(arg);
+				    }}}}}}}}}
+  return(g_set_samples(samp_0, samps, vect, snd, chn_n, truncate, edname, infile_chan, edpos, auto_delete));
+}
+
+
 void check_saved_temp_file(const char *type, Xen filename, Xen date_and_length)
 {
   const char *file;
@@ -9120,10 +9161,10 @@ Xen_wrap_4_optional_args(g_sample_w, g_sample)
 #define g_set_sample_w g_set_sample_reversed
 #define g_set_samples_w g_set_samples_reversed
 Xen_wrap_5_optional_args(orig_g_set_sample_w, g_set_sample)
-Xen_wrap_10_optional_args(orig_g_set_samples_w, g_set_samples)
+Xen_wrap_any_args(orig_g_set_samples_w, g_set_samples_any)
 #else
 Xen_wrap_5_optional_args(g_set_sample_w, g_set_sample)
-Xen_wrap_10_optional_args(g_set_samples_w, g_set_samples)
+Xen_wrap_any_args(g_set_samples_w, g_set_samples_any)
 #endif
 Xen_wrap_5_optional_args(g_samples_w, g_samples)
 Xen_wrap_1_arg(g_is_snd_to_sample_w, g_is_snd_to_sample)
@@ -9218,7 +9259,7 @@ void g_init_edits(void)
 
 #if HAVE_SCHEME
   Xen_define_procedure("set-sample",                   orig_g_set_sample_w,              2, 3, 0, H_sample);   /* for edit-list->function */
-  Xen_define_procedure("set-samples",                  orig_g_set_samples_w,             3, 7, 0, H_set_samples);
+  Xen_define_procedure("set-samples",                  orig_g_set_samples_w,             0, 0, 1, H_set_samples);
 #endif
 
   Xen_define_procedure(S_is_snd_to_sample,              g_is_snd_to_sample_w,              1, 0, 0, H_is_snd_to_sample);

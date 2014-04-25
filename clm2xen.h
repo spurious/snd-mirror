@@ -52,13 +52,6 @@ MUS_EXPORT void s7_init_sndlib(s7_scheme *sc);
 #endif
 
 MUS_EXPORT void Init_sndlib(void);
-
-#if (!DISABLE_DEPRECATED)
-#define mus_xen_p(Obj) mus_is_xen(Obj)
-#define XEN_TO_MUS_XEN(arg) ((mus_xen *)Xen_object_ref(arg))
-#define XEN_TO_MUS_ANY(obj) mus_xen_gen(XEN_TO_MUS_XEN(obj))
-#endif
-
 #ifdef __cplusplus
 }
 #endif

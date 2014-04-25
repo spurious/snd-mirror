@@ -331,48 +331,4 @@
 #define S_mus_file_mix               "mus-file-mix"
 #define S_mus_file_mix_with_envs     "mus-file-mix-with-envs"
 
-
-#if (!DISABLE_DEPRECATED)
-#define S_mus_mix                    "mus-mix"
-#define S_mus_mix_with_envs          "mus-mix-with-envs"
-
-#define S_make_mixer                 "make-mixer"
-#define S_make_scalar_mixer          "make-scalar-mixer"
-#define S_mixer                      "mixer"
-#if HAVE_RUBY
-  #define S_mixer_multiply           "mixer_multiply"
-  #define S_mixer_add                "mixer_add"
-#else
-  #define S_mixer_multiply           "mixer*"
-  #define S_mixer_add                "mixer+"
-#endif
-#define S_is_mixer                   "mixer?"
-#define S_mixer_ref                  "mixer-ref"
-#define S_mixer_set                  "mixer-set!"
-
-#define S_continue_frame_to_file     "continue-frame->file"
-#define S_file_to_frame              "file->frame"
-#define S_is_file_to_frame           "file->frame?"
-#define S_frame                      "frame"
-#define S_frame_to_file              "frame->file"
-#define S_is_frame_to_file           "frame->file?"
-#define S_frame_to_frame             "frame->frame"
-#define S_frame_to_list              "frame->list"
-#define S_frame_to_sample            "frame->sample"
-#if HAVE_RUBY
-  #define S_frame_add                "frame_add"
-  #define S_frame_multiply           "frame_multiply"
-#else
-  #define S_frame_add                "frame+"
-  #define S_frame_multiply           "frame*"
-#endif
-#define S_is_frame                   "frame?"
-#define S_frame_ref                  "frame-ref"
-#define S_frame_set                  "frame-set!"
-#define S_make_file_to_frame         "make-file->frame"
-#define S_make_frame                 "make-frame"
-#define S_make_frame_to_file         "make-frame->file"
-#define S_sample_to_frame            "sample->frame"
-#endif
-
 #endif

@@ -1756,8 +1756,11 @@ choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_en
   if ((in_n < 0) ||
       (in_n > (int)ENVED_SRATE))
     Xen_out_of_range_error(S_setB S_enved_target, 1, val, S_enved_target " should be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
-  n = (enved_target_t)in_n;
-  set_enved_target(n); 
+  else
+    {
+      n = (enved_target_t)in_n;
+      set_enved_target(n); 
+    }
   return(C_int_to_Xen_integer((int)enved_target(ss)));
 }
 

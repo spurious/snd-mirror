@@ -802,12 +802,6 @@ s7_pointer s7_apply_n_8(s7_scheme *sc, s7_pointer args,
 s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args, 
 		      s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
 				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9));
-#if (!DISABLE_DEPRECATED)
-s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args, 
-		      s7_pointer (*f10)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
-				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9, s7_pointer a10));
-#endif
-
 
 #if WITH_GMP
   #include <gmp.h>
@@ -832,19 +826,6 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
 
 #endif
 
-
-
-#if (!DISABLE_DEPRECATED)
-#define s7_F(Sc)           s7_f(Sc)
-#define s7_T(Sc)           s7_t(Sc)
-#define s7_NIL(Sc)         s7_nil(Sc)
-#define s7_UNDEFINED(Sc)   s7_undefined(Sc)
-#define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
-#define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
-
-bool s7_is_valid_pointer(s7_pointer arg); 
-#define s7_keyword_eq_p(Obj1, Obj2) s7_is_eq(Obj1, Obj2)
-#endif
 
 /* the following Scheme functions are not currently exported to C:
  *

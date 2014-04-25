@@ -594,10 +594,6 @@ static Xen start_playing_selection_hook;
 #define MAX_DEVICES 8
 static int dev_fd[MAX_DEVICES] = {-1, -1, -1, -1, -1, -1, -1, -1};
 
-#if (!DISABLE_DEPRECATED)
-static void cleanup_dac_hook(void);
-#endif
-
 void cleanup_dac(void)
 {
   /* called only from snd_exit_cleanly in snd-main.c */
@@ -610,9 +606,6 @@ void cleanup_dac(void)
 	  dev_fd[i] = -1;
 	}
   for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
-#if (!DISABLE_DEPRECATED)
-  cleanup_dac_hook();
-#endif
   dac_running = false;
 }
 
@@ -1561,28 +1554,6 @@ static mus_float_t **rev_ins;
 #define WRITE_TO_DAC 1
 #define WRITE_TO_FILE 0
 
-#if (!DISABLE_DEPRECATED)
-static Xen dac_hook;
-static Xen stop_dac_hook;
-static Xen sdobj;
-static int sdobj_loc = NOT_A_GC_LOC;
-
-static void cleanup_dac_hook(void)
-{
-  if (Xen_hook_has_list(stop_dac_hook))
-    run_hook(stop_dac_hook, 
-	     Xen_empty_list,
-	     S_stop_dac_hook);
-  if (!(Xen_is_false(sdobj)))
-    {
-      snd_unprotect_at(sdobj_loc);
-      sdobj = Xen_false;
-      sdobj_loc = NOT_A_GC_LOC;
-    }
-}
-#endif
-
-
 static int fill_dac_buffers(int write_ok)
 {
   /* return value used only by Apply */
@@ -1897,20 +1868,6 @@ static int fill_dac_buffers(int write_ok)
 	}
     }
   /* now parcel these buffers out to the available devices */
-
-#if (!DISABLE_DEPRECATED)
-  if ((snd_dacp) && 
-      (Xen_hook_has_list(dac_hook)))
-    {
-      if (Xen_is_false(sdobj))
-	{
-	  sdobj = Xen_list_1(wrap_sound_data(snd_dacp->channels, snd_dacp->frames, dac_buffers));
-	  sdobj_loc = snd_protect(sdobj);
-	}
-      run_hook(dac_hook, sdobj, S_dac_hook);
-    }
-  /* dac-hook might have forced stop-dac, so snd_dacp might be invalid here */
-#endif
 
   if (snd_dacp)
     {
@@ -2281,9 +2238,6 @@ static bool start_audio_output_1(void)
 		}
 	      dac_error();
 	      dac_running = false;
-#if (!DISABLE_DEPRECATED)
-	      cleanup_dac_hook();
-#endif
 	      if (global_rev) free_reverb();
 	      max_active_slot = -1;
 	      return(false);
@@ -2435,9 +2389,6 @@ static void stop_audio_output(void)
 	 dev_fd[i] = -1;
        }
    dac_running = false;
-#if (!DISABLE_DEPRECATED)
-   cleanup_dac_hook();
-#endif
    dac_pausing = false;
    if (global_rev) free_reverb();
    max_active_slot = -1;
@@ -2563,9 +2514,6 @@ void finalize_apply(snd_info *sp)
   play_list_members = 0;
   sp->playing = 0;
   dac_running = false;
-#if (!DISABLE_DEPRECATED)
-  cleanup_dac_hook();
-#endif
   if (snd_dacp) free_dac_state();
   if (global_rev) free_reverb();
 }
@@ -3527,17 +3475,6 @@ void g_init_dac(void)
   #define H_play_hook S_play_hook " (size): called each time a buffer is sent to the DAC."
   #define H_start_playing_hook S_start_playing_hook " (snd): called when a play request is triggered. \
 If it returns " PROC_TRUE ", the sound is not played."
-
-#if (!DISABLE_DEPRECATED)
-  #define H_dac_hook S_dac_hook " (data): called just before data is sent to DAC passing data as sound-data object"
-  #define H_stop_dac_hook S_stop_dac_hook " (): called upon mus_audio_close (when DAC is turned off)"
-
-  dac_hook =                     Xen_define_hook(S_dac_hook,                     "(make-hook 'data)", 1, H_dac_hook); 
-  stop_dac_hook =                Xen_define_hook(S_stop_dac_hook,                "(make-hook)",       0, H_stop_dac_hook); 
-
-  sdobj = Xen_false;
-  sdobj_loc = NOT_A_GC_LOC;
-#endif
 
   #define H_stop_playing_selection_hook S_stop_playing_selection_hook " (): called when the selection stops playing"
   #define H_start_playing_selection_hook S_start_playing_selection_hook " (): called when the selection starts playing"

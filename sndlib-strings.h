@@ -3,7 +3,6 @@
 
 #define S_array_to_file                 "array->file"
 #define S_file_to_array                 "file->array"
-#define S_make_sound_data               "make-sound-data"
 #define S_mus_aifc                      "mus-aifc"
 #define S_mus_aiff                      "mus-aiff"
 #define S_mus_alaw                      "mus-alaw"
@@ -61,8 +60,6 @@
 #define S_mus_rf64                      "mus-rf64"
 #define S_mus_riff                      "mus-riff"
 #define S_mus_sound_chans               "mus-sound-chans"
-#define S_mus_sound_close_input         "mus-sound-close-input"
-#define S_mus_sound_close_output        "mus-sound-close-output"
 #define S_mus_sound_comment             "mus-sound-comment"
 #define S_mus_sound_data_format         "mus-sound-data-format"
 #define S_mus_sound_data_location       "mus-sound-data-location"
@@ -76,17 +73,11 @@
 #define S_mus_sound_mark_info           "mus-sound-mark-info"
 #define S_mus_sound_maxamp              "mus-sound-maxamp"
 #define S_mus_sound_maxamp_exists       "mus-sound-maxamp-exists?"
-#define S_mus_sound_open_input          "mus-sound-open-input"
-#define S_mus_sound_open_output         "mus-sound-open-output"
 #define S_mus_sound_prune               "mus-sound-prune"
-#define S_mus_sound_read                "mus-sound-read"
-#define S_mus_sound_reopen_output       "mus-sound-reopen-output"
 #define S_mus_sound_report_cache        "mus-sound-report-cache"
 #define S_mus_sound_samples             "mus-sound-samples"
-#define S_mus_sound_seek_frample        "mus-sound-seek-frample"
 #define S_mus_sound_srate               "mus-sound-srate"
 #define S_mus_sound_type_specifier      "mus-sound-type-specifier"
-#define S_mus_sound_write               "mus-sound-write"
 #define S_mus_sound_write_date          "mus-sound-write-date"
 #define S_mus_soundfont                 "mus-soundfont"
 #define S_mus_svx                       "mus-svx"
@@ -97,33 +88,4 @@
 #define S_mus_unsupported               "mus-unsupported"
 #define S_mus_voc                       "mus-voc"
 #define S_new_sound_hook                "new-sound-hook"
-#define S_sound_data_addB               "sound-data-add!"
-#define S_sound_data_chans              "sound-data-chans"
-#define S_sound_data_copy               "sound-data-copy"
-#define S_sound_data_fillB              "sound-data-fill!"
-#define S_sound_data_length             "sound-data-length"
-#define S_sound_data_maxamp             "sound-data-maxamp"
-#define S_sound_data_multiplyB          "sound-data-multiply!"
-#define S_sound_data_offsetB            "sound-data-offset!"
-#define S_is_sound_data                  "sound-data?"
-#define S_sound_data_peak               "sound-data-peak"
-#define S_sound_data_ref                "sound-data-ref"
-#define S_sound_data_reverseB           "sound-data-reverse!"
-#define S_sound_data_scaleB             "sound-data-scale!"
-#define S_sound_data_setB               "sound-data-set!"
-
-#if HAVE_SCHEME
-  #define S_sound_data_to_vct           "sound-data->float-vector"
-  #define S_vct_to_sound_data           "float-vector->sound-data"
-#else
-  #define S_sound_data_to_vct           "sound-data->vct"
-  #define S_vct_to_sound_data           "vct->sound-data"
-#endif
-#if HAVE_RUBY
-  #define S_sound_data_multiply         "sound_data_multiply"
-  #define S_sound_data_add              "sound_data_add"
-#else
-  #define S_sound_data_multiply         "sound-data*"
-  #define S_sound_data_add              "sound-data+"
-#endif
 #endif

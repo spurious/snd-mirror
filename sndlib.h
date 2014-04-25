@@ -338,10 +338,6 @@ MUS_EXPORT char *mus_strcat(char *errmsg, const char *str, int *err_size);
 
 MUS_EXPORT bool mus_is_data_format(int n);
 MUS_EXPORT bool mus_is_header_type(int n);
-#if (!DISABLE_DEPRECATED)
-  #define mus_data_format_p(DF) mus_is_data_format(DF)
-  #define mus_header_type_p(HT) mus_is_header_type(HT)
-#endif
 
 MUS_EXPORT mus_long_t mus_header_samples(void);
 MUS_EXPORT mus_long_t mus_header_data_location(void);
@@ -398,12 +394,6 @@ MUS_EXPORT int mus_header_change_data_size(const char *filename, int type, mus_l
 
 typedef void mus_header_write_hook_t(const char *filename);
 MUS_EXPORT mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_hook);
-
-#if (!DISABLE_DEPRECATED)
-#define mus_sound_frames(Arg) mus_sound_framples(Arg)
-#define mus_sound_seek_frame(Ifd, Frm) mus_file_seek_frample(Ifd, Frm)
-#define mus_file_seek_frame(Fd, Fr) mus_file_seek_frample(Fd, Fr)
-#endif
 
 #ifdef __cplusplus
 }

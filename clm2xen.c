@@ -185,7 +185,6 @@ static void mx_free(mus_xen *p)
 
 
 #define FORMANT_TAG 1
-#define FRAME_TAG 2
 
 mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define mus_xen_to_mus_any(Gn) (((mus_xen *)Gn)->gen)
@@ -1477,11 +1476,6 @@ static Xen mus_xen_apply(Xen gen, Xen arg1, Xen arg2)
 
 #if HAVE_SCHEME
 
-#if (!DISABLE_DEPRECATED)
-static Xen g_frame_set(Xen uf1, Xen uchan, Xen val);
-static Xen g_mixer_set(Xen uf1, Xen in, Xen out, Xen val);
-#endif
-
 /* these are for mus_xen_tag, so need not handle float-vectors */
 
 static Xen mus_xen_apply(s7_scheme *sc, Xen gen, Xen args)
@@ -1499,89 +1493,11 @@ static Xen mus_xen_apply(s7_scheme *sc, Xen gen, Xen args)
   return(s7_make_real(s7, mus_run(Xen_to_mus_any(gen), 0.0, 0.0)));
 }
 
-#if (!DISABLE_DEPRECATED)
-static Xen s7_mus_set(s7_scheme *sc, Xen obj, Xen args)
-{
-  mus_any *g = NULL;
-  g = Xen_to_mus_any(obj);
-
-  if (mus_is_frame(g))
-    return(g_frame_set(obj, Xen_car(args), Xen_cadr(args)));
-  if (mus_is_mixer(g))
-    return(g_mixer_set(obj, Xen_car(args), Xen_cadr(args), Xen_caddr(args)));
-  Xen_check_type(false, obj, 1, "generalized set!", "a frame or mixer");
-  return(Xen_false);
-}
-#endif
-
 static Xen s7_mus_length(s7_scheme *sc, Xen obj)
 {
   return(g_mus_length(obj));
 }
 
-#if (!DISABLE_DEPRECATED)
-static Xen s7_mus_copy(s7_scheme *sc, Xen obj)
-{
-  /* mus_copy in clm.c first */
-
-  mus_any *g = NULL;
-  g = Xen_to_mus_any(obj);
-
-  if (mus_is_frame(g))
-    {
-      mus_xen *gn;
-      gn = mus_any_to_mus_xen(mus_frame_copy(g));
-      gn->type = FRAME_TAG;
-      /* (let ((fr (frame 1 2 3))) (let ((nfr (copy fr))) (frame-set! nfr 0 21) nfr))
-       */
-      return(mus_xen_to_object(gn));
-      /* return(mus_xen_to_object(mus_any_to_mus_xen(mus_frame_copy(g)))); */
-    }
-  if (mus_is_mixer(g))
-    return(mus_xen_to_object(mus_any_to_mus_xen(mus_mixer_copy(g))));
-
-  return(Xen_false);
-}
-
-static Xen s7_mus_fill(s7_scheme *sc, Xen obj, Xen val)
-{
-  /* frame mixer, perhaps anything with an array? mus_fill method? */
-
-  mus_any *g = NULL;
-  g = Xen_to_mus_any(obj);
-
-  if (mus_is_frame(g))
-    return(C_double_to_Xen_real(mus_frame_fill(g, Xen_real_to_C_double(val))));
-  if (mus_is_mixer(g))
-    return(C_double_to_Xen_real(mus_mixer_fill(g, Xen_real_to_C_double(val))));
-  
-  return(Xen_false);
-}
-
-static Xen s7_mus_reverse(s7_scheme *sc, Xen obj)
-{
-  /* in-place reversal, only frame now */
-  mus_any *g = NULL;
-  g = Xen_to_mus_any(obj);
-
-  if (mus_is_frame(g))
-    {
-      int i, j, len;
-      mus_float_t *data;
-      mus_float_t tmp;
-      data = mus_data(g);
-      len = mus_length(g);
-      for (i = 0, j = len - 1; i < j; i++, j--)	
-	{
-	  tmp = data[i];
-	  data[i] = data[j];
-	  data[j] = tmp;
-	}
-      return(obj);
-    }
-  return(Xen_false);
-}
-#endif
 #endif
 
 
@@ -2390,11 +2306,6 @@ Xen g_mus_channels(Xen gen)
   if (gn)
     return(C_int_to_Xen_integer(mus_channels(gn->gen)));
 
-#if (!DISABLE_DEPRECATED)
-  if (xen_is_sound_data(gen))
-    return(C_int_to_Xen_integer(mus_sound_data_chans(Xen_to_sound_data(gen))));
-#endif
-
 #if HAVE_SCHEME
   if (mus_is_vct(gen))
     {
@@ -2429,11 +2340,6 @@ Xen g_mus_length(Xen gen)
   gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
   if (gn)
     return(C_llong_to_Xen_llong(mus_length(gn->gen)));
-
-#if (!DISABLE_DEPRECATED)
-  if (xen_is_sound_data(gen))
-    return(C_int_to_Xen_integer(mus_sound_data_length(Xen_to_sound_data(gen))));
-#endif
 
   if (mus_is_vct(gen))
     return(C_int_to_Xen_integer(mus_vct_length(Xen_to_vct(gen))));
@@ -4799,600 +4705,6 @@ static Xen g_firmant(Xen gen, Xen input, Xen freq)
 }
 
 
-#if (!DISABLE_DEPRECATED)
-/* ---------------- frame ---------------- */
-
-#define MUS_MAX_CHANS 128
-
-/* this needs to be a reasonably small number -- user can override the size check using "!" as in make-mixer!
- */
-
-static Xen g_make_frame_2(int len, Xen args)
-{
-  mus_any *ge;
-  ge = (mus_any *)mus_make_empty_frame((len == 0) ? 1 : len);
-  if (ge)
-    {
-      if (len > 0)
-	{
-	  mus_float_t *vals;
-	  Xen lst;
-	  int i;
-	  vals = mus_data(ge);
-	  for (i = 0, lst = Xen_copy_arg(args); (i < len) && (!Xen_is_null(lst)); i++, lst = Xen_cdr(lst))
-	    if (Xen_is_number(Xen_car(lst)))
-	      vals[i] = Xen_real_to_C_double(Xen_car(lst));
-	    else
-	      {
-		mus_free(ge);
-		Xen_wrong_type_arg_error(S_make_frame, i, Xen_car(lst), "a number");
-	      }
-	}
-#if (!HAVE_SCHEME)
-      return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)))));
-#else
-      {
-	mus_xen *gn;
-	s7_pointer nv;
-	gn = mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)));
-	gn->type = FRAME_TAG;
-	nv = mus_xen_to_object(gn);
-	return(nv);
-      }
-#endif
-    }
-  return(Xen_false);
-}
-
-
-static Xen g_make_frame_1(Xen arglist, bool check_size)
-{
-  #if HAVE_SCHEME
-    #define make_frame_example "(" S_make_frame " 2 .1 .2)"
-  #endif
-  #if HAVE_RUBY
-    #define make_frame_example "make_frame(2, 0.1, 0.2)"
-  #endif
-  #if HAVE_FORTH
-    #define make_frame_example "2 0.1 0.2 make-frame"
-  #endif
-
-  #define H_make_frame "(" S_make_frame " chans val0 val1 ...): return a new frame object \
-with chans samples, each sample set from the trailing arguments (defaulting to 0.0):\n  " make_frame_example
-
-  /* make_empty_frame from first of arglist, then if more args, load vals */
-  int len = 0, size = 0;
-
-  Xen_check_type(Xen_is_list(arglist), arglist, 1, S_make_frame, "a list");
-  len = Xen_list_length(arglist);
-  if (len > 0)
-    {
-      Xen cararg;
-      cararg = Xen_car(arglist);
-      Xen_check_type(Xen_is_number(cararg), cararg, 1, S_make_frame, "a number");
-      size = Xen_integer_to_C_int(cararg);
-      if (size <= 0) 
-	Xen_out_of_range_error(S_make_frame, 1, cararg, "chans <= 0?");
-      if (len > (size + 1)) 
-	clm_error(S_make_frame, "extra trailing args?", arglist);
-      if ((check_size) && 
-	  (size > MUS_MAX_CHANS))
-	Xen_out_of_range_error(S_make_frame, 1, C_int_to_Xen_integer(size), "size too big");
-    }
-
-  return(g_make_frame_2(size, (len <= 1) ? Xen_empty_list : Xen_cdr(arglist)));
-}
-
-
-static Xen g_make_frame(Xen arglist)
-{
-  return(g_make_frame_1(arglist, true));
-}
-
-
-static Xen g_make_frame_unchecked(Xen arglist)
-{
-  #define H_make_frame_unchecked "(make-frame! chans val0 val1 ...): return a new frame object \
-with chans samples, each sample set from the trailing arguments (defaulting to 0.0).  Unlike make-frame, \
-make-frame! ignores mus-max-malloc and tries to create a frame of any size."
-  return(g_make_frame_1(arglist, false));
-}
-
-
-static Xen g_frame(Xen args) 
-{
-  #define H_frame "(" S_frame " num ...): returns a new frame with args as its contents: (frame .1 .2)"
-  return(g_make_frame_2(Xen_list_length(args), args));
-}
-
-
-
-
-static Xen g_is_frame(Xen obj) 
-{
-  #define H_is_frame "(" S_is_frame " gen): " PROC_TRUE " if gen is a frame"
-  return(C_bool_to_Xen_boolean((mus_is_xen(obj)) && (mus_is_frame(Xen_to_mus_any(obj)))));
-}
-
-
-static Xen g_frame_add(Xen uf1, Xen uf2, Xen ures) /* optional res */
-{
-  #define H_frame_add "(" S_frame_add " f1 f2 outf): add f1 and f2 returning outf; \
-if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i].  Either f1 or f2 can be a float."
-
-  mus_any *res = NULL, *nf = NULL;
-
-  if ((mus_is_xen(ures)) && 
-      (mus_is_frame(Xen_to_mus_any(ures)))) 
-    res = (mus_any *)Xen_to_mus_any(ures);
-
-  if (Xen_is_number(uf1))
-    {
-      Xen_check_type((mus_is_xen(uf2)) && (mus_is_frame(Xen_to_mus_any(uf2))), uf2, 2, S_frame_add, "a frame");
-      nf = mus_frame_offset((mus_any *)Xen_to_mus_any(uf2), Xen_real_to_C_double(uf1), res);
-    }
-  else
-    {
-      if (Xen_is_number(uf2))
-	{
-	  Xen_check_type((mus_is_xen(uf1)) && (mus_is_frame(Xen_to_mus_any(uf1))), uf1, 1, S_frame_add, "a frame");
-	  nf = mus_frame_offset((mus_any *)Xen_to_mus_any(uf1), Xen_real_to_C_double(uf2), res);
-	}
-    }
-  if (!nf)
-    {
-      Xen_check_type((mus_is_xen(uf1)) && (mus_is_frame(Xen_to_mus_any(uf1))), uf1, 1, S_frame_add, "a frame");
-      Xen_check_type((mus_is_xen(uf2)) && (mus_is_frame(Xen_to_mus_any(uf2))), uf2, 2, S_frame_add, "a frame");
-      nf = mus_frame_add((mus_any *)Xen_to_mus_any(uf1), (mus_any *)Xen_to_mus_any(uf2), res);
-    }
-
-  if (res)
-    return(ures);
-  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, xen_make_vct_wrapper(mus_length(nf), mus_data(nf)))));
-}
-
-
-static Xen g_frame_multiply(Xen uf1, Xen uf2, Xen ures) /* optional res */
-{
-  #define H_frame_multiply "(" S_frame_multiply " f1 f2 outf): multiply f1 and f2 (elementwise) returning outf; \
-if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
-
-  mus_any *res = NULL, *nf = NULL;
-
-  if ((mus_is_xen(ures)) && 
-      (mus_is_frame(Xen_to_mus_any(ures)))) 
-    res = (mus_any *)Xen_to_mus_any(ures);
-
-  if (Xen_is_number(uf1))
-    {
-      Xen_check_type((mus_is_xen(uf2)) && (mus_is_frame(Xen_to_mus_any(uf2))), uf2, 2, S_frame_multiply, "a frame");
-      nf = mus_frame_scale((mus_any *)Xen_to_mus_any(uf2), Xen_real_to_C_double(uf1), res);
-    }
-  else
-    {
-      if (Xen_is_number(uf2))
-	{
-	  Xen_check_type((mus_is_xen(uf1)) && (mus_is_frame(Xen_to_mus_any(uf1))), uf1, 1, S_frame_multiply, "a frame");
-	  nf = mus_frame_scale((mus_any *)Xen_to_mus_any(uf1), Xen_real_to_C_double(uf2), res);
-	}
-    }
-
-  if (!nf)
-    {
-      Xen_check_type((mus_is_xen(uf1)) && (mus_is_frame(Xen_to_mus_any(uf1))), uf1, 1, S_frame_multiply, "a frame");
-      Xen_check_type((mus_is_xen(uf2)) && (mus_is_frame(Xen_to_mus_any(uf2))), uf2, 2, S_frame_multiply, "a frame");
-      nf = mus_frame_multiply((mus_any *)Xen_to_mus_any(uf1), (mus_any *)Xen_to_mus_any(uf2), res);
-    }
-  if (res)
-    return(ures);
-  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, xen_make_vct_wrapper(mus_length(nf), mus_data(nf)))));
-}
-
-
-static Xen g_frame_ref(Xen uf1, Xen uchan)
-{
-  #define H_frame_ref "(" S_frame_ref " f chan): f[chan] (the chan-th sample in frame f)"
-  mus_any *g = NULL;
-  int chan = 0
-;  mus_xen *gn;
-
-#if HAVE_SCHEME
-  gn = (mus_xen *)imported_s7_object_value_checked(uf1, mus_xen_tag);
-  if ((!gn) ||
-      (gn->type != FRAME_TAG))
-    Xen_wrong_type_arg_error(S_frame_ref, 1, uf1, "a frame");
-  g = gn->gen;
-#else
-  Xen_to_C_generator(uf1, gn, g, mus_is_frame, S_frame_ref, "a frame");
-#endif
-
-  Xen_to_C_integer_or_error(uchan, chan, S_frame_ref, 2);
-  return(C_double_to_Xen_real(mus_frame_ref(g, chan)));
-}
-
-
-static Xen g_frame_set(Xen uf1, Xen uchan, Xen val)
-{
-  #define H_frame_set "(" S_frame_set " f chan val) sets frame f's chan-th sample to val: f[chan] = val"
-  mus_float_t x;
-  mus_any *g = NULL;
-  int chan = 0;
-  mus_xen *gn;
-
-#if HAVE_SCHEME
-  gn = (mus_xen *)imported_s7_object_value_checked(uf1, mus_xen_tag);
-  if ((!gn) ||
-      (gn->type != FRAME_TAG))
-    Xen_wrong_type_arg_error(S_frame_set, 1, uf1, "a frame");
-  g = gn->gen;
-#else
-  Xen_to_C_generator(uf1, gn, g, mus_is_frame, S_frame_set, "a frame");
-#endif
-
-  Xen_to_C_integer_or_error(uchan, chan, S_frame_set, 2);
-  Xen_to_C_double_or_error(val, x, S_frame_set, 3);
-
-  mus_frame_set(g, chan, x);
-  return(val);
-}
-
-
-
-/* ---------------- mixer ---------------- */
-
-static Xen g_is_mixer(Xen obj) 
-{
-  #define H_is_mixer "(" S_is_mixer " gen): " PROC_TRUE " if gen is a mixer"
-  return(C_bool_to_Xen_boolean((mus_is_xen(obj)) && (mus_is_mixer(Xen_to_mus_any(obj)))));
-}
-
-
-static Xen g_mixer_ref(Xen uf1, Xen in, Xen out)
-{
-  #define H_mixer_ref "(" S_mixer_ref " m in out): m[in, out], the mixer coefficient at location (in, out)"
-  mus_any *g = NULL;
-  int i_chan = 0, o_chan = 0;
-  mus_xen *gn;
-
-  Xen_to_C_generator(uf1, gn, g, mus_is_mixer, S_mixer_ref, "a mixer");
-
-  Xen_to_C_integer_or_error(in, i_chan, S_mixer_ref, 2);
-  Xen_to_C_integer_or_error(out, o_chan, S_mixer_ref, 3);
-
-  return(C_double_to_Xen_real(mus_mixer_ref(g, i_chan, o_chan)));
-}
-
-
-static Xen g_mixer_set(Xen uf1, Xen in, Xen out, Xen val)
-{
-  #define H_mixer_set "(" S_mixer_set " m in out val): set m[in, out] = val"
-  mus_any *g = NULL;
-  int i_chan = 0, o_chan = 0;
-  mus_float_t x;
-  mus_xen *gn;
-
-  Xen_to_C_generator(uf1, gn, g, mus_is_mixer, S_mixer_set, "a mixer");
-
-  Xen_to_C_integer_or_error(in, i_chan, S_mixer_set, 2);
-  Xen_to_C_integer_or_error(out, o_chan, S_mixer_set, 3);
-  Xen_to_C_double_or_error(val, x, S_mixer_set, 4);
-
-  mus_mixer_set(g, i_chan, o_chan, x);
-  return(val);
-}
-
-
-static Xen g_mixer_multiply(Xen uf1, Xen uf2, Xen ures) /* optional res */
-{
-  #define H_mixer_multiply "(" S_mixer_multiply " m1 m2 (outm " PROC_FALSE ")): multiply mixers m1 and m2 (a matrix multiply), \
-returning the mixer outm, or creating a new mixer if outm is not given.  Either m1 or m2 can be a float, rather than a mixer."
-
-  mus_any *res = NULL, *u1 = NULL, *u2 = NULL, *nm = NULL;
-  bool u1_mixer = false, u2_mixer = false;
-
-  if ((mus_is_xen(ures)) && 
-      (mus_is_mixer(Xen_to_mus_any(ures))))
-    res = (mus_any *)Xen_to_mus_any(ures);
-
-  if (mus_is_xen(uf1))
-    {
-      u1 = Xen_to_mus_any(uf1);
-      u1_mixer = mus_is_mixer(u1);
-      if (!u1_mixer)
-	Xen_check_type(mus_is_frame(u1), uf1, 1, S_mixer_multiply, "a frame or mixer");
-    }
-  else Xen_check_type(Xen_is_number(uf1), uf1, 1, S_mixer_multiply, "a number, frame or mixer");
-
-  if (mus_is_xen(uf2))
-    {
-      u2 = Xen_to_mus_any(uf2);
-      u2_mixer = mus_is_mixer(u2);
-      if (!u2_mixer)
-	Xen_check_type(mus_is_frame(u2), uf2, 2, S_mixer_multiply, "a frame or mixer");
-    }
-  else Xen_check_type(Xen_is_number(uf2), uf2, 2, S_mixer_multiply, "a number, frame or mixer");
-
-  Xen_check_type(u1_mixer || u2_mixer, uf1, 1, S_mixer_multiply, "one arg must be a mixer");
-  if (!u1)
-    {
-      Xen_check_type(u2_mixer, uf2, 2, S_mixer_multiply, "a mixer");
-      nm = mus_mixer_scale(u2, Xen_real_to_C_double(uf1), res);
-    }
-  else
-    {
-      if (!u2)
-	{
-	  Xen_check_type(u1_mixer, uf1, 1, S_mixer_multiply, "a mixer");
-	  nm = mus_mixer_scale(u1, Xen_real_to_C_double(uf2), res);
-	}
-    }
-  if (!nm)
-    {
-      if ((u1_mixer) && (u2_mixer))
-	nm = mus_mixer_multiply(u1, u2, res);
-      else 
-	{
-	  /* here "res" should be a frame */
-	  Xen_check_type(mus_is_frame(res), ures, 3, S_mixer_multiply, "a frame since one of the other arguments is a frame");
-	  nm = mus_frame_to_frame(u1, u2, res);
-	}
-    }
-  if (res)
-    return(ures);
-  return(mus_xen_to_object(mus_any_to_mus_xen(nm)));
-
-}
-
-
-static Xen g_mixer_add(Xen uf1, Xen uf2, Xen ures) /* optional res */
-{
-  #define H_mixer_add "(" S_mixer_add " m1 m2 outm): add mixers m1 and m2 \
-returning the mixer outm, or creating a new mixer if outm is not given. \
-Either m1 or m2 can be a float, rather than a mixer."
-
-  mus_any *res = NULL, *nm = NULL;
-
-  if ((mus_is_xen(ures)) && 
-      (mus_is_mixer(Xen_to_mus_any(ures))))
-    res = (mus_any *)Xen_to_mus_any(ures);
-
-  if (Xen_is_number(uf1))
-    {
-      Xen_check_type((mus_is_xen(uf2)) && (mus_is_mixer(Xen_to_mus_any(uf2))), uf2, 2, S_mixer_add, "a mixer");
-      nm = mus_mixer_offset((mus_any *)Xen_to_mus_any(uf2), Xen_real_to_C_double(uf1), res);
-    }
-  else
-    {
-      if (Xen_is_number(uf2))
-	{
-	  Xen_check_type((mus_is_xen(uf1)) && (mus_is_mixer(Xen_to_mus_any(uf1))), uf1, 1, S_mixer_add, "a mixer");
-	  nm = mus_mixer_offset((mus_any *)Xen_to_mus_any(uf1), Xen_real_to_C_double(uf2), res);
-	}
-    }
-
-  if (!nm)
-    {
-      Xen_check_type((mus_is_xen(uf1)) && (mus_is_mixer(Xen_to_mus_any(uf1))), uf1, 1, S_mixer_add, "a mixer");
-      Xen_check_type((mus_is_xen(uf2)) && (mus_is_mixer(Xen_to_mus_any(uf2))), uf2, 2, S_mixer_add, "a mixer");
-      nm = mus_mixer_add((mus_any *)Xen_to_mus_any(uf1), (mus_any *)Xen_to_mus_any(uf2), res);
-    }
-
-  if (res)
-    return(ures);
-  return(mus_xen_to_object(mus_any_to_mus_xen(nm)));
-}
-
-
-/* frame->frame chooses the multiplication based on arg order */
-
-static Xen g_frame_to_frame(Xen mx, Xen infr, Xen outfr) /* optional outfr */
-{
-  #define H_frame_to_frame "(" S_frame_to_frame " m f outf): pass frame f through mixer m \
-returning frame outf (or creating a new frame if necessary); this is a matrix multiply of m and f"
-
-  mus_any *res = NULL, *arg1, *arg2, *nm = NULL;
-
-  Xen_check_type(mus_is_xen(mx), mx, 1, S_frame_to_frame, "a mixer or frame");
-  Xen_check_type(mus_is_xen(infr), infr, 2, S_frame_to_frame, "a mixer or frame");
-
-  arg1 = (mus_any *)Xen_to_mus_any(mx);
-  arg2 = (mus_any *)Xen_to_mus_any(infr);
-  Xen_check_type((mus_is_frame(arg1) && mus_is_mixer(arg2)) || 
-		  (mus_is_mixer(arg1) && mus_is_frame(arg2)), 
-		  mx, 1, S_frame_to_frame, "first two args should be mixer and frame");
-
-  if ((mus_is_xen(outfr)) && 
-      (mus_is_frame(Xen_to_mus_any(outfr)))) 
-    res = (mus_any *)Xen_to_mus_any(outfr);
-
-  nm = mus_frame_to_frame(arg1, arg2, res);
-  if (res)
-    return(outfr);
-  return(mus_xen_to_object(mus_any_to_mus_xen(nm)));
-}
-
-
-static Xen g_frame_to_list(Xen fr)
-{
-  #define H_frame_to_list "(" S_frame_to_list " f): return contents of frame f as a list"
-  mus_any *val;
-  int i;
-  mus_float_t *vals;
-  Xen res = Xen_empty_list;
-
-  Xen_check_type((mus_is_xen(fr)) && (mus_is_frame(Xen_to_mus_any(fr))), fr, 1, S_frame_to_list, "a frame");
-
-  val = (mus_any *)Xen_to_mus_any(fr);
-  vals = mus_data(val);
-  for (i = (int)mus_length(val) - 1; i >= 0; i--) 
-    res = Xen_cons(C_double_to_Xen_real(vals[i]), res);
-  return(res);
-}
-
-
-static Xen g_frame_to_sample(Xen mx, Xen fr)
-{
-  #define H_frame_to_sample "(" S_frame_to_sample " m f): pass frame f through mixer (or frame) m to produce a sample"
-  Xen_check_type((mus_is_xen(mx)), mx, 1, S_frame_to_sample, "a frame or mixer");
-  Xen_check_type((mus_is_xen(fr)) && (mus_is_frame(Xen_to_mus_any(fr))), fr, 2, S_frame_to_sample, "a frame");
-  return(C_double_to_Xen_real(mus_frame_to_sample(Xen_to_mus_any(mx),
-					     (mus_any *)Xen_to_mus_any(fr))));
-}
-
-
-static Xen g_sample_to_frame(Xen mx, Xen insp, Xen outfr) /* optional outfr */
-{
-  #define H_sample_to_frame "(" S_sample_to_frame " m val outf): pass the sample val through mixer m \
-returning frame outf (creating it if necessary)"
-
-  mus_any *res = NULL, *nf = NULL, *gen;
-  mus_xen *gn, *outgn;
-
-  gn = (mus_xen *)Xen_object_ref_checked(mx, mus_xen_tag);
-  if (!gn) Xen_check_type(false, mx, 1, S_sample_to_frame, "a frame or mixer");
-  gen = gn->gen;
-
-  Xen_check_type(Xen_is_number(insp), insp, 2, S_sample_to_frame, "a number");
-
-  outgn = (mus_xen *)Xen_object_ref_checked(outfr, mus_xen_tag);
-  if ((outgn) &&
-      (mus_is_frame(outgn->gen)))
-    res = outgn->gen;
-
-  nf = mus_sample_to_frame(gen, Xen_real_to_C_double(insp), res);
-  if (res)
-    return(outfr);
-  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, xen_make_vct_wrapper(mus_length(nf), mus_data(nf)))));
-}
-
-
-static Xen g_make_scalar_mixer(Xen chans, Xen val)
-{
-  #define H_make_scalar_mixer "(" S_make_scalar_mixer " chans value): return a mixer \
-with 'chans' channels, and 'val' along the diagonal"
-
-  mus_any *mx = NULL;
-  int size;
-
-  Xen_check_type(Xen_is_integer(chans), chans, 1, S_make_scalar_mixer, "an integer");
-  Xen_check_type(Xen_is_number(val), val, 2, S_make_scalar_mixer, "a number");
-
-  size = Xen_integer_to_C_int(chans);
-  if (size <= 0) Xen_out_of_range_error(S_make_scalar_mixer, 1, chans, "chans <= 0?");
-  if (size > MUS_MAX_CHANS) Xen_out_of_range_error(S_make_scalar_mixer, 1, chans, "too many chans");
-  mx = mus_make_scalar_mixer(size, Xen_real_to_C_double(val));
-  if (mx)
-    return(mus_xen_to_object(mus_any_to_mus_xen(mx)));
-  return(Xen_false);
-}
-
-
-static Xen g_make_mixer_2(int len, Xen args)
-{
-  mus_any *ge;
-  ge = (mus_any *)mus_make_empty_mixer((len == 0) ? 1 : len);
-  if (ge)
-    {
-      if (len > 0)
-	{
-	  Xen lst;
-	  int i, j, k, size;
-	  mus_float_t **vals;
-	  size = len * len;
-	  vals = (mus_float_t **)mus_data(ge);
-	  j = 0;
-	  k = 0;
-	  for (i = 0, lst = Xen_copy_arg(args); (i < size) && (!Xen_is_null(lst)); i++, lst = Xen_cdr(lst))
-	    {
-	      if (Xen_is_number(Xen_car(lst)))
-		vals[j][k] = Xen_real_to_C_double(Xen_car(lst));
-	      else
-		{
-		  mus_free(ge);
-		  Xen_wrong_type_arg_error(S_make_mixer, i, Xen_car(lst), "a number");
-		}
-	      k++;
-	      if (k == len)
-		{
-		  k = 0;
-		  j++;
-		  if (j >= len) break;
-		}
-	    }
-	}
-      return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-    }
-  return(Xen_false);
-
-}
-
-
-static Xen g_make_mixer_1(Xen arglist, bool check_size)
-{
-  #if HAVE_SCHEME
-    #define make_mixer_example "(" S_make_mixer " 2 .5 .25 .125 1.0)"
-  #endif
-  #if HAVE_RUBY
-    #define make_mixer_example "make_mixer(2, 0.5, 0.25, 0.125, 1.0)"
-  #endif
-  #if HAVE_FORTH
-    #define make_mixer_example "2 0.5 0.25 0.125 1.0 make-mixer"
-  #endif
-
-  #define H_make_mixer "(" S_make_mixer " chans val0 val1 ...): make a new mixer object \
-with chans inputs and outputs, initializing the scalars from the rest of the arguments:\n  " make_mixer_example "\n\
-   | .5    .25 |\n\
-   | .125 1.0  |\n"
-
-  /* make_empty_mixer from first of arglist, then if more args, load vals */
-
-  Xen cararg;
-  int size = 0, len = 0;
-
-  Xen_check_type(Xen_is_list(arglist), arglist, 1, S_make_mixer, "a list");
-  len = Xen_list_length(arglist);
-  if (len == 0) clm_error(S_make_mixer, "need at least 1 arg", arglist);
-
-  cararg = Xen_car(arglist);
-  if (!(Xen_is_number(cararg)))
-    Xen_wrong_type_arg_error(S_make_mixer, 1, cararg, "an integer = number of chans");
-
-  size = Xen_integer_to_C_int(cararg);
-  if (size <= 0) Xen_out_of_range_error(S_make_mixer, 1, cararg, "chans <= 0?");
-  if ((check_size) &&
-      (size > MUS_MAX_CHANS))
-    Xen_out_of_range_error(S_make_mixer, 1, cararg, "too many chans");
-  if (len > (size * size + 1)) 
-    clm_error(S_make_mixer, "extra trailing args?", arglist);
-
-  return(g_make_mixer_2(size, (len == 1) ? Xen_empty_list : Xen_cdr(arglist)));
-}
-
-
-static Xen g_make_mixer(Xen arglist)
-{
-  return(g_make_mixer_1(arglist, true));
-}
-
-
-static Xen g_make_mixer_unchecked(Xen arglist)
-{
-  #define H_make_mixer_unchecked "(make-mixer! chans val0 val1 ...): make a new mixer object \
-with chans inputs and outputs, initializing the scalars from the rest of the arguments.  make-mixer! \
-ignores mus-max-malloc and tries to return a mixer of any size."
-
-  return(g_make_mixer_1(arglist, false));
-}
-
-
-static Xen g_mixer(Xen args) 
-{
-  #define H_mixer "(" S_mixer " num ...): returns a new mixer with args as its contents: (mixer .1 .2 .3 .4)"
-  return(g_make_mixer_2((int)ceil(sqrt(Xen_list_length(args))), args));
-}
-
-
-#endif
 
 
 #define S_pink_noise "pink-noise"
@@ -7110,15 +6422,6 @@ static Xen g_is_file_to_sample(Xen obj)
 static Xen mus_clm_output(void) {return(CLM_OUTPUT);}
 static Xen mus_clm_reverb(void) {return(CLM_REVERB);}
 
-#if (!DISABLE_DEPRECATED)
-
-static Xen g_is_file_to_frame(Xen obj) 
-{
-  #define H_is_file_to_frame "(" S_is_file_to_frame " gen): " PROC_TRUE " if gen is a " S_file_to_frame " generator"
-  return(C_bool_to_Xen_boolean((mus_is_xen(obj)) && (mus_is_file_to_frame(Xen_to_mus_any(obj)))));
-}
-#endif
-
 static Xen g_is_file_to_frample(Xen obj) 
 {
   #define H_is_file_to_frample "(" S_is_file_to_frample " gen): " PROC_TRUE " if gen is a " S_file_to_frample " generator"
@@ -7134,14 +6437,6 @@ static Xen g_is_sample_to_file(Xen obj)
 }
 
 
-#if (!DISABLE_DEPRECATED)
-static Xen g_is_frame_to_file(Xen obj) 
-{
-  #define H_is_frame_to_file "(" S_is_frame_to_file " gen): " PROC_TRUE " if gen is a " S_frame_to_file " generator"
-
-  return(C_bool_to_Xen_boolean((mus_is_xen(obj)) && (mus_is_frame_to_file(Xen_to_mus_any(obj)))));
-}
-#endif
 static Xen g_is_frample_to_file(Xen obj) 
 {
   #define H_is_frample_to_file "(" S_is_frample_to_file " gen): " PROC_TRUE " if gen is a " S_frample_to_file " generator"
@@ -7178,11 +6473,6 @@ static Xen g_in_any_1(const char *caller, Xen frame, int in_chan, Xen inp)
       Xen_check_type(mus_is_input(Xen_to_mus_any(inp)), inp, 3, caller, "an input generator");
       return(C_double_to_Xen_real(mus_in_any(pos, in_chan, (mus_any *)Xen_to_mus_any(inp))));
     }
-
-#if (!DISABLE_DEPRECATED)
-  if (xen_is_sound_data(inp))
-    return(C_double_to_Xen_real(mus_sound_data_ref(Xen_to_sound_data(inp), in_chan, pos)));
-#endif
 
   if (mus_is_vct(inp))
     {
@@ -7253,14 +6543,6 @@ static Xen fallback_out_any_2(Xen outp, mus_long_t pos, mus_float_t inv, int chn
       return(Xen_integer_zero);
     }
 
-#if (!DISABLE_DEPRECATED)
-  if (xen_is_sound_data(outp))
-    {
-      mus_sound_data_set(Xen_to_sound_data(outp), chn, pos, mus_sound_data_ref(Xen_to_sound_data(outp), chn, pos) + inv);
-      return(Xen_integer_zero);
-    }
-#endif
-
   if (mus_is_vct(outp))
     {
       mus_float_t *vdata;
@@ -7305,12 +6587,6 @@ bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *IO);
 static mus_xen *clm_output_gn = NULL;
 static mus_any *clm_output_gen = NULL;
 static vct *clm_output_vct;
-#if (!DISABLE_DEPRECATED)
-static sound_data *clm_output_sd;
-static s7_Double *clm_output_sd_data;
-static mus_long_t clm_output_sd_offset;
-static int clm_output_sd_chans;
-#endif
 
 static Xen out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
@@ -7365,22 +6641,6 @@ static Xen out_any_2_to_vct(mus_long_t pos, mus_float_t inv, int chn, const char
   return(xen_zero);
 }
 
-#if (!DISABLE_DEPRECATED)
-static Xen out_any_2_to_sound_data(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
-{
-  if (pos < clm_output_sd_offset)
-    {
-      if (chn == 0)
-	clm_output_sd_data[pos] += inv;
-      else
-	{
-	  if (chn < clm_output_sd_chans)
-	    clm_output_sd_data[chn * clm_output_sd_offset + pos] += inv;
-	}
-    }
-  return(xen_zero);
-}
-#endif
 
 static Xen out_any_2_to_vector(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
@@ -7411,34 +6671,18 @@ static s7_pointer g_clm_output_set(s7_scheme *sc, s7_pointer args)
   else
     {
       clm_output_gen = NULL;
-
-#if (!DISABLE_DEPRECATED)
-      if (xen_is_sound_data(new_output))
+      if (mus_is_vct(new_output))
 	{
-	  out_any_2 = out_any_2_to_sound_data;
-	  clm_output_sd = Xen_to_sound_data(new_output);
-#if HAVE_SCHEME
-	  clm_output_sd_data = s7_float_vector_elements(clm_output_sd);
-	  clm_output_sd_chans = mus_sound_data_chans(clm_output_sd);
-	  clm_output_sd_offset = mus_sound_data_length(clm_output_sd);
-#endif
+	  out_any_2 = out_any_2_to_vct;
+	  clm_output_vct = xen_to_vct(new_output);
 	}
       else
-#endif
 	{
-	  if (mus_is_vct(new_output))
+	  if (Xen_is_vector(new_output))
 	    {
-	      out_any_2 = out_any_2_to_vct;
-	      clm_output_vct = xen_to_vct(new_output);
+	      out_any_2 = out_any_2_to_vector;
 	    }
-	  else
-	    {
-	      if (Xen_is_vector(new_output))
-		{
-		  out_any_2 = out_any_2_to_vector;
-		}
-	      else out_any_2 = out_any_2_no_op;
-	    }
+	  else out_any_2 = out_any_2_no_op;
 	}
     }
   return(new_output);
@@ -7451,10 +6695,6 @@ static s7_pointer g_clm_output_set(s7_scheme *sc, s7_pointer args)
 static mus_xen *clm_input_gn;
 static mus_any *clm_input_gen;
 static vct *clm_input_vct;
-
-#if (!DISABLE_DEPRECATED)
-static sound_data *clm_input_sd;
-#endif
 
 static double in_any_2_to_mus_xen(mus_long_t pos, int chn)
 {
@@ -7475,13 +6715,6 @@ static double in_any_2_to_vct(mus_long_t pos, int chn)
     return(vdata[pos]);
   return(0.0);
 }
-
-#if (!DISABLE_DEPRECATED)
-static double in_any_2_to_sound_data(mus_long_t pos, int chn)
-{
-  return(mus_sound_data_ref(clm_input_sd, chn, pos));
-}
-#endif
 
 static double in_any_2_to_vector(mus_long_t pos, int chn)
 {
@@ -7511,28 +6744,18 @@ static s7_pointer g_clm_reverb_set(s7_scheme *sc, s7_pointer args)
     }
   else
     {
-#if (!DISABLE_DEPRECATED)
-      if (xen_is_sound_data(new_input))
+      if (mus_is_vct(new_input))
 	{
-	  in_any_2 = in_any_2_to_sound_data;
-	  clm_input_sd = Xen_to_sound_data(new_input);
+	  in_any_2 = in_any_2_to_vct;
+	  clm_input_vct = xen_to_vct(new_input);
 	}
       else
-#endif
 	{
-	  if (mus_is_vct(new_input))
+	  if (Xen_is_vector(new_input))
 	    {
-	      in_any_2 = in_any_2_to_vct;
-	      clm_input_vct = xen_to_vct(new_input);
+	      in_any_2 = in_any_2_to_vector;
 	    }
-	  else
-	    {
-	      if (Xen_is_vector(new_input))
-		{
-		  in_any_2 = in_any_2_to_vector;
-		}
-	      else in_any_2 = in_any_2_no_op;
-	    }
+	  else in_any_2 = in_any_2_no_op;
 	}
     }
   return(new_input);
@@ -7811,120 +7034,6 @@ static Xen g_sample_to_file_add(Xen obj1, Xen obj2)
   mus_sample_to_file_add(g1, g2);
   return(obj1);
 }
-
-#if (!DISABLE_DEPRECATED)
-static Xen g_make_file_to_frame(Xen name, Xen buffer_size)
-{
-  #define H_make_file_to_frame "(" S_make_file_to_frame " filename buffer-size): return an input generator reading 'filename' (a sound file)"
-
-  mus_any *ge;
-  mus_long_t size;
-
-  Xen_check_type(Xen_is_string(name), name, 1, S_make_file_to_frame, "a string");
-  Xen_check_type(Xen_is_llong_or_unbound(buffer_size), buffer_size, 2, S_make_file_to_frame, "an integer");
-
-  if (!(mus_file_probe(Xen_string_to_C_string(name))))
-    Xen_error(NO_SUCH_FILE,
-	      Xen_list_3(C_string_to_Xen_string(S_make_file_to_frame ": ~S, ~A"),
-			 name,
-			 C_string_to_Xen_string(STRERROR(errno))));
-
-  if (Xen_is_llong(buffer_size))
-    {
-      size = Xen_llong_to_C_llong(buffer_size);
-      if (size <= 0)
-	Xen_out_of_range_error(S_make_file_to_frame, 2, buffer_size, "must be > 0");
-    }
-  else size = mus_file_buffer_size();
-  ge = mus_make_file_to_frame_with_buffer_size(Xen_string_to_C_string(name), size);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-  return(Xen_false);
-}
-
-
-static Xen g_file_to_frame(Xen obj, Xen samp, Xen outfr)
-{
-  #define H_file_to_frame "(" S_file_to_frame " obj samp outf): frame of samples at frame 'samp' in sound file read by 'obj'"
-  mus_any *res = NULL, *nf = NULL;
-  
-  Xen_check_type((mus_is_xen(obj)) && (mus_is_input(Xen_to_mus_any(obj))), obj, 1, S_file_to_frame, "an input generator");
-  Xen_check_type(Xen_is_integer(samp), samp, 2, S_file_to_frame, "an integer");
-
-  if ((mus_is_xen(outfr)) && 
-      (mus_is_frame(Xen_to_mus_any(outfr)))) 
-    res = (mus_any *)Xen_to_mus_any(outfr);
-
-  nf = mus_file_to_frame(Xen_to_mus_any(obj), Xen_llong_to_C_llong(samp), res);
-  if (res)
-    return(outfr);
-  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, xen_make_vct_wrapper(mus_length(nf), mus_data(nf)))));
-}
-
-
-static Xen g_make_frame_to_file(Xen name, Xen chans, Xen out_format, Xen out_type, Xen comment)
-{
-  #if HAVE_SCHEME
-    #define make_frame_to_file_example "(" S_make_frame_to_file " \"test.snd\" 2 mus-lshort mus-riff)"
-  #endif
-  #if HAVE_RUBY
-    #define make_frame_to_file_example "\"test.snd\" 2 Mus_lshort Mus_riff make_frame2file"
-  #endif
-  #if HAVE_FORTH
-    #define make_frame_to_file_example "\"test.snd\" 2 mus-lshort mus-riff make-frame->file"
-  #endif
-
-  #define H_make_frame_to_file "(" S_make_frame_to_file " filename chans data-format header-type comment): \
-return an output generator writing the sound file 'filename' which is set up to have \
-'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
-should be sndlib identifiers:\n  " make_frame_to_file_example
-
-  mus_any *fgen = NULL;
-
-  Xen_check_type(Xen_is_string(name), name, 1, S_make_frame_to_file, "a string");
-  Xen_check_type(Xen_is_integer_or_unbound(chans), chans, 2, S_make_frame_to_file, "an integer");
-  Xen_check_type(Xen_is_integer_or_unbound(out_format), out_format, 3, S_make_frame_to_file, "an integer (data format id)");
-  Xen_check_type(Xen_is_integer_or_unbound(out_type), out_type, 4, S_make_frame_to_file, "an integer (header-type id)");
-
-  fgen = mus_make_frame_to_file_with_comment(Xen_string_to_C_string(name),
-					     (Xen_is_integer(chans)) ? Xen_integer_to_C_int(chans) : 1,
-					     (Xen_is_integer(out_format)) ? Xen_integer_to_C_int(out_format) : (int)MUS_OUT_FORMAT,
-					     (Xen_is_integer(out_type)) ? Xen_integer_to_C_int(out_type) : (int)MUS_NEXT,
-					     (Xen_is_string(comment)) ? Xen_string_to_C_string(comment) : NULL);
-  if (fgen) return(mus_xen_to_object(mus_any_to_mus_xen(fgen)));
-  return(Xen_false);
-}
-
-
-static Xen g_continue_frame_to_file(Xen name)
-{
-  #define H_continue_frame_to_file "(" S_continue_frame_to_file " filename): return an output generator \
-that reopens an existing sound file 'filename' ready for output via " S_frame_to_file
-
-  mus_any *rgen = NULL;
-  Xen_check_type(Xen_is_string(name), name, 1, S_continue_frame_to_file, "a string");
-  rgen = mus_continue_frame_to_file(Xen_string_to_C_string(name));
-  if (rgen) return(mus_xen_to_object(mus_any_to_mus_xen(rgen)));
-  return(Xen_false);
-}
-
-
-static Xen g_frame_to_file(Xen obj, Xen samp, Xen val)
-{
-  #define H_frame_to_file "(" S_frame_to_file " obj samp val): add frame 'val' to the output stream \
-handled by the output generator 'obj' at frame 'samp'"
-  mus_xen *gn, *frm;
-
-  gn = (mus_xen *)Xen_object_ref_checked(obj, mus_xen_tag);
-  Xen_check_type(((gn) && (mus_is_output(gn->gen))), obj, 1, S_frame_to_file, "an output generator");
-  Xen_check_type(Xen_is_integer(samp), samp, 2, S_frame_to_file, "an integer");
-
-  frm = (mus_xen *)Xen_object_ref_checked(val, mus_xen_tag);
-  Xen_check_type((frm) && (mus_is_frame(frm->gen)), val, 3, S_frame_to_file, "a frame");
-
-  mus_frame_to_file(gn->gen, Xen_llong_to_C_llong(samp), frm->gen);
-  return(val);
-}
-#endif
 
 static Xen g_make_file_to_frample(Xen name, Xen buffer_size)
 {
@@ -8217,43 +7326,36 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 
   if (outfr)
     {
-#if (!DISABLE_DEPRECATED)
-      if (xen_is_sound_data(output))
-	mus_sound_data_add_frame(Xen_to_sound_data(output), pos, outfr);
-      else
-#endif
+      if (mus_is_vct(output))
 	{
-	  if (mus_is_vct(output))
+	  vct *v;
+	  mus_float_t *vdata;
+	  v = xen_to_vct(output);
+	  vdata = mus_vct_data(v);
+	  if (Xen_vector_rank(output) == 1)
 	    {
-	      vct *v;
-	      mus_float_t *vdata;
-	      v = xen_to_vct(output);
-	      vdata = mus_vct_data(v);
-	      if (Xen_vector_rank(output) == 1)
-		{
-		  if (pos < mus_vct_length(v))
-		    vdata[pos] += outfr[0];
-		}
+	      if (pos < mus_vct_length(v))
+		vdata[pos] += outfr[0];
+	    }
 #if HAVE_SCHEME
-	      else
-		{
-		  s7_Int chan_len;
-		  chan_len = s7_vector_dimensions(output)[1]; /* '(4 20) so each chan len is [1] */
-		  if (pos < chan_len)
-		    {
-		      int i;
-		      for (i = 0; i < chans; i++)
-			vdata[i * chan_len + pos] += outfr[i];
-		    }
-		}
-#endif
-	    }
-	  else 
+	  else
 	    {
-	      if ((Xen_is_vector(output)) &&
-		  (pos < Xen_vector_length(output)))
-		Xen_vector_set(output, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(output, pos)) + outfr[0]));
+	      s7_Int chan_len;
+	      chan_len = s7_vector_dimensions(output)[1]; /* '(4 20) so each chan len is [1] */
+	      if (pos < chan_len)
+		{
+		  int i;
+		  for (i = 0; i < chans; i++)
+		    vdata[i * chan_len + pos] += outfr[i];
+		}
 	    }
+#endif
+	}
+      else 
+	{
+	  if ((Xen_is_vector(output)) &&
+	      (pos < Xen_vector_length(output)))
+	    Xen_vector_set(output, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(output, pos)) + outfr[0]));
 	}
     }
   
@@ -8261,43 +7363,36 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
       (Xen_is_bound(ms->vcts[G_LOCSIG_REVOUT])))
     {
       reverb = ms->vcts[G_LOCSIG_REVOUT];
-#if (!DISABLE_DEPRECATED)
-      if (xen_is_sound_data(reverb))
-	mus_sound_data_add_frame(Xen_to_sound_data(reverb), pos, revfr);
-      else
-#endif
+      if (mus_is_vct(reverb))
 	{
-	  if (mus_is_vct(reverb))
+	  vct *v;
+	  mus_float_t *vdata;
+	  v = xen_to_vct(reverb);
+	  vdata = mus_vct_data(v);
+	  if (Xen_vector_rank(reverb) == 1)
 	    {
-	      vct *v;
-	      mus_float_t *vdata;
-	      v = xen_to_vct(reverb);
-	      vdata = mus_vct_data(v);
-	      if (Xen_vector_rank(reverb) == 1)
-		{
-		  if (pos < mus_vct_length(v))
-		    vdata[pos] += revfr[0];
-		}
+	      if (pos < mus_vct_length(v))
+		vdata[pos] += revfr[0];
+	    }
 #if HAVE_SCHEME
-	      else
-		{
-		  s7_Int chan_len;
-		  chan_len = s7_vector_dimensions(reverb)[1];
-		  if (pos < chan_len)
-		    {
-		      int i;
-		      for (i = 0; i < rev_chans; i++)
-			vdata[i * chan_len + pos] += revfr[i];
-		    }
-		}
-#endif
-	    }
-	  else 
+	  else
 	    {
-	      if ((Xen_is_vector(reverb)) &&
-		  (pos < Xen_vector_length(reverb)))
-		Xen_vector_set(reverb, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(reverb, pos)) + revfr[0]));
+	      s7_Int chan_len;
+	      chan_len = s7_vector_dimensions(reverb)[1];
+	      if (pos < chan_len)
+		{
+		  int i;
+		  for (i = 0; i < rev_chans; i++)
+		    vdata[i * chan_len + pos] += revfr[i];
+		}
 	    }
+#endif
+	}
+      else 
+	{
+	  if ((Xen_is_vector(reverb)) &&
+	      (pos < Xen_vector_length(reverb)))
+	    Xen_vector_set(reverb, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(reverb, pos)) + revfr[0]));
 	}
     }
 }
@@ -8444,25 +7539,14 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     }
   else
     {
-#if (!DISABLE_DEPRECATED)
-      if (xen_is_sound_data(keys3))
-	{
-	  ov = keys3;
-	  if (out_chans < 0) 
-	    out_chans = mus_sound_data_chans(Xen_to_sound_data(ov));
-	}
-      else
-#endif
-	{
-	  if (mus_is_vct(keys3))
-	    ov = keys3;
-	  else Xen_check_type(Xen_is_keyword(keys[3]) || Xen_is_false(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, " S_vct ", vector, or a sound-data object");
+      if (mus_is_vct(keys3))
+	ov = keys3;
+      else Xen_check_type(Xen_is_keyword(keys[3]) || Xen_is_false(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, " S_vct ", vector, or a sound-data object");
 #if HAVE_SCHEME
-	  if ((out_chans < 0) &&
-	      (Xen_vector_rank(ov) > 1))
-	    out_chans = s7_vector_dimensions(ov)[0];
+      if ((out_chans < 0) &&
+	  (Xen_vector_rank(ov) > 1))
+	out_chans = s7_vector_dimensions(ov)[0];
 #endif
-	}
     }
 
   if ((mus_is_xen(keys4)) && 
@@ -8474,27 +7558,16 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     }
   else
     {
-#if (!DISABLE_DEPRECATED)
-      if (xen_is_sound_data(keys4))
+      if (mus_is_vct(keys4))
 	{
 	  rv = keys4;
-	  if (rev_chans < 0)
-	    rev_chans = mus_sound_data_chans(Xen_to_sound_data(rv));
-	}
-      else
-#endif
-	{
-	  if (mus_is_vct(keys4))
-	    {
-	      rv = keys4;
-	      rev_chans = 1;
+	  rev_chans = 1;
 #if HAVE_SCHEME
-	      if (Xen_vector_rank(rv) > 1)
-		rev_chans = s7_vector_dimensions(rv)[0];
+	  if (Xen_vector_rank(rv) > 1)
+	    rev_chans = s7_vector_dimensions(rv)[0];
 #endif
-	    }
-	  else Xen_check_type(Xen_is_keyword(keys[4]) || Xen_is_false(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output generator");
 	}
+      else Xen_check_type(Xen_is_keyword(keys[4]) || Xen_is_false(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output generator");
     }
 
   if (out_chans < 0) out_chans = 1;
@@ -8658,9 +7731,6 @@ static Xen g_make_move_sound(Xen dloc_list, Xen outp, Xen revp)
   else
     {
       if ((mus_is_vct(outp)) || 
-#if (!DISABLE_DEPRECATED)
-	  (xen_is_sound_data(outp)) || 
-#endif
 	  (Xen_is_false(outp)) || 
 	  (!Xen_is_bound(outp)))
 	ov = outp;
@@ -8675,9 +7745,6 @@ static Xen g_make_move_sound(Xen dloc_list, Xen outp, Xen revp)
   else
     {
       if ((mus_is_vct(revp)) || 
-#if (!DISABLE_DEPRECATED)
-	  (xen_is_sound_data(revp)) || 
-#endif
 	  (Xen_is_false(revp)) || 
 	  (!Xen_is_bound(revp)))
 	rv = revp;
@@ -9783,427 +8850,6 @@ static Xen g_mus_irandom(Xen val) {return(C_int_to_Xen_integer(mus_irandom(Xen_i
 
 static Xen mus_clm_output(void);
 static Xen mus_clm_reverb(void);
-
-
-#if (!DISABLE_DEPRECATED)
-/* ---------------- mix ---------------- */
-
-static Xen g_mus_mix(Xen out, Xen in, Xen ost, Xen olen, Xen ist, Xen mx, Xen envs)
-{
-  #define H_mus_mix "(" S_mus_mix " outfile infile (outloc 0) (frames) (inloc 0) mixer envs): \
-mix infile into outfile starting at outloc in outfile and inloc in infile \
-mixing 'frames' frames into 'outfile'.  frames defaults to the length of infile. If mixer, \
-use it to scale the various channels; if envs (an array of envelope generators), use \
-it in conjunction with mixer to scale/envelope all the various ins and outs. \
-'outfile' can also be a " S_frame_to_file " generator, and 'infile' can be a " S_file_to_frame " generator."
-
-  mus_any *outf = NULL, *inf = NULL;
-  mus_any *mx1 = NULL;
-  mus_any ***envs1 = NULL;
-  int i;
-  mus_long_t ostart = 0, istart = 0, osamps = 0;
-  int in_chans = 0, out_chans = 0, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
-
-  Xen_check_type(Xen_is_string(out) || ((mus_is_xen(out)) && (mus_is_output(Xen_to_mus_any(out)))), 
-		  out, 1, S_mus_mix, "a filename or a frame->file generator");
-  Xen_check_type(Xen_is_string(in) || ((mus_is_xen(in)) && (mus_is_input(Xen_to_mus_any(in)))), 
-		  in, 2, S_mus_mix, "a filename or a file->frame generator");
-  Xen_check_type(Xen_is_integer_or_unbound(ost), ost, 3, S_mus_mix, "an integer");
-  Xen_check_type(Xen_is_integer_or_unbound(olen), olen, 4, S_mus_mix, "an integer");
-  Xen_check_type(Xen_is_integer_or_unbound(ist), ist, 5, S_mus_mix, "an integer");
-  Xen_check_type((Xen_is_vector(mx)) || (!Xen_is_bound(mx)) || (Xen_is_false(mx)) || ((mus_is_xen(mx)) && (mus_is_mixer(Xen_to_mus_any(mx)))), mx, 6, S_mus_mix, "a mixer");
-  Xen_check_type((!Xen_is_bound(envs)) || (Xen_is_false(envs)) || (Xen_is_vector(envs)), envs, 7, S_mus_mix, "an env gen or vector of envs");
-  if (Xen_is_bound(ost)) ostart = Xen_llong_to_C_llong(ost);
-  if (Xen_is_bound(ist)) istart = Xen_llong_to_C_llong(ist);
-  if ((Xen_is_bound(mx)) && (mus_is_xen(mx))) 
-    mx1 = (mus_any *)Xen_to_mus_any(mx);
-  if (Xen_is_string(out)) 
-    {
-      const char *tmp_outf = NULL;
-      tmp_outf = Xen_string_to_C_string(out);
-      if (!mus_file_probe(tmp_outf)) 
-	Xen_error(NO_SUCH_FILE,
-		  Xen_list_2(C_string_to_Xen_string(S_mus_mix ": no such file, ~S"),
-			     out));
-      else out_chans = mus_sound_chans(tmp_outf);
-    }
-  else 
-    {
-      outf = Xen_to_mus_any(out);
-      out_chans = mus_channels(outf);
-    }
-
-  if (out_chans <= 0)
-    Xen_error(BAD_HEADER,
-	      Xen_list_2(C_string_to_Xen_string(S_mus_mix ": ~S output chans <= 0"),
-			 out));
-
-  if (Xen_is_string(in)) 
-    {
-      const char *tmp_inf = NULL;
-      tmp_inf = Xen_string_to_C_string(in); 
-      if (!mus_file_probe(tmp_inf)) 
-	Xen_error(NO_SUCH_FILE,
-		  Xen_list_2(C_string_to_Xen_string(S_mus_mix ": no such file, ~S"),
-			     in));
-      else in_chans = mus_sound_chans(tmp_inf);
-    }
-  else 
-    {
-      inf = Xen_to_mus_any(in);
-      in_chans = mus_channels(inf);
-    }
-
-  if (in_chans <= 0)
-    Xen_error(BAD_HEADER,
-	      Xen_list_2(C_string_to_Xen_string(S_mus_mix ": ~S input chans <= 0"),
-			 in));
-
-  if (Xen_is_bound(olen)) 
-    osamps = Xen_llong_to_C_llong(olen); 
-  else 
-    {
-      if (Xen_is_string(in))
-	osamps = mus_sound_framples(Xen_string_to_C_string(in));
-      else osamps = mus_length(inf);
-      if (osamps < 0)
-	Xen_error(BAD_HEADER,
-		  Xen_list_2(C_string_to_Xen_string(S_mus_mix ": ~S input frames < 0"),
-			     in));
-    }
-  if (osamps == 0) return(Xen_false);
-
-  if ((Xen_is_bound(envs)) && (!(Xen_is_false(envs))))
-    {
-      int in_len = 0, out_len, j;
-      /* pack into a C-style array of arrays of env pointers */
-      in_len = Xen_vector_length(envs);
-
-      if (in_len == 0)
-	Xen_error(BAD_TYPE,
-		  Xen_list_2(C_string_to_Xen_string(S_mus_mix ": env vector, ~A, can't be empty"),
-			     envs));
-
-      for (i = 0; i < in_len; i++)
-	{
-	  Xen datum;
-	  datum = Xen_vector_ref(envs, i);
-	  if (!(Xen_is_vector(datum)))
-	    Xen_error(BAD_TYPE,
-		      Xen_list_2(C_string_to_Xen_string(S_mus_mix ": each element of env vector, ~A, must be a vector (of envelopes)"),
-				 datum));
-	}
-      out_len = Xen_vector_length(Xen_vector_ref(envs, 0));
-      if (in_len < in_chans) in_size = in_chans; else in_size = in_len;
-      if (out_len < out_chans) out_size = out_chans; else out_size = out_len;
-      envs1 = (mus_any ***)malloc(in_size * sizeof(mus_any **));
-      for (i = 0; i < in_size; i++) envs1[i] = (mus_any **)calloc(out_size, sizeof(mus_any *));
-      for (i = 0; i < in_len; i++)
-	{
-	  for (j = 0; j < out_len; j++) 
-	    {
-	      Xen datum1;
-	      datum1 = Xen_vector_ref(Xen_vector_ref(envs, i), j);
-	      if (mus_is_xen(datum1))
-		{
-		  if (mus_is_env(Xen_to_mus_any(datum1)))
-		    envs1[i][j] = Xen_to_mus_any(datum1);
-		  else 
-		    {
-		      for (i = 0; i < in_size; i++) if (envs1[i]) free(envs1[i]);
-		      free(envs1);
-		      Xen_error(BAD_TYPE,
-				Xen_list_4(C_string_to_Xen_string(S_mus_mix ": each (non " PROC_FALSE ") element of (inner) envs vector, ~A at ~A ~A, must be an envelope"),
-					   datum1,
-					   C_int_to_Xen_integer(i),
-					   C_int_to_Xen_integer(j)));
-		    }
-		}
-	    }
-	}
-    }
-
-
-  {
-    char *outfile = NULL, *infile = NULL;
-#if HAVE_SCHEME
-    bool need_free = false;
-    if (s7_is_float_vector(mx))
-      {
-	int j, k, chans;
-	s7_Double *vals;
-	chans = s7_vector_dimensions(mx)[0];
-	vals = s7_float_vector_elements(mx);
-	mx1 = mus_make_empty_mixer(chans);
-	for (i = 0, k = 0; i < chans; i++)
-	  for (j = 0; j < chans; j++, k++)
-	    mus_mixer_set(mx1, i, j, (mus_float_t)(vals[k]));
-	need_free = true;
-      }
-#endif
-
-    if (Xen_is_string(out)) outfile = mus_strdup(Xen_string_to_C_string(out));
-    if (Xen_is_string(in)) infile = mus_strdup(Xen_string_to_C_string(in));
-
-    if ((infile) && (outfile))
-      mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
-    else
-      {
-	if (infile)
-	  inf = mus_make_file_to_frame(infile);
-	if (outfile)
-	  outf = mus_continue_sample_to_file(outfile);
-	mus_mix_with_reader_and_writer(outf, inf, ostart, osamps, istart, mx1, envs1);
-	if (infile)
-	  mus_free((mus_any *)inf);
-	if (outfile)
-	  mus_free((mus_any *)outf);
-      }
-    if (envs1) 
-      {
-	for (i = 0; i < in_size; i++) if (envs1[i]) free(envs1[i]);
-	free(envs1);
-      }
-    if (infile) free(infile);
-    if (outfile) free(outfile);
-#if HAVE_SCHEME
-    if (need_free) mus_free(mx1);
-#endif
-  }
-  return(Xen_true);
-}
-
-/* Xen file, Xen beg, Xen dur, Xen mx, Xen revmx, Xen envs, Xen srcs, Xen srcenv, Xen outstream, Xen revstream */
-
-static Xen g_mus_mix_with_envs(Xen args)
-{
-  #define H_mus_mix_with_envs "(" S_mus_mix_with_envs " file beg dur mx revmx envs srcs srcenv out rev) is an extension of " S_mus_mix ", primarily \
-intended to speed up the fullmix instrument.  file is a vector of readin generators.  beg is the sample at which to start mixing \
-output, dur is the number of samples to write. mx is a mixer, revmx is either #f or a mixer. "
-
-  int i, in_chans, out_chans;
-  mus_long_t st, nd;
-  mus_any *s_env = NULL, *mix = NULL, *rev_mix = NULL, *ostr, *rstr = NULL;
-  mus_any **mix_envs, **mix_srcs, **mix_rds;
-  mus_xen *gn;
-  Xen ve, arg, file, beg, dur, mx, revmx, envs, srcs, srcenv, outstream = Xen_undefined, revstream = Xen_undefined;
-  bool need_mx_free = false, need_revmx_free = false;
-  
-  arg = args;         file = Xen_car(arg);
-  arg = Xen_cdr(arg); beg = Xen_car(arg);
-  arg = Xen_cdr(arg); dur = Xen_car(arg);
-  arg = Xen_cdr(arg); mx = Xen_car(arg);
-  arg = Xen_cdr(arg); revmx = Xen_car(arg);
-  arg = Xen_cdr(arg); envs = Xen_car(arg);
-  arg = Xen_cdr(arg); srcs = Xen_car(arg);
-  arg = Xen_cdr(arg); srcenv = Xen_car(arg);
-  arg = Xen_cdr(arg);
-  if (!Xen_is_null(arg))
-    {
-      outstream = Xen_car(arg);
-      arg = Xen_cdr(arg);
-      if (!Xen_is_null(arg))
-	revstream = Xen_car(arg);
-    }
-
-  Xen_check_type(Xen_is_vector(file), file, 1, S_mus_mix_with_envs, "a vector of readin generators");
-  in_chans = Xen_vector_length(file);
-  
-  Xen_check_type(Xen_is_integer(beg), beg, 2, S_mus_mix_with_envs, "an integer");
-  Xen_check_type(Xen_is_integer(dur), dur, 3, S_mus_mix_with_envs, "an integer");
-
-  st = Xen_integer_to_C_int(beg);
-  nd = st + Xen_integer_to_C_int(dur);
-
-  if (!Xen_is_vector(mx))
-    {
-      gn = (mus_xen *)Xen_object_ref_checked(mx, mus_xen_tag);
-      if (!gn) Xen_check_type(false, mx, 4, S_mus_mix_with_envs, "a mixer");
-      mix = gn->gen;
-      Xen_check_type(mus_is_mixer(mix), mx, 4, S_mus_mix_with_envs, "a mixer");
-    }
-  if (!Xen_is_vector(revmx))
-    {
-      if (!Xen_is_false(revmx))
-	{
-	  gn = (mus_xen *)Xen_object_ref_checked(revmx, mus_xen_tag);
-	  if (!gn) Xen_check_type(false, mx, 5, S_mus_mix_with_envs, "a mixer");
-	  rev_mix = gn->gen;
-	  Xen_check_type(mus_is_mixer(rev_mix), revmx, 5, S_mus_mix_with_envs, "a mixer");
-	}
-    }
-
-  if (!Xen_is_false(srcenv))
-    {
-      gn = (mus_xen *)Xen_object_ref_checked(srcenv, mus_xen_tag);
-      if (!gn) Xen_check_type(false, srcenv, 8, S_mus_mix_with_envs, "an env generator");
-      s_env = gn->gen;
-      Xen_check_type(mus_is_env(s_env), srcenv, 8, S_mus_mix_with_envs, "an env generator");
-    }
-
-  if (Xen_is_bound(outstream))
-    {
-      gn = (mus_xen *)Xen_object_ref_checked(outstream, mus_xen_tag);
-      ostr = gn->gen;
-    }
-  else ostr = Xen_to_mus_any(mus_clm_output());
-  out_chans = mus_channels(ostr);
-
-  if (rev_mix)
-    {
-      if (Xen_is_bound(revstream))
-	{
-	  gn = (mus_xen *)Xen_object_ref_checked(revstream, mus_xen_tag);
-	  rstr = gn->gen;
-	}
-      else rstr = Xen_to_mus_any(mus_clm_reverb());
-    }
-
-  if (!Xen_is_false(envs))
-    Xen_check_type(Xen_is_vector(envs), envs, 6, S_mus_mix_with_envs, "a vector of env generators");
-  if (!Xen_is_false(srcs))
-    Xen_check_type(Xen_is_vector(srcs), srcs, 7, S_mus_mix_with_envs, "a vector of src generators");
-
-#if HAVE_SCHEME
-  if (Xen_is_vector(mx))
-    {
-      int j, k, chans;
-      s7_Double *vals;
-      chans = s7_vector_dimensions(mx)[0];
-      vals = s7_float_vector_elements(mx);
-      mix = mus_make_empty_mixer(chans);
-      for (i = 0, k = 0; i < chans; i++)
-	for (j = 0; j < chans; j++, k++)
-	  mus_mixer_set(mix, i, j, (mus_float_t)(vals[k]));
-      need_mx_free = true;
-    }
-  if (Xen_is_vector(revmx))
-    {
-      int j, k, chans;
-      s7_Double *vals;
-      chans = s7_vector_dimensions(revmx)[0];
-      vals = s7_float_vector_elements(revmx);
-      rev_mix = mus_make_empty_mixer(chans);
-      for (i = 0, k = 0; i < chans; i++)
-	for (j = 0; j < chans; j++, k++)
-	  mus_mixer_set(rev_mix, i, j, (mus_float_t)(vals[k]));
-      need_revmx_free = true;
-    }
-#endif
-
-  mix_rds = (mus_any **)calloc(in_chans, sizeof(mus_any *));
-  mix_srcs = (mus_any **)calloc(in_chans, sizeof(mus_any *));
-
-  for (i = 0; i < in_chans; i++)
-    mix_rds[i] = Xen_to_mus_any(Xen_vector_ref(file, i));
-    
-  if (Xen_is_vector(srcs))
-    {
-      for (i = 0; i < in_chans; i++)
-	{
-	  ve = Xen_vector_ref(srcs, i);
-	  if (!Xen_is_false(ve)) mix_srcs[i] = Xen_to_mus_any(ve);
-	}
-    }
-
-  mix_envs = (mus_any **)calloc(in_chans * out_chans, sizeof(mus_any *));
-  if (Xen_is_vector(envs))
-    for (i = 0; i < in_chans * out_chans; i++)
-      {
-	ve = Xen_vector_ref(envs, i);
-	if (!Xen_is_false(ve)) mix_envs[i] = Xen_to_mus_any(ve);
-      }
-
-  {
-    mus_long_t samp;
-    int inp, outp, off;
-    mus_float_t src_env_val = 0.0;
-    mus_any *in_frame, *out_frame, *rev_frame = NULL;
-    mus_float_t *infs;
-    mus_float_t **mxs;
-
-    mxs = (mus_float_t **)mus_data(mix);
-
-    in_frame = mus_make_empty_frame(in_chans);
-    infs = mus_data(in_frame);
-    out_frame = mus_make_empty_frame(out_chans);
-    if (rev_mix) rev_frame = mus_make_empty_frame(1);
-
-    if (in_chans == 1)
-      {
-	mus_any *s = NULL, *r = NULL;
-	s = mix_srcs[0];
-	if (!s) r = mix_rds[0];
-
-	for (samp = st; samp < nd; samp++)
-	  {
-	    for (outp = 0; outp < out_chans; outp++)
-	      {
-		mus_any *e;
-		e = mix_envs[outp];
-		if (e)
-		  mxs[0][outp] = mus_env(e);
-	      }
-	    if (s_env)
-	      src_env_val = mus_env(s_env);
-	    if (s)
-	      infs[0] = mus_src(s, src_env_val, NULL);
-	    else 
-	      {
-		if (r) 
-		  infs[0] = mus_readin(r);
-		else infs[0] = 0.0;
-	      }
-	    mus_frame_to_file(ostr, samp, mus_frame_to_frame(in_frame, mix, out_frame));
-	    if (rev_mix) mus_frame_to_file(rstr, samp, mus_frame_to_frame(in_frame, rev_mix, rev_frame));
-	  }
-      }
-    else
-      {
-	for (samp = st; samp < nd; samp++)
-	  {
-	    for (inp = 0, off = 0; inp < in_chans; inp++, off += out_chans)
-	      for (outp = 0; outp < out_chans; outp++)
-		{
-		  mus_any *e;
-		  e = mix_envs[off + outp];
-		  if (e)
-		    mxs[inp][outp] = mus_env(e);
-		}
-	    if (s_env)
-	      src_env_val = mus_env(s_env);
-	    for (inp = 0; inp < in_chans; inp++)
-	      {
-		mus_any *s;
-		s = mix_srcs[inp];
-		if (s)
-		  infs[inp] = mus_src(s, src_env_val, NULL);
-		else 
-		  {
-		    s = mix_rds[inp];
-		    if (s) 
-		      infs[inp] = mus_readin(s);
-		    else infs[inp] = 0.0;
-		  }
-	      }
-	    mus_frame_to_file(ostr, samp, mus_frame_to_frame(in_frame, mix, out_frame));
-	    if (rev_mix) mus_frame_to_file(rstr, samp, mus_frame_to_frame(in_frame, rev_mix, rev_frame));
-	  }
-      }
-    mus_free(in_frame);
-    mus_free(out_frame);
-    if (rev_frame) mus_free(rev_frame);
-  }
-
-  if (need_mx_free) mus_free(mix);
-  if (need_revmx_free) mus_free(rev_mix);
-  
-  free(mix_rds);
-  free(mix_srcs);
-  free(mix_envs);
-  return(Xen_false);
-}
-#endif
 
 
 
@@ -13297,8 +11943,8 @@ static gf *fixup_max(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
   if (s7_list_length(sc, expr) == 3)
     {
       int typ1, typ2;
-      double x1, x2;
-      double *rx1, *rx2;
+      double x1 = 0.0, x2;
+      double *rx1 = NULL, *rx2;
       s7_pointer s1, s2;
       gf *g1 = NULL, *g2 = NULL, *g = NULL;
 
@@ -13926,9 +12572,9 @@ static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
   if (s7_list_length(sc, expr) == 3)
     {
       int typ1, typ2;
-      double x1, x2;
-      double *rx1, *rx2;
-      s7_pointer s1, s2;
+      double x1 = 0.0, x2 = 0.0;
+      double *rx1 = NULL, *rx2 = NULL;
+      s7_pointer s1, s2 = NULL;
       gf *g1 = NULL, *g2 = NULL, *g = NULL;
 
       typ1 = gf_parse(sc, cadr(expr), locals, &g1, &s1, &x1, &rx1);
@@ -16101,36 +14747,6 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 	    vdata[pos] += mus_delay_unmodulated_noz(dly, vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0))));
 	  return(args);
 	}
-
-#if (!DISABLE_DEPRECATED)
-      if (out_any_2 == out_any_2_to_sound_data)
-	{
-	  mus_long_t pos2;
-	  mus_any *dly1, *dly2;
-
-	  dly1 = outs[0];
-	  if (end > clm_output_sd_offset)
-	    end = clm_output_sd_offset;
-	  if (size == 1)
-	    {
-	      for (; pos < end; pos++)
-		clm_output_sd_data[pos] += mus_delay_unmodulated_noz(dly1, vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0))));
-	      return(args);
-	    }
-	  if ((size == 2) && (clm_output_sd_chans > 1))
-	    {
-	      pos2 = clm_output_sd_offset + pos;
-	      dly2 = outs[1];
-	      for (; pos < end; pos++, pos2++)
-		{
-		  x = vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0)));
-		  clm_output_sd_data[pos] += mus_delay_unmodulated_noz(dly1, x);
-		  clm_output_sd_data[pos2] += mus_delay_unmodulated_noz(dly2, x);
-		}
-	      return(args);
-	    }
-	}
-#endif
     }
 
   for (; pos < end; pos++)
@@ -21991,30 +20607,6 @@ Xen_wrap_2_optional_args(g_one_pole_all_pass_w, g_one_pole_all_pass)
 Xen_wrap_2_args(g_set_formant_frequency_w, g_set_formant_frequency)
 Xen_wrap_3_args(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
 
-#if (!DISABLE_DEPRECATED)
-Xen_wrap_any_args(g_make_frame_w, g_make_frame)
-Xen_wrap_any_args(g_make_frame_unchecked_w, g_make_frame_unchecked)
-Xen_wrap_any_args(g_frame_w, g_frame)
-Xen_wrap_1_arg(g_is_frame_w, g_is_frame)
-Xen_wrap_3_optional_args(g_frame_add_w, g_frame_add)
-Xen_wrap_3_optional_args(g_frame_multiply_w, g_frame_multiply)
-Xen_wrap_2_args(g_frame_ref_w, g_frame_ref)
-Xen_wrap_3_args(g_frame_set_w, g_frame_set)
-Xen_wrap_any_args(g_make_mixer_w, g_make_mixer)
-Xen_wrap_any_args(g_make_mixer_unchecked_w, g_make_mixer_unchecked)
-Xen_wrap_any_args(g_mixer_w, g_mixer)
-Xen_wrap_1_arg(g_is_mixer_w, g_is_mixer)
-Xen_wrap_3_optional_args(g_mixer_multiply_w, g_mixer_multiply)
-Xen_wrap_3_optional_args(g_mixer_add_w, g_mixer_add)
-Xen_wrap_2_args(g_make_scalar_mixer_w, g_make_scalar_mixer)
-Xen_wrap_3_args(g_mixer_ref_w, g_mixer_ref)
-Xen_wrap_4_args(g_mixer_set_w, g_mixer_set)
-Xen_wrap_2_args(g_frame_to_sample_w, g_frame_to_sample)
-Xen_wrap_1_arg(g_frame_to_list_w, g_frame_to_list)
-Xen_wrap_3_optional_args(g_frame_to_frame_w, g_frame_to_frame)
-Xen_wrap_3_optional_args(g_sample_to_frame_w, g_sample_to_frame)
-#endif
-
 Xen_wrap_5_args(g_frample_to_frample_w, g_frample_to_frample)
 
 Xen_wrap_any_args(g_make_wave_train_w, g_make_wave_train)
@@ -22077,15 +20669,6 @@ Xen_wrap_1_arg(g_continue_sample_to_file_w, g_continue_sample_to_file)
 Xen_wrap_4_args(g_sample_to_file_w, g_sample_to_file)
 Xen_wrap_2_args(g_sample_to_file_add_w, g_sample_to_file_add)
 
-#if (!DISABLE_DEPRECATED)
-Xen_wrap_1_arg(g_is_file_to_frame_w, g_is_file_to_frame)
-Xen_wrap_2_optional_args(g_make_file_to_frame_w, g_make_file_to_frame)
-Xen_wrap_3_optional_args(g_file_to_frame_w, g_file_to_frame)
-Xen_wrap_1_arg(g_continue_frame_to_file_w, g_continue_frame_to_file)
-Xen_wrap_1_arg(g_is_frame_to_file_w, g_is_frame_to_file)
-Xen_wrap_3_args(g_frame_to_file_w, g_frame_to_file)
-Xen_wrap_5_optional_args(g_make_frame_to_file_w, g_make_frame_to_file)
-#endif
 Xen_wrap_1_arg(g_is_file_to_frample_w, g_is_file_to_frample)
 Xen_wrap_2_optional_args(g_make_file_to_frample_w, g_make_file_to_frample)
 Xen_wrap_3_optional_args(g_file_to_frample_w, g_file_to_frample)
@@ -22172,10 +20755,6 @@ Xen_wrap_4_optional_args(g_make_ncos_w, g_make_ncos)
 Xen_wrap_4_optional_args(g_make_nsin_w, g_make_nsin)
 Xen_wrap_8_optional_args(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 
-#if (!DISABLE_DEPRECATED)
-Xen_wrap_7_optional_args(g_mus_mix_w, g_mus_mix)
-Xen_wrap_any_args(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
-#endif
 Xen_wrap_any_args(g_mus_file_mix_w, g_mus_file_mix)
 Xen_wrap_any_args(g_mus_file_mix_with_envs_w, g_mus_file_mix_with_envs)
 
@@ -22209,12 +20788,7 @@ static void mus_xen_init(void)
   current_connect_func = Xen_false;
 
 #if HAVE_SCHEME
-#if (!DISABLE_DEPRECATED)
-  mus_xen_tag = s7_new_type_x("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
-				     mus_xen_apply, s7_mus_set, s7_mus_length, s7_mus_copy, s7_mus_reverse, s7_mus_fill);
-#else
   mus_xen_tag = s7_new_type_x("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, NULL, s7_mus_length, NULL, NULL, NULL);
-#endif
   as_needed_arglist = Xen_list_1(Xen_integer_zero);
   Xen_GC_protect(as_needed_arglist);
   s7_set_object_print_readably(mus_xen_tag, mus_generator_to_readable_string);
@@ -22654,15 +21228,6 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_sample_to_file,       g_sample_to_file_w,        4, 0, 0, H_sample_to_file);
   Xen_define_safe_procedure(S_sample_to_file_add,   g_sample_to_file_add_w,    2, 0, 0, H_sample_to_file_add);
 
-#if (!DISABLE_DEPRECATED)
-  Xen_define_safe_procedure(S_is_file_to_frame,     g_is_file_to_frame_w,      1, 0, 0, H_is_file_to_frame);
-  Xen_define_safe_procedure(S_make_file_to_frame,   g_make_file_to_frame_w,    1, 1, 0, H_make_file_to_frame);
-  Xen_define_safe_procedure(S_file_to_frame,        g_file_to_frame_w,         2, 1, 0, H_file_to_frame);
-  Xen_define_safe_procedure(S_continue_frame_to_file, g_continue_frame_to_file_w, 1, 0, 0, H_continue_frame_to_file);
-  Xen_define_safe_procedure(S_is_frame_to_file,     g_is_frame_to_file_w,      1, 0, 0, H_is_frame_to_file);
-  Xen_define_safe_procedure(S_frame_to_file,        g_frame_to_file_w,         3, 0, 0, H_frame_to_file);
-  Xen_define_safe_procedure(S_make_frame_to_file,   g_make_frame_to_file_w,    1, 4, 0, H_make_frame_to_file);
-#endif
   Xen_define_safe_procedure(S_is_file_to_frample,     g_is_file_to_frample_w,      1, 0, 0, H_is_file_to_frample);
   Xen_define_safe_procedure(S_make_file_to_frample,   g_make_file_to_frample_w,    1, 1, 0, H_make_file_to_frample);
   Xen_define_safe_procedure(S_file_to_frample,        g_file_to_frample_w,         2, 1, 0, H_file_to_frample);
@@ -22763,44 +21328,6 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_make_nsin,           g_make_nsin_w,           0, 4, 0, H_make_nsin); 
   Xen_define_safe_procedure(S_make_asymmetric_fm,  g_make_asymmetric_fm_w,  0, 8, 0, H_make_asymmetric_fm);
 
-#if (!DISABLE_DEPRECATED)
-  Xen_define_safe_procedure(S_make_frame,           g_make_frame_w,            0, 0, 1, H_make_frame);
-  Xen_define_safe_procedure(S_make_frame "!",       g_make_frame_unchecked_w,  0, 0, 1, H_make_frame_unchecked);
-  Xen_define_safe_procedure(S_frame,                g_frame_w,                 0, 0, 1, H_frame);
-
-  Xen_define_safe_procedure(S_is_frame,             g_is_frame_w,              1, 0, 0, H_is_frame);
-  Xen_define_safe_procedure(S_frame_add,            g_frame_add_w,             2, 1, 0, H_frame_add);
-  Xen_define_safe_procedure(S_frame_multiply,       g_frame_multiply_w,        2, 1, 0, H_frame_multiply);
-#if HAVE_SCHEME || HAVE_FORTH
-  Xen_define_procedure_with_setter(S_frame_ref, g_frame_ref_w, H_frame_ref, S_setB S_frame_ref, g_frame_set_w,  2, 0, 3, 0);
-#endif
-#if HAVE_RUBY
-  Xen_define_procedure(S_frame_ref,                 g_frame_ref_w,             2, 0, 0, H_frame_ref);
-#endif
-  Xen_define_safe_procedure(S_frame_set,            g_frame_set_w,             3, 0, 0, H_frame_set);
-
-  Xen_define_safe_procedure(S_make_mixer,           g_make_mixer_w,            0, 0, 1, H_make_mixer);
-  Xen_define_safe_procedure(S_make_mixer "!",       g_make_mixer_unchecked_w,  0, 0, 1, H_make_mixer_unchecked);
-  Xen_define_safe_procedure(S_mixer,                g_mixer_w,                 0, 0, 1, H_mixer);
-  Xen_define_safe_procedure(S_is_mixer,             g_is_mixer_w,              1, 0, 0, H_is_mixer);
-  Xen_define_safe_procedure(S_mixer_multiply,       g_mixer_multiply_w,        2, 1, 0, H_mixer_multiply);
-  Xen_define_safe_procedure(S_mixer_add,            g_mixer_add_w,             2, 1, 0, H_mixer_add);
-  Xen_define_safe_procedure(S_make_scalar_mixer,    g_make_scalar_mixer_w,     2, 0, 0, H_make_scalar_mixer);
-#if HAVE_SCHEME || HAVE_FORTH
-  Xen_define_procedure_with_setter(S_mixer_ref,  g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_mixer_set_w,  3, 0, 4, 0);
-#endif
-#if HAVE_RUBY
-  Xen_define_procedure(S_mixer_ref,                 g_mixer_ref_w,             3, 0, 0, H_mixer_ref);
-#endif
-  Xen_define_safe_procedure(S_mixer_set,            g_mixer_set_w,             4, 0, 0, H_mixer_set);
-  Xen_define_real_procedure(S_frame_to_sample,      g_frame_to_sample_w,       2, 0, 0, H_frame_to_sample);
-  Xen_define_safe_procedure(S_frame_to_list,        g_frame_to_list_w,         1, 0, 0, H_frame_to_list);
-  Xen_define_safe_procedure(S_frame_to_frame,       g_frame_to_frame_w,        2, 1, 0, H_frame_to_frame);
-  Xen_define_safe_procedure(S_sample_to_frame,      g_sample_to_frame_w,       2, 1, 0, H_sample_to_frame);
-
-  Xen_define_safe_procedure(S_mus_mix,              g_mus_mix_w,               2, 5, 0, H_mus_mix);
-  Xen_define_safe_procedure(S_mus_mix_with_envs,    g_mus_mix_with_envs_w,     0, 0, 1, H_mus_mix_with_envs);
-#endif
   Xen_define_safe_procedure(S_mus_file_mix,         g_mus_file_mix_w,          0, 0, 1, H_mus_file_mix);
   Xen_define_safe_procedure(S_mus_file_mix_with_envs, g_mus_file_mix_with_envs_w, 0, 0, 1, H_mus_file_mix_with_envs);
   Xen_define_safe_procedure(S_frample_to_frample,   g_frample_to_frample_w,    5, 0, 0, H_frample_to_frample);

@@ -147,20 +147,17 @@
  * so the incoming (non-s7-specific) compile-time switches are
  *     HAVE_COMPLEX_NUMBERS, HAVE_COMPLEX_TRIG, SIZEOF_VOID_P
  *
- * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__, __ANDROID__,
- *     __OpenBSD__
+ * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __ANDROID__
  *
  * if SIZEOF_VOID_P is not defined, we look for __SIZEOF_POINTER__ instead
  *   the default is to assume that we're running on a 64-bit machine.
- *
- * The __bfin__ switch refers to the Blackfin processor where int accesses must be 4-byte aligned.
- *   I can't find any built-in compiler switch to detect this case. (gcc has __alignof__(int) I think).
- *   Currently the unaligned access code is turned off, so this switch can be ignored.
  *
  * in openBSD I think you need to include -ftrampolines in CFLAGS.
  *
  * if you want this file to compile into a stand-alone interpreter, define WITH_MAIN (this assumes access to readline)
  *   then load it with -lreadline -ldl -lm, etc.
+ *
+ * -O3 does not seem to gain us anything.
  */
 
 
@@ -1443,9 +1440,8 @@ typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_w
 #define T_C_ANY_ARGS_FUNCTION 40
 #define T_C_OPT_ARGS_FUNCTION 41
 #define T_C_RST_ARGS_FUNCTION 42
-#define T_C_LST_ARGS_FUNCTION 43
 
-#define NUM_TYPES        44
+#define NUM_TYPES        43
 
 /* T_STACK, T_SLOT, T_BAFFLE, and T_COUNTER are internal (stacks, bindings, call/cc barriers, map circular list checks)
  */
@@ -1531,7 +1527,6 @@ static void init_types(void)
   t_applicable_p[T_C_ANY_ARGS_FUNCTION] = true;
   t_applicable_p[T_C_OPT_ARGS_FUNCTION] = true;
   t_applicable_p[T_C_RST_ARGS_FUNCTION] = true;
-  t_applicable_p[T_C_LST_ARGS_FUNCTION] = true;
   t_applicable_p[T_CLOSURE] = true;
   t_applicable_p[T_CLOSURE_STAR] = true;
   t_applicable_p[T_GOTO] = true;
@@ -1552,7 +1547,6 @@ static void init_types(void)
   t_simple_p[T_C_ANY_ARGS_FUNCTION] = true;
   t_simple_p[T_C_OPT_ARGS_FUNCTION] = true;
   t_simple_p[T_C_RST_ARGS_FUNCTION] = true;
-  t_simple_p[T_C_LST_ARGS_FUNCTION] = true;
   /* not completely sure about the next ones */
   t_simple_p[T_ENVIRONMENT] = true;
   t_simple_p[T_INPUT_PORT] = true;
@@ -1808,7 +1802,6 @@ static int t_optimized = T_OPTIMIZED;
 
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
-#define set_copy_args(p)              typeflag(p) |= T_COPY_ARGS
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
 /* this marks something that might mess with its argument list, it should not be in the 2nd byte
  */
@@ -3802,7 +3795,6 @@ static void init_mark_functions(void)
   mark_function[T_C_ANY_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_OPT_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_RST_ARGS_FUNCTION] = just_mark;
-  mark_function[T_C_LST_ARGS_FUNCTION] = just_mark;
 }
 
 
@@ -23546,16 +23538,6 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 }
 
 
-#if (!DISABLE_DEPRECATED)
-bool s7_is_valid_pointer(s7_pointer arg)
-{
-  /* not currently used, I hope */
-  return((arg) &&
-	 (type(arg) > T_FREE) && (type(arg) < NUM_TYPES));
-}
-#endif
-
-
 #if TRAP_SEGFAULT
 #include <signal.h>
 static sigjmp_buf senv;
@@ -24268,6 +24250,7 @@ static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, 
 
 static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
+  /* we need list_to_starboard... */
   s7_pointer x;
   int i, len, true_len;
 
@@ -25025,7 +25008,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
   
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
       port_write_string(port)(sc, c_function_name(obj), c_function_name_length(obj), port);
@@ -26867,56 +26849,6 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 				}}}}}}}}
   return(f9(a1, a2, a3, a4, a5, a6, a7, a8, a9));
 }
-
-#if (!DISABLE_DEPRECATED)
-s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args, 
-			 s7_pointer (*f10)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
-					   s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8,
-					   s7_pointer a9, s7_pointer a10))
-{
-  s7_pointer a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
-  a1 = sc->UNDEFINED; a2 = sc->UNDEFINED; a3 = sc->UNDEFINED; a4 = sc->UNDEFINED; a5 = sc->UNDEFINED; 
-  a6 = sc->UNDEFINED, a7 = sc->UNDEFINED; a8 = sc->UNDEFINED; a9 = sc->UNDEFINED; a10 = sc->UNDEFINED;
-  if (is_pair(args))
-    {
-      a1 = car(args);
-      args = cdr(args);
-      if (is_pair(args))
-	{
-	  a2 = car(args);
-	  args = cdr(args);
-	  if (is_pair(args))
-	    {
-	      a3 = car(args);
-	      args = cdr(args);
-	      if (is_pair(args))
-		{
-		  a4 = car(args);
-		  args = cdr(args);
-		  if (is_pair(args))
-		    {
-		      a5 = car(args);
-		      args = cdr(args);
-		      if (is_pair(args))
-			{
-			  a6 = car(args);
-			  args = cdr(args);
-			  if (is_pair(args))
-			    {
-			      a7 = car(args);
-			      args = cdr(args);
-			      if (is_pair(args))
-				{
-				  a8 = car(args);
-				  args = cdr(args);
-				  if (is_pair(args))
-				    {
-				      a9 = car(args);
-				      if (is_pair(cdr(args))) a10 = cadr(args);
-				    }}}}}}}}}
-  return(f10(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
-}
-#endif
 
 /* -------------------------------------------------------------------------------- */
 
@@ -28957,8 +28889,37 @@ static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_list "(list ...) returns its arguments in a list"
 
-  return(args);
+  return(copy_list(sc, args));
 }
+
+
+static s7_pointer list_0, list_1, list_2;
+static s7_pointer g_list_0(s7_scheme *sc, s7_pointer args)
+{
+  return(sc->NIL);
+}
+
+static s7_pointer g_list_1(s7_scheme *sc, s7_pointer args)
+{
+  return(cons(sc, car(args), sc->NIL));
+}
+
+static s7_pointer g_list_2(s7_scheme *sc, s7_pointer args)
+{
+  return(cons_unchecked(sc, car(args), cons(sc, cadr(args), sc->NIL)));
+}
+
+static s7_pointer list_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  switch (args)
+    {
+    case 0: return(list_0);
+    case 1: return(list_1);
+    case 2: return(list_2);
+    }
+  return(f);
+}
+
 
 
 s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
@@ -33303,7 +33264,6 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
       return(c_function_setter(p));
 
     case T_C_MACRO:
@@ -33356,7 +33316,6 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
       c_function_setter(p) = setter;
       if ((is_closure(setter)) ||
 	  (is_closure_star(setter)))
@@ -33396,7 +33355,6 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
   
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
       return(c_function_name(proc));
@@ -33620,7 +33578,6 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
     case T_C_FUNCTION:
       return(s7_cons(sc, s7_make_integer(sc, c_function_required_args(x)), s7_make_integer(sc, c_function_all_args(x))));
 
@@ -33775,7 +33732,6 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
     case T_C_FUNCTION:
       return(((int)c_function_required_args(x) <= args) &&
 	     ((int)c_function_all_args(x) >= args));
@@ -33935,7 +33891,6 @@ static bool is_thunkable(s7_scheme *sc, s7_pointer x)
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
       return(c_function_required_args(x) == 0);
 
     case T_CLOSURE:
@@ -36237,7 +36192,6 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     case T_CONTINUATION: return(continuations[article]);
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:   return(functions[article]);
     case T_MACRO:
@@ -38875,6 +38829,9 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
   #define H_qq_list "({list} ...) returns its arguments in a list (internal to quasiquote)"
 
   s7_pointer x, y, px;
+
+  if (sc->no_values == 0)
+    return(args);
 
   for (x = args; is_pair(x); x = cdr(x))
     if (car(x) == sc->NO_VALUE) 
@@ -42057,104 +42014,104 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->ADD, add_chooser);
   add_class = c_function_class(f);
 
-  add_1 = make_function_with_class(sc, f, "+", g_add_1, 1, 0, false, "+ optimization");
-  add_2 = make_function_with_class(sc, f, "+", g_add_2, 2, 0, false, "+ optimization");
+  add_1 = make_function_with_class(sc, f, "+", g_add_1, 1, 0, false, "+ opt");
+  add_2 = make_function_with_class(sc, f, "+", g_add_2, 2, 0, false, "+ opt");
 
-  add_2_temp = make_temp_function_with_class(sc, f, "+", g_add_2_temp, 2, 0, false, "+ optimization");
-  add_s_temp = make_temp_function_with_class(sc, f, "+", g_add_s_temp, 2, 0, false, "+ optimization");
-  add_s_direct = make_temp_function_with_class(sc, f, "+", g_add_s_direct, 2, 0, false, "+ optimization");
-  add_temp_s = make_temp_function_with_class(sc, f, "+", g_add_temp_s, 2, 0, false, "+ optimization");
-  add_3_temp = make_temp_function_with_class(sc, f, "+", g_add_3_temp, 3, 0, false, "+ optimization");
+  add_2_temp = make_temp_function_with_class(sc, f, "+", g_add_2_temp, 2, 0, false, "+ opt");
+  add_s_temp = make_temp_function_with_class(sc, f, "+", g_add_s_temp, 2, 0, false, "+ opt");
+  add_s_direct = make_temp_function_with_class(sc, f, "+", g_add_s_direct, 2, 0, false, "+ opt");
+  add_temp_s = make_temp_function_with_class(sc, f, "+", g_add_temp_s, 2, 0, false, "+ opt");
+  add_3_temp = make_temp_function_with_class(sc, f, "+", g_add_3_temp, 3, 0, false, "+ opt");
 
-  add_1s = make_function_with_class(sc, f, "+", g_add_1s, 2, 0, false, "+ optimization");
-  add_s1 = make_function_with_class(sc, f, "+", g_add_s1, 2, 0, false, "+ optimization");
-  add_cs1 = make_function_with_class(sc, f, "+", g_add_cs1, 2, 0, false, "+ optimization");
-  add_si_i = make_function_with_class(sc, f, "+", g_add_si_i, 2, 0, false, "+ optimization");
-  add_si = make_function_with_class(sc, f, "+", g_add_si, 2, 0, false, "+ optimization");
-  add_is = make_function_with_class(sc, f, "+", g_add_is, 2, 0, false, "+ optimization");
-  add_sf = make_function_with_class(sc, f, "+", g_add_sf, 2, 0, false, "+ optimization");
-  add_fs = make_function_with_class(sc, f, "+", g_add_fs, 2, 0, false, "+ optimization");
-  add_ss_1ss = make_temp_function_with_class(sc, f, "+", g_add_ss_1ss, 2, 0, false, "+ optimization");
-  add_f_sf = make_function_with_class(sc, f, "+", g_add_f_sf, 2, 0, false, "+ optimization");
+  add_1s = make_function_with_class(sc, f, "+", g_add_1s, 2, 0, false, "+ opt");
+  add_s1 = make_function_with_class(sc, f, "+", g_add_s1, 2, 0, false, "+ opt");
+  add_cs1 = make_function_with_class(sc, f, "+", g_add_cs1, 2, 0, false, "+ opt");
+  add_si_i = make_function_with_class(sc, f, "+", g_add_si_i, 2, 0, false, "+ opt");
+  add_si = make_function_with_class(sc, f, "+", g_add_si, 2, 0, false, "+ opt");
+  add_is = make_function_with_class(sc, f, "+", g_add_is, 2, 0, false, "+ opt");
+  add_sf = make_function_with_class(sc, f, "+", g_add_sf, 2, 0, false, "+ opt");
+  add_fs = make_function_with_class(sc, f, "+", g_add_fs, 2, 0, false, "+ opt");
+  add_ss_1ss = make_temp_function_with_class(sc, f, "+", g_add_ss_1ss, 2, 0, false, "+ opt");
+  add_f_sf = make_function_with_class(sc, f, "+", g_add_f_sf, 2, 0, false, "+ opt");
 
 
   /* - */
   f = set_function_chooser(sc, sc->MINUS, subtract_chooser);
 
-  subtract_1 = make_function_with_class(sc, f, "-", g_subtract_1, 1, 0, false, "- optimization");
-  subtract_2 = make_function_with_class(sc, f, "-", g_subtract_2, 2, 0, false, "- optimization");
-  subtract_s1 = make_function_with_class(sc, f, "-", g_subtract_s1, 2, 0, false, "- optimization");
-  subtract_cs1 = make_function_with_class(sc, f, "-", g_subtract_cs1, 2, 0, false, "- optimization");
-  subtract_csn = make_function_with_class(sc, f, "-", g_subtract_csn, 2, 0, false, "- optimization");
-  subtract_sf = make_function_with_class(sc, f, "-", g_subtract_sf, 2, 0, false, "- optimization");
-  subtract_2f = make_function_with_class(sc, f, "-", g_subtract_2f, 2, 0, false, "- optimization");
-  subtract_fs = make_function_with_class(sc, f, "-", g_subtract_fs, 2, 0, false, "- optimization");
-  subtract_sf_f = make_function_with_class(sc, f, "-", g_subtract_sf_f, 2, 0, false, "- optimization");
-  subtract_2_temp = make_temp_function_with_class(sc, f, "-", g_subtract_2_temp, 2, 0, false, "- optimization");
-  subtract_f_sqr = make_function_with_class(sc, f, "-", g_subtract_f_sqr, 2, 0, false, "- optimization");
+  subtract_1 = make_function_with_class(sc, f, "-", g_subtract_1, 1, 0, false, "- opt");
+  subtract_2 = make_function_with_class(sc, f, "-", g_subtract_2, 2, 0, false, "- opt");
+  subtract_s1 = make_function_with_class(sc, f, "-", g_subtract_s1, 2, 0, false, "- opt");
+  subtract_cs1 = make_function_with_class(sc, f, "-", g_subtract_cs1, 2, 0, false, "- opt");
+  subtract_csn = make_function_with_class(sc, f, "-", g_subtract_csn, 2, 0, false, "- opt");
+  subtract_sf = make_function_with_class(sc, f, "-", g_subtract_sf, 2, 0, false, "- opt");
+  subtract_2f = make_function_with_class(sc, f, "-", g_subtract_2f, 2, 0, false, "- opt");
+  subtract_fs = make_function_with_class(sc, f, "-", g_subtract_fs, 2, 0, false, "- opt");
+  subtract_sf_f = make_function_with_class(sc, f, "-", g_subtract_sf_f, 2, 0, false, "- opt");
+  subtract_2_temp = make_temp_function_with_class(sc, f, "-", g_subtract_2_temp, 2, 0, false, "- opt");
+  subtract_f_sqr = make_function_with_class(sc, f, "-", g_subtract_f_sqr, 2, 0, false, "- opt");
 
   /* * */
   f = set_function_chooser(sc, sc->MULTIPLY, multiply_chooser);
 
-  multiply_2 = make_function_with_class(sc, f, "*", g_multiply_2, 2, 0, false, "* optimization");
+  multiply_2 = make_function_with_class(sc, f, "*", g_multiply_2, 2, 0, false, "* opt");
 
-  multiply_2_temp = make_temp_function_with_class(sc, f, "*", g_multiply_2_temp, 2, 0, false, "* optimization");
-  multiply_3_temp = make_temp_function_with_class(sc, f, "*", g_multiply_3_temp, 3, 0, false, "* optimization");
-  multiply_1_any = make_temp_function_with_class(sc, f, "*", g_multiply_1_any, 3, 0, true, "* optimization");
-  multiply_s_temp = make_temp_function_with_class(sc, f, "*", g_multiply_s_temp, 2, 0, false, "* optimization");
-  multiply_temp_s = make_temp_function_with_class(sc, f, "*", g_multiply_temp_s, 2, 0, false, "* optimization");
-  multiply_s_direct = make_temp_function_with_class(sc, f, "*", g_multiply_s_direct, 2, 0, false, "* optimization");
+  multiply_2_temp = make_temp_function_with_class(sc, f, "*", g_multiply_2_temp, 2, 0, false, "* opt");
+  multiply_3_temp = make_temp_function_with_class(sc, f, "*", g_multiply_3_temp, 3, 0, false, "* opt");
+  multiply_1_any = make_temp_function_with_class(sc, f, "*", g_multiply_1_any, 3, 0, true, "* opt");
+  multiply_s_temp = make_temp_function_with_class(sc, f, "*", g_multiply_s_temp, 2, 0, false, "* opt");
+  multiply_temp_s = make_temp_function_with_class(sc, f, "*", g_multiply_temp_s, 2, 0, false, "* opt");
+  multiply_s_direct = make_temp_function_with_class(sc, f, "*", g_multiply_s_direct, 2, 0, false, "* opt");
 
-  multiply_is = make_function_with_class(sc, f, "*", g_multiply_is, 2, 0, false, "* optimization");
-  multiply_si = make_function_with_class(sc, f, "*", g_multiply_si, 2, 0, false, "* optimization");
-  multiply_fs = make_function_with_class(sc, f, "*", g_multiply_fs, 2, 0, false, "* optimization");
-  multiply_sf = make_function_with_class(sc, f, "*", g_multiply_sf, 2, 0, false, "* optimization");
+  multiply_is = make_function_with_class(sc, f, "*", g_multiply_is, 2, 0, false, "* opt");
+  multiply_si = make_function_with_class(sc, f, "*", g_multiply_si, 2, 0, false, "* opt");
+  multiply_fs = make_function_with_class(sc, f, "*", g_multiply_fs, 2, 0, false, "* opt");
+  multiply_sf = make_function_with_class(sc, f, "*", g_multiply_sf, 2, 0, false, "* opt");
 #if (!WITH_GMP)
-  sqr_ss = make_function_with_class(sc, f, "*", g_sqr_ss, 2, 0, false, "* optimization");
-  mul_1ss = make_function_with_class(sc, f, "*", g_mul_1ss, 2, 0, false, "* optimization");
-  multiply_cs_cos = make_function_with_class(sc, f, "*", g_multiply_cs_cos, 3, 0, false, "* optimization");
-  mul_s_sin_s = make_function_with_class(sc, f, "*", g_mul_s_sin_s, 2, 0, false, "* optimization");
-  mul_s_cos_s = make_function_with_class(sc, f, "*", g_mul_s_cos_s, 2, 0, false, "* optimization");
+  sqr_ss = make_function_with_class(sc, f, "*", g_sqr_ss, 2, 0, false, "* opt");
+  mul_1ss = make_function_with_class(sc, f, "*", g_mul_1ss, 2, 0, false, "* opt");
+  multiply_cs_cos = make_function_with_class(sc, f, "*", g_multiply_cs_cos, 3, 0, false, "* opt");
+  mul_s_sin_s = make_function_with_class(sc, f, "*", g_mul_s_sin_s, 2, 0, false, "* opt");
+  mul_s_cos_s = make_function_with_class(sc, f, "*", g_mul_s_cos_s, 2, 0, false, "* opt");
 #endif
 
 
   /* / */
 #if (!WITH_GMP)
   f = set_function_chooser(sc, sc->DIVIDE, divide_chooser);
-  invert_1 = make_function_with_class(sc, f, "/", g_invert_1, 1, 0, false, "/ optimization");
-  divide_1r = make_function_with_class(sc, f, "/", g_divide_1r, 2, 0, false, "/ optimization");
-  divide_temp_s = make_temp_function_with_class(sc, f, "/", g_divide_temp_s, 2, 0, false, "/ optimization");
-  divide_s_temp = make_temp_function_with_class(sc, f, "/", g_divide_s_temp, 2, 0, false, "/ optimization");
+  invert_1 = make_function_with_class(sc, f, "/", g_invert_1, 1, 0, false, "/ opt");
+  divide_1r = make_function_with_class(sc, f, "/", g_divide_1r, 2, 0, false, "/ opt");
+  divide_temp_s = make_temp_function_with_class(sc, f, "/", g_divide_temp_s, 2, 0, false, "/ opt");
+  divide_s_temp = make_temp_function_with_class(sc, f, "/", g_divide_s_temp, 2, 0, false, "/ opt");
 #endif
 
 
 #if (!WITH_GMP)
   /* modulo */
   f = set_function_chooser(sc, sc->MODULO, modulo_chooser);
-  mod_si = make_function_with_class(sc, f, "modulo", g_mod_si, 2, 0, false, "modulo optimization");
+  mod_si = make_function_with_class(sc, f, "modulo", g_mod_si, 2, 0, false, "modulo opt");
 
   /* abs */
   f = set_function_chooser(sc, sc->ABS, abs_chooser);
-  abs_direct = make_temp_function_with_class(sc, f, "abs", g_abs_direct, 1, 0, false, "abs optimization");
+  abs_direct = make_temp_function_with_class(sc, f, "abs", g_abs_direct, 1, 0, false, "abs opt");
 
   /* expt */
   f = set_function_chooser(sc, sc->EXPT, expt_chooser);
-  expt_temp_s = make_temp_function_with_class(sc, f, "expt", g_expt_temp_s, 2, 0, false, "expt optimization");
+  expt_temp_s = make_temp_function_with_class(sc, f, "expt", g_expt_temp_s, 2, 0, false, "expt opt");
 
   /* sqrt */
   f = set_function_chooser(sc, sc->SQRT, sqrt_chooser);
-  sqrt_temp = make_temp_function_with_class(sc, f, "sqrt", g_sqrt_temp, 1, 0, false, "sqrt optimization");
+  sqrt_temp = make_temp_function_with_class(sc, f, "sqrt", g_sqrt_temp, 1, 0, false, "sqrt opt");
 #endif
 
 
   /* max */
   f = set_function_chooser(sc, sc->MAX, max_chooser);
-  max_f2 = make_function_with_class(sc, f, "max", g_max_f2, 2, 0, false, "max optimization");
+  max_f2 = make_function_with_class(sc, f, "max", g_max_f2, 2, 0, false, "max opt");
 
 
   /* min */
   f = set_function_chooser(sc, sc->MIN, min_chooser);
-  min_f2 = make_function_with_class(sc, f, "min", g_min_f2, 2, 0, false, "min optimization");
+  min_f2 = make_function_with_class(sc, f, "min", g_min_f2, 2, 0, false, "min opt");
 
 
   /* zero? */
@@ -42165,207 +42122,213 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->EQ, equal_chooser);
   equal_class = c_function_class(f);
 
-  equal_s_ic = make_function_with_class(sc, f, "=", g_equal_s_ic, 2, 0, false, "= optimization");
-  equal_length_ic = make_function_with_class(sc, f, "=", g_equal_length_ic, 2, 0, false, "= optimization");
-  equal_2 = make_function_with_class(sc, f, "=", g_equal_2, 2, 0, false, "= optimization");
+  equal_s_ic = make_function_with_class(sc, f, "=", g_equal_s_ic, 2, 0, false, "= opt");
+  equal_length_ic = make_function_with_class(sc, f, "=", g_equal_length_ic, 2, 0, false, "= opt");
+  equal_2 = make_function_with_class(sc, f, "=", g_equal_2, 2, 0, false, "= opt");
 #if (!WITH_GMP)
-  mod_si_is_zero = make_function_with_class(sc, f, "=", g_mod_si_is_zero, 2, 0, false, "= optimization");
+  mod_si_is_zero = make_function_with_class(sc, f, "=", g_mod_si_is_zero, 2, 0, false, "= opt");
 #endif
 
 #if (!WITH_GMP)
   /* negative? */
   f = set_function_chooser(sc, sc->IS_NEGATIVE, is_negative_chooser);
-  is_negative_length = make_function_with_class(sc, f, "negative?", g_is_negative_length, 1, 0, false, "negative? optimization");
+  is_negative_length = make_function_with_class(sc, f, "negative?", g_is_negative_length, 1, 0, false, "negative? opt");
 
 
   /* < */
   f = set_function_chooser(sc, sc->LT, less_chooser);
 
-  less_s_ic = make_function_with_class(sc, f, "<", g_less_s_ic, 2, 0, false, "< optimization");
-  less_s0 = make_function_with_class(sc, f, "<", g_less_s0, 2, 0, false, "< optimization");
-  less_2 = make_function_with_class(sc, f, "<", g_less_2, 2, 0, false, "< optimization");
-  less_length_ic = make_function_with_class(sc, f, "<", g_less_length_ic, 2, 0, false, "< optimization");
+  less_s_ic = make_function_with_class(sc, f, "<", g_less_s_ic, 2, 0, false, "< opt");
+  less_s0 = make_function_with_class(sc, f, "<", g_less_s0, 2, 0, false, "< opt");
+  less_2 = make_function_with_class(sc, f, "<", g_less_2, 2, 0, false, "< opt");
+  less_length_ic = make_function_with_class(sc, f, "<", g_less_length_ic, 2, 0, false, "< opt");
 
 
   /* > */
   f = set_function_chooser(sc, sc->GT, greater_chooser);
 
-  greater_s_ic = make_function_with_class(sc, f, ">", g_greater_s_ic, 2, 0, false, "> optimization");
-  greater_s_fc = make_function_with_class(sc, f, ">", g_greater_s_fc, 2, 0, false, "> optimization");
-  greater_2 = make_function_with_class(sc, f, ">", g_greater_2, 2, 0, false, "> optimization");
+  greater_s_ic = make_function_with_class(sc, f, ">", g_greater_s_ic, 2, 0, false, "> opt");
+  greater_s_fc = make_function_with_class(sc, f, ">", g_greater_s_fc, 2, 0, false, "> opt");
+  greater_2 = make_function_with_class(sc, f, ">", g_greater_2, 2, 0, false, "> opt");
 
 
   /* <= */
   f = set_function_chooser(sc, sc->LEQ, leq_chooser);
 
-  leq_s_ic = make_function_with_class(sc, f, "<=", g_leq_s_ic, 2, 0, false, "<= optimization");
-  leq_2 = make_function_with_class(sc, f, "<=", g_leq_2, 2, 0, false, "<= optimization");
+  leq_s_ic = make_function_with_class(sc, f, "<=", g_leq_s_ic, 2, 0, false, "<= opt");
+  leq_2 = make_function_with_class(sc, f, "<=", g_leq_2, 2, 0, false, "<= opt");
 
 
   /* >= */
   f = set_function_chooser(sc, sc->GEQ, geq_chooser);
 
-  geq_s_ic = make_function_with_class(sc, f, ">=", g_geq_s_ic, 2, 0, false, ">= optimization");
-  geq_s_fc = make_function_with_class(sc, f, ">=", g_geq_s_fc, 2, 0, false, ">= optimization");
-  geq_2 = make_function_with_class(sc, f, ">=", g_geq_2, 2, 0, false, ">= optimization");
-  geq_length_ic = make_function_with_class(sc, f, ">=", g_geq_length_ic, 2, 0, false, ">= optimization");
+  geq_s_ic = make_function_with_class(sc, f, ">=", g_geq_s_ic, 2, 0, false, ">= opt");
+  geq_s_fc = make_function_with_class(sc, f, ">=", g_geq_s_fc, 2, 0, false, ">= opt");
+  geq_2 = make_function_with_class(sc, f, ">=", g_geq_2, 2, 0, false, ">= opt");
+  geq_length_ic = make_function_with_class(sc, f, ">=", g_geq_length_ic, 2, 0, false, ">= opt");
 
   /* random */
   f = set_function_chooser(sc, sc->RANDOM, random_chooser);
 
-  random_ic = make_function_with_class(sc, f, "random", g_random_ic, 1, 0, false, "random optimization");
-  random_rc = make_function_with_class(sc, f, "random", g_random_rc, 1, 0, false, "random optimization");
+  random_ic = make_function_with_class(sc, f, "random", g_random_ic, 1, 0, false, "random opt");
+  random_rc = make_function_with_class(sc, f, "random", g_random_rc, 1, 0, false, "random opt");
   set_returns_temp(random_rc);
 #endif
 
+  /* list */
+  f = set_function_chooser(sc, sc->LIST, list_chooser);
+  list_0 = make_function_with_class(sc, f, "list", g_list_0, 0, 0, false, "list opt");
+  list_1 = make_function_with_class(sc, f, "list", g_list_1, 1, 0, false, "list opt");
+  list_2 = make_function_with_class(sc, f, "list", g_list_2, 2, 0, false, "list opt");
+
   /* aritable? */
   f = set_function_chooser(sc, sc->IS_ARITABLE, is_aritable_chooser);
-  is_aritable_ic = make_function_with_class(sc, f, "aritable?", g_is_aritable_ic, 2, 0, false, "aritable? optimization");
+  is_aritable_ic = make_function_with_class(sc, f, "aritable?", g_is_aritable_ic, 2, 0, false, "aritable? opt");
 
 
   /* char=? */
   f = set_function_chooser(sc, sc->CHAR_EQ, char_equal_chooser);
 
-  char_equal_s_ic = make_function_with_class(sc, f, "char=?", g_char_equal_s_ic, 2, 0, false, "char=? optimization");
-  char_equal_2 = make_function_with_class(sc, f, "char=?", g_char_equal_2, 2, 0, false, "char=? optimization");
+  char_equal_s_ic = make_function_with_class(sc, f, "char=?", g_char_equal_s_ic, 2, 0, false, "char=? opt");
+  char_equal_2 = make_function_with_class(sc, f, "char=?", g_char_equal_2, 2, 0, false, "char=? opt");
 
 
   /* char>? */
   f = set_function_chooser(sc, sc->CHAR_GT, char_greater_chooser);
 
-  char_greater_s_ic = make_function_with_class(sc, f, "char>?", g_char_greater_s_ic, 2, 0, false, "char>? optimization");
-  char_greater_2 = make_function_with_class(sc, f, "char>?", g_char_greater_2, 2, 0, false, "char>? optimization");
+  char_greater_s_ic = make_function_with_class(sc, f, "char>?", g_char_greater_s_ic, 2, 0, false, "char>? opt");
+  char_greater_2 = make_function_with_class(sc, f, "char>?", g_char_greater_2, 2, 0, false, "char>? opt");
 
 
   /* char<? */
   f = set_function_chooser(sc, sc->CHAR_LT, char_less_chooser);
 
-  char_less_s_ic = make_function_with_class(sc, f, "char<?", g_char_less_s_ic, 2, 0, false, "char<? optimization");
-  char_less_2 = make_function_with_class(sc, f, "char<?", g_char_less_2, 2, 0, false, "char<? optimization");
+  char_less_s_ic = make_function_with_class(sc, f, "char<?", g_char_less_s_ic, 2, 0, false, "char<? opt");
+  char_less_2 = make_function_with_class(sc, f, "char<?", g_char_less_2, 2, 0, false, "char<? opt");
 
 
   /* char<=? */
   f = set_function_chooser(sc, sc->CHAR_LEQ, char_leq_chooser);
 
-  char_leq_s_ic = make_function_with_class(sc, f, "char<=?", g_char_leq_s_ic, 2, 0, false, "char<=? optimization");
-  char_leq_2 = make_function_with_class(sc, f, "char<=?", g_char_leq_2, 2, 0, false, "char<=? optimization");
+  char_leq_s_ic = make_function_with_class(sc, f, "char<=?", g_char_leq_s_ic, 2, 0, false, "char<=? opt");
+  char_leq_2 = make_function_with_class(sc, f, "char<=?", g_char_leq_2, 2, 0, false, "char<=? opt");
 
 
   /* char>=? */
   f = set_function_chooser(sc, sc->CHAR_GEQ, char_geq_chooser);
 
-  char_geq_s_ic = make_function_with_class(sc, f, "char>=?", g_char_geq_s_ic, 2, 0, false, "char>=? optimization");
-  char_geq_2 = make_function_with_class(sc, f, "char>=?", g_char_geq_2, 2, 0, false, "char>=? optimization");
+  char_geq_s_ic = make_function_with_class(sc, f, "char>=?", g_char_geq_s_ic, 2, 0, false, "char>=? opt");
+  char_geq_2 = make_function_with_class(sc, f, "char>=?", g_char_geq_2, 2, 0, false, "char>=? opt");
 
 
   /* char-ci=? */
   f = set_function_chooser(sc, sc->CHAR_CI_EQ, char_ci_equal_chooser);
 
-  char_ci_equal_s_ic = make_function_with_class(sc, f, "char-ci=?", g_char_ci_equal_s_ic, 2, 0, false, "char-ci=? optimization");
-  char_ci_equal_2 = make_function_with_class(sc, f, "char-ci=?", g_char_ci_equal_2, 2, 0, false, "char-ci=? optimization");
+  char_ci_equal_s_ic = make_function_with_class(sc, f, "char-ci=?", g_char_ci_equal_s_ic, 2, 0, false, "char-ci=? opt");
+  char_ci_equal_2 = make_function_with_class(sc, f, "char-ci=?", g_char_ci_equal_2, 2, 0, false, "char-ci=? opt");
 
 
   /* char-ci>? */
   f = set_function_chooser(sc, sc->CHAR_CI_GT, char_ci_greater_chooser);
 
-  char_ci_greater_s_ic = make_function_with_class(sc, f, "char-ci>?", g_char_ci_greater_s_ic, 2, 0, false, "char-ci>? optimization");
-  char_ci_greater_2 = make_function_with_class(sc, f, "char-ci>?", g_char_ci_greater_2, 2, 0, false, "char-ci>? optimization");
+  char_ci_greater_s_ic = make_function_with_class(sc, f, "char-ci>?", g_char_ci_greater_s_ic, 2, 0, false, "char-ci>? opt");
+  char_ci_greater_2 = make_function_with_class(sc, f, "char-ci>?", g_char_ci_greater_2, 2, 0, false, "char-ci>? opt");
 
 
   /* char-ci<? */
   f = set_function_chooser(sc, sc->CHAR_CI_LT, char_ci_less_chooser);
 
-  char_ci_less_s_ic = make_function_with_class(sc, f, "char-ci<?", g_char_ci_less_s_ic, 2, 0, false, "char-ci<? optimization");
-  char_ci_less_2 = make_function_with_class(sc, f, "char-ci<?", g_char_ci_less_2, 2, 0, false, "char-ci<? optimization");
+  char_ci_less_s_ic = make_function_with_class(sc, f, "char-ci<?", g_char_ci_less_s_ic, 2, 0, false, "char-ci<? opt");
+  char_ci_less_2 = make_function_with_class(sc, f, "char-ci<?", g_char_ci_less_2, 2, 0, false, "char-ci<? opt");
 
 
   /* char-ci<=? */
   f = set_function_chooser(sc, sc->CHAR_CI_LEQ, char_ci_leq_chooser);
 
-  char_ci_leq_s_ic = make_function_with_class(sc, f, "char-ci<=?", g_char_ci_leq_s_ic, 2, 0, false, "char-ci<=? optimization");
-  char_ci_leq_2 = make_function_with_class(sc, f, "char-ci<=?", g_char_ci_leq_2, 2, 0, false, "char-ci<=? optimization");
+  char_ci_leq_s_ic = make_function_with_class(sc, f, "char-ci<=?", g_char_ci_leq_s_ic, 2, 0, false, "char-ci<=? opt");
+  char_ci_leq_2 = make_function_with_class(sc, f, "char-ci<=?", g_char_ci_leq_2, 2, 0, false, "char-ci<=? opt");
 
 
   /* char-ci>=? */
   f = set_function_chooser(sc, sc->CHAR_CI_GEQ, char_ci_geq_chooser);
 
-  char_ci_geq_s_ic = make_function_with_class(sc, f, "char-ci>=?", g_char_ci_geq_s_ic, 2, 0, false, "char-ci>=? optimization");
-  char_ci_geq_2 = make_function_with_class(sc, f, "char-ci>=?", g_char_ci_geq_2, 2, 0, false, "char-ci>=? optimization");
+  char_ci_geq_s_ic = make_function_with_class(sc, f, "char-ci>=?", g_char_ci_geq_s_ic, 2, 0, false, "char-ci>=? opt");
+  char_ci_geq_2 = make_function_with_class(sc, f, "char-ci>=?", g_char_ci_geq_2, 2, 0, false, "char-ci>=? opt");
 
 
   /* string=? */
   f = set_function_chooser(sc, sc->STRING_EQ, string_equal_chooser);
 
-  string_equal_s_ic = make_function_with_class(sc, f, "string=?", g_string_equal_s_ic, 2, 0, false, "string=? optimization");
-  string_equal_2 = make_function_with_class(sc, f, "string=?", g_string_equal_2, 2, 0, false, "string=? optimization");
+  string_equal_s_ic = make_function_with_class(sc, f, "string=?", g_string_equal_s_ic, 2, 0, false, "string=? opt");
+  string_equal_2 = make_function_with_class(sc, f, "string=?", g_string_equal_2, 2, 0, false, "string=? opt");
 
 
   /* substring */
-  substring_to_temp = s7_make_function(sc, "substring", g_substring_to_temp, 2, 1, false, "substring optimization");
+  substring_to_temp = s7_make_function(sc, "substring", g_substring_to_temp, 2, 1, false, "substring opt");
   s7_function_set_class(substring_to_temp, slot_value(global_slot(sc->SUBSTRING)));
 
 
   /* string>? */
   f = set_function_chooser(sc, sc->STRING_GT, string_greater_chooser);
 
-  string_greater_s_ic = make_function_with_class(sc, f, "string>?", g_string_greater_s_ic, 2, 0, false, "string>? optimization");
-  string_greater_2 = make_function_with_class(sc, f, "string>?", g_string_greater_2, 2, 0, false, "string>? optimization");
+  string_greater_s_ic = make_function_with_class(sc, f, "string>?", g_string_greater_s_ic, 2, 0, false, "string>? opt");
+  string_greater_2 = make_function_with_class(sc, f, "string>?", g_string_greater_2, 2, 0, false, "string>? opt");
 
 
   /* string<? */
   f = set_function_chooser(sc, sc->STRING_LT, string_less_chooser);
 
-  string_less_s_ic = make_function_with_class(sc, f, "string<?", g_string_less_s_ic, 2, 0, false, "string<? optimization");
-  string_less_2 = make_function_with_class(sc, f, "string<?", g_string_less_2, 2, 0, false, "string<? optimization");
+  string_less_s_ic = make_function_with_class(sc, f, "string<?", g_string_less_s_ic, 2, 0, false, "string<? opt");
+  string_less_2 = make_function_with_class(sc, f, "string<?", g_string_less_2, 2, 0, false, "string<? opt");
 
 
   /* string<=? */
   f = set_function_chooser(sc, sc->STRING_LEQ, string_leq_chooser);
 
-  string_leq_s_ic = make_function_with_class(sc, f, "string<=?", g_string_leq_s_ic, 2, 0, false, "string<=? optimization");
-  string_leq_2 = make_function_with_class(sc, f, "string<=?", g_string_leq_2, 2, 0, false, "string<=? optimization");
+  string_leq_s_ic = make_function_with_class(sc, f, "string<=?", g_string_leq_s_ic, 2, 0, false, "string<=? opt");
+  string_leq_2 = make_function_with_class(sc, f, "string<=?", g_string_leq_2, 2, 0, false, "string<=? opt");
 
 
   /* string>=? */
   f = set_function_chooser(sc, sc->STRING_GEQ, string_geq_chooser);
 
-  string_geq_s_ic = make_function_with_class(sc, f, "string>=?", g_string_geq_s_ic, 2, 0, false, "string>=? optimization");
-  string_geq_2 = make_function_with_class(sc, f, "string>=?", g_string_geq_2, 2, 0, false, "string>=? optimization");
+  string_geq_s_ic = make_function_with_class(sc, f, "string>=?", g_string_geq_s_ic, 2, 0, false, "string>=? opt");
+  string_geq_2 = make_function_with_class(sc, f, "string>=?", g_string_geq_2, 2, 0, false, "string>=? opt");
 
 
   /* string-ci=? */
   f = set_function_chooser(sc, sc->STRING_CI_EQ, string_ci_equal_chooser);
 
-  string_ci_equal_s_ic = make_function_with_class(sc, f, "string-ci=?", g_string_ci_equal_s_ic, 2, 0, false, "string-ci=? optimization");
-  string_ci_equal_2 = make_function_with_class(sc, f, "string-ci=?", g_string_ci_equal_2, 2, 0, false, "string-ci=? optimization");
+  string_ci_equal_s_ic = make_function_with_class(sc, f, "string-ci=?", g_string_ci_equal_s_ic, 2, 0, false, "string-ci=? opt");
+  string_ci_equal_2 = make_function_with_class(sc, f, "string-ci=?", g_string_ci_equal_2, 2, 0, false, "string-ci=? opt");
 
 
   /* string-ci>? */
   f = set_function_chooser(sc, sc->STRING_CI_GT, string_ci_greater_chooser);
 
-  string_ci_greater_s_ic = make_function_with_class(sc, f, "string-ci>?", g_string_ci_greater_s_ic, 2, 0, false, "string-ci>? optimization");
-  string_ci_greater_2 = make_function_with_class(sc, f, "string-ci>?", g_string_ci_greater_2, 2, 0, false, "string-ci>? optimization");
+  string_ci_greater_s_ic = make_function_with_class(sc, f, "string-ci>?", g_string_ci_greater_s_ic, 2, 0, false, "string-ci>? opt");
+  string_ci_greater_2 = make_function_with_class(sc, f, "string-ci>?", g_string_ci_greater_2, 2, 0, false, "string-ci>? opt");
 
 
   /* string-ci<? */
   f = set_function_chooser(sc, sc->STRING_CI_LT, string_ci_less_chooser);
 
-  string_ci_less_s_ic = make_function_with_class(sc, f, "string-ci<?", g_string_ci_less_s_ic, 2, 0, false, "string-ci<? optimization");
-  string_ci_less_2 = make_function_with_class(sc, f, "string-ci<?", g_string_ci_less_2, 2, 0, false, "string-ci<? optimization");
+  string_ci_less_s_ic = make_function_with_class(sc, f, "string-ci<?", g_string_ci_less_s_ic, 2, 0, false, "string-ci<? opt");
+  string_ci_less_2 = make_function_with_class(sc, f, "string-ci<?", g_string_ci_less_2, 2, 0, false, "string-ci<? opt");
 
 
   /* string-ci<=? */
   f = set_function_chooser(sc, sc->STRING_CI_LEQ, string_ci_leq_chooser);
 
-  string_ci_leq_s_ic = make_function_with_class(sc, f, "string-ci<=?", g_string_ci_leq_s_ic, 2, 0, false, "string-ci<=? optimization");
-  string_ci_leq_2 = make_function_with_class(sc, f, "string-ci<=?", g_string_ci_leq_2, 2, 0, false, "string-ci<=? optimization");
+  string_ci_leq_s_ic = make_function_with_class(sc, f, "string-ci<=?", g_string_ci_leq_s_ic, 2, 0, false, "string-ci<=? opt");
+  string_ci_leq_2 = make_function_with_class(sc, f, "string-ci<=?", g_string_ci_leq_2, 2, 0, false, "string-ci<=? opt");
 
 
   /* string-ci>=? */
   f = set_function_chooser(sc, sc->STRING_CI_GEQ, string_ci_geq_chooser);
 
-  string_ci_geq_s_ic = make_function_with_class(sc, f, "string-ci>=?", g_string_ci_geq_s_ic, 2, 0, false, "string-ci>=? optimization");
-  string_ci_geq_2 = make_function_with_class(sc, f, "string-ci>=?", g_string_ci_geq_2, 2, 0, false, "string-ci>=? optimization");
+  string_ci_geq_s_ic = make_function_with_class(sc, f, "string-ci>=?", g_string_ci_geq_s_ic, 2, 0, false, "string-ci>=? opt");
+  string_ci_geq_2 = make_function_with_class(sc, f, "string-ci>=?", g_string_ci_geq_2, 2, 0, false, "string-ci>=? opt");
 
 
   /* string-ref */
@@ -42380,52 +42343,52 @@ static void init_choosers(s7_scheme *sc)
 
   /* symbol->string experiment */
   f = slot_value(global_slot(sc->SYMBOL_TO_STRING));
-  symbol_to_string_uncopied = s7_make_function(sc, "symbol->string", g_symbol_to_string_uncopied, 1, 0, false, "symbol->string optimization");
+  symbol_to_string_uncopied = s7_make_function(sc, "symbol->string", g_symbol_to_string_uncopied, 1, 0, false, "symbol->string opt");
   s7_function_set_class(symbol_to_string_uncopied, f);
 
 
   /* for-each */
   f = set_function_chooser(sc, sc->FOR_EACH, for_each_chooser);
 
-  for_each_1 = make_function_with_class(sc, f, "for-each", g_for_each_1, 2, 0, false, "for-each optimization");
-  for_each_2 = make_function_with_class(sc, f, "for-each", g_for_each_2, 2, 0, false, "for-each optimization");
+  for_each_1 = make_function_with_class(sc, f, "for-each", g_for_each_1, 2, 0, false, "for-each opt");
+  for_each_2 = make_function_with_class(sc, f, "for-each", g_for_each_2, 2, 0, false, "for-each opt");
 
   
   /* vector-ref */
   f = set_function_chooser(sc, sc->VECTOR_REF, vector_ref_chooser);
 
-  vector_ref_ic = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic, 2, 0, false, "vector-ref optimization");
-  vector_ref_add1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_add1, 2, 0, false, "vector-ref optimization");
-  vector_ref_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref optimization");
-  vector_ref_gs = make_function_with_class(sc, f, "vector-ref", g_vector_ref_gs, 2, 0, false, "vector-ref optimization");
-  vector_ref_ggs = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ggs, 2, 0, false, "vector-ref optimization");
+  vector_ref_ic = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic, 2, 0, false, "vector-ref opt");
+  vector_ref_add1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_add1, 2, 0, false, "vector-ref opt");
+  vector_ref_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref opt");
+  vector_ref_gs = make_function_with_class(sc, f, "vector-ref", g_vector_ref_gs, 2, 0, false, "vector-ref opt");
+  vector_ref_ggs = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ggs, 2, 0, false, "vector-ref opt");
 
 
   /* vector-set! */
   f = set_function_chooser(sc, sc->VECTOR_SET, vector_set_chooser);
 
-  vector_set_ic = make_function_with_class(sc, f, "vector-set!", g_vector_set_ic, 3, 0, false, "vector-set! optimization");
-  vector_set_vref = make_function_with_class(sc, f, "vector-set!", g_vector_set_vref, 3, 0, false, "vector-set! optimization");
-  vector_set_3 = make_function_with_class(sc, f, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! optimization");
+  vector_set_ic = make_function_with_class(sc, f, "vector-set!", g_vector_set_ic, 3, 0, false, "vector-set! opt");
+  vector_set_vref = make_function_with_class(sc, f, "vector-set!", g_vector_set_vref, 3, 0, false, "vector-set! opt");
+  vector_set_3 = make_function_with_class(sc, f, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! opt");
 
 
 
   /* list-ref */
   f = set_function_chooser(sc, sc->LIST_REF, list_ref_chooser);
-  list_ref_ic = make_function_with_class(sc, f, "list-ref", g_list_ref_ic, 2, 0, false, "list-ref optimization");
+  list_ref_ic = make_function_with_class(sc, f, "list-ref", g_list_ref_ic, 2, 0, false, "list-ref opt");
 
 
   /* list-set! */
   f = set_function_chooser(sc, sc->LIST_SET, list_set_chooser);
-  list_set_ic = make_function_with_class(sc, f, "list-set!", g_list_set_ic, 3, 0, false, "list-set! optimization");
+  list_set_ic = make_function_with_class(sc, f, "list-set!", g_list_set_ic, 3, 0, false, "list-set! opt");
 
 
   /* hash-table-ref */
   f = set_function_chooser(sc, sc->HASH_TABLE_REF, hash_table_ref_chooser);
 
-  hash_table_ref_2 = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_2, 2, 0, false, "hash-table-ref optimization");
-  hash_table_ref_ss = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_ss, 2, 0, false, "hash-table-ref optimization");
-  hash_table_ref_car = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_car, 2, 0, false, "hash-table-ref optimization");
+  hash_table_ref_2 = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_2, 2, 0, false, "hash-table-ref opt");
+  hash_table_ref_ss = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_ss, 2, 0, false, "hash-table-ref opt");
+  hash_table_ref_car = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_car, 2, 0, false, "hash-table-ref opt");
 
 
   /* car */
@@ -42438,99 +42401,99 @@ static void init_choosers(s7_scheme *sc)
   /* format */
   f = set_function_chooser(sc, sc->FORMAT, format_chooser);
 
-  format_allg = make_function_with_class(sc, f, "format", g_format_allg, 1, 0, true, "format optimization");
-  format_allg_no_column = make_function_with_class(sc, f, "format", g_format_allg_no_column, 1, 0, true, "format optimization");
-  format_just_newline = make_function_with_class(sc, f, "format", g_format_just_newline, 2, 0, false, "format optimization");
+  format_allg = make_function_with_class(sc, f, "format", g_format_allg, 1, 0, true, "format opt");
+  format_allg_no_column = make_function_with_class(sc, f, "format", g_format_allg_no_column, 1, 0, true, "format opt");
+  format_just_newline = make_function_with_class(sc, f, "format", g_format_just_newline, 2, 0, false, "format opt");
 
 
   /* not */
   f = set_function_chooser(sc, sc->NOT, not_chooser);
 
-  not_is_pair = make_function_with_class(sc, f, "not", g_not_is_pair, 1, 0, false, "not optimization");
-  not_is_null = make_function_with_class(sc, f, "not", g_not_is_null, 1, 0, false, "not optimization");
-  not_is_list = make_function_with_class(sc, f, "not", g_not_is_list, 1, 0, false, "not optimization");
-  not_is_symbol = make_function_with_class(sc, f, "not", g_not_is_symbol, 1, 0, false, "not optimization");
-  not_is_number = make_function_with_class(sc, f, "not", g_not_is_number, 1, 0, false, "not optimization");
-  not_is_real = make_function_with_class(sc, f, "not", g_not_is_real, 1, 0, false, "not optimization");
-  not_is_rational = make_function_with_class(sc, f, "not", g_not_is_rational, 1, 0, false, "not optimization");
-  not_is_integer = make_function_with_class(sc, f, "not", g_not_is_integer, 1, 0, false, "not optimization");
-  not_is_boolean = make_function_with_class(sc, f, "not", g_not_is_boolean, 1, 0, false, "not optimization");
-  not_is_string = make_function_with_class(sc, f, "not", g_not_is_string, 1, 0, false, "not optimization");
-  not_is_char = make_function_with_class(sc, f, "not", g_not_is_char, 1, 0, false, "not optimization");
-  not_is_eof = make_function_with_class(sc, f, "not", g_not_is_eof, 1, 0, false, "not optimization");
-  not_is_eq_ss = make_function_with_class(sc, f, "not", g_not_is_eq_ss, 1, 0, false, "not optimization");
-  not_is_eq_sq = make_function_with_class(sc, f, "not", g_not_is_eq_sq, 1, 0, false, "not optimization");
-  not_is_pair_car = make_function_with_class(sc, f, "not", g_not_is_pair_car, 1, 0, false, "not optimization");
-  not_is_null_cdr = make_function_with_class(sc, f, "not", g_not_is_null_cdr, 1, 0, false, "not optimization");
-  not_c_c = make_function_with_class(sc, f, "not", g_not_c_c, 1, 0, false, "not optimization");
+  not_is_pair = make_function_with_class(sc, f, "not", g_not_is_pair, 1, 0, false, "not opt");
+  not_is_null = make_function_with_class(sc, f, "not", g_not_is_null, 1, 0, false, "not opt");
+  not_is_list = make_function_with_class(sc, f, "not", g_not_is_list, 1, 0, false, "not opt");
+  not_is_symbol = make_function_with_class(sc, f, "not", g_not_is_symbol, 1, 0, false, "not opt");
+  not_is_number = make_function_with_class(sc, f, "not", g_not_is_number, 1, 0, false, "not opt");
+  not_is_real = make_function_with_class(sc, f, "not", g_not_is_real, 1, 0, false, "not opt");
+  not_is_rational = make_function_with_class(sc, f, "not", g_not_is_rational, 1, 0, false, "not opt");
+  not_is_integer = make_function_with_class(sc, f, "not", g_not_is_integer, 1, 0, false, "not opt");
+  not_is_boolean = make_function_with_class(sc, f, "not", g_not_is_boolean, 1, 0, false, "not opt");
+  not_is_string = make_function_with_class(sc, f, "not", g_not_is_string, 1, 0, false, "not opt");
+  not_is_char = make_function_with_class(sc, f, "not", g_not_is_char, 1, 0, false, "not opt");
+  not_is_eof = make_function_with_class(sc, f, "not", g_not_is_eof, 1, 0, false, "not opt");
+  not_is_eq_ss = make_function_with_class(sc, f, "not", g_not_is_eq_ss, 1, 0, false, "not opt");
+  not_is_eq_sq = make_function_with_class(sc, f, "not", g_not_is_eq_sq, 1, 0, false, "not opt");
+  not_is_pair_car = make_function_with_class(sc, f, "not", g_not_is_pair_car, 1, 0, false, "not opt");
+  not_is_null_cdr = make_function_with_class(sc, f, "not", g_not_is_null_cdr, 1, 0, false, "not opt");
+  not_c_c = make_function_with_class(sc, f, "not", g_not_c_c, 1, 0, false, "not opt");
 
 
   /* pair? */
   f = set_function_chooser(sc, sc->IS_PAIR, is_pair_chooser);
 
-  is_pair_car = make_function_with_class(sc, f, "pair?", g_is_pair_car, 1, 0, false, "pair? optimization");
-  is_pair_cdr = make_function_with_class(sc, f, "pair?", g_is_pair_cdr, 1, 0, false, "pair? optimization");
-  is_pair_cadr = make_function_with_class(sc, f, "pair?", g_is_pair_cadr, 1, 0, false, "pair? optimization");
+  is_pair_car = make_function_with_class(sc, f, "pair?", g_is_pair_car, 1, 0, false, "pair? opt");
+  is_pair_cdr = make_function_with_class(sc, f, "pair?", g_is_pair_cdr, 1, 0, false, "pair? opt");
+  is_pair_cadr = make_function_with_class(sc, f, "pair?", g_is_pair_cadr, 1, 0, false, "pair? opt");
 
 
   /* null? */
   f = set_function_chooser(sc, sc->IS_NULL, is_null_chooser);
-  is_null_cdr = make_function_with_class(sc, f, "null?", g_is_null_cdr, 1, 0, false, "null? optimization");
+  is_null_cdr = make_function_with_class(sc, f, "null?", g_is_null_cdr, 1, 0, false, "null? opt");
 
 
   /* eq? */
   f = set_function_chooser(sc, sc->IS_EQ, is_eq_chooser);
 
-  is_eq_car = make_function_with_class(sc, f, "eq?", g_is_eq_car, 2, 0, false, "eq? optimization");
-  is_eq_car_q = make_function_with_class(sc, f, "eq?", g_is_eq_car_q, 2, 0, false, "eq? optimization");
-  is_eq_caar_q = make_function_with_class(sc, f, "eq?", g_is_eq_caar_q, 2, 0, false, "eq? optimization");
+  is_eq_car = make_function_with_class(sc, f, "eq?", g_is_eq_car, 2, 0, false, "eq? opt");
+  is_eq_car_q = make_function_with_class(sc, f, "eq?", g_is_eq_car_q, 2, 0, false, "eq? opt");
+  is_eq_caar_q = make_function_with_class(sc, f, "eq?", g_is_eq_caar_q, 2, 0, false, "eq? opt");
 
 
   /* memq */
   f = set_function_chooser(sc, sc->MEMQ, memq_chooser);
   
-  memq_3 = make_function_with_class(sc, f, "memq", g_memq_3, 2, 0, false, "memq optimization");
-  memq_4 = make_function_with_class(sc, f, "memq", g_memq_4, 2, 0, false, "memq optimization");
-  memq_any = make_function_with_class(sc, f, "memq", g_memq_any, 2, 0, false, "memq optimization");
-  memq_car = make_function_with_class(sc, f, "memq", g_memq_car, 2, 0, false, "memq optimization");
+  memq_3 = make_function_with_class(sc, f, "memq", g_memq_3, 2, 0, false, "memq opt");
+  memq_4 = make_function_with_class(sc, f, "memq", g_memq_4, 2, 0, false, "memq opt");
+  memq_any = make_function_with_class(sc, f, "memq", g_memq_any, 2, 0, false, "memq opt");
+  memq_car = make_function_with_class(sc, f, "memq", g_memq_car, 2, 0, false, "memq opt");
 
 
   /* member */
   f = set_function_chooser(sc, sc->MEMBER, member_chooser);
   
-  member_ss = make_function_with_class(sc, f, "member", g_member_ss, 2, 0, false, "member optimization");
-  member_sq = make_function_with_class(sc, f, "member", g_member_sq, 2, 0, false, "member optimization");
-  member_sym_s = make_function_with_class(sc, f, "member", g_member_sym_s, 2, 0, false, "member optimization");
-  member_num_s = make_function_with_class(sc, f, "member", g_member_num_s, 2, 0, false, "member optimization");
+  member_ss = make_function_with_class(sc, f, "member", g_member_ss, 2, 0, false, "member opt");
+  member_sq = make_function_with_class(sc, f, "member", g_member_sq, 2, 0, false, "member opt");
+  member_sym_s = make_function_with_class(sc, f, "member", g_member_sym_s, 2, 0, false, "member opt");
+  member_num_s = make_function_with_class(sc, f, "member", g_member_num_s, 2, 0, false, "member opt");
 
 
   /* read-char */
   f = set_function_chooser(sc, sc->READ_CHAR, read_char_chooser);
   
-  read_char_0 = make_function_with_class(sc, f, "read-char", g_read_char_0, 0, 0, false, "read-char optimization");
-  read_char_1 = make_function_with_class(sc, f, "read-char", g_read_char_1, 1, 0, false, "read-char optimization");
+  read_char_0 = make_function_with_class(sc, f, "read-char", g_read_char_0, 0, 0, false, "read-char opt");
+  read_char_1 = make_function_with_class(sc, f, "read-char", g_read_char_1, 1, 0, false, "read-char opt");
 
 
   /* write-char */
   f = set_function_chooser(sc, sc->WRITE_CHAR, write_char_chooser);
-  write_char_1 = make_function_with_class(sc, f, "write-char", g_write_char_1, 1, 0, false, "write-char optimization");
+  write_char_1 = make_function_with_class(sc, f, "write-char", g_write_char_1, 1, 0, false, "write-char opt");
 
 
   /* or and if simple cases */
-  or_direct = s7_make_function(sc, "or", g_or_direct, 0, 0, true, "or optimization");
-  and_direct = s7_make_function(sc, "and", g_and_direct, 0, 0, true, "and optimization");
-  if_direct = s7_make_function(sc, "if", g_if_direct, 2, 1, false, "if optimization");
+  or_direct = s7_make_function(sc, "or", g_or_direct, 0, 0, true, "or opt");
+  and_direct = s7_make_function(sc, "and", g_and_direct, 0, 0, true, "and opt");
+  if_direct = s7_make_function(sc, "if", g_if_direct, 2, 1, false, "if opt");
 
-  or_all_x = s7_make_function(sc, "or", g_or_all_x, 0, 0, true, "or optimization");
-  and_all_x = s7_make_function(sc, "and", g_and_all_x, 0, 0, true, "and optimization");
-  if_all_x1 = s7_make_function(sc, "if", g_if_all_x1, 2, 0, false, "if optimization");
-  if_all_x2 = s7_make_function(sc, "if", g_if_all_x2, 3, 0, false, "if optimization");
-  if_all_x_qq = s7_make_function(sc, "if", g_if_all_x_qq, 3, 0, false, "if optimization");
-  if_all_x_qa = s7_make_function(sc, "if", g_if_all_x_qa, 3, 0, false, "if optimization");
+  or_all_x = s7_make_function(sc, "or", g_or_all_x, 0, 0, true, "or opt");
+  and_all_x = s7_make_function(sc, "and", g_and_all_x, 0, 0, true, "and opt");
+  if_all_x1 = s7_make_function(sc, "if", g_if_all_x1, 2, 0, false, "if opt");
+  if_all_x2 = s7_make_function(sc, "if", g_if_all_x2, 3, 0, false, "if opt");
+  if_all_x_qq = s7_make_function(sc, "if", g_if_all_x_qq, 3, 0, false, "if opt");
+  if_all_x_qa = s7_make_function(sc, "if", g_if_all_x_qa, 3, 0, false, "if opt");
 
-  or_s_direct = s7_make_function(sc, "or", g_or_s_direct, 0, 0, true, "or optimization");
-  and_s_direct = s7_make_function(sc, "and", g_and_s_direct, 0, 0, true, "and optimization");
-  if_s_direct = s7_make_function(sc, "if", g_if_s_direct, 2, 1, false, "if optimization");
+  or_s_direct = s7_make_function(sc, "or", g_or_s_direct, 0, 0, true, "or opt");
+  and_s_direct = s7_make_function(sc, "and", g_and_s_direct, 0, 0, true, "and opt");
+  if_s_direct = s7_make_function(sc, "if", g_if_s_direct, 2, 1, false, "if opt");
 }
 
 
@@ -53740,7 +53703,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    /* fprintf(stderr, "vs: %s\n", DISPLAY(code)); */
 		    set_opt_and_goto_opt_eval(code, f, OP_VECTOR_S);
 		    
-		  case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		  case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 		    if ((c_function_required_args(f) <= 1) &&
 			(c_function_all_args(f) >= 1))
 		      {
@@ -53818,7 +53781,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_VECTOR:
 			set_opt_and_goto_opt_eval(code, f, OP_VECTOR_C);
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			/* if we switch to op_c_all_x here, we need to set fcdr */
 			if (is_safe_procedure(f))
 			  {
@@ -53910,7 +53873,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  set_optimize_data(code, OP_SAFE_C_SS);
 			else
@@ -53963,7 +53926,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 							      ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SX)));
 			break;
 
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  set_optimize_data(code, OP_SAFE_C_SC);
 			else
@@ -54005,7 +53968,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  set_optimize_data(code, OP_SAFE_C_CS);
  			else
@@ -54088,7 +54051,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_SSS);
@@ -54136,7 +54099,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  set_optimize_data(code, OP_SAFE_C_ALL_S);
 			else
@@ -54211,7 +54174,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if ((num_args == 2) &&
 			    (is_symbol(cadr(code))) &&
 			    (is_pair(caddr(code))) &&
@@ -54272,7 +54235,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  set_opt_and_goto_opt_eval(code, f, OP_VECTOR_opCq);
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opCq);
@@ -54374,7 +54337,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    switch (type(f))
 		      {
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSq);
@@ -54435,7 +54398,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    switch (type(f))
 		      {
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSq_S);
@@ -54505,7 +54468,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_S_opSq : OP_C_S_opSq);
 			set_ecdr(cdr(code), cadr(caddr(code)));
 			set_c_function(code, f);
@@ -54546,7 +54509,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    /* code: (+ a (* b c)) */
@@ -54600,7 +54563,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSSq_S);
@@ -54676,7 +54639,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSq_opSq);
@@ -58147,12 +58110,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
 	  
-	case T_C_LST_ARGS_FUNCTION:                 /* -------- {list} -------- */
-	  if (sc->no_values == 0)
-	    sc->value = sc->args;
-	  else sc->value = g_qq_list(sc, sc->args);
-	  goto START;
-	  
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
 	    int len;
@@ -60090,7 +60047,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 0) 2) lst) */
 	    case T_C_FUNCTION:
 	      /* perhaps it has a setter */
-	      /* the only T_C_LST_ARGS function is internal: {list}, so it doesn't need a setter */
 	      
 	      if (is_procedure(c_function_setter(sc->x)))
 		{
@@ -68694,15 +68650,8 @@ s7_scheme *s7_init(void)
   sc->MEMBER =                s7_define_function(sc,      "member",                  g_member,                 2, 1, false, H_member);
 
   sc->APPEND =                s7_define_safe_function(sc, "append",                  g_append,                 0, 0, true,  H_append);
-  sc->LIST =                  s7_define_function(sc,      "list",                    g_list,                   0, 0, true,  H_list);
-  {
-    s7_pointer p;
-    p = s7_symbol_value(sc, sc->LIST);
-    set_copy_args(p);
-    /* currently list is not safe because this copy_args bit is being ignored in the safe func case? 
-     *  (i.e. OP_C_... as opposed to OP_SAFE_C...)
-     */
-  }
+  sc->LIST =                  s7_define_safe_function(sc, "list",                    g_list,                   0, 0, true,  H_list);
+
   sc->LIST_REF =              s7_define_safe_function(sc, "list-ref",                g_list_ref,               2, 0, true,  H_list_ref);
   sc->LIST_SET =              s7_define_safe_function(sc, "list-set!",               g_list_set,               3, 0, true,  H_list_set);
   sc->LIST_TAIL =             s7_define_safe_function(sc, "list-tail",               g_list_tail,              2, 0, false, H_list_tail);
@@ -68791,7 +68740,7 @@ s7_scheme *s7_init(void)
   sc->QQ_Append =             s7_define_constant_function(sc, "{append}",            g_append,                 0, 0, true,  H_append);
   sc->Multivector =           s7_define_constant_function(sc, "{multivector}",       g_qq_multivector,         1, 0, true,  H_qq_multivector);
   sc->QQ_List =               s7_define_constant_function(sc, "{list}",              g_qq_list,                0, 0, true,  H_qq_list);
-  set_type(sc->QQ_List, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
+  set_type(sc->QQ_List, (T_C_RST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
 
   sc->GC =                    s7_define_safe_function(sc, "gc",                      g_gc,                     0, 1, false, H_gc);
 
@@ -69431,7 +69380,7 @@ int main(int argc, char **argv)
 /* -------------------------------------------------------------------------------- */
 
 /*
- *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6
+ *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.7
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346
@@ -69457,9 +69406,7 @@ int main(int argc, char **argv)
  * why doesn't a new max take effect? [with-fullest-sound t844.scm]
  * click-2 in separate channel => play just that channel
  * clm opt accepts (env env)
- * does *load-path* interpose "."?
- * add gmp+debug to testsnd and find the free cell gmp bug
- * remove the ruby sndlib case in compsnd
+ * need to update sndins/sndins.c and maybe others 
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
@@ -69470,14 +69417,5 @@ int main(int argc, char **argv)
  *   and for catch what errors it might raise
  *     frames: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
- *
- * function parameter-list won't change, so it's an unchanging env -- we could preset access here,
- *   given env-slot layout.  If no intervening env, 
- *   (define (hi a b c) (current-environment))
- *   (hi 1 2 3) -> #<environment 'c 3 'b 2 'a 1>
- *   1-arg func, no inner, environment_slots(sc->envir) is the arg
- *               if 1 inner, environment_slots(next_environment(sc->envir))
- *   could this be all_x'd?  One obvious case:
- *   (define (name v) (vector-ref v 0)) -> vector_getter(slot_value(environment_slots(sc->envir)), 0) but needs v type check
  */
 

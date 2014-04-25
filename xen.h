@@ -583,21 +583,6 @@
 		  (argc > 8) ? argv[8] : XEN_UNDEFINED)); \
   }
 
-#define XEN_ARGIFY_10(OutName, InName) \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
-		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
-		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
-		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
-		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
-		  (argc > 6) ? argv[6] : XEN_UNDEFINED, \
-		  (argc > 7) ? argv[7] : XEN_UNDEFINED, \
-		  (argc > 8) ? argv[8] : XEN_UNDEFINED, \
-		  (argc > 9) ? argv[9] : XEN_UNDEFINED)); \
-  }
-
 #define XEN_NARGIFY_0(OutName, InName) \
   static XEN OutName(void) {return(InName());}
 
@@ -981,7 +966,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_ARGIFY_7(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7) = InName;
 #define XEN_ARGIFY_8(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7, XEN a8) = InName;
 #define XEN_ARGIFY_9(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7, XEN a8, XEN a9) = InName;
-#define XEN_ARGIFY_10(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7, XEN a8, XEN a9, XEN a10) = InName;
 #define XEN_VARGIFY(OutName, InName)   static XEN (*OutName)(XEN a1) = InName;
 
 #endif /* end HAVE_FORTH */
@@ -1173,8 +1157,6 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_ARGIFY_7(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(s7_apply_n_7(s7, args, InName));}
 #define XEN_ARGIFY_8(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(s7_apply_n_8(s7, args, InName));}
 #define XEN_ARGIFY_9(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(s7_apply_n_9(s7, args, InName));}
-#define XEN_ARGIFY_10(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(s7_apply_n_10(s7, args, InName));}
-
 #define XEN_VARGIFY(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(InName(args));}
 
 
@@ -1344,7 +1326,6 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_ARGIFY_7(OutName, InName) static int OutName(void) {return(-7);}
 #define XEN_ARGIFY_8(OutName, InName) static int OutName(void) {return(-8);}
 #define XEN_ARGIFY_9(OutName, InName) static int OutName(void) {return(-9);}
-#define XEN_ARGIFY_10(OutName, InName) static int OutName(void) {return(-10);}
 
 #define XEN_NARGIFY_0(OutName, InName) static int OutName(void) {return(0);}
 #define XEN_NARGIFY_1(OutName, InName) static int OutName(void) {return(1);}
@@ -1630,7 +1611,6 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_wrap_8_args(a, b)            XEN_NARGIFY_8(a, b)
 #define Xen_wrap_9_args(a, b)            XEN_NARGIFY_9(a, b)
 #define Xen_wrap_1_optional_arg(a, b)    XEN_ARGIFY_1(a, b)
-#define Xen_wrap_10_optional_args(a, b)  XEN_ARGIFY_10(a, b)
 #define Xen_wrap_2_optional_args(a, b)   XEN_ARGIFY_2(a, b)
 #define Xen_wrap_3_optional_args(a, b)   XEN_ARGIFY_3(a, b)
 #define Xen_wrap_4_optional_args(a, b)   XEN_ARGIFY_4(a, b)

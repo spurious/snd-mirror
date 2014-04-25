@@ -45,18 +45,6 @@ MUS_EXPORT vct *mus_vct_wrap(mus_long_t len, mus_float_t *data);
   MUS_EXPORT Xen vct_to_xen(vct *v);
 #endif
 
-#if (!DISABLE_DEPRECATED)
-#if HAVE_SCHEME
-  #define XEN_TO_VCT(Obj) (vct *)Obj
-#else
-  #define XEN_TO_VCT(arg) ((vct *)Xen_object_ref(arg))
-#endif
-#define MUS_IS_VCT(arg) mus_is_vct(arg)
-#define mus_vct_p mus_is_vct
-#define mus_vct_equalp mus_vct_is_equal
-#define MUS_VCT_P(arg) mus_is_vct(arg)
-#endif
-
 #ifdef __cplusplus
 }
 #endif

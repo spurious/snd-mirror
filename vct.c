@@ -1551,19 +1551,6 @@ void mus_vct_init(void)
   Xen_define_safe_procedure(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
   Xen_define_safe_procedure(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
 #else
-#if (!DISABLE_DEPRECATED)
-  s7_eval_c_string(s7, "(define vct-copy copy)");
-  s7_eval_c_string(s7, "(define vct-fill! fill!)");
-  s7_eval_c_string(s7, "(define vct float-vector)");
-  s7_eval_c_string(s7, "(define vct-length length)");
-  s7_eval_c_string(s7, "(define vct-reverse! reverse!)");  /* slight difference: no optional length arg (use make-shared-vector) */
-  s7_eval_c_string(s7, "(define vct->list vector->list)");
-  s7_eval_c_string(s7, "(define (list->vct x) (apply float-vector x))");
-  s7_eval_c_string(s7, "(define make-vct make-float-vector)");
-  s7_eval_c_string(s7, "(define (vector->vct v) (copy v (make-vector (length v) 0.0 #t)))");
-  s7_eval_c_string(s7, "(define (vct->vector v) (copy v (make-vector (length v) 0.0)))");
-  s7_eval_c_string(s7, "(define vct? float-vector?)");
-#endif
   s7_eval_c_string(s7, "(define vct-multiply! float-vector-multiply!)");
   s7_eval_c_string(s7, "(define vct-scale! float-vector-scale!)");
   s7_eval_c_string(s7, "(define vct-add! float-vector-add!)");
