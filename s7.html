@@ -2624,7 +2624,7 @@ augment-environment!  varlet, let-append(?)
 current-environment   valet,  make-begin(?)
 error-environment     owlet, triplet, error-let(?)
 procedure-environment runlet(?)
-environment-&gt;list  let-&gt;list(?)
+environment-&gt;list     let-&gt;list(?)
 open-environment      open-let(?)
 open-environment?
 </pre>
@@ -4595,6 +4595,20 @@ Along the same lines:
   (catch-if (lambda (tag) (member tag lst)) func err))
 </pre>
 </div>
+
+<!--
+(define (or-catch . funks)
+  (call-with-exit
+   (lambda (return)
+     (for-each
+      (lambda (f)
+	(catch #t
+	  (lambda ()
+	    (return (f)))
+	  (lambda any
+	    #f)))
+      funks))))
+-->       
 
 </blockquote>
 

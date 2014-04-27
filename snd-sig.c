@@ -1867,7 +1867,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 
       reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
       if (order == 0) order = 65536; /* presumably fsize is enormous here, so no MIN needed */
-      if (!(IS_POWER_OF_2(order)))
+      if (!(is_power_of_2(order)))
 	order = snd_to_int_pow2(order);
       fsize = 2 * order; /* need room for convolution */
       if (precalculated_coeffs)
@@ -5420,7 +5420,7 @@ If sign is -1, perform inverse fft.  Incoming data is in " S_vct "s."
   n = mus_vct_length(v1);
   if (mus_vct_length(v2) < n) n = mus_vct_length(v2);
   if (n == 0) return(Xen_integer_zero);
-  if (IS_POWER_OF_2(n))
+  if (is_power_of_2(n))
     {
       n2 = n;
       rl = mus_vct_data(v1);

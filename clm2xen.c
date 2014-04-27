@@ -1042,7 +1042,7 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
   if (n > mus_vct_length(v2))
     n = mus_vct_length(v2);
 
-  if (!(IS_POWER_OF_2(n)))
+  if (!(is_power_of_2(n)))
     {
       mus_float_t nf;
       int np;
@@ -1135,7 +1135,7 @@ and type determines how the spectral data is scaled:\n\
   if ((v3) && (n > mus_vct_length(v3)))
     n = mus_vct_length(v3);
 
-  if (!(IS_POWER_OF_2(n)))
+  if (!(is_power_of_2(n)))
     {
       mus_float_t nf;
       int np;
@@ -1217,7 +1217,7 @@ of " S_vct "s v1 with v2, using fft of size len (a power of 2), result in v1"
   else n = mus_vct_length(v1);
   if (n > mus_vct_length(v2))
     n = mus_vct_length(v2);
-  if (!(IS_POWER_OF_2(n)))
+  if (!(is_power_of_2(n)))
     {
       mus_float_t nf;
       int np;
@@ -8402,7 +8402,7 @@ return a new convolution generator which convolves its input with the impulse re
     Xen_error(NO_DATA,
 	      Xen_list_1(C_string_to_Xen_string(S_make_convolve ": no impulse (filter)?")));
 
-  if (IS_POWER_OF_2(mus_vct_length(filter)))
+  if (is_power_of_2(mus_vct_length(filter)))
     fftlen = mus_vct_length(filter) * 2;
   else fftlen = (mus_long_t)pow(2.0, 1 + (int)(log((mus_float_t)(mus_vct_length(filter) + 1)) / log(2.0)));
   if (fft_size < fftlen) fft_size = fftlen;
@@ -8639,7 +8639,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
 	Xen_out_of_range_error(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size <= 1?");
       if (fft_size > mus_max_malloc())
 	Xen_out_of_range_error(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size too large (see mus-max-malloc)");
-      if (!IS_POWER_OF_2(fft_size))
+      if (!is_power_of_2(fft_size))
 	Xen_out_of_range_error(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size must be power of 2");
 
       overlap = Xen_optkey_to_int(kw_overlap, keys[2], S_make_phase_vocoder, orig_arg[2], overlap);

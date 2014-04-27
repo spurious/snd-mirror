@@ -5226,7 +5226,7 @@ static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *
 	(*error) = PEAK_ENV_BAD_FORMAT;
       else
 	{
-	  if ((ibuf[1] <= 0) || (!(IS_POWER_OF_2(ibuf[1]))))
+	  if ((ibuf[1] <= 0) || (!(is_power_of_2(ibuf[1]))))
 	    (*error) = PEAK_ENV_BAD_SIZE;
 	  else
 	    {

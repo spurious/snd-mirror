@@ -374,7 +374,7 @@ enum {OP_NO_OP,
       OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
       OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_WHEN, OP_WHEN1, OP_UNLESS, OP_UNLESS1, OP_SET, OP_SET1, OP_SET2,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
-      OP_LETREC, OP_LETREC1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
+      OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
       OP_AND, OP_AND1, OP_OR, OP_OR1, 
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE, 
@@ -403,7 +403,7 @@ enum {OP_NO_OP,
       OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA, OP_SET_PAIR_UNKNOWN_S,
       OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE, OP_SET_FV_SCALED,
-      OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
+      OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_LETREC_STAR_UNCHECKED, OP_COND_UNCHECKED,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
       OP_DEFINE_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
       OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
@@ -481,7 +481,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "apply", "eval-macro", "lambda", "quote", 
    "define", "define", "begin", "begin", "if", "if", "when", "when", "unless", "unless", "set!", "set!", "set!", 
    "let", "let", "let*", "let*", "let*",
-   "letrec", "letrec", "cond", "cond", "cond", "cond",
+   "letrec", "letrec", "letrec*", "letrec*", "cond", "cond", "cond", "cond",
    "and", "and", "or", "or", 
    "define-macro", "define-macro*", "define-expansion",
    "case", "case", "read-list", "read-list", "read-dot", "read-quote", 
@@ -504,7 +504,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
-   "let*", "letrec", "cond",
+   "let*", "letrec", "letrec*", "cond",
    "lambda*", "do", "define", "define*", "define",
    "define", "define-macro",
    "let", "let", "let", "let*",
@@ -561,7 +561,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_APPLY", "OP_EVAL_MACRO", "OP_LAMBDA", "OP_QUOTE", 
   "OP_DEFINE", "OP_DEFINE1", "OP_BEGIN", "OP_BEGIN1", "OP_IF", "OP_IF1", "OP_WHEN", "OP_WHEN1", "OP_UNLESS", "OP_UNLESS1", "OP_SET", "OP_SET1", "OP_SET2",
   "OP_LET", "OP_LET1", "OP_LET_STAR", "OP_LET_STAR1", "OP_LET_STAR2", 
-  "OP_LETREC", "OP_LETREC1", "OP_COND", "OP_COND1", "OP_COND_SIMPLE", "OP_COND1_SIMPLE",
+  "OP_LETREC", "OP_LETREC1", "OP_LETREC_STAR", "OP_LETREC_STAR1", "OP_COND", "OP_COND1", "OP_COND_SIMPLE", "OP_COND1_SIMPLE",
   "OP_AND", "OP_AND1", "OP_OR", "OP_OR1", 
   "OP_DEFINE_MACRO", "OP_DEFINE_MACRO_STAR", "OP_DEFINE_EXPANSION",
   "OP_CASE", "OP_CASE1", "OP_READ_LIST", "OP_READ_NEXT", "OP_READ_DOT", "OP_READ_QUOTE", 
@@ -590,7 +590,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_A", "OP_SET_PAIR_P", "OP_SET_PAIR_ZA", "OP_SET_PAIR_UNKNOWN_S",
   "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_ENV_S", "OP_SET_ENV_ALL_X",
   "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE", "OP_SET_FV_SCALED",
-  "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
+  "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_LETREC_STAR_UNCHECKED", "OP_COND_UNCHECKED",
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", "OP_DEFINE_FUNCHECKED",
   "OP_DEFINE_WITH_ACCESSOR", "OP_DEFINE_MACRO_WITH_ACCESSOR",
   "OP_LET_NO_VARS", "OP_NAMED_LET", "OP_NAMED_LET_NO_VARS", "OP_NAMED_LET_STAR",
@@ -1231,7 +1231,7 @@ struct s7_scheme {
   unsigned int read_line_buf_size;
 
   s7_pointer v, w, x, y, z;         /* evaluator local vars */
-  s7_pointer temp1, temp2, temp3, temp4;
+  s7_pointer temp1, temp2, temp3;
   s7_pointer temp_cell, temp_cell_1, temp_cell_2, temp_cell_3, temp_cell_4;
   s7_pointer T1_1, T2_1, T2_2, T3_1, T3_2, T3_3;
   s7_pointer A1_1, A2_1, A2_2, A3_1, A3_2, A3_3, A4_1, A4_2, A4_3, A4_4;
@@ -1317,7 +1317,7 @@ struct s7_scheme {
   s7_pointer FEED_TO;                  /* => */
   s7_pointer BODY;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
-  s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
+  s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
   s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_UNKNOWN_S;
   s7_pointer SET_SYMBOL_SAFE_C, SET_PAIR_UNKNOWN_S, SET_FV_SCALED;
@@ -1572,6 +1572,7 @@ static void init_types(void)
   t_opt_all_x[HOP_SAFE_C_Q] = true;
   t_opt_all_x[HOP_SAFE_C_A] = true;
   t_opt_all_x[HOP_SAFE_C_SSA] = true; 
+  t_opt_all_x[HOP_SAFE_C_SSC] = true; 
   t_opt_all_x[HOP_SAFE_C_SS] = true;
   t_opt_all_x[HOP_SAFE_C_SSS] = true;
   t_opt_all_x[HOP_SAFE_C_SC] = true;
@@ -3884,7 +3885,6 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->temp1);
   S7_MARK(sc->temp2);
   S7_MARK(sc->temp3);
-  S7_MARK(sc->temp4);
 
   set_mark(sc->input_port);
   S7_MARK(sc->input_port_stack);
@@ -5616,7 +5616,7 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
   if (!is_null(bindings))
     {
       s7_pointer x;
-      sc->temp4 = new_e;
+      sc->temp3 = new_e;
 
       for (x = bindings; is_not_null(x); x = cdr(x))
 	{
@@ -5731,7 +5731,7 @@ new environment.  The arguments should be in the order symbol its-value."
   s7_pointer new_e, new_s, p, q;
 
   new_e = new_frame_in_env(sc, sc->NIL);
-  sc->temp4 = new_e; /* GC protect it */
+  sc->temp3 = new_e; /* GC protect it */
   for (p = args; is_not_null(p); p = cdr(q))
     {
       q = cdr(p);
@@ -5757,7 +5757,7 @@ new environment.  The arguments should be in the order symbol its-value."
 s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
 {
   s7_pointer x;
-  sc->temp4 = sc->w;
+  sc->temp3 = sc->w;
   sc->w = sc->NIL;
   if (env == sc->global_env)
     {
@@ -5782,7 +5782,7 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
 	sc->w = cons_unchecked(sc, cons(sc, slot_symbol(x), slot_value(x)), sc->w);
     }
   x = sc->w;
-  sc->w = sc->temp4;
+  sc->w = sc->temp3;
   return(x);
 }
 
@@ -5931,7 +5931,7 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 	  set_has_methods(new_e);
 	}
       else new_e = new_frame_in_env(sc, next_environment(env));
-      sc->temp4 = new_e;
+      sc->temp3 = new_e;
 
       for (x = environment_slots(env); is_slot(x); x = next_slot(x))
 	ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
@@ -23207,7 +23207,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   port = open_and_protect_input_string(sc, str);
   push_input_port(sc, port);
   
-  sc->temp4 = sc->args;
+  sc->temp3 = sc->args;
   push_stack(sc, OP_EVAL_STRING_1, args, sc->code); /* was sc->args */
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
   
@@ -32759,6 +32759,9 @@ returning the value of the last form.  The let* variables are local to it, and a
 	  return("(letrec ((var (lambda ...)))...) is like let, but var can refer to itself in \
 its value (i.e. you can define local recursive functions)");
 
+	case OP_LETREC_STAR:
+	  return("(letrec* ((var val))...) is like letrec, but successive bindings are handled as in let*");
+
 	case OP_COND:
 	  return("(cond (expr clause...)...) is like if..then.  Each expr is evaluated in \
 order, and if one is not #f, the associated clauses are evaluated, whereupon cond returns.");
@@ -33647,6 +33650,7 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 	case OP_LET:
 	case OP_LET_STAR:
 	case OP_LETREC:
+	case OP_LETREC_STAR:
 	case OP_CASE:
 	case OP_LAMBDA:
 	case OP_LAMBDA_STAR:
@@ -33805,6 +33809,7 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	case OP_LET:
 	case OP_LET_STAR:
 	case OP_LETREC:
+	case OP_LETREC_STAR:
 	case OP_CASE:
 	case OP_LAMBDA:
 	case OP_LAMBDA_STAR:
@@ -37741,7 +37746,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
     return(c_function_call(func)(sc, args));  /* no check for wrong-number-of-args -- is that reasonable? */
 
   sc->temp1 = func; /* this is just GC protection */
-  sc->temp2 = args;
+  sc->temp2 = args; 
 
   old_longjmp = sc->longjmp_ok;
   memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
@@ -38697,6 +38702,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	case OP_LET1:                                             /* (let ((var (values 1 2 3))) ...) */
 	case OP_LET_STAR1:
 	case OP_LETREC1:
+	case OP_LETREC_STAR1:
 	case OP_LET_O1:
 	case OP_LET_O2:
 	case OP_LET_O3:
@@ -42821,11 +42827,11 @@ static s7_pointer all_x_c_opsq_opsq(s7_scheme *sc, s7_pointer arg)
   s7_pointer largs;
   largs = cdr(arg);
   car(sc->T1_1) = find_symbol_checked(sc, cadr(car(largs)));
-  sc->temp4 = c_call(car(largs))(sc, sc->T1_1);
+  sc->temp3 = c_call(car(largs))(sc, sc->T1_1);
   largs = cadr(largs);
   car(sc->T1_1) = find_symbol_checked(sc, cadr(largs));
   car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
-  car(sc->T2_1) = sc->temp4;
+  car(sc->T2_1) = sc->temp3;
   return(c_call(arg)(sc, sc->T2_1));
 }
 
@@ -42835,12 +42841,12 @@ static s7_pointer all_x_c_opssq_opssq(s7_scheme *sc, s7_pointer arg)
   largs = cdr(arg);
   car(sc->T2_1) = find_symbol_checked(sc, cadr(car(largs)));
   car(sc->T2_2) = find_symbol_checked(sc, caddr(car(largs)));
-  sc->temp4 = c_call(car(largs))(sc, sc->T2_1);
+  sc->temp3 = c_call(car(largs))(sc, sc->T2_1);
   largs = cadr(largs);
   car(sc->T2_1) = find_symbol_checked(sc, cadr(largs));
   car(sc->T2_2) = find_symbol_checked(sc, caddr(largs));
   car(sc->T2_2) = c_call(largs)(sc, sc->T2_1);
-  car(sc->T2_1) = sc->temp4;
+  car(sc->T2_1) = sc->temp3;
   return(c_call(arg)(sc, sc->T2_1));
 }
 
@@ -42852,10 +42858,18 @@ static s7_pointer all_x_c_a(s7_scheme *sc, s7_pointer arg)
 
 static s7_pointer all_x_c_ssa(s7_scheme *sc, s7_pointer arg)
 {
-  sc->temp4 = ((s7_function)fcdr(cdddr(arg)))(sc, cadddr(arg));
+  sc->temp3 = ((s7_function)fcdr(cdddr(arg)))(sc, cadddr(arg));
   car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
   car(sc->T3_2) = find_symbol_checked(sc, caddr(arg));
-  car(sc->T3_3) = sc->temp4;
+  car(sc->T3_3) = sc->temp3;
+  return(c_call(arg)(sc, sc->T3_1));
+}
+
+static s7_pointer all_x_c_ssc(s7_scheme *sc, s7_pointer arg)
+{
+  car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
+  car(sc->T3_2) = find_symbol_checked(sc, caddr(arg));
+  car(sc->T3_3) = cadddr(arg);
   return(c_call(arg)(sc, sc->T3_1));
 }
 
@@ -42873,6 +42887,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	    case HOP_SAFE_C_Q:         return(all_x_c_q);
 	    case HOP_SAFE_C_A:         return(all_x_c_a);
 	    case HOP_SAFE_C_SSA:       return(all_x_c_ssa);
+	    case HOP_SAFE_C_SSC:       return(all_x_c_ssc);
 	    case HOP_SAFE_C_S:         
 	      if (car(arg) == sc->CDR)
 		return(all_x_cdr_s);
@@ -44854,6 +44869,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       
     case OP_LET_STAR:
     case OP_LETREC:
+    case OP_LETREC_STAR:
       sc->w = collect_collisions(sc, cadr(p), sc->w);
       break;
 
@@ -45445,6 +45461,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  /* fall through */
 	  
 	case OP_LETREC:
+	case OP_LETREC_STAR:
 	  {
 	    bool happy = true;
 	    if (is_pair(cadr(x)))
@@ -45703,6 +45720,21 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 {
   /* called in optimize_lambda */
   s7_pointer p;
+
+#if 0
+  for (p = body; is_pair(p); p = cdr(p))
+    {
+      if (is_pair(car(p)))
+	{
+	  if ((is_syntactic(caar(p))) ||
+	      (!is_optimized(car(p))) ||
+	      (!is_all_x_safe(sc, car(p))))
+	    break;
+	}
+    }
+  if (is_null(p))
+    fprintf(stderr, "all: %s\n", DISPLAY(body));
+#endif
 
   sc->cycle_counter++;
   if (sc->cycle_counter > 5000)
@@ -46408,6 +46440,7 @@ static s7_pointer check_let(s7_scheme *sc)
 				    op = sc->LET_ALL_X;
 				  else 
 				    {
+				      /* fprintf(stderr, "%s not all_x: %s\n", DISPLAY(cadr(x)), opt_name(cadr(x))); */
 				      op = sc->LET_UNCHECKED;
 				      break;
 				    }
@@ -46678,24 +46711,24 @@ static s7_pointer check_let_star(s7_scheme *sc)
 }
 
 
-static s7_pointer check_letrec(s7_scheme *sc)
+static s7_pointer check_letrec(s7_scheme *sc, bool letrec)
 {
   s7_pointer x, y;
   if ((!is_pair(sc->code)) ||                 /* (letrec . 1) */
       (!is_pair(cdr(sc->code))) ||            /* (letrec) */
       (!s7_is_list(sc, car(sc->code))))       /* (letrec 1 ...) */
-    return(eval_error(sc, "letrec variable list is messed up: ~A", sc->code));
+    return(eval_error_with_name(sc, "~A: variable list is messed up: ~A", sc->code));
   
   for (x = car(sc->code); is_not_null(x); x = cdr(x))
     {
       s7_pointer carx;
       if (!is_pair(x))                        /* (letrec ((a 1) . 2) ...) */
-	return(eval_error(sc, "improper list of letrec variables? ~A", sc->code));
+	return(eval_error_with_name(sc, "~A: improper list of variables? ~A", sc->code));
       
       carx = car(x);
       if ((!is_pair(carx)) ||                 /* (letrec (1 2) #t) */
 	  (!(is_symbol(car(carx)))))
-	return(eval_error(sc, "bad variable ~S in letrec", carx));
+	return(eval_error_with_name(sc, "~A: bad variable ~S", carx));
       
       if (is_immutable(car(carx)))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG,
@@ -46704,23 +46737,25 @@ static s7_pointer check_letrec(s7_scheme *sc)
       if (!is_pair(cdr(carx)))                /* (letrec ((x . 1))...) */
 	{
 	  if (is_null(cdr(carx)))             /* (letrec ((x)) x) -- perhaps this is legal? */
-	    return(eval_error(sc, "letrec variable declaration has no value?: ~A", carx));
-	  return(eval_error(sc, "letrec variable declaration is not a proper list?: ~A", carx));
+	    return(eval_error_with_name(sc, "~A: variable declaration has no value?: ~A", carx));
+	  return(eval_error_with_name(sc, "~A: variable declaration is not a proper list?: ~A", carx));
 	}
       if (is_not_null(cddr(carx)))            /* (letrec ((x 1 2 3)) ...) */
-	return(eval_error(sc, "letrec variable declaration has more than one value?: ~A", carx));
+	return(eval_error_with_name(sc, "~A: variable declaration has more than one value?: ~A", carx));
 
-      /* check for name collisions -- not sure this is required by Scheme */
+      /* check for name collisions -- this is needed in letrec* else which of the two legit values
+       *    does our "rec" refer to, so to speak.
+       */
       for (y = car(sc->code); y != x; y = cdr(y))
 	if (car(carx) == caar(y))
-	  return(eval_error(sc, "duplicate identifier in letrec: ~A", carx));
+	  return(eval_error_with_name(sc, "~A: duplicate identifier: ~A", carx));
 
       set_local(car(carx));
     }
 
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
-    set_syntax_op(sc->code, sc->LETREC_UNCHECKED);
+    set_syntax_op(sc->code, (letrec) ? sc->LETREC_UNCHECKED : sc->LETREC_STAR_UNCHECKED);
 
   return(sc->code);
 }
@@ -47316,6 +47351,7 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
 	case OP_LET:
 	case OP_LET_STAR:
 	case OP_LETREC:
+	case OP_LETREC_STAR:
 	  /* these can be optimized to some extent */
 	  break;
 	  
@@ -47929,6 +47965,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			return(false);
 
 		    case OP_LETREC:
+		    case OP_LETREC_STAR:
 		    case OP_DO:
 		      for (vars = cadr(expr); is_pair(vars); vars = cdr(vars))
 			{
@@ -49155,7 +49192,7 @@ static s7_pointer check_do(s7_scheme *sc)
       /* if ((fcdr(cdr(sc->code)) == end_dox_c_ss) &&
 	     (fcdr(fcdr(sc->code)) == g_equal_2) &&
 	     (body_is_dox_safe(sc, body, cdr(fcdr(sc->code)))) &&
-             (!tree_memq(sc, vars, caddr(fcdr(sc->code)))) &&
+             (!s7_tree_memq(sc, vars, caddr(fcdr(sc->code)))) &&
 	     (fcdr(step_expr_of_cadr) == g_add_t1 or g_add_csi))
          -- yow!
       */
@@ -52454,10 +52491,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		args = cdr(code);
 		
 		car(sc->T1_1) = find_symbol_checked(sc, fcdr(args));
-		sc->temp4 = c_call(car(args))(sc, sc->T1_1);
+		sc->temp3 = c_call(car(args))(sc, sc->T1_1);
 		car(sc->T1_1) = find_symbol_checked(sc, fcdr(code));
 
-		sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), sc->temp4, c_call(cadr(args))(sc, sc->T1_1));
+		sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), sc->temp3, c_call(cadr(args))(sc, sc->T1_1));
 		code = closure_body(ecdr(code));
 		if (is_pair(cdr(code)))
 		  push_stack_no_args(sc, OP_BEGIN1, cdr(code));
@@ -56618,9 +56655,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer args;
 		args = cdr(code);
 		car(sc->T1_1) = find_symbol_checked(sc, cadr(car(args)));
-		sc->temp4 = c_call(car(args))(sc, sc->T1_1);
+		sc->temp3 = c_call(car(args))(sc, sc->T1_1);
 		car(sc->T2_2) = find_symbol_checked(sc, cadr(args));
-		car(sc->T2_1) = sc->temp4;
+		car(sc->T2_1) = sc->temp3;
 		sc->value = c_call(code)(sc, sc->T2_1);
 		goto START;
 	      }
@@ -56709,11 +56746,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer args;
 		args = cdr(code);
 		car(sc->T1_1) = find_symbol_checked(sc, cadr(car(args)));
-		sc->temp4 = c_call(car(args))(sc, sc->T1_1);
+		sc->temp3 = c_call(car(args))(sc, sc->T1_1);
 		args = cadr(args);
 		car(sc->T1_1) = find_symbol_checked(sc, cadr(args));
 		car(sc->T2_2) = c_call(args)(sc, sc->T1_1);
-		car(sc->T2_1) = sc->temp4;
+		car(sc->T2_1) = sc->temp3;
 		sc->value = c_call(code)(sc, sc->T2_1);
 		goto START;
 	      }
@@ -56777,11 +56814,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		val2 = find_symbol_checked(sc, cadr(cadr(args)));
 		car(sc->T2_1) = find_symbol_checked(sc, cadr(car(args)));
 		car(sc->T2_2) = caddr(car(args));
-		sc->temp4 = c_call(car(args))(sc, sc->T2_1);
+		sc->temp3 = c_call(car(args))(sc, sc->T2_1);
 		car(sc->T2_1) = val2;
 		car(sc->T2_2) = caddr(cadr(args));
 		car(sc->T2_2) = c_call(cadr(args))(sc, sc->T2_1);
-		car(sc->T2_1) = sc->temp4;
+		car(sc->T2_1) = sc->temp3;
 		sc->value = c_call(code)(sc, sc->T2_1);
 		goto START;
 	      }
@@ -56804,11 +56841,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		car(sc->T2_1) = find_symbol_checked(sc, cadr(car(args)));
 		car(sc->T2_2) = val3;
-		sc->temp4 = c_call(car(args))(sc, sc->T2_1);
+		sc->temp3 = c_call(car(args))(sc, sc->T2_1);
 		car(sc->T2_1) = find_symbol_checked(sc, cadr(cadr(args)));
 		car(sc->T2_2) = val4;
 		car(sc->T2_2) = c_call(cadr(args))(sc, sc->T2_1);
-		car(sc->T2_1) = sc->temp4;
+		car(sc->T2_1) = sc->temp3;
 		sc->value = c_call(code)(sc, sc->T2_1);
 		goto START;
 	      }
@@ -56914,9 +56951,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer args, val;
 		args = cdr(code);
-		sc->temp4 = find_symbol_checked(sc, car(args));
+		sc->temp3 = find_symbol_checked(sc, car(args));
 		val = c_call(cadr(args))(sc, ecdr(args));
-		sc->args = list_2(sc, sc->temp4, val);
+		sc->args = list_2(sc, sc->temp3, val);
 		sc->value = c_call(code)(sc, sc->args);
 		goto START;
 	      }
@@ -61678,7 +61715,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *            (f1 (lambda (arg) (f1 (+ x arg)))))
        *       (f1 1)))
        *
-       * will hang.
+       * will hang.  (much later -- this worries me... Could we defer making the slot?)
        */
       NEW_FRAME_WITH_CHECKED_SLOT(sc, sc->envir, sc->envir, caar(sc->code), sc->value);
       
@@ -61721,7 +61758,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* -------------------------------- LETREC -------------------------------- */
       
     case OP_LETREC:
-      check_letrec(sc);
+      check_letrec(sc, true);
       
       /* --------------- */
     case OP_LETREC_UNCHECKED:
@@ -61778,6 +61815,74 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = car(sc->code);
 	  goto EVAL;
 	}
+
+      
+
+      /* -------------------------------- LETREC* -------------------------------- */
+      
+    case OP_LETREC_STAR:
+      check_letrec(sc, false);
+      
+      /* --------------- */
+    case OP_LETREC_STAR_UNCHECKED:
+      /* get all local vars and set to #<undefined>
+       * eval each member of values list and assign immediately, as in let*
+       * eval body
+       */
+      sc->envir = new_frame_in_env(sc, sc->envir); 
+      if (is_pair(car(sc->code)))
+	{
+	  s7_pointer x, p, q;
+	  for (x = car(sc->code); is_not_null(x); x = cdr(x))
+	    {
+	      s7_pointer slot;
+	      slot = add_slot(sc, caar(x), sc->UNDEFINED);
+	      slot_expression(slot) = cadar(x);
+	    }
+	  /* these are reversed, and for letrec*, they need to be in order, so... (reverse_in_place on the slot list) */
+	  p = environment_slots(sc->envir);
+	  x = sc->NIL;
+	  while (is_slot(p))
+	    {
+	      q = next_slot(p);
+	      next_slot(p) = x;
+	      x = p;
+	      p = q;
+	    }
+	  environment_slots(sc->envir) = x;
+	  sc->args = environment_slots(sc->envir);
+	  push_stack(sc, OP_LETREC_STAR1, sc->args, sc->code);
+	  sc->code = slot_expression(sc->args);
+	  goto EVAL;
+	}
+      sc->code = cdr(sc->code);
+      goto BEGIN;
+      
+
+      /* --------------- */
+    case OP_LETREC_STAR1:
+      {
+	s7_pointer slot;
+	slot = sc->args;
+	if (symbol_has_accessor(slot_symbol(slot)))
+	  slot_set_value(slot, call_symbol_bind(sc, slot_symbol(slot), sc->value));
+	else slot_set_value(slot, sc->value);
+	slot = next_slot(slot);
+	if (is_slot(slot))
+	  {
+	    push_stack(sc, OP_LETREC_STAR1, slot, sc->code);
+	    sc->code = slot_expression(slot);
+	    goto EVAL;
+	  }
+	else
+	  {
+	    sc->code = cdr(sc->code);
+	    if (is_pair(cdr(sc->code)))
+	      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	    sc->code = car(sc->code);
+	    goto EVAL;
+	  }
+      }
 
       
 
@@ -67872,7 +67977,6 @@ s7_scheme *s7_init(void)
   sc->temp1 = sc->NIL;
   sc->temp2 = sc->NIL;
   sc->temp3 = sc->NIL;
-  sc->temp4 = sc->NIL;
 
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
@@ -68074,6 +68178,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "let",               OP_LET);
   assign_syntax(sc, "let*",              OP_LET_STAR);
   assign_syntax(sc, "letrec",            OP_LETREC);
+  assign_syntax(sc, "letrec*",           OP_LETREC_STAR);
   assign_syntax(sc, "cond",              OP_COND);
   assign_syntax(sc, "and",               OP_AND);
   assign_syntax(sc, "or",                OP_OR);
@@ -68098,6 +68203,7 @@ s7_scheme *s7_init(void)
   sc->LET_UNCHECKED =         assign_internal_syntax(sc, "let",     OP_LET_UNCHECKED);  
   sc->LET_STAR_UNCHECKED =    assign_internal_syntax(sc, "let*",    OP_LET_STAR_UNCHECKED);  
   sc->LETREC_UNCHECKED =      assign_internal_syntax(sc, "letrec",  OP_LETREC_UNCHECKED);  
+  sc->LETREC_STAR_UNCHECKED = assign_internal_syntax(sc, "letrec*", OP_LETREC_STAR_UNCHECKED);  
   sc->LET_NO_VARS =           assign_internal_syntax(sc, "let",     OP_LET_NO_VARS);  
   sc->LET_C =                 assign_internal_syntax(sc, "let",     OP_LET_C);  
   sc->LET_C_P =               assign_internal_syntax(sc, "let",     OP_LET_C_P);  
@@ -69057,30 +69163,6 @@ s7_scheme *s7_init(void)
    */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
-  /* letrec* -- the less said the better...
-   */
-  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                             \n\
-                          (if (null? body)                                                  \n\
-                              (error 'syntax-error \"letrec* has no body\")                 \n\
-                              (if (not (list? bindings))                                    \n\
-                                  (error 'syntax-error \"letrec* variables are messed up\") \n\
-                                  `(let (,@(map (lambda (var&init)                          \n\
-                                                  (list (car var&init) #<undefined>))       \n\
-                                                bindings))                                  \n\
-                                     ,@(map (lambda (var&init)                              \n\
-                                              (if (not (null? (cddr var&init)))             \n\
-                                                  (error 'syntax-error \"letrec* variable has more than one value\")) \n\
-                                              (list 'set! (car var&init) (cadr var&init)))  \n\
-                                             bindings)                                      \n\
-                                     ,@body))))");
-
-  /* minor bug here: (letrec* ((x 1) (x 2)) ...) complains: duplicate identifier in let, but it should say letrec*, might use:
-   *   (define (duplicate-car-memq lst) 
-   *      (and (not (null? lst))
-   *           (or (member (caar lst) (cdr lst) (lambda (x y) (eq? x (car y)))) 
-   *               (duplicate-car-memq (cdr lst)))))
-   */
-  
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
 
@@ -69393,8 +69475,7 @@ int main(int argc, char **argv)
  *            153 with run macro (eval_ptree)
  */
 
-/* letrec* built-in (not macro)
- * loop in C or scheme (as do-loop wrapper)
+/* loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
  * for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
  * open-output|input-object|function? -- what's the application?
@@ -69406,7 +69487,6 @@ int main(int argc, char **argv)
  * why doesn't a new max take effect? [with-fullest-sound t844.scm]
  * click-2 in separate channel => play just that channel
  * clm opt accepts (env env)
- * need to update sndins/sndins.c and maybe others 
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
@@ -69415,7 +69495,7 @@ int main(int argc, char **argv)
  *   #define R_oscil by addition from xen_assert?
  *   also want to know free vars used/affected and is func val the same if args are the same [side-effects]
  *   and for catch what errors it might raise
- *     frames: (integer? define ( ...) (selected-sound selected-channel)??)
+ *     framples: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  */
 

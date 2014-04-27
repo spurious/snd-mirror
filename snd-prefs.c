@@ -2427,7 +2427,7 @@ static void fft_size_from_text(prefs_info *prf)
       free_TEXT(str);
       if (!(prf->got_error))
 	{
-	  if (IS_POWER_OF_2(size))
+	  if (is_power_of_2(size))
 	    {
 	      if (size <= MAX_TRANSFORM_SIZE)
 		set_transform_size(size);

@@ -1113,7 +1113,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
     }
   else 
     {
-      if ((cp->zero_pad == 0) && (IS_POWER_OF_2(cp->transform_size)))
+      if ((cp->zero_pad == 0) && (is_power_of_2(cp->transform_size)))
 	fftsize = cp->transform_size;
       else fftsize = snd_mus_long_t_pow2((int)(ceil(log((mus_float_t)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0))));
       if (fftsize < 2) fftsize = 2;

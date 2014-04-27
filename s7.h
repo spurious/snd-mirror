@@ -827,6 +827,17 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #endif
 
 
+#if (!DISABLE_DEPRECATED)
+/* cm uses these two: */
+#define s7_NIL(Sc)         s7_nil(Sc)
+#define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
+
+#define s7_F(Sc)           s7_f(Sc)
+#define s7_T(Sc)           s7_t(Sc)
+#define s7_UNDEFINED(Sc)   s7_undefined(Sc)
+#define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
+#endif
+
 /* the following Scheme functions are not currently exported to C:
  *
  *    * + - / < <= = > >= abs acos acosh angle ash asin asinh assv atan atanh 
@@ -841,7 +852,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
  *    make-rectangular map max memv min modulo nan? negative? not odd? port-closed? 
  *    port-line-number positive? quotient read-byte read-line remainder round s7-version 
- *    sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
+ *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
  *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-position string-ref 
  *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
  *    symbol-table tan tanh truncate values vector vector->list with-input-from-file 
@@ -858,6 +869,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 22-Apr:    remove (deprecated) s7_apply_n_10, s7_is_valid_pointer, s7_keyword_eq_p.
  * 5-Mar:     s7_heap_size, s7_gc_freed.
  * 22-Jan-14: s7_vector_ref_object_value_checked.
  * --------
