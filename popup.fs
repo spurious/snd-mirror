@@ -1,12 +1,11 @@
 \ popup.fs -- popup.scm|rb --> popup.fs
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sat Dec  1 19:08:39 CET 2012
-
-\ Commentary:
-
+\ Created: 05/12/23 00:28:28
+\ Changed: 14/04/28 03:52:17
 \
+\ @(#)popup.fs	1.41 4/28/14
+
 \ selection-popup-menu
 \ graph-popup-menu
 \ fft-popup-menu
@@ -22,8 +21,6 @@
 \ change-fft-popup-color	( new-color -- )
 \ change-edhist-popup-color	( new-color -- )
 \ change-listener-popup-color	( new-color -- )
-
-\ Code:
 
 'snd-motif provided? [unless] skip-file [then]
 
@@ -316,11 +313,11 @@ hide
 	sel 0 array-ref { snd }
 	sel 1 array-ref { chn }
 	snd chn selection-position { beg }
-	snd chn selection-frames   { len }
+	snd chn selection-framples { len }
 	beg 0> if
 		0 beg snd chn delete-samples drop
 	then
-	snd chn #f frames { frms }
+	snd chn #f framples { frms }
 	len frms < if
 		len 1+  frms len -  snd chn delete-samples drop
 	then
@@ -364,7 +361,7 @@ hide
 		select 0 array-ref { snd }
 		select 1 array-ref { chn }
 		snd chn selection-position { pos }
-		snd chn selection-frames 1- { len }
+		snd chn selection-framples 1- { len }
 		pos snd chn #f 0 add-mark drop
 		pos len d+ snd chn #f 0 add-mark drop
 	end-each
@@ -373,7 +370,7 @@ hide
 
 : sel-info <{ w c info -- val }>
 	#f #f selection-position { beg }
-	#f #f selection-frames   { len }
+	#f #f selection-framples { len }
 	"    start: %d, %.3f\n" #( beg beg #f srate f/ ) string-format ( str )
 	"      end: %d, %.3f\n" #( beg len + dup #f srate f/ ) string-format $+
 	" duration: %d, %.3f\n" #( len len #f srate f/ ) string-format $+
@@ -564,7 +561,7 @@ let: ( -- menu )
 	graph-popup-snd { snd }
 	graph-popup-chn { chn }
 	snd chn #f cursor { beg }
-	snd chn selection-frames { len }
+	snd chn selection-framples { len }
 	snd chn selection-position { sbeg }
 	snd chn selection-member? not
 	beg len + sbeg < ||
@@ -616,7 +613,7 @@ let: ( -- menu )
 : pinfo-cb <{ w c info -- val }>
 	graph-popup-snd { snd }
 	graph-popup-chn { chn }
-	snd chn #f frames { frms }
+	snd chn #f framples { frms }
 	snd srate { sr }
 	"   chans: %d, srate: %d\n" #( snd channels sr ) string-format ( str )
 	"  format: %s [%s]\n"
@@ -1151,7 +1148,7 @@ let: ( -- menu )
 				snd srate { sr }
 				\ BEG and END should be floats
 				pos sr f/ { beg }
-				pos snd graph-popup-chn selection-frames f+
+				pos snd graph-popup-chn selection-framples f+
 				    sr f/ { end }
 				xe beg snd chn undef x->position >=
 				xe end snd chn undef x->position <= && if

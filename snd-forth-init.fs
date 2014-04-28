@@ -1,4 +1,7 @@
 \ .snd_forth -- start up file for Snd/Forth
+\
+\ @(#)snd-forth-init.fs	1.42 4/28/14
+\
 
 \ You can install the *.fs scripts with:
 \ 
@@ -167,7 +170,8 @@ require examp
 	\
 	before-prompt-hook lambda: <{ prompt pos -- new-prompt }>
 		"%I:%M%p" current-time strftime string-downcase! { tm }
-		"[%s %s] (%d) ok " #( *short-hostname* tm pos ) string-format
+		"%%S[%s %s] (%d)%%s %%Bok%%b "
+		    #( *short-hostname* tm pos ) string-format
 	; add-hook!
 [else]				\ snd-motif|gtk
 	read-hook lambda: <{ text -- flag }>
@@ -348,7 +352,7 @@ require examp
 	
 	"End" 0 lambda: <{ -- val }>
 		selected-sound { snd }
-		snd #f #f frames { frms }
+		snd #f #f framples { frms }
 		snd srate { sr }
 		'( 0.0 frms sr f/ ) snd #f undef set-x-bounds ( val )
 	; #f "view full sound" undef bind-key drop

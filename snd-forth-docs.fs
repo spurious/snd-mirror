@@ -182,7 +182,7 @@ lambda: ( -- )
 lambda: ( -- )
   "oboe.snd" make-readin { rd }
   rd 0.5 make-src { sr }
-  "oboe.snd" mus-sound-frames 2* ( len ) 0 do
+  "oboe.snd" mus-sound-framples 2* ( len ) 0 do
     i  sr 0 #f src  *output* outa drop
   loop
 ; :play #t :srate 22050 with-sound drop
@@ -216,7 +216,7 @@ lambda: ( -- )
 lambda: ( -- )
   "oboe.snd" "pistol.snd" 0.5 "convolved.snd" convolve-files { tempfile }
   tempfile make-readin { reader }
-  tempfile mus-sound-frames ( len ) 0 do
+  tempfile mus-sound-framples ( len ) 0 do
     i  reader readin  *output* outa drop
   loop
   tempfile file-delete
@@ -257,7 +257,7 @@ lambda: ( -- )
 \ PHASE-VOCODER2
 lambda: ( -- )
   "oboe.snd" make-readin :interp 256 make-phase-vocoder { pv }
-  "oboe.snd" mus-sound-frames 2* ( samps ) 0 do
+  "oboe.snd" mus-sound-framples 2* ( samps ) 0 do
     i  pv #f #f #f #f phase-vocoder  *output* outa drop
   loop
 ; :play #t :srate 22050 with-sound drop
@@ -274,7 +274,7 @@ lambda: ( -- )
 lambda: ( -- )
   "stereo.snd" make-file->frame { input }
   2 make-frame { frm }
-  "stereo.snd" mus-sound-frames ( len ) 0 do
+  "stereo.snd" mus-sound-framples ( len ) 0 do
     input i frm file->frame ( frm ) 1 frame-ref ( val1 )
     frm 0 frame-ref ( val0 ) frm 1 rot frame-set! drop
     ( val1 ) frm 0 rot frame-set! drop

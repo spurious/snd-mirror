@@ -145,13 +145,11 @@ void reflect_play_selection_stop(void)
   set_menu_label(edit_play_menu, "Play Selection");
   ss->selection_play_stop = false;
 }
-
 #else
 
 void reflect_play_selection_stop(void)
 {
 }
-
 #endif
 
 
@@ -858,9 +856,19 @@ static void stop_everything_callback(GtkWidget *w, gpointer info)
 
 
 
+static void popup_play_channel_callback(GtkWidget *w, gpointer info) 
+{
+  chan_info *cp;
+  cp = current_channel();
+  play_channel(cp, 0, current_samples(cp));
+}
+
+
+static GtkWidget *popup_play = NULL;
 void post_basic_popup_menu(void *e)
 {
   GdkEventButton *ev = (GdkEventButton *)e;
+  snd_info *sp;
   if (!basic_popup_menu)
     {
       basic_popup_menu = gtk_menu_new();
@@ -872,11 +880,16 @@ void post_basic_popup_menu(void *e)
 
       add_menu_item(basic_popup_menu, "Info",           NULL, (GCallback)popup_info_callback);
       add_menu_item(basic_popup_menu, "Select all",     NULL, (GCallback)edit_select_all_callback);
+      popup_play = add_menu_item(basic_popup_menu, "Play channel", NULL, (GCallback)popup_play_channel_callback);
       add_menu_item(basic_popup_menu, "Stop!",          NULL, (GCallback)stop_everything_callback);
       add_menu_item(basic_popup_menu, "-> 1.0",         NULL, (GCallback)popup_normalize_callback);
       add_menu_item(basic_popup_menu, "Reverse",        NULL, (GCallback)popup_reverse_callback);
     }
-
+  
+  sp = any_selected_sound();
+  if ((!sp) || (sp->nchans == 1))
+    gtk_widget_hide(popup_play);
+  else gtk_widget_show(popup_play);
   gtk_menu_popup(GTK_MENU(basic_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
 }
 

@@ -1,11 +1,11 @@
 \ examp.fs -- examples from examp.scm|rb
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Thu Jun 13 18:47:47 CEST 2013
-
-\ Commentary:
+\ Created: 05/07/05 13:09:37
+\ Changed: 14/04/28 03:52:17
 \
+\ @(#)examp.fs	1.62 4/28/14
+
 \ With original comments and doc strings from examp.scm.
 \
 \ all-chans		( -- array-of-lists )
@@ -273,7 +273,7 @@ require rgb
 		'no-active-selection #( get-func-name ) fth-throw
 	then
 	selection-position #f #f 1 #f make-sampler { rd }
-	selection-frames { len }
+	selection-framples { len }
 	0.0 ( sum ) len 0 ?do
 		rd next-sample dup f* f+ ( sum += ... )
 	loop
@@ -400,8 +400,8 @@ It is intended for use with after-transform-hook."
 for use with graph-hook).  \
 y0 and y1 are ignored."
 	snd channels 2 = if
-		snd 0 #f frames 1 >
-		snd 1 #f frames 1 > && if
+		snd 0 #f framples 1 >
+		snd 1 #f framples 1 > && if
 			snd chn left-sample  { ls }
 			snd chn right-sample { rs }
 			rs ls - 1+ { ilen }
@@ -903,7 +903,7 @@ splitting it into two copies whose amplitudes depend on the envelope PAN-ENV.  \
 If PAN-ENV is a number, the sound is split such that 0 is all in channel 0 \
 and 90 is all in channel 1."
 	{ mono stereo pan }
-	mono #f #f #f frames { len }
+	mono #f #f #f framples { len }
 	pan number? if
 		pan 90.0 f/ { pos }
 		0 mono #f 1 #f make-sampler { reader0 }
@@ -927,7 +927,7 @@ previous
 	doc" Fft an entire sound, remove all energy \
 below BOTTOM and all above TOP, then inverse fft."
 	snd srate { sr }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	2.0  len flog 2.0 flog f/ fceil  f** fround->s { fsize }
 	0 fsize snd chn #f channel->vct { rdata }
 	fsize 0.0 make-vct { idata }
@@ -964,7 +964,7 @@ below BOTTOM and all above TOP, then inverse fft."
 : fft-squelch <{ squelch :optional snd #f chn #f -- scl }>
 	doc" Fft an entire sound, set all bins \
 to 0.0 whose energy is below squelch, then inverse fft."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	2.0  len flog 2.0 flog f/ fceil  f** fround->s { fsize }
 	0 fsize snd chn #f channel->vct { rdata }
 	fsize 0.0 make-vct { idata }
@@ -1001,7 +1001,7 @@ to 0.0 whose energy is below squelch, then inverse fft."
 	doc" Fft an entire sound, set the bin(s) \
 representing LO-FREQ to HI-FREQ to 0, then inverse fft."
 	snd srate { sr }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	2.0  len flog 2.0 flog f/ fceil  f** fround->s { fsize }
 	0 fsize snd chn #f channel->vct { rdata }
 	fsize 0.0 make-vct { idata }
@@ -1087,7 +1087,7 @@ previous
 : fft-env-data <{ fft-env :optional snd #f chn #f -- vct }>
 	doc" Apply FFT-ENV as spectral env to current sound, \
 returning vct of new data."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	2.0  len flog 2.0 flog f/ fceil  f** fround->s { fsize }
 	0 fsize snd chn #f channel->vct { rdata }
 	fsize 0.0 make-vct { idata }
@@ -1112,7 +1112,7 @@ returning vct of new data."
 : fft-env-edit <{ fft-env :optional snd #f chn #f -- vct }>
 	doc" Edit (filter) current chan using FFT-ENV."
 	"%s %s" #( fft-env get-func-name ) string-format { origin }
-	fft-env snd chn fft-env-data 0 snd chn #f frames 1-
+	fft-env snd chn fft-env-data 0 snd chn #f framples 1-
 	    snd chn #f origin vct->channel
 ;
 
@@ -1122,7 +1122,7 @@ versions (ENV1 and ENV2 are the spectral envelopes) \
 following interp (an env between 0 and 1)."
 	env1 snd chn fft-env-data { data1 }
 	env2 snd chn fft-env-data { data2 }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	:envelope interp :length len make-env { e }
 	"%s %s %s %s" #( env1 env2 interp get-func-name )
 	    string-format { origin }
@@ -1138,7 +1138,7 @@ apply the function FLT to it, then inverse fft.  \
 FLT should take one argument, the current spectrum value.\n\
 lambda: <{ y -- val }> y 0.01 f< if 0.0 else y then ; filter-fft\n\
 is like fft-squelch."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	snd chn #f maxamp { mx }
 	2.0  len flog 2.0 flog f/ fceil  f** fround->s { fsize }
 	fsize 2/ { fsize2 }
@@ -1268,7 +1268,7 @@ filters: 0.95 100 0.3 comb-chord map-channel."
 	:size size
 	    :max-size pm 0.0 max-envelope 1.0 f+ size f+ fround->s
 	    make-comb { gen }
-	:envelope pm :length #f #f #f frames make-env { penv }
+	:envelope pm :length #f #f #f framples make-env { penv }
 	1 proc-create ( prc )
 	gen , penv ,
   does> { x self -- val }
@@ -1314,7 +1314,7 @@ parallel: 0.99 900 0.98 1800 0.99 2700 formants map-channel."
 0.99 #( 0 1200 1 2400 ) moving-formant map-channel."
 	{ radius move }
 	move 1 array-ref radius make-formant { frm }
-	:envelope move :length #f #f #f frames make-env { menv }
+	:envelope move :length #f #f #f framples make-env { menv }
 	1 proc-create ( prc )
 	frm , menv ,
   does> { x self -- val }
@@ -1406,7 +1406,7 @@ parallel: 0.99 900 0.98 1800 0.99 2700 formants map-channel."
 10 #( 0 0 1 100 hz->radians ) ring-mod map-channel."
 	{ freq gliss-env }
 	:frequency freq make-oscil { os }
-	:envelope gliss-env :length #f #f #f frames make-env { genv }
+	:envelope gliss-env :length #f #f #f framples make-env { genv }
 	1 proc-create ( prc )
 	os , genv ,
   does> { y self -- val }
@@ -1464,7 +1464,7 @@ set-current
 	doc" Vary the sampling rate randomly, making a voice sound quavery:\n\
 40.0 0.1 #f #f hello-dentist drop."
 	:frequency frq :amplitude amp make-rand-interp { rn }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	0 len snd chn #f channel->vct { in-data }
 	:srate 1.0 :input in-data hd-input-cb make-src { rd }
 	"%s %s %s" #( frq amp get-func-name ) string-format { origin }
@@ -1495,7 +1495,7 @@ set-current
 	osfrq make-oscil { os }
 	0 snd chn 1 #f make-sampler { sf }
 	:srate sr :input sf fp-input-cb make-src { s }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	"%s %s %s %s" #( sr osamp osfrq get-func-name ) string-format { origin }
 	len 0.0 make-vct map!
 		s os 0.0 0.0 oscil osamp f* #f src
@@ -1579,7 +1579,7 @@ set-current
 	doc" Use the granulate generator to change tempo \
 according to an envelope:\n\
 #( 0 0.5 2 2.0 ) #f #f expsnd."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	len snd srate f/ gr-env integrate-envelope f*
 	    gr-env envelope-last-x f/ { dur }
 	0 snd chn 1 #f make-sampler { sf }
@@ -1653,7 +1653,7 @@ whispering: 1.0 256 2.0 2.0 #f #f voiced->unvoiced."
 	0 { inctr }
 	1.0 r fftsize f/ f- { radius }
 	snd srate fftsize / { bin }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	len tempo f/ fround->s len max { out-len }
 	freq-inc tempo f* fround->s { hop }
 	0.0 0.0 { old-peak-amp new-peak-amp }
@@ -1691,7 +1691,7 @@ whispering: 1.0 256 2.0 2.0 #f #f voiced->unvoiced."
 	0 { inctr }
 	1.0 r fftsize f/ f- { radius }
 	snd srate fftsize / { bin }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	0.0 0.0 { old-peak-amp new-peak-amp }
 	"%s %s %s %s %s %s"
 	    #( co freq amp fftsize r get-func-name ) string-format { origin }
@@ -1737,8 +1737,8 @@ whispering: 1.0 256 2.0 2.0 #f #f voiced->unvoiced."
 		doc" Convolve SND0 and SND1, scaling by AMP, \
 returns new max amp: 0 1 0.1 cnvtest."
 		{ snd0 snd1 amp }
-		snd0 #f #f frames { flt-len }
-		snd1 #f #f frames flt-len + { total-len }
+		snd0 #f #f framples { flt-len }
+		snd1 #f #f framples flt-len + { total-len }
 		0 snd1 0 1 #f make-sampler { sf }
 		:input sf cnv-cb :filter 0 flt-len
 		    snd0 #f #f channel->vct make-convolve { cnv }
@@ -1765,7 +1765,7 @@ returns new max amp: 0 1 0.1 cnvtest."
 	then
 	selection-chans 2 = if
 		selection-position { beg }
-		selection-frames { len }
+		selection-framples { len }
 		#f { snd-chn0 }
 		#f { snd-chn1 }
 		all-chans each { lst }
@@ -1829,48 +1829,38 @@ from FUNC created by make-sound-interp."
 \ ;;   for this effect, but it is much more direct to apply the envelope
 \ ;;   to sound sample positions.
 
+hide
+: esi-ws-cb { envelope len newlen snd chn -- prc; self -- }
+	0 len snd chn #f channel->vct { data }
+	:envelope envelope :length newlen 1+ :scaler len make-env { read-env }
+	0 proc-create ( prc ) newlen , data , read-env , len ,
+  does> { self -- }
+	self @ { newlen }
+	self cell+ @ { data }
+	self 2 cells + @ { read-env }
+	self 3 cells + @ { len }
+	newlen 0 ?do
+		i data read-env env len array-interp *output* outa drop
+	loop
+;
+set-current
+
 : env-sound-interp <{ envelope :optional time-scale 1.0 snd #f chn #f -- file }>
 	doc" Read SND's channel CHN according to ENVELOPE and TIME-SCALE."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	time-scale len f* fround->s { newlen }
-	0 snd chn make-sound-interp { reader }
-	:envelope envelope :length newlen :scaler len make-env { read-env }
-	snd-tempnam { tempfilename }
-	tempfilename snd srate 1 #f mus-next get-func-name
-	    mus-sound-open-output { fil }
-	8192 { bufsize }
-	1 bufsize make-sound-data { data }
-	newlen 0 ?do
-		bufsize 0 do
-			data 0 i reader read-env
-			    env sound-interp sound-data-set! drop
-		loop
-		fil 0 bufsize 1- 1 data mus-sound-write drop
-	bufsize +loop
-	newlen bufsize mod ?dup-if
-		fil 0 rot 1- 1 data mus-sound-write drop
-	then
-	fil newlen 4 * mus-sound-close-output drop
-	"%s %s %s" #( envelope time-scale get-func-name )
-	    string-format { origin }
-	0 newlen tempfilename snd chn
-	    #t ( truncate ) origin set-samples ( file-name )
-	tempfilename file-delete
+	envelope len newlen snd chn esi-ws-cb 
+	    :srate snd srate
+	    :channels 1
+	    :output snd-tempnam with-sound ws-output { new-snd }
+	"%s %s %s" #( envelope time-scale get-func-name ) format { origin }
+	0 newlen new-snd snd chn #t origin 0 #f #t set-samples ( file-name )
 ;
+previous
 
-: granulated-sound-interp
-  <{ en :optional tscl 1.0 grlen 0.1 gren #f ohop 0.05 snd #f chn #f -- file }>
-	gren empty? if
-		#( 0 0 1 1 2 1 3 0 ) to gren
-	then
-	snd chn #f frames { len }
-	tscl len f* fround->s { newlen }
+hide
+: gsi-ws-cb { en len newlen grlen ohop gren snd -- prc; self -- }
 	:envelope en :length newlen :scaler len make-env { read-env }
-	snd-tempnam { tempfilename }
-	\ ;; #f as data-format -> format compatible with sndlib (so no data
-	\ ;;   translation is needed)
-	tempfilename snd srate 1 #f mus-next get-func-name
-	    mus-sound-open-output { fil }
 	grlen snd srate f* fround->s { grain-frames }
 	ohop snd srate f* fround->s { hop-frames }
 	grlen ohop f/ fround->s 1+ { num-reader }
@@ -1878,45 +1868,59 @@ from FUNC created by make-sound-interp."
 	num-reader make-array map!
 		:envelope gren :length grain-frames make-env
 	end-map { grain-envs }
-	0 { next-reader-start-at }
-	8192 { bufsize }
-	1 bufsize make-sound-data { data }
-	0 { data-ctr }
 	snd srate 0.005 f* { jitter }
+	0 proc-create ( prc )
+	newlen , read-env , hop-frames , readers , grain-envs , jitter , snd ,
+  does> { self -- }
+	self @ { newlen }
+	self cell+ @ { read-env }
+	self 2 cells + @ { hop-frames }
+	self 3 cells + @ { readers }
+	self 4 cells + @ { grain-envs }
+	self 5 cells + @ { jitter }
+	self 6 cells + @ { snd }
+	0 { next-reader-startat }
+	0 { data-ctr }
 	newlen 0 ?do
-		bufsize 0 do
-			read-env env { position-in-original }
-			j next-reader-start-at >= if
-				readers cycle-start@ { next-reader }
-				readers position-in-original jitter
-				    mus-random f+ fround->s 0 max
-				    snd chn 1 #f make-sampler cycle-set!
-				grain-envs next-reader array-ref mus-reset drop
-				hop-frames next-reader-start-at +
-				   to next-reader-start-at
+		read-env env { position-in-original }
+		i next-reader-startat >= if
+			readers cycle-start@ { next-reader }
+			readers
+			    position-in-original jitter mus-random f+ fround->s
+			    0 max
+			    snd 0 1 #f make-sampler cycle-set!
+			grain-envs next-reader array-ref mus-reset drop
+			hop-frames next-reader-startat + to next-reader-startat
+		then
+		0.0 ( sum )
+		readers each { rd }
+			rd sampler? if
+				grain-envs i array-ref env
+				    rd next-sample f* f+ ( sum += ... )
 			then
-			0.0 ( sum )
-			readers each { rd }
-				rd sampler? if
-					grain-envs i array-ref
-					    env rd next-sample
-					    f* f+ ( sum += ... )
-				then
-			end-each { sum }
-			data 0 i sum  sound-data-set! drop
-		loop
-		fil 0 bufsize 1- 1 data mus-sound-write drop
-	bufsize +loop
-	newlen bufsize mod ?dup-if
-		fil 0 rot 1- 1 data mus-sound-write drop
+		end-each { sum }
+		i sum *output* outa drop
+	loop
+;
+set-current
+
+: granulated-sound-interp
+  <{ en :optional tscl 1.0 grlen 0.1 gren #f ohop 0.05 snd #f chn #f -- file }>
+	gren empty? if
+		#( 0 0 1 1 2 1 3 0 ) to gren
 	then
-	fil newlen 4 * mus-sound-close-output drop
+	snd chn #f framples { len }
+	tscl len f* fround->s { newlen }
+	en len newlen grlen ohop gren snd gsi-ws-cb
+	    :srate snd srate
+	    :channels 1
+	    :output snd-tempnam with-sound ws-output { new-snd }
 	"%s %s %s %s %s %s"
 	    #( en tscl grlen gren ohop get-func-name ) string-format { origin }
-	0 newlen tempfilename snd chn
-	    #t ( truncate ) origin set-samples ( file-name )
-	tempfilename file-delete
+	0 newlen new-snd snd chn #t origin set-samples ( file-name )
 ;
+previous
+
 \ #( 0 0 1 .1 2 1 ) 1.0 0.2 #( 0 0 1 1 2 0 )      granulated-sound-interp
 \ #( 0 0 1 1 ) 2.0                                granulated-sound-interp
 \ #( 0 0 1 .1 2 1 ) 1.0 0.2 #( 0 0 1 1 2 0 ) 0.02 granulated-sound-interp
@@ -1942,7 +1946,7 @@ when env is at 1.0, no filtering, as env moves to 0.0, \
 low-pass gets more intense; \
 amplitude and low-pass amount move together."
 	1.0 0.0 make-one-pole { flt }
-	:envelope e :length snd chn #f frames make-env { amp-env }
+	:envelope e :length snd chn #f framples make-env { amp-env }
 	flt amp-env fe-cb  0 #f snd chn #f
 	    "%s %s" #( e get-func-name ) string-format map-channel
 ;
@@ -1986,7 +1990,7 @@ previous
 	0.0 0.0 0.0 { samp0 samp1 samp2 }
 	10 0.0 make-vct { samps }
 	#f 					\ flag
-	#f #f #f frames loc ?do
+	#f #f #f framples loc ?do
 		samp1 to samp0
 		samp2 to samp1
 		rd next-sample to samp2
@@ -2130,7 +2134,7 @@ beginning of the note."
 			'no-such-file #( "%s: %S" get-func-name file ) fth-throw
 		then
 		0 file undef 1 #f make-sampler { reader }
-		file mus-sound-frames 0.0 make-vct map!
+		file mus-sound-framples 0.0 make-vct map!
 			reader next-sample
 		end-map ( data )
 		reader free-sampler drop
@@ -2215,7 +2219,7 @@ one after the other:\n\
 	( data ) map
 		*key* { id }
 		time { cur }
-		id 0 region-frames id region-srate f/ time f+ to time
+		id 0 region-framples id region-srate f/ time f+ to time
 		#( cur id )
 	end-map region-play-list
 ;
@@ -2225,7 +2229,7 @@ one after the other:\n\
 : replace-with-selection ( -- )
 	doc" Replace the samples from the cursor with the current selection."
 	#f #f #f cursor { beg }
-	#f #f selection-frames { len }
+	#f #f selection-framples { len }
 	beg #f #f insert-selection drop
 	beg len + len #f #f #f delete-samples drop
 ;
@@ -2244,7 +2248,7 @@ a bunch of files of the form sample-name.aif."
 		i last < if
 			lst i 1+ array-ref 1 array-ref
 		else
-			#f #f #f frames
+			#f #f #f framples
 		then { end }
 		vals 2 array-ref start d- { loop-start }
 		vals 3 array-ref start d- { loop-end }
@@ -2254,7 +2258,7 @@ a bunch of files of the form sample-name.aif."
 		then
 		#t #f #f set-selection-member? drop
 		start #f #f set-selection-position drop
-		end start d- #f #f set-selection-frames drop
+		end start d- #f #f set-selection-framples drop
 		:file filename :header-type mus-aifc save-selection drop
 		filename open-sound { temp }
 		temp #( loop-start loop-end ) set-sound-loop-info drop
@@ -2480,7 +2484,7 @@ hide
 			then
 		then
 		reg start #f #f 0 mix-region drop
-		reg 0 region-frames start + to start
+		reg 0 region-framples start + to start
 		reg forget-region drop
 	loop
 	pieces
@@ -2501,7 +2505,7 @@ set-current
 	#f set-with-mix-tags drop
 	buffer silence in-silence edges samp sc-scan-cb
 	    0 #f #f #f #f scan-channel drop
-	edges #f #f #f frames array-push drop
+	edges #f #f #f framples array-push drop
 	0 0 { start end }
 	edges map
 		start *key* #f #f make-region
@@ -2548,7 +2552,7 @@ set-current
 : reverse-by-blocks <{ block-len :optional snd #f chn #f -- val }>
 	doc" Divide sound into block-len blocks, \
 recombine blocks in reverse order."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	len snd srate block-len f* f/ fround->s { num-blocks }
 	num-blocks 1 > if
 		len num-blocks f/ fceil f>s { actual-block-len }
@@ -2585,7 +2589,7 @@ set-current
 : reverse-within-blocks <{ block-len :optional snd #f chn #f -- val }>
 	doc" Divide sound into blocks, recombine in order, \
 but each block internally reversed."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	len snd srate block-len f* f/ fround->s { num-blocks }
 	num-blocks 1 > if
 		len num-blocks f/ fceil f>s { actual-block-len }

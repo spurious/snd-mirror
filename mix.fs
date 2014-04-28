@@ -1,8 +1,10 @@
 \ mix.fs -- mix.scm -> mix.fs
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Wed Nov 21 19:50:54 CET 2012
+\ Created: 05/10/11 18:23:12
+\ Changed: 14/04/27 16:13:40
+\
+\ @(#)mix.fs	1.35 4/27/14
 
 \ Commentary:
 \

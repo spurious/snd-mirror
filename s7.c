@@ -69470,7 +69470,6 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7
  * t816          |                                    |  70.6                44.5
- * lg            |                                    |  7757                7723
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4
  *            153 with run macro (eval_ptree)
  */
@@ -69482,11 +69481,11 @@ int main(int argc, char **argv)
  * click to inspect/see source etc in listener?
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
- * Motif version crashes with X error 
  * why can't y-bounds be channel-specific if channels-combined?
  * why doesn't a new max take effect? [with-fullest-sound t844.scm]
- * click-2 in separate channel => play just that channel
  * clm opt accepts (env env)
+ * popup menu reflects selected sound, but comes up over any sound -- if popup, selected underlying?
+ *   why isn't that the case always? -- pointer selects if focus-follows-mouse
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))

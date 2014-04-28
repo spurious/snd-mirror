@@ -1,8 +1,10 @@
 \ hooks.fs -- hooks.scm -> hooks.fs
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Wed Jun 12 14:24:24 CEST 2013
+\ Created: 06/08/08 23:27:50
+\ Changed: 14/04/27 16:09:49
+\
+\ @(#)hooks.fs	1.24 4/27/14
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )

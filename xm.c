@@ -406,49 +406,49 @@ static void define_xm_obj(void)
                             (Xen_is_symbol(Xen_car(Value))) && \
                             (strcmp(Name, Xen_symbol_to_C_string(Xen_car(Value))) == 0))
 
-/* XM_TYPE is used for non-pointers (XID mainly) */
-#define XM_TYPE(Name, XType) \
+/* Xm_type is used for non-pointers (XID mainly) */
+#define Xm_type(Name, XType) \
   static Xen C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \
   static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
   static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
 
-#define XM_TYPE_NO_p(Name, XType) \
+#define Xm_type_no_p(Name, XType) \
   static Xen C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_ulong_to_Xen_ulong(val)));} \
   static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_ulong_to_C_ulong(Xen_cadr(val)));} \
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}
 
-#define XM_TYPE_INT(Name, XType) \
+#define Xm_type_int(Name, XType) \
   static Xen C_to_Xen_ ## Name (XType val) {return(Xen_list_2(C_string_to_Xen_symbol(#Name), C_int_to_Xen_integer(val)));} \
   static XType Xen_to_C_ ## Name (Xen val) {return((XType)Xen_integer_to_C_int(Xen_cadr(val)));} \
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
   static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
 
-#define XM_TYPE_PTR(Name, XType) \
+#define Xm_type_ptr(Name, XType) \
   static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
   static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
   static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
 
-#define XM_TYPE_PTR_NO_p(Name, XType) \
+#define Xm_type_ptr_no_p(Name, XType) \
   static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
   static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}
 
-#define XM_TYPE_PTR_NO_p_NO_P(Name, XType) \
+#define Xm_type_ptr_no_p_NO_P(Name, XType) \
   static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen(#Name, val)); return(Xen_false);} \
   static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));}
 
-#define XM_TYPE_PTR_NO_C2X(Name, XType) \
+#define Xm_type_ptr_no_c2x(Name, XType) \
   static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
   static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
 
-#define XM_TYPE_PTR_NO_C2X_NO_p(Name, XType) \
+#define Xm_type_ptr_no_c2x_no_p(Name, XType) \
   static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return((XType)NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}
 
-#define XM_TYPE_PTR_OBJ(Name, XType) \
+#define Xm_type_ptr_obj(Name, XType) \
   static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen_OBJ(#Name, val)); return(Xen_false);} \
   static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return(NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
@@ -468,134 +468,134 @@ static void define_xm_obj(void)
 #define C_to_Xen_Modifiers(Arg)  (C_ulong_to_Xen_ulong(Arg))
 #define Xen_is_Modifiers(Arg)     (Xen_is_ulong(Arg))
 
-XM_TYPE(Cursor, Cursor)
-XM_TYPE_PTR(Screen, Screen *)
-XM_TYPE_PTR_OBJ(XRectangle, XRectangle *)
-XM_TYPE_PTR_OBJ(XArc, XArc *)
-XM_TYPE_PTR_OBJ(XPoint, XPoint *)
-XM_TYPE_PTR_OBJ(XSegment, XSegment *)
-XM_TYPE_PTR_OBJ(XColor, XColor *)
-XM_TYPE(Atom, Atom)
-XM_TYPE(Colormap, Colormap)  /* XID */
-XM_TYPE_PTR_NO_C2X(Depth, Depth *)
-XM_TYPE_PTR(Display, Display *)
-XM_TYPE(Font, Font)
-XM_TYPE_PTR(GC, GC)
-XM_TYPE(KeySym, KeySym)
-XM_TYPE(Pixel, Pixel)
-XM_TYPE(Pixmap, Pixmap)
-XM_TYPE(Region, Region)
-XM_TYPE(Time, Time)
-XM_TYPE_PTR(Visual, Visual *)
-XM_TYPE(Window, Window) /* this is XID = long I think */
-XM_TYPE_PTR(XCharStruct, XCharStruct *)
-XM_TYPE_PTR(XFontProp, XFontProp *)
-XM_TYPE(XFontSet, XFontSet)
-XM_TYPE_PTR(XFontStruct, XFontStruct *)
-XM_TYPE_PTR(XGCValues, XGCValues *)
-XM_TYPE_PTR_NO_C2X(XTextItem, XTextItem *)
-XM_TYPE_PTR(XModifierKeymap, XModifierKeymap *) /* opaque in this implementation */
-XM_TYPE_PTR(XImage, XImage *)
+Xm_type(Cursor, Cursor)
+Xm_type_ptr(Screen, Screen *)
+Xm_type_ptr_obj(XRectangle, XRectangle *)
+Xm_type_ptr_obj(XArc, XArc *)
+Xm_type_ptr_obj(XPoint, XPoint *)
+Xm_type_ptr_obj(XSegment, XSegment *)
+Xm_type_ptr_obj(XColor, XColor *)
+Xm_type(Atom, Atom)
+Xm_type(Colormap, Colormap)  /* XID */
+Xm_type_ptr_no_c2x(Depth, Depth *)
+Xm_type_ptr(Display, Display *)
+Xm_type(Font, Font)
+Xm_type_ptr(GC, GC)
+Xm_type(KeySym, KeySym)
+Xm_type(Pixel, Pixel)
+Xm_type(Pixmap, Pixmap)
+Xm_type(Region, Region)
+Xm_type(Time, Time)
+Xm_type_ptr(Visual, Visual *)
+Xm_type(Window, Window) /* this is XID = long I think */
+Xm_type_ptr(XCharStruct, XCharStruct *)
+Xm_type_ptr(XFontProp, XFontProp *)
+Xm_type(XFontSet, XFontSet)
+Xm_type_ptr(XFontStruct, XFontStruct *)
+Xm_type_ptr(XGCValues, XGCValues *)
+Xm_type_ptr_no_c2x(XTextItem, XTextItem *)
+Xm_type_ptr(XModifierKeymap, XModifierKeymap *) /* opaque in this implementation */
+Xm_type_ptr(XImage, XImage *)
 static XAnyEvent *Xen_to_C_XAnyEvent(Xen val) {return((XAnyEvent *)Xen_unwrap_C_pointer(Xen_cadr(val)));}
-XM_TYPE_PTR_NO_C2X(XButtonEvent, XButtonEvent *)
-XM_TYPE_PTR_NO_C2X(XCirculateEvent, XCirculateEvent *)
-XM_TYPE_PTR_NO_C2X(XCirculateRequestEvent, XCirculateRequestEvent *)
-XM_TYPE_PTR_NO_C2X(XClientMessageEvent, XClientMessageEvent *)
-XM_TYPE_PTR_NO_C2X(XColormapEvent, XColormapEvent *)
-XM_TYPE_PTR_NO_C2X(XConfigureEvent, XConfigureEvent *)
-XM_TYPE_PTR_NO_C2X(XConfigureRequestEvent, XConfigureRequestEvent *)
-XM_TYPE_PTR_NO_C2X(XCreateWindowEvent, XCreateWindowEvent *)
-XM_TYPE_PTR_NO_C2X(XCrossingEvent, XCrossingEvent *)
-XM_TYPE_PTR_NO_C2X(XDestroyWindowEvent, XDestroyWindowEvent *)
-XM_TYPE_PTR(XErrorEvent, XErrorEvent *)
-XM_TYPE_PTR_NO_C2X(XExposeEvent, XExposeEvent *)
-XM_TYPE_PTR_NO_C2X(XFocusChangeEvent, XFocusChangeEvent *)
-XM_TYPE_PTR_NO_C2X(XGraphicsExposeEvent, XGraphicsExposeEvent *)
-XM_TYPE_PTR_NO_C2X(XGravityEvent, XGravityEvent *)
-XM_TYPE_PTR_NO_C2X(XKeyEvent, XKeyEvent *)
-XM_TYPE_PTR_NO_C2X(XKeymapEvent, XKeymapEvent *)
-XM_TYPE_PTR_NO_C2X(XMapEvent, XMapEvent *)
-XM_TYPE_PTR_NO_C2X(XMapRequestEvent, XMapRequestEvent *)
-XM_TYPE_PTR_NO_C2X(XMappingEvent, XMappingEvent *)
-XM_TYPE_PTR_NO_C2X(XMotionEvent, XMotionEvent *)
-XM_TYPE_PTR_NO_C2X(XNoExposeEvent, XNoExposeEvent *)
-XM_TYPE_PTR_NO_C2X(XPropertyEvent, XPropertyEvent *)
-XM_TYPE_PTR_NO_C2X(XReparentEvent, XReparentEvent *)
-XM_TYPE_PTR_NO_C2X(XResizeRequestEvent, XResizeRequestEvent *)
-XM_TYPE_PTR_NO_C2X(XSelectionClearEvent, XSelectionClearEvent *)
-XM_TYPE_PTR_NO_C2X(XSelectionEvent, XSelectionEvent *)
-XM_TYPE_PTR(XSelectionRequestEvent, XSelectionRequestEvent *)
-XM_TYPE_PTR_NO_C2X(XUnmapEvent, XUnmapEvent *)
-XM_TYPE_PTR_NO_C2X(XVisibilityEvent, XVisibilityEvent *)
-XM_TYPE_PTR_OBJ(XSetWindowAttributes, XSetWindowAttributes *)
-XM_TYPE_PTR(XVisualInfo, XVisualInfo *)
-XM_TYPE_PTR(XWMHints, XWMHints *)
-XM_TYPE_PTR_NO_C2X_NO_p(XSizeHints, XSizeHints *)
-XM_TYPE_PTR(XWindowAttributes, XWindowAttributes *)
-XM_TYPE_PTR_OBJ(XWindowChanges, XWindowChanges *)
-XM_TYPE_PTR(XStandardColormap, XStandardColormap *)
-XM_TYPE_INT(KeyCode, KeyCode)
-XM_TYPE_INT(XContext, XContext)
-XM_TYPE_PTR(XIconSize, XIconSize *)
+Xm_type_ptr_no_c2x(XButtonEvent, XButtonEvent *)
+Xm_type_ptr_no_c2x(XCirculateEvent, XCirculateEvent *)
+Xm_type_ptr_no_c2x(XCirculateRequestEvent, XCirculateRequestEvent *)
+Xm_type_ptr_no_c2x(XClientMessageEvent, XClientMessageEvent *)
+Xm_type_ptr_no_c2x(XColormapEvent, XColormapEvent *)
+Xm_type_ptr_no_c2x(XConfigureEvent, XConfigureEvent *)
+Xm_type_ptr_no_c2x(XConfigureRequestEvent, XConfigureRequestEvent *)
+Xm_type_ptr_no_c2x(XCreateWindowEvent, XCreateWindowEvent *)
+Xm_type_ptr_no_c2x(XCrossingEvent, XCrossingEvent *)
+Xm_type_ptr_no_c2x(XDestroyWindowEvent, XDestroyWindowEvent *)
+Xm_type_ptr(XErrorEvent, XErrorEvent *)
+Xm_type_ptr_no_c2x(XExposeEvent, XExposeEvent *)
+Xm_type_ptr_no_c2x(XFocusChangeEvent, XFocusChangeEvent *)
+Xm_type_ptr_no_c2x(XGraphicsExposeEvent, XGraphicsExposeEvent *)
+Xm_type_ptr_no_c2x(XGravityEvent, XGravityEvent *)
+Xm_type_ptr_no_c2x(XKeyEvent, XKeyEvent *)
+Xm_type_ptr_no_c2x(XKeymapEvent, XKeymapEvent *)
+Xm_type_ptr_no_c2x(XMapEvent, XMapEvent *)
+Xm_type_ptr_no_c2x(XMapRequestEvent, XMapRequestEvent *)
+Xm_type_ptr_no_c2x(XMappingEvent, XMappingEvent *)
+Xm_type_ptr_no_c2x(XMotionEvent, XMotionEvent *)
+Xm_type_ptr_no_c2x(XNoExposeEvent, XNoExposeEvent *)
+Xm_type_ptr_no_c2x(XPropertyEvent, XPropertyEvent *)
+Xm_type_ptr_no_c2x(XReparentEvent, XReparentEvent *)
+Xm_type_ptr_no_c2x(XResizeRequestEvent, XResizeRequestEvent *)
+Xm_type_ptr_no_c2x(XSelectionClearEvent, XSelectionClearEvent *)
+Xm_type_ptr_no_c2x(XSelectionEvent, XSelectionEvent *)
+Xm_type_ptr(XSelectionRequestEvent, XSelectionRequestEvent *)
+Xm_type_ptr_no_c2x(XUnmapEvent, XUnmapEvent *)
+Xm_type_ptr_no_c2x(XVisibilityEvent, XVisibilityEvent *)
+Xm_type_ptr_obj(XSetWindowAttributes, XSetWindowAttributes *)
+Xm_type_ptr(XVisualInfo, XVisualInfo *)
+Xm_type_ptr(XWMHints, XWMHints *)
+Xm_type_ptr_no_c2x_no_p(XSizeHints, XSizeHints *)
+Xm_type_ptr(XWindowAttributes, XWindowAttributes *)
+Xm_type_ptr_obj(XWindowChanges, XWindowChanges *)
+Xm_type_ptr(XStandardColormap, XStandardColormap *)
+Xm_type_int(KeyCode, KeyCode)
+Xm_type_int(XContext, XContext)
+Xm_type_ptr(XIconSize, XIconSize *)
 
-XM_TYPE_PTR(Widget, Widget)
-XM_TYPE(WidgetClass, WidgetClass)
-XM_TYPE(XtAppContext, XtAppContext)
-XM_TYPE(XtRequestId, XtRequestId)
-XM_TYPE(XtWorkProcId, XtWorkProcId)
-XM_TYPE(XtInputId, XtInputId)
-XM_TYPE(XtIntervalId, XtIntervalId)
-XM_TYPE_NO_p(XtActionHookId, XtActionHookId)
-XM_TYPE_NO_p(XtTranslations, XtTranslations) /* opaque */
-XM_TYPE_PTR(XmString, XmString)
-XM_TYPE_PTR_NO_p_NO_P(XmAnyCallbackStruct, XmAnyCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmArrowButtonCallbackStruct, XmArrowButtonCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmCommandCallbackStruct, XmCommandCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDragDropFinishCallbackStruct, XmDragDropFinishCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDragMotionCallbackStruct, XmDragMotionCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDragProcCallbackStruct, XmDragProcCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDrawingAreaCallbackStruct, XmDrawingAreaCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDrawnButtonCallbackStruct, XmDrawnButtonCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDropFinishCallbackStruct, XmDropFinishCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDropProcCallbackStruct, XmDropProcCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDropSiteEnterCallbackStruct, XmDropSiteEnterCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDropSiteLeaveCallbackStruct, XmDropSiteLeaveCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDropStartCallbackStruct, XmDropStartCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmFileSelectionBoxCallbackStruct, XmFileSelectionBoxCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmListCallbackStruct, XmListCallbackStruct *)
-XM_TYPE(XmTab, XmTab) /* opaque */
-XM_TYPE_PTR_NO_p(XmDragStartCallbackStruct, XmDragStartCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDisplayCallbackStruct, XmDisplayCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmDestinationCallbackStruct, XmDestinationCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmConvertCallbackStruct, XmConvertCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmComboBoxCallbackStruct, XmComboBoxCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmContainerOutlineCallbackStruct, XmContainerOutlineCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmContainerSelectCallbackStruct, XmContainerSelectCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmNotebookCallbackStruct, XmNotebookCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmNotebookPageInfo, XmNotebookPageInfo *)
-XM_TYPE_PTR(XmRenderTable, XmRenderTable)
-XM_TYPE_PTR(XmRendition, XmRendition)
-XM_TYPE_PTR_NO_p(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmTraverseObscuredCallbackStruct, XmTraverseObscuredCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmTopLevelLeaveCallbackStruct, XmTopLevelLeaveCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmTopLevelEnterCallbackStruct, XmTopLevelEnterCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmSelectionCallbackStruct, XmSelectionCallbackStruct *)
-XM_TYPE_PTR_NO_C2X_NO_p(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
-XM_TYPE_PTR(XmTabList, XmTabList) /* opaque */
-XM_TYPE(XmParseMapping, XmParseMapping)
-XM_TYPE_PTR_NO_p(XmOperationChangedCallbackStruct, XmOperationChangedCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmPushButtonCallbackStruct, XmPushButtonCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmRowColumnCallbackStruct, XmRowColumnCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmScaleCallbackStruct, XmScaleCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmScrollBarCallbackStruct, XmScrollBarCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmSelectionBoxCallbackStruct, XmSelectionBoxCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmTextVerifyCallbackStruct, XmTextVerifyCallbackStruct *)
-XM_TYPE_PTR_NO_C2X_NO_p(XmTextBlock, XmTextBlock)
-XM_TYPE_PTR_NO_p(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
+Xm_type_ptr(Widget, Widget)
+Xm_type(WidgetClass, WidgetClass)
+Xm_type(XtAppContext, XtAppContext)
+Xm_type(XtRequestId, XtRequestId)
+Xm_type(XtWorkProcId, XtWorkProcId)
+Xm_type(XtInputId, XtInputId)
+Xm_type(XtIntervalId, XtIntervalId)
+Xm_type_no_p(XtActionHookId, XtActionHookId)
+Xm_type_no_p(XtTranslations, XtTranslations) /* opaque */
+Xm_type_ptr(XmString, XmString)
+Xm_type_ptr_no_p_NO_P(XmAnyCallbackStruct, XmAnyCallbackStruct *)
+Xm_type_ptr_no_p(XmArrowButtonCallbackStruct, XmArrowButtonCallbackStruct *)
+Xm_type_ptr_no_p(XmCommandCallbackStruct, XmCommandCallbackStruct *)
+Xm_type_ptr_no_p(XmDragDropFinishCallbackStruct, XmDragDropFinishCallbackStruct *)
+Xm_type_ptr_no_p(XmDragMotionCallbackStruct, XmDragMotionCallbackStruct *)
+Xm_type_ptr_no_p(XmDragProcCallbackStruct, XmDragProcCallbackStruct *)
+Xm_type_ptr_no_p(XmDrawingAreaCallbackStruct, XmDrawingAreaCallbackStruct *)
+Xm_type_ptr_no_p(XmDrawnButtonCallbackStruct, XmDrawnButtonCallbackStruct *)
+Xm_type_ptr_no_p(XmDropFinishCallbackStruct, XmDropFinishCallbackStruct *)
+Xm_type_ptr_no_p(XmDropProcCallbackStruct, XmDropProcCallbackStruct *)
+Xm_type_ptr_no_p(XmDropSiteEnterCallbackStruct, XmDropSiteEnterCallbackStruct *)
+Xm_type_ptr_no_p(XmDropSiteLeaveCallbackStruct, XmDropSiteLeaveCallbackStruct *)
+Xm_type_ptr_no_p(XmDropStartCallbackStruct, XmDropStartCallbackStruct *)
+Xm_type_ptr_no_p(XmFileSelectionBoxCallbackStruct, XmFileSelectionBoxCallbackStruct *)
+Xm_type_ptr_no_p(XmListCallbackStruct, XmListCallbackStruct *)
+Xm_type(XmTab, XmTab) /* opaque */
+Xm_type_ptr_no_p(XmDragStartCallbackStruct, XmDragStartCallbackStruct *)
+Xm_type_ptr_no_p(XmDisplayCallbackStruct, XmDisplayCallbackStruct *)
+Xm_type_ptr_no_p(XmDestinationCallbackStruct, XmDestinationCallbackStruct *)
+Xm_type_ptr_no_p(XmConvertCallbackStruct, XmConvertCallbackStruct *)
+Xm_type_ptr_no_p(XmComboBoxCallbackStruct, XmComboBoxCallbackStruct *)
+Xm_type_ptr_no_p(XmContainerOutlineCallbackStruct, XmContainerOutlineCallbackStruct *)
+Xm_type_ptr_no_p(XmContainerSelectCallbackStruct, XmContainerSelectCallbackStruct *)
+Xm_type_ptr_no_p(XmNotebookCallbackStruct, XmNotebookCallbackStruct *)
+Xm_type_ptr_no_p(XmNotebookPageInfo, XmNotebookPageInfo *)
+Xm_type_ptr(XmRenderTable, XmRenderTable)
+Xm_type_ptr(XmRendition, XmRendition)
+Xm_type_ptr_no_p(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
+Xm_type_ptr_no_p(XmTraverseObscuredCallbackStruct, XmTraverseObscuredCallbackStruct *)
+Xm_type_ptr_no_p(XmTopLevelLeaveCallbackStruct, XmTopLevelLeaveCallbackStruct *)
+Xm_type_ptr_no_p(XmTopLevelEnterCallbackStruct, XmTopLevelEnterCallbackStruct *)
+Xm_type_ptr_no_p(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
+Xm_type_ptr_no_p(XmSelectionCallbackStruct, XmSelectionCallbackStruct *)
+Xm_type_ptr_no_c2x_no_p(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
+Xm_type_ptr(XmTabList, XmTabList) /* opaque */
+Xm_type(XmParseMapping, XmParseMapping)
+Xm_type_ptr_no_p(XmOperationChangedCallbackStruct, XmOperationChangedCallbackStruct *)
+Xm_type_ptr_no_p(XmPushButtonCallbackStruct, XmPushButtonCallbackStruct *)
+Xm_type_ptr_no_p(XmRowColumnCallbackStruct, XmRowColumnCallbackStruct *)
+Xm_type_ptr_no_p(XmScaleCallbackStruct, XmScaleCallbackStruct *)
+Xm_type_ptr_no_p(XmScrollBarCallbackStruct, XmScrollBarCallbackStruct *)
+Xm_type_ptr_no_p(XmSelectionBoxCallbackStruct, XmSelectionBoxCallbackStruct *)
+Xm_type_ptr_no_p(XmTextVerifyCallbackStruct, XmTextVerifyCallbackStruct *)
+Xm_type_ptr_no_c2x_no_p(XmTextBlock, XmTextBlock)
+Xm_type_ptr_no_p(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
 #define Xen_to_C_XmFontList(Arg) Xen_to_C_XmRenderTable(Arg)
-XM_TYPE(XmTextSource, XmTextSource)
-XM_TYPE(XmStringContext, XmStringContext)
+Xm_type(XmTextSource, XmTextSource)
+Xm_type(XmStringContext, XmStringContext)
 
 static int Xen_is_XmFontList_or_XmRenderTable(Xen arg)
 {
@@ -16451,9 +16451,9 @@ static Xen gxm_XtSetArg(Xen arg1, Xen arg2, Xen arg3)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-XM_TYPE_PTR_NO_C2X(XpmImage, XpmImage *)
-XM_TYPE_PTR_NO_C2X(XpmAttributes, XpmAttributes *) /* _OBJ?? */
-XM_TYPE_PTR_NO_C2X(XpmColorSymbol, XpmColorSymbol *)
+Xm_type_ptr_no_c2x(XpmImage, XpmImage *)
+Xm_type_ptr_no_c2x(XpmAttributes, XpmAttributes *) /* _OBJ?? */
+Xm_type_ptr_no_c2x(XpmColorSymbol, XpmColorSymbol *)
 
 static Xen gxm_XpmCreateXpmImageFromPixmap(Xen arg1, Xen arg2, Xen arg3, Xen arg5)
 {

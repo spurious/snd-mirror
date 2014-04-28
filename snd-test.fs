@@ -1341,7 +1341,7 @@ black-and-white-colormap constant *better-colormap*
     file mus-sound-duration    { fdur }
     file mus-sound-data-format { ffrm }
     file mus-sound-header-type { ftyp }
-    file mus-sound-frames      { fframes }
+    file mus-sound-framples      { fframes }
     file mus-sound-samples     { fsamps }
     file mus-sound-length      { flen }
     fchns chns lno name "chans"    test-header-check
@@ -2292,7 +2292,7 @@ black-and-white-colormap constant *better-colormap*
      'mus-sound-comment 
      'mus-sound-data-format 'mus-sound-data-location
      'mus-sound-datum-size 'mus-sound-duration 'mus-sound-forget 
-     'mus-sound-frames 'mus-sound-header-type 'mus-sound-length 
+     'mus-sound-framples 'mus-sound-header-type 'mus-sound-length 
      'mus-sound-loop-info 'mus-sound-mark-info 'mus-sound-maxamp 
      'mus-sound-maxamp-exists? 
      'mus-sound-prune 
@@ -2325,7 +2325,7 @@ black-and-white-colormap constant *better-colormap*
      'read-region-sample 'read-sample 'readin 'readin? 
      'rectangular->magnitudes 'rectangular->polar 'rectangular-window
      'redo 'redo-edit 'region->vct 'region-chans 'region-home 
-     'region-frames 'region-graph-style 'region-maxamp 'region-maxamp-position
+     'region-framples 'region-graph-style 'region-maxamp 'region-maxamp-position
      'region-position 'region-sample 'region-sampler? 'region-srate 'region?
      'regions 'remember-sound-state 'remove-from-menu 'reset-controls
      'reset-listener-cursor 'restore-controls 'restore-region
@@ -2346,7 +2346,7 @@ black-and-white-colormap constant *better-colormap*
      'seconds->samples 'select-all 'select-channel 'select-channel-hook
      'select-sound 'select-sound-hook 'selected-channel 'selected-data-color
      'selected-graph-color 'selected-sound 'selection-chans 'selection-color 
-     'selection-context 'selection-creates-region 'selection-frames
+     'selection-context 'selection-creates-region 'selection-framples
      'selection-maxamp 'selection-maxamp-position 'selection-member? 
      'selection-position 'selection-srate 'selection? 'short-file-name
      'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis 'show-axes
@@ -2378,7 +2378,7 @@ black-and-white-colormap constant *better-colormap*
      'syncd-marks 'table-lookup 'table-lookup? 'tap 'tap? 'temp-dir
      'text-focus-color 'time-graph 'time-graph-style 'time-graph-type 
      'time-graph? 'tiny-font 'tracking-cursor-style 'transform->vct
-     'transform-dialog 'transform-frames 'transform-graph 'transform-graph-style
+     'transform-dialog 'transform-framples 'transform-graph 'transform-graph-style
      'transform-graph-type 'transform-graph? 'transform-normalization
      'transform-sample 'transform-size 'transform-type 'transform? 
      'triangle-wave 'triangle-wave? 'tukey-window 
@@ -2429,7 +2429,7 @@ black-and-white-colormap constant *better-colormap*
   { file }
   file mus-sound-open-input { sound-fd }
   file mus-sound-chans      { chans }
-  file mus-sound-frames     { frames }
+  file mus-sound-framples     { frames }
   file mus-sound-srate      { srate }
   256                       { bufsize }
   chans bufsize make-sound-data { data }
@@ -2531,7 +2531,7 @@ black-and-white-colormap constant *better-colormap*
   "oboe.snd" { oboe-snd }
   oboe-snd mus-sound-chans { chns }
   oboe-snd mus-sound-data-location { dl }
-  oboe-snd mus-sound-frames { fr }
+  oboe-snd mus-sound-framples { fr }
   oboe-snd mus-sound-samples { smps }
   oboe-snd mus-sound-length { len }
   oboe-snd mus-sound-datum-size { size }
@@ -2585,7 +2585,7 @@ black-and-white-colormap constant *better-colormap*
   10 { req }
   chns  1             "oboe: mus-sound-chans"         #() snd-test-neq
   dl    28            "oboe: mus-sound-data-location" #() snd-test-neq
-  fr    50828         "oboe: mus-sound-frames"        #() snd-test-neq
+  fr    50828         "oboe: mus-sound-framples"        #() snd-test-neq
   smps  50828         "oboe: mus-sound-samples"       #() snd-test-neq
   len   50828 2* 28 + "oboe: mus-sound-length"        #() snd-test-neq
   size  2             "oboe: mus-sound-datum-size"    #() snd-test-neq
@@ -3137,7 +3137,7 @@ black-and-white-colormap constant *better-colormap*
         then
       then
       \ 
-      fsnd <'> mus-sound-frames #t nil fth-catch ?dup-if
+      fsnd <'> mus-sound-framples #t nil fth-catch ?dup-if
         car 'mus-error <> if
           "%s: frames %d (%s)" #( fsnd fr res ) snd-display
         then
@@ -3957,8 +3957,8 @@ black-and-white-colormap constant *better-colormap*
       3175160310 { our-frames }
       6350320648 { our-length }
       bigger-snd mus-sound-samples our-frames "bigger samples" #() snd-test-neq
-      bigger-snd mus-sound-frames our-frames "bigger frames" #() snd-test-neq
-      bigger-snd mus-sound-frames probable-frames <'> d=
+      bigger-snd mus-sound-framples our-frames "bigger frames" #() snd-test-neq
+      bigger-snd mus-sound-framples probable-frames <'> d=
         "bigger frames (probable)" #() snd-test-any-neq
       bigger-snd mus-sound-length our-length "bigger bytes" #() snd-test-neq
       bigger-snd mus-sound-duration 71999.1015 "bigger dur" #() snd-test-neq
@@ -3989,12 +3989,12 @@ black-and-white-colormap constant *better-colormap*
       selection-creates-region { old-select }
       #f set-selection-creates-region drop
       ind select-all drop
-      selection-frames ind 0 undef frames "bigger select all" #() snd-test-neq
+      selection-framples ind 0 undef frames "bigger select all" #() snd-test-neq
       44100 50000 d* set-selection-position drop
       selection-position 44100 50000 d* "bigger select pos" #() snd-test-neq
       0 set-selection-position drop
-      44100 65000 d* set-selection-frames drop
-      selection-frames 44100 65000 d* "bigger select len" #() snd-test-neq
+      44100 65000 d* set-selection-framples drop
+      selection-framples 44100 65000 d* "bigger select len" #() snd-test-neq
       old-select set-selection-creates-region drop
       44100 50000 d* ind set-cursor drop
       ind cursor 44100 50000 d* "bigger cursor" #() snd-test-neq
@@ -4375,7 +4375,7 @@ black-and-white-colormap constant *better-colormap*
   io port-close
   "test.aif" mus-sound-comment 0 3 string-substring "bil"
     "aifc trailing comt comments" #() snd-test-neq
-  "test.aif" mus-sound-frames 2 "aifc trailing comt frames" #() snd-test-neq
+  "test.aif" mus-sound-framples 2 "aifc trailing comt frames" #() snd-test-neq
   "test.aif" open-sound to ind
   0 sample { s0 }
   1 sample { s1 }
@@ -4417,7 +4417,7 @@ black-and-white-colormap constant *better-colormap*
   io port-close
   "test.aif" mus-sound-comment 0 3 string-substring "bil" 
     "aifc trailing comt comments" #() snd-test-neq
-  "test.aif" mus-sound-frames 2 "aifc trailing comt (bogus) frames" #()
+  "test.aif" mus-sound-framples 2 "aifc trailing comt (bogus) frames" #()
     snd-test-neq
   "test.aif" open-sound to ind
   0 sample to s0
@@ -4537,7 +4537,7 @@ black-and-white-colormap constant *better-colormap*
   2 sample 0.0 "file chunked eof" #() snd-test-neq
   3 sample 0.0 "file chunked eof+1" #() snd-test-neq
   ind close-sound drop
-  "test.aif" mus-sound-frames 2 "chunked mus-sound-frames" #() snd-test-neq
+  "test.aif" mus-sound-framples 2 "chunked mus-sound-framples" #() snd-test-neq
   "test.aif" file-delete
   "test.aif" mus-sound-forget drop
   \ 
@@ -4690,7 +4690,7 @@ black-and-white-colormap constant *better-colormap*
   ind close-sound drop
   "test space.snd" open-sound to ind
   ind short-file-name "test space.snd" "file name with space" #() snd-test-neq
-  ind frames "test space.snd" mus-sound-frames "spaced filename frames" #()
+  ind frames "test space.snd" mus-sound-framples "spaced filename frames" #()
     snd-test-neq
   1234 ind 0 add-mark drop
   ind save-marks drop      \ ; should write "test space.marks"
@@ -5748,7 +5748,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
 : sndclm-src1-test ( -- )
   "oboe.snd" make-readin { rd }
   rd 0.5 make-src { sr }
-  "oboe.snd" mus-sound-frames 2* ( len ) 0 ?do
+  "oboe.snd" mus-sound-framples 2* ( len ) 0 ?do
     i  sr 0 #f src  *output* outa drop
   loop
 ;
@@ -5779,7 +5779,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
 : sndclm-convolve2-test ( -- )
   "oboe.snd" "pistol.snd" 0.5 "convolved.snd" convolve-files { tempfile }
   tempfile make-readin { reader }
-  tempfile mus-sound-frames ( len ) 0 ?do
+  tempfile mus-sound-framples ( len ) 0 ?do
     i  reader readin  *output* outa drop
   loop
   tempfile file-delete
@@ -5817,7 +5817,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
 
 : sndclm-phase-vocoder2-test ( -- )
   "oboe.snd" make-readin :interp 256 make-phase-vocoder { pv }
-  "oboe.snd" mus-sound-frames 2* ( samps ) 0 ?do
+  "oboe.snd" mus-sound-framples 2* ( samps ) 0 ?do
     i  pv #f #f #f #f phase-vocoder  *output* outa drop
   loop
 ;
@@ -5832,7 +5832,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
 : sndclm-file->frame->file-test ( -- )
   "stereo.snd" make-file->frame { input }
   2 make-frame { frm }
-  "stereo.snd" mus-sound-frames ( len ) 0 ?do
+  "stereo.snd" mus-sound-framples ( len ) 0 ?do
     input i frm file->frame ( frm ) 1 frame-ref ( val1 )
     frm 0 frame-ref ( val0 ) frm 1 rot frame-set! drop
     ( val1 ) frm 0 rot frame-set! drop
@@ -6835,7 +6835,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> open-raw-sound <'> open-sound <'> previous-sample <'> peaks 
    <'> player? <'> players <'> print-length <'> progress-report
    <'> read-only <'> redo <'> region-chans <'> region-home 
-   <'> region-graph-style <'> region-frames <'> region-position
+   <'> region-graph-style <'> region-framples <'> region-position
    <'> region-maxamp <'> region-maxamp-position <'> remember-sound-state
    <'> selection-maxamp <'> selection-maxamp-position <'> region-sample
    <'> region->vct <'> region-srate <'> regions <'> region? 
@@ -6853,7 +6853,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> scale-selection-to <'> scale-to <'> search-procedure 
    <'> select-all <'> select-channel <'> select-sound <'> selected-channel
    <'> selected-sound <'> selection-position <'> selection-creates-region
-   <'> selection-frames <'> selection-member? <'> selection?
+   <'> selection-framples <'> selection-member? <'> selection?
    <'> short-file-name <'> show-axes <'> show-controls 
    <'> show-transform-peaks <'> show-indices <'> show-listener
    <'> show-selection <'> unselect-all <'> show-marks
@@ -6870,7 +6870,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> stop-player <'> stop-playing <'> swap-channels <'> syncd-marks
    <'> sync <'> sync-max <'> sound-properties <'> sound-property
    <'> temp-dir <'>  region-sampler?  <'> transform-sample 
-   <'> transform->vct <'> transform-frames <'> transform-type
+   <'> transform->vct <'> transform-framples <'> transform-type
    <'> with-file-monitor <'> undo 
    <'> update-transform-graph <'> update-time-graph 
    <'> update-lisp-graph <'> update-sound <'> clm-table-size 
@@ -6886,7 +6886,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> x-position-slider <'> x-zoom-slider <'> mus-header-type->string 
    <'> mus-data-format->string <'> y-bounds <'> y-position-slider
    <'> y-zoom-slider <'> zero-pad <'> zoom-focus-style <'> sync-style
-   <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration
+   <'> mus-sound-samples <'> mus-sound-framples <'> mus-sound-duration
    <'> mus-sound-datum-size <'> mus-sound-data-location <'> data-size
    <'> mus-sound-chans <'> mus-sound-srate <'> mus-sound-header-type
    <'> mus-sound-data-format <'> mus-sound-length
@@ -7033,7 +7033,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> chans <'> comment <'> data-format <'> data-location <'> data-size
    <'> edit-position <'> frames <'> header-type <'> maxamp <'> read-only
    <'> right-sample <'> sample <'> samples <'> selected-channel
-   <'> selected-sound <'> selection-position <'> selection-frames 
+   <'> selected-sound <'> selection-position <'> selection-framples 
    <'> selection-member? <'> sound-loop-info <'> srate <'> time-graph-type
    <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
    <'> y-zoom-slider <'> mus-array-print-length
@@ -7332,7 +7332,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       "oscil?proc %s [440 make-oscil]: %s" #( prc tag ) snd-display
     then
   end-each
-  #( <'> reverse-selection <'> selection-position <'> selection-frames 
+  #( <'> reverse-selection <'> selection-position <'> selection-framples 
      <'> smooth-selection <'> scale-selection-to <'> insert-selection
      <'> delete-selection <'> delete-selection-and-smooth
      <'> mix-selection ) each to prc
@@ -7446,7 +7446,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       then
     then
   end-each
-  #( <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration 
+  #( <'> mus-sound-samples <'> mus-sound-framples <'> mus-sound-duration 
      <'> mus-sound-datum-size <'> mus-sound-data-location <'> mus-sound-chans
      <'> mus-sound-srate <'> mus-sound-header-type <'> mus-sound-data-format
      <'> mus-sound-length <'> mus-sound-type-specifier
@@ -7473,7 +7473,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       then
     then
   end-each
-  #( <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration
+  #( <'> mus-sound-samples <'> mus-sound-framples <'> mus-sound-duration
      <'> mus-sound-datum-size <'> mus-sound-data-location
      <'> mus-sound-chans <'> mus-sound-srate <'> mus-sound-header-type
      <'> mus-sound-data-format <'> mus-sound-length
@@ -7509,7 +7509,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> spectrum-start <'> spectro-x-angle <'> spectro-x-scale
      <'> spectro-y-angle <'> grid-density <'> spectro-y-scale
      <'> spectro-z-angle <'> spectro-z-scale <'> squelch-update
-     <'> transform-sample <'> transform->vct <'> transform-frames
+     <'> transform-sample <'> transform->vct <'> transform-framples
      <'> transform-type <'> update-transform-graph <'> update-time-graph
      <'> update-lisp-graph <'> update-sound <'> wavelet-type <'> time-graph?
      <'> time-graph-type <'> wavo-hop <'> wavo-trace <'> x-bounds
@@ -7552,7 +7552,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> spectrum-start <'> spectro-x-angle <'> spectro-x-scale
      <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle
      <'> spectro-z-scale <'> squelch-update <'> grid-density <'> src-sound
-     <'> transform->vct <'> transform-frames <'> transform-type
+     <'> transform->vct <'> transform-framples <'> transform-type
      <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
      <'> update-sound <'> wavelet-type <'> time-graph? <'> time-graph-type
      <'> wavo-hop <'> wavo-trace <'> x-bounds <'> x-position-slider
@@ -7611,7 +7611,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> spectro-hop <'> spectrum-start <'> spectro-x-angle
      <'> spectro-x-scale <'> spectro-y-angle <'> spectro-y-scale 
      <'> spectro-z-angle <'> spectro-z-scale <'> squelch-update
-     <'> transform->vct <'> transform-frames <'> transform-type
+     <'> transform->vct <'> transform-framples <'> transform-type
      <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
      <'> wavelet-type <'> time-graph?  <'> time-graph-type <'> wavo-hop
      <'> wavo-trace <'> x-bounds <'> x-position-slider <'> x-axis-label
@@ -7645,7 +7645,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> spectrum-start <'> spectro-x-angle <'> spectro-x-scale
      <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle
      <'> spectro-z-scale <'> squelch-update <'> transform->vct
-     <'> transform-frames <'> transform-type <'> update-transform-graph
+     <'> transform-framples <'> transform-type <'> update-transform-graph
      <'> update-time-graph <'> update-lisp-graph <'> wavelet-type
      <'> time-graph? <'> time-graph-type <'> wavo-hop <'> wavo-trace
      <'> x-bounds <'> x-position-slider <'> x-zoom-slider <'> y-bounds
@@ -7745,7 +7745,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "oboe.snd" find-sound sound? if
     "oboe.snd is still open?" #() snd-display
   then
-  #( <'> region-chans <'> region-home <'> region-frames
+  #( <'> region-chans <'> region-home <'> region-framples
      <'> region-position <'> region-maxamp <'> region-maxamp-position
      <'> region-srate <'> forget-region ) { reg-prcs-1 }
   #( vct-5 #( 0 1 ) 0+i "hiho" '( 0 1 ) ) each to arg
@@ -8010,7 +8010,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     0 100 make-region
   then
   regions car 0 1234 <'> region-sample 'no-such-channel check-error-tag
-  regions car 1234 <'> region-frames 'no-such-channel check-error-tag
+  regions car 1234 <'> region-framples 'no-such-channel check-error-tag
   regions car 1234 <'> region-position 'no-such-channel check-error-tag
   "/bad/baddy.snd" <'> save-sound-as 'cannot-save check-error-tag
   0 1 1234 <'> transform-sample 'no-such-sound check-error-tag
@@ -8045,8 +8045,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   '() <'> scale-by 'no-data check-error-tag
   '() <'> scale-to 'no-data check-error-tag
   -999 ind 0 <'> set-selection-position 'no-such-sample check-error-tag
-  -999 ind 0 <'> set-selection-frames 'wrong-type-arg check-error-tag
-  0 ind 0 <'> set-selection-frames 'wrong-type-arg check-error-tag
+  -999 ind 0 <'> set-selection-framples 'wrong-type-arg check-error-tag
+  0 ind 0 <'> set-selection-framples 'wrong-type-arg check-error-tag
   -1 <'> edit-fragment 'no-such-edit check-error-tag
   101 ind 0 <'> edit-fragment 'no-such-edit check-error-tag
   ind 0 -2 <'> edit-tree 'no-such-edit check-error-tag

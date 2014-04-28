@@ -1,11 +1,11 @@
 \ effects.fs -- *effects*.scm -> effects.fs
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Thu Jun 13 18:45:16 CEST 2013
-
-\ Commentary:
+\ Created: 05/10/16 23:04:30
+\ Changed: 14/04/28 03:52:17
 \
+\ @(#)effects.fs	1.56 4/28/14
+
 \ General (nogui/motif/gtk)
 \
 \ effects-squelch-channel	( amount gate-size :optional snd chn -- )
@@ -40,10 +40,9 @@
 \
 \ Requires --with-motif|gtk
 \
-\ Tested with Snd 13.x
+\ Tested with Snd 14.x
 \             Fth 1.3.x
-\             Motif 2.3.4 X11R6
-\             Gtk+ 3.0.12, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+\             Motif 2.3.3 X11R6
 \
 \ make-menu			( name parent -- gen )
 \ menu-entry			( gen prc disp-prc -- )
@@ -183,7 +182,7 @@ set-current
 		dur number? if
 			dur
 		else
-			snd chn undef frames
+			snd chn undef framples
 		then
 	then { samps }
 	"%s %s %s %s %s %s" #( input-samps del-time amp beg dur get-func-name )
@@ -201,7 +200,7 @@ set-current
 		dur number? if
 			dur
 		else
-			snd chn undef frames
+			snd chn undef framples
 		then
 	then { samps }
 	"%s %s %s %s %s %s" #( amp secs input-samps beg dur get-func-name )
@@ -221,7 +220,7 @@ set-current
 		dur number? if
 			dur
 		else
-			snd chn undef frames
+			snd chn undef framples
 		then
 	then { samps }
 	"%s %s %s %s %s %s %s %s"
@@ -426,7 +425,7 @@ previous
 	dur if
 		dur
 	else
-		snd chn #f frames
+		snd chn #f framples
 	then { samps }
 	"%s %s %s %s" #( vol beg dur get-func-name ) string-format { origin }
 	samps vol effects-jc-reverb beg dur snd chn #f origin map-channel
@@ -446,8 +445,8 @@ set-current
 	snd0 sound? unless
 		sounds 0 array-ref to snd0
 	then
-	snd0 #f #f frames { flt-len }
-	snd chn #f frames flt-len + { total-len }
+	snd0 #f #f framples { flt-len }
+	snd chn #f framples flt-len + { total-len }
 	:filter 0 flt-len snd0 #f #f channel->vct make-convolve { cnv }
 	0 snd chn 1 #f make-sampler { sf }
 	sf cnv-cb { cnv-func }
@@ -491,7 +490,7 @@ hide
 set-current
 
 : effects-position-sound <{ mono pos :optional snd #f chn #f -- res }>
-	mono #f #f frames { len }
+	mono #f #f framples { len }
 	0 mono #f 1 #f make-sampler { rd }
 	"%s %s %s" #( mono pos get-func-name ) string-format { origin }
 	pos number? if
@@ -543,7 +542,7 @@ set-current
 	"%s %s %s %s %s %s"
 	    #( amnt speed time beg
 	       dur number?
-	       snd chn #f frames dur <> && if
+	       snd chn #f framples dur <> && if
 		       dur
 	       else
 		       #f
@@ -626,7 +625,7 @@ set-current
 	dur if
 		dur
 	else
-		snd chn #f frames
+		snd chn #f framples
 	then { len }
 	sf src-fp-read-cb { src-cb }
 	len 0.0 make-vct map!
@@ -661,7 +660,7 @@ set-current
 	dur if
 		dur
 	else
-		snd chn #f frames
+		snd chn #f framples
 	then { len }
 	beg len snd chn #f channel->vct { in-data }
 	amp f2* 1.0 f+ len f* fround->s ( out-len ) 0.0 make-vct { out-data }
@@ -686,7 +685,7 @@ hide
 	0.0 0.0 0.0 { samp0 samp1 samp2 }
 	10 0.0 make-vct { samps }
 	#f 					\ flag
-	snd chn #f frames loc ?do
+	snd chn #f framples loc ?do
 		samp1 to samp0
 		samp2 to samp1
 		rd next-sample to samp2
@@ -924,10 +923,10 @@ set-current
 
 : effect-frames { target -- frms }
 	target 'sound = if
-		#f #f #f frames 1-
+		#f #f #f framples 1-
 	else
 		target 'selection = if
-			#f #f selection-frames
+			#f #f selection-framples
 		else
 			plausible-mark-samples { pts }
 			pts if
@@ -1037,11 +1036,12 @@ set-current
 				lst 1 array-ref { chn }
 				snd sync snc = if
 					target 'sound = if
-						snd chn undef frames 1-
+						snd chn undef framples 1-
 					else
 						target 'selection = if
 							#f #f selection-position
-							#f #f selection-frames +
+							#f #f selection-framples
+							    +
 						else
 							pts 1 array-ref
 						then
@@ -4524,10 +4524,10 @@ hide
 	self @ { gen }
 	gen eff_sr@ gen eff_amp@ gen eff_freq@ \ beg dur follows
 	gen eff_target@ 'sound = if
-		0 #f #f #f frames
+		0 #f #f #f framples
 	else
 		gen eff_target@ 'selection = if
-			#f #f selection-position  #f #f selection-frames
+			#f #f selection-position  #f #f selection-framples
 		else
 			plausible-mark-samples { pts }
 			pts if
@@ -4672,10 +4672,10 @@ hide
 	self @ { gen }
 	gen eff_freq@ gen eff_amp@		\ beg dur follows
 	gen eff_target@ 'sound = if
-		0  #f #f #f frames
+		0  #f #f #f framples
 	else
 		gen eff_target@ 'selection = if
-			#f #f selection-position  #f #f selection-frames
+			#f #f selection-position  #f #f selection-framples
 		else
 			plausible-mark-samples { pts }
 			pts if

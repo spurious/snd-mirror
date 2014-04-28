@@ -1,11 +1,11 @@
 \ extensions.fs -- extensions.scm -> extensions.fs
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Fri Nov 23 04:41:59 CET 2012
-
-\ Commentary:
+\ Created: 05/12/18 19:21:00
+\ Changed: 14/04/28 03:52:17
 \
+\ @(#)extensions.fs	1.48 4/28/14
+
 \ With comments and doc strings from extensions.scm.
 \
 \ remove-sound-property		( key :optional snd -- props )
@@ -133,24 +133,26 @@ amp as unmixed SND/CHN (returns scaler)."
 \ ;;; there are lots of ways to do this; this version uses functions
 \ ;;;   from Snd, CLM, and Sndlib.
 
-: enveloped-mix ( filename beg env -- )
-	doc" Mix FILENAME starting at BEG with amplitude envelope ENV.\n\
-\"pistol.snd\" 0 #( 0 0 1 1 2 0 ) enveloped-mix."
-	{ filename beg env }
-	filename mus-sound-frames { len }
-	temp-dir empty? if
-		""
-	else
-		temp-dir
-	then "tmp.snd" $+ { tmp-name }
-	tmp-name 22050 1 mus-bshort mus-next ""
-	    mus-sound-open-output 0 mus-sound-close-output drop
-	#( #( :envelope env :length len make-env ) ) { envs }
-	1 1.0 make-mixer { mx }
-	tmp-name filename 0 len 0 mx envs mus-mix drop
-	tmp-name beg undef undef undef undef undef undef mix drop
-	tmp-name file-delete
+hide
+: em-cb { amp-env rd -- prc; y self -- val }
+	1 proc-create ( prc ) amp-env , rd ,
+  does> { y self -- val }
+	self @ { amp-env }
+	self cell+ @ { rd }
+	amp-env env rd readin f* y f+
 ;
+set-current
+
+: enveloped-mix ( filename beg en -- )
+	doc" Mix FILENAME starting at BEG with amplitude envelope EN.\n\
+\"pistol.snd\" 0 #( 0 0 1 1 2 0 ) enveloped-mix."
+	{ filename beg en }
+	filename framples { len }
+	:envelope en :length len make-env { amp-env }
+	filename make-readin { rd }
+	amp-env rd em-cb beg len map-channel drop
+;
+previous
 
 \ ;;; -------- map-sound-files, match-sound-files
 \ ;;;
@@ -240,11 +242,11 @@ hide
 	end integer? if
 		end 1+
 	else
-		snd chn #f frames
+		snd chn #f framples
 	then beg - to end
 	#t snd chn set-selection-member? drop
 	beg snd chn set-selection-position drop
-	end snd chn set-selection-frames drop
+	end snd chn set-selection-framples drop
 ;
 set-current
 
@@ -286,7 +288,7 @@ previous
 		exit
 	then
 	#f #f selection-position { beg }
-	#f #f selection-frames { len }
+	#f #f selection-framples { len }
 	all-chans each { lst }
 		lst car { snd }
 		lst cadr { chn }
@@ -332,7 +334,7 @@ FILE can be the file name or a list #( file-name [beg [channel]] )."
 	else
 		file 2 array-ref
 	then { file-channel }
-	dur file-name mus-sound-frames file-beg - || { len }
+	dur file-name mus-sound-framples file-beg - || { len }
 	beg 0< if
 		'no-such-sample #( "%s: %s" get-func-name beg ) fth-throw
 	then
@@ -371,7 +373,7 @@ FILE can be the file name or a list #( file-name [beg [channel]] )."
 	else
 		file 2 array-ref
 	then { file-channel }
-	dur file-name mus-sound-frames file-beg - || { len }
+	dur file-name mus-sound-framples file-beg - || { len }
 	beg 0< if
 		'no-such-sample #( "%s: %s" get-func-name beg ) fth-throw
 	then
@@ -460,7 +462,7 @@ set-current
 		en 0 array-ref beg dur snd chn edpos scale-channel
 	else
 		dur integer? unless
-			snd chn #f frames to dur
+			snd chn #f framples to dur
 		then
 		en func beg dur snd chn edpos aec-cb origin as-one-edit
 	then
@@ -491,7 +493,7 @@ set-current
 	dur number? if
 		dur
 	else
-		snd chn edpos frames  beg  f-
+		snd chn edpos framples  beg  f-
 	then pi swap f/ { incr }
 	rmp0 rmp1 rmp0 f- incr sine-ramp-cb
 	    beg dur snd chn edpos origin map-channel
@@ -538,7 +540,7 @@ set-current
 	dur number? if
 		dur
 	else
-		snd chn ep frames beg f-
+		snd chn ep framples beg f-
 	then pi swap f/ { incr }
 	rm0 rm1 rm0 f- incr b4r-cb beg dur snd chn ep origin map-channel
 ;
@@ -573,7 +575,7 @@ set-current
 	dur number? if
 		dur
 	else
-		snd chn ep frames beg f-
+		snd chn ep framples beg f-
 	then 1/f { incr }
 	r0 r1 r0 f- incr rsq-cb beg dur snd chn ep origin map-channel
 ;
@@ -625,7 +627,7 @@ set-current
 	dur number? if
 		dur
 	else
-		snd chn ep frames beg f-
+		snd chn ep framples beg f-
 	then 1/f { incr }
 	rmp0 rmp1 rmp0 f- incr exponent rx-cb
 	    beg dur snd chn ep origin map-channel
@@ -810,8 +812,8 @@ same (within diff) modulo trailing 0's."
 		mx1 mx2 f- fabs allowable-difference f> if
 			#f
 		else
-			snd1 chn1 #f frames { len1 }
-			snd2 chn2 #f frames { len2 }
+			snd1 chn1 #f framples { len1 }
+			snd2 chn2 #f framples { len2 }
 			len1 len2 >= if
 				len1 snd1 snd2 chn1 chn2
 			else
@@ -827,7 +829,7 @@ previous
 
 : channels-equal? <{ s1 c1 s2 c2 :optional allowable-difference 0.0 -- f }>
 	doc" Return #t if the two channels are the same (within diff)."
-	s1 c1 #f frames s2 c2 #f frames <> if
+	s1 c1 #f framples s2 c2 #f framples <> if
 		#f
 	else
 		s1 c1 s2 c2 allowable-difference channels=
@@ -1042,17 +1044,6 @@ hide
 	'original-cursor val snd chn set-channel-property
 ;
 
-: local-dac-func <{ data -- val }>
-	sounds each { snd }
-		snd channels 0 ?do
-			snd i #f cursor snd i original-cursor <> if
-				snd i snd i #f cursor set-current-cursor
-			then
-		loop
-	end-each
-	#f
-;
-
 : local-start-playing-func <{ snd -- val }>
 	snd channels 0 ?do
 		snd i #f cursor { cur }
@@ -1069,11 +1060,9 @@ set-current
 
 : if-cursor-follows-play-it-stays-where-play-stopped <{ :optional enable #t }>
 	enable if
-		dac-hook <'> local-dac-func add-hook!
 		start-playing-hook <'> local-start-playing-func add-hook!
 		stop-playing-hook <'> local-stop-playing-func add-hook!
 	else
-		dac-hook <'> local-dac-func remove-hook! drop
 		start-playing-hook <'> local-start-playing-func
 		    remove-hook! drop
 		stop-playing-hook <'> local-stop-playing-func remove-hook! drop

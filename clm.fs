@@ -1,11 +1,11 @@
 \ clm.fs -- clm related base words, with-sound and friends
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Tue Nov 27 17:47:28 CET 2012
-
-\ Commentary:
+\ Created: 04/03/15 19:25:58
+\ Changed: 14/04/28 03:52:17
 \
+\ @(#)clm.fs	1.110 4/28/14
+
 \ clm-print		( fmt :optional args -- )
 \ clm-message		( fmt :optional args -- )
 \ 
@@ -38,10 +38,8 @@
 \
 \ find-file		( file -- fname|#f )
 \ snd-info		( output :key reverb-file-name scaled? timer -- )
-\ play-sound		( :key verbose dac-size audio-format :optional ... -- )
-\ record-sound		( output keyword-args -- )
 \
-\ clm-mix		( ifile :key output output-frame frames ... -- )
+\ clm-mix		( ifile :key output output-frame frms ... -- )
 \ ws-output		( ws -- fname )
 \ with-sound		( body-xt keyword-args -- ws )
 \ clm-load		( fname keyword-args -- ws )
@@ -97,9 +95,7 @@
 		obj string? if
 			obj mus-sound-chans
 		else
-			obj mus-generator?
-			obj sound-data? ||
-			obj vct? || if
+			obj mus-generator? if
 				obj mus-channels
 			else
 				obj object-length
@@ -114,15 +110,14 @@
 			mus-srate f>s
 		then
 	;
-
-	: frames <{ :optional snd #f chn #f edpos #f -- n }>
+	
+	: framples <{ :optional snd #f chn #f edpos #f -- n }>
 		snd string? if
-			snd mus-sound-frames
+			snd mus-sound-framples
 		else
 			snd mus-generator? if
 				snd mus-length
 			else
-				\ covers sound-data and vct too
 				snd object-length
 			then
 		then
@@ -132,14 +127,10 @@
 		snd string? if
 			snd mus-sound-maxamp
 		else
-			snd sound-data? if
-				snd sound-data-maxamp
+			snd vct? if
+				snd vct-peak
 			else
-				snd vct? if
-					snd vct-peak
-				else
-					0.0
-				then
+				0.0
 			then
 		then
 	;
@@ -629,7 +620,7 @@ set-current
 
 : snd-info <{ output :key reverb-file-name #f scaled? #f timer #f -- }>
 	output mus-sound-duration { dur }
-	output mus-sound-frames { frames }
+	output mus-sound-framples { frms }
 	output mus-sound-chans { channels }
 	output mus-sound-srate { srate }
 	"filename: %S" #( output ) clm-message
@@ -637,10 +628,10 @@ set-current
 	"  format: %s [%s]"
 	    #( output mus-sound-data-format mus-data-format-name
 	       output mus-sound-header-type mus-header-type-name ) clm-message
-	"  length: %.3f  (%d frames)" #( dur frames ) clm-message
+	"  length: %.3f  (%d frames)" #( dur frms ) clm-message
 	timer timer? if
 		timer .timer
-		srate frames timer .timer-ratio
+		srate frms timer .timer-ratio
 	then
 	output "maxamp" srate scaled? .maxamps
 	reverb-file-name ?dup-if
@@ -654,6 +645,36 @@ set-current
 previous
 
 \ === Playing and Recording one or two Channel Sounds ===
+\
+\ FIXME play-sound
+\
+\ play-sound		( :key verbose dac-size audio-format :optional ... -- )
+\ record-sound		( output keyword-args -- )
+
+: play-sound <{ :key
+    verbose      *clm-verbose*
+    dac-size     *clm-rt-bufsize*
+    audio-format *clm-audio-format*
+    :optional
+    input        *clm-file-name* -- }>
+	"%s removed" #( get-func-name ) fth-warning
+;
+
+: record-sound <{ output :key
+    duration      10.0
+    verbose       *clm-verbose*
+    output-device *clm-output-device*
+    dac-size      *clm-rt-bufsize*
+    srate         *clm-srate*
+    channels      *clm-channels*
+    audio-format  *clm-audio-format*
+    data-format   *clm-data-format*
+    header-type   *clm-header-type*
+    comment       *clm-comment* -- }>
+	"%s removed" #( get-func-name ) fth-warning
+;
+
+0 [if]
 : play-sound <{ :key
     verbose      *clm-verbose*
     dac-size     *clm-rt-bufsize*
@@ -666,7 +687,7 @@ previous
 	input false? if
 		'no-such-file #( "%s: %s" get-func-name input ) fth-throw
 	then
-	input mus-sound-frames { frames }
+	input mus-sound-framples { frms }
 	input mus-sound-srate  { srate }
 	input mus-sound-chans  { chans }
 	chans 2 > if
@@ -677,7 +698,7 @@ previous
 	verbose if
 		input snd-info
 	then
-	dac-size frames min { bufsize }
+	dac-size frms min { bufsize }
 	bufsize 0= if
 		"nothing to play for %S (%d frames)"
 		    #( input bufsize ) fth-warning
@@ -694,9 +715,9 @@ previous
 	dac-fd 0< if
 		'forth-error #( "%s: can't open dac" get-func-name ) fth-throw
 	then
-	frames 0 ?do
-		i bufsize + frames > if
-			frames i - to bufsize
+	frms 0 ?do
+		i bufsize + frms > if
+			frms i - to bufsize
 		then
 		snd-fd 0 bufsize 1- chans data mus-sound-read drop
 		dac-fd data bufsize mus-audio-write drop
@@ -720,8 +741,8 @@ previous
 	\ INFO: mus-srate must be set before seconds->samples! [ms]
 	mus-srate { old-srate }
 	srate set-mus-srate drop
-	duration seconds->samples { frames }
-	dac-size frames min { bufsize }
+	duration seconds->samples { frms }
+	dac-size frms min { bufsize }
 	channels 2 min { chans }
 	comment empty? if
 		"written %s by %s" #( date get-func-name )
@@ -748,21 +769,22 @@ previous
 		"w format: %s [%s]"
 		    #( data-format mus-data-format-name
 		       header-type mus-header-type-name ) clm-message
-		"  length: %.3f  (%d frames)" #( duration frames ) clm-message
+		"  length: %.3f  (%d frames)" #( duration frms ) clm-message
 		" comment: %S" #( comment ) clm-message
 	then
-	frames 0 ?do
-		i bufsize + frames > if
-			frames i - to bufsize
+	frms 0 ?do
+		i bufsize + frms > if
+			frms i - to bufsize
 		then
 		dac-fd data bufsize mus-audio-read drop
 		snd-fd 0 bufsize 1- chans data mus-sound-write drop
 	bufsize +loop
 	dac-fd mus-audio-close drop
-	snd-fd frames chans * data-format mus-bytes-per-sample *
+	snd-fd frms chans * data-format mus-bytes-per-sample *
 	mus-sound-close-output drop
 	old-srate set-mus-srate drop
 ;
+[then]
 
 : clm-mix <{ infile :key
     output #f
@@ -776,7 +798,6 @@ Mixes oboe.snd in *output* at *output*'s \
 location 0 from oboe.snd's location 0 on.  \
 The whole oboe.snd file will be mixed in because :frames is not specified."
 	0 { chans }
-	#f { mx }
 	*output* mus-output? { outgen }
 	output unless
 		outgen if
@@ -794,28 +815,19 @@ The whole oboe.snd file will be mixed in because :frames is not specified."
 		    #( "%s: can't find %S" get-func-name infile ) fth-throw
 	then
 	frames
-	infile mus-sound-frames || dup unless
+	infile mus-sound-framples || dup unless
 		drop undef
 	then to frames
 	outgen if
 		*output* mus-close drop
-	then
-	chans       0>
-	scaler     f0<> &&
-	scaler 1.0 f<>  && if
-		save-stack { s }
-		chans  chans dup * 0 ?do
-			scaler
-		loop ( chans  scl scl ... ) make-mixer to mx
-		s restore-stack
 	then
 	output       ( outfile )
 	infile       ( infile )
 	output-frame ( outloc )
 	frames       ( frames )
 	input-frame  ( inloc )
-	mx           ( mixer )
-	#f           ( envs ) mus-mix drop
+	#f           ( matrix )
+	#f           ( envs ) mus-file-mix drop
 	outgen if
 		output continue-sample->file to *output*
 	then
@@ -856,7 +868,7 @@ hide
 		end-each { mx }
 		mx f0<> if
 			scale mx f/ to scale
-			snd #f #f frames { len }
+			snd #f #f framples { len }
 			ws :channels ws-ref 0 ?do
 				scale 0 len snd i ( chn ) #f scale-channel drop
 			loop
@@ -878,7 +890,7 @@ hide
 	ws :scaled-by ws-ref { scale }
 	'snd provided? if
 		ws ws-get-snd { snd }
-		snd #f #f frames { len }
+		snd #f #f framples { len }
 		ws :channels ws-ref 0 ?do
 			scale 0 len snd i ( chn ) #f scale-channel drop
 		loop

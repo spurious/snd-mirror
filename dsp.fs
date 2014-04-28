@@ -1,8 +1,10 @@
 \ dsp.fs -- dsp.scm|rb --> dsp.fs
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Fri Nov 23 03:50:20 CET 2012
+\ Created: 05/12/30 04:52:13
+\ Changed: 14/04/28 03:52:17
+\
+\ @(#)dsp.fs	1.51 4/28/14
 
 \ src-duration			( en -- dur )
 \ src-fit-envelope		( e1 target-dur -- e2 )
@@ -237,7 +239,7 @@ of N points using GAMMA as the window parameter."
 
 : down-oct <{ n :optional snd #f chn #f -- vct }>
 	doc" Move sound down by power of 2 n."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** f>s { fftlen }
 	fftlen 1/f { fftscale }
 	0 fftlen snd chn #f channel->vct { rl1 }
@@ -265,7 +267,7 @@ of N points using GAMMA as the window parameter."
 		doc" Make given channel longer (FACTOR should be > 1.0) \
 by squeezing in the frequency domain, then using the inverse DFT \
 to get the time domain result."
-		snd chn #f frames { n }
+		snd chn #f framples { n }
 		n f2/ floor f>s { n2 }
 		n factor f* fround->s { out-n }
 		0 n snd chn #f channel->vct { in-data }
@@ -561,7 +563,7 @@ of chord such as #( 1 5/4 3/2 )."
 
 : zero-phase <{ :optional snd #f chn #f -- vct }>
 	doc" Call fft, set all phases to 0, and un-fft."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround->s { fftlen }
 	fftlen 1/f { fftscale }
 	0 fftlen snd chn #f channel->vct { rl }
@@ -577,7 +579,7 @@ of chord such as #( 1 5/4 3/2 )."
 : rotate-phase <{ func :optional snd #f chn #f -- vct }>
 	doc" Call fft, apply FUNC, a proc or xt, to each phase, then un-fft."
 	func word? func 1 "a proc or xt" assert-type
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround->s { fftlen }
 	fftlen 2/ { fftlen2 }
 	fftlen 1/f { fftscale }
@@ -1580,7 +1582,7 @@ complex results in returned vector."
 		two-pi freq f* sr f/ { rfreq }
 		rfreq fcos f2* { cs }
 		dur unless
-			#f #f #f frames to dur
+			#f #f #f framples to dur
 		then
 		y0 y1 y2 cs goert-cb beg dur #f #f #f scan-channel drop
 		0.0 rfreq fnegate make-rectangular cexp y1 c* y0 c+ magnitude
@@ -1713,7 +1715,7 @@ set-current
 : channel-mean <{ :optional snd #f chn #f -- val }>   \ <f, 1> / n
 	doc" Return the average of the samples in the given channel: <f,1>/n."
 	0.0 { sum }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	sum chm-cb 0 len snd chn #f scan-channel drop
 	sum len f/
 ;
@@ -1733,7 +1735,7 @@ set-current
 	doc" Return the sum of the squares of all the samples \
 in the given channel: <f,f>."
 	0.0 { sum }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	sum chte-cb 0 len snd chn #f scan-channel drop
 	sum
 ;
@@ -1741,7 +1743,7 @@ previous
 
 : channel-average-power <{ :optional snd #f chn #f -- val }> \ <f, f> / n
 	doc" Return the average power in the given channel: <f,f>/n."
-	snd chn channel-total-energy snd chn #f frames f/
+	snd chn channel-total-energy snd chn #f framples f/
 ;
 
 : channel-rms <{ :optional snd #f chn #f -- val }> \ sqrt(<f, f> / n)
@@ -1754,7 +1756,7 @@ in the given channel: sqrt(<f,f>/n)."
 : channel-variance <{ :optional snd #f chn #f -- val }>
 	doc" Return the sample variance in the \
 given channel: <f,f>-((<f,1>/ n)^2."
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	len len 1- f/ snd chn channel-mean f* { mu }
 	snd chn channel-total-energy { P }
 	P mu dup f* f-
@@ -1777,7 +1779,7 @@ set-current
 : channel-lp <{ p :optional snd #f chn #f -- val }>
 	doc" Return the Lp norm of the samples in the given channel."
 	0.0 { sum }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	sum p chlp-cb 0 len snd chn #f scan-channel drop
 	sum p 1/f f**
 ;
@@ -1796,7 +1798,7 @@ set-current
 	doc" Return the maxamp in the given channel (the name is \
 just math jargon for maxamp)."
 	0.0 { mx }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	mx chlpinf-cb 0 len snd chn #f scan-channel drop
 	mx
 ;
@@ -1809,7 +1811,7 @@ previous
 	0 s1 c1 1 #f make-sampler { r1 }
 	0 s2 c2 1 #f make-sampler { r2 }
 	0.0 ( sum )
-	s1 c1 #f frames 0 ?do
+	s1 c1 #f framples 0 ?do
 		r1 next-sample r2 next-sample f* f+ ( sum += ... ) 
 	loop
 	( sum )
@@ -1848,7 +1850,7 @@ sqrt(<f-g,f-g>)."
 	0 s1 c1 1 #f make-sampler { r1 }
 	0 s2 c2 1 #f make-sampler { r2 }
 	0.0 ( sum )
-	s1 c1 #f frames s2 c2 #f frames min 0 ?do
+	s1 c1 #f framples s2 c2 #f framples min 0 ?do
 		r1 next-sample r2 next-sample f- dup f* f+ ( sum += diff^2 )
 	loop
 	( sum ) fsqrt
@@ -1858,7 +1860,7 @@ sqrt(<f-g,f-g>)."
 	doc" Display an 'N' point Bartlett periodogram \
 of the samples in the current channel."
 	{ N }
-	#f #f #f frames { len }
+	#f #f #f framples { len }
 	0 #f #f 1 #f make-sampler { rd }
 	N 2* { N2 }
 	N2 0.0 make-vct { rl }
@@ -1998,7 +2000,7 @@ set-current
 	pairs make-array { frenvs }
 	new-freq old-freq f- old-freq f/ { factor }
 	snd chn #f maxamp { mx }
-	snd chn #f frames 1- { len }
+	snd chn #f framples 1- { len }
 	pairs 0 ?do
 		i 1.0 f+ { idx }
 		old-freq idx f* { aff }
@@ -2084,7 +2086,7 @@ previous
 ;
 
 : channel-polynomial <{ coeffs :optional snd #f chn #f -- vct }>
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	"%S %s" #( coeffs get-func-name ) string-format { origin }
 	0 len snd chn #f channel->vct coeffs vct-polynomial 0 len snd chn
 	    #f origin vct->channel
@@ -2095,7 +2097,7 @@ previous
 \ ;;; convolution -> * in freq
 
 : spectral-polynomial <{ coeffs :optional snd #f chn #f -- vct }>
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	0 len snd chn #f channel->vct { sound }
 	coeffs vct-length { num-coeffs }
 	num-coeffs 2 < if
@@ -2181,7 +2183,7 @@ DB-FLOOR is the level below which data will be ignored."
 	dur if
 		dur fsr f*
 	else
-		file mus-sound-frames beg d-
+		file mus-sound-framples beg d-
 	then { end }
 	fftsize 0.0 make-vct { fdr }
 	fftsize 0.0 make-vct { fdi }
@@ -2560,7 +2562,7 @@ set-current
 	0 snd chn 1 #f make-sampler { rd }
 	rd sr lsc-ws-cb :output snd-tempnam
 	    :srate snd srate with-sound :output ws-ref { tempfile }
-	tempfile mus-sound-frames { len }
+	tempfile mus-sound-framples { len }
 	0 len 1- tempfile snd chn #t ( trunc ) get-func-name 0
 	    #f ( edpos ) #t ( autodel ) set-samples
 ;
@@ -3005,7 +3007,7 @@ set-current
 reconstruct the original using LPC."
 	#() { clip-data }	\ #( #( beg end ) #( ... ) ... )
 	0.0 { unclipped-max }
-	snd chn #f frames { len }
+	snd chn #f framples { len }
 	clip-data unclipped-max uncchn-sc-cb 0 len
 	    snd chn #f scan-channel drop
 	clip-data length 0> if

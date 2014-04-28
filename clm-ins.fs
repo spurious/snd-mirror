@@ -1,11 +1,11 @@
 \ clm-ins.fs -- clm-ins.scm|rb -> clm-ins.fs
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Sun Dec 23 01:09:16 CET 2012
+\ Created: 06/02/03 10:36:51
+\ Changed: 14/04/28 03:52:17
+\
+\ @(#)clm-ins.fs	1.49 4/28/14
 
-\ Commentary:
-\ 
 \ jc-reverb	( keyword-args -- )
 \ violin	( start dur freq amp keyword-args -- )
 \ fm-violin	( start dur freq amp keyword-args -- )
@@ -3789,6 +3789,23 @@ instrument: anoi <{ fname start dur :optional
 \ -matti
 \ mjkoskin@sci.fi
 
+\
+\ FIXME fullmix
+\ needs some more work
+\
+instrument: fullmix <{ in-file :optional
+    start 0.0
+    dur #f
+    inbeg 0.0
+    matrix #f
+    sr #f
+    rev-amount #f -- }>
+;
+
+: fullmix-test <{ :optional start 0.0 dur 1.0 -- }>
+;
+
+0 [if]
 hide
 : set-fullmix-matrix { outn mx inp outp in-chans out-chans dur -- envs }
 	#f { envs }
@@ -3887,10 +3904,10 @@ instrument: fullmix <{ in-file :optional
 		( start ) seconds->samples { st }
 		( dur ) seconds->samples { samps }
 		*output* in-file undef make-file->frame
-		    st samps inloc mx envs mus-mix drop
+		    st samps inloc mx envs mus-file-mix drop
 		rev-mx if
 			*reverb* 1 make-frame
-			    st samps inloc rev-mx #f mus-mix drop
+			    st samps inloc rev-mx #f mus-file-mix drop
 		then
 	else
 		in-chans make-frame { inframe }
@@ -3951,6 +3968,7 @@ previous
 	"oboe.snd" now@ dur 0 #( #( 0.1 en ) ) fullmix
 	dur 0.2 f+ step
 ;
+[then]
 
 'snd provided? [if]
 	\ ;;; bes-fm -- can also use bes-j0 here as in earlier versions
