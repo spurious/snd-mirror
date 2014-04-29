@@ -199,8 +199,8 @@ typedef struct {
 
 #define rgb_t gdouble
 #define RGB_MAX 1.0
-#define FLOAT_TO_RGB(Val) (rgb_t)(Val)
-#define RGB_TO_FLOAT(Val) Val
+#define float_to_rgb(Val) (rgb_t)(Val)
+#define rgb_to_float(Val) Val
 
 typedef struct {
   rgb_t red, green, blue, alpha;

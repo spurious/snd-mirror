@@ -282,7 +282,7 @@
 	   (in-data-beg 0)
 	   (obank (make-oscil-bank lastfreq (make-float-vector N2 0.0) lastamp)))
 
-      (set! window (float-vector->vector (float-vector-scale! window (/ 2.0 (* 0.54 fftsize))))) ;den = hamming window integrated
+      (set! window (float-vector-scale! window (/ 2.0 (* 0.54 fftsize)))) ;den = hamming window integrated
 
       (do ((i 0 (+ i 1)))
 	  ((>= i outlen))

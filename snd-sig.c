@@ -310,7 +310,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 		      filename, amp,  (cp == NULL) ? S_convolve_selection_with : S_convolve_with);
 #else
   origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP "%.3f", 
-	       TO_PROC_NAME((cp == NULL) ? S_convolve_selection_with : S_convolve_with), 
+	       to_proc_name((cp == NULL) ? S_convolve_selection_with : S_convolve_with), 
 	       filename, amp);
 #endif
   if (!(ss->stopped_explicitly))
@@ -608,7 +608,7 @@ bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *ur_scalers, int len, boo
 #if HAVE_FORTH
 	      origin = mus_format("%.3f" PROC_SEP "%lld" PROC_SEP "%lld %s", norm, beg, frames, S_normalize_channel);
 #else
-	      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", TO_PROC_NAME(S_normalize_channel), norm, beg, frames);
+	      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(S_normalize_channel), norm, beg, frames);
 #endif
 	    }
 	  else
@@ -618,7 +618,7 @@ bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *ur_scalers, int len, boo
 #if HAVE_FORTH
 	      origin = mus_format("%.3f 0 " PROC_FALSE " %s", norm, S_normalize_channel);
 #else
-	      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "0" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_normalize_channel), norm);
+	      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "0" PROC_SEP PROC_FALSE, to_proc_name(S_normalize_channel), norm);
 #endif
 	    }
 	  scale_channel_with_origin(ncp, scalers[i], beg, frames, ncp->edit_ctr, NOT_IN_AS_ONE_EDIT, origin);
@@ -866,8 +866,8 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
   else origin = mus_format("%lld" PROC_SEP "%lld %s", beg, dur, S_reverse_channel);
 #else
   if (dur == cp->edits[edpos]->samples)
-    origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_reverse_channel), beg);
-  else origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld", TO_PROC_NAME(S_reverse_channel), beg, dur);
+    origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP PROC_FALSE, to_proc_name(S_reverse_channel), beg);
+  else origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld", to_proc_name(S_reverse_channel), beg, dur);
 #endif
 
   if (temp_file)
@@ -1341,8 +1341,8 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	  else new_origin = mus_format("%.4f" PROC_SEP "%lld" PROC_SEP "%lld %s", ratio, beg, dur, S_src_channel);
 #else
 	  if (dur == cp->edits[sf->edit_ctr]->samples)
-	    new_origin = mus_format("%s" PROC_OPEN "%.4f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_src_channel), ratio, beg);
-	  else new_origin = mus_format("%s" PROC_OPEN "%.4f" PROC_SEP "%lld" PROC_SEP "%lld", TO_PROC_NAME(S_src_channel), ratio, beg, dur);
+	    new_origin = mus_format("%s" PROC_OPEN "%.4f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, to_proc_name(S_src_channel), ratio, beg);
+	  else new_origin = mus_format("%s" PROC_OPEN "%.4f" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(S_src_channel), ratio, beg, dur);
 #endif
 	}
       else
@@ -1366,11 +1366,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	  if (base == 1.0)
 	    {
 	      if (dur == cp->edits[sf->edit_ctr]->samples)
-		new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%lld" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_src_channel), envstr, beg);
-	      else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%lld" PROC_SEP "%lld", TO_PROC_NAME(S_src_channel), envstr, beg, dur);
+		new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%lld" PROC_SEP PROC_FALSE, to_proc_name(S_src_channel), envstr, beg);
+	      else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(S_src_channel), envstr, beg, dur);
 	    }
 	  else new_origin = mus_format("%s" PROC_OPEN BPAREN "%s" PROC_OPEN "%s" PROC_SEP ":base" PROC_SEP "%.4f" PROC_SEP ":end" PROC_SEP "%lld)" PROC_SEP "%lld" PROC_SEP "%lld", 
-				       TO_PROC_NAME(S_make_env), TO_PROC_NAME(S_src_channel), envstr, base, dur, beg, dur);
+				       to_proc_name(S_make_env), to_proc_name(S_src_channel), envstr, base, dur, beg, dur);
 #endif
 	  if (envstr) free(envstr);
 	  free_env(newe);
@@ -2133,9 +2133,9 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 #else
 	  if (total_dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
-				    TO_PROC_NAME(S_filter_channel), vstr, order, beg);
+				    to_proc_name(S_filter_channel), vstr, order, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP "%lld", 
-				       TO_PROC_NAME(S_filter_channel), vstr, order, beg, dur);
+				       to_proc_name(S_filter_channel), vstr, order, beg, dur);
 #endif
 
 	  if (vstr) free(vstr);
@@ -2156,9 +2156,9 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 #else
 	  if (total_dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
-				    TO_PROC_NAME(S_filter_channel), envstr, order, beg);
+				    to_proc_name(S_filter_channel), envstr, order, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP "%lld", 
-				       TO_PROC_NAME(S_filter_channel), envstr, order, beg, dur);
+				       to_proc_name(S_filter_channel), envstr, order, beg, dur);
 #endif
 	  if (envstr) free(envstr);
 	}
@@ -2336,9 +2336,9 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 #else
 	  if (dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
-				    TO_PROC_NAME(S_filter_channel), vstr, order, beg);
+				    to_proc_name(S_filter_channel), vstr, order, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP "%lld", 
-				       TO_PROC_NAME(S_filter_channel), vstr, order, beg, dur);
+				       to_proc_name(S_filter_channel), vstr, order, beg, dur);
 #endif
 
 	  if (vstr) free(vstr);
@@ -2359,9 +2359,9 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 #else
 	  if (dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
-				    TO_PROC_NAME(S_filter_channel), envstr, order, beg);
+				    to_proc_name(S_filter_channel), envstr, order, beg);
 	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP "%lld", 
-				       TO_PROC_NAME(S_filter_channel), envstr, order, beg, dur);
+				       to_proc_name(S_filter_channel), envstr, order, beg, dur);
 #endif
 	  if (envstr) free(envstr);
 	}
@@ -2582,9 +2582,9 @@ static char *edit_list_envelope(mus_any *egen, mus_long_t beg, mus_long_t env_du
 #else
       if (base == 1.0)
 	new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
-				TO_PROC_NAME(S_env_channel), envstr, beg);
+				to_proc_name(S_env_channel), envstr, beg);
       else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%.4f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
-				   TO_PROC_NAME(S_env_channel_with_base), envstr, base, beg);
+				   to_proc_name(S_env_channel_with_base), envstr, base, beg);
 #endif
     }
   else 
@@ -2595,7 +2595,7 @@ static char *edit_list_envelope(mus_any *egen, mus_long_t beg, mus_long_t env_du
 			      envstr, base, env_dur, S_make_env, beg, called_dur, S_env_channel);
 #else
       new_origin = mus_format("%s" PROC_OPEN BPAREN "%s" PROC_OPEN "%s" PROC_SEP ":base" PROC_SEP "%.4f" PROC_SEP ":end" PROC_SEP "%lld)" PROC_SEP "%lld" PROC_SEP "%lld",
-			      TO_PROC_NAME(S_env_channel), TO_PROC_NAME(S_make_env), envstr, base, env_dur, beg, called_dur);
+			      to_proc_name(S_env_channel), to_proc_name(S_make_env), envstr, base, env_dur, beg, called_dur);
 #endif
     }
   if (envstr) free(envstr);
@@ -3251,7 +3251,7 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
 #if HAVE_FORTH
   origin = mus_format("%lld" PROC_SEP "%lld %s", beg, dur, S_smooth_channel);
 #else
-  origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld", TO_PROC_NAME(S_smooth_channel), beg, dur);
+  origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld", to_proc_name(S_smooth_channel), beg, dur);
 #endif
 
   data = (mus_float_t *)malloc(dur * sizeof(mus_float_t));
@@ -5991,7 +5991,7 @@ static Xen g_filter_1(Xen e, Xen order, Xen snd, Xen chn_n, Xen edpos, const cha
 				      caller);
 #else
 	      new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d%s", 
-				      TO_PROC_NAME(caller), estr, len, 
+				      to_proc_name(caller), estr, len, 
 				      (over_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 #endif
 	    }
@@ -6016,7 +6016,7 @@ static Xen g_filter_1(Xen e, Xen order, Xen snd, Xen chn_n, Xen edpos, const cha
 				      caller);
 #else
 	      new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d%s", 
-				      TO_PROC_NAME(caller), estr, len, (over_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
+				      to_proc_name(caller), estr, len, (over_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 #endif
 	    }
 	  else new_origin = mus_strdup(origin);

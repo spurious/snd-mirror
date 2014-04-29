@@ -1066,9 +1066,9 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
 
 static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
 {
-  (*r) = RGB_TO_FLOAT(pix->red);
-  (*g) = RGB_TO_FLOAT(pix->green);
-  (*b) = RGB_TO_FLOAT(pix->blue);
+  (*r) = rgb_to_float(pix->red);
+  (*g) = rgb_to_float(pix->green);
+  (*b) = rgb_to_float(pix->blue);
 }
 
 

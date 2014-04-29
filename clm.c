@@ -9478,14 +9478,14 @@ static char *describe_env(mus_any *ptr)
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
   snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: %lld (dur: %lld), index: %d, scaler: %.4f, offset: %.4f, data: %s",
-	       mus_name(ptr),
-	       ((e->style == MUS_ENV_LINEAR) ? "linear" : ((e->style == MUS_ENV_EXPONENTIAL) ? "exponential" : "step")),
-	       e->locs[e->index] - e->loc, 
-	       e->end + 1, 
-	       e->index,
-	       e->original_scaler, 
-	       e->original_offset,
-	       str = float_array_to_string(e->original_data, e->size * 2, 0));
+	   mus_name(ptr),
+	   ((e->style == MUS_ENV_LINEAR) ? "linear" : ((e->style == MUS_ENV_EXPONENTIAL) ? "exponential" : "step")),
+	   (e->locs) ? (e->locs[e->index] - e->loc) : -1,
+	   e->end + 1, 
+	   e->index,
+	   e->original_scaler, 
+	   e->original_offset,
+	   str = float_array_to_string(e->original_data, e->size * 2, 0));
   if (str) free(str);
   return(describe_buffer);
 }

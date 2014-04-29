@@ -1349,7 +1349,7 @@ static void save_view_files_directory(prefs_info *prf, FILE *fd)
 #endif
 
 #if HAVE_RUBY
-      fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_directory_to_view_files_list), rts_vf_directory);
+      fprintf(fd, "%s(\"%s\")\n", to_proc_name(S_add_directory_to_view_files_list), rts_vf_directory);
 #endif
 
 #if HAVE_FORTH

@@ -39298,7 +39298,7 @@ EDITS: 1
 		(expandn 29 .5 "oboe.snd" .2)
 		(expandn 30 2 "2.snd" 1.0 '(0.0 1.0 1.0 4.0 2.0 1.0))
 		(let ((ampf '(0 0 1 1 2 1 3 0))) 
-		  (fm-voice 0 1 300 .8 3 1 ampf ampf ampf ampf ampf ampf ampf 1 0 0 .25 1 .01 0 ampf .01))
+		  (fm-voice 0 1 300 .8 3 1 ampf ampf ampf ampf ampf ampf ampf 1 0 0 .25 1 .01 ampf .01))
 		(graphEq "oboe.snd")
 		)
     

@@ -252,7 +252,7 @@ static char *tagged_mix_to_string(const char *mixinfile, mus_long_t beg, int fil
   return(mus_format("(set! -mix-%d (%s \"%s\" %lld %d snd chn %s %s))", mix_infos_ctr, S_mix, mixinfile, beg, file_channel, b2s(true), b2s(delete_file)));
 #endif
 #if HAVE_RUBY
-  return(mus_format("_mix_%d = %s(\"%s\", %lld, %d, snd, chn, %s, %s)", mix_infos_ctr, TO_PROC_NAME(S_mix), mixinfile, beg, file_channel, b2s(true), b2s(delete_file)));
+  return(mus_format("_mix_%d = %s(\"%s\", %lld, %d, snd, chn, %s, %s)", mix_infos_ctr, to_proc_name(S_mix), mixinfile, beg, file_channel, b2s(true), b2s(delete_file)));
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
   return(NULL);
@@ -269,7 +269,7 @@ static char *untagged_mix_to_string(const char *mixinfile, mus_long_t beg, int f
   return(mus_format("(%s \"%s\" %lld %d snd chn %s %s)", S_mix, mixinfile, beg, file_channel, b2s(false), b2s(delete_file)));
 #endif
 #if HAVE_RUBY
-  return(mus_format("%s(\"%s\", %lld, %d, snd, chn, %s, %s)", TO_PROC_NAME(S_mix), mixinfile, beg, file_channel, b2s(false), b2s(delete_file)));
+  return(mus_format("%s(\"%s\", %lld, %d, snd, chn, %s, %s)", to_proc_name(S_mix), mixinfile, beg, file_channel, b2s(false), b2s(delete_file)));
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
   return(NULL);

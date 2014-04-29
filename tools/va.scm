@@ -93,12 +93,10 @@
 
 ;;; look for missing or unused tips
 
-(if (not (defined? 'find-if))
-    (define (find-if pred l)
-      "(find-if func lst) scans 'lst' for any element that 'func' likes"
-      (cond ((null? l) #f)
-	    ((pred (car l)) (car l))
-	    (else (find-if pred (cdr l))))))
+(define (find-if pred l)
+  (cond ((null? l) #f)
+	((pred (car l)) (car l))
+	(else (find-if pred (cdr l)))))
   
 (let ((tip-list ())
       (new-tip-list ())

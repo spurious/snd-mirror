@@ -213,9 +213,11 @@
 			(if (eq? x 'x)
 			    (if (not (member type x-types))
 				(set! x-types (cons type x-types)))
-			    (if (eq? x 'g)
+			    (if (not (eq? x 'g))
+#|
 				(if (not (member type g-types))
 				    (set! g-types (cons type g-types)))
+|#
 				(if (not (member type types))
 				    (set! types (cons type types)))))
 			(set! type #f))
@@ -878,7 +880,7 @@
 
      (if in-glu
 	 (if (not (string=? "GLU" (substring val 0 3)))
-	     (BEGIN
+	     (begin
 	       (set! in-glu #f)
 	       (hey "#endif~%")))
 	 (if (string=? "GLU" (substring val 0 3))

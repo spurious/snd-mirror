@@ -1714,9 +1714,9 @@ static Xen g_color_to_list(Xen obj)
   Xen_check_type(Xen_is_pixel(obj), obj, 1, S_color_to_list, "a color"); 
   v = Xen_unwrap_pixel(obj);
   if (v)
-    return(Xen_list_4(C_double_to_Xen_real(RGB_TO_FLOAT(v->red)),
-		      C_double_to_Xen_real(RGB_TO_FLOAT(v->green)),
-		      C_double_to_Xen_real(RGB_TO_FLOAT(v->blue)),
+    return(Xen_list_4(C_double_to_Xen_real(rgb_to_float(v->red)),
+		      C_double_to_Xen_real(rgb_to_float(v->green)),
+		      C_double_to_Xen_real(rgb_to_float(v->blue)),
 		      C_double_to_Xen_real(v->alpha)));
   return(Xen_empty_list);
 }
@@ -1777,9 +1777,9 @@ static Xen g_color_to_list(Xen obj)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = Xen_unwrap_pixel(obj);
   XQueryColor(dpy, cmap, &tmp_color);
-  return(Xen_list_3(C_double_to_Xen_real(RGB_TO_FLOAT(tmp_color.red)),
-		    C_double_to_Xen_real(RGB_TO_FLOAT(tmp_color.green)),
-		    C_double_to_Xen_real(RGB_TO_FLOAT(tmp_color.blue))));
+  return(Xen_list_3(C_double_to_Xen_real(rgb_to_float(tmp_color.red)),
+		    C_double_to_Xen_real(rgb_to_float(tmp_color.green)),
+		    C_double_to_Xen_real(rgb_to_float(tmp_color.blue))));
 }
 
 
@@ -1803,9 +1803,9 @@ static Xen g_make_color(Xen r, Xen g, Xen b, Xen alpha)
   dpy = XtDisplay(MAIN_SHELL(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
-  tmp_color.red = FLOAT_TO_RGB(rf);
-  tmp_color.green = FLOAT_TO_RGB(gf);
-  tmp_color.blue = FLOAT_TO_RGB(bf);
+  tmp_color.red = float_to_rgb(rf);
+  tmp_color.green = float_to_rgb(gf);
+  tmp_color.blue = float_to_rgb(bf);
 
   if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
     Xen_error(Xen_make_error_type("no-such-color"),

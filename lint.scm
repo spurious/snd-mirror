@@ -5,10 +5,10 @@
 
 (provide 'lint.scm)
 
-(define *report-unused-parameters* #f)
+(define *report-unused-parameters* #t)
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
-(define *report-undefined-variables* #f)
+(define *report-undefined-variables* #t)
 (define *report-shadowed-variables* #f)
 (define *report-minor-stuff* #t)          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
 
@@ -129,7 +129,7 @@
 		  cons constant? continuation? cos cosh current-environment current-error-port current-input-port current-output-port 
 		  defined? denominator do dynamic-wind 
 		  environment environment-ref environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
-		  floor for-each 
+		  floor ;for-each 
 		  gcd gensym gensym? global-environment 
 		  hash-table hash-table-ref hash-table-size hash-table? hash-table-iterator? hook-functions 
 		  if imag-part inexact->exact inexact? infinite? initial-environment input-port? integer->char integer-decode-float 
@@ -3353,7 +3353,7 @@
 		     (lambda (var)
 		       (if (not (or (assq (car var) vars)
 				    (hash-table-ref globals (car var))))
-			   (lint-format "undefined identifier ~A in: ~A"
+			   (lint-format "undefined identifier ~A in: ~A" ;; TODO: this gives a bogus line number (last line in file)
 					(list-ref var 0)
 					(list-ref var 2)
 					(list-ref var 1))))
@@ -3378,7 +3378,7 @@
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
 
-;;; if function arg or local var collides with built-in, warn?
+;;; if function arg or local var collides with built-in, warn? (framples is a problem here, and channels)
 
 
 
@@ -3463,7 +3463,7 @@
 					      (format fout "~S~%" ncode)))
 					  (let ((outstr (call-with-output-string
 							 (lambda (p)
-							   (let ((old-undef *report-undefined-variables*)
+							   (let (;(old-undef *report-undefined-variables*)
 								 (old-shadow *report-shadowed-variables*))
 							     ;(set! *report-undefined-variables* #t)
 							     (set! *report-shadowed-variables* #t)

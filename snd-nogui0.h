@@ -45,8 +45,8 @@
 
 #define rgb_t unsigned short
 #define RGB_MAX 65535
-#define FLOAT_TO_RGB(Val) (rgb_t)(RGB_MAX * (Val))
-#define RGB_TO_FLOAT(Val) (float)((float)(Val) / (float)RGB_MAX)
+#define float_to_rgb(Val) (rgb_t)(RGB_MAX * (Val))
+#define rgb_to_float(Val) (float)((float)(Val) / (float)RGB_MAX)
 
 
 typedef struct {

@@ -169,7 +169,7 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
 #define EXIT_NOT_FORCED false
 
 #if HAVE_RUBY
-  #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
+  #define to_proc_name(Str) xen_scheme_procedure_to_ruby(Str)
   #define TO_VAR_NAME(Str) xen_scheme_constant_to_ruby(Str)
   #define PROC_OPEN "("
   #define PROC_SEP ", "
@@ -182,7 +182,7 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
   #define PROC_QUOTE ""
 #endif
 #if HAVE_FORTH
-  #define TO_PROC_NAME(Str) Str
+  #define to_proc_name(Str) Str
   #define TO_VAR_NAME(Str) Str
   #define PROC_OPEN " "
   #define PROC_SEP " "
@@ -195,7 +195,7 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
   #define PROC_QUOTE ""
 #endif
 #if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
-  #define TO_PROC_NAME(Str) Str
+  #define to_proc_name(Str) Str
   #define TO_VAR_NAME(Str) Str
   #define PROC_OPEN " "
   #define PROC_SEP " "

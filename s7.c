@@ -744,6 +744,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
 
 
 #define is_safe_c_op(op) ((op < OP_THUNK) && (op >= OP_SAFE_C_C))
+                                             /* for an unsigned int op, op is always >= OP_SAFE_C_C (0) */
 #define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_P))
 #define is_callable_c_op(op) (((op < OP_THUNK) && (op >= OP_SAFE_C_C)) || (op >= OP_SAFE_C_opVSq_S))
 
@@ -1796,17 +1797,14 @@ static int t_optimized = T_OPTIMIZED;
 /* marks a string that the caller considers a bytevector 
 */
 
-
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
 #define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
-
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
 /* this marks something that might mess with its argument list, it should not be in the 2nd byte
  */
-
 
 #define T_GENSYM                      (1 << (TYPE_BITS + 21))
 #define is_gensym(p)                  ((typeflag(p) & T_GENSYM) != 0)
@@ -1856,7 +1854,7 @@ static int t_optimized = T_OPTIMIZED;
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS  0
+#define UNUSED_BITS  (1 << (TYPE_BITS + 11))
 
 #if 0
 /* to find who is stomping on our symbols:
@@ -69466,7 +69464,7 @@ int main(int argc, char **argv)
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346
- * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973
+ * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1053
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7
  * t816          |                                    |  70.6                44.5
@@ -69481,11 +69479,10 @@ int main(int argc, char **argv)
  * click to inspect/see source etc in listener?
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
- * why can't y-bounds be channel-specific if channels-combined?
- * why doesn't a new max take effect? [with-fullest-sound t844.scm]
  * clm opt accepts (env env)
- * popup menu reflects selected sound, but comes up over any sound -- if popup, selected underlying?
+ * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
  *   why isn't that the case always? -- pointer selects if focus-follows-mouse
+ *   see snd-chn.c 5444 
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
@@ -69496,5 +69493,11 @@ int main(int argc, char **argv)
  *   and for catch what errors it might raise
  *     framples: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
+ *
+ * expandn add this to snd-test: (with-sound (:channels 4) (expandn 0 1 "4.aiff" 1 :expand 4))
+ *   and test expandn more fully! run current lint over motif-snd too
+ * check other clm describe for nulls
+ * is lint confused by defanimal? -- thinks it is undefined?
+ * fix its line #
  */
 

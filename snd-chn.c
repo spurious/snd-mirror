@@ -3132,9 +3132,9 @@ static bool make_gl_spectrogram(chan_info *cp)
   br = tmp_color.red;
   bg = tmp_color.green;
   bb = tmp_color.blue;
-  glClearColor(RGB_TO_FLOAT(tmp_color.red),
-	       RGB_TO_FLOAT(tmp_color.green),
-	       RGB_TO_FLOAT(tmp_color.blue),
+  glClearColor(rgb_to_float(tmp_color.red),
+	       rgb_to_float(tmp_color.green),
+	       rgb_to_float(tmp_color.blue),
 	       0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -5438,7 +5438,7 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
   if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
 
   /* if combining, figure out which virtual channel the mouse is in */
-  if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
+  if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y); /* select this?? */
 
   click_within_graph = within_graph(cp, x, y);
 
@@ -9526,9 +9526,9 @@ data and passes it to openGL.  See snd-gl.scm for an example."
 		 Xen_real_to_C_double(cutoff),
 		 Xen_boolean_to_C_bool(use_dB),
 		 Xen_real_to_C_double(min_dB),
-		 FLOAT_TO_RGB(Xen_real_to_C_double(br)),
-		 FLOAT_TO_RGB(Xen_real_to_C_double(bg)),
-		 FLOAT_TO_RGB(Xen_real_to_C_double(bb)));
+		 float_to_rgb(Xen_real_to_C_double(br)),
+		 float_to_rgb(Xen_real_to_C_double(bg)),
+		 float_to_rgb(Xen_real_to_C_double(bb)));
   free(si->data);
   free(si);
   return(Xen_false);

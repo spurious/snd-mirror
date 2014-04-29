@@ -4,6 +4,8 @@
  *   with boxes.  Especially the control panel.
  */
 
+#define sound_env_editor(Sp) ((env_editor *)(sp->flt))
+
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_stop_pix, W_info,
       W_play, W_sync, W_unite, W_close,
@@ -1164,7 +1166,7 @@ void display_filter_env(snd_info *sp)
     {
       ax->gc = ss->fltenv_data_gc;
       display_frequency_response(sp->filter_control_envelope, 
-				 (SOUND_ENV_EDITOR(sp))->axis, ax, 
+				 (sound_env_editor(sp))->axis, ax, 
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
     }
@@ -1217,7 +1219,7 @@ static gboolean filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, g
 {
   char *tmpstr = NULL;
   snd_info *sp = (snd_info *)data;
-  env_editor_button_release(SOUND_ENV_EDITOR(sp), sp->filter_control_envelope);
+  env_editor_button_release(sound_env_editor(sp), sp->filter_control_envelope);
   display_filter_env(sp);
   set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_envelope));
   if (tmpstr) free(tmpstr);
@@ -1359,7 +1361,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
   redirect_errors_to(NULL, NULL);
   if (!(sp->filter_control_envelope)) /* maybe user cleared text field? */
     sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
-  (SOUND_ENV_EDITOR(sp))->edited = true;
+  (sound_env_editor(sp))->edited = true;
   display_filter_env(sp);
   sp->filter_control_changed = true;
 }
@@ -1378,7 +1380,7 @@ void filter_env_changed(snd_info *sp, env *e)
 	  free(tmpstr);
 	}
       else gtk_entry_set_text(GTK_ENTRY(FILTER_COEFFS_TEXT(sp)), stupid);
-      (SOUND_ENV_EDITOR(sp))->edited = true;
+      (sound_env_editor(sp))->edited = true;
       display_filter_env(sp);
       /* this is called also from snd-scm.c */
     }

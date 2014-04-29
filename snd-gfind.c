@@ -221,12 +221,12 @@ void save_find_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       if (text)
-	fprintf(fd, "%s(true, \"%s\")\n", TO_PROC_NAME(S_find_dialog), text);
+	fprintf(fd, "%s(true, \"%s\")\n", to_proc_name(S_find_dialog), text);
       else
 	{
 	  if (ss->search_expr)
-	    fprintf(fd, "%s(true, \"%s\")\n", TO_PROC_NAME(S_find_dialog), ss->search_expr);
-	  else fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_find_dialog));
+	    fprintf(fd, "%s(true, \"%s\")\n", to_proc_name(S_find_dialog), ss->search_expr);
+	  else fprintf(fd, "%s(true)\n", to_proc_name(S_find_dialog));
 	}
 #endif
 #if HAVE_FORTH

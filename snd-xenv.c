@@ -197,7 +197,7 @@ static void apply_enved(void)
 				  (apply_to_selection) ? S_env_selection : S_env_channel);
 #else
 	      origin = mus_format("%s" PROC_OPEN "%s%s", 
-				  TO_PROC_NAME((apply_to_selection) ? S_env_selection : S_env_channel),
+				  to_proc_name((apply_to_selection) ? S_env_selection : S_env_channel),
 				  estr = env_to_string(active_env),
 				  (apply_to_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 #endif
@@ -219,7 +219,7 @@ static void apply_enved(void)
 				  (apply_to_selection) ? S_filter_selection : S_filter_channel);
 #else
 	      origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d%s",
-				  TO_PROC_NAME((apply_to_selection) ? S_filter_selection : S_filter_channel),
+				  to_proc_name((apply_to_selection) ? S_filter_selection : S_filter_channel),
 				  estr = env_to_string(active_env), 
 				  enved_filter_order(ss),
 				  (apply_to_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);

@@ -1116,9 +1116,9 @@ static XColor *rgb_to_color_1(mus_float_t r, mus_float_t g, mus_float_t b)
   XColor *new_color;
   new_color = (XColor *)calloc(1, sizeof(XColor));
   new_color->flags = DoRed | DoGreen | DoBlue;
-  new_color->red = FLOAT_TO_RGB(r);
-  new_color->green = FLOAT_TO_RGB(g);
-  new_color->blue = FLOAT_TO_RGB(b);
+  new_color->red = float_to_rgb(r);
+  new_color->green = float_to_rgb(g);
+  new_color->blue = float_to_rgb(b);
   dpy = MAIN_DISPLAY(ss);
   XAllocColor(dpy, DefaultColormap(dpy, DefaultScreen(dpy)), new_color);
   return(new_color);
@@ -1148,9 +1148,9 @@ static void pixel_to_rgb(Pixel pix, float *r, float *g, float *b)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = pix;
   XQueryColor(dpy, DefaultColormap(dpy, DefaultScreen(dpy)), &tmp_color);
-  (*r) = RGB_TO_FLOAT(tmp_color.red);
-  (*g) = RGB_TO_FLOAT(tmp_color.green);
-  (*b) = RGB_TO_FLOAT(tmp_color.blue);
+  (*r) = rgb_to_float(tmp_color.red);
+  (*g) = rgb_to_float(tmp_color.green);
+  (*b) = rgb_to_float(tmp_color.blue);
 }
 
 
@@ -1178,9 +1178,9 @@ static void reflect_color(prefs_info *prf)
   XmScrollBarGetValue(prf->bscl, &ib);
 
   current_color = rgb_to_color_1(ir / COLOR_MAXF, ig / COLOR_MAXF, ib / COLOR_MAXF);
-  r = RGB_TO_FLOAT(current_color->red);
-  g = RGB_TO_FLOAT(current_color->green);
-  b = RGB_TO_FLOAT(current_color->blue);
+  r = rgb_to_float(current_color->red);
+  g = rgb_to_float(current_color->green);
+  b = rgb_to_float(current_color->blue);
 
   pixel = current_color->pixel;
   free(current_color);

@@ -93,6 +93,8 @@
 				      :duration (/ duration update-rate)))
 		    (ampenv (make-env amp-env :duration duration :scaler amplitude))
 		    (ex-array (make-vector in-chans #f))
+		    (ex-samp -1.0)
+		    (next-samp 0.0)
 		    
 		    (max-len (ceiling (* *clm-srate*
 					 (+ (max max-out-hop max-in-hop)
@@ -121,10 +123,8 @@
 		(if (= in-chans 1)
 		    (let ((ingen (vector-ref ex-array 0))
 			  (sample-0 0.0)
-			  (sample-1 0.0)
-			  (ex-samp -1.0)
+			  (sample-1 0.0))
 			  ;; these vars used for resampling
-			  (next-samp 0.0))
 
 		      (if (and (not (list? srate))
 			       (not update-envs)
@@ -222,10 +222,7 @@
 			      (sample-0-1 0.0)
 			      (sample-1-1 0.0)
 			      (ingen0 (vector-ref ex-array 0))
-			      (ingen1 (vector-ref ex-array 1))
-			      (ex-samp -1.0)
-			      ;; these vars used for resampling
-			      (next-samp 0.0))
+			      (ingen1 (vector-ref ex-array 1)))
 			  (do ((i beg (+ i 1)))
 			      ((= i end))
 			    
@@ -286,7 +283,7 @@
 			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
 			      ;; if reverb is turned on, output to the reverb streams
 			      (if rev-mx
-				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals revchans))))))
+				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans))))))
 			
 			(let ((samples-0 (make-vector in-chans 0.0))
 			      (samples-1 (make-vector in-chans 0.0)))
@@ -352,6 +349,6 @@
 			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
 			      ;; if reverb is turned on, output to the reverb streams
 			      (if rev-mx
-				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals revchans)))))))))))))))
+				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans)))))))))))))))
 
 ;;; (with-sound () (expandn 0 1 "oboe.snd" 1 :expand 4))

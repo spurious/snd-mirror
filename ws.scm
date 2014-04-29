@@ -217,7 +217,7 @@
 	 (let ((snd-output #f)
 	       (cur-sync #f))
 	   (if statistics
-	       (set! cycles (/ (* 1.0 (- (get-internal-real-time) start)) internal-time-units-per-second)))
+	       (set! cycles (* 1.0 (- (get-internal-real-time) start))))
 
 	   (if (and to-snd output-to-file)
 	       (let ((cur (find-sound output-1)))
@@ -334,6 +334,17 @@
 	 (set! (y-bounds *snd-opened-sound*) (list (- mx) mx))))
      snd))
 
+(define-macro (with-fullest-sound args . body)
+  ;; with-sound but display full sound in Snd window
+  `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
+     (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (framples *snd-opened-sound*) (srate *snd-opened-sound*))))
+     (set! (channel-style *snd-opened-sound*) channels-separate)
+     (do ((chn 0 (+ chn 1)))
+	 ((= chn (channels *snd-opened-sound*)))
+       (let ((mx (maxamp *snd-opened-sound* chn)))
+	 (if (> mx 1.0)
+	     (set! (y-bounds *snd-opened-sound* chn) (list (- mx) mx)))))
+     snd))
 
 
 ;;; -------- with-temp-sound --------

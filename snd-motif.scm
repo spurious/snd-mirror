@@ -2542,6 +2542,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	   (XtVaSetValues (find-child scl "Scrollbar") (list XmNtroughColor (red-pixel)))
 	   (XmStringFree title)
 	   scl))
+#|
 	((meter)
 	 ;; using the level meters in snd-motif.scm
 	 (let ((height 70)
@@ -2549,6 +2550,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	   (XtCreateManagedWidget var-label xmLabelWidgetClass row-pane
 				  (list XmNbackground  *basic-color*))
 	   (make-level-meter row-pane width height () #f)))
+|#
 	((graph)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane 
 					     (list XmNpaneMinimum 100)))
@@ -2593,12 +2595,15 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		(if (= (+ loc 1) len)
 		    (set! (cursor snd 0) 0)
 		    (set! (cursor snd 0) (+ loc 1))))
+#|
 	      (if (XmIsDrawingArea (car widget))
 		  ;; level meter
 		  (begin
 		    (set! (widget 1) var)
 		    (display-level widget)
-		    (XmUpdateDisplay (car widget)))))))
+		    (XmUpdateDisplay (car widget))))
+|#
+	      )))
   var)
 
 (define (variable-display-reset widget)

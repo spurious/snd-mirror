@@ -2472,7 +2472,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "(%s #t)\n", S_open_file_dialog);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_open_file_dialog));
+      fprintf(fd, "%s(true)\n", to_proc_name(S_open_file_dialog));
 #endif
 #if HAVE_FORTH
       fprintf(fd, "#t %s drop\n", S_open_file_dialog);
@@ -2484,7 +2484,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "(%s #t)\n", S_mix_file_dialog);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
+      fprintf(fd, "%s(true)\n", to_proc_name(S_mix_file_dialog));
 #endif
 #if HAVE_FORTH
       fprintf(fd, "#t %s drop\n", S_mix_file_dialog);
@@ -2496,7 +2496,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "(%s #t)\n", S_insert_file_dialog);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_insert_file_dialog));
+      fprintf(fd, "%s(true)\n", to_proc_name(S_insert_file_dialog));
 #endif
 #if HAVE_FORTH
       fprintf(fd, "#t %s drop\n", S_insert_file_dialog);
@@ -2508,7 +2508,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "(%s #t)\n", S_save_sound_dialog);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_sound_dialog));
+      fprintf(fd, "%s(true)\n", to_proc_name(S_save_sound_dialog));
 #endif
 #if HAVE_FORTH
       fprintf(fd, "#t %s drop\n", S_save_sound_dialog);
@@ -2520,7 +2520,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "(%s #t)\n", S_save_selection_dialog);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_selection_dialog));
+      fprintf(fd, "%s(true)\n", to_proc_name(S_save_selection_dialog));
 #endif
 #if HAVE_FORTH
       fprintf(fd, "#t %s drop\n", S_save_selection_dialog);
@@ -2532,7 +2532,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "(%s #t)\n", S_save_region_dialog);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_region_dialog));
+      fprintf(fd, "%s(true)\n", to_proc_name(S_save_region_dialog));
 #endif
 #if HAVE_FORTH
       fprintf(fd, "#t %s drop\n", S_save_region_dialog);
@@ -3504,7 +3504,7 @@ void save_edit_header_dialog_state(FILE *fd)
 	    fprintf(fd, "(%s (%s \"%s\"))\n", S_edit_header_dialog, S_find_sound, ep->sp->short_filename);
 #endif
 #if HAVE_RUBY
-	    fprintf(fd, "%s(%s(\"%s\"))\n", TO_PROC_NAME(S_edit_header_dialog), TO_PROC_NAME(S_find_sound), ep->sp->short_filename);
+	    fprintf(fd, "%s(%s(\"%s\"))\n", to_proc_name(S_edit_header_dialog), to_proc_name(S_find_sound), ep->sp->short_filename);
 #endif
 #if HAVE_FORTH
 	    fprintf(fd, "\"%s\" %s %s drop\n", ep->sp->short_filename, S_find_sound, S_edit_header_dialog);
@@ -3592,7 +3592,7 @@ void save_post_it_dialog_state(FILE *fd)
       fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_info_dialog), subject, text);
+      fprintf(fd, "%s(\"%s\", \"%s\")\n", to_proc_name(S_info_dialog), subject, text);
 #endif
 #if HAVE_FORTH
       fprintf(fd, "\"%s\" \"%s\" %s drop\n", subject, text, S_info_dialog);

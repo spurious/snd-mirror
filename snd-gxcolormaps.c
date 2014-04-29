@@ -67,7 +67,7 @@ static rgb_t *mus_float_ts_to_rgb_t(int size, mus_float_t *data)
   rgb_t *new_data;
   new_data = (rgb_t *)calloc(size, sizeof(rgb_t));
   for (i = 0; i < size; i++)
-    new_data[i] = FLOAT_TO_RGB(data[i]);
+    new_data[i] = float_to_rgb(data[i]);
   return(new_data);
 }
 
@@ -1068,9 +1068,9 @@ static Xen g_colormap_ref(Xen map, Xen pos)
     Xen_out_of_range_error(S_colormap_ref, 2, pos, "x must be between 0.0 and 1.0");
 
   get_current_color(index, (int)(color_map_size(ss) * x + 0.5), &r, &g, &b);
-  return(Xen_list_3(C_double_to_Xen_real(RGB_TO_FLOAT(r)),
-		    C_double_to_Xen_real(RGB_TO_FLOAT(g)),
-		    C_double_to_Xen_real(RGB_TO_FLOAT(b))));
+  return(Xen_list_3(C_double_to_Xen_real(rgb_to_float(r)),
+		    C_double_to_Xen_real(rgb_to_float(g)),
+		    C_double_to_Xen_real(rgb_to_float(b))));
 }
 
 /* can't use Colormap -- it's the X type name */

@@ -273,39 +273,39 @@ static bool b_ok = false;
 
 
 #if HAVE_RUBY
-static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(name), val);}
-static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(\"%s\")\n", TO_PROC_NAME(name), val);}
-static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "set_%s(%d)\n", TO_PROC_NAME(name), val);}
-static void pss_sod(FILE *fd, const char *name, mus_long_t val)   {fprintf(fd, "set_%s(%lld)\n", TO_PROC_NAME(name), val);}
-static void pss_sf(FILE *fd, const char *name, mus_float_t val) {fprintf(fd, "set_%s(%.4f)\n", TO_PROC_NAME(name), val);}
+static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(%s)\n", to_proc_name(name), val);}
+static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(\"%s\")\n", to_proc_name(name), val);}
+static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "set_%s(%d)\n", to_proc_name(name), val);}
+static void pss_sod(FILE *fd, const char *name, mus_long_t val)   {fprintf(fd, "set_%s(%lld)\n", to_proc_name(name), val);}
+static void pss_sf(FILE *fd, const char *name, mus_float_t val) {fprintf(fd, "set_%s(%.4f)\n", to_proc_name(name), val);}
 
 static void pss_sl(FILE *fd, const char *name, mus_float_t val1, mus_float_t val2) 
-  {fprintf(fd, "set_%s([%f, %f])\n", TO_PROC_NAME(name), val1, val2);}
+  {fprintf(fd, "set_%s([%f, %f])\n", to_proc_name(name), val1, val2);}
 
-static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(name), val);}
-static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%sset_%s(%d, sfile)\n", white_space, TO_PROC_NAME(name), val);}
-static void psp_sf(FILE *fd, const char *name, mus_float_t val) {fprintf(fd, "%sset_%s(%.4f, sfile)\n", white_space, TO_PROC_NAME(name), val);}
+static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, to_proc_name(name), val);}
+static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%sset_%s(%d, sfile)\n", white_space, to_proc_name(name), val);}
+static void psp_sf(FILE *fd, const char *name, mus_float_t val) {fprintf(fd, "%sset_%s(%.4f, sfile)\n", white_space, to_proc_name(name), val);}
 
 static void psp_sl(FILE *fd, const char *name, mus_float_t val1, mus_float_t val2) 
-  {fprintf(fd, "%sset_%s([%f, %f], sfile)\n", white_space, TO_PROC_NAME(name), val1, val2);}
+  {fprintf(fd, "%sset_%s([%f, %f], sfile)\n", white_space, to_proc_name(name), val1, val2);}
 
 static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) 
-  {fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+  {fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, to_proc_name(name), val, chan);}
 
 static void pcp_sss(FILE *fd, const char *name, const char *val, int chan, const char *grf) 
-  {fprintf(fd, "%sset_%s(\"%s\", sfile, %d, %s)\n", white_space, TO_PROC_NAME(name), val, chan, TO_VAR_NAME(grf));}
+  {fprintf(fd, "%sset_%s(\"%s\", sfile, %d, %s)\n", white_space, to_proc_name(name), val, chan, TO_VAR_NAME(grf));}
 
 static void pcp_sd(FILE *fd, const char *name, int val, int chan)   
-  {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+  {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, to_proc_name(name), val, chan);}
 
 static void pcp_sod(FILE *fd, const char *name, mus_long_t val, int chan)   
-  {fprintf(fd, "%sset_%s(%lld, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+  {fprintf(fd, "%sset_%s(%lld, sfile, %d)\n", white_space, to_proc_name(name), val, chan);}
 
 static void pcp_sf(FILE *fd, const char *name, mus_float_t val, int chan) 
-  {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+  {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, to_proc_name(name), val, chan);}
 
 static void pcp_sl(FILE *fd, const char *name, mus_float_t val1, mus_float_t val2, int chan) 
-  {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
+  {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, to_proc_name(name), val1, val2, chan);}
 #endif
 
 
@@ -777,12 +777,12 @@ static void save_property_list(FILE *fd, Xen property_list, int chan, int edpos)
   if (!(Xen_is_vector(ignore_list)))
     {
       if (chan == -1)
-	fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), Xen_object_to_C_string(property_list));
+	fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, to_proc_name(S_sound_properties), Xen_object_to_C_string(property_list));
       else 
 	{
 	  if (edpos == -1)
-	    fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(S_channel_properties), Xen_object_to_C_string(property_list), chan);
-	  else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, TO_PROC_NAME(S_edit_properties), Xen_object_to_C_string(property_list), chan, edpos);
+	    fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, to_proc_name(S_channel_properties), Xen_object_to_C_string(property_list), chan);
+	  else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, to_proc_name(S_edit_properties), Xen_object_to_C_string(property_list), chan, edpos);
 	}
     }
   else
@@ -810,12 +810,12 @@ static void save_property_list(FILE *fd, Xen property_list, int chan, int edpos)
       if (!(Xen_is_null(new_properties)))
 	{
 	  if (chan == -1)
-	    fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), Xen_object_to_C_string(new_properties));
+	    fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, to_proc_name(S_sound_properties), Xen_object_to_C_string(new_properties));
 	  else 
 	    {
 	      if (edpos == -1)
-		fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(S_channel_properties), Xen_object_to_C_string(new_properties), chan);
-	      else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, TO_PROC_NAME(S_edit_properties), Xen_object_to_C_string(new_properties), chan, edpos);
+		fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, to_proc_name(S_channel_properties), Xen_object_to_C_string(new_properties), chan);
+	      else fprintf(fd, "%sset_%s(%s, sfile, %d, %d)\n", white_space, to_proc_name(S_edit_properties), Xen_object_to_C_string(new_properties), chan, edpos);
 	    }
 	}
       snd_unprotect_at(gc_loc);
@@ -912,10 +912,10 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
    */
 #if HAVE_RUBY
   fprintf(fd, "begin\n  sfile = %s(\"%s\", %d)\n  if (sfile == false)\n    sfile = %s(\"%s\")\n  end\n",
-	  TO_PROC_NAME(S_find_sound),
+	  to_proc_name(S_find_sound),
 	  sp->short_filename,
 	  (with_nth) ? find_sound_nth(sp) : 0,
-	  TO_PROC_NAME((sp->user_read_only == FILE_READ_ONLY) ? S_view_sound : S_open_sound),
+	  to_proc_name((sp->user_read_only == FILE_READ_ONLY) ? S_view_sound : S_open_sound),
 	  sp->filename);
   
 #endif
@@ -1252,10 +1252,10 @@ void save_state(const char *save_state_name)
   save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
   save_regions(save_fd);                                  /* regions */
   
-  if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_transform_dialog));
-  if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
-  if (color_orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_orientation_dialog));
-  if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
+  if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", to_proc_name(S_transform_dialog));
+  if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", to_proc_name(S_enved_dialog));
+  if (color_orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", to_proc_name(S_color_orientation_dialog));
+  if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", to_proc_name(S_view_regions_dialog));
   save_post_it_dialog_state(save_fd);
   save_find_dialog_state(save_fd);
   save_edit_header_dialog_state(save_fd);

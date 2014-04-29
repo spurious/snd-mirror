@@ -728,9 +728,9 @@ the modulation frequency, and the echo amplitude."))
 
 (define* (effects-comb-chord scaler size amp interval-one interval-two beg dur snd chn)
   "(effects-comb-chord scaler size amp interval-one interval-two beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
-  (let ((cs (make-comb-bnk (vector (make-comb scaler size)
-				   (make-comb scaler (* size interval-one))
-				   (make-comb scaler (* size interval-two))))))
+  (let ((cs (make-comb-bank (vector (make-comb scaler size)
+				    (make-comb scaler (* size interval-one))
+				    (make-comb scaler (* size interval-two))))))
     (map-channel (lambda (x)
 		   (* amp (comb-bank cs x)))
 		 beg dur snd chn #f

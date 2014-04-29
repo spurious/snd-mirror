@@ -239,9 +239,9 @@ static void save_a_color(FILE *Fp, color_info *default_color, color_info *curren
 
 #if HAVE_FORTH
     fprintf(Fp, "%.3f %.3f %.3f %s set-%s drop\n", 
-	    RGB_TO_FLOAT(current_color->red),
-	    RGB_TO_FLOAT(current_color->green),
-	    RGB_TO_FLOAT(current_color->blue),
+	    rgb_to_float(current_color->red),
+	    rgb_to_float(current_color->green),
+	    rgb_to_float(current_color->blue),
 	    S_make_color,
 	    ext_name); 
 #else
@@ -251,11 +251,11 @@ static void save_a_color(FILE *Fp, color_info *default_color, color_info *curren
 #if HAVE_RUBY
     fprintf(Fp, "set_%s(%s(%.3f, %.3f, %.3f))\n", 
 #endif
-	    TO_PROC_NAME(ext_name), 
-	    TO_PROC_NAME(S_make_color),
-	    RGB_TO_FLOAT(current_color->red),
-	    RGB_TO_FLOAT(current_color->green),
-	    RGB_TO_FLOAT(current_color->blue));
+	    to_proc_name(ext_name), 
+	    to_proc_name(S_make_color),
+	    rgb_to_float(current_color->red),
+	    rgb_to_float(current_color->green),
+	    rgb_to_float(current_color->blue));
 #endif /* not forth */
 #endif /* ext lang */
 

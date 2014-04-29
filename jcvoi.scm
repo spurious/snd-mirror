@@ -157,7 +157,7 @@
   (envelope-interp pitch ptr))
 
 (definstrument (fm-voice beg dur pitch amp vowel-1 sex-1 ampfun1 ampfun2 ampfun3 indxfun skewfun vibfun ranfun
-			 dis pcrev deg vibscl pcran skewscl ranpower glissfun glissamt)
+			 dis pcrev deg vibscl pcran skewscl glissfun glissamt)
   (fillfnc)
   (let ((c 261.62)
 	(vowel (floor vowel-1))
@@ -271,7 +271,7 @@
   (with-sound (:play #t) (fm-voice 0 1 300 .8 3 1 ampf ampf ampf ampf ampf ampf ampf 1 0 0 .25 1 .01 0 ampf .01)))
 
 (define-macro (voi beg dur pitch amp vowel-1 sex-1 ampfun1 ampfun2 ampfun3 indxfun skewfun vibfun ranfun
-		   dis pcrev deg vibscl skewscl ranpower)
+		   dis pcrev deg vibscl skewscl)
   `(fm-voice ,beg ,dur ,pitch ,amp ,vowel-1 ,sex-1 ,ampfun1 ,ampfun2 ,ampfun3 ,indxfun ,skewfun ,vibfun ,ranfun
-	     ,dis ,pcrev ,deg ,vibscl 0 ,skewscl ,ranpower '(0 0 100 0)))
+	     ,dis ,pcrev ,deg ,vibscl 0 ,skewscl '(0 0 100 0)))
 |#

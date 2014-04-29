@@ -851,6 +851,7 @@
     (list '*libgsl* "libgsl.scm")
     ))
 
+
   (apropos-1 (reverse (environment->list (global-environment))))
   
   (let ((syms ())
@@ -900,7 +901,7 @@
 (define n-array-length 2048)
 (define g-array-length 128)
 
-(define* (make-index-1 file-names (output "test.html") (cols 3) (capitalized #f) no-bold with-scm with-clm-locals)
+(define* (make-index-1 file-names (output "test.html") (cols 3) (capitalized #f) no-bold with-scm)
   ;; read html file, gather all names, create index (in lower-case, *=space in sort)
   (let ((n 0)
 	(g 0)
@@ -1449,7 +1450,7 @@
 									  
 									  (if (memq closer '(p td pre))
 									      (begin
-										(if (not (even? p-quotes))
+										(if (odd? p-quotes)
 										    (format #t "~A[~D]: unmatched quote~%" file linectr))
 										(set! p-quotes 0)
 										(if (= p-curlys 1)
@@ -1647,7 +1648,6 @@
 
 (make-index-1 '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "fm.html" "s7.html")
 	      "test.html" 5 '("AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") #t #t)
-
 
 (html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html" "sndscm.html" "fm.html" "s7.html" "index.html"))
 

@@ -1,9 +1,7 @@
 #ifndef SND_G1_H
 #define SND_G1_H
 
-#define SOUND_ENV_EDITOR(Sp) ((env_editor *)(sp->flt))
 void recolor_everything(widget_t w, gpointer color);
-
 
 
 /* -------- snd-ghelp.c -------- */

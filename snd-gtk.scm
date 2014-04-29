@@ -845,6 +845,7 @@
 	   (gtk_box_pack_start (GTK_BOX hbox) scale #f #f 6)
 	   (gtk_widget_show scale)
 	   (list scale (car range) (cadr range))))
+#|
 	((meter)
 	 ;; using the level meters in snd-gtk.scm
 	 (let ((height 70)
@@ -852,6 +853,7 @@
 	       (label (gtk_label_new var-label)))
 	   (gtk_box_pack_start (GTK_BOX pane) label #f #f 2)
 	   (make-level-meter pane width height)))
+|#
 	((graph)
 	 (let ((snd (make-variable-graph pane (string-append variable-name ": time") 2048 *clm-srate*)))
 	   (list (sound->integer snd) (channel-data snd 0))))
@@ -901,11 +903,14 @@
 		    (gtk_progress_bar_set_fraction 
 		     (GTK_PROGRESS_BAR (car widget))
 		     (max 0.0 (min 1.0 (/ (- var y0) (- y1 y0))))))
+#|
 		  ;; level meter
 		  (begin
 		    (set! (widget 1) var)
 		    (display-level widget)
-		    (force-update (car widget)))))))
+		    (force-update (car widget)))
+|#
+		  ))))
   var)
 
 (define (notebook-with-top-tabs)

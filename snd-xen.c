@@ -2320,7 +2320,7 @@ void save_added_source_file_extensions(FILE *fd)
 #endif
 
 #if HAVE_RUBY
-	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_source_file_extension), source_file_extensions[i]);
+	fprintf(fd, "%s(\"%s\")\n", to_proc_name(S_add_source_file_extension), source_file_extensions[i]);
 #endif
 
 #if HAVE_FORTH

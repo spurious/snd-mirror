@@ -1762,11 +1762,11 @@ static bool apply_controls(apply_state *ap)
 #else
 	      if (orig_apply_dur == 0)
 	      ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
-				      TO_PROC_NAME(S_controls_to_channel),
+				      to_proc_name(S_controls_to_channel),
 				      ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr, 
 				      apply_beg);
 	      else ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP "%lld" PROC_SEP "%lld",
-					   TO_PROC_NAME(S_controls_to_channel),
+					   to_proc_name(S_controls_to_channel),
 					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
 					   apply_beg, apply_dur);
 #endif
@@ -4989,12 +4989,12 @@ where each inner list entry can also be " PROC_FALSE "."
 	char *temp = NULL;
 	if (!(Xen_is_number(dur)))
 	  ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
-				  TO_PROC_NAME(S_controls_to_channel), 
+				  to_proc_name(S_controls_to_channel), 
 				  PROC_QUOTE,
 				  temp = Xen_object_to_C_string(settings), 
 				  apply_beg);
 	else ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP "%lld" PROC_SEP "%lld", 
-				     TO_PROC_NAME(S_controls_to_channel), 
+				     to_proc_name(S_controls_to_channel), 
 				     PROC_QUOTE,
 				     temp = Xen_object_to_C_string(settings), 
 				     apply_beg, apply_dur);

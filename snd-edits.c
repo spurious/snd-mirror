@@ -1971,7 +1971,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  return;
 		}
 #if HAVE_RUBY
-	      fprintf(fd, "      %s(\"%s\", %lld, sfile, %d, ", TO_PROC_NAME(S_override_samples_with_origin), nfile, len, cp->chan);
+	      fprintf(fd, "      %s(\"%s\", %lld, sfile, %d, ", to_proc_name(S_override_samples_with_origin), nfile, len, cp->chan);
 	      if (ed->origin) 
 		fprintf_with_possible_embedded_string(fd, ed->origin);
 	      else fprintf(fd, "\"\"");
@@ -2093,7 +2093,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		case INSERTION_EDIT: 
 		  /* samp data snd chn */
 		  fprintf(fd, "%s" PROC_OPEN "%lld" PROC_SEP "%lld" PROC_SEP,
-			  TO_PROC_NAME(S_insert_samples_with_origin),
+			  to_proc_name(S_insert_samples_with_origin),
 			  ed->beg,
 			  ed->len);
 		  if (ed->origin)
@@ -2107,7 +2107,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		case DELETION_EDIT:
 		  /* samp samps snd chn */
 		  fprintf(fd, "%s" PROC_OPEN "%lld" PROC_SEP "%lld" PROC_SEP "sfile" PROC_SEP "%d",
-			  TO_PROC_NAME(S_delete_samples),
+			  to_proc_name(S_delete_samples),
 			  ed->beg,
 			  ed->len,
 			  cp->chan);
@@ -2115,7 +2115,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 
 		case CHANGE_EDIT:
 		  fprintf(fd, "%s" PROC_OPEN "%lld" PROC_SEP "%lld" PROC_SEP,
-			  TO_PROC_NAME(S_change_samples_with_origin),
+			  to_proc_name(S_change_samples_with_origin),
 			  ed->beg,
 			  ed->len);
 		  if (ed->origin)
@@ -2138,7 +2138,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 
 		case ZERO_EDIT:
 		  fprintf(fd, "%s" PROC_OPEN "%lld" PROC_SEP "%lld" PROC_SEP "sfile" PROC_SEP "%d",
-			  TO_PROC_NAME(S_pad_channel),
+			  to_proc_name(S_pad_channel),
 			  ed->beg,
 			  ed->len,
 			  cp->chan);
@@ -2424,14 +2424,14 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		{
 		case INSERTION_EDIT: 
  		  if ((!(ed->origin)) || 
-		      (strcmp(ed->origin, TO_PROC_NAME(S_insert_samples)) == 0))
+		      (strcmp(ed->origin, to_proc_name(S_insert_samples)) == 0))
  		    {
  		      /* from HAVE_SCHEME above */
  		      /* save data in temp file, use insert-samples with file name */
  		      char *ofile;
  		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME, false);
  		      function = mus_format("%s %s(%lld, %lld, \"%s\", snd, chn)", 
-					    function, TO_PROC_NAME(S_insert_samples), ed->beg, ed->len, ofile);
+					    function, to_proc_name(S_insert_samples), ed->beg, ed->len, ofile);
  		      free(ofile);
  		    }
  		  else function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
@@ -2461,7 +2461,7 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 
 		case DELETION_EDIT:
 		  function = mus_format("%s%s %s(%lld, %lld, snd, chn)", 
-					function, (first) ? "" : ";", TO_PROC_NAME(S_delete_samples), ed->beg, ed->len);
+					function, (first) ? "" : ";", to_proc_name(S_delete_samples), ed->beg, ed->len);
 		  break;
 
 		case SCALED_EDIT: 
@@ -2479,7 +2479,7 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		case ZERO_EDIT:
 		  /* origin here is useless (see extend_with_zeros cases) */
 		  function = mus_format("%s%s %s(%lld, %lld, snd, chn)", 
-					function, (first) ? "" : ";", TO_PROC_NAME(S_pad_channel), ed->beg, ed->len);
+					function, (first) ? "" : ";", to_proc_name(S_pad_channel), ed->beg, ed->len);
 		  break;
 
 		case MIX_EDIT:
@@ -3659,7 +3659,7 @@ bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, fi
 				  filename, chan_beg, j, S_insert_sound);
 #else
 	      origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP "%lld" PROC_SEP "%d", 
-				  TO_PROC_NAME(S_insert_sound), filename, chan_beg, j);
+				  to_proc_name(S_insert_sound), filename, chan_beg, j);
 #endif
 	      ok = file_insert_samples(chan_beg, len, filename, ncp, j, auto_delete, origin, ncp->edit_ctr);
 	      if (ok)
@@ -3756,12 +3756,12 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
 #if HAVE_RUBY
   {
     char *temp;
-    temp = TO_PROC_NAME(S_delete_samples);
+    temp = to_proc_name(S_delete_samples);
     new_state->origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld", temp, beg, num);
     if (temp) free(temp);
   }
 #else
-  new_state->origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld", TO_PROC_NAME(S_delete_samples), beg, num);
+  new_state->origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld", to_proc_name(S_delete_samples), beg, num);
 #endif
 #endif
   new_state->edit_type = DELETION_EDIT;
@@ -4580,7 +4580,7 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 #if HAVE_FORTH
 	new_ed->origin = mus_format("%.3f %lld" PROC_SEP PROC_FALSE " %s", scl, beg, S_scale_channel);
 #else
-	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_scale_channel), scl, beg);
+	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, to_proc_name(S_scale_channel), scl, beg);
 #endif
       else
 	{
@@ -4591,9 +4591,9 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 	    new_ed->origin = mus_format("%.3f %lld" PROC_SEP "%lld %s", scl, beg, num, S_scale_channel);
 #else
 	  if (len == num)
-	      new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_scale_channel), scl, beg);
+	      new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, to_proc_name(S_scale_channel), scl, beg);
 	  else
-	    new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", TO_PROC_NAME(S_scale_channel), scl, beg, num);
+	    new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(S_scale_channel), scl, beg, num);
 #endif
 	}
     }
@@ -4838,9 +4838,9 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 	new_ed->origin = mus_format("%.3f %.3f %lld" PROC_SEP "%lld %s", rmp0, rmp1, beg, num, origin);
 #else
       if (num == len)
-	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, TO_PROC_NAME(origin), rmp0, rmp1, beg);
+	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, to_proc_name(origin), rmp0, rmp1, beg);
       else
-	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", TO_PROC_NAME(origin), rmp0, rmp1, beg, num);
+	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(origin), rmp0, rmp1, beg, num);
 #endif
     }
   else
@@ -4857,10 +4857,10 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 #else
       if (num == len)
 	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%.3f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
-				    TO_PROC_NAME(origin), data[xramp_seg_loc * 2 + 1], data[xramp_seg_loc * 2 + 3], mus_increment(e), beg);
+				    to_proc_name(origin), data[xramp_seg_loc * 2 + 1], data[xramp_seg_loc * 2 + 3], mus_increment(e), beg);
       else
 	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", 
-				    TO_PROC_NAME(origin), data[xramp_seg_loc * 2 + 1], data[xramp_seg_loc * 2 + 3], mus_increment(e), beg, num);
+				    to_proc_name(origin), data[xramp_seg_loc * 2 + 1], data[xramp_seg_loc * 2 + 3], mus_increment(e), beg, num);
 #endif
     }
   new_ed->edpos = pos;
@@ -5441,7 +5441,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->cursor = old_ed->cursor;
   new_ed->beg = 0;
   new_ed->len = old_ed->len;
-  new_ed->origin = mus_strdup(TO_PROC_NAME(S_swap_channels));
+  new_ed->origin = mus_strdup(to_proc_name(S_swap_channels));
   cp0->edits[cp0->edit_ctr] = new_ed;
   if (new_ed->len > 0)
     for (i = 0; i < new_ed->size; i++) 
@@ -5460,7 +5460,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->len = old_ed->len;
   new_ed->samples = old_ed->samples;
   new_ed->cursor = old_ed->cursor;
-  new_ed->origin = mus_strdup(TO_PROC_NAME(S_swap_channels)); /* swap = stored change-edit at restore time, so no redundancy here */
+  new_ed->origin = mus_strdup(to_proc_name(S_swap_channels)); /* swap = stored change-edit at restore time, so no redundancy here */
   cp1->edits[cp1->edit_ctr] = new_ed;
   if (new_ed->len > 0)
     for (i = 0; i < new_ed->size; i++) 
@@ -7610,12 +7610,12 @@ scale samples in the given sound/channel between beg and beg + num to norm."
   if ((samp == 0) && (samps == cp->edits[pos]->samples))
     {
       cur_max = channel_maxamp(cp, pos);
-      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "0" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_normalize_channel), norm);
+      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "0" PROC_SEP PROC_FALSE, to_proc_name(S_normalize_channel), norm);
     }
   else 
     {
       cur_max = channel_local_maxamp(cp, samp, samps, pos, NULL);
-      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", TO_PROC_NAME(S_normalize_channel), norm, samp, samps);
+      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(S_normalize_channel), norm, samp, samps);
     }
 #endif
 
@@ -7979,7 +7979,7 @@ static Xen g_set_sample(Xen samp_n, Xen val, Xen snd, Xen chn_n, Xen edpos)
 #if HAVE_FORTH
   origin = mus_format("%lld %.4f %s drop", beg, fval, "set-sample");
 #else
-  origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%.4f", TO_PROC_NAME("set-sample"), beg, fval);
+  origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%.4f", to_proc_name("set-sample"), beg, fval);
 #endif
   if (change_samples(beg, 1, ival, cp, origin, pos, fabs(fval)))
     update_graph(cp);
@@ -8625,7 +8625,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 #if HAVE_FORTH
 	  origin = mus_format("\"%s\" %lld %d %s drop", filename, beg, fchn, S_insert_sound);
 #else
-	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP "%lld" PROC_SEP "%d", TO_PROC_NAME(S_insert_sound), filename, beg, fchn);
+	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP "%lld" PROC_SEP "%d", to_proc_name(S_insert_sound), filename, beg, fchn);
 #endif
 	  if (file_insert_samples(beg, len, filename, cp, fchn, delete_file, origin,
 				  to_c_edit_position(cp, edpos, S_insert_sound, 6)))
@@ -8645,7 +8645,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 #if HAVE_FORTH
 	  origin = mus_format("\"%s\" %lld %d %s drop", filename, beg, i, S_insert_sound);
 #else
-	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP "%lld" PROC_SEP "%d", TO_PROC_NAME(S_insert_sound), filename, beg, i);
+	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP "%lld" PROC_SEP "%d", to_proc_name(S_insert_sound), filename, beg, i);
 #endif
 	  if (file_insert_samples(beg, len, filename, sp->chans[i], i, delete_file, origin,
 				  /* this edit_position cannot be optimized out -- each channel may have
@@ -8683,7 +8683,7 @@ static Xen g_insert_sample(Xen samp_n, Xen val, Xen snd, Xen chn_n, Xen edpos)
 #if HAVE_FORTH
   origin = mus_format("%lld %.4f %s drop", beg, fval, S_insert_sample);
 #else
-  origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%.4f", TO_PROC_NAME(S_insert_sample), beg, fval);
+  origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%.4f", to_proc_name(S_insert_sample), beg, fval);
 #endif
   if (insert_samples(beg, 1, ival, cp, origin, pos))
     update_graph(cp); 
@@ -8733,7 +8733,7 @@ insert data (either a " S_vct ", a list of samples, or a filename) into snd's ch
 #if HAVE_FORTH
       if (!origin) origin = mus_format("%lld" PROC_SEP "%lld \"%s\" %s drop", beg, len, filename, S_insert_samples);
 #else
-      if (!origin) origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld" PROC_SEP "\"%s\"", TO_PROC_NAME(S_insert_samples), beg, len, filename);
+      if (!origin) origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld" PROC_SEP "\"%s\"", to_proc_name(S_insert_samples), beg, len, filename);
 #endif
       file_insert_samples(beg, len, filename, cp, 0, delete_file, origin, pos);
       if (filename) free(filename);
@@ -8745,7 +8745,7 @@ insert data (either a " S_vct ", a list of samples, or a filename) into snd's ch
 	  vct *v;
 	  v = Xen_to_vct(vect);
 	  if (len > mus_vct_length(v)) len = mus_vct_length(v);
-	  if (!origin) origin = mus_strdup(TO_PROC_NAME(S_insert_samples));
+	  if (!origin) origin = mus_strdup(to_proc_name(S_insert_samples));
 	  insert_samples(beg, len, mus_vct_data(v), cp, origin, pos);
 	}
       else
@@ -8756,7 +8756,7 @@ insert data (either a " S_vct ", a list of samples, or a filename) into snd's ch
 	  ivals = g_floats_to_samples(vect, &ilen, S_insert_samples, 3);
 	  if (ivals)
 	    {
-	      if (!origin) origin = mus_strdup(TO_PROC_NAME(S_insert_samples));
+	      if (!origin) origin = mus_strdup(to_proc_name(S_insert_samples));
 	      insert_samples(beg, (mus_long_t)ilen, ivals, cp, origin, pos);
 	      free(ivals);
 	    }

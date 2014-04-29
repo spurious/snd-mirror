@@ -329,7 +329,7 @@ void ps_draw_sono_rectangle(axis_info *ap, int color, mus_float_t x, mus_float_t
     {
       get_current_color(color_map(ss), color, &r, &g, &b);
       last_color = color;
-      snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", RGB_TO_FLOAT(r), RGB_TO_FLOAT(g), RGB_TO_FLOAT(b));
+      snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", rgb_to_float(r), rgb_to_float(g), rgb_to_float(b));
       ps_write(pbuf);
     }
   snprintf(pbuf, PRINT_BUFFER_SIZE, " %.1f %.1f %.2f %.2f RF\n", ps_grf_x(ap, x) + 2, ps_grf_y(ap, y), width, height);
@@ -358,16 +358,16 @@ static void ps_set_color(color_t color)
   tmp_color.pixel = color;
   XQueryColor(dpy, cmap, &tmp_color);
   snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n",
-	       RGB_TO_FLOAT(tmp_color.red),
-	       RGB_TO_FLOAT(tmp_color.green),
-	       RGB_TO_FLOAT(tmp_color.blue));
+	       rgb_to_float(tmp_color.red),
+	       rgb_to_float(tmp_color.green),
+	       rgb_to_float(tmp_color.blue));
   ps_write(pbuf);
 #else
   #if USE_GTK
   snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", 
-	       RGB_TO_FLOAT(color->red), 
-	       RGB_TO_FLOAT(color->green), 
-	       RGB_TO_FLOAT(color->blue));
+	       rgb_to_float(color->red), 
+	       rgb_to_float(color->green), 
+	       rgb_to_float(color->blue));
   ps_write(pbuf);
   #endif
 #endif
@@ -446,7 +446,7 @@ void ps_draw_spectro_line(axis_info *ap, int color, mus_float_t x0, mus_float_t 
     {
       get_current_color(color_map(ss), color, &r, &g, &b);
       last_color = color;
-      snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", RGB_TO_FLOAT(r), RGB_TO_FLOAT(g), RGB_TO_FLOAT(b));
+      snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", rgb_to_float(r), rgb_to_float(g), rgb_to_float(b));
       ps_write(pbuf);
     }
   ps_draw_line(ap, (int)x0, (int)y0, (int)x1, (int)y1);
