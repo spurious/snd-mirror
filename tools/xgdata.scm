@@ -8296,8 +8296,8 @@
 (CFNC-3.4 "void gtk_application_set_app_menu GtkApplication* application GMenuModel* model")
 (CFNC-3.4 "GMenuModel* gtk_application_get_menubar GtkApplication* application")
 (CFNC-3.4 "void gtk_application_set_menubar GtkApplication* application GMenuModel* model")
-(CFNC-3.4 "void gtk_application_add_accelerator GtkApplication* application gchar* accelerator gchar* action_name GVariant* parameter" 'const)
-(CFNC-3.4 "void gtk_application_remove_accelerator GtkApplication* application gchar* action_name GVariant* parameter" 'const)
+;;; 3.14 (CFNC-3.4 "void gtk_application_add_accelerator GtkApplication* application gchar* accelerator gchar* action_name GVariant* parameter" 'const)
+;;; 3.14 (CFNC-3.4 "void gtk_application_remove_accelerator GtkApplication* application gchar* action_name GVariant* parameter" 'const)
 (CFNC-3.4 "gchar* gtk_entry_completion_compute_prefix GtkEntryCompletion* completion char* key" 'const)
 (CFNC-3.4 "void gtk_scale_set_has_origin GtkScale* scale gboolean has_origin")
 (CFNC-3.4 "gboolean gtk_scale_get_has_origin GtkScale* scale")
@@ -8867,6 +8867,25 @@
 ;;; 3.12.0 -- no changes
 
 ;;; 3.12.1 -- no changes? 
+
+;;; 3.13.1
+(CFNC-3.14 "gboolean gtk_list_box_row_is_selected GtkListBoxRow* row")
+;(CFNC-3.14 "void gtk_list_box_selected_foreach (GtkListBox* box GtkListBoxForeachFunc func gpointer data")
+;(CFNC-3.14 "GList *gtk_list_box_get_selected_rows GtkListBox* box")
+(CFNC-3.14 "void gtk_list_box_unselect_row GtkListBox* box GtkListBoxRow* row")
+(CFNC-3.14 "void gtk_list_box_select_all GtkListBox* box")
+(CFNC-3.14 "void gtk_list_box_unselect_all GtkListBox* box")
+(CFNC-3.14 "gboolean gtk_places_sidebar_get_show_enter_location GtkPlacesSidebar* sidebar")
+(CFNC-3.14 "void gtk_places_sidebar_set_show_enter_location GtkPlacesSidebar* sidebar gboolean show_enter_location")
+(CFNC-3.14 "void gtk_switch_set_state GtkSwitch* sw gboolean state")
+(CFNC-3.14 "gboolean gtk_switch_get_state GtkSwitch* sw")
+
+;;; is this exported?
+; GTK_MENU_SECTION_BOX(inst)
+; GTK_IS_MENU_SECTION_BOX(inst)
+; void gtk_menu_section_box_new_toplevel GtkStack* stack GMenuModel* model const gchar* action_namespace)
+
+
 
 ;;; --------------------------------------------------------------------------------
 #|

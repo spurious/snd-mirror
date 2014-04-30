@@ -95,7 +95,7 @@
     (set-cursor-position *g2* bpos)
     (let ((result (evaluate *g2*)))
       (if (not (string=? result rtn0))
-	  (append-text *g1* (format #f "~%~S, cursor at ~D (pos: ~D): ~S~%" exprs i pos result))))
+	  (append-text *g1* (format #f "~%~S, cursor at ~D (pos: ~D): ~S~%" exprs bpos pos result))))
 
     (do ((i (+ bpos 1) (+ i 1)))
 	((> i (+ bpos len)))

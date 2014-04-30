@@ -40,7 +40,7 @@
 
 (define r7rs-string-fill! vector-fill!)
 
-(define* (vector-copy! dest at src (start 0) end)
+(define* (vector-copy! dest at src (start 0) end) ; apparently end is exclusive here?
   (let ((len (or end (length src))))
     (if (or (not (eq? dest src))
 	    (<= at start))
@@ -48,7 +48,7 @@
 	     (k start (+ k 1)))
 	    ((= k len) dest)
 	  (set! (dest i) (src k)))
-	(do ((i (+ at (- len start)) (- i 1))
+	(do ((i (+ at (- len start 1)) (- i 1))
 	     (k (- len 1) (- k 1)))
 	    ((< k start) dest)
 	  (set! (dest i) (src k))))))

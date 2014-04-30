@@ -8,8 +8,8 @@
 (define (reset-hook! hook) 
   (set! (hook-functions hook) ()))
 
-(define (run-hook . args) 
-  (hook-apply (car args) (cdr args)))
+;(define (run-hook . args) 
+;  (hook-apply (car args) (cdr args)))
 
 (define hook->list hook-functions)
 

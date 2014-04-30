@@ -5810,9 +5810,6 @@ s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   if (!is_symbol(symbol))
     return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, symbol, A_SYMBOL));
 
-  if (environment_id(env) == symbol_id(symbol))
-    return(slot_value(local_slot(symbol)));
-
   if (env == sc->global_env)
     {
       y = global_slot(symbol);
@@ -5820,6 +5817,9 @@ s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 	return(slot_value(y));
       return(sc->UNDEFINED);
     }
+
+  if (environment_id(env) == symbol_id(symbol))
+    return(slot_value(local_slot(symbol))); /* this obviously has to follow the global-env check */
 
   for (x = env; is_environment(x); x = next_environment(x))
     for (y = environment_slots(x); is_slot(y); y = next_slot(y))
@@ -5834,13 +5834,6 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
 {
   s7_pointer x, y;
 
-  /* this costs slightly more than it saves (ref case above gets many more hits)
-  if (environment_id(env) == symbol_id(symbol))
-    {
-      slot_set_value(local_slot(symbol), value);
-      return(value);
-    }
-  */
   if (!is_symbol(symbol))
     return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, symbol, A_SYMBOL));
 
@@ -69168,16 +69161,17 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
   /* (call-with-values (lambda () (values 1 2 3)) +) */
 
-  s7_eval_c_string(sc, "(define-macro (multiple-value-bind vars expression . body) `((lambda ,vars ,@body) ,expression))");
+  s7_eval_c_string(sc, "(define-macro (multiple-value-bind vars expression . body)                            \n\
+                           (if (or (symbol? vars) (negative? (length vars)))                                  \n\
+                               `((lambda ,vars ,@body) ,expression)                                           \n\
+                               `((lambda* (,@vars . __r__) ,@body) ,expression)))");
   /* (multiple-value-bind (a b) (values 1 2) (+ a b)) */
   /*   named "receive" in srfi-8 which strikes me as perverse */
 
   s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)                                  \n\
                           (let ((local-vars (map (lambda (n) (gensym)) vars)))                                \n\
-                            `((lambda ,local-vars                                                             \n\
-                                ,@(map (lambda (n ln)                                                         \n\
-                                         `(set! ,n ,ln))                                                      \n\
-                                       vars local-vars)                                                       \n\
+                            `((lambda* (,@local-vars . __r__)                                                 \n\
+                                ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars)                        \n\
                                 ,@body)                                                                       \n\
                               ,expr)))");
 
@@ -69493,11 +69487,5 @@ int main(int argc, char **argv)
  *   and for catch what errors it might raise
  *     framples: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
- *
- * expandn add this to snd-test: (with-sound (:channels 4) (expandn 0 1 "4.aiff" 1 :expand 4))
- *   and test expandn more fully! run current lint over motif-snd too
- * check other clm describe for nulls
- * is lint confused by defanimal? -- thinks it is undefined?
- * fix its line #
  */
 

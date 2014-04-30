@@ -5,15 +5,15 @@
 
 (provide 'lint.scm)
 
-(define *report-unused-parameters* #t)
+(define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
-(define *report-undefined-variables* #t)
+(define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #t)          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
+(define *report-minor-stuff* #t)                          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
 
 
-(define *load-file-first* #f)
+(define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
 (define start-up-environment (global-environment))
 (define *current-file* "")
 (define *top-level-objects* (make-hash-table))
@@ -128,7 +128,7 @@
 		  char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? complex? cond 
 		  cons constant? continuation? cos cosh current-environment current-error-port current-input-port current-output-port 
 		  defined? denominator do dynamic-wind 
-		  environment environment-ref environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
+		  environment environment* environment-ref environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
 		  floor ;for-each 
 		  gcd gensym gensym? global-environment 
 		  hash-table hash-table-ref hash-table-size hash-table? hash-table-iterator? hook-functions 
@@ -181,6 +181,7 @@
 			   (cons 'augment-environment! +environment+)
 			   (cons 'boolean? +boolean+)
 			   (cons 'boolean=? +boolean+)
+			   (cons 'bytevector? +boolean+)
 			   (cons 'ceiling +integer+)
 			   (cons 'char->integer +integer+)
 			   (cons 'char-alphabetic? +boolean+)
@@ -220,6 +221,7 @@
 			   (cons 'denominator +integer+)
 			   (cons 'display +unspecified+)
 			   (cons 'environment +environment+)
+			   (cons 'environment* +environment+)
 			   (cons 'environment? +boolean+)
 			   (cons 'environment->list +list+)
 			   (cons 'eof-object? +boolean+)
@@ -232,6 +234,10 @@
 			   (cons 'exact? +boolean+)
 			   (cons 'exp +number+)
 			   (cons 'expt +number+)
+			   (cons 'float-vector +vector+)
+			   (cons 'float-vector? +boolean+)
+			   (cons 'float-vector-ref +number+)
+			   (cons 'float-vector-set! +number+)
 			   (cons 'floor +integer+)
 			   (cons 'for-each +unspecified+)
 			   (cons 'gcd +number+)
@@ -256,6 +262,7 @@
 			   (cons 'lcm +number+)
 			   (cons 'length +integer+)
 			   (cons 'list +list+)
+			   (cons 'list-tail 'pair-or-null)
 			   (cons 'list->string +string+)
 			   (cons 'list->vector +vector+)
 			   (cons 'list? +boolean+)
@@ -274,6 +281,8 @@
 			   (cons 'make-rectangular +number+)
 			   (cons 'make-string +string+)
 			   (cons 'make-vector +vector+)
+			   (cons 'make-float-vector +vector+)
+			   (cons 'make-shared-vector +vector+)
 			   (cons 'map +list+)
 			   (cons 'max +number+)
 			   (cons 'member 'list-or-f)
@@ -310,6 +319,7 @@
 			   (cons 'procedure-name +string+)
 			   (cons 'provided? +boolean+)
 			   (cons 'quotient +number+)
+			   (cons 'random +number+)
 			   (cons 'random-state? +boolean+)
 			   (cons 'random-state->list +list+)
 			   (cons 'rational? +boolean+)
@@ -336,6 +346,7 @@
 			   (cons 'string-ci>=? +boolean+)
 			   (cons 'string-ci>? +boolean+)
 			   (cons 'string-copy +string+)
+			   (cons 'string-fill! +character+)
 			   (cons 'string-length +integer+)
 			   (cons 'string-position 'integer-or-f)
 			   (cons 'string-ref +character+)
@@ -345,17 +356,21 @@
 			   (cons 'string>=? +boolean+)
 			   (cons 'string>? +boolean+)
 			   (cons 'string? +boolean+)
+			   (cons 'substring +string+)
 			   (cons 'symbol +symbol+)
 			   (cons 'symbol->string +string+)
 			   (cons 'symbol? +boolean+)
 			   (cons 'symbol=? +boolean+)
+			   (cons 's7-version +string+)
 			   (cons 'tan +number+)
 			   (cons 'tanh +not-integer+)
 			   (cons 'truncate +integer+)
 			   (cons 'vector +vector+)
 			   (cons 'vector-append +vector+)
-			   (cons 'vector->list +list+)
+			   (cons 'vector-dimensions +list+)
 			   (cons 'vector-length +integer+)
+			   (cons 'vector-rank +integer+)
+			   (cons 'vector->list +list+)
 			   (cons 'vector? +boolean+)
 			   (cons 'write +unspecified+)
 			   (cons 'write-char +unspecified+)
@@ -381,6 +396,7 @@
 			  (cons 'asinh number?)
 			  (cons 'atan (list number? number?))
 			  (cons 'atanh number?)
+			  (cons 'bytevector integer?)
 			  (cons 'caaaar pair?)
 			  (cons 'caaadr pair?)
 			  (cons 'caaar pair?)
@@ -442,6 +458,9 @@
 			  (cons 'cosh number?)
 			  (cons 'denominator rational?)
 			  (cons 'dynamic-wind (list thunkable? thunkable? thunkable?))
+			  (cons 'environment->list (list environment?))
+			  (cons 'environment-ref (list environment? symbol?))
+			  (cons 'environment-set! (list environment? symbol?))
 			  (cons 'eval-string string?)
 			  (cons 'even? integer?)
 			  (cons 'exact->inexact real?)
@@ -449,7 +468,9 @@
 			  (cons 'exp number?)
 			  (cons 'expt (list number? number?))
 			  (cons 'fill! (list sequence?))
+			  (cons 'float-vector real?)
 			  (cons 'floor real?)
+			  (cons 'gc boolean?)
 			  (cons 'gcd (list real? real?))
 			  (cons 'gensym string?)
 			  (cons 'hash-table-ref (list hash-table?))
@@ -482,6 +503,7 @@
 			  (cons 'make-hash-table non-negative-integer?)
 			  (cons 'make-hash-table-iterator hash-table?)
 			  (cons 'make-hook (list list? string?))
+			  (cons 'make-list (list non-negative-integer?))
 			  (cons 'make-polar real?)
 			  (cons 'make-procedure-with-setter procedure?)
 			  (cons 'make-rectangular real?)
@@ -497,9 +519,15 @@
 			  (cons 'open-input-file (list string? string?))
 			  (cons 'open-input-string string?)
 			  (cons 'open-output-file (list string? string?))
+			  (cons 'outer-environment environment?)
 			  (cons 'output-port? port?)
 			  (cons 'positive? real?)
+			  (cons 'procedure-documentation procedure?)
+			  (cons 'procedure-environment procedure?)
+			  (cons 'procedure-setter procedure?)
+			  (cons 'procedure-source procedure?)
 			  (cons 'provide symbol?)
+			  (cons 'provided? symbol?)
 			  (cons 'quotient (list real? real?))
 			  (cons 'pair-line-number pair?)
 			  (cons 'port-closed? port?)
@@ -510,6 +538,8 @@
 			  (cons 'reverse sequence?)
 			  (cons 'reverse! sequence?)
 			  (cons 'round real?)
+			  (cons 'set-car! (list pair?))
+			  (cons 'set-cdr! (list pair?))
 			  (cons 'sin number?)
 			  (cons 'sinh number?)
 			  (cons 'sort! (list sequence? procedure?))
@@ -535,11 +565,13 @@
 			  (cons 'string=? string?)
 			  (cons 'string>=? string?)
 			  (cons 'string>? string?)
-			  (cons 'substring (list string? non-negative-integer? non-negative-integer?))
+			  (cons 'substring (list string? integer? integer?))
 			  (cons 'symbol->dynamic-value symbol?)
 			  (cons 'symbol->keyword symbol?)
 			  (cons 'symbol->string symbol?)
 			  (cons 'symbol->value (list symbol?)) ; opt arg is env
+			  (cons 'symbol=? symbol?)
+			  (cons 'system string?)
 			  (cons 'tan number?)
 			  (cons 'tanh number?)
 			  (cons 'truncate real?)
@@ -615,7 +647,7 @@
 	  (outport #t)
 	  (loaded-files #f)
 	  (globals #f)
-	  (undefined-identifiers #f)
+	  (undefined-identifiers ())
 	  (other-identifiers #f)
 	  (last-simplify-boolean-line-number -1)
 	  (last-simplify-numeric-line-number -1)
@@ -1097,7 +1129,7 @@
 										       positive? negative? zero? exact? inexact?)))
 						 ((real?)     (memq (car b) '(rational? integer? even? odd? positive? negative? exact? inexact?)))
 						 ((rational?) (memq (car b) '(integer? even? odd?)))
-						 ((integer?)  (memq (car b) '(even? 'odd)))
+						 ((integer?)  (memq (car b) '(even? 'odd?)))
 						 (else #f)))
 					  (and (> (length b) 2)
 					       (member (cadr a) (cdr b))
@@ -1939,7 +1971,7 @@
 			      (truncated-list->string form)))))
 	     
 	  ((char<? char>? char<=? char>=? char=? 
-	    char-ci-<? char-ci->? char-ci-<=? char-ci->=? char-ci-=?)
+	    char-ci<? char-ci>? char-ci<=? char-ci>=? char-ci=?)
 	   (let ((cleared-form (cons (car form) ; keep operator
 				     (remove-if (lambda (x) 
 						  (not (char? x))) 
@@ -1951,7 +1983,7 @@
 			      (truncated-list->string form)))))
 	     
 	  ((string<? string>? string<=? string>=? string=? 
-	    string-ci-<? string-ci->? string-ci-<=? string-ci->=? string-ci-=?)
+	    string-ci<? string-ci>? string-ci<=? string-ci>=? string-ci=?)
 	   (let ((cleared-form (cons (car form) ; keep operator
 				     (remove-if (lambda (x) 
 						  (not (string? x))) 
@@ -2291,6 +2323,7 @@
       (define (load-walk form)
 	;; check form for top-level declarations, if load seen, and we haven't seen that file, load it
 	(let ((head (car form)))
+	  ;(format *stderr* "head: ~A~%" head)
 	  (case head
 	    ((begin)
 	     (load-walk (cdr form)))
@@ -2301,12 +2334,16 @@
 	    ((defmacro defmacro*)
 	     (hash-table-set! globals (cadr form) (list (cadr form) #f #f (list head (caddr form)))))
 	    
-	    ((define define* definstrument define-expansion define-macro define-macro* define-bacro define-bacro*)
+	    ((define)
 	     ;(format *stderr* "define: ~A~%" form)
 	     (if (pair? (cadr form))
 		 (hash-table-set! globals (car (cadr form)) (list (car (cadr form)) #f #f (list head (cdr (cadr form)))))
 		 (hash-table-set! globals (cadr form) (list (cadr form) #f #f))))
-	    
+
+	    ((define* definstrument defanimal define-expansion define-macro define-macro* define-bacro define-bacro*)
+	     ;(format *stderr* "~A: ~A~%" head form)
+	     (hash-table-set! globals (car (cadr form)) (list (car (cadr form)) #f #f (list head (cdr (cadr form))))))
+
 	    ((defgenerator)
 	     (get-generator form 'defgenerator head))
 	    
@@ -2424,10 +2461,6 @@
 		 (lint-format "~A ~A named ~A is asking for trouble" name head type (car arg))
 		 (if (not (symbol? (car arg)))
 		     (lint-format "bad ~A ~A name: ~S" name head type (car arg))))
-	     
-	     (if *report-undefined-variables*
-		 (set! undefined-identifiers (remove (car arg) undefined-identifiers)))
-	     
 	     (if (and (not (cadr arg))
 		      (not (hash-table-ref other-identifiers (car arg))))
 		 (if (caddr arg)
@@ -2651,7 +2684,7 @@
 		    ((define define* 
 		       define-constant defvar define-envelope
 		       define-expansion define-macro define-macro* define-bacro define-bacro*
-		       definstrument)
+		       definstrument defanimal)
 
 		     ;(format *stderr* "define case: ~%~A~%" form)
 		     
@@ -3212,11 +3245,16 @@
 			 (lint-format "with-environment is messed up: ~A" 
 				      name 
 				      (truncated-list->string form))
-			 (let* ((e (lint-walk-body name head (cddr form) env))
-				(vars (if (not (eq? e env))
-					  (env-difference name e env ())
-					  ())))
-			   (report-usage name 'variable head vars)))
+			 (let ((old-undef *report-undefined-variables*))
+			   (set! *report-undefined-variables* #f)            ; we currently can't tell env-vars from undefined vars
+			   (if (pair? (cadr form))
+			       (lint-walk name (cadr form) env))
+			   (let* ((e (lint-walk-body name head (cddr form) env))
+				  (vars (if (not (eq? e env))
+					    (env-difference name e env ())
+					    ())))
+			     (report-usage name 'variable head vars))
+			   (set! *report-undefined-variables* old-undef)))
 		     env)
 
 		    ;; with-baffle is not a special case, I guess
@@ -3276,9 +3314,7 @@
 					 (not (assq f env)))
 				    (if (and (not (defined? f))
 					     (not (assq f undefined-identifiers)))
-					(set! undefined-identifiers (cons (list f name 
-										(truncated-list->string form)) 
-									  undefined-identifiers))))
+					(set! undefined-identifiers (cons (list f name (truncated-list->string form) (pair-line-number form)) undefined-identifiers))))
 				(set! vars (lint-walk name f vars)))
 			      form))
 			   ))
@@ -3297,6 +3333,26 @@
 	(set! globals (make-hash-table))
 	(set! other-identifiers (make-hash-table))
 	(set! loaded-files ())
+
+#|
+	(let ((st (symbol-table)))
+	  (let ((ats ())
+		(fts ())
+		(ge (global-environment)))
+	    (for-each
+	     (lambda (lst)
+	       (for-each 
+		(lambda (sym)
+			(if (not (eq? (ge sym) #<undefined>))
+			    (begin
+			      (if (not (function-types sym)) 
+				  (set! fts (cons sym fts)))
+			      (if (not (argument-data sym)) 
+				  (set! ats (cons sym ats))))))
+		lst))
+	     st)
+	    (format *stderr* "ft: ~A~%at: ~A~%" fts ats)))
+|#
 	
 	(if *load-file-first* ; this can improve the error checks
 	    (load file))
@@ -3349,31 +3405,24 @@
 		    (report-usage file 'top-level-var "" vars))
 		
 		(if *report-undefined-variables*
-		    (for-each
-		     (lambda (var)
-		       (if (not (or (assq (car var) vars)
-				    (hash-table-ref globals (car var))))
-			   (lint-format "undefined identifier ~A in: ~A" ;; TODO: this gives a bogus line number (last line in file)
-					(list-ref var 0)
-					(list-ref var 2)
-					(list-ref var 1))))
-		     undefined-identifiers))
+		    (begin
+		      (set! line-number -1) ; squelch the line number reported by lint-format
+		      (for-each
+		       (lambda (var)
+			 (if (not (or (assq (car var) vars)
+				      (hash-table-ref globals (car var))))
+			     (let ((lnum (list-ref var 3)))
+			       (if (not (zero? lnum))
+				   (lint-format "undefined identifier ~A in: ~A (line ~A)" (car var) (caddr var) (cadr var) lnum)
+				   (lint-format "undefined identifier ~A in: ~A" (car var) (caddr var) (cadr var))))))
+		       (reverse undefined-identifiers))))
 		
 		(close-input-port fp))))))))
 
 
 
-;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is,
-;;;   but this slows us down too much.
-
-;;; currently *report-undefined-variables* is confused by with-environment -- the field names
-;;;   are wrongly reported as undefined.
-
-;;; another case: (and (< x 0) (> x 0)) -- can we catch this in general?
-;;;   if it's just relationals/and/or/not/numeric constants and symbols, 
-;;;   try each combination of symbols:any current constant:same +|- 1
-;;;   until both #t and #f seen, if reach end, it can be replaced by val
-;;;   but what about possible other stuff interspersed?
+;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is
+;;; also macros that cause definitions are ignored
 
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
@@ -3463,12 +3512,9 @@
 					      (format fout "~S~%" ncode)))
 					  (let ((outstr (call-with-output-string
 							 (lambda (p)
-							   (let (;(old-undef *report-undefined-variables*)
-								 (old-shadow *report-shadowed-variables*))
-							     ;(set! *report-undefined-variables* #t)
+							   (let ((old-shadow *report-shadowed-variables*))
 							     (set! *report-shadowed-variables* #t)
 							     (lint "t631-temp.scm" p)
-							     ;(set! *report-undefined-variables* old-undef)
 							     (set! *report-shadowed-variables* old-shadow))))))
 					    (if (> (length outstr) 0)
 						(format #t ";~A ~D: ~A~%" file line-num outstr)))))

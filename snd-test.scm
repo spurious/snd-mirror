@@ -39302,6 +39302,9 @@ EDITS: 1
 		(graphEq "oboe.snd")
 		)
     
+    (with-sound (:channels 4) (expandn 0 .1 "4.aiff" 1 :expand 4))
+    (with-sound (:channels 4 :reverb jc-reverb) (expandn 0 .1 "4.aiff" 1 :expand 4))
+    (with-sound (:channels 2 :reverb freeverb :reverb-channels 2) (expandn 0 .1 "4.aiff" 1 :expand 4))
     (with-sound (:play #f) (defopt-simp 0 10000) (defopt-simp 10000 10000 550.0 0.1) (defopt-simp 20000 10000 :amplitude .2))
     (with-sound (:channels 2 :reverb-channels 2 :reverb jcrev2 :play #f) (floc-simp 0 1))
     
