@@ -396,7 +396,7 @@ last end of the mixes in 'mix-list'"
 	
 (define (play-mixes mix-list)
   "(play-mixes mix-list) plays the mixes in 'mix-list'"
-  (let* ((sorted-mixes (sort! mix-list (lambda (a b) (< (mix-position a) (mix-position b)))))
+  (let* ((sorted-mixes (sort! (copy mix-list) (lambda (a b) (< (mix-position a) (mix-position b)))))
 	 (now (mix-position (car sorted-mixes))))
     (play (lambda ()
 	    (while (and (not (null? sorted-mixes))

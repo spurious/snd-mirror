@@ -1769,7 +1769,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
     (define (get-current-files dir)
       (set! current-directory dir)
-      (set! current-sorted-files (sort! (sound-files-in-directory dir) string<?)))
+      (set! current-sorted-files (sort! (copy (sound-files-in-directory dir)) string<?)))
       
     (define (get-current-directory filename)
       (set! last-file-opened filename)

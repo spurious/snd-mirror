@@ -7330,7 +7330,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	{
 	  vct *v;
 	  mus_float_t *vdata;
-	  v = xen_to_vct(output);
+	  v = Xen_to_vct(output);
 	  vdata = mus_vct_data(v);
 	  if (Xen_vector_rank(output) == 1)
 	    {
@@ -7367,7 +7367,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	{
 	  vct *v;
 	  mus_float_t *vdata;
-	  v = xen_to_vct(reverb);
+	  v = Xen_to_vct(reverb);
 	  vdata = mus_vct_data(v);
 	  if (Xen_vector_rank(reverb) == 1)
 	    {
@@ -21228,13 +21228,13 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_sample_to_file,       g_sample_to_file_w,        4, 0, 0, H_sample_to_file);
   Xen_define_safe_procedure(S_sample_to_file_add,   g_sample_to_file_add_w,    2, 0, 0, H_sample_to_file_add);
 
-  Xen_define_safe_procedure(S_is_file_to_frample,     g_is_file_to_frample_w,      1, 0, 0, H_is_file_to_frample);
-  Xen_define_safe_procedure(S_make_file_to_frample,   g_make_file_to_frample_w,    1, 1, 0, H_make_file_to_frample);
-  Xen_define_safe_procedure(S_file_to_frample,        g_file_to_frample_w,         2, 1, 0, H_file_to_frample);
+  Xen_define_safe_procedure(S_is_file_to_frample,   g_is_file_to_frample_w,    1, 0, 0, H_is_file_to_frample);
+  Xen_define_safe_procedure(S_make_file_to_frample, g_make_file_to_frample_w,  1, 1, 0, H_make_file_to_frample);
+  Xen_define_safe_procedure(S_file_to_frample,      g_file_to_frample_w,       2, 1, 0, H_file_to_frample);
   Xen_define_safe_procedure(S_continue_frample_to_file, g_continue_frample_to_file_w, 1, 0, 0, H_continue_frample_to_file);
-  Xen_define_safe_procedure(S_is_frample_to_file,     g_is_frample_to_file_w,      1, 0, 0, H_is_frample_to_file);
-  Xen_define_safe_procedure(S_frample_to_file,        g_frample_to_file_w,         3, 0, 0, H_frample_to_file);
-  Xen_define_safe_procedure(S_make_frample_to_file,   g_make_frample_to_file_w,    1, 4, 0, H_make_frample_to_file);
+  Xen_define_safe_procedure(S_is_frample_to_file,   g_is_frample_to_file_w,    1, 0, 0, H_is_frample_to_file);
+  Xen_define_safe_procedure(S_frample_to_file,      g_frample_to_file_w,       3, 0, 0, H_frample_to_file);
+  Xen_define_safe_procedure(S_make_frample_to_file, g_make_frample_to_file_w,  1, 4, 0, H_make_frample_to_file);
 
   Xen_define_safe_procedure(S_is_mus_input,         g_is_mus_input_w,          1, 0, 0, H_is_mus_input);
   Xen_define_safe_procedure(S_is_mus_output,        g_is_mus_output_w,         1, 0, 0, H_is_mus_output);

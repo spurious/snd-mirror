@@ -1902,7 +1902,7 @@ And of course:
 <p>By my count, around 20 of the Scheme built-in functions are already generic in the sense
 that they accept arguments of many types (leaving aside the numeric and type checking functions, take for example equal?, display,
 member, assoc, apply, eval, quasiquote, and values).  s7 extends that list with map, for-each, reverse,
-and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
+and length, and adds a few others such as copy, fill!, sort!, and object-&gt;string.
 newLisp takes a more radical approach than s7: it extends operators such as '&gt;' 
 to compare strings and lists, as well as numbers.  In map and for-each, however, you can mix the argument
 types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>,
@@ -4605,8 +4605,11 @@ Along the same lines:
 	(catch #t
 	  (lambda ()
 	    (return (f)))
-	  (lambda any
-	    #f)))
+	  (lambda args
+	    (case (car args)
+	      ((wrong-type-arg) ...)
+	      (...)
+	      (else (apply throw args))))))
       funks))))
 -->       
 
@@ -5109,7 +5112,7 @@ I need to know where something unexpected happened.  So:
 
 <p><b>reverse!</b> is an in-place version of the built-in function reverse.  That is, 
 it modifies the list passed to it in the process of reversing its contents.
-<b>list-set!</b> sets a member of a list.  <b>sort!</b> sorts a list or a vector using the
+<b>list-set!</b> sets a member of a list.  <b>sort!</b> sorts a sequence using the
 function passed as its second argument to choose the new ordering.
 </p>
 
@@ -5134,9 +5137,6 @@ function passed as its second argument to choose the new ordering.
 ((bird 0 0.1) (fm-violin 0 1 440 0.1) (bird 0.2 0.1) (bird 0.5 0.5) (fm-violin 1 1 550 0.1) (bird 1.2 0.3))
 </pre>
 
-<p>Despite the "!" in its name, sort! actually copies any list argument passed to it,
-but vectors are sorted in place.  
-</p>
 
 
 <div class="separator"></div>

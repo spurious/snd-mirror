@@ -391,7 +391,7 @@ enum {OP_NO_OP,
       OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
-      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, 
+      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT_PAIR_END, OP_SORT_VECTOR_END, OP_SORT_STRING_END, 
       OP_EVAL_STRING_1, OP_EVAL_STRING_2, 
       OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
       
@@ -578,7 +578,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
   
   "OP_DEFINE_BACRO", "OP_DEFINE_BACRO_STAR", 
-  "OP_GET_OUTPUT_STRING", "OP_SORT", "OP_SORT1", "OP_SORT2", "OP_SORT3", "OP_SORT4", "OP_SORT_TWO", 
+  "OP_GET_OUTPUT_STRING", "OP_SORT", "OP_SORT1", "OP_SORT2", "OP_SORT3", "OP_SORT_PAIR_END", "OP_SORT_VECTOR_END", "OP_SORT_STRING_END", 
   "OP_EVAL_STRING_1", "OP_EVAL_STRING_2", 
   "OP_MEMBER_IF", "OP_ASSOC_IF", "OP_MEMBER_IF1", "OP_ASSOC_IF1",
   
@@ -29093,23 +29093,30 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ)
 
   if (len > 0)
     {
+      vector_length(x) = len;
       if (typ == T_VECTOR)
 	{
 	  vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
 	  vector_getter(x) = default_vector_getter;
 	  vector_setter(x) = default_vector_setter;
+	  /* make_hash_table assumes nil as the default value */
+	  if (filled) s7_vector_fill(sc, x, sc->NIL);
 	}
       else
 	{
 	  if (typ == T_INT_VECTOR)
 	    {
-	      int_vector_elements(x) = (s7_Int *)malloc(len * sizeof(s7_Int));
+	      if (filled)
+		int_vector_elements(x) = (s7_Int *)calloc(len, sizeof(s7_Int));
+	      else int_vector_elements(x) = (s7_Int *)malloc(len * sizeof(s7_Int));
 	      vector_getter(x) = int_vector_getter;
 	      vector_setter(x) = int_vector_setter;
 	    }
 	  else 
 	    {
-	      float_vector_elements(x) = (s7_Double *)malloc(len * sizeof(s7_Double));
+	      if (filled)
+		float_vector_elements(x) = (s7_Double *)calloc(len, sizeof(s7_Double));
+	      else float_vector_elements(x) = (s7_Double *)malloc(len * sizeof(s7_Double));
 	      vector_getter(x) = float_vector_getter;
 	      vector_setter(x) = float_vector_setter;
 	    }
@@ -29117,10 +29124,6 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ)
       if (!(vector_elements(x)))
 	return(s7_error(sc, make_symbol(sc, "out-of-memory"), 
 			list_1(sc, make_protected_string(sc, "make-vector allocation failed!"))));
-
-      vector_length(x) = len;
-      /* make_hash_table assumes nil as the default value */
-      if (filled) s7_vector_fill(sc, x, ((typ == T_VECTOR) ? sc->NIL : ((typ == T_INT_VECTOR) ? small_int(0) : real_zero)));
     }
 
   vector_dimension_info(x) = NULL;
@@ -30939,14 +30942,13 @@ static int dox_compare(const void *v1, const void *v2)
 
 static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 {
-  #define H_sort "(sort! list-or-vector less?) sorts a list or vector using the function 'less?' to compare elements.\
-If its first argument is a list, the list is copied (despite the '!')."
+  #define H_sort "(sort! sequence less?) sorts a sequence using the function 'less?' to compare elements."
 
   s7_pointer data, lessp;
   s7_Int len = 0, n, k;
   int (*sort_func)(const void *v1, const void *v2);
+  s7_pointer *elements;
 
-  sort_func = vector_compare;
   data = car(args);
   if (is_null(data)) 
     {
@@ -30955,30 +30957,19 @@ If its first argument is a list, the list is copied (despite the '!')."
       lessp = cadr(args);
       if ((!is_procedure(lessp)) ||
 	  (!s7_is_aritable(sc, lessp, 2)))
-	return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, 
-					     make_protected_string(sc, "a function of 2 arguments")));
+	return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_protected_string(sc, "a function of 2 arguments")));
       return(sc->NIL);
-    }
-
-  if ((!is_pair(data)) && 
-      (!s7_is_vector(data)) &&
-      (!has_methods(data)))
-    {
-      check_method(sc, data, sc->SORT, args);
-      return(wrong_type_argument_with_type(sc, sc->SORT, small_int(1), data, 
-					   make_protected_string(sc, "a vector or a list")));
     }
 
   lessp = cadr(args);
   if (!is_procedure(lessp))
     return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, A_CLOSURE));
   if ((is_continuation(lessp)) || is_goto(lessp))
-    return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, 
-					 make_protected_string(sc, "a normal procedure (not a continuation)")));
+    return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_protected_string(sc, "a normal procedure (not a continuation)")));
   if (!s7_is_aritable(sc, lessp, 2))
-    return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, 
-					 make_protected_string(sc, "a procedure that can take 2 arguments")));
+    return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_protected_string(sc, "a procedure that can take 2 arguments")));
 
+  sort_func = vector_compare;
   compare_func = NULL;
   compare_args = sc->T2_1;
   compare_sc = sc;
@@ -31036,30 +31027,78 @@ If its first argument is a list, the list is copied (despite the '!')."
     case T_PAIR:
       len = s7_list_length(sc, data);            /* nil disposed of above, so 0 here == infinite */
       if (len <= 0)
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			list_2(sc, make_protected_string(sc, "sort! argument 1 should be a proper list: ~S"), data)));
-      if (len < 2) return(data);
-      if (len == 2)
-	{
-	  push_stack(sc, OP_SORT_TWO, data, args);  /* this will return a list -- was sc->args  */
-	  push_stack(sc, OP_APPLY, data, lessp);
-	  return(sc->F);
-	}
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_protected_string(sc, "sort! argument 1 should be a proper list: ~S"), data)));
+      if (len < 2) 
+	return(data);
 
       if (compare_func)
 	{
-	  int gc_loc;
-	  s7_pointer vec;
+	  int gc_loc, i;
+	  s7_pointer vec, p;
+
 	  vec = g_vector(sc, data);
+	  elements = s7_vector_elements(vec);
+
 	  gc_loc = s7_gc_protect(sc, vec);
-	  qsort((void *)s7_vector_elements(vec), len, sizeof(s7_pointer), sort_func);
-	  vec = s7_vector_to_list(sc, vec);
+	  qsort((void *)elements, len, sizeof(s7_pointer), sort_func);
+	  for (p = data, i = 0; i < len; i++, p = cdr(p))
+	    car(p) = elements[i];
 	  s7_gc_unprotect_at(sc, gc_loc);
-	  return(vec);
+
+	  return(data);
 	}
 
-      push_stack(sc, OP_SORT4, args, sc->code);    /* gc protect the original list, OP_SORT4 calls s7_vector_to_list, was sc->args */
+      push_stack(sc, OP_SORT_PAIR_END, cons(sc, data, lessp), sc->code); /* save and gc protect the original list and func */
       car(args) = g_vector(sc, data);
+      break;
+
+    case T_STRING:
+      {
+	int i;
+	s7_pointer vec;
+	unsigned char *chrs;
+
+	len = string_length(data);
+	if (len < 2) return(data);
+	vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
+	elements = s7_vector_elements(vec);
+	chrs = (unsigned char *)string_value(data);
+
+	if (is_bytevector(data))
+	  {
+	    for (i = 0; i < len; i++)
+	      elements[i] = small_int(chrs[i]);
+	  }
+	else
+	  {
+	    for (i = 0; i < len; i++)
+	      elements[i] = chars[chrs[i]];
+	  }
+
+	if (compare_func)
+	  {
+	    int gc_loc;
+	    gc_loc = s7_gc_protect(sc, vec);	  
+	    qsort((void *)elements, len, sizeof(s7_pointer), sort_func);
+	    
+	    if (is_bytevector(data))
+	      {
+		for (i = 0; i < len; i++)
+		  chrs[i] = (char)integer(elements[i]);
+	      }
+	    else
+	      {
+		for (i = 0; i < len; i++)
+		  chrs[i] = character(elements[i]);
+	      }
+
+	    s7_gc_unprotect_at(sc, gc_loc);
+	    return(data);
+	  }
+	
+	push_stack(sc, OP_SORT_STRING_END, cons(sc, data, lessp), sc->code);
+	car(args) = vec;
+      }
       break;
 
     case T_INT_VECTOR:
@@ -31071,27 +31110,37 @@ If its first argument is a list, the list is copied (despite the '!')."
 	/* currently we have to make the ordinary vector here even if not compare_func
 	 *   because the sorter uses vector_element to access sort args (see SORT_DATA in eval).
 	 *   This is probably better than passing down getter/setter (fewer allocations).
-	 *   get/set macro in eval is SORT_DATA(k) then s7_vector_to_list if pair at start (sort4)
+	 *   get/set macro in eval is SORT_DATA(k) then s7_vector_to_list if pair at start (sort_*_end)
 	 */
 	len = vector_length(data);
+	if (len < 2) return(data);
 	vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
+	elements = s7_vector_elements(vec);
+
 	for (i = 0; i < len; i++)
-	  vector_element(vec, i) = vector_getter(data)(sc, data, i);
+	  elements[i] = vector_getter(data)(sc, data, i);
 
 	if (compare_func)
 	  {
 	    int gc_loc;
 	    gc_loc = s7_gc_protect(sc, vec);	  
-	    qsort((void *)s7_vector_elements(vec), len, sizeof(s7_pointer), sort_func);
+	    qsort((void *)elements, len, sizeof(s7_pointer), sort_func);
+	    
+	    for (i = 0; i < len; i++)
+	      vector_setter(data)(sc, data, i, elements[i]);
+
 	    s7_gc_unprotect_at(sc, gc_loc);
-	    return(vec);
+	    return(data);
 	  }
+	
+	push_stack(sc, OP_SORT_VECTOR_END, cons(sc, data, lessp), sc->code); /* save and gc protect the original homogenous vector and func */
 	car(args) = vec;
       }
       break;
 
     case T_VECTOR:
       len = vector_length(data);
+      if (len < 2) return(data);
       if (compare_func)
 	{
 	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), sort_func);
@@ -31101,10 +31150,9 @@ If its first argument is a list, the list is copied (despite the '!')."
 
     default:
       check_method(sc, data, sc->SORT, args);
-      return(wrong_type_argument_with_type(sc, sc->SORT, small_int(1), data, make_protected_string(sc, "a vector or a list")));
+      return(wrong_type_argument_with_type(sc, sc->SORT, small_int(1), data, make_protected_string(sc, "a sequence")));
     }
 
-  if (len < 2) return(data);
   n = len - 1;
   k = ((int)(n / 2)) + 1;
 
@@ -49803,17 +49851,77 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto HEAPSORT;
 	}
 
-    case OP_SORT4:
-      /* sc->value is the sort vector which needs to be turned into a list */
-      sc->value = s7_vector_to_list(sc, sc->value);
-      goto START;
+    case OP_SORT_PAIR_END:
+      /* sc->value is the sort vector which needs to be copied into the original list */
+      {
+	s7_pointer p;
+	s7_pointer *elements;
+	int i, len;
+	
+	elements = s7_vector_elements(sc->value);
+	len = vector_length(sc->value);
+	for (i = 0, p = car(sc->args); i < len; i++, p = cdr(p))
+	  car(p) = elements[i];
+	
+	sc->value = car(sc->args);
+	goto START;
+      }
 
-    case OP_SORT_TWO:
-      /* here we're sorting a list of 2 items */
-      if (is_true(sc, sc->value))
-	sc->value = sc->args;
-      else sc->value = list_2(sc, cadr(sc->args), car(sc->args));
-      goto START;
+    case OP_SORT_VECTOR_END:
+      /* sc->value is the sort vector which needs to be copied into the original list */
+      {
+	s7_pointer *elements;
+	int i, len;
+	s7_pointer original_vector;
+	
+	elements = s7_vector_elements(sc->value);
+	len = vector_length(sc->value);
+	original_vector = car(sc->args);
+
+	if (is_float_vector(original_vector))
+	  {
+	    s7_Double *flts;
+	    flts = float_vector_elements(original_vector);
+	    for (i = 0; i < len; i++)
+	      flts[i] = real(elements[i]);
+	  }
+	else
+	  {
+	    s7_Int *ints;
+	    ints = int_vector_elements(original_vector);
+	    for (i = 0; i < len; i++)
+	      ints[i] = integer(elements[i]);
+	  }
+	sc->value = original_vector;
+	goto START;
+      }
+
+    case OP_SORT_STRING_END:
+      {
+	s7_pointer *elements;
+	int i, len;
+	s7_pointer original_string;
+	unsigned char *str;
+	
+	elements = s7_vector_elements(sc->value);
+	len = vector_length(sc->value);
+	original_string = car(sc->args);
+	str = (unsigned char *)string_value(original_string);
+
+	if (is_bytevector(original_string))
+	  {
+	    for (i = 0; i < len; i++)
+	      str[i] = (unsigned char)integer(elements[i]);
+	  }
+	else
+	  {
+	    for (i = 0; i < len; i++)
+	      str[i] = character(elements[i]);
+	  }
+	sc->value = original_string;
+	goto START;
+      }
+      break;
 
       /* batcher networks:
        *    ((0 2) (0 1) (1 2))
@@ -69469,7 +69577,6 @@ int main(int argc, char **argv)
 /* loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
  * for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
- * open-output|input-object|function? -- what's the application?
  * click to inspect/see source etc in listener?
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
@@ -69487,5 +69594,14 @@ int main(int argc, char **argv)
  *   and for catch what errors it might raise
  *     framples: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
+ *
+ * is this correct: (define x #<undefined>) (defined? 'x) -> #t -- how to undefine something?
+ *    macro: (define|set! x y)
+ * quasiquote should collapse some cases (see clisp backquote tests):
+ *   (list (apply values '(x))) -> '(x)
+ *   ({list} ({apply_values} ())) -> ()
+ *
+ * maybe read/write-bytevector should be built-in -- file_read basically
+ *   others of that ilk: string-up|downcase, digit-value, finite?, open-input|output-bytevector
  */
 
