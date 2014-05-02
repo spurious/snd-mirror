@@ -1767,7 +1767,7 @@ not currently considered to be a procedure, so <code>(procedure? "hi")</code> is
 accept anything that apply can handle, so
 <code>(map #(0 1) '(1 0))</code> is '(1 0).  (On the first call to map in this case, you get the result of
 <code>(#(0 1) 1)</code> and so on).
-string-&gt;list and vector-&gt;list are <code>(map values object)</code>.
+string-&gt;list, vector-&gt;list, and environment-&gt;list are <code>(map values object)</code>.
 Their inverses are (and always have been) equally trivial.
 </p>
 
@@ -2566,7 +2566,7 @@ As a quick example, here is a structure definition:
 		   (if (eq? (car x) 'type)
 		       (values) ; don't mention the internal type field
 		       x))
-	         (environment-&gt;list t1))))
+	         t1)))
 "t1 (a tree): (key . 0) (left) (right)"
 
 ;; to access a field, use either environment-ref and -set, or implicit indexing:
@@ -2624,10 +2624,13 @@ augment-environment!  varlet, let-append(?)
 current-environment   valet,  make-begin(?)
 error-environment     owlet, triplet, error-let(?)
 procedure-environment runlet(?)
-environment-&gt;list     let-&gt;list(?)
+environment-&gt;list     let-&gt;list(?) (or remove it; it is the same as (map values env))
 open-environment      open-let(?)
 open-environment?
 </pre>
+
+<!-- also (map append env)
+-->
 
 <p>If "let" is no good, what about "lex"?
 </p>
@@ -2716,7 +2719,7 @@ its top-level bindings are imported into the current environment:
 	     (cons (string-&gt;symbol 
 		    (string-append "library:" (symbol-&gt;string (car binding))))
 		   (cdr binding)))
-	    (environment-&gt;list (current-environment))))))
+	    (current-environment)))))
 </pre>
 
 <p>That's all there is to it!  Here is the same idea as a macro:
@@ -2872,12 +2875,12 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 						   ',class-name 
 						   (map (lambda (slot)
 							  (values (car slot) (cdr slot)))
-							(environment-&gt;list obj)))
+							obj))
 				           (format #f "#&lt;~A: ~{~A~^ ~}&gt;" 
 					           ',class-name
 					           (map (lambda (slot)
 						          (list (car slot) (cdr slot)))
-						        (environment-&gt;list obj)))))))
+						        obj))))))
 		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
 
     (let ((new-class (open-environment

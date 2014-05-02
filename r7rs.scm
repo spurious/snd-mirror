@@ -55,6 +55,7 @@
 
 (define bytevector-copy! vector-copy!)
 (define string-copy! vector-copy!)
+;;; bytevector->list is (map values bv)
 
 
 (define char-foldcase char-downcase) 
@@ -102,7 +103,7 @@
 	(pt (or port (current-input-port))))
     (do ((i start (+ i 1))
 	 (c (read-byte pt) (read-byte pt)))
-	((or (>= i end)
+	((or (>= i lim)
 	     (eof-object? c))
 	 bv)
       (set! (bv i) c))))
@@ -134,14 +135,15 @@
 (define (read-error? obj) (eq? (car obj) 'read-error))
 (define (file-error? obj) (eq? (car obj) 'io-error))
 (define (error-message obj) (apply format #f (cadr obj)))
-(define (error-irritants obj) (cdadr obj))
+(define error-irritants cdadr)
 
 
 (define interaction-environment current-environment)
 (define-bacro (include . files) 
-  ,@(map (lambda (file)
-           `(load ,file (outer-environment (current-environment)))
-         files)))
+  `(begin
+     ,@(map (lambda (file)
+	      `(load ,file (outer-environment (current-environment))))
+	    files)))
 
 (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 ;; I prefer (define-expansion (comment . stuff) (reader-cond (#t (values))))
@@ -175,7 +177,7 @@
 ;; parameters
 (define* (make-parameter init converter)
   (let* ((convert (or converter (lambda (x) x)))
-	 (old-values ())
+	 (old-values ()) ; see below -- this is part of the procedure-environment
 	 (value (convert init)))
     (lambda () value)))
 
@@ -185,7 +187,7 @@
 	 ,@(map (lambda (var)
 		  `(with-environment (procedure-environment ,(car var))
 		     (set! old-values (cons value old-values))
-		     (set! value (convert ,(cadr var))))
+		     (set! value (convert ,(cadr var)))))
 		vars))
        (lambda () 
          ,@body)
@@ -194,7 +196,7 @@
 		  `(with-environment (procedure-environment ,(car var))
 		     (set! value (car old-values))
 		     (set! old-values (cdr old-values))))
-		vars)))))
+		vars))))
 
 
 ;; libraries
@@ -216,7 +218,7 @@
 				  (not (member (car entry) *export*))))
 			 (values)
 			 entry))
-		   (environment->list (current-environment)))))))
+		   (current-environment))))))
 
 (define-macro (import . libs)
   `(augment-environment! (current-environment)
@@ -238,7 +240,7 @@
 				   (if (member (car entry) names)
 				       (values)
 				       entry))
-				 (environment->list e))))
+				 e)))
 		   (symbol->value (symbol (object->string (cadr ',lib))))
 		   (cddr ',lib)))
   
@@ -250,7 +252,7 @@
 					  (string-append (symbol->string prefx) 
 							 (symbol->string (car entry)))) 
 					 (cdr entry)))
-				 (environment->list e))))
+				 e)))
 		   (symbol->value (symbol (object->string (cadr ',lib))))
 		   (caddr ',lib)))
   
@@ -262,7 +264,7 @@
 				     (if info
 					 (cons (cadr info) (cdr entry))
 					 entry))) ; I assume the un-renamed ones are included
-				 (environment->list e))))
+				 e)))
 		   (symbol->value (symbol (object->string (cadr ',lib))))
 		   (cddr ',lib)))
 
@@ -406,7 +408,7 @@
 					       ',class-name
 					       (map (lambda (slot)
 						      (list (car slot) (cdr slot)))
-						    (environment->list obj))))))
+						    obj)))))
 		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
 
     (let ((new-class (open-environment

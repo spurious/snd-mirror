@@ -90,7 +90,7 @@
 	   (else
 	    (slib:warn "require.scm" 'unknown 'software-type (software-type))
 	    "/"))))
-    (lambda (chr) (and (memv chr suffi) #t))))
+    (lambda (chr) (memv chr suffi))))
 ;@
 (define (pathname->vicinity pathname)
   (let loop ((i (- (string-length pathname) 1)))
@@ -285,7 +285,7 @@
 		`(set! *defmacros* (cons (cons ',name (lambda ,parms ,@body))
 					 *defmacros*))))))
 ;@
-(define (defmacro? m) (and (assq m *defmacros*) #t))
+(define (defmacro? m) (assq m *defmacros*))
 ;@
 (define (macroexpand-1 e)
   (if (pair? e)

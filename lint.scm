@@ -17,6 +17,8 @@
 (define start-up-environment (global-environment))
 (define *current-file* "")
 (define *top-level-objects* (make-hash-table))
+(define *lint-output-port* #t)
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2265,17 +2267,17 @@
 					  (procedure? (symbol->value func)))
 				     (set! arity (procedure-arity (symbol->value func)))
 				     
-				     (if (and (pair? (cadr form))
-					      (memq (caadr form) '(lambda lambda*))
-					      (pair? (cadr (cadr form))))
-					 (let ((arglen (length (cadr (cadr form)))))
-					   (if (eq? (cadr form) 'lambda)
+				     (if (and (pair? func)
+					      (memq (car func) '(lambda lambda*))
+					      (pair? (cadr func)))
+					 (let ((arglen (length (cadr func))))
+					   (if (eq? (car func) 'lambda)
 					       (if (negative? arglen)
 						   (set! arity (list (abs arglen) 0 #t))
 						   (set! arity (list arglen 0 #f)))
 					       (if (negative? arglen)
 						   (set! arity (list 0 (abs arglen) #t))
-						   (set! arity (list 0 arglen (memq :rest (cadr (cadr form))))))))))
+						   (set! arity (list 0 arglen (memq :rest (cadr func)))))))))
 				 
 				 (if (pair? arity)
 				     (if (< args (car arity))
@@ -2286,7 +2288,16 @@
 						  (> args (+ (car arity) (cadr arity))))
 					     (lint-format "~A has too many arguments in: ~A"
 							  name head 
-							  (truncated-list->string form))))))))
+							  (truncated-list->string form)))))
+				 (for-each 
+				  (lambda (obj)
+				    (if (and (pair? obj)
+					     (memq (car obj) '(vector->list string->list environment->list)))
+					(lint-format "~A: ~A could be simplified to: ~A" 
+						     name head 
+						     (truncated-list->string obj) 
+						     (truncated-list->string (cadr obj)))))
+				  (cddr form)))))
 			    
 			    ((catch)
 			     (if (and (not (symbol? (cadr form)))
@@ -2910,7 +2921,6 @@
 						 (if (or (vector? key)
 							 (string? key)
 							 (pair? key)
-							 (null? key)
 							 (hash-table? key))
 						     (lint-format "case key ~S in ~S is unlikely to work (case uses eqv?)" 
 								  name key clause))
@@ -3325,8 +3335,8 @@
       
     ;;; --------------------------------------------------------------------------------
       
-      (lambda* (file (outp #t))
-	"(lint file) looks for infelicities in file's scheme code"
+      (lambda* (file (outp *lint-output-port*))
+	"(lint file (port #t)) looks for infelicities in file's scheme code"
 	(set! outport outp)
 	(set! *current-file* file)
 	(set! undefined-identifiers ())
@@ -3368,7 +3378,7 @@
 		    (line 0)
 		    (last-form #f)
 		    (last-line-number -1))
-		(if (eq? outport #t) (format outport ";~A~%" file))
+		(format outport ";~A~%" file)
 		(set! loaded-files (cons file loaded-files))
 		
 		(do ((form (read fp) (read fp)))
@@ -3423,12 +3433,13 @@
 
 ;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is
 ;;; also macros that cause definitions are ignored
-
+;;;
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
-
+;;;
 ;;; if function arg or local var collides with built-in, warn? (framples is a problem here, and channels)
-
+;;;
+;;; pi should remain a symbol (and other constants too) rather than being expanded in the simplifications
 
 
 ;;; this reads an HTML file, finds likely-looking scheme code, and runs lint over it.

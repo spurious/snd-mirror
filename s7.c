@@ -5401,35 +5401,6 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if 0
-static void save_null_environment(s7_scheme *sc)
-{
-  #define NULL_ENV_SIZE 18
-  static const char *null_env_names[NULL_ENV_SIZE] = {
-    "define" "quote" "lambda" "if" "set!" "define*" "lambda*" "cond" "case" "and" "or" "let" "let*" "letrec" "letrec*" "begin" "do" "quasiquote"};
-  int i;
-  s7_pointer *nulls;
-  /* g_null_environment would return sc->null_env */
-  
-  sc->null_env = (s7_pointer)calloc(1, sizeof(s7_cell));
-  set_type(sc->null_env, T_VECTOR);
-  vector_length(sc->null_env) = NULL_ENV_SIZE;
-  vector_elements(sc->null_env) = (s7_pointer *)malloc(NULL_ENV_SIZE * sizeof(s7_pointer));
-  vector_getter(sc->null_env) = default_vector_getter;
-  vector_setter(sc->null_env) = default_vector_setter;
-  nulls = vector_elements(sc->null_env);
-  heap_location(sc->null_env) = NOT_IN_HEAP;
-
-  for (i = 0; i < NULL_ENV_SIZE; i++)
-    {
-      s7_pointer sym;
-      sym = make_symbol(sc, null_env_names[i]);
-      nulls[i] = permanent_slot(sym, s7_symbol_value(sc, sym));
-    }
-}
-#endif
-
-
 static s7_pointer g_is_open_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_open_environment "(open-environment? obj) returns #t is 'obj' has methods."
@@ -6363,6 +6334,11 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_defined "(defined? obj (env (current-environment))) returns #t if obj has a binding (a value) in the environment env"
   s7_pointer sym, x;
+
+  /* is this correct? 
+   *    (defined? '_x) #f (symbol->value '_x) #<undefined>
+   *    (define x #<undefined>) (defined? 'x) #t
+   */
 
   sym = car(args);
   if (!is_symbol(sym))
@@ -31111,6 +31087,9 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	 *   because the sorter uses vector_element to access sort args (see SORT_DATA in eval).
 	 *   This is probably better than passing down getter/setter (fewer allocations).
 	 *   get/set macro in eval is SORT_DATA(k) then s7_vector_to_list if pair at start (sort_*_end)
+	 *
+	 * if we know the underlying C function (say < or >), we could greatly optimize this --
+	 *   is it worth the effort?  What are the most common cases here -- I expect sort vector of strings.
 	 */
 	len = vector_length(data);
 	if (len < 2) return(data);
@@ -69251,6 +69230,7 @@ s7_scheme *s7_init(void)
   /* macroexpand 
    *   needs to be a bacro so locally defined macros are expanded:
    *   (let () (define-macro (hi a) `(+ ,a 1)) (macroexpand (hi 2)))
+   *   we could use a gensym in place of __mac__ (see s7.html for an example), but then symbol mark in the gc sweep is less optimized.
    */
   s7_eval_c_string(sc, "(define-bacro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
   /*
@@ -69272,13 +69252,13 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (multiple-value-bind vars expression . body)                            \n\
                            (if (or (symbol? vars) (negative? (length vars)))                                  \n\
                                `((lambda ,vars ,@body) ,expression)                                           \n\
-                               `((lambda* (,@vars . __r__) ,@body) ,expression)))");
+                               `((lambda* (,@vars . ,(gensym)) ,@body) ,expression)))");
   /* (multiple-value-bind (a b) (values 1 2) (+ a b)) */
   /*   named "receive" in srfi-8 which strikes me as perverse */
 
   s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)                                  \n\
                           (let ((local-vars (map (lambda (n) (gensym)) vars)))                                \n\
-                            `((lambda* (,@local-vars . __r__)                                                 \n\
+                            `((lambda* (,@local-vars . ,(gensym))                                             \n\
                                 ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars)                        \n\
                                 ,@body)                                                                       \n\
                               ,expr)))");
@@ -69563,13 +69543,13 @@ int main(int argc, char **argv)
 
 /*
  *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.7
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3562
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1053
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7
- * t816          |                                    |  70.6                44.5
+ * t816          |                                    |  70.6                44.5 44.6
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4
  *            153 with run macro (eval_ptree)
  */
@@ -69595,13 +69575,8 @@ int main(int argc, char **argv)
  *     framples: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  *
- * is this correct: (define x #<undefined>) (defined? 'x) -> #t -- how to undefine something?
- *    macro: (define|set! x y)
- * quasiquote should collapse some cases (see clisp backquote tests):
- *   (list (apply values '(x))) -> '(x)
- *   ({list} ({apply_values} ())) -> ()
- *
  * maybe read/write-bytevector should be built-in -- file_read basically
- *   others of that ilk: string-up|downcase, digit-value, finite?, open-input|output-bytevector
+ *   others of that ilk: string-up|downcase, open-input|output-bytevector
+ *   string-downcase used in make-index, could replace the "marginally useful" code in map
  */
 
