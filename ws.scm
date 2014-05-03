@@ -727,9 +727,6 @@ finish-with-sound to complete the process."
 	(last-octave 0)                             ; octave number can be omitted
 	(ratios (vector 1.0 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2.0)))
 
-    (define (string-downcase str) 
-      (apply string (map char-downcase str)))
-
     (lambda* (pitch pythagorean)          ; pitch can be pitch name or actual frequency
       "(->frequency pitch pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
 symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small-integer ratios, rather than equal-tempered tuning."

@@ -1287,7 +1287,8 @@ struct s7_scheme {
   s7_pointer IS_PORT_CLOSED, PORT_FILE, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
-  s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
+  s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE;
+  s7_pointer STRING, STRING_DOWNCASE, STRING_UPCASE, STRING_LEQ, STRING_LT, STRING_EQ;
   s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, IS_SYMBOL, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
@@ -19400,6 +19401,60 @@ static s7_pointer g_string_length(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sc->STRING_LENGTH, p, T_STRING));
     }
   return(make_integer(sc, string_length(p)));
+}
+
+
+static s7_pointer g_string_downcase(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_downcase "(string-downcase str) returns the lower case version of str."
+  s7_pointer p, newstr;
+  int i, len;
+  unsigned char *nstr, *ostr;
+
+  p = car(args);
+  if (!is_string(p))
+    {
+      check_method(sc, p, sc->STRING_DOWNCASE, args);
+      return(simple_wrong_type_argument(sc, sc->STRING_DOWNCASE, p, T_STRING));
+    }
+
+  len = string_length(p);
+  newstr = make_empty_string(sc, len + 1, 0); 
+  string_length(newstr) = len;
+
+  ostr = (unsigned char *)string_value(p);
+  nstr = (unsigned char *)string_value(newstr);
+  for (i = 0; i < len; i++)
+    nstr[i] = tolower((int)ostr[i]);
+
+  return(newstr);
+}
+
+
+static s7_pointer g_string_upcase(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_upcase "(string-upcase str) returns the upper case version of str."
+  s7_pointer p, newstr;
+  int i, len;
+  unsigned char *nstr, *ostr;
+
+  p = car(args);
+  if (!is_string(p))
+    {
+      check_method(sc, p, sc->STRING_UPCASE, args);
+      return(simple_wrong_type_argument(sc, sc->STRING_UPCASE, p, T_STRING));
+    }
+
+  len = string_length(p);
+  newstr = make_empty_string(sc, len + 1, 0); 
+  string_length(newstr) = len;
+
+  ostr = (unsigned char *)string_value(p);
+  nstr = (unsigned char *)string_value(newstr);
+  for (i = 0; i < len; i++)
+    nstr[i] = toupper((int)ostr[i]);
+
+  return(newstr);
 }
 
 
@@ -38503,32 +38558,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     }
   else len = applicable_length(sc, obj);
 
-  /* marginally useful code -- map built-in func over string */
-  if ((is_string(obj)) &&
-      (is_null(cddr(args))) &&
-      (is_safe_procedure(sc->code)) &&
-      (is_c_function(sc->code)) &&
-      (s7_is_aritable(sc, sc->code, 1)))
-    {
-      s7_Int i;
-      s7_function func;
-      const char *str;
-      s7_pointer p;
-
-      func = c_function_call(sc->code);
-      sc->x = sc->NIL;
-      str = string_value(obj);
-
-      for (i = 0; i < len; i++)
-	{
-	  car(sc->T1_1) = chars[(unsigned int)((unsigned char)(str[i]))]; /* idiotic casts are necessary: str="ÿ" */
-	  sc->x = cons(sc, (*func)(sc, sc->T1_1), sc->x);
-	}
-      p = safe_reverse_in_place(sc, sc->x);
-      sc->x = sc->NIL;
-      return(p);
-    }
-
   if (len < 0)
     {
       if (!errstr1)
@@ -45738,21 +45767,6 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 {
   /* called in optimize_lambda */
   s7_pointer p;
-
-#if 0
-  for (p = body; is_pair(p); p = cdr(p))
-    {
-      if (is_pair(car(p)))
-	{
-	  if ((is_syntactic(caar(p))) ||
-	      (!is_optimized(car(p))) ||
-	      (!is_all_x_safe(sc, car(p))))
-	    break;
-	}
-    }
-  if (is_null(p))
-    fprintf(stderr, "all: %s\n", DISPLAY(body));
-#endif
 
   sc->cycle_counter++;
   if (sc->cycle_counter > 5000)
@@ -68765,6 +68779,8 @@ s7_scheme *s7_init(void)
   sc->STRING_CI_LEQ =         s7_define_safe_function(sc, "string-ci<=?",            g_strings_are_ci_leq,     2, 0, true,  H_strings_are_ci_leq);
   sc->STRING_CI_GEQ =         s7_define_safe_function(sc, "string-ci>=?",            g_strings_are_ci_geq,     2, 0, true,  H_strings_are_ci_geq);
   
+  sc->STRING_DOWNCASE =       s7_define_safe_function(sc, "string-downcase",         g_string_downcase,        1, 0, false, H_string_downcase);
+  sc->STRING_UPCASE =         s7_define_safe_function(sc, "string-upcase",           g_string_upcase,          1, 0, false, H_string_upcase);
   sc->STRING_APPEND =         s7_define_safe_function(sc, "string-append",           g_string_append,          0, 0, true,  H_string_append);
   sc->STRING_FILL =           s7_define_safe_function(sc, "string-fill!",            g_string_fill,            2, 2, false, H_string_fill);
   sc->STRING_COPY =           s7_define_safe_function(sc, "string-copy",             g_string_copy,            1, 0, false, H_string_copy);
@@ -69544,13 +69560,13 @@ int main(int argc, char **argv)
 /*
  *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.7
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3562
- * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4
- * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346
+ * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4 30.4
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1346
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1053
- * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4
- * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7
+ * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4  5.9
+ * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7 12.7
  * t816          |                                    |  70.6                44.5 44.6
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.9
  *            153 with run macro (eval_ptree)
  */
 
@@ -69576,7 +69592,6 @@ int main(int argc, char **argv)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  *
  * maybe read/write-bytevector should be built-in -- file_read basically
- *   others of that ilk: string-up|downcase, open-input|output-bytevector
- *   string-downcase used in make-index, could replace the "marginally useful" code in map
+ *   others of that ilk: open-input|output-bytevector
  */
 

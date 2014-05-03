@@ -2817,7 +2817,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 ;;; > (let ((rl (float-vector 0.0 1.0 0.0 0.0)) 
 ;;;         (im (float-vector 0.0 1.0 0.0 0.0))) 
 ;;;     (mus-fft rl im) 
-;;;     (map make-rectangular (vector->list rl) (vector->list im)))
+;;;     (map make-rectangular rl im))
 ;;; (1+1i -1+1i -1-1i 1-1i)
 
 |#

@@ -3433,6 +3433,7 @@
 
 ;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is
 ;;; also macros that cause definitions are ignored
+;;; and cload'ed identifiers are missed
 ;;;
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level

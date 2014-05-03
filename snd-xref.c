@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11372] = {
+static const char *snd_names[11364] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4084,7 +4084,6 @@ static const char *snd_names[11372] = {
     "ercos?", "generators.scm",
     "ercoser", "generators.scm",
     "errno", "libc.scm",
-    "error-irritants", "r7rs.scm",
     "error-message", "r7rs.scm",
     "erssb", "generators.scm",
     "erssb?", "generators.scm",
@@ -6899,6 +6898,7 @@ static const char *snd_names[11372] = {
     "read-bint32", "binary-io.scm",
     "read-bint64", "binary-io.scm",
     "read-bytevector", "r7rs.scm",
+    "read-bytevector!", "r7rs.scm",
     "read-chars", "binary-io.scm",
     "read-error?", "r7rs.scm",
     "read-flac", "examp.scm",
@@ -6983,7 +6983,6 @@ static const char *snd_names[11372] = {
     "rubber-sound", "rubber.scm",
     "ruby-crowned-kinglet", "animals.scm",
     "ruffed-grouse", "animals.scm",
-    "run-hook", "snd11.scm",
     "run-with-fm-and-pm", "generators.scm",
     "rusage.make", "libc.scm",
     "rusage.ru_inblock", "libc.scm",
@@ -7221,11 +7220,8 @@ static const char *snd_names[11372] = {
     "string->utf8", "r7rs.scm",
     "string->vector", "r7rs.scm",
     "string-copy!", "r7rs.scm",
-    "string-downcase", "r7rs.scm",
-    "string-foldcase", "r7rs.scm",
     "string-for-each", "r7rs.scm",
     "string-map", "r7rs.scm",
-    "string-upcase", "r7rs.scm",
     "stringy", "generators.scm",
     "striped-ground-cricket", "animals.scm",
     "strlen", "libc.scm",
@@ -7438,7 +7434,7 @@ static const char *snd_names[11372] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5686);
+  s7_autoload_set_names(sc, snd_names, 5682);
 }
 #endif
 

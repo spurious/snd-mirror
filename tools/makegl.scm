@@ -86,14 +86,6 @@
 	 (if (char=? (data i) #\space)
 	     (return (substring data (+ i 1)))))))))
 
-(define (string-upcase name)
-  (let* ((len (string-length name))
-	 (str (make-string len)))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (set! (str i) (char-upcase (name i))))
-    str))
-
 (define (ref-arg? arg)
   (and (= (length arg) 3)
        (string? (caddr arg))))

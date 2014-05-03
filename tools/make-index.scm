@@ -71,9 +71,6 @@
 	((pred (car l)) (car l))
 	(else (find-if pred (cdr l)))))
 
-(define (string-downcase str)
-  (apply string (map char-downcase str)))
-
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))
 

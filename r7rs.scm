@@ -59,9 +59,7 @@
 
 
 (define char-foldcase char-downcase) 
-(define (string-downcase str) (apply string (map char-downcase str)))
 (define string-foldcase string-downcase)
-(define (string-upcase str) (apply string (map char-upcase str)))
 (define (digit-value c) (and (char-numeric? c) (- (char->integer c) (char->integer #\0))))
 
 
@@ -89,7 +87,7 @@
 (define open-binary-input-file open-input-file)
 (define open-binary-output-file open-output-file)
 (define (call-with-port port proc) 
-  ((if (input-port? port) call-with-input-port call-with-output-port) port proc))
+  ((if (input-port? port) call-with-input-file call-with-output-file) port proc))
 
 
 (define (bytevector-u8-ref b k) (b k))
