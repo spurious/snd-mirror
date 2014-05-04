@@ -632,6 +632,54 @@ plugging it into the following with-sound call:
 </pre>
 
 
+<!--
+(define samps 44100)
+
+(define (simp1)
+  (let ((freq (hz->radians 440.0)))
+    (do ((i 0 (+ i 1))
+	 (x 0.0 (+ x freq)))
+	((= i samps))
+      (outa i (sin x)))))
+
+(define (simp2)
+  (let ((osc (make-oscil 440.0)))
+    (do ((i 0 (+ i 1)))
+	((= i samps))
+      (outa i (oscil osc)))))
+
+(define (simp3)
+  (let ((freq (hz->radians 440.0)))
+    (let simp-loop ((i 0) (x 0.0))
+      (outa i (sin x))
+      (if (< i samps)
+	  (simp-loop (+ i 1) (+ x freq))))))
+
+(define simp4
+  (let ((freq (hz->radians 440.0)))
+    (lambda* ((i 0) (x 0.0))
+      (outa i (sin x))
+      (if (< i samps)
+	  (simp4 (+ i 1) (+ x freq))))))
+
+(define-macro (time a) 
+  `(let ((start (get-internal-real-time)))
+     ,a 
+     (* 1.0 (- (get-internal-real-time) start))))
+
+(with-sound (:clipped #f)
+  (format *stderr* "~,4F~%" (time (simp1)))
+  (format *stderr* "~,4F~%" (time (simp2)))
+  (format *stderr* "~,4F~%" (time (simp3)))
+  (format *stderr* "~,4F~%" (time (simp4))))
+
+#|
+0.0044
+0.0017
+0.0165
+0.0276
+|#
+-->
 
 <!-- INDEX generators:Generators -->
 

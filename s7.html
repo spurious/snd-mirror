@@ -3597,8 +3597,7 @@ is cleaner than call/cc, and much faster.
   ;; borrowed loosely from CL &mdash; predefine "return" as an escape
   `(<em class=red>call-with-exit</em> (lambda (return) ,@body)))
 
-(define-macro (while test . body)
-  ;; while loop with predefined break and continue
+(define-macro (while test . body)         ; while loop with predefined break and continue
   `(<em class=red>call-with-exit</em>
     (lambda (break) 
       (letrec ((continue (lambda () 
@@ -3608,6 +3607,20 @@ is cleaner than call/cc, and much faster.
 				 (continue))
 			       (break)))))
 	(continue)))))
+
+(define-macro (switch selector . clauses) ; C-style case (branches fall through unless break called)
+  `(<em class=red>call-with-exit</em>
+    (lambda (break)
+      (case ,selector
+	,@(do ((clause clauses (cdr clause))
+	       (new-clauses ()))
+	      ((null? clause) (reverse new-clauses))
+	    (set! new-clauses (cons `(,(caar clause) 
+				      ,@(cdar clause)
+				      ,@(map (lambda (nc)
+					       (apply values (cdr nc))) ; doubly spliced!
+					     (if (pair? clause) (cdr clause) ())))
+				    new-clauses)))))))
 
 (define (and-for-each func . args)
   ;; apply func to the first member of each arg, stopping if it returns #f

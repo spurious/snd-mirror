@@ -49919,11 +49919,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* batcher networks:
        *    ((0 2) (0 1) (1 2))
        *    ((0 2) (1 3) (0 1) (2 3) (1 2))
-       *    ((0 4) (0 2) (1 3) (2 4) (0 1) (2 3) (1 4) (1 2) (3 4))
-       *    ((0 4) (1 5) (0 2) (1 3) (2 4) (3 5) (0 1) (2 3) (4 5) (1 4) (1 2) (3 4))
-       *    ((0 4) (1 5) (2 6) (0 2) (1 3) (4 6) (2 4) (3 5) (0 1) (2 3) (4 5) (1 4) (3 6) (1 2) (3 4) (5 6))
-       *    ((0 4) (1 5) (2 6) (3 7) (0 2) (1 3) (4 6) (5 7) (2 4) (3 5) (0 1) (2 3) (4 5) (6 7) (1 4) (3 6) (1 2) (3 4) (5 6))
-       *
+       *    etc -- see batcher in s7test.scm (from Doug Hoyte)
        * but since it has to be done here by hand, it turns into too much code, 3 is:
        *    < l0 l2 ?
        *    no goto L1
@@ -68555,7 +68551,6 @@ s7_scheme *s7_init(void)
   sc->OUTER_ENVIRONMENT =     s7_define_safe_function(sc, "outer-environment",       g_outer_environment,      1, 0, false, H_outer_environment);
                               s7_define_safe_function(sc, "global-environment",      g_global_environment,     0, 0, false, H_global_environment);
                               s7_define_safe_function(sc, "current-environment",     g_current_environment,    0, 0, false, H_current_environment);
-			      /* why was this unsafe? */
                               s7_define_constant_function(sc, "initial-environment", g_initial_environment,    0, 0, false, H_initial_environment);
   sc->AUGMENT_ENVIRONMENT =   s7_define_function(sc,      "augment-environment",     g_augment_environment,    1, 0, true,  H_augment_environment);
   sc->AUGMENT_ENVIRONMENTB =  s7_define_function(sc,      "augment-environment!",    g_augment_environment_direct, 1, 0, true, H_augment_environment_direct);
