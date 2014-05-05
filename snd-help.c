@@ -2156,9 +2156,9 @@ The sonogram colors can be set in the View:Colors dialog.",
 void envelope_editor_dialog_help(void)
 {
   #if HAVE_SCHEME
-    #define define_envelope_name "defvar, define, or define-envelope"
+    #define define_envelope_name "define, or define-envelope"
     #define ramp_envelope_example "'(0 0 1 1)"
-    #define define_envelope_example "  (defvar ramp '(0 0 1 1))\n  (define-envelope pyramid '(0 0 1 1 2 0))"
+    #define define_envelope_example "  (define-envelope pyramid '(0 0 1 1 2 0))"
   #endif
   #if HAVE_RUBY
     #define define_envelope_name "define_envelope"

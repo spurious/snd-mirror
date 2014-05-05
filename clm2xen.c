@@ -2525,7 +2525,7 @@ static Xen g_oscil_bank(Xen g)
 /* ---------------- delay ---------------- */
 
 
-typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_MOVING_AVERAGE, G_MOVING_MAX, G_MOVING_NORM, G_FCOMB} xclm_delay_t;
+typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_FCOMB} xclm_delay_t;
 
 static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 {
@@ -2539,7 +2539,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
   mus_long_t max_size = -1, size = -1;
   int interp_type = (int)MUS_INTERP_NONE;
   mus_float_t *line = NULL;
-  mus_float_t scaler = 0.0, feedback = 0.0, feedforward = 0.0, sum = 0.0;
+  mus_float_t scaler = 0.0, feedback = 0.0, feedforward = 0.0;
   vct *initial_contents = NULL;
   Xen orig_v = Xen_false;            /* initial-contents can be a vct */
   mus_float_t initial_element = 0.0;
@@ -2550,9 +2550,6 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
   switch (choice)
     {
     case G_DELAY:          caller = S_make_delay;                                                       break;
-    case G_MOVING_AVERAGE: caller = S_make_moving_average;                                              break;
-    case G_MOVING_MAX:     caller = S_make_moving_max;                                                  break;
-    case G_MOVING_NORM:    caller = S_make_moving_norm;    scaler = 1.0;                                break;
     case G_COMB:           caller = S_make_comb;           scaler_key = argn; keys[argn++] = kw_scaler; break;
     case G_FCOMB:          caller = S_make_filtered_comb;  scaler_key = argn; keys[argn++] = kw_scaler; break;
     case G_NOTCH:          caller = S_make_notch;          scaler_key = argn; keys[argn++] = kw_scaler; break;
@@ -2565,12 +2562,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
       break;
     }
 
-  size_key = argn;                 keys[argn++] = kw_size;
-  if (choice == G_MOVING_NORM) 
-    {
-      scaler_key = argn;       keys[argn++] = kw_scaler;
-    }
-
+  size_key = argn;             keys[argn++] = kw_size;
   initial_contents_key = argn; keys[argn++] = kw_initial_contents;
   initial_element_key = argn;  keys[argn++] = kw_initial_element;
   max_size_key = argn;         keys[argn++] = kw_max_size;
@@ -2631,11 +2623,9 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
       switch (choice)
 	{
 	case G_DELAY: 
-	case G_MOVING_AVERAGE:
-	case G_MOVING_MAX:
 	  break;
 
-	case G_COMB: case G_NOTCH: case G_FCOMB: case G_MOVING_NORM:
+	case G_COMB: case G_NOTCH: case G_FCOMB:
 	  scaler = Xen_optkey_to_float(kw_scaler, keys[scaler_key], caller, orig_arg[scaler_key], scaler);
 	  break;
 
@@ -2711,13 +2701,6 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	max_size = 1;
       else max_size = size;
     }
-  if (((choice == G_MOVING_AVERAGE) || (choice == G_MOVING_MAX) || (choice == G_MOVING_NORM)) && 
-      (max_size != size))
-    {
-      if (size == 0)
-	Xen_out_of_range_error(caller, 0, C_llong_to_Xen_llong(size), "size = 0?");
-      else Xen_out_of_range_error(caller, 0, C_llong_to_Xen_llong(max_size), "max_size is irrelevant here");
-    }
 
   if (initial_contents == NULL)
     {
@@ -2729,19 +2712,12 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	{
 	  for (i = 0; i < max_size; i++) 
 	    line[i] = initial_element;
-	  sum = initial_element * size;
 	}
       else memset((void *)line, 0, max_size * sizeof(mus_float_t));
     }
   else
     {
       line = mus_vct_data(initial_contents);
-      if ((line) && (choice == G_MOVING_AVERAGE))
-	{
-	  sum = line[0];
-	  for (i = 1; i < size; i++)
-	    sum += line[i];
-	}
     }
 
   {
@@ -2750,9 +2726,6 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
     switch (choice)
       {
       case G_DELAY:           ge = mus_make_delay(size, line, max_size, (mus_interp_t)interp_type);                           break;
-      case G_MOVING_AVERAGE:  ge = mus_make_moving_average_with_initial_sum(size, line, sum);                                 break;
-      case G_MOVING_MAX:      ge = mus_make_moving_max(size, line);                                                           break;
-      case G_MOVING_NORM:     ge = mus_make_moving_norm(size, line, scaler);                                                  break;
       case G_COMB:            ge = mus_make_comb(scaler, size, line, max_size, (mus_interp_t)interp_type);                    break;
       case G_NOTCH:           ge = mus_make_notch(scaler, size, line, max_size, (mus_interp_t)interp_type);                   break;
       case G_ALL_PASS:        ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, (mus_interp_t)interp_type); break;
@@ -2855,12 +2828,153 @@ initial-contents can be either a list or a " S_vct "."
 }
 
 
+typedef enum {G_MOVING_AVERAGE, G_MOVING_MAX, G_MOVING_NORM} xclm_moving_t;
+
+static Xen g_make_moving_any(xclm_moving_t choice, Xen arglist)
+{
+  mus_any *ge = NULL;
+  const char *caller = NULL;
+  Xen args[8];
+  Xen keys[4];
+  int orig_arg[4] = {0, 0, 0, 0};
+  int vals, i, argn = 0, len = 0, arglist_len;
+  mus_long_t size = -1;
+  mus_float_t scaler = 1.0, sum = 0.0;
+  vct *initial_contents = NULL;
+  Xen orig_v = Xen_false, p; 
+  mus_float_t initial_element = 0.0;
+  mus_float_t *line = NULL;
+  int scaler_key = -1, size_key = -1, initial_contents_key = -1, initial_element_key = -1;
+  bool size_set = false;
+  mus_error_handler_t *old_error_handler;
+
+  size_key = argn;                 
+  keys[argn++] = kw_size;
+  if (choice == G_MOVING_NORM) 
+    {
+      scaler_key = argn;       
+      keys[argn++] = kw_scaler;
+    }
+  initial_contents_key = argn; 
+  keys[argn++] = kw_initial_contents;
+  initial_element_key = argn;  
+  keys[argn++] = kw_initial_element;
+
+  arglist_len = Xen_list_length(arglist);
+  if (arglist_len > 8) clm_error(caller, "too many args!", arglist);
+  for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
+  for (i = arglist_len; i < argn * 2; i++) args[i] = Xen_undefined;
+  vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
+
+  if (vals > 0)
+    {
+      if (!(Xen_is_keyword(keys[size_key])))
+	{
+	  size = Xen_optkey_to_mus_long_t(kw_size, keys[size_key], caller, orig_arg[size_key], size); /* size can  be 0? -- surely we need a line in any case? */
+	  if (size < 0)
+	    Xen_out_of_range_error(caller, orig_arg[size_key], keys[size_key], "size < 0?");
+	  if (size > mus_max_table_size())
+	    Xen_out_of_range_error(caller, orig_arg[size_key], keys[size_key], "size too large (see mus-max-table-size)");
+	  size_set = true;
+	}
+
+      if (choice == G_MOVING_NORM)
+	scaler = Xen_optkey_to_float(kw_scaler, keys[scaler_key], caller, orig_arg[scaler_key], scaler);
+
+      initial_element = Xen_optkey_to_float(kw_initial_element, keys[initial_element_key], caller, orig_arg[initial_element_key], initial_element);
+      if (!(Xen_is_keyword(keys[initial_contents_key])))
+	{
+	  if (!(Xen_is_keyword(keys[initial_element_key])))
+	    Xen_out_of_range_error(caller, 
+				   orig_arg[initial_contents_key], 
+				   keys[initial_contents_key], 
+				   "initial-contents and initial-element in same call?");
+	  if (mus_is_vct(keys[initial_contents_key]))
+	    {
+	      initial_contents = Xen_to_vct(keys[initial_contents_key]);
+	      orig_v = keys[initial_contents_key];
+	    }
+	  else
+	    {
+	      if (Xen_is_list(keys[initial_contents_key]))
+		{
+		  len = Xen_list_length(keys[initial_contents_key]);
+		  if (len <= 0) 
+		    Xen_error(NO_DATA,
+			      Xen_list_2(C_string_to_Xen_string("~A: initial-contents not a proper list?"),
+					 C_string_to_Xen_string(caller)));
+		  
+		  orig_v = xen_list_to_vct(keys[initial_contents_key]);
+		  initial_contents = Xen_to_vct(orig_v);
+		  /* do I need to protect this until we read its contents? -- no extlang stuff except error returns */
+		}
+	      else Xen_check_type(Xen_is_false(keys[initial_contents_key]), 
+				  keys[initial_contents_key], 
+				  orig_arg[initial_contents_key], 
+				  caller, "a " S_vct " or a list");
+	    }
+	  if (initial_contents)
+	    {
+	      if (size_set)
+		{
+		  if (size > mus_vct_length(initial_contents))
+		    Xen_out_of_range_error(caller, orig_arg[initial_contents_key], keys[initial_contents_key], "size > initial-contents length");
+		}
+	      else size = mus_vct_length(initial_contents);
+	    }
+	}
+    }
+
+  if (size < 0) size = 1;
+  if (size == 0)
+    Xen_out_of_range_error(caller, 0, C_llong_to_Xen_llong(size), "size = 0?");
+
+  if (initial_contents == NULL)
+    {
+      line = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+      if (line == NULL)
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line", caller));
+      orig_v = xen_make_vct(size, line);
+      if (initial_element != 0.0)
+	{
+	  for (i = 0; i < size; i++) 
+	    line[i] = initial_element;
+	  sum = initial_element * size;
+	}
+      else memset((void *)line, 0, size * sizeof(mus_float_t));
+    }
+  else
+    {
+      line = mus_vct_data(initial_contents);
+      if ((line) && (choice == G_MOVING_AVERAGE))
+	{
+	  sum = line[0];
+	  for (i = 1; i < size; i++)
+	    sum += line[i];
+	}
+    }
+
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  switch (choice)
+    {
+    case G_MOVING_AVERAGE:  ge = mus_make_moving_average_with_initial_sum(size, line, sum); break;
+    case G_MOVING_MAX:      ge = mus_make_moving_max(size, line);                           break;
+    case G_MOVING_NORM:     ge = mus_make_moving_norm(size, line, scaler);                  break;
+    }
+  mus_error_set_handler(old_error_handler);
+
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
+  return(clm_mus_error(local_error_type, local_error_msg, caller));
+}
+
+
 static Xen g_make_moving_average(Xen args) 
 {
   #define H_make_moving_average "(" S_make_moving_average " (size) (initial-contents) (initial-element 0.0)): \
 return a new moving_average generator. initial-contents can be either a list or a " S_vct "."
 
-  return(g_make_delay_1(G_MOVING_AVERAGE, args));
+  return(g_make_moving_any(G_MOVING_AVERAGE, args));
 }
 
 
@@ -2869,7 +2983,7 @@ static Xen g_make_moving_max(Xen args)
   #define H_make_moving_max "(" S_make_moving_max " (size) (initial-contents) (initial-element 0.0)): \
 return a new moving-max generator. initial-contents can be either a list or a " S_vct "."
 
-  return(g_make_delay_1(G_MOVING_MAX, args));
+  return(g_make_moving_any(G_MOVING_MAX, args));
 }
 
 
@@ -2877,7 +2991,7 @@ static Xen g_make_moving_norm(Xen args)
 {
   #define H_make_moving_norm "(" S_make_moving_norm " (size (scaler 1.0))): return a new moving-norm generator."
 
-  return(g_make_delay_1(G_MOVING_NORM, args));
+  return(g_make_moving_any(G_MOVING_NORM, args));
 }
 
 

@@ -13099,10 +13099,6 @@ EDITS: 2
     (let ((err (catch #t (lambda () (make-moving-average :size 0)) (lambda args args))))
       (if (not (eq? (car err) 'out-of-range))
 	  (snd-display #__line__ ";make-average size==0 error message: ~A" err)))
-    (let ((err (catch #t (lambda () (make-moving-average :max-size 0)) (lambda args args))))
-      (if (not (eq? (car err) 'out-of-range))
-	  (snd-display #__line__ ";make-average max-size error message: ~A" err)))
-    
 
     (let ((gen (make-moving-max 4))
 	  (v0 (make-float-vector 10))
@@ -13165,10 +13161,6 @@ EDITS: 2
     (let ((err (catch #t (lambda () (make-moving-max :size 0)) (lambda args args))))
       (if (not (eq? (car err) 'out-of-range))
 	  (snd-display #__line__ ";make-max size==0 error message: ~A" err)))
-    (let ((err (catch #t (lambda () (make-moving-max :max-size 0)) (lambda args args))))
-      (if (not (eq? (car err) 'out-of-range))
-	  (snd-display #__line__ ";make-max max-size error message: ~A" err)))
-    
 
     (let ((gen (make-moving-norm 4))
 	  (v0 (make-float-vector 10))
@@ -24706,9 +24698,9 @@ EDITS: 2
 
 ;;; ---------------- test 11: dialogs ----------------
 
-(defvar env1 '(0 0 1 0))
-(defvar env2 '(0 0 1 1))
-(defvar ramp-up-env '(0 0 1 1))
+(define-envelope env1 '(0 0 1 0))
+(define-envelope env2 '(0 0 1 1))
+(define-envelope ramp-up-env '(0 0 1 1))
 (define-envelope env4 '(0 1 1 0))
 
 (define (snd_test_11)

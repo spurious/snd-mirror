@@ -11824,22 +11824,6 @@ Forth:  $" ramp" '( 0.0 0.0 1.0 1.0 ) 1.0 define-envelope
 <div class="spacer"></div>
 
 
-<!-- defvar -->
-<pre class="indented">
-<em class=def id="defvar">defvar</em> var val
-</pre>
-
-<p>This is the same as (define var val) except that the envelope editor keeps track
-of 'var' thereafter and treats lists as envelopes.
-defvar exists in this context so that Snd and the CL version of CLM can share envelope files.
-</p>
-
-<pre class="indented">
-(defvar a-func '(0 0 1 1))
-</pre>
-<div class="spacer"></div>
-
-
 <!-- delete-file-filter -->
 <pre class="indented">
 <em class=def id="deletefilefilter">delete-file-filter</em> index

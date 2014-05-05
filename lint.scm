@@ -633,7 +633,7 @@
 			 (set! (h op) #t))
 		       '(quote if begin let let* letrec cond case or and do set! 
 			       with-environment with-baffle
-			       lambda lambda* define define* defvar define-envelope
+			       lambda lambda* define define* define-envelope
 			       define-macro define-macro* define-bacro define-bacro* 
 			       define-constant))
 		      h))
@@ -2339,7 +2339,7 @@
 	    ((begin)
 	     (load-walk (cdr form)))
 	    
-	    ((define-constant defvar define-envelope)
+	    ((define-constant define-envelope)
 	     (hash-table-set! globals (cadr form) (list (cadr form) #f #f)))
 	    
 	    ((defmacro defmacro*)
@@ -2693,7 +2693,7 @@
 		    
 		    ;; ---------------- define ----------------		  
 		    ((define define* 
-		       define-constant defvar define-envelope
+		       define-constant define-envelope
 		       define-expansion define-macro define-macro* define-bacro define-bacro*
 		       definstrument defanimal)
 
@@ -2708,7 +2708,7 @@
 			   
 			   (if (symbol? sym)
 			       (begin
-				 (if (memq head '(define define-constant defvar define-envelope))
+				 (if (memq head '(define define-constant define-envelope))
 				     (let ((len (length form)))
 				       (if (not (= len 3))
 					   (lint-format "~S has ~A value~A?"
@@ -3378,7 +3378,8 @@
 		    (line 0)
 		    (last-form #f)
 		    (last-line-number -1))
-		(format outport ";~A~%" file)
+		(if (not (string=? file "t631-temp.scm"))
+		    (format outport ";~A~%" file))
 		(set! loaded-files (cons file loaded-files))
 		
 		(do ((form (read fp) (read fp)))

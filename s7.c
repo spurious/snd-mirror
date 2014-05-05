@@ -24990,7 +24990,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       if (use_write == USE_READABLE_WRITE)
 	write_macro_readably(sc, obj, port);
       else port_write_string(port)(sc, "#<macro>", 8, port);
-      /* so letrec* (for example) is displayed as #<macro> -- not ideal! */
       break;
 
     case T_BACRO:
@@ -45349,7 +45348,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		if ((len < GC_TRIGGER_SIZE) &&
 		    (pairs == (quotes + all_x_count(car_x))))
 		  {
-		    /* fprintf(stderr, "all_x: %s\n", DISPLAY(car_x)); */
 		    set_unsafely_optimized(car_x);
 		    set_optimize_data(car_x, hop + OP_UNKNOWN_ALL_X);
 		    set_ecdr(car_x, NULL);
@@ -54390,50 +54388,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (has_methods(f)) break;
 			if (closure_arity_to_int(sc, f) == 1)
 			  {
-			    if (is_safe_closure(f))
-			      {
-				/* if tail calls are marked in form_is_safe (T_PRINT_NAME used), we can check here (and in corresponding places)
-				 * for known cases:
-				 *    if (is_tail_call(code))
-				 *     {
-				 *       s7_pointer body;
-				 *       body = closure_body(f);
-				 *       if ((is_null(cdr(body))) &&
-				 *    	     (typesflag(car(body)) == SYNTACTIC_PAIR) &&
-				 *    	     ((opcode_t)lifted_op(car(body)) == OP_SAFE_IF_CSC_X_P) &&
-				 *    	     (car(code) == car(cadddr(car(body)))))
-				 *    	   lifted_op(car(body)) = OP_SAFE_IF_CSC_X_T;
-				 *     }
-				 * that is, check for the very special IF_SCS_X_P case where we are at P
-				 *  if this is called 1000000 times, we save 50M in valgrind -- not enough to make
-				 *  more than (say) 5% difference in any real code.  (A factor of 2 overall in a
-				 *  bare timing test).  So... too much code for the gain.
-				 * 
-				 * The corresponding eval-time block is:
-				 *    case OP_SAFE_IF_CSC_X_T: 
-				 *      {
-				 *	  s7_pointer code, slot, arg;
-				 *	  code = sc->code;
-				 *	  slot = environment_slots(sc->envir);
-				 *	  arg = cadr(caddr(code));
-				 *	  while (true)
-				 *	    {
-				 *	      car(sc->T2_1) = slot_value(slot);
-				 *	      car(sc->T2_2) = fcdr(code);
-				 *	      if (is_true(sc, c_call(car(code))(sc, sc->T2_1)))
-				 *	        {
-				 *		  sc->value = cadr(code);
-				 *		  if (is_symbol(sc->value))
-				 *		    sc->value = find_symbol_checked(sc, sc->value);
-				 *		  goto START;
-				 *	        }
-				 *	      slot_value(slot) = c_call(arg)(sc, cdr(arg));
-				 *	    }}
-				 */
-				set_optimize_data(code, OP_SAFE_CLOSURE_opCq);
-			      }
-			    else set_optimize_data(code, OP_CLOSURE_opCq);
-
+			    set_optimize_data(code, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_opCq : OP_CLOSURE_opCq);
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))))
 			      set_hopping(code);
@@ -62412,6 +62367,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       optimize(sc, closure_body(sc->value), 0, sc->NIL);
 
+      /* here sc->value is the macro, sc->code is its name (a symbol),
+       *   (symbol? (define (f a) (+ a 1))) -> #t, so I guess define-macro should follow suit.
+       */
       sc->value = sc->code;
       goto START;
       
@@ -68280,7 +68238,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define",            OP_DEFINE);
   assign_syntax(sc, "define*",           OP_DEFINE_STAR);
   assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);  /* unsetabble and unrebindable */
-  assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
+  assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO); 
   assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR); 
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);     /* macro expansion in calling environment */

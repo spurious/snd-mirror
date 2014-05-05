@@ -140,7 +140,6 @@
 	      ps-snd ps-chn ps-ax cr)
     (free-cairo cr)))
 
-(define old-defvar defvar)
 (define-macro (defvar name value) `(define ,name ,value))
 
 (define-macro (setf a b) `(set! ,a ,b))
@@ -186,9 +185,6 @@
 (define progn begin)
 
 (load "cmn-glyphs.lisp")
-
-(set! defvar old-defvar)
-;(set! declare old-declare)
 
 
 

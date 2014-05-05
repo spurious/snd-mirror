@@ -947,10 +947,9 @@ the result in the calling environment.
   (let ((args (gensym)))
     (apply <em class=red>define-bacro</em>
 	   `((setf-1 . ,args)        
-	     (if (not (null? ,args))
-		 (begin
-		   (apply set! (car ,args) (cadr ,args) ())
-		   (apply setf (cddr ,args))))))
+	     (unless (null? ,args)
+	       (apply set! (car ,args) (cadr ,args) ())
+	       (apply setf (cddr ,args)))))
     setf-1))
 </pre>
 
@@ -968,7 +967,17 @@ See s7test.scm for many examples including such perennial favorites as
 when, loop, dotimes, do*, enum, pushnew, and defstruct.
 </p>
 
+<!-- 
+  one problem with a bacro: since it sheds its define-time environment,
+     it has no notion of a closure:
+  (define call-m 
+    (let ((x 1))
+      (symbol->value (define-bacro (m a) `(+ ,a ,x)))))
+  now (call-m 1) -> x: unbound variable
+  if we had used define-macro instead, we'd get 2
 
+  maybe this is too foreign to scheme -- is there some other way?
+-->
 
 <blockquote>
 
@@ -2772,10 +2781,9 @@ such as abs, we need to put it back to its original form:
 		   (environment-&gt;list (current-environment)))))
       (for-each                       ; see if any built-in functions were stepped on
        (lambda (sym)
-	 (if (not (assoc (car sym) e))
-	     (begin
-	       (format #t "~S clobbered ~A~%" file (car sym))
-	       (apply set! (car sym) (list (cdr (assoc (car sym) new-e)))))))
+	 (unless (assoc (car sym) e)
+	   (format #t "~S clobbered ~A~%" file (car sym))
+	   (apply set! (car sym) (list (cdr (assoc (car sym) new-e))))))
        new-e))))
 
 ;; say libtest.scm has the line (set! abs odd?)
@@ -4729,8 +4737,8 @@ loads that file; if a function, it is called with one argument, the current (cal
 ;; here is the cload.scm case, loading j0 from the math library if it is called:
 (autoload 'j0
 	  (lambda (e)
-	    (if (not (provided? 'cload.scm))
-		(load "cload.scm"))
+	    (unless (provided? 'cload.scm)
+	      (load "cload.scm"))
 	    (c-define '(double j0 (double)) "" "math.h")
 	    (augment-environment! e (cons 'j0 j0))))
 </pre>
@@ -5200,8 +5208,8 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 
 <pre class="indented">
 (define-macro (defvar name value) 
-  `(if (not (defined? ',name)) 
-       (define ,name ,value)))
+  `(unless (defined? ',name)
+     (define ,name ,value)))
 </pre>
 
 <p>
@@ -5442,16 +5450,33 @@ if a bignum is involved, either here or in a hash-table, s7 uses equal?.
 </p>
 
 
-<!--
+<div class="separator"></div>
+
 <p>
-<b>define-expansion</b> defines read-time macros, which are just dangerous enough that
-I probably shouldn't document them.  It has the same syntax as
-define-macro, and the same result except that the macro is
-dealt with at read time!  (This means it does not respect attempts to
-bind it to something else, which is asking for confusion).
-This should be named define-reader-macro.
+<b>define-expansion</b> defines a reader macro.
+It has the same syntax as
+define-macro, and the same result except that the macro
+expands at read time.  Since the reader knows almost nothing
+about the code it is reading, 
+you need to make sure the expansion name is unique!
+The reader does know about global variables, so:
 </p>
--->
+
+<pre class="indented">
+(define *debugging* #t)
+
+(define-expansion (assert assertion)
+  (if *debugging*          ; or maybe better, (eq? (symbol-&gt;value '*debugging*) #t)
+      `(unless ,assertion
+	 (format *stderr* "~A: ~A failed~%" __func__ ',assertion))
+      (values)))
+</pre>
+
+<p>Now the assertion code is only present in the function body (or wherever)
+if *debugging* is #t; otherwise assert expands into nothing.
+</p>
+
+
 
 
 <div class="separator"></div>
@@ -5539,6 +5564,7 @@ same kind of name (or +pi+ to show it is a constant?).
 All the environment function names are bad &mdash; "environment" by itself
 is annoying. 
 get-output-string should be current-output-string. write-char behaves like display, not write.  symbol-access is not ideal.
+define-expansion should be named define-reader-macro.
 </p>
 
 <p>
@@ -6084,8 +6110,8 @@ glambda
 <pre class="indented">
 &gt; (define-macro (enum . args)
     `(for-each (let ((ctr -1))
-                 (symbol-&gt;value     ; perhaps define-macro and friends should return the value
-                   (define-macro (m a) ;   I think they return the symbol for the REPL's benefit(?)
+                 (symbol-&gt;value
+                   (define-macro (m a)
                      (set! ctr (+ ctr 1)) 
                      `(apply define ',a ,ctr ()))))
                ',args))
