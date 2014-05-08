@@ -159,7 +159,9 @@
 #define S_is_moving_max              "moving-max?"
 #define S_moving_norm                "moving-norm"
 #define S_is_moving_norm             "moving-norm?"
+#if (!DISABLE_DEPRECATED)
 #define S_multiply_arrays            "multiply-arrays"
+#endif
 #define S_mus_apply                  "mus-apply"
 #define S_mus_array_print_length     "mus-array-print-length"
 #define S_mus_channel                "mus-channel"

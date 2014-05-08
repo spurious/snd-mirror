@@ -76,12 +76,6 @@
 	   (* fpart (- (wave (modulo (+ ipart 1) n)) 
 		       (wave ipart)))))))
 
-(define (big-multiply-arrays v1 v2)
-  (let ((len (min (length v1) (length v2))))
-    (do ((i 0 (+ i 1)))
-	((= i len) v1)
-      (set! (v1 i) (* (v1 i) (v2 i))))))
-
 
 
 ;;; -------- polynomial --------

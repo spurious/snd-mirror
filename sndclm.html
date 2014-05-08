@@ -10288,7 +10288,6 @@ The upper sidebands may foldover (alias); if it's a problem, low-pass filter the
 <pre class="indented">
 <em class=def id="fft">mus-fft</em> rdat idat fftsize sign
 <em class=def id="make-fft-window">make-fft-window</em> type size (beta 0.0) (alpha 0.0)
-<em class=def id="multiply-arrays">multiply-arrays</em> rdat window
 <em class=def id="rectangulartopolar">rectangular-&gt;polar</em> rdat idat
 <em class=def id="rectangulartomagnitudes">rectangular-&gt;magnitudes</em> rdat idat
 <em class=def id="polartorectangular">polar-&gt;rectangular</em> rdat idat
@@ -10356,7 +10355,6 @@ sinc-window
 
 <p>rectangular-&gt;polar and polar-&gt;rectangular change how we view the FFT data: in polar or rectangular coordinates.
 rectangular-&gt;magnitudes is the same as rectangular-&gt;polar, but only calculates the magnitudes.
-multiply-arrays does an element-wise multiply of two float-vectors.
 autocorrelate performs an (in place) autocorrelation of 'data' (a float-vector).  See <a href="#moving-pitch">moving-pitch</a> in generators.scm, 
 or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 correlate performs an in-place cross-correlation of data1 and data2 (see, for example, <a href="sndscm.html#snddiffdoc">snddiff</a>).

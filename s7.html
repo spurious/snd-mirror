@@ -961,23 +961,26 @@ just sees #&lt;unspecified&gt; &mdash; so this is as fast as a function call.
 The setf argument is a gensym (created when setf is defined) so that its name does not shadow any existing
 variable.  Bacros expand in the calling environment, and a normal argument name
 might shadow something in that environment while the bacro is begin expanded.
-</p>
-<p>
 See s7test.scm for many examples including such perennial favorites as
-when, loop, dotimes, do*, enum, pushnew, and defstruct.
+loop, dotimes, do*, enum, pushnew, and defstruct.
 </p>
 
-<!-- 
-  one problem with a bacro: since it sheds its define-time environment,
-     it has no notion of a closure:
-  (define call-m 
-    (let ((x 1))
-      (symbol->value (define-bacro (m a) `(+ ,a ,x)))))
-  now (call-m 1) -> x: unbound variable
-  if we had used define-macro instead, we'd get 2
+<p>
+There is (at least) one problem with a bacro: since it sheds its define-time environment,
+it has no notion of a closure:
+</p>
 
-  maybe this is too foreign to scheme -- is there some other way?
--->
+<pre class="indented">
+(define call-bac
+  (let ((<em class=red>x</em> 2))
+    (symbol-&gt;value (define-bacro (m a) `(+ ,a ,<em class=red>x</em>)))))
+
+&gt; (call-bac 1) 
+x: unbound variable
+</pre>
+<p>
+A macro here returns 3.
+</p>
 
 <blockquote>
 
@@ -5516,6 +5519,8 @@ I think I could wave my hands and mumble about "aggressive lexical scope" or som
 choice here is that speed trumps that ol' hobgoblin consistency.  If you want to change gcd to +, do it before
 loading code that calls gcd. 
 </p>
+
+<!-- another case:  (with-environment (environment* '+ -) (+ 2 3)) -> 5 -->
 
 </div>
 

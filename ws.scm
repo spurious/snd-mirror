@@ -25,7 +25,7 @@
 (define *clm-delete-reverb*     #f)          ; should with-sound clean up reverb stream
 
 (define *to-snd*                #t)
-(define *default-player* (lambda (s) (play s :wait #t))) ; we need to preserve "play" because it is used as a keyword argument in with-sound
+(define *default-player* (lambda (s) (play s :wait #t)))
 
 (set! *clm-file-buffer-size* 65536)
 

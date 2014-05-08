@@ -4489,7 +4489,7 @@ static void draw_graph_cursor(chan_info *cp)
   if (cp->just_zero)
     {
       cp->cy = local_grf_y(0.0, ap);
-      cp->old_cy = local_grf_y(chn_sample(cursor_sample(cp), cp, cp->edit_ctr), ap);
+      /* cp->old_cy = local_grf_y(chn_sample(cursor_sample(cp), cp, cp->edit_ctr), ap); */
     }
   else cp->cy = local_grf_y(chn_sample(cursor_sample(cp), cp, cp->edit_ctr), ap);
   

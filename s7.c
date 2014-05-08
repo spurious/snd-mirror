@@ -45999,8 +45999,10 @@ static s7_pointer check_when(s7_scheme *sc)
     set_syntax_op(sc->code, sc->WHEN_UNCHECKED);
 
   if (is_symbol(car(sc->code)))
-        set_syntax_op(sc->code, sc->WHEN_S);
-
+    {
+      if (ecdr(sc->code)) 
+	set_syntax_op(sc->code, sc->WHEN_S);
+    }
   return(sc->code);
 }
 
@@ -46017,10 +46019,14 @@ static s7_pointer check_unless(s7_scheme *sc)
     set_syntax_op(sc->code, sc->UNLESS_UNCHECKED);
 
   if (is_symbol(car(sc->code)))
-        set_syntax_op(sc->code, sc->UNLESS_S);
-
+    {
+      if (ecdr(sc->code)) /* unless and when are not special here I think, but the user has to make an heroic effort to screw up */
+	set_syntax_op(sc->code, sc->UNLESS_S);
+    }
   return(sc->code);
 }
+
+/* (apply unless (list values :key #f)) */
 
 
 static s7_pointer check_case(s7_scheme *sc)
@@ -49282,7 +49288,7 @@ static void fixup_macro_overlay(s7_scheme *sc, s7_pointer p)
 {
   if ((is_pair(p)) &&
       (is_proper_list(sc, p)) &&
-      (!is_overlaid(sc->code)))
+      (!is_overlaid(p))) /* this was sc->code?! -- that can't be right, and probably doesn't matter anyway */
     {
       if (is_pair(cdr(p)))
 	{
@@ -69546,5 +69552,9 @@ int main(int argc, char **argv)
  *
  * maybe read/write-bytevector should be built-in -- file_read basically
  *   others of that ilk: open-input|output-bytevector
+ *
+ * other fv cleanups: clear-array, possibly mus_arrays_are_equal (clear-array is used a lot in *.ins)
+ *   array<->file use float-vector/vct? mus_array_print_length? mus_array_interp?
+ *   mus_array_to_list in vct.c?
  */
 

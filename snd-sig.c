@@ -6076,13 +6076,61 @@ frequency whistles leaking through."
 }
 
 
-#define HAVE_NESTED_FUNCTIONS (__GNUC__ && (!__cplusplus) && (!__clang__) && (__GNUC__ >= 4) && __linux__)
-
-/* in OSX, we need the -fnested-functions compiler flag */
-
-#if HAVE_NESTED_FUNCTIONS
 
 #define S_find_min_peak_phases "find-min-peak-phases"
+
+static void try_case(int i, int n, int dist, int size,
+		     mus_float_t best, 
+		     mus_float_t *current_max, int *current_phases, mus_float_t **current_sum, mus_float_t **sines, 
+		     int *sizes, int *best_phases)
+{
+  if ((current_max[i - 1] - n + i) < best)
+    {
+      int j, k, kk, n1, isize;
+      
+      n1 = n - 1;
+      isize = sizes[i];
+      
+      for (j = 0; j < dist; j++)
+	{
+	  /* j is current phase of i-th component */
+	  
+	  current_max[i] = 0.0;
+	  current_phases[i] = j;
+	  
+	  for (k = 0, kk = j; k < size; k++, kk++)
+	    {
+	      mus_float_t fval;
+	      if (kk >= isize) kk = 0;
+	      fval = current_sum[i - 1][k] + sines[i][kk];
+	      current_sum[i][k] = fval;
+	      fval = fabs(fval);
+	      if (fval > current_max[i])
+		{
+		  current_max[i] = fval;
+		  if ((i == n1) &&
+		      (fval > best))
+		    break;
+		}
+	    }
+	  
+	  if (i == n1)
+	    {
+	      if (current_max[i] < best)
+		{
+		  int m;
+		  best = current_max[i];
+		  for (m = 0; m < n; m++)
+		    best_phases[m] = current_phases[m];
+		}
+	    }
+	  else try_case(i + 1, n, dist, size, best,
+			current_max, current_phases, current_sum, sines, 
+			sizes, best_phases);
+	}
+    }
+}
+
 
 static Xen g_find_min_peak_phases(Xen arglist)
 {
@@ -6097,54 +6145,6 @@ that give a minimum peak amplitude when the signals are added together."
   mus_float_t **current_sum;
   mus_float_t **sines;
   int *sizes;
-  auto void try_case(int i);
-
-  void try_case(int i)
-  {
-    if ((current_max[i - 1] - n + i) < best)
-      {
-	int j, k, kk, n1, isize;
-
-	n1 = n - 1;
-	isize = sizes[i];
-
-	for (j = 0; j < dist; j++)
-	  {
-	    /* j is current phase of i-th component */
-
-	    current_max[i] = 0.0;
-	    current_phases[i] = j;
-
-	    for (k = 0, kk = j; k < size; k++, kk++)
-	      {
-		mus_float_t fval;
-		if (kk >= isize) kk = 0;
-		fval = current_sum[i - 1][k] + sines[i][kk];
-		current_sum[i][k] = fval;
-		fval = fabs(fval);
-		if (fval > current_max[i])
-		  {
-		    current_max[i] = fval;
-		    if ((i == n1) &&
-			(fval > best))
-		      break;
-		  }
-	      }
-
-	    if (i == n1)
-	      {
-		if (current_max[i] < best)
-		  {
-		    int m;
-		    best = current_max[i];
-		    for (m = 0; m < n; m++)
-		      best_phases[m] = current_phases[m];
-		  }
-	      }
-	    else try_case(i + 1);
-	  }
-      }
-  }
 
   int i;
   mus_float_t cmax;
@@ -6190,7 +6190,9 @@ that give a minimum peak amplitude when the signals are added together."
   for (i = 0; i < size; i++)
     current_sum[0][i] = sines[0][i];
 
-  try_case(1);
+  try_case(1, n, dist, size, best,
+	   current_max, current_phases, current_sum, sines, 
+	   sizes, best_phases);
 
   for (i = 0; i < n; i++)
     result = Xen_cons(C_int_to_Xen_integer(best_phases[i]), result);
@@ -6414,6 +6416,109 @@ typedef struct {
 
 #define S_fpsap "fpsap"
 
+static mus_float_t saved_min(int ch, int nn)
+{
+  if (nn <= 128)
+    {
+      switch (ch)
+	{
+	case ALL:   return(all_mins[nn - 1]);
+	case ODD:   return(odd_mins[nn - 1]);
+	case EVEN:  return(even_mins[nn - 1]);
+	case PRIME: return(prime_mins[nn - 1]);
+	}
+    }
+  if (nn == 256) return(min_8[ch]);
+  if (nn == 512) return(min_9[ch]);
+  if (nn == 1024) return(min_10[ch]);
+  if (nn == 2048) return(min_11[ch]);
+  return((mus_float_t)nn);
+}
+
+
+static mus_float_t get_peak(int choice, int fft_size, int n, mus_float_t *phases, mus_float_t *rl, mus_float_t *im)
+{
+  int i, m;
+  mus_float_t pi2, mx_sin, mx_cos;
+  
+  pi2 = M_PI / 2.0;
+  memset((void *)rl, 0, fft_size * sizeof(mus_float_t));
+  memset((void *)im, 0, fft_size * sizeof(mus_float_t));
+  
+  for (m = 0; m < n; m++)
+    {
+      int bin;
+      mus_float_t phi;
+      phi = (M_PI * phases[m]) + pi2;
+      if (choice == ALL)
+	bin = m + 1;
+      else
+	{
+	  if (choice == ODD)
+	    bin = (m * 2) + 1;
+	  else 
+	    {
+	      if (choice == EVEN)
+		{
+		  bin = m * 2;
+		  if (bin == 0) bin = 1;
+		}
+	      else bin = primes[m];
+	    }
+	}
+      rl[bin] = cos(phi);
+      im[bin] = sin(phi);
+    }
+  
+  mus_fft(rl, im, fft_size, -1);
+  /* real part is sine reconstruction, imaginary part is cosine, we're interested in both! */
+  /*   we could also add and subtract the 2 to get 2 more cases "for free", amp sqrt(2), phase asin(cos(0)/sqrt(2)) */
+  /*   and repeat this with a shift (rotation from i) for 2n other cases */
+  /*   resultant amp is between 0 and 2 (cosine) */
+  
+  mx_sin = fabs(rl[0]);
+  mx_cos = fabs(im[0]);
+  for (i = 1; i < fft_size; i++)
+    {
+      mus_float_t mxtemp;
+      mxtemp = fabs(rl[i]);
+      if (mxtemp > mx_sin)
+	mx_sin = mxtemp;
+      mxtemp = fabs(im[i]);
+      if (mxtemp > mx_cos)
+	mx_cos = mxtemp;
+    }
+  
+  if (mx_sin <= mx_cos)
+    return(mx_sin);
+  
+  /* use the cosine case, but make it sine-based with 0.0 initial phase for the fundamental */
+  for (m = 1; m < n; m++)
+    {
+      int bin;
+      if (choice == ALL)
+	bin = m + 1;
+      else
+	{
+	  if (choice == ODD)
+	    bin = (m * 2) + 1;
+	  else 
+	    {
+	      if (choice == EVEN)
+		{
+		  bin = m * 2;
+		  if (bin == 0) bin = 1;
+		}
+	      else bin = primes[m];
+	    }
+	}
+      phases[m] += (0.5 * (bin - 1));
+    }
+  
+  return(mx_cos);
+}
+  
+
 static Xen g_fpsap(Xen x_choice, Xen x_n, Xen start_phases, Xen x_size, Xen x_increment)
 {
   #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
@@ -6434,238 +6539,6 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   mus_float_t *rl, *im;
   const char *file = NULL;
   bool just_best = false;
-
-  auto mus_float_t saved_min(int ch, int nn);
-  auto mus_float_t get_peak(mus_float_t *phases);
-  auto pk_data *next_choice(pk_data *data);
-  auto bool day(void);
-
-  mus_float_t saved_min(int ch, int nn)
-  {
-    if (nn <= 128)
-      {
-	switch (ch)
-	  {
-	  case ALL:   return(all_mins[nn - 1]);
-	  case ODD:   return(odd_mins[nn - 1]);
-	  case EVEN:  return(even_mins[nn - 1]);
-	  case PRIME: return(prime_mins[nn - 1]);
-	  }
-      }
-    if (nn == 256) return(min_8[ch]);
-    if (nn == 512) return(min_9[ch]);
-    if (nn == 1024) return(min_10[ch]);
-    if (nn == 2048) return(min_11[ch]);
-    return((mus_float_t)nn);
-  }
-
-  mus_float_t get_peak(mus_float_t *phases)
-  {
-    int i, m;
-    mus_float_t pi2, mx_sin, mx_cos;
-
-    pi2 = M_PI / 2.0;
-    memset((void *)rl, 0, fft_size * sizeof(mus_float_t));
-    memset((void *)im, 0, fft_size * sizeof(mus_float_t));
-
-    for (m = 0; m < n; m++)
-      {
-	int bin;
-	mus_float_t phi;
-	phi = (M_PI * phases[m]) + pi2;
-	if (choice == ALL)
-	  bin = m + 1;
-	else
-	  {
-	    if (choice == ODD)
-	      bin = (m * 2) + 1;
-	    else 
-	      {
-		if (choice == EVEN)
-		  {
-		    bin = m * 2;
-		    if (bin == 0) bin = 1;
-		  }
-		else bin = primes[m];
-	      }
-	  }
-	rl[bin] = cos(phi);
-	im[bin] = sin(phi);
-      }
-
-    mus_fft(rl, im, fft_size, -1);
-    /* real part is sine reconstruction, imaginary part is cosine, we're interested in both! */
-    /*   we could also add and subtract the 2 to get 2 more cases "for free", amp sqrt(2), phase asin(cos(0)/sqrt(2)) */
-    /*   and repeat this with a shift (rotation from i) for 2n other cases */
-    /*   resultant amp is between 0 and 2 (cosine) */
-
-    mx_sin = fabs(rl[0]);
-    mx_cos = fabs(im[0]);
-    for (i = 1; i < fft_size; i++)
-      {
-	mus_float_t mxtemp;
-	mxtemp = fabs(rl[i]);
-	if (mxtemp > mx_sin)
-	  mx_sin = mxtemp;
-	mxtemp = fabs(im[i]);
-	if (mxtemp > mx_cos)
-	  mx_cos = mxtemp;
-      }
-
-    if (mx_sin <= mx_cos)
-      return(mx_sin);
-
-    /* use the cosine case, but make it sine-based with 0.0 initial phase for the fundamental */
-    for (m = 1; m < n; m++)
-      {
-	int bin;
-	if (choice == ALL)
-	  bin = m + 1;
-	else
-	  {
-	    if (choice == ODD)
-	      bin = (m * 2) + 1;
-	    else 
-	      {
-		if (choice == EVEN)
-		  {
-		    bin = m * 2;
-		    if (bin == 0) bin = 1;
-		  }
-		else bin = primes[m];
-	      }
-	  }
-	phases[m] += (0.5 * (bin - 1));
-      }
-
-    return(mx_cos);
-  }
-  
-  pk_data *next_choice(pk_data *data)
-  {
-    mus_float_t *phases;
-    mus_float_t cur_min, temp_min = 100000.0, pk = 100000.0;
-    int len, local_try, i, k, local_tries;
-    pk_data *new_pk;
-
-    new_pk = free_choices[--free_top];
-    cur_min = data->pk;
-    phases = data->phases;
-    len = n;
-    local_tries = RETRIES + day_counter * RETRY_MULT;
-
-    /* try to find a point nearby that is better */
-    for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
-      {
-	for (i = 1; i < len; i++)
-	  temp_phases[i] = fmod(phases[i] + local_random(increment) + local_random(increment), 2.0); /* not mus_frandom! */
-	pk = get_peak(temp_phases);
-	
-	if (pk < temp_min)
-	  {
-	    temp_min = pk;
-	    new_pk->pk = pk;
-	    for (k = 1; k < len; k++) new_pk->phases[k] = temp_phases[k];	    
-	  }
-      }
-    
-    /* if a better point is found, try to follow the slopes */
-    if (new_pk->pk < data->pk)
-      {
-	int happy = 3;
-	for (k = 1; k < len; k++)
-	  diff_phases[k] = new_pk->phases[k] - data->phases[k];
-
-	while (happy > 0)
-	  {
-	    for (k = 1; k < len; k++)
-	      temp_phases[k] = fmod(new_pk->phases[k] + local_frandom(diff_phases[k]), 2.0); /* use frandom 30-mar-11 */
-	    pk = get_peak(temp_phases);
-
-	    if (pk < new_pk->pk)
-	      {
-		new_pk->pk = pk;
-		for (k = 1; k < len; k++) new_pk->phases[k] = temp_phases[k];
-		happy = 3;
-	      }
-	    else happy--;
-	  }
-      }
-
-    pk = new_pk->pk;
-
-    if (pk < local_best)
-      {
-	local_best = pk;
-	if ((!just_best) ||
-	    (pk < overall_min))
-	  {
-	    FILE *ofile;
-	    for (k = 1; k < len; k++) min_phases[k] = new_pk->phases[k];
-	    if (pk < overall_min)
-	      {
-		if (file)
-		  ofile = fopen(file, "a");
-		else ofile = stderr;
-		fprintf(ofile, "%s, %d %f #(", choice_name[choice], n, pk);
-		for (k = 0; k < len - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
-		fprintf(ofile, "%f)\n", min_phases[len - 1]);
-		if (file) fclose(ofile);
-		overall_min = pk;
-	      }
-	  }
-
-	day_counter = 0;
-      }
-    return(new_pk);
-  }
-
-  bool day(void)
-  {
-    int i, j = 0, k, len;
-    mus_float_t sum = 0.0, avg;
-    len = size;
-    day_counter++;
-    for (i = 0; i < len; i++) sum += choices[i]->pk;
-    avg = sum / len;
-
-    for (i = 0; i < len; i++)
-      {
-	pk_data *datum;
-	datum = choices[i];
-	choices[i] = NULL;
-	if (datum->pk < avg)
-	  choices[j++] = datum;
-	else free_choices[free_top++] = datum;
-      }
-
-    for (i = 0, k = j; k < len; i++, k++)
-      {
-	if (i == j)
-	  i = 0;
-	choices[k] = next_choice(choices[i]);
-      }
-
-    if (day_counter < counts)
-      {
-	/* .9^50 = .005, so starting at .1 bottoms out at .0005
-	 *   perhaps the counts variable should be (ceiling (log INCR_MIN incr_mult)) = 90 or so in the current case
-	 *   incr_mult is currently always INCR_DOWN = .9
-	 */
-	increment *= incr_mult;
-	if (increment < INCR_MIN) 
-	  {
-	    increment = INCR_MIN;
-	  }
-	if (increment > INCR_MAX)
-	  {
-	    increment = INCR_MAX;
-	    incr_mult = INCR_DOWN;
-	  }
-	return(true);
-      }
-    return(false);
-  }
 
 #ifndef _MSC_VER
   {
@@ -6744,7 +6617,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
     /* here to stay focussed,
      *     for (k = 0; k < n; k++) choices[0]->phases[k] = initial_phases[k];
-     *     choices[0]->pk = get_peak(initial_phases);
+     *     choices[0]->pk = get_peak(choice, fft_size, n, initial_phases, rl, im);
      *     for (start = 1; start < size; start++)
      *     etc
      * but this is not an improvement
@@ -6766,7 +6639,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 		for (k = 1; k < n; k++) 
 		  temp_phases[k] = local_frandom(2.0);
 	      }
-	    pk = get_peak(temp_phases);
+	    pk = get_peak(choice, fft_size, n, temp_phases, rl, im);
 	    
 	    if (pk < local_best)
 	      {
@@ -6798,9 +6671,131 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 	      }
 	  }
       }
-    while (day()) {}
+
+    while (true)
+      {
+	int i, j = 0, k, len;
+	mus_float_t sum = 0.0, avg;
+
+	len = size;
+	day_counter++;
+	for (i = 0; i < len; i++) sum += choices[i]->pk;
+	avg = sum / len;
+	
+	for (i = 0; i < len; i++)
+	  {
+	    pk_data *datum;
+	    datum = choices[i];
+	    choices[i] = NULL;
+	    if (datum->pk < avg)
+	      choices[j++] = datum;
+	    else free_choices[free_top++] = datum;
+	  }
+	
+	for (i = 0, k = j; k < len; i++, k++)
+	  {
+	    pk_data *data;
+	    mus_float_t *phases;
+	    mus_float_t cur_min, temp_min = 100000.0, pk = 100000.0;
+	    int llen, local_try, ii, kk, local_tries;
+	    pk_data *new_pk;
+	    
+	    if (i == j)
+	      i = 0;
+	    
+	    data = choices[i];
+	    new_pk = free_choices[--free_top];
+	    cur_min = data->pk;
+	    phases = data->phases;
+	    llen = n;
+	    local_tries = RETRIES + day_counter * RETRY_MULT;
+	    
+	    /* try to find a point nearby that is better */
+	    for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
+	      {
+		for (ii = 1; ii < llen; ii++)
+		  temp_phases[ii] = fmod(phases[ii] + local_random(increment) + local_random(increment), 2.0); /* not mus_frandom! */
+		pk = get_peak(choice, fft_size, n, temp_phases, rl, im);
+		
+		if (pk < temp_min)
+		  {
+		    temp_min = pk;
+		    new_pk->pk = pk;
+		    for (kk = 1; kk < llen; kk++) new_pk->phases[kk] = temp_phases[kk];	    
+		  }
+	      }
+	    
+	    /* if a better point is found, try to follow the slopes */
+	    if (new_pk->pk < data->pk)
+	      {
+		int happy = 3;
+		for (kk = 1; kk < llen; kk++)
+		  diff_phases[kk] = new_pk->phases[kk] - data->phases[kk];
+		
+		while (happy > 0)
+		  {
+		    for (kk = 1; kk < llen; kk++)
+		      temp_phases[kk] = fmod(new_pk->phases[kk] + local_frandom(diff_phases[kk]), 2.0); /* use frandom 30-mar-11 */
+		    pk = get_peak(choice, fft_size, n, temp_phases, rl, im);
+		    
+		    if (pk < new_pk->pk)
+		      {
+			new_pk->pk = pk;
+			for (kk = 1; kk < llen; kk++) new_pk->phases[kk] = temp_phases[kk];
+			happy = 3;
+		      }
+		    else happy--;
+		  }
+	      }
+	    
+	    pk = new_pk->pk;
+	    
+	    if (pk < local_best)
+	      {
+		local_best = pk;
+		if ((!just_best) ||
+		    (pk < overall_min))
+		  {
+		    FILE *ofile;
+		    for (kk = 1; kk < llen; kk++) min_phases[kk] = new_pk->phases[kk];
+		    if (pk < overall_min)
+		      {
+			if (file)
+			  ofile = fopen(file, "a");
+			else ofile = stderr;
+			fprintf(ofile, "%s, %d %f #(", choice_name[choice], n, pk);
+			for (kk = 0; kk < llen - 1; kk++) fprintf(ofile, "%f ", min_phases[kk]);
+			fprintf(ofile, "%f)\n", min_phases[llen - 1]);
+			if (file) fclose(ofile);
+			overall_min = pk;
+		      }
+		  }
+		
+		day_counter = 0;
+	      }
+	    choices[k] = new_pk;
+	  }
+	
+	if (day_counter < counts)
+	  {
+	    /* .9^50 = .005, so starting at .1 bottoms out at .0005
+	     *   perhaps the counts variable should be (ceiling (log INCR_MIN incr_mult)) = 90 or so in the current case
+	     *   incr_mult is currently always INCR_DOWN = .9
+	     */
+	    increment *= incr_mult;
+	    if (increment < INCR_MIN) 
+	      {
+		increment = INCR_MIN;
+	      }
+	    if (increment > INCR_MAX)
+	      {
+		increment = INCR_MAX;
+		incr_mult = INCR_DOWN;
+	      }
+	  }
+	else break;
+      }
   }
-  
   free(temp_phases);
   free(diff_phases);
   free(rl);
@@ -6895,372 +6890,6 @@ static s7_pointer g_phases_get_peak(s7_scheme *sc, s7_pointer args)
 
   return(s7_make_real(sc, mx));
 }
-
-
-static Xen g_fpsap_1(Xen x_choice, Xen x_n, Xen start_phases, Xen x_amps, Xen x_size, Xen x_increment)
-{
-  #define INCR_DOWN 0.9
-  #define INCR_MAX 1.0
-  #define INCR_MIN 0.00001 /* was .00005 */
-  #define RETRIES 10
-  #define RETRY_MULT 2
-  #define INIT_TRIES 5000
-
-  int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0;
-  mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN, overall_min;
-  mus_float_t *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL, *initial_phases = NULL, *amps = NULL;
-  char *choice_name[4] = {"all", "odd", "even", "prime"};
-  pk_data **choices = NULL, **free_choices = NULL;
-  mus_float_t *rl, *im;
-  const char *file = NULL;
-  bool just_best = false;
-
-  auto mus_float_t saved_min(int ch, int nn);
-  auto mus_float_t get_peak(mus_float_t *phases);
-  auto pk_data *next_choice(pk_data *data);
-  auto bool day(void);
-
-  mus_float_t saved_min(int ch, int nn)
-  {
-    if (nn <= 128)
-      {
-	switch (ch)
-	  {
-	  case ALL:   return(all_mins[nn - 1]);
-	  case ODD:   return(odd_mins[nn - 1]);
-	  case EVEN:  return(even_mins[nn - 1]);
-	  case PRIME: return(prime_mins[nn - 1]);
-	  }
-      }
-    if (nn == 256) return(min_8[ch]);
-    if (nn == 512) return(min_9[ch]);
-    if (nn == 1024) return(min_10[ch]);
-    if (nn == 2048) return(min_11[ch]);
-    return((mus_float_t)nn);
-  }
-
-  mus_float_t get_peak(mus_float_t *phases)
-  {
-    int i, m;
-    mus_float_t pi2, mx_sin;
-
-    pi2 = M_PI / 2.0;
-    memset((void *)rl, 0, fft_size * sizeof(mus_float_t));
-    memset((void *)im, 0, fft_size * sizeof(mus_float_t));
-
-    for (m = 0; m < n; m++)
-      {
-	mus_float_t phi;
-	phi = (M_PI * phases[m]) + pi2;
-	rl[m] = amps[m] * cos(phi);
-	im[m] = amps[m] * sin(phi);
-      }
-
-    mus_fft(rl, im, fft_size, -1);
-    /* real part is sine reconstruction, imaginary part is cosine, we're interested in both! */
-    /*   we could also add and subtract the 2 to get 2 more cases "for free", amp sqrt(2), phase asin(cos(0)/sqrt(2)) */
-    /*   and repeat this with a shift (rotation from i) for 2n other cases */
-    /*   resultant amp is between 0 and 2 (cosine) */
-
-    mx_sin = fabs(rl[0]);
-    for (i = 1; i < fft_size; i++)
-      {
-	mus_float_t mxtemp;
-	mxtemp = fabs(rl[i]);
-	if (mxtemp > mx_sin)
-	  mx_sin = mxtemp;
-      }
-
-    return(mx_sin);
-  }
-  
-  pk_data *next_choice(pk_data *data)
-  {
-    mus_float_t *phases;
-    mus_float_t cur_min, temp_min = 100000.0, pk = 100000.0;
-    int len, local_try, i, k, local_tries;
-    pk_data *new_pk;
-
-    new_pk = free_choices[--free_top];
-    cur_min = data->pk;
-    phases = data->phases;
-    len = n;
-    local_tries = RETRIES + day_counter * RETRY_MULT;
-
-    /* try to find a point nearby that is better */
-    for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
-      {
-	for (i = 1; i < len; i++)
-	  temp_phases[i] = fmod(phases[i] + local_random(increment) + local_random(increment), 2.0); /* not mus_frandom! */
-	pk = get_peak(temp_phases);
-	
-	if (pk < temp_min)
-	  {
-	    temp_min = pk;
-	    new_pk->pk = pk;
-	    for (k = 1; k < len; k++) new_pk->phases[k] = temp_phases[k];	    
-	  }
-      }
-    
-    /* if a better point is found, try to follow the slopes */
-    if (new_pk->pk < data->pk)
-      {
-	int happy = 3;
-	for (k = 1; k < len; k++)
-	  diff_phases[k] = new_pk->phases[k] - data->phases[k];
-
-	while (happy > 0)
-	  {
-	    for (k = 1; k < len; k++)
-	      temp_phases[k] = fmod(new_pk->phases[k] + local_frandom(diff_phases[k]), 2.0); /* use frandom 30-mar-11 */
-	    pk = get_peak(temp_phases);
-
-	    if (pk < new_pk->pk)
-	      {
-		new_pk->pk = pk;
-		for (k = 1; k < len; k++) new_pk->phases[k] = temp_phases[k];
-		happy = 3;
-	      }
-	    else happy--;
-	  }
-      }
-
-    pk = new_pk->pk;
-
-    if (pk < local_best)
-      {
-	local_best = pk;
-	if ((!just_best) ||
-	    (pk < overall_min))
-	  {
-	    FILE *ofile;
-	    for (k = 1; k < len; k++) min_phases[k] = new_pk->phases[k];
-	    if (pk < overall_min)
-	      {
-		if (file)
-		  ofile = fopen(file, "a");
-		else ofile = stderr;
-		fprintf(ofile, "%s, %d %f #(", choice_name[choice], n, pk);
-		for (k = 0; k < len - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
-		fprintf(ofile, "%f)\n", min_phases[len - 1]);
-		if (file) fclose(ofile);
-		overall_min = pk;
-	      }
-	  }
-
-	day_counter = 0;
-      }
-    return(new_pk);
-  }
-
-  bool day(void)
-  {
-    int i, j = 0, k, len;
-    mus_float_t sum = 0.0, avg;
-    len = size;
-    day_counter++;
-    for (i = 0; i < len; i++) sum += choices[i]->pk;
-    avg = sum / len;
-
-    for (i = 0; i < len; i++)
-      {
-	pk_data *datum;
-	datum = choices[i];
-	choices[i] = NULL;
-	if (datum->pk < avg)
-	  choices[j++] = datum;
-	else free_choices[free_top++] = datum;
-      }
-
-    for (i = 0, k = j; k < len; i++, k++)
-      {
-	if (i == j)
-	  i = 0;
-	choices[k] = next_choice(choices[i]);
-      }
-
-    if (day_counter < counts)
-      {
-	/* .9^50 = .005, so starting at .1 bottoms out at .0005
-	 *   perhaps the counts variable should be (ceiling (log INCR_MIN incr_mult)) = 90 or so in the current case
-	 *   incr_mult is currently always INCR_DOWN = .9
-	 */
-	increment *= incr_mult;
-	if (increment < INCR_MIN) 
-	  {
-	    increment = INCR_MIN;
-	  }
-	if (increment > INCR_MAX)
-	  {
-	    increment = INCR_MAX;
-	    incr_mult = INCR_DOWN;
-	  }
-	return(true);
-      }
-    return(false);
-  }
-
-#ifndef _MSC_VER
-  {
-    struct timeval tm;
-    struct timezone tz;
-    gettimeofday(&tm, &tz);
-    mus_set_rand_seed((unsigned long)(tm.tv_sec * 1000 + tm.tv_usec / 1000));
-  }
-#endif
-
-  choice = Xen_integer_to_C_int(x_choice);
-  if ((choice < ALL) || (choice > PRIME))
-    choice = ALL;
-
-  n = Xen_integer_to_C_int(x_n);
-
-  if (Xen_is_integer(x_size))
-    size = Xen_integer_to_C_int(x_size);
-  else size = 3000; 
-
-  if (Xen_is_double(x_increment))
-    increment = Xen_real_to_C_double(x_increment);
-  else increment = 0.06; /* was .03 */
-
-  counts = 50; /* 100? */
-  orig_incr = increment;
-  incr_mult = INCR_DOWN;
-  file = "test.data";
-  just_best = false;
-
-  {
-    int i;
-    initial_phases = (mus_float_t *)malloc(n * sizeof(mus_float_t));
-    amps = (mus_float_t *)malloc(n * sizeof(mus_float_t));
-    for (i = 0; i < n; i++)
-      {
-	initial_phases[i] = (mus_float_t)Xen_real_to_C_double(Xen_vector_ref(start_phases, i));
-	amps[i] = (mus_float_t)Xen_real_to_C_double(Xen_vector_ref(x_amps, i));
-      }
-  }
-
-  min_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
-
-  overall_min = saved_min(choice, n);
-  if (overall_min < sqrt((double)n)) overall_min = sqrt((double)n);
-  overall_min += .5;
-
-  temp_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
-  diff_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
-
-  {
-    int start, n1;
-
-    if (choice == ALL)
-      n1 = n;
-    else
-      {
-	if (choice != PRIME)
-	  n1 = n * 2;
-	else n1 = primes[n];
-      }
-    fft_size = (int)pow(2.0, (int)ceil(log(FFT_MULT * n1) / log(2.0)));
-    rl = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
-    im = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
-
-    choices = (pk_data **)calloc(size, sizeof(pk_data *));
-    free_choices = (pk_data **)calloc(size, sizeof(pk_data *));
-
-    for (start = 0; start < size; start++)
-      {
-	choices[start] = (pk_data *)calloc(1, sizeof(pk_data));
-	choices[start]->phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
-      }
-
-    free_top = 0;
-    day_counter = 0;
-    local_best = (mus_float_t)n;
-    increment = orig_incr;
-
-    /* here to stay focussed,
-     *     for (k = 0; k < n; k++) choices[0]->phases[k] = initial_phases[k];
-     *     choices[0]->pk = get_peak(initial_phases);
-     *     for (start = 1; start < size; start++)
-     *     etc
-     * but this is not an improvement
-     */
-    for (start = 0; start < size; start++)
-      {
-	mus_float_t pk, local_pk = 100000.0;
-	int k, init_try;
-	
-	for (init_try = 0;  init_try < INIT_TRIES; init_try++)
-	  {
-	    if (initial_phases)
-	      {
-		for (k = 1; k < n; k++) 
-		  temp_phases[k] = initial_phases[k] + local_random(increment) + local_random(increment);
-	      }
-	    else
-	      {
-		for (k = 1; k < n; k++) 
-		  temp_phases[k] = local_frandom(2.0);
-	      }
-	    pk = get_peak(temp_phases);
-	    
-	    if (pk < local_best)
-	      {
-		local_best = pk;
-		if ((!just_best) ||
-		    (pk < overall_min))
-		  {
-		    FILE *ofile;
-		    for (k = 1; k < n; k++) min_phases[k] = temp_phases[k];
-		    if (pk < overall_min)
-		      {
-			if (file)
-			  ofile = fopen(file, "a");
-			else ofile = stderr;
-			fprintf(ofile, "%s, %d %f #(", choice_name[choice], n, pk);
-			for (k = 0; k < n - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
-			fprintf(ofile, "%f)\n", min_phases[n - 1]);
-			if (file) fclose(ofile);
-			overall_min = pk;
-		      }
-		  }
-	      }
-	    
-	    if (pk < local_pk)
-	      {
-		for (k = 1; k < n; k++) choices[start]->phases[k] = temp_phases[k];
-		choices[start]->pk = pk;
-		local_pk = pk;
-	      }
-	  }
-      }
-    while (day()) {}
-  }
-  
-  free(temp_phases);
-  free(diff_phases);
-  free(rl);
-  free(im);
-  free(free_choices);
-  if (initial_phases) free(initial_phases);
-  free(amps);
-
-  {
-    int i;
-    for (i = 0; i < size; i++)
-      {
-	free(choices[i]->phases);
-	free(choices[i]);
-      }
-    free(choices);
-  }
-
-  return(Xen_list_2(C_double_to_Xen_real(local_best), 
-		    xen_make_vct(n, min_phases)));
-}
-
-#endif
-
 #endif
 
 
@@ -7308,13 +6937,8 @@ Xen_wrap_8_optional_args(g_clm_channel_w, g_clm_channel)
 Xen_wrap_no_args(g_sinc_width_w, g_sinc_width)
 Xen_wrap_1_arg(g_set_sinc_width_w, g_set_sinc_width)
 
-#if HAVE_NESTED_FUNCTIONS
 Xen_wrap_any_args(g_find_min_peak_phases_w, g_find_min_peak_phases)
 Xen_wrap_5_optional_args(g_fpsap_w, g_fpsap)
-#if HAVE_SCHEME
-Xen_wrap_6_optional_args(g_fpsap_1_w, g_fpsap_1)
-#endif
-#endif
 
 void g_init_sig(void)
 {
@@ -7365,28 +6989,11 @@ void g_init_sig(void)
   Xen_define_procedure_with_setter(S_sinc_width, g_sinc_width_w, H_sinc_width,
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 
-#if HAVE_NESTED_FUNCTIONS
   Xen_define_procedure(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
   Xen_define_procedure(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
 #if HAVE_SCHEME
-  Xen_define_procedure("fpsap-1", g_fpsap_1_w, 3, 3, 0, H_fpsap);
   Xen_define_procedure("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
 #endif
-#endif
-
-#if 0
-  s7_eval_c_string(s7, "\n\
-(define* (scan-channel-fallback func (beg 0) dur snd chn edpos)\n\
-  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn)))\n\
-	(rd (make-sampler beg snd chn 1 edpos)))\n\
-    (do ((pos beg (+ pos 1)))\n\
-        ((or (>= pos end)\n\
-	     (func (next-sample rd)))\n\
-         (and (< pos end)\n\
-	      pos)))))");
-
-#endif
-
 }
 
 #if 0

@@ -1017,14 +1017,14 @@ mus_float_t mus_polynomial(mus_float_t *coeffs, mus_float_t x, int ncoeffs)
   return((mus_float_t)sum);
 }
 
-
+#if (!DISABLE_DEPRECATED)
 void mus_multiply_arrays(mus_float_t *data, mus_float_t *window, mus_long_t len)
 {
   mus_long_t i;
   for (i = 0; i < len; i++) 
     data[i] *= window[i];
 }
-
+#endif
 
 void mus_rectangular_to_polar(mus_float_t *rl, mus_float_t *im, mus_long_t size) 
 {
@@ -14650,7 +14650,11 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
   mus_float_t maxa, lowest;
   double val, todb;
 
-  if (window) mus_multiply_arrays(rdat, window, n);
+  if (window) 
+    {
+      for (i = 0; i < n; i++) 
+	rdat[i] *= window[i];
+    }
   mus_clear_array(idat, n);
   mus_fft(rdat, idat, n, 1);
 

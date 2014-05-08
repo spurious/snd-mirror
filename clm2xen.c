@@ -939,8 +939,11 @@ static Xen g_edot_product(Xen val1, Xen val2)
 }
 #endif
 
-
+#if (!DISABLE_DEPRECATED)
 typedef enum {G_MULTIPLY_ARRAYS, G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR, G_RECTANGULAR_MAGNITUDES} xclm_window_t;
+#else
+typedef enum {G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR, G_RECTANGULAR_MAGNITUDES} xclm_window_t;
+#endif
 
 static Xen g_fft_window_1(xclm_window_t choice, Xen val1, Xen val2, Xen ulen, const char *caller) 
 {
@@ -965,7 +968,9 @@ static Xen g_fft_window_1(xclm_window_t choice, Xen val1, Xen val2, Xen ulen, co
   if (len > mus_vct_length(v2)) len = mus_vct_length(v2);
   switch (choice)
     {
+#if (!DISABLE_DEPRECATED)
     case G_MULTIPLY_ARRAYS:        mus_multiply_arrays(mus_vct_data(v1), mus_vct_data(v2), len);           break;
+#endif
     case G_RECTANGULAR_POLAR:      mus_rectangular_to_polar(mus_vct_data(v1), mus_vct_data(v2), len);      break;
     case G_RECTANGULAR_MAGNITUDES: mus_rectangular_to_magnitudes(mus_vct_data(v1), mus_vct_data(v2), len); break;
     case G_POLAR_RECTANGULAR:      mus_polar_to_rectangular(mus_vct_data(v1), mus_vct_data(v2), len);      break;
@@ -974,11 +979,13 @@ static Xen g_fft_window_1(xclm_window_t choice, Xen val1, Xen val2, Xen ulen, co
 }
 
 
+#if (!DISABLE_DEPRECATED)
 static Xen g_multiply_arrays(Xen val1, Xen val2, Xen len) 
 {
   #define H_multiply_arrays "(" S_multiply_arrays " v1 v2 (len)): " S_vct " element-wise multiply: v1[i] *= v2[i]"
   return(g_fft_window_1(G_MULTIPLY_ARRAYS, val1, val2, len, S_multiply_arrays));
 }
+#endif
 
 
 static Xen g_rectangular_to_polar(Xen val1, Xen val2) 
@@ -20582,7 +20589,9 @@ Xen_wrap_2_args(g_edot_product_w, g_edot_product)
 #endif
 Xen_wrap_1_arg(g_clear_array_w, g_clear_array)
 Xen_wrap_2_args(g_polynomial_w, g_polynomial)
+#if (!DISABLE_DEPRECATED)
 Xen_wrap_3_optional_args(g_multiply_arrays_w, g_multiply_arrays)
+#endif
 Xen_wrap_4_optional_args(g_make_fft_window_w, g_make_fft_window)
 Xen_wrap_4_optional_args(g_mus_fft_w, g_mus_fft)
 Xen_wrap_4_optional_args(g_spectrum_w, g_spectrum)
@@ -21030,7 +21039,9 @@ static void mus_xen_init(void)
 #endif
   Xen_define_safe_procedure(S_clear_array,          g_clear_array_w,          1, 0, 0, H_clear_array);
   Xen_define_real_procedure(S_polynomial,           g_polynomial_w,           2, 0, 0, H_polynomial);
+#if (!DISABLE_DEPRECATED)
   Xen_define_safe_procedure(S_multiply_arrays,      g_multiply_arrays_w,      2, 1, 0, H_multiply_arrays);
+#endif
   Xen_define_safe_procedure(S_make_fft_window,      g_make_fft_window_w,      2, 2, 0, H_make_fft_window);
   Xen_define_safe_procedure(S_mus_fft,              g_mus_fft_w,              2, 2, 0, H_mus_fft);
   Xen_define_safe_procedure(S_spectrum,             g_spectrum_w,             3, 1, 0, H_mus_spectrum); 

@@ -2365,7 +2365,7 @@
 		       'mixes 'mouse-click-hook 'mouse-drag-hook 'mouse-enter-graph-hook
 		       'mouse-enter-label-hook 'mouse-enter-listener-hook 'mouse-enter-text-hook 'mouse-leave-graph-hook 'mouse-leave-label-hook
 		       'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'move-sound 'move-sound? 
-		       'moving-average 'moving-average? 'moving-max 'moving-max? 'moving-norm 'moving-norm? 'multiply-arrays
+		       'moving-average 'moving-average? 'moving-max 'moving-max? 'moving-norm 'moving-norm?
 		       'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size 'mus-alsa-buffers
 		       'mus-alsa-capture-device 'mus-alsa-device 'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
 		       'mus-array-print-length 'mus-float-equal-fudge-factor 
@@ -12329,15 +12329,8 @@ EDITS: 2
     (let ((v0 (make-float-vector 10))
 	  (v1 (make-float-vector 10)))
       (fill! v0 1.0)
-      (multiply-arrays v0 v1 1)
-      (if (not (vequal v0 (float-vector 0.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0)))
-	  (snd-display #__line__ ";multiply-arrays[0]: ~A?" v0))
-      (multiply-arrays v0 v1 100)
-      (if (fneq (float-vector-peak v0) 0.0)
-	  (snd-display #__line__ ";multiply-arrays[100]: ~A?" v0))
-      (fill! v0 1.0)
       (fill! v1 0.5)
-      (multiply-arrays v0 v1)
+      (float-vector-multiply! v0 v1)
       (if (fneq (v0 0) 0.5) (snd-display #__line__ ";multiple-arrays: ~F?" (v0 0)))
       (let ((sum (dot-product v0 v1)))
 	(if (fneq sum 2.5) (snd-display #__line__ ";dot-product: ~F?" sum)))
@@ -45444,7 +45437,7 @@ EDITS: 1
 		     make-nsin make-ssb-am make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train
 		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
-		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
+		     mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
 		     mus-close mus-data mus-feedback mus-feedforward mus-fft mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-file-mix mus-order mus-output?  mus-phase
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs 
@@ -45862,7 +45855,7 @@ EDITS: 1
 			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average make-moving-max make-moving-norm
 			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src make-ncos 
 			  make-nsin make-table-lookup make-triangle-wave
-			  make-two-pole make-two-zero make-wave-train multiply-arrays
+			  make-two-pole make-two-zero make-wave-train
 			  notch one-pole one-pole-all-pass one-zero oscil partials->polynomial partials->wave make-polyshape make-polywave
 			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar rectangular->magnitudes
 			  ring-modulate sawtooth-wave nrxysin nrxycos rxyk!cos rxyk!sin square-wave src ncos nsin
@@ -46509,7 +46502,6 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (set! *clm-srate* 0.0)))
 		(check-error-tag 'out-of-range (lambda () (set! *clm-srate* -1000)))
 		(check-error-tag 'out-of-range (lambda () (dot-product (make-float-vector 3) (make-float-vector 3) -1)))
-		(check-error-tag 'out-of-range (lambda () (multiply-arrays (make-float-vector 3) (make-float-vector 3) -1)))
 		(check-error-tag 'out-of-range (lambda () (make-delay 3 :initial-element 0.0 :initial-contents (float-vector .1 .2 .3))))
 		(check-error-tag 'out-of-range (lambda () (make-delay 3 :max-size 100 :initial-contents (float-vector .1 .2 .3))))
 		(check-error-tag 'out-of-range (lambda () (make-table-lookup :size 100 :wave (make-float-vector 3))))

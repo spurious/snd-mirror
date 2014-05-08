@@ -246,7 +246,7 @@ typedef struct chan_info {
   bool cursor_visible, fft_cursor_visible;     /* for XOR decisions */
   int cursor_size;
   cursor_style_t cursor_style, tracking_cursor_style;
-  int cx, cy, fft_cx, old_cy; /* graph-relative cursor loc (for XOR in Motif, erase-via-overwrite in cairo) */
+  int cx, cy, fft_cx; /* , old_cy; */ /* graph-relative cursor loc (for XOR in Motif, erase-via-overwrite in cairo) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
   ed_list **edits;         /* the edit list */
