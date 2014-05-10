@@ -68553,7 +68553,7 @@ s7_scheme *s7_init(void)
   sc->IS_OUTPUT_PORT =        s7_define_safe_function(sc, "output-port?",            g_is_output_port,         1, 0, false, H_is_output_port);
   sc->IS_PORT_CLOSED =        s7_define_safe_function(sc, "port-closed?",            g_is_port_closed,         1, 0, false, H_is_port_closed);
   sc->IS_CHAR_READY =         s7_define_safe_function(sc, "char-ready?",             g_is_char_ready,          0, 1, false, H_is_char_ready);
-  sc->IS_EOF_OBJECT =           s7_define_safe_function(sc, "eof-object?",             g_is_eof_object,          1, 0, false, H_is_eof_object);
+  sc->IS_EOF_OBJECT =         s7_define_safe_function(sc, "eof-object?",             g_is_eof_object,          1, 0, false, H_is_eof_object);
   /* this should be named eof? (what isn't an object?) */
   
                               s7_define_safe_function(sc, "current-input-port",      g_current_input_port,     0, 0, false, H_current_input_port);
@@ -68935,7 +68935,7 @@ s7_scheme *s7_init(void)
                               s7_define_function(sc,      "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
 #endif
 
-  sym = s7_define_function(sc,                      "(c-object set)",            g_internal_object_set,      1, 0, true,  "internal object setter redirection");
+  sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
   sc->Object_Set = s7_symbol_value(sc, sym);
 
 
@@ -69552,9 +69552,16 @@ int main(int argc, char **argv)
  *
  * maybe read/write-bytevector should be built-in -- file_read basically
  *   others of that ilk: open-input|output-bytevector
+ * the generic form: (with-input obj ...) (with-output obj ...)
  *
- * other fv cleanups: clear-array, possibly mus_arrays_are_equal (clear-array is used a lot in *.ins)
- *   array<->file use float-vector/vct? mus_array_print_length? mus_array_interp?
- *   mus_array_to_list in vct.c?
+ * gmp/mpfr/mpc as cload? jn/yn from mpfr? [no complex, but can we fake it?] [see snd-xen] 
+ * fft from fftw + mpfr/mpc version? gsl?
+ *
+ * pthread example for s7.html: snd-11.8 had pthread support, symbol-access or added funcs for coordination.
+ *   check startup overhead.  with-thread-sound?
+ *   nearly all the startup time now is in initializing the heap
+ *   we'll also need a way to free all allocated memory, including "permanent" allocs
+ *
+ * immutable data example?  immutable string/vector?
  */
 

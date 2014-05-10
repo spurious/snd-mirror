@@ -6205,6 +6205,52 @@ waste a lot of time fixing this, I chose to flush multithreading.
 </p>
 </div>
 
+<!--
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include "s7.h"
+
+typedef struct {
+  s7_scheme *sc;
+  s7_pointer func;
+  pthread_t *thread;
+} thred;
+
+static void *run_thread(void *obj)
+{
+  thred *f = (thred *)obj;
+  return((void *)s7_call(f->sc, f->func, s7_nil(f->sc)));
+}
+
+static thred *make_thread(s7_function func)
+{
+  thred *f;
+  f = (thred *)malloc(sizeof(thred));
+  f->sc = s7_init();
+  f->func = s7_make_function(f->sc, "a-test", func, 0, 0, false, "a test");
+  f->thread = (pthread_t *)malloc(sizeof(pthread_t));
+  pthread_create(f->thread, NULL, run_thread, (void *)f);
+  return(f);
+}
+
+static s7_pointer a_test(s7_scheme *sc, s7_pointer args)
+{
+  fprintf(stderr, "I am %p\n", sc);
+  return(args);
+}
+
+int main(int argc, char **argv)
+{
+  thred *f1, *f2;
+  f1 = make_thread(a_test);
+  f2 = make_thread(a_test);
+}
+
+/* gcc -o prepl prepl.c s7.o -g3 -Wl,-export-dynamic -lpthread -lm -I. -ldl
+ */
+-->
 
 
 <div class="indented">

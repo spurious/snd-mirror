@@ -915,11 +915,12 @@ mus_float_t mus_contrast_enhancement(mus_float_t sig, mus_float_t index)
   return(sin((sig * M_PI_2) + (index * sin(sig * TWO_PI))));
 }
 
-
+#if (!DISABLE_DEPRECATED)
 void mus_clear_array(mus_float_t *arr, mus_long_t size) 
 {
   memset((void *)arr, 0, size * sizeof(mus_float_t));
 }
+#endif
 
 
 bool mus_arrays_are_equal(mus_float_t *arr1, mus_float_t *arr2, mus_float_t fudge, mus_long_t len)
@@ -2795,7 +2796,7 @@ typedef struct {
 mus_float_t *mus_partials_to_wave(mus_float_t *partial_data, int partials, mus_float_t *table, mus_long_t table_size, bool normalize)
 {
   int partial, k;
-  mus_clear_array(table, table_size);
+  memset((void *)table, 0, table_size * sizeof(mus_float_t));
   for (partial = 0, k = 1; partial < partials; partial++, k += 2)
     {
       double amp;
@@ -2818,7 +2819,7 @@ mus_float_t *mus_partials_to_wave(mus_float_t *partial_data, int partials, mus_f
 mus_float_t *mus_phase_partials_to_wave(mus_float_t *partial_data, int partials, mus_float_t *table, mus_long_t table_size, bool normalize)
 {
   int partial, k, n;
-  mus_clear_array(table, table_size);
+  memset((void *)table, 0, table_size * sizeof(mus_float_t));
   for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
     {
       double amp;
@@ -4152,7 +4153,7 @@ static mus_float_t mus_wave_train_any(mus_any *ptr, mus_float_t fm)
 	  memmove((void *)out_data, (void *)(out_data + gen->out_pos), good_samps * sizeof(mus_float_t));
 	  memset((void *)(out_data + good_samps), 0, gen->out_pos * sizeof(mus_float_t));
 	}
-      else mus_clear_array(out_data, gen->out_data_size);
+      else memset((void *)out_data, 0, gen->out_data_size * sizeof(mus_float_t));
       if (gen->interp_type == MUS_INTERP_LINEAR)
 	{
 	  /* gen->phase doesn't change, and i is an int, so we can precalculate the fractional part, etc
@@ -4246,7 +4247,7 @@ static void wt_reset(mus_any *ptr)
 {
   wt *gen = (wt *)ptr;
   gen->phase = 0.0;
-  mus_clear_array(gen->out_data, gen->out_data_size);
+  memset((void *)(gen->out_data), 0, gen->out_data_size * sizeof(mus_float_t));
   gen->out_pos = gen->out_data_size;
   gen->next_wave_time = 0.0;
   gen->first_time = true;
@@ -4555,7 +4556,7 @@ static void delay_reset(mus_any *ptr)
   gen->loc = 0;
   gen->zloc = 0;
   gen->yn1 = 0.0;
-  mus_clear_array(gen->line, gen->zsize);
+  memset((void *)(gen->line), 0, gen->zsize * sizeof(mus_float_t));
 }
 
 
@@ -8726,7 +8727,7 @@ static char *describe_iir_filter(mus_any *ptr)
 static void filter_reset(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
-  mus_clear_array(gen->state, gen->allocated_size * 2);
+  memset((void *)(gen->state), 0, gen->allocated_size * 2 * sizeof(mus_float_t));
 }
 
 
@@ -11559,8 +11560,8 @@ void mus_locsig_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t
 static void locsig_reset(mus_any *ptr)
 {
   locs *gen = (locs *)ptr;
-  if (gen->outn) mus_clear_array(gen->outn, gen->chans);
-  if (gen->revn) mus_clear_array(gen->revn, gen->rev_chans);
+  if (gen->outn) memset((void *)(gen->outn), 0, gen->chans * sizeof(mus_float_t));
+  if (gen->revn) memset((void *)(gen->revn), 0, gen->rev_chans * sizeof(mus_float_t));
 }
 
 
@@ -12171,11 +12172,11 @@ void mus_move_locsig(mus_any *ptr, mus_float_t degree, mus_float_t distance)
   if (gen->rev_chans > 0)
     {
       if (gen->rev_chans > 2)
-	mus_clear_array(gen->revn, gen->rev_chans);
+	memset((void *)(gen->revn), 0, gen->rev_chans * sizeof(mus_float_t));
       mus_locsig_fill(gen->revn, gen->rev_chans, degree, (gen->reverb * sqrt(dist)), gen->type);
     }
   if (gen->chans > 2)
-    mus_clear_array(gen->outn, gen->chans);
+    memset((void *)(gen->outn), 0, gen->chans * sizeof(mus_float_t));
   mus_locsig_fill(gen->outn, gen->chans, degree, dist, gen->type);
 }
 
@@ -12681,7 +12682,7 @@ static mus_float_t *src_sinc_table(mus_any *rd) {return(((sr *)rd)->sinc_table);
 static void src_reset(mus_any *ptr)
 {
   sr *gen = (sr *)ptr;
-  mus_clear_array(gen->data, gen->lim + 1);
+  memset((void *)(gen->data), 0, (gen->lim + 1) * sizeof(mus_float_t));
   gen->x = 0.0;
   /* center the data if possible */
   if (gen->feeder)
@@ -13300,9 +13301,9 @@ static void grn_reset(mus_any *ptr)
   grn_info *gen = (grn_info *)ptr; 
   gen->cur_out = 0;
   gen->ctr = 0;
-  mus_clear_array(gen->out_data, gen->out_data_len);
-  mus_clear_array(gen->in_data, gen->in_data_len);
-  mus_clear_array(gen->grain, gen->in_data_len);
+  memset((void *)(gen->out_data), 0, gen->out_data_len * sizeof(mus_float_t));
+  memset((void *)(gen->in_data), 0, gen->in_data_len * sizeof(mus_float_t));
+  memset((void *)(gen->grain), 0, gen->in_data_len * sizeof(mus_float_t));
   gen->first_samp = true;
 }
 
@@ -13455,7 +13456,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	  if (spd->cur_out >= spd->out_data_len)
 	    {
 	      /* entire buffer has been output, and in fact we've been sending 0's for awhile to fill out hop */
-	      mus_clear_array(spd->out_data, spd->out_data_len); /* so zero the entire thing (it's all old) */
+	      memset((void *)(spd->out_data), 0, spd->out_data_len * sizeof(mus_float_t)); /* so zero the entire thing (it's all old) */
 	    }
 	  else 
 	    {
@@ -14655,7 +14656,7 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
       for (i = 0; i < n; i++) 
 	rdat[i] *= window[i];
     }
-  mus_clear_array(idat, n);
+  memset((void *)idat, 0, n * sizeof(mus_float_t));
   mus_fft(rdat, idat, n, 1);
 
   lowest = 0.000001;
@@ -14887,9 +14888,9 @@ static void convolve_reset(mus_any *ptr)
 {
   conv *gen = (conv *)ptr;
   gen->ctr = gen->fftsize2;
-  mus_clear_array(gen->rl1, gen->fftsize);
-  mus_clear_array(gen->rl2, gen->fftsize);
-  mus_clear_array(gen->buf, gen->fftsize);
+  memset((void *)(gen->rl1), 0, gen->fftsize * sizeof(mus_float_t));
+  memset((void *)(gen->rl2), 0, gen->fftsize * sizeof(mus_float_t));
+  memset((void *)(gen->buf), 0, gen->fftsize * sizeof(mus_float_t));
 }
 
 
@@ -15078,8 +15079,8 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
 	  c2++; 
 	  if (c2 >= file2_chans) c2 = 0;
 
-	  mus_clear_array(data1, fftlen);
-	  mus_clear_array(data2, fftlen);
+	  memset((void *)data1, 0, fftlen * sizeof(mus_float_t));
+	  memset((void *)data2, 0, fftlen * sizeof(mus_float_t));
 	}
 
       for (i = 0; i < totallen; i++) 
@@ -15216,12 +15217,12 @@ static void pv_reset(mus_any *ptr)
   gen->in_data = NULL;
   gen->outctr = gen->interp;
   gen->filptr = 0;
-  mus_clear_array(gen->ampinc, gen->N);
-  mus_clear_array(gen->freqs, gen->N);
-  mus_clear_array(gen->amps, gen->N / 2);
-  mus_clear_array(gen->phases, gen->N / 2);
-  mus_clear_array(gen->lastphase, gen->N / 2);
-  mus_clear_array(gen->phaseinc, gen->N / 2);
+  memset((void *)(gen->ampinc), 0, gen->N * sizeof(mus_float_t));
+  memset((void *)(gen->freqs), 0, gen->N * sizeof(mus_float_t));
+  memset((void *)(gen->amps), 0, (gen->N / 2) * sizeof(mus_float_t));
+  memset((void *)(gen->phases), 0, (gen->N / 2) * sizeof(mus_float_t));
+  memset((void *)(gen->lastphase), 0, (gen->N / 2) * sizeof(mus_float_t));
+  memset((void *)(gen->phaseinc), 0, (gen->N / 2) * sizeof(mus_float_t));
 }
 
 
@@ -15361,7 +15362,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	  ((*pv_analyze)(pv->closure, pv->input)))
 	{
 	  int j, buf;
-	  mus_clear_array(pv->freqs, pv->N);
+	  memset((void *)(pv->freqs), 0, pv->N * sizeof(mus_float_t));
 	  if (pv->in_data == NULL)
 	    {
 	      pv->in_data = (mus_float_t *)malloc(pv->N * sizeof(mus_float_t));

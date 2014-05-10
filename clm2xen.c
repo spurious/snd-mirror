@@ -21484,10 +21484,6 @@ Xen_eval_C_string("<'> fth-print alias clm-print ( fmt args -- )");
                       $stdout.print format(str, *args)\n\
                       end");
 #endif
-
-#if HAVE_SCHEME
-  Xen_eval_C_string("(define (clm-print . args) (apply format #t args))");
-#endif
 #endif
 
   Xen_provide_feature("clm");
