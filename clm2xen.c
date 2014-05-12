@@ -281,7 +281,7 @@ int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, i
 	    clm_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
 	  /* type checking on the actual values has to be the caller's problem */
 
-	  if (arg_ctr >= nkeys)
+	  if (arg_ctr >= nkeys) /* we aren't handling a keyword arg, so the underlying args should only take nkeys args */
 	    clm_error(caller, "extra trailing args?", args[arg_ctr]);
 
 	  keys[arg_ctr] = args[arg_ctr];
@@ -2450,6 +2450,7 @@ static Xen g_make_oscil(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 	    }
 	}
     }
+ 
   ge = mus_make_oscil(freq, phase);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(Xen_false);

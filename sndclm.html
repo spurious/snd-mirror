@@ -631,6 +631,46 @@ plugging it into the following with-sound call:
       (outa i (square-wave sqr)))))
 </pre>
 
+<p>Many people find the syntax of "do" confusing.  It's possible to hide that
+away in a macro:
+</p>
+
+<pre class="indented">
+(define-macro (output beg dur . body)
+  `(do ((i (seconds-&gt;samples ,beg) (+ i 1)))
+       ((= i (seconds-&gt;samples (+ ,beg ,dur))))
+     (outa i (begin ,@body))))
+
+(define (simp beg dur freq amp)
+  (let ((o (make-oscil freq)))
+    (output beg dur (* amp (oscil o)))))
+
+(with-sound ()
+  (simp 0 1 440 .1)
+  (simp .5 .5 660 .1))
+</pre>
+
+<p>It's also possible to use recursion, rather than iteration:
+</p>
+
+<pre class="indented">
+(define (simp1)
+  (let ((freq (hz-&gt;radians 440.0)))
+    (let <em class=red>simp-loop</em> ((i 0) (x 0.0))
+      (outa i (sin x)) 
+      (if (< i 44100)
+	  (<em class=red>simp-loop</em> (+ i 1) (+ x freq))))))
+
+(define <em class=red>simp2</em>
+  (let ((freq (hz-&gt;radians 440.0)))
+    (lambda* ((i 0) (x 0.0))
+      (outa i (sin x))
+      (if (< i 44100)
+	  (<em class=red>simp2</em> (+ i 1) (+ x freq))))))
+</pre>
+
+<p>but the do-loop is faster.
+</p>
 
 <!--
 (define samps 44100)

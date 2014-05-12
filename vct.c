@@ -97,8 +97,8 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 #define S_vct_subseq     "float-vector-subseq"
 #define S_vct_reverse    "float-vector-reverse!"
 #define S_vct_to_string  "float-vector->string"
-#define S_vct_times    "float-vector*"
-#define S_vct_plus     "float-vector+"
+#define S_vct_times      "float-vector*"
+#define S_vct_plus       "float-vector+"
 #else
 #define S_make_vct       "make-vct"
 #define S_vct_addB       "vct-add!"

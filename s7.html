@@ -965,9 +965,13 @@ See s7test.scm for many examples including such perennial favorites as
 loop, dotimes, do*, enum, pushnew, and defstruct.
 </p>
 
+
+<blockquote>
+
+<div class="indented">
+
 <p>
-There is (at least) one problem with a bacro: since it sheds its define-time environment,
-it has no notion of a closure:
+Since a bacro (normally) sheds its define-time environment:
 </p>
 
 <pre class="indented">
@@ -979,10 +983,51 @@ it has no notion of a closure:
 x: unbound variable
 </pre>
 <p>
-A macro here returns 3.
+A macro here returns 3.  But don't be hasty!  The bacro can get its define-time environment (its closure)
+via procedure-environment, so in fact, define-macro is a special case of define-bacro!  We can define
+macros that work in all four ways: the expansion can happen in either the definition or calling environment,
+as can the evaluation of that expansion.  In a bacro, both happen in the calling environment
+if we take no other action, and in a normal macro (define-macro), the expansion happens in the definition
+environment, and the evaluation in the calling environment.
+Here's a brief example of all four:
 </p>
 
-<blockquote>
+<pre class="indented">
+(let ((x 1) (y 2)) 
+  (define-bacro (bac1 a) 
+     `(+ ,x y ,a))        ; expand and eval in calling env
+  (let ((x 32) (y 64)) 
+    (bac1 3)))
+-&gt; 99
+
+(let ((x 1) (y 2))        ; this is like define-macro
+  (define-bacro (bac2 a) 
+    (with-environment (augment-environment (procedure-environment bac2) (cons 'a a))
+      `(+ ,x y ,a)))      ; expand in definition env, eval in calling env
+  (let ((x 32) (y 64)) 
+    (bac2 3)))
+-&gt; 68
+
+(let ((x 1) (y 2))
+  (define-bacro (bac3 a) 
+    (let ((e (with-environment (augment-environment (procedure-environment bac3) (cons 'a a))
+	       `(+ ,x y ,a))))
+      `(with-environment ,(augment-environment (procedure-environment bac3) (cons 'a a))
+	 ,e)))           ; expand and eval in definition env
+  (let ((x 32) (y 64)) 
+    (bac3 3)))
+-&gt; 6
+
+(let ((x 1) (y 2))
+  (define-bacro (bac4 a) 
+    (let ((e `(+ ,x y ,a)))
+      `(with-environment ,(augment-environment (procedure-environment bac4) (cons 'a a))
+	 ,e)))           ; expand in calling env, eval in definition env
+  (let ((x 32) (y 64))     
+    (bac4 3)))
+-&gt; 37
+</pre>
+</div>
 
 <div class="indented">
 
@@ -1021,6 +1066,18 @@ set
 &gt; (let ((v (vector 1 2 3))) (set! (ref v 0) 32) v)
 #(32 2 3)
 </pre>
+
+<p>To avoid the subsequent evaluation (to treat the macro as a, gasp!, f*xpr),
+either return a constant, quote the result, or in the worst case, <code>(apply quote ...)</code>.
+</p>
+
+<pre class="indented">
+&gt; (define-macro (fx x) `'(+ 1 ,x))
+fx
+&gt; (let ((a 3)) (fx a))
+(+ 1 a)
+</pre>
+
 </div>
 
 
@@ -6202,14 +6259,14 @@ so we use begin_hook now instead.
 Last but not least, the effort to make the non-threaded
 s7 faster messed up parts of the threaded version.  Rather than
 waste a lot of time fixing this, I chose to flush multithreading.
+Here's a very simple example of using an s7 interpreter per thread:
 </p>
-</div>
 
-<!--
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
+<pre class="indented">
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;pthread.h&gt;
 #include "s7.h"
 
 typedef struct {
@@ -6221,17 +6278,17 @@ typedef struct {
 static void *run_thread(void *obj)
 {
   thred *f = (thred *)obj;
-  return((void *)s7_call(f->sc, f->func, s7_nil(f->sc)));
+  return((void *)s7_call(f-&gt;sc, f-&gt;func, s7_nil(f-&gt;sc)));
 }
 
 static thred *make_thread(s7_function func)
 {
   thred *f;
   f = (thred *)malloc(sizeof(thred));
-  f->sc = s7_init();
-  f->func = s7_make_function(f->sc, "a-test", func, 0, 0, false, "a test");
-  f->thread = (pthread_t *)malloc(sizeof(pthread_t));
-  pthread_create(f->thread, NULL, run_thread, (void *)f);
+  f-&gt;sc = s7_init();
+  f-&gt;func = s7_make_function(f-&gt;sc, "a-test", func, 0, 0, false, "a test");
+  f-&gt;thread = (pthread_t *)malloc(sizeof(pthread_t));
+  pthread_create(f-&gt;thread, NULL, run_thread, (void *)f);
   return(f);
 }
 
@@ -6248,9 +6305,9 @@ int main(int argc, char **argv)
   f2 = make_thread(a_test);
 }
 
-/* gcc -o prepl prepl.c s7.o -g3 -Wl,-export-dynamic -lpthread -lm -I. -ldl
- */
--->
+/* gcc -o repl repl.c s7.o -g3 -Wl,-export-dynamic -lpthread -lm -I. -ldl */
+</pre>
+</div>
 
 
 <div class="indented">

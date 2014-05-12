@@ -45,7 +45,6 @@ static mus_long_t channel_find_forward(chan_info *cp)
 
 static mus_long_t channel_find_backward(chan_info *cp)
 {
-  /* TODO: scan backward via scan_channel in snd-sig.c */
   bool reported = false;
   mus_long_t i, start, passes;
   snd_fd *sf = NULL;
@@ -63,8 +62,8 @@ static mus_long_t channel_find_backward(chan_info *cp)
   for (i = start, passes = 0; i >= 0; i--, passes++)
     {
       res = Xen_call_with_1_arg(ss->search_proc, 
-		       C_double_to_Xen_real((double)(read_sample(sf))), 
-		       "search function");
+				C_double_to_Xen_real((double)(read_sample(sf))), 
+				"search function");
       if (!Xen_is_false(res)) 
 	break;
       if (passes >= MANY_PASSES)

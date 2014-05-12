@@ -1614,11 +1614,16 @@
 			  form)))
 		 ((2)
 		  (if (and (just-rationals? args)
-			   (not (member 0 (cdr args)))
-			   (not (member 0.0 (cdr args))))
+			   (not (zero? (cadr args))))
 		      (apply / args)                      ; including (/ 0 12) -> 0
 		      (if (equal? (car args) 1)           ; (/ 1 x) -> (/ x)
 			  `(/ ,(cadr args))
+#|
+			  ;; this works, but it generates too many less-than-helpful suggestions
+			  (if (and (number? (cadr args))  ; (/ e 2.0) for example
+				   (not (zero? (cadr args))))
+			      `(* ,(car args) ,(/ (cadr args)))
+|#
 			  (if (and (pair? (car args))     ; (/ (log x) (log y)) -> (log x y)
 				   (= (length (car args)) 2)
 				   (pair? (cadr args))

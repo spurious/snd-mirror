@@ -14335,7 +14335,7 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
-/* TODO: all of these mess up if overflows occur 
+/* all of these mess up if overflows occur 
  *  (let () (define (f x) (* x 9223372036854775806)) (f -63)) -> -9223372036854775682, but (* -63 9223372036854775806) -> -5.810724383218509e+20
  *  how to catch this?  (affects * - +)
  */
@@ -38060,7 +38060,7 @@ static bool next_for_each(s7_scheme *sc)
   push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
   sc->args = fargs;
 
-  if (is_macro(sc->code))
+  if (is_any_macro(sc->code))
     {
       push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
       /* we can use a temp here because the arg list will be copied in OP_FOR_EACH */
@@ -38472,16 +38472,14 @@ static bool next_map(s7_scheme *sc)
   sc->args = sc->x;
   sc->x = sc->NIL;
 
-  if (is_macro(sc->code))
+  if (is_any_macro(sc->code))
     {
       /* (let ((lst '(1 2 3))) 
        *   (define-macro (hiho a) `(+ 1 ,a)) 
        *   (map hiho lst)) 
        * -> '(2 3 4)
        *
-       * but this can be very confusing!  quasiquote is considered to be a macro, so
-       *    (map quasiquote '((1 2) (3 4))) -> (2 4)
-       * because map (or apply?) thinks the 1 and 3 are macro names!
+       * quasiquote is a C macro (T_C_MACRO) so is_macro omits it, as well as bacros
        */
       push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
       car(sc->temp_cell_1) = sc->code;
@@ -66418,9 +66416,9 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
    *    :(rationalize 0.1000000000000000 0)
    *    1/10
    *
-   * PERHAPS: gmp number reader used if gmp -- could this be the trailing zeros problem?  (why is the non-gmp case ok?)
-   *          also the bignum function is faking it.
-   *          (rationalize (real-part (bignum "0.1+i")) 0) -> 3602879701896397/36028797018963968
+   * perhaps gmp number reader used if gmp -- could this be the trailing zeros problem?  (why is the non-gmp case ok?)
+   *         also the bignum function is faking it.
+   *         (rationalize (real-part (bignum "0.1+i")) 0) -> 3602879701896397/36028797018963968
    *
    * a confusing case:
    *      > (rationalize 5925563891587147521650777143.74135805596e05)
@@ -69555,13 +69553,19 @@ int main(int argc, char **argv)
  * the generic form: (with-input obj ...) (with-output obj ...)
  *
  * gmp/mpfr/mpc as cload? jn/yn from mpfr? [no complex, but can we fake it?] [see snd-xen] 
+ *    gmpn opts?
  * fft from fftw + mpfr/mpc version? gsl?
  *
  * pthread example for s7.html: snd-11.8 had pthread support, symbol-access or added funcs for coordination.
- *   check startup overhead.  with-thread-sound?
- *   nearly all the startup time now is in initializing the heap
+ *   with-thread-sound?
  *   we'll also need a way to free all allocated memory, including "permanent" allocs
  *
  * immutable data example?  immutable string/vector?
+ * ideally the function doc string could be completely removed before optimization etc
+ * ideally make-* in clm2xen would use s7's define*, not unscramble (but type/range checks?)
+ * should (equal? "" #u8()) be #t?
+ *
+ * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
+ * does lint notice these? -- no because they can take extra args, apparently (list-ref arity is (2 0 #t)??)
  */
 

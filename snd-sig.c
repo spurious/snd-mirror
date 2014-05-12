@@ -3510,7 +3510,6 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 
 static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
 {
-  /* TODO: fold this into map_channel_to_buffer, or use its scheme opts once they settle down */
   snd_info *sp;
   int i, rpt = 0, rpt4, ofd, datumb;
   char *filename;
@@ -4304,17 +4303,6 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   if (reporting) start_progress_report(cp);
   rpt4 = MAX_BUFFER_SIZE / 4;
   ss->stopped_explicitly = false;
-
-#if 0
-  if (!use_apply)
-    {
-      s7_pointer res;
-      res = s7_apply_function(s7, s7_name_to_value(s7, "scan-channel-fallback"), s7_list(s7, 1, proc));
-      fprintf(stderr, "res: %s\n", DISPLAY(res));
-      return(res);
-      /* (scan-channel (lambda (y) (let ((x .1)) (> y x)))) */
-    }
-#endif
 
   for (kp = 0; kp < num; kp++)
     {

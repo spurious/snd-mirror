@@ -1327,7 +1327,7 @@
 
 
 		    ;; sort
-		    ;; TODO: size_t* -> int vector?
+		    ;; perhaps size_t* -> int vector?
 
 		    (void gsl_sort (double* size_t size_t))
 ;; 1.16?		    (void gsl_sort2 (double* size_t double* size_t size_t))
