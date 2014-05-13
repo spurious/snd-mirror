@@ -249,6 +249,14 @@
   /* this determines whether we include support for quasiquoted vector constants `#(...) */
 #endif
 
+#ifndef WITH_MAKE_COMPLEX 
+  #define WITH_MAKE_COMPLEX 0
+  /* this removes make-polar and make-rectangular, renaming the latter make-complex */
+#endif
+
+/* other similar choices: exact/inexact including #i/#e, #d/#o, call-with-values etc, char-ready?, eof-object?
+ */
+
 #ifndef DEBUGGING
   #define DEBUGGING 0
 #endif
@@ -1648,8 +1656,6 @@ static void init_types(void)
 
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 3))
 #define set_optimized(p)              typeflag(p) |= T_OPTIMIZED
-static int t_optimized = T_OPTIMIZED;
-/* #define is_optimized(p)               ((typeflag(p) & t_optimized) != 0) */
 #define clear_optimized(p)            typeflag(p) &= (~T_OPTIMIZED)
 #define OPTIMIZED_PAIR                (unsigned short)(T_PAIR | T_OPTIMIZED)
 #define is_optimized(p)               (typesflag(p) == OPTIMIZED_PAIR)
@@ -2506,7 +2512,8 @@ static void free_object(s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-static bool is_thunk(s7_scheme *sc, s7_pointer x);
+static bool is_one_argable(s7_scheme *sc, s7_pointer x);
+static bool is_no_argable(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(s7_scheme *sc, const char *file);
 static const char *type_name(s7_scheme *sc, s7_pointer arg, int article);
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
@@ -10512,6 +10519,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_MAKE_COMPLEX)
 static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
@@ -10623,12 +10631,17 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
    *    (make-polar 1.0 1e40) -> -0.76267273202438+0.64678458842683i, not 8.218988919070239214448025364432557517335E-1-5.696334009536363273080341815735687231337E-1i
    */
 }
+#endif
 
 
 static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
+#if WITH_MAKE_COMPLEX
+  #define H_make_rectangular "(make-complex x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
+#else
   #define H_make_rectangular "(make-rectangular x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
+#endif
   
   x = car(args);
   y = cadr(args);
@@ -23318,7 +23331,7 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
       check_method(sc, str, sc->WITH_INPUT_FROM_STRING, args);
       return(wrong_type_argument(sc, sc->WITH_INPUT_FROM_STRING, small_int(1), str, T_STRING));
     }
-  if (!is_thunk(sc, cadr(args)))
+  if (!is_no_argable(sc, cadr(args)))
     return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_STRING, small_int(2), cadr(args), A_THUNK));
   
   /* since the arguments are evaluated before we get here, we can get some confusing situations:
@@ -23340,7 +23353,7 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
       check_method(sc, car(args), sc->WITH_INPUT_FROM_FILE, args);
       return(wrong_type_argument(sc, sc->WITH_INPUT_FROM_FILE, small_int(1), car(args), T_STRING));
     }
-  if (!is_thunk(sc, cadr(args)))
+  if (!is_no_argable(sc, cadr(args)))
     return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_FILE, small_int(2), cadr(args), A_THUNK));
   
   return(with_input(sc, open_input_file_1(sc, string_value(car(args)), "r", "with-input-from-file"), args));
@@ -25386,18 +25399,20 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_output_string "(call-with-output-string proc) opens a string port applies proc to it, then returns the collected output"
-  s7_pointer port;
+  s7_pointer port, proc;
 
-  if (!is_procedure(car(args)))
+  proc = car(args);
+  if (!is_procedure(proc))
     {
-      check_method(sc, car(args), sc->CALL_WITH_OUTPUT_STRING, args);
-      return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), car(args), A_PROCEDURE));
+      check_method(sc, proc, sc->CALL_WITH_OUTPUT_STRING, args);
+      return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, A_PROCEDURE));
     }
-  if ((is_continuation(car(args))) || is_goto(car(args)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(2), car(args), 
+  if ((is_continuation(proc)) || is_goto(proc))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
-  if (is_thunk(sc, car(args)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(2), car(args), 
+
+  if (!is_one_argable(sc, proc))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
 					 make_protected_string(sc, "a procedure of one argument (the port)")));
   port = s7_open_output_string(sc);
   push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
@@ -25410,25 +25425,29 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_output_file "(call-with-output-file filename proc) opens filename and calls proc with the output port as its argument"
-  s7_pointer port;
+  s7_pointer port, file, proc;
   
-  if (!is_string(car(args)))
+  file = car(args);
+  if (!is_string(file))
     {
-      check_method(sc, car(args), sc->CALL_WITH_OUTPUT_FILE, args);
-      return(wrong_type_argument(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(1), car(args), T_STRING));
+      check_method(sc, file, sc->CALL_WITH_OUTPUT_FILE, args);
+      return(wrong_type_argument(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(1), file, T_STRING));
     }
-  if (!is_procedure(cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), cadr(args), A_PROCEDURE));
-  if ((is_continuation(cadr(args))) || is_goto(cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), cadr(args), 
+
+  proc = cadr(args);
+  if (!is_procedure(proc))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, A_PROCEDURE));
+  if ((is_continuation(proc)) || is_goto(proc))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
-  if (is_thunk(sc, car(args)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), car(args), 
+
+  if (!is_one_argable(sc, proc))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
 					 make_protected_string(sc, "a procedure of one argument (the port)")));
   
-  port = s7_open_output_file(sc, string_value(car(args)), "w");
+  port = s7_open_output_file(sc, string_value(file), "w");
   push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
-  push_stack(sc, OP_APPLY, list_1(sc, port), cadr(args));
+  push_stack(sc, OP_APPLY, list_1(sc, port), proc);
   return(sc->F);
 }
 
@@ -25438,7 +25457,7 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
   #define H_with_output_to_string "(with-output-to-string thunk) opens a string as a temporary current-output-port, calls thunk, then returns the collected output"
   s7_pointer old_output_port;
 
-  if (!is_thunk(sc, car(args)))
+  if (!is_no_argable(sc, car(args)))
     {
       check_method(sc, car(args), sc->WITH_OUTPUT_TO_STRING, args);
       return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_STRING, small_int(1), car(args), A_THUNK));
@@ -25457,20 +25476,23 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_output_to_file "(with-output-to-file filename thunk) opens filename as the temporary current-output-port and calls thunk"
-  s7_pointer old_output_port;
+  s7_pointer old_output_port, file, proc;
   
-  if (!is_string(car(args)))
+  file = car(args);
+  if (!is_string(file))
     {
-      check_method(sc, car(args), sc->WITH_OUTPUT_TO_FILE, args);
-      return(wrong_type_argument(sc, sc->WITH_OUTPUT_TO_FILE, small_int(1), car(args), T_STRING));
+      check_method(sc, file, sc->WITH_OUTPUT_TO_FILE, args);
+      return(wrong_type_argument(sc, sc->WITH_OUTPUT_TO_FILE, small_int(1), file, T_STRING));
     }
-  if (!is_thunk(sc, cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_FILE, small_int(2), cadr(args), A_THUNK));
+
+  proc = cadr(args);
+  if (!is_no_argable(sc, proc))
+    return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_FILE, small_int(2), proc, A_THUNK));
   
   old_output_port = sc->output_port;
-  sc->output_port = s7_open_output_file(sc, string_value(car(args)), "w");
+  sc->output_port = s7_open_output_file(sc, string_value(file), "w");
   push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
-  push_stack(sc, OP_APPLY, sc->NIL, cadr(args));
+  push_stack(sc, OP_APPLY, sc->NIL, proc);
   return(sc->F);
 }
 
@@ -32680,7 +32702,7 @@ static s7_pointer g_is_bacro(s7_scheme *sc, s7_pointer args)
 }
 
 
-void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
+static void define_function_star_1(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc, bool safe)
 {
   /* make an internal function of any args that calls fnc, then wrap it in define* and use eval_c_string */
   /* should (does) this ignore :key and other such noise? */
@@ -32702,7 +32724,9 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
   internal_arglist[0] = ' ';
 
   local_sym = symbol_name(s7_gensym(sc, "define*"));
-  s7_define_function(sc, local_sym, fnc, args, 0, 0, NULL);
+  if (safe)
+    s7_define_safe_function(sc, local_sym, fnc, args, 0, 0, NULL);
+  else s7_define_function(sc, local_sym, fnc, args, 0, 0, NULL);
 
   len = 32 + 2 * arglist_len + safe_strlen(doc) + safe_strlen(name) + safe_strlen(local_sym);
   internal_function = (char *)malloc(len * sizeof(char));
@@ -32711,6 +32735,16 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
 
   free(internal_function);
   free(internal_arglist);
+}
+
+void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
+{
+  return(define_function_star_1(sc, name, fnc, arglist, doc, false));
+}
+
+void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
+{
+  return(define_function_star_1(sc, name, fnc, arglist, doc, true));
 }
 
 
@@ -33942,22 +33976,27 @@ static s7_pointer is_aritable_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 }
 
 
-static bool is_thunk(s7_scheme *sc, s7_pointer x)
+static bool is_one_argable(s7_scheme *sc, s7_pointer x)
 {
   switch (type(x))
     {
     case T_C_FUNCTION:
-      return(c_function_all_args(x) == 0);
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+      return((c_function_all_args(x) >= 1) &&
+	     (c_function_required_args(x) <= 1));
 
     case T_CLOSURE:
     case T_CLOSURE_STAR:
-      return(is_null(closure_args(x)));
+      return((is_pair(closure_args(x))) &&
+	     (is_null(cdr(closure_args(x)))));
     }
   return(false);
 }
 
 
-static bool is_thunkable(s7_scheme *sc, s7_pointer x)
+static bool is_no_argable(s7_scheme *sc, s7_pointer x)
 {
   /* can be called with 0 args.
    *    don't use is_aritable here because this needs to be restricted to procedures
@@ -36501,14 +36540,14 @@ each a function of no arguments, guaranteeing that finish is called even if body
 
   /* apparently most schemes think the restriction here to a thunk is onerous, and
    *   instead limit it to functions that can be called with no args.
-   *   hence is_thunkable here -- is this also the expectation in call-with-output-file and others?
+   *   hence is_no_argable here -- is this also the expectation in call-with-output-file and others?
    */
 
-  if (!is_thunkable(sc, car(args)))
+  if (!is_no_argable(sc, car(args)))
     return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(1), car(args), A_THUNK));
-  if (!is_thunkable(sc, cadr(args)))
+  if (!is_no_argable(sc, cadr(args)))
     return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(2), cadr(args), A_THUNK));
-  if (!is_thunkable(sc, caddr(args)))
+  if (!is_no_argable(sc, caddr(args)))
     return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(3), caddr(args), A_THUNK));
 
   /* this won't work:
@@ -36567,7 +36606,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   /* should this check for a tag that can't possibly be eq? to anything that error might throw? (a string for example)
    */
 
-  if (!is_thunk(sc, cadr(args)))
+  if (!is_no_argable(sc, cadr(args)))
     return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), cadr(args), A_THUNK));
   if (!is_procedure(caddr(args)))
     return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(3), caddr(args), A_PROCEDURE));
@@ -47603,14 +47642,6 @@ static s7_pointer check_set(s7_scheme *sc)
     {
       if (!is_symbol(car(sc->code)))                                 /* (set! 12345 1) */
 	return(eval_error(sc, "set! can't change ~S", car(sc->code)));
-
-      /* now check for (set! abs 3) and the like -- in this case (safe function, abs currently refers to the global value)
-       *   turn off optimization.
-       */
-      if ((is_global(car(sc->code))) &&
-	  (is_c_function(slot_value(global_slot(car(sc->code))))) &&
-	  (is_safe_procedure(slot_value(global_slot(car(sc->code))))))
-	t_optimized = 0;
     }
 
   if ((is_overlaid(sc->code)) &&
@@ -62326,18 +62357,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       NEW_CELL_NO_CHECK(sc, sc->value);
       closure_args(sc->value) = list_1(sc, sc->y);
-      closure_body(sc->value) = list_1(sc, 
-					 cons(sc, 
-					      sc->Apply,
-					      cons(sc, 
-						   cons(sc, 
-							((sc->op == OP_DEFINE_MACRO_STAR) || 
-							 (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
-							cons(sc,                /* cdar(sc->code) is the parameter list */
-							     ((sc->op == OP_DEFINE_MACRO_STAR) || 
-							      (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
-							     sc->z)),
-						   list_1(sc, list_2(sc, sc->CDR, sc->y)))));
+      closure_body(sc->value) = list_1(sc, cons(sc, 
+						sc->Apply,
+						cons(sc, 
+						     cons(sc, 
+							  ((sc->op == OP_DEFINE_MACRO_STAR) || 
+							   (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
+							  cons(sc,                /* cdar(sc->code) is the parameter list */
+							       ((sc->op == OP_DEFINE_MACRO_STAR) || 
+								(sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
+							       sc->z)),
+						     list_1(sc, list_2(sc, sc->CDR, sc->y)))));
       closure_environment(sc->value) = sc->envir;
       closure_setter(sc->value) = sc->F;
       closure_arity(sc->value) = CLOSURE_ARITY_NOT_SET;
@@ -65220,7 +65250,11 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_make_rectangular(s7_scheme *sc, s7_pointer args)
 {
+#if WITH_MAKE_COMPLEX
+  #define H_make_rectangular "(make-complex x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
+#else
   #define H_make_rectangular "(make-rectangular x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
+#endif
 
   s7_pointer p0, p1, p;
   mpfr_t rl, im;
@@ -65266,6 +65300,7 @@ static s7_pointer big_make_rectangular(s7_scheme *sc, s7_pointer args)
 /* (make-polar 0 (real-part (log 0))) = 0? or nan?
  */
 
+#if (!WITH_MAKE_COMPLEX)
 static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_polar "(make-polar mag ang) returns a complex number with magnitude mag and angle ang"
@@ -65341,6 +65376,7 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
   mpfr_clear(mag);
   return(p);
 }
+#endif
 
 
 static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
@@ -67770,8 +67806,12 @@ static void s7_gmp_init(s7_scheme *sc)
   sc->GCD =              s7_define_function(sc, "gcd",                 big_gcd,              0, 0, true,  H_gcd);
   sc->LCM =              s7_define_function(sc, "lcm",                 big_lcm,              0, 0, true,  H_lcm);
 
+#if WITH_MAKE_COMPLEX
+  sc->MAKE_RECTANGULAR = s7_define_function(sc, "make-complex",        big_make_rectangular, 2, 0, false, H_make_rectangular);
+#else
   sc->MAKE_RECTANGULAR = s7_define_function(sc, "make-rectangular",    big_make_rectangular, 2, 0, false, H_make_rectangular);
   sc->MAKE_POLAR =       s7_define_function(sc, "make-polar",          big_make_polar,       2, 0, false, H_make_polar);
+#endif
   sc->ANGLE =            s7_define_function(sc, "angle",               big_angle,            1, 0, false, H_angle);
   sc->MAGNITUDE =        s7_define_function(sc, "magnitude",           big_magnitude,        1, 0, false, H_magnitude);
   sc->ABS =              s7_define_function(sc, "abs",                 big_abs,              1, 0, false, H_abs);
@@ -68619,8 +68659,12 @@ s7_scheme *s7_init(void)
   sc->IS_NAN =                s7_define_safe_function(sc, "nan?",                    g_is_nan,                 1, 0, false, H_is_nan);
 
 #if (!WITH_GMP)
+#if WITH_MAKE_COMPLEX
+  sc->MAKE_RECTANGULAR =      s7_define_safe_function(sc, "make-complex",            g_make_rectangular,       2, 0, false, H_make_rectangular);
+#else
   sc->MAKE_POLAR =            s7_define_safe_function(sc, "make-polar",              g_make_polar,             2, 0, false, H_make_polar);
   sc->MAKE_RECTANGULAR =      s7_define_safe_function(sc, "make-rectangular",        g_make_rectangular,       2, 0, false, H_make_rectangular);
+#endif
   sc->MAGNITUDE =             s7_define_safe_function(sc, "magnitude",               g_magnitude,              1, 0, false, H_magnitude);
   sc->ANGLE =                 s7_define_safe_function(sc, "angle",                   g_angle,                  1, 0, false, H_angle);
   sc->RATIONALIZE =           s7_define_safe_function(sc, "rationalize",             g_rationalize,            1, 1, false, H_rationalize);
@@ -69215,6 +69259,7 @@ s7_scheme *s7_init(void)
    */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
+  /* CL-style macros */
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
 
@@ -69559,13 +69604,38 @@ int main(int argc, char **argv)
  * pthread example for s7.html: snd-11.8 had pthread support, symbol-access or added funcs for coordination.
  *   with-thread-sound?
  *   we'll also need a way to free all allocated memory, including "permanent" allocs
+ * also make sure the multiple s7's won't collide -- how many globals are there?
+ *   object_types, num_types (init->init_types so we're in trouble, also for small_ints etc)
+ *   others: CAR_A_LIST (if init'd n times...)
+ *           alloc_cells? errstr? baffle_ctr? me|pepow init'd once
+ *           num_to_str_size, digits, all the bool tables, nth_roots
+ *           choosers et al init'd once
+ *           rng_tag, big_rng_tag, tmp_str, uppers, sigbuf senv?
+ *           compare_func etc, ht_iter_tag, f_class?, file_names_size etc
+ *           error stuff, syms_tag, mpc_precision, add_max?
+ * but is there any collision? 
  *
  * immutable data example?  immutable string/vector?
+ *   (constant ...) -> immutable object, but how to keep types transparent?
  * ideally the function doc string could be completely removed before optimization etc
  * ideally make-* in clm2xen would use s7's define*, not unscramble (but type/range checks?)
  * should (equal? "" #u8()) be #t?
+ * is there any use for the dd and rd bacro cases? rd=scoop in r-time expr, then eval in d
+ *   this seems like memoization
+ * should bacro? have a check_method fallback like macro?
  *
  * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
+ *   isn't this vector_ref_ic?  just s7_define(sc, sc->envir, func_as_symbol, vector_ref_ic)??
+ *   but we'll lose procedure-source etc
  * does lint notice these? -- no because they can take extra args, apparently (list-ref arity is (2 0 #t)??)
+ *
+ * perhaps implement => to multifuncs if values?
+ * perhaps (with-input <port/string/func/etc> . body) (with-output <port/string-growable?/func/etc> . body)
+ * WITH_MAKE_COMPLEX needs *features* flag and checks in *.scm
+ *
+ * s7_define_function_star -> safe_closure_star_direct or something (see clm2xen.c g_make_oscil)
+ *   or maybe a new type T_C_FUNCTION_STAR?  Then it could be handled explicitly and directly
+ *
+ * tests for with-input-from-string|file and output cases, and call-* cases, also dynamic-wind and catch
  */
 

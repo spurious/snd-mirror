@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.7"
-#define S7_DATE "22-Apr-14"
+#define S7_VERSION "3.8"
+#define S7_DATE "14-May-14"
 
 
 typedef long long int s7_Int;
@@ -554,6 +554,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, in
 s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
+void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
   /* this is now the same as s7_make_procedure_with_setter (different args) */
 
@@ -869,6 +870,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 14-May:    s7_define_safe_function_star.
  * 22-Apr:    remove (deprecated) s7_apply_n_10, s7_is_valid_pointer, s7_keyword_eq_p.
  * 5-Mar:     s7_heap_size, s7_gc_freed.
  * 22-Jan-14: s7_vector_ref_object_value_checked.

@@ -1013,7 +1013,7 @@ Here's a brief example of all four:
     (let ((e (with-environment (augment-environment (procedure-environment bac3) (cons 'a a))
 	       `(+ ,x y ,a))))
       `(with-environment ,(augment-environment (procedure-environment bac3) (cons 'a a))
-	 ,e)))           ; expand and eval in definition env
+	 ,e)))           ; expand and eval in definition env 
   (let ((x 32) (y 64)) 
     (bac3 3)))
 -&gt; 6
@@ -5601,7 +5601,7 @@ loading code that calls gcd.
 <li>remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
 <li>change make-rectangular to make-complex, and remove make-polar.
 <li>remove unquote (the name, not the functionality).
-<li>remove cond-expand and letrec*.
+<li>remove cond-expand.
 </ul>
 
 <p>and perhaps:
@@ -6259,9 +6259,10 @@ so we use begin_hook now instead.
 Last but not least, the effort to make the non-threaded
 s7 faster messed up parts of the threaded version.  Rather than
 waste a lot of time fixing this, I chose to flush multithreading.
-Here's a very simple example of using an s7 interpreter per thread:
 </p>
 
+<!--
+Here's a very simple example of using an s7 interpreter per thread:
 <pre class="indented">
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6307,6 +6308,8 @@ int main(int argc, char **argv)
 
 /* gcc -o repl repl.c s7.o -g3 -Wl,-export-dynamic -lpthread -lm -I. -ldl */
 </pre>
+-->
+
 </div>
 
 
