@@ -1261,9 +1261,13 @@ struct s7_scheme {
   int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size;
   int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc;
 
+  unsigned int syms_tag;
+  int ht_iter_tag, rng_tag, baffle_ctr;
   s7_rng_t *default_rng;
+
 #if WITH_GMP
   void *default_big_rng;
+  int big_rng_tag;
 
   s7_pointer *bigints, *bigratios, *bigreals, *bignumbers;
   int bigints_size, bigratios_size, bigreals_size, bignumbers_size;
@@ -2512,8 +2516,6 @@ static void free_object(s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-static bool is_one_argable(s7_scheme *sc, s7_pointer x);
-static bool is_no_argable(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(s7_scheme *sc, const char *file);
 static const char *type_name(s7_scheme *sc, s7_pointer arg, int article);
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
@@ -6825,13 +6827,11 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
  */  
 
 
-static int baffle_ctr = 0;
-
 static s7_pointer make_baffle(s7_scheme *sc)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  baffle_key(x) = baffle_ctr++;
+  baffle_key(x) = sc->baffle_ctr++;
   set_type(x, T_BAFFLE);
   return(x);
 }
@@ -6856,7 +6856,7 @@ static int find_any_baffle(s7_scheme *sc)
   /* search backwards through sc->envir for any sc->BAFFLE
    */
   s7_pointer x, y;	
-  if (baffle_ctr > 0)
+  if (sc->baffle_ctr > 0)
     for (x = sc->envir; is_environment(x); x = next_environment(x))
       for (y = environment_slots(x); is_slot(y); y = next_slot(y))	
 	if (slot_symbol(y) == sc->BAFFLE)
@@ -18147,12 +18147,6 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
  *   random-state? returns #t if its arg is one of these guys
  */
 
-static int rng_tag = 0;
-
-#if WITH_GMP
-static int big_rng_tag = 0;
-#endif
-
 static char *print_rng(s7_scheme *sc, void *val)
 {
   char *buf;
@@ -18208,7 +18202,7 @@ Pass this as the second argument to 'random' to get a repeatable random number s
       r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
       r->ran_seed = s7_integer(car(args));
       r->ran_carry = 1675393560;  /* should this be dependent on the seed? */
-      return(s7_make_object(sc, rng_tag, (void *)r));
+      return(s7_make_object(sc, sc->rng_tag, (void *)r));
     }
 
   if (!(s7_is_integer(cadr(args))))
@@ -18219,20 +18213,20 @@ Pass this as the second argument to 'random' to get a repeatable random number s
   r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
   r->ran_seed = s7_integer(car(args));
   r->ran_carry = s7_integer(cadr(args));
-  return(s7_make_object(sc, rng_tag, (void *)r));
+  return(s7_make_object(sc, sc->rng_tag, (void *)r));
 }
 
 
 static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
 {
-  if (c_object_type(obj) == rng_tag)
+  if (c_object_type(obj) == sc->rng_tag)
     {
       s7_rng_t *r, *new_r;
       r = (s7_rng_t *)s7_object_value(obj);
       new_r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
       new_r->ran_seed = r->ran_seed;
       new_r->ran_carry = r->ran_carry;
-      return(s7_make_object(sc, rng_tag, (void *)new_r));
+      return(s7_make_object(sc, sc->rng_tag, (void *)new_r));
     }
   /* I can't find a way to copy a gmp random generator */
   return(sc->F);
@@ -18246,10 +18240,10 @@ static s7_pointer g_is_random_state(s7_scheme *sc, s7_pointer args)
   obj = car(args);
   if (is_c_object(obj))
     {
-      if (c_object_type(obj) == rng_tag) 
+      if (c_object_type(obj) == sc->rng_tag) 
 	return(sc->T);
 #if WITH_GMP
-      if (c_object_type(obj) == big_rng_tag)
+      if (c_object_type(obj) == sc->big_rng_tag)
 	return(sc->T);
 #endif      
     }
@@ -18299,7 +18293,7 @@ You can later apply make-random-state to this list to continue a random number s
     {
       obj = car(args);
       if ((!is_c_object(obj)) ||
-	  (c_object_type(obj) != rng_tag))
+	  (c_object_type(obj) != sc->rng_tag))
 	{
 	  check_method(sc, obj, sc->RANDOM_STATE_TO_LIST, args);
 	  return(wrong_type_argument_with_type(sc, sc->RANDOM_STATE_TO_LIST, small_int(1), obj, 
@@ -18348,12 +18342,12 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 	  return(wrong_type_argument_with_type(sc, sc->RANDOM, small_int(2), state, 
 					       make_protected_string(sc, "a random state as returned by make-random-state")));
 	}
-      if (c_object_type(state) == rng_tag)
+      if (c_object_type(state) == sc->rng_tag)
 	r = (s7_rng_t *)s7_object_value(state);
       else
 	{
 #if WITH_GMP
-	  if (c_object_type(state) == big_rng_tag)
+	  if (c_object_type(state) == sc->big_rng_tag)
 	    return(big_random(sc, args));
 #endif
 	  return(wrong_type_argument_with_type(sc, sc->RANDOM, small_int(2), state, 
@@ -23331,7 +23325,7 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
       check_method(sc, str, sc->WITH_INPUT_FROM_STRING, args);
       return(wrong_type_argument(sc, sc->WITH_INPUT_FROM_STRING, small_int(1), str, T_STRING));
     }
-  if (!is_no_argable(sc, cadr(args)))
+  if (!s7_is_aritable(sc, cadr(args), 0))
     return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_STRING, small_int(2), cadr(args), A_THUNK));
   
   /* since the arguments are evaluated before we get here, we can get some confusing situations:
@@ -23353,7 +23347,7 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
       check_method(sc, car(args), sc->WITH_INPUT_FROM_FILE, args);
       return(wrong_type_argument(sc, sc->WITH_INPUT_FROM_FILE, small_int(1), car(args), T_STRING));
     }
-  if (!is_no_argable(sc, cadr(args)))
+  if (!s7_is_aritable(sc, cadr(args), 0))
     return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_FILE, small_int(2), cadr(args), A_THUNK));
   
   return(with_input(sc, open_input_file_1(sc, string_value(car(args)), "r", "with-input-from-file"), args));
@@ -25411,7 +25405,7 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
 
-  if (!is_one_argable(sc, proc))
+  if (!s7_is_aritable(sc, proc, 1))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
 					 make_protected_string(sc, "a procedure of one argument (the port)")));
   port = s7_open_output_string(sc);
@@ -25441,7 +25435,7 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
 
-  if (!is_one_argable(sc, proc))
+  if (!s7_is_aritable(sc, proc, 1))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
 					 make_protected_string(sc, "a procedure of one argument (the port)")));
   
@@ -25455,22 +25449,31 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_output_to_string "(with-output-to-string thunk) opens a string as a temporary current-output-port, calls thunk, then returns the collected output"
-  s7_pointer old_output_port;
+  s7_pointer old_output_port, p;
 
-  if (!is_no_argable(sc, car(args)))
+  p = car(args);
+  if (!s7_is_aritable(sc, p, 0))
     {
-      check_method(sc, car(args), sc->WITH_OUTPUT_TO_STRING, args);
-      return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_STRING, small_int(1), car(args), A_THUNK));
+      check_method(sc, p, sc->WITH_OUTPUT_TO_STRING, args);
+      return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_STRING, small_int(1), p, A_THUNK));
     }
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_string(sc);
   push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
   push_stack(sc, OP_GET_OUTPUT_STRING, sc->F, sc->output_port);
-  push_stack(sc, OP_APPLY, sc->NIL, car(args));
+
+  if (is_any_macro(p))
+    {
+      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
+      push_stack(sc, OP_APPLY, list_1(sc, args), p);
+    }
+  else push_stack(sc, OP_APPLY, sc->NIL, p);
   return(sc->F);
 }
 
-/* (string-ref (with-output-to-string (lambda () (write "1234") (values (get-output-string) 1)))) */
+/* (let () (define-macro (mac) (write "123")) (with-output-to-string mac))
+ * (string-ref (with-output-to-string (lambda () (write "1234") (values (get-output-string) 1))))
+ */
 
 
 static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
@@ -25486,16 +25489,21 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
     }
 
   proc = cadr(args);
-  if (!is_no_argable(sc, proc))
+  if (!s7_is_aritable(sc, proc, 0))
     return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_FILE, small_int(2), proc, A_THUNK));
   
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_file(sc, string_value(file), "w");
   push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
-  push_stack(sc, OP_APPLY, sc->NIL, proc);
+
+  if (is_any_macro(proc))
+    {
+      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
+      push_stack(sc, OP_APPLY, list_1(sc, cdr(args)), proc);
+    }
+  else push_stack(sc, OP_APPLY, sc->NIL, proc);
   return(sc->F);
 }
-
 
 
 
@@ -32092,7 +32100,6 @@ typedef struct {
   void *next;
 } ht_iter;
 
-static int ht_iter_tag = 0;
 static ht_iter *ht_iter_free_list = NULL;
 
 static char *print_ht_iter(s7_scheme *sc, void *val)
@@ -32156,7 +32163,7 @@ static s7_pointer copy_ht_iter(s7_scheme *sc, s7_pointer obj)
   new_iter->table = old_iter->table;
   new_iter->loc = old_iter->loc;
 
-  return(s7_make_object(sc, ht_iter_tag, (void *)new_iter));
+  return(s7_make_object(sc, sc->ht_iter_tag, (void *)new_iter));
 }
 
 
@@ -32176,7 +32183,7 @@ returns the next (key . value) pair in the hash-table each time it is called.  W
   iter->table = car(args);
   iter->loc = -1;
 
-  return(s7_make_object(sc, ht_iter_tag, (void *)iter));
+  return(s7_make_object(sc, sc->ht_iter_tag, (void *)iter));
 }
 
 
@@ -32187,7 +32194,7 @@ static s7_pointer g_is_hash_table_iterator(s7_scheme *sc, s7_pointer args)
 
   obj = car(args);
   if ((s7_is_object(obj)) && 
-      (c_object_type(obj) == ht_iter_tag))
+      (c_object_type(obj) == sc->ht_iter_tag))
     return(sc->T);
 
   check_method(sc, obj, sc->IS_HASH_TABLE_ITERATOR, args);
@@ -32692,13 +32699,6 @@ static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
   /* it would be more consistent (with procedure? for example) if this returned #f for a symbol,
    *   but fully-expand expects this version.
    */
-}
-
-
-static s7_pointer g_is_bacro(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_bacro "(bacro? arg) returns #t if 'arg' is a bacro"
-  return(make_boolean(sc, is_bacro(car(args))));
 }
 
 
@@ -33973,49 +33973,6 @@ static s7_pointer is_aritable_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       (s7_integer(cadr(expr)) >= 0))
     return(is_aritable_ic);
   return(f);
-}
-
-
-static bool is_one_argable(s7_scheme *sc, s7_pointer x)
-{
-  switch (type(x))
-    {
-    case T_C_FUNCTION:
-    case T_C_ANY_ARGS_FUNCTION:
-    case T_C_OPT_ARGS_FUNCTION:
-    case T_C_RST_ARGS_FUNCTION:
-      return((c_function_all_args(x) >= 1) &&
-	     (c_function_required_args(x) <= 1));
-
-    case T_CLOSURE:
-    case T_CLOSURE_STAR:
-      return((is_pair(closure_args(x))) &&
-	     (is_null(cdr(closure_args(x)))));
-    }
-  return(false);
-}
-
-
-static bool is_no_argable(s7_scheme *sc, s7_pointer x)
-{
-  /* can be called with 0 args.
-   *    don't use is_aritable here because this needs to be restricted to procedures
-   */
-  switch (type(x))
-    {
-    case T_C_FUNCTION:
-    case T_C_ANY_ARGS_FUNCTION:
-    case T_C_OPT_ARGS_FUNCTION:
-    case T_C_RST_ARGS_FUNCTION:
-      return(c_function_required_args(x) == 0);
-
-    case T_CLOSURE:
-      return(!(is_pair(closure_args(x))));
-      
-    case T_CLOSURE_STAR:
-      return(true);
-    }
-  return(false);
 }
 
 
@@ -36538,16 +36495,11 @@ static s7_pointer g_dynamic_wind(s7_scheme *sc, s7_pointer args)
 each a function of no arguments, guaranteeing that finish is called even if body is exited"
   s7_pointer p;
 
-  /* apparently most schemes think the restriction here to a thunk is onerous, and
-   *   instead limit it to functions that can be called with no args.
-   *   hence is_no_argable here -- is this also the expectation in call-with-output-file and others?
-   */
-
-  if (!is_no_argable(sc, car(args)))
+  if (!s7_is_aritable(sc, car(args), 0))
     return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(1), car(args), A_THUNK));
-  if (!is_no_argable(sc, cadr(args)))
+  if (!s7_is_aritable(sc, cadr(args), 0))
     return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(2), cadr(args), A_THUNK));
-  if (!is_no_argable(sc, caddr(args)))
+  if (!s7_is_aritable(sc, caddr(args), 0))
     return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(3), caddr(args), A_THUNK));
 
   /* this won't work:
@@ -36606,7 +36558,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   /* should this check for a tag that can't possibly be eq? to anything that error might throw? (a string for example)
    */
 
-  if (!is_no_argable(sc, cadr(args)))
+  if (!s7_is_aritable(sc, cadr(args), 0))
     return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), cadr(args), A_THUNK));
   if (!is_procedure(caddr(args)))
     return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(3), caddr(args), A_PROCEDURE));
@@ -39978,14 +39930,13 @@ static bool direct_memq(s7_pointer symbol, s7_pointer symbols)
 }
 
 
-static unsigned int syms_tag = 0;
-static s7_pointer add_sym_to_list(s7_pointer sym) {symbol_tag(sym) = syms_tag; return(sym);}
-static void clear_syms_in_list(void) {syms_tag++;}
+static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym) {symbol_tag(sym) = sc->syms_tag; return(sym);}
+static void clear_syms_in_list(s7_scheme *sc) {sc->syms_tag++;}
 
 static bool rdirect_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
 {
   s7_pointer x;
-  if (symbol_tag(symbol) != syms_tag)
+  if (symbol_tag(symbol) != sc->syms_tag)
     return(false);
   for (x = symbols; is_pair(x); x = cdr(x))
     {
@@ -42596,13 +42547,13 @@ static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e
     {
       if ((is_symbol(car(p))) &&
 	  (global_slot(car(p)) != sc->NIL))
-	sc->w = cons(sc, add_sym_to_list(car(p)), sc->w);
+	sc->w = cons(sc, add_sym_to_list(sc, car(p)), sc->w);
       else
 	{
 	  if ((is_pair(car(p))) &&
 	      (is_symbol(caar(p))) &&
 	      (global_slot(caar(p)) != sc->NIL))
-	    sc->w = cons(sc, add_sym_to_list(caar(p)), sc->w);
+	    sc->w = cons(sc, add_sym_to_list(sc, caar(p)), sc->w);
 	}
     }
   return(sc->w);
@@ -44944,7 +44895,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       if (is_symbol(cadr(p)))
 	{
 	  if (global_slot(cadr(p)) != sc->NIL)
-	    sc->w = cons(sc, add_sym_to_list(cadr(p)), sc->w);
+	    sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
 	  sc->w = collect_collisions(sc, caddr(p), sc->w);
 	}
       else sc->w = collect_collisions(sc, cadr(p), sc->w);
@@ -44963,19 +44914,19 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       if (is_symbol(cadr(p))) /* (lambda args ...) */
 	{
 	  if (global_slot(cadr(p)) != sc->NIL)
-	    sc->w = cons(sc, add_sym_to_list(cadr(p)), sc->w);
+	    sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
 	}
       else sc->w = collect_collisions(sc, cadr(p), sc->w);
 
       if ((op == OP_DEFINE) &&
 	  (is_pair(cadr(p))))
-	sc->w = cons(sc, add_sym_to_list(p), sc->w);
+	sc->w = cons(sc, add_sym_to_list(sc, p), sc->w);
       break;
 
     case OP_SET:
       if ((is_symbol(cadr(p))) &&
 	  (global_slot(cadr(p)) != sc->NIL))
-	sc->w = cons(sc, add_sym_to_list(cadr(p)), sc->w);
+	sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
       break;
 
     case OP_DO:
@@ -47321,8 +47272,8 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
     {
       bool bad_set = false;
 
-      clear_syms_in_list();
-      optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(x))));
+      clear_syms_in_list(sc);
+      optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(sc, x))));
 
       /* if the body is safe, we can optimize the calling sequence */
       if ((is_proper_list(sc, args)) &&
@@ -62280,6 +62231,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * (hi 2)
        * here with value: (+ 2 1)
        */
+      /* fprintf(stderr, "eval_macro: %s\n", DISPLAY(sc->value)); */
+
       if (is_multiple_value(sc->value))
 	{
 	  /* a normal macro's result is evaluated (below) and its value replaces the macro invocation,
@@ -62428,7 +62381,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 *    Third because something is broken in the optimizer: ((sc->safety == 0) && (sc->envir == sc->NIL)) should be sufficient!
 	 */
 	check_lambda_args(sc, car(code), NULL);
-	clear_syms_in_list();
+	clear_syms_in_list(sc);
 	optimize(sc, body, 0, sc->NIL);
 
 	if ((is_overlaid(code)) &&
@@ -62449,7 +62402,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	eval_error(sc, "lambda*: no args or no body? ~A", sc->code);
 
       car(sc->code) = check_lambda_star_args(sc, car(sc->code), NULL);
-      clear_syms_in_list();
+      clear_syms_in_list(sc);
       optimize(sc, cdr(sc->code), 0, sc->NIL);
 
       if ((is_overlaid(sc->code)) &&
@@ -63353,8 +63306,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 /* -------------------------------- multiprecision arithmetic -------------------------------- */
 
 #if WITH_GMP
-
-static mp_prec_t mpc_precision = 128;
+static mp_prec_t mpc_precision = DEFAULT_BIGNUM_PRECISION; /* global for libs */
 static mp_prec_t mpc_set_default_precision(mp_prec_t prec) {mpc_precision = prec; return(prec);}
 
 #define mpc_init(Z) mpc_init2(Z, mpc_precision)
@@ -64611,8 +64563,6 @@ static s7_pointer g_is_bignum(s7_scheme *sc, s7_pointer args)
   return(s7_make_boolean(sc, is_big_number(car(args))));
 }
 
-
-static s7_Int add_max = 0;
 
 static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
 {
@@ -67599,7 +67549,7 @@ Pass this as the second argument to 'random' to get a repeatable random number s
       r = (s7_big_rng_t *)calloc(1, sizeof(s7_big_rng_t));
       gmp_randinit_default(r->state);
       gmp_randseed(r->state, big_integer(seed));
-      return(s7_make_object(sc, big_rng_tag, (void *)r));
+      return(s7_make_object(sc, sc->big_rng_tag, (void *)r));
     }
 
   return(s7_make_random_state(sc, args));
@@ -67621,8 +67571,8 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
     {
       state = cadr(args);
       if ((!is_c_object(state)) ||
-	  ((c_object_type(state) != big_rng_tag) &&
-	   (c_object_type(state) != rng_tag)))
+	  ((c_object_type(state) != sc->big_rng_tag) &&
+	   (c_object_type(state) != sc->rng_tag)))
 	return(s7_wrong_type_arg_error(sc, "random state", 2, state, "a random-state object"));
     }
 
@@ -67631,7 +67581,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
   if ((is_big_number(num)) ||
       ((is_c_object(state)) &&
-       (c_object_type(state) == big_rng_tag)))
+       (c_object_type(state) == sc->big_rng_tag)))
     {
       /* bignum case -- provide a state if none was passed,
        *   promote num if bignum state was passed but num is not a bignum
@@ -67659,7 +67609,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	{
 	  /* state was passed, check its type */
 
-	  if (c_object_type(state) == rng_tag)
+	  if (c_object_type(state) == sc->rng_tag)
 	    {
 	      /* here "num" is a bignum, the state was passed, but it is intended for non-bignums */
 	      if (type(num) == T_BIG_REAL)
@@ -67840,8 +67790,8 @@ static void s7_gmp_init(s7_scheme *sc)
   sc->ACOSH =            s7_define_function(sc, "acosh",               big_acosh,            1, 0, false, H_acosh);
   sc->ATANH =            s7_define_function(sc, "atanh",               big_atanh,            1, 0, false, H_atanh);
 
-  big_rng_tag = s7_new_type("<big-random-number-generator>", print_big_rng, free_big_rng, equal_big_rng, NULL, NULL, NULL);
-  sc->RANDOM =          s7_define_function(sc,  "random",              big_random,           1, 1, false, H_random);
+  sc->big_rng_tag = s7_new_type("<big-random-number-generator>", print_big_rng, free_big_rng, equal_big_rng, NULL, NULL, NULL);
+  sc->RANDOM =           s7_define_function(sc, "random",              big_random,           1, 1, false, H_random);
   sc->MAKE_RANDOM_STATE = s7_define_function(sc,"make-random-state",  make_big_random_state,1, 1, false, H_make_random_state);
 
   sc->BIGNUM =          s7_define_function(sc, "bignum",              g_bignum,             1, 1, false, H_bignum);
@@ -67854,7 +67804,6 @@ static void s7_gmp_init(s7_scheme *sc)
 			      s7_make_function(sc, "(set *bignum-precision*)", g_set_bignum_precision, 2, 0, false, "called if *bignum-precision* is set"), 
 			      s7_make_function(sc, "(bind *bignum-precision*)", g_set_bignum_precision, 2, 0, false, "called if *bignum-precision* is bound")));
 
-  add_max = (1 << (s7_int_bits - 1));
   mpfr_set_default_prec((mp_prec_t)DEFAULT_BIGNUM_PRECISION); 
   mpc_set_default_precision((mp_prec_t)DEFAULT_BIGNUM_PRECISION);
 
@@ -67893,12 +67842,16 @@ s7_scheme *s7_init(void)
   int i;
   s7_scheme *sc;
   s7_pointer sym;
+  static bool already_inited = false;
 
-  init_types();
-  init_ctables();
-  init_mark_functions();
-  init_pows();
-  init_uppers();
+  if (!already_inited)
+    {
+      init_types();
+      init_ctables();
+      init_mark_functions();
+      init_pows();
+      init_uppers();
+    }
 
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
   
@@ -68135,6 +68088,8 @@ s7_scheme *s7_init(void)
   sc->s7_call_file = NULL;
   sc->s7_call_name = NULL;
   sc->safety = 0;
+  sc->baffle_ctr = 0;
+  sc->syms_tag = 0;
 
   sc->class_name_hash = raw_string_hash((const unsigned char *)"class-name");
   sc->class_name_location = sc->class_name_hash % SYMBOL_TABLE_SIZE;
@@ -68525,7 +68480,9 @@ s7_scheme *s7_init(void)
   sc->NOT_ENOUGH_ARGUMENTS = s7_make_permanent_string("~A: not enough arguments: ~A");
   sc->DIVISION_BY_ZERO_ERROR = s7_make_permanent_string("~A: division by zero, ~S");
   sc->DIVISION_BY_ZERO = make_symbol(sc, "division-by-zero");
-  init_car_a_list();
+
+  if (!already_inited)
+    init_car_a_list();
 
   for (i = 0; i < NUM_TYPES; i++)
     {
@@ -68572,7 +68529,6 @@ s7_scheme *s7_init(void)
   sc->IS_DEFINED =            s7_define_safe_function(sc, "defined?",                g_is_defined,             1, 1, false, H_is_defined);
   sc->IS_CONSTANT =           s7_define_safe_function(sc, "constant?",               g_is_constant,            1, 0, false, H_is_constant);
   sc->IS_MACRO =              s7_define_safe_function(sc, "macro?",                  g_is_macro,               1, 0, false, H_is_macro);
-                              s7_define_safe_function(sc, "bacro?",                  g_is_bacro,               1, 0, false, H_is_bacro);
 
   sc->IS_KEYWORD =            s7_define_safe_function(sc, "keyword?",                g_is_keyword,             1, 0, false, H_is_keyword);
   sc->MAKE_KEYWORD =          s7_define_safe_function(sc, "make-keyword",            g_make_keyword,           1, 0, false, H_make_keyword);
@@ -68719,8 +68675,8 @@ s7_scheme *s7_init(void)
   sc->LOGBIT =                s7_define_safe_function(sc, "logbit?",                 g_logbit,                 2, 0, false, H_logbit);
   sc->INTEGER_DECODE_FLOAT =  s7_define_safe_function(sc, "integer-decode-float",    g_integer_decode_float,   1, 0, false, H_integer_decode_float);
 
-  rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
-  s7_set_object_print_readably(rng_tag, print_rng_readably);
+  sc->rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
+  s7_set_object_print_readably(sc->rng_tag, print_rng_readably);
   sc->IS_RANDOM_STATE =       s7_define_safe_function(sc, "random-state?",           g_is_random_state,        1, 0, false, H_is_random_state);
   sc->RANDOM_STATE_TO_LIST =  s7_define_safe_function(sc, "random-state->list",      s7_random_state_to_list,  0, 1, false, H_random_state_to_list);
   sc->MAKE_RANDOM_STATE =     s7_define_safe_function(sc, "make-random-state",       s7_make_random_state,     1, 1, false, H_make_random_state);
@@ -68903,10 +68859,10 @@ s7_scheme *s7_init(void)
   
                               s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
-  ht_iter_tag = s7_new_type_x("<hash-table-iterator>", print_ht_iter, ht_iter_free, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
+  sc->ht_iter_tag = s7_new_type_x("<hash-table-iterator>", print_ht_iter, ht_iter_free, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
   sc->IS_HASH_TABLE_ITERATOR =   s7_define_safe_function(sc, "hash-table-iterator?",     g_is_hash_table_iterator,   1, 0, false, H_is_hash_table_iterator);
-  s7_set_object_print_readably(ht_iter_tag, write_ht_iter_readably);
+  s7_set_object_print_readably(sc->ht_iter_tag, write_ht_iter_readably);
 
 
   sc->CALL_CC =               s7_define_function(sc,      "call/cc",                 g_call_cc,                1, 0, false, H_call_cc);
@@ -69099,6 +69055,9 @@ s7_scheme *s7_init(void)
 #endif
 #if WITH_C_LOADER
   s7_provide(sc, "dlopen");
+#endif
+#if WITH_MAKE_COMPLEX
+  s7_provide(sc, "make-complex");
 #endif
 
 #ifdef __APPLE__
@@ -69411,6 +69370,8 @@ s7_scheme *s7_init(void)
 #if WITH_COUNTS
   clear_counts();
 #endif
+
+  already_inited = true;
   return(sc);
 }
 
@@ -69606,36 +69567,42 @@ int main(int argc, char **argv)
  *   we'll also need a way to free all allocated memory, including "permanent" allocs
  * also make sure the multiple s7's won't collide -- how many globals are there?
  *   object_types, num_types (init->init_types so we're in trouble, also for small_ints etc)
- *   others: CAR_A_LIST (if init'd n times...)
- *           alloc_cells? errstr? baffle_ctr? me|pepow init'd once
- *           num_to_str_size, digits, all the bool tables, nth_roots
- *           choosers et al init'd once
- *           rng_tag, big_rng_tag, tmp_str, uppers, sigbuf senv?
- *           compare_func etc, ht_iter_tag, f_class?, file_names_size etc
- *           error stuff, syms_tag, mpc_precision, add_max?
+ *   others: errstr? choosers et al init'd once??
+ *           tmp_str, sigbuf senv? -- this one is a problem
+ *           compare_func etc, f_class -- choosers use this? error stuff
  * but is there any collision? 
  *
  * immutable data example?  immutable string/vector?
  *   (constant ...) -> immutable object, but how to keep types transparent?
  * ideally the function doc string could be completely removed before optimization etc
- * ideally make-* in clm2xen would use s7's define*, not unscramble (but type/range checks?)
  * should (equal? "" #u8()) be #t?
  * is there any use for the dd and rd bacro cases? rd=scoop in r-time expr, then eval in d
  *   this seems like memoization
- * should bacro? have a check_method fallback like macro?
+ * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *
  * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
  *   isn't this vector_ref_ic?  just s7_define(sc, sc->envir, func_as_symbol, vector_ref_ic)??
  *   but we'll lose procedure-source etc
  * does lint notice these? -- no because they can take extra args, apparently (list-ref arity is (2 0 #t)??)
  *
- * perhaps implement => to multifuncs if values?
  * perhaps (with-input <port/string/func/etc> . body) (with-output <port/string-growable?/func/etc> . body)
- * WITH_MAKE_COMPLEX needs *features* flag and checks in *.scm
+ * still need to probe for missing accessor checks
  *
+ * ideally make-* in clm2xen would use s7's define*, not unscramble
  * s7_define_function_star -> safe_closure_star_direct or something (see clm2xen.c g_make_oscil)
  *   or maybe a new type T_C_FUNCTION_STAR?  Then it could be handled explicitly and directly
+ *   T_C_FUNCTION include opt/rest arg cases, so the other would imply default values?
+ *   read defaults->array of protected trees, at call fill in from args, then defaults?
+ *   or use lambda_star_set_args by having closure_args equivalent and saved env for set_slot -- but this is not direct.
+ *   So we have 2 cases even before starting?  Maybe not worth it.
  *
- * tests for with-input-from-string|file and output cases, and call-* cases, also dynamic-wind and catch
+ * with-output* with any applicable obj? (macros) -- generic IO -- test this
+ *   needs special handling for macro: see with_output_to_string -- also needs tests and some reason to do this...
+ *   also with-output-to-file+mac is untested
+ *   where else are we assuming functions?
+ *     symbol-access, member, assoc, sort!, call/cc, call-with-exit, catch, dynamic-wind
+ *     (call/cc macro) -- arg to macro is the continuation -- transparency as in map/for-each
+ *     in catch(main), dw -- no args to macro, call* -- arg is just a name
+ *   what about clm/snd?
  */
 

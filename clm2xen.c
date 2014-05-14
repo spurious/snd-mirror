@@ -2415,7 +2415,7 @@ static Xen g_mus_set_length(Xen gen, Xen val)
 /* ---------------- oscil ---------------- */
 
 #define S7_MAKE_OSCIL 0
-/* this is slower mainly because there's no s7_define_safe_function_star, and s7_define_function_star
+/* this is slower mainly because s7_define_safe_function_star
  *   currently wraps the function in an extra closure, so we have an extra step in eval on every call.
  *   ideally we'd go direct -- no env, no relookup of the args: safe_closure_star_direct = set up args (Tn_n) from defaults, call internal
  *   safe_closure_direct for the non* case?
@@ -2435,7 +2435,7 @@ static s7_pointer g_make_oscil(s7_scheme *sc, s7_pointer args)
     freq = s7_number_to_real_with_caller(sc, f, S_make_oscil);
   else Xen_check_type(false, f, 1, S_make_oscil, "a number");
   if (freq > (0.5 * mus_srate()))
-    {freq = 0.0; Xen_out_of_range_error(S_make_oscil, 1, f, "freq > srate/2?");}
+    {freq = 0.0; /* that assignment is merely to appease the compiler */ Xen_out_of_range_error(S_make_oscil, 1, f, "freq > srate/2?");}
 
   if (s7_is_real(p))
     phase = s7_number_to_real_with_caller(sc, p, S_make_oscil);
