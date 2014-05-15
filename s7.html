@@ -5791,11 +5791,13 @@ I wonder what other Scheme programmers (not implementors!) want in this situatio
 Currently, there are no immutable list, string, or vector constants, and
 symbol-&gt;string
 returns a copy of the string.
-One simple way to ensure immutability is to use copy:
+One simple way to ensure immutability is to use copy or package the object into a symbol name:
 </p>
 
 <pre class="indented">
 &gt; (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
+"hiho"
+&gt; (let ((x (string->symbol "hiho"))) (string-set! (symbol->string x) 1 #\x) (symbol->string x))
 "hiho"
 </pre>
 
@@ -6184,6 +6186,10 @@ enum
 1
 </pre>
 
+<p>Similarly, catch, dynamic-wind, and many of the other functions that take function
+arguments in standard Scheme, accept macros in s7.
+</p>
+
 <p>
 Currently, you can't set! a built-in syntactic keyword to some new value:
 <code>(set! if 3)</code>.
@@ -6254,15 +6260,13 @@ all cell allocations.  It was faster and simpler to use multiple
 processes each running a separate s7 interpreter, rather than one s7
 running multiple s7 threads.  In CLM, there was also contention for access
 to the output stream.  In GUI-related situations, as discussed at length below,
-threads were not useful mainly because the GUI toolkits are not thread safe,
-so we use begin_hook now instead.
+threads were not useful mainly because the GUI toolkits are not thread safe.
 Last but not least, the effort to make the non-threaded
 s7 faster messed up parts of the threaded version.  Rather than
 waste a lot of time fixing this, I chose to flush multithreading.
+Here's a very simple example of using an s7 interpreter per thread:
 </p>
 
-<!--
-Here's a very simple example of using an s7 interpreter per thread:
 <pre class="indented">
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6296,6 +6300,7 @@ static thred *make_thread(s7_function func)
 static s7_pointer a_test(s7_scheme *sc, s7_pointer args)
 {
   fprintf(stderr, "I am %p\n", sc);
+  /* do something time-consuming... */
   return(args);
 }
 
@@ -6304,11 +6309,13 @@ int main(int argc, char **argv)
   thred *f1, *f2;
   f1 = make_thread(a_test);
   f2 = make_thread(a_test);
+
+  pthread_join(*(f1-&gt;thread), NULL);
+  pthread_join(*(f2-&gt;thread), NULL);
 }
 
 /* gcc -o repl repl.c s7.o -g3 -Wl,-export-dynamic -lpthread -lm -I. -ldl */
 </pre>
--->
 
 </div>
 

@@ -679,8 +679,6 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
    * s7_call_with_location passes some information to the error handler.  
    */
 
-s7_pointer s7_catch_all(s7_scheme *sc, s7_pointer thunk, s7_pointer error_handler);
-
 bool s7_is_procedure_with_setter(s7_pointer obj);
 s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
 					 const char *name,
@@ -870,7 +868,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
- * 14-May:    s7_define_safe_function_star.
+ * 14-May:    s7_define_safe_function_star.  Removed s7_catch_all.
  * 22-Apr:    remove (deprecated) s7_apply_n_10, s7_is_valid_pointer, s7_keyword_eq_p.
  * 5-Mar:     s7_heap_size, s7_gc_freed.
  * 22-Jan-14: s7_vector_ref_object_value_checked.
@@ -946,7 +944,6 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 26-May:    added s7_scheme argument to s7_procedure_setter and getter (old names had "with_setter_").
  * 28-Apr:    s7_help.
  * 5-Apr:     pair-line-number.
- * 23-Mar:    s7_catch_all.
  * 14-Mar:    s7_make_random_state, optional state argument to s7_random, random-state->list, s7_random_state_to_list.
  * 10-Feb:    s7_vector_print_length, s7_set_vector_print_length.
  * 7-Feb:     s7_begin_hook, s7_set_begin_hook.

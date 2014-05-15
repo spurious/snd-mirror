@@ -426,7 +426,7 @@ enum {OP_NO_OP,
       OP_IF_UNCHECKED, OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
       
       OP_SAFE_IF_Z_Z, 
-      OP_CATCH_1, OP_CATCH_ALL, OP_COND_ALL_X,
+      OP_CATCH_1, OP_CATCH_2, OP_CATCH_ALL, OP_COND_ALL_X,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O, OP_SAFE_DOTIMES_STEP_A,
       OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_1, OP_SAFE_DOTIMES_C_C,
       OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, OP_SIMPLE_DO_FOREVER,
@@ -529,7 +529,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "and", "and", "and", "or", "or", "or", 
 
    "if", 
-   "catch", "catch", "cond",
+   "catch", "catch", "catch", "cond",
    "do", "do", "do", "do", "do", 
    "do", "do", "do", "do", "do", "do",
    "do", "do", "do", "do", "do",
@@ -613,7 +613,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_IF_UNCHECKED", "OP_AND_UNCHECKED", "OP_AND_P", "OP_AND_P1", "OP_OR_UNCHECKED", "OP_OR_P", "OP_OR_P1",
   
   "OP_SAFE_IF_Z_Z", 
-  "OP_CATCH_1", "OP_CATCH_ALL", "OP_COND_ALL_X",
+  "OP_CATCH_1", "OP_CATCH_2", "OP_CATCH_ALL", "OP_COND_ALL_X",
   "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_SAFE_DOTIMES", "OP_SAFE_DOTIMES_STEP", "OP_SAFE_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_STEP_O", "OP_SAFE_DOTIMES_STEP_A",
   "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DO_STEP_1", "OP_SAFE_DOTIMES_C_C",
   "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_DOX", "OP_DOX_STEP", "OP_DOX_STEP_P", "OP_SIMPLE_DO_FOREVER",
@@ -1569,6 +1569,7 @@ static void init_types(void)
   for (i = 0; i < OP_MAX_DEFINED; i++) t_catchable_p[i] = false;
   t_catchable_p[OP_CATCH_ALL] = true;
   t_catchable_p[OP_CATCH_1] = true;
+  t_catchable_p[OP_CATCH_2] = true;
   t_catchable_p[OP_CATCH] = true;
   t_catchable_p[OP_DYNAMIC_WIND] = true;
   t_catchable_p[OP_UNWIND_OUTPUT] = true;
@@ -1628,6 +1629,7 @@ static void init_types(void)
 
 #define is_sequence(P)                ((t_sequence_p[type(P)]) || (has_methods(P)))
 #define is_applicable(P)              (t_applicable_p[type(P)])
+/* this misses #() which actually is not applicable to anything, probably "" also */
 
 
 /* the layout of these bits does matter in several cases -- in particular, don't use the 2nd byte for anything
@@ -23251,14 +23253,19 @@ static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer arg
   p = cadr(args);
   port_original_input_string(port) = car(args);
   push_stack(sc, OP_UNWIND_INPUT, sc->input_port, port);
-  push_stack(sc, OP_APPLY, list_1(sc, port), p);
+  if (is_any_macro(p))
+    {
+      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
+      push_stack(sc, OP_APPLY, list_1(sc, list_2(sc, p, port)), p);
+    }
+  else push_stack(sc, OP_APPLY, list_1(sc, port), p);
   return(sc->F);
 }
 
 
 static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer str;
+  s7_pointer str, proc;
   #define H_call_with_input_string "(call-with-input-string str proc) opens a string port for str and applies proc to it"
   
   /* (call-with-input-string "44" (lambda (p) (+ 1 (read p)))) -> 45
@@ -23270,11 +23277,13 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
       check_method(sc, str, sc->CALL_WITH_INPUT_STRING, args);
       return(wrong_type_argument(sc, sc->CALL_WITH_INPUT_STRING, small_int(1), str, T_STRING));
     }
-  if (!is_procedure(cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, small_int(2), cadr(args), A_PROCEDURE));
-  if ((is_continuation(cadr(args))) || 
-      (is_goto(cadr(args))))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, small_int(2), cadr(args), 
+
+  proc = cadr(args);
+  if (!s7_is_aritable(sc, proc, 1))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, small_int(2), proc, 
+					 make_protected_string(sc, "a procedure of one argument (the port)")));
+  if ((is_continuation(proc)) || (is_goto(proc)))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, small_int(2), proc,
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
   
   return(call_with_input(sc, open_and_protect_input_string(sc, str), args));
@@ -23284,32 +23293,41 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_call_with_input_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_input_file "(call-with-input-file filename proc) opens filename and calls proc with the input port as its argument"
+  s7_pointer str, proc;
   
-  if (!is_string(car(args)))
+  str = car(args);
+  if (!is_string(str))
     {
-      check_method(sc, car(args), sc->CALL_WITH_INPUT_FILE, args);
-      return(wrong_type_argument(sc, sc->CALL_WITH_INPUT_FILE, small_int(1), car(args), T_STRING));
+      check_method(sc, str, sc->CALL_WITH_INPUT_FILE, args);
+      return(wrong_type_argument(sc, sc->CALL_WITH_INPUT_FILE, small_int(1), str, T_STRING));
     }
-  if (!is_procedure(cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_FILE, small_int(2), cadr(args), A_PROCEDURE));
-  if ((is_continuation(cadr(args))) || 
-      (is_goto(cadr(args))))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_FILE, small_int(2), cadr(args), 
+
+  proc = cadr(args);
+  if (!s7_is_aritable(sc, proc, 1))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_FILE, small_int(2), proc, 
+					 make_protected_string(sc, "a procedure of one argument (the port)")));
+  if ((is_continuation(proc)) || (is_goto(proc)))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_FILE, small_int(2), proc,
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
   
-  return(call_with_input(sc, open_input_file_1(sc, string_value(car(args)), "r", "call-with-input-file"), args));
+  return(call_with_input(sc, open_input_file_1(sc, string_value(str), "r", "call-with-input-file"), args));
 }
 
 
 static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 {
-  s7_pointer old_input_port;
+  s7_pointer old_input_port, p;
   old_input_port = sc->input_port;
   sc->input_port = port;
   port_original_input_string(port) = car(args);
-  
   push_stack(sc, OP_UNWIND_INPUT, old_input_port, port);
-  push_stack(sc, OP_APPLY, sc->NIL, cadr(args));
+  p = cadr(args);
+  if (is_any_macro(p))
+    {
+      push_stack(sc, OP_EVAL_MACRO, sc->NIL, cdr(args));
+      push_stack(sc, OP_APPLY, list_1(sc, cdr(args)), p);
+    }
+  else push_stack(sc, OP_APPLY, sc->NIL, p);
   return(sc->F);
 }
 
@@ -23569,7 +23587,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 
 #if TRAP_SEGFAULT
 #include <signal.h>
-static sigjmp_buf senv;
+static sigjmp_buf senv; /* global here is not a problem -- it is used only to protect s7_is_valid */
 static volatile sig_atomic_t can_jump = 0;
 static void segv(int ignored) {if (can_jump) siglongjmp(senv, 1);}
 #endif
@@ -25394,24 +25412,22 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_output_string "(call-with-output-string proc) opens a string port applies proc to it, then returns the collected output"
   s7_pointer port, proc;
-
   proc = car(args);
-  if (!is_procedure(proc))
-    {
-      check_method(sc, proc, sc->CALL_WITH_OUTPUT_STRING, args);
-      return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, A_PROCEDURE));
-    }
-  if ((is_continuation(proc)) || is_goto(proc))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
-					 make_protected_string(sc, "a normal procedure (not a continuation)")));
-
   if (!s7_is_aritable(sc, proc, 1))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
 					 make_protected_string(sc, "a procedure of one argument (the port)")));
+  if ((is_continuation(proc)) || is_goto(proc))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
+					 make_protected_string(sc, "a normal procedure (not a continuation)")));
   port = s7_open_output_string(sc);
   push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
   push_stack(sc, OP_GET_OUTPUT_STRING, sc->F, port);
-  push_stack(sc, OP_APPLY, list_1(sc, port), car(args));
+  if (is_any_macro(proc))                             /* (let () (define-macro (m p) `(write 123 ,p)) (call-with-output-string m)) */
+    {
+      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
+      push_stack(sc, OP_APPLY, list_1(sc, list_2(sc, proc, port)), proc);
+    }
+  else push_stack(sc, OP_APPLY, list_1(sc, port), proc);
   return(sc->F);
 }
 
@@ -25429,19 +25445,21 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
     }
 
   proc = cadr(args);
-  if (!is_procedure(proc))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, A_PROCEDURE));
+  if (!s7_is_aritable(sc, proc, 1))
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
+					 make_protected_string(sc, "a procedure of one argument (the port)")));
   if ((is_continuation(proc)) || is_goto(proc))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
 
-  if (!s7_is_aritable(sc, proc, 1))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
-					 make_protected_string(sc, "a procedure of one argument (the port)")));
-  
   port = s7_open_output_file(sc, string_value(file), "w");
   push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
-  push_stack(sc, OP_APPLY, list_1(sc, port), proc);
+  if (is_any_macro(proc))                             /* (let () (define-macro (m p) `(write 123 ,p)) (call-with-output-file "test" m)) */
+    {
+      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
+      push_stack(sc, OP_APPLY, list_1(sc, list_2(sc, proc, port)), proc);
+    }
+  else push_stack(sc, OP_APPLY, list_1(sc, port), proc);
   return(sc->F);
 }
 
@@ -25498,7 +25516,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 
   if (is_any_macro(proc))
     {
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
+      push_stack(sc, OP_EVAL_MACRO, sc->NIL, cdr(args));
       push_stack(sc, OP_APPLY, list_1(sc, cdr(args)), proc);
     }
   else push_stack(sc, OP_APPLY, sc->NIL, proc);
@@ -36531,12 +36549,22 @@ each a function of no arguments, guaranteeing that finish is called even if body
   if (dynamic_wind_in(p) != sc->F)
     {
       dynamic_wind_state(p) = DWIND_INIT;
-      push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_in(p));
+      if (is_any_macro(dynamic_wind_in(p)))
+	{
+	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
+	  push_stack(sc, OP_APPLY, list_1(sc, list_1(sc, dynamic_wind_in(p))), dynamic_wind_in(p));
+	}
+      else push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_in(p));
     }
   else
     {
       dynamic_wind_state(p) = DWIND_BODY;
-      push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_body(p));
+      if (is_any_macro(dynamic_wind_body(p)))
+	{
+	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
+	  push_stack(sc, OP_APPLY, list_1(sc, list_1(sc, dynamic_wind_body(p))), dynamic_wind_body(p));
+	}
+      else push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_body(p));
     }
   return(sc->F);
 }
@@ -36553,107 +36581,44 @@ each a function of no arguments, guaranteeing that finish is called even if body
 static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches the tag (#t matches all), the handler is called"
-  s7_pointer p;
+  s7_pointer p, proc, err;
 
-  /* should this check for a tag that can't possibly be eq? to anything that error might throw? (a string for example)
-   */
+  proc = cadr(args);
+  if (!s7_is_aritable(sc, proc, 0))
+    return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), proc, A_THUNK));
 
-  if (!s7_is_aritable(sc, cadr(args), 0))
-    return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), cadr(args), A_THUNK));
-  if (!is_procedure(caddr(args)))
-    return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(3), caddr(args), A_PROCEDURE));
+  err = caddr(args);
+  if (!is_applicable(err))
+    return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(3), err, SOMETHING_APPLICABLE));
   
   NEW_CELL(sc, p);
   catch_tag(p) = car(args);
   catch_goto_loc(p) = s7_stack_top(sc);
   catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
-  catch_handler(p) = caddr(args);
+  catch_handler(p) = err;
   set_type(p, T_CATCH);
 
-  push_stack(sc, OP_CATCH, args, p);          /* args ignored but maybe safer for GC? */
+  if (is_any_macro(err))
+    push_stack(sc, OP_CATCH_2, args, p);
+  else push_stack(sc, OP_CATCH, args, p);      /* args ignored but maybe safer for GC? */
 
-  if (is_closure(cadr(args)))
+  if (is_closure(proc))                       /* not also lambda* here because we need to handle the arg defaults */
     {
-      sc->code = closure_body(cadr(args));
-      NEW_FRAME(sc, closure_environment(cadr(args)), sc->envir);
+      sc->code = closure_body(proc);
+      NEW_FRAME(sc, closure_environment(proc), sc->envir);
       push_stack(sc, OP_BEGIN, sc->args, sc->code);
     }
-  else push_stack(sc, OP_APPLY, sc->NIL, cadr(args));
+  else 
+    {
+      if (is_any_macro(proc))
+	{
+	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
+	  push_stack(sc, OP_APPLY, list_1(sc, list_1(sc, proc)), proc);
+	}
+      else push_stack(sc, OP_APPLY, sc->NIL, proc);
+    }
   return(sc->F);
 }
-
-
-
-s7_pointer s7_catch_all(s7_scheme *sc, s7_pointer thunk, s7_pointer error_handler)
-{
-  s7_pointer p;
-
-  NEW_CELL(sc, p);
-  catch_tag(p) = sc->T;                   /* if we catch everything, the error handling stuff in s7_call is not needed */
-  catch_goto_loc(p) = s7_stack_top(sc);
-  catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
-  catch_handler(p) = error_handler;
-  set_type(p, T_CATCH);
-
-  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-  push_stack(sc, OP_CATCH, sc->NIL, p);
-  sc->args = sc->NIL;
-  sc->code = thunk;
-  eval(sc, OP_APPLY);
-
-  return(sc->value);
-}
-
-
-#if 0
-static s7_pointer s7_apply_function_with_catch(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_pointer error_handler)
-{
-  s7_pointer p;
-  NEW_CELL(sc, p);
-  catch_tag(p) = sc->T; 
-  catch_goto_loc(p) = s7_stack_top(sc);
-  catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
-  catch_handler(p) = error_handler;
-  set_type(p, T_CATCH);
-
-  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-  push_stack(sc, OP_CATCH, sc->NIL, p);
-  sc->args = args;
-  sc->code = func;
-  eval(sc, OP_APPLY);
-
-  return(sc->value);
-}
-
-/* here's an example:
- *
-    static s7_pointer error_handler(s7_scheme *sc, s7_pointer args)
-    {
-      fprintf(stderr, "got an error! %s\n", s7_object_to_c_string(sc, args));
-      return(s7_car(args));
-    }
-    
-    static s7_pointer adder(s7_scheme *sc, s7_pointer args)
-    {
-      return(s7_f(sc));
-    }
-    
-    int main(int argc, char **argv)
-    {
-      s7_scheme *s7;
-      s7 = s7_init();  
-      fprintf(stderr, "catch: %s\n",
-        s7_object_to_c_string(s7, 
-    	  s7_catch_all(s7, 
-    	    s7_make_function(s7, "adder", adder, 0, 0, false, "+"),
-    	    s7_make_function(s7, "error-handler", error_handler, 0, 0, true, "error handler"))));
-    }
- *
- * the function names are local (for error handling etc).  In general, it would be safer to
- *    call s7_gc_protect on the functions (s7_make_function does not protect them).  The
- *    body function ("adder") is a thunk -- args will always be nil.
- */
-#endif
 
 
 /* error reporting info -- save filename and line number */
@@ -36762,6 +36727,36 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	    break;
 	    
 	    
+	  case OP_CATCH_2:
+	    /* this is the macro-error-handler case from g_catch
+	     *    (let () (define-macro (m . args) (apply (car args) (cadr args))) (catch #t (lambda () (error abs -1)) m))
+	     */ 
+	    x = stack_code(sc->stack, i);
+	    if ((catch_tag(x) == sc->T) ||
+		(catch_tag(x) == type) ||
+		(type == sc->T))
+	      {
+		int loc;
+		loc = catch_goto_loc(x);
+		sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(x));
+		sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
+		sc->code = catch_handler(x);
+
+		car(sc->T3_1) = sc->code;
+		car(sc->T3_2) = type;
+		car(sc->T3_3) = info;
+		sc->args = list_1(sc, sc->T3_1);
+
+		push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
+		sc->op = OP_APPLY;
+		if (sc->longjmp_ok)
+		  {
+		    longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
+		  }
+		return(true);
+	      }
+	    break;
+
 	  case OP_CATCH_1:
 	  case OP_CATCH:
 	    x = stack_code(sc->stack, i);
@@ -36784,7 +36779,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		 *
 		 * so first examine closure_body(error_func)
 		 *   if it is a constant, or quoted symbol, return that,
-		 *   if it the args symbol, set it to (list type info)
+		 *   if it is the args symbol, return (list type info)
 		 */
 		
 		/* if OP_CATCH_1, we deferred making the error handler until it is actually needed
@@ -36878,8 +36873,13 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		if (dynamic_wind_out(x) != sc->F)
 		  {
 		    push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-		    sc->args = sc->NIL;
 		    sc->code = dynamic_wind_out(x);
+		    if (is_any_macro(sc->code))
+		      {
+			push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+			sc->args = list_1(sc, list_1(sc, sc->code));
+		      }
+		    else sc->args = sc->NIL;
 		    eval(sc, OP_APPLY);                  /* I guess this means no call/cc out of the exit thunk in an error-catching context */
 		  }
 	      }
@@ -38762,16 +38762,21 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  return(splice_in_values(sc, args));
 
 	case OP_BEGIN1:
-	case OP_CATCH_1:
 	  /* here we have a values call with nothing to splice into.  So flush it...
 	   *   otherwise the multiple-values bit gets set in some innocent list and never unset:
 	   *   :(let ((x '((1 2)))) (eval `(apply apply values x)) x)
            *   ((values 1 2))
 	   * other cases: (+ 1 (begin (values 5 6) (values 2 3)) 4) -> 10 -- the (5 6) is dropped
 	   *              (let () (values 1 2 3) 4) but (+ (let () (values 1 2))) -> 3
-	   * what was the catch case??
 	   */
 	  return(args);
+
+	case OP_CATCH: 
+	case OP_CATCH_1: 
+	case OP_CATCH_2: 
+	  /* (+ (catch #t (lambda () (values 3 4)) (lambda args args))) */
+	  pop_stack(sc);
+	  return(splice_in_values(sc, args));
 
 	default:
 	  break;
@@ -62716,6 +62721,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_CATCH_ALL:
     case OP_CATCH:
     case OP_CATCH_1:
+    case OP_CATCH_2:
       goto START;
 
 
@@ -62794,8 +62800,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  dynamic_wind_state(sc->code) = DWIND_BODY;
 	  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, sc->code);
-	  sc->args = sc->NIL;
 	  sc->code = dynamic_wind_body(sc->code);
+	  if (is_any_macro(sc->code))
+	    {
+	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+	      sc->args = list_1(sc, list_1(sc, sc->code));
+	    }
+	  else sc->args = sc->NIL;
 	  goto APPLY;
 	}
       else
@@ -62806,8 +62817,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (dynamic_wind_out(sc->code) != sc->F)
 		{
 		  push_stack(sc, OP_DYNAMIC_WIND, sc->value, sc->code);
-		  sc->args = sc->NIL;
 		  sc->code = dynamic_wind_out(sc->code);
+		  if (is_any_macro(sc->code))
+		    {
+		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+		      sc->args = list_1(sc, list_1(sc, sc->code));
+		    }
+		  else sc->args = sc->NIL;
 		  goto APPLY;
 		}
 	      else
@@ -68106,107 +68122,110 @@ s7_scheme *s7_init(void)
     vector_element(sc->global_env, i) = sc->NIL;
   sc->envir = sc->NIL;
   
-  /* keep the small_ints out of the heap */
-  small_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
-  {
-    s7_cell *cells;
-    cells = (s7_cell *)calloc((NUM_SMALL_INTS + 1), sizeof(s7_cell));
-    for (i = 0; i <= NUM_SMALL_INTS; i++) 
+  if (!already_inited)
+    {
+      /* keep the small_ints out of the heap */
+      small_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
       {
-	s7_pointer p;
-	small_ints[i] = &cells[i];
-	p = small_ints[i];
-	typeflag(p) = T_IMMUTABLE | T_INTEGER;
-	heap_location(p) = NOT_IN_HEAP;
-	integer(p) = i;
-      }
-  }
-
-  real_zero = make_permanent_real(0.0);
-  real_one = make_permanent_real(1.0);
-  real_NaN = make_permanent_real(NAN);
-  real_pi = make_permanent_real(3.1415926535897932384626433832795029L); /* M_PI is not good enough for s7_Double = long double */
-  arity_not_set = make_permanent_integer(CLOSURE_ARITY_NOT_SET);
-
-  /* keep the characters out of the heap */
-  chars = (s7_pointer *)malloc((NUM_CHARS + 1) * sizeof(s7_pointer));
-  chars[0] = sc->EOF_OBJECT;
-  chars++;                    /* now chars[EOF] == chars[-1] == sc->EOF_OBJECT */
-  {
-    s7_cell *cells;
-    cells = (s7_cell *)calloc(NUM_CHARS, sizeof(s7_cell));
-    for (i = 0; i < NUM_CHARS; i++) 
-      {
-	s7_pointer cp;
-	unsigned char c;
-
-	c = (unsigned char)i;
-	cp = &cells[i];
-	typeflag(cp) = T_IMMUTABLE | T_CHARACTER;
-	heap_location(cp) = NOT_IN_HEAP;
-	character(cp) = c;
-	upper_character(cp) = (unsigned char)toupper(i);
-	lower_character(cp) = (unsigned char)tolower(i);
-	is_char_alphabetic(cp) = (bool)isalpha(i);
-	is_char_numeric(cp) = (bool)isdigit(i);
-	is_char_whitespace(cp) = white_space[i];
-	is_char_uppercase(cp) = (bool)isupper(i);
-	is_char_lowercase(cp) = (bool)islower(i);
-	chars[i] = cp;
-	  
-	switch (c) 
+	s7_cell *cells;
+	cells = (s7_cell *)calloc((NUM_SMALL_INTS + 1), sizeof(s7_cell));
+	for (i = 0; i <= NUM_SMALL_INTS; i++) 
 	  {
-	  case ' ':
-	    character_name(cp) = copy_string("#\\space"); 
-	    break;
-	    
-	  case '\n':
-	    character_name(cp) = copy_string("#\\newline"); 
-	    break;
-	    
-	  case '\r':
-	    character_name(cp) = copy_string("#\\return"); 
-	    break;
-	    
-	  case '\t':
-	    character_name(cp) = copy_string("#\\tab"); 
-	    break;
-	    
-	  case '\0':
-	    character_name(cp) = copy_string("#\\null");
-	    break;
-
-	  case (char)0x1b:
-	    character_name(cp) = copy_string("#\\escape");
-	    break;
-
-	  case (char)0x7f:
-	    character_name(cp) = copy_string("#\\delete");
-	    break;
-
-	  case (char)7:
-	    character_name(cp) = copy_string("#\\alarm");
-	    break;
-	    
-	  case (char)8:
-	    character_name(cp) = copy_string("#\\backspace");
-	    break;
-	    
-	  default:
-	    {
-              #define P_SIZE 16
-	      char *p;
-	      p = (char *)malloc(P_SIZE * sizeof(char));
-	      if ((c < 32) || (c >= 127))
-		snprintf(p, P_SIZE, "#\\x%x", c);
-	      else snprintf(p, P_SIZE, "#\\%c", c); 
-	      character_name(cp) = p;
-	      break;
-	    }
+	    s7_pointer p;
+	    small_ints[i] = &cells[i];
+	    p = small_ints[i];
+	    typeflag(p) = T_IMMUTABLE | T_INTEGER;
+	    heap_location(p) = NOT_IN_HEAP;
+	    integer(p) = i;
 	  }
-	character_name_length(cp) = safe_strlen(character_name(cp));
       }
-  }
+      
+      real_zero = make_permanent_real(0.0);
+      real_one = make_permanent_real(1.0);
+      real_NaN = make_permanent_real(NAN);
+      real_pi = make_permanent_real(3.1415926535897932384626433832795029L); /* M_PI is not good enough for s7_Double = long double */
+      arity_not_set = make_permanent_integer(CLOSURE_ARITY_NOT_SET);
+      
+      /* keep the characters out of the heap */
+      chars = (s7_pointer *)malloc((NUM_CHARS + 1) * sizeof(s7_pointer));
+      chars[0] = sc->EOF_OBJECT;
+      chars++;                    /* now chars[EOF] == chars[-1] == sc->EOF_OBJECT */
+      {
+	s7_cell *cells;
+	cells = (s7_cell *)calloc(NUM_CHARS, sizeof(s7_cell));
+	for (i = 0; i < NUM_CHARS; i++) 
+	  {
+	    s7_pointer cp;
+	    unsigned char c;
+	    
+	    c = (unsigned char)i;
+	    cp = &cells[i];
+	    typeflag(cp) = T_IMMUTABLE | T_CHARACTER;
+	    heap_location(cp) = NOT_IN_HEAP;
+	    character(cp) = c;
+	    upper_character(cp) = (unsigned char)toupper(i);
+	    lower_character(cp) = (unsigned char)tolower(i);
+	    is_char_alphabetic(cp) = (bool)isalpha(i);
+	    is_char_numeric(cp) = (bool)isdigit(i);
+	    is_char_whitespace(cp) = white_space[i];
+	    is_char_uppercase(cp) = (bool)isupper(i);
+	    is_char_lowercase(cp) = (bool)islower(i);
+	    chars[i] = cp;
+	    
+	    switch (c) 
+	      {
+	      case ' ':
+		character_name(cp) = copy_string("#\\space"); 
+		break;
+		
+	      case '\n':
+		character_name(cp) = copy_string("#\\newline"); 
+		break;
+		
+	      case '\r':
+		character_name(cp) = copy_string("#\\return"); 
+		break;
+		
+	      case '\t':
+		character_name(cp) = copy_string("#\\tab"); 
+		break;
+		
+	      case '\0':
+		character_name(cp) = copy_string("#\\null");
+		break;
+		
+	      case (char)0x1b:
+		character_name(cp) = copy_string("#\\escape");
+		break;
+		
+	      case (char)0x7f:
+		character_name(cp) = copy_string("#\\delete");
+		break;
+		
+	      case (char)7:
+		character_name(cp) = copy_string("#\\alarm");
+		break;
+		
+	      case (char)8:
+		character_name(cp) = copy_string("#\\backspace");
+		break;
+		
+	      default:
+		{
+                  #define P_SIZE 16
+		  char *p;
+		  p = (char *)malloc(P_SIZE * sizeof(char));
+		  if ((c < 32) || (c >= 127))
+		    snprintf(p, P_SIZE, "#\\x%x", c);
+		  else snprintf(p, P_SIZE, "#\\%c", c); 
+		  character_name(cp) = p;
+		  break;
+		}
+	      }
+	    character_name_length(cp) = safe_strlen(character_name(cp));
+	  }
+      }
+    }
 
 #if WITH_COUNTS
   init_hashes(sc); 
@@ -69562,23 +69581,16 @@ int main(int argc, char **argv)
  *    gmpn opts?
  * fft from fftw + mpfr/mpc version? gsl?
  *
- * pthread example for s7.html: snd-11.8 had pthread support, symbol-access or added funcs for coordination.
- *   with-thread-sound?
- *   we'll also need a way to free all allocated memory, including "permanent" allocs
- * also make sure the multiple s7's won't collide -- how many globals are there?
- *   object_types, num_types (init->init_types so we're in trouble, also for small_ints etc)
- *   others: errstr? choosers et al init'd once??
- *           tmp_str, sigbuf senv? -- this one is a problem
- *           compare_func etc, f_class -- choosers use this? error stuff
- * but is there any collision? 
- *
- * immutable data example?  immutable string/vector?
- *   (constant ...) -> immutable object, but how to keep types transparent?
  * ideally the function doc string could be completely removed before optimization etc
  * should (equal? "" #u8()) be #t?
  * is there any use for the dd and rd bacro cases? rd=scoop in r-time expr, then eval in d
  *   this seems like memoization
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
+ *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
+ *  (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
+ *  (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
+ *  but the ones that return gunichar (toupper) currently don't return a bytevector or a string
+ *    maybe gunichar->bytevector?
  *
  * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
  *   isn't this vector_ref_ic?  just s7_define(sc, sc->envir, func_as_symbol, vector_ref_ic)??
@@ -69587,6 +69599,8 @@ int main(int argc, char **argv)
  *
  * perhaps (with-input <port/string/func/etc> . body) (with-output <port/string-growable?/func/etc> . body)
  * still need to probe for missing accessor checks
+ * what happens to values in (member 11 (list 1 2 3) (lambda (a b) (values #f a b))) -> '(1 2 3)
+ *   50154: if not #f we found a match -- should this check for mv? what else might it do?
  *
  * ideally make-* in clm2xen would use s7's define*, not unscramble
  * s7_define_function_star -> safe_closure_star_direct or something (see clm2xen.c g_make_oscil)
@@ -69595,14 +69609,5 @@ int main(int argc, char **argv)
  *   read defaults->array of protected trees, at call fill in from args, then defaults?
  *   or use lambda_star_set_args by having closure_args equivalent and saved env for set_slot -- but this is not direct.
  *   So we have 2 cases even before starting?  Maybe not worth it.
- *
- * with-output* with any applicable obj? (macros) -- generic IO -- test this
- *   needs special handling for macro: see with_output_to_string -- also needs tests and some reason to do this...
- *   also with-output-to-file+mac is untested
- *   where else are we assuming functions?
- *     symbol-access, member, assoc, sort!, call/cc, call-with-exit, catch, dynamic-wind
- *     (call/cc macro) -- arg to macro is the continuation -- transparency as in map/for-each
- *     in catch(main), dw -- no args to macro, call* -- arg is just a name
- *   what about clm/snd?
  */
 

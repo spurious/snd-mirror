@@ -60,6 +60,8 @@
 
 (define char-foldcase char-downcase) 
 (define string-foldcase string-downcase)
+;;; these and the string functions in s7 are not unicode-aware.  To get true unicode
+;;;   handling of the bytes, use the glib functions in libxg or use cload (see xgdata.scm).
 (define (digit-value c) (and (char-numeric? c) (- (char->integer c) (char->integer #\0))))
 
 
