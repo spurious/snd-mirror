@@ -5618,6 +5618,7 @@ loading code that calls gcd.
 <li>add typeq? and perhaps make null? generic.
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>let =&gt; be followed by any number of functions, and change its name to "forth".
+<li>remove the with-* IO functions (e.g. with-input-from-string), keeping the call-with-* versions (call-with-input-string).
 </ul>
 
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
@@ -5797,8 +5798,14 @@ One simple way to ensure immutability is to use copy or package the object into 
 <pre class="indented">
 &gt; (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
 "hiho"
-&gt; (let ((x (string->symbol "hiho"))) (string-set! (symbol->string x) 1 #\x) (symbol->string x))
+&gt; (let ((x (string-&gt;symbol "hiho"))) (string-set! (symbol-&gt;string x) 1 #\x) (symbol-&gt;string x))
 "hiho"
+&gt; (define (immutable obj) (string-&gt;symbol (object-&gt;string obj :readable)))
+immutable
+&gt; (define (symbol-&gt;object sym) (eval-string (symbol-&gt;string sym)))
+symbol-&gt;object
+&gt; (symbol-&gt;object (immutable (list 1 2 3)))
+(1 2 3)
 </pre>
 
 <p>There is one pitfall here.  s7 normally tries to optimize garbage collection by
