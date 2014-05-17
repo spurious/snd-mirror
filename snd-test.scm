@@ -223,7 +223,7 @@
 	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
-	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.cl" "trumpet.snd" "1234.snd")))
+	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.scm" "trumpet.snd" "1234.snd")))
 
 (for-each mus-sound-preload (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" 
 				  "fyow.snd" "storm.snd" "1.snd" "cardinal.snd" "2a.snd"))
@@ -1936,9 +1936,9 @@
   (let ((ind #f))
     
     (set! ind (open-sound "oboe.snd"))
-    (if (and (file-exists? "funcs.cl") 
+    (if (and (file-exists? "funcs.scm") 
 	     (not (defined? 'swellf)))
-	(load "funcs.cl"))
+	(load "funcs.scm"))
     (let ((td (temp-dir)))
       (catch #t
 	     (lambda ()
@@ -2246,7 +2246,7 @@
     (if (not (= (enved-filter-order) 6)) (snd-display #__line__ ";set enved-filter-order 5: ~A" (enved-filter-order)))
     (if with-gui
 	(begin
-	  (set! (enved-envelope) 'zero_to_one) ; funcs.cl above
+	  (set! (enved-envelope) 'zero_to_one) ; funcs.scm above
 	  (if (not (feql (enved-envelope) zero_to_one)) (snd-display #__line__ ";set symbol enved-envelope: ~A ~A" (enved-envelope) zero_to_one))
 	  (set! (enved-envelope) "mod_down")
 	  (if (not (feql (enved-envelope) mod_down)) (snd-display #__line__ ";set string enved-envelope: ~A ~A" (enved-envelope) mod_down))))

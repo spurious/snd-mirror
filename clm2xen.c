@@ -2414,13 +2414,14 @@ static Xen g_mus_set_length(Xen gen, Xen val)
 
 /* ---------------- oscil ---------------- */
 
-#define S7_MAKE_OSCIL 0
+#if HAVE_SCHEME 
+
 /* this is slower mainly because s7_define_safe_function_star
  *   currently wraps the function in an extra closure, so we have an extra step in eval on every call.
  *   ideally we'd go direct -- no env, no relookup of the args: safe_closure_star_direct = set up args (Tn_n) from defaults, call internal
  *   safe_closure_direct for the non* case?
  */
-#if S7_MAKE_OSCIL
+
 static s7_pointer g_make_oscil(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_oscil "(" S_make_oscil " (frequency *clm-default-frequency*) (initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
@@ -2433,9 +2434,9 @@ static s7_pointer g_make_oscil(s7_scheme *sc, s7_pointer args)
 
   if (s7_is_real(f))
     freq = s7_number_to_real_with_caller(sc, f, S_make_oscil);
-  else Xen_check_type(false, f, 1, S_make_oscil, "a number");
+  else {freq = 0.0; Xen_check_type(false, f, 1, S_make_oscil, "a number");}
   if (freq > (0.5 * mus_srate()))
-    {freq = 0.0; /* that assignment is merely to appease the compiler */ Xen_out_of_range_error(S_make_oscil, 1, f, "freq > srate/2?");}
+    Xen_out_of_range_error(S_make_oscil, 1, f, "freq > srate/2?");
 
   if (s7_is_real(p))
     phase = s7_number_to_real_with_caller(sc, p, S_make_oscil);
@@ -20907,7 +20908,7 @@ Xen_wrap_1_arg(g_set_clm_default_frequency_w, g_set_clm_default_frequency)
 Xen_wrap_1_arg(g_is_mus_generator_w, g_is_mus_generator)
 Xen_wrap_1_arg(g_mus_frandom_w, g_mus_frandom)
 Xen_wrap_1_arg(g_mus_irandom_w, g_mus_irandom)
-#if (!S7_MAKE_OSCIL)
+#if (!HAVE_SCHEME)
 Xen_wrap_4_optional_args(g_make_oscil_w, g_make_oscil)
 #endif
 Xen_wrap_3_optional_args(g_make_oscil_bank_w, g_make_oscil_bank)
@@ -21484,7 +21485,7 @@ static void mus_xen_init(void)
   Xen_define_constant(S_internal_time_units_per_second, 1, "units used by " S_get_internal_real_time);
 #endif
 
-#if S7_MAKE_OSCIL
+#if HAVE_SCHEME
   s7_define_safe_function_star(s7, S_make_oscil, g_make_oscil, "(frequency 0.0) (initial-phase 0.0)", H_make_oscil);
 #else
   Xen_define_safe_procedure(S_make_oscil,          g_make_oscil_w,          0, 4, 0, H_make_oscil);

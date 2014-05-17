@@ -893,15 +893,25 @@ typedef struct s7_port_t {
 } s7_port_t;
 
 
+typedef struct c_proc_ext_t {
+  s7_pointer looped_ff, let_looped_ff;
+  s7_ex *(*exf)(s7_scheme *sc, s7_pointer expr);
+  void *chooser_data;
+
+  s7_pointer *arg_defaults, *arg_names;
+  s7_pointer call_args;
+  int keyed_args;
+  bool simple_defaults;
+} c_proc_ext_t;
+
 typedef struct c_proc_t {
   const char *name;
   int name_length;
   unsigned int id;
   char *doc;
-  s7_pointer generic_ff, looped_ff, let_looped_ff;
+  s7_pointer generic_ff;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-  s7_ex *(*exf)(s7_scheme *sc, s7_pointer expr);
-  void *chooser_data;
+  c_proc_ext_t *ext;
 } c_proc_t;
 
 
@@ -1450,12 +1460,13 @@ typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_w
 #define T_INPUT_PORT          37
 #define T_BAFFLE              38
 
-#define T_C_FUNCTION          39
-#define T_C_ANY_ARGS_FUNCTION 40
-#define T_C_OPT_ARGS_FUNCTION 41
-#define T_C_RST_ARGS_FUNCTION 42
+#define T_C_FUNCTION_STAR     39
+#define T_C_FUNCTION          40
+#define T_C_ANY_ARGS_FUNCTION 41
+#define T_C_OPT_ARGS_FUNCTION 42
+#define T_C_RST_ARGS_FUNCTION 43
 
-#define NUM_TYPES        43
+#define NUM_TYPES        44
 
 /* T_STACK, T_SLOT, T_BAFFLE, and T_COUNTER are internal (stacks, bindings, call/cc barriers, map circular list checks)
  */
@@ -1538,6 +1549,7 @@ static void init_types(void)
   t_applicable_p[T_BACRO] = true;
   t_applicable_p[T_SYNTAX] = true;
   t_applicable_p[T_C_FUNCTION] = true;
+  t_applicable_p[T_C_FUNCTION_STAR] = true;
   t_applicable_p[T_C_ANY_ARGS_FUNCTION] = true;
   t_applicable_p[T_C_OPT_ARGS_FUNCTION] = true;
   t_applicable_p[T_C_RST_ARGS_FUNCTION] = true;
@@ -1558,6 +1570,7 @@ static void init_types(void)
   t_simple_p[T_SYNTAX] = true;
   t_simple_p[T_C_MACRO] = true;
   t_simple_p[T_C_FUNCTION] = true;
+  t_simple_p[T_C_FUNCTION_STAR] = true;
   t_simple_p[T_C_ANY_ARGS_FUNCTION] = true;
   t_simple_p[T_C_OPT_ARGS_FUNCTION] = true;
   t_simple_p[T_C_RST_ARGS_FUNCTION] = true;
@@ -1764,6 +1777,7 @@ static void init_types(void)
 #define set_checked(p)                typeflag(p) |= T_CHECKED
 #define is_checked(p)                 ((typeflag(p) & T_CHECKED) != 0)
 #define is_not_checked(p)             ((typeflag(p) & T_CHECKED) == 0)
+#define clear_checked(p)              typeflag(p) &= (~T_CHECKED)
 
 /* bit 11 is unused I think */
 
@@ -2207,23 +2221,32 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #define port_gc_loc(p)                port_port(p)->gc_loc
 
 #define is_c_function(f)              (type(f) >= T_C_FUNCTION)
+#define is_c_function_star(f)         (type(f) == T_C_FUNCTION_STAR)
 #define c_function_data(f)            (f)->object.fnc.c_proc
 #define c_function_call(f)            (f)->object.fnc.ff
-#define c_function_name(f)            c_function_data(f)->name
-#define c_function_name_length(f)     c_function_data(f)->name_length
-#define c_function_documentation(f)   c_function_data(f)->doc
 #define c_function_required_args(f)   (f)->object.fnc.required_args
 #define c_function_optional_args(f)   (f)->object.fnc.optional_args
 #define c_function_has_rest_arg(f)    (f)->object.fnc.rest_arg
 #define c_function_all_args(f)        (f)->object.fnc.all_args
 #define c_function_setter(f)          (f)->object.fnc.setter
+#define c_function_name(f)            c_function_data(f)->name
+#define c_function_name_length(f)     c_function_data(f)->name_length
+#define c_function_documentation(f)   c_function_data(f)->doc
 #define c_function_class(f)           c_function_data(f)->id
 #define c_function_chooser(f)         c_function_data(f)->chooser
-#define c_function_chooser_data(f)    c_function_data(f)->chooser_data
 #define c_function_base(f)            c_function_data(f)->generic_ff
-#define c_function_looped(f)          c_function_data(f)->looped_ff
-#define c_function_let_looped(f)      c_function_data(f)->let_looped_ff
-#define c_function_ex_parser(f)       c_function_data(f)->exf
+
+#define c_function_ext(f)             c_function_data(f)->ext
+#define c_function_chooser_data(f)    c_function_ext(f)->chooser_data
+#define c_function_looped(f)          c_function_ext(f)->looped_ff
+#define c_function_let_looped(f)      c_function_ext(f)->let_looped_ff
+#define c_function_ex_parser(f)       c_function_ext(f)->exf
+
+#define c_function_arg_defaults(f)    c_function_ext(f)->arg_defaults
+#define c_function_keyed_args(f)      c_function_ext(f)->keyed_args
+#define c_function_call_args(f)       c_function_ext(f)->call_args
+#define c_function_arg_names(f)       c_function_ext(f)->arg_names
+#define c_function_simple_defaults(f) c_function_ext(f)->simple_defaults
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_pair(f)) && (is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -3803,6 +3826,7 @@ static void init_mark_functions(void)
   mark_function[T_C_MACRO]             = just_mark;
   mark_function[T_C_POINTER]           = just_mark;
   mark_function[T_C_FUNCTION]          = just_mark;  /* these change if needed to mark_c_proc when setter is a scheme function */
+  mark_function[T_C_FUNCTION_STAR]     = just_mark;
   mark_function[T_C_ANY_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_OPT_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_RST_ARGS_FUNCTION] = just_mark;
@@ -25056,6 +25080,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
+    case T_C_FUNCTION_STAR:
       port_write_string(port)(sc, c_function_name(obj), c_function_name_length(obj), port);
       break;
 
@@ -32306,24 +32331,32 @@ void s7_function_set_class(s7_pointer f, s7_pointer base_f)
 
 void s7_function_set_looped(s7_pointer f, s7_pointer c)
 {
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_looped(f) = c;
 }
 
 
 void s7_function_set_let_looped(s7_pointer f, s7_pointer c)
 {
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_let_looped(f) = c;
 }
 
 
 void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr))
 {
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_ex_parser(f) = func;
 }
 
 s7_ex *(*s7_function_ex_parser(s7_pointer f))(s7_scheme *sc, s7_pointer expr)
 {
-  return(c_function_ex_parser(f));
+  if (c_function_ext(f))
+    return(c_function_ex_parser(f));
+  return(NULL);
 }
 
 s7_ex *(*s7_ex_fallback(s7_scheme *sc))(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
@@ -32355,20 +32388,24 @@ void *s7_function_chooser_data(s7_scheme *sc, s7_pointer expr)
       (is_symbol(car(expr))) &&
       (car(expr) != sc->QUOTE) &&
       (ecdr(expr)) &&
-      (is_c_function(ecdr(expr))))
+      (is_c_function(ecdr(expr))) &&
+      (c_function_ext(ecdr(expr))))
     return(c_function_chooser_data(ecdr(expr)));
   return(NULL);
 }
 
 void *s7_function_chooser_data_direct(s7_pointer f)
 {
-  if (is_c_function(f))
+  if ((is_c_function(f)) &&
+      (c_function_ext(f)))
     return(c_function_chooser_data(f));
   return(NULL);
 }
 
 void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data)
 {
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_chooser_data(f) = data;
 }
 
@@ -32483,10 +32520,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 
   c_function_class(x) = ++f_class;
   c_function_chooser(x) = fallback_chooser;
-  c_function_chooser_data(x) = NULL;
-  c_function_looped(x) = NULL;
-  c_function_let_looped(x) = NULL;
-  c_function_ex_parser(x) = NULL;
+  c_function_ext(x) = NULL;
 
   return(x);
 }
@@ -32520,10 +32554,11 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
    *  objects and macros as procedures.  We can use arity = applicable?
    */
   return(make_boolean(sc,
-		      (typ == T_CLOSURE)      || 
-		      (typ == T_CLOSURE_STAR) ||
-		      (typ >= T_C_FUNCTION)   ||
-		      (typ == T_GOTO)         ||
+		      (typ == T_CLOSURE)         || 
+		      (typ == T_CLOSURE_STAR)    ||
+		      (typ >= T_C_FUNCTION)      ||
+		      (typ >= T_C_FUNCTION_STAR) ||
+		      (typ == T_GOTO)            ||
 		      (typ == T_CONTINUATION)));
 }
 
@@ -32722,37 +32757,59 @@ static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
 
 static void define_function_star_1(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc, bool safe)
 {
-  /* make an internal function of any args that calls fnc, then wrap it in define* and use eval_c_string */
-  /* should (does) this ignore :key and other such noise? */
+  s7_pointer func, sym, local_args, p;
+  char *internal_arglist;
+  int i, len, n_args, gc_loc;
+  s7_pointer *names, *defaults;
 
-  char *internal_function, *internal_arglist;
-  int arglist_len, len, args;
-  const char *local_sym;
-  s7_pointer local_args;
-  
-  arglist_len = safe_strlen(arglist);
-  internal_arglist = (char *)malloc((arglist_len + 64) * sizeof(char));
-  snprintf(internal_arglist, arglist_len + 64, "(map (lambda (arg) (if (symbol? arg) arg (car arg))) '(%s))", arglist);
+  len = safe_strlen(arglist) + 8;
+  internal_arglist = (char *)malloc(len * sizeof(char));
+  snprintf(internal_arglist, len, "'(%s)", arglist);
   local_args = s7_eval_c_string(sc, internal_arglist);
+  gc_loc = s7_gc_protect(sc, local_args);
   free(internal_arglist);
+  n_args = safe_list_length(sc, local_args);  /* currently rest arg not supported, and we don't notice :key :allow-other-keys etc */
   
-  args = safe_list_length(sc, local_args); /* since local_args is from map (above), I think it can't be improper */
-  internal_arglist = s7_object_to_c_string(sc, local_args);
-  /* this has an opening paren which we don't want */
-  internal_arglist[0] = ' ';
+  func = s7_make_function(sc, name, fnc, 0, n_args, false, doc);
+  if (safe) 
+    set_type(func, T_C_FUNCTION_STAR | T_PROCEDURE | T_SAFE_PROCEDURE);
+  else set_type(func, T_C_FUNCTION_STAR | T_PROCEDURE);
 
-  local_sym = symbol_name(s7_gensym(sc, "define*"));
-  if (safe)
-    s7_define_safe_function(sc, local_sym, fnc, args, 0, 0, NULL);
-  else s7_define_function(sc, local_sym, fnc, args, 0, 0, NULL);
+  if (!c_function_ext(func))
+    c_function_ext(func) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
+  c_function_keyed_args(func) = 2 * n_args;
+  c_function_call_args(func) = make_list(sc, n_args, sc->F);
+  s7_remove_from_heap(sc, c_function_call_args(func));
 
-  len = 32 + 2 * arglist_len + safe_strlen(doc) + safe_strlen(name) + safe_strlen(local_sym);
-  internal_function = (char *)malloc(len * sizeof(char));
-  snprintf(internal_function, len, "(define* (%s %s) \"%s\" (%s %s)", name, arglist, doc, local_sym, internal_arglist);
-  s7_eval_c_string(sc, internal_function);
+  sym = make_symbol(sc, name);
+  s7_define(sc, sc->NIL, sym, func);
 
-  free(internal_function);
-  free(internal_arglist);
+  names = (s7_pointer *)malloc(n_args * sizeof(s7_pointer));
+  c_function_arg_names(func) = names;
+  defaults = (s7_pointer *)malloc(n_args * sizeof(s7_pointer));
+  c_function_arg_defaults(func) = defaults;
+  c_function_simple_defaults(func) = true;
+
+  for (p = local_args, i = 0; i < n_args; p = cdr(p), i++)
+    {
+      s7_pointer arg;
+      arg = car(p);
+      if (is_pair(arg))
+	{
+	  names[i] = s7_make_keyword(sc, symbol_name(car(arg)));
+	  defaults[i] = cadr(arg);
+	  s7_remove_from_heap(sc, cadr(arg));
+	  if ((is_symbol(defaults[i])) ||
+	      (is_pair(defaults[i])))
+	    c_function_simple_defaults(func) = false;
+	}
+      else 
+	{
+	  names[i] = s7_make_keyword(sc, symbol_name(arg));
+	  defaults[i] = sc->F;
+	}
+    }
+  s7_gc_unprotect_at(sc, gc_loc);
 }
 
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
@@ -32763,6 +32820,72 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
 {
   return(define_function_star_1(sc, name, fnc, arglist, doc, true));
+}
+
+
+s7_pointer set_c_function_call_args(s7_scheme *sc)
+{
+  int i, j, n_args;
+  s7_pointer arg, par, call_args, func;
+  s7_pointer *df;
+  
+  func = sc->code;
+  n_args = c_function_all_args(func);
+  call_args = c_function_call_args(func);
+
+  df = c_function_arg_defaults(func);  
+  for (i = 0, par = call_args; is_pair(par); i++, par = cdr(par))
+    {
+      clear_checked(par);
+      car(par) = df[i];
+    }
+
+  df = c_function_arg_names(func);
+  for (i = 0, arg = sc->args, par = call_args; (i < n_args) && (is_pair(arg)); i++, arg = cdr(arg), par = cdr(par))
+    {
+      if (!is_keyword(car(arg)))
+	{
+	  if (is_checked(par))
+	    return(s7_error(sc, sc->WRONG_TYPE_ARG,
+			    list_3(sc, make_protected_string(sc, "parameter set twice, ~S in ~S"), car(par), sc->args)));
+	  set_checked(par);
+	  car(par) = car(arg);
+	}
+      else
+	{
+	  s7_pointer p;
+	  for (j = 0, p = call_args; j < n_args; j++, p = cdr(p))
+	    if (df[j] == car(arg))
+	      break;
+	  if (j == n_args)
+	    return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_protected_string(sc, "~A: not a parameter name?"), car(arg))));
+	  if (is_checked(p))
+	    return(s7_error(sc, sc->WRONG_TYPE_ARG,
+			    list_3(sc, make_protected_string(sc, "parameter set twice, ~S in ~S"), car(p), sc->args)));
+	  set_checked(p);
+	  arg = cdr(arg);
+	  car(p) = car(arg);
+	}
+    }
+
+  if (!is_null(arg))
+    return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, sc->TOO_MANY_ARGUMENTS, func, sc->args)));
+
+  if (!c_function_simple_defaults(func))
+    for (i = 0, par = call_args; i < n_args; i++, par = cdr(par)) 
+      if (!is_checked(par))
+	{
+	  if (is_symbol(car(par)))
+	    car(par) = find_symbol_checked(sc, car(par));
+	  else
+	    {
+	      if (is_pair(car(par)))
+		car(par) = s7_eval_form(sc, car(par), sc->NIL);
+	    }
+	}
+
+  /* fprintf(stderr, "return %s\n", DISPLAY(call_args)); */
+  return(call_args);
 }
 
 
@@ -33388,6 +33511,7 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
       return(closure_setter(p));
 
     case T_C_FUNCTION:
+    case T_C_FUNCTION_STAR:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
@@ -33440,6 +33564,7 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_C_FUNCTION:
+    case T_C_FUNCTION_STAR:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
@@ -33484,6 +33609,7 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
+    case T_C_FUNCTION_STAR:
       return(c_function_name(proc));
 
     case T_C_MACRO:
@@ -33702,11 +33828,14 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
   x = car(args);
   switch (type(x))
     {
-    case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
     case T_C_FUNCTION:
       return(s7_cons(sc, s7_make_integer(sc, c_function_required_args(x)), s7_make_integer(sc, c_function_all_args(x))));
+
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_FUNCTION_STAR:
+      return(s7_cons(sc, small_int(0), s7_make_integer(sc, c_function_all_args(x))));
 
     case T_CLOSURE:
       return(closure_arity_to_cons(sc, x, closure_args(x)));
@@ -33857,12 +33986,15 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 {
   switch (type(x))
     {
-    case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
     case T_C_FUNCTION:
       return(((int)c_function_required_args(x) <= args) &&
 	     ((int)c_function_all_args(x) >= args));
+
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_FUNCTION_STAR:
+      return((int)c_function_all_args(x) >= args);
 
     case T_CLOSURE:
       return(closure_is_aritable(sc, x, closure_args(x), args));
@@ -36284,6 +36416,7 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
+    case T_C_FUNCTION_STAR:
     case T_C_FUNCTION:   return(functions[article]);
     case T_MACRO:
     case T_C_MACRO:      return(macros[article]);
@@ -40122,7 +40255,6 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 		  s7_pointer sym;
 		  sym = keyword_symbol(car(sc->y));
 		  
-		  
 		  if (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))) == sc->NO_VALUE)
 		    {
 		      /* if default value is a key, go ahead and use this value.
@@ -43665,7 +43797,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
     return(false);
 
   func_is_safe = is_safe_procedure(func);
-  func_is_c_function = is_c_function(func);
+  func_is_c_function = is_c_function(func); /* this only if no key: || ((is_c_function_star(func)) && (c_function_all_args(func) == 2))) */
   cadar_x = cadr(car_x);
   caddar_x = caddr(car_x);
 
@@ -48984,7 +49116,7 @@ static s7_pointer check_do(s7_scheme *sc)
 				  if (one_line)
 				    {
 				      if ((is_optimized(car(body))) &&
-					  (!c_function_looped(ecdr(car(body)))))
+					  ((!c_function_ext(ecdr(car(body)))) || (!c_function_looped(ecdr(car(body))))))
 					{
 					  if (optimize_data(car(body)) == HOP_SAFE_C_C)
 					    {
@@ -50299,7 +50431,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		stepper = slot_value(sc->args);
 		func = caddr(caddr(sc->code));
 		
-		if (c_function_let_looped(ecdr(func)))
+		if ((c_function_ext(ecdr(func))) &&
+		    (c_function_let_looped(ecdr(func))))
 		  {
 		    s7_function f;
 		    s7_pointer result;
@@ -50385,7 +50518,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		body = cdr(caddr(sc->code));
 		stepper = slot_value(sc->args);
 
-		if (c_function_looped(ecdr(func)))
+		if ((c_function_ext(ecdr(func))) && (c_function_looped(ecdr(func))))
 		  {
 		    s7_function f;
 		    s7_pointer result;
@@ -50619,13 +50752,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			     (syntax_opcode(car(sc->code)) == OP_LET_STAR)) && 
 			    (is_null(cdddr(sc->code))))
 			  {
+			    s7_pointer flp;
 			    /* if (syntax_opcode(car(sc->code)) == OP_LET_STAR) fprintf(stderr, "%s\n", DISPLAY(sc->code)); */
 
 			    /* it's a let of some sort, and one-line body */
 
 			    /* try let-looped */
-			    if ((is_optimized(caddr(sc->code))) &&
-				(c_function_let_looped(ecdr(caddr(sc->code)))))
+			    flp = caddr(sc->code);
+			    if ((is_optimized(flp)) &&
+				(c_function_ext(ecdr(flp))) &&
+				(c_function_let_looped(ecdr(flp))))
 			      {
 				bool happy = true;
 				s7_pointer p;
@@ -50652,7 +50788,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 				    /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(old_e)); */
 
-				    f = (s7_function)c_function_call(c_function_let_looped(ecdr(caddr(sc->code))));
+				    f = (s7_function)c_function_call(c_function_let_looped(ecdr(flp)));
 				    car(sc->T3_1) = slot_value(sc->args);
 				    car(sc->T3_2) = sc->code;
 				    car(sc->T3_3) = next_environment(old_e);
@@ -50687,10 +50823,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		    else
 		      {
-			/* fprintf(stderr, "%d %p %s\n", is_optimized(sc->code), c_function_looped(ecdr(sc->code)), DISPLAY(sc->code)); */
-
 			/* try direct looper */
 			if ((is_optimized(sc->code)) &&
+			    (c_function_ext(ecdr(sc->code))) &&
 			    (c_function_looped(ecdr(sc->code))))
 			  {
 			    s7_pointer body, stepper, result;
@@ -51123,6 +51258,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		f = s7_symbol_value(sc, car(body));
 
 		if ((is_c_function(f)) &&
+		    (c_function_ext(f)) &&
 		    (c_function_ex_parser(f)))
 		  {
 		    exd = c_function_ex_parser(f)(sc, body);
@@ -51332,7 +51468,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_function func;
 
 	body = cddr(sc->code);
-	if (c_function_looped(ecdr(car(body))))
+	if ((c_function_ext(ecdr(car(body)))) && (c_function_looped(ecdr(car(body)))))
 	  {
 	    func = (s7_function)c_function_call(c_function_looped(ecdr(car(body))));
 	    if (func(sc, sc->z = cons(sc, small_int(0), cdar(body)))) /* make it compatible with the other looped calls */
@@ -51702,6 +51838,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  f = s7_symbol_value(sc, car(code));
 		  
 		  if ((is_c_function(f)) &&
+		      (c_function_ext(f)) &&
 		      (c_function_ex_parser(f)))
 		    {
 		      s7_ex *exd = NULL;
@@ -53817,7 +53954,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    /* fprintf(stderr, "vs: %s\n", DISPLAY(code)); */
 		    set_opt_and_goto_opt_eval(code, f, OP_VECTOR_S);
 		    
-		  case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		  case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 		    if ((c_function_required_args(f) <= 1) &&
 			(c_function_all_args(f) >= 1))
 		      {
@@ -53895,7 +54032,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_VECTOR:
 			set_opt_and_goto_opt_eval(code, f, OP_VECTOR_C);
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			/* if we switch to op_c_all_x here, we need to set fcdr */
 			if (is_safe_procedure(f))
 			  {
@@ -53987,7 +54124,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  set_optimize_data(code, OP_SAFE_C_SS);
 			else
@@ -54040,7 +54177,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 							      ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SX)));
 			break;
 
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  set_optimize_data(code, OP_SAFE_C_SC);
 			else
@@ -54082,7 +54219,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  set_optimize_data(code, OP_SAFE_C_CS);
  			else
@@ -54165,7 +54302,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_SSS);
@@ -54213,7 +54350,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  set_optimize_data(code, OP_SAFE_C_ALL_S);
 			else
@@ -54288,7 +54425,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if ((num_args == 2) &&
 			    (is_symbol(cadr(code))) &&
 			    (is_pair(caddr(code))) &&
@@ -54349,7 +54486,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  set_opt_and_goto_opt_eval(code, f, OP_VECTOR_opCq);
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opCq);
@@ -54408,7 +54545,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    switch (type(f))
 		      {
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSq);
@@ -54469,7 +54606,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    switch (type(f))
 		      {
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSq_S);
@@ -54539,7 +54676,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_S_opSq : OP_C_S_opSq);
 			set_ecdr(cdr(code), cadr(caddr(code)));
 			set_c_function(code, f);
@@ -54580,7 +54717,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    /* code: (+ a (* b c)) */
@@ -54634,7 +54771,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSSq_S);
@@ -54710,7 +54847,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSq_opSq);
@@ -58147,6 +58284,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	  
 	  
+	case T_C_FUNCTION_STAR:                     /* -------- C-based function with defaults (lambda*) -------- */
+	  sc->value = c_function_call(sc->code)(sc, set_c_function_call_args(sc));
+	  goto START;
+
+
 	case T_C_OPT_ARGS_FUNCTION:                 /* -------- C-based function that has n optional arguments -------- */
 	  {
 	    unsigned int len;
@@ -59173,6 +59315,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  case T_C_RST_ARGS_FUNCTION:
 	  case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 1) 2) lst) */
 	  case T_C_FUNCTION:
+	  case T_C_FUNCTION_STAR:
 	    /* obj here is a c_function, but its setter could be a closure and vice versa below
 	     */
 	    if (is_procedure(c_function_setter(obj)))
@@ -60117,6 +60260,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case T_C_RST_ARGS_FUNCTION:
 	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 0) 2) lst) */
 	    case T_C_FUNCTION:
+	    case T_C_FUNCTION_STAR:
 	      /* perhaps it has a setter */
 	      
 	      if (is_procedure(c_function_setter(sc->x)))
@@ -69575,7 +69719,8 @@ int main(int argc, char **argv)
  *
  * maybe read/write-bytevector should be built-in -- file_read basically
  *   others of that ilk: open-input|output-bytevector
- * the generic form: (with-input obj ...) (with-output obj ...)
+ *   the generic form: (with-input obj ...) (with-output obj ...)
+ *   perhaps (with-input <port/string/func/etc> . body) (with-output <port/string-growable?/func/etc> . body)
  *
  * gmp/mpfr/mpc as cload? jn/yn from mpfr? [no complex, but can we fake it?] [see snd-xen] 
  *    gmpn opts?
@@ -69584,7 +69729,7 @@ int main(int argc, char **argv)
  * ideally the function doc string could be completely removed before optimization etc
  * should (equal? "" #u8()) be #t?
  * is there any use for the dd and rd bacro cases? rd=scoop in r-time expr, then eval in d
- *   this seems like memoization
+ *
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
  *  (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
@@ -69595,19 +69740,12 @@ int main(int argc, char **argv)
  * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
  *   isn't this vector_ref_ic?  just s7_define(sc, sc->envir, func_as_symbol, vector_ref_ic)??
  *   but we'll lose procedure-source etc
- * does lint notice these? -- no because they can take extra args, apparently (list-ref arity is (2 0 #t)??)
+ * does lint notice these? -- no because they can take extra args, apparently (list-ref arity is (2 0 #t))
  *
- * perhaps (with-input <port/string/func/etc> . body) (with-output <port/string-growable?/func/etc> . body)
- * still need to probe for missing accessor checks
- * what happens to values in (member 11 (list 1 2 3) (lambda (a b) (values #f a b))) -> '(1 2 3)
- *   50154: if not #f we found a match -- should this check for mv? what else might it do?
+ * t_c*: need opt-no-key case simple, and possibly OP_SAFE_C_STAR_CD...?
  *
- * ideally make-* in clm2xen would use s7's define*, not unscramble
- * s7_define_function_star -> safe_closure_star_direct or something (see clm2xen.c g_make_oscil)
- *   or maybe a new type T_C_FUNCTION_STAR?  Then it could be handled explicitly and directly
- *   T_C_FUNCTION include opt/rest arg cases, so the other would imply default values?
- *   read defaults->array of protected trees, at call fill in from args, then defaults?
- *   or use lambda_star_set_args by having closure_args equivalent and saved env for set_slot -- but this is not direct.
- *   So we have 2 cases even before starting?  Maybe not worth it.
+ * for the immutable symbol -- initial_slot is not settable from outside, so perhaps it could hold the value?
+ *   then the symbol-accessor could get it as #_name or something.
+ *   or this slot could simply hold the value (independent of the name -- gensym etc) 
  */
 
