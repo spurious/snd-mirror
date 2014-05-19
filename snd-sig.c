@@ -6064,160 +6064,6 @@ frequency whistles leaking through."
 }
 
 
-
-#define S_find_min_peak_phases "find-min-peak-phases"
-
-static void try_case(int i, int n, int dist, int size,
-		     mus_float_t best, 
-		     mus_float_t *current_max, int *current_phases, mus_float_t **current_sum, mus_float_t **sines, 
-		     int *sizes, int *best_phases)
-{
-  if ((current_max[i - 1] - n + i) < best)
-    {
-      int j, k, kk, n1, isize;
-      
-      n1 = n - 1;
-      isize = sizes[i];
-      
-      for (j = 0; j < dist; j++)
-	{
-	  /* j is current phase of i-th component */
-	  
-	  current_max[i] = 0.0;
-	  current_phases[i] = j;
-	  
-	  for (k = 0, kk = j; k < size; k++, kk++)
-	    {
-	      mus_float_t fval;
-	      if (kk >= isize) kk = 0;
-	      fval = current_sum[i - 1][k] + sines[i][kk];
-	      current_sum[i][k] = fval;
-	      fval = fabs(fval);
-	      if (fval > current_max[i])
-		{
-		  current_max[i] = fval;
-		  if ((i == n1) &&
-		      (fval > best))
-		    break;
-		}
-	    }
-	  
-	  if (i == n1)
-	    {
-	      if (current_max[i] < best)
-		{
-		  int m;
-		  best = current_max[i];
-		  for (m = 0; m < n; m++)
-		    best_phases[m] = current_phases[m];
-		}
-	    }
-	  else try_case(i + 1, n, dist, size, best,
-			current_max, current_phases, current_sum, sines, 
-			sizes, best_phases);
-	}
-    }
-}
-
-
-static Xen g_find_min_peak_phases(Xen arglist)
-{
-  #define H_find_min_peak_phases "(" S_find_min_peak_phases " dist " S_vct "s...) returns a vector of (sample-wise) offsets \
-that give a minimum peak amplitude when the signals are added together."
-
-  mus_float_t best = 0.0;
-  int n, size = 0, dist = 0;
-  int *best_phases;
-  int *current_phases;
-  mus_float_t *current_max;
-  mus_float_t **current_sum;
-  mus_float_t **sines;
-  int *sizes;
-
-  int i;
-  mus_float_t cmax;
-  Xen result = Xen_empty_list;
-
-  n = (Xen_list_length(arglist) - 1);
-  if (n < 2) return(Xen_list_1(Xen_integer_zero));
-  dist = Xen_integer_to_C_int(Xen_car(arglist));
-  arglist = Xen_cdr(arglist);
-
-  sines = (mus_float_t **)calloc(n, sizeof(mus_float_t *));
-  sizes = (int *)calloc(n, sizeof(int));
-  best_phases = (int *)calloc(n, sizeof(int));
-  current_phases = (int *)calloc(n, sizeof(int));
-  current_sum = (mus_float_t **)calloc(n, sizeof(mus_float_t *));
-  current_max = (mus_float_t *)calloc(n, sizeof(mus_float_t));
-
-  for (i = 0; i < n; i++)
-    {
-      vct *v;
-      current_max[i] = 0.0;
-      v = Xen_to_vct(Xen_list_ref(arglist, i));
-      sines[i] = mus_vct_data(v);
-      sizes[i] = mus_vct_length(v);
-      if (sizes[i] > size)
-	size = sizes[i];
-    }
-
-  for (i = 0; i < n; i++)
-    current_sum[i] = (mus_float_t *)calloc(size, sizeof(mus_float_t));
-
-  best = 10000.0;
-  cmax = fabs(sines[0][0]);
-  for (i = 1; i < sizes[0]; i++) 
-    {
-      mus_float_t absv;
-      absv = fabs(sines[0][i]); 
-      if (absv > cmax) cmax = absv;
-    }
-  current_max[0] = cmax;
-  current_phases[0] = 0;
-
-  for (i = 0; i < size; i++)
-    current_sum[0][i] = sines[0][i];
-
-  try_case(1, n, dist, size, best,
-	   current_max, current_phases, current_sum, sines, 
-	   sizes, best_phases);
-
-  for (i = 0; i < n; i++)
-    result = Xen_cons(C_int_to_Xen_integer(best_phases[i]), result);
-
-  free(best_phases);
-  free(current_phases);
-  for (i = 0; i < n; i++)
-    free(current_sum[i]);
-  free(current_sum);
-  free(sines);
-  free(current_max);
-
-  return(Xen_list_2(C_double_to_Xen_real(best), Xen_list_reverse(result)));
-}
-
-#if 0
-(let ((v1 (make-vct 2048))
-      (v2 (make-vct 2048))
-      (v3 (make-vct 2048))
-      (incr (/ (* 2 pi) 2048)))
-  (do ((i 0 (+ i 1))
-       (x 0.0 (+ x incr)))
-      ((= i 2048))
-    (vct-set! v1 i (sin x))
-    (vct-set! v2 i (sin (* 2 x)))
-    (vct-set! v3 i (sin (* 3 x))))
- (find-min-peak-phases 1024 v1 v2 v3))
-
-(1.98045 (0 210 1940))
-
-:(modulo (/ (* 210 2) 1024.0) 2.0)
-0.41015625
-:(modulo (/ (* 1940 3) 1024.0) 2.0)
-1.68359375
-#endif
-
-
 #ifndef _MSC_VER
   #include <sys/time.h>
 #endif
@@ -6522,7 +6368,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0;
   mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN, overall_min;
   mus_float_t *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL, *initial_phases = NULL;
-  char *choice_name[4] = {"all", "odd", "even", "prime"};
+  const char *choice_name[4] = {"all", "odd", "even", "prime"};
   pk_data **choices = NULL, **free_choices = NULL;
   mus_float_t *rl, *im;
   const char *file = NULL;
@@ -6925,7 +6771,6 @@ Xen_wrap_8_optional_args(g_clm_channel_w, g_clm_channel)
 Xen_wrap_no_args(g_sinc_width_w, g_sinc_width)
 Xen_wrap_1_arg(g_set_sinc_width_w, g_set_sinc_width)
 
-Xen_wrap_any_args(g_find_min_peak_phases_w, g_find_min_peak_phases)
 Xen_wrap_5_optional_args(g_fpsap_w, g_fpsap)
 
 void g_init_sig(void)
@@ -6977,7 +6822,6 @@ void g_init_sig(void)
   Xen_define_procedure_with_setter(S_sinc_width, g_sinc_width_w, H_sinc_width,
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 
-  Xen_define_procedure(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
   Xen_define_procedure(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
 #if HAVE_SCHEME
   Xen_define_procedure("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");

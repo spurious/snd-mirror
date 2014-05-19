@@ -504,7 +504,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "for-each", "for-each", "for-each", "for-each",
    "map", "map", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro*", 
-   "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", 
+   "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!",
    "eval-string", "eval-string", 
    "member", "assoc", "member", "assoc",
    
@@ -677,6 +677,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C, OP_SAFE_C_S_op_opSSq_opSSqq, HOP_SAFE_C_S_op_opSSq_opSSqq, 
       OP_SAFE_C_opSSq_op_opSSq_q, HOP_SAFE_C_opSSq_op_opSSq_q, OP_SAFE_C_op_opSSq_Sq_opSSq, HOP_SAFE_C_op_opSSq_Sq_opSSq,
       OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, 
+
+      OP_SAFE_C_STAR_CD, HOP_SAFE_C_STAR_CD, 
       
       OP_THUNK, HOP_THUNK, 
       OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
@@ -787,6 +789,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c", "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq", 
       "safe_c_opssq_op_opssq_q", "h_safe_c_opssq_op_opssq_q", "safe_c_op_opssq_sq_opssq", "h_safe_c_op_opssq_sq_opssq",
       "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", 
+
+      "safe_c*_cd", "h_safe_c*_cd",
 
       "thunk", "h_thunk", 
       "closure_s", "h_closure_s", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
@@ -2222,6 +2226,7 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 
 #define is_c_function(f)              (type(f) >= T_C_FUNCTION)
 #define is_c_function_star(f)         (type(f) == T_C_FUNCTION_STAR)
+#define is_any_c_function(f)          (type(f) >= T_C_FUNCTION_STAR)
 #define c_function_data(f)            (f)->object.fnc.c_proc
 #define c_function_call(f)            (f)->object.fnc.ff
 #define c_function_required_args(f)   (f)->object.fnc.required_args
@@ -30928,7 +30933,7 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
     ((ecdr(_X_)) &&							\
      ({s7_pointer _p_; _p_ = SYMBOL_TO_VALUE(Sc, car(_X_));		\
        ((_p_ == ecdr(_X_)) ||						\
-	((is_c_function(_p_)) && (is_c_function(ecdr(_X_))) &&		\
+	((is_any_c_function(_p_)) && (is_any_c_function(ecdr(_X_))) &&		\
 	 (c_function_class(_p_) == c_function_class(ecdr(_X_))))); })); })
 #else
 
@@ -30939,7 +30944,7 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
       s7_pointer p;
       p = SYMBOL_TO_VALUE(sc, car(x));
       return((p == ecdr(x)) ||
-	     ((is_c_function(p)) &&
+	     ((is_any_c_function(p)) &&
 	      (c_function_class(p) == c_function_class(ecdr(x)))));
     }
   return(false);
@@ -32905,7 +32910,7 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
       x = s7_symbol_value(sc, x); /* this is needed by Snd */
     }
 
-  if ((s7_is_function(x)) ||
+  if ((is_any_c_function(x)) ||
       (is_c_macro(x)))
     return((char *)c_function_documentation(x));
   
@@ -33651,7 +33656,7 @@ static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 {
-  if (is_c_function(x))
+  if (is_any_c_function(x))
     return(list_3(sc, 
 		  make_integer(sc, c_function_required_args(x)),
 		  make_integer(sc, c_function_optional_args(x)),
@@ -43579,6 +43584,17 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		  set_ecdr(car_x, func);
 		  set_fcdr(car_x, cadar_x);
 		  return(false); 
+		}
+
+	      if ((func_is_safe) &&
+		  (symbols == 0) &&
+		  (is_c_function_star(func)) &&
+		  (c_function_simple_defaults(func)))
+		{
+		  set_optimized(car_x);
+		  set_optimize_data(car_x, hop + OP_SAFE_C_STAR_CD);
+		  set_c_function(car_x, func);
+		  return(true);
 		}
 	    }
 	}
@@ -57091,7 +57107,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = c_call(code)(sc, sc->T2_1);
 		goto START;
 	      }
-	      
+
+	      /* an experiment -- c_function_star */
+	    case OP_SAFE_C_STAR_CD:
+	      if (!c_function_is_ok(sc, code))
+		break;
+
+	    case HOP_SAFE_C_STAR_CD:
+	      {
+		int i, n_args;
+		s7_pointer par, call_args, func;
+		s7_pointer *df;
+		func = ecdr(code);
+		n_args = c_function_all_args(func);
+		call_args = c_function_call_args(func);
+		df = c_function_arg_defaults(func);  
+		for (i = 1, par = cdr(call_args); is_pair(par); i++, par = cdr(par))
+		  car(par) = df[i];
+		car(call_args) = cadr(code);
+		sc->value = c_call(code)(sc, call_args);
+		goto START;
+	      }
+
 	      
 	      /* -------------------------------------------------------------------------------- */
 	    case OP_C_S_opSq:
@@ -69692,13 +69729,11 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4  5.9
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7 12.7
  * t816          |                                    |  70.6                44.5 44.6
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.9
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.8
  *            153 with run macro (eval_ptree)
  */
 
-/* loop in C or scheme (as do-loop wrapper)
- * cmn->scm+gtk?
- * for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
+/* for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
  * click to inspect/see source etc in listener?
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
@@ -69719,8 +69754,6 @@ int main(int argc, char **argv)
  *
  * maybe read/write-bytevector should be built-in -- file_read basically
  *   others of that ilk: open-input|output-bytevector
- *   the generic form: (with-input obj ...) (with-output obj ...)
- *   perhaps (with-input <port/string/func/etc> . body) (with-output <port/string-growable?/func/etc> . body)
  *
  * gmp/mpfr/mpc as cload? jn/yn from mpfr? [no complex, but can we fake it?] [see snd-xen] 
  *    gmpn opts?
@@ -69728,7 +69761,8 @@ int main(int argc, char **argv)
  *
  * ideally the function doc string could be completely removed before optimization etc
  * should (equal? "" #u8()) be #t?
- * is there any use for the dd and rd bacro cases? rd=scoop in r-time expr, then eval in d
+ * if t_c* and args=all_args and no keys, use current op_safe_c opts
+ * do we need to mark(gc) t_c* call_args?
  *
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
@@ -69739,10 +69773,7 @@ int main(int argc, char **argv)
  *
  * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
  *   isn't this vector_ref_ic?  just s7_define(sc, sc->envir, func_as_symbol, vector_ref_ic)??
- *   but we'll lose procedure-source etc
- * does lint notice these? -- no because they can take extra args, apparently (list-ref arity is (2 0 #t))
- *
- * t_c*: need opt-no-key case simple, and possibly OP_SAFE_C_STAR_CD...?
+ *   but we'll lose procedure-source, definition env etc
  *
  * for the immutable symbol -- initial_slot is not settable from outside, so perhaps it could hold the value?
  *   then the symbol-accessor could get it as #_name or something.

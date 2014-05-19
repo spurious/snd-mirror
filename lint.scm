@@ -2599,27 +2599,37 @@
 	      (if (and (pair? bval)          ; not (define (hi a) . 1)!
 		       (pair? (car bval))
 		       (null? (cdr bval))
-		       (symbol? (caar bval)) ; not (define (hi) ((if #f + abs) 0))
-		       (equal? args (cdar bval)))
-		  (let ((cval (caar bval)))
-		    (if (or (and (procedure? (symbol->value cval))
-				 (zero? (cadr (procedure-arity (symbol->value cval))))
-				 (not (caddr (procedure-arity (symbol->value cval))))) ; might be deliberately limiting args
-			    (let ((e (or (assq cval env) (hash-table-ref globals cval))))
-			      (and e
-				   (pair? e)
-				   (>= (length e) 4)
-				   (let ((def (list-ref e 3)))
-				     (and 
-				      (pair? def)
-				      (eq? (car def) 'define)
-				      (or (and (symbol? args)
-					       (symbol? (cadr def)))
-					  (= (length args) (length (cadr def)))))))))
-			(lint-format "~A could be (define ~A ~A)"
-				     name name
-				     name cval))))))
-
+		       (symbol? (caar bval))) ; not (define (hi) ((if #f + abs) 0))
+		  (if (equal? args (cdar bval))
+		      (let ((cval (caar bval)))
+			(if (or (and (procedure? (symbol->value cval))
+				     (zero? (cadr (procedure-arity (symbol->value cval))))
+				     (not (caddr (procedure-arity (symbol->value cval))))) ; might be deliberately limiting args
+				(let ((e (or (assq cval env) (hash-table-ref globals cval))))
+				  (and e
+				       (pair? e)
+				       (>= (length e) 4)
+				       (let ((def (list-ref e 3)))
+					 (and 
+					  (pair? def)
+					  (eq? (car def) 'define)
+					  (or (and (symbol? args)
+						   (symbol? (cadr def)))
+					      (= (length args) (length (cadr def)))))))))
+			    (lint-format "~A could be (define ~A ~A)"
+					 name name
+					 name cval)))
+		      (if (and (eq? (caar bval) 'list-ref)
+			       (pair? (cdar bval))
+			       (pair? (cddar bval))
+			       (eq? (car args) (cadar bval))
+			       (null? (cdr args)))
+			  (case (caddar bval)
+			    ((0) (lint-format "~A could be (define ~A car)" name name name))
+			    ((1) (lint-format "~A could be (define ~A cadr)" name name name))
+			    ((2) (lint-format "~A could be (define ~A caddr)" name name name))
+			    ((3) (lint-format "~A could be (define ~A cadddr)" name name name))))))))
+	    
 	(let ((ldata (and (not (memq head '(lambda lambda*)))
 			  (not (assq name env))
 			  (list name #f #f (list head args)))))

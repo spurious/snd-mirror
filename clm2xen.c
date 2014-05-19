@@ -2416,12 +2416,8 @@ static Xen g_mus_set_length(Xen gen, Xen val)
 
 #if HAVE_SCHEME 
 
-/* this is slower mainly because s7_define_safe_function_star
- *   currently wraps the function in an extra closure, so we have an extra step in eval on every call.
- *   ideally we'd go direct -- no env, no relookup of the args: safe_closure_star_direct = set up args (Tn_n) from defaults, call internal
- *   safe_closure_direct for the non* case?
+/* an experiment (see g_make_ncos also) -- this is essentially the same speed as using unscramble_optkey.
  */
-
 static s7_pointer g_make_oscil(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_oscil "(" S_make_oscil " (frequency *clm-default-frequency*) (initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
@@ -3442,6 +3438,38 @@ static Xen g_is_ncos(Xen obj)
 			  (mus_is_ncos(Xen_to_mus_any(obj)))));
 }
 
+#if HAVE_SCHEME
+static s7_pointer g_make_ncos(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_ncos "(" S_make_ncos " (frequency *clm-default-frequency*) (n 1)): \
+return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosines."
+
+  mus_any *ge;
+  mus_float_t freq;
+  s7_pointer f, p;
+  int n = 1;
+
+  f = s7_car(args);
+  p = s7_cadr(args);
+
+  if (s7_is_real(f))
+    freq = s7_number_to_real_with_caller(sc, f, S_make_ncos);
+  else {freq = 0.0; Xen_check_type(false, f, 1, S_make_ncos, "a number");}
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_ncos, 1, f, "freq > srate/2?");
+
+  if (s7_is_integer(p))
+    n = s7_number_to_integer_with_caller(sc, p, S_make_ncos);
+  else Xen_check_type(false, p, 2, S_make_ncos, "an integer");
+  if (n <= 0)
+    Xen_out_of_range_error(S_make_ncos, 2, p, "n <= 0?");
+
+  ge = mus_make_ncos(freq, n);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+
+#else
 
 static Xen g_make_ncos(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
@@ -3478,6 +3506,7 @@ return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosine
   return(Xen_false);
 }
 
+#endif
 
 static Xen g_ncos(Xen obj, Xen fm)
 {
@@ -20910,9 +20939,9 @@ Xen_wrap_1_arg(g_mus_frandom_w, g_mus_frandom)
 Xen_wrap_1_arg(g_mus_irandom_w, g_mus_irandom)
 #if (!HAVE_SCHEME)
 Xen_wrap_4_optional_args(g_make_oscil_w, g_make_oscil)
+Xen_wrap_4_optional_args(g_make_ncos_w, g_make_ncos)
 #endif
 Xen_wrap_3_optional_args(g_make_oscil_bank_w, g_make_oscil_bank)
-Xen_wrap_4_optional_args(g_make_ncos_w, g_make_ncos)
 Xen_wrap_4_optional_args(g_make_nsin_w, g_make_nsin)
 Xen_wrap_8_optional_args(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 
@@ -21487,11 +21516,12 @@ static void mus_xen_init(void)
 
 #if HAVE_SCHEME
   s7_define_safe_function_star(s7, S_make_oscil, g_make_oscil, "(frequency 0.0) (initial-phase 0.0)", H_make_oscil);
+  s7_define_safe_function_star(s7, S_make_ncos,  g_make_ncos,  "(frequency 0.0) (n 1)",               H_make_ncos);
 #else
   Xen_define_safe_procedure(S_make_oscil,          g_make_oscil_w,          0, 4, 0, H_make_oscil);
+  Xen_define_safe_procedure(S_make_ncos,           g_make_ncos_w,           0, 4, 0, H_make_ncos); 
 #endif
   Xen_define_safe_procedure(S_make_oscil_bank,     g_make_oscil_bank_w,     2, 1, 0, H_make_oscil_bank);
-  Xen_define_safe_procedure(S_make_ncos,           g_make_ncos_w,           0, 4, 0, H_make_ncos); 
   Xen_define_safe_procedure(S_make_nsin,           g_make_nsin_w,           0, 4, 0, H_make_nsin); 
   Xen_define_safe_procedure(S_make_asymmetric_fm,  g_make_asymmetric_fm_w,  0, 8, 0, H_make_asymmetric_fm);
 
