@@ -4720,10 +4720,12 @@ static raw_info *new_raw_dialog(void)
 static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   raw_info *rp = (raw_info *)context;
-  int raw_srate, raw_chans, raw_data_format;
+  int raw_srate = 0, raw_chans = 0, raw_data_format = 0;
+
   redirect_snd_error_to(post_file_panel_error, (void *)(rp->rdat));
   get_file_dialog_sound_attributes(rp->rdat, &raw_srate, &raw_chans, NULL, &raw_data_format, &(rp->location), NULL, 1);
   redirect_snd_error_to(NULL, NULL);
+
   if (rp->rdat->error_widget != NOT_A_SCANF_WIDGET)
     {
       clear_error_if_panel_changes(rp->dialog, rp->rdat);

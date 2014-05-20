@@ -57,7 +57,7 @@
 	"gchar***" "gfloat*" "gint8*" "gssize" "guint16*" "gunichar*" "GtkFileChooserButton*" "GtkPathPriorityType"
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
 	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
-	"GLogFunc" "GError*" "guint32*" ;"GtkRecentFilterInfo*"
+	"GLogFunc" "GError*" "guint32*"
 	
 	"GConnectFlags" "GSignalFlags" "GSignalMatchType" 
 					;"GdkAxisUse" 
@@ -100,8 +100,6 @@
 	"cairo_text_cluster_flags_t" "cairo_text_cluster_flags_t*" "cairo_rectangle_int_t*"
 
 	"GtkOverlay*" "cairo_pattern_t**" "GtkStyleProperties*" "GtkSymbolicColor*" "GtkWidgetPath*"
-	;; "GtkRecentFilterInfo*" 
-	;;    this one depends on c++
 	"GtkFontChooser*" "GtkFontChooserDialog*"
 	"GdkModifierIntent" "guint**" "GtkApplication*" "GVariant*" "GtkApplicationWindow*"
 	"GdkEventKey*" "GtkColorChooser*"
@@ -560,12 +558,12 @@
 			      (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_info" 'callback); 'callback)
 			      ;; guint8* is const
 			      'permanent-gcc)
-			(list 'GtkRecentFilterFunc
-			      "gboolean"
-			      "recent_filter"
-			      (parse-args "GtkRecentFilterInfo* filter_info lambda_data func_info" 'callback)
-			      ;; const filter info
-			      'permanent-gcc)
+;			(list 'GtkRecentFilterFunc
+;			      "gboolean"
+;			      "recent_filter"
+;			      (parse-args "GtkRecentFilterInfo* filter_info lambda_data func_info" 'callback)
+;			      ;; const filter info
+;			      'permanent-gcc)
 			(list 'GtkTreeViewSearchPositionFunc
 			      "void"
 			      "search_position"

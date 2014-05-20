@@ -4821,7 +4821,7 @@ You can use the r7rs library mechanism here, or with-environment, or
 whatever you want! (In Snd, libc, libm, libdl, and libgdbm are automatically
 tied into s7 via autoload, so if you call, for example, frexp, libm.scm
 is loaded, and frexp is exported from the *libm* environment, then the
-evaluator carries on, as if frexp had always been defined in s7).
+evaluator soldiers on, as if frexp had always been defined in s7).
 </p>
 <br>
 
@@ -5239,6 +5239,8 @@ search starts in the second argument.
 
 <p>If char-position's first argument is a string, it is treated as a set of characters, and
 char-position looks for the first occurrence of any member of that set.
+Currently, the strings involved are assumed to be C strings (don't expect embedded nulls
+to work right in this context).
 </p>
 
 

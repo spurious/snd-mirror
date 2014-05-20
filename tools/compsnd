@@ -829,13 +829,3 @@ g++ -o exs7 exs7.c s7.o -lm -DEX6 -ldl
 rm exs7
 rm exs7.o
 make clean
-
-echo ' -------------------------------------------------------------------------------- '
-echo ' -------------------------------- with int s7_Int -------------------------------- '
-echo ' -------------------------------------------------------------------------------- '
-sed s7.h -e 's/#define s7_Int long long int/#define s7_Int int/' > tmp
-mv tmp s7.c
-sed s7.h -e 's/#define s7_Int_d "%lld"/#define s7_Int_d "%d"/' > tmp
-mv tmp s7.c
-make
-make clean

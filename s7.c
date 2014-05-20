@@ -3603,6 +3603,20 @@ static void mark_c_proc(s7_pointer p)
     }
 }
 
+static void mark_c_proc_star(s7_pointer p)
+{
+  if (!is_marked(p)) 
+    {
+      set_mark(p);
+      S7_MARK(c_function_setter(p));
+      if (!c_function_simple_defaults(p))
+	{
+	  s7_pointer arg;
+	  for (arg = c_function_call_args(p); is_pair(arg); arg = cdr(arg))
+	    S7_MARK(car(arg));
+	}
+    }
+}
 
 static void mark_pair(s7_pointer p)
 {
@@ -3831,7 +3845,7 @@ static void init_mark_functions(void)
   mark_function[T_C_MACRO]             = just_mark;
   mark_function[T_C_POINTER]           = just_mark;
   mark_function[T_C_FUNCTION]          = just_mark;  /* these change if needed to mark_c_proc when setter is a scheme function */
-  mark_function[T_C_FUNCTION_STAR]     = just_mark;
+  mark_function[T_C_FUNCTION_STAR]     = just_mark;  /* change to mark_c_proc_star if defaults involve an expression */
   mark_function[T_C_ANY_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_OPT_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_RST_ARGS_FUNCTION] = just_mark;
@@ -19138,7 +19152,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   if (s7_is_character(arg1))
     {
       c = character(arg1);
-      p = strchr((const char *)(porig + start), (int)c);
+      p = strchr((const char *)(porig + start), (int)c); /* use strchrnul in Gnu C do catch embedded null case */
       if (p)
 	return(make_integer(sc, p - porig));
       return(sc->F);
@@ -19155,6 +19169,14 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   if ((pos + start) < len)
     return(make_integer(sc, pos + start));
 
+  /* but if the string has an embedded null, we can get erroneous results here --
+   *   perhaps check for null at pos+start?  What about a searched-for string that
+   *   also has embedded nulls?  
+   *
+   * The embedded nulls are for bytevector usages, where presumably you're not talking
+   *   about chars and strings, so I think I'll ignore these cases.  In unicode, you'd
+   *   want to use unicode-aware searchers, so that also is irrelevant.
+   */
   return(sc->F);
 }
 
@@ -32806,7 +32828,10 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
 	  s7_remove_from_heap(sc, cadr(arg));
 	  if ((is_symbol(defaults[i])) ||
 	      (is_pair(defaults[i])))
-	    c_function_simple_defaults(func) = false;
+	    {
+	      c_function_simple_defaults(func) = false;
+	      mark_function[T_C_FUNCTION_STAR] = mark_c_proc_star;
+	    }
 	}
       else 
 	{
@@ -33569,7 +33594,6 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_C_FUNCTION:
-    case T_C_FUNCTION_STAR:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
@@ -33577,6 +33601,13 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
       if ((is_closure(setter)) ||
 	  (is_closure_star(setter)))
 	mark_function[type(p)] = mark_c_proc;
+      break;
+
+    case T_C_FUNCTION_STAR:
+      c_function_setter(p) = setter;
+      if ((is_closure(setter)) ||
+	  (is_closure_star(setter)))
+	mark_function[T_C_FUNCTION_STAR] = mark_c_proc_star;
       break;
 
     case T_C_MACRO:
@@ -33633,7 +33664,30 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
 
       /* T_MACRO et all don't have an easily accessible name -- I suppose we could
        *   search the current environment?
+       *
+       * other things get here: #<goto>->"", presumably continuations
+       *   if we're active, the goto must be in the current env:
+       *   (call-with-exit (lambda (return) (current-environment))) -> #<environment 'return #<goto>>
+       *   (let () (define-macro (mac x) `(+ ,x 1)) (current-environment)) -> #<environment 'mac #<macro>>
+       * need a reverse lookup for the current env (value->symbol in s7.html):
        */
+#if 0
+    case T_MACRO:
+    case T_BACRO:
+    case T_GOTO:
+    case T_CONTINUATION:
+      {
+	s7_pointer x;
+	for (x = sc->envir; is_environment(x); x = next_environment(x))
+	  {
+	    s7_pointer y;
+	    for (y = environment_slots(x); is_slot(y); y = next_slot(y))
+	      if (slot_value(y) == proc)
+		return(symbol_name(slot_symbol(y)));
+	  }
+	/* now search the global env?? */
+      }
+#endif
     }
   return(NULL);
 }
@@ -33840,7 +33894,7 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION_STAR:
-      return(s7_cons(sc, small_int(0), s7_make_integer(sc, c_function_all_args(x))));
+      return(s7_cons(sc, small_int(0), s7_make_integer(sc, c_function_all_args(x)))); /* should this be *2? */
 
     case T_CLOSURE:
       return(closure_arity_to_cons(sc, x, closure_args(x)));
@@ -36728,7 +36782,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   err = caddr(args);
   if (!is_applicable(err))
     return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(3), err, SOMETHING_APPLICABLE));
-  
+
   NEW_CELL(sc, p);
   catch_tag(p) = car(args);
   catch_goto_loc(p) = s7_stack_top(sc);
@@ -36740,7 +36794,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
     push_stack(sc, OP_CATCH_2, args, p);
   else push_stack(sc, OP_CATCH, args, p);      /* args ignored but maybe safer for GC? */
 
-  if (is_closure(proc))                       /* not also lambda* here because we need to handle the arg defaults */
+  if (is_closure(proc))                        /* not also lambda* here because we need to handle the arg defaults */
     {
       sc->code = closure_body(proc);
       NEW_FRAME(sc, closure_environment(proc), sc->envir);
@@ -36903,7 +36957,8 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		(type == sc->T))
 	      {
 		int loc;
-		s7_pointer catcher, error_func;
+		s7_pointer catcher, error_func, body;
+
 		catcher = x;
 		loc = catch_goto_loc(catcher);
 		sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(catcher));
@@ -36922,44 +36977,47 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		
 		/* if OP_CATCH_1, we deferred making the error handler until it is actually needed
 		 */
-		{
-		  s7_pointer body, y = NULL;
-		  if (op == OP_CATCH_1)
-		    body = cdr(error_func);
-		  else body = closure_body(error_func);
-		  
-		  if (is_null(cdr(body)))
-		    {
-		      body = car(body);
-		      if (is_pair(body))
-			{
-			  if (car(body) == sc->QUOTE)
-			    y = cadr(body);
-			  else
-			    {
-			      if ((car(body) == sc->CAR) &&
-				  (cadr(body) == car(error_func)))
-				y = type;
-			    }
-			}
-		      else
-			{
-			  if (is_symbol(body))
-			    {
-			      if (body == car(error_func))
-				y = list_2(sc, type, info);
-			    }
-			  else y = body;
-			}
-		      if (y)
-			{
-			  pop_stack(sc);
-			  sc->value = y;
-			  if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
-			  return(true);
-			}
-		    }
-		}
+		if (op == OP_CATCH_1)
+		  body = cdr(error_func);
+		else 
+		  {
+		    if (is_closure(error_func))
+		      body = closure_body(error_func);
+		    else body = NULL;
+		  }
+		
+		if ((body) && (is_null(cdr(body))))
+		  {
+		    s7_pointer y = NULL;
+		    body = car(body);
+		    if (is_pair(body))
+		      {
+			if (car(body) == sc->QUOTE)
+			  y = cadr(body);
+			else
+			  {
+			    if ((car(body) == sc->CAR) &&
+				(cadr(body) == car(error_func)))
+			      y = type;
+			  }
+		      }
+		    else
+		      {
+			if (is_symbol(body))
+			  {
+			    if (body == car(error_func))
+			      y = list_2(sc, type, info);
+			  }
+			else y = body;
+		      }
+		    if (y)
+		      {
+			pop_stack(sc);
+			sc->value = y;
+			if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
+			return(true);
+		      }
+		  }
 		if (op == OP_CATCH_1)
 		  {
 		    s7_pointer y;
@@ -36975,10 +37033,9 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		 *   error check here!
 		 */
 		
-		if ((is_pair(closure_args(sc->code))) &&
-		    (!s7_is_aritable(sc, sc->code, 2)))
+		if (!s7_is_aritable(sc, sc->code, 2))
 		  {
-		    s7_wrong_number_of_args_error(sc, "catch error handler has wrong number of args: ~S", sc->args);
+		    s7_wrong_number_of_args_error(sc, "catch error handler should accept 2 args: ~S", sc->code);
 		    return(false);
 		  }
 		
@@ -39668,43 +39725,38 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	      return(sc->F);
 	    }
 
-	  if (c == '\\')
-	    sc->strbuf[i++] = '\\';
+	  if ((c == '\\') || (c == '"') || (c == '|'))
+	    sc->strbuf[i++] = c;
 	  else
 	    {
-	      if (c == '"')
-		sc->strbuf[i++] = '"';
-	      else
+	      if (c == 'n')
+		sc->strbuf[i++] = '\n';
+	      else 
 		{
-		  if (c == 'n')
-		    sc->strbuf[i++] = '\n';
+		  if (c == 't')                         /* this is for compatibility with other Schemes */
+		    sc->strbuf[i++] = '\t';
 		  else 
 		    {
-		      if (c == 't')                         /* this is for compatibility with other Schemes */
-			sc->strbuf[i++] = '\t';
-		      else 
+		      if (c == 'x')
 			{
-			  if (c == 'x')
-			    {
-			      c = read_x_char(pt);
-			      if (c == NOT_AN_X_CHAR)
-				return(sc->T);
-			      sc->strbuf[i++] = (unsigned char)c;
-			    }
-			  else
-			    {
-			      /* if (!is_white_space(c)) */ /* changed 8-Apr-12 */
-			      if ((c != '\n') && (c != '\r'))
-				return(sc->T); 
-
-			      /* #f here would give confusing error message "end of input", so return #t=bad backslash.
-			       *     this is not optimal. It's easy to forget that backslash needs to be backslashed. 
-			       *
-			       * the white_space business half-implements Scheme's \<newline>...<eol>... or \<space>...<eol>...
-			       *   feature -- the characters after \ are flushed if they're all white space and include a newline.
-			       *   (string->number "1\   2") is 12??  Too bizarre.
-			       */
-			    }
+			  c = read_x_char(pt);
+			  if (c == NOT_AN_X_CHAR)
+			    return(sc->T);
+			  sc->strbuf[i++] = (unsigned char)c;
+			}
+		      else
+			{
+			  /* if (!is_white_space(c)) */ /* changed 8-Apr-12 */
+			  if ((c != '\n') && (c != '\r'))
+			    return(sc->T); 
+			  
+			  /* #f here would give confusing error message "end of input", so return #t=bad backslash.
+			   *     this is not optimal. It's easy to forget that backslash needs to be backslashed. 
+			   *
+			   * the white_space business half-implements Scheme's \<newline>...<eol>... or \<space>...<eol>...
+			   *   feature -- the characters after \ are flushed if they're all white space and include a newline.
+			   *   (string->number "1\   2") is 12??  Too bizarre.
+			   */
 			}
 		    }
 		}
@@ -43483,7 +43535,9 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
     return(false);
 
   func_is_safe = is_safe_procedure(func);
-  func_is_c_function = is_c_function(func);
+  func_is_c_function = ((is_c_function(func)) || 
+			((is_c_function_star(func)) && 
+			 (c_function_all_args(func) == 1))); /* surely no need to check key here? */
   cadar_x = cadr(car_x);
 
   if (pairs == 0)
@@ -43812,10 +43866,14 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
        (arglist_has_keyword(cdr(car_x)))))
     return(false);
 
-  func_is_safe = is_safe_procedure(func);
-  func_is_c_function = is_c_function(func); /* this only if no key: || ((is_c_function_star(func)) && (c_function_all_args(func) == 2))) */
   cadar_x = cadr(car_x);
   caddar_x = caddr(car_x);
+
+  func_is_safe = is_safe_procedure(func);
+  func_is_c_function = ((is_c_function(func)) ||
+			((is_c_function_star(func)) && 
+			 (c_function_all_args(func) == 2) &&
+			 (!is_keyword(cadar_x))));
 
   if (pairs == 0)
     {
@@ -44436,11 +44494,16 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
        (arglist_has_keyword(cdr(car_x)))))
     return(false);
 
-  func_is_safe = is_safe_procedure(func);
-  func_is_c_function = is_c_function(func);
   cadar_x = cadr(car_x);
   caddar_x = caddr(car_x);
   cadddar_x = cadddr(car_x);
+
+  func_is_safe = is_safe_procedure(func);
+  func_is_c_function = ((is_c_function(func)) ||
+			((is_c_function_star(func)) && 
+			 (c_function_all_args(func) == 3) &&
+			 (!is_keyword(cadar_x)) &&
+			 (!is_keyword(caddar_x))));
 
   /* here quotes in safe functions are somewhat rare: list-ref, format, etc */
   if (pairs == 0)
@@ -57115,11 +57178,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    case HOP_SAFE_C_STAR_CD:
 	      {
-		int i, n_args;
+		int i;
 		s7_pointer par, call_args, func;
 		s7_pointer *df;
 		func = ecdr(code);
-		n_args = c_function_all_args(func);
 		call_args = c_function_call_args(func);
 		df = c_function_arg_defaults(func);  
 		for (i = 1, par = cdr(call_args); is_pair(par); i++, par = cdr(par))
@@ -69761,8 +69823,7 @@ int main(int argc, char **argv)
  *
  * ideally the function doc string could be completely removed before optimization etc
  * should (equal? "" #u8()) be #t?
- * if t_c* and args=all_args and no keys, use current op_safe_c opts
- * do we need to mark(gc) t_c* call_args?
+ * environment iterator? or some generic iterator?
  *
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
@@ -69778,5 +69839,9 @@ int main(int argc, char **argv)
  * for the immutable symbol -- initial_slot is not settable from outside, so perhaps it could hold the value?
  *   then the symbol-accessor could get it as #_name or something.
  *   or this slot could simply hold the value (independent of the name -- gensym etc) 
+ * or would that space be better spent at the user's disposal? -- if not built-in, plist or whatever
+ * it looks like it is safe to use -- it only controls #_*. 
+ *
+ * Guile uses 'r7rs-symbols when |...| is a symbol -- maybe add a switch for this?
  */
 
