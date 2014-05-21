@@ -1816,9 +1816,9 @@ static gboolean glistener_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 static void eval_text(glistener *g, GtkTextIter *start, GtkTextIter *end)
 {
   char *text;
+
   text = gtk_text_buffer_get_text(g->buffer, start, end, false);
-  
-  /* fprintf(stderr, "text: %s, %d\n", text); */
+  /* fprintf(stderr, "text: %s\n", text); */
 
   if (text)
     {

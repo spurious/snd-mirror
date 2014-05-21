@@ -21640,7 +21640,6 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt)
 static s7_pointer string_read_sharp_no_free(s7_scheme *sc, s7_pointer pt)
 {
   /* sc->strbuf[0] has the first char of the string we're reading */
-
   unsigned int k;
   char *orig_str, *str;
 
@@ -33618,6 +33617,8 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_GOTO:
+      return(s7_wrong_type_arg_error(sc, "set! procedure-setter", 1, p, "a normal procedure (not a call-with-exit exit procedure)"));
+
     case T_CONTINUATION:
       return(s7_wrong_type_arg_error(sc, "set! procedure-setter", 1, p, "a normal procedure (not a continuation)"));
     }
@@ -36077,7 +36078,7 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
 	  gc_protected_at(sc, gc_syms) = syms;
 
 	  val = s7_symbol_local_value(sc, code, e);
-	  if ((val != sc->UNDEFINED) &&
+	  if ((val) && (val != sc->UNDEFINED) &&
 	      (!is_any_macro(val)))
 	    {
 	      int typ;
@@ -62046,6 +62047,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * eval body
        *
        * which means that (letrec ((x x)) x) is not an error!
+       * but this assumes the environment is not changed by evaluating the exprs?
+       * (letrec ((a (define b 1))) b) -- if let, the define takes place in the calling env, not the current env
+       * I think I need to check here that slot_pending_value is set (using the is_checked bit below).
        */
       sc->envir = new_frame_in_env(sc, sc->envir); 
       if (is_pair(car(sc->code)))
@@ -62057,6 +62061,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      slot = add_slot(sc, caar(x), sc->UNDEFINED);
 	      slot_pending_value(slot) = sc->UNDEFINED;
 	      slot_expression(slot) = cadar(x);
+	      set_checked(slot);
 	    }
 	  sc->args = environment_slots(sc->envir);
 	  push_stack(sc, OP_LETREC1, sc->args, sc->code);
@@ -62080,11 +62085,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else
 	{
 	  s7_pointer slot;
+	  slot = environment_slots(sc->envir);
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 	    {
-	      if (symbol_has_accessor(slot_symbol(slot)))
-		slot_set_value(slot, call_symbol_bind(sc, slot_symbol(slot), slot_pending_value(slot)));
-	      else slot_set_value(slot, slot_pending_value(slot));
+	      if (is_checked(slot))
+		{
+		  if (symbol_has_accessor(slot_symbol(slot)))
+		    slot_set_value(slot, call_symbol_bind(sc, slot_symbol(slot), slot_pending_value(slot)));
+		  else slot_set_value(slot, slot_pending_value(slot));
+		}
 	    }
 	  sc->code = cdr(sc->code);
 	  if (is_pair(cdr(sc->code)))
@@ -69484,7 +69493,8 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
 
-  /* call-with-values is almost a no-op */
+  /* call-with-values is almost a no-op; r7rs's fault.
+   */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
   /* (call-with-values (lambda () (values 1 2 3)) +) */
 
@@ -69795,7 +69805,7 @@ int main(int argc, char **argv)
  *            153 with run macro (eval_ptree)
  */
 
-/* for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map)
+/* for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map), but return type?
  * click to inspect/see source etc in listener?
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
@@ -69823,7 +69833,6 @@ int main(int argc, char **argv)
  *
  * ideally the function doc string could be completely removed before optimization etc
  * should (equal? "" #u8()) be #t?
- * environment iterator? or some generic iterator?
  *
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
@@ -69839,9 +69848,11 @@ int main(int argc, char **argv)
  * for the immutable symbol -- initial_slot is not settable from outside, so perhaps it could hold the value?
  *   then the symbol-accessor could get it as #_name or something.
  *   or this slot could simply hold the value (independent of the name -- gensym etc) 
- * or would that space be better spent at the user's disposal? -- if not built-in, plist or whatever
- * it looks like it is safe to use -- it only controls #_*. 
+ *   or would that space be better spent at the user's disposal? -- if not built-in, plist or whatever
+ *   it looks like it is safe to use -- it only controls #_*. 
+ *   (is this slot GC-protected?)
  *
- * Guile uses 'r7rs-symbols when |...| is a symbol -- maybe add a switch for this?
+ * perhaps map/for-each should take function args (or any applicable thing), calling it each time
+ *   (in place of (obj ctr)) (for-each define '(a b c) (lambda (d) d)) -> enum
  */
 
