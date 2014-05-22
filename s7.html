@@ -944,13 +944,13 @@ the result in the calling environment.
 
 <pre class="indented">
 (define setf
-  (let ((args (gensym)))
-    (apply <em class=red>define-bacro</em>
-	   `((setf-1 . ,args)        
-	     (unless (null? ,args)
-	       (apply set! (car ,args) (cadr ,args) ())
-	       (apply setf (cddr ,args)))))
-    setf-1))
+  (let ((args (gensym))
+        (name (gensym)))
+    (symbol->value 
+     (apply <em class=red>define-bacro</em> `((,name . ,args)        
+			   (unless (null? ,args)
+			     (apply set! (car ,args) (cadr ,args) ())
+			     (apply setf (cddr ,args))))))))
 </pre>
 
 
@@ -5621,6 +5621,7 @@ loading code that calls gcd.
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>let =&gt; be followed by any number of functions, and change its name to "forth".
 <li>remove the with-* IO functions (e.g. with-input-from-string), keeping the call-with-* versions (call-with-input-string).
+<li>remove everything associated with current-input|output|error-port. 
 </ul>
 
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
@@ -5811,7 +5812,7 @@ symbol-&gt;object
 </pre>
 
 <p>There is one pitfall here.  s7 normally tries to optimize garbage collection by
-removing some constants from the heap.  If that constant is a list or a vector, and you later
+removing some constants from the heap.  If that constant is a sequence, and you later
 set some member of it to something that needs GC protection, nobody in the heap points to it, so
 it is GC'd.  Here is an example:
 </p>
@@ -5830,6 +5831,13 @@ few times.  You can turn off the optimization in question by setting the variabl
 to 1.  *safety* defaults to 0.  (Also, if *safety* is not 0, sort! is safe from infinite loops,
 and some exceedingly rare local method cases are handled more carefully).
 </p>
+
+<!-- there is another problem here: if the list constant in question is a program fragment
+     that can be optimized, then reapplied elsewhere, the optimization info remains in the
+     new, possibly inappropriate context.  This can cause segfaults.  The fix is to copy
+     the list. 
+-->
+
 </div>
 
 

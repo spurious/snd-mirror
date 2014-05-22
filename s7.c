@@ -46201,11 +46201,10 @@ static s7_pointer check_when(s7_scheme *sc)
 
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
-    set_syntax_op(sc->code, sc->WHEN_UNCHECKED);
-
-  if (is_symbol(car(sc->code)))
     {
-      if (ecdr(sc->code)) 
+      set_syntax_op(sc->code, sc->WHEN_UNCHECKED);
+
+      if (is_symbol(car(sc->code)))
 	set_syntax_op(sc->code, sc->WHEN_S);
     }
   return(sc->code);
@@ -46221,11 +46220,10 @@ static s7_pointer check_unless(s7_scheme *sc)
 
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
-    set_syntax_op(sc->code, sc->UNLESS_UNCHECKED);
-
-  if (is_symbol(car(sc->code)))
     {
-      if (ecdr(sc->code)) /* unless and when are not special here I think, but the user has to make an heroic effort to screw up */
+      set_syntax_op(sc->code, sc->UNLESS_UNCHECKED);
+
+      if (is_symbol(car(sc->code)))
 	set_syntax_op(sc->code, sc->UNLESS_S);
     }
   return(sc->code);
@@ -69820,7 +69818,7 @@ int main(int argc, char **argv)
  *   then (info obj) -> env with as much as we can find?
  *   #define R_oscil by addition from xen_assert?
  *   also want to know free vars used/affected and is func val the same if args are the same [side-effects]
- *   and for catch what errors it might raise
+ *   and for catch what errors it might raise -- given methods this can't work in general
  *     framples: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  *
@@ -69843,7 +69841,7 @@ int main(int argc, char **argv)
  *
  * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
  *   isn't this vector_ref_ic?  just s7_define(sc, sc->envir, func_as_symbol, vector_ref_ic)??
- *   but we'll lose procedure-source, definition env etc
+ *   but we'll lose procedure-source, definition env etc [and method redefs if careless]
  *
  * for the immutable symbol -- initial_slot is not settable from outside, so perhaps it could hold the value?
  *   then the symbol-accessor could get it as #_name or something.
@@ -69852,7 +69850,9 @@ int main(int argc, char **argv)
  *   it looks like it is safe to use -- it only controls #_*. 
  *   (is this slot GC-protected?)
  *
- * perhaps map/for-each should take function args (or any applicable thing), calling it each time
- *   (in place of (obj ctr)) (for-each define '(a b c) (lambda (d) d)) -> enum
+ * maybe add assertions under DEBUGGING flag, especially for stack overflow
+ * why not fix the "bad-idea" problem -- don't remove sequence constants from the heap --
+ *   at least get timing info. quoted-list/constant-vector -- can any others be problematic?
+ *   But how to mark it?  Perhaps add to gc_protected list as well as removing?
  */
 

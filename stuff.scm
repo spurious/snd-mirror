@@ -1,0 +1,579 @@
+;; some useful functions and macros
+
+;;; ----------------
+(define (first obj) (obj 0))
+(define (second obj) (obj 1))
+(define (third obj) (obj 2))
+(define (fourth obj) (obj 3))
+(define (fifth obj) (obj 4))
+(define (sixth obj) (obj 5))
+(define (seventh obj) (obj 6))
+(define (eighth obj) (obj 7))
+(define (ninth obj) (obj 8))
+(define (tenth obj) (obj 9))
+
+
+;;; ----------------
+(define setf
+  (let ((args (gensym))
+	(name (gensym)))
+    (symbol->value 
+     (apply define-bacro `((,name . ,args)        
+			   (unless (null? ,args)
+			     (apply set! (car ,args) (cadr ,args) ())
+			     (apply setf (cddr ,args))))))))
+
+(define-macro* (incf sym (inc 1))
+  `(set! ,sym (+ ,sym ,inc)))
+
+(define-macro* (decf sym (dec 1))
+  `(set! ,sym (- ,sym ,dec)))
+
+(define-macro (shiftf . places)
+  (let ((tmp (gensym)))
+    `(let ((,tmp ,(car places)))
+       ,@(map (lambda (a b)
+		`(set! ,a ,b))
+	      places
+	      (cdr places))
+       ,tmp)))
+
+(define-macro (rotatef . places)
+  (let ((tmp (gensym))
+	(last (car (list-tail places (- (length places) 1)))))
+    `(let ((,tmp ,(car places)))
+       ,@(map (lambda (a b)
+		`(set! ,a ,b))
+	      places
+	      (cdr places))
+       (set! ,last ,tmp))))
+
+(define-macro (progv vars vals . body)
+  `(apply (apply lambda ,vars ',body) ,vals))
+
+(define-macro (symbol-set! var val) ; like CL's set
+  `(apply set! ,var ',val ()))
+
+(define-bacro (value->symbol val)
+  `(call-with-exit
+    (lambda (return)
+      (do ((e (current-environment) (outer-environment e))) ()
+	(for-each 
+	 (lambda (slot)
+	   (if (equal? ,val (cdr slot))
+	       (return (car slot))))
+	 e)
+	(if (eq? e (global-environment))
+	    (return #f))))))
+
+(define-macro (enum . args)
+  (let ((name (gensym)))
+    `(for-each (let ((ctr -1))
+		 (symbol->value
+		  (define-macro (,name a)
+		    (set! ctr (+ ctr 1)) 
+		    `(apply define ',a ,ctr ()))))
+	       ',args)))
+
+(define (1- x) (- x 1))
+(define (1+ x) (+ x 1))
+
+
+
+;;; ----------------
+(define (empty? obj) 
+  (catch 'wrong-type-arg
+    (lambda ()
+      (= (length obj) 0))
+    (lambda args #f)))
+
+(define applicable? arity)
+
+(define (indexable? obj)
+  (catch 'wrong-type-arg
+    (lambda ()
+      (or (obj 0) #t)) ; (obj 0) might return #f which means #t in this context
+    (lambda args #f)))
+
+(define (sequence? obj)
+  (or (hash-table? obj)
+      (environment? obj)
+      (indexable? obj)))
+
+
+
+;;; ---------------- 
+(define (hash-table->alist table)
+  (map values table))
+
+(define (merge-hash-tables . tables)
+  (apply hash-table 
+    (apply append 
+      (map hash-table->alist tables))))
+
+
+
+;;; ----------------
+(define* (make-circular-list n init)
+  (let ((l (make-list n init)))
+    (set-cdr! (list-tail l (- n 1)) l)))
+
+(define (copy-tree lis)
+  (if (pair? lis)
+      (cons (copy-tree (car lis))
+	    (copy-tree (cdr lis)))
+      lis))
+
+
+
+
+;;; ----------------
+;; "ff" used if function is applied to corresponding elements of all sequences in parallel, (ff . args)
+;; "f" used if it is applied to each element of each sequence, one at a time, (f arg)
+
+(define (find-if ff . sequences)
+  (call-with-exit
+   (lambda (return) 
+     (apply for-each (lambda args 
+		       (if (apply ff args) 
+			   (apply return args)))
+	    sequences)
+     #f)))
+
+(define (position-if ff . sequences)
+  (let ((position 0))
+    (call-with-exit
+     (lambda (return) 
+       (apply for-each (lambda args 
+			 (if (apply ff args) 
+			     (return position))
+			 (set! position (+ position 1)))
+	    sequences)
+       #f))))
+
+(define (count-if ff . sequences)
+  (let ((count 0))
+    (apply for-each (lambda args 
+		      (if (apply ff args)
+			  (set! count (+ count 1))))
+	   sequences)
+    count))
+
+(define (every? ff . sequences)
+  (call-with-exit
+   (lambda (return)
+     (apply for-each (lambda args
+		       (if (not (apply ff args))
+			   (return #f)))
+	    sequences)
+     #t)))
+
+(define (any? ff . sequences)
+  (call-with-exit
+   (lambda (return)
+     (apply for-each (lambda args
+		       (let ((val (apply ff args)))
+			 (if val (return val))))
+	    sequences)
+     #f)))
+
+(define (concatenate type . sequences)
+  (apply type (apply append (map (lambda (sequence) (map values sequence)) sequences))))
+
+(define (intersection type . sequences)
+  (apply type (let ((lst ()))
+		(for-each (lambda (obj)
+			    (if (every? (lambda (seq) 
+					  (member obj seq)) 
+					(cdr sequences))
+				(set! lst (cons obj lst))))
+			  (car sequences))
+		(reverse lst))))
+
+(define (union type . sequences)
+  (apply type (let ((lst ()))
+		(for-each (lambda (obj)
+			    (if (not (member obj lst))
+				(set! lst (cons obj lst))))
+			  (apply append (map (lambda (sequence) (map values sequence)) sequences)))
+		(reverse lst))))
+
+(define (collect-if type f . sequences)
+  (apply type (let ((collection ()))
+		(for-each (lambda (arg)
+			    (if (f arg)
+				(set! collection (cons arg collection))))
+			  (apply append (map (lambda (sequence) (map values sequence)) sequences)))
+		(reverse collection))))
+
+;; if ff here, assume ff returns the thing to be collected?
+
+(define (remove-if type f . sequences)
+  (apply collect-if type (lambda (obj) (not (f obj))) sequences))
+
+
+
+;;; ----------------
+(define (2^n? x) 
+  (and (not (zero? x)) 
+       (zero? (logand x (- x 1)))))
+
+(define (2^n-1? x) 
+  (zero? (logand x (+ x 1))))
+
+(define (lognand . ints) 
+  (lognot (apply logand ints)))
+
+(define (lognor . ints) 
+  (lognot (apply logior ints)))
+
+(define (logeqv . ints) 
+  (lognot (apply logxor ints)))
+
+(define (log-none-of . ints)  ; bits on in none of ints
+  (lognot (apply logior ints)))
+
+(define (log-all-of . ints)   ; bits on in all of ints
+  (apply logand ints))
+
+(define (log-any-of . ints)   ; bits on in at least 1 of ints
+  (apply logior ints))
+
+(define (log-n-of n . ints)   ; return the bits on in exactly n of ints
+  (let ((len (length ints)))
+    (cond ((= len 0) (if (= n 0) -1 0))
+	  ((= n 0)   (lognot (apply logior ints)))
+	  ((= n len) (apply logand ints))
+	  ((> n len) 0)
+	  (#t 
+	   (do ((1s 0)
+		(prev ints)
+		(i 0 (+ i 1)))
+	       ((= i len) 1s)
+	     (let ((cur (ints i)))
+	       (if (= i 0)
+		   (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) (cdr ints)))))
+		   (let* ((mid (cdr prev))
+			  (nxt (if (= i (- len 1)) () (cdr mid))))
+		     (set! (cdr prev) nxt)  
+		     (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) ints))))
+		     (set! (cdr prev) mid)
+		     (set! prev mid)))))))))
+
+(define (byte siz pos) ;; -> cache size, position and mask.
+  (list siz pos (ash (- (ash 1 siz) 1) pos)))
+
+(define byte-size car)
+(define byte-position cadr)
+(define byte-mask caddr)
+
+(define (ldb bytespec integer)
+  (ash (logand integer (byte-mask bytespec))
+       (- (byte-position bytespec))))
+
+(define (dpb integer bytespec into)
+  (logior (ash (logand integer (- (ash 1 (byte-size bytespec)) 1)) (byte-position bytespec))
+	  (logand into (lognot (byte-mask bytespec)))))
+
+
+;;; ----------------
+(define-macro (c?r path)
+  (define (X-marks-the-spot accessor tree)
+    (if (pair? tree)
+	(or (X-marks-the-spot (cons 'car accessor) (car tree))
+	    (X-marks-the-spot (cons 'cdr accessor) (cdr tree)))
+	(if (eq? tree 'X) accessor #f)))
+  (let ((body 'lst))
+    (for-each
+     (lambda (f)
+       (set! body (list f body)))
+     (reverse (X-marks-the-spot () path)))
+    `(make-procedure-with-setter
+      (lambda (lst) 
+	,body)
+      (lambda (lst val)
+	(set! ,body val)))))
+
+
+
+;;; ----------------
+(define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
+  ;; a bacro is needed so that the calling environment is accessible via outer-environment
+  ;;   we could also use the begin/let shuffle, but it's too embarrassing
+  `(let ((outer-env (outer-environment (current-environment)))
+	 (new-methods ())
+	 (new-slots ()))
+
+    (for-each
+     (lambda (class)
+       ;; each class is a set of nested environments, the innermost (first in the list)
+       ;;   holds the local slots which are copied each time an instance is created,
+       ;;   the next holds the class slots (global to all instances, not copied);
+       ;;   these hold the class name and other such info.  The remaining environments
+       ;;   hold the methods, with the localmost method first.  So in this loop, we
+       ;;   are gathering the local slots and all the methods of the inherited
+       ;;   classes, and will splice them together below as a new class.
+
+       (set! new-slots (append (environment->list class) new-slots))
+       (do ((e (outer-environment (outer-environment class)) (outer-environment e)))
+	   ((or (not (environment? e))
+		(eq? e (global-environment))))
+	 (set! new-methods (append (environment->list e) new-methods))))
+     ,inherited-classes)
+
+     (let ((remove-duplicates 
+	    (lambda (lst)         ; if multiple local slots with same name, take the localmost
+	      (letrec ((rem-dup
+			(lambda (lst nlst)
+			  (cond ((null? lst) nlst)
+				((assq (caar lst) nlst) (rem-dup (cdr lst) nlst))
+				(else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
+		(reverse (rem-dup lst ()))))))
+       (set! new-slots 
+	     (remove-duplicates
+	      (append (map (lambda (slot)
+			     (if (pair? slot)
+				 (cons (car slot) (cadr slot))
+				 (cons slot #f)))
+			   ,slots)                    ; the incoming new slots, #f is the default value
+		      new-slots))))                   ; the inherited slots
+
+    (set! new-methods 
+	  (append (map (lambda (method)
+			 (if (pair? method)
+			     (cons (car method) (cadr method))
+			     (cons method #f)))
+		       ,methods)                     ; the incoming new methods
+
+		  ;; add an object->string method for this class (this is already a generic function).
+		  (list (cons 'object->string (lambda* (obj (use-write #t))
+				       (if (eq? use-write :readable)    ; write readably
+					   (format #f "(make-~A~{ :~A ~W~^~})" 
+						   ',class-name 
+						   (map (lambda (slot)
+							  (values (car slot) (cdr slot)))
+							obj))
+				           (format #f "#<~A: ~{~A~^ ~}>" 
+					           ',class-name
+					           (map (lambda (slot)
+						          (list (car slot) (cdr slot)))
+						        obj))))))
+		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
+
+    (let ((new-class (open-environment
+                       (apply augment-environment           ; the local slots
+		         (augment-environment               ; the global slots
+		           (apply environment               ; the methods
+			     (reverse new-methods))
+		           (cons 'class-name ',class-name)  ; class-name slot
+			   (cons 'inherited ,inherited-classes)
+			   (cons 'inheritors ()))           ; classes that inherit from this class
+		         new-slots))))
+
+      (augment-environment! outer-env                  
+        (cons ',class-name new-class)                       ; define the class as class-name in the calling environment
+
+	;; define class-name? type check
+	(cons (string->symbol (string-append (symbol->string ',class-name) "?"))
+	      (lambda (obj)
+		(and (environment? obj)
+		     (eq? (obj 'class-name) ',class-name)))))
+
+      (augment-environment! outer-env
+        ;; define the make-instance function for this class.  
+        ;;   Each slot is a keyword argument to the make function.
+        (cons (string->symbol (string-append "make-" (symbol->string ',class-name)))
+	      (apply lambda* (map (lambda (slot)
+				    (if (pair? slot)
+					(list (car slot) (cdr slot))
+					(list slot #f)))
+				  new-slots)
+		     `((let ((new-obj (copy ,,class-name)))
+			 ,@(map (lambda (slot)
+				  `(set! (new-obj ',(car slot)) ,(car slot)))
+				new-slots)
+			 new-obj)))))
+
+      ;; save inheritance info for this class for subsequent define-method
+      (letrec ((add-inheritor (lambda (class)
+				(for-each add-inheritor (class 'inherited))
+				(if (not (memq new-class (class 'inheritors)))
+				    (set! (class 'inheritors) (cons new-class (class 'inheritors)))))))
+	(for-each add-inheritor ,inherited-classes))
+    
+      ',class-name)))
+
+(define-macro (define-generic name)    ; (define (genfun any) ((any 'genfun) any))
+  `(define ,name 
+     (lambda args 
+       (let ((gf ((car args) ',name))) ; get local definition
+	 (if (not (eq? gf ,name))      ; avoid infinite recursion
+             (apply gf args)
+	     (error "attempt to call generic function wrapper recursively"))))))
+
+(define-macro (define-slot-accessor name slot)
+  `(define ,name (make-procedure-with-setter 
+                   (lambda (obj) (obj ',slot)) 
+		   (lambda (obj val) (set! (obj ',slot) val)))))
+
+(define-bacro (define-method name-and-args . body)
+  `(let* ((outer-env (outer-environment (current-environment)))
+	  (method-name (car ',name-and-args))
+	  (method-args (cdr ',name-and-args))
+	  (object (caar method-args))
+	  (class (symbol->value (cadar method-args)))
+	  (old-method (class method-name))
+	  (method (apply lambda* method-args ',body)))
+
+     ;; define the method as a normal-looking function
+     ;;   s7test.scm has define-method-with-next-method that implements call-next-method here
+     ;;   it also has make-instance 
+     (augment-environment! outer-env
+       (cons method-name 
+	     (apply lambda* method-args 
+		    `(((,object ',method-name)
+		       ,@(map (lambda (arg)
+				(if (pair? arg) (car arg) arg))
+			      method-args))))))
+     
+     ;; add the method to the class
+     (augment-environment! (outer-environment (outer-environment class))
+       (cons method-name method))
+
+     ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
+     (for-each
+      (lambda (inheritor) 
+	(if (not (eq? (inheritor method-name) #<undefined>)) ; defined? goes to the global env
+	    (if (eq? (inheritor method-name) old-method)
+		(set! (inheritor method-name) method))
+	    (augment-environment! (outer-environment (outer-environment inheritor))
+   	      (cons method-name method))))
+      (class 'inheritors))
+
+     method-name))
+
+(define (all-methods obj method)
+  ;; for arbitrary method combinations: this returns a list of all the methods of a given name
+  ;;   in obj's class and the classes it inherits from (see example below)
+  (let* ((base-method (obj method))
+	 (methods (if (procedure? base-method) (list base-method) ())))
+    (for-each 
+     (lambda (ancestor)
+       (let ((next-method (ancestor method)))
+	 (if (and (procedure? next-method)
+		  (not (memq next-method methods)))
+	     (set! methods (cons next-method methods)))))
+     (obj 'inherited))
+    (reverse methods)))
+
+
+
+;;; ----------------
+(define (curry function . args)
+  (if (null? args)
+      function
+      (lambda more-args
+        (if (null? more-args)
+            (apply function args)
+            (function (apply values args) (apply values more-args))))))
+
+(define-macro (and-let* vars . body)
+  `(let ()                                ; bind vars, if any is #f stop, else evaluate body with those bindings
+     (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars) 
+          (begin ,@body))))
+
+(define-macro (while test . body)         ; while loop with predefined break and continue
+  `(call-with-exit
+    (lambda (break) 
+      (letrec ((continue (lambda () 
+			   (if (let () ,test)
+			       (begin 
+				 (let () ,@body)
+				 (continue))
+			       (break)))))
+	(continue)))))
+
+(define (for-each-subset func args)
+  ;; form each subset of args, apply func to the subsets that fit its arity
+  (define (subset source dest len)
+    (if (null? source)
+        (if (aritable? func len)             ; does this subset fit?
+	    (apply func dest))
+	(begin
+	  (subset (cdr source) (cons (car source) dest) (+ len 1))
+	  (subset (cdr source) dest len))))
+  (subset args () 0))
+
+(define (for-each-permutation func vals)
+  ;; apply func to every permutation of vals: 
+  ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
+  (define (pinner cur nvals len)
+    (if (= len 1)
+        (apply func (cons (car nvals) cur))
+        (do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
+            ((= i len))
+          (let ((start nvals))
+            (set! nvals (cdr nvals))
+            (let ((cur1 (cons (car nvals) cur)))  ; add (car nvals) to our arg list
+              (set! (cdr start) (cdr nvals))      ; splice out that element and 
+              (pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down, "wheels within wheels"
+              (set! (cdr start) nvals))))))       ; restore original circle
+  (let ((len (length vals)))
+    (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
+    (pinner () vals len)
+    (set-cdr! (list-tail vals (- len 1)) ())))    ; restore its original shape
+
+
+
+
+
+
+;;; defstruct?
+;;; push pop circular? -- how can these be done generically?
+;;; various common-list srfi-1 ops
+;;; tests in s7test via local load
+;;; typeq (or (every? vector?)...) or find for 1st, then restrict across rest returning tightest predicate or #f
+;;;   can be done without cond I think -- any across type-checks, every across rest, type-check+restrict if possible
+;;;   (car (member obj (list integer? ...) (lambda (a b) (b a)))) -> type of 1st [also c_type checkers] ending with constant?
+;;;   for c_objs, assumption is type(obj) == tag in C -- how to access in Scheme? similarly for the make-* funcs
+;;;   typeq in s7 could return a function for this case
+;;;   object-environment might have fields such as 'predicate 'make 'ref 'set etc
+;;;
+
+#|
+(let ((st (symbol-table)))
+     (for-each
+       (lambda (lst)
+         (for-each
+           (lambda (sym)
+             (let ((name (symbol->string sym)))
+               (if (char=? #\? (name (- (length name) 1)))
+                 (format *stderr* "~A " sym))))
+           lst))
+       st))
+
+(define (->predicate obj)
+  (car (or (member obj (list integer? rational? real? complex? number?
+			     bytevector? string?
+			     float-vector? vector?
+			     null? pair? list? 
+			     keyword? gensym? symbol?
+			     char? string?
+			     hash-table? hash-table-iterator? 
+			     continuation? 
+			     input-port? output-port? 
+			     environment? 			     
+			     procedure-with-setter? procedure? macro?
+			     boolean?
+			     random-state? 
+			     eof-object? 
+			     c-pointer? 
+			     (lambda (obj) (eq? obj #<unspecified>))
+			     (lambda (obj) (eq? obj #<undefined>))
+			     ;; need c-object? or similar and a way to get the predicate for it
+			     )
+		   (lambda (obj pred)
+		     (pred obj)))
+	   ...)))
+
+|#
