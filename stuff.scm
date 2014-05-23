@@ -1,4 +1,4 @@
-;; some useful functions and macros
+;; some useful (or at least amusing) functions and macros
 
 ;;; ----------------
 (define (first obj) (obj 0))
@@ -11,6 +11,31 @@
 (define (eighth obj) (obj 7))
 (define (ninth obj) (obj 8))
 (define (tenth obj) (obj 9))
+
+(define* (iota n (start 0))
+  (let ((lst (make-list n)))
+    (do ((p lst (cdr p))
+	 (i start (+ i 1)))
+	((null? p) lst)
+      (set! (car p) i))))
+
+(define* (make-circular-list n init)
+  (let ((l (make-list n init)))
+    (set-cdr! (list-tail l (- n 1)) l)))
+
+(define (copy-tree lis)
+  (if (pair? lis)
+      (cons (copy-tree (car lis))
+	    (copy-tree (cdr lis)))
+      lis))
+
+(define (tree-member sym tree)
+  (and (pair? tree)
+       (or (eq? (car tree) sym)
+	   (and (pair? (car tree))
+		(tree-member sym (car tree)))
+	   (tree-member sym (cdr tree)))))
+
 
 
 ;;; ----------------
@@ -67,38 +92,10 @@
 	    (return #f))))))
 
 (define-macro (enum . args)
-  (let ((name (gensym)))
-    `(for-each (let ((ctr -1))
-		 (symbol->value
-		  (define-macro (,name a)
-		    (set! ctr (+ ctr 1)) 
-		    `(apply define ',a ,ctr ()))))
-	       ',args)))
+  `(for-each define ',args (iota (length ',args))))
 
 (define (1- x) (- x 1))
 (define (1+ x) (+ x 1))
-
-
-
-;;; ----------------
-(define (empty? obj) 
-  (catch 'wrong-type-arg
-    (lambda ()
-      (= (length obj) 0))
-    (lambda args #f)))
-
-(define applicable? arity)
-
-(define (indexable? obj)
-  (catch 'wrong-type-arg
-    (lambda ()
-      (or (obj 0) #t)) ; (obj 0) might return #f which means #t in this context
-    (lambda args #f)))
-
-(define (sequence? obj)
-  (or (hash-table? obj)
-      (environment? obj)
-      (indexable? obj)))
 
 
 
@@ -110,20 +107,6 @@
   (apply hash-table 
     (apply append 
       (map hash-table->alist tables))))
-
-
-
-;;; ----------------
-(define* (make-circular-list n init)
-  (let ((l (make-list n init)))
-    (set-cdr! (list-tail l (- n 1)) l)))
-
-(define (copy-tree lis)
-  (if (pair? lis)
-      (cons (copy-tree (car lis))
-	    (copy-tree (cdr lis)))
-      lis))
-
 
 
 
@@ -214,6 +197,55 @@
 
 
 ;;; ----------------
+(define (empty? obj) 
+  (catch 'wrong-type-arg
+    (lambda ()
+      (= (length obj) 0))
+    (lambda args #f)))
+
+(define applicable? arity)
+
+(define (indexable? obj)
+  (catch 'wrong-type-arg
+    (lambda ()
+      (or (obj 0) #t)) ; (obj 0) might return #f which means #t in this context
+    (lambda args #f)))
+
+(define (sequence? obj)
+  (or (hash-table? obj)
+      (environment? obj)
+      (indexable? obj)))
+
+(define ->predicate
+  (let ((predicates (list integer? rational? real? complex? number?
+			  bytevector? string?
+			  float-vector? vector?
+			  null? pair? list? 
+			  keyword? gensym? symbol?
+			  char? string?
+			  hash-table? hash-table-iterator? 
+			  continuation? 
+			  input-port? output-port? 
+			  environment? 			     
+			  procedure-with-setter? procedure? macro?
+			  boolean?
+			  random-state? 
+			  eof-object? 
+			  c-pointer? 
+			  (lambda (obj) (eq? obj #<unspecified>))
+			  (lambda (obj) (eq? obj #<undefined>))
+			  ;; need c-object? or similar and a way to get the predicate for it
+			  )))
+    (lambda (obj)
+      (find-if (lambda (pred) (pred obj)) predicates))))
+
+(define (typeq? . objs)
+  (or (null? objs)
+      (every? (->predicate (car objs)) (cdr objs))))
+
+
+
+;;; ----------------
 (define (2^n? x) 
   (and (not (zero? x)) 
        (zero? (logand x (- x 1)))))
@@ -227,7 +259,7 @@
 (define (lognor . ints) 
   (lognot (apply logior ints)))
 
-(define (logeqv . ints) 
+(define (logeqv . ints) ; eqv only if 2 args
   (lognot (apply logxor ints)))
 
 (define (log-none-of . ints)  ; bits on in none of ints
@@ -493,6 +525,37 @@
 			       (break)))))
 	(continue)))))
 
+(define-macro (do* spec end . body)
+  `(let* (,@(map (lambda (var) (list (car var) (cadr var))) spec))
+     (do () ,end
+       ,@body
+       ,@(map (lambda (var) (if (pair? (cddr var))
+				`(set! ,(car var) ,(caddr var))
+				(values)))
+	      spec))))
+
+(define-macro (dolist spec . body) ; spec = (var list . return)
+  `(begin
+     (for-each (lambda (,(car spec)) ,@body) ,(cadr spec))
+     ,@(cddr spec)))
+
+(define-macro (string-case selector . clauses)
+  `(case (symbol ,selector)             ; case with string constant keys
+     ,@(map (lambda (clause)
+	      (if (pair? (car clause))
+		  `(,(map symbol (car clause)) ,@(cdr clause))
+		  clause))
+	    clauses)))
+
+(define-macro (eval-case key . clauses) ; case with evaluated key-lists
+  `(cond ,@(map (lambda (lst)
+		  (if (pair? (car lst))
+		      (cons `(member ,key (list ,@(car lst)))
+			    (cdr lst))
+		      lst))
+		clauses)))
+
+
 (define (for-each-subset func args)
   ;; form each subset of args, apply func to the subsets that fit its arity
   (define (subset source dest len)
@@ -528,17 +591,10 @@
 
 
 
-;;; defstruct?
+;;; defstruct? sequence-member and copy
 ;;; push pop circular? -- how can these be done generically?
 ;;; various common-list srfi-1 ops
 ;;; tests in s7test via local load
-;;; typeq (or (every? vector?)...) or find for 1st, then restrict across rest returning tightest predicate or #f
-;;;   can be done without cond I think -- any across type-checks, every across rest, type-check+restrict if possible
-;;;   (car (member obj (list integer? ...) (lambda (a b) (b a)))) -> type of 1st [also c_type checkers] ending with constant?
-;;;   for c_objs, assumption is type(obj) == tag in C -- how to access in Scheme? similarly for the make-* funcs
-;;;   typeq in s7 could return a function for this case
-;;;   object-environment might have fields such as 'predicate 'make 'ref 'set etc
-;;;
 
 #|
 (let ((st (symbol-table)))
@@ -551,29 +607,4 @@
                  (format *stderr* "~A " sym))))
            lst))
        st))
-
-(define (->predicate obj)
-  (car (or (member obj (list integer? rational? real? complex? number?
-			     bytevector? string?
-			     float-vector? vector?
-			     null? pair? list? 
-			     keyword? gensym? symbol?
-			     char? string?
-			     hash-table? hash-table-iterator? 
-			     continuation? 
-			     input-port? output-port? 
-			     environment? 			     
-			     procedure-with-setter? procedure? macro?
-			     boolean?
-			     random-state? 
-			     eof-object? 
-			     c-pointer? 
-			     (lambda (obj) (eq? obj #<unspecified>))
-			     (lambda (obj) (eq? obj #<undefined>))
-			     ;; need c-object? or similar and a way to get the predicate for it
-			     )
-		   (lambda (obj pred)
-		     (pred obj)))
-	   ...)))
-
 |#

@@ -6185,25 +6185,20 @@ glambda
 3
 </pre>
 
-<p>Or another enum (for-each with a macro as its first argument might be called "transparent-for-each"):
+<p>Or another enum ("transparent-for-each"):
 </p>
 
 <pre class="indented">
 &gt; (define-macro (enum . args)
-    `(for-each (let ((ctr -1))
-                 (symbol-&gt;value
-                   (define-macro (m a)
-                     (set! ctr (+ ctr 1)) 
-                     `(apply define ',a ,ctr ()))))
-               ',args))
+    `(for-each define ',args (iota (length ',args))))
 enum
-&gt; (enum a b c)  ; (for-each define '(a b c) (iota 3))
+&gt; (enum a b c) 
 #&lt;unspecified&gt;
 &gt; b
 1
 </pre>
 
-<p>Similarly, catch, dynamic-wind, and many of the other functions that take function
+<p>catch, dynamic-wind, and many of the other functions that take function
 arguments in standard Scheme, accept macros in s7.
 </p>
 
