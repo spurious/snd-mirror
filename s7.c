@@ -1763,6 +1763,11 @@ static void init_types(void)
 /* to block random load-time reads from screwing up the load process, this bit marks a port used by the loader
  */
 
+#define T_CYCLIC                      (1 << (TYPE_BITS + 11))
+#define set_cyclic(p)                 typeflag(p) |= T_CYCLIC
+#define is_cyclic(p)                  ((typeflag(p) & T_CYCLIC) != 0)
+#define clear_cyclic(p)               typeflag(p) &= (~T_CYCLIC)
+
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
 #define set_overlay(p)                typeflag(p) |= T_OVERLAY
 #define is_overlaid(p)                ((typeflag(p) & T_OVERLAY) != 0)
@@ -1783,7 +1788,6 @@ static void init_types(void)
 #define is_not_checked(p)             ((typeflag(p) & T_CHECKED) == 0)
 #define clear_checked(p)              typeflag(p) &= (~T_CHECKED)
 
-/* bit 11 is unused I think */
 
 #define T_UNSAFE                      (1 << (TYPE_BITS + 15))
 #define set_unsafe(p)                 typeflag(p) |= T_UNSAFE
@@ -1885,7 +1889,7 @@ static void init_types(void)
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS  (1 << (TYPE_BITS + 11))
+#define UNUSED_BITS 0 /* (1 << (TYPE_BITS + 11)) */
 
 #if 0
 /* to find who is stomping on our symbols:
@@ -4296,6 +4300,11 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
    * 
    *     put that in a file, load it (to force removal), than call bad-idea a few times.
    * so... if *safety* is not 0, remove-from-heap is disabled.
+   *
+   * why not fix the "bad-idea" problem? We can't leave these in the heap if we remove the
+   *   surrounding code because nothing else points to them.  If we make a special GC protected
+   *   list of them, we end up with a bazillion: in snd-test there are 12667 list constants
+   *   and 19 vector constants in the removed code!
    */
 
   /* (catch #t (lambda () (set! *safety* "hi")) (lambda args args)) */
@@ -23980,7 +23989,9 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
   ci_objs = ci->objs;
   ci_refs = ci->refs;
 
-  /* find if any were referenced twice */
+  /* find if any were referenced twice (once for just being there, so twice=shared)
+   *   we know there's at least one such reference because has_hits is true.
+   */
   for (i = 0, refs = 0; i < ci->top; i++)
     if (ci_refs[i] > 0)
       {
@@ -23997,6 +24008,100 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
       }
   ci->top = refs;
   return(ci);
+}
+
+
+static s7_pointer g_cyclic_sequences(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cyclic_sequences "(cyclic-sequences obj) returns a list of elements that are cyclic."
+  shared_info *ci = NULL;
+  s7_pointer obj;
+  
+  obj = car(args);
+  if ((has_structure(obj)) &&
+      (obj != sc->global_env))
+    {
+      ci = make_shared_info(sc, obj, false); /* false=don't stop at print length (vectors etc) */
+      if (ci)
+	{
+	  int i, num;
+	  s7_pointer *objects;
+	  s7_pointer **obj_cis;
+	  s7_pointer lst;
+	  int *obj_top;
+
+	  /* save list of current shared pointers, set cyclic bit in each
+	   *   for each one, get its shared pointers
+	   *     if none, clear cyclic bit, and look back clearing if possible
+	   *   if all cleared, no cycles, else return list of those with cyclic bit still set
+	   *
+	   * ci->objs are the objects, ci->top is end pointer of list
+	   */
+	  
+	  num = ci->top;
+	  objects = (s7_pointer *)malloc(num * sizeof(s7_pointer));
+	  memcpy((void *)objects, (void *)(ci->objs), num * sizeof(s7_pointer));
+	  obj_cis = (s7_pointer **)calloc(num, sizeof(s7_pointer *));
+	  obj_top = (int *)calloc(num, sizeof(int));
+
+	  for (i = 0; i < num; i++)
+	    set_cyclic(objects[i]);
+
+	  for (i = 0; i < num; i++)
+	    {
+	      ci = make_shared_info(sc, objects[i], false);
+	      if (!ci) 
+		clear_cyclic(objects[i]);
+	      else 
+		{
+		  obj_top[i] = ci->top;
+		  obj_cis[i] = (s7_pointer *)malloc(obj_top[i] * sizeof(s7_pointer));
+		  memcpy((void *)(obj_cis[i]), (void *)(ci->objs), obj_top[i] * sizeof(s7_pointer));
+		}
+	    }
+
+	  while (true)
+	    {
+	      bool cleared_one = false;
+	      for (i = 0; i < num; i++)
+		{
+		  if (is_cyclic(objects[i]))
+		    {
+		      int k;
+		      bool empty = true;
+		      for (k = 0; k < obj_top[i]; k++)
+			if (is_cyclic(obj_cis[i][k]))
+			  {
+			    empty = false;
+			    break;
+			  }
+		      if (empty)
+			{
+			  cleared_one = true;
+			  clear_cyclic(objects[i]);
+			}
+		    }
+		}
+	      if (!cleared_one) break;
+	    }
+	  
+	  for (i =0; i < num; i++)
+	    if (obj_cis[i]) free(obj_cis[i]);
+	  free(obj_cis);
+	  free(obj_top);
+
+	  sc->w = sc->NIL;
+	  for (i = 0; i < num; i++)
+	    if (is_cyclic(objects[i]))
+	      sc->w = cons(sc, objects[i], sc->w);
+	  lst = sc->w;
+	  sc->w = sc->NIL;
+	  free(objects);
+
+	  return(lst);
+	}
+    }
+  return(sc->NIL);
 }
 
 
@@ -69133,6 +69238,8 @@ s7_scheme *s7_init(void)
   sc->IS_HASH_TABLE_ITERATOR =   s7_define_safe_function(sc, "hash-table-iterator?",     g_is_hash_table_iterator,   1, 0, false, H_is_hash_table_iterator);
   s7_set_object_print_readably(sc->ht_iter_tag, write_ht_iter_readably);
 
+  s7_define_function(sc, "cyclic-sequences", g_cyclic_sequences, 1, 0, false, H_cyclic_sequences);
+
 
   sc->CALL_CC =               s7_define_function(sc,      "call/cc",                 g_call_cc,                1, 0, false, H_call_cc);
                               s7_define_function(sc,      "call-with-current-continuation", g_call_cc,         1, 0, false, H_call_cc);
@@ -69805,6 +69912,7 @@ int main(int argc, char **argv)
 
 /* for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map), but return type?
  * click to inspect/see source etc in listener?
+ *  need some way to inspect a c_object: type etc, and ideally get the associated ? and make funcs.
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * clm opt accepts (env env)
@@ -69851,8 +69959,7 @@ int main(int argc, char **argv)
  *   (is this slot GC-protected?)
  *
  * maybe add assertions under DEBUGGING flag, especially for stack overflow
- * why not fix the "bad-idea" problem -- don't remove sequence constants from the heap --
- *   at least get timing info. quoted-list/constant-vector -- can any others be problematic?
- *   But how to mark it?  Perhaps add to gc_protected list as well as removing?
+ *
+ * doc cyclic-sequences 
  */
 

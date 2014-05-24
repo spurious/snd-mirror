@@ -23,6 +23,10 @@
   (let ((l (make-list n init)))
     (set-cdr! (list-tail l (- n 1)) l)))
 
+(define (cyclic? obj) 
+  (not (null? (cyclic-sequences obj))))
+
+
 (define (copy-tree lis)
   (if (pair? lis)
       (cons (copy-tree (car lis))
@@ -35,6 +39,12 @@
 	   (and (pair? (car tree))
 		(tree-member sym (car tree)))
 	   (tree-member sym (cdr tree)))))
+
+
+; full-copy|fill!|reverse|find(returning path)|count|replace|etc (tree-any...)
+;   kar/kdr/empty?/sequence? for arbitrary sequence traversal
+
+
 
 
 
@@ -111,66 +121,90 @@
 
 
 ;;; ----------------
-;; "ff" used if function is applied to corresponding elements of all sequences in parallel, (ff . args)
-;; "f" used if it is applied to each element of each sequence, one at a time, (f arg)
-
-(define (find-if ff . sequences)
+(define (find-if f sequence)
   (call-with-exit
-   (lambda (return) 
-     (apply for-each (lambda args 
-		       (if (apply ff args) 
-			   (apply return args)))
-	    sequences)
+   (lambda (return)
+     (for-each (lambda (arg)
+		 (if (f arg)
+		     (return arg)))
+	       sequence)
      #f)))
 
-(define (position-if ff . sequences)
+(define (position-if f sequence)
   (let ((position 0))
     (call-with-exit
      (lambda (return) 
-       (apply for-each (lambda args 
-			 (if (apply ff args) 
-			     (return position))
-			 (set! position (+ position 1)))
-	    sequences)
+       (for-each (lambda (arg)
+		   (if (f arg)
+		       (return position))
+		   (set! position (+ position 1)))
+		 sequence)
        #f))))
 
-(define (count-if ff . sequences)
+(define (count-if f sequence)
   (let ((count 0))
-    (apply for-each (lambda args 
-		      (if (apply ff args)
-			  (set! count (+ count 1))))
-	   sequences)
+    (for-each (lambda (arg)
+		(if (f arg)
+		    (set! count (+ count 1))))
+	      sequence)
     count))
 
-(define (every? ff . sequences)
+(define (every? f sequence)
   (call-with-exit
    (lambda (return)
-     (apply for-each (lambda args
-		       (if (not (apply ff args))
-			   (return #f)))
-	    sequences)
+     (for-each (lambda (arg)
+		 (if (not (f arg))
+		     (return #f)))
+	       sequence)
      #t)))
 
-(define (any? ff . sequences)
+(define (any? f sequence)
   (call-with-exit
    (lambda (return)
-     (apply for-each (lambda args
-		       (let ((val (apply ff args)))
-			 (if val (return val))))
-	    sequences)
+     (for-each (lambda (arg)
+		 (let ((val (f arg)))
+		   (if val (return val))))
+	       sequence)
      #f)))
 
+(define (collect-if type f sequence)
+  (apply type (let ((collection ()))
+		(for-each (lambda (arg)
+			    (if (f arg)
+				(set! collection (cons arg collection))))
+			  sequence)
+		(reverse collection))))
+
+(define (remove-if type f sequence)
+  (collect-if type (lambda (obj) (not (f obj))) sequence))
+
+(define (nonce type sequence) ; return the objects that only occur once
+  (collect-if type (lambda (obj) (= (count-if (lambda (x) (equal? x obj)) sequence) 1)) sequence))
+
+(define (member? obj sequence)
+  (find-if (lambda (x) (equal? x obj)) sequence))
+
+
+
+;;; ----------------
 (define (concatenate type . sequences)
-  (apply type (apply append (map (lambda (sequence) (map values sequence)) sequences))))
+  (apply type 
+    (apply append 
+      (map (lambda (sequence) 
+	     (map values sequence)) 
+	   sequences))))
 
 (define (intersection type . sequences)
   (apply type (let ((lst ()))
-		(for-each (lambda (obj)
-			    (if (every? (lambda (seq) 
-					  (member obj seq)) 
-					(cdr sequences))
-				(set! lst (cons obj lst))))
-			  (car sequences))
+		(if (pair? sequences)
+		    (for-each (lambda (obj)
+				(if (every? (lambda (seq) 
+					      (find-if (lambda (x) 
+							 (equal? x obj)) 
+						       seq)) 
+					    (cdr sequences))
+				    (set! lst (cons obj lst))))
+			      (car sequences)))
 		(reverse lst))))
 
 (define (union type . sequences)
@@ -180,19 +214,6 @@
 				(set! lst (cons obj lst))))
 			  (apply append (map (lambda (sequence) (map values sequence)) sequences)))
 		(reverse lst))))
-
-(define (collect-if type f . sequences)
-  (apply type (let ((collection ()))
-		(for-each (lambda (arg)
-			    (if (f arg)
-				(set! collection (cons arg collection))))
-			  (apply append (map (lambda (sequence) (map values sequence)) sequences)))
-		(reverse collection))))
-
-;; if ff here, assume ff returns the thing to be collected?
-
-(define (remove-if type f . sequences)
-  (apply collect-if type (lambda (obj) (not (f obj))) sequences))
 
 
 
@@ -501,14 +522,6 @@
 
 
 ;;; ----------------
-(define (curry function . args)
-  (if (null? args)
-      function
-      (lambda more-args
-        (if (null? more-args)
-            (apply function args)
-            (function (apply values args) (apply values more-args))))))
-
 (define-macro (and-let* vars . body)
   `(let ()                                ; bind vars, if any is #f stop, else evaluate body with those bindings
      (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars) 
@@ -526,18 +539,15 @@
 	(continue)))))
 
 (define-macro (do* spec end . body)
-  `(let* (,@(map (lambda (var) (list (car var) (cadr var))) spec))
+  `(let* (,@(map (lambda (var) 
+		   (list (car var) (cadr var))) 
+		 spec))
      (do () ,end
        ,@body
        ,@(map (lambda (var) (if (pair? (cddr var))
 				`(set! ,(car var) ,(caddr var))
 				(values)))
 	      spec))))
-
-(define-macro (dolist spec . body) ; spec = (var list . return)
-  `(begin
-     (for-each (lambda (,(car spec)) ,@body) ,(cadr spec))
-     ,@(cddr spec)))
 
 (define-macro (string-case selector . clauses)
   `(case (symbol ,selector)             ; case with string constant keys
@@ -556,6 +566,8 @@
 		clauses)))
 
 
+
+;;; ----------------
 (define (for-each-subset func args)
   ;; form each subset of args, apply func to the subsets that fit its arity
   (define (subset source dest len)
@@ -586,25 +598,3 @@
     (pinner () vals len)
     (set-cdr! (list-tail vals (- len 1)) ())))    ; restore its original shape
 
-
-
-
-
-
-;;; defstruct? sequence-member and copy
-;;; push pop circular? -- how can these be done generically?
-;;; various common-list srfi-1 ops
-;;; tests in s7test via local load
-
-#|
-(let ((st (symbol-table)))
-     (for-each
-       (lambda (lst)
-         (for-each
-           (lambda (sym)
-             (let ((name (symbol->string sym)))
-               (if (char=? #\? (name (- (length name) 1)))
-                 (format *stderr* "~A " sym))))
-           lst))
-       st))
-|#

@@ -5599,7 +5599,7 @@ loading code that calls gcd.
 <li>remove `#(...) support (quasiquoted vector constants)
 <li>remove call-with-values and its friends
 <li>remove char-ready?
-<li>change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
+<li>change eof-object? to eof? or just omit it (you can use eq? #&lt;eof&gt;)
 <li>remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
 <li>change make-rectangular to make-complex, and remove make-polar.
 <li>remove unquote (the name, not the functionality).
@@ -5615,16 +5615,16 @@ loading code that calls gcd.
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
 <li>change file-exists? to file? (or omit it and assume use of libc.scm &mdash; why reinvent the wheel?).
-<li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy).
-<li>add typeq? and perhaps make null? generic.
+<li>add typeq? and perhaps make null? generic (see stuff.scm).
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>let =&gt; be followed by any number of functions, and change its name to "forth".
+<li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove the with-* IO functions (e.g. with-input-from-string), keeping the call-with-* versions (call-with-input-string).
 <li>remove everything associated with current-input|output|error-port. 
 </ul>
 
-<p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
+<p>There are several less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
 *most-positive-fixnum* (*fixmost*?) so that all the built-in variables and constants have the
 same kind of name (or +pi+ to show it is a constant?).  
 All the environment function names are bad &mdash; "environment" by itself
@@ -6156,6 +6156,20 @@ These symbols are not just an optimization of string comparison:
   (+ zero one two))
 </pre>
 
+<p>But there's a prettier way to implement enum ("transparent-for-each"):
+</p>
+
+<pre class="indented">
+&gt; (define-macro (enum . args)
+    `(for-each define ',args (iota (length ',args))))
+enum
+&gt; (enum a b c) 
+#&lt;unspecified&gt;
+&gt; b
+1
+</pre>
+
+
 <p>If you apply define or define-macro, the returned value is a symbol, so to apply the
 new function or macro, you need to use either eval or symbol-&gt;value:
 </p>
@@ -6183,19 +6197,6 @@ glambda
 &gt; (let ((gf (glambda (a b))))  ; gf is now ready for any body that involves arguments 'a and 'b
     ((gf (+ a b)) 1 2))        ; apply (lambda (a b) (+ a b)) to '(1 2)
 3
-</pre>
-
-<p>Or another enum ("transparent-for-each"):
-</p>
-
-<pre class="indented">
-&gt; (define-macro (enum . args)
-    `(for-each define ',args (iota (length ',args))))
-enum
-&gt; (enum a b c) 
-#&lt;unspecified&gt;
-&gt; b
-1
 </pre>
 
 <p>catch, dynamic-wind, and many of the other functions that take function
@@ -9243,9 +9244,10 @@ end
 <div class="topheader" id="s7examples">s7 examples</div>
 
 <p>The s7 tarball includes several scheme files including s7test.scm,
-lint.scm, and cload.scm.  s7test.scm is a regression test for s7, lint.scm
-is the s7 equivalent of the ancient C program named lint, and cload.scm
-is a wrapper for the FFI stuff described above.
+lint.scm, cload.scm, and stuff.scm.  s7test.scm is a regression test for s7, lint.scm
+is the s7 equivalent of the ancient C program named lint, cload.scm
+is a wrapper for the FFI stuff described above, and stuff.scm is just some
+arbitrary stuff.
 </p>
 
 
