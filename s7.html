@@ -2452,6 +2452,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 <li>(<em class=def id="hashtableset">hash-table-set!</em> ht key value)
 <li>(<em class=def id="hashtablep">hash-table?</em> obj)
 <li>(<em class=def id="hashtablesize">hash-table-size</em> ht)
+<li>(<em class=def id="hashtableentries">hash-table-entries</em> ht)
 <li>(<em class=def id="hashtableiterator">make-hash-table-iterator</em> ht)
 <li>(<em class=def id="hashtableiteratorp">hash-table-iterator?</em> obj)
 </ul>
@@ -5983,7 +5984,13 @@ definite length, but:
 		   (cons lst sofar))))
   (map f (linearize arg)))
 </pre>
-<br>
+
+
+<p>
+<em class=def id="cyclicsequences">cyclic-sequences</em> returns a list of the cyclic
+sequences in its argument, or nil.
+<code>(define (cyclic? obj) (not (null? (cyclic-sequences obj))))</code>.
+</p>
 
 <p>Here's an amusing use of circular lists:
 </p>

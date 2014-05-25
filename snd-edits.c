@@ -8423,7 +8423,7 @@ history position to read (defaults to current position). snd can be a filename, 
   if (Xen_is_string(snd))
     {
       snd_info *loc_sp = NULL;
-      int chan = 0;
+      int chan = 0, chans;
       const char *filename;
       mus_float_t *fvals;
       vct *v;
@@ -8433,26 +8433,25 @@ history position to read (defaults to current position). snd can be a filename, 
       if (chan < 0) return(snd_no_such_channel_error(S_samples, snd, chn_n));	
 
       filename = Xen_string_to_C_string(snd);
+      if (!mus_file_probe(filename))
+	return(snd_no_such_file_error(S_make_sampler, snd));
+
       if (Xen_is_integer(samps))
 	len = Xen_integer_to_C_int(samps);
       else len = mus_sound_framples(filename);
       if (len <= 0) return(Xen_false);
 
-      if (mus_file_probe(filename))
-	loc_sp = make_sound_readable(filename, false);
-      else return(snd_no_such_file_error(S_make_sampler, snd));
+      chans = mus_sound_chans(filename);
+      if (chan >= chans)
+	return(snd_no_such_channel_error(S_samples, snd, chn_n));	
 
-      if (chan >= loc_sp->nchans)
-	{
-	  completely_free_snd_info(loc_sp);
-	  return(snd_no_such_channel_error(S_samples, snd, chn_n));	
-	}
+      loc_sp = make_sound_readable(filename, false);
       cp = loc_sp->chans[chan];
-      
       v = mus_vct_make(len);
       fvals = mus_vct_data(v);
       mus_file_to_array(filename, chan, beg, len, fvals);
 
+      completely_free_snd_info(loc_sp);
       return(vct_to_xen(v));
     }
 

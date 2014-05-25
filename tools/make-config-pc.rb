@@ -19,6 +19,7 @@ end
 dldflags = CONFIG["DLDFLAGS"] 
 librubyarg = CONFIG["LIBRUBYARG"] 
 libs = CONFIG["LIBS"] 
+rubylibdir = CONFIG["libdir"] 
 
 print <<OUT 
 Name: Ruby 
@@ -26,6 +27,7 @@ Description: Object Oriented Script Language
 Version: #{version} 
 URL: http://www.ruby-lang.org 
 Cflags: -I#{rubyhdrdir}/#{arch} -I#{rubyhdrdir} 
-Libs: #{dldflags} #{librubyarg} #{libs} 
+# Libs: #{dldflags} #{librubyarg} #{libs} 
+Libs: -L#{rubylibdir} #{dldflags} #{librubyarg} #{libs} 
 Requires: 
 OUT

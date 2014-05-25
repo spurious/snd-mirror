@@ -25,6 +25,8 @@ The configure script has a bunch of arguments:
                          If ruby.pc (or equivalent) is missing, tools/make-config-pc.rb can make one:
                          make-config-pc.rb > ruby.pc
                          mv ruby.pc /usr/local/lib/pkgconfig/ruby.pc
+                         You may also have to set PKG_CONFIG_PATH:
+			 PKG_CONFIG_PATH=.:/opt/X11/lib/pkgconfig/ ./configure --with-gtk --with-ruby --with-portaudio 
   
      --with-forth      use Forth (Mike Scholz's FTH) as the extension language.
   

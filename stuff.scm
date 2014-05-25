@@ -13,6 +13,9 @@
 (define (tenth obj) (obj 9))
 
 (define* (iota n (start 0))
+  (if (or (not (integer? n))
+	  (< n 0))
+      (error 'wrong-type-arg "iota length should be a non-negative integer" n))
   (let ((lst (make-list n)))
     (do ((p lst (cdr p))
 	 (i start (+ i 1)))
@@ -24,7 +27,7 @@
     (set-cdr! (list-tail l (- n 1)) l)))
 
 (define (cyclic? obj) 
-  (not (null? (cyclic-sequences obj))))
+  (pair? (cyclic-sequences obj)))
 
 
 (define (copy-tree lis)
@@ -109,6 +112,26 @@
 
 
 
+;;; ----------------
+(define-macro (c?r path)
+  (define (X-marks-the-spot accessor tree)
+    (if (pair? tree)
+	(or (X-marks-the-spot (cons 'car accessor) (car tree))
+	    (X-marks-the-spot (cons 'cdr accessor) (cdr tree)))
+	(if (eq? tree 'X) accessor #f)))
+  (let ((body 'lst))
+    (for-each
+     (lambda (f)
+       (set! body (list f body)))
+     (reverse (X-marks-the-spot () path)))
+    `(make-procedure-with-setter
+      (lambda (lst) 
+	,body)
+      (lambda (lst val)
+	(set! ,body val)))))
+
+
+
 ;;; ---------------- 
 (define (hash-table->alist table)
   (map values table))
@@ -185,6 +208,29 @@
   (find-if (lambda (x) (equal? x obj)) sequence))
 
 
+(define (full-find-if f sequence)
+  (call-with-exit
+   (lambda (return)
+     (letrec ((full-find-if-1 
+	       (lambda (seq)
+		 (for-each (lambda (x)
+			     (if (f x)
+				 (return x)
+				 (if (sequence? x)
+				     (full-find-if-1 x))))
+			   seq))))
+       (full-find-if-1 sequence)))))
+
+(define (find-path-if f sequence)
+  ;; if (f element) return the accessor args for it, assuming implicit indexing (a c?r extension)
+  ;; (find-path-if (lambda (x) (= x 3)) '(1 (2 (3 4)))) -> '(1 1 0) so that (apply (list 1 (list 2 (list 3 4))) '(1 1 0)) -> 3
+
+  ;; hash-table: index is key, environment: symbol, else for-each ctr
+  ;; also the things passed are different: ht/env pass cons, rest pass obj 
+  ;; if we then recurse into the cons, we see only car, so need special dotted-list handling as well
+  #f)
+
+
 
 ;;; ----------------
 (define (concatenate type . sequences)
@@ -215,28 +261,49 @@
 			  (apply append (map (lambda (sequence) (map values sequence)) sequences)))
 		(reverse lst))))
 
+(define (asymmetric-difference type . sequences) ; complement
+  (if (and (pair? sequences)
+	   (pair? (cdr sequences)))
+      (let ((all (apply union list (cdr sequences))))
+	(collect-if type (lambda (obj) (not (member obj (car sequences))))))
+      (apply type ())))
+
+(define (symmetric-difference type . sequences)  ; xor
+  (let ((all (apply append (map (lambda (sequence) (map values sequence)) sequences))))
+    (collect-if type (lambda (obj) (odd? (count-if (lambda (x) (equal? x obj)) all))) all)))
+
+(define (power-set type . sequences) ; ignoring repeats (taken from stackoverflow)
+  (letrec ((pset (lambda (set)
+		   (if (null? set)
+		       '(()) 
+		       (let ((rest (pset (cdr set))))
+			 (append rest (map (lambda (subset) 
+					     (cons (car set) subset)) 
+					   rest)))))))
+    (apply type (pset (apply union list sequences)))))
+
 
 
 ;;; ----------------
 (define (empty? obj) 
-  (catch 'wrong-type-arg
+  (catch #t
     (lambda ()
-      (= (length obj) 0))
+      (if (hash-table? obj)
+	  (= (hash-table-entries obj) 0) ; is it too late to change length in this regard?
+	  (= (length obj) 0)))
     (lambda args #f)))
 
 (define applicable? arity)
 
-(define (indexable? obj)
-  (catch 'wrong-type-arg
-    (lambda ()
-      (or (obj 0) #t)) ; (obj 0) might return #f which means #t in this context
+(define (sequence? obj)
+  (catch #t
+    (lambda () (length obj))
     (lambda args #f)))
 
-(define (sequence? obj)
-  (or (hash-table? obj)
-      (environment? obj)
-      (indexable? obj)))
-
+(define (indexable? obj)
+  (and (sequence? obj)
+       (applicable? obj)))
+      
 (define ->predicate
   (let ((predicates (list integer? rational? real? complex? number?
 			  bytevector? string?
@@ -280,8 +347,10 @@
 (define (lognor . ints) 
   (lognot (apply logior ints)))
 
-(define (logeqv . ints) ; eqv only if 2 args
-  (lognot (apply logxor ints)))
+(define (logeqv . ints)
+  (if (odd? (length ints))
+      (lognot (apply logxor -1 ints))
+      (lognot (apply logxor ints))))
 
 (define (log-none-of . ints)  ; bits on in none of ints
   (lognot (apply logior ints)))
@@ -327,26 +396,6 @@
 (define (dpb integer bytespec into)
   (logior (ash (logand integer (- (ash 1 (byte-size bytespec)) 1)) (byte-position bytespec))
 	  (logand into (lognot (byte-mask bytespec)))))
-
-
-;;; ----------------
-(define-macro (c?r path)
-  (define (X-marks-the-spot accessor tree)
-    (if (pair? tree)
-	(or (X-marks-the-spot (cons 'car accessor) (car tree))
-	    (X-marks-the-spot (cons 'cdr accessor) (cdr tree)))
-	(if (eq? tree 'X) accessor #f)))
-  (let ((body 'lst))
-    (for-each
-     (lambda (f)
-       (set! body (list f body)))
-     (reverse (X-marks-the-spot () path)))
-    `(make-procedure-with-setter
-      (lambda (lst) 
-	,body)
-      (lambda (lst val)
-	(set! ,body val)))))
-
 
 
 ;;; ----------------

@@ -1675,9 +1675,13 @@ static void recolor_everything_1(widget_t w, gpointer color)
       (w != ss->listener_pane))
     {
 #if (!HAVE_GTK_3)
+      /* this is a gigantic memory leak */
+#if 0
       gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)color);
       if (GTK_IS_CONTAINER(w))
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
+#endif
+
 #else
       gtk_widget_override_background_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)color);
       if (GTK_IS_LABEL(w))

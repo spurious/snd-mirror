@@ -1303,7 +1303,7 @@ struct s7_scheme {
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
-  s7_pointer IS_HASH_TABLE, IS_HASH_TABLE_ITERATOR, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
+  s7_pointer IS_HASH_TABLE, IS_HASH_TABLE_ITERATOR, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, IS_LIST, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
   s7_pointer IS_MACRO, MAGNITUDE, MAKE_BYTEVECTOR, MAKE_FLOAT_VECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
@@ -22920,6 +22920,7 @@ defaults to the global environment.  To load into the current environment instea
 		  {
 		    typedef void *(*dl_func)(s7_scheme *sc);
 		    ((dl_func)init_func)(sc); 
+		    free(pwd_name);
 		    return(sc->T);
 		  }
 		else 
@@ -29418,7 +29419,7 @@ s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len, int dims, s7_Int *dim
 }
 
 
-s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, s7_Int *dim_info)
+s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, s7_Int *dim_info, bool free_data)
 {
   /* this wraps up a C-allocated/freed double array as an s7 vector.
    */
@@ -29431,8 +29432,8 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *da
   vector_setter(x) = float_vector_setter;
   vector_length(x) = len;
   if (dim_info)
-    vector_dimension_info(x) = make_vdims(sc, false, dims, dim_info);
-  else vector_dimension_info(x) = NULL;
+    vector_dimension_info(x) = make_vdims(sc, free_data, dims, dim_info);
+  else vector_dimension_info(x) = NULL;     /* data won't be freed */
   add_vector(sc, x);
 
   return(x);
@@ -31440,6 +31441,18 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sc->HASH_TABLE_SIZE, car(args), T_HASH_TABLE));
     }
   return(make_integer(sc, hash_table_length(car(args))));
+}
+
+
+static s7_pointer g_hash_table_entries(s7_scheme *sc, s7_pointer args)
+{
+  #define H_hash_table_entries "(hash-table-entries obj) returns the number of entries in the hash-table obj"
+  if (!is_hash_table(car(args)))
+    {
+      check_method(sc, car(args), sc->HASH_TABLE_ENTRIES, args);
+      return(simple_wrong_type_argument(sc, sc->HASH_TABLE_ENTRIES, car(args), T_HASH_TABLE));
+    }
+  return(make_integer(sc, hash_table_entries(car(args))));
 }
 
 
@@ -69230,6 +69243,7 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_REF =        s7_define_safe_function(sc, "hash-table-ref",          g_hash_table_ref,         2, 0, true,  H_hash_table_ref);
   sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
   sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
+  sc->HASH_TABLE_ENTRIES =    s7_define_safe_function(sc, "hash-table-entries",      g_hash_table_entries,     1, 0, false, H_hash_table_entries);
   
                               s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
@@ -69959,7 +69973,5 @@ int main(int argc, char **argv)
  *   (is this slot GC-protected?)
  *
  * maybe add assertions under DEBUGGING flag, especially for stack overflow
- *
- * doc cyclic-sequences 
  */
 
