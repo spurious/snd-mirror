@@ -946,7 +946,7 @@ the result in the calling environment.
 (define setf
   (let ((args (gensym))
         (name (gensym)))
-    (symbol->value 
+    (symbol-&gt;value 
      (apply <em class=red>define-bacro</em> `((,name . ,args)        
 			   (unless (null? ,args)
 			     (apply set! (car ,args) (cadr ,args) ())
@@ -5629,7 +5629,7 @@ loading code that calls gcd.
 *most-positive-fixnum* (*fixmost*?) so that all the built-in variables and constants have the
 same kind of name (or +pi+ to show it is a constant?).  
 All the environment function names are bad &mdash; "environment" by itself
-is annoying. 
+is annoying.  Perhaps object-&gt;string should be -&gt;string.
 get-output-string should be current-output-string. write-char behaves like display, not write.  symbol-access is not ideal.
 define-expansion should be named define-reader-macro.
 </p>
@@ -5989,7 +5989,7 @@ definite length, but:
 <p>
 <em class=def id="cyclicsequences">cyclic-sequences</em> returns a list of the cyclic
 sequences in its argument, or nil.
-<code>(define (cyclic? obj) (not (null? (cyclic-sequences obj))))</code>.
+<code>(define (cyclic? obj) (pair? (cyclic-sequences obj)))</code>.
 </p>
 
 <p>Here's an amusing use of circular lists:

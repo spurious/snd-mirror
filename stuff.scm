@@ -1,6 +1,28 @@
 ;; some useful (or at least amusing) functions and macros
 
 ;;; ----------------
+(define (empty? obj) 
+  (catch #t
+    (lambda ()
+      (if (hash-table? obj)
+	  (= (hash-table-entries obj) 0) ; length here is table size
+	  (= (length obj) 0)))
+    (lambda args #f)))
+
+(define applicable? arity)
+
+(define (sequence? obj)
+  (catch #t
+    (lambda () (length obj))
+    (lambda args #f)))
+
+(define (indexable? obj)
+  (and (sequence? obj)
+       (applicable? obj)))
+      
+
+
+;;; ----------------
 (define (first obj) (obj 0))
 (define (second obj) (obj 1))
 (define (third obj) (obj 2))
@@ -12,13 +34,13 @@
 (define (ninth obj) (obj 8))
 (define (tenth obj) (obj 9))
 
-(define* (iota n (start 0))
+(define* (iota n (start 0) (incr 1))
   (if (or (not (integer? n))
 	  (< n 0))
-      (error 'wrong-type-arg "iota length should be a non-negative integer" n))
+      (error 'wrong-type-arg "iota length ~A should be a non-negative integer" n))
   (let ((lst (make-list n)))
     (do ((p lst (cdr p))
-	 (i start (+ i 1)))
+	 (i start (+ i incr)))
 	((null? p) lst)
       (set! (car p) i))))
 
@@ -42,12 +64,6 @@
 	   (and (pair? (car tree))
 		(tree-member sym (car tree)))
 	   (tree-member sym (cdr tree)))))
-
-
-; full-copy|fill!|reverse|find(returning path)|count|replace|etc (tree-any...)
-;   kar/kdr/empty?/sequence? for arbitrary sequence traversal
-
-
 
 
 
@@ -112,6 +128,17 @@
 
 
 
+;;; ---------------- 
+(define (hash-table->alist table)
+  (map values table))
+
+(define (merge-hash-tables . tables)
+  (apply hash-table 
+    (apply append 
+      (map hash-table->alist tables))))
+
+
+
 ;;; ----------------
 (define-macro (c?r path)
   (define (X-marks-the-spot accessor tree)
@@ -132,17 +159,6 @@
 
 
 
-;;; ---------------- 
-(define (hash-table->alist table)
-  (map values table))
-
-(define (merge-hash-tables . tables)
-  (apply hash-table 
-    (apply append 
-      (map hash-table->alist tables))))
-
-
-
 ;;; ----------------
 (define (find-if f sequence)
   (call-with-exit
@@ -153,16 +169,25 @@
 	       sequence)
      #f)))
 
-(define (position-if f sequence)
-  (let ((position 0))
-    (call-with-exit
-     (lambda (return) 
-       (for-each (lambda (arg)
-		   (if (f arg)
-		       (return position))
-		   (set! position (+ position 1)))
-		 sequence)
-       #f))))
+(define (member? obj sequence)
+  (find-if (lambda (x) (equal? x obj)) sequence))
+
+(define (index-if f sequence)
+  (call-with-exit
+   (lambda (return) 
+     (if (or (hash-table? sequence)
+	     (environment? sequence))
+	 (for-each (lambda (arg)
+		     (if (f arg)
+			 (return (car arg))))
+		   sequence)
+	 (let ((position 0))
+	   (for-each (lambda (arg)
+		       (if (f arg)
+			   (return position))
+		       (set! position (+ position 1)))
+		     sequence)))
+     #f)))
 
 (define (count-if f sequence)
   (let ((count 0))
@@ -190,6 +215,7 @@
 	       sequence)
      #f)))
 
+
 (define (collect-if type f sequence)
   (apply type (let ((collection ()))
 		(for-each (lambda (arg)
@@ -204,9 +230,6 @@
 (define (nonce type sequence) ; return the objects that only occur once
   (collect-if type (lambda (obj) (= (count-if (lambda (x) (equal? x obj)) sequence) 1)) sequence))
 
-(define (member? obj sequence)
-  (find-if (lambda (x) (equal? x obj)) sequence))
-
 
 (define (full-find-if f sequence)
   (call-with-exit
@@ -219,16 +242,44 @@
 				 (if (sequence? x)
 				     (full-find-if-1 x))))
 			   seq))))
-       (full-find-if-1 sequence)))))
+       (full-find-if-1 sequence))
+     #f)))
 
-(define (find-path-if f sequence)
-  ;; if (f element) return the accessor args for it, assuming implicit indexing (a c?r extension)
-  ;; (find-path-if (lambda (x) (= x 3)) '(1 (2 (3 4)))) -> '(1 1 0) so that (apply (list 1 (list 2 (list 3 4))) '(1 1 0)) -> 3
+(define (full-index-if f sequence)
+  ;; (apply sequence (full-index-if f sequence)) -> something that satisfies f
+  (call-with-exit
+   (lambda (return)
+     (letrec ((full-index-if-1 
+	       (lambda (f seq path)
+		 (if (or (hash-table? seq)
+			 (environment? seq))
+		     (for-each (lambda (arg)
+				 (if (f arg)
+				     (return (reverse (cons (car arg) path)))
+				     (if (indexable? (cdr arg))
+					 (full-index-if-1 f (cdr arg) (cons (car arg) path)))))
+			       seq)
+		     (let ((position 0))
+		       (for-each (lambda (arg)
+				   (if (f arg)
+				       (return (reverse (cons position path)))
+				       (if (indexable? arg)
+					   (full-index-if-1 f arg (cons position path))))
+				   (set! position (+ position 1)))
+				 seq))))))
+       (full-index-if-1 f sequence ())
+       #f))))
 
-  ;; hash-table: index is key, environment: symbol, else for-each ctr
-  ;; also the things passed are different: ht/env pass cons, rest pass obj 
-  ;; if we then recurse into the cons, we see only car, so need special dotted-list handling as well
-  #f)
+;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) '(1 2 3)) -> '(2)
+;;; (full-index-if (lambda (x) (= (cdr x) 3)) (hash-table '(a . 1) '(b . 3))) -> '(b)
+;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) '(1 (2 3))) -> '(1 1)
+;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) '((1 (2 (3))))) -> '(0 1 1 0)
+;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) #((1 (2 #(3))))) -> '(0 1 1 0)
+;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) (hash-table '(a . 1) '(b . #(1 2 3)))) -> '(b 2)
+;;; (full-index-if (lambda (x) (and (integer? x) (= x 4))) (hash-table '(a . 1) '(b . #(1 2 3)))) -> #f
+
+
+; full-count|replace|etc (tree-any...)
 
 
 
@@ -261,18 +312,32 @@
 			  (apply append (map (lambda (sequence) (map values sequence)) sequences)))
 		(reverse lst))))
 
-(define (asymmetric-difference type . sequences) ; complement
+(define (asymmetric-difference type . sequences) ; complement, elements in B's not in A
   (if (and (pair? sequences)
 	   (pair? (cdr sequences)))
-      (let ((all (apply union list (cdr sequences))))
-	(collect-if type (lambda (obj) (not (member obj (car sequences))))))
+      (collect-if type (lambda (obj) 
+			 (not (member obj (car sequences))))
+		  (apply union list (cdr sequences)))
       (apply type ())))
 
-(define (symmetric-difference type . sequences)  ; xor
+(define (cl-set-difference type . sequences)     ; CL: elements in A not in B's
+  (if (and (pair? sequences)
+	   (pair? (cdr sequences)))
+      (let ((others (apply union list (cdr sequences))))
+	(collect-if type (lambda (obj) 
+			   (not (member obj others)))
+		    (car sequences)))
+      (apply type ())))
+  
+(define (symmetric-difference type . sequences)  ; xor, elements in an odd number of sequences (logxor A B...)
   (let ((all (apply append (map (lambda (sequence) (map values sequence)) sequences))))
-    (collect-if type (lambda (obj) (odd? (count-if (lambda (x) (equal? x obj)) all))) all)))
+    (collect-if type (lambda (obj) 
+		       (odd? (count-if (lambda (x) 
+					 (equal? x obj)) 
+				       all))) 
+		(apply union list sequences))))
 
-(define (power-set type . sequences) ; ignoring repeats (taken from stackoverflow)
+(define (power-set type . sequences) ; ignoring repeats
   (letrec ((pset (lambda (set)
 		   (if (null? set)
 		       '(()) 
@@ -285,25 +350,6 @@
 
 
 ;;; ----------------
-(define (empty? obj) 
-  (catch #t
-    (lambda ()
-      (if (hash-table? obj)
-	  (= (hash-table-entries obj) 0) ; is it too late to change length in this regard?
-	  (= (length obj) 0)))
-    (lambda args #f)))
-
-(define applicable? arity)
-
-(define (sequence? obj)
-  (catch #t
-    (lambda () (length obj))
-    (lambda args #f)))
-
-(define (indexable? obj)
-  (and (sequence? obj)
-       (applicable? obj)))
-      
 (define ->predicate
   (let ((predicates (list integer? rational? real? complex? number?
 			  bytevector? string?
@@ -330,6 +376,24 @@
 (define (typeq? . objs)
   (or (null? objs)
       (every? (->predicate (car objs)) (cdr objs))))
+
+(define-macro (typecase expr . clauses)      ; actually type=any boolean func
+  (let ((obj (gensym)))
+    `(let ((,obj ,expr))                     
+       (cond ,@(map (lambda (clause)         
+		      (if (memq (car clause) '(#t else))
+			  clause
+			  (if (= (length (car clause)) 1)
+			      `((,(caar clause) ,obj) ,@(cdr clause))
+			      `((or ,@(map (lambda (type)
+					     `(,type ,obj))
+					   (car clause)))
+				,@(cdr clause)))))
+		    clauses)))))
+
+;;; this is not ideal because the let blocks internal defines -- maybe (begin (define ,obj ,expr)...)?
+;;;   we need a semitransparent let -- block its own bindings but pass all others
+;;; perhaps wrap each ,@(cdr clause) in (with-environment e ...) where (let ((e (current-environment)) (,obj ,expr)) ...)
 
 
 
@@ -573,7 +637,7 @@
 ;;; ----------------
 (define-macro (and-let* vars . body)
   `(let ()                                ; bind vars, if any is #f stop, else evaluate body with those bindings
-     (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars) 
+     (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars)
           (begin ,@body))))
 
 (define-macro (while test . body)         ; while loop with predefined break and continue
@@ -646,4 +710,10 @@
     (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
     (pinner () vals len)
     (set-cdr! (list-tail vals (- len 1)) ())))    ; restore its original shape
+
+
+;;; ----------------
+
+
+     
 

@@ -508,6 +508,7 @@
 (load "lint.scm")
 (load "r7rs.scm")
 (load "cload.scm")
+(load "stuff.scm")
 
 
 (let ((names (make-hash-table)))
@@ -810,9 +811,19 @@
     (list 'implementation-version "r7rs.scm")
     (list 'box-type? "r7rs.scm")
     (list 'make-box-type "r7rs.scm")
+    (list 'define-library "r7rs.scm")
+    (list 'define-record-type "r7rs.scm")
     
+    (list 'c?r "stuff.scm")
+    (list 'do* "stuff.scm")
+    (list 'typecase "stuff.scm")
+    (list 'enum "stuff.scm")
+    (list 'while "stuff.scm")
+    (list 'define-class "stuff.scm")
+
     (list 'moog? "moog.scm")
     (list 'make-moog "moog.scm")
+
     ))
 
   ;; still missing (if not above):
@@ -847,7 +858,6 @@
     (list '*libc* "libc.scm")
     (list '*libgsl* "libgsl.scm")
     ))
-
 
   (apropos-1 (reverse (environment->list (global-environment))))
   
@@ -1648,7 +1658,5 @@
 
 (html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html" "sndscm.html" "fm.html" "s7.html" "index.html"))
 
-
 (s7-version)
 (exit)
-

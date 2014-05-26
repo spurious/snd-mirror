@@ -658,14 +658,14 @@ away in a macro:
   (let ((freq (hz-&gt;radians 440.0)))
     (let <em class=red>simp-loop</em> ((i 0) (x 0.0))
       (outa i (sin x)) 
-      (if (< i 44100)
+      (if (&lt; i 44100)
 	  (<em class=red>simp-loop</em> (+ i 1) (+ x freq))))))
 
 (define <em class=red>simp2</em>
   (let ((freq (hz-&gt;radians 440.0)))
     (lambda* ((i 0) (x 0.0))
       (outa i (sin x))
-      (if (< i 44100)
+      (if (&lt; i 44100)
 	  (<em class=red>simp2</em> (+ i 1) (+ x freq))))))
 </pre>
 
