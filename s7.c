@@ -38412,7 +38412,7 @@ static s7_pointer make_simple_counter(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc object . objects) applies proc to each element of the objects traversed in parallel. \
-Each object can be a list (the normal case), string, vector, hash-table, or any applicable object."
+Each object can be a list, string, vector, hash-table, or any other sequence."
 
   /* (for-each (lambda (n) (format #t "~A " n)) (vct 1.0 2.0 3.0)) */
   s7_Int len = 0; 
@@ -38519,10 +38519,10 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  if (nlen < 0)
 	    {
 	      if (!errstr2)
-		errstr2 = s7_make_permanent_string("a vector, list, string, hash-table, or applicable object");
+		errstr2 = s7_make_permanent_string("a vector, list, string, hash-table, or any other sequence");
 	      return(wrong_type_argument_n_with_type(sc, sc->FOR_EACH, position_of(x, args), car(x), errstr2));
 	    }
-	  if ((x == cdr(args)) || (nlen < len))
+	  if ((x == cdr(args)) || (nlen < len)) /* i.e. either the first arg or one with lesser length than previous */
 	    len = nlen;
 	  if (len == 0) 
 	    {
@@ -38576,22 +38576,16 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   else /* len == 0 and  we checked for non-applicable first arg above */
     return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
 
-  if (len == S7_LONG_MAX)
+  if ((len == S7_LONG_MAX) &&
+      (sc->safety != 0))
     {
       /* if at this point len == S7_LONG_MAX, then all args are circular lists, assuming that
        *    we're not looking at some enormous vector or string -- perhaps -1 would be a
        *    better marker.  This actually might not be an error (the for-each function could
-       *    have call-with-exit), but it seems better to complain about it.
-       * 
-       * this means that a make-type generator's length is tricky:
-       *    (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) (- (expt 2 31) 1)))))) (sum 0))
-       *      (call-with-exit (lambda (go) (for-each (lambda (a) (set! sum (+ sum a)) (if (> sum 100) (go sum))) ctr))))
-       * returns an error about circular lists, but should return 105.
-       *
-       * I think I'll at least check that the args were in fact lists.
+       *    have call-with-exit).
        */
       for (x = cdr(args); (is_pair(x)) && (is_pair(car(x))); x = cdr(x)) {}
-      if (!is_pair(x))
+      if (!is_pair(x)) /* i.e. all args are lists */
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~S"), cdr(args))));
     }
@@ -38922,7 +38916,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   if (len == 0)   /* (map 1 "hi" ()) */
     return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
 
-  if (len == S7_LONG_MAX)
+  if ((len == S7_LONG_MAX) &&
+      (sc->safety != 0))
     {
       /* all args are circular lists, or perhaps an odd scheme type (see comment under for-each) */
       for (x = cdr(args); (is_pair(x)) && (is_pair(car(x))); x = cdr(x)) {}
@@ -69956,11 +69951,14 @@ int main(int argc, char **argv)
  *
  * ideally the function doc string could be completely removed before optimization etc
  * should (equal? "" #u8()) be #t?
- * should map/for-each include final cdr of dotted list?
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * test remove-if with env/hash?
- * deal with cycles in the stuff funcs via cyclic-sequences
- * might want gensym for key/selector in string|eval-case
+ * cyclic-seq in rest of full-*
+ *   also full-walk-if -- pass objs and path indices
+ * ga-search using objs
+ * doc strings for stuff.scm
+ *  elambda*: use bacro* to get the defaults, then call lambda with just arg name
+ *   i.e. lambda* where all defaults are evaluated in call-time env
  *
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t

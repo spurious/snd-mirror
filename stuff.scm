@@ -1,5 +1,7 @@
 ;; some useful (or at least amusing) functions and macros
 
+(provide 'stuff.scm)
+
 ;;; ----------------
 (define (empty? obj) 
   (catch #t
@@ -47,6 +49,25 @@
 (define* (make-circular-list n init)
   (let ((l (make-list n init)))
     (set-cdr! (list-tail l (- n 1)) l)))
+
+(define (circular-list . objs)
+  (let ((lst (copy objs)))
+    (set-cdr! (list-tail lst (- (length lst) 1)) lst)))
+
+(define (circular-list? obj)
+  (catch #t
+    (lambda () (infinite? (length obj)))
+    (lambda args #f)))
+
+(define (linearize lst) ; turn circular list into normal list
+  (define (lin-1 lst result sofar)
+    (if (or (not (pair? lst))
+	    (memq lst sofar))
+	(reverse! result)
+	(linearize (cdr lst) 
+		   (cons (car lst) result) 
+		   (cons lst sofar))))
+  (lin-1 lst () ()))
 
 (define (cyclic? obj) 
   (pair? (cyclic-sequences obj)))
@@ -129,6 +150,16 @@
 (define (1- x) (- x 1))
 (define (1+ x) (+ x 1))
 
+(define-macro (destructuring-bind lst expr . body) ; if only there were some use for this!
+  `(let ,(letrec ((flatten (lambda (lst1 lst2 args)
+			     (cond ((null? lst1) args)
+				   ((not (pair? lst1)) 
+				    (cons (list lst1 lst2) args))
+				   (#t (flatten (car lst1) (car lst2) 
+					 (flatten (cdr lst1) (cdr lst2) args)))))))
+	   (flatten lst (eval expr) ()))
+     ,@body))
+
 (define-macro (elambda args . body)
   `(symbol->value 
     (define-bacro (,(gensym) ,@args)
@@ -158,9 +189,6 @@
 			`((cons '*env* (outer-environment (current-environment))))))
 	  (let ((,result (begin ,@body)))
 	    `(quote ,,result)))))))
-
-;; elambda*: use bacro* to get the defaults, then call lambda with just arg name
-;;   i.e. lambda* where all defaults are evaluated in call-time env
 |#
 
 
@@ -311,6 +339,41 @@
 				 seq))))))
        (full-index-if-1 f sequence ())
        #f))))
+
+(define (safe-find-if f sequence) ; can handle any kind of cycle
+  (let ((unseen-cycles (cyclic-sequences sequence))
+	(cycles-traversed ()))
+    (call-with-exit
+     (lambda (return)
+      (letrec* ((check (lambda (obj)
+			 (if (f obj)
+			     (return obj))
+			 (if (sequence? obj)
+			     (safe-find-if-1 obj))))
+		(safe-find-if-1 
+		 (lambda (seq)
+		   (when (not (memq seq cycles-traversed))
+		     (if (memq seq unseen-cycles)
+			 (begin
+			   (set! cycles-traversed (cons seq cycles-traversed))
+			   (set! unseen-cycles (remove-if list (lambda (x) (eq? x seq)) unseen-cycles))
+			   (if (pair? seq)
+			       (begin
+				 (check (car seq))
+				 (do ((p (cdr seq) (cdr p)))
+				     ((or (not (pair? p))
+					  (memq p cycles-traversed)
+					  (memq p unseen-cycles)))
+				   (check (car p))))
+			       (for-each check seq)))
+			 (for-each check seq))))))
+	 (safe-find-if-1 sequence))
+       #f))))
+
+(define (safe-count-if f sequence)
+  (let ((count 0))
+    (safe-find-if (lambda (x) (if (f x) (set! count (+ count 1))) #f) sequence)
+    count))
 
 
 
@@ -703,12 +766,15 @@
 	    clauses)))
 
 (define-macro (eval-case key . clauses) ; case with evaluated key-lists
-  `(cond ,@(map (lambda (lst)
-		  (if (pair? (car lst))
-		      (cons `(member ,key (list ,@(car lst)))
-			    (cdr lst))
-		      lst))
-		clauses)))
+  (let ((select (gensym)))
+    `(begin 
+       (define ,select ,key)
+       (cond ,@(map (lambda (lst)
+		      (if (pair? (car lst))
+			  (cons `(member ,select (list ,@(car lst)))
+				(cdr lst))
+			  lst))
+		    clauses)))))
 
 
 
@@ -764,9 +830,3 @@
 	      (do ((i 2 (+ i 1)))
 		  ((> i mn) cnk)
 		(set! cnk (/ (* cnk (+ mx i)) i))))))))
-
-
-;;; cyclic-seq in full-*
-;;;   also full-walk -- pass objs and path indices
-;;; ga-search using objs
-;;; doc strings

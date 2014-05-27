@@ -5992,22 +5992,7 @@ then it is part of the language, and it doesn't look like the rest of the langua
 <p>Length returns +inf.0 if passed a circular list, and returns a negative
 number if passed a dotted list.  In the dotted case, the absolute value of the length is the list length not counting
 the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
-Currently map and for-each accept circular list arguments only if some other argument has a
-definite length, but:
 </p>
-
-<pre class="indented">
-(define (map-once f arg)
-  (define* (linearize lst (result ()) (sofar ()))
-    (if (or (not (pair? lst))
-            (memq lst sofar))
-        (reverse! result)
-        (linearize (cdr lst) 
-		   (cons (car lst) result) 
-		   (cons lst sofar))))
-  (map f (linearize arg)))
-</pre>
-
 
 <p>
 <em class=def id="cyclicsequences">cyclic-sequences</em> returns a list of the cyclic
