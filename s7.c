@@ -5672,6 +5672,10 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
   return(new_e);
 }
 
+/* augment-environment keeps the env-chain intact, but environment (with the same args) does not.
+ *   (see below -- arg1 is global-env)
+ */
+
 
 /* currently (eval 'a (augment-environment () '(a . 1) '(a . 2))) -> 2,
  *   but should it be an error?
@@ -69926,7 +69930,6 @@ int main(int argc, char **argv)
 
 /* for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map), but return type?
  * click to inspect/see source etc in listener?
- *  need some way to inspect a c_object: type etc, and ideally get the associated ? and make funcs.
  *
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * clm opt accepts (env env)
@@ -69953,6 +69956,11 @@ int main(int argc, char **argv)
  *
  * ideally the function doc string could be completely removed before optimization etc
  * should (equal? "" #u8()) be #t?
+ * should map/for-each include final cdr of dotted list?
+ * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
+ * test remove-if with env/hash?
+ * deal with cycles in the stuff funcs via cyclic-sequences
+ * might want gensym for key/selector in string|eval-case
  *
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t

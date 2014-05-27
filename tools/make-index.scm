@@ -820,6 +820,7 @@
     (list 'enum "stuff.scm")
     (list 'while "stuff.scm")
     (list 'define-class "stuff.scm")
+    (list 'elambda "stuff.scm")
 
     (list 'moog? "moog.scm")
     (list 'make-moog "moog.scm")

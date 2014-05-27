@@ -191,7 +191,7 @@ indented and on a sort of brownish background.
 </div>
 
 <ul>
-  <li><a href="#multiprecision">multiprecision arithmetic</a>
+  <li><a href="#multiprecision">arbitrary precision arithmetic</a>
   <li><a href="#math">math functions</a>
   <li><a href="#define*">define*, named let*</a>
   <li><a href="#macros">define-macro</a>
@@ -1068,7 +1068,7 @@ set
 </pre>
 
 <p>To avoid the subsequent evaluation (to treat the macro as a, gasp!, f*xpr),
-either return a constant, quote the result, or in the worst case, <code>(apply quote ...)</code>.
+either return a constant or quote the result.
 </p>
 
 <pre class="indented">
@@ -5423,6 +5423,27 @@ Leaving aside this special case, so to speak,
 dynamic binding does what you'd expect, even in the context of call/cc.  See s7test.scm for
 the MIT-Scheme test of that interaction.
 </p>
+
+<p>There is another way to get the call-time value:
+</p>
+<pre class="indented">
+(define-macro (elambda args . body)
+  `(symbol-&gt;value 
+    (define-bacro (,(gensym) ,@args)
+      `((lambda* ,(append ',args `((*env* (current-environment)))) 
+          ,'(begin ,@body)) 
+        ,,@args))))
+
+(define efunc (elambda (x) (+ (*env* 'y) x))) ; add x to the run-time value of y
+(let ((y 3)) (efunc 1)) ; returns 4
+</pre>
+
+<p>elambda does not suffer from the symbol-&gt;dynamic-value defects mentioned above, but
+it's probably slow.  We have to wrap the function in a bacro because lambda*'s argument default
+values are evaluated in the definition environment, but we want the run-time environment.
+</p>
+
+
 </div>
 
 
@@ -5623,6 +5644,7 @@ loading code that calls gcd.
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove the with-* IO functions (e.g. with-input-from-string), keeping the call-with-* versions (call-with-input-string).
 <li>remove everything associated with current-input|output|error-port. 
+<li>replace the #n# notation with one that distinguishes between shared and cyclic structures.
 </ul>
 
 <p>There are several less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
@@ -5762,7 +5784,8 @@ closed-over thing is a constant:
 (1 32 3)
 </pre>
 
-<p>And it's possible to reach into a constant list via list-set! (or set-car! of course):
+<p>
+And it's possible to reach into a constant list via list-set! (or set-car! of course):
 </p>
 
 <pre class="indented">
@@ -6480,7 +6503,7 @@ One (inconvenient) way to do this is to set the emacs variable scheme-program-na
 the name of the exectuable created above ("doc7"), then call the emacs function run-scheme:
 M-x eval-expression in emacs, followed by (setq scheme-program-name "doc7"), then
 M-x run-scheme, and you're talking to s7 in emacs.  Of course, this connection can be
-customized indefinitely.  See, for example, snd-inf.el in the Snd package.
+customized indefinitely.  See, for example, inf-snd.el in the Snd package.
 </p>
 
 <p>To read stdin while working in a GUI-based program is trickier.  In glib/gtk, you can use

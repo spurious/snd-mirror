@@ -65,6 +65,9 @@
 		(tree-member sym (car tree)))
 	   (tree-member sym (cdr tree)))))
 
+(define (adjoin obj lst)
+  (if (member obj lst) lst (cons obj lst)))
+
 
 
 ;;; ----------------
@@ -125,6 +128,40 @@
 
 (define (1- x) (- x 1))
 (define (1+ x) (+ x 1))
+
+(define-macro (elambda args . body)
+  `(symbol->value 
+    (define-bacro (,(gensym) ,@args)
+      `((lambda* ,(append ',args `((*env* (current-environment))))
+	  ,'(begin ,@body)) 
+	,,@args))))
+
+#|
+;; the same:
+(define-macro (elambda args . body)
+  (let ((e (gensym)))
+    `(symbol->value 
+      (define-bacro* (,(gensym) ,@args (,e (current-environment)))
+	`((lambda ,(append ',args '(*env*)) ,'(begin ,@body)) ,,@args ,,e)))))
+
+;; slightly different (worse -- recursion is tricky):
+(define-macro (elambda args . body)
+  (let ((name (gensym))
+	(result (gensym)))
+    `(symbol->value 
+      (define-bacro (,name ,@args)
+	(with-environment 
+	    (augment-environment (procedure-environment ,name)
+	      ,@(append (map (lambda (x) 
+			       `(cons ',x (eval ,x)))
+			     args)
+			`((cons '*env* (outer-environment (current-environment))))))
+	  (let ((,result (begin ,@body)))
+	    `(quote ,,result)))))))
+
+;; elambda*: use bacro* to get the defaults, then call lambda with just arg name
+;;   i.e. lambda* where all defaults are evaluated in call-time env
+|#
 
 
 
@@ -245,6 +282,11 @@
        (full-find-if-1 sequence))
      #f)))
 
+(define (full-count-if f sequence)
+  (let ((count 0))
+    (full-find-if (lambda (x) (if (f x) (set! count (+ count 1))) #f) sequence)
+    count))
+
 (define (full-index-if f sequence)
   ;; (apply sequence (full-index-if f sequence)) -> something that satisfies f
   (call-with-exit
@@ -270,16 +312,6 @@
        (full-index-if-1 f sequence ())
        #f))))
 
-;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) '(1 2 3)) -> '(2)
-;;; (full-index-if (lambda (x) (= (cdr x) 3)) (hash-table '(a . 1) '(b . 3))) -> '(b)
-;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) '(1 (2 3))) -> '(1 1)
-;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) '((1 (2 (3))))) -> '(0 1 1 0)
-;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) #((1 (2 #(3))))) -> '(0 1 1 0)
-;;; (full-index-if (lambda (x) (and (integer? x) (= x 3))) (hash-table '(a . 1) '(b . #(1 2 3)))) -> '(b 2)
-;;; (full-index-if (lambda (x) (and (integer? x) (= x 4))) (hash-table '(a . 1) '(b . #(1 2 3)))) -> #f
-
-
-; full-count|replace|etc (tree-any...)
 
 
 
@@ -367,19 +399,22 @@
 			  eof-object? 
 			  c-pointer? 
 			  (lambda (obj) (eq? obj #<unspecified>))
-			  (lambda (obj) (eq? obj #<undefined>))
-			  ;; need c-object? or similar and a way to get the predicate for it
-			  )))
+			  (lambda (obj) (eq? obj #<undefined>)))))
     (lambda (obj)
       (find-if (lambda (pred) (pred obj)) predicates))))
+
+(define (add-predicate p)                    ; add a predicate to the predicates list in the ->predicate closure
+  (let ((e (procedure-environment ->predicate)))
+    (set! (e 'predicates) (cons p (e 'predicates)))))
 
 (define (typeq? . objs)
   (or (null? objs)
       (every? (->predicate (car objs)) (cdr objs))))
 
-(define-macro (typecase expr . clauses)      ; actually type=any boolean func
+(define-macro (typecase expr . clauses) ; actually type=any boolean func
   (let ((obj (gensym)))
-    `(let ((,obj ,expr))                     
+    `(begin (define ,obj ,expr)         ; normally this would be (let ((,obj ,expr)) ...)
+					;   but use begin so that internal defines are not blocked	    
        (cond ,@(map (lambda (clause)         
 		      (if (memq (car clause) '(#t else))
 			  clause
@@ -390,10 +425,6 @@
 					   (car clause)))
 				,@(cdr clause)))))
 		    clauses)))))
-
-;;; this is not ideal because the let blocks internal defines -- maybe (begin (define ,obj ,expr)...)?
-;;;   we need a semitransparent let -- block its own bindings but pass all others
-;;; perhaps wrap each ,@(cdr clause) in (with-environment e ...) where (let ((e (current-environment)) (,obj ,expr)) ...)
 
 
 
@@ -469,24 +500,24 @@
   `(let ((outer-env (outer-environment (current-environment)))
 	 (new-methods ())
 	 (new-slots ()))
-
-    (for-each
-     (lambda (class)
-       ;; each class is a set of nested environments, the innermost (first in the list)
-       ;;   holds the local slots which are copied each time an instance is created,
-       ;;   the next holds the class slots (global to all instances, not copied);
-       ;;   these hold the class name and other such info.  The remaining environments
-       ;;   hold the methods, with the localmost method first.  So in this loop, we
-       ;;   are gathering the local slots and all the methods of the inherited
-       ;;   classes, and will splice them together below as a new class.
-
-       (set! new-slots (append (environment->list class) new-slots))
-       (do ((e (outer-environment (outer-environment class)) (outer-environment e)))
-	   ((or (not (environment? e))
-		(eq? e (global-environment))))
-	 (set! new-methods (append (environment->list e) new-methods))))
-     ,inherited-classes)
-
+     
+     (for-each
+      (lambda (class)
+	;; each class is a set of nested environments, the innermost (first in the list)
+	;;   holds the local slots which are copied each time an instance is created,
+	;;   the next holds the class slots (global to all instances, not copied);
+	;;   these hold the class name and other such info.  The remaining environments
+	;;   hold the methods, with the localmost method first.  So in this loop, we
+	;;   are gathering the local slots and all the methods of the inherited
+	;;   classes, and will splice them together below as a new class.
+	
+	(set! new-slots (append (environment->list class) new-slots))
+	(do ((e (outer-environment (outer-environment class)) (outer-environment e)))
+	    ((or (not (environment? e))
+		 (eq? e (global-environment))))
+	  (set! new-methods (append (environment->list e) new-methods))))
+      ,inherited-classes)
+     
      (let ((remove-duplicates 
 	    (lambda (lst)         ; if multiple local slots with same name, take the localmost
 	      (letrec ((rem-dup
@@ -503,71 +534,71 @@
 				 (cons slot #f)))
 			   ,slots)                    ; the incoming new slots, #f is the default value
 		      new-slots))))                   ; the inherited slots
-
-    (set! new-methods 
-	  (append (map (lambda (method)
-			 (if (pair? method)
-			     (cons (car method) (cadr method))
-			     (cons method #f)))
-		       ,methods)                     ; the incoming new methods
-
-		  ;; add an object->string method for this class (this is already a generic function).
-		  (list (cons 'object->string (lambda* (obj (use-write #t))
-				       (if (eq? use-write :readable)    ; write readably
-					   (format #f "(make-~A~{ :~A ~W~^~})" 
-						   ',class-name 
-						   (map (lambda (slot)
-							  (values (car slot) (cdr slot)))
-							obj))
-				           (format #f "#<~A: ~{~A~^ ~}>" 
-					           ',class-name
-					           (map (lambda (slot)
-						          (list (car slot) (cdr slot)))
-						        obj))))))
-		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
-
-    (let ((new-class (open-environment
+     
+     (set! new-methods 
+	   (append (map (lambda (method)
+			  (if (pair? method)
+			      (cons (car method) (cadr method))
+			      (cons method #f)))
+			,methods)                     ; the incoming new methods
+		   
+		   ;; add an object->string method for this class (this is already a generic function).
+		   (list (cons 'object->string (lambda* (obj (use-write #t))
+						 (if (eq? use-write :readable)    ; write readably
+						     (format #f "(make-~A~{ :~A ~W~^~})" 
+							     ',class-name 
+							     (map (lambda (slot)
+								    (values (car slot) (cdr slot)))
+								  obj))
+						     (format #f "#<~A: ~{~A~^ ~}>" 
+							     ',class-name
+							     (map (lambda (slot)
+								    (list (car slot) (cdr slot)))
+								  obj))))))
+		   (reverse! new-methods)))           ; the inherited methods, shadowed automatically
+     
+     (let ((new-class (open-environment
                        (apply augment-environment           ; the local slots
-		         (augment-environment               ; the global slots
-		           (apply environment               ; the methods
-			     (reverse new-methods))
-		           (cons 'class-name ',class-name)  ; class-name slot
-			   (cons 'inherited ,inherited-classes)
-			   (cons 'inheritors ()))           ; classes that inherit from this class
-		         new-slots))))
-
-      (augment-environment! outer-env                  
-        (cons ',class-name new-class)                       ; define the class as class-name in the calling environment
-
-	;; define class-name? type check
-	(cons (string->symbol (string-append (symbol->string ',class-name) "?"))
-	      (lambda (obj)
-		(and (environment? obj)
-		     (eq? (obj 'class-name) ',class-name)))))
-
-      (augment-environment! outer-env
-        ;; define the make-instance function for this class.  
-        ;;   Each slot is a keyword argument to the make function.
-        (cons (string->symbol (string-append "make-" (symbol->string ',class-name)))
-	      (apply lambda* (map (lambda (slot)
-				    (if (pair? slot)
-					(list (car slot) (cdr slot))
-					(list slot #f)))
-				  new-slots)
-		     `((let ((new-obj (copy ,,class-name)))
-			 ,@(map (lambda (slot)
-				  `(set! (new-obj ',(car slot)) ,(car slot)))
-				new-slots)
-			 new-obj)))))
-
-      ;; save inheritance info for this class for subsequent define-method
-      (letrec ((add-inheritor (lambda (class)
-				(for-each add-inheritor (class 'inherited))
-				(if (not (memq new-class (class 'inheritors)))
-				    (set! (class 'inheritors) (cons new-class (class 'inheritors)))))))
-	(for-each add-inheritor ,inherited-classes))
-    
-      ',class-name)))
+			      (augment-environment               ; the global slots
+				  (apply environment               ; the methods
+					 (reverse new-methods))
+				(cons 'class-name ',class-name)  ; class-name slot
+				(cons 'inherited ,inherited-classes)
+				(cons 'inheritors ()))           ; classes that inherit from this class
+			      new-slots))))
+       
+       (augment-environment! outer-env                  
+	 (cons ',class-name new-class)                       ; define the class as class-name in the calling environment
+	 
+	 ;; define class-name? type check
+	 (cons (string->symbol (string-append (symbol->string ',class-name) "?"))
+	       (lambda (obj)
+		 (and (environment? obj)
+		      (eq? (obj 'class-name) ',class-name)))))
+       
+       (augment-environment! outer-env
+	 ;; define the make-instance function for this class.  
+	 ;;   Each slot is a keyword argument to the make function.
+	 (cons (string->symbol (string-append "make-" (symbol->string ',class-name)))
+	       (apply lambda* (map (lambda (slot)
+				     (if (pair? slot)
+					 (list (car slot) (cdr slot))
+					 (list slot #f)))
+				   new-slots)
+		      `((let ((new-obj (copy ,,class-name)))
+			  ,@(map (lambda (slot)
+				   `(set! (new-obj ',(car slot)) ,(car slot)))
+				 new-slots)
+			  new-obj)))))
+       
+       ;; save inheritance info for this class for subsequent define-method
+       (letrec ((add-inheritor (lambda (class)
+				 (for-each add-inheritor (class 'inherited))
+				 (if (not (memq new-class (class 'inheritors)))
+				     (set! (class 'inheritors) (cons new-class (class 'inheritors)))))))
+	 (for-each add-inheritor ,inherited-classes))
+       
+       ',class-name)))
 
 (define-macro (define-generic name)    ; (define (genfun any) ((any 'genfun) any))
   `(define ,name 
@@ -579,8 +610,8 @@
 
 (define-macro (define-slot-accessor name slot)
   `(define ,name (make-procedure-with-setter 
-                   (lambda (obj) (obj ',slot)) 
-		   (lambda (obj val) (set! (obj ',slot) val)))))
+		  (lambda (obj) (obj ',slot)) 
+		  (lambda (obj val) (set! (obj ',slot) val)))))
 
 (define-bacro (define-method name-and-args . body)
   `(let* ((outer-env (outer-environment (current-environment)))
@@ -590,7 +621,7 @@
 	  (class (symbol->value (cadar method-args)))
 	  (old-method (class method-name))
 	  (method (apply lambda* method-args ',body)))
-
+     
      ;; define the method as a normal-looking function
      ;;   s7test.scm has define-method-with-next-method that implements call-next-method here
      ;;   it also has make-instance 
@@ -605,7 +636,7 @@
      ;; add the method to the class
      (augment-environment! (outer-environment (outer-environment class))
        (cons method-name method))
-
+     
      ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
      (for-each
       (lambda (inheritor) 
@@ -615,7 +646,7 @@
 	    (augment-environment! (outer-environment (outer-environment inheritor))
    	      (cons method-name method))))
       (class 'inheritors))
-
+     
      method-name))
 
 (define (all-methods obj method)
@@ -657,9 +688,10 @@
 		 spec))
      (do () ,end
        ,@body
-       ,@(map (lambda (var) (if (pair? (cddr var))
-				`(set! ,(car var) ,(caddr var))
-				(values)))
+       ,@(map (lambda (var) 
+		(if (pair? (cddr var))
+		    `(set! ,(car var) ,(caddr var))
+		    (values)))
 	      spec))))
 
 (define-macro (string-case selector . clauses)
@@ -712,8 +744,29 @@
     (set-cdr! (list-tail vals (- len 1)) ())))    ; restore its original shape
 
 
-;;; ----------------
+
 
 
      
+;;; ----------------
+(define (clamp minimum x maximum)
+  (min maximum (max x minimum)))
 
+(define (n-choose-k n k)
+  "(n-choose-k n k) returns the binomial coefficient C(N,K)"
+  (let ((mn (min k (- n k))))
+    (if (< mn 0)
+	0
+	(if (= mn 0)
+	    1
+	    (let* ((mx (max k (- n k)))
+		   (cnk (+ 1 mx)))
+	      (do ((i 2 (+ i 1)))
+		  ((> i mn) cnk)
+		(set! cnk (/ (* cnk (+ mx i)) i))))))))
+
+
+;;; cyclic-seq in full-*
+;;;   also full-walk -- pass objs and path indices
+;;; ga-search using objs
+;;; doc strings
