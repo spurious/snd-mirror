@@ -64,9 +64,9 @@
     (if (or (not (pair? lst))
 	    (memq lst sofar))
 	(reverse! result)
-	(linearize (cdr lst) 
-		   (cons (car lst) result) 
-		   (cons lst sofar))))
+	(lin-1 (cdr lst) 
+	       (cons (car lst) result) 
+	       (cons lst sofar))))
   (lin-1 lst () ()))
 
 (define (cyclic? obj) 
@@ -160,12 +160,19 @@
 	   (flatten lst (eval expr) ()))
      ,@body))
 
-(define-macro (elambda args . body)
+(define-macro (elambda args . body)  ; lambda but pass extra arg "*env*" = run-time env
   `(symbol->value 
     (define-bacro (,(gensym) ,@args)
       `((lambda* ,(append ',args `((*env* (current-environment))))
 	  ,'(begin ,@body)) 
 	,,@args))))
+
+(define-macro* (rlambda args . body) ; lambda* but eval arg defaults in run-time env
+  (let ((arg-names (map (lambda (arg) (if (pair? arg) (car arg) arg)) args))
+	(arg-defaults (map (lambda (arg) (if (pair? arg) `(,(car arg) (eval ,(cadr arg))) arg)) args)))
+  `(symbol->value
+    (define-bacro* (,(gensym) ,@arg-defaults)
+      `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
 
 #|
 ;; the same:
@@ -476,8 +483,8 @@
 
 (define-macro (typecase expr . clauses) ; actually type=any boolean func
   (let ((obj (gensym)))
-    `(begin (define ,obj ,expr)         ; normally this would be (let ((,obj ,expr)) ...)
-					;   but use begin so that internal defines are not blocked	    
+    `(begin                             ; normally this would be (let ((,obj ,expr)) ...)
+       (define ,obj ,expr)              ;   but use begin so that internal defines are not blocked	    
        (cond ,@(map (lambda (clause)         
 		      (if (memq (car clause) '(#t else))
 			  clause
@@ -507,7 +514,7 @@
 
 (define (logeqv . ints)
   (if (odd? (length ints))
-      (lognot (apply logxor -1 ints))
+      (lognot (apply logxor -1 ints)) ; Clisp does it this way
       (lognot (apply logxor ints))))
 
 (define (log-none-of . ints)  ; bits on in none of ints

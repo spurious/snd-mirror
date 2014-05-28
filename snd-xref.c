@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11492] = {
+static const char *snd_names[11514] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -3492,6 +3492,7 @@ static const char *snd_names[11492] = {
     "add-envelopes", "env.scm",
     "add-hook!", "snd11.scm",
     "add-notes", "examp.scm",
+    "add-predicate", "stuff.scm",
     "add-to-all-hook-ends", "hooks.scm",
     "add-to-all-hook-inits", "hooks.scm",
     "add-watcher", "snd11.scm",
@@ -3507,6 +3508,7 @@ static const char *snd_names[11492] = {
     "addrinfo.set_ai_flags", "libc.scm",
     "addrinfo.set_ai_protocol", "libc.scm",
     "addrinfo.set_ai_socktype", "libc.scm",
+    "adjoin", "stuff.scm",
     "adjustable-oscil", "generators.scm",
     "adjustable-oscil?", "generators.scm",
     "adjustable-sawtooth-wave", "generators.scm",
@@ -3873,8 +3875,11 @@ static const char *snd_names[11492] = {
     "chown", "libc.scm",
     "chuck-wills-widow", "animals.scm",
     "circle", "musglyphs.scm",
+    "circular-list", "stuff.scm",
+    "circular-list?", "stuff.scm",
     "cis", "dlocsig.scm",
     "cl-set-difference", "stuff.scm",
+    "clamp", "stuff.scm",
     "clamp-rxycos-r", "generators.scm",
     "clarinet", "prc95.scm",
     "clean-channel", "clean.scm",
@@ -4083,6 +4088,7 @@ static const char *snd_names[11492] = {
     "eastern-wood-pewee-2", "animals.scm",
     "echo", "examp.scm",
     "eighth", "stuff.scm",
+    "elambda", "stuff.scm",
     "elliptic-prototype", "analog-filter.scm",
     "empty?", "stuff.scm",
     "endhostent", "libc.scm",
@@ -4261,6 +4267,7 @@ static const char *snd_names[11492] = {
     "ftruncate", "libc.scm",
     "ftrylockfile", "libc.scm",
     "ftw", "libc.scm",
+    "full-count-if", "stuff.scm",
     "full-find-if", "stuff.scm",
     "full-index-if", "stuff.scm",
     "fullmix", "fullmix.scm",
@@ -6372,6 +6379,7 @@ static const char *snd_names[11492] = {
     "legendre-polynomial", "numerics.scm",
     "lesser-nighthawk", "animals.scm",
     "linear-src-channel", "dsp.scm",
+    "linearize", "stuff.scm",
     "lineto", "musglyphs.scm",
     "link", "libc.scm",
     "linnaeus-cicada", "animals.scm",
@@ -6681,6 +6689,7 @@ static const char *snd_names[11492] = {
     "multiply-envelopes", "env.scm",
     "music-font", "musglyphs.scm",
     "mvmfilt", "maxf.scm",
+    "n-choose-k", "stuff.scm",
     "n-choose-k", "numerics.scm",
     "n1cos", "generators.scm",
     "n1cos?", "generators.scm",
@@ -7050,6 +7059,8 @@ static const char *snd_names[11492] = {
     "rxycos?", "generators.scm",
     "rxysin", "generators.scm",
     "rxysin?", "generators.scm",
+    "safe-count-if", "stuff.scm",
+    "safe-find-if", "stuff.scm",
     "safe-rxycos", "generators.scm",
     "safe-rxycos?", "generators.scm",
     "safe-srate", "zip.scm",
@@ -7498,7 +7509,7 @@ static const char *snd_names[11492] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5746);
+  s7_autoload_set_names(sc, snd_names, 5757);
 }
 #endif
 

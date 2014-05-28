@@ -69952,13 +69952,13 @@ int main(int argc, char **argv)
  * ideally the function doc string could be completely removed before optimization etc
  * should (equal? "" #u8()) be #t?
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
- * test remove-if with env/hash?
  * cyclic-seq in rest of full-*
- *   also full-walk-if -- pass objs and path indices
+ *   also full-walk-if -- pass objs and path indices, safe-index and the simpler case
  * ga-search using objs
- * doc strings for stuff.scm
- *  elambda*: use bacro* to get the defaults, then call lambda with just arg name
- *   i.e. lambda* where all defaults are evaluated in call-time env
+ * doc strings for stuff.scm and rlambda tests
+ *
+ * all the complex_I stuff could use CMPLX if that macro exists and is usable (stupid clang...)
+ *   in gcc it's based on __builtin_complex or something like that
  *
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t

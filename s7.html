@@ -5439,10 +5439,19 @@ the MIT-Scheme test of that interaction.
 </pre>
 
 <p>elambda does not suffer from the symbol-&gt;dynamic-value defects mentioned above, but
-it's probably slow.  We have to wrap the function in a bacro because lambda*'s argument default
+it's probably slower.  We have to wrap the function in a bacro because lambda*'s argument default
 values are evaluated in the definition environment, but we want the run-time environment.
+As goes without saying, we can get around that too:
 </p>
 
+<pre class="indented">
+(define-macro* (rlambda args . body) ; lambda* but eval arg defaults in run-time env
+  (let ((arg-names (map (lambda (arg) (if (pair? arg) (car arg) arg)) args))
+	(arg-defaults (map (lambda (arg) (if (pair? arg) `(,(car arg) (eval ,(cadr arg))) arg)) args)))
+  `(symbol-&gt;value
+    (define-bacro* (,(gensym) ,@arg-defaults)
+      `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
+</pre>
 
 </div>
 
