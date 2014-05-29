@@ -348,6 +348,11 @@
       #define _Complex_I 1.0fi
     #endif
   #endif
+
+#ifndef CMPLX
+  /* c11 addition? */
+  #define CMPLX(r, i) ((r) + ((i) * _Complex_I))
+#endif
 #endif
 
 #include <setjmp.h>
@@ -2371,7 +2376,7 @@ static int num_types = 0;
 #define real_part(p)                  p->object.number.complex_value.rl
 #define imag_part(p)                  p->object.number.complex_value.im
 #if HAVE_COMPLEX_NUMBERS
-  #define as_c_complex(p)             (real_part(p) + (imag_part(p) * _Complex_I))
+  #define as_c_complex(p)             CMPLX(real_part(p), imag_part(p))
 #endif
 
 #define NUM_SMALL_INTS 2048
@@ -4973,6 +4978,15 @@ static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym) 
+{
+  symbol_tag(sym) = sc->syms_tag; 
+  return(sym);
+}
+
+static void clear_syms_in_list(s7_scheme *sc) {sc->syms_tag++;}
+
+
 
 
 
@@ -7393,7 +7407,7 @@ static s7_Complex csqrt(s7_Complex z)
     { 
       s7_Double r = cabs(z); 
       s7_Double x = creal(z); 
-      return(sqrt((r + x) / 2.0) + sqrt((r - x) / 2.0) * _Complex_I); 
+      return(CMPLX(sqrt((r + x) / 2.0), sqrt((r - x) / 2.0))); 
     } 
 } 
 #endif
@@ -8254,7 +8268,7 @@ s7_Double s7_real(s7_pointer p)
 #if (!WITH_GMP)
 static s7_Complex s7_complex(s7_pointer p)
 {
-  return(s7_real_part(p) + s7_imag_part(p) * _Complex_I);
+  return(CMPLX(s7_real_part(p), s7_imag_part(p)));
 }
 
 
@@ -11082,7 +11096,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
       
 	/* otherwise use maxima code: */
 	recip = 1.0 / absx;
-	result = (M_PI / 2.0) - (_Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip)))));
+ 	result = (M_PI / 2.0) - (_Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip)))));
 	if (x < 0.0)
 	  return(s7_from_c_complex(sc, -result));
 	return(s7_from_c_complex(sc, result));
@@ -24699,6 +24713,16 @@ static void write_readably_error(s7_scheme *sc, const char *type)
 }
 
 
+static void e_to_p(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+{
+  if (is_slot(x))
+    {
+      e_to_p(sc, next_slot(x), port, use_write, to_file, ci);
+      port_write_character(port)(sc, ' ', port);
+      object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
+    }
+}
+
 static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   /* if outer env points to (say) method list, the object needs to specialize object->string itself
@@ -24776,11 +24800,7 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
       else
 	{
 	  port_write_string(port)(sc, "#<environment", 13, port);
-	  for (x = environment_slots(obj); is_slot(x); x = next_slot(x))
-	    {
-	      port_write_character(port)(sc, ' ', port);
-	      object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
-	    }
+	  e_to_p(sc, environment_slots(obj), port, use_write, to_file, ci);
 	  port_write_character(port)(sc, '>', port);
 	}
     }
@@ -34612,6 +34632,77 @@ static bool hash_tables_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 }
 
 
+static bool environments_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool normal)
+{
+  /* x == y if all unshadowed vars match
+   *   envs can contain envs, even themselves
+   *   (equal? (environment* 'a (environment* 'b 1)) (environment* 'a (environment* 'b 1))) 
+   *
+   * order does not matter, but shadowing does, and shadowed slots are ignored
+   *   it is possible to get shadowing within an environment:
+   *   (environment* 'a 1 'a 2) -> #<environment 'a 2 'a 1>
+   */
+  s7_pointer ex, ey;
+  bool (*checker)(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
+
+  if (normal)
+    checker = s7_is_equal_tracking_circles;
+  else checker = s7_is_morally_equal_1;
+
+  for (ex = x, ey = y; is_environment(ex) && is_environment(ey); ex = next_environment(ex), ey = next_environment(ey))
+    {
+      s7_pointer px, py;
+
+      if (ex == ey)
+	return(true);
+      if ((ex == sc->global_env) ||
+	  (ey == sc->global_env))
+	return(false);
+
+      /* first check that we have the same symbols -- this requires two checks! */
+      clear_syms_in_list(sc);
+      for (px = environment_slots(ex); is_slot(px); px = next_slot(px))
+	add_sym_to_list(sc, slot_symbol(px));
+      for (py = environment_slots(ey); is_slot(py); py = next_slot(py))
+	if (symbol_tag(slot_symbol(py)) != sc->syms_tag)
+	  return(false);
+
+      for (py = environment_slots(ey); is_slot(py); py = next_slot(py))
+	symbol_tag(slot_symbol(py)) = 0;
+      for (px = environment_slots(ex); is_slot(px); px = next_slot(px))
+	if (symbol_tag(slot_symbol(px)) != 0)
+	  return(false);
+
+      for (px = environment_slots(ex); is_slot(px); px = next_slot(px))
+	{
+	  for (py = environment_slots(ey); is_slot(py); py = next_slot(py))
+	    {
+	      if (slot_symbol(px) == slot_symbol(py)) /* we know something will match */
+		{
+		  if (!(checker(sc, slot_value(px), slot_value(py), ci)))
+		    {
+		      s7_pointer ppx;
+		      /* check for shadowing */
+		      for (ppx = environment_slots(ex); is_slot(ppx); ppx = next_slot(ppx))
+			if (slot_symbol(ppx) == slot_symbol(px))
+			  {
+			    if (ppx == px)
+			      return(false);
+			    break;
+			  }
+		    }
+		  break; /* we found one, so ignore possible shadows */
+		}
+	    }
+	}
+    }
+  if ((is_environment(ex)) ||
+      (is_environment(ey)))
+    return(false);
+  return(true);
+}
+
+
 static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   /* here we know x and y are pointers to the same type of structure */
@@ -34697,42 +34788,7 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
       }
 
     case T_ENVIRONMENT:
-      {
-	/*
-	  (let ((e1 #f) (e2 #f))
-	    (let ((a 1)) (set! e1 (current-environment)))
-            (let ((a 1)) (set! e2 (current-environment))) 
-            (equal? e1 e2))
-	*/
-	s7_pointer ex, ey;
-
-	for (ex = x, ey = y; is_environment(ex) && is_environment(ey); ex = next_environment(ex), ey = next_environment(ey))
-	  {
-	    s7_pointer px, py;
-
-	    if (ex == ey)
-	      return(true);
-
-	    if ((ex == sc->global_env) ||
-		(ey == sc->global_env))
-	      return(false);
-
-	    /* currently order matters, unlike hash-tables */
-	    for (px = environment_slots(ex), py = environment_slots(ey); is_slot(px) && is_slot(py); px = next_slot(px), py = next_slot(py))
-	      if ((slot_symbol(px) != slot_symbol(py)) ||
-		  (!(s7_is_equal_tracking_circles(sc, slot_value(px), slot_value(py), ci))))
-		return(false);
-
-	    if ((is_slot(px)) ||
-		(is_slot(py)))
-	      return(false);
-	  }
-	if ((is_environment(ex)) ||
-	    (is_environment(ey)))
-	  return(false);
-
-	return(true);
-      }
+      return(environments_are_equal(sc, x, y, ci, true));
     }
   return(true);
 }
@@ -35026,36 +35082,7 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
       }
 
     case T_ENVIRONMENT:
-      {
-	/*
-	  (let ((e1 #f) (e2 #f))
-	    (let ((a 1)) (set! e1 (current-environment)))
-            (let ((a 1)) (set! e2 (current-environment))) 
-            (equal? e1 e2))
-	*/
-	s7_pointer ex, ey;
-	for (ex = x, ey = y; is_environment(ex) && is_environment(ey); ex = next_environment(ex), ey = next_environment(ey))
-	  {
-	    s7_pointer px, py;
-	    if (ex == ey)
-	      return(true);
-	    if ((ex == sc->global_env) ||
-		(ey == sc->global_env))
-	      return(false);
-	    /* currently order matters, unlike hash-tables */
-	    for (px = environment_slots(ex), py = environment_slots(ey); is_slot(px) && is_slot(py); px = next_slot(px), py = next_slot(py))
-	      if ((slot_symbol(px) != slot_symbol(py)) ||
-		  (!(s7_is_morally_equal_1(sc, slot_value(px), slot_value(py), ci))))
-		return(false);
-	    if ((is_slot(px)) ||
-		(is_slot(py)))
-	      return(false);
-	  }
-	if ((is_environment(ex)) ||
-	    (is_environment(ey)))
-	  return(false);
-	return(true);
-      }
+      return(environments_are_equal(sc, x, y, ci, false));
     }
   return(true);
 }
@@ -40243,23 +40270,6 @@ static bool direct_memq(s7_pointer symbol, s7_pointer symbols)
 }
 
 
-static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym) {symbol_tag(sym) = sc->syms_tag; return(sym);}
-static void clear_syms_in_list(s7_scheme *sc) {sc->syms_tag++;}
-
-static bool rdirect_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
-{
-  s7_pointer x;
-  if (symbol_tag(symbol) != sc->syms_tag)
-    return(false);
-  for (x = symbols; is_pair(x); x = cdr(x))
-    {
-      if (car(x) == symbol)
-	return(true);
-    }
-  return(false);
-}
-
-
 bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
 {
   if (is_null(tree))
@@ -45397,6 +45407,17 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
   return(false);
 }
 
+
+static bool rdirect_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
+{
+  s7_pointer x;
+  if (symbol_tag(symbol) != sc->syms_tag)
+    return(false);
+  for (x = symbols; is_pair(x); x = cdr(x))
+    if (car(x) == symbol)
+      return(true);
+  return(false);
+}
 
 static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_pointer e)
 { 
@@ -69954,11 +69975,14 @@ int main(int argc, char **argv)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-*
  *   also full-walk-if -- pass objs and path indices, safe-index and the simpler case
- * ga-search using objs
- * doc strings for stuff.scm and rlambda tests
- *
- * all the complex_I stuff could use CMPLX if that macro exists and is usable (stupid clang...)
- *   in gcc it's based on __builtin_complex or something like that
+ * doc strings for stuff.scm and rlambda tests -- recursion, flatten-env tests
+ *   flatten lst-usual, vect-1dim, env-above, ht? string?
+ * (reverse env) -> reversed slots? (apply environment (reverse (map values e)))?
+ * check equal? with cyclic env
+ * member: ht->exists-as-key, env->slot-sym=defined, vector/string like list, (how to extend to c_obj)
+ * assoc similar for ht/env [built-in method?]
+ * does copy return env with shadowing unreversed?
+ * env|string|vect->list should not be built-in (use map values...)
  *
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t

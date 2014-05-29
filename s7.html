@@ -2616,7 +2616,9 @@ Environments are first class (and applicable) objects in s7.
 </pre>
 
 <div class="indented">
-<p>Environments provide a very simple, yet very powerful structure or class mechanism.
+<p>
+Two environments are equal if they have the same symbol/value pairs, ignoring shadowed pairs.
+Environments provide a very simple, yet very powerful structure or class mechanism.
 As a quick example, here is a structure definition:
 </p>
 
@@ -5441,7 +5443,6 @@ the MIT-Scheme test of that interaction.
 <p>elambda does not suffer from the symbol-&gt;dynamic-value defects mentioned above, but
 it's probably slower.  We have to wrap the function in a bacro because lambda*'s argument default
 values are evaluated in the definition environment, but we want the run-time environment.
-As goes without saying, we can get around that too:
 </p>
 
 <pre class="indented">
@@ -5646,7 +5647,7 @@ loading code that calls gcd.
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
 <li>change file-exists? to file? (or omit it and assume use of libc.scm &mdash; why reinvent the wheel?).
-<li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy).
+<li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy or map).
 <li>add typeq? and perhaps make null? generic (see stuff.scm).
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>let =&gt; be followed by any number of functions, and change its name to "forth".
@@ -6390,12 +6391,16 @@ SIZEOF_VOID_P                  8 (default) or 4.
 WITH_GMP                       1 if you want multiprecision arithmetic (requires gmp, mpfr, and mpc, default is 0)
 HAVE_COMPLEX_NUMBERS           1 if your compiler supports complex numbers
 HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
+DISABLE_DEPRECATED             1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
+
 WITH_AT_SIGN_AS_EXPONENT       1 if you want "@" to mark exponents (default is 1)
+WITH_QUASIQUOTE_VECTOR         1 if you want to use the `#(...) junk (default is 1, but under protest)
+WITH_IMMUTATBLE_UNQUOTE        1 if you want "unquote" omitted (default 0)
 WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)
                                    if someone defends these exponent markers, ask him to read 1l11+11l1i
 WITH_SYSTEM_EXTRAS             1 if you want some additional OS-related functions built-in (default is 0)
-DISABLE_DEPRECATED             1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
 WITH_MAIN                      1 if you want s7.c to include a main program section that implements a REPL.
+WITH_C_LOADER		       1 if you want to be able to load shared object files with load.
 </pre>
 
 <p>See the comment at the start of s7.c for more information about these switches.

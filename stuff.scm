@@ -820,7 +820,6 @@
 
 
 
-     
 ;;; ----------------
 (define (clamp minimum x maximum)
   (min maximum (max x minimum)))
@@ -837,3 +836,17 @@
 	      (do ((i 2 (+ i 1)))
 		  ((> i mn) cnk)
 		(set! cnk (/ (* cnk (+ mx i)) i))))))))
+
+
+
+;;; ----------------
+
+(define (flatten-environment e)
+  (let ((slots ()))
+    (do ((pe e (outer-environment pe)))
+	((eq? pe (global-environment))
+	 (apply environment slots))
+      (for-each (lambda (slot)
+		  (if (not (assq (car slot) slots))
+		      (set! slots (cons slot slots))))
+		pe))))
