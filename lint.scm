@@ -133,7 +133,7 @@
 		  environment environment* environment-ref environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
 		  floor ;for-each 
 		  gcd gensym gensym? global-environment 
-		  hash-table hash-table-ref hash-table-size hash-table? hash-table-iterator? hook-functions 
+		  hash-table hash-table-ref hash-table-size hash-table-entries hash-table? hash-table-iterator? hook-functions 
 		  if imag-part inexact->exact inexact? infinite? initial-environment input-port? integer->char integer-decode-float 
 		  integer-length integer? 
 		  keyword->symbol keyword? 
@@ -149,7 +149,7 @@
 		  random random-state? rational? rationalize real-part real? remainder reverse round 
 		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
 		  string-ci=? string-ci>=? string-ci>? string-length string-position string-ref string<=? string<? string=? string>=? 
-		  string>? string? substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? symbol=?
+		  string>? string? string-downcase string-upcase substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? symbol=?
 		  tan tanh truncate 
 		  vector vector->list vector-dimensions vector-length vector-ref vector? 
 		  zero?))
@@ -249,6 +249,7 @@
 			   (cons 'hash-table +hash-table+)
 			   (cons 'hash-table? +boolean+)
 			   (cons 'hash-table-iterator? +boolean+)
+			   (cons 'hash-table-entries +integer+)
 			   (cons 'hash-table-size +integer+)
 			   (cons 'imag-part +number+)
 			   (cons 'inexact->exact +number+)
@@ -338,6 +339,8 @@
 			   (cons 'sinh +not-integer+)
 			   (cons 'sqrt +number+)
 			   (cons 'string +string+)
+			   (cons 'string-downcase +string+)
+			   (cons 'string-upcase +string+)
 			   (cons 'string->list +list+)
 			   (cons 'string->number 'number-or-f)
 			   (cons 'string->symbol +symbol+)
@@ -477,6 +480,7 @@
 			  (cons 'gensym string?)
 			  (cons 'hash-table-ref (list hash-table?))
 			  (cons 'hash-table-set! (list hash-table?))
+			  (cons 'hash-table-entries hash-table?)
 			  (cons 'hash-table-size hash-table?)
 			  (cons 'imag-part number?)
 			  (cons 'inexact->exact real?)
@@ -547,6 +551,8 @@
 			  (cons 'sort! (list sequence? procedure?))
 			  (cons 'sqrt number?)
 			  (cons 'string char?)
+			  (cons 'string-downcase string?)
+			  (cons 'string-upcase string?)
 			  (cons 'string->list string?)
 			  (cons 'string->number (list string? integer-between-2-and-16?))
 			  (cons 'string->symbol string?)

@@ -5452,6 +5452,15 @@ values are evaluated in the definition environment, but we want the run-time env
   `(symbol-&gt;value
     (define-bacro* (,(gensym) ,@arg-defaults)
       `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
+
+(let ()
+  (define rx (rlambda ((a x)) 
+               (if (> a 0) 
+                   (let ((x (- x 1))) ;:)
+                     (rx))
+                   0)))
+  (let ((x 3))
+    (rx)))
 </pre>
 
 </div>

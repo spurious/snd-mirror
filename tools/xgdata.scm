@@ -5444,7 +5444,7 @@
 (CFNC "gboolean gtk_clipboard_wait_is_target_available GtkClipboard* clipboard GdkAtom target")
 (CFNC "void gtk_clipboard_set_can_store GtkClipboard* clipboard GtkTargetEntry* @targets gint n_targets")
 (CFNC "void gtk_clipboard_store GtkClipboard* clipboard")
-(CFNC "gboolean gtk_alternative_dialog_button_order GdkScreen* @screen")
+;;; 3.12? (CFNC "gboolean gtk_alternative_dialog_button_order GdkScreen* @screen")
 ;;;(CFNC "void gtk_dialog_set_alternative_button_order GtkDialog* dialog gint first_response_id ...")
 (CFNC "void gtk_drag_dest_add_image_targets GtkWidget* widget")
 (CFNC "void gtk_drag_dest_add_uri_targets GtkWidget* widget")
@@ -5505,7 +5505,7 @@
 
 (CFNC "void gtk_button_set_image GtkButton* button GtkWidget* image") 
 (CFNC "GtkWidget* gtk_button_get_image GtkButton* button") 
-(CFNC "void gtk_dialog_set_alternative_button_order_from_array GtkDialog* dialog gint n_params gint* new_order") 
+;;; 3.12? (CFNC "void gtk_dialog_set_alternative_button_order_from_array GtkDialog* dialog gint n_params gint* new_order") 
 (CFNC "void gtk_label_set_angle GtkLabel* label gdouble angle") 
 (CFNC "gdouble gtk_label_get_angle GtkLabel* label") 
 
@@ -6902,7 +6902,7 @@
 (CFNC-2.14 "gboolean gtk_accel_group_get_is_locked GtkAccelGroup* accel_group")
 ;;; 3.3.16 (CFNC-2.14 "GtkWidget* gtk_color_selection_dialog_get_color_selection GtkColorSelectionDialog* colorsel")
 (CFNC-2.14 "GtkWidget* gtk_container_get_focus_child GtkContainer* container")
-(CFNC-2.14 "GtkWidget* gtk_dialog_get_action_area GtkDialog* dialog")
+;;; 3.12? (CFNC-2.14 "GtkWidget* gtk_dialog_get_action_area GtkDialog* dialog")
 (CFNC-2.14 "GtkWidget* gtk_dialog_get_content_area GtkDialog* dialog")
 (CFNC-2.14 "void gtk_entry_set_overwrite_mode GtkEntry* entry gboolean overwrite")
 (CFNC-2.14 "gboolean gtk_entry_get_overwrite_mode GtkEntry* entry")
@@ -8797,10 +8797,10 @@
 ;void gtk_flow_box_set_filter_func GtkFlowBox* box GtkFlowBoxFilterFunc filter_func gpointer user_data GDestroyNotify destroy)
 
 
-;;; 3.11.2
-(CINT-3.12 "GDK_EVENT_FLUSHED" "GdkEventFlags")
-(CINT-3.12 "GTK_STATE_FLAG_LINK" "GtkStateFlags")
-(CINT-3.12 "GTK_STATE_FLAG_VISITED" "GtkStateFlags")
+;;; 3.11.2 -- these are internal to gdk
+;;; (CINT-3.12 "GDK_EVENT_FLUSHED" "GdkEventFlags")
+;;; (CINT-3.12 "GTK_STATE_FLAG_LINK" "GtkStateFlags")
+;;; (CINT-3.12 "GTK_STATE_FLAG_VISITED" "GtkStateFlags")
 
 (CFNC-3.12 "void gdk_window_set_event_compression GdkWindow* window gboolean event_compression")
 (CFNC-3.12 "gboolean gdk_window_get_event_compression GdkWindow* window")
@@ -8839,13 +8839,13 @@
 
 (CCAST-3.12 "GTK_POPOVER" "GtkPopover*")
 (CCHK-3.12 "GTK_IS_POPOVER" "GtkPopover*")
-(CFNC-3.12 "GdkVisual* gdk_screen_get_preferred_visual GdkScreen* screen")
+;;; ?? (CFNC-3.12 "GdkVisual* gdk_screen_get_preferred_visual GdkScreen* screen")
 (CFNC-3.12 "GtkWidget* gtk_dialog_get_header_bar GtkDialog* dialog")
 (CFNC-3.12 "GtkWidget* gtk_popover_new GtkWidget* relative_to")
 (CFNC-3.12 "void gtk_popover_set_relative_to GtkPopover* popover GtkWidget* relative_to")
 (CFNC-3.12 "GtkWidget* gtk_popover_get_relative_to GtkPopover* popover")
-(CFNC-3.12 "void gtk_popover_set_pointing_to GtkPopover* popover cairo_rectangle_int_t *rect")
-(CFNC-3.12 "gboolean gtk_popover_get_pointing_to GtkPopover* popover cairo_rectangle_int_t *rect")
+(CFNC-3.12 "void gtk_popover_set_pointing_to GtkPopover* popover GdkRectangle *rect")
+(CFNC-3.12 "gboolean gtk_popover_get_pointing_to GtkPopover* popover GdkRectangle [rect]")
 (CFNC-3.12 "void gtk_popover_set_position GtkPopover* popover GtkPositionType position")
 (CFNC-3.12 "GtkPositionType gtk_popover_get_position GtkPopover* popover")
 (CFNC-3.12 "void gtk_popover_set_modal GtkPopover* popover gboolean modal")

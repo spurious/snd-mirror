@@ -5859,7 +5859,6 @@ s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   /* (let ((a 1)) ((current-environment) 'a)) 
    * ((global-environment) 'abs) 
    */
-
   if (!is_symbol(symbol))
     return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, symbol, A_SYMBOL));
 
@@ -5954,12 +5953,20 @@ static s7_pointer reverse_slots(s7_scheme *sc, s7_pointer list)
   return(result);
 }
 
+static void add_slot_in_reverse(s7_scheme *sc, s7_pointer e, s7_pointer x)
+{
+  if (is_slot(x))
+    {
+      add_slot_in_reverse(sc, e, next_slot(x));
+      ADD_SLOT(e, slot_symbol(x), slot_value(x));
+    }
+}
 
 static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 {
   if (is_environment(env))
     {
-      s7_pointer x, new_e;
+      s7_pointer new_e;
 
       if (env == sc->global_env)   /* (copy (global-environment)) or (copy (procedure-environment abs)) etc */
 	return(sc->global_env);
@@ -5977,9 +5984,11 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
       else new_e = new_frame_in_env(sc, next_environment(env));
       sc->temp3 = new_e;
 
-      for (x = environment_slots(env); is_slot(x); x = next_slot(x))
-	ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
-      environment_slots(new_e) = reverse_slots(sc, environment_slots(new_e));
+      add_slot_in_reverse(sc, new_e, environment_slots(env));
+      /* We can't do a loop here then reverse the slots later because the symbol's local_slot has to
+       *    match the unshadowed slot, not the last in the list:
+       *    (let ((e1 (environment* 'a 1 'a 2))) (let ((e2 (copy e1))) (list (equal? e1 e2) (equal? (e1 'a) (e2 'a))))) 
+       */
 
       return(new_e);
     }
@@ -24037,8 +24046,8 @@ static s7_pointer g_cyclic_sequences(s7_scheme *sc, s7_pointer args)
   s7_pointer obj;
   
   obj = car(args);
-  if ((has_structure(obj)) &&
-      (obj != sc->global_env))
+  if (has_structure(obj))
+    /* (obj != sc->global_env) -- why this? */
     {
       ci = make_shared_info(sc, obj, false); /* false=don't stop at print length (vectors etc) */
       if (ci)
@@ -49728,18 +49737,21 @@ static s7_pointer check_cond(s7_scheme *sc)
 
 /* it is almost never the case that we already have the value and can see it in the current environment directly,
  * but once found, the value usually matches the current (ecdr(code))
+ *
+ * (_val_) is needed below because car(code) might be undefined (with-environment can cause this confusion),
+ *   and find_symbol_unchecked returns NULL in that case.
  */
 #define closure_is_ok(Sc, Code, Type, Args) \
   ({ s7_pointer _code_, _val_; _code_ = Code; _val_ = find_symbol_unchecked(Sc, car(_code_)); \
      ((_val_ == ecdr(_code_)) || \
-      ((typesflag(_val_) == (unsigned short)Type) &&			\
+      ((_val_) && (typesflag(_val_) == (unsigned short)Type) &&		\
        ((closure_arity(_val_) == Args) || (closure_arity_to_int(Sc, _val_) == Args)) && \
        (set_ecdr(_code_, _val_)))); })
 
 #define closure_star_is_ok(Sc, Code, Type, Args) \
   ({ s7_pointer _val_; _val_ = find_symbol_unchecked(Sc, car(Code));			\
      ((_val_ == ecdr(Code)) || \
-      ((typesflag(_val_) == (unsigned short)Type) &&			\
+      ((_val_) && (typesflag(_val_) == (unsigned short)Type) &&		\
        ((closure_arity(_val_) >= Args) || (closure_star_arity_to_int(Sc, _val_) >= Args)) && \
        (set_ecdr(Code, _val_)))); })
 
@@ -69974,15 +69986,7 @@ int main(int argc, char **argv)
  * should (equal? "" #u8()) be #t?
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-*
- *   also full-walk-if -- pass objs and path indices, safe-index and the simpler case
- * doc strings for stuff.scm and rlambda tests -- recursion, flatten-env tests
- *   flatten lst-usual, vect-1dim, env-above, ht? string?
- * (reverse env) -> reversed slots? (apply environment (reverse (map values e)))?
- * check equal? with cyclic env
- * member: ht->exists-as-key, env->slot-sym=defined, vector/string like list, (how to extend to c_obj)
- * assoc similar for ht/env [built-in method?]
- * does copy return env with shadowing unreversed?
- * env|string|vect->list should not be built-in (use map values...)
+ * doc strings for stuff.scm, s7.html entry for stuff.scm
  *
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
@@ -69994,6 +69998,8 @@ int main(int argc, char **argv)
  * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
  *   isn't this vector_ref_ic?  just s7_define(sc, sc->envir, func_as_symbol, vector_ref_ic)??
  *   but we'll lose procedure-source, definition env etc [and method redefs if careless]
+ * opESq to parallel current opVSq cases, but it's op_opESq_Qq_S or something
+ *   but then it's either an environment or a hash-table nearly always
  *
  * for the immutable symbol -- initial_slot is not settable from outside, so perhaps it could hold the value?
  *   then the symbol-accessor could get it as #_name or something.

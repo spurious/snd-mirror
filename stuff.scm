@@ -347,7 +347,7 @@
        (full-index-if-1 f sequence ())
        #f))))
 
-(define (safe-find-if f sequence) ; can handle any kind of cycle
+(define (safe-find-if f sequence) ; can handle almost any kind of cycle
   (let ((unseen-cycles (cyclic-sequences sequence))
 	(cycles-traversed ()))
     (call-with-exit

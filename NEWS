@@ -1,121 +1,14 @@
-Snd 14.6
+Snd 14.7.
 
-s7: gensym? environment*
+s7: sort! now operates in-place on lists (it used to copy the list).
+    sort! also accepts bytevectors (for r7rs), and as a by-product, strings.
+    string-up|downcase built-in (for r7rs).
+    stuff.scm.
+    cyclic-sequences.
+    hash-table-entries.
 
-clm: even|odd-weight|multiple (new built-in functions).
-     moving-norm (new generator).
+Snd: removed defvar (use define-envelope), and multiply-arrays (missed earlier)
 
-   deprecate frame and mixer generators -- use float vectors instead.
+checked: sbcl 1.1.18|1.2.0, gtk 3.13.1|2
 
-   finally deprecate sound-data objects -- this includes a bunch of
-      functions such as dac-hook, mus-sound-read, etc.
-
-   "frample" replaces "frame" wherever "frame" refers to
-      a set of samples that represent a single sampling instant
-      (also known as a "sample frame").  So, the generator once
-      known as "file->frame" is now "file->frample".
-
-    mus-mix -> mus-file-mix, 
-    mus-mix-with-envs -> mus-file-mix-with-envs.
-
-CL clm: bumped version number to 5 (I'll leave clm-4.tar.gz
-    for future generations to marvel at).  The new CL clm
-    does not have frames or mixers, and has file->frample
-    and frample->file in place of file->frame and frame->file.
-    Also sound-frames -> sound-framples and so on.
-
-cast into outer darkness:
-    continue-float-vector->file 
-    continue-frame->file 
-    dac-hook 
-    file->float-vector
-    file->float-vector?  
-    file->frame
-    file->frame?
-    float-vector->file
-    float-vector->file?
-    float-vector-mix
-    frame
-    frame*
-    frame+
-    frame->file
-    frame->file?
-    frame->frame
-    frame->list
-    frame->sample
-    frame-ref
-    frame-set!
-    frame?
-    frames
-    make-file->float-vector
-    make-file->frame
-    make-float-vector->file
-    make-frame
-    make-frame!
-    make-frame->file
-    make-level-meter
-    make-mixer
-    make-mixer!
-    make-scalar-mixer
-    make-sound-data
-    mixer
-    mixer*
-    mixer+
-    mixer-ref
-    mixer-set!
-    mixer?
-    mus-sound-frames
-    mus-sound-close-input
-    mus-sound-close-output
-    mus-sound-open-input
-    mus-sound-open-output
-    mus-sound-read
-    mus-sound-reopen-output
-    mus-sound-seek-frame
-    mus-sound-write
-    region-frames
-    sample->frame
-    save-mixes
-    selection-frames
-    sound-data*
-    sound-data+
-    sound-data-add!
-    sound-data-chans
-    sound-data-copy
-    sound-data-fill!
-    sound-data-length
-    sound-data-maxamp
-    sound-data-multiply!
-    sound-data-offset!
-    sound-data-peak
-    sound-data-ref
-    sound-data-reverse!
-    sound-data-scale!
-    sound-data-set!
-    sound-data?
-    stop-dac-hook
-    transform-frames
-    with-level-meters
-(some backwards compatible replacements are in snd14.scm)
-    
-
-Some notes on updating:
-  the main instruments that changed are expandn, freeverb, and fullmix
-  
-  mixer -> 1-dim array of floats, size: chans * chans
-  frame -> same, size: chans
-  sound-data -> 2 dim array of floats, size: '(chans samples-per-chan)
-  array of floats = float-vector in scheme, double-array in CL, vct elsewhere
-  
-  "frame" -> "frample" in most cases, including mus-file-mix arg names
-  envs arg to mus-file-mix-with-envs has same layout as matrix arg
-  frample->frample arg order is '(matrix in-vector out-vector)
-  most mus-sound-read|write cases can be replaced by array->file and file->array
-  
-    
-checked: gtk 3.11.9|12.0|1, sbcl 1.1.17
-    
-Thanks!: Mike Scholz.
-
-
-
+Thanks!: Mike Scholz, David Lowenfels, Corey Mwamba
