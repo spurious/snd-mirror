@@ -31,62 +31,6 @@
  *
  * s7, Bill Schottstaedt, Aug-08
  *
- *   changes from tinyScheme:
- *        just two files: s7.c and s7.h, source-level embeddable (no library, no run-time init files)
- *        full continuations, call-with-exit for goto or return, dynamic-wind
- *        ratios and complex numbers (and ints are 64-bit by default)
- *          optional multiprecision arithmetic for all numeric types and functions
- *        generalized set!, procedure-setter, applicable objects
- *        define-macro, define*, lambda*, named let*
- *        keywords, hash tables, block comments, format
- *        error handling using error and catch
- *        no invidious distinction between built-in and "foreign"
- *        lists, strings, vectors, hash-tables, and environments are (set-)applicable objects
- *        true multiple-values
- *        multidimensional vectors
- *        hooks (conditions)
- *
- *   differences from r5rs:
- *        no syntax-rules or any of its friends
- *        no force or delay
- *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
- *           (exact? has no obvious meaning in regard to complex numbers anyway -- are we referring to the polar or
- *            the rectangular form, and are both real and imaginary parts included? -- why can't they be separate?)
- *           In s7, exact? is a synonym for rational?, inexact->exact is a synonym for rationalize.
- *        '#' does not stand for an unknown digit, and the '@' complex number notation is ignored
- *           I also choose not to include numbers such as +i (= 0+i) -- include the real part!
- *        modulo, remainder, and quotient take integer, ratio, or real args 
- *        lcm and gcd can take integer or ratio args
- *        continuation? function to distinguish a continuation from a procedure
- *        log takes an optional second arg (base)
- *        '.' and an exponent can occur in a number in any base -- they do not mean "base 10"!  
- *           However, the exponent itself is always in base 10 (this follows gmp usage).
- *
- *   other additions: 
- *        random for any numeric type and any numeric argument, including 0 ferchrissake!
- *        sinh, cosh, tanh, asinh, acosh, atanh
- *        read-line, read-byte, write-byte, *stdin*, *stdout*, and *stderr*
- *        logior, logxor, logand, lognot, logbit?, ash, integer-length
- *        integer-decode-float, nan?, infinite?
- *        procedure-source, procedure-arity, procedure-documentation, procedure-name, help
- *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
- *        symbol-table, symbol->value
- *        global-environment, current-environment, procedure-environment, initial-environment, environment?
- *        provide, provided?, defined?
- *        port-line-number, port-filename
- *        object->string, eval-string
- *        reverse!, list-set!, sort!, make-list
- *        gc, *load-hook*, *error-hook*, (error-environment), *unbound-variable-hook*
- *        *features*, *load-path*, *vector-print-length*, *#readers*
- *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
- *        length, copy, fill!, reverse, map, for-each are generic
- *        symbol-access modifies symbol value lookup
- *        member and assoc accept an optional third argument, the comparison function
- *        morally-equal?
- *        unicode (utf8)
- *        homogenous float or int vectors
- *
- *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube and Andrew Burnson provided the MS Visual C++ support
  *
@@ -96,10 +40,9 @@
  * cload.scm and lib*.scm tie in various C libraries.
  * lint.scm checks Scheme code for infelicities.
  * r7rs.scm implements some of r7rs (small).
- * write.scm currrenly has pretty-print and other half-written stuff.
- * s7.c has more than 115000 e's!
+ * write.scm currrenly has pretty-print.
+ * stuff.scm has some stuff.
  *
- * 
  *
  * ---------------- compile time switches ---------------- 
  */
@@ -267,8 +210,6 @@
 #define NORMAL_TEXT "\033[0m"
 
 
-
-
 /* -------------------------------------------------------------------------------- */
 
 /* s7.c is organized as follows:
@@ -304,12 +245,17 @@
  *   *_1 are auxilliary functions, big_* refer to gmp and friends, scheme "?" corresponds to C "_is_", scheme "->" to C "_to_".
  */
 
+/* in case mus-config.h forgets these */
+#ifndef HAVE_COMPLEX_NUMBERS
+  #define HAVE_COMPLEX_NUMBERS 1
+#endif
 #if __cplusplus
-  #ifndef HAVE_COMPLEX_NUMBERS
-    #define HAVE_COMPLEX_NUMBERS 1
-  #endif
   #ifndef HAVE_COMPLEX_TRIG
     #define HAVE_COMPLEX_TRIG 0
+  #endif
+#else
+  #ifndef HAVE_COMPLEX_TRIG
+    #define HAVE_COMPLEX_TRIG 1
   #endif
 #endif
 
@@ -1313,7 +1259,7 @@ struct s7_scheme {
   s7_pointer LIST, IS_LIST, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
   s7_pointer IS_MACRO, MAGNITUDE, MAKE_BYTEVECTOR, MAKE_FLOAT_VECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
   s7_pointer MAKE_RECTANGULAR, MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
-  s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, /* OBJECT_ENVIRONMENT, */ OBJECT_TO_STRING, IS_ODD, OPEN_ENVIRONMENT, IS_OPEN_ENVIRONMENT, OPEN_INPUT_FILE;
+  s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPEN_ENVIRONMENT, IS_OPEN_ENVIRONMENT, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, IS_OUTPUT_PORT, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
   s7_pointer IS_PORT_CLOSED, PORT_FILE, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
@@ -4636,7 +4582,6 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int hash,
 } 
 
 
-
 static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, unsigned int hash, unsigned int location) 
 { 
   s7_pointer x; 
@@ -5238,6 +5183,8 @@ static s7_pointer find_environment(s7_scheme *sc, s7_pointer obj)
     case T_ENVIRONMENT:
       return(obj);
 
+    case T_MACRO:
+    case T_BACRO:
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       return(closure_environment(obj));
@@ -6821,6 +6768,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 {
+  #define CC_INITIAL_STACK_SIZE 128
   int i, len;
   s7_pointer new_v;
   s7_pointer *nv, *ov;
@@ -6830,9 +6778,9 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
    */
 
   len = vector_length(old_v);
-  if ((top < INITIAL_STACK_SIZE / 2) &&
-      (len > INITIAL_STACK_SIZE * 2))
-    len = INITIAL_STACK_SIZE;
+  if ((len > CC_INITIAL_STACK_SIZE) &&
+      (top < len / 4))
+    len = top * 4;
 
   new_v = s7_make_vector(sc, len);
   set_type(new_v, T_STACK);
@@ -30761,8 +30709,8 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define MV_TOO_MANY_ELEMENTS -1
-#define MV_NOT_ENOUGH_ELEMENTS -2
+#define MULTIVECTOR_TOO_MANY_ELEMENTS -1
+#define MULTIVECTOR_NOT_ENOUGH_ELEMENTS -2
 
 static int traverse_vector_data(s7_scheme *sc, s7_pointer vec, int flat_ref, int dimension, int dimensions, int *sizes, s7_pointer lst)
 {
@@ -30776,7 +30724,7 @@ static int traverse_vector_data(s7_scheme *sc, s7_pointer vec, int flat_ref, int
   for (i = 0, x = lst; i < sizes[dimension]; i++, x = cdr(x))
     {
       if (!is_pair(x))
-	return(MV_NOT_ENOUGH_ELEMENTS);
+	return(MULTIVECTOR_NOT_ENOUGH_ELEMENTS);
 
       if (dimension == (dimensions - 1))
 	vector_setter(vec)(sc, vec, flat_ref++, car(x));
@@ -30788,7 +30736,7 @@ static int traverse_vector_data(s7_scheme *sc, s7_pointer vec, int flat_ref, int
     }
 
   if (is_not_null(x))
-    return(MV_TOO_MANY_ELEMENTS);
+    return(MULTIVECTOR_TOO_MANY_ELEMENTS);
   return(flat_ref);
 }
 
@@ -30855,7 +30803,7 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_Int dims, s7_pointer data)
   free(sizes);
   s7_gc_unprotect_at(sc, vec_loc);
   if (err < 0) 
-    return(s7_multivector_error(sc, (err == MV_TOO_MANY_ELEMENTS) ? "found too many elements" : "not enough elements found", data));
+    return(s7_multivector_error(sc, (err == MULTIVECTOR_TOO_MANY_ELEMENTS) ? "found too many elements" : "not enough elements found", data));
 
   return(vec);
 }
@@ -32827,8 +32775,8 @@ s7_pointer s7_procedure_environment(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer p;
-  #define H_procedure_environment "(procedure-environment func) tries to return func's environment"
+  s7_pointer p, e;
+  #define H_procedure_environment "(procedure-environment func) tries to return an object's environment"
 
   /* this procedure gives direct access to a function's closure -- see s7test.scm 
    *   for some wild examples.  At least it provides a not-too-kludgey way for several functions
@@ -32844,13 +32792,15 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
 			list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args)))); /* not p here */
     }
 
-  if (!is_procedure_or_macro(p))
-    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ENVIRONMENT, car(args), make_protected_string(sc, "a procedure or a macro")));
-
-  if ((is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p)) &&
-      (is_not_null(closure_environment(p))))
-    return(closure_environment(p));
-  return(sc->global_env);
+  e = find_environment(sc, p);
+  if ((is_null(e)) &&
+      (!is_c_object(p)))
+    {
+      if (!is_procedure_or_macro(p))
+	return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ENVIRONMENT, car(args), make_protected_string(sc, "a procedure or a macro")));
+      return(sc->global_env);
+    }
+  return(e);
 }
 
 
@@ -33556,17 +33506,6 @@ s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e)
   return(e);
 }
 
-#if 0
-static s7_pointer g_object_environment(s7_scheme *sc, s7_pointer args)
-{
-  #define H_object_environment "(object-environment obj) returns the environment associated with obj."
-  s7_pointer obj;
-  obj = car(args);
-  if (!is_c_object(obj))
-    return(simple_wrong_type_argument_with_type(sc, sc->OBJECT_ENVIRONMENT, obj, make_protected_string(sc, "a c object (created by s7_make_object)")));
-  return(c_object_environment(obj));
-}
-#endif
 
 static s7_pointer object_length(s7_scheme *sc, s7_pointer obj)
 {
@@ -59123,7 +59062,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* the immutable constant check needs to wait until we have the actual new value because
        *   we want to ignore the rebinding (not raise an error) if it is the existing value.
-       *   This happens when we reload a file that has a define-constant call.
+       *   This happens when we reload a file that has calls define-constant.
        */
       if (is_immutable(sc->code))                                        /* (define pi 3) or (define (pi a) a) */
 	{
@@ -68939,7 +68878,6 @@ s7_scheme *s7_init(void)
                               s7_define_safe_function(sc, "error-environment",       g_error_environment,      0, 0, false, H_error_environment);
   sc->OPEN_ENVIRONMENT =      s7_define_safe_function(sc, "open-environment",        g_open_environment,       1, 0, false, H_open_environment);
   sc->IS_OPEN_ENVIRONMENT =   s7_define_safe_function(sc, "open-environment?",       g_is_open_environment,    1, 0, false, H_is_open_environment);
-  /* sc->OBJECT_ENVIRONMENT = s7_define_safe_function(sc, "object-environment",      g_object_environment,     1, 0, false, H_object_environment); */
   sc->ENVIRONMENT_REF =       s7_define_safe_function(sc, "environment-ref",         g_environment_ref,        2, 0, false, H_environment_ref);
   sc->ENVIRONMENT_SET =       s7_define_safe_function(sc, "environment-set!",        g_environment_set,        3, 0, false, H_environment_set);
 
@@ -69111,7 +69049,6 @@ s7_scheme *s7_init(void)
 
   sc->NUMBER_TO_STRING =      s7_define_safe_function(sc, "number->string",          g_number_to_string,       1, 1, false, H_number_to_string);
   sc->STRING_TO_NUMBER =      s7_define_safe_function(sc, "string->number",          g_string_to_number,       1, 1, false, H_string_to_number);
-
   
   sc->CHAR_UPCASE =           s7_define_safe_function(sc, "char-upcase",             g_char_upcase,            1, 0, false, H_char_upcase);
   sc->CHAR_DOWNCASE =         s7_define_safe_function(sc, "char-downcase",           g_char_downcase,          1, 0, false, H_char_downcase);
@@ -69179,7 +69116,6 @@ s7_scheme *s7_init(void)
    *   is not enough.
    */
 
-
   sc->IS_NULL =               s7_define_safe_function(sc, "null?",                   g_is_null,                1, 0, false, H_is_null);
   sc->IS_LIST =               s7_define_safe_function(sc, "list?",                   g_is_list,                1, 0, false, H_is_list);
   sc->IS_PAIR =               s7_define_safe_function(sc, "pair?",                   g_is_pair,                1, 0, false, H_is_pair);
@@ -69227,12 +69163,10 @@ s7_scheme *s7_init(void)
 
   sc->APPEND =                s7_define_safe_function(sc, "append",                  g_append,                 0, 0, true,  H_append);
   sc->LIST =                  s7_define_safe_function(sc, "list",                    g_list,                   0, 0, true,  H_list);
-
   sc->LIST_REF =              s7_define_safe_function(sc, "list-ref",                g_list_ref,               2, 0, true,  H_list_ref);
   sc->LIST_SET =              s7_define_safe_function(sc, "list-set!",               g_list_set,               3, 0, true,  H_list_set);
   sc->LIST_TAIL =             s7_define_safe_function(sc, "list-tail",               g_list_tail,              2, 0, false, H_list_tail);
   sc->MAKE_LIST =             s7_define_safe_function(sc, "make-list",               g_make_list,              1, 1, false, H_make_list);
-
 
   sc->LENGTH =                s7_define_safe_function(sc, "length",                  g_length,                 1, 0, false, H_length);
   sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 3, false, H_copy);
@@ -69276,7 +69210,6 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
   sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
   sc->HASH_TABLE_ENTRIES =    s7_define_safe_function(sc, "hash-table-entries",      g_hash_table_entries,     1, 0, false, H_hash_table_entries);
-  
                               s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
   sc->ht_iter_tag = s7_new_type_x("<hash-table-iterator>", print_ht_iter, ht_iter_free, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
@@ -69284,9 +69217,7 @@ s7_scheme *s7_init(void)
   sc->IS_HASH_TABLE_ITERATOR =   s7_define_safe_function(sc, "hash-table-iterator?",     g_is_hash_table_iterator,   1, 0, false, H_is_hash_table_iterator);
   s7_set_object_print_readably(sc->ht_iter_tag, write_ht_iter_readably);
 
-  s7_define_function(sc, "cyclic-sequences", g_cyclic_sequences, 1, 0, false, H_cyclic_sequences);
-
-
+                              s7_define_function(sc,      "cyclic-sequences",        g_cyclic_sequences,       1, 0, false, H_cyclic_sequences);
   sc->CALL_CC =               s7_define_function(sc,      "call/cc",                 g_call_cc,                1, 0, false, H_call_cc);
                               s7_define_function(sc,      "call-with-current-continuation", g_call_cc,         1, 0, false, H_call_cc);
   sc->IS_CONTINUATION =       s7_define_safe_function(sc, "continuation?",           g_is_continuation,        1, 0, false, H_is_continuation);
@@ -69331,10 +69262,7 @@ s7_scheme *s7_init(void)
   sc->PROCEDURE_ENVIRONMENT = s7_define_safe_function(sc, "procedure-environment",   g_procedure_environment,  1, 0, false, H_procedure_environment);
   sc->UNOPTIMIZE =            s7_define_safe_function(sc, "unoptimize",              g_unoptimize,             1, 0, false, H_unoptimize);
   sc->PROCEDURE_NAME =        s7_define_safe_function(sc, "procedure-name",          g_procedure_name,         1, 0, false, H_procedure_name);
-  s7_make_procedure_with_setter(sc,                       "procedure-setter",   
-				g_procedure_setter, 1, 0,
-				g_procedure_set_setter, 2, 0,
-				H_procedure_setter);
+  s7_make_procedure_with_setter(sc, "procedure-setter",   g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter);
 
   sc->ARITY =                 s7_define_safe_function(sc, "arity",                   g_arity,                  1, 0, false, H_arity);
   sc->IS_ARITABLE =           s7_define_safe_function(sc, "aritable?",               g_is_aritable,            2, 0, false, H_is_aritable);
@@ -69941,11 +69869,10 @@ int main(int argc, char **argv)
 #endif
 
 
-/* -------------------------------------------------------------------------------- */
-
-/*
+/* --------------------------------------------------------------------------------
+ *
  *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.8
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3562
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3548
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4 30.4
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1346
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1053
@@ -69954,11 +69881,10 @@ int main(int argc, char **argv)
  * t816          |                                    |  70.6                44.5 44.6
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.8
  *            153 with run macro (eval_ptree)
- */
-
-/* for-each over sound(etc) -> sampler (=scan), similarly member(=find)/map(=map), but return type?
- * click to inspect/see source etc in listener?
  *
+ *
+ * click to inspect/see source etc in listener?
+ * ideally the function doc string could be completely removed before optimization etc
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * clm opt accepts (env env)
  * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
@@ -69979,15 +69905,15 @@ int main(int argc, char **argv)
  *   others of that ilk: open-input|output-bytevector
  *
  * gmp/mpfr/mpc as cload? jn/yn from mpfr? [no complex, but can we fake it?] [see snd-xen] 
- *    gmpn opts?
  * fft from fftw + mpfr/mpc version? gsl?
  *
- * ideally the function doc string could be completely removed before optimization etc
  * should (equal? "" #u8()) be #t?
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-*
  * doc strings for stuff.scm, s7.html entry for stuff.scm
  *
+ * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc
+ *   (environment* 'value "hi" 'string-length g_utf8_strlen)
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
  *  (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
@@ -69998,16 +69924,6 @@ int main(int argc, char **argv)
  * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
  *   isn't this vector_ref_ic?  just s7_define(sc, sc->envir, func_as_symbol, vector_ref_ic)??
  *   but we'll lose procedure-source, definition env etc [and method redefs if careless]
- * opESq to parallel current opVSq cases, but it's op_opESq_Qq_S or something
- *   but then it's either an environment or a hash-table nearly always
  *
- * for the immutable symbol -- initial_slot is not settable from outside, so perhaps it could hold the value?
- *   then the symbol-accessor could get it as #_name or something.
- *   or this slot could simply hold the value (independent of the name -- gensym etc) 
- *   or would that space be better spent at the user's disposal? -- if not built-in, plist or whatever
- *   it looks like it is safe to use -- it only controls #_*. 
- *   (is this slot GC-protected?)
- *
- * maybe add assertions under DEBUGGING flag, especially for stack overflow
+ * float-vector support is currently half-in/half-out
  */
-

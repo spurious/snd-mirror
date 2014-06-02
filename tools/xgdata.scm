@@ -1,7 +1,6 @@
 ;;; [] for ref args, @ for ptr args that can be null, # are optional (default #f)
 ;;; || for ref arg list, {} for ref arg int as list len
 ;;; & in struct for settable field
-;;; 4 semicolon comments = removed because I can't see any use for it
 
 (CFNC "gboolean g_unichar_validate gunichar ch")
 (CFNC "gboolean g_unichar_isalnum gunichar c")

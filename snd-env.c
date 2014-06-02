@@ -1759,6 +1759,9 @@ choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_en
   else
     {
       n = (enved_target_t)in_n;
+      /* there is a huge bug in some versions of g++ that make it necessary to: */
+      if (in_n < 0) n = ENVED_AMPLITUDE;
+      if (in_n > 2) n = ENVED_SRATE;
       set_enved_target(n); 
     }
   return(C_int_to_Xen_integer((int)enved_target(ss)));

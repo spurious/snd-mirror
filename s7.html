@@ -4480,10 +4480,27 @@ a          ; here s7 waited for me to type "a" in the terminal
 
 
 <div class="indented">
+<p>An environment can be treated as an IO port, providing what Guile calls a "soft port":
+</p>
+
+<pre class="indented">
+(define (call-with-input-vector v proc)
+  (let ((i -1))
+    (proc (open-environment
+	   (environment* 'read (lambda (p)
+				 (v (set! i (+ i 1)))))))))
+</pre>
+
+<p>Here the IO port is an open environment that redefines the "read" function so that it
+returns the next element of a vector.  See stuff.scm for call-with-output-vector.
+</p>
+</div>
+
+
+<div class="indented">
 
 <p>binary-io.scm in the Snd package has functions that read and write integers and floats in
-both endian choices in a variety of sizes.  Besides read-byte and write-byte, it uses
-integer-decode-float, and the various bitwise operators.
+both endian choices in a variety of sizes.
 </p>
 
 </div>
@@ -5838,7 +5855,7 @@ I wonder what other Scheme programmers (not implementors!) want in this situatio
 Currently, there are no immutable list, string, or vector constants, and
 symbol-&gt;string
 returns a copy of the string.
-One simple way to ensure immutability is to use copy or package the object into a symbol name:
+copy can protect some values.  Or combine object-&gt;string and string-&gt;symbol:
 </p>
 
 <pre class="indented">
@@ -5854,7 +5871,7 @@ symbol-&gt;object
 (1 2 3)
 </pre>
 
-<p>There is one pitfall here.  s7 normally tries to optimize garbage collection by
+<p>s7 normally tries to optimize garbage collection by
 removing some constants from the heap.  If that constant is a sequence, and you later
 set some member of it to something that needs GC protection, nobody in the heap points to it, so
 it is GC'd.  Here is an example:

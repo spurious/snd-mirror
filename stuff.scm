@@ -4,6 +4,7 @@
 
 ;;; ----------------
 (define (empty? obj) 
+  "(empty? obj) returns #t if obj is an empty sequence"
   (catch #t
     (lambda ()
       (if (hash-table? obj)
@@ -14,11 +15,13 @@
 (define applicable? arity)
 
 (define (sequence? obj)
+  "(sequence> obj) returns #t if obj is a sequence (vector, list, string, etc)"
   (catch #t
     (lambda () (length obj))
     (lambda args #f)))
 
 (define (indexable? obj)
+  "(indexable? obj) returns #t if obj can be applied to an index: (obj 0)"
   (and (sequence? obj)
        (applicable? obj)))
       
@@ -36,7 +39,10 @@
 (define (ninth obj) (obj 8))
 (define (tenth obj) (obj 9))
 
+
 (define* (iota n (start 0) (incr 1))
+  "(iota n (start 0)) returns a list counting from start for n:\n\
+    (iota 3) -> '(0 1 2)"
   (if (or (not (integer? n))
 	  (< n 0))
       (error 'wrong-type-arg "iota length ~A should be a non-negative integer" n))
@@ -46,20 +52,28 @@
 	((null? p) lst)
       (set! (car p) i))))
 
+
 (define* (make-circular-list n init)
+  "(make-circular-list n init) returns a circular list with n entries initialized to init:\n\
+    (make-circular-list 3 #f) -> #1=(#f #f #f . #1#)"
   (let ((l (make-list n init)))
     (set-cdr! (list-tail l (- n 1)) l)))
 
 (define (circular-list . objs)
+  "(circular-list . objs) returns a circular list with objs:\n\
+    (circular-list 1 2) -> #1=(1 2 . #1#)"
   (let ((lst (copy objs)))
     (set-cdr! (list-tail lst (- (length lst) 1)) lst)))
 
 (define (circular-list? obj)
+  "(circular-list? obj) returns #t if obj is a circular list"
   (catch #t
     (lambda () (infinite? (length obj)))
     (lambda args #f)))
 
-(define (linearize lst) ; turn circular list into normal list
+(define (linearize lst) 
+  " (linearize lst) turns a circular list into normal list:\n\
+    (linearize (circular-list 1 2)) -> '(1 2)"
   (define (lin-1 lst result sofar)
     (if (or (not (pair? lst))
 	    (memq lst sofar))
@@ -69,17 +83,21 @@
 	       (cons lst sofar))))
   (lin-1 lst () ()))
 
-(define (cyclic? obj) 
+(define (cyclic? obj)
+  "(cyclic obj) returns #t if the sequence obj contains any cycles"
   (pair? (cyclic-sequences obj)))
 
 
 (define (copy-tree lis)
+  "(copy-tree lst) returns a full copy of lst"
   (if (pair? lis)
       (cons (copy-tree (car lis))
 	    (copy-tree (cdr lis)))
       lis))
 
 (define (tree-member sym tree)
+  "(tree-member sym tree) returns #t if sym is found anywhere in tree:\n\
+    (tree-member 'a '(1 (2 a))) -> #t"
   (and (pair? tree)
        (or (eq? (car tree) sym)
 	   (and (pair? (car tree))
@@ -87,6 +105,7 @@
 	   (tree-member sym (cdr tree)))))
 
 (define (adjoin obj lst)
+  "(adjoin obj lst) adds obj to lst if it is not already in lst, returning the new list"
   (if (member obj lst) lst (cons obj lst)))
 
 
@@ -147,9 +166,6 @@
 (define-macro (enum . args)
   `(for-each define ',args (iota (length ',args))))
 
-(define (1- x) (- x 1))
-(define (1+ x) (+ x 1))
-
 (define-macro (destructuring-bind lst expr . body) ; if only there were some use for this!
   `(let ,(letrec ((flatten (lambda (lst1 lst2 args)
 			     (cond ((null? lst1) args)
@@ -174,37 +190,67 @@
     (define-bacro* (,(gensym) ,@arg-defaults)
       `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
 
-#|
-;; the same:
-(define-macro (elambda args . body)
-  (let ((e (gensym)))
-    `(symbol->value 
-      (define-bacro* (,(gensym) ,@args (,e (current-environment)))
-	`((lambda ,(append ',args '(*env*)) ,'(begin ,@body)) ,,@args ,,e)))))
+(define-macro (and-let* vars . body)
+  `(let ()                                ; bind vars, if any is #f stop, else evaluate body with those bindings
+     (and ,@(map (lambda (var) 
+		   `(begin 
+		      (apply define ',var) 
+		      ,(car var))) 
+		 vars)
+          (begin ,@body))))
 
-;; slightly different (worse -- recursion is tricky):
-(define-macro (elambda args . body)
-  (let ((name (gensym))
-	(result (gensym)))
-    `(symbol->value 
-      (define-bacro (,name ,@args)
-	(with-environment 
-	    (augment-environment (procedure-environment ,name)
-	      ,@(append (map (lambda (x) 
-			       `(cons ',x (eval ,x)))
-			     args)
-			`((cons '*env* (outer-environment (current-environment))))))
-	  (let ((,result (begin ,@body)))
-	    `(quote ,,result)))))))
-|#
+(define-macro (while test . body)         ; while loop with predefined break and continue
+  `(call-with-exit
+    (lambda (break) 
+      (letrec ((continue (lambda () 
+			   (if (let () ,test)
+			       (begin 
+				 (let () ,@body)
+				 (continue))
+			       (break)))))
+	(continue)))))
+
+(define-macro (do* spec end . body)
+  `(let* (,@(map (lambda (var) 
+		   (list (car var) (cadr var))) 
+		 spec))
+     (do () ,end
+       ,@body
+       ,@(map (lambda (var) 
+		(if (pair? (cddr var))
+		    `(set! ,(car var) ,(caddr var))
+		    (values)))
+	      spec))))
+
+(define-macro (string-case selector . clauses)
+  `(case (symbol ,selector)             ; case with string constant keys
+     ,@(map (lambda (clause)
+	      (if (pair? (car clause))
+		  `(,(map symbol (car clause)) ,@(cdr clause))
+		  clause))
+	    clauses)))
+
+(define-macro (eval-case key . clauses) ; case with evaluated key-lists
+  (let ((select (gensym)))
+    `(begin 
+       (define ,select ,key)
+       (cond ,@(map (lambda (lst)
+		      (if (pair? (car lst))
+			  (cons `(member ,select (list ,@(car lst)))
+				(cdr lst))
+			  lst))
+		    clauses)))))
 
 
 
 ;;; ---------------- 
 (define (hash-table->alist table)
+  "(hash-table->alist table) returns the contents of table as an association list:\n\
+    (hash-table->alist (hash-table '(a . 1))) -> '((a . 1))"
   (map values table))
 
 (define (merge-hash-tables . tables)
+  "(merge-hash-tables . tables) returns a new hash-table with the contents of all the tables"
   (apply hash-table 
     (apply append 
       (map hash-table->alist tables))))
@@ -233,6 +279,8 @@
 
 ;;; ----------------
 (define (find-if f sequence)
+  "(find-if func sequence) applies func to each member of sequence.\n\
+If func approves of one, find-if returns that member of the sequence"
   (call-with-exit
    (lambda (return)
      (for-each (lambda (arg)
@@ -242,9 +290,15 @@
      #f)))
 
 (define (member? obj sequence)
+  "(member? obj sequence) returns #t if obj is an element of sequence"
   (find-if (lambda (x) (equal? x obj)) sequence))
 
+
 (define (index-if f sequence)
+  "(index-if func sequence) applies func to each member of sequence.\n\
+If func approves of one, index-if returns the index that gives that element's position.\n\
+    (index-if (lambda (x) (= x 32)) #(0 1 32 4)) -> 2\n\
+    (index-if (lambda (x) (= (cdr x) 32)) (hash-table '(a . 1) '(b . 32))) -> 'b"
   (call-with-exit
    (lambda (return) 
      (if (or (hash-table? sequence)
@@ -262,6 +316,7 @@
      #f)))
 
 (define (count-if f sequence)
+  "(count-if func sequence) applies func to each member of sequence, returning the number of times func approves."
   (let ((count 0))
     (for-each (lambda (arg)
 		(if (f arg)
@@ -270,6 +325,7 @@
     count))
 
 (define (every? f sequence)
+  "(every func sequence) returns #t if func approves of every member of sequence"
   (call-with-exit
    (lambda (return)
      (for-each (lambda (arg)
@@ -279,6 +335,7 @@
      #t)))
 
 (define (any? f sequence)
+  "(any func sequence) returns #t if func approves of any member of sequence"
   (call-with-exit
    (lambda (return)
      (for-each (lambda (arg)
@@ -386,12 +443,14 @@
 
 
 ;;; ----------------
+(define (sequences->list . sequences)
+  (apply append 
+    (map (lambda (sequence) 
+	   (map values sequence)) 
+	 sequences)))
+
 (define (concatenate type . sequences)
-  (apply type 
-    (apply append 
-      (map (lambda (sequence) 
-	     (map values sequence)) 
-	   sequences))))
+  (apply type (apply sequences->list sequences)))
 
 (define (intersection type . sequences)
   (apply type (let ((lst ()))
@@ -411,7 +470,7 @@
 		(for-each (lambda (obj)
 			    (if (not (member obj lst))
 				(set! lst (cons obj lst))))
-			  (apply append (map (lambda (sequence) (map values sequence)) sequences)))
+			  (apply sequences->list sequences))
 		(reverse lst))))
 
 (define (asymmetric-difference type . sequences) ; complement, elements in B's not in A
@@ -432,7 +491,7 @@
       (apply type ())))
   
 (define (symmetric-difference type . sequences)  ; xor, elements in an odd number of sequences (logxor A B...)
-  (let ((all (apply append (map (lambda (sequence) (map values sequence)) sequences))))
+  (let ((all (apply sequences->list sequences)))
     (collect-if type (lambda (obj) 
 		       (odd? (count-if (lambda (x) 
 					 (equal? x obj)) 
@@ -547,6 +606,7 @@
 		     (set! (cdr prev) mid)
 		     (set! prev mid)))))))))
 
+;; from Rick
 (define (byte siz pos) ;; -> cache size, position and mask.
   (list siz pos (ash (- (ash 1 siz) 1) pos)))
 
@@ -736,56 +796,6 @@
 
 
 ;;; ----------------
-(define-macro (and-let* vars . body)
-  `(let ()                                ; bind vars, if any is #f stop, else evaluate body with those bindings
-     (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars)
-          (begin ,@body))))
-
-(define-macro (while test . body)         ; while loop with predefined break and continue
-  `(call-with-exit
-    (lambda (break) 
-      (letrec ((continue (lambda () 
-			   (if (let () ,test)
-			       (begin 
-				 (let () ,@body)
-				 (continue))
-			       (break)))))
-	(continue)))))
-
-(define-macro (do* spec end . body)
-  `(let* (,@(map (lambda (var) 
-		   (list (car var) (cadr var))) 
-		 spec))
-     (do () ,end
-       ,@body
-       ,@(map (lambda (var) 
-		(if (pair? (cddr var))
-		    `(set! ,(car var) ,(caddr var))
-		    (values)))
-	      spec))))
-
-(define-macro (string-case selector . clauses)
-  `(case (symbol ,selector)             ; case with string constant keys
-     ,@(map (lambda (clause)
-	      (if (pair? (car clause))
-		  `(,(map symbol (car clause)) ,@(cdr clause))
-		  clause))
-	    clauses)))
-
-(define-macro (eval-case key . clauses) ; case with evaluated key-lists
-  (let ((select (gensym)))
-    `(begin 
-       (define ,select ,key)
-       (cond ,@(map (lambda (lst)
-		      (if (pair? (car lst))
-			  (cons `(member ,select (list ,@(car lst)))
-				(cdr lst))
-			  lst))
-		    clauses)))))
-
-
-
-;;; ----------------
 (define (for-each-subset func args)
   ;; form each subset of args, apply func to the subsets that fit its arity
   (define (subset source dest len)
@@ -824,6 +834,9 @@
 (define (clamp minimum x maximum)
   (min maximum (max x minimum)))
 
+(define (1- x) (- x 1))
+(define (1+ x) (+ x 1))
+
 (define (n-choose-k n k)
   "(n-choose-k n k) returns the binomial coefficient C(N,K)"
   (let ((mn (min k (- n k))))
@@ -850,3 +863,30 @@
 		  (if (not (assq (car slot) slots))
 		      (set! slots (cons slot slots))))
 		pe))))
+
+(define (call-with-input-vector v proc)
+  (let ((i -1))
+    (proc (open-environment
+	   (environment* 'read (lambda (p)
+				 (v (set! i (+ i 1)))))))))
+
+(define (call-with-output-vector proc)
+  (let* ((size 1)
+	 (v (make-vector size #f))
+	 (i 0)
+	 (write-to-vector (lambda (obj p)
+			    (when (= i size) ; make the vector bigger to accommodate the output
+			      (set! v (copy v (make-vector (set! size (* size 2)) #f))))
+			    (set! (v i) obj)
+			    (set! i (+ i 1))
+			    #<unspecified>))) ; that's what write/display return!
+    (proc (open-environment
+	   (environment* 'write (lambda* (obj p)
+				  ((if (not (environment? p)) write write-to-vector) obj p))
+			 'display (lambda* (obj p)
+				    ((if (not (environment? p)) display write-to-vector) obj p))
+			 'format (lambda (p . args)
+				   (if (not (environment? p))
+				       (apply format p args)
+				       (write (apply format #f args) p))))))
+    (make-shared-vector v (list i)))) ; ignore extra trailing elements
