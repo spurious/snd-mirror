@@ -3499,7 +3499,6 @@ static void init_gc_caches(s7_scheme *sc)
 #endif
 }
 
-
 #define S7_MARK(Obj) do {s7_pointer _p_; _p_ = Obj; (*mark_function[type(_p_)])(_p_);} while (0)
 
 static void mark_vector_1(s7_pointer p, s7_Int top)
@@ -4058,7 +4057,7 @@ int s7_gc_freed(s7_scheme *sc)
 }
 
 
-#define WITH_DUMP_HEAP DEBUGGING
+#define WITH_DUMP_HEAP 0
 #if WITH_DUMP_HEAP
 static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 {
@@ -4720,11 +4719,7 @@ static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
   if (car(x) == sym)
     {
       vector_element(sc->symbol_table, loc) = cdr(x);
-      free(x); 
-      /* a gensym is put in the symbol table, then later freed, and its link freed here -- was allocated specially
-       *   in g_gensym. line 3151 we call remove, but call/cc is somehow confusing this.
-       *   still looking...
-       */
+      free(x);
     }
   else
     {
@@ -32302,7 +32297,13 @@ static ht_iter *ht_iter_alloc(void)
 
 static bool equal_ht_iter(void *val1, void *val2)
 {
-  return(val1 == val2);
+  ht_iter *h1, *h2;
+  if (val1 == val2) return(true);
+  h1 = (ht_iter *)val1;
+  h2 = (ht_iter *)val2;
+  return((h1->table == h2->table) &&
+	 (h1->loc == h2->loc)&&
+	 (h1->lst == h2->lst));
 }
 
 
@@ -38271,12 +38272,22 @@ static bool next_for_each(s7_scheme *sc)
   z = sc->NIL;
 
   vargs = counter_list(sc->args);
-  fargs = counter_result(sc->args);
+  fargs = counter_result(sc->args); /* this is the saved list for args */
   loc = counter_count(sc->args);
 
   /* for-each func ... -- each trailing sequence arg contributes one arg to the current call on func, 
    *   so in the next loop, gather one arg from each sequence.
    *   environments are turned into lists at the start.
+   *
+   * there is one problem: the symbol-table is a vector of lists outside the heap.  When a gensym
+   *   is added, the list link is allocated outside the heap.  When the GC sees that symbol is
+   *   now unused, it frees it and the symbol-table's link.  If a for-each is traversing that
+   *   list while this change is happening, it can end up pointing to freed memory, eventually
+   *   causing the GC to segfault when it tries to mark counter_result.  This seems to happen
+   *   only if call/cc is also in play, and seems to me to indicate that the continuation stack
+   *   top indication in the GC is not correct -- surely the symbol would be marked if it were
+   *   on the stack?  So, in this case, copy the list passed to for-each -- someday I'll figure
+   *   this out.
    */
 
   for (x = fargs, y = vargs; is_not_null(x); x = cdr(x), y = cdr(y))
@@ -38572,7 +38583,11 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 
   sc->y = args;
   sc->args = make_counter(sc, sc->x, safe_reverse_in_place(sc, sc->z), 0, len);
-  /* counter_result: func-arglist, counter_list: objects, counter_count: current count, counter_length: applicable length */
+  /* counter_result(sc->x): func-arglist, (this is a saved list used for args on each func application)
+   * counter_list(sc->z reversed): objects, 
+   * counter_count(0): current count, 
+   * counter_length(len): applicable length 
+   */
 
   sc->x = sc->NIL;
   sc->y = sc->NIL;
@@ -38764,7 +38779,6 @@ static bool next_map(s7_scheme *sc)
       cdr(sc->temp_cell_1) = sc->args;
       sc->args = sc->temp_cell;
     }
-
   return(true);
 }
 
@@ -59062,7 +59076,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* the immutable constant check needs to wait until we have the actual new value because
        *   we want to ignore the rebinding (not raise an error) if it is the existing value.
-       *   This happens when we reload a file that has calls define-constant.
+       *   This happens when we reload a file that calls define-constant.
        */
       if (is_immutable(sc->code))                                        /* (define pi 3) or (define (pi a) a) */
 	{
@@ -69904,13 +69918,15 @@ int main(int argc, char **argv)
  * maybe read/write-bytevector should be built-in -- file_read basically
  *   others of that ilk: open-input|output-bytevector
  *
- * gmp/mpfr/mpc as cload? jn/yn from mpfr? [no complex, but can we fake it?] [see snd-xen] 
- * fft from fftw + mpfr/mpc version? gsl?
- *
  * should (equal? "" #u8()) be #t?
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-*
  * doc strings for stuff.scm, s7.html entry for stuff.scm
+ *
+ * format:
+ *   ~<~> in CL are for text justification, ~? is also doable without great pain
+ *   perhaps ~K: "~{car: ~A, cdr: ~K~}" where ~K automatically closes the loop processing
+ *   ~^ should also escape circles
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc
  *   (environment* 'value "hi" 'string-length g_utf8_strlen)

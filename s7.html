@@ -3133,9 +3133,6 @@ v3
 &gt; (for-each (lambda (p) (format #t "~A~%" (procedure-source p))) (all-methods v3 'multiply))
 (lambda (obj num) (* num ((class-2 'multiply) obj) (add obj)))
 (lambda (obj) (with-environment obj (* a b c)))
-
-
-;; another obvious possibility: generic macros
 </pre>
 
 <p>with-environment (used briefly above) provides an even more striking simplification of syntax
@@ -3611,33 +3608,6 @@ is 15, as anyone would expect.
 </td>
 </tr>
 </table>
-
-<p>Here's a much more entertaining version:
-</p>
-<pre>
-(define (flatten! lst) ; in-place flatten
-  (let loop ((L lst))
-    (if (pair? (car L))
-	(let ((end (cdr L))
-	      (p (car L)))
-	  (set! (car L) (car p))
-	  (set! (cdr L) (cdr p))
-	  (set! (cdr (list-tail L (- (length p) 1))) end)
-	  (loop L))
-	(if (not (null? (cdr L)))
-	    (if (null? (car L))
-		(begin
-		  (set! (car L) (cadr L))
-		  (set! (cdr L) (cddr L))
-		  (loop L))
-		(loop (cdr L)))))
-    (if (equal? lst '(()))
-	()
-	(let ((len (length lst)))
-	  (if (null? (car (list-tail lst (- len 1))))
-	      (set! (cdr (list-tail lst (- len 2))) ()))
-	  lst))))
-</pre>
 </div>
 
 </blockquote>
@@ -3776,10 +3746,20 @@ continuing...2
 
 <p>In a more general case, the error handler is separate from the
 catch body, and needs a way to distinguish a real continuation
-from a simple procedure.  Otherwise, it blithely announces that
-it is continuing from the point of the error, but then fails to do so.
+from a simple procedure.  
 </p>
 
+<pre class="indented">
+(define (continuable-error . args)
+  (call/cc 
+   (lambda (continue)
+     (apply error args))))
+
+(define (continue-from-error)
+  (if (<em class=red>continuation?</em> ((error-environment) 'continue)) ; might be #&lt;undefined&gt; or a function as in the while macro
+      (((error-environment) 'continue))
+      'bummer))
+</pre>
 
 
 

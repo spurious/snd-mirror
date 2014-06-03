@@ -797,7 +797,7 @@ If func approves of one, index-if returns the index that gives that element's po
 
 ;;; ----------------
 (define (for-each-subset func args)
-  ;; form each subset of args, apply func to the subsets that fit its arity
+  "(for-each-subset func args) forms each subset of args, then applies func to the subsets that fit its arity"
   (define (subset source dest len)
     (if (null? source)
         (if (aritable? func len)             ; does this subset fit?
@@ -808,8 +808,8 @@ If func approves of one, index-if returns the index that gives that element's po
   (subset args () 0))
 
 (define (for-each-permutation func vals)
-  ;; apply func to every permutation of vals: 
-  ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
+  "(for-each-permutation func vals) applies func to every permutation of vals:\n\
+    (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))"
   (define (pinner cur nvals len)
     (if (= len 1)
         (apply func (cons (car nvals) cur))
@@ -853,6 +853,17 @@ If func approves of one, index-if returns the index that gives that element's po
 
 
 ;;; ----------------
+
+(define (continuable-error . args)
+  "(continuable-error . args) is (apply error args) wrapped in a continuation named 'continue."
+  (call/cc 
+   (lambda (continue)
+     (apply error args))))
+
+(define (continue-from-error)
+  "(continue-from-error) tries to continue from the point of the earlier continuable-error"
+  (if (continuation? ((error-environment) 'continue))
+      (((error-environment) 'continue))))
 
 (define (flatten-environment e)
   (let ((slots ()))
