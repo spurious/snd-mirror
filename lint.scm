@@ -3370,8 +3370,6 @@
 	  (let ((ats ())
 		(fts ())
 		(ge (global-environment)))
-	    (for-each
-	     (lambda (lst)
 	       (for-each 
 		(lambda (sym)
 			(if (not (eq? (ge sym) #<undefined>))
@@ -3380,7 +3378,6 @@
 				  (set! fts (cons sym fts)))
 			      (if (not (argument-data sym)) 
 				  (set! ats (cons sym ats))))))
-		lst))
 	     st)
 	    (format *stderr* "ft: ~A~%at: ~A~%" fts ats)))
 |#

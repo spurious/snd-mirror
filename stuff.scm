@@ -346,6 +346,8 @@ If func approves of one, index-if returns the index that gives that element's po
 
 
 (define (collect-if type f sequence)
+  "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\
+    (collect-if list integer? #(1.4 2/3 1 1+i 2)) -> '(1 2)"
   (apply type (let ((collection ()))
 		(for-each (lambda (arg)
 			    (if (f arg)
@@ -354,13 +356,17 @@ If func approves of one, index-if returns the index that gives that element's po
 		(reverse collection))))
 
 (define (remove-if type f sequence)
+  "(remove-if type f sequence) returns via type the elements of sequence that do not satisfy func:\n\
+    (remove-if list integer? #(1.4 2/3 1 1+i 2)) -> '(1.4 2/3 1+1i)"
   (collect-if type (lambda (obj) (not (f obj))) sequence))
 
-(define (nonce type sequence) ; return the objects that only occur once
+(define (nonce type sequence) 
+  "(nonce type sequence) returns via type the elements of sequence that occur only once"
   (collect-if type (lambda (obj) (= (count-if (lambda (x) (equal? x obj)) sequence) 1)) sequence))
 
 
 (define (full-find-if f sequence)
+  "(full-find-if func sequence) searches sequence, and recursively any sequences it contains, for an element that satisfies func"
   (call-with-exit
    (lambda (return)
      (letrec ((full-find-if-1 
@@ -375,12 +381,14 @@ If func approves of one, index-if returns the index that gives that element's po
      #f)))
 
 (define (full-count-if f sequence)
+  "(full-count-if func sequence) searches sequence, and recursively any sequences it contains, returning the number of elements that satisfy func"
   (let ((count 0))
     (full-find-if (lambda (x) (if (f x) (set! count (+ count 1))) #f) sequence)
     count))
 
 (define (full-index-if f sequence)
-  ;; (apply sequence (full-index-if f sequence)) -> something that satisfies f
+  "(full-index-if func sequence) searches sequence, and recursively any sequences it contains, returning the indices of the first element that satisfies func:\n\
+    (full-index-if (lambda (x) (and (integer? x) (= x 3))) '(1 (2 3))) -> '(1 1)"
   (call-with-exit
    (lambda (return)
      (letrec ((full-index-if-1 
@@ -450,6 +458,8 @@ If func approves of one, index-if returns the index that gives that element's po
 	 sequences)))
 
 (define (concatenate type . sequences)
+  "(concatenate type . sequences) concatenates sequences returning an object of type:\n\
+    (concatenate vector '(1 2) #(3 4)) -> #(1 2 3 4)"
   (apply type (apply sequences->list sequences)))
 
 (define (intersection type . sequences)
@@ -530,13 +540,17 @@ If func approves of one, index-if returns the index that gives that element's po
 			  (lambda (obj) (eq? obj #<unspecified>))
 			  (lambda (obj) (eq? obj #<undefined>)))))
     (lambda (obj)
+      "(->predicate obj) returns the type predicate function for obj:\n\
+    (->predicate 31) -> integer?"
       (find-if (lambda (pred) (pred obj)) predicates))))
 
-(define (add-predicate p)                    ; add a predicate to the predicates list in the ->predicate closure
+(define (add-predicate p) 
+  "(add-predicate p) adds p (and boolean function of one argument) to the list of predicates used by ->predicate"
   (let ((e (procedure-environment ->predicate)))
     (set! (e 'predicates) (cons p (e 'predicates)))))
 
 (define (typeq? . objs)
+  "(typeq? . objs) returns #t if all objs have the same type (as determined by ->predicate)"
   (or (null? objs)
       (every? (->predicate (car objs)) (cdr objs))))
 
@@ -559,6 +573,7 @@ If func approves of one, index-if returns the index that gives that element's po
 
 ;;; ----------------
 (define (2^n? x) 
+  "(2^n? x) returns #t if x is a power of 2"
   (and (not (zero? x)) 
        (zero? (logand x (- x 1)))))
 

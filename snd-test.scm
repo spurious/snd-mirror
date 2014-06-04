@@ -47006,48 +47006,17 @@ EDITS: 1
 
 #|
 (let ((st (symbol-table)))
-  (for-each
-   (lambda (lst)
-     (for-each 
+  (for-each 
       (lambda (sym)
 	(if (defined? sym)
 	    (let ((val (symbol->value sym)))
 	      (if (and (procedure? val)
 		       (string=? "" (procedure-documentation val)))
 		  (snd-display #__line__ "~A " sym)))))
-      lst))
    st))
 |#
 
 (s7-version)
-
-#|
-(let ((table (symbol-table)))
-  (let ((counts (make-vector 100 0)))
-    (do ((i 0 (+ i 1)))
-	((= i (length table)))
-      (let ((len (length (table i))))
-	(if (>= len 100) (set! len 99))
-	(set! (counts len) (+ (counts len) 1))))
-    (do ((i 0 (+ i 1)))
-	((or (= i 100))
-	 (= (counts i) 0))
-      (format *stderr* "~D ~D~%" i (counts i)))))
-|#
-#|
-0 8581
-1 6358
-2 2687
-3 989
-4 317
-5 167
-6 73
-7 45
-8 27
-9 8
-10 6
-11 1
-|#
 
 (if with-exit (exit))
 

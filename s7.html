@@ -5290,29 +5290,25 @@ returns the value dynamically bound to it.  A variable can access both of its va
 </pre>
 
 <p>
-<code>symbol-table</code> returns the symbol table, a vector of lists of symbols.
+<code>symbol-table</code> returns a list containing the symbols currently in the symbol-table.
 Here we scan the symbol table looking for any function that doesn't have documentation:
 </p>
 
 <pre class="indented">
-(for-each
-  (lambda (lst)
-    (for-each 
-       (lambda (sym)
-          (if (<em class=red>defined?</em> sym)
-              (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-                (if (and (procedure? val)
-                         (string=? "" (procedure-documentation val)))
-                    (format *stderr* "~A " sym)))))
-        lst))
+(for-each 
+   (lambda (sym)
+     (if (<em class=red>defined?</em> sym)
+         (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+           (if (and (procedure? val)
+                    (string=? "" (procedure-documentation val)))
+               (format *stderr* "~A " sym)))))
   (<em class=red>symbol-table</em>))
 </pre>
 
 
 <div class="indented">
 
-<p>But geez how boring can something be?  Nobody cares about procedure-documentation!
-Here's a better example, an automatic software torture tester.
+<p>Here's a better example, an automatic software tester.
 </p>
 
 <pre class="indented">
@@ -5326,24 +5322,21 @@ Here's a better example, an automatic software torture tester.
 	   (autotest func (cons c args) (- args-left 1)))
 	 constants)))
 
-  (for-each
-    (lambda (lst)
-      (for-each 
-	(lambda (sym)
-	   (if (<em class=red>defined?</em> sym)
-	       (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-		 (if (procedure? val)
-		     (let* ((arity (procedure-arity val))
-			    (req (car arity))
-			    (opt (cadr arity))
-			    (rst (caddr arity)))
-		       (if (or (&gt; (+ opt req) 4)
-		       	       (member (symbol-&gt;string sym) '("exit" "abort")))
-			   (format #t ";skip ~A for now~%" sym) ; no time! no time!
-			   (begin
-			     (format #t ";whack on ~A...~%" sym)
-			     (autotest val () (+ req opt 1 (if rst 1 0))))))))))
-	 lst))
+    (for-each 
+      (lambda (sym)
+	(if (<em class=red>defined?</em> sym)
+	    (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+              (if (procedure? val)
+	          (let* ((arity (procedure-arity val))
+		         (req (car arity))
+		         (opt (cadr arity))
+		         (rst (caddr arity)))
+	            (if (or (&gt; (+ opt req) 4)
+	       	            (member (symbol-&gt;string sym) '("exit" "abort")))
+		        (format #t ";skip ~A for now~%" sym) ; no time! no time!
+		        (begin
+		          (format #t ";whack on ~A...~%" sym)
+		          (autotest val () (+ req opt 1 (if rst 1 0))))))))))
     (<em class=red>symbol-table</em>)))
 </pre>
 
@@ -5364,21 +5357,18 @@ The function takes one argument, the environment in which loads and evals should
   (define (wrap-all)
     (let ((e (environment)))
       (for-each
-        (lambda (lst)
-	  (for-each 
-	   (lambda (sym)
-	     (if (and (<em class=red>defined?</em> sym)
-		      (not (constant? sym)))
-		 (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-		   (if (procedure? val)
-		       (let ((new-val (apply lambda 'args `((profile-1 ,call) (apply ,val args)))))
-			 (set! (calls call) (cons sym 0))
-			 (set! call (+ call 1))
-			 (if (procedure-setter val)
-			     (set! (procedure-setter new-val) (procedure-setter val)))
-			 (augment-environment! e (cons sym new-val)))))))
-	   lst))
-        (<em class=red>symbol-table</em>))
+        (lambda (sym)
+          (if (and (<em class=red>defined?</em> sym)
+	           (not (constant? sym)))
+	      (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+	        (if (procedure? val)
+	            (let ((new-val (apply lambda 'args `((profile-1 ,call) (apply ,val args)))))
+		      (set! (calls call) (cons sym 0))
+		      (set! call (+ call 1))
+		      (if (procedure-setter val)
+		          (set! (procedure-setter new-val) (procedure-setter val)))
+		      (augment-environment! e (cons sym new-val)))))))
+       (<em class=red>symbol-table</em>))
       e))
 
   (expression (wrap-all))

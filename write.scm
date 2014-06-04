@@ -262,8 +262,6 @@
 
 #|
 (let ((st (symbol-table)))
-  (do ((i 0 (+ i 1))) 
-      ((= i (vector-length st)))
     (for-each
      (lambda (sym)
        (if (defined? sym)
@@ -274,8 +272,7 @@
 				       (pp (procedure-source val))
 				       (pp val)))
 	     (newline *stderr*))))
-     (st i))))
-  
+     st))
 |#
 
 
@@ -286,8 +283,6 @@
   (call-with-output-file file
     (lambda (p)
       (let ((st (symbol-table)))
-	(do ((i 0 (+ i 1))) 
-	    ((= i (vector-length st)))
 	  (for-each
 	   (lambda (sym)
 	     (if (defined? sym)
@@ -296,13 +291,11 @@
 		       (format p "(if (not (defined? '~A)) (load ~S))~%" sym choice)
 		       (if (procedure? choice)
 			   (format p "(if (not (defined? '~A)) ((~S) (current-environment)))~%" sym choice))))))
-	   (st i)))
+	   st)
 
       ;; now presumably we've loaded all the findable files, and called the autoload functions
       ;; run through the table again checking for diffs or omissions -- will this cover all the s7 settings?
 
-	(do ((i 0 (+ i 1))) 
-	    ((= i (vector-length st)))
 	  (for-each
 	   (lambda (sym)
 	     (if (and (defined? sym)
@@ -328,7 +321,7 @@
 			       (format p "(if (not (defined? '~A)) (define ~A ~A))~%" sym sym str)))
 			   (lambda args
 			     (format *stderr* "~A not saved~%" sym))))))))
-	   (st i)))
+	   st)
 
 	;; now look for changes?  This probably can't work for macros/functions (not equal? anyway)
 

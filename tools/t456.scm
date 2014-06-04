@@ -7,8 +7,13 @@
       (format *stderr* "this won't work in Snd!~%") ; see t705.scm
       (exit)))
 
+;(load "stuff.scm")
+;(load "r7rs.scm")
+
 (define data-file #f) ;(open-output-file "output-of-t455"))
 (define max-args 3)
+
+(define-constant one 1)
 
 (define constants (list #f #t () #\a (/ 1 most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 			"hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) (list (list 1 2)) (list (list 1)) (list ()) #() 
@@ -17,11 +22,11 @@
 			most-positive-fixnum most-negative-fixnum (- most-positive-fixnum 1) (+ most-negative-fixnum 1)
 			-1 0 0.0 1 1.5 1.0-1.0i 3/4 #\null -63 (make-hash-table) (hash-table '(a . 2) '(b . 3))
 			'((1 2) (3 4)) '((1 (2)) (((3) 4))) "" (list #(1) "1") '(1 2 . 3) (list (cons 'a 2) (cons 'b 3))
-			#(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs 'a 'b
+			#(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs 'a 'b one
 			(lambda args args) (lambda* ((a 3) (b 2)) (+ a b)) (lambda () 3)
 			(augment-environment () (cons 'a 1)) (global-environment)
 			*load-hook*  *error-hook* (make-random-state 123)
-			quasiquote macroexpand cond-expand begin let letrec* if case cond pi (call-with-exit (lambda (goto) goto))
+			quasiquote macroexpand cond-expand begin let letrec* if case cond (call-with-exit (lambda (goto) goto))
 			;(with-baffle (call/cc (lambda (cc) cc)))
 			(string #\a #\null #\b) #2d((1 2) (3 4)) (environment* 'a 2 'b 3)
 			#<undefined> #<eof> #<unspecified> (make-vector 3 0 #t) (make-vector 3 -1.4 #t)
@@ -38,7 +43,7 @@
 
 (define (autotest func args args-now args-left)
   ;; args-left is at least 1, args-now starts at 0, args starts at ()
-  ;(format *stderr* "~A: ~D ~D (~D ~D): ~A~%" func (length args) args-now low args-left args)
+  ;(if (macro? func) (format *stderr* "~A: ~D ~D (~D ~D): ~A~%" func (length args) args-now low args-left args))
     
   (call-with-exit
    (lambda (quit)
@@ -47,7 +52,7 @@
 	   (lambda () 
 	     (cond ((apply func args) => 
 		    (lambda (val) 
-		      (if data-file 
+		      (if data-file
 			  (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))))
 	   (lambda any
 	     (if (or (eq? (car any) 'wrong-type-arg)
@@ -64,10 +69,10 @@
 		(set-car! p (car constants))
 		(catch #t
 		  (lambda ()
-;		    (if (equal? func catch) (format *stderr* "~A: ~A~%" func c-args))
+		    ;(if (macro? func) (format *stderr* "~A: ~A~%" func c-args))
 		    (cond ((apply func c-args) => 
 			   (lambda (val)
-			     (if data-file 
+			     (if data-file
 				 (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
 		  (lambda any 
 		    (if (and (eq? (car any) 'wrong-type-arg)
@@ -81,10 +86,10 @@
 		   (catch #t 
 		     (lambda () 
 		       (set-car! p c)
-;		       (if (equal? func catch) (format *stderr* "~A: ~A~%" func c-args))
+		       ;(if (macro? func) (format *stderr* "~A: ~A~%" func c-args))
 		       (cond ((apply func c-args) => 
 			      (lambda (val)
-				(if data-file 
+				(if data-file
 				    (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
 		     (lambda any 
 		       'error)))
@@ -102,7 +107,7 @@
 (define (test-sym sym)
   (if (defined? sym)
       (let ((f (symbol->value sym)))
-	(let ((argn (and (procedure? f) (arity f))))
+	(let ((argn (and (or (procedure? f) (macro? f)) (arity f))))
 	  (if argn
 	      (let ((bottom (car argn))
 		    (top (min (cdr argn) max-args))
@@ -114,7 +119,10 @@
 					       "open-environment" "eval" "vector" "list" "cons"
 
 					       "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
-					       "boolean=?" "symbol=?"
+					       "boolean=?" "symbol=?" 
+
+;					       "do*" "define-slot-accessor" "power-set"
+;					       "define-library" "define-record-type"
 					       ))))
 		    (begin
 		      (if (< top bottom)
@@ -129,12 +137,9 @@
 			  (autotest f () 0 top))))))))))
 
 (define (all)
-  (let ((st (symbol-table))
-	(st-len (length (symbol-table))))
-    (do ((i 0 (+ i 1))) 
-	((= i st-len)
-	 (if data-file (close-output-port data-file))
-	 (format #t "~%all done~%"))
-      (for-each test-sym (st i)))))
+  (let ((st (symbol-table)))
+    (for-each test-sym st)
+    (if data-file (close-output-port data-file))
+    (format #t "~%all done~%")))
 
 (all)

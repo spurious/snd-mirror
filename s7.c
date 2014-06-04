@@ -4594,13 +4594,29 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, uns
 
 static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_table "(symbol-table) returns the s7 symbol table (a vector)"
-
-  /* this is trouble -- we can't protect it by copying its vector elements into an s7 vector
-   *   because the symbol-table is outside the gc's protection!  Not sure now what to do --
-   *   maybe copy every list?!?
+  #define H_symbol_table "(symbol-table) returns a list containing the current symbol-table symbols"
+  s7_pointer lst, x;
+  int i;
+  
+  /* this can't be optimized by returning the actual symbol-table (a vector of lists), because
+   *    gensyms can cause the table's lists and symbols to change at any time.  This wreaks havoc
+   *    on traversals like for-each.  So, symbol-table returns a snap-shot of the table contents
+   *    at the time it is called, and we call gc before making the list.  I suppose the next step
+   *    is to check that we have room, and increase the heap here if necessary!
+   *
+   *    (define (for-each-symbol func num) (for-each (lambda (sym) (if (> num 0) (for-each-symbol func (- num 1)) (func sym))) (symbol-table)))
+   *    (for-each-symbol (lambda (sym) (gensym) 1))
    */
-  return(sc->symbol_table);
+  sc->w = sc->NIL;
+  
+  gc(sc);
+  for (i = 0; i < vector_length(sc->symbol_table); i++) 
+    for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
+      sc->w = cons(sc, car(x), sc->w);
+
+  lst = sc->w;
+  sc->w = sc->NIL;
+  return(lst);
 }
 
 
@@ -4643,10 +4659,13 @@ bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
    (lambda (lst)
       (for-each
          (lambda (sym)
-            (format #t "~A ~S~%" sym (symbol->value sym)))
+           (format #t "~A ~S~%" sym (symbol->value sym)))
          lst))
    (symbol-table))
-   
+
+   but this can't work in general if gensyms are in use.  When the latter is unreachable, it is pruned
+   from the symbol-table, but we might be traversing the table!  Copying each list does not help.
+
    at normal motif-snd startup there are 5699 globals (2583 of them constant), and 411 other undefined symbols
 */
 
@@ -35452,6 +35471,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 
     case T_PAIR:                    /* top level only, as in the other cases, last arg checks for circles */
       return(cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true))); 
+      /* list_copy assumes obj is in the heap (visible to the GC) -- don't use it with the symbol-table! */
 
 #if WITH_GMP
     case T_BIG_INTEGER:
@@ -38278,16 +38298,6 @@ static bool next_for_each(s7_scheme *sc)
   /* for-each func ... -- each trailing sequence arg contributes one arg to the current call on func, 
    *   so in the next loop, gather one arg from each sequence.
    *   environments are turned into lists at the start.
-   *
-   * there is one problem: the symbol-table is a vector of lists outside the heap.  When a gensym
-   *   is added, the list link is allocated outside the heap.  When the GC sees that symbol is
-   *   now unused, it frees it and the symbol-table's link.  If a for-each is traversing that
-   *   list while this change is happening, it can end up pointing to freed memory, eventually
-   *   causing the GC to segfault when it tries to mark counter_result.  This seems to happen
-   *   only if call/cc is also in play, and seems to me to indicate that the continuation stack
-   *   top indication in the GC is not correct -- surely the symbol would be marked if it were
-   *   on the stack?  So, in this case, copy the list passed to for-each -- someday I'll figure
-   *   this out.
    */
 
   for (x = fargs, y = vargs; is_not_null(x); x = cdr(x), y = cdr(y))
@@ -50369,6 +50379,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer args, counter;
 	counter = sc->args;
 	args = counter_list(counter);
+
 	if (is_pair(args))
 	  {
 	    s7_pointer code;
@@ -69915,9 +69926,6 @@ int main(int argc, char **argv)
  *     framples: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  *
- * maybe read/write-bytevector should be built-in -- file_read basically
- *   others of that ilk: open-input|output-bytevector
- *
  * should (equal? "" #u8()) be #t?
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-*
@@ -69925,7 +69933,6 @@ int main(int argc, char **argv)
  *
  * format:
  *   ~<~> in CL are for text justification, ~? is also doable without great pain
- *   perhaps ~K: "~{car: ~A, cdr: ~K~}" where ~K automatically closes the loop processing
  *   ~^ should also escape circles
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc
