@@ -506,7 +506,7 @@ read an ASCII sound file"
   "(mark-loops) places marks at loop points found in the selected sound's header"
   (let ((loops (or (sound-loop-info)
 		   (mus-sound-loop-info (file-name)))))
-    (if (not (null? loops))
+    (if (pair? loops)
 	(begin
 	  (if (not (and (= (car loops) 0) (= (cadr loops) 0)))
 	      (begin
@@ -1704,7 +1704,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
   "(explode-sf2) turns the currently selected soundfont file into a bunch of files of the form sample-name.aif"
   (letrec ((sf2it 
 	    (lambda (lst)
-	      (if (not (null? lst))
+	      (if (pair? lst)
 		  (let* ((vals (car lst))
 			 ;; each inner list is: '(name start loop-start loop-end)
 			 (name (car vals))
@@ -1784,7 +1784,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
       (if (not (member get-current-files (hook-functions open-hook)))
 	  (hook-push open-hook (lambda (hook) (get-current-directory (hook 'name)))))
       (if (and (not (string? last-file-opened))
-	       (not (null? (sounds))))
+	       (pair? (sounds)))
 	  (set! last-file-opened (file-name (or (selected-sound)
 						(car (sounds))))))
       (if (not current-directory)
@@ -1797,7 +1797,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	    (if (find-sound next-file)
 		(error 'file-already-open (list "open-next-file-in-directory" next-file))
 		(begin
-		  (if (not (null? (sounds)))
+		  (if (pair? (sounds))
 		      (close-sound (or (selected-sound)
 				       (car (sounds)))))
 		  (open-sound next-file)))))

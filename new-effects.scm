@@ -395,7 +395,7 @@
 		     (XtSetValues (car sliders) (list XmNvalue (floor (* gate-amount 1000)))))
 		   
 		   (lambda () 
-		     (not (null? (sounds))))))
+		     (pair? (sounds)))))
 	    
 	    (set! sliders
 		  (add-sliders gate-dialog
@@ -2137,7 +2137,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		     (XtSetValues (sliders 2) (list XmNvalue (floor (* convolve-amp 100)))))
 		   
 		   (lambda () 
-		     (not (null? (sounds))))))
+		     (pair? (sounds)))))
 	    
 	    (set! sliders
 		  (add-sliders convolve-dialog
@@ -2405,7 +2405,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		     (XtSetValues (car sliders) (list XmNvalue (floor (* silence-amount 100)))))
 		   
 		   (lambda ()
-		     (not (null? (sounds))))))
+		     (pair? (sounds)))))
 	    
 	    (set! sliders
 		  (add-sliders silence-dialog
@@ -2791,7 +2791,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		     (XtSetValues (car sliders) (list XmNvalue (floor (* random-phase-amp-scaler 100)))))
 		   
 		   (lambda ()
-		     (not (null? (sounds))))))
+		     (pair? (sounds)))))
 	    
 	    (set! sliders
 		  (add-sliders random-phase-dialog

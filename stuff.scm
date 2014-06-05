@@ -413,6 +413,8 @@ If func approves of one, index-if returns the index that gives that element's po
        #f))))
 
 (define (safe-find-if f sequence) ; can handle almost any kind of cycle
+  "(safe-find-if func sequence) searches sequence, and recursively any sequences it contains, for an element that satisfies func.\
+Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (let ((unseen-cycles (cyclic-sequences sequence))
 	(cycles-traversed ()))
     (call-with-exit
@@ -452,6 +454,8 @@ If func approves of one, index-if returns the index that gives that element's po
 
 ;;; ----------------
 (define (sequences->list . sequences)
+  "(sequences->list . sequences) returns a list of elements of all the sequences:\n\
+    (sequences->list \"hi\" #(0 1) (hash-table '(a . 2))) -> '(#\\h #\\i 0 1 (a . 2))"
   (apply append 
     (map (lambda (sequence) 
 	   (map values sequence)) 
@@ -463,6 +467,8 @@ If func approves of one, index-if returns the index that gives that element's po
   (apply type (apply sequences->list sequences)))
 
 (define (intersection type . sequences)
+  "(intersection type . sequences) returns via type the intersection of the sequences:\n\
+    (intersection vector '(1 2 3) #(2 3 4)) -> #(2 3)"
   (apply type (let ((lst ()))
 		(if (pair? sequences)
 		    (for-each (lambda (obj)
@@ -540,8 +546,7 @@ If func approves of one, index-if returns the index that gives that element's po
 			  (lambda (obj) (eq? obj #<unspecified>))
 			  (lambda (obj) (eq? obj #<undefined>)))))
     (lambda (obj)
-      "(->predicate obj) returns the type predicate function for obj:\n\
-    (->predicate 31) -> integer?"
+      "(->predicate obj) returns the type predicate function for obj: (->predicate 31) -> integer?"
       (find-if (lambda (pred) (pred obj)) predicates))))
 
 (define (add-predicate p) 
@@ -875,7 +880,7 @@ If func approves of one, index-if returns the index that gives that element's po
    (lambda (continue)
      (apply error args))))
 
-(define (continue-from-error)
+(define (continue-from-error) ; maybe arg for value to pass back
   "(continue-from-error) tries to continue from the point of the earlier continuable-error"
   (if (continuation? ((error-environment) 'continue))
       (((error-environment) 'continue))))

@@ -101,7 +101,7 @@
     (let* ((samps (map mark-sample ids))
 	   (max-samp (apply max samps)))
       (define (pad-to-sync lst-ids lst-samps)
-	(if (not (null? lst-ids))
+	(if (pair? lst-ids)
 	    (begin
 	      (if (< (car lst-samps) max-samp)
 		  (let ((nsamps (- max-samp (car lst-samps)))
@@ -126,7 +126,7 @@
 			   m1 (car m1-home) (cadr m1-home)
 			   m2 (car m2-home) (cadr m2-home)))
 	(let* ((mark-samps (- m2-samp m1-samp))
-	       (selection-samps (selection-frames))
+	       (selection-samps (selection-framples))
 	       (reg-data (let ((data (make-float-vector selection-samps))
 			       (rd (make-sampler (selection-position))))
 			   (do ((i 0 (+ 1 i)))
@@ -237,7 +237,7 @@
 
 		 (define (report-mark-names-play-hook hook)
 		   (set! samp (+ samp (hook 'size)))
-		   (if (and (not (null? samplist))
+		   (if (and (pair? samplist)
 			    (>= samp (car samplist)))
 		       (begin
 			 (status-report (mark-name (car marklist)) snd)
@@ -263,7 +263,7 @@
 	(for-each 
 	 (lambda (select)
 	   (let ((pos (apply selection-position select))
-		 (len (apply selection-frames select)))
+		 (len (apply selection-framples select)))
 	     (set! ms (cons (apply add-mark pos select) ms))
 	     (set! ms (cons (apply add-mark (+ pos len) select) ms))))
 	(selection-members)))
@@ -286,7 +286,7 @@
 	      (set! (selection-member? #t) #f)) ; clear entire current selection, if any
 	  (set! (selection-member? snd chn) #t)
 	  (set! (selection-position snd chn) beg)
-	  (set! (selection-frames snd chn) (+ 1 (- end beg)))))))
+	  (set! (selection-framples snd chn) (+ 1 (- end beg)))))))
 
 
 ;;; -------- snap-mark-to-beat
@@ -331,7 +331,7 @@
 		   ((= i (channels snd)))
 		 (set! (selection-member? snd i) #t)
 		 (set! (selection-position snd i) start)
-		 (set! (selection-frames snd i) (- end start)))
+		 (set! (selection-framples snd i) (- end start)))
 	       (save-selection filename :header-type htype :data-format dformat :srate (srate snd))
 	       (do ((i 0 (+ 1 i)))
 		   ((= i (channels snd)))
@@ -366,7 +366,7 @@
 		 (let ((mp (mark-properties m)))
 		   (if (and mp
 			    (list? mp)
-			    (not (null? mp)))
+			    (pair? mp))
 		       (let ((mhome (mark-home m))
 			     (msamp (mark-sample m)))
 			 (format fd "(let ((s (find-sound ~S)))~%" (file-name (car mhome)))
@@ -397,7 +397,7 @@
 			     "")
 			 (let ((props (mark-properties n)))
 			   (if (and (list? props)
-				    (not (null? props)))
+				    (pair? props))
 			       (format #f "~%  properties: '~A" props)
 			       ""))))
     (set! (hook 'result) #t)))
@@ -431,7 +431,7 @@
 					   (format #f "~S" (mark-name m))
 					   #f)
 				       (sync m))))
-	  (if (not (null? (mark-properties m)))
+	  (if (pair? (mark-properties m))
 	      (set! str
 		    (string-append str 
 				   (format #f

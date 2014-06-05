@@ -69933,10 +69933,8 @@ int main(int argc, char **argv)
  *
  * format:
  *   ~<~> in CL are for text justification, ~? is also doable without great pain
- *   ~^ should also escape circles
  *   ~n* and ~n:* perhaps, also CL allows ~,+3F
  *
- * stepper by local-cc's.
  * maybe build-in with-let -- need no-consing version of this -- make outer-environment settable?
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc

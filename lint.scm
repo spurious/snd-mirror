@@ -733,7 +733,7 @@
 		 (let ((e (or (assq form env) (hash-table-ref globals form))))
 		   (or (not e)
 		       (and (>= (length e) 4)
-			    (not (null? (list-ref e 3))))
+			    (pair? (list-ref e 3)))
 		       ))))) ; it is a local function
       
       
@@ -1110,7 +1110,7 @@
 						(return #f)))))))
 				 vars)
 				
-				(if (not (null? none-vars))
+				(if (pair? none-vars)
 				    (begin
 				      (for-each
 				       (lambda (nv)
@@ -1336,6 +1336,8 @@
 					       ((even?)        `(odd? ,@(cdr arg)))
 					       ((exact?)       `(inexact? ,@(cdr arg)))
 					       ((inexact?)     `(exact? ,@(cdr arg)))
+					       ((null?)        `(pair? ,@(cdr arg)))
+					       ;; char-upper-case? and lower are not switchable here
 					       (else form))
 					     form))))))
 		       form))
@@ -1427,7 +1429,7 @@
 						      (eq? (car e) 'and))
 						 (set! exprs (append e (cdr exprs)))
 						 (if (not (and (pair? e)                   ; (and ... (or ... 123) ...) -> splice out or
-							       (not (null? (cdr exprs)))
+							       (pair? (cdr exprs))
 							       (eq? (car e) 'or)
 							       (> (length e) 2)
 							       (let ((last (list-ref e (- (length e) 1))))
@@ -1929,7 +1931,7 @@
 						    name
 						    (lists->string form (cadddr form))))
 				   (if (and (boolean? (list-ref form 2))
-					    (not (null? (cdddr form)))
+					    (pair? (cdddr form))
 					    (boolean? (list-ref form 3))
 					    (not (eq? (list-ref form 2) (list-ref form 3)))) ; !
 				       (lint-format "possible simplification:~A"
@@ -2026,21 +2028,21 @@
 	  ;;   this is trickier than it appears: (* 2.0 (random 3)) etc
 
 	  ((/)
-	   (if (not (null? (cdr form)))
+	   (if (pair? (cdr form))
 	       (if (and (null? (cddr form))
 			(number? (cadr form))
 			(zero? (cadr form)))
 		   (lint-format "attempt to invert zero:~A"
 				name 
 				(truncated-list->string form))
-		   (if (and (not (null? (cddr form)))
+		   (if (and (pair? (cddr form))
 			    (member 0 (cddr form)))
 		       (lint-format "attempt to divide by 0:~A"
 				    name
 				    (truncated-list->string form))))))
 	  
 	  ((copy)
-	   (if (not (null? (cdr form)))
+	   (if (pair? (cdr form))
 	       (if (or (number? (cadr form))
 		       (boolean? (cadr form))
 		       (char? (cadr form))
@@ -2051,7 +2053,7 @@
 				name form (cadr form)))))
 	  
 	  ((string-copy)
-	   (if (and (not (null? (cdr form)))
+	   (if (and (pair? (cdr form))
 		    (pair? (cadr form))
 		    (or (eq? (caadr form) 'copy)
 			(eq? (caadr form) 'string-copy)))
@@ -2066,14 +2068,18 @@
 		     (lint-format "this is pointless:~A"
 				  name
 				  (truncated-list->string form))
-		     (if (< (length args) (length (cdr form)))
+		     (if (null? (cdr args))
 			 (lint-format "possible simplification:~A"
 				      name
-				      (lists->string form `(string-append ,@args)))))
+				      (lists->string form (car args)))
+			 (if (< (length args) (length (cdr form)))
+			     (lint-format "possible simplification:~A"
+					  name
+					  (lists->string form `(string-append ,@args))))))
 		 (set! last-simplify-boolean-line-number line-number))))
 	  
 	  ((object->string)
-	   (if (and (not (null? (cdr form)))
+	   (if (and (pair? (cdr form))
 		    (pair? (cadr form))
 		    (eq? (caadr form) 'object->string))
 	       (lint-format "~A could be ~A" 
@@ -2096,9 +2102,9 @@
 			     (list->string . string->list)
 			     (string->list . list->string)
 			     (number->string . string->number))))
-	     (if (and (not (null? (cdr form)))
+	     (if (and (pair? (cdr form))
 		      (pair? (cadr form))
-		      (not (null? (cdadr form)))
+		      (pair? (cdadr form))
 		      (eq? (caadr form) (let ((p (assq head inverses))) (and (pair? p) (cdr p)))))
 		 (lint-format "~A could be (copy ~A)" 
 			      name form (cadadr form)))))
@@ -2109,9 +2115,9 @@
 			     (symbol->keyword . keyword->symbol)
 			     (keyword->symbol . symbol->keyword)
 			     (string->number . number->string))))
-	     (if (and (not (null? (cdr form)))
+	     (if (and (pair? (cdr form))
 		      (pair? (cadr form))
-		      (not (null? (cdadr form)))
+		      (pair? (cdadr form))
 		      (eq? (caadr form) (let ((p (assq head inverses))) (and (pair? p) (cdr p)))))
 		 (lint-format "~A could be ~A" 
 			      name form (cadadr form)))))
@@ -2138,7 +2144,7 @@
 	      ;; a local var
 	      (begin
 		(if (and (>= (length fdata) 4)
-			 (not (null? (list-ref fdata 3))))
+			 (pair? (list-ref fdata 3)))
 		    (let ((type (car (list-ref fdata 3)))
 			  (args (cadr (list-ref fdata 3))))
 		      
@@ -2466,7 +2472,7 @@
 	;; report unused or set-but-unreferenced variables
 	(if (and (not (eq? head 'begin)) ; begin can redefine = set a variable
 		 (list? vars)
-		 (not (null? vars)))
+		 (pair? vars))
 	    (do ((cur vars (cdr cur))
 		 (rst (cdr vars) (cdr rst)))
 		((null? rst))
@@ -2490,10 +2496,10 @@
 		     (set! unused (cons (car arg) unused)))))
 	   vars)
 	  
-	  (if (not (null? set))
+	  (if (pair? set)
 	      (lint-format "~A ~A~A ~{~A~^, ~} set, but not used" 
 			   name head type (if (> (length set) 1) "s" "") (reverse set)))
-	  (if (not (null? unused))
+	  (if (pair? unused)
 	      (lint-format "~A ~A~A ~{~A~^, ~} not used" 
 			   name head type (if (> (length unused) 1) "s" "") (reverse unused)))))
       
@@ -2540,7 +2546,7 @@
 	
 	;(format *stderr* "walk function body: ~A ~A ~A ~A~%" name head args arg-data)
 	(if (and (pair? body)
-		 (not (null? (cdr body)))
+		 (pair? (cdr body))
 		 (string? (car body)))
 	    (begin
 	      (if *report-minor-stuff*
@@ -2743,7 +2749,7 @@
 						  name head 
 						  (truncated-list->string form)))
 				 
-				 (if (not (null? (cddr form)))
+				 (if (pair? (cddr form))
 				     (let ((e (lint-walk sym (caddr form) env)))
 					;(format outport "define ~A: ~A~%" sym (car e))
 				       (if (and (pair? e)
@@ -2898,7 +2904,7 @@
 							     (truncated-list->string clause))
 						(lint-walk name (caddr clause) env))
 					    (lint-walk-body name head (cdr clause) env))
-					(if (not (null? (cdr clause)))
+					(if (pair? (cdr clause))
 					    (lint-format "cond clause is messed up: ~A"
 							 name
 							 (truncated-list->string clause)))))))
@@ -2957,7 +2963,7 @@
 							       name 
 							       (truncated-list->string (cddr form))))))
 				      (set! all-keys (append (if (and (list? keys)
-								      (not (null? keys)))
+								      (pair? keys))
 								 keys 
 								 (list keys))
 							     all-keys))
@@ -2980,7 +2986,7 @@
 			     ;; walk the init forms before adding the step vars to env
 			     (do ((bindings step-vars (cdr bindings)))
 				 ((not (pair? bindings))
-				  (if (not (null? bindings))
+				  (if (pair? bindings)
 				      (lint-format "do variable list is not a proper list? ~S" 
 						   name step-vars)))
 			       (if (binding-ok? name head (car bindings) env #f)
@@ -3019,7 +3025,7 @@
 				 (varlist (if named-let (caddr form) (cadr form))))
 			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))
-				  (if (not (null? bindings))
+				  (if (pair? bindings)
 				      (lint-format "let variable list is not a proper list? ~S" 
 						   name (if named-let (caddr form) (cadr form)))))
 			       (if (binding-ok? name head (car bindings) env #f)
@@ -3063,7 +3069,7 @@
 				 (varlist (if named-let (caddr form) (cadr form))))
 			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))
-				  (if (not (null? bindings))
+				  (if (pair? bindings)
 				      (lint-format "let* variable list is not a proper list? ~S" 
 						   name (if named-let (caddr form) (cadr form)))))
 			       (if (binding-ok? name head (car bindings) env #f)
@@ -3115,7 +3121,7 @@
 					    (truncated-list->string form)))
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((not (pair? bindings))
-				(if (not (null? bindings))
+				(if (pair? bindings)
 				    (lint-format "letrec variable list is not a proper list? ~S" 
 						 name (cadr form))))
 			     (if (binding-ok? name head (car bindings) env #f)
@@ -3310,7 +3316,7 @@
 				 
 				 (if (and *report-minor-stuff*
 					  (not (= line-number last-simplify-numeric-line-number))
-					  (not (null? (cdr form)))
+					  (pair? (cdr form))
 					  (not (hash-table-ref globals head))
 					  (hash-table-ref numeric-ops head)
 					  (not (assq head env)))

@@ -112,7 +112,7 @@
     #f))
 
 (define* (fill-in score :rest args)
-  (if (not (null? pathlist))
+  (if (pair? pathlist)
       (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
 	(fill-polygon
 	 (make-polygon
@@ -123,7 +123,7 @@
   #f)
 
 (define (draw score arg)
-  (if (not (null? pathlist))
+  (if (pair? pathlist)
       (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
 	(draw-lines
 	 (make-polygon

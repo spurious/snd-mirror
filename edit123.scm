@@ -84,7 +84,7 @@
       (if (not (member get-current-files (hook-functions open-hook)))
 	  (hook-push open-hook get-current-directory))
       (if (and (not (string? last-file-opened))
-	       (not (null? (sounds))))
+	       (pair? (sounds)))
 	  (set! last-file-opened (file-name (or (selected-sound)
 						(car (sounds))))))
       (if (not current-directory)
@@ -97,7 +97,7 @@
 	    (if (find-sound next-file)
 		(error 'file-already-open (list "open-next-file-in-directory" next-file))
 		(begin
-		  (if (not (null? (sounds)))
+		  (if (pair? (sounds))
 		      (close-sound (or (selected-sound)  ; not sure this is what you want -- closes current file
 				       (car (sounds)))))
 		  (open-sound next-file)))))

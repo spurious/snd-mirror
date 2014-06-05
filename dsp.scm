@@ -2523,7 +2523,7 @@ is assumed to be outside -1.0 to 1.0."
 (define (fm-parallel-component freq-we-want wc wms inds ns bs using-sine)
   "(fm-parallel-component freq carrier modfreqs indices () () with-sines) returns the amplitude of \"freq\" in \
 the multi-modulator FM case described by the list of modulator frequencies and indices"
-  (if (not (null? wms))
+  (if (pair? wms)
       (let* ((sum 0.0)
 	     (index (car inds))
 	     (mx (ceiling (* 7 index)))

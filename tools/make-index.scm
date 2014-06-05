@@ -203,7 +203,7 @@
 			  (do ((cap caps (cdr cap)))
 			      ((or (null? cap)
 				   (string-position (car cap) ln))
-			       (not (null? cap))))))))
+			       (pair? cap)))))))
 	   (if (not (search-caps line))
 	       ;; find the first character of the >name< business and downcase it
 	       (let ((bpos (char-position #\> line)))
@@ -1086,6 +1086,7 @@
 	  (format ofil "<!DOCTYPE html>
 <html lang=\"en\">
 <head>
+<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\" >
 <title>Snd Index</title>
 <style type=\"text/css\">
 	EM.red {color:red; font-style:normal}
@@ -1560,7 +1561,7 @@
 										 (format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands))))
 									    ((--)
 									     (format #t "~A[~D]: <-- missing !?~%" file linectr)))
-									  (if (not (memq opener '(br spacer li hr area)))
+									  (if (not (memq opener '(br meta spacer li hr area)))
 									      (set! commands (cons opener commands)))))))))))
 					      ;; end if closing
 					      (set! start #f))))))))
@@ -1639,7 +1640,7 @@
 				     (set! pos (string-position " href=" dline))
 				     (set! pos-len 7))))))))
 		     (line-loop (read-line f)))))
-	     (if (not (null? commands)) 
+	     (if (pair? commands) 
 		 (format #t "open directives at end of ~A: ~A~%" file commands))))))
      files)
     ;; end file scan

@@ -596,7 +596,7 @@
 
 (define (find-callback test)
   (define (find-callback-1 test funcs)
-    (and (not (null? funcs))
+    (and (pair? funcs)
 	 (or (test (car funcs))
 	     (find-callback-1 test (cdr funcs)))))
   (find-callback-1 test callbacks))
@@ -1426,7 +1426,7 @@
      (hey "): ~A struct~%" name)))
  (reverse make-structs))
 
-(if (not (null? cairo-make-structs))
+(if (pair? cairo-make-structs)
     (for-each
      (lambda (name)
        (let ((args (cadr (find-struct name))))
@@ -1740,7 +1740,7 @@
 (for-each type-it (reverse types))
 (for-each
  (lambda (type-list with-func)
-   (if (not (null? type-list)) 
+   (if (pair? type-list) 
        (with-func hey (lambda () 
 			(for-each type-it (reverse type-list))))))
  all-ntypes all-ntype-withs)
@@ -2339,7 +2339,7 @@
 (for-each handle-func (reverse funcs))
 (for-each
  (lambda (func-list with-func)
-   (if (not (null? func-list)) 
+   (if (pair? func-list) 
        (with-func hey (lambda () 
 			(for-each handle-func (reverse func-list))))))
  all-funcs all-func-withs)
@@ -2360,7 +2360,7 @@
 (for-each cast-it (reverse casts))
 (for-each
  (lambda (cast-list cast-func)
-   (if (not (null? cast-list)) 
+   (if (pair? cast-list) 
        (cast-func hey (lambda () 
 			(for-each cast-it (reverse cast-list))))))
  all-casts all-cast-withs)
@@ -2374,7 +2374,7 @@
 (for-each make-check (reverse checks))
 (for-each
  (lambda (check-list check-func)
-   (if (not (null? check-list)) 
+   (if (pair? check-list) 
        (check-func hey (lambda () 
 			 (for-each make-check (reverse check-list))))))
  all-checks all-check-withs)
@@ -2712,7 +2712,7 @@
 	  (hey "}~%~%")))))
 
 (for-each define-struct (reverse make-structs))
-(if (not (null? cairo-make-structs))
+(if (pair? cairo-make-structs)
     (with-cairo hey 
 		(lambda () 
 		  (for-each define-struct (reverse cairo-make-structs)))))
@@ -2748,7 +2748,7 @@
 (for-each argify-func (reverse funcs))
 (for-each
  (lambda (func-list with-func)
-   (if (not (null? func-list)) 
+   (if (pair? func-list) 
        (with-func hey (lambda () 
 			(for-each argify-func (reverse func-list))))))
  all-funcs all-func-withs)
@@ -2770,7 +2770,7 @@
 (for-each ruby-cast (reverse casts))
 (for-each
  (lambda (cast-list cast-func)
-   (if (not (null? cast-list)) 
+   (if (pair? cast-list) 
        (cast-func hey (lambda () 
 			(for-each ruby-cast (reverse cast-list))))))
  all-casts all-cast-withs)
@@ -2779,7 +2779,7 @@
 (for-each ruby-check (reverse checks))
 (for-each
  (lambda (check-list check-func)
-   (if (not (null? check-list)) 
+   (if (pair? check-list) 
        (check-func hey (lambda () 
 			 (for-each ruby-check (reverse check-list))))))
  all-checks all-check-withs)
@@ -2846,7 +2846,7 @@
 (for-each defun (reverse funcs))
 (for-each
  (lambda (func-list with-func)
-   (if (not (null? func-list)) 
+   (if (pair? func-list) 
        (with-func hey (lambda () 
 			(for-each defun (reverse func-list))))))
  all-funcs all-func-withs)
@@ -2863,7 +2863,7 @@
 (for-each cast-out (reverse casts))
 (for-each
  (lambda (cast-list cast-func)
-   (if (not (null? cast-list)) 
+   (if (pair? cast-list) 
        (cast-func hey (lambda () 
 			(for-each cast-out (reverse cast-list))))))
  all-casts all-cast-withs)
@@ -2890,7 +2890,7 @@
 (for-each check-out (reverse checks))
 (for-each
  (lambda (check-list check-func)
-   (if (not (null? check-list)) 
+   (if (pair? check-list) 
        (check-func hey (lambda () 
 			 (for-each check-out (reverse check-list))))))
  all-checks all-check-withs)
@@ -2915,7 +2915,7 @@
 		   struct)))
 	  (reverse make-structs))
 
-(if (not (null? cairo-make-structs))
+(if (pair? cairo-make-structs)
     (with-cairo hey
 		(lambda ()
 		  (for-each 
@@ -2965,7 +2965,7 @@
 
 (for-each
  (lambda (ints-list with-ints)
-   (if (not (null? ints-list))
+   (if (pair? ints-list)
        (with-ints hey (lambda () 
 			(for-each (lambda (val) 
 				    (hey "  define_integer(~A);~%" val)) 
@@ -3038,7 +3038,7 @@
 (for-each (lambda (str) (hey "  define_string(~A);~%" str)) (reverse strings))
 (for-each
  (lambda (strings-list with-strings)
-   (if (not (null? strings-list))
+   (if (pair? strings-list)
        (with-strings hey (lambda () 
 			   (for-each (lambda (str) 
 				       (hey "  define_string(~A);~%" str)) 
@@ -3072,9 +3072,9 @@
 (hey "      xg_already_inited = true;~%")
 (hey "#if HAVE_SCHEME~%")
 (hey "      /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */~%")
-(hey "      Xen_eval_C_string(\"(define (g_signal_connect obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))\");~%")
-(hey "      Xen_eval_C_string(\"(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))\");~%")
-(hey "      Xen_eval_C_string(\"(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))\");~%")
+(hey "      Xen_eval_C_string(\"(define (g_signal_connect obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (pair? data) (car data)) #f 0))\");~%")
+(hey "      Xen_eval_C_string(\"(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (pair? data) (car data)) #f G_CONNECT_AFTER))\");~%")
+(hey "      Xen_eval_C_string(\"(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (pair? data) (car data)) #f G_CONNECT_SWAPPED))\");~%")
 (hey "#endif~%")
 (hey "#if HAVE_RUBY ~%")
 (hey "      Xen_eval_C_string(\"def Rg_signal_connect(obj, name, func, data = false); Rg_signal_connect_data(RGPOINTER(obj), name, func, data, false, 0); end\"); ~%")

@@ -222,7 +222,7 @@
 
 (define (listp a) 
   "(listp lst) is #t is 'lst' is a non-null list"
-  (and (list? a) (not (null? a))))
+  (and (list? a) (pair? a)))
 
 (define (make-list-1 n val)
   (let ((lst ()))
@@ -293,7 +293,7 @@
   (if (null? speakers)
       (error 'mus-error "ERROR: a speaker configuration must have at least one speaker!~%"))
   
-  (if (not (null? groups))
+  (if (pair? groups)
       (let ((first-len (length (car groups))))
 	(for-each
 	 (lambda (group)
@@ -320,35 +320,35 @@
   (if (null? groups)
       (error 'mus-error "ERROR: no groups specified, speakers must be arranged in groups~%"))
   
-  (if (and (not (null? delays))
-	   (not (null? distances)))
+  (if (and (pair? delays)
+	   (pair? distances))
       (error 'mus-error "ERROR: please specify delays or distances but not both~%"))
   
-  (if (not (null? delays))
+  (if (pair? delays)
       (if (> (length speakers) (length delays))
 	  (error 'mus-error "ERROR: all speaker delays have to be specified, only ~A supplied [~A]~%" (length delays) delays)
 	  (if (< (length speakers) (length delays))
 	      (error 'mus-error "ERROR: more speaker delays than speakers, ~A supplied instead of ~A [~A]~%" (length delays) (length speakers) delays))))
   
-  (if (not (null? delays))
+  (if (pair? delays)
       (for-each
        (lambda (dly)
 	 (if (< dly 0.0) (error 'mus-error "ERROR: delays must be all positive, ~A is negative~%" dly)))
        delays))
   
-  (if (not (null? distances))
+  (if (pair? distances)
       (if (> (length speakers) (length distances))
 	  (error 'mus-error "ERROR: all speaker distances have to be specified, only ~A supplied [~A]~%" (length distances) distances)
 	  (if (< (length speakers) (length distances))
 	      (error 'mus-error "ERROR: more speaker distances than speakers, ~A supplied instead of ~A [~A]~%" (length distances) (length speakers) distances))))
   
-  (if (not (null? distances))
+  (if (pair? distances)
       (for-each
        (lambda (dly)
 	 (if (< dly 0.0) (error 'mus-error "ERROR: distances must be all positive, ~A is negative~%" dly)))
        distances))
   
-  (if (not (null? channel-map))
+  (if (pair? channel-map)
       (if (> (length speakers) (length channel-map))
 	  (error 'mus-error "ERROR: must map all speakers to output channels, only ~A mapped [~A]~%" (length channel-map) channel-map)
 	  (if (< (length speakers) (length channel-map))
@@ -374,7 +374,7 @@
 	    (reverse val)))
 	 
 	 ;; minimum distance
-	 (min-dist (if (not (null? distances))
+	 (min-dist (if (pair? distances)
 		       (let ((mind (car distances)))
 			 (for-each 
 			  (lambda (d)
@@ -387,8 +387,8 @@
 	 (times (let ((v (make-float-vector (length speakers))))
 		  (do ((i 0 (+ i 1)))
 		      ((= i (length speakers)))
-		    (set! (v i) (let ((distance (and (not (null? distances)) (distances i)))
-				      (dly (and (not (null? delays)) (delays i))))
+		    (set! (v i) (let ((distance (and (pair? distances) (distances i)))
+				      (dly (and (pair? delays) (delays i))))
 				    (or dly
 					(and distance 
 					     (/ (- distance min-dist) dlocsig-speed-of-sound))
@@ -452,7 +452,7 @@
 			 :omap (let ((v (make-vector (length speakers))))
 				 (do ((chan 0 (+ 1 chan)))
 				     ((= chan (length speakers)))
-				   (set! (v chan) (or (and (not (null? channel-map)) (channel-map chan))
+				   (set! (v chan) (or (and (pair? channel-map) (channel-map chan))
 						      chan)))
 				 v))))
 
@@ -945,7 +945,7 @@
 	 (lambda (p)
 	   (let* ((d (car p))
 		  (a (cadr p))
-		  (e (if 3d (if (not (null? (cddr p))) (caddr p) 0.0) 0.0))
+		  (e (if 3d (if (pair? (cddr p)) (caddr p) 0.0) 0.0))
 		  (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
 		  (dxy (* d (real-part evec)))
 		  (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
@@ -1433,7 +1433,7 @@
 			   (distance '(0 10 1 10))
 			   (height '(0 0 1 0))
 			   (velocity '(0 1 1 1)))
-  (if (and total-angle (not (null? turns)))
+  (if (and total-angle (pair? turns))
       (error 'mus-error "ERROR: can't specify total-angle [~A] and turns [~A] at the same time for the spiral path~%" total-angle turns))
   
   (list 'spiral-path () () () () () () () () () () path-3d #f 

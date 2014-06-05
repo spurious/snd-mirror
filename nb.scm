@@ -39,7 +39,7 @@
 	(collect-files ptr (gdbm-next-key ptr key) (cons key files))
 	files))
   (define (prune-file ptr files)
-    (if (not (null? files))
+    (if (pair? files)
 	(begin
 	  (if (not (file-exists? (car files)))
 	      (begin
@@ -50,7 +50,7 @@
     (if (gdbm? ptr)
 	(let ((files (collect-files ptr (gdbm-first-key ptr) ())))
 	  (gdbm-close! ptr)
-	  (if (not (null? files))
+	  (if (pair? files)
 	      (let ((ptr (gdbm-open nb-database 'write)))
 		(prune-file ptr files)
 		(gdbm-close! ptr)))))))

@@ -2,6 +2,7 @@
 
 <html lang="en">
 <head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
 <title>An Introduction to FM</title>
 
 <style type="text/css">
@@ -1600,7 +1601,7 @@ here's the code to get that info:
 ;(multifm-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) () () #t)
 
 (define (multifm-component freq-we-want wc wms inds ns bs using-sine)
-  (if (not (null? wms))
+  (if (pair? wms)
       (let* ((sum 0.0)
 	     (index (car inds))
 	     (mx (ceiling (* 5 index)))

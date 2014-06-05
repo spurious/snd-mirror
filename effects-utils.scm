@@ -47,7 +47,7 @@
 
 (define (update-label effects)
   "(update-label effects) evaluates the elements of the list 'effects'"
-  (if (not (null? effects))
+  (if (pair? effects)
       (begin
 	((car effects))
 	(update-label (cdr effects)))))
@@ -55,7 +55,7 @@
 (define (effect-target-ok target)
   "(effect-target-ok target) returns #t if the current effect's chosen target is ready"
   (if (eq? target 'sound) 
-      (not (null? (sounds)))
+      (pair? (sounds))
       (if (eq? target 'selection) 
 	  (selection?)
 	  (and (selected-sound)
@@ -112,10 +112,10 @@
 		     (lambda (hook) 
 		       (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (target-ok-callback)))))
 	(begin
-	  (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (not (null? (sounds))))
+	  (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (pair? (sounds)))
 	  (hook-push effects-hook
 		     (lambda (hook) 
-		       (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (not (null? (sounds))))))))
+		       (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (pair? (sounds)))))))
 
     new-dialog))
 

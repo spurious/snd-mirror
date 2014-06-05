@@ -71,7 +71,7 @@
 
   (define (xe-on-dot? x y cur-env pos)
     (define xe-mouse-radius .03)
-    (and (not (null? cur-env))
+    (and (pair? cur-env)
 	 (or (and (< (abs (- (car cur-env) x)) xe-mouse-radius)
 		  (< (abs (- (cadr cur-env) y)) xe-mouse-radius)
 		  pos)

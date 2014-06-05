@@ -83,7 +83,7 @@
 	       (float-vector-move! v0 0 trim)
 	       (float-vector-move! v1 0 trim)))
 	 (let ((result (unconvolve-1 v0 (copy v1) ())))
-	   (if (not (null? result))
+	   (if (pair? result)
 	       (list 'filter (reverse result))
 	       #f)))))
   

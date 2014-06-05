@@ -15,7 +15,7 @@
 
 (define fft-menu (add-to-main-menu "FFT Edits" (lambda ()
 						 (define (update-label fft)
-						   (if (not (null? fft))
+						   (if (pair? fft)
 						       (begin
 							 ((car fft))
 							 (update-label (cdr fft)))))

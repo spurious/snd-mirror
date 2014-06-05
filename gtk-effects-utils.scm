@@ -15,14 +15,14 @@
 	(list sndlist chnlist))))
 
 (define (update-label effects)
-  (if (not (null? effects))
+  (if (pair? effects)
       (begin
 	((car effects))
 	(update-label (cdr effects)))))
 
 (define (effect-target-ok target)
   (if (eq? target 'sound) 
-      (not (null? (sounds)))
+      (pair? (sounds))
       (if (eq? target 'selection) 
 	  (selection?)
 	  (and (selected-sound)
@@ -72,9 +72,9 @@
 	  (hook-push effects-hook
 		     (lambda (hook) (gtk_widget_set_sensitive ok-button (target-ok-callback)))))
 	(begin
-	  (gtk_widget_set_sensitive ok-button (not (null? (sounds))))
+	  (gtk_widget_set_sensitive ok-button (pair? (sounds)))
 	  (hook-push effects-hook
-		     (lambda (hook) (gtk_widget_set_sensitive ok-button (not (null? (sounds))))))))
+		     (lambda (hook) (gtk_widget_set_sensitive ok-button (pair? (sounds)))))))
 
     (g_object_set_data (G_OBJECT new-dialog) "ok-button" (GPOINTER ok-button))
     new-dialog))

@@ -67,8 +67,7 @@
   
   (if (not (member auto-save-done (hook-functions close-hook)))
       (begin
-	(if (not (null? (sounds)))
-	    (for-each auto-save-open-func (sounds)))
+	(for-each auto-save-open-func (sounds))
 	(hook-push after-open-hook (lambda (hook) (auto-save-open-func (hook 'snd))))
 	(hook-push close-hook (lambda (hook) (auto-save-done (hook 'snd))))
 	(hook-push save-hook (lambda (hook) (auto-save-done (hook 'snd))))

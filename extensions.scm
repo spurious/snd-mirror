@@ -95,7 +95,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   (lambda (n) 
     (catch #t
            (lambda ()
- 	      (if (not (null? (mus-sound-loop-info (string-append "/home/bil/sf/" n)))) 
+ 	      (if (pair? (mus-sound-loop-info (string-append "/home/bil/sf/" n))) 
  		  (snd-print (format #f "~%~A" n))))
            (lambda args #f)))
   "/home/bil/sf")
@@ -228,7 +228,7 @@ a list (file-name-or-sound-object [beg [channel]])."
   "(any-env-channel e func (beg 0) dur snd chn edpos origin) takes breakpoints in 'e', \
 connects them with 'func', and applies the result as an amplitude envelope to the given channel"
   ;; handled as a sequence of funcs and scales
-  (if (not (null? e))
+  (if (pair? e)
       (let ((pts (/ (length e) 2)))
 	(if (= pts 1)
 	    (scale-channel (car e) beg dur snd chn edpos)

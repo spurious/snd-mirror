@@ -995,7 +995,7 @@
 (define (add-mark-pane)
 
   (define (find-mark-list snd chn dats)
-    (if (not (null? dats))
+    (if (pair? dats)
 	(let ((cur (car dats)))
 	  (if (and (equal? (car cur) snd)
 		   (= (cadr cur) chn))
@@ -1418,7 +1418,7 @@
 	    (lambda (w c i)
 	      (if (and (= (.auto_selection_type i) XmAUTO_BEGIN) ; just click to select for now
 		       (list? (.selected_items i))
-		       (not (null? (.selected_items i))))
+		       (pair? (.selected_items i)))
 		  (select-func (XtName (car (.selected_items i)))))))
 	  (for-each
 	   (lambda (file)
@@ -2195,7 +2195,7 @@
 					     (cadr (get-color new-color)))))
 	(new-selected-mark-color (list 'Pixel (logxor (cadr *selected-graph-color*)
 						      (cadr (get-color new-color))))))
-    (if (not (null? (hook-functions draw-mark-hook)))
+    (if (pair? (hook-functions draw-mark-hook))
 	(set! (hook-functions draw-mark-hook) ()))
     (hook-push draw-mark-hook
 	       (lambda (hook)

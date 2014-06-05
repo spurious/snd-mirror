@@ -150,7 +150,7 @@
 		      (pretty-print-1 (cadr obj) port ifcol)
 		      (spaces (+ column 4))
 		      (pretty-print-1 (caddr obj) port ifcol)
-		      (if (not (null? (cdddr obj)))
+		      (if (pair? (cdddr obj))
 			  (begin
 			    (spaces (+ column 4))
 			    (pretty-print-1 (cadddr obj) port ifcol)))
@@ -221,7 +221,7 @@
 						       (= k line-len)))
 						(format port " ~A" (car lst))
 						(set! lst (cdr lst)))
-					      (if (not (null? lst))
+					      (if (pair? lst)
 						  (spaces (+ column carstrlen 2)))))))))))))))))
 	  (else
 	   (write obj port))))

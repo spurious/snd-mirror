@@ -92,7 +92,7 @@
 	  (call-with-values
 	      (lambda () (exp-seg x (expt base yscl) nx (expt base nyscl) yscl nyscl error))
 	    (lambda (xs ys)
-	      (if (not (null? ys))
+	      (if (pair? ys)
 		  (let ((ys-scaled (map (lambda (y) (* y out-scaler)) ys)))
 		    (let vals ((xx xs) 
 			       (yy ys-scaled))

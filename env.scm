@@ -271,7 +271,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 	(xoff 0.0))
     (for-each 
      (lambda (e)
-       (if (and (not (null? ne))
+       (if (and (pair? ne)
 		(= (car ne) (cadr e)))
 	   (begin
 	     (set! xoff (- xoff .01))
@@ -294,7 +294,7 @@ repetition to be in reverse."
 		(let ((lastx (ur-env (- (length ur-env) 2)))
 		      (rev-env (cddr (reverse ur-env)))
 		      (new-env (reverse ur-env)))
-		  (while (not (null? rev-env))
+		  (while (pair? rev-env)
 			 (set! new-env (cons (+ lastx (- lastx (cadr rev-env))) new-env))
 			 (set! new-env (cons (car rev-env) new-env))
 			 (set! rev-env (cddr rev-env)))

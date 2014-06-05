@@ -44731,13 +44731,13 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("30-May-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("05-Jun-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
-      Xen_eval_C_string("(define (g_signal_connect obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))");
-      Xen_eval_C_string("(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))");
-      Xen_eval_C_string("(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))");
+      Xen_eval_C_string("(define (g_signal_connect obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (pair? data) (car data)) #f 0))");
+      Xen_eval_C_string("(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (pair? data) (car data)) #f G_CONNECT_AFTER))");
+      Xen_eval_C_string("(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (pair? data) (car data)) #f G_CONNECT_SWAPPED))");
 #endif
 #if HAVE_RUBY 
       Xen_eval_C_string("def Rg_signal_connect(obj, name, func, data = false); Rg_signal_connect_data(RGPOINTER(obj), name, func, data, false, 0); end"); 

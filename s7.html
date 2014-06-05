@@ -4,6 +4,8 @@
 <!-- documentation for s7 -->
 
 <head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+
 <title>s7</title>
 
 <style type="text/css">
@@ -1737,7 +1739,7 @@ mingle
 	    ((goto)      (set! gotos (cons tree gotos)))
 	    ((come-from) (set! come-froms (cons tree come-froms))))))
 
-    (if (not (null? gotos))
+    (if (pair? gotos)
 	(for-each
 	 (lambda (goto)
 	   (let* ((name (cadr (cadar goto)))
@@ -1747,7 +1749,7 @@ mingle
 		 (error 'bad-goto "can't find label: ~S" name))))
 	   gotos))
 
-    (if (not (null? come-froms))
+    (if (pair? come-froms)
 	(for-each
 	 (lambda (from)
 	   (let* ((name (cadr (cadar from)))
@@ -1763,12 +1765,13 @@ mingle
 	     (come-from (lambda (name) #f)))
 	 ,@body))))
 </pre>
-
-<p>Truely, this is only a beginning, but we believe that with sufficient time and funding and unpaid
+<!--
+<p>Truly, this is only a beginning, but we believe that with sufficient time and funding and unpaid
 graduate student help, we can win through eventually to that most prized of accomplishments, that Holy Grail
 of progammers, a complete COME-FROM implementation in Scheme.  WGS wishes to thank his parents, his
 sisters, his friends-too-numerous-to-count, and his gray cat, Gray Cat.
 </p>
+-->
 </div>
 
 

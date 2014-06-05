@@ -18,7 +18,7 @@
 (define* (open-play-output out-chans out-srate out-format out-bufsize)
   ;; returns (list audio-fd chans frames)
   (let* ((outchans (or out-chans 1))
-	 (cur-srate (or out-srate (and (not (null? (sounds))) (srate)) 22050))
+	 (cur-srate (or out-srate (and (pair? (sounds)) (srate)) 22050))
 	 (pframes (or out-bufsize 256))
 	 (frm (or out-format (if (little-endian?) mus-lshort mus-bshort)))
 	 (outbytes (* pframes 2))     ; 2 here since we'll first try to send short (16-bit) data to the DAC
@@ -42,7 +42,7 @@
 
 (define* (play-sound func)
   "(play-sound func) plays the currently selected sound, calling func on each data buffer, if func exists (mono only)"
-  (if (not (null? (sounds)))
+  (if (pair? (sounds))
       (let* ((filechans (chans))
 	     (audio-info (open-play-output filechans (srate) #f 256))
 	     (audio-fd (car audio-info))

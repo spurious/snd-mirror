@@ -2,6 +2,7 @@
 
 <html lang="en">
 <head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
 <title>Snd Customization and Extension</title>
 <style type="text/css">
 	EM.red {color:red; font-style: normal}
@@ -605,7 +606,7 @@ Snd does not exit.</p>
 
 <pre class="indented">
 (define (unsaved-edits? lst)
-  (if (not (null? lst))
+  (if (pair? lst)
       (if (&gt; (car (<a class=quiet href="#edits" onmouseout="UnTip()" onmouseover="Tip(extsnd_edits_tip)">edits</a> (car lst))) 0)
 	  (begin
 	    (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> "there are unsaved edits")
@@ -2488,8 +2489,7 @@ If it returns a thunk, that function is called rather than the standard graph ro
 	          (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  sync: ~A" (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a> n))
 	          "")
 	        (let ((props (<a class=quiet href="#markproperties" onmouseout="UnTip()" onmouseover="Tip(sndscm_markproperties_tip)">mark-properties</a> n)))
-	          (if (and (list? props)
-		           (not (null? props)))
+	          (if (pair? props)
 	            (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  properties: '~A" props)
 	            ""))))
       (set! (hook 'result) #t))))
@@ -9175,7 +9175,7 @@ current channel looking for any sample greater than .1:
 
 <pre class="indented">
 (or (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>)
-    (and (not (null? (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>)))
+    (and (pair? (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))
          (car (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 </pre>
 
@@ -9457,7 +9457,7 @@ at the loop points:
   (letrec 
     ((sf2it 
        (lambda (lst)
-         (if (not (null? lst))
+         (if (pair? lst)
              (let* ((vals (car lst))
                     (m1 (<a class=quiet href="#addmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_addmark_tip)">add-mark</a> (cadr vals))))
                (set! (<a class=quiet href="#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a> m1) (car vals))

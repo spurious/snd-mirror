@@ -70,7 +70,7 @@
       (search-point cur-env 0))
 
     (define (on-dot? x y cur-env pos)
-      (and (not (null? cur-env))
+      (and (pair? cur-env)
 	   (or (and (< (abs (- (car cur-env) x)) mouse-radius)
 		    (< (abs (- (cadr cur-env) y)) mouse-radius)
 		    pos)
