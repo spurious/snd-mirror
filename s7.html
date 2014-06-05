@@ -1715,66 +1715,62 @@ mingle
 &gt; (procedure-source (c?r (((((a (b (c (d (e X)))))))))))
 (lambda (lst) (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (car (car (car lst)))))))))))))))
 </pre>	
+</div>
 
-<p>We can extend c?r into something incredibly useful!  A goto implementation using circular lists:
+
+
+<div class="indented">
+<p>Speaking of INTERCAL, its most famous operator is COME-FROM:
 </p>
 
 <pre class="indented">
-(define-macro (define-with-goto name-and-args . body)
-  ;; run through the body collecting label accessors, (label name)
-  ;; run through getting goto positions, (goto name)
-  ;; tie all the goto's to their respective labels (via set-cdr! essentially)
-  
-  (define (find-accessor type)
-    (let ((labels ()))
-      (define (gather-labels accessor tree)
-	(if (pair? tree)
-	    (if (equal? (car tree) type)
-		(begin
-		  (set! labels (cons (cons (cadr tree) 
-					   (let ((body 'lst))
-					     (for-each
-					      (lambda (f)
-						(set! body (list f body)))
-					      (reverse (cdr accessor)))
-					     (make-procedure-with-setter
-					      (apply lambda '(lst) (list body))
-					      (apply lambda '(lst val) `((set! ,body val))))))
-				     labels))
-		  (gather-labels (cons 'cdr accessor) (cdr tree)))
-		(begin
-		  (gather-labels (cons 'car accessor) (car tree))
-		  (gather-labels (cons 'cdr accessor) (cdr tree))))))
-      (gather-labels () body)
-      labels))
-	
-  (let ((labels (find-accessor 'label))
-	(gotos (find-accessor 'goto)))
+(define-macro (define-with-goto-and-come-from name-and-args . body)
+  (let ((labels ())
+	(gotos ())
+	(come-froms ()))
+
+    (do ((tree (cdr body) (cdr tree)))
+	((null? tree))
+      (if (pair? tree)
+	  (case (caar tree)
+	    ((label)     (set! labels (cons tree labels)))
+	    ((goto)      (set! gotos (cons tree gotos)))
+	    ((come-from) (set! come-froms (cons tree come-froms))))))
+
     (if (not (null? gotos))
 	(for-each
 	 (lambda (goto)
-	   (let* ((name (car goto))
-		  (goto-accessor (cdr goto))
-		  (label (assoc name labels))
-		  (label-accessor (and label (cdr label))))
-	     (if label-accessor
-		 (set! (goto-accessor body) (label-accessor body))
+	   (let* ((name (cadr (cadar goto)))
+		  (label (member name labels (lambda (a b) (eq? a (cadr (cadar b)))))))
+	     (if label
+		 (set-cdr! goto (car label))
 		 (error 'bad-goto "can't find label: ~S" name))))
 	   gotos))
 
+    (if (not (null? come-froms))
+	(for-each
+	 (lambda (from)
+	   (let* ((name (cadr (cadar from)))
+		  (label (member name labels (lambda (a b) (eq? a (cadr (cadar b)))))))
+	     (if label
+		 (set-cdr! (car label) from)
+		 (error 'bad-come-from "can't find label: ~S" name))))
+	   come-froms))
+
     `(define ,name-and-args
        (let ((label (lambda (name) #f))
-	     (goto (lambda (name) #f)))
+	     (goto (lambda (name) #f))
+	     (come-from (lambda (name) #f)))
 	 ,@body))))
-
-(define-with-goto (hi)
-  (display "start ")
-  (<em class=red>goto</em> 'the-end)
-  (display "oops")
-  (<em class=red>label</em> 'the-end)
-  (display "all done"))
 </pre>
+
+<p>Truely, this is only a beginning, but we believe that with sufficient time and funding and unpaid
+graduate student help, we can win through eventually to that more prized of all goals, that Holy Grail
+of progammers, a complete COME-FROM implementation in Scheme.  WGS wishes to thank his parents, his
+sisters, his friends-too-numerous-to-count, and his gray cat, Gray Cat.
+</p>
 </div>
+
 
 
 <div class="indented">
@@ -2651,23 +2647,32 @@ As a quick example, here is a structure definition:
 </div>
 
 
-<p>with-environment evaluates its body in the given environment,
-and augment-environment adds a binding (a symbol and its value) to an environment:
+<p>with-environment evaluates its body in the given environment, so
+<code>(with-environment e . body)</code> is equivalent to
+<code>(eval `(begin ,@body) e)</code>, but probably faster.
+Similarly, <code>(let bindings . body)</code> is equivalent to
+<code>(eval `(begin ,@body) (apply environment* (flatten bindings)))</code>.
+</p>
+
+<p>
+augment-environment adds bindings (symbols with associated values) to an environment.
+It does not change the environment passed to it, but
+just prepends the new bindings, shadowing any old ones,
+as if you had called "let":
 </p>
 
 <pre class="indented">
-&gt; (let ((a 1)) 
-    (with-environment
-        (<em class=red>augment-environment</em>
-          (current-environment) ; this has 'a with the value 1 
-          (cons 'b 32))         ; add 'b with the value 32
-      (+ a b)))
-33
+(define-bacro (with-let e . body)
+  `(with-environment (<em class=red>augment-environment</em> (current-environment) ,e)
+     ,@body))
+
+(let ((a 1))
+  (with-let (environment* 'b 2)
+    (+ a b)))
 </pre>
 
-<p>augment-environment does not change the environment passed to it.  It
-just prepends the new bindings, shadowing any old ones,
-as if you had called "let".  To add the bindings directly to the environment,
+<p>
+To add the bindings directly to the environment,
 use augment-environment!.  Both of these functions accept nil as the
 'env' argument as shorthand for <code>(global-environment)</code>.
 Both also accept other environments as well as individual bindings,

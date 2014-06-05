@@ -25953,7 +25953,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      i++;
 	      fdat->args = cdr(fdat->args);
 	      break;
-	      
+
 	    case '^':                           /* -------- exit -------- */
 	      if (is_null(fdat->args))
 		{
@@ -69934,6 +69934,10 @@ int main(int argc, char **argv)
  * format:
  *   ~<~> in CL are for text justification, ~? is also doable without great pain
  *   ~^ should also escape circles
+ *   ~n* and ~n:* perhaps, also CL allows ~,+3F
+ *
+ * stepper by local-cc's.
+ * maybe build-in with-let -- need no-consing version of this -- make outer-environment settable?
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc
  *   (environment* 'value "hi" 'string-length g_utf8_strlen)
