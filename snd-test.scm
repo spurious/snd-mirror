@@ -440,7 +440,7 @@
 	       (clear-save-state-files)
 	       (clear-listener)
 	       (set! (ask-about-unsaved-edits) #f)
-	       (if (not (null? (sounds)))
+	       (if (pair? (sounds))
 		   (begin
 		     (snd-display #__line__ ";end test ~D: open sounds: ~A" n (map short-file-name (sounds)))
 		     (for-each close-sound (sounds))))
@@ -550,17 +550,17 @@
 (define (snd_test_0)
   (letrec ((test-constants 
 	    (lambda (lst)
-	      (if (not (null? lst))
+	      (if (pair? lst)
 		  (begin
 		    (if (not (= (cadr lst) (caddr lst)))
 			(snd-display #__line__ ";~A is not ~A (~A)~%"
 				     (car lst) (cadr lst) (caddr lst)))
 		    (test-constants (cdddr lst)))))))
     
-    (if (or (not (null? (sounds)))
-	    (not (null? (mixes)))
-	    (not (null? (marks)))
-	    (not (null? (regions))))
+    (if (or (pair? (sounds))
+	    (pair? (mixes))
+	    (pair? (marks))
+	    (pair? (regions)))
 	(snd-display #__line__ ";start up: ~A ~A ~A ~A" (sounds) (mixes) (marks) (regions)))
     (test-constants
      (list
@@ -1277,7 +1277,7 @@
 (define (snd_test_1)
   (letrec ((test-defaults
 	    (lambda (lst)
-	      (if (not (null? lst))
+	      (if (pair? lst)
 		  (begin
 		    (if (and (not (equal? (cadr lst)  (caddr lst)))
 			     (or (not (pair? (caddr lst)))
@@ -1459,7 +1459,7 @@
     (let ((s (open-sound "oboe.snd")))
     (letrec ((test-vars
 	      (lambda (lst)
-		(if (not (null? lst))
+		(if (pair? lst)
 		    (let* ((args (car lst))
 			   (name (args 0))
 			   (getfnc (args 1))
@@ -1620,7 +1620,7 @@
   (if (string? sf-dir)
       (letrec ((test-headers
 		(lambda (base-files)
-		  (if (not (null? base-files))
+		  (if (pair? base-files)
 		      (let ((testf (car base-files)))
 			(let ((file (string-append sf-dir (testf 0))))
 			  (if (file-exists? file)
@@ -1675,7 +1675,7 @@
 					    (snd-display #__line__ ";~A: loop start: ~A" (car lst) (testf 6)))
 					(if (not (equal? (cadr lst) (testf 7))) 
 					    (snd-display #__line__ ";~A: loop end: ~A" (cadr lst) (testf 7))))
-				      (if (not (null? lst))
+				      (if (pair? lst)
 					  (snd-display #__line__ ";~A thinks it has loop info: ~A" file lst))))
 				(mus-sound-forget file))
 			      (snd-display #__line__ ";~A missing?" file))
@@ -1964,7 +1964,7 @@
     
     (letrec ((test-vars
 	      (lambda (lst)
-		(if (not (null? lst))
+		(if (pair? lst)
 		    (let* ((name ((car lst) 0))
 			   (getfnc ((car lst) 1))
 			   (setfnc (lambda (val) (set! (getfnc) val)))
@@ -2137,7 +2137,7 @@
     (set! (ask-about-unsaved-edits) #f)    
     (letrec ((test-bad-args
 	      (lambda (lst)
-		(if (not (null? lst))
+		(if (pair? lst)
 		    (let* ((name ((car lst) 0))
 			   (getfnc ((car lst) 1))
 			   (setfnc (lambda (val) (set! (getfnc) val)))
@@ -2491,7 +2491,7 @@
 	 (if (not (defined? n))
 	     (set! undef (cons n undef))))
        names)
-      (if (not (null? undef))
+      (if (pair? undef)
 	  (snd-display #__line__ ";undefined: ~A" undef)))
     
     ))
@@ -4315,7 +4315,7 @@
     
     (set! (hook-functions bad-header-hook) ())
     (set! (hook-functions open-raw-sound-hook) ())
-    (if (not (null? (sounds))) (for-each close-sound (sounds)))
+    (if (pair? (sounds)) (for-each close-sound (sounds)))
     
     (let ((ind (new-sound :size 0)))
       (if (not (= (framples ind) 0)) (snd-display #__line__ ";new-sound :size 0 -> ~A framples" (framples ind)))
@@ -4335,7 +4335,7 @@
       (if (not (eq? tag 'out-of-range))
 	  (begin
 	    (snd-display #__line__ ";new-sound :size -1: ~A" tag)
-	    (if (not (null? (sounds))) (for-each close-sound (sounds))))))
+	    (if (pair? (sounds)) (for-each close-sound (sounds))))))
     
     (let ((ind (read-ascii (string-append sf-dir "caruso.asc"))))
       (if (not (sound? ind)) 
@@ -9513,7 +9513,7 @@ EDITS: 2
 	  (provided? 'snd-motif))
       (letrec ((test-color
 		(lambda (lst)
-		  (if (not (null? lst))
+		  (if (pair? lst)
 		      (let* ((name ((car lst) 0))
 			     (getfnc ((car lst) 1))
 			     (setfnc (lambda (val) (set! (getfnc) val)))
@@ -11335,9 +11335,9 @@ EDITS: 2
       
       ;; degree=0
       (let ((val (poly-roots (float-vector 0.0))))
-	(if (not (null? val)) (snd-display #__line__ ";poly-roots 0.0: ~A" val)))
+	(if (pair? val) (snd-display #__line__ ";poly-roots 0.0: ~A" val)))
       (let ((val (poly-roots (float-vector 12.3))))
-	(if (not (null? val)) (snd-display #__line__ ";poly-roots 12.3: ~A" val)))
+	(if (pair? val) (snd-display #__line__ ";poly-roots 12.3: ~A" val)))
       
       ;; degree 0 + x=0
       (let ((val (poly-roots (float-vector 0.0 1.0))))
@@ -19665,7 +19665,7 @@ EDITS: 2
 		 (view-files-dialog #f))
 	    (begin
 	      (set! (view-files-files (view-files-dialog #f)) ())
-	      (if (not (null? (view-files-files (view-files-dialog #f))))
+	      (if (pair? (view-files-files (view-files-dialog #f)))
 		  (snd-display #__line__ ";set vf files list null: ~A" (view-files-files (view-files-dialog #f)))))))
       )
     
@@ -20262,7 +20262,7 @@ EDITS: 2
     
     (let ()
       ;; someday this should be expanded
-      (if (not (null? (sounds)))
+      (if (pair? (sounds))
 	  (for-each close-sound (sounds)))
       
       (with-sound (:output "flat.snd") 
@@ -20632,16 +20632,16 @@ EDITS: 2
 		(outa i (* amp (phase-vocoder sr ifunc #f efunc sfunc))))))))
       
       (let ((v (make-float-vector 200)))
-	(let ((ind (with-sound (:output v :srate 44100) (pvoc-d 0 .0025 .2 128))))
-	  (do ((i 55 (+ i 1)))
-	      ((= i 65))
-	    (if (> (abs (- (v i) .196)) .01)
-		(snd-display #__line__ ";pvoc-d at ~D: ~A~%" i (v i))))
-	  (do ((i 75 (+ i 1)))
-	      ((= i 85))
-	    (if (> (abs (- (v i) -.196)) .01)
-		(snd-display #__line__ ";pvoc-d at ~D: ~A~%" i (v i)))))
-	))
+	(with-sound (:output v :srate 44100) (pvoc-d 0 .0025 .2 128))
+	(do ((i 55 (+ i 1)))
+	    ((= i 65))
+	  (if (> (abs (- (v i) .196)) .01)
+	      (snd-display #__line__ ";pvoc-d at ~D: ~A~%" i (v i))))
+	(do ((i 75 (+ i 1)))
+	    ((= i 85))
+	  (if (> (abs (- (v i) -.196)) .01)
+	      (snd-display #__line__ ";pvoc-d at ~D: ~A~%" i (v i)))))
+      )
 
     (let ((ind (open-sound "oboe.snd")))
       (let ((gen (make-moog-filter 500.0 .1)))
@@ -22412,7 +22412,7 @@ EDITS: 2
 		(if (not (vequal vals (float-vector 0 0 0 .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0 0 0)))
 		    (snd-display #__line__ ";ramp mix amp env: ~A" vals)))
 	      (set! (mix-amp-env id) #f)
-	      (if (not (null? (mix-amp-env id))) (snd-display #__line__ ";set mix-amp-env to null: ~A" (mix-amp-env id)))
+	      (if (pair? (mix-amp-env id)) (snd-display #__line__ ";set mix-amp-env to null: ~A" (mix-amp-env id)))
 	      (set! (mix-speed id) 0.5)
 	      (if (not (= (framples) 24)) (snd-display #__line__ ";mix speed lengthens 24: ~A" (framples)))
 	      (set! (mix-speed id) 1.0)
@@ -23795,7 +23795,7 @@ EDITS: 2
 					     (format #f "~S" (mark-name m))
 					     #f)
 					 (mark-sync m))))
-	    (if (not (null? (mark-properties m)))
+	    (if (pair? (mark-properties m))
 		(set! str
 		      (string-append str 
 				     (format #f
@@ -24330,7 +24330,7 @@ EDITS: 2
 	    (let* ((current-marks (marks ind 0))
 		   (current-samples (map mark-sample current-marks)))
 	      
-	      (if (not (null? current-marks))
+	      (if (pair? current-marks)
 		  (let ((id (current-marks (random (- (length current-marks) 1)))))
 		    (if (not (equal? id (find-mark (mark-sample id)))) 
 			(snd-display #__line__ ";~A: two marks at ~A? ~A" i (mark-sample id) (map mark-sample current-marks)))
@@ -24340,17 +24340,16 @@ EDITS: 2
 		((0) (let ((beg (random (framples)))
 			   (dur (max 1 (random 100))))
 		       (insert-silence beg dur)
-		       (if (not (null? current-marks))
-			   (for-each
-			    (lambda (id old-loc)
-			      (if (> old-loc beg)
-				  (begin
-				    (if (not (mark? id))
-					(snd-display #__line__ ";insert clobbered mark: ~A" id)
-					(if (not (= (mark-sample id) (+ old-loc dur)))
-					    (snd-display #__line__ ";insert, mark ~D ~D -> ~D (~D)" id old-loc (mark-sample id) dur))))))
-			    current-marks
-			    current-samples))))
+		       (for-each
+			(lambda (id old-loc)
+			  (if (> old-loc beg)
+			      (begin
+				(if (not (mark? id))
+				    (snd-display #__line__ ";insert clobbered mark: ~A" id)
+				    (if (not (= (mark-sample id) (+ old-loc dur)))
+					(snd-display #__line__ ";insert, mark ~D ~D -> ~D (~D)" id old-loc (mark-sample id) dur))))))
+			current-marks
+			current-samples)))
 		((1) (if (> (car (edits ind 0)) 0) (undo)))
 		((2) (if (> (cadr (edits ind 0)) 0) (redo)))
 		((3) (if (> (maxamp ind 0) .1) (scale-channel .5) (scale-channel 2.0))
@@ -24367,7 +24366,7 @@ EDITS: 2
 			    (dur (max 1 (random 100)))
 			    (end (+ beg dur)))
 		       (delete-samples beg dur)
-		       (if (not (null? current-marks))
+		       (if (pair? current-marks)
 			   (for-each
 			    (lambda (id old-loc)
 			      (if (and (> old-loc beg)
@@ -24383,7 +24382,7 @@ EDITS: 2
 			    current-marks
 			    current-samples))))
 		((6) (revert-sound))
-		((7) (if (and (not (null? current-marks))
+		((7) (if (and (pair? current-marks)
 			      (> (length current-marks) 1))
 			 (let ((id (current-marks (random (- (length current-marks) 1)))))
 			   (delete-mark id)
@@ -24393,27 +24392,25 @@ EDITS: 2
 			       (snd-display #__line__ ";delete-mark list trouble: ~A ~A ~A" id current-marks (marks ind 0))))))
 		((8) (let ((rate (if (> (framples) 200000) 2.0 0.5)))
 		       (src-channel rate)
-		       (if (not (null? current-marks))
-			   (for-each
-			    (lambda (id old-loc)
-			      (if (not (mark? id))
-				  (snd-display #__line__ ";src-channel clobbered mark: ~A" id)
-				  (if (> (abs (- (/ old-loc rate) (mark-sample id))) 2)
-				      (snd-display #__line__ ";src moved mark: ~A ~A ~A (~A -> ~A)" 
-						   id old-loc (mark-sample id) rate (- (/ old-loc rate) (mark-sample id))))))
-			    current-marks
-			    current-samples))))
+		       (for-each
+			(lambda (id old-loc)
+			  (if (not (mark? id))
+			      (snd-display #__line__ ";src-channel clobbered mark: ~A" id)
+			      (if (> (abs (- (/ old-loc rate) (mark-sample id))) 2)
+				  (snd-display #__line__ ";src moved mark: ~A ~A ~A (~A -> ~A)" 
+					       id old-loc (mark-sample id) rate (- (/ old-loc rate) (mark-sample id))))))
+			current-marks
+			current-samples)))
 		((9) (reverse-channel)
-		 (if (not (null? current-marks))
-		     (for-each
-		      (lambda (id old-loc)
-			(if (not (mark? id))
-			    (snd-display #__line__ ";reverse-channel clobbered mark: ~A" id)
-			    (if (> (abs (- (framples) old-loc (mark-sample id))) 2)
-				(snd-display #__line__ ";reverse moved mark: ~A ~A ~A (~A)" 
-					     id old-loc (- (framples) old-loc) (mark-sample id)))))
-		      current-marks
-		      current-samples)))
+		 (for-each
+		  (lambda (id old-loc)
+		    (if (not (mark? id))
+			(snd-display #__line__ ";reverse-channel clobbered mark: ~A" id)
+			(if (> (abs (- (framples) old-loc (mark-sample id))) 2)
+			    (snd-display #__line__ ";reverse moved mark: ~A ~A ~A (~A)" 
+					 id old-loc (- (framples) old-loc) (mark-sample id)))))
+		  current-marks
+		  current-samples))
 		(else (add-mark (random (- (framples) 1)))))))
 	  (close-sound ind))
 	
@@ -24933,7 +24930,7 @@ EDITS: 2
 		(if (not (member "wave" exts))
 		    (snd-display #__line__ ";sound-file-extensions: ~A" exts))
 		(set! (sound-file-extensions) (list))
-		(if (not (null? (sound-file-extensions)))
+		(if (pair? (sound-file-extensions))
 		    (snd-display #__line__ ";sound-file-extesions set to (): ~A" (sound-file-extensions)))
 		(set! (sound-file-extensions) exts)
 		(if (not (member "wave" exts))
@@ -25248,7 +25245,7 @@ EDITS: 2
 
     (for-each 
      (lambda (n) 
-       (if (not (null? (hook-functions n)))
+       (if (pair? (hook-functions n))
 	   (snd-display #__line__ ";~A not empty?" n)))
      (snd-hooks))
     
@@ -25652,7 +25649,7 @@ EDITS: 2
       (set! (search-procedure) #f)
       (close-sound ind)
       )
-    (if (not (null? (hook-functions open-raw-sound-hook))) (set! (hook-functions open-raw-sound-hook) ()))
+    (if (pair? (hook-functions open-raw-sound-hook)) (set! (hook-functions open-raw-sound-hook) ()))
     (hook-push open-raw-sound-hook (lambda (hook) (set! (hook 'result) (list 1 22050 mus-bshort))))
     (let ((ind (open-sound "~/sf1/addf8.nh")))
       (play ind :wait #t)
@@ -26339,7 +26336,7 @@ EDITS: 2
 	      (if (fneq (mix-amp mx) 1.0) (snd-display #__line__ ";mix amp: blocked edit: ~A" (mix-amp mx)))
 	      (set! (mix-amp-env mx) '(0 0 1 1 2 0))
 	      (if (not (= (edit-position ind 0) 2)) (snd-display #__line__ ";mix amp env: blocked edit: ~A" (edit-position ind 0)))
-	      (if (not (null? (mix-amp-env mx))) (snd-display #__line__ ";mix amp env: blocked edit: ~A" (mix-amp-env mx)))
+	      (if (pair? (mix-amp-env mx)) (snd-display #__line__ ";mix amp env: blocked edit: ~A" (mix-amp-env mx)))
 	      (set! (mix-speed mx) 2.0)
 	      (if (not (= (edit-position ind 0) 2)) (snd-display #__line__ ";mix speed: blocked edit: ~A" (edit-position ind 0)))
 	      (if (fneq (mix-speed mx) 1.0) (snd-display #__line__ ";mix speed: blocked edit: ~A" (mix-speed mx)))
@@ -26353,8 +26350,8 @@ EDITS: 2
       (close-sound ind))
     
     (let ((ind (open-sound "oboe.snd")))
-      (if (not (null? (hook-functions (edit-hook ind 0)))) (snd-display #__line__ ";edit-hook not cleared at close?"))
-      (if (not (null? (hook-functions (after-edit-hook ind 0)))) (snd-display #__line__ ";after-edit-hook not cleared at close?"))
+      (if (pair? (hook-functions (edit-hook ind 0))) (snd-display #__line__ ";edit-hook not cleared at close?"))
+      (if (pair? (hook-functions (after-edit-hook ind 0))) (snd-display #__line__ ";after-edit-hook not cleared at close?"))
       (close-sound ind))
     
     (reset-all-hooks)
@@ -26742,7 +26739,7 @@ EDITS: 2
 	  (without-errors
 	   (let ((cfd (car open-files)))
 	     (set! (sync cfd) 1)
-	     (if (not (null? (cdr open-files))) (set! (sync (cadr open-files)) 1))
+	     (if (pair? (cdr open-files)) (set! (sync (cadr open-files)) 1))
 	     (safe-make-selection 1000 2000 cfd)
 	     (src-selection .5)
 	     (undo 1 cfd)
@@ -26773,7 +26770,7 @@ EDITS: 2
 	     (src-selection '(0 .5 1 1))
 	     (undo)
 	     (revert-sound cfd)
-	     (if (not (null? (cdr open-files))) (revert-sound (cadr open-files)))))
+	     (if (pair? (cdr open-files)) (revert-sound (cadr open-files)))))
 	  
 	  (if (and (> (framples) 1)
 		   (< (framples) 10000))
@@ -27165,7 +27162,7 @@ EDITS: 2
 	  ;; new variable settings 
 	  (letrec ((reset-vars
 		    (lambda (lst)
-		      (if (not (null? lst))
+		      (if (pair? lst)
 			  (let* ((name ((car lst) 0))
 				 (index (if ((car lst) 2) (choose-fd) #f))
 				 (getfnc ((car lst) 1))
@@ -28036,7 +28033,7 @@ EDITS: 2
 		  (snd3 (open-sound "4.aiff")))
 	      (define tests-1
 		(lambda (f fn nv)
-		  (if (not (null? f))
+		  (if (pair? f)
 		      (begin
 			(test-history-channel (car f) (car fn) (car nv) snd1 snd2 snd3)
 			(tests-1 (cdr f) (cdr fn) (cdr nv))))))
@@ -29262,8 +29259,8 @@ EDITS: 2
 		     (dur (+ 80 (random 200)))
 		     (reader0 (make-sampler beg cursnd curchn)))
 		(env-channel e beg dur cursnd curchn)
-		(let* ((reader1 (make-sampler beg cursnd curchn))
-		       (en (make-env e :length dur)))
+		(let ((reader1 (make-sampler beg cursnd curchn))
+		      (en (make-env e :length dur)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i dur))
 		    (let* ((e0 (env en))
@@ -39566,7 +39563,7 @@ EDITS: 1
   (if *clm-verbose* (snd-display #__line__ ";*clm-verbose*: ~A" *clm-verbose*))
   (if *clm-statistics* (snd-display #__line__ ";*clm-statistics*: ~A" *clm-statistics*))
   (if *clm-reverb* (snd-display #__line__ ";*clm-reverb*: ~A" *clm-reverb*))
-  (if (not (null? *clm-reverb-data*)) (snd-display #__line__ ";*clm-reverb-data*: ~A?" *clm-reverb-data*))
+  (if (pair? *clm-reverb-data*) (snd-display #__line__ ";*clm-reverb-data*: ~A?" *clm-reverb-data*))
   (if *clm-delete-reverb* (snd-display #__line__ ";*clm-delete-reverb*: ~A" *clm-delete-reverb*))
   
   (let ((old-stats *clm-statistics*))
@@ -39639,9 +39636,9 @@ EDITS: 1
   (zip-sound 2 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
   
   (if all-args
-      (let* ((ind (open-sound "oboe.snd"))
-	     (pv (make-pvocoder 256 4 64))
-	     (rd (make-sampler 0)))
+      (let ((ind (open-sound "oboe.snd"))
+	    (pv (make-pvocoder 256 4 64))
+	    (rd (make-sampler 0)))
 	(map-channel (lambda (y) (pvocoder pv rd)))
 	(clm-reverb-sound .1 jc-reverb)
 	(close-sound ind)))
@@ -41415,7 +41412,7 @@ EDITS: 1
       (if (not (string=? descr "another-name freq: 440.000Hz, phase: 0.000"))
 	  (snd-display #__line__ ";set mus-name describe 1: ~A" descr))))
   
-  (if (not (null? (sounds))) (for-each close-sound (sounds)))
+  (if (pair? (sounds)) (for-each close-sound (sounds)))
   
   (test-documentation-instruments) ; clm23.scm
   )
@@ -41447,7 +41444,7 @@ EDITS: 1
 	      (string-set! new-str i #\_)
 	      (string-set! new-str i c))))))
   
-  (define (tagged-p val sym)  (or (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) sym))))
+  (define (tagged-p val sym)  (or (eq? val #f) (and (list? val) (pair? val) (eq? (car val) sym))))
   (define (array-p val type)  (and (list? val) (or (null? val) (type (car val)))))
   (define XM_INT  integer?)
   (define (XM_ULONG val)  (and (integer? val) (>= val 0)))
@@ -41482,13 +41479,13 @@ EDITS: 1
   (define (XM_VISUAL val)  (or (tagged-p val 'Visual) (and (number? val) (= val 0))))
   (define (XM_WIDGET_CLASS val)  (or (tagged-p val 'WidgetClass) (and (number? val) (= val 0))))
   (define (XM_STRING_OR_INT val)  (or (string? val) (integer? val) (eq? val #f)))
-  (define (XM_STRING_OR_XMSTRING val)  (or (string? val) (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) 'XmString)) (and (number? val) (= val 0))))
+  (define (XM_STRING_OR_XMSTRING val)  (or (string? val) (eq? val #f) (and (list? val) (pair? val) (eq? (car val) 'XmString)) (and (number? val) (= val 0))))
   (define (XM_BOOLEAN_OR_INT val)  (or (boolean? val) (integer? val)))
   (define (XM_POSITION val)  (and (integer? val) (< (abs val) 65536)))
   (define (XM_SHORT val)  (and (integer? val) (< (abs val) 65536)))
   (define (XM_CALLBACK val)  (or (procedure? val) (eq? val #f) (integer? val)))
-  (define (XM_TRANSFER_CALLBACK val)  (or (procedure? val) (eq? val #f) (integer? val) (and (list? val) (not (null? val)) (procedure? (car val)))))
-  (define (XM_CONVERT_CALLBACK val)  (or (procedure? val) (eq? val #f) (integer? val) (and (list? val) (not (null? val)) (procedure? (car val)))))
+  (define (XM_TRANSFER_CALLBACK val)  (or (procedure? val) (eq? val #f) (integer? val) (and (list? val) (pair? val) (procedure? (car val)))))
+  (define (XM_CONVERT_CALLBACK val)  (or (procedure? val) (eq? val #f) (integer? val) (and (list? val) (pair? val) (procedure? (car val)))))
   (define (XM_SEARCH_CALLBACK val)  (or (procedure? val) (eq? val #f) (integer? val)))
   (define (XM_ORDER_CALLBACK val)  (or (procedure? val) (eq? val #f) (integer? val)))
   (define (XM_QUALIFY_CALLBACK val)  (or (procedure? val) (eq? val #f) (integer? val)))
@@ -41529,13 +41526,13 @@ EDITS: 1
 		      (not (Depth? (car dps))))
 		  (snd-display #__line__ ";depths: ~A" (.depths scr)))
 	      (if (not (= (.depth (car dps)) 24)) (snd-display #__line__ ";.depths val: ~A" (map .depth dps)))
-	      (if (not (null? (.visuals (car dps))))
+	      (if (pair? (.visuals (car dps)))
 		  (if (not (Visual? (car (.visuals (car dps))))) 
 		      (snd-display #__line__ ";visuals: ~A" (map .visuals dps))
 		      (if (not (= (.bits_per_rgb (car (.visuals (car dps)))) 8))
 			  (snd-display #__line__ ";bits/visuals: ~A" (map .bits_per_rgb (.visuals (car dps))))))
 		  (if (and (cadr dps)
-			   (not (null? (.visuals (cadr dps)))))
+			   (pair? (.visuals (cadr dps))))
 		      (if (not (Visual? (car (.visuals (cadr dps))))) 
 			  (snd-display #__line__ ";visuals: ~A" (map .visuals dps))
 			  (if (not (= (.bits_per_rgb (car (.visuals (cadr dps)))) 8))
@@ -43353,7 +43350,7 @@ EDITS: 1
 	      (XmListDeleteAllItems lst)
 	      (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 	      (if (not (= (vals 1) 0)) (snd-display #__line__ ";XmListDeleteAllItems len: ~A" (vals 1)))
-	      (if (not (null? (vals 3)))
+	      (if (pair? (vals 3))
 		  (snd-display #__line__ ";deleted all items: ~A" (vals 3)))
 	      
 	      (let ((item1 (XmStringCreate "one" XmFONTLIST_DEFAULT_TAG))
@@ -45167,7 +45164,7 @@ EDITS: 1
 	      gl-procs))
 	   (list (list 0 1) 0+i))
 	  
-	  (if (not (null? glu-procs))
+	  (if (pair? glu-procs)
 	      (begin
 		(for-each 
 		 (lambda (arg)
@@ -46581,7 +46578,7 @@ EDITS: 1
 		(if (not (string=? str "set! beats-per-measure: no such sound: -1"))
 		    (snd-display #__line__ ";beats-per-measure error: ~S~%" str)))))
 	  
-	  (if (not (null? (sounds)))
+	  (if (pair? (sounds))
 	      (snd-display #__line__ ";sounds after error checks: ~A~%" (map short-file-name (sounds))))
 	  
 	  (if (provided? 'snd-motif)

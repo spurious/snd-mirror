@@ -330,11 +330,10 @@
 	  (if (< (length speakers) (length delays))
 	      (error 'mus-error "ERROR: more speaker delays than speakers, ~A supplied instead of ~A [~A]~%" (length delays) (length speakers) delays))))
   
-  (if (pair? delays)
-      (for-each
-       (lambda (dly)
-	 (if (< dly 0.0) (error 'mus-error "ERROR: delays must be all positive, ~A is negative~%" dly)))
-       delays))
+  (for-each
+   (lambda (dly)
+     (if (< dly 0.0) (error 'mus-error "ERROR: delays must be all positive, ~A is negative~%" dly)))
+   delays)
   
   (if (pair? distances)
       (if (> (length speakers) (length distances))
@@ -342,11 +341,10 @@
 	  (if (< (length speakers) (length distances))
 	      (error 'mus-error "ERROR: more speaker distances than speakers, ~A supplied instead of ~A [~A]~%" (length distances) (length speakers) distances))))
   
-  (if (pair? distances)
-      (for-each
-       (lambda (dly)
-	 (if (< dly 0.0) (error 'mus-error "ERROR: distances must be all positive, ~A is negative~%" dly)))
-       distances))
+  (for-each
+   (lambda (dly)
+     (if (< dly 0.0) (error 'mus-error "ERROR: distances must be all positive, ~A is negative~%" dly)))
+   distances)
   
   (if (pair? channel-map)
       (if (> (length speakers) (length channel-map))

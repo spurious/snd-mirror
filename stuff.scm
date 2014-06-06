@@ -41,7 +41,7 @@
 
 
 (define* (iota n (start 0) (incr 1))
-  "(iota n (start 0)) returns a list counting from start for n:\n\
+  "(iota n (start 0) (incr 1)) returns a list counting from start for n:\n\
     (iota 3) -> '(0 1 2)"
   (if (or (not (integer? n))
 	  (< n 0))
@@ -829,7 +829,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 (define (for-each-permutation func vals)
   "(for-each-permutation func vals) applies func to every permutation of vals:\n\
-    (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))"
+    (for-each-permutation (lambda args (format #t \"~{~A~^ ~}~%\" args)) '(1 2 3))"
   (define (pinner cur nvals len)
     (if (= len 1)
         (apply func (cons (car nvals) cur))

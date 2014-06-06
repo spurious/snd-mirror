@@ -3,7 +3,7 @@
 (define xtva-ctr 0)
 
 (define (for-each-file func files)
-  (if (not (null? files))
+  (if (pair? files)
       (let ((count 1))
 	(call-with-input-file 
 	    (car files)

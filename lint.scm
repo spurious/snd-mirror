@@ -1914,36 +1914,48 @@
 		 (if (< len 3)
 		     (lint-format "if has too few clauses: ~S" 
 				  name form)
-		     
-		     (if *report-minor-stuff*
-			 (let ((expr (simplify-boolean (cadr form) () () env)))
-			   (if (eq? expr #t)
-			       (lint-format "possible simplification:~A"
-					    name
-					    (lists->string form (caddr form)))
-			       (if (eq? expr #f)
-				   (if (null? (cdddr form))
-				       (if (not (eq? (caddr form) #f))
-					   (lint-format "~S is never #t:~A"
-							name (cadr form)
-							(truncated-list->string form)))
-				       (lint-format "possible simplification:~A"
-						    name
-						    (lists->string form (cadddr form))))
-				   (if (and (boolean? (list-ref form 2))
-					    (pair? (cdddr form))
-					    (boolean? (list-ref form 3))
-					    (not (eq? (list-ref form 2) (list-ref form 3)))) ; !
-				       (lint-format "possible simplification:~A"
-						    name
-						    (lists->string form (if (list-ref form 2)
-									    expr
-									    `(not ,expr))))
-				       (if (and (= len 4)
-						(equal? (caddr form) (cadddr form)))
-					   (lint-format "if is not needed here:~A"
-							name 
-							(truncated-list->string form))))))))))))
+		     (let ((test (cadr form))
+			   (true (caddr form))
+			   (false (and (= len 4) (cadddr form))))
+
+		       (if *report-minor-stuff*
+			   (let ((expr (simplify-boolean test () () env)))
+
+			     (if (and (not false) ; (if (pair? lst) (for-each f lst)) -> (for-each f lst)
+				      (pair? test)
+				      (eq? (car test) 'pair?)
+				      (pair? true)
+				      (memq (car true) '(map for-each))
+				      (eq? (cadr test) (caddr true)))
+				 (lint-format "possible simplification: ~A"
+					      name
+					      (lists->string form true)))
+
+			     (if (eq? expr #t)
+				 (lint-format "possible simplification:~A"
+					      name
+					      (lists->string form true))
+				 (if (eq? expr #f)
+				     (if (not false)
+					 (if (not (eq? true #f)) ; (if #f #f) as a kludgey #<unspecified>
+					     (lint-format "~S is never #t:~A"
+							  name test
+							  (truncated-list->string form)))
+					 (lint-format "possible simplification:~A"
+						      name
+						      (lists->string form false)))
+				     (if (and (boolean? true)
+					      false
+					      (boolean? false)
+					      (not (eq? true false))) ; !  (if expr #t #f) turned into something less verbose
+					 (lint-format "possible simplification:~A"
+						      name
+						      (lists->string form (if true expr `(not ,expr))))
+					 (if (and (= len 4)
+						  (equal? true false))
+					     (lint-format "if is not needed here:~A"
+							  name 
+							  (truncated-list->string form)))))))))))))
 
 	  ; (do) -- if no side effect in body, it's not needed
 	  ; in that case, if no side-effect in steppers/inits, they're not needed
@@ -2009,6 +2021,8 @@
 			      name
 			      (truncated-list->string form)))))
 	     
+#|
+	  ;; this check isn't correct unfortunately
 	  ((call/cc call-with-current-continuation)
 	   (let ((continuation (and (pair? (cdr form))
 				    (pair? (cadr form))
@@ -2023,7 +2037,7 @@
 			   (lint-format "~A is not needed:~A"
 					name head 
 					(truncated-list->string form))))))))
-	  
+|#	  
 	  ;; what about (* 2.0 (random 1.0)) and the like?
 	  ;;   this is trickier than it appears: (* 2.0 (random 3)) etc
 
@@ -2127,7 +2141,7 @@
 	   (if (= (length form) 2)
 	       (lint-format "~A could be ~A" 
 			    name form (cadr form))))
-	  
+
 	  ((sort!)
 	   (if (and (= (length form) 3)
 		    (memq (caddr form) '(= <= >= eq? eqv? equal?

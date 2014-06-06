@@ -81,7 +81,7 @@
 	  ((pair? obj)
 	   (case (car obj)
 	     
-	     ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-environment)
+	     ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-environment when unless)
 	      (format port "(~A ~A" (car obj) (cadr obj))
 	      (spaces (+ column 2))
 	      (stacked-list (cddr obj) (+ column 2))

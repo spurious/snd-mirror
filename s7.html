@@ -1739,25 +1739,23 @@ mingle
 	    ((goto)      (set! gotos (cons tree gotos)))
 	    ((come-from) (set! come-froms (cons tree come-froms))))))
 
-    (if (pair? gotos)
-	(for-each
-	 (lambda (goto)
-	   (let* ((name (cadr (cadar goto)))
-		  (label (member name labels (lambda (a b) (eq? a (cadr (cadar b)))))))
-	     (if label
-		 (set-cdr! goto (car label))
-		 (error 'bad-goto "can't find label: ~S" name))))
-	   gotos))
-
-    (if (pair? come-froms)
-	(for-each
-	 (lambda (from)
-	   (let* ((name (cadr (cadar from)))
-		  (label (member name labels (lambda (a b) (eq? a (cadr (cadar b)))))))
-	     (if label
-		 (set-cdr! (car label) from)
-		 (error 'bad-come-from "can't find label: ~S" name))))
-	   come-froms))
+    (for-each
+     (lambda (goto)
+       (let* ((name (cadr (cadar goto)))
+	      (label (member name labels (lambda (a b) (eq? a (cadr (cadar b)))))))
+	 (if label
+	     (set-cdr! goto (car label))
+	     (error 'bad-goto "can't find label: ~S" name))))
+     gotos)
+    
+    (for-each
+     (lambda (from)
+       (let* ((name (cadr (cadar from)))
+	      (label (member name labels (lambda (a b) (eq? a (cadr (cadar b)))))))
+	 (if label
+	     (set-cdr! (car label) from)
+	     (error 'bad-come-from "can't find label: ~S" name))))
+     come-froms)
 
     `(define ,name-and-args
        (let ((label (lambda (name) #f))
@@ -1765,13 +1763,6 @@ mingle
 	     (come-from (lambda (name) #f)))
 	 ,@body))))
 </pre>
-<!--
-<p>Truly, this is only a beginning, but we believe that with sufficient time and funding and unpaid
-graduate student help, we can win through eventually to that most prized of accomplishments, that Holy Grail
-of progammers, a complete COME-FROM implementation in Scheme.  WGS wishes to thank his parents, his
-sisters, his friends-too-numerous-to-count, and his gray cat, Gray Cat.
-</p>
--->
 </div>
 
 
