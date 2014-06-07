@@ -16,7 +16,6 @@ typedef double s7_Double;
  */
 
 
-
   /* --------------------------------------------------------------------------------
    * s7 itself is based on the types and functions in this file, so the first place to look for examples
    *   is s7.c.  There are also a few variations on a REPL at the end of s7.html.  s7test.scm
@@ -30,61 +29,6 @@ typedef double s7_Double;
    *
    *   Common Music by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
    *     which can use sndlib -- see Snd's grfsnd.html or the cmdist archives for details
-   *
-   *
-   * s7 (Scheme) variables:
-   *
-   *    *features*              a list of symbols describing what is currently available (initially '(s7)).
-   *    *vector-print-length*   how many elements of a vector are printed (initially 8)
-   *    *load-path*             a list of directory names that "load" searches for Scheme input files (initially '())
-   *    *load-hook*             hook called before a file is loaded; takes a function of one arg, the name of the file.
-   *    *error-hook*            hook called upon error; takes a function of two args, 
-   *                               the error type (a symbol), and the info about it (a list).
-   *    *unbound-variable-hook* hook called when an unbound symbol is accessed.
-   *    *#readers*              #... readers
-   *    *gc-stats*              #t to turn on GC statistics
-   *    *maximum-stack-size*    largest stack allowed
-   *    __func__                equivalent to C's __func__.  Data about the current function.
-   *
-   * s7 constants:
-   *
-   *    most-positive-fixnum
-   *    most-negative-fixnum    integer limits (the names come from Common Lisp)
-   *    pi                      3.1415...
-   *    *stdin*, *stdout*, *stderr* default IO ports
-   *
-   * s7 non-standard functions:
-   *
-   *    provided?               checks the *features* list for a symbol
-   *    provide                 adds a symbol to the *features* list
-   *    port-line-number        current line during loading
-   *    port-filename           current file name during loading
-   *    pair-line-number        location of a piece of code read from a file
-   *    gc                      calls the GC. If its argument is #f, the GC is turned off
-   *    call-with-exit          just like call/cc but without the ability to jump back into a context
-   *    continuation?           #t if its argument is a continuation (as opposed to an ordinary procedure)
-   *    procedure-documentation doc string associated with a procedure
-   *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
-   *    aritable?               #t if a function can be called with a given number of arguments
-   *    procedure-source        returns the source (a list) of a procedure
-   *    help                    tries to find a help string associated with its argument
-   *    symbol-calls            if profiling is enabled, returns the number of times its argument (a symbol) has been called
-   *    macro?                  returns #t if its argument is a macro or a symbol whose value is a macro
-   *    gensym?                 returns #t if its argument is a symbol created by make-gensym
-   *    with-baffle             limit scope of continuations
-   *
-   *    and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
-   *    stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
-   *    such as multiprecision arithmetic, initial heap and stack size, etc.
-   *
-   *    The functions map, for-each, length, reverse, copy, and fill! are generic.
-   *
-   * I think s7 has built-in support for srfi-0 (cond-expand), srfi-6 (basic string ports), srfi-8 (receive), srfi-17 (generalized-set!), 
-   *   srfi-28 (format, also nearly all of srfi-48), srfi-30 (block comments),
-   *   srfi-88 (keywords), and srfi-89 (define*).  It also supports the functionality of many others
-   *   but under a slightly different syntax: srfi-69 (hash-tables), srfi-16 (define*), srfi-25 (multidimensional
-   *   arrays).  srfi-98 would be trivial to add, and exists in snd as getenv.
-   * The srfi-1 (lists) and srfi-60 (bitwise ops) reference implementations can be loaded as is.
    */
 
 

@@ -239,7 +239,6 @@ indented and on a sort of brownish background.
       <li><a href="#notify">notification in C that a Scheme variable has been set!</a>
       <li><a href="#namespace">Load C defined stuff into a separate namespace</a>
       <li><a href="#Cerrors">Error handling in C</a>
-      <li><a href="#closure">Closure defined in C</a>
       <li><a href="#testhook">Hooks in C and Scheme</a>
       <li><a href="#dload">Load a C module dynamically</a>
       <li><a href="#gmpex">gmp and friends</a>
@@ -1731,13 +1730,17 @@ mingle
 	(gotos ())
 	(come-froms ()))
 
-    (do ((tree (cdr body) (cdr tree)))
-	((null? tree))
-      (if (pair? tree)
+    (define (collect-jumps tree)
+      (when (pair? tree)
+	(when (pair? (car tree))
 	  (case (caar tree)
 	    ((label)     (set! labels (cons tree labels)))
 	    ((goto)      (set! gotos (cons tree gotos)))
-	    ((come-from) (set! come-froms (cons tree come-froms))))))
+	    ((come-from) (set! come-froms (cons tree come-froms)))
+	    (else (collect-jumps (car tree)))))
+	(collect-jumps (cdr tree))))
+
+    (collect-jumps body)
 
     (for-each
      (lambda (goto)
@@ -2584,7 +2587,7 @@ Environments are first class (and applicable) objects in s7.
 <pre class="indented">
 (<em class=def id="environmentp">environment?</em> obj)              #t if obj is an environment
 (<em class=def id="withenvironment">with-environment</em> env . body)   evaluate body in the environment env 
-(<em class=def id="outerenvironment">outer-environment</em> env)         the environment that encloses the environment env
+(<em class=def id="outerenvironment">outer-environment</em> env)         the environment that encloses the environment env (settable)
 (<em class=def id="environmenttolist">environment-&gt;list</em> env)         return the environment bindings as a list of (symbol . value) cons's
 
 (<em class=def id="globalenvironment">global-environment</em>)            the top-level environment
@@ -2601,13 +2604,16 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="openenvironment">open-environment</em> env)          mark env as open (see below)
 (<em class=def id="openenvironmentp">open-environment?</em> env)
 
-(<em class=def id="environmentref">environment-ref</em> env sym)       these are the explicit forms to get and set an environment variable
+(<em class=def id="environmentref">environment-ref</em> env sym)       these are the explicit forms to get and set a binding
 (<em class=def id="environmentset">environment-set!</em> env sym val)
 </pre>
 
-<div class="indented">
 <p>
 Two environments are equal if they have the same symbol/value pairs, ignoring shadowed pairs.
+</p>
+
+<div class="indented">
+<p>
 Environments provide a very simple, yet very powerful structure or class mechanism.
 As a quick example, here is a structure definition:
 </p>
@@ -2645,7 +2651,8 @@ As a quick example, here is a structure definition:
 <code>(with-environment e . body)</code> is equivalent to
 <code>(eval `(begin ,@body) e)</code>, but probably faster.
 Similarly, <code>(let bindings . body)</code> is equivalent to
-<code>(eval `(begin ,@body) (apply environment* (flatten bindings)))</code>.
+<code>(eval `(begin ,@body) (apply environment* (flatten bindings)))</code>,
+ignoring the outer (enclosing) environment.
 </p>
 
 <p>
@@ -2671,8 +2678,6 @@ use augment-environment!.  Both of these functions accept nil as the
 'env' argument as shorthand for <code>(global-environment)</code>.
 Both also accept other environments as well as individual bindings,
 adding all the argument's bindings to the new environment.
-If you call augment-environment! on a procedure-environment,
-whatever happens next is not a bug.
 </p>
 
 <blockquote>
@@ -4007,13 +4012,6 @@ h
 "a: 1, b: 2"
 &gt; (h)
 "a: 32, b: #f"
-</pre>
-
-<p>To add an old-style hook function:
-</p>
-
-<pre class="indented">
-(add-to-hook hook (lambda (h) (set! (h 'result) (apply func (map h (h 'args))))))
 </pre>
 
 <p>In C, to make a hook:
@@ -5697,7 +5695,7 @@ Better ideas are always welcome!
 <li>pi
 <li>*stdin* *stdout* *stderr*
 <li>*stacktrace*
-<li>nan.0 -nan.0 inf.0 -inf.0
+<li>nan.0 -nan.0 inf.0 -inf.0 (what crappy names! nan.0 is an inexact integer that is not a number?)
 <li>most-positive-fixnum most-negative-fixnum
 <li>*unbound-variable-hook* *load-hook* *error-hook*
 </ul>
@@ -6420,7 +6418,6 @@ The examples that follow show:
 <li><a href="#notify">notification in C that a Scheme variable has been set!</a>
 <li><a href="#namespace">Load C defined stuff into a separate namespace</a>
 <li><a href="#Cerrors">Error handling in C</a>
-<li><a href="#closure">Closure defined in C</a>
 <li><a href="#testhook">Hooks in C and Scheme</a>
 <li><a href="#dload">Load a C module dynamically</a>
 <li><a href="#gmpex">gmp and friends</a>
@@ -7814,118 +7811,6 @@ int main(int argc, char **argv)
  *   the value returned ('our-error in this case).
  */
 </pre></div>
-
-
-
-
-
-<div class="header" id="closure"><h4>Closures in C</h4></div>
-
-<p>We often have hooks or callback lists in Scheme, and would like to place a C-defined
-s7 function on such a list.  If the C-side function does not have
-any state, we can just add its name to the list, but if it is effectively a closure, we have a problem.  C itself does not
-provide closures, so the standard two-step is to include a void* pointer with the
-C function in a struct, then when that is called, pass the pointer to the function
-by hand.  This obviously does not work if we want that function to be a member of
-a normal Scheme list of functions.  So in the next example, we define a closure
-in C using s7_make_closure.  
-</p>
-
-
-<div class="indented">
-<pre>
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-
-#include "s7.h"
-
-static s7_pointer closure_func(s7_scheme *sc, s7_pointer args)
-{
-  /* closure_func is the function portion of our closure.  It assumes its
-   *   environment has an integer named "x".  The function also takes one argument,
-   *   an integer we'll call it "y".
-   */
-  return(s7_make_integer(sc,                            /* return (+ y x) */
-                         s7_integer(s7_car(args)) +     /*   this is y */
-                         s7_integer(s7_name_to_value(sc, "x"))));
-}
-
-static s7_pointer define_closure(s7_scheme *sc, const char *name, s7_pointer func, s7_pointer x_value)
-{
-  /* make_closure creates a new closure with x_value as the local value of x,
-   *   and func as the function.  It defines this in Scheme as "name".  
-   *
-   *   s7_make_closure's arguments are the closure args and body, and
-   *   the closure's environment.  For the args, we'll use '(y), and
-   *   the body is '(f y));  for the environment, we'll augment 
-   *   the current environment with '((x . x_value) (f . func)).
-   */
-  s7_define(sc, 
-	    s7_nil(sc),
-	    s7_make_symbol(sc, name),
-	    <em class=red>s7_make_closure</em>(sc, 
-			    s7_cons(sc,                         /* arg list: '(y) */
-			            s7_make_symbol(sc, "y"), s7_nil(sc)), 
-			    s7_cons(sc,                         /* body: '(f y) */
-				    s7_cons(sc,                              
-					    s7_make_symbol(sc, "f"),
-					    s7_cons(sc, s7_make_symbol(sc, "y"), s7_nil(sc))),
-				    s7_nil(sc)),
-			    <em class=red>s7_augment_environment</em>(sc, 
-						   s7_current_environment(sc), 
-						   s7_cons(sc, 
-							   s7_cons(sc,  /* the local binding for "x" */
-                                                                   s7_make_symbol(sc, "x"), 
-                                                                   <em class=red>x_value</em>), 
-							   s7_cons(sc,  /*     and "f" */
-								   s7_cons(sc, 
-                                                                           s7_make_symbol(sc, "f"), 
-                                                                           <em class=red>func</em>), 
-								   s7_nil(sc))))));
-  return(s7_unspecified(sc));
-}
-
-int main(int argc, char **argv)
-{
-  char buffer[512];
-  char response[1024];
-  s7_pointer c_func;
-  s7_scheme *s7;
-
-  s7 = s7_init();  
-
-  c_func = s7_make_function(s7, "#&lt;closure function&gt;", closure_func, 1, 0, false, "function used by define_closure");
-
-  define_closure(s7, "closure-1", c_func, s7_make_integer(s7, 32));  /* (let ((x 32)) (lambda (y) (+ y x))) */
-  define_closure(s7, "closure-2", c_func, s7_make_integer(s7, 123)); /* (let ((x 123)) (lambda (y) (+ y x))) */
-
-  while (1) 
-    {
-      fprintf(stdout, "\n&gt; ");
-      fgets(buffer, 512, stdin);
-      if ((buffer[0] != '\n') || 
-	  (strlen(buffer) &gt; 1))
-	{                            
-	  sprintf(response, "(write %s)", buffer);
-	  s7_eval_c_string(s7, response);
-	}
-    }
-}
-
-/*
- *   &gt; (closure-1 3)
- *   35
- *   &gt; (closure-2 3)
- *   126
- *   &gt; (procedure-source closure-1)
- *   (lambda (y) (f y))
- *   &gt; (environment-&gt;list (procedure-environment closure-1))
- *   ((f . #&lt;closure function&gt;) (x . 32))
- */
-</pre></div>
-
-
 
 
 

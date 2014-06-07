@@ -6010,7 +6010,7 @@ s7_pointer s7_outer_environment(s7_pointer e)
 
 static s7_pointer g_outer_environment(s7_scheme *sc, s7_pointer args)
 {
-  #define H_outer_environment "(outer-environment env) returns the environment that contains env."
+  #define H_outer_environment "(outer-environment env) is the environment that contains env."
   s7_pointer env;
 
   env = car(args);
@@ -6023,6 +6023,30 @@ static s7_pointer g_outer_environment(s7_scheme *sc, s7_pointer args)
       (is_null(next_environment(env))))
     return(sc->global_env);
   return(next_environment(env));
+}
+
+
+static s7_pointer g_set_outer_environment(s7_scheme *sc, s7_pointer args)
+{
+  /* (let ((a 1)) (let ((b 2)) (set! (outer-environment (current-environment)) (global-environment)) ((current-environment) 'a))) */
+  s7_pointer env, new_outer;
+
+  env = car(args);
+  if (!is_environment(env))
+    {
+      check_method(sc, env, sc->OUTER_ENVIRONMENT, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->OUTER_ENVIRONMENT, env, AN_ENVIRONMENT));  
+    }
+
+  new_outer = cadr(args);
+  if (!is_environment(new_outer))
+    return(wrong_type_argument_with_type(sc, sc->OUTER_ENVIRONMENT, small_int(2), new_outer, AN_ENVIRONMENT));  
+  if (new_outer == sc->global_env)
+    new_outer = sc->NIL;
+
+  if (env != sc->global_env)
+    next_environment(env) = new_outer;
+  return(new_outer);
 }
 
 
@@ -7755,53 +7779,6 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
     }
   return(false);
 }
-
-#if 0
-/* there is another way to rationalize (in fact there are many ways!).  Here is a scheme version of
- *   Bill Gosper's farint:
-
-(define* (farint x (err 1/1000000))
-  
-  (define* (farint-1 x nhi dhi (ln 0) (ld 1) (hn 1) (hd 0))
-    (if (> (+ ln hn) (* (+ ld hd) x))
-	(let* ((m (min (if (= 0 ln) 
-			   nhi 
-			 (floor (/ (- nhi hn) ln)))
-		       (floor (/ (- dhi hd) ld))))
-	       (d (- (* x ld) ln))
-	       (k (if (= 0 d) 
-		      m 
-		    (ceiling (/ (- hn (* x hd)) d)))))
-	  (if (< k m)
-	      (let ((hn1 (+ (* k ln) hn))
-		    (hd1 (+ (* k ld) hd)))
-		(farint-1 x nhi dhi hn1 hd1 (- hn1 ln) (- hd1 ld)))
-
-	    (let* ((n (+ (* m ln) hn)) (d (+ (* m ld) hd)))
-	      (if (< (* 2 d ld x) (+ (* ld n) (* ln d)))
-		  (/ ln ld) 
-		(/ n d)))))
-
-      (let* ((m (min (floor (/ (- nhi ln) hn))
-		     (if (= 0 hd) 
-			 dhi 
-		       (floor (/ (- dhi ld) hd)))))
-	     (d (- hn (* x hd)))
-	     (k (if (= 0 d) 
-		    m 
-		  (ceiling (/ (- (* x ld) ln) d)))))
-	(if (< k m)
-	    (let ((ln1 (+ (* k hn) ln))
-		  (ld1 (+ (* k hd) ld)))
-	    (farint-1 x nhi dhi (- ln1 hn) (- ld1 hd) ln1 ld1))
-	  (let* ((n (+ (* m hn) ln)) (d (+ (* m hd) ld)))
-	    (if (< (* 2 d hd x) (+ (* hd n) (* hn d)))
-		(/ n d) 
-	      (/ hn hd)))))))
-
-  (farint-1 x (/ err) (/ err)))
-*/
-#endif
 
 
 s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error)
@@ -29103,6 +29080,7 @@ static s7_pointer g_features_set(s7_scheme *sc, s7_pointer args)
     return(cadr(args));
   return(sc->ERROR);
 }
+
 
 
 
@@ -69516,6 +69494,8 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "current-input-port",  "set-current-input-port");
   s7_function_set_setter(sc, "current-output-port", "set-current-output-port");
   s7_function_set_setter(sc, "current-error-port",  "set-current-error-port");
+  s7_function_set_setter(sc, "outer-environment",   "(set! outer-environment)");
+  c_function_setter(s7_symbol_value(sc, sc->OUTER_ENVIRONMENT)) = s7_make_function(sc, "(set! outer-environment)", g_set_outer_environment, 2, 0, false, "outer-environment setter"); 
 
   {
     int i, top;
@@ -69918,24 +69898,18 @@ int main(int argc, char **argv)
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
- *   how to pass this into scheme from c (returns_temp is a kludge)? -- can we make it automatically from xen_assert and c_to_xen_*?
+ *   how to pass this into scheme from c (returns_temp is a kludge)
  *   then (info obj) -> env with as much as we can find?
- *   #define R_oscil by addition from xen_assert?
  *   also want to know free vars used/affected and is func val the same if args are the same [side-effects]
  *   and for catch what errors it might raise -- given methods this can't work in general
  *     framples: (integer? define ( ...) (selected-sound selected-channel)??)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  *
- * should (equal? "" #u8()) be #t?
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-*
  * doc strings for stuff.scm, s7.html entry for stuff.scm
- *
- * format:
- *   ~<~> in CL are for text justification, ~? is also doable without great pain
- *   ~n* and ~n:* perhaps, also CL allows ~,+3F
- *
  * maybe build-in with-let -- need no-consing version of this -- make outer-environment settable?
+ * format: CL allows ~,+3F, ~<~> in CL are for text justification, ~? is also doable without great pain
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc
  *   (environment* 'value "hi" 'string-length g_utf8_strlen)
@@ -69951,4 +69925,26 @@ int main(int argc, char **argv)
  *   but we'll lose procedure-source, definition env etc [and method redefs if careless]
  *
  * float-vector support is currently half-in/half-out
+ * in stuff, what is the "type" that simply returns the list, guaranteeing no copying? 
+ *   {list} perhaps, append if 1 arg
+ *   if identity, how to unapply?  unapply? (apply unapply x) -> x, like values but listifies
+ *   ((if (eq? type list) ?? (values apply type)) ...) -- odd -- here we need the unop -- values or append?
+ *   ((if (eq? type list) values (values apply type)) (collect-if ...))
+ *
+ * can we block (augment-environment (procedure-environment)...) or should we?
+ * ops on envs: union/intersection/difference/chain/ -- would union give multimethod?/reverse=unshadow?
+ *   rename: libraries = copy(libenv)+change names directly -> substitute -- would this collapse r7rs junk?
+ *   intersection=what will work in both
+ *   cond-defined?
+ *   union in the sense of combining same-named-but-not-equal-symbol values (wrapper lambda returning values or something) -> merge?
+ *   (epluribus e1 ...) (environment* 'n1 (lambda () (values (e1 'n1) (e2 'n1)...))) or return a new thing that
+ *   takes (e 'n1) and does the values stuff itself -- seems at first it has to be a function with e's in closure
+ *   (define e (let ((e's ...)) (lambda (sym) (apply values (map (lambda (e1) (if (defined? sym e1) (e1 sym) (values))) e's))))
+ *     perhaps this is a special case of reduce, or method-combination
+ *   CL has (make-sequence type size (initial-element...))
+ *
+ * (go tree) -> eval jumps to continue evaluation at tree
+ *    sc->code = tree;
+ *    goto START;
+ *  but stack may be inconsistent -- jump into call-with-exit for example, or maybe out as well (deactivated goto?)
  */

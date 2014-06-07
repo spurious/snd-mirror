@@ -355,6 +355,9 @@ If func approves of one, index-if returns the index that gives that element's po
 			  sequence)
 		(reverse collection))))
 
+;;; if type=list, this is slightly wasteful because list currently copies its args, so:
+;;;   ((if (eq? type list) values (values apply type)) ...) would work
+
 (define (remove-if type f sequence)
   "(remove-if type f sequence) returns via type the elements of sequence that do not satisfy func:\n\
     (remove-if list integer? #(1.4 2/3 1 1+i 2)) -> '(1.4 2/3 1+1i)"
@@ -482,6 +485,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		(reverse lst))))
 
 (define (union type . sequences)
+  "(union type . sequences) returns via type the union of the sequences:\n\
+    (union  vector '(1 2 3) #(2 3 4)) -> #(1 2 3 4)"
   (apply type (let ((lst ()))
 		(for-each (lambda (obj)
 			    (if (not (member obj lst))
@@ -490,6 +495,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		(reverse lst))))
 
 (define (asymmetric-difference type . sequences) ; complement, elements in B's not in A
+  "(asymmetric-difference type . sequences) returns the elements in the rest of the sequences that are not in the first:\n\
+    (asymmetric-difference vector '(1 2 3) #(2 3 4) '(1 5)) -> #(4 5)"
   (if (and (pair? sequences)
 	   (pair? (cdr sequences)))
       (collect-if type (lambda (obj) 
@@ -498,6 +505,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
       (apply type ())))
 
 (define (cl-set-difference type . sequences)     ; CL: elements in A not in B's
+  "(cl-set-difference type .sequences) returns the elements in the first sequence that are not in the rest of the sequences:\n\
+    (cl-set-difference vector '(1 2 3) #(2 3 4) '(1 5)) -> #()"
   (if (and (pair? sequences)
 	   (pair? (cdr sequences)))
       (let ((others (apply union list (cdr sequences))))
@@ -507,6 +516,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
       (apply type ())))
   
 (define (symmetric-difference type . sequences)  ; xor, elements in an odd number of sequences (logxor A B...)
+  "(symmetric-difference type .sequences) returns the elements that are in an odd number of the sequences:\n\
+    (symmetric-difference vector '(1 2 3) #(2 3 4) '(5)) -> #(1 4 5)"
   (let ((all (apply sequences->list sequences)))
     (collect-if type (lambda (obj) 
 		       (odd? (count-if (lambda (x) 
@@ -515,6 +526,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		(apply union list sequences))))
 
 (define (power-set type . sequences) ; ignoring repeats
+  "(power-set type . sequences) returns the power set of the union of the elements in the sequences."
   (letrec ((pset (lambda (set)
 		   (if (null? set)
 		       '(()) 

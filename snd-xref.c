@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11514] = {
+static const char *snd_names[11526] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -3701,6 +3701,8 @@ static const char *snd_names[11514] = {
     "calculate-fit", "dlocsig.scm",
     "california-quail", "animals.scm",
     "california-towhee", "animals.scm",
+    "call-with-input-vector", "stuff.scm",
+    "call-with-output-vector", "stuff.scm",
     "call-with-port", "r7rs.scm",
     "calling-all-animals", "animals.scm",
     "calling-all-birds", "animals.scm",
@@ -3921,6 +3923,8 @@ static const char *snd_names[11514] = {
     "confused-ground-cricket", "animals.scm",
     "connect", "libc.scm",
     "constant-velocity", "dlocsig.scm",
+    "continuable-error", "stuff.scm",
+    "continue-from-error", "stuff.scm",
     "contrast-channel", "extensions.scm",
     "contrast-sound", "extensions.scm",
     "copy-tree", "stuff.scm",
@@ -4198,6 +4202,7 @@ static const char *snd_names[11514] = {
     "fit-selection-between-marks", "marks.scm",
     "flammulated-owl", "animals.scm",
     "flash-selected-data", "examp.scm",
+    "flatten-environment", "stuff.scm",
     "flatten-partials", "dsp.scm",
     "flecho", "examp.scm",
     "flipxy", "jcvoi.scm",
@@ -7094,6 +7099,7 @@ static const char *snd_names[11514] = {
     "sendmsg", "libc.scm",
     "sendto", "libc.scm",
     "sequence?", "stuff.scm",
+    "sequences->list", "stuff.scm",
     "servent.s_aliases", "libc.scm",
     "servent.s_name", "libc.scm",
     "servent.s_port", "libc.scm",
@@ -7509,7 +7515,7 @@ static const char *snd_names[11514] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5757);
+  s7_autoload_set_names(sc, snd_names, 5763);
 }
 #endif
 

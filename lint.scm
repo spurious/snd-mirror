@@ -637,7 +637,7 @@
 		      (for-each
 		       (lambda (op)
 			 (set! (h op) #t))
-		       '(quote if begin let let* letrec cond case or and do set! 
+		       '(quote if begin let let* letrec cond case or and do set! unless when
 			       with-environment with-baffle
 			       lambda lambda* define define* define-envelope
 			       define-macro define-macro* define-bacro define-bacro* 
@@ -2178,7 +2178,8 @@
 					     req (if (> req 1) "s" "") 
 					     (truncated-list->string form))
 				(if (and (not rst)
-					 (> (- call-args (keywords (cdr form))) (+ req opt)))
+					 (> (- call-args (keywords (cdr form))) (+ req opt))
+					 (not (procedure-setter head)))
 				    (lint-format "~A has too many arguments:~A" 
 						 name head 
 						 (truncated-list->string form))))
@@ -2213,7 +2214,8 @@
 					 (if (> (car arity) 1) "s" "") 
 					 (truncated-list->string form))
 			    (if (and (not (caddr arity))
-				     (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity))))
+				     (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity)))
+				     (not (procedure-setter head-value)))
 				(lint-format "~A has too many arguments:~A" 
 					     name head 
 					     (truncated-list->string form)))))
@@ -3384,24 +3386,6 @@
 	(set! globals (make-hash-table))
 	(set! other-identifiers (make-hash-table))
 	(set! loaded-files ())
-
-#|
-	(let ((st (symbol-table)))
-	  (let ((ats ())
-		(fts ())
-		(ge (global-environment)))
-	       (for-each 
-		(lambda (sym)
-			(if (not (eq? (ge sym) #<undefined>))
-			    (begin
-			      (if (not (function-types sym)) 
-				  (set! fts (cons sym fts)))
-			      (if (not (argument-data sym)) 
-				  (set! ats (cons sym ats))))))
-	     st)
-	    (format *stderr* "ft: ~A~%at: ~A~%" fts ats)))
-|#
-	
 	(if *load-file-first* ; this can improve the error checks
 	    (load file))
 	(let ((fp (catch #t
