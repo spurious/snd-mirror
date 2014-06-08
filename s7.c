@@ -6041,6 +6041,8 @@ static s7_pointer g_set_outer_environment(s7_scheme *sc, s7_pointer args)
   new_outer = cadr(args);
   if (!is_environment(new_outer))
     return(wrong_type_argument_with_type(sc, sc->OUTER_ENVIRONMENT, small_int(2), new_outer, AN_ENVIRONMENT));  
+  if (new_outer == env)
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_protected_string(sc, "can't set the outer-environment of env to env!"))));
   if (new_outer == sc->global_env)
     new_outer = sc->NIL;
 
@@ -63184,7 +63186,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       break;
 
 
-      /* -------------------------------- with-environment -------------------------------- */
+      /* -------------------------------- with-environment --------------------------------
+       *
+       * the extra set! to pull in args, or fixup the outer-env is annoying, but 
+       *   but with-let or with-environment! is hard to do right -- what if env is chained as in class/objects?
+       */
 
     case OP_WITH_ENV_S:
       {
@@ -69494,7 +69500,6 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "current-input-port",  "set-current-input-port");
   s7_function_set_setter(sc, "current-output-port", "set-current-output-port");
   s7_function_set_setter(sc, "current-error-port",  "set-current-error-port");
-  s7_function_set_setter(sc, "outer-environment",   "(set! outer-environment)");
   c_function_setter(s7_symbol_value(sc, sc->OUTER_ENVIRONMENT)) = s7_make_function(sc, "(set! outer-environment)", g_set_outer_environment, 2, 0, false, "outer-environment setter"); 
 
   {
@@ -69907,8 +69912,6 @@ int main(int argc, char **argv)
  *
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-*
- * doc strings for stuff.scm, s7.html entry for stuff.scm
- * maybe build-in with-let -- need no-consing version of this -- make outer-environment settable?
  * format: CL allows ~,+3F, ~<~> in CL are for text justification, ~? is also doable without great pain
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc
@@ -69920,31 +69923,5 @@ int main(int argc, char **argv)
  *  but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *    maybe gunichar->bytevector?
  *
- * internal built-in (vector-ref x 0) = {vref0}, if seen as only expr in func, (define func {vref0}) like list-ref 0 -> car
- *   isn't this vector_ref_ic?  just s7_define(sc, sc->envir, func_as_symbol, vector_ref_ic)??
- *   but we'll lose procedure-source, definition env etc [and method redefs if careless]
- *
  * float-vector support is currently half-in/half-out
- * in stuff, what is the "type" that simply returns the list, guaranteeing no copying? 
- *   {list} perhaps, append if 1 arg
- *   if identity, how to unapply?  unapply? (apply unapply x) -> x, like values but listifies
- *   ((if (eq? type list) ?? (values apply type)) ...) -- odd -- here we need the unop -- values or append?
- *   ((if (eq? type list) values (values apply type)) (collect-if ...))
- *
- * can we block (augment-environment (procedure-environment)...) or should we?
- * ops on envs: union/intersection/difference/chain/ -- would union give multimethod?/reverse=unshadow?
- *   rename: libraries = copy(libenv)+change names directly -> substitute -- would this collapse r7rs junk?
- *   intersection=what will work in both
- *   cond-defined?
- *   union in the sense of combining same-named-but-not-equal-symbol values (wrapper lambda returning values or something) -> merge?
- *   (epluribus e1 ...) (environment* 'n1 (lambda () (values (e1 'n1) (e2 'n1)...))) or return a new thing that
- *   takes (e 'n1) and does the values stuff itself -- seems at first it has to be a function with e's in closure
- *   (define e (let ((e's ...)) (lambda (sym) (apply values (map (lambda (e1) (if (defined? sym e1) (e1 sym) (values))) e's))))
- *     perhaps this is a special case of reduce, or method-combination
- *   CL has (make-sequence type size (initial-element...))
- *
- * (go tree) -> eval jumps to continue evaluation at tree
- *    sc->code = tree;
- *    goto START;
- *  but stack may be inconsistent -- jump into call-with-exit for example, or maybe out as well (deactivated goto?)
  */

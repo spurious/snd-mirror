@@ -348,15 +348,12 @@ If func approves of one, index-if returns the index that gives that element's po
 (define (collect-if type f sequence)
   "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\
     (collect-if list integer? #(1.4 2/3 1 1+i 2)) -> '(1 2)"
-  (apply type (let ((collection ()))
-		(for-each (lambda (arg)
-			    (if (f arg)
-				(set! collection (cons arg collection))))
-			  sequence)
-		(reverse collection))))
+  (apply type (map (lambda (arg) (if (f arg) arg (values))) sequence)))
 
 ;;; if type=list, this is slightly wasteful because list currently copies its args, so:
 ;;;   ((if (eq? type list) values (values apply type)) ...) would work
+;;;
+;;; to return (f arg) rather than arg, (apply type (map f sequence))
 
 (define (remove-if type f sequence)
   "(remove-if type f sequence) returns via type the elements of sequence that do not satisfy func:\n\

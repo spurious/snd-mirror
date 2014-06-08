@@ -4428,7 +4428,7 @@ are:
 the upper limit on how many vector elements are printed by object-&gt;string and format.
 The end-of-file object is #&lt;eof&gt;. 
 When running s7 behind a GUI, you often want input to come from and output to go to
-arbitrary widgets. The function ports provide a way to redirect IO.  See <a href="#functionportexample">below</a>
+arbitrary widgets. The function ports provide a way to redirect IO in C.  See <a href="#functionportexample">below</a>
 for an example.
 </p>
 
@@ -4470,6 +4470,8 @@ a          ; here s7 waited for me to type "a" in the terminal
 
 <p>Here the IO port is an open environment that redefines the "read" function so that it
 returns the next element of a vector.  See stuff.scm for call-with-output-vector.
+The "proc" argument above can also be a macro, giving you a kludgey way to get around
+the dumb "lambda" (see s7test.scm for a couple examples).
 </p>
 </div>
 
@@ -5646,7 +5648,6 @@ loading code that calls gcd.
 <li>let =&gt; be followed by any number of functions, and change its name to "forth".
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove the with-* IO functions (e.g. with-input-from-string), keeping the call-with-* versions (call-with-input-string).
-<li>remove everything associated with current-input|output|error-port. 
 <li>replace the #n# notation with one that distinguishes between shared and cyclic structures.
 </ul>
 
