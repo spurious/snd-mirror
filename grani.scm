@@ -634,7 +634,7 @@
 	   :grain-start 0.1 :grain-start-spread 0.01
 	   :amp-envelope '(0 1 1 1) :grain-density 40
 	   :srate-linear #t
-	   :srate (list 0 1 0.2 1 0.6 (expt 2 (/ 5 12)) 1 (expt 2 (/ 5 12))))
+	   :srate (list 0 1 0.2 1 0.6 (expt 2 5/12) 1 (expt 2 5/12)))
     (grani 0 2 1 "oboe.snd" 
 	   :grain-start 0.1 :grain-start-spread 0.01
 	   :amp-envelope '(0 1 1 1) :grain-density 40

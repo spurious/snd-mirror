@@ -6,9 +6,9 @@
 (provide 'snd-xm-enved.scm)
 (define with-gtk3 (provided? 'gtk3))
 
-(if (provided? 'snd-motif)
-    (if (not (provided? 'snd-snd-motif.scm))
-	(load "snd-motif.scm")))
+(if (and (provided? 'snd-motif)
+	 (not (provided? 'snd-snd-motif.scm)))
+    (load "snd-motif.scm"))
 
 (define xe-envelope
   (make-procedure-with-setter

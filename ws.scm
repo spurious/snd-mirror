@@ -199,10 +199,10 @@
 	     (begin
 	       (if reverb-to-file
 		   (mus-close *reverb*))
-	       (if statistics 
-		   (if (or reverb-to-file
-			   (vector? reverb-1))
-		       (set! revmax (maxamp reverb-1))))
+	       (if (and statistics 
+			(or reverb-to-file
+			    (vector? reverb-1)))
+		   (set! revmax (maxamp reverb-1)))
 	       (if reverb-to-file
 		   (set! *reverb* (make-file->sample reverb-1)))
 	       (apply reverb reverb-data)                                   ; here is the reverb call(!)

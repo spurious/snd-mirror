@@ -4045,31 +4045,9 @@ Still others are only interested in the decision reached by the main functions.
 We need the dynamic-wind to be sure that all the before and after functions are called no matter what
 happens during the handling of the main functions.
 See the <a href="#evalstring">eval</a> section for a more elaborate example.
+Hooks are not very convenient within Scheme code, but are intended for use via the FFI where
+some callback mechanism is needed.
 </p>
-
-<p>We can also use a hook as a normal procecdure, but now the function
-lists make it easy to extend an existing function.  
-The next example adds to a numerical function the possibility of calling it
-with a string:
-</p>
-
-<pre class="indented">
-&gt; (define h (make-hook '(x 0.0)))
-h
-&gt; (set! (hook-functions h) ; these are the 'body' functions
-        (list (lambda (hook) 
-                (set! (hook 'result) (+ (hook 'x) 1.0)))))
-(#&lt;lambda (hook)&gt;)
-&gt; (h 2.5)
-3.5
-&gt; (set! ((procedure-environment h) 'init) 
-        (list (lambda (hook) ; if x is a string, convert it to a number
-                (if (string? (hook 'x)) 
-                    (set! (hook 'x) (string-&gt;number (hook 'x)))))))
-(#&lt;lambda (hook)&gt;)
-&gt; (h "2.5")
-3.5
-</pre>
 
 
 
@@ -4377,11 +4355,11 @@ is similar, but its argument is a string.
 			 (uncaller (car tree)))
 		     (uncaller (cdr tree)))
 		    tree))
-	      (format *stderr* ": ~A -&gt; ~A~40T~A~%" 
+	      (format (current-output-port) ": ~A -&gt; ~A~40T~A~%" 
 		      (uncaller (hook 'code)) 
 		      (hook 'result)
 		      (if (and (not (eq? (hook 'e) (global-environment)))
-			       (not (eq? (outer-environment (hook 'e)) (global-environment))))
+			       (not (defined? '__top__ (hook 'e))))
 			  (map values (hook 'e)) 
 			  "")))))
 
@@ -9123,6 +9101,7 @@ and find yourself staring at a stackful of opaque pointers.  Print statements ar
 friend, of course, and at the gdb command level, the main one in this context is
 s7_object_to_c_string.  Here are some commands (intended for your .gdbinit file)
 that can speed up the process.  They assume the s7_scheme pointer is named "sc".
+(These are now included in the gdbinit file in the s7 tarball).
 </p>
 
 <pre class="indented">
@@ -9168,7 +9147,7 @@ end
 lint.scm, cload.scm, and stuff.scm.  s7test.scm is a regression test for s7, lint.scm
 is the s7 equivalent of the ancient C program named lint, cload.scm
 is a wrapper for the FFI stuff described above, and stuff.scm is just some
-arbitrary stuff.
+arbitrary stuff.  gdbinit has some gdb commands for s7.
 </p>
 
 

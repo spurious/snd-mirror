@@ -2581,43 +2581,34 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	  (if (XmIsScale widget)
 	      ;; thermometer
 	      (XmScaleSetValue widget (floor (* 100 var)))))
-      (if (list? widget)
-	  (if (or (number? (car widget))
-		  (sound? (car widget)))
-	      ;; graph/spectrum -- does this need an explicit update?
-	      (let* ((snd (car widget))
-		     (data (cadr widget))
-		     (len (length data))
-		     (loc (cursor snd 0)))
-		(set! (data loc) var)
-		(if (time-graph? snd) (update-time-graph snd))
-		(if (transform-graph? snd) (update-transform-graph snd))
-		(if (= (+ loc 1) len)
-		    (set! (cursor snd 0) 0)
-		    (set! (cursor snd 0) (+ loc 1))))
-#|
-	      (if (XmIsDrawingArea (car widget))
-		  ;; level meter
-		  (begin
-		    (set! (widget 1) var)
-		    (display-level widget)
-		    (XmUpdateDisplay (car widget))))
-|#
-	      )))
+      (if (and (list? widget)
+	       (or (number? (car widget))
+		   (sound? (car widget))))
+	  ;; graph/spectrum -- does this need an explicit update?
+	  (let* ((snd (car widget))
+		 (data (cadr widget))
+		 (len (length data))
+		 (loc (cursor snd 0)))
+	    (set! (data loc) var)
+	    (if (time-graph? snd) (update-time-graph snd))
+	    (if (transform-graph? snd) (update-transform-graph snd))
+	    (if (= (+ loc 1) len)
+		(set! (cursor snd 0) 0)
+		(set! (cursor snd 0) (+ loc 1))))))
   var)
 
 (define (variable-display-reset widget)
   "(variable-display-reset widget) restarts the variable graphs -- this is intended for the start (or perhaps end) of a note"
-  (if (list? widget)
-      (if (number? (car widget))
-	  ;; graph/spectrum
-	  (let* ((snd (car widget))
-		 (data (cadr widget))
-		 (len (length data)))
-	    (set! (cursor snd 0) 0)
-	    (do ((i 0 (+ i 1)))
-		((= i len))
-	      (vector-set! data 0 i 0.0))))))
+  (if (and (list? widget)
+	   (number? (car widget)))
+      ;; graph/spectrum
+      (let* ((snd (car widget))
+	     (data (cadr widget))
+	     (len (length data)))
+	(set! (cursor snd 0) 0)
+	(do ((i 0 (+ i 1)))
+	    ((= i len))
+	  (vector-set! data 0 i 0.0)))))
 
 
 #|

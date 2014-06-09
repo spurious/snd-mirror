@@ -2263,12 +2263,13 @@ and decay portions in the envelope editor, or use functions such as
 (hook-push <em class=red>enved-hook</em>
   (lambda (hook)
     ((lambda (env pt x y reason)
-       (if (= reason enved-move-point)
-           (if (and (&gt; x 0.0) (&lt; x (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopelastx_tip)">envelope-last-x</a> env))) ; from env.scm
-               (let* ((old-x (env (* pt 2)))
-                      (new-env (<em class=red>stretch-envelope</em> env old-x x)))
-                 (set! (new-env (+ (* pt 2) 1)) y)
-                 (set! (hook 'result) new-env)))))
+       (if (and (= reason enved-move-point)
+                (&gt; x 0.0)
+                (&lt; x (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopelastx_tip)">envelope-last-x</a> env))) ; from env.scm
+         (let* ((old-x (env (* pt 2)))
+                (new-env (<em class=red>stretch-envelope</em> env old-x x)))
+           (set! (new-env (+ (* pt 2) 1)) y)
+           (set! (hook 'result) new-env))))
      (hook 'envelope) (hook 'point) (hook 'x) (hook 'y) (hook 'reason))))
 </pre>
 
@@ -2926,18 +2927,18 @@ If it returns a string (a filename), that file is opened instead of the original
 (hook-push <em class=red>open-hook</em>
   (lambda (hook)
     (let ((filename (hook 'name)))
-      (if (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> filename) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">mus-raw</a>)
-          ;; check for "OggS" first word, if found, translate to something Snd can read
-	  (if (call-with-input-file filename 
+      (if (and (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> filename) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">mus-raw</a>)
+               ;; check for "OggS" first word, if found, translate to something Snd can read
+	       (call-with-input-file filename 
 	        (lambda (fd)
 		  (and (char=? (read-char fd) #\O)
 		       (char=? (read-char fd) #\g)
 		       (char=? (read-char fd) #\g)
-		       (char=? (read-char fd) #\S))))
-	      (let ((aufile (string-append filename ".au")))
-	        (if (file-exists? aufile) (delete-file aufile))
-	        (system (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "ogg123 -d au -f ~A ~A" aufile filename))
-	        (set! (hook 'result) aufile))))))) ; now open-sound will read the new .au file
+		       (char=? (read-char fd) #\S)))))
+	(let ((aufile (string-append filename ".au")))
+	  (if (file-exists? aufile) (delete-file aufile))
+	  (system (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "ogg123 -d au -f ~A ~A" aufile filename))
+	  (set! (hook 'result) aufile)))))) ; now open-sound will read the new .au file
 </pre>
 
 <div class="spacer"></div>

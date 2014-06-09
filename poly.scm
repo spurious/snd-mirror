@@ -149,7 +149,7 @@
 			((> j n))
 		      (set! (r j) 0))
 		    (list q r)))))
-	  (list (poly-as-vector* p1 (/ 1 p2)) (vector 0)))
+	  (list (poly-as-vector* p1 (/ p2)) (vector 0)))
       (list (vector 0) p2)))
 
 (define (poly/ p1 p2)
@@ -348,8 +348,8 @@
 	   (r (- (/ (- (* a1 a2) (* 3 a0)) 6) (/ (* a2 a2 a2) 27)))
 	   (q3r2 (+ (* q q q) (* r r)))
 	   (sq3r2 (sqrt q3r2))
-	   (r1 (expt (+ r sq3r2) (/ 1 3)))
-	   (r2 (expt (- r sq3r2) (/ 1 3)))
+	   (r1 (expt (+ r sq3r2) 1/3))
+	   (r2 (expt (- r sq3r2) 1/3))
 	   (incr (/ (* 2 pi 0+i) 3)))
       (call-with-exit
        (lambda (return)

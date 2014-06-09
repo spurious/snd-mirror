@@ -205,13 +205,9 @@
 			(if (eq? x 'x)
 			    (if (not (member type x-types))
 				(set! x-types (cons type x-types)))
-			    (if (not (eq? x 'g))
-#|
-				(if (not (member type g-types))
-				    (set! g-types (cons type g-types)))
-|#
-				(if (not (member type types))
-				    (set! types (cons type types)))))
+			    (if (and (not (eq? x 'g))
+				     (not (member type types)))
+				(set! types (cons type types))))
 			(set! type #f))
 		      (if (> i (+ 1 sp))
 			  (set! type (substring args (+ 1 sp) i))))

@@ -99,13 +99,13 @@ It causes a description of the file to popup when the mouse crosses the filename
 	(let ((info-exists (list-ref (dialog-widgets) 20)))
 	  (info-dialog name (file-info name))
 	  (let ((info-widget (list-ref (dialog-widgets) 20)))
-	    (if info-widget
-		(if (not info-exists) ; keep the help dialog from overlapping the files dialog
-		    (let* ((files-dialog (list-ref (dialog-widgets) 8))
-			   (files-position (widget-position files-dialog))
-			   (files-size (widget-size files-dialog)))
-		      (set! (widget-position info-widget) (list (+ (car files-position) (car files-size) 10)
-								(+ (cadr files-position) 10)))))))))))
+	    (if (and info-widget
+		     (not info-exists)) ; keep the help dialog from overlapping the files dialog
+		(let* ((files-dialog (list-ref (dialog-widgets) 8))
+		       (files-position (widget-position files-dialog))
+		       (files-size (widget-size files-dialog)))
+		  (set! (widget-position info-widget) (list (+ (car files-position) (car files-size) 10)
+							    (+ (cadr files-position) 10))))))))))
 
 
 (define (files-popdown-info type position name)
