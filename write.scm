@@ -262,21 +262,22 @@
 
 #|
 (let ((st (symbol-table)))
-    (for-each
-     (lambda (sym)
-       (if (defined? sym)
-	   (let ((val (symbol->value sym)))
-	     (format *stderr* "~A ~A " sym val)
-	     (format *stderr* "~A" (if (or (procedure? val)
-					   (macro? val))
-				       (pp (procedure-source val))
-				       (pp val)))
-	     (newline *stderr*))))
-     st))
+  (for-each
+   (lambda (sym)
+     (if (defined? sym)
+	 (let ((val (symbol->value sym)))
+	   (format *stderr* "~A ~A " sym val)
+	   (format *stderr* "~A" (if (or (procedure? val)
+					 (macro? val))
+				     (pp (procedure-source val))
+				     (pp val)))
+	   (newline *stderr*))))
+   st))
 |#
 
 
  
+#|
 ;;; -------------------------------- checkpoint --------------------------------
 
 (define* (checkpoint (file "checkpoint-s7.scm"))
@@ -327,3 +328,4 @@
 
       )))
   #f)
+|#

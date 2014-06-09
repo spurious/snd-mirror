@@ -1501,25 +1501,19 @@
 		     (just-integers? (cdr form)))))
 	  
 	  (define (simplify-arg x)
-	    (if (number? x)
+	    (if (or (not (pair? x))                      ; constants and the like look dumb if simplified
+		    (hash-table-ref globals (car x))
+		    (not (hash-table-ref no-side-effect-functions (car x)))
+		    (assq (car x) env))
 		x
-		(if (not (pair? x))
-		    (if (and (symbol? x)
-			     (constant? x))
-			(symbol->value x)
-			x)
-		    (if (or (hash-table-ref globals (car x))
-			    (not (hash-table-ref no-side-effect-functions (car x)))
-			    (assq (car x) env))
-			x
-			(let ((f (simplify-numerics x env)))
-			  (if (and (pair? f)
-				   (just-rationals? f))
-			      (catch #t
-				(lambda ()
-				  (eval f))
-				(lambda ignore f))
-			      f))))))
+		(let ((f (simplify-numerics x env)))
+		  (if (and (pair? f)
+			   (just-rationals? f))
+		      (catch #t
+			(lambda ()
+			  (eval f))
+			(lambda ignore f))
+		      f))))
 	  
 	  (let* ((args (map simplify-arg (cdr form)))
 		 (len (length args)))

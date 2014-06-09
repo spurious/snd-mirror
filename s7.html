@@ -3987,29 +3987,25 @@ make-hook is:
        ())))
 </pre>
 
-<p>
-Each of the functions held by the hook ('f' above), takes one argument, the environment within the hook,
-and its return value is ignored.
-The function can use <code>(with-environment arg ...)</code> or <code>(arg symbol)</code> to access the arguments to the hook ('args').
-The hook environment's result field is the returned value of the hook application.
-Each such environment has three lists,
-init, body, and end, and
-these lists of functions are called in dynamic-wind.
-Here's a sketch:
+<p>So the result of calling make-hook is a function (the lambda* that is applied to args above) that
+contains three lists of functions, init, body, and end.  Most of the time, you only need to use the "body"
+function list.  These internal functions each take one argument, the current (internal) environment.
+Each time the hook is called, each of the init functions is called, then each body function, then each end function.
+The result returned is the variable "result".  That variable, and each of the hook's arguments are accessible to the hook's internal
+functions by going through the environment passed to the internal functions.  This is a bit circuitous; 
+here's a sketch:
 </p>
 
 <pre class="indented">
-(define (add-to-hook hook function)
-  (set! (hook-functions hook) (cons function (hook-functions hook))))
-
-&gt; (define h (make-hook '(a 32) 'b)) 
+&gt; (define h (make-hook '(a 32) 'b))  ; h is a function: (lambda* ((a 32) b) ...)
 h
-&gt; (add-to-hook h (lambda (hook) 
-                   (set! (hook 'result) 
-                         (format #f "a: ~A, b: ~A" (hook 'a) (hook 'b)))))
+&gt; (set! (hook-functions h)              ; this sets ((procedure-environment h) 'body)
+           (list (lambda (hook) 	; each hook internal function takes one argument, the environment
+                   (set! (hook 'result) ; this is the "result" variable above 
+                         (format #f "a: ~A, b: ~A" (hook 'a) (hook 'b))))))
 (#&lt;lambda (hook)&gt;)
-&gt; (h 1 2)
-"a: 1, b: 2"
+&gt; (h 1 2)                               ; this calls the hook's internal functions (just one in this case)
+"a: 1, b: 2"                            ; we set "result" to this string, so it is returned as the hook application result
 &gt; (h)
 "a: 32, b: #f"
 </pre>
@@ -4031,7 +4027,7 @@ result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_intege
 
 <div class="indented">
 <pre>
-(define-macro (hook . body)
+(define-macro (hook . body)  ; return a new hook with "body" as its body, setting "result"
   `(let ((h (make-hook)))
      (set! (hook-functions h) (list (lambda (h) (set! (h 'result) (begin ,@body)))))
      h))
@@ -4048,6 +4044,7 @@ with any other similar hook functions' results (the 'body' list).
 Still others are only interested in the decision reached by the main functions.
 We need the dynamic-wind to be sure that all the before and after functions are called no matter what
 happens during the handling of the main functions.
+See the <a href="#evalstring">eval</a> section for a more elaborate example.
 </p>
 
 <p>We can also use a hook as a normal procecdure, but now the function
@@ -4325,57 +4322,71 @@ is similar, but its argument is a string.
 
 <div class="indented">
 
-<p>The environment argument is mainly useful in debugging.  A breakpoint can be set, for
-example, then any input is evaluated in the environment of the break.  Say we have the
-following code in ex.scm:
+<p>eval's environment argument is handy when implementing break and trace:
 </p>
-
 <pre>
-(define-macro (break)
-  `(let ((break-env (<em class=red>current-environment</em>))
-	 (prompt (format #f "~%~A &gt; " (if (defined? __func__) __func__ "break"))))
-     (call-with-exit
-      (lambda (return)
-	(do () ()                       ; our debugger's own REPL
-	  (display prompt)              ; show where we stopped
-	  (let ((str (read-line)))      ; read a line of input, :go -&gt; exit the debugger
-	    ;; the nil argument to read-line makes sure that we read C's stdin.  In any normal
-	    ;;    program, we'd get the string from a text widget.
-	    (if (&gt; (length str) 0)
-		(catch #t               ; try to handle typing mistakes etc
-		       (lambda ()
-			 (let ((val (<em class=red>eval-string</em> str <em class=red>break-env</em>)))
-			   (if (eq? val :go)
-			       (return))
-			   (write val)))
-		       (lambda args
-			 (format #t "error: ~A" args))))))))))
+(define *break-environment* #f)
+(define *step-hook* (make-hook 'code 'e))
 
-;; now some random code that has a breakpoint
-(define (a-function b)
-  (let ((x 32))
-    (do ((i 0 (+ i 1)))
-	((= i 10))
-      (if (= i 3)
-	  (<em class=red>break</em>)))
-    x))
+(define-macro* (trace/break code . break-points)
+  (define (caller tree)
+    (if (pair? tree)
+	(cons 
+	 (if (pair? (car tree))
+	     (if (and (symbol? (caar tree))
+		      (procedure? (symbol-&gt;value (caar tree))))
+		 (if (member (car tree) break-points)
+		     `(__break__ ,(caller (car tree)))
+		     `(__call__ ,(caller (car tree))))
+		 (caller (car tree)))
+	     (car tree))
+	 (caller (cdr tree)))
+	tree))
+  `(call-with-exit (lambda (__top__) ,(caller code))))
 
-(a-function 123)
-(display "done!") (newline)
-</pre>
+(define (go . args)
+  (and (environment? *break-environment*)
+       (apply (*break-environment* 'go) args)))
 
-<p>
-Start up a REPL, and:
-</p>
+(define (clear-break)
+  (set! *break-environment* #f))
 
-<pre class="indented">
-&gt; (load "ex.scm")
-(a-function "ex.scm" 26) &gt; x    ; here we're in the debugger
-32
-(a-function "ex.scm" 26) &gt; (+ b i)
-126
-(a-function "ex.scm" 26) &gt; :go
-done!
+(define-macro (__call__ code)
+  `(*step-hook* ',code (current-environment)))
+
+(define-macro (__break__ code)
+  `(begin
+     (call/cc
+      (lambda (go)
+	(set! *break-environment* (current-environment))
+	(__top__ (format #f "break at: ~A~%" ',code))))
+     ,code))
+
+(set! (hook-functions *step-hook*) 
+      (list (lambda (hook)
+	      (set! (hook 'result) (<em class=red>eval (hook 'code) (hook 'e)</em>)))))
+
+(set! ((procedure-environment *step-hook*) 'end)
+      (list (lambda (hook)
+	      (define (uncaller tree)
+		(if (pair? tree)
+		    (cons 
+		     (if (and (pair? (car tree))
+			      (memq (caar tree) '(__call__ __break__)))
+			 (uncaller (cadar tree))
+			 (uncaller (car tree)))
+		     (uncaller (cdr tree)))
+		    tree))
+	      (format *stderr* ": ~A -&gt; ~A~40T~A~%" 
+		      (uncaller (hook 'code)) 
+		      (hook 'result)
+		      (if (and (not (eq? (hook 'e) (global-environment)))
+			       (not (eq? (outer-environment (hook 'e)) (global-environment))))
+			  (map values (hook 'e)) 
+			  "")))))
+
+;;; (trace/break (let ((a (+ 3 1)) (b 2)) (if (&gt; (* 2 a) b) 2 3)))
+;;; (trace/break (let ((a (+ 3 1)) (b 2)) (if (&gt; (* 2 a) b) 2 3)) (* 2 a))
 </pre>
 </div>
 

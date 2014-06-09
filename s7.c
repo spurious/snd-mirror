@@ -69911,8 +69911,12 @@ int main(int argc, char **argv)
  *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
  *
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
- * cyclic-seq in rest of full-*
+ *   colored brick where cycle, matching original paren color
+ *   for shared, maybe colored underline?
+ * cyclic-seq in rest of full-* and in pretty-print (obj->str 3rd: cyclics?)
  * format: CL allows ~,+3F, ~<~> in CL are for text justification, ~? is also doable without great pain
+ * local constants
+ * add t901 code to s7test somehow, and add comments in s7.html
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc
  *   (environment* 'value "hi" 'string-length g_utf8_strlen)
@@ -69924,4 +69928,5 @@ int main(int argc, char **argv)
  *    maybe gunichar->bytevector?
  *
  * float-vector support is currently half-in/half-out
+ * gbdinit -> s7/snd-tools dir?
  */
