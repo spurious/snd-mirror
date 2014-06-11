@@ -259,7 +259,7 @@
                                          XmNbottomAttachment    XmATTACH_FORM
                                          XmNlabelString         s1
                                          XmNbackground          *basic-color*)))
-                         (buffer-labels (map (lambda (n) (XmStringCreateLocalized n)) (list "64" "128" "256" "512" "1024" "2048" "4096")))
+                         (buffer-labels (map XmStringCreateLocalized (list "64" "128" "256" "512" "1024" "2048" "4096")))
                          (combo (XtCreateManagedWidget "buffersize" xmComboBoxWidgetClass frm
                                    (list XmNleftAttachment      XmATTACH_WIDGET
                                          XmNleftWidget          lab
@@ -271,7 +271,7 @@
                                          XmNcomboBoxType        XmDROP_DOWN_COMBO_BOX
                                          XmNbackground          *basic-color*))))
                     (set! loop-between-marks-default-buffer-widget combo)
-                    (for-each (lambda (n) (XmStringFree n)) buffer-labels)
+                    (for-each XmStringFree buffer-labels)
                     (XmStringFree s1)
                     (XtSetValues combo (list XmNselectedPosition 1))
                     (XtAddCallback combo XmNselectionCallback

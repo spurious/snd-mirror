@@ -2587,7 +2587,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 							 XmNbottomAttachment    XmATTACH_FORM
 							 XmNlabelString         s1
 							 XmNbackground          *basic-color*)))
-		       (fft-labels (map (lambda (n) (XmStringCreateLocalized n)) (list "64" "128" "256" "512" "1024" "4096")))
+		       (fft-labels (map XmStringCreateLocalized (list "64" "128" "256" "512" "1024" "4096")))
 		       (combo (XtCreateManagedWidget "fftsize" xmComboBoxWidgetClass frm
 						     (list XmNleftAttachment      XmATTACH_WIDGET
 							   XmNleftWidget          lab
@@ -2599,7 +2599,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 							   XmNcomboBoxType        XmDROP_DOWN_COMBO_BOX
 							   XmNbackground          *basic-color*))))
 		  (set! cross-synth-default-fft-widget combo)
-		  (for-each (lambda (n) (XmStringFree n)) fft-labels)
+		  (for-each XmStringFree fft-labels)
 		  (XmStringFree s1)
 		  (XtSetValues combo (list XmNselectedPosition 1))
 		  (XtAddCallback combo XmNselectionCallback

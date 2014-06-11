@@ -546,9 +546,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 
 (define (update-graphs)
   "(update-graphs) updates (redraws) all graphs"
-  (apply for-each (lambda (snd chn)
-		    (update-time-graph snd chn))
-	 (all-chans)))
+  (apply for-each update-time-graph (all-chans)))
 
 (define* (do-chans func origin)
   "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"

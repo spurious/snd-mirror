@@ -399,9 +399,7 @@
 		   (for-each 
 		    (lambda (group)
 		      (let* ((size (length group))
-			     (vertices (map (lambda (n)
-					      (coords n))
-					    group))
+			     (vertices (map coords group))
 			     (matrix (if (= size 3)
 					 (let ((m (make-vector (list 3 3) 0.0 #t)))
 					   (do ((i 0 (+ i 1)))

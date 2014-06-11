@@ -313,9 +313,7 @@
 	  #f
 	  (fveql a (cdr b) (+ i 1)))))
 
-(define (sd-equal sd0 sd1)
-  (mus-arrays-equal? sd0 sd1))
-       
+(define sd-equal mus-arrays-equal?)
 (define vequal mus-arrays-equal?)
 
 (define (vequal1 v0 v1)
@@ -419,13 +417,7 @@
 
 
 (define (clear-save-state-files)
-  "forget regions and whatnot"
-  (let ((regs (regions)))
-    (for-each
-     (lambda (n)
-       (forget-region n))
-     regs))
-  
+  (for-each forget-region (regions))
   (system (format #f "rm -f ~A/snd_*" (or (save-dir) original-save-dir)))
   (if (file-exists? "/var/tmp") 
       (system "rm -f /var/tmp/snd_save_*"))
@@ -7736,10 +7728,7 @@ EDITS: 5
 		(set! (edit-position index) (floor (* (car (edits index)) .7)))))
 	    
 	    (close-sound index)
-	    (for-each
-	     (lambda (n)
-	       (forget-region n))
-	     (regions))
+	    (for-each forget-region (regions))
 	    (for-each
 	     (lambda (file)
 	       (if (file-exists? file) 
@@ -9466,7 +9455,7 @@ EDITS: 2
 	      (snd-display #__line__ ";float-vector s7 len: ~A" (length v)))
 	  (if (not (equal? v (copy v)))
 	      (snd-display #__line__ ";float-vector s7 copy is not equal? ~A ~A" v (copy v)))
-	  (let ((val (map (lambda (x) (floor x)) v)))
+	  (let ((val (map floor v)))
 	    (if (not (equal? val '(1 2 3)))
 		(snd-display #__line__ ";float-vector s7 map: ~A" val)))
 	  (let ((val 0))
@@ -23546,10 +23535,6 @@ EDITS: 2
 		(set! (mix-speed mix-id) 2.0) 
 		
 		(set! (mix-amp-env mix-id) '(0.0 0.0 1.0 1.0)) 
-		(let ((val (mix-amp-env mix-id)))
-		  (set! (mix-amp-env mix-id) (mix-amp-env mix-id))
-		  (if (not (feql (mix-amp-env mix-id) val)) 
-		      (snd-display #__line__ ";set mix-amp-env to self: ~A ~A" val (mix-amp-env mix-id))))
 		(set! (mix-tag-y mix-id) 20) 
 		(let ((pos (mix-position mix-id))
 		      (spd (mix-speed mix-id))
@@ -24418,7 +24403,7 @@ EDITS: 2
 		(if (or (not (equal? ((car val1) 0) m1))
 			(not (equal? ((car val1) 2) ind))
 			(not (= ((car val1) 5) 0))
-			(not (eq? (val1 1) #f))
+			(val1 1)
 			(not (= (val1 2) 1234)))
 		    (snd-display #__line__ ";describe-mark m1: ~A" val1))
 		(delete-mark m0)
@@ -24429,13 +24414,13 @@ EDITS: 2
 			(not (equal? ((car val0) 2) ind))
 			(not (= ((car val0) 5) 0))
 			(not (= (val0 1) 4321))
-			(not (eq? (val0 2) #f))
-			(not (eq? (val0 3) #f)))
+			(val0 2)
+			(val0 3))
 		    (snd-display #__line__ ";describe-mark m0 [1]: ~A" val0))
 		(if (or (not (equal? ((car val1) 0) m1))
 			(not (equal? ((car val1) 2) ind))
 			(not (= ((car val1) 5) 0))
-			(not (eq? (val1 1) #f))
+			(val1 1)
 			(not (= (val1 2) 1234))
 			(not (= (val1 3) 1234)))
 		    (snd-display #__line__ ";describe-mark m1 [1]: ~A" val1)))))
@@ -25677,7 +25662,7 @@ EDITS: 2
 			   (choice (hook 'state)))
 		       (if (not (string=? (substring file (- (string-length file) 8)) "test.snd"))
 			   (snd-display #__line__ ";open-raw-sound-hook file: ~A?" (substring file (- (string-length file) 8))))
-		       (if (not (eq? choice #f))
+		       (if choice
 			   (snd-display #__line__ ";open-raw-sound-hook choice: ~A?" choice))
 		       (set! (hook 'result) (list 2 44100 mus-mulaw)))))
 	(set! ind (open-sound "test.snd"))
@@ -25785,7 +25770,7 @@ EDITS: 2
       
       (hook-push open-hook (lambda (hook) (set! (hook 'result) #t)))
       (let ((pistol (open-sound "pistol.snd")))
-	(if (not (eq? pistol #f))
+	(if pistol
 	    (begin
 	      (snd-display #__line__ ";open-hook #t, but open-sound -> ~A" pistol)
 	      (if (sound? pistol) (close-sound pistol)))))
@@ -26807,8 +26792,8 @@ EDITS: 2
 	  
 	  (let ((ind (open-sound "z.snd")))
 	    (if (not (= (framples ind) 0)) (snd-display #__line__ ";framples z.snd ~A" (framples ind)))
-	    (if (not (eq? (samples) #f)) (snd-display #__line__ ";samples of empty file (z): ~A" (samples)))
-	    (if (not (eq? (channel->float-vector) #f)) (snd-display #__line__ ";channel->float-vector of empty file (z): ~A" (channel->float-vector)))
+	    (if (samples) (snd-display #__line__ ";samples of empty file (z): ~A" (samples)))
+	    (if (channel->float-vector) (snd-display #__line__ ";channel->float-vector of empty file (z): ~A" (channel->float-vector)))
 	    (if (fneq (maxamp ind) 0.0) (snd-display #__line__ ";maxamp z.snd ~A" (maxamp ind)))
 	    (if (fneq (sample 100 ind) 0.0) (snd-display #__line__ ";sample 100 z.snd ~A" (sample 100 ind)))
 	    (scale-by 2.0)
@@ -37670,10 +37655,10 @@ EDITS: 1
 	 (lambda (name-and-func)
 	   (let ((name (car name-and-func)))
 	     ((cadr name-and-func))
-	     (if (fneq (/ (maxamp) mx) 2.0)
-		 (if (and (not (eq? name 'set-samples))
-			  (not (eq? name 'coroutines)))
-		     (snd-display #__line__ ";silly scalers: ~A ~A" name (/ (maxamp) mx))))
+	     (if (and (fneq (/ (maxamp) mx) 2.0)
+		      (not (eq? name 'set-samples))
+		      (not (eq? name 'coroutines)))
+		 (snd-display #__line__ ";silly scalers: ~A ~A" name (/ (maxamp) mx)))
 	     (revert-sound)))
 	 (list
 	  (list 'scale-by (lambda () (scale-by 2.0)))
@@ -46817,11 +46802,7 @@ EDITS: 1
 
 ;;; ---------------- test all done
 
-(let ((regs (regions)))
-  (for-each
-   (lambda (n)
-     (forget-region n))
-   regs))
+(for-each forget-region (regions))
 (if with-motif (set! (view-files-sort) 0))
 
 (stop-playing)

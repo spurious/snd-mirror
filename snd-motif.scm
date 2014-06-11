@@ -211,7 +211,7 @@
 					(list XmNfileListItems fileTable
 					      XmNfileListItemCount (length files)
 					      XmNlistUpdated #t))
-			   (for-each (lambda (n) (XmStringFree n)) fileTable)))))
+			   (for-each XmStringFree fileTable)))))
     (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST))
     (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST_LABEL))
     (XtSetValues (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
@@ -1033,10 +1033,7 @@
     (let ((current-mark-list-length (mark-list-length snd chn)))
       (if (and (> current-mark-list-length 0)
 	       (Widget? (mark-list snd chn)))
-	  (for-each
-	   (lambda (n)
-	     (XtUnmanageChild n))
-	   (cadr (XtGetValues (mark-list snd chn) (list XmNchildren 0) 1))))))
+	  (for-each XtUnmanageChild (cadr (XtGetValues (mark-list snd chn) (list XmNchildren 0) 1))))))
   
   (define (make-mark-list snd chn)
     (let ((current-mark-list-length (mark-list-length snd chn)))

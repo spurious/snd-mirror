@@ -4877,10 +4877,7 @@ the mark comes back to life.
 </p>
 
 <pre class="indented">
-(for-each 
-  (lambda (m) 
-    (delete-mark m)) 
-  (<a class=quiet href="#emarks" onmouseout="UnTip()" onmouseover="Tip(extsnd_emarks_tip)">marks</a> (or snd (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>)) (or chn (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>))))
+(for-each delete-mark (<a class=quiet href="#emarks" onmouseout="UnTip()" onmouseover="Tip(extsnd_emarks_tip)">marks</a> (or snd (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>)) (or chn (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>))))
 </pre>
 <div class="spacer"></div>
 

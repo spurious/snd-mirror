@@ -852,7 +852,6 @@ typedef struct c_proc_ext_t {
   s7_pointer looped_ff, let_looped_ff;
   s7_ex *(*exf)(s7_scheme *sc, s7_pointer expr);
   void *chooser_data;
-
   s7_pointer *arg_defaults, *arg_names;
   s7_pointer call_args;
   int keyed_args;
@@ -30228,29 +30227,36 @@ static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
   return(vector_ref_1(sc, vec, cdr(args)));
 }
 
-
-static s7_pointer vector_ref_ic;
-static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_vector_ref_ic_n(s7_scheme *sc, s7_pointer args, s7_Int index)
 {
   s7_pointer vec;
-  s7_Int index;
-
   vec = find_symbol_checked(sc, car(args));
   if (!s7_is_vector(vec))
     {
       check_method(sc, vec, sc->VECTOR_REF, args);
       return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec, T_VECTOR));
     }
-
-  index = s7_integer(cadr(args));
   if (index >= vector_length(vec))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be less than vector length"));
-
   if (vector_rank(vec) > 1)
     return(make_shared_vector(sc, vec, 1, index));
-
   return(vector_getter(vec)(sc,vec, index));
 }
+
+static s7_pointer vector_ref_ic;
+static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args) {return(g_vector_ref_ic_n(sc, args, s7_integer(cadr(args))));}
+static s7_pointer vector_ref_ic_0;
+static s7_pointer g_vector_ref_ic_0(s7_scheme *sc, s7_pointer args) {return(g_vector_ref_ic_n(sc, args, 0));}
+static s7_pointer vector_ref_ic_1;
+static s7_pointer g_vector_ref_ic_1(s7_scheme *sc, s7_pointer args) {return(g_vector_ref_ic_n(sc, args, 1));}
+static s7_pointer vector_ref_ic_2;
+static s7_pointer g_vector_ref_ic_2(s7_scheme *sc, s7_pointer args) {return(g_vector_ref_ic_n(sc, args, 2));}
+static s7_pointer vector_ref_ic_3;
+static s7_pointer g_vector_ref_ic_3(s7_scheme *sc, s7_pointer args) {return(g_vector_ref_ic_n(sc, args, 3));}
+static s7_pointer vector_ref_ic_4;
+static s7_pointer g_vector_ref_ic_4(s7_scheme *sc, s7_pointer args) {return(g_vector_ref_ic_n(sc, args, 4));}
+static s7_pointer vector_ref_ic_5;
+static s7_pointer g_vector_ref_ic_5(s7_scheme *sc, s7_pointer args) {return(g_vector_ref_ic_n(sc, args, 5));}
 
 static s7_pointer vector_ref_gs;
 static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
@@ -30446,7 +30452,6 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
   vector_setter(vec)(sc, vec, index, val);
   return(val);
 }
-
 
 static s7_pointer vector_set_ic;
 static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
@@ -42672,6 +42677,12 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->VECTOR_REF, vector_ref_chooser);
 
   vector_ref_ic = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic, 2, 0, false, "vector-ref opt");
+  vector_ref_ic_0 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_0, 1, 0, false, "vector-ref opt");
+  vector_ref_ic_1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_1, 1, 0, false, "vector-ref opt");
+  vector_ref_ic_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_2, 1, 0, false, "vector-ref opt");
+  vector_ref_ic_3 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_3, 1, 0, false, "vector-ref opt");
+  vector_ref_ic_4 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_4, 1, 0, false, "vector-ref opt");
+  vector_ref_ic_5 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_5, 1, 0, false, "vector-ref opt");
   vector_ref_add1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_add1, 2, 0, false, "vector-ref opt");
   vector_ref_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref opt");
   vector_ref_gs = make_function_with_class(sc, f, "vector-ref", g_vector_ref_gs, 2, 0, false, "vector-ref opt");
@@ -43668,7 +43679,44 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		  bool safe_case;
 		  safe_case = is_safe_closure(func);
 		  if (safe_case)
-		    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S);
+		    {
+		      s7_pointer body;
+		      body = closure_body(func);
+		      /* fprintf(stderr, "s: %s %s %s\n", DISPLAY(func), DISPLAY(closure_body(func)), DISPLAY(closure_args(func))); */
+		      if ((is_pair(body)) &&
+			  (is_null(cdr(body))) &&
+			  (is_pair(car(body))) &&
+			  (car(closure_args(func)) == cadar(body)))
+			{
+			  if ((is_null(cdddr(car(body)))) &&
+			      (c_call(car(body)) == g_vector_ref_ic) &&
+			      (integer(caddr(car(body))) >= 0) && (integer(caddr(car(body))) < 6))
+			    {
+			      switch (integer(caddr(car(body))))
+				{
+				case 0: set_c_function(car_x, vector_ref_ic_0); break;
+				case 1: set_c_function(car_x, vector_ref_ic_1); break;
+				case 2: set_c_function(car_x, vector_ref_ic_2); break;
+				case 3: set_c_function(car_x, vector_ref_ic_3); break;
+				case 4: set_c_function(car_x, vector_ref_ic_4); break;
+				case 5: set_c_function(car_x, vector_ref_ic_5); break;
+				}
+			      set_optimize_data(car_x, hop + OP_SAFE_C_C);
+			      set_optimized(car_x);
+			      return(true);
+			    }
+			  if (is_safe_c_s(car(body)))
+			    {
+			      /* fprintf(stderr, "redirect: %s %s %s\n", DISPLAY(func), DISPLAY(closure_body(func)), DISPLAY(closure_args(func))); */
+			      set_optimize_data(car_x, optimize_data(car(body)));
+			      set_optimized(car_x);
+			      set_ecdr(car_x, ecdr(car(body)));
+			      set_fcdr(car_x, fcdr(car(body)));
+			      return(true);
+			    }
+			}
+		      set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S);
+		    }
 		  else set_optimize_data(car_x, hop + OP_CLOSURE_S);
 		}
 	      else set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_C : OP_CLOSURE_C));
@@ -69889,7 +69937,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4  5.9
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7 12.7
  * t816          |                                    |  70.6                44.5 44.6
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.8
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.6
  *            153 with run macro (eval_ptree)
  *
  *
@@ -69900,6 +69948,8 @@ int main(int argc, char **argv)
  * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
  *   why isn't that the case always? -- pointer selects if focus-follows-mouse
  *   see snd-chn.c 5444 
+ * float-vector support is currently half-in/half-out
+ * the safe_c_s->direct opt could be extended especially to lambda* wrappers
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
@@ -69917,14 +69967,12 @@ int main(int argc, char **argv)
  * cyclic-seq in rest of full-* and in pretty-print (obj->str 3rd: cyclics?)
  * format: CL allows ~,+3F, ~<~> in CL are for text justification, ~? is also doable without great pain
  *
- * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc
- *   (environment* 'value "hi" 'string-length g_utf8_strlen)
+ * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
+ *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
  * an example of using the glib unicode stuff? The data is in xgdata.scm.
  *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
  *  (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
  *  (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
  *  but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *    maybe gunichar->bytevector?
- *
- * float-vector support is currently half-in/half-out
  */
