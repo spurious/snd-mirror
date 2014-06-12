@@ -108,6 +108,10 @@
   "(adjoin obj lst) adds obj to lst if it is not already in lst, returning the new list"
   (if (member obj lst) lst (cons obj lst)))
 
+(define (cdr-assoc obj lst)
+  (cond ((assoc obj lst) => cdr)
+	(else #f)))
+
 
 
 ;;; ----------------

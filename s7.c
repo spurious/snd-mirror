@@ -25804,6 +25804,27 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
 }
 
 
+static int format_nesting(const char *str, char opener, char closer, int start, int end) /* start=i, end=str_len-1 */
+{
+  int k, nesting = 1;
+  for (k = start + 2; k < end; k++)
+    if (str[k] == '~')
+      {
+	if (str[k + 1] == closer)
+	  {
+	    nesting--;
+	    if (nesting == 0)
+	      return(k - start - 1);
+	  }
+	else
+	  {
+	    if (str[k + 1] == opener)
+	      nesting++;
+	  }
+      }
+  return(-1);
+}
+
 #if WITH_GMP
 static bool s7_is_one_or_big_one(s7_pointer p);
 #else
@@ -25963,35 +25984,62 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      i++;
 	      fdat->args = cdr(fdat->args);
 	      break;
-	      
+
+	    case '>':
+	      return(format_error(sc, "unmatched '>'", str, args, fdat));
+
+	    case '<':                          /* -------- escape to s7 -------- */
+	      {
+		int bracket_len;
+		bracket_len = format_nesting(str, '<', '>', i, str_len - 1);
+
+		if (bracket_len == -1)
+		  return(format_error(sc, "'<' directive, but no matching '>'", str, args, fdat));
+		if (bracket_len > 1)
+		  {
+		    s7_pointer result;
+		    char *bracket_str;
+
+		    if (bracket_len > fdat->curly_len)
+		      {
+			if (fdat->curly_str) free (fdat->curly_str);
+			fdat->curly_len = bracket_len;
+			fdat->curly_str = (char *)malloc(bracket_len * sizeof(char));
+		      }
+		    bracket_str = fdat->curly_str;
+		    memcpy((void *)bracket_str, (void *)(str + i + 2), bracket_len - 1);
+		    bracket_str[bracket_len - 1] = '\0';
+		    
+		    result = eval_string_1(sc, bracket_str); /* is this safe? */
+		    if (is_string(result))
+		      format_append_string(sc, fdat, string_value(result), string_length(result), port);
+		    else
+		      {
+			bracket_str = s7_object_to_c_string(sc, result);
+			if (bracket_str)
+			  {
+			    format_append_string(sc, fdat, bracket_str, strlen(bracket_str), port);
+			    free(bracket_str);
+			  }
+		      }
+		  }
+		i += (bracket_len + 2); /* jump past the ending '>' too */
+	      }
+	      break;
+
 	    case '{':                           /* -------- iteration -------- */
 	      {
-		int k, curly_len = -1, curly_nesting = 1;
+		int curly_len;
 		
 		if (is_null(fdat->args))
 		  return(format_error(sc, "missing argument", str, args, fdat));
 		
-		for (k = i + 2; k < str_len - 1; k++)
-		  if (str[k] == '~')
-		    {
-		      if (str[k + 1] == '}')
-			{
-			  curly_nesting--;
-			  if (curly_nesting == 0)
-			    {
-			      curly_len = k - i - 1;
-			      break;
-			    }
-			}
-		      else
-			{
-			  if (str[k + 1] == '{')
-			    curly_nesting++;
-			}
-		    }
-		
+		curly_len = format_nesting(str, '{', '}', i, str_len - 1);
+
 		if (curly_len == -1)
 		  return(format_error(sc, "'{' directive, but no matching '}'", str, args, fdat));
+		if (curly_len == 1)
+		  return(format_error(sc, "~{~}' doesn't consume any arguments!", str, args, fdat));
 		
 		/* what about cons's here?  I can't see any way in CL either to specify the car or cdr of a cons within the format string 
 		 *   (cons 1 2) is applicable: ((cons 1 2) 0) -> 1
@@ -69949,7 +69997,7 @@ int main(int argc, char **argv)
  *   why isn't that the case always? -- pointer selects if focus-follows-mouse
  *   see snd-chn.c 5444 
  * float-vector support is currently half-in/half-out
- * the safe_c_s->direct opt could be extended especially to lambda* wrappers
+ * the safe_c_s->direct opt could be extended especially to lambda* wrappers, and at least the op_safe_c_ss case
  *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
@@ -69965,7 +70013,7 @@ int main(int argc, char **argv)
  *   for shared, maybe colored underline?
  *   {} [] <> || "" +{...} *{...}
  * cyclic-seq in rest of full-* and in pretty-print (obj->str 3rd: cyclics?)
- * format: CL allows ~,+3F, ~<~> in CL are for text justification, ~? is also doable without great pain
+ * TODO: test format ~<~> and add to lint etc
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?

@@ -221,6 +221,7 @@
 			   (cons 'current-error-port +port+)
 			   (cons 'current-input-port +port+)
 			   (cons 'current-output-port +port+)
+			   (cons 'cyclic-sequences +list+)
 			   (cons 'defined? +boolean+)
 			   (cons 'denominator +integer+)
 			   (cons 'display +unspecified+)
@@ -650,7 +651,7 @@
 				 (for-each
 				  (lambda (c)
 				    (vector-set! chars (char->integer c) #t))
-				  '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P #\*
+				  '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P #\* #\< #\>
 				    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p
 				    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
 				 chars))
@@ -1357,39 +1358,41 @@
 		       #f
 		       (if (= len 2)
 			   (classify (cadr form))
-			   (let ((new-form ()))
-			     (do ((exprs (cdr form) (cdr exprs)))
-				 ((null? exprs) 
-				  (if (null? new-form)
-				      #f
-				      (if (null? (cdr new-form))
-					  (car new-form)
-					  `(or ,@(reverse new-form)))))
-			       (let* ((e (car exprs))
-				      (val (classify e)))
-				 
-				 (if (and (pair? val)
-					  (memq (car val) '(and or not)))
-				     (set! val (classify (simplify-boolean e true false env))))
-				 
-				 (if val                                ; #f in or is ignored
-				     (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
-					     (and (not (pair? val))
-						  (not (symbol? val))))
-					 (begin
-					   (if (null? new-form)         ; (or x1 123) -> value of x1, so we can't throw it away here, unlike the and case
-					       (set! new-form (list val))           ;was `(,val))
-					       (set! new-form (cons val new-form))) ;was (append `(,val) new-form))) ; reversed when returned
-					   (set! exprs '(#t)))
-					 
-					 ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, so trailing x1 would still be #f
-					 
-					 (if (and (pair? e)             ; (or ...) -> splice into current
-						  (eq? (car e) 'or))
-					     (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
-					     (begin                     ; else add it to our new expression with value #f
-					       (store e val 'or)
-					       (set! new-form (cons val new-form))))))))))))
+			   (if (true? (cadr form)) ; no need to check anything else
+			       (cadr form)
+			       (let ((new-form ()))
+				 (do ((exprs (cdr form) (cdr exprs)))
+				     ((null? exprs) 
+				      (if (null? new-form)
+					  #f
+					  (if (null? (cdr new-form))
+					      (car new-form)
+					      `(or ,@(reverse new-form)))))
+				   (let* ((e (car exprs))
+					  (val (classify e)))
+				     
+				     (if (and (pair? val)
+					      (memq (car val) '(and or not)))
+					 (set! val (classify (set! e (simplify-boolean e true false env)))))
+				     
+				     (if val                                ; #f in or is ignored
+					 (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
+						 (and (not (pair? val))
+						      (not (symbol? val))))
+					     (begin
+					       (if (null? new-form)         ; (or x1 123) -> value of x1 first
+						   (set! new-form (list val))           ;was `(,val))
+						   (set! new-form (cons val new-form))) ;was (append `(,val) new-form))) ; reversed when returned
+					       (set! exprs '(#t)))
+					     
+					     ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, so trailing x1 would still be #f
+					     
+					     (if (and (pair? e)             ; (or ...) -> splice into current
+						      (eq? (car e) 'or))
+						 (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
+						 (begin                     ; else add it to our new expression with value #f
+						   (store e val 'or)
+						   (set! new-form (cons val new-form)))))))))))))
 		  
 		  ((and)
 		   (if (= len 1)
@@ -1412,7 +1415,7 @@
 				     
 				     (if (and (pair? val)
 					      (memq (car val) '(and or not)))
-					 (set! val (classify (simplify-boolean e true false env))))
+					 (set! val (classify (set! e (simplify-boolean e true false env)))))
 				     
 				     ;; (and x1 x2 x1) is not reducible, unless to (and x2 x1)
 				     ;;   the final thing has to remain at the end, but can be deleted earlier if it can't short-circuit the evaluation,
@@ -1791,14 +1794,26 @@
 			   `(numerator ,(car args))))
 		   form))
 	      
-	      ((rationalize make-polar make-rectangular lognot ash modulo remainder quotient exact->inexact tan)
+	      ((random)
+	       (if (and (= len 1)
+			(morally-equal? (car args) 0.0))
+		   0.0
+		   `(random ,@args)))
+	      ;; what about (* 2.0 (random 1.0)) and the like?
+	      ;;   this is trickier than it appears: (* 2.0 (random 3)) etc
+
+	      ((rationalize make-polar make-rectangular lognot ash modulo remainder quotient tan exact->inexact)
 	       (if (just-rationals? args)
 		   (catch #t ; catch needed here for things like (ash 2 64)
 		     (lambda ()
 		       (apply (symbol->value (car form)) args))
 		     (lambda ignore
 		       `(,(car form) ,@args)))
-		   `(,(car form) ,@args)))
+		   (if (and (eq? (car form) 'make-rectangular)
+			    (= len 2)
+			    (morally-equal? (cadr args) 0.0))
+		       (car args)
+		       `(,(car form) ,@args))))
 	      
 	      ((expt) 
 	       (if (= len 2)
@@ -1837,7 +1852,9 @@
 				(or (rational-result? (caar args))
 				    (integer-result? (caar args)))))
 		       (car args)
-		       `(inexact->exact ,@args))
+		       (if (number? (car args))
+			   (catch #t (lambda () (inexact->exact (car args))) (lambda any `(inexact->exact ,@args)))
+			   `(inexact->exact ,@args)))
 		   form))
 	      
 	      ((logior)
@@ -2004,7 +2021,9 @@
 				 (if (equal? (cadr false) test)
 				     (lint-format "pointless (impossible) retest: ~A" name form)
 				     (if (equal? (cadr false) `(not ,test))
-					 (lint-format "pointless (redundant) retest: ~A" name form))))))
+					 (lint-format "pointless (redundant) retest: ~A" name form))))
+			     ;; the (equal? true false) case is checked below
+			     ))
 
 		       (if *report-minor-stuff*
 			   (let ((expr (simplify-boolean test () () env)))
@@ -2125,9 +2144,6 @@
 		       (if (not (tree-member continuation body))
 			   (lint-format "~A is not needed:~A" name head (truncated-list->string form))))))))
 |#	  
-	  ;; what about (* 2.0 (random 1.0)) and the like?
-	  ;;   this is trickier than it appears: (* 2.0 (random 3)) etc
-
 	  ((/)
 	   (if (pair? (cdr form))
 	       (if (and (null? (cddr form))
@@ -2682,9 +2698,6 @@
       
       (define (lint-walk-function head name args val env)
 	;; check out function arguments (adding them to the current env), then walk its body, (name == function name, val == body)
-	
-	;; (format *stderr* "line-walk-function ~A ~A ~A ~A ~A~%" head name args val (if (pair? env) (car env) ""))
-	
 	;; first check for (define (hi...) (ho...)) where ho has no opt args (and try to ignore possible string constant doc string)
 	(if (and *report-minor-stuff*
 		 (eq? head 'define))
@@ -2711,7 +2724,9 @@
 					  (eq? (car def) 'define)
 					  (or (and (symbol? args)
 						   (symbol? (cadr def)))
-					      (= (length args) (length (cadr def)))))))))
+					      (and (pair? args)
+						   (pair? (cadr def))
+						   (= (length args) (length (cadr def))))))))))
 			    (lint-format "~A could be (define ~A ~A)" name name name cval)))
 		      (if (and (eq? (caar bval) 'list-ref)
 			       (pair? (cdar bval))
@@ -2727,7 +2742,6 @@
 	(let ((ldata (and (not (memq head '(lambda lambda*)))
 			  (not (assq name env))
 			  (list name #f #f (list head args)))))
-	  ;(format *stderr* "ldata: ~A ~A ~A~%" ldata head name)
 	  (if (null? args)
 	      (begin
 		(if (memq head '(define* lambda* defmacro* define-macro* define-bacro*))
@@ -2961,7 +2975,22 @@
 					      (lint-walk-body name head (cdr clause) env))
 					  (if (not (null? (cdr clause)))  ; (not (null?...)) here is correct -- we're looking for stray dots (lint is confused)
 					      (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause)))))))
-			      (cdr form))))
+			      (cdr form))
+			     (if (and (= len 2)
+				      *report-minor-stuff*)
+				 (let ((c1 (cadr form))
+				       (c2 (caddr form)))
+				   (if (and (pair? c1) (= (length c1) 2)
+					    (pair? c2) (= (length c2) 2)
+					    (boolean? (cadr c1))
+					    (boolean? (cadr c2))
+					    (memq (car c2) '(#t else)))
+				       (if (equal? (cadr c1) (cadr c2))
+					   (if (not (side-effect? (car c1) env))
+					       (lint-format "possible simplification: ~A" name (lists->string form (cadr c1))))
+					   (if (eq? (cadr c1) #t)
+					       (lint-format "possible simplification: ~A" name (lists->string form (car c1)))
+					       (lint-format "possible simplification: ~A" name (lists->string form `(not ,(car c1)))))))))))
 		       env))
 		    
 		    
@@ -3057,7 +3086,16 @@
 		     (if (< (length form) 3)
 			 (lint-format "let is messed up: ~A" name (truncated-list->string form))
 			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
-			   (let ((vars (if named-let (list (list named-let #f #f)) ()))
+			   (let ((vars (if named-let 
+					   (list (list named-let #f #f
+						       (and (pair? (cddr form)) ; trying to protect against badly formed let's here
+							    (pair? (caddr form))
+							    (every? (lambda (b)
+								      (and (pair? b)
+									   (pair? (cdr b))))
+								    (caddr form))
+							    (list 'define (map car (caddr form))))))
+					   ()))
 				 (varlist (if named-let (caddr form) (cadr form))))
 			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))
@@ -3217,6 +3255,7 @@
 			   
 			   (define (count-directives str name form)
 			     (let ((curlys 0)
+				   (brackets 0)
 				   (dirs 0)
 				   (pos (char-position #\~ str)))
 			       (if pos
@@ -3228,7 +3267,8 @@
 					 (if tilde-time
 					     (begin
 					       (if (and (= curlys 0)
-							(not (memq c '(#\~ #\T #\t #\& #\% #\^ #\newline #\}))) ; ~* consumes an arg
+							(= brackets 0) ; ??
+							(not (memq c '(#\~ #\T #\t #\& #\% #\^ #\newline #\} #\> #\<))) ; ~* consumes an arg
 							(not (call-with-exit
 							      (lambda (return)
 								(do ((k i (+ k 1)))
@@ -3245,7 +3285,9 @@
 					       (set! tilde-time #f)
 					       (case c 
 						 ((#\{) (set! curlys (+ curlys 1)))
-						 ((#\}) (set! curlys (- curlys 1)))))
+						 ((#\}) (set! curlys (- curlys 1)))
+						 ((#\<) (set! brackets (+ brackets 1)))
+						 ((#\>) (set! brackets (- brackets 1)))))
 					     (begin
 					       (set! pos (char-position #\~ str i))
 					       (if pos 
@@ -3263,6 +3305,13 @@
 						(abs curlys) 
 						(if (positive? curlys) "{" "}") 
 						(if (> curlys 1) "s" "") 
+						(truncated-list->string form)))
+			       (if (not (= brackets 0))
+				   (lint-format "~A has ~D unmatched ~A~A:~A"
+						name head 
+						(abs brackets) 
+						(if (positive? brackets) "<" ">") 
+						(if (> brackets 1) "s" "") 
 						(truncated-list->string form)))
 			       dirs))
 			   
@@ -3286,11 +3335,11 @@
 		    ;; ---------------- other schemes ----------------		  
 		    ((define-syntax let-syntax letrec-syntax define-module re-export case-lambda) ; for other's code
 		     env) 
-
-		    ;; with-environment
-		    ((with-environment)
+		    
+		    ;; -------- with-environment when unless --------
+		    ((with-environment unless when)
 		     (if (< (length form) 3)
-			 (lint-format "with-environment is messed up: ~A" name (truncated-list->string form))
+			 (lint-format "~A is messed up: ~A" name head (truncated-list->string form))
 			 (let ((old-undef *report-undefined-variables*))
 			   (set! *report-undefined-variables* #f)            ; we currently can't tell env-vars from undefined vars
 			   (if (pair? (cadr form))
@@ -3449,29 +3498,10 @@
 ;;;
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
-;;;
-;;; if function arg or local var collides with built-in, warn? (framples is a problem here, and channels)
-;;; redundant begin starting body
-;;; check A and not A with no side-effects -> #f? similar -> #t
-;;;  A&B | A&!B -> A etc
-;;;  I suppose x + (- x) -> removed?
-;;;  (make-rectangular x 0) -> x, (random 0) -> 0
-;;;  cond expr known to be false: (cond (#f ...) (< 1 0)... ) etc, also if -> #f
-;;;  similarly if known to be #t and has following exprs -- would simplify-boolean catch these?
-;;; check no-side repetitions in and/or:
-#|
-x or x -> x
-x and x -> x
-x and (x or y) -> x
-x or (x and y) -> x
-(x or y) and (x or z) -> x or (y and z)
-x and (not x) -> #f
-x or (not x) -> #t(orx)
-(not x) and (not y) -> (not (x or y))
-(not x) or (not y) -> (not (x and y))
-|#
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; this reads an HTML file, finds likely-looking scheme code, and runs lint over it.
 
 (define (html-lint file)

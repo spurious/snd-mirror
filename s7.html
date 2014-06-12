@@ -3791,6 +3791,8 @@ from a simple procedure.
 ~}        end iteration
 ~^        jump out of iteration
 ~*        ignore the current argument
+~<        begin escape to s7 (code in ~<...~> is evaluated, result is stringified and inserted)
+~>        end s7 escape
 ~C        print character (numeric argument = how many times to print it)
 ~P        insert 's' if current argument is not 1 or 1.0 (use ~@P for "ies" or "y")
 ~A        object-&gt;string as in display
@@ -3862,7 +3864,18 @@ floats in the "~X" case.  So in s7,
 "h i h o"
 &gt; (format #f "~{~{~C~^ ~}~^...~}" (list "hiho" "test"))
 "h i h o...t e s t"
+&gt; (with-input-from-string (format #f "(~{~C~^ ~})" (format #f "~B" 1367)) read) ; integer-&gt;list
+(1 0 1 0 1 0 1 0 1 1 1)
 </pre>
+
+<p>The ~'&lt;...~&gt; directive takes the stuff inside the brackets, and interprets it as s7 code.
+If the result is not a string, object-&gt;string is called.  The string is then inserted into
+the format output string.
+</p>
+<pre class="indented">
+&gt; (let ((counter 32)) (format #f "counter is ~< counter ~>!"))
+"counter is 32!"
+<pre>
 </div>
 
 
