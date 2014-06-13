@@ -2710,10 +2710,11 @@
 		       (null? (cdr bval))
 		       (symbol? (caar bval))) ; not (define (hi) ((if #f + abs) 0))
 		  (if (equal? args (cdar bval))
-		      (let ((cval (caar bval)))
-			(if (or (and (procedure? (symbol->value cval))
-				     (zero? (cadr (procedure-arity (symbol->value cval))))
-				     (not (caddr (procedure-arity (symbol->value cval))))) ; might be deliberately limiting args
+		      (let* ((cval (caar bval))
+			     (p (symbol->value cval)))
+			(if (or (and (procedure? p)
+				     (zero? (cadr (procedure-arity p)))
+				     (not (caddr (procedure-arity p)))) ; might be deliberately limiting args
 				(let ((e (or (assq cval env) (hash-table-ref globals cval))))
 				  (and e
 				       (pair? e)
@@ -3256,6 +3257,7 @@
 			   (define (count-directives str name form)
 			     (let ((curlys 0)
 				   (brackets 0)
+				   (bracket-pos 0)
 				   (dirs 0)
 				   (pos (char-position #\~ str)))
 			       (if pos
@@ -3286,8 +3288,13 @@
 					       (case c 
 						 ((#\{) (set! curlys (+ curlys 1)))
 						 ((#\}) (set! curlys (- curlys 1)))
-						 ((#\<) (set! brackets (+ brackets 1)))
-						 ((#\>) (set! brackets (- brackets 1)))))
+						 ((#\<) 
+						  (set! bracket-pos (+ i 1))
+						  (set! brackets (+ brackets 1)))
+						 ((#\>) 
+						  ;; walk the ~< expr ~> code to check for otherwise unused variables etc
+						  (lint-walk 'format (with-input-from-string (substring str bracket-pos (- i 1)) read) env)
+						  (set! brackets (- brackets 1)))))
 					     (begin
 					       (set! pos (char-position #\~ str i))
 					       (if pos 
@@ -3498,7 +3505,8 @@
 ;;;
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
-
+;;;
+;;; for ~<expr~>, lint needs to check the expr and mark vars etc (currently complains about unused vars)
 
 
 ;;; --------------------------------------------------------------------------------

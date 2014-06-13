@@ -136,7 +136,7 @@ define s7cell
   end
 
   if (($type == T_STRING) || ($is_bad_type))
-      if (($cell.tf.type_flag & T_BYTEVECTOR) != 0)
+      if (($cell.tf.type_field & T_BYTEVECTOR) != 0)
          printf "bytevector:     "
       else
          printf "string:         "

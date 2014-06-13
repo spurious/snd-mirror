@@ -59044,6 +59044,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	closure_args(new_func) = cdar(sc->code);
 	closure_body(new_func) = cdr(sc->code);
 	closure_setter(new_func) = sc->F; 
+
+	if (!(fcdr(sc->code))) fcdr(sc->code) = sc->F;
+	/* fcdr can be nil if we have a function, call it (so check_define+opt), then 
+	 *   walk the procedure source while redefining the function, then call it again.
+	 *   To be safe, we should actually call check_define, but how to force that?
+	 */
 	closure_arity(new_func) = integer(fcdr(sc->code));
 	set_type(new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
 	sc->capture_env_counter++; 
@@ -69999,6 +70005,15 @@ int main(int argc, char **argv)
  * float-vector support is currently half-in/half-out
  * the safe_c_s->direct opt could be extended especially to lambda* wrappers, and at least the op_safe_c_ss case
  *
+ * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
+ *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
+ * an example of using the glib unicode stuff? The data is in xgdata.scm.
+ *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
+ *  (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
+ *  (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
+ *  but the ones that return gunichar (toupper) currently don't return a bytevector or a string
+ *    maybe gunichar->bytevector?
+ *
  * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
  *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
  *   how to pass this into scheme from c (returns_temp is a kludge)
@@ -70013,14 +70028,5 @@ int main(int argc, char **argv)
  *   for shared, maybe colored underline?
  *   {} [] <> || "" +{...} *{...}
  * cyclic-seq in rest of full-* and in pretty-print (obj->str 3rd: cyclics?)
- * TODO: test format ~<~> and add to lint etc
- *
- * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
- *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
- * an example of using the glib unicode stuff? The data is in xgdata.scm.
- *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
- *  (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
- *  (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
- *  but the ones that return gunichar (toupper) currently don't return a bytevector or a string
- *    maybe gunichar->bytevector?
+ * TODO: fix annotate-procedure problem (incomplete unoptimize?) and add to s7test
  */
