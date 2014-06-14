@@ -109,7 +109,7 @@
   (if (member obj lst) lst (cons obj lst)))
 
 (define (cdr-assoc obj lst)
-  (cond ((assoc obj lst) => cdr)
+  (cond ((assoc obj lst) => cdr) ; why not continue?
 	(else #f)))
 
 

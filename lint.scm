@@ -2187,7 +2187,11 @@
 	   (if (and (pair? (cdr form))
 		    (pair? (cadr form))
 		    (eq? (caadr form) 'object->string))
-	       (lint-format "~A could be ~A" name form (cadr form))))
+	       (lint-format "~A could be ~A" name form (cadr form))
+	       (if (and (pair? (cddr form))
+			(constant? (caddr form))
+			(not (memq (caddr form) '(#f #t :readable))))
+		   (lint-format "bad second argument: ~A" name (caddr form)))))
 
 	  ((display)
 	   (if (and (= (length form) 2)
@@ -2938,7 +2942,8 @@
 			       (if (and *report-minor-stuff*
 					(or (number? (cadr form))
 					    (boolean? (cadr form))
-					    (string? (cadr form))))
+					    (string? (cadr form))
+					    (vector? (cadr form))))
 				   (lint-format "quote is not needed here:~A" name (truncated-list->string form))))))
 		     env)
 		    
@@ -3348,7 +3353,8 @@
 		     (if (< (length form) 3)
 			 (lint-format "~A is messed up: ~A" name head (truncated-list->string form))
 			 (let ((old-undef *report-undefined-variables*))
-			   (set! *report-undefined-variables* #f)            ; we currently can't tell env-vars from undefined vars
+			   (if (eq? head with-environment)
+			       (set! *report-undefined-variables* #f))            ; we currently can't tell env-vars from undefined vars
 			   (if (pair? (cadr form))
 			       (lint-walk name (cadr form) env))
 			   (let* ((e (lint-walk-body name head (cddr form) env))
@@ -3402,7 +3408,7 @@
 			   (let ((vars env))
 			     (for-each
 			      (lambda (f)
-				;; look for names we don't know about
+				;; look for names we don't know about -- this is unfortunately not very useful
 				(if (and *report-undefined-variables*
 					 (symbol? f)
 					 (not (keyword? f))
@@ -3499,14 +3505,13 @@
 
 
 
-;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is
-;;; also macros that cause definitions are ignored
+;;; macros that cause definitions are ignored
 ;;; and cload'ed identifiers are missed
 ;;;
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
-;;;
-;;; for ~<expr~>, lint needs to check the expr and mark vars etc (currently complains about unused vars)
+
+
 
 
 ;;; --------------------------------------------------------------------------------

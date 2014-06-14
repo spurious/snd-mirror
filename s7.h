@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.9"
-#define S7_DATE "24-May-14"
+#define S7_VERSION "3.10"
+#define S7_DATE "16-June-14"
 
 
 typedef long long int s7_Int;
@@ -411,7 +411,6 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args);                 /* (
 const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);              /* (procedure-name x) -- don't free the string! */
 
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
-s7_pointer s7_unoptimize(s7_scheme *sc, s7_pointer code);                   /* (unoptimize obj) */
 
 s7_pointer s7_make_continuation(s7_scheme *sc);                             /* call/cc... (see example below) */
 bool s7_is_syntax(s7_pointer p);
@@ -812,6 +811,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 16-June:   remove unoptimize and s7_unoptimize.
  * 14-May:    s7_define_safe_function_star.  Removed s7_catch_all.
  * 22-Apr:    remove (deprecated) s7_apply_n_10, s7_is_valid_pointer, s7_keyword_eq_p.
  * 5-Mar:     s7_heap_size, s7_gc_freed.

@@ -1268,7 +1268,7 @@ struct s7_scheme {
   s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, IS_SYMBOL, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
-  s7_pointer TAN, TANH, THROW, TO_BYTEVECTOR, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR, VECTOR_APPEND;
+  s7_pointer TAN, TANH, THROW, TO_BYTEVECTOR, TRUNCATE, VALUES, VECTOR, VECTOR_APPEND;
   s7_pointer IS_VECTOR, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, WRITE_STRING, IS_ZERO;
   s7_pointer S7_FEATURES, GC_STATS, LOAD_PATH, PI;
@@ -25997,7 +25997,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		  return(format_error(sc, "'<' directive, but no matching '>'", str, args, fdat));
 		if (bracket_len > 1)
 		  {
-		    s7_pointer result;
+		    s7_pointer result, eport;
 		    char *bracket_str;
 
 		    if (bracket_len > fdat->curly_len)
@@ -26010,16 +26010,51 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    memcpy((void *)bracket_str, (void *)(str + i + 2), bracket_len - 1);
 		    bracket_str[bracket_len - 1] = '\0';
 		    
-		    result = eval_string_1(sc, bracket_str); /* is this safe? */
+		    /* if eval-string returns a multiple-value, it tries to splice it into something */
+		    eport = s7_open_input_string(sc, bracket_str);
+		    push_input_port(sc, eport);
+		    push_stack(sc, OP_BARRIER, eport, sc->NIL); /* this is not superfluous */
+		    push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);  
+		    eval(sc, OP_READ_INTERNAL);
+		    pop_input_port(sc);
+		    s7_close_input_port(sc, eport);
+		    result = sc->value;
+		    /* end of special case eval-string */
+
 		    if (is_string(result))
 		      format_append_string(sc, fdat, string_value(result), string_length(result), port);
 		    else
 		      {
-			bracket_str = s7_object_to_c_string(sc, result);
-			if (bracket_str)
+			if (result != sc->NO_VALUE)           /* (format #f "~<(values)~>") -> "" */
 			  {
-			    format_append_string(sc, fdat, bracket_str, strlen(bracket_str), port);
-			    free(bracket_str);
+			    if (is_multiple_value(result))    /* (format #f "~<(values 1 2 3)~>") -> "123" */
+			      {
+				int gc_loc;
+				s7_pointer p;
+				gc_loc = s7_gc_protect(sc, result);
+				for (p = multiple_value(result); is_pair(p); p = cdr(p))
+				  if (is_string(car(p)))
+				    format_append_string(sc, fdat, string_value(car(p)), string_length(car(p)), port);
+				  else
+				    {
+				      bracket_str = s7_object_to_c_string(sc, car(p));
+				      if (bracket_str)
+					{
+					  format_append_string(sc, fdat, bracket_str, strlen(bracket_str), port);
+					  free(bracket_str);
+					}
+				    }
+				s7_gc_unprotect_at(sc, gc_loc);
+			      }
+			    else
+			      {
+				bracket_str = s7_object_to_c_string(sc, result);
+				if (bracket_str)
+				  {
+				    format_append_string(sc, fdat, bracket_str, strlen(bracket_str), port);
+				    free(bracket_str);
+				  }
+			      }
 			  }
 		      }
 		  }
@@ -38231,6 +38266,7 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 #if WITH_COUNTS
   report_counts(sc);
 #endif
+
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
 
@@ -46176,53 +46212,6 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	}
     }
   return(is_null(p));
-}
-
-
-s7_pointer s7_unoptimize(s7_scheme *sc, s7_pointer code)
-{
-  if (is_pair(code))
-    {
-      if ((is_syntax(car(code))) &&                           /* (typeflag(car(code)) == SYNTACTIC_TYPE) && */
-	  (is_internal_syntax_op(syntax_opcode(car(code)))))
-	car(code) = car(slot_value(global_slot(car(code))));
-      else s7_unoptimize(sc, car(code));
-      s7_unoptimize(sc, cdr(code));
-    }
-  return(code);
-}
-
-
-static s7_pointer tree_copy(s7_scheme *sc, s7_pointer tree)
-{
-  /* copy entire tree, but use s7_copy for any non-pairs
-   */
-  s7_pointer x;
-  if (!is_pair(tree))
-    x = s7_copy(sc, tree);
-  else
-    {
-      x = cons(sc, 
-	       tree_copy(sc, car(tree)),
-	       tree_copy(sc, cdr(tree)));
-      set_ecdr(x, NULL);
-      set_fcdr(x, NULL);
-      set_gcdr(x, NULL);
-    }
-  /* fprintf(stderr, "copy %p -> %p (%s %p %p)\n", tree, x, type_name(sc, tree, NO_ARTICLE), fcdr(tree), fcdr(x)); */
-  return(x);
-}
-
-static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
-{
-  #define H_unoptimize "(unoptimize code) erases some of the optimizer info in code"
-  s7_pointer code;
-  code = car(args);
-
-  if (make_shared_info(sc, code, false) != NULL)                /* if not null, we found a cycle */
-    return(wrong_type_argument_with_type(sc, sc->UNOPTIMIZE, small_int(1), code, A_PROPER_LIST));
-
-  return(s7_unoptimize(sc, tree_copy(sc, code)));
 }
 
 
@@ -69371,7 +69360,6 @@ s7_scheme *s7_init(void)
   sc->PROCEDURE_ARITY =       s7_define_safe_function(sc, "procedure-arity",         g_procedure_arity,        1, 0, false, H_procedure_arity);
   sc->PROCEDURE_SOURCE =      s7_define_safe_function(sc, "procedure-source",        g_procedure_source,       1, 0, false, H_procedure_source);
   sc->PROCEDURE_ENVIRONMENT = s7_define_safe_function(sc, "procedure-environment",   g_procedure_environment,  1, 0, false, H_procedure_environment);
-  sc->UNOPTIMIZE =            s7_define_safe_function(sc, "unoptimize",              g_unoptimize,             1, 0, false, H_unoptimize);
   sc->PROCEDURE_NAME =        s7_define_safe_function(sc, "procedure-name",          g_procedure_name,         1, 0, false, H_procedure_name);
   s7_make_procedure_with_setter(sc, "procedure-setter",   g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter);
 
@@ -70028,5 +70016,9 @@ int main(int argc, char **argv)
  *   for shared, maybe colored underline?
  *   {} [] <> || "" +{...} *{...}
  * cyclic-seq in rest of full-* and in pretty-print (obj->str 3rd: cyclics?)
- * TODO: fix annotate-procedure problem (incomplete unoptimize?) and add to s7test
+ * generalize =>:  => anywhere means take current value and apply next thing to it, reverse of values sort of
+ *    (values 1 2 3) => + is 6?
+ *    this is consistent with case, but not cond where its more like and=>
+ *    maybe ==> for the other? or just assume in cond it's and=> and in case it's =>
+ * lint should track type checks: (and (procedure? p) (procedure-* p)) etc
  */

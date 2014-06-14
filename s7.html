@@ -3791,8 +3791,8 @@ from a simple procedure.
 ~}        end iteration
 ~^        jump out of iteration
 ~*        ignore the current argument
-~<        begin escape to s7 (code in ~<...~> is evaluated, result is stringified and inserted)
-~>        end s7 escape
+~&lt;        begin escape to s7 (code in ~&lt;...~&gt; is evaluated, result is stringified and inserted)
+~&gt;        end s7 escape
 ~C        print character (numeric argument = how many times to print it)
 ~P        insert 's' if current argument is not 1 or 1.0 (use ~@P for "ies" or "y")
 ~A        object-&gt;string as in display
@@ -3873,9 +3873,12 @@ If the result is not a string, object-&gt;string is called.  The string is then 
 the format output string.
 </p>
 <pre class="indented">
-&gt; (let ((counter 32)) (format #f "counter is ~< counter ~>!"))
+&gt; (let ((counter 32)) (format #f "counter is ~&lt; counter ~&gt;!"))
 "counter is 32!"
 <pre>
+
+<p>If the evaluation returns multiple values, each is inserted in turn.  (values) becomes "".
+</p>
 </div>
 
 
@@ -4125,41 +4128,38 @@ add-2
 
 <div class="indented">
 
-<p>procedure-source returns the actual function source &mdash;
-more fun than a barrel of monkeys!
-If you modify the procedure source directly, it is safest to redefine the procedure
-so that everything in s7 knows about the change.  
-Here'a an example that adds trace and local variable info for debugging:
+<p>procedure-source returns the actual function source.  If you
+call the function, the optimizer changes the source to suit itself,
+so if you want to walk over the function body or change it in some way,
+make a clean copy of
+the procedure-source first (using, for example, copy-tree in stuff.scm).
 </p>
 
 <pre>
 (define-bacro (procedure-annotate proc) ; use "bacro" so we can annotate local functions
-  (let ((orig (<em class=red>procedure-source</em> proc)))
+  (let ((orig (<em class=red>procedure-source</em> proc))) ; this assumes we haven't called "proc" yet
 
     (define (proc-walk source)
       (if (pair? source)
-	  (if (or (eq? (car source) 'let)     ; if let or let*, show local variables
-		  (eq? (car source) 'let*))
-	      (if (symbol? (cadr source))
+	  (if (memq (car source) '(let let*))     ; if let or let*, show local variables
+	      (if (symbol? (cadr source))         ; named let?
 		  ;; (let name vars . body) -&gt; (let name vars print-vars . body)
 		  (append 
 		   (list (car source)
 			 (cadr source)
 			 (caddr source)
-			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" 
-                                  ,(cadr source) (environment-&gt;list (current-environment))))
+			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (current-environment)))
 		   (cdddr source))
 		  ;; (let(*) vars . body) -&gt; (let vars print-vars . body)
 		  (append 
 		   (list (car source)
 			 (cadr source)
-			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" 
-                                  ,(car source) (environment-&gt;list (current-environment))))
+			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (current-environment)))
 		   (cddr source)))
 	      (cons (proc-walk (car source))
 		    (proc-walk (cdr source))))
 	  source))
-
+    
     (let* ((new-body (proc-walk orig))
 	   (result (gensym))
 	   (new-source 
@@ -4169,18 +4169,16 @@ Here'a an example that adds trace and local variable info for debugging:
 		     (lambda ()       ; upon entry, show procedure name and args
 		       (format #t "(~A~{ ~A~})~%" 
                                ',proc 
-                               (environment-&gt;list 
-                                 (outer-environment 
-                                   (outer-environment (current-environment))))))
+			       (outer-environment (outer-environment (current-environment)))))
 		     (lambda ()
-		       (set! ,result (,new-body ,@(cadr orig)))
-		       ,result)
+		       (set! ,result (,new-body ,@(cadr orig))))
 		     (lambda ()       ; at exit, show result
 		       (if (eq? ,result #&lt;undefined&gt;)
 			   (format #t "  ~A returns early~%")
 			   (format #t "  ~A returns ~A~%" ',proc ,result))))))))
 
-      `(set! ,proc (eval ,new-source)))))
+      `(define ,proc ,new-source))))
+
 			 
 &gt; (define (hi a) (let ((b 12)) (+ b a)))
 hi

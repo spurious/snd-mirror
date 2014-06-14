@@ -113,7 +113,7 @@
 		    (top (min (cdr argn) max-args))
 		    (strname (symbol->string sym)))
 		(if (not (or (memq (strname 0) '(#\{ #\[ #\())
-			     (member strname '("exit" "emergency-exit" "abort" "unoptimize" "autotest" 
+			     (member strname '("exit" "emergency-exit" "abort" "autotest" 
 					       "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
 					       "augment-environment!" "make-procedure-with-setter" "gc"
 					       "open-environment" "eval" "vector" "list" "cons"
