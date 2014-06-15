@@ -924,15 +924,7 @@
       
       
       (define (keywords lst)
-	;; count keywords in lst
-	(let ((keys 0))
-	  (for-each 
-	   (lambda (arg)
-	     (if (keyword? arg)
-		 (set! keys (+ keys 1))))
-	   lst)
-	  keys))
-      
+	(count-if keyword? lst))
       
       (define (tree-member sym tree)
 	(and (pair? tree)
@@ -1025,15 +1017,14 @@
 				  (canonical-tree (cdr lst))) 
 			    lst))))
 		
-		(define (cdr-assoc val lst)
-		  (if (not (pair? lst))
-		      #f
-		      (if (equal? (cdar lst) val)
-			  (car lst)
-			  (cdr-assoc val (cdr lst)))))
-		
 		(define (expand expr)
-		  (let ((data (cdr-assoc expr associated-exprs)))
+		  (define (car-rassoc val lst)
+		    (if (not (pair? lst))
+			#f
+			(if (equal? (cdar lst) val)
+			    (car lst)
+			    (car-rassoc val (cdr lst)))))
+		  (let ((data (car-rassoc expr associated-exprs)))
 		    (if data
 			(copy (car data))
 			(if (pair? expr)
@@ -2189,7 +2180,7 @@
 		    (eq? (caadr form) 'object->string))
 	       (lint-format "~A could be ~A" name form (cadr form))
 	       (if (and (pair? (cddr form))
-			(constant? (caddr form))
+			(not (pair? (caddr form)))
 			(not (memq (caddr form) '(#f #t :readable))))
 		   (lint-format "bad second argument: ~A" name (caddr form)))))
 
@@ -2719,7 +2710,8 @@
 			(if (or (and (procedure? p)
 				     (zero? (cadr (procedure-arity p)))
 				     (not (caddr (procedure-arity p)))) ; might be deliberately limiting args
-				(let ((e (or (assq cval env) (hash-table-ref globals cval))))
+				(let ((e (or (assq cval env) 
+					     (hash-table-ref globals cval))))
 				  (and e
 				       (pair? e)
 				       (>= (length e) 4)
@@ -2727,7 +2719,9 @@
 					 (and 
 					  (pair? def)
 					  (eq? (car def) 'define)
-					  (or (and (symbol? args)
+					  (or (and (null? args)
+						   (null? (cadr def)))
+					      (and (symbol? args)
 						   (symbol? (cadr def)))
 					      (and (pair? args)
 						   (pair? (cadr def))
@@ -2943,7 +2937,9 @@
 					(or (number? (cadr form))
 					    (boolean? (cadr form))
 					    (string? (cadr form))
-					    (vector? (cadr form))))
+					    (vector? (cadr form))
+					    (null? (cadr form))
+					    (memq (cadr form) '(#<unspecified> #<undefined> #<eof>))))
 				   (lint-format "quote is not needed here:~A" name (truncated-list->string form))))))
 		     env)
 		    
@@ -3348,15 +3344,33 @@
 		    ((define-syntax let-syntax letrec-syntax define-module re-export case-lambda) ; for other's code
 		     env) 
 		    
-		    ;; -------- with-environment when unless --------
-		    ((with-environment unless when)
+		    ;; -------- when, unless --------
+		    ((when unless)
 		     (if (< (length form) 3)
 			 (lint-format "~A is messed up: ~A" name head (truncated-list->string form))
-			 (let ((old-undef *report-undefined-variables*))
-			   (if (eq? head with-environment)
-			       (set! *report-undefined-variables* #f))            ; we currently can't tell env-vars from undefined vars
+			 (begin
 			   (if (pair? (cadr form))
 			       (lint-walk name (cadr form) env))
+			   (let* ((e (lint-walk-body name head (cddr form) env))
+				  (vars (if (not (eq? e env))
+					    (env-difference name e env ())
+					    ())))
+			     (report-usage name 'variable head vars))))
+		     env)
+
+		    ;; -------- with-environment --------
+		    ((with-environment)
+		     (if (< (length form) 3)
+			 (lint-format "with-environment is messed up: ~A" name (truncated-list->string form))
+			 (let ((old-undef *report-undefined-variables*))
+			   (set! *report-undefined-variables* #f)            ; we currently can't tell env-vars from undefined vars
+			   (if (pair? (cadr form))
+			       (begin
+				 (if (and *report-minor-stuff*
+					  (null? (cdadr form))
+					  (eq? (caadr form) 'current-environment))
+				     (lint-format "with-environment is not needed here: ~A" name (truncated-list->string form)))
+				 (lint-walk name (cadr form) env)))
 			   (let* ((e (lint-walk-body name head (cddr form) env))
 				  (vars (if (not (eq? e env))
 					    (env-difference name e env ())

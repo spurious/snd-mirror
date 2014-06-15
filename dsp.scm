@@ -2548,6 +2548,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 ;;; this returns the component in FM with complex index (using-sine ignored for now)
 
 (define (fm-complex-component freq-we-want wc wm a b interp using-sine)
+  (define (F3 x) (format #f "~,3F" x))
   (let ((sum 0.0)
 	(mxa (ceiling (* 7 a)))
 	(mxb (ceiling (* 7 b))))
@@ -2561,18 +2562,19 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 			    (expt 0.0+1.0i j))))
 	      (set! sum (+ sum curJI))
 	      (if (> (magnitude curJI) 0.001)
-		  (format #t ";fm-complex-component add ~A from J~D(~A) = ~A and I~D(~A) = ~A"
-			       curJI 
-			       k a (bes-jn k a)
-			       j b (bes-in (abs j) b)))))))
+		  (format #t ";fm-complex-component add ~<(F3 curJI)~> ~
+                                                    from J~<k~>(~<a~>) = ~<(F3 (bes-jn k a))~> ~
+                                                     and I~<j~>(~<b~>) = ~<(F3 (bes-in (abs j) b))~>~%"))))))
     (list sum
 	  (+ (* (- 1.0 interp) (real-part sum))
 	     (* interp (imag-part sum))))))
 
 ;(fm-complex-component 1200 1000 100 1.0 3.0 0.0 #f)
+;(fm-complex-component 1200 1000 100 1.0 4.0 0.0 #f) hits the commentary
 
 
 (define (fm-cascade-component freq-we-want wc wm1 a wm2 b)
+  (define (F3 x) (format #f "~,3F" x))
   (let ((sum 0.0)
 	(mxa (ceiling (* 7 a)))
 	(mxb (ceiling (* 7 b))))
@@ -2585,10 +2587,9 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 			    (bes-jn j (* k b)))))
 	      (set! sum (+ sum curJJ))
 	      (if (> (magnitude curJJ) 0.001)
-		  (format #t ";fm-cascade-component add ~A from J~D(~A) = ~A and I~D(~A) = ~A"
-			       curJJ 
-			       k a (bes-jn k a)
-			       j b (bes-jn j (* k b))))))))
+		  (format #t ";fm-cascade-component add ~<(F3 curJJ)~> ~
+                                                    from J~<k~>(~<a~>) = ~<(F3 (bes-jn k a))~> ~
+                                                     and J~<j~>(~<(* k b)~>) = ~<(F3 (bes-jn j (* k b)))~>~%"))))))
     sum))
 
 ;(fm-cascade-component 2000 2000 500 1.5 50 1.0)

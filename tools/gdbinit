@@ -30,14 +30,10 @@ document s7stack
 display the currently active local environments
 end
 
-# and check first for valid pointers in the prints
-# and cur eval op
-# and decode entire (multi-arg) call?
 # and possibly s7 stack?
 # shadowed globals with current value
 # heap/gc stats
 # port fields
-# opt 2nd env arg to eval? (for error env eval)
 
 # source ~/.gdbinit reloads
 

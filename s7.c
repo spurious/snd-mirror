@@ -26009,13 +26009,14 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    bracket_str = fdat->curly_str;
 		    memcpy((void *)bracket_str, (void *)(str + i + 2), bracket_len - 1);
 		    bracket_str[bracket_len - 1] = '\0';
-		    
-		    /* if eval-string returns a multiple-value, it tries to splice it into something */
+
+		    /* this is touchy code... (we're cheating -- ideally this would be embedded in the eval loop) */
 		    eport = s7_open_input_string(sc, bracket_str);
 		    push_input_port(sc, eport);
-		    push_stack(sc, OP_BARRIER, eport, sc->NIL); /* this is not superfluous */
+		    push_stack(sc, OP_BARRIER, eport, sc->code); /* neither of these is superfluous: sc->code if values */
 		    push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);  
 		    eval(sc, OP_READ_INTERNAL);
+		    if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER) pop_stack(sc);
 		    pop_input_port(sc);
 		    s7_close_input_port(sc, eport);
 		    result = sc->value;
@@ -53259,9 +53260,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
-	      
-
-	      
 	      /* -------------------------------------------------------------------------------- */
 
 	    case OP_SAFE_CLOSURE_STAR_SS:
@@ -70021,4 +70019,5 @@ int main(int argc, char **argv)
  *    this is consistent with case, but not cond where its more like and=>
  *    maybe ==> for the other? or just assume in cond it's and=> and in case it's =>
  * lint should track type checks: (and (procedure? p) (procedure-* p)) etc
+ * possibly: s7_stack|value in C.
  */

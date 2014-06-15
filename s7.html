@@ -3875,10 +3875,15 @@ the format output string.
 <pre class="indented">
 &gt; (let ((counter 32)) (format #f "counter is ~&lt; counter ~&gt;!"))
 "counter is 32!"
-<pre>
+</pre>
 
 <p>If the evaluation returns multiple values, each is inserted in turn.  (values) becomes "".
 </p>
+
+<pre class="indented">
+&gt; (let ((x 3)) (format #f "~&lt; (if (positive? x) (values \"x is \" x \"?\") (values)) ~&gt;"))
+"x is 3?"
+</pre>
 </div>
 
 
@@ -4222,12 +4227,6 @@ its bindings (this is borrowed from "nuntius" at reddit lisp):
 
 
 <div class="indented">
-
-<p>Since define* accepts multiple rest arguments, perhaps procedure-arity should return that number,
-rather than a boolean.  I haven't run into a case where it matters.  Another odd case: 
-<code>(procedure-arity (lambda* (:allow-other-keys) #f))</code>.  How should we indicate
-this in procedure-arity?
-</p>
 
 <p>In define*, an argument's default value can be a function, so we can store
 argument-specific documentation in the documentation string:
@@ -4844,7 +4843,7 @@ dalliance with symbol-macros!
 		           (do ((e (outer-environment (error-environment)) (outer-environment e))) 
 			       ((eq? e (global-environment)) 
                                 (set! (hook 'result) #f))
-		             (status-report (format #f "~%~A" (environment-&gt;list e)) -1))
+		             (status-report (format #f "~%~{~A~^ ~}" e) -1))
                              ;; status-report is a Snd function that (in this case)
 		             ;;   sends the data to the Snd listener.	       
                              )))))))
