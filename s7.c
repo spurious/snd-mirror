@@ -20945,13 +20945,16 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 
 void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
 {
+  /* what does it mean to "flush" a string port? Surely
+   *    (with-output-to-string (lambda () (display "123") (flush-output-port))) 
+   * should return "123" not ""?
+   */
   if ((!is_output_port(p)) || 
-      (is_function_port(p)) ||   /* function ports are not buffered, so flush not needed */
+      (!is_file_port(p)) || 
       (port_is_closed(p)))
     return;
 
-  if ((is_file_port(p)) &&
-      (port_file(p)))
+  if (port_file(p))
     {
       if (port_position(p) > 0)
 	{
@@ -20960,16 +20963,6 @@ void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
 	}
       port_position(p) = 0;
       fflush(port_file(p));
-    }
-  else
-    {
-      if ((is_string_port(p)) && 
-	  (port_data(p)))
-	{
-	  port_position(p) = 0;
-	  port_data(p)[0] = '\0';
-	  /* does this need to be cleared throughout? */
-	}
     }
 }
 
@@ -25950,6 +25943,8 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      
 	    case '*':                           /* -------- ignore arg -------- */
 	      i++;
+	      if (is_null(fdat->args))          /* (format #f "~*~A") */
+		return(format_error(sc, "can't skip argument!", str, args, fdat));
 	      fdat->args = cdr(fdat->args);
 	      break;
 
@@ -26205,10 +26200,11 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		
 		if (isdigit(str[i]))
 		  {
+		    #define MAX_FORMAT_WIDTH 10000
 		    width = format_read_integer(sc, &i, str_len, str, args, fdat);
-		    if ((width < 0) ||  /* sccanf is 32 bit so (format #f "~922337203685477580F" pi) gets a width of -1 or some such number */
-			(width > MAX_STRING_LENGTH))
-		      return(format_error(sc, "numeric argument too large", str, args, fdat));
+		    if ((width < 0) || /* maybe overflow somewhere? */
+			(width > MAX_FORMAT_WIDTH))
+		      return(format_error(sc, "width argument too big", str, args, fdat));
 		  }
 		
 		if (str[i] == ',')
@@ -26216,10 +26212,11 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    i++;
 		    if (isdigit(str[i]))
 		      {
+			#define MAX_FORMAT_PRECISION 10000
 			precision = format_read_integer(sc, &i, str_len, str, args, fdat);
 			if ((precision < 0) ||
-			    (precision > MAX_STRING_LENGTH)) /* needed in 32-bit case */
-			  return(format_error(sc, "numeric argument too large", str, args, fdat));
+			    (precision > MAX_FORMAT_PRECISION))
+			  return(format_error(sc, "precision argument too big", str, args, fdat));
 		      }
 		    /* is (format #f "~12,12D" 1) an error?  The precision has no use here. */
 		    else
@@ -70013,11 +70010,12 @@ int main(int argc, char **argv)
  *   colored brick where cycle, matching original paren color
  *   for shared, maybe colored underline?
  *   {} [] <> || "" +{...} *{...}
- * cyclic-seq in rest of full-* and in pretty-print (obj->str 3rd: cyclics?)
+ * cyclic-seq in rest of full-* 
  * generalize =>:  => anywhere means take current value and apply next thing to it, reverse of values sort of
  *    (values 1 2 3) => + is 6?
  *    this is consistent with case, but not cond where its more like and=>
  *    maybe ==> for the other? or just assume in cond it's and=> and in case it's =>
  * lint should track type checks: (and (procedure? p) (procedure-* p)) etc
+ * lint should remove var from undefineds if it is subsequently defined (and we're tracking that list)
  * possibly: s7_stack|value in C.
  */

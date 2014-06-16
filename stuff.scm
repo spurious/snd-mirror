@@ -934,19 +934,3 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 				       (apply format p args)
 				       (write (apply format #f args) p))))))
     (make-shared-vector v (list i)))) ; ignore extra trailing elements
-
-
-(define (levenshtein s1 s2)
-  ;; from Rosetta Code, names changed to suit tiny-CL
-  (define (lv-1 s1 s1d s2 s2d)
-    (cond ((zero? s1d) s2d)
-          ((zero? s2d) s1d)
-          (else
-	    (min (+ (lv-1 (cdr s1) (- s1d 1) s2 s2d) 1)
-                 (+ (lv-1 s1 s1d (cdr s2) (- s2d 1)) 1)
-                 (+ (lv-1 (cdr s1) (- s1d 1) (cdr s2) (- s2d 1))
-		    (if (char=? (car s1) (car s2)) 0 1))))))
-  (lv-1 (string->list s1)
-	(string-length s1)		
-	(string->list s2)
-	(string-length s2)))

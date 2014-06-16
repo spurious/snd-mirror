@@ -2907,25 +2907,27 @@ static const char **snd_xref_urls(const char *topic)
 }
 
 
-static int levenstein(const char *s1, const char *s2)
+static int levenshtein(const char *s1, int l1, const char *s2, int l2)
 {
-  /* taken with bug fixes from "The Ruby Way" by Hal Fulton, SAMS Pubs */
-  int l1, l2, i, j, val, insert_cost = 2, delete_cost = 2, substitute_cost = 1;
+  /* taken with bug fixes from "The Ruby Way" by Hal Fulton, SAMS Pubs 
+   */
+  int i, j, val;
   int **distance;
-  l1 = mus_strlen(s1);
-  l2 = mus_strlen(s2);
-  if ((l1 == 0) || (l2 == 0)) return(1000);
+
+  if (!s1) return(l2);
+  if (!s2) return(l1);
+
   distance = (int **)calloc(l2 + 1, sizeof(int *));
   for (i = 0; i <= l2; i++) distance[i] = (int *)calloc(l1 + 1, sizeof(int));
-  for (j = 0; j <= l1; j++) distance[0][j] = j * insert_cost;
-  for (i = 0; i <= l2; i++) distance[i][0] = i * delete_cost;
+  for (j = 0; j <= l1; j++) distance[0][j] = j;
+  for (i = 0; i <= l2; i++) distance[i][0] = i;
   for (i = 1; i <= l2; i++)
     for (j = 1; j <= l1; j++)
       {
 	int c1, c2, c3;
-	c1 = distance[i][j - 1] + insert_cost;
-	c2 = distance[i - 1][j] + delete_cost;
-	c3 = distance[i - 1][j - 1] + (((s2[i - 1] == s1[j - 1]) || (toupper(s2[i - 1]) == toupper(s1[j - 1]))) ? 0 : substitute_cost);
+	c1 = distance[i][j - 1] + 1;
+	c2 = distance[i - 1][j] + 1;
+	c3 = distance[i - 1][j - 1] + ((s2[i - 1] == s1[j - 1]) ? 0 : 1);
 	if (c1 > c2) c1 = c2;
 	if (c1 > c3) c1 = c3;
 	distance[i][j] = c1;
@@ -2935,6 +2937,18 @@ static int levenstein(const char *s1, const char *s2)
   free(distance);
   return(val);
 }
+
+
+#if HAVE_SCHEME
+static s7_pointer g_leven(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer s1, s2;
+  s1 = s7_car(args);
+  s2 = s7_cadr(args);
+  if (s1 == s2) return(s7_make_integer(sc, 0));
+  return(s7_make_integer(sc, (s7_Int)levenshtein(s7_string(s1), s7_string_length(s1), s7_string(s2), s7_string_length(s2))));
+}
+#endif
 
 
 static int help_name_to_url(const char *name)
@@ -3136,11 +3150,12 @@ bool snd_topic_help(const char *topic)
 
   /* try respelling topic */
   {
-    int min_diff = 1000, min_loc = 0, this_diff;
+    int min_diff = 1000, min_loc = 0, this_diff, topic_len;
+    topic_len = mus_strlen(topic);
     for (i = 0; i < NUM_XREFS; i++)
       if (help_funcs[i])
 	{
-	  this_diff = levenstein(topic, xrefs[i]);
+	  this_diff = levenshtein(topic, topic_len, xrefs[i], mus_strlen(xrefs[i]));
 	  if (this_diff < min_diff)
 	    {
 	      min_diff = this_diff;
@@ -3880,6 +3895,7 @@ If more than one hook function, each function gets the previous function's outpu
   Xen_define_procedure_with_setter(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
+  s7_define_function(s7, "levenshtein", g_leven, 2, 0, false, "a test");
   autoload_info(s7); /* snd-xref.c included above */
 #endif
 }

@@ -6,6 +6,8 @@
 
 ;;; -------------------------------- pretty-print --------------------------------
 
+(define *pp-max-column* 100)
+
 (define* (pretty-print obj (port (current-output-port)) (column 0))
 
   (define (pretty-print-1 obj port column)
@@ -82,7 +84,8 @@
 	   (let ((cobj (if (symbol? (car obj)) (string->symbol (symbol->string (car obj))) (car obj)))) ; this clears out some optimization confusion
 	     (case cobj
 	       
-	       ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-environment when unless)
+	       ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-environment when unless
+		 call-with-input-string call-with-input-file call-with-output-string call-with-output-file)
 		(format port "(~A ~A" (car obj) (cadr obj))
 		(spaces (+ column 2))
 		(stacked-list (cddr obj) (+ column 2))
@@ -109,7 +112,15 @@
 		    (stacked-list (cadr obj) (+ column 5)))
 		(write-char #\) port)
 		(spaces (+ column 4))
-		(write (caddr obj) port)
+		(let ((end (caddr obj)))
+		  (if (< (length (object->string end)) (- *pp-max-column* column))
+		      (write end port)
+		      (begin
+			(write-char #\( port)
+			(pretty-print-1 (car end) port (+ column 4))
+			(spaces (+ column 5))
+			(stacked-list (cdr end) (+ column 5))
+			(write-char #\) port))))
 		(spaces (+ column 2))
 		(stacked-list (cdddr obj) (+ column 2))
 		(write-char #\) port))
@@ -128,13 +139,30 @@
 		    (write obj port)))
 	       
 	       ((case)
-		(format port "(case ~A" (cadr obj))
+		(format port "(case ~A" (cadr obj)) ; send out the selector
 		(do ((lst (cddr obj) (cdr lst)))
 		    ((null? lst))
 		  (spaces (+ column 2))
 		  (write-char #\( port)
-		  (write (caar lst) port)
-		  (if (null? (cddar lst))
+		  (if (not (pair? (caar lst)))
+		      (write (caar lst) port)
+		      (let ((len (length (caar lst))))
+			(if (< len 6)
+			    (write (caar lst) port)
+			    (let ((p (caar lst)))
+			      (write-char #\( port)
+			      (do ((i 0 (+ i 6)))
+				  ((>= i len))
+				(do ((j 0 (+ j 1)))
+				    ((or (= j 6)
+					 (null? p))
+				     (if (pair? p) (spaces (+ column 4))))
+				  (write (car p) port)
+				  (set! p (cdr p))
+				  (if (pair? p) (write-char #\space port))))
+			      (write-char #\) port)))))
+		  (if (and (null? (cddar lst))
+			   (< (length (object->string (cadar lst))) 60))
 		      (begin
 			(write-char #\space port)
 			(write (cadar lst) port))
@@ -221,7 +249,7 @@
 	       (else
 		(let* ((objstr (object->string obj))
 		       (strlen (length objstr)))
-		  (if (< strlen 60)
+		  (if (< (+ column strlen) *pp-max-column*)
 		      (display objstr port)
 		      (let ((lstlen (length obj)))
 			(if (or (infinite? lstlen)
@@ -265,7 +293,9 @@
 	  (else
 	   (write obj port))))
   
-  (pretty-print-1 obj port column))
+  (pretty-print-1 obj port column)
+  (flush-output-port port)
+  #<unspecified>)
 
 
 (define (pp obj)
@@ -297,22 +327,20 @@
       (format *stderr* "pp7"))
   )
 
-(test-pretty-print)
+;(test-pretty-print)
 
-#|
-(let ((st (symbol-table)))
-  (for-each
-   (lambda (sym)
-     (if (defined? sym)
-	 (let ((val (symbol->value sym)))
-	   (format *stderr* "~A ~A " sym val)
-	   (format *stderr* "~A" (if (or (procedure? val)
-					 (macro? val))
-				     (pp (procedure-source val))
-				     (pp val)))
-	   (newline *stderr*))))
-   st))
-|#
+(define (pretty-print-all)
+  (let ((st (symbol-table)))
+    (for-each
+     (lambda (sym)
+       (if (defined? sym)
+	   (let ((val (symbol->value sym)))
+	     (let ((source (and (procedure? val)
+				(procedure-source val))))
+	       (if (pair? source)
+		   (format *stderr* "~<sym~> ~<val~>:~%~<(pp source)~>~%~%"))))))
+     st)))
+
 
 
  

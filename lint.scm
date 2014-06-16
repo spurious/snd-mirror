@@ -10,7 +10,7 @@
 (define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
-(define *report-undefined-variables* #f)
+(define *report-undefined-variables* #f)                  ; this is never useful
 (define *report-shadowed-variables* #f)
 (define *report-minor-stuff* #t)                          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
 
@@ -1722,7 +1722,14 @@
 			(rational? (car args))
 			(= (car args) (* (sqrt (car args)) (sqrt (car args)))))
 		   (sqrt (car args))
-		   `(sqrt ,@args)))
+		   (if (and (pair? (car args)) ; (sqrt (* x x)) -> x
+			    (eq? (caar args) '*)
+			    (pair? (cdar args))
+			    (pair? (cddar args))
+			    (null? (cdddar args))
+			    (equal? (cadar args) (caddar args)))
+		       (cadar args)
+		       `(sqrt ,@args))))
 	      
 	      ((floor round ceiling truncate)
 	       (if (= len 1)
@@ -1744,7 +1751,12 @@
 		       (car args)
 		       (if (rational? (car args))
 			   (abs (car args))
-			   `(,(car form) ,@args)))
+			   (if (and (pair? (car args))   ; (abs (- x)) -> (abs x)
+				    (eq? (caar args) '-)
+				    (pair? (cdar args))
+				    (null? (cddar args)))
+			       `(,(car form) ,(cadar args))
+			       `(,(car form) ,@args))))
 		   form))
 	      
 	      ((imag-part)
