@@ -2,9 +2,9 @@
 
 (provide 'snd-clm23.scm)
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
-(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
+(require snd-dsp.scm snd-jcrev.scm)
 
 
 ;;; definstrument -> define* (+ change open paren placement)
@@ -1417,9 +1417,6 @@
 ;;;
 ;;; instruments and note lists from the documentation
 
-
-(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
-(if (not (provided? 'snd-jcrev.scm)) (load "jcrev.scm"))
 
 ;;; ins in docs + note lists
 

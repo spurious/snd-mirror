@@ -2,7 +2,7 @@
 ;;;
 ;;; tie the dynamic loader library into the *libdl* environment
 
-(if (not (provided? 'cload.scm)) (load "cload.scm"))
+(require cload.scm)
 (provide 'libdl.scm)
 
 (if (not (defined? '*libdl*))

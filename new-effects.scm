@@ -1,12 +1,7 @@
 (if (not (provided? 'snd-motif)) (snd-error "new-effects.scm is Motif-specific"))
 
 (provide 'snd-new-effects.scm)
-
-(if (not (provided? 'snd-effects-utils.scm)) (load "effects-utils.scm"))
-(if (not (provided? 'snd-xm-enved.scm)) (load "xm-enved.scm"))
-(if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
-(if (not (provided? 'snd-rubber.scm)) (load "rubber.scm"))
-(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
+(require snd-effects-utils.scm snd-xm-enved.scm snd-moog.scm snd-rubber.scm snd-dsp.scm)
 
 (define effects-list ()) ; menu labels are updated to show current settings
 

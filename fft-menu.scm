@@ -6,7 +6,7 @@
 	 (not (provided? 'snd-gtk-effects-utils.scm)))
     (load "gtk-effects-utils.scm"))
 
-(if (not (provided? 'snd-examp.scm)) (load "examp.scm")) ; squelch-vowels
+(require snd-examp.scm)
 
 (provide 'snd-fft-menu.scm)
 

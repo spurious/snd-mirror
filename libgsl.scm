@@ -2,7 +2,7 @@
 ;;;
 ;;; tie the gsl library into the *libgsl* environment
 
-(if (not (provided? 'cload.scm)) (load "cload.scm"))
+(require cload.scm)
 (provide 'libgsl.scm)
 
 (if (not (defined? '*libgsl*))

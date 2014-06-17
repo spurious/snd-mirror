@@ -3,8 +3,8 @@
 
 (provide 'snd-maraca.scm)
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 (define two-pi (* 2 pi))
 

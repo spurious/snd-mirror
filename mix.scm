@@ -336,7 +336,7 @@ last end of the mixes in 'mix-list'"
 	 (apply min (map mix-position mix-list)))))
 
   
-(if (not (provided? 'snd-env.scm)) (load "env.scm"))
+(require snd-env.scm)
 
 (define (env-mixes mix-list overall-amp-env)
   "(env-mixes mix-list amp-env) applies 'amp-env' as a global amplitude envelope to the mixes in 'mix-list'"

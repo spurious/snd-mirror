@@ -1,14 +1,7 @@
 ;;; translation of new-effects.scm to gtk/xg
 
-(if (not (provided? 'snd-gtk)) (snd-error "gtk-effects.scm is Gtk-specific"))
-
 (provide 'snd-gtk-effects.scm)
-
-(if (not (provided? 'snd-gtk-effects-utils.scm)) (load "gtk-effects-utils.scm"))
-(if (not (provided? 'snd-xm-enved.scm)) (load "xm-enved.scm"))
-(if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
-(if (not (provided? 'snd-rubber.scm)) (load "rubber.scm"))
-(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
+(require snd-gtk snd-gtk-effects-utils.scm snd-xm-enved.scm snd-moog.scm snd-rubber.scm snd-dsp.scm)
 
 (define (plausible-mark-samples)
   ;; find two marks in the current channel (in or nearest to current window)

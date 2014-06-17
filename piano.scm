@@ -2,10 +2,9 @@
 
 (provide 'snd-piano.scm)
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
-
-(if (not (provided? 'snd-env.scm)) (load "env.scm"))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
+(require snd-env.scm)
 
 ;;; see generators.scm for the old scheme versions of one-pole-all-pass, pnoise, one-pole-swept, and expseg
 

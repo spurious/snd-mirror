@@ -333,8 +333,8 @@ repetition to be in reverse."
 ;;; (this could also be done using multi-expt-env (based on env-any) in generators.scm)
 
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 ;;; (define pe (make-power-env '(0 0 1 1 2 0) :duration 1.0))
 ;;; :(power-env pe)
@@ -353,12 +353,11 @@ repetition to be in reverse."
   (with-environment pe
     (let ((val (env (vector-ref envs current-env))))
       (set! current-pass (- current-pass 1))
-    (if (= current-pass 0)
-      (if (< current-env (- total-envs 1))
-	  (begin
+      (when (and (= current-pass 0)
+		 (< current-env (- total-envs 1)))
 	    (set! current-env (+ current-env 1))
-	    (set! current-pass (- (length (vector-ref envs current-env)) 1)))))
-    val)))
+	    (set! current-pass (- (length (vector-ref envs current-env)) 1)))
+      val)))
 
 (define* (make-power-env envelope (scaler 1.0) (offset 0.0) duration)
   (let* ((len (- (floor (/ (length envelope) 3)) 1))

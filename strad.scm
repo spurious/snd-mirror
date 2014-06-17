@@ -10,9 +10,8 @@
 
 (provide 'snd-strad.scm)
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
-;;; (if (not (provided? 'snd-jcrev.scm)) (load "jcrev.scm"))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 (define (make-biquad a0 a1 a2 b1 b2)
   "(make-biquad a0 a1 a2 b1 b2) returns a biquad filter (use with the CLM filter gen)"

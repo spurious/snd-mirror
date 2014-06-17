@@ -3,10 +3,10 @@
 (provide 'snd-clm-ins.scm)
 
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
-(if (not (provided? 'snd-env.scm)) (load "env.scm"))
-(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm")) ; hilbert-transform
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
+(require snd-env.scm snd-dsp.scm snd-fullmix.scm snd-expandn.scm)
+
 
 
 ;;; -------- pluck
@@ -2583,8 +2583,6 @@ mjkoskin@sci.fi
 
 
 
-(if (not (provided? 'snd-expandn.scm)) (load "expandn.scm"))
-
 (definstrument (cnvrev file impulse (rev-amt .1))
   (let* ((file-len (mus-sound-framples file))
 	 (filter-len (mus-sound-framples impulse))
@@ -2621,4 +2619,4 @@ mjkoskin@sci.fi
 |#
 
 
-(if (not (provided? 'snd-fullmix.scm)) (load "fullmix.scm"))
+

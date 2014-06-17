@@ -1,8 +1,7 @@
 ;; clean-channel -- noise reduction
 
 (provide 'snd-clean.scm)
-(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
-(if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
+(require snd-dsp.scm snd-generators.scm)
 
 (define* (goertzel-channel freq (beg 0) dur snd chn)
   "(goertzel-channel freq beg dur snd chn) returns the amplitude of the 'freq' spectral component"

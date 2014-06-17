@@ -2,15 +2,13 @@
 
 (if (provided? 'xm)
     (begin
-      (if (not (provided? 'snd-effects-utils.scm))
-	  (load "effects-utils.scm"))
+      (require snd-effects-utils.scm)
       (if (not (defined? 'mark-sync-color)) 
 	  (load "snd-motif.scm"))))
 
 (if (provided? 'xg)
     (begin
-      (if (not (provided? 'snd-gtk-effects-utils.scm))
-	  (load "gtk-effects-utils.scm"))
+      (require snd-gtk-effects-utils.scm)
       (if (not (defined? 'mark-sync-color)) 
 	  (load "snd-gtk.scm"))))
 

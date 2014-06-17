@@ -6,9 +6,11 @@
 ;;;
 ;;; translated from fade.ins
 
+(provide 'snd-fade.scm)
+
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 (definstrument (cross-fade beg dur amp file1 file2 ramp-beg ramp-dur ramp-type bank-dur fs fwidth)
   ;; ramp-type 0=sweep up, 1=sweep down, 2=split from middle

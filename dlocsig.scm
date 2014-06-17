@@ -3190,8 +3190,8 @@
 					;(define hi (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f :error 0.001))
 					;(make-dlocsig 0 1.0 :out-channels 2 :rev-channels 0 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f))
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 (define* (sinewave start-time duration freq amp 
 		   (amp-env '(0 1 1 1))

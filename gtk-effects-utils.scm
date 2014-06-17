@@ -1,4 +1,4 @@
-(if (not (provided? 'snd-gtk)) (snd-error "gtk-effects-utils.scm is Gtk-specific"))
+(require snd-gtk)
 
 (provide 'snd-gtk-effects-utils.scm)
 

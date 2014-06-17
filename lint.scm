@@ -4,8 +4,7 @@
 ;;; to control the kinds of checks, set the variables below.
 
 (provide 'lint.scm)
-
-(if (not (provided? 'stuff.scm)) (load "stuff.scm"))
+(require stuff.scm)
 
 (define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)

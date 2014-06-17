@@ -3,8 +3,8 @@
 
 (provide 'snd-prc95.scm)
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 
 (define* (make-reed (offset 0.6) (slope -0.8))

@@ -14,12 +14,8 @@
 ;;; make-font-selector-dialog
 ;;; add-main-menu-mnemonics
 
-(if (not (provided? 'snd-gtk)) (snd-error "snd-gtk.scm is Gtk-specific"))
-
 (provide 'snd-snd-gtk.scm)
-
-(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
-(if (not (provided? 'snd-play.scm)) (load "play.scm"))
+(require snd-gtk snd-extensions.scm snd-play.scm)
 
 (define load-font pango_font_description_from_string)
 

@@ -226,11 +226,11 @@
 
 (provide 'snd-animals.scm)
 
-(if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
+(require snd-generators.scm)
 ;;     rxyk!cos rk!cos blackman=polywave rcos rxycos
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 (set! *clm-default-frequency* 0.0)
 

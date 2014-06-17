@@ -282,8 +282,8 @@ read, even if not playing.  'files' is a list of files to be played."
 
 (provide 'snd-frame.scm)
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm")) ; for defgenerator
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 
 (define frame-reverse! reverse)

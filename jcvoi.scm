@@ -1,7 +1,7 @@
 ;;; from VOIDAT.SAI[220,JDC] and GLSVOI.SAI[220,JDC], then (30 years later) jcvoi.ins
 
 (provide 'snd-jcvoi.scm)
-(if (not (provided? 'snd-env.scm)) (load "env.scm"))
+(require snd-env.scm)
 
 (define fnc #f)  ;; fnc[sex,vowel,formant number,formant freq,amp or fm index]
 (define vibfreqfun #f)

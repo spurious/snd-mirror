@@ -452,8 +452,7 @@
 	  (lambda args 
 	    (car args))))
 
-(if (not (provided? 'snd-hooks.scm)) (load "hooks.scm"))
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(require snd-hooks.scm snd-ws.scm)
 
 
 (define (set-arity-ok func args)
@@ -520,12 +519,10 @@
 
 (if (and (provided? 'snd-motif)
 	 (provided? 'xm))
-    (begin
-      (if (not (provided? 'snd-snd-motif.scm)) (load "snd-motif.scm")))
+    (require snd-snd-motif.scm)
     (if (and (provided? 'snd-gtk)
 	     (provided? 'xg))
-	(begin
-	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm")))))
+	(require snd-snd-gtk.scm)))
 
 
 (define default-file-buffer-size *clm-file-buffer-size*)
@@ -2495,8 +2492,7 @@
 	     (list? ramp)))
     (load "examp.scm"))
 
-(if (not (provided? 'snd-mix.scm)) (load "mix.scm"))
-(if (not (provided? 'snd-env.scm)) (load "env.scm"))
+(require snd-mix.scm snd-env.scm)
 
 (definstrument (out-samps beg chan data)
   (let ((len (length data)))
@@ -4478,12 +4474,8 @@
 
 ;;; ---------------- test 5: simple overall checks ----------------
 
-(if (not (provided? 'snd-selection.scm)) (load "selection.scm"))
-(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
-(if (not (provided? 'snd-selection.scm)) (load "selection.scm"))
-(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
-(if (not (provided? 'snd-pvoc.scm)) (load "pvoc.scm"))
-(if (and with-gui (not (provided? 'snd-edit-menu.scm))) (load "edit-menu.scm"))
+(require snd-selection.scm snd-extensions.scm snd-selection.scm snd-dsp.scm snd-pvoc.scm)
+(if with-gui (require snd-edit-menu.scm))
 
 (define (snd_test_5)
   (define a-ctr 0)
@@ -9489,7 +9481,7 @@ EDITS: 2
 
 ;;; ---------------- test 7: colors ----------------
 
-(if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
+(require snd-rgb.scm)
 
 (define (snd_test_7)
   (define colormap-error-max 0.0)
@@ -10008,13 +10000,8 @@ EDITS: 2
 
 ;;; ---------------- test 8: clm ----------------
 
-(if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
-(if (not (provided? 'snd-poly.scm)) (load "poly.scm"))
-(if (and (not (provided? 'snd-analog-filter.scm)) (defined? 'gsl-roots)) (load "analog-filter.scm"))
-(if (not (provided? 'snd-bird.scm)) (load "bird.scm"))
-(if (not (provided? 'snd-v.scm)) (load "v.scm"))
-(if (not (provided? 'snd-numerics.scm)) (load "numerics.scm"))
-(if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
+(require snd-moog.scm snd-poly.scm snd-bird.scm snd-v.scm snd-numerics.scm snd-generators.scm)
+(if (defined? 'gsl-roots) (require snd-analog-filter.scm))
 
 (defgenerator sa1 freq (coscar #f) (sincar #f) (dly #f) (hlb #f))
 
@@ -20348,8 +20335,7 @@ EDITS: 2
 	(outa 100 1.0)
 	(outa 101 0.5))
       
-      (if (not (provided? 'snd-jcrev.scm))
-	  (load "jcrev.scm"))
+      (require snd-jcrev.scm)
       
       (with-sound (:output "mix.snd" :reverb jc-reverb)
 	(let ((rd (vector (make-readin "flat.snd"))))
@@ -23739,7 +23725,7 @@ EDITS: 2
 
 ;;; ---------------- test 10: marks ----------------
 
-(if (not (provided? 'snd-marks.scm)) (load "marks.scm"))
+(require snd-marks.scm)
 
 (define (snd_test_10)
   
@@ -23771,7 +23757,7 @@ EDITS: 2
 		(lambda args #f))))
   
   (define (marks->string sndf)
-    (let ((str (format #f "(if (not (provided? 'snd-marks.scm)) (load \"marks.scm\"))~%(let ((m #f))~%"))
+    (let ((str (format #f "(require snd-marks.scm)~%(let ((m #f))~%"))
 	  (chan 0))
       (for-each
        (lambda (chan-marks)
@@ -27314,7 +27300,7 @@ EDITS: 2
 
 ;;; ---------------- test 15: chan-local vars ----------------
 
-(if (not (provided? 'snd-rubber.scm)) (load "rubber.scm"))
+(require snd-rubber.scm)
 
 (define (snd_test_15)
   (define (smoother y0 y1 num)
@@ -32855,11 +32841,9 @@ EDITS: 1
 
 ;;; ---------------- test 17: dialogs and graphics ----------------
 
-(if (not (provided? 'snd-draw.scm)) (load "draw.scm")) ; needed also in test_21 (color-samples)
-(if (and with-gui
-	 (not (provided? 'snd-musglyphs.scm)))
-    (load "musglyphs.scm"))
-(if (not (provided? 'snd-enved.scm)) (load "enved.scm"))
+(require snd-draw.scm)
+(if with-gui (require snd-musglyphs.scm))
+(require snd-enved.scm)
 
 (define (snd_test_17)
   
@@ -32885,7 +32869,7 @@ EDITS: 1
   (if with-gui
       (begin
 	
-	(if (not (provided? 'snd-musglyphs.scm)) (load "musglyphs.scm"))
+	(require snd-musglyphs.scm)
 	(hook-push after-graph-hook (lambda (hook) (display-previous-edits (hook 'snd) (hook 'chn))))
 	(hook-push lisp-graph-hook 
 		   (lambda (hook)
@@ -32969,7 +32953,7 @@ EDITS: 1
 
 ;;; ---------------- test 18: save and restore ----------------
 
-(if (not (provided? 'snd-fade.scm)) (load "fade.scm"))
+(require snd-fade.scm)
 
 (define* (clm-channel-test snd chn) ; edit-list->function wants this to be global??
   (clm-channel (make-two-zero 1 -1) 0 #f snd chn #f #f "clm-channel-test"))
@@ -36731,8 +36715,7 @@ EDITS: 1
 (if (not (defined? 'load-font))
     (define (load-font name) #f))
 
-(if (not (provided? 'snd-clean.scm)) (load "clean.scm"))
-(if (not (provided? 'snd-snddiff.scm)) (load "snddiff.scm"))
+(require snd-clean.scm snd-snddiff.scm)
 
 (define (snd_test_20)
   
@@ -38451,24 +38434,9 @@ EDITS: 1
 
 ;;; ---------------- test 22: with-sound ----------------
 
-(if (not (provided? 'snd-prc95.scm)) (load "prc95.scm"))
-(if (not (provided? 'snd-jcrev.scm)) (load "jcrev.scm"))
-(if (not (provided? 'snd-maraca.scm)) (load "maraca.scm"))
-(if (not (provided? 'snd-singer.scm)) (load "singer.scm"))
-(if (not (provided? 'snd-strad.scm)) (load "strad.scm"))
-(if (not (provided? 'snd-noise.scm)) (load "noise.scm"))
-(if (not (provided? 'snd-clm-ins.scm)) (load "clm-ins.scm"))
-(if (not (provided? 'snd-jcvoi.scm)) (load "jcvoi.scm"))
-(if (not (provided? 'snd-piano.scm)) (load "piano.scm"))
-(if (not (provided? 'snd-play.scm)) (load "play.scm"))
-(if (not (provided? 'snd-zip.scm)) (load "zip.scm"))
-(if (not (provided? 'snd-clm23.scm)) (load "clm23.scm"))
-(if (not (provided? 'snd-freeverb.scm)) (load "freeverb.scm"))
-(if (not (provided? 'snd-grani.scm)) (load "grani.scm"))
-(if (not (provided? 'snd-animals.scm)) (load "animals.scm"))
-(if (not (provided? 'snd-big-gens.scm)) (load "big-gens.scm"))
-(if (not (provided? 'snd-dlocsig.scm)) (load "dlocsig.scm"))
-(if (not (provided? 'snd-sndwarp.scm)) (load "sndwarp.scm"))
+(require snd-prc95.scm snd-jcrev.scm snd-maraca.scm snd-singer.scm snd-strad.scm snd-noise.scm snd-clm-ins.scm snd-jcvoi.scm)
+(require snd-piano.scm snd-play.scm snd-zip.scm snd-clm23.scm snd-freeverb.scm snd-grani.scm snd-animals.scm snd-big-gens.scm)
+(require snd-dlocsig.scm snd-sndwarp.scm)
 
 (defgenerator st1 one two)
 (defgenerator st2 (one 11) (two 22))
@@ -45090,8 +45058,7 @@ EDITS: 1
 	   (provided? 'xm))
       
       (begin
-	
-	(if (not (provided? 'snd-snd-gl.scm)) (load "snd-gl.scm"))
+	(require snd-snd-gl.scm)
 	(gl-info)
 	(if all-args (gl-dump-state))
 	(let ((gl-procs 

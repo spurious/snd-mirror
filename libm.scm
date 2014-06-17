@@ -2,7 +2,7 @@
 ;;;
 ;;; tie the math library into the *libm* environment
 
-(if (not (provided? 'cload.scm)) (load "cload.scm"))
+(require cload.scm)
 (provide 'libm.scm)
 
 (if (not (defined? '*libm*))

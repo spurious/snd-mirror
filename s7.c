@@ -29137,9 +29137,12 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
     }
 
   if (!is_member(car(args), s7_symbol_value(sc, sc->S7_FEATURES)))
-    s7_symbol_set_value(sc, 
-			sc->S7_FEATURES,
-			cons(sc, car(args), s7_symbol_value(sc, sc->S7_FEATURES)));
+    {
+      s7_symbol_set_value(sc, 
+			  sc->S7_FEATURES,
+			  cons(sc, car(args), s7_symbol_value(sc, sc->S7_FEATURES)));
+      s7_define(sc, sc->NIL, car(args), car(args));
+    }
   return(car(args));
 }
 
@@ -69440,7 +69443,22 @@ s7_scheme *s7_init(void)
   sc->AUTOLOADER = s7_define_function(sc, "*autoload*", g_autoloader, 1, 0, false, H_autoloader);
   sym = s7_define_variable(sc, "*libraries*", sc->NIL);
   sc->libraries = global_slot(sym);
-  
+
+  s7_autoload(sc, make_symbol(sc, "cload.scm"), s7_make_permanent_string("cload.scm"));
+  s7_autoload(sc, make_symbol(sc, "lint.scm"),  s7_make_permanent_string("lint.scm"));
+  s7_autoload(sc, make_symbol(sc, "stuff.scm"), s7_make_permanent_string("stuff.scm"));
+  s7_autoload(sc, make_symbol(sc, "write.scm"), s7_make_permanent_string("write.scm"));
+  s7_autoload(sc, make_symbol(sc, "r7rs.scm"),  s7_make_permanent_string("r7rs.scm"));
+
+  s7_autoload(sc, make_symbol(sc, "libc.scm"),     s7_make_permanent_string("libc.scm"));
+  s7_autoload(sc, make_symbol(sc, "libm.scm"),     s7_make_permanent_string("libm.scm"));
+  s7_autoload(sc, make_symbol(sc, "libdl.scm"),    s7_make_permanent_string("libdl.scm"));
+  s7_autoload(sc, make_symbol(sc, "libgsl.scm"),   s7_make_permanent_string("libgsl.scm"));
+  s7_autoload(sc, make_symbol(sc, "libgdbm.scm"),  s7_make_permanent_string("libgdbm.scm"));
+
+  s7_eval_c_string(sc, "(define (require . lib) lib)");
+
+
 
   /* -------- *#readers* -------- */
   sym = s7_define_variable(sc, "*#readers*", sc->NIL);
@@ -70004,6 +70022,12 @@ int main(int argc, char **argv)
  * lint should track type checks: (and (procedure? p) (procedure-* p)) etc
  * lint should remove var from undefineds if it is subsequently defined (and we're tracking that list)
  * possibly: s7_stack|value in C.
- * (require name) macro to replace the long-winded (if (provided...)) stuff
+ * (require name) macro to replace the long-winded (if (provided...)) stuff, but don't want to collide with slib or r7rs
  *   should it be a function? (require 'cload.scm)?  How to map to the file we want?
+ *   can this be handled by autoload?  (*autoload* 'cload.scm) -> "cload.scm" but we still need the rest
+ *   with that info, (require cload.scm) -> whatever load returns: (define (require lib) lib) -- now if it's defined, nothing happens.
+ *   so s7, and in Snd snd-xref, need to preautoload all the known cases, and we need to document how to add more.
+ *   and (provide...) could also add its symbol to the table, simply to block later (require ...) from autoloading it
+ *   TODO: doc/test this and add to Snd
+ * fix the profiler in s7.html, or discard it
  */

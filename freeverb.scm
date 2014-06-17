@@ -38,8 +38,8 @@
 
 (provide 'snd-freeverb.scm)
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 (definstrument (freeverb
 		(room-decay 0.5)

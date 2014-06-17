@@ -1,20 +1,12 @@
 (provide 'snd-special-menu.scm)
 
 (if (provided? 'xm)
-    (begin
-      (if (not (provided? 'snd-effects-utils.scm))
-	  (load "effects-utils.scm"))
-      (if (not (provided? 'snd-snd-motif.scm))
-	  (load "snd-motif.scm")))) ; select-file
+    (require snd-effects-utils.scm snd-snd-motif.scm))
 
 (if (provided? 'xg)
-    (begin
-      (if (not (provided? 'snd-gtk-effects-utils.scm))
-	  (load "gtk-effects-utils.scm"))
-      (if (not (provided? 'snd-snd-gtk.scm))
-	  (load "snd-gtk.scm")))) ; select-file
+    (require snd-gtk-effects-utils.scm snd-snd-gtk.scm))
 
-(if (not (provided? 'snd-edit-menu.scm)) (load "edit-menu.scm"))
+(require snd-edit-menu.scm)
 (if (not (defined? 'start-enveloping)) (load "enved.scm"))
 (if (not (defined? 'explode-sf2)) (load "examp.scm"))
 

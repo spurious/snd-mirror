@@ -2,7 +2,7 @@
 
 (set! (hook-functions *unbound-variable-hook*) ())
 
-(if (not (provided? 'cload.scm)) (load "cload.scm"))
+(require cload.scm)
 
 ;;; --------------------------------------------------------------------------------
 
@@ -160,7 +160,7 @@
 ;;; --------------------------------------------------------------------------------
 ;;; libm
 
-(if (not (provided? 'libm.scm)) (load "libm.scm"))
+(require libm.scm)
 
 (with-environment *libm*
 

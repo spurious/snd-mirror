@@ -3771,8 +3771,22 @@ from a simple procedure.
 
 <div class="header" id="format1"><h4>format, object-&gt;string</h4></div>
 
+<p>object-&gt;string returns the string representation of its argument.  Its optional second argument
+can be #f (use display), #t (the default, use write), or :readable.  In the latter case, object-&gt;string
+tries to produce a string that can be evaluated via eval-string to return an object equal to the
+original.
+</p>
 
-<p>s7's built-in <em class=def id="format">format</em> function is very close to that in srfi-48.
+<pre class="indented">
+&gt; (object-&gt;string "hiho")
+"\"hiho\""
+
+&gt; (format #f "~S" "hiho")
+"\"hiho\""
+</pre>
+
+<br>
+<p>s7's <em class=def id="format">format</em> function is very close to that in srfi-48.
 </p>
 
 <pre class="indented">
@@ -3885,26 +3899,26 @@ the format output string.
 "x is 3?"
 </pre>
 
+<p>If the default object-&gt;string output is not ideal, you can either call format itself 
+in the brackets, or define convenience functions:
+</p>
+
+<pre class="indented">
+(define (fm-cascade-component freq wc wm1 a wm2 b) ; from dsp.scm in the Snd package
+  (define (~,3f x) (format #f "~,3F" x))
+  ;... (much code deleted here since it is not to the point
+  (if (&gt; (magnitude curJJ) 0.001)
+      (format #t ";fm-cascade-component ~&lt;(~,3f curJJ)~&gt; ~
+                                         from J~&lt;k~&gt;(~&lt;a~&gt;) = ~&lt;(~,3f (bes-jn k a))~&gt; ~
+                                          and J~&lt;j~&gt;(~&lt;(* k b)~&gt;) = ~&lt;(~,3f (bes-jn j (* k b)))~&gt;~%"))))
+</pre>
+
 <p>Currently the code in ~&lt;~&gt; is ignored by quasiquote: it sees only a string constant.
 </p>
 </div>
 
 
 </blockquote>
-
-<p>object-&gt;string returns the string representation of its argument.  Its optional second argument
-can be #f (use display), #t (the default, use write), or :readable.  In the latter case, object-&gt;string
-tries to produce a string that can be evaluated via eval-string to return an object equal to the
-original.
-</p>
-
-<pre class="indented">
-&gt; (object-&gt;string "hiho")
-"\"hiho\""
-
-&gt; (format #f "~S" "hiho")
-"\"hiho\""
-</pre>
 
 
 <blockquote>

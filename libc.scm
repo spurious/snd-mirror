@@ -2,7 +2,7 @@
 ;;;
 ;;; tie the C library into the *libc* environment
 
-(if (not (provided? 'cload.scm)) (load "cload.scm"))
+(require cload.scm)
 (provide 'libc.scm)
 
 (if (not (defined? '*libc*))

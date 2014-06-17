@@ -2,7 +2,7 @@
 ;;;
 ;;; records are built on the class mechanism
 
-(if (not (provided? 'cload.scm)) (load "cload.scm"))
+(require cload.scm libc.scm)
 (provide 'r7rs.scm)
 
 
@@ -328,7 +328,6 @@
 
 
 (let ((e (current-environment)))
-  (if (not (provided? 'libc.scm)) (load "libc.scm"))
   (augment-environment! e
     (cons 'get-environment-variable (*libc* 'getenv))
     (cons 'get-environment-variables (*libc* 'getenvs))
@@ -337,7 +336,6 @@
 
 ;;; srfi 112
 (let ((e (current-environment)))
-  (if (not (provided? 'libc.scm)) (load "libc.scm"))
   (augment-environment! e 
     (cons 'os-type (lambda () (car ((*libc* 'uname)))))
     (cons 'cpu-architecture (lambda () (cadr ((*libc* 'uname)))))

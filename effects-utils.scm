@@ -1,5 +1,5 @@
 (provide 'snd-effects-utils.scm)
-(if (not (provided? 'snd-motif)) (snd-error "effects-utils.scm is Motif-specific"))
+(require snd-motif)
 
 (define (raise-dialog w)
   "(raise-dialog w) tries to put 'w' on top of any widgets that are obscuring it"

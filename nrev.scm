@@ -3,8 +3,8 @@
 (provide 'snd-nrev.scm)
 
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 
 (definstrument (nrev (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))

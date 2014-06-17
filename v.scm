@@ -1,8 +1,8 @@
 (provide 'snd-v.scm)
 
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 (define default-index-env (float-vector 0 1  25 .4  75 .6  100 0))
 (define default-amp-env (float-vector 0 0  25 1  75 1  100 0))

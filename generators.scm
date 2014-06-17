@@ -1,7 +1,7 @@
 (provide 'snd-generators.scm)
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
 
 ;;; it is dangerous to use a method within a generator's definition of that method
 ;;;   if the gen is used as the environment in with-environment, the embedded call

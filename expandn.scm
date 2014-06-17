@@ -11,9 +11,9 @@
 (provide 'snd-expandn.scm)
 
 (if (provided? 'snd)
-    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
-(if (not (provided? 'snd-env.scm)) (load "env.scm")) ; min-envelope, max-envelope
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
+(require snd-env.scm)
 
 
 (definstrument (expandn time duration filename amplitude

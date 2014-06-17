@@ -32,18 +32,13 @@
 ;;; create-audit-dialog
 ;;; equalize-panes
 
-(if (not (provided? 'snd-motif)) (snd-error "snd-motif.scm is Motif-specific"))
-
 (define (find-if pred l)
   (cond ((null? l) #f)
 	((pred (car l)) (car l))
 	(else (find-if pred (cdr l)))))
 
 (provide 'snd-snd-motif.scm)
-
-(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
-(if (not (provided? 'snd-play.scm)) (load "play.scm"))
-(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm")) ; make-bandpass
+(require snd-motif snd-extensions.scm snd-play.scm snd-dsp.scm)
 
 (define (load-font name)
   "(load-font name) loads the font 'name', returning the font id"

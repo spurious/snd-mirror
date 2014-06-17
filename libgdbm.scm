@@ -2,7 +2,7 @@
 ;;;
 ;;; tie libgdbm into s7
 
-(if (not (provided? 'cload.scm)) (load "cload.scm"))
+(require cload.scm)
 (provide 'libgdbm.scm)
 
 (if (not (defined? '*libgdbm*))
