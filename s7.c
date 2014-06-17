@@ -9062,7 +9062,7 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 	  if (args == sc->F) 
 	    args = list_1(sc, s7_make_string(sc, name));
 	  /* args is GC protected by s7_apply_function (placed on the stack */
-	  value = s7_apply_function(sc, cdar(reader), args);
+	  value = s7_apply_function(sc, cdar(reader), args); /* this is much less error-safe than s7_call */
 	  if (value != sc->F)
 	    break;
 	}
@@ -39366,6 +39366,8 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 	  /* things that evaluate to themselves don't need to be quoted. 
 	   *    but this means `() -> () whereas below `(1) -> '(1) -- should nil here return ()?
 	   *    (this also affects vector constants since they call g_quasiquote at run time in OP_READ_QUASIQUOTE_VECTOR)
+	   *
+	   * format ~<~> innards are ignored by quasiquote expansion -- it sees a string constant
 	   */
 	  return(form);
 	}
@@ -69997,25 +69999,11 @@ int main(int argc, char **argv)
  *  but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *    maybe gunichar->bytevector?
  *
- * what about procedure-signature (or whatever it's called): return type and arg types (as functions? or as objects?)
- *   ([procedure-]signature oscil) -> (real? (oscil? (real? 0.0) (real? 0.0)))
- *   how to pass this into scheme from c (returns_temp is a kludge)
- *   then (info obj) -> env with as much as we can find?
- *   also want to know free vars used/affected and is func val the same if args are the same [side-effects]
- *   and for catch what errors it might raise -- given methods this can't work in general
- *     framples: (integer? define ( ...) (selected-sound selected-channel)??)
- *     make-oscil (oscil? define* (...) (*clm-default-frequency*)
- *
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
- *   colored brick where cycle, matching original paren color
- *   for shared, maybe colored underline?
- *   {} [] <> || "" +{...} *{...}
  * cyclic-seq in rest of full-* 
- * generalize =>:  => anywhere means take current value and apply next thing to it, reverse of values sort of
- *    (values 1 2 3) => + is 6?
- *    this is consistent with case, but not cond where its more like and=>
- *    maybe ==> for the other? or just assume in cond it's and=> and in case it's =>
  * lint should track type checks: (and (procedure? p) (procedure-* p)) etc
  * lint should remove var from undefineds if it is subsequently defined (and we're tracking that list)
  * possibly: s7_stack|value in C.
+ * (require name) macro to replace the long-winded (if (provided...)) stuff
+ *   should it be a function? (require 'cload.scm)?  How to map to the file we want?
  */

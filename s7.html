@@ -3884,6 +3884,9 @@ the format output string.
 &gt; (let ((x 3)) (format #f "~&lt; (if (positive? x) (values \"x is \" x \"?\") (values)) ~&gt;"))
 "x is 3?"
 </pre>
+
+<p>Currently the code in ~&lt;~&gt; is ignored by quasiquote: it sees only a string constant.
+</p>
 </div>
 
 
@@ -4023,7 +4026,7 @@ h
 &gt; (set! (hook-functions h)              ; this sets ((procedure-environment h) 'body)
            (list (lambda (hook) 	; each hook internal function takes one argument, the environment
                    (set! (hook 'result) ; this is the "result" variable above 
-                         (format #f "a: ~A, b: ~A" (hook 'a) (hook 'b))))))
+                         (format #f "a: ~&lt;(hook 'a)~&gt;, b: ~&lt;(hook 'b)~&gt;")))))
 (#&lt;lambda (hook)&gt;)
 &gt; (h 1 2)                               ; this calls the hook's internal functions (just one in this case)
 "a: 1, b: 2"                            ; we set "result" to this string, so it is returned as the hook application result
@@ -4925,10 +4928,10 @@ local constants with:
 (define constant-access 
   (list #f
 	(lambda (symbol new-value) 
-	  (format #t "can't change constant ~A's value to ~A" symbol new-value)
+	  (format #t "can't change constant ~&lt;symbol~&gt;'s value to ~&lt;new-value~&gt;")
           'error)
 	(lambda (symbol new-value) 
-	  (format #t "can't bind constant ~A to a new value, ~A" symbol new-value)
+	  (format #t "can't bind constant ~&lt;symbol~&gt; to a new value, ~&lt;new-value~&gt;")
           'error)))
 
 (define-macro (let-constant vars . body)
@@ -4976,7 +4979,7 @@ In the next example, we restrict the values a variable can take to integers:
 		   (if (real? new-value)
 		       (floor new-value) ; or min/max to restrict it to some range etc
                        (begin 
-                         (format #t "~A can only take an integer value, not ~S" symbol new-value)
+                         (format #t "~&lt;symbol~&gt; can only take an integer value, not ~&lt;new-value~&gt;")
                          'error)))
 		 #f))
      ',var))
@@ -5004,7 +5007,7 @@ and in between, call the previous set accessor, if any, after reporting the set:
     (set! (<em class=red>symbol-access</em> var)
 	  (list (and cur-access (car cur-access))
 		(lambda (symbol new-value) 
-		  (format #t "~A set to ~A~%" symbol new-value) 
+		  (format #t "~&lt;symbol~&gt; set to ~&lt;new-value~&gt;~%")
 		  (if cur-set 
 		      (cur-set symbol new-value)
 		      new-value))
@@ -5299,7 +5302,7 @@ Here we scan the symbol table looking for any function that doesn't have documen
          (let ((val (<em class=red>symbol-&gt;value</em> sym)))
            (if (and (procedure? val)
                     (string=? "" (procedure-documentation val)))
-               (format *stderr* "~A " sym)))))
+               (format *stderr* "~&lt;sym~&gt; ")))))
   (<em class=red>symbol-table</em>))
 </pre>
 
@@ -5331,9 +5334,9 @@ Here we scan the symbol table looking for any function that doesn't have documen
 		         (rst (caddr arity)))
 	            (if (or (&gt; (+ opt req) 4)
 	       	            (member (symbol-&gt;string sym) '("exit" "abort")))
-		        (format #t ";skip ~A for now~%" sym) ; no time! no time!
+		        (format #t ";skip ~&lt;sym~&gt; for now~%")
 		        (begin
-		          (format #t ";whack on ~A...~%" sym)
+		          (format #t ";whack on ~&lt;sym~&gt;...~%")
 		          (autotest val () (+ req opt 1 (if rst 1 0))))))))))
     (<em class=red>symbol-table</em>)))
 </pre>
@@ -5374,7 +5377,7 @@ The function takes one argument, the environment in which loads and evals should
   (do ((i 0 (+ i 1)))
       ((= i call))
     (if (&gt; (cdr (calls i)) 0)
-	(format #t "~A: ~A~%" (car (calls i)) (cdr (calls i))))))
+	(format #t "~&lt; (car (calls i)) ~&gt;: ~&lt; (cdr (calls i)) ~&gt;~%"))))
 
 &gt; (profile (lambda (e) 
              (load "lint.scm" e) 
@@ -5437,7 +5440,7 @@ values are evaluated in the definition environment, but we want the run-time env
   `(symbol-&gt;value
     (define-bacro* (,(gensym) ,@arg-defaults)
       `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
-
+<!-- ( -->
 (let ()
   (define rx (rlambda ((a x)) 
                (if (> a 0) 
@@ -5972,7 +5975,7 @@ then it is part of the language, and it doesn't look like the rest of the langua
   (set! *#readers* 
     (cons (cons (integer-&gt;char (+ i (char-&gt;integer #\0))) circular-list-reader)
           *#readers*)))
-
+<!-- ) -->
 &gt; '#1=(1 2 . #1#)
 #1=(1 2 . #1#)
 &gt; '#1=(1 #2=(2 . #2#) . #1#)

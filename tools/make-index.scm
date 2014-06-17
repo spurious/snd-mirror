@@ -453,7 +453,7 @@
 (load "enved.scm")		   
 (load "rgb.scm")
 (load "env.scm")		   
-;(load "rtio.scm")
+					;(load "rtio.scm")
 (load "examp.scm")		   
 (load "rubber.scm")
 (load "expandn.scm")		   
@@ -1185,7 +1185,8 @@
 	      (n2 (tnames (+ i 1))))
 	  (if (and (string? (ind-sortby n1))
 		   (string? (ind-sortby n2))
-		   (string=? (ind-sortby n1) (ind-sortby n2)))
+		   (string=? (ind-sortby n1) (ind-sortby n2))
+		   (string=? (ind-name n1) (ind-name n2)))
 	      (format #t "duplicated name: ~A (~A ~A)~%" (ind-sortby n1) (ind-name n1) (ind-name n2)))))
       
       (if with-scm

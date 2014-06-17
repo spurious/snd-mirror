@@ -720,6 +720,7 @@
 	;; could evaluation of form have any side effects (like IO etc)
 	
 	(if (pair? form)
+	    ;; can't optimize ((...)...) because the car might eval to a function
 	    (or (and (not (hash-table-ref no-side-effect-functions (car form))) ; if func is not in that list, make no assumptions about it
 		     (or (not (eq? (car form) 'format))                 ; (format #f ...)
 			 (cadr form)))

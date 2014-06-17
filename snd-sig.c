@@ -6358,9 +6358,9 @@ static Xen g_fpsap(Xen x_choice, Xen x_n, Xen start_phases, Xen x_size, Xen x_in
   #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
-  #define INCR_DOWN 0.9
+  #define INCR_DOWN 0.92
   #define INCR_MAX 1.0
-  #define INCR_MIN 0.00001 /* was .00005 */
+  #define INCR_MIN 0.00005
   #define RETRIES 10
   #define RETRY_MULT 2
   #define INIT_TRIES 5000
