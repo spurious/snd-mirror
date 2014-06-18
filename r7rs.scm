@@ -2,7 +2,7 @@
 ;;;
 ;;; records are built on the class mechanism
 
-(require cload.scm libc.scm)
+(require cload.scm libc.scm stuff.scm)
 (provide 'r7rs.scm)
 
 
@@ -56,6 +56,20 @@
 (define bytevector-copy! vector-copy!)
 (define string-copy! vector-copy!)
 ;;; bytevector->list is (map values bv)
+
+
+;;; ugh!! -- only #true is stupider 
+(define (boolean=? . args) 
+  (or (null? args)
+      (null? (cdr args))
+      (and (boolean? (car args))
+	   (every? (lambda (obj) (eq? (car args) obj)) (cdr args)))))
+
+(define (symbol=? . args) 
+  (or (null? args)
+      (null? (cdr args))
+      (and (symbol? (car args))
+	   (every? (lambda (obj) (eq? (car args) obj)) (cdr args)))))
 
 
 (define char-foldcase char-downcase) 

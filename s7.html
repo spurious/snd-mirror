@@ -4889,7 +4889,6 @@ dalliance with symbol-macros!
 
 <div class="header" id="constants"><h4>define-constant, constant?, symbol-access</h4></div>
 
-
 <p><em class=def id="defineconstant">define-constant</em> defines a constant and 
 <em class=def id="constantp">constant?</em> returns #t if its argument
 is a constant.  A constant in s7 is really constant: it can't be set or rebound.
@@ -5096,6 +5095,22 @@ at startup *features* is:
 &gt; (provided? 'gmp)
 #t
 </pre>
+
+<p>The other side of <code>provide</code> is <code>require</code>.
+(<em class=def id="requires7">require</em> . things) finds each thing
+(via <a href="#autoload">autoload</a>), and if that thing has not already been loaded,
+loads the associated file.  <code>(require integrate-envelope)</code>
+loads "env.scm", for example; in this case it is equivalent to
+simply using integrate-envelope, but if placed at the start of
+a file, it documents that you're using that function.
+In the more normal use, <code>(require snd-ws.scm)</code>
+looks for the file that has <code>(provide 'snd-ws.scm)</code>
+and if it hasn't already been loaded, loads it ("ws.scm" in this case).
+The "thing" passed to <code>require</code> is not quoted.
+To add your own files to this mechanism, add the provided symbol via <a href="#autoload">autoload</a>.
+</p>
+
+
 
 
 <div class="separator"></div>

@@ -197,6 +197,10 @@
   /* this removes make-polar and make-rectangular, renaming the latter make-complex */
 #endif
 
+#ifndef WITH_R7RS
+  #define WITH_R7RS 0
+#endif
+
 /* other similar choices: exact/inexact including #i/#e, #d/#o, call-with-values etc, char-ready?, eof-object?
  */
 
@@ -414,7 +418,6 @@ enum {OP_NO_OP,
       OP_MAX_DEFINED_1};
 
 #define OP_MAX_DEFINED (OP_MAX_DEFINED_1 + 1)
-#define is_internal_syntax_op(op) (op >= OP_QUOTE_UNCHECKED)
 
 #if (((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4)) || ((defined(__SIZEOF_POINTER__)) && (__SIZEOF_POINTER__ == 4)))
   #define opcode_t unsigned int
@@ -4635,9 +4638,11 @@ bool s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
 	 (symbol_func("#f", data))             ||
 	 (symbol_func("#<unspecified>", data)) ||
 	 (symbol_func("#<undefined>", data))   ||
-	 (symbol_func("#<eof>", data))         ||
-	 (symbol_func("#true", data))          ||
-	 (symbol_func("#false", data))); /* these 2 for r7rs */
+	 (symbol_func("#<eof>", data))         
+#if WITH_R7RS
+	 || (symbol_func("#true", data)) || (symbol_func("#false", data))
+#endif
+	 );
 }
 
 
@@ -23157,6 +23162,26 @@ static s7_pointer g_autoloader(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_require(s7_scheme *sc, s7_pointer args)
+{
+  #define H_require "(require . symbols) loads each file associated with each symbol if it has not been loaded already.\
+The symbols refer to the argument to \"provide\"."
+
+  s7_pointer p;
+  for (p = args; is_pair(p); p = cdr(p))
+    {
+      if ((is_symbol(car(p))) &&
+	  (!is_slot(find_symbol(sc, car(p)))))
+	{
+	  s7_pointer f;
+	  f = g_autoloader(sc, p);
+	  if (is_string(f))
+	    s7_load(sc, string_value(f));
+	}
+    }
+  return(sc->T);
+}
+
 
 /* -------------------------------- eval-string -------------------------------- */
 
@@ -34925,39 +34950,6 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       return(raw_pointer(x) == raw_pointer(y));
     }
   return(false); /* we already checked that x != y (port etc) */
-}
-
-
-static s7_pointer g_booleans_are_eq(s7_scheme *sc, s7_pointer args)
-{
-  #define H_booleans_are_eq "(eq? bool1 bool2 ...) returns #t if all args are either all #f or all #t."
-  s7_pointer p, x;
-
-  x = car(args);
-  if (!s7_is_boolean(x))
-    return(sc->F);
-  /* should this be an error? (also symbol=?) */
-
-  for (p = cdr(args); is_pair(p); p = cdr(p))
-    if (car(p) != x)
-      return(sc->F);
-  return(sc->T);
-}
-
-
-static s7_pointer g_symbols_are_eq(s7_scheme *sc, s7_pointer args)
-{
-  #define H_symbols_are_eq "(eq? sym1 sym2 ...) returns #t if all args are the same symbol."
-  s7_pointer p, x;
-
-  x = car(args);
-  if (!is_symbol(x))
-    return(sc->F);
-
-  for (p = cdr(args); is_pair(p); p = cdr(p))
-    if (car(p) != x)
-      return(sc->F);
-  return(sc->T);
 }
 
 
@@ -69368,8 +69360,6 @@ s7_scheme *s7_init(void)
   
   sc->NOT =                   s7_define_safe_function(sc, "not",                     g_not,                    1, 0, false, H_not);
   sc->IS_BOOLEAN =            s7_define_safe_function(sc, "boolean?",                g_is_boolean,             1, 0, false, H_is_boolean);
-                              s7_define_safe_function(sc, "boolean=?",               g_booleans_are_eq,        2, 0, true,  H_booleans_are_eq);
-                              s7_define_safe_function(sc, "symbol=?",                g_symbols_are_eq,         2, 0, true,  H_symbols_are_eq);
   sc->IS_EQ =                 s7_define_safe_function(sc, "eq?",                     g_is_eq,                  2, 0, false, H_is_eq);
   sc->IS_EQV =                s7_define_safe_function(sc, "eqv?",                    g_is_eqv,                 2, 0, false, H_is_eqv);
   sc->IS_EQUAL =              s7_define_safe_function(sc, "equal?",                  g_is_equal,               2, 0, false, H_is_equal);
@@ -69456,7 +69446,7 @@ s7_scheme *s7_init(void)
   s7_autoload(sc, make_symbol(sc, "libgsl.scm"),   s7_make_permanent_string("libgsl.scm"));
   s7_autoload(sc, make_symbol(sc, "libgdbm.scm"),  s7_make_permanent_string("libgdbm.scm"));
 
-  s7_eval_c_string(sc, "(define (require . lib) lib)");
+  s7_define_macro(sc, "require", g_require, 0, 0, true, H_require);  
 
 
 
@@ -70022,12 +70012,6 @@ int main(int argc, char **argv)
  * lint should track type checks: (and (procedure? p) (procedure-* p)) etc
  * lint should remove var from undefineds if it is subsequently defined (and we're tracking that list)
  * possibly: s7_stack|value in C.
- * (require name) macro to replace the long-winded (if (provided...)) stuff, but don't want to collide with slib or r7rs
- *   should it be a function? (require 'cload.scm)?  How to map to the file we want?
- *   can this be handled by autoload?  (*autoload* 'cload.scm) -> "cload.scm" but we still need the rest
- *   with that info, (require cload.scm) -> whatever load returns: (define (require lib) lib) -- now if it's defined, nothing happens.
- *   so s7, and in Snd snd-xref, need to preautoload all the known cases, and we need to document how to add more.
- *   and (provide...) could also add its symbol to the table, simply to block later (require ...) from autoloading it
- *   TODO: doc/test this and add to Snd
- * fix the profiler in s7.html, or discard it
+ * check/fix the profiler in s7.html
+ * require->provide in s7.html? also (require integrate-envelope) should work
  */
