@@ -58,18 +58,17 @@
 ;;; bytevector->list is (map values bv)
 
 
-;;; ugh!! -- only #true is stupider 
-(define (boolean=? . args) 
+(define (boolean=? . args)
   (or (null? args)
-      (null? (cdr args))
       (and (boolean? (car args))
-	   (every? (lambda (obj) (eq? (car args) obj)) (cdr args)))))
+	   (or (null? (cdr args))
+	       (every? (lambda (obj) (eq? (car args) obj)) (cdr args))))))
 
 (define (symbol=? . args) 
   (or (null? args)
-      (null? (cdr args))
       (and (symbol? (car args))
-	   (every? (lambda (obj) (eq? (car args) obj)) (cdr args)))))
+	   (or (null? (cdr args))
+	       (every? (lambda (obj) (eq? (car args) obj)) (cdr args))))))
 
 
 (define char-foldcase char-downcase) 

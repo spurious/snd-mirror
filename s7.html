@@ -46,6 +46,7 @@
 		      padding-bottom: 0.5cm;
 		      margin-bottom: 0.5cm;
 		      border: 1px solid gray;
+		      border-radius: 20px;
 		      -moz-border-radius: 20px;
 		      -webkit-border-radius: 20px;
 		      }
@@ -79,6 +80,7 @@
 		       background-color: #f5f5dc; /* beige */
 		       padding-top: 4px;
 		       width: 30%;
+		      border-radius: 4px;
 		      -moz-border-radius: 4px;
 		      -webkit-border-radius: 4px;
 		      } 
@@ -114,6 +116,7 @@
 		   margin-left: 0.5cm;
 		   margin-right: 1.0cm;
 		   float: right;
+		   border-radius: 8px;
 		   -moz-border-radius: 8px;
 		   -webkit-border-radius: 8px;
 		   }
@@ -2873,15 +2876,28 @@ function if it exists.  A bare-bones example:
 </p>
 
 <pre class="indented">
-&gt; (abs (open-environment (environment (cons 'abs (lambda (x) 47)))))
+&gt; (abs (open-environment (environment* 'abs (lambda (x) 47))))
 47
 </pre>
 
 <p>In CLOS, we'd have to declare a class and a method, then call make-instance,
 and then we'd discover that it wouldn't work anyway.
 Here we have, in effect, an anonymous instance of an anonymous class.
+A slightly more complex example:
 </p>
 
+<pre class="indented">
+(let ((e1 (open-environment 
+	   (environment* 
+	    'x 3
+	    '* (lambda args
+		 (if (number? (car args))
+		     (apply * (car args) ((cadr args) 'x) (cddr args))
+		     (apply * ((car args) 'x) (cdr args))))))))
+  (let ((e2 (copy e1)))
+    (set! (e2 'x) 4)
+    (* 2 e1 e2))) ; (* 2 3 4) =&gt; 24
+</pre>
 
 <blockquote>
 <div class="indented">
@@ -5096,8 +5112,8 @@ at startup *features* is:
 #t
 </pre>
 
-<p>The other side of <code>provide</code> is <code>require</code>.
-(<em class=def id="requires7">require</em> . things) finds each thing
+<p>The other side of <code>provide</code> is <em class=def id="requires7">require</em>.
+<code>(require . things)</code> finds each thing
 (via <a href="#autoload">autoload</a>), and if that thing has not already been loaded,
 loads the associated file.  <code>(require integrate-envelope)</code>
 loads "env.scm", for example; in this case it is equivalent to
@@ -5378,7 +5394,7 @@ Here we scan the symbol table looking for any function that doesn't have documen
   "(profile func) evaluates the function, then reports profiling information. \
 The function takes one argument, the environment in which loads and evals should operate."
 
-  (define calls (make-vector 4096 (cons 'unused -1)))
+  (define calls (make-vector 1024 (cons 'unused -1)))
   (define call 0)
 
   (define (profile-1 n)
@@ -5395,6 +5411,8 @@ The function takes one argument, the environment in which loads and evals should
 	            (let ((new-val (apply lambda 'args `((profile-1 ,call) (apply ,val args)))))
 		      (set! (calls call) (cons sym 0))
 		      (set! call (+ call 1))
+		      (if (&gt;= call (length calls))
+			  (set! calls (copy calls (make-vector (* 2 (length calls)) (cons 'unused -1)))))
 		      (if (procedure-setter val)
 		          (set! (procedure-setter new-val) (procedure-setter val)))
 		      (augment-environment! e (cons sym new-val)))))))
@@ -5410,7 +5428,7 @@ The function takes one argument, the environment in which loads and evals should
 
 &gt; (profile (lambda (e) 
              (load "lint.scm" e) 
-             (eval '(lint "dsp.scm") e)))
+             (with-environment e (lint "dsp.scm"))))
 ;;; many lines of data print out
 </pre>
 </div>
@@ -9186,10 +9204,10 @@ end
 <div class="topheader" id="s7examples">s7 examples</div>
 
 <p>The s7 tarball includes several scheme files including s7test.scm,
-lint.scm, cload.scm, and stuff.scm.  s7test.scm is a regression test for s7, lint.scm
-is the s7 equivalent of the ancient C program named lint, cload.scm
+lint.scm, cload.scm, write.scm, and stuff.scm.  s7test.scm is a regression test for s7, lint.scm
+is the s7 equivalent of the ancient C program named lint, write.scm has a pretty printer, cload.scm
 is a wrapper for the FFI stuff described above, and stuff.scm is just some
-arbitrary stuff.  gdbinit has some gdb commands for s7.
+arbitrary stuff.  gdbinit has some gdb commands for s7. 
 </p>
 
 

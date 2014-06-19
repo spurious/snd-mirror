@@ -54115,7 +54115,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto EVAL;
 	      }
 
-
 	      
 	      /* -------------------------------------------------------------------------------- */
 
@@ -70012,6 +70011,11 @@ int main(int argc, char **argv)
  * lint should track type checks: (and (procedure? p) (procedure-* p)) etc
  * lint should remove var from undefineds if it is subsequently defined (and we're tracking that list)
  * possibly: s7_stack|value in C.
- * check/fix the profiler in s7.html
- * require->provide in s7.html? also (require integrate-envelope) should work
+ * check the profiler in s7.html -- it's ok, but better would be expr-specific counters
+ * format ~[~] like <> but with arg? ~(~) arglist?
+ *     not (format #f "~[abs~] " -21) (format #f "~[(lambda (x) (format \"arg is ~B\" x))~] " 32)
+ *     not (format #f "~((lambda (x) (* x 2)~) " (list 1 2 3)) -> "2 4 6 " but this can be done with (format #f "~{~[(lambda (x) (* x 2))~] ~}" (list 1 2 3))
+ *   (format #f "~((lambda ...)~) " ...) -- use as many args as the function can absorb, but that subsumes the first case
+ *   (format #f "sum: ~[+~]" 1 2 3 4 5)
+ *   but this seems unnecessary -- the arg(s) can be pulled in from the outer context
  */
