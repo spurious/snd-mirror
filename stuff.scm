@@ -5,20 +5,13 @@
 ;;; ----------------
 (define (empty? obj) 
   "(empty? obj) returns #t if obj is an empty sequence"
-  (catch #t
-    (lambda ()
-      (if (hash-table? obj)
-	  (= (hash-table-entries obj) 0) ; length here is table size
-	  (= (length obj) 0)))
-    (lambda args #f)))
+  (if (hash-table? obj)
+      (= (hash-table-entries obj) 0) ; length here is table size
+      (equal? (length obj) 0)))
 
 (define applicable? arity)
 
-(define (sequence? obj)
-  "(sequence> obj) returns #t if obj is a sequence (vector, list, string, etc)"
-  (catch #t
-    (lambda () (length obj))
-    (lambda args #f)))
+(define sequence? length)
 
 (define (indexable? obj)
   "(indexable? obj) returns #t if obj can be applied to an index: (obj 0)"

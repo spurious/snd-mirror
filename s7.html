@@ -3930,6 +3930,9 @@ in the brackets, or define convenience functions:
 </pre>
 
 <p>Currently the code in ~&lt;~&gt; is ignored by quasiquote: it sees only a string constant.
+This feature has been shoe-horned into pre-existing code, so it is not yet very robust;
+if the code in the brackets raises an error (even within a catch), you may get an
+incomplete evaluation.  
 </p>
 </div>
 

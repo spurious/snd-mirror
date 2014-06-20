@@ -5318,7 +5318,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (moving-sum gen y)
   
-  "  (make-moving-sum (n 128) returns a moving-sum generator.\n\
+  "  (make-moving-sum (n 128)) returns a moving-sum generator.\n\
   (moving-sum gen input) returns the sum of the absolute values in a moving window over the last n inputs."
   
   (moving-average (gen 'gen) (abs y)))
@@ -5462,7 +5462,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (weighted-moving-average gen y)
   
-  "  (make-weighted-moving-average (n 128) returns a weighted-moving-average generator.\n\
+  "  (make-weighted-moving-average (n 128)) returns a weighted-moving-average generator.\n\
   (weighted-moving-average gen y) returns the sum of the last n inputs weighted by 1/n"
   
   (environment-set! gen 'y y)

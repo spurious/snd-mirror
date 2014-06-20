@@ -26030,17 +26030,35 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    memcpy((void *)bracket_str, (void *)(str + i + 2), bracket_len - 1);
 		    bracket_str[bracket_len - 1] = '\0';
 
-		    /* this is touchy code... (we're cheating -- ideally this would be embedded in the eval loop) */
+		    /* if the called code has a catch and raises an error, or anything else that causes a longjmp,
+		     *   we won't complete this format call -- we end up at an earlier point in the C stack.
+		     *   To fix this will probably require embedding this code in the eval loop somehow.
+		     *   I don't think we can push (say) OP_FORMAT to restore all the current fdat state
+		     *   because the longjmp will also collapse away the current format recursive calls.
+		     *   It does not help to put a setjmp here, nor to call s7_call (saving/restoring the
+		     *   setjmp buffer), nor to use s7_eval_c_string but leave sc->envir alone.
+		     *   If we had a catch/throw mechanism that did not go through s7_error, then only
+		     *   a call from here into scheme into C and back would be problematic.  Can throw simply
+		     *   crawl the stack directly in eval?  No -- catch assumes the jump.
+		     *
+		     * so, to fix this, if ~<~> arg is a pair, replace it with ~{~A~} and put the read(?) code on a new arglist,
+		     *   complete the current format, then push op_apply with g_format and these new args, and return.
+		     *   But we're sending the output as we go in some cases! And we're now assuming format is safe --
+		     *   this seems incorrect.  How hard would it be to embed format itself?  s7_error calls it.
+		     *
+		     * even a rewrite at call time can be fooled -- I think for now I'll add a note in s7.html.
+		     */
 		    eport = s7_open_input_string(sc, bracket_str);
 		    push_input_port(sc, eport);
 		    push_stack(sc, OP_BARRIER, eport, sc->code); /* neither of these is superfluous: sc->code if values */
 		    push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);  
+
 		    eval(sc, OP_READ_INTERNAL);
+
 		    if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER) pop_stack(sc);
 		    pop_input_port(sc);
 		    s7_close_input_port(sc, eport);
 		    result = sc->value;
-		    /* end of special case eval-string */
 
 		    if (is_string(result))
 		      format_append_string(sc, fdat, string_value(result), string_length(result), port);
@@ -35442,7 +35460,7 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table. \
 The length of a dotted list does not include the final cdr, and is returned as a negative number.  A circular \
-list has infinite length."
+list has infinite length.  Length of anything else returns #f."
 
   s7_pointer lst;
   lst = car(args);
@@ -35487,7 +35505,8 @@ list has infinite length."
 	return(make_integer(sc, closure_length(sc, lst)));
 
     default:
-      return(simple_wrong_type_argument_with_type(sc, sc->LENGTH, lst, make_protected_string(sc, "a list, vector, string, or hash-table")));
+      return(sc->F);
+      /* return(simple_wrong_type_argument_with_type(sc, sc->LENGTH, lst, make_protected_string(sc, "a list, vector, string, or hash-table"))); */
     }
   
   return(small_int(0));
@@ -70012,10 +70031,4 @@ int main(int argc, char **argv)
  * lint should remove var from undefineds if it is subsequently defined (and we're tracking that list)
  * possibly: s7_stack|value in C.
  * check the profiler in s7.html -- it's ok, but better would be expr-specific counters
- * format ~[~] like <> but with arg? ~(~) arglist?
- *     not (format #f "~[abs~] " -21) (format #f "~[(lambda (x) (format \"arg is ~B\" x))~] " 32)
- *     not (format #f "~((lambda (x) (* x 2)~) " (list 1 2 3)) -> "2 4 6 " but this can be done with (format #f "~{~[(lambda (x) (* x 2))~] ~}" (list 1 2 3))
- *   (format #f "~((lambda ...)~) " ...) -- use as many args as the function can absorb, but that subsumes the first case
- *   (format #f "sum: ~[+~]" 1 2 3 4 5)
- *   but this seems unnecessary -- the arg(s) can be pulled in from the outer context
  */

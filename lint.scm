@@ -697,12 +697,6 @@
 		       (char-whitespace? (str i)))
 		   (format #f "~%        ~A..." (substring str 0 (if (<= i 40) 77 i))))))))
       
-      (define (lint-format str name . args)
-	(if (and (positive? line-number)
-		 (< line-number 100000))
-	    (apply format outport (string-append "  ~A (line ~D): " str "~%") name line-number args)
-	    (apply format outport (string-append "  ~A: " str "~%") name args)))
-      
       (define (lists->string f1 f2)
 	;; same but 2 strings that may need to be lined up vertically
 	(let* ((str1 (object->string f1))
@@ -714,6 +708,12 @@
 	      (if (< (+ len1 len2) 70)
 		  (format #f "~%        ~A -> ~A" str1 str2)
 		  (format #f "~%        ~A ->~%        ~A" str1 str2)))))
+      
+      (define (lint-format str name . args)
+	(if (and (positive? line-number)
+		 (< line-number 100000))
+	    (apply format outport (string-append "  ~A (line ~D): " str "~%") name line-number args)
+	    (apply format outport (string-append "  ~A: " str "~%") name args)))
       
       (define (side-effect? form env)
 	;; could evaluation of form have any side effects (like IO etc)
@@ -1303,10 +1303,10 @@
 					 (if (and (pair? arg)
 						  (<= (length arg) 3)) ; avoid (<= 0 i 12) and such
 					     (case (car arg)
-					       ((<)            `(>= ,@(cdr arg)))   ; (not (< ...)) -> (>= ...)
+					       ((<)            `(>= ,@(cdr arg)))   ; (not (< ...)) -> (>= ...) 
 					       ((>)            `(<= ,@(cdr arg)))
-					       ((<=)           `(> ,@(cdr arg)))
-					       ((>=)           `(< ,@(cdr arg)))
+					       ((<=)           (if (morally-equal? (caddr arg) 0) `(positive? ,(cadr arg)) `(> ,@(cdr arg))))
+					       ((>=)           (if (morally-equal? (caddr arg) 0) `(negative? ,(cadr arg)) `(< ,@(cdr arg))))
 					       ((char<?)       `(char>=? ,@(cdr arg)))
 					       ((char>?)       `(char<=? ,@(cdr arg)))
 					       ((char<=?)      `(char>? ,@(cdr arg)))
@@ -1327,8 +1327,11 @@
 					       ((even?)        `(odd? ,@(cdr arg)))
 					       ((exact?)       `(inexact? ,@(cdr arg)))
 					       ((inexact?)     `(exact? ,@(cdr arg)))
-					       ((null?)        `(pair? ,@(cdr arg)))
+					       ;; ((null?)        `(pair? ,@(cdr arg)))
+					       ;;      this is not quite right
 					       ;; char-upper-case? and lower are not switchable here
+
+					       ;; if stuff loaded, (not (every? ...)) => any? and so on
 
 					       ((zero?)       ; (not (zero? (logand p (ash 1 i)))) -> (logbit? p i)
 						(let ((zarg (cadr arg)))  ; (logand...)
@@ -1838,7 +1841,10 @@
 	      ((angle)
 	       (if (equal? (car args) -1)
 		   'pi
-		   `(,(car form) ,@args)))
+		   (if (or (morally-equal? (car args) 0.0)
+			   (morally-equal? (car args) pi))
+		       0.0
+		       `(,(car form) ,@args))))
 
 	      ((atan)
 	       (if (and (= len 1)
