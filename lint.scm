@@ -2632,6 +2632,8 @@
 	    
 	    (let ((ctr 0)
 		  (len (length body)))
+	      (if (eq? head 'do) (set! len (+ len 1))) ; last form in do body is not returned
+
 	      (for-each
 	       (lambda (f)
 		 (if (< ctr (- len 1)) ; not the last form, so its value is ignored

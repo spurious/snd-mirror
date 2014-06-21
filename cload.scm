@@ -129,7 +129,8 @@
 			 '(real s7_is_real s7_number_to_real s7_make_real s7_Double)
 
 			 ;; '(complex s7_is_complex #f s7_make_complex s7_Complex)
-			 ;; the typedef is around line 6116 in s7.c, but we also need s7_complex in the gmp case, I think
+			 ;; the typedef is around line 6116 in s7.c, but we also need s7_complex which requires the s7_Complex type
+			 ;; xen.h uses (s7_real_part(a) + s7_imag_part(a) * _Complex_I) instead since c++ won't let use define s7_Complex in s7.h
 
 			 '(string s7_is_string s7_string s7_make_string char*)
 			 (list 'character 's7_is_character 's7_character 's7_make_character (symbol "unsigned char"))
@@ -168,8 +169,8 @@
 		((string-position "bool" type-name) 
 		 'boolean)
 		
-;		((string-position "complex" type-name)
-;		 'complex)
+		;; ((string-position "complex" type-name)
+		;;  'complex)                              ; double complex or complex double (mus_edot_product in clm.c uses the latter)
 
 		((or (string-position "float" type-name) 
 		     (string-position "double" type-name)) 
@@ -449,3 +450,12 @@
 
 ;;; backwards compatibility
 (define define-c-function c-define)
+
+
+#|
+(let ((cd (symbol "complex double"))
+      (cd* (symbol "complex double *")))
+  (c-define (list cd 'mus_edot_product (list cd cd* 'int))))
+
+;complex double mus_edot_product(complex double freq, complex double *data, mus_long_t size)
+|#

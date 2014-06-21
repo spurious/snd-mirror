@@ -197,10 +197,6 @@
   /* this removes make-polar and make-rectangular, renaming the latter make-complex */
 #endif
 
-#ifndef WITH_R7RS
-  #define WITH_R7RS 0
-#endif
-
 /* other similar choices: exact/inexact including #i/#e, #d/#o, call-with-values etc, char-ready?, eof-object?
  */
 
@@ -306,6 +302,8 @@
 #endif
 
 #include <setjmp.h>
+/* currently longjmps in s7_call, s7_error, g_throw, eval at OP_ERROR_HOOK_QUIT
+ */
 
 #include "s7.h"
 
@@ -2309,7 +2307,7 @@ static int num_types = 0;
 #define baffle_key(p)                 (p)->object.baffle_key
 
 #if __cplusplus && HAVE_COMPLEX_NUMBERS
-  using namespace std;
+  using namespace std;                /* the code has to work in C as well as C++, so we can't scatter std:: all over the place */
   typedef complex<s7_Double> s7_Complex;
   static s7_Double Real(complex<s7_Double> x) {return(real(x));} /* protect the C++ name */
   static s7_Double Imag(complex<s7_Double> x) {return(imag(x));}
@@ -2576,6 +2574,9 @@ static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK,
 static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE;
 
 
+/* --------------------------------------------------------------------------------
+ * profiling junk
+ */
 #define WITH_COUNTS 0
 
 #if WITH_COUNTS
@@ -2804,7 +2805,7 @@ void add_code(s7_scheme *sc)
 /* use xen.h and s7 here */
 #endif
 #endif
-
+/* -------------------------------------------------------------------------------- */
 
 
 static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_pointer body, bool at_end, bool *bad_set);
@@ -4638,11 +4639,9 @@ bool s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
 	 (symbol_func("#f", data))             ||
 	 (symbol_func("#<unspecified>", data)) ||
 	 (symbol_func("#<undefined>", data))   ||
-	 (symbol_func("#<eof>", data))         
-#if WITH_R7RS
-	 || (symbol_func("#true", data)) || (symbol_func("#false", data))
-#endif
-	 );
+	 (symbol_func("#<eof>", data))         ||
+	 (symbol_func("#true", data))          ||
+	 (symbol_func("#false", data)));
 }
 
 
@@ -4658,20 +4657,6 @@ bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 
   return(false);
 }
-
-/* (for-each
-   (lambda (lst)
-      (for-each
-         (lambda (sym)
-           (format #t "~A ~S~%" sym (symbol->value sym)))
-         lst))
-   (symbol-table))
-
-   but this can't work in general if gensyms are in use.  When the latter is unreachable, it is pruned
-   from the symbol-table, but we might be traversing the table!  Copying each list does not help.
-
-   at normal motif-snd startup there are 5699 globals (2583 of them constant), and 411 other undefined symbols
-*/
 
 
 static s7_pointer g_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
@@ -19133,7 +19118,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   if (s7_is_character(arg1))
     {
       c = character(arg1);
-      p = strchr((const char *)(porig + start), (int)c); /* use strchrnul in Gnu C do catch embedded null case */
+      p = strchr((const char *)(porig + start), (int)c); /* use strchrnul in Gnu C to catch embedded null case */
       if (p)
 	return(make_integer(sc, p - porig));
       return(sc->F);
@@ -26030,36 +26015,74 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    memcpy((void *)bracket_str, (void *)(str + i + 2), bracket_len - 1);
 		    bracket_str[bracket_len - 1] = '\0';
 
-		    /* if the called code has a catch and raises an error, or anything else that causes a longjmp,
-		     *   we won't complete this format call -- we end up at an earlier point in the C stack.
-		     *   To fix this will probably require embedding this code in the eval loop somehow.
-		     *   I don't think we can push (say) OP_FORMAT to restore all the current fdat state
-		     *   because the longjmp will also collapse away the current format recursive calls.
-		     *   It does not help to put a setjmp here, nor to call s7_call (saving/restoring the
-		     *   setjmp buffer), nor to use s7_eval_c_string but leave sc->envir alone.
-		     *   If we had a catch/throw mechanism that did not go through s7_error, then only
-		     *   a call from here into scheme into C and back would be problematic.  Can throw simply
-		     *   crawl the stack directly in eval?  No -- catch assumes the jump.
-		     *
-		     * so, to fix this, if ~<~> arg is a pair, replace it with ~{~A~} and put the read(?) code on a new arglist,
-		     *   complete the current format, then push op_apply with g_format and these new args, and return.
-		     *   But we're sending the output as we go in some cases! And we're now assuming format is safe --
-		     *   this seems incorrect.  How hard would it be to embed format itself?  s7_error calls it.
-		     *
-		     * even a rewrite at call time can be fooled -- I think for now I'll add a note in s7.html.
-		     */
-		    eport = s7_open_input_string(sc, bracket_str);
-		    push_input_port(sc, eport);
-		    push_stack(sc, OP_BARRIER, eport, sc->code); /* neither of these is superfluous: sc->code if values */
-		    push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);  
+		    /* if it's just a variable name (most common case by far), or a number, grab it directly */
+		    if (strcspn((const char *)bracket_str, (const char *)"('\"`") == bracket_len - 1)
+		      {
+			int k; /* "i" is the outer index */
+			unsigned char *lstr;
 
-		    eval(sc, OP_READ_INTERNAL);
-
-		    if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER) pop_stack(sc);
-		    pop_input_port(sc);
-		    s7_close_input_port(sc, eport);
-		    result = sc->value;
-
+			lstr = (unsigned char *)bracket_str;
+			for (k = 0; (k < bracket_len) && (white_space[*lstr]); k++, lstr++);
+			bracket_str = (char *)lstr;
+			if (k < bracket_len)
+			  {
+			    while (char_ok_in_a_name[*lstr]) {lstr++; k++; if (k >= bracket_len) break;}
+			    if ((char *)lstr == bracket_str)
+			      {
+				i += (bracket_len + 2); /* I guess we want (format #f "~< ~>") to return "" */
+				break;
+			      }
+			    if (k < bracket_len) *lstr = '\0';
+			    result = make_atom(sc, bracket_str, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR);
+			    if (result == sc->NIL)
+			      return(format_error(sc, "read error?", str, args, fdat));
+			    if (is_symbol(result)) 
+			      {
+				result = s7_symbol_value(sc, result);
+				if (result == sc->UNDEFINED)
+				  return(format_error(sc, "undefined identifier", str, args, fdat));
+			      }
+			  }
+			else
+			  {
+			    i += (bracket_len + 2);
+			    break;
+			  }
+		      }
+		    else
+		      {
+			/* if the called code has a catch and raises an error, or anything else that causes a longjmp,
+			 *   we won't complete this format call -- we end up at an earlier point in the C stack.
+			 *   To fix this will probably require embedding this code in the eval loop somehow.
+			 *   I don't think we can push (say) OP_FORMAT to restore all the current fdat state
+			 *   because the longjmp will also collapse away the current format recursive calls.
+			 *   It does not help to put a setjmp here, nor to call s7_call (saving/restoring the
+			 *   setjmp buffer), nor to use s7_eval_c_string but leave sc->envir alone.
+			 *   If we had a catch/throw mechanism that did not go through s7_error, then only
+			 *   a call from here into scheme into C and back would be problematic.  Can throw simply
+			 *   crawl the stack directly in eval?  No -- catch assumes the jump. ("The stack context
+			 *   [saved by setjmp] will be invalidated if the function which called setjmp returns").
+			 *
+			 * so, to fix this, if ~<~> arg is a pair, replace it with ~{~A~} and put the read(?) code on a new arglist,
+			 *   complete the current format, then push op_apply with g_format and these new args, and return.
+			 *   But we're sending the output as we go in some cases! And we're now assuming format is safe --
+			 *   this seems incorrect.  How hard would it be to embed format itself?  s7_error calls it.
+			 *
+			 * even a rewrite at call time can be fooled -- I think for now I'll add a note in s7.html.
+			 */
+			eport = s7_open_input_string(sc, bracket_str);
+			push_input_port(sc, eport);
+			push_stack(sc, OP_BARRIER, eport, sc->code); /* neither of these is superfluous: sc->code if values */
+			push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);  
+			
+			eval(sc, OP_READ_INTERNAL);
+			
+			if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER) pop_stack(sc);
+			pop_input_port(sc);
+			s7_close_input_port(sc, eport);
+			result = sc->value;
+		      }
+		    
 		    if (is_string(result))
 		      format_append_string(sc, fdat, string_value(result), string_length(result), port);
 		    else
@@ -37112,7 +37135,6 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	      sc->stack_end = (s7_pointer *)(sc->stack_start + catch_all_goto_loc(catcher));
 	      pop_stack(sc);
 	      sc->value = catch_all_result(catcher);
-	      if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
 	      return(true);
 	    }
 	    break;
@@ -37140,10 +37162,6 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 
 		push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
 		sc->op = OP_APPLY;
-		if (sc->longjmp_ok)
-		  {
-		    longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
-		  }
 		return(true);
 	      }
 	    break;
@@ -37213,7 +37231,6 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		      {
 			pop_stack(sc);
 			sc->value = y;
-			if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
 			return(true);
 		      }
 		  }
@@ -37250,11 +37267,6 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		 *  but putting it here (via eval(sc, OP_APPLY)) means the C stack is not cleared correctly in non-s7-call cases, 
 		 *  so defer it until s7_call 
 		 */
-		if (sc->longjmp_ok)
-		  {
-		    longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
-		  }
-		
 		return(true);
 	      }
 	    break;
@@ -37337,7 +37349,10 @@ It looks for an existing catch with a matching tag, and jumps to it if found.  O
 
   bool ignored_flag = false;
   if (found_catch(sc, car(args), cdr(args), &ignored_flag))
-    return(car(args));
+    {
+      if (sc->longjmp_ok) longjmp(sc->goto_start, 1);
+      return(sc->value);
+    }
   return(s7_error(sc, make_symbol(sc, "uncaught-throw"), args));
 }
 
@@ -37407,7 +37422,10 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
     }
 
   if (found_catch(sc, type, info, &reset_error_hook))
-    return(type);
+    {
+      if (sc->longjmp_ok) longjmp(sc->goto_start, 1);
+      return(type);
+    }
 
   /* error not caught */
   /* (set! *error-hook* (list (lambda (hook) (apply format #t (hook 'args))))) */
@@ -37560,11 +37578,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       sc->op = OP_ERROR_QUIT;
     }
 
-  if (sc->longjmp_ok)
-    {
-      longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
-    }
-  
+  if (sc->longjmp_ok) longjmp(sc->goto_start, 1);
   return(type);
 }
 
@@ -38223,9 +38237,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       
       if ((sc->op == OP_ERROR_QUIT) &&
 	  (sc->longjmp_ok))
-	{
-	  longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
-	}
+	longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
 
       eval(sc, sc->op); 
       /* sc->op can be OP_APPLY if s7_call raised an error that was caught (via catch) -- we're about to go to the error handler */
@@ -63188,10 +63200,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       stack_reset(sc);
       sc->op = OP_ERROR_QUIT;
-      if (sc->longjmp_ok)
-	{
-	  longjmp(sc->goto_start, 1);
-	}
+      if (sc->longjmp_ok) longjmp(sc->goto_start, 1);
       return(sc->value); /* not executed I hope */
 
       
@@ -68726,7 +68735,7 @@ s7_scheme *s7_init(void)
   sc->LET_ALL_C =             assign_internal_syntax(sc, "let",     OP_LET_ALL_C);  
   sc->LET_ALL_S =             assign_internal_syntax(sc, "let",     OP_LET_ALL_S);  
   sc->LET_ALL_X =             assign_internal_syntax(sc, "let",     OP_LET_ALL_X);  
-  sc->LET_STAR_ALL_X =        assign_internal_syntax(sc, "let",     OP_LET_STAR_ALL_X);  
+  sc->LET_STAR_ALL_X =        assign_internal_syntax(sc, "let*",    OP_LET_STAR_ALL_X);  
   sc->LET_opCq =              assign_internal_syntax(sc, "let",     OP_LET_opCq);  
   sc->LET_opSSq =             assign_internal_syntax(sc, "let",     OP_LET_opSSq);  
   sc->NAMED_LET_NO_VARS =     assign_internal_syntax(sc, "let",     OP_NAMED_LET_NO_VARS); 
@@ -70031,4 +70040,5 @@ int main(int argc, char **argv)
  * lint should remove var from undefineds if it is subsequently defined (and we're tracking that list)
  * possibly: s7_stack|value in C.
  * check the profiler in s7.html -- it's ok, but better would be expr-specific counters
+ * (require ws) -- make the .scm and maybe the snd- parts optional [requires local symbols etc]
  */
