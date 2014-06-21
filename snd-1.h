@@ -857,26 +857,6 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 void g_init_main(void);
 
 
-/* --------- snd-error.c -------- */
-
-const char *io_error_name(io_error_t err);
-#ifdef __GNUC__
-  void snd_error(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
-  void snd_warning(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
-#else
-  void snd_error(const char *format, ...);
-  void snd_warning(const char *format, ...);
-#endif
-void snd_error_without_format(const char *msg);
-void snd_warning_without_format(const char *msg);
-bool run_snd_error_hook(const char *msg);
-void g_init_errors(void);
-
-void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data);
-void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data);
-
-
-
 /* -------- snd-completion.c -------- */
 
 char *expression_completer(widget_t w, const char *text, void *data);
@@ -1155,6 +1135,19 @@ int xen_transform_to_int(Xen n);
 
 
 /* -------- snd-xen.c -------- */
+
+const char *io_error_name(io_error_t err);
+#ifdef __GNUC__
+  void snd_error(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+  void snd_warning(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+#else
+  void snd_error(const char *format, ...);
+  void snd_warning(const char *format, ...);
+#endif
+void snd_error_without_format(const char *msg);
+void snd_warning_without_format(const char *msg);
+void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data);
+void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data);
 
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data);

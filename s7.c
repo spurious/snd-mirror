@@ -135,7 +135,6 @@
  *    might be vulnerable to the GC. 
  */
 
-
 #define WITH_GCC (defined(__GNUC__) || defined(__clang__))
 
 
@@ -180,7 +179,6 @@
    *   needs to supply system and delete-file so that cload.scm works.
    */
 #endif
-
 
 #ifndef WITH_IMMUTABLE_UNQUOTE
   #define WITH_IMMUTABLE_UNQUOTE 0
@@ -259,7 +257,6 @@
   #endif
 #endif
 
-
 #ifndef _MSC_VER
   #include <unistd.h>
   #include <sys/param.h> 
@@ -320,7 +317,6 @@
 #endif
 
 #define WRITE_REAL_PRECISION 16
-
 
 #if ((!__NetBSD__) && ((_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))))
   #define __func__ __FUNCTION__
@@ -412,7 +408,6 @@ enum {OP_NO_OP,
        */
 
       OP_SAFE_C_opSq_P_1, OP_SAFE_C_opSq_P_MV, OP_C_P_1, OP_C_P_2, OP_C_SP_1, OP_C_SP_2,
-
       OP_MAX_DEFINED_1};
 
 #define OP_MAX_DEFINED (OP_MAX_DEFINED_1 + 1)
@@ -430,7 +425,6 @@ enum {OP_NO_OP,
  *   but I can't think of a way to do this short of a configuration script.
  *   If someone defines s7_Double to be long long double, we're in trouble.
  */
-
 
 /* these names are intended for error messages (eval_error_with_name) and debugging.  
  */
@@ -477,7 +471,6 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", "if", "if", "when", "unless",
-
    "and", "and", "and", "or", "or", "or", 
 
    "if", 
@@ -594,9 +587,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_C_ZZZZ_1", "OP_SAFE_C_ZZZZ_2", "OP_SAFE_C_ZZZZ_3", "OP_SAFE_C_ZZZZ_4", 
 
   "OP_SAFE_C_opSq_P_1", "OP_SAFE_C_opSq_P_MV", "OP_C_P_1", "OP_C_P_2", "OP_C_SP_1", "OP_C_SP_2",
-
   "OP_MAX_DEFINED_1"};
-
 
 typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
 
@@ -700,10 +691,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_ZZA, HOP_SAFE_C_ZZA, OP_SAFE_C_ZAZ, HOP_SAFE_C_ZAZ, OP_SAFE_C_AZZ, HOP_SAFE_C_AZZ, 
       OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ, OP_SAFE_C_ZZZZ, HOP_SAFE_C_ZZZZ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP, 
-
       OPT_MAX_DEFINED
 };
-
 
 #define is_safe_c_op(op) ((op < OP_THUNK) && (op >= OP_SAFE_C_C))
                                              /* for an unsigned int op, op is always >= OP_SAFE_C_C (0) */
@@ -811,7 +800,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_zza", "h_safe_c_zza", "safe_c_zaz", "h_safe_c_zaz", "safe_c_azz", "h_safe_c_azz", 
       "safe_c_zzz", "h_safe_c_zzz", "safe_c_zzzz", "h_safe_c_zzzz",
       "safe_c_ssp", "h_safe_c_ssp", 
-
       "opt_max_defined"
   };
 
@@ -20676,20 +20664,6 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if 0
-static s7_pointer g_port_file(s7_scheme *sc, s7_pointer args)
-{
-  #define H_port_file "(port-file file-port) returns the current FILE* stream (as a raw c-pointer) for port"
-  s7_pointer p;
-  p = car(args);
-
-  if (is_file_port(p))
-    return(s7_make_c_pointer(sc, (void *)port_file(p)));
-  return(sc->F);
-}
-#endif
-
-
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p)   
 { 
   return(is_input_port(p));
@@ -32198,7 +32172,6 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
           (hash-table-ref H (car args))
           (apply href (hash-table-ref H (car args)) (cdr args))))
   */
-
   if (is_null(cddr(args)))
     return(s7_hash_table_ref(sc, table, cadr(args)));
   return(implicit_index(sc, s7_hash_table_ref(sc, table, cadr(args)), cddr(args)));
@@ -32300,7 +32273,6 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
 
   /* this accepts repeated keys: (hash-table '(a . 1) '(a . 1)) -- or just '(a) for that matter
    */
-
   for (len = 0, x = args; is_pair(x); x = cdr(x), len++)
     if ((!is_pair(car(x))) &&
 	(!is_null(car(x))))
@@ -39248,31 +39220,6 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if 0
-static s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
-{
-  int i;
-  va_list ap;
-  s7_pointer p;
-  
-  if (num_values == 0)
-    return(sc->NIL);
-
-  sc->w = sc->NIL;
-  va_start(ap, num_values);
-  for (i = 0; i < num_values; i++)
-    sc->w = cons(sc, va_arg(ap, s7_pointer), sc->w);
-  va_end(ap);
-
-  p = sc->w;
-  sc->w = sc->NIL;
-
-  return(g_values(sc, safe_reverse_in_place(sc, p)));
-}
-#endif
-
-
-
 /* -------------------------------- quasiquote -------------------------------- */
 
 static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
@@ -39710,14 +39657,12 @@ static token_t read_comma(s7_scheme *sc, s7_pointer pt)
 {
   int c;
   /* here we probably should check for symbol names that start with "@":
-     
      :(define-macro (hi @foo) `(+ ,@foo 1))
      hi
      :(hi 2)
      ;foo: unbound variable
 	 
      but
-
      :(define-macro (hi .foo) `(+ ,.foo 1))
      hi
      :(hi 2)
@@ -39805,7 +39750,6 @@ static token_t token(s7_scheme *sc)
       return(TOKEN_ATOM);
     }
 }
-
 
 
 #define NOT_AN_X_CHAR -1
@@ -40348,23 +40292,6 @@ bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
 	   (s7_tree_memq(sc, symbol, cdr(tree))));
   return(false);
 }
-
-#if 0
-static s7_pointer remq(s7_scheme *sc, s7_pointer a, s7_pointer obj) 
-{
-  s7_pointer p;
-
-  sc->w = sc->NIL;
-  for ( ; is_pair(a); a = cdr(a))
-    if (car(a) != obj)
-      sc->w = cons(sc, car(a), sc->w);
-  p = sc->w;
-  sc->w = sc->NIL;
-
-  return(s7_reverse(sc, p));
-}
-#endif
-
 
 
 static s7_pointer g_pair_line_number(s7_scheme *sc, s7_pointer args)
@@ -44819,14 +44746,6 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 	    }
 	}
     }
-
-
-  /*
-  fprintf(stderr, "%s: %d [%s] %d %d %d\n", 
-	  DISPLAY(car_x),
-	  is_optimized(car_x), (is_optimized(car_x) ? opt_names[optimize_data(car_x)] : ""),
-	  pairs, quotes, all_x_count(car_x));
-  */
 
   if (pairs == quotes + all_x_count(car_x))
     {
@@ -70036,9 +69955,7 @@ int main(int argc, char **argv)
  *
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
- * lint should track type checks: (and (procedure? p) (procedure-* p)) etc
  * lint should remove var from undefineds if it is subsequently defined (and we're tracking that list)
  * possibly: s7_stack|value in C.
- * check the profiler in s7.html -- it's ok, but better would be expr-specific counters
  * (require ws) -- make the .scm and maybe the snd- parts optional [requires local symbols etc]
  */

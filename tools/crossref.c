@@ -270,7 +270,6 @@ int main(int argc, char **argv)
   add_file("clm2xen.c");
   add_file("snd-io.c");
   add_file("snd-utils.c");
-  add_file("snd-error.c");
   add_file("snd-completion.c");
   add_file("snd-menu.c");
   add_file("snd-draw.c");

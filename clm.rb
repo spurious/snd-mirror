@@ -2574,7 +2574,7 @@ Snd_error_tags = [# clm2xen.c
                   :no_such_auto_delete_choice,
                   # snd-env.c
                   :env_error,
-                  # snd-error.c
+                  # snd-xen.c
                   :snd_error,
                   # snd-gxcolormaps.c
                   :no_such_colormap,
