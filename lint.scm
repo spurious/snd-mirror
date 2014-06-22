@@ -9,7 +9,6 @@
 (define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
-(define *report-undefined-variables* #f)                  ; this is never useful
 (define *report-shadowed-variables* #f)
 (define *report-minor-stuff* #t)                          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
 
@@ -657,7 +656,6 @@
 	  (outport #t)
 	  (loaded-files #f)
 	  (globals #f)
-	  (undefined-identifiers ())
 	  (other-identifiers #f)
 	  (last-simplify-boolean-line-number -1)
 	  (last-simplify-numeric-line-number -1)
@@ -3382,8 +3380,7 @@
 		    ((with-environment)
 		     (if (< (length form) 3)
 			 (lint-format "with-environment is messed up: ~A" name (truncated-list->string form))
-			 (let ((old-undef *report-undefined-variables*))
-			   (set! *report-undefined-variables* #f)            ; we currently can't tell env-vars from undefined vars
+			 (begin
 			   (if (pair? (cadr form))
 			       (begin
 				 (if (and *report-minor-stuff*
@@ -3395,8 +3392,7 @@
 				  (vars (if (not (eq? e env))
 					    (env-difference name e env ())
 					    ())))
-			     (report-usage name 'variable head vars))
-			   (set! *report-undefined-variables* old-undef)))
+			     (report-usage name 'variable head vars))))
 		     env)
 
 		    ;; with-baffle is not a special case, I guess
@@ -3429,8 +3425,6 @@
 					     (set! last-simplify-numeric-line-number line-number)
 					     (lint-format "possible simplification:~A" name (lists->string form val))))))
 				 
-				 ;; walk everything looking for undefined vars (saved until we finish the file).
-				 ;;
 				 ;;   if we loaded this file first, and f (head) is defined (e.g. scan above),
 				 ;;   and it is used before it is defined, but not thereafter, the usage stuff 
 				 ;;   can get confused, so other-identifiers is trying to track those.
@@ -3442,17 +3436,6 @@
 			   (let ((vars env))
 			     (for-each
 			      (lambda (f)
-				;; look for names we don't know about -- this is unfortunately not very useful
-				(if (and *report-undefined-variables*
-					 (symbol? f)
-					 (not (keyword? f))
-					 (not (eq? f name))
-					 (not (eq? f '=>))
-					 (not (hash-table-ref globals f))
-					 (not (assq f env))
-					 (not (defined? f))
-					 (not (assq f undefined-identifiers)))
-				    (set! undefined-identifiers (cons (list f name (truncated-list->string form) (pair-line-number form)) undefined-identifiers)))
 				(set! vars (lint-walk name f vars)))
 			      form))
 			   ))
@@ -3467,7 +3450,6 @@
 	"(lint file (port #t)) looks for infelicities in file's scheme code"
 	(set! outport outp)
 	(set! *current-file* file)
-	(set! undefined-identifiers ())
 	(set! globals (make-hash-table))
 	(set! other-identifiers (make-hash-table))
 	(set! loaded-files ())
@@ -3521,19 +3503,6 @@
 		
 		(if *report-unused-top-level-functions* 
 		    (report-usage file 'top-level-var "" vars))
-		
-		(if *report-undefined-variables*
-		    (begin
-		      (set! line-number -1) ; squelch the line number reported by lint-format
-		      (for-each
-		       (lambda (var)
-			 (if (not (or (assq (car var) vars)
-				      (hash-table-ref globals (car var))))
-			     (let ((lnum (list-ref var 3)))
-			       (if (not (zero? lnum))
-				   (lint-format "undefined identifier ~A in: ~A (line ~A)" (car var) (caddr var) (cadr var) lnum)
-				   (lint-format "undefined identifier ~A in: ~A" (car var) (caddr var) (cadr var))))))
-		       (reverse undefined-identifiers))))
 		
 		(close-input-port fp))))))))
 

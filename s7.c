@@ -1231,17 +1231,17 @@ struct s7_scheme {
    */
   s7_pointer MINUS, MULTIPLY, ADD, DIVIDE, LT, LEQ, EQ, GT, GEQ, ABS, ACOS, ACOSH;
   s7_pointer ANGLE, APPEND, APPLY, IS_ARITABLE, ARITY, ASH, ASIN, ASINH, ASSOC, ASSQ, ASSV, ATAN, ATANH;
-  s7_pointer AUGMENT_ENVIRONMENT, AUGMENT_ENVIRONMENTB, AUTOLOAD, AUTOLOADER, IS_BOOLEAN, BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
+  s7_pointer AUGMENT_ENVIRONMENT, AUGMENT_ENVIRONMENTB, AUTOLOAD, AUTOLOADER, IS_BOOLEAN, BYTEVECTOR, IS_BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_EXIT;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
   s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, IS_CHAR_ALPHABETIC, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
   s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, IS_CHAR_LOWER_CASE, IS_CHAR_NUMERIC, IS_CHAR_READY, CHAR_UPCASE, IS_CHAR_UPPER_CASE;
-  s7_pointer IS_CHAR_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, IS_COMPLEX, CONS, IS_CONSTANT, IS_CONTINUATION, COPY, COS, COSH, C_POINTER, C_POINTERP;
+  s7_pointer IS_CHAR_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, IS_COMPLEX, CONS, IS_CONSTANT, IS_CONTINUATION, COPY, COS, COSH, C_POINTER, IS_C_POINTER;
   s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_ENVIRONMENT, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_STAR, ENVIRONMENT_TO_LIST;
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
-  s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
+  s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
   s7_pointer IS_HASH_TABLE, IS_HASH_TABLE_ITERATOR, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, IS_LIST, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
@@ -4757,6 +4757,7 @@ static s7_pointer g_is_gensym(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_gensym "(gensym? sym) returns #t if sym is a gensym"
   return(make_boolean(sc, ((is_symbol(car(args))) && (is_gensym(car(args))))));
+  /* check_boolean_method(sc, car(args), s7_is_gensym, sc->IS_GENSYM, args); */
 }
 
 
@@ -6648,7 +6649,7 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
 static s7_pointer g_is_c_pointer(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_c_pointer "(c-pointer? obj) returns #t if obj is a C pointer being held in s7."
-  return(make_boolean(sc, type(car(args)) == T_C_POINTER));
+  check_boolean_method(sc, car(args), s7_is_c_pointer, sc->IS_C_POINTER, args);
 }
 
 
@@ -20512,6 +20513,7 @@ static s7_pointer g_is_bytevector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_bytevector "(bytevector? obj) returns #t if obj is a bytevector"
   return(make_boolean(sc, is_string(car(args)) && is_bytevector(car(args))));
+  /* check_boolean_method(sc, car(args), s7_is_bytevector, sc->IS_BYTEVECTOR, args); */
 }
 
 
@@ -24660,7 +24662,7 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
       if (print_func != sc->UNDEFINED)
 	{
 	  s7_pointer p;
-	  /* what needs to be protected here? */
+	  /* what needs to be protected here? for one, the function might not return a string! */
 	  push_stack(sc, OP_NO_OP, sc->temp_cell_2, sc->temp_cell_3);
 	  if (use_write == USE_WRITE)
 	    p = s7_apply_function(sc, print_func, list_1(sc, obj));
@@ -24669,7 +24671,7 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 	  sc->temp_cell_3 = main_stack_code(sc);
 	  pop_main_stack(sc);
 	  
-	  if (string_length(p) > 0)
+	  if ((is_string(p)) && (string_length(p) > 0))
 	    port_write_string(port)(sc, string_value(p), string_length(p), port);
 	  return;
 	}
@@ -30088,6 +30090,7 @@ static s7_pointer g_is_float_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_float_vector "(float-vector? obj) returns #t if obj is an homogenous float vector"
   return(s7_make_boolean(sc, type(car(args)) == T_FLOAT_VECTOR));
+  /* check_boolean_method(sc, car(args), s7_is_float_vector, sc->IS_FLOAT_VECTOR, args); */
 }
 
 static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
@@ -68892,7 +68895,7 @@ s7_scheme *s7_init(void)
   sc->gc_off = false;
 
   sc->GENSYM =                s7_define_safe_function(sc, "gensym",                  g_gensym,                 0, 1, false, H_gensym);
-                              s7_define_safe_function(sc, "gensym?",                 g_is_gensym,              1, 0, false, H_is_gensym);
+  sc->IS_GENSYM =             s7_define_safe_function(sc, "gensym?",                 g_is_gensym,              1, 0, false, H_is_gensym);
                               s7_define_safe_function(sc, "symbol-table",            g_symbol_table,           0, 0, false, H_symbol_table);
   sc->IS_SYMBOL =             s7_define_safe_function(sc, "symbol?",                 g_is_symbol,              1, 0, false, H_is_symbol);
   sc->SYMBOL_TO_STRING =      s7_define_safe_function(sc, "symbol->string",          g_symbol_to_string,       1, 0, false, H_symbol_to_string);
@@ -68930,7 +68933,7 @@ s7_scheme *s7_init(void)
   sc->SYMBOL_TO_KEYWORD =     s7_define_safe_function(sc, "symbol->keyword",         g_symbol_to_keyword,      1, 0, false, H_symbol_to_keyword);
   sc->KEYWORD_TO_SYMBOL =     s7_define_safe_function(sc, "keyword->symbol",         g_keyword_to_symbol,      1, 0, false, H_keyword_to_symbol);
 
-  sc->C_POINTERP =            s7_define_safe_function(sc, "c-pointer?",              g_is_c_pointer,           1, 0, false, H_is_c_pointer);
+  sc->IS_C_POINTER =          s7_define_safe_function(sc, "c-pointer?",              g_is_c_pointer,           1, 0, false, H_is_c_pointer);
   sc->C_POINTER =             s7_define_safe_function(sc, "c-pointer",               g_c_pointer,              1, 0, false, H_c_pointer);  
 
   sc->PORT_LINE_NUMBER =      s7_define_safe_function(sc, "port-line-number",        g_port_line_number,       0, 1, false, H_port_line_number);
@@ -69236,7 +69239,7 @@ s7_scheme *s7_init(void)
   sc->FLOAT_VECTOR_REF =      s7_define_safe_function(sc, "float-vector-ref",        g_float_vector_ref,       2, 0, true,  H_float_vector_ref);
   set_returns_temp(s7_symbol_value(sc, sc->FLOAT_VECTOR_REF));
 
-                              s7_define_safe_function(sc, "bytevector?",             g_is_bytevector,          1, 0, false, H_is_bytevector);
+  sc->IS_BYTEVECTOR =         s7_define_safe_function(sc, "bytevector?",             g_is_bytevector,          1, 0, false, H_is_bytevector);
   sc->TO_BYTEVECTOR =         s7_define_safe_function(sc, "->bytevector",            g_to_bytevector,          1, 0, false, H_to_bytevector);
   sc->BYTEVECTOR =            s7_define_safe_function(sc, "bytevector",              g_bytevector,             0, 0, true,  H_bytevector);
   sc->MAKE_BYTEVECTOR =       s7_define_safe_function(sc, "make-bytevector",         g_make_bytevector,        1, 1, false, H_make_bytevector);
@@ -69955,7 +69958,40 @@ int main(int argc, char **argv)
  *
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
- * lint should remove var from undefineds if it is subsequently defined (and we're tracking that list)
  * possibly: s7_stack|value in C.
  * (require ws) -- make the .scm and maybe the snd- parts optional [requires local symbols etc]
+ * can envs modify for-each/map and so on?  Check everything in this regard!
+ *   t915.scm: 105 that are trouble (240 ok), add this to s7test eventually
+ *   then object-environment can handle all the special cases -- no need for the function tables?
+ *   all of these (object_reverse et al) need to check object_environment -- block in s7test
+ *   auto-env in t179a and others, secret/locked-env -- can we block implicit set/ref?
+ * tester: let->named let (same value), added var, virus-env as tree walker that adds "innocuous" copies of self to envs
+ *   then retest until trouble -- can this give full history?
+ *   pass as arg, then it records each caller, adapts to it, infects returned value (as around method)
+ * this also gives a way to extend member (etc) to any sequence type (member obj (mock-list ...)
+
+(define (mock-list seq)
+  (open-environment
+   (environment* 
+    'pair? (lambda (obj) #t)
+    'value seq
+    'member (lambda (a b)
+	      (let* ((v (b 'value))
+		     (len (length v)))
+		(call-with-exit
+		 (lambda (return)
+		   (do ((i 0 (+ i 1)))
+		       ((= i len) #f)
+		     (if (equal? a (v i))
+			 (return (make-shared-vector v (list (- len i)) i))))))))))) 
+; assuming here a vector value, but copy isn't quite the right replacement:
+; need generic subsequence [subseq in CL] I guess, (subsequence seq (start 0) end)
+; float-vector-subseq vct.c
+; ->make (along the lines of ->predicate)
+
+(member 2 (mock-list #(0 1 2 3 4 5)))
+#(2 3 4 5)
+
+call/cc (mock-cc) ... -> records calls?
+t915/t916
  */

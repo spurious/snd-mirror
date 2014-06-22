@@ -4711,6 +4711,16 @@ Along the same lines:
 
 (define (catch-member lst func err)
   (catch-if (lambda (tag) (member tag lst)) func err))
+
+(define-macro (catch* clauses . error) 
+  ;; try each clause until one evaluates without error, else error:
+  ;;    (macroexpand (catch* ((+ 1 2) (- 3 4)) 'error))
+  ;;    (catch #t (lambda () (+ 1 2)) (lambda args (catch #t (lambda () (- 3 4)) (lambda args 'error))))
+  (define (builder lst)
+    (if (null? lst)
+	(apply values error)
+	`(catch #t (lambda () ,(car lst)) (lambda args ,(builder (cdr lst))))))
+  (builder clauses))
 </pre>
 </div>
 
