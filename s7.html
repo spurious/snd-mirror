@@ -2698,14 +2698,14 @@ global-environment    rootlet
 initial-environment   unlet
 with-environment      inlet 
 outer-environment     outlet
-augment-environment   sublet, make-let(?)
-augment-environment!  varlet, let-append(?)
-current-environment   valet,  make-begin(?)
+augment-environment   
+augment-environment!  varlet
+current-environment   valet
 error-environment     owlet, triplet, error-let(?)
-procedure-environment runlet(?)
+procedure-environment 
 environment-&gt;list     let-&gt;list(?) (or remove it; it is the same as (map values env))
-open-environment      open-let(?)
-open-environment?
+open-environment      (open-environment (environment* ...)) is the normal use: opiate?
+open-environment?     if opiate, then opium?
 </pre>
 
 <!-- also (map append env)
@@ -3343,6 +3343,13 @@ The '+' function for instance, can take any mixture of numbers:
 #&lt;quaternion: (r 4.5) (i 2.0) (j 0.0) (k 0.0)&gt;
 </pre>
 
+</div>
+
+<div class="indented">
+<p>Currently some s7 functions ignore methods, in particular functions
+that scarcely glance at their arguments: cons, vector, list, and others of that ilk will
+not notice the oddball environment with a 'cons method.
+</p>
 </div>
 </blockquote>
 

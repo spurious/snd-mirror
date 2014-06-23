@@ -1250,7 +1250,8 @@ struct s7_scheme {
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPEN_ENVIRONMENT, IS_OPEN_ENVIRONMENT, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, IS_OUTPUT_PORT, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
   s7_pointer IS_PORT_CLOSED, PORT_FILE, PORT_FILENAME, PORT_LINE_NUMBER;
-  s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
+  s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE;
+  s7_pointer IS_PROCEDURE_WITH_SETTER, PROVIDE;
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE;
   s7_pointer STRING, STRING_DOWNCASE, STRING_UPCASE, STRING_LEQ, STRING_LT, STRING_EQ;
@@ -4147,8 +4148,10 @@ Evaluation produces a surprising amount of garbage, so don't leave the GC off fo
   if (is_not_null(args))
     {
       if (!s7_is_boolean(car(args)))
-	return(simple_wrong_type_argument_with_type(sc, sc->GC, car(args), make_protected_string(sc, "#f (turn GC off) or #t (turn it on)")));
-
+	{
+	  check_method(sc, car(args), sc->GC, args);
+	  return(simple_wrong_type_argument_with_type(sc, sc->GC, car(args), make_protected_string(sc, "#f (turn GC off) or #t (turn it on)")));
+	}
       sc->gc_off = (car(args) == sc->F);
       if (sc->gc_off) 
 	return(sc->F);
@@ -4753,11 +4756,12 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 } 
 
 
+static bool s7_is_gensym(s7_pointer g) {return((is_symbol(g)) && (is_gensym(g)));}
+
 static s7_pointer g_is_gensym(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_gensym "(gensym? sym) returns #t if sym is a gensym"
-  return(make_boolean(sc, ((is_symbol(car(args))) && (is_gensym(car(args))))));
-  /* check_boolean_method(sc, car(args), s7_is_gensym, sc->IS_GENSYM, args); */
+  check_boolean_method(sc, car(args), s7_is_gensym, sc->IS_GENSYM, args); 
 }
 
 
@@ -5431,6 +5435,7 @@ static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
   s7_pointer e;
 
   e = car(args);
+  check_method(sc, e, sc->OPEN_ENVIRONMENT, args);
   if (((is_environment(e)) && (e != sc->global_env)) ||
       (is_closure(e)) ||
       (is_closure_star(e)) ||
@@ -5439,7 +5444,6 @@ static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
       set_has_methods(e);
       return(e);
     }
-  check_method(sc, e, sc->OPEN_ENVIRONMENT, args);
   return(simple_wrong_type_argument_with_type(sc, sc->OPEN_ENVIRONMENT, e, AN_ENVIRONMENT));
 }
 
@@ -5507,11 +5511,9 @@ environment."
     e = sc->global_env;
   else
     {
+      check_method(sc, e, sc->AUGMENT_ENVIRONMENTB, args);
       if (!is_environment(e))
-	{
-	  check_method(sc, e, sc->AUGMENT_ENVIRONMENTB, args);
-	  return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, small_int(1), e, AN_ENVIRONMENT));
-	}
+	return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, small_int(1), e, AN_ENVIRONMENT));
     }
   for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
     {
@@ -5648,11 +5650,9 @@ new environment."
     e = sc->global_env;
   else
     {
+      check_method(sc, e, sc->AUGMENT_ENVIRONMENT, args);
       if (!is_environment(e))
-	{
-	  check_method(sc, e, sc->AUGMENT_ENVIRONMENT, args);
-	  return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, small_int(1), e, AN_ENVIRONMENT));
-	}
+	return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, small_int(1), e, AN_ENVIRONMENT));
     }
   if (!is_null(cdr(args)))
     for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
@@ -5783,11 +5783,9 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 
   s7_pointer env;
   env = car(args);
+  check_method(sc, env, sc->ENVIRONMENT_TO_LIST, args);
   if (!is_environment(env))
-    {
-      check_method(sc, env, sc->ENVIRONMENT_TO_LIST, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_TO_LIST, env, AN_ENVIRONMENT));
-    }
+    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_TO_LIST, env, AN_ENVIRONMENT));
   return(s7_environment_to_list(sc, env));
 }
 
@@ -6268,8 +6266,10 @@ static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
   sym = car(args);
 
   if (!is_symbol(sym))
-    return(wrong_type_argument(sc, sc->SYMBOL_TO_DYNAMIC_VALUE, small_int(1), sym, T_SYMBOL));
-  
+    {
+      check_method(sc, sym, sc->SYMBOL_TO_DYNAMIC_VALUE, args);
+      return(wrong_type_argument(sc, sc->SYMBOL_TO_DYNAMIC_VALUE, small_int(1), sym, T_SYMBOL));
+    }
   if (is_global(sym))
     return(slot_value(global_slot(sym)));
 
@@ -19114,8 +19114,10 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
     }
   
   if (!is_string(arg1))
-    return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(1), arg1, T_CHARACTER));
-
+    {
+      check_method(sc, arg1, sc->CHAR_POSITION, args);
+      return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(1), arg1, T_CHARACTER));
+    }
   if (string_length(arg1) == 0)
     return(sc->F);
   pset = string_value(arg1);
@@ -19144,12 +19146,18 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
   s7_pointer s1p, s2p;
 
   s1p = car(args);
-  s2p = cadr(args);
-
   if (!is_string(s1p))
-    return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(1), s1p, T_STRING));
+    {
+      check_method(sc, s1p, sc->STRING_POSITION, args);
+      return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(1), s1p, T_STRING));
+    }
+
+  s2p = cadr(args);
   if (!is_string(s2p))
-    return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(2), s2p, T_STRING));
+    {
+      check_method(sc, s2p, sc->STRING_POSITION, args);
+      return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(2), s2p, T_STRING));
+    }
 
   if (is_pair(cddr(args)))
     {
@@ -19740,8 +19748,9 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
 static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_object_to_string "(object->string obj (write #t)) returns a string representation of obj."
-  use_write_t choice = USE_WRITE;
+  use_write_t choice;
   char *str;
+  s7_pointer obj;
 
   if (is_not_null(cdr(args)))
     {
@@ -19749,9 +19758,15 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
       if (choice == USE_WRITE_WRONG)
 	return(wrong_type_argument(sc, sc->OBJECT_TO_STRING, small_int(2), cadr(args), T_BOOLEAN));
     }
+  else choice = USE_WRITE;
   /* can't use s7_object_to_string here anymore because it assumes use_write arg is a boolean
    */
-  str = s7_object_to_c_string_1(sc, car(args), choice, NULL);
+  
+  obj = car(args);
+  if (is_environment(obj))
+    check_method(sc, obj, sc->OBJECT_TO_STRING, args);
+
+  str = s7_object_to_c_string_1(sc, obj, choice, NULL);
   if (str)
     return(make_string_uncopied(sc, str));
   return(s7_make_string_with_length(sc, "", 0)); 
@@ -20509,11 +20524,12 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
  * these are just strings with the T_BYTEVECTOR bit set.
  */
 
+static bool s7_is_bytevector(s7_pointer b) {return((is_string(b)) && (is_bytevector(b)));}
+
 static s7_pointer g_is_bytevector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_bytevector "(bytevector? obj) returns #t if obj is a bytevector"
-  return(make_boolean(sc, is_string(car(args)) && is_bytevector(car(args))));
-  /* check_boolean_method(sc, car(args), s7_is_bytevector, sc->IS_BYTEVECTOR, args); */
+  check_boolean_method(sc, car(args), s7_is_bytevector, sc->IS_BYTEVECTOR, args);
 }
 
 
@@ -20715,8 +20731,11 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
   if ((is_input_port(port)) &&
       (!port_is_closed(port)))
     sc->input_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, port, "an open input port"));
-
+  else
+    {
+      check_method(sc, port, s7_make_symbol(sc, "set-current-input-port"), args);
+      return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, port, "an open input port"));
+    }
   return(old_port);
 }
 
@@ -20762,8 +20781,11 @@ static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
   if ((is_output_port(port)) &&
       (!port_is_closed(port)))
     sc->output_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-output-port", 0, port, "an open output port"));
-
+  else 
+    {
+      check_method(sc, port, s7_make_symbol(sc, "set-current-output-port"), args);
+      return(s7_wrong_type_arg_error(sc, "set-current-output-port", 0, port, "an open output port"));
+    }
   return(old_port);
 }
 
@@ -20800,8 +20822,11 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
   if ((is_output_port(port)) &&
       (!port_is_closed(port)))
     sc->error_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-error-port", 0, port, "an open output port"));
-
+  else 
+    {
+      check_method(sc, port, s7_make_symbol(sc, "set-current-error-port"), args);
+      return(s7_wrong_type_arg_error(sc, "set-current-error-port", 0, port, "an open output port"));
+    }
   return(old_port);
 }
 
@@ -22531,7 +22556,10 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 
   k = car(args);
   if (!s7_is_integer(k))
-    return(wrong_type_argument(sc, sc->READ_STRING, small_int(1), k, T_INTEGER));
+    {
+      check_method(sc, k, sc->READ_STRING, args);
+      return(wrong_type_argument(sc, sc->READ_STRING, small_int(1), k, T_INTEGER));
+    }
   chars = s7_integer(k);
   if (chars < 0)
     return(wrong_type_argument_with_type(sc, sc->READ_STRING, small_int(1), k, A_NON_NEGATIVE_INTEGER));
@@ -25525,7 +25553,7 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
   if (!s7_is_aritable(sc, proc, 1))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
 					 make_protected_string(sc, "a procedure of one argument (the port)")));
-  if ((is_continuation(proc)) || is_goto(proc))
+  if ((is_continuation(proc)) || (is_goto(proc)))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
   port = s7_open_output_string(sc);
@@ -30089,8 +30117,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_float_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_float_vector "(float-vector? obj) returns #t if obj is an homogenous float vector"
-  return(s7_make_boolean(sc, type(car(args)) == T_FLOAT_VECTOR));
-  /* check_boolean_method(sc, car(args), s7_is_float_vector, sc->IS_FLOAT_VECTOR, args); */
+  check_boolean_method(sc, car(args), s7_is_float_vector, sc->IS_FLOAT_VECTOR, args);
 }
 
 static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
@@ -31025,8 +31052,10 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 
   v = car(args);
   if (!is_float_vector(v))
-    return(wrong_type_argument(sc, sc->FLOAT_VECTOR_REF, small_int(1), v, T_FLOAT_VECTOR)); 
-
+    {
+      check_method(sc, v, sc->FLOAT_VECTOR_REF, args);
+      return(wrong_type_argument(sc, sc->FLOAT_VECTOR_REF, small_int(1), v, T_FLOAT_VECTOR)); 
+    }
   if (vector_rank(v) == 1)
     {
       index = cadr(args);
@@ -32876,8 +32905,10 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   if ((!is_procedure(p)) &&
       (!is_macro(p)) &&
       (!is_bacro(p)))
-    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_SOURCE, car(args), make_protected_string(sc, "a procedure or a macro")));
-
+    {
+      check_method(sc, p, sc->PROCEDURE_SOURCE, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_SOURCE, p, make_protected_string(sc, "a procedure or a macro")));
+    }
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     {
       s7_pointer body;
@@ -32922,14 +32953,17 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
 			list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args)))); /* not p here */
     }
 
+  if (!is_procedure_or_macro(p))
+    {
+      check_method(sc, p, sc->PROCEDURE_ENVIRONMENT, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ENVIRONMENT, p, make_protected_string(sc, "a procedure or a macro")));
+    }
+
   e = find_environment(sc, p);
   if ((is_null(e)) &&
       (!is_c_object(p)))
-    {
-      if (!is_procedure_or_macro(p))
-	return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ENVIRONMENT, car(args), make_protected_string(sc, "a procedure or a macro")));
-      return(sc->global_env);
-    }
+    return(sc->global_env);
+
   return(e);
 }
 
@@ -33223,7 +33257,10 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
     }
   if ((!is_procedure(p)) &&
       (!s7_is_macro(sc, p)))
-    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_DOCUMENTATION, car(args), A_PROCEDURE));
+    {
+      check_method(sc, p, sc->PROCEDURE_DOCUMENTATION, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_DOCUMENTATION, p, A_PROCEDURE));
+    }
   return(s7_make_string(sc, s7_procedure_documentation(sc, p)));
 }
 
@@ -33363,7 +33400,6 @@ static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
   const char *doc;
 
   check_method(sc, car(args), sc->HELP, args);
-
   doc = s7_help(sc, car(args));
   if (!doc)
     return(sc->F);
@@ -33719,6 +33755,12 @@ bool s7_is_procedure_with_setter(s7_pointer obj)
 	  (is_procedure(closure_setter(obj)))));
 }
 
+static s7_pointer g_is_procedure_with_setter(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_procedure_with_setter "(procedure-with-setter? obj) returns #t if obj is a procedure with setter."
+  check_boolean_method(sc, car(args), s7_is_procedure_with_setter, sc->IS_PROCEDURE_WITH_SETTER, args);
+}
+
 
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
 {
@@ -33728,21 +33770,6 @@ s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
   return(closure_setter(obj));
 }
 
-#if 0
-static s7_pointer s7_procedure_set_setter(s7_scheme *sc, s7_pointer obj, s7_pointer setter)
-{
-  /* setter can be #f to clear an old setting */
-  if (is_c_function(obj))
-    {
-      c_function_setter(obj) = setter;
-      if ((is_closure(setter)) ||
-	  (is_closure_star(setter)))
-	mark_function[type(obj)] = mark_c_proc;
-    }
-  else closure_setter(obj) = setter;
-  return(setter);
-}
-#endif
 
 static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
 {
@@ -33772,6 +33799,10 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
     case T_GOTO:
     case T_CONTINUATION:
       return(sc->F);
+
+    case T_ENVIRONMENT:
+      check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
+      break;
     }
 
   return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure or a reasonable facsimile thereof"));
@@ -33922,6 +33953,7 @@ static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
   if ((is_procedure_or_macro(p)) ||
       (is_symbol(p)))
     return(s7_make_string(sc, s7_procedure_name(sc, p)));
+  check_method(sc, p, sc->PROCEDURE_NAME, args);
   return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_NAME, p, A_PROCEDURE));
 }
 
@@ -34006,9 +34038,11 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			list_2(sc, make_protected_string(sc, "procedure-arity arg, '~S, is unbound"), car(args))));
     }
-
   if (!is_procedure(p))
-    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ARITY, car(args), A_PROCEDURE));
+    {
+      check_method(sc, p, sc->PROCEDURE_ARITY, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ARITY, p, A_PROCEDURE));
+    }
   return(s7_procedure_arity(sc, p));
 }
 
@@ -34145,6 +34179,7 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 	return(sc->F);
 
     case T_ENVIRONMENT:
+      check_method(sc, x, sc->ARITY, args);
       return(s7_cons(sc, small_int(1), small_int(1)));
       
     case T_C_OBJECT:
@@ -34320,6 +34355,8 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	     ((unsigned int)args <= vector_rank(x)));
 
     case T_ENVIRONMENT:
+      check_method(sc, x, sc->IS_ARITABLE, list_2(sc, x, s7_make_integer(sc, args)));
+
     case T_HASH_TABLE:
     case T_PAIR:
       return(args == 1);
@@ -34465,7 +34502,10 @@ static s7_pointer g_symbol_get_access(s7_scheme *sc, s7_pointer args)
 symbol accesses its current binding."
 
   if (!is_symbol(car(args)))
-    return(simple_wrong_type_argument(sc, sc->SYMBOL_ACCESS, car(args), T_SYMBOL));
+    {
+      check_method(sc, car(args), sc->SYMBOL_ACCESS, args);
+      return(simple_wrong_type_argument(sc, sc->SYMBOL_ACCESS, car(args), T_SYMBOL));
+    }
   return(s7_symbol_access(sc, car(args)));
 }
 
@@ -35670,6 +35710,7 @@ static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_
   return(s7_hash_table_set(sc, e, car(val), cdr(val)));
 }
 
+
 static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
@@ -35709,6 +35750,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_C_OBJECT:     get = c_object_getter;       end = object_length_to_int(sc, source); break;
 
     case T_ENVIRONMENT:  
+      check_method(sc, source, sc->COPY, args);
       if (source == sc->global_env)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_protected_string(sc, "a sequence other than the global environment")));
       get = env_getter;            
@@ -35749,7 +35791,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_HASH_TABLE:   set = hash_table_setter;   dest_len = source_len;                     break;
     case T_C_OBJECT:     set = c_object_setter;     dest_len = object_length_to_int(sc, dest); break;
 
-    case T_ENVIRONMENT:  
+    case T_ENVIRONMENT: 
       if (source == sc->global_env)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(2), dest, make_protected_string(sc, "a sequence other than the global environment")));
       set = env_setter;          
@@ -36572,7 +36614,11 @@ line to be preceded by a semicolon."
 	      else return(wrong_type_argument(sc, sc->STACKTRACE, small_int(2), car(args), T_INTEGER));
 	    }
 	}
-      else return(wrong_type_argument(sc, sc->STACKTRACE, small_int(1), car(args), T_INTEGER));
+      else 
+	{
+	  check_method(sc, car(args), sc->STACKTRACE, args);
+	  return(wrong_type_argument(sc, sc->STACKTRACE, small_int(1), car(args), T_INTEGER));
+	}
     }
   return(make_string_uncopied(sc, stacktrace_1(sc, (int)max_frames, (int)code_cols, (int)total_cols, (int)notes_start_col, as_comment)));
 }
@@ -37328,6 +37374,7 @@ It looks for an existing catch with a matching tag, and jumps to it if found.  O
       if (sc->longjmp_ok) longjmp(sc->goto_start, 1);
       return(sc->value);
     }
+  if (is_environment(car(args))) check_method(sc, car(args), sc->THROW, args);
   return(s7_error(sc, make_symbol(sc, "uncaught-throw"), args));
 }
 
@@ -38611,7 +38658,10 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	{ 
 	  /* (let ((a 1) (b 2)) (for-each (lambda (slot) (format #t "~A~%" slot)) (current-environment))) */
 	  if (is_environment(obj))
-	    sc->z = list_1(sc, s7_environment_to_list(sc, obj));
+	    {
+	      check_method(sc, obj, sc->FOR_EACH, args);
+	      sc->z = list_1(sc, s7_environment_to_list(sc, obj));
+	    }
 	  else sc->z = list_1(sc, obj);
 	}
 
@@ -38947,7 +38997,10 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       else 
 	{
 	  if (is_environment(obj))
-	    sc->z = list_1(sc, s7_environment_to_list(sc, obj));
+	    {
+	      check_method(sc, obj, sc->MAP, args);
+	      sc->z = list_1(sc, s7_environment_to_list(sc, obj));
+	    }
 	  else sc->z = list_1(sc, obj);
 	}
 
@@ -69303,6 +69356,7 @@ s7_scheme *s7_init(void)
   sc->PROCEDURE_ENVIRONMENT = s7_define_safe_function(sc, "procedure-environment",   g_procedure_environment,  1, 0, false, H_procedure_environment);
   sc->PROCEDURE_NAME =        s7_define_safe_function(sc, "procedure-name",          g_procedure_name,         1, 0, false, H_procedure_name);
   s7_make_procedure_with_setter(sc, "procedure-setter",   g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter);
+  sc->IS_PROCEDURE_WITH_SETTER = s7_define_safe_function(sc, "procedure-with-setter?", g_is_procedure_with_setter, 1, 0, false, H_is_procedure_with_setter);
 
   sc->ARITY =                 s7_define_safe_function(sc, "arity",                   g_arity,                  1, 0, false, H_arity);
   sc->IS_ARITABLE =           s7_define_safe_function(sc, "aritable?",               g_is_aritable,            2, 0, false, H_is_aritable);
@@ -69655,10 +69709,6 @@ s7_scheme *s7_init(void)
                               (set! (procedure-setter g) s))                                                  \n\
                           g)");
 
-  s7_eval_c_string(sc, "(define (procedure-with-setter? obj)                                                  \n\
-                          \"(procedure-with-setter? obj) returns #t if obj is a procedure with setter.\"      \n\
-                          (and (procedure? obj) (procedure? (procedure-setter obj))))");
-
 
   /* ---------------- cond-expand ---------------- */
 
@@ -69963,35 +70013,17 @@ int main(int argc, char **argv)
  * can envs modify for-each/map and so on?  Check everything in this regard!
  *   t915.scm: 105 that are trouble (240 ok), add this to s7test eventually
  *   then object-environment can handle all the special cases -- no need for the function tables?
+ *   or object types!  except as optimization, but that could be internal
+ *   so make new C-obj class: s7_make_environment, new member, same but point outer->class
+ *   type is T_C_OBJECT for s7, caller can distinguish in any way: how to specify implicit ref/set, free equal? mark
  *   all of these (object_reverse et al) need to check object_environment -- block in s7test
- *   auto-env in t179a and others, secret/locked-env -- can we block implicit set/ref?
+ * why was this rejected a couple years ago? obj-env could simply point to the class -- no extra memory etc
  * tester: let->named let (same value), added var, virus-env as tree walker that adds "innocuous" copies of self to envs
  *   then retest until trouble -- can this give full history?
  *   pass as arg, then it records each caller, adapts to it, infects returned value (as around method)
- * this also gives a way to extend member (etc) to any sequence type (member obj (mock-list ...)
-
-(define (mock-list seq)
-  (open-environment
-   (environment* 
-    'pair? (lambda (obj) #t)
-    'value seq
-    'member (lambda (a b)
-	      (let* ((v (b 'value))
-		     (len (length v)))
-		(call-with-exit
-		 (lambda (return)
-		   (do ((i 0 (+ i 1)))
-		       ((= i len) #f)
-		     (if (equal? a (v i))
-			 (return (make-shared-vector v (list (- len i)) i))))))))))) 
-; assuming here a vector value, but copy isn't quite the right replacement:
-; need generic subsequence [subseq in CL] I guess, (subsequence seq (start 0) end)
-; float-vector-subseq vct.c
-; ->make (along the lines of ->predicate)
-
-(member 2 (mock-list #(0 1 2 3 4 5)))
-#(2 3 4 5)
-
-call/cc (mock-cc) ... -> records calls?
-t915/t916
+ *   wrapper: (env 'f (lambda (e . args) (set! (e 'result) (f (e 'result) . args) e))
+ *   is env-ref called in implicit case? s7_* is I think! so there's hope
+ * can extend stuff et all to check for methods
+ * ->make (along the lines of ->predicate)
+ * secret env: env->list->() all fields gensym'd. aug-env|ref|set blocked
  */

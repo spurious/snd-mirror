@@ -45,6 +45,12 @@
 	((null? p) lst)
       (set! (car p) i))))
 
+(define (cdr* lst n)
+  (do ((i n (- i 1))
+       (result lst (cdr result))) 
+      ((or (null? result)
+	   (zero? i)) 
+       result)))
 
 (define* (make-circular-list n init)
   "(make-circular-list n init) returns a circular list with n entries initialized to init:\n\
@@ -891,16 +897,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (if (continuation? ((error-environment) 'continue))
       (((error-environment) 'continue))))
 
-(define (flatten-environment e)
-  (let ((slots ()))
-    (do ((pe e (outer-environment pe)))
-	((eq? pe (global-environment))
-	 (apply environment slots))
-      (for-each (lambda (slot)
-		  (if (not (assq (car slot) slots))
-		      (set! slots (cons slot slots))))
-		pe))))
-
 (define (call-with-input-vector v proc)
   (let ((i -1))
     (proc (open-environment
@@ -927,3 +923,69 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 				       (apply format p args)
 				       (write (apply format #f args) p))))))
     (make-shared-vector v (list i)))) ; ignore extra trailing elements
+
+
+
+;;; ----------------
+
+(define (flatten-environment e)
+  (let ((slots ()))
+    (do ((pe e (outer-environment pe)))
+	((eq? pe (global-environment))
+	 (apply environment slots))
+      (for-each (lambda (slot)
+		  (if (not (assq (car slot) slots))
+		      (set! slots (cons slot slots))))
+		pe))))
+
+
+(define* (subsequence obj (start 0) end)
+  (let* ((len (length obj))
+	 (new-len (- (min len (or end len)) start)))
+    (if (negative? new-len)
+	(error 'out-of-range "end: ~A should be greater than start: ~A" end start))
+
+    (cond ((vector? obj) 
+	   (make-shared-vector obj (list new-len) start))
+
+	  ((string? obj) 
+	   (if end
+	       (substring obj start end)
+	       (substring obj start)))
+
+	  ((pair? obj)
+	   (if (not end)
+	       (cdr* obj start)
+	       (let ((lst (make-list new-len #f)))
+		 (do ((i 0 (+ i 1)))
+		     ((= i new-len) lst)
+		   (set! (lst i) (obj (+ i start)))))))
+
+	  ;; ((float-vector? obj) (float-vector-subseq obj start end)) but it's currently in vct.c
+
+	  (else             ; (subsequence (open-environment (environment* 'subsequence (lambda* (obj start end) "subseq"))))
+	   (catch #t
+	     (lambda ()
+	       ((obj 'subsequence) obj start end))
+	     (lambda args
+	       #f))))))
+
+
+(define (mock-list seq)
+  (open-environment
+   (environment* 
+    'pair? (lambda (obj) #t)
+    'value seq
+    'member (lambda* (a b c)
+	      (let* ((v (b 'value))
+		     (len (length v))
+		     (c? (or c equal?)))
+		(call-with-exit
+		 (lambda (return)
+		   (do ((i 0 (+ i 1)))
+		       ((= i len) #f)
+		     (if (c? a (v i))
+			 (return (subsequence v i)))))))))))
+
+
+
