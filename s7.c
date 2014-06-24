@@ -1039,6 +1039,9 @@ typedef struct s7_cell {
 	  s7_pointer result;
 	  unsigned int op_stack_loc, goto_loc;
 	} ctall;
+        struct {
+	  s7_pointer elsef;
+	} elsenv;
       } edat;
     } envr;
 
@@ -1283,7 +1286,7 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer Object_Set;               /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
-  s7_pointer BODY;
+  s7_pointer BODY, _ELSE_;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
@@ -1772,6 +1775,12 @@ static void init_types(void)
 /* marks a string that the caller considers a bytevector 
 */
 
+#define T_HAS_ELSE                    T_MUTABLE
+#define has_else(p)                   ((typeflag(p) & T_HAS_ELSE) != 0)
+#define set_has_else(p)               typeflag(p) |= T_HAS_ELSE
+/* this marks an environment or c_object that has a fallback else method
+ */
+
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
 #define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
@@ -2101,6 +2110,7 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #define environment_file(p)           (p)->object.envr.edat.efnc.file
 #define environment_dox1(p)           (p)->object.envr.edat.dox.dox1
 #define environment_dox2(p)           (p)->object.envr.edat.dox.dox2
+#define environment_else(p)           (p)->object.envr.edat.elsenv.elsef
 
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
@@ -2560,7 +2570,7 @@ static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
-static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE;
+static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL;
 
 
 /* --------------------------------------------------------------------------------
@@ -2807,13 +2817,24 @@ static int position_of(s7_pointer p, s7_pointer args)
 }
 
 
-#define check_method(Sc, Obj, Method, Args)   \
-  {                                           \
-    s7_pointer func;                          \
-    if ((has_methods(Obj)) &&                 \
-        ((func = find_method(Sc, find_environment(Sc, Obj), Method)) != Sc->UNDEFINED)) \
-      return(s7_apply_function(Sc, func, Args));        \
-  }
+#define check_method(Sc, Obj, Method, Args) do {if (has_methods(Obj)) {s7_pointer _x_; _x_ = check_method_1(Sc, Obj, Method, Args); if (_x_) return(_x_);}} while (0)
+
+static s7_pointer check_method_1(s7_scheme *sc, s7_pointer obj, s7_pointer method, s7_pointer args)
+{
+  s7_pointer func;
+  if ((func = find_method(sc, find_environment(sc, obj), method)) != sc->UNDEFINED)
+    return(s7_apply_function(sc, func, args));       
+  if (has_else(obj))
+    {
+      if (obj == car(args))
+	return(s7_apply_function(sc, find_symbol_unchecked(sc, method),
+		 s7_apply_function(sc, environment_else(obj), args)));
+      return(s7_apply_function(sc, find_symbol_unchecked(sc, method),
+	       s7_cons(sc, car(args), 
+		 s7_apply_function(sc, environment_else(obj), cdr(args)))));
+    }
+  return(NULL);
+}
 
 /* unfortunately, in the simplest cases, where a function (like number?) accepts any argument,
  *   this costs about a factor of 1.5 in speed (we're doing the normal check like s7_is_number,
@@ -5470,7 +5491,7 @@ s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_point
 static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e)
 {
   s7_pointer x;
-
+  
   if (old_e == sc->global_env) 
     return;
 
@@ -5494,6 +5515,16 @@ static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e
 }
 
 
+static s7_pointer check_c_obj_env(s7_scheme *sc, s7_pointer old_e, s7_pointer caller)
+{
+  if (is_c_object(old_e))
+    old_e = c_object_environment(old_e);
+  if (!is_environment(old_e))
+    return(simple_wrong_type_argument_with_type(sc, caller, old_e, AN_ENVIRONMENT));
+  return(old_e);
+}
+
+
 /* should these two augment-envs check for symbol accessors?
  */
 
@@ -5503,7 +5534,7 @@ static s7_pointer g_augment_environment_direct(s7_scheme *sc, s7_pointer args)
 arguments (each an environment or a cons: symbol . value) directly to the environment env, and returns the \
 environment."
 
-  s7_pointer x, e;
+  s7_pointer x, e, sym, val, p;
   int i;
 
   e = car(args);
@@ -5515,36 +5546,23 @@ environment."
       if (!is_environment(e))
 	return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, small_int(1), e, AN_ENVIRONMENT));
     }
-  for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
-    {
-      s7_pointer sym, val, p;
-      p = car(x);
-      if (!is_environment(p))
-	{
-	  if (!is_pair(p))
-	    return(wrong_type_argument(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), p, T_PAIR));
-	  if (!is_symbol(car(p)))
-	    return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), p, 
-						 make_protected_string(sc, "a pair whose car is a symbol: '(symbol . value)")));
-	  sym = car(p);
-	  val = cdr(p);
-	  if ((is_immutable(sym)) &&                    /* check for (eval 'pi (augment-environment! () '(pi . 1))) */
-	      (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
-	    return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, 
-						 make_protected_string(sc, "a non-contant symbol")));
-	}
-    }
   
   if (e == sc->global_env)
     {
       for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
 	{
-	  s7_pointer p;
 	  p = car(x);
 	  if (is_pair(p))
 	    {
-	      s7_pointer sym;
 	      sym = car(p);
+	      if (!is_symbol(sym))
+		return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), p, A_BINDING));
+
+	      val = cdr(p);
+	      if ((is_immutable(sym)) &&                             /* check for (eval 'pi (augment-environment! () '(pi . 1))) */
+		  (!s7_is_equal(sc, val, s7_symbol_value(sc, sym)))) /* like define-constant again -- a redundant entry? -- very rare to get here */
+		return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+
 	      if (is_slot(global_slot(sym)))
 		{
 		  if (is_syntax(slot_value(global_slot(sym))))
@@ -5559,16 +5577,16 @@ environment."
 		   * 1
 		   * or worse set quote to a function of one arg that tries to quote something -- infinite loop
 		   */
-		  slot_set_value(global_slot(sym), cdr(p));
+		  slot_set_value(global_slot(sym), val);
 		}
-	      else s7_make_slot(sc, e, sym, cdr(p));
+	      else s7_make_slot(sc, e, sym, val);
 	    }
-	  else append_environment(sc, e, p);
+	  else append_environment(sc, e, check_c_obj_env(sc, p, sc->AUGMENT_ENVIRONMENTB));
 	}
     }
   else
     {
-      for (x = cdr(args); is_not_null(x); x = cdr(x))
+      for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
 	{
 	  s7_pointer p;
 	  p = car(x);
@@ -5576,26 +5594,46 @@ environment."
 	    {
 	      s7_pointer x;
 	      bool found_it = false;
+
+	      sym = car(p);
+	      if (!is_symbol(sym))
+		return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), p, A_BINDING));
+
+	      val = cdr(p);
+	      if (is_immutable(sym))
+		{
+		  if (sym == sc->_ELSE_)
+		    {
+		      set_has_else(e);
+		      environment_else(e) = val;
+		    }
+		  else
+		    {
+		      if (!s7_is_equal(sc, val, s7_symbol_value(sc, sym)))
+			return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+		    }
+		}
 	      for (x = environment_slots(e); is_slot(x); x = next_slot(x))
-		if (slot_symbol(x) == car(p))
+		if (slot_symbol(x) == sym)
 		  {
-		    slot_set_value(x, cdr(p));
+		    slot_set_value(x, val);
 		    found_it = true;
 		    break;
 		  }
 	      if (!found_it)
-		s7_make_slot(sc, e, car(p), cdr(p));
+		s7_make_slot(sc, e, sym, val);
 	    }
-	  else append_environment(sc, e, p);
+	  else append_environment(sc, e, check_c_obj_env(sc, p, sc->AUGMENT_ENVIRONMENTB));
 	}
     }
   return(e);
 }
 
 
-s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindings)
+static s7_pointer augment_environment_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_pointer caller)
 {
   s7_pointer new_e;
+  int i;
 
   if (e == sc->global_env)
     new_e = new_frame_in_env(sc, sc->NIL);
@@ -5606,25 +5644,45 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
       s7_pointer x;
       sc->temp3 = new_e;
 
-      for (x = bindings; is_not_null(x); x = cdr(x))
+      for (i = 2, x = bindings; is_not_null(x); i++, x = cdr(x))
 	{
 	  s7_pointer p;
 
 	  p = car(x);
 	  if (is_pair(p))
-	    s7_make_slot(sc, new_e, car(p), cdr(p));
-	  else append_environment(sc, new_e, p);
+	    {
+	      s7_pointer sym, val;
 
-	  /* env as arg for common case: 
-	   *   (with-environment (augment-environment (current-environment) (c-object-environment obj)) ...)
-	   * to bring in all of obj's fields/methods but keep access to the surrounding context.
-	   * But chaining is not safe or even unambiguous, and this form will not work if obj's fields
-	   *  are being set -- we've made a new slot!  Not sure how to handle this.
-	   */
+	      sym = car(p);
+	      if (!is_symbol(sym))
+		return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), p, A_BINDING));
+
+	      val = cdr(p);
+	      if (is_immutable(sym))
+		{
+		  if (sym == sc->_ELSE_)
+		    {
+		      set_has_else(e);
+		      environment_else(e) = val;
+		    }
+		  else
+		    {
+		      if (!s7_is_equal(sc, val, s7_symbol_value(sc, sym)))
+			return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+		    }
+		}
+	      s7_make_slot(sc, new_e, sym, val);
+	    }
+	  else append_environment(sc, new_e, check_c_obj_env(sc, p, caller));
 	}
     }
-
   return(new_e);
+}
+
+
+s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindings)
+{
+  return(augment_environment_1(sc, e, bindings, sc->AUGMENT_ENVIRONMENT));
 }
 
 /* augment-environment keeps the env-chain intact, but environment (with the same args) does not.
@@ -5642,8 +5700,7 @@ static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 arguments (each an environment or a cons: symbol . value) to the environment env, and returns the \
 new environment."
 
-  s7_pointer e, x;
-  int i;
+  s7_pointer e;
 
   e = car(args);
   if (is_null(e))
@@ -5654,26 +5711,7 @@ new environment."
       if (!is_environment(e))
 	return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, small_int(1), e, AN_ENVIRONMENT));
     }
-  if (!is_null(cdr(args)))
-    for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
-      {
-	s7_pointer sym, val, p;
-	p = car(x);
-	if (!is_environment(p))
-	  {
-	    if (!is_pair(p))
-	      return(wrong_type_argument(sc, sc->AUGMENT_ENVIRONMENT, make_integer(sc, i), p, T_PAIR));
-	    if (!is_symbol(car(p)))
-	      return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, make_integer(sc, i), p, 
-						   make_protected_string(sc, "a pair whose car is a symbol: '(symbol . value)")));
-	    sym = car(p);
-	    val = cdr(p);
-	    if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
-		(!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
-	      return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, make_integer(sc, i), sym, make_protected_string(sc, "a non-constant symbol")));
-	  }
-      }
-  return(s7_augment_environment(sc, e, cdr(args)));
+  return(augment_environment_1(sc, e, cdr(args), sc->AUGMENT_ENVIRONMENT));
 }
 
 
@@ -5683,33 +5721,7 @@ static s7_pointer g_environment(s7_scheme *sc, s7_pointer args)
 arguments (each an environment or a cons: symbol . value) to a new environment, and returns the \
 new environment."
 
-  s7_pointer x;
-  int i;
-  static s7_pointer errstr = NULL;
-
-  if (!is_null(args))
-    for (i = 1, x = args; is_not_null(x); x = cdr(x), i++)
-      {
-	s7_pointer sym, val, p;
-	p = car(x);
-	if (!is_environment(p))
-	  {
-	    if (!is_pair(p))
-	      return(wrong_type_argument(sc, sc->ENVIRONMENT, make_integer(sc, i), p, T_PAIR));
-	    if (!is_symbol(car(p)))
-	      {
-		if (!errstr)
-		  errstr = s7_make_permanent_string("a pair whose car is a symbol: '(symbol . value)");
-		return(wrong_type_argument_with_type(sc, sc->ENVIRONMENT, make_integer(sc, i), p, errstr));
-	      }
-	    sym = car(p);
-	    val = cdr(p);
-	    if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
-		(!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
-	      return(wrong_type_argument_with_type(sc, sc->ENVIRONMENT, make_integer(sc, i), sym, make_protected_string(sc, "a non-constant symbol")));
-	  }
-      }
-  return(s7_augment_environment(sc, sc->global_env, args));
+  return(augment_environment_1(sc, sc->global_env, args, sc->ENVIRONMENT));
 }
 
 
@@ -5718,7 +5730,7 @@ static s7_pointer g_environment_star(s7_scheme *sc, s7_pointer args)
   #define H_environment_star "(environment* ...) adds its arguments to a new environment, and returns the \
 new environment.  The arguments should be in the order symbol its-value."
 
-  s7_pointer new_e, new_s, p, q;
+  s7_pointer new_e, sym, val, p, q;
 
   new_e = new_frame_in_env(sc, sc->NIL);
   sc->temp3 = new_e; /* GC protect it */
@@ -5728,11 +5740,17 @@ new environment.  The arguments should be in the order symbol its-value."
       if (!is_pair(q))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_protected_string(sc, "environment* symbol ~S has no value"), car(p))));
 
-      new_s = car(p);
-      if (!is_symbol(new_s))
-	return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_STAR, new_s, A_SYMBOL));
+      sym = car(p);
+      if (!is_symbol(sym))
+	return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_STAR, sym, A_SYMBOL));
 
-      ADD_SLOT(new_e, new_s, car(q));         /* new_frame_in_env checks the gc triggers so this should be somewhat safe */
+      val = car(q);
+      if (sym == sc->_ELSE_)
+	{
+	  set_has_else(new_e);
+	  environment_else(new_e) = val;
+	}
+      ADD_SLOT(new_e, sym, val);
     }
   return(new_e);
 }
@@ -5785,7 +5803,12 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
   env = car(args);
   check_method(sc, env, sc->ENVIRONMENT_TO_LIST, args);
   if (!is_environment(env))
-    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_TO_LIST, env, AN_ENVIRONMENT));
+    {
+      if (is_c_object(env))
+	env = c_object_environment(env);
+      if (!is_environment(env))
+        return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_TO_LIST, env, AN_ENVIRONMENT));
+    }
   return(s7_environment_to_list(sc, env));
 }
 
@@ -19763,9 +19786,7 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
    */
   
   obj = car(args);
-  if (is_environment(obj))
-    check_method(sc, obj, sc->OBJECT_TO_STRING, args);
-
+  check_method(sc, obj, sc->OBJECT_TO_STRING, args);
   str = s7_object_to_c_string_1(sc, obj, choice, NULL);
   if (str)
     return(make_string_uncopied(sc, str));
@@ -20550,7 +20571,8 @@ static s7_pointer g_make_bytevector(s7_scheme *sc, s7_pointer args)
   if (is_null(cdr(args)))
     {
       str = g_make_string(sc, args);
-      memset((void *)(string_value(str)), 0, string_length(str));
+      if (is_string(str))
+	memset((void *)(string_value(str)), 0, string_length(str));
     }
   else 
     {
@@ -27949,6 +27971,8 @@ static void init_car_a_list(void)
   CONSTANT_ARG_ERROR = s7_make_permanent_string("lambda* parameter '~A is a constant");
   BAD_BINDING = s7_make_permanent_string("~A: can't bind some variable to ~S");
   A_FORMAT_PORT = s7_make_permanent_string("#f, #t, or an open output port");
+  A_BINDING = s7_make_permanent_string("a pair whose car is a symbol: '(symbol . value)");
+  A_NON_CONSTANT_SYMBOL = s7_make_permanent_string("a non-constant symbol");
 }
 
 
@@ -32823,7 +32847,7 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
   int typ;
 
   x = car(args);
-  if (!is_procedure(x)) 
+  if ((!is_procedure(x)) || (is_c_object(x)))
     {
       check_method(sc, x, sc->IS_PROCEDURE, args);
       return(sc->F);
@@ -32882,11 +32906,9 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 {
+  #define H_procedure_source "(procedure-source func) tries to return the definition of func"
   /* make it look like a scheme-level lambda */
   s7_pointer p;
-  
-  #define H_procedure_source "(procedure-source func) tries to return the definition of func"
-  
   p = car(args);
 
   if (is_symbol(p))
@@ -32896,19 +32918,13 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			list_2(sc, make_protected_string(sc, "procedure-source arg, '~S, is unbound"), car(args))));
     }
+
   if (is_c_function(p))
     return(sc->NIL);
-
   if (is_c_macro(p))
     return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_SOURCE, p, make_protected_string(sc, "a scheme macro")));
 
-  if ((!is_procedure(p)) &&
-      (!is_macro(p)) &&
-      (!is_bacro(p)))
-    {
-      check_method(sc, p, sc->PROCEDURE_SOURCE, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_SOURCE, p, make_protected_string(sc, "a procedure or a macro")));
-    }
+  check_method(sc, p, sc->PROCEDURE_SOURCE, args);
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     {
       s7_pointer body;
@@ -32922,6 +32938,8 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 			     body));
     }
 
+  if (!is_procedure(p))
+    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_SOURCE, p, make_protected_string(sc, "a procedure or a macro")));
   return(sc->NIL);
 }
 
@@ -32953,11 +32971,9 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
 			list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args)))); /* not p here */
     }
 
+  check_method(sc, p, sc->PROCEDURE_ENVIRONMENT, args);
   if (!is_procedure_or_macro(p))
-    {
-      check_method(sc, p, sc->PROCEDURE_ENVIRONMENT, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ENVIRONMENT, p, make_protected_string(sc, "a procedure or a macro")));
-    }
+    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ENVIRONMENT, p, make_protected_string(sc, "a procedure or a macro")));
 
   e = find_environment(sc, p);
   if ((is_null(e)) &&
@@ -33255,12 +33271,12 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 	return(s7_make_string(sc, symbol_help(p)));
       p = s7_symbol_value(sc, p);
     }
+
+  check_method(sc, p, sc->PROCEDURE_DOCUMENTATION, args);
   if ((!is_procedure(p)) &&
       (!s7_is_macro(sc, p)))
-    {
-      check_method(sc, p, sc->PROCEDURE_DOCUMENTATION, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_DOCUMENTATION, p, A_PROCEDURE));
-    }
+    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_DOCUMENTATION, p, A_PROCEDURE));
+
   return(s7_make_string(sc, s7_procedure_documentation(sc, p)));
 }
 
@@ -33801,6 +33817,7 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
       return(sc->F);
 
     case T_ENVIRONMENT:
+    case T_C_OBJECT:
       check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
       break;
     }
@@ -33950,10 +33967,10 @@ static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
   #define H_procedure_name "(procedure-name proc) returns the name of the procedure or closure proc, if it can be found."
   s7_pointer p;
   p = car(args);
+  check_method(sc, p, sc->PROCEDURE_NAME, args);
   if ((is_procedure_or_macro(p)) ||
       (is_symbol(p)))
     return(s7_make_string(sc, s7_procedure_name(sc, p)));
-  check_method(sc, p, sc->PROCEDURE_NAME, args);
   return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_NAME, p, A_PROCEDURE));
 }
 
@@ -34010,7 +34027,6 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 	    }
 	  return(list_3(sc, small_int(0), make_integer(sc, abs(len) - opts), make_boolean(sc, len < 0)));
 	}
-
       return(list_3(sc, make_integer(sc, abs(len)), small_int(0), make_boolean(sc, len < 0)));
     }
 
@@ -34038,11 +34054,10 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			list_2(sc, make_protected_string(sc, "procedure-arity arg, '~S, is unbound"), car(args))));
     }
+
+  check_method(sc, p, sc->PROCEDURE_ARITY, args);
   if (!is_procedure(p))
-    {
-      check_method(sc, p, sc->PROCEDURE_ARITY, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ARITY, p, A_PROCEDURE));
-    }
+    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ARITY, p, A_PROCEDURE));
   return(s7_procedure_arity(sc, p));
 }
 
@@ -34183,6 +34198,7 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
       return(s7_cons(sc, small_int(1), small_int(1)));
       
     case T_C_OBJECT:
+      check_method(sc, x, sc->ARITY, args);
       if (is_procedure(x))
 	return(s7_cons(sc, small_int(0), make_integer(sc, MAX_ARITY)));
       return(sc->F);
@@ -34345,6 +34361,7 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	     (string_length(x) > 0)); /* ("" 0) -> error */
       
     case T_C_OBJECT:
+      check_method(sc, x, sc->IS_ARITABLE, list_2(sc, x, s7_make_integer(sc, args)));
       return(is_procedure(x));
 
     case T_INT_VECTOR:
@@ -35747,7 +35764,12 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_VECTOR:       get = vector_getter(source); end = vector_length(source);            break;
     case T_STRING:       get = string_getter;         end = string_length(source);            break;
     case T_HASH_TABLE:   get = hash_table_getter;     end = hash_table_entries(source);       break;
-    case T_C_OBJECT:     get = c_object_getter;       end = object_length_to_int(sc, source); break;
+
+    case T_C_OBJECT:     
+      check_method(sc, source, sc->COPY, args);
+      get = c_object_getter;       
+      end = object_length_to_int(sc, source); 
+      break;
 
     case T_ENVIRONMENT:  
       check_method(sc, source, sc->COPY, args);
@@ -35963,6 +35985,7 @@ also accepts a string or vector argument."
       return(hash_table_reverse(sc, p));
 
     case T_C_OBJECT:
+      check_method(sc, p, sc->REVERSE, args);
       return(object_reverse(sc, p));
 
     default:
@@ -36130,6 +36153,7 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(g_vector_fill(sc, args));
 
     case T_C_OBJECT:
+      check_method(sc, p, sc->FILL, args);
       if (c_object_fill(p))
 	return((*(c_object_fill(p)))(sc, p, cadr(args)));
       return(eval_error(sc, "attempt to fill ~S?", p));
@@ -38662,7 +38686,12 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	      check_method(sc, obj, sc->FOR_EACH, args);
 	      sc->z = list_1(sc, s7_environment_to_list(sc, obj));
 	    }
-	  else sc->z = list_1(sc, obj);
+	  else
+	    {
+	      if (is_c_object(obj))
+		check_method(sc, obj, sc->MAP, args);
+	      sc->z = list_1(sc, obj);
+	    }
 	}
 
       /* we have to copy the args if any of them is a list:
@@ -39001,7 +39030,12 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      check_method(sc, obj, sc->MAP, args);
 	      sc->z = list_1(sc, s7_environment_to_list(sc, obj));
 	    }
-	  else sc->z = list_1(sc, obj);
+	  else 
+	    {
+	      if (is_c_object(obj))
+		check_method(sc, obj, sc->MAP, args);
+	      sc->z = list_1(sc, obj);
+	    }
 	}
 
       /* we have to copy the args if any of them is a list:
@@ -68876,6 +68910,8 @@ s7_scheme *s7_init(void)
   sc->SET =         make_symbol(sc, "set!");
   sc->BAFFLE =      make_symbol(sc, "(baffle)");
   sc->BODY =        make_symbol(sc, "body");
+  sc->_ELSE_ =      make_symbol(sc, "{else}");
+  set_immutable(sc->_ELSE_);
 
   sc->KEY_KEY =              s7_make_keyword(sc, "key");
   sc->KEY_OPTIONAL =         s7_make_keyword(sc, "optional");
@@ -70016,7 +70052,7 @@ int main(int argc, char **argv)
  *   or object types!  except as optimization, but that could be internal
  *   so make new C-obj class: s7_make_environment, new member, same but point outer->class
  *   type is T_C_OBJECT for s7, caller can distinguish in any way: how to specify implicit ref/set, free equal? mark
- *   all of these (object_reverse et al) need to check object_environment -- block in s7test
+ *   maybe retire s7_new_type_x
  * why was this rejected a couple years ago? obj-env could simply point to the class -- no extra memory etc
  * tester: let->named let (same value), added var, virus-env as tree walker that adds "innocuous" copies of self to envs
  *   then retest until trouble -- can this give full history?
@@ -70024,6 +70060,23 @@ int main(int argc, char **argv)
  *   wrapper: (env 'f (lambda (e . args) (set! (e 'result) (f (e 'result) . args) e))
  *   is env-ref called in implicit case? s7_* is I think! so there's hope
  * can extend stuff et all to check for methods
+ *
+ * TODO: {else} method doc/test/check cancel/copy/timing/scheme side use (like subsequence->{else})
+ *            and what if this triggers an error?
+ *   (define e (open-environment (environment* 'value 2 '{else} (lambda args (cons ((car args) 'value) (cdr args))))))
+ *   can field use symbol-access to ensure type? set accessor for 'only-an-int, then use that as field name
+ *   shorten the fvector example?
+ * TODO: it looks like closure envs are openable but not fully functional? (t917)
+ *
  * ->make (along the lines of ->predicate)
  * secret env: env->list->() all fields gensym'd. aug-env|ref|set blocked
+ * why isn't method support automatic in Snd? args not local but in apply so bad_type case can't reach them
+ *   pass args throughout, and instead of s7_apply, undo locally? 
+ * can threads be used as actual C threads via the ffi -- call to fire one up, get notification upon finish
+ *   so no scheme(GC/heap) overhead.
+ *
+ * string-ci* and char-ci* are used less than 10 times in all the real scheme code in Snd, once in cm --
+ *   perhaps relegate to scheme, not C (apply string< (map string-downcase args)) etc
  */
+
+

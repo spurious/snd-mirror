@@ -961,8 +961,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     ((= i new-len) lst)
 		   (set! (lst i) (obj (+ i start)))))))
 
-	  ;; ((float-vector? obj) (float-vector-subseq obj start end)) but it's currently in vct.c
-
 	  (else             ; (subsequence (open-environment (environment* 'subsequence (lambda* (obj start end) "subseq"))))
 	   (catch #t
 	     (lambda ()

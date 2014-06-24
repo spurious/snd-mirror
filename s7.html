@@ -1415,7 +1415,7 @@ with-environment from the start, writing an immaculo directly:
 <pre>
 (define-macro (mac b)
   `(with-environment
-       (environment (cons 'b ,b)) 
+       (environment* 'b ,b)
      (let ((a 12))
        (+ a b))))
 
@@ -3232,20 +3232,20 @@ Here's an idle thought:
 
 <pre>
 (begin
-  (define float-vector? #f)
-  (define make-float-vector #f)
+  (define fvector? #f)
+  (define make-fvector #f)
   
   (let ((type (gensym))
 	(-&gt;float (lambda (x)
 		   (if (real? x)
 		       (* x 1.0)
-		       (error 'wrong-type-arg "float-vector new value is not a real: ~A" x)))))
+		       (error 'wrong-type-arg "fvector new value is not a real: ~A" x)))))
 
     (augment-environment! (current-environment)
       (cons 'length (lambda (p) ((procedure-environment p) 'len)))
-      (cons 'object-&gt;string (lambda (p) "#&lt;float-vector&gt;")))
+      (cons 'object-&gt;string (lambda (p) "#&lt;fvector&gt;")))
 
-    (set! make-float-vector
+    (set! make-fvector
 	  (lambda* (len (init 0.0)) 
 	    (let ((obj (make-vector len (-&gt;float init))))
 	      (<em class=red>open-environment</em>
@@ -3253,15 +3253,15 @@ Here's an idle thought:
 		  (lambda (i) (#_vector-ref obj i))
 		  (lambda (i val) (#_vector-set! obj i (-&gt;float val))))))))
     
-    (set! float-vector?
+    (set! fvector?
 	  (lambda (p)
 	    (and (procedure? p)
 		 (eq? ((procedure-environment p) 'type) type))))))
   
-&gt; (define fv (make-float-vector 32))
+&gt; (define fv (make-fvector 32))
 fv
 &gt; fv
-#&lt;float-vector&gt;
+#&lt;fvector&gt;
 &gt; (length fv)
 32
 &gt; (set! (fv 0) 123)
@@ -3285,9 +3285,9 @@ fv
 (cons 'reverse (lambda (p) (#_reverse ((procedure-environment p) 'obj))))
 </pre>
 
-<p>then our float-vectors are fully legitimate Scheme vectors. It is irrelevant to Scheme that
+<p>then our fvectors are fully legitimate Scheme vectors. It is irrelevant to Scheme that
 they happen to be procedures; a vector is any value that behaves like a vector.
-Extend this to math ops, and we can treat float-vectors as matrices, so <code>(* v1 v2)</code>
+Extend this to math ops, and we can treat fvectors as matrices, so <code>(* v1 v2)</code>
 is matrix multiplication.  Or add quaternions, gap-buffers as strings &mdash; I'd say "the possibilities
 are endless", but actually I can't think of any others right at the moment.
 </p>
@@ -5706,7 +5706,7 @@ loading code that calls gcd.
 </p>
 
 <ul>
-<li>remove *-ci functions
+<li>remove *-ci functions (they are completely useless), and *-up|downcase
 <li>remove even? and odd?
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
