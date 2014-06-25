@@ -152,8 +152,20 @@
   #define DEFAULT_BIGNUM_PRECISION 128
 #endif
 
+#ifndef WITH_PURE_S7
+  #define WITH_PURE_S7 0
+#endif
+#if WITH_PURE_S7
+  #define WITH_EXTRA_EXPONENT_MARKERS 0
+  #define WITH_AT_SIGN_AS_EXPONENT 1
+  #define WITH_IMMUTABLE_UNQUOTE 1
+  #define WITH_QUASIQUOTE_VECTOR 0
+  #define WITH_MAKE_COMPLEX 1
+  /* also omitted: *-ci* functions */
+#endif
+
 #ifndef WITH_EXTRA_EXPONENT_MARKERS
-  #define WITH_EXTRA_EXPONENT_MARKERS 1
+#define WITH_EXTRA_EXPONENT_MARKERS 1
   /* if 1, s7 recognizes "d", "f", "l", and "s" as exponent markers, in addition to "e" (also "D", "F", "L", "S")
    */
 #endif
@@ -195,7 +207,7 @@
   /* this removes make-polar and make-rectangular, renaming the latter make-complex */
 #endif
 
-/* other similar choices: exact/inexact including #i/#e, #d/#o, call-with-values etc, char-ready?, eof-object?, *-ci*
+/* other similar choices: exact/inexact including #i/#e, #d/#o, call-with-values etc, char-ready?, eof-object?
  */
 
 #ifndef DEBUGGING
@@ -5497,6 +5509,7 @@ static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e
 
   if (new_e != sc->global_env)
     {
+      /* TODO: does this need to check {else}? */
       for (x = environment_slots(old_e); is_slot(x); x = next_slot(x))
 	ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
     }
@@ -18872,6 +18885,7 @@ static s7_pointer g_char_leq_2(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_PURE_S7)
 static s7_pointer g_char_cmp_ci(s7_scheme *sc, s7_pointer args, int val, s7_pointer sym)
 {
   s7_pointer x;
@@ -19084,6 +19098,7 @@ static s7_pointer g_char_ci_leq_2(s7_scheme *sc, s7_pointer args)
     }
   return(make_boolean(sc, upper_character(car(args)) <= upper_character(cadr(args))));
 }
+#endif /* pure s7 */
 
 
 /* non-standard, but extremely useful -- more so than all the *-ci stuff put together!
@@ -20103,6 +20118,7 @@ static s7_pointer g_string_leq_2(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_PURE_S7)
 static unsigned char uppers[256];
 static void init_uppers(void)
 {
@@ -20384,7 +20400,7 @@ static s7_pointer g_string_ci_leq_2(s7_scheme *sc, s7_pointer args)
     }
   return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) != 1));
 }
-
+#endif /* pure s7 */
 
 
 static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
@@ -29210,7 +29226,7 @@ static bool is_memq(s7_pointer sym, s7_pointer lst)
 static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_provided "(provided? symbol) returns #t if symbol is a member of the *features* list"
-  s7_pointer sym, topf;
+  s7_pointer sym, topf, x;
   sym = car(args);
   if (!is_symbol(sym))
     {
@@ -29225,8 +29241,22 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
   topf = slot_value(global_slot(sc->S7_FEATURES));
   if (is_memq(sym, topf))
     return(sc->T);
-  /* TODO: scan chain */
-  return(make_boolean(sc, is_memq(sym, s7_symbol_value(sc, sc->S7_FEATURES)))); /* local outward */
+
+  if (is_global(sc->S7_FEATURES))
+    return(sc->F);
+  for (x = sc->envir; symbol_id(sc->S7_FEATURES) < environment_id(x); x = next_environment(x));
+  for (; is_environment(x); x = next_environment(x))
+    {
+      s7_pointer y; 
+      for (y = environment_slots(x); is_slot(y); y = next_slot(y))	
+	if (slot_symbol(y) == sc->S7_FEATURES)
+	  {
+	    if ((slot_value(y) != topf) &&
+		(is_memq(sym, slot_value(y))))
+	      return(sc->T);
+	  }
+    }
+  return(sc->F);
 }
 
 
@@ -29255,7 +29285,8 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 	slot_set_value(p, cons(sc, sym, lst));
     }
 
-  s7_define(sc, sc->envir, sym, sym);
+  if (!is_slot(find_symbol(sc, sym))) /* *features* name might be the same as an existing function */
+    s7_define(sc, sc->envir, sym, sym);
   return(sym);
 }
 
@@ -42039,7 +42070,7 @@ static s7_pointer char_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
   return(f);
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer char_ci_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -42094,6 +42125,7 @@ static s7_pointer char_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
     }
   return(f);
 }
+#endif /* pure s7 */
 
 
 static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr)
@@ -42190,6 +42222,7 @@ static s7_pointer string_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 }
 
 
+#if (!WITH_PURE_S7)
 static s7_pointer string_ci_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   check_for_substring_temp(sc, expr);
@@ -42249,6 +42282,7 @@ static s7_pointer string_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s
     }
   return(f);
 }
+#endif /* pure s7 */
 
 
 static s7_pointer string_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -42689,7 +42723,7 @@ static void init_choosers(s7_scheme *sc)
   char_geq_s_ic = make_function_with_class(sc, f, "char>=?", g_char_geq_s_ic, 2, 0, false, "char>=? opt");
   char_geq_2 = make_function_with_class(sc, f, "char>=?", g_char_geq_2, 2, 0, false, "char>=? opt");
 
-
+#if (!WITH_PURE_S7)
   /* char-ci=? */
   f = set_function_chooser(sc, sc->CHAR_CI_EQ, char_ci_equal_chooser);
 
@@ -42723,7 +42757,7 @@ static void init_choosers(s7_scheme *sc)
 
   char_ci_geq_s_ic = make_function_with_class(sc, f, "char-ci>=?", g_char_ci_geq_s_ic, 2, 0, false, "char-ci>=? opt");
   char_ci_geq_2 = make_function_with_class(sc, f, "char-ci>=?", g_char_ci_geq_2, 2, 0, false, "char-ci>=? opt");
-
+#endif
 
   /* string=? */
   f = set_function_chooser(sc, sc->STRING_EQ, string_equal_chooser);
@@ -42764,7 +42798,7 @@ static void init_choosers(s7_scheme *sc)
   string_geq_s_ic = make_function_with_class(sc, f, "string>=?", g_string_geq_s_ic, 2, 0, false, "string>=? opt");
   string_geq_2 = make_function_with_class(sc, f, "string>=?", g_string_geq_2, 2, 0, false, "string>=? opt");
 
-
+#if (!WITH_PURE_S7)
   /* string-ci=? */
   f = set_function_chooser(sc, sc->STRING_CI_EQ, string_ci_equal_chooser);
 
@@ -42798,7 +42832,7 @@ static void init_choosers(s7_scheme *sc)
 
   string_ci_geq_s_ic = make_function_with_class(sc, f, "string-ci>=?", g_string_ci_geq_s_ic, 2, 0, false, "string-ci>=? opt");
   string_ci_geq_2 = make_function_with_class(sc, f, "string-ci>=?", g_string_ci_geq_2, 2, 0, false, "string-ci>=? opt");
-
+#endif
 
   /* string-ref */
   f = set_function_chooser(sc, sc->STRING_REF, string_ref_chooser);
@@ -68356,7 +68390,9 @@ s7_scheme *s7_init(void)
       init_ctables();
       init_mark_functions();
       init_pows();
+#if (!WITH_PURE_S7)
       init_uppers();
+#endif
     }
 
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
@@ -69220,12 +69256,13 @@ s7_scheme *s7_init(void)
   sc->CHAR_GT =               s7_define_safe_function(sc, "char>?",                  g_chars_are_greater,      2, 0, true,  H_chars_are_greater);
   sc->CHAR_LEQ =              s7_define_safe_function(sc, "char<=?",                 g_chars_are_leq,          2, 0, true,  H_chars_are_leq);
   sc->CHAR_GEQ =              s7_define_safe_function(sc, "char>=?",                 g_chars_are_geq,          2, 0, true,  H_chars_are_geq);
+#if (!WITH_PURE_S7)
   sc->CHAR_CI_EQ =            s7_define_safe_function(sc, "char-ci=?",               g_chars_are_ci_equal,     2, 0, true,  H_chars_are_ci_equal);
   sc->CHAR_CI_LT =            s7_define_safe_function(sc, "char-ci<?",               g_chars_are_ci_less,      2, 0, true,  H_chars_are_ci_less);
   sc->CHAR_CI_GT =            s7_define_safe_function(sc, "char-ci>?",               g_chars_are_ci_greater,   2, 0, true,  H_chars_are_ci_greater);
   sc->CHAR_CI_LEQ =           s7_define_safe_function(sc, "char-ci<=?",              g_chars_are_ci_leq,       2, 0, true,  H_chars_are_ci_leq);
   sc->CHAR_CI_GEQ =           s7_define_safe_function(sc, "char-ci>=?",              g_chars_are_ci_geq,       2, 0, true,  H_chars_are_ci_geq);
-  
+#endif  
   sc->CHAR_POSITION =         s7_define_safe_function(sc, "char-position",           g_char_position,          2, 1, false,  H_char_position);
   sc->STRING_POSITION =       s7_define_safe_function(sc, "string-position",         g_string_position,        2, 1, false,  H_string_position);
   
@@ -69239,12 +69276,13 @@ s7_scheme *s7_init(void)
   sc->STRING_GT =             s7_define_safe_function(sc, "string>?",                g_strings_are_greater,    2, 0, true,  H_strings_are_greater);
   sc->STRING_LEQ =            s7_define_safe_function(sc, "string<=?",               g_strings_are_leq,        2, 0, true,  H_strings_are_leq);
   sc->STRING_GEQ =            s7_define_safe_function(sc, "string>=?",               g_strings_are_geq,        2, 0, true,  H_strings_are_geq);
+#if (!WITH_PURE_S7)
   sc->STRING_CI_EQ =          s7_define_safe_function(sc, "string-ci=?",             g_strings_are_ci_equal,   2, 0, true,  H_strings_are_ci_equal);
   sc->STRING_CI_LT =          s7_define_safe_function(sc, "string-ci<?",             g_strings_are_ci_less,    2, 0, true,  H_strings_are_ci_less);
   sc->STRING_CI_GT =          s7_define_safe_function(sc, "string-ci>?",             g_strings_are_ci_greater, 2, 0, true,  H_strings_are_ci_greater);
   sc->STRING_CI_LEQ =         s7_define_safe_function(sc, "string-ci<=?",            g_strings_are_ci_leq,     2, 0, true,  H_strings_are_ci_leq);
   sc->STRING_CI_GEQ =         s7_define_safe_function(sc, "string-ci>=?",            g_strings_are_ci_geq,     2, 0, true,  H_strings_are_ci_geq);
-  
+#endif  
   sc->STRING_DOWNCASE =       s7_define_safe_function(sc, "string-downcase",         g_string_downcase,        1, 0, false, H_string_downcase);
   sc->STRING_UPCASE =         s7_define_safe_function(sc, "string-upcase",           g_string_upcase,          1, 0, false, H_string_upcase);
   sc->STRING_APPEND =         s7_define_safe_function(sc, "string-append",           g_string_append,          0, 0, true,  H_string_append);
@@ -69551,6 +69589,9 @@ s7_scheme *s7_init(void)
   s7_provide(sc, "s7-" S7_VERSION);
   s7_provide(sc, "ratio");
 
+#if WITH_PURE_S7
+  s7_provide(sc, "pure-s7");
+#endif
 #if WITH_EXTRA_EXPONENT_MARKERS
   s7_provide(sc, "dfls-exponents");
 #endif
@@ -70064,15 +70105,11 @@ int main(int argc, char **argv)
  *   pass as arg, then it records each caller, adapts to it, infects returned value (as around method)
  *   wrapper: (env 'f (lambda (e . args) (set! (e 'result) (f (e 'result) . args) e))
  *   is env-ref called in implicit case? s7_* is I think! so there's hope
- *   (declare integer? x 32) -> (define x (open-e (e* 'integers-only-gensym 32 '{else} prepend field)))
- *   which won't affect set! of x... -- almost need a set! method
  * can extend stuff et all to check for methods
- *
+ * append_environment probably need {else} checks if not has_else already
  * TODO: {else} method doc, and what if this triggers an error?
  *   (define e (open-environment (environment* 'value 2 '{else} (lambda args (cons ((car args) 'value) (cdr args))))))
- *   can field use symbol-access to ensure type? set accessor for 'only-an-int, then use that as field name: -- see t917
- *     TODO: s7tests here
- *   shorten the fvector example?
+ * shorten the fvector example?
  * TODO: it looks like closure envs are openable but not fully functional? (t917)
  *
  * ->make (along the lines of ->predicate)
@@ -70081,6 +70118,4 @@ int main(int argc, char **argv)
  *   pass args throughout, and instead of s7_apply, undo locally? 
  * can threads be used as actual C threads via the ffi -- call to fire one up, get notification upon finish
  *   so no scheme(GC/heap) overhead.
- * string-ci* and char-ci* are used less than 10 times in all the real scheme code in Snd, once in cm --
- *   perhaps relegate to scheme, not C (apply string< (map string-downcase args)) etc
  */

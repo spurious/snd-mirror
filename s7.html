@@ -5149,6 +5149,32 @@ So, for example, (let () (require stuff.scm) ...) loads "stuff.scm" into the loc
 not globally.
 </p>
 
+<div class="indented">
+<p>*features* is an odd variable: it is spread out across the chain of environments, and
+can hold features in an intermediate environment that aren't in subsequent (nested) values.
+One simple way this can happen is to load a file in a let, but cause the load to happen
+at the top level.  The provided entities get added to the top-level *features* value,
+not the current let's value, but they are actually accessible locally.  So *features*
+is a merge of all its currently accessible values, vaguely like call-next-method in
+CLOS.  We can mimic this behavior:
+</p>
+<pre class="indented">
+(let ((x '(a)))
+  (let ((x '(b)))
+    (define (transparent-memq sym var e)
+      (let ((val (symbol->value var e)))
+	(or (and (pair? val)
+		 (memq sym val))
+	    (and (not (eq? e (global-environment)))
+		 (transparent-memq sym var (outer-environment e))))))
+    (let ((ce (current-environment)))
+      (list (transparent-memq 'a 'x ce)
+	    (transparent-memq 'b 'x ce)
+	    (transparent-memq 'c 'x ce)))))
+
+'((a) (b) #f)
+</pre>    
+</div>
 
 
 
