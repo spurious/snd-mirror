@@ -5144,6 +5144,9 @@ looks for the file that has <code>(provide 'snd-ws.scm)</code>
 and if it hasn't already been loaded, loads it ("ws.scm" in this case).
 The "thing" passed to <code>require</code> is not quoted.
 To add your own files to this mechanism, add the provided symbol via <a href="#autoload">autoload</a>.
+Since load can take an environment argument, *features* and its friends follow block structure.
+So, for example, (let () (require stuff.scm) ...) loads "stuff.scm" into the local environment,
+not globally.
 </p>
 
 
@@ -5734,11 +5737,10 @@ The name "cond-expand" is bad &mdash; we're not expanding anything, and the macr
 operate with the *features* list; perhaps "cond-provided"?  Not only is cond-expand poorly named, but the whole
 idea is clumsy &mdash; no-one has ever exclaimed "Let's use cond-expand!" with a happy heart.
 I'd say "use #+ and #-", but that's not quite the right thing either.  Why assume that
-the *features* list is the only thing of interest at read time?  
-Why restrict where a read-time decision can occur?
-I'm currently toying with "reader-expand" (similar to cond-expand, but the code choice happens at read-time),
-and "reader-cond" (similar again, but the decision is based on a normal evaluation, not something tied to *features*).
-In the latter cases, if the macro returns (values), nothing is placed in the output.  See libc.scm for examples.
+the *features* list is the only thing of interest?
+I'm currently toying with 
+"reader-cond", where the decision involves normal evaluation, not something specific to *features*.
+If reader-cond returns (values), nothing is placed in the output.  See libc.scm for examples.
 </p>
 
 <p>

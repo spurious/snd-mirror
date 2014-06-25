@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11656] = {
+static const char *snd_names[11660] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -3832,6 +3832,7 @@ static const char *snd_names[11656] = {
     "cblas_ztrsm", "libgsl.scm",
     "cblas_ztrsv", "libgsl.scm",
     "cbrt", "libm.scm",
+    "cdr*", "stuff.scm",
     "cdr-assoc", "stuff.scm",
     "cedar-waxwing", "animals.scm",
     "ceil", "libm.scm",
@@ -6650,6 +6651,7 @@ static const char *snd_names[11656] = {
     "mkstemp", "libc.scm",
     "mktemp", "libc.scm",
     "mktime", "libc.scm",
+    "mock-list", "stuff.scm",
     "modf", "libm.scm",
     "mono->stereo", "extensions.scm",
     "mono-files->stereo", "extensions.scm",
@@ -7089,7 +7091,6 @@ static const char *snd_names[11656] = {
     "send", "libc.scm",
     "sendmsg", "libc.scm",
     "sendto", "libc.scm",
-    "sequence?", "stuff.scm",
     "sequences->list", "stuff.scm",
     "servent.s_aliases", "libc.scm",
     "servent.s_name", "libc.scm",
@@ -7379,6 +7380,7 @@ static const char *snd_names[11656] = {
     "strxfrm", "libc.scm",
     "stuff.scm", "stuff.scm",
     "submatrix", "poly.scm",
+    "subsequence", "stuff.scm",
     "summer-tanager", "animals.scm",
     "superimpose-ffts", "examp.scm",
     "swainsons-thrush", "animals.scm",
@@ -7580,7 +7582,7 @@ static const char *snd_names[11656] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5828);
+  s7_autoload_set_names(sc, snd_names, 5830);
 }
 #endif
 

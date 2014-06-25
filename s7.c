@@ -195,7 +195,7 @@
   /* this removes make-polar and make-rectangular, renaming the latter make-complex */
 #endif
 
-/* other similar choices: exact/inexact including #i/#e, #d/#o, call-with-values etc, char-ready?, eof-object?
+/* other similar choices: exact/inexact including #i/#e, #d/#o, call-with-values etc, char-ready?, eof-object?, *-ci*
  */
 
 #ifndef DEBUGGING
@@ -2063,7 +2063,7 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
 #define symbol_accessor(p)            (p)->object.sym.ext.accessor 
-#define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
+#define symbol_has_accessor(p)        (symbol_accessor(p) != -1)  /* odd... this is much faster than >= 0 ? */
 #define symbol_id(p)                  (p)->object.sym.id
 /* we need 64-bits here, since we don't want this thing to wrap around, and frames are created at a great rate 
  *    callgrind says this is faster than an unsigned int!
@@ -2828,10 +2828,10 @@ static s7_pointer check_method_1(s7_scheme *sc, s7_pointer obj, s7_pointer metho
     {
       if (obj == car(args))
 	return(s7_apply_function(sc, find_symbol_unchecked(sc, method),
-		 s7_apply_function(sc, environment_else(obj), args)));
+		 s7_apply_function(sc, slot_value(environment_else(obj)), args)));
       return(s7_apply_function(sc, find_symbol_unchecked(sc, method),
 	       s7_cons(sc, car(args), 
-		 s7_apply_function(sc, environment_else(obj), cdr(args)))));
+		 s7_apply_function(sc, slot_value(environment_else(obj)), cdr(args)))));
     }
   return(NULL);
 }
@@ -5525,9 +5525,6 @@ static s7_pointer check_c_obj_env(s7_scheme *sc, s7_pointer old_e, s7_pointer ca
 }
 
 
-/* should these two augment-envs check for symbol accessors?
- */
-
 static s7_pointer g_augment_environment_direct(s7_scheme *sc, s7_pointer args)
 {
   #define H_augment_environment_direct "(augment-environment! env ...) adds its \
@@ -5605,7 +5602,7 @@ environment."
 		  if (sym == sc->_ELSE_)
 		    {
 		      set_has_else(e);
-		      environment_else(e) = val;
+		      environment_else(e) = s7_make_slot(sc, e, sym, val);
 		    }
 		  else
 		    {
@@ -5663,7 +5660,7 @@ static s7_pointer augment_environment_1(s7_scheme *sc, s7_pointer e, s7_pointer 
 		  if (sym == sc->_ELSE_)
 		    {
 		      set_has_else(e);
-		      environment_else(e) = val;
+		      environment_else(e) = s7_make_slot(sc, e, sym, val);
 		    }
 		  else
 		    {
@@ -5748,18 +5745,12 @@ new environment.  The arguments should be in the order symbol its-value."
       if (sym == sc->_ELSE_)
 	{
 	  set_has_else(new_e);
-	  environment_else(new_e) = val;
+	  environment_else(new_e) = s7_make_slot(sc, new_e, sym, val);
 	}
-      ADD_SLOT(new_e, sym, val);
+      else ADD_SLOT(new_e, sym, val);
     }
   return(new_e);
 }
-
-
-/* augment-environment is, it turns out, not quite the right thing for method lists -- in that case
- *   we don't want to redirect searchers from the global value which is still correct, or turn off
- *   optimization (based on safe=global).
- */
 
 
 s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
@@ -5854,7 +5845,9 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
       y = global_slot(symbol);
       if (is_slot(y))
 	{
-	  slot_set_value(y, value);
+	  if (symbol_has_accessor(symbol))
+	    slot_set_value(y, call_symbol_bind(sc, symbol, value)); /* env=let so this is a bind, not a set */
+	  else slot_set_value(y, value);
 	  return(value);
 	}
       return(sc->UNDEFINED);
@@ -5864,7 +5857,9 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
     for (y = environment_slots(x); is_slot(y); y = next_slot(y))
       if (slot_symbol(y) == symbol)
 	{
-	  slot_set_value(y, value);
+	  if (symbol_has_accessor(symbol))
+	    slot_set_value(y, call_symbol_bind(sc, symbol, value));
+	  else slot_set_value(y, value);
 	  return(value);
 	}
   return(sc->UNDEFINED);
@@ -5935,21 +5930,22 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
        *   make-object function in define-class uses copy to make a new object!
        *   So if it is present, we get it here, and then there's almost surely trouble.
        */
-      if (has_methods(env))
+      new_e = new_frame_in_env(sc, next_environment(env));
+      if (has_methods(env))          /* mark the new env as open and check for {else} */
 	{
-	  /* mark the new env as open */
-	  new_e = new_frame_in_env(sc, next_environment(env));
 	  set_has_methods(new_e);
+	  if (has_else(env))
+	    {
+	      set_has_else(new_e);
+	      environment_else(new_e) = s7_make_slot(sc, new_e, sc->_ELSE_, slot_value(environment_else(env)));
+	    }
 	}
-      else new_e = new_frame_in_env(sc, next_environment(env));
       sc->temp3 = new_e;
-
       add_slot_in_reverse(sc, new_e, environment_slots(env));
       /* We can't do a loop here then reverse the slots later because the symbol's local_slot has to
        *    match the unshadowed slot, not the last in the list:
        *    (let ((e1 (environment* 'a 1 'a 2))) (let ((e2 (copy e1))) (list (equal? e1 e2) (equal? (e1 'a) (e2 'a))))) 
        */
-
       return(new_e);
     }
   return(sc->NIL);
@@ -22749,7 +22745,7 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 }
 
 
-s7_pointer s7_load(s7_scheme *sc, const char *filename)
+static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
 {
   bool old_longjmp;
   s7_pointer port;
@@ -22772,7 +22768,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   /* it's possible to call this recursively (s7_load is Xen_load_file which can be invoked via s7_call)
    *   but in that case, we actually want it to behave like g_load and continue the evaluation upon completion
    */
-  sc->envir = sc->NIL;
+  sc->envir = e;
   
   if (!sc->longjmp_ok)
     {
@@ -22801,6 +22797,12 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
     }
 
   return(sc->value);
+}
+
+
+s7_pointer s7_load(s7_scheme *sc, const char *filename)
+{
+  return(s7_load_1(sc, filename, sc->NIL));
 }
 
 
@@ -23187,7 +23189,7 @@ The symbols refer to the argument to \"provide\"."
 	  s7_pointer f;
 	  f = g_autoloader(sc, p);
 	  if (is_string(f))
-	    s7_load(sc, string_value(f));
+	    s7_load_1(sc, string_value(f), sc->envir);
 	}
     }
   return(sc->T);
@@ -29199,7 +29201,7 @@ static s7_pointer member_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 }
 
 
-static bool is_member(s7_pointer sym, s7_pointer lst)
+static bool is_memq(s7_pointer sym, s7_pointer lst)
 {
   s7_pointer x;
   for (x = lst; is_pair(x); x = cdr(x))
@@ -29217,27 +29219,37 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
       check_method(sc, car(args), sc->IS_PROVIDED, args);
       return(simple_wrong_type_argument(sc, sc->IS_PROVIDED, car(args), T_SYMBOL));
     }
-  return(make_boolean(sc, is_member(car(args), s7_symbol_value(sc, sc->S7_FEATURES))));
+  return(make_boolean(sc, is_memq(car(args), s7_symbol_value(sc, sc->S7_FEATURES)))); /* local outward */
 }
 
 
 static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 {
   #define H_provide "(provide symbol) adds symbol to the *features* list"
-  if (!is_symbol(car(args)))
+  /* this has to be relative to the current environment: (load file env)
+   *   the things loaded are only present in env, and go away with it, so should not be in the global *features* list
+   */
+  s7_pointer p, sym, lst;
+  sym = car(args);
+  if (!is_symbol(sym))
     {
-      check_method(sc, car(args), sc->PROVIDE, args);
-      return(simple_wrong_type_argument(sc, sc->PROVIDE, car(args), T_SYMBOL));
+      check_method(sc, sym, sc->PROVIDE, args);
+      return(simple_wrong_type_argument(sc, sc->PROVIDE, sym, T_SYMBOL));
     }
 
-  if (!is_member(car(args), s7_symbol_value(sc, sc->S7_FEATURES)))
+  p = find_local_symbol(sc, sc->envir, sc->S7_FEATURES); /* if sc->envir is nil, this returns the global slot, else local slot */
+  lst = slot_value(find_symbol(sc, sc->S7_FEATURES));    /* in either case, we want the current *feartures* list */
+
+  if (p == sc->UNDEFINED)
+    add_slot(sc, sc->S7_FEATURES, cons(sc, sym, lst));   /* this assumes sc->envir */
+  else
     {
-      s7_symbol_set_value(sc, 
-			  sc->S7_FEATURES,
-			  cons(sc, car(args), s7_symbol_value(sc, sc->S7_FEATURES)));
-      s7_define(sc, sc->NIL, car(args), car(args));
+      if (!is_memq(sym, lst))
+	slot_set_value(p, cons(sc, sym, lst));
     }
-  return(car(args));
+
+  s7_define(sc, sc->envir, sym, sym);
+  return(sym);
 }
 
 
@@ -29249,12 +29261,13 @@ void s7_provide(s7_scheme *sc, const char *feature)
 
 bool s7_is_provided(s7_scheme *sc, const char *feature)
 {
-  return(is_member(s7_make_symbol(sc, feature), s7_symbol_value(sc, sc->S7_FEATURES)));
+  return(is_memq(s7_make_symbol(sc, feature), s7_symbol_value(sc, sc->S7_FEATURES))); /* this goes from local outward */
 }
 
 
 static s7_pointer g_features_set(s7_scheme *sc, s7_pointer args)
 {
+  /* symbol_access for set/let of *features* which can only be changed via provide */
   if (s7_is_list(sc, cadr(args)))
     return(cadr(args));
   return(sc->ERROR);
@@ -34372,7 +34385,8 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	     ((unsigned int)args <= vector_rank(x)));
 
     case T_ENVIRONMENT:
-      check_method(sc, x, sc->IS_ARITABLE, list_2(sc, x, s7_make_integer(sc, args)));
+      /* check_method(sc, x, sc->IS_ARITABLE, list_2(sc, x, s7_make_integer(sc, args))); */
+      /* this slows us down a lot */
 
     case T_HASH_TABLE:
     case T_PAIR:
@@ -35549,9 +35563,11 @@ list has infinite length.  Length of anything else returns #f."
       return(make_integer(sc, hash_table_length(lst)));
 
     case T_C_OBJECT:
+      check_method(sc, lst, sc->LENGTH, args);
       return(object_length(sc, lst));
 
     case T_ENVIRONMENT:
+      check_method(sc, lst, sc->LENGTH, args);
       return(make_integer(sc, environment_length(sc, lst)));
 
     case T_CLOSURE:
@@ -69762,24 +69778,6 @@ s7_scheme *s7_init(void)
 			                           (if (null? (cdr clause)) '(#f) (cdr clause))))             \n\
 		                          clauses))))");
 
-  s7_eval_c_string(sc, "(define-expansion (reader-expand . clauses)                                           \n\
-                          (letrec ((traverse (lambda (tree)                                                   \n\
-		                               (if (pair? tree)                                               \n\
-			                           (cons (traverse (car tree))                                \n\
-				                         (if (null? (cdr tree)) () (traverse (cdr tree))))    \n\
-			                           (if (memq tree '(and or not else #t)) tree                 \n\
-			                               (and (symbol? tree) (provided? tree)))))))             \n\
-                            (call-with-exit                                                                   \n\
-                              (lambda (return)                                                                \n\
-                                (for-each                                                                     \n\
-	                          (lambda (clause)                                                            \n\
-	                            (if (eval (traverse (car clause)))                                        \n\
-	                                (if (null? (cddr clause))                                             \n\
-                                            (return (cadr clause))                                            \n\
-                                            (return `(begin ,@(cdr clause))))))                               \n\
-	                          clauses)                                                                    \n\
-                                (values)))))");
-
   s7_eval_c_string(sc, "(define-expansion (reader-cond . clauses)                                             \n\
                           (call-with-exit                                                                     \n\
                             (lambda (return)                                                                  \n\
@@ -70015,7 +70013,7 @@ int main(int argc, char **argv)
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3548
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4 30.4
  * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1346
- * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1053
+ * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1084
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4  5.9
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7 12.7
  * t816          |                                    |  70.6                44.5 44.6
@@ -70045,7 +70043,7 @@ int main(int argc, char **argv)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * possibly: s7_stack|value in C.
- * (require ws) -- make the .scm and maybe the snd- parts optional [requires local symbols etc]
+ *
  * can envs modify for-each/map and so on?  Check everything in this regard!
  *   t915.scm: 105 that are trouble (240 ok), add this to s7test eventually
  *   then object-environment can handle all the special cases -- no need for the function tables?
@@ -70053,18 +70051,20 @@ int main(int argc, char **argv)
  *   so make new C-obj class: s7_make_environment, new member, same but point outer->class
  *   type is T_C_OBJECT for s7, caller can distinguish in any way: how to specify implicit ref/set, free equal? mark
  *   maybe retire s7_new_type_x
- * why was this rejected a couple years ago? obj-env could simply point to the class -- no extra memory etc
+ *
  * tester: let->named let (same value), added var, virus-env as tree walker that adds "innocuous" copies of self to envs
  *   then retest until trouble -- can this give full history?
  *   pass as arg, then it records each caller, adapts to it, infects returned value (as around method)
  *   wrapper: (env 'f (lambda (e . args) (set! (e 'result) (f (e 'result) . args) e))
  *   is env-ref called in implicit case? s7_* is I think! so there's hope
+ *   (declare integer? x 32) -> (define x (open-e (e* 'integers-only-gensym 32 '{else} prepend field)))
+ *   which won't affect set! of x... -- almost need a set! method
  * can extend stuff et all to check for methods
  *
- * TODO: {else} method doc/test/check cancel/copy/timing/scheme side use (like subsequence->{else})
- *            and what if this triggers an error?
+ * TODO: {else} method doc, and what if this triggers an error?
  *   (define e (open-environment (environment* 'value 2 '{else} (lambda args (cons ((car args) 'value) (cdr args))))))
- *   can field use symbol-access to ensure type? set accessor for 'only-an-int, then use that as field name
+ *   can field use symbol-access to ensure type? set accessor for 'only-an-int, then use that as field name: -- see t917
+ *     TODO: s7tests here
  *   shorten the fvector example?
  * TODO: it looks like closure envs are openable but not fully functional? (t917)
  *
@@ -70074,9 +70074,6 @@ int main(int argc, char **argv)
  *   pass args throughout, and instead of s7_apply, undo locally? 
  * can threads be used as actual C threads via the ffi -- call to fire one up, get notification upon finish
  *   so no scheme(GC/heap) overhead.
- *
  * string-ci* and char-ci* are used less than 10 times in all the real scheme code in Snd, once in cm --
  *   perhaps relegate to scheme, not C (apply string< (map string-downcase args)) etc
  */
-
-
