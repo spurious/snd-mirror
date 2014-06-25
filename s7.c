@@ -5556,8 +5556,7 @@ environment."
 		return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), p, A_BINDING));
 
 	      val = cdr(p);
-	      if ((is_immutable(sym)) &&                             /* check for (eval 'pi (augment-environment! () '(pi . 1))) */
-		  (!s7_is_equal(sc, val, s7_symbol_value(sc, sym)))) /* like define-constant again -- a redundant entry? -- very rare to get here */
+	      if (is_immutable(sym))                             /* check for (eval 'pi (augment-environment! () '(pi . 1))) */
 		return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
 
 	      if (is_slot(global_slot(sym)))
@@ -5604,11 +5603,7 @@ environment."
 		      set_has_else(e);
 		      environment_else(e) = s7_make_slot(sc, e, sym, val);
 		    }
-		  else
-		    {
-		      if (!s7_is_equal(sc, val, s7_symbol_value(sc, sym)))
-			return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
-		    }
+		  else return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
 		}
 	      for (x = environment_slots(e); is_slot(x); x = next_slot(x))
 		if (slot_symbol(x) == sym)
@@ -5662,11 +5657,7 @@ static s7_pointer augment_environment_1(s7_scheme *sc, s7_pointer e, s7_pointer 
 		      set_has_else(e);
 		      environment_else(e) = s7_make_slot(sc, e, sym, val);
 		    }
-		  else
-		    {
-		      if (!s7_is_equal(sc, val, s7_symbol_value(sc, sym)))
-			return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
-		    }
+		  else return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
 		}
 	      s7_make_slot(sc, new_e, sym, val);
 	    }
@@ -5728,10 +5719,11 @@ static s7_pointer g_environment_star(s7_scheme *sc, s7_pointer args)
 new environment.  The arguments should be in the order symbol its-value."
 
   s7_pointer new_e, sym, val, p, q;
+  int i;
 
   new_e = new_frame_in_env(sc, sc->NIL);
   sc->temp3 = new_e; /* GC protect it */
-  for (p = args; is_not_null(p); p = cdr(q))
+  for (i = 2, p = args; is_not_null(p); i++, p = cdr(q))
     {
       q = cdr(p);
       if (!is_pair(q))
@@ -5742,12 +5734,16 @@ new environment.  The arguments should be in the order symbol its-value."
 	return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_STAR, sym, A_SYMBOL));
 
       val = car(q);
-      if (sym == sc->_ELSE_)
+      if (is_immutable(sym))
 	{
-	  set_has_else(new_e);
-	  environment_else(new_e) = s7_make_slot(sc, new_e, sym, val);
+	  if (sym == sc->_ELSE_)
+	    {
+	      set_has_else(new_e);
+	      environment_else(new_e) = s7_make_slot(sc, new_e, sym, val);
+	    }
+	  else return(wrong_type_argument_with_type(sc, sc->ENVIRONMENT_STAR, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
 	}
-      else ADD_SLOT(new_e, sym, val);
+      ADD_SLOT(new_e, sym, val);
     }
   return(new_e);
 }
@@ -29214,12 +29210,23 @@ static bool is_memq(s7_pointer sym, s7_pointer lst)
 static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_provided "(provided? symbol) returns #t if symbol is a member of the *features* list"
-  if (!is_symbol(car(args)))
+  s7_pointer sym, topf;
+  sym = car(args);
+  if (!is_symbol(sym))
     {
-      check_method(sc, car(args), sc->IS_PROVIDED, args);
-      return(simple_wrong_type_argument(sc, sc->IS_PROVIDED, car(args), T_SYMBOL));
+      check_method(sc, sym, sc->IS_PROVIDED, args);
+      return(simple_wrong_type_argument(sc, sc->IS_PROVIDED, sym, T_SYMBOL));
     }
-  return(make_boolean(sc, is_memq(car(args), s7_symbol_value(sc, sc->S7_FEATURES)))); /* local outward */
+  /* here the *features* list is spread out (or can be anyway) along the current environment chain,
+   *   so we need to travel back all the way to the top level checking each *features* list in turn.
+   *   Since *features* grows via cons (newest first), we can stop the scan if we hit the shared
+   *   top-level at least.
+   */
+  topf = slot_value(global_slot(sc->S7_FEATURES));
+  if (is_memq(sym, topf))
+    return(sc->T);
+  /* TODO: scan chain */
+  return(make_boolean(sc, is_memq(sym, s7_symbol_value(sc, sc->S7_FEATURES)))); /* local outward */
 }
 
 
