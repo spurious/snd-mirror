@@ -1,6 +1,9 @@
 ;;; make-index.scm translated from index.cl
 ;;;   run this -noinit so that loads in ~/.snd_s7 don't confuse matters
 
+(if (provided? 'pure-s7)
+    (define (char-ci=? . chars) (apply char=? (map char-upcase chars))))
+
 ;(set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S~%" (hook 'name)))))
 (set! (hook-functions *unbound-variable-hook*) ())
 

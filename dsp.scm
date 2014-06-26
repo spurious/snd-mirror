@@ -5,6 +5,7 @@
     (require snd-ws.scm)
     (require sndlib-ws.scm))
 (require snd-env.scm)
+(if (provided? 'pure-s7) (define make-rectangular make-complex))
 
 (define (binomial n k)
   "(binomial n k) computes the binomial coefficient C(N,K)"

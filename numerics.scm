@@ -1,4 +1,5 @@
 (provide 'snd-numerics.scm)
+(if (provided? 'pure-s7) (define make-rectangular make-complex))
 
 ;;; random stuff I needed at one time or another while goofing around...
 ;;;   there are a lot more in snd-test.scm

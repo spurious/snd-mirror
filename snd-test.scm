@@ -31,6 +31,7 @@
 ;;;  test the end                               [47016]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
+(if (provided? 'pure-s7) (define make-rectangular make-complex))
 
 (define tests 1)
 (define keep-going #f)

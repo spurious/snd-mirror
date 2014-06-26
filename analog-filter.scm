@@ -11,7 +11,7 @@
 ;;; build Snd with gsl for best results
 
 (provide 'snd-analog-filter.scm)
-
+(if (provided? 'pure-s7) (define make-rectangular make-complex))
 
 (define* (analog->digital n num den fz)
   (let ((g 1.0)

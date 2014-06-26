@@ -5,6 +5,7 @@
 ;;; this file really needs doubles (--with-doubles in configure, double as s7_Double in s7.h)
 
 (provide 'snd-poly.scm)
+(if (provided? 'pure-s7) (define make-rectangular make-complex))
 
 (define (vector->float-vector v) (copy v (make-vector (length v) 0.0 #t)))
 (define (float-vector->vector v) (copy v (make-vector (length v) 0.0)))

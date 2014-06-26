@@ -2655,8 +2655,12 @@ As a quick example, here is a structure definition:
 <code>(eval `(begin ,@body) e)</code>, but probably faster.
 Similarly, <code>(let bindings . body)</code> is equivalent to
 <code>(eval `(begin ,@body) (apply environment* (flatten bindings)))</code>,
-ignoring the outer (enclosing) environment.
+ignoring the outer (enclosing) environment. Or better,
 </p>
+<pre class="indented">
+(define-macro (with-environs e . body) 
+  `(apply let (map (lambda (a) (list (car a) (cdr a))) ,e) '(,@body)))
+</pre>
 
 <p>
 augment-environment adds bindings (symbols with associated values) to an environment.
@@ -3270,34 +3274,14 @@ fv
 123.0
 </pre>
 
-<p>If we add the following lines to the augment-environment! section above:
-</p>
+</div>
 
-<pre class="indented">
-(cons 'vector? (lambda (p) #t)) 
-(cons 'vector-length (lambda (p) ((procedure-environment p) 'len)))
-(cons 'vector-dimensions (lambda (p) (list ((procedure-environment p) 'len))))
-(cons 'vector-ref (lambda (p ind) (#_vector-ref ((procedure-environment p) 'obj) ind)))
-(cons 'vector-set! (lambda (p ind val) (#_vector-set! ((procedure-environment p) 'obj) ind (-&gt;float val))))
-(cons 'vector-fill! (lambda (p val) (#_vector-fill! ((procedure-environment p) 'obj) (-&gt;float val))))
-(cons 'fill! (lambda (p val) (#_vector-fill! ((procedure-environment p) 'obj) (-&gt;float val))))
-(cons 'vector-&gt;list (lambda (p) (#_vector-&gt;list ((procedure-environment p) 'obj))))
-(cons 'reverse (lambda (p) (#_reverse ((procedure-environment p) 'obj))))
-</pre>
 
-<p>then our fvectors are fully legitimate Scheme vectors. It is irrelevant to Scheme that
-they happen to be procedures; a vector is any value that behaves like a vector.
-Extend this to math ops, and we can treat fvectors as matrices, so <code>(* v1 v2)</code>
-is matrix multiplication.  Or add quaternions, gap-buffers as strings &mdash; I'd say "the possibilities
-are endless", but actually I can't think of any others right at the moment.
-</p>
+<div class="indented">
 
-<p>I can't resist adding at least some of the quaternion implementation.  In the following code
-we add quaternions to some of the math functions (finally "number?" is not the same
-as "complex?"!), and include support for possible additional numeric types that might be
-added later.  As in the earlier case, a number is whatever behaves like a number &mdash;
-we aren't bound by any previous classes, and we don't have to define separate methods for every possibility.
-The '+' function for instance, can take any mixture of numbers:
+<p>I can't resist adding at least some of a quaternion implementation
+(finally "number?" is not the same
+as "complex?"!):
 </p>
 
 <pre>

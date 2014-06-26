@@ -404,9 +404,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                WITH_EXTRA_EXPONENT_MARKERS=0 WITH_AT_SIGN_AS_EXPONENT=0 --- '
+echo ' ----                WITH_PURE_S7  --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DWITH_IMMUTABLE_UNQUOTE=1 -DWITH_SYSTEM_EXTRAS=1 -DWITH_EXTRA_EXPONENT_MARKERS=0 -DWITH_AT_SIGN_AS_EXPONENT=0"
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DWITH_PURE_S7=1"
 make
 echo ' '
 echo ' '

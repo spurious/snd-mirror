@@ -1051,9 +1051,6 @@ typedef struct s7_cell {
 	  s7_pointer result;
 	  unsigned int op_stack_loc, goto_loc;
 	} ctall;
-        struct {
-	  s7_pointer elsef;
-	} elsenv;
       } edat;
     } envr;
 
@@ -1298,7 +1295,7 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer Object_Set;               /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
-  s7_pointer BODY, _ELSE_;
+  s7_pointer BODY;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
@@ -1787,12 +1784,6 @@ static void init_types(void)
 /* marks a string that the caller considers a bytevector 
 */
 
-#define T_HAS_ELSE                    T_MUTABLE
-#define has_else(p)                   ((typeflag(p) & T_HAS_ELSE) != 0)
-#define set_has_else(p)               typeflag(p) |= T_HAS_ELSE
-/* this marks an environment or c_object that has a fallback else method
- */
-
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
 #define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
@@ -2122,7 +2113,6 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #define environment_file(p)           (p)->object.envr.edat.efnc.file
 #define environment_dox1(p)           (p)->object.envr.edat.dox.dox1
 #define environment_dox2(p)           (p)->object.envr.edat.dox.dox2
-#define environment_else(p)           (p)->object.envr.edat.elsenv.elsef
 
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
@@ -2835,16 +2825,7 @@ static s7_pointer check_method_1(s7_scheme *sc, s7_pointer obj, s7_pointer metho
 {
   s7_pointer func;
   if ((func = find_method(sc, find_environment(sc, obj), method)) != sc->UNDEFINED)
-    return(s7_apply_function(sc, func, args));       
-  if (has_else(obj))
-    {
-      if (obj == car(args))
-	return(s7_apply_function(sc, find_symbol_unchecked(sc, method),
-		 s7_apply_function(sc, slot_value(environment_else(obj)), args)));
-      return(s7_apply_function(sc, find_symbol_unchecked(sc, method),
-	       s7_cons(sc, car(args), 
-		 s7_apply_function(sc, slot_value(environment_else(obj)), cdr(args)))));
-    }
+    return(s7_apply_function(sc, func, args));  
   return(NULL);
 }
 
@@ -5610,14 +5591,8 @@ environment."
 
 	      val = cdr(p);
 	      if (is_immutable(sym))
-		{
-		  if (sym == sc->_ELSE_)
-		    {
-		      set_has_else(e);
-		      environment_else(e) = s7_make_slot(sc, e, sym, val);
-		    }
-		  else return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
-		}
+		return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+
 	      for (x = environment_slots(e); is_slot(x); x = next_slot(x))
 		if (slot_symbol(x) == sym)
 		  {
@@ -5664,14 +5639,7 @@ static s7_pointer augment_environment_1(s7_scheme *sc, s7_pointer e, s7_pointer 
 
 	      val = cdr(p);
 	      if (is_immutable(sym))
-		{
-		  if (sym == sc->_ELSE_)
-		    {
-		      set_has_else(e);
-		      environment_else(e) = s7_make_slot(sc, e, sym, val);
-		    }
-		  else return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
-		}
+		return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
 	      s7_make_slot(sc, new_e, sym, val);
 	    }
 	  else append_environment(sc, new_e, check_c_obj_env(sc, p, caller));
@@ -5748,15 +5716,8 @@ new environment.  The arguments should be in the order symbol its-value."
 
       val = car(q);
       if (is_immutable(sym))
-	{
-	  if (sym == sc->_ELSE_)
-	    {
-	      set_has_else(new_e);
-	      environment_else(new_e) = s7_make_slot(sc, new_e, sym, val);
-	    }
-	  else return(wrong_type_argument_with_type(sc, sc->ENVIRONMENT_STAR, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
-	}
-      ADD_SLOT(new_e, sym, val);
+	return(wrong_type_argument_with_type(sc, sc->ENVIRONMENT_STAR, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+      s7_make_slot(sc, new_e, sym, val);
     }
   return(new_e);
 }
@@ -5851,6 +5812,8 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
 
   if (env == sc->global_env)
     {
+      if (is_immutable(symbol))  /* (environment-set! (global-environment) :key #f) */
+	return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, symbol, A_NON_CONSTANT_SYMBOL));	
       y = global_slot(symbol);
       if (is_slot(y))
 	{
@@ -5941,14 +5904,8 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
        */
       new_e = new_frame_in_env(sc, next_environment(env));
       if (has_methods(env))          /* mark the new env as open and check for {else} */
-	{
-	  set_has_methods(new_e);
-	  if (has_else(env))
-	    {
-	      set_has_else(new_e);
-	      environment_else(new_e) = s7_make_slot(sc, new_e, sc->_ELSE_, slot_value(environment_else(env)));
-	    }
-	}
+	set_has_methods(new_e);
+
       sc->temp3 = new_e;
       add_slot_in_reverse(sc, new_e, environment_slots(env));
       /* We can't do a loop here then reverse the slots later because the symbol's local_slot has to
@@ -19753,8 +19710,6 @@ static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
   return(make_temporary_string(sc, (const char *)(string_value(str) + start), (int)(end - start)));
 }
 
-
-
 /* (set! (substring...) ...)? -- might require allocation
  *   to implement substring_uncopied we'd need to make sure the lack of a trailing null can't confuse anyone
  *   this is also the case for read-line.
@@ -26569,7 +26524,7 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer pt;
 
-  sc->args = sc->NIL;
+  /* sc->args = sc->NIL; */ /* why? s7test is ok either way */
   pt = car(args);
 
   if (is_string(pt))
@@ -26589,7 +26544,8 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
     }
   return(format_to_port(sc, 
 			(pt == sc->T) ? sc->output_port : pt, 
-			string_value(cadr(args)), cddr(args), NULL, !is_output_port(pt), 
+			string_value(cadr(args)), 
+			cddr(args), NULL, !is_output_port(pt), 
 			string_length(cadr(args))));
 }
 
@@ -46501,7 +46457,7 @@ static s7_pointer check_unless(s7_scheme *sc)
 
 static s7_pointer check_case(s7_scheme *sc)
 {
-  bool keys_simple = true, has_else = false, has_feed_to = false, keys_single = true, bodies_simple = true, bodies_simplest = true;
+  bool keys_simple = true, have_else = false, has_feed_to = false, keys_single = true, bodies_simple = true, bodies_simplest = true;
   s7_pointer x, y;
 
   /* (let () (define (hi a) (case a ((0) (+ a 1)) ((1 2) a))) (define (ho) (hi 1)) (ho))
@@ -46554,7 +46510,7 @@ static s7_pointer check_case(s7_scheme *sc)
 	    return(eval_error(sc, "case clause key list ~A is not a proper list or 'else'", y));
 	  if (is_not_null(cdr(x)))                                  /* (case 1 (else 1) ((2) 1)) */
 	    return(eval_error(sc, "case 'else' clause, ~A, is not the last clause", x));
-	  has_else = true;
+	  have_else = true;
 	}
       else
 	{
@@ -46618,7 +46574,7 @@ static s7_pointer check_case(s7_scheme *sc)
       if ((!has_feed_to) &&
 	  (keys_simple))
 	{
-	  if (has_else) /* don't combine ifs ! */
+	  if (have_else) /* don't combine ifs ! */
 	    {
 	      if (is_symbol(car(sc->code)))
 		{
@@ -47965,11 +47921,9 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
       if (is_keyword(x))                                                        /* (define :hi 1) */
 	return(eval_error_with_name(sc, "~A ~A: keywords are constants", x));
-      if (is_syntactic(x))                                                      /* (define and a) */
-	{
+      if ((is_syntactic(x)) &&                                                  /* (define and a) */
+	  (sc->safety > 0))
 	  fprintf(stderr, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
-	  /* return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x)); */
-	}
       if ((is_pair(cadr(sc->code))) &&               /* look for (define sym (lambda ...)) and treat it like (define (sym ...)...) */
 	  (((symbol_id(sc->LAMBDA) == 0) && (caadr(sc->code) == sc->LAMBDA)) ||
 	   ((symbol_id(sc->LAMBDA_STAR) == 0) && (caadr(sc->code) == sc->LAMBDA_STAR))))
@@ -47981,11 +47935,9 @@ static s7_pointer check_define(s7_scheme *sc)
       x = caar(sc->code);
       if (!is_symbol(x))                                                        /* (define (3 a) a) */
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
-      if (is_syntactic(x))                                                      /* (define (and a) a) */
-	{
-	  fprintf(stderr, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
-	  /* return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x)); */
-	}
+      if ((is_syntactic(x)) &&                                                  /* (define (and a) a) */
+	  (sc->safety > 0))
+	fprintf(stderr, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
       if (sc->op == OP_DEFINE_STAR)
 	cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code), &arity);
       else check_lambda_args(sc, cdar(sc->code), &arity);
@@ -49712,11 +49664,9 @@ static s7_pointer check_define_macro(s7_scheme *sc)
   x = caar(sc->code);
   if (!is_symbol(x))
     return(eval_error_with_name(sc, "~A: ~S is not a symbol?", x));
-  if (dont_eval_args(x))                                            /* (define-macro (quote a) quote) */
-    {
-      fprintf(stderr, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
-      /* return(eval_error_with_name(sc, "~A: syntactic keywords (such as ~S) tend to behave badly if redefined", x)); */
-    }
+  if ((dont_eval_args(x)) &&                                           /* (define-macro (quote a) quote) */
+      (sc->safety > 0))
+    fprintf(stderr, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
   
   if (is_immutable(x))
     return(eval_error_with_name(sc, "~A: ~S is immutable", x));
@@ -68969,8 +68919,6 @@ s7_scheme *s7_init(void)
   sc->SET =         make_symbol(sc, "set!");
   sc->BAFFLE =      make_symbol(sc, "(baffle)");
   sc->BODY =        make_symbol(sc, "body");
-  sc->_ELSE_ =      make_symbol(sc, "{else}");
-  set_immutable(sc->_ELSE_);
 
   sc->KEY_KEY =              s7_make_keyword(sc, "key");
   sc->KEY_OPTIONAL =         s7_make_keyword(sc, "optional");
@@ -69293,7 +69241,7 @@ s7_scheme *s7_init(void)
   sc->LIST_TO_STRING =        s7_define_safe_function(sc, "list->string",            g_list_to_string,         1, 0, false, H_list_to_string);
   sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 2, false, H_string_to_list);
   sc->OBJECT_TO_STRING =      s7_define_safe_function(sc, "object->string",          g_object_to_string,       1, 1, false, H_object_to_string);
-  sc->FORMAT =                s7_define_safe_function(sc, "format",                  g_format,                 1, 0, true,  H_format);
+  sc->FORMAT =                s7_define_function(sc,      "format",                  g_format,                 1, 0, true,  H_format);
 
   /* as format runs through the saved args, "~A" can call object->string; it can call format, and 
    *    sc->temp_cell_2 can be stepped on in the arg evaluation of the recursive format call,
@@ -69302,9 +69250,7 @@ s7_scheme *s7_init(void)
    *    clearing that flag in open_environment).  Any other function that keeps sc->args
    *    in play long enough for s7_call should also be unsafe.
    *
-   * Would it fix this to save/restore the temp cells across the object->string method application? -- this experiment is running...
-   *   By changing to safe function, don't we use either the T|An series or the prebuilt (in-use flag) set? Perhaps temp_cell_2
-   *   is not enough.
+   * Would it fix this to save/restore the temp cells across the object->string method application? -- no.
    */
 
   sc->IS_NULL =               s7_define_safe_function(sc, "null?",                   g_is_null,                1, 0, false, H_is_null);
@@ -70091,31 +70037,12 @@ int main(int argc, char **argv)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * possibly: s7_stack|value in C.
- *
- * can envs modify for-each/map and so on?  Check everything in this regard!
- *   t915.scm: 105 that are trouble (240 ok), add this to s7test eventually
- *   then object-environment can handle all the special cases -- no need for the function tables?
- *   or object types!  except as optimization, but that could be internal
- *   so make new C-obj class: s7_make_environment, new member, same but point outer->class
- *   type is T_C_OBJECT for s7, caller can distinguish in any way: how to specify implicit ref/set, free equal? mark
- *   maybe retire s7_new_type_x
- *
- * tester: let->named let (same value), added var, virus-env as tree walker that adds "innocuous" copies of self to envs
- *   then retest until trouble -- can this give full history?
- *   pass as arg, then it records each caller, adapts to it, infects returned value (as around method)
- *   wrapper: (env 'f (lambda (e . args) (set! (e 'result) (f (e 'result) . args) e))
- *   is env-ref called in implicit case? s7_* is I think! so there's hope
- * can extend stuff et all to check for methods
- * append_environment probably need {else} checks if not has_else already
- * TODO: {else} method doc, and what if this triggers an error?
- *   (define e (open-environment (environment* 'value 2 '{else} (lambda args (cons ((car args) 'value) (cdr args))))))
- * shorten the fvector example?
- * TODO: it looks like closure envs are openable but not fully functional? (t917)
- *
+ * reader-cond (values) seems to be flakey?
  * ->make (along the lines of ->predicate)
- * secret env: env->list->() all fields gensym'd. aug-env|ref|set blocked
  * why isn't method support automatic in Snd? args not local but in apply so bad_type case can't reach them
  *   pass args throughout, and instead of s7_apply, undo locally? 
  * can threads be used as actual C threads via the ffi -- call to fire one up, get notification upon finish
  *   so no scheme(GC/heap) overhead.
+ * can extend stuff et all to check for methods
  */
+
