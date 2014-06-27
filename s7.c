@@ -5774,15 +5774,12 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
+static s7_pointer environment_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
   s7_pointer x, y;
   /* (let ((a 1)) ((current-environment) 'a)) 
    * ((global-environment) 'abs) 
    */
-  if (!is_symbol(symbol))
-    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, symbol, A_SYMBOL));
-
   if (env == sc->global_env)
     {
       y = global_slot(symbol);
@@ -5803,12 +5800,40 @@ s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 }
 
 
-s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
+s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
+{
+  if (!is_symbol(symbol))
+    {
+      check_method(sc, env, sc->ENVIRONMENT_REF, sc->w = list_2(sc, env, symbol));
+      return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, symbol, A_SYMBOL));
+    }
+  return(environment_ref_1(sc, env, symbol));
+}
+
+
+static s7_pointer g_environment_ref(s7_scheme *sc, s7_pointer args)
+{
+  #define H_environment_ref "(environment-ref env sym) returns the value of the symbol sym in the environment env"
+  s7_pointer e, s;
+
+  e = car(args);
+  if (!is_environment(e))
+    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, e, AN_ENVIRONMENT));
+
+  s = cadr(args);
+  if (!is_symbol(s))
+    {
+      check_method(sc, e, sc->ENVIRONMENT_REF, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, s, A_SYMBOL));
+    }
+
+  return(environment_ref_1(sc, e, s));
+}
+
+
+static s7_pointer environment_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
   s7_pointer x, y;
-
-  if (!is_symbol(symbol))
-    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, symbol, A_SYMBOL));
 
   if (env == sc->global_env)
     {
@@ -5838,16 +5863,14 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
 }
 
 
-static s7_pointer g_environment_ref(s7_scheme *sc, s7_pointer args)
+s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
-  #define H_environment_ref "(environment-ref env sym) returns the value of the symbol sym in the environment env"
-  s7_pointer e;
-
-  e = car(args);
-  if (!is_environment(e))
-    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, e, AN_ENVIRONMENT));
-
-  return(s7_environment_ref(sc, e, cadr(args)));
+  if (!is_symbol(symbol))
+    {
+      check_method(sc, env, sc->ENVIRONMENT_SET, sc->w = list_3(sc, env, symbol, value));
+      return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, symbol, A_SYMBOL));
+    }
+  return(environment_set_1(sc, env, symbol, value));
 }
 
 
@@ -5855,13 +5878,20 @@ static s7_pointer g_environment_set(s7_scheme *sc, s7_pointer args)
 {
   /* (let ((a 1)) (set! ((current-environment) 'a) 32) a) */
   #define H_environment_set "(environment-set! env sym val) sets the symbol sym's value in the environment env to val"
-  s7_pointer e;
+  s7_pointer e, s;
 
   e = car(args);
   if (!is_environment(e))
     return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, e, AN_ENVIRONMENT));
 
-  return(s7_environment_set(sc, e, cadr(args), caddr(args)));
+  s = cadr(args);
+  if (!is_symbol(s))
+    {
+      check_method(sc, e, sc->ENVIRONMENT_SET, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, s, A_SYMBOL));
+    }
+  
+  return(environment_set_1(sc, e, s, caddr(args)));
 }
 
 
@@ -13053,7 +13083,7 @@ static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
     default:        
-      check_method(sc, x, sc->ADD, list_2(sc, x, small_int(1)));
+      check_method(sc, x, sc->ADD, args);
       return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
     }
   return(x);
@@ -13095,7 +13125,7 @@ static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
     default:        
-      check_method(sc, x, sc->ADD, list_2(sc, x, small_int(2)));
+      check_method(sc, x, sc->ADD, args);
       return(wrong_type_argument_with_type(sc, sc->ADD, small_int(2), x, A_NUMBER));
     }
   return(x);
@@ -13118,7 +13148,7 @@ static s7_pointer g_add_si(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
     default:        
-      check_method(sc, x, sc->ADD, args);
+      check_method(sc, x, sc->ADD, list_2(sc, x, cadr(args)));
       return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
     }
   return(x);
@@ -13138,7 +13168,7 @@ static s7_pointer g_add_is(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
     default:        
-      check_method(sc, x, sc->ADD, args);
+      check_method(sc, x, sc->ADD, list_2(sc, x, car(args)));
       return(wrong_type_argument_with_type(sc, sc->ADD, small_int(2), x, A_NUMBER));
     }
   return(x);
@@ -13158,7 +13188,7 @@ static s7_pointer g_add_sf(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
     default:        
-      check_method(sc, x, sc->ADD, args);
+      check_method(sc, x, sc->ADD, list_2(sc, x, cadr(args)));
       return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
     }
   return(x);
@@ -13178,7 +13208,7 @@ static s7_pointer g_add_fs(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
     default:        
-      check_method(sc, x, sc->ADD, args);
+      check_method(sc, x, sc->ADD, list_2(sc, x, car(args)));
       return(wrong_type_argument_with_type(sc, sc->ADD, small_int(2), x, A_NUMBER));
     }
   return(x);
@@ -13206,7 +13236,7 @@ static s7_pointer g_add_f_sf(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, x + real(s) * y));
     case T_COMPLEX: return(s7_make_complex(sc, x + (real_part(s) * y), imag_part(s) * y));
     default:        
-      check_method(sc, s, sc->MULTIPLY, args);
+      check_method(sc, s, sc->MULTIPLY, args); /* TODO: broken */
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), s, A_NUMBER));
     }
   return(s);
@@ -13783,7 +13813,7 @@ static s7_pointer g_subtract_s1(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) - 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
     default:        
-      check_method(sc, x, sc->MINUS, list_2(sc, x, small_int(1)));
+      check_method(sc, x, sc->MINUS, args);
       return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(1), x, A_NUMBER));
     }
   return(x);
@@ -13827,7 +13857,7 @@ static s7_pointer g_subtract_sf(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) - n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - n, imag_part(x)));
     default:        
-      check_method(sc, x, sc->MINUS, args);
+      check_method(sc, x, sc->MINUS, list_2(sc, x, cadr(args)));
       return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(1), x, A_NUMBER));
     }
   return(x);
@@ -13920,9 +13950,16 @@ static s7_pointer g_subtract_f_sqr(s7_scheme *sc, s7_pointer args)
     case T_RATIO:   return(make_real(sc, y - (fraction(x) * fraction(x))));
     case T_REAL:    return(make_real(sc, y - (real(x) * real(x))));
     case T_COMPLEX: return(s7_make_complex(sc, y - real_part(x) * real_part(x) + imag_part(x) * imag_part(x), 2.0 * real_part(x) * imag_part(x)));
-    default:        
-      check_method(sc, x, sc->MULTIPLY, list_2(sc, x, x));
-      return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));
+    default:
+      /* complicated -- look for * method, if any get (* x x), then go to g_subtract_2 with that and the original y
+       *   can't use check_method here because it returns from the caller.
+       */
+      {
+        s7_pointer func;
+	if ((func = find_method(sc, find_environment(sc, x), sc->MULTIPLY)) != sc->UNDEFINED)
+	  return(g_subtract_2(sc, list_2(sc, car(args), s7_apply_function(sc, func, list_2(sc, x, x)))));
+	return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));
+      }
     }
   return(x);
 }
@@ -25890,7 +25927,6 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
    *   if port is sc->F, no non-string result is wanted.
    *   if port is not boolean, it better be a port.
    *   if we are about to goto START in eval, and main_stack_op(Sc) == OP_BEGIN1, no return string is wanted -- yow, this is not true
-   *   since format is now safe, it can be embedded, so we also have to check that op(cur_code) is hop_safe_sc?
    */
 
   port_has_buffer = port_data(port);
@@ -26060,8 +26096,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			 *
 			 * so, to fix this, if ~<~> arg is a pair, replace it with ~{~A~} and put the read(?) code on a new arglist,
 			 *   complete the current format, then push op_apply with g_format and these new args, and return.
-			 *   But we're sending the output as we go in some cases! And we're now assuming format is safe --
-			 *   this seems incorrect.  How hard would it be to embed format itself?  s7_error calls it.
+			 *   But we're sending the output as we go in some cases!
 			 *
 			 * even a rewrite at call time can be fooled -- I think for now I'll add a note in s7.html.
 			 */
@@ -30418,7 +30453,7 @@ static s7_pointer g_vector_ref_ic_n(s7_scheme *sc, s7_pointer args, s7_Int index
   vec = find_symbol_checked(sc, car(args));
   if (!s7_is_vector(vec))
     {
-      check_method(sc, vec, sc->VECTOR_REF, args);
+      check_method(sc, vec, sc->VECTOR_REF, list_2(sc, vec, cadr(args)));
       return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec, T_VECTOR));
     }
   if (index >= vector_length(vec))
@@ -41701,7 +41736,6 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       if (type(arg2) == T_REAL)
 	return(subtract_2f);
 
-      /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
       return(subtract_2);
     }
 #endif
@@ -41735,13 +41769,6 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	  (is_optimized(arg2)) &&
 	  (s7_function_returns_temp(sc, arg2)))
 	return(divide_s_temp);
-      /*
-      fprintf(stderr, "%d %s\n", 
-	      ((is_pair(arg2)) &&
-	       (is_optimized(arg2)) &&
-	       (s7_function_returns_temp(sc, arg2))),
-	      DISPLAY_80(expr));
-      */
     }
 
   return(f);
@@ -43751,8 +43778,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 {
   bool func_is_safe, func_is_c_function, func_is_closure;
   s7_pointer cadar_x;
-
-  /* fprintf(stderr, "%s: %d\n", DISPLAY_80(car_x), hop); */
+  /* fprintf(stderr, "func_one_arg: %s: %d\n", DISPLAY_80(car_x), hop); */
 
   func_is_closure = is_closure(func);
 
@@ -44119,8 +44145,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 {
   s7_pointer cadar_x, caddar_x;
   bool func_is_safe, func_is_c_function, func_is_closure;
-
-  /* fprintf(stderr, "opt func %s %s %d %d\n", DISPLAY(func), DISPLAY_80(car_x), pairs, bad_pairs); */
+  /* fprintf(stderr, "opt func_2 %s %s %d %d\n", DISPLAY(func), DISPLAY_80(car_x), pairs, bad_pairs); */
 
   func_is_closure = is_closure(func);
 
@@ -44142,7 +44167,6 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			((is_c_function_star(func)) && 
 			 (c_function_all_args(func) == 2) &&
 			 (!is_keyword(cadar_x))));
-
   if (pairs == 0)
     {
       if (func_is_c_function)
@@ -45255,7 +45279,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 {
   int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0, orig_hop;
   s7_pointer p;
-
   /* fprintf(stderr, "opt_func func %s %s %d %s\n", DISPLAY(func), DISPLAY_80(x), hop, DISPLAY(e)); */
 
   orig_hop = hop;
@@ -45574,14 +45597,15 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_po
 	if (slot_symbol(y) == hdl)
 	  return(y);
     }
-  return(sc->NIL);
+  
+  return(global_slot(hdl)); /* it's no longer global perhaps (local definition now inaccessible) */
+  /* return(sc->NIL); */
 } 
 
 
 static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e)
 {
   s7_pointer y, car_x;
-
   /* fprintf(stderr, "opt expr: %s\n", DISPLAY_80(x)); */
 
   car_x = car(x);
@@ -45607,7 +45631,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	    return(optimize_syntax(sc, x, func, hop, e));
 	  
 	  /* we miss implicit indexing here because at this time, the data are not set */
-	  
 	  if ((is_procedure(func)) ||
 	      (is_c_function(func)) ||
 	      (is_safe_procedure(func))) /* built-in applicable objects like vectors */
@@ -70020,8 +70043,7 @@ int main(int argc, char **argv)
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * clm opt accepts (env env)
  * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
- *   why isn't that the case always? -- pointer selects if focus-follows-mouse
- *   see snd-chn.c 5444 
+ *   why isn't that the case always? -- pointer selects if focus-follows-mouse, see snd-chn.c 5444 
  * float-vector support is currently half-in/half-out
  * the safe_c_s->direct opt could be extended especially to lambda* wrappers, and at least the op_safe_c_ss case
  *
@@ -70037,12 +70059,5 @@ int main(int argc, char **argv)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * possibly: s7_stack|value in C.
- * reader-cond (values) seems to be flakey?
- * ->make (along the lines of ->predicate)
- * why isn't method support automatic in Snd? args not local but in apply so bad_type case can't reach them
- *   pass args throughout, and instead of s7_apply, undo locally? 
- * can threads be used as actual C threads via the ffi -- call to fire one up, get notification upon finish
- *   so no scheme(GC/heap) overhead.
- * can extend stuff et all to check for methods
  */
 

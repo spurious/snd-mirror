@@ -3238,29 +3238,25 @@ Here's an idle thought:
 (begin
   (define fvector? #f)
   (define make-fvector #f)
-  
   (let ((type (gensym))
 	(-&gt;float (lambda (x)
 		   (if (real? x)
 		       (* x 1.0)
 		       (error 'wrong-type-arg "fvector new value is not a real: ~A" x)))))
-
-    (augment-environment! (current-environment)
-      (cons 'length (lambda (p) ((procedure-environment p) 'len)))
-      (cons 'object-&gt;string (lambda (p) "#&lt;fvector&gt;")))
-
     (set! make-fvector
 	  (lambda* (len (init 0.0)) 
-	    (let ((obj (make-vector len (-&gt;float init))))
-	      (<em class=red>open-environment</em>
-	        (make-procedure-with-setter
-		  (lambda (i) (#_vector-ref obj i))
-		  (lambda (i val) (#_vector-set! obj i (-&gt;float val))))))))
-    
-    (set! fvector?
-	  (lambda (p)
-	    (and (procedure? p)
-		 (eq? ((procedure-environment p) 'type) type))))))
+	    (<em class=red>open-environment</em>
+	     (environment* 'v (make-vector len (-&gt;float init))
+			   'type type
+			   'length (lambda (f) len)
+			   'object-&gt;string (lambda (f . args) "#&lt;fvector&gt;")
+			   'environment-set! (lambda (fv i val)
+					       (#_vector-set! (fv 'v) i (-&gt;float val)))
+			   'environment-ref (lambda (fv i)
+					      (#_vector-ref (fv 'v) i))))))
+    (set! fvector? (lambda (p)
+		     (and (environment? p)
+			  (eq? (p 'type) type))))))
   
 &gt; (define fv (make-fvector 32))
 fv
