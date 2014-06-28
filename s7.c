@@ -2818,16 +2818,13 @@ static int position_of(s7_pointer p, s7_pointer args)
   return(i);
 }
 
-
-#define check_method(Sc, Obj, Method, Args) do {if (has_methods(Obj)) {s7_pointer _x_; _x_ = check_method_1(Sc, Obj, Method, Args); if (_x_) return(_x_);}} while (0)
-
-static s7_pointer check_method_1(s7_scheme *sc, s7_pointer obj, s7_pointer method, s7_pointer args)
-{
-  s7_pointer func;
-  if ((func = find_method(sc, find_environment(sc, obj), method)) != sc->UNDEFINED)
-    return(s7_apply_function(sc, func, args));  
-  return(NULL);
-}
+#define check_method(Sc, Obj, Method, Args)   \
+  {                                           \
+    s7_pointer func;                          \
+    if ((has_methods(Obj)) &&                 \
+        ((func = find_method(Sc, find_environment(Sc, Obj), Method)) != Sc->UNDEFINED)) \
+      return(s7_apply_function(Sc, func, Args));        \
+  }
 
 /* unfortunately, in the simplest cases, where a function (like number?) accepts any argument,
  *   this costs about a factor of 1.5 in speed (we're doing the normal check like s7_is_number,
@@ -2837,13 +2834,24 @@ static s7_pointer check_method_1(s7_scheme *sc, s7_pointer obj, s7_pointer metho
  *   go ahead. It's mostly boilerplate:
  */
 
-#define check_boolean_method(Sc, Obj, Checker, Method, Args) \
+#define check_boolean_method(Sc, Checker, Method, Args)      \
   {                                                          \
     s7_pointer p;                                            \
     p = car(Args);                                           \
     if (Checker(p)) return(Sc->T);                           \
     check_method(Sc, p, Method, Args);                       \
     return(Sc->F);                                           \
+  }
+
+#define check_boolean_not_method(Sc, Checker, Method, Args)  \
+  {                                                          \
+    s7_pointer p, func;					     \
+    p = find_symbol_checked(sc, cadar(Args));		     \
+    if (Checker(p)) return(Sc->F);                           \
+    if (((func = find_method(sc, find_environment(sc, p), Method)) != sc->UNDEFINED) && \
+	(s7_apply_function(sc, func, list_1(sc, p)) != sc->F))		\
+      return(Sc->F);                                         \
+    return(sc->T);                                           \
   }
 
 /* the old form would be: return(make_boolean(Sc, Checker(car(Args))))
@@ -2933,7 +2941,7 @@ s7_pointer s7_make_boolean(s7_scheme *sc, bool x)
 static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t: (boolean? ()) -> #f"
-  check_boolean_method(sc, car(args), s7_is_boolean, sc->IS_BOOLEAN, args);
+  check_boolean_method(sc, s7_is_boolean, sc->IS_BOOLEAN, args);
 }
 
 
@@ -2952,7 +2960,7 @@ bool s7_is_constant(s7_pointer p)
 static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_constant "(constant? obj) returns #t if obj is a constant (unsettable): (constant? pi) -> #t"
-  check_boolean_method(sc, car(args), s7_is_constant, sc->IS_CONSTANT, args);
+  check_boolean_method(sc, s7_is_constant, sc->IS_CONSTANT, args);
 }
 
 
@@ -4775,7 +4783,7 @@ static bool s7_is_gensym(s7_pointer g) {return((is_symbol(g)) && (is_gensym(g)))
 static s7_pointer g_is_gensym(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_gensym "(gensym? sym) returns #t if sym is a gensym"
-  check_boolean_method(sc, car(args), s7_is_gensym, sc->IS_GENSYM, args); 
+  check_boolean_method(sc, s7_is_gensym, sc->IS_GENSYM, args); 
 }
 
 
@@ -4858,7 +4866,7 @@ bool s7_is_syntax(s7_pointer p)
 static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_symbol "(symbol? obj) returns #t if obj is a symbol"
-  check_boolean_method(sc, car(args), is_symbol, sc->IS_SYMBOL, args);
+  check_boolean_method(sc, is_symbol, sc->IS_SYMBOL, args);
 }
 
 
@@ -5182,7 +5190,7 @@ bool s7_is_environment(s7_pointer e)
 static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_environment "(environment? obj) returns #t if obj is an environment."
-  check_boolean_method(sc, car(args), is_environment, sc->IS_ENVIRONMENT, args);
+  check_boolean_method(sc, is_environment, sc->IS_ENVIRONMENT, args);
 }
 
 
@@ -5439,7 +5447,7 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_open_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_open_environment "(open-environment? obj) returns #t is 'obj' has methods."
-  check_boolean_method(sc, car(args), has_methods, sc->IS_OPEN_ENVIRONMENT, args);
+  check_boolean_method(sc, has_methods, sc->IS_OPEN_ENVIRONMENT, args);
 }
 
 
@@ -6566,7 +6574,7 @@ bool s7_is_keyword(s7_pointer obj)
 static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword, (keyword? :key) -> #t"
-  check_boolean_method(sc, car(args), is_keyword, sc->IS_KEYWORD, args);
+  check_boolean_method(sc, is_keyword, sc->IS_KEYWORD, args);
 }
 
 
@@ -6664,7 +6672,7 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
 static s7_pointer g_is_c_pointer(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_c_pointer "(c-pointer? obj) returns #t if obj is a C pointer being held in s7."
-  check_boolean_method(sc, car(args), s7_is_c_pointer, sc->IS_C_POINTER, args);
+  check_boolean_method(sc, s7_is_c_pointer, sc->IS_C_POINTER, args);
 }
 
 
@@ -6684,7 +6692,7 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_continuation "(continuation? obj) returns #t if obj is a continuation"
-  check_boolean_method(sc, car(args), is_continuation, sc->IS_CONTINUATION, args);
+  check_boolean_method(sc, is_continuation, sc->IS_CONTINUATION, args);
 }
 
 /* is this the right thing?  It returns #f for call-with-exit ("goto") because
@@ -10721,7 +10729,7 @@ static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 	}
 
     default:
-      check_method(sc, y, sc->MAKE_RECTANGULAR, args);
+      check_method(sc, (is_environment(x)) ? x : y, sc->MAKE_RECTANGULAR, args);
       return(wrong_type_argument(sc, sc->MAKE_RECTANGULAR, small_int(2), y, T_REAL));
     }
 }
@@ -12584,10 +12592,11 @@ static s7_pointer g_mod_si(s7_scheme *sc, s7_pointer args)
   if (s7_is_ratio(x))
     return(g_modulo(sc, list_2(sc, x, cadr(args))));
 
-  check_method(sc, x, sc->MODULO, args);
+  check_method(sc, x, sc->MODULO, list_2(sc, x, cadr(args)));
   return(wrong_type_argument(sc, sc->MODULO, small_int(1), x, T_REAL));
 }
 
+static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args);
 static s7_pointer mod_si_is_zero;
 static s7_pointer g_mod_si_is_zero(s7_scheme *sc, s7_pointer args)
 {
@@ -12607,7 +12616,11 @@ static s7_pointer g_mod_si_is_zero(s7_scheme *sc, s7_pointer args)
   if (s7_is_ratio(x))
     return(sc->F);
 
-  check_method(sc, x, sc->MODULO, args);
+  {
+    s7_pointer func;
+    if ((func = find_method(sc, find_environment(sc, x), sc->MODULO)) != sc->UNDEFINED)
+      return(g_is_zero(sc, list_1(sc, s7_apply_function(sc, func, list_2(sc, x, caddar(args))))));
+  }
   return(wrong_type_argument(sc, sc->MODULO, small_int(1), x, T_REAL));
 }
 #endif
@@ -13235,9 +13248,13 @@ static s7_pointer g_add_f_sf(s7_scheme *sc, s7_pointer args)
     case T_RATIO:   return(make_real(sc, x + (fraction(s) * y)));
     case T_REAL:    return(make_real(sc, x + real(s) * y));
     case T_COMPLEX: return(s7_make_complex(sc, x + (real_part(s) * y), imag_part(s) * y));
-    default:        
-      check_method(sc, s, sc->MULTIPLY, args); /* TODO: broken */
-      return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), s, A_NUMBER));
+    default:
+      {
+	s7_pointer func;
+	if ((func = find_method(sc, find_environment(sc, s), sc->MULTIPLY)) != sc->UNDEFINED)
+	  return(g_add_2(sc, list_2(sc, car(args), s7_apply_function(sc, func, list_2(sc, s, cadr(vargs))))));
+	return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), s, A_NUMBER));
+      }
     }
   return(s);
 }
@@ -13375,12 +13392,16 @@ static s7_pointer g_add_si_i(s7_scheme *sc, s7_pointer args)
     case T_RATIO:   return(s7_make_ratio(sc, k * denominator(x) + numerator(x) * n, denominator(x)));
     case T_REAL:    return(make_real(sc, k + real(x) * n));
     case T_COMPLEX: return(s7_make_complex(sc, k + real_part(x) * n, imag_part(x) * n));
-    default:        return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
+    default:
+      {
+        s7_pointer func;
+	if ((func = find_method(sc, find_environment(sc, x), sc->MULTIPLY)) != sc->UNDEFINED)
+	  return(g_add_2(sc, list_2(sc, s7_apply_function(sc, func, list_2(sc, x, caddar(args))), cadr(args))));
+	return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
+      }
     }
   return(x);
 }
-
-
 
 /* (let () (define (hi a) (+ a 1)) ((apply let '((x 32)) (list (procedure-source hi))) 12))
  */
@@ -13899,7 +13920,7 @@ static s7_pointer g_subtract_fs(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, n - real(x)));
     case T_COMPLEX: return(s7_make_complex(sc, n - real_part(x), -imag_part(x)));
     default:        
-      check_method(sc, x, sc->MINUS, args);
+      check_method(sc, x, sc->MINUS, list_2(sc, car(args), x));
       return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(2), x, A_NUMBER));
     }
   return(x);
@@ -14364,7 +14385,7 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	}
 
     default:
-      check_method(sc, y, sc->MULTIPLY, args);
+      check_method(sc, x, sc->MULTIPLY, args);
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));      
     }
   return(x);
@@ -14390,7 +14411,7 @@ static s7_pointer g_multiply_si(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) * n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * n, imag_part(x) * n));
     default:        
-      check_method(sc, x, sc->MULTIPLY, args);
+      check_method(sc, x, sc->MULTIPLY, list_2(sc, x, cadr(args)));
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));
     }
   return(x);
@@ -14411,7 +14432,7 @@ static s7_pointer g_multiply_is(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) * n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * n, imag_part(x) * n));
     default:        
-      check_method(sc, x, sc->MULTIPLY, args);
+      check_method(sc, x, sc->MULTIPLY, list_2(sc, car(args), x));
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(2), x, A_NUMBER));
     }
   return(x);
@@ -14432,7 +14453,7 @@ static s7_pointer g_multiply_fs(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) * scl));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * scl, imag_part(x) * scl));
     default:        
-      check_method(sc, x, sc->MULTIPLY, args);
+      check_method(sc, x, sc->MULTIPLY, list_2(sc, car(args), x));
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));
     }
   return(x);
@@ -14453,7 +14474,7 @@ static s7_pointer g_multiply_sf(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) * scl));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * scl, imag_part(x) * scl));
     default:       
-      check_method(sc, x, sc->MULTIPLY, args); 
+      check_method(sc, x, sc->MULTIPLY, list_2(sc, x, cadr(args)));
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(2), x, A_NUMBER));
     }
   return(x);
@@ -14598,6 +14619,21 @@ static s7_pointer g_mul_1ss(s7_scheme *sc, s7_pointer args)
   else
     {
       s7_Double r1, r2, i1, i2;
+      if (!is_number(x))
+	{
+	  s7_pointer func;
+	  if ((func = find_method(sc, find_environment(sc, x), sc->MINUS)) != sc->UNDEFINED)
+	    return(g_multiply_2(sc, list_2(sc, s7_apply_function(sc, func, list_2(sc, real_one, x)), y)));
+	  return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(2), x, A_NUMBER));
+	}
+      if (!is_number(y))
+	{
+	  s7_pointer func;
+	  if ((func = find_method(sc, find_environment(sc, y), sc->MULTIPLY)) != sc->UNDEFINED)
+	    return(s7_apply_function(sc, func, list_2(sc, g_subtract(sc, list_2(sc, real_one, x)), y)));
+	  return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(2), y, A_NUMBER));
+	}
+
       r1 = 1.0 - s7_real_part(x);
       r2 = s7_real_part(y);
       i1 = -s7_imag_part(x);
@@ -15064,6 +15100,7 @@ static s7_pointer g_invert_1(s7_scheme *sc, s7_pointer args)
       }
 
     default:
+      check_method(sc, p, sc->DIVIDE, args);
       return(wrong_type_argument_with_type(sc, sc->DIVIDE, small_int(1), p, A_NUMBER));
     }
 }
@@ -15354,6 +15391,7 @@ static s7_pointer g_max_f2(s7_scheme *sc, s7_pointer args)
     return((real(x) >= real(y)) ? x : y);
   if (is_real(y))
     return((real(x) >= number_to_double(sc, y, "max")) ? x : y);
+  check_method(sc, y, sc->MAX, args);
   return(wrong_type_argument(sc, sc->MAX, small_int(2), y, T_REAL));
 }
 
@@ -15566,6 +15604,7 @@ static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
     return((real(x) <= real(y)) ? x : y);
   if (is_real(y))
     return((real(x) <= number_to_double(sc, y, "min")) ? x : y);
+  check_method(sc, y, sc->MIN, args);
   return(wrong_type_argument(sc, sc->MIN, small_int(2), y, T_REAL));
 }
 
@@ -15754,7 +15793,7 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
       return(sc->F);
 
     default:
-      check_method(sc, val, sc->EQ, args);
+      check_method(sc, val, sc->EQ, list_2(sc, val, cadr(args)));
       return(wrong_type_argument_with_type(sc, sc->EQ, small_int(1), val, A_NUMBER));
     }
   return(sc->T);
@@ -16716,6 +16755,7 @@ static s7_pointer g_less_s0(s7_scheme *sc, s7_pointer args)
     return(make_boolean(sc, integer(x) < 0));
   if (is_real(x))
     return(make_boolean(sc, s7_is_negative(x)));
+  check_method(sc, x, sc->LT, args);
   return(wrong_type_argument(sc, sc->LT, small_int(1), x, T_REAL));
 }
 
@@ -16789,6 +16829,7 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, object_length_to_int(sc, val) < ilen));
 
     case T_ENVIRONMENT:
+      /* this works because environment_length handles the length method itself! */
       return(make_boolean(sc, environment_length(sc, val) < ilen));
 
     case T_CLOSURE:
@@ -17544,41 +17585,35 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_number(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_number "(number? obj) returns #t if obj is a number"
-  check_boolean_method(sc, car(args), s7_is_number, sc->IS_NUMBER, args);
-  /* return(make_boolean(sc, s7_is_number(car(args))));  */  /* we need the s7_* versions here for the GMP case */
+  check_boolean_method(sc, s7_is_number, sc->IS_NUMBER, args); /* we need the s7_* versions here for the GMP case */
 }
 
 
 static s7_pointer g_is_integer(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_integer "(integer? obj) returns #t if obj is an integer"
-  check_boolean_method(sc, car(args), s7_is_integer, sc->IS_INTEGER, args);
-  /* return(make_boolean(sc, s7_is_integer(car(args)))); */
+  check_boolean_method(sc, s7_is_integer, sc->IS_INTEGER, args);
 }
 
 
 static s7_pointer g_is_real(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_real "(real? obj) returns #t if obj is a real number"
-  check_boolean_method(sc, car(args), s7_is_real, sc->IS_REAL, args);
-  /* return(make_boolean(sc, s7_is_real(car(args)))); */
+  check_boolean_method(sc, s7_is_real, sc->IS_REAL, args);
 }
 
 
 static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_complex "(complex? obj) returns #t if obj is a number"
-  check_boolean_method(sc, car(args), s7_is_number, sc->IS_COMPLEX, args);
-  /* return(make_boolean(sc, s7_is_number(car(args)))); */
+  check_boolean_method(sc, s7_is_number, sc->IS_COMPLEX, args);
 }
 
 
 static s7_pointer g_is_rational(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_rational "(rational? obj) returns #t if obj is a rational number (either an integer or a ratio)"
-  check_boolean_method(sc, car(args), s7_is_rational, sc->IS_RATIONAL, args);
-  /* return(make_boolean(sc, s7_is_rational(car(args)))); */
-
+  check_boolean_method(sc, s7_is_rational, sc->IS_RATIONAL, args);
   /* in the non-gmp case, (rational? 455702434782048082459/86885567283849955830) -> #f, not #t
    *  and similarly for exact? etc.
    */
@@ -18605,7 +18640,7 @@ static s7_pointer g_is_char_lower_case(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char "(char? obj) returns #t if obj is a character"
-  check_boolean_method(sc, car(args), s7_is_character, sc->IS_CHAR, args);
+  check_boolean_method(sc, s7_is_character, sc->IS_CHAR, args);
 }
 
 
@@ -18747,7 +18782,7 @@ static s7_pointer g_char_equal_s_ic(s7_scheme *sc, s7_pointer args)
     return(sc->T);
   if (!s7_is_character(c))
     {
-      check_method(sc, c, sc->CHAR_EQ, args);
+      check_method(sc, c, sc->CHAR_EQ, list_2(sc, c, cadr(args)));
       return(wrong_type_argument(sc, sc->CHAR_EQ, small_int(1), c, T_CHARACTER));
     }
   return(sc->F);
@@ -19109,7 +19144,10 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   arg2 = cadr(args);
 
   if (!is_string(arg2))
-    return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(2), arg2, T_STRING));
+    {
+      check_method(sc, (is_environment(arg1)) ? arg1 : arg2, sc->CHAR_POSITION, args);
+      return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(2), arg2, T_STRING));
+    }
   porig = string_value(arg2);
 
   if (is_pair(cddr(args)))
@@ -19398,7 +19436,7 @@ const char *s7_string(s7_pointer p)
 static s7_pointer g_is_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_string "(string? obj) returns #t if obj is a string"
-  check_boolean_method(sc, car(args), is_string, sc->IS_STRING, args);
+  check_boolean_method(sc, is_string, sc->IS_STRING, args);
 }
 
 
@@ -19918,7 +19956,7 @@ static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
 	{
 	  if (!is_string(car(x)))
 	    {
-	      check_method(sc, x, sc->STRING_EQ, args);
+	      check_method(sc, car(x), sc->STRING_EQ, args);
 	      return(wrong_type_argument_n(sc, sc->STRING_EQ, position_of(x, args), car(x), T_STRING));
 	    }
 	  if (happy)
@@ -20550,7 +20588,7 @@ static bool s7_is_bytevector(s7_pointer b) {return((is_string(b)) && (is_bytevec
 static s7_pointer g_is_bytevector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_bytevector "(bytevector? obj) returns #t if obj is a bytevector"
-  check_boolean_method(sc, car(args), s7_is_bytevector, sc->IS_BYTEVECTOR, args);
+  check_boolean_method(sc, s7_is_bytevector, sc->IS_BYTEVECTOR, args);
 }
 
 
@@ -20713,7 +20751,7 @@ bool s7_is_input_port(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_is_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_input_port "(input-port? p) returns #t if p is an input port"
-  check_boolean_method(sc, car(args), is_input_port, sc->IS_INPUT_PORT, args);
+  check_boolean_method(sc, is_input_port, sc->IS_INPUT_PORT, args);
 }
 
 
@@ -20726,7 +20764,7 @@ bool s7_is_output_port(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_is_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_output_port "(output-port? p) returns #t if p is an output port"
-  check_boolean_method(sc, car(args), is_output_port, sc->IS_OUTPUT_PORT, args);
+  check_boolean_method(sc, is_output_port, sc->IS_OUTPUT_PORT, args);
 }
 
 
@@ -27546,7 +27584,7 @@ int s7_list_length(s7_scheme *sc, s7_pointer a)
 static s7_pointer g_is_null(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_null "(null? obj) returns #t if obj is the empty list"
-  check_boolean_method(sc, car(args), is_null, sc->IS_NULL, args);
+  check_boolean_method(sc, is_null, sc->IS_NULL, args);
   /* as a generic this could be: has_structure and length == 0 */
 }
 
@@ -27554,7 +27592,7 @@ static s7_pointer g_is_null(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_pair(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_pair "(pair? obj) returns #t if obj is a pair (a non-empty list)"
-  check_boolean_method(sc, car(args), is_pair, sc->IS_PAIR, args);
+  check_boolean_method(sc, is_pair, sc->IS_PAIR, args);
 }
 
 
@@ -30183,7 +30221,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_float_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_float_vector "(float-vector? obj) returns #t if obj is an homogenous float vector"
-  check_boolean_method(sc, car(args), s7_is_float_vector, sc->IS_FLOAT_VECTOR, args);
+  check_boolean_method(sc, s7_is_float_vector, sc->IS_FLOAT_VECTOR, args);
 }
 
 static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
@@ -30888,7 +30926,7 @@ static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_vector "(vector? obj) returns #t if obj is a vector"
-  check_boolean_method(sc, car(args), s7_is_vector, sc->IS_VECTOR, args);
+  check_boolean_method(sc, s7_is_vector, sc->IS_VECTOR, args);
 }
 
 
@@ -31630,7 +31668,7 @@ bool s7_is_hash_table(s7_pointer p)
 static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_hash_table "(hash-table? obj) returns #t if obj is a hash-table"
-  check_boolean_method(sc, car(args), is_hash_table, sc->IS_HASH_TABLE, args);
+  check_boolean_method(sc, is_hash_table, sc->IS_HASH_TABLE, args);
 }
 
 
@@ -33816,7 +33854,7 @@ bool s7_is_procedure_with_setter(s7_pointer obj)
 static s7_pointer g_is_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_procedure_with_setter "(procedure-with-setter? obj) returns #t if obj is a procedure with setter."
-  check_boolean_method(sc, car(args), s7_is_procedure_with_setter, sc->IS_PROCEDURE_WITH_SETTER, args);
+  check_boolean_method(sc, s7_is_procedure_with_setter, sc->IS_PROCEDURE_WITH_SETTER, args);
 }
 
 
@@ -41021,18 +41059,22 @@ static s7_pointer not_is_pair, not_is_symbol, not_is_null, not_is_list, not_is_n
 static s7_pointer not_is_boolean, not_is_char, not_is_string, not_is_eof;
 static s7_pointer not_is_eq_sq, not_is_eq_ss;
 
-static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_pair(find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_null(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_null(find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_symbol(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_symbol(find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_number(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_number(find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_real(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_real(find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_integer(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_integer(find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_rational(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_rational(find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_proper_list(sc, find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_boolean(find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_character(find_symbol_checked(sc, cadar(args)))));}
-static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_string(find_symbol_checked(sc, cadar(args)))));}
+static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_pair, sc->IS_PAIR, args);}
+static s7_pointer g_not_is_null(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_null, sc->IS_NULL, args);}
+static s7_pointer g_not_is_symbol(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_symbol, sc->IS_SYMBOL, args);}
+static s7_pointer g_not_is_number(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_number, sc->IS_NUMBER, args);}
+static s7_pointer g_not_is_real(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_real, sc->IS_REAL, args);}
+static s7_pointer g_not_is_integer(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_integer, sc->IS_INTEGER, args);}
+static s7_pointer g_not_is_rational(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_rational, sc->IS_RATIONAL, args);}
+static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_boolean, sc->IS_BOOLEAN, args);}
+static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_character, sc->IS_CHAR, args);}
+static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_string, sc->IS_STRING, args);}
 static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, find_symbol_checked(sc, cadar(args)) != sc->EOF_OBJECT));}
+
+static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) 
+{
+  return(make_boolean(sc, !is_proper_list(sc, find_symbol_checked(sc, cadar(args)))));
+}
 
 static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args) 
 {
@@ -70059,5 +70101,6 @@ int main(int argc, char **argv)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * possibly: s7_stack|value in C.
+ * finish t922 and put in s7test
  */
 
