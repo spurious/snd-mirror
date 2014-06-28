@@ -1892,6 +1892,7 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
 #endif
 
 #define is_unspecified(p)             (p == sc->UNSPECIFIED)
+#define is_eof(p)                     (p == sc->EOF_OBJECT)
 
 #define is_pair(p)                    (type(p) == T_PAIR)
 #define is_null(p)                    (p == sc->NIL)
@@ -20891,6 +20892,7 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_PURE_S7)
 static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_ready "(char-ready? (port (current-input-port))) returns #t if a character is ready for input on the given port"
@@ -20911,6 +20913,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
     }
   return(make_boolean(sc, (is_input_port(sc->input_port)) && (is_string_port(sc->input_port))));
 }      
+#endif
 
 
 static s7_pointer g_is_eof_object(s7_scheme *sc, s7_pointer args)
@@ -20918,7 +20921,7 @@ static s7_pointer g_is_eof_object(s7_scheme *sc, s7_pointer args)
   #define H_is_eof_object "(eof-object? val) returns #t if val is the end-of-file object"
   s7_pointer p;
   p = car(args);
-  if (p == sc->EOF_OBJECT) return(sc->T);
+  if (is_eof(p)) return(sc->T);
   check_method(sc, p, sc->IS_EOF_OBJECT, args);
   return(sc->F);
 }
@@ -21470,8 +21473,10 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
     {
       port = cadr(args);
       if (!is_output_port(port))
-	return(wrong_type_argument_with_type(sc, sc->WRITE_STRING, small_int(2), port, AN_OUTPUT_PORT));
-
+	{
+	  if (port == sc->F) return(sc->UNSPECIFIED);
+	  return(wrong_type_argument_with_type(sc, sc->WRITE_STRING, small_int(2), port, AN_OUTPUT_PORT));
+	}
       start_and_end(sc, sc->WRITE_STRING, cddr(args), 3, &start, &end);
     }
   else port = sc->output_port;
@@ -22451,6 +22456,7 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     {
       port = cadr(args);
+      if (port == sc->F) return(sc->UNSPECIFIED);
       if (!is_output_port(port))
 	return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, AN_OUTPUT_PORT));
     }
@@ -22559,6 +22565,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
   if ((!is_output_port(port)) ||
       (is_string_port(port)))
     {
+      if (port == sc->F) return(car(args));
       check_method(sc, port, sc->WRITE_BYTE, args);
       return(wrong_type_argument_with_type(sc, sc->WRITE_BYTE, small_int(2), port, make_protected_string(sc, "an output file or function port")));
     }
@@ -25540,6 +25547,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
       port = car(args);
       if (!is_output_port(port))
 	{
+	  if (port == sc->F) return(sc->UNSPECIFIED);
 	  check_method(sc, port, sc->NEWLINE, args);
 	  return(simple_wrong_type_argument_with_type(sc, sc->NEWLINE, port, AN_OUTPUT_PORT));
 	}
@@ -25569,6 +25577,7 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
       port = cadr(args);
       if (!is_output_port(port))
 	{
+	  if (port == sc->F) return(sc->UNSPECIFIED);
 	  check_method(sc, port, sc->WRITE, args);
 	  return(wrong_type_argument_with_type(sc, sc->WRITE, small_int(2), port, AN_OUTPUT_PORT));
 	}
@@ -25601,6 +25610,7 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
       port = cadr(args);
       if (!is_output_port(port))
 	{
+	  if (port == sc->F) return(sc->UNSPECIFIED);
 	  check_method(sc, port, sc->DISPLAY, args);
 	  return(wrong_type_argument_with_type(sc, sc->DISPLAY, small_int(2), port, AN_OUTPUT_PORT));
 	}
@@ -27595,6 +27605,8 @@ static s7_pointer g_is_pair(s7_scheme *sc, s7_pointer args)
   check_boolean_method(sc, is_pair, sc->IS_PAIR, args);
 }
 
+
+#define is_list(p) ((is_pair(p)) || (is_null(p)))
 
 bool s7_is_list(s7_scheme *sc, s7_pointer p)
 {
@@ -40791,7 +40803,7 @@ static s7_pointer g_is_pair_car(s7_scheme *sc, s7_pointer args)
   s7_pointer val;
   val = find_symbol_checked(sc, cadar(args));
   if (!is_pair(val))                                               /* (define (tst) (let ((a 123)) (pair? (car a)))) */
-    return(g_is_pair(sc, list_1(sc, g_car(sc, list_1(sc, val))))); /* handle possible methods the indirect way */
+    return(g_is_pair(sc, list_1(sc, g_car(sc, list_1(sc, val)))));
   return(make_boolean(sc, is_pair(car(val))));
 }
 
@@ -41069,22 +41081,13 @@ static s7_pointer g_not_is_rational(s7_scheme *sc, s7_pointer args) {check_boole
 static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_boolean, sc->IS_BOOLEAN, args);}
 static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_character, sc->IS_CHAR, args);}
 static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_string, sc->IS_STRING, args);}
-static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, find_symbol_checked(sc, cadar(args)) != sc->EOF_OBJECT));}
+static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_eof, sc->IS_EOF_OBJECT, args);}
+static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_list, sc->IS_LIST, args);}
 
-static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) 
-{
-  return(make_boolean(sc, !is_proper_list(sc, find_symbol_checked(sc, cadar(args)))));
-}
+/* the rest are harder */
 
-static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args) 
-{
-  return(make_boolean(sc, find_symbol_checked(sc, cadr(car(args))) != cadr(caddr(car(args)))));
-}
-
-static s7_pointer g_not_is_eq_ss(s7_scheme *sc, s7_pointer args) 
-{
-  return(make_boolean(sc, find_symbol_checked(sc, cadr(car(args))) != find_symbol_checked(sc, caddr(car(args)))));
-}
+static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, find_symbol_checked(sc, cadr(car(args))) != cadr(caddr(car(args)))));}
+static s7_pointer g_not_is_eq_ss(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, find_symbol_checked(sc, cadr(car(args))) != find_symbol_checked(sc, caddr(car(args)))));}
 
 static s7_pointer not_is_pair_car;
 static s7_pointer g_not_is_pair_car(s7_scheme *sc, s7_pointer args) 
@@ -49147,7 +49150,7 @@ static s7_pointer end_dox_c_s_opssq(s7_scheme *sc, s7_pointer code)
 
 static s7_pointer end_dox_is_eof(s7_scheme *sc, s7_pointer code)
 {
-  return(make_boolean(sc, slot_value(environment_dox1(sc->envir)) == sc->EOF_OBJECT));
+  return(make_boolean(sc, is_eof(slot_value(environment_dox1(sc->envir)))));
 }
 
 static s7_pointer end_dox_equal_s_ic(s7_scheme *sc, s7_pointer code)
@@ -69105,7 +69108,9 @@ s7_scheme *s7_init(void)
   sc->IS_INPUT_PORT =         s7_define_safe_function(sc, "input-port?",             g_is_input_port,          1, 0, false, H_is_input_port);
   sc->IS_OUTPUT_PORT =        s7_define_safe_function(sc, "output-port?",            g_is_output_port,         1, 0, false, H_is_output_port);
   sc->IS_PORT_CLOSED =        s7_define_safe_function(sc, "port-closed?",            g_is_port_closed,         1, 0, false, H_is_port_closed);
+#if (!WITH_PURE_S7)
   sc->IS_CHAR_READY =         s7_define_safe_function(sc, "char-ready?",             g_is_char_ready,          0, 1, false, H_is_char_ready);
+#endif
   sc->IS_EOF_OBJECT =         s7_define_safe_function(sc, "eof-object?",             g_is_eof_object,          1, 0, false, H_is_eof_object);
   /* this should be named eof? (what isn't an object?) */
   
@@ -70100,7 +70105,8 @@ int main(int argc, char **argv)
  *
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
- * possibly: s7_stack|value in C.
  * finish t922 and put in s7test
+ *    for clm, xen_to_c_generator could fallback on method check
+ *    this needs find_method/find_environment, but find_method is just symbol_to_value, and find_env is env for most cases
  */
 

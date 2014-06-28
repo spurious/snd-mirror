@@ -5668,6 +5668,7 @@ if *debugging* is #t; otherwise assert expands into nothing.
 <li>port-closed?
 <li>current-input-port, current-output-port, and current-error-port have setters
 <li>the default IO ports are named *stdin*, *stdout*, and *stderr*.
+<li>#f as an output port means nothing is output (#f is /dev/null, I guess).
 <li>member and assoc accept an optional third argument, the comparison function (equal? is the default).
 <li>case accepts =&gt; much like cond (the function argument is the selector).
 <li>if WITH_SYSTEM_EXTRAS is 1, the following are built-in: directory?, file-exists?, delete-file, system, directory-&gt;list, getenv.
@@ -5709,13 +5710,13 @@ loading code that calls gcd.
 <li>change make-rectangular to make-complex, and remove make-polar.
 <li>remove unquote (the name, not the functionality).
 <li>remove cond-expand.
+<li>remove *-ci functions (they are completely useless)
 </ul>
 
-<p>and perhaps:
+<p>(most of these are removed if you set the compiler flag WITH_PURE_S7), and perhaps:
 </p>
 
 <ul>
-<li>remove *-ci functions (they are completely useless), and *-up|downcase
 <li>remove even? and odd?
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
