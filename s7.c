@@ -2819,6 +2819,13 @@ static int position_of(s7_pointer p, s7_pointer args)
   return(i);
 }
 
+s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method)
+{
+  if (has_methods(obj))
+    return(find_method(sc, find_environment(sc, obj), method));
+  return(sc->UNDEFINED);
+}
+
 #define check_method(Sc, Obj, Method, Args)   \
   {                                           \
     s7_pointer func;                          \
@@ -13949,8 +13956,12 @@ static s7_pointer g_subtract_sf_f(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, (real(s) * y) - x));
     case T_COMPLEX: return(s7_make_complex(sc, (real_part(s) * y) - x, imag_part(s) * y));
     default:        
-      check_method(sc, s, sc->MULTIPLY, args);
-      return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), s, A_NUMBER));
+      {
+        s7_pointer func;
+	if ((func = find_method(sc, find_environment(sc, s), sc->MULTIPLY)) != sc->UNDEFINED)
+	  return(g_subtract_2(sc, list_2(sc, s7_apply_function(sc, func, list_2(sc, s, cadr(vargs))), cadr(args))));
+	return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), s, A_NUMBER));
+      }
     }
   return(s);
 }
@@ -19585,7 +19596,10 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
   
   index = cadr(args);
   if (!s7_is_integer(index))
-    return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
+    {
+      check_method(sc, cadr(args), sc->STRING_REF, args);
+      return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
+    }
   ind = s7_integer(index);
   if (ind < 0)
     return(wrong_type_argument_with_type(sc, sc->STRING_REF, small_int(2), index, A_NON_NEGATIVE_INTEGER));
@@ -19614,7 +19628,10 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 
   index = cadr(args);
   if (!s7_is_integer(index))
-    return(wrong_type_argument(sc, sc->STRING_SET, small_int(2), index, T_INTEGER));
+    {
+      check_method(sc, cadr(args), sc->STRING_SET, args);
+      return(wrong_type_argument(sc, sc->STRING_SET, small_int(2), index, T_INTEGER));
+    }
   ind = s7_integer(index);
   if (ind < 0)
     return(wrong_type_argument_with_type(sc, sc->STRING_SET, small_int(2), index, A_NON_NEGATIVE_INTEGER));
@@ -21005,7 +21022,8 @@ void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
    */
   if ((!is_output_port(p)) || 
       (!is_file_port(p)) || 
-      (port_is_closed(p)))
+      (port_is_closed(p)) ||
+      (p == sc->F))
     return;
 
   if (port_file(p))
@@ -21032,6 +21050,7 @@ static s7_pointer g_flush_output_port(s7_scheme *sc, s7_pointer args)
 
   if (!is_output_port(pt))
     {
+      if (pt == sc->F) return(pt);
       check_method(sc, pt, sc->FLUSH_OUTPUT_PORT, args);
       return(simple_wrong_type_argument_with_type(sc, sc->FLUSH_OUTPUT_PORT, pt, AN_OUTPUT_PORT));
     }
@@ -21043,7 +21062,8 @@ static s7_pointer g_flush_output_port(s7_scheme *sc, s7_pointer args)
 void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 {
   if ((is_immutable(p)) ||
-      ((is_output_port(p)) && (port_is_closed(p))))
+      ((is_output_port(p)) && (port_is_closed(p))) ||
+      (p == sc->F))
     return;
   
   if (port_filename(p))
@@ -21095,6 +21115,7 @@ static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
   pt = car(args);
   if (!is_output_port(pt))
     {
+      if (pt == sc->F) return(sc->UNSPECIFIED);
       check_method(sc, pt, sc->CLOSE_OUTPUT_PORT, args);
       return(simple_wrong_type_argument_with_type(sc, sc->CLOSE_OUTPUT_PORT, pt, AN_OUTPUT_PORT));
     }
@@ -21475,6 +21496,7 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
       if (!is_output_port(port))
 	{
 	  if (port == sc->F) return(sc->UNSPECIFIED);
+	  check_method(sc, port, sc->WRITE_STRING, args);
 	  return(wrong_type_argument_with_type(sc, sc->WRITE_STRING, small_int(2), port, AN_OUTPUT_PORT));
 	}
       start_and_end(sc, sc->WRITE_STRING, cddr(args), 3, &start, &end);
@@ -22255,6 +22277,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
   if ((!is_output_port(p)) ||
       (!is_string_port(p)))
     {
+      if (p == sc->F) return(make_empty_string(sc, 0, '\0'));
       check_method(sc, p, sc->GET_OUTPUT_STRING, args);
       return(simple_wrong_type_argument_with_type(sc, sc->GET_OUTPUT_STRING, p, make_protected_string(sc, "an output string port")));
     }
@@ -22458,7 +22481,10 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
       port = cadr(args);
       if (port == sc->F) return(sc->UNSPECIFIED);
       if (!is_output_port(port))
-	return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, AN_OUTPUT_PORT));
+	{
+	  check_method(sc, port, sc->WRITE_CHAR, args);
+	  return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, AN_OUTPUT_PORT));
+	}
     }
   else port = sc->output_port;
 
@@ -24409,7 +24435,9 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	}
       else
 	{
-	  port_write_string(port)(sc, "#(", 2, port);
+	  if (is_float_vector(vect))
+	    port_write_string(port)(sc, "(float-vector ", 14, port);
+	  else port_write_string(port)(sc, "#(", 2, port);
 	  if (is_int_vector(vect))
 	    {
 	      for (i = 0; i < len - 1; i++)
@@ -27605,8 +27633,6 @@ static s7_pointer g_is_pair(s7_scheme *sc, s7_pointer args)
   check_boolean_method(sc, is_pair, sc->IS_PAIR, args);
 }
 
-
-#define is_list(p) ((is_pair(p)) || (is_null(p)))
 
 bool s7_is_list(s7_scheme *sc, s7_pointer p)
 {
@@ -31235,8 +31261,10 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
 	{
 	  s7_Int n;
 	  if (!s7_is_integer(car(x)))
-	    return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_SET, i + 2, car(x), T_INTEGER));
-
+	    {
+	      check_method(sc, car(x), sc->FLOAT_VECTOR_SET, args);
+	      return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_SET, i + 2, car(x), T_INTEGER));
+	    }
 	  n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vec, i)))
@@ -31255,8 +31283,10 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
   else
     {
       if (!s7_is_integer(cadr(args)))
-	return(wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, small_int(2), cadr(args), T_INTEGER));
-
+	{
+	  check_method(sc, cadr(args), sc->FLOAT_VECTOR_SET, args);
+	  return(wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, small_int(2), cadr(args), T_INTEGER));
+	}
       index = s7_integer(cadr(args));
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
@@ -41082,13 +41112,21 @@ static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args) {check_boolea
 static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_character, sc->IS_CHAR, args);}
 static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_string, sc->IS_STRING, args);}
 static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_eof, sc->IS_EOF_OBJECT, args);}
-static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_list, sc->IS_LIST, args);}
+#define is_normal_list(p) is_proper_list(sc, p)
+static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_normal_list, sc->IS_LIST, args);}
 
-/* the rest are harder */
+/* eq? does not check for methods */
+static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args) 
+{
+  return(make_boolean(sc, find_symbol_checked(sc, cadr(car(args))) != cadr(caddr(car(args)))));
+}
 
-static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, find_symbol_checked(sc, cadr(car(args))) != cadr(caddr(car(args)))));}
-static s7_pointer g_not_is_eq_ss(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, find_symbol_checked(sc, cadr(car(args))) != find_symbol_checked(sc, caddr(car(args)))));}
+static s7_pointer g_not_is_eq_ss(s7_scheme *sc, s7_pointer args) 
+{
+  return(make_boolean(sc, find_symbol_checked(sc, cadr(car(args))) != find_symbol_checked(sc, caddr(car(args)))));
+}
 
+/* here the method finder is in either car or cdr */
 static s7_pointer not_is_pair_car;
 static s7_pointer g_not_is_pair_car(s7_scheme *sc, s7_pointer args) 
 {
@@ -41105,7 +41143,7 @@ static s7_pointer g_not_is_null_cdr(s7_scheme *sc, s7_pointer args)
   s7_pointer val;
   val = find_symbol_checked(sc, cadr(cadar(args)));
   if (!is_pair(val))
-    return(g_not(sc, list_1(sc, g_is_pair(sc, list_1(sc, g_cdr(sc, list_1(sc, val)))))));
+    return(g_not(sc, list_1(sc, g_is_null(sc, list_1(sc, g_cdr(sc, list_1(sc, val)))))));
   return(make_boolean(sc, !is_null(cdr(val))));
 }
 
@@ -70093,6 +70131,8 @@ int main(int argc, char **argv)
  *   why isn't that the case always? -- pointer selects if focus-follows-mouse, see snd-chn.c 5444 
  * float-vector support is currently half-in/half-out
  * the safe_c_s->direct opt could be extended especially to lambda* wrappers, and at least the op_safe_c_ss case
+ * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
+ * cyclic-seq in rest of full-* 
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
@@ -70103,10 +70143,10 @@ int main(int argc, char **argv)
  *  but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *    maybe gunichar->bytevector?
  *
- * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
- * cyclic-seq in rest of full-* 
- * finish t922 and put in s7test
+ * finish t922
  *    for clm, xen_to_c_generator could fallback on method check
- *    this needs find_method/find_environment, but find_method is just symbol_to_value, and find_env is env for most cases
+ *    need complex number tests for clm too
+ *    tests for env-as-setter, (set! (f g) h) -> env 'f etc
+ * need #f tests for the various close output cases (are these a good idea?) and maybe output-to-vector etc
  */
 

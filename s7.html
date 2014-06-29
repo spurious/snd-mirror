@@ -7213,6 +7213,9 @@ int main(int argc, char **argv)
 
 <div class="header" id="extendop"><h4>Extend a built-in operator ("+" in this case)</h4></div>
 
+<p>There are several ways to do this.  In the first example, we save the original function,
+and replace it with ours, calling the original whenever possible:
+</p>
 
 <div class="indented">
 <pre>
@@ -7233,7 +7236,6 @@ static s7_pointer our_add(s7_scheme *sc, s7_pointer args)
   if ((s7_is_pair(args)) &amp;&amp;
       (s7_is_string(s7_car(args))))
     return(<em class=red>s7_apply_function</em>(sc, old_string_append, args));
-
   return(s7_apply_function(sc, old_add, args));
 }
 
@@ -7242,7 +7244,6 @@ int main(int argc, char **argv)
   s7_scheme *s7;
   char buffer[512];
   char response[1024];
-
   s7 = s7_init();
 
   /* get built-in + and string-append */
@@ -7265,15 +7266,70 @@ int main(int argc, char **argv)
     }
 }
 
-/* 
- *    &gt; (+ 1 2)
+/*    &gt; (+ 1 2)
  *    3
  *    &gt; (+ "hi" "ho")
  *    "hiho"
  */
 </pre></div>
 
+<p>In the next example, we use the method (environment) machinery:
+</p>
 
+<div class="indented">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;math.h&gt;
+
+#include "s7.h"
+
+static s7_pointer our_abs(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  x = s7_car(args);
+  if (!s7_is_number(x))
+    {
+      s7_pointer method;
+      method = <em class=red>s7_method</em>(sc, x, s7_make_symbol(sc, "abs"));
+      if (method == s7_undefined(sc))                       /* no method found, so raise an error */
+	s7_wrong_type_arg_error(sc, "abs", 1, x, "a real"); /*   else apply the method to the args */
+      return(s7_apply_function(sc, method, args));
+    }
+  return(s7_make_real(sc, (s7_Double)fabs(s7_number_to_real(sc, x))));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init();
+  s7_define_function(s7, "our-abs", our_abs, 1, 0, false, "abs replacement");
+
+  while (1)
+    {
+      fprintf(stdout, "\n&gt; ");
+      fgets(buffer, 512, stdin);
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) &gt; 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	}
+    }
+}
+
+/*    &gt; (our-abs -1)
+ *    1.0
+ *    &gt; (our-abs (open-environment (environment* 'value -3.0 'abs (lambda (x) (abs (x 'value))))))
+ *    3.0
+ */
+
+</pre>
+</div>
 
 
 

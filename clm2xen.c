@@ -9475,7 +9475,7 @@ Xen_wrap_no_args(g_get_internal_real_time_w, g_get_internal_real_time)
 /* -------------------------------- scheme-side optimization -------------------------------- */
 
 #if HAVE_SCHEME
-/* maany of these are not in xen.h */
+/* many of these are not in xen.h */
 #define car(E)    s7_car(E)
 #define caar(E)   s7_caar(E)
 #define cdr(E)    s7_cdr(E)
@@ -9504,7 +9504,14 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
   mus_float_t *d;
 
   v = car(args);
-  Xen_check_type((s7_is_float_vector(v)) && (s7_vector_rank(v) == 1), v, 1, "float-vector-set!", "a " S_vct);
+  if (!s7_is_float_vector(v))
+    {
+      val = s7_method(sc, v, s7_make_symbol(sc, "float-vector-set!"));
+      if (val == xen_undefined)
+	s7_wrong_type_arg_error(s7, "float-vector-set!", 1, v, "a " S_vct);
+      return(s7_apply_function(s7, val, args));
+    }
+  Xen_check_type((s7_vector_rank(v) == 1), v, 1, "float-vector-set!", "a 1-dimensional " S_vct);
 
   loc = s7_number_to_integer_with_caller(sc, cadr(args), "float-vector-set!");
   if ((loc < 0) || (loc>= mus_vct_length(v)))

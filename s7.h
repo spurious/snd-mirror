@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.10"
-#define S7_DATE "16-June-14"
+#define S7_VERSION "3.11"
+#define S7_DATE "30-June-14"
 
 
 typedef long long int s7_Int;
@@ -442,6 +442,7 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_
 s7_pointer s7_open_environment(s7_pointer e);                               /* (open-environment e) */
 bool s7_is_open_environment(s7_pointer e);                                  /* (open-environment? e) */
 s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
+s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method);
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name);
@@ -811,6 +812,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 30-June:   s7_method.
  * 16-June:   remove unoptimize and s7_unoptimize.
  * 14-May:    s7_define_safe_function_star.  Removed s7_catch_all.
  * 22-Apr:    remove (deprecated) s7_apply_n_10, s7_is_valid_pointer, s7_keyword_eq_p.
