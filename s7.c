@@ -19652,7 +19652,6 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 	  str[ind] = (char)ic;
 	  return(c);
 	}
-      check_method(sc, c, sc->STRING_SET, args);
       return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), c, T_CHARACTER));
     }
 
@@ -22588,12 +22587,11 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
     port = cadr(args);
   else port = sc->output_port;
 
-  if ((!is_output_port(port)) ||
-      (is_string_port(port)))
+  if (!is_output_port(port))
     {
       if (port == sc->F) return(car(args));
       check_method(sc, port, sc->WRITE_BYTE, args);
-      return(wrong_type_argument_with_type(sc, sc->WRITE_BYTE, small_int(2), port, make_protected_string(sc, "an output file or function port")));
+      return(simple_wrong_type_argument_with_type(sc, sc->WRITE_BYTE, port, AN_OUTPUT_PORT));
     }
 
   val = s7_integer(b);
@@ -59626,7 +59624,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_pair(arg))
 	      arg = cadr(arg); /* can only be (quote ...) in this case */
 	  }
-
 	obj = caar(sc->code);
 	if (is_symbol(obj))
 	  {
@@ -70133,6 +70130,7 @@ int main(int argc, char **argv)
  * the safe_c_s->direct opt could be extended especially to lambda* wrappers, and at least the op_safe_c_ss case
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
+ * close-environment?
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
@@ -70146,7 +70144,7 @@ int main(int argc, char **argv)
  * finish t922
  *    for clm, xen_to_c_generator could fallback on method check
  *    need complex number tests for clm too
- *    tests for env-as-setter, (set! (f g) h) -> env 'f etc
- * need #f tests for the various close output cases (are these a good idea?) and maybe output-to-vector etc
+ *    fvect from clm2xen
+ *    gmp problems: should we insist on a 'bignum method?
  */
 

@@ -46833,6 +46833,7 @@ EDITS: 1
 ;; 21-Apr-13: #(1 1 2 2 27  88 4 1 266 1 15 1 2 10 15 1  78 1 1  97 39  69 1  917 0 0 0 1 2 77)  ;  17
 ;; 24-Feb-14: #(1 1 2 1 22  74 2 1 162 2  9 1 3  8  9 2  54 2    70 33  24 2  791     0 0 1 82)  ;  14
 ;; 15-Mar-14: #(1 2 3 2 25  71 3 2 129 1  8 1 2  8 14 2  45 2    74 32  25 1  781     0 0 2 81)  ;  13
+;; 29-Jun-14: #(1 2 3 2 21  72 3 2 128 1  7 1 2  8 12 2  45 1    70 32  24 1  759     0 0 2 101) ;  13
 
 ;;; -------- cleanup temp files
 
@@ -47079,28 +47080,6 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   449,476,048  ???:n1_64 [/home/bil/snd-14/snd]
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
-
-10-Apr-14:
-35,619,416,179
-5,416,914,391  s7.c:eval [/home/bil/gtk-snd/snd]
-2,256,286,386  ???:sin [/lib64/libm-2.12.so]
-2,030,457,131  ???:cos [/lib64/libm-2.12.so]
-1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,096,023,303  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  901,303,892  ???:t2_32 [/home/bil/gtk-snd/snd]
-  785,597,992  s7.c:gc [/home/bil/gtk-snd/snd]
-  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
-  664,377,340  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  648,406,214  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  565,781,514  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  454,355,496  ???:n1_64 [/home/bil/gtk-snd/snd]
-  453,855,997  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
-  437,664,958  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  414,027,948  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  381,402,276  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
-  338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 
 27-Apr-14:
 35,390,341,125

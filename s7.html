@@ -7294,8 +7294,8 @@ static s7_pointer our_abs(s7_scheme *sc, s7_pointer args)
       s7_pointer method;
       method = <em class=red>s7_method</em>(sc, x, s7_make_symbol(sc, "abs"));
       if (method == s7_undefined(sc))                       /* no method found, so raise an error */
-	s7_wrong_type_arg_error(sc, "abs", 1, x, "a real"); /*   else apply the method to the args */
-      return(s7_apply_function(sc, method, args));
+	s7_wrong_type_arg_error(sc, "abs", 1, x, "a real"); 
+      return(s7_apply_function(sc, method, args));          /*   else apply the method to the args */
     }
   return(s7_make_real(sc, (s7_Double)fabs(s7_number_to_real(sc, x))));
 }
@@ -7443,7 +7443,7 @@ int main(int argc, char **argv)
 <div class="header" id="definegeneric"><h4>define a generic function in C</h4></div>
 
 <p>In scheme, a function becomes generic simply by <code>(apply ((car args) 'func) args)</code>.
-To accomplish the same thing in C, we use s7_search_open_environment and s7_apply_function:
+To accomplish the same thing in C, we use s7_method and s7_apply_function:
 </p>
 
 <div class="indented">
@@ -7457,15 +7457,11 @@ To accomplish the same thing in C, we use s7_search_open_environment and s7_appl
 static s7_pointer plus(s7_scheme *sc, s7_pointer args)
 {
   #define plus_help "(plus obj ...) applies obj's plus method to obj and any trailing arguments."
-  s7_pointer obj;
+  s7_pointer obj, method;
   obj = s7_car(args);
-  if (<em class=red>s7_is_open_environment</em>(obj))          /* does obj have methods? */
-    {
-      s7_pointer method;                    /* does it have a 'plus method? */
-      method = <em class=red>s7_search_open_environment</em>(sc, s7_make_symbol(sc, "plus"), obj);
-      if (s7_is_procedure(method))
-	return(<em class=red>s7_apply_function</em>(sc, method, args));
-    }
+  method = <em class=red>s7_method</em>(sc, obj, s7_make_symbol(sc, "plus"));
+  if (s7_is_procedure(method))
+    return(<em class=red>s7_apply_function</em>(sc, method, args));
   return(s7_f(sc));
 }
 

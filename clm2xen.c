@@ -1609,12 +1609,11 @@ static Xen g_mus_reset(Xen gen)
       s7_float_vector_scale(s7, gen, xen_zero);
       return(gen);
     }
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-reset"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-    } 
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-reset"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  } 
 #endif
   Xen_check_type(false, gen, 1, S_mus_reset, "a generator");
   return(gen);
@@ -1635,12 +1634,11 @@ static Xen g_mus_run(Xen gen, Xen arg1, Xen arg2)
       return(C_double_to_Xen_real(mus_run(ms->gen, a1, a2)));
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-run"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 3, gen, arg1, arg2))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-run"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 3, gen, arg1, arg2))); 
+  }
 #endif
   Xen_check_type(false, gen, 1, S_mus_run, "a generator");
   return(C_double_to_Xen_real(0.0));
@@ -1676,12 +1674,11 @@ static Xen g_mus_apply(Xen arglist)
 					    Xen_real_to_C_double_with_caller(Xen_caddr(arglist), "mus-apply"))));
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-apply"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, arglist));
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-apply"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, arglist));
+  }
 #endif
   Xen_check_type(false, Xen_car(arglist), 1, S_mus_apply, "a generator");
   return(C_double_to_Xen_real(0.0));
@@ -1704,12 +1701,11 @@ static Xen g_mus_describe(Xen gen)
       return(result);
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-describe"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-describe"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  }
 #endif
   Xen_check_type(false, gen, 1, S_mus_describe, "a generator");
   return(gen);
@@ -1719,70 +1715,55 @@ static Xen g_mus_describe(Xen gen)
 #if HAVE_SCHEME
 #define mus_double_generic(Caller, CLM_case, Symbol)				\
   mus_xen *gn;                                                                \
+  s7_pointer func; \
   gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (gn) return(C_double_to_Xen_real(CLM_case(gn->gen))); \
-  if (s7_is_open_environment(gen)) \
-    { \
-      s7_pointer func; \
-      func = s7_search_open_environment(s7, Symbol, gen); \
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); \
-    } \
+  func = s7_method(s7, gen, Symbol);				\
+  if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); \
   Xen_check_type(false, gen, 1, Caller, "a generator");  \
   return(gen);
 
 #define mus_set_double_generic(Caller, CLM_case)                   \
   mus_xen *gn;                                                             \
+  s7_pointer func; \
   gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   Xen_check_type(Xen_is_double(val), val, 2, S_setB Caller, "a float");   \
   if (gn) {CLM_case(gn->gen, Xen_real_to_C_double(val)); return(val);}	\
-  if (s7_is_open_environment(gen)) \
-    { \
-      s7_pointer func; \
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, Caller), gen); \
-      if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))			\
-	return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val))); \
-    } \
+  func = s7_method(s7, gen, s7_make_symbol(s7, Caller));		\
+  if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))	\
+    return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val))); \
   Xen_check_type(false, gen, 1, S_setB Caller, "a generator");  \
   return(val);
 
 #define mus_long_long_generic(Caller, CLM_case)                       \
   mus_xen *gn;                                                                \
+  s7_pointer func; \
   gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (gn) return(C_llong_to_Xen_llong(CLM_case(gn->gen))); \
-  if (s7_is_open_environment(gen)) \
-    { \
-      s7_pointer func; \
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, Caller), gen); \
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); \
-    } \
+  func = s7_method(s7, gen, s7_make_symbol(s7, Caller));		\
+  if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); \
   Xen_check_type(false, gen, 1, Caller, "a generator");  \
   return(gen);
 
 #define mus_set_long_long_generic(Caller, CLM_case)                \
   mus_xen *gn;                                                             \
+  s7_pointer func; \
   gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   Xen_check_type(Xen_is_integer(val), val, 2, Caller, "an integer"); \
   if (gn) {CLM_case(gn->gen, Xen_llong_to_C_llong(val)); return(val);}	\
-  if (s7_is_open_environment(gen)) \
-    { \
-      s7_pointer func; \
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, Caller), gen); \
-      if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))			\
-	return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val))); \
-    } \
+  func = s7_method(s7, gen, s7_make_symbol(s7, Caller));		\
+  if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))	\
+    return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val))); \
   Xen_check_type(false, gen, 1, Caller, "a generator");  \
   return(val);
 
 #define mus_int_generic(Caller, CLM_case)                             \
   mus_xen *gn;                                                                \
+  s7_pointer func; \
   gn = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);		\
   if (gn) return(C_int_to_Xen_integer(CLM_case(gn->gen)));			\
-  if (s7_is_open_environment(gen)) \
-    { \
-      s7_pointer func; \
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, Caller), gen); \
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); \
-    } \
+  func = s7_method(s7, gen, s7_make_symbol(s7, Caller));		\
+  if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); \
   Xen_check_type(false, gen, 1, Caller, "a generator");	\
   return(gen);
 
@@ -1997,12 +1978,11 @@ static Xen g_mus_name(Xen gen)
   if (ms) 
     return(C_string_to_Xen_string(mus_name(mus_xen_to_mus_any(ms))));
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-name"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-name"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  }
 #endif
   Xen_check_type(false, gen, 1, S_mus_name, "a generator");
   return(gen);
@@ -2020,13 +2000,12 @@ static Xen g_mus_set_name(Xen gen, Xen name)
       return(name);
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-name"), gen); 
-      if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-	return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, name)));
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-name"));
+    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
+      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, name)));
+  }
 #endif
   Xen_check_type(false, gen, 1, S_setB S_mus_name, "a generator");
   return(name);
@@ -2041,12 +2020,11 @@ Xen g_mus_file_name(Xen gen)
   if (gn) 
     return(C_string_to_Xen_string(mus_file_name(gn->gen)));
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, S_mus_file_name), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, S_mus_file_name));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  }
 #endif
   Xen_check_type(false, gen, 1, S_mus_file_name, "a generator"); 
   return(gen);
@@ -2066,12 +2044,11 @@ Xen g_mus_data(Xen gen)
       else return(Xen_false);
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-data"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-data"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  }
 #endif
   Xen_check_type(false, gen, 1, S_mus_data, "a generator");
   return(gen);
@@ -2098,13 +2075,12 @@ static Xen g_mus_set_data(Xen gen, Xen val)
 	}
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-data"), gen); 
-      if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-	return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val)));
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-data"));
+    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
+      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val)));
+  }
 #endif
 
   Xen_check_type(false, gen, 1, S_setB S_mus_data, "a generator with a data field");
@@ -2141,12 +2117,11 @@ static Xen g_mus_xcoeffs(Xen gen)
       return(Xen_false);
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-xcoeffs"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-xcoeffs"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  }
 #endif
   Xen_check_type(false, gen, 1, S_mus_xcoeffs, "a generator");
   return(gen);
@@ -2178,12 +2153,11 @@ static Xen g_mus_ycoeffs(Xen gen)
       return(Xen_false);
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-ycoeffs"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-ycoeffs"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  }
 #endif
   Xen_check_type(false, gen, 1, S_mus_ycoeffs, "a generator");
   return(gen);
@@ -2205,12 +2179,11 @@ static Xen g_mus_xcoeff(Xen gen, Xen index)
       return(C_double_to_Xen_real(mus_xcoeff(mus_xen_to_mus_any(ms), ind)));
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-xcoeff"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 2, gen, index))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-xcoeff"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 2, gen, index))); 
+  }
 #endif
   Xen_check_type(false, gen, 1, S_mus_xcoeff, "a generator");
   return(index);
@@ -2234,13 +2207,12 @@ static Xen g_mus_set_xcoeff(Xen gen, Xen index, Xen val)
       return(val);
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-xcoeff"), gen); 
-      if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-	return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 3, gen, index, val)));
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-xcoeff"));
+    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
+      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 3, gen, index, val)));
+  }
 #endif
   Xen_check_type(false, gen, 1, S_setB S_mus_xcoeff, "a generator");
   return(val);
@@ -2262,12 +2234,11 @@ static Xen g_mus_ycoeff(Xen gen, Xen index)
       return(C_double_to_Xen_real(mus_ycoeff(mus_xen_to_mus_any(ms), ind)));
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-ycoeff"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 2, gen, index))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-ycoeff"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 2, gen, index))); 
+  }
 #endif
   Xen_check_type(false, gen, 1, S_mus_ycoeff, "a generator");
   return(index);
@@ -2291,13 +2262,12 @@ static Xen g_mus_set_ycoeff(Xen gen, Xen index, Xen val)
       return(val);
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-ycoeff"), gen); 
-      if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-	return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 3, gen, index, val)));
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-ycoeff"));
+    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
+      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 3, gen, index, val)));
+  }
 #endif
   Xen_check_type(false, gen, 1, S_setB S_mus_ycoeff, "a generator");
   return(val);
@@ -2326,12 +2296,11 @@ Xen g_mus_channels(Xen gen)
 #endif
 
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-channels"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-channels"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  }
 #endif
 
   Xen_check_type(false, gen, 1, S_mus_channels, "an output generator, " S_vct ", or sound-data object");
@@ -2352,12 +2321,11 @@ Xen g_mus_length(Xen gen)
     return(C_int_to_Xen_integer(mus_vct_length(Xen_to_vct(gen))));
 
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-length"), gen); 
-      if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-length"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  }
 #endif
 
   Xen_check_type(false, gen, 1, S_mus_length, "a generator, " S_vct ", or sound-data object");
@@ -2396,13 +2364,12 @@ static Xen g_mus_set_length(Xen gen, Xen val)
       return(val);
     }
 #if HAVE_SCHEME
-  if (s7_is_open_environment(gen)) 
-    { 
-      s7_pointer func; 
-      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-length"), gen); 
-      if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-	return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val)));
-    }
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-length"));
+    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
+      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val)));
+  }
 #endif
   Xen_check_type(false, gen, 1, S_setB S_mus_length, "a generator");
   return(val);
