@@ -359,15 +359,24 @@
 	  (else
 	   (write obj port))))
   
-  (pretty-print-1 obj port column)
-  (flush-output-port port)
-  #<unspecified>)
+  (let ((old-port port))
+    (if (boolean? old-port)
+	(set! port (open-output-string)))
+    (pretty-print-1 obj port column)
+    (flush-output-port port)
+    (if (boolean? old-port)
+	(let ((str (get-output-string port)))
+	  (close-output-port port)
+	  (if (eq? old-port #t)
+	      (display str))
+	  str)
+	(values))))
 
 
 (define (pp obj)
-  (with-output-to-string
-    (lambda ()
-      (pretty-print obj))))
+  (call-with-output-string
+    (lambda (p)
+      (pretty-print obj p))))
 
 (define (test-pretty-print)
 

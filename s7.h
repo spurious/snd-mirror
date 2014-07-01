@@ -441,7 +441,6 @@ s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym); /*
 s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (set! (env sym) val) */
 s7_pointer s7_open_environment(s7_pointer e);                               /* (open-environment e) */
 bool s7_is_open_environment(s7_pointer e);                                  /* (open-environment? e) */
-s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method);
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
@@ -779,6 +778,9 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_T(Sc)           s7_t(Sc)
 #define s7_UNDEFINED(Sc)   s7_undefined(Sc)
 #define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
+
+s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
+/* replaced by s7_method */
 #endif
 
 /* the following Scheme functions are not currently exported to C:

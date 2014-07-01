@@ -167,16 +167,12 @@ static s7_pointer mac_plus(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer open_plus(s7_scheme *sc, s7_pointer args)
 {
-  #define plus_help "(plus obj ...) applies obj's plus method to any trailing arguments."
-  s7_pointer obj;
+  #define plus_help "(plus obj ...) applies obj's plus method to obj and any trailing arguments."
+  s7_pointer obj, method;
   obj = s7_car(args);
-  if (s7_is_open_environment(obj))          /* does obj have methods? */
-    {
-      s7_pointer method;                    /* does it have a 'plus method? */
-      method = s7_search_open_environment(sc, s7_make_symbol(sc, "plus"), obj);
-      if (s7_is_procedure(method))
-	return(s7_apply_function(sc, method, s7_cdr(args)));
-    }
+  method = s7_method(sc, obj, s7_make_symbol(sc, "plus"));
+  if (s7_is_procedure(method))
+    return(s7_apply_function(sc, method, args));
   return(s7_f(sc));
 }
 

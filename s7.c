@@ -611,7 +611,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, OP_SAFE_C_SSA, HOP_SAFE_C_SSA, 
       OP_SAFE_C_CSA, HOP_SAFE_C_CSA, OP_SAFE_C_SCA, HOP_SAFE_C_SCA,
       OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA, 
-      OP_SAFE_C_AZ, HOP_SAFE_C_AZ, OP_SAFE_C_ZA, HOP_SAFE_C_ZA, OP_SAFE_C_SQS, HOP_SAFE_C_SQS, 
+      OP_SAFE_C_SQS, HOP_SAFE_C_SQS, 
+      OP_SAFE_C_S_opAAq, HOP_SAFE_C_S_opAAq, OP_SAFE_C_S_opAAAq, HOP_SAFE_C_S_opAAAq, 
 
       OP_SAFE_C_opCq, HOP_SAFE_C_opCq, OP_SAFE_C_opSq, HOP_SAFE_C_opSq, 
       OP_SAFE_C_opSSq, HOP_SAFE_C_opSSq, OP_SAFE_C_opSCq, HOP_SAFE_C_opSCq, OP_SAFE_C_opSQq, HOP_SAFE_C_opSQq, 
@@ -634,6 +635,13 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, 
 
       OP_SAFE_C_STAR_CD, HOP_SAFE_C_STAR_CD, 
+      OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS, 
+      OP_SAFE_C_CZ, HOP_SAFE_C_CZ, OP_SAFE_C_ZC, HOP_SAFE_C_ZC, OP_SAFE_C_QZ, HOP_SAFE_C_QZ, OP_SAFE_C_ZQ, HOP_SAFE_C_ZQ, 
+      OP_SAFE_C_opCq_Z, HOP_SAFE_C_opCq_Z, OP_SAFE_C_S_opSZq, HOP_SAFE_C_S_opSZq, 
+      OP_SAFE_C_AZ, HOP_SAFE_C_AZ, OP_SAFE_C_ZA, HOP_SAFE_C_ZA, 
+      OP_SAFE_C_ZAA, HOP_SAFE_C_ZAA, OP_SAFE_C_AZA, HOP_SAFE_C_AZA, OP_SAFE_C_AAZ, HOP_SAFE_C_AAZ, OP_SAFE_C_SSZ, HOP_SAFE_C_SSZ,
+      OP_SAFE_C_ZZA, HOP_SAFE_C_ZZA, OP_SAFE_C_ZAZ, HOP_SAFE_C_ZAZ, OP_SAFE_C_AZZ, HOP_SAFE_C_AZZ, 
+      OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ, OP_SAFE_C_ZZZZ, HOP_SAFE_C_ZZZZ,
       
       OP_THUNK, HOP_THUNK, 
       OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
@@ -693,23 +701,14 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, 
       OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, OP_SAFE_C_QP, HOP_SAFE_C_QP, OP_SAFE_C_AP, HOP_SAFE_C_AP, 
       OP_SAFE_C_PS, HOP_SAFE_C_PS, OP_SAFE_C_PC, HOP_SAFE_C_PC, OP_SAFE_C_PQ, HOP_SAFE_C_PQ,
-      
-      OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS, 
-      OP_SAFE_C_CZ, HOP_SAFE_C_CZ, OP_SAFE_C_ZC, HOP_SAFE_C_ZC, OP_SAFE_C_QZ, HOP_SAFE_C_QZ, OP_SAFE_C_ZQ, HOP_SAFE_C_ZQ, 
-      OP_SAFE_C_opCq_Z, HOP_SAFE_C_opCq_Z, OP_SAFE_C_S_opSZq, HOP_SAFE_C_S_opSZq, 
-      OP_SAFE_C_S_opAAq, HOP_SAFE_C_S_opAAq, OP_SAFE_C_S_opAAAq, HOP_SAFE_C_S_opAAAq, 
-      
-      OP_SAFE_C_ZAA, HOP_SAFE_C_ZAA, OP_SAFE_C_AZA, HOP_SAFE_C_AZA, OP_SAFE_C_AAZ, HOP_SAFE_C_AAZ, OP_SAFE_C_SSZ, HOP_SAFE_C_SSZ,
-      OP_SAFE_C_ZZA, HOP_SAFE_C_ZZA, OP_SAFE_C_ZAZ, HOP_SAFE_C_ZAZ, OP_SAFE_C_AZZ, HOP_SAFE_C_AZZ, 
-      OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ, OP_SAFE_C_ZZZZ, HOP_SAFE_C_ZZZZ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP, 
       OPT_MAX_DEFINED
 };
 
-#define is_safe_c_op(op) ((op < OP_THUNK) && (op >= OP_SAFE_C_C))
-                                             /* for an unsigned int op, op is always >= OP_SAFE_C_C (0) */
+#define is_safe_c_op(op) ((op < OP_THUNK) && (op >= OP_SAFE_C_C)) /* used only in safe_stepper */
+                                                                  /* for an unsigned int op, op is always >= OP_SAFE_C_C (0) */
 #define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_P))
-#define is_callable_c_op(op) (((op < OP_THUNK) && (op >= OP_SAFE_C_C)) || (op >= OP_SAFE_C_opVSq_S))
+#define is_callable_c_op(op) (((op < OP_THUNK) && (op >= OP_SAFE_C_C)) || (op >= OP_SAFE_C_opVSq_S)) /* used only in check_set */
 
 /* also for debugging */
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
@@ -721,7 +720,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", 
       "safe_c_csa", "h_safe_c_csa", "safe_c_sca", "h_safe_c_sca",
       "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa", 
-      "safe_c_az", "h_safe_c_az", "safe_c_za", "h_safe_c_za", "safe_c_sqs", "h_safe_c_sqs",
+      "safe_c_sqs", "h_safe_c_sqs",
+      "safe_c_s_opaaq", "h_safe_c_s_opaaq", "safe_c_s_opaaaq", "h_safe_c_s_opaaaq", 
       
       "safe_c_opcq", "h_safe_c_opcq", "safe_c_opsq", "h_safe_c_opsq", 
       "safe_c_opssq", "h_safe_c_opssq", "safe_c_opscq", "h_safe_c_opscq", "safe_c_opsqq", "h_safe_c_opsqq", 
@@ -743,6 +743,13 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_opssq_op_opssq_q", "h_safe_c_opssq_op_opssq_q", "safe_c_op_opssq_sq_opssq", "h_safe_c_op_opssq_sq_opssq",
       "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", 
 
+      "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs", 
+      "safe_c_cz", "h_safe_c_cz", "safe_c_zc", "h_safe_c_zc", "safe_c_qz", "h_safe_c_qz", "safe_c_zq", "h_safe_c_zq", 
+      "safe_c_opcq_z", "h_safe_c_opcq_z", "safe_c_s_opszq", "h_safe_c_s_opszq", 
+      "safe_c_az", "h_safe_c_az", "safe_c_za", "h_safe_c_za", 
+      "safe_c_zaa", "h_safe_c_zaa", "safe_c_aza", "h_safe_c_aza", "safe_c_aaz", "h_safe_c_aaz", "safe_c_ssz", "h_safe_c_ssz",
+      "safe_c_zza", "h_safe_c_zza", "safe_c_zaz", "h_safe_c_zaz", "safe_c_azz", "h_safe_c_azz", 
+      "safe_c_zzz", "h_safe_c_zzz", "safe_c_zzzz", "h_safe_c_zzzz",
       "safe_c*_cd", "h_safe_c*_cd",
 
       "thunk", "h_thunk", 
@@ -802,15 +809,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_opsq_p", "h_safe_c_opsq_p", 
       "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", "safe_c_ap", "h_safe_c_ap", 
       "safe_c_ps", "h_safe_c_ps", "safe_c_pc", "h_safe_c_pc", "safe_c_pq", "h_safe_c_pq",
-      
-      "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs", 
-      "safe_c_cz", "h_safe_c_cz", "safe_c_zc", "h_safe_c_zc", "safe_c_qz", "h_safe_c_qz", "safe_c_zq", "h_safe_c_zq", 
-      "safe_c_opcq_z", "h_safe_c_opcq_z", "safe_c_s_opszq", "h_safe_c_s_opszq", 
-      "safe_c_s_opaaq", "h_safe_c_s_opaaq", "safe_c_s_opaaaq", "h_safe_c_s_opaaaq", 
-      
-      "safe_c_zaa", "h_safe_c_zaa", "safe_c_aza", "h_safe_c_aza", "safe_c_aaz", "h_safe_c_aaz", "safe_c_ssz", "h_safe_c_ssz",
-      "safe_c_zza", "h_safe_c_zza", "safe_c_zaz", "h_safe_c_zaz", "safe_c_azz", "h_safe_c_azz", 
-      "safe_c_zzz", "h_safe_c_zzz", "safe_c_zzzz", "h_safe_c_zzzz",
       "safe_c_ssp", "h_safe_c_ssp", 
       "opt_max_defined"
   };
@@ -1261,7 +1259,7 @@ struct s7_scheme {
   s7_pointer MAKE_RECTANGULAR, MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPEN_ENVIRONMENT, IS_OPEN_ENVIRONMENT, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, IS_OUTPUT_PORT, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
-  s7_pointer IS_PORT_CLOSED, PORT_FILE, PORT_FILENAME, PORT_LINE_NUMBER;
+  s7_pointer IS_PORT_CLOSED, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE;
   s7_pointer IS_PROCEDURE_WITH_SETTER, PROVIDE;
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
@@ -1555,16 +1553,18 @@ static void init_types(void)
   t_opt_all_x[HOP_SAFE_C_C] = true;
   t_opt_all_x[HOP_SAFE_C_Q] = true;
   t_opt_all_x[HOP_SAFE_C_A] = true;
-  t_opt_all_x[HOP_SAFE_C_SSA] = true; 
-  t_opt_all_x[HOP_SAFE_C_SSC] = true; 
-  t_opt_all_x[HOP_SAFE_C_SS] = true;
-  t_opt_all_x[HOP_SAFE_C_SSS] = true;
   t_opt_all_x[HOP_SAFE_C_SC] = true;
   t_opt_all_x[HOP_SAFE_C_CS] = true;
   t_opt_all_x[HOP_SAFE_C_SQ] = true;
+  t_opt_all_x[HOP_SAFE_C_SS] = true;
+  t_opt_all_x[HOP_SAFE_C_SSA] = true; 
+  t_opt_all_x[HOP_SAFE_C_SSC] = true; 
+  t_opt_all_x[HOP_SAFE_C_SSS] = true;
   t_opt_all_x[HOP_SAFE_C_opCq] = true;
   t_opt_all_x[HOP_SAFE_C_opSq] = true;
   t_opt_all_x[HOP_SAFE_C_opSSq] = true;
+  t_opt_all_x[HOP_SAFE_C_opSCq] = true;
+  t_opt_all_x[HOP_SAFE_C_opSQq] = true;
   t_opt_all_x[HOP_SAFE_C_opSSq_S] = true;
   t_opt_all_x[HOP_SAFE_C_S_opSSq] = true;
   t_opt_all_x[HOP_SAFE_C_S_opSq] = true;
@@ -2582,7 +2582,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 #define WITH_COUNTS 0
 
 #if WITH_COUNTS
-#if 0
+#if 1
 #if 0
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -2661,7 +2661,7 @@ static void report_counts(s7_scheme *sc)
   for (k = 0; k < OP_MAX_DEFINED; k++)
     {
       if (counts[k] > 0)
-	fprintf(stderr, "%d: %d\n", k, counts[k]); /* fprintf(stderr, "%s ", opt_names[k]); */
+	fprintf(stderr, "%s: %d\n", opt_names[k], counts[k]);
     }
   /* fprintf(stderr, "\n"); */
 }
@@ -5490,11 +5490,12 @@ bool s7_is_open_environment(s7_pointer e)
   return(has_methods(e));
 }
 
-
+#if (!DISABLE_DEPRECATED)
 s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 {
   return(find_method(sc, find_environment(sc, e), symbol));
 }
+#endif
 
 
 static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e)
@@ -23256,13 +23257,22 @@ The symbols refer to the argument to \"provide\"."
   s7_pointer p;
   for (p = args; is_pair(p); p = cdr(p))
     {
-      if ((is_symbol(car(p))) &&
-	  (!is_slot(find_symbol(sc, car(p)))))
+      if (is_symbol(car(p)))
 	{
-	  s7_pointer f;
-	  f = g_autoloader(sc, p);
-	  if (is_string(f))
-	    s7_load_1(sc, string_value(f), sc->envir);
+	  if (!is_slot(find_symbol(sc, car(p))))
+	    {
+	      s7_pointer f;
+	      f = g_autoloader(sc, p);
+	      if (is_string(f))
+		s7_load_1(sc, string_value(f), sc->envir);
+	      else fprintf(stderr, "%s: no autoload info\n", s7_object_to_c_string(sc, car(p)));
+	    }
+	}
+      else 
+	{
+	  if ((is_pair(car(p))) && (caar(p) == sc->QUOTE))
+	    fprintf(stderr, "don't quote %s as an argument to require\n", s7_object_to_c_string(sc, cadar(p)));
+	  else fprintf(stderr, "%s is not a symbol\n", s7_object_to_c_string(sc, car(p)));
 	}
     }
   return(sc->T);
@@ -26121,7 +26131,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    bracket_str[bracket_len - 1] = '\0';
 
 		    /* if it's just a variable name (most common case by far), or a number, grab it directly */
-		    if (strcspn((const char *)bracket_str, (const char *)"('\"`") == bracket_len - 1)
+		    if ((int)strcspn((const char *)bracket_str, (const char *)"('\"`") == bracket_len - 1)
 		      {
 			int k; /* "i" is the outer index */
 			unsigned char *lstr;
@@ -43120,7 +43130,9 @@ static int all_x_count(s7_pointer x)
 }
 
 
-/* arg here is the full expression */
+/* arg here is the full expression 
+ *   remember to set the t_opt_all_x table as well
+ */
 
 static s7_pointer all_x_else(s7_scheme *sc, s7_pointer arg)
 {
@@ -43327,6 +43339,26 @@ static s7_pointer all_x_c_opssq(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T1_1));
 }
 		    
+static s7_pointer all_x_c_opscq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T2_1) = find_symbol_checked(sc, cadr(largs));
+  car(sc->T2_2) = caddr(largs);
+  car(sc->T1_1) = c_call(largs)(sc, sc->T2_1);
+  return(c_call(arg)(sc, sc->T1_1));
+}
+		    
+static s7_pointer all_x_c_opsqq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T2_1) = find_symbol_checked(sc, cadr(largs));
+  car(sc->T2_2) = cadr(caddr(largs));
+  car(sc->T1_1) = c_call(largs)(sc, sc->T2_1);
+  return(c_call(arg)(sc, sc->T1_1));
+}
+		    
 static s7_pointer all_x_c_opssq_s(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -43471,6 +43503,8 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	    case HOP_SAFE_C_opCq:        return(all_x_c_opcq);
 	    case HOP_SAFE_C_opSq:        return(all_x_c_opsq);
 	    case HOP_SAFE_C_opSSq:       return(all_x_c_opssq);
+	    case HOP_SAFE_C_opSCq:       return(all_x_c_opscq);
+	    case HOP_SAFE_C_opSQq:       return(all_x_c_opsqq);
 	    case HOP_SAFE_C_opSq_S:      return(all_x_c_opsq_s);
 	    case HOP_SAFE_C_opSq_C:      return(all_x_c_opsq_c);
 	    case HOP_SAFE_C_S_opSq:      return(all_x_c_s_opsq);
@@ -47372,10 +47406,7 @@ static s7_pointer check_and(s7_scheme *sc)
       if (all_pairs)
 	{
 	  for (p = sc->code; is_pair(p); p = cdr(p))
-	    {
-	      set_fcdr(p, (s7_pointer)orp_all_x_eval(sc, car(p))); /* this can be nil! */
-	      /* fprintf(stderr, "%sset %s fcdr (%p) to %p%s\n", BOLD_TEXT, DISPLAY(p), p, fcdr(p), UNBOLD_TEXT); */
-	    }
+	    set_fcdr(p, (s7_pointer)orp_all_x_eval(sc, car(p))); /* this can be nil! */
 	  set_syntax_op(sc->code, sc->AND_P);
 	}
       else set_syntax_op(sc->code, sc->AND_UNCHECKED);
@@ -48339,13 +48370,6 @@ static s7_pointer check_set(s7_scheme *sc)
 					    }
 					  else
 					    {
-					      /*
-					      if ((!is_callable_c_op(optimize_data(value))) ||
-						  (!is_h_optimized(value)))
-						fprintf(stderr, "%s: %s %d %d %d\n", 
-							DISPLAY(sc->code), opt_name(value), 
-							is_safe_c_op(optimize_data(value)), is_all_x_safe(sc, value), is_h_optimized(value));
-					      */
 					      if (is_all_x_safe(sc, value)) /* value = cadr(sc->code) */
 						{
 						  set_syntax_op(sc->code, sc->SET_SYMBOL_A);
@@ -48545,7 +48569,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			(*has_set) = true;
 		      if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
 			return(false);
-		      if (!safe_stepper(sc, expr, steppers))  /* is any stepper the value saved? */
+		      if (!safe_stepper(sc, expr, steppers))  /* is step var's value used as the stored value by set!? */
 			return(false);
 		      break;
 		      
@@ -59176,7 +59200,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	closure_body(new_func) = cdr(sc->code);
 	closure_setter(new_func) = sc->F; 
 
-	if (!(fcdr(sc->code))) fcdr(sc->code) = sc->F;
+	if (!(fcdr(sc->code))) set_fcdr(sc->code, sc->F);
 	/* fcdr can be nil if we have a function, call it (so check_define+opt), then 
 	 *   walk the procedure source while redefining the function, then call it again.
 	 *   To be safe, we should actually call check_define, but how to force that?
@@ -62689,6 +62713,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL; 
 	}
 
+      /* lg, here and or_p eval cases: h_safe_c_opscq: 126040, h_safe_c_opsqq: 41740, safe_closure_opsq_s: 52382 ?? */
 
       
       /* -------------------------------- OR -------------------------------- */      
@@ -68522,7 +68547,6 @@ s7_scheme *s7_init(void)
   car(sc->temp_cell_4) = cdr(sc->temp_cell_4) = sc->NIL;
   heap_location(sc->temp_cell_4) = NOT_IN_HEAP;
 
-
   sc->T1_1 = alloc_pointer();
   set_type(sc->T1_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T1_1) = sc->NIL;
@@ -68558,7 +68582,6 @@ s7_scheme *s7_init(void)
   cdr(sc->T3_3) = sc->NIL;
   heap_location(sc->T3_3) = NOT_IN_HEAP;
 
-
   sc->A4_1 = alloc_pointer();
   sc->A4_2 = alloc_pointer();
   sc->A4_3 = alloc_pointer();
@@ -68588,7 +68611,6 @@ s7_scheme *s7_init(void)
   sc->A3_2 = sc->A4_3;
   sc->A3_3 = sc->A4_4;
 
-
   sc->safe_lists = (s7_pointer *)calloc(NUM_SAFE_LISTS, sizeof(s7_pointer));
   for (i = 1; i < NUM_SAFE_LISTS; i++)
     {
@@ -68599,7 +68621,6 @@ s7_scheme *s7_init(void)
 	p = permanent_cons(sc->NIL, p, T_PAIR);
       sc->safe_lists[i] = p;
     }
-
 
   sc->input_port_stack = sc->NIL;
   sc->code = sc->NIL;
@@ -69137,7 +69158,6 @@ s7_scheme *s7_init(void)
 
   sc->PORT_LINE_NUMBER =      s7_define_safe_function(sc, "port-line-number",        g_port_line_number,       0, 1, false, H_port_line_number);
   sc->PORT_FILENAME =         s7_define_safe_function(sc, "port-filename",           g_port_filename,          0, 1, false, H_port_filename);
-  /* sc->PORT_FILE =          s7_define_safe_function(sc, "port-file",               g_port_file,              1, 0, false, H_port_file); */
   sc->PAIR_LINE_NUMBER =      s7_define_safe_function(sc, "pair-line-number",        g_pair_line_number,       1, 0, false, H_pair_line_number);
   
   sc->IS_INPUT_PORT =         s7_define_safe_function(sc, "input-port?",             g_is_input_port,          1, 0, false, H_is_input_port);
@@ -69150,11 +69170,12 @@ s7_scheme *s7_init(void)
   /* this should be named eof? (what isn't an object?) */
   
                               s7_define_safe_function(sc, "current-input-port",      g_current_input_port,     0, 0, false, H_current_input_port);
-                              s7_define_safe_function(sc, "set-current-input-port",  g_set_current_input_port, 1, 0, false, H_set_current_input_port);
                               s7_define_safe_function(sc, "current-output-port",     g_current_output_port,    0, 0, false, H_current_output_port);
-                              s7_define_safe_function(sc, "set-current-output-port", g_set_current_output_port,1, 0, false, H_set_current_output_port);
                               s7_define_safe_function(sc, "current-error-port",      g_current_error_port,     0, 0, false, H_current_error_port);
+                              s7_define_safe_function(sc, "set-current-input-port",  g_set_current_input_port, 1, 0, false, H_set_current_input_port);
+                              s7_define_safe_function(sc, "set-current-output-port", g_set_current_output_port,1, 0, false, H_set_current_output_port);
                               s7_define_safe_function(sc, "set-current-error-port",  g_set_current_error_port, 1, 0, false, H_set_current_error_port);
+
   sc->CLOSE_INPUT_PORT =      s7_define_safe_function(sc, "close-input-port",        g_close_input_port,       1, 0, false, H_close_input_port);
   sc->CLOSE_OUTPUT_PORT =     s7_define_safe_function(sc, "close-output-port",       g_close_output_port,      1, 0, false, H_close_output_port);
   sc->FLUSH_OUTPUT_PORT =     s7_define_safe_function(sc, "flush-output-port",       g_flush_output_port,      0, 1, false, H_flush_output_port);
@@ -69738,6 +69759,9 @@ s7_scheme *s7_init(void)
   set_setter(s7_make_symbol(sc, "set-current-input-port"));
   set_setter(s7_make_symbol(sc, "set-current-output-port"));
   set_setter(s7_make_symbol(sc, "set-current-error-port"));
+  s7_function_set_setter(sc, "current-input-port",  "set-current-input-port");
+  s7_function_set_setter(sc, "current-output-port", "set-current-output-port");
+  s7_function_set_setter(sc, "current-error-port",  "set-current-error-port");
 
   s7_function_set_setter(sc, "car",                 "set-car!");
   s7_function_set_setter(sc, "cdr",                 "set-cdr!");
@@ -69746,9 +69770,6 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "float-vector-ref",    "float-vector-set!");
   s7_function_set_setter(sc, "list-ref",            "list-set!");
   s7_function_set_setter(sc, "string-ref",          "string-set!");
-  s7_function_set_setter(sc, "current-input-port",  "set-current-input-port");
-  s7_function_set_setter(sc, "current-output-port", "set-current-output-port");
-  s7_function_set_setter(sc, "current-error-port",  "set-current-error-port");
   c_function_setter(s7_symbol_value(sc, sc->OUTER_ENVIRONMENT)) = s7_make_function(sc, "(set! outer-environment)", g_set_outer_environment, 2, 0, false, "outer-environment setter"); 
 
   {
@@ -70120,7 +70141,6 @@ int main(int argc, char **argv)
  *            153 with run macro (eval_ptree)
  *
  *
- * click to inspect/see source etc in listener?
  * ideally the function doc string could be completely removed before optimization etc
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * clm opt accepts (env env)
@@ -70131,20 +70151,30 @@ int main(int argc, char **argv)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * close-environment?
+ * perhaps the require troubles should be normal s7 errors.
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
- * an example of using the glib unicode stuff? The data is in xgdata.scm.
- *  (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
- *  (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
- *  (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
- *  but the ones that return gunichar (toupper) currently don't return a bytevector or a string
- *    maybe gunichar->bytevector?
+ *   an example of using the glib unicode stuff? The data is in xgdata.scm.
+ *   (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
+ *   (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
+ *   (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
+ *   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
+ *   maybe gunichar->bytevector?
  *
  * finish t922
  *    for clm, xen_to_c_generator could fallback on method check
  *    need complex number tests for clm too
- *    fvect from clm2xen
  *    gmp problems: should we insist on a 'bignum method?
+ *
+ * There are many cases where we know "args" is An or Tn, so a specialized body could avoid traversing the list
+ *   but even better: avoid the list itself: c1_call(code)(sc, value) etc, could this avoid all the ffi apply's?
+ *   for many these exist: s7_cadar
+ * count all_x in let(*) and/or etc [which unused of safe_c_*?]
+ * unused arg in lint?  or constant? can simplify-boolean be used in cond/if?
+ *   impossible case choices? local funcs never called?
+ * what happens if pretty-print called in format?  -- use with-output-to-string or (begin ... (values))+same out port
+ *   now assumes out string if boolean port
+ *   error printout using pp?  also of course need lint/pp tests
  */
 

@@ -5142,7 +5142,7 @@ CLOS.  We can mimic this behavior:
 (let ((x '(a)))
   (let ((x '(b)))
     (define (transparent-memq sym var e)
-      (let ((val (symbol->value var e)))
+      (let ((val (symbol-&gt;value var e)))
 	(or (and (pair? val)
 		 (memq sym val))
 	    (and (not (eq? e (global-environment)))
