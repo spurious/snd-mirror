@@ -974,16 +974,24 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
    (environment* 
     'pair? (lambda (obj) #t)
     'value seq
-    'member (lambda* (a b c)
+    'member (lambda* (a b (c equal?))
 	      (let* ((v (b 'value))
-		     (len (length v))
-		     (c? (or c equal?)))
+		     (len (length v)))
 		(call-with-exit
 		 (lambda (return)
 		   (do ((i 0 (+ i 1)))
 		       ((= i len) #f)
-		     (if (c? a (v i))
+		     (if (c a (v i))
 			 (return (subsequence v i)))))))))))
 
 
+(define (make-method f accessor)
+  (lambda args
+    (if (environment? (car args)) 
+	(apply f (accessor (car args)) (cdr args))
+	(apply f (car args) (accessor (cadr args)) (cddr args)))))
+
+(define (make-object . args)
+  (open-environment
+   (apply environment* args)))
 

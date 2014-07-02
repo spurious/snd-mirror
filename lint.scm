@@ -26,7 +26,7 @@
       (define (string-ci>? . strs) (apply string>? (map string-upcase strs)))
       ))
 
-(define *report-unused-parameters* #f)
+(define *report-unused-parameters* #t)
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
 (define *report-shadowed-variables* #f)
@@ -38,10 +38,6 @@
 (define *current-file* "")
 (define *top-level-objects* (make-hash-table))
 (define *lint-output-port* #t)
-
-
-(define find-var assq)
-(define add-vars append)
 
 
 
@@ -706,6 +702,21 @@
 		       +list+)))
 	      (#t +any+)))
       
+      (define (type-compatible type obj)
+	(or (eq? type +any+)
+	    (let ((obj-type (->type obj)))
+	      (or (equal? type obj-type)
+		  (and (equal? type +number+) (equal? obj-type +integer+))
+		  (and (equal? type +integer+) (equal? obj-type +number+))
+		  (and (equal? type 'char-or-eof) (equal? obj-type +character+))))))
+
+      (define (never-false expr)
+	(let ((type (if (pair? expr)
+			(hash-table-ref function-types (car expr))
+			(->type expr))))
+	  (not (member type (list +any+ +boolean+ +symbol+ 'integer-or-f 'list-or-f 'number-or-f)))))
+	
+
       ;; --------------------------------------------------------------------------------
       
       (define (truncated-list->string form)
@@ -755,7 +766,7 @@
 		   #f)))
 	    (and (symbol? form)
 		 (not (hash-table-ref no-side-effect-functions form))
-		 (let ((e (or (find-var form env) (hash-table-ref globals form))))
+		 (let ((e (or (assq form env) (hash-table-ref globals form))))
 		   (or (not e)
 		       (and (>= (length e) 4)
 			    (pair? (list-ref e 3)))
@@ -771,7 +782,7 @@
 		 (or (and (symbol? (car form))
 			  (hash-table-ref no-side-effect-functions (car form))
 			  (not (hash-table-ref globals (car form)))
-			  (not (find-var (car form) env))) ; e.g. exp declared locally as a list
+			  (not (assq (car form) env))) ; e.g. exp declared locally as a list
 		     (and (constant? (car form))
 			  (not (pair? (car form)))
 			  (not (vector? (car form)))))
@@ -893,7 +904,7 @@
 		      (if (symbol? arg)
 			  ;; if we're in a loop of some sort and the set! follows the ref,
 			  ;;   this can be fooled.
-			  (let ((var-data (or (find-var arg env) (hash-table-ref globals arg))))
+			  (let ((var-data (or (assq arg env) (hash-table-ref globals arg))))
 			    (if (and (pair? var-data)
 				     (not (list-ref var-data 1)) ; a stop-gap -- refd?
 				     (not (list-ref var-data 2)) ;               set?
@@ -922,13 +933,13 @@
       
       (define (set-ref? name env)
 	;; if name is in env, set its "I've been referenced" flag
-	(let ((data (or (find-var name env) (hash-table-ref globals name))))
+	(let ((data (or (assq name env) (hash-table-ref globals name))))
 	  (if (pair? data)
 	      (list-set! data 1 #t))))
       
       
       (define (set-set? name env)
-	(let ((data (or (find-var name env) (hash-table-ref globals name))))
+	(let ((data (or (assq name env) (hash-table-ref globals name))))
 	  (if (pair? data)
 	      (list-set! data 2 #t)))) ; "I've been set"
       
@@ -1314,7 +1325,7 @@
 					  (symbol? (car arg))
 					  (not (hash-table-ref globals (car arg)))
 					  (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f integer-or-f)))
-					  (not (find-var (car arg) env))))
+					  (not (assq (car arg) env))))
 				 #f
 				 (if (and (pair? arg)               ; (not (not ...)) -> ...
 					  (pair? (cdr arg))
@@ -1533,7 +1544,7 @@
 	    (if (or (not (pair? x))                      ; constants and the like look dumb if simplified
 		    (hash-table-ref globals (car x))
 		    (not (hash-table-ref no-side-effect-functions (car x)))
-		    (find-var (car x) env))
+		    (assq (car x) env))
 		x
 		(let ((f (simplify-numerics x env)))
 		  (if (and (pair? f)
@@ -2038,6 +2049,8 @@
 		     (let ((test (cadr form))
 			   (true (caddr form))
 			   (false (and (= len 4) (cadddr form))))
+		       (if (never-false test)
+			   (lint-format "if test is never false: ~A" name form))
 
 		       (if (not (side-effect? test env))
 			   (begin
@@ -2272,7 +2285,7 @@
       
       
       (define (check-call name head form env)
-	(let ((fdata (or (find-var head env) (hash-table-ref globals head))))
+	(let ((fdata (or (assq head env) (hash-table-ref globals head))))
 	  (if (pair? fdata)
 	      ;; a local var
 	      (begin
@@ -2594,7 +2607,7 @@
 				(if (and *report-shadowed-variables*
 					 (not second-pass)
 					 (or (hash-table-ref globals (car binding))
-					     (find-var (car binding) env)))
+					     (assq (car binding) env)))
 				    (lint-format "~A variable ~A in ~S shadows an earlier declaration" name head (car binding) binding))
 				#t))))))))
       
@@ -2752,7 +2765,7 @@
 			(if (or (and (procedure? p)
 				     (zero? (cadr (procedure-arity p)))
 				     (not (caddr (procedure-arity p)))) ; might be deliberately limiting args
-				(let ((e (or (find-var cval env) 
+				(let ((e (or (assq cval env) 
 					     (hash-table-ref globals cval))))
 				  (and e
 				       (pair? e)
@@ -2781,7 +2794,7 @@
 			    ((3) (lint-format "~A could be (define ~A cadddr)" name name name))))))))
 	    
 	(let ((ldata (and (not (memq head '(lambda lambda*)))
-			  (not (find-var name env))
+			  (not (assq name env))
 			  (list name #f #f (list head args)))))
 	  (if (null? args)
 	      (begin
@@ -2791,7 +2804,7 @@
 				 (symbol (substring (symbol->string head) 0 (- (length (symbol->string head)) 1)))))
 		(lint-walk-function-body name head args () val env)
 		(if ldata
-		    (add-vars (list ldata) env)
+		    (append (list ldata) env)
 		    env))
 	    
 	      (if (or (symbol? args) 
@@ -2813,11 +2826,11 @@
 						 (list (car arg) #f #f))))
 				       (proper-list args)))))
 		  
-		    (lint-walk-function-body name head args arg-data val (add-vars arg-data (if ldata (add-vars (list ldata) env) env)))
+		    (lint-walk-function-body name head args arg-data val (append arg-data (if ldata (append (list ldata) env) env)))
 		    (if *report-unused-parameters* 
 			(report-usage name 'parameter head arg-data))
 		    (if ldata 
-			(add-vars (list ldata) env)
+			(append (list ldata) env)
 			env))
 		
 		  (begin
@@ -2886,8 +2899,8 @@
 				       (if (and (pair? e)
 						(eq? (caar e) sym)) ; (define x (lambda ...)) but it misses closures
 					   e
-					   (add-vars (list (list sym #f #f)) env)))
-				     (add-vars (list (list sym #f #f)) env)))
+					   (append (list (list sym #f #f)) env)))
+				     (append (list (list sym #f #f)) env)))
 			       
 			       (if (pair? sym)
 				   (begin
@@ -2998,6 +3011,12 @@
 				(if (not (pair? clause))
 				    (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause))
 				    (let ((expr (simplify-boolean (car clause) () () env)))
+
+				      (if (never-false expr)
+					  (if (not (= ctr len))
+					      (lint-format "cond test is never false: ~A" name form)
+					      (if (not (side-effect? (car clause) env))
+						  (lint-format "cond last test could be #t: ~A" name form))))
 				      (if (not (side-effect? (car clause) env))
 					  (if (member (car clause) exprs)
 					      (lint-format "cond test repeated:~A" name (truncated-list->string clause))
@@ -3043,11 +3062,18 @@
 		     ;; here the keys are not evaluated, so we might have a list like (letrec define ...)
 		     (if (< (length form) 3)
 			 (lint-format "case is messed up: ~A" name (truncated-list->string form))
-			 (begin
-			   (if (and (not (pair? (cadr form)))
-				    (constant? (cadr form)))
+			 (let ((sel-type +any+)
+			       (selector (cadr form)))
+			   (if (and (not (pair? selector))
+				    (constant? selector))
 			       (lint-format "case selector is a constant: ~A" name (truncated-list->string form)))
-			   (lint-walk name (cadr form) env) ; the selector
+			   (lint-walk name selector env)
+			   (if (and (pair? selector)
+				    (symbol? (car selector)))
+			       (begin
+				 (set! sel-type (hash-table-ref function-types (car selector)))
+				 (if (not (member sel-type (list +any+ +symbol+ +boolean+ +character+ +integer+ +number+ +unspecified+ 'char-or-eof)))
+				     (lint-format "case selector may not work with eqv: ~A" name (truncated-list->string selector)))))
 			   (let ((all-keys ())
 				 (ctr 0)
 				 (len (length (cddr form))))
@@ -3069,7 +3095,9 @@
 							 (hash-table? key))
 						     (lint-format "case key ~S in ~S is unlikely to work (case uses eqv?)" name key clause))
 						 (if (member key all-keys)
-						     (lint-format "repeated case key ~S in ~S" name key clause)))
+						     (lint-format "repeated case key ~S in ~S" name key clause))
+						 (if (not (type-compatible sel-type key))
+						     (lint-format "case key ~S in ~S is pointless" name key clause)))
 					       keys))
 					  (if (not (eq? keys 'else))
 					      (lint-format "bad case key ~S in ~S" name keys clause)
@@ -3111,12 +3139,12 @@
 				 ((not (pair? bindings)))
 			       (if (and (binding-ok? name head (car bindings) env #t)
 					(pair? (cddar bindings)))
-				   (lint-walk name (caddar bindings) (add-vars vars env))))
+				   (lint-walk name (caddar bindings) (append vars env))))
 			     
 			     ;; walk the body and end stuff (it's too tricky to find infinite do loops)
 			     (if (pair? (caddr form))
-				 (lint-walk-body name head (cddr form) (add-vars vars env))
-				 (lint-walk-body name head (cdddr form) (add-vars vars env)))
+				 (lint-walk-body name head (cddr form) (append vars env))
+				 (lint-walk-body name head (cdddr form) (append vars env)))
 			     (report-usage name 'variable head vars)))
 
 		       ;; if while walking the do loop body we see an expression involving
@@ -3152,7 +3180,7 @@
 					      (eq? 'lambda (car (cadar bindings)))
 					      (not (hash-table-ref globals (caar bindings)))
 					      (tree-car-member (caar bindings) (cadar bindings))
-					      (not (find-var (caar bindings) env)))
+					      (not (assq (caar bindings) env)))
 					 (lint-format "let variable ~A is called in its binding?  Perhaps let should be letrec:~A"
 						      name (caar bindings) 
 						      (truncated-list->string bindings)))
@@ -3166,7 +3194,7 @@
 				     (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars)))))
 			     ;; each var is (sym ref set opt-func-data opt-type-data)
 			     
-			     (let* ((cur-env (add-vars vars env))
+			     (let* ((cur-env (append vars env))
 				    (e (lint-walk-body name head (if named-let (cdddr form) (cddr form)) cur-env))
 				    (nvars (and (not (eq? e cur-env))
 						(env-difference name e cur-env ()))))
@@ -3190,7 +3218,7 @@
 						   name (if named-let (caddr form) (cadr form)))))
 			       (if (binding-ok? name head (car bindings) env #f)
 				   (begin
-				     (lint-walk name (cadar bindings) (add-vars vars env))
+				     (lint-walk name (cadar bindings) (append vars env))
 				     (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars)))))
 			     
 			     (if (and *report-minor-stuff* ; maybe we need *report-very-minor-stuff* !
@@ -3212,7 +3240,7 @@
 			     ;; if each function could tell us what globals it depends on or affects,
 			     ;;   we could make this work in all cases.
 			     
-			     (let* ((cur-env (add-vars vars env))
+			     (let* ((cur-env (append vars env))
 				    (e (lint-walk-body name head (if named-let (cdddr form) (cddr form)) cur-env))
 				    (nvars (and (not (eq? e cur-env))
 						(env-difference name e cur-env ()))))
@@ -3235,13 +3263,13 @@
 				    (lint-format "letrec variable list is not a proper list? ~S" name (cadr form))))
 			     (if (binding-ok? name head (car bindings) env #f)
 				 (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars))))
-			   (let ((new-env (add-vars vars env)))
+			   (let ((new-env (append vars env)))
 			     (do ((bindings (cadr form) (cdr bindings)))
 				 ((not (pair? bindings)))
 			       (if (binding-ok? name head (car bindings) env #t)
 				   (lint-walk name (cadar bindings) new-env)))
 			     
-			     (let* ((cur-env (add-vars vars env))
+			     (let* ((cur-env (append vars env))
 				    (e (lint-walk-body name head (cddr form) cur-env))
 				    (nvars (and (not (eq? e cur-env))
 						(env-difference name e cur-env ()))))
@@ -3390,9 +3418,11 @@
 		    ((when unless)
 		     (if (< (length form) 3)
 			 (lint-format "~A is messed up: ~A" name head (truncated-list->string form))
-			 (begin
-			   (if (pair? (cadr form))
-			       (lint-walk name (cadr form) env))
+			 (let ((test (cadr form)))
+			   (if (never-false test)
+			       (lint-format "~A test is never false: ~A" name head form))
+			   (if (pair? test)
+			       (lint-walk name test env))
 			   (let* ((e (lint-walk-body name head (cddr form) env))
 				  (vars (if (not (eq? e env))
 					    (env-difference name e env ())
@@ -3405,6 +3435,8 @@
 		     (if (< (length form) 3)
 			 (lint-format "with-environment is messed up: ~A" name (truncated-list->string form))
 			 (begin
+			   (if (symbol? (cadr form))
+			       (set-ref? (cadr form) env))
 			   (if (pair? (cadr form))
 			       (begin
 				 (if (and *report-minor-stuff*
@@ -3434,7 +3466,7 @@
 			       (begin
 				 (check-call name head form env)
 				 (if (not (or (hash-table-ref globals head)
-					      (find-var head env) ))
+					      (assq head env) ))
 				     (check-special-cases name head form env))
 				 
 				 (if (and *report-minor-stuff*
@@ -3442,7 +3474,7 @@
 					  (pair? (cdr form))
 					  (not (hash-table-ref globals head))
 					  (hash-table-ref numeric-ops head)
-					  (not (find-var head env)))
+					  (not (assq head env)))
 				     (let ((val (simplify-numerics form env)))
 				       (if (not (equal-ignoring-constants? form val))
 					   (begin

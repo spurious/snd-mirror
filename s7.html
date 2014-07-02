@@ -734,6 +734,8 @@ Why not treat the initial values as default values?
 <p>This is consistent with the lambda* arguments because their defaults are
 already set in left-to-right order, and as each parameter is set to its default value,
 the binding is added to the default value expression environment (just as if it were a let*).
+The let* name itself (the implicit function) is not defined until after the bindings
+have been evaluated (as in named let).
 </p>
 
 <p>In CL, keyword default values are handled in the same way:
@@ -2605,6 +2607,7 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings-or-env)
 
 (<em class=def id="openenvironment">open-environment</em> env)          mark env as open (see below)
+(<em class=def id="closeenvironment">close-environment</em> env)        mark env as closed (undo an earlier open-environment)
 (<em class=def id="openenvironmentp">open-environment?</em> env)
 
 (<em class=def id="environmentref">environment-ref</em> env sym)       these are the explicit forms to get and set a binding

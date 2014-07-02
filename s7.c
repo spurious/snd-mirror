@@ -1242,7 +1242,7 @@ struct s7_scheme {
   s7_pointer MINUS, MULTIPLY, ADD, DIVIDE, LT, LEQ, EQ, GT, GEQ, ABS, ACOS, ACOSH;
   s7_pointer ANGLE, APPEND, APPLY, IS_ARITABLE, ARITY, ASH, ASIN, ASINH, ASSOC, ASSQ, ASSV, ATAN, ATANH;
   s7_pointer AUGMENT_ENVIRONMENT, AUGMENT_ENVIRONMENTB, AUTOLOAD, AUTOLOADER, IS_BOOLEAN, BYTEVECTOR, IS_BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
-  s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_EXIT;
+  s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_EXIT, CLOSE_ENVIRONMENT;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
   s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, IS_CHAR_ALPHABETIC, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
@@ -1263,7 +1263,7 @@ struct s7_scheme {
   s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE;
   s7_pointer IS_PROCEDURE_WITH_SETTER, PROVIDE;
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
-  s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE;
+  s7_pointer READ_STRING, REAL_PART, REMAINDER, REQUIRE, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE;
   s7_pointer STRING, STRING_DOWNCASE, STRING_UPCASE, STRING_LEQ, STRING_LT, STRING_EQ;
   s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
@@ -1559,7 +1559,9 @@ static void init_types(void)
   t_opt_all_x[HOP_SAFE_C_SS] = true;
   t_opt_all_x[HOP_SAFE_C_SSA] = true; 
   t_opt_all_x[HOP_SAFE_C_SSC] = true; 
+  t_opt_all_x[HOP_SAFE_C_SCS] = true;
   t_opt_all_x[HOP_SAFE_C_SSS] = true;
+  t_opt_all_x[HOP_SAFE_C_CSS] = true;
   t_opt_all_x[HOP_SAFE_C_opCq] = true;
   t_opt_all_x[HOP_SAFE_C_opSq] = true;
   t_opt_all_x[HOP_SAFE_C_opSSq] = true;
@@ -1831,6 +1833,7 @@ static void init_types(void)
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
 #define set_has_methods(p)            typeflag(p) |= T_HAS_METHODS
+#define clear_has_methods(p)          typeflag(p) &= (~T_HAS_METHODS)
 /* this marks an environment or closure that is "opened" up to generic functions etc 
  */
 
@@ -5467,14 +5470,31 @@ static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
   e = car(args);
   check_method(sc, e, sc->OPEN_ENVIRONMENT, args);
   if (((is_environment(e)) && (e != sc->global_env)) ||
-      (is_closure(e)) ||
-      (is_closure_star(e)) ||
+      (is_closure(e)) || (is_closure_star(e)) ||
       ((is_c_object(e)) && (c_object_environment(e) != sc->NIL)))
     {
       set_has_methods(e);
       return(e);
     }
   return(simple_wrong_type_argument_with_type(sc, sc->OPEN_ENVIRONMENT, e, AN_ENVIRONMENT));
+}
+
+
+static s7_pointer g_close_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_close_environment "(close-environment e) undoes an earlier open-environment."
+  s7_pointer e;
+
+  e = car(args);
+  check_method(sc, e, sc->CLOSE_ENVIRONMENT, args);
+  if (((is_environment(e)) && (e != sc->global_env)) ||
+      (is_closure(e)) || (is_closure_star(e)) ||
+      ((is_c_object(e)) && (c_object_environment(e) != sc->NIL)))
+    {
+      clear_has_methods(e);
+      return(e);
+    }
+  return(simple_wrong_type_argument_with_type(sc, sc->CLOSE_ENVIRONMENT, e, AN_ENVIRONMENT));
 }
 
 
@@ -23265,14 +23285,17 @@ The symbols refer to the argument to \"provide\"."
 	      f = g_autoloader(sc, p);
 	      if (is_string(f))
 		s7_load_1(sc, string_value(f), sc->envir);
-	      else fprintf(stderr, "%s: no autoload info\n", s7_object_to_c_string(sc, car(p)));
+	      else return(s7_error(sc, sc->READ_ERROR, 
+				   list_2(sc, make_protected_string(sc, "require: no autoload info for ~S"), car(p)))); /* read-error?? */
 	    }
 	}
       else 
 	{
 	  if ((is_pair(car(p))) && (caar(p) == sc->QUOTE))
-	    fprintf(stderr, "don't quote %s as an argument to require\n", s7_object_to_c_string(sc, cadar(p)));
-	  else fprintf(stderr, "%s is not a symbol\n", s7_object_to_c_string(sc, car(p)));
+	    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			    list_2(sc, make_protected_string(sc, "require: don't quote ~S"), car(p))));
+	  return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			  list_2(sc, make_protected_string(sc, "require: ~S is not a symbol"), car(p))));
 	}
     }
   return(sc->T);
@@ -43249,6 +43272,22 @@ static s7_pointer all_x_c_sss(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T3_1));
 }		    
 
+static s7_pointer all_x_c_scs(s7_scheme *sc, s7_pointer arg)
+{
+  car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
+  car(sc->T3_2) = caddr(arg);
+  car(sc->T3_3) = find_symbol_checked(sc, cadddr(arg));
+  return(c_call(arg)(sc, sc->T3_1));
+}		    
+
+static s7_pointer all_x_c_css(s7_scheme *sc, s7_pointer arg)
+{
+  car(sc->T3_1) = cadr(arg);
+  car(sc->T3_2) = find_symbol_checked(sc, caddr(arg));
+  car(sc->T3_3) = find_symbol_checked(sc, cadddr(arg));
+  return(c_call(arg)(sc, sc->T3_1));
+}		    
+
 static s7_pointer all_x_c_sq(s7_scheme *sc, s7_pointer arg)
 {
   car(sc->T2_1) = find_symbol_checked(sc, cadr(arg));
@@ -43482,11 +43521,9 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	  /* fprintf(stderr, "annotate %s %s\n", DISPLAY(arg), opt_name(arg)); */
 	  switch (optimize_data(arg))
 	    {
-	    case HOP_SAFE_C_C:         return(all_x_c_c);
-	    case HOP_SAFE_C_Q:         return(all_x_c_q);
-	    case HOP_SAFE_C_A:         return(all_x_c_a);
-	    case HOP_SAFE_C_SSA:       return(all_x_c_ssa);
-	    case HOP_SAFE_C_SSC:       return(all_x_c_ssc);
+	    case HOP_SAFE_C_C:           return(all_x_c_c);
+	    case HOP_SAFE_C_Q:           return(all_x_c_q);
+	    case HOP_SAFE_C_A:           return(all_x_c_a);
 	    case HOP_SAFE_C_S:         
 	      if (car(arg) == sc->CDR)
 		return(all_x_cdr_s);
@@ -43497,9 +43534,13 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	      return(all_x_c_s);
 	    case HOP_SAFE_C_SC:          return(all_x_c_sc);
 	    case HOP_SAFE_C_CS:          return(all_x_c_cs);
-	    case HOP_SAFE_C_SS:          return(all_x_c_ss);
-	    case HOP_SAFE_C_SSS:         return(all_x_c_sss);
 	    case HOP_SAFE_C_SQ:          return(all_x_c_sq);
+	    case HOP_SAFE_C_SS:          return(all_x_c_ss);
+	    case HOP_SAFE_C_SSA:         return(all_x_c_ssa);
+	    case HOP_SAFE_C_SSC:         return(all_x_c_ssc);
+	    case HOP_SAFE_C_SSS:         return(all_x_c_sss);
+	    case HOP_SAFE_C_SCS:         return(all_x_c_scs);
+	    case HOP_SAFE_C_CSS:         return(all_x_c_css);
 	    case HOP_SAFE_C_opCq:        return(all_x_c_opcq);
 	    case HOP_SAFE_C_opSq:        return(all_x_c_opsq);
 	    case HOP_SAFE_C_opSSq:       return(all_x_c_opssq);
@@ -43988,7 +44029,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 			    }
 			  if (is_safe_c_s(car(body)))
 			    {
-			      /* fprintf(stderr, "redirect: %s %s %s\n", DISPLAY(func), DISPLAY(closure_body(func)), DISPLAY(closure_args(func))); */
 			      set_optimize_data(car_x, optimize_data(car(body)));
 			      set_optimized(car_x);
 			      set_ecdr(car_x, ecdr(car(body)));
@@ -50864,7 +50904,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_function f;
 		    s7_pointer result;
 			
-		    /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(sc->envir)); */
 		    f = (s7_function)c_function_call(c_function_let_looped(ecdr(func)));
 		    car(sc->T3_1) = stepper;
 		    car(sc->T3_2) = caddr(sc->code);
@@ -51048,7 +51087,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		if (is_pair(cdr(body)))
 		  {
-		    /* fprintf(stderr, "not 1: %s\n", DISPLAY(cddr(sc->code))); */
 		    while (true)
 		      {
 			s7_pointer p;
@@ -51180,8 +51218,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    (is_null(cdddr(sc->code))))
 			  {
 			    s7_pointer flp;
-			    /* if (syntax_opcode(car(sc->code)) == OP_LET_STAR) fprintf(stderr, "%s\n", DISPLAY(sc->code)); */
-
 			    /* it's a let of some sort, and one-line body */
 
 			    /* try let-looped */
@@ -51196,14 +51232,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  if ((!is_pair(cadar(p))) ||
 				      (!is_optimized(cadar(p))))
 				    {
-				      /* fprintf(stderr, "   bad: %s %s\n", opt_name(cadar(p)), DISPLAY(cadar(p))); */
 				      happy = false;
 				      break;
 				    }
-				/*
-				fprintf(stderr, "%s%s%s is%slet loopable\n", 
-					(happy) ? RED_TEXT : "", DISPLAY(sc->code), (happy) ? NORMAL_TEXT : "", (happy) ? " " : " not "); 
-				*/
+
 				if (happy)
 				  {
 				    s7_function f;
@@ -51212,8 +51244,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    sc->envir = new_frame_in_env(sc, sc->envir); 
 				    for (p = cadr(sc->code); is_pair(p); p = cdr(p))
 				      add_slot(sc, caar(p), s7_make_mutable_real(sc, 1.5));
-
-				    /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(old_e)); */
 
 				    f = (s7_function)c_function_call(c_function_let_looped(ecdr(flp)));
 				    car(sc->T3_1) = slot_value(sc->args);
@@ -51244,7 +51274,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    lifted_op(sc->code) = sc->op;
 			    set_type(sc->code, SYNTACTIC_PAIR);
 			  }
-			/* fprintf(stderr, "%d %s %s\n", __LINE__, real_op_names[sc->op], DISPLAY_80(sc->code)); */
 			sc->code = cdr(sc->code);
 			goto START_WITHOUT_POP_STACK;
 		      }
@@ -51258,11 +51287,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    s7_pointer body, stepper, result;
 			    s7_function f;
 
-			    /* fprintf(stderr, "direct: %s\n", DISPLAY(sc->code)); */
-
 			    stepper = slot_value(sc->args);
 			    body = cdr(sc->code);
-			    
 			    f = (s7_function)c_function_call(c_function_looped(ecdr(sc->code)));
 			    result = f(sc, sc->z = cons(sc, stepper, body));
 			    if (result)
@@ -51295,8 +51321,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      }
 			  }
 			set_unsafe_do(sc->code);
-			
-			/* fprintf(stderr, "%d %s\n", __LINE__, DISPLAY_80(sc->code)); */
 			push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, code);
 			goto NS_EVAL;
 		      }
@@ -51502,7 +51526,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	body = car(fcdr(sc->code));
 	if (typesflag(body) == SYNTACTIC_PAIR)
 	  {
-	    /* fprintf(stderr, "syn: %s, code: %s\n", real_op_names[lifted_op(body)], DISPLAY(body)); */
 	    if ((lifted_op(body) == OP_INCREMENT_SA) || 
 		(lifted_op(body) == OP_INCREMENT_1))
 	      {
@@ -51677,8 +51700,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    stepf = c_call(caddr(caar(code)));
 	    step_var = caddr(caddr(caar(code))); 
 
-	    /* fprintf(stderr, "%s\n", DISPLAY(body)); */
-
 	    if (is_symbol(car(body)))
 	      {
 		s7_pointer f;
@@ -51778,10 +51799,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 
 	if (sc->op == OP_SIMPLE_DO_A)
-	  {
-	    /* fprintf(stderr, "%s\n", DISPLAY(code)); */
 	  push_stack(sc, OP_SIMPLE_DO_STEP_A, sc->args, code);
-	  }
 	else push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, code);
 
 	sc->code = fcdr(code);
@@ -52252,10 +52270,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      lifted_op(code) = sc->op;
 		      set_type(code, SYNTACTIC_PAIR);
 		    }
-
-		  /* fprintf(stderr, "%d (dox) %s\n", __LINE__, DISPLAY_80(code)); */
 		  sc->code = cdr(code);
-
 		  goto START_WITHOUT_POP_STACK;
 		}
 
@@ -69137,6 +69152,7 @@ s7_scheme *s7_init(void)
   sc->IS_ENVIRONMENT =        s7_define_safe_function(sc, "environment?",            g_is_environment,         1, 0, false, H_is_environment);
   sc->ENVIRONMENT_TO_LIST =   s7_define_safe_function(sc, "environment->list",       g_environment_to_list,    1, 0, false, H_environment_to_list);
                               s7_define_safe_function(sc, "error-environment",       g_error_environment,      0, 0, false, H_error_environment);
+  sc->CLOSE_ENVIRONMENT =     s7_define_safe_function(sc, "close-environment",       g_close_environment,      1, 0, false, H_close_environment);
   sc->OPEN_ENVIRONMENT =      s7_define_safe_function(sc, "open-environment",        g_open_environment,       1, 0, false, H_open_environment);
   sc->IS_OPEN_ENVIRONMENT =   s7_define_safe_function(sc, "open-environment?",       g_is_open_environment,    1, 0, false, H_is_open_environment);
   sc->ENVIRONMENT_REF =       s7_define_safe_function(sc, "environment-ref",         g_environment_ref,        2, 0, false, H_environment_ref);
@@ -69618,7 +69634,7 @@ s7_scheme *s7_init(void)
   s7_autoload(sc, make_symbol(sc, "libgsl.scm"),   s7_make_permanent_string("libgsl.scm"));
   s7_autoload(sc, make_symbol(sc, "libgdbm.scm"),  s7_make_permanent_string("libgdbm.scm"));
 
-  s7_define_macro(sc, "require", g_require, 0, 0, true, H_require);  
+  sc->REQUIRE = s7_define_macro(sc, "require", g_require, 0, 0, true, H_require);  
 
 
 
@@ -70150,8 +70166,6 @@ int main(int argc, char **argv)
  * the safe_c_s->direct opt could be extended especially to lambda* wrappers, and at least the op_safe_c_ss case
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
- * close-environment?
- * perhaps the require troubles should be normal s7 errors.
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
@@ -70169,12 +70183,8 @@ int main(int argc, char **argv)
  *
  * There are many cases where we know "args" is An or Tn, so a specialized body could avoid traversing the list
  *   but even better: avoid the list itself: c1_call(code)(sc, value) etc, could this avoid all the ffi apply's?
- *   for many these exist: s7_cadar
- * count all_x in let(*) and/or etc [which unused of safe_c_*?]
- * unused arg in lint?  or constant? can simplify-boolean be used in cond/if?
- *   impossible case choices? local funcs never called?
- * what happens if pretty-print called in format?  -- use with-output-to-string or (begin ... (values))+same out port
- *   now assumes out string if boolean port
- *   error printout using pp?  also of course need lint/pp tests
+ *   for many these exist: s7_cadar (but errors?)
+ *
+ * error printout using pp?  also of course need lint/pp tests
  */
 
