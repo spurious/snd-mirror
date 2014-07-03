@@ -170,9 +170,12 @@ static s7_pointer open_plus(s7_scheme *sc, s7_pointer args)
   #define plus_help "(plus obj ...) applies obj's plus method to obj and any trailing arguments."
   s7_pointer obj, method;
   obj = s7_car(args);
-  method = s7_method(sc, obj, s7_make_symbol(sc, "plus"));
-  if (s7_is_procedure(method))
-    return(s7_apply_function(sc, method, args));
+  if (s7_is_open_environment(obj))
+    {
+      method = s7_method(sc, obj, s7_make_symbol(sc, "plus"));
+      if (s7_is_procedure(method))
+	return(s7_apply_function(sc, method, s7_cdr(args)));
+    }
   return(s7_f(sc));
 }
 

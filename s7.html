@@ -2690,6 +2690,21 @@ Both also accept other environments as well as individual bindings,
 adding all the argument's bindings to the new environment.
 </p>
 
+<p>One way to add reader and writer functions to an individual environment slot is:
+</p>
+
+<pre class="indented">
+(define e (environment* 
+            'x (let ((local-x 3)) ; x's initial value
+		 (make-procedure-with-setter
+		   (lambda () local-x)
+		   (lambda (val) (set! local-x (max 0 (min val 100))))))))
+&gt; ((e 'x))
+3
+&gt; (set! ((e 'x)) 123)
+100
+</pre>
+
 <blockquote>
 <div class="indented">
 <p>

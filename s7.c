@@ -1557,6 +1557,8 @@ static void init_types(void)
   t_opt_all_x[HOP_SAFE_C_CS] = true;
   t_opt_all_x[HOP_SAFE_C_SQ] = true;
   t_opt_all_x[HOP_SAFE_C_SS] = true;
+  t_opt_all_x[HOP_SAFE_C_CSA] = true; 
+  t_opt_all_x[HOP_SAFE_C_SCA] = true; 
   t_opt_all_x[HOP_SAFE_C_SSA] = true; 
   t_opt_all_x[HOP_SAFE_C_SSC] = true; 
   t_opt_all_x[HOP_SAFE_C_SCS] = true;
@@ -2659,12 +2661,26 @@ static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i
 static void tick(int op) {counts[op]++;}
 static void report_counts(s7_scheme *sc)
 {
-  int k;
+  int k, i, mx;
+  bool happy = true;
   fprintf(stderr, "\n");
-  for (k = 0; k < OP_MAX_DEFINED; k++)
+  while (happy)
     {
-      if (counts[k] > 0)
-	fprintf(stderr, "%s: %d\n", opt_names[k], counts[k]);
+      mx = 0;
+      for (k = 0; k < OP_MAX_DEFINED; k++)
+	{
+	  if (counts[k] > mx)
+	    {
+	      mx = counts[k];
+	      i = k;
+	    }
+	}
+      if (mx > 0)
+	{
+	  fprintf(stderr, "%s: %d\n", opt_names[i], counts[i]);
+	  counts[i] = 0;
+	}
+      else happy = false;
     }
   /* fprintf(stderr, "\n"); */
 }
@@ -2832,8 +2848,7 @@ s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method)
 #define check_method(Sc, Obj, Method, Args)   \
   {                                           \
     s7_pointer func;                          \
-    if ((has_methods(Obj)) &&                 \
-        ((func = find_method(Sc, find_environment(Sc, Obj), Method)) != Sc->UNDEFINED)) \
+    if ((has_methods(Obj)) && ((func = find_method(Sc, find_environment(Sc, Obj), Method)) != Sc->UNDEFINED)) \
       return(s7_apply_function(Sc, func, Args));        \
   }
 
@@ -2859,7 +2874,7 @@ s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method)
     s7_pointer p, func;					     \
     p = find_symbol_checked(sc, cadar(Args));		     \
     if (Checker(p)) return(Sc->F);                           \
-    if (((func = find_method(sc, find_environment(sc, p), Method)) != sc->UNDEFINED) && \
+    if ((has_methods(p)) && ((func = find_method(sc, find_environment(sc, p), Method)) != sc->UNDEFINED) && \
 	(s7_apply_function(sc, func, list_1(sc, p)) != sc->F))		\
       return(Sc->F);                                         \
     return(sc->T);                                           \
@@ -43503,6 +43518,24 @@ static s7_pointer all_x_c_ssa(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T3_1));
 }
 
+static s7_pointer all_x_c_sca(s7_scheme *sc, s7_pointer arg)
+{
+  sc->temp3 = ((s7_function)fcdr(cdddr(arg)))(sc, cadddr(arg));
+  car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
+  car(sc->T3_2) = caddr(arg);
+  car(sc->T3_3) = sc->temp3;
+  return(c_call(arg)(sc, sc->T3_1));
+}
+
+static s7_pointer all_x_c_csa(s7_scheme *sc, s7_pointer arg)
+{
+  sc->temp3 = ((s7_function)fcdr(cdddr(arg)))(sc, cadddr(arg));
+  car(sc->T3_1) = cadr(arg);
+  car(sc->T3_2) = find_symbol_checked(sc, caddr(arg));
+  car(sc->T3_3) = sc->temp3;
+  return(c_call(arg)(sc, sc->T3_1));
+}
+
 static s7_pointer all_x_c_ssc(s7_scheme *sc, s7_pointer arg)
 {
   car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
@@ -43536,6 +43569,8 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	    case HOP_SAFE_C_CS:          return(all_x_c_cs);
 	    case HOP_SAFE_C_SQ:          return(all_x_c_sq);
 	    case HOP_SAFE_C_SS:          return(all_x_c_ss);
+	    case HOP_SAFE_C_CSA:         return(all_x_c_csa);
+	    case HOP_SAFE_C_SCA:         return(all_x_c_sca);
 	    case HOP_SAFE_C_SSA:         return(all_x_c_ssa);
 	    case HOP_SAFE_C_SSC:         return(all_x_c_ssc);
 	    case HOP_SAFE_C_SSS:         return(all_x_c_sss);
@@ -70148,7 +70183,7 @@ int main(int argc, char **argv)
  *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.8
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3548
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4 30.4
- * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1346
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1268
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1084
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4  5.9
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7 12.7
@@ -70156,6 +70191,7 @@ int main(int argc, char **argv)
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.6
  *            153 with run macro (eval_ptree)
  *
+ * --------------------------------------------------------------------------------
  *
  * ideally the function doc string could be completely removed before optimization etc
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
@@ -70181,10 +70217,7 @@ int main(int argc, char **argv)
  *    need complex number tests for clm too
  *    gmp problems: should we insist on a 'bignum method?
  *
- * There are many cases where we know "args" is An or Tn, so a specialized body could avoid traversing the list
- *   but even better: avoid the list itself: c1_call(code)(sc, value) etc, could this avoid all the ffi apply's?
- *   for many these exist: s7_cadar (but errors?)
- *
  * error printout using pp?  also of course need lint/pp tests
+ * envs: see t929 for example and bugs
  */
 

@@ -15,6 +15,8 @@ echo ' -------------------------------- that was snd-test without-gui (also s7te
 echo ' '
 echo ' '
 
+./snd lint.scm -e '(begin (lint "s7test.scm" #f) (exit))'
+
 valgrind ./snd -noinit -l snd-test
 echo ' '
 echo ' '

@@ -26,7 +26,7 @@
       (define (string-ci>? . strs) (apply string>? (map string-upcase strs)))
       ))
 
-(define *report-unused-parameters* #t)
+(define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
 (define *report-shadowed-variables* #f)
@@ -37,7 +37,7 @@
 (define start-up-environment (global-environment))
 (define *current-file* "")
 (define *top-level-objects* (make-hash-table))
-(define *lint-output-port* #t)
+(define *lint-output-port* *stderr*)
 
 
 
@@ -711,11 +711,17 @@
 		  (and (equal? type 'char-or-eof) (equal? obj-type +character+))))))
 
       (define (never-false expr)
-	(let ((type (if (pair? expr)
-			(hash-table-ref function-types (car expr))
-			(->type expr))))
-	  (not (member type (list +any+ +boolean+ +symbol+ 'integer-or-f 'list-or-f 'number-or-f)))))
+	(or (eq? expr #t)
+	    (let ((type (if (pair? expr)
+			    (hash-table-ref function-types (car expr))
+			    (->type expr))))
+	      (not (member type (list +any+ +boolean+ +symbol+ 'integer-or-f 'list-or-f 'number-or-f))))))
 	
+      (define (never-true expr)
+	(or (not expr)
+	    (and (pair? expr)
+		 (eq? (car expr) 'not)
+		 (never-false (cadr expr)))))
 
       ;; --------------------------------------------------------------------------------
       
@@ -2050,7 +2056,11 @@
 			   (true (caddr form))
 			   (false (and (= len 4) (cadddr form))))
 		       (if (never-false test)
-			   (lint-format "if test is never false: ~A" name form))
+			   (lint-format "if test is never false: ~A" name form)
+			   (if (never-true test)
+			       (if (equal? form '(if #f #f))
+				   (lint-format "~A can be replaced with #<unspecified>" name form)
+				   (lint-format "if test is never true: ~A" name form))))
 
 		       (if (not (side-effect? test env))
 			   (begin
@@ -2228,14 +2238,14 @@
 		 (set! last-simplify-boolean-line-number line-number))))
 	  
 	  ((object->string)
-	   (if (and (pair? (cdr form))
-		    (pair? (cadr form))
-		    (eq? (caadr form) 'object->string))
-	       (lint-format "~A could be ~A" name form (cadr form))
-	       (if (and (pair? (cddr form))
-			(not (pair? (caddr form)))
-			(not (memq (caddr form) '(#f #t :readable))))
-		   (lint-format "bad second argument: ~A" name (caddr form)))))
+	   (if (pair? (cdr form))
+	       (if (and (pair? (cadr form))
+			(eq? (caadr form) 'object->string))
+		   (lint-format "~A could be ~A" name form (cadr form))
+		   (if (and (pair? (cddr form))
+			    (not (pair? (caddr form)))
+			    (not (memq (caddr form) '(#f #t :readable))))
+		       (lint-format "bad second argument: ~A" name (caddr form))))))
 
 	  ((display)
 	   (if (and (= (length form) 2)
@@ -3004,26 +3014,30 @@
 			   (len (- (length form) 1)))
 		       (if (negative? len)
 			   (lint-format "cond is messed up:~A" name (truncated-list->string form))
-			   (let ((exprs ()))
+			   (let ((exprs ())
+				 (falses ()))
 			     (for-each
 			      (lambda (clause)
 				(set! ctr (+ ctr 1))
 				(if (not (pair? clause))
 				    (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause))
-				    (let ((expr (simplify-boolean (car clause) () () env)))
+				    (let ((expr (simplify-boolean (car clause) () falses env)))
 
 				      (if (never-false expr)
 					  (if (not (= ctr len))
 					      (lint-format "cond test is never false: ~A" name form)
-					      (if (not (side-effect? (car clause) env))
-						  (lint-format "cond last test could be #t: ~A" name form))))
+					      (if (and (not (memq expr '(#t else)))
+						       (not (side-effect? (car clause) env)))
+						  (lint-format "cond last test could be #t: ~A" name form)))
+					  (if (never-true expr)
+					      (lint-format "cond test is never true: ~A" name form)))
 				      (if (not (side-effect? (car clause) env))
 					  (if (member (car clause) exprs)
 					      (lint-format "cond test repeated:~A" name (truncated-list->string clause))
 					      (set! exprs (cons (car clause) exprs))))
 				      (if (boolean? expr)
 					  (if (not expr)
-					      (lint-format "cond clause will never be evaluated:~A" name (truncated-list->string clause))
+					      (lint-format "cond test is always false:~A" name (truncated-list->string clause))
 					      (if (not (= ctr len))
 						  (lint-format "cond #t clause is not the last: ~A" name (truncated-list->string form))))
 					  (if (eq? (car clause) 'else)
@@ -3037,8 +3051,11 @@
 						  (lint-walk name (caddr clause) env))
 					      (lint-walk-body name head (cdr clause) env))
 					  (if (not (null? (cdr clause)))  ; (not (null?...)) here is correct -- we're looking for stray dots (lint is confused)
-					      (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause)))))))
+					      (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause))))
+				      (if (not (side-effect? expr env))
+					  (set! falses (cons expr falses))))))
 			      (cdr form))
+
 			     (if (and (= len 2)
 				      *report-minor-stuff*)
 				 (let ((c1 (cadr form))
@@ -3364,7 +3381,11 @@
 						  (set! brackets (+ brackets 1)))
 						 ((#\>) 
 						  ;; walk the ~< expr ~> code to check for otherwise unused variables etc
-						  (lint-walk 'format (with-input-from-string (substring str bracket-pos (- i 1)) read) env)
+						  (catch 'read-error
+						    (lambda ()
+						      (lint-walk 'format (with-input-from-string (substring str bracket-pos (- i 1)) read) env))
+						    (lambda args
+						      (lint-format "bad ~~<~~> code (read-error): ~A" name str)))
 						  (set! brackets (- brackets 1)))))
 					     (begin
 					       (set! pos (char-position #\~ str i))
@@ -3420,7 +3441,9 @@
 			 (lint-format "~A is messed up: ~A" name head (truncated-list->string form))
 			 (let ((test (cadr form)))
 			   (if (never-false test)
-			       (lint-format "~A test is never false: ~A" name head form))
+			       (lint-format "~A test is never false: ~A" name head form)
+			       (if (never-true test)
+				   (lint-format "~A test is never true: ~A" name head form)))
 			   (if (pair? test)
 			       (lint-walk name test env))
 			   (let* ((e (lint-walk-body name head (cddr form) env))
