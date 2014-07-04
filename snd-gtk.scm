@@ -782,7 +782,6 @@
 
 (define (make-variables-dialog)
   (let ((dismiss-button #f))
-    (gtk_widget_set_name dismiss-button "quit_button")
     (set! variables-dialog (gtk_dialog_new))
     (gtk_window_set_title (GTK_WINDOW variables-dialog) "Variables")
     (gtk_container_set_border_width (GTK_CONTAINER variables-dialog) 10)
@@ -794,6 +793,7 @@
     (set! dismiss-button (gtk_dialog_add_button (GTK_DIALOG variables-dialog) "Go Away" GTK_RESPONSE_NONE))
     (g_signal_connect dismiss-button "clicked" (lambda (w data) (gtk_widget_hide variables-dialog)) #f)
     (gtk_widget_show dismiss-button)
+    (gtk_widget_set_name dismiss-button "quit_button")
 
     (set! variables-notebook (gtk_notebook_new))
     (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG variables-dialog))) variables-notebook #t #t 4)
