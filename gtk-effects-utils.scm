@@ -31,15 +31,12 @@
 (define* (make-effect-dialog label ok-callback help-callback reset-callback target-ok-callback)
   ;; make a standard dialog
   ;; callbacks take 2 args: widget data
-  (let ((dismiss-button (gtk_button_new_with_label "Go Away"))
-	(help-button (gtk_button_new_with_label "Help"))
-	(ok-button (gtk_button_new_with_label "DoIt"))
-	(reset-button (if reset-callback (gtk_button_new_with_label "Reset") #f))
-	(new-dialog (gtk_dialog_new)))
-    (gtk_widget_set_name dismiss-button "quit_button")
-    (gtk_widget_set_name help-button "help_button")
-    (gtk_widget_set_name ok-button "doit_button")
-    (gtk_widget_set_name reset-button "reset_button")
+  (let ((new-dialog (gtk_dialog_new))
+	(dismiss-button #f)
+	(help-button #f)
+	(ok-button #f)
+	(reset-button #f))
+
     (gtk_window_set_title (GTK_WINDOW new-dialog) label)
     (gtk_container_set_border_width (GTK_CONTAINER new-dialog) 10)
     (gtk_window_set_default_size (GTK_WINDOW new-dialog) -1 -1)
@@ -50,21 +47,29 @@
 			(gtk_widget_hide new-dialog)
 			#t) ; this is crucial -- thanks to Kjetil for catching it!
 		      #f)
-    (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG new-dialog))) dismiss-button #t #t 20)
+
+    (set! dismiss-button (gtk_dialog_add_button (GTK_DIALOG new-dialog) "Go Away" GTK_RESPONSE_NONE))
     (g_signal_connect dismiss-button "clicked" (lambda (w data) (gtk_widget_hide new-dialog)) #f)
     (gtk_widget_show dismiss-button)
-    (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG new-dialog))) ok-button #t #t 20)
+
+    (set! ok-button (gtk_dialog_add_button (GTK_DIALOG new-dialog) "DoIt" GTK_RESPONSE_NONE))
     (g_signal_connect ok-button "clicked" ok-callback #f)
     (gtk_widget_show ok-button)
-    (if reset-button
+
+    (if reset-callback
 	(begin
-	  (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG new-dialog))) reset-button #t #t 20)
+	  (set! reset-button (gtk_dialog_add_button (GTK_DIALOG new-dialog) "Reset" GTK_RESPONSE_NONE))
 	  (g_signal_connect reset-button "clicked" reset-callback #f)
+	  (gtk_widget_set_name reset-button "reset_button")
 	  (gtk_widget_show reset-button)))
-    (gtk_box_pack_end (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG new-dialog))) help-button #t #t 20)
+
+    (set! help-button (gtk_dialog_add_button (GTK_DIALOG new-dialog) "Help" GTK_RESPONSE_NONE))
     (g_signal_connect help-button "clicked" help-callback #f)
     (gtk_widget_show help-button)
-    ;; build rest in (gtk_dialog_get_content_area (GTK_DIALOG new-dialog))
+
+    (gtk_widget_set_name dismiss-button "quit_button")
+    (gtk_widget_set_name help-button "help_button")
+    (gtk_widget_set_name ok-button "doit_button")
 
     (if target-ok-callback
 	(begin

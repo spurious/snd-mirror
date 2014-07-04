@@ -1945,9 +1945,9 @@
     (if with-gui
 	(begin
 	  (let ((wid (enved-dialog) ))
-	    (if (not (equal? wid ((dialog-widgets) 2)))
-		(snd-display #__line__ ";enved-dialog -> ~A ~A" wid ((dialog-widgets) 2))))
-					;(if (not ((dialog-widgets) 2)) (snd-display #__line__ ";enved-dialog?"))
+	    (if (not (equal? wid ((dialog-widgets) 1)))
+		(snd-display #__line__ ";enved-dialog -> ~A ~A" wid ((dialog-widgets) 1))))
+					;(if (not ((dialog-widgets) 1)) (snd-display #__line__ ";enved-dialog?"))
 	  (set! (enved-envelope) '(0.0 0.0 1.0 1.0 2.0 0.0))
 	  (if (not (equal? (enved-envelope) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
 	      (snd-display #__line__ ";set enved-envelope to self: ~A?" (enved-envelope)))))
@@ -5826,8 +5826,8 @@ EDITS: 5
 	(delete-file "tmp.peaks")
 	(peaks)
 	(if (and (provided? 'xm) 
-		 (or (not ((dialog-widgets) 20))
-		     (not (XtIsManaged ((dialog-widgets) 20)))))
+		 (or (not ((dialog-widgets) 15))
+		     (not (XtIsManaged ((dialog-widgets) 15)))))
 	    (snd-display #__line__ ";peaks but no help?"))
 	(dismiss-all-dialogs)
 	(let ((num-transforms 6)
@@ -46941,7 +46941,7 @@ EDITS: 1
 (for-each close-sound (sounds))
 (mus-sound-prune)
 (if (and with-motif (dialog-widgets))
-    (let ((vfs ((dialog-widgets) 8))) ; view-files (possible list)
+    (let ((vfs ((dialog-widgets) 5))) ; view-files (possible list)
       (if vfs
 	  (if (symbol? (car vfs))
 	      (set! (view-files-files vfs) ())

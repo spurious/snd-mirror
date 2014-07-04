@@ -3,10 +3,10 @@
 /* envelope editor and viewer */
 
 static GtkWidget *enved_dialog = NULL;
-static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB = NULL, *resetB, *firB = NULL;
-static GtkWidget *revertB, *undoB, *redoB, *brktxtL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB;
-static GtkWidget *nameL, *textL, *dBB, *orderL;
-static GtkWidget *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *unrow;
+static GtkWidget *apply_button, *apply2_button, *cancel_button, *drawer, *show_button, *save_button = NULL, *reset_button, *fir_button = NULL;
+static GtkWidget *revert_button, *undo_button, *redo_button, *brktxtL, *graph_button, *flt_button, *amp_button, *src_button, *rbrow, *clip_button;
+static GtkWidget *name_label, *text_label, *dB_button, *order_label;
+static GtkWidget *lin_button, *lerow, *baseScale, *baseLabel, *baseValue, *selection_button, *selrow, *unrow;
 static GtkAdjustment *baseAdj, *orderAdj;
 static gc_t *gc, *rgc, *ggc;
 static slist *env_list = NULL;
@@ -73,11 +73,11 @@ static void prepare_env_edit(env *new_env)
 }
 
 
-void set_enved_redo_sensitive(bool val) {set_sensitive(redoB, val);}
-void set_enved_revert_sensitive(bool val) {set_sensitive(revertB, val);}
-void set_enved_undo_sensitive(bool val) {set_sensitive(undoB, val);}
-void set_enved_save_sensitive(bool val) {set_sensitive(saveB, val);}
-void set_enved_show_sensitive(bool val) {set_sensitive(showB, val);}
+void set_enved_redo_sensitive(bool val) {set_sensitive(redo_button, val);}
+void set_enved_revert_sensitive(bool val) {set_sensitive(revert_button, val);}
+void set_enved_undo_sensitive(bool val) {set_sensitive(undo_button, val);}
+void set_enved_save_sensitive(bool val) {set_sensitive(save_button, val);}
+void set_enved_show_sensitive(bool val) {set_sensitive(show_button, val);}
 
 
 void make_scrolled_env_list(void)
@@ -151,10 +151,10 @@ static void apply_enved(void)
       active_channel = current_channel();
       if (active_channel)
 	{
-	  set_sensitive(applyB, false);
-	  set_sensitive(apply2B, false);
-	  set_stock_button_label(cancelB, I_STOP);
-	  force_update(cancelB);
+	  set_sensitive(apply_button, false);
+	  set_sensitive(apply2_button, false);
+	  set_stock_button_label(cancel_button, I_STOP);
+	  force_update(cancel_button);
 	  switch (enved_target(ss))
 	    {
 	    case ENVED_AMPLITUDE:
@@ -219,9 +219,9 @@ static void apply_enved(void)
 	      }
 	      break;
 	    }
-	  set_sensitive(applyB, true);
-	  set_sensitive(apply2B, true);
-	  set_stock_button_label(cancelB, I_GO_AWAY);
+	  set_sensitive(apply_button, true);
+	  set_sensitive(apply2_button, true);
+	  set_stock_button_label(cancel_button, I_GO_AWAY);
 	}
     }
 }
@@ -262,7 +262,7 @@ static void env_redisplay_1(printing_t printing)
       else 
 	{
 	  char *name = NULL;
-	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
+	  name = (char *)gtk_entry_get_text(GTK_ENTRY(text_label));
 	  if (!name) name = (char *)"noname";
 
 	  if ((enved_with_wave(ss)) &&
@@ -314,7 +314,7 @@ void update_enved_background_waveform(chan_info *cp)
 
 static void enved_filter_order_callback(GtkWidget *w, gpointer data)
 {
-  set_enved_filter_order(gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(orderL)));
+  set_enved_filter_order(gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(order_label)));
 }
 
 
@@ -357,7 +357,7 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 	    {
 	      alert_envelope_editor(str, copy_env(active_env));
 	      add_or_edit_symbol(str, active_env);
-	      set_sensitive(saveB, false);
+	      set_sensitive(save_button, false);
 	      env_redisplay(); /* updates label */
 	    }
 	  else 
@@ -380,9 +380,9 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 	  active_env = copy_env(e);
 	  set_enved_env_list_top(0);
 	  prepare_env_edit(active_env);
-	  set_sensitive(saveB, true);
-	  set_sensitive(undoB, false);
-	  set_sensitive(revertB, false);
+	  set_sensitive(save_button, true);
+	  set_sensitive(undo_button, false);
+	  set_sensitive(revert_button, false);
 	  env_redisplay();
 	  free_env(e);
 	}
@@ -394,12 +394,12 @@ static void save_button_pressed(GtkWidget *w, gpointer context)
 {
   char *name = NULL;
   if (active_env == NULL) return;
-  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
+  name = (char *)gtk_entry_get_text(GTK_ENTRY(text_label));
   if ((!name) || (!(*name))) 
     name = (char *)"unnamed";
   alert_envelope_editor(name, copy_env(active_env));
   add_or_edit_symbol(name, active_env);
-  set_sensitive(saveB, false);
+  set_sensitive(save_button, false);
   env_redisplay();
 }
 
@@ -442,18 +442,18 @@ static void select_or_edit_env(int pos)
   if (showing_all_envs)
     {
       showing_all_envs = false;
-      set_button_label(showB, "view envs");
+      set_button_label(show_button, "view envs");
     }
   if (active_env) active_env = free_env(active_env);
   selected_env = position_to_env(pos);
   if (!selected_env) return;
   active_env = selected_env;
-  gtk_entry_set_text(GTK_ENTRY(textL), enved_all_names(pos));
+  gtk_entry_set_text(GTK_ENTRY(text_label), enved_all_names(pos));
   set_enved_env_list_top(0);
   prepare_env_edit(active_env);
-  set_sensitive(undoB, false);
-  set_sensitive(revertB, false);
-  set_sensitive(saveB, false);
+  set_sensitive(undo_button, false);
+  set_sensitive(revert_button, false);
+  set_sensitive(save_button, false);
   env_redisplay();
 }
 
@@ -538,9 +538,9 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
       if (env_editor_button_press(ss->enved, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_TIME(ev), active_env))
 	env_redisplay();
       enved_display_point_label(ungrf_x(ss->enved->axis, EVENT_X(ev)), env_editor_ungrf_y_dB(ss->enved, (int)(EVENT_Y(ev))));
-      set_sensitive(saveB, true);
-      set_sensitive(undoB, true);
-      set_sensitive(revertB, true);
+      set_sensitive(save_button, true);
+      set_sensitive(undo_button, true);
+      set_sensitive(revert_button, true);
     }
   return(false);
 }
@@ -586,7 +586,7 @@ static void show_button_pressed(GtkWidget *w, gpointer context)
 {
   /* if show all (as opposed to show current), loop through loaded LV_LISTs */
   showing_all_envs = (!showing_all_envs);
-  set_button_label(showB, (showing_all_envs) ? "edit env" : "view envs");
+  set_button_label(show_button, (showing_all_envs) ? "edit env" : "view envs");
   env_redisplay();
 }
 
@@ -594,8 +594,8 @@ static void show_button_pressed(GtkWidget *w, gpointer context)
 static void selection_button_pressed(GtkWidget *w, gpointer context)
 {
   apply_to_selection = (!apply_to_selection);
-  widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->yellow : ss->basic_color);
-  set_sensitive(apply2B, true);
+  widget_modify_bg(selection_button, GTK_STATE_NORMAL, (apply_to_selection) ? ss->yellow : ss->basic_color);
+  set_sensitive(apply2_button, true);
   if ((enved_with_wave(ss)) && 
       (!showing_all_envs)) 
     env_redisplay();
@@ -608,7 +608,7 @@ static void revert_button_pressed(GtkWidget *w, gpointer context)
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
   if (active_env == NULL)
-    text_field_activated(textL, NULL);
+    text_field_activated(text_label, NULL);
   env_redisplay();
 }
 
@@ -633,10 +633,10 @@ static void redo_button_pressed(GtkWidget *w, gpointer context)
 
 static void reflect_apply_state(void)
 {
-  gtk_label_set_text(GTK_LABEL(nameL), env_names[enved_target(ss)]);
-  widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? ss->yellow : ss->basic_color);
-  widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? ss->yellow : ss->basic_color);
-  widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? ss->yellow : ss->basic_color);
+  gtk_label_set_text(GTK_LABEL(name_label), env_names[enved_target(ss)]);
+  widget_modify_bg(amp_button, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? ss->yellow : ss->basic_color);
+  widget_modify_bg(flt_button, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? ss->yellow : ss->basic_color);
+  widget_modify_bg(src_button, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? ss->yellow : ss->basic_color);
   if ((!showing_all_envs) && (enved_with_wave(ss))) env_redisplay();
 }
 
@@ -690,7 +690,7 @@ static void enved_reset(void)
 #endif
   set_enved_env_list_top(0);
   prepare_env_edit(active_env);
-  set_sensitive(saveB, true);
+  set_sensitive(save_button, true);
   reflect_enved_style();
   env_redisplay();
 }
@@ -754,7 +754,7 @@ static void make_base_label(mus_float_t bval)
   if ((active_env) && 
       (!(showing_all_envs))) 
     {
-      if (saveB) set_sensitive(saveB, true); /* what about undo/redo here? */
+      if (save_button) set_sensitive(save_button, true); /* what about undo/redo here? */
 
       active_env->base = enved_base(ss);
       if (active_env->base == 1.0)
@@ -827,7 +827,7 @@ static void base_changed_callback(GtkAdjustment *adj, gpointer context)
 static gboolean fir_button_pressed(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   is_FIR = (!is_FIR);
-  gtk_label_set_text(GTK_LABEL(firB), (is_FIR) ? "fir" : "fft");
+  gtk_label_set_text(GTK_LABEL(fir_button), (is_FIR) ? "fir" : "fft");
   if (enved_with_wave(ss)) env_redisplay();
   return(false);
 }
@@ -837,8 +837,8 @@ static void reflect_sound_state(void)
 {
   bool file_on;
   file_on = (bool)(any_selected_sound());
-  set_sensitive(applyB, file_on);
-  set_sensitive(apply2B, file_on);
+  set_sensitive(apply_button, file_on);
+  set_sensitive(apply2_button, file_on);
 }
 
 
@@ -856,7 +856,7 @@ GtkWidget *create_envelope_editor(void)
 {
   if (!enved_dialog)
     {
-      GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow;
+      GtkWidget *mainform, *help_button, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow;
 
       enved_dialog = gtk_dialog_new();
       add_dialog_style(enved_dialog);
@@ -880,45 +880,36 @@ GtkWidget *create_envelope_editor(void)
       gc_set_background(ggc, ss->white);
       gc_set_foreground(ggc, ss->enved_waveform_color);
 
-      helpB = button_new_with_icon(ICON_HELP);
-      gtk_widget_set_name(helpB, "dialog_button");
+      help_button = gtk_dialog_add_button(GTK_DIALOG(enved_dialog), "Help", GTK_RESPONSE_NONE);
+      reset_button = gtk_dialog_add_button(GTK_DIALOG(enved_dialog), "Clear graph", GTK_RESPONSE_NONE);
+      cancel_button = gtk_dialog_add_button(GTK_DIALOG(enved_dialog), I_GO_AWAY, GTK_RESPONSE_NONE);
+      apply2_button = gtk_dialog_add_button(GTK_DIALOG(enved_dialog), "Undo&Apply", GTK_RESPONSE_NONE);
+      apply_button = gtk_dialog_add_button(GTK_DIALOG(enved_dialog), "Apply", GTK_RESPONSE_NONE);
 
-      cancelB = sg_button_new_with_label_and_icon(I_GO_AWAY, ICON_QUIT);
-      gtk_widget_set_name(cancelB, "dialog_button");
+      gtk_widget_set_name(help_button, "dialog_button");
+      gtk_widget_set_name(cancel_button, "dialog_button");
+      gtk_widget_set_name(apply_button, "dialog_button");
+      gtk_widget_set_name(apply2_button, "dialog_button");
+      gtk_widget_set_name(reset_button, "dialog_button");
 
-      applyB = button_new_with_icon(ICON_APPLY);
-      gtk_widget_set_name(applyB, "dialog_button");
-
-      apply2B = sg_button_new_with_label_and_icon("Undo&Apply", ICON_UNDO);
-      gtk_widget_set_name(apply2B, "dialog_button");
-
-      resetB = sg_button_new_with_label_and_icon("Clear graph", ICON_REFRESH);
-      gtk_widget_set_name(resetB, "dialog_button");
-
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), helpB, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), resetB, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), cancelB, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), apply2B, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), applyB, false, true, 10);
-
-      SG_SIGNAL_CONNECT(cancelB, "clicked", dismiss_enved_callback, NULL);
-      SG_SIGNAL_CONNECT(resetB, "clicked", reset_button_pressed, NULL);
-      SG_SIGNAL_CONNECT(helpB, "clicked", help_enved_callback, NULL);
-      SG_SIGNAL_CONNECT(apply2B, "clicked", undo_and_apply_enved_callback, NULL);
-      SG_SIGNAL_CONNECT(applyB, "clicked", apply_enved_callback, NULL);
+      SG_SIGNAL_CONNECT(cancel_button, "clicked", dismiss_enved_callback, NULL);
+      SG_SIGNAL_CONNECT(reset_button, "clicked", reset_button_pressed, NULL);
+      SG_SIGNAL_CONNECT(help_button, "clicked", help_enved_callback, NULL);
+      SG_SIGNAL_CONNECT(apply2_button, "clicked", undo_and_apply_enved_callback, NULL);
+      SG_SIGNAL_CONNECT(apply_button, "clicked", apply_enved_callback, NULL);
 
 #if HAVE_GTK_3
-      add_highlight_button_style(cancelB);
-      add_highlight_button_style(applyB);
-      add_highlight_button_style(apply2B);
-      add_highlight_button_style(resetB);
-      add_highlight_button_style(helpB);
+      add_highlight_button_style(cancel_button);
+      add_highlight_button_style(apply_button);
+      add_highlight_button_style(apply2_button);
+      add_highlight_button_style(reset_button);
+      add_highlight_button_style(help_button);
 #endif
-      gtk_widget_show(cancelB);
-      gtk_widget_show(applyB);
-      gtk_widget_show(apply2B);
-      gtk_widget_show(resetB);
-      gtk_widget_show(helpB);
+      gtk_widget_show(cancel_button);
+      gtk_widget_show(apply_button);
+      gtk_widget_show(apply2_button);
+      gtk_widget_show(reset_button);
+      gtk_widget_show(help_button);
 
       mainform = gtk_hbox_new(false, 0); /* buttons + graph */
       gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(enved_dialog)), mainform, true, true, 0);
@@ -945,99 +936,99 @@ GtkWidget *create_envelope_editor(void)
       widget_modify_fg(drawer, GTK_STATE_NORMAL, ss->black);
       gtk_widget_show(drawer);
 
-      showB = gtk_button_new_with_label("view envs");
-      gtk_button_set_relief(GTK_BUTTON(showB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(leftbox), showB, false, false, BB_MARGIN);
-      SG_SIGNAL_CONNECT(showB, "clicked", show_button_pressed, NULL);
+      show_button = gtk_button_new_with_label("view envs");
+      gtk_button_set_relief(GTK_BUTTON(show_button), GTK_RELIEF_HALF);
+      gtk_box_pack_start(GTK_BOX(leftbox), show_button, false, false, BB_MARGIN);
+      SG_SIGNAL_CONNECT(show_button, "clicked", show_button_pressed, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(showB);
+      add_highlight_button_style(show_button);
 #endif
-      gtk_widget_show(showB);
+      gtk_widget_show(show_button);
 
-      saveB = gtk_button_new_with_label("define it");
-      gtk_button_set_relief(GTK_BUTTON(saveB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(leftbox), saveB, false, false, BB_MARGIN);
-      SG_SIGNAL_CONNECT(saveB, "clicked", save_button_pressed, NULL);
+      save_button = gtk_button_new_with_label("define it");
+      gtk_button_set_relief(GTK_BUTTON(save_button), GTK_RELIEF_HALF);
+      gtk_box_pack_start(GTK_BOX(leftbox), save_button, false, false, BB_MARGIN);
+      SG_SIGNAL_CONNECT(save_button, "clicked", save_button_pressed, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(saveB);
+      add_highlight_button_style(save_button);
 #endif
-      gtk_widget_show(saveB);
+      gtk_widget_show(save_button);
 
-      revertB = gtk_button_new_with_label("revert ");
-      gtk_button_set_relief(GTK_BUTTON(revertB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(leftbox), revertB, false, false, BB_MARGIN);
-      SG_SIGNAL_CONNECT(revertB, "clicked", revert_button_pressed, NULL);
+      revert_button = gtk_button_new_with_label("revert ");
+      gtk_button_set_relief(GTK_BUTTON(revert_button), GTK_RELIEF_HALF);
+      gtk_box_pack_start(GTK_BOX(leftbox), revert_button, false, false, BB_MARGIN);
+      SG_SIGNAL_CONNECT(revert_button, "clicked", revert_button_pressed, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(revertB);
+      add_highlight_button_style(revert_button);
 #endif
-      gtk_widget_show(revertB);
+      gtk_widget_show(revert_button);
 
       unrow = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(leftbox), unrow, false, false, BB_MARGIN);
       gtk_widget_show(unrow);
 
-      undoB = gtk_button_new_with_label(" undo ");
-      gtk_button_set_relief(GTK_BUTTON(undoB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(unrow), undoB, true, true, BB_MARGIN);
-      SG_SIGNAL_CONNECT(undoB, "clicked", undo_button_pressed, NULL);
+      undo_button = gtk_button_new_with_label(" undo ");
+      gtk_button_set_relief(GTK_BUTTON(undo_button), GTK_RELIEF_HALF);
+      gtk_box_pack_start(GTK_BOX(unrow), undo_button, true, true, BB_MARGIN);
+      SG_SIGNAL_CONNECT(undo_button, "clicked", undo_button_pressed, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(undoB);
+      add_highlight_button_style(undo_button);
 #endif
-      gtk_widget_show(undoB);
+      gtk_widget_show(undo_button);
 
-      redoB = gtk_button_new_with_label(" redo ");
-      gtk_button_set_relief(GTK_BUTTON(redoB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(unrow), redoB, true, true, BB_MARGIN);
-      SG_SIGNAL_CONNECT(redoB, "clicked", redo_button_pressed, NULL);
+      redo_button = gtk_button_new_with_label(" redo ");
+      gtk_button_set_relief(GTK_BUTTON(redo_button), GTK_RELIEF_HALF);
+      gtk_box_pack_start(GTK_BOX(unrow), redo_button, true, true, BB_MARGIN);
+      SG_SIGNAL_CONNECT(redo_button, "clicked", redo_button_pressed, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(redoB);
+      add_highlight_button_style(redo_button);
 #endif
-      gtk_widget_show(redoB);
+      gtk_widget_show(redo_button);
 
       rbrow = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(leftbox), rbrow, false, false, BB_MARGIN);
       gtk_widget_show(rbrow);
 
-      ampB = gtk_button_new_with_label("amp");
-      gtk_button_set_relief(GTK_BUTTON(ampB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(rbrow), ampB, true, true, BB_MARGIN);
-      SG_SIGNAL_CONNECT(ampB, "clicked", amp_button_pressed, NULL);
+      amp_button = gtk_button_new_with_label("amp");
+      gtk_button_set_relief(GTK_BUTTON(amp_button), GTK_RELIEF_HALF);
+      gtk_box_pack_start(GTK_BOX(rbrow), amp_button, true, true, BB_MARGIN);
+      SG_SIGNAL_CONNECT(amp_button, "clicked", amp_button_pressed, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(ampB);
+      add_highlight_button_style(amp_button);
 #endif
-      gtk_widget_show(ampB);
+      gtk_widget_show(amp_button);
 
-      fltB = gtk_button_new_with_label("flt");
-      gtk_button_set_relief(GTK_BUTTON(fltB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(rbrow), fltB, true, true, BB_MARGIN);
-      SG_SIGNAL_CONNECT(fltB, "clicked", flt_button_pressed, NULL);
+      flt_button = gtk_button_new_with_label("flt");
+      gtk_button_set_relief(GTK_BUTTON(flt_button), GTK_RELIEF_HALF);
+      gtk_box_pack_start(GTK_BOX(rbrow), flt_button, true, true, BB_MARGIN);
+      SG_SIGNAL_CONNECT(flt_button, "clicked", flt_button_pressed, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(fltB);
+      add_highlight_button_style(flt_button);
 #endif
-      gtk_widget_show(fltB);
+      gtk_widget_show(flt_button);
 
-      srcB = gtk_button_new_with_label("src");
-      gtk_button_set_relief(GTK_BUTTON(srcB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(rbrow), srcB, true, true, BB_MARGIN);
-      SG_SIGNAL_CONNECT(srcB, "clicked", src_button_pressed, NULL);
+      src_button = gtk_button_new_with_label("src");
+      gtk_button_set_relief(GTK_BUTTON(src_button), GTK_RELIEF_HALF);
+      gtk_box_pack_start(GTK_BOX(rbrow), src_button, true, true, BB_MARGIN);
+      SG_SIGNAL_CONNECT(src_button, "clicked", src_button_pressed, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(srcB);
+      add_highlight_button_style(src_button);
 #endif
-      gtk_widget_show(srcB);
+      gtk_widget_show(src_button);
 
 
       selrow = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(leftbox), selrow, false, false, BB_MARGIN);
       gtk_widget_show(selrow);
 
-      selectionB = gtk_button_new_with_label("selection");
-      gtk_button_set_relief(GTK_BUTTON(selectionB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(selrow), selectionB, true, true, BB_MARGIN);
-      SG_SIGNAL_CONNECT(selectionB, "clicked", selection_button_pressed, NULL);
+      selection_button = gtk_button_new_with_label("selection");
+      gtk_button_set_relief(GTK_BUTTON(selection_button), GTK_RELIEF_HALF);
+      gtk_box_pack_start(GTK_BOX(selrow), selection_button, true, true, BB_MARGIN);
+      SG_SIGNAL_CONNECT(selection_button, "clicked", selection_button_pressed, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(selectionB);
+      add_highlight_button_style(selection_button);
 #endif
-      gtk_widget_show(selectionB);
+      gtk_widget_show(selection_button);
 
       env_list = slist_new_with_title("envs:", leftbox, NULL, 0, BOX_PACK);
       env_list->select_callback = env_browse_callback;
@@ -1061,33 +1052,33 @@ GtkWidget *create_envelope_editor(void)
 
       #define LEFT_MARGIN 8
 
-      nameL = gtk_label_new("amp env:");
-      widget_set_margin_left(nameL, LEFT_MARGIN);
-      gtk_box_pack_start(GTK_BOX(toprow), nameL, false, false, 0);
-      gtk_widget_show(nameL);
+      name_label = gtk_label_new("amp env:");
+      widget_set_margin_left(name_label, LEFT_MARGIN);
+      gtk_box_pack_start(GTK_BOX(toprow), name_label, false, false, 0);
+      gtk_widget_show(name_label);
 
-      textL = snd_entry_new_with_size(toprow, 28);
-      SG_SIGNAL_CONNECT(textL, "activate", text_field_activated, NULL);
+      text_label = snd_entry_new_with_size(toprow, 28);
+      SG_SIGNAL_CONNECT(text_label, "activate", text_field_activated, NULL);
 
       brktxtL = gtk_label_new(BLANK_LABEL);
       gtk_box_pack_start(GTK_BOX(toprow), brktxtL, false, false, 6);
       gtk_widget_show(brktxtL);
 
 
-      dBB = gtk_check_button_new_with_label("dB");
-      SG_SIGNAL_CONNECT(dBB, "toggled", dB_button_callback, NULL);
-      gtk_box_pack_end(GTK_BOX(toprow), dBB, false, false, 4);
-      gtk_widget_show(dBB);
+      dB_button = gtk_check_button_new_with_label("dB");
+      SG_SIGNAL_CONNECT(dB_button, "toggled", dB_button_callback, NULL);
+      gtk_box_pack_end(GTK_BOX(toprow), dB_button, false, false, 4);
+      gtk_widget_show(dB_button);
 
-      graphB = gtk_check_button_new_with_label("wave");
-      SG_SIGNAL_CONNECT(graphB, "toggled", graph_button_callback, NULL);
-      gtk_box_pack_end(GTK_BOX(toprow), graphB, false, false, 4);
-      gtk_widget_show(graphB);
+      graph_button = gtk_check_button_new_with_label("wave");
+      SG_SIGNAL_CONNECT(graph_button, "toggled", graph_button_callback, NULL);
+      gtk_box_pack_end(GTK_BOX(toprow), graph_button, false, false, 4);
+      gtk_widget_show(graph_button);
 
-      clipB = gtk_check_button_new_with_label("clip");
-      SG_SIGNAL_CONNECT(clipB, "toggled", clip_button_callback, NULL);
-      gtk_box_pack_end(GTK_BOX(toprow), clipB, false, false, 4);
-      gtk_widget_show(clipB);
+      clip_button = gtk_check_button_new_with_label("clip");
+      SG_SIGNAL_CONNECT(clip_button, "toggled", clip_button_callback, NULL);
+      gtk_box_pack_end(GTK_BOX(toprow), clip_button, false, false, 4);
+      gtk_widget_show(clip_button);
 
 
       baseLabel = gtk_label_new("exp:");
@@ -1136,25 +1127,25 @@ GtkWidget *create_envelope_editor(void)
 	gtk_box_pack_end(GTK_BOX(hr), lb, true, true, 2);
 	gtk_widget_show(lb);
 
-	linB = gtk_button_new_with_label("1.0");
-	gtk_box_pack_start(GTK_BOX(hr), linB, false, false, 4);
-	SG_SIGNAL_CONNECT(linB, "clicked", make_linear, NULL);
+	lin_button = gtk_button_new_with_label("1.0");
+	gtk_box_pack_start(GTK_BOX(hr), lin_button, false, false, 4);
+	SG_SIGNAL_CONNECT(lin_button, "clicked", make_linear, NULL);
 #if HAVE_GTK_3
-	add_center_button_style(linB); 
+	add_center_button_style(lin_button); 
 #endif
-	gtk_widget_show(linB);
+	gtk_widget_show(lin_button);
       }
 
       orderAdj = (GtkAdjustment *)gtk_adjustment_new(20, 2, 100000, 2, 10, 0);
-      orderL = gtk_spin_button_new(GTK_ADJUSTMENT(orderAdj), 0.0, 0);
-      gtk_box_pack_end(GTK_BOX(bottomrow), orderL, false, false, 4);
-      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(orderL), true);
+      order_label = gtk_spin_button_new(GTK_ADJUSTMENT(orderAdj), 0.0, 0);
+      gtk_box_pack_end(GTK_BOX(bottomrow), order_label, false, false, 4);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(order_label), true);
       SG_SIGNAL_CONNECT(orderAdj, "value_changed", enved_filter_order_callback, NULL);
-      SG_SIGNAL_CONNECT(orderL, "enter_notify_event", spin_button_focus_callback, NULL);
-      SG_SIGNAL_CONNECT(orderL, "leave_notify_event", spin_button_unfocus_callback, NULL);
-      gtk_widget_show(orderL);
+      SG_SIGNAL_CONNECT(order_label, "enter_notify_event", spin_button_focus_callback, NULL);
+      SG_SIGNAL_CONNECT(order_label, "leave_notify_event", spin_button_unfocus_callback, NULL);
+      gtk_widget_show(order_label);
 
-      /* firB = gtk_button_new_with_label((is_FIR) ? "fir" : "fft"); */
+      /* fir_button = gtk_button_new_with_label((is_FIR) ? "fir" : "fft"); */
       /* SG_SIGNAL_CONNECT(eb, "clicked", fir_button_pressed, NULL); */
       {
 	GtkWidget *eb;
@@ -1167,9 +1158,9 @@ GtkWidget *create_envelope_editor(void)
 	SG_SIGNAL_CONNECT(eb, "button_press_event", fir_button_pressed, NULL);
 	gtk_widget_show(eb);
 
-	firB = gtk_label_new("fir");
-	gtk_container_add(GTK_CONTAINER(eb), firB);
-	gtk_widget_show(firB);
+	fir_button = gtk_label_new("fir");
+	gtk_container_add(GTK_CONTAINER(eb), fir_button);
+	gtk_widget_show(fir_button);
       }
 
       gtk_widget_show(mainform);
@@ -1197,17 +1188,17 @@ GtkWidget *create_envelope_editor(void)
       SG_SIGNAL_CONNECT(drawer, "motion_notify_event", drawer_button_motion, NULL);
 
       if (enved_all_envs_top() == 0)
-	set_sensitive(showB, false);
-      set_sensitive(revertB, false);
-      set_sensitive(undoB, false);
-      set_sensitive(redoB, false);
-      set_sensitive(saveB, false);
+	set_sensitive(show_button, false);
+      set_sensitive(revert_button, false);
+      set_sensitive(undo_button, false);
+      set_sensitive(redo_button, false);
+      set_sensitive(save_button, false);
       if (!(selection_is_active())) 
-	set_sensitive(selectionB, false);
+	set_sensitive(selection_button, false);
 
-      set_toggle_button(clipB, enved_clipping(ss), false, NULL);
-      set_toggle_button(graphB, enved_with_wave(ss), false, NULL);
-      set_toggle_button(dBB, enved_in_dB(ss), false, NULL);
+      set_toggle_button(clip_button, enved_clipping(ss), false, NULL);
+      set_toggle_button(graph_button, enved_with_wave(ss), false, NULL);
+      set_toggle_button(dB_button, enved_in_dB(ss), false, NULL);
 
       reflect_apply_state();
       reflect_segment_state();
@@ -1231,7 +1222,7 @@ GtkWidget *create_envelope_editor(void)
 void set_enved_clipping(bool val) 
 {
   in_set_enved_clipping(val); 
-  if (enved_dialog) set_toggle_button(clipB, val, false, NULL);
+  if (enved_dialog) set_toggle_button(clip_button, val, false, NULL);
 }
 
 
@@ -1251,14 +1242,14 @@ void set_enved_target(enved_target_t val)
 void set_enved_with_wave(bool val) 
 {
   in_set_enved_with_wave(val); 
-  if (enved_dialog) set_toggle_button(graphB, val, false, NULL);
+  if (enved_dialog) set_toggle_button(graph_button, val, false, NULL);
 }
 
 
 void set_enved_in_dB(bool val) 
 {
   in_set_enved_in_dB(val); 
-  if (enved_dialog) set_toggle_button(dBB, val, false, NULL);
+  if (enved_dialog) set_toggle_button(dB_button, val, false, NULL);
 }
 
 
@@ -1284,7 +1275,7 @@ void set_enved_filter_order(int order)
       else {in_set_enved_filter_order(order);}
       if (enved_dialog)
 	{
-	  widget_int_to_text(orderL, enved_filter_order(ss));
+	  widget_int_to_text(order_label, enved_filter_order(ss));
 	  if ((enved_target(ss) == ENVED_SPECTRUM) && 
 	      (enved_with_wave(ss)) && 
 	      (!showing_all_envs)) 
@@ -1298,7 +1289,7 @@ void enved_reflect_selection(bool on)
 {
   if ((enved_dialog) && (!within_selection_src))
     {
-      set_sensitive(selectionB, on);
+      set_sensitive(selection_button, on);
       if ((apply_to_selection) && (!on))
 	{
 	  apply_to_selection = false;
@@ -1308,7 +1299,7 @@ void enved_reflect_selection(bool on)
 	{
 	  apply_to_selection = true;
 	}
-      widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->yellow : ss->basic_color);
+      widget_modify_bg(selection_button, GTK_STATE_NORMAL, (apply_to_selection) ? ss->yellow : ss->basic_color);
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
 	  (enved_with_wave(ss)) && 
 	  (!showing_all_envs)) 
@@ -1362,8 +1353,8 @@ static Xen g_set_enved_filter(Xen type)
 {
   Xen_check_type(Xen_is_boolean(type), type, 1, S_setB S_enved_filter, "boolean");
   is_FIR = Xen_boolean_to_C_bool(type);
-  if (firB)
-    gtk_label_set_text(GTK_LABEL(firB), (is_FIR) ? "fir" : "fft");
+  if (fir_button)
+    gtk_label_set_text(GTK_LABEL(fir_button), (is_FIR) ? "fir" : "fft");
   return(type);
 }
 

@@ -1594,7 +1594,7 @@ static void va_post_prefs_error(const char *msg, prefs_info *data, ...)
 
 widget_t make_preferences_dialog(void)
 {
-  GtkWidget *saveB, *revertB, *clearB, *helpB, *dismissB, *topics, *scroller;
+  GtkWidget *save_button, *revert_button, *clear_button, *help_button, *dismiss_button, *topics, *scroller;
   prefs_info *prf;
   char *str;
 
@@ -1614,58 +1614,46 @@ widget_t make_preferences_dialog(void)
       (STARTUP_HEIGHT < gdk_screen_height()))
     gtk_window_resize(GTK_WINDOW(preferences_dialog), STARTUP_WIDTH, STARTUP_HEIGHT);
 
-  helpB = button_new_with_icon(ICON_HELP);
-  gtk_widget_set_name(helpB, "dialog_button");
-
+  help_button = gtk_dialog_add_button(GTK_DIALOG(preferences_dialog), "Help", GTK_RESPONSE_NONE);
+  revert_button = gtk_dialog_add_button(GTK_DIALOG(preferences_dialog), "Revert", GTK_RESPONSE_NONE);
+  clear_button = gtk_dialog_add_button(GTK_DIALOG(preferences_dialog), "Clear", GTK_RESPONSE_NONE);
+  dismiss_button = gtk_dialog_add_button(GTK_DIALOG(preferences_dialog), "Go away", GTK_RESPONSE_NONE);
 #if HAVE_EXTENSION_LANGUAGE
-  saveB = button_new_with_icon(ICON_SAVE);
-  gtk_widget_set_name(saveB, "dialog_button");
+  save_button = gtk_dialog_add_button(GTK_DIALOG(preferences_dialog), "Save", GTK_RESPONSE_NONE);
+  gtk_widget_set_name(save_button, "dialog_button");
 #endif
 
-  revertB = button_new_with_icon(ICON_REVERT_TO_SAVED);
-  gtk_widget_set_name(revertB, "dialog_button");
-
-  clearB = button_new_with_icon(ICON_CLEAR);
-  gtk_widget_set_name(clearB, "dialog_button");
-
-  dismissB = button_new_with_icon(ICON_QUIT);
-  gtk_widget_set_name(dismissB, "dialog_button");
-  set_stock_button_label(dismissB, I_GO_AWAY);
-
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), helpB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), revertB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), clearB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), dismissB, true, true, 10);
-#if HAVE_EXTENSION_LANGUAGE
-  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), saveB, true, true, 10);
-#endif
+  gtk_widget_set_name(help_button, "dialog_button");
+  gtk_widget_set_name(revert_button, "dialog_button");
+  gtk_widget_set_name(clear_button, "dialog_button");
+  gtk_widget_set_name(dismiss_button, "dialog_button");
 
 #if HAVE_GTK_3
-  add_highlight_button_style(dismissB);
-  add_highlight_button_style(revertB);
-  add_highlight_button_style(clearB);
+  add_highlight_button_style(dismiss_button);
+  add_highlight_button_style(revert_button);
+  add_highlight_button_style(clear_button);
 #if HAVE_EXTENSION_LANGUAGE
-  add_highlight_button_style(saveB);
+  add_highlight_button_style(save_button);
 #endif
-  add_highlight_button_style(helpB);
+  add_highlight_button_style(help_button);
 #endif
 
   SG_SIGNAL_CONNECT(preferences_dialog, "delete_event", preferences_delete_callback, NULL);
-  SG_SIGNAL_CONNECT(dismissB, "clicked", preferences_dismiss_callback, NULL);
-  SG_SIGNAL_CONNECT(revertB, "clicked", preferences_revert_callback, NULL);
-  SG_SIGNAL_CONNECT(clearB, "clicked", preferences_clear_callback, NULL);
+  SG_SIGNAL_CONNECT(dismiss_button, "clicked", preferences_dismiss_callback, NULL);
+  SG_SIGNAL_CONNECT(revert_button, "clicked", preferences_revert_callback, NULL);
+  SG_SIGNAL_CONNECT(clear_button, "clicked", preferences_clear_callback, NULL);
 #if HAVE_EXTENSION_LANGUAGE
-  SG_SIGNAL_CONNECT(saveB, "clicked", preferences_save_callback, NULL);
+  SG_SIGNAL_CONNECT(save_button, "clicked", preferences_save_callback, NULL);
 #endif
-  SG_SIGNAL_CONNECT(helpB, "clicked", preferences_help_callback, NULL);
+  SG_SIGNAL_CONNECT(help_button, "clicked", preferences_help_callback, NULL);
 
-  gtk_widget_show(dismissB);
+  gtk_widget_show(dismiss_button);
 #if HAVE_EXTENSION_LANGUAGE
-  gtk_widget_show(saveB);
+  gtk_widget_show(save_button);
 #endif
-  gtk_widget_show(revertB);
-  gtk_widget_show(clearB);
-  gtk_widget_show(helpB);
+  gtk_widget_show(revert_button);
+  gtk_widget_show(clear_button);
+  gtk_widget_show(help_button);
 
   topics = gtk_vbox_new(false, 0);
   scroller = gtk_scrolled_window_new(NULL, NULL);

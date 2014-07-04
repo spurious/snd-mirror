@@ -235,28 +235,33 @@ module Snd_XM
   Gzy    = 9
 
   # dialog_widgets
-  Color_dialog        =  0
-  Orientation_dialog  =  1
-  Enved_dialog        =  2
-  Error_dialog        =  3
-  Yes_or_no_dialog    =  4
-  Transform_dialog    =  5
-  File_open_dialog    =  6
-  File_save_as_dialog =  7
-  View_files_dialog   =  8
-  Raw_data_dialog     =  9
-  New_file_dialog     = 10
-  File_mix_dialog     = 11
-  Edit_header_dialog  = 12
-  Find_dialog         = 13
-  Help_dialog         = 14
-  Completion_dialog   = 15
-  Mix_panel_dialog    = 16
-  Print_dialog        = 17
-  Recorder_dialog     = 18
-  Region_dialog       = 19
-  Info_dialog         = 20
-  Track_dialog        = 21
+  Color_dialog          =  0
+  Orientation_dialog    =  0
+  Enved_dialog          =  1
+#  Error_dialog         =  3
+#  Yes_or_no_dialog     =  4
+  Transform_dialog      =  2
+  File_open_dialog      =  3
+  File_save_as_dialog   =  4
+  View_files_dialog     =  5
+  Raw_data_dialog       =  6
+  New_file_dialog       =  7
+  File_mix_dialog       =  8
+  Edit_header_dialog    =  9
+  Find_dialog           = 10
+  Help_dialog           = 11
+#  Completion_dialog    = 15
+  Mix_panel_dialog      = 12
+  Print_dialog          = 13
+#  Recorder_dialog      = 18
+  Region_dialog         = 14
+  Info_dialog           = 15
+#  Track_dialog         = 21
+  Extra_Controls_dialog = 16
+  Save_selection_dialog = 17
+  Insert_file_dialog    = 18
+  Save_regions_dialog   = 19
+  Preferences_dialog    = 20
 
   # MAKE_MENU as well as MAKE_POPUP_MENU may be used in non-Snd
   # scripts.  MAKE_SND_MENU and MAKE_SND_POPUP (see popup.rb) are

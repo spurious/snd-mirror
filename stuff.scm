@@ -961,8 +961,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     ((= i new-len) lst)
 		   (set! (lst i) (obj (+ i start)))))))
 
-	  (else             ; (subsequence (open-environment (environment* 'subsequence (lambda* (obj start end) "subseq"))))
-	   (catch #t
+	  (else             ; (subsequence (environment* 'subsequence (lambda* (obj start end) "subseq")))
+	   (catch #t        ; perhaps we should use (open-environment? obj) instead?
 	     (lambda ()
 	       ((obj 'subsequence) obj start end))
 	     (lambda args

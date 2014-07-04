@@ -781,7 +781,7 @@
 (define variables-pages ())
 
 (define (make-variables-dialog)
-  (let ((dismiss-button (gtk_button_new_with_label "Go Away")))
+  (let ((dismiss-button #f))
     (gtk_widget_set_name dismiss-button "quit_button")
     (set! variables-dialog (gtk_dialog_new))
     (gtk_window_set_title (GTK_WINDOW variables-dialog) "Variables")
@@ -790,9 +790,11 @@
     (gtk_window_set_resizable (GTK_WINDOW variables-dialog) #t)
     (gtk_widget_realize variables-dialog)
     (g_signal_connect variables-dialog "delete_event" (lambda (w ev data) (gtk_widget_hide variables-dialog) #t) #f)
-    (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG variables-dialog))) dismiss-button #t #t 20)
+
+    (set! dismiss-button (gtk_dialog_add_button (GTK_DIALOG variables-dialog) "Go Away" GTK_RESPONSE_NONE))
     (g_signal_connect dismiss-button "clicked" (lambda (w data) (gtk_widget_hide variables-dialog)) #f)
     (gtk_widget_show dismiss-button)
+
     (set! variables-notebook (gtk_notebook_new))
     (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG variables-dialog))) variables-notebook #t #t 4)
     (gtk_notebook_set_tab_pos (GTK_NOTEBOOK variables-notebook) GTK_POS_RIGHT)

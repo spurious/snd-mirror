@@ -96,12 +96,12 @@ It causes a description of the file to popup when the mouse crosses the filename
   (let ((region-viewer 2))
     (set! nb-mouse-response-time (get-internal-real-time))
     (if (not (= type region-viewer))
-	(let ((info-exists (list-ref (dialog-widgets) 20)))
+	(let ((info-exists (list-ref (dialog-widgets) 15)))
 	  (info-dialog name (file-info name))
-	  (let ((info-widget (list-ref (dialog-widgets) 20)))
+	  (let ((info-widget (list-ref (dialog-widgets) 15)))
 	    (if (and info-widget
 		     (not info-exists)) ; keep the help dialog from overlapping the files dialog
-		(let* ((files-dialog (list-ref (dialog-widgets) 8))
+		(let* ((files-dialog (list-ref (dialog-widgets) 5))
 		       (files-position (widget-position files-dialog))
 		       (files-size (widget-size files-dialog)))
 		  (set! (widget-position info-widget) (list (+ (car files-position) (car files-size) 10)
@@ -112,7 +112,7 @@ It causes a description of the file to popup when the mouse crosses the filename
   (let ((cur-time (get-internal-real-time)))
     (in 1000 (lambda ()
 	       (if (> cur-time nb-mouse-response-time)
-		   (hide-widget (list-ref (dialog-widgets) 20)))))))
+		   (hide-widget (list-ref (dialog-widgets) 15)))))))
 
 (hook-push mouse-enter-label-hook (lambda (hook) (files-popup-info (hook 'type) (hook 'position) (hook 'label))))
 (hook-push mouse-leave-label-hook (lambda (hook) (files-popdown-info (hook 'type) (hook 'position) (hook 'label))))

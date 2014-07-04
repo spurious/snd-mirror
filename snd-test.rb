@@ -2145,7 +2145,7 @@ def test_03
     old_ctrl = show_controls
     set_show_controls(true)
     req = enved_dialog
-    snd_test_neq(dialog_widgets[2], req, "enved_dialog")
+    snd_test_neq(dialog_widgets[1], req, "enved_dialog")
     req = [0.0, 0.0, 1.0, 1.0, 2.0, 0.0]
     set_enved_envelope(req)
     snd_test_neq(enved_envelope, req, "set_enved_envelope")
@@ -7423,7 +7423,7 @@ def test_05_10
   delete_file("tmp.peaks")
   peaks()
   if $with_test_motif and
-    (!dialog_widgets[20] or !RXtIsManaged(dialog_widgets[20]))
+    (!dialog_widgets[15] or !RXtIsManaged(dialog_widgets[15]))
     snd_display("peaks but no help?")
   end
   dismiss_all_dialogs
@@ -22040,7 +22040,7 @@ def test_09_03
     end
     view_mixes_dialog
     set_mix_dialog_mix(mix1)
-    mixd = dialog_widgets[16]
+    mixd = dialog_widgets[12]
     if widget?(nxt = Snd.catch(:no_such_widget) do find_child(mixd, "Next") end.first)
       if widget?(prev = Snd.catch(:no_such_widget) do find_child(mixd, "Previous") end.first)
         force_event

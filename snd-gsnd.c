@@ -2373,19 +2373,13 @@ void make_controls_dialog(void)
       gtk_widget_realize(controls_dialog);
       gtk_window_resize(GTK_WINDOW(controls_dialog), 400, 500);
 
-      help_button = button_new_with_icon(ICON_HELP);
+      help_button = gtk_dialog_add_button(GTK_DIALOG(controls_dialog), "Help", GTK_RESPONSE_NONE);
+      reset_button = gtk_dialog_add_button(GTK_DIALOG(controls_dialog), "Revert", GTK_RESPONSE_NONE);
+      dismiss_button = gtk_dialog_add_button(GTK_DIALOG(controls_dialog), "Go away", GTK_RESPONSE_NONE);
+
       gtk_widget_set_name(help_button, "dialog_button");
-
-      dismiss_button = button_new_with_icon(ICON_QUIT);
       gtk_widget_set_name(dismiss_button, "dialog_button");
-      set_stock_button_label(dismiss_button, I_GO_AWAY);
-
-      reset_button = button_new_with_icon(ICON_REVERT_TO_SAVED);
       gtk_widget_set_name(reset_button, "dialog_button");
-
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), help_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), reset_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), dismiss_button, false, true, 10);
 
 #if HAVE_GTK_3
   add_highlight_button_style(dismiss_button);

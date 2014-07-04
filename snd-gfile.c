@@ -612,32 +612,24 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 
 
   /* -------- buttons -------- */
-  fd->help_button = button_new_with_icon(ICON_HELP);
-  gtk_widget_set_name(fd->help_button, "dialog_button");
-
-  fd->cancel_button = button_new_with_icon(ICON_CANCEL);
-  gtk_widget_set_name(fd->cancel_button, "dialog_button");
-  set_stock_button_label(fd->cancel_button, I_GO_AWAY);
-
+  fd->help_button = gtk_dialog_add_button(GTK_DIALOG(fd->dialog), "Help", GTK_RESPONSE_NONE);
+#if WITH_AUDIO
+  if (!save_as)
+    fd->play_button = gtk_dialog_add_button(GTK_DIALOG(fd->dialog), "Play", GTK_RESPONSE_NONE);
+#endif
   if (with_extract)
-    {
-      fd->extract_button = sg_button_new_with_label_and_icon("Extract", ICON_CUT);
-      gtk_widget_set_name(fd->extract_button, "dialog_button");
-    }
+    fd->extract_button = gtk_dialog_add_button(GTK_DIALOG(fd->dialog), "Extract", GTK_RESPONSE_NONE);
+  fd->cancel_button = gtk_dialog_add_button(GTK_DIALOG(fd->dialog), "Go away", GTK_RESPONSE_NONE);
+  fd->ok_button = gtk_dialog_add_button(GTK_DIALOG(fd->dialog), "Ok", GTK_RESPONSE_NONE);
 
-  if (ok_lab)
-    {
-      if (stock)
-	fd->ok_button = sg_button_new_with_label_and_icon(ok_lab, stock);
-      else fd->ok_button = gtk_button_new_with_label(ok_lab);
-    }
-  else fd->ok_button = button_new_with_icon(stock);
+  gtk_widget_set_name(fd->help_button, "dialog_button");
+  gtk_widget_set_name(fd->cancel_button, "dialog_button");
+  if (with_extract)
+    gtk_widget_set_name(fd->extract_button, "dialog_button");
   gtk_widget_set_name(fd->ok_button, "dialog_button");
-
 #if WITH_AUDIO
   if (!save_as)
     {
-      fd->play_button = sg_button_new_with_label_and_icon("Play", ICON_MEDIA_PLAY);
       gtk_widget_set_name(fd->play_button, "dialog_button");
 #if HAVE_GTK_3
       add_highlight_button_style(fd->play_button);
@@ -651,15 +643,6 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   add_highlight_button_style(fd->help_button);
   if (with_extract) add_highlight_button_style(fd->extract_button);
 #endif
-
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->help_button, true, true, 10);
-#if WITH_AUDIO
-  if (!save_as)
-    gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->play_button, true, true, 10);
-#endif
-  if (with_extract) gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->extract_button, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->cancel_button, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->ok_button, true, true, 10);
 
   gtk_widget_show(fd->ok_button);
   gtk_widget_show(fd->cancel_button);
@@ -2714,7 +2697,7 @@ static void raw_data_help_callback(GtkWidget *w, gpointer context)
 
 static void make_raw_data_dialog(raw_info *rp, const char *filename, const char *title)
 {
-  GtkWidget *resetB, *helpB, *cancelB, *okB;
+  GtkWidget *reset_button, *help_button, *cancel_button, *ok_button;
   int raw_srate, raw_chans, raw_data_format;
  
   rp->dialog = snd_gtk_dialog_new();
@@ -2726,29 +2709,21 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   gtk_window_resize(GTK_WINDOW(rp->dialog), 350, 260);
   gtk_widget_realize(rp->dialog);
 
-  helpB = button_new_with_icon(ICON_HELP);
-  gtk_widget_set_name(helpB, "dialog_button");
+  help_button = gtk_dialog_add_button(GTK_DIALOG(rp->dialog), "Help", GTK_RESPONSE_NONE);
+  reset_button = gtk_dialog_add_button(GTK_DIALOG(rp->dialog), "Reset", GTK_RESPONSE_NONE);
+  cancel_button = gtk_dialog_add_button(GTK_DIALOG(rp->dialog), "Go away", GTK_RESPONSE_NONE);
+  ok_button = gtk_dialog_add_button(GTK_DIALOG(rp->dialog), "Ok", GTK_RESPONSE_NONE);
 
-  cancelB = button_new_with_icon(ICON_CANCEL);
-  gtk_widget_set_name(cancelB, "dialog_button");
-  set_stock_button_label(cancelB, I_GO_AWAY);
-
-  resetB = sg_button_new_with_label_and_icon("Reset", ICON_REFRESH);
-  gtk_widget_set_name(resetB, "dialog_button");
-
-  okB = button_new_with_icon(ICON_OK);
-  gtk_widget_set_name(okB, "dialog_button");
-
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), helpB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), resetB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), cancelB, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), okB, true, true, 10);
+  gtk_widget_set_name(help_button, "dialog_button");
+  gtk_widget_set_name(cancel_button, "dialog_button");
+  gtk_widget_set_name(reset_button, "dialog_button");
+  gtk_widget_set_name(ok_button, "dialog_button");
 
 #if HAVE_GTK_3
-  add_highlight_button_style(cancelB);
-  add_highlight_button_style(helpB);
-  add_highlight_button_style(resetB);
-  add_highlight_button_style(okB);
+  add_highlight_button_style(cancel_button);
+  add_highlight_button_style(help_button);
+  add_highlight_button_style(reset_button);
+  add_highlight_button_style(ok_button);
 #endif
 
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
@@ -2770,16 +2745,16 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 				   IGNORE_SAMPLES, NULL);
 
   SG_SIGNAL_CONNECT(rp->dialog, "delete_event", raw_data_delete_callback, rp);
-  SG_SIGNAL_CONNECT(okB, "clicked", raw_data_ok_callback, rp);
+  SG_SIGNAL_CONNECT(ok_button, "clicked", raw_data_ok_callback, rp);
 
-  SG_SIGNAL_CONNECT(helpB, "clicked", raw_data_help_callback, rp);
-  SG_SIGNAL_CONNECT(resetB, "clicked", raw_data_reset_callback, rp);
-  SG_SIGNAL_CONNECT(cancelB, "clicked", raw_data_cancel_callback, rp);
+  SG_SIGNAL_CONNECT(help_button, "clicked", raw_data_help_callback, rp);
+  SG_SIGNAL_CONNECT(reset_button, "clicked", raw_data_reset_callback, rp);
+  SG_SIGNAL_CONNECT(cancel_button, "clicked", raw_data_cancel_callback, rp);
 
-  gtk_widget_show(okB);
-  gtk_widget_show(cancelB);
-  gtk_widget_show(helpB);
-  gtk_widget_show(resetB);
+  gtk_widget_show(ok_button);
+  gtk_widget_show(cancel_button);
+  gtk_widget_show(help_button);
+  gtk_widget_show(reset_button);
 
   set_dialog_widget(RAW_DATA_DIALOG, rp->dialog);
 }
@@ -3066,23 +3041,15 @@ widget_t make_new_file_dialog(bool managed)
       gtk_window_resize(GTK_WINDOW(new_file_dialog), 400, 250);
       gtk_widget_realize(new_file_dialog);
 
-      help_button = button_new_with_icon(ICON_HELP);
+      help_button = gtk_dialog_add_button(GTK_DIALOG(new_file_dialog), "Help", GTK_RESPONSE_NONE);
+      reset_button = gtk_dialog_add_button(GTK_DIALOG(new_file_dialog), "Reset", GTK_RESPONSE_NONE);
+      cancel_button = gtk_dialog_add_button(GTK_DIALOG(new_file_dialog), "Go away", GTK_RESPONSE_NONE);
+      new_file_ok_button = gtk_dialog_add_button(GTK_DIALOG(new_file_dialog), "Ok", GTK_RESPONSE_NONE);
+
       gtk_widget_set_name(help_button, "dialog_button");
-
-      cancel_button = button_new_with_icon(ICON_CANCEL);
       gtk_widget_set_name(cancel_button, "dialog_button");
-      set_stock_button_label(cancel_button, I_GO_AWAY);
-
-      new_file_ok_button = sg_button_new_with_label_and_icon("Ok", ICON_NEW);
       gtk_widget_set_name(new_file_ok_button, "dialog_button");
-
-      reset_button = sg_button_new_with_label_and_icon("Reset", ICON_REFRESH);
       gtk_widget_set_name(reset_button, "dialog_button");
-
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), help_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), reset_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), cancel_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), new_file_ok_button, true, true, 10);
 
 #if HAVE_GTK_3
       add_highlight_button_style(help_button);
@@ -3411,19 +3378,13 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_window_resize(GTK_WINDOW(ep->dialog), 400, 250);
       gtk_widget_realize(ep->dialog);
 
-      help_button = button_new_with_icon(ICON_HELP);
+      help_button = gtk_dialog_add_button(GTK_DIALOG(ep->dialog), "Help", GTK_RESPONSE_NONE);
+      cancel_button = gtk_dialog_add_button(GTK_DIALOG(ep->dialog), "Go away", GTK_RESPONSE_NONE);
+      ep->save_button = gtk_dialog_add_button(GTK_DIALOG(ep->dialog), "Save", GTK_RESPONSE_NONE);
+
       gtk_widget_set_name(help_button, "dialog_button");
-
-      cancel_button = button_new_with_icon(ICON_CANCEL);
       gtk_widget_set_name(cancel_button, "dialog_button");
-      set_stock_button_label(cancel_button, I_GO_AWAY);
-
-      ep->save_button = button_new_with_icon(ICON_SAVE);
       gtk_widget_set_name(ep->save_button, "dialog_button");
-
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), help_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), cancel_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), ep->save_button, true, true, 10);
 
 #if HAVE_GTK_3
       add_highlight_button_style(help_button);
@@ -3544,10 +3505,8 @@ static void create_post_it_monolog(void)
   gtk_window_resize(GTK_WINDOW(post_it_dialog), POST_IT_COLUMNS * 9, POST_IT_ROWS * 20);
   gtk_widget_realize(post_it_dialog);
 
-  ok_button = button_new_with_icon(ICON_OK);
+  ok_button = gtk_dialog_add_button(GTK_DIALOG(post_it_dialog), "Ok", GTK_RESPONSE_NONE);
   gtk_widget_set_name(ok_button, "dialog_button");
-
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(post_it_dialog)), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);
 

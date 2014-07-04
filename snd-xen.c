@@ -3012,18 +3012,6 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 
 #endif
 
-#if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ADJUSTMENT_GET_UPPER)
-  /* Gtk 3 is removing direct struct accesses (which they should have done years ago), so we need compatibility functions: */
-  Xen_eval_C_string("(define (gtk_widget_get_window w) (.window w))");
-  Xen_eval_C_string("(define (gtk_font_selection_dialog_get_ok_button w) (.ok_button w))");
-  Xen_eval_C_string("(define (gtk_font_selection_dialog_get_apply_button w) (.apply_button w))");
-  Xen_eval_C_string("(define (gtk_font_selection_dialog_get_cancel_button w) (.cancel_button w))");
-  Xen_eval_C_string("(define (gtk_color_selection_dialog_get_color_selection w) (.colorsel w))");
-  Xen_eval_C_string("(define (gtk_dialog_get_action_area w) (.action_area w))");
-  Xen_eval_C_string("(define (gtk_dialog_get_content_area w) (.vbox w))");
-  /* also gtk_adjustment fields, but I think they are not in use in Snd's gtk code */
-#endif
-
 #if HAVE_FORTH
   Xen_eval_C_string("<'> redo alias redo-edit");        /* consistency with Ruby */ 
   Xen_eval_C_string("<'> undo alias undo-edit"); 

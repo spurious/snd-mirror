@@ -681,37 +681,32 @@ GtkWidget *make_mix_dialog(void)
       gtk_window_resize(GTK_WINDOW(mix_dialog), 560, 280);
       gtk_widget_realize(mix_dialog);
       
-      help_button = button_new_with_icon(ICON_HELP);
+      help_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), "Help", GTK_RESPONSE_NONE);
       gtk_widget_set_name(help_button, "dialog_button");
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(help_button, "clicked", mix_dialog_help_callback, NULL);
 #if HAVE_GTK_3
       add_highlight_button_style(help_button);
 #endif
       gtk_widget_show(help_button);
 
-      copy_button = sg_button_new_with_label_and_icon("Copy mix", ICON_COPY);
+      copy_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), "Copy mix", GTK_RESPONSE_NONE);
       gtk_widget_set_name(copy_button, "dialog_button");
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), copy_button, false, true, 10);
       SG_SIGNAL_CONNECT(copy_button, "clicked", copy_mix_callback, NULL);
 #if HAVE_GTK_3
       add_highlight_button_style(copy_button);
 #endif
       gtk_widget_show(copy_button);
 
-      dismiss_button = button_new_with_icon(ICON_QUIT);
+      dismiss_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), I_GO_AWAY, GTK_RESPONSE_NONE);
       gtk_widget_set_name(dismiss_button, "dialog_button");
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), dismiss_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
 #if HAVE_GTK_3
       add_highlight_button_style(dismiss_button);
 #endif
       gtk_widget_show(dismiss_button);
-      set_stock_button_label(dismiss_button, I_GO_AWAY);
 
-      apply_button = sg_button_new_with_label_and_icon("Apply Env", ICON_APPLY);
+      apply_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), "Apply env", GTK_RESPONSE_NONE);
       gtk_widget_set_name(apply_button, "dialog_button");
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), apply_button, false, true, 10);
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_env_callback, NULL);
 #if HAVE_GTK_3
       add_highlight_button_style(apply_button);

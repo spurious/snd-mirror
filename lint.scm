@@ -1307,8 +1307,6 @@
 		    (set! false (cons e false))))))
 	
 	(let ((form (bsimp in-form)))
-					; (if (not (equal? form in-form)) (format outport "bsimp ~A -> ~A~%" in-form form))
-	  
 	  (if (or (not (pair? form))
 		  (not (memq (car form) '(or and not))))
 	      (classify form)

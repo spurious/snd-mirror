@@ -553,20 +553,16 @@ static void make_region_dialog(void)
   gtk_window_resize(GTK_WINDOW(region_dialog), 400, 500);
   gtk_widget_realize(region_dialog);
 
-  help_button = button_new_with_icon(ICON_HELP);
+  insert_button = gtk_dialog_add_button(GTK_DIALOG(region_dialog), "Insert", GTK_RESPONSE_NONE);
+  mix_button = gtk_dialog_add_button(GTK_DIALOG(region_dialog), "Mix", GTK_RESPONSE_NONE);
+  save_as_button = gtk_dialog_add_button(GTK_DIALOG(region_dialog), "Save as", GTK_RESPONSE_NONE);
+  dismiss_button = gtk_dialog_add_button(GTK_DIALOG(region_dialog), "Go away", GTK_RESPONSE_NONE);
+  help_button = gtk_dialog_add_button(GTK_DIALOG(region_dialog), "Help", GTK_RESPONSE_NONE);
+
   gtk_widget_set_name(help_button, "dialog_button");
-
-  dismiss_button = button_new_with_icon(ICON_QUIT);
   gtk_widget_set_name(dismiss_button, "dialog_button");
-  set_stock_button_label(dismiss_button, I_GO_AWAY);
-
-  insert_button = sg_button_new_with_label_and_icon("Insert", ICON_PASTE);
   gtk_widget_set_name(insert_button, "dialog_button");
-
-  mix_button = sg_button_new_with_label_and_icon("Mix", ICON_ADD);
   gtk_widget_set_name(mix_button, "dialog_button");
-
-  save_as_button = button_new_with_icon(ICON_SAVE_AS);
   gtk_widget_set_name(save_as_button, "dialog_button");
 
 #if HAVE_GTK_3
@@ -576,12 +572,6 @@ static void make_region_dialog(void)
   add_highlight_button_style(save_as_button);
   add_highlight_button_style(mix_button);
 #endif
-
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), insert_button, true, true, 4);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), mix_button, true, true, 4);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), save_as_button, true, true, 4);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), dismiss_button, true, true, 4);
-  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), help_button, true, true, 4);
 
   SG_SIGNAL_CONNECT(insert_button, "clicked", region_insert_callback, NULL);
   SG_SIGNAL_CONNECT(mix_button, "clicked", region_mix_callback, NULL);

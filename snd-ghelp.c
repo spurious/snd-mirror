@@ -216,15 +216,13 @@ static void create_help_monolog(void)
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 40);
   gtk_widget_realize(help_dialog);
 
-  ok_button = button_new_with_icon(ICON_QUIT);
+  ok_button = gtk_dialog_add_button(GTK_DIALOG(help_dialog), "Go Away", GTK_RESPONSE_NONE);
   gtk_widget_set_name(ok_button, "dialog_button");
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
 #if HAVE_GTK_3
   add_highlight_button_style(ok_button);
 #endif
   gtk_widget_show(ok_button);
-  set_stock_button_label(ok_button, I_GO_AWAY);
 
   frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(help_dialog)), frame, true, true, 10); 

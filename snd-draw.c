@@ -771,12 +771,12 @@ static void check_dialog_widget_table(void)
 static Xen g_dialog_widgets(void)
 {
   #define H_dialog_widgets "(" S_dialog_widgets "): dialog widgets (each " PROC_FALSE " if not yet created): (list \
- (0 " S_color_orientation_dialog ") (1 " PROC_FALSE ") (2 " S_enved_dialog ") (3 " PROC_FALSE ") (4 " PROC_FALSE ") (5 " S_transform_dialog ") \
- (6 " S_open_file_dialog ") (7 " S_save_sound_dialog ") (8 " S_view_files_dialog ") (9 raw data dialog) (10 new file dialog) \
- (11 " S_mix_file_dialog ") (12 " S_edit_header_dialog ") (13 " S_find_dialog ") (14 " S_help_dialog ") (15 listener completion) \
- (16 " S_view_mixes_dialog ") (17 " S_print_dialog ") (19 " S_view_regions_dialog ") \
- (20 " S_info_dialog ") (21 " PROC_FALSE ") (22 " S_save_selection_dialog ") (23 " S_insert_file_dialog ") \
- (24 " S_save_region_dialog ") (25 " S_preferences_dialog "))"
+ (0 " S_color_orientation_dialog ") (1 " S_enved_dialog ") (2 " S_transform_dialog ") \
+ (3 " S_open_file_dialog ") (4 " S_save_sound_dialog ") (5 " S_view_files_dialog ") (6 raw data dialog) (7 new file dialog) \
+ (8 " S_mix_file_dialog ") (9 " S_edit_header_dialog ") (10 " S_find_dialog ") (11 " S_help_dialog ") \
+ (12 " S_view_mixes_dialog ") (13 " S_print_dialog ") (14 " S_view_regions_dialog ") \
+ (15 " S_info_dialog ") (16 extra controls dialog) (17 " S_save_selection_dialog ") (18 " S_insert_file_dialog ") \
+ (19 " S_save_region_dialog ") (20 " S_preferences_dialog "))"
 
   check_dialog_widget_table();
   return(Xen_vector_to_Xen_list(dialog_widgets));

@@ -1828,7 +1828,7 @@ black-and-white-colormap constant *better-colormap*
     show-controls { old-ctrl }
     #t set-show-controls drop
     enved-dialog { req }
-    dialog-widgets 2 array-ref req "enved-dialog" #() snd-test-neq
+    dialog-widgets 1 array-ref req "enved-dialog" #() snd-test-neq
     '( 0.0 0.0 1.0 1.0 2.0 0.0 ) to req
     req set-enved-envelope drop
     enved-envelope req "set-enved-envelope" #() snd-test-neq
