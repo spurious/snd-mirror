@@ -756,7 +756,6 @@
       
       (define (side-effect? form env)
 	;; could evaluation of form have any side effects (like IO etc)
-	
 	(if (pair? form)
 	    ;; can't optimize ((...)...) because the car might eval to a function
 	    (or (and (not (hash-table-ref no-side-effect-functions (car form))) ; if func is not in that list, make no assumptions about it
@@ -775,8 +774,7 @@
 		 (let ((e (or (assq form env) (hash-table-ref globals form))))
 		   (or (not e)
 		       (and (>= (length e) 4)
-			    (pair? (list-ref e 3)))
-		       ))))) ; it is a local function
+			    (pair? (list-ref e 3)))))))) ; it is a local function
       
       
       (define (just-constants? form env)
@@ -1390,7 +1388,7 @@
 		       (if (= len 2)
 			   (classify (cadr form))
 			   (if (true? (cadr form)) ; no need to check anything else
-			       (cadr form)
+			       #t                  ; side-effect? here is a nightmare
 			       (let ((new-form ()))
 				 (do ((exprs (cdr form) (cdr exprs)))
 				     ((null? exprs) 
@@ -1602,7 +1600,10 @@
 					(member -1 val))
 				   `(- ,@(remove -1 val)) ; (* -1 x) -> (- x)
 				   `(* ,@val))))))))))
-	      
+
+	      ;; (* (/ x 2) 2) -> x?
+	      ;; (/ (* x 2) 2 also, and other similar cases: (+ 1 (- x 1)),  (* x (/ 1 x)) but is this 1 or 1.0?
+
 	      ((-)
 	       (case len
 		 ((0) form)
@@ -3502,9 +3503,9 @@
 					     (set! last-simplify-numeric-line-number line-number)
 					     (lint-format "possible simplification:~A" name (lists->string form val))))))
 				 
-				 ;;   if we loaded this file first, and f (head) is defined (e.g. scan above),
-				 ;;   and it is used before it is defined, but not thereafter, the usage stuff 
-				 ;;   can get confused, so other-identifiers is trying to track those.
+				 ;; if we loaded this file first, and f (head) is defined (e.g. scan above),
+				 ;; and it is used before it is defined, but not thereafter, the usage stuff 
+				 ;; can get confused, so other-identifiers is trying to track those.
 				 
 				 (if (and (not (hash-table-ref other-identifiers head))
 					  (not (defined? head start-up-environment)))
@@ -3524,30 +3525,34 @@
     ;;; --------------------------------------------------------------------------------
       
       (lambda* (file (outp *lint-output-port*))
-	"(lint file (port #t)) looks for infelicities in file's scheme code"
+	"(lint file port) looks for infelicities in file's scheme code"
 	(set! outport outp)
-	(set! *current-file* file)
 	(set! globals (make-hash-table))
 	(set! other-identifiers (make-hash-table))
 	(set! loaded-files ())
-	(if *load-file-first* ; this can improve the error checks
-	    (load file))
-	(let ((fp (catch #t
-		    (lambda ()
-		      (open-input-file file))
-		    (lambda args
-		      (format outport "  can't open ~S: ~A~%" file (apply format #f (cadr args)))
-		      #f))))
+
+	(let ((fp (if (input-port? file)
+		      file
+		      (begin
+			(set! *current-file* file)
+			(if *load-file-first* ; this can improve the error checks
+			    (load file))
+			(catch #t
+			  (lambda ()
+			    (let ((p (open-input-file file)))
+			      (if (not (string=? file "t631-temp.scm"))
+				  (format outport ";~A~%" file))
+			      (set! loaded-files (cons file loaded-files))
+			      p))
+			  (lambda args
+			    (format outport "  can't open ~S: ~A~%" file (apply format #f (cadr args)))
+			    #f))))))
 	  
 	  (if (input-port? fp)
 	      (let ((vars ())
 		    (line 0)
 		    (last-form #f)
 		    (last-line-number -1))
-		(if (not (string=? file "t631-temp.scm"))
-		    (format outport ";~A~%" file))
-		(set! loaded-files (cons file loaded-files))
-		
 		(do ((form (read fp) (read fp)))
 		    ((eof-object? form))
 		  (if (pair? form)
@@ -3574,11 +3579,13 @@
 		       (let ((var-file (hash-table-ref *top-level-objects* (car var))))
 			 (if (not var-file)
 			     (hash-table-set! *top-level-objects* (car var) *current-file*)
-			     (if (not (string=? var-file *current-file*))
+			     (if (and (string? *current-file*)
+				      (not (string=? var-file *current-file*)))
 				 (format outport ";~S is defined at the top level in ~S and ~S~%" (car var) var-file *current-file*)))))
 		     vars))
 		
-		(if *report-unused-top-level-functions* 
+		(if (and (string? file)
+			 *report-unused-top-level-functions*)
 		    (report-usage file 'top-level-var "" vars))
 		
 		(close-input-port fp))))))))
@@ -3590,6 +3597,8 @@
 ;;;
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
+;;;
+;;; to make testing tolerable: (call-with-input-string "(+ 1 2)" lint)
 
 
 

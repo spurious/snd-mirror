@@ -5366,7 +5366,7 @@ static s7_pointer make_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value
 
 /* -------- initial-environment -------- */
 
-#define INITIAL_ENV_ENTRIES 400
+#define INITIAL_ENV_ENTRIES 512
 
 static void save_initial_environment(s7_scheme *sc)
 {
@@ -5396,15 +5396,7 @@ static void save_initial_environment(s7_scheme *sc)
 	    val = slot_value(initial_slot(sym));
 	    if ((is_procedure(val)) || (is_syntax(val)))
 	      inits[k++] = initial_slot(sym);
-
 	    /* (let ((begin +)) (with-environment (initial-environment) (begin 1 2))) */
-	    /*
-	    if (k >= INITIAL_ENV_ENTRIES)
-	      {
-		fprintf(stderr, "oops: overran inits\n");
-		return;
-	      }
-	    */
 	  }
       }
 }
@@ -5536,7 +5528,6 @@ static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e
 
   if (new_e != sc->global_env)
     {
-      /* TODO: does this need to check {else}? */
       for (x = environment_slots(old_e); is_slot(x); x = next_slot(x))
 	ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
     }
@@ -6388,6 +6379,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
 }
 
 
+#if (!DISABLE_DEPRECATED)
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e)
 {
   /* c is a list: args code, so 
@@ -6400,6 +6392,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
   /* sc->capture_env_counter++; */ /* happens in make_closure */
   return(p);
 }
+#endif
 
 
 #define make_closure_with_env(Sc, X, Args, Code, Env)	\
@@ -11475,19 +11468,6 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument_with_type(sc, sc->SQRT, n, A_NUMBER));
     }
 }
-
-#if (!HAVE_GMP)
-static s7_pointer sqrt_temp;
-static s7_pointer g_sqrt_temp(s7_scheme *sc, s7_pointer args)
-{
-  /* this is not called much */
-  s7_pointer arg1;
-  arg1 = car(args);
-  if (real(arg1) >= 0.0)
-    return(remake_real(sc, arg1, sqrt(real(arg1))));
-  return(s7_make_complex(sc, 0.0, sqrt(-real(arg1))));
-}
-#endif
 
 
 static s7_Int int_to_int(s7_Int x, s7_Int n)
@@ -39592,8 +39572,8 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 		 * this used to be `(1 . ,@('(2 3))).  
 		 *     This now becomes (1 unquote ({apply_values} ('(2 3)))) -> ({append} ({list} 1) ({apply_values} ('(2 3)))) -> error
 		 * `(1 . (,@'(2 3))) works in both cases, and `(1 . (,(+ 1 1)))
-		 * so do we actually need this block? `(1 ,@'(2 3)) if undotted
 		 */
+
 		car(bq) = g_quasiquote_1(sc, car(orig));
 		cdr(bq) = sc->NIL;
 		sc->w = list_3(sc, sc->QQ_Append, sc->w, caddr(orig));
@@ -41400,17 +41380,6 @@ static s7_pointer abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
     }
   return(f);
 }
-
-static s7_pointer sqrt_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  s7_pointer arg;
-  arg = cadr(expr);
-  if ((is_pair(arg)) &&
-      (is_optimized(arg)) &&
-      (s7_function_returns_temp(sc, arg)))
-    return(sqrt_temp);
-  return(f);
-}
 #endif
 
 
@@ -42638,10 +42607,6 @@ static void init_choosers(s7_scheme *sc)
   /* expt */
   f = set_function_chooser(sc, sc->EXPT, expt_chooser);
   expt_temp_s = make_temp_function_with_class(sc, f, "expt", g_expt_temp_s, 2, 0, false, "expt opt");
-
-  /* sqrt */
-  f = set_function_chooser(sc, sc->SQRT, sqrt_chooser);
-  sqrt_temp = make_temp_function_with_class(sc, f, "sqrt", g_sqrt_temp, 1, 0, false, "sqrt opt");
 #endif
 
 
@@ -44008,8 +43973,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 			      set_optimized(car_x);
 			      set_ecdr(car_x, ecdr(car(body)));
 			      set_fcdr(car_x, fcdr(car(body)));
-
-			      fprintf(stderr, "safe: %s\n", DISPLAY(body));
 			      return(true);
 			    }
 			}
@@ -70171,4 +70134,5 @@ int main(int argc, char **argv)
  * gmp method problems: should we insist on a 'bignum method?
  * error printout using pp?  also of course need lint/pp tests
  * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
+ * if sounds were envs, all current args packaged as env, (map snd...) -> (map-sound ...) etc
  */

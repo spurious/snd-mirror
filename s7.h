@@ -539,10 +539,7 @@ typedef struct {
 
 void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr));
 s7_ex *(*s7_function_ex_parser(s7_pointer f))(s7_scheme *sc, s7_pointer expr);
-
-
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
-s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e);
 
 s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 
@@ -781,7 +778,9 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 
 s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 /* replaced by s7_method */
+s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e);
 #endif
+
 
 /* the following Scheme functions are not currently exported to C:
  *
