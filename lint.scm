@@ -776,7 +776,6 @@
 		       (and (>= (length e) 4)
 			    (pair? (list-ref e 3)))))))) ; it is a local function
       
-      
       (define (just-constants? form env)
 	;; can we probably evaluate form given just built-in stuff?
 	(or (and (constant? form)

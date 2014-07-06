@@ -26,7 +26,6 @@ fgrep -e "off_t* " *.[ch]
 fgrep -e " long* " *.[ch]
 grep ' \-\-$' *.html
 /home/bil/cl/snd tools/va.scm
-# tools/check-gtk.scm
 
 echo ' '
 echo ' '

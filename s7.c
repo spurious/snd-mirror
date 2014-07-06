@@ -1639,7 +1639,7 @@ static void init_types(void)
 #define clear_optimized(p)            typeflag(p) &= (~T_OPTIMIZED)
 #define OPTIMIZED_PAIR                (unsigned short)(T_PAIR | T_OPTIMIZED)
 #define is_optimized(p)               (typesflag(p) == OPTIMIZED_PAIR)
-/*   this is faster than the bit extraction above */
+/*   this is faster than the bit extraction above and the same speed as xor */
 /* optimizer flag for an expression that has optimization info, it should be in the 2nd byte
  */
 
@@ -32671,7 +32671,6 @@ static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
 	  return(car(x));
 	}
     }
-
   iter->loc = len;
   return(sc->NIL);
 }
@@ -33525,9 +33524,6 @@ static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
   return(closure); /* desperation -- the parameter list (caar here) will cause endless confusion in OP_APPLY errors! */
 }
 
-/* (define* (hi (a 1) (b 2)) a) (hi :b 1 2) */
-/* (let ((x (lambda* ((a 1) (b 2)) a))) (x :b 1 2)) */
-
 
 
 
@@ -33544,9 +33540,7 @@ static char *fallback_print_readably(s7_scheme *sc, void *val)
   return(NULL);
 }
 
-static void fallback_free(void *value)
-{
-}
+static void fallback_free(void *value) {}
 
 static bool fallback_equal(void *val1, void *val2)
 {
@@ -52819,9 +52813,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
 
-      if (typesflag(sc->code) == SYNTACTIC_PAIR)
+      if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	{
-	  sc->cur_code = sc->code;               /* in case an error occurs, this helps tell us where we are */
+	  sc->cur_code = sc->code;                /* in case an error occurs, this helps tell us where we are */
 	  /* sc->op = (opcode_t)syntax_opcode(car(sc->code)); */
 	  sc->op = (opcode_t)lifted_op(sc->code);
 	  sc->code = cdr(sc->code);
@@ -70116,7 +70110,7 @@ int main(int argc, char **argv)
  * clm opt accepts (env env)
  * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
  *   why isn't that the case always? -- pointer selects if focus-follows-mouse, see snd-chn.c 5444 
- * float-vector support is currently half-in/half-out
+ * float-vector support is currently half-in/half-out (shouldn't the name be byte-vector?)
  * the safe_c_s->direct opt could be extended especially to lambda* wrappers, and at least the op_safe_c_ss case
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 

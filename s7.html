@@ -4220,7 +4220,7 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
 		       (set! ,result (,new-body ,@(cadr orig))))
 		     (lambda ()       ; at exit, show result
 		       (if (eq? ,result #&lt;undefined&gt;)
-			   (format #t "  ~A returns early~%")
+			   (format #t "  ~A returns early~%" ',proc)
 			   (format #t "  ~A returns ~A~%" ',proc ,result))))))))
 
       `(define ,proc ,new-source))))
@@ -5513,7 +5513,7 @@ the MIT-Scheme test of that interaction.
 <pre class="indented">
 (define-macro (elambda args . body)
   `(symbol-&gt;value 
-    (define-bacro (,(gensym) ,@args)
+    (define-macro (,(gensym) ,@args)
       `((lambda* ,(append ',args `((*env* (current-environment)))) 
           ,'(begin ,@body)) 
         ,,@args))))
@@ -5523,7 +5523,7 @@ the MIT-Scheme test of that interaction.
 </pre>
 
 <p>elambda does not suffer from the symbol-&gt;dynamic-value defects mentioned above, but
-it's probably slower.  We have to wrap the function in a bacro because lambda*'s argument default
+it's probably slower.  We have to wrap the function in a macro because lambda*'s argument default
 values are evaluated in the definition environment, but we want the run-time environment.
 </p>
 
@@ -5545,6 +5545,41 @@ values are evaluated in the definition environment, but we want the run-time env
     (rx)))
 </pre>
 
+<p>Now putting that idea with the procedure-annotation macro given earlier, and the __func__ business
+(to get the caller's name), and taking care to handle default arguments correctly, we make a
+macro that returns an anonymous macro that returns an anonymous function that &mdash; where was I?
+</p>
+<pre class="indented">
+(define-macro (Display definition) ; (Display (define (f1 x) (+ x 1))) -&gt; an annotated version of f1
+  (let ((func (caadr definition))
+	(args (cdadr definition)))
+    (let ((arg-names (map (lambda (a) (if (symbol? a) a (car a))) args))
+	  (body (proc-walk `(begin ,@(cddr definition))))) ; from procedure-annotation above
+      `(define ,func
+	 (symbol-&gt;value 
+	  (define-macro* (,(gensym) ,@args)
+	    (let ((e (gensym))
+		  (result (gensym)))
+	      `((lambda* ,(append ',arg-names `((,e (current-environment)))) ; the calling environment
+		  (let ((,result '?))
+		    (dynamic-wind
+			(lambda ()    ; display the caller, if any, as well as the incoming arguments
+			  (format *stderr* "(~A~{~^ ~A~})" ',',func 
+				  (map (lambda (slot)
+					 (if (gensym? (car slot)) (values) slot))
+				       (outer-environment (outer-environment (current-environment)))))
+			  (let ((caller (eval '__func__ ,e)))
+			    (if (not (eq? caller #&lt;undefined&gt;))
+				(format *stderr* " ;called from ~S" caller))
+			    (newline *stderr*)))
+			(lambda ()   ; evaluate the original function's body with annotations
+			  (set! ,result ,',body))
+			(lambda ()   ; display the result (it is returned by the set! above)
+			  (format *stderr* "    -&gt; ~S~%" ,result)))))
+		,,@arg-names))))))))
+</pre>
+<p>stuff.scm has a more mature version of this macro.
+</p>
 </div>
 
 
@@ -5796,6 +5831,10 @@ Better ideas are always welcome!
 <li>most-positive-fixnum most-negative-fixnum
 <li>*unbound-variable-hook* *load-hook* *error-hook*
 </ul>
+
+<p>__func__ is the name (or name and location) of the function currently being called, as in C.
+</p>
+
 </div>
 
 

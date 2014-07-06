@@ -179,20 +179,6 @@
 	   (flatten lst (eval expr) ()))
      ,@body))
 
-(define-macro (elambda args . body)  ; lambda but pass extra arg "*env*" = run-time env
-  `(symbol->value 
-    (define-bacro (,(gensym) ,@args)
-      `((lambda* ,(append ',args `((*env* (current-environment))))
-	  ,'(begin ,@body)) 
-	,,@args))))
-
-(define-macro* (rlambda args . body) ; lambda* but eval arg defaults in run-time env
-  (let ((arg-names (map (lambda (arg) (if (pair? arg) (car arg) arg)) args))
-	(arg-defaults (map (lambda (arg) (if (pair? arg) `(,(car arg) (eval ,(cadr arg))) arg)) args)))
-  `(symbol->value
-    (define-bacro* (,(gensym) ,@arg-defaults)
-      `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
-
 (define-macro (and-let* vars . body)
   `(let ()                                ; bind vars, if any is #f stop, else evaluate body with those bindings
      (and ,@(map (lambda (var) 
@@ -995,3 +981,97 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (open-environment
    (apply environment* args)))
 
+
+;;; --------------------------------------------------------------------------------
+
+(define-macro (elambda args . body)  ; lambda but pass extra arg "*env*" = run-time env
+  `(symbol->value 
+    (define-bacro (,(gensym) ,@args)
+      `((lambda* ,(append ',args `((*env* (current-environment))))
+	  ,'(begin ,@body)) 
+	,,@args))))
+
+(define-macro* (rlambda args . body) ; lambda* but eval arg defaults in run-time env
+  (let ((arg-names (map (lambda (arg) (if (pair? arg) (car arg) arg)) args))
+	(arg-defaults (map (lambda (arg) (if (pair? arg) `(,(car arg) (eval ,(cadr arg))) arg)) args)))
+  `(symbol->value
+    (define-bacro* (,(gensym) ,@arg-defaults)
+      `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
+
+
+(define Display #f)
+
+(let ((spaces (gensym))
+      (e (gensym))
+      (result (gensym)))
+  (apply define spaces '(0)) ; spaces='gensym, gensym=0
+  
+  (define-macro (Display-1 definition)
+    
+    (define (proc-walk source)
+      (if (pair? source)
+	  (if (memq (car source) '(let let*))     ; if let or let*, show local variables
+	      (if (symbol? (cadr source))         ; named let?
+		  ;; (let name vars . body) -> (let name vars print-vars . body)
+		  (append 
+		   (list (car source)
+			 (cadr source)
+			 (caddr source)
+			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (current-environment)))
+		   (cdddr source))
+		  ;; (let(*) vars . body) -> (let vars print-vars . body)
+		  (append 
+		   (list (car source)
+			 (cadr source)
+			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (current-environment)))
+		   (cddr source)))
+	      (cons (proc-walk (car source))
+		    (proc-walk (cdr source))))
+	  source))
+    
+    (let ((func (caadr definition))
+	  (args (cdadr definition)))
+      (let ((arg-names (map (lambda (a) (if (symbol? a) a (car a))) args))
+	    (body (proc-walk `(begin ,@(cddr definition)))))
+	
+	`(define ,func
+	   (symbol->value 
+	    
+	    (define-macro* (,(gensym) ,@args)
+	      
+	      `((lambda* ,(append ',arg-names `((,',e (current-environment))))
+		  (let ((,',result '?))
+		    
+		    (dynamic-wind
+			(lambda () 
+			  (with-environment (procedure-environment Display)
+			    (do ((i 0 (+ i 1))) 
+				((= i ,',spaces))
+			      (display #\space *stderr*))
+			    (set! ,',spaces (+ ,',spaces 2)))
+
+			  (format *stderr* "(~A~{~^ ~S~})" ',',func 
+				  (map (lambda (slot)
+					 (if (or (gensym? (car slot)) 
+						 (eq? (cdr slot) ,',e))
+					     (values) 
+					     (list (car slot) (cdr slot))))
+				       (outer-environment (outer-environment (current-environment)))))
+			  (let ((caller (eval '__func__ ,',e)))
+			    (if (not (eq? caller #<undefined>))
+				(format *stderr* " ;called from ~S" caller))
+			    (newline *stderr*)))
+			
+			(lambda ()
+			  (set! ,',result ,',body))
+			
+			(lambda ()
+			  (with-environment (procedure-environment Display)
+			    (set! ,',spaces (- ,',spaces 2))
+			    (do ((i 0 (+ i 1))) 
+				((= i ,',spaces)) 
+			      (display #\space *stderr*)))
+			  (format *stderr* "    -> ~S~%" ,',result)))))
+		,,@arg-names)))))))
+  
+  (set! Display Display-1))
