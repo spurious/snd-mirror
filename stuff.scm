@@ -999,79 +999,91 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
       `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
 
 
-(define Display #f)
 
-(let ((spaces (gensym))
+(define Display #f)
+(define Display-port #f)
+(define Display-print-length 6)
+
+(let ((spaces 0)
       (e (gensym))
-      (result (gensym)))
-  (apply define spaces '(0)) ; spaces='gensym, gensym=0
-  
+      (result (gensym))
+      (vlp (gensym))
+      (*display* *stderr*))
+
+  (define (prepend-spaces)
+    (format *display* (format #f "~~~DC" spaces) #\space))
+
+  (set! Display-port (make-procedure-with-setter
+		      (lambda () *display*)
+		      (lambda (val) (set! *display* val))))
+
+  (define (display-format str . args)
+    `(let ((,vlp *vector-print-length*))
+       (set! *vector-print-length* Display-print-length)
+       (with-environment (procedure-environment Display)
+	 (prepend-spaces))
+       (format (Display-port) ,str ,@args)
+       (set! *vector-print-length* ,vlp)))
+
+  (define (proc-walk source)
+    (if (pair? source)
+	(case (car source)
+	  ((let let*)                ; if let or let*, show local variables, (let vars . body) -> (let vars print-vars . body)
+	   (if (symbol? (cadr source))         ; named let?
+	       (append 
+		(list (car source)   ; let
+		      (cadr source)  ; name
+		      (caddr source) ; vars
+		      (display-format "(let ~A (~{~A~| ~}) ...))~%" (cadr source) '(outer-environment (current-environment))))
+		(cdddr source))      ; body
+	       (append 
+		(list (car source)   ; let
+		      (cadr source)  ; vars
+		      (display-format "(~A (~{~A~| ~}) ...)~%" (car source) '(outer-environment (current-environment))))
+		(cddr source))))     ; body
+	  (else
+	   (cons (proc-walk (car source))
+		 (proc-walk (cdr source)))))
+	source))
+    
   (define-macro (Display-1 definition)
-    
-    (define (proc-walk source)
-      (if (pair? source)
-	  (if (memq (car source) '(let let*))     ; if let or let*, show local variables
-	      (if (symbol? (cadr source))         ; named let?
-		  ;; (let name vars . body) -> (let name vars print-vars . body)
-		  (append 
-		   (list (car source)
-			 (cadr source)
-			 (caddr source)
-			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (current-environment)))
-		   (cdddr source))
-		  ;; (let(*) vars . body) -> (let vars print-vars . body)
-		  (append 
-		   (list (car source)
-			 (cadr source)
-			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (current-environment)))
-		   (cddr source)))
-	      (cons (proc-walk (car source))
-		    (proc-walk (cdr source))))
-	  source))
-    
     (let ((func (caadr definition))
 	  (args (cdadr definition)))
-      (let ((arg-names (map (lambda (a) (if (symbol? a) a (car a))) args))
+      (let ((arg-names (map (lambda (a) (if (symbol? a) a (car a))) args)) ; omit the default values, if any
 	    (body (proc-walk `(begin ,@(cddr definition)))))
 	
 	`(define ,func
 	   (symbol->value 
-	    
 	    (define-macro* (,(gensym) ,@args)
 	      
-	      `((lambda* ,(append ',arg-names `((,',e (current-environment))))
+	      `((lambda ,(append ',arg-names `(,',e))
 		  (let ((,',result '?))
-		    
 		    (dynamic-wind
 			(lambda () 
 			  (with-environment (procedure-environment Display)
-			    (do ((i 0 (+ i 1))) 
-				((= i ,',spaces))
-			      (display #\space *stderr*))
-			    (set! ,',spaces (+ ,',spaces 2)))
-
-			  (format *stderr* "(~A~{~^ ~S~})" ',',func 
+			    (prepend-spaces)
+			    (set! spaces (+ spaces 2)))
+			  (format (Display-port) "(~A~{~| ~A~})" ',',func 
 				  (map (lambda (slot)
 					 (if (or (gensym? (car slot)) 
 						 (eq? (cdr slot) ,',e))
-					     (values) 
-					     (list (car slot) (cdr slot))))
+					       (values) 
+					       (list (car slot) (cdr slot))))
 				       (outer-environment (outer-environment (current-environment)))))
 			  (let ((caller (eval '__func__ ,',e)))
 			    (if (not (eq? caller #<undefined>))
-				(format *stderr* " ;called from ~S" caller))
-			    (newline *stderr*)))
+				(format (Display-port) " ;called from ~A" caller)))
+			  (newline (Display-port)))
 			
 			(lambda ()
 			  (set! ,',result ,',body))
 			
 			(lambda ()
 			  (with-environment (procedure-environment Display)
-			    (set! ,',spaces (- ,',spaces 2))
-			    (do ((i 0 (+ i 1))) 
-				((= i ,',spaces)) 
-			      (display #\space *stderr*)))
-			  (format *stderr* "    -> ~S~%" ,',result)))))
-		,,@arg-names)))))))
+			    (set! spaces (- spaces 2))
+			    (prepend-spaces))
+			  (format (Display-port) "    -> ~S~%" ,',result)))))
+
+		,,@arg-names (current-environment)))))))) ; this might be slightly different for defaults -- they expect the definition env
   
   (set! Display Display-1))

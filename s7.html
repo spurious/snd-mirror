@@ -3824,7 +3824,7 @@ original.
 ~\n       (tilde followed by newline): trim white space
 ~{        begin iteration (take arguments from a list, string, vector, or any other applicable object)
 ~}        end iteration
-~^        jump out of iteration
+~^ ~|     jump out of iteration, ~| also quits if *vector-print-length* reached
 ~*        ignore the current argument
 ~&lt;        begin escape to s7 (code in ~&lt;...~&gt; is evaluated, result is stringified and inserted)
 ~&gt;        end s7 escape
@@ -3939,6 +3939,12 @@ This feature has been shoe-horned into pre-existing code, so it is not yet very 
 if the code in the brackets raises an error (even within a catch), you may get an
 incomplete evaluation.  
 </p>
+
+<p>Many Schemes provide ~_ with a numeric argument for spaces.  In s7, use 
+something like <code>(format #f (format #f "~~~DC" n) #\space)</code>
+which outputs n spaces.
+</p>
+
 </div>
 
 
@@ -6324,7 +6330,8 @@ enum
 </pre>
 
 
-<p>If you apply define or define-macro, the returned value is a symbol, so to apply the
+<p><code>(apply define ...)</code> is similar to CL's set.
+If you apply define or define-macro, the returned value is a symbol, so to apply the
 new function or macro, you need to use either eval or symbol-&gt;value:
 </p>
 

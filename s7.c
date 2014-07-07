@@ -1112,7 +1112,7 @@ typedef struct {
 
 
 typedef struct {
-  int loc, col, gc_loc, curly_len;
+  int loc, col, gc_loc, curly_len, ctr;
   char *curly_str;
   s7_pointer args;
 } format_data;
@@ -25894,6 +25894,7 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
 
   free(tmp);
   fdat->args = cdr(fdat->args);
+  fdat->ctr++;
 }
 
 
@@ -25969,6 +25970,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
       sc->fdats[sc->format_depth] = fdat;
       fdat->curly_len = 0;
       fdat->curly_str = NULL;
+      fdat->ctr = 0;
     }
   else
     {
@@ -26046,6 +26048,15 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		return(format_error(sc, "can't skip argument!", str, args, fdat));
 	      fdat->args = cdr(fdat->args);
 	      break;
+
+	    case '|':                           /* -------- exit if args nil or ctr > *vector-print-length* -------- */
+	      if ((is_pair(fdat->args)) &&
+		  (fdat->ctr >= (int)s7_integer(slot_value(sc->vector_print_length))))
+		{
+		  format_append_string(sc, fdat, " ...", 4, port);
+		  fdat->args = sc->NIL;
+		}
+	      /* fall through */
 
 	    case '^':                           /* -------- exit -------- */
 	      if (is_null(fdat->args))
@@ -26255,6 +26266,10 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			memcpy((void *)curly_str, (void *)(str + i + 2), curly_len - 1);
 			curly_str[curly_len - 1] = '\0';
 			
+			if ((sc->format_depth < sc->num_fdats - 1) &&
+			    (sc->fdats[sc->format_depth + 1]))
+			  sc->fdats[sc->format_depth + 1]->ctr = 0;
+
 			while (is_not_null(curly_arg))
 			  {
 			    s7_pointer new_arg = sc->NIL;
@@ -26273,6 +26288,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		
 		i += (curly_len + 2); /* jump past the ending '}' too */
 		fdat->args = cdr(fdat->args);
+		fdat->ctr++;
 	      }
 	      break;
 	      
@@ -26329,6 +26345,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    free(s);
 		  }
 		fdat->args = cdr(fdat->args);
+		fdat->ctr++;
 	      }
 	      break;
 		    
@@ -26435,6 +26452,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			    format_append_char(sc, fdat, character(obj), port);
 			}
 		      fdat->args = cdr(fdat->args);
+		      fdat->ctr++;
 		    }
 		    break;
 		    
@@ -70129,4 +70147,7 @@ int main(int argc, char **argv)
  * error printout using pp?  also of course need lint/pp tests
  * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
  * if sounds were envs, all current args packaged as env, (map snd...) -> (map-sound ...) etc
+ * pretty-print should follow *vector-print-length* for lists/envs/hashes etc
+ * (format #f "~:<n~>F") or something to set the numeric arguments, and perhaps for ~n| as well
+ *   that is, ~:<~> gets the value, then prepends a tilde
  */

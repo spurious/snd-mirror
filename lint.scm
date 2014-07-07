@@ -3356,7 +3356,7 @@
 					     (begin
 					       (if (and (= curlys 0)
 							(= brackets 0) ; ??
-							(not (memq c '(#\~ #\T #\t #\& #\% #\^ #\newline #\} #\> #\<))) ; ~* consumes an arg
+							(not (memq c '(#\~ #\T #\t #\& #\% #\^ #\| #\newline #\} #\> #\<))) ; ~* consumes an arg
 							(not (call-with-exit
 							      (lambda (return)
 								(do ((k i (+ k 1)))
@@ -3374,6 +3374,9 @@
 					       (case c 
 						 ((#\{) (set! curlys (+ curlys 1)))
 						 ((#\}) (set! curlys (- curlys 1)))
+						 ((#\^ #\|)
+						  (if (zero? curlys)
+						      (lint-format "~A has ~C outside ~~{~~}?" name str c)))
 						 ((#\<) 
 						  (set! bracket-pos (+ i 1))
 						  (set! brackets (+ brackets 1)))
