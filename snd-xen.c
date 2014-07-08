@@ -2964,7 +2964,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
           (define (apropos-1 e)\
             (for-each\
              (lambda (binding)\
-               (if (and (pair? binding)\
+               (if (and (pair? binding) (symbol? (car binding))\
                         (string-position name (symbol->string (car binding))))\
                    (let ((str (format #f \"~%~A: ~A\" \
 	        	              (car binding) \

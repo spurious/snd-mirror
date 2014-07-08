@@ -55,7 +55,7 @@
 
 (define bytevector-copy! vector-copy!)
 (define string-copy! vector-copy!)
-;;; bytevector->list is (map values bv)
+(define (bytevector->list bv) (map values bv))
 
 
 (define (boolean=? . args)
@@ -160,6 +160,7 @@
 
 (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 ;; I prefer (define-expansion (comment . stuff) (reader-cond (#t (values))))
+;;   or (format #f "~^ this is a comment ")
 
 
 (define-macro (define-values vars . body)

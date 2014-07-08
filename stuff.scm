@@ -954,6 +954,20 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	     (lambda args
 	       #f))))))
 
+(define (sequence->string val)
+  (if (or (not (sequence? val))
+	  (empty? val))
+      (format #f "~S" val)
+      (cond ((vector? val)       
+	     (format #f "#(~{~A~| ~})" val))
+	    ((environment? val)  
+	     (format #f (if (< *vector-print-length* 6) "#<e. ~{~A~| ~}>" "#<environment ~{~A~| ~}>") val))
+	    ((hash-table? val)   
+	     (format #f (if (< *vector-print-length* 6) "#<h. ~{~A~| ~}>" "#<hash-table ~{~A~| ~}>") val))
+	    ((string? val)       
+	     (format #f (if (bytevector? val) "#u8(~{~D~| ~})" "\"~{~A~|~}\"") val))
+	    (else                
+	     (format #f "(~{~A~| ~})" val)))))
 
 (define (mock-list seq)
   (open-environment
@@ -1000,6 +1014,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 
 
+;;; --------------------------------------------------------------------------------
+
+;; these need to be globally accessible since they're inserted in an arbitrary function's source
 (define Display #f)
 (define Display-port #f)
 (define Display-print-length 6)
@@ -1018,12 +1035,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		      (lambda (val) (set! *display* val))))
 
   (define (display-format str . args)
-    `(let ((,vlp *vector-print-length*))
+    `(let ((vlp *vector-print-length*))
        (set! *vector-print-length* Display-print-length)
        (with-environment (procedure-environment Display)
 	 (prepend-spaces))
        (format (Display-port) ,str ,@args)
-       (set! *vector-print-length* ,vlp)))
+       (set! *vector-print-length* vlp)))
 
   (define (proc-walk source)
     (if (pair? source)
@@ -1049,7 +1066,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (define-macro (Display-1 definition)
     (let ((func (caadr definition))
 	  (args (cdadr definition)))
-      (let ((arg-names (map (lambda (a) (if (symbol? a) a (car a))) args)) ; omit the default values, if any
+      (let ((arg-names (map (lambda (a) (if (symbol? a) a (car a))) args))     ; omit the default values, if any
 	    (body (proc-walk `(begin ,@(cddr definition)))))
 	
 	`(define ,func
@@ -1058,32 +1075,43 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	      
 	      `((lambda ,(append ',arg-names `(,',e))
 		  (let ((,',result '?))
+		    ;(format *stderr* "~A~%" ,',e)
 		    (dynamic-wind
-			(lambda () 
-			  (with-environment (procedure-environment Display)
+			(lambda ()                                             ; when function called, show args and caller
+			  (with-environment (procedure-environment Display)    ; indent
 			    (prepend-spaces)
 			    (set! spaces (+ spaces 2)))
-			  (format (Display-port) "(~A~{~| ~A~})" ',',func 
-				  (map (lambda (slot)
-					 (if (or (gensym? (car slot)) 
-						 (eq? (cdr slot) ,',e))
-					       (values) 
-					       (list (car slot) (cdr slot))))
-				       (outer-environment (outer-environment (current-environment)))))
-			  (let ((caller (eval '__func__ ,',e)))
+
+			  (format (Display-port) "(~A" ',',func)               ; show args, ruthlessly abbreviated
+			  (for-each
+			   (lambda (slot)
+			     (when (not (or (gensym? (car slot))
+					  (eq? (cdr slot) ,',e)))
+			       (let ((,',vlp *vector-print-length*))
+				 (set! *vector-print-length* Display-print-length)
+				 (let ((str (sequence->string (cdr slot))))
+				   (set! *vector-print-length* 60)
+				   (format (Display-port) " :~A ~{~A~|~}" (car slot) str))
+				 (set! *vector-print-length* ,',vlp))))
+			   (outer-environment (outer-environment (current-environment))))
+			  (format (Display-port) ")")
+
+			  (let ((caller (eval '__func__ ,',e)))                ; show caller 
 			    (if (not (eq? caller #<undefined>))
 				(format (Display-port) " ;called from ~A" caller)))
 			  (newline (Display-port)))
 			
-			(lambda ()
-			  (set! ,',result ,',body))
+			(lambda ()                                             ; the original function body
+			  (set! ,',result ,',body))                            ;   but annotated by proc-walk
 			
-			(lambda ()
+			(lambda ()                                             ; at the end, show the result
 			  (with-environment (procedure-environment Display)
 			    (set! spaces (- spaces 2))
 			    (prepend-spaces))
 			  (format (Display-port) "    -> ~S~%" ,',result)))))
 
-		,,@arg-names (current-environment)))))))) ; this might be slightly different for defaults -- they expect the definition env
+		,,@arg-names (current-environment))))))))                      ; pass in the original args and the current-environment
+  ;; this might be slightly different for defaults -- they expect the definition env
   
   (set! Display Display-1))
+

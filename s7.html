@@ -3824,7 +3824,7 @@ original.
 ~\n       (tilde followed by newline): trim white space
 ~{        begin iteration (take arguments from a list, string, vector, or any other applicable object)
 ~}        end iteration
-~^ ~|     jump out of iteration, ~| also quits if *vector-print-length* reached
+~^ ~|     jump out of iteration
 ~*        ignore the current argument
 ~&lt;        begin escape to s7 (code in ~&lt;...~&gt; is evaluated, result is stringified and inserted)
 ~&gt;        end s7 escape
@@ -3943,6 +3943,13 @@ incomplete evaluation.
 <p>Many Schemes provide ~_ with a numeric argument for spaces.  In s7, use 
 something like <code>(format #f (format #f "~~~DC" n) #\space)</code>
 which outputs n spaces.
+</p>
+
+<p>Since any sequence can be passed to ~{~}, we need a way to truncate output and represent
+the rest of the sequence with "...", but ~^ only stops at the end of the sequence.  ~|
+is like ~^ but it also stops after it handles *vector-print-length* elements and prints
+"...".  So, <code>(format #f "~{~A~| ~}" #(0 1 2 3 4))</code> returns "0 1 2 ..."
+if *vector-print-length* is 3.
 </p>
 
 </div>

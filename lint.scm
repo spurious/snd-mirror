@@ -110,11 +110,6 @@
     
     (define (thunk? p)
       (and (procedure? p)
-	   (aritable? p 0)
-	   (not (aritable? p 1))))
-    
-    (define (thunkable? p)
-      (and (procedure? p)
 	   (aritable? p 0)))
     
     (define (one-argable? p)
@@ -483,7 +478,7 @@
 			  (cons 'cos number?)
 			  (cons 'cosh number?)
 			  (cons 'denominator rational?)
-			  (cons 'dynamic-wind (list thunkable? thunkable? thunkable?))
+			  (cons 'dynamic-wind (list thunk? thunk? thunk?))
 			  (cons 'environment->list (list environment?))
 			  (cons 'environment-ref (list environment? symbol?))
 			  (cons 'environment-set! (list environment? symbol?))
@@ -775,7 +770,7 @@
 		   (or (not e)
 		       (and (>= (length e) 4)
 			    (pair? (list-ref e 3)))))))) ; it is a local function
-      
+
       (define (just-constants? form env)
 	;; can we probably evaluate form given just built-in stuff?
 	(or (and (constant? form)
@@ -919,7 +914,18 @@
 					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 					     checker arg
 					     (truncated-list->string form))))
-			  
+#|
+;; this gets false positives too often
+				(if (and (not (assq arg env))
+					 (hash-table-ref globals arg)
+					 (not (checker (symbol->value arg))))
+				    (lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
+						 name head arg-number 
+						 (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
+						 checker arg 
+						 (truncated-list->string form)))))
+|#
+
 			  (if (not (checker arg))
 			      (lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
 					   name head arg-number 
@@ -1494,11 +1500,6 @@
       
       
       (define (simplify-numerics form env)
-	
-	;;   I first tried a table of rules, but the code was unreadable, so
-	;;   here I'll split out each case by hand.
-	;; This is not an aggressive simplification.
-	
 	;; this returns a form, possibly the original simplified
 	(let ((complex-result? (lambda (op) (memq op '(+ * - / 
 							 sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
@@ -1566,20 +1567,25 @@
 		 ((1) (car args))
 		 (else 
 		  (let ((val (remove-all 0 (splice-if (lambda (x) (eq? x '+)) args))))
+		    (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
+			(let ((rats (collect-if list rational? val)))
+			  (if (> (length rats) 1)
+			      (let ((y (apply + rats)))
+				(if (zero? y)
+				  (set! val (collect-if list (lambda (x) (not (number? x))) val))
+				  (set! val (cons y (collect-if list (lambda (x) (not (number? x))) val))))))))
 		    (case (length val)
 		      ((0) 0)
 		      ((1) (car val))                     ; (+ x) -> x
 		      (else 
-		       (if (just-rationals? val)
-			   (apply + val)
-			   (if (every? (lambda (arg)      ; (+ (log x) (log y)) -> (log (* x y))
-					 (and (pair? arg)
-					      (pair? (cdr arg))
-					      (null? (cddr arg))
-					      (eq? (car arg) 'log)))
-				       val)
-			       `(log (* ,@(map cadr val)))
-			       `(+ ,@val)))))))))
+		       (if (every? (lambda (arg)      ; (+ (log x) (log y)) -> (log (* x y))
+				     (and (pair? arg)
+					  (pair? (cdr arg))
+					  (null? (cddr arg))
+					  (eq? (car arg) 'log)))
+				   val)
+			   `(log (* ,@(map cadr val)))
+			   `(+ ,@val))))))))
 	      
 	      ((*)
 	       (case len
@@ -1587,8 +1593,15 @@
 		 ((1) (car args))
 		 (else 
 		  (let ((val (remove-all 1 (splice-if (lambda (x) (eq? x '*)) args))))
+		    (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
+			(let ((rats (collect-if list rational? val)))
+			  (if (> (length rats) 1)
+			      (let ((y (apply * rats)))
+				(if (= y 1)
+				  (set! val (collect-if list (lambda (x) (not (number? x))) val))
+				  (set! val (cons y (collect-if list (lambda (x) (not (number? x))) val))))))))
 		    (case (length val)
-		      ((0) 0)
+		      ((0) 1)
 		      ((1) (car val))                     ; (* x) -> x
 		      (else 
 		       (if (just-rationals? val)
@@ -1599,9 +1612,6 @@
 					(member -1 val))
 				   `(- ,@(remove -1 val)) ; (* -1 x) -> (- x)
 				   `(* ,@val))))))))))
-
-	      ;; (* (/ x 2) 2) -> x?
-	      ;; (/ (* x 2) 2 also, and other similar cases: (+ 1 (- x 1)),  (* x (/ 1 x)) but is this 1 or 1.0?
 
 	      ((-)
 	       (case len
@@ -1634,10 +1644,17 @@
 				      `(- ,@(cdar args) ,(cadr args)) ; (- (- x y) z) -> (- x y z) but leave (- (- x) ...)
 				      `(- ,@args)))))))
 		 (else 
-		  (if (just-rationals? args)
-		      (apply - args)
-		      (let ((nargs (remove-all 0 (splice-if (lambda (x) (eq? x '+)) (cdr args)))) ; (- x a (+ b c) d) -> (- x a b c d)
-			    (first-arg (car args)))
+		  (let ((val (remove-all 0 (splice-if (lambda (x) (eq? x '+)) (cdr args)))))
+		    (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
+			(let ((rats (collect-if list rational? val)))
+			  (if (> (length rats) 1)
+			      (let ((y (apply + rats)))
+				(if (zero? y)
+				    (set! val (collect-if list (lambda (x) (not (number? x))) val))
+				    (set! val (cons y (collect-if list (lambda (x) (not (number? x))) val))))))))
+		    (set! val (cons (car args) val))
+		    (let ((first-arg (car args))
+			  (nargs (cdr val)))
 			(if (member first-arg nargs)
 			    (begin
 			      (set! nargs (remove first-arg nargs)) ; remove once
@@ -1951,6 +1968,9 @@
 			     (lambda ignore
 			       `(gcd ,@args)))
 			   `(gcd ,@args)))))
+	      ;; (gcd x x ...) -> (abs x)
+	      ;; (gcd x 0) -> (abs x)
+	      ;; (* (gcd a b) (lcm a b)) -> (abs (* a b))
 	      
 	      ((lcm)
 	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'lcm)) args)))
@@ -1965,6 +1985,7 @@
 			     (lambda ignore
 			       `(lcm ,@args)))
 			   `(lcm ,@args)))))
+	      ;; (lcm x x ...) -> (abs x)
 	      
 	      ((max min)
 	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x (car form))) args)))
@@ -1983,7 +2004,7 @@
 	   (if (>= (length form) 2)
 	       (scan form))
 	   env)
-	  
+
 	  ((= equal?)
 	   (if (and *report-minor-stuff*
 		    (> (length form) 2)
@@ -3335,7 +3356,10 @@
 		     (if (< (length form) 3)
 			 (begin
 			   (if (< (length form) 2)
-			       (lint-format "~A has too few arguments:~A" name head (truncated-list->string form)))
+			       (lint-format "~A has too few arguments:~A" name head (truncated-list->string form))
+			       (if (and (pair? (cadr form))
+					(eq? (caadr form) 'format))
+				   (lint-format "redundant format: ~A" name (truncated-list->string form))))
 			   env)
 			 (let ((control-string (if (string? (cadr form)) (cadr form) (caddr form)))
 			       (args (if (string? (cadr form)) (cddr form) (cdddr form))))
@@ -3480,7 +3504,6 @@
 		    
 		    ;; ---------------- everything else ----------------		  
 		    (else
-		     
 		     (if (not (list? form))
 			 (begin
 			   (lint-format "stray dot? ~A" name (truncated-list->string form))
@@ -3492,7 +3515,6 @@
 				 (if (not (or (hash-table-ref globals head)
 					      (assq head env) ))
 				     (check-special-cases name head form env))
-				 
 				 (if (and *report-minor-stuff*
 					  (not (= line-number last-simplify-numeric-line-number))
 					  (pair? (cdr form))
@@ -3532,6 +3554,9 @@
 	(set! globals (make-hash-table))
 	(set! other-identifiers (make-hash-table))
 	(set! loaded-files ())
+	(set! last-simplify-boolean-line-number -1)
+	(set! last-simplify-numeric-line-number -1)
+	(set! line-number -1)
 
 	(let ((fp (if (input-port? file)
 		      file
@@ -3590,7 +3615,8 @@
 			 *report-unused-top-level-functions*)
 		    (report-usage file 'top-level-var "" vars))
 		
-		(close-input-port fp))))))))
+		(if (not (input-port? file))
+		    (close-input-port fp)))))))))
 
 
 
@@ -3600,8 +3626,7 @@
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
 ;;;
-;;; to make testing tolerable: (call-with-input-string "(+ 1 2)" lint)
-
+;;; tests in t935.scm
 
 
 
@@ -3697,3 +3722,4 @@
 					(format #t ";~A ~D, error in read: ~A ~A~%" file line-num args
 						(fixup-html (remove-markups code)))))))))))))))))))
 				    
+

@@ -20648,6 +20648,19 @@ static s7_pointer g_bytevector(s7_scheme *sc, s7_pointer args)
   return(vec);
 }
 
+static s7_pointer bytevector_to_list(s7_scheme *sc, const char *str, int len)
+{
+  int i;
+  s7_pointer p;
+  if (len == 0) return(sc->NIL);
+  sc->w = sc->NIL;
+  for (i = len - 1; i >= 0; i--)
+    sc->w = cons(sc, small_int((unsigned int)(str[i])), sc->w);
+  p = sc->w;
+  sc->w = sc->NIL;
+  return(p);
+}
+
 
   
 /* -------------------------------- ports -------------------------------- 
@@ -36295,6 +36308,8 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       return(s7_vector_to_list(sc, obj));
 
     case T_STRING:
+      if (is_bytevector(obj))
+	return(bytevector_to_list(sc, string_value(obj), string_length(obj)));
       return(s7_string_to_list(sc, string_value(obj), string_length(obj)));
 
     case T_HASH_TABLE:
@@ -70132,6 +70147,10 @@ int main(int argc, char **argv)
  * the safe_c_s->direct opt could be extended especially to lambda* wrappers, and at least the op_safe_c_ss case
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
+ * for clm methods, xen_to_c_generator could fallback on method check -- t932.scm -- can't decide about this
+ * gmp method problems: should we insist on a 'bignum method?
+ * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
+ * if sounds were envs, all current args packaged as env, (map snd...) -> (map-sound ...) etc
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
@@ -70142,12 +70161,5 @@ int main(int argc, char **argv)
  *   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *   maybe gunichar->bytevector?
  *
- * for clm methods, xen_to_c_generator could fallback on method check -- t932.scm -- can't decide about this
- * gmp method problems: should we insist on a 'bignum method?
- * error printout using pp?  also of course need lint/pp tests
- * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
- * if sounds were envs, all current args packaged as env, (map snd...) -> (map-sound ...) etc
- * pretty-print should follow *vector-print-length* for lists/envs/hashes etc
- * (format #f "~:<n~>F") or something to set the numeric arguments, and perhaps for ~n| as well
- *   that is, ~:<~> gets the value, then prepends a tilde
+ * lint/pp/Display tests
  */
