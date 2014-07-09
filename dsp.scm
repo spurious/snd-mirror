@@ -2545,6 +2545,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 
 ;;; this returns the component in FM with complex index (using-sine ignored for now)
+;;;   this needs the Bessel functions (gsl or snd-test.scm)
 
 (define (fm-complex-component freq-we-want wc wm a b interp using-sine)
   (define (~,3f x) (format #f "~,3F" x))

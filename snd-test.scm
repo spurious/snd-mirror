@@ -11495,10 +11495,11 @@ EDITS: 2
 
   ;; -----------------
   (define (test-fm-components)
-    (let ((str (with-output-to-string
-		 (lambda ()
-		   (fm-complex-component 1200 1000 100 1.0 4.0 0.0 #f)
-		   (fm-cascade-component 2000 2000 500 1.5 50 1.0)))))
+    (if (provided? 'gsl)
+	(let ((str (with-output-to-string
+		     (lambda ()
+		       (fm-complex-component 1200 1000 100 1.0 4.0 0.0 #f)
+		       (fm-cascade-component 2000 2000 500 1.5 50 1.0)))))
       (if (not (string=? str 
 		 (format #f ";fm-complex-component add -0.000-0.010i from J-3(1.0) = -0.020 and I5(4.0) = 0.505\n~
                              ;fm-complex-component add 0.163 from J-2(1.0) = 0.115 and I4(4.0) = 1.416\n~
@@ -11510,7 +11511,7 @@ EDITS: 2
                              ;fm-complex-component add -0.016 from J4(1.0) = 0.002 and I-2(4.0) = 6.422\n~
                              ;fm-cascade-component add 0.512 from J0(1.5) = 0.512 and J0(0.0) = 1.000\n~
                              ")))
-	  (snd-display #__line__ ";fm-components are unexpected:~%~S" str))))
+	  (snd-display #__line__ ";fm-components are unexpected:~%~S" str)))))
   
   ;; ----------------
   (define (fltit)

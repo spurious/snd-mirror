@@ -35331,8 +35331,8 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  (s7_is_vector(y)))
 	return(unmatched_vectors_are_morally_equal(sc, x, y));
 
-      if ((!is_number(x)) && 
-	  (!is_big_number(x)))
+      if (((!is_number(x)) && (!is_big_number(x))) ||
+	  ((!is_number(y)) && (!is_big_number(y))))
 	return(false);
     }
 
@@ -69683,6 +69683,7 @@ s7_scheme *s7_init(void)
   s7_provide(sc, "make-complex");
 #endif
 
+
 #ifdef __APPLE__
   s7_provide(sc, "osx");
 #endif
@@ -70163,4 +70164,5 @@ int main(int argc, char **argv)
  * instead of clumsy (outer-env (... (current-env))), perhaps (lets i) where 0->current
  *   or extend first...? or and index arg to current-e, 0=default? or (outer-env e index)
  * perhaps with-env should be generic: accept c-obj and func too
+ * s7test clang loader trouble
  */

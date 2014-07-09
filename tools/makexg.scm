@@ -108,6 +108,8 @@
 ;	"GIcon*"
 
 	"GBytes" "GtkPlacesSidebar*" "GtkStackSwitcher*" "GtkRevealer*" "GtkHeaderBar*" "GtkListBox*" "GtkSearchBar*"
+
+	"GtkFlowBox*" "GtkActionBar*" "GtkPopover*"
 	))
 
 (define no-xen-p 

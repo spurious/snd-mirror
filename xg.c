@@ -892,9 +892,9 @@ Xm_type_Ptr_1(GtkSearchBar_, GtkSearchBar*)
 
 #if GTK_CHECK_VERSION(3, 12, 0)
 Xm_type_Ptr(GtkFlowBoxChild_, GtkFlowBoxChild*)
-Xm_type_Ptr(GtkFlowBox_, GtkFlowBox*)
-Xm_type_Ptr(GtkActionBar_, GtkActionBar*)
-Xm_type_Ptr(GtkPopover_, GtkPopover*)
+Xm_type_Ptr_1(GtkFlowBox_, GtkFlowBox*)
+Xm_type_Ptr_1(GtkActionBar_, GtkActionBar*)
+Xm_type_Ptr_1(GtkPopover_, GtkPopover*)
 #endif
 
 #if GTK_CHECK_VERSION(3, 14, 0)
@@ -44650,7 +44650,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("24-Jun-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("09-Jul-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

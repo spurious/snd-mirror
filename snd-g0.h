@@ -62,8 +62,13 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define widget_set_margin_left(W, M) 
 #define widget_set_margin_right(W, M) 
 #else
-#define widget_set_margin_left(W, M) gtk_widget_set_margin_left(W, M)
-#define widget_set_margin_right(W, M) gtk_widget_set_margin_right(W, M)
+#if (GTK_CHECK_VERSION(3, 12, 0))
+  #define widget_set_margin_left(W, M) 
+  #define widget_set_margin_right(W, M) 
+#else
+  #define widget_set_margin_left(W, M) gtk_widget_set_margin_left(W, M)
+  #define widget_set_margin_right(W, M) gtk_widget_set_margin_right(W, M)
+#endif
 #endif
 
 #if (HAVE_GTK_3) && defined(__GNUC__) && (!(defined(__cplusplus)))
