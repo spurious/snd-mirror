@@ -100,6 +100,13 @@ make allclean
 rm -f snd
 rm -f config.cache
 
+./configure --quiet CC=clang CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
+make
+make allclean
+rm -f snd
+rm -f config.cache
+
+
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '

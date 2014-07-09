@@ -1,14 +1,20 @@
-Snd 14.7.
+Snd 14.8:
 
-s7: sort! now operates in-place on lists (it used to copy the list).
-    sort! also accepts bytevectors (for r7rs), and as a by-product, strings.
-    string-up|downcase built-in (for r7rs).
-    stuff.scm.
-    cyclic-sequences.
-    hash-table-entries.
+s7: symbol-table function now returns a list of all known symbols.
+    require added
+    removed unoptimize and reader-expand
+    Display macro in stuff.scm
+    added ~< expr ~> in format as a sort of "here-string" escape -- any s7 code in
+      the brackets is evaluated in the current environment, and the result
+      is inserted at that point in the output string (using object->string if
+      the result is not a string). This is similar to {var} or $var in various
+      shell languages. 
+    also added ~| as a smarter ~^
+    for all output functions, #f as port means no output (/dev/null in effect)
 
-Snd: removed defvar (use define-envelope), and multiply-arrays (missed earlier)
+Snd: the numbering for dialog-widgets has changed -- the unused entries were removed.
 
-checked: sbcl 1.1.18|1.2.0, gtk 3.13.1|2
+checked: sbcl 1.2.1, gtk 3.13.3
 
-Thanks!: Mike Scholz, David Lowenfels, Corey Mwamba
+Thanks!: Greg Santucci
+

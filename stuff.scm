@@ -1111,7 +1111,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			  (format (Display-port) "    -> ~S~%" ,',result)))))
 
 		,,@arg-names (current-environment))))))))                      ; pass in the original args and the current-environment
-  ;; this might be slightly different for defaults -- they expect the definition env
   
   (set! Display Display-1))
 

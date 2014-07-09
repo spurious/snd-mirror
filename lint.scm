@@ -408,6 +408,7 @@
 			  (cons '= number?)
 			  (cons '> real?)
 			  (cons '>= real?)
+			  (cons '->bytevector string?)
 			  (cons 'abs number?)
 			  (cons 'acos number?)
 			  (cons 'acosh number?)
@@ -475,6 +476,7 @@
 			  (cons 'char=? char?)
 			  (cons 'char>=? char?)
 			  (cons 'char>? char?)
+			  (cons 'close-environment environment?)
 			  (cons 'cos number?)
 			  (cons 'cosh number?)
 			  (cons 'denominator rational?)
@@ -538,6 +540,7 @@
 			  (cons 'number->string (list number? integer-between-2-and-16?))
 			  (cons 'numerator rational?)
 			  (cons 'odd? integer?)
+			  (cons 'open-environment environment?)
 			  (cons 'open-input-file (list string? string?))
 			  (cons 'open-input-string string?)
 			  (cons 'open-output-file (list string? string?))
@@ -623,8 +626,8 @@
 			      sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
 			      log exp expt sqrt make-polar make-rectangular
 			      imag-part real-part abs magnitude angle max min exact->inexact
-			      modulo remainder quotient lcd gcd
-			      rationalize inexact->exact
+			      modulo remainder quotient lcm gcd
+			      rationalize inexact->exact random
 			      logior lognot logxor logand numerator denominator 
 			      floor round truncate ceiling ash))
 			 h))
@@ -633,7 +636,7 @@
 				 (for-each
 				  (lambda (op)
 				    (set! (h op) #t))
-				  '(= / max min < > <= >= - quotient remainder modulo lcm gcd and or
+				  '(= / max min < > <= >= - quotient remainder modulo and or
 				      string=? string<=? string>=? string<? string>?
 				      char=? char<=? char>=? char<? char>?
 				      boolean=? symbol=?))
@@ -915,7 +918,7 @@
 					     checker arg
 					     (truncated-list->string form))))
 #|
-;; this gets false positives too often
+;; this makes too many mistakes (angle as env field in generators.scm)
 				(if (and (not (assq arg env))
 					 (hash-table-ref globals arg)
 					 (not (checker (symbol->value arg))))
@@ -1501,11 +1504,8 @@
       
       (define (simplify-numerics form env)
 	;; this returns a form, possibly the original simplified
-	(let ((complex-result? (lambda (op) (memq op '(+ * - / 
-							 sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
-							 log exp expt sqrt make-polar make-rectangular))))
-	      (real-result? (lambda (op) (memq op '(imag-part real-part abs magnitude angle max min exact->inexact
-							      modulo remainder quotient lcd gcd))))
+	(let ((real-result? (lambda (op) (memq op '(imag-part real-part abs magnitude angle max min exact->inexact
+							      modulo remainder quotient lcm gcd))))
 	      (rational-result? (lambda (op) (memq op '(rationalize inexact->exact))))
 	      (integer-result? (lambda (op) (memq op '(logior lognot logxor logand numerator denominator 
 							      floor round truncate ceiling ash)))))
@@ -1559,7 +1559,7 @@
 	  
 	  (let* ((args (map simplify-arg (cdr form)))
 		 (len (length args)))
-	    
+
 	    (case (car form)
 	      ((+)
 	       (case len
@@ -1608,7 +1608,7 @@
 			   (apply * val)
 			   (if (member 0 val)             ; (* x 0 2) -> 0
 			       0 
-			       (if (and (= len 2)
+			       (if (and (= (length val) 2)
 					(member -1 val))
 				   `(- ,@(remove -1 val)) ; (* -1 x) -> (- x)
 				   `(* ,@val))))))))))
@@ -1739,54 +1739,59 @@
 				     ((sin) 0.0)
 				     ((cos) 1.0)
 				     (else `(,(car form) ,@args)))
-				   (if (and (eq? (car form) 'exp) ; (exp (* a (log b))) -> (expt b a)
-					    (pair? (car args))
-					    (eq? (caar args) '*))
-				       (let ((targ (cdar args)))
-					 (if (= (length targ) 2)
-					     (if (and (pair? (car targ))
-						      (eq? (caar targ) 'log)
-						      (pair? (cdar targ))
-						      (null? (cddar targ)))
-						 `(expt ,(cadar targ) ,(cadr targ))
-						 (if (and (pair? (cadr targ))
-							  (eq? (caadr targ) 'log) 
-							  (pair? (cdr (cadr targ)))
-							  (null? (cddr (cadr targ))))
-						     `(expt ,(cadadr targ) ,(car targ))
-						     `(,(car form) ,@args)))
-					     `(,(car form) ,@args)))
-				       `(,(car form) ,@args))))))
+				   (if (equal? (car args) 0.0)
+				       (apply (symbol->value (car form)) '(0.0))
+				       (if (and (eq? (car form) 'exp) ; (exp (* a (log b))) -> (expt b a)
+						(pair? (car args))
+						(eq? (caar args) '*))
+					   (let ((targ (cdar args)))
+					     (if (= (length targ) 2)
+						 (if (and (pair? (car targ))
+							  (eq? (caar targ) 'log)
+							  (pair? (cdar targ))
+							  (null? (cddar targ)))
+						     `(expt ,(cadar targ) ,(cadr targ))
+						     (if (and (pair? (cadr targ))
+							      (eq? (caadr targ) 'log) 
+							      (pair? (cdr (cadr targ)))
+							      (null? (cddr (cadr targ))))
+							 `(expt ,(cadadr targ) ,(car targ))
+							 `(,(car form) ,@args)))
+						 `(,(car form) ,@args)))
+				       `(,(car form) ,@args)))))))
 		   `(,(car form) ,@args)))
 	      
 	      ((log)
-	       (if (equal? (car args) 1)
-		   0
-		   (if (and (= len 1)
-			    (pair? (car args))
-			    (= (length (car args)) 2)
-			    (eq? (caar args) 'exp))
-		       (cadar args)
-		       (if (and (= len 2)
-				(equal? (car args) (cadr args)))
-			   (if (integer? (car args))
-			       1
-			       1.0)
-			   `(log ,@args)))))
+	       (if (pair? args)
+		   (if (equal? (car args) 1)
+		       0
+		       (if (and (= len 1)
+				(pair? (car args))
+				(= (length (car args)) 2)
+				(eq? (caar args) 'exp))
+			   (cadar args)
+			   (if (and (= len 2)
+				    (equal? (car args) (cadr args)))
+			       (if (integer? (car args))
+				   1
+				   1.0)
+			       `(log ,@args))))
+		   form))
 	      
 	      ((sqrt)
-	       (if (and (pair? args)
-			(rational? (car args))
-			(= (car args) (* (sqrt (car args)) (sqrt (car args)))))
-		   (sqrt (car args))
-		   (if (and (pair? (car args)) ; (sqrt (* x x)) -> x
-			    (eq? (caar args) '*)
-			    (pair? (cdar args))
-			    (pair? (cddar args))
-			    (null? (cdddar args))
-			    (equal? (cadar args) (caddar args)))
-		       (cadar args)
-		       `(sqrt ,@args))))
+	       (if (pair? args)
+		   (if (and (rational? (car args))
+			    (= (car args) (* (sqrt (car args)) (sqrt (car args)))))
+		       (sqrt (car args))
+		       (if (and (pair? (car args)) ; (sqrt (* x x)) -> x
+				(eq? (caar args) '*)
+				(pair? (cdar args))
+				(pair? (cddar args))
+				(null? (cdddar args))
+				(equal? (cadar args) (caddar args)))
+			   (cadar args)
+			   `(sqrt ,@args)))
+		   form))
 	      
 	      ((floor round ceiling truncate)
 	       (if (= len 1)
@@ -1818,11 +1823,12 @@
 	      
 	      ((imag-part)
 	       (if (= len 1)
-		   (if (or (not (real? (car args)))
+		   (if (or (and (number? (car args))
+				(real? (car args)))
 			   (and (pair? (car args))
-				(complex-result? (caar args))))
-		       `(imag-part ,@args)
-		       0.0)
+				(real-result? (caar args))))
+		       0.0
+		       `(imag-part ,@args))
 		   form))
 	      
 	      ((real-part)
@@ -1856,8 +1862,13 @@
 	      
 	      ((random)
 	       (if (and (= len 1)
-			(morally-equal? (car args) 0.0))
-		   0.0
+			(number? (car args)))
+		   (if (and (integer? (car args))
+			    (= (car args) 0))
+		       0
+		       (if (morally-equal? (car args) 0.0)
+			   0.0
+			   `(random ,@args)))
 		   `(random ,@args)))
 	      ;; what about (* 2.0 (random 1.0)) and the like?
 	      ;;   this is trickier than it appears: (* 2.0 (random 3)) etc
@@ -1889,16 +1900,27 @@
 				   (car args)
 				   (if (equal? (cadr args) -1)
 				       `(/ ,(car args))
-				       `(,(car form) ,@args))))))
+				       (if (just-rationals? args)
+					   (catch #t
+					     (lambda ()
+					       (let ((val (apply expt args)))
+						 (if (integer? val)
+						     val
+						     `(expt ,@args))))
+					     (lambda args
+					       `(expt ,@args)))
+					   `(expt ,@args)))))))
 		   form))
 
 	      ((angle)
-	       (if (equal? (car args) -1)
-		   'pi
-		   (if (or (morally-equal? (car args) 0.0)
-			   (morally-equal? (car args) pi))
-		       0.0
-		       `(,(car form) ,@args))))
+	       (if (pair? args)
+		   (if (equal? (car args) -1)
+		       'pi
+		       (if (or (morally-equal? (car args) 0.0)
+			       (eq? (car args) 'pi))
+			   0.0
+			   `(angle ,@args)))
+		   form))
 
 	      ((atan)
 	       (if (and (= len 1)
@@ -1922,6 +1944,13 @@
 	      
 	      ((logior)
 	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'logior)) args)))
+	       (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
+		   (let ((rats (collect-if list integer? args)))
+		     (if (> (length rats) 1)
+			 (let ((y (apply logior rats)))
+			   (if (zero? y)
+			       (set! args (collect-if list (lambda (x) (not (number? x))) args))
+			       (set! args (cons y (collect-if list (lambda (x) (not (number? x))) args))))))))
 	       (if (null? args)           ; (logior) -> 0
 		   0
 		   (if (null? (cdr args)) ; (logior x) -> x
@@ -1934,6 +1963,13 @@
 	      
 	      ((logand)
 	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'logand)) args)))
+	       (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
+		   (let ((rats (collect-if list integer? args)))
+		     (if (> (length rats) 1)
+			 (let ((y (apply logand rats)))
+			   (if (= y -1)
+			       (set! args (collect-if list (lambda (x) (not (number? x))) args))
+			       (set! args (cons y (collect-if list (lambda (x) (not (number? x))) args))))))))
 	       (if (null? args)
 		   -1
 		   (if (null? (cdr args)) ; (logand x) -> x
@@ -1952,7 +1988,10 @@
 		       (car args)
 		       (if (just-integers? args)
 			   (apply logxor args)
-			   `(logxor ,@args)))))
+			   (if (and (= len 2)
+				    (equal? (car args) (cadr args)))
+			       0
+			       `(logxor ,@args))))))
 		   
 	      ((gcd)
 	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'gcd)) args)))
@@ -1967,8 +2006,10 @@
 			       (apply gcd args))
 			     (lambda ignore
 			       `(gcd ,@args)))
-			   `(gcd ,@args)))))
-	      ;; (gcd x x ...) -> (abs x)
+			   (if (null? (cdr args))
+			       `(abs ,(car args))
+			       `(gcd ,@args))))))
+
 	      ;; (gcd x 0) -> (abs x)
 	      ;; (* (gcd a b) (lcm a b)) -> (abs (* a b))
 	      
@@ -1984,16 +2025,20 @@
 			       (apply lcm args))
 			     (lambda ignore
 			       `(lcm ,@args)))
-			   `(lcm ,@args)))))
-	      ;; (lcm x x ...) -> (abs x)
+			   (if (null? (cdr args))
+			       `(abs ,(car args))
+			       `(lcm ,@args))))))
 	      
 	      ((max min)
-	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x (car form))) args)))
-	       (if (= len 1)
-		   (car args)
-		   (if (just-rationals? args)
-		       (apply (symbol->value (car form)) args)
-		       `(,(car form) ,@args))))
+	       (if (pair? args)
+		   (begin
+		     (set! args (remove-duplicates (splice-if (lambda (x) (eq? x (car form))) args)))
+		     (if (= len 1)
+			 (car args)
+			 (if (just-rationals? args)
+			     (apply (symbol->value (car form)) args)
+			     `(,(car form) ,@args))))
+		   form))
 	      
 	      (else `(,(car form) ,@args))))))
       
@@ -3517,7 +3562,7 @@
 				     (check-special-cases name head form env))
 				 (if (and *report-minor-stuff*
 					  (not (= line-number last-simplify-numeric-line-number))
-					  (pair? (cdr form))
+					  ;(pair? (cdr form))
 					  (not (hash-table-ref globals head))
 					  (hash-table-ref numeric-ops head)
 					  (not (assq head env)))

@@ -20842,8 +20842,9 @@ static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
 
   old_port = sc->output_port;
   port = car(args);
-  if ((is_output_port(port)) &&
-      (!port_is_closed(port)))
+  if (((is_output_port(port)) &&
+       (!port_is_closed(port))) ||
+      (port == sc->F))
     sc->output_port = port;
   else 
     {
@@ -20883,8 +20884,9 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
 
   old_port = sc->error_port;
   port = car(args);
-  if ((is_output_port(port)) &&
-      (!port_is_closed(port)))
+  if (((is_output_port(port)) &&
+       (!port_is_closed(port))) ||
+      (port == sc->F))
     sc->error_port = port;
   else 
     {
@@ -21479,15 +21481,15 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
   if (!is_null(cdr(args)))
     {
       port = cadr(args);
-      if (!is_output_port(port))
-	{
-	  if (port == sc->F) return(sc->UNSPECIFIED);
-	  check_method(sc, port, sc->WRITE_STRING, args);
-	  return(wrong_type_argument_with_type(sc, sc->WRITE_STRING, small_int(2), port, AN_OUTPUT_PORT));
-	}
       start_and_end(sc, sc->WRITE_STRING, cddr(args), 3, &start, &end);
     }
   else port = sc->output_port;
+  if (!is_output_port(port))
+    {
+      if (port == sc->F) return(sc->UNSPECIFIED);
+      check_method(sc, port, sc->WRITE_STRING, args);
+      return(wrong_type_argument_with_type(sc, sc->WRITE_STRING, small_int(2), port, AN_OUTPUT_PORT));
+    }
 
   if (start == 0)
     port_write_string(port)(sc, string_value(str), end, port);
@@ -22393,7 +22395,8 @@ int s7_peek_char(s7_scheme *sc, s7_pointer port)
 
 void s7_write_char(s7_scheme *sc, int c, s7_pointer pt) 
 {
-  port_write_character(pt)(sc, c, pt);
+  if (pt != sc->F)
+    port_write_character(pt)(sc, c, pt);
 }
 
 
@@ -22462,16 +22465,14 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->WRITE_CHAR, small_int(1), chr, T_CHARACTER));
     }
   if (is_pair(cdr(args)))
-    {
-      port = cadr(args);
-      if (port == sc->F) return(sc->UNSPECIFIED);
-      if (!is_output_port(port))
-	{
-	  check_method(sc, port, sc->WRITE_CHAR, args);
-	  return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, AN_OUTPUT_PORT));
-	}
-    }
+    port = cadr(args);
   else port = sc->output_port;
+  if (port == sc->F) return(sc->UNSPECIFIED);
+  if (!is_output_port(port))
+    {
+      check_method(sc, port, sc->WRITE_CHAR, args);
+      return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, AN_OUTPUT_PORT));
+    }
 
   port_write_character(port)(sc, s7_character(chr), port);
   return(sc->UNSPECIFIED);
@@ -25566,16 +25567,14 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   s7_pointer port;
   
   if (is_not_null(args))
-    {
-      port = car(args);
-      if (!is_output_port(port))
-	{
-	  if (port == sc->F) return(sc->UNSPECIFIED);
-	  check_method(sc, port, sc->NEWLINE, args);
-	  return(simple_wrong_type_argument_with_type(sc, sc->NEWLINE, port, AN_OUTPUT_PORT));
-	}
-    }
+    port = car(args);
   else port = sc->output_port;
+  if (!is_output_port(port))
+    {
+      if (port == sc->F) return(sc->UNSPECIFIED);
+      check_method(sc, port, sc->NEWLINE, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->NEWLINE, port, AN_OUTPUT_PORT));
+    }
   /* hmmm: shouldn't (newline #t) be the same as (format #t "~%")?
    */
   
@@ -25586,7 +25585,8 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
 
 void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
-  write_or_display(sc, obj, port, USE_WRITE);
+  if (port != sc->F)
+    write_or_display(sc, obj, port, USE_WRITE);
 }
 
 
@@ -25596,16 +25596,15 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
   s7_pointer port;
   
   if (is_pair(cdr(args)))
-    {
-      port = cadr(args);
-      if (!is_output_port(port))
-	{
-	  if (port == sc->F) return(sc->UNSPECIFIED);
-	  check_method(sc, port, sc->WRITE, args);
-	  return(wrong_type_argument_with_type(sc, sc->WRITE, small_int(2), port, AN_OUTPUT_PORT));
-	}
-    }
+    port = cadr(args);
   else port = sc->output_port;
+  if (!is_output_port(port))
+    {
+      if (port == sc->F) return(sc->UNSPECIFIED);
+      check_method(sc, port, sc->WRITE, args);
+      return(wrong_type_argument_with_type(sc, sc->WRITE, small_int(2), port, AN_OUTPUT_PORT));
+    }
+
   write_or_display(sc, car(args), port, USE_WRITE);
   return(sc->UNSPECIFIED);
 }
@@ -25619,7 +25618,8 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
 
 void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
-  write_or_display(sc, obj, port, USE_DISPLAY);
+  if (port != sc->F) 
+    write_or_display(sc, obj, port, USE_DISPLAY);
 }
 
 
@@ -25629,16 +25629,14 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
   s7_pointer port;
   
   if (is_pair(cdr(args)))
-    {
-      port = cadr(args);
-      if (!is_output_port(port))
-	{
-	  if (port == sc->F) return(sc->UNSPECIFIED);
-	  check_method(sc, port, sc->DISPLAY, args);
-	  return(wrong_type_argument_with_type(sc, sc->DISPLAY, small_int(2), port, AN_OUTPUT_PORT));
-	}
-    }
+    port = cadr(args);
   else port = sc->output_port;
+  if (!is_output_port(port))
+    {
+      if (port == sc->F) return(sc->UNSPECIFIED);
+      check_method(sc, port, sc->DISPLAY, args);
+      return(wrong_type_argument_with_type(sc, sc->DISPLAY, small_int(2), port, AN_OUTPUT_PORT));
+    }
   write_or_display(sc, car(args), port, USE_DISPLAY);
   return(sc->UNSPECIFIED); /* wouldn't it be more useful to return car(args) here and in write? */
 }
@@ -70162,4 +70160,7 @@ int main(int argc, char **argv)
  *   maybe gunichar->bytevector?
  *
  * lint/pp/Display tests
+ * instead of clumsy (outer-env (... (current-env))), perhaps (lets i) where 0->current
+ *   or extend first...? or and index arg to current-e, 0=default? or (outer-env e index)
+ * perhaps with-env should be generic: accept c-obj and func too
  */
