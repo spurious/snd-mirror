@@ -405,14 +405,6 @@ void about_snd_help(void)
   /* -------------------------------------------------------------------------------- */
   main_snd_help("Snd is a sound editor.",
 		info,
-		"\nRecent changes include:\n\
-\n\
-31-May: Snd 14.7.\n\
-23-Apr: Snd 14.6.\n\
-18-Mar: Snd 14.5.\n\
-12-Feb: Snd 14.4.\n\
-4-Jan:  Snd 14.3.\n\
-",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
 #endif

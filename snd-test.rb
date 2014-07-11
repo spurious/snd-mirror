@@ -5010,53 +5010,33 @@ def test_edpos(ind1, func_sym, func_body = nil, &change_thunk)
     fr1 = func_body.call(ind1, 0, false)
     fr2 = func_body.call(ind1, 0, 0)
     fr3 = func_body.call(ind1, 0, Current_edit_position)
-    fr4 = func_body.call(ind1, 0, lambda do |snd, chn| 0 end)
-    unless fr1 == fr2 and fr1 == fr3 and fr1 == fr4
-      snd_display_prev_caller("initial %s: %s %s %s %s?",
-                              func_sym, fr1, fr2, fr3, fr4)
+    unless fr1 == fr2 and fr1 == fr3
+      snd_display_prev_caller("initial %s: %s %s %s?",
+                              func_sym, fr1, fr2, fr3)
     end
     change_thunk.call
     fr5 = func_body.call(ind1, 0, false)
     fr6 = func_body.call(ind1, 0, 1)
     fr7 = func_body.call(ind1, 0, Current_edit_position)
-    fr8 = func_body.call(ind1, 0, lambda do |snd, chn|
-      edit_position(snd, chn)
-    end)
-    unless fr5 == fr6 and fr5 == fr7 and fr5 == fr8
-      snd_display_prev_caller("%s (edpos 1): %s %s %s %s?",
-                              func_sym, fr5, fr6, fr7, fr8)
-    end
-    fr5 = func_body.call(ind1, 0, 0)
-    fr6 = func_body.call(ind1, 0, lambda do |snd, chn| 0 end)
-    unless fr1 == fr5 and fr1 == fr6
-      snd_display_prev_caller("%s (edpos -1): %s %s %s?",
-                              func_sym, fr1, fr5, fr6)
+    unless fr5 == fr6 and fr5 == fr7
+      snd_display_prev_caller("%s (edpos 1): %s %s %s?",
+                              func_sym, fr5, fr6, fr7)
     end
   else
     fr1 = snd_func(func_sym, ind1, 0, false)
     fr2 = snd_func(func_sym, ind1, 0, 0)
     fr3 = snd_func(func_sym, ind1, 0, Current_edit_position)
-    fr4 = snd_func(func_sym, ind1, 0, lambda do |snd, chn| 0 end)
-    unless fr1 == fr2 and fr1 == fr3 and fr1 == fr4
-      snd_display_prev_caller("initial %s: %s %s %s %s?",
-                              func_sym, fr1, fr2, fr3, fr4)
+    unless fr1 == fr2 and fr1 == fr3
+      snd_display_prev_caller("initial %s: %s %s %s?",
+                              func_sym, fr1, fr2, fr3)
     end
     change_thunk.call
     fr5 = snd_func(func_sym, ind1, 0, false)
     fr6 = snd_func(func_sym, ind1, 0, 1)
     fr7 = snd_func(func_sym, ind1, 0, Current_edit_position)
-    fr8 = snd_func(func_sym, ind1, 0, lambda do |snd, chn|
-      edit_position(snd, chn)
-    end)
-    unless fr5 == fr6 and fr5 == fr7 and fr5 == fr8
-      snd_display_prev_caller("%s (edpos 1): %s %s %s %s?",
-                              func_sym, fr5, fr6, fr7, fr8)
-    end
-    fr5 = snd_func(func_sym, ind1, 0, 0)
-    fr6 = snd_func(func_sym, ind1, 0, lambda do |snd, chn| 0 end)
-    unless fr1 == fr5 and fr1 == fr6
-      snd_display_prev_caller("%s (edpos -1): %s %s %s?",
-                              func_sym, fr1, fr5, fr6)
+    unless fr5 == fr6 and fr5 == fr7
+      snd_display_prev_caller("%s (edpos 1): %s %s %s?",
+                              func_sym, fr5, fr6, fr7)
     end
   end
   revert_sound(ind1)
@@ -5074,11 +5054,6 @@ def test_edpos_1(func_sym, ind1, &body)
   v2 = channel2vct(12000, 10, ind1, 0)
   unless vequal(v1, v2)
     snd_display_prev_caller(snd_format(v2, v1, "!=", "%s (1)", func_sym))
-  end
-  body.call(ind1, lambda do |snd, chn| 0 end)
-  v2 = channel2vct(12000, 10, ind1, 0)
-  unless vequal(v1, v2)
-    snd_display_prev_caller(snd_format(v2, v1, "!=", "%s (2)", func_sym))
   end
   revert_sound(ind1)
 end

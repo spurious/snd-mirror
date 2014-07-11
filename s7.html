@@ -8208,6 +8208,7 @@ int main(int argc, char **argv)
  *   gcc ex3a.o -shared -o ex3a.so
  *   gcc -c s7.c -I. -fPIC -shared
  *   gcc -o ex3 ex3.c s7.o -lm -ldl -I. -Wl,-export-dynamic
+ *   # omit -ldl in freeBSD, openBSD might want -ftrampolines
  *
  * in Mac OSX:
  *   gcc -c ex3a.c

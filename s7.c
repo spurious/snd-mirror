@@ -609,7 +609,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC, 
       OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS, OP_SAFE_C_SSC, HOP_SAFE_C_SSC, OP_SAFE_C_CSS, HOP_SAFE_C_CSS,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, OP_SAFE_C_SSA, HOP_SAFE_C_SSA, 
-      OP_SAFE_C_CSA, HOP_SAFE_C_CSA, OP_SAFE_C_SCA, HOP_SAFE_C_SCA,
+      OP_SAFE_C_CSA, HOP_SAFE_C_CSA, OP_SAFE_C_SCA, HOP_SAFE_C_SCA, OP_SAFE_C_CAS, HOP_SAFE_C_CAS,
       OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA, 
       OP_SAFE_C_SQS, HOP_SAFE_C_SQS, 
       OP_SAFE_C_S_opAAq, HOP_SAFE_C_S_opAAq, OP_SAFE_C_S_opAAAq, HOP_SAFE_C_S_opAAAq, 
@@ -718,7 +718,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_cq", "h_safe_c_cq", "safe_c_qc", "h_safe_c_qc", 
       "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs", "safe_c_ssc", "h_safe_c_ssc", "safe_c_css", "h_safe_c_css",
       "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", 
-      "safe_c_csa", "h_safe_c_csa", "safe_c_sca", "h_safe_c_sca",
+      "safe_c_csa", "h_safe_c_csa", "safe_c_sca", "h_safe_c_sca", "safe_c_cas", "h_safe_c_cas",
       "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa", 
       "safe_c_sqs", "h_safe_c_sqs",
       "safe_c_s_opaaq", "h_safe_c_s_opaaq", "safe_c_s_opaaaq", "h_safe_c_s_opaaaq", 
@@ -2588,7 +2588,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 #define WITH_COUNTS 0
 
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 0
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -10848,8 +10848,9 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 #else
 		  fx = log2((double)ix);
 #endif
+		  /* (s7_Int)fx rounds (log 8 2) to 2 in FreeBSD! */
 		  if ((ix & (ix - 1)) == 0)
-		    return(make_integer(sc, (s7_Int)fx));
+		    return(make_integer(sc, (s7_Int)round(fx)));
 		  return(make_real(sc, fx));
 		}
 	    }
@@ -33855,12 +33856,6 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 
   get_func = s7_make_function(sc, name, getter, get_req_args, get_opt_args, false, documentation); 
   typeflag(get_func) |= T_SAFE_PROCEDURE; 
-
-  /* this is slightly dangerous -- the C function might call a hook for example.
-   *   an unsafe procedure-with-setter might be defined via
-   *   s7_define_c_function followed by s7_procedure_set_setter (currently not exported).
-   */
-
   s7_define(sc, sc->NIL, make_symbol(sc, name), get_func);
   set_func = s7_make_function(sc, internal_set_name, setter, set_req_args, set_opt_args, false, documentation); 
   /* typeflag(set_func) |= T_SAFE_PROCEDURE; */
@@ -45016,21 +45011,29 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 		}
 	      annotate_args(sc, cdr(car_x));
 	      set_arglist_length(car_x, small_int(3));
+	      set_optimize_data(car_x, hop + OP_SAFE_C_AAA);
 
 	      if ((pairs == 1) &&
-		  (symbols == 1) &&
-		  (is_pair(cadddar_x)))
+		  (symbols == 1))
 		{
-		  if (is_symbol(caddar_x))
-		    set_optimize_data(car_x, hop + OP_SAFE_C_CSA);
-		  else set_optimize_data(car_x, hop + OP_SAFE_C_SCA);
+		  if (is_pair(cadddar_x))
+		    {
+		      if (is_symbol(caddar_x))
+			set_optimize_data(car_x, hop + OP_SAFE_C_CSA);
+		      else set_optimize_data(car_x, hop + OP_SAFE_C_SCA);
+		    }
+		  else
+		    {
+		      if ((is_pair(caddar_x)) &&
+			  (is_symbol(cadddar_x)))
+			set_optimize_data(car_x, hop + OP_SAFE_C_CAS);
+		    }
 		}
 	      else
 		{
 		  if ((is_symbol(cadar_x)) &&
 		      (is_symbol(caddar_x)))
 		    set_optimize_data(car_x, hop + OP_SAFE_C_SSA);
-		  else set_optimize_data(car_x, hop + OP_SAFE_C_AAA);
 		}
 	      choose_c_function(sc, car_x, func, 3);
 	    }
@@ -56343,6 +56346,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 
 
+	    case OP_SAFE_C_CAS:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_SAFE_C_CAS:
+	      {
+		s7_pointer arg;
+		arg = cdr(code);
+		car(sc->A3_1) = car(arg);
+		arg = cdr(arg);
+		car(sc->A3_2) = ((s7_function)fcdr(arg))(sc, car(arg));
+		car(sc->A3_3) = find_symbol_checked(sc, cadr(arg));
+		sc->value = c_call(code)(sc, sc->A3_1);
+		goto START;
+	      }
+
+
 	    case OP_SAFE_C_AAAA:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -58739,15 +58759,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    unsigned int len;
 	    len = safe_list_length(sc, sc->args);
-#if DEBUGGING
-	    {
-	      int i;
-	      s7_pointer p;
-	      for (i = 1, p = sc->args; is_pair(p); p = cdr(p), i++);
-	      if (type(p) == 0)
-		fprintf(stderr, "%s line %d: sc->args arg %d is a free cell: %p\n", DISPLAY(sc->code), __LINE__, i, p);
-	    }
-#endif
 	    if (len < c_function_required_args(sc->code))
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
@@ -70124,10 +70135,10 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------------------------------------
  *
- *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.8
+ *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.9
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3548
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4 30.4
- * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1268
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1266
  * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1084
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4  5.9
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7 12.7
@@ -70162,7 +70173,6 @@ int main(int argc, char **argv)
  *
  * lint/pp/Display tests
  * instead of clumsy (outer-env (... (current-env))), perhaps (lets i) where 0->current
- *   or extend first...? or and index arg to current-e, 0=default? or (outer-env e index)
+ *   or extend first...? or and index arg to current-e, 0=default? or (outer-env e index) -- ambiguous if iterate?
  * perhaps with-env should be generic: accept c-obj and func too
- * s7test clang loader trouble
  */

@@ -771,7 +771,8 @@
 		 (not (hash-table-ref no-side-effect-functions form))
 		 (let ((e (or (assq form env) (hash-table-ref globals form))))
 		   (or (not e)
-		       (and (>= (length e) 4)
+		       (and (pair? e)
+			    (>= (length e) 4)
 			    (pair? (list-ref e 3)))))))) ; it is a local function
 
       (define (just-constants? form env)
@@ -1304,7 +1305,8 @@
 	  ;; we can't make any assumptions about the expression if it might have side effects
 	  ;;   for example (or (= (oscil o) 0.0) (= (oscil o) 0.0)) can't be reduced
 	  
-	  (if (not (side-effect? e env))
+	  (if (or (not (pair? e))
+		  (not (side-effect? e env)))
 	      (let ((its-true (if (eq? and/or 'or)
 				  (eq? value #t)             ; or, so it's false if unknown
 				  value)))
@@ -1429,7 +1431,8 @@
 						 (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
 						 (begin                     ; else add it to our new expression with value #f
 						   (store e val 'or)
-						   (set! new-form (cons val new-form)))))))))))))
+						   (if (not (memq val new-form))
+						       (set! new-form (cons val new-form))))))))))))))
 		  
 		  ((and)
 		   (if (= len 1)
@@ -1439,57 +1442,63 @@
 			   (if (contradictory? (cdr form))
 			       #f
 			       (let ((new-form ()))
-				 (do ((exprs (cdr form) (cdr exprs)))
-				     ((null? exprs) 
-				      (if (null? new-form)
-					  #t
-					  (if (null? (cdr new-form))
-					      (car new-form)
-					      `(and ,@(reverse new-form)))))
-				   
-				   (let* ((e (car exprs))
-					  (val (classify e)))
-				     
-				     (if (and (pair? val)
-					      (memq (car val) '(and or not)))
-					 (set! val (classify (set! e (simplify-boolean e true false env)))))
-				     
-				     ;; (and x1 x2 x1) is not reducible, unless to (and x2 x1)
-				     ;;   the final thing has to remain at the end, but can be deleted earlier if it can't short-circuit the evaluation,
-				     ;;   but if there are expressions following the first x1, we can't be sure that it is not
-				     ;;   protecting them:
-				     ;;       (and false-or-0 (display (list-ref lst false-or-0)) false-or-0)
-				     ;;   so I'll not try to optimize that case.  But (and x x) is optimizable.
-				     
-				     (if (eq? val #t)
-					 (if (and (not (eq? e #t))
-						  (or (not (pair? e))
-						      (not (eq? (hash-table-ref function-types (car e)) #t)))
-						  (or (null? new-form)
-						      (not (equal? e (car new-form)))))
-					     (set! new-form (cons e new-form)))
-					 (if (not val)             ; #f in and ends the expression
-					     (begin
-					       (if (or (null? new-form)   
-						       (just-symbols? new-form))
-						   (set! new-form '(#f))
-						   (set! new-form (cons #f new-form))) ;was (append '(#f) new-form)))
-					       (set! exprs '(#f)))
-					     (if (and (pair? e)       ; if (and ...) splice into current
-						      (eq? (car e) 'and))
-						 (set! exprs (append e (cdr exprs)))
-						 (if (not (and (pair? e)                   ; (and ... (or ... 123) ...) -> splice out or
-							       (pair? (cdr exprs))
-							       (eq? (car e) 'or)
-							       (> (length e) 2)
-							       (let ((last (list-ref e (- (length e) 1))))
-								 (and last ; (or ... #f)
-								      (not (pair? last))
-								      (not (symbol? last))))))
-						     (begin                 ; else add it to our new expression with value #t
-						       (store e val 'and)
-						       (set! new-form (cons val new-form)))))))))))))
-		   ))))))
+				 (if (and (= len 3)
+					  (symbol? (cadr form))
+					  (eq? (cadr form) (caddr form)))
+				     (cadr form)
+				     (do ((exprs (cdr form) (cdr exprs)))
+					 ((null? exprs) 
+					  (if (null? new-form)
+					      #t
+					      (if (null? (cdr new-form))
+						  (car new-form)
+						  `(and ,@(reverse new-form)))))
+				       
+				       (let* ((e (car exprs))
+					      (val (classify e)))
+					 
+					 (if (and (pair? val)
+						  (memq (car val) '(and or not)))
+					     (set! val (classify (set! e (simplify-boolean e true false env)))))
+					 
+					 ;; (and x1 x2 x1) is not reducible, unless to (and x2 x1)
+					 ;;   the final thing has to remain at the end, but can be deleted earlier if it can't short-circuit the evaluation,
+					 ;;   but if there are expressions following the first x1, we can't be sure that it is not
+					 ;;   protecting them:
+					 ;;       (and false-or-0 (display (list-ref lst false-or-0)) false-or-0)
+					 ;;   so I'll not try to optimize that case.  But (and x x) is optimizable.
+					 
+					 (if (eq? val #t)
+					     (if (and (not (eq? e #t))
+						      (or (not (pair? e))
+							  (not (eq? (hash-table-ref function-types (car e)) #t)))
+						      (or (null? new-form)
+							  (not (equal? e (car new-form)))))
+						 (set! new-form (cons e new-form)))
+					     (if (not val)             ; #f in and ends the expression
+						 (begin
+						   (if (or (null? new-form)   
+							   (just-symbols? new-form))
+						       (set! new-form '(#f))
+						       (set! new-form (cons #f new-form))) ;was (append '(#f) new-form)))
+						   (set! exprs '(#f)))
+						 (if (and (pair? e)       ; if (and ...) splice into current
+							  (eq? (car e) 'and))
+						     (set! exprs (append e (cdr exprs)))
+						     (if (not (and (pair? e)                   ; (and ... (or ... 123) ...) -> splice out or
+								   (pair? (cdr exprs))
+								   (eq? (car e) 'or)
+								   (> (length e) 2)
+								   (let ((last (list-ref e (- (length e) 1))))
+								     (and last ; (or ... #f)
+									  (not (pair? last))
+									  (not (symbol? last))))))
+							 (begin                 ; else add it to our new expression with value #t
+							   (store e val 'and)
+							   (if (or (not (pair? new-form))
+								   (not (eq? val (car new-form))))
+							       (set! new-form (cons val new-form))))))))))))))
+		       )))))))
       
       
       (define (splice-if f lst)
@@ -2050,19 +2059,15 @@
 	       (scan form))
 	   env)
 
-	  ((= equal?)
+	  ((=)
 	   (if (and *report-minor-stuff*
 		    (> (length form) 2)
 		    (any-real? (cdr form)))
-	       (lint-format "~A can be troublesome with floats:~A" name head (truncated-list->string form)))
-	   (if (eq? head '=)
-	       (let ((cleared-form (cons (car form) ; keep operator
-					 (remove-if (lambda (x) 
-						      (not (number? x))) 
-						    (cdr form)))))
-		 (if (and (> (length cleared-form) 2)
-			  (not (checked-eval cleared-form)))
-		     (lint-format "this comparison can't be true:~A" name (truncated-list->string form))))))
+	       (lint-format "= can be troublesome with floats:~A" name (truncated-list->string form)))
+	   (let ((cleared-form (cons = (remove-if (lambda (x) (not (number? x))) (cdr form)))))
+	     (if (and (> (length cleared-form) 2)
+		      (not (checked-eval cleared-form)))
+		 (lint-format "this comparison can't be true:~A" name (truncated-list->string form)))))
 	  
 	  ((memq assq)
 	   (if (and (= (length form) 3)
@@ -2087,7 +2092,7 @@
 	   (if (= (length form) 4)
 	       (let ((func (list-ref form 3)))
 		 (if (eq? func 'eq?)
-		     (lint-format "member might perhaps be assq" name)
+		     (lint-format "member might perhaps be memq" name)
 		     (if (and (pair? func)
 			      (= (length func) 3)
 			      (eq? (car func) 'lambda)
@@ -2118,7 +2123,8 @@
 		     (lint-format "if has too few clauses: ~S" name form)
 		     (let ((test (cadr form))
 			   (true (caddr form))
-			   (false (and (= len 4) (cadddr form))))
+			   (false (if (= len 4) (cadddr form) 'no-false)))
+
 		       (if (never-false test)
 			   (lint-format "if test is never false: ~A" name form)
 			   (if (never-true test)
@@ -2126,49 +2132,32 @@
 				   (lint-format "~A can be replaced with #<unspecified>" name form)
 				   (lint-format "if test is never true: ~A" name form))))
 
-		       (if (not (side-effect? test env))
-			   (begin
-			     (if (and (pair? true)
-				      (eq? (car true) 'if))
-				 (if (equal? (cadr true) test)
-				     (lint-format "pointless (redundant) retest: ~A" name form)
-				     (if (equal? (cadr true) `(not ,test))
-					 (lint-format "pointless (impossible) retest: ~A" name form))))
-			     (if (and (pair? false)
-				      (eq? (car false) 'if))
-				 (if (equal? (cadr false) test)
-				     (lint-format "pointless (impossible) retest: ~A" name form)
-				     (if (equal? (cadr false) `(not ,test))
-					 (lint-format "pointless (redundant) retest: ~A" name form))))
-			     ;; the (equal? true false) case is checked below
-			     ))
-
 		       (if *report-minor-stuff*
 			   (let ((expr (simplify-boolean test () () env)))
 
-			     (if (and (not false) ; (if (pair? lst) (for-each f lst)) -> (for-each f lst)
+			     (if (and (eq? false 'no-false) ; (if (pair? lst) (for-each f lst)) -> (for-each f lst)
 				      (pair? test)
 				      (eq? (car test) 'pair?)
 				      (pair? true)
 				      (memq (car true) '(map for-each))
 				      (eq? (cadr test) (caddr true)))
-				 (lint-format "possible simplification: ~A" name (lists->string form true)))
+				 (lint-format "possible simplification:~A" name (lists->string form true)))
 
-			     (if (and (not false) ; (if test0 (if test1 expr)) -> (if (and test0 test1) expr) (else #<unspecified>)
+			     (if (and (eq? false 'no-false) ; (if test0 (if test1 expr)) -> (if (and test0 test1) expr) (else #<unspecified>)
 				      (pair? true)
 				      (eq? (car true) 'if)
 				      (null? (cdddr true)))
 				 (let ((test1 (simplify-boolean `(and ,test ,(cadr true)) () () env)))
-				   (lint-format "possible simplification: ~A" name (lists->string form `(if ,test1 ,(caddr true))))))
+				   (lint-format "possible simplification:~A" name (lists->string form `(if ,test1 ,(caddr true))))))
 			     
 			     (if (and (pair? false) ; (if test0 expr (if test1 expr)) -> if (or test0 test1) expr) 
 				      (eq? (car false) 'if)
 				      (equal? true (caddr false))
 				      (null? (cdddr false)))
 				 (let ((test1 (simplify-boolean `(or ,test ,(cadr false)) () () env)))
-				   (lint-format "possible simplification: ~A" name (lists->string form `(if ,test1 ,true)))))
+				   (lint-format "possible simplification:~A" name (lists->string form `(if ,test1 ,true)))))
 
-			     (if (and false        ; (if expr (set! var #t|#f) (set! var #f|#t)) -> (set! var expr|(not expr))??
+			     (if (and (not (eq? false 'no-false))        ; (if expr (set! var #t|#f) (set! var #f|#t)) -> (set! var expr|(not expr))??
 				      (pair? true)
 				      (pair? false)
 				      (eq? (car true) 'set!)
@@ -2177,7 +2166,7 @@
 				      (boolean? (caddr true))
 				      (boolean? (caddr false))
 				      (not (eq? (caddr true) (caddr false))))
-				 (lint-format "possible simplification: ~A"
+				 (lint-format "possible simplification:~A"
 					      name
 					      (lists->string form 
 							     (if (caddr true)
@@ -2186,12 +2175,11 @@
 			     (if (eq? expr #t)
 				 (lint-format "possible simplification:~A" name (lists->string form true))
 				 (if (not expr)
-				     (if (not false)
+				     (if (eq? false 'no-false)
 					 (if true                             ; (if #f #f) as a kludgey #<unspecified>
 					     (lint-format "~S is never #t:~A" name test (truncated-list->string form)))
 					 (lint-format "possible simplification:~A" name (lists->string form false)))
 				     (if (and (boolean? true)
-					      false
 					      (boolean? false)
 					      (not (eq? true false))) ; !  (if expr #t #f) turned into something less verbose
 					 (lint-format "possible simplification:~A" name (lists->string form (if true expr `(not ,expr))))
@@ -2355,7 +2343,7 @@
 		    (memq (caddr form) '(= <= >= eq? eqv? equal?
 					   string=? string<=? string>=? char=? char<=? char>=?
 					   string-ci=? string-ci<=? string-ci>=? char-ci=? char-ci<=? char-ci>=?)))
-	       (lint-format "sort! with ~A may hang:~A" name head (truncated-list->string form))))))
+	       (lint-format "sort! with ~A may hang:~A" name (caddr form) (truncated-list->string form))))))
       
       
       (define (check-call name head form env)
@@ -2385,9 +2373,7 @@
 					     (truncated-list->string form))
 				(if (and (not rst)
 					 (> (- call-args (keywords (cdr form))) (+ req opt))
-					 (symbol? head)
-					 (procedure? (symbol->value head))
-					 (not (procedure-setter (symbol->value head))))
+					 (symbol? head))
 				    (lint-format "~A has too many arguments:~A" name head (truncated-list->string form))))
 			    (if (and (memq type '(define* lambda*))
 				     (not (memq :allow-other-keys pargs))
@@ -2550,8 +2536,8 @@
 				  (lambda (obj)
 				    (if (and (pair? obj)
 					     (memq (car obj) '(vector->list string->list environment->list)))
-					(lint-format "~A: ~A could be simplified to: ~A ; (~A accepts non-list sequences)" 
-						     name head 
+					(lint-format "~A could be simplified to: ~A ; (~A accepts non-list sequences)" 
+						     name
 						     (truncated-list->string obj) 
 						     (truncated-list->string (cadr obj))
 						     head)))
@@ -2964,8 +2950,10 @@
 							(if (< len 3) "" "s"))))
 				     (lint-format "~S is messed up" name form))
 				 
-				 (if (equal? sym val)
-				     (lint-format "this ~A is either not needed, or an error:~A" name head (truncated-list->string form)))
+				 (if (and (pair? val)
+					  (null? (cdr val))
+					  (equal? sym (car val)))
+				     (lint-format "this ~A is either not needed, or is an error:~A" name head (truncated-list->string form)))
 				 
 				 (if (pair? (cddr form))
 				     (let ((e (lint-walk sym (caddr form) env)))
