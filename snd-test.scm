@@ -271,14 +271,14 @@
 
 
 (define-expansion (fneq a b)
-  `(> (abs (- ,a ,b)) .001))
+  `(> (magnitude (- ,a ,b)) .001))
 
 (define-expansion (ffneq a b)
-  `(> (abs (- ,a ,b)) .01))
+  `(> (magnitude (- ,a ,b)) .01))
 
 
 (define-expansion (fffneq a b) 
-  `(> (abs (- ,a ,b)) .1))
+  `(> (magnitude (- ,a ,b)) .1))
 
 (define (cneq a b)
   (> (magnitude (- a b)) .001))

@@ -4891,7 +4891,7 @@ both reflect that in their spectra (spectrum y axis is in dB):
 </p>
 
 <pre class="indented">
-(/ (log (max .01 (random 1.0))) (log .01))
+(log (max .01 (random 1.0)) .01)
 </pre>
 
 <p>where the ".01"'s affect how tightly the resultant values cluster toward 0.0 &mdash;
@@ -10350,7 +10350,7 @@ only difference is that mus-fft includes the fft length as an argument, whereas
 
 <pre class="indented">
 (let* ((len (mus-sound-framples "oboe.snd"))
-       (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+       (fsize (expt 2 (ceiling (log len 2))))
        (rdata (make-vector fsize 0.0 #t))
        (idata (make-vector fsize 0.0 #t))
        (cutoff (round (/ fsize 10)))

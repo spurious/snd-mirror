@@ -381,7 +381,7 @@ enum {OP_NO_OP,
       OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_X,
       OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq, OP_LET_C_P, OP_LET_S_P, 
       OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X_X, 
-      OP_IF_B_P, OP_IF_B_P_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
+      OP_IF_B_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
       OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, OP_IF_PXX, 
       OP_IF_S_P_P, OP_IF_S_P, OP_IF_S_P_X, OP_IF_S_X_P, OP_IF_P_FEED, OP_IF_P_FEED_1, OP_WHEN_S, OP_UNLESS_S,
       OP_IF_UNCHECKED, OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
@@ -399,7 +399,7 @@ enum {OP_NO_OP,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
       OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P,
       OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_P, OP_SAFE_IF_NOT_S_P,
-      OP_IF_Z_P, OP_IF_Z_P_P, OP_IF_A_P, OP_IF_A_P_P, OP_IF_GT_P,
+      OP_IF_Z_P, OP_IF_Z_P_P, OP_IF_A_P, OP_IF_A_P_P, 
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
       OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
       OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
@@ -482,7 +482,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", 
-   "if", "if", "if", "if", "if", "if", "if", "when", "unless",
+   "if", "if", "if", "if", "if", "if", "when", "unless",
    "and", "and", "and", "or", "or", "or", 
 
    "if", 
@@ -497,7 +497,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if",
    "if", "if", "if", "if", "if", "if", "if",
    "if", "if", "if", "if",
-   "if", "if", "if", "if", "if", "if", "if",
+   "if", "if", "if", "if", "if", "if",
    "c_p_1", "c_pp_1", "c_pp_2", "c_pp_3", "c_pp_4", "c_pp_5", "c_pp_6", 
    "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
    "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
@@ -564,7 +564,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_LET_C", "OP_LET_S", "OP_LET_Q", "OP_LET_ALL_C", "OP_LET_ALL_S", "OP_LET_ALL_X", 
   "OP_LET_STAR_ALL_X", "OP_LET_opCq", "OP_LET_opSSq", "OP_LET_C_P", "OP_LET_S_P", 
   "OP_IF_P_P_P", "OP_IF_P_P", "OP_IF_P_P_X", "OP_IF_P_X_P", "OP_IF_P_X_X", 
-  "OP_IF_B_P", "OP_IF_B_P_P", "OP_IF_ANDP_P", "OP_IF_ANDP_P_P", "OP_IF_ORP_P", "OP_IF_ORP_P_P", 
+  "OP_IF_B_P", "OP_IF_ANDP_P", "OP_IF_ANDP_P_P", "OP_IF_ORP_P", "OP_IF_ORP_P_P", 
   "OP_IF_PPP", "OP_IF_PP", "OP_IF_PPX", "OP_IF_PXP", "OP_IF_PXX", 
   "OP_IF_S_P_P", "OP_IF_S_P", "OP_IF_S_P_X", "OP_IF_S_X_P", "OP_IF_P_FEED", "OP_IF_P_FEED_1", "OP_WHEN_S", "OP_UNLESS_S",
   "OP_IF_UNCHECKED", "OP_AND_UNCHECKED", "OP_AND_P", "OP_AND_P1", "OP_OR_UNCHECKED", "OP_OR_P", "OP_OR_P1",
@@ -582,7 +582,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
   "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P", 
   "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_P", "OP_SAFE_IF_NOT_S_P",
-  "OP_IF_Z_P", "OP_IF_Z_P_P", "OP_IF_A_P", "OP_IF_A_P_P", "OP_IF_GT_P",
+  "OP_IF_Z_P", "OP_IF_Z_P_P", "OP_IF_A_P", "OP_IF_A_P_P", 
   "OP_SAFE_C_P_1", "OP_SAFE_C_PP_1", "OP_SAFE_C_PP_2", "OP_SAFE_C_PP_3", "OP_SAFE_C_PP_4", "OP_SAFE_C_PP_5", "OP_SAFE_C_PP_6", 
   "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_1_MV", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_2_MV", 
   "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_3_MV", "OP_EVAL_ARGS_P_4_MV", 
@@ -1306,8 +1306,8 @@ struct s7_scheme {
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_X;
   s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq, LET_C_P, LET_S_P;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, IF_UNCHECKED, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
-  s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_B_P_P, IF_P_P_X, IF_P_X_P, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_P_FEED;
-  s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_GT_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P, WHEN_UNCHECKED, UNLESS_UNCHECKED, WHEN_S, UNLESS_S;
+  s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_P_P_X, IF_P_X_P, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_P_FEED;
+  s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P, WHEN_UNCHECKED, UNLESS_UNCHECKED, WHEN_S, UNLESS_S;
 
   s7_pointer COND_ALL_X;
   s7_pointer SAFE_IF_Z_Z, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P;
@@ -1581,6 +1581,7 @@ static void init_types(void)
   t_opt_all_x[HOP_SAFE_C_opSq_C] = true;
   t_opt_all_x[HOP_SAFE_C_opCq_C] = true;
   t_opt_all_x[HOP_SAFE_C_opSq_opSq] = true;
+  t_opt_all_x[HOP_SAFE_C_opCq_opCq] = true;
   t_opt_all_x[HOP_SAFE_C_opSSq_opSSq] = true;
 }
 
@@ -43282,6 +43283,16 @@ static s7_pointer all_x_c_opcq_c(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }
 		    
+static s7_pointer all_x_c_opcq_opcq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T2_1) = c_call(largs)(sc, cdr(largs));
+  largs = caddr(arg);
+  car(sc->T2_2) = c_call(largs)(sc, cdr(largs));
+  return(c_call(arg)(sc, sc->T2_1));
+}
+		    
 static s7_pointer all_x_c_opsq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -43512,6 +43523,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	    case HOP_SAFE_C_opSSq_S:     return(all_x_c_opssq_s);
 	    case HOP_SAFE_C_S_opSSq:     return(all_x_c_s_opssq);
 	    case HOP_SAFE_C_opSq_opSq:   return(all_x_c_opsq_opsq);
+	    case HOP_SAFE_C_opCq_opCq:   return(all_x_c_opcq_opcq);
 	    case HOP_SAFE_C_opSSq_opSSq: return(all_x_c_opssq_opssq);
 	    }
 	}
@@ -47572,7 +47584,6 @@ static s7_pointer check_if(s7_scheme *sc)
 			{
 			  opcode_t new_op;
 			  lifted_op(test) = syntax_opcode(car(test));
-			  set_syntax_op(sc->code, sc->IF_B_P_P);
 
 			  if (syntax_opcode(car(test)) == OP_AND)
 			    {
@@ -47681,23 +47692,10 @@ static s7_pointer check_if(s7_scheme *sc)
 						    }
 						  else
 						    {
-#if (!WITH_GMP)
-						      if ((optimize_data(test) == HOP_SAFE_C_op_opSSq_q_C) &&
-							  (c_call(test) == g_greater_s_fc) && /* this checks that caddr is T_REAL, and args == 2 */
-							  ((c_call(cadr(test)) == g_magnitude) || (c_call(cadr(test)) == g_abs)) &&
-							  (c_call(cadr(cadr(test))) == g_subtract_2))
-							{
-							  set_syntax_op(sc->code, sc->IF_GT_P);
-							  set_fcdr(sc->code, cadr(cadr(test)));
-							}
-						      else
-#endif
-							{
-							  set_fcdr(sc->code, cadr(sc->code));
-							  if (is_h_optimized(t))
-							    set_syntax_op(sc->code, sc->SAFE_IF_Z_Z);
-							  else set_syntax_op(sc->code, sc->IF_Z_P);
-							}
+						      set_fcdr(sc->code, cadr(sc->code));
+						      if (is_h_optimized(t))
+							set_syntax_op(sc->code, sc->SAFE_IF_Z_Z);
+						      else set_syntax_op(sc->code, sc->IF_Z_P);
 						    }
 						}
 					    }
@@ -60938,19 +60936,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_IF_B_P_P:
-      {
-	s7_pointer code;
-	code = sc->code;
-	push_stack_no_args(sc, OP_IF_PPP, cdr(code));
-	code = car(code);
-	sc->op = (opcode_t)lifted_op(code);
-	sc->code = cdr(code);
-	goto START_WITHOUT_POP_STACK;
-      }
-      
-      
-      /* --------------- */
     case OP_IF_ANDP_P_P:
       push_stack_no_args(sc, OP_IF_PPP, cdr(sc->code));
       sc->code = cdar(sc->code);
@@ -60984,40 +60969,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_IF_PP, fcdr(sc->code));
       sc->code = car(sc->code);
       goto OPT_EVAL;
-      
-      
-#if (!WITH_GMP)
-      /* --------------- */
-    case OP_IF_GT_P:
-      {
-	/* code: ((> (magnitude (- old new)) 0.001)...)
-	 */
-	s7_pointer arg, val1, val2;
-	bool happy;
-	arg = fcdr(sc->code);  /* cadr(cadr(test)) => (- old new) */
-	val1 = find_symbol_checked(sc, cadr(arg));
-	val2 = find_symbol_checked(sc, caddr(arg));
-	if ((type(val1) == T_REAL) &&
-	    (type(val2) == T_REAL))
-	  happy = (fabs(real(val1) - real(val2)) > real(caddar(sc->code)));
-	else
-	  {
-	    s7_Double x;
-	    car(sc->T2_1) = val1;
-	    car(sc->T2_2) = val2;
-	    car(sc->T1_1) = g_subtract_2(sc, sc->T2_1);
-	    x = number_to_double(sc, g_magnitude(sc, sc->T1_1), ">"); /* or maybe c_call here to get abs? */
-	    happy = (x > real(caddar(sc->code)));
-	  }
-	if (happy)
-	  {
-	    sc->code = cadr(sc->code);
-	    goto EVAL;
-	  }
-	sc->value = sc->UNSPECIFIED;
-	IF_BEGIN_POP_STACK(sc); 
-      }
-#endif
       
       
       /* --------------- */
@@ -68943,7 +68894,6 @@ s7_scheme *s7_init(void)
   sc->IF_ORP_P =              assign_internal_syntax(sc, "if",      OP_IF_ORP_P);
   sc->IF_ORP_P_P =            assign_internal_syntax(sc, "if",      OP_IF_ORP_P_P);
   sc->IF_B_P =                assign_internal_syntax(sc, "if",      OP_IF_B_P);
-  sc->IF_B_P_P =              assign_internal_syntax(sc, "if",      OP_IF_B_P_P);
   sc->IF_P_P_X =              assign_internal_syntax(sc, "if",      OP_IF_P_P_X);
   sc->IF_P_X_P =              assign_internal_syntax(sc, "if",      OP_IF_P_X_P);
   sc->IF_P_X_X =              assign_internal_syntax(sc, "if",      OP_IF_P_X_X);
@@ -68956,7 +68906,6 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_Z_Z =           assign_internal_syntax(sc, "if",      OP_SAFE_IF_Z_Z);  
   sc->IF_Z_P_P =              assign_internal_syntax(sc, "if",      OP_IF_Z_P_P);
   sc->IF_Z_P =                assign_internal_syntax(sc, "if",      OP_IF_Z_P);
-  sc->IF_GT_P =               assign_internal_syntax(sc, "if",      OP_IF_GT_P);
   sc->IF_A_P_P =              assign_internal_syntax(sc, "if",      OP_IF_A_P_P);
   sc->IF_A_P =                assign_internal_syntax(sc, "if",      OP_IF_A_P);
   sc->SAFE_IF_CC_X_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_X_P);  
@@ -70138,12 +70087,12 @@ int main(int argc, char **argv)
  *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.9
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3548
  * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4 30.4
- * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1266
- * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1084
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1265
+ * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1127
  * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4  5.9
  * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7 12.7
- * t816          |                                    |  70.6                44.5 44.6
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.6
+ * t816          |                                    |  70.6                44.5 45.6
+ * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.4
  *            153 with run macro (eval_ptree)
  *
  * --------------------------------------------------------------------------------
@@ -70161,6 +70110,7 @@ int main(int argc, char **argv)
  * gmp method problems: should we insist on a 'bignum method?
  * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
  * if sounds were envs, all current args packaged as env, (map snd...) -> (map-sound ...) etc
+ * perhaps with-env should be generic: accept c-obj and func too
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
@@ -70171,8 +70121,5 @@ int main(int argc, char **argv)
  *   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *   maybe gunichar->bytevector?
  *
- * lint/pp/Display tests
- * instead of clumsy (outer-env (... (current-env))), perhaps (lets i) where 0->current
- *   or extend first...? or and index arg to current-e, 0=default? or (outer-env e index) -- ambiguous if iterate?
- * perhaps with-env should be generic: accept c-obj and func too
+ * Display tests
  */

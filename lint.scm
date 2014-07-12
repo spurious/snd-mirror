@@ -2296,6 +2296,7 @@
 		   (lint-format "~A could be ~A" name form (cadr form))
 		   (if (and (pair? (cddr form))
 			    (not (pair? (caddr form)))
+			    (or (not (symbol? (caddr form))) (keyword? (caddr form)))
 			    (not (memq (caddr form) '(#f #t :readable))))
 		       (lint-format "bad second argument: ~A" name (caddr form))))))
 
