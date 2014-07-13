@@ -378,32 +378,6 @@
     (lambda (p)
       (pretty-print obj p))))
 
-(define (test-pretty-print)
-
-  (if (not (string=? (pp '(lambda* (a b) (+ a b) (* 1 2))) "(lambda* (a b)\n  (+ a b)\n  (* 1 2))"))
-      (format *stderr* "pp 1"))
-
-  (if (not (string=? (pp '(let ((a 1) (b 2)) (+ a b))) "(let ((a 1)\n      (b 2))\n  (+ a b))"))
-      (format *stderr* "pp 2"))
-
-  (if (not (string=? (pp '(let () (+ a b))) "(let ()\n  (+ a b))"))
-      (format *stderr* "pp 2a"))
-
-  (if (not (string=? (pp '(begin (+ 1 2) (* 2 3))) "(begin\n  (+ 1 2)\n  (* 2 3))"))
-      (format *stderr* "pp 3"))
-
-  (if (not (string=? (pp '(case a ((a b c) 1) ((d) 2) (else 3))) "(case a\n  ((a b c) 1)\n  ((d) 2)\n  (else 3))"))
-      (format *stderr* "pp 4: ~A" (pp '(case a ((a b c) 1) ((d) 2) (else 3)))))
-
-  (if (not (string=? (pp '(cond ((> a 1) 2) ((< a 3) 3) (#t 4))) "(cond ((> a 1) 2)\n      ((< a 3) 3)\n      (#t 4))"))
-      (format *stderr* "pp 5"))
-
-  (if (not (string=? (pp '(if a '(1 2 3))) "(if a '(1 2 3))"))
-      (format *stderr* "pp7"))
-  )
-
-;(test-pretty-print)
-
 (define (pretty-print-all)
   (let ((st (symbol-table)))
     (for-each

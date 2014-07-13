@@ -7,6 +7,7 @@
 (set! *clm-srate* (default-output-srate))
 
 (define *clm-file-name*         "test.snd")
+(define *clm-reverb-file-name*  "test.rev")
 (define *clm-channels*          (default-output-chans))
 (define *clm-data-format*       (default-output-data-format))
 (define *clm-header-type*       (default-output-header-type))
@@ -85,7 +86,7 @@
 			    (comment #f)
 			    (verbose *clm-verbose*)
 			    (reverb *clm-reverb*)
-			    (revfile "test.rev")
+			    (revfile *clm-reverb-file-name*)
 			    (reverb-data *clm-reverb-data*)
 			    (reverb-channels *clm-reverb-channels*)
 			    (continue-old-file #f)
@@ -569,7 +570,7 @@
 	  (comment #f)
 	  ;(verbose *clm-verbose*) ; why is this commented out?
 	  (reverb *clm-reverb*)
-	  (revfile "test.rev")
+	  (revfile *clm-reverb-file-name*)
 	  (reverb-data *clm-reverb-data*)
 	  (reverb-channels *clm-reverb-channels*)
 	  (continue-old-file #f)

@@ -11565,8 +11565,8 @@ optionally a reverb output object: *reverb*.  Each instrument uses <a href="sndc
 output, and establishes an environment where various problems can be handled nicely (in Scheme,
 a dynamic-wind with various debugging hooks).  Then the with-sound body is evaluated, presumably
 producing sound.  Once evaluated, the outputs are closed, and if reverb is requested, the reverberator
-is run.  Once complete, with-sound print out statistics (if :statistics is #t), scales the result (if :scale-to),
-and plays it (if :play is #t).  Then, if the output is a sound file, with-sound opens it in Snd, first closing any previous sound with
+is run.  Once complete, with-sound prints out statistics (if :statistics is #t), scales the result (if :scale-to),
+and plays it (if :play is #t).  Then, if the output is a sound file (and :to-snd is #t), with-sound opens it in Snd, first closing any previous sound with
 the same name (this makes it easier to call with-sound over and over while trying out some patch).
 with-sound returns its :output argument.
 </p>
@@ -11582,9 +11582,9 @@ with-sound returns its :output argument.
 	  (comment #f)                           ; any comment to store in the header (a string)
 	  (verbose *clm-verbose*)                ; if #t, print out some info
 	  (reverb *clm-reverb*)                  ; reverb instrument (jc-reverb)
-	  (revfile "test.rev")                   ; reverb intermediate output file name ("test.rev")
 	  (reverb-data *clm-reverb-data*)        ; arguments passed to the reverb
 	  (reverb-channels *clm-reverb-channels*); chans in the reverb intermediate file
+          (revfile *clm-reverb-file-name*)       ; reverb intermediate output file name ("test.rev")
 	  (continue-old-file #f)                 ; if #t, continue a previous computation
 	  (statistics *clm-statistics*)          ; if #t, print info at end of with-sound (compile time, maxamps)
 	  (scaled-by #f)                         ; is a number, scale output by that amp
@@ -11693,6 +11693,7 @@ snd&gt; 0.0 1.0 330.0 0.5 ' simp :play #f :channels 2 with-sound
 (define *clm-reverb*             #f)
 (define *clm-reverb-channels*    1)
 (define *clm-reverb-data*        ())
+(define *clm-reverb-file-name*   "test.rev")
 (define *clm-table-size*         512)
 (define *clm-default-frequency*  0.0)
 (define *clm-file-buffer-size*   65536)

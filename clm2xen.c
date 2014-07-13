@@ -9262,6 +9262,8 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
     {
       outstream = Xen_car(arg);
       gn = (mus_xen *)Xen_object_ref_checked(outstream, mus_xen_tag);
+      if (!gn)
+	Xen_check_type(false, outstream, 9, S_mus_file_mix_with_envs, "an output generator");
       ostr = gn->gen;
 
       arg = Xen_cdr(arg);
@@ -9276,6 +9278,8 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
       if (!Xen_is_false(revstream))
 	{
 	  gn = (mus_xen *)Xen_object_ref_checked(revstream, mus_xen_tag);
+	  if (!gn)
+	    Xen_check_type(false, revstream, 10, S_mus_file_mix_with_envs, "an output generator");
 	  rstr = gn->gen;
 	}
       else rstr = Xen_to_mus_any(mus_clm_reverb());
