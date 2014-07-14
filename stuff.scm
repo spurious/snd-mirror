@@ -1042,32 +1042,140 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
        (format (Display-port) ,str ,@args)
        (set! *vector-print-length* vlp)))
 
+  (define (last lst)
+    (car (list-tail lst (- (length lst) 1))))
+      
+  (define* (butlast lst (result ()))
+    (if (or (null? lst)
+	    (null? (cdr lst)))
+	(reverse result)
+	(butlast (cdr lst) (cons (car lst) result))))
+
   (define (proc-walk source)
+
     (if (pair? source)
 	(case (car source)
-	  ((let let*)                ; if let or let*, show local variables, (let vars . body) -> (let vars print-vars . body)
-	   (if (symbol? (cadr source))         ; named let?
+	  ((let let*)                
+	   ;; show local variables, (let vars . body) -> (let vars print-vars . body)
+	   (if (symbol? (cadr source))           ; named let?
 	       (append 
-		(list (car source)   ; let
-		      (cadr source)  ; name
-		      (caddr source) ; vars
+		(list (car source)               ; let
+		      (cadr source)              ; name
+		      (caddr source)             ; vars
 		      (display-format "(let ~A (~{~A~| ~}) ...))~%" (cadr source) '(outer-environment (current-environment))))
-		(cdddr source))      ; body
+		(proc-walk (cdddr source)))      ; body
 	       (append 
-		(list (car source)   ; let
-		      (cadr source)  ; vars
+		(list (car source)               ; let
+		      (cadr source)              ; vars
 		      (display-format "(~A (~{~A~| ~}) ...)~%" (car source) '(outer-environment (current-environment))))
-		(cddr source))))     ; body
+		(proc-walk (cddr source)))))     ; body
+
+	  ((or and)
+	   ;; report form that short-circuits the evaluation
+	   (append (list (car source))
+		   (let ((ctr -1)
+			 (len (- (length (cdr source)) 1))
+			 (eob (if (eq? (car source) 'or) 'when 'unless)))
+		     (map (lambda (expr)
+			    (set! ctr (+ ctr 1))
+			    `(let ((,result ,expr))
+			       (,eob ,result
+				 (format (Display-port) "  (~A ~A~A~A) -> ~A~%" 
+					 ',(car source)
+					 ,(if (> ctr 0) " ... " "")
+					 ',expr 
+					 ,(if (< ctr len) " ... " "")
+					 ,result))
+			     ,result))
+			(cdr source)))))
+
+	  ((begin with-environment with-baffle)
+	   ;; report last form
+	   (let ((previous (butlast (cdr source)))
+		 (end (last source)))
+	     `(,(car source)
+	       ,@previous
+	       (let ((,result ,end))
+		 (format (Display-port) "(~A ~A~A) -> ~A~%"
+			 ',(car source)
+			 ,(if (pair? previous) " ... " "")
+			 ',end
+			 ,result)
+		 ,result))))
+
+	  ((when unless)
+	   ;; report expr if body not walked, else report last form of body
+	   (let ((previous (butlast (cddr source)))
+		 (end (last (cddr source))))
+	     `(,(car source) (let ((,result ,(cadr source)))
+			       (,(car source) (not ,result)
+				(format (Display-port) "(~A ~A -> ~A ...)~%"
+					',(car source)
+					',(cadr source)
+					,result))
+			       ,result)
+	       ,@previous
+	       (let ((,result ,end))
+		 (format (Display-port) "(~A ... ~A) -> ~A~%"
+			 ',(car source)
+			 ',end
+			 ,result)
+		 ,result))))
+
+	  ((quote)
+	   source)
+
+	  ((cond)
+	   ;; report form that satisifies cond
+	   (let ((ctr -1)
+		 (len (- (length (cdr source)) 1)))
+	     `(cond ,@(map (lambda (clause)
+			     (let ((test (car clause))
+				   (body (cdr clause)))
+			       (set! ctr (+ ctr 1))
+			       `(,test (let ((,result (begin ,@body)))
+					 (format (Display-port) "  (cond ~A~A~A) -> ~A~%" 
+						 ,(if (> ctr 0) " ... " "")
+						 ',clause
+						 ,(if (< ctr len) " ... " "")
+						 ,result)
+					 ,result))))
+			   (cdr source)))))
+
+	  ((case)
+	   ;; as in cond but include selector value in []
+	   (let ((ctr -1)
+		 (len (- (length (cddr source)) 1)))
+	     `(case ,(cadr source)
+		,@(map (lambda (clause)
+			 (let ((test (car clause))
+			       (body (cdr clause)))
+			   (set! ctr (+ ctr 1))
+			   `(,test (let ((,result (begin ,@body)))
+				     (format (Display-port) "  (case [~A] ~A~A~A) -> ~A~%" 
+					     ,(cadr source)
+					     ,(if (> ctr 0) " ... " "")
+					     ',clause
+					     ,(if (< ctr len) " ... " "")
+					     ,result)
+				     ,result))))
+		       (cddr source)))))
+
+	  ;; let body just last (et al)
+	  ;; cond and case => 
+	  ;; perhaps dynamic-wind letrec(*) do
+	  ;; also last form in outer body
+
 	  (else
-	   (cons (proc-walk (car source))
+	   (cons (proc-walk (car source)) 
 		 (proc-walk (cdr source)))))
 	source))
-    
+
   (define-macro (Display-1 definition)
     (let ((func (caadr definition))
 	  (args (cdadr definition)))
       (let ((arg-names (map (lambda (a) (if (symbol? a) a (car a))) args))     ; omit the default values, if any
-	    (body (proc-walk `(begin ,@(cddr definition)))))
+	    (body `(begin ,@(proc-walk (cddr definition)))))
 	
 	`(define ,func
 	   (symbol->value 
@@ -1086,12 +1194,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			  (for-each
 			   (lambda (slot)
 			     (when (not (or (gensym? (car slot))
-					  (eq? (cdr slot) ,',e)))
+					    (eq? (cdr slot) ,',e)))
 			       (let ((,',vlp *vector-print-length*))
 				 (set! *vector-print-length* Display-print-length)
 				 (let ((str (sequence->string (cdr slot))))
 				   (set! *vector-print-length* 60)
-				   (format (Display-port) " :~A ~{~A~|~}" (car slot) str))
+				   (format (Display-port) " :~A ~{~A~|~}" (car slot) str)) 
 				 (set! *vector-print-length* ,',vlp))))
 			   (outer-environment (outer-environment (current-environment))))
 			  (format (Display-port) ")")
@@ -1113,4 +1221,3 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		,,@arg-names (current-environment))))))))                      ; pass in the original args and the current-environment
   
   (set! Display Display-1))
-

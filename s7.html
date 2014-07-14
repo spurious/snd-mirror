@@ -2902,8 +2902,8 @@ function if it exists.  A bare-bones example:
 47
 </pre>
 
-<p>In CLOS, we'd have to declare a class and a method, then call make-instance,
-and then we'd discover that it wouldn't work anyway.
+<p>In CLOS, we'd declare a class and a method, and call make-instance,
+and then discover that it wouldn't work anyway.
 Here we have, in effect, an anonymous instance of an anonymous class.
 A slightly more complex example:
 </p>
@@ -3324,10 +3324,6 @@ as "complex?"!):
                                     (cdr args)))
 			    ((<em class=red>open-environment?</em> n) ; maybe we'll add octonions later!
 			     (if (eq? n (car orig-args))
-                                 ;; if we are not the first argument, and we don't know how to handle the
-                                 ;; first argument, then we have to raise an error.  Otherwise, the two
-                                 ;; methods will get into an infinite loop saying very politely
-                                 ;;   "please, you go first".
 				 (error 'missing-method "+ can't handle these arguments: ~A" args)
 				 (apply (n '+) 
                                         (make-quaternion 
@@ -3344,9 +3340,7 @@ as "complex?"!):
 </div>
 
 <div class="indented">
-<p>Currently some s7 functions ignore methods, in particular functions
-that scarcely glance at their arguments: cons, vector, list, and others of that ilk will
-not notice the oddball environment with a 'cons method.
+<p>Currently some s7 functions ignore methods: cons, vector, list, and others of that ilk.
 </p>
 </div>
 </blockquote>
@@ -3356,7 +3350,6 @@ not notice the oddball environment with a 'cons method.
 
 
 <div class="header" id="multiplevalues"><h4>multiple-values</h4></div>
-
 
 <p>
 In s7, multiple values are spliced directly into the caller's argument list.

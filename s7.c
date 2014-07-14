@@ -7453,16 +7453,13 @@ static s7_Complex cpow(s7_Complex x, s7_Complex y)
   static s7_Complex ccosh(s7_Complex z) {return(cosh(creal(z)) * cos(cimag(z)) + (sinh(creal(z)) * sin(cimag(z))) * _Complex_I);} 
   static s7_Complex ctan(s7_Complex z) {return(csin(z) / ccos(z));} 
   static s7_Complex ctanh(s7_Complex z) {return(csinh(z) / ccosh(z));} 
-
   static s7_Complex casin(s7_Complex z) {return(-_Complex_I * clog(_Complex_I * z + csqrt(1.0 - z * z)));} 
   static s7_Complex cacos(s7_Complex z) {return(-_Complex_I * clog(z + _Complex_I * csqrt(1.0 - z * z)));} 
   static s7_Complex catan(s7_Complex z) {return(_Complex_I * clog((_Complex_I + z) / (_Complex_I - z)) / 2.0);} 
   static s7_Complex catanh(s7_Complex z) {return(clog((1.0 + z) / (1.0 - z)) / 2.0);} 
   static s7_Complex casinh(s7_Complex z) {return(clog(z + csqrt(1.0 + z * z)));} 
   static s7_Complex cacosh(s7_Complex z) {return(clog(z + csqrt(z * z - 1.0)));} 
-  /* perhaps less prone to numerical troubles (untested):
-   *   2.0 * clog(csqrt(0.5 * (z + 1.0)) + csqrt(0.5 * (z - 1.0)))
-   */
+  /* perhaps less prone to numerical troubles (untested): 2.0 * clog(csqrt(0.5 * (z + 1.0)) + csqrt(0.5 * (z - 1.0))) */
 #endif /* not FreeBSD 10 */
 #endif /* not c++ */
 #endif /* not HAVE_COMPLEX_TRIG */
@@ -47000,10 +46997,6 @@ static s7_pointer check_let(s7_scheme *sc)
 	  for (p = car(sc->code); is_pair(p); p = cdr(p))
 	    set_fcdr(cdar(p), (s7_pointer)all_x_eval(sc, cadar(p)));
 	}
-      /*
-      fprintf(stderr, "%s\n    %s: %s\n", DISPLAY_80(sc->code), real_op_names[lifted_op(ecdr(sc->code))], 
-	      ((!is_null(cdr(sc->code))) && (is_null(cddr(sc->code)))) ? (opt_name(cadr(sc->code))) : "()");
-      */
     }
   return(sc->code);
 }
@@ -55609,7 +55602,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer e, arg2, body;
 
-		e = find_symbol_checked(sc, cadr(code));                      /* S of S0 above */
+		e = find_symbol_checked(sc, cadr(code));         /* S of S0 above */
 		if (e == sc->global_env)
 		  sc->envir = sc->NIL;
 		else 
@@ -58055,6 +58048,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_EVAL_ARGS_P_2:
       /* from HOP_SAFE_C_SP||CP|QP, handled like P_1 case above
+       *   primarily involves generators: (outa i (nrcos gen)) etc
        */
       car(sc->T2_1) = sc->args;
       car(sc->T2_2) = sc->value;
@@ -62888,7 +62882,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
     case OP_CASE1: 
-      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       {
 	s7_pointer x, y;
 	if (is_simple(sc->value))
@@ -62944,7 +62937,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLE: 
-      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple, and no =>
        */
       {
@@ -62980,7 +62972,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLER: 
-      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple, and no => and no else
        */
       {
@@ -63008,7 +62999,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLER_1: 
-      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple, and no => and no else, bodies are 1 liners
        */
       {
@@ -63033,7 +63023,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLER_SS: 
-      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume hop_safe_ss as selector, all keys are simple, and no => and no else, bodies are 1 liners
        */
       {
@@ -63063,7 +63052,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLEST_SS:
-      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       {
 	s7_pointer x, selector, args;
 	args = cdar(sc->code);
@@ -63087,7 +63075,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLEST: 
-      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple and singletons, and no => and no else, bodies are 1 liners
        */
       {
@@ -63106,7 +63093,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLEST_ELSE: 
-      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple and singletons, and no =>, bodies are 1 liners
        */
       {
@@ -63125,7 +63111,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLEST_ELSE_C: 
-      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple and singletons, and no =>, bodies are constants
        */
       {
@@ -69964,7 +69949,7 @@ int main(int argc, char **argv)
 #endif
 
 
-/* --------------------------------------------------------------------------------
+/* ------------------------------------------------------------------------------------------------
  *
  *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.9
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3548
@@ -69977,7 +69962,7 @@ int main(int argc, char **argv)
  * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.4
  *            153 with run macro (eval_ptree)
  *
- * --------------------------------------------------------------------------------
+ * ------------------------------------------------------------------------------------------------
  *
  * ideally the function doc string could be completely removed before optimization etc
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
@@ -70006,7 +69991,11 @@ int main(int argc, char **argv)
  * there's still a problem with dynamic loading, clang, and freebsd
  *
  * all_if_x1 -> increment as well and do step_x + all_xable body, where increment need not be re-looked up if not a step var
- * increment_1 means no symbol_access, so this is an all_x op by itself -- how does if work?
- * get op_safe_c_cs_opcq, add dox_step_cs_opcq (init is csc) but it doesn't happen anywhere else
+ *   increment_1 means no symbol_access, so this is an all_x op by itself -- how does if work?
+ *   get op_safe_c_cs_opcq, add dox_step_cs_opcq (init is csc) but it doesn't happen anywhere else, even as all_x_c_csa
+ *
+ * in Snd/ws.scm, if clm-file-name (or with-sound :output) is a vector, can we display it as if a sound?
+ *   currently find-sound expects a string.
+ * Display needs lots of attention
+ * pretty-print can end up way over to the right 
  */
-
