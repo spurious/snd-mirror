@@ -1042,20 +1042,36 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
        (format (Display-port) ,str ,@args)
        (set! *vector-print-length* vlp)))
 
+  ;; last and butlast need to work with dotted lists
   (define (last lst)
-    (car (list-tail lst (- (length lst) 1))))
+    (let ((len (length lst)))
+      (let ((end (list-tail lst (if (negative? len) (abs len) (- len 1)))))
+	(if (pair? end)
+	    (car end)
+	    end))))
       
   (define* (butlast lst (result ()))
-    (if (or (null? lst)
+    (if (or (not (pair? lst))
 	    (null? (cdr lst)))
 	(reverse result)
 	(butlast (cdr lst) (cons (car lst) result))))
 
+  (define* (remove-keys args (lst ()))
+    (if (pair? args)
+	(remove-keys (cdr args) 
+		     (if (or (not (keyword? (car args)))
+			     (eq? (car args) :rest))
+			 (cons (car args) lst)
+			 lst))
+	(if (null? args)
+	    (reverse lst)
+	    (append (reverse lst) args))))
+ 
   (define (proc-walk source)
 
     (if (pair? source)
 	(case (car source)
-	  ((let let*)                
+	  ((let let* letrec letrec*)                
 	   ;; show local variables, (let vars . body) -> (let vars print-vars . body)
 	   (if (symbol? (cadr source))           ; named let?
 	       (append 
@@ -1133,38 +1149,65 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			     (let ((test (car clause))
 				   (body (cdr clause)))
 			       (set! ctr (+ ctr 1))
-			       `(,test (let ((,result (begin ,@body)))
-					 (format (Display-port) "  (cond ~A~A~A) -> ~A~%" 
-						 ,(if (> ctr 0) " ... " "")
-						 ',clause
-						 ,(if (< ctr len) " ... " "")
-						 ,result)
-					 ,result))))
+			       (if (eq? (car body) '=>) 
+				   `(,test => (lambda (,result) 
+						(let ((,result (,@(cdr body) ,result)))
+						  (format (Display-port) "  (cond ~A~A~A) -> ~A~%" 
+							  ,(if (> ctr 0) " ... " "")
+							  ',clause
+							  ,(if (< ctr len) " ... " "")
+							  ,result)
+						  ,result)))
+				   `(,test (let ((,result (begin ,@body)))
+					     (format (Display-port) "  (cond ~A~A~A) -> ~A~%" 
+						     ,(if (> ctr 0) " ... " "")
+						     ',clause
+						     ,(if (< ctr len) " ... " "")
+						     ,result)
+					     ,result)))))
 			   (cdr source)))))
 
 	  ((case)
 	   ;; as in cond but include selector value in []
 	   (let ((ctr -1)
-		 (len (- (length (cddr source)) 1)))
+		 (len (- (length (cddr source)) 1))
+		 (default (member '(else #t) (cddr source) (lambda (a b) (memq (car b) a)))))
 	     `(case ,(cadr source)
-		,@(map (lambda (clause)
-			 (let ((test (car clause))
-			       (body (cdr clause)))
-			   (set! ctr (+ ctr 1))
-			   `(,test (let ((,result (begin ,@body)))
-				     (format (Display-port) "  (case [~A] ~A~A~A) -> ~A~%" 
-					     ,(cadr source)
-					     ,(if (> ctr 0) " ... " "")
-					     ',clause
-					     ,(if (< ctr len) " ... " "")
-					     ,result)
-				     ,result))))
-		       (cddr source)))))
-
-	  ;; let body just last (et al)
-	  ;; cond and case => 
-	  ;; perhaps dynamic-wind letrec(*) do
-	  ;; also last form in outer body
+		,@(append 
+		   (map (lambda (clause)
+			  (let ((test (car clause))
+				(body (cdr clause)))
+			    (set! ctr (+ ctr 1))
+			    (if (eq? (car body) '=>)
+				`(,test => (lambda (,result)
+					     (let ((,result (,@(cdr body) ,result)))
+					       (format (Display-port) "  (case [~A] ~A~A~A) -> ~A~%" 
+						       ,(cadr source)
+						       ,(if (> ctr 0) " ... " "")
+						       ',clause
+						       ,(if (< ctr len) " ... " "")
+						       ,result)
+					       ,result)))
+				`(,test (let ((,result (begin ,@body)))
+					  (format (Display-port) "  (case [~A] ~A~A~A) -> ~A~%" 
+						  ,(cadr source)
+						  ,(if (> ctr 0) " ... " "")
+						  ',clause
+						  ,(if (< ctr len) " ... " "")
+						  ,result)
+					  ,result)))))
+			(cddr source))
+		   (if (not default)
+		       `((else (format (Display-port) "  (case [~A] falls through~%" ,(cadr source)) #<unspecified>))
+		       ())))))
+	  
+	  
+	  ((dynamic-wind)
+	   ;; here we want to ignore the first and last clauses, and report the last of the second
+	   `(dynamic-wind
+		,(cadr source)
+		,(proc-walk (caddr source))
+		,(cadddr source)))
 
 	  (else
 	   (cons (proc-walk (car source)) 
@@ -1173,17 +1216,43 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
   (define-macro (Display-1 definition)
     (let ((func (caadr definition))
-	  (args (cdadr definition)))
-      (let ((arg-names (map (lambda (a) (if (symbol? a) a (car a))) args))     ; omit the default values, if any
-	    (body `(begin ,@(proc-walk (cddr definition)))))
-	
+	  (args (cdadr definition))
+	  (body `(begin ,@(proc-walk (cddr definition)))))
+      (let* ((no-noise-args (remove-keys args))                                ; omit noise words like :optional
+	     (arg-names (if (list? args)                                       ; handle (f x ...), (f (x 1) ...), (f . x), and (f x . z)
+			    (map (lambda (a) 
+				   (if (symbol? a)
+				       a
+				       (car a)))                               ; omit the default values
+				 no-noise-args)                                
+			    (if (pair? args)
+				(append (butlast no-noise-args) (list :rest (last args)))
+				(list :rest args))))
+	     (call-args (if (list? args)
+			    (if (memq :rest args)
+				(append (butlast (butlast no-noise-args))      ; also omit the :rest
+					(list (list '{apply_values} (last args))))
+				arg-names)                                     ; (... y x)
+			    (if (pair? args)
+				(append (butlast no-noise-args)                ; (... y ({apply_values} x))
+					(list (list '{apply_values} (last args))))
+				(list (list '{apply_values} args))))))         ; (... ({apply_values} x))
+	     ;; (apply + ({list} ({apply_values} ()))) -> 0 -- this is a special quasiquote list handling of ,@ that
+	     ;;   is not the same as (apply + ({list} (apply values ()))) -> error.  But it's too messy to write these
+	     ;;   lists out in place, so I'll cheat and use {apply_values} directly.  This only works because
+	     ;;   quasiquote turns list into {list}. Maybe s7 should be less timid about (values).  I used to
+	     ;;   think (abs -1 (values)) had to be an error, but now it looks fine.
+
+	;; (let ((x ())) `(+ ,@x)) -> (+)
+	;; (let ((x ())) (list + (apply values x))) -> (+ #<unspecified>) because (values) -> #<unspecified>
+	;; but everywhere else ,@x is the same as (apply values x)
+
 	`(define ,func
 	   (symbol->value 
-	    (define-macro* (,(gensym) ,@args)
+	    (define-macro* ,(cons (gensym) args)                               ; args might be a symbol etc
 	      
-	      `((lambda ,(append ',arg-names `(,',e))
+	      `((lambda* ,(cons ',e ',arg-names)                               ; prepend added env arg because there might be a rest arg
 		  (let ((,',result '?))
-		    ;(format *stderr* "~A~%" ,',e)
 		    (dynamic-wind
 			(lambda ()                                             ; when function called, show args and caller
 			  (with-environment (procedure-environment Display)    ; indent
@@ -1218,6 +1287,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			    (prepend-spaces))
 			  (format (Display-port) "    -> ~S~%" ,',result)))))
 
-		,,@arg-names (current-environment))))))))                      ; pass in the original args and the current-environment
+		(current-environment) ,,@call-args)))))))                      ; pass in the original args and the current-environment
   
   (set! Display Display-1))
+
+
+

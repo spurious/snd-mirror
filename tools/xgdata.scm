@@ -5014,13 +5014,13 @@
 (CFNC "GList* gtk_icon_theme_list_icons GtkIconTheme* icon_theme gchar* context") 
 (CFNC "char* gtk_icon_theme_get_example_icon_name GtkIconTheme* icon_theme") 
 (CFNC "gboolean gtk_icon_theme_rescan_if_needed GtkIconTheme* icon_theme") 
-(CFNC "void gtk_icon_theme_add_builtin_icon gchar* icon_name gint size GdkPixbuf* pixbuf") 
+;;; 3.13.4 (CFNC "void gtk_icon_theme_add_builtin_icon gchar* icon_name gint size GdkPixbuf* pixbuf") 
 ;;;;(CFNC "GType gtk_icon_info_get_type void") 
 ;;; 3.7.10 (CFNC "GtkIconInfo* gtk_icon_info_copy GtkIconInfo* icon_info") 
 ;;; 3.7.10 (CFNC "void gtk_icon_info_free GtkIconInfo* icon_info") 
 (CFNC "gint gtk_icon_info_get_base_size GtkIconInfo* icon_info") 
 (CFNC "gchar* gtk_icon_info_get_filename GtkIconInfo* icon_info") 
-(CFNC "GdkPixbuf* gtk_icon_info_get_builtin_pixbuf GtkIconInfo* icon_info") 
+;;; 3.13.4 (CFNC "GdkPixbuf* gtk_icon_info_get_builtin_pixbuf GtkIconInfo* icon_info") 
 (CFNC "GdkPixbuf* gtk_icon_info_load_icon GtkIconInfo* icon_info GError** [error]") 
 ;;; 3.13.3 (CFNC "void gtk_icon_info_set_raw_coordinates GtkIconInfo* icon_info gboolean raw_coordinates") 
 ;;; 3.13.3 (CFNC "gboolean gtk_icon_info_get_embedded_rect GtkIconInfo* icon_info GdkRectangle* rectangle") 
@@ -7695,10 +7695,10 @@
 (CFNC-3.0 "gboolean gtk_widget_compute_expand GtkWidget* widget GtkOrientation orientation")
 (CFNC-3.0 "void gtk_window_set_default_geometry GtkWindow* window gint width gint height")
 (CFNC-3.0 "void gtk_window_resize_to_geometry GtkWindow* window gint width gint height")
-(CFNC-3.0 "void gtk_window_set_has_resize_grip GtkWindow* window gboolean value")
-(CFNC-3.0 "gboolean gtk_window_get_has_resize_grip GtkWindow* window")
-(CFNC-3.0 "gboolean gtk_window_resize_grip_is_visible GtkWindow* window")
-(CFNC-3.0 "gboolean gtk_window_get_resize_grip_area GtkWindow* window GdkRectangle* rect")
+;;; 3.13.4 (CFNC-3.0 "void gtk_window_set_has_resize_grip GtkWindow* window gboolean value")
+;;; 3.13.4 (CFNC-3.0 "gboolean gtk_window_get_has_resize_grip GtkWindow* window")
+;;; 3.13.4 (CFNC-3.0 "gboolean gtk_window_resize_grip_is_visible GtkWindow* window")
+;;; 3.13.4 (CFNC-3.0 "gboolean gtk_window_get_resize_grip_area GtkWindow* window GdkRectangle* rect")
 
 (CCAST-3.0 "GTK_COMBO_BOX_TEXT(obj)" "GtkComboBoxText*")
 (CCHK-3.0 "GTK_IS_COMBO_BOX_TEXT(obj)" "GtkComboBoxText*")
@@ -8962,6 +8962,10 @@
 (CFNC-3.14 "GtkPropagationPhase gtk_event_controller_get_propagation_phase GtkEventController* controller")
 (CFNC-3.14 "void gtk_event_controller_set_propagation_phase GtkEventController* controller GtkPropagationPhase phase")
 
-
 ;;; 3.13.3: nothing new
+
+;;; 3.13.4:
+(CFNC-3.14 "void gtk_icon_theme_add_resource_path GtkIconTheme* icon_theme gchar* path" 'const)
+(CFNC-3.14 "void gtk_list_box_row_set_activatable GtkListBoxRow* row gboolean activatable")
+(CFNC-3.14 "gboolean gtk_list_box_row_get_activatable GtkListBoxRow* row")
 
