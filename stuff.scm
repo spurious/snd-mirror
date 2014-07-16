@@ -1016,33 +1016,54 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 ;;; --------------------------------------------------------------------------------
 
-;; these need to be globally accessible since they're inserted in an arbitrary function's source
+;; these need to be globally accessible since they're inserted in arbitrary source
 (define Display #f)
 (define Display-port #f)
-(define Display-print-length 6)
 
 (let ((spaces 0)
+      (*display-spacing* 2)         ; (set! ((procedure-environment Display) '*display-spacing*) 1) etc
+      (*display-print-length* 6)
+      (*display* *stderr*)          ; exported via Display-port
       (e (gensym))
       (result (gensym))
-      (vlp (gensym))
-      (*display* *stderr*))
+      (vlp (gensym)))
 
-  (define (prepend-spaces)
-    (format *display* (format #f "~~~DC" spaces) #\space))
+  ;; local symbol access -- this does not affect any other uses of these symbols
+  (set! (symbol-access '*display-spacing* (current-environment))
+	(lambda (s v) (if (and (integer? v) (not (negative? v))) v *display-spacing*)))
 
+  (set! (symbol-access '*display-print-length* (current-environment))
+	(lambda (s v) (if (and (integer? v) (not (negative? v))) v *display-print-length*)))
+
+  ;; export *display* -- just a convenience
   (set! Display-port (make-procedure-with-setter
 		      (lambda () *display*)
 		      (lambda (val) (set! *display* val))))
 
+  (define (prepend-spaces)
+    (format *display* (format #f "~~~DC" spaces) #\space))
+
   (define (display-format str . args)
-    `(let ((vlp *vector-print-length*))
-       (set! *vector-print-length* Display-print-length)
+    `(let ((,vlp *vector-print-length*))
        (with-environment (procedure-environment Display)
+	 (set! *vector-print-length* *display-print-length*)
 	 (prepend-spaces))
        (format (Display-port) ,str ,@args)
-       (set! *vector-print-length* vlp)))
+       (set! *vector-print-length* ,vlp)))
 
-  ;; last and butlast need to work with dotted lists
+  (define (display-environment le e)
+    (let ((vlp *vector-print-length*))
+      (for-each
+       (lambda (slot)
+	 (when (not (or (gensym? (car slot))
+			(eq? (cdr slot) e)))
+	   (set! *vector-print-length* *display-print-length*)
+	   (let ((str (sequence->string (cdr slot))))
+	     (set! *vector-print-length* 30)
+	     (format (Display-port) " :~A ~{~A~|~}" (car slot) str))))
+       le)
+      (set! *vector-print-length* vlp)))
+
   (define (last lst)
     (let ((len (length lst)))
       (let ((end (list-tail lst (if (negative? len) (abs len) (- len 1)))))
@@ -1071,6 +1092,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
     (if (pair? source)
 	(case (car source)
+
 	  ((let let* letrec letrec*)                
 	   ;; show local variables, (let vars . body) -> (let vars print-vars . body)
 	   (if (symbol? (cadr source))           ; named let?
@@ -1168,10 +1190,11 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			   (cdr source)))))
 
 	  ((case)
-	   ;; as in cond but include selector value in []
+	   ;; as in cond but include selector value in [] and report fall throughs
 	   (let ((ctr -1)
 		 (len (- (length (cddr source)) 1))
-		 (default (member '(else #t) (cddr source) (lambda (a b) (memq (car b) a)))))
+		 (default (member '(else #t) (cddr source) (lambda (a b) 
+							     (memq (car b) a)))))
 	     `(case ,(cadr source)
 		,@(append 
 		   (map (lambda (clause)
@@ -1198,9 +1221,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 					  ,result)))))
 			(cddr source))
 		   (if (not default)
-		       `((else (format (Display-port) "  (case [~A] falls through~%" ,(cadr source)) #<unspecified>))
+		       `((else 
+			  (format (Display-port) "  (case [~A] falls through~%" ,(cadr source)) 
+			  #<unspecified>))
 		       ())))))
-	  
 	  
 	  ((dynamic-wind)
 	   ;; here we want to ignore the first and last clauses, and report the last of the second
@@ -1215,81 +1239,78 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	source))
 
   (define-macro (Display-1 definition)
-    (let ((func (caadr definition))
-	  (args (cdadr definition))
-	  (body `(begin ,@(proc-walk (cddr definition)))))
-      (let* ((no-noise-args (remove-keys args))                                ; omit noise words like :optional
-	     (arg-names (if (list? args)                                       ; handle (f x ...), (f (x 1) ...), (f . x), and (f x . z)
-			    (map (lambda (a) 
-				   (if (symbol? a)
-				       a
-				       (car a)))                               ; omit the default values
-				 no-noise-args)                                
-			    (if (pair? args)
-				(append (butlast no-noise-args) (list :rest (last args)))
-				(list :rest args))))
-	     (call-args (if (list? args)
-			    (if (memq :rest args)
-				(append (butlast (butlast no-noise-args))      ; also omit the :rest
-					(list (list '{apply_values} (last args))))
-				arg-names)                                     ; (... y x)
-			    (if (pair? args)
-				(append (butlast no-noise-args)                ; (... y ({apply_values} x))
-					(list (list '{apply_values} (last args))))
-				(list (list '{apply_values} args))))))         ; (... ({apply_values} x))
-	     ;; (apply + ({list} ({apply_values} ()))) -> 0 -- this is a special quasiquote list handling of ,@ that
-	     ;;   is not the same as (apply + ({list} (apply values ()))) -> error.  But it's too messy to write these
-	     ;;   lists out in place, so I'll cheat and use {apply_values} directly.  This only works because
-	     ;;   quasiquote turns list into {list}. Maybe s7 should be less timid about (values).  I used to
-	     ;;   think (abs -1 (values)) had to be an error, but now it looks fine.
+    (if (and (pair? definition)
+	     (memq (car definition) '(define define*))
+	     (pair? (cdr definition))
+	     (pair? (cadr definition)))
 
-	;; (let ((x ())) `(+ ,@x)) -> (+)
-	;; (let ((x ())) (list + (apply values x))) -> (+ #<unspecified>) because (values) -> #<unspecified>
-	;; but everywhere else ,@x is the same as (apply values x)
+	;; (Display (define (f ...) ...)
+	(let ((func (caadr definition))
+	      (args (cdadr definition))
+	      (body `(begin ,@(proc-walk (cddr definition)))))
+	  (let* ((no-noise-args (remove-keys args))                                ; omit noise words like :optional
+		 (arg-names (if (list? args)                                       ; handle (f x ...), (f (x 1) ...), (f . x), and (f x . z)
+				(map (lambda (a) 
+				       (if (symbol? a)
+					   a
+					   (car a)))                               ; omit the default values
+				     no-noise-args)                                
+				(if (pair? args)
+				    (append (butlast no-noise-args) (list :rest (last args)))
+				    (list :rest args))))
+		 (call-args (if (list? args)
+				(if (memq :rest args)
+				    (append (butlast (butlast no-noise-args))      ; also omit the :rest
+					    (list (list '{apply_values} (last args))))
+				    arg-names)                                     ; (... y x)
+				(if (pair? args)
+				    (append (butlast no-noise-args)                ; (... y ({apply_values} x))
+					    (list (list '{apply_values} (last args))))
+				    (list (list '{apply_values} args))))))         ; (... ({apply_values} x))
+	    
+	    ;; (apply + ({list} ({apply_values} ()))) -> 0 -- this is a special quasiquote list handling of ,@ that
+	    ;;   is not the same as (apply + ({list} (apply values ()))) -> error.  But it's too messy to write these
+	    ;;   lists out in place, so I'll cheat and use {apply_values} directly.  This only works because
+	    ;;   quasiquote turns list into {list}. Maybe s7 should be less timid about (values).  I used to
+	    ;;   think (abs -1 (values)) had to be an error, but now it looks fine.
+	    ;;
+	    ;;   (let ((x ())) `(+ ,@x)) -> (+)
+	    ;;   (let ((x ())) (list + (apply values x))) -> (+ #<unspecified>) because (values) -> #<unspecified>
+	    ;;   but everywhere else ,@x is the same as (apply values x)
+	    ;; perhaps quasiquote should change ({list} 'apply 'values ...) to ({list} {apply_values} ...)
+	    
+	    `(define ,func
+	       (symbol->value 
+		(define-macro* ,(cons (gensym) args)                               ; args might be a symbol etc
+		  
+		  `((lambda* ,(cons ',e ',arg-names)                               ; prepend added env arg because there might be a rest arg
+		      (let ((,',result '?))
+			(dynamic-wind
+			    (lambda ()                                             ; when function called, show args and caller
+			      (with-environment (procedure-environment Display)    ; indent
+				(prepend-spaces)
+				(set! spaces (+ spaces *display-spacing*)))
+			      (format (Display-port) "(~A" ',',func)               ; show args, ruthlessly abbreviated
+			      (((procedure-environment Display) 'display-environment) (outer-environment (outer-environment (current-environment))) ,',e)
+			      (format (Display-port) ")")
+			      (let ((caller (eval '__func__ ,',e)))                ; show caller 
+				(if (not (eq? caller #<undefined>))
+				    (format (Display-port) " ;called from ~A" caller)))
+			      (newline (Display-port)))
+			    
+			    (lambda ()                                             ; the original function body
+			      (set! ,',result ,',body))                            ;   but annotated by proc-walk
+			    
+			    (lambda ()                                             ; at the end, show the result
+			      (with-environment (procedure-environment Display)
+				(set! spaces (- spaces *display-spacing*))         ; unindent
+				(prepend-spaces))
+			      (format (Display-port) "    -> ~S~%" ,',result)))))
+		    
+		    (current-environment) ,,@call-args))))))                       ; pass in the original args and the current-environment
+	
+	;; (Display <anything-else>)
+	(proc-walk definition)))                                                   ; (Display (+ x 1)) etc
 
-	`(define ,func
-	   (symbol->value 
-	    (define-macro* ,(cons (gensym) args)                               ; args might be a symbol etc
-	      
-	      `((lambda* ,(cons ',e ',arg-names)                               ; prepend added env arg because there might be a rest arg
-		  (let ((,',result '?))
-		    (dynamic-wind
-			(lambda ()                                             ; when function called, show args and caller
-			  (with-environment (procedure-environment Display)    ; indent
-			    (prepend-spaces)
-			    (set! spaces (+ spaces 2)))
-
-			  (format (Display-port) "(~A" ',',func)               ; show args, ruthlessly abbreviated
-			  (for-each
-			   (lambda (slot)
-			     (when (not (or (gensym? (car slot))
-					    (eq? (cdr slot) ,',e)))
-			       (let ((,',vlp *vector-print-length*))
-				 (set! *vector-print-length* Display-print-length)
-				 (let ((str (sequence->string (cdr slot))))
-				   (set! *vector-print-length* 60)
-				   (format (Display-port) " :~A ~{~A~|~}" (car slot) str)) 
-				 (set! *vector-print-length* ,',vlp))))
-			   (outer-environment (outer-environment (current-environment))))
-			  (format (Display-port) ")")
-
-			  (let ((caller (eval '__func__ ,',e)))                ; show caller 
-			    (if (not (eq? caller #<undefined>))
-				(format (Display-port) " ;called from ~A" caller)))
-			  (newline (Display-port)))
-			
-			(lambda ()                                             ; the original function body
-			  (set! ,',result ,',body))                            ;   but annotated by proc-walk
-			
-			(lambda ()                                             ; at the end, show the result
-			  (with-environment (procedure-environment Display)
-			    (set! spaces (- spaces 2))
-			    (prepend-spaces))
-			  (format (Display-port) "    -> ~S~%" ,',result)))))
-
-		(current-environment) ,,@call-args)))))))                      ; pass in the original args and the current-environment
-  
-  (set! Display Display-1))
-
-
+  (set! Display Display-1))                                                    ; make Display-1 globally accessible
 

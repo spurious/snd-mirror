@@ -1109,14 +1109,8 @@ hi
 
 ;; same: (define-macro (hi a) ({list} + 1 ({apply_values} a)))
 
-&gt; (define-macro (hi a) ``(+ 1 ,,a))
-hi
-&gt; (procedure-source hi)
-(lambda ({defmac}-18) (apply (lambda (a) <em class=red>({list} '{list} ({list} 'quote '+) 1 a))</em> (cdr {defmac}-18)))
-</pre>
-
-<p>and so on.  "{list}" is a special version of "list" to avoid name collisions
-and handle a few tricky details (similarly for "{apply_values}").  There is no unquote-splicing
+<p>{list} is a special version of list to avoid name collisions
+and handle a few tricky details (similarly for {apply_values}).  There is no unquote-splicing
 macro in s7;  ",@(...)" becomes "(unquote ({apply_values} ...))" at read-time.  There shouldn't be any unquote
 either.  In Scheme the reader turns ,x into (unquote x), so:
 </p>
@@ -4967,7 +4961,12 @@ or in C; I wanted this many years ago in Snd).  The notification function is esp
 you have a Scheme variable and want to reflect any change in its value immediately in C (see <a href="#notify">below</a>).
 All of these cases modify
 the path between a symbol and its value.  
-s7 gives you a handle on that path via <em class=def id="symbolaccess">symbol-access</em>.
+</p>
+<p>symbol-access is under revsision....
+</p>
+<!--
+<p>This section is obsolete! 
+s7 gives you a handle on that path via <em class=def id="symbolaccess">symbol-access</em>. 
 <code>(symbol-access symbol)</code> returns that symbol's accessors, and <code>(set! (symbol-access symbol) accessor-list)</code>
 changes them.  The symbol-accessor value is a list of three or more items, primarily the set, and bind functions, the second
 and third entries in the list respectively.
@@ -5044,8 +5043,9 @@ int
 &gt; (set! int (list 1 2))
 ;int can only take an integer value, not (1 2)
 </pre>
+-->
 
-
+<!--
 <blockquote>
 <div class="indented">
 
@@ -5074,12 +5074,13 @@ and in between, call the previous set accessor, if any, after reporting the set:
 </pre>
 </div>
 </blockquote>
-
+-->
+<!--
 <p>The first element of the symbol-accessor list is not used by s7.
 It is used for CL-style property lists by symbol-plist and friends in s7test.scm.
 I believe symbol-access is similar in spirit to a hooked variable in Ruby, or perhaps a tied variable in Perl (I know nothing about Perl).
 </p>
-
+-->
 
 
 
@@ -5766,7 +5767,7 @@ loading code that calls gcd.
 <li>remove char-ready?
 <li>change eof-object? to eof? or just omit it (you can use eq? #&lt;eof&gt;)
 <li>remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
-<li>change make-rectangular to make-complex, and remove make-polar.
+<li>change make-rectangular to make-complex, and remove make-polar, angle, and magnitude.
 <li>remove unquote (the name, not the functionality).
 <li>remove cond-expand.
 <li>remove *-ci functions (they are completely useless)
@@ -7765,9 +7766,7 @@ int main(int argc, char **argv)
 
   s7_define_function(s7, "notify-C", scheme_set_notification, 2, 0, false, "called if notified-var is set!");
   s7_define_variable(s7, "notified-var", s7_make_integer(s7, 0));
-  <em class=red>s7_symbol_set_access</em>(s7,   /* set symbol-access of notified-var to (list #f notify-C #f) */
-		       s7_make_symbol(s7, "notified-var"),
-		       s7_list(s7, 3, s7_f(s7), s7_name_to_value(s7, "notify-C"), s7_f(s7)));
+  <em class=red>s7_symbol_set_access</em>(s7, s7_make_symbol(s7, "notified-var"), s7_name_to_value(s7, "notify-C"));
 
   if (argc == 2)
     {

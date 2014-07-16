@@ -3659,9 +3659,16 @@
 ;;;
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
+;;; 
+;;; track known local vals (let ((x 0))...) and types
+;;;
+;;; snd|s7-lint-info.scm: all the func type/arg data using predicates, lint also using these
+;;;   no built-in data here (fill hash-tables via local loads)
+;;;   '(func 'type-predicate arg1-pred...) or (f t . arg) if all args have same etc
+;;;   '(+ number? . number?), '(abs real? real?) etc
 ;;;
 ;;; tests in t935.scm
-
+;;; (require ...) when we're in ...
 
 
 ;;; --------------------------------------------------------------------------------

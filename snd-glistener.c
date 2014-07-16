@@ -805,7 +805,7 @@ leaves the lisp listener pane"
       s7_hook_functions(s7, s7_name_to_value(s7, "*load-hook*"))));
 
   listener_colorized_symbol = s7_define_variable(s7, "*listener-colorized*", s7_make_boolean(s7, s7_f(s7)));
-  s7_eval_c_string(s7, "(set! (symbol-access '*listener-colorized*) (list #f (lambda (s v) (set! (listener-colorized) v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*listener-colorized*) (lambda (s v) (set! (listener-colorized) v)))");
   s7_symbol_set_documentation(s7, listener_colorized_symbol, "*listener-colorized*: number of vector elements to print in the listener (default: 12)");
 #endif
 }

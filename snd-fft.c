@@ -2454,7 +2454,7 @@ of a moving mark:\n\
 
   /* *transform-type* is #<transform Fourier> by default */
   ss->transform_type_symbol = s7_define_variable(s7, "*" S_transform_type "*", s7_name_to_value(s7, S_fourier_transform));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_transform_type "*) (list #f (lambda (s v) (set! (" S_transform_type ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_transform_type "*) (lambda (s v) (set! (" S_transform_type ") v)))");
   s7_symbol_set_documentation(s7, ss->transform_type_symbol, "*transform-type*: transform type (fourier-transform etc)");
 
 #else

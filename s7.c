@@ -1725,6 +1725,7 @@ static void init_types(void)
 #define set_cyclic(p)                 typeflag(p) |= T_CYCLIC
 #define is_cyclic(p)                  ((typeflag(p) & T_CYCLIC) != 0)
 #define clear_cyclic(p)               typeflag(p) &= (~T_CYCLIC)
+/* used by cyclic-sequences to mark objects already traversed */
 
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
 #define set_overlay(p)                typeflag(p) |= T_OVERLAY
@@ -1840,6 +1841,11 @@ static void init_types(void)
 #define clear_has_methods(p)          typeflag(p) &= (~T_HAS_METHODS)
 /* this marks an environment or closure that is "opened" up to generic functions etc 
  */
+
+#define T_HAS_ACCESSOR                T_HAS_METHODS
+#define has_accessor(p)               ((typeflag(p) & T_HAS_ACCESSOR) != 0)
+#define set_has_accessor(p)           typeflag(p) |= T_HAS_ACCESSOR
+/* marks a slot or symbol that has a setter */
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
@@ -2073,8 +2079,9 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define symbol_name(p)                string_value(symbol_name_cell(p))
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
-#define symbol_accessor(p)            (p)->object.sym.ext.accessor 
-#define symbol_has_accessor(p)        (symbol_accessor(p) != -1)  /* odd... this is much faster than >= 0 ? */
+#define symbol_global_accessor_gc_index(p) (p)->object.sym.ext.accessor 
+#define symbol_has_accessor(p)        has_accessor(p)
+#define symbol_set_has_accessor(p)    set_has_accessor(p)
 #define symbol_id(p)                  (p)->object.sym.id
 /* we need 64-bits here, since we don't want this thing to wrap around, and frames are created at a great rate 
  *    callgrind says this is faster than an unsigned int!
@@ -2099,6 +2106,9 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define next_slot(p)                  (p)->object.slt.nxt
 #define slot_pending_value(p)         (p)->object.slt.pending_value
 #define slot_expression(p)            (p)->object.slt.expr
+#define slot_accessor(p)              (p)->object.slt.expr
+#define slot_has_accessor(p)          has_accessor(p)
+#define slot_set_has_accessor(p)      set_has_accessor(p)
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_opcode(p)              ((p)->hloc)
@@ -2533,7 +2543,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
 #define find_symbol_checked(Sc, Sym) find_symbol_unchecked(Sc, Sym)
 #endif
 
-static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
 static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol);
 static s7_pointer find_environment(s7_scheme *sc, s7_pointer obj);
 static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator);
@@ -3634,6 +3643,9 @@ static void mark_slot(s7_pointer p)
     {
       set_mark(p);
       S7_MARK(slot_value(p));
+      if (slot_has_accessor(p))
+	S7_MARK(slot_accessor(p));
+
       /* should this also mark any pending_value? -- currently we don't initialize it.
        *   perhaps a bit if pending_value is in use checked here.  This procedure is not
        *   called very often, but the pending value set happens a lot.
@@ -4244,12 +4256,6 @@ static s7_pointer g_safety_set(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_safety_bind(s7_scheme *sc, s7_pointer args)
-{
-  return(sc->ERROR);
-}
-
-
 static s7_cell *alloc_pointer(void)
 {
   #define ALLOC_SIZE 256
@@ -4585,7 +4591,6 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int hash,
   global_slot(x) = sc->UNDEFINED; /* was sc->NIL; */
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
-  symbol_accessor(x) = -1;
   symbol_tag(x) = 0;
 
   if (symbol_name_length(x) > 1)                           /* not 0, otherwise : is a keyword */
@@ -4851,7 +4856,6 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   global_slot(x) = sc->NIL;
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
-  symbol_accessor(x) = -1;
   symbol_hash(x) = location;
 
   /* place new symbol in symbol-table, but using calloc so we can easily free it (remove it from the table) in GC sweep */
@@ -5092,9 +5096,7 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
       New_Env = _x_;		   \
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = _sym_;\
-      if (symbol_has_accessor(_sym_)) \
-        slot_set_value(_slot_, call_symbol_bind(Sc, _sym_, _val_)); \
-      else slot_set_value(_slot_, _val_);		\
+      slot_set_value(_slot_, _val_);		\
       symbol_set_local(_sym_, environment_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
@@ -5108,9 +5110,7 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
     _sym_ = Symbol; _val_ = Value;			\
     NEW_CELL_NO_CHECK(sc, _slot_);\
     slot_symbol(_slot_) = _sym_;\
-    if (symbol_has_accessor(_sym_)) \
-      slot_set_value(_slot_, call_symbol_bind(sc, _sym_, _val_)); \
-    else slot_set_value(_slot_, _val_);		\
+    slot_set_value(_slot_, _val_);		\
     symbol_set_local(_sym_, environment_id(Frame), _slot_); \
     set_type(_slot_, T_SLOT | T_IMMUTABLE);\
     next_slot(_slot_) = environment_slots(Frame);\
@@ -5869,6 +5869,36 @@ static s7_pointer g_environment_ref(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer new_value)
+{
+  s7_pointer func;
+  func = slot_accessor(slot);
+  if (is_procedure(func))
+    {
+      s7_pointer old_value;
+      old_value = new_value;
+      if (is_c_function(func))
+	{
+	  car(sc->T2_1) = slot_symbol(slot);
+	  car(sc->T2_2) = new_value;
+      	  new_value = c_function_call(func)(sc, sc->T2_1);
+	}
+      else
+	{
+	  bool old_off;
+	  old_off = sc->gc_off;
+	  sc->gc_off = true;
+	  new_value = s7_apply_function(sc, func, list_2(sc, slot_symbol(slot), new_value));
+	  sc->gc_off = old_off;
+	}
+      if (new_value == sc->ERROR)
+	return(s7_error(sc, sc->ERROR,
+			list_3(sc, make_protected_string(sc, "can't set! ~S to ~S"), slot_symbol(slot), old_value)));
+    }
+  return(new_value);
+}
+
+
 static s7_pointer environment_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
   s7_pointer x, y;
@@ -5879,11 +5909,11 @@ static s7_pointer environment_set_1(s7_scheme *sc, s7_pointer env, s7_pointer sy
 	return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, symbol, A_NON_CONSTANT_SYMBOL));	
       y = global_slot(symbol);
       if (is_slot(y))
-	{
-	  if (symbol_has_accessor(symbol))
-	    slot_set_value(y, call_symbol_bind(sc, symbol, value)); /* env=let so this is a bind, not a set */
+	{	
+	  if (slot_has_accessor(y))
+	    slot_set_value(y, call_accessor(sc, y, value));
 	  else slot_set_value(y, value);
-	  return(value);
+	  return(slot_value(y));
 	}
       return(sc->UNDEFINED);
     }
@@ -5892,10 +5922,11 @@ static s7_pointer environment_set_1(s7_scheme *sc, s7_pointer env, s7_pointer sy
     for (y = environment_slots(x); is_slot(y); y = next_slot(y))
       if (slot_symbol(y) == symbol)
 	{
-	  if (symbol_has_accessor(symbol))
-	    slot_set_value(y, call_symbol_bind(sc, symbol, value));
+
+	  if (slot_has_accessor(y))
+	    slot_set_value(y, call_accessor(sc, y, value));
 	  else slot_set_value(y, value);
-	  return(value);
+	  return(slot_value(y));
 	}
   return(sc->UNDEFINED);
 }
@@ -31263,13 +31294,11 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
 #endif
 
 
-static bool arglist_has_accessed_symbol(s7_pointer args)
+static bool arglist_has_rest(s7_scheme *sc, s7_pointer args)
 {
-  /* rest arg if any not checked */
   s7_pointer p;
   for (p = args; is_pair(p); p = cdr(p))
-    if (((is_symbol(car(p))) && (symbol_has_accessor(car(p)))) ||
-	((is_pair(car(p))) && (symbol_has_accessor(caar(p)))))
+    if (car(p) == sc->KEY_REST)
       return(true);
   return(false);
 }
@@ -31420,7 +31449,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	  args = closure_args(lessp);
 
 	  if ((is_pair(args)) &&
-	      (!arglist_has_accessed_symbol(args)) &&
+	      (!arglist_has_rest(sc, args)) &&
 	      (((optimize_data(expr) & 1) != 0) ||
 	       (c_function_is_ok(sc, expr))))
 	    {
@@ -34472,134 +34501,111 @@ static s7_pointer is_aritable_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 
 
 /* -------------------------------- symbol-access ------------------------------------------------ */
-/*
- * notification when a variable was set, constants
- *
- * these are in the same realm:
- *   typed var: restrict set! to the desired type or do auto-conversions
- *   constant: disallow set!
- *   traced var: report set!
- *   keywords: can't set or bind
- *
- * it would be nice to have also a way to create local constants
- *   defines like cpp tokens? rather than let-constant, (let ((#:name value)) name here can't be changed) -- a sort of local keyword
- *   if the accessor were slot-specific, not symbol-specific, no need for unwind checks etc
- *   but then need only the set! function -- how to make a true constant?
- *   symbol_accessor is actually just a pointer in the gc_protected table or -1, so it could be localized.
- *   but how to see that in the rest of s7, and where to store the index?
- */
 
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
 {
-  if (symbol_has_accessor(sym))
-    return(s7_gc_protected_at(sc, symbol_accessor(sym)));
+  /* these refer to the global environment */
+  if (slot_has_accessor(global_slot(sym)))
+    return(s7_gc_protected_at(sc, symbol_global_accessor_gc_index(sym)));
   return(sc->F);
 }
 
 
-s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs)
+s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer func)
 {
-  if (symbol_has_accessor(symbol))
+  if (slot_has_accessor(global_slot(symbol)))
     {
-      if (is_immutable(s7_gc_protected_at(sc, symbol_accessor(symbol))))
-	return(funcs); 
-
-      s7_gc_unprotect_at(sc, symbol_accessor(symbol));
-      symbol_accessor(symbol) = -1;
+      if (is_immutable(s7_gc_protected_at(sc, symbol_global_accessor_gc_index(symbol))))
+	return(func); 
+      s7_gc_unprotect_at(sc, symbol_global_accessor_gc_index(symbol));
     }
-
-  if (is_pair(funcs))
+  else 
     {
-      s7_pointer x;
-      for (x = funcs; is_pair(x); x = cdr(x))
-	if (car(x) != sc->F)                      /* if any field is not #f, reset symbol_accessor */
-	  {
-	    symbol_accessor(symbol) = s7_gc_protect(sc, funcs);
-	    break;
-	  }
+      slot_set_has_accessor(global_slot(symbol));
+      symbol_set_has_accessor(symbol);
     }
-  return(funcs); /* or perhaps the new symbol-accessor? */
+  symbol_global_accessor_gc_index(symbol) = s7_gc_protect(sc, func);
+  slot_accessor(global_slot(symbol)) = func;
+  return(func); 
 }
 
 
-static s7_pointer g_symbol_get_access(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_access "(symbol-access sym) is a procedure that adds or removes controls on how a \
-symbol accesses its current binding."
+  #define H_symbol_access "(symbol-access sym (env (current-environment))) is the function called when the symbol is set!."
+  s7_pointer sym, p, e;
 
-  if (!is_symbol(car(args)))
+  sym = car(args);
+  if (!is_symbol(sym))
     {
-      check_method(sc, car(args), sc->SYMBOL_ACCESS, args);
-      return(simple_wrong_type_argument(sc, sc->SYMBOL_ACCESS, car(args), T_SYMBOL));
+      check_method(sc, sym, sc->SYMBOL_ACCESS, args);
+      return(simple_wrong_type_argument(sc, sc->SYMBOL_ACCESS, sym, T_SYMBOL));
     }
-  return(s7_symbol_access(sc, car(args)));
+
+  if (is_null(cdr(args)))
+    return(s7_symbol_access(sc, sym));
+  e = cadr(args);
+  if ((e == sc->global_env) ||
+      (e == sc->NIL))
+    return(s7_symbol_access(sc, sym));
+  if (!is_environment(e))
+    return(wrong_type_argument(sc, sc->SYMBOL_ACCESS, small_int(2), e, T_ENVIRONMENT));
+
+  p = find_local_symbol(sc, e, sym);
+  if ((is_slot(p)) &&
+      (slot_has_accessor(p)))
+    return(slot_accessor(p));
+
+  return(sc->F);
 }
 
 
 static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer sym, funcs;
+  s7_pointer sym, func, e, p;
+  /* perhaps: check func */
+  
   sym = car(args);
   if (!is_symbol(sym))
     return(s7_wrong_type_arg_error(sc, "set! symbol-access", 1, sym, "a symbol"));
 
-  funcs = cadr(args);
-  if (funcs != sc->F)
+  /* (set! (symbol-access sym) f) or (set! (symbol-access sym env) f) */
+  func = cadr(args);
+  if (is_pair(cddr(args)))
     {
-      if ((!is_pair(funcs)) ||
-	  (s7_list_length(sc, funcs) < 3))
-	return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, funcs, "a list of 3 or more items"));	
-      if ((is_procedure(cadr(funcs))) && (!s7_is_aritable(sc, cadr(funcs), 2)))
-	return(s7_wrong_type_arg_error(sc, "set! symbol-access set function", 2, cadr(funcs), "a procedure of 2 arguments"));	
-      if ((is_procedure(caddr(funcs))) && (!s7_is_aritable(sc, caddr(funcs), 2)))
-	return(s7_wrong_type_arg_error(sc, "set! symbol-access bind function", 2, caddr(funcs), "a procedure of 2 arguments"));	
+      e = func;
+      func = caddr(args);
     }
-  return(s7_symbol_set_access(sc, sym, funcs));
-}
+  else e = sc->envir;
+  if ((!is_procedure(func)) &&
+      (func != sc->F))
+    return(s7_wrong_type_arg_error(sc, "set! symbol-access", 3, func, "a function or #f"));
 
+  if ((e == sc->global_env) ||
+      (e == sc->NIL))
+    return(s7_symbol_set_access(sc, sym, func));
 
-static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
-{
-  s7_pointer func;
-  func = caddr(s7_gc_protected_at(sc, symbol_accessor(symbol)));
-  if (is_procedure(func))
+  if (!is_environment(e))
+    return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, e, "an environment"));
+
+  p = find_local_symbol(sc, e, sym);
+  if (is_slot(p))
     {
-      s7_pointer old_value;
-      old_value = new_value;
-
-      /* this happens in contexts that are tricky to implement with a clean use of the evaluator stack (as in
-       *   the parallel symbol set case), so we need to use s7_call.  But if an uncaught error
-       *   occurs in s7_call, the error handler marches up the stack looking for a catch, unwinding the stack
-       *   past the point of the call.  In the worst case, we can segfault because any subsequent pop_stack
-       *   (i.e. an unchecked goto START), walks off the start of the stack. 
-       */
-      
-      if (is_c_function(func))
-	{
-	  car(sc->T2_1) = symbol;
-	  car(sc->T2_2) = new_value;
-      	  new_value = c_function_call(func)(sc, sc->T2_1);
-	}
-      else
-	{
-	  bool old_off;
-	  old_off = sc->gc_off;
-	  sc->gc_off = true;
-	  new_value = s7_apply_function(sc, func, list_2(sc, symbol, new_value));
-	  sc->gc_off = old_off;
-	}
-      if (new_value == sc->ERROR)
-	return(s7_error(sc, sc->ERROR,
-			list_3(sc, make_protected_string(sc, "can't bind ~S to ~S"), symbol, old_value)));
+      slot_accessor(p) = func;
+      slot_set_has_accessor(p);
+      symbol_set_has_accessor(sym);
+      return(func);
     }
-  return(new_value);
+  return(sc->F);
 }
 
 
 static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer symbol, s7_pointer new_value)
 {
+  /* this refers to (define (sym ...)) and friends */
   s7_pointer func;
-  func = caddr(s7_gc_protected_at(sc, symbol_accessor(symbol)));
+
+  func = g_symbol_access(sc, list_2(sc, symbol, sc->envir));
   if (is_procedure(func))
     {
       if (is_c_function(func))
@@ -38608,8 +38614,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	{
 	  if ((type(sc->code) == T_CLOSURE) &&                        /* not lambda* that might get confused about arg names */
 	      (closure_arity_to_int(sc, sc->code) == 1) &&            /* not a rest arg: not is_pair: (lambda (x . args) arg) */
-	      (!is_immutable(car(closure_args(sc->code)))) &&         /* not a bad arg name! */
-	      (!symbol_has_accessor(car(closure_args(sc->code)))))    /* not wrapped in an accessor */
+	      (!is_immutable(car(closure_args(sc->code)))))           /* not a bad arg name! */
 	    {
 	      /* one list arg -- special, but very common case
 	       */
@@ -38833,8 +38838,7 @@ static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 
       	  if ((is_pair(largs)) &&
 	      (is_null(cdr(largs))) &&
-	      (!is_immutable(car(largs))) &&
-	      (!symbol_has_accessor(car(largs))))
+	      (!is_immutable(car(largs))))
 	    {
 	      if ((is_pair(car(lbody))) &&
 		  (is_null(cdr(lbody))))
@@ -38975,8 +38979,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	{
 	  if ((type(sc->code) == T_CLOSURE) &&                        /* not lambda* that might get confused about arg names */
 	      (closure_arity_to_int(sc, sc->code) == 1) &&            /* not a rest arg, not is_pair here: (lambda (x . args) args) */
-	      (!is_immutable(car(closure_args(sc->code)))) &&         /* not a bad arg name! */
-	      (!symbol_has_accessor(car(closure_args(sc->code)))))    /* not wrapped in an accessor */
+	      (!is_immutable(car(closure_args(sc->code)))))           /* not a bad arg name! */
 	    {
 	      push_stack(sc, OP_MAP_SIMPLE, make_counter(sc, sc->NIL, obj, len, 0), sc->code);
 	      return(sc->NO_VALUE);
@@ -40346,7 +40349,6 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   initial_slot(x) = sc->UNDEFINED;
   symbol_hash(x) = (raw_string_hash((const unsigned char *)name) % SYMBOL_TABLE_SIZE);
   symbol_set_local(x, 0LL, sc->NIL);
-  symbol_accessor(x) = -1;
 
   syn = alloc_pointer();
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
@@ -44155,7 +44157,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
     {
       if (((func_is_closure) ||
 	   (is_closure_star(func))) &&
-	  (!arglist_has_accessed_symbol(closure_args(func))))
+	  (!arglist_has_rest(sc, closure_args(func))))
 	{
 	  set_unsafely_optimized(car_x);
 	  if (func_is_closure)
@@ -44254,7 +44256,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_SS);
 		  else
 		    {
-		      if (!arglist_has_accessed_symbol(closure_args(func)))
+		      if (!arglist_has_rest(sc, closure_args(func)))
 			set_optimize_data(car_x, hop + OP_CLOSURE_SSb);
 		      else set_optimize_data(car_x, hop + OP_CLOSURE_SS);
 		    }
@@ -44363,7 +44365,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		      else set_optimize_data(car_x, hop + OP_CLOSURE_opSq_opSq);
 		      if ((is_null(cdr(closure_body(func)))) &&
 			  (is_safe_closure(func)) &&
-			  (!arglist_has_accessed_symbol(closure_args(func))))
+			  (!arglist_has_rest(sc, closure_args(func))))
 			{
 			  if ((c_call(cadar_x) == g_car) &&
 			      (c_call(caddar_x) == g_car) &&
@@ -44744,7 +44746,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	{
 	  if (((func_is_closure) ||
 	       (is_closure_star(func))) &&
-	      (!arglist_has_accessed_symbol(closure_args(func))))
+	      (!arglist_has_rest(sc, closure_args(func))))
 	    {
 	      set_unsafely_optimized(car_x);
 	      if (func_is_closure)
@@ -44884,7 +44886,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 		  return(false);
 		}
 	      
-	      if (!arglist_has_accessed_symbol(closure_args(func)))
+	      if (!arglist_has_rest(sc, closure_args(func)))
 		{
 		  set_arglist_length(car_x, small_int(3));
 		  set_optimize_data(car_x, hop + OP_CLOSURE_ALL_S);
@@ -44965,7 +44967,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 	{
 	  if (((func_is_closure) ||
 	       (is_closure_star(func))) &&
-	      (!arglist_has_accessed_symbol(closure_args(func))))
+	      (!arglist_has_rest(sc, closure_args(func))))
 	    {
 	      set_unsafely_optimized(car_x);
 	      if (func_is_closure)
@@ -45226,7 +45228,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 	      
 	  if ((!safe_case) &&
 	      (symbols == args) &&
-	      (!arglist_has_accessed_symbol(closure_args(func))))
+	      (!arglist_has_rest(sc, closure_args(func))))
 	    set_optimize_data(car_x, hop + OP_CLOSURE_ALL_S);
 	  return(false);
 	}
@@ -45275,7 +45277,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 	  */
 	  if (((func_is_closure) ||
 	       (is_closure_star(func))) && 
-	      (!arglist_has_accessed_symbol(closure_args(func))) &&
+	      (!arglist_has_rest(sc, closure_args(func))) &&
 	      (pairs == (quotes + all_x_count(car_x))))
 	    {
 	      set_unsafely_optimized(car_x);
@@ -45491,7 +45493,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
   if (symbol_id(caar(x)) == 0) 
     {
       /* if (op == OP_SET) fprintf(stderr, "%s\n", DISPLAY(x));
-       *  if no symbol_access, and either constant caddar? or (+ sym 1) etc
+       *  if either constant caddar? or (+ sym 1) etc
        *  can we return set_all_c or incr_all?
        * then
 	      set_optimized(car_x);
@@ -46836,97 +46838,92 @@ static s7_pointer check_let(s7_scheme *sc)
 	    {
 	      s7_pointer binding;
 	      binding = caar(sc->code);
-	      if (symbol_has_accessor(car(binding)))
-		set_syntax_op(sc->code, sc->LET_UNCHECKED);
-	      else
+	      if (is_pair(cadr(binding)))
 		{
-		  if (is_pair(cadr(binding)))
-		    {
-		      if (car(cadr(binding)) == sc->QUOTE)
-			set_syntax_op(sc->code, sc->LET_Q);
-		      else
-			{
-			  if (is_h_safe_c_s(cadr(binding)))
-			    {
-			      if ((is_null(cddr(sc->code))) &&
-				  (is_pair(cadr(sc->code))))
-				{
-				  set_syntax_op(sc->code, sc->LET_R_P);
-				  if (is_syntactic(caadr(sc->code)))
-				    {
-				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
-				      if (c_call(cadr(binding)) == g_car)
-					{
-					  set_gcdr(sc->code, caaar(sc->code));
-					  set_syntax_op(sc->code, sc->LET_CAR_P);
-					}
-				    }
-				}
-			      else set_syntax_op(sc->code, sc->LET_R);
-			      set_fcdr(sc->code, cadr(cadr(binding)));
-			    }
-			  else 
-			    {
-			      set_fcdr(sc->code, cadr(binding));
-			      if (is_all_x_safe(sc, cadr(binding)))
-				{
-				  if (optimize_data(cadr(binding)) == HOP_SAFE_C_SS)
-				    set_syntax_op(sc->code, sc->LET_opSSq);
-				  else
-				    {
-				      if (optimize_data(cadr(binding)) == HOP_SAFE_C_C)
-					set_syntax_op(sc->code, sc->LET_opCq);
-				      else set_syntax_op(sc->code, sc->LET_ALL_X);
-				    }
-				}
-			      else
-				{
-				  set_fcdr(cdr(sc->code), car(binding));
-				  if ((is_null(cddr(sc->code))) &&
-				      (is_pair(cadr(sc->code))))
-				    {
-				      if (is_syntactic(caadr(sc->code)))
-					{
-					  lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
-					  if (is_h_optimized(cadr(binding)))
-					    set_syntax_op(sc->code, sc->LET_Z_P); 
-					  else set_syntax_op(sc->code, sc->LET_O_P);
-					  /* syntax_op uses ecdr */
-					}
-				      else
-					{
-					  if (is_h_optimized(cadr(binding)))
-					    set_syntax_op(sc->code, sc->LET_Z_O); 
-					  else set_syntax_op(sc->code, sc->LET_O_O); 
-					}
-				    }
-				  else set_syntax_op(sc->code, sc->LET_O);
-				}
-			    }
-			}
-		    }
+		  if (car(cadr(binding)) == sc->QUOTE)
+		    set_syntax_op(sc->code, sc->LET_Q);
 		  else
 		    {
-		      set_fcdr(sc->code, cadaar(sc->code));
-		      set_gcdr(sc->code, caaar(sc->code));
-		      /* should we make sure T_LINE_NUMBER is not set? -- it won't be cur_code in an error message */
-		      if (is_symbol(fcdr(sc->code)))
-			{
-			  if (is_null(cddr(sc->code)))
-			    set_syntax_op(sc->code, sc->LET_S_P);
-			  else set_syntax_op(sc->code, sc->LET_S);
-			}
-		      else 
+		      if (is_h_safe_c_s(cadr(binding)))
 			{
 			  if ((is_null(cddr(sc->code))) &&
 			      (is_pair(cadr(sc->code))))
 			    {
-			      if (is_h_optimized(cadr(sc->code)))
-				set_syntax_op(sc->code, sc->LET_C_D);
-			      else set_syntax_op(sc->code, sc->LET_C_P); /* does not check syntax_opcode */
+			      set_syntax_op(sc->code, sc->LET_R_P);
+			      if (is_syntactic(caadr(sc->code)))
+				{
+				  lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
+				  if (c_call(cadr(binding)) == g_car)
+				    {
+				      set_gcdr(sc->code, caaar(sc->code));
+				      set_syntax_op(sc->code, sc->LET_CAR_P);
+				    }
+				}
 			    }
-			  else set_syntax_op(sc->code, sc->LET_C);
+			  else set_syntax_op(sc->code, sc->LET_R);
+			  set_fcdr(sc->code, cadr(cadr(binding)));
 			}
+		      else 
+			{
+			  set_fcdr(sc->code, cadr(binding));
+			  if (is_all_x_safe(sc, cadr(binding)))
+			    {
+			      if (optimize_data(cadr(binding)) == HOP_SAFE_C_SS)
+				set_syntax_op(sc->code, sc->LET_opSSq);
+			      else
+				{
+				  if (optimize_data(cadr(binding)) == HOP_SAFE_C_C)
+				    set_syntax_op(sc->code, sc->LET_opCq);
+				  else set_syntax_op(sc->code, sc->LET_ALL_X);
+				}
+			    }
+			  else
+			    {
+			      set_fcdr(cdr(sc->code), car(binding));
+			      if ((is_null(cddr(sc->code))) &&
+				  (is_pair(cadr(sc->code))))
+				{
+				  if (is_syntactic(caadr(sc->code)))
+				    {
+				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
+				      if (is_h_optimized(cadr(binding)))
+					set_syntax_op(sc->code, sc->LET_Z_P); 
+				      else set_syntax_op(sc->code, sc->LET_O_P);
+				      /* syntax_op uses ecdr */
+				    }
+				  else
+				    {
+				      if (is_h_optimized(cadr(binding)))
+					set_syntax_op(sc->code, sc->LET_Z_O); 
+				      else set_syntax_op(sc->code, sc->LET_O_O); 
+				    }
+				}
+			      else set_syntax_op(sc->code, sc->LET_O);
+			    }
+			}
+		    }
+		}
+	      else
+		{
+		  set_fcdr(sc->code, cadaar(sc->code));
+		  set_gcdr(sc->code, caaar(sc->code));
+		  /* should we make sure T_LINE_NUMBER is not set? -- it won't be cur_code in an error message */
+		  if (is_symbol(fcdr(sc->code)))
+		    {
+		      if (is_null(cddr(sc->code)))
+			set_syntax_op(sc->code, sc->LET_S_P);
+		      else set_syntax_op(sc->code, sc->LET_S);
+		    }
+		  else 
+		    {
+		      if ((is_null(cddr(sc->code))) &&
+			  (is_pair(cadr(sc->code))))
+			{
+			  if (is_h_optimized(cadr(sc->code)))
+			    set_syntax_op(sc->code, sc->LET_C_D);
+			  else set_syntax_op(sc->code, sc->LET_C_P); /* does not check syntax_opcode */
+			}
+		      else set_syntax_op(sc->code, sc->LET_C);
 		    }
 		}
 	    }
@@ -46940,11 +46937,6 @@ static s7_pointer check_let(s7_scheme *sc)
 		  for (p = car(sc->code); is_pair(p); p = cdr(p))
 		    {
 		      x = car(p);
-		      if (symbol_has_accessor(car(x)))
-			{
-			  op = sc->LET_UNCHECKED;
-			  break;
-			}
 		      if (is_pair(cadr(x)))
 			{
 			  if (car(cadr(x)) == sc->QUOTE)
@@ -47104,86 +47096,81 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	    {
 	      s7_pointer binding;
 	      binding = caar(sc->code);
-	      if (symbol_has_accessor(car(binding)))
-		set_syntax_op(sc->code, sc->LET_STAR_UNCHECKED);
-	      else
+	      if (is_pair(cadr(binding)))
 		{
-		  if (is_pair(cadr(binding)))
-		    {
-		      if (car(cadr(binding)) == sc->QUOTE)
-			set_syntax_op(sc->code, sc->LET_Q);
-		      else
-			{
-			  if (is_h_safe_c_s(cadr(binding)))
-			    {
-			      if ((is_null(cddr(sc->code))) &&
-				  (is_pair(cadr(sc->code))))
-				{
-				  set_syntax_op(sc->code, sc->LET_R_P);
-				  if (is_syntactic(caadr(sc->code)))
-				    {
-				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
-				      if (c_call(cadr(binding)) == g_car)
-					{
-					  set_gcdr(sc->code, caaar(sc->code));
-					  set_syntax_op(sc->code, sc->LET_CAR_P);
-					}
-				    }
-				}
-			      else set_syntax_op(sc->code, sc->LET_R);
-			      set_fcdr(sc->code, cadr(cadr(binding)));
-			    }
-			  else 
-			    {
-			      set_fcdr(sc->code, cadr(binding));
-			      if (is_all_x_safe(sc, cadr(binding)))
-				set_syntax_op(sc->code, sc->LET_ALL_X);
-			      else
-				{
-				  set_fcdr(cdr(sc->code), car(binding));
-				  if ((is_null(cddr(sc->code))) &&
-				      (is_pair(cadr(sc->code))))
-				    {
-				      if (is_syntactic(caadr(sc->code)))
-					{
-					  lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
-					  if (is_h_optimized(cadr(binding)))
-					    set_syntax_op(sc->code, sc->LET_Z_P); 
-					  else set_syntax_op(sc->code, sc->LET_O_P); 
-					}
-				      else
-					{
-					  if (is_h_optimized(cadr(binding)))
-					    set_syntax_op(sc->code, sc->LET_Z_O); 
-					  else set_syntax_op(sc->code, sc->LET_O_O); 
-					}
-				    }
-				  else set_syntax_op(sc->code, sc->LET_O);
-				}
-			    }
-			}
-		    }
+		  if (car(cadr(binding)) == sc->QUOTE)
+		    set_syntax_op(sc->code, sc->LET_Q);
 		  else
 		    {
-		      set_fcdr(sc->code, cadaar(sc->code));
-		      set_gcdr(sc->code, caaar(sc->code)); /* added 18-Jun-13 to parallel LET_C_D cases above */
-		      if (is_symbol(cadaar(sc->code)))
-			{
-			  if (is_null(cddr(sc->code)))
-			    set_syntax_op(sc->code, sc->LET_S_P);
-			  else set_syntax_op(sc->code, sc->LET_S);
-			}
-		      else 
+		      if (is_h_safe_c_s(cadr(binding)))
 			{
 			  if ((is_null(cddr(sc->code))) &&
 			      (is_pair(cadr(sc->code))))
 			    {
-			      if (is_h_optimized(cadr(sc->code)))
-				set_syntax_op(sc->code, sc->LET_C_D);
-			      else set_syntax_op(sc->code, sc->LET_C_P);
+			      set_syntax_op(sc->code, sc->LET_R_P);
+			      if (is_syntactic(caadr(sc->code)))
+				{
+				  lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
+				  if (c_call(cadr(binding)) == g_car)
+				    {
+				      set_gcdr(sc->code, caaar(sc->code));
+				      set_syntax_op(sc->code, sc->LET_CAR_P);
+				    }
+				}
 			    }
-			  else set_syntax_op(sc->code, sc->LET_C);
+			  else set_syntax_op(sc->code, sc->LET_R);
+			  set_fcdr(sc->code, cadr(cadr(binding)));
 			}
+		      else 
+			{
+			  set_fcdr(sc->code, cadr(binding));
+			  if (is_all_x_safe(sc, cadr(binding)))
+			    set_syntax_op(sc->code, sc->LET_ALL_X);
+			  else
+			    {
+			      set_fcdr(cdr(sc->code), car(binding));
+			      if ((is_null(cddr(sc->code))) &&
+				  (is_pair(cadr(sc->code))))
+				{
+				  if (is_syntactic(caadr(sc->code)))
+				    {
+				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
+				      if (is_h_optimized(cadr(binding)))
+					set_syntax_op(sc->code, sc->LET_Z_P); 
+				      else set_syntax_op(sc->code, sc->LET_O_P); 
+				    }
+				  else
+				    {
+				      if (is_h_optimized(cadr(binding)))
+					set_syntax_op(sc->code, sc->LET_Z_O); 
+				      else set_syntax_op(sc->code, sc->LET_O_O); 
+				    }
+				}
+			      else set_syntax_op(sc->code, sc->LET_O);
+			    }
+			}
+		    }
+		}
+	      else
+		{
+		  set_fcdr(sc->code, cadaar(sc->code));
+		  set_gcdr(sc->code, caaar(sc->code)); /* added 18-Jun-13 to parallel LET_C_D cases above */
+		  if (is_symbol(cadaar(sc->code)))
+		    {
+		      if (is_null(cddr(sc->code)))
+			set_syntax_op(sc->code, sc->LET_S_P);
+		      else set_syntax_op(sc->code, sc->LET_S);
+		    }
+		  else 
+		    {
+		      if ((is_null(cddr(sc->code))) &&
+			  (is_pair(cadr(sc->code))))
+			{
+			  if (is_h_optimized(cadr(sc->code)))
+			    set_syntax_op(sc->code, sc->LET_C_D);
+			  else set_syntax_op(sc->code, sc->LET_C_P);
+			}
+		      else set_syntax_op(sc->code, sc->LET_C);
 		    }
 		}
 	    }
@@ -47195,11 +47182,6 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	      for (p = car(sc->code); is_pair(p); p = cdr(p))
 		{
 		  x = car(p);
-		  if (symbol_has_accessor(car(x)))
-		    {
-		      op = sc->LET_STAR2;
-		      break;
-		    }
 		  if (is_pair(cadr(x)))
 		    {
 		      if ((!is_all_x_safe(sc, cadr(x))) &&
@@ -47755,7 +47737,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 
       /* if the body is safe, we can optimize the calling sequence */
       if ((is_proper_list(sc, args)) &&
-	  (!arglist_has_accessed_symbol(args)))
+	  (!arglist_has_rest(sc, args)))
 	{
 	  if (!unstarred_lambda)
 	    {
@@ -49334,9 +49316,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	  /* loop has one step variable, and normal-looking end test
 	   */
 	  vars = car(vars);
-	  if (symbol_has_accessor(car(vars)))
-	    return(sc->code);
-	  
 	  if ((safe_list_length(sc, vars) == 3) &&
 	      ((!is_pair(cadr(vars))) ||
 	       ((is_optimized(cadr(vars))) &&
@@ -49594,8 +49573,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	       * another tricky case: current var might be used in previous step expr(!)
 	       */
 	      var = car(var);
-	      if (symbol_has_accessor(var))
-		return(sc->code);
 	      for (rp = vars; is_pair(rp); rp = cdr(rp)) /* look both back and forward for cross-talk */
 		if ((rp != p) && 
 		    (s7_tree_memq(sc, var, cddar(rp))))
@@ -52542,33 +52519,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    args = cdr(y);
 	    
 	    slot_symbol(y) = sym;
-
-	    if (symbol_has_accessor(sym))
-	      {
-		s7_pointer old_value;
-		old_value = sc->value;
-		slot_set_value(y, call_symbol_bind(sc, sym, val)); /* this might change sc->value */
-		sc->value = old_value;
-	      }
-	    else slot_set_value(y, val);
-
-	    /* var access checks during the step section? 
-	     *   we'd want a separate iteration in that case to avoid slowing down the normal case
-	     *
-	     * to embed here, we need x, y, (sc->args? sc->code?), sc->value
-	     *
-	     * label at start of loop plus jump back at end
-	     * if accessor and binder is scheme func
-	     *   push_stack DO_INIT_WITH_ACCESSOR, args=x y value args, code, jumping back after apply
-	     *   args='(sym val), code=scheme func, goto APPLY
-	     *   DO_INIT_WITH_ACCESSOR checks for 'error and jumps to
-	     * DO_INIT_ACCESS:
-	     *   reset x y code args from saved stuff
-	     *   set cdr(y) from new value
-	     *   restore old sc->value
-	     * [before saving y, set its type?][will a gc clobber anything here?]
-	     */
-
+	    slot_set_value(y, val);
 	    set_type(y, T_SLOT | T_IMMUTABLE);
 	    next_slot(y) = environment_slots(sc->envir);
 	    environment_slots(sc->envir) = y;
@@ -55951,9 +55902,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    args = cdr(z);
 		    slot_symbol(z) = sym;
 		    symbol_set_local(sym, id, z);
-		    if (symbol_has_accessor(sym))
-		      slot_set_value(z, call_symbol_bind(sc, sym, val));
-		    else slot_set_value(z, val);
+		    slot_set_value(z, val);
 		    set_type(z, T_SLOT | T_IMMUTABLE);
 		    next_slot(z) = environment_slots(e);
 		    environment_slots(e) = z;
@@ -56296,9 +56245,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		    slot_symbol(z) = sym;
 		    symbol_set_local(sym, id, z);
-		    if (symbol_has_accessor(sym))
-		      slot_set_value(z, call_symbol_bind(sc, sym, val));
-		    else slot_set_value(z, val);
+		    slot_set_value(z, val);
 		    set_type(z, T_SLOT | T_IMMUTABLE);
 		    next_slot(z) = environment_slots(e);
 		    environment_slots(e) = z;
@@ -56544,7 +56491,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    else 
 			      {
 				set_optimize_data(code, OP_CLOSURE_SS);
-				if (!arglist_has_accessed_symbol(closure_args(f)))
+				if (!arglist_has_rest(sc, closure_args(f)))
 				  set_optimize_data(code, OP_CLOSURE_SSb);
 			      }
 			    if (is_global(car(code)))
@@ -56733,7 +56680,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    else 
 			      {
 				if ((is_null(cdr(closure_body(f)))) &&
-				    (!arglist_has_accessed_symbol(closure_args(f))))
+				    (!arglist_has_rest(sc, closure_args(f))))
 				  {
 				    set_arglist_length(code, small_int(3));
 				    set_optimize_data(code, OP_CLOSURE_ALL_S);
@@ -56787,7 +56734,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_CLOSURE:
 			if (has_methods(f)) break;
 			if ((closure_arity_to_int(sc, f) == num_args) &&
-			    (!arglist_has_accessed_symbol(closure_args(f))))
+			    (!arglist_has_rest(sc, closure_args(f))))
 			  {
 			    annotate_args(sc, cdr(code));
 			    set_opt_and_goto_opt_eval(code, f, (((is_global(car(code))) ? 1 : 0) + 
@@ -56830,7 +56777,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_CLOSURE:
 			if (has_methods(f)) break;
 			if ((closure_arity_to_int(sc, f) == num_args) &&
-			    (!arglist_has_accessed_symbol(closure_args(f))))
+			    (!arglist_has_rest(sc, closure_args(f))))
 			  {
 			    annotate_args(sc, cdr(code));
 			    if (is_safe_closure(f))
@@ -56861,7 +56808,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if ((has_simple_args(closure_body(f))) &&
 			    (closure_star_arity_to_int(sc, f) >= num_args) && 
 			    (!arglist_has_keyword(cdr(code))) &&
-			    (!arglist_has_accessed_symbol(closure_args(f))))
+			    (!arglist_has_rest(sc, closure_args(f))))
 			    /* fcdr is already set -- we use it to get num_args above! */
 			  {
 			    annotate_args(sc, cdr(code));
@@ -57260,7 +57207,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      set_optimize_data(code, OP_SAFE_CLOSURE_opSq_opSq);
 			    else set_optimize_data(code, OP_CLOSURE_opSq_opSq);
 			    if ((is_null(cdr(closure_body(f)))) &&
-				(!arglist_has_accessed_symbol(closure_args(f))))
+				(!arglist_has_rest(sc, closure_args(f))))
 			      {
 				if (is_safe_closure(f))
 				  {
@@ -58757,9 +58704,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		slot_symbol(z) = sym;
 		symbol_set_local(sym, id, z);
-		if (symbol_has_accessor(sym))
-		  slot_set_value(z, call_symbol_bind(sc, sym, val));
-		else slot_set_value(z, val);
+		slot_set_value(z, val);
 		set_type(z, T_SLOT | T_IMMUTABLE);
 		next_slot(z) = environment_slots(e);
 		environment_slots(e) = z;
@@ -59217,10 +59162,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       if (symbol_has_accessor(sc->code))
 	{
-	  sc->value = bind_accessed_symbol(sc, OP_DEFINE_WITH_ACCESSOR, sc->code, sc->value);
-	  if (sc->value == sc->NO_VALUE)
-	    goto APPLY;
-	  /* if all goes well, OP_DEFINE_WITH_ACCESSOR will jump to DEFINE2 */
+	  s7_pointer x;
+	  x = find_symbol(sc, sc->code);
+	  if ((is_slot(x)) &&
+	      (slot_has_accessor(x)))
+	    {
+	      sc->value = bind_accessed_symbol(sc, OP_DEFINE_WITH_ACCESSOR, sc->code, sc->value);
+	      if (sc->value == sc->NO_VALUE)
+		goto APPLY;
+	      /* if all goes well, OP_DEFINE_WITH_ACCESSOR will jump to DEFINE2 */
+	    }
 	}
       
     DEFINE2:
@@ -60720,13 +60671,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_SET1:  
       /* if unbound variable hook here, we need the binding, not the current value */
+
       sc->y = find_symbol(sc, sc->code);
       if (is_slot(sc->y)) 
 	{
-	  if (symbol_has_accessor(sc->code))
+	  if (slot_has_accessor(sc->y))
 	    {
 	      s7_pointer func;
-	      func = cadr(s7_gc_protected_at(sc, symbol_accessor(sc->code)));
+	      func = slot_accessor(sc->y);
 	      if (is_procedure(func))
 		{
 		  if (is_c_function(func))
@@ -62035,9 +61987,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  args = cdr(y);
 		  
 		  slot_symbol(y) = sym;
-		  if (symbol_has_accessor(sym))
-		    slot_set_value(y, call_symbol_bind(sc, sym, val));
-		  else slot_set_value(y, val);
+		  slot_set_value(y, val);
 		  set_type(y, T_SLOT | T_IMMUTABLE);
 		  next_slot(y) = environment_slots(sc->envir);
 		  environment_slots(sc->envir) = y;
@@ -62066,9 +62016,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  slot_symbol(y) = sym;
 		  symbol_set_local(sym, id, y);
-		  if (symbol_has_accessor(sym))
-		    slot_set_value(y, call_symbol_bind(sc, sym, val));
-		  else slot_set_value(y, val);
+		  slot_set_value(y, val);
 		  set_type(y, T_SLOT | T_IMMUTABLE);
 		  next_slot(y) = environment_slots(e);
 		  environment_slots(e) = y;
@@ -62268,11 +62216,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 	    {
 	      if (is_checked(slot))
-		{
-		  if (symbol_has_accessor(slot_symbol(slot)))
-		    slot_set_value(slot, call_symbol_bind(sc, slot_symbol(slot), slot_pending_value(slot)));
-		  else slot_set_value(slot, slot_pending_value(slot));
-		}
+		slot_set_value(slot, slot_pending_value(slot));
 	    }
 	  sc->code = cdr(sc->code);
 	  if (is_pair(cdr(sc->code)))
@@ -62329,9 +62273,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer slot;
 	slot = sc->args;
-	if (symbol_has_accessor(slot_symbol(slot)))
-	  slot_set_value(slot, call_symbol_bind(sc, slot_symbol(slot), sc->value));
-	else slot_set_value(slot, sc->value);
+	slot_set_value(slot, sc->value);
 	slot = next_slot(slot);
 	if (is_slot(slot))
 	  {
@@ -62731,10 +62673,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (symbol_has_accessor(caar(sc->code)))
 	{
-	  sc->value = bind_accessed_symbol(sc, OP_DEFINE_MACRO_WITH_ACCESSOR, caar(sc->code), sc->code);
-	  if (sc->value == sc->NO_VALUE)
-	    goto APPLY;
-	  sc->code = sc->value;
+	  s7_pointer x;
+	  x = find_symbol(sc, caar(sc->code));
+	  if ((is_slot(x)) &&
+	      (slot_has_accessor(x)))
+	    {
+	      sc->value = bind_accessed_symbol(sc, OP_DEFINE_MACRO_WITH_ACCESSOR, caar(sc->code), sc->code);
+	      if (sc->value == sc->NO_VALUE)
+		goto APPLY;
+	      sc->code = sc->value;
+	    }
 	}
 
     DEFINE_MACRO2:
@@ -68236,10 +68184,7 @@ static void s7_gmp_init(s7_scheme *sc)
 
   sc->BIGNUM_PRECISION = s7_define_variable(sc, "*bignum-precision*", small_int(DEFAULT_BIGNUM_PRECISION));
   s7_symbol_set_access(sc, sc->BIGNUM_PRECISION,
-		       list_3(sc, 
-			      sc->F, 
-			      s7_make_function(sc, "(set *bignum-precision*)", g_set_bignum_precision, 2, 0, false, "called if *bignum-precision* is set"), 
-			      s7_make_function(sc, "(bind *bignum-precision*)", g_set_bignum_precision, 2, 0, false, "called if *bignum-precision* is bound")));
+		       s7_make_function(sc, "(set *bignum-precision*)", g_set_bignum_precision, 2, 0, false, "*bignum-precision* accessor")); 
 
   mpfr_set_default_prec((mp_prec_t)DEFAULT_BIGNUM_PRECISION); 
   mpc_set_default_precision((mp_prec_t)DEFAULT_BIGNUM_PRECISION);
@@ -68940,7 +68885,7 @@ s7_scheme *s7_init(void)
   sc->SYMBOL =                s7_define_safe_function(sc, "symbol",                  g_symbol,                 1, 0, false, H_symbol);
   sc->SYMBOL_TO_VALUE =       s7_define_safe_function(sc, "symbol->value",           g_symbol_to_value,        1, 1, false, H_symbol_to_value);
   sc->SYMBOL_TO_DYNAMIC_VALUE = s7_define_safe_function(sc, "symbol->dynamic-value", g_symbol_to_dynamic_value,1, 0, false, H_symbol_to_dynamic_value);
-  s7_define_function_with_setter(sc,                      "symbol-access",           g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
+  s7_make_procedure_with_setter(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access, 2, 1, H_symbol_access);
   sc->SYMBOL_ACCESS = make_symbol(sc, "symbol-access");
   
   sc->OUTER_ENVIRONMENT =     s7_define_safe_function(sc, "outer-environment",       g_outer_environment,      1, 0, false, H_outer_environment);
@@ -69372,54 +69317,31 @@ s7_scheme *s7_init(void)
 
   /* -------- *gc-stats* -------- */
   sc->GC_STATS = s7_define_variable_with_documentation(sc, "*gc-stats*", sc->F, "if *gc-stats* is #t, the garbage collector prints various stats on each call");
-  s7_symbol_set_access(sc, sc->GC_STATS,
-		       list_3(sc, 
-			      sc->F, 
-			      s7_make_function(sc, "(set *gc-stats*)", g_gc_stats_set, 2, 0, false, "called if *gc-stats* is set"), 
-			      s7_make_function(sc, "(bind *gc-stats*)", g_gc_stats_set, 2, 0, false, "called if *gc-stats* is bound")));
+  s7_symbol_set_access(sc, sc->GC_STATS, s7_make_function(sc, "(set *gc-stats*)", g_gc_stats_set, 2, 0, false, "*gc-stats* accessor"));
 
   /* -------- *features* -------- */
   sc->S7_FEATURES = s7_define_variable(sc, "*features*", sc->NIL);
-  s7_symbol_set_access(sc, sc->S7_FEATURES,
-		       list_3(sc, 
-			      sc->F, 
-			      s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "called if *features* is set"), 
-			      s7_make_function(sc, "(bind *features*)", g_features_set, 2, 0, false, "called if *features* is bound")));
+  s7_symbol_set_access(sc, sc->S7_FEATURES, s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "*features* accessor"));
 
   /* -------- *vector-print-length* -------- */
   sym = s7_define_variable(sc, "*vector-print-length*", small_int(8));
   sc->vector_print_length = global_slot(sym);
-  s7_symbol_set_access(sc, sym, 
-		       list_3(sc, 
-			      sc->F, 
-			      s7_make_function(sc, "(set *vector-print-length*)", g_vector_print_length_set, 2, 0, false, "called if *vector-print-length* is set"), 
-			      sc->F));
+  s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *vector-print-length*)", g_vector_print_length_set, 2, 0, false, "*vector-print-length* accessor"));
 
   /* -------- *maximum-stack-size* -------- */
   sym = s7_define_variable_with_documentation(sc, "*maximum-stack-size*", s7_make_integer(sc, (1 << 30)), "*maximum-stack-size* sets the maximum stack depth");
   sc->maximum_stack_size = global_slot(sym);
-  s7_symbol_set_access(sc, sym, 
-		       list_3(sc, 
-			      sc->F, 
-			      s7_make_function(sc, "(set *maximum-stack-size*)", g_maximum_stack_size_set, 2, 0, false, "called if *maximum-stack-size* is set"), 
-			      sc->F));
+  s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *maximum-stack-size*)", g_maximum_stack_size_set, 2, 0, false, "*maximum-stack-size* accessor"));
 
   /* -------- *safety* -------- */
   sym = s7_define_variable(sc, "*safety*", small_int(sc->safety));
-  s7_symbol_set_access(sc, sym, 
-		       list_3(sc, 
-			      sc->F, 
-			      s7_make_function(sc, "(set *safety*)", g_safety_set, 2, 0, false, "called if *safety* is set"), 
-			      s7_make_function(sc, "(bind *safety*)", g_safety_bind, 2, 0, false, "called if *safety* is bound")));
+  s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *safety*)", g_safety_set, 2, 0, false, "*safety* accessor"));
 
 
   /* -------- *load-path* -------- */
   sc->LOAD_PATH = s7_define_variable_with_documentation(sc, "*load-path*", sc->NIL, "*load-path* is a list of directories (strings) that the load function searches if it is passed an incomplete file name");
-  s7_symbol_set_access(sc, sc->LOAD_PATH,
-		       list_3(sc, 
-			      sc->F, 
-			      s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is set"), 
-			      s7_make_function(sc, "(bind *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is bound")));
+  s7_symbol_set_access(sc, sc->LOAD_PATH, s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "*load-path* accessor"));
+
 
   /* -------- *autoload* -------- 
    * this pretends to be a hash-table or environment, but it's actually a function
@@ -69446,12 +69368,7 @@ s7_scheme *s7_init(void)
   /* -------- *#readers* -------- */
   sym = s7_define_variable(sc, "*#readers*", sc->NIL);
   sc->sharp_readers = global_slot(sym);
-  s7_symbol_set_access(sc, sym, 
-		       list_3(sc, 
-			      sc->F, 
-			      s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "called if *#readers* is set"), 
-			      s7_make_function(sc, "(bind *#readers*)", g_sharp_readers_set, 2, 0, false, "called if *#readers* is bound")));
-
+  s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "*#readers* accessor"));
 
   /* the next two are for the test suite */
   s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
@@ -69564,10 +69481,6 @@ s7_scheme *s7_init(void)
   set_setter(sc->ENVIRONMENT_SET);
   
   set_setter(sc->CONS); /* (this blocks an over-eager do loop optimization -- see do-test-15 in s7test) */
-  /*
-  sc->Cons = s7_symbol_value(sc, sc->CONS);
-  set_setter(sc->Cons); 
-  */
   
   sc->String_Set = s7_symbol_value(sc, sc->STRING_SET);
   set_setter(sc->String_Set);
@@ -69998,4 +69911,13 @@ int main(int argc, char **argv)
  *   currently find-sound expects a string.
  * Display needs lots of attention
  * pretty-print can end up way over to the right 
+ * perhaps quasiquote should change ({list} 'apply 'values ...) to ({list} {apply_values} ...)
+ * with_make_complex: also omit angle and magnitude
+ * perhaps put most globals in *s7-environment*?
+ * pretty-printer needs to use ~|
+ * lint could also use the proc-env for its controlling vars
+ * 
+ * if symbol-access changed, need to change *features* scan to watch out for non lists
+ * can remaining arglist checks go? 
+ * test and document the new symbol-access
  */
