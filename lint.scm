@@ -8,6 +8,7 @@
 
 (if (provided? 'make-complex)
     (begin
+      (define magnitude abs)
       (define make-rectangular make-complex)
       (define (make-polar mag ang) (make-complex (* mag (cos ang)) (* mag (sin ang))))))
 
@@ -3654,7 +3655,7 @@
 
 
 
-;;; macros that cause definitions are ignored
+;;; macros that cause definitions are ignored (this also affects variable usage stats)
 ;;; and cload'ed identifiers are missed
 ;;;
 ;;; big projects: reorder let* -> nested let, check do body for static exprs

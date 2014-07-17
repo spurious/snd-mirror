@@ -1228,10 +1228,21 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	  
 	  ((dynamic-wind)
 	   ;; here we want to ignore the first and last clauses, and report the last of the second
-	   `(dynamic-wind
-		,(cadr source)
-		,(proc-walk (caddr source))
-		,(cadddr source)))
+	   (let ((l2 (caddr source)))
+	     (let* ((body (and (eq? (car l2) 'lambda)
+			      (cddr l2)))
+		    (previous (and body (butlast body)))
+		    (end (and body (last body))))
+	       (if (not body)
+		   source
+		   `(dynamic-wind
+			,(cadr source)
+			(lambda ()
+			  ,@previous
+			  (let ((,result ,end))
+			    (format (Display-port) "(dynamic-wind ... ~A) -> ~A~%" ',end ,result)
+			    ,result))
+			,(cadddr source))))))
 
 	  (else
 	   (cons (proc-walk (car source)) 
@@ -1251,9 +1262,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	  (let* ((no-noise-args (remove-keys args))                                ; omit noise words like :optional
 		 (arg-names (if (list? args)                                       ; handle (f x ...), (f (x 1) ...), (f . x), and (f x . z)
 				(map (lambda (a) 
-				       (if (symbol? a)
-					   a
-					   (car a)))                               ; omit the default values
+				       (if (symbol? a) a (car a)))                 ; omit the default values
 				     no-noise-args)                                
 				(if (pair? args)
 				    (append (butlast no-noise-args) (list :rest (last args)))
@@ -1267,22 +1276,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 				    (append (butlast no-noise-args)                ; (... y ({apply_values} x))
 					    (list (list '{apply_values} (last args))))
 				    (list (list '{apply_values} args))))))         ; (... ({apply_values} x))
-	    
-	    ;; (apply + ({list} ({apply_values} ()))) -> 0 -- this is a special quasiquote list handling of ,@ that
-	    ;;   is not the same as (apply + ({list} (apply values ()))) -> error.  But it's too messy to write these
-	    ;;   lists out in place, so I'll cheat and use {apply_values} directly.  This only works because
-	    ;;   quasiquote turns list into {list}. Maybe s7 should be less timid about (values).  I used to
-	    ;;   think (abs -1 (values)) had to be an error, but now it looks fine.
-	    ;;
-	    ;;   (let ((x ())) `(+ ,@x)) -> (+)
-	    ;;   (let ((x ())) (list + (apply values x))) -> (+ #<unspecified>) because (values) -> #<unspecified>
-	    ;;   but everywhere else ,@x is the same as (apply values x)
-	    ;; perhaps quasiquote should change ({list} 'apply 'values ...) to ({list} {apply_values} ...)
-	    
 	    `(define ,func
 	       (symbol->value 
 		(define-macro* ,(cons (gensym) args)                               ; args might be a symbol etc
-		  
 		  `((lambda* ,(cons ',e ',arg-names)                               ; prepend added env arg because there might be a rest arg
 		      (let ((,',result '?))
 			(dynamic-wind
@@ -1297,16 +1293,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 				(if (not (eq? caller #<undefined>))
 				    (format (Display-port) " ;called from ~A" caller)))
 			      (newline (Display-port)))
-			    
 			    (lambda ()                                             ; the original function body
 			      (set! ,',result ,',body))                            ;   but annotated by proc-walk
-			    
 			    (lambda ()                                             ; at the end, show the result
 			      (with-environment (procedure-environment Display)
 				(set! spaces (- spaces *display-spacing*))         ; unindent
 				(prepend-spaces))
 			      (format (Display-port) "    -> ~S~%" ,',result)))))
-		    
 		    (current-environment) ,,@call-args))))))                       ; pass in the original args and the current-environment
 	
 	;; (Display <anything-else>)

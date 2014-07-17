@@ -204,7 +204,7 @@
 
 #ifndef WITH_MAKE_COMPLEX 
   #define WITH_MAKE_COMPLEX 0
-  /* this removes make-polar and make-rectangular, renaming the latter make-complex */
+  /* this removes magnitude (use abs for all numbers), make-polar, and make-rectangular, renaming the latter make-complex */
 #endif
 
 /* other similar choices: exact/inexact including #i/#e, #d/#o, call-with-values etc, char-ready?, eof-object?
@@ -6101,7 +6101,7 @@ static s7_pointer g_set_outer_environment(s7_scheme *sc, s7_pointer args)
   new_outer = cadr(args);
   if (!is_environment(new_outer))
     return(wrong_type_argument_with_type(sc, sc->OUTER_ENVIRONMENT, small_int(2), new_outer, AN_ENVIRONMENT));  
-  if (new_outer == env)
+  if (new_outer == env) /* TODO: why not? */
     return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_protected_string(sc, "can't set the outer-environment of env to env!"))));
   if (new_outer == sc->global_env)
     new_outer = sc->NIL;
@@ -8985,7 +8985,6 @@ static void init_ctables(void)
   number_table[(unsigned char)'+'] = true;
   number_table[(unsigned char)'-'] = true;
   number_table[(unsigned char)'#'] = true;
-
 }
 
 
@@ -9500,7 +9499,6 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
    *   so, perhaps for radix > 10, the exponent, if any, has to use one of S s L l?  Not "l"!  And "s" originally meant "short".
    *
    * '@' can now be used as the exponent marker (26-Mar-12).
-   *
    * Another slight ambiguity: 1+1/2i is parsed as 1 + 0.5i, not 1+1/(2i), or (1+1)/(2i) or (1+1/2)i etc
    */
 
@@ -10315,6 +10313,7 @@ static s7_pointer g_abs_direct(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
+
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
   #define H_abs "(abs x) returns the absolute value of the real number x"
@@ -10340,13 +10339,18 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 	return(make_real(sc, -real(x)));
       return(x);
 
+#if (WITH_MAKE_COMPLEX)
+    case T_COMPLEX:
+      return(make_real(sc, hypot(imag_part(x), real_part(x))));
+#endif
+
     default:
       check_method(sc, x, sc->ABS, args);
       return(simple_wrong_type_argument(sc, sc->ABS, x, T_REAL));
     }
 }
 
-
+#if (!WITH_MAKE_COMPLEX)
 static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
 {
   #define H_magnitude "(magnitude z) returns the magnitude of z"
@@ -10383,7 +10387,7 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument_with_type(sc, sc->MAGNITUDE, x, A_NUMBER));
     }
 }
-
+#endif
 
 static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 {
@@ -20383,12 +20387,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
       check_method(sc, chr, sc->STRING_FILL, args);
       return(wrong_type_argument(sc, sc->STRING_FILL, small_int(2), chr, T_CHARACTER));
     }
-  /* strlen and so on here is probably not right -- a scheme string has a length
-   *   set when it is created, and (apparently) can contain an embedded 0, so its
-   *   print length is not its length.
-   *         char *str; char c; str = string_value(car(args)); c = character(cadr(args));
-   *         int i, len = 0; if (str) len = safe_strlen(str); if (len > 0) for (i = 0; i < len; i++) str[i] = c; 
-   */
+
   end = string_length(x);
   if (end == 0) return(chr);
 
@@ -43881,7 +43880,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      s7_pointer body;
 		      body = closure_body(func);
 		      /* (let () (define (f1 x) (vector-ref x 0)) (define (f2 x) (f1 x)) (f2 #(0))) */
-		      /* fprintf(stderr, "s: %s %s %s\n", DISPLAY(func), DISPLAY(closure_body(func)), DISPLAY(closure_args(func))); */
 		      if ((is_pair(body)) &&
 			  (is_null(cdr(body))) &&
 			  (is_pair(car(body))) &&
@@ -43889,7 +43887,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 			{
 			  if ((is_null(cdddr(car(body)))) &&
 			      (c_call(car(body)) == g_vector_ref_ic) &&
-			      (integer(caddr(car(body))) >= 0) && (integer(caddr(car(body))) < 6))
+			      (integer(caddr(car(body))) >= 0) && (integer(caddr(car(body))) < 4))
 			    {
 			      switch (integer(caddr(car(body))))
 				{
@@ -44247,6 +44245,21 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	  if ((func_is_closure) &&
 	      (symbols >= 1))
 	    {
+#if 0
+	      s7_pointer body;
+	      body = closure_body(func);
+	      if ((is_pair(body)) &&
+		  (is_null(cdr(body))) &&
+		  (is_pair(car(body))) &&
+		  /* (car(closure_args(func)) == cadar(body)) && (cadr(closure_args(func)) == caddar(body)) && */
+		  (is_optimized(car(body))))
+		{
+		  fprintf(stderr, "%s -> %s %s\n", DISPLAY(car_x), opt_name(car(body)), DISPLAY(car(body)));
+		  /* if (op_no_hop(car(body)) == OP_SAFE_C_SS)):
+		   *   (vref v 1) -> (vector-ref v i), (bad-increment x b) -> (cons a b)
+		   */
+		}
+#endif
 	      set_unsafely_optimized(car_x);
 	      if (symbols == 2)
 		{
@@ -65481,6 +65494,21 @@ static s7_pointer big_abs(s7_scheme *sc, s7_pointer args)
       mpfr_abs(big_real(x), big_real(x), GMP_RNDN);
       return(x);
 
+#if WITH_MAKE_COMPLEX
+    case T_COMPLEX:
+      return(make_real(sc, hypot(imag_part(p), real_part(p))));
+
+    case T_BIG_COMPLEX:
+      {
+	mpfr_t n;
+	mpfr_init(n);
+	mpc_abs(n, big_complex(p), GMP_RNDN);
+	p = mpfr_to_big_real(sc, n);
+	mpfr_clear(n);
+	return(p);
+      }
+#endif
+
     default:
       check_method(sc, p, sc->ABS, args);
       return(simple_wrong_type_argument(sc, sc->ABS, p, T_REAL));
@@ -65488,6 +65516,7 @@ static s7_pointer big_abs(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_MAKE_COMPLEX)
 static s7_pointer big_magnitude(s7_scheme *sc, s7_pointer args)
 {
   #define H_magnitude "(magnitude z) returns the magnitude of z"
@@ -65515,7 +65544,7 @@ static s7_pointer big_magnitude(s7_scheme *sc, s7_pointer args)
 
   return(big_abs(sc, args));
 }
-
+#endif
 
 static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
 {
@@ -68146,9 +68175,9 @@ static void s7_gmp_init(s7_scheme *sc)
 #else
   sc->MAKE_RECTANGULAR = s7_define_function(sc, "make-rectangular",    big_make_rectangular, 2, 0, false, H_make_rectangular);
   sc->MAKE_POLAR =       s7_define_function(sc, "make-polar",          big_make_polar,       2, 0, false, H_make_polar);
+  sc->MAGNITUDE =        s7_define_function(sc, "magnitude",           big_magnitude,        1, 0, false, H_magnitude);
 #endif
   sc->ANGLE =            s7_define_function(sc, "angle",               big_angle,            1, 0, false, H_angle);
-  sc->MAGNITUDE =        s7_define_function(sc, "magnitude",           big_magnitude,        1, 0, false, H_magnitude);
   sc->ABS =              s7_define_function(sc, "abs",                 big_abs,              1, 0, false, H_abs);
 
   sc->LOGNOT =           s7_define_function(sc, "lognot",              big_lognot,           1, 0, false, H_lognot);
@@ -69009,8 +69038,8 @@ s7_scheme *s7_init(void)
 #else
   sc->MAKE_POLAR =            s7_define_safe_function(sc, "make-polar",              g_make_polar,             2, 0, false, H_make_polar);
   sc->MAKE_RECTANGULAR =      s7_define_safe_function(sc, "make-rectangular",        g_make_rectangular,       2, 0, false, H_make_rectangular);
-#endif
   sc->MAGNITUDE =             s7_define_safe_function(sc, "magnitude",               g_magnitude,              1, 0, false, H_magnitude);
+#endif
   sc->ANGLE =                 s7_define_safe_function(sc, "angle",                   g_angle,                  1, 0, false, H_angle);
   sc->RATIONALIZE =           s7_define_safe_function(sc, "rationalize",             g_rationalize,            1, 1, false, H_rationalize);
   sc->ABS =                   s7_define_safe_function(sc, "abs",                     g_abs,                    1, 0, false, H_abs);
@@ -69883,14 +69912,12 @@ int main(int argc, char **argv)
  * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
  *   why isn't that the case always? -- pointer selects if focus-follows-mouse, see snd-chn.c 5444 
  * float-vector support is currently half-in/half-out (shouldn't the name be byte-vector?)
- * the safe_c_s->direct opt could be extended especially to lambda* wrappers, and at least the op_safe_c_ss case
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * for clm methods, xen_to_c_generator could fallback on method check -- t932.scm -- can't decide about this
  * gmp method problems: should we insist on a 'bignum method?
  * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
  * if sounds were envs, all current args packaged as env, (map snd...) -> (map-sound ...) etc
- * perhaps with-env should be generic: accept c-obj and func too
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
@@ -69902,22 +69929,35 @@ int main(int argc, char **argv)
  *   maybe gunichar->bytevector?
  *
  * there's still a problem with dynamic loading, clang, and freebsd
- *
- * all_if_x1 -> increment as well and do step_x + all_xable body, where increment need not be re-looked up if not a step var
- *   increment_1 means no symbol_access, so this is an all_x op by itself -- how does if work?
- *   get op_safe_c_cs_opcq, add dox_step_cs_opcq (init is csc) but it doesn't happen anywhere else, even as all_x_c_csa
- *
  * in Snd/ws.scm, if clm-file-name (or with-sound :output) is a vector, can we display it as if a sound?
  *   currently find-sound expects a string.
  * Display needs lots of attention
- * pretty-print can end up way over to the right 
- * perhaps quasiquote should change ({list} 'apply 'values ...) to ({list} {apply_values} ...)
- * with_make_complex: also omit angle and magnitude
- * perhaps put most globals in *s7-environment*?
- * pretty-printer needs to use ~|
- * lint could also use the proc-env for its controlling vars
- * 
- * if symbol-access changed, need to change *features* scan to watch out for non lists
- * can remaining arglist checks go? 
- * test and document the new symbol-access
+ * pretty-print can end up way over to the right and needs to use ~|
+ * perhaps: with_make_complex omit angle
+ * lint could also use the proc-env for its controlling vars, snd-lint-info script[t940], track vars
+ *
+ * e can set out-e to itself (blocked now -- pointless since outer->outer->e), or to an embedded e: secret data?
+ *  how is this GC-protected? mark-env! 
+(define e (let () 
+            (set! (outer-environment (current-environment)) 
+                  (let ((a 1)
+                        (b 2))
+                    (set! (outer-environment (current-environment)) (global-environment))
+                    (current-environment))) 
+            (current-environment)))
+e
+#<environment>
+(outer-environment e)
+#<environment 'a 1 'b 2>
+(outer-environment (outer-environment e))
+#<global-environment>
+
+but this is the same as 
+(let ((a 1)
+      (b 2))
+  (let ()
+    (current-environment)))
+
+    so (+ a b) at the outer let actually works!
+
  */

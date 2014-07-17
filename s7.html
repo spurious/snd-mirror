@@ -1108,6 +1108,7 @@ hi
 (lambda ({defmac}-17) (apply (lambda (a) <em class=red>({list} '+ 1 ({apply_values} a)))</em> (cdr {defmac}-17)))
 
 ;; same: (define-macro (hi a) ({list} + 1 ({apply_values} a)))
+</pre>
 
 <p>{list} is a special version of list to avoid name collisions
 and handle a few tricky details (similarly for {apply_values}).  There is no unquote-splicing
@@ -4059,7 +4060,7 @@ here's a sketch:
 </p>
 
 <pre class="indented">
-&gt; (define h (make-hook '(a 32) 'b))  ; h is a function: (lambda* ((a 32) b) ...)
+&gt; (define h (make-hook '(a 32) 'b))     ; h is a function: (lambda* ((a 32) b) ...)
 h
 &gt; (set! (hook-functions h)              ; this sets ((procedure-environment h) 'body)
            (list (lambda (hook) 	; each hook internal function takes one argument, the environment
@@ -4111,7 +4112,28 @@ Hooks are not very convenient within Scheme code, but are intended for use via t
 some callback mechanism is needed.
 </p>
 
+<div class="indented">
+<p>One annoying aspect of the hook function lists is that all you see is a bunch of anonymous lambdas.
+When callback order matters, one not-too-kludgey way to tell these functions apart is to use the
+function's closure to store whatever information is needed:
+</p>
 
+<pre class="indented">
+(set! (hook-functions h)
+      (list (let ((*info* "first hook!"))
+	      (lambda (hook)
+		(set! (hook 'result) "first")))
+	    (let ((*info* "second hook"))
+	      (lambda (hook)
+		(set! (hook 'result) (string-append (hook 'result) ", second"))))))
+
+(map (lambda (h)
+       ((procedure-environment h) '*info*))
+     (hook-functions h))
+
+'("first hook!" "second hook")
+</pre>
+</div>
 
 
 
@@ -4959,128 +4981,37 @@ variable trace (informative function upon set or keeping a history of past value
 variable's values or doing automatic conversions upon set), and notification upon set (either in Scheme
 or in C; I wanted this many years ago in Snd).  The notification function is especially useful if
 you have a Scheme variable and want to reflect any change in its value immediately in C (see <a href="#notify">below</a>).
-All of these cases modify
-the path between a symbol and its value.  
+In s7, <em class=def id="symbolaccess">symbol-access</em> sets this function.
 </p>
-<p>symbol-access is under revsision....
-</p>
-<!--
-<p>This section is obsolete! 
-s7 gives you a handle on that path via <em class=def id="symbolaccess">symbol-access</em>. 
-<code>(symbol-access symbol)</code> returns that symbol's accessors, and <code>(set! (symbol-access symbol) accessor-list)</code>
-changes them.  The symbol-accessor value is a list of three or more items, primarily the set, and bind functions, the second
-and third entries in the list respectively.
-These two functions take two arguments, the symbol in question
-and the value that it is about to be set or bound to.  The variable is set or bound to the value they return.
-We could add
-local constants with:
+
+<p>Each environment is a set of symbols and their associated values.  symbol-access places a function between a symbol
+and its value in a given environment.  The accessor function takes two arguments, the symbol and the new value, and
+returns the value that is actually set.  For example, the function can ensure that a variable is always an integer:
 </p>
 
 <pre class="indented">
-(define constant-access 
-  (list #f
-	(lambda (symbol new-value) 
-	  (format #t "can't change constant ~&lt;symbol~&gt;'s value to ~&lt;new-value~&gt;")
-          'error)
-	(lambda (symbol new-value) 
-	  (format #t "can't bind constant ~&lt;symbol~&gt; to a new value, ~&lt;new-value~&gt;")
-          'error)))
+(define e      ; save environment for use below
+  (let ((x 3)  ; will always be an integer
+	(y 3)  ; will always keep its initial value
+	(z 3)) ; will report set!
 
-(define-macro (let-constant vars . body)
-  (let ((varlist (map car vars)))
-    `(let ,vars
-       (let ((accessors ()))
-	 (with-baffle
-	   (dynamic-wind
-	       ;; save current accessors, if any
-	       (lambda ()
-		 (for-each
-		  (lambda (var)
-		    (set! accessors (cons (list var (symbol-access var)) accessors)))
-		  ',varlist))
+    (set! (symbol-access 'x) (lambda (s v) (if (integer? v) v x)))
+    (set! (symbol-access 'y) (lambda (s v) y))
+    (set! (symbol-access 'z) (lambda (s v) (format *stderr* "z ~A -&gt; ~A~%" z v) v))
+  
+    (set! x 3.3) ; x does not change because 3.3 is not an integer
+    (set! y 3.3) ; y does not change value
+    (set! z 3.3) ; prints "z 3 -&gt; 3.3" 
+    (current-environment)))
 
-	       ;; make current let vars constant during evaluation of the body
-	       (lambda ()
-		 ,@(map (lambda (var)
-			  `(set! (symbol-access ',var) constant-access))
-			varlist)
-		 ,@body)
-	     
-	       ;; restore the old accessors
-	       (lambda ()
-		 (for-each
-		  (lambda (var)
-		    (set! (symbol-access var) (cadr (assq var accessors))))
-		  ',varlist))))))))
+&gt; e
+#&lt;environment 'x 3 'y 3 'z 3.3&gt;
+&gt;(begin (set! (e 'x) 123) (set! (e 'y) #()) (set! (e 'z) #f))
+;; prints "z 3.3 -&gt; #f"
+&gt; e
+#&lt;environment 'x 123 'y 3 'z #f&gt;
 </pre>
 
-
-<p>Kinda ugly.  Maybe in a normal let (or whatever), binding #:name makes
-name a constant in the let body: <code>(let ((#:xyz 4)) (set! xyz 3)) ; error</code>.
-That reflects the way keywords are handled in s7, and isn't too horrible to contemplate.
-In the next example, we restrict the values a variable can take to integers:
-</p>
-
-<pre class="indented">
-(define-macro (define-integer var value)
-  `(begin
-     (define ,var ,value)
-     (set! (<em class=red>symbol-access</em> ',var) 
-	   (list #f
-		 (lambda (symbol new-value)
-		   (if (real? new-value)
-		       (floor new-value) ; or min/max to restrict it to some range etc
-                       (begin 
-                         (format #t "~&lt;symbol~&gt; can only take an integer value, not ~&lt;new-value~&gt;")
-                         'error)))
-		 #f))
-     ',var))
-
-&gt; (define-integer int 123)
-int
-&gt; (set! int 321.67)
-321
-&gt; (set! int (list 1 2))
-;int can only take an integer value, not (1 2)
-</pre>
--->
-
-<!--
-<blockquote>
-<div class="indented">
-
-<p>Here are trace and untrace.  We save the previous accessors in trace, restore them upon untrace,
-and in between, call the previous set accessor, if any, after reporting the set:
-</p>
-
-<pre class="indented">
-(define (trace var)
-  (let* ((cur-access (<em class=red>symbol-access</em> var))
-	 (cur-set (and cur-access (cadr cur-access))))
-    (set! (<em class=red>symbol-access</em> var)
-	  (list (and cur-access (car cur-access))
-		(lambda (symbol new-value) 
-		  (format #t "~&lt;symbol~&gt; set to ~&lt;new-value~&gt;~%")
-		  (if cur-set 
-		      (cur-set symbol new-value)
-		      new-value))
-		(and cur-access (caddr cur-access))
-		cur-access)))) ; save the old version 
-
-(define (untrace var)
-  (if (and (symbol-access var)
-	   (cdddr (symbol-access var)))
-      (set! (symbol-access var) (cadddr (symbol-access var)))))
-</pre>
-</div>
-</blockquote>
--->
-<!--
-<p>The first element of the symbol-accessor list is not used by s7.
-It is used for CL-style property lists by symbol-plist and friends in s7test.scm.
-I believe symbol-access is similar in spirit to a hooked variable in Ruby, or perhaps a tied variable in Perl (I know nothing about Perl).
-</p>
--->
 
 
 
@@ -5795,7 +5726,7 @@ loading code that calls gcd.
 same kind of name (or +pi+ to show it is a constant?).  
 All the environment function names are bad &mdash; "environment" by itself
 is annoying.  Perhaps object-&gt;string should be -&gt;string.
-get-output-string should be current-output-string. write-char behaves like display, not write.  symbol-access is not ideal.
+get-output-string should be current-output-string. write-char behaves like display, not write.
 define-expansion should be named define-reader-macro.
 </p>
 
