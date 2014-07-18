@@ -2241,6 +2241,28 @@ char *mus_expand_filename(const char *filename)
       strcpy(file_name_buf, orig);
       strcat(file_name_buf, "/");
       strcat(file_name_buf, filename);
+#if HAVE_EXTENSION_LANGUAGE
+      if (!mus_file_probe(file_name_buf))
+	{
+	  Xen p;
+	  for (p = g_mus_sound_path(); Xen_is_pair(p); p = Xen_cdr(p))
+	    {
+	      char *nfile;
+	      const char *path;
+	      path = Xen_string_to_C_string(Xen_car(p));
+	      nfile = (char *)malloc((len + sndlib_strlen(path) + 4) * sizeof(char));
+	      strcpy(nfile, path);
+	      strcat(nfile, "/");
+	      strcat(nfile, filename);
+	      if (mus_file_probe(nfile))
+		{
+		  free(file_name_buf);
+		  return(nfile);
+		}
+	      free(nfile);
+	    }
+	}
+#endif
       return(file_name_buf);
     }
 

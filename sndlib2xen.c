@@ -1143,6 +1143,37 @@ static Xen g_mus_audio_reinitialize(void)
 #endif
 
 
+static Xen sound_path;
+Xen g_mus_sound_path(void)
+{
+  #define H_mus_sound_path "(" S_mus_sound_path "): a list of directories to search for sound files."
+  return(sound_path);
+}
+
+#if HAVE_SCHEME
+  static int sound_path_loc = -1;
+  static s7_pointer mus_sound_path_symbol;
+#endif
+
+static Xen g_mus_set_sound_path(Xen val)
+{
+  Xen_check_type(Xen_is_list(val), val, 1, S_setB S_mus_sound_path, "a list");
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, mus_sound_path_symbol, val);
+  if (sound_path_loc != -1)
+    s7_gc_unprotect_at(s7, sound_path_loc);
+  sound_path = val;
+  sound_path_loc = s7_gc_protect(s7, sound_path);
+#else
+  if (sound_path != Xen_empty_list)
+    Xen_GC_unprotect(sound_path);
+  Xen_GC_protect(val);
+  sound_path = val;
+#endif
+  return(val);
+}
+
+
 static Xen g_mus_max_malloc(void)
 {
   #define H_mus_max_malloc "(" S_mus_max_malloc "): maximum number of bytes we will try to malloc."
@@ -1279,6 +1310,8 @@ Xen_wrap_no_args(g_mus_max_malloc_w, g_mus_max_malloc)
 Xen_wrap_1_arg(g_mus_set_max_malloc_w, g_mus_set_max_malloc)
 Xen_wrap_no_args(g_mus_max_table_size_w, g_mus_max_table_size)
 Xen_wrap_1_arg(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
+Xen_wrap_no_args(g_mus_sound_path_w, g_mus_sound_path)
+Xen_wrap_1_arg(g_mus_set_sound_path_w, g_mus_set_sound_path)
 
 
 
@@ -1286,6 +1319,7 @@ Xen_wrap_1_arg(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 void mus_sndlib_xen_initialize(void)
 {
   mus_sound_initialize();
+  sound_path = Xen_empty_list;
 
 #if HAVE_RUBY
   Init_Hook();
@@ -1413,6 +1447,8 @@ void mus_sndlib_xen_initialize(void)
 				   S_setB S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0);
   Xen_define_procedure_with_setter(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size,
 				   S_setB S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_mus_sound_path, g_mus_sound_path_w, H_mus_sound_path,
+				   S_setB S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0);
 
 #if HAVE_SCHEME
   mus_max_table_size_symbol = s7_define_variable(s7, "*" S_mus_max_table_size "*", s7_make_integer(s7, MUS_MAX_TABLE_SIZE_DEFAULT));
@@ -1422,6 +1458,10 @@ void mus_sndlib_xen_initialize(void)
   mus_max_malloc_symbol = s7_define_variable(s7, "*" S_mus_max_malloc "*", s7_make_integer(s7, MUS_MAX_MALLOC_DEFAULT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_max_malloc "*) (lambda (s v) (set! (" S_mus_max_malloc ") v)))");
   s7_symbol_set_documentation(s7, mus_max_malloc_symbol, "*mus-max-malloc*: maximum number of bytes we will try to malloc.");
+
+  mus_sound_path_symbol = s7_define_variable(s7, "*" S_mus_sound_path "*", s7_nil(s7));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_sound_path "*) (lambda (s v) (set! (" S_mus_sound_path ") v)))");
+  s7_symbol_set_documentation(s7, mus_sound_path_symbol, "*" S_mus_sound_path "* is a list of directories to search for sound files");
 #endif
 
 #if HAVE_OSS

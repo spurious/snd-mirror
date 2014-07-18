@@ -69947,11 +69947,5 @@ int main(int argc, char **argv)
  * Display needs lots of attention
  * pretty-print can end up way over to the right and needs to use ~|
  * lint could also use the proc-env for its controlling vars, snd-lint-info script[t940], track vars
- *
- * snd file search path, use *load-path* since it already is set up everywhere
-  Xen dirs; const char *path;
-  for (dirs = Xen_load_path; Xen_is_pair(dirs); dirs = Xen_cdr(dirs))
-    path = Xen_string_to_C_string(Xen_car(dirs));
-  two places in mus_expand_filename for this loop + search_load_path above
- *
+ * test mus-sound-path
  */

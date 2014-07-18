@@ -1115,6 +1115,17 @@ In s7, you can use the variable *mus-max-table-size* instead.
 <div class="spacer"></div>
 
 
+<!-- mus-sound-path -->
+<pre class="indented">
+<em class=def id="mussoundpath">mus-sound-path</em> (default: ())
+</pre>
+
+<p>This is the list of directories searched for an incompletely specified sound file.
+The current directory is always searched first.
+</p>
+<div class="spacer"></div>
+
+
 <!-- open-file-dialog-directory -->
 <pre class="indented">
 <em class=def id="openfiledialogdirectory">open-file-dialog-directory</em> (default: ".")
@@ -6574,12 +6585,7 @@ sets the global amp control (slider) bounds to be between 0.0 and 2.0, whereas
 
 <p id="currenteditposition">Many of the procedures also have an 'edpos' argument (standing for "edit position").
 It always defaults to the current edit history position.  If specified, it can be either an edit history position (to which
-the operation is applied), the constant current-edit-position (the default), or a function
-of two arguments, the sound and the channel number.  The function should return the
-desired edit history position. In most cases, you should only refer to edits in the past
-(that is, 'edpos' should be less than or equal to the current edit-position); in a few
-situations, you can make use of data in the "redo" section of the edit-history list, but
-nothing is guaranteed.  
+the operation is applied), or the constant current-edit-position.
 </p>
 
 <p id="regularizedargs">

@@ -73,6 +73,7 @@
 #define S_mus_sound_mark_info           "mus-sound-mark-info"
 #define S_mus_sound_maxamp              "mus-sound-maxamp"
 #define S_mus_sound_maxamp_exists       "mus-sound-maxamp-exists?"
+#define S_mus_sound_path                "mus-sound-path"
 #define S_mus_sound_prune               "mus-sound-prune"
 #define S_mus_sound_report_cache        "mus-sound-report-cache"
 #define S_mus_sound_samples             "mus-sound-samples"
@@ -88,4 +89,5 @@
 #define S_mus_unsupported               "mus-unsupported"
 #define S_mus_voc                       "mus-voc"
 #define S_new_sound_hook                "new-sound-hook"
+
 #endif

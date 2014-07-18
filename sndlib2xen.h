@@ -22,6 +22,8 @@ MUS_EXPORT Xen g_mus_sound_framples(Xen filename); /* snd-chn.c */
 MUS_EXPORT Xen g_mus_expand_filename(Xen file);    /* snd-snd.c */
 MUS_EXPORT Xen g_mus_sound_maxamp(Xen file);       /* snd-chn.c */
 
+MUS_EXPORT Xen g_mus_sound_path(void);
+
 #ifdef __cplusplus
 }
 #endif
