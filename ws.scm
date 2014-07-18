@@ -295,7 +295,7 @@
 		   (if *clm-player*
 		       (*clm-player* snd-output)
 		       (*default-player* snd-output))
-		   (*default-player* output-1))) ; this was (play output-1) which could not have worked?!
+		   (*default-player* output-1)))
 
 	   (if (and to-snd output-to-file)
 	       (begin

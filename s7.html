@@ -3336,6 +3336,37 @@ as "complex?"!):
 
 <div class="indented">
 <p>Currently some s7 functions ignore methods: cons, vector, list, and others of that ilk.
+Also, since outer-environment is settable, there are two ways an environment can
+become circular.  One is to include the current environment as the value of one of its variables.
+The other is:
+</p>
+<pre class="indented">
+(define e (let ((a 1))
+            (set! (outer-environment (current-environment)) (current-environment))))
+</pre>
+<p>Now "e" looks like a normal environment, and <code>(e 'a)</code> returns 1,
+but <code>(e anything-else)</code> hangs in an infinite loop.
+</p>
+
+<p>If you want to hide an environment's fields from any part of s7 that does not
+known the field names in advance,
+</p>
+<pre class="indented">
+(open-environment  ; make it appear to be empty to the rest of s7
+  (environment* 'object-&gt;string    (lambda args "#&lt;environment&gt;")
+                'map               (lambda args ())
+                'for-each          (lambda args #&lt;unspecified&gt;)
+  	        'environment-&gt;list (lambda args ())
+                'length            (lambda args 0)
+		'copy              (lambda args (environment*))
+		'open #t
+		'close-environment (lambda (e) (set! (e 'open) #f) e)
+		'open-environment  (lambda (e) (set! (e 'open) #t) e)
+		'open-environment? (lambda (e) (e 'open))
+                ;; your secret data here
+                ))
+</pre>
+<p>(There are still at least two ways to tell that something is fishy).
 </p>
 </div>
 </blockquote>
@@ -4533,8 +4564,16 @@ a          ; here s7 waited for me to type "a" in the terminal
 <p>Here the IO port is an open environment that redefines the "read" function so that it
 returns the next element of a vector.  See stuff.scm for call-with-output-vector.
 The "proc" argument above can also be a macro, giving you a kludgey way to get around
-the dumb "lambda" (see s7test.scm for a couple examples).
+the dumb "lambda" (see s7test.scm for a couple examples). A more useful example:
 </p>
+<pre class="indented">
+(open-environment          ; a soft port for format that sends its output to *stderr*
+  (environment* 'format    ;   and returns the string
+	        (lambda (port str . args)
+		  (let ((result (apply format #f str args)))
+		    (display result *stderr*)
+		    result))))
+</pre>
 </div>
 
 

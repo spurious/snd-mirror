@@ -1088,6 +1088,20 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	    (reverse lst)
 	    (append (reverse lst) args))))
  
+  (define (walk-let-body source)
+    (let ((previous (butlast source))
+	  (end (last source)))
+      `(begin
+	 ,@previous
+	 (let ((,result ,end))
+	   (with-environment (procedure-environment Display)
+	     (prepend-spaces))
+	   (format (Display-port) "  ~A~A) -> ~A~%"
+			   ,(if (pair? previous) " ... " "")
+			   ',end
+			   ,result)
+	   ,result))))
+
   (define (proc-walk source)
 
     (if (pair? source)
@@ -1100,13 +1114,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		(list (car source)               ; let
 		      (cadr source)              ; name
 		      (caddr source)             ; vars
-		      (display-format "(let ~A (~{~A~| ~}) ...))~%" (cadr source) '(outer-environment (current-environment))))
-		(proc-walk (cdddr source)))      ; body
+		      (display-format "(let ~A (~{~A~| ~})~%" (cadr source) '(outer-environment (current-environment))))
+		(walk-let-body (cdddr source)))      ; body
 	       (append 
 		(list (car source)               ; let
 		      (cadr source)              ; vars
-		      (display-format "(~A (~{~A~| ~}) ...)~%" (car source) '(outer-environment (current-environment))))
-		(proc-walk (cddr source)))))     ; body
+		      (display-format "(~A (~{~A~| ~})~%" (car source) '(outer-environment (current-environment))))
+		(walk-let-body (cddr source)))))     ; body
 
 	  ((or and)
 	   ;; report form that short-circuits the evaluation

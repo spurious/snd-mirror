@@ -3674,6 +3674,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;; this reads an HTML file, finds likely-looking scheme code, and runs lint over it.
+;;;    called on all snd files in hg.scm
 
 (define (html-lint file)
   

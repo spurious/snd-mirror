@@ -5460,7 +5460,8 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_open_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_open_environment "(open-environment? obj) returns #t is 'obj' has methods."
-  check_boolean_method(sc, has_methods, sc->IS_OPEN_ENVIRONMENT, args);
+  check_method(sc, car(args), sc->IS_OPEN_ENVIRONMENT, args);
+  return(make_boolean(sc, has_methods(car(args))));
 }
 
 
@@ -5656,6 +5657,7 @@ static s7_pointer augment_environment_1(s7_scheme *sc, s7_pointer e, s7_pointer 
   if (e == sc->global_env)
     new_e = new_frame_in_env(sc, sc->NIL);
   else new_e = new_frame_in_env(sc, e);
+  if (has_methods(e)) set_has_methods(new_e);
 
   if (!is_null(bindings))
     {
@@ -6101,8 +6103,10 @@ static s7_pointer g_set_outer_environment(s7_scheme *sc, s7_pointer args)
   new_outer = cadr(args);
   if (!is_environment(new_outer))
     return(wrong_type_argument_with_type(sc, sc->OUTER_ENVIRONMENT, small_int(2), new_outer, AN_ENVIRONMENT));  
-  if (new_outer == env) /* TODO: why not? */
+  /*
+  if (new_outer == env)
     return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_protected_string(sc, "can't set the outer-environment of env to env!"))));
+  */
   if (new_outer == sc->global_env)
     new_outer = sc->NIL;
 
@@ -34706,6 +34710,11 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
   
   switch (type(x))
     {
+    case T_UNIQUE: 
+      if (x == sc->UNSPECIFIED) return(y == sc->NO_VALUE);
+      if (x == sc->NO_VALUE) return(y == sc->UNSPECIFIED);
+      return(false);
+
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
@@ -34720,6 +34729,9 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
 
     case T_COUNTER:
       return(counter_count(x) == counter_count(y)); /* ?? not in s7_is_equal because it only occurs in a structure?? */
+
+    case T_SYNTAX:
+      return(slot_symbol(global_slot(x)) == slot_symbol(global_slot(y)));
 
     case T_ENVIRONMENT:
     case T_INT_VECTOR:
@@ -36241,6 +36253,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       return(sc->NIL);
       
     case T_ENVIRONMENT:
+      check_method(sc, obj, sc->ENVIRONMENT_TO_LIST, sc->NIL);
       return(s7_environment_to_list(sc, obj));
 
     case T_C_OBJECT:
@@ -69918,6 +69931,7 @@ int main(int argc, char **argv)
  * gmp method problems: should we insist on a 'bignum method?
  * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
  * if sounds were envs, all current args packaged as env, (map snd...) -> (map-sound ...) etc
+ * if (f a b), a and b have (different) f methods, who wins? in s7, a does.
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
@@ -69928,36 +69942,16 @@ int main(int argc, char **argv)
  *   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *   maybe gunichar->bytevector?
  *
- * there's still a problem with dynamic loading, clang, and freebsd
  * in Snd/ws.scm, if clm-file-name (or with-sound :output) is a vector, can we display it as if a sound?
- *   currently find-sound expects a string.
+ *   currently find-sound expects a string.  This is tricky...
  * Display needs lots of attention
  * pretty-print can end up way over to the right and needs to use ~|
- * perhaps: with_make_complex omit angle
  * lint could also use the proc-env for its controlling vars, snd-lint-info script[t940], track vars
  *
- * e can set out-e to itself (blocked now -- pointless since outer->outer->e), or to an embedded e: secret data?
- *  how is this GC-protected? mark-env! 
-(define e (let () 
-            (set! (outer-environment (current-environment)) 
-                  (let ((a 1)
-                        (b 2))
-                    (set! (outer-environment (current-environment)) (global-environment))
-                    (current-environment))) 
-            (current-environment)))
-e
-#<environment>
-(outer-environment e)
-#<environment 'a 1 'b 2>
-(outer-environment (outer-environment e))
-#<global-environment>
-
-but this is the same as 
-(let ((a 1)
-      (b 2))
-  (let ()
-    (current-environment)))
-
-    so (+ a b) at the outer let actually works!
-
+ * snd file search path, use *load-path* since it already is set up everywhere
+  Xen dirs; const char *path;
+  for (dirs = Xen_load_path; Xen_is_pair(dirs); dirs = Xen_cdr(dirs))
+    path = Xen_string_to_C_string(Xen_car(dirs));
+  two places in mus_expand_filename for this loop + search_load_path above
+ *
  */

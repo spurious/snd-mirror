@@ -680,6 +680,7 @@ case "$host" in
     if test "$GCC" = yes ; then
       SO_LD="$CC"
       SO_FLAGS="-fPIC $SO_FLAGS"
+      CFLAGS="-fPIC $CFLAGS"
       LDSO_FLAGS="-shared"
     fi
     ;;
@@ -731,7 +732,7 @@ ORIGINAL_LDFLAGS="$LDFLAGS"
 
 case "$host" in
   *-*-linux* | *-*-bsdi* | *-*-freebsd* | *-*-openbsd* | *-*-netbsd*) 
-    if test "$CC" = "gcc" || test "$CC" = "g++" ; then
+    if test "$CC" = "gcc" || test "$CC" = "g++" || test "$CC" = "cc" ; then
       LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
     fi
 esac
