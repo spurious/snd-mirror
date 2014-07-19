@@ -5193,6 +5193,7 @@ static int read_comdisco_header(const char *filename, int fd)
   char *line = NULL;
   int i, j, k, m, n, curend, offset, len, type, d_size = 0;
   bool happy = true, little, commenting;
+
   k = 15;
   line = (char *)calloc(256, sizeof(char));
   little = false;
@@ -5268,9 +5269,8 @@ static int read_comdisco_header(const char *filename, int fd)
     }
 
   /* now clean up this mess */
-  if (data_location == 0)
-    return(mus_error(MUS_HEADER_READ_FAILED, "%s: no $DATA BINARY field?", filename));
-  if (srate == 0) return(mus_error(MUS_HEADER_READ_FAILED, "%s: srate == 0", filename));
+  if (data_location == 0) {free(line); return(mus_error(MUS_HEADER_READ_FAILED, "%s: no $DATA BINARY field?", filename));}
+  if (srate == 0) {free(line); return(mus_error(MUS_HEADER_READ_FAILED, "%s: srate == 0", filename));}
   chans = 1;
   if (d_size != 0) data_size = (mus_long_t)d_size;
   switch (type)

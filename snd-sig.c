@@ -690,7 +690,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 	      idata0[j] = read_sample(c1);
 	      idata1[j] = read_sample(c0);
 	    }
-	  err = mus_file_write(ofd0, 0, j - 1, 1, data0);
+	  mus_file_write(ofd0, 0, j - 1, 1, data0);
 	  err = mus_file_write(ofd1, 0, j - 1, 1, data1);
 
 	  if (err != MUS_NO_ERROR) break;
@@ -784,11 +784,13 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
-	  if (ofile) free(ofile);
-	  return(mus_format("%s %s temp file %s: %s\n", 
+	  char *str;
+	  str = mus_format("%s %s temp file %s: %s\n", 
 			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			    caller, ofile, 
-			    snd_open_strerror()));
+			    snd_open_strerror());
+	  if (ofile) free(ofile);
+	  return(str);
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -1200,7 +1202,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
   else
     {
       mus_long_t next_pass;
-      mus_long_t cur_mark_sample = -1;
+      mus_long_t cur_mark_sample;
       int cur_mark = 0, cur_new_mark = 0;
       mus_float_t env_val;
 
@@ -3487,7 +3489,7 @@ static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_lon
   file_info *hdr;
   mus_long_t kp, samps = 0;
   int j = 0;
-  bool reporting = false;
+  bool reporting;
   io_error_t io_err = IO_NO_ERROR;
   Xen res = Xen_false;
 
@@ -3940,7 +3942,7 @@ static Xen g_map_chan_1(Xen proc_and_list, Xen s_beg, Xen s_end, Xen org, Xen sn
   int pos;
   bool temp_file = false, backup = false;
   Xen res = Xen_false;
-  Xen proc = Xen_false;
+  Xen proc;
 
   proc = proc_and_list;
 
@@ -4023,7 +4025,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   bool reporting = false;
   int counts = 0, pos;
   char *errmsg;
-  Xen proc = Xen_false;
+  Xen proc;
 
   proc = proc_and_list;
 

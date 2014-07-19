@@ -2850,7 +2850,7 @@ static Xen g_make_moving_any(xclm_moving_t choice, Xen arglist)
   Xen orig_v = Xen_false, p; 
   mus_float_t initial_element = 0.0;
   mus_float_t *line = NULL;
-  int scaler_key = -1, size_key = -1, initial_contents_key = -1, initial_element_key = -1;
+  int scaler_key = -1, size_key, initial_contents_key = -1, initial_element_key = -1;
   bool size_set = false;
   mus_error_handler_t *old_error_handler;
 
@@ -11177,7 +11177,6 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
   s7_Int pos, end;
   s7_pointer stepper, val, index_slot, locsym, obj, vec;
   s7_Int *step, *stop;
-  mus_any **fs;
   gf *gf1;
   int i, len;
   
@@ -11216,6 +11215,7 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
       s7_pointer *els;
       double x;
       bool is_delay = true;
+      mus_any **fs;
       
       fs = (mus_any **)malloc(len * sizeof(mus_any *));
       els = s7_vector_elements(vec);
@@ -11264,6 +11264,7 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
 	      }
 
 	    clear_gen_list();
+	    free(fs);
 	    return(args);
 	  }
 	}
@@ -11278,6 +11279,7 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
       (*step) = end;
       gf_free(gf1);
       clear_gen_list();
+      free(fs);
       return(args);
     }
   /* ---------------------------------------- */
@@ -14909,6 +14911,8 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 
 	  for (; pos < end; pos++)
 	    vdata[pos] += mus_delay_unmodulated_noz(dly, vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0))));
+
+	  free(outs);
 	  return(args);
 	}
     }

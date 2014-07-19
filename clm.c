@@ -3762,12 +3762,12 @@ static char *describe_polywave(mus_any *ptr)
   str = float_array_to_string(gen->coeffs, gen->n, 0);
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
   snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, coeffs[%d]: %s",
-	       mus_name(ptr),
-	       mus_frequency(ptr),
-	       mus_phase(ptr),
-	       gen->n,
-	       str);
-  if (str) free(str);
+	   mus_name(ptr),
+	   mus_frequency(ptr),
+	   mus_phase(ptr),
+	   gen->n,
+	   str);
+  free(str);
   return(describe_buffer);
 }
 
@@ -10608,8 +10608,7 @@ mus_float_t *mus_file_to_frample(mus_any *ptr, mus_long_t samp, mus_float_t *f)
   int i;
 
   if ((samp <= gen->data_end) &&
-      (samp >= gen->data_start) &&
-      (gen->chans <= gen->chans))
+      (samp >= gen->data_start))
     {
       mus_long_t pos;
       pos = samp - gen->data_start;
@@ -14757,7 +14756,7 @@ mus_float_t *mus_correlate(mus_float_t *data1, mus_float_t *data2, mus_long_t n)
 mus_float_t *mus_cepstrum(mus_float_t *data, mus_long_t n)
 {
   mus_float_t *rl, *im;
-  mus_float_t fscl = 0.0, lowest;
+  mus_float_t fscl, lowest;
   mus_long_t i;
 
   lowest = 0.00000001;

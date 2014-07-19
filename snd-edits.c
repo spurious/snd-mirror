@@ -5552,6 +5552,8 @@ io_error_t save_edits_and_update_display(snd_info *sp)
 	  int j;
 	  for (j = 0; j < i; j++) free_snd_fd(sf[j]);
 	  free(sf);
+	  if (vals) free(vals);
+	  if (times) free(times);
 	  return(IO_BAD_CHANNEL);
 	}
       if (samples < current_samples(sp->chans[i]))

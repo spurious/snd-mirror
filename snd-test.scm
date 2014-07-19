@@ -455,7 +455,6 @@
 
 (require snd-hooks.scm snd-ws.scm)
 
-
 (define (set-arity-ok func args)
   (let ((arit (if (procedure-with-setter? func)
 		   (procedure-arity (procedure-setter func))
@@ -2379,7 +2378,7 @@
 		       'mus-run 'mus-scaler 'mus-set-formant-radius-and-frequency 'mus-sound-chans 
 		       'mus-sound-comment 'mus-sound-data-format 'mus-sound-data-location 'mus-sound-datum-size
 		       'mus-sound-duration 'mus-sound-forget 'mus-sound-framples 'mus-sound-header-type 'mus-sound-length
-		       'mus-sound-loop-info 'mus-sound-mark-info 'mus-sound-maxamp 'mus-sound-maxamp-exists?
+		       'mus-sound-loop-info 'mus-sound-mark-info 'mus-sound-maxamp 'mus-sound-maxamp-exists? 'mus-sound-path
 		       'mus-sound-prune 'mus-sound-report-cache 'mus-sound-samples
 		       'mus-sound-srate 'mus-sound-type-specifier 'mus-sound-write-date
 		       'mus-soundfont 'mus-srate 'mus-svx 'mus-ubshort
@@ -2631,6 +2630,20 @@
 	  (close-sound index)
 	  (mus-sound-forget long-file-name)
 	  (delete-file long-file-name))
+
+	(let ((old-sound-path (mus-sound-path)))
+	  (set! *mus-sound-path* (list "/home/bil/sf1"))
+	  (let ((ind (open-sound "o2.bicsf")))
+	    (if (not (sound? ind))
+		(snd-display #__line__ ";mus-sound-path: ~A~%" ind)
+		(begin
+		  (close-sound ind)
+		  (set! *mus-sound-path* (list "/home/bil/sf1/"))
+		  (set! ind (open-sound "o2.bicsf"))
+		  (if (not (sound? ind))
+		      (snd-display #__line__ ";mus-sound-path/: ~A~%" ind)
+		      (close-sound ind)))))
+	  (set! (mus-sound-path) old-sound-path))
 	
 	(let ((fsnd (string-append sf-dir "forest.aiff")))
 	  (if (file-exists? fsnd)

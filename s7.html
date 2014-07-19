@@ -3909,7 +3909,7 @@ floats in the "~X" case.  So in s7,
 <p>That is, the output choice matches the argument.  A case that came up in the Guile mailing lists is:
 <code>(format #f "~F" 1/3)</code>.  s7 currently returns "1/3", but Clisp returns "0.33333334".
 </p>
-
+<br>
 <p>The curly bracket directive applies to anything you can map over, not just lists:
 </p>
 
@@ -3921,7 +3921,7 @@ floats in the "~X" case.  So in s7,
 &gt; (with-input-from-string (format #f "(~{~C~^ ~})" (format #f "~B" 1367)) read) ; integer-&gt;list
 (1 0 1 0 1 0 1 0 1 1 1)
 </pre>
-
+<br>
 <p>The ~'&lt;...~&gt; directive takes the stuff inside the brackets, and interprets it as s7 code.
 If the result is not a string, object-&gt;string is called.  The string is then inserted into
 the format output string.
@@ -3958,7 +3958,7 @@ This feature has been shoe-horned into pre-existing code, so it is not yet very 
 if the code in the brackets raises an error (even within a catch), you may get an
 incomplete evaluation.  
 </p>
-
+<br>
 <p>Many Schemes provide ~_ with a numeric argument for spaces.  In s7, use 
 something like <code>(format #f (format #f "~~~DC" n) #\space)</code>
 which outputs n spaces.

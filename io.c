@@ -2249,10 +2249,13 @@ char *mus_expand_filename(const char *filename)
 	    {
 	      char *nfile;
 	      const char *path;
+	      int path_len;
 	      path = Xen_string_to_C_string(Xen_car(p));
-	      nfile = (char *)malloc((len + sndlib_strlen(path) + 4) * sizeof(char));
+	      path_len = sndlib_strlen(path);
+	      nfile = (char *)malloc((len + path_len + 4) * sizeof(char));
 	      strcpy(nfile, path);
-	      strcat(nfile, "/");
+	      if (path[path_len - 1] != '/')
+		strcat(nfile, "/");
 	      strcat(nfile, filename);
 	      if (mus_file_probe(nfile))
 		{

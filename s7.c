@@ -2507,6 +2507,7 @@ static int safe_strcmp(const char *s1, const char *s2)
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice);
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
 static bool is_all_x_safe(s7_scheme *sc, s7_pointer p);
+static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg);
 static void annotate_args(s7_scheme *sc, s7_pointer args);
 static void annotate_arg(s7_scheme *sc, s7_pointer arg);
 static void mark_embedded_objects(s7_pointer a); /* called by gc, calls c_obj's mark func */
@@ -4325,7 +4326,6 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 
     case T_VECTOR:
       {
-	s7_Int i;
 	/* this can happen if a global function has an explicit vector constant.  (The vector remains in the sc->vectors
 	 *    array forever -- also in the gensym case below).
 	 */
@@ -4338,6 +4338,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	if ((!vector_has_dimensional_info(x)) ||
 	    (shared_vector(x) == sc->F))
 	  {
+	    s7_Int i;
 	    for (i = 0; i < vector_length(x); i++)
 	      s7_remove_from_heap(sc, vector_element(x, i));
 	  }
@@ -5652,7 +5653,6 @@ environment."
 static s7_pointer augment_environment_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_pointer caller)
 {
   s7_pointer new_e;
-  int i;
 
   if (e == sc->global_env)
     new_e = new_frame_in_env(sc, sc->NIL);
@@ -5661,6 +5661,7 @@ static s7_pointer augment_environment_1(s7_scheme *sc, s7_pointer e, s7_pointer 
 
   if (!is_null(bindings))
     {
+      int i;
       s7_pointer x;
       sc->temp3 = new_e;
 
@@ -6253,9 +6254,9 @@ s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst)
 
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
-  s7_pointer x;
   if (is_environment(local_env))
     {
+      s7_pointer x;
       for (x = local_env; is_environment(x); x = next_environment(x))
 	{
 	  s7_pointer y;
@@ -7040,13 +7041,12 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 
   for (i = s7_stack_top(sc) - 1; i > 0; i -= 4)
     {
-      s7_pointer x;
-
       op = stack_op(sc->stack, i);
       switch (op)
 	{
 	case OP_DYNAMIC_WIND:
 	  {
+	    s7_pointer x;
 	    int j;
 	    x = stack_code(sc->stack, i);
 	    for (j = 3; j < continuation_stack_top(c); j += 4)
@@ -7652,8 +7652,6 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
   double x0, x1, val;
   s7_Int i, i0, i1, r, r1, p0, q0, p1, q1;
   double e0, e1, e0p, e1p;
-  s7_Int old_p1, old_q1;
-  double old_e0, old_e1, old_e0p;
   int tries = 0;
   /* don't use s7_Double here;  if it is "long double", the loop below will hang */
 
@@ -7713,6 +7711,8 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
 
   while (true)
     {
+      s7_Int old_p1, old_q1;
+      double old_e0, old_e1, old_e0p;
       val = (double)p0 / (double)q0;
       
       if (((x0 <= val) && (val <= x1)) ||
@@ -9682,7 +9682,6 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
   if (int_len <= max_len)
     {
-      char *iend;
       int int_exponent;
 
       /* a better algorithm (since the inaccuracies are in the radix^exponent portion):
@@ -9697,6 +9696,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
       int_exponent = exponent;
       if (int_len > 0)
 	{
+	  char *iend;
 	  iend = (char *)(str + int_len - 1);
 	  while ((*iend == '0') && (iend != str)) {iend--; int_exponent++;}
 
@@ -15059,9 +15059,9 @@ static s7_pointer g_invert_1(s7_scheme *sc, s7_pointer args)
 static s7_pointer divide_1r;
 static s7_pointer g_divide_1r(s7_scheme *sc, s7_pointer args)
 {
-  s7_Double rl;
   if (s7_is_real(cadr(args)))
     {
+      s7_Double rl;
       rl = number_to_double(sc, cadr(args), "/");
       if (rl == 0.0)
 	return(division_by_zero_error(sc, sc->DIVIDE, args));
@@ -18280,11 +18280,11 @@ s7_pointer s7_random_state_to_list(s7_scheme *sc, s7_pointer args)
 You can later apply make-random-state to this list to continue a random number sequence from any point."
 
   s7_rng_t *r = NULL;
-  s7_pointer obj;
   if (is_null(args))
     r = sc->default_rng;
   else
     {
+      s7_pointer obj;
       obj = car(args);
       if ((!is_c_object(obj)) ||
 	  (c_object_type(obj) != sc->rng_tag))
@@ -19072,7 +19072,6 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_position "(char-position char-or-str str (start 0)) returns the position of the first occurrence of char in str, or #f"
   const char *porig, *p, *pset;
-  char c;
   s7_Int start = 0, pos, len; /* not "int" because start arg might be most-negative-fixnum */
   s7_pointer arg1, arg2;
 
@@ -19104,6 +19103,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 
   if (s7_is_character(arg1))
     {
+      char c;
       c = character(arg1);
       p = strchr((const char *)(porig + start), (int)c); /* use strchrnul in Gnu C to catch embedded null case */
       if (p)
@@ -22726,10 +22726,10 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
   for (i = 0; i < len; i++)
     {
       const char *new_dir;
-      int size;
       new_dir = string_value(s7_list_ref(sc, lst, i));
       if (new_dir)
 	{
+	  int size;
 	  char *new_name;
 	  FILE *fp;
 	  size = name_len + safe_strlen(new_dir) + 2;
@@ -22880,12 +22880,11 @@ defaults to the global environment.  To load into the current environment instea
 	(strcmp((const char *)(fname + (fname_len - 3)), ".so") == 0))
       {
 	s7_pointer init;
-	const char *init_name = NULL;
-	void *library;
-
 	init = s7_environment_ref(sc, sc->envir, s7_make_symbol(sc, "init_func"));
 	if (is_symbol(init))
 	  {
+	    void *library;
+	    const char *init_name = NULL;
 	    char *pwd_name;
 	    pwd_name = full_filename(fname);
 	    init_name = symbol_name(init);
@@ -23802,7 +23801,6 @@ static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top, 
 
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length)
 {
-  int i;
   /* look for top in current list.
    * 
    * As we collect objects (guaranteed to have structure) we set the collected bit.  If we ever
@@ -23812,6 +23810,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
   if (is_collected(top))
     {
       s7_pointer *p, *objs_end;
+      int i;
       objs_end = (s7_pointer *)(ci->objs + ci->top);
 
       for (p = ci->objs; p < objs_end; p++)
@@ -23938,13 +23937,13 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
   s7_pointer *ci_objs;
   int *ci_refs;
   bool no_problem = true;
-  s7_pointer x;
 
   /* check for simple cases first */
   if (is_pair(top))
     {
       if (s7_list_length(sc, top) != 0) /* it is not circular at the top level (following cdr), so we can check each car(x) */
 	{
+	  s7_pointer x;
 	  for (x = top; is_pair(x); x = cdr(x))
 	    if (has_structure(car(x)))
 	      {
@@ -24755,8 +24754,6 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
        * or (let ((b #f)) (set! b (current-environment)) (current-environment))
        *    #1=#<environment 'b #1#>
        */
-      s7_pointer x;
-      
       if (use_write == USE_READABLE_WRITE)
 	{
 	  if (obj == sc->error_env)
@@ -24767,6 +24764,7 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 		port_write_string(port)(sc, "*stacktrace*", 12, port);
 	      else
 		{
+		  s7_pointer x;
 		  port_write_string(port)(sc, "(let (({e} (environment))) ", 27, port);
 		  if ((ci) &&
 		      (shared_ref(ci, obj) < 0))
@@ -25781,10 +25779,10 @@ static void format_append_string(s7_scheme *sc, format_data *fdat, const char *s
 static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const char *str, s7_pointer args, format_data *fdat)
 {
   int i, arg1 = -1;
-  char *tmp;
   i = *cur_i;
   if (isdigit(str[i]))
     {
+      char *tmp;
       tmp = (char *)(str + i);
       if (sscanf(tmp, "%d", &arg1) < 1)
 	format_error(sc, "bad number?", str, args, fdat);
@@ -28650,6 +28648,32 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 		}
 	      return(sc->F);
 	    }
+
+	  if ((is_closure(eq_func)) &&
+	      (is_pair(closure_args(eq_func))))
+	    {
+	      s7_pointer body;
+	      body = closure_body(eq_func);
+	      if ((is_optimized(car(body))) &&
+		  (is_null(cdr(body))) &&
+		  (is_all_x_safe(sc, car(body))))
+		{
+		  s7_function func;
+		  s7_pointer b;
+
+		  NEW_FRAME_WITH_TWO_SLOTS(sc, sc->envir, sc->envir, car(closure_args(eq_func)), car(args), cadr(closure_args(eq_func)), sc->F);
+		  func = all_x_eval(sc, car(body));
+		  b = next_slot(environment_slots(sc->envir));
+
+		  for (; is_pair(x); x = cdr(x))
+		    {
+		      slot_value(b) = caar(x);
+		      if (is_true(sc, (*func)(sc, car(body))))
+			return(car(x));
+		    }
+		  return(sc->F);
+		}
+	    }
 	}
 
       /* sc->value = sc->F; */
@@ -29063,6 +29087,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
       if (!s7_is_aritable(sc, eq_func, 2))
 	return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, 
 					     make_protected_string(sc, "a procedure that can take 2 arguments")));
+
       /* now maybe there's a simple case */
       if (s7_list_length(sc, x) > 0)
 	{
@@ -29081,6 +29106,32 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 		    return(x);
 		}
 	      return(sc->F);
+	    }
+
+	  if ((is_closure(eq_func)) &&
+	      (is_pair(closure_args(eq_func))))
+	    {
+	      s7_pointer body;
+	      body = closure_body(eq_func);
+	      if ((is_optimized(car(body))) &&
+		  (is_null(cdr(body))) &&
+		  (is_all_x_safe(sc, car(body))))
+		{
+		  s7_function func;
+		  s7_pointer b;
+
+		  NEW_FRAME_WITH_TWO_SLOTS(sc, sc->envir, sc->envir, car(closure_args(eq_func)), car(args), cadr(closure_args(eq_func)), sc->F);
+		  func = all_x_eval(sc, car(body));
+		  b = next_slot(environment_slots(sc->envir));
+
+		  for (; is_pair(x); x = cdr(x))
+		    {
+		      slot_value(b) = car(x);
+		      if (is_true(sc, (*func)(sc, car(body))))
+			return(x);
+		    }
+		  return(sc->F);
+		}
 	    }
 	}
 
@@ -30183,13 +30234,14 @@ s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill)
 static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector "(vector ...) returns a vector whose elements are the arguments"
-  s7_Int i, len;
+  s7_Int len;
   s7_pointer vec;
   
   len = s7_list_length(sc, args);
   vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
   if (len > 0)
     {
+      s7_Int i;
       s7_pointer x;
       for (x = args, i = 0; is_pair(x); x = cdr(x), i++) 
 	vector_element(vec, i) = car(x);
@@ -30798,7 +30850,6 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
     }
   else
     {
-      s7_pointer y;
       if (!(is_pair(x)))
 	{
 	  check_method(sc, x, sc->MAKE_VECTOR, args);
@@ -30813,6 +30864,7 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
       else
 	{
 	  int dims;
+	  s7_pointer y;
 
 	  dims = s7_list_length(sc, x);
 	  if (dims <= 0)                /* 0 if circular, negative if dotted */
@@ -32112,7 +32164,6 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 
       if (eq_arg != sc->GC_NIL)
 	{
-	  s7_pointer ht;
 	  int typ;
 	  typ = type(eq_arg);
 	  /* true procedure needed here else (make-hash-table ()) will work
@@ -32126,6 +32177,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	   */
 	  if (is_c_function(eq_arg)) /* we need to restrict this function so that hash-table-ref|set! remain safe functions */
 	    {
+	      s7_pointer ht;
 	      ht = s7_make_hash_table(sc, size);
 	      hash_table_function(ht) = hash_eq_func;
 	      hash_table_eq_function(ht) = eq_arg;
@@ -32159,7 +32211,6 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
   else
     {
       unsigned int hash_len, loc;
-      int typ;
 
       hash_len = hash_table_length(table) - 1;
       loc = hash_loc(sc, key) & hash_len;
@@ -32167,6 +32218,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 
       if (hash_table_function(table) != hash_eq_func)
 	{
+	  int typ;
 	  typ = type(key);
 	  if (hash_table_function(table) == hash_empty)
 	    {
@@ -32379,7 +32431,7 @@ static s7_pointer g_hash_table(s7_scheme *sc, s7_pointer args)
   #define H_hash_table "(hash-table ...) returns a hash-table containing the cons's passed as its arguments. \
 That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with the two key/value pairs preinstalled."
 
-  int len, ht_loc;
+  int len;
   s7_pointer x, ht;
 
   /* this accepts repeated keys: (hash-table '(a . 1) '(a . 1)) -- or just '(a) for that matter
@@ -32392,6 +32444,7 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
   ht = s7_make_hash_table(sc, (len > 512) ? 4095 : 511);
   if (len > 0)
     {
+      int ht_loc;
       ht_loc = s7_gc_protect(sc, ht); /* hash_table_set can cons, so we need to protect this */
       for (x = args; is_pair(x); x = cdr(x)) 
 	{
@@ -32916,7 +32969,6 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc,
 		      (typ == T_CLOSURE)         || 
 		      (typ == T_CLOSURE_STAR)    ||
-		      (typ >= T_C_FUNCTION)      ||
 		      (typ >= T_C_FUNCTION_STAR) ||
 		      (typ == T_GOTO)            ||
 		      (typ == T_CONTINUATION)));
@@ -34866,10 +34918,9 @@ static bool environments_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, sh
 static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   /* here we know x and y are pointers to the same type of structure */
-  int ref_x, ref_y;
-
   if (ci)
     {
+      int ref_x, ref_y;
       ref_x = peek_shared_ref(ci, x);
       ref_y = peek_shared_ref(ci, y);
 
@@ -35042,8 +35093,6 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       return(structures_are_equal(sc, x, y, new_shared_info(sc)));
 #endif
 
-      return(structures_are_equal(sc, x, y, new_shared_info(sc)));
-
     case T_C_POINTER:
       return(raw_pointer(x) == raw_pointer(y));
     }
@@ -35131,10 +35180,9 @@ static bool floats_are_morally_equal(s7_Double x, s7_Double y)
 static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   /* here we know x and y are pointers to the same type of structure */
-  int ref_x, ref_y;
-
   if (ci)
     {
+      int ref_x, ref_y;
       ref_x = peek_shared_ref(ci, x);
       ref_y = peek_shared_ref(ci, y);
       
@@ -36043,13 +36091,13 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
     case T_STRING:
       {
 	int i, j, len;
-	char c;
 	char *str;
 
 	len = string_length(p);
 	str = string_value(p);
 	for (i = 0, j = len - 1; i < j; i++, j--)
 	  {
+	    char c;
 	    c = str[i];
 	    str[i] = str[j];
 	    str[j] = c;
@@ -36061,12 +36109,12 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       {
 	s7_Int i, j, len;
 	s7_Int *d;
-	s7_Int temp;
 
 	len = vector_length(p);
 	d = int_vector_elements(p);
 	for (i = 0, j = len - 1; i < j; i++, j--)
 	  {
+	    s7_Int temp;
 	    temp = d[i];
 	    d[i] = d[j];
 	    d[j] = temp;
@@ -36078,12 +36126,12 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       {
 	s7_Int i, j, len;
 	s7_Double *d;
-	s7_Double temp;
 
 	len = vector_length(p);
 	d = float_vector_elements(p);
 	for (i = 0, j = len - 1; i < j; i++, j--)
 	  {
+	    s7_Double temp;
 	    temp = d[i];
 	    d[i] = d[j];
 	    d[j] = temp;
@@ -36095,12 +36143,12 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       {
 	s7_Int i, j, len;
 	s7_pointer *d;
-	s7_pointer temp;
 
 	len = vector_length(p);
 	d = vector_elements(p);
 	for (i = 0, j = len - 1; i < j; i++, j--)
 	  {
+	    s7_pointer temp;
 	    temp = d[i];
 	    d[i] = d[j];
 	    d[j] = temp;
@@ -37121,7 +37169,7 @@ static int file_names_top = -1;
 
 static int remember_file_name(s7_scheme *sc, const char *file)
 {
-  int i, old_size = 0;
+  int i;
 
   for (i = 0; i <= file_names_top; i++)
     if (safe_strcmp(file, string_value(file_names[i])) == 0)
@@ -37130,6 +37178,7 @@ static int remember_file_name(s7_scheme *sc, const char *file)
   file_names_top++;
   if (file_names_top >= file_names_size)
     {
+      int old_size = 0;
       if (file_names_size == 0)
 	{
 	  file_names_size = INITIAL_FILE_NAMES_SIZE;
@@ -39600,12 +39649,13 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	 * ndims in the vector struct is an unsigned int, so we'll complain if it goes over short max for now
 	 */
 	s7_Int dims;
-	int dig, d, loc = 0;
+	int d, loc = 0;
 	sc->strbuf[loc++] = c;
 	dims = digits[c];
 	
 	while (true)
 	  {
+	    s7_Int dig;
 	    d = inchar(pt);
 	    if (d == EOF)
 	      s7_error(sc, sc->READ_ERROR,
@@ -39699,11 +39749,10 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
        */
     case '|':
       {
-	char last_char;
-	last_char = ' ';
-	
 	if (is_file_port(pt))
 	  {
+	    char last_char;
+	    last_char = ' ';
 	    while (true)
 	      {
 		c = fgetc(port_file(pt));
@@ -39871,7 +39920,7 @@ static int read_x_char(s7_pointer pt)
   /* possible "\xnn" char (write creates these things, so we have to read them) 
    *   but we could have crazy input like "\x -- with no trailing double quote
    */
-  int d1, d2, c;
+  int d1, c;
 
   c = inchar(pt);
   if (c == EOF)
@@ -39880,6 +39929,7 @@ static int read_x_char(s7_pointer pt)
   d1 = digits[c];
   if (d1 < 16)
     {
+      int d2;
       c = inchar(pt);
       if (c == EOF)
 	return(NOT_AN_X_CHAR);
@@ -39900,7 +39950,6 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
    *   no check needed here for bad input port and so on
    */
   unsigned int i = 0;
-  int c;
 
   if (is_string_port(pt)) 
     {
@@ -39968,6 +40017,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
   while (true)
     {
       /* splitting this check out and duplicating the loop was slower?!? */
+      int c;
       c = port_read_character(pt)(sc, pt);
 
       switch (c)
@@ -40908,13 +40958,14 @@ static s7_pointer format_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
       if (args == 2) 
 	{
 	  int len;
-	  const char *p, *orig;
+	  const char *orig;
 
 	  orig = (const char *)string_value(str_arg);
 	  len = string_length(str_arg);
 	  if ((len > 1) &&
 	      (orig[len - 1] == '%'))
 	    {
+	      const char *p;
 	      p = strchr(orig, (int)'~');
 	      if ((p) && ((p - orig) == len - 2))
 		return(format_just_newline);
@@ -63695,7 +63746,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     default:
       fprintf(stderr, "unknown operator: %d, %s in %s\n", 
 	      (int)(sc->op), 
-	      (((int)(sc->op) < OP_MAX_DEFINED) && ((int)(sc->op) >= 0)) ? op_names[(int)(sc->op)] : "?",
+	      ((int)(sc->op) < OP_MAX_DEFINED) ? op_names[(int)(sc->op)] : "?",
 	      DISPLAY(sc->cur_code));
       return(sc->F);
     }
@@ -69873,7 +69924,7 @@ int main(int argc, char **argv)
     {
       while (true)
 	{
-	  char *line_read = NULL, *temp;
+	  char *line_read = NULL;
 	  line_read = readline("s7> ");
 	  if (line_read)
 	    {
@@ -69882,9 +69933,7 @@ int main(int argc, char **argv)
 	      while ((str) && (isspace(str[0]))) str++;
 	      if (*str)
 		{
-		  int len;
 		  s7_pointer result;
-		  len = strlen(str);
 		  add_history(str);
 		  result = s7_eval_c_string(s7, str);
 		  s7_write(s7, result, s7_current_output_port(s7));   /* use write, not display so that strings are in double quotes */
@@ -69947,5 +69996,4 @@ int main(int argc, char **argv)
  * Display needs lots of attention
  * pretty-print can end up way over to the right and needs to use ~|
  * lint could also use the proc-env for its controlling vars, snd-lint-info script[t940], track vars
- * test mus-sound-path
  */

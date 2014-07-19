@@ -130,7 +130,7 @@
     (define (pair-or-null? obj) ; list? is proper-list?
       (or (pair? obj)
 	  (null? obj)))
-    
+
     (let ((no-side-effect-functions 
 	   (let ((ht (make-hash-table)))
 	     (for-each
@@ -679,7 +679,38 @@
 	  (last-simplify-boolean-line-number -1)
 	  (last-simplify-numeric-line-number -1)
 	  (line-number -1))
-      
+
+
+      ;; vector or list versions
+      (define var-name (make-procedure-with-setter (lambda (v) (v 0)) (lambda (v x) (set! (v 0) x))))
+      (define var-ref (make-procedure-with-setter (lambda (v) (v 1)) (lambda (v x) (set! (v 1) x))))
+      (define var-set (make-procedure-with-setter (lambda (v) (v 2)) (lambda (v x) (set! (v 2) x))))
+      (define var-typ (make-procedure-with-setter (lambda (v) (v 3)) (lambda (v x) (set! (v 3) x))))
+      (define var-init (make-procedure-with-setter (lambda (v) (v 4)) (lambda (v x) (set! (v 4) x))))
+#|      
+      ;; vector version
+      (define* (make-var name ref set typ init :allow-other-keys) (vector name ref set typ init))
+      (define var? vector?)
+      (define (mf a b) (eq? a (vector-ref b 0)))
+      (define (var-member v q) (let ((lst (member v q mf))) (and lst (car lst))))
+|#
+      ;; list version
+      (define* (make-var name ref set typ init :allow-other-keys) (list name ref set typ init))
+      (define var? pair?)
+      (define var-member assq)
+#|
+      ;; environment version
+      (define var-name (make-procedure-with-setter (lambda (v) (v 'name)) (lambda (v x) (set! (v 'name) x))))
+      (define var-ref (make-procedure-with-setter (lambda (v) (v 'ref)) (lambda (v x) (set! (v 'ref) x))))
+      (define var-set (make-procedure-with-setter (lambda (v) (v 'set)) (lambda (v x) (set! (v 'set) x))))
+      (define var-typ (make-procedure-with-setter (lambda (v) (v 'typ)) (lambda (v x) (set! (v 'typ) x))))
+      (define var-init (make-procedure-with-setter (lambda (v) (v 'init)) (lambda (v x) (set! (v 'init) x))))
+      (define* (make-var name ref set typ init :allow-other-keys) (environment* 'name name 'ref ref 'set set 'typ typ 'init init))
+      (define var? environment?)
+      (define (mf a b) (eq? a (environment-ref b 'name)))
+      (define (var-member v q) (let ((lst (member v q mf))) (and lst (car lst))))
+|#
+
       (define (->type c)
 	(cond ((integer? c) +integer+)
 	      ((number? c) +not-integer+)
@@ -770,11 +801,10 @@
 		   #f)))
 	    (and (symbol? form)
 		 (not (hash-table-ref no-side-effect-functions form))
-		 (let ((e (or (assq form env) (hash-table-ref globals form))))
+		 (let ((e (or (var-member form env) (hash-table-ref globals form))))
 		   (or (not e)
-		       (and (pair? e)
-			    (>= (length e) 4)
-			    (pair? (list-ref e 3)))))))) ; it is a local function
+		       (and (var? e)
+			    (pair? (var-typ e)))))))) ; it is a local function
 
       (define (just-constants? form env)
 	;; can we probably evaluate form given just built-in stuff?
@@ -785,7 +815,7 @@
 		 (or (and (symbol? (car form))
 			  (hash-table-ref no-side-effect-functions (car form))
 			  (not (hash-table-ref globals (car form)))
-			  (not (assq (car form) env))) ; e.g. exp declared locally as a list
+			  (not (var-member (car form) env))) ; e.g. exp declared locally as a list
 		     (and (constant? (car form))
 			  (not (pair? (car form)))
 			  (not (vector? (car form)))))
@@ -907,13 +937,12 @@
 		      (if (symbol? arg)
 			  ;; if we're in a loop of some sort and the set! follows the ref,
 			  ;;   this can be fooled.
-			  (let ((var-data (or (assq arg env) (hash-table-ref globals arg))))
-			    (if (and (pair? var-data)
-				     (not (list-ref var-data 1)) ; a stop-gap -- refd?
-				     (not (list-ref var-data 2)) ;               set?
-				     (>= (length var-data) 5)
-				     (not (memq (list-ref var-data 4) (list +any+ +symbol+)))
-				     (not (checker (list-ref var-data 4))))
+			  (let ((var-data (or (var-member arg env) (hash-table-ref globals arg))))
+			    (if (and (var? var-data)
+				     (not (var-ref var-data)) ; a stop-gap -- refd?
+				     (not (var-set var-data)) ;               set?
+				     (not (memq (var-init var-data) (list +any+ +symbol+)))
+				     (not (checker (var-init var-data))))
 				(lint-format "~A's argument ~D might not be a~A ~A: ~S:~A" 
 					     name head arg-number 
 					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
@@ -921,7 +950,7 @@
 					     (truncated-list->string form))))
 #|
 ;; this makes too many mistakes (angle as env field in generators.scm)
-				(if (and (not (assq arg env))
+				(if (and (not (var-member arg env))
 					 (hash-table-ref globals arg)
 					 (not (checker (symbol->value arg))))
 				    (lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
@@ -947,15 +976,15 @@
       
       (define (set-ref? name env)
 	;; if name is in env, set its "I've been referenced" flag
-	(let ((data (or (assq name env) (hash-table-ref globals name))))
-	  (if (pair? data)
-	      (list-set! data 1 #t))))
+	(let ((data (or (var-member name env) (hash-table-ref globals name))))
+	  (if (var? data)
+	      (set! (var-ref data) #t))))
       
       
       (define (set-set? name env)
-	(let ((data (or (assq name env) (hash-table-ref globals name))))
-	  (if (pair? data)
-	      (list-set! data 2 #t)))) ; "I've been set"
+	(let ((data (or (var-member name env) (hash-table-ref globals name))))
+	  (if (var? data)
+	      (set! (var-set data) #t)))) ; "I've been set"
       
       
       (define (proper-list lst)
@@ -968,7 +997,7 @@
 			  () 
 			  (list (cdr lst)))))
 	    lst))
-      
+
       
       (define (keywords lst)
 	(count-if keyword? lst))
@@ -1338,7 +1367,7 @@
 					  (symbol? (car arg))
 					  (not (hash-table-ref globals (car arg)))
 					  (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f integer-or-f)))
-					  (not (assq (car arg) env))))
+					  (not (var-member (car arg) env))))
 				 #f
 				 (if (and (pair? arg)               ; (not (not ...)) -> ...
 					  (pair? (cdr arg))
@@ -1556,7 +1585,7 @@
 	    (if (or (not (pair? x))                      ; constants and the like look dumb if simplified
 		    (hash-table-ref globals (car x))
 		    (not (hash-table-ref no-side-effect-functions (car x)))
-		    (assq (car x) env))
+		    (var-member (car x) env))
 		x
 		(let ((f (simplify-numerics x env)))
 		  (if (and (pair? f)
@@ -2349,14 +2378,14 @@
       
       
       (define (check-call name head form env)
-	(let ((fdata (or (assq head env) (hash-table-ref globals head))))
-	  (if (pair? fdata)
+	(let ((fdata (or (var-member head env) (hash-table-ref globals head))))
+	  ;(format *stderr* "call: ~A~%" fdata)
+	  (if (var? fdata)
 	      ;; a local var
 	      (begin
-		(if (and (>= (length fdata) 4)
-			 (pair? (list-ref fdata 3)))
-		    (let ((type (car (list-ref fdata 3)))
-			  (args (cadr (list-ref fdata 3))))
+		(if (pair? (var-typ fdata))
+		    (let ((type (car (var-typ fdata)))
+			  (args (cadr (var-typ fdata))))
 		      
 		      (let ((rst (or (not (pair? args))
 				     (not (list? args))
@@ -2571,8 +2600,8 @@
 	  (let ((make-name (string->symbol (string-append "make-" (symbol->string name))))
 		(name? (string->symbol (string-append (symbol->string name) "?"))))
 	    
-	    (hash-table-set! globals make-name (list make-name #f #f))
-	    (hash-table-set! globals name? (list name? #f #f)))))
+	    (hash-table-set! globals make-name (make-var make-name #f #f))
+	    (hash-table-set! globals name? (make-var name? #f #f)))))
       
       
       (define (load-walk form)
@@ -2583,18 +2612,18 @@
 	     (load-walk (cdr form)))
 	    
 	    ((define-constant define-envelope)
-	     (hash-table-set! globals (cadr form) (list (cadr form) #f #f)))
+	     (hash-table-set! globals (cadr form) (make-var (cadr form) #f #f)))
 	    
 	    ((defmacro defmacro*)
-	     (hash-table-set! globals (cadr form) (list (cadr form) #f #f (list head (caddr form)))))
+	     (hash-table-set! globals (cadr form) (make-var (cadr form) #f #f (list head (caddr form)))))
 	    
 	    ((define)
 	     (if (pair? (cadr form))
-		 (hash-table-set! globals (car (cadr form)) (list (car (cadr form)) #f #f (list head (cdr (cadr form)))))
-		 (hash-table-set! globals (cadr form) (list (cadr form) #f #f))))
+		 (hash-table-set! globals (car (cadr form)) (make-var (car (cadr form)) #f #f (list head (cdr (cadr form)))))
+		 (hash-table-set! globals (cadr form) (make-var (cadr form) #f #f))))
 
 	    ((define* definstrument defanimal define-expansion define-macro define-macro* define-bacro define-bacro*)
-	     (hash-table-set! globals (car (cadr form)) (list (car (cadr form)) #f #f (list head (cdr (cadr form))))))
+	     (hash-table-set! globals (car (cadr form)) (make-var (car (cadr form)) #f #f (list head (cdr (cadr form))))))
 
 	    ((defgenerator)
 	     (get-generator form 'defgenerator head))
@@ -2669,7 +2698,7 @@
 				(if (and *report-shadowed-variables*
 					 (not second-pass)
 					 (or (hash-table-ref globals (car binding))
-					     (assq (car binding) env)))
+					     (var-member (car binding) env)))
 				    (lint-format "~A variable ~A in ~S shadows an earlier declaration" name head (car binding) binding))
 				#t))))))))
       
@@ -2680,7 +2709,7 @@
 		(eq? (car e1) (car e2)))
 	    lst
 	    (env-difference name (cdr e1) e2 
-			    (if (eq? name (caar e1))
+			    (if (eq? name (var-name (car e1)))
 				lst
 				(cons (car e1) lst)))))
       
@@ -2693,24 +2722,27 @@
 	    (do ((cur vars (cdr cur))
 		 (rst (cdr vars) (cdr rst)))
 		((null? rst))
-	      (let ((repeat (assq (caar cur) rst)))
+	      (let ((repeat (var-member (var-name (car cur)) rst)))
 		;; not globals here because the same name might be used as a global
 		(if repeat
-		    (lint-format "~A ~A ~A is declared twice" name head type (caar cur))))))
+		    (lint-format "~A ~A ~A is declared twice" name head type (var-name (car cur)))))))
 	
 	(let ((set ())
 	      (unused ()))
 	  (for-each 
 	   (lambda (arg)
-	     (if (hash-table-ref syntaces (car arg))
-		 (lint-format "~A ~A named ~A is asking for trouble" name head type (car arg))
-		 (if (not (symbol? (car arg)))
-		     (lint-format "bad ~A ~A name: ~S" name head type (car arg))))
-	     (if (and (not (cadr arg))
-		      (not (hash-table-ref other-identifiers (car arg))))
-		 (if (caddr arg)
-		     (set! set (cons (car arg) set))
-		     (set! unused (cons (car arg) unused)))))
+	     (if (hash-table-ref syntaces (var-name arg))
+		 (lint-format "~A ~A named ~A is asking for trouble" name head type (var-name arg))
+		 (if (not (symbol? (var-name arg)))
+		     (lint-format "bad ~A ~A name: ~S" name head type (var-name arg))))
+	     
+	     ;(format *stderr* "~A~%" arg)
+
+	     (if (and (not (var-ref arg))
+		      (not (hash-table-ref other-identifiers (var-name arg))))
+		 (if (var-set arg)
+		     (set! set (cons (var-name arg) set))
+		     (set! unused (cons (var-name arg) unused)))))
 	   vars)
 	  
 	  (if (pair? set)
@@ -2755,8 +2787,6 @@
       
       (define (lint-walk-function-body name head args arg-data body env)
 	;; walk function body, with possible doc string at the start
-	
-	;(format *stderr* "walk function body: ~A ~A ~A ~A~%" name head args arg-data)
 	(if (and (pair? body)
 		 (pair? (cdr body))
 		 (string? (car body)))
@@ -2827,12 +2857,11 @@
 			(if (or (and (procedure? p)
 				     (zero? (cadr (procedure-arity p)))
 				     (not (caddr (procedure-arity p)))) ; might be deliberately limiting args
-				(let ((e (or (assq cval env) 
+				(let ((e (or (var-member cval env) 
 					     (hash-table-ref globals cval))))
 				  (and e
-				       (pair? e)
-				       (>= (length e) 4)
-				       (let ((def (list-ref e 3)))
+				       (var? e)
+				       (let ((def (var-typ e)))
 					 (and 
 					  (pair? def)
 					  (eq? (car def) 'define)
@@ -2856,8 +2885,8 @@
 			    ((3) (lint-format "~A could be (define ~A cadddr)" name name name))))))))
 	    
 	(let ((ldata (and (not (memq head '(lambda lambda*)))
-			  (not (assq name env))
-			  (list name #f #f (list head args)))))
+			  (not (var-member name env))
+			  (make-var name #f #f (list head args)))))
 	  (if (null? args)
 	      (begin
 		(if (memq head '(define* lambda* defmacro* define-macro* define-bacro*))
@@ -2872,20 +2901,20 @@
 	      (if (or (symbol? args) 
 		      (pair? args))
 		  (let ((arg-data (if (symbol? args)                            ; this is getting arg names to add to the environment
-				      (list (list args #f #f))
+				      (list (make-var args #f #f))
 				      (map
 				       (lambda (arg)
 					 (if (symbol? arg)
 					     (if (memq arg '(:optional :key :rest :allow-other-keys))
 						 (values)                  ; map omits this entry 
-						 (list arg #f #f))
+						 (make-var arg #f #f))
 					     (if (or (not (pair? arg))
 						     (not (= (length arg) 2))
 						     (not (memq head '(define* lambda* defmacro* define-macro* define-bacro* definstrument))))
 						 (begin
 						   (lint-format "strange parameter for ~A: ~S" name head arg)
 						   (values))
-						 (list (car arg) #f #f))))
+						 (make-var (car arg) #f #f))))
 				       (proper-list args)))))
 		  
 		    (lint-walk-function-body name head args arg-data val (append arg-data (if ldata (append (list ldata) env) env)))
@@ -2932,8 +2961,6 @@
 		       define-expansion define-macro define-macro* define-bacro define-bacro*
 		       definstrument defanimal)
 
-		     ;(format *stderr* "define case: ~%~A~%" form)
-		     
 		     (if (< (length form) 2)
 			 (begin
 			   (lint-format "~S makes no sense" name form)
@@ -2959,12 +2986,11 @@
 				 
 				 (if (pair? (cddr form))
 				     (let ((e (lint-walk sym (caddr form) env)))
-					;(format outport "define ~A: ~A~%" sym (car e))
 				       (if (and (pair? e)
-						(eq? (caar e) sym)) ; (define x (lambda ...)) but it misses closures
+						(eq? (var-name (car e)) sym)) ; (define x (lambda ...)) but it misses closures
 					   e
-					   (append (list (list sym #f #f)) env)))
-				     (append (list (list sym #f #f)) env)))
+					   (append (list (make-var sym #f #f)) env)))
+				     (append (list (make-var sym #f #f)) env)))
 			       
 			       (if (pair? sym)
 				   (begin
@@ -3203,7 +3229,7 @@
 			       (if (binding-ok? name head (car bindings) env #f)
 				   (begin
 				     (lint-walk name (cadar bindings) env)
-				     (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars)))))
+				     (set! vars (append (list (make-var (caar bindings) #f #f #f (->type (cadar bindings)))) vars)))))
 			     
 			     ;; walk the step exprs
 			     (do ((bindings step-vars (cdr bindings)))
@@ -3230,7 +3256,7 @@
 			 (lint-format "let is messed up: ~A" name (truncated-list->string form))
 			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
 			   (let ((vars (if named-let 
-					   (list (list named-let #f #f
+					   (list (make-var named-let #f #f
 						       (and (pair? (cddr form)) ; trying to protect against badly formed let's here
 							    (pair? (caddr form))
 							    (every? (lambda (b)
@@ -3251,7 +3277,7 @@
 					      (eq? 'lambda (car (cadar bindings)))
 					      (not (hash-table-ref globals (caar bindings)))
 					      (tree-car-member (caar bindings) (cadar bindings))
-					      (not (assq (caar bindings) env)))
+					      (not (var-member (caar bindings) env)))
 					 (lint-format "let variable ~A is called in its binding?  Perhaps let should be letrec:~A"
 						      name (caar bindings) 
 						      (truncated-list->string bindings)))
@@ -3262,7 +3288,7 @@
 				     ;;   then append that as the 4th entry below (unused currently I think)
 				     ;;   then use that in arg checks if arg is a known var
 				     
-				     (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars)))))
+				     (set! vars (append (list (make-var (caar bindings) #f #f #f (->type (cadar bindings)))) vars)))))
 			     ;; each var is (sym ref set opt-func-data opt-type-data)
 			     
 			     (let* ((cur-env (append vars env))
@@ -3280,7 +3306,7 @@
 			 (lint-format "let* is messed up: ~A" name (truncated-list->string form))
 			 
 			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
-			   (let ((vars (if named-let (list (list named-let #f #f)) ()))
+			   (let ((vars (if named-let (list (make-var named-let #f #f)) ()))
 				 (varlist (if named-let (caddr form) (cadr form))))
 			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))
@@ -3290,14 +3316,14 @@
 			       (if (binding-ok? name head (car bindings) env #f)
 				   (begin
 				     (lint-walk name (cadar bindings) (append vars env))
-				     (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars)))))
+				     (set! vars (append (list (make-var (caar bindings) #f #f #f (->type (cadar bindings)))) vars)))))
 			     
 			     (if (and *report-minor-stuff* ; maybe we need *report-very-minor-stuff* !
 				      (call-with-exit
 				       (lambda (return)
 					 (for-each
 					  (lambda (v)
-					    (if (list-ref v 1) ; refd?
+					    (if (var-ref v) 
 						(return #f)))
 					  vars)
 					 #t)))
@@ -3333,7 +3359,7 @@
 				(if (pair? bindings)
 				    (lint-format "letrec variable list is not a proper list? ~S" name (cadr form))))
 			     (if (binding-ok? name head (car bindings) env #f)
-				 (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars))))
+				 (set! vars (append (list (make-var (caar bindings) #f #f #f (->type (cadar bindings)))) vars))))
 			   (let ((new-env (append vars env)))
 			     (do ((bindings (cadr form) (cdr bindings)))
 				 ((not (pair? bindings)))
@@ -3548,14 +3574,14 @@
 			       (begin
 				 (check-call name head form env)
 				 (if (not (or (hash-table-ref globals head)
-					      (assq head env) ))
+					      (var-member head env) ))
 				     (check-special-cases name head form env))
 				 (if (and *report-minor-stuff*
 					  (not (= line-number last-simplify-numeric-line-number))
 					  ;(pair? (cdr form))
 					  (not (hash-table-ref globals head))
 					  (hash-table-ref numeric-ops head)
-					  (not (assq head env)))
+					  (not (var-member head env)))
 				     (let ((val (simplify-numerics form env)))
 				       (if (not (equal-ignoring-constants? form val))
 					   (begin
@@ -3765,4 +3791,3 @@
 					(format #t ";~A ~D, error in read: ~A ~A~%" file line-num args
 						(fixup-html (remove-markups code)))))))))))))))))))
 				    
-
