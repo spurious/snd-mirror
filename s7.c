@@ -322,6 +322,8 @@
 
 #ifndef INFINITY
   #define INFINITY (-log(0.0))
+  /* 1.0 / 0.0 is also used, there is sometimes a function, infinity(), MSC apparently uses HUGE_VALF
+   */
 #endif
 
 #ifndef NAN
@@ -1013,8 +1015,10 @@ typedef struct s7_cell {
       unsigned int length;
       unsigned int hash;  
       char *svalue;
-      unsigned int needs_free; /* unsigned int: needs_free=1 then which free list or use_free_list=2? there's room here for symbol info */
-
+      union {
+	bool needs_free; 
+	int accessor;
+      } str_ext;
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
       unsigned int tag;
       s7_pointer initial_slot;
@@ -1024,10 +1028,7 @@ typedef struct s7_cell {
     struct {                      /* symbols */
       s7_pointer name, global_slot, local_slot;
       long long int id;
-      union {
-	int accessor;
-	s7_pointer ksym;
-      } ext;
+      s7_pointer ksym;
     } sym;
 
     struct {                       /* slots (bindings) */
@@ -1251,7 +1252,7 @@ struct s7_scheme {
   s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_ENVIRONMENT, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_STAR, ENVIRONMENT_TO_LIST;
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
-  s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
+  s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
   s7_pointer IS_HASH_TABLE, IS_HASH_TABLE_ITERATOR, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, IS_LIST, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
@@ -1783,7 +1784,8 @@ static void init_types(void)
 #define is_mutable(p)                 ((typeflag(p) & T_MUTABLE) != 0)
 /* #define set_mutable(p)             typeflag(p) |= T_MUTABLE */
 #define clear_mutable(p)              typeflag(p) &= (~T_MUTABLE)
-/* used for mutable numbers in clm2xen */
+/* used for mutable numbers in clm2xen 
+ */
 
 #define T_BYTEVECTOR                  T_MUTABLE
 #define is_bytevector(p)              ((typeflag(p) & T_BYTEVECTOR) != 0)
@@ -1794,6 +1796,8 @@ static void init_types(void)
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
 #define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
+/* marks numbers that have a saved version of their string representation 
+ */
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
@@ -2048,7 +2052,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define string_value(p)               (p)->object.string.svalue
 #define string_length(p)              (p)->object.string.length
 #define string_hash(p)                (p)->object.string.hash
-#define string_needs_free(p)          (p)->object.string.needs_free
+#define string_needs_free(p)          (p)->object.string.str_ext.needs_free
 
 #define character(p)                  (p)->object.chr.c
 #define upper_character(p)            (p)->object.chr.up_c
@@ -2079,7 +2083,7 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define symbol_name(p)                string_value(symbol_name_cell(p))
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
-#define symbol_global_accessor_gc_index(p) (p)->object.sym.ext.accessor 
+#define symbol_global_accessor_gc_index(p) symbol_name_cell(p)->object.string.str_ext.accessor 
 #define symbol_has_accessor(p)        has_accessor(p)
 #define symbol_set_has_accessor(p)    set_has_accessor(p)
 #define symbol_id(p)                  (p)->object.sym.id
@@ -2089,7 +2093,7 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define global_slot(p)                (p)->object.sym.global_slot
 #define initial_slot(p)               (symbol_name_cell(p))->object.string.initial_slot
 #define local_slot(p)                 (p)->object.sym.local_slot
-#define keyword_symbol(p)             (p)->object.sym.ext.ksym
+#define keyword_symbol(p)             (p)->object.sym.ksym
 #define symbol_help(p)                (symbol_name_cell(p))->object.string.documentation
 #define symbol_tag(p)                 (symbol_name_cell(p))->object.string.tag
 #define symbol_has_help(p)            (is_documented(symbol_name_cell(p)))
@@ -3147,7 +3151,7 @@ static void sweep(s7_scheme *sc)
 	  s1 = sc->strings[i];
 	  if (type(s1) == 0)
 	    {
-	      if (string_needs_free(s1) != 0)
+	      if (string_needs_free(s1))
 		free(string_value(s1));
 	    }
 	  else sc->strings[j++] = s1;
@@ -4848,7 +4852,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   set_type(str, T_STRING | T_IMMUTABLE);
   string_length(str) = safe_strlen(name);
   string_value(str) = name;
-  string_needs_free(str) = 0;
+  string_needs_free(str) = false;
 
   /* allocate the symbol in the heap so GC'd when inaccessible */
   NEW_CELL(sc, x);
@@ -4932,7 +4936,7 @@ static s7_pointer g_symbol_to_string_uncopied(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sc->SYMBOL_TO_STRING, sym, T_SYMBOL));
     }
   x = make_string_uncopied_with_length(sc, symbol_name(sym), symbol_name_length(sym)); 
-  string_needs_free(x) = 0;
+  string_needs_free(x) = false;
   return(x);
 }
 
@@ -7593,7 +7597,7 @@ bool s7_is_complex(s7_pointer p)
 
 static s7_Int c_gcd(s7_Int u, s7_Int v)
 {
-  s7_Int a, b, temp;
+  s7_Int a, b;
   
   if ((u == S7_LLONG_MIN) || (v == S7_LLONG_MIN))
     {
@@ -7612,6 +7616,7 @@ static s7_Int c_gcd(s7_Int u, s7_Int v)
   b = s7_Int_abs(v);
   while (b != 0)
     {
+      s7_Int temp;
       temp = a % b;
       a = b;
       b = temp;
@@ -7649,8 +7654,8 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
 			     (ceiling (/ e0p e1p)))))))))
   */
   
-  double x0, x1, val;
-  s7_Int i, i0, i1, r, r1, p0, q0, p1, q1;
+  double x0, x1;
+  s7_Int i, i0, i1, p0, q0, p1, q1;
   double e0, e1, e0p, e1p;
   int tries = 0;
   /* don't use s7_Double here;  if it is "long double", the loop below will hang */
@@ -7712,7 +7717,7 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
   while (true)
     {
       s7_Int old_p1, old_q1;
-      double old_e0, old_e1, old_e0p;
+      double old_e0, old_e1, old_e0p, val, r, r1;
       val = (double)p0 / (double)q0;
       
       if (((x0 <= val) && (val <= x1)) ||
@@ -19196,7 +19201,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   else string_value(x)[0] = 0;
   string_length(x) = len;
   string_hash(x) = 0;
-  string_needs_free(x) = 1;
+  string_needs_free(x) = true;
   add_string(sc, x);
   return(x);
 }
@@ -19213,7 +19218,7 @@ static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const cha
   string_value(x)[len] = 0;
   string_length(x) = len;
   string_hash(x) = 0;
-  string_needs_free(x) = 1;
+  string_needs_free(x) = true;
   add_string(sc, x);
   return(x);
 }
@@ -19227,7 +19232,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
   string_value(x) = str;
   string_length(x) = len;
   string_hash(x) = 0;
-  string_needs_free(x) = 1;
+  string_needs_free(x) = true;
   add_string(sc, x);
   return(x);
 }
@@ -19241,7 +19246,7 @@ static s7_pointer make_protected_string(s7_scheme *sc, const char *str)
   string_value(x) = (char *)str;
   string_length(x) = safe_strlen(str);
   string_hash(x) = 0;
-  string_needs_free(x) = 0;
+  string_needs_free(x) = false;
   return(x);
 }
 
@@ -19263,7 +19268,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
   string_value(x)[len] = 0;
   string_hash(x) = 0;
   string_length(x) = len;
-  string_needs_free(x) = 1;
+  string_needs_free(x) = true;
   add_string(sc, x);
   return(x);
 }
@@ -19317,7 +19322,7 @@ s7_pointer s7_make_permanent_string(const char *str)
       string_length(x) = 0;
     }
   string_hash(x) = 0;
-  string_needs_free(x) = 0;
+  string_needs_free(x) = false;
   return(x);
 }
 
@@ -19334,7 +19339,7 @@ static s7_pointer make_temporary_string(s7_scheme *sc, const char *str, int len)
       heap_location(tmp_str) = NOT_IN_HEAP;
       set_type(tmp_str, T_STRING | T_SAFE_PROCEDURE);
       string_hash(tmp_str) = 0;
-      string_needs_free(tmp_str) = 0;
+      string_needs_free(tmp_str) = false;
     }
   if (len >= tmp_str_size)
     {
@@ -22747,7 +22752,6 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 
 static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
 {
-  bool old_longjmp;
   s7_pointer port;
   FILE *fp;
 
@@ -22772,6 +22776,7 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
   
   if (!sc->longjmp_ok)
     {
+      bool old_longjmp;
       push_stack(sc, OP_LOAD_RETURN_IF_EOF, port, sc->code);
       
       old_longjmp = sc->longjmp_ok;
@@ -22808,9 +22813,6 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 
 #if WITH_C_LOADER
 #include <dlfcn.h>
-
-/* besides the dynamic loader, we also need to fully specify the shared object file name.
- */
 
 static char *full_filename(const char *filename)
 {
@@ -25398,12 +25400,13 @@ static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_po
 
 static void setup_shared_reads(s7_scheme *sc, s7_pointer port, shared_info *ci)
 {
-  int i, len;
+  int i;
   char buf[64];
 
   port_write_string(port)(sc, "(let (", 6, port);
   for (i = 1; i <= ci->top; i++)
     {
+      int len;
       len = snprintf(buf, 64, "({%d} #f)", i);
       port_write_string(port)(sc, buf, len, port);
     }
@@ -32451,6 +32454,35 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
 	  if (is_pair(car(x)))
 	    s7_hash_table_set(sc, ht, caar(x), cdar(x));
 	}
+      s7_gc_unprotect_at(sc, ht_loc);
+    }
+  return(ht);
+}
+
+
+static s7_pointer g_hash_table_star(s7_scheme *sc, s7_pointer args)
+{
+  #define H_hash_table_star "(hash-table* ...) returns a hash-table containing the symbol/value pairs passed as its arguments. \
+That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value pairs preinstalled."
+
+  int len;
+  s7_pointer ht;
+
+  len = safe_list_length(sc, args);
+  if (len & 1)
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_protected_string(sc, "hash-table* got an odd number of arguments: ~S"), args)));
+  len /= 2;
+
+  ht = s7_make_hash_table(sc, (len > 512) ? 4095 : 511);
+  if (len > 0)
+    {
+      int ht_loc;
+      s7_pointer x, y;
+      ht_loc = s7_gc_protect(sc, ht); /* hash_table_set can cons, so we need to protect this */
+
+      for (x = args, y = cdr(args); is_pair(y); x = cddr(x), y = cddr(y)) 
+	s7_hash_table_set(sc, ht, car(x), car(y));
+
       s7_gc_unprotect_at(sc, ht_loc);
     }
   return(ht);
@@ -69329,6 +69361,7 @@ s7_scheme *s7_init(void)
   sc->MAKE_BYTEVECTOR =       s7_define_safe_function(sc, "make-bytevector",         g_make_bytevector,        1, 1, false, H_make_bytevector);
 
   sc->HASH_TABLE =            s7_define_safe_function(sc, "hash-table",              g_hash_table,             0, 0, true,  H_hash_table);
+  sc->HASH_TABLE_STAR =       s7_define_safe_function(sc, "hash-table*",             g_hash_table_star,        0, 0, true,  H_hash_table_star);
   sc->IS_HASH_TABLE =         s7_define_safe_function(sc, "hash-table?",             g_is_hash_table,          1, 0, false, H_is_hash_table);
   sc->MAKE_HASH_TABLE =       s7_define_safe_function(sc, "make-hash-table",         g_make_hash_table,        0, 2, false, H_make_hash_table);
   sc->HASH_TABLE_REF =        s7_define_safe_function(sc, "hash-table-ref",          g_hash_table_ref,         2, 0, true,  H_hash_table_ref);
@@ -69979,8 +70012,6 @@ int main(int argc, char **argv)
  * for clm methods, xen_to_c_generator could fallback on method check -- t932.scm -- can't decide about this
  * gmp method problems: should we insist on a 'bignum method?
  * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
- * if sounds were envs, all current args packaged as env, (map snd...) -> (map-sound ...) etc
- * if (f a b), a and b have (different) f methods, who wins? in s7, a does.
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (environment* 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
@@ -69993,7 +70024,4 @@ int main(int argc, char **argv)
  *
  * in Snd/ws.scm, if clm-file-name (or with-sound :output) is a vector, can we display it as if a sound?
  *   currently find-sound expects a string.  This is tricky...
- * Display needs lots of attention
- * pretty-print can end up way over to the right and needs to use ~|
- * lint could also use the proc-env for its controlling vars, snd-lint-info script[t940], track vars
  */

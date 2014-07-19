@@ -24,7 +24,7 @@ mus_long_t disk_kspace(const char *filename)
 #else
   struct statvfs buf;
 #endif
-  mus_long_t err = -1;
+  mus_long_t err;
   err = statvfs(filename, &buf);
   if (err == 0)
     {
@@ -411,6 +411,7 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
 	  else
 	    {
 	      snd_warning("no such file-filter (%d)", filter_pos);
+	      closedir(dpos);
 	      return(find_files_in_dir(name));
 	    }
 	}
@@ -1270,8 +1271,7 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
   mcf = mus_expand_filename(filename);
   if (Xen_hook_has_list(open_hook))
     {
-      Xen res = Xen_false;
-      Xen fstr;
+      Xen res, fstr;
       fstr = C_string_to_Xen_string(mcf);
       res = run_or_hook(open_hook,
 			Xen_list_1(fstr),
@@ -1988,7 +1988,7 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
   if (before_save_as_hook_active) return(false);
   if (Xen_hook_has_list(before_save_as_hook))
     {
-      Xen result = Xen_false;
+      Xen result;
       before_save_as_hook_active = true;
       result = run_progn_hook(before_save_as_hook,
 			      Xen_list_7((sp) ? C_int_to_Xen_sound(sp->index) : Xen_false,

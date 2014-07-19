@@ -1491,7 +1491,7 @@ static void allocate_icons(Widget w)
   Pixmap shape1, shape2, shape3, shape4; 
   XpmAttributes attributes; 
   XpmColorSymbol symbols[1];
-  int scr, k, pixerr = XpmSuccess;
+  int scr, k, pixerr;
   Display *dp;
   Drawable wn;
 

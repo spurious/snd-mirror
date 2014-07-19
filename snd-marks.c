@@ -257,7 +257,7 @@ static void draw_mark_1(chan_info *cp, mark *mp, bool show)
   if (!(cp->graph_time_on)) return;
   if (Xen_hook_has_list(draw_mark_hook))
     {
-      Xen res = Xen_false;
+      Xen res;
       res = run_progn_hook(draw_mark_hook,
 			   Xen_list_1(new_xen_mark(mp->id)),
 			   S_draw_mark_hook);
@@ -1697,7 +1697,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
-  double start_time = 0.0, cur_srate = 1.0;
+  double start_time = 0.0, cur_srate;
 
   sp = cp->sound;
   ap = cp->axis;

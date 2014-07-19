@@ -140,21 +140,22 @@ io_error_t copy_file(const char *oldname, const char *newname)
 {
   /* make newname a copy of oldname */
   int ifd, ofd;
-  mus_long_t bytes, wb, total;
+  mus_long_t bytes, wb;
   char *buf = NULL;
-  total = 0;
-  ifd = OPEN(oldname, O_RDONLY, 0);
+ 
+ ifd = OPEN(oldname, O_RDONLY, 0);
   if (ifd == -1) return(IO_CANT_OPEN_FILE);
+
   ofd = CREAT(newname, 0666);
   if (ofd == -1) 
     {
       snd_close(ifd, oldname);
       return(IO_CANT_CREATE_FILE);
     }
+
   buf = (char *)malloc(8192 * sizeof(char));
   while ((bytes = read(ifd, buf, 8192)))
     {
-      total += bytes;
       wb = write(ofd, buf, bytes);
       if (wb != bytes) 
 	{
@@ -164,6 +165,7 @@ io_error_t copy_file(const char *oldname, const char *newname)
 	  return(IO_WRITE_ERROR);
 	}
     }
+
   snd_close(ifd, oldname);
   wb = disk_kspace(newname);
   snd_close(ofd, newname);
@@ -487,7 +489,7 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans,
 	{
 	  err = too_many_files_cleanup();
 	  if (err != -1) 
-	    err = mus_write_header(name, type, srate, chans, samples, format, comment);
+	    mus_write_header(name, type, srate, chans, samples, format, comment);
 	  else 
 	    {
 	      mus_error_set_handler(old_error_handler);

@@ -7423,7 +7423,7 @@ void as_one_edit(chan_info *cp, int one_edit)
 {
   /* it's not safe to back up during the as-one-edit function call because that function might refer back via the edpos args etc */
 
-  bool need_backup = false;
+  bool need_backup;
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
 
   if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */

@@ -2850,7 +2850,7 @@ static Xen g_make_moving_any(xclm_moving_t choice, Xen arglist)
   Xen orig_v = Xen_false, p; 
   mus_float_t initial_element = 0.0;
   mus_float_t *line = NULL;
-  int scaler_key = -1, size_key, initial_contents_key = -1, initial_element_key = -1;
+  int scaler_key = -1, size_key, initial_contents_key, initial_element_key;
   bool size_set = false;
   mus_error_handler_t *old_error_handler;
 
@@ -3565,7 +3565,7 @@ static mus_float_t *inverse_integrate(Xen dist, int data_size)
   mus_float_t *e, *data;
   int i, e_len, lim, e_loc = 2;
   Xen ex0, ex1, ey0, ey1;
-  mus_float_t x, x0, x1, xincr, y0, y1, sum = 0.0, first_sum = 0.0, last_sum = 0.0;
+  mus_float_t x, x0, x1, xincr, y0, y1, sum, first_sum, last_sum = 0.0;
 
   lim = (e_size + 1) * 2;
   e = (mus_float_t *)calloc(lim, sizeof(mus_float_t));
@@ -12957,7 +12957,7 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
       gf *g1 = NULL, *g2 = NULL, *g;
       double x1, x2;
       double *rx1, *rx2;
-      int typ1 = GF_G, typ2 = GF_G;
+      int typ1, typ2;
       s7_pointer s1, s2;
 
       arg1 = cadr(expr);
@@ -13145,7 +13145,7 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
       gf *g1 = NULL, *g2 = NULL, *g3 = NULL, *g;
       double x1, x2, x3;
       double *rx1, *rx2, *rx3;
-      int typ1 = GF_G, typ2 = GF_G, typ3 = GF_G;
+      int typ1, typ2, typ3;
       s7_pointer s1, s2, s3;
 
       arg1 = cadr(expr);

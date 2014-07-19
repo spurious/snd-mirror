@@ -1130,8 +1130,9 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
       file_dialog_stop_playing(fd);
       if (!(is_directory(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
 	{
-	  bool ok = false;
+	  bool ok;
 	  snd_info *sp;
+
 	  sp = any_selected_sound();
 	  ss->requestor_dialog = w;
 	  ss->open_requestor = FROM_INSERT_DIALOG;
@@ -1872,6 +1873,7 @@ static void make_auto_comment(file_dialog_info *fd)
 
 	      if (orig_comment)
 		strcat(comment, orig_comment);
+	      free(edit_strs);
 	    }
 
 	  sg_text_insert(fdat->comment_text, comment);

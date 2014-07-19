@@ -1714,7 +1714,7 @@ static void min_dB_text(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
-      float value = 0.0;
+      float value;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = (float)string_to_mus_float_t(str, -100000.0, "min dB");
@@ -1750,7 +1750,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
-      float value = 0.0;
+      float value;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = (float)string_to_mus_float_t(str, 0.0, "fft beta");
@@ -1788,7 +1788,7 @@ static void grid_density_text_callback(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
-      float value = 0.0;
+      float value;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = (float)string_to_mus_float_t(str, 0.0, "grid density");
@@ -2483,7 +2483,7 @@ static void cursor_location_text(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
-      float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
+      float interval;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
       interval = (float)string_to_mus_float_t(str, 0.0, "cursor offset");
@@ -2902,7 +2902,7 @@ static void default_output_data_format_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
     {
-      int which = -1;
+      int which;
       which = which_radio_button(prf);
       set_default_output_data_format(output_formats[which]);
 

@@ -979,7 +979,6 @@ static void motif_listener_completion(Widget w, XEvent *event, char **str, Cardi
       return;
     }
 
-  beg = 0;
   end = XmTextGetInsertionPosition(w);
   replace_end = end;
 

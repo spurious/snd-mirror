@@ -68,7 +68,7 @@ static void display_env(env *e, const char *name, GC cur_gc, int x0, int y0, int
   graphics_context *ax = NULL;  
   ax = (graphics_context *)calloc(1, sizeof(graphics_context));
   ax->wn = XtWindow(drawer);
-  if (!(ax->wn)) return;
+  if (!(ax->wn)) {free(ax); return;}
   ax->dp = XtDisplay(drawer);
   ax->gc = cur_gc;
   ss->enved->with_dots = dots;

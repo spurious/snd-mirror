@@ -1748,7 +1748,7 @@ static Xen gxg_g_cclosure_new(Xen func, Xen func_info, Xen destroy_data)
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 2, "g_cclosure_new", "lambda_data");
   Xen_check_type(Xen_is_GClosureNotify(destroy_data) || Xen_is_false(destroy_data), destroy_data, 3, "g_cclosure_new", "GClosureNotify");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -1875,7 +1875,7 @@ GSignalEmissionHook hook_func, lambda_data func_info, GtkDestroyNotify data_dest
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 4, "g_signal_add_emission_hook", "lambda_data");
   Xen_check_type(Xen_is_GtkDestroyNotify(data_destroy), data_destroy, 5, "g_signal_add_emission_hook", "GtkDestroyNotify");
   {
-    Xen result = Xen_false;
+    Xen result;
     Xen gxg_ptr = Xen_list_5(Xen_false, func_info, Xen_false, Xen_false, Xen_false);
     xm_protect(gxg_ptr);
     Xen_list_set(gxg_ptr, 3, data_destroy);
@@ -1942,7 +1942,7 @@ GCallback func, lambda_data func_info, GClosureNotify destroy_data, GConnectFlag
   Xen_check_type(Xen_is_GClosureNotify(destroy_data) || Xen_is_false(destroy_data), destroy_data, 5, "g_signal_connect_data", "GClosureNotify");
   Xen_check_type(Xen_is_GConnectFlags(connect_flags), connect_flags, 6, "g_signal_connect_data", "GConnectFlags");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -3949,7 +3949,7 @@ lambda_data func_info)"
   if (!Xen_is_bound(func_info)) func_info = Xen_false; 
   else Xen_check_type(Xen_is_lambda_data(func_info), func_info, 3, "gtk_accel_group_find", "lambda_data");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -4781,7 +4781,7 @@ lambda_data func_info)"
   if (!Xen_is_bound(func_info)) func_info = Xen_false; 
   else Xen_check_type(Xen_is_lambda_data(func_info), func_info, 6, "gtk_clipboard_set_with_data", "lambda_data");
   {
-    Xen result = Xen_false;
+    Xen result;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     xm_protect(gxg_ptr);
     Xen_list_set(gxg_ptr, 2, clear_func);
@@ -9182,7 +9182,7 @@ GtkTextCharPredicate pred, lambda_data func_info, GtkTextIter* limit)"
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 3, "gtk_text_iter_forward_find_char", "lambda_data");
   Xen_check_type(Xen_is_GtkTextIter_(limit) || Xen_is_false(limit), limit, 4, "gtk_text_iter_forward_find_char", "GtkTextIter*");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(Xen_false, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -9203,7 +9203,7 @@ GtkTextCharPredicate pred, lambda_data func_info, GtkTextIter* limit)"
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 3, "gtk_text_iter_backward_find_char", "lambda_data");
   Xen_check_type(Xen_is_GtkTextIter_(limit) || Xen_is_false(limit), limit, 4, "gtk_text_iter_backward_find_char", "GtkTextIter*");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(Xen_false, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -11664,7 +11664,7 @@ GtkDestroyNotify dnotify)"
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 6, "gtk_tree_view_insert_column_with_data_func", "lambda_data");
   Xen_check_type(Xen_is_GtkDestroyNotify(dnotify), dnotify, 7, "gtk_tree_view_insert_column_with_data_func", "GtkDestroyNotify");
   {
-    Xen result = Xen_false;
+    Xen result;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     xm_protect(gxg_ptr);
     Xen_list_set(gxg_ptr, 3, dnotify);
@@ -16340,7 +16340,7 @@ lambda_data func_info, GtkDestroyNotify notify)"
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 4, "g_timeout_add_full", "lambda_data");
   Xen_check_type(Xen_is_GtkDestroyNotify(notify), notify, 5, "g_timeout_add_full", "GtkDestroyNotify");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -16361,7 +16361,7 @@ static Xen gxg_g_timeout_add(Xen interval, Xen func, Xen func_info)
   if (!Xen_is_bound(func_info)) func_info = Xen_false; 
   else Xen_check_type(Xen_is_lambda_data(func_info), func_info, 3, "g_timeout_add", "lambda_data");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -16379,7 +16379,7 @@ static Xen gxg_g_idle_add(Xen func, Xen func_info)
   if (!Xen_is_bound(func_info)) func_info = Xen_false; 
   else Xen_check_type(Xen_is_lambda_data(func_info), func_info, 2, "g_idle_add", "lambda_data");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -16399,7 +16399,7 @@ GtkDestroyNotify notify)"
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 3, "g_idle_add_full", "lambda_data");
   Xen_check_type(Xen_is_GtkDestroyNotify(notify), notify, 4, "g_idle_add_full", "GtkDestroyNotify");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -19188,7 +19188,7 @@ GLogFunc func, lambda_data func_info)"
   if (!Xen_is_bound(func_info)) func_info = Xen_false; 
   else Xen_check_type(Xen_is_lambda_data(func_info), func_info, 4, "g_log_set_handler", "lambda_data");
   {
-    Xen result = Xen_false;
+    Xen result;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     xm_protect(gxg_ptr);
     result = C_to_Xen_guint(g_log_set_handler(Xen_to_C_gchar_(log_domain), Xen_to_C_GLogLevelFlags(log_levels), Xen_to_C_GLogFunc(func), 
@@ -22630,7 +22630,7 @@ lambda_data func_info, GDestroyNotify notify)"
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 3, "gdk_threads_add_idle_full", "lambda_data");
   Xen_check_type(Xen_is_GDestroyNotify(notify), notify, 4, "gdk_threads_add_idle_full", "GDestroyNotify");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -22649,7 +22649,7 @@ static Xen gxg_gdk_threads_add_idle(Xen func, Xen func_info)
   if (!Xen_is_bound(func_info)) func_info = Xen_false; 
   else Xen_check_type(Xen_is_lambda_data(func_info), func_info, 2, "gdk_threads_add_idle", "lambda_data");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -22670,7 +22670,7 @@ GSourceFunc func, lambda_data func_info, GDestroyNotify notify)"
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 4, "gdk_threads_add_timeout_full", "lambda_data");
   Xen_check_type(Xen_is_GDestroyNotify(notify), notify, 5, "gdk_threads_add_timeout_full", "GDestroyNotify");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -22691,7 +22691,7 @@ lambda_data func_info)"
   if (!Xen_is_bound(func_info)) func_info = Xen_false; 
   else Xen_check_type(Xen_is_lambda_data(func_info), func_info, 3, "gdk_threads_add_timeout", "lambda_data");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(func, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -23567,7 +23567,7 @@ guint interval, GSourceFunc function, lambda_data func_info, GDestroyNotify noti
   Xen_check_type(Xen_is_lambda_data(func_info), func_info, 4, "gdk_threads_add_timeout_seconds_full", "lambda_data");
   Xen_check_type(Xen_is_GDestroyNotify(notify), notify, 5, "gdk_threads_add_timeout_seconds_full", "GDestroyNotify");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(Xen_false, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -23588,7 +23588,7 @@ lambda_data func_info)"
   if (!Xen_is_bound(func_info)) func_info = Xen_false; 
   else Xen_check_type(Xen_is_lambda_data(func_info), func_info, 3, "gdk_threads_add_timeout_seconds", "lambda_data");
   {
-    Xen result = Xen_false;
+    Xen result;
     int loc;
     Xen gxg_ptr = Xen_list_5(Xen_false, func_info, Xen_false, Xen_false, Xen_false);
     loc = xm_protect(gxg_ptr);
@@ -44621,7 +44621,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("14-Jul-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("19-Jul-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

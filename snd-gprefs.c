@@ -1154,7 +1154,7 @@ static void prefs_r_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r = 0.0;
+  float r;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   redirect_errors_to(errors_to_color_text, context);
   r = (float)string_to_mus_float_t(str, 0.0, "red amount");
@@ -1171,7 +1171,7 @@ static void prefs_g_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r = 0.0;
+  float r;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   redirect_errors_to(errors_to_color_text, context);
   r = (float)string_to_mus_float_t(str, 0.0, "green amount");
@@ -1188,7 +1188,7 @@ static void prefs_b_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r = 0.0;
+  float r;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   redirect_errors_to(errors_to_color_text, context);
   r = (float)string_to_mus_float_t(str, 0.0, "blue amount");

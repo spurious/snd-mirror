@@ -149,7 +149,7 @@
 		  environment environment* environment-ref environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
 		  floor ;for-each 
 		  gcd gensym gensym? global-environment 
-		  hash-table hash-table-ref hash-table-size hash-table-entries hash-table? hash-table-iterator? hook-functions 
+		  hash-table hash-table* hash-table-ref hash-table-size hash-table-entries hash-table? hash-table-iterator? hook-functions 
 		  if imag-part inexact->exact inexact? infinite? initial-environment input-port? integer->char integer-decode-float 
 		  integer-length integer? 
 		  keyword->symbol keyword? 
@@ -171,453 +171,454 @@
 		  zero?))
 	     ht))
 	  
-	  (function-types (hash-table 
-			   (cons '* +number+)
-			   (cons '+ +number+)
-			   (cons '- +number+)
-			   (cons '/ +number+)
-			   (cons '< +boolean+)
-			   (cons '<= +boolean+)
-			   (cons '= +boolean+)
-			   (cons '> +boolean+)
-			   (cons '>= +boolean+)
-			   (cons 'abs +number+)
-			   (cons 'acos +not-integer+)
-			   (cons 'acosh +not-integer+)
-			   (cons 'angle +number+)
-			   (cons 'aritable? +boolean+)
-			   (cons 'arity +list+)
-			   (cons 'ash +integer+)
-			   (cons 'asin +not-integer+)
-			   (cons 'asinh +not-integer+)
-			   (cons 'assoc 'list-or-f)
-			   (cons 'assq 'list-or-f)
-			   (cons 'assv 'list-or-f)
-			   (cons 'atan +not-integer+)
-			   (cons 'atanh +not-integer+)
-			   (cons 'augment-environment +environment+)
-			   (cons 'augment-environment! +environment+)
-			   (cons 'boolean? +boolean+)
-			   (cons 'boolean=? +boolean+)
-			   (cons 'bytevector? +boolean+)
-			   (cons 'ceiling +integer+)
-			   (cons 'char->integer +integer+)
-			   (cons 'char-alphabetic? +boolean+)
-			   (cons 'char-ci<=? +boolean+)
-			   (cons 'char-ci<? +boolean+)
-			   (cons 'char-ci=? +boolean+)
-			   (cons 'char-ci>=? +boolean+)
-			   (cons 'char-ci>? +boolean+)
-			   (cons 'char-downcase +character+)
-			   (cons 'char-lower-case? +boolean+)
-			   (cons 'char-numeric? +boolean+)
-			   (cons 'char-position 'integer-or-f)
-			   (cons 'char-ready? +boolean+)
-			   (cons 'char-upcase +character+)
-			   (cons 'char-upper-case? +boolean+)
-			   (cons 'char-whitespace? +boolean+)
-			   (cons 'char<=? +boolean+)
-			   (cons 'char<? +boolean+)
-			   (cons 'char=? +boolean+)
-			   (cons 'char>=? +boolean+)
-			   (cons 'char>? +boolean+)
-			   (cons 'char? +boolean+)
-			   (cons 'close-input-port +unspecified+)
-			   (cons 'close-output-port +unspecified+)
-			   (cons 'flush-output-port +unspecified+)
-			   (cons 'complex? +boolean+)
-			   (cons 'cons +list+)
-			   (cons 'constant? +boolean+)
-			   (cons 'continuation? +boolean+)
-			   (cons 'cos +number+)
-			   (cons 'cosh +not-integer+)
-			   (cons 'current-environment +environment+)
-			   (cons 'current-error-port +port+)
-			   (cons 'current-input-port +port+)
-			   (cons 'current-output-port +port+)
-			   (cons 'cyclic-sequences +list+)
-			   (cons 'defined? +boolean+)
-			   (cons 'denominator +integer+)
-			   (cons 'display +unspecified+)
-			   (cons 'environment +environment+)
-			   (cons 'environment* +environment+)
-			   (cons 'environment? +boolean+)
-			   (cons 'environment->list +list+)
-			   (cons 'eof-object? +boolean+)
-			   (cons 'eq? +boolean+)
-			   (cons 'equal? +boolean+)
-			   (cons 'eqv? +boolean+)
-			   (cons 'error-environment +environment+)
-			   (cons 'even? +boolean+)
-			   (cons 'exact->inexact +not-integer+)
-			   (cons 'exact? +boolean+)
-			   (cons 'exp +number+)
-			   (cons 'expt +number+)
-			   (cons 'float-vector +vector+)
-			   (cons 'float-vector? +boolean+)
-			   (cons 'float-vector-ref +number+)
-			   (cons 'float-vector-set! +number+)
-			   (cons 'floor +integer+)
-			   (cons 'for-each +unspecified+)
-			   (cons 'gcd +number+)
-			   (cons 'gensym +symbol+)
-			   (cons 'gensym? +boolean+)
-			   (cons 'global-environment +environment+)
-			   (cons 'hash-table +hash-table+)
-			   (cons 'hash-table? +boolean+)
-			   (cons 'hash-table-iterator? +boolean+)
-			   (cons 'hash-table-entries +integer+)
-			   (cons 'hash-table-size +integer+)
-			   (cons 'imag-part +number+)
-			   (cons 'inexact->exact +number+)
-			   (cons 'inexact? +boolean+)
-			   (cons 'infinite? +boolean+)
-			   (cons 'input-port? +boolean+)
-			   (cons 'integer->char +character+)
-			   (cons 'integer-decode-float +list+)
-			   (cons 'integer-length +integer+)
-			   (cons 'integer? +boolean+)
-			   (cons 'keyword->symbol +symbol+)
-			   (cons 'keyword? +boolean+)
-			   (cons 'lcm +number+)
-			   (cons 'length +integer+)
-			   (cons 'list +list+)
-			   (cons 'list-tail 'pair-or-null)
-			   (cons 'list->string +string+)
-			   (cons 'list->vector +vector+)
-			   (cons 'list? +boolean+)
-			   (cons 'log +number+)
-			   (cons 'logand +integer+)
-			   (cons 'logbit? +boolean+)
-			   (cons 'logior +integer+)
-			   (cons 'lognot +integer+)
-			   (cons 'logxor +integer+)
-			   (cons 'macro? +boolean+)
-			   (cons 'magnitude +number+)
-			   (cons 'make-hash-table +hash-table+)
-			   (cons 'make-keyword +symbol+)
-			   (cons 'make-list +list+)
-			   (cons 'make-polar +number+) 
-			   (cons 'make-rectangular +number+)
-			   (cons 'make-string +string+)
-			   (cons 'make-vector +vector+)
-			   (cons 'make-float-vector +vector+)
-			   (cons 'make-shared-vector +vector+)
-			   (cons 'map +list+)
-			   (cons 'max +number+)
-			   (cons 'member 'list-or-f)
-			   (cons 'memq 'list-or-f)
-			   (cons 'memv 'list-or-f)
-			   (cons 'min +number+)
-			   (cons 'modulo +number+)
-			   (cons 'morally-equal? +boolean+)
-			   (cons 'nan? +boolean+)
-			   (cons 'negative? +boolean+)
-			   (cons 'newline +unspecified+)
-			   (cons 'not +boolean+)
-			   (cons 'null? +boolean+)
-			   (cons 'number->string +string+)
-			   (cons 'number? +boolean+)
-			   (cons 'numerator +integer+)
-;			   (cons 'object-environment +environment+)
-			   (cons 'object->string +string+)
-			   (cons 'odd? +boolean+)
-			   (cons 'open-environment +environment+)
-			   (cons 'open-environment? +boolean+)
-			   (cons 'outer-environment +environment+)
-			   (cons 'output-port? +boolean+)
-			   (cons 'pair? +boolean+)
-			   (cons 'pair-line-number +integer+)
-			   (cons 'peek-char 'char-or-eof)
-			   (cons 'port-closed? +boolean+)
-			   (cons 'port-file-name +string+)
-			   (cons 'port-line-number +integer+)
-			   (cons 'positive? +boolean+)
-			   (cons 'procedure? +boolean+)
-			   (cons 'procedure-arity 'list-or-f)
-			   (cons 'procedure-environment +environment+)
-			   (cons 'procedure-name +string+)
-			   (cons 'provided? +boolean+)
-			   (cons 'quotient +number+)
-			   (cons 'random +number+)
-			   (cons 'random-state? +boolean+)
-			   (cons 'random-state->list +list+)
-			   (cons 'rational? +boolean+)
-			   (cons 'rationalize +number+)
-			   (cons 'read-byte 'number-or-eof)
-			   (cons 'read-char 'char-or-eof)
-			   (cons 'read-line 'string-or-eof)
-			   (cons 'read-string 'string-or-eof)
-			   (cons 'real-part +number+)
-			   (cons 'real? +boolean+)
-			   (cons 'remainder +number+)
-			   (cons 'round +integer+)
-			   (cons 'sin +number+)
-			   (cons 'sinh +not-integer+)
-			   (cons 'sqrt +number+)
-			   (cons 'string +string+)
-			   (cons 'string-downcase +string+)
-			   (cons 'string-upcase +string+)
-			   (cons 'string->list +list+)
-			   (cons 'string->number 'number-or-f)
-			   (cons 'string->symbol +symbol+)
-			   (cons 'string-append +string+)
-			   (cons 'string-ci<=? +boolean+)
-			   (cons 'string-ci<? +boolean+)
-			   (cons 'string-ci=? +boolean+)
-			   (cons 'string-ci>=? +boolean+)
-			   (cons 'string-ci>? +boolean+)
-			   (cons 'string-copy +string+)
-			   (cons 'string-fill! +character+)
-			   (cons 'string-length +integer+)
-			   (cons 'string-position 'integer-or-f)
-			   (cons 'string-ref +character+)
-			   (cons 'string<=? +boolean+)
-			   (cons 'string<? +boolean+)
-			   (cons 'string=? +boolean+)
-			   (cons 'string>=? +boolean+)
-			   (cons 'string>? +boolean+)
-			   (cons 'string? +boolean+)
-			   (cons 'substring +string+)
-			   (cons 'symbol +symbol+)
-			   (cons 'symbol->string +string+)
-			   (cons 'symbol? +boolean+)
-			   (cons 'symbol=? +boolean+)
-			   (cons 's7-version +string+)
-			   (cons 'tan +number+)
-			   (cons 'tanh +not-integer+)
-			   (cons 'truncate +integer+)
-			   (cons 'vector +vector+)
-			   (cons 'vector-append +vector+)
-			   (cons 'vector-dimensions +list+)
-			   (cons 'vector-length +integer+)
-			   (cons 'vector-rank +integer+)
-			   (cons 'vector->list +list+)
-			   (cons 'vector? +boolean+)
-			   (cons 'write +unspecified+)
-			   (cons 'write-char +unspecified+)
-			   (cons 'write-string +unspecified+)
-			   (cons 'zero? +boolean+)
-			   (cons 'procedure-with-setter? +boolean+)))
-	  (argument-data (hash-table
-			  (cons '* number?)
-			  (cons '+ number?)
-			  (cons '- number?)
-			  (cons '/ number?)
-			  (cons '< real?)
-			  (cons '<= real?)
-			  (cons '= number?)
-			  (cons '> real?)
-			  (cons '>= real?)
-			  (cons '->bytevector string?)
-			  (cons 'abs number?)
-			  (cons 'acos number?)
-			  (cons 'acosh number?)
-			  (cons 'angle number?)
-			  (cons 'ash (list integer? integer?))
-			  (cons 'asin number?)
-			  (cons 'asinh number?)
-			  (cons 'atan (list number? number?))
-			  (cons 'atanh number?)
-			  (cons 'bytevector integer?)
-			  (cons 'caaaar pair?)
-			  (cons 'caaadr pair?)
-			  (cons 'caaar pair?)
-			  (cons 'caadar pair?)
-			  (cons 'caaddr pair?)
-			  (cons 'caadr pair?)
-			  (cons 'caar pair?)
-			  (cons 'cadaar pair?)
-			  (cons 'cadadr pair?)
-			  (cons 'cadar pair?)
-			  (cons 'caddar pair?)
-			  (cons 'cadddr pair?)
-			  (cons 'caddr pair?)
-			  (cons 'cadr pair?)
-			  (cons 'call-with-current-continuation one-argable?)
-			  (cons 'call-with-exit one-argable?)
-			  (cons 'call-with-input-file (list string? procedure?)) ; maybe these should also be one-argable? 
-			  (cons 'call-with-input-string (list string? procedure?))
-			  (cons 'call-with-output-file (list string? procedure?))
-			  (cons 'call-with-output-string procedure?)
-			  (cons 'call/cc one-argable?)
-			  (cons 'car pair?)
-			  (cons 'cdaaar pair?)
-			  (cons 'cdaadr pair?)
-			  (cons 'cdaar pair?)
-			  (cons 'cdadar pair?)
-			  (cons 'cdaddr pair?)
-			  (cons 'cdadr pair?)
-			  (cons 'cdar pair?)
-			  (cons 'cddaar pair?)
-			  (cons 'cddadr pair?)
-			  (cons 'cddar pair?)
-			  (cons 'cdddar pair?)
-			  (cons 'cddddr pair?)
-			  (cons 'cdddr pair?)
-			  (cons 'cddr pair?)
-			  (cons 'cdr pair?)
-			  (cons 'ceiling real?)
-			  (cons 'char->integer char?)
-			  (cons 'char-alphabetic? char?)
-			  (cons 'char-ci<=? char?)
-			  (cons 'char-ci<? char?)
-			  (cons 'char-ci=? char?)
-			  (cons 'char-ci>=? char?)
-			  (cons 'char-ci>? char?)
-			  (cons 'char-downcase char?)
-			  (cons 'char-lower-case? char?)
-			  (cons 'char-numeric? char?)
-			  (cons 'char-ready? port?)
-			  (cons 'char-upcase char?)
-			  (cons 'char-upper-case? char?)
-			  (cons 'char-whitespace? char?)
-			  (cons 'char<=? char?)
-			  (cons 'char<? char?)
-			  (cons 'char=? char?)
-			  (cons 'char>=? char?)
-			  (cons 'char>? char?)
-			  (cons 'close-environment environment?)
-			  (cons 'cos number?)
-			  (cons 'cosh number?)
-			  (cons 'denominator rational?)
-			  (cons 'dynamic-wind (list thunk? thunk? thunk?))
-			  (cons 'environment->list (list environment?))
-			  (cons 'environment-ref (list environment? symbol?))
-			  (cons 'environment-set! (list environment? symbol?))
-			  (cons 'eval-string string?)
-			  (cons 'even? integer?)
-			  (cons 'exact->inexact real?)
-			  (cons 'exact? number?)
-			  (cons 'exp number?)
-			  (cons 'expt (list number? number?))
-			  (cons 'fill! (list sequence?))
-			  (cons 'float-vector real?)
-			  (cons 'floor real?)
-			  (cons 'gc boolean?)
-			  (cons 'gcd (list real? real?))
-			  (cons 'gensym string?)
-			  (cons 'hash-table-ref (list hash-table?))
-			  (cons 'hash-table-set! (list hash-table?))
-			  (cons 'hash-table-entries hash-table?)
-			  (cons 'hash-table-size hash-table?)
-			  (cons 'imag-part number?)
-			  (cons 'inexact->exact real?)
-			  (cons 'inexact? number?)
-			  (cons 'infinite? number?)
-			  (cons 'input-port? port?)
-			  (cons 'integer->char integer-between-0-and-255?)
-			  (cons 'integer-decode-float real-but-not-rational?)
-			  (cons 'integer-length integer?)
-			  (cons 'keyword->symbol keyword?)
-			  (cons 'lcm (list real? real?))
-			  (cons 'length sequence?)
-			  (cons 'list->string list?)
-			  (cons 'list->vector list?)
-			  (cons 'list-ref (list pair-or-null? non-negative-integer?))
-			  (cons 'list-set! (list pair? non-negative-integer?))
-			  (cons 'list-tail (list pair-or-null? non-negative-integer?))
-			  (cons 'load (list non-null-string?))
-			  (cons 'log (list number? non-zero-number?))
-			  (cons 'logand (list integer? integer?))
-			  (cons 'logbit? (list integer? integer?))
-			  (cons 'logior (list integer? integer?))
-			  (cons 'lognot (list integer? integer?))
-			  (cons 'logxor (list integer? integer?))
-			  (cons 'magnitude number?)
-			  (cons 'make-hash-table non-negative-integer?)
-			  (cons 'make-hash-table-iterator hash-table?)
-			  (cons 'make-hook (list list? string?))
-			  (cons 'make-list (list non-negative-integer?))
-			  (cons 'make-polar real?)
-			  (cons 'make-procedure-with-setter procedure?)
-			  (cons 'make-rectangular real?)
-			  (cons 'make-string (list non-negative-integer? char?))
-			  (cons 'max real?)
-			  (cons 'min real?)
-			  (cons 'modulo (list real? real?))
-			  (cons 'nan? number?)
-			  (cons 'negative? real?)
-			  (cons 'number->string (list number? integer-between-2-and-16?))
-			  (cons 'numerator rational?)
-			  (cons 'odd? integer?)
-			  (cons 'open-environment environment?)
-			  (cons 'open-input-file (list string? string?))
-			  (cons 'open-input-string string?)
-			  (cons 'open-output-file (list string? string?))
-			  (cons 'outer-environment environment?)
-			  (cons 'output-port? port?)
-			  (cons 'positive? real?)
-			  (cons 'procedure-documentation procedure?)
-			  (cons 'procedure-environment procedure?)
-			  (cons 'procedure-setter procedure?)
-			  (cons 'procedure-source procedure?)
-			  (cons 'provide symbol?)
-			  (cons 'provided? symbol?)
-			  (cons 'quotient (list real? real?))
-			  (cons 'pair-line-number pair?)
-			  (cons 'port-closed? port?)
-			  (cons 'random (list number? random-state?))
-			  (cons 'rationalize (list real? real?))
-			  (cons 'real-part number?)
-			  (cons 'remainder (list real? real?))
-			  (cons 'reverse sequence?)
-			  (cons 'reverse! sequence?)
-			  (cons 'round real?)
-			  (cons 'set-car! (list pair?))
-			  (cons 'set-cdr! (list pair?))
-			  (cons 'sin number?)
-			  (cons 'sinh number?)
-			  (cons 'sort! (list sequence? procedure?))
-			  (cons 'sqrt number?)
-			  (cons 'string char?)
-			  (cons 'string-downcase string?)
-			  (cons 'string-upcase string?)
-			  (cons 'string->list string?)
-			  (cons 'string->number (list string? integer-between-2-and-16?))
-			  (cons 'string->symbol string?)
-			  (cons 'string-append string?)
-			  (cons 'string-ci<=? string?)
-			  (cons 'string-ci<? string?)
-			  (cons 'string-ci=? string?)
-			  (cons 'string-ci>=? string?)
-			  (cons 'string-ci>? string?)
-			  (cons 'string-copy string?)
-			  (cons 'string-fill! (list string? char? non-negative-integer? non-negative-integer?))
-			  (cons 'string-length string?)
-			  (cons 'string-position (list string? string?))
-			  (cons 'string-ref (list non-null-string? non-negative-integer?))
-			  (cons 'string-set! (list non-null-string? non-negative-integer? char?))
-			  (cons 'string<=? string?)
-			  (cons 'string<? string?)
-			  (cons 'string=? string?)
-			  (cons 'string>=? string?)
-			  (cons 'string>? string?)
-			  (cons 'substring (list string? integer? integer?))
-			  (cons 'symbol->dynamic-value symbol?)
-			  (cons 'symbol->keyword symbol?)
-			  (cons 'symbol->string symbol?)
-			  (cons 'symbol->value (list symbol?)) ; opt arg is env
-			  (cons 'symbol=? symbol?)
-			  (cons 'system string?)
-			  (cons 'tan number?)
-			  (cons 'tanh number?)
-			  (cons 'truncate real?)
-			  (cons 'vector->list vector?)
-			  (cons 'vector-append vector?)
-			  (cons 'vector-dimensions vector?)
-			  (cons 'vector-fill! (list vector?))
-			  (cons 'vector-length vector?)
-			  (cons 'vector-ref (list non-null-vector? non-negative-integer?))
-			  (cons 'vector-set! (list non-null-vector? non-negative-integer?))
-			  (cons 'with-input-from-file (list string? thunk?))
-			  (cons 'with-input-from-string (list string? thunk?))
-			  (cons 'with-output-to-file (list string? thunk?))
-			  (cons 'with-output-to-string thunk?)
-			  (cons 'write-byte (list integer-between-0-and-255?))
-			  (cons 'write-char (list char?))
-			  (cons 'write-string (list string?))
-			  (cons 'zero? number?)))
+	  (function-types (hash-table* 
+			   '* +number+
+			   '+ +number+
+			   '- +number+
+			   '/ +number+
+			   '< +boolean+
+			   '<= +boolean+
+			   '= +boolean+
+			   '> +boolean+
+			   '>= +boolean+
+			   'abs +number+
+			   'acos +not-integer+
+			   'acosh +not-integer+
+			   'angle +number+
+			   'aritable? +boolean+
+			   'arity +list+
+			   'ash +integer+
+			   'asin +not-integer+
+			   'asinh +not-integer+
+			   'assoc 'list-or-f
+			   'assq 'list-or-f
+			   'assv 'list-or-f
+			   'atan +not-integer+
+			   'atanh +not-integer+
+			   'augment-environment +environment+
+			   'augment-environment! +environment+
+			   'boolean? +boolean+
+			   'boolean=? +boolean+
+			   'bytevector? +boolean+
+			   'ceiling +integer+
+			   'char->integer +integer+
+			   'char-alphabetic? +boolean+
+			   'char-ci<=? +boolean+
+			   'char-ci<? +boolean+
+			   'char-ci=? +boolean+
+			   'char-ci>=? +boolean+
+			   'char-ci>? +boolean+
+			   'char-downcase +character+
+			   'char-lower-case? +boolean+
+			   'char-numeric? +boolean+
+			   'char-position 'integer-or-f
+			   'char-ready? +boolean+
+			   'char-upcase +character+
+			   'char-upper-case? +boolean+
+			   'char-whitespace? +boolean+
+			   'char<=? +boolean+
+			   'char<? +boolean+
+			   'char=? +boolean+
+			   'char>=? +boolean+
+			   'char>? +boolean+
+			   'char? +boolean+
+			   'close-input-port +unspecified+
+			   'close-output-port +unspecified+
+			   'flush-output-port +unspecified+
+			   'complex? +boolean+
+			   'cons +list+
+			   'constant? +boolean+
+			   'continuation? +boolean+
+			   'cos +number+
+			   'cosh +not-integer+
+			   'current-environment +environment+
+			   'current-error-port +port+
+			   'current-input-port +port+
+			   'current-output-port +port+
+			   'cyclic-sequences +list+
+			   'defined? +boolean+
+			   'denominator +integer+
+			   'display +unspecified+
+			   'environment +environment+
+			   'environment* +environment+
+			   'environment? +boolean+
+			   'environment->list +list+
+			   'eof-object? +boolean+
+			   'eq? +boolean+
+			   'equal? +boolean+
+			   'eqv? +boolean+
+			   'error-environment +environment+
+			   'even? +boolean+
+			   'exact->inexact +not-integer+
+			   'exact? +boolean+
+			   'exp +number+
+			   'expt +number+
+			   'float-vector +vector+
+			   'float-vector? +boolean+
+			   'float-vector-ref +number+
+			   'float-vector-set! +number+
+			   'floor +integer+
+			   'for-each +unspecified+
+			   'gcd +number+
+			   'gensym +symbol+
+			   'gensym? +boolean+
+			   'global-environment +environment+
+			   'hash-table +hash-table+
+			   'hash-table* +hash-table+
+			   'hash-table? +boolean+
+			   'hash-table-iterator? +boolean+
+			   'hash-table-entries +integer+
+			   'hash-table-size +integer+
+			   'imag-part +number+
+			   'inexact->exact +number+
+			   'inexact? +boolean+
+			   'infinite? +boolean+
+			   'input-port? +boolean+
+			   'integer->char +character+
+			   'integer-decode-float +list+
+			   'integer-length +integer+
+			   'integer? +boolean+
+			   'keyword->symbol +symbol+
+			   'keyword? +boolean+
+			   'lcm +number+
+			   'length +integer+
+			   'list +list+
+			   'list-tail 'pair-or-null
+			   'list->string +string+
+			   'list->vector +vector+
+			   'list? +boolean+
+			   'log +number+
+			   'logand +integer+
+			   'logbit? +boolean+
+			   'logior +integer+
+			   'lognot +integer+
+			   'logxor +integer+
+			   'macro? +boolean+
+			   'magnitude +number+
+			   'make-hash-table +hash-table+
+			   'make-keyword +symbol+
+			   'make-list +list+
+			   'make-polar +number+
+			   'make-rectangular +number+
+			   'make-string +string+
+			   'make-vector +vector+
+			   'make-float-vector +vector+
+			   'make-shared-vector +vector+
+			   'map +list+
+			   'max +number+
+			   'member 'list-or-f
+			   'memq 'list-or-f
+			   'memv 'list-or-f
+			   'min +number+
+			   'modulo +number+
+			   'morally-equal? +boolean+
+			   'nan? +boolean+
+			   'negative? +boolean+
+			   'newline +unspecified+
+			   'not +boolean+
+			   'null? +boolean+
+			   'number->string +string+
+			   'number? +boolean+
+			   'numerator +integer+
+;			   'object-environment +environment+
+			   'object->string +string+
+			   'odd? +boolean+
+			   'open-environment +environment+
+			   'open-environment? +boolean+
+			   'outer-environment +environment+
+			   'output-port? +boolean+
+			   'pair? +boolean+
+			   'pair-line-number +integer+
+			   'peek-char 'char-or-eof
+			   'port-closed? +boolean+
+			   'port-file-name +string+
+			   'port-line-number +integer+
+			   'positive? +boolean+
+			   'procedure? +boolean+
+			   'procedure-arity 'list-or-f
+			   'procedure-environment +environment+
+			   'procedure-name +string+
+			   'provided? +boolean+
+			   'quotient +number+
+			   'random +number+
+			   'random-state? +boolean+
+			   'random-state->list +list+
+			   'rational? +boolean+
+			   'rationalize +number+
+			   'read-byte 'number-or-eof
+			   'read-char 'char-or-eof
+			   'read-line 'string-or-eof
+			   'read-string 'string-or-eof
+			   'real-part +number+
+			   'real? +boolean+
+			   'remainder +number+
+			   'round +integer+
+			   'sin +number+
+			   'sinh +not-integer+
+			   'sqrt +number+
+			   'string +string+
+			   'string-downcase +string+
+			   'string-upcase +string+
+			   'string->list +list+
+			   'string->number 'number-or-f
+			   'string->symbol +symbol+
+			   'string-append +string+
+			   'string-ci<=? +boolean+
+			   'string-ci<? +boolean+
+			   'string-ci=? +boolean+
+			   'string-ci>=? +boolean+
+			   'string-ci>? +boolean+
+			   'string-copy +string+
+			   'string-fill! +character+
+			   'string-length +integer+
+			   'string-position 'integer-or-f
+			   'string-ref +character+
+			   'string<=? +boolean+
+			   'string<? +boolean+
+			   'string=? +boolean+
+			   'string>=? +boolean+
+			   'string>? +boolean+
+			   'string? +boolean+
+			   'substring +string+
+			   'symbol +symbol+
+			   'symbol->string +string+
+			   'symbol? +boolean+
+			   'symbol=? +boolean+
+			   's7-version +string+
+			   'tan +number+
+			   'tanh +not-integer+
+			   'truncate +integer+
+			   'vector +vector+
+			   'vector-append +vector+
+			   'vector-dimensions +list+
+			   'vector-length +integer+
+			   'vector-rank +integer+
+			   'vector->list +list+
+			   'vector? +boolean+
+			   'write +unspecified+
+			   'write-char +unspecified+
+			   'write-string +unspecified+
+			   'zero? +boolean+
+			   'procedure-with-setter? +boolean+))
+      (argument-data (hash-table*
+			  '* number?
+			  '+ number?
+			  '- number?
+			  '/ number?
+			  '< real?
+			  '<= real?
+			  '= number?
+			  '> real?
+			  '>= real?
+			  '->bytevector string?
+			  'abs number?
+			  'acos number?
+			  'acosh number?
+			  'angle number?
+			  'ash (list integer? integer?)
+			  'asin number?
+			  'asinh number?
+			  'atan (list number? number?)
+			  'atanh number?
+			  'bytevector integer?
+			  'caaaar pair?
+			  'caaadr pair?
+			  'caaar pair?
+			  'caadar pair?
+			  'caaddr pair?
+			  'caadr pair?
+			  'caar pair?
+			  'cadaar pair?
+			  'cadadr pair?
+			  'cadar pair?
+			  'caddar pair?
+			  'cadddr pair?
+			  'caddr pair?
+			  'cadr pair?
+			  'call-with-current-continuation one-argable?
+			  'call-with-exit one-argable?
+			  'call-with-input-file (list string? procedure?) ; maybe these should also be one-argable?
+			  'call-with-input-string (list string? procedure?)
+			  'call-with-output-file (list string? procedure?)
+			  'call-with-output-string procedure?
+			  'call/cc one-argable?
+			  'car pair?
+			  'cdaaar pair?
+			  'cdaadr pair?
+			  'cdaar pair?
+			  'cdadar pair?
+			  'cdaddr pair?
+			  'cdadr pair?
+			  'cdar pair?
+			  'cddaar pair?
+			  'cddadr pair?
+			  'cddar pair?
+			  'cdddar pair?
+			  'cddddr pair?
+			  'cdddr pair?
+			  'cddr pair?
+			  'cdr pair?
+			  'ceiling real?
+			  'char->integer char?
+			  'char-alphabetic? char?
+			  'char-ci<=? char?
+			  'char-ci<? char?
+			  'char-ci=? char?
+			  'char-ci>=? char?
+			  'char-ci>? char?
+			  'char-downcase char?
+			  'char-lower-case? char?
+			  'char-numeric? char?
+			  'char-ready? port?
+			  'char-upcase char?
+			  'char-upper-case? char?
+			  'char-whitespace? char?
+			  'char<=? char?
+			  'char<? char?
+			  'char=? char?
+			  'char>=? char?
+			  'char>? char?
+			  'close-environment environment?
+			  'cos number?
+			  'cosh number?
+			  'denominator rational?
+			  'dynamic-wind (list thunk? thunk? thunk?)
+			  'environment->list (list environment?)
+			  'environment-ref (list environment? symbol?)
+			  'environment-set! (list environment? symbol?)
+			  'eval-string string?
+			  'even? integer?
+			  'exact->inexact real?
+			  'exact? number?
+			  'exp number?
+			  'expt (list number? number?)
+			  'fill! (list sequence?)
+			  'float-vector real?
+			  'floor real?
+			  'gc boolean?
+			  'gcd (list real? real?)
+			  'gensym string?
+			  'hash-table-ref (list hash-table?)
+			  'hash-table-set! (list hash-table?)
+			  'hash-table-entries hash-table?
+			  'hash-table-size hash-table?
+			  'imag-part number?
+			  'inexact->exact real?
+			  'inexact? number?
+			  'infinite? number?
+			  'input-port? port?
+			  'integer->char integer-between-0-and-255?
+			  'integer-decode-float real-but-not-rational?
+			  'integer-length integer?
+			  'keyword->symbol keyword?
+			  'lcm (list real? real?)
+			  'length sequence?
+			  'list->string list?
+			  'list->vector list?
+			  'list-ref (list pair-or-null? non-negative-integer?)
+			  'list-set! (list pair? non-negative-integer?)
+			  'list-tail (list pair-or-null? non-negative-integer?)
+			  'load (list non-null-string?)
+			  'log (list number? non-zero-number?)
+			  'logand (list integer? integer?)
+			  'logbit? (list integer? integer?)
+			  'logior (list integer? integer?)
+			  'lognot (list integer? integer?)
+			  'logxor (list integer? integer?)
+			  'magnitude number?
+			  'make-hash-table non-negative-integer?
+			  'make-hash-table-iterator hash-table?
+			  'make-hook (list list? string?)
+			  'make-list (list non-negative-integer?)
+			  'make-polar real?
+			  'make-procedure-with-setter procedure?
+			  'make-rectangular real?
+			  'make-string (list non-negative-integer? char?)
+			  'max real?
+			  'min real?
+			  'modulo (list real? real?)
+			  'nan? number?
+			  'negative? real?
+			  'number->string (list number? integer-between-2-and-16?)
+			  'numerator rational?
+			  'odd? integer?
+			  'open-environment environment?
+			  'open-input-file (list string? string?)
+			  'open-input-string string?
+			  'open-output-file (list string? string?)
+			  'outer-environment environment?
+			  'output-port? port?
+			  'positive? real?
+			  'procedure-documentation procedure?
+			  'procedure-environment procedure?
+			  'procedure-setter procedure?
+			  'procedure-source procedure?
+			  'provide symbol?
+			  'provided? symbol?
+			  'quotient (list real? real?)
+			  'pair-line-number pair?
+			  'port-closed? port?
+			  'random (list number? random-state?)
+			  'rationalize (list real? real?)
+			  'real-part number?
+			  'remainder (list real? real?)
+			  'reverse sequence?
+			  'reverse! sequence?
+			  'round real?
+			  'set-car! (list pair?)
+			  'set-cdr! (list pair?)
+			  'sin number?
+			  'sinh number?
+			  'sort! (list sequence? procedure?)
+			  'sqrt number?
+			  'string char?
+			  'string-downcase string?
+			  'string-upcase string?
+			  'string->list string?
+			  'string->number (list string? integer-between-2-and-16?)
+			  'string->symbol string?
+			  'string-append string?
+			  'string-ci<=? string?
+			  'string-ci<? string?
+			  'string-ci=? string?
+			  'string-ci>=? string?
+			  'string-ci>? string?
+			  'string-copy string?
+			  'string-fill! (list string? char? non-negative-integer? non-negative-integer?)
+			  'string-length string?
+			  'string-position (list string? string?)
+			  'string-ref (list non-null-string? non-negative-integer?)
+			  'string-set! (list non-null-string? non-negative-integer? char?)
+			  'string<=? string?
+			  'string<? string?
+			  'string=? string?
+			  'string>=? string?
+			  'string>? string?
+			  'substring (list string? integer? integer?)
+			  'symbol->dynamic-value symbol?
+			  'symbol->keyword symbol?
+			  'symbol->string symbol?
+			  'symbol->value (list symbol?) ; opt arg is env
+			  'symbol=? symbol?
+			  'system string?
+			  'tan number?
+			  'tanh number?
+			  'truncate real?
+			  'vector->list vector?
+			  'vector-append vector?
+			  'vector-dimensions vector?
+			  'vector-fill! (list vector?)
+			  'vector-length vector?
+			  'vector-ref (list non-null-vector? non-negative-integer?)
+			  'vector-set! (list non-null-vector? non-negative-integer?)
+			  'with-input-from-file (list string? thunk?)
+			  'with-input-from-string (list string? thunk?)
+			  'with-output-to-file (list string? thunk?)
+			  'with-output-to-string thunk?
+			  'write-byte (list integer-between-0-and-255?)
+			  'write-char (list char?)
+			  'write-string (list string?)
+			  'zero? number?))
 	  
 	  (numeric-ops (let ((h (make-hash-table)))
 			 (for-each
@@ -689,7 +690,8 @@
       (define var-init (make-procedure-with-setter (lambda (v) (v 4)) (lambda (v x) (set! (v 4) x))))
 #|      
       ;; vector version
-      (define* (make-var name ref set typ init :allow-other-keys) (vector name ref set typ init))
+      (define* (make-var name ref set typ init :allow-other-keys) 
+        (vector name ref set typ init))
       (define var? vector?)
       (define (mf a b) (eq? a (vector-ref b 0)))
       (define (var-member v q) (let ((lst (member v q mf))) (and lst (car lst))))
@@ -2619,7 +2621,8 @@
 	    
 	    ((define)
 	     (if (pair? (cadr form))
-		 (hash-table-set! globals (car (cadr form)) (make-var (car (cadr form)) #f #f (list head (cdr (cadr form)))))
+		 (if (symbol? (caadr form))
+		     (hash-table-set! globals (caadr form) (make-var (caadr form) #f #f (list head (cdadr form)))))
 		 (hash-table-set! globals (cadr form) (make-var (cadr form) #f #f))))
 
 	    ((define* definstrument defanimal define-expansion define-macro define-macro* define-bacro define-bacro*)
@@ -2992,7 +2995,8 @@
 					   (append (list (make-var sym #f #f)) env)))
 				     (append (list (make-var sym #f #f)) env)))
 			       
-			       (if (pair? sym)
+			       (if (and (pair? sym)
+					(not (pair? (car sym))))
 				   (begin
 				     (if (and (pair? (cdr sym))
 					      (repeated-member? (proper-list (cdr sym)) env))
@@ -3695,7 +3699,7 @@
 ;;;   '(+ number? . number?), '(abs real? real?) etc
 ;;;
 ;;; tests in t935.scm
-;;; (require ...) when we're in ...
+
 
 
 ;;; --------------------------------------------------------------------------------

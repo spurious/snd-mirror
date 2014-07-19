@@ -1626,8 +1626,7 @@ static int snd_access(const char *dir, const char *caller)
       temp = mus_format("%s: directory %s is not writable: %s", caller, dir, snd_open_strerror());
       res = C_string_to_Xen_string(temp);
       free(temp);
-      Xen_error(NO_SUCH_FILE,
-		Xen_list_1(res));
+      Xen_error(NO_SUCH_FILE, Xen_list_1(res));
     }
   else snd_close(err, temp);
   snd_remove(temp, IGNORE_CACHE);

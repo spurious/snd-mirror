@@ -1226,7 +1226,7 @@ static void prefs_r_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r = 0.0;
+  float r;
   str = XmTextFieldGetString(w);
   redirect_errors_to(errors_to_color_text, (void *)prf);
   r = (float)string_to_mus_float_t(str, 0.0, "red amount");
@@ -1243,7 +1243,7 @@ static void prefs_g_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r = 0.0;
+  float r;
   str = XmTextFieldGetString(w);
   redirect_errors_to(errors_to_color_text, (void *)prf);
   r = (float)string_to_mus_float_t(str, 0.0, "green amount");
@@ -1260,7 +1260,7 @@ static void prefs_b_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r = 0.0;
+  float r;
   str = XmTextFieldGetString(w);
   redirect_errors_to(errors_to_color_text, (void *)prf);
   r = (float)string_to_mus_float_t(str, 0.0, "blue amount");

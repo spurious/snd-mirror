@@ -1326,7 +1326,7 @@ char *sp_name_click(snd_info *sp) /* caller should free returned string */
 	  mus_float_t dur;
 	  char *result, *str = NULL;
 
-	  bool linked = false;
+	  bool linked;
 	  linked = is_link_file(sp->filename);
 	  dur = (mus_float_t)((double)(hdr->samples) / (double)(hdr->chans * hdr->srate));
 	  result = mus_format("%d, %d chan%s, %.3f sec%s, %s: %s, %s%s%s%s",

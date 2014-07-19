@@ -2441,6 +2441,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 <ul>
 <li>(<em class=def id="makehashtable">make-hash-table</em> (size 512) eq-func) or (make-hash-table eq-func size)
 <li>(<em class=def id="hashtable">hash-table</em> ...)
+<li>(<em class=def id="hashtablestar">hash-table*</em> ...)
 <li>(<em class=def id="hashtableref">hash-table-ref</em> ht key)
 <li>(<em class=def id="hashtableset">hash-table-set!</em> ht key value)
 <li>(<em class=def id="hashtablep">hash-table?</em> obj)
@@ -2465,8 +2466,12 @@ If you pass a table size that is not a power of 2, make-hash-table rounds it up 
 123
 </pre>
 
-<p>hash-table (the function) parallels (the functions) vector, list, and string.  Its arguments are cons's containing key/value pairs.
+<p>hash-table (the function) parallels (the functions) vector, list, and string.  Its arguments are conses containing key/value pairs.
 The result is a new hash-table with those values preinstalled: <code>(hash-table '("hi" . 32) '("ho" . 1))</code>.
+After much use, I now think it is more convenient here, as in environment*, to use hash-table*; its arguments are
+simply the keys and values, without the consing: <code>(hash-table* 'a 1 'b 2)</code>.
+</p>
+<p>
 make-hash-table-iterator returns a function of no arguments (a "thunk").  Each time you call this function, it
 returns the next entry in the hash table.  When it runs out of entries, it returns nil.  hash-table-iterator?
 returns #t if passed one of these iterators.
@@ -9319,10 +9324,13 @@ end
 <div class="topheader" id="s7examples">s7 examples</div>
 
 <p>The s7 tarball includes several scheme files including s7test.scm,
-lint.scm, cload.scm, write.scm, and stuff.scm.  s7test.scm is a regression test for s7, lint.scm
-is the s7 equivalent of the ancient C program named lint, write.scm has a pretty printer, cload.scm
-is a wrapper for the FFI stuff described above, and stuff.scm is just some
-arbitrary stuff.  gdbinit has some gdb commands for s7. 
+lint.scm, cload.scm, write.scm, and stuff.scm.  
+s7test.scm is a regression test for s7, 
+lint.scm is the s7 equivalent of the ancient C program named lint (modern equivalent: cppcheck), 
+write.scm has a pretty printer, 
+cload.scm is a wrapper for the FFI stuff described above, and 
+stuff.scm is just some arbitrary stuff.  
+gdbinit has some gdb commands for s7. 
 </p>
 
 

@@ -1097,7 +1097,7 @@ int mus_sound_close_output(int fd, mus_long_t bytes_of_data)
   name = mus_file_fd_name(fd);
   if (name)
     {
-      int err = MUS_ERROR, old_type;
+      int err, old_type;
       char *fname;
       fname = mus_strdup(name); 
       old_type = mus_file_header_type(fd);

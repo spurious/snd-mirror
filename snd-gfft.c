@@ -421,7 +421,7 @@ static void map_show_transform_peaks(chan_info *cp, bool value)
 
 static void peaks_callback(GtkWidget *w, gpointer context)
 {
-  bool val = false;
+  bool val;
   val = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   in_set_show_transform_peaks(val);
   for_each_chan_with_bool(map_show_transform_peaks, val);

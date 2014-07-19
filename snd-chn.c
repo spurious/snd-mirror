@@ -1028,7 +1028,7 @@ static void set_x_axis_x1(chan_info *cp, mus_long_t right)
 void reset_x_display(chan_info *cp, double sx, double zx)
 {
   axis_info *ap;
-  bool reset_zx = false;
+  bool reset_zx;
 
   ap = cp->axis;
   ap->sx = sx;
@@ -2020,7 +2020,7 @@ void draw_graph_data(chan_info *cp, mus_long_t losamp, mus_long_t hisamp, int da
   sp = cp->sound;
   if (data1 == NULL)
     {
-      double start_time = 0.0, cur_srate = 1.0;
+      double start_time = 0.0, cur_srate;
 
       cur_srate = (double)snd_srate(sp);
       if (losamp == -1)
@@ -3947,7 +3947,7 @@ static void display_channel_data_with_size(chan_info *cp,
       (!(ss->graph_hook_active)) &&
       (Xen_hook_has_list(graph_hook)))
     {
-      Xen res = Xen_false;
+      Xen res;
       ss->graph_hook_active = true;
       res = run_progn_hook(graph_hook,
 			   Xen_list_4(C_int_to_Xen_sound(sp->index),
@@ -5347,7 +5347,7 @@ void key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
       (within_graph(cp, x, y) == CLICK_LISP) &&
       (Xen_hook_has_list(key_press_hook)))
     {
-      Xen res = Xen_false;
+      Xen res;
       res = run_or_hook(key_press_hook,
 			Xen_list_4(C_int_to_Xen_sound(sp->index),
 				   C_int_to_Xen_integer(cp->chan),
@@ -6069,7 +6069,7 @@ static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
       if ((grf_width > 100) &&
 	  (grf_height > 20))
 	{
-	  bool try_tiny_font = false;
+	  bool try_tiny_font;
 	  int width, height, frames, seconds, minutes, hours;
 	  double secs;
 	  char num_buf[3];

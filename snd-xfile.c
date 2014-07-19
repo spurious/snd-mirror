@@ -2003,7 +2003,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
       file_dialog_stop_playing(fd->dp);
       if (!(is_directory(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
 	{
-	  bool ok = false;
+	  bool ok;
 	  snd_info *sp;
 	  sp = any_selected_sound();
 	  ss->requestor_dialog = w;
@@ -3007,6 +3007,7 @@ static void make_auto_comment(save_as_dialog_info *sd)
 
 	      if (orig_comment)
 		strcat(comment, orig_comment);
+	      free(edit_strs);
 	    }
 
 	  XmTextSetString(fd->comment_text, comment);
@@ -6370,7 +6371,7 @@ static void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 
   if (!(vdat->has_error))
     {
-      bool ok = false;
+      bool ok;
 
       redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
       redirect_snd_warning_to(redirect_vf_post_error, (void *)vdat);

@@ -2074,7 +2074,7 @@
 	      (set! using-result (and (not (string=? return-type "void"))
 				      (not (eq? lambda-type 'lambda))))
 	      (hey "  {~%")
-	      (if using-result (hey "    Xen result = Xen_false;~%"))
+	      (if using-result (hey "    Xen result;~%"))
 	      (if using-loc (hey "    int loc;~%"))
 	      (hey "    Xen gxg_ptr = Xen_list_5(~A, func_info, Xen_false, Xen_false, Xen_false);~%"
 		   (call-with-exit
