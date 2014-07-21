@@ -6715,7 +6715,9 @@ static Xen fallback_out_any_2(Xen outp, mus_long_t pos, mus_float_t inv, int chn
 	{
 	  s7_Int *offsets;
 	  offsets = s7_vector_offsets(outp);
-	  vdata[chn * offsets[0] + pos] += inv;
+	  pos += (chn * offsets[0]);
+	  if (pos < mus_vct_length(v))
+	    vdata[pos] += inv;
 	}
 #endif
       return(Xen_integer_zero);

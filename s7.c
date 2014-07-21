@@ -114,7 +114,7 @@
  */
 #endif
 
-#define SYMBOL_TABLE_SIZE 13567 /* 19259 */
+#define SYMBOL_TABLE_SIZE 13567 
 /* names are hashed into the symbol table (a vector) and collisions are chained as lists. 
  */
 
@@ -1022,13 +1022,16 @@ typedef struct s7_cell {
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
       unsigned int tag;
       s7_pointer initial_slot;
-      char *documentation;
+      union {
+	char *documentation;
+	s7_pointer ksym;
+      } doc;
     } string;
     
-    struct {                      /* symbols */
+    struct {                       /* symbols */
       s7_pointer name, global_slot, local_slot;
       long long int id;
-      s7_pointer ksym;
+      /* s7_pointer ksym; */
     } sym;
 
     struct {                       /* slots (bindings) */
@@ -1214,7 +1217,6 @@ struct s7_scheme {
   void (*begin_hook)(s7_scheme *sc, bool *val);
   
   int no_values, current_line, s7_call_line, safety;
-  unsigned int class_name_location, class_name_hash;
   const char *current_file, *s7_call_file, *s7_call_name;
 
   shared_info *circle_info;
@@ -1294,7 +1296,7 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer Object_Set;               /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
-  s7_pointer BODY;
+  s7_pointer BODY, CLASS_NAME;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
@@ -2093,8 +2095,8 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define global_slot(p)                (p)->object.sym.global_slot
 #define initial_slot(p)               (symbol_name_cell(p))->object.string.initial_slot
 #define local_slot(p)                 (p)->object.sym.local_slot
-#define keyword_symbol(p)             (p)->object.sym.ksym
-#define symbol_help(p)                (symbol_name_cell(p))->object.string.documentation
+#define keyword_symbol(p)             (symbol_name_cell(p))->object.string.doc.ksym /* (p)->object.sym.ksym */
+#define symbol_help(p)                (symbol_name_cell(p))->object.string.doc.documentation
 #define symbol_tag(p)                 (symbol_name_cell(p))->object.string.tag
 #define symbol_has_help(p)            (is_documented(symbol_name_cell(p)))
 #define symbol_set_has_help(p)        set_documented(symbol_name_cell(p))
@@ -6482,7 +6484,7 @@ static int closure_length(s7_scheme *sc, s7_pointer e)
 
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_defined "(defined? obj (env (current-environment))) returns #t if obj has a binding (a value) in the environment env"
+  #define H_is_defined "(defined? obj (env (current-environment)) ignore-globals) returns #t if obj has a binding (a value) in the environment env"
   s7_pointer sym, x;
 
   /* is this correct? 
@@ -6513,6 +6515,11 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       x = find_local_symbol(sc, e, sym); 
       if (is_slot(x))
 	return(sc->T);
+
+      if ((is_pair(cddr(args))) &&
+	  (caddr(args) == sc->T))
+	return(sc->F);
+
       /* here we can't fall back on find_symbol:
        *    (let ((b 2))
        *      (let ((e (current-environment)))
@@ -6614,6 +6621,7 @@ s7_pointer s7_define_constant_with_documentation(s7_scheme *sc, const char *name
 
 char *s7_symbol_documentation(s7_scheme *sc, s7_pointer sym)
 {
+  if (is_keyword(sym)) return(NULL);
   if ((is_symbol(sym)) &&
       (symbol_has_help(sym)))
     return(symbol_help(sym));
@@ -6623,6 +6631,7 @@ char *s7_symbol_documentation(s7_scheme *sc, s7_pointer sym)
 
 char *s7_symbol_set_documentation(s7_scheme *sc, s7_pointer sym, const char *new_doc)
 {
+  if (is_keyword(sym)) return(NULL);
   if ((is_symbol(sym)) &&
       (symbol_has_help(sym)) &&
       (symbol_help(sym)))
@@ -21603,7 +21612,9 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt)
    * but slightly faster.
    */
 
-  /* eval_c_string string is a constant so we can't set and unset the token's end char */
+  /* eval_c_string string is a constant so we can't set and unset the token's end char 
+   *    two elaborate attempts to avoid the memcpy failed.
+   */
   if ((k + 1) >= sc->strbuf_size)
     resize_strbuf(sc, k + 1);
   
@@ -35013,9 +35024,9 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 
 	if (is_float_vector(x))
 	  {
-	    s7_Double z;
 	    for (i = 0; i < len; i++)
 	      {
+		s7_Double z;
 		z = float_vector_element(x, i);
 		if ((is_NaN(z)) ||
 		    (z != float_vector_element(y, i)))
@@ -36040,9 +36051,8 @@ also accepts a string or vector argument."
 	int i, j, len;
 	len = string_length(p);
 	np = make_empty_string(sc, len, 0);
-	if (len > 0)
-	  for (i = 0, j = len - 1; i < len; i++, j--)
-	    string_value(np)[i] = string_value(p)[j];
+	for (i = 0, j = len - 1; i < len; i++, j--)
+	  string_value(np)[i] = string_value(p)[j];
 	if (is_bytevector(p))
 	  set_bytevector(np);
       }
@@ -36055,9 +36065,8 @@ also accepts a string or vector argument."
 	if (vector_rank(p) > 1)
 	  np = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, p)), small_int(0), sc->T));
 	else np = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
-	if (len > 0)
-	  for (i = 0, j = len - 1; i < len; i++, j--)
-	    int_vector_element(np, i) = int_vector_element(p, j);
+	for (i = 0, j = len - 1; i < len; i++, j--)
+	  int_vector_element(np, i) = int_vector_element(p, j);
       }
       break;
 
@@ -36068,9 +36077,8 @@ also accepts a string or vector argument."
 	if (vector_rank(p) > 1)
 	  np = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, p)), real_zero, sc->T));
 	else np = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
-	if (len > 0)
-	  for (i = 0, j = len - 1; i < len; i++, j--)
-	    float_vector_element(np, i) = float_vector_element(p, j);
+	for (i = 0, j = len - 1; i < len; i++, j--)
+	  float_vector_element(np, i) = float_vector_element(p, j);
       }
       break;
 
@@ -36081,9 +36089,8 @@ also accepts a string or vector argument."
 	if (vector_rank(p) > 1)
 	  np = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, p))));
 	else np = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
-	if (len > 0)
-	  for (i = 0, j = len - 1; i < len; i++, j--)
-	    vector_element(np, i) = vector_element(p, j);
+	for (i = 0, j = len - 1; i < len; i++, j--)
+	  vector_element(np, i) = vector_element(p, j);
       }
       break;
 
@@ -36882,7 +36889,6 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
 static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 {
   const char *str;
-  s7_pointer class_sym;
 
   str = type_name_from_type(sc, type(arg), article);
   if (str) return(str);
@@ -36901,15 +36907,10 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
     case T_ENVIRONMENT:  
       if (has_methods(arg))
 	{
-	  class_sym = symbol_table_find_by_name(sc, "class-name", sc->class_name_hash, sc->class_name_location);
-	  if (!is_null(class_sym))
-	    {
-	      s7_pointer class_name;
-	      class_name = find_method(sc, arg, class_sym);
-	      if ((class_name != sc->UNDEFINED) &&
-		  (is_symbol(class_name)))
-		return(make_type_name(symbol_name(class_name), article));
-	    }
+	  s7_pointer class_name;
+	  class_name = find_method(sc, arg, sc->CLASS_NAME);
+	  if (is_symbol(class_name))
+	    return(make_type_name(symbol_name(class_name), article));
 	}
       return(environments[article]);
 
@@ -36917,15 +36918,10 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
     case T_CLOSURE_STAR: 
       if (has_methods(arg))
 	{
-	  class_sym = symbol_table_find_by_name(sc, "class-name", sc->class_name_hash, sc->class_name_location);
-	  if (!is_null(class_sym))
-	    {
-	      s7_pointer class_name;
-	      class_name = find_method(sc, closure_environment(arg), class_sym);
-	      if ((class_name != sc->UNDEFINED) &&
-		  (is_symbol(class_name)))
-		return(make_type_name(symbol_name(class_name), article));
-	    }
+	  s7_pointer class_name;
+	  class_name = find_method(sc, closure_environment(arg), sc->CLASS_NAME);
+	  if (is_symbol(class_name))
+	    return(make_type_name(symbol_name(class_name), article));
 	}
       return(closures[article]);
     }
@@ -42643,7 +42639,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* zero? */
-  f = set_function_chooser(sc, sc->IS_ZERO, is_zero_chooser);
+  set_function_chooser(sc, sc->IS_ZERO, is_zero_chooser);
 
 
   /* = */
@@ -42860,13 +42856,13 @@ static void init_choosers(s7_scheme *sc)
 #endif
 
   /* string-ref */
-  f = set_function_chooser(sc, sc->STRING_REF, string_ref_chooser);
+  set_function_chooser(sc, sc->STRING_REF, string_ref_chooser);
 
   /* string-set! */
-  f = set_function_chooser(sc, sc->STRING_SET, string_set_chooser);
+  set_function_chooser(sc, sc->STRING_SET, string_set_chooser);
 
   /* string-append */
-  f = set_function_chooser(sc, sc->STRING_APPEND, string_append_chooser);
+  set_function_chooser(sc, sc->STRING_APPEND, string_append_chooser);
 
 
   /* symbol->string experiment */
@@ -42923,10 +42919,10 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* car */
-  f = set_function_chooser(sc, sc->CAR, car_chooser);
+  set_function_chooser(sc, sc->CAR, car_chooser);
 
   /* cdr */
-  f = set_function_chooser(sc, sc->CDR, cdr_chooser);
+  set_function_chooser(sc, sc->CDR, cdr_chooser);
 
 
   /* format */
@@ -68595,10 +68591,7 @@ s7_scheme *s7_init(void)
   sc->safety = 0;
   sc->baffle_ctr = 0;
   sc->syms_tag = 0;
-
-  sc->class_name_hash = raw_string_hash((const unsigned char *)"class-name");
-  sc->class_name_location = sc->class_name_hash % SYMBOL_TABLE_SIZE;
-
+  sc->CLASS_NAME = make_symbol(sc, "class-name");
   sc->circle_info = NULL;
   sc->fdats = (format_data **)calloc(8, sizeof(format_data *));
   sc->num_fdats = 8;
@@ -69038,7 +69031,7 @@ s7_scheme *s7_init(void)
 
   sc->IS_PROVIDED =           s7_define_safe_function(sc, "provided?",               g_is_provided,            1, 0, false, H_is_provided);
   sc->PROVIDE =               s7_define_safe_function(sc, "provide",                 g_provide,                1, 0, false, H_provide);
-  sc->IS_DEFINED =            s7_define_safe_function(sc, "defined?",                g_is_defined,             1, 1, false, H_is_defined);
+  sc->IS_DEFINED =            s7_define_safe_function(sc, "defined?",                g_is_defined,             1, 2, false, H_is_defined);
   sc->IS_CONSTANT =           s7_define_safe_function(sc, "constant?",               g_is_constant,            1, 0, false, H_is_constant);
   sc->IS_MACRO =              s7_define_safe_function(sc, "macro?",                  g_is_macro,               1, 0, false, H_is_macro);
 
@@ -70022,6 +70015,8 @@ int main(int argc, char **argv)
  *   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *   maybe gunichar->bytevector?
  *
- * in Snd/ws.scm, if clm-file-name (or with-sound :output) is a vector, can we display it as if a sound?
- *   currently find-sound expects a string.  This is tricky...
+ * t941: c-pointer->bytevector
+ * ~nT seems confused by numbers?
+ * libc tests, libdl, libgsl, any more libm?
+ * if error and cur_code useless, look for loader port
  */

@@ -2827,7 +2827,6 @@ retrieves rendition resources"
     Xen val;
     int i, len, gcloc;
     XmRendition r;
-    char *name;
     Xen arg2;
     arg2 = Xen_copy_arg(larg2);
     gcloc = xm_protect(arg2);
@@ -2839,6 +2838,7 @@ retrieves rendition resources"
     locs = (unsigned long *)calloc(len, sizeof(unsigned long));
     for (i = 0; i < len; i++, arg2 = Xen_cddr(arg2))
       {
+	char *name;
 	name = xen_strdup(Xen_string_to_C_string(Xen_car(arg2)));
 	XtSetArg(args[i], name, &(locs[i]));
       }
@@ -3404,7 +3404,7 @@ static Xen gxm_XmStringParseText(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg
 XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a character string to a compound string"
   /* DIFF: XmStringParseText arg1 is string, arg2 is int
    */
-  int loc, len;
+  int len;
   const char *str, *tag = NULL;
   XmTextType type;
   XtPointer *intext = NULL;
@@ -3421,6 +3421,7 @@ XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a 
   str = Xen_string_to_C_string(arg1);
   if (Xen_is_integer(arg2)) 
     {
+      int loc;
       loc = Xen_integer_to_C_int(arg2);
       intext = (XtPointer *)(str + loc);
     }
@@ -11233,7 +11234,7 @@ static Xen gxm_XAllocColorPlanes(Xen args)
    */
   unsigned long r,g,b;
   unsigned long *ps;
-  int i, len, val;
+  int len, val;
   Xen lst = Xen_false;
   Xen arg1, arg2, arg3, arg5, arg6, arg7, arg8;
   arg1 = Xen_list_ref(args, 0);
@@ -11262,7 +11263,7 @@ static Xen gxm_XAllocColorPlanes(Xen args)
   if (val != 0)
     {
       Xen plist = Xen_empty_list;
-      int loc;
+      int i, loc;
       loc = xm_protect(plist);
       for (i = len - 1; i >= 0; i--)
 	plist = Xen_cons(C_ulong_to_Xen_ulong(ps[i]), plist);
@@ -14231,7 +14232,6 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
   int i, len = 0, argc, arglen;
   char **argv = NULL;
   char **fallbacks = NULL;
-  Xen lst;
   Xen_check_type(Xen_is_string(arg2), arg2, 1, "XtVaAppInitialize", "char*");
   Xen_check_type(Xen_is_integer(arg5), arg5, 2, "XtVaAppInitialize", "int");
   Xen_check_type(Xen_is_list(arg6), arg6, 3, "XtVaAppInitialize", "list of String");
@@ -14242,6 +14242,7 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
   if (argc > 0) argv = Xen_to_C_Strings(arg6, argc);
   if (Xen_is_list(specs))
     {
+      Xen lst;
       int gcloc;
       len = Xen_list_length(specs);
       if (len <= 0) return(Xen_false);
@@ -14305,7 +14306,6 @@ and the specified args and num_args and returns the created shell.  The num_args
   char **argv = NULL;
   char **fallbacks = NULL;
   int i, len = 0;
-  Xen lst;
   Xen_check_type(Xen_is_string(arg2), arg2, 1, "XtAppInitialize", "char*");
   Xen_check_type(Xen_is_integer(arg5), arg5, 2, "XtAppInitialize", "int");
   Xen_check_type(Xen_is_list(arg6), arg6, 3, "XtAppInitialize", "list of String*");
@@ -14318,6 +14318,7 @@ and the specified args and num_args and returns the created shell.  The num_args
   if (Xen_is_integer(arg9)) arglen = Xen_integer_to_C_int(arg9); else arglen = Xen_list_length(arg8) / 2;
   if (Xen_is_list(arg9))
     {
+      Xen lst;
       int gcloc;
       len = Xen_list_length(arg9);
       lst = Xen_copy_arg(arg9);
@@ -14366,7 +14367,6 @@ static Xen gxm_XtVaOpenApplication(Xen arg1, Xen arg4, Xen arg5, Xen arg7, Xen a
   char **argv = NULL;
   char **fallbacks = NULL;
   int i, len = 0;
-  Xen lst;
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XtVaOpenApplication", "char*");
   Xen_check_type(Xen_is_integer(arg4), arg4, 2, "XtVaOpenApplication", "int"); /* was arg3 by mistake, 11-Oct-02 */
   Xen_check_type(Xen_is_list(arg5), arg5, 3, "XtVaOpenApplication", "list of String");
@@ -14378,6 +14378,7 @@ static Xen gxm_XtVaOpenApplication(Xen arg1, Xen arg4, Xen arg5, Xen arg7, Xen a
   if (argc > 0) argv = Xen_to_C_Strings(arg5, argc);
   if (Xen_is_list(specs))
     {
+      Xen lst;
       int gcloc;
       len = Xen_list_length(specs);
       lst = Xen_copy_arg(specs);
@@ -14431,7 +14432,6 @@ of fallback resources."
   char **argv;
   char **fallbacks = NULL;
   int i, len = 0;
-  Xen lst;
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XtOpenApplication", "char*");
   Xen_check_type(Xen_is_integer(arg4), arg4, 2, "XtOpenApplication", "int");
   Xen_check_type(Xen_is_list(arg5), arg5, 3, "XtOpenApplication", "list of String*");
@@ -14444,6 +14444,7 @@ of fallback resources."
   if (Xen_is_integer(arg9)) arglen = Xen_integer_to_C_int(arg9); else arglen = Xen_list_length(arg8) / 2;
   if (Xen_is_list(arg9))
     {
+      Xen lst;
       int gcloc;
       len = Xen_list_length(arg9);
       lst = Xen_copy_arg(arg9);
@@ -15740,12 +15741,12 @@ static Xen gxm_XtGetResourceList(Xen widget_class)
   #define H_XtGetResourceList "XtGetResourceList(widget-class): returns the widget class's resource list"
   Xen lst = Xen_empty_list;
   Cardinal len = 0;
-  int i;
   XtResourceList resources;
   Xen_check_type(Xen_is_WidgetClass(widget_class), widget_class, 1, "XtGetResourceList", "WidgetClass");
   XtGetResourceList(Xen_to_C_WidgetClass(widget_class), &resources, &len);
   if (len > 0)
     {
+      int i;
       for (i = len - 1; i >= 0; i--)
 	lst = Xen_cons(Xen_list_7(C_string_to_Xen_string(resources[i].resource_name),
 				  C_string_to_Xen_string(resources[i].resource_class),
@@ -16716,13 +16717,14 @@ static Xen gxm_set_y_hotspot(Xen ptr, Xen val)
 static Xen gxm_colorsymbols(Xen ptr)
 {
   XpmAttributes *atr;
-  int i, len;
+  int len;
   Xen lst = Xen_empty_list;
   XM_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "colorsymbols", "XpmAttributes");
   atr = Xen_to_C_XpmAttributes(ptr);
   len = atr->numsymbols;
   if (len > 0)
     {
+      int i;
       XpmColorSymbol *cols;
       cols = atr->colorsymbols;
       for (i = len - 1; i >= 0; i--)
@@ -16734,14 +16736,15 @@ static Xen gxm_colorsymbols(Xen ptr)
 static Xen gxm_set_colorsymbols(Xen ptr, Xen vals)
 {
   XpmAttributes *atr;
-  int i, len;
-  Xen lst;
+  int len;
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "colorsymbols", "XpmAttributes");
   XM_set_field_assert_type(Xen_is_list(vals), vals, 2, "colorsymbols", "list of XpmColorSymbols");
   atr = Xen_to_C_XpmAttributes(ptr);
   len = Xen_list_length(vals);
   if (len > 0)
     {
+      Xen lst;
+      int i;
       XpmColorSymbol *cols = NULL, *cur;
       cols = (XpmColorSymbol *)calloc(len, sizeof(XpmColorSymbol));
       for (lst = Xen_copy_arg(vals), i = 0; i < len; i++, lst = Xen_cdr(lst))
@@ -17345,14 +17348,15 @@ static Xen gxm_bits_per_pixel(Xen ptr)
 static Xen gxm_visuals(Xen ptr)
 {
   Depth *dps;
-  Visual *vs;
-  int i, len;
+  int len;
   Xen lst = Xen_empty_list;
   XM_field_assert_type(Xen_is_Depth(ptr), ptr, 1, "visuals", "Depth");
   dps = Xen_to_C_Depth(ptr);
   len = dps->nvisuals;
   if (len > 0)
     {
+      int i;
+      Visual *vs;
       vs = dps->visuals;
       for (i = len - 1; i >= 0; i--)
 	lst = Xen_cons(wrap_for_Xen("Visual", &(vs[i])), lst);
@@ -18184,7 +18188,7 @@ static Xen gxm_key_vector(Xen ptr)
 static Xen gxm_set_key_vector(Xen ptr, Xen val)
 {
   char *keys;
-  int i, lim = 0;
+  int lim = 0;
   XM_set_field_assert_type(Xen_is_string(val), val, 2, "key_vector", "a string");
   keys = (char *)Xen_string_to_C_string(val);
   if (keys) lim = strlen(keys);
@@ -18193,6 +18197,7 @@ static Xen gxm_set_key_vector(Xen ptr, Xen val)
     {
       if (Xen_is_XKeymapEvent(ptr))
 	{
+	  int i;
 	  for (i = 0; i < lim; i++)
 	    (Xen_to_C_XKeymapEvent(ptr))->key_vector[i] = keys[i];
 	}
@@ -18690,15 +18695,16 @@ static Xen gxm_root_depth(Xen ptr)
 
 static Xen gxm_depths(Xen ptr)
 {
-  Depth *dps;
   Screen *scr;
-  int i, len;
+  int len;
   Xen lst = Xen_empty_list;
   XM_field_assert_type(Xen_is_Screen(ptr), ptr, 1, "depths", "Screen");
   scr = Xen_to_C_Screen(ptr);
   len = scr->ndepths;
   if (len > 0)
     {
+      Depth *dps;
+      int i;
       dps = scr->depths;
       for (i = len - 1; i >= 0; i--)
 	lst = Xen_cons(wrap_for_Xen("Depth", &(dps[i])), lst);
@@ -19298,12 +19304,12 @@ static Xen gxm_data(Xen ptr)
 
 static Xen gxm_set_data(Xen ptr, Xen val)
 {
-  int i, len = 0;
   char *str;
   XM_set_field_assert_type(Xen_is_string(val) || Xen_is_list(val), val, 2, "data", "a string or a list of longs");
   XM_set_field_assert_type(Xen_is_XClientMessageEvent(ptr), ptr, 1, "data", "XClientMessageEvent");
   if (Xen_is_string(val))
     {
+      int i, len = 0;
       str = (char *)Xen_string_to_C_string(val);
       if (str)
 	len = strlen(str);
@@ -23693,10 +23699,11 @@ static void define_strings(void)
 
   qsort((void *)xm_hash, hd_ctr, sizeof(hdata *), alphabet_compare);
   {
-    int i, n;
+    int i;
     for (i = 0; i < LINKS_SIZE; i++) hd_links[i] = hd_ctr;
     for (i = 0; i < hd_ctr; i++)
       {
+	int n;
 	n = (int)(xm_hash[i]->name[0]) - 97; /* (char->integer #\a) */
 	if (hd_links[n] > i)
 	  hd_links[n] = i;

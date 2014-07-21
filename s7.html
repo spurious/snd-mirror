@@ -5336,7 +5336,7 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 (<em class=def id="symboltable">symbol-table</em>)
 (<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (current-environment)))
 (<em class=def id="symboltodynamicvalue">symbol-&gt;dynamic-value</em> sym)
-(<em class=def id="definedp">defined?</em> sym (env (current-environment)))
+(<em class=def id="definedp">defined?</em> sym (env (current-environment)) ignore-global-env)
 </pre>
 
 <p>
@@ -5349,7 +5349,7 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
      (define ,name ,value)))
 </pre>
 
-<p>
+<p>If ignore-global-env is #t, the search is confined to the given environment.
 <code>symbol-&gt;value</code> returns the value (lexically) bound to the symbol, whereas <code>symbol-&gt;dynamic-value</code>
 returns the value dynamically bound to it.  A variable can access both of its values:
 </p>

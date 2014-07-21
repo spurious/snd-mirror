@@ -1177,7 +1177,6 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
       snd_info *sp;
       if (mus_strcmp(call_data->params[0], "Start"))
 	{
-	  int outer_ctr = 0;
 	  for (i = 0; i < ss->max_sounds; i++)
 	    {
 	      sp = ss->sounds[i];
@@ -1192,6 +1191,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 
 	  if (outer_panes > 0)
 	    {
+	      int outer_ctr;
 	      inner_panes = (int *)calloc(outer_panes, sizeof(int));
 	      outer_sizes = (Dimension *)calloc(outer_panes, sizeof(Dimension));
 	      inner_sizes = (Dimension **)calloc(outer_panes, sizeof(Dimension *));
@@ -1244,7 +1244,6 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 			    {
 			      /* this pane has multiple chans and its size has changed enough to matter */
 			      Dimension total_inner = 0, diff;
-			      int size;
 			      float ratio;
 			      
 			      for (k = 0; k < sp->nchans; k++)
@@ -1259,6 +1258,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 				{
 				  for (k = 0; k < sp->nchans; k++)
 				    {
+				      int size;
 				      size = (int)(ratio * inner_sizes[outer_ctr][k]);
 				      XtVaSetValues(channel_main_pane(sp->chans[k]), 
 						    XmNpaneMinimum, size - 1,

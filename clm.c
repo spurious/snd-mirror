@@ -13488,7 +13488,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 
       /* create current grain */
       {
-	int lim, steady_end, curstart, j, up_end;
+	int lim, curstart, j;
 
 	lim = spd->grain_len;
 	curstart = grn_irandom(spd, spd->s20); /* start location in input buffer */
@@ -13503,6 +13503,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	  }
 	if (spd->rmp > 0)
 	  {
+	    int steady_end, up_end;
 	    mus_float_t amp = 0.0, incr;
 	    steady_end = (spd->grain_len - spd->rmp);
 	    incr = (mus_float_t)(spd->amp) / (mus_float_t)(spd->rmp);
