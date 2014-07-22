@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11662] = {
+static const char *snd_names[11680] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -2910,13 +2910,17 @@ static const char *snd_names[11662] = {
     "RLIMIT_RTPRIO", "libc.scm",
     "RLIMIT_SIGPENDING", "libc.scm",
     "RLIMIT_STACK", "libc.scm",
+    "RLIM_INFINITY", "libc.scm",
     "RLIM_NLIMITS", "libc.scm",
+    "RLIM_SAVED_CUR", "libc.scm",
+    "RLIM_SAVED_MAX", "libc.scm",
     "RTLD_BINDING_MASK", "libdl.scm",
     "RTLD_DEEPBIND", "libdl.scm",
     "RTLD_LOCAL", "libdl.scm",
     "RTLD_NODELETE", "libdl.scm",
     "RTLD_NOLOAD", "libdl.scm",
     "RUSAGE_CHILDREN", "libc.scm",
+    "RUSAGE_SELF", "libc.scm",
     "R_OK", "libc.scm",
     "SA_NOCLDSTOP", "libc.scm",
     "SA_NOCLDWAIT", "libc.scm",
@@ -3550,6 +3554,7 @@ static const char *snd_names[11662] = {
     "atoll", "libc.scm",
     "attack-point", "noise.scm",
     "attract", "clm-ins.scm",
+    "augment-environment*", "stuff.scm",
     "auto-dot", "examp.scm",
     "auto-save", "autosave.scm",
     "aux-f", "numerics.scm",
@@ -3697,6 +3702,8 @@ static const char *snd_names[11662] = {
     "bytevector-u8-ref", "r7rs.scm",
     "bytevector-u8-set!", "r7rs.scm",
     "c-define-1", "cload.scm",
+    "c-null?", "libc.scm",
+    "c-pointer->string", "libc.scm",
     "c?r", "stuff.scm",
     "calculate-fit", "dlocsig.scm",
     "california-quail", "animals.scm",
@@ -3911,6 +3918,7 @@ static const char *snd_names[11662] = {
     "color-samples", "draw.scm",
     "comb-chord", "examp.scm",
     "comb-filter", "examp.scm",
+    "command-line", "r7rs.scm",
     "common-gull", "animals.scm",
     "common-loon-1", "animals.scm",
     "common-loon-2", "animals.scm",
@@ -4176,6 +4184,7 @@ static const char *snd_names[11662] = {
     "field-sparrow", "animals.scm",
     "fifth", "stuff.scm",
     "file->floats", "examp.scm",
+    "file-does-exist?", "r7rs.scm",
     "file-error?", "r7rs.scm",
     "fileno", "libc.scm",
     "files-popdown-info", "nb.scm",
@@ -7583,7 +7592,7 @@ static const char *snd_names[11662] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5831);
+  s7_autoload_set_names(sc, snd_names, 5840);
 }
 #endif
 

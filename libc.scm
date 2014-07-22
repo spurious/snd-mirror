@@ -12,6 +12,7 @@
 	
 	;; -------- stddef.h --------
 	(define NULL (c-pointer 0))
+	(define (c-null? p) (equal? p NULL))
 
 	;; -------- stdbool.h --------
 	(define false #f)
@@ -85,6 +86,10 @@
 		    (C-macro (int (__BYTE_ORDER __BIG_ENDIAN __LITTLE_ENDIAN)))
 
 		    
+		    (in-C "static s7_pointer g_c_pointer_to_string(s7_scheme *sc, s7_pointer args) 
+                           {return(s7_make_string_with_length(sc, (const char *)s7_c_pointer(s7_car(args)), s7_integer(s7_cadr(args))));}")
+		    (C-function ("c-pointer->string" g_c_pointer_to_string "" 2))
+
 		    ;; -------- ctype.h --------
 		    (int isalnum (int))
 		    (int isalpha (int))
@@ -110,7 +115,7 @@
 				   FD_CLOEXEC F_RDLCK F_WRLCK F_UNLCK POSIX_FADV_NORMAL POSIX_FADV_RANDOM POSIX_FADV_SEQUENTIAL 
 				   POSIX_FADV_WILLNEED POSIX_FADV_DONTNEED POSIX_FADV_NOREUSE)))
 		    (int fcntl (int int))
-		    (int open (char* int))
+		    (int open (char* int int))
 		    (int creat (char* (mode_t int)))
 		    (int lockf (int int int))
 		    (reader-cond ((provided? 'linux) (int posix_fadvise (int int int int))))
@@ -643,7 +648,13 @@
                            {
                              return(s7_make_integer(sc, (s7_Int)mktime((struct tm *)s7_c_pointer(s7_car(args)))));
                            }
-                           static s7_pointer g_time_make(s7_scheme *sc, s7_pointer args) {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(time_t))));}
+                           static s7_pointer g_time_make(s7_scheme *sc, s7_pointer args) 
+                           {
+                             time_t *tm;
+                             tm = (time_t *)calloc(1, sizeof(time_t));
+                             (*tm) = (time_t)s7_integer(s7_car(args));
+                             return(s7_make_c_pointer(sc, (void *)tm));
+                           }
                            static s7_pointer g_strftime(s7_scheme *sc, s7_pointer args) 
                            {
                              return(s7_make_integer(sc, (s7_Int)strftime((char *)s7_string(s7_car(args)), 
@@ -723,7 +734,7 @@
                              #endif
                            }
                            ")
-		    (C-function ("time.make" g_time_make "" 0))
+		    (C-function ("time.make" g_time_make "" 1))
 		    (C-function ("mktime" g_mktime "" 1))
 		    (C-function ("asctime" g_asctime "" 1))
 		    (C-function ("strftime" g_strftime "" 4))

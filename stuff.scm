@@ -924,6 +924,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		      (set! slots (cons slot slots))))
 		pe))))
 
+(define (augment-environment* e . args)
+  "(augment-environment* e . args) is like augment-environment but accepts environment* style args"
+  (let ((new-e (apply environment* args)))
+    (set! (outer-environment new-e) e)
+    new-e))
+
 
 (define* (subsequence obj (start 0) end)
   (let* ((len (length obj))

@@ -1116,7 +1116,7 @@ typedef struct {
 
 
 typedef struct {
-  int loc, col, gc_loc, curly_len, ctr;
+  int loc, gc_loc, curly_len, ctr;
   char *curly_str;
   s7_pointer args;
 } format_data;
@@ -25714,6 +25714,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- format -------------------------------- */
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj);
+static int format_column = 0;
 
 static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *fdat)
 {
@@ -25761,7 +25762,7 @@ static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, 
 static void format_append_char(s7_scheme *sc, format_data *fdat, char c, s7_pointer port)
 {
   port_write_character(port)(sc, c, port);
-  fdat->col++;
+  format_column++;
 
   /* if c is #\null, is this the right thing to do? 
    * We used to return "1 2 3 4" because ~C was first turned into a string (empty in this case)
@@ -25778,7 +25779,7 @@ static void format_append_char(s7_scheme *sc, format_data *fdat, char c, s7_poin
 static void format_append_newline(s7_scheme *sc, format_data *fdat, s7_pointer port)
 {
   port_write_character(port)(sc, '\n', port);
-  fdat->col = 0;
+  format_column = 0;
 }
 
 
@@ -25786,7 +25787,7 @@ static void format_append_string(s7_scheme *sc, format_data *fdat, const char *s
 {
   port_write_string(port)(sc, str, len, port);
   fdat->loc += len;
-  fdat->col += len;
+  format_column += len;
 }
 
 
@@ -25942,7 +25943,6 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
     }
   fdat->gc_loc = -1;
   fdat->loc = 0;
-  fdat->col = 0;
   fdat->args = args;
 
   /* choose whether to write to a temporary string port, or simply use the in-coming port
@@ -25979,14 +25979,14 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		  /* which is actually a bad idea, but as a desperate stopgap, I simply padded
 		   *  the string port string with 8 chars that are not in the length.
 		   */
-		  fdat->col = 0;
+		  format_column = 0;
 		}
 	      else format_append_newline(sc, fdat, port);
 	      i++;
 	      break;
 	      
 	    case '&':                           /* -------- conditional newline -------- */
-	      if (fdat->col > 0)
+	      if (format_column > 0)
 		format_append_newline(sc, fdat, port);
 	      i++;
 	      break;
@@ -26383,11 +26383,11 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			if (precision > 0)
 			  {
 			    int mult;
-			    mult = (int)(ceil((s7_Double)(fdat->col + 1 - width) / (s7_Double)precision)); /* CLtL2 ("least positive int") */
+			    mult = (int)(ceil((s7_Double)(format_column + 1 - width) / (s7_Double)precision)); /* CLtL2 ("least positive int") */
 			    if (mult < 1) mult = 1;
 			    width += (precision * mult);
 			  }
-			for (j = fdat->col + 1; j < width; j++)
+			for (j = format_column + 1; j < width; j++)
 			  format_append_char(sc, fdat, pad, port);
 		      }
 		    break;
@@ -26517,7 +26517,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	    }
 	  else port_write_string(port)(sc, (char *)(str + i), new_len, port);
 	  fdat->loc += new_len;
-	  fdat->col += new_len;
+	  format_column += new_len;
 	  i = j - 1;
 	}
     }
@@ -26597,6 +26597,7 @@ static s7_pointer format_to_port(s7_scheme *sc, s7_pointer port, const char *str
 static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer pt;
+  format_column = 0;
 
   /* sc->args = sc->NIL; */ /* why? s7test is ok either way */
   pt = car(args);
@@ -26659,22 +26660,7 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- system extras -------------------------------- */
 
 #if WITH_SYSTEM_EXTRAS
-
-/* according to gnulib, these headers are in every OS:
- *    <float.h>, <limits.h>, <stdarg.h>, <stddef.h>, <ctime.h>, <errno.h>, <fcntl.h>,
- *    <locale.h>, <signal.h>, <stdio.h>, <stdlib.h>, <string.h>, <time.h>, <sys/types.h>
- */
-
 #include <fcntl.h>
-
-  /* other possibilities:
-   *   setenv, home-directory
-   *   current-time, time->string (ie strftime packaged up), temporary-filename or temp-directory, sleep
-   *   lseek [open|close|delete-hook] file-write-date or file-write-time since we want it to work with time->string
-   *   full-filename
-   *   would need T_TIME type so need time?
-   * CL names: file-length file-position file-write-date
-   */
 
 static s7_pointer g_is_directory(s7_scheme *sc, s7_pointer args)
 {
@@ -40966,7 +40952,7 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
       check_method(sc, pt, sc->FORMAT, args);
       return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, A_FORMAT_PORT));
     }
-
+  format_column = 0;
   return(format_to_port_1(sc, (pt == sc->T) ? sc->output_port : pt, 
 			  string_value(cadr(args)), cddr(args), NULL,
 			  !is_output_port(pt), /* i.e. is boolean port so we're returning a string */
@@ -70015,8 +70001,9 @@ int main(int argc, char **argv)
  *   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *   maybe gunichar->bytevector?
  *
- * t941: c-pointer->bytevector
- * ~nT seems confused by numbers?
- * libc tests, libdl, libgsl, any more libm?
+ * (define (c-pointer->bytevector p) (->bytevector (c-pointer->string p)))
+ * libc tests (t941), libdl, libgsl, any more libm? add to doc 
  * if error and cur_code useless, look for loader port
+ * finish reactive macro in t943
+ * libc: add nftw support?
  */

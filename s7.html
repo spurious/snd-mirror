@@ -5044,7 +5044,7 @@ returns the value that is actually set.  For example, the function can ensure th
     (set! (symbol-access 'z) (lambda (s v) (format *stderr* "z ~A -&gt; ~A~%" z v) v))
   
     (set! x 3.3) ; x does not change because 3.3 is not an integer
-    (set! y 3.3) ; y does not change value
+    (set! y 3.3) ; y does not change
     (set! z 3.3) ; prints "z 3 -&gt; 3.3" 
     (current-environment)))
 
@@ -5056,6 +5056,19 @@ returns the value that is actually set.  For example, the function can ensure th
 #&lt;environment 'x 123 'y 3 'z #f&gt;
 </pre>
 
+<p>Or implement reactive programming:
+</p>
+<pre class="indented">
+(let ((a 1)
+      (b 2)
+      (c 3))
+  (set! (symbol-access 'b) (lambda (s v) (set! a (+ v c)) v))
+  (set! (symbol-access 'c) (lambda (s v) (set! a (+ b v)) v))
+  (set! a (+ b c)) ; a will be updated if b or c is set
+  (set! b 4)
+  (set! c 5)
+  a)               ; a is 9 = (+ 4 5)
+</pre>
 
 
 
@@ -9545,6 +9558,34 @@ c-define-1
 
 <p>See also r7rs.scm, libc.scm, libgsl.scm, libm.scm, libdl.scm, and libgdbm.scm.
 </p>
+
+<div class="indented">
+<pre>
+(require libc.scm)
+
+(define (copy-file in-file out-file)
+  (with-environment (augment-environment *libc* 
+		      (cons 'in-file in-file)
+		      (cons 'out-file out-file))
+    (let ((infd (open in-file O_RDONLY 0)))
+      (if (= infd -1)
+	  (error 'io-error "can't find ~S~%" in-file)
+	  (let ((outfd (creat out-file #o666)))
+	    (if (= outfd -1)
+		(begin
+		  (close infd)
+		  (error 'io-error "can't open ~S~%" out-file))
+		(let* ((BUF_SIZE 1024)
+                       (buf (malloc BUF_SIZE)))
+		  (do ((num (read infd buf BUF_SIZE) (read infd buf BUF_SIZE)))
+		      ((or (&lt;= num 0)
+			   (not (= (write outfd buf num) num)))))
+		  (close outfd)
+		  (close infd)
+		  (free buf)
+		  out-file)))))))
+</pre>
+</div>
 
 </body>
 </html>

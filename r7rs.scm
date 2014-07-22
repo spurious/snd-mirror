@@ -341,25 +341,35 @@
     (cons 'current-second g_time)))
 
 
-(let ((e (current-environment)))
-  (augment-environment! e
-    (cons 'get-environment-variable (*libc* 'getenv))
-    (cons 'get-environment-variables (*libc* 'getenvs))
-    (cons 'r7rs-file-exists? (lambda (arg) (= ((*libc* 'access) arg (*libc* 'F_OK)) 0)))))
+(define get-environment-variable (*libc* 'getenv))
+(define get-environment-variables (*libc* 'getenvs))
+(define (file-does-exist? arg) (= ((*libc* 'access) arg (*libc* 'F_OK)) 0))
 
-
-;;; srfi 112
-(let ((e (current-environment)))
-  (augment-environment! e 
-    (cons 'os-type (lambda () (car ((*libc* 'uname)))))
-    (cons 'cpu-architecture (lambda () (cadr ((*libc* 'uname)))))
-    (cons 'machine-name (lambda () (caddr ((*libc* 'uname)))))
-    (cons 'os-version (lambda () (string-append (list-ref ((*libc* 'uname)) 3) " " (list-ref ((*libc* 'uname)) 4))))
-    (cons 'implementation-name (lambda () "s7"))
-    (cons 'implementation-version (lambda () (substring (s7-version) 3 7)))))
+(define (os-type) (car ((*libc* 'uname))))
+(define (cpu-architecture) (cadr ((*libc* 'uname))))
+(define (machine-name) (caddr ((*libc* 'uname))))
+(define (os-version) (string-append (list-ref ((*libc* 'uname)) 3) " " (list-ref ((*libc* 'uname)) 4)))
+(define (implementation-name) "s7")
+(define (implementation-version) (substring (s7-version) 3 7))
 
 ;; command-line is problematic: s7 has no access to the caller's "main" function, and
 ;;   outside Windows, there's no reasonable way to get these arguments.
+;;   in Linux, you might win with:
+
+(define (command-line)
+  (let ((lst ()))
+    (with-input-from-file "/proc/self/cmdline"
+      (lambda ()
+	(do ((c (read-char) (read-char))
+	     (s ""))
+	    ((eof-object? c)
+	     (reverse lst))
+	  (if (char=? c #\null)
+	      (begin
+		(set! lst (cons s lst))
+		(set! s ""))
+	      (set! s (string-append s (string c)))))))))
+
 
 ;; other minor differences: 
 ;;  in s7, single-quote can occur in a name
