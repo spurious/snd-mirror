@@ -6,7 +6,7 @@
 (provide 'libgdbm.scm)
 
 (if (not (defined? '*libgdbm*))
-    (define-constant *libgdbm*
+    (define *libgdbm*
       (with-environment (initial-environment)
 	(set! *libraries* (cons (cons "libgdbm.scm" (current-environment)) *libraries*))
 	

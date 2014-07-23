@@ -6,7 +6,7 @@
 (provide 'libgsl.scm)
 
 (if (not (defined? '*libgsl*))
-    (define-constant *libgsl*
+    (define *libgsl*
       (with-environment (initial-environment)
 	
 	(set! *libraries* (cons (cons "libgsl.scm" (current-environment)) *libraries*))
@@ -2307,6 +2307,8 @@
 		    (gsl_matrix_complex* gsl_matrix_complex_alloc_from_matrix (gsl_matrix_complex* size_t size_t size_t size_t))
 		    (gsl_vector_complex* gsl_vector_complex_alloc_row_from_matrix (gsl_matrix_complex* size_t))
 		    (gsl_vector_complex* gsl_vector_complex_alloc_col_from_matrix (gsl_matrix_complex* size_t))
+		    (gsl_vector_complex* gsl_vector_complex_alloc (size_t))
+		    (void gsl_vector_complex_free (gsl_vector_complex*))
 		    (void gsl_matrix_complex_free (gsl_matrix_complex*))
 		    (void gsl_matrix_complex_set_zero (gsl_matrix_complex*))
 		    (void gsl_matrix_complex_set_identity (gsl_matrix_complex*))
@@ -2371,10 +2373,17 @@
                              S7_TO_GSL_COMPLEX(s7_cadr(args), g);
                              return(s7_make_integer(sc, gsl_matrix_complex_add_diagonal((gsl_matrix_complex *)s7_c_pointer(s7_car(args)), g)));
                            }
+                           static s7_pointer g_gsl_vector_complex_get(s7_scheme *sc, s7_pointer args)
+                           {
+                             gsl_complex g;
+                             g = gsl_vector_complex_get((gsl_vector_complex *)s7_c_pointer(s7_car(args)), s7_integer(s7_cadr(args)));
+                             return(GSL_TO_S7_COMPLEX(sc, g));
+                           }
                            ")
 		    (C-function ("gsl_matrix_complex_set_all" g_gsl_matrix_complex_set_all "" 2))
 		    (C-function ("gsl_matrix_complex_set" g_gsl_matrix_complex_set "" 4))
 		    (C-function ("gsl_matrix_complex_get" g_gsl_matrix_complex_get "" 3))
+		    (C-function ("gsl_vector_complex_get" g_gsl_vector_complex_get "" 2))
 		    (C-function ("gsl_matrix_complex_scale" g_gsl_matrix_complex_scale "" 2))
 		    (C-function ("gsl_matrix_complex_add_constant" g_gsl_matrix_complex_add_constant "" 2))
 		    (C-function ("gsl_matrix_complex_add_diagonal" g_gsl_matrix_complex_add_diagonal "" 2))
@@ -2775,13 +2784,14 @@
 			   "gsl/gsl_sys.h"
 			   "gsl/gsl_vector.h"
 			   "gsl/gsl_vector_complex.h"
+			   "gsl/gsl_vector_complex_double.h"
 			   "gsl/gsl_vector_double.h"
 			   "gsl/gsl_version.h"
 			   "gsl/gsl_wavelet.h"
 			   "gsl/gsl_wavelet2d.h"
 			   )
 		 
-		 "-I/usr/local/include -DGSL_DISABLE_DEPRECATED" "-lgsl -lgslcblas" "libgsl_s7")
+		 "-I/usr/local/include -g3 -DGSL_DISABLE_DEPRECATED" "-lgsl -lgslcblas" "libgsl_s7")
 					; GSL_DISABLE_DEPRECATED is needed to avoid a name collision (dating from version 1.7!!)
 	(current-environment))))
 

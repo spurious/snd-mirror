@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11680] = {
+static const char *snd_names[11678] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4184,7 +4184,6 @@ static const char *snd_names[11680] = {
     "field-sparrow", "animals.scm",
     "fifth", "stuff.scm",
     "file->floats", "examp.scm",
-    "file-does-exist?", "r7rs.scm",
     "file-error?", "r7rs.scm",
     "fileno", "libc.scm",
     "files-popdown-info", "nb.scm",
@@ -7592,7 +7591,7 @@ static const char *snd_names[11680] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5840);
+  s7_autoload_set_names(sc, snd_names, 5839);
 }
 #endif
 

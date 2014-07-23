@@ -926,10 +926,48 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 (define (augment-environment* e . args)
   "(augment-environment* e . args) is like augment-environment but accepts environment* style args"
-  (let ((new-e (apply environment* args)))
-    (set! (outer-environment new-e) e)
-    new-e))
+  (augment-environment e (apply environment* args)))
 
+
+;;; ----------------
+
+(define* (symbol->environment sym (ce (current-environment)))
+  (if (defined? sym ce #t)
+      ce
+      (if (eq? ce (global-environment))
+	  #f
+	  (symbol->environment sym (outer-environment ce)))))
+
+(define* (gather-symbols expr (lst ()))
+  (if (symbol? expr)
+      (if (and (not (memq expr lst))
+	       (not (eq? (symbol->environment expr) (global-environment))))
+	  (cons expr lst)
+	  lst)
+      (if (pair? expr)
+	  (gather-symbols (cdr expr) 
+	    (gather-symbols (car expr) lst))
+	  lst)))
+
+(define-bacro (reactive-set! sym expr)
+  (for-each (lambda (symbol)
+	      (set! (symbol-access symbol)
+		    (lambda (s v)
+		      (apply let `(((,symbol v)) (set! ,sym ,expr) v)))))
+	    (gather-symbols expr ()))
+  `(set! ,sym ,expr))
+
+#|
+(let ((a 1)
+      (b 2)
+      (c 3))
+  (reactive-set! a (+ b c))
+  (set! b 4)
+  (set! c 5)
+  a)
+|#
+
+;;; ----------------
 
 (define* (subsequence obj (start 0) end)
   (let* ((len (length obj))
@@ -1002,7 +1040,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
    (apply environment* args)))
 
 
-;;; --------------------------------------------------------------------------------
+;;; ----------------
 
 (define-macro (elambda args . body)  ; lambda but pass extra arg "*env*" = run-time env
   `(symbol->value 
@@ -1020,7 +1058,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 
 
-;;; --------------------------------------------------------------------------------
+;;; ----------------
 
 ;; these need to be globally accessible since they're inserted in arbitrary source
 (define Display #f)

@@ -6,7 +6,7 @@
 (provide 'libm.scm)
 
 (if (not (defined? '*libm*))
-    (define-constant *libm*
+    (define *libm*
       (with-environment (initial-environment)
 	
 	(set! *libraries* (cons (cons "libm.scm" (current-environment)) *libraries*))

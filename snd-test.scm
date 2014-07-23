@@ -192,7 +192,7 @@
       (system "rm /var/tmp/*.snd")))
 (system "rm core*")
 
-(define home-dir "/home/bil")
+(define home-dir (getenv "HOME"))
 (define sf-dir "/sf1")
 
 (if (not (file-exists? (string-append home-dir "/cl/oboe.snd")))
@@ -201,7 +201,9 @@
 	(if (file-exists? "/Users/bil/cl/oboe.snd")
 	    (set! home-dir "/Users/bil")
 	    (if (file-exists? "/users/b/bil/cl/oboe.snd")
-		(set! home-dir "/users/b/bil")))))
+		(set! home-dir "/users/b/bil")
+		(if (file-exists? "/usr/home/bil/cl/oboe.snd")
+		    (set! home-dir "/usr/home/bil"))))))
 (define cwd (string-append (getcwd) "/"))
 
 (define sf-dir1 (string-append home-dir sf-dir "/"))

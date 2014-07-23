@@ -8969,3 +8969,8 @@
 (CFNC-3.14 "void gtk_list_box_row_set_activatable GtkListBoxRow* row gboolean activatable")
 (CFNC-3.14 "gboolean gtk_list_box_row_get_activatable GtkListBoxRow* row")
 
+;;; 3.14.5:
+(CFNC-3.14 "void gtk_list_box_row_set_selectable GtkListBoxRow* row gboolean selectable")
+(CFNC-3.14 "gboolean gtk_list_box_row_get_selectable GtkListBoxRow* row")
+(CFNC-3.14 "GtkStateFlags gtk_widget_path_iter_get_state GtkWidgetPath* path gint pos" 'const)
+(CFNC-3.14 "void gtk_widget_path_iter_set_state GtkWidgetPath* path gint pos GtkStateFlags state")

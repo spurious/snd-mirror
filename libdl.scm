@@ -6,7 +6,7 @@
 (provide 'libdl.scm)
 
 (if (not (defined? '*libdl*))
-    (define-constant *libdl*
+    (define *libdl*
       (with-environment (initial-environment)
 	(set! *libraries* (cons (cons "libdl.scm" (current-environment)) *libraries*))
 	(c-define '((void* dlopen (char* int))

@@ -34626,16 +34626,21 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sc->SYMBOL_ACCESS, sym, T_SYMBOL));
     }
 
-  if (is_null(cdr(args)))
-    return(s7_symbol_access(sc, sym));
-  e = cadr(args);
+  if (is_pair(cdr(args)))
+    {
+      e = cadr(args);
+      if (!is_environment(e))
+	return(wrong_type_argument(sc, sc->SYMBOL_ACCESS, small_int(2), e, T_ENVIRONMENT));
+    }
+  else e = sc->envir;
+
   if ((e == sc->global_env) ||
       (e == sc->NIL))
     return(s7_symbol_access(sc, sym));
-  if (!is_environment(e))
-    return(wrong_type_argument(sc, sc->SYMBOL_ACCESS, small_int(2), e, T_ENVIRONMENT));
 
-  p = find_local_symbol(sc, e, sym);
+  if (is_null(cdr(args)))
+    p = find_symbol(sc, sym);
+  else p = find_local_symbol(sc, e, sym);
   if ((is_slot(p)) &&
       (slot_has_accessor(p)))
     return(slot_accessor(p));
@@ -34654,13 +34659,18 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "set! symbol-access", 1, sym, "a symbol"));
 
   /* (set! (symbol-access sym) f) or (set! (symbol-access sym env) f) */
-  func = cadr(args);
   if (is_pair(cddr(args)))
     {
-      e = func;
+      e = cadr(args);
+      if (!is_environment(e))
+	return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, e, "an environment"));
       func = caddr(args);
     }
-  else e = sc->envir;
+  else
+    {
+      e = sc->envir;
+      func = cadr(args);
+    }
   if ((!is_procedure(func)) &&
       (func != sc->F))
     return(s7_wrong_type_arg_error(sc, "set! symbol-access", 3, func, "a function or #f"));
@@ -34669,10 +34679,10 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
       (e == sc->NIL))
     return(s7_symbol_set_access(sc, sym, func));
 
-  if (!is_environment(e))
-    return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, e, "an environment"));
+  if (is_null(cddr(args)))
+    p = find_symbol(sc, sym);
+  else p = find_local_symbol(sc, e, sym);
 
-  p = find_local_symbol(sc, e, sym);
   if (is_slot(p))
     {
       slot_accessor(p) = func;
@@ -37647,6 +37657,24 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	      if ((line > 0) &&
 		  (slot_value(sc->error_line) != sc->F))
 		format_to_port(sc, error_port, "\n;  line ~D", list_1(sc, make_integer(sc, line)), NULL, false, 11);
+	      else
+		{
+		  /* an experiment -- look in the input port stack */
+		  if (is_pair(sc->input_port_stack))
+		    {
+		      s7_pointer p;
+		      p = car(sc->input_port_stack);
+		      if ((is_input_port(p)) &&
+			  (port_file(p) != stdin) &&
+			  (!port_is_closed(p)))
+			{
+			  filename = port_filename(p);
+			  line = port_line_number(p);
+			  if (filename)
+			    format_to_port(sc, error_port, "\n;  ~A[~D]", list_2(sc, make_protected_string(sc, filename), make_integer(sc, line)), NULL, false, 10);
+			}
+		    }
+		}
 	    }
 	}
       else
@@ -70001,9 +70029,8 @@ int main(int argc, char **argv)
  *   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *   maybe gunichar->bytevector?
  *
- * (define (c-pointer->bytevector p) (->bytevector (c-pointer->string p)))
- * libc tests (t941), libdl, libgsl, any more libm? add to doc 
- * if error and cur_code useless, look for loader port
+ * finish Display!
+ * more tests: libgsl
  * finish reactive macro in t943
- * libc: add nftw support?
+ * define* in cload, and complex numbers, and va_list?
  */

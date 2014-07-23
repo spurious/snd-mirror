@@ -343,7 +343,8 @@
 
 (define get-environment-variable (*libc* 'getenv))
 (define get-environment-variables (*libc* 'getenvs))
-(define (file-does-exist? arg) (= ((*libc* 'access) arg (*libc* 'F_OK)) 0))
+(define (r7rs-file-exists? arg) (= ((*libc* 'access) arg (*libc* 'F_OK)) 0))
+(define r7rs-delete-file (*libc* 'unlink))
 
 (define (os-type) (car ((*libc* 'uname))))
 (define (cpu-architecture) (cadr ((*libc* 'uname))))
@@ -422,7 +423,6 @@
 				 (error 'wrong-type-arg "~S should be a ~A" obj ',type))
                              (set! (obj ',(car field)) val)))))))
 	  fields)
-       
        ',new-type)))
 
 ;;; srfi 111:

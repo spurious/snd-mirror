@@ -31389,6 +31389,43 @@ static Xen gxg_gtk_list_box_row_get_activatable(Xen row)
   return(C_to_Xen_gboolean(gtk_list_box_row_get_activatable(Xen_to_C_GtkListBoxRow_(row))));
 }
 
+static Xen gxg_gtk_list_box_row_set_selectable(Xen row, Xen selectable)
+{
+  #define H_gtk_list_box_row_set_selectable "void gtk_list_box_row_set_selectable(GtkListBoxRow* row, \
+gboolean selectable)"
+  Xen_check_type(Xen_is_GtkListBoxRow_(row), row, 1, "gtk_list_box_row_set_selectable", "GtkListBoxRow*");
+  Xen_check_type(Xen_is_gboolean(selectable), selectable, 2, "gtk_list_box_row_set_selectable", "gboolean");
+  gtk_list_box_row_set_selectable(Xen_to_C_GtkListBoxRow_(row), Xen_to_C_gboolean(selectable));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_list_box_row_get_selectable(Xen row)
+{
+  #define H_gtk_list_box_row_get_selectable "gboolean gtk_list_box_row_get_selectable(GtkListBoxRow* row)"
+  Xen_check_type(Xen_is_GtkListBoxRow_(row), row, 1, "gtk_list_box_row_get_selectable", "GtkListBoxRow*");
+  return(C_to_Xen_gboolean(gtk_list_box_row_get_selectable(Xen_to_C_GtkListBoxRow_(row))));
+}
+
+static Xen gxg_gtk_widget_path_iter_get_state(Xen path, Xen pos)
+{
+  #define H_gtk_widget_path_iter_get_state "GtkStateFlags gtk_widget_path_iter_get_state(GtkWidgetPath* path, \
+gint pos)"
+  Xen_check_type(Xen_is_GtkWidgetPath_(path), path, 1, "gtk_widget_path_iter_get_state", "GtkWidgetPath*");
+  Xen_check_type(Xen_is_gint(pos), pos, 2, "gtk_widget_path_iter_get_state", "gint");
+  return(C_to_Xen_GtkStateFlags(gtk_widget_path_iter_get_state(Xen_to_C_GtkWidgetPath_(path), Xen_to_C_gint(pos))));
+}
+
+static Xen gxg_gtk_widget_path_iter_set_state(Xen path, Xen pos, Xen state)
+{
+  #define H_gtk_widget_path_iter_set_state "void gtk_widget_path_iter_set_state(GtkWidgetPath* path, \
+gint pos, GtkStateFlags state)"
+  Xen_check_type(Xen_is_GtkWidgetPath_(path), path, 1, "gtk_widget_path_iter_set_state", "GtkWidgetPath*");
+  Xen_check_type(Xen_is_gint(pos), pos, 2, "gtk_widget_path_iter_set_state", "gint");
+  Xen_check_type(Xen_is_GtkStateFlags(state), state, 3, "gtk_widget_path_iter_set_state", "GtkStateFlags");
+  gtk_widget_path_iter_set_state(Xen_to_C_GtkWidgetPath_(path), Xen_to_C_gint(pos), Xen_to_C_GtkStateFlags(state));
+  return(Xen_false);
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -37936,6 +37973,10 @@ Xen_wrap_2_args(gxg_gtk_event_controller_set_propagation_phase_w, gxg_gtk_event_
 Xen_wrap_2_args(gxg_gtk_icon_theme_add_resource_path_w, gxg_gtk_icon_theme_add_resource_path)
 Xen_wrap_2_args(gxg_gtk_list_box_row_set_activatable_w, gxg_gtk_list_box_row_set_activatable)
 Xen_wrap_1_arg(gxg_gtk_list_box_row_get_activatable_w, gxg_gtk_list_box_row_get_activatable)
+Xen_wrap_2_args(gxg_gtk_list_box_row_set_selectable_w, gxg_gtk_list_box_row_set_selectable)
+Xen_wrap_1_arg(gxg_gtk_list_box_row_get_selectable_w, gxg_gtk_list_box_row_get_selectable)
+Xen_wrap_2_args(gxg_gtk_widget_path_iter_get_state_w, gxg_gtk_widget_path_iter_get_state)
+Xen_wrap_3_args(gxg_gtk_widget_path_iter_set_state_w, gxg_gtk_widget_path_iter_set_state)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -41957,6 +41998,10 @@ static void define_functions(void)
   Xg_define_procedure(gtk_icon_theme_add_resource_path, gxg_gtk_icon_theme_add_resource_path_w, 2, 0, 0, H_gtk_icon_theme_add_resource_path);
   Xg_define_procedure(gtk_list_box_row_set_activatable, gxg_gtk_list_box_row_set_activatable_w, 2, 0, 0, H_gtk_list_box_row_set_activatable);
   Xg_define_procedure(gtk_list_box_row_get_activatable, gxg_gtk_list_box_row_get_activatable_w, 1, 0, 0, H_gtk_list_box_row_get_activatable);
+  Xg_define_procedure(gtk_list_box_row_set_selectable, gxg_gtk_list_box_row_set_selectable_w, 2, 0, 0, H_gtk_list_box_row_set_selectable);
+  Xg_define_procedure(gtk_list_box_row_get_selectable, gxg_gtk_list_box_row_get_selectable_w, 1, 0, 0, H_gtk_list_box_row_get_selectable);
+  Xg_define_procedure(gtk_widget_path_iter_get_state, gxg_gtk_widget_path_iter_get_state_w, 2, 0, 0, H_gtk_widget_path_iter_get_state);
+  Xg_define_procedure(gtk_widget_path_iter_set_state, gxg_gtk_widget_path_iter_set_state_w, 3, 0, 0, H_gtk_widget_path_iter_set_state);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -44621,7 +44666,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("19-Jul-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("22-Jul-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
