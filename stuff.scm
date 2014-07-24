@@ -949,15 +949,16 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	    (gather-symbols (car expr) lst))
 	  lst)))
 
+#|
+;;; first version
 (define-bacro (reactive-set! sym expr)
-  (for-each (lambda (symbol)
+  (for-each (lambda (symbol)   
 	      (set! (symbol-access symbol)
 		    (lambda (s v)
 		      (apply let `(((,symbol v)) (set! ,sym ,expr) v)))))
 	    (gather-symbols expr ()))
-  `(set! ,sym ,expr))
+  `(set! ,sym ,expr)) ; just for old-time's sake
 
-#|
 (let ((a 1)
       (b 2)
       (c 3))
@@ -966,6 +967,28 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (set! c 5)
   a)
 |#
+
+;;; second version -- this incorporates possible existing accessors
+(define-bacro (reactive-set! sym expr)
+  (for-each (lambda (symbol)
+	      (let ((osa (or (symbol-access symbol) (lambda (s v) v))))
+		(set! (symbol-access symbol)
+		      (lambda (s v)
+			(let ((nv (osa s v)))
+			  (apply let `(((,symbol ,nv)) (set! ,sym ,expr) ,nv)))))))
+	    (gather-symbols expr ()))
+  `(set! ,sym ,expr))
+
+#|
+(let ((a 1)
+      (b 2)
+      (c 3))
+  (reactive-set! b (+ c 4))  ; order matters!
+  (reactive-set! a (+ b c))
+  (set! c 5)
+  a)
+|#
+
 
 ;;; ----------------
 

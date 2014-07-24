@@ -743,7 +743,7 @@
 		    (C-function ("clock_getres" g_clock_getres "" 1))
 		    (C-function ("clock_gettime" g_clock_gettime "" 1)) ; these need -lrt
 		    (C-function ("clock_settime" g_clock_settime "" 3))
-		    (C-function ("clock_getcpuclockid" g_clock_getcpuclockid "" 1))
+		    (reader-cond ((not (provided? 'solaris)) (C-function ("clock_getcpuclockid" g_clock_getcpuclockid "" 1))))
 		    (C-function ("clock_nanosleep" g_clock_nanosleep "" 4))
 
 
@@ -1040,9 +1040,13 @@
                            }
                            static s7_pointer g_sigwait(s7_scheme *sc, s7_pointer args)
                            {
+                             #if (!__sun)
                              int status, result;
                              result = sigwait((const sigset_t *)s7_c_pointer(s7_car(args)), &status);
                              return(s7_list(sc, 2, s7_make_integer(sc, result), s7_make_integer(sc, status)));
+                             #else
+                             return(s7_f(sc));
+                             #endif
                            }
                            static s7_pointer g_sigtimedwait(s7_scheme *sc, s7_pointer args)
                            {
@@ -1242,7 +1246,7 @@
 		    (C-function ("wait" g_wait "" 0))
 		    (C-function ("waitpid" g_waitpid "" 2))
 		    (C-function ("sigqueue" g_sigqueue "" 3))
-		    (C-function ("sigwait" g_sigwait "" 1))
+		    (reader-cond ((not (provided? 'solaris)) (C-function ("sigwait" g_sigwait "" 1))))
 		    (C-function ("sigaction" g_sigaction "" 3))
 		    (C-function ("sigtimedwait" g_sigtimedwait "" 3))
 		    (C-function ("sigset.make" g_sigset_make "" 0))
@@ -1597,6 +1601,8 @@
                         "utime.h" "termios.h" "grp.h" "pwd.h" "fnmatch.h" "glob.h" "signal.h" "sys/wait.h" "netdb.h" 
 			"sys/resource.h"
 			(reader-cond ((not (provided? 'openbsd)) "wordexp.h"))
+			(reader-cond ((provided? 'freebsd) "sys/socket.h"))
+			(reader-cond ((provided? 'freebsd) "netinet/in.h"))
 			)
 		  "" 
 		  (if (provided? 'linux) "-lrt" 

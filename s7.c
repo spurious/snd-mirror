@@ -70031,6 +70031,5 @@ int main(int argc, char **argv)
  *
  * finish Display!
  * more tests: libgsl
- * finish reactive macro in t943
- * define* in cload, and complex numbers, and va_list?
+ * define* in cload, and complex numbers
  */

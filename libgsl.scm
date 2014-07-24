@@ -1422,14 +1422,14 @@
                              s7_pointer res;
                            
                              size = s7_integer(s7_cadr(args));
-                             res = s7_cadddr(args);
+                             res = s7_caddr(args);
                            
                              z = (double *)calloc(size * 2, sizeof(double));
                              w = gsl_poly_complex_workspace_alloc(size);
                              result = gsl_poly_complex_solve((double *)s7_c_pointer(s7_car(args)), size, w, (gsl_complex_packed_ptr)z);
                              gsl_poly_complex_workspace_free(w);
                            
-                             for (i = 0; i < size; i++)
+                             for (i = 0; i < size - 1; i++)
                                s7_vector_set(sc, res, i, s7_make_complex(sc, z[2 * i], z[2 * i + 1]));
                              free(z);
                            

@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11678] = {
+static const char *snd_names[11688] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4291,6 +4291,7 @@ static const char *snd_names[11678] = {
     "gain", "clm-ins.scm",
     "gain-avg", "clm-ins.scm",
     "gambels-quail", "animals.scm",
+    "gather-symbols", "stuff.scm",
     "gaussian-distribution", "dsp.scm",
     "gaussian-envelope", "dsp.scm",
     "gdbm_close", "libgdbm.scm",
@@ -6207,8 +6208,11 @@ static const char *snd_names[11678] = {
     "gsl_vector_alloc_from_vector", "libgsl.scm",
     "gsl_vector_alloc_row_from_matrix", "libgsl.scm",
     "gsl_vector_calloc", "libgsl.scm",
+    "gsl_vector_complex_alloc", "libgsl.scm",
     "gsl_vector_complex_alloc_col_from_matrix", "libgsl.scm",
     "gsl_vector_complex_alloc_row_from_matrix", "libgsl.scm",
+    "gsl_vector_complex_free", "libgsl.scm",
+    "gsl_vector_complex_get", "libgsl.scm",
     "gsl_vector_const_ptr", "libgsl.scm",
     "gsl_vector_div", "libgsl.scm",
     "gsl_vector_equal", "libgsl.scm",
@@ -7395,6 +7399,7 @@ static const char *snd_names[11678] = {
     "superimpose-ffts", "examp.scm",
     "swainsons-thrush", "animals.scm",
     "swap-selection-channels", "selection.scm",
+    "symbol->environment", "stuff.scm",
     "symbol=?", "r7rs.scm",
     "symmetric-difference", "stuff.scm",
     "sync-all-mixes", "mix.scm",
@@ -7591,7 +7596,7 @@ static const char *snd_names[11678] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5839);
+  s7_autoload_set_names(sc, snd_names, 5844);
 }
 #endif
 

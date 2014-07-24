@@ -45,12 +45,12 @@
 		    (double nextafter (double double))
 		    (double nexttoward (double double))
 		    
-		    (int fpclassify (double))
-		    (int isfinite (double))
-		    (int isinf (double))
-		    (int isnan (double))
-		    (int isnormal (double))
-		    (int signbit (double))
+		    (reader-cond ((not (provided? 'solaris)) (int fpclassify (double))))
+		    (reader-cond ((not (provided? 'solaris)) (int isfinite (double))))
+		    (reader-cond ((not (provided? 'solaris)) (int isinf (double))))
+		    (reader-cond ((not (provided? 'solaris)) (int isnan (double))))
+		    (reader-cond ((not (provided? 'solaris)) (int isnormal (double))))
+		    (reader-cond ((not (provided? 'solaris)) (int signbit (double))))
 		    
 		    ;; exporting these will overwrite the built-in versions
 		    (double floor (double))
