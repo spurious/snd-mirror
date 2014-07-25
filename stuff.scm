@@ -117,11 +117,10 @@
 (define setf
   (let ((args (gensym))
 	(name (gensym)))
-    (symbol->value 
-     (apply define-bacro `((,name . ,args)        
-			   (unless (null? ,args)
-			     (apply set! (car ,args) (cadr ,args) ())
-			     (apply setf (cddr ,args))))))))
+    (apply define-bacro `((,name . ,args)        
+			  (unless (null? ,args)
+			    (apply set! (car ,args) (cadr ,args) ())
+			    (apply setf (cddr ,args)))))))
 
 (define-macro* (incf sym (inc 1))
   `(set! ,sym (+ ,sym ,inc)))
@@ -992,37 +991,51 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 (define reactive-let
   (let ((bindings (gensym))
 	(accessors (gensym))
+	(original-accessors (gensym))
 	(vars (gensym))
-	(body (gensym)))
-    (symbol->value
-     (apply define-bacro 
-	    `((,(gensym) ,vars . ,body)
-	      (let ((,bindings ())
-		    (,accessors ()))
-		(for-each 
-		 (lambda (bd)
-		   (let ((syms (gather-symbols (cadr bd) ())))
-		     (for-each 
-		      (lambda (sym)
-			(let ((fname (gensym)))
-			  (set! ,bindings (cons `(,fname (lambda (,sym) ,(copy (cadr bd)))) ,bindings))
-			  (let ((prev (assq sym ,accessors)))
-			    (if (not prev)
-				(set! ,accessors (cons (cons sym `((set! ,(car bd) (,fname v)))) ,accessors))
-				(set-cdr! prev (append `((set! ,(car bd) (,fname v))) (cdr prev)))))))
-		      syms)
-		     (set! ,bindings (cons bd ,bindings))))
-		 ,vars)
-		(let ((e (gensym)))
-		  `(let ((,e (current-environment)))
-		     (let ,(reverse ,bindings)
-		       ,@(map (lambda (sa)
-				`(set! (symbol-access ',(car sa) ,e) 
-				       (lambda (s v) 
-					 ,@(cdr sa) 
-					 v)))
-			      ,accessors)
-		       ,@,body)))))))))
+	(body (gensym))
+	(e (gensym)))
+    (apply define-bacro 
+	   `((,(gensym) ,vars . ,body)
+	     (let ((,bindings ())
+		   (,accessors ())
+		   (,original-accessors ()))
+	       (for-each 
+		(lambda (bd)
+		  (let ((syms (gather-symbols (cadr bd) ())))
+		    (for-each 
+		     (lambda (sym)
+		       (let ((fname (gensym)))
+			 (set! ,bindings (cons `(,fname (lambda (,sym) ,(copy (cadr bd)))) ,bindings))
+			 (if (not (assq sym ,original-accessors))
+			     (set! ,original-accessors (cons (list sym (symbol-access sym)) ,original-accessors)))
+			 (let ((prev (assq sym ,accessors)))
+			   (if (not prev)
+			       (set! ,accessors (cons (cons sym `((set! ,(car bd) (,fname v)))) ,accessors))
+			       (set-cdr! prev (append `((set! ,(car bd) (,fname v))) (cdr prev)))))))
+		     syms)
+		    (set! ,bindings (cons bd ,bindings))))
+		,vars)
+	       `(let ((,',e (current-environment)))
+		  (dynamic-wind
+		      (lambda () #f)
+		      (lambda ()
+			(let ,(reverse ,bindings)
+			  ,@(map (lambda (sa)
+				   `(set! (symbol-access ',(car sa)) 
+					  (lambda (s nv)
+					    (let ((osa (assq ',(car sa) ',,original-accessors)))
+					      (let ((v (if (cadr osa)
+							   ((cadr osa) s nv)
+							   nv)))
+						,@(cdr sa) 
+						v)))))
+				 ,accessors)
+			  ,@,body))
+		      (lambda () ; return accessors to their previous state
+			,@(map (lambda (sa)
+				 `(set! (symbol-access ',(car sa)) ,(cadr sa)))
+			       ,original-accessors)))))))))
 
 #|
 (let ((a 1))
@@ -1118,18 +1131,16 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 ;;; ----------------
 
 (define-macro (elambda args . body)  ; lambda but pass extra arg "*env*" = run-time env
-  `(symbol->value 
-    (define-bacro (,(gensym) ,@args)
+  `(define-bacro (,(gensym) ,@args)
       `((lambda* ,(append ',args `((*env* (current-environment))))
 	  ,'(begin ,@body)) 
-	,,@args))))
+	,,@args)))
 
 (define-macro* (rlambda args . body) ; lambda* but eval arg defaults in run-time env
   (let ((arg-names (map (lambda (arg) (if (pair? arg) (car arg) arg)) args))
 	(arg-defaults (map (lambda (arg) (if (pair? arg) `(,(car arg) (eval ,(cadr arg))) arg)) args)))
-  `(symbol->value
-    (define-bacro* (,(gensym) ,@arg-defaults)
-      `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
+    `(define-bacro* (,(gensym) ,@arg-defaults)
+      `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names))))
 
 
 
@@ -1410,7 +1421,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 					    (list (list '{apply_values} (last args))))
 				    (list (list '{apply_values} args))))))         ; (... ({apply_values} x))
 	    `(define ,func
-	       (symbol->value 
 		(define-macro* ,(cons (gensym) args)                               ; args might be a symbol etc
 		  `((lambda* ,(cons ',e ',arg-names)                               ; prepend added env arg because there might be a rest arg
 		      (let ((,',result '?))
@@ -1433,7 +1443,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 				(set! spaces (- spaces *display-spacing*))         ; unindent
 				(prepend-spaces))
 			      (format (Display-port) "    -> ~S~%" ,',result)))))
-		    (current-environment) ,,@call-args))))))                       ; pass in the original args and the current-environment
+		    (current-environment) ,,@call-args)))))                       ; pass in the original args and the current-environment
 	
 	;; (Display <anything-else>)
 	(proc-walk definition)))                                                   ; (Display (+ x 1)) etc

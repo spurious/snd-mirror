@@ -1869,7 +1869,7 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 
 static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line) 
 {
-  if (is_global(symbol)) 
+  if ((is_global(symbol)) || (is_syntactic(symbol)))
     fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
   typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
 }
@@ -4977,6 +4977,10 @@ static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym) 
 {
+#if DEBUGGING
+  if (!is_symbol(sym))
+    fprintf(stderr, "%s[%d]: %s is not a symbol\n", __func__, __LINE__, DISPLAY(sym));
+#endif
   symbol_tag(sym) = sc->syms_tag; 
   return(sym);
 }
@@ -24822,7 +24826,7 @@ static void write_macro_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
     starred = true;
   body = cddr(body);
 
-  port_write_string(port)(sc, "(symbol->value (define-", 23, port);
+  port_write_string(port)(sc, "(define-", 8, port);
   port_write_string(port)(sc, (type(obj) == T_MACRO) ? "macro" : "bacro", 5, port); 
   if (starred)
     port_write_character(port)(sc, '*', port);
@@ -24851,7 +24855,7 @@ static void write_macro_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
   port_write_string(port)(sc, ") ", 2, port);
   for (expr = body; is_pair(expr); expr = cdr(expr))
     object_to_port(sc, car(expr), port, USE_WRITE, false, NULL);
-  port_write_string(port)(sc, "))", 2, port);
+  port_write_character(port)(sc, ')', port);
 }
 
 
@@ -33168,15 +33172,7 @@ s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int
 
 bool s7_is_macro(s7_scheme *sc, s7_pointer x)
 {
-  if ((is_macro(x)) || (is_bacro(x)) || (is_c_macro(x)))
-    return(true);
-
-  if (is_symbol(x))
-    {
-      x = s7_symbol_value(sc, x);
-      return(is_macro(x) || is_bacro(x) || is_c_macro(x));
-    }
-  return(false);
+  return((is_macro(x)) || (is_bacro(x)) || (is_c_macro(x)));
 }
 
 
@@ -34605,8 +34601,11 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
     }
   else 
     {
-      slot_set_has_accessor(global_slot(symbol));
-      symbol_set_has_accessor(symbol);
+      if (func != sc->F)
+	{
+	  slot_set_has_accessor(global_slot(symbol));
+	  symbol_set_has_accessor(symbol);
+	}
     }
   symbol_global_accessor_gc_index(symbol) = s7_gc_protect(sc, func);
   slot_accessor(global_slot(symbol)) = func;
@@ -34686,8 +34685,11 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
   if (is_slot(p))
     {
       slot_accessor(p) = func;
-      slot_set_has_accessor(p);
-      symbol_set_has_accessor(sym);
+      if (func != sc->F)
+	{
+	  slot_set_has_accessor(p);
+	  symbol_set_has_accessor(sym);
+	}
       return(func);
     }
   return(sc->F);
@@ -45572,8 +45574,9 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       else sc->w = collect_collisions(sc, cadr(p), sc->w);
 
       if ((op == OP_DEFINE) &&
-	  (is_pair(cadr(p))))
-	sc->w = cons(sc, add_sym_to_list(sc, p), sc->w);
+	  (is_pair(cadr(p))) &&
+	  (is_symbol(caadr(p))))
+	sc->w = cons(sc, add_sym_to_list(sc, caadr(p)), sc->w);
       break;
 
     case OP_SET:
@@ -45603,7 +45606,6 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
     default:
       break;
     }
-  
   for (p = cdar(x); is_pair(p); p = cdr(p))
     if ((is_pair(car(p))) &&
 	(!is_checked(car(p))))
@@ -45788,13 +45790,11 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	return(false);
 
       func = find_uncomplicated_symbol(sc, y, e);
-      if (is_not_null(func))
+      if (is_slot(func))
 	{
 	  func = slot_value(func);
-	  
 	  if (is_syntactic(func))
 	    return(optimize_syntax(sc, x, func, hop, e));
-	  
 	  /* we miss implicit indexing here because at this time, the data are not set */
 	  if ((is_procedure(func)) ||
 	      (is_c_function(func)) ||
@@ -46591,7 +46591,6 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
 	set_local(w);
       i = -1;
     }
-
   if (arity) (*arity) = i;
   return(top);
 }
@@ -47840,7 +47839,6 @@ static s7_pointer check_if(s7_scheme *sc)
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body)
 {
   int len;
-
   len = s7_list_length(sc, body);
   /* fprintf(stderr, "optimize_lambda: %s %s, args: %d\n", DISPLAY(args), DISPLAY_80(body), len); */
 
@@ -47853,7 +47851,6 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 
       clear_syms_in_list(sc);
       optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(sc, x))));
-
       /* if the body is safe, we can optimize the calling sequence */
       if ((is_proper_list(sc, args)) &&
 	  (!arglist_has_rest(sc, args)))
@@ -47878,7 +47875,6 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	      if (happy)
 		set_simple_args(body);
 	    }
-
 	  sc->cycle_counter = 0;
 	  /* it is expensive to check for cycles with collect_shared_info, but the
 	   *   body_is_safe process can get hung if the cycle is hidden from the simple
@@ -48049,7 +48045,6 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error_with_name(sc, "~A: no value? ~A", sc->code));        /* (define var) */
       return(eval_error_with_name(sc, "~A: bad form? ~A", sc->code));          /* (define var . 1) */
     }
-
   if (!is_pair(car(sc->code)))
     {
       if (is_not_null(cddr(sc->code)))                                           /* (define var 1 . 2) */
@@ -48105,7 +48100,6 @@ static s7_pointer check_define(s7_scheme *sc)
       else set_syntax_op(sc->code, sc->DEFINE_STAR_UNCHECKED);
     }
   else set_fcdr(sc->code, sc->F);
-
   return(sc->code);
 }
 
@@ -50068,7 +50062,6 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
     Obj = (*(--(Sc->free_heap_top))); \
     } while (0)
 #endif
-
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
@@ -52814,7 +52807,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   at this point, it's sc->code we care about; sc->args is not relevant.
        */
       /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
-
       if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	{
 	  sc->cur_code = sc->code;                /* in case an error occurs, this helps tell us where we are */
@@ -57896,7 +57888,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer code, carc;
 	code = sc->code;
-	
+
 	if (is_pair(code))
 	  {
 	    sc->cur_code = code;
@@ -59102,7 +59094,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_DEFINE_STAR:
       check_define(sc);
-      
+
       /* --------------- */
     case OP_DEFINE_STAR_UNCHECKED:
       {
@@ -59129,11 +59121,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_DEFINE_FUNCHECKED:
       {
-	/* we can't optimize away cases like (define (make-func) (define (a-func a) (+ a 1))) because we'll
-	 *   also collapse ((symbol->value (define...)) args)
-	 */
 	s7_pointer new_func, new_env;
-
 	sc->value = caar(sc->code);
 
 	/* make_closure... */
@@ -59173,6 +59161,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	
 	ADD_SLOT(sc->envir, sc->value, new_func);
 	set_local(sc->value);
+	sc->value = new_func; /* 25-Jul-14 */
 	
 	goto START;
       }
@@ -59180,24 +59169,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_DEFINE_CONSTANT1:
-      /* define-constant -> OP_DEFINE_CONSTANT -> OP_DEFINE..1, then back to here */
-      /*   at this point, sc->value is the symbol that we want to be immutable, sc->code is the original pair */
-      
-      sc->x = find_symbol(sc, sc->value);
+      /* define-constant -> OP_DEFINE_CONSTANT -> OP_DEFINE..1, then back to here
+       *   sc->value is the value of the symbol that we want to be immutable, sc->code is the original pair 
+       */
+      sc->x = find_symbol(sc, car(sc->code));
       if (is_slot(sc->x))
 	set_immutable(slot_symbol(sc->x));
-      
-      /* if we have define-constant of a symbol that is purely local, then reload the file containing that code,
-       *   the symbol itself is immutable, but the original local slot has vanished, so we can't compare (below)
-       *   against the old value.  Should define-constant always be global?  Otherwise we need to keep track of
-       *   exactly where it was defined!
-       *
-       * but the following code is confusing because the definition leaks out -- not sure what to do here.
-       *   perhaps a separate global table of these?  Also, redefinition of a constant local closure won't
-       *   work unless we check equality of the functions!
-       *
-       * another question: (define-constant c (list 1 2 3)) but the list contents are settable
-       */
       goto START;
       
       
@@ -59349,6 +59326,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* so funchecked is always local already -- perhaps reset below? */
 	    }
 	  else s7_make_slot(sc, sc->envir, sc->code, new_func);
+
+	  sc->value = new_func; /* 25-Jul-14 */
 	}
       else
 	{
@@ -59358,7 +59337,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    slot_set_value(sc->x, sc->value); 
 	  else s7_make_slot(sc, sc->envir, sc->code, sc->value);
 	}
-      sc->value = sc->code;
+      /* sc->value = sc->code; */ /* 25-Jul-14 */
       IF_BEGIN_POP_STACK(sc);
       
       
@@ -62861,7 +62840,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* here sc->value is the macro, sc->code is its name (a symbol),
        *   (symbol? (define (f a) (+ a 1))) -> #t, so I guess define-macro should follow suit.
        */
-      sc->value = sc->code;
+      /* sc->value = sc->code; */ /* 25-Jul-14 */
       goto START;
       
       
@@ -70032,6 +70011,5 @@ int main(int argc, char **argv)
  *
  * finish Display!
  * more tests: libgsl, what about load info for sndlib/xg? 
- *   figure out which int* in libgsl are really just int-by-ref
  * define* in cload, and complex numbers
  */

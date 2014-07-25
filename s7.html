@@ -952,11 +952,10 @@ the result in the calling environment.
 (define setf
   (let ((args (gensym))
         (name (gensym)))
-    (symbol-&gt;value 
      (apply <em class=red>define-bacro</em> `((,name . ,args)        
 			   (unless (null? ,args)
 			     (apply set! (car ,args) (cadr ,args) ())
-			     (apply setf (cddr ,args))))))))
+			     (apply setf (cddr ,args)))))))
 </pre>
 
 
@@ -983,7 +982,7 @@ Since a bacro (normally) sheds its define-time environment:
 <pre class="indented">
 (define call-bac
   (let ((<em class=red>x</em> 2))
-    (symbol-&gt;value (define-bacro (m a) `(+ ,a ,<em class=red>x</em>)))))
+    (define-bacro (m a) `(+ ,a ,<em class=red>x</em>))))
 
 &gt; (call-bac 1) 
 x: unbound variable
@@ -1057,8 +1056,7 @@ fmac
 &gt; (fmac hi)
 5
 &gt; (define (make-mac)
-    (define-macro (hi a) `(+ ,a 1))
-    hi)
+    (define-macro (hi a) `(+ ,a 1)))
 make-mac
 &gt; (let ((x (make-mac)))
     (x 2))
@@ -1591,9 +1589,9 @@ f
 (define once-only
   (let ((names (gensym))
 	(body (gensym)))
-    (symbol-&gt;value (apply define-bacro `((,(gensym) ,names . ,body)
+    (apply define-bacro `((,(gensym) ,names . ,body)
       `(let (,@(map (lambda (name) `(,name ,(eval name))) ,names))
-	 ,@,body))))))
+	 ,@,body)))))
 </pre>
 </div>
 
@@ -1634,11 +1632,10 @@ value passed to set!:
 </p>
 <pre class="indented">
 &gt; (set! (procedure-setter logbit?)
-        (symbol-&gt;value 
           (define-macro (m var index on) ; here we want to set "var", so we need a macro
 	    `(if ,on
 	         (set! ,var (logior ,var (ash 1 ,index)))
-	         (set! ,var (logand ,var (lognot (ash 1 ,index))))))))
+	         (set! ,var (logand ,var (lognot (ash 1 ,index)))))))
 #&lt;macro&gt;
 &gt; (define (mingle a b)
     (let ((r 0))
@@ -5511,11 +5508,10 @@ the MIT-Scheme test of that interaction.
 </p>
 <pre class="indented">
 (define-macro (elambda args . body)
-  `(symbol-&gt;value 
-    (define-macro (,(gensym) ,@args)
-      `((lambda* ,(append ',args `((*env* (current-environment)))) 
-          ,'(begin ,@body)) 
-        ,,@args))))
+  `(define-macro (,(gensym) ,@args)
+    `((lambda* ,(append ',args `((*env* (current-environment)))) 
+        ,'(begin ,@body)) 
+      ,,@args)))
 
 (define efunc (elambda (x) (+ (*env* 'y) x))) ; add x to the run-time value of y
 (let ((y 3)) (efunc 1)) ; returns 4
@@ -5530,9 +5526,8 @@ values are evaluated in the definition environment, but we want the run-time env
 (define-macro* (rlambda args . body) ; lambda* but eval arg defaults in run-time env
   (let ((arg-names (map (lambda (arg) (if (pair? arg) (car arg) arg)) args))
 	(arg-defaults (map (lambda (arg) (if (pair? arg) `(,(car arg) (eval ,(cadr arg))) arg)) args)))
-  `(symbol-&gt;value
-    (define-bacro* (,(gensym) ,@arg-defaults)
-      `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names)))))
+    `(define-bacro* (,(gensym) ,@arg-defaults)
+      `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names))))
 <!-- ( -->
 (let ()
   (define rx (rlambda ((a x)) 
@@ -5555,7 +5550,6 @@ macro that returns an anonymous macro that returns an anonymous function that &m
     (let ((arg-names (map (lambda (a) (if (symbol? a) a (car a))) args))
 	  (body (proc-walk `(begin ,@(cddr definition))))) ; from procedure-annotation above
       `(define ,func
-	 (symbol-&gt;value 
 	  (define-macro* (,(gensym) ,@args)
 	    (let ((e (gensym))
 		  (result (gensym)))
@@ -5575,7 +5569,7 @@ macro that returns an anonymous macro that returns an anonymous function that &m
 			  (set! ,result ,',body))
 			(lambda ()   ; display the result (it is returned by the set! above)
 			  (format *stderr* "    -&gt; ~S~%" ,result)))))
-		,,@arg-names))))))))
+		,,@arg-names)))))))
 </pre>
 <p>stuff.scm has a more mature version of this macro.
 </p>
@@ -6323,14 +6317,12 @@ enum
 
 
 <p><code>(apply define ...)</code> is similar to CL's set.
-If you apply define or define-macro, the returned value is a symbol, so to apply the
-new function or macro, you need to use either eval or symbol-&gt;value:
 </p>
 
 <pre class="indented">
-&gt; ((symbol-&gt;value (apply define-macro '((m a) `(+ 1 ,a)))) 3)
+&gt; ((apply define-macro '((m a) `(+ 1 ,a))) 3)
 4
-&gt; ((symbol-&gt;value (apply define '((hi a) (+ a 1)))) 3)
+&gt; ((apply define '((hi a) (+ a 1))) 3)
 4
 </pre>
 
@@ -6339,13 +6331,13 @@ new function or macro, you need to use either eval or symbol-&gt;value:
 
 <pre class="indented">
 (define-macro (mu args . body)
-  `(symbol-&gt;value (apply define-macro '((,(gensym) ,@args) ,@body))))
+  `(apply define-macro '((,(gensym) ,@args) ,@body)))
 
 &gt; ((mu (a) `(+ 1 ,a)) 3)
 4
 &gt; (define-macro (glambda args) ; returns an anonymous macro that will return a function given a body
-    `(symbol-&gt;value (define-macro (,(gensym) . body) 
-                      `(lambda ,',args ,@body))))
+    `(define-macro (,(gensym) . body) 
+         `(lambda ,',args ,@body)))
 glambda
 &gt; (let ((gf (glambda (a b))))  ; gf is now ready for any body that involves arguments 'a and 'b
     ((gf (+ a b)) 1 2))        ; apply (lambda (a b) (+ a b)) to '(1 2)
