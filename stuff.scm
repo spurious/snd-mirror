@@ -989,6 +989,58 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   a)
 |#
 
+(define reactive-let
+  (let ((bindings (gensym))
+	(accessors (gensym))
+	(vars (gensym))
+	(body (gensym)))
+    (symbol->value
+     (apply define-bacro 
+	    `((,(gensym) ,vars . ,body)
+	      (let ((,bindings ())
+		    (,accessors ()))
+		(for-each 
+		 (lambda (bd)
+		   (let ((syms (gather-symbols (cadr bd) ())))
+		     (for-each 
+		      (lambda (sym)
+			(let ((fname (gensym)))
+			  (set! ,bindings (cons `(,fname (lambda (,sym) ,(copy (cadr bd)))) ,bindings))
+			  (let ((prev (assq sym ,accessors)))
+			    (if (not prev)
+				(set! ,accessors (cons (cons sym `((set! ,(car bd) (,fname v)))) ,accessors))
+				(set-cdr! prev (append `((set! ,(car bd) (,fname v))) (cdr prev)))))))
+		      syms)
+		     (set! ,bindings (cons bd ,bindings))))
+		 ,vars)
+		(let ((e (gensym)))
+		  `(let ((,e (current-environment)))
+		     (let ,(reverse ,bindings)
+		       ,@(map (lambda (sa)
+				`(set! (symbol-access ',(car sa) ,e) 
+				       (lambda (s v) 
+					 ,@(cdr sa) 
+					 v)))
+			      ,accessors)
+		       ,@,body)))))))))
+
+#|
+(let ((a 1))
+  (reactive-let ((b (+ a 1))
+		 (c (* a 2)))
+    (set! a 3)
+    (+ c b)))
+
+(let ((a 1) 
+      (d 2))
+  (reactive-let ((b (+ a d))
+		 (c (* a d))
+                 (d 0))
+    (set! a 3)
+    (+ b c)))
+|#
+
+
 
 ;;; ----------------
 

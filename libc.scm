@@ -80,6 +80,7 @@
 				   INTPTR_MAX UINTPTR_MAX INTMAX_MIN INTMAX_MAX UINTMAX_MAX PTRDIFF_MIN PTRDIFF_MAX SIG_ATOMIC_MIN SIG_ATOMIC_MAX 
 				   SIZE_MAX WCHAR_MIN WCHAR_MAX WINT_MIN WINT_MAX )))
 
+		    (c-pointer (stdin stdout stderr))
 
 		    ;; -------- endian.h --------
 		    ;; also has htobe16 etc
@@ -87,8 +88,16 @@
 
 		    
 		    (in-C "static s7_pointer g_c_pointer_to_string(s7_scheme *sc, s7_pointer args) 
-                           {return(s7_make_string_with_length(sc, (const char *)s7_c_pointer(s7_car(args)), s7_integer(s7_cadr(args))));}")
+                           {return(s7_make_string_with_length(sc, (const char *)s7_c_pointer(s7_car(args)), s7_integer(s7_cadr(args))));}
+                           static s7_pointer g_string_to_c_pointer(s7_scheme *sc, s7_pointer args)
+                           {
+                             if (s7_is_string(s7_car(args)))
+                               return(s7_make_c_pointer(sc, (void *)s7_string(s7_car(args))));
+                             return(s7_car(args));
+                           }")
+
 		    (C-function ("c-pointer->string" g_c_pointer_to_string "" 2))
+		    (C-function ("string->c-pointer" g_string_to_c_pointer "" 1))
 
 		    ;; -------- ctype.h --------
 		    (int isalnum (int))
@@ -542,8 +551,6 @@
                              return(s7_make_integer(sc, ftw(s7_string(s7_car(args)), internal_ftw_function, s7_integer(s7_caddr(args)))));
                            }")
                     (C-function ("ftw" g_ftw "" 3))
-		    ;; ((*libc* 'ftw) "/home/bil/sf1" (lambda (a b c) (format *stderr* "~A ~A ~A~%" a b c) 0) 10)
-		    ;; presumably stat.h will gives us a way to examine the second arg
 
 
                     ;; -------- sys/stat.h --------
@@ -807,8 +814,31 @@
                              return(s7_make_integer(sc, tcsetattr(s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), p)));
                            }
                            static s7_pointer g_termios_make(s7_scheme *sc, s7_pointer args)
-                             {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct termios))));}
+                           {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct termios))));}
+
+                           static s7_pointer g_termios_c_lflag(s7_scheme *sc, s7_pointer args)
+                           {
+                             struct termios *p;
+                             p = (struct termios *)s7_c_pointer(s7_car(args));
+                             return(s7_make_integer(sc, (s7_Int)(p->c_lflag)));
+                           }
+                           static s7_pointer g_termios_set_c_lflag(s7_scheme *sc, s7_pointer args)
+                           {
+                             struct termios *p;
+                             p = (struct termios *)s7_c_pointer(s7_car(args));
+                             p->c_lflag = (tcflag_t)s7_integer(s7_cadr(args));
+                             return(s7_cadr(args));
+                           }
+                           static s7_pointer g_termios_set_c_cc(s7_scheme *sc, s7_pointer args)
+                           {
+                             struct termios *p;
+                             p = (struct termios *)s7_c_pointer(s7_car(args));
+                             p->c_cc[(int)s7_integer(s7_cadr(args))] = (cc_t)s7_integer(s7_caddr(args));
+                             return(s7_caddr(args));
+                           }
                            ")
+		    ;; tcflag_t c_iflag, c_oflag, c_cflag; cc_t c_line;
+		    ;; cc_t c_cc[NCCS];
 
 		    (C-function ("cfgetospeed" g_cfgetospeed "" 1))
 		    (C-function ("cfgetispeed" g_cfgetispeed "" 1))
@@ -817,6 +847,9 @@
 		    (C-function ("tcgetattr" g_tcgetattr "" 2))
 		    (C-function ("tcsetattr" g_tcsetattr "" 3))
 		    (C-function ("termios.make" g_termios_make "" 0))
+		    (C-function ("termios.c_lflag" g_termios_c_lflag "" 1))
+		    (C-function ("termios.set_c_lflag" g_termios_set_c_lflag "" 2))
+		    (C-function ("termios.set_c_cc" g_termios_set_c_cc "" 3))
 
 
 		    ;; -------- grp.h --------
@@ -1612,6 +1645,3 @@
 	(current-environment))))
 
 *libc*
-
-
-

@@ -70028,8 +70028,10 @@ int main(int argc, char **argv)
  *   (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
  *   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
  *   maybe gunichar->bytevector?
+ *   but need glib.scm, or unicode.scm to load the stuff
  *
  * finish Display!
- * more tests: libgsl
+ * more tests: libgsl, what about load info for sndlib/xg? 
+ *   figure out which int* in libgsl are really just int-by-ref
  * define* in cload, and complex numbers
  */
