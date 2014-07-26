@@ -1134,48 +1134,6 @@ other hand, seem unnecessary.
 </div>
 
 
-
-<div class="indented">
-<p>macro? returns #t if its argument is a macro or a symbol whose value is a macro.
-We can use it, and other macro-related stuff to make a version of macroexpand-all:
-</p>
-
-<pre class="indented">
-(define-macro (fully-expand form)
-  (define (expand form)
-    (if (pair? form)
-	(if (<em class=red>macro?</em> (car form))
-	    (expand ((eval (procedure-source (car form))) form))
-	    (cons (expand (car form))
-		  (expand (cdr form))))
-	form))
-  (expand form))
-
-&gt; (define-macro (hi a) `(+ 1 ,a))
-hi
-&gt; (define-macro (ha c) `(hi (+ ,c 1)))
-ha
-&gt; (fully-expand (define (ho b) (+ 1 (ha b))))
-ho
-&gt; (procedure-source ho)
-(lambda (b) (+ 1 (+ 1 (+ b 1))))
-</pre>
-
-<p>fully-expand expands each macro it encounters by using the
-procedure-source of that macro, that is, the function that the macro definition
-expanded into:
-</p>
-
-<pre class="indented">
-(define-macro (hi a) `(+ ,a 1))
-
-&gt; (procedure-source hi)
-(lambda ({defmac}-18) (apply (lambda (a) ({list} '+ a 1)) (cdr {defmac}-18)))
-</pre>
-</div>
-
-
-
 <div class="indented">
 
 <p>s7 macros are not hygienic.  For example,
@@ -2712,25 +2670,30 @@ these names come to mind:
 </p>
 
 <pre class="indented">
-environment?          let?, islet
+environment?          let?
 global-environment    rootlet
 initial-environment   unlet
-with-environment      inlet 
+with-environment      inlet
 outer-environment     outlet
-augment-environment   
+augment-environment   sublet
 augment-environment!  varlet
 current-environment   valet
-error-environment     owlet, triplet, error-let(?)
-procedure-environment 
-environment-&gt;list     let-&gt;list(?) (or remove it; it is the same as (map values env))
-open-environment      (open-environment (environment* ...)) is the normal use: opiate?
-open-environment?     if opiate, then opium?
+error-environment     owlet
+procedure-environment flet
+environment-&gt;list  let-&gt;list(?) (or remove it; it is the same as (map values env))
+open-environment      runlet
+open-environment?     runlet?
+close-environment     coverlet
+environment-ref       let-ref
+environment-set!      let-set
+environment           to-let
+environment*          to-let*
 </pre>
 
 <!-- also (map append env)
 -->
 
-<p>If "let" is no good, what about "lex"?
+<p>These names are defined in stuff.scm.
 </p>
 </div>
 </blockquote>
@@ -9559,8 +9522,8 @@ c-define-1
 (require libc.scm)
 
 (define (copy-file in-file out-file)
-  (with-environment (augment-environment *libc* 
-		      (environment* 'in-file in-file 'out-file out-file))
+  (with-environment 
+    (augment-environment *libc* (environment* 'in-file in-file 'out-file out-file))
     (let ((infd (open in-file O_RDONLY 0)))
       (if (= infd -1)
 	  (error 'io-error "can't find ~S~%" in-file)
@@ -9578,6 +9541,17 @@ c-define-1
 		  (close infd)
 		  (free buf)
 		  out-file)))))))
+
+(define (glob-&gt;list pattern)
+  (with-environment 
+    (augment-environment *libc* (cons 'pattern pattern))
+    (let ((g (glob.make))) 
+      (glob pattern 0 g) 
+      (let ((res (glob.gl_pathv g))) 
+	(globfree g) 
+	res))))
+
+;; now (load "*.scm") is (for-each load (glob-&gt;list "*.scm")) 
 </pre>
 </div>
 
@@ -9587,8 +9561,8 @@ c-define-1
 (require libgsl.scm)
 
 (define (eigenvalues M)
-  (with-environment (augment-environment *libgsl* 
-                      (environment* 'M M))
+  (with-environment 
+    (augment-environment *libgsl* (cons 'M M))
     (let* ((len (sqrt (length M)))
 	   (gm (gsl_matrix_alloc len len))
 	   (m (float-vector-&gt;gsl_matrix M gm))

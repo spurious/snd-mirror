@@ -207,7 +207,7 @@
   /* this removes magnitude (use abs for all numbers), make-polar, and make-rectangular, renaming the latter make-complex */
 #endif
 
-/* other similar choices: exact/inexact including #i/#e, #d/#o, call-with-values etc, char-ready?, eof-object?
+/* other similar choices: exact/inexact including #i/#e, call-with-values etc, char-ready?, eof-object?
  */
 
 #ifndef DEBUGGING
@@ -70012,4 +70012,5 @@ int main(int argc, char **argv)
  * finish Display!
  * more tests: libgsl, what about load info for sndlib/xg? 
  * define* in cload, and complex numbers
+ * check again (define (make-func) (define (a-func a) (+ a 1))) -- the opt problem is now fixed -- where it this business?? line 44013
  */

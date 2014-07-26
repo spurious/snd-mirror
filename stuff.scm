@@ -1450,3 +1450,26 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
   (set! Display Display-1))                                                    ; make Display-1 globally accessible
 
+
+
+;;; --------------------------------------------------------------------------------
+
+(define let? environment?)
+(define rootlet global-environment)
+(define unlet initial-environment)
+(define inlet with-environment)
+(define outlet outer-environment)
+(define sublet augment-environment)
+(define varlet augment-environment!)
+(define valet current-environment)
+(define owlet error-environment)
+(define flet procedure-environment)
+(define let->list environment->list)
+(define runlet open-environment)
+(define runlet? open-environment?)
+(define coverlet close-environment)
+(define let-ref environment-ref)
+(define let-set! environment-set!)
+(define to-let environment)
+(define to-let* environment*)
+

@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.11"
-#define S7_DATE "30-June-14"
+#define S7_VERSION "3.12"
+#define S7_DATE "25-July-14"
 
 
 typedef long long int s7_Int;
@@ -813,6 +813,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
  * 
  *        s7 changes
  *		
+ * 25-July:   define and friends now return the value, not the symbol.
  * 30-June:   s7_method.
  * 16-June:   remove unoptimize and s7_unoptimize.
  * 14-May:    s7_define_safe_function_star.  Removed s7_catch_all.
