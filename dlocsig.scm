@@ -165,22 +165,22 @@
 (define* (make-group (id 0) (size 0) vertices speakers matrix)
   (list 'group id size vertices speakers matrix))
 
-(define group-id (make-procedure-with-setter (lambda (a) (a 1)) (lambda (a b) (set! (a 1) b))))
-(define group-size (make-procedure-with-setter (lambda (a) (a 2)) (lambda (a b) (set! (a 2) b))))
-(define group-vertices (make-procedure-with-setter (lambda (a) (a 3)) (lambda (a b) (set! (a 3) b))))
-(define group-speakers (make-procedure-with-setter (lambda (a) (a 4)) (lambda (a b) (set! (a 4) b))))
-(define group-matrix (make-procedure-with-setter (lambda (a) (a 5)) (lambda (a b) (set! (a 5) b))))
+(define group-id (dilambda (lambda (a) (a 1)) (lambda (a b) (set! (a 1) b))))
+(define group-size (dilambda (lambda (a) (a 2)) (lambda (a b) (set! (a 2) b))))
+(define group-vertices (dilambda (lambda (a) (a 3)) (lambda (a b) (set! (a 3) b))))
+(define group-speakers (dilambda (lambda (a) (a 4)) (lambda (a b) (set! (a 4) b))))
+(define group-matrix (dilambda (lambda (a) (a 5)) (lambda (a b) (set! (a 5) b))))
 
 
 (define* (make-speaker-config number dimension coords groups delays omap)
   (list 'speaker-config number dimension coords groups delays omap))
 
-(define speaker-config-number (make-procedure-with-setter (lambda (a) (a 1)) (lambda (a b) (set! (a 1) b))))
-(define speaker-config-dimension (make-procedure-with-setter (lambda (a) (a 2)) (lambda (a b) (set! (a 2) b))))
-(define speaker-config-coords (make-procedure-with-setter (lambda (a) (a 3)) (lambda (a b) (set! (a 3) b))))
-(define speaker-config-groups (make-procedure-with-setter (lambda (a) (a 4)) (lambda (a b) (set! (a 4) b))))
-(define speaker-config-delays (make-procedure-with-setter (lambda (a) (a 5)) (lambda (a b) (set! (a 5) b))))
-(define speaker-config-map (make-procedure-with-setter (lambda (a) (a 6)) (lambda (a b) (set! (a 6) b))))
+(define speaker-config-number (dilambda (lambda (a) (a 1)) (lambda (a b) (set! (a 1) b))))
+(define speaker-config-dimension (dilambda (lambda (a) (a 2)) (lambda (a b) (set! (a 2) b))))
+(define speaker-config-coords (dilambda (lambda (a) (a 3)) (lambda (a b) (set! (a 3) b))))
+(define speaker-config-groups (dilambda (lambda (a) (a 4)) (lambda (a b) (set! (a 4) b))))
+(define speaker-config-delays (dilambda (lambda (a) (a 5)) (lambda (a b) (set! (a 5) b))))
+(define speaker-config-map (dilambda (lambda (a) (a 6)) (lambda (a b) (set! (a 6) b))))
 
 
 ;;; Create a speaker configuration structure based on a list of speakers
@@ -634,15 +634,15 @@
 
 ;;; path is a list (type rx ry rz rv rt tx ty tz tt ...)
 
-(define path-rx (make-procedure-with-setter (lambda (p) (p 1)) (lambda (p val) (set! (p 1) val))))
-(define path-ry (make-procedure-with-setter (lambda (p) (p 2)) (lambda (p val) (set! (p 2) val))))
-(define path-rz (make-procedure-with-setter (lambda (p) (p 3)) (lambda (p val) (set! (p 3) val))))
-(define path-rv (make-procedure-with-setter (lambda (p) (p 4)) (lambda (p val) (set! (p 4) val))))
-(define path-rt (make-procedure-with-setter (lambda (p) (p 5)) (lambda (p val) (set! (p 5) val))))
-(define path-tx (make-procedure-with-setter (lambda (p) (p 6)) (lambda (p val) (set! (p 6) val))))
-(define path-ty (make-procedure-with-setter (lambda (p) (p 7)) (lambda (p val) (set! (p 7) val))))
-(define path-tz (make-procedure-with-setter (lambda (p) (p 8)) (lambda (p val) (set! (p 8) val))))
-(define path-tt (make-procedure-with-setter (lambda (p) (p 9)) (lambda (p val) (set! (p 9) val))))
+(define path-rx (dilambda (lambda (p) (p 1)) (lambda (p val) (set! (p 1) val))))
+(define path-ry (dilambda (lambda (p) (p 2)) (lambda (p val) (set! (p 2) val))))
+(define path-rz (dilambda (lambda (p) (p 3)) (lambda (p val) (set! (p 3) val))))
+(define path-rv (dilambda (lambda (p) (p 4)) (lambda (p val) (set! (p 4) val))))
+(define path-rt (dilambda (lambda (p) (p 5)) (lambda (p val) (set! (p 5) val))))
+(define path-tx (dilambda (lambda (p) (p 6)) (lambda (p val) (set! (p 6) val))))
+(define path-ty (dilambda (lambda (p) (p 7)) (lambda (p val) (set! (p 7) val))))
+(define path-tz (dilambda (lambda (p) (p 8)) (lambda (p val) (set! (p 8) val))))
+(define path-tt (dilambda (lambda (p) (p 9)) (lambda (p val) (set! (p 9) val))))
 
 					;(define (make-path) (list 'path () () () () () () () () ()))
 
@@ -725,18 +725,18 @@
 ;;; bezier-path is path + path 3d polar x y z v bx by bz error curvature
 
 
-(define bezier-path      (make-procedure-with-setter (lambda (p) (p 10)) (lambda (p val) (set! (p 10) val))))
-(define bezier-3d        (make-procedure-with-setter (lambda (p) (p 11)) (lambda (p val) (set! (p 11) val))))
-(define bezier-polar     (make-procedure-with-setter (lambda (p) (p 12)) (lambda (p val) (set! (p 12) val))))
-(define bezier-x         (make-procedure-with-setter (lambda (p) (p 13)) (lambda (p val) (set! (p 13) val))))
-(define bezier-y         (make-procedure-with-setter (lambda (p) (p 14)) (lambda (p val) (set! (p 14) val))))
-(define bezier-z         (make-procedure-with-setter (lambda (p) (p 15)) (lambda (p val) (set! (p 15) val))))
-(define bezier-v         (make-procedure-with-setter (lambda (p) (p 16)) (lambda (p val) (set! (p 16) val))))
-(define bezier-bx        (make-procedure-with-setter (lambda (p) (p 17)) (lambda (p val) (set! (p 17) val))))
-(define bezier-by        (make-procedure-with-setter (lambda (p) (p 18)) (lambda (p val) (set! (p 18) val))))
-(define bezier-bz        (make-procedure-with-setter (lambda (p) (p 19)) (lambda (p val) (set! (p 19) val))))
-(define bezier-error     (make-procedure-with-setter (lambda (p) (p 20)) (lambda (p val) (set! (p 20) val))))
-(define bezier-curvature (make-procedure-with-setter (lambda (p) (p 21)) (lambda (p val) (set! (p 21) val))))
+(define bezier-path      (dilambda (lambda (p) (p 10)) (lambda (p val) (set! (p 10) val))))
+(define bezier-3d        (dilambda (lambda (p) (p 11)) (lambda (p val) (set! (p 11) val))))
+(define bezier-polar     (dilambda (lambda (p) (p 12)) (lambda (p val) (set! (p 12) val))))
+(define bezier-x         (dilambda (lambda (p) (p 13)) (lambda (p val) (set! (p 13) val))))
+(define bezier-y         (dilambda (lambda (p) (p 14)) (lambda (p val) (set! (p 14) val))))
+(define bezier-z         (dilambda (lambda (p) (p 15)) (lambda (p val) (set! (p 15) val))))
+(define bezier-v         (dilambda (lambda (p) (p 16)) (lambda (p val) (set! (p 16) val))))
+(define bezier-bx        (dilambda (lambda (p) (p 17)) (lambda (p val) (set! (p 17) val))))
+(define bezier-by        (dilambda (lambda (p) (p 18)) (lambda (p val) (set! (p 18) val))))
+(define bezier-bz        (dilambda (lambda (p) (p 19)) (lambda (p val) (set! (p 19) val))))
+(define bezier-error     (dilambda (lambda (p) (p 20)) (lambda (p val) (set! (p 20) val))))
+(define bezier-curvature (dilambda (lambda (p) (p 21)) (lambda (p val) (set! (p 21) val))))
 
 (define* (make-bezier-path (path ()) (3d #t) (polar #f) (error 0.01) (curvature #f))
   (list 'bezier-path () () () () () () () () () path 3d polar () () () () () () () error curvature))
@@ -744,8 +744,8 @@
 
 ;;; Path class for open bezier paths
 
-(define initial-direction (make-procedure-with-setter (lambda (p) (p 22)) (lambda (p val) (set! (p 22) val))))
-(define final-direction   (make-procedure-with-setter (lambda (p) (p 23)) (lambda (p val) (set! (p 23) val))))
+(define initial-direction (dilambda (lambda (p) (p 22)) (lambda (p val) (set! (p 22) val))))
+(define final-direction   (dilambda (lambda (p) (p 23)) (lambda (p val) (set! (p 23) val))))
 
 (define* (make-open-bezier-path (path ()) (3d #t) (polar #f) (error 0.01) (curvature #f) 
 				(initial-direction '(0.0 0.0 0.0)) (final-direction '(0.0 0.0 0.0)))
@@ -1397,9 +1397,9 @@
 ;;;;;;;;;;;;;;;;;
 
 
-(define literal-points (make-procedure-with-setter (lambda (p) (p 10)) (lambda (p val) (set! (p 10) val))))
-(define literal-3d     (make-procedure-with-setter (lambda (p) (p 11)) (lambda (p val) (set! (p 11) val))))
-(define literal-polar  (make-procedure-with-setter (lambda (p) (p 12)) (lambda (p val) (set! (p 12) val))))
+(define literal-points (dilambda (lambda (p) (p 10)) (lambda (p val) (set! (p 10) val))))
+(define literal-3d     (dilambda (lambda (p) (p 11)) (lambda (p val) (set! (p 11) val))))
+(define literal-polar  (dilambda (lambda (p) (p 12)) (lambda (p val) (set! (p 12) val))))
 
 ;;; Generic literal path creation function
 (define* (make-literal-path (points ()) (3d path-3d) polar)
@@ -1414,13 +1414,13 @@
 ;;; Spirals
 ;;;;;;;;;;;
 
-(define spiral-start-angle (make-procedure-with-setter (lambda (p) (p 13)) (lambda (p val) (set! (p 13) val))))
-(define spiral-total-angle (make-procedure-with-setter (lambda (p) (p 14)) (lambda (p val) (set! (p 14) val))))
-(define spiral-step-angle  (make-procedure-with-setter (lambda (p) (p 15)) (lambda (p val) (set! (p 15) val))))
-(define spiral-turns       (make-procedure-with-setter (lambda (p) (p 16)) (lambda (p val) (set! (p 16) val))))
-(define spiral-distance    (make-procedure-with-setter (lambda (p) (p 17)) (lambda (p val) (set! (p 17) val))))
-(define spiral-height      (make-procedure-with-setter (lambda (p) (p 18)) (lambda (p val) (set! (p 18) val))))
-(define spiral-velocity    (make-procedure-with-setter (lambda (p) (p 19)) (lambda (p val) (set! (p 19) val))))
+(define spiral-start-angle (dilambda (lambda (p) (p 13)) (lambda (p val) (set! (p 13) val))))
+(define spiral-total-angle (dilambda (lambda (p) (p 14)) (lambda (p val) (set! (p 14) val))))
+(define spiral-step-angle  (dilambda (lambda (p) (p 15)) (lambda (p val) (set! (p 15) val))))
+(define spiral-turns       (dilambda (lambda (p) (p 16)) (lambda (p val) (set! (p 16) val))))
+(define spiral-distance    (dilambda (lambda (p) (p 17)) (lambda (p val) (set! (p 17) val))))
+(define spiral-height      (dilambda (lambda (p) (p 18)) (lambda (p val) (set! (p 18) val))))
+(define spiral-velocity    (dilambda (lambda (p) (p 19)) (lambda (p val) (set! (p 19) val))))
 
 (define* (make-spiral-path (start-angle 0.0)
 			   total-angle

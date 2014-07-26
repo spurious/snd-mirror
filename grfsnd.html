@@ -948,8 +948,7 @@ calls it init_ex, we add it to the loader's environment as follows:
 
 <pre class=indented>
 (load so-file-name 
-  (augment-environment 
-    (current-environment)
+  (sublet (curlet)
     (cons 'init_func 'init_ex)))
 </pre>
 

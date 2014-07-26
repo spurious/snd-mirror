@@ -248,12 +248,12 @@
 		     (provided? 'snd-motif)))
 
 (if (not with-gui)
-    (define y-bounds (make-procedure-with-setter
+    (define y-bounds (dilambda
 		      (lambda args (list -1.0 1.0))
 		      (lambda args (list -1.0 1.0)))))
 
 (if (not with-gui)
-    (define x-bounds (make-procedure-with-setter
+    (define x-bounds (dilambda
 		      (lambda args (list 0.0 0.1))
 		      (lambda args (list 0.0 0.1)))))
 
@@ -458,7 +458,7 @@
 (require snd-hooks.scm snd-ws.scm)
 
 (define (set-arity-ok func args)
-  (let ((arit (if (procedure-with-setter? func)
+  (let ((arit (if (dilambda? func)
 		   (procedure-arity (procedure-setter func))
 		   (and (procedure? (procedure-setter func))
 			(procedure-arity (procedure-setter func))))))
@@ -20833,7 +20833,7 @@ EDITS: 2
 		      (snd-display #__line__ ";generic ~A of delay: ~A" genname tag))))
 	      (let ((tag (catch #t (lambda () (func gen)) (lambda args (car args)))))
 		(if (and (not (symbol? tag))
-			 (procedure-with-setter? func)
+			 (dilambda? func)
 			 (or (not (eq? genname 'mus-data))
 			     (float-vector? tag)))
 		    (let ((tag1 (catch #t (lambda () (set! (func gen) tag)) (lambda args (car args)))))
@@ -20940,11 +20940,11 @@ EDITS: 2
 			 (lambda (arg2)
 			   (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
 			 (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-			       (lambda () #t) (current-environment) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+			       (lambda () #t) (curlet) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			       () 3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			       )))
 		      (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-			    (lambda () #t) (current-environment) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+			    (lambda () #t) (curlet) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			    () 3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			    ))
 		     
@@ -21751,7 +21751,7 @@ EDITS: 2
       
       (define* (old-rxyk!sin gen (fm 0.0))
 	(set! (gen 'fm) fm)
-	(with-environment gen
+	(inlet gen
 	  (let* ((x angle)
 		 (y (* x ratio)))
 	    (set! angle (+ x fm frequency))
@@ -21768,7 +21768,7 @@ EDITS: 2
       
       (define* (old-rxyk!cos gen (fm 0.0))
 	(set! (gen 'fm) fm)
-	(with-environment gen
+	(inlet gen
 	  (let* ((x angle)
 		 (y (* x ratio)))
 	    (set! angle (+ x fm frequency))
@@ -21881,7 +21881,7 @@ EDITS: 2
       
       (define (one-pole-allpass gen input)
 	(set! (gen 'input) input)
-	(with-environment gen
+	(inlet gen
 	  (set! y1 (+ x1 (* coeff (- input y1))))
 	  (set! x1 input)
 	  y1))
@@ -21890,7 +21890,7 @@ EDITS: 2
       
       (define (one-pole-allpass-bank gen input)
 	(set! (gen 'input) input)
-	(with-environment gen
+	(inlet gen
 	  (set! y1 (+ x1 (* coeff (- input y1))))
 	  (set! x1 input)
 	  
@@ -38945,7 +38945,7 @@ EDITS: 1
       (defgenerator (g1 :methods (list (cons 'g1-method (lambda (g) 440)))))
       (let ((g (make-g1)))
 	(if (not (g1? g)) 
-	    (format #t ";not g1: ~A~%" (environment->list g)))
+	    (format #t ";not g1: ~A~%" (let->list g)))
 	(if (not (= ((g 'g1-method) g) 440))
 	    (format #t ";g1-method: ~A~%" ((g 'g1-method) g)))))
 
@@ -40325,8 +40325,8 @@ EDITS: 1
   
   (let* ((res (with-sound (:clipped #f)  
 			  (let ((gen (make-ercos 100 :r 0.1)))
-			    (with-environment gen
-			      (let ((g (current-environment))
+			    (inlet gen
+			      (let ((g (curlet))
 				    (t-env (make-env '(0 .1 1 2) :length 20000))
 				    (poly-coeffs (mus-data osc)))
 				(do ((i 0 (+ i 1)))
@@ -44844,7 +44844,7 @@ EDITS: 1
 		       (lambda args (car args))))
 	      xm-procs1))
 	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-		 (lambda () #t) (current-environment) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t () (make-vector 0)))
+		 (lambda () #t) (curlet) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t () (make-vector 0)))
 	  
 	  ;; ---------------- 2 Args
 	  (for-each 
@@ -44970,7 +44970,7 @@ EDITS: 1
 			     (lambda args (car args)))))
 		 (if (not (eq? tag 'wrong-number-of-args))
 		     (snd-display #__line__ ";(~A) -> ~A" name tag)))
-	       (if (procedure-with-setter? n)
+	       (if (dilambda? n)
 		   (let ((tag
 			  (catch #t
 				 (lambda () 
@@ -44992,7 +44992,7 @@ EDITS: 1
 				(lambda args (car args)))))
 		    (if (not (eq? tag 'wrong-type-arg))
 			(snd-display #__line__ ";(~A ~A) -> ~A" name arg tag)))
-		  (if (procedure-with-setter? n)
+		  (if (dilambda? n)
 		      (begin
 			(let ((tag 
 			       (catch #t

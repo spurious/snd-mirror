@@ -11,7 +11,7 @@
 (provide 'snd-enved.scm)
 
 (define channel-envelope
-  (make-procedure-with-setter
+  (dilambda
 
    (lambda (snd chn)
      "(channel-envelope snd chn) returns the current enved envelope associated with snd's channel chn"

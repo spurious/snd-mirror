@@ -1006,7 +1006,7 @@
 				   (and (equal? (car n) snd) 
 					(= (cadr n) chn))) 
 				 mark-list-lengths)))
-      (make-procedure-with-setter
+      (dilambda
        (lambda (snd chn)
 	 (or (find-mark-list snd chn mark-list-lengths)
 	     0))
@@ -1016,7 +1016,7 @@
 
   (define mark-list
     (let ((mark-lists ()))
-      (make-procedure-with-setter
+      (dilambda
        (lambda (snd chn)
 	 (let ((dat (find-mark-list snd chn mark-lists)))
 	   (and dat
@@ -1119,7 +1119,7 @@
       (do ((i 0 (+ i 1)))
 	  ((= i (channels snd)))
 	(hook-push (after-edit-hook snd i) 
-		   (lambda (hook) 
+		   (lambda (hook)
 		     (if (Widget? (mark-list snd i)) 
 			 (make-mark-list snd i))))
 	(hook-push (undo-hook snd i) 
@@ -1328,22 +1328,22 @@
 
       ;; button data list handlers
       (define sound-button-gc
-	(make-procedure-with-setter
+	(dilambda
 	 (lambda (data) (data 0))
 	 (lambda (data val) (set! (data 0) val))))
 
       (define sound-button-filename
-	(make-procedure-with-setter
+	(dilambda
 	 (lambda (data) (data 1))
 	 (lambda (data val) (set! (data 1) val))))
 
       (define sound-button
-	(make-procedure-with-setter
+	(dilambda
 	 (lambda (data) (data 2))
 	 (lambda (data val) (set! (data 2) val))))
 
       (define sound-button-peaks
-	(make-procedure-with-setter
+	(dilambda
 	 (lambda (data) (data 3))
 	 (lambda (data val) (set! (data 3) val))))
 #|

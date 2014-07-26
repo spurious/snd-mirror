@@ -1165,7 +1165,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_DEFINE_PROCEDURE_STAR(Name, Func, Args, Doc)              s7_define_function_star(s7, Name, Func, Args, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  s7_make_procedure_with_setter(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help)
+  s7_dilambda(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help)
 
 #define XEN_ARITY(Func)                                               s7_procedure_arity(s7, Func)
 #define XEN_REQUIRED_ARGS(Func)                                       XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))

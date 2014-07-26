@@ -11,7 +11,7 @@
     (load "snd-motif.scm"))
 
 (define xe-envelope
-  (make-procedure-with-setter
+  (dilambda
    (lambda (drawer)
      "accessor for the current xm-enved envelope"
      (or (car drawer) 

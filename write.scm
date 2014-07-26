@@ -93,7 +93,7 @@
 	     (let ((cobj (if (symbol? (car obj)) (string->symbol (symbol->string (car obj))) (car obj)))) ; this clears out some optimization confusion
 	       (case cobj
 		 
-		 ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-environment when unless
+		 ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-environment inlet when unless
 			  call-with-input-string call-with-input-file call-with-output-file
 			  with-input-from-file with-input-from-string with-output-to-file)
 		  (if (or (not (pair? (cdr obj))) ; (when) or (when . #t)
@@ -268,8 +268,8 @@
 			    (stacked-list ((if (symbol? (cadr obj)) cdddr cddr) obj) (+ column *pretty-print-spacing*)))
 			(write-char #\) port))))
 		 
-		 ((environment*)
-		  (format port "(environment*")
+		 ((environment* to*-let)
+		  (format port "(to*-let")
 		  (if (pair? (cdr obj))
 		      (do ((lst (cdr obj) (cddr lst)))
 			  ((or (not (pair? lst))
@@ -414,7 +414,7 @@
 		   (if (string? choice)
 		       (format p "(if (not (defined? '~A)) (load ~S))~%" sym choice)
 		       (if (procedure? choice)
-			   (format p "(if (not (defined? '~A)) ((~S) (current-environment)))~%" sym choice))))))
+			   (format p "(if (not (defined? '~A)) ((~S) (curlet)))~%" sym choice))))))
 	   st)
 
       ;; now presumably we've loaded all the findable files, and called the autoload functions

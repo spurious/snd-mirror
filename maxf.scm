@@ -51,8 +51,8 @@
 (defgenerator mvm sample pp1 pp2 pp3 yy1 yy2 zz1 zz2 out)
 
 (define (mvmfilt b sample0)
-  (environment-set! b 'sample sample0)
-  (with-environment b
+  (let-set! b 'sample sample0)
+  (inlet b
     (set! yy2 (- (+ (* pp1 yy1)
 		    (* pp2 zz1))
 		 (* pp3 sample)))

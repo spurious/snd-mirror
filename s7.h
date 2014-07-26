@@ -499,7 +499,7 @@ s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function 
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
-  /* this is now the same as s7_make_procedure_with_setter (different args) */
+  /* this is now the same as s7_dilambda (different args) */
 
 
 s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
@@ -619,14 +619,16 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
    * s7_call_with_location passes some information to the error handler.  
    */
 
-bool s7_is_procedure_with_setter(s7_pointer obj);
-s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
-					 const char *name,
-					 s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
-					 int get_req_args, int get_opt_args,
-					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
-					 int set_req_args, int set_opt_args,
-					 const char *documentation);
+bool s7_is_dilambda(s7_pointer obj);
+s7_pointer s7_dilambda(s7_scheme *sc, 
+		       const char *name,
+		       s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
+		       int get_req_args, int get_opt_args,
+		       s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
+		       int set_req_args, int set_opt_args,
+		       const char *documentation);
+#define s7_is_procedure_with_setter s7_is_dilambda
+#define s7_make_procedure_with_setter s7_dilambda
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj);
 
 
@@ -814,6 +816,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
  *        s7 changes
  *		
  * 25-July:   define and friends now return the value, not the symbol.
+ *            procedure_with_setter -> dilambda.
  * 30-June:   s7_method.
  * 16-June:   remove unoptimize and s7_unoptimize.
  * 14-May:    s7_define_safe_function_star.  Removed s7_catch_all.

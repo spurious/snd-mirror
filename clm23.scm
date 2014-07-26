@@ -2279,8 +2279,8 @@
 (defgenerator sndscm-osc freq phase fm res)
 
 (define (sndscm-osc gen fm)
-  (environment-set! gen 'fm fm)
-  (with-environment gen
+  (let-set! gen 'fm fm)
+  (inlet gen
     (set! res (sin phase))
     (set! phase (+ phase freq fm))
     res))
@@ -2307,8 +2307,8 @@
   freq phase fm res)
 
 (define* (sndscm-osc1 gen fm)
-  (environment-set! gen 'fm fm)
-  (with-environment gen
+  (let-set! gen 'fm fm)
+  (inlet gen
     (set! res (sin phase))
     (set! phase (+ phase freq fm))
     res))
@@ -2333,12 +2333,12 @@
 					   gen)
 			   :methods (list
 				     (cons 'mus-frequency 
-					   (make-procedure-with-setter
+					   (dilambda
 					    (lambda (g) (radians->hz (g 'freq)))
 					    (lambda (g val) (set! (g 'freq) (hz->radians val)))))
 				     
 				     (cons 'mus-phase 
-					   (make-procedure-with-setter
+					   (dilambda
 					    (lambda (g) (g 'phase))
 					    (lambda (g val) (set! (g 'phase) val))))
 				     
@@ -2349,8 +2349,8 @@
   freq phase fm res)
 
 (define* (sndscm-osc2 gen fm)
-  (environment-set! gen 'fm fm)
-  (with-environment gen
+  (let-set! gen 'fm fm)
+  (inlet gen
     (set! res (sin phase))
     (set! phase (+ phase freq fm))
     res))
@@ -2381,8 +2381,8 @@
 
 (define (dsp-asyfm-J gen input)
   "(dsp-asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
-  (environment-set! gen 'input input)
-  (with-environment gen
+  (let-set! gen 'input input)
+  (inlet gen
     (let* ((modphase (* ratio phase))
 	   (result (* (exp (* r2 (cos modphase)))
 		      (sin (+ phase (* r1 (sin modphase)))))))
@@ -2391,8 +2391,8 @@
 
 (define (dsp-asyfm-I gen input)
   "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
-  (environment-set! gen 'input input)
-  (with-environment gen
+  (let-set! gen 'input input)
+  (inlet gen
     (let* ((modphase (* ratio phase))
 	   (result (* (exp (- (* r1 (cos modphase)) r3))
 		      (sin (+ phase (* r2 (sin modphase)))))))
@@ -2411,8 +2411,8 @@
   frequency phase et sinht cosht fm)
 
 (define (sndclm-expcs gen fm)
-  (environment-set! gen 'fm fm)
-  (with-environment gen
+  (let-set! gen 'fm fm)
+  (inlet gen
     (let ((result (- (/ sinht (- cosht (cos phase))) 0.5)))
     (set! phase (+ phase frequency fm))
     result)))

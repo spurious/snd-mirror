@@ -151,11 +151,11 @@
 (define error-irritants cdadr)
 
 
-(define interaction-environment current-environment)
+(define interaction-environment curlet)
 (define-bacro (include . files) 
   `(begin
      ,@(map (lambda (file)
-	      `(load ,file (outer-environment (current-environment))))
+	      `(load ,file (outlet (curlet))))
 	    files)))
 
 (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
@@ -191,7 +191,7 @@
 ;; parameters
 (define* (make-parameter init converter)
   (let* ((convert (or converter (lambda (x) x)))
-	 (old-values ()) ; see below -- this is part of the procedure-environment
+	 (old-values ()) ; see below -- this is part of the funclet
 	 (value (convert init)))
     (lambda () value)))
 
@@ -199,7 +199,7 @@
   `(dynamic-wind
        (lambda ()
 	 ,@(map (lambda (var)
-		  `(with-environment (procedure-environment ,(car var))
+		  `(inlet (funclet ,(car var))
 		     (set! old-values (cons value old-values))
 		     (set! value (convert ,(cadr var)))))
 		vars))
@@ -207,40 +207,40 @@
          ,@body)
        (lambda ()
 	 ,@(map (lambda (var)
-		  `(with-environment (procedure-environment ,(car var))
+		  `(inlet (funclet ,(car var))
 		     (set! value (car old-values))
 		     (set! old-values (cdr old-values))))
 		vars))))
 
 
 ;; libraries
-(apply define (symbol (object->string '(scheme base))) (environment) ()) ; ignore (scheme base)
+(apply define (symbol (object->string '(scheme base))) (to-let) ()) ; ignore (scheme base)
 
 (define-macro (define-library libname . body) ; |(lib name)| -> environment
   `(define ,(symbol (object->string libname))
-     (with-environment (augment-environment (initial-environment) 
+     (inlet (sublet (unlet) 
 			 (cons 'import (symbol->value 'import))
 			 (cons '*export* ())
 			 (cons 'export (symbol->value 
 					(define-macro (,(gensym) . names) 
 					  `(set! *export* (append ',names *export*))))))
        ,@body
-       (apply environment
+       (apply to-let
 	      (map (lambda (entry)
 		     (if (or (member (car entry) '(*export* export import))
 			     (and (pair? *export*)
 				  (not (member (car entry) *export*))))
 			 (values)
 			 entry))
-		   (current-environment))))))
+		   (curlet))))))
 
 (define-macro (import . libs)
-  `(augment-environment! (current-environment)
+  `(varlet (curlet)
      ,@(map (lambda (lib)
 	      (case (car lib)
 		((only) 
 		 `((lambda (e names)
-		     (apply environment 
+		     (apply to-let
 			    (map (lambda (name)
 				   (cons name (e name)))
 				 names)))
@@ -249,7 +249,7 @@
   
 		((except)
 		 `((lambda (e names)
-		     (apply environment 
+		     (apply to-let
 			    (map (lambda (entry)
 				   (if (member (car entry) names)
 				       (values)
@@ -260,7 +260,7 @@
   
 		((prefix)
 		 `((lambda (e prefx)
-		     (apply environment 
+		     (apply to-let
 			    (map (lambda (entry)
 				   (cons (string->symbol 
 					  (string-append (symbol->string prefx) 
@@ -272,7 +272,7 @@
   
 		((rename)
 		 `((lambda (e names)
-		     (apply environment 
+		     (apply to-let
 			    (map (lambda (entry)
 				   (let ((info (assoc (car entry) names)))
 				     (if info
@@ -313,11 +313,8 @@
 ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
 ;; and why no euclidean-rationalize or exact-integer-expt?
 ;;   (imagine what will happen when r8rs stumbles on the zoo of continued fraction algorithms!)
-;;
-;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
-;;   in any name should raise a red flag.  What about "home-environment"?
 
-(let ((e (current-environment)))
+(let ((e (curlet)))
   (c-define 
     '((in-C "static int g_time(void) {return((int)time(NULL));} \n\
              static struct timeval overall_start_time;  \n\
@@ -335,7 +332,7 @@
       (double get_internal_real_time (void))
       (int g_time (void)))
     "" '("time.h" "sys/time.h"))
-  (augment-environment! e 
+  (varlet e 
     (cons 'jiffies-per-second (lambda () 1000))
     (cons 'current-jiffy (lambda () (round (* (get_internal_real_time) 1000.0))))
     (cons 'current-second g_time)))
@@ -393,7 +390,7 @@
 		      (search-inheritors (cdr objs) type))))
 	   (or (eq? (obj 'class-name) type)
 	       (search-inheritors (obj 'inherited) type)))
-         (and (environment? obj)
+         (and (let? obj)
 	      (search-inherited obj ',new-type)))
        
        (define ,make 

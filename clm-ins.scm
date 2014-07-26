@@ -2214,7 +2214,7 @@ is a physical model of a flute:
 	(let ((val 0.0))
 	  (if (= i out1)
 	      (begin
-		(set! val (with-environment grn1
+		(set! val (inlet grn1
 			    (let ((inval (ina loc file)))
 			      (set! loc (+ loc 1))
 			      (if (= whichseg 0)	;ramp-up
@@ -2251,7 +2251,7 @@ is a physical model of a flute:
 		      (set! out1 (+ out1 hop))))))
 	  (if (= i out2)
 	      (begin
-		(set! val (+ val (with-environment grn2
+		(set! val (+ val (inlet grn2
 				   (let ((inval (ina loc file)))
 				     (set! loc (+ loc 1))
 				     (if (= whichseg 0)	;ramp-up
@@ -2504,8 +2504,8 @@ mjkoskin@sci.fi
 
 (define (ssb-fm gen modsig)
   "(ssb-fm gen modsig) runs an ssb-fm generator"
-  (environment-set! gen 'modsig modsig)
-  (with-environment gen
+  (let-set! gen 'modsig modsig)
+  (inlet gen
     (+ (* (oscil am0) 
 	  (oscil car0 (hilbert-transform mod0 modsig)))
        (* (oscil am1) 
@@ -2550,17 +2550,17 @@ mjkoskin@sci.fi
 
 (define (rms gen sig)
   "(rms gen sig) runs an RMS gain generator"
-  (environment-set! gen 'sig sig)
-  (with-environment gen
+  (let-set! gen 'sig sig)
+  (inlet gen
     (set! q (+ (* c1 sig sig) (* c2 q)))
     (sqrt q)))
 
 
 (define (gain gen sig rmsval)
   "(gain gen sig rmsval) returns the current RMS gain"
-  (environment-set! gen 'sig sig)
-  (environment-set! gen 'rmsval rmsval)
-  (with-environment gen
+  (let-set! gen 'sig sig)
+  (let-set! gen 'rmsval rmsval)
+  (inlet gen
     (set! r (+ (* c1 sig sig) (* c2 r)))
     (let ((this-gain (if (zero? r)
 			 rmsval

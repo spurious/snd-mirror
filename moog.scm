@@ -88,7 +88,7 @@
 
 
 (define moog-frequency
-  (make-procedure-with-setter
+  (dilambda
    (lambda (gen)
      "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"
      (gen 'freq))
@@ -101,8 +101,8 @@
 
 (define (moog-filter m sig)
   ;"(moog-filter m sig) is the generator associated with make-moog-filter"
-  (environment-set! m 'sig sig)
-  (with-environment m
+  (let-set! m 'sig sig)
+  (inlet m
     (let ((A (* 0.25 (- sig y)))
 	  (st 0.0))
       (do ((cell 0 (+ 1 cell)))
@@ -137,7 +137,7 @@
 
 
 (define moog-frequency
-  (make-procedure-with-setter
+  (dilambda
    (lambda (gen)
      "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"
      (gen 'freq))
@@ -151,8 +151,8 @@
 (define (moog-filter m sig)
   ;"(moog-filter m sig) is the generator associated with make-moog-filter"
   ;  see below for the "saturate" option
-  (environment-set! m 'sig sig)
-  (with-environment m
+  (let-set! m 'sig sig)
+  (inlet m
     (let ((A (* 0.25 (- sig y)))
 	  (st 0.0))
 
@@ -177,8 +177,8 @@
 
 (define (moog-filter-saturated m sig)
   ;"(moog-filter-saturated m sig) is the generator associated with make-moog-filter with internal saturation"
-  (environment-set! m 'sig sig)
-  (with-environment m
+  (let-set! m 'sig sig)
+  (inlet m
     (let ((A (* 0.25 (- sig y)))
 	  (st 0.0))
 

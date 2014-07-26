@@ -1264,10 +1264,8 @@
 		    ;; ((*libgsl* 'gsl_cheb_init) cs (lambda (x) x) -1.0 1.0)
 		    ;; (do ((x -1.0 (+ x .1))) ((>= x 1.0)) (format #t "~A~%" ((*libgsl* 'gsl_cheb_eval) cs x)))
 		    ;; ((*libgsl* 'gsl_cheb_free) cs)
-
 		    
 		    ;; interp
-
 		    (gsl_interp_accel* gsl_interp_accel_alloc (void))
 		    (int gsl_interp_accel_reset (gsl_interp_accel*))
 		    (void gsl_interp_accel_free (gsl_interp_accel*))
@@ -1288,9 +1286,7 @@
 		    (size_t gsl_interp_bsearch (double* double size_t size_t))
 		    (size_t gsl_interp_accel_find (gsl_interp_accel* double* size_t double))
 
-
 		    ;; spline
-
 		    (gsl_spline* gsl_spline_alloc (gsl_interp_type* size_t))
 		    (int gsl_spline_init (gsl_spline* double* double* size_t))
 		    (char* gsl_spline_name (gsl_spline*))
@@ -1304,10 +1300,8 @@
 		    (int gsl_spline_eval_integ_e (gsl_spline* double double gsl_interp_accel* double*))
 		    (double gsl_spline_eval_integ (gsl_spline* double double gsl_interp_accel*))
 		    (void gsl_spline_free (gsl_spline*))
-		    
 
 		    ;; bspline
-
 		    (gsl_bspline_workspace* gsl_bspline_alloc (size_t size_t))
 		    (void gsl_bspline_free (gsl_bspline_workspace*))
 		    (size_t gsl_bspline_ncoeffs (gsl_bspline_workspace*))
@@ -1324,7 +1318,6 @@
 		    (void gsl_bspline_deriv_free (gsl_bspline_deriv_workspace*))
 		    (int gsl_bspline_deriv_eval (double size_t gsl_matrix* gsl_bspline_workspace* gsl_bspline_deriv_workspace*))
 		    (int gsl_bspline_deriv_eval_nonzero (double size_t gsl_matrix* size_t* size_t* gsl_bspline_workspace* gsl_bspline_deriv_workspace*))
-
 
 		    ;; sort
 		    ;; perhaps size_t* -> int vector?
@@ -1344,9 +1337,7 @@
 		    (int gsl_sort_vector_smallest_index (size_t* size_t gsl_vector*))
 		    (int gsl_sort_vector_largest_index (size_t* size_t gsl_vector*))
 
-
 		    ;; poly
-
 		    (double gsl_poly_eval (double* int double))
 		    (int gsl_poly_eval_derivs (double* size_t double double* size_t))
 		    (int gsl_poly_dd_init (double* double* double* size_t))
@@ -1469,10 +1460,8 @@
 		    (C-function ("gsl_poly_complex_solve_quadratic" g_gsl_poly_complex_solve_quadratic "" 4))
 		    (C-function ("gsl_poly_complex_solve_cubic" g_gsl_poly_complex_solve_cubic "" 4))
 		    (C-function ("gsl_poly_complex_solve" g_gsl_poly_complex_solve "" 3))
-                           
 		    (C-function ("gsl_poly_solve_quadratic" g_gsl_poly_solve_quadratic "" 4))
 		    (C-function ("gsl_poly_solve_cubic" g_gsl_poly_solve_cubic "" 4))
-
 		    
 		    ;; block -- I can't see any use for this
 		    ;; (gsl_block_complex* gsl_block_complex_alloc (size_t))
@@ -1569,7 +1558,6 @@
 		    (double* gsl_vector_const_ptr (gsl_vector* size_t))
 		    (void gsl_vector_minmax (gsl_vector* double* double*)) ; by ref
 		    (void gsl_vector_minmax_index (gsl_vector* size_t* size_t*)) ; by ref 
-
 
 		    ;; matrix
 		    (in-C "static s7_pointer g_float_vector_to_gsl_matrix(s7_scheme *sc, s7_pointer args)
@@ -1897,6 +1885,7 @@
 ;;; ...		    (void cblas_xerbla (int char* char* ...))
 
 
+		    ;; combination
 		    (gsl_combination* gsl_combination_alloc (size_t size_t))
 		    (gsl_combination* gsl_combination_calloc (size_t size_t))
 		    (void gsl_combination_init_first (gsl_combination*))
@@ -1909,16 +1898,27 @@
 		    (int gsl_combination_fprintf (FILE* gsl_combination* char*))
 		    (size_t gsl_combination_n (gsl_combination*))
 		    (size_t gsl_combination_k (gsl_combination*))
-		    (size_t* gsl_combination_data (gsl_combination*))
+		    ;(size_t* gsl_combination_data (gsl_combination*))
 		    (int gsl_combination_valid (gsl_combination*))
 		    (int gsl_combination_next (gsl_combination*))
 		    (int gsl_combination_prev (gsl_combination*))
 		    (size_t gsl_combination_get (gsl_combination* size_t))
+		    (in-C "static s7_pointer g_gsl_combination_to_int_vector(s7_scheme *sc, s7_pointer args)
+                           {
+                              gsl_combination *g;
+                              int i, size;
+                              s7_Int *el;
+                              s7_pointer v;
+                              v = s7_cadr(args);
+                              size = s7_vector_length(v);
+                              g = (gsl_combination *)s7_c_pointer(s7_car(args));
+                              el = s7_int_vector_elements(v);
+                              for (i = 0; i < size; i++) el[i] = (s7_Int)(g->data[i]);
+                              return(s7_cadr(args));
+                           }
+                           ")
+		    (C-function ("gsl_combination->int-vector" g_gsl_combination_to_int_vector "" 2))
 
-
-		    (int gsl_deriv_central (gsl_function* double double double* double*))
-		    (int gsl_deriv_backward (gsl_function* double double double* double*))
-		    (int gsl_deriv_forward (gsl_function* double double double* double*))
 
 		    (int gsl_dft_complex_forward (double* size_t size_t double*))
 		    (int gsl_dft_complex_backward (double* size_t size_t double*))
@@ -2118,12 +2118,16 @@
 		    (void gsl_histogram2d_pdf_free (gsl_histogram2d_pdf*))
 		    (int gsl_histogram2d_pdf_sample (gsl_histogram2d_pdf* double double double* double*))
 
-		    (void gsl_ieee_printf_double (double*) )
-		    (void gsl_ieee_fprintf_double (FILE* double*) )
-		    (void gsl_ieee_double_to_rep (double* gsl_ieee_double_rep*) )
-		    (void gsl_ieee_env_setup (void) )
-		    (int gsl_ieee_read_mode_string (char* int* int* int*) ) ; int by ref
+		    ;(void gsl_ieee_printf_double (double*) ) ; these are ridiculous
+		    ;(void gsl_ieee_fprintf_double (FILE* double*) )
+		    ;(void gsl_ieee_double_to_rep (double* gsl_ieee_double_rep*) )
+		    (void gsl_ieee_env_setup (void) ) ; looks for GSL_IEEE_MODE home var
+		    ;(int gsl_ieee_read_mode_string (char* int* int* int*) ) ; int by ref
 		    (int gsl_ieee_set_mode (int int int) )
+
+		    (int gsl_deriv_central (gsl_function* double double double* double*))
+		    (int gsl_deriv_backward (gsl_function* double double double* double*))
+		    (int gsl_deriv_forward (gsl_function* double double double* double*))
 
 		    (gsl_integration_workspace* gsl_integration_workspace_alloc (size_t))
 		    (void gsl_integration_workspace_free (gsl_integration_workspace*))

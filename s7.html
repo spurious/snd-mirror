@@ -1562,11 +1562,11 @@ f
 
 <pre class="indented">
 (<em class=def>procedure-setter</em> proc)
-(<em class=def id="procedurewithsetter">make-procedure-with-setter</em> proc setter)
+(<em class=def id="dilambda">dilambda</em> proc setter)
 </pre>
 
 <p>Each function (or macro!) can have an associated setter, much like defsetf in CL.  As a convenience, there's also
-a way to associate the two functions under one name: make-procedure-with-setter.
+a way to associate the two functions under one name: dilambda.
 The setter is called when the procedure is the target of set!  Its last argument is the
 value passed to set!:
 </p>
@@ -1611,14 +1611,14 @@ mingle
 
 <div class="indented">
 
-<p>Here is a pretty example of make-procedure-with-setter:
+<p>Here is a pretty example of dilambda:
 </p>
 
 <pre class="indented">
 (define-macro (c?r path)
   ;; "path" is a list and "X" marks the spot in it that we are trying to access
   ;; (a (b ((c X)))) &mdash; anything after the X is ignored, other symbols are just placeholders
-  ;; c?r returns a procedure-with-setter that gets/sets X
+  ;; c?r returns a dilambda that gets/sets X
 
   (define (X-marks-the-spot accessor tree)
     (if (pair? tree)
@@ -1632,7 +1632,7 @@ mingle
        (set! body (list f body)))
      (reverse (X-marks-the-spot () path)))
 
-    `(<em class=red>make-procedure-with-setter</em>
+    `(<em class=red>dilambda</em>
       (lambda (lst) 
 	,body)
       (lambda (lst val)
@@ -1722,33 +1722,6 @@ mingle
 	 ,@body))))
 </pre>
 </div>
-
-
-
-<div class="indented">
-
-<p>I wonder if it would be more consistent to use the
-name "procedure/setter" in place of Guile's "make-procedure-with-setter".
-Its syntax is closer to
-vector than make-vector, for example.  
-Even better: "dilambda":
-</p>
-
-<pre class="indented">
-(define-macro (dilambda getter setter)
-  `(make-procedure-with-setter
-     (lambda ,@getter)
-     (lambda ,@setter)))
-
-(let ((a 32)) 
-  (dilambda (() a) 
-            ((b) (set! a b))))
-</pre>
-
-<p>"bilambda" would mix Latin and Greek since the Romans used "el", not "lambda", according to Wikipedia.
-</p>
-</div>
-
 </blockquote>
 
 
@@ -2007,7 +1980,7 @@ So...
   (with-iterator iter obj))
 
 (define iterator-ctr 
-  (make-procedure-with-setter 
+  (dilambda 
    (lambda (iter)
      (with-iterator iter ctr))
    (lambda (iter new-ctr)
@@ -2651,7 +2624,7 @@ adding all the argument's bindings to the new environment.
 <pre class="indented">
 (define e (environment* 
             'x (let ((local-x 3)) ; x's initial value
-		 (make-procedure-with-setter
+		 (dilambda
 		   (lambda () local-x)
 		   (lambda (val) (set! local-x (max 0 (min val 100))))))))
 &gt; ((e 'x))
@@ -2677,23 +2650,21 @@ with-environment      inlet
 outer-environment     outlet
 augment-environment   sublet
 augment-environment!  varlet
-current-environment   valet
+current-environment   curlet
 error-environment     owlet
-procedure-environment flet
+procedure-environment funclet ; callet has the wrong denotation
 environment-&gt;list  let-&gt;list(?) (or remove it; it is the same as (map values env))
-open-environment      runlet
+open-environment      runlet  ; glasslet?
 open-environment?     runlet?
 close-environment     coverlet
 environment-ref       let-ref
 environment-set!      let-set
 environment           to-let
-environment*          to-let*
+environment*          to*-let
 </pre>
 
-<!-- also (map append env)
--->
-
-<p>These names are defined in stuff.scm.
+<p>These new names are now built-in as synonyms.  If I find myself using them, 
+I'll deprecate that old, pompous, long-winded, hard-to-type "environment" twaddle.
 </p>
 </div>
 </blockquote>
@@ -3014,7 +2985,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 
 
 (define-macro (define-slot-accessor name slot)
-  `(define ,name (make-procedure-with-setter 
+  `(define ,name (dilambda 
                    (lambda (obj) (obj ',slot)) 
 		   (lambda (obj val) (set! (obj ',slot) val)))))
 
@@ -4779,7 +4750,7 @@ Along the same lines:
 </blockquote>
 
 <p>When an error is encountered, and when s7 is interrupted via begin-hook, 
-(<em class=def id="errorenvironment">error-environment</em>) returns an environment that contains
+(<em class=def id="owlet">error-environment</em>) returns an environment that contains
 additional info about that error:
 </p>
 

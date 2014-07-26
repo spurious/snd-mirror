@@ -38,13 +38,13 @@
 (define (add-to-all-hook-inits func)
   (for-each 
    (lambda (n)
-     (set! ((procedure-environment n) 'init) (list func ((procedure-environment n) 'init))))
+     (set! ((funclet n) 'init) (list func ((funclet n) 'init))))
    (snd-hooks)))
 
 (define (add-to-all-hook-ends func)
   (for-each 
    (lambda (n)
-     (set! ((procedure-environment n) 'end) (list func ((procedure-environment n) 'end))))
+     (set! ((funclet n) 'end) (list func ((funclet n) 'end))))
    (snd-hooks)))
 
 

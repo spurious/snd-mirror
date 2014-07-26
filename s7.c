@@ -1264,7 +1264,7 @@ struct s7_scheme {
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, IS_OUTPUT_PORT, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
   s7_pointer IS_PORT_CLOSED, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE;
-  s7_pointer IS_PROCEDURE_WITH_SETTER, PROVIDE;
+  s7_pointer IS_DILAMBDA, PROVIDE;
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REQUIRE, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE;
   s7_pointer STRING, STRING_DOWNCASE, STRING_UPCASE, STRING_LEQ, STRING_LT, STRING_EQ;
@@ -1286,7 +1286,7 @@ struct s7_scheme {
   /* these are the associated functions, not symbols */
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Environment_Set; /* Cons (see the setter stuff at the end) */
 
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE, WITH_ENVIRONMENT;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE, WITH_ENVIRONMENT, INLET, LET_SET;
   s7_pointer SET, QQ_List, QQ_Apply_Values, QQ_Append, Multivector;
   s7_pointer Apply, Vector;
   s7_pointer WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO, WTA1, WTA2, WTA3, WTA4, WTA5;
@@ -33850,15 +33850,15 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
 }
 
 
-/* -------- procedure-with-setter -------- */
+/* -------- dilambda -------- */
 
-s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
-					 const char *name,
-					 s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
-					 int get_req_args, int get_opt_args,
-					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
-					 int set_req_args, int set_opt_args,
-					 const char *documentation)
+s7_pointer s7_dilambda(s7_scheme *sc, 
+		       const char *name,
+		       s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
+		       int get_req_args, int get_opt_args,
+		       s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
+		       int set_req_args, int set_opt_args,
+		       const char *documentation)
 {
   s7_pointer get_func, set_func;
   char *internal_set_name;
@@ -33880,7 +33880,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 }
   
 
-bool s7_is_procedure_with_setter(s7_pointer obj)
+bool s7_is_dilambda(s7_pointer obj)
 {
   return(((is_c_function(obj)) &&
 	  (is_c_function(c_function_setter(obj)))) ||
@@ -33889,10 +33889,10 @@ bool s7_is_procedure_with_setter(s7_pointer obj)
 	  (is_procedure(closure_setter(obj)))));
 }
 
-static s7_pointer g_is_procedure_with_setter(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_is_dilambda(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_procedure_with_setter "(procedure-with-setter? obj) returns #t if obj is a procedure with setter."
-  check_boolean_method(sc, s7_is_procedure_with_setter, sc->IS_PROCEDURE_WITH_SETTER, args);
+  #define H_is_dilambda "(dilambda? obj) returns #t if obj is a procedure with setter."
+  check_boolean_method(sc, s7_is_dilambda, sc->IS_DILAMBDA, args);
 }
 
 
@@ -34015,7 +34015,7 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
 
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc)
 {
-  s7_make_procedure_with_setter(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc);
+  s7_dilambda(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc);
 }
 
 
@@ -43896,11 +43896,11 @@ static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer car_x, int 
   s7_pointer body;
   body = closure_body(func);
   if ((s7_list_length(sc, body) == 2) &&
-      (caar(body) == sc->ENVIRONMENT_SET) &&
+      ((caar(body) == sc->ENVIRONMENT_SET) || (caar(body) == sc->LET_SET)) &&
       (is_optimized(car(body))) &&
       (optimize_data(car(body)) == HOP_SAFE_C_SQS))
     {
-      if ((caadr(body) == sc->WITH_ENVIRONMENT) &&
+      if (((caadr(body) == sc->WITH_ENVIRONMENT) || (caadr(body) == sc->INLET)) &&
 	  (is_symbol(cadr(cadr(body)))) &&
 	  (cadr(cadr(body)) == car(closure_args(func))) &&
 	  (cadddr(car(body)) == caadr(closure_args(func))))
@@ -68725,6 +68725,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "do",                OP_DO);
 
   set_immutable(assign_syntax(sc, "with-environment",  OP_WITH_ENV));
+  set_immutable(assign_syntax(sc, "inlet",  OP_WITH_ENV));
 
   assign_syntax(sc, "lambda",            OP_LAMBDA);
   assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);      /* optional, key, rest args */
@@ -68897,6 +68898,8 @@ s7_scheme *s7_init(void)
   sc->LAMBDA_STAR =      make_symbol(sc, "lambda*");
   sc->QUOTE =            make_symbol(sc, "quote");
   sc->WITH_ENVIRONMENT = make_symbol(sc, "with-environment");
+  sc->INLET =            make_symbol(sc, "inlet");
+  sc->LET_SET =          make_symbol(sc, "let-set!");
 
 #if WITH_IMMUTABLE_UNQUOTE
   /* unquote has no value, so it has to be the symbol for quasiquote */
@@ -68996,7 +68999,7 @@ s7_scheme *s7_init(void)
   sc->SYMBOL =                s7_define_safe_function(sc, "symbol",                  g_symbol,                 1, 0, false, H_symbol);
   sc->SYMBOL_TO_VALUE =       s7_define_safe_function(sc, "symbol->value",           g_symbol_to_value,        1, 1, false, H_symbol_to_value);
   sc->SYMBOL_TO_DYNAMIC_VALUE = s7_define_safe_function(sc, "symbol->dynamic-value", g_symbol_to_dynamic_value,1, 0, false, H_symbol_to_dynamic_value);
-  s7_make_procedure_with_setter(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access, 2, 1, H_symbol_access);
+  s7_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access, 2, 1, H_symbol_access);
   sc->SYMBOL_ACCESS = make_symbol(sc, "symbol-access");
   
   sc->OUTER_ENVIRONMENT =     s7_define_safe_function(sc, "outer-environment",       g_outer_environment,      1, 0, false, H_outer_environment);
@@ -69402,8 +69405,8 @@ s7_scheme *s7_init(void)
   sc->PROCEDURE_SOURCE =      s7_define_safe_function(sc, "procedure-source",        g_procedure_source,       1, 0, false, H_procedure_source);
   sc->PROCEDURE_ENVIRONMENT = s7_define_safe_function(sc, "procedure-environment",   g_procedure_environment,  1, 0, false, H_procedure_environment);
   sc->PROCEDURE_NAME =        s7_define_safe_function(sc, "procedure-name",          g_procedure_name,         1, 0, false, H_procedure_name);
-  s7_make_procedure_with_setter(sc, "procedure-setter",   g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter);
-  sc->IS_PROCEDURE_WITH_SETTER = s7_define_safe_function(sc, "procedure-with-setter?", g_is_procedure_with_setter, 1, 0, false, H_is_procedure_with_setter);
+  s7_dilambda(sc, "procedure-setter",   g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter);
+  sc->IS_DILAMBDA = s7_define_safe_function(sc, "dilambda?", g_is_dilambda, 1, 0, false, H_is_dilambda);
 
   sc->ARITY =                 s7_define_safe_function(sc, "arity",                   g_arity,                  1, 0, false, H_arity);
   sc->IS_ARITABLE =           s7_define_safe_function(sc, "aritable?",               g_is_aritable,            2, 0, false, H_is_aritable);
@@ -69483,10 +69486,10 @@ s7_scheme *s7_init(void)
   s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "*#readers* accessor"));
 
   /* the next two are for the test suite */
-  s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
-				g_symbol_table_is_locked, 0, 0, 
-				g_set_symbol_table_is_locked, 1, 0, 
-				H_symbol_table_is_locked);
+  s7_dilambda(sc, "-s7-symbol-table-locked?", 
+	      g_symbol_table_is_locked, 0, 0, 
+	      g_set_symbol_table_is_locked, 1, 0, 
+	      H_symbol_table_is_locked);
 
   s7_define_safe_function(sc, "-s7-stack-top-", g_stack_top, 0, 0, false, "current stack top");
   sc->STACKTRACE = s7_define_safe_function(sc, "stacktrace", g_stacktrace, 0, 5, false, H_stacktrace);
@@ -69719,12 +69722,12 @@ s7_scheme *s7_init(void)
                               ,expr)))");
 
 
-  /* ---------------- make-procedure-with-setter ---------------- */
+  /* ---------------- dilambda ---------------- */
 
-  s7_eval_c_string(sc, "(define (make-procedure-with-setter g s)                                              \n\
-                          \"(make-procedure-with-setter g s) returns a function (g) whose setter is s.\"      \n\
+  s7_eval_c_string(sc, "(define (dilambda g s)                                              \n\
+                          \"(dilambda g s) returns a function (g) whose setter is s.\"      \n\
                           (if (or (not (procedure? g)) (not (procedure? s)))                                  \n\
-                              (error 'wrong-type-arg \"procedure-with-setter takes 2 procedures: ~A ~A\" g s) \n\
+                              (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s) \n\
                               (set! (procedure-setter g) s))                                                  \n\
                           g)");
 
@@ -69774,7 +69777,7 @@ s7_scheme *s7_init(void)
                               ())))");
 
   s7_eval_c_string(sc, "(define hook-functions                                                                \n\
-                          (make-procedure-with-setter                                                         \n\
+                          (dilambda                                                                           \n\
                             (lambda (hook)                                                                    \n\
                               ((procedure-environment hook) 'body))                                           \n\
                             (lambda (hook lst)                                                                \n\
@@ -69802,6 +69805,28 @@ s7_scheme *s7_init(void)
   sc->error_hook = s7_eval_c_string(sc, "(make-hook 'type 'data)");
   s7_define_constant_with_documentation(sc, "*error-hook*", sc->error_hook, "*error-hook* functions are called in the error handler, passed (hook 'type) and (hook 'data).");
   
+  s7_eval_c_string(sc, "(define let? environment?)              \n\
+                        (define rootlet global-environment)     \n\
+                        (define unlet initial-environment)      \n\
+                        ;(define inlet with-environment)        \n\
+                        (define outlet outer-environment)       \n\
+                        (define sublet augment-environment)     \n\
+                        (define varlet augment-environment!)    \n\
+                        (define curlet current-environment)     \n\
+                        (define owlet error-environment)        \n\
+                        (define funclet procedure-environment)  \n\
+                        (define let->list environment->list)    \n\
+                        (define runlet open-environment)        \n\
+                        (define runlet? open-environment?)      \n\
+                        (define coverlet close-environment)     \n\
+                        (define let-ref environment-ref)        \n\
+                        (define let-set! environment-set!)      \n\
+                        (define to-let environment)             \n\
+                        (define to*-let environment*)           \n\
+                        (define make-procedure-with-setter dilambda) \n\
+                        (define procedure-with-setter? dilambda?)");
+
+
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
   /* 64 bit machine: size: 48 [size 72 if gmp], op: 324, opt: 430 */
 
@@ -70013,4 +70038,5 @@ int main(int argc, char **argv)
  * more tests: libgsl, what about load info for sndlib/xg? 
  * define* in cload, and complex numbers
  * check again (define (make-func) (define (a-func a) (+ a 1))) -- the opt problem is now fixed -- where it this business?? line 44013
+ * need a way to easily get library versions for reader-cond
  */

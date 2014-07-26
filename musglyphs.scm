@@ -170,7 +170,7 @@
 (define sound-comment comment)
 
 ;(define comment
-;  (make-procedure-with-setter
+;  (dilambda
 ;   (lambda* ((scr #f) (msg 0))
 ;     "(comment (scr #f) (msg 0)) tries to make musglyph.scm safe for comments"
 ;     (if (or (number? msg)

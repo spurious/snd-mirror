@@ -350,7 +350,7 @@ repetition to be in reverse."
 (defgenerator penv (envs #f) (total-envs 0) (current-env 0) (current-pass 0))
 
 (define (power-env pe)
-  (with-environment pe
+  (inlet pe
     (let ((val (env (vector-ref envs current-env))))
       (set! current-pass (- current-pass 1))
       (when (and (= current-pass 0)

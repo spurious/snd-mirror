@@ -156,13 +156,13 @@
 (define-bacro (value->symbol val)
   `(call-with-exit
     (lambda (return)
-      (do ((e (current-environment) (outer-environment e))) ()
+      (do ((e (curlet) (outlet e))) ()
 	(for-each 
 	 (lambda (slot)
 	   (if (equal? ,val (cdr slot))
 	       (return (car slot))))
 	 e)
-	(if (eq? e (global-environment))
+	(if (eq? e (rootlet))
 	    (return #f))))))
 
 (define-macro (enum . args)
@@ -257,7 +257,7 @@
      (lambda (f)
        (set! body (list f body)))
      (reverse (X-marks-the-spot () path)))
-    `(make-procedure-with-setter
+    `(dilambda
       (lambda (lst) 
 	,body)
       (lambda (lst val)
@@ -290,7 +290,7 @@ If func approves of one, index-if returns the index that gives that element's po
   (call-with-exit
    (lambda (return) 
      (if (or (hash-table? sequence)
-	     (environment? sequence))
+	     (let? sequence))
 	 (for-each (lambda (arg)
 		     (if (f arg)
 			 (return (car arg))))
@@ -382,7 +382,7 @@ If func approves of one, index-if returns the index that gives that element's po
      (letrec ((full-index-if-1 
 	       (lambda (f seq path)
 		 (if (or (hash-table? seq)
-			 (environment? seq))
+			 (let? seq))
 		     (for-each (lambda (arg)
 				 (if (f arg)
 				     (return (reverse (cons (car arg) path)))
@@ -534,8 +534,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			  hash-table? hash-table-iterator? 
 			  continuation? 
 			  input-port? output-port? 
-			  environment? 			     
-			  procedure-with-setter? procedure? macro?
+			  let? 			     
+			  dilambda? procedure? macro?
 			  boolean?
 			  random-state? 
 			  eof-object? 
@@ -548,7 +548,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 (define (add-predicate p) 
   "(add-predicate p) adds p (and boolean function of one argument) to the list of predicates used by ->predicate"
-  (let ((e (procedure-environment ->predicate)))
+  (let ((e (funclet ->predicate)))
     (set! (e 'predicates) (cons p (e 'predicates)))))
 
 (define (typeq? . objs)
@@ -642,9 +642,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 ;;; ----------------
 (define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
-  ;; a bacro is needed so that the calling environment is accessible via outer-environment
+  ;; a bacro is needed so that the calling environment is accessible via outlet
   ;;   we could also use the begin/let shuffle, but it's too embarrassing
-  `(let ((outer-env (outer-environment (current-environment)))
+  `(let ((outer-env (outlet (curlet)))
 	 (new-methods ())
 	 (new-slots ()))
      
@@ -658,11 +658,11 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	;;   are gathering the local slots and all the methods of the inherited
 	;;   classes, and will splice them together below as a new class.
 	
-	(set! new-slots (append (environment->list class) new-slots))
-	(do ((e (outer-environment (outer-environment class)) (outer-environment e)))
-	    ((or (not (environment? e))
-		 (eq? e (global-environment))))
-	  (set! new-methods (append (environment->list e) new-methods))))
+	(set! new-slots (append (let->list class) new-slots))
+	(do ((e (outlet (outlet class)) (outlet e)))
+	    ((or (not (let? e))
+		 (eq? e (rootlet))))
+	  (set! new-methods (append (let->list e) new-methods))))
       ,inherited-classes)
      
      (let ((remove-duplicates 
@@ -702,28 +702,28 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 							     (map (lambda (slot)
 								    (list (car slot) (cdr slot)))
 								  obj))))))
-		   (reverse! new-methods)))           ; the inherited methods, shadowed automatically
+		   (reverse! new-methods)))                      ; the inherited methods, shadowed automatically
      
-     (let ((new-class (open-environment
-                       (apply augment-environment           ; the local slots
-			      (augment-environment               ; the global slots
-				  (apply environment               ; the methods
+     (let ((new-class (runlet
+                       (apply sublet                             ; the local slots
+			      (sublet                            ; the global slots
+				  (apply to-let                  ; the methods
 					 (reverse new-methods))
 				(cons 'class-name ',class-name)  ; class-name slot
 				(cons 'inherited ,inherited-classes)
 				(cons 'inheritors ()))           ; classes that inherit from this class
 			      new-slots))))
        
-       (augment-environment! outer-env                  
+       (varlet outer-env                  
 	 (cons ',class-name new-class)                       ; define the class as class-name in the calling environment
 	 
 	 ;; define class-name? type check
 	 (cons (string->symbol (string-append (symbol->string ',class-name) "?"))
 	       (lambda (obj)
-		 (and (environment? obj)
+		 (and (let? obj)
 		      (eq? (obj 'class-name) ',class-name)))))
        
-       (augment-environment! outer-env
+       (varlet outer-env
 	 ;; define the make-instance function for this class.  
 	 ;;   Each slot is a keyword argument to the make function.
 	 (cons (string->symbol (string-append "make-" (symbol->string ',class-name)))
@@ -756,12 +756,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	     (error "attempt to call generic function wrapper recursively"))))))
 
 (define-macro (define-slot-accessor name slot)
-  `(define ,name (make-procedure-with-setter 
+  `(define ,name (dilambda 
 		  (lambda (obj) (obj ',slot)) 
 		  (lambda (obj val) (set! (obj ',slot) val)))))
 
 (define-bacro (define-method name-and-args . body)
-  `(let* ((outer-env (outer-environment (current-environment)))
+  `(let* ((outer-env (outlet (curlet)))
 	  (method-name (car ',name-and-args))
 	  (method-args (cdr ',name-and-args))
 	  (object (caar method-args))
@@ -772,7 +772,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
      ;; define the method as a normal-looking function
      ;;   s7test.scm has define-method-with-next-method that implements call-next-method here
      ;;   it also has make-instance 
-     (augment-environment! outer-env
+     (varlet outer-env
        (cons method-name 
 	     (apply lambda* method-args 
 		    `(((,object ',method-name)
@@ -781,7 +781,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			      method-args))))))
      
      ;; add the method to the class
-     (augment-environment! (outer-environment (outer-environment class))
+     (varlet (outlet (outlet class))
        (cons method-name method))
      
      ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
@@ -790,7 +790,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	(if (not (eq? (inheritor method-name) #<undefined>)) ; defined? goes to the global env
 	    (if (eq? (inheritor method-name) old-method)
 		(set! (inheritor method-name) method))
-	    (augment-environment! (outer-environment (outer-environment inheritor))
+	    (varlet (outlet (outlet inheritor))
    	      (cons method-name method))))
       (class 'inheritors))
      
@@ -879,13 +879,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 (define (continue-from-error) ; maybe arg for value to pass back
   "(continue-from-error) tries to continue from the point of the earlier continuable-error"
-  (if (continuation? ((error-environment) 'continue))
-      (((error-environment) 'continue))))
+  (if (continuation? ((owlet) 'continue))
+      (((owlet) 'continue))))
 
 (define (call-with-input-vector v proc)
   (let ((i -1))
-    (proc (open-environment
-	   (environment* 'read (lambda (p)
+    (proc (runlet
+	   (to*-let 'read (lambda (p)
 				 (v (set! i (+ i 1)))))))))
 
 (define (call-with-output-vector proc)
@@ -898,13 +898,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			    (set! (v i) obj)
 			    (set! i (+ i 1))
 			    #<unspecified>))) ; that's what write/display return!
-    (proc (open-environment
-	   (environment* 'write (lambda* (obj p)
-				  ((if (not (environment? p)) write write-to-vector) obj p))
+    (proc (runlet
+	   (to*-let 'write (lambda* (obj p)
+				  ((if (not (let? p)) write write-to-vector) obj p))
 			 'display (lambda* (obj p)
-				    ((if (not (environment? p)) display write-to-vector) obj p))
+				    ((if (not (let? p)) display write-to-vector) obj p))
 			 'format (lambda (p . args)
-				   (if (not (environment? p))
+				   (if (not (let? p))
 				       (apply format p args)
 				       (write (apply format #f args) p))))))
     (make-shared-vector v (list i)))) ; ignore extra trailing elements
@@ -913,34 +913,34 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 ;;; ----------------
 
-(define (flatten-environment e)
+(define (flatten-let e)
   (let ((slots ()))
-    (do ((pe e (outer-environment pe)))
-	((eq? pe (global-environment))
-	 (apply environment slots))
+    (do ((pe e (outlet pe)))
+	((eq? pe (rootlet))
+	 (apply to-let slots))
       (for-each (lambda (slot)
 		  (if (not (assq (car slot) slots))
 		      (set! slots (cons slot slots))))
 		pe))))
 
-(define (augment-environment* e . args)
-  "(augment-environment* e . args) is like augment-environment but accepts environment* style args"
-  (augment-environment e (apply environment* args)))
+(define (sub*let e . args)
+  "(sub*let e . args) is like sublet but accepts to*-let style args"
+  (sublet e (apply to*-let args)))
 
 
 ;;; ----------------
 
-(define* (symbol->environment sym (ce (current-environment)))
+(define* (symbol->let sym (ce (curlet)))
   (if (defined? sym ce #t)
       ce
-      (if (eq? ce (global-environment))
+      (if (eq? ce (rootlet))
 	  #f
-	  (symbol->environment sym (outer-environment ce)))))
+	  (symbol->let sym (outlet ce)))))
 
 (define* (gather-symbols expr (lst ()))
   (if (symbol? expr)
       (if (and (not (memq expr lst))
-	       (not (eq? (symbol->environment expr) (global-environment))))
+	       (not (eq? (symbol->let expr) (rootlet))))
 	  (cons expr lst)
 	  lst)
       (if (pair? expr)
@@ -1016,7 +1016,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     syms)
 		    (set! ,bindings (cons bd ,bindings))))
 		,vars)
-	       `(let ((,',e (current-environment)))
+	       `(let ((,',e (curlet)))
 		  (dynamic-wind
 		      (lambda () #f)
 		      (lambda ()
@@ -1079,8 +1079,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     ((= i new-len) lst)
 		   (set! (lst i) (obj (+ i start)))))))
 
-	  (else             ; (subsequence (environment* 'subsequence (lambda* (obj start end) "subseq")))
-	   (catch #t        ; perhaps we should use (open-environment? obj) instead?
+	  (else             ; (subsequence (to*-let 'subsequence (lambda* (obj start end) "subseq")))
+	   (catch #t        ; perhaps we should use (open-let? obj) instead?
 	     (lambda ()
 	       ((obj 'subsequence) obj start end))
 	     (lambda args
@@ -1092,7 +1092,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
       (format #f "~S" val)
       (cond ((vector? val)       
 	     (format #f "#(~{~A~| ~})" val))
-	    ((environment? val)  
+	    ((let? val)  
 	     (format #f (if (< *vector-print-length* 6) "#<e. ~{~A~| ~}>" "#<environment ~{~A~| ~}>") val))
 	    ((hash-table? val)   
 	     (format #f (if (< *vector-print-length* 6) "#<h. ~{~A~| ~}>" "#<hash-table ~{~A~| ~}>") val))
@@ -1102,8 +1102,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	     (format #f "(~{~A~| ~})" val)))))
 
 (define (mock-list seq)
-  (open-environment
-   (environment* 
+  (runlet
+   (to*-let
     'pair? (lambda (obj) #t)
     'value seq
     'member (lambda* (a b (c equal?))
@@ -1119,20 +1119,20 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 (define (make-method f accessor)
   (lambda args
-    (if (environment? (car args)) 
+    (if (let? (car args)) 
 	(apply f (accessor (car args)) (cdr args))
 	(apply f (car args) (accessor (cadr args)) (cddr args)))))
 
 (define (make-object . args)
-  (open-environment
-   (apply environment* args)))
+  (runlet
+   (apply to*-let args)))
 
 
 ;;; ----------------
 
 (define-macro (elambda args . body)  ; lambda but pass extra arg "*env*" = run-time env
   `(define-bacro (,(gensym) ,@args)
-      `((lambda* ,(append ',args `((*env* (current-environment))))
+      `((lambda* ,(append ',args `((*env* (curlet))))
 	  ,'(begin ,@body)) 
 	,,@args)))
 
@@ -1151,7 +1151,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 (define Display-port #f)
 
 (let ((spaces 0)
-      (*display-spacing* 2)         ; (set! ((procedure-environment Display) '*display-spacing*) 1) etc
+      (*display-spacing* 2)         ; (set! ((funclet Display) '*display-spacing*) 1) etc
       (*display-print-length* 6)
       (*display* *stderr*)          ; exported via Display-port
       (e (gensym))
@@ -1159,14 +1159,14 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
       (vlp (gensym)))
 
   ;; local symbol access -- this does not affect any other uses of these symbols
-  (set! (symbol-access '*display-spacing* (current-environment))
+  (set! (symbol-access '*display-spacing* (curlet))
 	(lambda (s v) (if (and (integer? v) (not (negative? v))) v *display-spacing*)))
 
-  (set! (symbol-access '*display-print-length* (current-environment))
+  (set! (symbol-access '*display-print-length* (curlet))
 	(lambda (s v) (if (and (integer? v) (not (negative? v))) v *display-print-length*)))
 
   ;; export *display* -- just a convenience
-  (set! Display-port (make-procedure-with-setter
+  (set! Display-port (dilambda
 		      (lambda () *display*)
 		      (lambda (val) (set! *display* val))))
 
@@ -1175,13 +1175,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
   (define (display-format str . args)
     `(let ((,vlp *vector-print-length*))
-       (with-environment (procedure-environment Display)
+       (inlet (funclet Display)
 	 (set! *vector-print-length* *display-print-length*)
 	 (prepend-spaces))
        (format (Display-port) ,str ,@args)
        (set! *vector-print-length* ,vlp)))
 
-  (define (display-environment le e)
+  (define (display-let le e)
     (let ((vlp *vector-print-length*))
       (for-each
        (lambda (slot)
@@ -1224,7 +1224,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
       `(begin
 	 ,@previous
 	 (let ((,result ,end))
-	   (with-environment (procedure-environment Display)
+	   (inlet (funclet Display)
 	     (prepend-spaces))
 	   (format (Display-port) "  ~A~A) -> ~A~%"
 			   ,(if (pair? previous) " ... " "")
@@ -1244,12 +1244,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		(list (car source)               ; let
 		      (cadr source)              ; name
 		      (caddr source)             ; vars
-		      (display-format "(let ~A (~{~A~| ~})~%" (cadr source) '(outer-environment (current-environment))))
+		      (display-format "(let ~A (~{~A~| ~})~%" (cadr source) '(outlet (curlet))))
 		(walk-let-body (cdddr source)))      ; body
 	       (append 
 		(list (car source)               ; let
 		      (cadr source)              ; vars
-		      (display-format "(~A (~{~A~| ~})~%" (car source) '(outer-environment (current-environment))))
+		      (display-format "(~A (~{~A~| ~})~%" (car source) '(outlet (curlet))))
 		(walk-let-body (cddr source)))))     ; body
 
 	  ((or and)
@@ -1271,7 +1271,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			     ,result))
 			(cdr source)))))
 
-	  ((begin with-environment with-baffle)
+	  ((begin inlet with-baffle)
 	   ;; report last form
 	   (let ((previous (butlast (cdr source)))
 		 (end (last source)))
@@ -1426,11 +1426,11 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		      (let ((,',result '?))
 			(dynamic-wind
 			    (lambda ()                                             ; when function called, show args and caller
-			      (with-environment (procedure-environment Display)    ; indent
+			      (inlet (funclet Display)                             ; indent
 				(prepend-spaces)
 				(set! spaces (+ spaces *display-spacing*)))
 			      (format (Display-port) "(~A" ',',func)               ; show args, ruthlessly abbreviated
-			      (((procedure-environment Display) 'display-environment) (outer-environment (outer-environment (current-environment))) ,',e)
+			      (((funclet Display) 'display-let) (outlet (outlet (curlet))) ,',e)
 			      (format (Display-port) ")")
 			      (let ((caller (eval '__func__ ,',e)))                ; show caller 
 				(if (not (eq? caller #<undefined>))
@@ -1439,37 +1439,18 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			    (lambda ()                                             ; the original function body
 			      (set! ,',result ,',body))                            ;   but annotated by proc-walk
 			    (lambda ()                                             ; at the end, show the result
-			      (with-environment (procedure-environment Display)
+			      (inlet (funclet Display)
 				(set! spaces (- spaces *display-spacing*))         ; unindent
 				(prepend-spaces))
 			      (format (Display-port) "    -> ~S~%" ,',result)))))
-		    (current-environment) ,,@call-args)))))                       ; pass in the original args and the current-environment
+		    (curlet) ,,@call-args)))))                                     ; pass in the original args and the curlet
 	
 	;; (Display <anything-else>)
 	(proc-walk definition)))                                                   ; (Display (+ x 1)) etc
 
-  (set! Display Display-1))                                                    ; make Display-1 globally accessible
+  (set! Display Display-1))                                                        ; make Display-1 globally accessible
 
 
 
 ;;; --------------------------------------------------------------------------------
-
-(define let? environment?)
-(define rootlet global-environment)
-(define unlet initial-environment)
-(define inlet with-environment)
-(define outlet outer-environment)
-(define sublet augment-environment)
-(define varlet augment-environment!)
-(define valet current-environment)
-(define owlet error-environment)
-(define flet procedure-environment)
-(define let->list environment->list)
-(define runlet open-environment)
-(define runlet? open-environment?)
-(define coverlet close-environment)
-(define let-ref environment-ref)
-(define let-set! environment-set!)
-(define to-let environment)
-(define to-let* environment*)
 

@@ -720,12 +720,12 @@ then inverse ffts."
   ;;
   ;; this could use the moving-average generator (or one-pole?)
 
-  (environment-set! gen 'up up)
-  (with-environment gen
+  (let-set! gen 'up up)
+  (inlet gen
     (set! val (min 1.0 (max 0.0 (+ val (if up incr (- incr))))))))
 
 (define* (make-ramp (size 128))
-  (environment* 'val 0.0 'incr (/ 1.0 size) 'up 1))
+  (to*-let 'val 0.0 'incr (/ 1.0 size) 'up 1))
 
 ;;; (let ((r (make-ramp))) (map-channel (lambda (y) (* y (ramp r (> (random 1.0) 0.5))))))
 

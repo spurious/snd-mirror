@@ -399,7 +399,7 @@ finish-with-sound to complete the process."
 
 
 (define wsdat-play ; for cm
-  (make-procedure-with-setter
+  (dilambda
    (lambda (w)
      "accessor for play field of init-with-sound struct"
      (list-ref w 9))
@@ -496,7 +496,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	 
 	 (set! ,(string->symbol (string-append sname "?"))
 	       (lambda (obj)
-		 (and (environment? obj)
+		 (and (let? obj)
 		      (eq? (obj 'mus-generator-type) gen-type))))
 
 	 (set! ,(string->symbol (string-append "make-" sname))
@@ -504,12 +504,12 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				(if (list? n) n (list n 0.0)))
 			      fields)
   	         (,wrapper 
-		  (open-environment
+		  (runlet
 		   ,(if methods
-		       `(augment-environment 
+		       `(sublet 
 			   (apply environment ,methods)
-			 (environment* ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
-		       `(environment* 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
+			 (to-let* ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
+		       `(to-let* 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
 
 
 ;;; --------------------------------------------------------------------------------

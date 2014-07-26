@@ -3566,7 +3566,7 @@ getting waveforms and results like these:
 
 (define* (ngencos gen (fm 0.0)) ; polyoid now, I think
   (set! (gen 'fm) fm)
-  (with-environment gen	 
+  (inlet gen	 
     (let ((sum 0.0))
       (do ((i 0 (+ i 1)))
 	  ((= i n))
@@ -9885,7 +9885,7 @@ Here is a way to define oscil using defgenerator:
 
 ;;; make-osc creates an osc, and osc? returns #t if passed an osc.
 ;;; Once we have an osc (an environment with "freq" and "phase" locals)
-;;;   we can either use with-environment, or refer to the local variables
+;;;   we can either use inlet, or refer to the local variables
 ;;;   directly via (gen 'freq) and (gen 'phase).
 
 (define (osc gen fm)                ; our new generator
@@ -9968,11 +9968,11 @@ in CLM, add the desired methods as an association list with the keyword :methods
 		   <em class=red>:methods</em>
 		     (list
 		      (cons 'mus-frequency 
-                            (make-procedure-with-setter
+                            (dilambda
 			      (lambda (g) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">radians-&gt;hz</a> (g 'freq)))
 			      (lambda (g val) (set! (g 'freq) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> val)))))
 		      (cons 'mus-phase 
-                            (make-procedure-with-setter		          
+                            (dilambda		          
 			      (lambda (g) (g 'phase))
 			      (lambda (g val) (set! (g 'phase) val))))
 		      

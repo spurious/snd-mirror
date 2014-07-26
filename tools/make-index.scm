@@ -82,7 +82,7 @@
 (define (ind-topic obj)   (vector-ref obj 2))
 (define (ind-file obj)    (vector-ref obj 3))
 (define (ind-general obj) (vector-ref obj 4))
-(define ind-indexed       (make-procedure-with-setter (lambda (obj) (vector-ref obj 5)) (lambda (obj val) (vector-set! obj 5 val))))
+(define ind-indexed       (dilambda (lambda (obj) (vector-ref obj 5)) (lambda (obj val) (vector-set! obj 5 val))))
 (define (ind-char obj)    (vector-ref obj 6))
 
 

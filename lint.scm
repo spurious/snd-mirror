@@ -155,12 +155,12 @@
 		  keyword->symbol keyword? 
 		  lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
 		  list? log logand logbit? logior lognot logxor 
-		  macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-list make-polar make-procedure-with-setter 
+		  macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-list make-polar dilambda
 		  make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
 		  nan? negative? not null? number->string number? numerator 
 		  object->string odd? open-environment? or outer-environment output-port? 
 		  pair? pair-line-number port-closed? port-filename port-line-number positive? procedure-arity procedure-documentation procedure-environment 
-		  procedure-name procedure-setter procedure-source procedure-with-setter? procedure? provided? 
+		  procedure-name procedure-setter procedure-source dilambda? procedure? provided? 
 		  quasiquote quote quotient 
 		  random random-state? rational? rationalize real-part real? remainder reverse round 
 		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
@@ -399,7 +399,7 @@
 			   'write-char +unspecified+
 			   'write-string +unspecified+
 			   'zero? +boolean+
-			   'procedure-with-setter? +boolean+))
+			   'dilambda? +boolean+))
       (argument-data (hash-table*
 			  '* number?
 			  '+ number?
@@ -531,7 +531,7 @@
 			  'make-hook (list list? string?)
 			  'make-list (list non-negative-integer?)
 			  'make-polar real?
-			  'make-procedure-with-setter procedure?
+			  'dilambda procedure?
 			  'make-rectangular real?
 			  'make-string (list non-negative-integer? char?)
 			  'max real?
@@ -683,11 +683,11 @@
 
 
       ;; vector or list versions
-      (define var-name (make-procedure-with-setter (lambda (v) (v 0)) (lambda (v x) (set! (v 0) x))))
-      (define var-ref (make-procedure-with-setter (lambda (v) (v 1)) (lambda (v x) (set! (v 1) x))))
-      (define var-set (make-procedure-with-setter (lambda (v) (v 2)) (lambda (v x) (set! (v 2) x))))
-      (define var-typ (make-procedure-with-setter (lambda (v) (v 3)) (lambda (v x) (set! (v 3) x))))
-      (define var-init (make-procedure-with-setter (lambda (v) (v 4)) (lambda (v x) (set! (v 4) x))))
+      (define var-name (dilambda (lambda (v) (v 0)) (lambda (v x) (set! (v 0) x))))
+      (define var-ref (dilambda (lambda (v) (v 1)) (lambda (v x) (set! (v 1) x))))
+      (define var-set (dilambda (lambda (v) (v 2)) (lambda (v x) (set! (v 2) x))))
+      (define var-typ (dilambda (lambda (v) (v 3)) (lambda (v x) (set! (v 3) x))))
+      (define var-init (dilambda (lambda (v) (v 4)) (lambda (v x) (set! (v 4) x))))
 #|      
       ;; vector version
       (define* (make-var name ref set typ init :allow-other-keys) 
@@ -702,11 +702,11 @@
       (define var-member assq)
 #|
       ;; environment version
-      (define var-name (make-procedure-with-setter (lambda (v) (v 'name)) (lambda (v x) (set! (v 'name) x))))
-      (define var-ref (make-procedure-with-setter (lambda (v) (v 'ref)) (lambda (v x) (set! (v 'ref) x))))
-      (define var-set (make-procedure-with-setter (lambda (v) (v 'set)) (lambda (v x) (set! (v 'set) x))))
-      (define var-typ (make-procedure-with-setter (lambda (v) (v 'typ)) (lambda (v x) (set! (v 'typ) x))))
-      (define var-init (make-procedure-with-setter (lambda (v) (v 'init)) (lambda (v x) (set! (v 'init) x))))
+      (define var-name (dilambda (lambda (v) (v 'name)) (lambda (v x) (set! (v 'name) x))))
+      (define var-ref (dilambda (lambda (v) (v 'ref)) (lambda (v x) (set! (v 'ref) x))))
+      (define var-set (dilambda (lambda (v) (v 'set)) (lambda (v x) (set! (v 'set) x))))
+      (define var-typ (dilambda (lambda (v) (v 'typ)) (lambda (v x) (set! (v 'typ) x))))
+      (define var-init (dilambda (lambda (v) (v 'init)) (lambda (v x) (set! (v 'init) x))))
       (define* (make-var name ref set typ init :allow-other-keys) (environment* 'name name 'ref ref 'set set 'typ typ 'init init))
       (define var? environment?)
       (define (mf a b) (eq? a (environment-ref b 'name)))
