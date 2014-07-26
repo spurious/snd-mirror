@@ -33,9 +33,11 @@
 			(make-vector '(2 3) "hi") #("hiho" "hi" "hoho") (make-shared-vector (make-vector '(2 3) 1 #t) '(6))
 			(make-shared-vector (make-shared-vector (make-vector '(2 3) 1.0 #t) '(6)) '(2 2))
 			(vector-ref #2d((#(1 2 3)) (#(3 4 5))) 0 0) (symbol->value (define-macro (m a) `(+ ,a 1)))
-			(c-pointer 0) (c-pointer -1) :readable :else (make-list 1024) (symbol->value (define-bacro* (m (a 1)) `(+ ,a 1)))
+			(c-pointer 0) (c-pointer -1) :readable :else (symbol->value (define-bacro* (m (a 1)) `(+ ,a 1)))
 			(bytevector 0 1 2) (bytevector) (bytevector 255 0 127) (make-hash-table-iterator (hash-table '(a . 2)))
 			(lambda (dir) 1.0) (float-vector) (make-float-vector '(2 32)) 
+			;(open-environment (environment* 'value 1 '+ (lambda args 1)))
+			;all-env
 			))
 
 (define low 0)
@@ -50,12 +52,12 @@
      (if (>= args-now low)
 	 (catch #t 
 	   (lambda () 
-	     (cond ((apply func args) => 
+	     (cond ((func (values args)) => ;(apply func args) => 
 		    (lambda (val) 
 		      (if data-file
 			  (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))))
 	   (lambda any
-	     (if (or (eq? (car any) 'wrong-type-arg)
+	     (if (or (memq (car any) '(wrong-type-arg syntax-error))
 		     (not (memq func (list map for-each /))))
 		 (quit)))))
      
@@ -75,7 +77,8 @@
 			     (if data-file
 				 (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
 		  (lambda any 
-		    (if (and (eq? (car any) 'wrong-type-arg)
+		    (if (and (memq (car any) '(wrong-type-arg syntax-error))
+			     (pair? (cdr (cadr any)))
 			     (pair? (cddr (cadr any)))
 			     (integer? (caddr (cadr any))) ; if just 1 arg, arg num can be omitted
 			     (< (caddr (cadr any)) low))
@@ -115,8 +118,8 @@
 		(if (not (or (memq (strname 0) '(#\{ #\[ #\())
 			     (member strname '("exit" "emergency-exit" "abort" "autotest" 
 					       "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
-					       "augment-environment!" "make-procedure-with-setter" "gc"
-					       "open-environment" "eval" "vector" "list" "cons"
+					       "augment-environment!" "dilambda" "gc"
+					       "open-environment" "eval" "vector" "list" "cons" "m"
 
 					       "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
 					       "boolean=?" "symbol=?" 

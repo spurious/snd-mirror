@@ -463,10 +463,10 @@ int main(int argc, char **argv)
   s7_define_function(s7, "dax?", is_dax, 1, 0, false, "(dax? anything) returns #t if its argument is a dax object");
 
   s7_define_variable(s7, "dax-x", 
-		     s7_make_procedure_with_setter(s7, "dax-x", dax_x, 1, 0, set_dax_x, 2, 0, "dax x field"));
+		     s7_dilambda(s7, "dax-x", dax_x, 1, 0, set_dax_x, 2, 0, "dax x field"));
 
   s7_define_variable(s7, "dax-data", 
-		     s7_make_procedure_with_setter(s7, "dax-data", dax_data, 1, 0, set_dax_data, 2, 0, "dax data field"));
+		     s7_dilambda(s7, "dax-data", dax_data, 1, 0, set_dax_data, 2, 0, "dax data field"));
 
   while (1)
     {

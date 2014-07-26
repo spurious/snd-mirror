@@ -2931,18 +2931,6 @@ static int levenshtein(const char *s1, int l1, const char *s2, int l2)
 }
 
 
-#if HAVE_SCHEME
-static s7_pointer g_leven(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer s1, s2;
-  s1 = s7_car(args);
-  s2 = s7_cadr(args);
-  if (s1 == s2) return(s7_make_integer(sc, 0));
-  return(s7_make_integer(sc, (s7_Int)levenshtein(s7_string(s1), s7_string_length(s1), s7_string(s2), s7_string_length(s2))));
-}
-#endif
-
-
 static int help_name_to_url(const char *name)
 {
   /* trying to be fancy here just causes trouble -- this is not a function that needs to be fast! */
@@ -3887,7 +3875,6 @@ If more than one hook function, each function gets the previous function's outpu
   Xen_define_procedure_with_setter(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
-  s7_define_function(s7, "levenshtein", g_leven, 2, 0, false, "a test");
   autoload_info(s7); /* snd-xref.c included above */
 #endif
 }

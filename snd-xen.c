@@ -16,8 +16,6 @@
  *
  *   In Forth, Snd's exit is named snd-exit.
  */
-
-
 /* error handlers */
 
 static const char *io_error_names[IO_ERROR_NUM] = {"no error", "save-hook cancellation", "bad channel",
@@ -2918,7 +2916,6 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   g_init_gxsnd();
   g_init_gxfind();
 #endif
-
 
 #if HAVE_SCHEME && (!_MSC_VER)
   Xen_define_procedure("dlopen",  g_dlopen_w,  1, 1 ,0, H_dlopen);

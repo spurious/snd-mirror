@@ -989,10 +989,10 @@ int main(int argc, char **argv)
   s7_define_function(sc, "dax?", is_dax, 1, 0, false, "(dax? anything) returns #t if its argument is a dax object");
 
   s7_define_variable(sc, "dax-x", 
-                     s7_make_procedure_with_setter(sc, "dax-x", dax_x, 1, 0, set_dax_x, 2, 0, "dax x field (a real)"));
+                     s7_dilambda(sc, "dax-x", dax_x, 1, 0, set_dax_x, 2, 0, "dax x field (a real)"));
 
   s7_define_variable(sc, "dax-data", 
-                     s7_make_procedure_with_setter(sc, "dax-data", dax_data, 1, 0, set_dax_data, 2, 0, "dax data field"));
+                     s7_dilambda(sc, "dax-data", dax_data, 1, 0, set_dax_data, 2, 0, "dax data field"));
 
   if (!s7_is_procedure_with_setter(s7_name_to_value(sc, "dax-x")))
     {fprintf(stderr, "%d: dax-x is not a pws?\n", __LINE__);}

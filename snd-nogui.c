@@ -350,34 +350,34 @@ void snd_doit(int argc, char **argv)
   Xen_eval_C_string("(define " S_time_graph " 0)");
   Xen_eval_C_string("(define " S_transform_graph " 1)");
 
-  Xen_eval_C_string("(define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_colormap " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_colormap_size " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_cursor_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_enved_envelope " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_enved_filter " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_enved_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_filter_control_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_graph_cursor " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_listener_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_axis_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_mark_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
-  Xen_eval_C_string("(define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
-  Xen_eval_C_string("(define " S_combined_data_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
-  Xen_eval_C_string("(define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_foreground_color " (make-procedure-with-setter (lambda args #f) (lambda args (car args))))");
-  Xen_eval_C_string("(define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_selected_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_selected_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_text_focus_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_x_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))");
-  Xen_eval_C_string("(define " S_y_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))");
-  Xen_eval_C_string("(define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  Xen_eval_C_string("(define " S_widget_size " (make-procedure-with-setter (lambda (w) #f) (lambda (w val) val)))");
-  Xen_eval_C_string("(define " S_widget_position " (make-procedure-with-setter (lambda (w) #f) (lambda (w val) val)))");
+  Xen_eval_C_string("(define " S_basic_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_colormap " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_colormap_size " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_cursor_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_data_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_enved_envelope " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_enved_filter " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_enved_waveform_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_filter_control_waveform_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_graph_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_graph_cursor " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_listener_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_listener_text_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_axis_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_mark_color " (dilambda (lambda args #f) (lambda args #f)))");
+  Xen_eval_C_string("(define " S_mix_color " (dilambda (lambda args #f) (lambda args #f)))");
+  Xen_eval_C_string("(define " S_combined_data_color " (dilambda (lambda args #f) (lambda args #f)))");
+  Xen_eval_C_string("(define " S_position_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_foreground_color " (dilambda (lambda args #f) (lambda args (car args))))");
+  Xen_eval_C_string("(define " S_sash_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_selected_data_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_selected_graph_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_text_focus_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_x_axis_label " (dilambda (lambda args \"\") (lambda args \"\")))");
+  Xen_eval_C_string("(define " S_y_axis_label " (dilambda (lambda args \"\") (lambda args \"\")))");
+  Xen_eval_C_string("(define " S_zoom_color " (dilambda (lambda () #f) (lambda (val) val)))");
+  Xen_eval_C_string("(define " S_widget_size " (dilambda (lambda (w) #f) (lambda (w val) val)))");
+  Xen_eval_C_string("(define " S_widget_position " (dilambda (lambda (w) #f) (lambda (w val) val)))");
 
   Xen_eval_C_string("(define (" S_make_cairo " . args) #f)");
   Xen_eval_C_string("(define (" S_free_cairo " . args) #f)");
@@ -423,8 +423,8 @@ void snd_doit(int argc, char **argv)
   Xen_eval_C_string("(define (" S_colormap_name " arg) #f)");
   Xen_eval_C_string("(define (" S_add_colormap " . args) #f)");
 
-  Xen_eval_C_string("(define " S_x_bounds " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
-  Xen_eval_C_string("(define " S_y_bounds " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
+  Xen_eval_C_string("(define " S_x_bounds " (dilambda (lambda args #f) (lambda args #f)))");
+  Xen_eval_C_string("(define " S_y_bounds " (dilambda (lambda args #f) (lambda args #f)))");
 #endif
 
 #if HAVE_RUBY

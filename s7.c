@@ -70039,4 +70039,5 @@ int main(int argc, char **argv)
  * define* in cload, and complex numbers
  * check again (define (make-func) (define (a-func a) (+ a 1))) -- the opt problem is now fixed -- where it this business?? line 44013
  * need a way to easily get library versions for reader-cond
+ * environment in s7test/html/c
  */

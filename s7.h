@@ -627,8 +627,6 @@ s7_pointer s7_dilambda(s7_scheme *sc,
 		       s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
 		       int set_req_args, int set_opt_args,
 		       const char *documentation);
-#define s7_is_procedure_with_setter s7_is_dilambda
-#define s7_make_procedure_with_setter s7_dilambda
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj);
 
 
@@ -777,6 +775,9 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_T(Sc)           s7_t(Sc)
 #define s7_UNDEFINED(Sc)   s7_undefined(Sc)
 #define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
+
+#define s7_is_procedure_with_setter s7_is_dilambda
+#define s7_make_procedure_with_setter s7_dilambda
 
 s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 /* replaced by s7_method */

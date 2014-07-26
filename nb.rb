@@ -92,8 +92,8 @@ class NB
   include Info
   
   Region_viewer = 2
-  View_files_dialog = 8
-  Info_dialog = 20
+  View_files_dialog = 5
+  Info_dialog = 15
   
   def initialize(path)
     @nb_database = path
