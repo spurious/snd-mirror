@@ -199,7 +199,7 @@
   `(dynamic-wind
        (lambda ()
 	 ,@(map (lambda (var)
-		  `(inlet (funclet ,(car var))
+		  `(with-let (funclet ,(car var))
 		     (set! old-values (cons value old-values))
 		     (set! value (convert ,(cadr var)))))
 		vars))
@@ -207,25 +207,25 @@
          ,@body)
        (lambda ()
 	 ,@(map (lambda (var)
-		  `(inlet (funclet ,(car var))
+		  `(with-let (funclet ,(car var))
 		     (set! value (car old-values))
 		     (set! old-values (cdr old-values))))
 		vars))))
 
 
 ;; libraries
-(apply define (symbol (object->string '(scheme base))) (to-let) ()) ; ignore (scheme base)
+(apply define (symbol (object->string '(scheme base))) (inlet) ()) ; ignore (scheme base)
 
 (define-macro (define-library libname . body) ; |(lib name)| -> environment
   `(define ,(symbol (object->string libname))
-     (inlet (sublet (unlet) 
+     (with-let (sublet (unlet) 
 			 (cons 'import (symbol->value 'import))
 			 (cons '*export* ())
 			 (cons 'export (symbol->value 
 					(define-macro (,(gensym) . names) 
 					  `(set! *export* (append ',names *export*))))))
        ,@body
-       (apply to-let
+       (apply inlet
 	      (map (lambda (entry)
 		     (if (or (member (car entry) '(*export* export import))
 			     (and (pair? *export*)
@@ -240,7 +240,7 @@
 	      (case (car lib)
 		((only) 
 		 `((lambda (e names)
-		     (apply to-let
+		     (apply inlet
 			    (map (lambda (name)
 				   (cons name (e name)))
 				 names)))
@@ -249,7 +249,7 @@
   
 		((except)
 		 `((lambda (e names)
-		     (apply to-let
+		     (apply inlet
 			    (map (lambda (entry)
 				   (if (member (car entry) names)
 				       (values)
@@ -260,7 +260,7 @@
   
 		((prefix)
 		 `((lambda (e prefx)
-		     (apply to-let
+		     (apply inlet
 			    (map (lambda (entry)
 				   (cons (string->symbol 
 					  (string-append (symbol->string prefx) 
@@ -272,7 +272,7 @@
   
 		((rename)
 		 `((lambda (e names)
-		     (apply to-let
+		     (apply inlet
 			    (map (lambda (entry)
 				   (let ((info (assoc (car entry) names)))
 				     (if info

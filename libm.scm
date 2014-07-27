@@ -7,9 +7,9 @@
 
 (if (not (defined? '*libm*))
     (define *libm*
-      (with-environment (initial-environment)
+      (with-let (unlet)
 	
-	(set! *libraries* (cons (cons "libm.scm" (current-environment)) *libraries*))
+	(set! *libraries* (cons (cons "libm.scm" (curlet)) *libraries*))
 
 	(c-define '((double j0 (double) "Bessel j0") 
 		    (double j1 (double)) 
@@ -131,7 +131,7 @@ static s7_pointer g_modf(s7_scheme *sc, s7_pointer args)
 		    )
 		  "" "math.h" "" "" "libm_s7")
 	
-	(current-environment))))
+	(curlet))))
 
 *libm*
 ;; the loader will return *libm*

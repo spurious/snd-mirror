@@ -659,7 +659,7 @@
 		       (lambda (op)
 			 (set! (h op) #t))
 		       '(quote if begin let let* letrec cond case or and do set! unless when
-			       with-environment with-baffle
+			       with-environment with-let with-baffle
 			       lambda lambda* define define* define-envelope
 			       define-macro define-macro* define-bacro define-bacro* 
 			       define-constant))
@@ -3544,9 +3544,9 @@
 		     env)
 
 		    ;; -------- with-environment --------
-		    ((with-environment)
+		    ((with-environment with-let)
 		     (if (< (length form) 3)
-			 (lint-format "with-environment is messed up: ~A" name (truncated-list->string form))
+			 (lint-format "~A is messed up: ~A" head name (truncated-list->string form))
 			 (begin
 			   (if (symbol? (cadr form))
 			       (set-ref? (cadr form) env))
@@ -3554,8 +3554,8 @@
 			       (begin
 				 (if (and *report-minor-stuff*
 					  (null? (cdadr form))
-					  (eq? (caadr form) 'current-environment))
-				     (lint-format "with-environment is not needed here: ~A" name (truncated-list->string form)))
+					  (memq (caadr form) '(curlet current-environment)))
+				     (lint-format "~A is not needed here: ~A" head name (truncated-list->string form)))
 				 (lint-walk name (cadr form) env)))
 			   (let* ((e (lint-walk-body name head (cddr form) env))
 				  (vars (if (not (eq? e env))

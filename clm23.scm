@@ -2280,7 +2280,7 @@
 
 (define (sndscm-osc gen fm)
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (set! res (sin phase))
     (set! phase (+ phase freq fm))
     res))
@@ -2308,7 +2308,7 @@
 
 (define* (sndscm-osc1 gen fm)
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (set! res (sin phase))
     (set! phase (+ phase freq fm))
     res))
@@ -2350,7 +2350,7 @@
 
 (define* (sndscm-osc2 gen fm)
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (set! res (sin phase))
     (set! phase (+ phase freq fm))
     res))
@@ -2382,7 +2382,7 @@
 (define (dsp-asyfm-J gen input)
   "(dsp-asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
   (let-set! gen 'input input)
-  (inlet gen
+  (with-let gen
     (let* ((modphase (* ratio phase))
 	   (result (* (exp (* r2 (cos modphase)))
 		      (sin (+ phase (* r1 (sin modphase)))))))
@@ -2392,7 +2392,7 @@
 (define (dsp-asyfm-I gen input)
   "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
   (let-set! gen 'input input)
-  (inlet gen
+  (with-let gen
     (let* ((modphase (* ratio phase))
 	   (result (* (exp (- (* r1 (cos modphase)) r3))
 		      (sin (+ phase (* r2 (sin modphase)))))))
@@ -2412,7 +2412,7 @@
 
 (define (sndclm-expcs gen fm)
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((result (- (/ sinht (- cosht (cos phase))) 0.5)))
     (set! phase (+ phase frequency fm))
     result)))

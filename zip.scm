@@ -46,7 +46,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 ;;  "(zipper zip in1 in2) creates the digital zipper sound effect using zipper generator 'zip' and the two samplers 'in1' and 'in2'"
   (let-set! zp 'input1 input1)
   (let-set! zp 'input2 input2)
-  (inlet zp
+  (with-let zp
     (let* ((frame-samples (floor (env fe)))
 	   (chunk-len (round (* frame-samples (env rampe)))))
       (if (<= chunk-len low-start)

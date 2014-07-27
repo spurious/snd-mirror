@@ -3700,10 +3700,10 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      s7_Double x;
 	      if (s7_is_symbol(res))
 		{
-		  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
-		  old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
+		  e = s7_sublet(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
+		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
 		  res = s7_value(s7, res);
-		  s7_set_current_environment(s7, old_e);
+		  s7_set_curlet(s7, old_e);
 		}
 	      x = s7_number_to_real(s7, res);
 	      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
@@ -3728,10 +3728,10 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      if (s7_cadr(res) == arg) fx = s7_caddr(res); else fx = s7_cadr(res);
 	      if (s7_is_symbol(fx))
 		{
-		  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
-		  old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
+		  e = s7_sublet(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
+		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
 		  fx = s7_value(s7, fx);
-		  s7_set_current_environment(s7, old_e);
+		  s7_set_curlet(s7, old_e);
 		}
 	      x = s7_number_to_real(s7, fx);
 	      if (s7_car(res) == s7_make_symbol(s7, "*"))
@@ -3753,8 +3753,8 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	    s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
 	    fallback = s7_ex_fallback(s7);
 
-	    e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
-	    old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
+	    e = s7_sublet(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
+	    old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
 	    /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
 
 	    y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
@@ -3783,17 +3783,17 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		change_samples(beg, num, data, cp, caller, pos, -1.0);
 		free(data);
 		gf1->free((void *)gf1);
-		s7_set_current_environment(s7, old_e);
+		s7_set_curlet(s7, old_e);
 		return(res);
 	      }
-	    s7_set_current_environment(s7, old_e);
+	    s7_set_curlet(s7, old_e);
 	  }
 #endif
 	}
       /* (let ((rd (make-sampler 0))) (map-channel (lambda (y) (+ (next-sample rd) y)))) */
 
       arg = s7_caadar(source);
-      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+      e = s7_sublet(s7, s7_cdr(source), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
       use_apply = false;
@@ -4117,8 +4117,8 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 		{
 		  s7_pointer olde;
 
-		  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-		  olde = s7_set_current_environment(s7, e);
+		  e = s7_sublet(s7, s7_cdr(source), s7_nil(s7));
+		  olde = s7_set_curlet(s7, e);
 		  y = s7_make_mutable_real(s7, 1.5);
 		  slot = s7_make_slot(s7, e, arg, y);
 		  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
@@ -4135,7 +4135,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 			  else break;
 			}
 		    }
-		  s7_set_current_environment(s7, olde);
+		  s7_set_curlet(s7, olde);
 		  sf = free_snd_fd(sf);
 		  if (counting)
 		    return(s7_make_integer(s7, counts));
@@ -4180,9 +4180,9 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 			       *  -- the search needs the closure's env
 			       */
 			      s7_pointer old_e;
-			      old_e = s7_set_current_environment(s7, s7_cdr(source));
+			      old_e = s7_set_curlet(s7, s7_cdr(source));
 			      z = s7_symbol_value(s7, z);
-			      s7_set_current_environment(s7, old_e);
+			      s7_set_curlet(s7, old_e);
 			    }
 			  args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
 			}
@@ -4250,7 +4250,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
       /* (fneq y 1.0)?
        * 400000: (or (> n3 0.1) (not|begin (set! samp (+ samp 1))[ #f]))
        */
-      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+      e = s7_sublet(s7, s7_cdr(source), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
       use_apply = false;

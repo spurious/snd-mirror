@@ -404,7 +404,7 @@ const char *s7_format(s7_scheme *sc, s7_pointer args);                      /* (
 bool s7_is_procedure(s7_pointer x);                                         /* (procedure? x) */
 bool s7_is_macro(s7_scheme *sc, s7_pointer x);                              /* (macro? x) */
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (procedure-source x) if it can be found */
-s7_pointer s7_procedure_environment(s7_scheme *sc, s7_pointer p);           /* (procedure-environment x) */
+s7_pointer s7_funclet(s7_scheme *sc, s7_pointer p);                         /* (funclet x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);                 /* (procedure-arity x) -- returns a list (required optional rest?) */
 bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args);                 /* (aritable? x args) */
@@ -430,17 +430,17 @@ s7_pointer s7_slot_value(s7_pointer slot);
 s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value);
 s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 
-s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
-s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
-s7_pointer s7_set_current_environment(s7_scheme *sc, s7_pointer e);         /* returns previous current-environment */
-s7_pointer s7_outer_environment(s7_pointer e);                              /* (outer-environment e) */
-s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
-s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env);           /* (environment->list env) */
-bool s7_is_environment(s7_pointer e);
-s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym); /* (env sym) */
-s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (set! (env sym) val) */
-s7_pointer s7_open_environment(s7_pointer e);                               /* (open-environment e) */
-bool s7_is_open_environment(s7_pointer e);                                  /* (open-environment? e) */
+s7_pointer s7_rootlet(s7_scheme *sc);                                       /* (global-environment) */
+s7_pointer s7_curlet(s7_scheme *sc);                                        /* (current-environment) */
+s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e);                      /* returns previous current-environment */
+s7_pointer s7_outlet(s7_pointer e);                                         /* (outer-environment e) */
+s7_pointer s7_sublet(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
+s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env);                   /* (environment->list env) */
+bool s7_is_let(s7_pointer e);
+s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym);       /* (env sym) */
+s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (set! (env sym) val) */
+s7_pointer s7_openlet(s7_pointer e);                                        /* (open-environment e) */
+bool s7_is_openlet(s7_pointer e);                                           /* (open-environment? e) */
 s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method);
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
@@ -779,8 +779,20 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_is_procedure_with_setter s7_is_dilambda
 #define s7_make_procedure_with_setter s7_dilambda
 
-s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
-/* replaced by s7_method */
+#define s7_procedure_environment s7_funclet
+#define s7_environment_ref s7_let_ref
+#define s7_environment_set s7_let_set
+#define s7_augment_environment_ref s7_sublet
+#define s7_outer_environment_ref s7_outlet
+#define s7_global_environment_ref s7_rootlet
+#define s7_current_environment_ref s7_curlet
+#define s7_set_current_environment_ref s7_set_curlet
+#define s7_environment_to_list s7_let_to_list
+#define s7_is_environment s7_is_let
+#define s7_open_environment s7_openlet
+#define s7_is_open_environment s7_is_openlet
+
+s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e); /* replaced by s7_method */
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e);
 #endif
 
@@ -788,13 +800,13 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
 /* the following Scheme functions are not currently exported to C:
  *
  *    * + - / < <= = > >= abs acos acosh angle ash asin asinh assv atan atanh 
- *    augment-environment! call-with-exit call-with-input-file call-with-input-string 
+ *    varlet call-with-exit call-with-input-file call-with-input-string 
  *    call-with-output-file call-with-output-string catch ceiling char->integer char-alphabetic? 
  *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
  *    char-numeric? char-position char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
- *    char=? char>=? char>? continuation? cosh dynamic-wind environment? eof-object? eval even? 
+ *    char=? char>=? char>? continuation? cosh dynamic-wind let? eof-object? eval even? 
  *    exact? exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
- *    hook inexact->exact inexact? infinite? initial-environment integer->char integer-decode-float 
+ *    hook inexact->exact inexact? infinite? unlet integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm length list->string list->vector list-tail log logand 
  *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
  *    make-rectangular map max memv min modulo nan? negative? not odd? port-closed? 
@@ -818,6 +830,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
  *		
  * 25-July:   define and friends now return the value, not the symbol.
  *            procedure_with_setter -> dilambda.
+ *            environment -> let.
  * 30-June:   s7_method.
  * 16-June:   remove unoptimize and s7_unoptimize.
  * 14-May:    s7_define_safe_function_star.  Removed s7_catch_all.

@@ -339,7 +339,7 @@
       (format p "void ~A(s7_scheme *sc)~%" init-name)
       (format p "{~%")
       (format p "  s7_pointer cur_env;~%")
-      (format p "  cur_env = s7_outer_environment(s7_current_environment(sc));~%") ; this must exist because we pass load the env ourselves
+      (format p "  cur_env = s7_outlet(s7_curlet(sc));~%") ; this must exist because we pass load the env ourselves
       
       ;; send out any special initialization code
       (for-each

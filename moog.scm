@@ -102,7 +102,7 @@
 (define (moog-filter m sig)
   ;"(moog-filter m sig) is the generator associated with make-moog-filter"
   (let-set! m 'sig sig)
-  (inlet m
+  (with-let m
     (let ((A (* 0.25 (- sig y)))
 	  (st 0.0))
       (do ((cell 0 (+ 1 cell)))
@@ -152,7 +152,7 @@
   ;"(moog-filter m sig) is the generator associated with make-moog-filter"
   ;  see below for the "saturate" option
   (let-set! m 'sig sig)
-  (inlet m
+  (with-let m
     (let ((A (* 0.25 (- sig y)))
 	  (st 0.0))
 
@@ -178,7 +178,7 @@
 (define (moog-filter-saturated m sig)
   ;"(moog-filter-saturated m sig) is the generator associated with make-moog-filter with internal saturation"
   (let-set! m 'sig sig)
-  (inlet m
+  (with-let m
     (let ((A (* 0.25 (- sig y)))
 	  (st 0.0))
 

@@ -2757,7 +2757,7 @@ static Xen reflect_file_close_in_sync(Xen hook_or_reason)
 {
   int reason;
 #if HAVE_SCHEME
-  reason = Xen_integer_to_C_int(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
+  reason = Xen_integer_to_C_int(s7_let_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
 #else
   reason = Xen_integer_to_C_int(hook_or_reason);
 #endif

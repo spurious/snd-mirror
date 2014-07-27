@@ -170,7 +170,7 @@ static s7_pointer open_plus(s7_scheme *sc, s7_pointer args)
   #define plus_help "(plus obj ...) applies obj's plus method to obj and any trailing arguments."
   s7_pointer obj, method;
   obj = s7_car(args);
-  if (s7_is_open_environment(obj))
+  if (s7_is_openlet(obj))
     {
       method = s7_method(sc, obj, s7_make_symbol(sc, "plus"));
       if (s7_is_procedure(method))
@@ -263,8 +263,8 @@ static s7_pointer define_closure(s7_scheme *sc, const char *name, s7_pointer fun
 					    s7_make_symbol(sc, "f"),
 					    s7_cons(sc, s7_make_symbol(sc, "y"), s7_nil(sc))),
 				    s7_nil(sc)),
-			    s7_augment_environment(sc, 
-						   s7_current_environment(sc), 
+			    s7_sublet(sc, 
+				      s7_curlet(sc), 
 						   s7_cons(sc, 
 							   s7_cons(sc,  /* the local binding for "x" */
                                                                    s7_make_symbol(sc, "x"), 
@@ -296,7 +296,7 @@ static s7_pointer g_make_block(s7_scheme *sc, s7_pointer args)
   g->data = (double *)calloc(g->size, sizeof(double));
   new_g = s7_make_object(sc, g_block_type, (void *)g);
   s7_object_set_environment(new_g, g_block_methods);
-  s7_open_environment(new_g);
+  s7_openlet(new_g);
   return(new_g);
 }
 
@@ -883,10 +883,10 @@ int main(int argc, char **argv)
     free(s1);    
 
     s7_set_car(c1234, s7_make_symbol(sc, "+")); 
-    p = s7_eval(sc, s7_list(sc, 2, s7_make_symbol(sc, "quote"), c1234), s7_augment_environment(sc, s7_global_environment(sc), s7_nil(sc)));
+    p = s7_eval(sc, s7_list(sc, 2, s7_make_symbol(sc, "quote"), c1234), s7_sublet(sc, s7_rootlet(sc), s7_nil(sc)));
     if (s7_integer(p) != 9)
       {fprintf(stderr, "%d: (eval '(+ 2 3 4)) is %s?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-    p = s7_eval_form(sc, c1234, s7_augment_environment(sc, s7_global_environment(sc), s7_nil(sc)));
+    p = s7_eval_form(sc, c1234, s7_sublet(sc, s7_rootlet(sc), s7_nil(sc)));
     if (s7_integer(p) != 9)
       {fprintf(stderr, "%d: (eval(form) '(+ 2 3 4)) is %s?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
     
@@ -957,12 +957,12 @@ int main(int argc, char **argv)
   if (!s7_is_eq(p, p))
     {fprintf(stderr, "%d: %s is not a self-eq??\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
-  p = s7_global_environment(sc);
-  if (!s7_is_environment(p))
+  p = s7_rootlet(sc);
+  if (!s7_is_let(p))
     {fprintf(stderr, "%d: %s is not an environment?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
   
-  p = s7_current_environment(sc);
-  if ((!s7_is_null(sc, p)) && (!s7_is_environment(p)))
+  p = s7_curlet(sc);
+  if ((!s7_is_null(sc, p)) && (!s7_is_let(p)))
     {fprintf(stderr, "%d: %s is not an environment?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
   
   s7_define_constant(sc, "a_constant", s7_t(sc));
@@ -1065,15 +1065,15 @@ int main(int argc, char **argv)
   p1 = s7_apply_function(sc, 
 	s7_name_to_value(sc, "mac-plus"),
 	s7_list(sc, 1, s7_list(sc, 3, s7_make_symbol(sc, "mac-plus"), s7_make_integer(sc, 3), s7_make_integer(sc, 4))));
-  p = s7_eval_form(sc, p1, s7_global_environment(sc));
+  p = s7_eval_form(sc, p1, s7_rootlet(sc));
   if ((!s7_is_integer(p)) ||
       (s7_integer(p) != 7))
     {char *s2; fprintf(stderr, "%d: %s -> %s is not 7?\n", __LINE__, s1 = TO_STR(p1), s2 = TO_STR(p)); free(s1); free(s2);}
 
 
   s7_define_function(sc, "open-plus", open_plus, 1, 0, true, plus_help);
-  p = s7_augment_environment(sc, s7_nil(sc), s7_cons(sc, s7_cons(sc, s7_make_symbol(sc, "plus"), s7_name_to_value(sc, "plus")), s7_nil(sc)));
-  s7_open_environment(p);
+  p = s7_sublet(sc, s7_nil(sc), s7_cons(sc, s7_cons(sc, s7_make_symbol(sc, "plus"), s7_name_to_value(sc, "plus")), s7_nil(sc)));
+  s7_openlet(p);
   p1 = s7_apply_function(sc, s7_name_to_value(sc, "open-plus"), s7_list(sc, 3, p, s7_make_integer(sc, 2), s7_make_integer(sc, 3)));
   if ((!s7_is_integer(p1)) ||
       (s7_integer(p1) != 7))
@@ -1154,43 +1154,43 @@ int main(int argc, char **argv)
   
   {
     s7_pointer new_env, old_env;
-    new_env = s7_augment_environment(sc, old_env = s7_current_environment(sc), s7_nil(sc));
+    new_env = s7_sublet(sc, old_env = s7_curlet(sc), s7_nil(sc));
     gc_loc = s7_gc_protect(sc, new_env);
 
     s7_define(sc, new_env, s7_make_symbol(sc, "var1"), s7_make_integer(sc, 32));
 
-    if (new_env == s7_current_environment(sc))
+    if (new_env == s7_curlet(sc))
       {fprintf(stderr, "%d: %s is the current env?\n", __LINE__, s1 = TO_STR(new_env)); free(s1);}
     
-    s1 = TO_STR(s7_environment_to_list(sc, new_env));
+    s1 = TO_STR(s7_let_to_list(sc, new_env));
     if (strcmp(s1, "((var1 . 32))") != 0)
       {fprintf(stderr, "%d: new-env is %s?\n", __LINE__, s1);}
     free(s1);
     
-    p = s7_environment_ref(sc, new_env, s7_make_symbol(sc, "var1"));
+    p = s7_let_ref(sc, new_env, s7_make_symbol(sc, "var1"));
     if (s7_integer(p) != 32)
       {fprintf(stderr, "%d: %s is not 32?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
-    s7_environment_set(sc, new_env, s7_make_symbol(sc, "var1"), TO_S7_INT(3));
-    p = s7_environment_ref(sc, new_env, s7_make_symbol(sc, "var1"));
+    s7_let_set(sc, new_env, s7_make_symbol(sc, "var1"), TO_S7_INT(3));
+    p = s7_let_ref(sc, new_env, s7_make_symbol(sc, "var1"));
     if (s7_integer(p) != 3)
       {fprintf(stderr, "%d: %s is not 3?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
-    s7_set_current_environment(sc, new_env);
+    s7_set_curlet(sc, new_env);
     p = s7_slot(sc, s7_make_symbol(sc, "var1"));
     if (s7_integer(s7_slot_value(p)) != 3)
       {fprintf(stderr, "%d: slot-value %s is not 3?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
     s7_slot_set_value(sc, p, s7_f(sc));
-    p = s7_environment_ref(sc, new_env, s7_make_symbol(sc, "var1"));
+    p = s7_let_ref(sc, new_env, s7_make_symbol(sc, "var1"));
     if (p != s7_f(sc))
       {fprintf(stderr, "%d: set slot-value %s is not #f?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
-    if (s7_outer_environment(new_env) != old_env)
+    if (s7_outlet(new_env) != old_env)
       {fprintf(stderr, "%d: outer-env %s?\n", __LINE__, s1 = TO_STR(old_env)); free(s1);}
 
     s7_make_slot(sc, new_env, s7_make_symbol(sc, "var2"), TO_S7_INT(-1));
-    p = s7_environment_ref(sc, new_env, s7_make_symbol(sc, "var2"));
+    p = s7_let_ref(sc, new_env, s7_make_symbol(sc, "var2"));
     if (s7_integer(p) != -1)
       {fprintf(stderr, "%d: make_slot %s is not -1?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
@@ -1199,7 +1199,7 @@ int main(int argc, char **argv)
     if (p != s7_t(sc))
       {fprintf(stderr, "%d: set symbol-value %s is not #t?\n", __LINE__, s1 = TO_STR(p)); free(s1);}    
     
-    p = s7_environment_to_list(sc, new_env);
+    p = s7_let_to_list(sc, new_env);
     {
       int gloc;
       gloc = s7_gc_protect(sc, p);
@@ -1209,7 +1209,7 @@ int main(int argc, char **argv)
       free(s1);
       s7_gc_unprotect_at(sc, gloc);
     }
-    s7_set_current_environment(sc, old_env);
+    s7_set_curlet(sc, old_env);
     s7_gc_unprotect_at(sc, gc_loc);
   }
 
@@ -1377,9 +1377,9 @@ int main(int argc, char **argv)
   if (strcmp(s7_procedure_name(sc, p1), "abs") != 0)
     {fprintf(stderr, "%d: (procedure-name abs) = %s?\n", __LINE__, s7_procedure_name(sc, p1));}
 
-  p = s7_procedure_environment(sc, p1);
-  if (p != s7_global_environment(sc))
-    {fprintf(stderr, "%d: (procedure-environment abs) = %s?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+  p = s7_funclet(sc, p1);
+  if (p != s7_rootlet(sc))
+    {fprintf(stderr, "%d: (funclet abs) = %s?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
   {
     const char *s3;
@@ -1426,7 +1426,7 @@ int main(int argc, char **argv)
   s7_define_function(sc, "make-block", g_make_block, 1, 0, false, g_make_block_help);
   s7_define_function(sc, "block", g_to_block, 0, 0, true, g_block_help);
 
-  g_block_methods = s7_eval_c_string(sc, "(environment (cons 'vector? (lambda (p) #t)))");
+  g_block_methods = s7_eval_c_string(sc, "(inlet (cons 'vector? (lambda (p) #t)))");
   s7_gc_protect(sc, g_block_methods);
 
   {

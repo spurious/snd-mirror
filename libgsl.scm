@@ -7,9 +7,9 @@
 
 (if (not (defined? '*libgsl*))
     (define *libgsl*
-      (with-environment (initial-environment)
+      (with-let (unlet)
 	
-	(set! *libraries* (cons (cons "libgsl.scm" (current-environment)) *libraries*))
+	(set! *libraries* (cons (cons "libgsl.scm" (curlet)) *libraries*))
 
 	(define GSL_REAL real-part)
 	(define GSL_IMAG imag-part)
@@ -2823,7 +2823,7 @@
 		 
 		 "-I/usr/local/include -g3 -DGSL_DISABLE_DEPRECATED" "-lgsl -lgslcblas" "libgsl_s7")
 					; GSL_DISABLE_DEPRECATED is needed to avoid a name collision (dating from version 1.7!!)
-	(current-environment))))
+	(curlet))))
 
 *libgsl*
 

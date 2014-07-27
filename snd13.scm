@@ -387,7 +387,7 @@ read, even if not playing.  'files' is a list of files to be played."
 
 (define (frame-reader-at-end? fr)
   "(frame-reader-at-end? fr) -> #t if the samplers in frame-reader fr have reached the end of their respective channels"
-  (inlet fr
+  (with-let fr
     (call-with-exit
      (lambda (return)
        (do ((i 0 (+ i 1)))
@@ -397,26 +397,26 @@ read, even if not playing.  'files' is a list of files to be played."
 
 (define (frame-reader-position fr)
   "(frame-reader-position fr) -> current read position of frame-reader fr"
-  (inlet fr (sampler-position (samplers 0))))
+  (with-let fr (sampler-position (samplers 0))))
 
 (define (frame-reader-home fr)
   "(frame-reader-home fr) -> sound object associated with frame-reader fr"
-  (inlet fr snd))
+  (with-let fr snd))
 
 (define (frame-reader-chans fr)
   "(frame-reader-chans fr) -> number of channels read by frame-reader fr"
-  (inlet fr chns))
+  (with-let fr chns))
 
 (define (free-frame-reader fr)
   "(free-frame-reader fr) frees all samplers associated with frame-reader fr"
-  (inlet fr
+  (with-let fr
     (do ((i 0 (+ i 1)))
 	((= i chns))
       (free-sampler (samplers i)))))
 
 (define (copy-frame-reader fr)
   "(copy-frame-reader fr) returns a copy of frame-reader fr"
-  (inlet fr
+  (with-let fr
     (make-frame-sampler snd chns
 			(make-frame chns)
 			(let ((v (make-vector chns)))
@@ -426,21 +426,21 @@ read, even if not playing.  'files' is a list of files to be played."
 
 (define (next-frame fr)
 ;;  "(next-frame fr) returns the next frame as read by frame-reader fr"
-  (inlet fr
+  (with-let fr
     (do ((i 0 (+ i 1)))
 	((= i chns) frm)
       (set! (frm i) (next-sample (samplers i))))))
 
 (define (previous-frame fr)
   "(previous-frame fr) returns the previous frame as read by frame-reader fr"
-  (inlet fr
+  (with-let fr
     (do ((i 0 (+ i 1)))
 	((= i chns) frm)
       (set! (frm i) (previous-sample (samplers i))))))
 
 (define (read-frame fr)
 ;;  "(read-frame fr) returns the next frame read by frame-reader fr taking its current read direction into account"
-  (inlet fr
+  (with-let fr
     (do ((i 0 (+ i 1)))
 	((= i chns) frm)
       (set! (frm i) (read-sample (samplers i))))))

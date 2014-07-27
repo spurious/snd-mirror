@@ -52,7 +52,7 @@
 
 (define (mvmfilt b sample0)
   (let-set! b 'sample sample0)
-  (inlet b
+  (with-let b
     (set! yy2 (- (+ (* pp1 yy1)
 		    (* pp2 zz1))
 		 (* pp3 sample)))

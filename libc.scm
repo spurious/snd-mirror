@@ -7,8 +7,8 @@
 
 (if (not (defined? '*libc*))
     (define *libc*
-      (with-environment (initial-environment)
-	(set! *libraries* (cons (cons "libc.scm" (current-environment)) *libraries*))
+      (with-let (unlet)
+	(set! *libraries* (cons (cons "libc.scm" (curlet)) *libraries*))
 	
 	;; -------- stddef.h --------
 	(define NULL (c-pointer 0))
@@ -937,7 +937,7 @@
 		    (reader-cond ((not (provided? 'openbsd)) (C-function ("wordexp.make" g_wordexp_make "" 0))))
 		    (reader-cond ((not (provided? 'openbsd)) (C-function ("wordexp.we_wordc" g_wordexp_we_wordc "" 1))))
 		    (reader-cond ((not (provided? 'openbsd)) (C-function ("wordexp.we_wordv" g_wordexp_we_wordv "" 1))))
-		    ;; (with-environment *libc* (let ((w (wordexp.make))) (wordexp "~/cl/snd-gdraw" w 0) (wordexp.we_wordv w))) -> ("/home/bil/cl/snd-gdraw")
+		    ;; (with-let *libc* (let ((w (wordexp.make))) (wordexp "~/cl/snd-gdraw" w 0) (wordexp.we_wordv w))) -> ("/home/bil/cl/snd-gdraw")
 
 
 		    ;; -------- glob.h --------
@@ -1642,6 +1642,6 @@
 		      (if (provided? 'openbsd) "-pthread" ""))
 		  "libc_s7")
 
-	(current-environment))))
+	(curlet))))
 
 *libc*

@@ -8117,10 +8117,10 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 			  gf *g;
 			  /* here we need to make sure the function's environment is set up correctly */
 			  s7_pointer old_e;
-			  old_e = s7_set_current_environment(s7, s7_cdr(source));
+			  old_e = s7_set_curlet(s7, s7_cdr(source));
 			  setup_gen_list(s7, res);
 			  g = find_gf(s7, res);
-			  s7_set_current_environment(s7, old_e);
+			  s7_set_curlet(s7, old_e);
 			  if (g)
 			    {
 			      gn->g = g;
@@ -13793,7 +13793,7 @@ static gf *gf_alloc(void)
 
 static gf *find_gf(s7_scheme *sc, s7_pointer expr)
 {
-  return(find_gf_with_locals(sc, expr, s7_outer_environment(s7_current_environment(sc))));
+  return(find_gf_with_locals(sc, expr, s7_outlet(s7_curlet(sc))));
 }
 
 

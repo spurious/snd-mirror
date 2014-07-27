@@ -93,7 +93,7 @@
 	     (let ((cobj (if (symbol? (car obj)) (string->symbol (symbol->string (car obj))) (car obj)))) ; this clears out some optimization confusion
 	       (case cobj
 		 
-		 ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-environment inlet when unless
+		 ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-environment with-let when unless
 			  call-with-input-string call-with-input-file call-with-output-file
 			  with-input-from-file with-input-from-string with-output-to-file)
 		  (if (or (not (pair? (cdr obj))) ; (when) or (when . #t)
@@ -268,8 +268,8 @@
 			    (stacked-list ((if (symbol? (cadr obj)) cdddr cddr) obj) (+ column *pretty-print-spacing*)))
 			(write-char #\) port))))
 		 
-		 ((environment* to*-let)
-		  (format port "(to*-let")
+		 ((environment* inlet*)
+		  (format port "(inlet*")
 		  (if (pair? (cdr obj))
 		      (do ((lst (cdr obj) (cddr lst)))
 			  ((or (not (pair? lst))

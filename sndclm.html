@@ -3566,7 +3566,7 @@ getting waveforms and results like these:
 
 (define* (ngencos gen (fm 0.0)) ; polyoid now, I think
   (set! (gen 'fm) fm)
-  (inlet gen	 
+  (with-let gen	 
     (let ((sum 0.0))
       (do ((i 0 (+ i 1)))
 	  ((= i n))
@@ -9885,7 +9885,7 @@ Here is a way to define oscil using defgenerator:
 
 ;;; make-osc creates an osc, and osc? returns #t if passed an osc.
 ;;; Once we have an osc (an environment with "freq" and "phase" locals)
-;;;   we can either use inlet, or refer to the local variables
+;;;   we can either use with-let, or refer to the local variables
 ;;;   directly via (gen 'freq) and (gen 'phase).
 
 (define (osc gen fm)                ; our new generator

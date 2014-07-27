@@ -823,12 +823,12 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				(if (list? n) n (list n 0.0)))
 			      fields)
   	         (,wrapper 
-		  (runlet
+		  (openlet
 		   ,(if methods
 		       `(sublet 
-			   (apply to-let ,methods)
-			 (to*-let ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
-		       `(to*-let 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
+			   (apply inlet ,methods)
+			 (inlet* ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
+		       `(inlet* 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
 
 
 

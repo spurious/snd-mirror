@@ -704,10 +704,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 								  obj))))))
 		   (reverse! new-methods)))                      ; the inherited methods, shadowed automatically
      
-     (let ((new-class (runlet
+     (let ((new-class (openlet
                        (apply sublet                             ; the local slots
 			      (sublet                            ; the global slots
-				  (apply to-let                  ; the methods
+				  (apply inlet                  ; the methods
 					 (reverse new-methods))
 				(cons 'class-name ',class-name)  ; class-name slot
 				(cons 'inherited ,inherited-classes)
@@ -884,9 +884,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 (define (call-with-input-vector v proc)
   (let ((i -1))
-    (proc (runlet
-	   (to*-let 'read (lambda (p)
-				 (v (set! i (+ i 1)))))))))
+    (proc (openlet
+	   (inlet* 'read (lambda (p)
+			     (v (set! i (+ i 1)))))))))
 
 (define (call-with-output-vector proc)
   (let* ((size 1)
@@ -898,15 +898,15 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			    (set! (v i) obj)
 			    (set! i (+ i 1))
 			    #<unspecified>))) ; that's what write/display return!
-    (proc (runlet
-	   (to*-let 'write (lambda* (obj p)
-				  ((if (not (let? p)) write write-to-vector) obj p))
-			 'display (lambda* (obj p)
-				    ((if (not (let? p)) display write-to-vector) obj p))
-			 'format (lambda (p . args)
-				   (if (not (let? p))
-				       (apply format p args)
-				       (write (apply format #f args) p))))))
+    (proc (openlet
+	   (inlet* 'write (lambda* (obj p)
+			      ((if (not (let? p)) write write-to-vector) obj p))
+		     'display (lambda* (obj p)
+				((if (not (let? p)) display write-to-vector) obj p))
+		     'format (lambda (p . args)
+			       (if (not (let? p))
+				   (apply format p args)
+				   (write (apply format #f args) p))))))
     (make-shared-vector v (list i)))) ; ignore extra trailing elements
 
 
@@ -917,15 +917,15 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (let ((slots ()))
     (do ((pe e (outlet pe)))
 	((eq? pe (rootlet))
-	 (apply to-let slots))
+	 (apply inlet slots))
       (for-each (lambda (slot)
 		  (if (not (assq (car slot) slots))
 		      (set! slots (cons slot slots))))
 		pe))))
 
 (define (sub*let e . args)
-  "(sub*let e . args) is like sublet but accepts to*-let style args"
-  (sublet e (apply to*-let args)))
+  "(sub*let e . args) is like sublet but accepts inlet* style args"
+  (sublet e (apply inlet* args)))
 
 
 ;;; ----------------
@@ -1079,7 +1079,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     ((= i new-len) lst)
 		   (set! (lst i) (obj (+ i start)))))))
 
-	  (else             ; (subsequence (to*-let 'subsequence (lambda* (obj start end) "subseq")))
+	  (else             ; (subsequence (inlet* 'subsequence (lambda* (obj start end) "subseq")))
 	   (catch #t        ; perhaps we should use (open-let? obj) instead?
 	     (lambda ()
 	       ((obj 'subsequence) obj start end))
@@ -1102,8 +1102,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	     (format #f "(~{~A~| ~})" val)))))
 
 (define (mock-list seq)
-  (runlet
-   (to*-let
+  (openlet
+   (inlet*
     'pair? (lambda (obj) #t)
     'value seq
     'member (lambda* (a b (c equal?))
@@ -1124,8 +1124,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	(apply f (car args) (accessor (cadr args)) (cddr args)))))
 
 (define (make-object . args)
-  (runlet
-   (apply to*-let args)))
+  (openlet
+   (apply inlet* args)))
 
 
 ;;; ----------------
@@ -1175,7 +1175,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
   (define (display-format str . args)
     `(let ((,vlp *vector-print-length*))
-       (inlet (funclet Display)
+       (with-let (funclet Display)
 	 (set! *vector-print-length* *display-print-length*)
 	 (prepend-spaces))
        (format (Display-port) ,str ,@args)
@@ -1224,7 +1224,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
       `(begin
 	 ,@previous
 	 (let ((,result ,end))
-	   (inlet (funclet Display)
+	   (with-let (funclet Display)
 	     (prepend-spaces))
 	   (format (Display-port) "  ~A~A) -> ~A~%"
 			   ,(if (pair? previous) " ... " "")
@@ -1271,7 +1271,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			     ,result))
 			(cdr source)))))
 
-	  ((begin inlet with-baffle)
+	  ((begin with-let with-baffle)
 	   ;; report last form
 	   (let ((previous (butlast (cdr source)))
 		 (end (last source)))
@@ -1426,7 +1426,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		      (let ((,',result '?))
 			(dynamic-wind
 			    (lambda ()                                             ; when function called, show args and caller
-			      (inlet (funclet Display)                             ; indent
+			      (with-let (funclet Display)                             ; indent
 				(prepend-spaces)
 				(set! spaces (+ spaces *display-spacing*)))
 			      (format (Display-port) "(~A" ',',func)               ; show args, ruthlessly abbreviated
@@ -1439,7 +1439,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			    (lambda ()                                             ; the original function body
 			      (set! ,',result ,',body))                            ;   but annotated by proc-walk
 			    (lambda ()                                             ; at the end, show the result
-			      (inlet (funclet Display)
+			      (with-let (funclet Display)
 				(set! spaces (- spaces *display-spacing*))         ; unindent
 				(prepend-spaces))
 			      (format (Display-port) "    -> ~S~%" ,',result)))))

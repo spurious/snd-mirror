@@ -4,7 +4,7 @@
     (require sndlib-ws.scm))
 
 ;;; it is dangerous to use a method within a generator's definition of that method
-;;;   if the gen is used as the environment in inlet, the embedded call
+;;;   if the gen is used as the environment in with-let, the embedded call
 ;;;   becomes a recursive call on that method.  You either need to check the type
 ;;;   of the method argument, or use #_method to override the name lookup, or use
 ;;;   the explicit call style: (((gen 'embedded-gen) 'shared-method) ...)
@@ -29,7 +29,7 @@
 ;;   (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
 	   (den (sin (* 0.5 mx))))
@@ -124,7 +124,7 @@
 ;;   (nxysin gen (fm 0.0)) returns n sines from frequency spaced by frequency * ratio."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (y (* x ratio))
 	   (den (sin (* y 0.5))))
@@ -200,7 +200,7 @@
 ;;   (nxycos gen (fm 0.0)) returns n cosines from frequency spaced by frequency * ratio."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (y (* x ratio))
 	   (den (sin (* y 0.5))))
@@ -237,7 +237,7 @@
 ;;   (nxy1cos gen (fm 0.0)) returns 2n cosines from frequency spaced by frequency * ratio with every other cosine multiplied by -1."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (y (* x ratio))
 	   (den (cos (* y 0.5))))
@@ -284,7 +284,7 @@
 ;;   (nxy1sin gen (fm 0.0)) returns n sines from frequency spaced by frequency * ratio with every other sine multiplied by -1."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (y (* x ratio))
 	   (den (cos (* y 0.5))))
@@ -355,7 +355,7 @@
 ;;   (noddsin gen (fm 0.0)) returns n odd-numbered sines spaced by frequency."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((snx (sin (* n angle)))
 	  (den (sin angle)))
       (set! angle (+ angle fm frequency))
@@ -393,7 +393,7 @@
 ;;   (noddcos gen (fm 0.0)) returns n odd-numbered cosines spaced by frequency."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((cx angle)
 	  (den (* 2 n (sin angle)))) ; "n" here is normalization
       (set! angle (+ angle fm frequency))
@@ -430,7 +430,7 @@
 ;;   (noddssb gen (fm 0.0)) returns n sinusoids from frequency spaced by 2 * ratio * frequency."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
 	   (x (- cx mx))
@@ -485,7 +485,7 @@
   ;;   in the pulse-train aspect and want easily predictable peak amp).  Harmonics go as (n-i)/n+1.
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (den (sin (* 0.5 x))))
       (set! angle (+ angle fm frequency))
@@ -540,7 +540,7 @@
 ;;   (npcos gen (fm 0.0)) returns n*2+1 sinusoids spaced by frequency with amplitudes in a sort of tent shape."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((den (sin (* 0.5 angle)))
 	   (result (if (< (abs den) nearly-zero)
 		       1.0
@@ -585,7 +585,7 @@
   ;; from "Chebyshev Polynomials", Mason and Handscomb, p87
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (den (tan (* 0.5 x))))
       (set! angle (+ angle fm frequency))
@@ -642,7 +642,7 @@
   ;; from "Chebyshev Polynomials", Mason and Handscomb, p100
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (den (tan (* 0.5 x))))
       (set! angle (+ angle fm frequency))
@@ -779,7 +779,7 @@
 	    (g 'r))
 	  (lambda (g val)
 	    (set! (g 'r) (min 0.999999 (max -0.999999 val)))
-	    (inlet g
+	    (with-let g
 	      (let ((absr (abs r)))
 		(set! rr (* r r))
 		(set! r1 (+ 1.0 rr))
@@ -809,7 +809,7 @@
 ;;   (nrcos gen (fm 0.0)) returns n cosines spaced by frequency with amplitudes scaled by r^k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle)
 	  (rcos (* r (cos angle))))
       (set! angle (+ angle fm frequency))
@@ -824,7 +824,7 @@
 ;;; formula changed to start at k=1 and n increased so we get 1 to n
 ;;; here is the preoptimization form:
 #|
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (if (or (= n 1)
@@ -917,7 +917,7 @@
 ;;   (nrssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio with amplitudes scaled by r^k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio)))
       (let ((nmx (* n mx))
@@ -943,7 +943,7 @@
   
   (let-set! gen 'fm fm)
   (let-set! gen 'interp interp)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio)))
       (let ((nmx (* n mx))
@@ -1072,7 +1072,7 @@
 ;;   (nkssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio with amplitude k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x (* angle ratio)))
       (let ((cxx (- angle x))
 	    (sx2 (sin (* 0.5 x)))
@@ -1099,7 +1099,7 @@
   
   (let-set! gen 'fm fm)
   (let-set! gen 'interp interp)
-  (inlet gen
+  (with-let gen
     (let ((x (* angle ratio)))
       (let ((cxx (- angle x))
 	    (sx2 (sin (* 0.5 x))))
@@ -1255,7 +1255,7 @@
 ;;   (nsincos gen (fm 0.0)) returns n cosines spaced by frequency with amplitude sin(k*pi/(n+1))/sin(pi/(n+1))"
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (num (cos (* n2 x))))
       (set! angle (+ angle fm frequency))
@@ -1285,7 +1285,7 @@
 
 (define* (n1cos gen (fm 0.0))
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (tn (tan (* 0.5 x))))
       (set! angle (+ angle fm frequency))
@@ -1324,7 +1324,7 @@
 ;;   (npos1cos gen (fm 0.0)) returns n cosines spaced by frequency."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (num (- (* (+ n 2) (sin (/ (* n x) 2)))
 		   (* n (sin (/ (* (+ n 2) x) 2)))))
@@ -1358,7 +1358,7 @@
 ;;   (npos3cos gen (fm 0.0)) returns n cosines spaced by frequency."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (sx (sin (/ x 2)))
 	   (den (* (+ (* 4 n) 2) sx sx)))
@@ -1436,11 +1436,11 @@
   ;; a variant of the G&R 2nd col 4th row
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (* (- (/ rr-1 (- rr+1 (* r2 (oscil osc fm)))) 1.0) norm)))
 
 #|
-  (inlet gen
+  (with-let gen
     (let ((absr (abs r))
 	  (rr (* r r)))
       (if (< absr nearly-zero)
@@ -1456,7 +1456,7 @@
 ;;; G&R form:
 (define* (rcos gen (fm 0.0))
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((absr (abs r))
 	   (rcosx (* r (oscil osc fm))))
       (* (- (/ (- 1.0 rcosx)
@@ -1540,7 +1540,7 @@
 ;;   (rssb gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((angle1 angle)
 	   (angle2 (* angle1 ratio))
 	   (carsin (sin angle1))
@@ -1561,7 +1561,7 @@
   
   (let-set! gen 'fm fm)
   (let-set! gen 'interp interp)
-  (inlet gen
+  (with-let gen
     (let* ((angle1 angle)
 	   (angle2 (* angle1 ratio))
 	   (carsin (sin angle1))
@@ -1732,7 +1732,7 @@
 ;;   (rxysin gen (fm 0.0)) returns many sines from frequency spaced by frequency * ratio with amplitude r^k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (y (* x ratio)))
       (set! angle (+ angle fm frequency))
@@ -1778,7 +1778,7 @@
 ;; I really need to figure out how to keep these doc strings out of the evaluator.
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (y (* x ratio)))
       (set! angle (+ angle fm frequency))
@@ -1801,7 +1801,7 @@
   ;;   highest frequency goes as x+ky (y=ratio*x); we want the value of k when
   ;;   we reach srate/3, then solve for the corresponding r.
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((maxr (expt cutoff (/ (floor (- (/ two-pi (* 3 ratio (+ fm frequency))) (/ ratio)))))))
       (if (>= r 0.0)
 	  (min r maxr)
@@ -1844,7 +1844,7 @@
 ;;   (safe-rxycos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k where 'r' is restricted to a safe value."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle)
 	  (y (* angle ratio)))
       (set! angle (+ angle fm frequency))
@@ -1909,11 +1909,11 @@
 ;;   (ercos gen (fm 0.0)) returns many cosines from frequency with amplitude e^(-kr)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (- (/ scaler (polywave osc fm)) offset)))
 
 #|
-  (inlet gen
+  (with-let gen
     (- (/ scaler 
 	  (- cosh-t (oscil osc fm)))
        offset)))
@@ -1930,7 +1930,7 @@
 	 (stop (seconds->samples (+ beg dur)))
 	 (gen (make-ercos freq :r r))
 	 (t-env (make-env '(0 .1 1 2) :duration dur)))
-    (inlet
+    (with-let
 	(varlet gen 
 	  (cons 'start start) (cons 'stop stop) (cons 'amp amp) (cons 't-env t-env) (cons 'gen gen))
       (do ((i start (+ i 1)))
@@ -1981,7 +1981,7 @@
 ;;   (erssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude e^(-kr)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
 	   (cxx (- cx mx))
@@ -2029,7 +2029,7 @@
 ;;   (r2sin gen (fm 0.0)) returns many even-numbered sines from frequency with amplitude r^(2k)/(2k)!."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle))
       (set! angle (+ angle fm frequency))
       (* (sinh (* r (cos x)))
@@ -2060,7 +2060,7 @@
 ;;   (r2cos gen (fm 0.0)) returns many even-numbered cosines from frequency with amplitude r^(2k)/(2k)!."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle))
       (set! angle (+ angle fm frequency))
       (/ (- (* (cosh (* r (cos x)))
@@ -2090,7 +2090,7 @@
 ;;   (r2ssb gen (fm 0.0)) returns many even-numbered sinusoids from frequency spaced by frequency * ratio, if that makes any sense, with amplitude r^(2k)/(2k)!."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
 	   (a r)
@@ -2157,7 +2157,7 @@
 ;;   (eoddcos gen (fm 0.0)) returns many cosines from spaced by frequency with amplitude e^(-r)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((a r)
 	   (sinha (sinh a)))
       (if (zero? sinha)
@@ -2261,7 +2261,7 @@
 ;;   (rkcos gen (fm 0.0)) returns many cosines from spaced by frequency with amplitude (r^k)/k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((cs (oscil osc fm)))
       (/ (* 0.5 (log (+ 1.0 (* -2.0 r cs) (* r r))))
 	 (log (- 1.0 (abs r))))))) ; norm
@@ -2297,7 +2297,7 @@
 ;;   (rksin gen (fm 0.0)) returns many sines from spaced by frequency with amplitude (r^k)/k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (/ (atan (* r (sin x))
@@ -2335,7 +2335,7 @@
 ;;   (rkssb gen (fm 0.0)) returns many sinusoids from frequency from spaced by frequency * ratio with amplitude (r^k)/k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
 	   (cxx (* (- 1.0 ratio) cx))
@@ -2387,7 +2387,7 @@
 ;;   (rk!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude (r^k)/k!."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (* (- (* (exp (* r (cos x)))
@@ -2485,7 +2485,7 @@
 ;;   (rk!ssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude (r^k)/k!."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
 	   (ercosmx (exp (* r (cos mx))))
@@ -2551,7 +2551,7 @@
 ;;   (rxyk!sin gen (fm 0.0)) returns many sines from frequency spaced by frequency * ratio with amplitude r^k/k!."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (y (* x ratio)))
       (set! angle (+ angle fm frequency))
@@ -2581,7 +2581,7 @@
 ;;   (rxyk!cos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k/k!."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (y (* x ratio)))
       (set! angle (+ angle fm frequency))
@@ -2666,12 +2666,12 @@
 ;;  "(make-2rk!cos frequency (r 0.5) (k 0.0)) creates an r2k!cos generator.\n\
 ;;   (r2k!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude too messy to write down."
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (* (expt (polywave osc fm) k) norm)))
 
 #|
   ;;; old form
-  (inlet gen
+  (with-let gen
     (let ((rr1 (+ 1.0 (* r r)))
 	  (r2 (* 2 (abs r)))) ; abs for negative r
       (* (expt (- rr1
@@ -2773,7 +2773,7 @@
 ;;   (k2sin gen (fm 0.0)) returns many sines spaced by frequency with amplitude 1/(2^k)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (/ (* 3.0 (sin x)) ; 3 rather than 4 for normalization
@@ -2803,7 +2803,7 @@
 ;;   (k2cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude 1/(2^k)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (* 0.5 (- (/ 3.0
@@ -2832,7 +2832,7 @@
 ;;   (k2ssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude 1/(2^k)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio)))
       (set! angle (+ angle fm frequency))
@@ -2877,7 +2877,7 @@
 ;;   (dblsum gen (fm 0.0)) returns many sines from frequency spaced by frequency * (2k -1) with amplitude r^k (this is buggy)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (/ (* (+ 1 r) (sin (* 0.5 x)))
@@ -2926,7 +2926,7 @@
 ;;   (rkoddssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * 2 * ratio with amplitude (r^(2k-1))/(2k-1)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
 	   (cxx (- cx mx))
@@ -3002,7 +3002,7 @@
 ;;   (krksin gen (fm 0.0)) returns many sines spaced by frequency with amplitude kr^k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (r1 (- 1.0 r))
 	   (r2 (* r r))
@@ -3088,7 +3088,7 @@
 ;;   (abssin gen (fm 0.0)) returns (abs oscil)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (/ (- (abs (oscil osc fm))
 	  (/ 2.0 pi))
        (/ 2.0 pi))))  ; original went from 0 to 1.0, subtract 2/pi, and we get peak at -2/pi
@@ -3137,7 +3137,7 @@
 ;;   (abcos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle)
 	   (norm (/ 0.5 (- (/ 1.0 
 			      (- 1.0 (/ (abs (- (sqrt (- (* a a) (* b b))) 
@@ -3171,7 +3171,7 @@
 ;;   (absin gen (fm 0.0)) returns many sines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (/ (* (sin x) 
@@ -3215,7 +3215,7 @@
 ;;   (r2k2cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle)
 	  (a r))
       (if (> x (* 2 pi))
@@ -3264,7 +3264,7 @@
 ;;   (blsaw gen (fm 0.0)) returns a band-limited sawtooth wave."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((a r)
 	   (N n)
 	   (x angle)
@@ -3306,7 +3306,7 @@
 (define* (asyfm-J gen (fm 0.0))
 ;;  "(asyfm-J gen fm) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((r1 (/ r))
 	   (one (if (or (> r 1.0) 
 			(and (< r 0.0)
@@ -3359,7 +3359,7 @@
 (define* (asyfm-I gen (fm 0.0))
 ;;  "(asyfm-I gen fm) is the I0 case of the asymmetric-fm generator"
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((r1 (/ r))
 	   (modphase (* ratio phase))
 	   (result (* (exp (* 0.5 index (+ r r1) (- (cos modphase) 1.0)))
@@ -3400,7 +3400,7 @@
 ;;   (bess gen (fm 0.0)) returns Jn."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((result (/ (bes-jn n angle) norm)))
       (set! angle (+ angle frequency fm))
       result)))
@@ -3462,7 +3462,7 @@
 ;;   (jjcos gen (fm 0.0)) returns a sum of cosines scaled by a product of Bessel functions."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (dc (* (bes-j0 (* k a)) (bes-j0 (* k r))))
 	   (norm (- (bes-j0 (* k (sqrt (+ (* a a) (* r r) (* -2 a r))))) dc)))
@@ -3540,7 +3540,7 @@ which again matches
 
 (define* (jjsin gen (fm 0.0))
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (* (sin x)
@@ -3556,7 +3556,7 @@ which again matches
 
 (define* (jjesin gen (fm 0.0))
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (* (exp (* r (- (cos x) 1.0))) ; -1 for norm , but there's huge DC offset
@@ -3589,7 +3589,7 @@ which again matches
 ;;   (j0evencos gen (fm 0.0)) returns a sum of cosines scaled Jk^2(index/2)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (z index)
 	   (j0 (bes-j0 (* 0.5 z)))
@@ -3714,7 +3714,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (j2cos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (rsinx2 (* 2.0 r (sin (* 0.5 x)))))
       (set! angle (+ angle fm frequency))
@@ -3756,7 +3756,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (jpcos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   ;; (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
 	   ;; from P0(x)=1, J[1/2](x)=sqrt(2/(pi x))sin(x), omitting original 1/pi
@@ -3832,7 +3832,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (jncos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((arg (sqrt (+ (* r r) 
 			(* a a)
 			(* a (* -2.0 r (cos angle)))))))
@@ -3868,7 +3868,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (j0j1cos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (z index)
 	   (j0 (bes-j0 (* 0.5 z)))
@@ -3962,7 +3962,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (jycos gen (fm 0.0)) returns a sum of cosines scaled by Yn(r)*Jn(r)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (b r)
 	   (c a)
@@ -4021,7 +4021,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (jcos gen (fm 0.0)) returns a sum of cosines scaled in some complex manner."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (b r)
 	   (c a)
@@ -4054,7 +4054,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (sin2n gen (fm 0.0)) returns (r*sin)^(2n)"
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle))
       (set! angle (+ angle fm frequency))
       (expt (* r (sin x)) (* 2 n)))))
@@ -4134,7 +4134,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (blackman gen (fm 0.0)) returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10)"
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (polynomial coeffs (cos x)))))
@@ -4194,7 +4194,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (fmssb gen (fm 0.0)) returns single-sideband FM."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((cx angle)
 	   (mx (* cx ratio)))
       (set! angle (+ angle fm frequency))
@@ -4417,7 +4417,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (k3sin gen (fm 0.0)) returns a sum of sines scaled by k^3."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (if (not (<= 0.0 x two-pi))
 	  (set! x (modulo x two-pi)))
@@ -4467,7 +4467,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (izcos gen (fm 0.0)) returns a sum of sines scaled by In(r)."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (if (< (abs norm) nearly-zero)
@@ -4595,7 +4595,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (adjustable-square-wave gen (fm 0.0)) returns a square-wave where the duty-factor sets the ratio of pulse duration to pulse period."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (set! sum (+ sum
 		 (pulse-train p1 fm)
 		 (pulse-train p2 fm)))))
@@ -4648,7 +4648,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (adjustable-triangle-wave gen (fm 0.0)) returns a triangle-wave where the duty-factor sets the ratio of pulse duration to pulse period."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((val (triangle-wave gen fm)))
       (* scl (- val (max (- top) (min top val)))))))
 
@@ -4700,7 +4700,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (adjustable-sawtooth-wave gen (fm 0.0)) returns a sawtooth-wave where the duty-factor sets the ratio of pulse duration to pulse period."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((val (sawtooth-wave gen fm)))
       (* scl (- val (max (- top) (min top val)))))))
 
@@ -4752,7 +4752,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (adjustable-oscil gen (fm 0.0)) returns a sinusoid where the duty-factor sets the ratio of pulse duration to pulse period."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((val (oscil gen fm)))
       (* scl (- val (max (- top) (min top val)))))))
 
@@ -4817,7 +4817,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (round-interp gen (fm 0.0)) returns a rand-interp sequence low-pass filtered by a moving-average generator of length n."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (moving-average flt (rand-interp rnd fm))))
 
 #|
@@ -4903,7 +4903,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (nchoosekcos gen (fm 0.0)) returns a sum of cosines scaled by the binomial coeffcients."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (y (* x ratio)))
       (set! angle (+ angle fm frequency))
@@ -4969,7 +4969,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (sinc-train gen (fm 0.0)) returns a sinc-train"
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x angle)
 	   (max-angle (* pi 0.5 n))
 	   (new-angle (+ x fm frequency))
@@ -5014,7 +5014,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-pink-noise (n 1)) creates a pink-noise generator with n octaves of rand (12 is recommended).\n\
 ;;  (pink-noise gen) returns the next random value in the 1/f stream produced by gen."
   
-  (inlet gen
+  (with-let gen
     (/ (rand-bank rands) (* 2.5 (sqrt n))))) ; this normalization is not quite right
 |#
 
@@ -5079,7 +5079,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  (brown-noise gen (fm 0.0)) returns the next brownian noise sample."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((val (rand gr fm)))
     (if (not (= val prev))
 	(begin
@@ -5133,7 +5133,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (green-noise gen (fm 0.0)) returns the next sample in a sequence of bounded brownian noise samples."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((val (rand gr fm)))
     (if (not (= val prev))
 	(begin
@@ -5193,7 +5193,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (green-noise-interp gen (fm 0.0)) returns the next sample in a sequence of interpolated bounded brownian noise samples."
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (if (not (<= 0.0 angle two-pi))
 	(let ((val (mus-random amplitude)))
 	  (set! angle (modulo angle two-pi))
@@ -5349,7 +5349,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (moving-variance gen y)
   (let-set! gen 'y y)
-  (inlet gen
+  (with-let gen
     (let ((x1 (moving-average gen1 y))
 	  (x2 (moving-average gen2 (* y y))))
       (/ (- (* n x2)
@@ -5387,7 +5387,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  (moving-rms gen input) returns the rms of the values in a window over the last n inputs."
 
   (let-set! gen 'y y)
-  (inlet gen
+  (with-let gen
     (sqrt (max 0.0 ;; this is tricky -- due to floating point inaccuracy, we can get negative output
 	       ;;   from moving-rms even if all the inputs are positive!  The sqrt then returns
 	       ;;   a complex number and all hell breaks loose
@@ -5414,7 +5414,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  (moving-length gen input) returns the length of the values in a window over the last few inputs."
 
   (let-set! gen 'y y)
-  (inlet gen
+  (with-let gen
     (sqrt (max 0.0 (moving-average gen (* y y))))))
 
 
@@ -5466,7 +5466,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (weighted-moving-average gen y) returns the sum of the last n inputs weighted by 1/n"
   
   (let-set! gen 'y y)
-  (inlet gen
+  (with-let gen
     (let* ((n (mus-order dly))
 	   (den (/ (* (+ 1 n) n) 2)))
       (set! num (- (+ num (* n y)) sum))
@@ -5551,7 +5551,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define* (polyoid gen (fm 0.0))
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (mus-chebyshev-tu-sum x tn un))))
@@ -6042,7 +6042,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  (tanhsin gen (fm 0.0)) produces tanh(r*sin) which approaches a square wave as r increases."
 
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
   (tanh (* r (oscil osc fm)))))
 
 
@@ -6084,7 +6084,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;; taking input from the readin generator 'reader'.  The magnitudes are available as mus-xcoeffs, \n\
 ;; the phases as mus-ycoeffs, and the current input data as mus-data."
   
-  (inlet gen
+  (with-let gen
     (let ((new-data #f))
       (if (>= outctr hop)
 	  (let ((fft-window window))
@@ -6150,7 +6150,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (data #f) (dataloc 0))
 
 (define (moving-spectrum gen)
-  (inlet gen
+  (with-let gen
     (let ((n2 (/ n 2)))
       (if (>= outctr hop)
 	  (begin
@@ -6293,7 +6293,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define* (moving-scentroid gen (x 0.0))
   (let-set! gen 'x x)
-  (inlet gen
+  (with-let gen
     
     (let ((rms (moving-rms rms x)))
       (if (>= outctr hop)
@@ -6374,7 +6374,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;; (moving-autocorrelation gen) produces the autocorrelation of 'size' samples every 'hop' samples, \n\
 ;; taking input from the readin generator 'reader'.  The output data is available via mus-data."
   
-  (inlet gen
+  (with-let gen
     (let ((new-data #f))
       (if (>= outctr hop)
 	  (begin
@@ -6418,7 +6418,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (define (moving-pitch gen)
-  (inlet gen
+  (with-let gen
     (if (moving-autocorrelation ac)
 	(let* ((data (mus-data ac))
 	       (peak 0.0)
@@ -6513,7 +6513,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;   (circler gen (fm 0.0)) produces a waveform made up of half circles"
   
   (let-set! gen 'fm fm)
-  (inlet gen
+  (with-let gen
     (let* ((x (modulo angle (* 2 pi)))
 	   (xx (/ (* 4 x) (* 2 pi)))
 	   (y (if (< xx 2)
@@ -6576,7 +6576,7 @@ index 10 (so 10/2 is the bes-jn arg):
   ;; signal position and per-channel-delay depends on rand-interp
   (let-set! gen 'samp samp)
   (let-set! gen 'input input)
-  (inlet gen
+  (with-let gen
     (let* ((rpos (rand-interp ri))
 	   (pos (min (max (+ rpos offset) (- amplitude)) amplitude))
 	   (amp1 (if (<= pos -1.0) 1.0
@@ -6627,7 +6627,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (one-pole-allpass gen input)
   (let-set! gen 'input input)
-  (inlet gen
+  (with-let gen
     (set! y1 (+ x1 (* coeff (- input y1))))
     (set! x1 input)
     y1))
@@ -6636,7 +6636,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (one-pole-allpass-bank gen input)
   (let-set! gen 'input input)
-  (inlet gen
+  (with-let gen
     (set! y1 (+ x1 (* coeff (- input y1))))
     (set! x1 input)
 
@@ -6667,7 +6667,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (expseg gen r)
   (let-set! gen 'r r)
-  (inlet gen
+  (with-let gen
     (set! currentValue (+ (* r targetValue) (* (- 1.0 r) currentValue)))))
     ;(set! currentValue (+ currentValue (* r (- targetValue currentValue))))))
     ;; (bil) this is slightly different (getting clicks)

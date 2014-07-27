@@ -3565,19 +3565,19 @@ and its value is returned."
 
 	    if (((str == NULL) || 
 		 (mus_strlen(str) == 0)) &&
-		(s7_procedure_environment(s7, sym) != sym))
+		(s7_funclet(s7, sym) != sym))
 	      {
 		const char *url = NULL;
 		s7_pointer x, e;
-		e = s7_procedure_environment(s7, sym);
+		e = s7_funclet(s7, sym);
 		str = (char *)calloc(256, sizeof(char));
 		/* unavoidable memleak I guess -- we could use a backup statically allocated buffer here */
 		if (s7_is_null(s7, e))
 		  snprintf(str, 256, "this function appears to come from eval or eval-string?");
 		else
 		  {
-		    /* (cdr (assoc '__func__ (environment->list (procedure-environment func)))) => (name file line) or name */
-		    x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_environment_to_list(s7, e)));
+		    /* (cdr (assoc '__func__ (let->list (funclet func)))) => (name file line) or name */
+		    x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_let_to_list(s7, e)));
 
 		    if ((x) && (s7_is_pair(x)))
 		      {

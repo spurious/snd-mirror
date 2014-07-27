@@ -21751,7 +21751,7 @@ EDITS: 2
       
       (define* (old-rxyk!sin gen (fm 0.0))
 	(set! (gen 'fm) fm)
-	(inlet gen
+	(with-let gen
 	  (let* ((x angle)
 		 (y (* x ratio)))
 	    (set! angle (+ x fm frequency))
@@ -21768,7 +21768,7 @@ EDITS: 2
       
       (define* (old-rxyk!cos gen (fm 0.0))
 	(set! (gen 'fm) fm)
-	(inlet gen
+	(with-let gen
 	  (let* ((x angle)
 		 (y (* x ratio)))
 	    (set! angle (+ x fm frequency))
@@ -21881,7 +21881,7 @@ EDITS: 2
       
       (define (one-pole-allpass gen input)
 	(set! (gen 'input) input)
-	(inlet gen
+	(with-let gen
 	  (set! y1 (+ x1 (* coeff (- input y1))))
 	  (set! x1 input)
 	  y1))
@@ -21890,7 +21890,7 @@ EDITS: 2
       
       (define (one-pole-allpass-bank gen input)
 	(set! (gen 'input) input)
-	(inlet gen
+	(with-let gen
 	  (set! y1 (+ x1 (* coeff (- input y1))))
 	  (set! x1 input)
 	  
@@ -40325,7 +40325,7 @@ EDITS: 1
   
   (let* ((res (with-sound (:clipped #f)  
 			  (let ((gen (make-ercos 100 :r 0.1)))
-			    (inlet gen
+			    (with-let gen
 			      (let ((g (curlet))
 				    (t-env (make-env '(0 .1 1 2) :length 20000))
 				    (poly-coeffs (mus-data osc)))

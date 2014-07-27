@@ -872,11 +872,7 @@ f
 </pre>
 </div>
 
-
 </blockquote>
-
-
-
 
 
 
@@ -989,7 +985,7 @@ x: unbound variable
 </pre>
 <p>
 A macro here returns 3.  But don't be hasty!  The bacro can get its define-time environment (its closure)
-via procedure-environment, so in fact, define-macro is a special case of define-bacro!  We can define
+via funclet, so in fact, define-macro is a special case of define-bacro!  We can define
 macros that work in all four ways: the expansion can happen in either the definition or calling environment,
 as can the evaluation of that expansion.  In a bacro, both happen in the calling environment
 if we take no other action, and in a normal macro (define-macro), the expansion happens in the definition
@@ -1007,7 +1003,7 @@ Here's a brief example of all four:
 
 (let ((x 1) (y 2))        ; this is like define-macro
   (define-bacro (bac2 a) 
-    (with-environment (augment-environment (procedure-environment bac2) (cons 'a a))
+    (with-let (sublet (funclet bac2) (cons 'a a))
       `(+ ,x y ,a)))      ; expand in definition env, eval in calling env
   (let ((x 32) (y 64)) 
     (bac2 3)))
@@ -1015,9 +1011,9 @@ Here's a brief example of all four:
 
 (let ((x 1) (y 2))
   (define-bacro (bac3 a) 
-    (let ((e (with-environment (augment-environment (procedure-environment bac3) (cons 'a a))
+    (let ((e (with-let (sublet (funclet bac3) (cons 'a a))
 	       `(+ ,x y ,a))))
-      `(with-environment ,(augment-environment (procedure-environment bac3) (cons 'a a))
+      `(with-let ,(sublet (funclet bac3) (cons 'a a))
 	 ,e)))           ; expand and eval in definition env 
   (let ((x 32) (y 64)) 
     (bac3 3)))
@@ -1026,7 +1022,7 @@ Here's a brief example of all four:
 (let ((x 1) (y 2))
   (define-bacro (bac4 a) 
     (let ((e `(+ ,x y ,a)))
-      `(with-environment ,(augment-environment (procedure-environment bac4) (cons 'a a))
+      `(with-let ,(sublet (funclet bac4) (cons 'a a))
 	 ,e)))           ; expand in calling env, eval in definition env
   (let ((x 32) (y 64))     
     (bac4 3)))
@@ -1192,13 +1188,13 @@ we might be loading
 code written by others, it's sometimes hard to tell what names
 that code depends on or redefines.
 We need a way to get the pristine (start-up, built-in) value of '+'.
-One long-winded way in s7 uses <a href="#initialenvironment">initial-environment</a>:
+One long-winded way in s7 uses <a href="#unlet">unlet</a>:
 </p>
 
 <pre class="indented">
 &gt; (define + *)
 +
-&gt; (define (add a b) (with-environment (initial-environment) (+ a b)))
+&gt; (define (add a b) (with-let (unlet) (+ a b)))
 add
 &gt; (add 2 3)
 5
@@ -1207,8 +1203,8 @@ add
 <p>But this is hard to read, and it's not inconceivable that we might want all three
 values of a symbol, the start-up value, the definition-time value, and the
 current value.  The latter can be accessed with the bare symbol, the definition-time
-value with unquote (','), and the start-up value with either initial-environment
-or #_&lt;name&gt;.  That is, #_+ is a reader macro for <code>(with-environment (initial-environment) +)</code>.
+value with unquote (','), and the start-up value with either unlet
+or #_&lt;name&gt;.  That is, #_+ is a reader macro for <code>(with-let (unlet) +)</code>.
 </p>
 
 <pre class="indented">
@@ -1236,8 +1232,7 @@ mac
 <pre class="indented">
 (set! *#readers*
   (cons (cons #\_ (lambda (str)
-		    (with-environment 
-                      (initial-environment) 
+		    (with-let (unlet)
                       (string-&gt;symbol (substring str 1)))))
 	*#readers*))
 </pre>
@@ -1273,8 +1268,8 @@ gensym can make the macro code
 unreadable in more complex cases.  It is possible to
 write a macro to do the gensymification for us, but in s7 it is easier to
 use the environment functions.
-The procedure-environment of a macro is the environment at its definition time, just like a function.
-By wrapping the macro body in with-environment, we make sure anything in that body reflects 
+The funclet of a macro is the environment at its definition time, just like a function.
+By wrapping the macro body in with-let, we make sure anything in that body reflects 
 the definition environment, not the calling environment.  We then augment that environment
 with the macro arguments getting their values from the call-time environment:
 </p>
@@ -1290,9 +1285,9 @@ with the macro arguments getting their values from the call-time environment:
 	 (new-body (list (apply let blocked-args body))))    ; unquote args
     `(define-macro ,name-and-args
        `(let ,(list ,@set-args)
-          ,(list 'with-environment 
-                 (append (list 'augment-environment) 
-                         (list (list 'procedure-environment ,name)) 
+          ,(list 'with-let 
+                 (append (list 'sublet) 
+                         (list (list 'funclet ,name)) 
                          (list ,@get-args))
                  ',@new-body)))))
 
@@ -1306,7 +1301,7 @@ mac
 </pre>
 
 <p>Here's a simpler version that does not try to import the definition environment.
-Better would be to use a gensym rather than "e" for the current-environment.
+Better would be to use a gensym rather than "e" for the curlet.
 </p>
 <pre>
 (define-macro (define-immaculo name-and-args . body)
@@ -1314,12 +1309,12 @@ Better would be to use a gensym rather than "e" for the current-environment.
                          `(list (quote ,arg) ,arg)) 
                        (cdr name-and-args)))
 	(wrapped-args (map (lambda (arg) 
-                             `(,arg (quote (with-environment e ,arg)))) 
+                             `(,arg (quote (with-let e ,arg)))) 
                            (cdr name-and-args))))
     (let ((new-body (apply let wrapped-args body)))
       `(define-macro ,name-and-args
 	 `(let ,(list ,@new-args)
-	    (let ((e (current-environment)))
+	    (let ((e (curlet)))
 	      ,',new-body))))))
 
 &gt; (define-immaculo (mac b) 
@@ -1330,9 +1325,9 @@ mac
 &gt; (procedure-source mac) ; I've edited the results to try to make the transformation clearer
 (define-macro (mac b)
   `(let ((b ,b))
-     (let ((e (current-environment)))	      
+     (let ((e (curlet)))	      
        (let ((a 1))     ; here is the original macro body
-         (+ a (with-environment e b))))))
+         (+ a (with-let e b))))))
 </pre>
 
 <p>Apply let is very similar to eval:
@@ -1340,7 +1335,7 @@ mac
 <pre>
 &gt; (apply let '((a 2) (b 3)) '((+ a b)))
 5
-&gt; (eval '(+ a b) (environment '(a . 2) '(b . 3)))
+&gt; (eval '(+ a b) (inlet '(a . 2) '(b . 3)))
 5
 &gt; ((apply lambda '(a b) '((+ a b))) 2 3)
 5
@@ -1363,12 +1358,11 @@ use a trailing null instead (mimicking apply* in some ancient lisps):
 
 <p>But why insist on writing macros the old way?
 We can use
-with-environment from the start, writing an immaculo directly:
+with-let from the start, writing an immaculo directly:
 </p>
 <pre>
 (define-macro (mac b)
-  `(with-environment
-       (environment* 'b ,b)
+  `(with-let (inlet* 'b ,b)
      (let ((a 12))
        (+ a b))))
 
@@ -1380,11 +1374,9 @@ with-environment from the start, writing an immaculo directly:
 </p>
 <pre>
 (define-macro (glet bindings . body)
-  `(with-environment
-       (environment 
-	 ,@(map (lambda (b) 
-                  `(cons ',(car b) ,(cadr b))) 
-                bindings))
+  `(with-let (inlet ,@(map (lambda (b) 
+                           `(cons ',(car b) ,(cadr b))) 
+                          bindings))
      ,@body))
 
 (define-macro (mac b)
@@ -1399,9 +1391,7 @@ to be evaluated in its definition environment:
 <pre>
 (let ((a 3))
   (define-macro (mac b)
-    `(with-environment 
-	 (environment (cons 'b ,b)
-		      (procedure-environment mac))
+    `(with-let (inlet (cons 'b ,b) (funclet mac))
        (+ a b)))       ; definition-time "a", call-time "b"
   (define-macro (mac-1 b)
     `(+ a ,b))         ; call-time "a" and "b"
@@ -1416,9 +1406,7 @@ to be evaluated in its definition environment:
 <pre>
 (define-macro (define-safe-macro name&amp;args . body)
   `(define-macro ,name&amp;args
-     (with-environment 
-         (#_environment 
-	  (initial-environment)
+     (with-let (#_inlet (unlet)
 	  ,@(#_let ((rest (#_if (#_list? name&amp;args) 
 			    #f 
 			    (#_list-tail name&amp;args (#_abs (#_length name&amp;args))))))
@@ -1434,32 +1422,25 @@ to be evaluated in its definition environment:
 
 <!--
 (define-macro (begin-1 . body)
-  `(with-environment 
-       (current-environment) 
+  `(with-let (curlet) 
      ,@body))
 
 (define-macro (let-1 bindings . body)
-  `(with-environment 
-       (environment 
-	(current-environment) 
+  `(with-let (inlet (curlet) 
 	,@(map (lambda (b) 
 		 `(cons ',(car b) ,(cadr b))) 
 	       bindings)) 
      ,@body))
 
 (define-macro (let*-1 bindings . body)
-  `(with-environment
-       (environment 
-	(current-environment))
+  `(with-let (inlet (curlet))
      ,@(map (lambda (b)
 	      `(define ,(car b) ,(cadr b)))
 	    bindings)
      ,@body))
 
 (define-macro (letrec*-1 bindings . body)
-  `(with-environment
-       (environment 
-	(current-environment)
+  `(with-let (inlet (curlet)
 	,@(map (lambda (b) 
 		 `(cons ',(car b) #<undefined>))
 	       bindings)) 
@@ -1469,9 +1450,7 @@ to be evaluated in its definition environment:
      ,@body))
 
 (define-macro (safe-let bindings . body)
-  `(with-environment 
-       (#_environment 
-	(initial-environment)
+  `(with-let (#_inlet (unlet)
 	,@(#_map (#_lambda (b) 
 		 `(#_cons ',(#_car b) ,(#_cadr b)))
 	       bindings))
@@ -1970,7 +1949,7 @@ So...
 
 <pre class="indented">
 (define-macro (with-iterator obj . body) 
-  `(with-environment (procedure-environment ,obj) ,@body))
+  `(with-let (funclet ,obj) ,@body))
 
 ;; just for fun:
 (define (reset-iterator iter)
@@ -1984,8 +1963,7 @@ So...
    (lambda (iter)
      (with-iterator iter ctr))
    (lambda (iter new-ctr)
-     (with-environment 
-      (augment-environment (procedure-environment iter) (cons 'new-ctr new-ctr))
+     (with-let (sublet (funclet iter) (cons 'new-ctr new-ctr))
       (set! ctr new-ctr)))))
 
 (define (iterator-copy iter)
@@ -2484,7 +2462,7 @@ memo-fib
 &gt; (time (memo-fib 34))    ; memoized time
 3.200e-05
 
-&gt; (environment-&gt;list (outer-environment (procedure-environment memo-fib)))
+&gt; (let-&gt;list (outlet (funclet memo-fib)))
 (({memo}-18 . #&lt;hash-table 
     (0 . 0) (1 . 1) (2 . 1) (3 . 2) (4 . 3) (5 . 5) 
     (6 . 8) (7 . 13) (8 . 21) (9 . 34) (10 . 55) (11 . 89) 
@@ -2518,28 +2496,27 @@ Environments are first class (and applicable) objects in s7.
 </p>
 
 <pre class="indented">
-(<em class=def id="environmentp">environment?</em> obj)              #t if obj is an environment
-(<em class=def id="withenvironment">with-environment</em> env . body)   evaluate body in the environment env 
-(<em class=def id="outerenvironment">outer-environment</em> env)         the environment that encloses the environment env (settable)
-(<em class=def id="environmenttolist">environment-&gt;list</em> env)         return the environment bindings as a list of (symbol . value) cons's
+(<em class=def id="letp">let?</em> obj)                #t if obj is an environment
+(<em class=def id="with-let">with-let</em> env . body)     evaluate body in the environment env 
+(<em class=def id="outlet">outlet</em> env)              the environment that encloses the environment env (settable)
+(<em class=def id="lettolist">let-&gt;list</em> env)           return the environment bindings as a list of (symbol . value) cons's
 
-(<em class=def id="globalenvironment">global-environment</em>)            the top-level environment
-(<em class=def id="currentenvironment">current-environment</em>)           the currently visible variables and their values
-(<em class=def id="procedureenvironment">procedure-environment</em> proc)    the environment at the time when proc was defined
-(error-environment)             the environment at the point of the last error
-(<em class=def id="initialenvironment">initial-environment</em>)           the current environment, but all built-in functions have their original values
+(<em class=def id="rootlet">rootlet</em>)                 the top-level environment
+(<em class=def id="curlet">curlet</em>)                  the currently visible variables and their values
+(<em class=def id="funclet">funclet</em> proc)            the environment at the time when proc was defined
+(owlet)                   the environment at the point of the last error
+(<em class=def id="unlet">unlet</em>)                   the current environment, but all built-in functions have their original values
 
-(<em class=def id="environment">environment</em> . bindings)        make a new environment with the given bindings
-(<em class=def id="environmentstar">environment*</em> symbol value ...) make a new environment with the given symbols/values
-(<em class=def id="augmentenvironment">augment-environment</em> env . bindings-or-envs)   add bindings to env
-(<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings-or-env)
+(<em class=def id="inlet">inlet</em> . bindings)        make a new environment with the given bindings
+(<em class=def id="sublet">sublet</em> env . bindings-or-envs)  add bindings to env
+(<em class=def id="varlet">varlet</em> env . bindings-or-env)
 
-(<em class=def id="openenvironment">open-environment</em> env)          mark env as open (see below)
-(<em class=def id="closeenvironment">close-environment</em> env)         mark env as closed (undo an earlier open-environment)
-(<em class=def id="openenvironmentp">open-environment?</em> env)
+(<em class=def id="openlet">openlet</em> env)             mark env as open (see below)
+(<em class=def id="coverlet">coverlet</em> env)            mark env as closed (undo an earlier openlet)
+(<em class=def id="openletp">openlet?</em> env)
 
-(<em class=def id="environmentref">environment-ref</em> env sym)       these are the explicit forms to get and set a binding
-(<em class=def id="environmentset">environment-set!</em> env sym val)
+(<em class=def id="letref">let-ref</em> env sym)
+(<em class=def id="letset">let-set!</em> env sym val)
 </pre>
 
 <p>
@@ -2555,10 +2532,10 @@ As a quick example, here is a structure definition:
 <pre class="indented">
 (define* (make-tree (key 0) (left ()) (right ()))
   ;; make a tree structure with 3 fields, and a type indicator
-  (environment* 'key key 'left left 'right right 'type 'tree))
+  (inlet* 'key key 'left left 'right right 'type 'tree))
 
 (define (tree? obj)
-  (and (environment? obj)
+  (and (let? obj)
        (eq? (obj 'type) 'tree)))
 
 &gt; (let ((t1 (make-tree)))
@@ -2571,21 +2548,21 @@ As a quick example, here is a structure definition:
 	         t1)))
 "t1 (a tree): (key . 0) (left) (right)"
 
-;; to access a field, use either environment-ref and -set, or implicit indexing:
+;; to access a field, use either let-ref and -set, or implicit indexing:
 &gt; (let ((t1 (make-tree))) (t1 'key))
 0
 &gt; (let ((t1 (make-tree))) (set! (t1 'key) 32) (t1 'key))
 32
-&gt; (let ((t1 (make-tree))) (with-environment t1 (set! key 32) key))
+&gt; (let ((t1 (make-tree))) (with-let t1 (set! key 32) key))
 </pre>
 </div>
 
 
-<p>with-environment evaluates its body in the given environment, so
-<code>(with-environment e . body)</code> is equivalent to
+<p>with-let evaluates its body in the given environment, so
+<code>(with-let e . body)</code> is equivalent to
 <code>(eval `(begin ,@body) e)</code>, but probably faster.
 Similarly, <code>(let bindings . body)</code> is equivalent to
-<code>(eval `(begin ,@body) (apply environment* (flatten bindings)))</code>,
+<code>(eval `(begin ,@body) (apply inlet* (flatten bindings)))</code>,
 ignoring the outer (enclosing) environment. Or better,
 </p>
 <pre class="indented">
@@ -2594,26 +2571,26 @@ ignoring the outer (enclosing) environment. Or better,
 </pre>
 
 <p>
-augment-environment adds bindings (symbols with associated values) to an environment.
+sublet adds bindings (symbols with associated values) to an environment.
 It does not change the environment passed to it, but
 just prepends the new bindings, shadowing any old ones,
 as if you had called "let":
 </p>
 
 <pre class="indented">
-(define-bacro (with-let e . body)
-  `(with-environment (<em class=red>augment-environment</em> (current-environment) ,e)
+(define-bacro (let/ e . body)
+  `(with-let (<em class=red>sublet</em> (curlet) ,e)
      ,@body))
 
 (let ((a 1))
-  (with-let (environment* 'b 2)
+  (let/ (inlet* 'b 2)
     (+ a b)))
 </pre>
 
 <p>
 To add the bindings directly to the environment,
-use augment-environment!.  Both of these functions accept nil as the
-'env' argument as shorthand for <code>(global-environment)</code>.
+use varlet.  Both of these functions accept nil as the
+'env' argument as shorthand for <code>(rootlet)</code>.
 Both also accept other environments as well as individual bindings,
 adding all the argument's bindings to the new environment.
 </p>
@@ -2622,7 +2599,7 @@ adding all the argument's bindings to the new environment.
 </p>
 
 <pre class="indented">
-(define e (environment* 
+(define e (inlet* 
             'x (let ((local-x 3)) ; x's initial value
 		 (dilambda
 		   (lambda () local-x)
@@ -2635,59 +2612,51 @@ adding all the argument's bindings to the new environment.
 
 <blockquote>
 <div class="indented">
-<p>
-Augment-environment is a bad name, but
-I'm at a loss for a better one.  If we view an environment as a disembodied let,
-akin to viewing a generic function as a disembodied lambda,
-these names come to mind:
+<p>I orignally used a bunch of foolishly pompous names for the environment functions.
+They are still available for backwards compatibility:
 </p>
 
 <pre class="indented">
-environment?          let?
-global-environment    rootlet
-initial-environment   unlet
-with-environment      inlet
-outer-environment     outlet
-augment-environment   sublet
-augment-environment!  varlet
-current-environment   curlet
-error-environment     owlet
-procedure-environment funclet ; callet has the wrong denotation
-environment-&gt;list  let-&gt;list(?) (or remove it; it is the same as (map values env))
-open-environment      runlet  ; glasslet?
-open-environment?     runlet?
-close-environment     coverlet
-environment-ref       let-ref
-environment-set!      let-set
-environment           to-let
-environment*          to*-let
+let?         environment?
+rootlet      global-environment
+unlet        initial-environment
+with-let     with-environment
+outlet       outer-environment
+sublet       augment-environment
+varlet       augment-environment!
+curlet       current-environment
+owlet        error-environment
+funclet      procedure-environment
+let-&gt;list    environment-&gt;list
+openlet      open-environment
+openlet?     open-environment?
+coverlet     close-environment
+let-ref      environment-ref
+let-set!     environment-set!
+inlet        environment and environment*
 </pre>
-
-<p>These new names are now built-in as synonyms.  If I find myself using them, 
-I'll deprecate that old, pompous, long-winded, hard-to-type "environment" twaddle.
-</p>
 </div>
 </blockquote>
 
 
 <p>It is possible in Scheme to redefine built-in functions such as car.
 To ensure that some code sees the original built-in function definitions,
-wrap it in <code>(with-environment (initial-environment) ...)</code>:
+wrap it in <code>(with-let (unlet) ...)</code>:
 </p>
 <pre class="indented">
 &gt; (let ((caar 123)) 
-    (+ caar (with-environment (initial-environment) 
+    (+ caar (with-let (unlet) 
               (caar '((2) 3)))))
 125
 </pre>
 
 <p>
-with-environment and initial-environment are constants, so you can
+with-let and unlet are constants, so you can
 use them in any context without worrying about whether they've been redefined.
 As mentioned in the macro section, #_&lt;name&gt; is a built-in reader macro
-for <code>(with-environment (initial-environment) &lt;name&gt;)</code>,
+for <code>(with-let (unlet) &lt;name&gt;)</code>,
 so for example, #_+ is the built-in + function, no matter what.
-<code>(initial-environment)</code> cleans up the current environment whenever it's called,
+<code>(unlet)</code> cleans up the current environment whenever it's called,
 so you can use it to revert the REPL. 
 </p>
 
@@ -2702,14 +2671,14 @@ Here's one way: first the library writer just writes his library.
 The normal user simply loads it.  The abnormal user worries about everything,
 so first he loads the library in a local let to make sure no bindings escape 
 to pollute his code, and then he
-uses initial-environment to
+uses unlet to
 make sure that none of his bindings pollute the library code:
 </p>
 
 <pre class="indented">
 (let ()
-  (with-environment (initial-environment)
-    (load "any-library.scm" (current-environment)) 
+  (with-let (unlet)
+    (load "any-library.scm" (curlet)) 
     ;; by default load puts stuff in the global environment
     ...))
 </pre>
@@ -2720,10 +2689,10 @@ all the other functions are of no interest:
 </p>
 
 <pre class="indented">
-(augment-environment! (current-environment)
+(varlet (curlet)
   (cons 'bitwise-not-or 
-    (with-environment (initial-environment)
-      (load "any-library.scm" (current-environment))
+    (with-let (unlet)
+      (load "any-library.scm" (curlet))
       lognor))) ; lognor is presumably defined in "any-library.scm"
 </pre>
 
@@ -2732,26 +2701,26 @@ its top-level bindings are imported into the current environment:
 </p>
 
 <pre class="indented">
-(augment-environment! (current-environment)
-  (with-environment (initial-environment)
+(varlet (curlet)
+  (with-let (unlet)
     (let ()
-      (load "any-library.scm" (current-environment))
-      (current-environment)))) ; these are the bindings introduced by loading the library
+      (load "any-library.scm" (curlet))
+      (curlet)))) ; these are the bindings introduced by loading the library
 </pre>
 
 <p>To do the same thing, but prepend "library:" to each name:
 </p>
 
 <pre class="indented">
-(apply augment-environment! (current-environment)
-  (with-environment (initial-environment)
+(apply varlet (curlet)
+  (with-let (unlet)
     (let ()
-      (load "any-library.scm" (current-environment))
+      (load "any-library.scm" (curlet))
       (map (lambda (binding)
 	     (cons (string-&gt;symbol 
 		    (string-append "library:" (symbol-&gt;string (car binding))))
 		   (cdr binding)))
-	    (current-environment)))))
+	    (curlet)))))
 </pre>
 
 <p>That's all there is to it!  Here is the same idea as a macro:
@@ -2763,7 +2732,7 @@ its top-level bindings are imported into the current environment:
   ;;   (let! ((a 1)) ((hiho)) (define (hiho x) (+ a x)))
   `(let ,init
      ,@body
-     (augment-environment! (outer-environment (current-environment))
+     (varlet (outlet (curlet))
        ,@(map (lambda (export)
 		`(cons ',export ,export))
 	      (car end)))
@@ -2772,14 +2741,12 @@ its top-level bindings are imported into the current environment:
 
 <!--
 (define-macro (safe-let! init end . body)
-  `(with-environment 
-       (#_environment 
-	(initial-environment)
+  `(with-let (#_inlet (unlet)
 	,@(#_map (#_lambda (b) 
 		 `(#_cons ',(#_car b) ,(#_cadr b)))
 	       init))
      ,@body
-     (#_augment-environment! (#_outer-environment (#_current-environment))
+     (#_varlet (#_outlet (#_curlet))
 	,@(#_map (#_lambda (export)
 		 `(#_cons ',export ,export))
 	       (#_car end)))
@@ -2795,13 +2762,11 @@ such as abs, we need to put it back to its original form:
 
 <pre>
 (define (safe-load file)
-  (let ((e (with-environment          ; save the environment before loading
-	       (initial-environment) 
-	     (environment-&gt;list (current-environment)))))
-    (<em class=red>load</em> file (current-environment))
-    (let ((new-e (with-environment    ; get the environment after loading
-		     (initial-environment) 
-		   (environment-&gt;list (current-environment)))))
+  (let ((e (with-let (unlet)         ; save the environment before loading
+	     (let-&gt;list (curlet)))))
+    (<em class=red>load</em> file (curlet))
+    (let ((new-e (with-let (unlet)   ; get the environment after loading
+		   (let-&gt;list (curlet)))))
       (for-each                       ; see if any built-in functions were stepped on
        (lambda (sym)
 	 (unless (assoc (car sym) e)
@@ -2821,7 +2786,7 @@ such as abs, we need to put it back to its original form:
 </blockquote>
 
 
-<p>open-environment marks its argument, either an environment, a closure, or a c-object
+<p>openlet marks its argument, either an environment, a closure, or a c-object
 as open.  I need better terminology here!  An open object is one that the
 built-in s7 functions handle specially.  If they encounter one in their
 argument list, they look in the object for their own name, and call that
@@ -2829,11 +2794,11 @@ function if it exists.  A bare-bones example:
 </p>
 
 <pre class="indented">
-&gt; (abs (open-environment (environment* 'abs (lambda (x) 47))))
+&gt; (abs (openlet (inlet* 'abs (lambda (x) 47))))
 47
 &gt; (define* (f1 (a 1)) (if (real? a) (abs a) ((a 'f1) a)))
 f1
-&gt; (f1 :a (open-environment (environment* 'f1 (lambda (e) 47))))
+&gt; (f1 :a (openlet (inlet* 'f1 (lambda (e) 47))))
 47
 </pre>
 
@@ -2844,8 +2809,8 @@ A slightly more complex example:
 </p>
 
 <pre class="indented">
-(let ((e1 (open-environment 
-	   (environment* 
+(let ((e1 (openlet 
+	   (inlet* 
 	    'x 3
 	    '* (lambda args
 		 (if (number? (car args))
@@ -2864,14 +2829,14 @@ A class might be thought of as a template for instances, but
 there's actually no difference between them.  To make an instance of a class, copy it.  To inherit from
 another class, concatenate the environments. To access (get or set) a field or a method, use the implicit
 indexing syntax with the field or method name.  To evaluate a form in the context of an instance
-(CL's with-slots), use with-environment. To run through all the fields, use map or for-each.
+(CL's with-slots), use with-let. To run through all the fields, use map or for-each.
 </p>
 
 <pre>
 (define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
-  ;; a bacro is needed so that the calling environment is accessible via outer-environment
+  ;; a bacro is needed so that the calling environment is accessible via outlet
   ;;   we could also use the begin/let shuffle, but it's too embarrassing
-  `(let ((outer-env (outer-environment (current-environment)))
+  `(let ((outer-env (outlet (curlet)))
 	 (new-methods ())
 	 (new-slots ()))
 
@@ -2885,11 +2850,11 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
        ;;   are gathering the local slots and all the methods of the inherited
        ;;   classes, and will splice them together below as a new class.
 
-       (set! new-slots (append (environment-&gt;list class) new-slots))
-       (do ((e (outer-environment (outer-environment class)) (outer-environment e)))
-	   ((or (not (environment? e))
-		(eq? e (global-environment))))
-	 (set! new-methods (append (environment-&gt;list e) new-methods))))
+       (set! new-slots (append (let-&gt;list class) new-slots))
+       (do ((e (outlet (outlet class)) (outlet e)))
+	   ((or (not (let? e))
+		(eq? e (rootlet))))
+	 (set! new-methods (append (let-&gt;list e) new-methods))))
      ,inherited-classes)
 
      (let ((remove-duplicates 
@@ -2929,28 +2894,28 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 					           (map (lambda (slot)
 						          (list (car slot) (cdr slot)))
 						        obj))))))
-		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
+		  (reverse! new-methods)))             ; the inherited methods, shadowed automatically
 
-    (let ((new-class (open-environment
-                       (apply augment-environment           ; the local slots
-		         (augment-environment               ; the global slots
-		           (apply environment               ; the methods
+    (let ((new-class (openlet
+                       (apply sublet                   ; the local slots
+		         (sublet                       ; the global slots
+		           (apply inlet               ; the methods
 			     (reverse new-methods))
 		           (cons 'class-name ',class-name)  ; class-name slot
 			   (cons 'inherited ,inherited-classes)
 			   (cons 'inheritors ()))           ; classes that inherit from this class
 		         new-slots))))
 
-      (augment-environment! outer-env                  
+      (varlet outer-env                  
         (cons ',class-name new-class)                       ; define the class as class-name in the calling environment
 
 	;; define class-name? type check
 	(cons (string-&gt;symbol (string-append (symbol-&gt;string ',class-name) "?"))
 	      (lambda (obj)
-		(and (environment? obj)
+		(and (let? obj)
 		     (eq? (obj 'class-name) ',class-name)))))
 
-      (augment-environment! outer-env
+      (varlet outer-env
         ;; define the make-instance function for this class.  
         ;;   Each slot is a keyword argument to the make function.
         (cons (string-&gt;symbol (string-append "make-" (symbol-&gt;string ',class-name)))
@@ -2991,7 +2956,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 
 
 (define-bacro (define-method name-and-args . body)
-  `(let* ((outer-env (outer-environment (current-environment)))
+  `(let* ((outer-env (outlet (curlet)))
 	  (method-name (car ',name-and-args))
 	  (method-args (cdr ',name-and-args))
 	  (object (caar method-args))
@@ -3002,7 +2967,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
      ;; define the method as a normal-looking function
      ;;   s7test.scm has define-method-with-next-method that implements call-next-method here
      ;;   it also has make-instance 
-     (augment-environment! outer-env
+     (varlet outer-env
        (cons method-name 
 	     (apply lambda* method-args 
 		    `(((,object ',method-name)
@@ -3011,7 +2976,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 			      method-args))))))
      
      ;; add the method to the class
-     (augment-environment! (outer-environment (outer-environment class))
+     (varlet (outlet (outlet class))
        (cons method-name method))
 
      ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
@@ -3020,7 +2985,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 	(if (not (eq? (inheritor method-name) #&lt;undefined&gt;)) ; defined? goes to the global env
 	    (if (eq? (inheritor method-name) old-method)
 		(set! (inheritor method-name) method))
-	    (augment-environment! (outer-environment (outer-environment inheritor))
+	    (varlet (outlet (outlet inheritor))
    	      (cons method-name method))))
       (class 'inheritors))
 
@@ -3045,7 +3010,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 &gt; (define-class class-1 () 
        '((a 1) (b 2)) 
        (list (list 'add (lambda (obj) 
-                          (with-environment obj
+                          (with-let obj
                             (+ a b))))))
 class-1
 &gt; (define v (make-class-1 :a 32))
@@ -3069,7 +3034,7 @@ slot-a
 &gt; (define-class class-2 (list class-1)
        '((c 3)) 
        (list (list 'multiply (lambda (obj) 
-                               (with-environment obj 
+                               (with-let obj 
                                  (* a b c))))))
 class-2
 &gt; (define v2 (make-class-2 :a 32))
@@ -3080,15 +3045,15 @@ v2
 192
 &gt; (add v2)                      ; inherited from class-1
 34
-&gt; (define-method (subtract (obj class-1)) (with-environment obj (- a b)))
+&gt; (define-method (subtract (obj class-1)) (with-let obj (- a b)))
 subtract
 &gt; (subtract v2)  ; class-2 inherits from class-1 so it knows about subtract
 30
 &gt; (define v1 (make-class-1))
 v1
-&gt; (augment-environment! v1      ; change the add method just in this instance
+&gt; (varlet v1      ; change the add method just in this instance
        (cons 'add (lambda (obj) 
-                    (with-environment obj
+                    (with-let obj
                       (+ 1 a (* 2 b))))))
 #&lt;class-1: (a 1) (b 2) (add #&lt;lambda (obj)&gt;)&gt;
 &gt; (add v1)
@@ -3109,10 +3074,10 @@ v3
 (#&lt;lambda (obj num)&gt; #&lt;lambda (obj)&gt;)
 &gt; (for-each (lambda (p) (format #t "~A~%" (procedure-source p))) (all-methods v3 'multiply))
 (lambda (obj num) (* num ((class-2 'multiply) obj) (add obj)))
-(lambda (obj) (with-environment obj (* a b c)))
+(lambda (obj) (with-let obj (* a b c)))
 </pre>
 
-<p>with-environment (used briefly above) provides an even more striking simplification of syntax
+<p>with-let (used briefly above) provides an even more striking simplification of syntax
 than implicit indexing or multidimensional vectors, and it is faster as well!
 See Snd's generators.scm for many examples.  
 </p>
@@ -3125,16 +3090,16 @@ at class definition time:
 
 <div class="indented">
 <p>As shown in the preceding example, implicit indexing of a local environment
-does not search the global environment.  Since initial-environment extends the
+does not search the global environment.  Since unlet extends the
 current environment chain, it is considered a local environment:
 </p>
 
 <pre class="indented">
-&gt; ((global-environment) 'abs)
+&gt; ((rootlet) 'abs)
 abs
-&gt; (let () ((current-environment) 'abs))
+&gt; (let () ((curlet) 'abs))
 #&lt;undefined&gt;
-&gt; ((initial-environment) 'abs) ; what a bad function name
+&gt; ((unlet) 'abs)
 #&lt;undefined&gt;
 </pre>
 
@@ -3144,16 +3109,16 @@ abs
 <div class="indented">
 <pre>
 (define-bacro (value-&gt;symbol val)
-   ;; (outer-environment (current-environment)) is the calling environment
+   ;; (outlet (curlet)) is the calling environment
   `(call-with-exit
     (lambda (return)
-      (do ((e (current-environment) (outer-environment e))) ()
+      (do ((e (curlet) (outlet e))) ()
 	(for-each 
 	 (lambda (slot)
 	   (if (equal? ,val (cdr slot))
 	       (return (car slot))))
 	 e)
-	(if (eq? e (global-environment))
+	(if (eq? e (rootlet))
 	    (return #f))))))
 
 &gt; (let ((a 1) (b "hi")) 
@@ -3173,7 +3138,7 @@ Here's an idle thought:
 	     (lambda (a)
 	       (+ x a))))
 (define (f2 b)
-  (+ b (* 2 ((procedure-environment f1) 'x)))) ; import f1's x into f2
+  (+ b (* 2 ((funclet f1) 'x)))) ; import f1's x into f2
 
 &gt; (+ (f1 1) (f2 1))
 71
@@ -3184,7 +3149,7 @@ Here's an idle thought:
 
 
 <div class="indented">
-<p>open-environment alerts the rest of s7 that the environment has methods.
+<p>openlet alerts the rest of s7 that the environment has methods.
 </p>
 
 <pre>
@@ -3198,17 +3163,15 @@ Here's an idle thought:
 		       (error 'wrong-type-arg "fvector new value is not a real: ~A" x)))))
     (set! make-fvector
 	  (lambda* (len (init 0.0)) 
-	    (<em class=red>open-environment</em>
-	     (environment* 'v (make-vector len (-&gt;float init))
+	    (<em class=red>openlet</em>
+	     (inlet* 'v (make-vector len (-&gt;float init))
 			   'type type
 			   'length (lambda (f) len)
 			   'object-&gt;string (lambda (f . args) "#&lt;fvector&gt;")
-			   'environment-set! (lambda (fv i val)
-					       (#_vector-set! (fv 'v) i (-&gt;float val)))
-			   'environment-ref (lambda (fv i)
-					      (#_vector-ref (fv 'v) i))))))
+			   'let-set! (lambda (fv i val) (#_vector-set! (fv 'v) i (-&gt;float val)))
+			   'let-ref (lambda (fv i) (#_vector-ref (fv 'v) i))))))
     (set! fvector? (lambda (p)
-		     (and (environment? p)
+		     (and (let? p)
 			  (eq? (p 'type) type))))))
   
 &gt; (define fv (make-fvector 32))
@@ -3257,7 +3220,7 @@ as "complex?"!):
 			       (add (cons (n 'r) r) (cons (n 'i) i) 
                                     (cons (n 'j) j) (cons (n 'k) k) 
                                     (cdr args)))
-			    ((<em class=red>open-environment?</em> n) ; maybe we'll add octonions later!
+			    ((<em class=red>openlet?</em> n) ; maybe we'll add octonions later!
 			     (if (eq? n (car orig-args))
 				 (error 'missing-method "+ can't handle these arguments: ~A" args)
 				 (apply (n '+) 
@@ -3276,13 +3239,13 @@ as "complex?"!):
 
 <div class="indented">
 <p>Currently some s7 functions ignore methods: cons, vector, list, and others of that ilk.
-Also, since outer-environment is settable, there are two ways an environment can
+Also, since outlet is settable, there are two ways an environment can
 become circular.  One is to include the current environment as the value of one of its variables.
 The other is:
 </p>
 <pre class="indented">
 (define e (let ((a 1))
-            (set! (outer-environment (current-environment)) (current-environment))))
+            (set! (outlet (curlet)) (curlet))))
 </pre>
 <p>Now "e" looks like a normal environment, and <code>(e 'a)</code> returns 1,
 but <code>(e anything-else)</code> hangs in an infinite loop.
@@ -3292,19 +3255,19 @@ but <code>(e anything-else)</code> hangs in an infinite loop.
 know the field names in advance,
 </p>
 <pre class="indented">
-(open-environment  ; make it appear to be empty to the rest of s7
-  (environment* 'object-&gt;string    (lambda args "#&lt;environment&gt;")
-                'map               (lambda args ())
-                'for-each          (lambda args #&lt;unspecified&gt;)
-  	        'environment-&gt;list (lambda args ())
-                'length            (lambda args 0)
-		'copy              (lambda args (environment*))
-		'open #t
-		'close-environment (lambda (e) (set! (e 'open) #f) e)
-		'open-environment  (lambda (e) (set! (e 'open) #t) e)
-		'open-environment? (lambda (e) (e 'open))
-                ;; your secret data here
-                ))
+(openlet  ; make it appear to be empty to the rest of s7
+  (inlet* 'object-&gt;string   (lambda args "#&lt;environment&gt;")
+           'map             (lambda args ())
+           'for-each        (lambda args #&lt;unspecified&gt;)
+  	   'let-&gt;list       (lambda args ())
+           'length          (lambda args 0)
+	   'copy            (lambda args (inlet*))
+ 	   'open #t
+	   'coverlet        (lambda (e) (set! (e 'open) #f) e)
+	   'openlet         (lambda (e) (set! (e 'open) #t) e)
+	   'openlet?        (lambda (e) (e 'open))
+           ;; your secret data here
+           ))
 </pre>
 <p>(There are still at least two ways to tell that something is fishy).
 </p>
@@ -3740,8 +3703,8 @@ from a simple procedure.
      (apply error args))))
 
 (define (continue-from-error)
-  (if (<em class=red>continuation?</em> ((error-environment) 'continue)) ; might be #&lt;undefined&gt; or a function as in the while macro
-      (((error-environment) 'continue))
+  (if (<em class=red>continuation?</em> ((owlet) 'continue)) ; might be #&lt;undefined&gt; or a function as in the while macro
+      (((owlet) 'continue))
       'bummer))
 </pre>
 
@@ -4013,7 +3976,7 @@ make-hook is:
 	(end ()))
     (apply lambda* args
       '(let ((result #&lt;unspecified&gt;))
-         (let ((e (current-environment)))
+         (let ((e (curlet)))
            (dynamic-wind 
 	     (lambda () (for-each (lambda (f) (f e)) init))
 	     (lambda () (for-each (lambda (f) (f e)) body) result)
@@ -4033,7 +3996,7 @@ here's a sketch:
 <pre class="indented">
 &gt; (define h (make-hook '(a 32) 'b))     ; h is a function: (lambda* ((a 32) b) ...)
 h
-&gt; (set! (hook-functions h)              ; this sets ((procedure-environment h) 'body)
+&gt; (set! (hook-functions h)              ; this sets ((funclet h) 'body)
            (list (lambda (hook) 	; each hook internal function takes one argument, the environment
                    (set! (hook 'result) ; this is the "result" variable above 
                          (format #f "a: ~&lt;(hook 'a)~&gt;, b: ~&lt;(hook 'b)~&gt;")))))
@@ -4099,7 +4062,7 @@ function's closure to store whatever information is needed:
 		(set! (hook 'result) (string-append (hook 'result) ", second"))))))
 
 (map (lambda (h)
-       ((procedure-environment h) '*info*))
+       ((funclet h) '*info*))
      (hook-functions h))
 
 '("first hook!" "second hook")
@@ -4118,7 +4081,7 @@ function's closure to store whatever information is needed:
 (<em class=def id="procedurearity">procedure-arity</em> proc) ; obsolete
 (<em class=def id="proceduredocumentation">procedure-documentation</em> proc)
 (<em class=def id="proceduresetter">procedure-setter</em> proc)
-(procedure-environment proc)
+(funclet proc)
 
 (<em class=def id="arity">arity</em> obj)
 (<em class=def id="aritablep">aritable?</em> obj num-args)
@@ -4129,7 +4092,7 @@ Scheme function.
 procedure-documentation returns the documentation string associated with a procedure: the initial string in the
 function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
 procedure-setter returns or sets the set function associated with a procedure (set-car! with car, for example).
-procedure-source returns the procedure source (a list). procedure-environment returns
+procedure-source returns the procedure source (a list). funclet returns
 a procedure's environment.  procedure-name returns the procedure's name.
 </p>
 
@@ -4187,13 +4150,13 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
 		   (list (car source)
 			 (cadr source)
 			 (caddr source)
-			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (current-environment)))
+			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (curlet)))
 		   (cdddr source))
 		  ;; (let(*) vars . body) -&gt; (let vars print-vars . body)
 		  (append 
 		   (list (car source)
 			 (cadr source)
-			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (current-environment)))
+			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (curlet)))
 		   (cddr source)))
 	      (cons (proc-walk (car source))
 		    (proc-walk (cdr source))))
@@ -4208,7 +4171,7 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
 		     (lambda ()       ; upon entry, show procedure name and args
 		       (format #t "(~A~{ ~A~})~%" 
                                ',proc 
-			       (outer-environment (outer-environment (current-environment)))))
+			       (outlet (outlet (curlet)))))
 		     (lambda ()
 		       (set! ,result (,new-body ,@(cadr orig))))
 		     (lambda ()       ; at exit, show result
@@ -4253,7 +4216,7 @@ its bindings (this is borrowed from "nuntius" at reddit lisp):
 
 (define-macro (print-let bindings . body)
   `(let ,bindings 
-     (format #t "~{;~A~%~}" (current-environment))
+     (format #t "~{;~A~%~}" (curlet))
      ,@body))	      
 </pre>
 
@@ -4347,7 +4310,7 @@ is similar, but its argument is a string.
 <p>eval's environment argument is handy when implementing break and trace:
 </p>
 <pre>
-(define *break-environment* #f)
+(define *breaklet* #f)
 (define *step-hook* (make-hook 'code 'e))
 
 (define-macro* (trace/break code . break-points)
@@ -4367,20 +4330,20 @@ is similar, but its argument is a string.
   `(call-with-exit (lambda (__top__) ,(caller code))))
 
 (define (go . args)
-  (and (environment? *break-environment*)
-       (apply (*break-environment* 'go) args)))
+  (and (let? *breaklet*)
+       (apply (*breaklet* 'go) args)))
 
 (define (clear-break)
-  (set! *break-environment* #f))
+  (set! *breaklet* #f))
 
 (define-macro (__call__ code)
-  `(*step-hook* ',code (current-environment)))
+  `(*step-hook* ',code (curlet)))
 
 (define-macro (__break__ code)
   `(begin
      (call/cc
       (lambda (go)
-	(set! *break-environment* (current-environment))
+	(set! *breaklet* (curlet))
 	(__top__ (format #f "break at: ~A~%" ',code))))
      ,code))
 
@@ -4388,7 +4351,7 @@ is similar, but its argument is a string.
       (list (lambda (hook)
 	      (set! (hook 'result) (<em class=red>eval (hook 'code) (hook 'e)</em>)))))
 
-(set! ((procedure-environment *step-hook*) 'end)
+(set! ((funclet *step-hook*) 'end)
       (list (lambda (hook)
 	      (define (uncaller tree)
 		(if (pair? tree)
@@ -4402,7 +4365,7 @@ is similar, but its argument is a string.
 	      (format (current-output-port) ": ~A -&gt; ~A~40T~A~%" 
 		      (uncaller (hook 'code)) 
 		      (hook 'result)
-		      (if (and (not (eq? (hook 'e) (global-environment)))
+		      (if (and (not (eq? (hook 'e) (rootlet)))
 			       (not (defined? '__top__ (hook 'e))))
 			  (map values (hook 'e)) 
 			  "")))))
@@ -4496,9 +4459,7 @@ a          ; here s7 waited for me to type "a" in the terminal
 <pre class="indented">
 (define (call-with-input-vector v proc)
   (let ((i -1))
-    (proc (open-environment
-	   (environment* 'read (lambda (p)
-				 (v (set! i (+ i 1)))))))))
+    (proc (openlet (inlet* 'read (lambda (p) (v (set! i (+ i 1)))))))))
 </pre>
 
 <p>Here the IO port is an open environment that redefines the "read" function so that it
@@ -4507,8 +4468,8 @@ The "proc" argument above can also be a macro, giving you a kludgey way to get a
 the dumb "lambda" (see s7test.scm for a couple examples). A more useful example:
 </p>
 <pre class="indented">
-(open-environment          ; a soft port for format that sends its output to *stderr*
-  (environment* 'format    ;   and returns the string
+(openlet          ; a soft port for format that sends its output to *stderr*
+  (inlet* 'format    ;   and returns the string
 	        (lambda (port str . args)
 		  (let ((result (apply format #f str args)))
 		    (display result *stderr*)
@@ -4750,7 +4711,7 @@ Along the same lines:
 </blockquote>
 
 <p>When an error is encountered, and when s7 is interrupted via begin-hook, 
-(<em class=def id="owlet">error-environment</em>) returns an environment that contains
+(<em class=def id="owlet">owlet</em>) returns an environment that contains
 additional info about that error:
 </p>
 
@@ -4767,13 +4728,13 @@ additional info about that error:
 
 <div class="indented">
 
-<p>To find a variable's value at the point of the error: <code>((error-environment) var)</code>.
+<p>To find a variable's value at the point of the error: <code>((owlet) var)</code>.
 To list all the local bindings from the error outward:
 </p>
 
 <pre class="indented">
-(do ((e (outer-environment (error-environment)) (outer-environment e))) 
-    ((eq? e (global-environment))) 
+(do ((e (outlet (owlet)) (outlet e))) 
+    ((eq? e (rootlet))) 
   (format #t "~{~A ~}~%" e))
 </pre>
 
@@ -4789,9 +4750,8 @@ To evaluate the error handler in the environment of the error:
 	   (let ((y 2))
 	     (error 'oops)))
 	 (lambda args
-	   (with-environment
-	    (augment-environment (error-environment)
-	     (cons 'args args))    ; add the error handler args
+	   (with-let (sublet (owlet)
+	                  (cons 'args args))    ; add the error handler args
 	    (list args x y)))))    ; we have access to 'y'
 </pre>
 
@@ -4850,7 +4810,7 @@ loads that file; if a function, it is called with one argument, the current (cal
 	    (unless (provided? 'cload.scm)
 	      (load "cload.scm"))
 	    (c-define '(double j0 (double)) "" "math.h")
-	    (augment-environment! e (cons 'j0 j0))))
+	    (varlet e (cons 'j0 j0))))
 </pre>
 
 <p>The entity (hash-table or environment probably) that holds the autoload info is named *autoload*.
@@ -4867,7 +4827,7 @@ time s7 encounters j0, j0 is undefined, so
 s7 loads libm.scm.  That load returns the C math library as the environment *libm*.
 s7 then automatically looks for j0 in *libm*, and defines it for you.
 So the result is the same as if you had defined j0 yourself in C code.
-You can use the r7rs library mechanism here, or with-environment, or
+You can use the r7rs library mechanism here, or with-let, or
 whatever you want! (In Snd, libc, libm, libdl, and libgdbm are automatically
 tied into s7 via autoload, so if you call, for example, frexp, libm.scm
 is loaded, and frexp is exported from the *libm* environment, then the
@@ -4892,8 +4852,8 @@ dalliance with symbol-macros!
                  (if (memq (hook 'result) '(#&lt;unspecified&gt; #&lt;undefined&gt;))
 	             (let ((sym (hook 'variable)))
 		       (if (eq? sym '?)                       ; here '?' is the thing typed
-		           (do ((e (outer-environment (error-environment)) (outer-environment e))) 
-			       ((eq? e (global-environment)) 
+		           (do ((e (outlet (owlet)) (outlet e))) 
+			       ((eq? e (rootlet)) 
                                 (set! (hook 'result) #f))
 		             (status-report (format #f "~%~{~A~^ ~}" e) -1))
                              ;; status-report is a Snd function that (in this case)
@@ -4981,7 +4941,7 @@ returns the value that is actually set.  For example, the function can ensure th
     (set! x 3.3) ; x does not change because 3.3 is not an integer
     (set! y 3.3) ; y does not change
     (set! z 3.3) ; prints "z 3 -&gt; 3.3" 
-    (current-environment)))
+    (curlet)))
 
 &gt; e
 #&lt;environment 'x 3 'y 3 'z 3.3&gt;
@@ -5093,9 +5053,9 @@ CLOS.  We can mimic this behavior:
       (let ((val (symbol-&gt;value var e)))
 	(or (and (pair? val)
 		 (memq sym val))
-	    (and (not (eq? e (global-environment)))
-		 (transparent-memq sym var (outer-environment e))))))
-    (let ((ce (current-environment)))
+	    (and (not (eq? e (rootlet)))
+		 (transparent-memq sym var (outlet e))))))
+    (let ((ce (curlet)))
       (list (transparent-memq 'a 'x ce)
 	    (transparent-memq 'b 'x ce)
 	    (transparent-memq 'c 'x ce)))))
@@ -5145,7 +5105,7 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 <div class="indented">
 <p>I use *#readers* primarily to implement a way to get the current line number and file name, along
 the lines of C's __LINE__ and __FILE__.  port-line-number works if we're reading a file (during load
-for example), and (error-environment) has the same information if an error happens.  But during Snd's auto-test
+for example), and (owlet) has the same information if an error happens.  But during Snd's auto-test
 sequence, there are many cases that aren't errors, and the file is no longer being loaded, but
 I need to know where something unexpected happened.  So:
 </p>
@@ -5282,9 +5242,9 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 
 <pre class="indented">
 (<em class=def id="symboltable">symbol-table</em>)
-(<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (current-environment)))
+(<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (curlet)))
 (<em class=def id="symboltodynamicvalue">symbol-&gt;dynamic-value</em> sym)
-(<em class=def id="definedp">defined?</em> sym (env (current-environment)) ignore-global-env)
+(<em class=def id="definedp">defined?</em> sym (env (curlet)) ignore-global-env)
 </pre>
 
 <p>
@@ -5378,7 +5338,7 @@ The function takes one argument, the environment in which loads and evals should
     (set! (cdr (calls n)) (+ (cdr (calls n)) 1)))
   
   (define (wrap-all)
-    (let ((e (environment)))
+    (let ((e (inlet)))
       (for-each
         (lambda (sym)
           (if (and (<em class=red>defined?</em> sym)
@@ -5392,7 +5352,7 @@ The function takes one argument, the environment in which loads and evals should
 			  (set! calls (copy calls (make-vector (* 2 (length calls)) (cons 'unused -1)))))
 		      (if (procedure-setter val)
 		          (set! (procedure-setter new-val) (procedure-setter val)))
-		      (augment-environment! e (cons sym new-val)))))))
+		      (varlet e (cons sym new-val)))))))
        (<em class=red>symbol-table</em>))
       e))
 
@@ -5405,7 +5365,7 @@ The function takes one argument, the environment in which loads and evals should
 
 &gt; (profile (lambda (e) 
              (load "lint.scm" e) 
-             (with-environment e (lint "dsp.scm"))))
+             (with-let e (lint "dsp.scm"))))
 ;;; many lines of data print out
 </pre>
 </div>
@@ -5443,7 +5403,7 @@ the MIT-Scheme test of that interaction.
 <pre class="indented">
 (define-macro (elambda args . body)
   `(define-macro (,(gensym) ,@args)
-    `((lambda* ,(append ',args `((*env* (current-environment)))) 
+    `((lambda* ,(append ',args `((*env* (curlet)))) 
         ,'(begin ,@body)) 
       ,,@args)))
 
@@ -5487,14 +5447,14 @@ macro that returns an anonymous macro that returns an anonymous function that &m
 	  (define-macro* (,(gensym) ,@args)
 	    (let ((e (gensym))
 		  (result (gensym)))
-	      `((lambda* ,(append ',arg-names `((,e (current-environment)))) ; the calling environment
+	      `((lambda* ,(append ',arg-names `((,e (curlet)))) ; the calling environment
 		  (let ((,result '?))
 		    (dynamic-wind
 			(lambda ()    ; display the caller, if any, as well as the incoming arguments
 			  (format *stderr* "(~A~{~^ ~A~})" ',',func 
 				  (map (lambda (slot)
 					 (if (gensym? (car slot)) (values) slot))
-				       (outer-environment (outer-environment (current-environment)))))
+				       (outlet (outlet (curlet)))))
 			  (let ((caller (eval '__func__ ,e)))
 			    (if (not (eq? caller #&lt;undefined&gt;))
 				(format *stderr* " ;called from ~S" caller))
@@ -5637,7 +5597,7 @@ if *debugging* is #t; otherwise assert expands into nothing.
 <ul>
 <li>no force or delay (see <a href="#r7rs">below</a>).
 <li>no syntax-rules or any of its friends.
-<li>no scheme-report-environment, null-environment, or interaction-environment (use current-environment).
+<li>no scheme-report-environment, null-environment, or interaction-environment (use curlet).
 <li>no transcript-on or transcript-off.
 <li>begin returns the value of the last form; it can contain both definitions and other statements.
 <li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are first-class objects.
@@ -5665,12 +5625,12 @@ choice here is that speed trumps that ol' hobgoblin consistency.  If you want to
 loading code that calls gcd. 
 </p>
 
-<!-- another case:  (with-environment (environment* '+ -) (+ 2 3)) -> 5 -->
+<!-- another case:  (with-let (inlet* '+ -) (+ 2 3)) -> 5 -->
 
 </div>
 
 <!-- null-environment does not fit very well; how to shadow earlier define-constant for example
-     one of which is initial-environment; perhaps make a special environment at init time? 
+     one of which is unlet; perhaps make a special environment at init time? 
      the code for that is save_null_environment, but it is untested and commented out.
 -->
 
@@ -5712,8 +5672,7 @@ loading code that calls gcd.
 <p>There are several less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
 *most-positive-fixnum* (*fixmost*?) so that all the built-in variables and constants have the
 same kind of name (or +pi+ to show it is a constant?).  
-All the environment function names are bad &mdash; "environment" by itself
-is annoying.  Perhaps object-&gt;string should be -&gt;string.
+Perhaps object-&gt;string should be -&gt;string.
 get-output-string should be current-output-string. write-char behaves like display, not write.
 define-expansion should be named define-reader-macro.
 </p>
@@ -7255,7 +7214,7 @@ int main(int argc, char **argv)
  */
 </pre></div>
 
-<p>In the next example, we use the method (environment) machinery:
+<p>In the next example, we use the method (inlet) machinery:
 </p>
 
 <div class="indented">
@@ -7306,7 +7265,7 @@ int main(int argc, char **argv)
 
 /*    &gt; (our-abs -1)
  *    1.0
- *    &gt; (our-abs (open-environment (environment* 'value -3.0 'abs (lambda (x) (abs (x 'value))))))
+ *    &gt; (our-abs (openlet (inlet* 'value -3.0 'abs (lambda (x) (abs (x 'value))))))
  *    3.0
  */
 
@@ -7472,8 +7431,8 @@ int main(int argc, char **argv)
  *
  * &gt; (plus 1 2)
  * #f
- * (define obj (open-environment 
- *               (environment
+ * (define obj (openlet 
+ *               (inlet
  *                 (cons 'plus (lambda args 
  *                               (apply + 1 (cdr args)))))))
  * obj
@@ -7793,21 +7752,21 @@ int main(int argc, char **argv)
  *     ;; so lib-exports has the C-defined names and values
  *     ;; we can use these directly:
  *
- *     &gt; (define lib-env (apply <em class=red>augment-environment</em> (current-environment) lib-exports))
+ *     &gt; (define lib-env (apply <em class=red>sublet</em> (curlet) lib-exports))
  *     lib-env
- *     &gt; (<em class=red>with-environment</em> lib-env (func1 var1))
+ *     &gt; (<em class=red>with-let</em> lib-env (func1 var1))
  *     33
  *
  *     ;; or rename them to prepend "lib:"
- *     &gt; (define lib-env (apply augment-environment 
-                                (current-environment) 
+ *     &gt; (define lib-env (apply sublet 
+                                (curlet) 
                                 (map (lambda (binding) 
                                        (cons (string-&gt;symbol 
                                                (string-append "lib:" (symbol-&gt;string (car binding)))) 
                                              (cdr binding))) 
                                      lib-exports)))
  *     lib-env
- *     &gt; (with-environment lib-env (lib:func1 lib:var1))
+ *     &gt; (with-let lib-env (lib:func1 lib:var1))
  *     33
  *
  *     ;;; now for convenience, place "func1" in the global environment under the name "func2"
@@ -9493,8 +9452,8 @@ c-define-1
 (require libc.scm)
 
 (define (copy-file in-file out-file)
-  (with-environment 
-    (augment-environment *libc* (environment* 'in-file in-file 'out-file out-file))
+  (with-let (sublet *libc* (cons 'in-file in-file) 
+                        (cons 'out-file out-file))
     (let ((infd (open in-file O_RDONLY 0)))
       (if (= infd -1)
 	  (error 'io-error "can't find ~S~%" in-file)
@@ -9514,8 +9473,7 @@ c-define-1
 		  out-file)))))))
 
 (define (glob-&gt;list pattern)
-  (with-environment 
-    (augment-environment *libc* (cons 'pattern pattern))
+  (with-let (sublet *libc* (cons 'pattern pattern))
     (let ((g (glob.make))) 
       (glob pattern 0 g) 
       (let ((res (glob.gl_pathv g))) 
@@ -9532,8 +9490,7 @@ c-define-1
 (require libgsl.scm)
 
 (define (eigenvalues M)
-  (with-environment 
-    (augment-environment *libgsl* (cons 'M M))
+  (with-let (sublet *libgsl* (cons 'M M))
     (let* ((len (sqrt (length M)))
 	   (gm (gsl_matrix_alloc len len))
 	   (m (float-vector-&gt;gsl_matrix M gm))
@@ -9563,8 +9520,8 @@ c-define-1
 <!--
 circular env without set!: 
 (let ()
-   (let ((b (current-environment)))
-      (current-environment)))
+   (let ((b (curlet)))
+      (curlet)))
 
 circular func (implicit set!):
 (letrec* ((b (lambda () (a)))

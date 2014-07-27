@@ -2214,7 +2214,7 @@ is a physical model of a flute:
 	(let ((val 0.0))
 	  (if (= i out1)
 	      (begin
-		(set! val (inlet grn1
+		(set! val (with-let grn1
 			    (let ((inval (ina loc file)))
 			      (set! loc (+ loc 1))
 			      (if (= whichseg 0)	;ramp-up
@@ -2251,7 +2251,7 @@ is a physical model of a flute:
 		      (set! out1 (+ out1 hop))))))
 	  (if (= i out2)
 	      (begin
-		(set! val (+ val (inlet grn2
+		(set! val (+ val (with-let grn2
 				   (let ((inval (ina loc file)))
 				     (set! loc (+ loc 1))
 				     (if (= whichseg 0)	;ramp-up
@@ -2505,7 +2505,7 @@ mjkoskin@sci.fi
 (define (ssb-fm gen modsig)
   "(ssb-fm gen modsig) runs an ssb-fm generator"
   (let-set! gen 'modsig modsig)
-  (inlet gen
+  (with-let gen
     (+ (* (oscil am0) 
 	  (oscil car0 (hilbert-transform mod0 modsig)))
        (* (oscil am1) 
@@ -2551,7 +2551,7 @@ mjkoskin@sci.fi
 (define (rms gen sig)
   "(rms gen sig) runs an RMS gain generator"
   (let-set! gen 'sig sig)
-  (inlet gen
+  (with-let gen
     (set! q (+ (* c1 sig sig) (* c2 q)))
     (sqrt q)))
 
@@ -2560,7 +2560,7 @@ mjkoskin@sci.fi
   "(gain gen sig rmsval) returns the current RMS gain"
   (let-set! gen 'sig sig)
   (let-set! gen 'rmsval rmsval)
-  (inlet gen
+  (with-let gen
     (set! r (+ (* c1 sig sig) (* c2 r)))
     (let ((this-gain (if (zero? r)
 			 rmsval
