@@ -6,7 +6,7 @@ interpret the argument as an s7 value and display it
 end
 # the current expression is sc->cur_code
 # the current environment is sc->envir
-# the error environment is sc->error_env
+# the error environment is sc->owlet
 # so for example, to see the current local variables, s7p sc->envir
 
 define s7eval

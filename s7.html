@@ -1362,7 +1362,7 @@ with-let from the start, writing an immaculo directly:
 </p>
 <pre>
 (define-macro (mac b)
-  `(with-let (inlet* 'b ,b)
+  `(with-let (inlet 'b ,b)
      (let ((a 12))
        (+ a b))))
 
@@ -2532,7 +2532,7 @@ As a quick example, here is a structure definition:
 <pre class="indented">
 (define* (make-tree (key 0) (left ()) (right ()))
   ;; make a tree structure with 3 fields, and a type indicator
-  (inlet* 'key key 'left left 'right right 'type 'tree))
+  (inlet 'key key 'left left 'right right 'type 'tree))
 
 (define (tree? obj)
   (and (let? obj)
@@ -2562,7 +2562,7 @@ As a quick example, here is a structure definition:
 <code>(with-let e . body)</code> is equivalent to
 <code>(eval `(begin ,@body) e)</code>, but probably faster.
 Similarly, <code>(let bindings . body)</code> is equivalent to
-<code>(eval `(begin ,@body) (apply inlet* (flatten bindings)))</code>,
+<code>(eval `(begin ,@body) (apply inlet (flatten bindings)))</code>,
 ignoring the outer (enclosing) environment. Or better,
 </p>
 <pre class="indented">
@@ -2583,7 +2583,7 @@ as if you had called "let":
      ,@body))
 
 (let ((a 1))
-  (let/ (inlet* 'b 2)
+  (let/ (inlet 'b 2)
     (+ a b)))
 </pre>
 
@@ -2599,7 +2599,7 @@ adding all the argument's bindings to the new environment.
 </p>
 
 <pre class="indented">
-(define e (inlet* 
+(define e (inlet 
             'x (let ((local-x 3)) ; x's initial value
 		 (dilambda
 		   (lambda () local-x)
@@ -2612,7 +2612,7 @@ adding all the argument's bindings to the new environment.
 
 <blockquote>
 <div class="indented">
-<p>I orignally used a bunch of foolishly pompous names for the environment functions.
+<p>I originally used a bunch of foolishly pompous names for the environment functions.
 They are still available for backwards compatibility:
 </p>
 
@@ -2794,11 +2794,11 @@ function if it exists.  A bare-bones example:
 </p>
 
 <pre class="indented">
-&gt; (abs (openlet (inlet* 'abs (lambda (x) 47))))
+&gt; (abs (openlet (inlet 'abs (lambda (x) 47))))
 47
 &gt; (define* (f1 (a 1)) (if (real? a) (abs a) ((a 'f1) a)))
 f1
-&gt; (f1 :a (openlet (inlet* 'f1 (lambda (e) 47))))
+&gt; (f1 :a (openlet (inlet 'f1 (lambda (e) 47))))
 47
 </pre>
 
@@ -2810,7 +2810,7 @@ A slightly more complex example:
 
 <pre class="indented">
 (let ((e1 (openlet 
-	   (inlet* 
+	   (inlet 
 	    'x 3
 	    '* (lambda args
 		 (if (number? (car args))
@@ -3164,7 +3164,7 @@ Here's an idle thought:
     (set! make-fvector
 	  (lambda* (len (init 0.0)) 
 	    (<em class=red>openlet</em>
-	     (inlet* 'v (make-vector len (-&gt;float init))
+	     (inlet 'v (make-vector len (-&gt;float init))
 			   'type type
 			   'length (lambda (f) len)
 			   'object-&gt;string (lambda (f . args) "#&lt;fvector&gt;")
@@ -3256,12 +3256,12 @@ know the field names in advance,
 </p>
 <pre class="indented">
 (openlet  ; make it appear to be empty to the rest of s7
-  (inlet* 'object-&gt;string   (lambda args "#&lt;environment&gt;")
+  (inlet 'object-&gt;string   (lambda args "#&lt;environment&gt;")
            'map             (lambda args ())
            'for-each        (lambda args #&lt;unspecified&gt;)
   	   'let-&gt;list       (lambda args ())
            'length          (lambda args 0)
-	   'copy            (lambda args (inlet*))
+	   'copy            (lambda args (inlet))
  	   'open #t
 	   'coverlet        (lambda (e) (set! (e 'open) #f) e)
 	   'openlet         (lambda (e) (set! (e 'open) #t) e)
@@ -4459,7 +4459,7 @@ a          ; here s7 waited for me to type "a" in the terminal
 <pre class="indented">
 (define (call-with-input-vector v proc)
   (let ((i -1))
-    (proc (openlet (inlet* 'read (lambda (p) (v (set! i (+ i 1)))))))))
+    (proc (openlet (inlet 'read (lambda (p) (v (set! i (+ i 1)))))))))
 </pre>
 
 <p>Here the IO port is an open environment that redefines the "read" function so that it
@@ -4469,7 +4469,7 @@ the dumb "lambda" (see s7test.scm for a couple examples). A more useful example:
 </p>
 <pre class="indented">
 (openlet          ; a soft port for format that sends its output to *stderr*
-  (inlet* 'format    ;   and returns the string
+  (inlet 'format    ;   and returns the string
 	        (lambda (port str . args)
 		  (let ((result (apply format #f str args)))
 		    (display result *stderr*)
@@ -5625,7 +5625,7 @@ choice here is that speed trumps that ol' hobgoblin consistency.  If you want to
 loading code that calls gcd. 
 </p>
 
-<!-- another case:  (with-let (inlet* '+ -) (+ 2 3)) -> 5 -->
+<!-- another case:  (with-let (inlet '+ -) (+ 2 3)) -> 5 -->
 
 </div>
 
@@ -7265,7 +7265,7 @@ int main(int argc, char **argv)
 
 /*    &gt; (our-abs -1)
  *    1.0
- *    &gt; (our-abs (openlet (inlet* 'value -3.0 'abs (lambda (x) (abs (x 'value))))))
+ *    &gt; (our-abs (openlet (inlet 'value -3.0 'abs (lambda (x) (abs (x 'value))))))
  *    3.0
  */
 
@@ -9194,7 +9194,7 @@ interpret the argument as an s7 value and display it
 end
 # the current expression is sc-&gt;cur_code
 # the current environment is sc-&gt;envir
-# the error environment is sc-&gt;error_env
+# the error environment is sc-&gt;owlet
 # so for example, to see the current local variables, s7p sc-&gt;envir
 
 define s7eval

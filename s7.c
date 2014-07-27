@@ -1040,7 +1040,7 @@ typedef struct s7_cell {
 
     struct {                       /* environments (frames) */
       s7_pointer slots, nxt;
-      long long int id;            /* id of global_env is -1 */
+      long long int id;            /* id of rootlet is -1 */
       union {
 	struct {
 	  s7_pointer function;     /* __func__ (code) if this is a closure environment */
@@ -1173,16 +1173,16 @@ struct s7_scheme {
   s7_pointer GC_NIL;                  /* a marker for an unoccupied slot in sc->protected_objects (and other similar stuff) */
   
   s7_pointer symbol_table;            /* symbol table */
-  s7_pointer global_env;              /* global environment */
-  s7_Int global_env_entries;
-  s7_pointer initial_env;             /* original bindings of predefined functions */
+  s7_pointer rootlet;                 /* global environment */
+  s7_Int rootlet_entries;
+  s7_pointer unlet;             /* original bindings of predefined functions */
   
   s7_pointer input_port;              /* current-input-port */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
   s7_pointer output_port;             /* current-output-port */
   s7_pointer error_port;              /* current-error-port */
-  s7_pointer error_env;               /* the environment returned by (owlet) */
-  s7_pointer error_type, error_data, error_code, error_line, error_file; /* error_env slots */
+  s7_pointer owlet;               /* the environment returned by (owlet) */
+  s7_pointer error_type, error_data, error_code, error_line, error_file; /* owlet slots */
   s7_pointer standard_input, standard_output, standard_error;
 
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
@@ -1251,7 +1251,7 @@ struct s7_scheme {
   s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, IS_CHAR_ALPHABETIC, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
   s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, IS_CHAR_LOWER_CASE, IS_CHAR_NUMERIC, IS_CHAR_READY, CHAR_UPCASE, IS_CHAR_UPPER_CASE;
   s7_pointer IS_CHAR_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, IS_COMPLEX, CONS, IS_CONSTANT, IS_CONTINUATION, COPY, COS, COSH, C_POINTER, IS_C_POINTER;
-  s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_LET, ENVIRONMENT, LET_REF, LET_SET, INLET_STAR, LET_TO_LIST;
+  s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_LET, INLET, LET_REF, LET_SET, LET_TO_LIST;
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
@@ -3873,14 +3873,14 @@ static void mark_op_stack(s7_scheme *sc)
 }
 
 
-static void mark_global_env(s7_scheme *sc)
+static void mark_rootlet(s7_scheme *sc)
 {
   s7_pointer ge;
   s7_pointer *tmp, *top;
 
-  ge = sc->global_env;
+  ge = sc->rootlet;
   tmp = vector_elements(ge);
-  top = (s7_pointer *)(tmp + sc->global_env_entries);
+  top = (s7_pointer *)(tmp + sc->rootlet_entries);
 
   set_mark(ge);
 
@@ -3932,10 +3932,10 @@ static int gc(s7_scheme *sc)
 #endif
     }
 
-  mark_global_env(sc);
+  mark_rootlet(sc);
   S7_MARK(sc->args);
   mark_environment(sc->envir);
-  mark_environment(sc->error_env);
+  mark_environment(sc->owlet);
   S7_MARK(sc->code);
   S7_MARK(sc->cur_code);
   mark_stack_1(sc->stack, s7_stack_top(sc));
@@ -5266,8 +5266,8 @@ static int environment_length(s7_scheme *sc, s7_pointer e)
   int i;
   s7_pointer p;
 
-  if (e == sc->global_env)
-    return(sc->global_env_entries);
+  if (e == sc->rootlet)
+    return(sc->rootlet_entries);
 
   if (has_methods(e))
     {
@@ -5287,7 +5287,7 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
   s7_pointer slot;
 
   if ((!is_let(env)) ||
-      (env == sc->global_env))
+      (env == sc->rootlet))
     {
       s7_pointer ge;
 
@@ -5301,15 +5301,15 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 	  s7_remove_from_heap(sc, closure_body(value));
 	}
 
-      ge = sc->global_env;
+      ge = sc->rootlet;
       slot = permanent_slot(symbol, value);
-      vector_element(ge, sc->global_env_entries++) = slot;
-      if (sc->global_env_entries >= vector_length(ge))
+      vector_element(ge, sc->rootlet_entries++) = slot;
+      if (sc->rootlet_entries >= vector_length(ge))
 	{
 	  int i;
 	  vector_length(ge) *= 2;
 	  vector_elements(ge) = (s7_pointer *)realloc(vector_elements(ge), vector_length(ge) * sizeof(s7_pointer));
-	  for (i = sc->global_env_entries; i < vector_length(ge); i++)
+	  for (i = sc->rootlet_entries; i < vector_length(ge); i++)
 	    vector_element(ge, i) = sc->NIL;
 	}
 
@@ -5378,7 +5378,7 @@ static s7_pointer make_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value
 
 /* -------- unlet -------- */
 
-#define INITIAL_ENV_ENTRIES 512
+#define UNLET_ENTRIES 512
 
 static void save_unlet(s7_scheme *sc)
 {
@@ -5388,15 +5388,15 @@ static void save_unlet(s7_scheme *sc)
   s7_pointer x;
   s7_pointer *inits;
 
-  sc->initial_env = (s7_pointer)calloc(1, sizeof(s7_cell));
-  set_type(sc->initial_env, T_VECTOR);
-  vector_length(sc->initial_env) = INITIAL_ENV_ENTRIES;
-  vector_elements(sc->initial_env) = (s7_pointer *)malloc(INITIAL_ENV_ENTRIES * sizeof(s7_pointer));
-  vector_getter(sc->initial_env) = default_vector_getter;
-  vector_setter(sc->initial_env) = default_vector_setter;
-  inits = vector_elements(sc->initial_env);
-  s7_vector_fill(sc, sc->initial_env, sc->NIL);
-  heap_location(sc->initial_env) = NOT_IN_HEAP;
+  sc->unlet = (s7_pointer)calloc(1, sizeof(s7_cell));
+  set_type(sc->unlet, T_VECTOR);
+  vector_length(sc->unlet) = UNLET_ENTRIES;
+  vector_elements(sc->unlet) = (s7_pointer *)malloc(UNLET_ENTRIES * sizeof(s7_pointer));
+  vector_getter(sc->unlet) = default_vector_getter;
+  vector_setter(sc->unlet) = default_vector_setter;
+  inits = vector_elements(sc->unlet);
+  s7_vector_fill(sc, sc->unlet, sc->NIL);
+  heap_location(sc->unlet) = NOT_IN_HEAP;
 
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
@@ -5416,7 +5416,7 @@ static void save_unlet(s7_scheme *sc)
 
 static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
 {
-  /* add sc->initial_env bindings to the current environment */
+  /* add sc->unlet bindings to the current environment */
   #define H_unlet "(unlet) establishes the original bindings of all the predefined functions"
 
   /* slightly confusing:
@@ -5433,9 +5433,9 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
   s7_pointer x, sym;
 
   sc->w = new_frame_in_env(sc, sc->envir);
-  inits = vector_elements(sc->initial_env);
+  inits = vector_elements(sc->unlet);
 
-  for (i = 0; (i < INITIAL_ENV_ENTRIES) && (is_slot(inits[i])); i++)
+  for (i = 0; (i < UNLET_ENTRIES) && (is_slot(inits[i])); i++)
     {
       x = slot_value(inits[i]);
       sym = slot_symbol(inits[i]);
@@ -5479,7 +5479,7 @@ static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
 
   e = car(args);
   check_method(sc, e, sc->OPENLET, args);
-  if (((is_let(e)) && (e != sc->global_env)) ||
+  if (((is_let(e)) && (e != sc->rootlet)) ||
       (is_closure(e)) || (is_closure_star(e)) ||
       ((is_c_object(e)) && (c_object_environment(e) != sc->NIL)))
     {
@@ -5497,7 +5497,7 @@ static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
 
   e = car(args);
   check_method(sc, e, sc->COVERLET, args);
-  if (((is_let(e)) && (e != sc->global_env)) ||
+  if (((is_let(e)) && (e != sc->rootlet)) ||
       (is_closure(e)) || (is_closure_star(e)) ||
       ((is_c_object(e)) && (c_object_environment(e) != sc->NIL)))
     {
@@ -5532,10 +5532,10 @@ static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e
 {
   s7_pointer x;
   
-  if (old_e == sc->global_env) 
+  if (old_e == sc->rootlet) 
     return;
 
-  if (new_e != sc->global_env)
+  if (new_e != sc->rootlet)
     {
       for (x = environment_slots(old_e); is_slot(x); x = next_slot(x))
 	ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
@@ -5576,7 +5576,7 @@ environment."
 
   e = car(args);
   if (is_null(e))
-    e = sc->global_env;
+    e = sc->rootlet;
   else
     {
       check_method(sc, e, sc->VARLET, args);
@@ -5584,7 +5584,7 @@ environment."
 	return(wrong_type_argument_with_type(sc, sc->VARLET, small_int(1), e, AN_ENVIRONMENT));
     }
   
-  if (e == sc->global_env)
+  if (e == sc->rootlet)
     {
       for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
 	{
@@ -5660,7 +5660,7 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 {
   s7_pointer new_e;
 
-  if (e == sc->global_env)
+  if (e == sc->rootlet)
     new_e = new_frame_in_env(sc, sc->NIL);
   else new_e = new_frame_in_env(sc, e);
   if (has_methods(e)) set_has_methods(new_e);
@@ -5673,23 +5673,41 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 
       for (i = 2, x = bindings; is_not_null(x); i++, x = cdr(x))
 	{
-	  s7_pointer p;
+	  s7_pointer p, sym, val;
 
 	  p = car(x);
-	  if (is_pair(p))
+	  switch (type(p))
 	    {
-	      s7_pointer sym, val;
+	    case T_SYMBOL:
+	      if (is_keyword(p))
+		sym = keyword_symbol(p);
+	      else sym = p;
+	      i++;
+	      if (!is_pair(cdr(x)))
+		return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), p, A_BINDING));		
+	      x = cdr(x);
+	      val = car(x);
+	      break;
 
+	    case T_PAIR:
 	      sym = car(p);
-	      if (!is_symbol(sym))
-		return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), p, A_BINDING));
-
 	      val = cdr(p);
-	      if (is_immutable(sym))
-		return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
-	      s7_make_slot(sc, new_e, sym, val);
+	      break;
+
+	    case T_ENVIRONMENT:
+	      append_environment(sc, new_e, check_c_obj_env(sc, p, caller));
+	      continue;
+
+	    default:
+	      sym = p;
+	      break;
 	    }
-	  else append_environment(sc, new_e, check_c_obj_env(sc, p, caller));
+
+	  if (!is_symbol(sym))
+	    return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), p, A_SYMBOL));
+	  if (is_immutable(sym))
+	    return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+	  s7_make_slot(sc, new_e, sym, val);
 	}
     }
   return(new_e);
@@ -5720,7 +5738,7 @@ new environment."
 
   e = car(args);
   if (is_null(e))
-    e = sc->global_env;
+    e = sc->rootlet;
   else
     {
       check_method(sc, e, sc->SUBLET, args);
@@ -5734,39 +5752,10 @@ new environment."
 static s7_pointer g_inlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_inlet "(environment ...) adds its \
-arguments (each an environment or a cons: symbol . value) to a new environment, and returns the \
+arguments, each an environment, a cons: '(symbol . value), or a keyword/value pair, to a new environment, and returns the \
 new environment."
 
-  return(sublet_1(sc, sc->global_env, args, sc->ENVIRONMENT));
-}
-
-
-static s7_pointer g_inlet_star(s7_scheme *sc, s7_pointer args)
-{
-  #define H_inlet_star "(environment* ...) adds its arguments to a new environment, and returns the \
-new environment.  The arguments should be in the order symbol its-value."
-
-  s7_pointer new_e, sym, val, p, q;
-  int i;
-
-  new_e = new_frame_in_env(sc, sc->NIL);
-  sc->temp3 = new_e; /* GC protect it */
-  for (i = 2, p = args; is_not_null(p); i++, p = cdr(q))
-    {
-      q = cdr(p);
-      if (!is_pair(q))
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_protected_string(sc, "environment* symbol ~S has no value"), car(p))));
-
-      sym = car(p);
-      if (!is_symbol(sym))
-	return(simple_wrong_type_argument_with_type(sc, sc->INLET_STAR, sym, A_SYMBOL));
-
-      val = car(q);
-      if (is_immutable(sym))
-	return(wrong_type_argument_with_type(sc, sc->INLET_STAR, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
-      s7_make_slot(sc, new_e, sym, val);
-    }
-  return(new_e);
+  return(sublet_1(sc, sc->rootlet, args, sc->INLET));
 }
 
 
@@ -5775,13 +5764,13 @@ s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
   s7_pointer x;
   sc->temp3 = sc->w;
   sc->w = sc->NIL;
-  if (env == sc->global_env)
+  if (env == sc->rootlet)
     {
       unsigned int i, lim2;
       s7_pointer *entries;
 
       entries = vector_elements(env);
-      lim2 = sc->global_env_entries;
+      lim2 = sc->rootlet_entries;
       if (lim2 & 1) lim2--;
 
       for (i = 0; i <lim2; )
@@ -5789,7 +5778,7 @@ s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
 	  sc->w = cons_unchecked(sc, cons(sc, slot_symbol(entries[i]), slot_value(entries[i])), sc->w); i++;
 	  sc->w = cons_unchecked(sc, cons_unchecked(sc, slot_symbol(entries[i]), slot_value(entries[i])), sc->w); i++;
 	}
-      if (lim2 < sc->global_env_entries)
+      if (lim2 < sc->rootlet_entries)
 	sc->w = cons_unchecked(sc, cons(sc, slot_symbol(entries[i]), slot_value(entries[i])), sc->w); 
     }
   else
@@ -5827,7 +5816,7 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   /* (let ((a 1)) ((curlet) 'a)) 
    * ((rootlet) 'abs) 
    */
-  if (env == sc->global_env)
+  if (env == sc->rootlet)
     {
       y = global_slot(symbol);
       if (is_slot(y))
@@ -5912,7 +5901,7 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 {
   s7_pointer x, y;
 
-  if (env == sc->global_env)
+  if (env == sc->rootlet)
     {
       if (is_immutable(symbol))  /* (let-set! (rootlet) :key #f) */
 	return(simple_wrong_type_argument_with_type(sc, sc->LET_SET, symbol, A_NON_CONSTANT_SYMBOL));	
@@ -6003,8 +5992,8 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
     {
       s7_pointer new_e;
 
-      if (env == sc->global_env)   /* (copy (rootlet)) or (copy (funclet abs)) etc */
-	return(sc->global_env);
+      if (env == sc->rootlet)   /* (copy (rootlet)) or (copy (funclet abs)) etc */
+	return(sc->rootlet);
 
       /* we can't make copy handle environments-as-objects specially because the
        *   make-object function in define-class uses copy to make a new object!
@@ -6029,7 +6018,7 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 static s7_pointer g_rootlet(s7_scheme *sc, s7_pointer ignore)
 {
   #define H_rootlet "(rootlet) returns the current top-level definitions (symbol bindings)."
-  return(sc->global_env);
+  return(sc->rootlet);
 }
 
 /* as with the symbol-table, this function can lead to disaster -- user could
@@ -6040,7 +6029,7 @@ static s7_pointer g_rootlet(s7_scheme *sc, s7_pointer ignore)
 
 s7_pointer s7_rootlet(s7_scheme *sc) 
 {
-  return(sc->global_env);
+  return(sc->rootlet);
 }
 
 
@@ -6051,7 +6040,7 @@ static s7_pointer g_curlet(s7_scheme *sc, s7_pointer args)
   sc->capture_env_counter++;
   if (is_let(sc->envir))
     return(sc->envir);
-  return(sc->global_env);
+  return(sc->rootlet);
 }
 
 
@@ -6088,9 +6077,9 @@ static s7_pointer g_outlet(s7_scheme *sc, s7_pointer args)
       check_method(sc, env, sc->OUTLET, args);
       return(simple_wrong_type_argument_with_type(sc, sc->OUTLET, env, AN_ENVIRONMENT));  
     }
-  if ((env == sc->global_env) ||
+  if ((env == sc->rootlet) ||
       (is_null(next_environment(env))))
-    return(sc->global_env);
+    return(sc->rootlet);
   return(next_environment(env));
 }
 
@@ -6114,10 +6103,10 @@ static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
   if (new_outer == env)
     return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_protected_string(sc, "can't set the outlet of env to env!"))));
   */
-  if (new_outer == sc->global_env)
+  if (new_outer == sc->rootlet)
     new_outer = sc->NIL;
 
-  if (env != sc->global_env)
+  if (env != sc->rootlet)
     next_environment(env) = new_outer;
   return(new_outer);
 }
@@ -6299,7 +6288,7 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
 	  check_method(sc, local_env, sc->SYMBOL_TO_VALUE, args);
 	  return(wrong_type_argument_with_type(sc, sc->SYMBOL_TO_VALUE, small_int(2), local_env, AN_ENVIRONMENT));
 	}
-      if (local_env == sc->global_env)
+      if (local_env == sc->rootlet)
 	{
 	  x = global_slot(sym);
 	  if (is_slot(x))
@@ -6509,7 +6498,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 	  return(wrong_type_argument_with_type(sc, sc->IS_DEFINED, small_int(2), e, AN_ENVIRONMENT));
 	}
 
-      if (e == sc->global_env)
+      if (e == sc->rootlet)
 	return(make_boolean(sc, global_slot(sym) != sc->UNDEFINED));
 
       x = find_local_symbol(sc, e, sym); 
@@ -6564,7 +6553,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
 {
   s7_pointer x;
 
-  if (envir == sc->global_env) envir = sc->NIL; /* for C-side backwards compatibility */
+  if (envir == sc->rootlet) envir = sc->NIL; /* for C-side backwards compatibility */
   x = find_local_symbol(sc, envir, symbol);
   if (is_slot(x)) 
     slot_set_value(x, value); 
@@ -22864,7 +22853,7 @@ defaults to the global environment.  To load into the current environment instea
       e = cadr(args);
       if (!is_let(e))
 	return(wrong_type_argument_with_type(sc, sc->LOAD, small_int(2), e, AN_ENVIRONMENT));
-      if (e == sc->global_env)
+      if (e == sc->rootlet)
 	sc->envir = sc->NIL;
       else sc->envir = e; 
     }
@@ -23312,7 +23301,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
       e = cadr(args);
       if (!is_let(e))
  	return(wrong_type_argument_with_type(sc, sc->EVAL_STRING, small_int(2), e, AN_ENVIRONMENT));
-      if (e == sc->global_env)
+      if (e == sc->rootlet)
 	sc->envir = sc->NIL;
       else sc->envir = e;
     }
@@ -23896,7 +23885,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	  break;
 
 	case T_ENVIRONMENT:
-	  if (top == sc->global_env)
+	  if (top == sc->rootlet)
 	    collect_vector_info(sc, ci, top, stop_at_print_length);
 	  else
 	    {
@@ -24041,7 +24030,7 @@ static s7_pointer g_cyclic_sequences(s7_scheme *sc, s7_pointer args)
   
   obj = car(args);
   if (has_structure(obj))
-    /* (obj != sc->global_env) -- why this? */
+    /* (obj != sc->rootlet) -- why this? */
     {
       ci = make_shared_info(sc, obj, false); /* false=don't stop at print length (vectors etc) */
       if (ci)
@@ -24753,7 +24742,7 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 	  return;
 	}
     }
-  if (obj == sc->global_env)
+  if (obj == sc->rootlet)
     {
       if (use_write == USE_READABLE_WRITE)
 	port_write_string(port)(sc, "(rootlet)", 9, port);
@@ -24769,7 +24758,7 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
        */
       if (use_write == USE_READABLE_WRITE)
 	{
-	  if (obj == sc->error_env)
+	  if (obj == sc->owlet)
 	    port_write_string(port)(sc, "(owlet)", 8, port);
 	  else
 	    {
@@ -24858,7 +24847,7 @@ static void write_macro_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 static s7_pointer match_symbol(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 {
   s7_pointer y, le;
-  for (le = e; is_let(le) && (le != sc->global_env); le = next_environment(le))
+  for (le = e; is_let(le) && (le != sc->rootlet); le = next_environment(le))
     for (y = environment_slots(le); is_slot(y); y = next_slot(y))
       if (slot_symbol(y) == symbol)
 	return(y);
@@ -25438,7 +25427,7 @@ static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer por
 
   if (has_structure(obj))
     {
-      if (obj != sc->global_env)
+      if (obj != sc->rootlet)
 	ci = make_shared_info(sc, obj, use_write != USE_READABLE_WRITE);
       if ((ci) &&
 	  (use_write == USE_READABLE_WRITE))
@@ -25466,7 +25455,7 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
 
   if (has_structure(obj))
     {
-      if (obj != sc->global_env)
+      if (obj != sc->rootlet)
 	ci = make_shared_info(sc, obj, use_write != USE_READABLE_WRITE);
       if ((ci) &&
 	  (use_write == USE_READABLE_WRITE))
@@ -26283,7 +26272,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		if (!columnized)
 		  {
 		    if ((has_structure(obj)) &&
-			(obj != sc->global_env))
+			(obj != sc->rootlet))
 		      {
 			shared_info *ci = NULL;
 			ci = make_shared_info(sc, obj, choice != USE_READABLE_WRITE);
@@ -33081,7 +33070,7 @@ s7_pointer s7_funclet(s7_scheme *sc, s7_pointer p)
 { 
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     return(closure_environment(p));
-  return(sc->global_env);
+  return(sc->rootlet);
 }
 
 
@@ -33111,7 +33100,7 @@ static s7_pointer g_funclet(s7_scheme *sc, s7_pointer args)
   e = find_environment(sc, p);
   if ((is_null(e)) &&
       (!is_c_object(p)))
-    return(sc->global_env);
+    return(sc->rootlet);
 
   return(e);
 }
@@ -34629,7 +34618,7 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
     }
   else e = sc->envir;
 
-  if ((e == sc->global_env) ||
+  if ((e == sc->rootlet) ||
       (e == sc->NIL))
     return(s7_symbol_access(sc, sym));
 
@@ -34670,7 +34659,7 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
       (func != sc->F))
     return(s7_wrong_type_arg_error(sc, "set! symbol-access", 3, func, "a function or #f"));
 
-  if ((e == sc->global_env) ||
+  if ((e == sc->rootlet) ||
       (e == sc->NIL))
     return(s7_symbol_set_access(sc, sym, func));
 
@@ -34904,8 +34893,8 @@ static bool environments_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, sh
 
       if (ex == ey)
 	return(true);
-      if ((ex == sc->global_env) ||
-	  (ey == sc->global_env))
+      if ((ex == sc->rootlet) ||
+	  (ey == sc->rootlet))
 	return(false);
 
       /* first check that we have the same symbols -- this requires two checks! */
@@ -35884,7 +35873,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 
     case T_ENVIRONMENT:  
       check_method(sc, source, sc->COPY, args);
-      if (source == sc->global_env)
+      if (source == sc->rootlet)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_protected_string(sc, "a sequence other than the global environment")));
       get = env_getter;            
       end = environment_length(sc, source);   
@@ -35925,7 +35914,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_C_OBJECT:     set = c_object_setter;     dest_len = object_length_to_int(sc, dest); break;
 
     case T_ENVIRONMENT: 
-      if (source == sc->global_env)
+      if (source == sc->rootlet)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(2), dest, make_protected_string(sc, "a sequence other than the global environment")));
       set = env_setter;          
       dest_len = source_len;                     /* grows via set, so dest_len isn't relevant */
@@ -36381,7 +36370,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer stacktrace_find_caller(s7_scheme *sc, s7_pointer e)
 {
-  if ((is_let(e)) && (e != sc->global_env))
+  if ((is_let(e)) && (e != sc->rootlet))
     {
       if (is_function_env(e))
 	return(environment_function(e));
@@ -36408,8 +36397,8 @@ static int stacktrace_find_error_hook_quit(s7_scheme *sc)
 
 static bool stacktrace_in_error_handler(s7_scheme *sc, int loc)
 {
-  return((next_environment(sc->error_env) == sc->envir) ||
-	 (stacktrace_find_environment(sc, loc * 4, next_environment(sc->error_env))) ||
+  return((next_environment(sc->owlet) == sc->envir) ||
+	 (stacktrace_find_environment(sc, loc * 4, next_environment(sc->owlet))) ||
 	 (stacktrace_find_error_hook_quit(sc) > 0));
 }
 
@@ -36605,10 +36594,10 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
 	  s7_pointer cur_env, f;
 
 	  errstr = s7_object_to_c_string(sc, err_code);
-	  cur_env = next_environment(sc->error_env);
+	  cur_env = next_environment(sc->owlet);
 	  f = stacktrace_find_caller(sc, cur_env); /* this is a symbol */
 	  if ((is_let(cur_env)) &&
-	      (cur_env != sc->global_env))
+	      (cur_env != sc->rootlet))
 	    notes = stacktrace_walker(sc, err_code, cur_env, NULL, gc_syms, code_cols, total_cols, notes_start_col, as_comment);
 	  str = stacktrace_add_func(sc, f, err_code, errstr, notes, code_cols, as_comment);
 	  free(errstr);
@@ -36656,7 +36645,7 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
 			  return(str);
 			}
 
-		      if ((is_let(e)) && (e != sc->global_env))
+		      if ((is_let(e)) && (e != sc->rootlet))
 			notes = stacktrace_walker(sc, code, e, NULL, gc_syms, code_cols, total_cols, notes_start_col, as_comment);
 		      newstr = stacktrace_add_func(sc, f, code, codestr, notes, code_cols, as_comment);
 		      free(codestr);
@@ -37221,12 +37210,12 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 }
 
 
-static s7_pointer init_error_env(s7_scheme *sc)
+static s7_pointer init_owlet(s7_scheme *sc)
 {
   s7_pointer e;
   int gc_loc;
 
-  e = new_frame_in_env(sc, sc->global_env);
+  e = new_frame_in_env(sc, sc->rootlet);
   gc_loc = s7_gc_protect(sc, e);
 
   sc->error_type = s7_make_slot(sc, e, make_symbol(sc, "error-type"), sc->F);  /* the error type or tag ('division-by-zero) */
@@ -37244,7 +37233,7 @@ static s7_pointer g_owlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_owlet "(owlet) returns the environment at the point of the last error. \
 It has the additional local variables: error-type, error-data, error-code, error-line, and error-file."
-  return(sc->error_env);
+  return(sc->owlet);
 }
 
 /*  > (let ((a 32) (b "hiho")) (catch #t (lambda () (+ a b)) (lambda args (format #t "~{;~A~%~}" (owlet)))))
@@ -37532,7 +37521,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
   slot_set_value(sc->error_type, type);
   slot_set_value(sc->error_data, info);
-  next_environment(sc->error_env) = sc->envir;
+  next_environment(sc->owlet) = sc->envir;
 
   cur_code = sc->cur_code;
   slot_set_value(sc->error_code, cur_code);
@@ -38193,7 +38182,7 @@ static bool call_begin_hook(s7_scheme *sc)
       slot_set_value(sc->error_code, sc->cur_code);
       slot_set_value(sc->error_line, sc->F);
       slot_set_value(sc->error_file, sc->F);
-      next_environment(sc->error_env) = sc->envir;
+      next_environment(sc->owlet) = sc->envir;
 
       sc->value = s7_make_symbol(sc, "begin-hook-interrupt"); 
       /* otherwise the evaluator returns whatever random thing is in sc->value (normally #<closure>)
@@ -38311,10 +38300,10 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 {
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = code;
-  if ((e != sc->global_env) &&
+  if ((e != sc->rootlet) &&
       (is_let(e)))
     sc->envir = e; 
-  else sc->envir = sc->NIL; /* can't check is_let(e) because sc->global_env sets its type to t_env! */
+  else sc->envir = sc->NIL; /* can't check is_let(e) because sc->rootlet sets its type to t_env! */
   eval(sc, OP_BEGIN);
   return(sc->value);
 }
@@ -38324,7 +38313,7 @@ s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
 {
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = form;
-  if ((e != sc->global_env) &&
+  if ((e != sc->rootlet) &&
       (is_let(e)))
     sc->envir = e; 
   else sc->envir = sc->NIL;
@@ -38351,7 +38340,7 @@ pass (rootlet):\n\
       e = cadr(args);
       if (!is_let(e))
 	return(wrong_type_argument_with_type(sc, sc->EVAL, small_int(2), e, AN_ENVIRONMENT));
-      if (e == sc->global_env)
+      if (e == sc->rootlet)
 	sc->envir = sc->NIL;
       else sc->envir = e;
     }
@@ -55661,7 +55650,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer e, arg2, body;
 
 		e = find_symbol_checked(sc, cadr(code));         /* S of S0 above */
-		if (e == sc->global_env)
+		if (e == sc->rootlet)
 		  sc->envir = sc->NIL;
 		else 
 		  {
@@ -55673,7 +55662,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		body = closure_body(ecdr(code));
 		arg2 = cadr(caddr(car(body)));                   /* car(body): (let-set! gen 'fm fm) for example */
 		
-		if (e != sc->global_env)
+		if (e != sc->rootlet)
 		  {
 		    s7_pointer p;
 		    environment_id(e) = ++environment_number;
@@ -63312,7 +63301,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer e;
 	e = find_symbol_checked(sc, car(sc->code));
-	if (e == sc->global_env)
+	if (e == sc->rootlet)
 	  sc->envir = sc->NIL;
 	else 
 	  {
@@ -63376,7 +63365,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	e = sc->value;
 	if (!is_let(e))                    /* (with-let . "hi") */
 	  eval_type_error(sc, "with-let takes an environment argument: ~A", e);
-	if (e == sc->global_env)
+	if (e == sc->rootlet)
 	  sc->envir = sc->NIL;                             /* (with-let (rootlet) ...) */
 	else 
 	  {
@@ -68586,11 +68575,11 @@ s7_scheme *s7_init(void)
   sc->num_fdats = 8;
   sc->direct_str = s7_make_permanent_string(NULL);
 
-  sc->global_env = s7_make_vector(sc, 512);
-  type(sc->global_env) = T_ENVIRONMENT;
-  sc->global_env_entries = 0;
+  sc->rootlet = s7_make_vector(sc, 512);
+  type(sc->rootlet) = T_ENVIRONMENT;
+  sc->rootlet_entries = 0;
   for (i = 0; i < 512; i++)
-    vector_element(sc->global_env, i) = sc->NIL;
+    vector_element(sc->rootlet, i) = sc->NIL;
   sc->envir = sc->NIL;
   
   if (!already_inited)
@@ -68933,7 +68922,7 @@ s7_scheme *s7_init(void)
   sc->FORMAT_ERROR =   make_symbol(sc, "format-error");
   sc->OUT_OF_RANGE =   make_symbol(sc, "out-of-range");
 
-  sc->error_env = init_error_env(sc);
+  sc->owlet = init_owlet(sc);
 
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
   for (i = 0; i < 6; i++)
@@ -69003,8 +68992,7 @@ s7_scheme *s7_init(void)
                               s7_define_constant_function(sc, "unlet",               g_unlet,                  0, 0, false, H_unlet);
   sc->SUBLET =                s7_define_function(sc,      "sublet",                  g_sublet,                 1, 0, true,  H_sublet);
   sc->VARLET =                s7_define_function(sc,      "varlet",                  g_varlet,                 1, 0, true, H_varlet);
-  sc->ENVIRONMENT =           s7_define_safe_function(sc, "inlet",                 g_inlet,                0, 0, true,  H_inlet);
-  sc->INLET_STAR =          s7_define_safe_function(sc, "inlet*",                g_inlet_star,           0, 0, true,  H_inlet_star);
+  sc->INLET =                 s7_define_safe_function(sc, "inlet",                   g_inlet,                  0, 0, true,  H_inlet);
   sc->IS_LET =                s7_define_safe_function(sc, "let?",                    g_is_let,                 1, 0, false, H_is_let);
   sc->LET_TO_LIST =           s7_define_safe_function(sc, "let->list",               g_let_to_list,            1, 0, false, H_let_to_list);
                               s7_define_safe_function(sc, "owlet",                   g_owlet,                  0, 0, false, H_owlet);
@@ -69014,7 +69002,7 @@ s7_scheme *s7_init(void)
   sc->LET_REF =               s7_define_safe_function(sc, "let-ref",                 g_let_ref,                2, 0, false, H_let_ref);
   sc->LET_SET =               s7_define_safe_function(sc, "let-set!",                g_let_set,                3, 0, false, H_let_set);
   /* the 2 and 3 arg choice here might not be optimal:
-   *   (define e1 (openlet (inlet* 'x 32 'let-ref (lambda (obj) (obj 'x)) 'let-set! (lambda (obj val) (set! (obj 'x) val)))))
+   *   (define e1 (openlet (inlet 'x 32 'let-ref (lambda (obj) (obj 'x)) 'let-set! (lambda (obj val) (set! (obj 'x) val)))))
    *   (e1) -> environment as applicable object takes one argument: ()
    *   (e1 2) -> (e1 2): too many arguments: (e1 2)
    * and similarly for the set case.  We can add an ignored 2nd arg, but it's not pretty.
@@ -69488,7 +69476,7 @@ s7_scheme *s7_init(void)
 
   s7_define_safe_function(sc, "-s7-stack-top-", g_stack_top, 0, 0, false, "current stack top");
   sc->STACKTRACE = s7_define_safe_function(sc, "stacktrace", g_stacktrace, 0, 5, false, H_stacktrace);
-  sc->stacktrace_env = s7_sublet(sc, sc->global_env, 
+  sc->stacktrace_env = s7_sublet(sc, sc->rootlet, 
 					      s7_list(sc, 5, 
 						      cons(sc, s7_make_symbol(sc, "max-frames"), small_int(3)),
 						      cons(sc, s7_make_symbol(sc, "code-cols"), small_int(45)),
@@ -69815,8 +69803,8 @@ s7_scheme *s7_init(void)
                         (define close-environment coverlet)     \n\
                         (define environment-ref let-ref)        \n\
                         (define environment-set! let-set!)      \n\
-                        (define environment inlet)            \n\
-                        (define environment* inlet*)          \n\
+                        (define environment inlet)              \n\
+                        (define environment* inlet)             \n\
                         (define make-procedure-with-setter dilambda) \n\
                         (define procedure-with-setter? dilambda?)");
 
@@ -70033,7 +70021,4 @@ int main(int argc, char **argv)
  * define* in cload, and complex numbers
  * check again (define (make-func) (define (a-func a) (+ a 1))) -- the opt problem is now fixed -- where it this business?? line 44013
  * need a way to easily get library versions for reader-cond
- * environment in *.c, also the export funcs like s7_sublet
- *   need C side to get s7test to run because method names are symbols
- *   remake index! html-check etc
  */

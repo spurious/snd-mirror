@@ -268,8 +268,8 @@
 			    (stacked-list ((if (symbol? (cadr obj)) cdddr cddr) obj) (+ column *pretty-print-spacing*)))
 			(write-char #\) port))))
 		 
-		 ((environment* inlet*)
-		  (format port "(inlet*")
+		 ((environment* inlet)
+		  (format port "(inlet")
 		  (if (pair? (cdr obj))
 		      (do ((lst (cdr obj) (cddr lst)))
 			  ((or (not (pair? lst))

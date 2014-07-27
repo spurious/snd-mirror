@@ -885,7 +885,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 (define (call-with-input-vector v proc)
   (let ((i -1))
     (proc (openlet
-	   (inlet* 'read (lambda (p)
+	   (inlet 'read (lambda (p)
 			     (v (set! i (+ i 1)))))))))
 
 (define (call-with-output-vector proc)
@@ -899,7 +899,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			    (set! i (+ i 1))
 			    #<unspecified>))) ; that's what write/display return!
     (proc (openlet
-	   (inlet* 'write (lambda* (obj p)
+	   (inlet 'write (lambda* (obj p)
 			      ((if (not (let? p)) write write-to-vector) obj p))
 		     'display (lambda* (obj p)
 				((if (not (let? p)) display write-to-vector) obj p))
@@ -924,8 +924,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		pe))))
 
 (define (sub*let e . args)
-  "(sub*let e . args) is like sublet but accepts inlet* style args"
-  (sublet e (apply inlet* args)))
+  "(sub*let e . args) is like sublet but accepts inlet style args"
+  (sublet e (apply inlet args)))
 
 
 ;;; ----------------
@@ -1079,7 +1079,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     ((= i new-len) lst)
 		   (set! (lst i) (obj (+ i start)))))))
 
-	  (else             ; (subsequence (inlet* 'subsequence (lambda* (obj start end) "subseq")))
+	  (else             ; (subsequence (inlet 'subsequence (lambda* (obj start end) "subseq")))
 	   (catch #t        ; perhaps we should use (open-let? obj) instead?
 	     (lambda ()
 	       ((obj 'subsequence) obj start end))
@@ -1103,7 +1103,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 (define (mock-list seq)
   (openlet
-   (inlet*
+   (inlet
     'pair? (lambda (obj) #t)
     'value seq
     'member (lambda* (a b (c equal?))
@@ -1125,7 +1125,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 (define (make-object . args)
   (openlet
-   (apply inlet* args)))
+   (apply inlet args)))
 
 
 ;;; ----------------

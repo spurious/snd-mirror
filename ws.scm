@@ -827,8 +827,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		   ,(if methods
 		       `(sublet 
 			   (apply inlet ,methods)
-			 (inlet* ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
-		       `(inlet* 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
+			 (inlet ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
+		       `(inlet 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
 
 
 
