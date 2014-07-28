@@ -295,7 +295,7 @@ static s7_pointer g_make_block(s7_scheme *sc, s7_pointer args)
   g->size = (size_t)s7_integer(s7_car(args));
   g->data = (double *)calloc(g->size, sizeof(double));
   new_g = s7_make_object(sc, g_block_type, (void *)g);
-  s7_object_set_environment(new_g, g_block_methods);
+  s7_object_set_let(new_g, g_block_methods);
   s7_openlet(new_g);
   return(new_g);
 }

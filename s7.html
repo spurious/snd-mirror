@@ -1335,7 +1335,7 @@ mac
 <pre>
 &gt; (apply let '((a 2) (b 3)) '((+ a b)))
 5
-&gt; (eval '(+ a b) (inlet '(a . 2) '(b . 3)))
+&gt; (eval '(+ a b) (inlet 'a 2 'b 3))
 5
 &gt; ((apply lambda '(a b) '((+ a b))) 2 3)
 5
@@ -2882,18 +2882,19 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 		       ,methods)                     ; the incoming new methods
 
 		  ;; add an object-&gt;string method for this class (this is already a generic function).
-		  (list (cons 'object-&gt;string (lambda* (obj (use-write #t))
-				       (if (eq? use-write :readable)    ; write readably
-					   (format #f "(make-~A~{ :~A ~W~^~})" 
-						   ',class-name 
-						   (map (lambda (slot)
-							  (values (car slot) (cdr slot)))
-							obj))
-				           (format #f "#&lt;~A: ~{~A~^ ~}&gt;" 
-					           ',class-name
-					           (map (lambda (slot)
-						          (list (car slot) (cdr slot)))
-						        obj))))))
+		  (list (cons 'object-&gt;string 
+                              (lambda* (obj (use-write #t))
+				(if (eq? use-write :readable)    ; write readably
+				    (format #f "(make-~A~{ :~A ~W~^~})" 
+					    ',class-name 
+					    (map (lambda (slot)
+						   (values (car slot) (cdr slot)))
+						 obj))
+				    (format #f "#&lt;~A: ~{~A~^ ~}&gt;" 
+				            ',class-name
+					    (map (lambda (slot)
+					           (list (car slot) (cdr slot)))
+					         obj))))))
 		  (reverse! new-methods)))             ; the inherited methods, shadowed automatically
 
     (let ((new-class (openlet
@@ -3164,12 +3165,12 @@ Here's an idle thought:
     (set! make-fvector
 	  (lambda* (len (init 0.0)) 
 	    (<em class=red>openlet</em>
-	     (inlet 'v (make-vector len (-&gt;float init))
-			   'type type
-			   'length (lambda (f) len)
-			   'object-&gt;string (lambda (f . args) "#&lt;fvector&gt;")
-			   'let-set! (lambda (fv i val) (#_vector-set! (fv 'v) i (-&gt;float val)))
-			   'let-ref (lambda (fv i) (#_vector-ref (fv 'v) i))))))
+	     (inlet :v (make-vector len (-&gt;float init))
+	            :type type
+	   	    :length (lambda (f) len)
+		    :object-&gt;string (lambda (f . args) "#&lt;fvector&gt;")
+		    :let-set! (lambda (fv i val) (#_vector-set! (fv 'v) i (-&gt;float val)))
+		    :let-ref (lambda (fv i) (#_vector-ref (fv 'v) i))))))
     (set! fvector? (lambda (p)
 		     (and (let? p)
 			  (eq? (p 'type) type))))))
@@ -3256,18 +3257,18 @@ know the field names in advance,
 </p>
 <pre class="indented">
 (openlet  ; make it appear to be empty to the rest of s7
-  (inlet 'object-&gt;string   (lambda args "#&lt;environment&gt;")
-           'map             (lambda args ())
-           'for-each        (lambda args #&lt;unspecified&gt;)
-  	   'let-&gt;list       (lambda args ())
-           'length          (lambda args 0)
-	   'copy            (lambda args (inlet))
- 	   'open #t
-	   'coverlet        (lambda (e) (set! (e 'open) #f) e)
-	   'openlet         (lambda (e) (set! (e 'open) #t) e)
-	   'openlet?        (lambda (e) (e 'open))
-           ;; your secret data here
-           ))
+  (inlet 'object-&gt;string  (lambda args "#&lt;environment&gt;")
+         'map             (lambda args ())
+         'for-each        (lambda args #&lt;unspecified&gt;)
+  	 'let-&gt;list       (lambda args ())
+         'length          (lambda args 0)
+	 'copy            (lambda args (inlet))
+ 	 'open #t
+	 'coverlet        (lambda (e) (set! (e 'open) #f) e)
+	 'openlet         (lambda (e) (set! (e 'open) #t) e)
+	 'openlet?        (lambda (e) (e 'open))
+         ;; your secret data here
+         ))
 </pre>
 <p>(There are still at least two ways to tell that something is fishy).
 </p>
@@ -3519,44 +3520,8 @@ the same as <code>(set! x ...)</code>.  <code>(string-set! (values string) ...)<
 works because string-set! does evaluate its first argument.  <code>((values + 1 2) (values 3 4) 5)</code>
 is 15, as anyone would expect.
 </p>
+
 </div>
-
-
-<div class="indented">
-
-<p>I wrote all that and said "nobody needs multiple values!".  In desperation,
-</p>
-
-<table><tr><td>
-<div class="bluishbordered">
-<pre>
-(define (flatten lst)
-  (define (flatten-1 lst)
-    (cond ((null? lst) (values))
-	  ((not (pair? lst)) lst)
-	  (#t (values (flatten-1 (car lst))
-		      (flatten-1 (cdr lst))))))
-  (map values (list (flatten-1 lst))))
-</pre>
-</div>
-</td>
-<td></td>
-
-<td>
-<div class="brownishbordered">
-<pre>
-(define (boring-flatten x)
-  (cond ((null? x) ())
-        ((not (pair? x)) (list x))
-        (#t (append (boring-flatten (car x))
-		    (boring-flatten (cdr x))))))
-</pre>
-</div>
-</td>
-</tr>
-</table>
-</div>
-
 </blockquote>
 
 <!-- one place where multiple values might cause surprise:
@@ -4465,15 +4430,31 @@ a          ; here s7 waited for me to type "a" in the terminal
 <p>Here the IO port is an open environment that redefines the "read" function so that it
 returns the next element of a vector.  See stuff.scm for call-with-output-vector.
 The "proc" argument above can also be a macro, giving you a kludgey way to get around
-the dumb "lambda" (see s7test.scm for a couple examples). A more useful example:
+the dumb "lambda".  Here are more useful examples:
 </p>
 <pre class="indented">
-(openlet          ; a soft port for format that sends its output to *stderr*
-  (inlet 'format    ;   and returns the string
-	        (lambda (port str . args)
-		  (let ((result (apply format #f str args)))
-		    (display result *stderr*)
-		    result))))
+(openlet          ; a soft port for format that sends its output to *stderr* and returns the string
+  (inlet 'format (lambda (port str . args)
+ 	           (let ((result (apply format #f str args)))
+	             (display result *stderr*)
+	             result))))
+
+(define (open-output-log name)
+  ;; return a soft output port that does not hold its output file open
+  (define (logit name str)
+    (let ((p (open-output-file name "a")))
+      (display str p)
+      (close-output-port p)))
+  (openlet 
+   (inlet :name name
+	  :format (lambda (p str . args) (logit (p 'name) (apply format #f str args)))
+	  :write (lambda (obj p)         (logit (p 'name) (object->string obj #t)))
+	  :display (lambda (obj p)       (logit (p 'name) (object->string obj #f)))
+	  :write-string (lambda (str p)  (logit (p 'name) str))
+	  :write-char (lambda (ch p)     (logit (p 'name) (string ch)))
+	  :newline (lambda (p)           (logit (p 'name) (string #\newline)))
+	  :close-output-port (lambda (p) #f)
+	  :flush-output-port (lambda (p) #f))))
 </pre>
 </div>
 
@@ -7431,10 +7412,7 @@ int main(int argc, char **argv)
  *
  * &gt; (plus 1 2)
  * #f
- * (define obj (openlet 
- *               (inlet
- *                 (cons 'plus (lambda args 
- *                               (apply + 1 (cdr args)))))))
+ * (define obj (openlet (inlet 'plus (lambda args (apply + 1 (cdr args))))))
  * obj
  * &gt; (plus obj 2 3)
  * 6

@@ -430,17 +430,17 @@ s7_pointer s7_slot_value(s7_pointer slot);
 s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value);
 s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 
-s7_pointer s7_rootlet(s7_scheme *sc);                                       /* (global-environment) */
-s7_pointer s7_curlet(s7_scheme *sc);                                        /* (current-environment) */
-s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e);                      /* returns previous current-environment */
-s7_pointer s7_outlet(s7_pointer e);                                         /* (outer-environment e) */
+s7_pointer s7_rootlet(s7_scheme *sc);                                       /* (rootlet) */
+s7_pointer s7_curlet(s7_scheme *sc);                                        /* (curlet) */
+s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e);                      /* returns previous curlet */
+s7_pointer s7_outlet(s7_pointer e);                                         /* (outlet e) */
 s7_pointer s7_sublet(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
-s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env);                   /* (environment->list env) */
+s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env);                   /* (let->list env) */
 bool s7_is_let(s7_pointer e);
-s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym);       /* (env sym) */
-s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (set! (env sym) val) */
-s7_pointer s7_openlet(s7_pointer e);                                        /* (open-environment e) */
-bool s7_is_openlet(s7_pointer e);                                           /* (open-environment? e) */
+s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym);       /* (let-ref e sym) */
+s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (let-set! e sym val) */
+s7_pointer s7_openlet(s7_pointer e);                                        /* (openlet e) */
+bool s7_is_openlet(s7_pointer e);                                           /* (openlet? e) */
 s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method);
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
@@ -657,8 +657,8 @@ void *s7_object_value_checked(s7_pointer obj, int type);
 void *s7_vector_ref_object_value_checked(s7_scheme *sc, s7_pointer args, int type);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
-s7_pointer s7_object_environment(s7_pointer obj);
-s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e);
+s7_pointer s7_object_let(s7_pointer obj);
+s7_pointer s7_object_set_let(s7_pointer obj, s7_pointer e);
 void s7_set_object_print_readably(int type, char *(*printer)(s7_scheme *sc, void *val));
 
   /* experiments */
@@ -791,36 +791,12 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_is_environment s7_is_let
 #define s7_open_environment s7_openlet
 #define s7_is_open_environment s7_is_openlet
+#define s7_object_environment s7_object_let
+#define s7_object_set_environment s7_object_set_let
 
 s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e); /* replaced by s7_method */
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e);
 #endif
-
-
-/* the following Scheme functions are not currently exported to C:
- *
- *    * + - / < <= = > >= abs acos acosh angle ash asin asinh assv atan atanh 
- *    varlet call-with-exit call-with-input-file call-with-input-string 
- *    call-with-output-file call-with-output-string catch ceiling char->integer char-alphabetic? 
- *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
- *    char-numeric? char-position char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
- *    char=? char>=? char>? continuation? cosh dynamic-wind let? eof-object? eval even? 
- *    exact? exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
- *    hook inexact->exact inexact? infinite? unlet integer->char integer-decode-float 
- *    integer-length keyword->symbol lcm length list->string list->vector list-tail log logand 
- *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
- *    make-rectangular map max memv min modulo nan? negative? not odd? port-closed? 
- *    port-line-number positive? quotient read-byte read-line remainder round s7-version 
- *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
- *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-position string-ref 
- *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
- *    symbol-table tan tanh truncate values vector vector->list with-input-from-file 
- *    with-input-from-string with-output-to-file with-output-to-string write-byte zero?
- *
- * and these variables: *safety* *#readers* *error-hook* *unbound-variable-hook*
- *
- * if you need any of these, let me know.
- */
 
 
 
