@@ -4448,8 +4448,8 @@ the dumb "lambda".  Here are more useful examples:
   (openlet 
    (inlet :name name
 	  :format (lambda (p str . args) (logit (p 'name) (apply format #f str args)))
-	  :write (lambda (obj p)         (logit (p 'name) (object->string obj #t)))
-	  :display (lambda (obj p)       (logit (p 'name) (object->string obj #f)))
+	  :write (lambda (obj p)         (logit (p 'name) (object-&gt;string obj #t)))
+	  :display (lambda (obj p)       (logit (p 'name) (object-&gt;string obj #f)))
 	  :write-string (lambda (str p)  (logit (p 'name) str))
 	  :write-char (lambda (ch p)     (logit (p 'name) (string ch)))
 	  :newline (lambda (p)           (logit (p 'name) (string #\newline)))

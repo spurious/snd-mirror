@@ -1177,8 +1177,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (define (display-format str . args)
     `(let ((,vlp *vector-print-length*))
        (with-let (funclet Display)
-		 (set! *vector-print-length* *display-print-length*)
-		 (prepend-spaces))
+	 (set! *vector-print-length* *display-print-length*)
+	 (prepend-spaces))
        (format (Display-port) ,str ,@args)
        (set! *vector-print-length* ,vlp)))
   
@@ -1226,7 +1226,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	 ,@previous
 	 (let ((,result ,end))
 	   (with-let (funclet Display)
-		     (prepend-spaces))
+	     (prepend-spaces))
 	   (format (Display-port) "  ~A~A) -> ~A~%"
 		   ,(if (pair? previous) " ... " "")
 		   ',end
@@ -1428,8 +1428,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		       (dynamic-wind
 			   (lambda ()                                              ; when function called, show args and caller
 			     (with-let (funclet Display)                           ; indent
-				       (prepend-spaces)
-				       (set! spaces (+ spaces *display-spacing*)))
+			       (prepend-spaces)
+			       (set! spaces (+ spaces *display-spacing*)))
 			     (format (Display-port) "(~A" ',',func)                ; show args, ruthlessly abbreviated
 			     (((funclet Display) 'display-let) (outlet (outlet (curlet))) ,',e)
 			     (format (Display-port) ")")
@@ -1441,8 +1441,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			     (set! ,',result ,',body))                             ;   but annotated by proc-walk
 			   (lambda ()                                              ; at the end, show the result
 			     (with-let (funclet Display)
-				       (set! spaces (- spaces *display-spacing*))  ; unindent
-				       (prepend-spaces))
+			       (set! spaces (- spaces *display-spacing*))  ; unindent
+			       (prepend-spaces))
 			     (format (Display-port) "    -> ~S~%" ,',result)))))
 		   (curlet) ,,@call-args)))))                                      ; pass in the original args and the curlet
 	

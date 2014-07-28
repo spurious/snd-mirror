@@ -124,7 +124,30 @@
 				   FD_CLOEXEC F_RDLCK F_WRLCK F_UNLCK POSIX_FADV_NORMAL POSIX_FADV_RANDOM POSIX_FADV_SEQUENTIAL 
 				   POSIX_FADV_WILLNEED POSIX_FADV_DONTNEED POSIX_FADV_NOREUSE)))
 		    (int fcntl (int int))
-		    (int open (char* int int))
+		    (in-C "static s7_pointer g_c_open(s7_scheme *sc, s7_pointer args)
+                           {
+                             s7_pointer arg;
+                             char* name;
+                             int flags, mode;
+                             arg = args;
+                             if (s7_is_string(s7_car(arg)))
+                               name = (char*)s7_string(s7_car(arg));
+                             else return(s7_wrong_type_arg_error(sc, \"open\", 1, s7_car(arg), \"string\"));
+                             arg = s7_cdr(arg);
+                             if (s7_is_integer(s7_car(arg)))
+                               flags = (int)s7_integer(s7_car(arg));
+                             else return(s7_wrong_type_arg_error(sc, \"open\", 2, s7_car(arg), \"integer\"));
+                             if (s7_is_pair(s7_cdr(arg)))
+                               {
+                                 arg = s7_cdr(arg);
+                                 if (s7_is_integer(s7_car(arg)))
+                                   mode = (int)s7_integer(s7_car(arg));
+                                 else return(s7_wrong_type_arg_error(sc, \"open\", 3, s7_car(arg), \"integer\"));
+                                 return(s7_make_integer(sc, (s7_Int)open(name, flags, mode)));
+                               }
+                             return(s7_make_integer(sc, (s7_Int)open(name, flags)));
+                           }")
+		    (C-function ("open" g_c_open "" 2 1))
 		    (int creat (char* (mode_t int)))
 		    (int lockf (int int int))
 		    (reader-cond ((provided? 'linux) (int posix_fadvise (int int int int))))
@@ -274,9 +297,16 @@
 		    (char* realpath (char* char*))
 		    (int abs (int))
 		    (int labs (int))
-		    (int llabs (int))
 
 		    (in-C "
+                      static s7_pointer g_llabs(s7_scheme *sc, s7_pointer args) 
+                        {
+                          #if  ((__GNUC__) && ((__GNUC__ < 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ < 4))))
+                            return(s7_make_integer(sc, labs(s7_integer(s7_car(args)))));
+                          #else
+                            return(s7_make_integer(sc, llabs(s7_integer(s7_car(args)))));
+                          #endif
+                        }
                       static s7_pointer g_strtod(s7_scheme *sc, s7_pointer args) 
                         {return(s7_make_real(sc, strtod(s7_string(s7_car(args)), NULL)));}
                       static s7_pointer g_strtof(s7_scheme *sc, s7_pointer args) 
@@ -298,6 +328,7 @@
                         return(s7_list(sc, 2, s7_make_integer(sc, d.quot), s7_make_integer(sc, d.rem)));
                       }
                       ")
+		    (C-function ("llabs" g_llabs "" 1))
                     (C-function ("strtod" g_strtod "" 1))
                     (C-function ("strtof" g_strtof "" 1))
                     (C-function ("strtol" g_strtol "" 2))

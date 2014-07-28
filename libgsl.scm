@@ -311,7 +311,7 @@
 		    (double gsl_sf_bessel_Inu (double double))
 		    (int gsl_sf_bessel_Knu_scaled_e (double double gsl_sf_result*))
 		    (double gsl_sf_bessel_Knu_scaled (double double))
-		    (int gsl_sf_bessel_Knu_scaled_e10_e (double double gsl_sf_result_e10*))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_sf_bessel_Knu_scaled_e10_e (double double gsl_sf_result_e10*))))
 		    (int gsl_sf_bessel_Knu_e (double double gsl_sf_result*))
 		    (double gsl_sf_bessel_Knu (double double))
 		    (int gsl_sf_bessel_lnKnu_e (double double gsl_sf_result*))
@@ -915,14 +915,19 @@
 				gsl_multimin_fminimizer_nmsimplex gsl_multimin_fminimizer_nmsimplex2 gsl_multimin_fminimizer_nmsimplex2rand
 				gsl_multiroot_fsolver_dnewton gsl_multiroot_fsolver_broyden gsl_multiroot_fsolver_hybrid gsl_multiroot_fsolver_hybrids
 				gsl_multiroot_fdfsolver_newton gsl_multiroot_fdfsolver_gnewton gsl_multiroot_fdfsolver_hybridj gsl_multiroot_fdfsolver_hybridsj
-				gsl_odeiv_step_rk2 gsl_odeiv_step_rk4 gsl_odeiv_step_rkf45 gsl_odeiv_step_rkck gsl_odeiv_step_rk8pd gsl_odeiv_step_rk2imp
-				gsl_odeiv_step_rk2simp gsl_odeiv_step_rk4imp gsl_odeiv_step_bsimp gsl_odeiv_step_gear1 gsl_odeiv_step_gear2 gsl_odeiv2_step_rk2
-				gsl_odeiv2_step_rk4 gsl_odeiv2_step_rkf45 gsl_odeiv2_step_rkck gsl_odeiv2_step_rk8pd gsl_odeiv2_step_rk2imp gsl_odeiv2_step_rk4imp
-				gsl_odeiv2_step_bsimp gsl_odeiv2_step_rk1imp gsl_odeiv2_step_msadams gsl_odeiv2_step_msbdf gsl_prec_eps gsl_prec_sqrt_eps
+				gsl_prec_eps gsl_prec_sqrt_eps
 				gsl_prec_root3_eps gsl_prec_root4_eps gsl_prec_root5_eps gsl_prec_root6_eps gsl_root_fsolver_bisection gsl_root_fsolver_brent
 				gsl_root_fsolver_falsepos gsl_root_fdfsolver_newton gsl_root_fdfsolver_secant gsl_root_fdfsolver_steffenson gsl_version
 				gsl_wavelet_daubechies gsl_wavelet_daubechies_centered gsl_wavelet_haar gsl_wavelet_haar_centered gsl_wavelet_bspline
 				gsl_wavelet_bspline_centered))
+		    (c-pointer (gsl_odeiv_step_rk2 gsl_odeiv_step_rk4 gsl_odeiv_step_rkf45 gsl_odeiv_step_rkck gsl_odeiv_step_rk8pd 
+				gsl_odeiv_step_rk2imp gsl_odeiv_step_rk2simp gsl_odeiv_step_rk4imp gsl_odeiv_step_bsimp 
+				gsl_odeiv_step_gear1 gsl_odeiv_step_gear2))
+
+		    (reader-cond ((>= gsl-version 1.15)
+				  (c-pointer (gsl_odeiv2_step_rk2 gsl_odeiv2_step_rk4 
+					      gsl_odeiv2_step_rkf45 gsl_odeiv2_step_rkck gsl_odeiv2_step_rk8pd gsl_odeiv2_step_rk2imp gsl_odeiv2_step_rk4imp
+					      gsl_odeiv2_step_bsimp gsl_odeiv2_step_rk1imp gsl_odeiv2_step_msadams gsl_odeiv2_step_msbdf))))
 
 		    (reader-cond ((>= gsl-version 1.16)
 				  (c-pointer (gsl_multifit_robust_default gsl_multifit_robust_bisquare gsl_multifit_robust_cauchy gsl_multifit_robust_fair
@@ -1281,7 +1286,7 @@
 		    (int gsl_interp_init (gsl_interp* double* double* size_t))
 		    (char* gsl_interp_name (gsl_interp*))
 		    (int gsl_interp_min_size (gsl_interp*))
-		    (int gsl_interp_type_min_size (gsl_interp_type*))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_interp_type_min_size (gsl_interp_type*))))
 		    (int gsl_interp_eval_e (gsl_interp* double* double* double gsl_interp_accel* double*))
 		    (double gsl_interp_eval (gsl_interp* double* double* double gsl_interp_accel*))
 		    (int gsl_interp_eval_deriv_e (gsl_interp* double* double* double gsl_interp_accel* double*))
@@ -1555,7 +1560,7 @@
 		    (int gsl_vector_div (gsl_vector* gsl_vector*))
 		    (int gsl_vector_scale (gsl_vector* double))
 		    (int gsl_vector_add_constant (gsl_vector* double))
-		    (int gsl_vector_equal (gsl_vector* gsl_vector*))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_vector_equal (gsl_vector* gsl_vector*))))
 		    (int gsl_vector_isnull (gsl_vector*))
 		    (int gsl_vector_ispos (gsl_vector*))
 		    (int gsl_vector_isneg (gsl_vector*))
@@ -1620,7 +1625,7 @@
 		    (void gsl_matrix_max_index (gsl_matrix* size_t* size_t*))
 		    (void gsl_matrix_min_index (gsl_matrix* size_t* size_t*))
 		    (void gsl_matrix_minmax_index (gsl_matrix* size_t* size_t* size_t* size_t*))
-		    (int gsl_matrix_equal (gsl_matrix* gsl_matrix*))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_matrix_equal (gsl_matrix* gsl_matrix*))))
 		    (int gsl_matrix_isnull (gsl_matrix*))
 		    (int gsl_matrix_ispos (gsl_matrix*))
 		    (int gsl_matrix_isneg (gsl_matrix*))
@@ -1983,7 +1988,7 @@
 		    (int gsl_eigen_nonsymm_Z (gsl_matrix* gsl_vector_complex* gsl_matrix* gsl_eigen_nonsymm_workspace*))
 		    (gsl_eigen_nonsymmv_workspace* gsl_eigen_nonsymmv_alloc (size_t))
 		    (void gsl_eigen_nonsymmv_free (gsl_eigen_nonsymmv_workspace*))
-		    (void gsl_eigen_nonsymmv_params (int gsl_eigen_nonsymmv_workspace*))
+		    (reader-cond ((>= gsl-version 1.15) (void gsl_eigen_nonsymmv_params (int gsl_eigen_nonsymmv_workspace*))))
 		    (int gsl_eigen_nonsymmv (gsl_matrix* gsl_vector_complex* gsl_matrix_complex* gsl_eigen_nonsymmv_workspace*))
 		    (int gsl_eigen_nonsymmv_Z (gsl_matrix* gsl_vector_complex* gsl_matrix_complex* gsl_matrix* gsl_eigen_nonsymmv_workspace*))
 		    (gsl_eigen_gensymm_workspace* gsl_eigen_gensymm_alloc (size_t))
@@ -2168,10 +2173,12 @@
 		    (gsl_integration_glfixed_table* gsl_integration_glfixed_table_alloc (size_t))
 		    (void gsl_integration_glfixed_table_free (gsl_integration_glfixed_table*))
 		    (double gsl_integration_glfixed (gsl_function* double double gsl_integration_glfixed_table*))
-		    (int gsl_integration_glfixed_point (double double size_t double* double* gsl_integration_glfixed_table*))
-		    (gsl_integration_cquad_workspace* gsl_integration_cquad_workspace_alloc (size_t))
-		    (void gsl_integration_cquad_workspace_free (gsl_integration_cquad_workspace*))
-		    (int gsl_integration_cquad (gsl_function* double double double double gsl_integration_cquad_workspace* double* double* size_t*))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_integration_glfixed_point (double double size_t double* double* gsl_integration_glfixed_table*))))
+
+		    (reader-cond ((>= gsl-version 1.15) (gsl_integration_cquad_workspace* gsl_integration_cquad_workspace_alloc (size_t))))
+		    (reader-cond ((>= gsl-version 1.15) (void gsl_integration_cquad_workspace_free (gsl_integration_cquad_workspace*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_integration_cquad 
+							     (gsl_function* double double double double gsl_integration_cquad_workspace* double* double* size_t*))))
 
 		    (int gsl_linalg_matmult (gsl_matrix* gsl_matrix* gsl_matrix*))
 		    (int gsl_linalg_matmult_mod (gsl_matrix* int gsl_matrix* int gsl_matrix*))
@@ -2305,7 +2312,7 @@
 		    (int gsl_linalg_complex_cholesky_decomp (gsl_matrix_complex*))
 		    (int gsl_linalg_complex_cholesky_solve (gsl_matrix_complex* gsl_vector_complex* gsl_vector_complex*))
 		    (int gsl_linalg_complex_cholesky_svx (gsl_matrix_complex* gsl_vector_complex*))
-		    (int gsl_linalg_complex_cholesky_invert (gsl_matrix_complex*))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_linalg_complex_cholesky_invert (gsl_matrix_complex*))))
 		    (int gsl_linalg_symmtd_decomp (gsl_matrix* gsl_vector*))
 		    (int gsl_linalg_symmtd_unpack (gsl_matrix* gsl_vector* gsl_matrix* gsl_vector* gsl_vector*))
 		    (int gsl_linalg_symmtd_unpack_T (gsl_matrix* gsl_vector* gsl_vector*))
@@ -2347,7 +2354,7 @@
 		    (int gsl_matrix_complex_swap_rowcol (gsl_matrix_complex* size_t size_t))
 		    (int gsl_matrix_complex_transpose (gsl_matrix_complex*))
 		    (int gsl_matrix_complex_transpose_memcpy (gsl_matrix_complex* gsl_matrix_complex*))
-		    (int gsl_matrix_complex_equal (gsl_matrix_complex* gsl_matrix_complex*))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_matrix_complex_equal (gsl_matrix_complex* gsl_matrix_complex*))))
 		    (int gsl_matrix_complex_isnull (gsl_matrix_complex*))
 		    (int gsl_matrix_complex_ispos (gsl_matrix_complex*))
 		    (int gsl_matrix_complex_isneg (gsl_matrix_complex*))
@@ -2581,42 +2588,51 @@
 		    (int gsl_odeiv_evolve_apply (gsl_odeiv_evolve* gsl_odeiv_control* gsl_odeiv_step* gsl_odeiv_system* double* double double* double*))
 		    (int gsl_odeiv_evolve_reset (gsl_odeiv_evolve*))
 		    (void gsl_odeiv_evolve_free (gsl_odeiv_evolve*))
-		    (gsl_odeiv2_step* gsl_odeiv2_step_alloc (gsl_odeiv2_step_type* size_t))
-		    (int gsl_odeiv2_step_reset (gsl_odeiv2_step*))
-		    (void gsl_odeiv2_step_free (gsl_odeiv2_step*))
-		    (char* gsl_odeiv2_step_name (gsl_odeiv2_step*))
-		    (int gsl_odeiv2_step_order (gsl_odeiv2_step*))
-		    (int gsl_odeiv2_step_apply (gsl_odeiv2_step* double double double* double* double* double* gsl_odeiv2_system*))
-		    (int gsl_odeiv2_step_set_driver (gsl_odeiv2_step* gsl_odeiv2_driver*))
-		    (gsl_odeiv2_control* gsl_odeiv2_control_alloc (gsl_odeiv2_control_type*))
-		    (int gsl_odeiv2_control_init (gsl_odeiv2_control* double double double double))
-		    (void gsl_odeiv2_control_free (gsl_odeiv2_control*))
-		    (int gsl_odeiv2_control_hadjust (gsl_odeiv2_control* gsl_odeiv2_step* double* double* double* double*))
-		    (char* gsl_odeiv2_control_name (gsl_odeiv2_control*))
-		    (int gsl_odeiv2_control_errlevel (gsl_odeiv2_control* double double double size_t double*))
-		    (int gsl_odeiv2_control_set_driver (gsl_odeiv2_control* gsl_odeiv2_driver*))
-		    (gsl_odeiv2_control* gsl_odeiv2_control_standard_new (double double double double))
-		    (gsl_odeiv2_control* gsl_odeiv2_control_y_new (double double))
-		    (gsl_odeiv2_control* gsl_odeiv2_control_yp_new (double double))
-		    (gsl_odeiv2_control* gsl_odeiv2_control_scaled_new (double double double double double* size_t))
-		    (gsl_odeiv2_evolve* gsl_odeiv2_evolve_alloc (size_t))
-		    (int gsl_odeiv2_evolve_apply (gsl_odeiv2_evolve* gsl_odeiv2_control* gsl_odeiv2_step* gsl_odeiv2_system* double* double double* double*))
-		    (int gsl_odeiv2_evolve_apply_fixed_step (gsl_odeiv2_evolve* gsl_odeiv2_control* gsl_odeiv2_step* gsl_odeiv2_system* double* double double*))
-		    (int gsl_odeiv2_evolve_reset (gsl_odeiv2_evolve*))
-		    (void gsl_odeiv2_evolve_free (gsl_odeiv2_evolve*))
-		    (int gsl_odeiv2_evolve_set_driver (gsl_odeiv2_evolve* gsl_odeiv2_driver*))
-		    (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_y_new (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double))
-		    (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_yp_new (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double))
-		    (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_scaled_new (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double double double double*))
-		    (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_standard_new (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double double double))
-		    (int gsl_odeiv2_driver_set_hmin (gsl_odeiv2_driver* double))
-		    (int gsl_odeiv2_driver_set_hmax (gsl_odeiv2_driver* double))
-		    (int gsl_odeiv2_driver_set_nmax (gsl_odeiv2_driver* int))
-		    (int gsl_odeiv2_driver_apply (gsl_odeiv2_driver* double* double double*))
-		    (int gsl_odeiv2_driver_apply_fixed_step (gsl_odeiv2_driver* double* double int double*))
-		    (int gsl_odeiv2_driver_reset (gsl_odeiv2_driver*))
-		    (reader-cond ((>= gsl-version 1.16) (int gsl_odeiv2_driver_reset_hstart (gsl_odeiv2_driver* double))))
-		    (void gsl_odeiv2_driver_free (gsl_odeiv2_driver*))
+
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_step* gsl_odeiv2_step_alloc (gsl_odeiv2_step_type* size_t))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_step_reset (gsl_odeiv2_step*))))
+		    (reader-cond ((>= gsl-version 1.15) (void gsl_odeiv2_step_free (gsl_odeiv2_step*))))
+		    (reader-cond ((>= gsl-version 1.15) (char* gsl_odeiv2_step_name (gsl_odeiv2_step*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_step_order (gsl_odeiv2_step*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_step_apply 
+							     (gsl_odeiv2_step* double double double* double* double* double* gsl_odeiv2_system*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_step_set_driver (gsl_odeiv2_step* gsl_odeiv2_driver*))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_alloc (gsl_odeiv2_control_type*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_control_init (gsl_odeiv2_control* double double double double))))
+		    (reader-cond ((>= gsl-version 1.15) (void gsl_odeiv2_control_free (gsl_odeiv2_control*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_control_hadjust (gsl_odeiv2_control* gsl_odeiv2_step* double* double* double* double*))))
+		    (reader-cond ((>= gsl-version 1.15) (char* gsl_odeiv2_control_name (gsl_odeiv2_control*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_control_errlevel (gsl_odeiv2_control* double double double size_t double*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_control_set_driver (gsl_odeiv2_control* gsl_odeiv2_driver*))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_standard_new (double double double double))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_y_new (double double))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_yp_new (double double))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_scaled_new (double double double double double* size_t))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_evolve* gsl_odeiv2_evolve_alloc (size_t))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_evolve_apply 
+							     (gsl_odeiv2_evolve* gsl_odeiv2_control* gsl_odeiv2_step* 
+							      gsl_odeiv2_system* double* double double* double*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_evolve_apply_fixed_step 
+							     (gsl_odeiv2_evolve* gsl_odeiv2_control* gsl_odeiv2_step* gsl_odeiv2_system* double* double double*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_evolve_reset (gsl_odeiv2_evolve*))))
+		    (reader-cond ((>= gsl-version 1.15) (void gsl_odeiv2_evolve_free (gsl_odeiv2_evolve*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_evolve_set_driver (gsl_odeiv2_evolve* gsl_odeiv2_driver*))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_y_new 
+									    (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_yp_new 
+									    (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_scaled_new 
+									    (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double double double double*))))
+		    (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_standard_new 
+									    (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double double double))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_set_hmin (gsl_odeiv2_driver* double))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_set_hmax (gsl_odeiv2_driver* double))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_set_nmax (gsl_odeiv2_driver* int))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_apply (gsl_odeiv2_driver* double* double double*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_apply_fixed_step (gsl_odeiv2_driver* double* double int double*))))
+		    (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_reset (gsl_odeiv2_driver*))))
+		    (reader-cond ((>= gsl-version 1.15) (reader-cond ((>= gsl-version 1.16) (int gsl_odeiv2_driver_reset_hstart (gsl_odeiv2_driver* double))))))
+		    (reader-cond ((>= gsl-version 1.15) (void gsl_odeiv2_driver_free (gsl_odeiv2_driver*))))
 
 		    (gsl_permutation* gsl_permutation_alloc (size_t))
 		    (gsl_permutation* gsl_permutation_calloc (size_t))
@@ -2763,7 +2779,7 @@
 			   "gsl/gsl_nan.h"
 			   "gsl/gsl_ntuple.h"
 			   "gsl/gsl_odeiv.h"
-			   "gsl/gsl_odeiv2.h"
+			   (reader-cond ((>= gsl-version 1.15) "gsl/gsl_odeiv2.h"))
 			   "gsl/gsl_permutation.h"
 			   "gsl/gsl_permute.h"
 			   "gsl/gsl_permute_complex_double.h"

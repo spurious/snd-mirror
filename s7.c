@@ -70056,9 +70056,6 @@ int main(int argc, char **argv)
  *
  * finish Display!
  * more tests: libgsl, what about load info for sndlib/xg? / libreadline libsigsegv libtecla glib(etc) ncurses pthread? glib:huge
- * define* in cload (for open)
  * check again (define (make-func) (define (a-func a) (+ a 1))) -- the opt problem is now fixed -- where it this business?? line 44013
- * 32-bit Debian libc.scm segfault in group.gr.name or some such function in s7test
- * check and prettify inlet calls (scm) [test gsl version check in fatty5]
  */
 

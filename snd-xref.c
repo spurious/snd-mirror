@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11546] = {
+static const char *snd_names[11598] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4411,7 +4411,9 @@ static const char *snd_names[11546] = {
     "gsl_bspline_eval", "libgsl.scm",
     "gsl_bspline_eval_nonzero", "libgsl.scm",
     "gsl_bspline_free", "libgsl.scm",
+    "gsl_bspline_greville_abscissa", "libgsl.scm",
     "gsl_bspline_knots", "libgsl.scm",
+    "gsl_bspline_knots_greville", "libgsl.scm",
     "gsl_bspline_knots_uniform", "libgsl.scm",
     "gsl_bspline_nbreak", "libgsl.scm",
     "gsl_bspline_ncoeffs", "libgsl.scm",
@@ -4901,6 +4903,7 @@ static const char *snd_names[11546] = {
     "gsl_linalg_SV_decomp", "libgsl.scm",
     "gsl_linalg_SV_decomp_jacobi", "libgsl.scm",
     "gsl_linalg_SV_decomp_mod", "libgsl.scm",
+    "gsl_linalg_SV_leverage", "libgsl.scm",
     "gsl_linalg_SV_solve", "libgsl.scm",
     "gsl_linalg_balance_accum", "libgsl.scm",
     "gsl_linalg_balance_columns", "libgsl.scm",
@@ -5081,6 +5084,9 @@ static const char *snd_names[11546] = {
     "gsl_monte_vegas_runval", "libgsl.scm",
     "gsl_multifit_covar", "libgsl.scm",
     "gsl_multifit_fdfsolver_alloc", "libgsl.scm",
+    "gsl_multifit_fdfsolver_dif_df", "libgsl.scm",
+    "gsl_multifit_fdfsolver_dif_fdf", "libgsl.scm",
+    "gsl_multifit_fdfsolver_driver", "libgsl.scm",
     "gsl_multifit_fdfsolver_free", "libgsl.scm",
     "gsl_multifit_fdfsolver_iterate", "libgsl.scm",
     "gsl_multifit_fdfsolver_lmder", "libgsl.scm",
@@ -5089,6 +5095,7 @@ static const char *snd_names[11546] = {
     "gsl_multifit_fdfsolver_position", "libgsl.scm",
     "gsl_multifit_fdfsolver_set", "libgsl.scm",
     "gsl_multifit_fsolver_alloc", "libgsl.scm",
+    "gsl_multifit_fsolver_driver", "libgsl.scm",
     "gsl_multifit_fsolver_free", "libgsl.scm",
     "gsl_multifit_fsolver_iterate", "libgsl.scm",
     "gsl_multifit_fsolver_name", "libgsl.scm",
@@ -5102,6 +5109,20 @@ static const char *snd_names[11546] = {
     "gsl_multifit_linear_residuals", "libgsl.scm",
     "gsl_multifit_linear_svd", "libgsl.scm",
     "gsl_multifit_linear_usvd", "libgsl.scm",
+    "gsl_multifit_robust", "libgsl.scm",
+    "gsl_multifit_robust_alloc", "libgsl.scm",
+    "gsl_multifit_robust_bisquare", "libgsl.scm",
+    "gsl_multifit_robust_cauchy", "libgsl.scm",
+    "gsl_multifit_robust_default", "libgsl.scm",
+    "gsl_multifit_robust_est", "libgsl.scm",
+    "gsl_multifit_robust_fair", "libgsl.scm",
+    "gsl_multifit_robust_free", "libgsl.scm",
+    "gsl_multifit_robust_huber", "libgsl.scm",
+    "gsl_multifit_robust_name", "libgsl.scm",
+    "gsl_multifit_robust_ols", "libgsl.scm",
+    "gsl_multifit_robust_statistics", "libgsl.scm",
+    "gsl_multifit_robust_tune", "libgsl.scm",
+    "gsl_multifit_robust_welsch", "libgsl.scm",
     "gsl_multifit_test_delta", "libgsl.scm",
     "gsl_multifit_test_gradient", "libgsl.scm",
     "gsl_multifit_wlinear", "libgsl.scm",
@@ -5208,6 +5229,7 @@ static const char *snd_names[11546] = {
     "gsl_odeiv2_driver_apply_fixed_step", "libgsl.scm",
     "gsl_odeiv2_driver_free", "libgsl.scm",
     "gsl_odeiv2_driver_reset", "libgsl.scm",
+    "gsl_odeiv2_driver_reset_hstart", "libgsl.scm",
     "gsl_odeiv2_driver_set_hmax", "libgsl.scm",
     "gsl_odeiv2_driver_set_hmin", "libgsl.scm",
     "gsl_odeiv2_driver_set_nmax", "libgsl.scm",
@@ -5304,6 +5326,7 @@ static const char *snd_names[11546] = {
     "gsl_poly_complex_workspace_alloc", "libgsl.scm",
     "gsl_poly_complex_workspace_free", "libgsl.scm",
     "gsl_poly_dd_eval", "libgsl.scm",
+    "gsl_poly_dd_hermite_init", "libgsl.scm",
     "gsl_poly_dd_init", "libgsl.scm",
     "gsl_poly_dd_taylor", "libgsl.scm",
     "gsl_poly_eval", "libgsl.scm",
@@ -6040,12 +6063,14 @@ static const char *snd_names[11546] = {
     "gsl_sf_zetam1_int", "libgsl.scm",
     "gsl_sf_zetam1_int_e", "libgsl.scm",
     "gsl_sort", "libgsl.scm",
+    "gsl_sort2", "libgsl.scm",
     "gsl_sort_index", "libgsl.scm",
     "gsl_sort_largest", "libgsl.scm",
     "gsl_sort_largest_index", "libgsl.scm",
     "gsl_sort_smallest", "libgsl.scm",
     "gsl_sort_smallest_index", "libgsl.scm",
     "gsl_sort_vector", "libgsl.scm",
+    "gsl_sort_vector2", "libgsl.scm",
     "gsl_sort_vector_index", "libgsl.scm",
     "gsl_sort_vector_largest", "libgsl.scm",
     "gsl_sort_vector_largest_index", "libgsl.scm",
@@ -6088,6 +6113,7 @@ static const char *snd_names[11546] = {
     "gsl_stats_sd_with_fixed_mean", "libgsl.scm",
     "gsl_stats_skew", "libgsl.scm",
     "gsl_stats_skew_m_sd", "libgsl.scm",
+    "gsl_stats_spearman", "libgsl.scm",
     "gsl_stats_tss", "libgsl.scm",
     "gsl_stats_tss_m", "libgsl.scm",
     "gsl_stats_ttest", "libgsl.scm",
@@ -7525,7 +7551,7 @@ static const char *snd_names[11546] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5773);
+  s7_autoload_set_names(sc, snd_names, 5799);
 }
 #endif
 
