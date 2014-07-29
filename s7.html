@@ -2593,6 +2593,9 @@ use varlet.  Both of these functions accept nil as the
 'env' argument as shorthand for <code>(rootlet)</code>.
 Both also accept other environments as well as individual bindings,
 adding all the argument's bindings to the new environment.
+inlet is very similar, but omits the environment argument and
+just takes the keys and their values.  These can be passed as
+symbol/value pairs, as a cons, or using keywords as if in define*.
 </p>
 
 <p>One way to add reader and writer functions to an individual environment slot is:
@@ -3257,7 +3260,7 @@ know the field names in advance,
 </p>
 <pre class="indented">
 (openlet  ; make it appear to be empty to the rest of s7
-  (inlet 'object-&gt;string  (lambda args "#&lt;environment&gt;")
+  (inlet 'object-&gt;string  (lambda args "#&lt;let&gt;")
          'map             (lambda args ())
          'for-each        (lambda args #&lt;unspecified&gt;)
   	 'let-&gt;list       (lambda args ())
@@ -4925,11 +4928,11 @@ returns the value that is actually set.  For example, the function can ensure th
     (curlet)))
 
 &gt; e
-#&lt;environment 'x 3 'y 3 'z 3.3&gt;
+#&lt;let 'x 3 'y 3 'z 3.3&gt;
 &gt;(begin (set! (e 'x) 123) (set! (e 'y) #()) (set! (e 'z) #f))
 ;; prints "z 3.3 -&gt; #f"
 &gt; e
-#&lt;environment 'x 123 'y 3 'z #f&gt;
+#&lt;let 'x 123 'y 3 'z #f&gt;
 </pre>
 
 <p>Or implement reactive programming (see reactive-set! in stuff.scm):

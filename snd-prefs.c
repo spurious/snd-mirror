@@ -343,9 +343,9 @@ static char *trim_string(const char *str)
   char *trimmed_str;
   len = strlen(str);
   trimmed_str = (char *)calloc(len + 1, sizeof(char));
-  while ((i < len) && (isspace(str[i]))) i++;
+  while ((i < len) && (isspace((int)str[i]))) i++;
   k = len - 1;
-  while ((k > i) && (isspace(str[k]))) k--;
+  while ((k > i) && (isspace((int)str[k]))) k--;
   for (m = i; m <= k; m++)
     trimmed_str[j++] = str[m];
   return(trimmed_str);
@@ -360,9 +360,9 @@ static char *possibly_quote(char *key)
   len = mus_strlen(key);
   if (len > 12) len = 12;
   for (i = 0, j = 0; i < len; i++)
-    if (!(isspace(key[i])))
+    if (!(isspace((int)key[i])))
       {
-	if ((j == 0) && (isalpha(key[i])))
+	if ((j == 0) && (isalpha((int)key[i])))
 	  key_buf[j++] = '\"';
 	key_buf[j++] = key[i];
       }

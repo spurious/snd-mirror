@@ -1054,8 +1054,8 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 			    }
 			  else
 			    {
-			      if ((!isdigit(expr[k])) && /* #2d(...)? */
-				  (!isalpha(expr[k])) && /* #c(1 2)? */
+			      if ((!isdigit((int)expr[k])) && /* #2d(...)? */
+				  (!isalpha((int)expr[k])) && /* #c(1 2)? */
 				  (expr[k] != 'D') && 
 				  (expr[k] != 'd') &&
 				  (expr[k] != '=') &&   /* what is this for? */

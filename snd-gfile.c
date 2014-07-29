@@ -3885,7 +3885,7 @@ static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint 
 	      filename = (char *)calloc(len, sizeof(char));
 	      for (i = 0; i < len; i++)
 		{
-		  if (isspace(str[i]))
+		  if (isspace((int)str[i]))
 		    {
 		      if (j > 0)
 			{

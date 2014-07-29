@@ -24760,9 +24760,9 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
     {
       /* circles can happen here: 
        *    (let () (let ((b (curlet))) (curlet)))
-       *    #<environment 'b #<environment>>
+       *    #<let 'b #<let>>
        * or (let ((b #f)) (set! b (curlet)) (curlet))
-       *    #1=#<environment 'b #1#>
+       *    #1=#<let 'b #1#>
        */
       if (use_write == USE_READABLE_WRITE)
 	{
@@ -24800,7 +24800,7 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 	}
       else
 	{
-	  port_write_string(port)(sc, "#<environment", 13, port);
+	  port_write_string(port)(sc, "#<let", 5, port);
 	  e_to_p(sc, environment_slots(obj), port, use_write, to_file, ci);
 	  port_write_character(port)(sc, '>', port);
 	}
@@ -25209,7 +25209,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       if (has_methods(obj))
 	{
 	  /* look for object->string method else fallback on ordinary case.
-	   * can't use recursion on closure_let here because then the fallback name is #<environment>.
+	   * can't use recursion on closure_let here because then the fallback name is #<let>.
 	   */
 	  s7_pointer print_func;
 	  print_func = find_method(sc, closure_let(obj), sc->OBJECT_TO_STRING);
@@ -25792,7 +25792,7 @@ static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const cha
 {
   int i, arg1 = -1;
   i = *cur_i;
-  if (isdigit(str[i]))
+  if (isdigit((int)str[i]))
     {
       char *tmp;
       tmp = (char *)(str + i);
@@ -25800,7 +25800,7 @@ static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const cha
 	format_error(sc, "bad number?", str, args, fdat);
 
       for (i = i + 1; i < str_len - 1; i++)
-	if (!isdigit(str[i]))
+	if (!isdigit((int)str[i]))
 	  break;
       if (i >= str_len)
 	format_error(sc, "numeric argument, but no directive!", str, args, fdat);
@@ -26329,7 +26329,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		char pad = ' ';
 		i++;
 		
-		if (isdigit(str[i]))
+		if (isdigit((int)str[i]))
 		  {
 		    #define MAX_FORMAT_WIDTH 10000
 		    width = format_read_integer(sc, &i, str_len, str, args, fdat);
@@ -26341,7 +26341,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		if (str[i] == ',')
 		  {
 		    i++;
-		    if (isdigit(str[i]))
+		    if (isdigit((int)str[i]))
 		      {
 			#define MAX_FORMAT_PRECISION 10000
 			precision = format_read_integer(sc, &i, str_len, str, args, fdat);
@@ -34077,8 +34077,8 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
        *
        * other things get here: #<goto>->"", presumably continuations
        *   if we're active, the goto must be in the current env:
-       *   (call-with-exit (lambda (return) (curlet))) -> #<environment 'return #<goto>>
-       *   (let () (define-macro (mac x) `(+ ,x 1)) (curlet)) -> #<environment 'mac #<macro>>
+       *   (call-with-exit (lambda (return) (curlet))) -> #<let 'return #<goto>>
+       *   (let () (define-macro (mac x) `(+ ,x 1)) (curlet)) -> #<let 'mac #<macro>>
        * need a reverse lookup for the current env (value->symbol in s7.html):
        */
 #if 0
@@ -34916,7 +34916,7 @@ static bool environments_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, sh
    *
    * order does not matter, but shadowing does, and shadowed slots are ignored
    *   it is possible to get shadowing within an environment:
-   *   (environment* 'a 1 'a 2) -> #<environment 'a 2 'a 1>
+   *   (environment* 'a 1 'a 2) -> #<let 'a 2 'a 1>
    */
   s7_pointer ex, ey;
   bool (*checker)(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
@@ -70057,5 +70057,6 @@ int main(int argc, char **argv)
  * finish Display!
  * more tests: libgsl, what about load info for sndlib/xg? / libreadline libsigsegv libtecla glib(etc) ncurses pthread? glib:huge
  * check again (define (make-func) (define (a-func a) (+ a 1))) -- the opt problem is now fixed -- where it this business?? line 44013
+ * require for xm/xg (not built-in). snd use libgsl rather than built-in?
  */
 

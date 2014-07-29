@@ -180,7 +180,7 @@ static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
 	  bool one_word = true;
 	  len = mus_strlen(txt);
 	  for (i = 0; i < len; i++)
-	    if (isspace(txt[i]))
+	    if (isspace((int)txt[i]))
 	      {
 		one_word = false;
 		break;

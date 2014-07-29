@@ -1094,7 +1094,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
       (cond ((vector? val)       
 	     (format #f "#(~{~A~| ~})" val))
 	    ((let? val)  
-	     (format #f (if (< *vector-print-length* 6) "#<e. ~{~A~| ~}>" "#<environment ~{~A~| ~}>") val))
+	     (format #f (if (< *vector-print-length* 6) "#<e. ~{~A~| ~}>" "#<let ~{~A~| ~}>") val))
 	    ((hash-table? val)   
 	     (format #f (if (< *vector-print-length* 6) "#<h. ~{~A~| ~}>" "#<hash-table ~{~A~| ~}>") val))
 	    ((string? val)       

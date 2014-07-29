@@ -735,7 +735,7 @@ char *list_completer(widget_t w, const char *text, void *data)
   /* strip away leading and trailing white space */
   trimmed_text = (char *)calloc(len + 1, sizeof(char));
   for (i = 0; i < len; i++)
-    if (!(isspace(text[i])))
+    if (!(isspace((int)text[i])))
       trimmed_text[j++] = text[i];
 
   if (j == 0)

@@ -1465,7 +1465,7 @@ void xen_repl(int argc, char **argv)
 	    {
 	      if (buffer[i] == 0)
 		break;
-	      if (!isspace(buffer[i]))
+	      if (!isspace((int)buffer[i]))
 		{
 		  expr_ok = true;
 		  break;
