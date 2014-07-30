@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11598] = {
+static const char *snd_names[11586] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4674,7 +4674,19 @@ static const char *snd_names[11598] = {
     "gsl_fcmp", "libgsl.scm",
     "gsl_fdiv", "libgsl.scm",
     "gsl_fft_backward", "libgsl.scm",
+    "gsl_fft_complex_backward", "libgsl.scm",
+    "gsl_fft_complex_forward", "libgsl.scm",
+    "gsl_fft_complex_inverse", "libgsl.scm",
     "gsl_fft_complex_memcpy", "libgsl.scm",
+    "gsl_fft_complex_radix2_backward", "libgsl.scm",
+    "gsl_fft_complex_radix2_dif_backward", "libgsl.scm",
+    "gsl_fft_complex_radix2_dif_forward", "libgsl.scm",
+    "gsl_fft_complex_radix2_dif_inverse", "libgsl.scm",
+    "gsl_fft_complex_radix2_dif_transform", "libgsl.scm",
+    "gsl_fft_complex_radix2_forward", "libgsl.scm",
+    "gsl_fft_complex_radix2_inverse", "libgsl.scm",
+    "gsl_fft_complex_radix2_transform", "libgsl.scm",
+    "gsl_fft_complex_transform", "libgsl.scm",
     "gsl_fft_complex_wavetable_alloc", "libgsl.scm",
     "gsl_fft_complex_wavetable_free", "libgsl.scm",
     "gsl_fft_complex_workspace_alloc", "libgsl.scm",
@@ -5064,24 +5076,6 @@ static const char *snd_names[11598] = {
     "gsl_min_fminimizer_x_minimum", "libgsl.scm",
     "gsl_min_fminimizer_x_upper", "libgsl.scm",
     "gsl_min_test_interval", "libgsl.scm",
-    "gsl_monte_miser_alloc", "libgsl.scm",
-    "gsl_monte_miser_free", "libgsl.scm",
-    "gsl_monte_miser_init", "libgsl.scm",
-    "gsl_monte_miser_integrate", "libgsl.scm",
-    "gsl_monte_miser_params_get", "libgsl.scm",
-    "gsl_monte_miser_params_set", "libgsl.scm",
-    "gsl_monte_plain_alloc", "libgsl.scm",
-    "gsl_monte_plain_free", "libgsl.scm",
-    "gsl_monte_plain_init", "libgsl.scm",
-    "gsl_monte_plain_integrate", "libgsl.scm",
-    "gsl_monte_vegas_alloc", "libgsl.scm",
-    "gsl_monte_vegas_chisq", "libgsl.scm",
-    "gsl_monte_vegas_free", "libgsl.scm",
-    "gsl_monte_vegas_init", "libgsl.scm",
-    "gsl_monte_vegas_integrate", "libgsl.scm",
-    "gsl_monte_vegas_params_get", "libgsl.scm",
-    "gsl_monte_vegas_params_set", "libgsl.scm",
-    "gsl_monte_vegas_runval", "libgsl.scm",
     "gsl_multifit_covar", "libgsl.scm",
     "gsl_multifit_fdfsolver_alloc", "libgsl.scm",
     "gsl_multifit_fdfsolver_dif_df", "libgsl.scm",
@@ -7551,7 +7545,7 @@ static const char *snd_names[11598] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5799);
+  s7_autoload_set_names(sc, snd_names, 5793);
 }
 #endif
 

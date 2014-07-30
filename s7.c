@@ -37818,12 +37818,6 @@ static s7_pointer eval_error_with_name(s7_scheme *sc, const char *errmsg, s7_poi
 }
 
 
-static s7_pointer eval_error_no_arg(s7_scheme *sc, const char *errmsg)
-{
-  return(s7_error(sc, sc->SYNTAX_ERROR, list_1(sc, make_protected_string(sc, errmsg))));
-}
-
-
 static s7_pointer eval_type_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
   return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_protected_string(sc, errmsg), obj)));
@@ -40291,7 +40285,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here
    */
   if (sym == sc->UNQUOTE)
-    return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
+    return(eval_error(sc, "unquote (',') occurred outside quasiquote: ~S", sc->cur_code));
 
   if (sym == sc->__FUNC__) /* __func__ is a sort of symbol macro */
     {
@@ -50105,10 +50099,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
   /* syntax_opcode can be optimize_data, the field can be set at read time, we could
    *   probably combine the optimized and normal case statements, jump here if eval (eval_pair, opt_eval),
-   *   and thereby save the is_syntactic and is_pair check in op_eval (still need is_optimized).
-   *   To get there, the cdr(code) step in is_syntactic needs to be spread out to all the branches but
-   *   all the current pops and jumps assume the cdr, op_begin would explicitly jump back here, no op_eval, 
+   *   and thereby save the is_syntactic and is_pair check in op_eval, op_begin would explicitly jump back here, no op_eval, 
    *   current trailers would be outside? and where would eval args go?  Huge change, might save 1% if lucky.
+   *   see end of file -- I think this is too pessimistic and given rearrangement of the s7_cell layout,
+   *   can be done without an increase in size.
    *
    * about half the cases don't care about args or op, but it's not simple to distribute the sc->args
    *   setting throughout this switch statement.  Lots of branches fall through to the next and there
@@ -70055,8 +70049,20 @@ int main(int argc, char **argv)
  *   but need glib.scm, or unicode.scm to load the stuff
  *
  * finish Display!
- * more tests: libgsl, what about load info for sndlib/xg? / libreadline libsigsegv libtecla glib(etc) ncurses pthread? glib:huge
+ * more tests: libgsl, what about load info for sndlib/xg? / libreadline libsigsegv ncurses pthread? glib:huge
  * check again (define (make-func) (define (a-func a) (+ a 1))) -- the opt problem is now fixed -- where it this business?? line 44013
- * require for xm/xg (not built-in). snd use libgsl rather than built-in?
+ *
+ * symbol+syntax=bit 6, pair=bit 8,
+ *   tricky cases: ext_cons where gcdr is a preset offset (arglist=len)
+ *                 slt where expr and pending_value can probably be combined
+ *                 envr where dox2 is a problem
+ *   the move hloc into each struct, expand type to 64 bits
+ *   use lower 4 as the type+op-if-any, upper 4 as flags
+ *   so: figure out dox2, undo the pointer part of gcdr, combine expr+pending
+ *   what about the syn+cdr assumption?
+ *   where does this actually save?  we have the same switch overhead, looks like 1%!
+ *
+ * also remember to track shadowed vars in gather-symbols
+ * is there a similar accessor for (set! (v i) x) etc? (vector-set! method in openlet perhaps? but that is awkward)
  */
 

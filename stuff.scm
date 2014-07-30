@@ -931,42 +931,23 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 ;;; ----------------
 
-(define* (symbol->let sym (ce (curlet)))
+(define (symbol->let sym ce)
   (if (defined? sym ce #t)
       ce
       (if (eq? ce (rootlet))
 	  #f
 	  (symbol->let sym (outlet ce)))))
 
-(define* (gather-symbols expr (lst ()))
+(define* (gather-symbols expr ce (lst ()))
   (if (symbol? expr)
       (if (and (not (memq expr lst))
-	       (not (eq? (symbol->let expr) (rootlet))))
+	       (not (eq? (symbol->let expr ce) (rootlet))))
 	  (cons expr lst)
 	  lst)
       (if (pair? expr)
-	  (gather-symbols (cdr expr) 
-			  (gather-symbols (car expr) lst))
+	  (gather-symbols (cdr expr) ce  
+			  (gather-symbols (car expr) ce lst))
 	  lst)))
-
-#|
-;;; first version
-(define-bacro (reactive-set! sym expr)
-  (for-each (lambda (symbol)   
-	      (set! (symbol-access symbol)
-		    (lambda (s v)
-		      (apply let `(((,symbol v)) (set! ,sym ,expr) v)))))
-	    (gather-symbols expr ()))
-  `(set! ,sym ,expr)) ; just for old-time's sake
-
-(let ((a 1)
-      (b 2)
-      (c 3))
-  (reactive-set! a (+ b c))
-  (set! b 4)
-  (set! c 5)
-  a)
-|#
 
 ;;; second version -- this incorporates possible existing accessors
 (define-bacro (reactive-set! sym expr)
@@ -976,7 +957,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		      (lambda (s v)
 			(let ((nv (osa s v)))
 			  (apply let `(((,symbol ,nv)) (set! ,sym ,expr) ,nv)))))))
-	    (gather-symbols expr ()))
+	    (gather-symbols expr (curlet) ()))
   `(set! ,sym ,expr))
 
 #|
@@ -1000,10 +981,11 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	   `((,(gensym) ,vars . ,body)
 	     (let ((,bindings ())
 		   (,accessors ())
-		   (,original-accessors ()))
+		   (,original-accessors ())
+		   (,e (curlet)))
 	       (for-each 
 		(lambda (bd)
-		  (let ((syms (gather-symbols (cadr bd) ())))
+		  (let ((syms (gather-symbols (cadr bd) ,e ())))
 		    (for-each 
 		     (lambda (sym)
 		       (let ((fname (gensym)))
@@ -1017,26 +999,53 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     syms)
 		    (set! ,bindings (cons bd ,bindings))))
 		,vars)
-	       `(let ((,',e (curlet)))
-		  (dynamic-wind
-		      (lambda () #f)
-		      (lambda ()
-			(let ,(reverse ,bindings)
-			  ,@(map (lambda (sa)
-				   `(set! (symbol-access ',(car sa)) 
-					  (lambda (s nv)
-					    (let ((osa (assq ',(car sa) ',,original-accessors)))
-					      (let ((v (if (cadr osa)
-							   ((cadr osa) s nv)
-							   nv)))
-						,@(cdr sa) 
-						v)))))
-				 ,accessors)
-			  ,@,body))
-		      (lambda () ; return accessors to their previous state
+	       `(dynamic-wind
+		    (lambda ()
+		      #f)
+		    (lambda ()
+		      (let ,(reverse ,bindings)
 			,@(map (lambda (sa)
-				 `(set! (symbol-access ',(car sa)) ,(cadr sa)))
-			       ,original-accessors)))))))))
+				 `(set! (symbol-access ',(car sa)) 
+					(lambda (s nv)
+					  (let ((osa (assq ',(car sa) ',,original-accessors)))
+					    (let ((v (if (cadr osa)
+							 ((cadr osa) s nv)
+							 nv)))
+					      ,@(cdr sa) 
+					      v)))))
+			       ,accessors)
+			,@,body))
+		    (lambda () ; return accessors to their previous state
+		      ,@(map (lambda (sa)
+			       `(set! (symbol-access ',(car sa)) ,(cadr sa)))
+			     ,original-accessors)
+		      #f)))))))                            ; in case there aren't any original accessors
+
+
+(define-macro (reactive-let* vars . body)
+  (define (add-layer vars)
+    (if (pair? vars)
+	(let ((g (gensym)))
+	  `(let ((,(caar vars) #f)
+		 (,g (symbol-access ',(caar vars))))
+	     (dynamic-wind
+		 (lambda () 
+		   #f)
+		 (lambda ()
+		   (reactive-set! ,(caar vars) ,(cadar vars))
+		   ,(add-layer (cdr vars)))
+		 (lambda ()
+		   (set! (symbol-access ',(caar vars)) ,g)))))
+	`(begin ,@body)))
+  (add-layer vars))
+
+
+(define-macro (reactive-lambda* args . body)
+  `(let ((f (lambda* ,args ,@body)))
+     (for-each (lambda (v)
+		 (set! (symbol-access (car v)) (lambda (s v) (f s v) v)))
+	       (outlet (curlet)))
+     f))
 
 #|
 (let ((a 1))
@@ -1052,8 +1061,27 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
                  (d 0))
 		(set! a 3)
 		(+ b c)))
-|#
 
+(let ((a 1))
+  (reactive-let* ((b (+ a 1))
+		  (c (* b 2)))
+    (set! a 3)
+    (+ c b)))
+
+(let ((a 1))
+  (reactive-let* ((b (+ a 1)))
+    (set! a 3) 
+    b))
+
+(define rl (let ((a 1)
+	         (b 2)
+		 (c 3))
+	     (reactive-lambda* (s v)
+	       (format *stderr* "~S changed: ~S~%" s v))))
+
+;; that is, if any of the function's immediate closure variables are set (via (set! ((funclet rl) 'a) 32)), rl is called.
+;;   (say a library that needs to keep all closure vars consistent, so if any changed a la Display, we need to check all).
+|#
 
 
 ;;; ----------------

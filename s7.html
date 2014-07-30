@@ -2496,27 +2496,27 @@ Environments are first class (and applicable) objects in s7.
 </p>
 
 <pre class="indented">
-(<em class=def id="letp">let?</em> obj)                #t if obj is an environment
-(<em class=def id="with-let">with-let</em> env . body)     evaluate body in the environment env 
-(<em class=def id="outlet">outlet</em> env)              the environment that encloses the environment env (settable)
-(<em class=def id="lettolist">let-&gt;list</em> env)           return the environment bindings as a list of (symbol . value) cons's
+(<em class=def id="rootlet">rootlet</em>)               the top-level (global) environment
+(<em class=def id="curlet">curlet</em>)                the current (innermost) environment
+(<em class=def id="funclet">funclet</em> proc)          the environment at the time when proc was defined
+(owlet)                 the environment at the point of the last error
+(<em class=def id="unlet">unlet</em>)                 the current environment, but all built-in functions have their original values
 
-(<em class=def id="rootlet">rootlet</em>)                 the top-level environment
-(<em class=def id="curlet">curlet</em>)                  the currently visible variables and their values
-(<em class=def id="funclet">funclet</em> proc)            the environment at the time when proc was defined
-(owlet)                   the environment at the point of the last error
-(<em class=def id="unlet">unlet</em>)                   the current environment, but all built-in functions have their original values
-
-(<em class=def id="inlet">inlet</em> . bindings)        make a new environment with the given bindings
-(<em class=def id="sublet">sublet</em> env . bindings-or-envs)  add bindings to env
-(<em class=def id="varlet">varlet</em> env . bindings-or-env)
-
-(<em class=def id="openlet">openlet</em> env)             mark env as open (see below)
-(<em class=def id="coverlet">coverlet</em> env)            mark env as closed (undo an earlier openlet)
-(<em class=def id="openletp">openlet?</em> env)
-
-(<em class=def id="letref">let-ref</em> env sym)
+(<em class=def id="letref">let-ref</em> env sym)       get value of sym in env, same as (env sym)
 (<em class=def id="letset">let-set!</em> env sym val)
+
+(<em class=def id="inlet">inlet</em> . bindings)       make a new environment with the given bindings
+(<em class=def id="sublet">sublet</em> env . bindings)  same as inlet, but the new environment is local to env
+(<em class=def id="varlet">varlet</em> env . bindings)  add new bindings directly to env
+
+(<em class=def id="letp">let?</em> obj)               #t if obj is an environment
+(<em class=def id="with-let">with-let</em> env . body)    evaluate body in the environment env 
+(<em class=def id="outlet">outlet</em> env)             the environment that encloses the environment env (settable)
+(<em class=def id="lettolist">let-&gt;list</em> env)          return the environment bindings as a list of (symbol . value) cons's
+
+(<em class=def id="openlet">openlet</em> env)            mark env as open (see below)
+(<em class=def id="openletp">openlet?</em> env)           #t is env is open
+(<em class=def id="coverlet">coverlet</em> env)           mark env as closed (undo an earlier openlet)
 </pre>
 
 <p>
@@ -4935,7 +4935,7 @@ returns the value that is actually set.  For example, the function can ensure th
 #&lt;let 'x 123 'y 3 'z #f&gt;
 </pre>
 
-<p>Or implement reactive programming (see reactive-set! in stuff.scm):
+<p>Or implement reactive programming (see reactive-set! and friends in stuff.scm):
 </p>
 <pre class="indented">
 (let ((a 1)

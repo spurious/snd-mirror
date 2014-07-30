@@ -8,7 +8,7 @@
 ;; since we might be loading this locally, reader-cond (in that case) won't find gsl-version unless...
 (if (not (defined? '*libgsl*))
     (with-let (rootlet)
-      (define gsl-version 0.0)		
+      (define gsl-version 0.0)		; define at top-level no matter where we are now
       (when (and (provided? 'linux)
 		 (defined? 'system))
 	(let ((version (system "pkg-config gsl --modversion" #t)))
@@ -1748,29 +1748,28 @@
                   ")
 	   (C-function ("gsl_combination->int-vector" g_gsl_combination_to_int_vector "" 2))
 	   
-	   
+	   ;; rl+im for complex in most of these cases
 	   (int gsl_dft_complex_forward (double* size_t size_t double*))
 	   (int gsl_dft_complex_backward (double* size_t size_t double*))
 	   (int gsl_dft_complex_inverse (double* size_t size_t double*))
 	   (int gsl_dft_complex_transform (double* size_t size_t double* int))
-	   
-	   ;; packed		    (int gsl_fft_complex_radix2_forward (gsl_complex_packed_array size_t size_t))
-	   ;; packed		    (int gsl_fft_complex_radix2_backward (gsl_complex_packed_array size_t size_t))
-	   ;; packed		    (int gsl_fft_complex_radix2_inverse (gsl_complex_packed_array size_t size_t))
-	   ;; packed		    (int gsl_fft_complex_radix2_transform (gsl_complex_packed_array size_t size_t int))
-	   ;; packed		    (int gsl_fft_complex_radix2_dif_forward (gsl_complex_packed_array size_t size_t))
-	   ;; packed		    (int gsl_fft_complex_radix2_dif_backward (gsl_complex_packed_array size_t size_t))
-	   ;; packed		    (int gsl_fft_complex_radix2_dif_inverse (gsl_complex_packed_array size_t size_t))
-	   ;; packed		    (int gsl_fft_complex_radix2_dif_transform (gsl_complex_packed_array size_t size_t int))
+	   (int gsl_fft_complex_radix2_forward (double* size_t size_t))
+	   (int gsl_fft_complex_radix2_backward (double* size_t size_t))
+	   (int gsl_fft_complex_radix2_inverse (double* size_t size_t))
+	   (int gsl_fft_complex_radix2_transform (double* size_t size_t int))
+	   (int gsl_fft_complex_radix2_dif_forward (double* size_t size_t))
+	   (int gsl_fft_complex_radix2_dif_backward (double* size_t size_t))
+	   (int gsl_fft_complex_radix2_dif_inverse (double* size_t size_t))
+	   (int gsl_fft_complex_radix2_dif_transform (double* size_t size_t int))
 	   (gsl_fft_complex_wavetable* gsl_fft_complex_wavetable_alloc (size_t))
 	   (void gsl_fft_complex_wavetable_free (gsl_fft_complex_wavetable*))
 	   (gsl_fft_complex_workspace* gsl_fft_complex_workspace_alloc (size_t))
 	   (void gsl_fft_complex_workspace_free (gsl_fft_complex_workspace*))
 	   (int gsl_fft_complex_memcpy (gsl_fft_complex_wavetable* gsl_fft_complex_wavetable*))
-	   ;; packed		    (int gsl_fft_complex_forward (gsl_complex_packed_array size_t size_t gsl_fft_complex_wavetable* gsl_fft_complex_workspace*))
-	   ;; packed		    (int gsl_fft_complex_backward (gsl_complex_packed_array size_t size_t gsl_fft_complex_wavetable* gsl_fft_complex_workspace*))
-	   ;; packed		    (int gsl_fft_complex_inverse (gsl_complex_packed_array size_t size_t gsl_fft_complex_wavetable* gsl_fft_complex_workspace*))
-	   ;; packed		    (int gsl_fft_complex_transform (gsl_complex_packed_array size_t size_t gsl_fft_complex_wavetable* gsl_fft_complex_workspace* int))
+	   (int gsl_fft_complex_forward (double* size_t size_t gsl_fft_complex_wavetable* gsl_fft_complex_workspace*))
+	   (int gsl_fft_complex_backward (double* size_t size_t gsl_fft_complex_wavetable* gsl_fft_complex_workspace*))
+	   (int gsl_fft_complex_inverse (double* size_t size_t gsl_fft_complex_wavetable* gsl_fft_complex_workspace*))
+	   (int gsl_fft_complex_transform (double* size_t size_t gsl_fft_complex_wavetable* gsl_fft_complex_workspace* int))
 	   (int gsl_fft_real_radix2_transform (double* size_t size_t) )
 	   (gsl_fft_real_wavetable* gsl_fft_real_wavetable_alloc (size_t))
 	   (void gsl_fft_real_wavetable_free (gsl_fft_real_wavetable*))
@@ -1990,12 +1989,32 @@
 	   (int gsl_integration_qawo_table_set (gsl_integration_qawo_table* double double int))
 	   (int gsl_integration_qawo_table_set_length (gsl_integration_qawo_table* double))
 	   (void gsl_integration_qawo_table_free (gsl_integration_qawo_table*))
-	   (void gsl_integration_qk15 (gsl_function* double double double* double* double* double*))
-	   (void gsl_integration_qk21 (gsl_function* double double double* double* double* double*))
-	   (void gsl_integration_qk31 (gsl_function* double double double* double* double* double*))
-	   (void gsl_integration_qk41 (gsl_function* double double double* double* double* double*))
-	   (void gsl_integration_qk51 (gsl_function* double double double* double* double* double*))
-	   (void gsl_integration_qk61 (gsl_function* double double double* double* double* double*))
+
+	   (in-C "#define Integration(Name) \
+                    static s7_pointer g_gsl_integration_ ## Name (s7_scheme *sc, s7_pointer args)   \
+                  {                                                                                 \
+                    gsl_function gsl_f;                                                             \
+                    make_gsl_function(s7_car(args));                                                \
+                    gsl_integration_ ## Name (&gsl_f, s7_real(s7_cadr(args)), s7_real(s7_caddr(args)), \
+                                         (double *)s7_c_pointer(s7_list_ref(sc, args, 3)), (double *)s7_c_pointer(s7_list_ref(sc, args, 4)), \
+                                         (double *)s7_c_pointer(s7_list_ref(sc, args, 5)), (double *)s7_c_pointer(s7_list_ref(sc, args, 6))); \
+                    return(s7_car(args));                                                          \
+                  }
+                 Integration(qk15)
+                 Integration(qk21)
+                 Integration(qk31)
+                 Integration(qk41)
+                 Integration(qk51)
+                 Integration(qk61)
+                 ")
+	   (C-function ("gsl_integration_qk15" g_gsl_integration_qk15 "" 7))
+	   (C-function ("gsl_integration_qk21" g_gsl_integration_qk21 "" 7))
+	   (C-function ("gsl_integration_qk31" g_gsl_integration_qk31 "" 7))
+	   (C-function ("gsl_integration_qk41" g_gsl_integration_qk41 "" 7))
+	   (C-function ("gsl_integration_qk51" g_gsl_integration_qk51 "" 7))
+	   (C-function ("gsl_integration_qk61" g_gsl_integration_qk61 "" 7))
+
+	   ;; TODO: finish these gsl_functions
 	   (void gsl_integration_qcheb (gsl_function* double double double* double*))
 	   (void gsl_integration_qk (int double* double* double* double* double* gsl_function* double double double* double* double* double*))
 	   (int gsl_integration_qng (gsl_function* double double double double double* double* size_t*))
@@ -2009,15 +2028,16 @@
 	   (int gsl_integration_qaws (gsl_function* double double gsl_integration_qaws_table* double double size_t gsl_integration_workspace* double* double*))
 	   (int gsl_integration_qawo (gsl_function* double double double size_t gsl_integration_workspace* gsl_integration_qawo_table* double* double*))
 	   (int gsl_integration_qawf (gsl_function* double double size_t gsl_integration_workspace* gsl_integration_workspace* gsl_integration_qawo_table* double* double*))
+	   (reader-cond ((>= gsl-version 1.15) (int gsl_integration_cquad 
+						    (gsl_function* double double double double gsl_integration_cquad_workspace* double* double* size_t*))))
+	   (double gsl_integration_glfixed (gsl_function* double double gsl_integration_glfixed_table*))
+
 	   (gsl_integration_glfixed_table* gsl_integration_glfixed_table_alloc (size_t))
 	   (void gsl_integration_glfixed_table_free (gsl_integration_glfixed_table*))
-	   (double gsl_integration_glfixed (gsl_function* double double gsl_integration_glfixed_table*))
 	   (reader-cond ((>= gsl-version 1.15) (int gsl_integration_glfixed_point (double double size_t double* double* gsl_integration_glfixed_table*))))
 	   
 	   (reader-cond ((>= gsl-version 1.15) (gsl_integration_cquad_workspace* gsl_integration_cquad_workspace_alloc (size_t))))
 	   (reader-cond ((>= gsl-version 1.15) (void gsl_integration_cquad_workspace_free (gsl_integration_cquad_workspace*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_integration_cquad 
-						    (gsl_function* double double double double gsl_integration_cquad_workspace* double* double* size_t*))))
 	   
 	   (int gsl_linalg_matmult (gsl_matrix* gsl_matrix* gsl_matrix*))
 	   (int gsl_linalg_matmult_mod (gsl_matrix* int gsl_matrix* int gsl_matrix*))
@@ -2283,24 +2303,8 @@
 	   (int gsl_min_test_interval (double double double double))
 	   (int gsl_min_find_bracket (gsl_function* double* double* double* double* double* double* size_t))
 	   
-	   (int gsl_monte_miser_integrate (gsl_monte_function* double* double* size_t size_t gsl_rng* gsl_monte_miser_state* double* double*))
-	   (gsl_monte_miser_state* gsl_monte_miser_alloc (size_t))
-	   (int gsl_monte_miser_init (gsl_monte_miser_state*))
-	   (void gsl_monte_miser_free (gsl_monte_miser_state*))
-	   (void gsl_monte_miser_params_get (gsl_monte_miser_state* gsl_monte_miser_params*))
-	   (void gsl_monte_miser_params_set (gsl_monte_miser_state* gsl_monte_miser_params*))
-	   (int gsl_monte_plain_integrate (gsl_monte_function* double* double* size_t size_t gsl_rng* gsl_monte_plain_state* double* double*))
-	   (gsl_monte_plain_state* gsl_monte_plain_alloc (size_t))
-	   (int gsl_monte_plain_init (gsl_monte_plain_state*))
-	   (void gsl_monte_plain_free (gsl_monte_plain_state*))
-	   (int gsl_monte_vegas_integrate (gsl_monte_function* double* double* size_t size_t gsl_rng* gsl_monte_vegas_state* double* double*))
-	   (gsl_monte_vegas_state* gsl_monte_vegas_alloc (size_t))
-	   (int gsl_monte_vegas_init (gsl_monte_vegas_state*))
-	   (void gsl_monte_vegas_free (gsl_monte_vegas_state*))
-	   (double gsl_monte_vegas_chisq (gsl_monte_vegas_state*))
-	   (void gsl_monte_vegas_runval (gsl_monte_vegas_state* double* double*))
-	   (void gsl_monte_vegas_params_get (gsl_monte_vegas_state* gsl_monte_vegas_params*))
-	   (void gsl_monte_vegas_params_set (gsl_monte_vegas_state* gsl_monte_vegas_params*))
+           ;; gsl_monte* is not doable -- they chose to pass a bare double* array to the gsl_monte_function,
+	   ;;   and there's nothing I can do with that.  To wrap and unwrap it on every call would make it unusable.
 	   
 	   (gsl_multifit_linear_workspace* gsl_multifit_linear_alloc (size_t size_t))
 	   (void gsl_multifit_linear_free (gsl_multifit_linear_workspace*))
@@ -2515,7 +2519,7 @@
 	   (double gsl_root_fsolver_x_lower (gsl_root_fsolver*))
 	   (double gsl_root_fsolver_x_upper (gsl_root_fsolver*))
 	   (gsl_root_fdfsolver* gsl_root_fdfsolver_alloc (gsl_root_fdfsolver_type*))
-	   (int gsl_root_fdfsolver_set (gsl_root_fdfsolver* gsl_function_fdf* double))
+	   (int gsl_root_fdfsolver_set (gsl_root_fdfsolver* gsl_function_fdf* double)) ; TODO: another gsl_function case
 	   (int gsl_root_fdfsolver_iterate (gsl_root_fdfsolver*))
 	   (void gsl_root_fdfsolver_free (gsl_root_fdfsolver*))
 	   (char* gsl_root_fdfsolver_name (gsl_root_fdfsolver*))
