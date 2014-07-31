@@ -1806,7 +1806,7 @@ static bool apply_controls(apply_state *ap)
 	  else
 	    {
 	      int len;
-	      len = run_apply(ap->ofd); /* returns frames written (an int) */
+	      len = run_apply(ap->ofd); /* returns framples written (an int) */
 	      if (len <= 0)
 		{
 		  ap->slice++;
@@ -2222,7 +2222,7 @@ static bool s7_xen_sound_equalp(void *obj1, void *obj2)
 
 static Xen s7_xen_sound_length(s7_scheme *sc, Xen obj)
 {
-  return(g_frames(obj, Xen_integer_zero, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION)));
+  return(g_framples(obj, Xen_integer_zero, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION)));
 }
 
 

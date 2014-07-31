@@ -5656,7 +5656,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
    */
   file_info *hdr;
   snd_fd **sf;
-  mus_long_t frames = 0;
+  mus_long_t framples = 0;
   int i;
   file_info *ohdr;
   io_error_t err = IO_NO_ERROR;
@@ -5708,7 +5708,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
       int local_pos;
       cp = sp->chans[i];
       if (pos == AT_CURRENT_EDIT_POSITION) local_pos = cp->edit_ctr; else local_pos = pos;
-      if (frames < cp->edits[local_pos]->samples) frames = cp->edits[local_pos]->samples;
+      if (framples < cp->edits[local_pos]->samples) framples = cp->edits[local_pos]->samples;
       sf[i] = init_sample_read_any(0, cp, READ_FORWARD, local_pos); 
       if (sf[i] == NULL)
 	{
@@ -5728,7 +5728,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
 	}
     }
 
-  err = snd_make_file(new_name, sp->nchans, hdr, sf, frames, true);
+  err = snd_make_file(new_name, sp->nchans, hdr, sf, framples, true);
   if (vals)
     {
       if (err == IO_NO_ERROR)
@@ -6930,7 +6930,7 @@ static Xen g_sampler_position(Xen obj)
     {
       snd_fd *fd = NULL;
       fd = Xen_to_C_sampler(obj);
-      if (fd->at_eof) return(Xen_integer_zero); /* -1? frames? */
+      if (fd->at_eof) return(Xen_integer_zero); /* -1? framples? */
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
 	  (fd->cp->sound))
@@ -8950,7 +8950,7 @@ static char *snd_to_sample_describe(mus_any *ptr)
 }
 
 
-static mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frame, int chan) 
+static mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frample, int chan) 
 {
   snd_to_sample *spl = (snd_to_sample *)ptr;
   mus_long_t diff, i;
@@ -8958,11 +8958,11 @@ static mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frame, int chan)
     spl->sfs = (snd_fd **)calloc(spl->chans, sizeof(snd_fd *));
   if (!(spl->sfs[chan])) 
     {
-      spl->sfs[chan] = init_sample_read(frame, spl->sp->chans[chan], READ_FORWARD);
-      spl->samps[chan] = frame;
+      spl->sfs[chan] = init_sample_read(frample, spl->sp->chans[chan], READ_FORWARD);
+      spl->samps[chan] = frample;
       return(next_sample_value(spl->sfs[chan]));
     }
-  diff = frame - spl->samps[chan];
+  diff = frample - spl->samps[chan];
   if (diff == 1)
     {
       spl->samps[chan]++;
@@ -8971,12 +8971,12 @@ static mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frame, int chan)
   if (diff > 1)
     {
       for (i = 1; i < diff; i++) next_sample_value(spl->sfs[chan]); /* just push pointer forward */
-      spl->samps[chan] = frame;
+      spl->samps[chan] = frample;
       return(next_sample_value(spl->sfs[chan]));
     }
   diff = -diff;
   for (i = 0; i <= diff; i++) previous_sample_value(spl->sfs[chan]); /* just push pointer backward (one too far) */
-  spl->samps[chan] = frame;
+  spl->samps[chan] = frample;
   return(next_sample_value(spl->sfs[chan])); /* always end up going forward (for simpler code) */
 }
 
@@ -9004,14 +9004,14 @@ static Xen g_is_snd_to_sample(Xen os)
 }
 
 
-static Xen g_snd_to_sample(Xen os, Xen frame, Xen chan)
+static Xen g_snd_to_sample(Xen os, Xen frample, Xen chan)
 {
-  #define H_snd_to_sample "(" S_snd_to_sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
+  #define H_snd_to_sample "(" S_snd_to_sample " gen frample chan): input sample (via snd->sample gen) at frample in channel chan"
   Xen_check_type((mus_is_xen(os)) && (is_snd_to_sample(Xen_to_mus_any(os))), os, 1, S_snd_to_sample, "a " S_snd_to_sample " gen");
-  Xen_check_type(Xen_is_llong(frame), frame, 2, S_snd_to_sample, "an integer");
+  Xen_check_type(Xen_is_llong(frample), frample, 2, S_snd_to_sample, "an integer");
   Xen_check_type(Xen_is_integer_or_unbound(chan), chan, 3, S_snd_to_sample, "an integer");
   return(C_double_to_Xen_real(snd_to_sample_read((mus_any *)Xen_to_mus_any(os), 
-					    Xen_llong_to_C_llong(frame), 
+					    Xen_llong_to_C_llong(frample), 
 					    (Xen_is_integer(chan)) ? Xen_integer_to_C_int(chan) : 0)));
 }
 

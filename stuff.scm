@@ -949,7 +949,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			  (gather-symbols (car expr) ce lst))
 	  lst)))
 
-;;; second version -- this incorporates possible existing accessors
 (define-bacro (reactive-set! sym expr)
   (for-each (lambda (symbol)
 	      (let ((osa (or (symbol-access symbol) (lambda (s v) v))))

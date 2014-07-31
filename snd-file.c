@@ -2880,7 +2880,7 @@ void display_info(snd_info *sp)
 		   sp->nchans,
 		   (double)(current_samples(sp->chans[0])) / (double)snd_srate(sp),
 		   current_samples(sp->chans[0]),
-		   (sp->nchans == 1) ? "samples" : "frames",
+		   (sp->nchans == 1) ? "samples" : "framples",
 		   ampstr = display_sound_maxamps(sp));
       post_it(sp->short_filename, buffer);
       if (ampstr) free(ampstr);

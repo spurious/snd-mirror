@@ -3317,10 +3317,9 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   bool with_mixer;
   mus_long_t beg = 0, len = 0;
 
-  /* it might be nice to make mix generic: vct=mix-vct, region=mix-region, sound-data=mix-sound-data, frame=mix-frame,
+  /* it might be nice to make mix generic: vct=mix-vct, region=mix-region, sound-data=mix-sound-data
    *        also mix-sound|mix-channel (sound object/int), but arg order is confusing (file-chn...)
    *        and mix-vct has "origin", also file_chn might be env: pan-mix-* [vector list?]
-   *   but someday I'd like to combine vct/sound-data/frame etc.
    *
    * mix-vct origin arg is not used (externally) except as a comment
    *
@@ -3679,15 +3678,15 @@ static io_error_t save_mix(int id, const char *name, int type, int format)
   snd_info *sp;
   mix_state *ms;
   io_error_t io_err = IO_NO_ERROR;
-  mus_long_t frames;
+  mus_long_t framples;
 
   md = md_from_id(id);
   cp = md->cp;
   sp = cp->sound;
   ms = current_mix_state(md);
-  frames = ms->len;
+  framples = ms->len;
 
-  io_err = snd_write_header(name, type, snd_srate(sp), 1, frames, format, NULL, NULL);
+  io_err = snd_write_header(name, type, snd_srate(sp), 1, framples, format, NULL, NULL);
 
   if (io_err == IO_NO_ERROR)
     {
@@ -3716,12 +3715,12 @@ static io_error_t save_mix(int id, const char *name, int type, int format)
 	  bufs[0] = (mus_float_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_float_t));
 	  data = bufs[0];
 
-	  for (i = 0; i < frames; i += FILE_BUFFER_SIZE)
+	  for (i = 0; i < framples; i += FILE_BUFFER_SIZE)
 	    {
 	      int cursamples, k;
-	      if ((i + FILE_BUFFER_SIZE) < frames) 
+	      if ((i + FILE_BUFFER_SIZE) < framples) 
 		cursamples = FILE_BUFFER_SIZE; 
-	      else cursamples = (frames - i);
+	      else cursamples = (framples - i);
 
 	      for (k = 0; k < cursamples; k++)
 		data[k] = read_sample(mf->sf);

@@ -451,20 +451,20 @@ void scale_by(chan_info *cp, mus_float_t *ur_scalers, int len, bool over_selecti
 
   for (i = 0, j = 0; i < si->chans; i++)
     {
-      mus_long_t beg, frames;
+      mus_long_t beg, framples;
       chan_info *ncp;
       ncp = si->cps[i];
       if (over_selection)
 	{
 	  beg = selection_beg(ncp);
-	  frames = selection_end(ncp) - beg + 1;
+	  framples = selection_end(ncp) - beg + 1;
 	}
       else
 	{
 	  beg = 0;
-	  frames = current_samples(ncp);
+	  framples = current_samples(ncp);
 	}
-      scale_channel(ncp, ur_scalers[j], beg, frames, ncp->edit_ctr, NOT_IN_AS_ONE_EDIT);
+      scale_channel(ncp, ur_scalers[j], beg, framples, ncp->edit_ctr, NOT_IN_AS_ONE_EDIT);
       j++;
       if (j >= len) j = 0;
     }
@@ -479,7 +479,7 @@ bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *ur_scalers, int len, boo
   /*   if more than one, get successive maxamps */
   bool scaled = false;
   int i, chans, nlen, datum_size;
-  mus_long_t beg, frames;
+  mus_long_t beg, framples;
   sync_info *si = NULL;
   chan_info *ncp;
   mus_float_t maxamp = -1.0, val, norm = 1.0;
@@ -575,24 +575,24 @@ bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *ur_scalers, int len, boo
 	  if (over_selection)
 	    {
 	      beg = selection_beg(ncp);
-	      frames = selection_end(ncp) - beg + 1;
+	      framples = selection_end(ncp) - beg + 1;
 #if HAVE_FORTH
-	      origin = mus_format("%.3f" PROC_SEP "%lld" PROC_SEP "%lld %s", norm, beg, frames, S_normalize_channel);
+	      origin = mus_format("%.3f" PROC_SEP "%lld" PROC_SEP "%lld %s", norm, beg, framples, S_normalize_channel);
 #else
-	      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(S_normalize_channel), norm, beg, frames);
+	      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(S_normalize_channel), norm, beg, framples);
 #endif
 	    }
 	  else
 	    {
 	      beg = 0;
-	      frames = current_samples(ncp);
+	      framples = current_samples(ncp);
 #if HAVE_FORTH
 	      origin = mus_format("%.3f 0 " PROC_FALSE " %s", norm, S_normalize_channel);
 #else
 	      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "0" PROC_SEP PROC_FALSE, to_proc_name(S_normalize_channel), norm);
 #endif
 	    }
-	  scale_channel_with_origin(ncp, scalers[i], beg, frames, ncp->edit_ctr, NOT_IN_AS_ONE_EDIT, origin);
+	  scale_channel_with_origin(ncp, scalers[i], beg, framples, ncp->edit_ctr, NOT_IN_AS_ONE_EDIT, origin);
 	  if (origin) free(origin);
 	  origin = NULL;
 	}
@@ -6804,7 +6804,7 @@ void g_init_sig(void)
 /* these work in snd-test, but are not faster */
 
 (define* (scan-channel func (beg 0) dur snd chn edpos)
-  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn)))
+  (let ((end (if dur (min (+ beg dur) (framples snd chn)) (framples snd chn)))
 	(rd (make-sampler beg snd chn 1 edpos)))
     (do ((pos beg (+ pos 1)))
         ((or (>= pos end)
@@ -6813,7 +6813,7 @@ void g_init_sig(void)
 	      pos)))))
 
 (define* (count-matches func (beg 0) snd chn edpos)
-  (let ((end (frames snd chn edpos))
+  (let ((end (framples snd chn edpos))
 	(matches 0)
 	(reader (make-sampler beg snd chn 1 edpos)))
     (do ((i beg (+ i 1)))
@@ -6823,7 +6823,7 @@ void g_init_sig(void)
 
 
 (define-macro* (scan-channel-1 func (beg 0) dur snd chn edpos)
-  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn))))
+  (let ((end (if dur (min (+ beg dur) (framples snd chn)) (framples snd chn))))
     `(let ((rd (make-sampler ,beg ,snd ,chn 1 ,edpos))
 	   (f ,func))
        (define (call)
@@ -6837,7 +6837,7 @@ void g_init_sig(void)
 (define* (scan-channel-2 func (beg 0) dur snd chn edpos)
   (define* (uncons lst (res ()))
     (if (null? lst) res (uncons (cdr lst) (cons (list (caar lst) (cdar lst)) res))))
-  (let ((end (if dur (min (+ beg dur) (frames snd chn)) (frames snd chn)))
+  (let ((end (if dur (min (+ beg dur) (framples snd chn)) (framples snd chn)))
 	(source (procedure-source func))
 	(e (procedure-environment func)))
     (let ((arg (caadr source))

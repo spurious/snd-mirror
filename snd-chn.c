@@ -587,7 +587,7 @@ void update_graph_or_warn(chan_info *cp)
 
 static Xen initial_graph_hook;
 
-bool add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_graph_t graphed)
+bool add_channel_data_1(chan_info *cp, int srate, mus_long_t framples, channel_graph_t graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
@@ -600,7 +600,7 @@ bool add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
   cp->edit_size = INITIAL_EDIT_SIZE;
   cp->edits = (ed_list **)calloc(cp->edit_size, sizeof(ed_list *));
   cp->edit_ctr = 0;
-  cp->edits[0] = initial_ed_list(0, frames - 1);
+  cp->edits[0] = initial_ed_list(0, framples - 1);
   cp->sound_size = INITIAL_EDIT_SIZE;
   cp->sound_ctr = 0;
   cp->sounds = (snd_data **)calloc(cp->sound_size, sizeof(snd_data *));
@@ -621,7 +621,7 @@ bool add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
     default:                   label = "time";            break;
     }
 
-  dur = (double)frames / (double)(srate);
+  dur = (double)framples / (double)(srate);
   if (show_full_duration(ss))
     {
       x0 = 0.0;
@@ -771,7 +771,7 @@ void start_peak_env(chan_info *cp)
 void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 {
   int chn = 0;
-  mus_long_t frames;
+  mus_long_t framples;
   snd_info *sp;
   file_info *chdr, *hdr;
 #if (!USE_NO_GUI)
@@ -780,11 +780,11 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 
   sp = cp->sound;
   hdr = sp->hdr;
-  frames = hdr->samples / hdr->chans;
+  framples = hdr->samples / hdr->chans;
 #if (!USE_NO_GUI)
-  ymax_set = add_channel_data_1(cp, hdr->srate, frames, graphed);
+  ymax_set = add_channel_data_1(cp, hdr->srate, framples, graphed);
 #else
-  add_channel_data_1(cp, hdr->srate, frames, graphed);
+  add_channel_data_1(cp, hdr->srate, framples, graphed);
 #endif
 
   chdr = copy_header(filename, hdr); /* need one separate from snd_info case */
@@ -6053,7 +6053,7 @@ static graphics_context *combined_context(chan_info *cp) {return(set_context(cp,
 static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
 {
 #if (!USE_NO_GUI)
-  #define SMPTE_FRAMES_PER_SECOND 24.0
+  #define SMPTE_FRAMPLES_PER_SECOND 24.0
   static char label[12] = "00:00:00:00";
 
   if (cp->graph_time_on)
@@ -6070,7 +6070,7 @@ static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
 	  (grf_height > 20))
 	{
 	  bool try_tiny_font;
-	  int width, height, frames, seconds, minutes, hours;
+	  int width, height, framples, seconds, minutes, hours;
 	  double secs;
 	  char num_buf[3];
 
@@ -6084,7 +6084,7 @@ static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
 	  minutes = floor(secs / 60.0);
 	  secs -= minutes * 60;
 	  seconds = floor(secs);
-	  frames = (secs - seconds) * SMPTE_FRAMES_PER_SECOND;
+	  framples = (secs - seconds) * SMPTE_FRAMPLES_PER_SECOND;
 	  
 	  snprintf(num_buf, 3, "%d", hours);
 	  if (hours > 9) {label[0] = num_buf[0]; label[1] = num_buf[1];} else {label[0] = '0'; label[1] = num_buf[0];}
@@ -6092,8 +6092,8 @@ static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
 	  if (minutes > 9) {label[3] = num_buf[0]; label[4] = num_buf[1];} else {label[3] = '0'; label[4] = num_buf[0];}
 	  snprintf(num_buf, 3, "%d", seconds);
 	  if (seconds > 9) {label[6] = num_buf[0]; label[7] = num_buf[1];} else {label[6] = '0'; label[7] = num_buf[0];}
-	  snprintf(num_buf, 3, "%d", frames);
-	  if (frames > 9) {label[9] = num_buf[0]; label[10] = num_buf[1];} else {label[9] = '0'; label[10] = num_buf[0];}
+	  snprintf(num_buf, 3, "%d", framples);
+	  if (framples > 9) {label[9] = num_buf[0]; label[10] = num_buf[1];} else {label[9] = '0'; label[10] = num_buf[0];}
 
 	  fill_rectangle(cur_ax, grf_x, grf_y, width, 2);
 	  fill_rectangle(cur_ax, grf_x, grf_y + height, width, 2);
@@ -6165,7 +6165,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
       int grf_width, width, x_offset, y_offset, grf_height, height, chan_offset;
       bool new_peaks;
       inset_graph_info_t *info;
-      mus_long_t frames;
+      mus_long_t framples;
 
       if (!(cp->inset_graph))
 	{
@@ -6187,11 +6187,11 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 
       new_peaks = ((cp->axis->cp) && (cp->axis->cp->new_peaks));
       /* new_peaks is set during update_graph if we just finished a new peak-env */
-      frames = current_samples(cp);
+      framples = current_samples(cp);
 
       if ((width > 10) &&
 	  (height > 10) &&
-	  (frames > 0) &&
+	  (framples > 0) &&
 	  ((cp->chan == 0) || (cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
 	{
 	  /* draw axes around the inset graph */
@@ -6243,8 +6243,8 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	  /* show where the current window fits into the overall graph */
 	  {
 	    int rx, lx, wx;
-	    rx = snd_round(width * (double)(cp->axis->hisamp) / (double)frames);
-	    lx = snd_round(width * (double)(cp->axis->losamp) / (double)frames);
+	    rx = snd_round(width * (double)(cp->axis->hisamp) / (double)framples);
+	    lx = snd_round(width * (double)(cp->axis->losamp) / (double)framples);
 #if USE_GTK
 	    if (lx < 2) lx = 2; /* don't erase the y axis */
 #endif
@@ -6285,7 +6285,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	      int gc_loc;
 #endif
 
-	      data = make_graph_data(cp, cp->edit_ctr, 0, frames);
+	      data = make_graph_data(cp, cp->edit_ctr, 0, framples);
 #if HAVE_SCHEME
 	      gc_loc = s7_gc_protect(s7, data);
 #endif
@@ -6444,14 +6444,14 @@ void draw_inset_line_cursor(chan_info *cp, graphics_context *ax)
 
 /* -------------------------------------------------------------------------------- */
 
-typedef enum {CP_GRAPH_TRANSFORM_ON, CP_GRAPH_TIME_ON, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_ON, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
+typedef enum {CP_GRAPH_TRANSFORM_ON, CP_GRAPH_TIME_ON, CP_FRAMPLES, CP_CURSOR, CP_GRAPH_LISP_ON, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
 	      CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK, CP_AFTER_EDIT_HOOK,
 	      CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_TIME_GRAPH_TYPE, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_TRANSFORM_PEAKS, 
 	      CP_SHOW_TRANSFORM_PEAKS, CP_ZERO_PAD, CP_WITH_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
 	      CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_TRANSFORM_SIZE, CP_TRANSFORM_GRAPH_TYPE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
 	      CP_TRANSFORM_NORMALIZATION, CP_SHOW_MIX_WAVEFORMS, CP_TIME_GRAPH_STYLE, CP_LISP_GRAPH_STYLE, CP_TRANSFORM_GRAPH_STYLE, CP_DOT_SIZE,
 	      CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
-	      CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM_GRAPH, CP_UPDATE_LISP, CP_PROPERTIES,
+	      CP_EDPOS_FRAMPLES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM_GRAPH, CP_UPDATE_LISP, CP_PROPERTIES,
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
 	      CP_SPECTRUM_END, CP_SPECTRUM_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
 	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY, CP_MAXAMP_POSITION,
@@ -6505,7 +6505,7 @@ static Xen channel_get(Xen snd, Xen chn_n, cp_field_t fld, const char *caller)
 	    case CP_GRAPH_TIME_ON:            return(C_bool_to_Xen_boolean(cp->graph_time_on));                       break;
 	    case CP_CURSOR:                  return(C_llong_to_Xen_llong(cursor_sample(cp)));                           break;
 	    case CP_EDPOS_CURSOR:            return(C_llong_to_Xen_llong(cp->edits[to_c_edit_position(cp, cp_edpos, S_cursor, 3)]->cursor)); break;
-	    case CP_FRAMES:                  return(C_llong_to_Xen_llong(current_samples(cp)));                  break;
+	    case CP_FRAMPLES:                  return(C_llong_to_Xen_llong(current_samples(cp)));                  break;
 	    case CP_GRAPH_LISP_ON:            return(C_bool_to_Xen_boolean(cp->graph_lisp_on));                       break;
 	    case CP_AP_LOSAMP:               if (cp->axis) return(C_llong_to_Xen_llong(cp->axis->losamp));       break;
 	    case CP_AP_HISAMP:               if (cp->axis) return(C_llong_to_Xen_llong(cp->axis->hisamp));       break;
@@ -6582,7 +6582,7 @@ static Xen channel_get(Xen snd, Xen chn_n, cp_field_t fld, const char *caller)
 	    case CP_SHOW_AXES:               return(C_int_to_Xen_integer((int)(cp->show_axes)));                         break;
 	    case CP_GRAPHS_HORIZONTAL:       return(C_bool_to_Xen_boolean(cp->graphs_horizontal));                    break;
 	    case CP_CURSOR_POSITION:         return(Xen_list_2(C_int_to_Xen_integer(cp->cx), C_int_to_Xen_integer(cp->cy)));     break;
-	    case CP_EDPOS_FRAMES:            return(C_llong_to_Xen_llong(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
+	    case CP_EDPOS_FRAMPLES:            return(C_llong_to_Xen_llong(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 
 	    case CP_UPDATE_TIME:
 	      /* any display-oriented background process must 1st be run to completion
@@ -7056,7 +7056,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
       return(C_bool_to_Xen_boolean(cp->graphs_horizontal));
       break;
 
-    case CP_FRAMES:
+    case CP_FRAMPLES:
       if (cp->editable)
 	{
 	  bool need_update = true;
@@ -7064,7 +7064,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	  curlen = current_samples(cp);
 	  newlen = (Xen_is_llong(on)) ? Xen_llong_to_C_llong(on) : curlen;
 	  if (newlen < 0)
-	    Xen_out_of_range_error(S_setB S_framples, 1, on, "frames < 0?");
+	    Xen_out_of_range_error(S_setB S_framples, 1, on, "framples < 0?");
 	  if (curlen > newlen)
 	    {
 	      if (newlen > 0)
@@ -7429,14 +7429,14 @@ static Xen g_cursor_position(Xen snd, Xen chn)
 }
 
 
-Xen g_frames(Xen snd, Xen chn, Xen edpos)
+Xen g_framples(Xen snd, Xen chn, Xen edpos)
 {
-  #define H_frames "(" S_framples " :optional snd-or-object chn edpos): number of frames of data in the given object or channel"
+  #define H_framples "(" S_framples " :optional snd-or-object chn edpos): number of framples of data in the given object or channel"
 
   if (!(Xen_is_bound(chn)))
     {
       if ((xen_is_sound(snd)) || (!Xen_is_bound(snd)))
-	return(channel_get(snd, chn, CP_FRAMES, S_framples));
+	return(channel_get(snd, chn, CP_FRAMPLES, S_framples));
 
       if (Xen_is_string(snd))
 	return(g_mus_sound_framples(snd));         /* mus-sound-framples */
@@ -7450,7 +7450,7 @@ Xen g_frames(Xen snd, Xen chn, Xen edpos)
       if (xen_is_mix(snd))                        /* mix-length */
 	return(g_mix_length(snd));
 
-      if (xen_is_region(snd))                     /* region-frames */
+      if (xen_is_region(snd))                     /* region-framples */
 	return(g_region_framples(snd, Xen_integer_zero));
 
       if (xen_is_player(snd))
@@ -7471,23 +7471,23 @@ Xen g_frames(Xen snd, Xen chn, Xen edpos)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
-      res = channel_get(snd, chn, CP_EDPOS_FRAMES, S_framples);
+      res = channel_get(snd, chn, CP_EDPOS_FRAMPLES, S_framples);
       snd_unprotect_at(cp_edpos_loc);
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
 
-  return(channel_get(snd, chn, CP_FRAMES, S_framples));
+  return(channel_get(snd, chn, CP_FRAMPLES, S_framples));
 }
 
 
-static Xen g_set_frames(Xen on, Xen snd, Xen chn_n) 
+static Xen g_set_framples(Xen on, Xen snd, Xen chn_n) 
 {
   Xen_check_type(Xen_is_number(on), on, 1, S_setB S_framples, "a number");
-  return(channel_set(snd, chn_n, on, CP_FRAMES, S_setB S_framples));
+  return(channel_set(snd, chn_n, on, CP_FRAMPLES, S_setB S_framples));
 }
 
-with_three_setter_args(g_set_frames_reversed, g_set_frames)
+with_three_setter_args(g_set_framples_reversed, g_set_framples)
 
 
 static Xen g_vector_maxamp(Xen obj)
@@ -9728,7 +9728,7 @@ Xen_wrap_2_optional_args(g_ap_sx_w, g_ap_sx)
 Xen_wrap_2_optional_args(g_ap_sy_w, g_ap_sy)
 Xen_wrap_2_optional_args(g_ap_zx_w, g_ap_zx)
 Xen_wrap_2_optional_args(g_ap_zy_w, g_ap_zy)
-Xen_wrap_3_optional_args(g_frames_w, g_frames)
+Xen_wrap_3_optional_args(g_framples_w, g_framples)
 Xen_wrap_3_optional_args(g_maxamp_position_w, g_maxamp_position)
 Xen_wrap_3_optional_args(g_maxamp_w, g_maxamp)
 Xen_wrap_2_optional_args(g_cursor_position_w, g_cursor_position)
@@ -9805,7 +9805,7 @@ Xen_wrap_1_arg(g_set_with_gl_w, g_set_with_gl)
 #define g_set_ap_sy_w g_set_ap_sy_reversed
 #define g_set_ap_zx_w g_set_ap_zx_reversed
 #define g_set_ap_zy_w g_set_ap_zy_reversed
-#define g_set_frames_w g_set_frames_reversed
+#define g_set_framples_w g_set_framples_reversed
 #define g_set_maxamp_w g_set_maxamp_reversed
 #define g_set_edit_position_w g_set_edit_position_reversed
 #define g_set_transform_graph_on_w g_set_transform_graph_on_reversed
@@ -9871,7 +9871,7 @@ Xen_wrap_3_optional_args(g_set_ap_sx_w, g_set_ap_sx)
 Xen_wrap_3_optional_args(g_set_ap_sy_w, g_set_ap_sy)
 Xen_wrap_3_optional_args(g_set_ap_zx_w, g_set_ap_zx)
 Xen_wrap_3_optional_args(g_set_ap_zy_w, g_set_ap_zy)
-Xen_wrap_3_optional_args(g_set_frames_w, g_set_frames)
+Xen_wrap_3_optional_args(g_set_framples_w, g_set_framples)
 Xen_wrap_3_optional_args(g_set_maxamp_w, g_set_maxamp)
 Xen_wrap_3_optional_args(g_set_edit_position_w, g_set_edit_position)
 Xen_wrap_3_optional_args(g_set_transform_graph_on_w, g_set_transform_graph_on)
@@ -9960,7 +9960,7 @@ void g_init_chn(void)
   Xen_define_procedure_with_setter(S_y_position_slider, g_ap_sy_w, H_y_position_slider, S_setB S_y_position_slider, g_set_ap_sy_w, 0, 2, 1, 2);
   Xen_define_procedure_with_setter(S_x_zoom_slider, g_ap_zx_w, H_x_zoom_slider, S_setB S_x_zoom_slider, g_set_ap_zx_w, 0, 2, 1, 2);
   Xen_define_procedure_with_setter(S_y_zoom_slider, g_ap_zy_w, H_y_zoom_slider, S_setB S_y_zoom_slider, g_set_ap_zy_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_framples, g_frames_w, H_frames, S_setB S_framples, g_set_frames_w, 0, 3, 1, 2);
+  Xen_define_procedure_with_setter(S_framples, g_framples_w, H_framples, S_setB S_framples, g_set_framples_w, 0, 3, 1, 2);
   Xen_define_procedure_with_setter(S_maxamp, g_maxamp_w, H_maxamp, S_setB S_maxamp, g_set_maxamp_w, 0, 3, 1, 2);
 
   Xen_define_safe_procedure(S_maxamp_position,   g_maxamp_position_w, 0, 3, 0,   H_maxamp_position);

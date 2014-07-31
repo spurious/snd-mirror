@@ -6602,15 +6602,15 @@ static Xen g_is_frample_to_file(Xen obj)
 static double (*in_any_2)(mus_long_t pos, int chn);
 #endif
 
-static Xen g_in_any_1(const char *caller, Xen frame, int in_chan, Xen inp)
+static Xen g_in_any_1(const char *caller, Xen frample, int in_chan, Xen inp)
 {
   mus_long_t pos;
 
-  Xen_check_type(Xen_is_integer(frame), frame, 1, caller, "an integer");
+  Xen_check_type(Xen_is_integer(frample), frample, 1, caller, "an integer");
 
-  pos = Xen_llong_to_C_llong(frame);
+  pos = Xen_llong_to_C_llong(frample);
   if (pos < 0) 
-    Xen_out_of_range_error(caller, 1, frame, "location should be >= 0");    
+    Xen_out_of_range_error(caller, 1, frample, "location should be >= 0");    
 
   if (in_chan < 0) 
     Xen_out_of_range_error(caller, 2, C_int_to_Xen_integer(in_chan), "must be >= 0");    
@@ -6658,25 +6658,25 @@ static Xen g_in_any_1(const char *caller, Xen frame, int in_chan, Xen inp)
 }
 
 
-static Xen g_in_any(Xen frame, Xen chan, Xen inp) 
+static Xen g_in_any(Xen frample, Xen chan, Xen inp) 
 {
-  #define H_in_any "(" S_in_any " frame chan stream): input stream sample at frame in channel chan"
+  #define H_in_any "(" S_in_any " frample chan stream): input stream sample at frample in channel chan"
   Xen_check_type(Xen_is_integer(chan), chan, 2, S_in_any, "an integer");
-  return(g_in_any_1(S_in_any, frame, Xen_integer_to_C_int(chan), inp));
+  return(g_in_any_1(S_in_any, frample, Xen_integer_to_C_int(chan), inp));
 }
 
 
-static Xen g_ina(Xen frame, Xen inp) 
+static Xen g_ina(Xen frample, Xen inp) 
 {
-  #define H_ina "(" S_ina " frame stream): input stream sample in channel 0 at frame"
-  return(g_in_any_1(S_ina, frame, 0, inp));
+  #define H_ina "(" S_ina " frample stream): input stream sample in channel 0 at frample"
+  return(g_in_any_1(S_ina, frample, 0, inp));
 }
 
 
-static Xen g_inb(Xen frame, Xen inp) 
+static Xen g_inb(Xen frample, Xen inp) 
 {
-  #define H_inb "(" S_inb " frame stream): input stream sample in channel 1 at frame"
-  return(g_in_any_1(S_inb, frame, 1, inp));
+  #define H_inb "(" S_inb " frample stream): input stream sample in channel 1 at frample"
+  return(g_in_any_1(S_inb, frample, 1, inp));
 }
 
 
@@ -6961,7 +6961,7 @@ sends that output to the output channels in the vector order (the first generato
 }
 
 
-static Xen g_out_any_1(const char *caller, Xen frame, int chn, Xen val, Xen outp)
+static Xen g_out_any_1(const char *caller, Xen frample, int chn, Xen val, Xen outp)
 {
   mus_long_t pos = 0;
   mus_float_t inv;
@@ -6969,9 +6969,9 @@ static Xen g_out_any_1(const char *caller, Xen frame, int chn, Xen val, Xen outp
   if (chn < 0)
     Xen_out_of_range_error(caller, 3, C_int_to_Xen_integer(chn), "must be >= 0");    
 
-  Xen_to_C_integer_or_error(frame, pos, caller, 1);
+  Xen_to_C_integer_or_error(frample, pos, caller, 1);
   if (pos < 0) 
-    Xen_out_of_range_error(caller, 1, frame, "must be >= 0");    
+    Xen_out_of_range_error(caller, 1, frample, "must be >= 0");    
 
   Xen_to_C_double_or_error(val, inv, caller, 2);
 
@@ -6991,39 +6991,39 @@ static Xen g_out_any_1(const char *caller, Xen frame, int chn, Xen val, Xen outp
 #endif
 }
 
-static Xen g_out_any(Xen frame, Xen val, Xen chan, Xen outp)
+static Xen g_out_any(Xen frample, Xen val, Xen chan, Xen outp)
 {
-  #define H_out_any "(" S_out_any " frame val chan stream): add val to output stream at frame in channel chan"
+  #define H_out_any "(" S_out_any " frample val chan stream): add val to output stream at frample in channel chan"
   Xen_check_type(Xen_is_integer(chan), chan, 3, S_out_any, "an integer");
-  return(g_out_any_1(S_out_any, frame, Xen_integer_to_C_int(chan), val, outp));
+  return(g_out_any_1(S_out_any, frample, Xen_integer_to_C_int(chan), val, outp));
 }
 
 
-static Xen g_outa(Xen frame, Xen val, Xen outp)
+static Xen g_outa(Xen frample, Xen val, Xen outp)
 {
-  #define H_outa "(" S_outa " frame val stream): add val to output stream at frame in channel 0"
-  return(g_out_any_1(S_outa, frame, 0, val, outp));
+  #define H_outa "(" S_outa " frample val stream): add val to output stream at frample in channel 0"
+  return(g_out_any_1(S_outa, frample, 0, val, outp));
 }
 
 
-static Xen g_outb(Xen frame, Xen val, Xen outp)
+static Xen g_outb(Xen frample, Xen val, Xen outp)
 {
-  #define H_outb "(" S_outb " frame val stream): add val to output stream at frame in channel 1"
-  return(g_out_any_1(S_outb, frame, 1, val, outp));
+  #define H_outb "(" S_outb " frample val stream): add val to output stream at frample in channel 1"
+  return(g_out_any_1(S_outb, frample, 1, val, outp));
 }
 
 
-static Xen g_outc(Xen frame, Xen val, Xen outp)
+static Xen g_outc(Xen frample, Xen val, Xen outp)
 {
-  #define H_outc "(" S_outc " frame val stream): add val to output stream at frame in channel 2"
-  return(g_out_any_1(S_outc, frame, 2, val, outp));
+  #define H_outc "(" S_outc " frample val stream): add val to output stream at frample in channel 2"
+  return(g_out_any_1(S_outc, frample, 2, val, outp));
 }
 
 
-static Xen g_outd(Xen frame, Xen val, Xen outp)
+static Xen g_outd(Xen frample, Xen val, Xen outp)
 {
-  #define H_outd "(" S_outd " frame val stream): add val to output stream at frame in channel 3"
-  return(g_out_any_1(S_outd, frame, 3, val, outp));
+  #define H_outd "(" S_outd " frample val stream): add val to output stream at frample in channel 3"
+  return(g_out_any_1(S_outd, frample, 3, val, outp));
 }
 
 
@@ -7072,7 +7072,7 @@ static Xen g_make_file_to_sample(Xen name, Xen buffer_size)
 
 static Xen g_file_to_sample(Xen obj, Xen samp, Xen chan)
 {
-  #define H_file_to_sample "(" S_file_to_sample " obj frame chan): sample value in sound file read by 'obj' in channel chan at frame"
+  #define H_file_to_sample "(" S_file_to_sample " obj frample chan): sample value in sound file read by 'obj' in channel chan at frample"
   int channel = 0;
   mus_any *g = NULL;
   mus_xen *gn;
@@ -7155,7 +7155,7 @@ that reopens an existing sound file 'filename' ready for output via " S_sample_t
 static Xen g_sample_to_file(Xen obj, Xen samp, Xen chan, Xen val)
 {
   #define H_sample_to_file "(" S_sample_to_file " obj samp chan val): add val to the output stream \
-handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
+handled by the output generator 'obj', in channel 'chan' at frample 'samp'"
 
   mus_any *g = NULL;
   mus_xen *gn;
@@ -7319,7 +7319,7 @@ static Xen g_readin(Xen obj)
 static Xen g_make_readin(Xen arglist)
 {
   #define H_make_readin "(" S_make_readin " file (channel 0) (start 0) (direction 1) size): \
-return a new readin (file input) generator reading the sound file 'file' starting at frame \
+return a new readin (file input) generator reading the sound file 'file' starting at frample \
 'start' in channel 'channel' and reading forward if 'direction' is not -1"
 
   /* optkey file channel start direction size */
@@ -7555,7 +7555,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 
 static Xen g_locsig(Xen xobj, Xen xpos, Xen xval)
 {
-  #define H_locsig "(" S_locsig " gen loc val): add 'val' to the output of locsig at frame 'loc'"
+  #define H_locsig "(" S_locsig " gen loc val): add 'val' to the output of locsig at frample 'loc'"
   mus_any *loc_gen;
   mus_xen *ms;
   mus_long_t pos;
@@ -7581,7 +7581,7 @@ static Xen g_locsig(Xen xobj, Xen xpos, Xen xval)
 
   mus_locsig(loc_gen, pos, fval);
 
-  return(xval);  /* changed 30-June-06 to return val rather than a wrapped frame */
+  return(xval);  /* changed 30-June-06 to return val rather than a wrapped frample */
 }
 
 static mus_interp_t clm_locsig_type = MUS_INTERP_LINEAR;
@@ -9315,11 +9315,11 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
     mus_long_t samp;
     int inp, outp, off;
     mus_float_t src_env_val = 0.0;
-    mus_float_t *infs, *out_frame, *rev_frame = NULL;
+    mus_float_t *infs, *out_frample, *rev_frample = NULL;
 
     infs = (mus_float_t *)calloc(in_chans, sizeof(mus_float_t));
-    out_frame = (mus_float_t *)calloc(out_chans, sizeof(mus_float_t));
-    if (rev_mix) rev_frame = (mus_float_t *)calloc(rev_chans, sizeof(mus_float_t));
+    out_frample = (mus_float_t *)calloc(out_chans, sizeof(mus_float_t));
+    if (rev_mix) rev_frample = (mus_float_t *)calloc(rev_chans, sizeof(mus_float_t));
 
     if (in_chans == 1)
       {
@@ -9346,8 +9346,8 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
 		  infs[0] = mus_readin(r);
 		else infs[0] = 0.0;
 	      }
-	    mus_frample_to_file(ostr, samp, mus_frample_to_frample(mix, mx_chans, infs, in_chans, out_frame, out_chans));
-	    if (rev_mix) mus_frample_to_file(rstr, samp, mus_frample_to_frample(rev_mix, rev_mix_chans, infs, in_chans, rev_frame, rev_chans));
+	    mus_frample_to_file(ostr, samp, mus_frample_to_frample(mix, mx_chans, infs, in_chans, out_frample, out_chans));
+	    if (rev_mix) mus_frample_to_file(rstr, samp, mus_frample_to_frample(rev_mix, rev_mix_chans, infs, in_chans, rev_frample, rev_chans));
 	  }
       }
     else
@@ -9378,13 +9378,13 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
 		    else infs[inp] = 0.0;
 		  }
 	      }
-	    mus_frample_to_file(ostr, samp, mus_frample_to_frample(mix, mx_chans, infs, in_chans, out_frame, out_chans));
-	    if (rev_mix) mus_frample_to_file(rstr, samp, mus_frample_to_frample(rev_mix, rev_mix_chans, infs, in_chans, rev_frame, rev_chans));
+	    mus_frample_to_file(ostr, samp, mus_frample_to_frample(mix, mx_chans, infs, in_chans, out_frample, out_chans));
+	    if (rev_mix) mus_frample_to_file(rstr, samp, mus_frample_to_frample(rev_mix, rev_mix_chans, infs, in_chans, rev_frample, rev_chans));
 	  }
       }
     free(infs);
-    free(out_frame);
-    if (rev_frame) free(rev_frame);
+    free(out_frample);
+    if (rev_frample) free(rev_frample);
   }
 
   free(mix_rds);
@@ -14352,7 +14352,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
   /* else not choices, so maybe op is not a function?
    */
 
-  /* vector, vct, sound-data, frame -- anything applicable
+  /* vector, vct, sound-data -- anything applicable
    */
   if ((mus_is_vct(op)) &&
       (!s7_is_pair(cddr(expr))) &&

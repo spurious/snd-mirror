@@ -396,7 +396,7 @@ static void set_window_percentage(chan_info *cp, int count)
 }
 
 
-static void window_frames_selection(chan_info *cp)
+static void window_framples_selection(chan_info *cp)
 {
   double x0, x1;
   int i;
@@ -1407,7 +1407,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 		case snd_K_V: case snd_K_v: 
 		  if (selection_is_active_in_channel(cp))
-		    window_frames_selection(cp); 
+		    window_framples_selection(cp); 
 		  else 
 		    {
 		      bool complain = true;
@@ -1418,7 +1418,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 			    if ((i != cp->chan) &&
 				(selection_is_active_in_channel(sp->chans[i])))
 			      {
-				window_frames_selection(sp->chans[i]);
+				window_framples_selection(sp->chans[i]);
 				complain = false;
 				break;
 			      }

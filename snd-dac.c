@@ -40,7 +40,7 @@ typedef struct dac_info {
   snd_info *sp;        /* needed to see button callback changes etc */
   chan_info *cp;
   bool never_sped;
-  int expand_ring_frames;
+  int expand_ring_framples;
   mus_long_t end;
   Xen stop_procedure;
   int stop_procedure_gc_loc;
@@ -562,12 +562,12 @@ void dac_set_reverb_lowpass(snd_info *sp, mus_float_t newval) {dac_set_field(sp,
 typedef struct {
   int srate;                /* output srate */
   int channels;             /* total output channels currently active */
-  int frames;               /* samples per channel per output block */
+  int framples;               /* samples per channel per output block */
   int devices;              /* output devices active */
   int *chans_per_device;    /* channels sent to each active device */
   int out_format;           /* output data format */
   int slice;                /* background process state (i.e. starting, running, quitting) */
-  mus_long_t reverb_ring_frames; /* how long the reverb rings after the end (if reverb, of course) */
+  mus_long_t reverb_ring_framples; /* how long the reverb rings after the end (if reverb, of course) */
 
 } dac_state;
 
@@ -657,7 +657,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 		      if (dp->cur_srate > 0.0)
 			{
 			  mus_long_t samp;
-			  samp = current_location(dp->chn_fd) + ((snd_dacp) ? snd_dacp->frames : 0);
+			  samp = current_location(dp->chn_fd) + ((snd_dacp) ? snd_dacp->framples : 0);
 			  if (dp->selection)
 			    {
 			      if (samp > selection_end(cp))
@@ -990,7 +990,7 @@ static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd
       if (dp->expanding) 
 	{
 	  dp->spd = (spd_info *)make_expand(sp, sp->expand_control, dp);
-	  dp->expand_ring_frames = (int)(snd_srate(sp) * sp->expand_control * sp->expand_control_length * 2);
+	  dp->expand_ring_framples = (int)(snd_srate(sp) * sp->expand_control * sp->expand_control_length * 2);
 	}
 
       if (dp->filtering)
@@ -1075,10 +1075,10 @@ static void start_dac(int srate, int channels, play_process_t background, mus_fl
       if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
       snd_dacp->channels = channels;
       if (dac_size(ss) > 0)
-	snd_dacp->frames = dac_size(ss);
-      else snd_dacp->frames = 256;
+	snd_dacp->framples = dac_size(ss);
+      else snd_dacp->framples = 256;
       snd_dacp->devices = 1;  /* just a first guess */
-      snd_dacp->reverb_ring_frames = (mus_long_t)(srate * decay);
+      snd_dacp->reverb_ring_framples = (mus_long_t)(srate * decay);
       if (background == IN_BACKGROUND) 
 	dac_work_proc = BACKGROUND_ADD(dac_in_background, NULL);
       else
@@ -1559,7 +1559,7 @@ static int fill_dac_buffers(int write_ok)
   /* return value used only by Apply */
   int i, j;
   bool cursor_change = false;
-  int bytes, frames;
+  int bytes, framples;
   mus_float_t *revin;
   mus_float_t amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
   dac_info *dp;
@@ -1569,13 +1569,13 @@ static int fill_dac_buffers(int write_ok)
   mus_float_t **dev_bufs;
 #endif
 
-  frames = snd_dacp->frames;
+  framples = snd_dacp->framples;
   /* clear buffers */
   for (i = 0; i < snd_dacp->channels; i++) 
-    memset(dac_buffers[i], 0, frames * sizeof(mus_float_t));
+    memset(dac_buffers[i], 0, framples * sizeof(mus_float_t));
   if (global_rev)
     for (i = 0; i < snd_dacp->channels; i++) 
-      memset(rev_ins[i], 0, frames * sizeof(mus_float_t));
+      memset(rev_ins[i], 0, framples * sizeof(mus_float_t));
 
   if (dac_pausing) 
     cursor_change = false;
@@ -1583,9 +1583,9 @@ static int fill_dac_buffers(int write_ok)
     {
       if (Xen_hook_has_list(play_hook))
 	run_hook(play_hook, 
-		 Xen_list_1(C_int_to_Xen_integer(frames)),
+		 Xen_list_1(C_int_to_Xen_integer(framples)),
 		 S_play_hook);
-      cursor_time += frames;
+      cursor_time += framples;
       cursor_change = (cursor_time >= (int)(snd_dacp->srate * cursor_update_interval(ss)));
       /* the check for hooks and so on has to be separate from the fill loop to keep everything synchronized across stop-function replay requests etc */
 
@@ -1644,15 +1644,15 @@ static int fill_dac_buffers(int write_ok)
 		{
 		case NO_CHANGE:
 		  /* simplest case -- no changes at all */
-		  for (j = 0; j < frames; j++)
+		  for (j = 0; j < framples; j++)
 		    buf[j] += (mus_float_t)((*(dp->dac_sample))(dp));
 		  break;
 
 		case JUST_AMP:
 		  /* AMP_CONTROL(sp, dp) is current UI value, dp->cur_amp is current local value */
 		  amp = dp->cur_amp;
-		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(frames);
-		  for (j = 0; j < frames; j++, amp += incr) 
+		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(framples);
+		  for (j = 0; j < framples; j++, amp += incr) 
 		    buf[j] += (mus_float_t)(amp * (*(dp->dac_sample))(dp));
 		  dp->cur_amp = amp;
 		  break;
@@ -1662,9 +1662,9 @@ static int fill_dac_buffers(int write_ok)
 		  /* sp->speed_control is current UI value, dp->cur_srate is current local value */
 		  dp->never_sped = false;
 		  amp = dp->cur_amp;
-		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(frames);
+		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(framples);
 		  sr = dp->cur_srate;
-		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (mus_float_t)(frames);
+		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (mus_float_t)(framples);
 		  if ((sr != 0.0) || (sincr != 0.0))
 		    {
 		      if (dp->src)
@@ -1672,11 +1672,11 @@ static int fill_dac_buffers(int write_ok)
 			  if ((amp == 1.0) && (incr == 0.0) && (sincr == 0.0))
 			    {
 			      mus_set_increment(dp->src, sr);
-			      mus_src_to_buffer(dp->src, &dac_src_input_as_needed, buf, frames);
+			      mus_src_to_buffer(dp->src, &dac_src_input_as_needed, buf, framples);
 			    }
 			  else
 			    {
-			      for (j = 0; j < frames; j++, amp += incr, sr += sincr) 
+			      for (j = 0; j < framples; j++, amp += incr, sr += sincr) 
 				{
 				  mus_set_increment(dp->src, sr);
 				  buf[j] += (amp * mus_src(dp->src, 0.0, &dac_src_input_as_needed));
@@ -1685,7 +1685,7 @@ static int fill_dac_buffers(int write_ok)
 			}
 		      else
 			{
-			  for (j = 0; j < frames; j++, amp += incr, sr += sincr) 
+			  for (j = 0; j < framples; j++, amp += incr, sr += sincr) 
 			    buf[j] += (amp * speed(dp, sr));
 			}
 		    }
@@ -1695,14 +1695,14 @@ static int fill_dac_buffers(int write_ok)
 
 		case ALL_CHANGES:
 		  amp = dp->cur_amp;
-		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(frames);
+		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(framples);
 		  sr = dp->cur_srate;
-		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (mus_float_t)(frames);
+		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (mus_float_t)(framples);
 		  if ((sincr != 0.0) || (!(snd_feq(sr, 1.0)))) dp->never_sped = false;
 		  ind = dp->cur_index;
-		  indincr = (sp->contrast_control - ind) / (mus_float_t)(frames);
+		  indincr = (sp->contrast_control - ind) / (mus_float_t)(framples);
 		  rev = dp->cur_rev;
-		  revincr = (sp->reverb_control_scale - rev) / (mus_float_t)(frames);
+		  revincr = (sp->reverb_control_scale - rev) / (mus_float_t)(framples);
 		  if ((dp->filtering) && (sp->filter_control_changed))
 		    {
 		      mus_float_t *data = NULL;
@@ -1738,8 +1738,8 @@ static int fill_dac_buffers(int write_ok)
 		  if (dp->expanding)
 		    {
 		      ex = dp->cur_exp;
-		      exincr = (sp->expand_control - ex) / (mus_float_t)(frames);
-		      for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, ex += exincr, rev += revincr) 
+		      exincr = (sp->expand_control - ex) / (mus_float_t)(framples);
+		      for (j = 0; j < framples; j++, amp += incr, sr += sincr, ind += indincr, ex += exincr, rev += revincr) 
 			{
 			  fval = expand(dp, sr, ex);
 			  if (sp->contrast_control_on) fval = contrast(dp, amp, ind, fval); else fval *= amp;
@@ -1753,7 +1753,7 @@ static int fill_dac_buffers(int write_ok)
 		    {
 		      if (dp->filtering)
 			{
-			  for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
+			  for (j = 0; j < framples; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
 			    {
 			      fval = speed(dp, sr);
 			      if (sp->contrast_control_on) fval = contrast(dp, amp, ind, fval); else fval *= amp;
@@ -1766,7 +1766,7 @@ static int fill_dac_buffers(int write_ok)
 			{
 			  if (sp->contrast_control_on)
 			    {
-			      for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
+			      for (j = 0; j < framples; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
 				{
 				  fval = contrast(dp, amp, ind, speed(dp, sr));
 				  if (dp->reverbing) revin[j] += fval * rev;
@@ -1777,7 +1777,7 @@ static int fill_dac_buffers(int write_ok)
 			    {
 			      if (dp->never_sped)
 				{
-				  for (j = 0; j < frames; j++, amp += incr, rev += revincr) 
+				  for (j = 0; j < framples; j++, amp += incr, rev += revincr) 
 				    {
 				      fval = amp * (*(dp->dac_sample))(dp);
 				      revin[j] += fval * rev;
@@ -1786,7 +1786,7 @@ static int fill_dac_buffers(int write_ok)
 				}
 			      else
 				{
-				  for (j = 0; j < frames; j++, amp += incr, sr += sincr, rev += revincr) 
+				  for (j = 0; j < framples; j++, amp += incr, sr += sincr, rev += revincr) 
 				    {
 				      fval = amp * speed(dp, sr);
 				      revin[j] += fval * rev;
@@ -1816,7 +1816,7 @@ static int fill_dac_buffers(int write_ok)
 	} /* fill-case loop through max_active_slot */
 
       if (global_rev) 
-	for (i = 0; i < frames; i++)
+	for (i = 0; i < framples; i++)
 	  reverb(global_rev, rev_ins, dac_buffers, i);
 
       /* now hooks, stop-function etc */
@@ -1839,8 +1839,8 @@ static int fill_dac_buffers(int write_ok)
 			    stop_playing(dp, WITH_HOOK, PLAY_COMPLETE);
 			  else
 			    {
-			      dp->expand_ring_frames -= frames;
-			      if (dp->expand_ring_frames <= 0)
+			      dp->expand_ring_framples -= framples;
+			      if (dp->expand_ring_framples <= 0)
 				stop_playing(dp, WITH_HOOK, PLAY_COMPLETE);
 			    }
 			}
@@ -1862,8 +1862,8 @@ static int fill_dac_buffers(int write_ok)
 	  (snd_dacp) &&
 	  (play_list_members == 0))
 	{
-	  snd_dacp->reverb_ring_frames -= frames;
-	  if (snd_dacp->reverb_ring_frames <= 0) 
+	  snd_dacp->reverb_ring_framples -= framples;
+	  if (snd_dacp->reverb_ring_framples <= 0) 
 	    free_reverb();
 	}
     }
@@ -1879,7 +1879,7 @@ static int fill_dac_buffers(int write_ok)
 	    if (dev_fd[i] != -1)
 	      {
 		mus_file_write_buffer(snd_dacp->out_format,
-				      0, frames - 1,
+				      0, framples - 1,
 				      snd_dacp->chans_per_device[i],
 				      dev_bufs,
 				      (char *)(audio_bytes[i]),
@@ -1889,21 +1889,21 @@ static int fill_dac_buffers(int write_ok)
 	  for (i = 0; i < snd_dacp->devices; i++)
 	    if (dev_fd[i] != -1)
 	      {
-		bytes = snd_dacp->chans_per_device[i] * frames * mus_bytes_per_sample(snd_dacp->out_format);
+		bytes = snd_dacp->chans_per_device[i] * framples * mus_bytes_per_sample(snd_dacp->out_format);
 		mus_audio_write(dev_fd[i], (char *)(audio_bytes[i]), bytes);
 	      }
 	}
 #else
       if (write_ok == WRITE_TO_DAC) 
 	{
-	  mus_file_write_buffer(snd_dacp->out_format, 0, frames - 1, snd_dacp->channels, dac_buffers, (char *)(audio_bytes[0]), clipping(ss));
-	  bytes = snd_dacp->channels * frames * mus_bytes_per_sample(snd_dacp->out_format);
+	  mus_file_write_buffer(snd_dacp->out_format, 0, framples - 1, snd_dacp->channels, dac_buffers, (char *)(audio_bytes[0]), clipping(ss));
+	  bytes = snd_dacp->channels * framples * mus_bytes_per_sample(snd_dacp->out_format);
 	  mus_audio_write(dev_fd[0], (char *)(audio_bytes[0]), bytes);
 	}
 #endif
     }
   if (cursor_change) cursor_time = 0;
-  return(frames);
+  return(framples);
 }
 
 
@@ -1975,7 +1975,7 @@ static void make_dac_buffers(void)
 
   if ((dac_buffers == NULL) || 
       (dac_buffer_chans < snd_dacp->channels) || 
-      (dac_buffer_size < snd_dacp->frames))
+      (dac_buffer_size < snd_dacp->framples))
     {
       if (dac_buffers)
 	{
@@ -1991,11 +1991,11 @@ static void make_dac_buffers(void)
       rev_ins = (mus_float_t **)calloc(snd_dacp->channels, sizeof(mus_float_t *));
       for (i = 0; i < snd_dacp->channels; i++) 
 	{
-	  dac_buffers[i] = (mus_float_t *)calloc(snd_dacp->frames, sizeof(mus_float_t));
-	  rev_ins[i] = (mus_float_t *)calloc(snd_dacp->frames, sizeof(mus_float_t));
+	  dac_buffers[i] = (mus_float_t *)calloc(snd_dacp->framples, sizeof(mus_float_t));
+	  rev_ins[i] = (mus_float_t *)calloc(snd_dacp->framples, sizeof(mus_float_t));
 	}
       dac_buffer_chans = snd_dacp->channels;
-      dac_buffer_size = snd_dacp->frames;
+      dac_buffer_size = snd_dacp->framples;
       if (r_outs) free(r_outs);
       if (r_ins) free(r_ins);
       r_outs = (mus_float_t *)calloc(snd_dacp->channels, sizeof(mus_float_t));
@@ -2179,7 +2179,7 @@ static bool start_audio_output_1(void)
       snd_dacp->out_format = mus_audio_compatible_format(alsa_devices[out_dev[0]]);
       if (alloc_devs < 2) 
 	{
-	  /* see if we have a minimum sized frame to fill 
+	  /* see if we have a minimum sized frample to fill 
 	   * FIXME: could this happen in more than one device? */
 	  int c;
 	  c = alsa_min_chans[out_dev[0]];
@@ -2199,8 +2199,8 @@ static bool start_audio_output_1(void)
 
       /* read the number of samples per channel the device wants buffered */
       samples_per_channel = mus_audio_alsa_samples_per_channel(alsa_devices[out_dev[0]]);
-      snd_dacp->frames = samples_per_channel;
-      /* set_dac_size(snd_dacp->frames * mus_bytes_per_sample(snd_dacp->out_format)); */
+      snd_dacp->framples = samples_per_channel;
+      /* set_dac_size(snd_dacp->framples * mus_bytes_per_sample(snd_dacp->out_format)); */
       set_dac_size(samples_per_channel); /* bil 24-Mar-13 */
 
       /* open all allocated devices */
@@ -2225,7 +2225,7 @@ static bool start_audio_output_1(void)
 					    snd_dacp->srate,
 					    channels, 
 					    snd_dacp->out_format, 
-					    snd_dacp->frames * channels * mus_bytes_per_sample(snd_dacp->out_format));
+					    snd_dacp->framples * channels * mus_bytes_per_sample(snd_dacp->out_format));
 	  unset_dac_print();
       
 	  if (dev_fd[d] == -1) 
@@ -2480,11 +2480,11 @@ void initialize_apply(snd_info *sp, int chans, mus_long_t beg, mus_long_t dur)
   snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
   if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
   snd_dacp->channels = chans;
-  snd_dacp->frames = 8192;
+  snd_dacp->framples = 8192;
   snd_dacp->devices = 1;
   snd_dacp->chans_per_device = (int *)calloc(1, sizeof(int));
   snd_dacp->chans_per_device[0] = chans;
-  snd_dacp->reverb_ring_frames = (mus_long_t)(snd_dacp->srate * sp->reverb_control_decay);
+  snd_dacp->reverb_ring_framples = (mus_long_t)(snd_dacp->srate * sp->reverb_control_decay);
   make_dac_buffers();
 
   switch (ss->apply_choice)
@@ -3267,7 +3267,7 @@ static Xen g_dac_size(void) {return(C_int_to_Xen_integer(dac_size(ss)));}
 
 static Xen g_set_dac_size(Xen val) 
 {
-  #define H_dac_size "(" S_dac_size "): the current DAC buffer size in frames (256)"
+  #define H_dac_size "(" S_dac_size "): the current DAC buffer size in framples (256)"
   int len;
   Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_dac_size, "an integer");
   len = Xen_integer_to_C_int(val);

@@ -1424,13 +1424,13 @@ static bool find_leftover_keys(int key, int state, bool cx, Xen func)
 void key_help(void)
 {
   #if HAVE_SCHEME
-    #define bind_key_example "(bind-key \"End\" 0\n      (lambda () \"view full sound\"\n        (set! (x-bounds) (list 0.0 (/ (frames) (srate))))))"
+    #define bind_key_example "(bind-key \"End\" 0\n      (lambda () \"view full sound\"\n        (set! (x-bounds) (list 0.0 (/ (framples) (srate))))))"
   #endif
   #if HAVE_RUBY
-    #define bind_key_example "bind_key(\"End\", 0,\n       lambda do ||\n         set_x_bounds([0.0, frames.to_f / srate.to_f])\n       end)"
+    #define bind_key_example "bind_key(\"End\", 0,\n       lambda do ||\n         set_x_bounds([0.0, framples.to_f / srate.to_f])\n       end)"
   #endif
   #if HAVE_FORTH
-    #define bind_key_example "\"End\" 0\n       lambda: <{ -- val }> doc\" view full sound\"\n         '( 0.0  #f #f #f frames  #f srate  f/ ) #f #f undef set-x-bounds ; bind-key" 
+    #define bind_key_example "\"End\" 0\n       lambda: <{ -- val }> doc\" view full sound\"\n         '( 0.0  #f #f #f framples  #f srate  f/ ) #f #f undef set-x-bounds ; bind-key" 
   #endif
 
   int i;
@@ -1713,7 +1713,7 @@ void resample_help(void)
   #if HAVE_SCHEME
     #define src_number_example "(src-channel 2.0) ; go twice as fast"
     #define src_env_example "(src-channel '(0 1 1 2))"
-    #define src_clm_example "(src-channel (make-env '(0 1 1 2) :end (frames)))"
+    #define src_clm_example "(src-channel (make-env '(0 1 1 2) :end (framples)))"
     #define H_speed_control_as_float S_speed_control_as_float
     #define H_speed_control_as_ratio S_speed_control_as_ratio
     #define H_speed_control_as_semitone S_speed_control_as_semitone
@@ -1722,7 +1722,7 @@ void resample_help(void)
   #if HAVE_RUBY
     #define src_number_example "src_channel(2.0) # go twice as fast"
     #define src_env_example "src_channel([0.0, 1.0, 1.0, 2.0])"
-    #define src_clm_example "src_channel(make_env([0.0, 1.0, 1.0, 2.0], :end, frames()))"
+    #define src_clm_example "src_channel(make_env([0.0, 1.0, 1.0, 2.0], :end, framples()))"
     #define H_speed_control_as_float "Speed_control_as_float"
     #define H_speed_control_as_ratio "Speed_control_as_ratio"
     #define H_speed_control_as_semitone "Speed_control_as_semitone"
@@ -1731,7 +1731,7 @@ void resample_help(void)
   #if HAVE_FORTH
     #define src_number_example "2.0 src-channel \\ go twice as fast"
     #define src_env_example "'( 0.0 1.0 1.0 2.0 ) src-channel"
-    #define src_clm_example "'( 0.0 1.0 1.0 2.0 ) :end 0 0 -1 frames make-env src-channel"
+    #define src_clm_example "'( 0.0 1.0 1.0 2.0 ) :end 0 0 -1 framples make-env src-channel"
     #define H_speed_control_as_float S_speed_control_as_float
     #define H_speed_control_as_ratio S_speed_control_as_ratio
     #define H_speed_control_as_semitone S_speed_control_as_semitone
@@ -2565,7 +2565,7 @@ static const char *edit_header_xrefs[11] = {
   "interpret current header differently: {" S_header_type "}",
   "extract or combine chans: {mono->stereo}",
   "change data location: {" S_data_location "}",
-  "change number of samples: {frames}",
+  "change number of samples: {framples}",
   "what are these data formats?",
   "what are these headers?",
   NULL

@@ -415,6 +415,10 @@ Other math-related differences between s7 and r5rs:
 #t
 </pre>
 
+<p>See <a href="#libgslscm">cload and libgsl.scm</a> for easy access to GSL,
+and similarly libm.scm for the C math library.
+</p>
+
 <blockquote>
 <div class="indented">
 
@@ -760,45 +764,6 @@ FOO
 
 <div class="indented">
 
-<p>If you want a version of define* that insists
-that any arguments before the keyword :optional are required:
-</p>
-
-<pre class="indented">
-(define-macro (define** declarations . forms)
-  (let ((name (car declarations))
-	(args (cdr declarations)))
-    (define (position thing lst count)
-      (if (or (null? lst)
-	      (not (pair? (cdr lst)))) ; for dotted arg = "rest" arg
-	  #f
-	  (if (eq? thing (car lst))
-	      count
-	      (position thing (cdr lst) (+ count 1)))))
-    (let ((required-args (position :optional args 0)))
-      (if required-args
-	  `(define* (,name . func-args)
-	     (if (&lt; (length func-args) ,required-args)
-		 (error "~A requires ~D argument~A: ~A" 
-			',name ,required-args 
-                        (if (&gt; ,required-args 1) "s" "") 
-                        func-args)
-		 (apply (lambda* ,args ,@forms) func-args)))
-	  `(define* ,declarations ,@forms)))))
-
-&gt; (define** (hi a :optional (b 23)) (list a b))
-hi
-&gt; (hi 1)
-(1 23)
-&gt; (hi)
-;hi requires 1 argument: ()
-</pre>
-
-</div>
-
-
-<div class="indented">
-
 <p>To try to catch what I believe are usually mistakes, I added two
 error checks.  One is triggered if you set the same parameter twice
 in the same call, and the other if an unknown keyword is encountered
@@ -822,6 +787,10 @@ in the key position.  These problems arise in a case such as
 argument keyword: <code>(f :a :c)</code>, or make the default value a keyword:
 <code>(define* (f (a :c) ...))</code>.
 To turn off this error check, add :allow-other-keys at the end of the parameter list.
+</p>
+
+<p>See define** in s7test.scm for a version of define* that complains
+if any arguments before :optional are omitted.
 </p>
 
 </div>
@@ -1003,7 +972,7 @@ Here's a brief example of all four:
 
 (let ((x 1) (y 2))        ; this is like define-macro
   (define-bacro (bac2 a) 
-    (with-let (sublet (funclet bac2) (cons 'a a))
+    (with-let (sublet (funclet bac2) :a a)
       `(+ ,x y ,a)))      ; expand in definition env, eval in calling env
   (let ((x 32) (y 64)) 
     (bac2 3)))
@@ -1011,9 +980,9 @@ Here's a brief example of all four:
 
 (let ((x 1) (y 2))
   (define-bacro (bac3 a) 
-    (let ((e (with-let (sublet (funclet bac3) (cons 'a a))
+    (let ((e (with-let (sublet (funclet bac3) :a a)
 	       `(+ ,x y ,a))))
-      `(with-let ,(sublet (funclet bac3) (cons 'a a))
+      `(with-let ,(sublet (funclet bac3) :a a)
 	 ,e)))           ; expand and eval in definition env 
   (let ((x 32) (y 64)) 
     (bac3 3)))
@@ -1022,7 +991,7 @@ Here's a brief example of all four:
 (let ((x 1) (y 2))
   (define-bacro (bac4 a) 
     (let ((e `(+ ,x y ,a)))
-      `(with-let ,(sublet (funclet bac4) (cons 'a a))
+      `(with-let ,(sublet (funclet bac4) :a a)
 	 ,e)))           ; expand in calling env, eval in definition env
   (let ((x 32) (y 64))     
     (bac4 3)))
@@ -1963,7 +1932,7 @@ So...
    (lambda (iter)
      (with-iterator iter ctr))
    (lambda (iter new-ctr)
-     (with-let (sublet (funclet iter) (cons 'new-ctr new-ctr))
+     (with-let (sublet (funclet iter) :new-ctr new-ctr)
       (set! ctr new-ctr)))))
 
 (define (iterator-copy iter)
@@ -2519,44 +2488,29 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="coverlet">coverlet</em> env)           mark env as closed (undo an earlier openlet)
 </pre>
 
-<p>
-Two environments are equal if they have the same symbol/value pairs, ignoring shadowed pairs.
-</p>
-
-<div class="indented">
-<p>
-Environments provide a very simple, yet very powerful structure or class mechanism.
-As a quick example, here is a structure definition:
-</p>
-
+<br>
+<blockquote>
 <pre class="indented">
-(define* (make-tree (key 0) (left ()) (right ()))
-  ;; make a tree structure with 3 fields, and a type indicator
-  (inlet 'key key 'left left 'right right 'type 'tree))
-
-(define (tree? obj)
-  (and (let? obj)
-       (eq? (obj 'type) 'tree)))
-
-&gt; (let ((t1 (make-tree)))
-    (format #t "t1 (~A): ~{~A~^ ~}~%" 
-	    (if (tree? t1) "a tree" "oops")
-	    (map (lambda (x)
-		   (if (eq? (car x) 'type)
-		       (values) ; don't mention the internal type field
-		       x))
-	         t1)))
-"t1 (a tree): (key . 0) (left) (right)"
-
-;; to access a field, use either let-ref and -set, or implicit indexing:
-&gt; (let ((t1 (make-tree))) (t1 'key))
-0
-&gt; (let ((t1 (make-tree))) (set! (t1 'key) 32) (t1 'key))
-32
-&gt; (let ((t1 (make-tree))) (with-let t1 (set! key 32) key))
+&gt; (inlet 'a 1 'b 2)
+#&lt;let 'a 1 'b 2&gt;
+&gt; (let ((a 1) (b 2)) (curlet))
+#&lt;let 'a 1 'b 2&gt;
+&gt; (let ((x (inlet :a 1 :b 2))) (x 'a))
+1
+&gt; (with-let (inlet 'a 1 'b 2) (+ a b))
+3
+&gt; (let ((x (inlet :a 1 :b 2))) (set! (x 'a) 4) x)
+#&lt;let 'a 4 'b 2&gt;
+&gt; (let ((x (inlet))) (varlet x 'a 1) x)
+#&lt;let 'a 1&gt;
+&gt; (let ((a 1)) (let ((b 2)) (outlet (curlet))))
+#&lt;let 'a 1&gt;
 </pre>
-</div>
+</blockquote>
+<br>
 
+<p>As the names suggest, in s7 an environment is viewed as a disembodied let.
+</p>
 
 <p>with-let evaluates its body in the given environment, so
 <code>(with-let e . body)</code> is equivalent to
@@ -3129,26 +3083,6 @@ abs
     (value-&gt;symbol "hi"))
 b
 </pre>
-</div>
-
-
-<div class="indented">
-<p>Scheme needs a way to define functions that share a closure.
-Here's an idle thought:
-</p>
-
-<pre class="indented">
-(define f1 (let ((x 23))
-	     (lambda (a)
-	       (+ x a))))
-(define (f2 b)
-  (+ b (* 2 ((funclet f1) 'x)))) ; import f1's x into f2
-
-&gt; (+ (f1 1) (f2 1))
-71
-</pre>
-<p>That has now blossomed into...
-</p>
 </div>
 
 
@@ -4734,9 +4668,8 @@ To evaluate the error handler in the environment of the error:
 	   (let ((y 2))
 	     (error 'oops)))
 	 (lambda args
-	   (with-let (sublet (owlet)
-	                  (cons 'args args))    ; add the error handler args
-	    (list args x y)))))    ; we have access to 'y'
+	   (with-let (sublet (owlet) :args args)    ; add the error handler args
+	     (list args x y)))))    ; we have access to 'y'
 </pre>
 
 <p>To limit the maximum size of the stack, set *maximum-stack-size*.
@@ -4794,7 +4727,7 @@ loads that file; if a function, it is called with one argument, the current (cal
 	    (unless (provided? 'cload.scm)
 	      (load "cload.scm"))
 	    (c-define '(double j0 (double)) "" "math.h")
-	    (varlet e (cons 'j0 j0))))
+	    (varlet e 'j0 j0)))
 </pre>
 
 <p>The entity (hash-table or environment probably) that holds the autoload info is named *autoload*.
@@ -5336,7 +5269,7 @@ The function takes one argument, the environment in which loads and evals should
 			  (set! calls (copy calls (make-vector (* 2 (length calls)) (cons 'unused -1)))))
 		      (if (procedure-setter val)
 		          (set! (procedure-setter new-val) (procedure-setter val)))
-		      (varlet e (cons sym new-val)))))))
+		      (varlet e sym new-val))))))
        (<em class=red>symbol-table</em>))
       e))
 
@@ -9433,8 +9366,12 @@ c-define-1
 (require libc.scm)
 
 (define (copy-file in-file out-file)
-  (with-let (sublet *libc* (cons 'in-file in-file) 
-                        (cons 'out-file out-file))
+  (with-let (sublet *libc* :in-file in-file :out-file out-file)
+
+    ;; the rest of the function body exists in the *libc* environment, with the
+    ;;   function parameters in-file and out-file imported, so, for example,
+    ;;   (open ...) below calls the libc function open.
+
     (let ((infd (open in-file O_RDONLY 0)))
       (if (= infd -1)
 	  (error 'io-error "can't find ~S~%" in-file)
@@ -9454,7 +9391,7 @@ c-define-1
 		  out-file)))))))
 
 (define (glob-&gt;list pattern)
-  (with-let (sublet *libc* (cons 'pattern pattern))
+  (with-let (sublet *libc* :pattern pattern)
     (let ((g (glob.make))) 
       (glob pattern 0 g) 
       (let ((res (glob.gl_pathv g))) 
@@ -9466,12 +9403,12 @@ c-define-1
 </div>
 
 
-<div class="indented">
+<div class="indented" id="libgslscm">
 <pre>
 (require libgsl.scm)
 
 (define (eigenvalues M)
-  (with-let (sublet *libgsl* (cons 'M M))
+  (with-let (sublet *libgsl* :M M)
     (let* ((len (sqrt (length M)))
 	   (gm (gsl_matrix_alloc len len))
 	   (m (float-vector-&gt;gsl_matrix M gm))

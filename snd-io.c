@@ -6,7 +6,7 @@
 
 struct snd_io {
   int fd, chans, bufsize;
-  mus_long_t frames, beg, end;
+  mus_long_t framples, beg, end;
   mus_float_t **arrays;
 };
 
@@ -197,13 +197,13 @@ static void c_io_bufclr(snd_io *io, int beg)
 
 static void reposition_file_buffers_1(mus_long_t loc, snd_io *io)
 {
-  /* called when loc is outside the current in-core frame for the file pointed to by io */
-  mus_long_t frames;
-  /* local frames is buffer-local, not a sample number. */
+  /* called when loc is outside the current in-core frample for the file pointed to by io */
+  mus_long_t framples;
+  /* local framples is buffer-local, not a sample number. */
 
-  frames = io->frames - loc;         /* io->frames is total samps in file */
-  if (frames > io->bufsize) frames = io->bufsize;
-  if (frames <= 0)                   /* tried to access beyond current end of file */
+  framples = io->framples - loc;         /* io->framples is total samps in file */
+  if (framples > io->bufsize) framples = io->bufsize;
+  if (framples <= 0)                   /* tried to access beyond current end of file */
     {
       io->beg = loc; 
       c_io_bufclr(io, 0);
@@ -213,12 +213,12 @@ static void reposition_file_buffers_1(mus_long_t loc, snd_io *io)
       mus_file_seek_frample(io->fd, loc);
       io->beg = loc;
       mus_file_read_chans(io->fd,
-			  loc, frames,
+			  loc, framples,
 			  io->chans,
 			  io->arrays,
 			  io->arrays);
-      if (frames < (io->bufsize - 1)) 
-	c_io_bufclr(io, frames);
+      if (framples < (io->bufsize - 1)) 
+	c_io_bufclr(io, framples);
     }
   io->end = io->beg + io->bufsize - 1;
 }
@@ -283,7 +283,7 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, mus_long_t beg, int su
   io->arrays = (mus_float_t **)calloc(hdr->chans, sizeof(mus_float_t *));
   io->fd = fd;
   io->chans = hdr->chans;
-  io->frames = chansize;
+  io->framples = chansize;
   io->beg = 0;
   io->end = bufsize - 1;
   io->bufsize = bufsize;

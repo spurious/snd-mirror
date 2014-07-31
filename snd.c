@@ -705,7 +705,7 @@ void snd_set_global_defaults(bool need_cleanup)
 
   ss->dac_size_symbol = s7_define_variable(s7, "*" S_dac_size "*", s7_make_integer(s7, DEFAULT_DAC_SIZE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_dac_size "*) (lambda (s v) (set! (" S_dac_size ") v)))");
-  s7_symbol_set_documentation(s7, ss->dac_size_symbol, "*dac-size*: the current DAC buffer size in frames (256)");
+  s7_symbol_set_documentation(s7, ss->dac_size_symbol, "*dac-size*: the current DAC buffer size in framples (256)");
 
   ss->view_files_sort_symbol = s7_define_variable(s7, "*" S_view_files_sort "*", s7_make_integer(s7, DEFAULT_VIEW_FILES_SORT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_view_files_sort "*) (lambda (s v) (set! (" S_view_files_sort ") v)))");

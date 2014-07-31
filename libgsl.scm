@@ -909,15 +909,11 @@
 	   
 	   (c-pointer (gsl_interp_linear gsl_interp_polynomial gsl_interp_cspline gsl_interp_cspline_periodic gsl_interp_akima
 		       gsl_interp_akima_periodic gsl_min_fminimizer_goldensection gsl_min_fminimizer_brent gsl_min_fminimizer_quad_golden
-		       gsl_multifit_fdfsolver_lmder
-		       gsl_multifit_fdfsolver_lmsder gsl_multimin_fdfminimizer_steepest_descent gsl_multimin_fdfminimizer_conjugate_pr
-		       gsl_multimin_fdfminimizer_conjugate_fr gsl_multimin_fdfminimizer_vector_bfgs gsl_multimin_fdfminimizer_vector_bfgs2
 		       gsl_multimin_fminimizer_nmsimplex gsl_multimin_fminimizer_nmsimplex2 gsl_multimin_fminimizer_nmsimplex2rand
 		       gsl_multiroot_fsolver_dnewton gsl_multiroot_fsolver_broyden gsl_multiroot_fsolver_hybrid gsl_multiroot_fsolver_hybrids
-		       gsl_multiroot_fdfsolver_newton gsl_multiroot_fdfsolver_gnewton gsl_multiroot_fdfsolver_hybridj gsl_multiroot_fdfsolver_hybridsj
 		       gsl_prec_eps gsl_prec_sqrt_eps
 		       gsl_prec_root3_eps gsl_prec_root4_eps gsl_prec_root5_eps gsl_prec_root6_eps gsl_root_fsolver_bisection gsl_root_fsolver_brent
-		       gsl_root_fsolver_falsepos gsl_root_fdfsolver_newton gsl_root_fdfsolver_secant gsl_root_fdfsolver_steffenson gsl_version
+		       gsl_root_fsolver_falsepos gsl_version
 		       gsl_wavelet_daubechies gsl_wavelet_daubechies_centered gsl_wavelet_haar gsl_wavelet_haar_centered gsl_wavelet_bspline
 		       gsl_wavelet_bspline_centered))
 	   (c-pointer (gsl_odeiv_step_rk2 gsl_odeiv_step_rk4 gsl_odeiv_step_rkf45 gsl_odeiv_step_rkck gsl_odeiv_step_rk8pd 
@@ -1263,11 +1259,6 @@
                   ")
 	   (C-function ("gsl_cheb_init" g_gsl_cheb_init "" 4))
 	   
-	   ;; (define cs ((*libgsl* 'gsl_cheb_alloc) 40))
-	   ;; ((*libgsl* 'gsl_cheb_init) cs (lambda (x) x) -1.0 1.0)
-	   ;; (do ((x -1.0 (+ x .1))) ((>= x 1.0)) (format #t "~A~%" ((*libgsl* 'gsl_cheb_eval) cs x)))
-	   ;; ((*libgsl* 'gsl_cheb_free) cs)
-	   
 	   ;; interp
 	   (gsl_interp_accel* gsl_interp_accel_alloc (void))
 	   (int gsl_interp_accel_reset (gsl_interp_accel*))
@@ -1463,10 +1454,6 @@
 	   (C-function ("gsl_poly_solve_quadratic" g_gsl_poly_solve_quadratic "" 4))
 	   (C-function ("gsl_poly_solve_cubic" g_gsl_poly_solve_cubic "" 4))
 	   
-	   ;; (gsl_matrix_complex* gsl_matrix_complex_alloc_from_block (gsl_block_complex* size_t size_t size_t size_t))
-	   ;; (gsl_vector* gsl_vector_alloc_from_block (gsl_block* size_t size_t size_t))
-	   ;; (gsl_matrix* gsl_matrix_alloc_from_block (gsl_block* size_t size_t size_t size_t))
-	   
 	   ;; vector
 	   (in-C "static s7_pointer g_float_vector_to_gsl_vector(s7_scheme *sc, s7_pointer args)
                   {
@@ -1604,6 +1591,12 @@
 	   (void gsl_matrix_set (gsl_matrix* size_t size_t double))
 	   (double* gsl_matrix_ptr (gsl_matrix* size_t size_t))
 	   (double* gsl_matrix_const_ptr (gsl_matrix* size_t size_t))
+	   (in-C "static s7_pointer g_gsl_matrix_size(s7_scheme *sc, s7_pointer args)
+                  {
+                    gsl_matrix *g; g = (gsl_matrix *)s7_c_pointer(s7_car(args));
+                    return(s7_cons(sc, s7_make_integer(sc, (s7_Int)(g->size1)), s7_make_integer(sc, (s7_Int)(g->size2))));
+                  }")
+           (C-function ("gsl_matrix_size" g_gsl_matrix_size "" 1))
 	   
 	   ;; cblas
 	   (int gsl_blas_zdotu (gsl_vector_complex* gsl_vector_complex* gsl_complex*))
@@ -1838,8 +1831,14 @@
 	   (int gsl_schur_gen_eigvals (gsl_matrix* gsl_matrix* double* double* double* double* double*))
 	   (int gsl_schur_solve_equation (double gsl_matrix* double double double gsl_vector* gsl_vector* double* double* double))
 	   (int gsl_schur_solve_equation_z (double gsl_matrix* gsl_complex* double double gsl_vector_complex* gsl_vector_complex* double* double* double))
-	   (int gsl_eigen_jacobi (gsl_matrix* gsl_vector* gsl_matrix* int int*)) ; unsigned int* = int by ref
 	   (int gsl_eigen_invert_jacobi (gsl_matrix* gsl_matrix* int))
+	   (in-C "static s7_pointer g_gsl_eigen_jacobi(s7_scheme *sc, s7_pointer args)
+                  {
+                    unsigned int ref_arg = 0;
+                    return(s7_make_integer(sc, (s7_Int)gsl_eigen_jacobi((gsl_matrix*)s7_c_pointer(s7_car(args)), (gsl_vector*)s7_c_pointer(s7_cadr(args)),
+                                               (gsl_matrix*)s7_c_pointer(s7_caddr(args)), (int)s7_integer(s7_cadddr(args)), &ref_arg)));
+                  }")
+	   (C-function ("gsl_eigen_jacobi" g_gsl_eigen_jacobi "" 4))
 	   
 	   (void gsl_error (char* char* int int))
 	   (void gsl_stream_printf (char* char* int char*))
@@ -1855,9 +1854,6 @@
 	   (int gsl_fit_mul (double* size_t double* size_t size_t double* double* double*))
 	   (int gsl_fit_wmul (double* size_t double* size_t double* size_t size_t double* double* double*))
 	   (int gsl_fit_mul_est (double double double double* double*))
-	   
-	   ;; fn_t		    (void gsl_heapsort (void* size_t size_t int))
-	   ;; fn_t		    (int gsl_heapsort_index (size_t* void* size_t size_t int))
 	   
 	   (gsl_histogram* gsl_histogram_alloc (size_t))
 	   (gsl_histogram* gsl_histogram_calloc (size_t))
@@ -2107,7 +2103,13 @@
 	   (int gsl_linalg_SV_decomp_jacobi (gsl_matrix* gsl_matrix* gsl_vector*))
 	   (int gsl_linalg_SV_solve (gsl_matrix* gsl_matrix* gsl_vector* gsl_vector* gsl_vector*))
 	   (reader-cond ((>= gsl-version 1.16) (int gsl_linalg_SV_leverage (gsl_matrix* gsl_vector*))))
-	   (int gsl_linalg_LU_decomp (gsl_matrix* gsl_permutation* int*))
+	   (in-C "static s7_pointer g_gsl_linalg_LU_decomp(s7_scheme *sc, s7_pointer args)
+                  {
+                    int s = 0;
+                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_LU_decomp((gsl_matrix *)s7_c_pointer(s7_car(args)),
+                                               (gsl_permutation *)s7_c_pointer(s7_cadr(args)), &s)));
+                  }")
+	   (C-function ("gsl_linalg_LU_decomp" g_gsl_linalg_LU_decomp "" 2))
 	   (int gsl_linalg_LU_solve (gsl_matrix* gsl_permutation* gsl_vector* gsl_vector*))
 	   (int gsl_linalg_LU_svx (gsl_matrix* gsl_permutation* gsl_vector*))
 	   (int gsl_linalg_LU_refine (gsl_matrix* gsl_matrix* gsl_permutation* gsl_vector* gsl_vector* gsl_vector*))
@@ -2115,7 +2117,13 @@
 	   (double gsl_linalg_LU_det (gsl_matrix* int))
 	   (double gsl_linalg_LU_lndet (gsl_matrix*))
 	   (int gsl_linalg_LU_sgndet (gsl_matrix* int))
-	   (int gsl_linalg_complex_LU_decomp (gsl_matrix_complex* gsl_permutation* int*))
+	   (in-C "static s7_pointer g_gsl_linalg_complex_LU_decomp(s7_scheme *sc, s7_pointer args)
+                  {
+                    int s = 0;
+                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_complex_LU_decomp((gsl_matrix_complex *)s7_c_pointer(s7_car(args)),
+                                               (gsl_permutation *)s7_c_pointer(s7_cadr(args)), &s)));
+                  }")
+	   (C-function ("gsl_linalg_complex_LU_decomp" g_gsl_linalg_complex_LU_decomp "" 2))
 	   (int gsl_linalg_complex_LU_solve (gsl_matrix_complex* gsl_permutation* gsl_vector_complex* gsl_vector_complex*))
 	   (int gsl_linalg_complex_LU_svx (gsl_matrix_complex* gsl_permutation* gsl_vector_complex*))
 	   (int gsl_linalg_complex_LU_refine (gsl_matrix_complex* gsl_matrix_complex* gsl_permutation* gsl_vector_complex* gsl_vector_complex* gsl_vector_complex*))
@@ -2135,8 +2143,23 @@
 	   (int gsl_linalg_QR_unpack (gsl_matrix* gsl_vector* gsl_matrix* gsl_matrix*))
 	   (int gsl_linalg_R_solve (gsl_matrix* gsl_vector* gsl_vector*))
 	   (int gsl_linalg_R_svx (gsl_matrix* gsl_vector*))
-	   (int gsl_linalg_QRPT_decomp (gsl_matrix* gsl_vector* gsl_permutation* int* gsl_vector*))
-	   (int gsl_linalg_QRPT_decomp2 (gsl_matrix* gsl_matrix* gsl_matrix* gsl_vector* gsl_permutation* int* gsl_vector*))
+	   (in-C "static s7_pointer g_gsl_linalg_QRPT_decomp(s7_scheme *sc, s7_pointer args)
+                  {
+                    int s = 0;
+                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_QRPT_decomp((gsl_matrix *)s7_c_pointer(s7_car(args)),
+                                               (gsl_vector *)s7_c_pointer(s7_cadr(args)), (gsl_permutation *)s7_c_pointer(s7_caddr(args)), &s,
+                                               (gsl_vector *)s7_c_pointer(s7_cadddr(args)))));
+                  }")
+	   (C-function ("gsl_linalg_QRPT_decomp" g_gsl_linalg_QRPT_decomp "" 4))
+	   (in-C "static s7_pointer g_gsl_linalg_QRPT_decomp2(s7_scheme *sc, s7_pointer args)
+                  {
+                    int s = 0;
+                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_QRPT_decomp2((gsl_matrix *)s7_c_pointer(s7_car(args)), (gsl_matrix *)s7_c_pointer(s7_cadr(args)),
+                                               (gsl_matrix *)s7_c_pointer(s7_caddr(args)),
+                                               (gsl_vector *)s7_c_pointer(s7_cadddr(args)), (gsl_permutation *)s7_c_pointer(s7_list_ref(sc, args, 4)), &s,
+                                               (gsl_vector *)s7_c_pointer(s7_list_ref(sc, args, 5)))));
+                  }")
+	   (C-function ("gsl_linalg_QRPT_decomp2" g_gsl_linalg_QRPT_decomp2 "" 6))
 	   (int gsl_linalg_QRPT_solve (gsl_matrix* gsl_vector* gsl_permutation* gsl_vector* gsl_vector*))
 	   (int gsl_linalg_QRPT_svx (gsl_matrix* gsl_vector* gsl_permutation* gsl_vector*))
 	   (int gsl_linalg_QRPT_QRsolve (gsl_matrix* gsl_matrix* gsl_permutation* gsl_vector* gsl_vector*))
@@ -2155,8 +2178,23 @@
 	   (int gsl_linalg_LQ_unpack (gsl_matrix* gsl_vector* gsl_matrix* gsl_matrix*))
 	   (int gsl_linalg_LQ_update (gsl_matrix* gsl_matrix* gsl_vector* gsl_vector*))
 	   (int gsl_linalg_LQ_LQsolve (gsl_matrix* gsl_matrix* gsl_vector* gsl_vector*))
-	   (int gsl_linalg_PTLQ_decomp (gsl_matrix* gsl_vector* gsl_permutation* int* gsl_vector*))
-	   (int gsl_linalg_PTLQ_decomp2 (gsl_matrix* gsl_matrix* gsl_matrix* gsl_vector* gsl_permutation* int* gsl_vector*))
+	   (in-C "static s7_pointer g_gsl_linalg_PTLQ_decomp(s7_scheme *sc, s7_pointer args)
+                  {
+                    int s = 0;
+                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_PTLQ_decomp((gsl_matrix *)s7_c_pointer(s7_car(args)),
+                                               (gsl_vector *)s7_c_pointer(s7_cadr(args)), (gsl_permutation *)s7_c_pointer(s7_caddr(args)), &s,
+                                               (gsl_vector *)s7_c_pointer(s7_cadddr(args)))));
+                  }")
+	   (C-function ("gsl_linalg_PTLQ_decomp" g_gsl_linalg_PTLQ_decomp "" 4))
+	   (in-C "static s7_pointer g_gsl_linalg_PTLQ_decomp2(s7_scheme *sc, s7_pointer args)
+                  {
+                    int s = 0;
+                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_PTLQ_decomp2((gsl_matrix *)s7_c_pointer(s7_car(args)), (gsl_matrix *)s7_c_pointer(s7_cadr(args)),
+                                               (gsl_matrix *)s7_c_pointer(s7_caddr(args)),
+                                               (gsl_vector *)s7_c_pointer(s7_cadddr(args)), (gsl_permutation *)s7_c_pointer(s7_list_ref(sc, args, 4)), &s,
+                                               (gsl_vector *)s7_c_pointer(s7_list_ref(sc, args, 5)))));
+                  }")
+	   (C-function ("gsl_linalg_PTLQ_decomp2" g_gsl_linalg_PTLQ_decomp2 "" 6))
 	   (int gsl_linalg_PTLQ_solve_T (gsl_matrix* gsl_vector* gsl_permutation* gsl_vector* gsl_vector*))
 	   (int gsl_linalg_PTLQ_svx_T (gsl_matrix* gsl_vector* gsl_permutation* gsl_vector*))
 	   (int gsl_linalg_PTLQ_LQsolve_T (gsl_matrix* gsl_matrix* gsl_permutation* gsl_vector* gsl_vector*))
@@ -2305,6 +2343,9 @@
 	   
            ;; gsl_monte* is not doable -- they chose to pass a bare double* array to the gsl_monte_function,
 	   ;;   and there's nothing I can do with that.  To wrap and unwrap it on every call would make it unusable.
+	   ;;   I could keep wrappers around of all so-far-used sizes, but not until someone actually needs them.
+	   ;; the fdf cases are similar, I think, and the ode functions.  GSL also assumes direct access to their
+	   ;; structs (as in matrix size1/2) -- not very nice for our style of use.
 	   
 	   (gsl_multifit_linear_workspace* gsl_multifit_linear_alloc (size_t size_t))
 	   (void gsl_multifit_linear_free (gsl_multifit_linear_workspace*))
@@ -2324,9 +2365,6 @@
 	   (reader-cond ((>= gsl-version 1.16) (int gsl_multifit_robust (gsl_matrix* gsl_vector* gsl_vector* gsl_matrix* gsl_multifit_robust_workspace*))))
 	   (reader-cond ((>= gsl-version 1.16) (int gsl_multifit_robust_est (gsl_vector* gsl_vector* gsl_matrix* double* double*))))
 	   (reader-cond ((>= gsl-version 1.16) (int gsl_multifit_fsolver_driver (gsl_multifit_fsolver* size_t double double))))
-	   (reader-cond ((>= gsl-version 1.16) (int gsl_multifit_fdfsolver_driver (gsl_multifit_fdfsolver* size_t double double))))
-	   (reader-cond ((>= gsl-version 1.16) (int gsl_multifit_fdfsolver_dif_df (gsl_vector* gsl_multifit_function_fdf* gsl_vector* gsl_matrix*))))
-	   (reader-cond ((>= gsl-version 1.16) (int gsl_multifit_fdfsolver_dif_fdf (gsl_vector* gsl_multifit_function_fdf* gsl_vector* gsl_matrix*))))
 	   (int gsl_multifit_gradient (gsl_matrix* gsl_vector* gsl_vector*))
 	   (int gsl_multifit_covar (gsl_matrix* double gsl_matrix*))
 	   (gsl_multifit_fsolver* gsl_multifit_fsolver_alloc (gsl_multifit_fsolver_type* size_t size_t))
@@ -2335,12 +2373,6 @@
 	   (int gsl_multifit_fsolver_iterate (gsl_multifit_fsolver*))
 	   (char* gsl_multifit_fsolver_name (gsl_multifit_fsolver*))
 	   (gsl_vector* gsl_multifit_fsolver_position (gsl_multifit_fsolver*))
-	   (gsl_multifit_fdfsolver* gsl_multifit_fdfsolver_alloc (gsl_multifit_fdfsolver_type* size_t size_t))
-	   (int gsl_multifit_fdfsolver_set (gsl_multifit_fdfsolver* gsl_multifit_function_fdf* gsl_vector*))
-	   (int gsl_multifit_fdfsolver_iterate (gsl_multifit_fdfsolver*))
-	   (void gsl_multifit_fdfsolver_free (gsl_multifit_fdfsolver*))
-	   (char* gsl_multifit_fdfsolver_name (gsl_multifit_fdfsolver*))
-	   (gsl_vector* gsl_multifit_fdfsolver_position (gsl_multifit_fdfsolver*))
 	   (int gsl_multifit_test_delta (gsl_vector* gsl_vector* double double))
 	   (int gsl_multifit_test_gradient (gsl_vector* double))
 	   
@@ -2355,16 +2387,6 @@
 	   (double gsl_multimin_fminimizer_size (gsl_multimin_fminimizer*))
 	   (int gsl_multimin_test_gradient (gsl_vector* double))
 	   (int gsl_multimin_test_size (double double))
-	   (gsl_multimin_fdfminimizer* gsl_multimin_fdfminimizer_alloc (gsl_multimin_fdfminimizer_type* size_t))
-	   (int gsl_multimin_fdfminimizer_set (gsl_multimin_fdfminimizer* gsl_multimin_function_fdf* gsl_vector* double double))
-	   (void gsl_multimin_fdfminimizer_free (gsl_multimin_fdfminimizer*))
-	   (char* gsl_multimin_fdfminimizer_name (gsl_multimin_fdfminimizer*))
-	   (int gsl_multimin_fdfminimizer_iterate (gsl_multimin_fdfminimizer*))
-	   (int gsl_multimin_fdfminimizer_restart (gsl_multimin_fdfminimizer*))
-	   (gsl_vector* gsl_multimin_fdfminimizer_x (gsl_multimin_fdfminimizer*))
-	   (gsl_vector* gsl_multimin_fdfminimizer_dx (gsl_multimin_fdfminimizer*))
-	   (gsl_vector* gsl_multimin_fdfminimizer_gradient (gsl_multimin_fdfminimizer*))
-	   (double gsl_multimin_fdfminimizer_minimum (gsl_multimin_fdfminimizer*))
 	   
 	   (int gsl_multiroot_fdjacobian (gsl_multiroot_function* gsl_vector* gsl_vector* double gsl_matrix*))
 	   (gsl_multiroot_fsolver* gsl_multiroot_fsolver_alloc (gsl_multiroot_fsolver_type* size_t) )
@@ -2375,14 +2397,6 @@
 	   (gsl_vector* gsl_multiroot_fsolver_root (gsl_multiroot_fsolver*))
 	   (gsl_vector* gsl_multiroot_fsolver_dx (gsl_multiroot_fsolver*))
 	   (gsl_vector* gsl_multiroot_fsolver_f (gsl_multiroot_fsolver*))
-	   (gsl_multiroot_fdfsolver* gsl_multiroot_fdfsolver_alloc (gsl_multiroot_fdfsolver_type* size_t))
-	   (int gsl_multiroot_fdfsolver_set (gsl_multiroot_fdfsolver* gsl_multiroot_function_fdf* gsl_vector*))
-	   (int gsl_multiroot_fdfsolver_iterate (gsl_multiroot_fdfsolver*))
-	   (void gsl_multiroot_fdfsolver_free (gsl_multiroot_fdfsolver*))
-	   (char* gsl_multiroot_fdfsolver_name (gsl_multiroot_fdfsolver*))
-	   (gsl_vector* gsl_multiroot_fdfsolver_root (gsl_multiroot_fdfsolver*))
-	   (gsl_vector* gsl_multiroot_fdfsolver_dx (gsl_multiroot_fdfsolver*))
-	   (gsl_vector* gsl_multiroot_fdfsolver_f (gsl_multiroot_fdfsolver*))
 	   (int gsl_multiroot_test_delta (gsl_vector* gsl_vector* double double))
 	   (int gsl_multiroot_test_residual (gsl_vector* double))
 	   
@@ -2412,71 +2426,8 @@
 	   (int gsl_ntuple_project (gsl_histogram* gsl_ntuple* gsl_ntuple_value_fn* gsl_ntuple_select_fn*))
 	   (int gsl_ntuple_close (gsl_ntuple*))
 	   
-	   (gsl_odeiv_step* gsl_odeiv_step_alloc (gsl_odeiv_step_type* size_t))
-	   (int gsl_odeiv_step_reset (gsl_odeiv_step*))
-	   (void gsl_odeiv_step_free (gsl_odeiv_step*))
-	   (char* gsl_odeiv_step_name (gsl_odeiv_step*))
-	   (int gsl_odeiv_step_order (gsl_odeiv_step*))
-	   (int gsl_odeiv_step_apply (gsl_odeiv_step* double double double* double* double* double* gsl_odeiv_system*))
-	   (gsl_odeiv_control* gsl_odeiv_control_alloc (gsl_odeiv_control_type*))
-	   (int gsl_odeiv_control_init (gsl_odeiv_control* double double double double))
-	   (void gsl_odeiv_control_free (gsl_odeiv_control*))
-	   (int gsl_odeiv_control_hadjust (gsl_odeiv_control* gsl_odeiv_step* double* double* double* double*))
-	   (char* gsl_odeiv_control_name (gsl_odeiv_control*))
-	   (gsl_odeiv_control* gsl_odeiv_control_standard_new (double double double double))
-	   (gsl_odeiv_control* gsl_odeiv_control_y_new (double double))
-	   (gsl_odeiv_control* gsl_odeiv_control_yp_new (double double))
-	   (gsl_odeiv_control* gsl_odeiv_control_scaled_new (double double double double double* size_t))
-	   (gsl_odeiv_evolve* gsl_odeiv_evolve_alloc (size_t))
-	   (int gsl_odeiv_evolve_apply (gsl_odeiv_evolve* gsl_odeiv_control* gsl_odeiv_step* gsl_odeiv_system* double* double double* double*))
-	   (int gsl_odeiv_evolve_reset (gsl_odeiv_evolve*))
-	   (void gsl_odeiv_evolve_free (gsl_odeiv_evolve*))
-	   
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_step* gsl_odeiv2_step_alloc (gsl_odeiv2_step_type* size_t))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_step_reset (gsl_odeiv2_step*))))
-	   (reader-cond ((>= gsl-version 1.15) (void gsl_odeiv2_step_free (gsl_odeiv2_step*))))
-	   (reader-cond ((>= gsl-version 1.15) (char* gsl_odeiv2_step_name (gsl_odeiv2_step*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_step_order (gsl_odeiv2_step*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_step_apply 
-						    (gsl_odeiv2_step* double double double* double* double* double* gsl_odeiv2_system*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_step_set_driver (gsl_odeiv2_step* gsl_odeiv2_driver*))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_alloc (gsl_odeiv2_control_type*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_control_init (gsl_odeiv2_control* double double double double))))
-	   (reader-cond ((>= gsl-version 1.15) (void gsl_odeiv2_control_free (gsl_odeiv2_control*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_control_hadjust (gsl_odeiv2_control* gsl_odeiv2_step* double* double* double* double*))))
-	   (reader-cond ((>= gsl-version 1.15) (char* gsl_odeiv2_control_name (gsl_odeiv2_control*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_control_errlevel (gsl_odeiv2_control* double double double size_t double*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_control_set_driver (gsl_odeiv2_control* gsl_odeiv2_driver*))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_standard_new (double double double double))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_y_new (double double))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_yp_new (double double))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_control* gsl_odeiv2_control_scaled_new (double double double double double* size_t))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_evolve* gsl_odeiv2_evolve_alloc (size_t))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_evolve_apply 
-						    (gsl_odeiv2_evolve* gsl_odeiv2_control* gsl_odeiv2_step* 
-									gsl_odeiv2_system* double* double double* double*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_evolve_apply_fixed_step 
-						    (gsl_odeiv2_evolve* gsl_odeiv2_control* gsl_odeiv2_step* gsl_odeiv2_system* double* double double*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_evolve_reset (gsl_odeiv2_evolve*))))
-	   (reader-cond ((>= gsl-version 1.15) (void gsl_odeiv2_evolve_free (gsl_odeiv2_evolve*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_evolve_set_driver (gsl_odeiv2_evolve* gsl_odeiv2_driver*))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_y_new 
-								   (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_yp_new 
-								   (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_scaled_new 
-								   (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double double double double*))))
-	   (reader-cond ((>= gsl-version 1.15) (gsl_odeiv2_driver* gsl_odeiv2_driver_alloc_standard_new 
-								   (gsl_odeiv2_system* gsl_odeiv2_step_type* double double double double double))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_set_hmin (gsl_odeiv2_driver* double))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_set_hmax (gsl_odeiv2_driver* double))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_set_nmax (gsl_odeiv2_driver* int))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_apply (gsl_odeiv2_driver* double* double double*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_apply_fixed_step (gsl_odeiv2_driver* double* double int double*))))
-	   (reader-cond ((>= gsl-version 1.15) (int gsl_odeiv2_driver_reset (gsl_odeiv2_driver*))))
-	   (reader-cond ((>= gsl-version 1.15) (reader-cond ((>= gsl-version 1.16) (int gsl_odeiv2_driver_reset_hstart (gsl_odeiv2_driver* double))))))
-	   (reader-cond ((>= gsl-version 1.15) (void gsl_odeiv2_driver_free (gsl_odeiv2_driver*))))
-	   
+	   ;; the ode functions all pass bare double* arrays to the called function.
+
 	   (gsl_permutation* gsl_permutation_alloc (size_t))
 	   (gsl_permutation* gsl_permutation_calloc (size_t))
 	   (void gsl_permutation_init (gsl_permutation*))
@@ -2518,18 +2469,9 @@
 	   (double gsl_root_fsolver_root (gsl_root_fsolver*))
 	   (double gsl_root_fsolver_x_lower (gsl_root_fsolver*))
 	   (double gsl_root_fsolver_x_upper (gsl_root_fsolver*))
-	   (gsl_root_fdfsolver* gsl_root_fdfsolver_alloc (gsl_root_fdfsolver_type*))
-	   (int gsl_root_fdfsolver_set (gsl_root_fdfsolver* gsl_function_fdf* double)) ; TODO: another gsl_function case
-	   (int gsl_root_fdfsolver_iterate (gsl_root_fdfsolver*))
-	   (void gsl_root_fdfsolver_free (gsl_root_fdfsolver*))
-	   (char* gsl_root_fdfsolver_name (gsl_root_fdfsolver*))
-	   (double gsl_root_fdfsolver_root (gsl_root_fdfsolver*))
 	   (int gsl_root_test_interval (double double double double))
 	   (int gsl_root_test_residual (double double))
 	   (int gsl_root_test_delta (double double double double))
-	   
-	   ;; fn_ts	    (void gsl_siman_solve (gsl_rng* void* int int int int int int int size_t int))
-	   ;; fn_ts	    (void gsl_siman_solve_many (gsl_rng* void* int int int int size_t int))
 	   
 	   (gsl_sum_levin_u_workspace* gsl_sum_levin_u_alloc (size_t))
 	   (void gsl_sum_levin_u_free (gsl_sum_levin_u_workspace*))

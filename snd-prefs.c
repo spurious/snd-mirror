@@ -4030,7 +4030,7 @@ static char *make_show_all(char *key, bool ctrl, bool meta, bool cx)
   return(mus_format("(bind-key %s %d (lambda () \
                                        (let ((old-sync (sync))) \
                                          (set! (sync) (1+ (sync-max))) \
-                                         (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) \
+                                         (set! (x-bounds) (list 0.0 (/ (framples) (srate)))) \
                                          (set! (sync) old-sync))) %s \"show entire sound\" \"show-all\")\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
@@ -4041,7 +4041,7 @@ static char *make_show_all(char *key, bool ctrl, bool meta, bool cx)
   return(mus_format("bind_key(%s, %d, lambda do\n\
                                         old_sync = sync()\n\
                                         sync(1 + sync_max())\n\
-                                        set_x_bounds([0.0, frames() / srate()])\n\
+                                        set_x_bounds([0.0, framples() / srate()])\n\
                                         set_sync(old_sync)\n\
                                         end, %s, \"show entire sound\", \"show-all\")\n", 
 		    possibly_quote(key), 
@@ -4050,7 +4050,7 @@ static char *make_show_all(char *key, bool ctrl, bool meta, bool cx)
 #endif
 
 #if HAVE_FORTH
-  return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop '( 0.0 #f #f #f frames #f srate f/ ) #f #f set-x-bounds drop #f set-sync ; %s \"show entire sound\" \"show-all\" bind-key drop\n",
+  return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop '( 0.0 #f #f #f framples #f srate f/ ) #f #f set-x-bounds drop #f set-sync ; %s \"show entire sound\" \"show-all\" bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));

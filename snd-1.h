@@ -79,7 +79,7 @@ typedef struct snd_io snd_io;
 
 typedef struct {
   char *name;             /* full name */
-  mus_long_t samples;          /* total samples = chans * frames */
+  mus_long_t samples;          /* total samples = chans * framples */
   mus_long_t data_location;    /* bytes */
   int srate;
   int chans;
@@ -1357,7 +1357,7 @@ void loop_play_selection(void);
 bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix, bool start_playing);
 void toggle_dac_pausing(void); /* snd-dac.c */
 bool play_in_progress(void);
-void initialize_apply(snd_info *sp, int chans, mus_long_t beg, mus_long_t frames);
+void initialize_apply(snd_info *sp, int chans, mus_long_t beg, mus_long_t framples);
 void finalize_apply(snd_info *sp);
 int run_apply(int ofd);
 mus_float_t *sample_linear_env(env *e, int order);
@@ -1423,7 +1423,7 @@ void update_graph(chan_info *cp);
 void update_graph_or_warn(chan_info *cp);
 void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end);
 void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed);
-bool add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_graph_t graphed);
+bool add_channel_data_1(chan_info *cp, int srate, mus_long_t framples, channel_graph_t graphed);
 void set_x_bounds(axis_info *ap);
 void set_show_axes(show_axes_t val);
 void display_channel_data(chan_info *cp);
@@ -1480,7 +1480,7 @@ void set_graph_style(graph_style_t val);
 void set_show_marks(bool val);
 void set_show_y_zero(bool val);
 
-Xen g_frames(Xen snd_n, Xen chn_n, Xen edpos);
+Xen g_framples(Xen snd_n, Xen chn_n, Xen edpos);
 void check_cursor_shape(chan_info *cp, int x, int y);
 widget_t channel_to_widget(chan_info *cp);
 chan_info *channel_to_chan(chan_info *cp);

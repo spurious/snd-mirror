@@ -1055,14 +1055,14 @@ static void crop(chan_info *cp)
 {
   if (selection_is_active_in_channel(cp))
     {
-      mus_long_t beg, end, frames;
-      frames = current_samples(cp);
+      mus_long_t beg, end, framples;
+      framples = current_samples(cp);
       beg = selection_beg(cp);
       end = selection_end(cp);
       if (beg > 0)
 	delete_samples(0, beg, cp, cp->edit_ctr);
-      if (end < (frames - 1))
-	delete_samples(end + 1, frames - end, cp, cp->edit_ctr);
+      if (end < (framples - 1))
+	delete_samples(end + 1, framples - end, cp, cp->edit_ctr);
     }
 }
 

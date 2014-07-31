@@ -5587,72 +5587,75 @@ environment."
 	return(wrong_type_argument_with_type(sc, sc->VARLET, small_int(1), e, AN_ENVIRONMENT));
     }
   
-  if (e == sc->rootlet)
+  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
     {
-      for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
+      p = car(x);
+      switch (type(p))
 	{
-	  p = car(x);
-	  if (is_pair(p))
-	    {
-	      sym = car(p);
-	      if (!is_symbol(sym))
-		return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), p, A_BINDING));
+	case T_SYMBOL:
+	  if (is_keyword(p))
+	    sym = keyword_symbol(p);
+	  else sym = p;
+	  i++;
+	  if (!is_pair(cdr(x)))
+	    return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), p, A_BINDING));		
+	  x = cdr(x);
+	  val = car(x);
+	  break;
 
-	      val = cdr(p);
-	      if (is_immutable(sym))                             /* check for (eval 'pi (varlet () '(pi . 1))) */
-		return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+	case T_PAIR:
+	  sym = car(p);
+	  val = cdr(p);
+	  break;
 
-	      if (is_slot(global_slot(sym)))
-		{
-		  if (is_syntax(slot_value(global_slot(sym))))
-		    return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), p, 
-							 make_protected_string(sc, "a non-syntactic keyword")));
-		  /*  without this check we can end up turning our code into gibberish:
-		   *
-		   * :(set! quote 1)
-		   * ;can't set! quote
-		   * :(varlet (rootlet) '(quote . 1))
-		   * :quote
-		   * 1
-		   * or worse set quote to a function of one arg that tries to quote something -- infinite loop
-		   */
-		  slot_set_value(global_slot(sym), val);
-		}
-	      else s7_make_slot(sc, e, sym, val);
-	    }
-	  else append_environment(sc, e, check_c_obj_env(sc, p, sc->VARLET));
+	case T_ENVIRONMENT:
+	  append_environment(sc, e, check_c_obj_env(sc, p, sc->VARLET));
+	  continue;
+	  
+	default:
+	  sym = p;
+	  val = sc->F;
+	  break;
 	}
-    }
-  else
-    {
-      for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
+
+      if (!is_symbol(sym))
+	return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), p, A_SYMBOL));
+      if (is_immutable(sym))
+	return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+	  
+      if (e == sc->rootlet)
 	{
-	  s7_pointer p;
-	  p = car(x);
-	  if (is_pair(p))
+	  if (is_slot(global_slot(sym)))
 	    {
-	      s7_pointer x;
-	      bool found_it = false;
-
-	      sym = car(p);
-	      if (!is_symbol(sym))
-		return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), p, A_BINDING));
-
-	      val = cdr(p);
-	      if (is_immutable(sym))
-		return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
-
-	      for (x = environment_slots(e); is_slot(x); x = next_slot(x))
-		if (slot_symbol(x) == sym)
-		  {
-		    slot_set_value(x, val);
-		    found_it = true;
-		    break;
-		  }
-	      if (!found_it)
-		s7_make_slot(sc, e, sym, val);
+	      if (is_syntax(slot_value(global_slot(sym))))
+		return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), p, 
+						     make_protected_string(sc, "a non-syntactic keyword")));
+	      /*  without this check we can end up turning our code into gibberish:
+	       *
+	       * :(set! quote 1)
+	       * ;can't set! quote
+	       * :(varlet (rootlet) '(quote . 1))
+	       * :quote
+	       * 1
+	       * or worse set quote to a function of one arg that tries to quote something -- infinite loop
+	       */
+	      slot_set_value(global_slot(sym), val);
 	    }
-	  else append_environment(sc, e, check_c_obj_env(sc, p, sc->VARLET));
+	  else s7_make_slot(sc, e, sym, val);
+	}
+      else
+	{
+	  s7_pointer x;
+	  bool found_it = false;
+	  for (x = environment_slots(e); is_slot(x); x = next_slot(x))
+	    if (slot_symbol(x) == sym)
+	      {
+		slot_set_value(x, val);
+		found_it = true;
+		break;
+	      }
+	  if (!found_it)
+	    s7_make_slot(sc, e, sym, val);
 	}
     }
   return(e);
@@ -5753,7 +5756,7 @@ new environment."
 }
 
 
-static s7_pointer g_inlet(s7_scheme *sc, s7_pointer args)
+s7_pointer s7_inlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_inlet "(environment ...) adds its \
 arguments, each an environment, a cons: '(symbol . value), or a keyword/value pair, to a new environment, and returns the \
@@ -69024,7 +69027,7 @@ s7_scheme *s7_init(void)
                               s7_define_constant_function(sc, "unlet",               g_unlet,                  0, 0, false, H_unlet);
   sc->SUBLET =                s7_define_function(sc,      "sublet",                  g_sublet,                 1, 0, true,  H_sublet);
   sc->VARLET =                s7_define_function(sc,      "varlet",                  g_varlet,                 1, 0, true, H_varlet);
-  sc->INLET =                 s7_define_safe_function(sc, "inlet",                   g_inlet,                  0, 0, true,  H_inlet);
+  sc->INLET =                 s7_define_safe_function(sc, "inlet",                   s7_inlet,                 0, 0, true,  H_inlet);
   sc->IS_LET =                s7_define_safe_function(sc, "let?",                    g_is_let,                 1, 0, false, H_is_let);
   sc->LET_TO_LIST =           s7_define_safe_function(sc, "let->list",               g_let_to_list,            1, 0, false, H_let_to_list);
                               s7_define_safe_function(sc, "owlet",                   g_owlet,                  0, 0, false, H_owlet);
@@ -70049,20 +70052,16 @@ int main(int argc, char **argv)
  *   but need glib.scm, or unicode.scm to load the stuff
  *
  * finish Display!
- * more tests: libgsl, what about load info for sndlib/xg? / libreadline libsigsegv ncurses pthread? glib:huge
+ * more tests: libgsl, what about load info for sndlib/xg? / libreadline libsigsegv ncurses(large) pthread? glib(huge)
  * check again (define (make-func) (define (a-func a) (+ a 1))) -- the opt problem is now fixed -- where it this business?? line 44013
- *
- * symbol+syntax=bit 6, pair=bit 8,
- *   tricky cases: ext_cons where gcdr is a preset offset (arglist=len)
- *                 slt where expr and pending_value can probably be combined
- *                 envr where dox2 is a problem
- *   the move hloc into each struct, expand type to 64 bits
- *   use lower 4 as the type+op-if-any, upper 4 as flags
- *   so: figure out dox2, undo the pointer part of gcdr, combine expr+pending
- *   what about the syn+cdr assumption?
- *   where does this actually save?  we have the same switch overhead, looks like 1%!
- *
- * also remember to track shadowed vars in gather-symbols
+ * reactive-letrec, simpler rlet: can't letrec be let but remove any gathered locals
  * is there a similar accessor for (set! (v i) x) etc? (vector-set! method in openlet perhaps? but that is awkward)
+ * s7.html could put examples and long lucubrations in expandable sections via html5 details/summary
+ *   or maybe hide bare code, replace with heavily commented version?
+ *
+ * at least in scheme, use s7_inlet to return a sound or any other snd object? Then the associated methods could be preset.
+ *   or maybe use openlet and c_object_env + inlet to define that at startup?
+ *   do we ever need a c-object?
+ * I just noticed there are a bunch of "frames" that should be "framples" in Snd (758)
  */
 

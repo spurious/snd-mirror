@@ -434,9 +434,10 @@ s7_pointer s7_rootlet(s7_scheme *sc);                                       /* (
 s7_pointer s7_curlet(s7_scheme *sc);                                        /* (curlet) */
 s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e);                      /* returns previous curlet */
 s7_pointer s7_outlet(s7_pointer e);                                         /* (outlet e) */
-s7_pointer s7_sublet(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
+s7_pointer s7_sublet(s7_scheme *sc, s7_pointer env, s7_pointer bindings);   /* (sublet e ...) */
+s7_pointer s7_inlet(s7_scheme *sc, s7_pointer bindings);                    /* (inlet ...) */
 s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env);                   /* (let->list env) */
-bool s7_is_let(s7_pointer e);
+bool s7_is_let(s7_pointer e);                                               /* )let? e) */
 s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym);       /* (let-ref e sym) */
 s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (let-set! e sym val) */
 s7_pointer s7_openlet(s7_pointer e);                                        /* (openlet e) */
