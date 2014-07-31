@@ -70052,16 +70052,16 @@ int main(int argc, char **argv)
  *   but need glib.scm, or unicode.scm to load the stuff
  *
  * finish Display!
- * more tests: libgsl, what about load info for sndlib/xg? / libreadline libsigsegv ncurses(large) pthread? glib(huge)
  * check again (define (make-func) (define (a-func a) (+ a 1))) -- the opt problem is now fixed -- where it this business?? line 44013
  * reactive-letrec, simpler rlet: can't letrec be let but remove any gathered locals
  * is there a similar accessor for (set! (v i) x) etc? (vector-set! method in openlet perhaps? but that is awkward)
+ *
  * s7.html could put examples and long lucubrations in expandable sections via html5 details/summary
  *   or maybe hide bare code, replace with heavily commented version?
+ *   how to make the listener examples live?
  *
  * at least in scheme, use s7_inlet to return a sound or any other snd object? Then the associated methods could be preset.
  *   or maybe use openlet and c_object_env + inlet to define that at startup?
  *   do we ever need a c-object?
- * I just noticed there are a bunch of "frames" that should be "framples" in Snd (758)
  */
 

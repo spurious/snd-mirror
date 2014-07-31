@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11384] = {
+static const char *snd_names[11316] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -2582,9 +2582,6 @@ static const char *snd_names[11384] = {
     "GSL_NAN", "libgsl.scm",
     "GSL_NEGINF", "libgsl.scm",
     "GSL_NEGZERO", "libgsl.scm",
-    "GSL_ODEIV_HADJ_DEC", "libgsl.scm",
-    "GSL_ODEIV_HADJ_INC", "libgsl.scm",
-    "GSL_ODEIV_HADJ_NIL", "libgsl.scm",
     "GSL_POSINF", "libgsl.scm",
     "GSL_POSZERO", "libgsl.scm",
     "GSL_PREC_APPROX", "libgsl.scm",
@@ -2638,9 +2635,6 @@ static const char *snd_names[11384] = {
     "GSL_SQRT_MACH_EPS", "libgsl.scm",
     "GSL_SQRT_SFLT_EPSILON", "libgsl.scm",
     "GSL_SUCCESS", "libgsl.scm",
-    "GSL_VEGAS_MODE_IMPORTANCE", "libgsl.scm",
-    "GSL_VEGAS_MODE_IMPORTANCE_ONLY", "libgsl.scm",
-    "GSL_VEGAS_MODE_STRATIFIED", "libgsl.scm",
     "GSL_VERSION", "libgsl.scm",
     "ICANON", "libc.scm",
     "ICRNL", "libc.scm",
@@ -5115,6 +5109,7 @@ static const char *snd_names[11384] = {
     "gsl_multimin_diff", "libgsl.scm",
     "gsl_multimin_fminimizer_alloc", "libgsl.scm",
     "gsl_multimin_fminimizer_free", "libgsl.scm",
+    "gsl_multimin_fminimizer_fval", "libgsl.scm",
     "gsl_multimin_fminimizer_iterate", "libgsl.scm",
     "gsl_multimin_fminimizer_minimum", "libgsl.scm",
     "gsl_multimin_fminimizer_name", "libgsl.scm",
@@ -5160,35 +5155,6 @@ static const char *snd_names[11384] = {
     "gsl_multiset_valid", "libgsl.scm",
     "gsl_nan", "libgsl.scm",
     "gsl_neginf", "libgsl.scm",
-    "gsl_ntuple_bookdata", "libgsl.scm",
-    "gsl_ntuple_close", "libgsl.scm",
-    "gsl_ntuple_create", "libgsl.scm",
-    "gsl_ntuple_open", "libgsl.scm",
-    "gsl_ntuple_project", "libgsl.scm",
-    "gsl_ntuple_read", "libgsl.scm",
-    "gsl_ntuple_write", "libgsl.scm",
-    "gsl_odeiv2_step_bsimp", "libgsl.scm",
-    "gsl_odeiv2_step_msadams", "libgsl.scm",
-    "gsl_odeiv2_step_msbdf", "libgsl.scm",
-    "gsl_odeiv2_step_rk1imp", "libgsl.scm",
-    "gsl_odeiv2_step_rk2", "libgsl.scm",
-    "gsl_odeiv2_step_rk2imp", "libgsl.scm",
-    "gsl_odeiv2_step_rk4", "libgsl.scm",
-    "gsl_odeiv2_step_rk4imp", "libgsl.scm",
-    "gsl_odeiv2_step_rk8pd", "libgsl.scm",
-    "gsl_odeiv2_step_rkck", "libgsl.scm",
-    "gsl_odeiv2_step_rkf45", "libgsl.scm",
-    "gsl_odeiv_step_bsimp", "libgsl.scm",
-    "gsl_odeiv_step_gear1", "libgsl.scm",
-    "gsl_odeiv_step_gear2", "libgsl.scm",
-    "gsl_odeiv_step_rk2", "libgsl.scm",
-    "gsl_odeiv_step_rk2imp", "libgsl.scm",
-    "gsl_odeiv_step_rk2simp", "libgsl.scm",
-    "gsl_odeiv_step_rk4", "libgsl.scm",
-    "gsl_odeiv_step_rk4imp", "libgsl.scm",
-    "gsl_odeiv_step_rk8pd", "libgsl.scm",
-    "gsl_odeiv_step_rkck", "libgsl.scm",
-    "gsl_odeiv_step_rkf45", "libgsl.scm",
     "gsl_permutation_alloc", "libgsl.scm",
     "gsl_permutation_calloc", "libgsl.scm",
     "gsl_permutation_canonical_cycles", "libgsl.scm",
@@ -7444,7 +7410,7 @@ static const char *snd_names[11384] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5692);
+  s7_autoload_set_names(sc, snd_names, 5658);
 }
 #endif
 
