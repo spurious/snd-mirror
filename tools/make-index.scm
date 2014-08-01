@@ -1469,7 +1469,7 @@
 								    (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
 									    file linectr closer line (+ start 2) i commands)
 								    
-								    (if (memq closer '(ul tr td table small sub blockquote p
+								    (if (memq closer '(ul tr td table small sub blockquote p details summary
 											  a A i b title pre span h1 h2 h3 code body html
 											  em head h4 sup map smaller bigger th tbody div))
 									(begin

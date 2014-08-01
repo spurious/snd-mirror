@@ -4770,7 +4770,7 @@ evaluator soldiers on, as if frexp had always been defined in s7).
 <br>
 
 <details>
-<summary class="indented">Bad hacker!</summary>
+<summary class="indented">symbol macro?</summary>
 <blockquote>
 <div class="indented">
 <p>There are a lot of thoroughly disreputable ways to take advantage of *unbound-variable-hook*.
@@ -5615,12 +5615,17 @@ define-expansion should be named define-reader-macro.
 <p>
 The name "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
 operate with the *features* list; perhaps "cond-provided"?  Not only is cond-expand poorly named, but the whole
-idea is clumsy &mdash; no-one has ever exclaimed "Let's use cond-expand!" with a happy heart.
-I'd say "use #+ and #-", but that's not quite the right thing either.  Why assume that
-the *features* list is the only thing of interest?
-I'm currently toying with 
-"reader-cond", where the decision involves normal evaluation, not something specific to *features*.
-If reader-cond returns (values), nothing is placed in the output.  See libc.scm for examples.
+idea is clumsy.  Take libgsl.scm; different versions of the GSL library have different functions.  We need to know
+when we're building the FFI what version we're dealing with.  If you think the *features* list can handle
+this, you've never used ACL!  So, s7 uses reader-cond instead.
+In this case, the read-time decision involves normal evaluation, not something specific to *features*.
+We can easily handle library versions via <code>(reader-cond ((&gt;= gsl-version 1.15) ...))</code>.
+If reader-cond returns (values), nothing is placed in the output.
+</p>
+
+<p>Should environments be open by default, or always open?  The three functions openlet, openlet?,
+and coverlet were originally intended for c-object use.  Then I started worrying about inadvertent
+method calls.
 </p>
 
 <p>
@@ -5658,6 +5663,8 @@ Better ideas are always welcome!
 </div>
 
 
+<details>
+<summary class="indented">quotes</summary>
 <div class="indented">
 
 <p>Schemes vary in their treatment of ().  s7 considers it a constant that evaluates to itself,
@@ -5689,25 +5696,14 @@ to keep it from being evaluated, but
 <!-- there's another sense in which '() is a constant: you can't apply it to anything. ('() 0) -> error
 -->
 </div>
+</details>
 
 
-
+<details>
+<summary class="indented">mutable constants</summary>
 <div class="indented">
 
-<p>Schemes also vary in handling trailing arguments:
-<code>(* 0 "hi")</code> in Guile returns 0, but s7 gives an error.  
-<code>(cond (1) (=&gt;))</code> is 1 in both,  and
-<code>(or 1 2 . 3)</code> is an
-error in Guile, and 1 in s7!
-Because it flushes trailing arguments, Guile returns 0 from <code>(* 0 +inf.0)</code>, but I think it should return NaN.
-</p>
-</div>
-
-
-
-<div class="indented">
-
-<p>And a harder one... How should s7 treat this:
+<p>How should s7 treat this:
 <code>(string-set! "hiho" 1 #\z)</code>, or 
 <code>(vector-set! #(1 2 3) 1 32)</code>, or
 <code>(list-set! '(1 2 3) 1 32)</code>?
@@ -5822,6 +5818,7 @@ and some exceedingly rare local method cases are handled more carefully).
 -->
 
 </div>
+</details>
 
 
 

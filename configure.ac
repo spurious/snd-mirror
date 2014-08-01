@@ -554,6 +554,7 @@ if test "$with_audio" != no ; then
     else
       JACK_LIBS="-ljack -lsamplerate"
     fi
+  JACK_LIBS="$JACK_LIBS -lpthread"
   fi
 
   if test "$with_alsa" = yes ; then

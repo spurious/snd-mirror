@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11316] = {
+static const char *snd_names[11314] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4791,7 +4791,6 @@ static const char *snd_names[11316] = {
     "gsl_hypot3", "libgsl.scm",
     "gsl_ieee_env_setup", "libgsl.scm",
     "gsl_ieee_set_mode", "libgsl.scm",
-    "gsl_integration_cquad", "libgsl.scm",
     "gsl_integration_cquad_workspace_alloc", "libgsl.scm",
     "gsl_integration_cquad_workspace_free", "libgsl.scm",
     "gsl_integration_glfixed", "libgsl.scm",
@@ -7410,7 +7409,7 @@ static const char *snd_names[11316] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5658);
+  s7_autoload_set_names(sc, snd_names, 5657);
 }
 #endif
 
