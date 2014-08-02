@@ -633,7 +633,8 @@ have any number after, for example, #b:
 </div>
 
 
-
+<details>
+<summary class="indented">more examples</summary>
 <div class="indented">
 
 <pre>
@@ -658,8 +659,8 @@ have any number after, for example, #b:
 		     (set! (cdr prev) mid)
 		     (set! prev mid)))))))))
 </pre>
-
 </div>
+</details>
 
 </blockquote>
 
@@ -979,15 +980,15 @@ Here's a brief example of all four:
   (define-bacro (bac1 a) 
      `(+ ,x y ,a))        ; expand and eval in calling env
   (let ((x 32) (y 64)) 
-    (bac1 3)))
--&gt; 99
+    (bac1 3)))            ; (with-let (inlet 'x 32 'y 64) (+ 32 y 3))
+-&gt; 99                     ;  with-let and inlet refer to <a href="#environments">environments</a>
 
 (let ((x 1) (y 2))        ; this is like define-macro
   (define-bacro (bac2 a) 
     (with-let (sublet (funclet bac2) :a a)
       `(+ ,x y ,a)))      ; expand in definition env, eval in calling env
   (let ((x 32) (y 64)) 
-    (bac2 3)))
+    (bac2 3)))            ; (with-let (inlet 'x 32 'y 64) (+ 1 y 3))
 -&gt; 68
 
 (let ((x 1) (y 2))
@@ -997,7 +998,7 @@ Here's a brief example of all four:
       `(with-let ,(sublet (funclet bac3) :a a)
 	 ,e)))           ; expand and eval in definition env 
   (let ((x 32) (y 64)) 
-    (bac3 3)))
+    (bac3 3)))           ; (with-let (inlet 'x 1 'y 2) (+ 1 y 3))
 -&gt; 6
 
 (let ((x 1) (y 2))
@@ -1006,7 +1007,7 @@ Here's a brief example of all four:
       `(with-let ,(sublet (funclet bac4) :a a)
 	 ,e)))           ; expand in calling env, eval in definition env
   (let ((x 32) (y 64))     
-    (bac4 3)))
+    (bac4 3)))           ; (with-let (inlet 'x 1 'y 2) (+ 32 y 3))
 -&gt; 37
 </pre>
 </div>
@@ -5616,11 +5617,10 @@ define-expansion should be named define-reader-macro.
 The name "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
 operate with the *features* list; perhaps "cond-provided"?  Not only is cond-expand poorly named, but the whole
 idea is clumsy.  Take libgsl.scm; different versions of the GSL library have different functions.  We need to know
-when we're building the FFI what version we're dealing with.  If you think the *features* list can handle
-this, you've never used ACL!  So, s7 uses reader-cond instead.
+when we're building the FFI what version we're dealing with.  It would be nuts to start pushing and checking dozens
+of library version symbols when all we actually want is <code>(&gt; version 23.19)</code>.
+(ACL shows how inadequate #+ is when dealing with version numbers).  So, s7 uses reader-cond instead.
 In this case, the read-time decision involves normal evaluation, not something specific to *features*.
-We can easily handle library versions via <code>(reader-cond ((&gt;= gsl-version 1.15) ...))</code>.
-If reader-cond returns (values), nothing is placed in the output.
 </p>
 
 <p>Should environments be open by default, or always open?  The three functions openlet, openlet?,

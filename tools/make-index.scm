@@ -510,7 +510,7 @@
 (let ((names (make-hash-table)))
   
   (define (where-is func)
-    (let ((addr (with-environment (procedure-environment func) __func__)))
+    (let ((addr (with-let (funclet func) __func__)))
       ;; this misses scheme-side pws because their environment is (probably) the global env
       (if (not (pair? addr))
 	  #f
@@ -817,6 +817,10 @@
     (list 'while "stuff.scm")
     (list 'define-class "stuff.scm")
     (list 'elambda "stuff.scm")
+    (list 'reactive-let "stuff.scm")
+    (list 'reactive-let* "stuff.scm")
+    (list 'reactive-letrec* "stuff.scm")
+    (list 'reactive-lambda* "stuff.scm")
 
     (list 'moog? "moog.scm")
     (list 'make-moog "moog.scm")

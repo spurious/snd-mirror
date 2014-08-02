@@ -4158,51 +4158,54 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
    */
 
 
+static void expand_heap(s7_scheme *sc)
+{
+  /* alloc more heap */
+  unsigned int old_size, old_free;
+  unsigned int k;
+  s7_cell *cells;
+
+  old_size = sc->heap_size;
+  
+  old_free = sc->free_heap_top - sc->free_heap;
+  if (sc->heap_size < 512000)
+    sc->heap_size *= 2;
+  else sc->heap_size += 512000;
+  
+  sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
+  if (!(sc->heap))
+    fprintf(stderr, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));
+  
+  sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
+  if (!(sc->free_heap))
+    fprintf(stderr, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
+  
+  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TRIGGER_SIZE);
+  sc->free_heap_top = sc->free_heap + old_free; /* incremented below, added old_free 21-Aug-12?!? */
+
+  /* optimization suggested by K Matheussen */
+  cells = (s7_cell *)calloc(sc->heap_size - old_size, sizeof(s7_cell));
+  for (k = old_size; k < sc->heap_size; k++)
+    {
+      sc->heap[k] = &cells[k - old_size];
+      (*sc->free_heap_top++) = sc->heap[k];
+      heap_location(sc->heap[k]) = k;
+    }
+  sc->previous_free_heap_top = sc->free_heap_top;
+}
+
+
 static void try_to_call_gc(s7_scheme *sc)
 {
   /* called only from NEW_CELL and cons */
-  unsigned int freed_heap = 0;
+  unsigned int freed_heap;
   
   if (sc->gc_off) return;
 
   freed_heap = gc(sc);
   if ((freed_heap < sc->heap_size / 2) &&
       (freed_heap < 1000000)) /* if huge heap */
-    {
-      /* alloc more heap */
-      unsigned int old_size, old_free;
-      old_size = sc->heap_size;
-
-      old_free = sc->free_heap_top - sc->free_heap;
-      if (sc->heap_size < 512000)
-	sc->heap_size *= 2;
-      else sc->heap_size += 512000;
-
-      sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
-      if (!(sc->heap))
-	fprintf(stderr, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));
-      
-      sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
-      if (!(sc->free_heap))
-	fprintf(stderr, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
-      
-      sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TRIGGER_SIZE);
-      sc->free_heap_top = sc->free_heap + old_free; /* incremented below, added old_free 21-Aug-12?!? */
-
-      { 
-	/* optimization suggested by K Matheussen */
-	unsigned int k;
-	s7_cell *cells;
-	cells = (s7_cell *)calloc(sc->heap_size - old_size, sizeof(s7_cell));
-	for (k = old_size; k < sc->heap_size; k++)
-	  {
-	    sc->heap[k] = &cells[k - old_size];
-	    (*sc->free_heap_top++) = sc->heap[k];
-	    heap_location(sc->heap[k]) = k;
-	  }
-	sc->previous_free_heap_top = sc->free_heap_top;
-      }
-    }
+    expand_heap(sc);
 }
 
   /* originally I tried to mark each temporary value until I was done with it, but
@@ -6856,11 +6859,21 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 {
+  /* called only in copy_stack -- the GC is off */
   s7_pointer nobj;
   int nloc;
 
-  NEW_CELL(sc, nobj);
+  /* NEW_CELL(sc, nobj); */
+  /* since the GC is off, NEW_CELL ignores the free_heap trigger, causing it to exhaust the free list sometimes,
+   *   so we check explicitly here -- we don't want to call the gc mark/sweep process here.
+   */
+  if (sc->free_heap_top <= sc->free_heap_trigger) expand_heap(sc);
+  nobj = (*(--(sc->free_heap_top)));
+
   nloc = heap_location(nobj);
+#if DEBUGGING
+  if (nloc == 0) {fprintf(stderr, "free_list trouble\n"); abort();}
+#endif
   memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
   heap_location(nobj) = nloc;
 
@@ -70054,5 +70067,27 @@ int main(int argc, char **argv)
  *   but need glib.scm, or unicode.scm to load the stuff
  *
  * finish Display!
+ * reactive s7.html section, better library, useful cases of the other 2 bacros? setf oddities?
+ *   inlet+reactive-lambda? or observer? = reactive-with-let?
+ *   reactive-when: (rwhen expr ...) -- if any var in expr is set, eval form again [also rcond etc]
+ *   or cleaner to wrap these in (reactive (syms) ...)? -- would want the new value already assigned?
+ *   like a call/cc except not exportable, not a goto -- more like a defmethod perhaps
+ *   so no need for hooks/callbacks, but this does depend on names -- also the reactive thing
+ *   should happen only once somehow -- unwind itself (where?): 
+ *   reactive adds accessors, come around again, adds more... but in general no way to see curlet go
+ *   does this affect reactive-lambda/set? yes -- presumes local vars and no loop
+ *   can't save original and work from there because someone else might have added an accessor
+ *   but hooks are similar: add once -- how to hook for a local effect?
+ *   both should be let-local if target is: shadow global, add accessor, in accessor set global and local
+ *   can reactive-let use this? -- the shadow is just (let ((a a)) ...)! but we also need
+ *   (set (((outlet (curlet)) 'a) v) or maybe a saved setter func to pass the new value outward
+ * need an engulfing-lambda for symbol-access
+ *   (engulf f sym) (let ((pf (symbol-access sym))) (set! (symbol-access sym) (if pf (lambda (s v) (f s (pf s v))) f)))
+ *   (degulf sym) (let ((pf (symbol-access sym))) (if pf (let ((innards (caddr (caddr (procedure-source f))))) (apply lambda '(s v) innards))))
+ * 94 all, odd? for +1 check
+ * is stack_copy protected against circles?
+ * libgmp.scm? 
+ * s7.html more examples under details? like mv-flatten 
+ *   come-from as error handler?
  */
 

@@ -1039,6 +1039,26 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (add-layer vars))
 
 
+(define-macro (reactive-letrec* vars . body)
+  (define (add-layer vars)
+    (if (pair? vars)
+	(let ((g (gensym)))
+	  `(let ((,g (symbol-access ',(caar vars))))
+	     (dynamic-wind
+		 (lambda () 
+		   #f)
+		 (lambda ()
+		   (reactive-set! ,(caar vars) ,(cadar vars))
+		   ,(add-layer (cdr vars)))
+		 (lambda ()
+		   (set! (symbol-access ',(caar vars)) ,g)))))
+	`(begin ,@body)))
+  `(let ,(map (lambda (var&value)
+		`(,(car var&value) #<undefined>))
+	      vars)
+     ,(add-layer vars)))
+
+
 (define-macro (reactive-lambda* args . body)
   `(let ((f (lambda* ,args ,@body)))
      (for-each (lambda (v)
@@ -1080,6 +1100,24 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 ;; that is, if any of the function's immediate closure variables are set (via (set! ((funclet rl) 'a) 32)), rl is called.
 ;;   (say a library that needs to keep all closure vars consistent, so if any changed a la Display, we need to check all).
+
+(define (make-library)
+  (let ((A 1.0)             ; define a library with 2 globals (A and B) and a function (f1)
+	(B 2.0))            ;   A, B, and f1 will be exported below
+    (reactive-lambda* (s v) ; make sure B is always twice A
+      (case s
+	((A) (set! B (* 2 v)))
+	((B) (set! A (/ v 2)))))
+    (define (f1 x) 
+      (+ A (* B x)))
+    (curlet)))              ; return the library
+
+(with-let (make-library)
+  (format *stderr* "(f1 3): ~A~%" (f1 3))
+  (set! A 3.0)
+  (format *stderr* "A: ~A, B: ~A, (f1 3): ~A~%" A B (f1 3))
+  (set! B 4.0)
+  (format *stderr* "A: ~A, B: ~A, (f1 3): ~A~%" A B (f1 3)))
 |#
 
 
