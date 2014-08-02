@@ -972,7 +972,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 (define reactive-let
   (let ((bindings (gensym))
 	(accessors (gensym))
-	(original-accessors (gensym))
+	(setters (gensym))
 	(vars (gensym))
 	(body (gensym))
 	(e (gensym)))
@@ -980,7 +980,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	   `((,(gensym) ,vars . ,body)
 	     (let ((,bindings ())
 		   (,accessors ())
-		   (,original-accessors ())
+		   (,setters ())
 		   (,e (curlet)))
 	       (for-each 
 		(lambda (bd)
@@ -989,8 +989,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     (lambda (sym)
 		       (let ((fname (gensym)))
 			 (set! ,bindings (cons `(,fname (lambda (,sym) ,(copy (cadr bd)))) ,bindings))
-			 (if (not (assq sym ,original-accessors))
-			     (set! ,original-accessors (cons (list sym (symbol-access sym)) ,original-accessors)))
+			 (if (not (assq sym ,setters))
+			     (set! ,setters (cons (cons sym (gensym)) ,setters)))
 			 (let ((prev (assq sym ,accessors)))
 			   (if (not prev)
 			       (set! ,accessors (cons (cons sym `((set! ,(car bd) (,fname v)))) ,accessors))
@@ -998,29 +998,23 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     syms)
 		    (set! ,bindings (cons bd ,bindings))))
 		,vars)
-	       `(dynamic-wind
-		    (lambda ()
-		      #f)
-		    (lambda ()
-		      (let ,(reverse ,bindings)
-			,@(map (lambda (sa)
-				 `(set! (symbol-access ',(car sa)) 
-					(lambda (s nv)
-					  (let ((osa (assq ',(car sa) ',,original-accessors)))
-					    (let ((v (if (cadr osa)
-							 ((cadr osa) s nv)
-							 nv)))
-					      ,@(cdr sa) 
-					      v)))))
-			       ,accessors)
-			,@,body))
-		    (lambda () ; return accessors to their previous state
-		      ,@(map (lambda (sa)
-			       `(set! (symbol-access ',(car sa)) ,(cadr sa)))
-			     ,original-accessors)
-		      #f)))))))                            ; in case there aren't any original accessors
+	       `(let ,(map (lambda (sym) ; sym: '(s . g)                      ; g=function to set outer copy of the symbol
+			     `(,(cdr sym) (lambda (v) (set! ,(car sym) v)))) 
+			   ,setters)
+		  (let ,(map (lambda (sym)                                    ; now shadow that symbol with a local version
+			       `(,(car sym) ,(car sym)))
+			     ,setters)
+		    (let ,(reverse ,bindings)                                 ; the original let
+		      ,@(map (lambda (sa)                                     ; set local accessors of the middle symbols (which may be locally shadowed!)
+			       `(set! (symbol-access ',(car sa) (outlet (curlet)))
+				      (lambda (s v)
+					(,(cdr (assq (car sa) ,setters)) v)  ; set same-named symbol in outer let
+					,@(cdr sa)                           ; react to current set
+					v)))
+			   ,accessors)
+		      ,@,body))))))))
 
-
+;; TODO: follow rlet -- no dynamic-wind
 (define-macro (reactive-let* vars . body)
   (define (add-layer vars)
     (if (pair? vars)
