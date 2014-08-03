@@ -969,19 +969,25 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   a)
 |#
 
+;;; this is not pretty -- still testing, the _RLET_* names are for readability in macroexpand
+;;; full explanation, if it keeps working, will take some effort
+
 (define reactive-let
   (let ((bindings (gensym))
 	(accessors (gensym))
 	(setters (gensym))
 	(vars (gensym))
 	(body (gensym))
-	(e (gensym)))
+	(e (gensym))
+	(bacro (gensym)))
     (apply define-bacro 
 	   `((,(gensym) ,vars . ,body)
 	     (let ((,bindings ())
 		   (,accessors ())
 		   (,setters ())
 		   (,e (curlet)))
+	       (define (rlet-symbol sym wrap)
+		 (string->symbol (string-append wrap (symbol->string sym) wrap)))
 	       (for-each 
 		(lambda (bd)
 		  (let ((syms (gather-symbols (cadr bd) ,e ())))
@@ -989,30 +995,37 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		     (lambda (sym)
 		       (let ((fname (gensym)))
 			 (set! ,bindings (cons `(,fname (lambda (,sym) ,(copy (cadr bd)))) ,bindings))
-			 (if (not (assq sym ,setters))
-			     (set! ,setters (cons (cons sym (gensym)) ,setters)))
+			 (if (not (memq sym ,setters))
+			     (set! ,setters (cons sym ,setters)))
 			 (let ((prev (assq sym ,accessors)))
 			   (if (not prev)
-			       (set! ,accessors (cons (cons sym `((set! ,(car bd) (,fname v)))) ,accessors))
-			       (set-cdr! prev (append `((set! ,(car bd) (,fname v))) (cdr prev)))))))
+			       (set! ,accessors (cons (cons sym `((set! (,(rlet-symbol (car bd) "_RLET_") ',(car bd)) (,fname v)))) ,accessors))
+			       (set-cdr! prev (append `((set! (,(rlet-symbol (car bd) "_RLET_") ',(car bd)) (,fname v))) (cdr prev)))))))
 		     syms)
 		    (set! ,bindings (cons bd ,bindings))))
 		,vars)
-	       `(let ,(map (lambda (sym) ; sym: '(s . g)                      ; g=function to set outer copy of the symbol
-			     `(,(cdr sym) (lambda (v) (set! ,(car sym) v)))) 
+	       `(let ,(map (lambda (sym)
+			     `(,(rlet-symbol sym "_RSET_") (lambda (v) (set! ,sym v))))
 			   ,setters)
 		  (let ,(map (lambda (sym)                                    ; now shadow that symbol with a local version
-			       `(,(car sym) ,(car sym)))
+			       `(,sym ,sym))
 			     ,setters)
-		    (let ,(reverse ,bindings)                                 ; the original let
-		      ,@(map (lambda (sa)                                     ; set local accessors of the middle symbols (which may be locally shadowed!)
-			       `(set! (symbol-access ',(car sa) (outlet (curlet)))
-				      (lambda (s v)
-					(,(cdr (assq (car sa) ,setters)) v)  ; set same-named symbol in outer let
-					,@(cdr sa)                           ; react to current set
-					v)))
-			   ,accessors)
-		      ,@,body))))))))
+		    (let ,(map (lambda (sym)
+				 `(,(rlet-symbol sym "_RLET_") (curlet)))
+			       ,setters)
+		      (let ,(reverse ,bindings)                                 ; the original let
+			(let ,(map (lambda (v)
+				     `(,(rlet-symbol (car v) "_RLET_") (curlet)))
+				   ,vars)
+			  ,@(map (lambda (sa)                                     ; set local accessors of the middle symbols (which may be locally shadowed!)
+				   `(set! (symbol-access ',(car sa) (outlet (outlet (outlet (curlet))))) ; can't be simplified!!
+					  (define-bacro (,',bacro s v1)
+					    (let ((v (eval v1)))
+					      (,(rlet-symbol (car sa) "_RSET_") v)  ; set same-named symbol in outer let
+					      ,@(cdr sa)                           ; react to current set
+					      v)))) ; might need quote here?
+				 ,accessors)
+			  ,@,body))))))))))
 
 ;; TODO: follow rlet -- no dynamic-wind
 (define-macro (reactive-let* vars . body)

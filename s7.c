@@ -5877,18 +5877,19 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer new_value)
+static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer old_value)
 {
-  s7_pointer func;
+  s7_pointer func, new_value;
+
+  new_value = sc->ERROR;
   func = slot_accessor(slot);
+
   if (is_procedure(func))
     {
-      s7_pointer old_value;
-      old_value = new_value;
       if (is_c_function(func))
 	{
 	  car(sc->T2_1) = slot_symbol(slot);
-	  car(sc->T2_2) = new_value;
+	  car(sc->T2_2) = old_value;
       	  new_value = c_function_call(func)(sc, sc->T2_1);
 	}
       else
@@ -5896,13 +5897,27 @@ static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer new_v
 	  bool old_off;
 	  old_off = sc->gc_off;
 	  sc->gc_off = true;
-	  new_value = s7_apply_function(sc, func, list_2(sc, slot_symbol(slot), new_value));
+	  new_value = s7_apply_function(sc, func, list_2(sc, slot_symbol(slot), old_value));
 	  sc->gc_off = old_off;
 	}
-      if (new_value == sc->ERROR)
-	return(s7_error(sc, sc->ERROR,
-			list_3(sc, make_protected_string(sc, "can't set! ~S to ~S"), slot_symbol(slot), old_value)));
     }
+  else
+    {
+      if (is_any_macro(func))
+	{
+	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+	  sc->args = list_1(sc, cons(sc, func, list_2(sc, slot_symbol(slot), old_value)));
+	  sc->code = func;
+	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
+	  eval(sc, OP_APPLY);
+	  new_value = sc->value;
+	}
+      else return(old_value);
+    }
+
+  if (new_value == sc->ERROR)
+    return(s7_error(sc, sc->ERROR,
+		    list_3(sc, make_protected_string(sc, "can't set! ~S to ~S"), slot_symbol(slot), old_value)));
   return(new_value);
 }
 
@@ -34709,7 +34724,8 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
       e = sc->envir;
       func = cadr(args);
     }
-  if ((!is_procedure(func)) &&
+
+  if ((!is_procedure_or_macro(func)) &&
       (func != sc->F))
     return(s7_wrong_type_arg_error(sc, "set! symbol-access", 3, func, "a function or #f"));
 
@@ -34737,7 +34753,9 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer symbol, s7_pointer new_value)
 {
-  /* this refers to (define (sym ...)) and friends */
+  /* this refers to (define (sym ...)) and friends -- define cases
+   *    see call_accessor for the set! cases
+   */
   s7_pointer func;
 
   func = g_symbol_access(sc, list_2(sc, symbol, sc->envir));
@@ -34759,9 +34777,10 @@ static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer sy
 	  sc->args = list_2(sc, symbol, new_value);
 	  push_stack(sc, op, sc->args, sc->code);
 	  sc->code = func;
-	  return(sc->NO_VALUE);
+	  return(sc->NO_VALUE); /* this means the accessor in set! needs to goto APPLY to get the new value */
 	}
     }
+  /* perhaps add macro case? */
   return(new_value);
 }
 
@@ -58769,7 +58788,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
-	    
 	    sc->value = c_macro_call(sc->code)(sc, sc->args);
 	    goto START;
 	  }
@@ -60828,6 +60846,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      sc->args = list_2(sc, sc->code, sc->value);
 		      push_stack(sc, OP_SET_WITH_ACCESSOR, sc->args, sc->y); /* op, args, code */
 		      sc->code = func;
+		      goto APPLY;
+		    }
+		}
+	      else
+		{
+		  if (is_any_macro(func))
+		    {
+		      push_stack(sc, OP_SET_WITH_ACCESSOR, sc->args, sc->y); /* args only for error (see below) */
+		      sc->args = list_1(sc, cons(sc, func, list_2(sc, sc->code, sc->value)));
+		      sc->code = func;
+		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
 		      goto APPLY;
 		    }
 		}
@@ -70079,8 +70108,6 @@ int main(int argc, char **argv)
  *   can't save original and work from there because someone else might have added an accessor
  *   but hooks are similar: add once -- how to hook for a local effect?
  *   both should be let-local if target is: shadow global, add accessor, in accessor set global and local
- *   can reactive-let use this? -- the shadow is just (let ((a a)) ...)! but we also need
- *   (set (((outlet (curlet)) 'a) v) or maybe a saved setter func to pass the new value outward
  * need an engulfing-lambda for symbol-access
  *   (engulf f sym) (let ((pf (symbol-access sym))) (set! (symbol-access sym) (if pf (lambda (s v) (f s (pf s v))) f)))
  *   (degulf sym) (let ((pf (symbol-access sym))) (if pf (let ((innards (caddr (caddr (procedure-source f))))) (apply lambda '(s v) innards))))

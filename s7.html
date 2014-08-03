@@ -3274,7 +3274,7 @@ In s7, multiple values are spliced directly into the caller's argument list.
 <div class="indented">
 
 <p>There aren't that many real uses for multiple-values in Scheme.  Nearly all can be replaced by
-a normal list.  There are a couple of cases where multiple-values are handy.
+a normal list.  There are a few cases where multiple-values are handy.
 First, you can use "values" to return any number of values, including 0,
 from map's function application:
 </p>
@@ -3339,11 +3339,31 @@ of 'or' and 'and'.
           (begin ,@body))))
 </pre>
 
-<p>Finally, a macro can return multiple values; these are evaluated and spliced,
+<p>Third, a macro can return multiple values; these are evaluated and spliced,
 exactly like a normal macro,
 so you can use <code>(values '(define a 1) '(define b 2))</code> to
 splice multiple definitions at the macro invocation point.  
+If an expansion returns (values), nothing is spliced in.  This is
+mostly useful in reader-cond.
 </p>
+
+<pre class="indented">
+&gt; (define-expansion (comment str) (values))
+#&lt;macro&gt;
+&gt; (+ 1 (comment "one") 2 (comment "two"))
+3
+</pre>
+
+<p>Finally, in format's ~&lt;~&gt; escape, if the expression evaluates to (values), nothing is printed.
+If it returns multiple values, they are printed one after the other.
+</p>
+
+<pre class="indented">
+&gt; (format #f "~&lt;(values)~&gt;")
+""
+&gt; (format #f "~&lt;(values 1 2 3)~&gt;") 
+"123"
+</pre>
 
 <p>At the top-level (in the REPL), since there's nothing to splice into, you simply get your values back:
 </p>
@@ -3368,6 +3388,19 @@ or (leaving aside <code>'(()))</code>, <code>(func (apply values (apply values a
 </div>
 
 
+<div class="indented">
+
+<p>Since set! does not evaluate its first argument, and
+there is no setter for "values", <code>(set! (values x) ...)</code> is not
+the same as <code>(set! x ...)</code>.  <code>(string-set! (values string) ...)</code>
+works because string-set! does evaluate its first argument.  <code>((values + 1 2) (values 3 4) 5)</code>
+is 15, as anyone would expect.
+</p>
+
+</div>
+
+<details>
+<summary class="indented">more examples</summary>
 <div class="indented">
 
 <p>In some Schemes, values behaves like CL's prog1:
@@ -3465,18 +3498,8 @@ s7 handles it this way:
 <p>Now, what have I missed?
 </p>
 </div>
+</details>
 
-
-<div class="indented">
-
-<p>Since set! does not evaluate its first argument, and
-there is no setter for "values", <code>(set! (values x) ...)</code> is not
-the same as <code>(set! x ...)</code>.  <code>(string-set! (values string) ...)</code>
-works because string-set! does evaluate its first argument.  <code>((values + 1 2) (values 3 4) 5)</code>
-is 15, as anyone would expect.
-</p>
-
-</div>
 </blockquote>
 
 <!-- one place where multiple values might cause surprise:
@@ -4887,7 +4910,7 @@ returns the value that is actually set.  For example, the function can ensure th
 #&lt;let 'x 123 'y 3 'z #f&gt;
 </pre>
 
-<p>Or implement reactive programming (see reactive-set! and friends in stuff.scm):
+<p>Or implement reactive programming (sort of...):
 </p>
 <pre class="indented">
 (let ((a 1)
@@ -4901,6 +4924,27 @@ returns the value that is actually set.  For example, the function can ensure th
   a)               ; a is 9 = (+ 4 5)
 </pre>
 
+<!--
+<details>
+<summary class="indented">reactive-let</summary>
+<div class="indented">
+
+<p>stuff.scm has reactive-let and friends.  In reactive-let,
+</p>
+<pre class="indented">
+(let ((a 1)) 
+  (reactive-let ((b (+ a 1))) 
+    (set! a 3) 
+    b)
+</pre>
+<p>the macro notices that 'b depends on 'a, so it sets up a symbol-access on 'a
+so that <code>(set! a 3)</code> triggers <code>(set! b (+ a 1))</code>.
+To keep the let tail callable while cleaning up symbol-accessors is slightly tricky.
+</p>
+
+</div>
+</details>
+-->
 
 
 <div class="header" id="miscellanea"><h4>miscellaneous stuff</h4></div>
