@@ -817,9 +817,9 @@
     (list 'while "stuff.scm")
     (list 'define-class "stuff.scm")
     (list 'elambda "stuff.scm")
+    (list 'reflective-let "stuff.scm")
     (list 'reactive-let "stuff.scm")
     (list 'reactive-let* "stuff.scm")
-    (list 'reactive-letrec* "stuff.scm")
     (list 'reactive-lambda* "stuff.scm")
 
     (list 'moog? "moog.scm")

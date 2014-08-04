@@ -349,15 +349,18 @@ static int tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int srate
     default:
       res = (int)(ap->x_base + val * ap->x_scale); 
       break;
+
     case X_AXIS_IN_BEATS: 
     case X_AXIS_IN_MEASURES:
       if (ap->cp)
 	res = (int)(ap->x_base + val * ap->x_scale * 60.0 / ap->cp->beats_per_minute);
       else res = (int)(ap->x_base + val * ap->x_scale); 
       break;
+
     case X_AXIS_IN_SAMPLES: 
       res = (int)(ap->x_axis_x0 + (val - ap->x0 * srate) * ap->x_scale / srate); 
       break;
+
     case X_AXIS_AS_PERCENTAGE: 
       res = (int)(ap->x_axis_x0 + (val - ap->x0 / ap->xmax) * ap->x_scale * ap->xmax); 
       break;

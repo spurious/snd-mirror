@@ -40442,7 +40442,19 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  
 	  /* check *unbound-variable-hook* */
 	  if (result == sc->UNDEFINED)
-	    result = s7_call(sc, sc->unbound_variable_hook, list_1(sc, sym)); /* not s7_apply_function */
+	    {
+	      /* (let () (set! (hook-functions *unbound-variable-hook*) (list (lambda (v) _asdf_))) _asdf_)
+	       */
+	      s7_pointer old_hook;
+	      int old_hook_loc;
+
+	      old_hook = sc->unbound_variable_hook;
+	      old_hook_loc = s7_gc_protect(sc, old_hook);
+	      sc->unbound_variable_hook = sc->error_hook;      /* avoid the infinite loop mentioned above */
+	      result = s7_call(sc, old_hook, list_1(sc, sym)); /* not s7_apply_function */
+	      sc->unbound_variable_hook = old_hook;
+	      s7_gc_unprotect_at(sc, old_hook_loc);
+	    }
 	}
 
       /* -------- */
@@ -40462,7 +40474,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  (result != sc->UNSPECIFIED))
 	return(result);
     }
-  
   return(eval_error(sc, "~A: unbound variable", sym));
 }
 
@@ -70096,25 +70107,21 @@ int main(int argc, char **argv)
  *   but need glib.scm, or unicode.scm to load the stuff
  *
  * finish Display!
- * reactive s7.html section, better library, useful cases of the other 2 bacros? setf oddities?
- *   inlet+reactive-lambda? or observer? = reactive-with-let?
- *   reactive-when: (rwhen expr ...) -- if any var in expr is set, eval form again [also rcond etc]
- *   or cleaner to wrap these in (reactive (syms) ...)? -- would want the new value already assigned?
- *   like a call/cc except not exportable, not a goto -- more like a defmethod perhaps
- *   so no need for hooks/callbacks, but this does depend on names -- also the reactive thing
- *   should happen only once somehow -- unwind itself (where?): 
- *   reactive adds accessors, come around again, adds more... but in general no way to see curlet go
- *   does this affect reactive-lambda/set? yes -- presumes local vars and no loop
- *   can't save original and work from there because someone else might have added an accessor
- *   but hooks are similar: add once -- how to hook for a local effect?
- *   both should be let-local if target is: shadow global, add accessor, in accessor set global and local
- * need an engulfing-lambda for symbol-access
- *   (engulf f sym) (let ((pf (symbol-access sym))) (set! (symbol-access sym) (if pf (lambda (s v) (f s (pf s v))) f)))
- *   (degulf sym) (let ((pf (symbol-access sym))) (if pf (let ((innards (caddr (caddr (procedure-source f))))) (apply lambda '(s v) innards))))
  * 94 all, odd? for +1 check
- * is stack_copy protected against circles?
  * libgmp.scm? 
- * s7.html more examples under details? like mv-flatten 
+ * s7.html more examples under details? 
  *   come-from as error handler?
+ *   reactive-*
+ *   reflective-let
+ *   better library, useful cases of the other 2 bacros? setf oddities?
+ * hook name in hook somehow -- as local like 'body? then (let ((h (make-hook))) (set! ((funclet h) 'name) "asdf") h)
+ * could stack trace show where calls are invoked?
+ * it should be possible for lint to see unmatched "," -- macroexpand!
+ * could macroexpand show current (incomplete) expansion when it hits an error?
+ *
+ * *left-sample* (snd-chn.c g_left_sample), if set (via window motion etc), could check
+ *   its accessor, so (reactive-let ((a (display *left-sample*))) ...) would follow it automatically 
+ *   right now set is going the other way, ap->x0 of current-channel so ap axis always through func
+ *   or graph_button_motion in snd-gchn, so currently we have hooks, but perhaps accessors are better
  */
 

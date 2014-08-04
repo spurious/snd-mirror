@@ -3399,8 +3399,27 @@ is 15, as anyone would expect.
 
 </div>
 
+<!--
 <details>
-<summary class="indented">more examples</summary>
+<summary class="indented">examples</summary>
+
+<pre>
+(define (flatten lst)
+  (define (flatten-1 lst)
+    (cond ((null? lst) (values))
+	  ((not (pair? lst)) lst)
+	  (#t (values (flatten-1 (car lst))
+		      (flatten-1 (cdr lst))))))
+  (map values (list (flatten-1 lst))))
+</pre>
+
+<div class="indented">
+-->
+
+</details>
+
+<details>
+<summary class="indented">more on values</summary>
 <div class="indented">
 
 <p>In some Schemes, values behaves like CL's prog1:
@@ -4882,7 +4901,7 @@ you have a Scheme variable and want to reflect any change in its value immediate
 In s7, <em class=def id="symbolaccess">symbol-access</em> sets this function.
 </p>
 
-<p>Each environment is a set of symbols and their associated values.  symbol-access places a function between a symbol
+<p>Each environment is a set of symbols and their associated values.  symbol-access places a function (or macro) between a symbol
 and its value in a given environment.  The accessor function takes two arguments, the symbol and the new value, and
 returns the value that is actually set.  For example, the function can ensure that a variable is always an integer:
 </p>
@@ -4910,7 +4929,7 @@ returns the value that is actually set.  For example, the function can ensure th
 #&lt;let 'x 123 'y 3 'z #f&gt;
 </pre>
 
-<p>Or implement reactive programming (sort of...):
+<p>Or implement reactive programming:
 </p>
 <pre class="indented">
 (let ((a 1)
@@ -4924,27 +4943,35 @@ returns the value that is actually set.  For example, the function can ensure th
   a)               ; a is 9 = (+ 4 5)
 </pre>
 
-<!--
+
 <details>
 <summary class="indented">reactive-let</summary>
 <div class="indented">
 
-<p>stuff.scm has reactive-let and friends.  In reactive-let,
+<p>stuff.scm has reactive-set!, reactive-let, reactive-let*, and reactive-lambda*.  In reactive-let,
 </p>
 <pre class="indented">
 (let ((a 1)) 
   (reactive-let ((b (+ a 1))) 
     (set! a 3) 
-    b)
+    b))
 </pre>
 <p>the macro notices that 'b depends on 'a, so it sets up a symbol-access on 'a
 so that <code>(set! a 3)</code> triggers <code>(set! b (+ a 1))</code>.
-To keep the let tail callable while cleaning up symbol-accessors is slightly tricky.
 </p>
+<p>work in progress...</p>
+<!--
+We can't set the accessor directly on 'a because we want the reactive-let to be tail-callable,
+which means it can't use dynamic-wind to clean up.  So we have to create a dummy copy of 'a
+which holds the accessor during the reactive-let, and goes away when it does.  But if
+either 'a is set, it's actually the same variable, so any set! of the inner 'a
+has to also set the outer 'a.  But we can't put an accessor on the outer 'a, so we
+better not set! it. 
+-->
 
 </div>
 </details>
--->
+
 
 
 <div class="header" id="miscellanea"><h4>miscellaneous stuff</h4></div>
@@ -5350,6 +5377,8 @@ The function takes one argument, the environment in which loads and evals should
 </pre>
 </div>
 
+<details>
+<summary class="indented">more on dynamic values</summary>
 <div class="indented" id="weaselwords">
 <p>So why, you are asking, the useless 'values' in our dynamic binding example?  The short answer: tail calls.
 The long winded one goes something like this.  symbol-&gt;dynamic-value searches the stack to find
@@ -5448,7 +5477,7 @@ macro that returns an anonymous macro that returns an anonymous function that &m
 <p>stuff.scm has a more mature version of this macro.
 </p>
 </div>
-
+</details>
 
 <div class="separator"></div>
 

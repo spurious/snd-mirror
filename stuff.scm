@@ -931,6 +931,16 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 ;;; ----------------
 
+(define-macro (reflective-let vars . body)
+  `(let ,vars
+     ,@(map (lambda (vr)
+	      `(set! (symbol-access ',(car vr))
+		     (lambda (s v)
+		       (format *stderr* "~S -> ~S~%" s v)
+		       v)))
+	    vars)
+     ,@body))
+
 (define (symbol->let sym ce)
   (if (defined? sym ce #t)
       ce
@@ -938,15 +948,29 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	  #f
 	  (symbol->let sym (outlet ce)))))
 
-(define* (gather-symbols expr ce (lst ()))
+(define* (gather-symbols expr ce (lst ()) (ignore ()))
   (if (symbol? expr)
       (if (and (not (memq expr lst))
+	       (not (memq expr ignore))
 	       (not (eq? (symbol->let expr ce) (rootlet))))
 	  (cons expr lst)
 	  lst)
       (if (pair? expr)
-	  (gather-symbols (cdr expr) ce  
-			  (gather-symbols (car expr) ce lst))
+	  (if (and (pair? (cdr expr))
+		   (pair? (cddr expr)))
+	      (if (pair? (cadr expr))
+		  (if (memq (car expr) '(let let* letrec letrec* do))
+		      (gather-symbols (cddr expr) ce lst (append ignore (map car (cadr expr))))
+		      (if (eq? (car expr) 'lambda)
+			  (gather-symbols (cddr expr) ce lst (append ignore (cadr expr)))
+			  (if (eq? (car expr) 'lambda*)
+			      (gather-symbols (cddr expr) ce lst (append ignore (map (lambda (a) (if (pair? a) (car a) a)) (cadr expr))))
+			      (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore))))
+		  (if (and (eq? (car expr) 'lambda)
+			   (symbol? (cadr expr)))
+		      (gather-symbols (cddr expr) ce lst (append ignore (list (cadr expr))))
+		      (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore)))
+	      (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore))
 	  lst)))
 
 (define-bacro (reactive-set! sym expr)
@@ -1027,53 +1051,40 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 				 ,accessors)
 			  ,@,body))))))))))
 
-;; TODO: follow rlet -- no dynamic-wind
+
 (define-macro (reactive-let* vars . body)
-  (define (add-layer vars)
-    (if (pair? vars)
-	(let ((g (gensym)))
-	  `(let ((,(caar vars) #f)
-		 (,g (symbol-access ',(caar vars))))
-	     (dynamic-wind
-		 (lambda () 
-		   #f)
-		 (lambda ()
-		   (reactive-set! ,(caar vars) ,(cadar vars))
-		   ,(add-layer (cdr vars)))
-		 (lambda ()
-		   (set! (symbol-access ',(caar vars)) ,g)))))
+  (define (add-let v)
+    (if (pair? v)
+	`(reactive-let ((,(caar v) ,(cadar v)))
+	   ,(add-let (cdr v)))
 	`(begin ,@body)))
-  (add-layer vars))
+  (add-let vars))
 
-
-(define-macro (reactive-letrec* vars . body)
-  (define (add-layer vars)
-    (if (pair? vars)
-	(let ((g (gensym)))
-	  `(let ((,g (symbol-access ',(caar vars))))
-	     (dynamic-wind
-		 (lambda () 
-		   #f)
-		 (lambda ()
-		   (reactive-set! ,(caar vars) ,(cadar vars))
-		   ,(add-layer (cdr vars)))
-		 (lambda ()
-		   (set! (symbol-access ',(caar vars)) ,g)))))
-	`(begin ,@body)))
-  `(let ,(map (lambda (var&value)
-		`(,(car var&value) #<undefined>))
-	      vars)
-     ,(add-layer vars)))
+;; reactive-letrec is not useful: lambdas already react and anything else is an error (use of #<undefined>)
 
 
 (define-macro (reactive-lambda* args . body)
-  `(let ((f (lambda* ,args ,@body)))
-     (for-each (lambda (v)
-		 (set! (symbol-access (car v)) (lambda (s v) (f s v) v)))
-	       (outlet (curlet)))
+  `(let ((f (lambda* ,args ,@body))
+	 (e (curlet)))
+     (when (not (eq? e (rootlet)))
+
+       (define (one-access s1 v)
+	 (let* ((syms (map car e))
+		(sa's (map (lambda (s) (symbol-access s e)) syms)))
+	   (dynamic-wind
+	       (lambda () (for-each (lambda (s) (if (not (eq? s s1)) (set! (symbol-access s e) #f))) syms))
+	       (lambda () (f s1 v))
+	       (lambda () (for-each (lambda (s a) (set! (symbol-access s e) a)) syms sa's)))))
+
+       (for-each (lambda (s) (set! (symbol-access s e) one-access)) (map car e)))
      f))
 
+
 #|
+(let ((x 0.0)) (reactive-let ((y (sin x))) (set! x 1.0) y)) -- so "lifting" comes for free?
+
+(map (lambda (s) (symbol-access (car s) e)) (let->list e))
+
 (let ((a 1))
   (reactive-let ((b (+ a 1))
 		 (c (* a 2)))
@@ -1109,15 +1120,15 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 ;;   (say a library that needs to keep all closure vars consistent, so if any changed a la Display, we need to check all).
 
 (define (make-library)
-  (let ((A 1.0)             ; define a library with 2 globals (A and B) and a function (f1)
-	(B 2.0))            ;   A, B, and f1 will be exported below
-    (reactive-lambda* (s v) ; make sure B is always twice A
+  (let ((A 1.0)
+	(B 2.0))
+    (reactive-lambda* (s v)
       (case s
 	((A) (set! B (* 2 v)))
 	((B) (set! A (/ v 2)))))
     (define (f1 x) 
       (+ A (* B x)))
-    (curlet)))              ; return the library
+    (curlet)))
 
 (with-let (make-library)
   (format *stderr* "(f1 3): ~A~%" (f1 3))
@@ -1125,6 +1136,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (format *stderr* "A: ~A, B: ~A, (f1 3): ~A~%" A B (f1 3))
   (set! B 4.0)
   (format *stderr* "A: ~A, B: ~A, (f1 3): ~A~%" A B (f1 3)))
+
+;; constant env:
+;; (define e (let ((a 1) (b 2)) (reactive-lambda* (s v) ((curlet) s)) (curlet)))
 |#
 
 
