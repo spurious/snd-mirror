@@ -257,9 +257,6 @@ indented and on a sort of brownish background.
       <li><a href="#testhook">Hooks in C and Scheme</a>
       <li><a href="#dload">Load a C module dynamically</a>
       <li><a href="#gmpex">gmp and friends</a>
-      <li><a href="#gtkrepl">Gtk-based REPL</a>
-      <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
-      <li><a href="#replrescue">begin_hook to the rescue!</a>
       <li><a href="#glistener">glistener.c</a>
       <li><a href="#gdb">gdb</a>
   </ul>
@@ -1063,6 +1060,8 @@ fx
 </div>
 
 
+<details>
+<summary class="indented">backquote details</summary>
 <div class="indented">
 
 <p>Backquote (quasiquote) in s7 is almost trivial.  Constants are unchanged, symbols are quoted,
@@ -1110,8 +1109,11 @@ that I'm reluctant to change it.  The two unquote names, on the
 other hand, seem unnecessary.
 </p>
 </div>
+</details>
 
 
+<details>
+<summary class="indented">miraculous immaculos</summary>
 <div class="indented">
 
 <p>s7 macros are not hygienic.  For example,
@@ -1400,47 +1402,12 @@ to be evaluated in its definition environment:
 	,@body)))
 </pre>
 </div>
-
-
-<!--
-(define-macro (begin-1 . body)
-  `(with-let (curlet) 
-     ,@body))
-
-(define-macro (let-1 bindings . body)
-  `(with-let (inlet (curlet) 
-	,@(map (lambda (b) 
-		 `(cons ',(car b) ,(cadr b))) 
-	       bindings)) 
-     ,@body))
-
-(define-macro (let*-1 bindings . body)
-  `(with-let (inlet (curlet))
-     ,@(map (lambda (b)
-	      `(define ,(car b) ,(cadr b)))
-	    bindings)
-     ,@body))
-
-(define-macro (letrec*-1 bindings . body)
-  `(with-let (inlet (curlet)
-	,@(map (lambda (b) 
-		 `(cons ',(car b) #<undefined>))
-	       bindings)) 
-     ,@(map (lambda (b)
-	      `(set! ,(car b) ,(cadr b)))
-	    bindings)
-     ,@body))
-
-(define-macro (safe-let bindings . body)
-  `(with-let (#_inlet (unlet)
-	,@(#_map (#_lambda (b) 
-		 `(#_cons ',(#_car b) ,(#_cadr b)))
-	       bindings))
-     ,@body))
--->
+</details>
 
 
 
+<details>
+<summary class="indented">loopy macros</summary>
 <div class="indented">
 
 <p>There is another problem with macros: accidental loops.  Take the following
@@ -1476,6 +1443,7 @@ f
 (list 1)
 </pre>
 </div>
+</details>
 
 
 <div class="indented">
@@ -3401,7 +3369,7 @@ is 15, as anyone would expect.
 
 <!--
 <details>
-<summary class="indented">examples</summary>
+<summary class="indented">more examples</summary>
 
 <pre>
 (define (flatten lst)
@@ -3414,9 +3382,9 @@ is 15, as anyone would expect.
 </pre>
 
 <div class="indented">
+</details>
 -->
 
-</details>
 
 <details>
 <summary class="indented">more on values</summary>
@@ -4948,25 +4916,47 @@ returns the value that is actually set.  For example, the function can ensure th
 <summary class="indented">reactive-let</summary>
 <div class="indented">
 
-<p>stuff.scm has reactive-set!, reactive-let, reactive-let*, and reactive-lambda*.  In reactive-let,
+<p>stuff.scm has reactive-set!, reactive-let, reactive-let*, and reactive-lambda*:
 </p>
 <pre class="indented">
-(let ((a 1)) 
-  (reactive-let ((b (+ a 1))) 
-    (set! a 3) 
+&gt; (let ((a 1)
+        (b 2))
+    (<em class=red>reactive-set!</em> a (* b 2))
+    (set! b 3)
+    a)
+6
+&gt; (let ((a 1)) 
+    (<em class=red>reactive-let</em> ((b (+ a 1))) ; if 'a changes, 'b does too
+    (set! a 3)                  ;   so 'b is now 4
     b))
+4
+&gt; (let ((a 1))
+    (<em class=red>reactive-lambda*</em> (s v)
+      (format *stderr* "~S -&gt; ~S~%" s v))
+    (set! a 3))
+"a -&gt; 3"
 </pre>
-<p>the macro notices that 'b depends on 'a, so it sets up a symbol-access on 'a
+<p>In the reactive-let example, the macro notices that 'b depends on 'a, so it sets up a symbol-access on 'a
 so that <code>(set! a 3)</code> triggers <code>(set! b (+ a 1))</code>.
 </p>
 <p>work in progress...</p>
-<!--
-We can't set the accessor directly on 'a because we want the reactive-let to be tail-callable,
-which means it can't use dynamic-wind to clean up.  So we have to create a dummy copy of 'a
-which holds the accessor during the reactive-let, and goes away when it does.  But if
-either 'a is set, it's actually the same variable, so any set! of the inner 'a
-has to also set the outer 'a.  But we can't put an accessor on the outer 'a, so we
-better not set! it. 
+
+<!-- in the Snd listener, 
+(let ((*mouse-x* 0)
+      (*mouse-y* 0)
+      (x 0) 
+      (y 0))
+
+  (reactive-set! x (let ((val (round *mouse-x*))) (format *stderr* "mouse: ~A ~A~%" x y) val))
+  (reactive-set! y (round *mouse-y*))
+
+  (g_signal_connect 
+   (G_OBJECT (listener-text-widget *listener*)) 
+   "motion_notify_event" 
+   (lambda (w e d) 
+     (let ((mxy (gdk_event_get_coords (GDK_EVENT e))))
+       (set! *mouse-x* (cadr mxy))
+       (set! *mouse-y* (caddr mxy))))))
 -->
 
 </div>
@@ -5672,7 +5662,6 @@ loading code that calls gcd.
 <li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy or map).
 <li>add typeq? and perhaps make null? generic (see stuff.scm).
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
-<li>let =&gt; be followed by any number of functions, and change its name to "forth".
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove the with-* IO functions (e.g. with-input-from-string), keeping the call-with-* versions (call-with-input-string).
 <li>replace the #n# notation with one that distinguishes between shared and cyclic structures.
@@ -6446,9 +6435,6 @@ The examples that follow show:
 <li><a href="#testhook">Hooks in C and Scheme</a>
 <li><a href="#dload">Load a C module dynamically</a>
 <li><a href="#gmpex">gmp and friends</a>
-<li><a href="#gtkrepl">Gtk-based REPL</a>
-<li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
-<li><a href="#replrescue">begin_hook to the rescue!</a>
 <li><a href="#glistener">glistener.c</a>
 <li><a href="#gdb">gdb</a>
 </ul>
@@ -8244,758 +8230,6 @@ int main(int argc, char **argv)
 </pre></div>
 
 
-
-
-
-<div class="header" id="gtkrepl"><h4>gtk-based repl</h4></div>
-
-<p>In this example, we use Gtk to make a window with a scrolled text widget, running s7
-in a read-eval-print loop.  I've tried to make this as short as possible; see glistener.c for
-a much more elaborate REPL.  From s7's point of view, the only tricky part involves
-catching errors.
-</p>
-
-
-<div class="indented">
-<pre>
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-
-/* use Gtk to post a text widget as a REPL.
- */
-#include &lt;gtk/gtk.h&gt;
-
-#if HAVE_GTK_3
-  #include &lt;gdk/gdk.h&gt;
-  #define Return_Key GDK_KEY_Return
-#else
-  #include &lt;gdk/gdkkeysyms.h&gt;
-  #define Return_Key GDK_Return
-#endif
-
-#include "s7.h"
-
-#define S7_PROMPT "s7&gt; "
-#define S7_PROMPT_LENGTH 4
-
-static GtkWidget* repl;                        /* the REPL text widget */
-static GtkTextBuffer *repl_buf;                /* its text buffer */
-static GtkTextTag *prompt_not_editable = NULL; /* a tag to make sure the prompt can't be erased */
-
-static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context)
-{
-  /* called when we click the 'x' window decoration */
-  exit(0);
-}
-
-static void evaluate_expression(s7_scheme *sc, char *expression)
-{
-  /* evaluate expression, display result, catching and displaying any errors */
-  if ((expression) &amp;&amp;
-      (*expression))
-    {
-      if ((strlen(expression) &gt; 1) || 
-	  (expression[0] != '\n'))
-	{
-	  const char *errmsg;
-	  int gc_loc = -1;
-	  s7_pointer old_port, result;
-	  GtkTextIter pos;
-
-	  /* open a port to catch error info */
-	  old_port = s7_set_current_error_port(sc, s7_open_output_string(sc));
-	  if (old_port != s7_nil(sc))
-	    gc_loc = s7_gc_protect(sc, old_port);
-	  
-	  result = s7_eval_c_string(sc, expression);
-	  
-	  errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
-	  /* if error, display it, else display result of evaluation */
-	  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
-	  
-	  if ((errmsg) &amp;&amp; (*errmsg))
-	    gtk_text_buffer_insert(repl_buf, &amp;pos, errmsg, strlen(errmsg));
-	  else 
-	    {
-	      char *result_as_string;
-	      result_as_string = s7_object_to_c_string(sc, result);
-	      if (result_as_string)
-		{
-		  gtk_text_buffer_insert(repl_buf, &amp;pos, "\n", 1);
-		  gtk_text_buffer_insert(repl_buf, &amp;pos, result_as_string, strlen(result_as_string));
-		  free(result_as_string);
-		}
-	    }
-	  
-	  s7_close_output_port(sc, s7_current_error_port(sc));
-	  s7_set_current_error_port(sc, old_port);
-	  if (gc_loc != -1)
-	    s7_gc_unprotect_at(sc, gc_loc);
-	}
-      g_free(expression);
-    }
-}
-
-static char *get_current_expression(void)
-{
-  /* find the enclosing expression and return it.  This could be a lot smarter, but
-   *    for now, I'll just look back to the previous prompt, then forward for the 
-   *    next prompt or the buffer end.
-   */
-  GtkTextIter pos, previous, next, temp;
-  GtkTextMark *m;
-
-  m = gtk_text_buffer_get_insert(repl_buf);
-  gtk_text_buffer_get_iter_at_mark(repl_buf, &amp;pos, m);
-
-  if (gtk_text_iter_backward_search(&amp;pos, S7_PROMPT, 0, &amp;temp, &amp;previous, NULL))
-    {
-      /* previous now marks the end of the previous prompt */
-      if (!gtk_text_iter_forward_search(&amp;pos, S7_PROMPT, 0, &amp;next, &amp;temp, NULL))
-	{
-	  gtk_text_buffer_get_end_iter(repl_buf, &amp;next);
-	  /* next now marks the end of the buffer, so there's no complication */
-	  return(gtk_text_buffer_get_text(repl_buf, &amp;previous, &amp;next, true));
-	}
-      /* here next marks the start of the next prompt, but that probably includes
-       *   the result printout from an earlier evaluation.  s7_eval_c_string evaluates
-       *   all the expressions in its string, returning the value of the last one,
-       *   but we want the first.  We'll backup two '\n'.
-       */
-      gtk_text_iter_backward_search(&amp;next, "\n", 0, &amp;pos, &amp;temp, NULL);     
-      gtk_text_iter_backward_search(&amp;pos, "\n", 0, &amp;next, &amp;temp, NULL);      
-      return(gtk_text_buffer_get_text(repl_buf, &amp;previous, &amp;next, true));
-    }
-  return(NULL);
-}
-
-static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer scheme)
-{
-  /* called when we type anything in the text widget.
-   *   'scheme' is our s7 interpreter.
-   */
-  guint key;
-  key = event-&gt;keyval;
-  if (key == Return_Key)
-    {
-      GtkTextIter pos;
-      /* get enclosing expression, evaluate it, display result (or error), prompt for next */
-      evaluate_expression((s7_scheme *)scheme, get_current_expression());
-
-      /* prompt for next expression */
-      gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
-      gtk_text_buffer_insert_with_tags(repl_buf, &amp;pos, 
-                                       "\n" S7_PROMPT, 1 + S7_PROMPT_LENGTH, prompt_not_editable, NULL);
-
-      /* make sure the stuff we added is visible */
-      gtk_text_buffer_place_cursor(repl_buf, &amp;pos);
-      gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(repl), gtk_text_buffer_get_insert(repl_buf));
-
-      /* tell Gtk that we already sent the '\n' */
-      g_signal_stop_emission((gpointer)w, 
-                             g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
-    }
-  return(false);
-}
-
-int main(int argc, char **argv)
-{
-  s7_scheme *s7;
-  GtkWidget *shell, *scrolled_window;
-  GtkTextIter pos;
-
-  s7 = s7_init();  
-
-  /* make a window with a scrolled text widget */
-  gtk_init(&amp;argc, &amp;argv);
-  shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
-
-  scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), 
-                                 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_container_add(GTK_CONTAINER(shell), scrolled_window);
-
-  repl = gtk_text_view_new();
-  repl_buf = gtk_text_buffer_new(NULL);
-  gtk_container_add(GTK_CONTAINER(scrolled_window), repl);
-
-  gtk_text_view_set_buffer(GTK_TEXT_VIEW(repl), repl_buf);
-  gtk_text_view_set_editable(GTK_TEXT_VIEW(repl), true);
-  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(repl), GTK_WRAP_NONE);
-  gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(repl), true);
-  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(repl), 4);
-
-  /* whenever a key is pressed, call repl_key_press */
-  gtk_widget_set_events(repl, GDK_ALL_EVENTS_MASK);
-  g_signal_connect(G_OBJECT(repl), "key_press_event", G_CALLBACK(repl_key_press), (void *)s7);
-
-  gtk_widget_show(repl);
-  gtk_widget_show(scrolled_window);
-  gtk_widget_show(shell);
-
-  /* start with a boldface '&gt;' prompt that can't be stepped on */
-  prompt_not_editable = gtk_text_buffer_create_tag(repl_buf, "prompt_not_editable", 
-						   "editable", false, 
-						   "weight", PANGO_WEIGHT_BOLD,
-						   NULL);
-  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
-  gtk_text_buffer_insert_with_tags(repl_buf, &amp;pos, 
-                                   S7_PROMPT, S7_PROMPT_LENGTH, prompt_not_editable, NULL);
-
-  /* make the initial window size reasonable */
-  gdk_window_resize(gtk_widget_get_window(shell), 400, 200);
-  gtk_main();
-}
-
-/*   gcc -c s7.c -I. 
- *   gcc -o listener listener.c s7.o -I. `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
- */
-
-</pre></div>
-
-
-
-
-
-<div class="header" id="gtkschemerepl"><h4>scheme-based repl (using gtk)</h4></div>
-
-<p>In the same vein, we can use libxm's Gtk/s7 bindings to make the REPL in Scheme.
-Here is the same code, but now using libxm; first the C side, called gtkex.c:
-</p>
-
-
-<div class="indented">
-<pre>
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-
-#include &lt;mus-config.h&gt;
-#include "xen.h"
-void Init_libxg(void);
-
-int main(int argc, char **argv)
-{
-  s7_scheme *s7;
-  s7 = s7_init();             /* start s7 */
-  s7_xen_initialize(s7);     /* start the xen connection to libxm */
-  Init_libxg();              /* load up all the glib/gdk/gtk/cairo/pango bindings in libxm */
-  s7_load(s7, "gtkex.scm");  /* load and run our REPL (below) */ 
-}
-
-/*   libxm: configure --with-gtk, then make
- *   gcc -o gtkex gtkex.c libxg.so -lm -ldl -I.
- *   ;; you may need to include the libxm directory above
- */
-</pre></div>
-
-
-<p>And here is gtkex.scm.  The main problem with this code is that Gtk is moving
-rapidly toward gtk3, and libxm is running along behind panting and complaining.
-There are several things that may change once Gtk settles down.
-</p>
-
-
-<div class="indented">
-<pre>
-(gtk_init 0 #f)
-
-(let ((shell (gtk_window_new GTK_WINDOW_TOPLEVEL))
-      (s7-prompt "s7&gt; ")
-      (return-key (if (provided? 'gtk3) GDK_KEY_Return GDK_Return)))
-  
-  (g_signal_connect (G_OBJECT shell) "delete_event"
-		    (lambda (window event data)
-		      (gtk_main_quit)
-		      (exit)))
-  (g_signal_connect (G_OBJECT shell) "destroy" 
-		    (lambda (window data)
-		      (gtk_main_quit)
-		      (exit)))
-  
-  (gtk_window_set_title (GTK_WINDOW shell) "s7")
-
-  (let ((scrolled_window (gtk_scrolled_window_new #f #f)))
-    
-    (gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW scrolled_window) 
-                                    GTK_POLICY_AUTOMATIC GTK_POLICY_AUTOMATIC)
-    (gtk_container_add (GTK_CONTAINER shell) scrolled_window)
-    
-    (let* ((repl (gtk_text_view_new))
-	   (repl_buf (gtk_text_buffer_new #f))
-	   (prompt_not_editable #f))
-
-      (define (evaluate-expression expr)
-	(let ((pos (GtkTextIter))
-	      (result (catch #t
-			     (lambda ()
-			       (object-&gt;string (eval-string expr)))
-			     (lambda args
-			       (format #f "~A: ~S" (car args) (apply format #f (cadr args)))))))
-	  (gtk_text_buffer_get_end_iter repl_buf pos)
-	  (gtk_text_buffer_insert repl_buf pos "\n" 1)
-	  (gtk_text_buffer_insert repl_buf pos result (length result))))
-
-      (define (get-current-expression)
-	(let ((m (gtk_text_buffer_get_insert repl_buf))
-	      (pos (GtkTextIter))
-	      (previous (GtkTextIter))
-	      (next (GtkTextIter))
-	      (temp (GtkTextIter)))
-	  (gtk_text_buffer_get_iter_at_mark repl_buf pos m)
-	  (if (gtk_text_iter_backward_search pos s7-prompt 0 temp previous #f)
-	      (if (not (gtk_text_iter_forward_search pos s7-prompt 0 next temp #f))
-		  (begin
-		    (gtk_text_buffer_get_end_iter repl_buf next)
-		    (gtk_text_buffer_get_text repl_buf previous next #t))
-		  (begin
-		    (gtk_text_iter_backward_search next "\n" 0 pos temp #f)
-		    (gtk_text_iter_backward_search pos "\n" 0 next temp #f)
-		    (gtk_text_buffer_get_text repl_buf previous next #t)))
-	      "")))
-
-      (define (repl-key-press w event data)
-	(let ((key (gtk_event_keyval event)))
-	  (if (equal? key return-key)
-	      (let ((pos (GtkTextIter)))
-
-		(evaluate-expression (get-current-expression))
-		
-		(gtk_text_buffer_get_end_iter repl_buf pos)
-		(gtk_text_buffer_insert_with_tags repl_buf pos
-						  (string-append (string #\newline) s7-prompt) 
-						  (+ 1  (length s7-prompt))
-						  (list prompt_not_editable))
-		(gtk_text_buffer_place_cursor repl_buf pos)
-		(gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW repl) 
-						    (gtk_text_buffer_get_insert repl_buf))
-		(g_signal_stop_emission (GPOINTER w)
-					(g_signal_lookup "key_press_event" 
-							 (G_OBJECT_TYPE (G_OBJECT w))) 
-					0)))))
-      
-      (gtk_container_add (GTK_CONTAINER scrolled_window) repl)
-      (gtk_text_view_set_buffer (GTK_TEXT_VIEW repl) repl_buf)
-      (gtk_text_view_set_editable (GTK_TEXT_VIEW repl) #t)
-      (gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW repl) GTK_WRAP_NONE)
-      (gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW repl) #t)
-      (gtk_text_view_set_left_margin (GTK_TEXT_VIEW repl) 4)
-      
-      (gtk_widget_set_events repl GDK_ALL_EVENTS_MASK)
-      (g_signal_connect (G_OBJECT repl) "key_press_event" repl-key-press)
-
-      (gtk_widget_show repl)
-      (gtk_widget_show scrolled_window)
-      (gtk_widget_show shell)
-      
-      (set! prompt_not_editable 
-	    (gtk_text_buffer_create_tag repl_buf "prompt_not_editable" 
-					(list "editable" 0 "weight" PANGO_WEIGHT_BOLD)))
-      (let ((pos (GtkTextIter)))
-	(gtk_text_buffer_get_end_iter repl_buf pos)
-	(gtk_text_buffer_insert_with_tags repl_buf pos 
-					  s7-prompt (length s7-prompt)
-					  (list prompt_not_editable))
-	(gdk_window_resize (gtk_widget_get_window shell) 400 200)
-	(gtk_main)))))
-
-;; build gtkex as above, then run it and it will load/run this code
-</pre>
-
-
-<p>There is one major flaw in these two REPLs; if s7 gets caught in an infinite loop (via
-<code>(do () ())</code> for example), you have to kill the main program to stop it.  We could use
-Unix interrupts as in the <a href="#signal">signal</a> example earlier, but surely in a modern
-GUI-based program, we'd like to avoid such brute-force stuff.  In particular, we want our interface
-to keep running while we clean up the s7 problem.  On first thought, we might try to use a separate
-thread for the s7 evaluation, but that won't solve the problem.
-Any GUI callback can
-call s7_call or s7_eval_c_string directly.  If the listener
-starts a long evaluation (or falls into an infinite loop), and we start idly poking around 
-with the mouse, waiting for the evaluation to finish, a mouse or menu callback can trigger
-a call on the same s7 interpreter that is currently running in the listener.
-We are trying to evaluate two different expressions at the same time!  What you
-get depends on where s7 notices the problem.  If the evaluator senses that it is lost,
-it will raise some confusing error; otherwise the s7 stack will cause a segfault.
-We need the GUI to stay active so that we can interrupt computation by typing C-C.
-We can't sort through all the events dispatching only the C-C, because that
-confuses subsequent GUI actions, and the whole idea is to keep the interface
-alive.  We can put the listener's s7_eval_c_string in a separate s7 thread
-so that the multiple evaluations can be interleaved, but those evaluations
-can still make calls into Gtk or Motif, and
-unfortunately, neither GUI toolkit is thread-safe. If two threads invoke
-a GUI function, you get a segfault or some other bizarre screwup.
-So...
-</p>
-</div>
-
-
-<div class="header" id="replrescue"><h4>begin-hook</h4></div>
-
-<p>
-Common Lisp has something called "evalhook" that makes it possible
-to insert your own function into eval.  In s7, we have a "begin_hook" which sits at the opening of any begin block
-(implicit or explicit).  Here are two REPLs, one for Gtk, and one for a bare terminal.
-</p>
-
-
-
-
-
-<div class="indented">
-<pre>
-/* terminal-based REPL, 
- *    an expansion of the <a href="#repl">read-eval-print loop</a> program above.
- * type C-g to interrupt an evaluation.
- */
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-#include &lt;termios.h&gt;
-#include &lt;signal.h&gt;
-
-#include "s7.h"
-
-static struct termios save_buf, buf;
-
-static void sigcatch(int n)
-{
-  /* put things back the way they were */
-  tcsetattr(fileno(stdin), TCSAFLUSH, &amp;save_buf);
-  exit(0);
-}
-
-static char buffer[512];
-static int type_ahead_point = 0;
-
-static void <em class=red>watch_for_c_g</em>(s7_scheme *sc, bool *all_done)
-{
-  char c;
-  /* watch for C-g without blocking, save other chars as type-ahead */
-  tcsetattr(fileno(stdin), TCSAFLUSH, &amp;buf);
-
-  if (read(fileno(stdin), &amp;c, 1) == 1)
-    {
-      if (c == 7) /* C-g */
-	{
-	  *all_done = true;
-	  type_ahead_point = 0;
-	}
-      else buffer[type_ahead_point++] = c;
-    }
-
-  tcsetattr(fileno(stdin), TCSAFLUSH, &amp;save_buf);
-}
-
-int main(int argc, char **argv)
-{
-  s7_scheme *s7;
-  bool use_begin_hook;
-
-  use_begin_hook = (tcgetattr(fileno(stdin), &amp;save_buf) &gt;= 0);
-  if (use_begin_hook)
-    {
-      buf = save_buf;
-      buf.c_lflag &amp;= ~ICANON;
-      buf.c_cc[VMIN] = 0;         /* if no chars waiting, just return */
-      buf.c_cc[VTIME] = 0;
-
-      signal(SIGINT, sigcatch);
-      signal(SIGQUIT, sigcatch);
-      signal(SIGTERM, sigcatch);
-    }
-
-  s7 = s7_init();  
-
-  if (argc == 2)
-    {
-      fprintf(stderr, "load %s\n", argv[1]);
-      s7_load(s7, argv[1]);
-    }
-  else
-    {
-      char response[1024];
-      while (1) 
-	{
-	  fprintf(stdout, "\n&gt; ");
-	  fgets((char *)(buffer + type_ahead_point), 512 - type_ahead_point, stdin);
-	  type_ahead_point = 0;
-
-	  if ((buffer[0] != '\n') || 
-	      (strlen(buffer) &gt; 1))
-	    {                            
-	      sprintf(response, "(write %s)", buffer);
-
-	      if (use_begin_hook)
-		<em class=red>s7_set_begin_hook</em>(s7, watch_for_c_g);
-	      s7_eval_c_string(s7, response);
-	      if (use_begin_hook)
-		<em class=red>s7_set_begin_hook</em>(s7, NULL);
-	    }
-	}
-    }
-  if (use_begin_hook)
-    tcsetattr(fileno(stdin), TCSAFLUSH, &amp;save_buf);
-}
-</pre></div>
-
-
-
-
-<div class="indented">
-<pre>
-/* Gtk-based REPL using s7_begin_hook 
- */
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-#include &lt;gtk/gtk.h&gt;
-
-#if HAVE_GTK_3
-  #include &lt;gdk/gdk.h&gt;
-  #define Return_Key GDK_KEY_Return
-  #define C_Key GDK_KEY_C
-  #define c_Key GDK_KEY_c
-#else
-  #include &lt;gdk/gdkkeysyms.h&gt;
-  #define Return_Key GDK_Return
-  #define C_Key GDK_C
-  #define c_Key GDK_c
-#endif
-
-#include "s7.h"
-
-#define S7_PROMPT "s7&gt; "
-#define S7_PROMPT_LENGTH 4
-#define S7_INTERRUPTED_MESSAGE "\ns7 interrupted!"
-
-static GtkWidget* repl;                        /* the REPL text widget */
-static GtkTextBuffer *repl_buf;                /* its text buffer */
-static GtkTextTag *prompt_not_editable = NULL; /* a tag to make sure the prompt can't be erased */
-static GdkCursor *arrow, *spinner;
-
-static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {exit(0);}
-
-<em class=red>static bool C_c_typed = false;
-
-static void begin_hook(s7_scheme *sc, bool *result)
-{
-  C_c_typed = false;
-  if (gtk_events_pending()) /* this is very slow &mdash; see snd-listener.c for a work-around */
-    gtk_main_iteration();
-  *result = C_c_typed;
-}</em>
-
-static void evaluate_expression(s7_scheme *sc, char *expression)
-{
-  /* evaluate expression, display result, catching and displaying any errors */
-  if ((expression) &amp;&amp;
-      (*expression))
-    {
-      if ((strlen(expression) &gt; 1) || 
-	  (expression[0] != '\n'))
-	{
-	  const char *errmsg = NULL;
-	  int gc_loc;
-	  s7_pointer old_port, result;
-	  GtkTextIter pos;
-
-	  old_port = s7_set_current_error_port(sc, s7_open_output_string(sc));
-	  gc_loc = s7_gc_protect(sc, old_port);
-	  gdk_window_set_cursor(gtk_text_view_get_window(GTK_TEXT_VIEW(repl), GTK_TEXT_WINDOW_TEXT), spinner);
-	  
-	  <em class=red>s7_set_begin_hook(sc, begin_hook);
-	  result = s7_eval_c_string(sc, expression);
-	  s7_set_begin_hook(sc, NULL);</em>
-
-	  gdk_window_set_cursor(gtk_text_view_get_window(GTK_TEXT_VIEW(repl), GTK_TEXT_WINDOW_TEXT), arrow);
-	  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
-
-	  <em class=red>if (C_c_typed)
-	    {
-	      gtk_text_buffer_insert(repl_buf, &amp;pos, S7_INTERRUPTED_MESSAGE, strlen(S7_INTERRUPTED_MESSAGE));
-	      C_c_typed = false;
-	    }
-	  else</em>
-	    {
-	      errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
-	      if ((errmsg) &amp;&amp; (*errmsg))
-		gtk_text_buffer_insert(repl_buf, &amp;pos, errmsg, strlen(errmsg));
-	      else 
-		{
-		  char *result_as_string;
-		  result_as_string = s7_object_to_c_string(sc, result);
-		  if (result_as_string)
-		    {
-		      gtk_text_buffer_insert(repl_buf, &amp;pos, "\n", 1);
-		      gtk_text_buffer_insert(repl_buf, &amp;pos, result_as_string, strlen(result_as_string));
-		      free(result_as_string);
-		    }
-		}
-	    }
-
-	  s7_close_output_port(sc, s7_current_error_port(sc));
-	  s7_set_current_error_port(sc, old_port);
-	  s7_gc_unprotect_at(sc, gc_loc);
-	}
-
-      g_free(expression);
-    }
-}
-
-static char *get_current_expression(void)
-{
-  GtkTextIter pos, previous, next, temp;
-  GtkTextMark *m;
-  m = gtk_text_buffer_get_insert(repl_buf);
-  gtk_text_buffer_get_iter_at_mark(repl_buf, &amp;pos, m);
-  if (gtk_text_iter_backward_search(&amp;pos, S7_PROMPT, 0, &amp;temp, &amp;previous, NULL))
-    {
-      if (!gtk_text_iter_forward_search(&amp;pos, S7_PROMPT, 0, &amp;next, &amp;temp, NULL))
-	{
-	  gtk_text_buffer_get_end_iter(repl_buf, &amp;next);
-	  return(gtk_text_buffer_get_text(repl_buf, &amp;previous, &amp;next, true));
-	}
-      gtk_text_iter_backward_search(&amp;next, "\n", 0, &amp;pos, &amp;temp, NULL);     
-      gtk_text_iter_backward_search(&amp;pos, "\n", 0, &amp;next, &amp;temp, NULL);      
-      return(gtk_text_buffer_get_text(repl_buf, &amp;previous, &amp;next, true));
-    }
-  return(NULL);
-}
-
-static void prompt(GtkWidget *w)
-{
-  GtkTextIter pos;
-  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
-  gtk_text_buffer_insert_with_tags(repl_buf, &amp;pos, "\n" S7_PROMPT, 1 + S7_PROMPT_LENGTH, prompt_not_editable, NULL);
-  gtk_text_buffer_place_cursor(repl_buf, &amp;pos);
-  gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(repl), gtk_text_buffer_get_insert(repl_buf));
-  g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
-}
-
-static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer scheme)
-{
-  /* called when you type anything in the text widget.
-   */
-  guint key, state;
-  s7_scheme *sc;
-
-  sc = (s7_scheme *)scheme;
-  key = event-&gt;keyval;
-  state = event-&gt;state;
-
-  if (key == Return_Key)
-    {
-      if (<em class=red>s7_begin_hook(sc) == NULL</em>)
-	{
-	  evaluate_expression(sc, get_current_expression());
-	  prompt(w);
-	}
-    }
-
-  if (((key == C_Key) || (key == c_Key)) &amp;&amp;
-      ((state &amp; GDK_CONTROL_MASK) != 0))
-    <em class=red>C_c_typed = true</em>;
-
-  return(false);
-}
-
-int main(int argc, char **argv)
-{
-  GtkWidget *shell, *scrolled_window;
-  GtkTextIter pos;
-  s7_scheme *s7;
-
-  s7 = s7_init();  
-
-  gtk_init(&amp;argc, &amp;argv);
-  spinner = gdk_cursor_new(GDK_WATCH);
-  arrow = gdk_cursor_new(GDK_LEFT_PTR);
-  
-  shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
-
-  scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_container_add(GTK_CONTAINER(shell), scrolled_window);
-
-  repl = gtk_text_view_new();
-  repl_buf = gtk_text_buffer_new(NULL);
-  gtk_container_add(GTK_CONTAINER(scrolled_window), repl);
-
-  gtk_text_view_set_buffer(GTK_TEXT_VIEW(repl), repl_buf);
-  gtk_text_view_set_editable(GTK_TEXT_VIEW(repl), true);
-  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(repl), GTK_WRAP_NONE);
-  gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(repl), true);
-  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(repl), 4);
-  gtk_widget_set_events(repl, GDK_ALL_EVENTS_MASK);
-  g_signal_connect(G_OBJECT(repl), "key_press_event", G_CALLBACK(repl_key_press), (void *)s7);
-
-  gtk_widget_show(repl);
-  gtk_widget_show(scrolled_window);
-  gtk_widget_show(shell);
-
-  prompt_not_editable = gtk_text_buffer_create_tag(repl_buf, "prompt_not_editable", 
-						   "editable", false, 
-						   "weight", PANGO_WEIGHT_BOLD,
-						   NULL);
-  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
-  gtk_text_buffer_insert_with_tags(repl_buf, &amp;pos, S7_PROMPT, S7_PROMPT_LENGTH, prompt_not_editable, NULL);
-  gdk_window_resize(gtk_widget_get_window(shell), 400, 200);
-  gtk_main();
-}
-</pre></div>
-
-
-<p>In the Gtk case above, begin_hook itself checks the user-interface (via gtk_main_iteration), so a key_press event
-(or any other) can still get through, even if s7_eval_c_string falls into an
-infinite loop.  If a GUI event triggers a call on s7, that call happens in the current thread
-at a protected point in the s7 evaluation, so the GUI toolkit is happy because there's
-only the current thread, and s7 is happy because it handles the interleaved expression
-at a point where it can't confuse the current evaluation.
-If the begin_hook function sets its bool argument to true (if C-C is typed),
-s7 itself calls s7_quit, interrupting the current evaluation. 
-If the user types return, and s7 is running (begin_hook is not NULL),
-we ignore it.  Otherwise return causes our REPL to send
-the current string to s7_eval_c_string.  Upon returning from s7_eval_c_string,
-we check whether we were interrupted (C_c_typed is true), and if so, send a surprised
-message to the REPL.  Otherwise we handle everything as in the previous REPLs.
-</p>
-
-<p>If the s7 evaluation can't affect the GUI and the GUI can't call s7 itself,
-then you don't need to use begin_hook.
-</p>
-
-<p>begin_hook provides a way to call arbitrary C or Scheme code at any time;
-the mind boggles!  
-</p>
-
-<p>Since the normal
-begin_hook function keeps the interface alive, a callback can save the current
-begin_hook function, insert its own function to do something useful, then that function can
-replace itself with the original:
-</p>
-
-
-<div class="indented">
-<pre>
-static void (*current_begin_hook)(s7_scheme *sc, bool *val); /* this will be the saved original function */
-
-static void stacktrace_begin_hook(s7_scheme *sc, bool *val)  /* this is our one-shot replacement */
-{
-  fprintf(stderr, "%s\n", s7_string(s7_stacktrace(sc)));     /* it prints local var info */
-  s7_set_begin_hook(s7, current_begin_hook);                 /*   then replaces itself with the original */
-}
-
-static void listener_stacktrace_callback(...)                /* the usual callback boilerplate here */
-{
-  current_begin_hook = s7_begin_hook(s7);                    /* save current begin_hook function */
-  if (current_begin_hook)                                    /* s7 is running, so... */
-    s7_set_begin_hook(s7, stacktrace_begin_hook);            /*   insert our stacktrace function in its place */
-}
-</pre></div>
 
 
 

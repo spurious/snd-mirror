@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11326] = {
+static const char *snd_names[11324] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -6732,6 +6732,7 @@ static const char *snd_names[11326] = {
     "pqw", "clm-ins.scm",
     "pqw-vox", "clm-ins.scm",
     "pread", "libc.scm",
+    "pretty-print", "write.scm",
     "previous-phrase", "spokenword.scm",
     "protoent.p_aliases", "libc.scm",
     "protoent.p_name", "libc.scm",
@@ -6769,8 +6770,6 @@ static const char *snd_names[11326] = {
     "reactive-lambda*", "stuff.scm",
     "reactive-let", "stuff.scm",
     "reactive-let*", "stuff.scm",
-    "reactive-letrec", "stuff.scm",
-    "reactive-letrec*", "stuff.scm",
     "read-aif-header", "binary-io.scm",
     "read-ascii", "examp.scm",
     "read-au-header", "binary-io.scm",
@@ -7415,7 +7414,7 @@ static const char *snd_names[11326] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5663);
+  s7_autoload_set_names(sc, snd_names, 5662);
 }
 #endif
 

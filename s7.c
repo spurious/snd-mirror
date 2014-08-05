@@ -69821,6 +69821,7 @@ s7_scheme *s7_init(void)
 			                           (if (null? (cdr clause)) '(#f) (cdr clause))))             \n\
 		                          clauses))))");
 
+
   s7_eval_c_string(sc, "(define-expansion (reader-cond . clauses)                                             \n\
                           (call-with-exit                                                                     \n\
                             (lambda (return)                                                                  \n\
@@ -70107,21 +70108,12 @@ int main(int argc, char **argv)
  *   but need glib.scm, or unicode.scm to load the stuff
  *
  * finish Display!
- * 94 all, odd? for +1 check
  * libgmp.scm? 
  * s7.html more examples under details? 
- *   come-from as error handler?
  *   reactive-*
  *   reflective-let
- *   better library, useful cases of the other 2 bacros? setf oddities?
- * hook name in hook somehow -- as local like 'body? then (let ((h (make-hook))) (set! ((funclet h) 'name) "asdf") h)
- * could stack trace show where calls are invoked?
- * it should be possible for lint to see unmatched "," -- macroexpand!
- * could macroexpand show current (incomplete) expansion when it hits an error?
- *
- * *left-sample* (snd-chn.c g_left_sample), if set (via window motion etc), could check
- *   its accessor, so (reactive-let ((a (display *left-sample*))) ...) would follow it automatically 
- *   right now set is going the other way, ap->x0 of current-channel so ap axis always through func
- *   or graph_button_motion in snd-gchn, so currently we have hooks, but perhaps accessors are better
+ *   useful cases of the other 2 bacros? setf oddities?
+ *     run+def seems like a good one, but def+def is nutty -- just make a function!
+ * fullyxp+pp -> write+xref
  */
 

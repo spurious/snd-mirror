@@ -1002,54 +1002,69 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	(setters (gensym))
 	(vars (gensym))
 	(body (gensym))
-	(e (gensym))
-	(bacro (gensym)))
+	(e (gensym)))
     (apply define-bacro 
 	   `((,(gensym) ,vars . ,body)
 	     (let ((,bindings ())
 		   (,accessors ())
 		   (,setters ())
 		   (,e (curlet)))
+
 	       (define (rlet-symbol sym wrap)
 		 (string->symbol (string-append wrap (symbol->string sym) wrap)))
+
 	       (for-each 
 		(lambda (bd)
-		  (let ((syms (gather-symbols (cadr bd) ,e ())))
+		  (let ((syms (gather-symbols (cadr bd) ,e)))
 		    (for-each 
 		     (lambda (sym)
-		       (let ((fname (gensym)))
+		       (let ((fname (gensym (symbol->string sym))))
 			 (set! ,bindings (cons `(,fname (lambda (,sym) ,(copy (cadr bd)))) ,bindings))
 			 (if (not (memq sym ,setters))
 			     (set! ,setters (cons sym ,setters)))
 			 (let ((prev (assq sym ,accessors)))
 			   (if (not prev)
-			       (set! ,accessors (cons (cons sym `((set! (,(rlet-symbol (car bd) "_RLET_") ',(car bd)) (,fname v)))) ,accessors))
-			       (set-cdr! prev (append `((set! (,(rlet-symbol (car bd) "_RLET_") ',(car bd)) (,fname v))) (cdr prev)))))))
+			       (set! ,accessors (cons (cons sym `((set! ,(car bd) (,fname v)))) ,accessors))
+			       (set-cdr! prev (append `((set! ,(car bd) (,fname v))) (cdr prev)))))))
 		     syms)
 		    (set! ,bindings (cons bd ,bindings))))
 		,vars)
+
+	       (let ((bsyms (gather-symbols ,body ,e))
+		     (nsyms ()))
+		 (for-each (lambda (s)
+			     (if (and (symbol-access s)
+				      (not (assq s ,bindings)))
+				 (if (not (memq s ,setters))
+				     (begin
+				       (set! ,setters (cons s ,setters))
+				       (set! nsyms (cons (cons s (cdr (procedure-source (symbol-access s)))) nsyms)))
+				     (let ((prev (assq s ,accessors)))
+				       (if prev ; merge the two functions
+					   (set-cdr! prev (append (cdddr (procedure-source (symbol-access s)))
+								  (cdr prev))))))))
+			   bsyms)
+
 	       `(let ,(map (lambda (sym)
-			     `(,(rlet-symbol sym "_RSET_") (lambda (v) (set! ,sym v))))
+			     (values
+			      `(,(rlet-symbol sym "_RSET_") (lambda (v) (set! ,sym v)))
+			      `(,sym ,sym)))
 			   ,setters)
-		  (let ,(map (lambda (sym)                                    ; now shadow that symbol with a local version
-			       `(,sym ,sym))
-			     ,setters)
-		    (let ,(map (lambda (sym)
-				 `(,(rlet-symbol sym "_RLET_") (curlet)))
-			       ,setters)
-		      (let ,(reverse ,bindings)                                 ; the original let
-			(let ,(map (lambda (v)
-				     `(,(rlet-symbol (car v) "_RLET_") (curlet)))
-				   ,vars)
-			  ,@(map (lambda (sa)                                     ; set local accessors of the middle symbols (which may be locally shadowed!)
-				   `(set! (symbol-access ',(car sa) (outlet (outlet (outlet (curlet))))) ; can't be simplified!!
-					  (define-bacro (,',bacro s v1)
-					    (let ((v (eval v1)))
-					      (,(rlet-symbol (car sa) "_RSET_") v)  ; set same-named symbol in outer let
-					      ,@(cdr sa)                           ; react to current set
-					      v)))) ; might need quote here?
-				 ,accessors)
-			  ,@,body))))))))))
+		  (let ,(reverse ,bindings) 
+		    ,@(map (lambda (sa)
+			     (if (not (assq (car sa) ,bindings))
+				 `(set! (symbol-access ',(car sa))
+					(lambda (s v)
+					  (,(rlet-symbol (car sa) "_RSET_") v)
+					  ,@(cdr sa)
+					  v))
+				 (values)))
+			   ,accessors)
+		    ,@(map (lambda (ns)
+			     `(set! (symbol-access ',(car ns))
+				    (apply lambda ',(cdr ns))))
+			   nsyms)
+		    ,@,body))))))))
 
 
 (define-macro (reactive-let* vars . body)
