@@ -397,3 +397,17 @@
 		   (format *stderr* "~<sym~> ~<val~>:~%~<(pp source)~>~%~%"))))))
      st)))
 |#
+
+
+(define-macro (fully-macroexpand form)
+  (define (expand form)
+    ;; walk form looking for macros, expand any that are found
+    (if (pair? form)
+	(if (and (symbol? (car form))
+		 (macro? (symbol->value (car form))))
+	    (expand ((eval (procedure-source (symbol->value (car form)))) form))
+	    (cons (expand (car form))
+		  (expand (cdr form))))
+	form))
+  `(pretty-print ',(expand form)))
+

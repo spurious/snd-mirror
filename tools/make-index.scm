@@ -822,6 +822,7 @@
     (list 'reactive-let* "stuff.scm")
     (list 'reactive-lambda* "stuff.scm")
     (list 'pretty-print "write.scm")
+    (list 'fully-macroexpand "write.scm")
 
     (list 'moog? "moog.scm")
     (list 'make-moog "moog.scm")

@@ -2548,7 +2548,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 static void stack_reset(s7_scheme *sc);
 
-static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer hdl);
+static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
 
 #if WITH_GCC
@@ -4997,6 +4997,7 @@ static void clear_syms_in_list(s7_scheme *sc) {sc->syms_tag++;}
 
 
 
+
 /* -------------------------------- environments -------------------------------- */
 
 static unsigned long long int environment_number = 0;
@@ -6137,27 +6138,27 @@ static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
+static s7_pointer find_symbol(s7_scheme *sc, s7_pointer symbol)
 { 
   s7_pointer x;	
 
-  if (environment_id(sc->envir) == symbol_id(hdl))
-    return(local_slot(hdl));	
+  if (environment_id(sc->envir) == symbol_id(symbol))
+    return(local_slot(symbol));	
 
-  for (x = sc->envir; symbol_id(hdl) < environment_id(x); x = next_environment(x));
+  for (x = sc->envir; symbol_id(symbol) < environment_id(x); x = next_environment(x));
 
-  if (environment_id(x) == symbol_id(hdl))
-    return(local_slot(hdl));	
+  if (environment_id(x) == symbol_id(symbol))
+    return(local_slot(symbol));	
 
   for (; is_let(x); x = next_environment(x))
     {
       s7_pointer y; 
       for (y = environment_slots(x); is_slot(y); y = next_slot(y))	
-	if (slot_symbol(y) == hdl)
+	if (slot_symbol(y) == symbol)
 	  return(y); 
     }
 
-  return(global_slot(hdl));
+  return(global_slot(symbol));
 } 
 
 
@@ -6180,16 +6181,16 @@ s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value)
 }
 
 
-static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 { 
   s7_pointer y;
 
-  if (!is_let(env))
-    return(global_slot(hdl));
+  if (!is_let(e))
+    return(global_slot(symbol));
 
-  if (symbol_id(hdl) != 0)
-    for (y = environment_slots(env); is_slot(y); y = next_slot(y))
-      if (slot_symbol(y) == hdl)
+  if (symbol_id(symbol) != 0)
+    for (y = environment_slots(e); is_slot(y); y = next_slot(y))
+      if (slot_symbol(y) == symbol)
 	return(y);
 
   return(sc->UNDEFINED);
@@ -6526,7 +6527,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       if (e == sc->rootlet)
 	return(make_boolean(sc, global_slot(sym) != sc->UNDEFINED));
 
-      x = find_local_symbol(sc, e, sym); 
+      x = find_local_symbol(sc, sym, e); 
       if (is_slot(x))
 	return(sc->T);
 
@@ -6579,7 +6580,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
   s7_pointer x;
 
   if (envir == sc->rootlet) envir = sc->NIL; /* for C-side backwards compatibility */
-  x = find_local_symbol(sc, envir, symbol);
+  x = find_local_symbol(sc, symbol, envir);
   if (is_slot(x)) 
     slot_set_value(x, value); 
   else s7_make_slot(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
@@ -29396,7 +29397,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sc->PROVIDE, sym, T_SYMBOL));
     }
 
-  p = find_local_symbol(sc, sc->envir, sc->S7_FEATURES); /* if sc->envir is nil, this returns the global slot, else local slot */
+  p = find_local_symbol(sc, sc->S7_FEATURES, sc->envir); /* if sc->envir is nil, this returns the global slot, else local slot */
   lst = slot_value(find_symbol(sc, sc->S7_FEATURES));    /* in either case, we want the current *feartures* list */
 
   if (p == sc->UNDEFINED)
@@ -34693,7 +34694,7 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 
   if (is_null(cdr(args)))
     p = find_symbol(sc, sym);
-  else p = find_local_symbol(sc, e, sym);
+  else p = find_local_symbol(sc, sym, e);
   if ((is_slot(p)) &&
       (slot_has_accessor(p)))
     return(slot_accessor(p));
@@ -34735,7 +34736,7 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 
   if (is_null(cddr(args)))
     p = find_symbol(sc, sym);
-  else p = find_local_symbol(sc, e, sym);
+  else p = find_local_symbol(sc, sym, e);
 
   if (is_slot(p))
     {
@@ -40835,35 +40836,35 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 }
 
 
-static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer hdl) 
+static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol) 
 {
   s7_pointer x;
 
-  if (environment_id(sc->envir) == symbol_id(hdl))
-    return(slot_value(local_slot(hdl)));
+  if (environment_id(sc->envir) == symbol_id(symbol))
+    return(slot_value(local_slot(symbol)));
 
-  for (x = sc->envir; symbol_id(hdl) < environment_id(x); x = next_environment(x));
+  for (x = sc->envir; symbol_id(symbol) < environment_id(x); x = next_environment(x));
 
   /* this looks redundant, but every attempt to improve it is much slower! */
-  if (environment_id(x) == symbol_id(hdl))
-    return(slot_value(local_slot(hdl)));
+  if (environment_id(x) == symbol_id(symbol))
+    return(slot_value(local_slot(symbol)));
 
   for (; is_let(x); x = next_environment(x))
     {
       s7_pointer y;
       for (y = environment_slots(x); is_slot(y); y = next_slot(y))
-	if (slot_symbol(y) == hdl)
+	if (slot_symbol(y) == symbol)
 	  return(slot_value(y));
     }
 
-  x = global_slot(hdl);
+  x = global_slot(symbol);
   if (is_slot(x)) 
     return(slot_value(x));
 
 #if WITH_GCC
   return(NULL);
 #else
-  return(unbound_variable(sc, hdl));
+  return(unbound_variable(sc, symbol));
 #endif
 }
 
@@ -45806,31 +45807,31 @@ static bool rdirect_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
   return(false);
 }
 
-static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_pointer e)
+static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 { 
   s7_pointer x;
   long long int id;
 
-  if (rdirect_memq(sc, hdl, e))
+  if (rdirect_memq(sc, symbol, e))
     return(sc->NIL);
 
-  if (is_global(hdl))
-    return(global_slot(hdl));
+  if (is_global(symbol))
+    return(global_slot(symbol));
 
-  id = symbol_id(hdl);
+  id = symbol_id(symbol);
   for (x = sc->envir; id < environment_id(x); x = next_environment(x));
   for (; is_let(x); x = next_environment(x))
     {
       s7_pointer y;
       if (environment_id(x) == id)
-	return(local_slot(hdl));
+	return(local_slot(symbol));
 
       for (y = environment_slots(x); is_slot(y); y = next_slot(y))
-	if (slot_symbol(y) == hdl)
+	if (slot_symbol(y) == symbol)
 	  return(y);
     }
   
-  return(global_slot(hdl)); /* it's no longer global perhaps (local definition now inaccessible) */
+  return(global_slot(symbol)); /* it's no longer global perhaps (local definition now inaccessible) */
   /* return(sc->NIL); */
 } 
 
@@ -50938,7 +50939,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    /* eval let + body  (cddr(sc->code)) */
 		    for (let_var = lets; is_pair(let_var); let_var = cdr(let_var))
 		      {
-			p = find_local_symbol(sc, sc->envir, caar(let_var));
+			p = find_local_symbol(sc, caar(let_var), sc->envir);
 			slot_set_value(p, c_call(cadar(let_var))(sc, cdadar(let_var)));
 		      }
 		    c_call(func)(sc, body);
@@ -59396,7 +59397,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else
 	{
 	  /* add the newly defined thing to the current environment */
-	  sc->x = find_local_symbol(sc, sc->envir, sc->code);
+	  sc->x = find_local_symbol(sc, sc->code, sc->envir);
 	  if (is_slot(sc->x))
 	    slot_set_value(sc->x, sc->value); 
 	  else s7_make_slot(sc, sc->envir, sc->code, sc->value);
@@ -62891,7 +62892,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* symbol? macro name has already been checked */
       /* find name in environment, and define it */
-      sc->x = find_local_symbol(sc, sc->envir, sc->code); 
+      sc->x = find_local_symbol(sc, sc->code, sc->envir); 
       if (is_slot(sc->x))
 	slot_set_value(sc->x, sc->value); 
       else s7_make_slot(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
@@ -70108,12 +70109,6 @@ int main(int argc, char **argv)
  *   but need glib.scm, or unicode.scm to load the stuff
  *
  * finish Display!
- * libgmp.scm? 
- * s7.html more examples under details? 
- *   reactive-*
- *   reflective-let
- *   useful cases of the other 2 bacros? setf oddities?
- *     run+def seems like a good one, but def+def is nutty -- just make a function!
- * fullyxp+pp -> write+xref
+ * doc cyclic-seq+stuff under circular lists
  */
 

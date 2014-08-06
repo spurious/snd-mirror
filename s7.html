@@ -1057,6 +1057,23 @@ fx
 (+ 1 a)
 </pre>
 
+<p>To expand all the macros in a piece of code:
+</p>
+<pre class="indented">
+(define-macro (fully-macroexpand form)
+  (define (expand form)
+    (if (pair? form)
+	(if (and (symbol? (car form))
+		 (macro? (symbol-&gt;value (car form))))
+	    (expand ((eval (procedure-source (symbol-&gt;value (car form)))) form))
+	    (cons (expand (car form))
+		  (expand (cdr form))))
+	form))
+  `(pretty-print ',(expand form)))
+</pre>
+<p>This does not always handle bacros correctly because their expansion can depend on the run-time 
+state, and here we are just looking at the code as a list.
+</p>
 </div>
 
 
@@ -2760,6 +2777,7 @@ A slightly more complex example:
     (set! (e2 'x) 4)
     (* 2 e1 e2))) ; (* 2 3 4) =&gt; 24
 </pre>
+
 
 <blockquote>
 <div class="indented">
@@ -4895,6 +4913,33 @@ returns the value that is actually set.  For example, the function can ensure th
 ;; prints "z 3.3 -&gt; #f"
 &gt; e
 #&lt;let 'x 123 'y 3 'z #f&gt;
+
+&gt; (define-macro (reflective-let vars . body)
+    `(let ,vars
+       ,@(map (lambda (vr)
+	        `(set! (symbol-access ',(car vr))
+		       (lambda (s v)
+		         (format *stderr* "~S -&gt; ~S~%" s v)
+		         v)))
+	      vars)
+       ,@body))
+#&lt;macro&gt;
+&gt; (reflective-let ((a 1)) (set! a 2))
+2     ; prints "a -&gt; 2"
+
+&gt;(let ((a 0))
+     (set! (symbol-access 'a)
+      (let ((history (make-vector 3 0))
+	    (position 0))
+	(lambda (s v)
+	  (set! (history position) v)
+	  (set! position (+ position 1))
+	  (if (= position 3) (set! position 0))
+	  v)))
+     (set! a 1)
+     (set! a 2)
+     ((funclet (symbol-access 'a)) 'history))
+#(1 2 0)
 </pre>
 
 <p>Or implement reactive programming:
@@ -4919,16 +4964,16 @@ returns the value that is actually set.  For example, the function can ensure th
 <p>stuff.scm has reactive-set!, reactive-let, reactive-let*, and reactive-lambda*:
 </p>
 <pre class="indented">
-&gt; (let ((a 1)
+&gt; (let ((-a- 1)
         (b 2))
-    (<em class=red>reactive-set!</em> a (* b 2))
+    (<em class=red>reactive-set!</em> -a- (* b 2))
     (set! b 3)
-    a)
+    -a-)
 6
 &gt; (let ((a 1)) 
-    (<em class=red>reactive-let</em> ((b (+ a 1))) ; if 'a changes, 'b does too
+    (<em class=red>reactive-let</em> ((-b- (+ a 1))) ; if 'a changes, 'b does too
     (set! a 3)                  ;   so 'b is now 4
-    b))
+    -b-))
 4
 &gt; (let ((a 1))
     (<em class=red>reactive-lambda*</em> (s v)
@@ -4936,10 +4981,16 @@ returns the value that is actually set.  For example, the function can ensure th
     (set! a 3))
 "a -&gt; 3"
 </pre>
-<p>In the reactive-let example, the macro notices that 'b depends on 'a, so it sets up a symbol-access on 'a
-so that <code>(set! a 3)</code> triggers <code>(set! b (+ a 1))</code>.
+<p>In the reactive-let example, the macro notices that '-b- depends on 'a, so it sets up a symbol-access on 'a
+so that <code>(set! a 3)</code> triggers <code>(set! -b- (+ a 1))</code>.  I'm using -name- to distinguish
+the variables that can change value at any time; in the Lisp community, +name+ is often used to mark a constant,
+so this seems like a natural convention.
 </p>
-<p>work in progress...</p>
+
+<p>None of these macros does the right thing yet; I'm sort of following my nose.
+</p>
+
+<p>work in progress... see s7test.scm for more examples.</p>
 
 <!-- in the Snd listener, 
 (let ((*mouse-x* 0)
@@ -5884,10 +5935,11 @@ and some exceedingly rare local method cases are handled more carefully).
 
 
 
-
+<details id="circle">
+<summary class="indented">circular lists</summary>
 <div class="indented">
 
-<p id="circle">s7 handles circular lists and vectors and dotted lists with its customary aplomb.  
+<p>s7 handles circular lists and vectors and dotted lists with its customary aplomb.  
 You can pass them to memq, or print them, for example; you can even evaluate them.  
 The print syntax is borrowed from CL:
 </p>
@@ -6042,9 +6094,11 @@ sequences in its argument, or nil.
     (set-cdr! (list-tail vals (- len 1)) ())))    ; restore its original shape
 </pre>
 </div>
+</details>
 
 
-
+<details>
+<summary class="indented">unprintable symbols</summary>
 <div class="indented">
 
 <p>s7 and Snd use "*" in a variable name, *features* for example, to indicate
@@ -6133,7 +6187,7 @@ These symbols are not just an optimization of string comparison:
 <p>I hope that makes you as happy as it makes me!
 </p>
 </div>
-
+</details>
 
 
 

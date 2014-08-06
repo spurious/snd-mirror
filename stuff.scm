@@ -941,14 +941,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	    vars)
      ,@body))
 
-(define (symbol->let sym ce)
-  (if (defined? sym ce #t)
-      ce
-      (if (eq? ce (rootlet))
-	  #f
-	  (symbol->let sym (outlet ce)))))
-
-(define* (gather-symbols expr ce (lst ()) (ignore ()))
+(define (gather-symbols expr ce lst ignore)
+  (define (symbol->let sym ce)
+    (if (defined? sym ce #t)
+	ce
+	(if (eq? ce (rootlet))
+	    #f
+	    (symbol->let sym (outlet ce)))))
   (if (symbol? expr)
       (if (and (not (memq expr lst))
 	       (not (memq expr ignore))
@@ -980,7 +979,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		      (lambda (s v)
 			(let ((nv (osa s v)))
 			  (apply let `(((,symbol ,nv)) (set! ,sym ,expr) ,nv)))))))
-	    (gather-symbols expr (curlet) ()))
+	    (gather-symbols expr (curlet) () ()))
   `(set! ,sym ,expr))
 
 #|
@@ -993,8 +992,48 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   a)
 |#
 
-;;; this is not pretty -- still testing, the _RLET_* names are for readability in macroexpand
-;;; full explanation, if it keeps working, will take some effort
+;;; this is not pretty -- still testing, the _RSET_* names are for readability in macroexpand.
+;;; full explanation, if it keeps working, will take some effort.
+;;; part of the complexity comes from the hope to be tail-callable, but even a version
+;;;   using dynamic-wind is pretty complicated because of shadowing -- here's a version
+;;;   that ignores that:
+#|
+(define-bacro (dwrlet vars . body)
+  (let ((accessors (gensym)))
+    `(let ((,accessors (map (lambda (v)                       ; save in-coming accessors
+			      (if (defined? (car v))
+				  (cons (car v) (symbol-access (car v)))
+				  (values)))
+			    ',vars)))
+       (dynamic-wind
+	   (lambda () #f)
+	   (lambda ()
+	     (let ,(map (lambda (v)
+			  `(,(car v) #f))
+			vars)
+	       ,@(map (lambda (v)
+		       `(reactive-set! ,(car v) ,(cadr v)))
+		     vars)
+	       ,@body))
+	   (lambda ()                                         ; restore them
+	     (for-each (lambda (access)
+			 (set! (symbol-access (car access)) (cdr access)))
+		       ,accessors))))))
+|#
+
+;;; what I think we want here is a globally accessible way to see set! that does not
+;;;   require non-local state (not a hook with its list of functions, or symbol-access)
+;;;   and that doesn't bring s7 to a halt.  Perhaps a symbol-access function that
+;;;   traverses the let-chain (like *features*) looking for something??  But the relevant
+;;;   chain is on the stack, so it won't be quick.  And weak refs are asking for trouble.
+;;;   Perhaps a way to share the original's slot?  No slow down, transparent, local setter can
+;;;   run its own accessor, set -> shared slot so all sharers see the new value,
+;;;   but how to trigger all accessors?
+;;;     (set! (symbol-slot 'a e1) (symbol-slot 'a e2))
+;;;   this isn't currently doable -- object.slt.val is a pointer, not a pointer to a pointer
+;;;   there is the symbol's extra slot, but it is global.  I wonder how much slower s7 would be
+;;;   with a pointer to a pointer here -- are there any other places this would be useful?
+;;;   even with this, the entire accessor chain is not triggered.
 
 (define reactive-let
   (let ((bindings (gensym))
@@ -1015,7 +1054,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 	       (for-each 
 		(lambda (bd)
-		  (let ((syms (gather-symbols (cadr bd) ,e)))
+		  (let ((syms (gather-symbols (cadr bd) ,e () ())))
 		    (for-each 
 		     (lambda (sym)
 		       (let ((fname (gensym (symbol->string sym))))
@@ -1030,7 +1069,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		    (set! ,bindings (cons bd ,bindings))))
 		,vars)
 
-	       (let ((bsyms (gather-symbols ,body ,e))
+	       (let ((bsyms (gather-symbols ,body ,e () ()))
 		     (nsyms ()))
 		 (for-each (lambda (s)
 			     (if (and (symbol-access s)
