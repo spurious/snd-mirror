@@ -284,13 +284,13 @@ static bool have_drag_title = false;
 
 static void menu_drag_watcher(GtkWidget *w, const char *str, int x, int y, drag_style_t dtype, void *data)
 {
-  char *new_title;
   switch (dtype)
     {
     case DRAG_MOTION:
     case DRAG_ENTER:
       if (!have_drag_title)
 	{
+	  char *new_title;
 	  new_title = mus_format("%s: drop to open file", ss->startup_title);
 	  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), new_title);
 	  have_drag_title = true;

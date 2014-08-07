@@ -3898,10 +3898,11 @@ static void reflect_key(prefs_info *prf, const char *key_name)
 
 static void save_key(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x))
 {
-  char *key, *expr;
+  char *key;
   key = GET_TEXT(prf->text);
   if ((key) && (*key))
     {
+      char *expr;
       expr = (*binder)(key, 
 		       GET_TOGGLE(prf->toggle),
 		       GET_TOGGLE(prf->toggle2),
@@ -3915,7 +3916,7 @@ static void save_key(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool 
 
 static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m, bool x))
 {
-  char *key, *expr;
+  char *key;
   bool ctrl, meta, cx;
   key = GET_TEXT(prf->text);
   ctrl = GET_TOGGLE(prf->toggle);
@@ -3923,6 +3924,7 @@ static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m,
   cx = GET_TOGGLE(prf->toggle3);
   if ((key) && (*key))
     {
+      char *expr;
       expr = (*binder)(key, ctrl, meta, cx);
       free_TEXT(key);
       Xen_eval_C_string(expr);

@@ -385,9 +385,9 @@ static int label_base, number_base;
 static void activate_gl_fonts(void)
 {
 #if USE_MOTIF
-  XFontStruct *label, *number;
   if (!gl_fonts_activated)
     {
+      XFontStruct *label, *number;
       label = (XFontStruct *)(AXIS_LABEL_FONT(ss));
       number = (XFontStruct *)(AXIS_NUMBERS_FONT(ss));
       label_base = glGenLists(128);
@@ -412,9 +412,9 @@ static void activate_gl_fonts(void)
 void reload_label_font(void)
 {
 #if USE_MOTIF
-  XFontStruct *label;
   if (gl_fonts_activated)
     {
+      XFontStruct *label;
       glDeleteLists(label_base, 128);
       label_base = glGenLists(128);
       label = (XFontStruct *)(AXIS_LABEL_FONT(ss));
@@ -434,9 +434,9 @@ void reload_label_font(void)
 void reload_number_font(void)
 {
 #if USE_MOTIF
-  XFontStruct *number;
   if (gl_fonts_activated)
     {
+      XFontStruct *number;
       glDeleteLists(number_base, 128);
       number_base = glGenLists(128);
       number = (XFontStruct *)(AXIS_NUMBERS_FONT(ss));

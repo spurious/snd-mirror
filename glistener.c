@@ -2396,11 +2396,12 @@ static void glistener_completion(glistener *g, int pos)
       else
 	{
 	  GtkTextIter paren;
-	  int oparen_pos, oparen_col;
+	  int oparen_pos;
 	  if (!find_open_paren(g, 1, pos, &oparen_pos, &start_limit))
 	    glistener_insert_text(g, "    ");
 	  else
 	    {
+	      int oparen_col;
 	      gtk_text_buffer_get_iter_at_offset(g->buffer, &paren, oparen_pos);
 	      oparen_col = gtk_text_iter_get_line_offset(&paren);
 	      /* we're at linecol, it's at oparen_col

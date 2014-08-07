@@ -2178,7 +2178,7 @@ static char *saved_cwd = NULL;
 char *mus_getcwd(void)
 {
   int i, path_max = 0;
-  char *pwd = NULL, *res = NULL;
+  char *pwd = NULL;
   if (saved_cwd) return(saved_cwd);
 #ifndef _MSC_VER
   path_max = pathconf("/", _PC_PATH_MAX);
@@ -2193,6 +2193,7 @@ char *mus_getcwd(void)
     }
   for (i = path_max;; i *= 2)
     {
+      char *res;
       if (pwd) free(pwd);
       pwd = (char *)calloc(i, sizeof(char));
 #if (defined(_MSC_VER) || __CYGWIN__)

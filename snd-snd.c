@@ -216,14 +216,12 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 	      old_samples = cp->edits[orig_pos]->samples;
 	      if (snd_abs_mus_long_t(samples - old_samples) < (samples / 2))
 		{
-		  int start_bin, end_bin, old_end_bin;
-
 		  start = edit_changes_begin_at(cp, cp->edit_ctr);
 		  end = edit_changes_end_at(cp, cp->edit_ctr);
 
 		  if (snd_abs_mus_long_t(end - start) < (samples / 2))
 		    {
-		      int i, j;
+		      int i, j, start_bin, end_bin, old_end_bin;
 
 		      /* here we'll try to take advantage of an existing envelope */
 		      old_ep = cp->edits[orig_pos]->peak_env;

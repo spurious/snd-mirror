@@ -2536,12 +2536,10 @@ static void add_source_file_extension(const char *ext)
 
 bool is_source_file(const char *name)
 {
-  int i, dot_loc = -1, len;
-
   if (!name) return(false);
-
   if (source_file_extensions)
     {
+      int i, dot_loc = -1, len;
       len = strlen(name);
 
       for (i = 0; i < len; i++)

@@ -381,7 +381,7 @@ enum {OP_NO_OP,
       OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS,
       OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C,
       OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_X,
-      OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq, OP_LET_C_P, OP_LET_S_P, 
+      OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq, 
       OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X_X, 
       OP_IF_B_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
       OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, OP_IF_PXX, 
@@ -408,7 +408,7 @@ enum {OP_NO_OP,
       OP_EVAL_ARGS_SSP_1, OP_EVAL_ARGS_SSP_MV, OP_EVAL_MACRO_MV,
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CONS, 
       OP_INCREMENT_SS, OP_INCREMENT_SSS, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP, OP_INCREMENT_SA, OP_INCREMENT_SAA,
-      OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_Z_P, OP_LET_O2, OP_LET_O_O, OP_LET_Z_O, OP_LET_O3, 
+      OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_Z_P, OP_LET_O2, OP_LET_O_O, OP_LET_Z_O, OP_LET_O3, 
       OP_LET_R_P, OP_LET_CAR_P,
 
       OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1, OP_SAFE_C_ZA_1, OP_INCREMENT_SZ_1, OP_SAFE_C_SZ_SZ,
@@ -478,7 +478,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "let", "let", "let", "let*",
    "case", "case", "case", "case",
    "case", "case", "case", "case", 
-   "let", "let", "let", "let", "let", "let", 
+   "let", "let", "let", "let",
    "let*", "let", "let", "let", "let",
 
    "if", "if", "if", "if", "if", 
@@ -506,7 +506,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "eval_args_ssp_1", "eval_args_ssp_mv", "eval_macro_mv",
    "increment_1", "decrement_1", "set_cons", 
    "increment_ss", "increment_sss", "increment_sz", "increment_c_temp", "increment_sa", "increment_saa",
-   "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", 
+   "let", "let", "let", "let", "let", "let", "let", "let", "let", "let",
    "let", "let", 
 
    "c_zz_1", "c_zz_2", "c_sz_1", "c_zs_1", "c_za_1", "increment_sz_1", "c_sz_sz",
@@ -564,7 +564,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_CASE_SIMPLE", "OP_CASE_SIMPLER", "OP_CASE_SIMPLER_1", "OP_CASE_SIMPLER_SS",
   "OP_CASE_SIMPLEST", "OP_CASE_SIMPLEST_SS", "OP_CASE_SIMPLEST_ELSE", "OP_CASE_SIMPLEST_ELSE_C",
   "OP_LET_C", "OP_LET_S", "OP_LET_Q", "OP_LET_ALL_C", "OP_LET_ALL_S", "OP_LET_ALL_X", 
-  "OP_LET_STAR_ALL_X", "OP_LET_opCq", "OP_LET_opSSq", "OP_LET_C_P", "OP_LET_S_P", 
+  "OP_LET_STAR_ALL_X", "OP_LET_opCq", "OP_LET_opSSq", 
   "OP_IF_P_P_P", "OP_IF_P_P", "OP_IF_P_P_X", "OP_IF_P_X_P", "OP_IF_P_X_X", 
   "OP_IF_B_P", "OP_IF_ANDP_P", "OP_IF_ANDP_P_P", "OP_IF_ORP_P", "OP_IF_ORP_P_P", 
   "OP_IF_PPP", "OP_IF_PP", "OP_IF_PPX", "OP_IF_PXP", "OP_IF_PXX", 
@@ -591,7 +591,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_EVAL_ARGS_SSP_1", "OP_EVAL_ARGS_SSP_MV", "OP_EVAL_MACRO_MV",
   "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CONS", 
   "OP_INCREMENT_SS", "OP_INCREMENT_SSS", "OP_INCREMENT_SZ", "OP_INCREMENT_C_TEMP", "OP_INCREMENT_SA", "OP_INCREMENT_SAA",
-  "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_Z_P", "OP_LET_O2", "OP_LET_O_O", "OP_LET_Z_O", "OP_LET_O3", 
+  "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_Z_P", "OP_LET_O2", "OP_LET_O_O", "OP_LET_Z_O", "OP_LET_O3", 
   "OP_LET_R_P", "OP_LET_CAR_P",
 
   "OP_SAFE_C_ZZ_1", "OP_SAFE_C_ZZ_2", "OP_SAFE_C_SZ_1", "OP_SAFE_C_ZS_1", "OP_SAFE_C_ZA_1", "OP_INCREMENT_SZ_1", "OP_SAFE_C_SZ_SZ",
@@ -1308,7 +1308,7 @@ struct s7_scheme {
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C;
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_X;
-  s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq, LET_C_P, LET_S_P;
+  s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, IF_UNCHECKED, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
   s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_P_P_X, IF_P_X_P, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_P_FEED;
   s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P, WHEN_UNCHECKED, UNLESS_UNCHECKED, WHEN_S, UNLESS_S;
@@ -1321,7 +1321,7 @@ struct s7_scheme {
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P;
   s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_P, SAFE_IF_NOT_S_P;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, INCREMENT_SS, INCREMENT_SSS, INCREMENT_SZ, INCREMENT_C_TEMP, INCREMENT_SA, INCREMENT_SAA;
-  s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_Z_P, LET_O_O, LET_Z_O, LET_R_P, LET_CAR_P;
+  s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_Z_P, LET_O_O, LET_Z_O, LET_R_P, LET_CAR_P;
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_A, SAFE_DO;
   s7_pointer SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_FOREVER, SIMPLE_DO_A;
   s7_pointer DOX;
@@ -26783,12 +26783,14 @@ system captures the output as a string and returns it."
       #define BUF_SIZE 256
       char buf[BUF_SIZE];
       char *str = NULL;
-      int full_len = 0, cur_len = 0, buf_len;
+      int cur_len = 0;
       FILE *fd;
       s7_pointer res;
+
       fd = popen(string_value(name), "r"); 
       while (fgets(buf, BUF_SIZE, fd))
 	{
+	  int buf_len, full_len = 0;
 	  buf_len = strlen(buf);
 	  if (cur_len + buf_len > full_len)
 	    {
@@ -26802,6 +26804,7 @@ system captures the output as a string and returns it."
 	  strcat(str, buf);
 	}
       pclose(fd);
+
       res = s7_make_string_with_length(sc, str, cur_len);
       if (str) free(str);
       return(res);
@@ -36890,6 +36893,7 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
   static const char *catches[3] =       {"catch",              "the catch",               "a catch"};
   static const char *dynamic_winds[3] = {"dynamic-wind",       "the dynamic-wind",        "a dynamic-wind"};
   static const char *hash_tables[3] =   {"hash-table",         "the hash-table",          "a hash-table"};
+  static const char *environments[3] =  {"environment",        "the environment",         "an environment"};
   static const char *integers[3] =      {"integer",            "the integer",             "an integer"};
   static const char *big_integers[3] =  {"big integer",        "the big integer",         "a big integer"};
   static const char *ratios[3] =        {"ratio",              "the ratio",               "a ratio"};
@@ -36927,6 +36931,7 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     case T_CATCH:        return(catches[article]); /* are these 2 possible? */
     case T_DYNAMIC_WIND: return(dynamic_winds[article]);
     case T_HASH_TABLE:   return(hash_tables[article]);
+    case T_ENVIRONMENT:  return(environments[article]);
     case T_COUNTER:      return(counters[article]);
     case T_BAFFLE:       return(baffles[article]);
     case T_SLOT:         return(slots[article]);
@@ -45905,7 +45910,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	if ((is_null(p)) &&              /* (+ 1 . 2) */
 	    (!is_optimized(car_x)))
 	  {
-	    /* fprintf(stderr, "opt expr unknown %s %s %d\n", DISPLAY_80(car_x), DISPLAY(func), hop); */
 	    /* len=0 case is almost entirely arglists */
 
 	    if (pairs == 0)
@@ -47072,7 +47076,6 @@ static s7_pointer check_let(s7_scheme *sc)
 				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
 				      if (is_h_optimized(cadr(binding)))
 					set_syntax_op(sc->code, sc->LET_Z_P); 
-				      else set_syntax_op(sc->code, sc->LET_O_P);
 				      /* syntax_op uses ecdr */
 				    }
 				  else
@@ -47094,9 +47097,8 @@ static s7_pointer check_let(s7_scheme *sc)
 		  /* should we make sure T_LINE_NUMBER is not set? -- it won't be cur_code in an error message */
 		  if (is_symbol(fcdr(sc->code)))
 		    {
-		      if (is_null(cddr(sc->code)))
-			set_syntax_op(sc->code, sc->LET_S_P);
-		      else set_syntax_op(sc->code, sc->LET_S);
+		      if (!is_null(cddr(sc->code)))
+			set_syntax_op(sc->code, sc->LET_S);
 		    }
 		  else 
 		    {
@@ -47105,7 +47107,6 @@ static s7_pointer check_let(s7_scheme *sc)
 			{
 			  if (is_h_optimized(cadr(sc->code)))
 			    set_syntax_op(sc->code, sc->LET_C_D);
-			  else set_syntax_op(sc->code, sc->LET_C_P); /* does not check syntax_opcode */
 			}
 		      else set_syntax_op(sc->code, sc->LET_C);
 		    }
@@ -47321,7 +47322,6 @@ static s7_pointer check_let_star(s7_scheme *sc)
 				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
 				      if (is_h_optimized(cadr(binding)))
 					set_syntax_op(sc->code, sc->LET_Z_P); 
-				      else set_syntax_op(sc->code, sc->LET_O_P); 
 				    }
 				  else
 				    {
@@ -47341,9 +47341,8 @@ static s7_pointer check_let_star(s7_scheme *sc)
 		  set_gcdr(sc->code, caaar(sc->code)); /* added 18-Jun-13 to parallel LET_C_D cases above */
 		  if (is_symbol(cadaar(sc->code)))
 		    {
-		      if (is_null(cddr(sc->code)))
-			set_syntax_op(sc->code, sc->LET_S_P);
-		      else set_syntax_op(sc->code, sc->LET_S);
+		      if (!is_null(cddr(sc->code)))
+			set_syntax_op(sc->code, sc->LET_S);
 		    }
 		  else 
 		    {
@@ -47352,7 +47351,6 @@ static s7_pointer check_let_star(s7_scheme *sc)
 			{
 			  if (is_h_optimized(cadr(sc->code)))
 			    set_syntax_op(sc->code, sc->LET_C_D);
-			  else set_syntax_op(sc->code, sc->LET_C_P);
 			}
 		      else set_syntax_op(sc->code, sc->LET_C);
 		    }
@@ -61716,16 +61714,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
       /* --------------- */
-    case OP_LET_C_P:
-      /* one var, init is constant, incoming sc->code is '(((var val))...)!
-       *   body is one statement
-       */
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), fcdr(sc->code));
-      sc->code = cadr(sc->code);
-      goto EVAL; 
-      
-      
-      /* --------------- */
     case OP_LET_C_D:
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        *   body is one optimized statement
@@ -61744,15 +61732,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
-      
-      
-      /* --------------- */
-    case OP_LET_S_P:
-      /* one var, init is symbol, incoming sc->code is '(((var sym))...)
-       */
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), find_symbol_checked(sc, fcdr(sc->code)));
-      sc->code = cadr(sc->code);
-      goto EVAL; 
       
       
       /* --------------- */
@@ -61916,18 +61895,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_LET_O3, fcdr(cdr(sc->code)), cadr(sc->code));
       sc->code = fcdr(sc->code);
       goto OPT_EVAL;
-      
-
-      /* --------------- */
-    case OP_LET_O_P:
-      /* hooboy, both fcdrs here can be NULL!  But it requires a grim determination to screw up
-       *   no matter what.  A macro that defines two functions in for-each, each of which shares code,
-       *   and one is called before the other gets to be optimized.  Has this ever happened
-       *   in real life?  Call tree-copy and move on.
-       */
-      push_stack(sc, OP_LET_O3, fcdr(cdr(sc->code)), cadr(sc->code));
-      sc->code = fcdr(sc->code);
-      goto EVAL; 
       
 
       /* --------------- */
@@ -68822,9 +68789,7 @@ s7_scheme *s7_init(void)
   sc->LETREC_STAR_UNCHECKED = assign_internal_syntax(sc, "letrec*", OP_LETREC_STAR_UNCHECKED);  
   sc->LET_NO_VARS =           assign_internal_syntax(sc, "let",     OP_LET_NO_VARS);  
   sc->LET_C =                 assign_internal_syntax(sc, "let",     OP_LET_C);  
-  sc->LET_C_P =               assign_internal_syntax(sc, "let",     OP_LET_C_P);  
   sc->LET_S =                 assign_internal_syntax(sc, "let",     OP_LET_S);  
-  sc->LET_S_P =               assign_internal_syntax(sc, "let",     OP_LET_S_P);  
   sc->LET_Q =                 assign_internal_syntax(sc, "let",     OP_LET_Q);  
   sc->LET_ALL_C =             assign_internal_syntax(sc, "let",     OP_LET_ALL_C);  
   sc->LET_ALL_S =             assign_internal_syntax(sc, "let",     OP_LET_ALL_S);  
@@ -68944,7 +68909,6 @@ s7_scheme *s7_init(void)
   sc->LET_CAR_P =             assign_internal_syntax(sc, "let",     OP_LET_CAR_P);  
   sc->LET_ALL_R =             assign_internal_syntax(sc, "let",     OP_LET_ALL_R);  
   sc->LET_O =                 assign_internal_syntax(sc, "let",     OP_LET_O);  
-  sc->LET_O_P =               assign_internal_syntax(sc, "let",     OP_LET_O_P);  
   sc->LET_Z_P =               assign_internal_syntax(sc, "let",     OP_LET_Z_P);  
   sc->LET_O_O =               assign_internal_syntax(sc, "let",     OP_LET_O_O);  
   sc->LET_Z_O =               assign_internal_syntax(sc, "let",     OP_LET_Z_O);  
@@ -70073,15 +70037,15 @@ int main(int argc, char **argv)
 
 /* ------------------------------------------------------------------------------------------------
  *
- *           12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6|  14.2 14.3 14.4 14.5 14.6 14.9
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989|  4220 4157 3447 3556 3540 3548
- * lat        229|    63   52   47   42   40   34   31|  29   29.4 30.4 30.5 30.4 29.9
- * index    44300|  3291 3005 2742 2078 1643 1435 1363|  1725 1371 1382 1380 1346 1265
- * s7test    1721|  1358 1297 1244  977  961  957  960|   995  957  974  971  973 1127
- * t455|6     265|    89   55   31   14   14    9    9|   9    8.5  5.5  5.5  5.4  5.9
- * t502        90|    43   39   36   29   23   20   14|  14.5 14.4 13.6 12.8 12.7 12.7
- * t816          |                                    |  70.6                44.5 45.6
- * calls      359|   275  207  175  115   89   71   53|  54   49.5 39.7 36.4 35.4 35.4
+ *           12.x|  13.0 |  14.2 14.3 14.4 14.5 14.6 14.9 | 15.0
+ * bench    42736|  8752 |  4220 4157 3447 3556 3540 3548 |
+ * lat        229|    63 |  29   29.4 30.4 30.5 30.4 29.9 |
+ * index    44300|  3291 |  1725 1371 1382 1380 1346 1265 |
+ * s7test    1721|  1358 |   995  957  974  971  973 1127 |
+ * t455|6     265|    89 |   9    8.5  5.5  5.5  5.4  5.9 |
+ * t502        90|    43 |  14.5 14.4 13.6 12.8 12.7 12.7 |
+ * t816          |       |  70.6                44.5 45.6 |
+ * calls      359|   275 |  54   49.5 39.7 36.4 35.4 35.4 |
  *            153 with run macro (eval_ptree)
  *
  * ------------------------------------------------------------------------------------------------

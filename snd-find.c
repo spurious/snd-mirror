@@ -132,13 +132,13 @@ static char *global_search(read_direction_t direction, bool repeating)
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
-      chan_info *cp;
 
       sp = ss->sounds[i];
       if ((sp) &&
 	  (sp->inuse == SOUND_NORMAL))
 	for (j = 0; j < sp->nchans; j++)
 	  {
+	    chan_info *cp;
 	    cp = (chan_info *)(sp->chans[j]);
 	    if ((!repeating) ||
 		(cp == previous_channel))
@@ -245,8 +245,6 @@ static Xen g_search_procedure(void)
 static Xen g_set_search_procedure(Xen proc)
 {
   char *error = NULL;
-  Xen errstr;
-
   /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> as "proc" */
   
   Xen_check_type(Xen_is_procedure(proc) || Xen_is_false(proc), proc, 1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
@@ -263,6 +261,7 @@ static Xen g_set_search_procedure(Xen proc)
     }
   else 
     {
+      Xen errstr;
       errstr = C_string_to_Xen_string(error);
       free(error);
       return(snd_bad_arity_error(S_setB S_search_procedure, errstr, proc));

@@ -1176,7 +1176,6 @@ slist *slist_new_with_title_and_table_data(const char *title,
 {
   slist *lst;
   GtkWidget *topw = NULL;
-  int i;
   lst = (slist *)calloc(1, sizeof(slist));
   lst->selected_item = SLIST_NO_ITEM_SELECTED;
 
@@ -1245,6 +1244,7 @@ slist *slist_new_with_title_and_table_data(const char *title,
 
   if (num_items > 0)
     {
+      int i;
       lst->items = (GtkWidget **)calloc(num_items, sizeof(GtkWidget *));
       lst->items_size = num_items;
       lst->num_items = num_items;

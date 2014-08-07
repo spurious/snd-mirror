@@ -967,7 +967,6 @@ static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat)
 static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
 {
   int fs = -1, fd = -1, i, j, chans, srate, blksiz, samps, samps_read;
-  ssize_t totalin;
   unsigned char *buf = NULL;
   mus_long_t loc;
   short *buf1;
@@ -998,6 +997,7 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
   stat.step_index = 0;
   while (samps > 0)
     {
+      ssize_t totalin;
       totalin = read(fd, buf, blksiz);
       if (totalin <= 0) break;
       for (i = 0, j = 0; i < totalin; i++)

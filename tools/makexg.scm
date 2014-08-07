@@ -2112,7 +2112,7 @@
 	      (if using-result
 		  (begin
 		    (hey "  {~%")
-		    (hey "    Xen result = Xen_false;~%")))
+		    (hey "    Xen result;~%")))
 	      (hey-start)
 
 	      (if (not (eq? spec 'etc))
@@ -2437,7 +2437,7 @@
 (hey "    for (i = 0; i < ref_argc; i++, lst = Xen_cdr(lst)) ref_argv[i] = Xen_to_C_char_(Xen_car(lst));~%")
 (hey "  }~%")
 (hey "  {~%")
-(hey "    Xen result = Xen_false;~%")
+(hey "    Xen result;~%")
 (hey "    result = C_to_Xen_gboolean(gtk_init_check(&ref_argc, &ref_argv));~%")
 (hey "    return(Xen_list_3(result, C_to_Xen_int(ref_argc), C_to_Xen_char__(ref_argv)));~%")
 (hey "  }~%")

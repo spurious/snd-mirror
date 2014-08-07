@@ -701,7 +701,7 @@
        (if using-result
 	   (begin
 	     (hey "  {~%")
-	     (hey "    Xen result = Xen_false;~%")))
+	     (hey "    Xen result;~%")))
        (hey-start)
        (if (not (string=? return-type "void"))
 	   (if (= refargs 0)

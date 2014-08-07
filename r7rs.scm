@@ -152,7 +152,7 @@
 
 
 (define interaction-environment curlet)
-(define-bacro (include . files) 
+(define-macro (include . files) 
   `(begin
      ,@(map (lambda (file)
 	      `(load ,file (outlet (curlet))))

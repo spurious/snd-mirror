@@ -957,13 +957,12 @@ int mus_sound_mark_info(const char *arg, int **mark_ids, int **mark_positions)
 
 char *mus_sound_comment(const char *name)
 {
-  mus_long_t start, end, len;
   char *sc = NULL;
   sound_file *sf = NULL;
-
   sf = get_sf(name); 
   if (sf)
     {
+      mus_long_t start, end;
       start = sf->comment_start;
       end = sf->comment_end;
       if (end == 0) 
@@ -986,13 +985,13 @@ char *mus_sound_comment(const char *name)
 	{
 	  if (end <= sf->true_file_length)
 	    {
+	      int len;
 	      len = end - start + 1;
 	      if (len > 0)
 		{
 		  /* open and get the comment */
 		  ssize_t bytes;
 		  int fd;
-		  char *auxcom;
 		  fd = mus_file_open_read(name);
 		  if (fd == -1) return(NULL);
 		  lseek(fd, start, SEEK_SET);
@@ -1004,6 +1003,7 @@ char *mus_sound_comment(const char *name)
 		      (sf->aux_comment_start) &&
 		      (bytes != 0))
 		    {
+		      char *auxcom;
 		      auxcom = mus_header_aiff_aux_comment(name, 
 							   sf->aux_comment_start, 
 							   sf->aux_comment_end);

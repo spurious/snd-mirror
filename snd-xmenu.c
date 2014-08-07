@@ -1860,11 +1860,11 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
   Widget m, menw;
   Arg args[12];
   int n = 0;
-  unsigned int i;
   menw = menu_widget(which_menu);
   if (menw == NULL) return(NULL);
   if (label)
     {
+      unsigned int i;
       /* look for currently unused widget first */
       /*   but close-all and open-recent should be left alone! */
       CompositeWidget cw = (CompositeWidget)menw;

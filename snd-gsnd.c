@@ -1496,7 +1496,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   int snd_slot, nchans, i, k, old_chans;
   bool free_filename = false, make_widgets;
   char *old_name = NULL, *title;
-  int app_y, app_dy, screen_y, chan_min_y;
+  int app_y, app_dy, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
 
   if (ss->translated_filename) 
@@ -1515,6 +1515,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
   if (auto_resize(ss))
     {
+      int screen_y;
       screen_y = gdk_screen_height();
       app_dy = (screen_y - app_y - app_dy - 20 * nchans);
     }

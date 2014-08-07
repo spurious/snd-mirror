@@ -495,15 +495,15 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
 static bool query_callback(GtkTooltip *tooltip, const char *which)
 {
   snd_info *sp;
-  char *tip;
-  chan_info *cp;
 
   sp = any_selected_sound();
   if (sp)
     {
+      chan_info *cp;
       cp = any_selected_channel(sp);
       if (cp)
 	{
+	  char *tip;
 	  tip = mus_format("%s the selected region at the cursor (at time %.3f) in %s",
 			   which,
 			   ((double)cursor_sample(cp)) / ((double)(snd_srate(sp))),

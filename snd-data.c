@@ -437,12 +437,11 @@ void free_snd_info(snd_info *sp)
 snd_info *completely_free_snd_info(snd_info *sp)
 {
   int i;
-  chan_info *cp;
 
   free_snd_info(sp);
-
   for (i = 0; i < sp->allocated_chans; i++) 
     {
+      chan_info *cp;
       cp = sp->chans[i];
       if (cp)
 	{
@@ -472,9 +471,10 @@ snd_info *completely_free_snd_info(snd_info *sp)
 
 void for_each_chan_with_int(void (*func)(chan_info *ncp, int val), int value)
 {
-  int i, j;
+  int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];
@@ -488,9 +488,10 @@ void for_each_chan_with_int(void (*func)(chan_info *ncp, int val), int value)
 
 void for_each_chan_with_mus_long_t(void (*func)(chan_info *ncp, mus_long_t val), mus_long_t value)
 {
-  int i, j;
+  int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];
@@ -504,9 +505,10 @@ void for_each_chan_with_mus_long_t(void (*func)(chan_info *ncp, mus_long_t val),
 
 void for_each_chan_with_bool(void (*func)(chan_info *ncp, bool val), bool value)
 {
-  int i, j;
+  int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];
@@ -520,9 +522,10 @@ void for_each_chan_with_bool(void (*func)(chan_info *ncp, bool val), bool value)
 
 void for_each_chan_with_float(void (*func)(chan_info *ncp, mus_float_t val), mus_float_t value)
 {
-  int i, j;
+  int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];
@@ -536,9 +539,10 @@ void for_each_chan_with_float(void (*func)(chan_info *ncp, mus_float_t val), mus
 
 void for_each_chan(void (*func)(chan_info *ncp))
 {
-  int i, j;
+  int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];
@@ -552,9 +556,10 @@ void for_each_chan(void (*func)(chan_info *ncp))
 
 void for_each_normal_chan_with_void(void (*func)(chan_info *ncp, void *ptr), void *userptr)
 {
-  int i, j;
+  int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];
@@ -568,9 +573,10 @@ void for_each_normal_chan_with_void(void (*func)(chan_info *ncp, void *ptr), voi
 
 void for_each_normal_chan_with_int(void (*func)(chan_info *ncp, int val), int value)
 {
-  int i, j;
+  int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];
@@ -584,9 +590,10 @@ void for_each_normal_chan_with_int(void (*func)(chan_info *ncp, int val), int va
 
 void for_each_normal_chan_with_refint(void (*func)(chan_info *ncp, int *val), int *value)
 {
-  int i, j;
+  int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];
@@ -600,9 +607,10 @@ void for_each_normal_chan_with_refint(void (*func)(chan_info *ncp, int *val), in
 
 void for_each_normal_chan(void (*func)(chan_info *ncp))
 {
-  int i, j;
+  int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];

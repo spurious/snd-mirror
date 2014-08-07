@@ -346,7 +346,7 @@ void allocate_color_map(int colormap)
 
 void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
-  int i, x0, y0, x1, y1, y2 = 0, y00 = -1, cur, prev;
+  int i, x0, y0, y2 = 0, y00 = -1, cur, prev;
   color_t old_color;
 
   if (num <= 0) return;
@@ -364,6 +364,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
 
   for (i = 1; i < num; i++)
     {
+      int x1, y1;
       x1 = points[i].x;
       y1 = points[i].y;
       if (i < num - 1)

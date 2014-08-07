@@ -183,12 +183,12 @@ static bool new_help(const char *pattern, bool complain)
 static void help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* single-click to select item in "related items" list */
-  char *red_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   if ((help_urls) && (help_urls[cbs->item_position - 1]))
     url_to_html_viewer(help_urls[cbs->item_position - 1]);
   else
     {
+      char *red_text;
       red_text = find_highlighted_text(cbs->item);
       if (red_text)
 	{
@@ -211,12 +211,12 @@ static void help_browse_callback(Widget w, XtPointer context, XtPointer info)
 static void help_double_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* double-click item in "related items" list */
-  char *red_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   if ((help_urls) && (help_urls[cbs->item_position - 1]))
     url_to_html_viewer(help_urls[cbs->item_position - 1]);
   else
     {
+      char *red_text;
       red_text = find_highlighted_text(cbs->selected_items[0]);
       if (red_text)
 	{

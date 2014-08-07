@@ -940,8 +940,22 @@ to implement setf without any run-time consing or extra work &mdash; the second 
 just sees #&lt;unspecified&gt; &mdash; so this is as fast as a function call.
 The setf argument is a gensym (created when setf is defined) so that its name does not shadow any existing
 variable.  Bacros expand in the calling environment, and a normal argument name
-might shadow something in that environment while the bacro is begin expanded.
-See s7test.scm for many examples including such perennial favorites as
+might shadow something in that environment while the bacro is being expanded.
+Similarly, if you introduce bindings in the bacro expansion code, you need to
+keep track of which environment you want things to happen in.  Use with-let
+or gensym liberally.  Since a bacro's expansion can depend on the run-time environment,
+macroexpand does not always show its actual expansion.  I use:
+</p>
+<pre class="indented">
+(define-bacro ...        ; the bacro's name and parameters here
+  (let ((expansion ...)) ; the bacro code here
+    (pretty-print expansion)
+    expansion))
+</pre>
+
+
+<p>
+See s7test.scm for many examples of macros including such perennial favorites as
 loop, dotimes, do*, enum, pushnew, and defstruct.
 </p>
 
@@ -2778,8 +2792,10 @@ A slightly more complex example:
     (* 2 e1 e2))) ; (* 2 3 4) =&gt; 24
 </pre>
 
-
 <blockquote>
+
+<details>
+<summary class="indented">define-class</summary>
 <div class="indented">
 
 <p>Here is yet another object system.  Each class and each instance is an environment.
@@ -3046,9 +3062,11 @@ at class definition time:
     (list 'mac (symbol->value (define-macro (mac a) `(+ ,a 1))))
 -->
 </div>
+</details>
+
 
 <div class="indented">
-<p>As shown in the preceding example, implicit indexing of a local environment
+<p>Implicit indexing of a local environment
 does not search the global environment.  Since unlet extends the
 current environment chain, it is considered a local environment:
 </p>
@@ -4987,28 +5005,54 @@ the variables that can change value at any time; in the Lisp community, +name+ i
 so this seems like a natural convention.
 </p>
 
-<p>None of these macros does the right thing yet; I'm sort of following my nose.
+<p>Here's the standard example of following the mouse (assuming you're using Snd and glistener):
 </p>
+<pre class="indented">
+(let ((*mouse-x* 0) (*mouse-y* 0)
+      (x 0) (y 0))
 
-<p>work in progress... see s7test.scm for more examples.</p>
-
-<!-- in the Snd listener, 
-(let ((*mouse-x* 0)
-      (*mouse-y* 0)
-      (x 0) 
-      (y 0))
-
-  (reactive-set! x (let ((val (round *mouse-x*))) (format *stderr* "mouse: ~A ~A~%" x y) val))
+  (reactive-set! x (let ((val (round *mouse-x*))) 
+		     (format *stderr* "mouse: ~A ~A~%" x y) 
+		     val))
   (reactive-set! y (round *mouse-y*))
 
-  (g_signal_connect 
-   (G_OBJECT (listener-text-widget *listener*)) 
-   "motion_notify_event" 
-   (lambda (w e d) 
-     (let ((mxy (gdk_event_get_coords (GDK_EVENT e))))
-       (set! *mouse-x* (cadr mxy))
-       (set! *mouse-y* (caddr mxy))))))
--->
+  (g_signal_connect (G_OBJECT (listener-text-widget *listener*)) "motion_notify_event" 
+		    (lambda (w e d) 
+		      (let ((mxy (gdk_event_get_coords (GDK_EVENT e))))
+			(set! *mouse-x* (cadr mxy))
+			(set! *mouse-y* (caddr mxy))))))
+</pre>
+
+<p>reactive-lambda* is aimed at library consistency.  Say we have the following library
+that wants A to always be half B:
+</p>
+
+<pre class="indented">
+(define (make-library)
+  (let ((A 1.0)
+	(B 2.0))
+    (reactive-lambda* (s v)
+      (case s
+	((A) (set! B (* 2 v)))
+	((B) (set! A (/ v 2)))))
+    (define (f1 x) 
+      (+ A (* B x)))
+    (curlet)))
+
+(with-let (make-library)
+  (format *stderr* "(f1 3): ~A~%" (f1 3))
+  (set! A 3.0)
+  (format *stderr* "A: ~A, B: ~A, (f1 3): ~A~%" A B (f1 3))
+  (set! B 4.0)
+  (format *stderr* "A: ~A, B: ~A, (f1 3): ~A~%" A B (f1 3)))
+</pre>
+
+<p>reactive-lambda* sets up accessors on the library's top-level variables
+that call the lambda body if one of the variables is set.
+</p>
+
+<p>None of these macros does the right thing yet; I'm sort of following my nose.
+</p>
 
 </div>
 </details>

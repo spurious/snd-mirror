@@ -262,9 +262,12 @@ static void colorizer(glistener *g, glistener_colorizer_t type, int start, int e
 	    {
 	      char *text;
 	      text = glistener_text(ss->listener, start, start + 3);
-	      if (strcmp(text, ";;;") == 0)
-		tag = comment3_tag;
-	      if (text) free(text);
+	      if (text)
+		{
+		  if (strcmp(text, ";;;") == 0)
+		    tag = comment3_tag;
+		  free(text);
+		}
 	    }
 	}
       break;

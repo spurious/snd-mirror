@@ -199,7 +199,7 @@ char *direct_completions(const char *str)
 
 char *expression_completer(widget_t w, const char *original_text, void *data)
 {
-  int i, len, beg, matches = 0;
+  int len, beg, matches = 0;
   /* first back up to some delimiter to get the current expression */
 
   current_match = NULL;
@@ -208,6 +208,7 @@ char *expression_completer(widget_t w, const char *original_text, void *data)
   if ((original_text) && (*original_text))
     {
       const char *text;
+      int i;
 
       len = strlen(original_text);
       for (i = len - 1; i >= 0; i--)
@@ -517,7 +518,6 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
 
   char *full_name = NULL, *dir_name = NULL, *file_name = NULL, *current_match = NULL;
   int i, j, k, len, curlen, matches = 0;
-  struct dirent *dirp;
   DIR *dpos;
 
   if (mus_strlen(text) == 0) return(NULL);
@@ -543,6 +543,7 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
   len = mus_strlen(file_name);
   if ((dpos = opendir(dir_name)) != NULL)
     {
+      struct dirent *dirp;
       while ((dirp = readdir(dpos)) != NULL)
 	if ((dirp->d_name[0] != '.') && 
 	    (strncmp(dirp->d_name, file_name, len) == 0)) /* match dirp->d_name against rest of text */

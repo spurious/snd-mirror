@@ -517,7 +517,7 @@ static int tempfiles_size = 0;
 
 void remember_temp(const char *filename, int chans)
 {
-  int i, old_size;
+  int i;
   tempfile_ctr *tmp = NULL;
 
   if (tempfiles_size == 0)
@@ -539,6 +539,7 @@ void remember_temp(const char *filename, int chans)
 
       if (i >= tempfiles_size)
 	{
+	  int old_size;
 	  old_size = tempfiles_size;
 	  tempfiles_size += 8;
 	  tempfiles = (tempfile_ctr **)realloc(tempfiles, tempfiles_size * sizeof(tempfile_ctr *));

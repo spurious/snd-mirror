@@ -195,10 +195,11 @@ static char *scheme_to_ruby(const char *name)
 {
   /* replace any non-alphanumeric except "?" with "_". "?" -> "_p". '->" -> "2" drop "!" */
   char *new_name = NULL;
+  int len;
   len = strlen(name);
   if (len > 0)
     {
-      int len, i, j;
+      int i, j;
       new_name = (char *)calloc(len + 3, sizeof(char)); /* +1 for possible _p, +1 for possible $ */
       for (i = 0, j = 0; i < len; i++)
 	{
@@ -241,10 +242,11 @@ char *xen_scheme_constant_to_ruby(const char *name)
 char *xen_scheme_procedure_to_ruby(const char *name)
 {
   char *new_name = NULL;
+  int len;
   len = strlen(name);
   if (len > 0)
     {
-      int len, i, j;
+      int i, j;
       new_name = (char *)calloc(len + 1, sizeof(char));
       for (i = 0, j = 0; i < len; i++)
 	{

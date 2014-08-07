@@ -153,17 +153,19 @@
 (define-macro (symbol-set! var val) ; like CL's set
   `(apply set! ,var ',val ()))
 
-(define-bacro (value->symbol val)
-  `(call-with-exit
-    (lambda (return)
-      (do ((e (curlet) (outlet e))) ()
-	(for-each 
-	 (lambda (slot)
-	   (if (equal? ,val (cdr slot))
-	       (return (car slot))))
-	 e)
-	(if (eq? e (rootlet))
-	    (return #f))))))
+(define-macro (value->symbol expr)
+  `(let ((val ,expr)
+	 (e1 (curlet)))
+     (call-with-exit
+      (lambda (return)
+	(do ((e e1 (outlet e))) ()
+	  (for-each 
+	   (lambda (slot)
+	     (if (equal? val (cdr slot))
+		 (return (car slot))))
+	   e)
+	  (if (eq? e (rootlet))
+	      (return #f)))))))
 
 (define-macro (enum . args)
   `(for-each define ',args (iota (length ',args))))
@@ -972,15 +974,24 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	      (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore))
 	  lst)))
 
-(define-bacro (reactive-set! sym expr)
-  (for-each (lambda (symbol)
-	      (let ((osa (or (symbol-access symbol) (lambda (s v) v))))
-		(set! (symbol-access symbol)
-		      (lambda (s v)
-			(let ((nv (osa s v)))
-			  (apply let `(((,symbol ,nv)) (set! ,sym ,expr) ,nv)))))))
-	    (gather-symbols expr (curlet) () ()))
-  `(set! ,sym ,expr))
+
+;; gensyms here make the blasted code unreadable, so I'm going to say "don't start a symbol with #\{ if you use reactive-set!"
+
+(define-bacro (reactive-set! {sym} {expr})
+  `(begin
+     (define {e} (curlet))
+     ,@(map (lambda (symbol)
+	      `(set! (symbol-access ',symbol)
+		     (lambda (s v)
+		       (let ((nv ,(if (symbol-access symbol) 
+				      `(begin (,(procedure-source (symbol-access symbol)) s v))
+				      'v)))
+			 (with-let (sublet {e} ',symbol nv)
+			   (set! ,{sym} ,{expr}))
+			 nv))))
+	    (gather-symbols {expr} (curlet) () ()))
+     (set! ,{sym} ,{expr})))
+
 
 #|
 (let ((a 1)
@@ -993,34 +1004,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 |#
 
 ;;; this is not pretty -- still testing, the _RSET_* names are for readability in macroexpand.
-;;; full explanation, if it keeps working, will take some effort.
 ;;; part of the complexity comes from the hope to be tail-callable, but even a version
-;;;   using dynamic-wind is pretty complicated because of shadowing -- here's a version
-;;;   that ignores that:
-#|
-(define-bacro (dwrlet vars . body)
-  (let ((accessors (gensym)))
-    `(let ((,accessors (map (lambda (v)                       ; save in-coming accessors
-			      (if (defined? (car v))
-				  (cons (car v) (symbol-access (car v)))
-				  (values)))
-			    ',vars)))
-       (dynamic-wind
-	   (lambda () #f)
-	   (lambda ()
-	     (let ,(map (lambda (v)
-			  `(,(car v) #f))
-			vars)
-	       ,@(map (lambda (v)
-		       `(reactive-set! ,(car v) ,(cadr v)))
-		     vars)
-	       ,@body))
-	   (lambda ()                                         ; restore them
-	     (for-each (lambda (access)
-			 (set! (symbol-access (car access)) (cdr access)))
-		       ,accessors))))))
-|#
-
+;;;   using dynamic-wind is complicated because of shadowing
 ;;; what I think we want here is a globally accessible way to see set! that does not
 ;;;   require non-local state (not a hook with its list of functions, or symbol-access)
 ;;;   and that doesn't bring s7 to a halt.  Perhaps a symbol-access function that
@@ -1063,8 +1048,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			     (set! ,setters (cons sym ,setters)))
 			 (let ((prev (assq sym ,accessors)))
 			   (if (not prev)
-			       (set! ,accessors (cons (cons sym `((set! ,(car bd) (,fname v)))) ,accessors))
-			       (set-cdr! prev (append `((set! ,(car bd) (,fname v))) (cdr prev)))))))
+			       (set! ,accessors (cons (cons sym `((set! ,(car bd) (,fname {v})))) ,accessors))
+			       (set-cdr! prev (append `((set! ,(car bd) (,fname {v}))) (cdr prev)))))))
 		     syms)
 		    (set! ,bindings (cons bd ,bindings))))
 		,vars)
@@ -1086,17 +1071,17 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 	       `(let ,(map (lambda (sym)
 			     (values
-			      `(,(rlet-symbol sym "_RSET_") (lambda (v) (set! ,sym v)))
+			      `(,(rlet-symbol sym "_RSET_") (lambda ({v}) (set! ,sym {v})))
 			      `(,sym ,sym)))
 			   ,setters)
 		  (let ,(reverse ,bindings) 
 		    ,@(map (lambda (sa)
 			     (if (not (assq (car sa) ,bindings))
 				 `(set! (symbol-access ',(car sa))
-					(lambda (s v)
-					  (,(rlet-symbol (car sa) "_RSET_") v)
+					(lambda (s {v})
+					  (,(rlet-symbol (car sa) "_RSET_") {v})
 					  ,@(cdr sa)
-					  v))
+					  {v}))
 				 (values)))
 			   ,accessors)
 		    ,@(map (lambda (ns)
@@ -1169,27 +1154,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		 (c 3))
 	     (reactive-lambda* (s v)
 	       (format *stderr* "~S changed: ~S~%" s v))))
-
-;; that is, if any of the function's immediate closure variables are set (via (set! ((funclet rl) 'a) 32)), rl is called.
-;;   (say a library that needs to keep all closure vars consistent, so if any changed a la Display, we need to check all).
-
-(define (make-library)
-  (let ((A 1.0)
-	(B 2.0))
-    (reactive-lambda* (s v)
-      (case s
-	((A) (set! B (* 2 v)))
-	((B) (set! A (/ v 2)))))
-    (define (f1 x) 
-      (+ A (* B x)))
-    (curlet)))
-
-(with-let (make-library)
-  (format *stderr* "(f1 3): ~A~%" (f1 3))
-  (set! A 3.0)
-  (format *stderr* "A: ~A, B: ~A, (f1 3): ~A~%" A B (f1 3))
-  (set! B 4.0)
-  (format *stderr* "A: ~A, B: ~A, (f1 3): ~A~%" A B (f1 3)))
 
 ;; constant env:
 ;; (define e (let ((a 1) (b 2)) (reactive-lambda* (s v) ((curlet) s)) (curlet)))

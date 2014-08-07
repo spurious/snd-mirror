@@ -656,13 +656,13 @@ static Xen g_mus_sound_preload(Xen file)
 
   if (str)
     {
-      int i, ifd, chans;
-      mus_float_t **bufs;
-      mus_long_t framples;
-
+      int ifd;
       ifd = mus_sound_open_input(str);
       if (ifd != MUS_ERROR)
 	{
+	  int i, chans;
+	  mus_float_t **bufs;
+	  mus_long_t framples;
 	  chans = mus_sound_chans(str);
 	  framples = mus_sound_framples(str) + 8; /* + 8 for readers than wander off the end */
 	  bufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));

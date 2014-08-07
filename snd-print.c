@@ -527,7 +527,6 @@ static char *snd_print_or_error(const char *output)
     {
       int j, i, err;
       int *offsets = NULL;
-      snd_info *sp;
       sync_info *si;
       chan_info *ccp;
       char *errstr = NULL;
@@ -544,6 +543,7 @@ static char *snd_print_or_error(const char *output)
       if (si->chans > 1)
 	for (i = 0; i < si->chans; )
 	  {
+	    snd_info *sp;
 	    sp = (si->cps[i])->sound;
 	    if (sp == NULL) break;
 	    if (sp->channel_style == CHANNELS_COMBINED)

@@ -876,12 +876,12 @@ mus_long_t zoom_focus_mix_in_channel_to_position(chan_info *cp)
   if (mxl)
     {
       mus_long_t lo, hi;
-      mix_state *ms;
       int i;
       lo = cp->axis->losamp;
       hi = cp->axis->hisamp;
       for (i = 0; i < mxl->size; i++)
 	{
+	  mix_state *ms;
 	  ms = mxl->list[i];
 	  if ((ms) &&
 	      (ms->beg >= lo) && 

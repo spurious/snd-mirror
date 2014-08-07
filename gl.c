@@ -283,7 +283,7 @@ static Xen gxg_glXGetConfig(Xen dpy, Xen vis, Xen attrib, Xen value)
   Xen_check_type(Xen_is_XVisualInfo(vis), vis, 2, "glXGetConfig", "XVisualInfo*");
   Xen_check_type(Xen_is_int(attrib), attrib, 3, "glXGetConfig", "int");
   {
-    Xen result = Xen_false;
+    Xen result;
     result = C_to_Xen_int(glXGetConfig(Xen_to_C_Display(dpy), Xen_to_C_XVisualInfo(vis), Xen_to_C_int(attrib), ref_value));
     return(Xen_list_2(result, C_to_Xen_int(ref_value[0])));
    }
@@ -325,7 +325,7 @@ static Xen gxg_glXQueryExtension(Xen dpy, Xen errorBase, Xen eventBase)
   int ref_eventBase[1];
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXQueryExtension", "Display*");
   {
-    Xen result = Xen_false;
+    Xen result;
     result = C_to_Xen_Bool(glXQueryExtension(Xen_to_C_Display(dpy), ref_errorBase, ref_eventBase));
     return(Xen_list_3(result, C_to_Xen_int(ref_errorBase[0]), C_to_Xen_int(ref_eventBase[0])));
    }
@@ -338,7 +338,7 @@ static Xen gxg_glXQueryVersion(Xen dpy, Xen major, Xen minor)
   int ref_minor[1];
   Xen_check_type(Xen_is_Display(dpy), dpy, 1, "glXQueryVersion", "Display*");
   {
-    Xen result = Xen_false;
+    Xen result;
     result = C_to_Xen_Bool(glXQueryVersion(Xen_to_C_Display(dpy), ref_major, ref_minor));
     return(Xen_list_3(result, C_to_Xen_int(ref_major[0]), C_to_Xen_int(ref_minor[0])));
    }
@@ -3823,7 +3823,7 @@ GLdouble* proj, GLint* view, GLdouble* [winX], GLdouble* [winY], GLdouble* [winZ
   Xen_check_type(Xen_is_GLdouble_(proj), proj, 5, "gluProject", "GLdouble*");
   Xen_check_type(Xen_is_GLint_(view), view, 6, "gluProject", "GLint*");
   {
-    Xen result = Xen_false;
+    Xen result;
     result = C_to_Xen_GLint(gluProject(Xen_to_C_GLdouble(objX), Xen_to_C_GLdouble(objY), Xen_to_C_GLdouble(objZ), Xen_to_C_GLdouble_(model), 
                                        Xen_to_C_GLdouble_(proj), Xen_to_C_GLint_(view), ref_winX, ref_winY, ref_winZ));
     return(Xen_list_4(result, C_to_Xen_GLdouble(ref_winX[0]), C_to_Xen_GLdouble(ref_winY[0]), C_to_Xen_GLdouble(ref_winZ[0])));
@@ -4037,7 +4037,7 @@ GLdouble* proj, GLint* view, GLdouble* [objX], GLdouble* [objY], GLdouble* [objZ
   Xen_check_type(Xen_is_GLdouble_(proj), proj, 5, "gluUnProject", "GLdouble*");
   Xen_check_type(Xen_is_GLint_(view), view, 6, "gluUnProject", "GLint*");
   {
-    Xen result = Xen_false;
+    Xen result;
     result = C_to_Xen_GLint(gluUnProject(Xen_to_C_GLdouble(winX), Xen_to_C_GLdouble(winY), Xen_to_C_GLdouble(winZ), Xen_to_C_GLdouble_(model), 
                                          Xen_to_C_GLdouble_(proj), Xen_to_C_GLint_(view), ref_objX, ref_objY, ref_objZ));
     return(Xen_list_4(result, C_to_Xen_GLdouble(ref_objX[0]), C_to_Xen_GLdouble(ref_objY[0]), C_to_Xen_GLdouble(ref_objZ[0])));
@@ -4073,7 +4073,7 @@ GLdouble* [objZ], GLdouble* [objW])"
   Xen_check_type(Xen_is_GLdouble(near), near, 8, "gluUnProject4", "GLdouble");
   Xen_check_type(Xen_is_GLdouble(far), far, 9, "gluUnProject4", "GLdouble");
   {
-    Xen result = Xen_false;
+    Xen result;
     result = C_to_Xen_GLint(gluUnProject4(Xen_to_C_GLdouble(winX), Xen_to_C_GLdouble(winY), Xen_to_C_GLdouble(winZ), Xen_to_C_GLdouble(clipW), 
                                           Xen_to_C_GLdouble_(model), Xen_to_C_GLdouble_(proj), Xen_to_C_GLint_(view), Xen_to_C_GLdouble(near), 
                                           Xen_to_C_GLdouble(far), ref_objX, ref_objY, ref_objZ, ref_objW));
@@ -5684,7 +5684,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("09-Jun-14"));
+      Xen_define("gl-version", C_string_to_Xen_string("06-Aug-14"));
       gl_already_inited = true;
     }
 }
