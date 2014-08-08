@@ -212,29 +212,23 @@ void draw_picture(graphics_context *ax, picture_t *src, gint xsrc, gint ysrc, gi
 
 static void draw_polygon_va(graphics_context *ax, bool filled, int points, va_list ap)
 {
-  int i;
-  {
-    int x, y;
-    x = va_arg(ap, int);
-    y = va_arg(ap, int);
-    cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-    cairo_move_to(ss->cr, x, y);
-    for (i = 1; i < points; i++)
-      {
-	x = va_arg(ap, int);
-	y = va_arg(ap, int);
-	cairo_line_to(ss->cr, x, y);
-      }
-    if (filled)
-      {
-	cairo_close_path(ss->cr);
-	cairo_fill(ss->cr);
-      }
-    else
-      {
-	cairo_stroke(ss->cr);
-      }
-  }
+  int i, x, y;
+  x = va_arg(ap, int);
+  y = va_arg(ap, int);
+  cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
+  cairo_move_to(ss->cr, x, y);
+  for (i = 1; i < points; i++)
+    {
+      x = va_arg(ap, int);
+      y = va_arg(ap, int);
+      cairo_line_to(ss->cr, x, y);
+    }
+  if (filled)
+    {
+      cairo_close_path(ss->cr);
+      cairo_fill(ss->cr);
+    }
+  else cairo_stroke(ss->cr);
 }
 
 
@@ -319,9 +313,9 @@ static GdkRectangle **sono_data = NULL;
 
 void check_colormap_sizes(int size)
 {
-  int i, old_size;
   if ((sono_data) && (sono_colors < size) && (sono_bins > 0))
     {
+      int i, old_size;
       old_size = sono_colors;
       sono_colors = size;
       sono_data = (GdkRectangle **)realloc(sono_data, sono_colors * sizeof(GdkRectangle *));
@@ -411,7 +405,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
    *   colors are 0..colormap_size: colors[k] = (int)((fft_phases[k] * color_map_size(ss)) / (2.0 * M_PI))
    */
   
-  int i, x0, y0, x1, y1, cur, prev;
+  int i, x0, y0, cur, prev;
   color_t old_color;
   rgb_t r, g, b;
 
@@ -438,6 +432,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
 
   for (i = 1; i < num; i++)
     {
+      int x1, y1;
       x1 = points[i].x;
       y1 = points[i].y;
       if ((abs(y0 - axis_y0) < 5) &&

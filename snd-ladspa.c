@@ -292,7 +292,7 @@ static void loadLADSPA(void) {
     if (*pcStart == ':')
       pcStart++;
 
-    if (pcBuffer) free(pcBuffer);
+    free(pcBuffer);
     pcBuffer = NULL;
   }
 }

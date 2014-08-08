@@ -1414,6 +1414,7 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
+#define XEN_UNPROTECT_FROM_GC(Var) 0
 
 #ifdef __cplusplus
 extern "C" {

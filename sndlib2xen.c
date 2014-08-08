@@ -981,9 +981,7 @@ static Xen g_mus_sound_report_cache(Xen file)
 {
   #define H_mus_sound_report_cache "(" S_mus_sound_report_cache " (name)): print the current sound \
 cache info to the file given or stdout"
-  FILE *fd;
   const char *name;
-  char *str = NULL;
 
   if (!Xen_is_bound(file))
     {
@@ -995,9 +993,11 @@ cache info to the file given or stdout"
   name = Xen_string_to_C_string(file);
   if (name)
     {
+      char *str = NULL;
       str = mus_expand_filename(name);
       if (str)
 	{
+	  FILE *fd;
 	  fd = FOPEN(str, "w");
 	  free(str);
 	  if (fd)

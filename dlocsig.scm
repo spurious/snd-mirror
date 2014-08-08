@@ -128,8 +128,7 @@
 
 (define (one-turn-is unit)
   "(one-turn-is unit) sets dlocsig's angle unit (degrees=360, the default or radians=2*pi)"
-  (set! dlocsig-one-turn unit)
-  unit)
+  (set! dlocsig-one-turn unit))
 
 (define (angles-in-degree)
   "(angles-in-degree) sets dlocsig's unit to degrees (the default)"
@@ -148,13 +147,11 @@
 
 (define (distances-in-meters)
   "(distances-in-meters) sets dlocsig's distances in meters (the default)"
-  (set! dlocsig-speed-of-sound 344)
-  344)
+  (set! dlocsig-speed-of-sound 344))
 
 (define (distances-in-feet)
   "(distances-in-feet) sets dlocsig's distances in feet (default is meters)"
-  (set! dlocsig-speed-of-sound 1128)
-  1128)
+  (set! dlocsig-speed-of-sound 1128))
 
 ;; default for whether to use two or three-dimensional speaker configurations
 (define dlocsig-3d #f)

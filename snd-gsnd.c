@@ -1493,9 +1493,9 @@ static bool currently_showing_controls = false;
 snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr)
 {
   snd_info *sp, *osp;
-  int snd_slot, nchans, i, k, old_chans;
+  int snd_slot, nchans, i, old_chans;
   bool free_filename = false, make_widgets;
-  char *old_name = NULL, *title;
+  char *old_name = NULL;
   int app_y, app_dy, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
 
@@ -1985,6 +1985,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     } /* new sound ss */
   else
     { 
+      int k;
       /* re-manage currently inactive chan */
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) 
 	raise_dialog(sp->dialog);
@@ -2004,6 +2005,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
     {
+      char *title;
       title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
       gtk_window_set_title(GTK_WINDOW(sp->dialog), title);

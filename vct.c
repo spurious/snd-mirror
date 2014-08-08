@@ -1159,12 +1159,12 @@ static Xen g_vct_each(Xen obj)
 
 static Xen g_vct_compare(Xen vr1, Xen vr2)
 {
-  mus_long_t i, len;
-  vct *v1, *v2;
-  mus_float_t *d1, *d2;
-
   if ((mus_is_vct(vr1)) && (mus_is_vct(vr2)))
     {
+      mus_long_t i, len;
+      vct *v1, *v2;
+      mus_float_t *d1, *d2;
+
       v1 = Xen_to_vct(vr1);
       v2 = Xen_to_vct(vr2);
       d1 = mus_vct_data(v1);

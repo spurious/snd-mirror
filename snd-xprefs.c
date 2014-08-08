@@ -1650,7 +1650,6 @@ static void va_post_prefs_error(const char *msg, prefs_info *data, ...)
 widget_t make_preferences_dialog(void)
 {
   Arg args[20];
-  int n;
   Widget scroller, topics, current_sep;
   char *str;
   prefs_info *prf;
@@ -1666,6 +1665,7 @@ widget_t make_preferences_dialog(void)
 
   /* -------- base buttons -------- */
   {
+    int n;
     XmString title, help, revert, clear, save, go_away;
     Widget clear_button, revert_button;
 #if HAVE_EXTENSION_LANGUAGE

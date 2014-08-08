@@ -143,11 +143,11 @@ static char *find_highlighted_text(const char *value)
 
 static void help_browse_callback(const char *name, int row, void *data)
 {
-  char *topic = NULL;
   if ((help_urls) && (help_urls[row]))
     url_to_html_viewer(help_urls[row]);
   else
     {
+      char *topic = NULL;
       topic = find_highlighted_text(name);
       if (topic)
 	{

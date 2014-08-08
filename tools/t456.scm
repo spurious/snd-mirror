@@ -24,11 +24,11 @@
 			'((1 2) (3 4)) '((1 (2)) (((3) 4))) "" (list #(1) "1") '(1 2 . 3) (list (cons 'a 2) (cons 'b 3))
 			#(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs 'a 'b one
 			(lambda args args) (lambda* ((a 3) (b 2)) (+ a b)) (lambda () 3)
-			(augment-environment () (cons 'a 1)) (global-environment)
+			(sublet () (cons 'a 1)) (rootlet)
 			*load-hook*  *error-hook* (make-random-state 123)
 			quasiquote macroexpand cond-expand begin let letrec* if case cond (call-with-exit (lambda (goto) goto))
 			;(with-baffle (call/cc (lambda (cc) cc)))
-			(string #\a #\null #\b) #2d((1 2) (3 4)) (environment* 'a 2 'b 3)
+			(string #\a #\null #\b) #2d((1 2) (3 4)) (inlet 'a 2 'b 3)
 			#<undefined> #<eof> #<unspecified> (make-vector 3 0 #t) (make-vector 3 -1.4 #t)
 			(make-vector '(2 3) "hi") #("hiho" "hi" "hoho") (make-shared-vector (make-vector '(2 3) 1 #t) '(6))
 			(make-shared-vector (make-shared-vector (make-vector '(2 3) 1.0 #t) '(6)) '(2 2))
@@ -36,7 +36,7 @@
 			(c-pointer 0) (c-pointer -1) :readable :else (define-bacro* (m (a 1)) `(+ ,a 1))
 			(bytevector 0 1 2) (bytevector) (bytevector 255 0 127) (make-hash-table-iterator (hash-table '(a . 2)))
 			(lambda (dir) 1.0) (float-vector) (make-float-vector '(2 32)) 
-			;(open-environment (environment* 'value 1 '+ (lambda args 1)))
+			;(openlet (inlet 'value 1 '+ (lambda args 1)))
 			;all-env
 			))
 
@@ -118,8 +118,8 @@
 		(if (not (or (memq (strname 0) '(#\{ #\[ #\())
 			     (member strname '("exit" "emergency-exit" "abort" "autotest" 
 					       "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
-					       "augment-environment!" "dilambda" "gc"
-					       "open-environment" "eval" "vector" "list" "cons" "m"
+					       "varlet" "dilambda" "gc"
+					       "openlet" "eval" "vector" "list" "cons" "m"
 
 					       "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
 					       "boolean=?" "symbol=?" 

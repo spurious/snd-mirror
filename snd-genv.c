@@ -145,12 +145,12 @@ static bool within_selection_src = false;
 
 static void apply_enved(void)
 {
-  char *origin = NULL, *estr = NULL;
   if (active_env)
     {
       active_channel = current_channel();
       if (active_channel)
 	{
+	  char *origin = NULL, *estr = NULL;
 	  set_sensitive(apply_button, false);
 	  set_sensitive(apply2_button, false);
 	  set_stock_button_label(cancel_button, I_STOP);

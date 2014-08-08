@@ -2188,7 +2188,6 @@ static int alsa_formats(int ur_dev, int chan, int *val)
   int device;
   int alsa_device = 0;
   snd_pcm_stream_t alsa_stream = SND_PCM_STREAM_PLAYBACK;
-  int f, err;
   
   if ((!audio_initialized) && 
       (mus_audio_initialize() != MUS_NO_ERROR))
@@ -2202,7 +2201,7 @@ static int alsa_formats(int ur_dev, int chan, int *val)
     return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
 
   {
-    int format;
+    int f, format;
     snd_pcm_format_mask_t *mask;
 
     snd_pcm_format_mask_alloca(&mask);
@@ -2210,6 +2209,7 @@ static int alsa_formats(int ur_dev, int chan, int *val)
 
     for (format = 0, f = 1; format < SND_PCM_FORMAT_LAST; format++) 
       {
+	int err;
 	err = snd_pcm_format_mask_test(mask, (snd_pcm_format_t)format);
 	if (err > 0) 
 	  {
@@ -5433,13 +5433,14 @@ int mus_audio_device_channels(int dev)
 int mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
 {
 #if HAVE_ALSA
-  int err, i;
-  int ival[32];
   if (api == MUS_ALSA_API) 
     {
+      int err;
+      int ival[32];
       err = alsa_formats(dev, 32, ival);
       if (err != MUS_ERROR)
 	{
+	  int i;
 	  for (i = 1; i <= ival[0]; i++)
 	    if (ival[i] == MUS_AUDIO_COMPATIBLE_FORMAT) 
 	      return(MUS_AUDIO_COMPATIBLE_FORMAT);
@@ -5462,11 +5463,8 @@ int mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
 
 #if MUS_JACK
   if (api == MUS_JACK_API) 
-    {
-      return(MUS_COMP_FLOAT);
-    }
+    return(MUS_COMP_FLOAT);
 #endif
-
   return(MUS_AUDIO_COMPATIBLE_FORMAT);
 }
 

@@ -280,7 +280,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
 {
   #define MAX_NUM_SIZE 32
   char *base, *str;
-  int i, lim, k, size = 256;
+  int i, lim, size = 256;
   if (arr == NULL) 
     {
       str = (char *)malloc(4 * sizeof(char));
@@ -296,6 +296,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
 
   if (len > 0)
     {
+      int k;
       sprintf(base, "[");
       lim = len;
       if (lim > array_print_length) lim = array_print_length;
@@ -4462,13 +4463,13 @@ static char *describe_delay(mus_any *ptr)
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
   if (gen->zdly)
-    snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s line[%d,%d, %s]: %s", 
+    snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s line[%u,%u, %s]: %s", 
 		 mus_name(ptr),
 		 gen->size, 
 		 gen->zsize, 
 		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
-  else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s line[%d, %s]: %s", 
+  else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s line[%u, %s]: %s", 
 		    mus_name(ptr),
 		    gen->size, 
 		    interp_type_to_string(gen->type), 
@@ -4696,14 +4697,14 @@ static char *describe_comb(mus_any *ptr)
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
   if (gen->zdly)
-    snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%d,%d, %s]: %s", 
+    snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%u,%u, %s]: %s", 
 		 mus_name(ptr),
 		 gen->yscl, 
 		 gen->size, 
 		 gen->zsize, 
 		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
-  else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%d, %s]: %s", 
+  else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%u, %s]: %s", 
 		    mus_name(ptr),
 		    gen->yscl, 
 		    gen->size, 
@@ -4947,14 +4948,14 @@ static char *describe_notch(mus_any *ptr)
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
   if (gen->zdly)
-    snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%d,%d, %s]: %s", 
+    snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%u,%u, %s]: %s", 
 		 mus_name(ptr),
 		 gen->xscl, 
 		 gen->size, 
 		 gen->zsize, 
 		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
-  else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%d, %s]: %s", 
+  else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%u, %s]: %s", 
 		    mus_name(ptr),
 		    gen->xscl, 
 		    gen->size, 
@@ -5091,7 +5092,7 @@ static char *describe_all_pass(mus_any *ptr)
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
   if (gen->zdly)
-    snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s feedback: %.3f, feedforward: %.3f, line[%d,%d, %s]:%s",
+    snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s feedback: %.3f, feedforward: %.3f, line[%u,%u, %s]:%s",
 		 mus_name(ptr),
 		 gen->yscl, 
 		 gen->xscl, 
@@ -5099,7 +5100,7 @@ static char *describe_all_pass(mus_any *ptr)
 		 gen->zsize, 
 		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
-  else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s feedback: %.3f, feedforward: %.3f, line[%d, %s]:%s",
+  else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s feedback: %.3f, feedforward: %.3f, line[%u, %s]:%s",
 		    mus_name(ptr),
 		    gen->yscl, 
 		    gen->xscl, 
@@ -5357,7 +5358,7 @@ static char *describe_moving_average(mus_any *ptr)
   dly *gen = (dly *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %.3f, line[%d]:%s",
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %.3f, line[%u]:%s",
 	       mus_name(ptr),
 	       gen->xscl * gen->yscl, 
 	       gen->size, 
@@ -5476,7 +5477,7 @@ static char *describe_moving_max(mus_any *ptr)
   dly *gen = (dly *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %.3f, line[%d]:%s",
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %.3f, line[%u]:%s",
 	       mus_name(ptr),
 	       gen->xscl, 
 	       gen->size, 
@@ -5573,7 +5574,7 @@ static char *describe_moving_norm(mus_any *ptr)
   dly *gen = (dly *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s, max %.3f, y1 %.3f, weight %.3f, line[%d]:%s",
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s, max %.3f, y1 %.3f, weight %.3f, line[%u]:%s",
 	   mus_name(ptr),
 	   gen->xscl, gen->y1, gen->yscl,
 	   gen->size, 
@@ -9337,7 +9338,7 @@ static mus_float_t run_env(mus_any *ptr, mus_float_t unused1, mus_float_t unused
 static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur, double scaler)
 { 
   int i, j;
-  double xscl, cur_loc, cur_dx, x0, y0, x1, y1;
+  double xscl, cur_loc, x1, y1;
   mus_long_t samps, pre_loc;
 
   /* pts > 1 if we get here, so the loop below is always exercised */
@@ -9353,6 +9354,7 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
 
   for (j = 0, i = 2, cur_loc = 0.0; i < pts * 2; i += 2, j++)
     {
+      double cur_dx, x0, y0;
       x0 = x1;
       x1 = data[i];
       y0 = y1;
@@ -10751,7 +10753,7 @@ static void flush_buffers(rdout *gen)
     {
       /* get existing samples, add new output, write back to output */
       mus_float_t **addbufs = NULL;
-      int i, j, data_format;
+      int i, data_format;
       mus_long_t current_file_framples, framples_to_add;
       
       data_format = mus_sound_data_format(gen->file_name);
@@ -10905,6 +10907,7 @@ static void flush_buffers(rdout *gen)
       
       if (addbufs)
 	{
+	  int j;
 	  /* fill/write output buffers with current data added to saved data */
 	  for (j = 0; j < gen->chans; j++)
 	    {
@@ -11106,9 +11109,9 @@ static int sample_to_file_end(mus_any *ptr)
   rdout *gen = (rdout *)ptr;
   if ((gen) && (gen->obufs))
     {
-      int i;
       if (gen->chans > 0)
 	{
+	  int i;
 	  flush_buffers(gen); /* this forces the error handling stuff, unlike in free reader case */
 	  for (i = 0; i < gen->chans; i++)
 	    if (gen->obufs[i]) 
@@ -11132,11 +11135,11 @@ bool mus_is_sample_to_file(mus_any *ptr)
 
 static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int out_chans, int out_format, int out_type, const char *comment, bool reopen)
 {
-  int fd;
   if (filename == NULL)
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_sample_to_file " requires a file name");
   else
     {
+      int fd;
       if (out_chans <= 0)
 	return(NULL);
       if (reopen)
@@ -11932,10 +11935,10 @@ static void mus_locsig_safe_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val
 static void mus_locsig_detour(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   /* here we let the closure data decide what to do with the output */
-  int i;
   locs *gen = (locs *)ptr;
   if (gen->detour)
     {
+      int i;
       for (i = 0; i < gen->chans; i++)
 	gen->outf[i] = val * gen->outn[i];
       
@@ -12789,7 +12792,7 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum, x, zf, srx, factor;
-  int lim, i, loc, xi, xs;
+  int lim, loc, xi;
   bool int_ok;
   mus_float_t *data, *sinc_table;
 
@@ -12809,7 +12812,7 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 
   if (srp->x >= 1.0)
     {
-      int fsx, dir = 1;
+      int i, fsx, dir = 1;
 
       if (srx < 0.0) dir = -1;
       fsx = (int)(srp->x);
@@ -12862,7 +12865,7 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
   sum = 0.0;
   if (int_ok)
     {
-      int sinc_loc, sinc_incr, last, last10;
+      int sinc_loc, sinc_incr, last, last10, xs;
       
       xs = (int)(zf * (srp->width_1 - srp->x));
       sinc_loc = xs + srp->sinc4;
@@ -12926,7 +12929,7 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
    */
   sr *srp = (sr *)srptr;
   mus_float_t sum, x, zf, srx, factor, sincx, srpx;
-  int lim, i, loc, xi, xs, dir = 1;
+  int lim, i, xi, xs, dir = 1;
   bool int_ok;
   mus_long_t k;
   mus_float_t *data, *sinc_table;
@@ -12960,6 +12963,7 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 
   for (k = 0; k < dur; k++)
     {
+      int loc;
       loc = srp->start;
       if (srpx >= 1.0)
 	{
@@ -13057,7 +13061,7 @@ mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum;
-  int lim, i, j, width, wid1, wid10, xs, xi;
+  int lim, i, width, wid1, wid10, xs, xi;
   mus_long_t k, dur2;
   mus_float_t *out_data, *ldata, *coeffs;
   
@@ -13086,6 +13090,7 @@ mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
 
   for (k = 0; k < dur2; k++, ldata += 2)
     {
+      int j;
       sum = ldata[wid1];
       i = 0;
       j = 0;
@@ -13727,11 +13732,12 @@ static void mus_scramble(mus_float_t *rl, mus_float_t *im, int n)
 {
   /* bit reversal */
 
-  int i, m, j;
+  int i, j;
   mus_float_t vr, vi;
   j = 0;
   for (i = 0; i < n; i++)
     {
+      int m;
       if (j > i)
 	{
 	  vr = rl[j];
@@ -13759,7 +13765,7 @@ void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
    * see fxt/simplfft/fft.c (Joerg Arndt) 
    */
   int m, j, mh, ldm, lg, i, i2, j2, imh;
-  double ur, ui, u, vr, vi, angle, c, s;
+  double u, vr, vi, angle;
 
   if (n >= (1 << 30))
     {
@@ -13775,6 +13781,7 @@ void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
   angle = (M_PI * is);
   for (lg = 0; lg < imh; lg++)
     {
+      double c, s, ur, ui;
       c = cos(angle);
       s = sin(angle);
       ur = 1.0;
@@ -13811,7 +13818,7 @@ static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 {
   mus_long_t m, j, mh, ldm, i, i2, j2;
   int imh, lg;
-  double ur, ui, u, vr, vi, angle, c, s;
+  double u, vr, vi, angle;
 
   imh = (int)(log(n + 1) / log(2.0));
 
@@ -13842,6 +13849,7 @@ static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
   angle = (M_PI * is);
   for (lg = 0; lg < imh; lg++)
     {
+      double c, s, ur, ui;
       c = cos(angle);
       s = sin(angle);
       ur = 1.0;
@@ -14649,7 +14657,6 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
 {
   mus_long_t i;
   mus_float_t maxa, lowest;
-  double val, todb;
 
   if (window) 
     {
@@ -14664,6 +14671,7 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
   n = n * 0.5;
   for (i = 0; i < n; i++)
     {
+      double val;
       val = rdat[i] * rdat[i] + idat[i] * idat[i];
       if (val < lowest)
 	rdat[i] = 0.001;
@@ -14675,6 +14683,7 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
     }
   if (maxa > 0.0)
     {
+      double todb;
       maxa = 1.0 / maxa;
       if (type == MUS_SPECTRUM_IN_DB)
 	{
@@ -15270,7 +15279,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
    *   the inclusion of pitch and interp provides built-in time/pitch scaling which is 99% of phase-vocoder use
    */
   pv_info *pv;
-  int N2, D, i;
+  int N2, D;
   mus_float_t scl;
 
   N2 = (int)(fftsize / 2);
@@ -15308,6 +15317,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
     }
   else
     {
+      int i;
       if (pv_last_window) free(pv_last_window);
       pv_last_fftsize = fftsize;
       pv_last_window = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
@@ -15361,7 +15371,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       if ((pv_analyze == NULL) || 
 	  ((*pv_analyze)(pv->closure, pv->input)))
 	{
-	  int j, buf;
+	  int buf;
 	  memset((void *)(pv->freqs), 0, pv->N * sizeof(mus_float_t));
 	  if (pv->in_data == NULL)
 	    {
@@ -15371,6 +15381,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	    }
 	  else
 	    {
+	      int j;
 	      /* if back-to-back here we could omit a lot of data movement or just use a circle here! */
 	      for (i = 0, j = pv->D; j < pv->N; i++, j++)
 		pv->in_data[i] = pv->in_data[j];
@@ -15854,7 +15865,7 @@ static mus_float_t *ssb_am_last_coeffs = NULL;
 mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 {
   ssbam *gen;
-  int i, k, len, flen;
+  int len, flen;
 
   if ((order & 1) == 0) order++; /* if order is even, the first Hilbert coeff is 0.0 */
   gen = (ssbam *)malloc(sizeof(ssbam));
@@ -15884,6 +15895,7 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
     }
   else
     {
+      int i, k;
       gen->coeffs = (mus_float_t *)calloc(flen, sizeof(mus_float_t));
       for (i = -order, k = 0; i <= order; i++, k++)
 	{

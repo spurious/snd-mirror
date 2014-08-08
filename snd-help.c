@@ -3567,8 +3567,7 @@ and its value is returned."
 		 (mus_strlen(str) == 0)) &&
 		(s7_funclet(s7, sym) != sym))
 	      {
-		const char *url = NULL;
-		s7_pointer x, e;
+		s7_pointer e;
 		e = s7_funclet(s7, sym);
 		str = (char *)calloc(256, sizeof(char));
 		/* unavoidable memleak I guess -- we could use a backup statically allocated buffer here */
@@ -3576,6 +3575,8 @@ and its value is returned."
 		  snprintf(str, 256, "this function appears to come from eval or eval-string?");
 		else
 		  {
+		    const char *url = NULL;
+		    s7_pointer x;
 		    /* (cdr (assoc '__func__ (let->list (funclet func)))) => (name file line) or name */
 		    x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_let_to_list(s7, e)));
 

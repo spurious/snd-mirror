@@ -205,7 +205,6 @@ static void startup_funcs(void)
   Atom wm_delete_window;
   Display *dpy;
   Widget shell;
-  snd_info *sp;
   static int auto_open_ctr = 0;
 
   ss->file_monitor_ok = initialize_file_monitor();
@@ -271,6 +270,7 @@ static void startup_funcs(void)
   if ((ss->sounds) &&
       (ss->selected_sound == NO_SELECTION))
     {
+      snd_info *sp;
       sp = ss->sounds[0];
       if ((sp) && 
 	  (sp->inuse == SOUND_NORMAL) &&
@@ -316,17 +316,17 @@ static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointe
   Widget page;
   if ((nb->reason == XmCR_MAJOR_TAB) && (nb->page_widget))
     {
-      int index = 0;
-      snd_info *sp;
       page = nb->page_widget;
       if (page)
 	{
+	  int index;
 	  pointer_or_int_t data;
 	  XtVaGetValues(page, XmNuserData, &data, NULL);
 	  index = (int)data;
 	  if ((index < ss->max_sounds) && 
 	      (snd_ok(ss->sounds[index])))
 	    {
+	      snd_info *sp;
 	      sp = ss->sounds[index];
 	      if (sp->selected_channel == NO_SELECTION)
 		select_channel(ss->sounds[index], 0);

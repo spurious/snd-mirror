@@ -972,8 +972,6 @@ void save_sound_state(snd_info *sp, void *ptr)
   int chan;
   FILE *fd;
   chan_info *cp;
-  axis_info *ap;
-  char *tmpstr = NULL;
   fd = (FILE *)ptr;
   open_save_sound_block(sp, fd, true);
   b_ok = false; 
@@ -1036,6 +1034,7 @@ void save_sound_state(snd_info *sp, void *ptr)
   if (sp->filter_control_in_hz != DEFAULT_FILTER_CONTROL_IN_HZ) psp_ss(fd, S_filter_control_in_hz, b2s(sp->filter_control_in_hz));
   if ((sp->filter_control_envelope) && (!(is_default_envelope(sp->filter_control_envelope))))
     {
+      char *tmpstr = NULL;
       psp_ss(fd, S_filter_control_envelope, tmpstr = env_to_string(sp->filter_control_envelope));
       if (tmpstr) free(tmpstr);
     }
@@ -1048,6 +1047,8 @@ void save_sound_state(snd_info *sp, void *ptr)
     }
   for (chan = 0; chan < sp->nchans; chan++)
     {
+      axis_info *ap;
+
       cp = sp->chans[chan];
       if ((!cp) || (!cp->edits) || (!cp->sounds)) break;
       ap = cp->axis;
@@ -1295,7 +1296,7 @@ void save_state(const char *save_state_name)
   
   /* the problem here (with saving hooks) is that it is not straightforward to save the function source
    *   (with the current print-set! source option, or with an earlier procedure->string function using
-   *   procedure_environment etc); many types print in this case in ways that are not readable.
+   *   funclet etc); many types print in this case in ways that are not readable.
    *   The functions may depend on globals that are not in loaded files, or that were changed since
    *   loading, and trying to map over the current module's obarray, saving each such variable in
    *   its current form, is a major undertaking (although this can be done for simple vars); additionally, 
@@ -1657,10 +1658,10 @@ static Xen g_peak_env_dir(void) {return(C_string_to_Xen_string(peak_env_dir(ss))
 static Xen g_set_peak_env_dir(Xen val) 
 {
   #define H_peak_env_dir "(" S_peak_env_dir "): name of directory for peak env files (or " PROC_FALSE "=null)"
-  const char *dir = NULL;
   Xen_check_type(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_peak_env_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (Xen_is_string(val)) 
     {
+      const char *dir = NULL;
       dir = Xen_string_to_C_string(val);
       if (snd_access(dir, S_peak_env_dir))
 	{

@@ -367,7 +367,7 @@ sync_info *selection_sync(void)
 
 static int mix_selection(chan_info *cp, sync_info *si_out, mus_long_t beg, io_error_t *err, int start_chan)
 {
-  char *tempfile = NULL, *origin = NULL;
+  char *tempfile = NULL;
   int id = INVALID_MIX_ID;
   io_error_t io_err = IO_NO_ERROR;
 
@@ -375,6 +375,7 @@ static int mix_selection(chan_info *cp, sync_info *si_out, mus_long_t beg, io_er
   io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, snd_srate(cp->sound), NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
+      char *origin = NULL;
 #if HAVE_FORTH
       origin = mus_format("%lld snd chn %s", beg, S_mix_selection);
 #else
@@ -1065,7 +1066,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   sync_info *si = NULL;
   mus_long_t *ends;
   int i, j, k, chans;
-  mus_long_t dur, num, ioff;
+  mus_long_t dur;
   snd_fd **sfs;
   snd_info *sp = NULL;
   mus_float_t **data;
@@ -1110,6 +1111,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 
   if (sp)
     {
+      mus_long_t num;
       disk_space_t no_space;
       bool copy_ok = false;
 
@@ -1143,10 +1145,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	   * copy len*data-size bytes
 	   * get max from amp envs
 	   */
-	  mus_long_t bytes, iloc;
 	  int fdi;
-	  char *buffer;
-
 	  lseek(ofd, oloc, SEEK_SET);
 	  fdi = mus_file_open_read(sp->filename); /* this does not read the header */
 	  if (fdi == -1)
@@ -1158,6 +1157,9 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	  /* snd_error("can't read selection's original sound? %s: %s", sp->filename, snd_io_strerror()); */
 	  else
 	    {
+	      mus_long_t bytes, iloc;
+	      char *buffer;
+	  
 	      iloc = mus_sound_data_location(sp->filename);
 	      lseek(fdi, iloc + chans * bps * si->begs[0], SEEK_SET);
 	      buffer = (char *)malloc(MAX_BUFFER_SIZE * sizeof(char));
@@ -1221,6 +1223,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
     }
   else
     {
+      mus_long_t ioff;
       ss->stopped_explicitly = false;
       for (k = 0; k < chans; k++)
 	sampler_set_safe(sfs[k], ends[k]);

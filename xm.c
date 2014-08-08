@@ -11284,7 +11284,7 @@ static Xen gxm_XAllocColorCells(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5
 allocates read/write color cells."
   /* DIFF: XAllocColorCells arg 4 and 6 omitted and returned as (embedded) lists 
    */
-  int mlen, plen, i, val;
+  int mlen, plen, val;
   Xen mlst = Xen_empty_list, plst = Xen_empty_list;
   unsigned long *ms, *ps;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XAllocColorCells", "Display*");
@@ -11305,7 +11305,7 @@ allocates read/write color cells."
 			 ps, plen);
   if (val != 0)
     {
-      int loc1, loc2;
+      int i, loc1, loc2;
       loc1 = xm_protect(mlst);
       loc2 = xm_protect(plst);
       for (i = mlen - 1; i >= 0; i--) 

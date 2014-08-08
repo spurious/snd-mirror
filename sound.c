@@ -348,11 +348,13 @@ static sound_file *add_to_sound_table(const char *name)
 
 int mus_sound_prune(void)
 {
-  int i, j, pruned = 0, sound_table_size;
-  sound_file **sound_table;
+  int j, pruned = 0;
 
   for (j = 0; j < NUM_SOUND_TABLES; j++)
     {
+      int i, sound_table_size;
+      sound_file **sound_table;
+
       sound_table = sound_tables[j];
       sound_table_size = sound_table_sizes[j];
 
@@ -478,7 +480,6 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 static sound_file *find_sound_file(const char *name)
 {
   int i, len, len2;
-  sound_file *sf;
   sound_file **sound_table;
   int sound_table_size, index;
   char c;
@@ -496,6 +497,7 @@ static sound_file *find_sound_file(const char *name)
 
   for (i = 0; i < sound_table_size; i++)  
     {
+      sound_file *sf;
       sf = sound_table[i];
       if ((sf) &&
 	  (sf->file_name_length == len) &&
@@ -510,10 +512,8 @@ static sound_file *find_sound_file(const char *name)
 static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 {
   #define TIME_BUFFER_SIZE 64
-  int i, lim;
   time_t date;
   char timestr[TIME_BUFFER_SIZE];
-  char *comment;
 
   date = sf->write_date;
   if (date != 0)
@@ -540,6 +540,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 
   if (sf->maxamps)
     {
+      int i, lim;
       lim = sf->maxamps_size;
       if (lim > 0)
 	{
@@ -558,6 +559,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 
   if (mus_file_probe(name))
     {
+      char *comment;
       comment = mus_sound_comment(name);
       if (comment)
 	{
@@ -574,12 +576,13 @@ void mus_sound_report_cache(FILE *fp)
 {
   sound_file *sf;
   int entries = 0;
-  int i, j, sound_table_size;
+  int i, j;
   sound_file **sound_table;
 
   fprintf(fp, "sound table:");
   for (j = 0; j < NUM_SOUND_TABLES; j++)
     {
+      int sound_table_size;
       sound_table = sound_tables[j];
       sound_table_size = sound_table_sizes[j];
 
@@ -1233,7 +1236,7 @@ bool mus_sound_maxamp_exists(const char *ifile)
 mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mus_long_t *times)
 {
   mus_long_t framples;
-  int i, ichans, chn;
+  int ichans, chn;
   sound_file *sf; 
     
   sf = get_sf(ifile); 
@@ -1289,6 +1292,7 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
 	mus_file_read(ifd, n, curframples, ichans, ibufs);
 	for (chn = 0; chn < ichans; chn++)
 	  {
+	    int i;
 	    buffer = (mus_float_t *)(ibufs[chn]);
 	    for (i = 0; i < curframples; i++) 
 	      {
@@ -1463,7 +1467,6 @@ const char *mus_array_to_file_with_error(const char *filename, mus_float_t *ddat
   /* assume ddata is interleaved already if more than one channel */
   int fd, err = MUS_NO_ERROR;
   mus_long_t oloc;
-  mus_float_t *bufs[1];
   mus_sound_forget(filename);
 
   err = mus_write_header(filename, MUS_NEXT, srate, channels, len * channels, MUS_OUT_FORMAT, "array->file");
@@ -1478,6 +1481,7 @@ const char *mus_array_to_file_with_error(const char *filename, mus_float_t *ddat
 				  oloc, channels, MUS_NEXT);
   if (err != MUS_ERROR)
     {
+      mus_float_t *bufs[1];
       bufs[0] = ddata;
       err = mus_file_write(fd, 0, len - 1, 1, bufs); /* 1 = chans?? */
     }

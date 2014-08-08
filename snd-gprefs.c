@@ -295,7 +295,7 @@ static gint arrow_func_up(gpointer context)
   prefs_info *prf = (prefs_info *)context;
   if (Widget_Is_Sensitive(prf->arrow_up))
     {
-      if ((prf) && (prf->arrow_up_func))
+      if (prf->arrow_up_func)
 	{
 	  (*(prf->arrow_up_func))(prf);
 	  prf->power_id = g_timeout_add_full(0,
@@ -314,7 +314,7 @@ static gint arrow_func_down(gpointer context)
   prefs_info *prf = (prefs_info *)context;
   if (Widget_Is_Sensitive(prf->arrow_down))
     {
-      if ((prf) && (prf->arrow_down_func))
+      if (prf->arrow_down_func)
 	{
 	  (*(prf->arrow_down_func))(prf);
 	  prf->power_id = g_timeout_add_full(0,

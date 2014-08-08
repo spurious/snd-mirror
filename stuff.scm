@@ -1185,7 +1185,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		   (set! (lst i) (obj (+ i start)))))))
 	  
 	  (else             ; (subsequence (inlet 'subsequence (lambda* (obj start end) "subseq")))
-	   (catch #t        ; perhaps we should use (open-let? obj) instead?
+	   (catch #t        ; perhaps we should use (openlet? obj) instead?
 	     (lambda ()
 	       ((obj 'subsequence) obj start end))
 	     (lambda args

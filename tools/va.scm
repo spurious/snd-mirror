@@ -360,6 +360,33 @@
 	(format #t "--------------------------------------------------------------------------------~%"))))
 |#
 
+#|
+;;; check for incorrect port_write_string lengths -- is confused by \" 
+(call-with-input-file "s7.c"
+  (lambda (file)
+    (let ((count 0))
+      (let loop ((line (read-line file #t)))
+	(or (eof-object? line)
+	    (let ((pos (string-position "port_write_string(" line)))
+	      (set! count (+ count 1))
+	      (if pos
+		  (let ((qpos (char-position #\" (substring line (+ pos 1)))))
+		    (if qpos
+			(let ((npos (char-position #\, (substring line (+ pos qpos 2)))))
+			  (if npos
+			      (let ((len (- npos 1))
+				    (new-line (substring line (+ pos qpos 2 npos))))
+				(let ((ccpos (char-position #\, (substring new-line 1))))
+				  (if ccpos
+				      (let ((clen (string->number (substring new-line 2 (+ ccpos 1)))))
+					(if (and clen
+						 (not (= clen len)))
+					    (format *stderr* "[~D]: ~A: length ~A ~A~%" count 
+						    (substring line (char-position #\p line) (char-position #\; line))
+						    len clen)))))))))))
+	      (loop (read-line file #t))))))))
+|#
+
 (exit)
 
 

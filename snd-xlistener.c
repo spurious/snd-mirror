@@ -113,7 +113,6 @@ static void listener_help_at_cursor(char *buf, int name_curpos, int len, int pro
 
   if (name_end > name_start)
     {
-      Xen help;
       char *new_text;
 
       buf[name_end + 1] = '\0';
@@ -121,6 +120,7 @@ static void listener_help_at_cursor(char *buf, int name_curpos, int len, int pro
 
       if (new_text)
 	{
+	  Xen help;
 	  int matches;
 	  matches = get_possible_completions_size();
 
@@ -152,7 +152,6 @@ static void listener_help_at_cursor(char *buf, int name_curpos, int len, int pro
 		  free(help_str);
 		}
 	    }
-
 	  free(new_text);
 	}
     }
@@ -964,7 +963,7 @@ static void motif_listener_completion(Widget w, XEvent *event, char **str, Cardi
    *   and we don't want to back up past the last prompt
    *   also if at start of line (or all white-space to previous \n), indent
    */
-  int beg, end, replace_end, len, matches = 0;
+  int beg, end, replace_end, len;
   char *old_text;
 
   if ((completions_pane) &&
@@ -997,6 +996,7 @@ static void motif_listener_completion(Widget w, XEvent *event, char **str, Cardi
 
   if (old_text)
     {
+      int matches = 0;
       char *new_text = NULL, *file_text = NULL;
       bool try_completion = true;
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
@@ -1020,7 +1020,6 @@ static void motif_listener_completion(Widget w, XEvent *event, char **str, Cardi
       if (matches > 1)
 	{
 	  int num;
-	  char **buffer;
 	  clear_possible_completions();
 	  set_save_completions(true);
 	  if (file_text) 
@@ -1036,6 +1035,7 @@ static void motif_listener_completion(Widget w, XEvent *event, char **str, Cardi
 	    {
 	      int i;
 	      XmString *match;
+	      char **buffer;
 
 	      if (!completions_list)
 		{
@@ -2065,7 +2065,7 @@ static void listener_stacktrace_callback(Widget w, XtPointer context, XtPointer 
   s7_pointer str;
   str = s7_eval_c_string(s7, "(stacktrace)");
   if (s7_string_length(str) == 0)
-    str = s7_eval_c_string(s7, "(object->string (error-environment))");
+    str = s7_eval_c_string(s7, "(object->string (owlet))");
   snd_display_result(s7_string(str), NULL);
 }
 #endif
@@ -2090,7 +2090,7 @@ static void listener_popup_callback(Widget w, XtPointer context, XtPointer info)
     {
 #if HAVE_SCHEME
       if (stacktrace_popup_menu)
-	set_menu_label(stacktrace_popup_menu, (s7_is_null(s7, s7_current_environment(s7))) ? "Error info" : "Stacktrace");
+	set_menu_label(stacktrace_popup_menu, (s7_is_null(s7, s7_curlet(s7))) ? "Error info" : "Stacktrace");
 #endif
       cb->menuToPost = listener_popup;
     }

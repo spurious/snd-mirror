@@ -35,7 +35,7 @@
 
 
 (define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
-(define start-up-environment (global-environment))
+(define start-up-environment (rootlet))
 (define *current-file* "")
 (define *top-level-objects* (make-hash-table))
 (define *lint-output-port* *stderr*)
@@ -69,7 +69,7 @@
     (define +unspecified+ #<unspecified>)
     (define +symbol+ 'symbol)
     (define +character+ #\a)
-    (define +environment+ (environment))
+    (define +environment+ (inlet))
     (define +hash-table+ (hash-table))
     (define +port+ *stdout*)
 
@@ -144,13 +144,14 @@
 		  cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? 
 		  char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-position char-ready? char-upcase 
 		  char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? complex? cond 
-		  cons constant? continuation? cos cosh current-environment current-error-port current-input-port current-output-port 
+		  cons constant? continuation? cos cosh current-environment curlet current-error-port current-input-port current-output-port 
 		  defined? denominator do dynamic-wind 
-		  environment environment* environment-ref environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
+		  environment inlet environment* environment-ref let-ref environment? let?
+		  eof-object? eq? equal? eqv? error-environment owlet even? exact->inexact exact? exp expt 
 		  floor ;for-each 
-		  gcd gensym gensym? global-environment 
+		  gcd gensym gensym? global-environment rootlet
 		  hash-table hash-table* hash-table-ref hash-table-size hash-table-entries hash-table? hash-table-iterator? hook-functions 
-		  if imag-part inexact->exact inexact? infinite? initial-environment input-port? integer->char integer-decode-float 
+		  if imag-part inexact->exact inexact? infinite? initial-environment unlet input-port? integer->char integer-decode-float 
 		  integer-length integer? 
 		  keyword->symbol keyword? 
 		  lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
@@ -158,8 +159,9 @@
 		  macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-list make-polar dilambda
 		  make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
 		  nan? negative? not null? number->string number? numerator 
-		  object->string odd? open-environment? or outer-environment output-port? 
-		  pair? pair-line-number port-closed? port-filename port-line-number positive? procedure-arity procedure-documentation procedure-environment 
+		  object->string odd? open-environment? openlet? or outer-environment outlet output-port? 
+		  pair? pair-line-number port-closed? port-filename port-line-number positive? 
+		  procedure-arity procedure-documentation procedure-environment funclet
 		  procedure-name procedure-setter procedure-source dilambda? procedure? provided? 
 		  quasiquote quote quotient 
 		  random random-state? rational? rationalize real-part real? remainder reverse round 
@@ -197,8 +199,8 @@
 			   'atanh +not-integer+
 			   'augment-environment +environment+
 			   'augment-environment! +environment+
-			   'boolean? +boolean+
 			   'boolean=? +boolean+
+			   'boolean? +boolean+
 			   'bytevector? +boolean+
 			   'ceiling +integer+
 			   'char->integer +integer+
@@ -224,13 +226,13 @@
 			   'char? +boolean+
 			   'close-input-port +unspecified+
 			   'close-output-port +unspecified+
-			   'flush-output-port +unspecified+
 			   'complex? +boolean+
 			   'cons +list+
 			   'constant? +boolean+
 			   'continuation? +boolean+
 			   'cos +number+
 			   'cosh +not-integer+
+			   'curlet +environment+
 			   'current-environment +environment+
 			   'current-error-port +port+
 			   'current-input-port +port+
@@ -238,11 +240,12 @@
 			   'cyclic-sequences +list+
 			   'defined? +boolean+
 			   'denominator +integer+
+			   'dilambda? +boolean+
 			   'display +unspecified+
 			   'environment +environment+
 			   'environment* +environment+
-			   'environment? +boolean+
 			   'environment->list +list+
+			   'environment? +boolean+
 			   'eof-object? +boolean+
 			   'eq? +boolean+
 			   'equal? +boolean+
@@ -254,25 +257,29 @@
 			   'exp +number+
 			   'expt +number+
 			   'float-vector +vector+
-			   'float-vector? +boolean+
 			   'float-vector-ref +number+
 			   'float-vector-set! +number+
+			   'float-vector? +boolean+
 			   'floor +integer+
+			   'flush-output-port +unspecified+
 			   'for-each +unspecified+
+			   'funclet +environment+
 			   'gcd +number+
 			   'gensym +symbol+
 			   'gensym? +boolean+
 			   'global-environment +environment+
 			   'hash-table +hash-table+
 			   'hash-table* +hash-table+
-			   'hash-table? +boolean+
-			   'hash-table-iterator? +boolean+
 			   'hash-table-entries +integer+
+			   'hash-table-iterator? +boolean+
 			   'hash-table-size +integer+
+			   'hash-table? +boolean+
 			   'imag-part +number+
 			   'inexact->exact +number+
 			   'inexact? +boolean+
 			   'infinite? +boolean+
+			   'inlet +environment+
+			   'inlet +environment+
 			   'input-port? +boolean+
 			   'integer->char +character+
 			   'integer-decode-float +list+
@@ -282,10 +289,12 @@
 			   'keyword? +boolean+
 			   'lcm +number+
 			   'length +integer+
+			   'let->list +list+
+			   'let? +boolean+
 			   'list +list+
-			   'list-tail 'pair-or-null
 			   'list->string +string+
 			   'list->vector +vector+
+			   'list-tail 'pair-or-null
 			   'list? +boolean+
 			   'log +number+
 			   'logand +integer+
@@ -295,15 +304,15 @@
 			   'logxor +integer+
 			   'macro? +boolean+
 			   'magnitude +number+
+			   'make-float-vector +vector+
 			   'make-hash-table +hash-table+
 			   'make-keyword +symbol+
 			   'make-list +list+
 			   'make-polar +number+
 			   'make-rectangular +number+
+			   'make-shared-vector +vector+
 			   'make-string +string+
 			   'make-vector +vector+
-			   'make-float-vector +vector+
-			   'make-shared-vector +vector+
 			   'map +list+
 			   'max +number+
 			   'member 'list-or-f
@@ -320,29 +329,32 @@
 			   'number->string +string+
 			   'number? +boolean+
 			   'numerator +integer+
-;			   'object-environment +environment+
 			   'object->string +string+
 			   'odd? +boolean+
 			   'open-environment +environment+
 			   'open-environment? +boolean+
+			   'openlet +environment+
+			   'openlet? +boolean+
 			   'outer-environment +environment+
+			   'outlet +environment+
 			   'output-port? +boolean+
-			   'pair? +boolean+
+			   'owlet +environment+
 			   'pair-line-number +integer+
+			   'pair? +boolean+
 			   'peek-char 'char-or-eof
 			   'port-closed? +boolean+
 			   'port-file-name +string+
 			   'port-line-number +integer+
 			   'positive? +boolean+
-			   'procedure? +boolean+
 			   'procedure-arity 'list-or-f
 			   'procedure-environment +environment+
 			   'procedure-name +string+
+			   'procedure? +boolean+
 			   'provided? +boolean+
 			   'quotient +number+
 			   'random +number+
-			   'random-state? +boolean+
 			   'random-state->list +list+
+			   'random-state? +boolean+
 			   'rational? +boolean+
 			   'rationalize +number+
 			   'read-byte 'number-or-eof
@@ -352,13 +364,13 @@
 			   'real-part +number+
 			   'real? +boolean+
 			   'remainder +number+
+			   'rootlet +environment+
 			   'round +integer+
+			   's7-version +string+
 			   'sin +number+
 			   'sinh +not-integer+
 			   'sqrt +number+
 			   'string +string+
-			   'string-downcase +string+
-			   'string-upcase +string+
 			   'string->list +list+
 			   'string->number 'number-or-f
 			   'string->symbol +symbol+
@@ -369,48 +381,50 @@
 			   'string-ci>=? +boolean+
 			   'string-ci>? +boolean+
 			   'string-copy +string+
+			   'string-downcase +string+
 			   'string-fill! +character+
 			   'string-length +integer+
 			   'string-position 'integer-or-f
 			   'string-ref +character+
+			   'string-upcase +string+
 			   'string<=? +boolean+
 			   'string<? +boolean+
 			   'string=? +boolean+
 			   'string>=? +boolean+
 			   'string>? +boolean+
 			   'string? +boolean+
+			   'sublet +environment+
 			   'substring +string+
 			   'symbol +symbol+
 			   'symbol->string +string+
-			   'symbol? +boolean+
 			   'symbol=? +boolean+
-			   's7-version +string+
+			   'symbol? +boolean+
 			   'tan +number+
 			   'tanh +not-integer+
 			   'truncate +integer+
+			   'varlet +environment+
 			   'vector +vector+
+			   'vector->list +list+
 			   'vector-append +vector+
 			   'vector-dimensions +list+
 			   'vector-length +integer+
 			   'vector-rank +integer+
-			   'vector->list +list+
 			   'vector? +boolean+
 			   'write +unspecified+
 			   'write-char +unspecified+
 			   'write-string +unspecified+
-			   'zero? +boolean+
-			   'dilambda? +boolean+))
-      (argument-data (hash-table*
+			   'zero? +boolean+))
+	  (argument-data (hash-table*
 			  '* number?
 			  '+ number?
 			  '- number?
+			  '->bytevector string?
 			  '/ number?
 			  '< real?
 			  '<= real?
 			  '= number?
 			  '> real?
 			  '>= real?
-			  '->bytevector string?
 			  'abs number?
 			  'acos number?
 			  'acosh number?
@@ -481,7 +495,9 @@
 			  'close-environment environment?
 			  'cos number?
 			  'cosh number?
+			  'coverlet environment?
 			  'denominator rational?
+			  'dilambda procedure?
 			  'dynamic-wind (list thunk? thunk? thunk?)
 			  'environment->list (list environment?)
 			  'environment-ref (list environment? symbol?)
@@ -495,12 +511,13 @@
 			  'fill! (list sequence?)
 			  'float-vector real?
 			  'floor real?
+			  'funclet procedure?
 			  'gc boolean?
 			  'gcd (list real? real?)
 			  'gensym string?
+			  'hash-table-entries hash-table?
 			  'hash-table-ref (list hash-table?)
 			  'hash-table-set! (list hash-table?)
-			  'hash-table-entries hash-table?
 			  'hash-table-size hash-table?
 			  'imag-part number?
 			  'inexact->exact real?
@@ -513,6 +530,9 @@
 			  'keyword->symbol keyword?
 			  'lcm (list real? real?)
 			  'length sequence?
+			  'let->list (list environment?)
+			  'let-ref (list environment? symbol?)
+			  'let-set! (list environment? symbol?)
 			  'list->string list?
 			  'list->vector list?
 			  'list-ref (list pair-or-null? non-negative-integer?)
@@ -531,7 +551,6 @@
 			  'make-hook (list list? string?)
 			  'make-list (list non-negative-integer?)
 			  'make-polar real?
-			  'dilambda procedure?
 			  'make-rectangular real?
 			  'make-string (list non-negative-integer? char?)
 			  'max real?
@@ -545,9 +564,13 @@
 			  'open-environment environment?
 			  'open-input-file (list string? string?)
 			  'open-input-string string?
+			  'openlet environment?
 			  'open-output-file (list string? string?)
 			  'outer-environment environment?
+			  'outlet environment?
 			  'output-port? port?
+			  'pair-line-number pair?
+			  'port-closed? port?
 			  'positive? real?
 			  'procedure-documentation procedure?
 			  'procedure-environment procedure?
@@ -556,8 +579,6 @@
 			  'provide symbol?
 			  'provided? symbol?
 			  'quotient (list real? real?)
-			  'pair-line-number pair?
-			  'port-closed? port?
 			  'random (list number? random-state?)
 			  'rationalize (list real? real?)
 			  'real-part number?
@@ -572,8 +593,6 @@
 			  'sort! (list sequence? procedure?)
 			  'sqrt number?
 			  'string char?
-			  'string-downcase string?
-			  'string-upcase string?
 			  'string->list string?
 			  'string->number (list string? integer-between-2-and-16?)
 			  'string->symbol string?
@@ -584,11 +603,13 @@
 			  'string-ci>=? string?
 			  'string-ci>? string?
 			  'string-copy string?
+			  'string-downcase string?
 			  'string-fill! (list string? char? non-negative-integer? non-negative-integer?)
 			  'string-length string?
 			  'string-position (list string? string?)
 			  'string-ref (list non-null-string? non-negative-integer?)
 			  'string-set! (list non-null-string? non-negative-integer? char?)
+			  'string-upcase string?
 			  'string<=? string?
 			  'string<? string?
 			  'string=? string?
@@ -619,6 +640,27 @@
 			  'write-char (list char?)
 			  'write-string (list string?)
 			  'zero? number?))
+
+	  (deprecated-ops '((environment? . let?)
+			    (global-environment . rootlet)
+			    (initial-environment . unlet)
+			    (with-environment . with-let)
+			    (outer-environment . outlet)
+			    (augment-environment . sublet)
+			    (augment-environment! . varlet)
+			    (current-environment . curlet)
+			    (error-environment . owlet)
+			    (procedure-environment . funclet)
+			    (environment->list . let->list)
+			    (open-environment . openlet)
+			    (open-environment? . openlet?)
+			    (close-environment . coverlet)
+			    (environment-ref . let-ref)
+			    (environment-set! . let-set!)
+			    (environment . inlet)
+			    (environment* . inlet)
+			    (make-procedure-with-setter . dilambda)
+			    (procedure-with-setter? . dilambda?)))
 	  
 	  (numeric-ops (let ((h (make-hash-table)))
 			 (for-each
@@ -723,7 +765,7 @@
 	      ((eq? c #<unspecified>) +unspecified+)
 	      ((boolean? c) +boolean+)
 	      ((symbol? c) +symbol+)
-	      ((environment? c) +environment+)
+	      ((let? c) +environment+)
 	      ((hash-table? c) +hash-table+)
 	      ((or (input-port? c) (output-port? c)) +port+)
 	      ((pair? c)
@@ -1254,7 +1296,7 @@
 	       (or (char-op? b)
 		   (number-op? b)
 		   (string-op? b)))
-	      ((boolean? procedure? symbol? continuation? environment?)
+	      ((boolean? procedure? symbol? continuation? environment? let?)
 	       (or (char-op? b)
 		   (number-op? b)
 		   (list-op? b)
@@ -2568,7 +2610,7 @@
 				 (for-each 
 				  (lambda (obj)
 				    (if (and (pair? obj)
-					     (memq (car obj) '(vector->list string->list environment->list)))
+					     (memq (car obj) '(vector->list string->list let->list environment->list)))
 					(lint-format "~A could be simplified to: ~A ; (~A accepts non-list sequences)" 
 						     name
 						     (truncated-list->string obj) 
@@ -2763,6 +2805,7 @@
 	    (lint-format "stray dot? ~A" name (truncated-list->string body))
 	    
 	    (let ((ctr 0)
+		  (prev-f #f)
 		  (len (length body)))
 	      (if (eq? head 'do) (set! len (+ len 1))) ; last form in do body is not returned
 
@@ -2775,7 +2818,14 @@
 			   (lint-format "map could be for-each:~A" name (truncated-list->string f)))
 		       
 		       (if (not (side-effect? f env))
+			   (lint-format "this could be omitted:~A" name (truncated-list->string f))))
+		     (begin
+		       (if (and (pair? prev-f)
+				(eq? (car prev-f) 'set!)
+				(equal? (caddr prev-f) f)
+				(not (side-effect? f env)))
 			   (lint-format "this could be omitted:~A" name (truncated-list->string f)))))
+		 (set! prev-f f)
 		 
 		 (if (and (pair? f)
 			  (memq head '(defmacro defmacro* define-macro define-macro* define-bacro define-bacro*))
@@ -3543,8 +3593,8 @@
 			     (report-usage name 'variable head vars))))
 		     env)
 
-		    ;; -------- with-environment --------
-		    ((with-environment with-let)
+		    ;; -------- with-let --------
+		    ((with-let with-environment)
 		     (if (< (length form) 3)
 			 (lint-format "~A is messed up: ~A" head name (truncated-list->string form))
 			 (begin
@@ -3580,6 +3630,9 @@
 				 (if (not (or (hash-table-ref globals head)
 					      (var-member head env) ))
 				     (check-special-cases name head form env))
+				 (if (assq head deprecated-ops)
+				     (lint-format "~A is deprecated; use ~A" name head (cdr (assq head deprecated-ops))))
+
 				 (if (and *report-minor-stuff*
 					  (not (= line-number last-simplify-numeric-line-number))
 					  ;(pair? (cdr form))

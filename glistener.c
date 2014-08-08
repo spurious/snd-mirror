@@ -1513,7 +1513,6 @@ static gboolean glistener_key_press(GtkWidget *w, GdkEventKey *event, gpointer d
   if ((g->keyer == default_keyer) ||
       (!(g->keyer(g, w, event))))
     {
-      int pos;
       guint key;
       GdkModifierType state;
 
@@ -1646,6 +1645,7 @@ static gboolean glistener_key_press(GtkWidget *w, GdkEventKey *event, gpointer d
 	case GDK_KEY_t:
 	  if (state & ControlMask)
 	    {
+	      int pos;
 	      pos = glistener_cursor_position(g);
 	      if ((!is_prompt_end(g, pos)) &&
 		  (!is_prompt_end(g, pos + g->prompt_length)))
@@ -1700,7 +1700,6 @@ static void post_help(glistener *g, int pos)
   GtkTextIter s1, e1;
   int start = 0, end = 0;
   char *text;
-  const char *help;
 
   if (g->helper == default_helper) return;
 
@@ -1713,6 +1712,7 @@ static void post_help(glistener *g, int pos)
   text = gtk_text_buffer_get_text(g->buffer, &s1, &e1, true);
   if (text)
     {
+      const char *help;
       help = g->helper(g, text);
       if (help)
 	glistener_post_status(g, help);
@@ -1735,7 +1735,7 @@ static void check_for_open_paren_help(glistener *g)
 static gboolean glistener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   glistener *g = (glistener *)data;
-  int cpos, bpos;
+  int cpos;
   GtkTextIter c;
   /* before doing anything, make sure we're not in the prompt! */
 
@@ -1744,6 +1744,7 @@ static gboolean glistener_key_release(GtkWidget *w, GdkEventKey *event, gpointer
     glistener_set_cursor_position(g, g->prompt_length - 1);
   else
     {
+      int bpos;
       bpos = find_current_prompt(g);
       if (cpos < bpos)
 	glistener_set_cursor_position(g, bpos);
@@ -1789,7 +1790,7 @@ static gboolean glistener_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
     glistener_set_cursor_position(g, g->insertion_position);
   else
     {
-      int cpos, bpos;
+      int cpos;
       /* before doing anything, make sure we're not in the prompt! */
 
       cpos = glistener_cursor_position(g);
@@ -1797,6 +1798,7 @@ static gboolean glistener_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 	glistener_set_cursor_position(g, g->prompt_length - 1);
       else
 	{
+	  int bpos;
 	  bpos = find_current_prompt(g);
 	  if (cpos < bpos)
 	    glistener_set_cursor_position(g, bpos);
@@ -2164,9 +2166,7 @@ static void glistener_return_callback(glistener *g)
 static char *filename_completion(glistener *g, const char *partial_name)
 {
   char *file_name = NULL, *directory_name = NULL, *temp, *new_name = NULL, *slash, *current_match = NULL, *result = NULL;
-  const char *rname;
-  int j, len = 0, flen, matches = 0;
-  GDir *dir;
+  int len = 0, flen, matches = 0;
 
   if (partial_name[0] == '~')
     {
@@ -2211,9 +2211,11 @@ static char *filename_completion(glistener *g, const char *partial_name)
 
   if ((directory_name) && (file_name))
     {
+      GDir *dir;
       dir = g_dir_open(directory_name, 0, NULL);
       while (true)
 	{
+	  const char *rname;
 	  rname = g_dir_read_name(dir);
 	  if (!rname) break;
 	  if (strncmp(rname, file_name, flen) == 0)
@@ -2228,6 +2230,7 @@ static char *filename_completion(glistener *g, const char *partial_name)
 		}
 	      else 
 		{
+		  int j;
 		  matches++;
 		  for (j = 0; j < len; j++)
 		    if (current_match[j] != rname[j])
@@ -2350,12 +2353,13 @@ static void glistener_completion(glistener *g, int pos)
    * when key release, also perhaps look for possible completions (with list if > 1) 
    */
   
-  char *text, *new_name;
+  char *text;
   bool in_string = false;
   
   text = get_preceding_text(g, pos, &in_string);
   if ((text) && (*text))
     {
+      char *new_name;
       if (!in_string)
 	new_name = symbol_completion(g, text);
       else new_name = filename_completion(g, text);

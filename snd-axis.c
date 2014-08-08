@@ -58,7 +58,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
   tick_descriptor *td;
   int ten, hib, lob, offset = 0;
   double flog10, plog10;
-  double frac, ften, hilo_diff, eten, flt_ten, flt_ften;
+  double frac, ften, hilo_diff, eten, flt_ten;
   double inside, mfdiv, mten, mften;
   int mticks, mdiv;
 
@@ -99,6 +99,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
     }
   else
     {
+      double flt_ften;
       /* try next lower power of ten */
       ften = eten * .1;
       flt_ften = (hi / ften);
@@ -1917,7 +1918,6 @@ static Xen g_set_y_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
   chan_info *cp;
   axis_info *ap;
   mus_float_t low = 0.0, hi = 0.0;
-  int len = 0;
   Xen y0 = Xen_undefined, y1 = Xen_undefined;
 
   Snd_assert_channel(S_setB S_y_bounds, snd, chn, 2);
@@ -1935,6 +1935,7 @@ static Xen g_set_y_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
     }
   else
     {
+      int len;
       len = Xen_list_length(bounds);
       if (len > 0)
 	{

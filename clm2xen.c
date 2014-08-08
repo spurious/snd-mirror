@@ -2541,7 +2541,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
   Xen keys[9];
   Xen xen_filt = Xen_false;
   int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_NONE, 0};
-  int vals, i, argn = 0, len = 0, arglist_len;
+  int vals, i, argn = 0, len = 0;
   mus_long_t max_size = -1, size = -1;
   int interp_type = (int)MUS_INTERP_NONE;
   mus_float_t *line = NULL;
@@ -2577,6 +2577,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 
   {
     Xen p;
+    int arglist_len;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 18) clm_error(caller, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
@@ -3641,7 +3642,7 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
-  int i, vals, arglist_len;
+  int i, vals;
   mus_float_t freq, base = 1.0;
   mus_float_t *distribution = NULL;
   vct *v = NULL;
@@ -3657,6 +3658,7 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
   keys[4] = kw_size;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(caller, "too many args!", arglist);
@@ -4019,7 +4021,7 @@ The default table size is 512; use :size to set some other size, or pass your ow
 is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice which defaults to " S_mus_interp_linear "."
 
   mus_any *ge;
-  int vals, i, arglist_len;
+  int vals, i;
   mus_long_t table_size = clm_table_size;
   Xen args[10];
   Xen keys[5];
@@ -4039,6 +4041,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   keys[4] = kw_type;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_table_lookup, "too many args!", arglist);
@@ -4908,7 +4911,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
-  int vals, i, arglist_len;
+  int vals, i;
   mus_long_t wsize = clm_table_size;
   vct *v = NULL;
   Xen orig_v = Xen_false;
@@ -4926,6 +4929,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 
   {
     Xen p;
+    int arglist_len;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_wave_train, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
@@ -5434,7 +5438,6 @@ is the same in effect as " S_make_oscil
 
   mus_any *ge;
   Xen args[10];
-  int arglist_len;
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
   int i, ck, vals, csize = 0, npartials = 0;
@@ -5461,6 +5464,7 @@ is the same in effect as " S_make_oscil
   keys[4] = kw_kind;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_polyshape, "too many args!", arglist);
@@ -5565,7 +5569,6 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 
   mus_any *ge;
   Xen args[10];
-  int arglist_len;
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
   int i, type, vals, n = 0, npartials = 0;
@@ -5585,6 +5588,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
   keys[4] = kw_y_coeffs;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_polywave, "too many args!", arglist);
@@ -5728,7 +5732,7 @@ static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
   Xen args[8];
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
-  int vals, i, arglist_len;
+  int vals, i;
   mus_float_t freq, r = 0.5, ratio = 1.0;
   int n = 1;
 
@@ -5740,6 +5744,7 @@ static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
   keys[3] = kw_r;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 8) clm_error(caller, "too many args!", arglist);
@@ -5843,7 +5848,7 @@ static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
   Xen args[6];
   Xen keys[3];
   int orig_arg[3] = {0, 0, 0};
-  int vals, i, arglist_len;
+  int vals, i;
   mus_float_t freq, r = 0.5, ratio = 1.0; /* original in generators.scm assumes initial-phase = 0.0 */
 
   freq = clm_default_frequency;
@@ -5853,6 +5858,7 @@ static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
   keys[2] = kw_r;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 6) clm_error(caller, "too many args!", arglist);
@@ -6180,7 +6186,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   Xen args[14];
   Xen keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
-  int vals, i, len = 0, arglist_len;
+  int vals, i, len = 0;
   mus_float_t base = 1.0, scaler = 1.0, offset = 0.0, duration = 0.0;
   mus_long_t end = 0, dur = -1;
   int npts = 0;
@@ -6197,6 +6203,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   keys[6] = kw_length;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 14) clm_error(S_make_env, "too many args!", arglist);
@@ -7329,7 +7336,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
-  int i, vals, arglist_len;
+  int i, vals;
   mus_long_t buffer_size;
   int channel = 0, direction = 1;
   mus_long_t start = 0;
@@ -7344,6 +7351,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   /* this is only 8192! (clm.h MUS_DEFAULT_FILE_BUFFER_SIZE) */
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_readin, "too many args!", arglist);
@@ -7626,7 +7634,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   Xen ov = Xen_undefined, rv = Xen_undefined;
   Xen keys3 = Xen_undefined, keys4 = Xen_undefined;
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
-  int vals, i, arglist_len, out_chans = -1, rev_chans = -1;
+  int vals, i, out_chans = -1, rev_chans = -1;
   mus_interp_t type;
   mus_float_t degree = 0.0, distance = 1.0, reverb = 0.0;
 
@@ -7641,6 +7649,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   keys[6] = kw_type;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 14) clm_error(S_make_locsig, "too many args!", arglist);
@@ -8384,7 +8393,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   Xen args[18];
   Xen keys[9];
   int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int vals, i, arglist_len, maxsize = 0;
+  int vals, i, maxsize = 0;
   mus_float_t expansion = 1.0, segment_length = .15, segment_scaler = .6, ramp_time = .4, output_hop = .05;
   mus_float_t jitter = 1.0;
   Xen edit_obj = Xen_undefined, grn_obj;
@@ -8400,6 +8409,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   keys[8] = kw_edit;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 18) clm_error(S_make_granulate, "too many args!", arglist);
@@ -8521,7 +8531,7 @@ return a new convolution generator which convolves its input with the impulse re
   Xen args[6];
   Xen keys[3];
   int orig_arg[3] = {0, 0, 0};
-  int vals, i, arglist_len;
+  int vals, i;
   vct *filter = NULL;
   Xen filt = Xen_undefined, in_obj = Xen_undefined;
   mus_long_t fftlen, fft_size = 0;
@@ -8531,6 +8541,7 @@ return a new convolution generator which convolves its input with the impulse re
   keys[2] = kw_fft_size;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 6) clm_error(S_make_convolve, "too many args!", arglist);
@@ -8763,7 +8774,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   Xen keys[8];
   Xen pv_obj;
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  int vals, arglist_len, i;
+  int vals, i;
   int fft_size = 512, overlap = 4, interp = 128;
   mus_float_t pitch = 1.0;
 
@@ -8777,6 +8788,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   keys[7] = kw_synthesize;
 
   {
+    int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 16) clm_error(S_make_phase_vocoder, "too many args!", arglist);
@@ -10136,7 +10148,7 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
   s7_Int *step, *stop;
   mus_float_t *d;
 
-  /* args (harmonicizer in dsp.scm): (40 (let* ((sig (bandpass bp (vct-ref indata k))) ...)) #<environment ...>)
+  /* args (harmonicizer in dsp.scm): (40 (let* ((sig (bandpass bp (vct-ref indata k))) ...)) #<let ...>)
    *     (harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
    */
   /* fprintf(stderr, "%s\n", DISPLAY(args)); */
@@ -13490,10 +13502,6 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
       if (g3) gf_free(g3);
       if (g4) gf_free(g4);
     }
-
-#if PRINTING
-  fprintf(stderr, "+|*: %d %s\n", __LINE__, DISPLAY(expr));
-#endif
   return(NULL);
 }
 

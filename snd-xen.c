@@ -394,20 +394,20 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 #if HAVE_SCHEME
   if (handler == NULL)
     s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) ())");
-  else s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) (list               \n\
-                               (lambda (hook)                                        \n\
-                                 (let ((args (hook 'data)))                          \n\
-                                 (_snd_s7_error_handler_                             \n\
-                                   (string-append                                    \n\
-                                     (if (string? args)                              \n\
-                                         args                                        \n\
-                                         (if (pair? args)                            \n\
-                                             (apply format #f args)                  \n\
-                                             \"\"))                                  \n\
-                                     (with-environment (error-environment)           \n\
-                                       (if (and error-code                           \n\
-                                                (string? error-file)                 \n\
-                                                (number? error-line))                \n\
+  else s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) (list  \n\
+                               (lambda (hook)                           \n\
+                                 (let ((args (hook 'data)))             \n\
+                                 (_snd_s7_error_handler_                \n\
+                                   (string-append                       \n\
+                                     (if (string? args)                 \n\
+                                         args                           \n\
+                                         (if (pair? args)               \n\
+                                             (apply format #f args)     \n\
+                                             \"\"))                     \n\
+                                     (with-let (owlet)                  \n\
+                                       (if (and error-code              \n\
+                                                (string? error-file)    \n\
+                                                (number? error-line))   \n\
                                            (format #f \"~%~S[~D]: ~A~%\" error-file error-line error-code) \n\
                                            \"\"))))))))");
 #endif
@@ -643,7 +643,6 @@ char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name,
 {
   /* if string returned, needs to be freed */
   /* 0 args is special => "thunk" meaning in this case that optional args are not ok (applies to as-one-edit and two menu callbacks) */
-  Xen arity;
   int rargs;
 
   if (!(Xen_is_procedure(proc)))
@@ -662,6 +661,7 @@ char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name,
     }
   else
     {
+      Xen arity;
       arity = Xen_arity(proc);
 
 #if HAVE_RUBY
@@ -2974,9 +2974,9 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
                   (= (length name) 0))\
               (error 'wrong-type-arg \"apropos argument should be a non-nil string\")\
               (begin \
-                 (if (not (eq? (current-environment) (global-environment)))\
-                     (for-each apropos-1 (environment->list (current-environment)))) \
-                 (apropos-1 (global-environment)))))");
+                 (if (not (eq? (curlet) (rootlet)))\
+                     (for-each apropos-1 (let->list (curlet)))) \
+                 (apropos-1 (rootlet)))))");
 
   Xen_eval_C_string("\
 (define break-ok #f)\
@@ -2992,7 +2992,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 		      (set! saved-listener-prompt (listener-prompt)))))\
 \
 (define-macro (break)\
-  `(let ((__break__ (current-environment)))\
+  `(let ((__break__ (curlet)))\
      (break-enter)\
      (set! (listener-prompt) (format #f \"~A>\" (if (defined? __func__) __func__ 'break)))\
      (call/cc\

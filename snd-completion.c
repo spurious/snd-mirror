@@ -708,7 +708,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	      new_text = (char *)calloc(len, sizeof(char));
 	      strncpy(new_text, old_text, i + 1);
 	      strcat(new_text, new_file);
-	      if (new_file) free(new_file);
+	      free(new_file);
 	    }
 	  break;
 	}

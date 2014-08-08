@@ -281,6 +281,6 @@
 (define* (big-one-pole gen x)
   (let ((val (- (* x (gen 'a0))
 		(* (gen 'y1) (gen 'b1)))))
-    (set! (gen 'y1) val)
-    val))
+    (set! (gen 'y1) val)))
+
 

@@ -1018,7 +1018,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 {
   /* we know we have checked for FORM xxxx AIFF|AIFC when we arrive here */
   /* as far as I can tell, the COMM block has the header data we seek, and the SSND block has the sound data */
-  int chunksize, chunkloc, i, ssnd_bytes = 0;
+  int chunkloc, i, ssnd_bytes = 0;
   bool happy = true, got_comm = false;
   mus_long_t offset = 0;
 
@@ -1040,6 +1040,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 
   while (happy)
     {
+      int chunksize;
       offset += chunkloc;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	{

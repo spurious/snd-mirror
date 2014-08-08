@@ -1807,7 +1807,7 @@ mus_clip_handler_t *mus_clip_set_handler_and_checker(mus_clip_handler_t *new_cli
 static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, char *inbuf, bool clipped)
 {
   int err, siz, siz_chans, data_format, val;
-  mus_long_t bytes, k, lim, leftover, loc, oldloc, buflim;
+  mus_long_t bytes, k, lim, leftover, loc, buflim;
   bool clipping = false;
   unsigned char *jchar;
   static char *ur_charbuf = NULL;
@@ -1863,6 +1863,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 
   while (leftover > 0)
     {
+      int oldloc;
       bytes = leftover;
       if (bytes > buflim) 
 	{
@@ -2207,6 +2208,10 @@ char *mus_getcwd(void)
   return(pwd);
 }
 
+#if HAVE_EXTENSION_LANGUAGE
+#include "sndlib2xen.h"
+/* for g_mus_sound_path */
+#endif
 
 char *mus_expand_filename(const char *filename)
 {

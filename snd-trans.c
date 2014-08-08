@@ -885,7 +885,7 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
 
 static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, int type)
 {
-  int fs = -1, fd = -1, chans, srate, blksiz, samps, samps_read;
+  int fs = -1, fd = -1, chans, srate, blksiz, samps;
   unsigned char *buf = NULL;
   mus_long_t loc;
   loc = mus_sound_data_location(oldname);
@@ -908,6 +908,7 @@ static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, i
   lseek(fd, loc, SEEK_SET);
   while (samps > 0)
     {
+      int samps_read;
       ssize_t totalin;
       totalin = read(fd, buf, blksiz);
       if (totalin < blksiz) break;
@@ -966,7 +967,7 @@ static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat)
 
 static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
 {
-  int fs = -1, fd = -1, i, j, chans, srate, blksiz, samps, samps_read;
+  int fs = -1, fd = -1, i, j, chans, srate, blksiz, samps;
   unsigned char *buf = NULL;
   mus_long_t loc;
   short *buf1;
@@ -997,6 +998,7 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
   stat.step_index = 0;
   while (samps > 0)
     {
+      int samps_read;
       ssize_t totalin;
       totalin = read(fd, buf, blksiz);
       if (totalin <= 0) break;

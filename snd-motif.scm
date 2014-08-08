@@ -255,8 +255,7 @@
 	  (let ((zy ((channel-widgets snd chn) 6)))
 	    (XtRemoveCallback zy XmNdragCallback (car calls))
 	    (set! calls (cdr calls))))))
-  (set! (sound-property 'dragger snd) #f)
-  #f)
+  (set! (sound-property 'dragger snd) #f))
 
 (define (add-dragger hook)
   "(add-dragger snd) syncs together y-zoom sliders"
@@ -2302,8 +2301,7 @@
 	(dpy (XtDisplay (cadr (main-widgets))))
 	(happy #t))
     (XSetErrorHandler (lambda (dpy err)
-			(set! happy #f)
-			#f))
+			(set! happy #f)))
     (while happy
       (let ((name (XGetAtomName dpy (list 'Atom i))))
 	(if (string? name)

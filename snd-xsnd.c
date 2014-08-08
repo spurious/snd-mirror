@@ -1629,7 +1629,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   snd_info *sp = NULL, *osp;
   Widget *sw;
   XmString s1;
-  int snd_slot, nchans = 1, i, k, n, old_chans;
+  int snd_slot, nchans = 1, i, old_chans;
   bool make_widgets;
   Arg args[32];
   char *old_name = NULL, *title;
@@ -1693,6 +1693,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
   if (make_widgets)
     {
+      int n;
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
@@ -2626,6 +2627,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     } /* new sound ss */
   else
     { /* re-manage currently inactive chan */
+      int k;
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));

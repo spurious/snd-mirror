@@ -445,8 +445,7 @@
 			     (/ (* 2.0 sum2 (factorial n)
 				   (if (= (modulo n 4) 0) -1 1))
 				(expt (* 2.0 pi) n))))))
-	    (set! (saved-values n) value)
-	    value)))))
+	    (set! (saved-values n) value))))))
 
 (define (bernoulli-poly n x)
   (let ((fact 1.0)

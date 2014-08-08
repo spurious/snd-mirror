@@ -7793,7 +7793,7 @@ int main(int argc, char **argv)
    *   accessible from Scheme via the global variable "lib-exports"
    */
   
-  new_env = <em class=red>s7_augment_environment</em>(s7, s7_current_environment(s7), s7_nil(s7));
+  new_env = <em class=red>s7_inlet</em>(s7, s7_curlet(s7), s7_nil(s7));
   /* make a private environment for func1 and var1 below (this is our "namespace") */
   s7_gc_protect(s7, new_env);
 
@@ -7805,7 +7805,7 @@ int main(int argc, char **argv)
   /* those two symbols are now defined in the new environment */
 
   /* add "lib-exports" to the global environment */
-  s7_define_variable(s7, "lib-exports", <em class=red>s7_environment_to_list</em>(s7, new_env));
+  s7_define_variable(s7, "lib-exports", <em class=red>s7_let_to_list</em>(s7, new_env));
 
   if (argc == 2)
     {

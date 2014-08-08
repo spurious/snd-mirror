@@ -869,7 +869,6 @@ GtkWidget *make_transform_dialog(bool managed)
       GtkWidget *display_frame, *help_button, *dismiss_button;
       GtkWidget *color_button;
       GtkWidget *se_box, *se_frame, *se_label;
-      GtkWidget *alpha_box, *beta_box;
       GtkWidget *end_box, *end_label, *start_box, *start_label;
 
 #if HAVE_GTK_3
@@ -1091,6 +1090,7 @@ GtkWidget *make_transform_dialog(bool managed)
       /* ALPHA/BETA */
 
       {
+	GtkWidget *alpha_box, *beta_box;
 	GtkWidget *alpha_scale, *beta_scale, *ab_box, *ab_frame, *ab_label;
 	ab_frame = gtk_frame_new(NULL);
 	gtk_table_attach_defaults(GTK_TABLE(outer_table), ab_frame, 0, 6, 12, 14);

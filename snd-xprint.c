@@ -108,7 +108,6 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
   else
     {
       bool print_it;
-      char *str = NULL;
 
       clear_print_error();
       if (ss->print_choice == PRINT_SND)
@@ -131,7 +130,6 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 
       if (print_it)
 	{
-	  int err = 0;
 	  char *name;
 	  name = snd_tempnam();
 
@@ -149,6 +147,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  redirect_snd_error_to(NULL, NULL);
 	  if (!print_error)
 	    {
+	      int err;
 	      err = lpr(name); /* lpr apparently insists on printing to stderr? */
 	      if (err != 0)
 		report_in_error_info("can't print!", NULL);
@@ -158,6 +157,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	}
       else 
 	{
+	  char *str = NULL;
 	  redirect_snd_error_to(report_in_error_info, NULL);
 	  str = XmTextGetString(print_name);
 	  switch (ss->print_choice)

@@ -128,7 +128,6 @@ int update_region_browser(bool grf_too)
 {
   int i, len;
   region_state *rs;
-  chan_info *cp;
 
   rs = region_report();
   len = rs->len;
@@ -154,6 +153,7 @@ int update_region_browser(bool grf_too)
   XtManageChild(region_list);
   if (grf_too)
     {
+      chan_info *cp;
       unhighlight_region();
       set_current_region(0);
       highlight_region();
