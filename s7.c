@@ -5730,14 +5730,6 @@ s7_pointer s7_sublet(s7_scheme *sc, s7_pointer e, s7_pointer bindings)
   return(sublet_1(sc, e, bindings, sc->SUBLET));
 }
 
-/* sublet keeps the env-chain intact, but environment (with the same args) does not.
- *   (see below -- arg1 is global-env)
- */
-
-
-/* currently (eval 'a (sublet () '(a . 1) '(a . 2))) -> 2,
- *   but should it be an error?
- */
 
 static s7_pointer g_sublet(s7_scheme *sc, s7_pointer args)
 {
@@ -46907,6 +46899,7 @@ static s7_pointer check_let(s7_scheme *sc)
   s7_pointer x;
   bool named_let;
   int vars;
+  /* fprintf(stderr, "check_let: %s\n", DISPLAY(sc->code)); */
 
   if (!is_pair(sc->code))               /* (let . 1) */
     {
@@ -52873,6 +52866,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
       if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	{
+	  /* fprintf(stderr, "    lift: %s\n", DISPLAY_80(sc->code)); */
 	  sc->cur_code = sc->code;                /* in case an error occurs, this helps tell us where we are */
 	  /* sc->op = (opcode_t)syntax_opcode(car(sc->code)); */
 	  sc->op = (opcode_t)lifted_op(sc->code);
@@ -57962,8 +57956,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		/* if we hit this branch a lot, there's a bug somewhere!  Probably a check for is_syntactic at
 		 *   optimization time that missed something that had not been lifted.
+		 *
+		 * But in any case, if the lifted op indicates optimization, it should be cleared.
 		 */
 		set_type(code, SYNTACTIC_PAIR);
+		car(code) = car(slot_value(global_slot(carc))); /* clear possible optimization confusion */
+		carc = car(code);
 		sc->op = (opcode_t)syntax_opcode(carc);
 		/* fprintf(stderr, "set %s to %lld %s\n", DISPLAY(sc->code), sc->op, real_op_names[sc->op]); */
 		lifted_op(code) = sc->op;
@@ -58164,7 +58162,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = sc->value;
       sc->code = c_function_base(ecdr(sc->code));
       goto APPLY;
-
 
       
       /* --------------- */
@@ -61705,6 +61702,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_C:
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        */
+      if ((sc->code == NULL) ||
+	  (fcdr(sc->code) == NULL) ||
+	  (gcdr(sc->code) == NULL))
+	{
+	  fprintf(stderr, "%d: %p %p %p\n", __LINE__, sc->code, fcdr(sc->code), gcdr(sc->code));
+	  abort();
+	}
       NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), fcdr(sc->code));
       sc->code = cdr(sc->code);
       if (is_pair(cdr(sc->code)))
@@ -62751,7 +62755,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * (hi 2)
        * here with value: (+ 2 1)
        */
-      /* fprintf(stderr, "eval_macro: %s\n", DISPLAY(sc->value)); */
+      /* fprintf(stderr, "eval_macro: %s %d\n", DISPLAY(sc->value), sc->value == sc->NO_VALUE); */
 
       if (is_multiple_value(sc->value))
 	{
@@ -69844,6 +69848,7 @@ s7_scheme *s7_init(void)
   sc->error_hook = s7_eval_c_string(sc, "(make-hook 'type 'data)");
   s7_define_constant_with_documentation(sc, "*error-hook*", sc->error_hook, "*error-hook* functions are called in the error handler, passed (hook 'type) and (hook 'data).");
   
+#if (!DISABLE_DEPRECATED)
   s7_eval_c_string(sc, "(define environment? let?)                  \n\
                         (define global-environment rootlet)         \n\
                         (define-constant initial-environment unlet) \n\
@@ -69863,7 +69868,7 @@ s7_scheme *s7_init(void)
                         (define environment* inlet)                 \n\
                         (define make-procedure-with-setter dilambda)\n\
                         (define procedure-with-setter? dilambda?)");
-
+#endif
 
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
   /* 64 bit machine: size: 48 [size 72 if gmp], op: 324, opt: 430 */

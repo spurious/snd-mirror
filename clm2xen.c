@@ -1487,9 +1487,9 @@ static Xen mus_xen_apply(Xen gen, Xen arg1, Xen arg2)
 
 static Xen mus_xen_apply(s7_scheme *sc, Xen gen, Xen args)
 {
-  mus_float_t arg1, arg2;
   if (s7_is_pair(args))
     {
+      mus_float_t arg1, arg2;
       arg1 = s7_number_to_real_with_caller(sc, s7_car(args), "mus-apply");
       args = s7_cdr(args);
       if (s7_is_pair(args))
@@ -2541,7 +2541,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
   Xen keys[9];
   Xen xen_filt = Xen_false;
   int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_NONE, 0};
-  int vals, i, argn = 0, len = 0;
+  int vals, i, argn = 0;
   mus_long_t max_size = -1, size = -1;
   int interp_type = (int)MUS_INTERP_NONE;
   mus_float_t *line = NULL;
@@ -2551,7 +2551,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
   mus_float_t initial_element = 0.0;
   int scaler_key = -1, feedback_key = -1, feedforward_key = -1, size_key = -1, initial_contents_key = -1;
   int initial_element_key = -1, max_size_key = -1, interp_type_key = -1, filter_key = -1;
-  bool size_set = false, max_size_set = false;
+  bool max_size_set = false;
 
   switch (choice)
     {
@@ -2587,6 +2587,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 
   if (vals > 0)
     {
+      bool size_set = false;
       /* try to catch obvious type/range errors before allocations 
        *   a major complication here is that size can be 0
        */
@@ -2668,6 +2669,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	    {
 	      if (Xen_is_list(keys[initial_contents_key]))
 		{
+		  int len;
 		  len = Xen_list_length(keys[initial_contents_key]);
 		  if (len <= 0) 
 		    Xen_error(NO_DATA,
@@ -2844,7 +2846,7 @@ static Xen g_make_moving_any(xclm_moving_t choice, Xen arglist)
   Xen args[8];
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
-  int vals, i, argn = 0, len = 0, arglist_len;
+  int vals, i, argn = 0, arglist_len;
   mus_long_t size = -1;
   mus_float_t scaler = 1.0, sum = 0.0;
   vct *initial_contents = NULL;
@@ -2852,7 +2854,6 @@ static Xen g_make_moving_any(xclm_moving_t choice, Xen arglist)
   mus_float_t initial_element = 0.0;
   mus_float_t *line = NULL;
   int scaler_key = -1, size_key, initial_contents_key, initial_element_key;
-  bool size_set = false;
   mus_error_handler_t *old_error_handler;
 
   size_key = argn;                 
@@ -2875,6 +2876,7 @@ static Xen g_make_moving_any(xclm_moving_t choice, Xen arglist)
 
   if (vals > 0)
     {
+      bool size_set = false;
       if (!(Xen_is_keyword(keys[size_key])))
 	{
 	  size = Xen_optkey_to_mus_long_t(kw_size, keys[size_key], caller, orig_arg[size_key], size); /* size can  be 0? -- surely we need a line in any case? */
@@ -2905,6 +2907,7 @@ static Xen g_make_moving_any(xclm_moving_t choice, Xen arglist)
 	    {
 	      if (Xen_is_list(keys[initial_contents_key]))
 		{
+		  int len;
 		  len = Xen_list_length(keys[initial_contents_key]);
 		  if (len <= 0) 
 		    Xen_error(NO_DATA,
@@ -3642,10 +3645,9 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
-  int i, vals;
+  int vals;
   mus_float_t freq, base = 1.0;
   mus_float_t *distribution = NULL;
-  vct *v = NULL;
   Xen orig_v = Xen_false;
   int distribution_size = RANDOM_DISTRIBUTION_TABLE_SIZE;
 
@@ -3658,7 +3660,7 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
   keys[4] = kw_size;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(caller, "too many args!", arglist);
@@ -3701,6 +3703,7 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
 	      Xen_check_type(mus_is_vct(keys[3]) || Xen_is_false(keys[3]), keys[3], orig_arg[3], caller, "a " S_vct);
 	      if (mus_is_vct(keys[3]))
 		{
+		  vct *v = NULL;
 		  orig_v = keys[3];
 		  v = mus_optkey_to_vct(orig_v, caller, orig_arg[3], NULL);
 		  distribution_size = mus_vct_length(v);
@@ -3924,8 +3927,8 @@ static Xen g_phase_partials_to_wave(Xen partials, Xen utable, Xen normalize)
 {
   vct *f;
   Xen table, lst;
-  mus_float_t *partial_data = NULL, *wave;
-  mus_long_t len = 0, i;
+  mus_float_t *partial_data = NULL;
+  mus_long_t len = 0;
   bool partials_allocated = true;
 #if HAVE_SCHEME
   int gc_loc;
@@ -3977,6 +3980,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if ((!Xen_is_bound(utable)) || (!(mus_is_vct(utable))))
     {
+      mus_float_t *wave;
       wave = (mus_float_t *)calloc(clm_table_size, sizeof(mus_float_t));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table", S_phase_partials_to_wave));
@@ -3992,6 +3996,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (!partial_data)
     {
+      int i;
       partial_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
       if (partial_data == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table", S_phase_partials_to_wave));
@@ -4021,14 +4026,13 @@ The default table size is 512; use :size to set some other size, or pass your ow
 is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice which defaults to " S_mus_interp_linear "."
 
   mus_any *ge;
-  int vals, i;
+  int vals;
   mus_long_t table_size = clm_table_size;
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
   mus_float_t freq, phase = 0.0;
   mus_float_t *table = NULL;
-  vct *v = NULL;
   Xen orig_v = Xen_false;
   int interp_type = (int)MUS_INTERP_LINEAR;
 
@@ -4041,7 +4045,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   keys[4] = kw_type;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_table_lookup, "too many args!", arglist);
@@ -4052,6 +4056,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   vals = mus_optkey_unscramble(S_make_table_lookup, 5, keys, args, orig_arg);
   if (vals > 0)
     {
+      vct *v = NULL;
       freq = Xen_optkey_to_float(kw_frequency, keys[0], S_make_table_lookup, orig_arg[0], freq);
       if (freq > (0.5 * mus_srate()))
 	Xen_out_of_range_error(S_make_table_lookup, orig_arg[0], keys[0], "freq > srate/2?");
@@ -4911,9 +4916,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
-  int vals, i;
+  int vals;
   mus_long_t wsize = clm_table_size;
-  vct *v = NULL;
   Xen orig_v = Xen_false;
   mus_float_t freq, phase = 0.0;
   mus_float_t *wave = NULL;
@@ -4929,7 +4933,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 
   {
     Xen p;
-    int arglist_len;
+    int i, arglist_len;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_wave_train, "too many args!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
@@ -4939,6 +4943,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   vals = mus_optkey_unscramble(S_make_wave_train, 5, keys, args, orig_arg);
   if (vals > 0)
     {
+      vct *v = NULL;
       freq = Xen_optkey_to_float(kw_frequency, keys[0], S_make_wave_train, orig_arg[0], freq);
       if (freq > (0.5 * mus_srate()))
 	Xen_out_of_range_error(S_make_wave_train, orig_arg[0], keys[0], "freq > srate/2?");
@@ -5440,8 +5445,7 @@ is the same in effect as " S_make_oscil
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
-  int i, ck, vals, csize = 0, npartials = 0;
-  vct *v = NULL;
+  int vals, csize = 0, npartials = 0;
   Xen orig_v = Xen_false;
   mus_float_t freq, phase = 0.0; 
   /* 
@@ -5452,7 +5456,7 @@ is the same in effect as " S_make_oscil
    *   but these add to exactly the same actual wave -- what you'd expect since Tn doesn't know
    *   where we started.  This also does not affect "signification".
    */
-  mus_float_t *coeffs = NULL, *partials = NULL;
+  mus_float_t *coeffs = NULL;
 
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
   freq = clm_default_frequency;
@@ -5464,7 +5468,7 @@ is the same in effect as " S_make_oscil
   keys[4] = kw_kind;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_polyshape, "too many args!", arglist);
@@ -5475,6 +5479,9 @@ is the same in effect as " S_make_oscil
   vals = mus_optkey_unscramble(S_make_polyshape, 5, keys, args, orig_arg);
   if (vals > 0)
     {
+      vct *v = NULL;
+      int ck;
+
       freq = Xen_optkey_to_float(kw_frequency, keys[0], S_make_polyshape, orig_arg[0], freq);
       if (freq > (0.5 * mus_srate()))
 	Xen_out_of_range_error(S_make_polyshape, orig_arg[0], keys[0], "freq > srate/2?");
@@ -5497,6 +5504,7 @@ is the same in effect as " S_make_oscil
 	{
 	  if (!(Xen_is_keyword(keys[3])))
 	    {
+	      mus_float_t *partials = NULL;
 	      int error = NO_PROBLEM_IN_LIST;
 	      if (mus_is_vct(keys[3]))
 		partials = mus_vct_to_partials(Xen_to_vct(keys[3]), &npartials, &error);
@@ -5571,13 +5579,12 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
-  int i, type, vals, n = 0, npartials = 0;
+  int vals, n = 0, npartials = 0;
   Xen orig_x = Xen_false, orig_y = Xen_false;
   mus_float_t freq; 
   mus_float_t *xcoeffs = NULL, *ycoeffs = NULL, *partials = NULL;
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
   int error = NO_PROBLEM_IN_LIST;
-  vct *v;
 
   freq = clm_default_frequency;
 
@@ -5588,7 +5595,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
   keys[4] = kw_y_coeffs;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_polywave, "too many args!", arglist);
@@ -5599,6 +5606,8 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
   vals = mus_optkey_unscramble(S_make_polywave, 5, keys, args, orig_arg);
   if (vals > 0)
     {
+      vct *v;
+      int type;
       freq = Xen_optkey_to_float(kw_frequency, keys[0], S_make_polywave, orig_arg[0], freq);
       if (freq > (0.5 * mus_srate()))
 	Xen_out_of_range_error(S_make_polywave, orig_arg[0], keys[0], "freq > srate/2?");
@@ -5732,7 +5741,7 @@ static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
   Xen args[8];
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
-  int vals, i;
+  int vals;
   mus_float_t freq, r = 0.5, ratio = 1.0;
   int n = 1;
 
@@ -5744,7 +5753,7 @@ static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
   keys[3] = kw_r;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 8) clm_error(caller, "too many args!", arglist);
@@ -5848,7 +5857,7 @@ static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
   Xen args[6];
   Xen keys[3];
   int orig_arg[3] = {0, 0, 0};
-  int vals, i;
+  int vals;
   mus_float_t freq, r = 0.5, ratio = 1.0; /* original in generators.scm assumes initial-phase = 0.0 */
 
   freq = clm_default_frequency;
@@ -5858,7 +5867,7 @@ static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
   keys[2] = kw_r;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 6) clm_error(caller, "too many args!", arglist);
@@ -6006,7 +6015,6 @@ static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen 
 {
   Xen xwave = Xen_undefined, ywave = Xen_undefined;
   mus_any *fgen = NULL;
-  mus_xen *gn = NULL;
   Xen args[8]; 
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
@@ -6119,6 +6127,7 @@ static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen 
     }
   if (fgen)
     {
+      mus_xen *gn = NULL;
       gn = mx_alloc(3);
       gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
       gn->vcts[G_FILTER_STATE] = xen_make_vct_wrapper(order, mus_data(fgen));
@@ -6186,12 +6195,11 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   Xen args[14];
   Xen keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
-  int vals, i, len = 0;
+  int vals, i;
   mus_float_t base = 1.0, scaler = 1.0, offset = 0.0, duration = 0.0;
   mus_long_t end = 0, dur = -1;
   int npts = 0;
   mus_float_t *brkpts = NULL;
-  Xen lst;
   vct *v = NULL;
 
   keys[0] = kw_envelope;
@@ -6237,6 +6245,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(Xen_is_keyword(keys[0])))
         {
+	  int len;
 	  Xen vect = XEN_NULL;
 	  if (mus_is_vct(keys[0]))
 	    {
@@ -6299,6 +6308,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 		}
 	      else
 		{
+		  Xen lst;
 		  if (Xen_is_number(Xen_car(keys[0])))
 		    {
 		      for (i = 0, lst = Xen_copy_arg(keys[0]); (i < len) && (!Xen_is_null(lst)); i++, lst = Xen_cdr(lst))
@@ -6790,10 +6800,11 @@ static Xen out_any_2_to_vct(mus_long_t pos, mus_float_t inv, int chn, const char
     }
   else
     {
-      s7_Int chan_len, chans;
+      s7_Int chans;
       chans = s7_vector_dimensions(clm_output_vct)[0];
       if (chn < chans)
 	{
+	  s7_Int chan_len;
 	  chan_len = s7_vector_dimensions(clm_output_vct)[1];
 	  if (pos < chan_len)
 	    vdata[chn * chan_len + pos] += inv;
@@ -7336,7 +7347,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
-  int i, vals;
+  int vals;
   mus_long_t buffer_size;
   int channel = 0, direction = 1;
   mus_long_t start = 0;
@@ -7351,7 +7362,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   /* this is only 8192! (clm.h MUS_DEFAULT_FILE_BUFFER_SIZE) */
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_readin, "too many args!", arglist);
@@ -7626,7 +7637,6 @@ static Xen g_make_locsig(Xen arglist)
   #define H_make_locsig "(" S_make_locsig " (degree 0.0) (distance 1.0) (reverb 0.0) (output *output*) (revout *reverb*) (channels (mus-channels *output*)) (type " S_mus_interp_linear ")): \
 return a new generator for signal placement in n channels.  Channel 0 corresponds to 0 degrees."
 
-  mus_xen *gn;
   mus_any *ge;
   mus_any *outp = NULL, *revp = NULL;
   Xen args[14];
@@ -7634,7 +7644,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   Xen ov = Xen_undefined, rv = Xen_undefined;
   Xen keys3 = Xen_undefined, keys4 = Xen_undefined;
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
-  int vals, i, out_chans = -1, rev_chans = -1;
+  int vals, out_chans = -1, rev_chans = -1;
   mus_interp_t type;
   mus_float_t degree = 0.0, distance = 1.0, reverb = 0.0;
 
@@ -7649,7 +7659,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   keys[6] = kw_type;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 14) clm_error(S_make_locsig, "too many args!", arglist);
@@ -7741,6 +7751,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 
   if (ge)
     {
+      mus_xen *gn;
       if (((Xen_is_bound(ov)) && (!Xen_is_false(ov))) || 
 	  ((Xen_is_bound(rv)) && (!Xen_is_false(rv))))
 	gn = mx_alloc(4);
@@ -8393,7 +8404,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   Xen args[18];
   Xen keys[9];
   int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int vals, i, maxsize = 0;
+  int vals, maxsize = 0;
   mus_float_t expansion = 1.0, segment_length = .15, segment_scaler = .6, ramp_time = .4, output_hop = .05;
   mus_float_t jitter = 1.0;
   Xen edit_obj = Xen_undefined, grn_obj;
@@ -8409,7 +8420,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   keys[8] = kw_edit;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 18) clm_error(S_make_granulate, "too many args!", arglist);
@@ -8531,7 +8542,7 @@ return a new convolution generator which convolves its input with the impulse re
   Xen args[6];
   Xen keys[3];
   int orig_arg[3] = {0, 0, 0};
-  int vals, i;
+  int vals;
   vct *filter = NULL;
   Xen filt = Xen_undefined, in_obj = Xen_undefined;
   mus_long_t fftlen, fft_size = 0;
@@ -8541,7 +8552,7 @@ return a new convolution generator which convolves its input with the impulse re
   keys[2] = kw_fft_size;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 6) clm_error(S_make_convolve, "too many args!", arglist);
@@ -8774,7 +8785,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   Xen keys[8];
   Xen pv_obj;
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  int vals, i;
+  int vals;
   int fft_size = 512, overlap = 4, interp = 128;
   mus_float_t pitch = 1.0;
 
@@ -8788,7 +8799,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   keys[7] = kw_synthesize;
 
   {
-    int arglist_len;
+    int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 16) clm_error(S_make_phase_vocoder, "too many args!", arglist);
@@ -9036,7 +9047,7 @@ it in conjunction with matrix to scale/envelope all the various ins and outs. \
   mus_any ***envs1 = NULL;
   int i;
   mus_long_t ostart = 0, istart = 0, osamps = 0;
-  int in_chans = 0, out_chans = 0, mx_chans = 0, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
+  int in_chans = 0, out_chans = 0, mx_chans = 0, in_size = 0;  /* mus_mix in clm.c assumes the envs array is large enough */
   const char *outfile = NULL, *infile = NULL;
 
   /* -------- setup output gen -------- */
@@ -9131,7 +9142,7 @@ it in conjunction with matrix to scale/envelope all the various ins and outs. \
 		      Xen_check_type((Xen_is_false(envs)) || (Xen_is_vector(envs)), envs, 7, S_mus_file_mix, "a vector of envs");
 		      if (Xen_is_vector(envs))
 			{
-			  int in_len = 0, out_len, j;
+			  int in_len = 0, out_len, j, out_size;
 			  /* pack into a C-style array of arrays of env pointers */
 			  in_len = Xen_vector_length(envs);
 			  if (in_len == 0)
@@ -9325,7 +9336,7 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
 
   {
     mus_long_t samp;
-    int inp, outp, off;
+    int outp;
     mus_float_t src_env_val = 0.0;
     mus_float_t *infs, *out_frample, *rev_frample = NULL;
 
@@ -9366,6 +9377,7 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
       {
 	for (samp = st; samp < nd; samp++)
 	  {
+	    int inp, off;
 	    for (inp = 0, off = 0; inp < in_chans; inp++, off += mx_chans)
 	      for (outp = 0; outp < out_chans; outp++)
 		{
@@ -9717,9 +9729,9 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
   gf1 = find_gf(sc, val);
   if (gf1)
     {
-      mus_long_t dist;
       if (gf1->func_1)
 	{
+	  mus_long_t dist;
 	  void *gen;
 	  mus_float_t (*func)(void *p);
 	  gen = gf1->gen;
@@ -11592,9 +11604,9 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 	  if ((chans == 1) &&
 	      (rev_chans == 0))
 	    {
-	      mus_long_t dlen2;
 	      for (; pos < end;)
 		{
+		  mus_long_t dlen2;
 		  vibrato = simple_triangle_wave(s) + rf(r);
 		  mus_safe_out_any_to_file(pos++, f1 * af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))), 0, outp);
 		  dstart = mus_out_any_data_start(outp);
@@ -11625,7 +11637,6 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		  (rev_chans == 1))
 		{
 		  mus_float_t x;
-		  mus_long_t dlen2;
 
 		  f2 = mus_locsig_ref(lc, 1);
 		  r1 = mus_locsig_reverb_ref(lc, 0);
@@ -11634,6 +11645,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 
 		  for (; pos < end;)
 		    {
+		      mus_long_t dlen2;
 		      vibrato = simple_triangle_wave(s) + rf(r);
 		      x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 		      mus_safe_out_any_to_file(pos, f1 * x, 0, outp);
@@ -11685,13 +11697,13 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		      (rev_chans == 0))
 		    {
 		      mus_float_t x;
-		      mus_long_t dlen2;
 
 		      f2 = mus_locsig_ref(lc, 1);
 		      buf2 = ob[1];
 
 		      for (; pos < end;)
 			{
+			  mus_long_t dlen2;
 			  vibrato = simple_triangle_wave(s) + rf(r);
 			  x = af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato)));
 			  mus_safe_out_any_to_file(pos, f1 * x, 0, outp);
@@ -14863,7 +14875,6 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 	    {
 	      mus_float_t *buf1, *buf2;
 	      mus_any *dly1, *dly2;
-	      mus_long_t dlen2;
 
 	      buf1 = ob[0];
 	      dly1 = outs[0];
@@ -14872,6 +14883,7 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 
 	      for (; pos < end;)
 		{
+		  mus_long_t dlen2;
 		  x = vol * mus_comb_bank(combs, mus_all_pass_bank(allpasses, in_any_2(pos, 0)));
 		  mus_safe_out_any_to_file(pos, mus_delay_unmodulated_noz(dly1, x), 0, clm_output_gen);
 		  mus_safe_out_any_to_file(pos, mus_delay_unmodulated_noz(dly2, x), 1, clm_output_gen);
@@ -15229,9 +15241,9 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
     {                                                                   \
       if (mus_out_any_is_safe(clm_output_gen))				\
 	{								\
-	  mus_long_t dlen2;						\
 	  for (; pos < end;)						\
 	    {								\
+	      mus_long_t dlen2;						\
 	      mus_safe_out_any_to_file(pos++, Call, Chan, clm_output_gen); \
 	      dstart = mus_out_any_data_start(clm_output_gen);		\
 	      dend = mus_out_any_data_end(clm_output_gen);		\
@@ -15338,9 +15350,9 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
     {                                                                   \
       if (mus_out_any_is_safe(clm_output_gen))				\
 	{								\
-	  mus_long_t dlen2; 				\
 	  for (; pos < end;)						\
 	    {								\
+	      mus_long_t dlen2;						\
 	      mus_safe_out_any_to_file(pos++, Call, 0, clm_output_gen); \
 	      dstart = mus_out_any_data_start(clm_output_gen);		\
 	      dend = mus_out_any_data_end(clm_output_gen);		\

@@ -27,6 +27,28 @@
       (define (string-ci>? . strs) (apply string>? (map string-upcase strs)))
       ))
 
+(if (not (defined? 'environment?))
+    (begin
+      (define environment? let?)
+      (define global-environment rootlet)
+      (define-constant initial-environment unlet)
+      (define outer-environment outlet)
+      (define augment-environment sublet)
+      (define augment-environment! varlet)
+      (define current-environment curlet)
+      (define error-environment owlet)
+      (define procedure-environment funclet)
+      (define environment->list let->list)
+      (define open-environment openlet)
+      (define open-environment? openlet?)
+      (define close-environment coverlet)
+      (define environment-ref let-ref)
+      (define environment-set! let-set!)
+      (define environment inlet)
+      (define environment* inlet)
+      (define make-procedure-with-setter dilambda)
+      (define procedure-with-setter? dilambda?)))
+
 (define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file

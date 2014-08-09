@@ -115,7 +115,7 @@
 
 ;;; to place the new function in the caller's current environment, we need to pass the environment in explicitly:
 (define-macro (c-define . args) 
-  `(c-define-1 (current-environment) ,@args))
+  `(c-define-1 (curlet) ,@args))
 
 
 (define* (c-define-1 cur-env function-info (prefix "") (headers ()) (cflags "") (ldflags "") output-name)
@@ -451,9 +451,7 @@
 	  (delete-file o-file-name)))
 
     ;; load the obejct file, clean up
-    (let ((new-env (augment-environment
-		       cur-env
-		     (cons 'init_func (string->symbol init-name)))))
+    (let ((new-env (sublet cur-env 'init_func (string->symbol init-name))))
       (format *stderr* "loading ~A~%" so-file-name)
       (load so-file-name new-env))))
 

@@ -501,7 +501,7 @@
 (load "nb.scm")
 
 (load "write.scm")
-(load "lint.scm")
+;(load "lint.scm")
 (load "r7rs.scm")
 (load "cload.scm")
 (load "stuff.scm")
@@ -824,6 +824,9 @@
     (list 'pretty-print "write.scm")
     (list 'fully-macroexpand "write.scm")
 
+    (list 'lint "lint.scm")
+    (list 'html-lint "lint.scm")
+
     (list 'moog? "moog.scm")
     (list 'make-moog "moog.scm")
 
@@ -862,7 +865,7 @@
   ;;  stop-dac dlocsig vector-copy array-ref sound-comment 
 
 
-  ;; alternate: (autoload sym (lambda (e) (let ((m (load file))) (augment-environment! (global-environment) (cons sym (m sym))))))
+  ;; alternate: (autoload sym (lambda (e) (let ((m (load file))) (varlet (rootlet) (cons sym (m sym))))))
   (for-each
    (lambda (sym&file)
      (let ((e (car sym&file))
@@ -884,7 +887,7 @@
     (list '*libgsl* "libgsl.scm")
     ))
 
-  (apropos-1 (reverse (environment->list (global-environment))))
+  (apropos-1 (reverse (let->list (rootlet))))
   
   (let ((syms ())
 	(size 0))

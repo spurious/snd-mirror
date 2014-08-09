@@ -943,7 +943,10 @@ variable.  Bacros expand in the calling environment, and a normal argument name
 might shadow something in that environment while the bacro is being expanded.
 Similarly, if you introduce bindings in the bacro expansion code, you need to
 keep track of which environment you want things to happen in.  Use with-let
-or gensym liberally.  Since a bacro's expansion can depend on the run-time environment,
+and gensym liberally.  
+stuff.scm has bacro-shaker which can find inadvertent name collisions,
+but it is flighty and easily confused.
+Since a bacro's expansion can depend on the run-time environment,
 macroexpand does not always show its actual expansion.  I use:
 </p>
 <pre class="indented">
@@ -952,7 +955,6 @@ macroexpand does not always show its actual expansion.  I use:
     (pretty-print expansion)
     expansion))
 </pre>
-
 
 <p>
 See s7test.scm for many examples of macros including such perennial favorites as
@@ -5022,6 +5024,24 @@ so this seems like a natural convention.
 			(set! *mouse-x* (cadr mxy))
 			(set! *mouse-y* (caddr mxy))))))
 </pre>
+
+<!--
+(let ((*mouse-x* 0) (*mouse-y* 0))
+
+  (g_signal_connect (G_OBJECT (listener-text-widget *listener*)) "motion_notify_event" 
+		    (lambda (w e d) 
+		      (let ((mxy (gdk_event_get_coords (GDK_EVENT e))))
+			(set! *mouse-x* (cadr mxy))
+			(set! *mouse-y* (caddr mxy)))))
+
+  (with-accessors (*mouse-x* *mouse-y*)
+    (let ((x 0) (y 0))
+      (reactive-set! x (let ((val (round *mouse-x*))) 
+		       (format *stderr* "mouse: ~A ~A~%" x y) 
+		       val))
+      (reactive-set! y (round *mouse-y*))
+      (gtk_main))))
+-->
 
 <p>reactive-lambda* is aimed at library consistency.  Say we have the following library
 that wants A to always be half B:

@@ -926,10 +926,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		      (set! slots (cons slot slots))))
 		pe))))
 
-(define (sub*let e . args)
-  "(sub*let e . args) is like sublet but accepts inlet style args"
-  (sublet e (apply inlet args)))
-
 
 ;;; ----------------
 
@@ -942,6 +938,32 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		       v)))
 	    vars)
      ,@body))
+
+#|
+(define-bacro (reflective-probe)
+  (with-let (inlet 'e (outlet (outlet (curlet))))
+    (for-each (lambda (var)
+		(format *stderr* "~S: ~S~%" (car var) (cdr var)))
+	      e)))
+|#
+;; ideally this would simply vanish, and make no change in the run-time state, but (values) here returns #<unspecified>
+;;   (let ((a 1) (b 2)) (list (set! a 3) (probe) b)) -> '(3 2) not '(3 #<unspecified> 2)
+;;   I was too timid when I started s7 and thought (then) that (abs -1 (values)) should be an error
+;; perhaps if we want it to disappear:
+
+(define-bacro (reflective-probe . body)
+  (with-let (inlet :e (outlet (outlet (curlet))) 
+		   :body body)
+    (for-each (lambda (var)
+		(format *stderr* "~S: ~S~%" (car var) (cdr var)))
+	      e)
+    `(begin ,@body)))
+
+;; now (let ((a 1) (b 2)) (list (set! a 3) (probe b))) -> '(3 2)
+;; and (let ((a 1) (b 2)) (list (set! a 3) (probe) b)) -> '(3 () 2)
+
+;; could this use reactive-lambda* to show changes as well?
+
 
 (define (gather-symbols expr ce lst ignore)
   (define (symbol->let sym ce)
@@ -975,23 +997,28 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	  lst)))
 
 
-;; gensyms here make the blasted code unreadable, so I'm going to say "don't start a symbol with #\{ if you use reactive-set!"
-
-(define-bacro (reactive-set! {sym} {expr})
-  `(begin
-     (define {e} (curlet))
-     ,@(map (lambda (symbol)
-	      `(set! (symbol-access ',symbol)
-		     (lambda (s v)
-		       (let ((nv ,(if (symbol-access symbol) 
-				      `(begin (,(procedure-source (symbol-access symbol)) s v))
-				      'v)))
-			 (with-let (sublet {e} ',symbol nv)
-			   (set! ,{sym} ,{expr}))
-			 nv))))
-	    (gather-symbols {expr} (curlet) () ()))
-     (set! ,{sym} ,{expr})))
-
+(define-bacro (reactive-set! symbol value)
+  (with-let (inlet 'symbol symbol                    ; with-let here gives us control over the names
+		   'value value 
+		   'e (outlet (outlet (curlet))))    ; the run-time (calling) environment
+    (let ((nv (gensym))
+	  (ne (gensym)))
+      `(begin
+	 (define ,ne ,e)
+	 ,@(map (lambda (sym)
+		  `(set! (symbol-access ',sym)
+			 (lambda (s v)  
+			   (let ((,nv ,(if (with-let (sublet e 'sym sym) 
+					     (symbol-access sym))
+					   `(begin (,(procedure-source (with-let (sublet e 'sym sym) 
+									 (symbol-access sym))) 
+						    s v))
+					   'v)))
+			     (with-let (sublet ,ne ',sym ,nv)
+			       (set! ,symbol ,value))
+			     ,nv))))
+		(gather-symbols value e () ()))
+	 (set! ,symbol ,value)))))
 
 #|
 (let ((a 1)
@@ -1003,7 +1030,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   a)
 |#
 
-;;; this is not pretty -- still testing, the _RSET_* names are for readability in macroexpand.
+;;; this is not pretty
 ;;; part of the complexity comes from the hope to be tail-callable, but even a version
 ;;;   using dynamic-wind is complicated because of shadowing
 ;;; what I think we want here is a globally accessible way to see set! that does not
@@ -1019,76 +1046,82 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 ;;;   there is the symbol's extra slot, but it is global.  I wonder how much slower s7 would be
 ;;;   with a pointer to a pointer here -- are there any other places this would be useful?
 ;;;   even with this, the entire accessor chain is not triggered.
+;;; so, use with-accessors and reactive-set! for complex cases
 
-(define reactive-let
-  (let ((bindings (gensym))
-	(accessors (gensym))
-	(setters (gensym))
-	(vars (gensym))
-	(body (gensym))
-	(e (gensym)))
-    (apply define-bacro 
-	   `((,(gensym) ,vars . ,body)
-	     (let ((,bindings ())
-		   (,accessors ())
-		   (,setters ())
-		   (,e (curlet)))
+(define unique-reactive-let-name ; the alternative is (apply define-bacro ...) with a top-level gensym
+  (let ((name #f))
+    (lambda ()
+      (if (gensym? name)
+	  name
+	  (set! name (gensym "v"))))))
 
-	       (define (rlet-symbol sym wrap)
-		 (string->symbol (string-append wrap (symbol->string sym) wrap)))
+(define-bacro (reactive-let vars . body)
+  (with-let (inlet 'vars vars 'body body 'e (outlet (outlet (curlet))))
+    (let ((bindings ())
+	  (accessors ())
+	  (setters ())
+	  (gs (gensym))
+	  (v (unique-reactive-let-name)))
 
-	       (for-each 
-		(lambda (bd)
-		  (let ((syms (gather-symbols (cadr bd) ,e () ())))
-		    (for-each 
-		     (lambda (sym)
-		       (let ((fname (gensym (symbol->string sym))))
-			 (set! ,bindings (cons `(,fname (lambda (,sym) ,(copy (cadr bd)))) ,bindings))
-			 (if (not (memq sym ,setters))
-			     (set! ,setters (cons sym ,setters)))
-			 (let ((prev (assq sym ,accessors)))
-			   (if (not prev)
-			       (set! ,accessors (cons (cons sym `((set! ,(car bd) (,fname {v})))) ,accessors))
-			       (set-cdr! prev (append `((set! ,(car bd) (,fname {v}))) (cdr prev)))))))
-		     syms)
-		    (set! ,bindings (cons bd ,bindings))))
-		,vars)
+      (define (rlet-symbol sym)
+	(string->symbol (string-append "{" (symbol->string sym) "}-rlet")))
 
-	       (let ((bsyms (gather-symbols ,body ,e () ()))
-		     (nsyms ()))
-		 (for-each (lambda (s)
-			     (if (and (symbol-access s)
-				      (not (assq s ,bindings)))
-				 (if (not (memq s ,setters))
-				     (begin
-				       (set! ,setters (cons s ,setters))
-				       (set! nsyms (cons (cons s (cdr (procedure-source (symbol-access s)))) nsyms)))
-				     (let ((prev (assq s ,accessors)))
-				       (if prev ; merge the two functions
-					   (set-cdr! prev (append (cdddr (procedure-source (symbol-access s)))
-								  (cdr prev))))))))
-			   bsyms)
+      (for-each 
+       (lambda (bd)
+	 (let ((syms (gather-symbols (cadr bd) e () ())))
+	   (for-each 
+	    (lambda (sym)
+	      (let ((fname (gensym (symbol->string sym))))
+		(set! bindings (cons `(,fname (lambda (,sym) ,(copy (cadr bd)))) bindings))
+		(if (not (memq sym setters))
+		    (set! setters (cons sym setters)))
+		(let ((prev (assq sym accessors)))
+		  (if (not prev)
+		      (set! accessors (cons (cons sym `((set! ,(car bd) (,fname ,v)))) accessors))
+		      (set-cdr! prev (append `((set! ,(car bd) (,fname ,v))) (cdr prev)))))))
+	    syms)
+	   (set! bindings (cons bd bindings))))
+       vars)
 
-	       `(let ,(map (lambda (sym)
-			     (values
-			      `(,(rlet-symbol sym "_RSET_") (lambda ({v}) (set! ,sym {v})))
-			      `(,sym ,sym)))
-			   ,setters)
-		  (let ,(reverse ,bindings) 
-		    ,@(map (lambda (sa)
-			     (if (not (assq (car sa) ,bindings))
-				 `(set! (symbol-access ',(car sa))
-					(lambda (s {v})
-					  (,(rlet-symbol (car sa) "_RSET_") {v})
-					  ,@(cdr sa)
-					  {v}))
-				 (values)))
-			   ,accessors)
-		    ,@(map (lambda (ns)
-			     `(set! (symbol-access ',(car ns))
-				    (apply lambda ',(cdr ns))))
-			   nsyms)
-		    ,@,body))))))))
+      (let ((bsyms (gather-symbols body e () ()))
+	    (nsyms ()))
+	(for-each (lambda (s)
+		    (if (and (with-let (sublet e (quote gs) s) 
+			       (symbol-access gs))
+			     (not (assq s bindings)))
+			(if (not (memq s setters))
+			    (begin
+			      (set! setters (cons s setters))
+			      (set! nsyms (cons (cons s (cdr (procedure-source (with-let (sublet e (quote gs) s) 
+										 (symbol-access gs)))))
+						nsyms)))
+			    (let ((prev (assq s accessors)))
+			      (if prev ; merge the two functions
+				  (set-cdr! prev (append (cdddr (procedure-source (with-let (sublet e (quote gs) s) 
+										    (symbol-access gs))))
+							 (cdr prev))))))))
+		  bsyms)
+
+	`(let ,(map (lambda (sym)
+		      (values
+		       `(,(rlet-symbol sym) (lambda (,v) (set! ,sym ,v)))
+		       `(,sym ,sym)))
+		    setters)
+	   (let ,(reverse bindings) 
+	     ,@(map (lambda (sa)
+		      (if (not (assq (car sa) bindings))
+			  `(set! (symbol-access ',(car sa))
+				 (lambda (,(gensym) ,v)
+				   (,(rlet-symbol (car sa)) ,v)
+				   ,@(cdr sa)
+				   ,v))
+			  (values)))
+		    accessors)
+	     ,@(map (lambda (ns)
+		      `(set! (symbol-access ',(car ns))
+			     (apply lambda ',(cdr ns))))
+		    nsyms)
+	     ,@body))))))
 
 
 (define-macro (reactive-let* vars . body)
@@ -1100,7 +1133,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (add-let vars))
 
 ;; reactive-letrec is not useful: lambdas already react and anything else is an error (use of #<undefined>)
-
 
 (define-macro (reactive-lambda* args . body)
   `(let ((f (lambda* ,args ,@body))
@@ -1118,6 +1150,21 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
        (for-each (lambda (s) (set! (symbol-access s e) one-access)) (map car e)))
      f))
 
+
+(define-macro (with-accessors vars . body)
+  `(let ((accessors ()))
+     (dynamic-wind
+	 (lambda ()
+	   (set! accessors (map symbol-access ',vars)))
+	 (lambda ()
+	   ,@body)
+	 (lambda ()
+	   (for-each
+	    (lambda (var accessor)
+	      (set! (symbol-access var) accessor))
+	    ',vars accessors)))))
+
+;; (let ((a 1) (b 2)) (with-accessors (a b) (let ((c 3)) (reactive-set! c (+ (* 2 a) (* 3 b))) (set! a 4) c)))
 
 #|
 (let ((x 0.0)) (reactive-let ((y (sin x))) (set! x 1.0) y)) -- so "lifting" comes for free?
@@ -1158,6 +1205,73 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 ;; constant env:
 ;; (define e (let ((a 1) (b 2)) (reactive-lambda* (s v) ((curlet) s)) (curlet)))
 |#
+
+#|
+;; this tests a bacro for independence of any runtime names
+;; (bacro-shaker reactive-set! '(let ((a 21) (b 1)) (reactive-set! a (* b 2)) (set! b 3) a))
+
+(define (bacro-shaker bac example)
+
+  (define (swap-symbols old-code syms)
+    (if (null? old-code)
+	()
+	(if (symbol? old-code)
+	    (let ((x (assq old-code syms)))
+	      (if x
+		  (cdr x)
+		  (copy old-code)))
+	    (if (pair? old-code)
+		(cons (swap-symbols (car old-code) syms)
+		      (swap-symbols (cdr old-code) syms))
+		(copy old-code)))))
+
+  (let ((e (outlet (outlet (curlet))))
+	(source (cddr (cadr (caddr (procedure-source bac))))))
+    (let ((symbols (gather-symbols source (rootlet) () ()))
+	  (exsyms (gather-symbols (cadr example) (rootlet) () ())))
+      ;; now try each symbol at each position in exsyms, in all combinations
+      
+      (let ((syms ()))
+	(for-each
+	 (lambda (s)
+	   (set! syms (cons (cons s s) syms)))
+	 exsyms)
+	(let ((result (eval example e)))
+
+	  (define (g . new-args)
+	    (for-each (lambda (a b) 
+			(set-cdr! a b)) 
+		      syms new-args)
+	    (let ((code (swap-symbols example syms)))
+	      (let ((new-result (catch #t 
+				  (lambda ()
+				    (eval code e))
+				  (lambda args 
+				    args))))
+		(if (not (equal? result new-result))
+		    (format *stderr* "~A -> ~A~%~A -> ~A~%"
+			    example result
+			    code new-result)))))
+
+	  (define (f . args)
+	    (for-each-permutation g args))
+	    
+	  (let ((subsets ())
+		(func f)
+		(num-args (length exsyms))
+		(args symbols))
+	    (define (subset source dest len)
+	      (if (null? source)
+		  (begin
+		    (set! subsets (cons dest subsets))
+		    (if (= len num-args)
+			(apply func dest)))
+		  (begin
+		    (subset (cdr source) (cons (car source) dest) (+ len 1))
+		    (subset (cdr source) dest len))))
+	    (subset args () 0)))))))
+|#
+
 
 
 ;;; ----------------

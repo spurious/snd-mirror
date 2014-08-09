@@ -6683,10 +6683,10 @@ int mus_header_change_location(const char *filename, int type, mus_long_t new_lo
 int mus_header_change_comment(const char *filename, int type, const char *new_comment)
 {
   int err = MUS_NO_ERROR, fd, len = 0;
-  bool need_ripple = false;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
     {
+      bool need_ripple = false;
       switch (type)	  
 	{
 	case MUS_IRCAM:

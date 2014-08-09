@@ -507,7 +507,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		  (openlet
 		   ,(if methods
 		       `(sublet 
-			   (apply environment ,methods)
+			   (apply inlet ,methods)
 			 (inlet ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
 		       `(inlet 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
 

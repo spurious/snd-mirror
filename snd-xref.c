@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11324] = {
+static const char *snd_names[11322] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -6209,7 +6209,6 @@ static const char *snd_names[11324] = {
     "link", "libc.scm",
     "linnaeus-cicada", "animals.scm",
     "lint", "lint.scm",
-    "lint.scm", "lint.scm",
     "lip", "prc95.scm",
     "lip-set-freq", "prc95.scm",
     "list-copy", "r7rs.scm",
@@ -7208,7 +7207,6 @@ static const char *snd_names[11324] = {
     "strtoll", "libc.scm",
     "strxfrm", "libc.scm",
     "stuff.scm", "stuff.scm",
-    "sub*let", "stuff.scm",
     "submatrix", "poly.scm",
     "subsequence", "stuff.scm",
     "summer-tanager", "animals.scm",
@@ -7299,6 +7297,7 @@ static const char *snd_names[11324] = {
     "undo-channel", "extensions.scm",
     "ungetc", "libc.scm",
     "union", "stuff.scm",
+    "unique-reactive-let-name", "stuff.scm",
     "unlink", "libc.scm",
     "unsetenv", "libc.scm",
     "update-graphs", "examp.scm",
@@ -7414,7 +7413,7 @@ static const char *snd_names[11324] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5662);
+  s7_autoload_set_names(sc, snd_names, 5661);
 }
 #endif
 
