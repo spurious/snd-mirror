@@ -48,7 +48,7 @@
 (define (make-stereofile)
   (let* ((ofile-name (file-name))
 	 (old-sound (selected-sound))
-	 (nsnd (new-sound (string-append ofile-name ".stereo") (header-type) (data-format) (srate) 2)))
+	 (nsnd (new-sound (string-append ofile-name ".stereo") (header-type) (sample-type) (srate) 2)))
     (if (not nsnd)
 	(begin
 	  (display "Could not make new sound.")(newline))

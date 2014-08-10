@@ -1987,15 +1987,15 @@ widget_t make_preferences_dialog(void)
     output_header_type_prf = prf;
     remember_pref(prf, reflect_default_output_header_type, save_default_output_header_type, help_default_output_header_type, NULL, revert_default_output_header_type);
 
-    rts_default_output_data_format = default_output_data_format(ss);
-    prf = prefs_row_with_radio_box("data format", S_default_output_data_format,
+    rts_default_output_sample_type = default_output_sample_type(ss);
+    prf = prefs_row_with_radio_box("sample type", S_default_output_sample_type,
 				   output_format_choices, NUM_OUTPUT_FORMAT_CHOICES, -1,
 				   dpy_box, prf->label,
-				   default_output_data_format_choice);
-    output_data_format_prf = prf;
-    remember_pref(prf, reflect_default_output_data_format, save_default_output_data_format, help_default_output_data_format, NULL, revert_default_output_data_format);
+				   default_output_sample_type_choice);
+    output_sample_type_prf = prf;
+    remember_pref(prf, reflect_default_output_sample_type, save_default_output_sample_type, help_default_output_sample_type, NULL, revert_default_output_sample_type);
     reflect_default_output_header_type(output_header_type_prf);
-    reflect_default_output_data_format(output_data_format_prf);
+    reflect_default_output_sample_type(output_sample_type_prf);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     {
@@ -2003,12 +2003,12 @@ widget_t make_preferences_dialog(void)
       mus_header_raw_defaults(&srate, &chans, &format);
       rts_raw_chans = chans;
       rts_raw_srate = srate;
-      rts_raw_data_format = format;
+      rts_raw_sample_type = format;
       str = mus_format("%d", chans);
       str1 = mus_format("%d", srate);
-      raw_data_format_choices = (char **)calloc(MUS_NUM_DATA_FORMATS - 1, sizeof(char *));
-      for (i = 1; i < MUS_NUM_DATA_FORMATS; i++)
-	raw_data_format_choices[i - 1] = raw_data_format_to_string(i); /* skip MUS_UNKNOWN */
+      raw_sample_type_choices = (char **)calloc(MUS_NUM_SAMPLE_TYPES - 1, sizeof(char *));
+      for (i = 1; i < MUS_NUM_SAMPLE_TYPES; i++)
+	raw_sample_type_choices[i - 1] = raw_sample_type_to_string(i); /* skip MUS_UNKNOWN */
       prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
 				dpy_box, current_sep,
 				raw_chans_choice);
@@ -2019,13 +2019,13 @@ widget_t make_preferences_dialog(void)
 				raw_srate_choice);
       remember_pref(prf, reflect_raw_srate, save_raw_srate, help_raw_srate, NULL, revert_raw_srate);
 
-      prf = prefs_row_with_list("data format", S_mus_header_raw_defaults, raw_data_format_choices[format - 1],
-				(const char **)raw_data_format_choices, MUS_NUM_DATA_FORMATS - 1,
+      prf = prefs_row_with_list("sample type", S_mus_header_raw_defaults, raw_sample_type_choices[format - 1],
+				(const char **)raw_sample_type_choices, MUS_NUM_SAMPLE_TYPES - 1,
 				dpy_box, prf->label,
-				raw_data_format_from_text,
+				raw_sample_type_from_text,
 				NULL, NULL,
-				raw_data_format_from_menu);
-      remember_pref(prf, reflect_raw_data_format, save_raw_data_format, help_raw_data_format, NULL, revert_raw_data_format);
+				raw_sample_type_from_menu);
+      remember_pref(prf, reflect_raw_sample_type, save_raw_sample_type, help_raw_sample_type, NULL, revert_raw_sample_type);
       free(str);
       free(str1);
     }

@@ -39,13 +39,13 @@ snd_info *get_sp(Xen snd)
 }
 
 
-snd_info *snd_new_file(const char *newname, int header_type, int data_format, int srate, int chans, const char *new_comment, mus_long_t samples)
+snd_info *snd_new_file(const char *newname, int header_type, int sample_type, int srate, int chans, const char *new_comment, mus_long_t samples)
 {
   /* caller checks newname != null, and runs overwrite hook */
-  if (mus_header_writable(header_type, data_format))
+  if (mus_header_writable(header_type, sample_type))
     {
       io_error_t err;
-      err = snd_write_header(newname, header_type, srate, chans, samples * chans, data_format, new_comment, NULL);
+      err = snd_write_header(newname, header_type, srate, chans, samples * chans, sample_type, new_comment, NULL);
       if (err != IO_NO_ERROR)
 	snd_error("%s %s: %s", 
 		  io_error_name(err),
@@ -58,7 +58,7 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
 	  /* send out the initial samples */
 	  chan = snd_reopen_write(newname);
 	  lseek(chan, mus_header_data_location(), SEEK_SET);
-	  size = chans * mus_samples_to_bytes(data_format, samples);
+	  size = chans * mus_samples_to_bytes(sample_type, samples);
 	  if (size > 0)
 	    {
 	      ssize_t bytes;
@@ -78,7 +78,7 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
     snd_error("%s: can't write %s header with %s data format",
 	      newname,
 	      mus_header_type_name(header_type),
-	      mus_data_format_name(data_format));
+	      mus_sample_type_name(sample_type));
   return(NULL);
 }
 
@@ -412,7 +412,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	  if (bytes_read < lm * es->bytes)
 	    {
 	      int zero_byte;
-	      zero_byte = mus_data_format_zero(es->format);
+	      zero_byte = mus_sample_type_zero(es->format);
 	      if ((zero_byte == 0) ||
 		  ((es->format != MUS_UBSHORT) &&
 		   (es->format != MUS_ULSHORT)))
@@ -422,7 +422,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 		  mus_long_t i, start, len;
 		  unsigned short *buf;
 
-		  /* (with-sound (:data-format mus-ubshort) (fm-violin 0 2 440 .1)) */
+		  /* (with-sound (:sample-type mus-ubshort) (fm-violin 0 2 440 .1)) */
 
 		  buf = (unsigned short *)(es->direct_data);
 		  start = bytes_read / 2;
@@ -1334,7 +1334,7 @@ char *sp_name_click(snd_info *sp) /* caller should free returned string */
 			       dur,
 			       ((dur == 1.0) ? "" : "s"),
 			       mus_header_type_to_string(hdr->type),
-			       mus_data_format_to_string(hdr->format),
+			       mus_sample_type_to_string(hdr->format),
 			       snd_strftime("%d-%b-%Y %H:%M", sp->write_date),
 			       (linked) ? ", (link to " : "",
 #ifndef _MSC_VER
@@ -2430,7 +2430,7 @@ If more than one such sound exists, 'nth' chooses which one to return."
 
 
 typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
-	      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
+	      SP_SRATE, SP_SAMPLE_TYPE, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
 	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_SHOW_CONTROLS,
 	      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
 	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
@@ -2489,7 +2489,7 @@ static Xen sound_get(Xen snd, sp_field_t fld, const char *caller)
     case SP_FILTER_HZING:        return(C_bool_to_Xen_boolean(sp->filter_control_in_hz));                                break;
     case SP_FILTER_ORDER:        return(C_int_to_Xen_integer(sp->filter_control_order));                                    break;
     case SP_SRATE:               return(C_int_to_Xen_integer(sp->hdr->srate));                                              break;
-    case SP_DATA_FORMAT:         return(C_int_to_Xen_integer(sp->hdr->format));                                             break;
+    case SP_SAMPLE_TYPE:         return(C_int_to_Xen_integer(sp->hdr->format));                                             break;
     case SP_HEADER_TYPE:         return(C_int_to_Xen_integer(sp->hdr->type));                                               break;
     case SP_DATA_LOCATION:       return(C_llong_to_Xen_llong(sp->hdr->data_location));                                  break;
     case SP_DATA_SIZE:           return(C_llong_to_Xen_llong(mus_samples_to_bytes(sp->hdr->format, sp->hdr->samples))); break;
@@ -2797,16 +2797,16 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 	}
       break;
 
-    case SP_DATA_FORMAT:
+    case SP_SAMPLE_TYPE:
       if (!(is_player_sound(sp))) 
 	{
 	  ival = Xen_integer_to_C_int(val);
-	  if (mus_is_data_format(ival))
+	  if (mus_is_sample_type(ival))
 	    {
 	      chan_info *cp;
 	      int old_format;
 	      old_format = sp->hdr->format;
-	      mus_sound_set_data_format(sp->filename, ival);
+	      mus_sound_set_sample_type(sp->filename, ival);
 	      sp->hdr->format = ival;
 	      if (mus_bytes_per_sample(old_format) != mus_bytes_per_sample(ival))
 		{
@@ -2822,7 +2822,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 		}
 	      snd_update_within_xen(sp, caller);
 	    }
-	  else Xen_out_of_range_error(S_setB S_data_format, 1, val, "unknown data format");
+	  else Xen_out_of_range_error(S_setB S_sample_type, 1, val, "unknown data format");
 	}
       break;
 
@@ -3315,18 +3315,18 @@ static Xen g_set_data_size(Xen snd, Xen val)
 }
 
 
-static Xen g_data_format(Xen snd) 
+static Xen g_sample_type(Xen snd) 
 {
-  #define H_data_format "(" S_data_format " :optional snd): snd's data format (e.g. " S_mus_bshort ")"
-  return(sound_get(snd, SP_DATA_FORMAT, S_data_format));
+  #define H_sample_type "(" S_sample_type " :optional snd): snd's data format (e.g. " S_mus_bshort ")"
+  return(sound_get(snd, SP_SAMPLE_TYPE, S_sample_type));
 }
 
 
-static Xen g_set_data_format(Xen snd, Xen val) 
+static Xen g_set_sample_type(Xen snd, Xen val) 
 {
   if (!Xen_is_bound(val))
-    return(sound_set(Xen_undefined, check_non_negative_integer(snd, S_setB S_data_format), SP_DATA_FORMAT, S_setB S_data_format));
-  else return(sound_set(snd, check_non_negative_integer(val, S_setB S_data_format), SP_DATA_FORMAT, S_setB S_data_format));
+    return(sound_set(Xen_undefined, check_non_negative_integer(snd, S_setB S_sample_type), SP_SAMPLE_TYPE, S_setB S_sample_type));
+  else return(sound_set(snd, check_non_negative_integer(val, S_setB S_sample_type), SP_SAMPLE_TYPE, S_setB S_sample_type));
 }
 
 
@@ -3943,12 +3943,12 @@ open filename (as if opened from File:Open menu option), and return the new soun
 }
 
 
-static Xen kw_header_type, kw_data_format, kw_file, kw_srate, kw_channel, kw_sound, kw_edit_position, kw_channels, kw_size, kw_comment;
+static Xen kw_header_type, kw_file, kw_srate, kw_channel, kw_sound, kw_edit_position, kw_channels, kw_size, kw_comment, kw_sample_type;
 
 static void init_sound_keywords(void)
 {
   kw_header_type = Xen_make_keyword("header-type");
-  kw_data_format = Xen_make_keyword("data-format");
+  kw_sample_type = Xen_make_keyword("sample-type");
   kw_file = Xen_make_keyword("file");
   kw_srate = Xen_make_keyword("srate");
   kw_channel = Xen_make_keyword("channel");
@@ -3962,7 +3962,7 @@ static void init_sound_keywords(void)
 
 static Xen g_open_raw_sound(Xen arglist)
 {
-  #define H_open_raw_sound "(" S_open_raw_sound " file channels srate data-format): \
+  #define H_open_raw_sound "(" S_open_raw_sound " file channels srate sample-type): \
 open file assuming the data matches the attributes indicated unless the file actually has a header"
 
   const char *file = NULL;
@@ -3978,7 +3978,7 @@ open file assuming the data matches the attributes indicated unless the file act
   keys[0] = kw_file;
   keys[1] = kw_channels;
   keys[2] = kw_srate;
-  keys[3] = kw_data_format;
+  keys[3] = kw_sample_type;
 
   mus_header_raw_defaults(&os, &oc, &ofr);
 
@@ -4081,7 +4081,7 @@ static Xen g_save_sound_as(Xen arglist)
     #define save_as_example "\"test.snd\" index mus-next mus-bshort save-sound-as"
   #endif
 
-  #define H_save_sound_as "("  S_save_sound_as " file sound header-type data-format srate channel edit-position comment): \
+  #define H_save_sound_as "("  S_save_sound_as " file sound header-type sample-type srate channel edit-position comment): \
 save sound in file using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
 Omitted arguments take their value from the sound being saved.\n  " save_as_example
   
@@ -4101,7 +4101,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   keys[0] = kw_file;
   keys[1] = kw_sound;
   keys[2] = kw_header_type;
-  keys[3] = kw_data_format;
+  keys[3] = kw_sample_type;
   keys[4] = kw_srate;
   keys[5] = kw_channel;
   keys[6] = kw_edit_position;
@@ -4158,7 +4158,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 
   if (df == -1) 
     {
-      /* try to find some writable data_format */
+      /* try to find some writable sample_type */
       df = hdr->format;
       if (!mus_header_writable(ht, df)) 
 	df = MUS_OUT_FORMAT;
@@ -4176,7 +4176,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 	  if (!mus_header_writable(ht, df))
 	    {
 	      int i;
-	      for (i = 1; i < MUS_NUM_DATA_FORMATS; i++) /* MUS_UNSUPPORTED is 0 */
+	      for (i = 1; i < MUS_NUM_SAMPLE_TYPES; i++) /* MUS_UNSUPPORTED is 0 */
 		{
 		  df = i;
 		  if (mus_header_writable(ht, df))
@@ -4189,7 +4189,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   if (!mus_header_writable(ht, df))
     Xen_error(CANNOT_SAVE,
 	      Xen_list_3(C_string_to_Xen_string(S_save_sound_as ": can't write ~A data to ~A headers"),
-			 C_string_to_Xen_string(mus_data_format_name(df)),
+			 C_string_to_Xen_string(mus_sample_type_name(df)),
 			 C_string_to_Xen_string(mus_header_type_name(ht))));
 
   if (chan >= sp->nchans)
@@ -4261,7 +4261,7 @@ static Xen g_new_sound(Xen arglist)
     #define new_sound_example "\"test.snd\" mus-next mus-bshort 22050 1 \"no comment\" 1000 new-sound"
   #endif
 
-  #define H_new_sound "(" S_new_sound " file header-type data-format srate channels comment size): \
+  #define H_new_sound "(" S_new_sound " file header-type sample-type srate channels comment size): \
 creates a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used. \
 The 'size' argument sets the number of samples (zeros) in the newly created sound. \n  " new_sound_example
 
@@ -4279,7 +4279,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
 
   keys[0] = kw_file;
   keys[1] = kw_header_type;
-  keys[2] = kw_data_format;
+  keys[2] = kw_sample_type;
   keys[3] = kw_srate;
   keys[4] = kw_channels;
   keys[5] = kw_comment;
@@ -4291,7 +4291,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   vals = mus_optkey_unscramble(S_new_sound, 7, keys, args, orig_arg);
 
   ht = default_output_header_type(ss);
-  df = default_output_data_format(ss);
+  df = default_output_sample_type(ss);
   sr = default_output_srate(ss);
   ch = default_output_chans(ss);
 
@@ -4310,13 +4310,13 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   if (!(mus_is_header_type(ht)))
     Xen_out_of_range_error(S_new_sound, orig_arg[1], keys[1], "invalid header type");
 
-  if (!(mus_is_data_format(df)))
+  if (!(mus_is_sample_type(df)))
     Xen_out_of_range_error(S_new_sound, orig_arg[2], keys[2], "invalid data format");
 
   if (!(mus_header_writable(ht, df)))
     Xen_error(BAD_HEADER,
 	      Xen_list_3(C_string_to_Xen_string(S_new_sound ": can't write ~A data to a ~A header"),
-			 C_string_to_Xen_string(mus_data_format_short_name(df)),
+			 C_string_to_Xen_string(mus_sample_type_short_name(df)),
 			 C_string_to_Xen_string(mus_header_type_name(ht))));
 
   if (sr <= 0)
@@ -5707,8 +5707,8 @@ Xen_wrap_1_optional_arg(g_data_location_w, g_data_location)
 Xen_wrap_2_optional_args(g_set_data_location_w, g_set_data_location)
 Xen_wrap_1_optional_arg(g_data_size_w, g_data_size)
 Xen_wrap_2_optional_args(g_set_data_size_w, g_set_data_size)
-Xen_wrap_1_optional_arg(g_data_format_w, g_data_format)
-Xen_wrap_2_optional_args(g_set_data_format_w, g_set_data_format)
+Xen_wrap_1_optional_arg(g_sample_type_w, g_sample_type)
+Xen_wrap_2_optional_args(g_set_sample_type_w, g_set_sample_type)
 Xen_wrap_1_optional_arg(g_header_type_w, g_header_type)
 Xen_wrap_2_optional_args(g_set_header_type_w, g_set_header_type)
 Xen_wrap_1_optional_arg(g_comment_w, g_comment)
@@ -5887,7 +5887,10 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_procedure_with_setter(S_srate,         g_srate_w,         H_srate,         S_setB S_srate,         g_set_srate_w,          0, 1, 1, 1);
   Xen_define_procedure_with_setter(S_data_location, g_data_location_w, H_data_location, S_setB S_data_location, g_set_data_location_w,  0, 1, 1, 1);
   Xen_define_procedure_with_setter(S_data_size,     g_data_size_w,     H_data_size,     S_setB S_data_size,     g_set_data_size_w,      0, 1, 1, 1);
-  Xen_define_procedure_with_setter(S_data_format,   g_data_format_w,   H_data_format,   S_setB S_data_format,   g_set_data_format_w,    0, 1, 1, 1);
+  Xen_define_procedure_with_setter(S_sample_type,   g_sample_type_w,   H_sample_type,   S_setB S_sample_type,   g_set_sample_type_w,    0, 1, 1, 1);
+#if (!DISABLE_DEPRECATED)
+  Xen_define_procedure_with_setter(S_data_format,   g_sample_type_w,   H_sample_type,   S_setB S_data_format,   g_set_sample_type_w,    0, 1, 1, 1);
+#endif
   Xen_define_procedure_with_setter(S_header_type,   g_header_type_w,   H_header_type,   S_setB S_header_type,   g_set_header_type_w,    0, 1, 1, 1);
   Xen_define_procedure_with_setter(S_comment,       g_comment_w,       H_comment,       S_setB S_comment,       g_set_comment_w,        0, 1, 1, 1);
 

@@ -124,11 +124,11 @@ int main(int argc, char *argv[])
       exit(0);
     }
 
-  if (!(mus_is_data_format(mus_sound_data_format(name))))
+  if (!(mus_is_sample_type(mus_sound_sample_type(name))))
     {
       fprintf(stderr, "can't play %s (data format: %s (%s)?)\n",
 	      name,
-	      mus_data_format_name(mus_sound_data_format(name)),
+	      mus_sample_type_name(mus_sound_sample_type(name)),
 	      mus_header_original_format_name(mus_sound_original_format(name), 
 					      mus_sound_header_type(name)));
       exit(0);

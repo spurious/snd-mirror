@@ -748,9 +748,9 @@
 	(snd-display #__line__ ";clipping set default: ~A" *clipping*))
     (if (not (equal? *default-output-chans*  1 )) 
 	(snd-display #__line__ ";default-output-chans set default: ~A" *default-output-chans*))
-    (if (and (not (equal? *default-output-data-format* mus-bdouble))
-	     (not (equal? *default-output-data-format* mus-ldouble)))
-	(snd-display #__line__ ";default-output-data-format set default: ~A" *default-output-data-format*))
+    (if (and (not (equal? *default-output-sample-type* mus-bdouble))
+	     (not (equal? *default-output-sample-type* mus-ldouble)))
+	(snd-display #__line__ ";default-output-sample-type set default: ~A" *default-output-sample-type*))
     (if (not (equal? *default-output-srate*  44100 )) 
 	(snd-display #__line__ ";default-output-srate set default: ~A" *default-output-srate*))
     (if (not (equal? *default-output-header-type*  mus-next)) 
@@ -1009,9 +1009,9 @@
 	(snd-display #__line__ ";* clipping set default: ~A" *clipping*))
     (if (not (equal? *default-output-chans*  1 )) 
 	(snd-display #__line__ ";* default-output-chans set default: ~A" *default-output-chans*))
-    (if (and (not (equal? *default-output-data-format* mus-bdouble))
-	     (not (equal? *default-output-data-format* mus-ldouble)))
-	(snd-display #__line__ ";* default-output-data-format set default: ~A" *default-output-data-format*))
+    (if (and (not (equal? *default-output-sample-type* mus-bdouble))
+	     (not (equal? *default-output-sample-type* mus-ldouble)))
+	(snd-display #__line__ ";* default-output-sample-type set default: ~A" *default-output-sample-type*))
     (if (not (equal? *default-output-srate*  44100 )) 
 	(snd-display #__line__ ";* default-output-srate set default: ~A" *default-output-srate*))
     (if (not (equal? *default-output-header-type*  mus-next)) 
@@ -1313,7 +1313,7 @@
       'dac-combines-channels *dac-combines-channels* #t
       'dac-size *dac-size* 256 
       'default-output-chans *default-output-chans* 1 
-      'default-output-data-format *default-output-data-format* mus-ldouble
+      'default-output-sample-type *default-output-sample-type* mus-ldouble
       'default-output-header-type *default-output-header-type* mus-next
       'default-output-srate *default-output-srate* 44100
       'dot-size *dot-size* 1 
@@ -1505,7 +1505,7 @@
 	(list 'dac-size dac-size 256 512 '*dac-size*)
 	(list 'clipping clipping #f #t '*clipping*)
 	(list 'default-output-chans default-output-chans 1 2 '*default-output-chans*)
-	(list 'default-output-data-format default-output-data-format 1 1 '*default-output-data-format*)
+	(list 'default-output-sample-type default-output-sample-type 1 1 '*default-output-sample-type*)
 	(list 'default-output-srate default-output-srate 22050 44100 '*default-output-srate*)
 	(list 'default-output-header-type default-output-header-type mus-next mus-aifc '*default-output-header-type*)
 	(list 'dot-size dot-size 1 4 '*dot-size*)
@@ -1603,7 +1603,7 @@
     ))
 
 
-(set! *default-output-data-format* mus-ldouble)
+(set! *default-output-sample-type* mus-ldouble)
 
 
 ;;; ---------------- test 2: headers ----------------
@@ -1631,7 +1631,7 @@
 						 (testf 0)
 						 (mus-sound-duration file) 
 						 (testf 3)))
-				(if (and (not (= (mus-sound-data-format file) mus-unknown))
+				(if (and (not (= (mus-sound-sample-type file) mus-unknown))
 					 (not (= (mus-sound-header-type file) 27)) ; bogus header on test case (comdisco)
 					 (< (+ (mus-sound-length file) 1)
 					    (* (mus-sound-datum-size file) (mus-sound-duration file)
@@ -1654,10 +1654,10 @@
 						 (testf 0) 
 						 (mus-header-type-name (mus-sound-header-type file))
 						 (testf 4)))
-				(if (not (equal? (mus-data-format-name (mus-sound-data-format file)) (testf 5)))
+				(if (not (equal? (mus-sample-type-name (mus-sound-sample-type file)) (testf 5)))
 				    (snd-display #__line__ ";~A: type ~A is not ~A"
 						 (testf 0) 
-						 (mus-data-format-name (mus-sound-data-format file)) 
+						 (mus-sample-type-name (mus-sound-sample-type file)) 
 						 (testf 5)))
 				(let ((lst (mus-sound-loop-info file)))
 				  (if (> (length testf) 6)
@@ -1673,7 +1673,7 @@
 			  (test-headers (cdr base-files))))))))
 	
 	;; need to make sure raw defaults are consistent with following tests
-	(let ((ind (open-raw-sound :file (string-append sf-dir "addf8.nh") :channels 2 :srate 44100 :data-format mus-bshort)))
+	(let ((ind (open-raw-sound :file (string-append sf-dir "addf8.nh") :channels 2 :srate 44100 :sample-type mus-bshort)))
 	  (if (sound? ind) (close-sound ind)))
 	(catch #t
 	       (lambda ()
@@ -2013,7 +2013,7 @@
 	(list 'dac-size dac-size 256 512)
 	(list 'clipping clipping #f #t)
 	(list 'default-output-chans default-output-chans 1 2)
-	(list 'default-output-data-format default-output-data-format 1 1)
+	(list 'default-output-sample-type default-output-sample-type 1 1)
 	(list 'default-output-srate default-output-srate 22050 44100)
 	(list 'default-output-header-type default-output-header-type mus-next mus-aifc)
 	(list 'dot-size dot-size 1 4)
@@ -2275,8 +2275,8 @@
 		       'current-font 'cursor 'cursor-color 'cursor-context 'cursor-cross
 		       'cursor-in-middle 'cursor-in-view 'cursor-line 'cursor-location-offset 'cursor-on-left
 		       'cursor-on-right 'cursor-position 'cursor-size 'cursor-style 'cursor-update-interval
-		       'dac-combines-channels 'dac-size 'data-color 'data-format
-		       'data-location 'data-size 'db->linear 'default-output-chans 'default-output-data-format
+		       'dac-combines-channels 'dac-size 'data-color 'sample-type
+		       'data-location 'data-size 'db->linear 'default-output-chans 'default-output-sample-type
 		       'default-output-header-type 'default-output-srate 'define-envelope 'degrees->radians 'delay
 		       'delay-tick 'delay? 'delete-colormap
 		       'delete-mark 'delete-marks 'delete-sample 'delete-samples 'delete-samples-and-smooth
@@ -2364,7 +2364,7 @@
 		       'mus-bfloat 'mus-bfloat-unscaled 'mus-bicsf 'mus-bint 'mus-bintn
 		       'mus-bshort 'mus-byte 'mus-bytes-per-sample 'mus-caff 'mus-channel 'mus-channels
 		       'mus-chebyshev-first-kind 'mus-chebyshev-second-kind 'mus-clipping 'mus-close
-		       'mus-data 'mus-data-format->string 'mus-data-format-name 'mus-describe 'mus-error-hook
+		       'mus-data 'mus-sample-type->string 'mus-sample-type-name 'mus-describe 'mus-error-hook
 		       'mus-error-type->string 'mus-expand-filename 'mus-feedback 'mus-feedforward 'mus-fft
 		       'mus-file-buffer-size 'mus-file-clipping 'mus-file-name
 		       'mus-frequency 'mus-generator? 'mus-header-raw-defaults 'mus-header-type->string 'mus-header-type-name
@@ -2378,7 +2378,7 @@
 		       'mus-out-format 'mus-output? 'mus-phase 'mus-ramp
 		       'mus-rand-seed 'mus-random 'mus-raw 'mus-reset 'mus-riff
 		       'mus-run 'mus-scaler 'mus-set-formant-radius-and-frequency 'mus-sound-chans 
-		       'mus-sound-comment 'mus-sound-data-format 'mus-sound-data-location 'mus-sound-datum-size
+		       'mus-sound-comment 'mus-sound-sample-type 'mus-sound-data-location 'mus-sound-datum-size
 		       'mus-sound-duration 'mus-sound-forget 'mus-sound-framples 'mus-sound-header-type 'mus-sound-length
 		       'mus-sound-loop-info 'mus-sound-mark-info 'mus-sound-maxamp 'mus-sound-maxamp-exists? 'mus-sound-path
 		       'mus-sound-prune 'mus-sound-report-cache 'mus-sound-samples
@@ -2532,7 +2532,7 @@
 	    (m1 (mus-sound-maxamp-exists? "oboe.snd"))
 	    (mal (mus-sound-maxamp "oboe.snd"))
 	    (mz (mus-sound-maxamp "z.snd"))
-	    (bytes (mus-bytes-per-sample (mus-sound-data-format "oboe.snd"))))
+	    (bytes (mus-bytes-per-sample (mus-sound-sample-type "oboe.snd"))))
 	(if (or (not (= (car mz) 0))
 		(fneq (cadr mz) 0.0))
 	    (snd-display #__line__ ";mus-sound-maxamp z.snd: ~A (~A ~A)" mz (not (= (car mz) 0)) (fneq (cadr mz) 0.0)))
@@ -2547,11 +2547,11 @@
 	  (for-each
 	   (lambda (frm siz)
 	     (if (not (= (mus-bytes-per-sample frm) siz))
-		 (snd-display #__line__ ";mus-bytes-per-sample ~A: ~A" (mus-data-format-name frm) siz)))
+		 (snd-display #__line__ ";mus-bytes-per-sample ~A: ~A" (mus-sample-type-name frm) siz)))
 	   formats
 	   sizes))
-	(if (not (string=? (mus-data-format->string mus-bshort) "mus-bshort"))
-	    (snd-display #__line__ ";mus-data-format->string: ~A" (mus-data-format->string mus-bshort)))
+	(if (not (string=? (mus-sample-type->string mus-bshort) "mus-bshort"))
+	    (snd-display #__line__ ";mus-sample-type->string: ~A" (mus-sample-type->string mus-bshort)))
 	(if (not (string=? (mus-header-type->string mus-aifc) "mus-aifc"))
 	    (snd-display #__line__ ";mus-header-type->string: ~A" (mus-header-type->string mus-aifc)))
 	(mus-sound-report-cache "hiho.tmp")
@@ -2587,7 +2587,7 @@
 			(frm (caddr vals)))
 		    (if (not (= sr 44100)) (snd-display #__line__ ";mus-header-raw-defaults srate: ~A" sr))
 		    (if (not (= chns 2)) (snd-display #__line__ ";mus-header-raw-defaults chns: ~A" chns))
-		    (if (not (= frm mus-bshort)) (snd-display #__line__ ";mus-header-raw-defaults format: ~A: ~A" frm (mus-data-format-name frm)))))))
+		    (if (not (= frm mus-bshort)) (snd-display #__line__ ";mus-header-raw-defaults format: ~A: ~A" frm (mus-sample-type-name frm)))))))
 	(set! (mus-header-raw-defaults) (list 12345 3 mus-bdouble-unscaled))
 	(let ((vals (mus-header-raw-defaults)))
 	  (if (or (not (list? vals))
@@ -2598,7 +2598,7 @@
 		    (frm (caddr vals)))
 		(if (not (= sr 12345)) (snd-display #__line__ ";set mus-header-raw-defaults srate: ~A" sr))
 		(if (not (= chns 3)) (snd-display #__line__ ";set mus-header-raw-defaults chns: ~A" chns))
-		(if (not (= frm mus-bdouble-unscaled)) (snd-display #__line__ ";set mus-header-raw-defaults format: ~A: ~A" frm (mus-data-format-name frm))))))
+		(if (not (= frm mus-bdouble-unscaled)) (snd-display #__line__ ";set mus-header-raw-defaults format: ~A: ~A" frm (mus-sample-type-name frm))))))
 	(set! (mus-header-raw-defaults) (list 44100 2 mus-bshort))
 	
 	(let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
@@ -2814,8 +2814,8 @@
 			 ((string-=? (mus-header-type-name i) "unsupported") i))))
 	  (if (< lasth 50) (snd-display #__line__ ";header-type[~A] = ~A" lasth (mus-header-type-name lasth))))
 	(let ((lasth (do ((i 1 (+ i 1)))
-			 ((string-=? (mus-data-format-name i) "unknown") i))))
-	  (if (< lasth 10) (snd-display #__line__ ";data-format[~A] = ~A" lasth (mus-data-format-name lasth))))
+			 ((string-=? (mus-sample-type-name i) "unknown") i))))
+	  (if (< lasth 10) (snd-display #__line__ ";sample-type[~A] = ~A" lasth (mus-sample-type-name lasth))))
 	
 	(set! *transform-normalization* dont-normalize)
 	(if (not (= *transform-normalization* dont-normalize))
@@ -2921,7 +2921,7 @@
 		       (snd-display #__line__ ";random 2.0 -> ~A?" val))
 		   (set! (v i) (- 1.0 val))))
 	       (float-vector->channel v 0 len ind 0)
-	       (save-sound-as "test1.snd" ind mus-next :data-format type)
+	       (save-sound-as "test1.snd" ind mus-next :sample-type type)
 	       (close-sound ind)
 	       (set! ind (open-sound "test1.snd"))
 	       (let ((v1 (channel->float-vector 0 len ind 0)))
@@ -2934,7 +2934,7 @@
 			   (set! maxpos i)))))
 		 (if (> maxdiff allowed-diff)
 		     (snd-display #__line__ ";[line 2841] ~A: ~A at ~A (~A ~A)" 
-				  (mus-data-format-name type) 
+				  (mus-sample-type-name type) 
 				  maxdiff maxpos 
 				  (v maxpos) (v1 maxpos)))
 		 (close-sound ind))))
@@ -2990,27 +2990,27 @@
 		(snd-display #__line__ ";save-as nist -> ~A?" (mus-header-type-name (header-type ab))))
 	    (if (not (= (mus-sound-header-type "test.snd") mus-nist)) 
 		(snd-display #__line__ ";saved-as nist -> ~A?" (mus-header-type-name (mus-sound-header-type "test.snd"))))
-	    (if (not (= (data-format ab) mus-bint)) 
-		(snd-display #__line__ ";save-as int -> ~A?" (mus-data-format-name (data-format ab))))
-	    (if (not (= (mus-sound-data-format "test.snd") mus-bint)) 
-		(snd-display #__line__ ";saved-as int -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
+	    (if (not (= (sample-type ab) mus-bint)) 
+		(snd-display #__line__ ";save-as int -> ~A?" (mus-sample-type-name (sample-type ab))))
+	    (if (not (= (mus-sound-sample-type "test.snd") mus-bint)) 
+		(snd-display #__line__ ";saved-as int -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";nist[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
 	  (set! (hook-functions output-comment-hook) ())
 	  (hook-push output-comment-hook
 		     (lambda (hook) 
 		       (set! (hook 'result) (string-append (hook 'comment) " [written by me]"))))
-	  (save-sound-as :file "test.snd" :sound ob :header-type mus-riff :data-format mus-lfloat)
+	  (save-sound-as :file "test.snd" :sound ob :header-type mus-riff :sample-type mus-lfloat)
 	  (set! (hook-functions output-comment-hook) ())
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-riff)) 
 		(snd-display #__line__ ";save-as riff -> ~A?" (mus-header-type-name (header-type ab))))
 	    (if (not (= (mus-sound-header-type "test.snd") mus-riff)) 
 		(snd-display #__line__ ";saved-as riff -> ~A?" (mus-header-type-name (mus-sound-header-type "test.snd"))))
-	    (if (not (= (data-format ab) mus-lfloat)) 
-		(snd-display #__line__ ";save-as float -> ~A?" (mus-data-format-name (data-format ab))))
-	    (if (not (= (mus-sound-data-format "test.snd") mus-lfloat)) 
-		(snd-display #__line__ ";saved-as float -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
+	    (if (not (= (sample-type ab) mus-lfloat)) 
+		(snd-display #__line__ ";save-as float -> ~A?" (mus-sample-type-name (sample-type ab))))
+	    (if (not (= (mus-sound-sample-type "test.snd") mus-lfloat)) 
+		(snd-display #__line__ ";saved-as float -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";riff[1000] = ~A?" (sample 1000 ab)))
 	    (if (or (not (string? (comment ab)))
 		    (not (string=? (comment ab) 
@@ -3025,10 +3025,10 @@
 		(snd-display #__line__ ";save-as aiff -> ~A?" (mus-header-type-name (header-type ab))))
 	    (if (not (= (mus-sound-header-type "test.snd") mus-aiff)) 
 		(snd-display #__line__ ";saved-as aiff -> ~A?" (mus-header-type-name (mus-sound-header-type "test.snd"))))
-	    (if (not (= (data-format ab) mus-b24int))
-		(snd-display #__line__ ";save-as 24-bit -> ~A?" (mus-data-format-name (data-format ab))))
-	    (if (not (= (mus-sound-data-format "test.snd") mus-b24int))
-		(snd-display #__line__ ";saved-as 24-bit -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
+	    (if (not (= (sample-type ab) mus-b24int))
+		(snd-display #__line__ ";save-as 24-bit -> ~A?" (mus-sample-type-name (sample-type ab))))
+	    (if (not (= (mus-sound-sample-type "test.snd") mus-b24int))
+		(snd-display #__line__ ";saved-as 24-bit -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";aiff[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
 	  (save-sound-as "test.snd" ob mus-ircam mus-mulaw)
@@ -3037,10 +3037,10 @@
 		(snd-display #__line__ ";save-as ircam -> ~A?" (mus-header-type-name (header-type ab))))
 	    (if (not (= (mus-sound-header-type "test.snd") mus-ircam)) 
 		(snd-display #__line__ ";saved-as ircam -> ~A?" (mus-header-type-name (mus-sound-header-type "test.snd"))))
-	    (if (not (= (data-format ab) mus-mulaw))
-		(snd-display #__line__ ";save-as mulaw -> ~A?" (mus-data-format-name (data-format ab))))
-	    (if (not (= (mus-sound-data-format "test.snd") mus-mulaw))
-		(snd-display #__line__ ";saved-as mulaw -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
+	    (if (not (= (sample-type ab) mus-mulaw))
+		(snd-display #__line__ ";save-as mulaw -> ~A?" (mus-sample-type-name (sample-type ab))))
+	    (if (not (= (mus-sound-sample-type "test.snd") mus-mulaw))
+		(snd-display #__line__ ";saved-as mulaw -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";ircam[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
 	  (save-sound-as "test.snd" ob mus-next mus-alaw)
@@ -3049,18 +3049,18 @@
 		(snd-display #__line__ ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
 	    (if (not (= (mus-sound-header-type "test.snd") mus-next)) 
 		(snd-display #__line__ ";saved-as next -> ~A?" (mus-header-type-name (mus-sound-header-type "test.snd"))))
-	    (if (not (= (data-format ab) mus-alaw)) 
-		(snd-display #__line__ ";save-as alaw -> ~A?" (mus-data-format-name (data-format ab))))
-	    (if (not (= (mus-sound-data-format "test.snd") mus-alaw)) 
-		(snd-display #__line__ ";saved-as alaw -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
+	    (if (not (= (sample-type ab) mus-alaw)) 
+		(snd-display #__line__ ";save-as alaw -> ~A?" (mus-sample-type-name (sample-type ab))))
+	    (if (not (= (mus-sound-sample-type "test.snd") mus-alaw)) 
+		(snd-display #__line__ ";saved-as alaw -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (alaw)[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
 	  (save-sound-as "test.snd" ob mus-next mus-ldouble)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-next)) 
 		(snd-display #__line__ ";save-as dbl next -> ~A?" (mus-header-type-name (header-type ab))))
-	    (if (not (= (data-format ab) mus-ldouble)) 
-		(snd-display #__line__ ";save-as dbl -> ~A?" (mus-data-format-name (data-format ab))))
+	    (if (not (= (sample-type ab) mus-ldouble)) 
+		(snd-display #__line__ ";save-as dbl -> ~A?" (mus-sample-type-name (sample-type ab))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (dbl)[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
 	  (save-sound-as "test.snd" ob mus-next mus-bshort)
@@ -3069,16 +3069,16 @@
 		(snd-display #__line__ ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
 	    (if (not (= (mus-sound-header-type "test.snd") mus-next)) 
 		(snd-display #__line__ ";saved-as next -> ~A?" (mus-header-type-name (mus-sound-header-type "test.snd"))))
-	    (if (not (= (data-format ab) mus-bshort)) 
-		(snd-display #__line__ ";save-as short -> ~A?" (mus-data-format-name (data-format ab))))
-	    (if (not (= (mus-sound-data-format "test.snd") mus-bshort)) 
-		(snd-display #__line__ ";saved-as short -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
+	    (if (not (= (sample-type ab) mus-bshort)) 
+		(snd-display #__line__ ";save-as short -> ~A?" (mus-sample-type-name (sample-type ab))))
+	    (if (not (= (mus-sound-sample-type "test.snd") mus-bshort)) 
+		(snd-display #__line__ ";saved-as short -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (short)[1000] = ~A?" (sample 1000 ab)))
 	    (set! (hook-functions update-hook) ())
 	    (set! (y-bounds ab 0) (list -3.0 3.0))
-	    (set! (data-format ab) mus-lshort)
+	    (set! (sample-type ab) mus-lshort)
 	    (if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd"))) ; these set!'s can change the index via update-sound
-	    (if (not (= (data-format ab) mus-lshort)) (snd-display #__line__ ";set data-format: ~A?" (mus-data-format-name (data-format ab))))
+	    (if (not (= (sample-type ab) mus-lshort)) (snd-display #__line__ ";set sample-type: ~A?" (mus-sample-type-name (sample-type ab))))
 	    (if (not (equal? (y-bounds ab 0) (list -3.0 3.0))) (snd-display #__line__ ";set data format y-bounds: ~A?" (y-bounds ab 0)))
 	    (set! (y-bounds ab 0) (list 2.0))
 	    (if (not (equal? (y-bounds ab 0) (list -2.0 2.0))) (snd-display #__line__ ";set data format y-bounds 1: ~A?" (y-bounds ab 0)))
@@ -3108,18 +3108,18 @@
 		(snd-display #__line__ ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
 	    (if (not (= (mus-sound-header-type "test.snd") mus-next)) 
 		(snd-display #__line__ ";saved-as next -> ~A?" (mus-header-type-name (mus-sound-header-type "test.snd"))))
-	    (if (not (= (data-format ab) mus-bfloat)) 
-		(snd-display #__line__ ";save-as float -> ~A?" (mus-data-format-name (data-format ab))))
-	    (if (not (= (mus-sound-data-format "test.snd") mus-bfloat)) 
-		(snd-display #__line__ ";saved-as float -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
+	    (if (not (= (sample-type ab) mus-bfloat)) 
+		(snd-display #__line__ ";save-as float -> ~A?" (mus-sample-type-name (sample-type ab))))
+	    (if (not (= (mus-sound-sample-type "test.snd") mus-bfloat)) 
+		(snd-display #__line__ ";saved-as float -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (float)[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
 	  (save-sound-as "test.snd" ob mus-next mus-ldouble)
 	  (close-sound ob)
 	  (let ((ab (open-sound "test.snd")))
-	    (set! (data-format) mus-lshort)
+	    (set! (sample-type) mus-lshort)
 	    (if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
-	    (if (not (= (data-format) mus-lshort)) (snd-display #__line__ ";set data-format: ~A?" (mus-data-format-name (data-format))))
+	    (if (not (= (sample-type) mus-lshort)) (snd-display #__line__ ";set sample-type: ~A?" (mus-sample-type-name (sample-type))))
 	    (set! (header-type) mus-aifc)
 	    (if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	    (if (not (= (header-type) mus-aifc)) (snd-display #__line__ ";set header-type: ~A?" (mus-header-type-name (header-type))))
@@ -3135,12 +3135,12 @@
 	    (close-sound ab)))
 	
 	(let ((ind (open-sound "2a.snd")))
-	  (save-sound-as "test.snd" :data-format mus-l24int :header-type mus-riff :channel 0)
+	  (save-sound-as "test.snd" :sample-type mus-l24int :header-type mus-riff :channel 0)
 	  (let ((ind0 (open-sound "test.snd")))
 	    (if (not (= (channels ind0) 1)) 
 		(snd-display #__line__ ";save-sound-as :channel 0 chans: ~A" (channels ind0)))
-	    (if (not (= (data-format ind0) mus-l24int)) 
-		(snd-display #__line__ ";save-sound-as :channel 0 data-format: ~A ~A" (data-format ind0) (mus-data-format-name (data-format ind0))))
+	    (if (not (= (sample-type ind0) mus-l24int)) 
+		(snd-display #__line__ ";save-sound-as :channel 0 sample-type: ~A ~A" (sample-type ind0) (mus-sample-type-name (sample-type ind0))))
 	    (if (not (= (header-type ind0) mus-riff))
 		(snd-display #__line__ ";save-sound-as :channel 0 header-type: ~A ~A" (header-type ind0) (mus-header-type-name (header-type ind0))))
 	    (if (not (= (srate ind0) (srate ind)))
@@ -3150,12 +3150,12 @@
 	    (if (fneq (maxamp ind0 0) (maxamp ind 0))
 		(snd-display #__line__ ";save-sound-as :channel 0 maxamps: ~A ~A" (maxamp ind0 0) (maxamp ind 0)))
 	    (close-sound ind0))
-	  (save-sound-as "test.snd" :data-format mus-bfloat :header-type mus-aifc :channel 1 :srate 12345)
+	  (save-sound-as "test.snd" :sample-type mus-bfloat :header-type mus-aifc :channel 1 :srate 12345)
 	  (let ((ind0 (open-sound "test.snd")))
 	    (if (not (= (channels ind0) 1)) 
 		(snd-display #__line__ ";save-sound-as :channel 1 chans: ~A" (channels ind0)))
-	    (if (not (= (data-format ind0) mus-bfloat)) 
-		(snd-display #__line__ ";save-sound-as :channel 1 data-format: ~A ~A" (data-format ind0) (mus-data-format-name (data-format ind0))))
+	    (if (not (= (sample-type ind0) mus-bfloat)) 
+		(snd-display #__line__ ";save-sound-as :channel 1 sample-type: ~A ~A" (sample-type ind0) (mus-sample-type-name (sample-type ind0))))
 	    (if (not (= (header-type ind0) mus-aifc))
 		(snd-display #__line__ ";save-sound-as :channel 1 header-type: ~A ~A" (header-type ind0) (mus-header-type-name (header-type ind0))))
 	    (if (not (= (srate ind0) 12345))
@@ -3169,8 +3169,8 @@
 	  (let ((ind0 (open-sound "test.snd")))
 	    (if (not (= (channels ind0) 1)) 
 		(snd-display #__line__ ";save-sound-as :channel 1 (1) chans: ~A" (channels ind0)))
-	    (if (not (= (data-format ind0) (data-format ind)))
-		(snd-display #__line__ ";save-sound-as :channel 1 (1) data-format: ~A ~A" (data-format ind0) (mus-data-format-name (data-format ind0))))
+	    (if (not (= (sample-type ind0) (sample-type ind)))
+		(snd-display #__line__ ";save-sound-as :channel 1 (1) sample-type: ~A ~A" (sample-type ind0) (mus-sample-type-name (sample-type ind0))))
 	    (if (not (= (header-type ind0) (header-type ind)))
 		(snd-display #__line__ ";save-sound-as :channel 1 (1) header-type: ~A ~A" (header-type ind0) (mus-header-type-name (header-type ind0))))
 	    (if (not (= (srate ind0) (srate ind)))
@@ -3297,12 +3297,12 @@
 
 	(hook-push open-raw-sound-hook (lambda (hook) (set! (hook 'result) (list 1 22050 mus-bshort))))
 	(let ((ind (open-sound (string-append sf-dir "empty.snd"))))
-	  (if (or (not (= (data-format ind) mus-bshort))
+	  (if (or (not (= (sample-type ind) mus-bshort))
 		  (not (= (chans ind) 1))
 		  (not (= (srate ind) 22050))
 		  (not (= (data-location ind) 0))
 		  (not (= (framples ind) 0)))
-	      (snd-display #__line__ ";open raw: ~A ~A ~A ~A ~A" (data-format ind) (chans ind) (srate ind) (data-location ind) (framples ind)))
+	      (snd-display #__line__ ";open raw: ~A ~A ~A ~A ~A" (sample-type ind) (chans ind) (srate ind) (data-location ind) (framples ind)))
 	  (set! (hook-functions open-raw-sound-hook) ())
 	  (close-sound ind))
 	
@@ -3369,7 +3369,7 @@
 	(delete-file "fmv.snd")
 	
 	(set! *clipping* #f)
-	(let ((snd (new-sound "test.snd" :data-format mus-lshort)))
+	(let ((snd (new-sound "test.snd" :sample-type mus-lshort)))
 	  (pad-channel 0 10)
 	  (set! (sample 1) 1.0)
 	  (set! (sample 2) -1.0)
@@ -3390,7 +3390,7 @@
 	(mus-sound-forget "test.snd")
 	
 	(set! *clipping* #t)
-	(let ((snd (new-sound "test.snd" :data-format mus-lshort)))
+	(let ((snd (new-sound "test.snd" :sample-type mus-lshort)))
 	  (pad-channel 0 10)
 	  (set! (sample 1) 1.0)
 	  (set! (sample 2) -1.0)
@@ -3496,7 +3496,7 @@
 	
 	(let ((cur-srate (mus-sound-srate "oboe.snd"))
 	      (cur-chans (mus-sound-chans "oboe.snd"))
-	      (cur-format (mus-sound-data-format "oboe.snd"))
+	      (cur-format (mus-sound-sample-type "oboe.snd"))
 	      (cur-type (mus-sound-header-type "oboe.snd"))
 	      (cur-loc (mus-sound-data-location "oboe.snd"))
 	      (cur-samps (mus-sound-samples "oboe.snd")))
@@ -3515,15 +3515,15 @@
 	  (set! (mus-sound-header-type "oboe.snd") mus-nist)
 	  (if (not (= mus-nist (mus-sound-header-type "oboe.snd"))) 
 	      (snd-display #__line__ ";set mus-sound-header-type: ~A -> ~A" cur-type (mus-sound-header-type "oboe.snd")))
-	  (set! (mus-sound-data-format "oboe.snd") mus-lintn)
-	  (if (not (= mus-lintn (mus-sound-data-format "oboe.snd"))) 
-	      (snd-display #__line__ ";set mus-sound-data-format: ~A -> ~A" cur-format (mus-sound-data-format "oboe.snd")))
+	  (set! (mus-sound-sample-type "oboe.snd") mus-lintn)
+	  (if (not (= mus-lintn (mus-sound-sample-type "oboe.snd"))) 
+	      (snd-display #__line__ ";set mus-sound-sample-type: ~A -> ~A" cur-format (mus-sound-sample-type "oboe.snd")))
 	  (set! (mus-sound-srate "oboe.snd") cur-srate)
 	  (set! (mus-sound-samples "oboe.snd") cur-samps)
 	  (set! (mus-sound-chans "oboe.snd") cur-chans)
 	  (set! (mus-sound-data-location "oboe.snd") cur-loc)
 	  (set! (mus-sound-header-type "oboe.snd") cur-type)
-	  (set! (mus-sound-data-format "oboe.snd") cur-format))
+	  (set! (mus-sound-sample-type "oboe.snd") cur-format))
 	
 	(let ((ind (open-sound "oboe.snd")))
 	  (save-sound-as "test.wave" ind mus-riff)
@@ -3535,7 +3535,7 @@
 	   (lambda (file)
 	     (let ((cur-srate (mus-sound-srate file))
 		   (cur-chans (mus-sound-chans file))
-		   (cur-format (mus-sound-data-format file))
+		   (cur-format (mus-sound-sample-type file))
 		   (cur-type (mus-sound-header-type file))
 		   (cur-loc (mus-sound-data-location file))
 		   (cur-samps (mus-sound-samples file)))
@@ -3554,15 +3554,15 @@
 	       (set! (mus-sound-header-type file) mus-nist)
 	       (if (not (= mus-nist (mus-sound-header-type file))) 
 		   (snd-display #__line__ ";~A: set mus-sound-header-type: ~A -> ~A" file cur-type (mus-sound-header-type file)))
-	       (set! (mus-sound-data-format file) mus-lintn)
-	       (if (not (= mus-lintn (mus-sound-data-format file))) 
-		   (snd-display #__line__ ";~A: set mus-sound-data-format: ~A -> ~A" file cur-format (mus-sound-data-format file)))
+	       (set! (mus-sound-sample-type file) mus-lintn)
+	       (if (not (= mus-lintn (mus-sound-sample-type file))) 
+		   (snd-display #__line__ ";~A: set mus-sound-sample-type: ~A -> ~A" file cur-format (mus-sound-sample-type file)))
 	       (set! (mus-sound-srate file) cur-srate)
 	       (set! (mus-sound-samples file) cur-samps)
 	       (set! (mus-sound-chans file) cur-chans)
 	       (set! (mus-sound-data-location file) cur-loc)
 	       (set! (mus-sound-header-type file) cur-type)
-	       (set! (mus-sound-data-format file) cur-format)))
+	       (set! (mus-sound-sample-type file) cur-format)))
 	   (list "test.wave" "test.rf64" "test.aifc"))
 	  
 	  (for-each 
@@ -3570,7 +3570,7 @@
 	     (let ((ind (open-sound file)))
 	       (let ((cur-srate (srate ind))
 		     (cur-chans (chans ind))
-		     (cur-format (data-format ind))
+		     (cur-format (sample-type ind))
 		     (cur-type (header-type ind))
 		     (cur-loc (data-location ind))
 		     (cur-samps (framples ind)))
@@ -3592,15 +3592,15 @@
 		 (set! (header-type ind) mus-nist)
 		 (if (not (= mus-nist (header-type ind))) 
 		     (snd-display #__line__ ";~A: set header-type: ~A -> ~A" file cur-type (header-type ind)))
-		 (set! (data-format ind) mus-lintn)
-		 (if (not (= mus-lintn (data-format ind))) 
-		     (snd-display #__line__ ";~A: set data-format: ~A -> ~A" file cur-format (data-format ind)))
+		 (set! (sample-type ind) mus-lintn)
+		 (if (not (= mus-lintn (sample-type ind))) 
+		     (snd-display #__line__ ";~A: set sample-type: ~A -> ~A" file cur-format (sample-type ind)))
 		 (set! (srate ind) cur-srate)
 		 (set! (framples ind) cur-samps)
 		 (set! (chans ind) cur-chans)
 		 (set! (data-location ind) cur-loc)
 		 (set! (header-type ind) cur-type)
-		 (set! (data-format ind) cur-format))
+		 (set! (sample-type ind) cur-format))
 	       (close-sound ind))
 	     (if (file-exists? file)
 		 (delete-file file)))
@@ -3829,8 +3829,8 @@
 	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; comment
 	(write-byte #o000) (write-byte #o001) ; samp 1
 	))
-    (if (not (= (mus-sound-data-format "test.snd") mus-bshort))
-	(snd-display #__line__ ";next 18: ~A" (mus-sound-data-format "test.snd")))
+    (if (not (= (mus-sound-sample-type "test.snd") mus-bshort))
+	(snd-display #__line__ ";next 18: ~A" (mus-sound-sample-type "test.snd")))
     (delete-file "test.snd")
     (mus-sound-forget "test.snd")
     (with-output-to-file "test.snd"
@@ -3933,7 +3933,7 @@
 	(if (and (number? tag)
 		 (sound? tag))
 	    (begin
-	      (snd-display #__line__ ";open-sound bits 80 ~A: ~A?" (data-format tag) tag)
+	      (snd-display #__line__ ";open-sound bits 80 ~A: ~A?" (sample-type tag) tag)
 	      (close-sound tag))))
       (delete-file "test.aif")
       (mus-sound-forget "test.aif"))
@@ -5915,7 +5915,7 @@ EDITS: 5
 	(if (not (= (srate index) 22050)) (snd-display #__line__ ";oboe: srate ~D?" (srate index)))
 	(if (not (= (data-location index) 28)) (snd-display #__line__ ";oboe: location ~D?" (data-location index)))
 	(if (not (= (data-size index) (* 50828 2))) (snd-display #__line__ ";oboe: size ~D?" (data-size index)))
-	(if (not (= (data-format index) mus-bshort)) (snd-display #__line__ ";oboe: format ~A?" (data-format index)))
+	(if (not (= (sample-type index) mus-bshort)) (snd-display #__line__ ";oboe: format ~A?" (sample-type index)))
 	(if (fneq (maxamp index) .14724) (snd-display #__line__ ";oboe: maxamp ~F?" (maxamp index)))
 	(if (not (= (maxamp-position index) 24971)) (snd-display #__line__ ";oboe: maxamp-position ~A?" (maxamp-position index)))
 	(if (> (length (comment index)) 0) (snd-display #__line__ ";oboe: comment ~A?" (comment index)))
@@ -6218,8 +6218,8 @@ EDITS: 5
 	    (save-region id "fmv.snd")
 	    (if (not (= (mus-sound-header-type "fmv.snd") mus-next))
 		(snd-display #__line__ ";save-region header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
-	    (if (not (= (mus-sound-data-format "fmv.snd") mus-out-format))
-		(snd-display #__line__ ";save-region format: ~A?" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+	    (if (not (= (mus-sound-sample-type "fmv.snd") mus-out-format))
+		(snd-display #__line__ ";save-region format: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
 	    (if (not (= (mus-sound-srate "fmv.snd") (region-srate id)))
 		(snd-display #__line__ ";save-region srate: ~A (~A)" (mus-sound-srate "fmv.snd") (region-srate id)))
 	    (if (not (= (mus-sound-chans "fmv.snd") (region-chans id)))
@@ -6232,38 +6232,38 @@ EDITS: 5
 	    (save-region id "fmv.snd" mus-riff mus-lshort "this is a comment")
 	    (if (not (= (mus-sound-header-type "fmv.snd") mus-riff))
 		(snd-display #__line__ ";save-region riff header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
-	    (if (not (= (mus-sound-data-format "fmv.snd") mus-lshort))
-		(snd-display #__line__ ";save-region lshort format: ~A?" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+	    (if (not (= (mus-sound-sample-type "fmv.snd") mus-lshort))
+		(snd-display #__line__ ";save-region lshort format: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
 	    (if (not (= (mus-sound-framples "fmv.snd") (region-framples id)))
 		(snd-display #__line__ ";save-region length: ~A (~A)" (mus-sound-framples "fmv.snd") (region-framples id)))
 	    (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
 		(snd-display #__line__ ";save-region comment: ~A" (mus-sound-comment "fmv.snd")))
 	    (delete-file "fmv.snd")
-	    (save-region id :file "fmv.snd" :header-type mus-riff :data-format mus-lshort :comment "this is a comment")
+	    (save-region id :file "fmv.snd" :header-type mus-riff :sample-type mus-lshort :comment "this is a comment")
 	    (if (not (= (mus-sound-header-type "fmv.snd") mus-riff))
 		(snd-display #__line__ ";save-region opt riff header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
-	    (if (not (= (mus-sound-data-format "fmv.snd") mus-lshort))
-		(snd-display #__line__ ";save-region opt lshort format: ~A?" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+	    (if (not (= (mus-sound-sample-type "fmv.snd") mus-lshort))
+		(snd-display #__line__ ";save-region opt lshort format: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
 	    (if (not (= (mus-sound-framples "fmv.snd") (region-framples id)))
 		(snd-display #__line__ ";save-region opt length: ~A (~A)" (mus-sound-framples "fmv.snd") (region-framples id)))
 	    (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
 		(snd-display #__line__ ";save-region opt comment: ~A" (mus-sound-comment "fmv.snd")))
 	    (delete-file "fmv.snd")
-	    (save-region id :comment "this is a comment" :file "fmv.snd" :data-format mus-lshort :header-type mus-riff)
+	    (save-region id :comment "this is a comment" :file "fmv.snd" :sample-type mus-lshort :header-type mus-riff)
 	    (if (not (= (mus-sound-header-type "fmv.snd") mus-riff))
 		(snd-display #__line__ ";save-region opt1 riff header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
-	    (if (not (= (mus-sound-data-format "fmv.snd") mus-lshort))
-		(snd-display #__line__ ";save-region opt1 lshort format: ~A?" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+	    (if (not (= (mus-sound-sample-type "fmv.snd") mus-lshort))
+		(snd-display #__line__ ";save-region opt1 lshort format: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
 	    (if (not (= (mus-sound-framples "fmv.snd") (region-framples id)))
 		(snd-display #__line__ ";save-region opt1 length: ~A (~A)" (mus-sound-framples "fmv.snd") (region-framples id)))
 	    (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
 		(snd-display #__line__ ";save-region opt1 comment: ~A" (mus-sound-comment "fmv.snd")))
 	    (delete-file "fmv.snd")
-	    (save-region id "fmv.snd" :data-format mus-bshort)
+	    (save-region id "fmv.snd" :sample-type mus-bshort)
 	    (if (not (= (mus-sound-header-type "fmv.snd") mus-next))
 		(snd-display #__line__ ";save-region opt2 next header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
-	    (if (not (= (mus-sound-data-format "fmv.snd") mus-bshort))
-		(snd-display #__line__ ";save-region opt2 bshort format: ~A?" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+	    (if (not (= (mus-sound-sample-type "fmv.snd") mus-bshort))
+		(snd-display #__line__ ";save-region opt2 bshort format: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
 	    (delete-file "fmv.snd")
 	    ))
 	(close-sound index)
@@ -6380,8 +6380,8 @@ EDITS: 5
 	      (snd-display #__line__ ";save-selection: ~A ~A ~A ~A?" (v0 64) (v0 20) (v0 119) v0))
 	  (if (not (= (mus-sound-header-type "fmv5.snd") mus-next))
 	      (snd-display #__line__ ";save-selection type: ~A?" (mus-header-type-name (mus-sound-header-type "fmv5.snd"))))
-	  (if (not (= (mus-sound-data-format "fmv5.snd") mus-bint))
-	      (snd-display #__line__ ";save-selection format: ~A?" (mus-data-format-name (mus-sound-data-format "fmv5.snd"))))
+	  (if (not (= (mus-sound-sample-type "fmv5.snd") mus-bint))
+	      (snd-display #__line__ ";save-selection format: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv5.snd"))))
 	  (if (not (= (mus-sound-srate "fmv5.snd") 22050))
 	      (snd-display #__line__ ";save-selection srate: ~A?" (mus-sound-srate "fmv5.snd")))
 	  (fill! v0 0.0)
@@ -6399,29 +6399,29 @@ EDITS: 5
 	      (snd-display #__line__ ";save reverse-selection: ~A?" v0))
 	  (if (not (= (mus-sound-header-type "fmv4.snd") mus-riff))
 	      (snd-display #__line__ ";save-selection type 1: ~A?" (mus-header-type-name (mus-sound-header-type "fmv4.snd"))))
-	  (if (not (= (mus-sound-data-format "fmv4.snd") mus-lfloat))
-	      (snd-display #__line__ ";save-selection format 1: ~A?" (mus-data-format-name (mus-sound-data-format "fmv4.snd"))))
+	  (if (not (= (mus-sound-sample-type "fmv4.snd") mus-lfloat))
+	      (snd-display #__line__ ";save-selection format 1: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv4.snd"))))
 	  (if (not (= (mus-sound-srate "fmv4.snd") 44100))
 	      (snd-display #__line__ ";save-selection srate 1: ~A?" (mus-sound-srate "fmv4.snd")))
 	  (if (not (string=? (mus-sound-comment "fmv4.snd") "this is a comment"))
 	      (snd-display #__line__ ";save-selection comment: ~A?" (mus-sound-comment "fmv4.snd")))
 	  (delete-file "fmv4.snd")
-	  (save-selection :file "fmv4.snd" :header-type mus-riff :data-format mus-lfloat :srate 44100 :comment "this is a comment")
+	  (save-selection :file "fmv4.snd" :header-type mus-riff :sample-type mus-lfloat :srate 44100 :comment "this is a comment")
 	  (if (not (= (mus-sound-header-type "fmv4.snd") mus-riff))
 	      (snd-display #__line__ ";save-selection opt type 1: ~A?" (mus-header-type-name (mus-sound-header-type "fmv4.snd"))))
-	  (if (not (= (mus-sound-data-format "fmv4.snd") mus-lfloat))
-	      (snd-display #__line__ ";save-selection opt format 1: ~A?" (mus-data-format-name (mus-sound-data-format "fmv4.snd"))))
+	  (if (not (= (mus-sound-sample-type "fmv4.snd") mus-lfloat))
+	      (snd-display #__line__ ";save-selection opt format 1: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv4.snd"))))
 	  (if (not (= (mus-sound-srate "fmv4.snd") 44100))
 	      (snd-display #__line__ ";save-selection opt srate 1: ~A?" (mus-sound-srate "fmv4.snd")))
 	  (if (not (string=? (mus-sound-comment "fmv4.snd") "this is a comment"))
 	      (snd-display #__line__ ";save-selection opt comment: ~A?" (mus-sound-comment "fmv4.snd")))
 	  (delete-file "fmv4.snd")
-	  (save-selection :file "fmv4.snd" :data-format mus-bfloat :channel 0)
+	  (save-selection :file "fmv4.snd" :sample-type mus-bfloat :channel 0)
 	  (if (and (not (= (mus-sound-header-type "fmv4.snd") mus-next))
 		   (not (= (mus-sound-header-type "fmv4.snd") mus-ircam)))
 	      (snd-display #__line__ ";save-selection opt1 type 1: ~A?" (mus-header-type-name (mus-sound-header-type "fmv4.snd"))))
-	  (if (not (= (mus-sound-data-format "fmv4.snd") mus-bfloat))
-	      (snd-display #__line__ ";save-selection opt1 format 1: ~A?" (mus-data-format-name (mus-sound-data-format "fmv4.snd"))))
+	  (if (not (= (mus-sound-sample-type "fmv4.snd") mus-bfloat))
+	      (snd-display #__line__ ";save-selection opt1 format 1: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv4.snd"))))
 	  (if (not (= (mus-sound-chans "fmv4.snd") 1))
 	      (snd-display #__line__ ";save-selection opt1 chans: ~A?" (mus-sound-chans "fmv4.snd")))
 	  (delete-file "fmv4.snd")
@@ -17831,8 +17831,8 @@ EDITS: 2
 	  (snd-display #__line__ ";sample->file samples: ~A" (mus-sound-samples "fmv.snd")))
       (if (not (= (mus-sound-header-type "fmv.snd") mus-next)) 
 	  (snd-display #__line__ ";sample->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
-      (if (not (= (mus-sound-data-format "fmv.snd") mus-bshort)) 
-	  (snd-display #__line__ ";sample->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+      (if (not (= (mus-sound-sample-type "fmv.snd") mus-bshort)) 
+	  (snd-display #__line__ ";sample->file format: ~A" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
       (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
 	  (snd-display #__line__ ";sample->file comment: ~A" (mus-sound-comment "fmv.snd")))
       (let ((rd (make-file->sample "fmv.snd"))
@@ -17862,8 +17862,8 @@ EDITS: 2
 	  (snd-display #__line__ ";continue-sample->file samples: ~A" (mus-sound-samples "fmv.snd")))
       (if (not (= (mus-sound-header-type "fmv.snd") mus-next)) 
 	  (snd-display #__line__ ";continue-sample->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
-      (if (not (= (mus-sound-data-format "fmv.snd") mus-bshort)) 
-	  (snd-display #__line__ ";continue-sample->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+      (if (not (= (mus-sound-sample-type "fmv.snd") mus-bshort)) 
+	  (snd-display #__line__ ";continue-sample->file format: ~A" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
       (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
 	  (snd-display #__line__ ";continue-sample->file comment: ~A" (mus-sound-comment "fmv.snd")))
       (let ((ind (open-sound "fmv.snd")))
@@ -17904,8 +17904,8 @@ EDITS: 2
 	  (snd-display #__line__ ";frample->file samples: ~A" (mus-sound-samples "fmv.snd")))
       (if (not (= (mus-sound-header-type "fmv.snd") mus-riff)) 
 	  (snd-display #__line__ ";frample->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
-      (if (not (= (mus-sound-data-format "fmv.snd") mus-lfloat)) 
-	  (snd-display #__line__ ";frample->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+      (if (not (= (mus-sound-sample-type "fmv.snd") mus-lfloat)) 
+	  (snd-display #__line__ ";frample->file format: ~A" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
       (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
 	  (snd-display #__line__ ";frample->file comment: ~A" (mus-sound-comment "fmv.snd")))
       (let ((rd (make-file->frample "fmv.snd"))
@@ -17935,8 +17935,8 @@ EDITS: 2
 	  (snd-display #__line__ ";continue-frample->file samples: ~A" (mus-sound-samples "fmv.snd")))
       (if (not (= (mus-sound-header-type "fmv.snd") mus-riff)) 
 	  (snd-display #__line__ ";continue-frample->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
-      (if (not (= (mus-sound-data-format "fmv.snd") mus-lfloat)) 
-	  (snd-display #__line__ ";continue-frample->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+      (if (not (= (mus-sound-sample-type "fmv.snd") mus-lfloat)) 
+	  (snd-display #__line__ ";continue-frample->file format: ~A" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
       (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
 	  (snd-display #__line__ ";continue-frample->file comment: ~A" (mus-sound-comment "fmv.snd")))
       (let ((ind (open-sound "fmv.snd")))
@@ -20001,10 +20001,10 @@ EDITS: 2
 	  (snd-display #__line__ ";new-sound default header-type: ~A ~A?"
 		       (mus-header-type-name (header-type nind))
 		       (mus-header-type-name *default-output-header-type*)))
-      (if (not (= (data-format nind) *default-output-data-format*))
-	  (snd-display #__line__ ";new-sound default data-format: ~A ~A?"
-		       (mus-data-format-name (data-format nind))
-		       (mus-data-format-name *default-output-data-format*)))
+      (if (not (= (sample-type nind) *default-output-sample-type*))
+	  (snd-display #__line__ ";new-sound default sample-type: ~A ~A?"
+		       (mus-sample-type-name (sample-type nind))
+		       (mus-sample-type-name *default-output-sample-type*)))
       (if (not (= (chans nind) *default-output-chans*))
 	  (snd-display #__line__ ";new-sound default chans: ~A ~A?" (chans nind) *default-output-chans*))
       (if (not (= (srate nind) *default-output-srate*))
@@ -24890,7 +24890,7 @@ EDITS: 2
 			  (lambda () 
 			    (if (and (< (mus-sound-chans (string-append sf-dir file)) 256)
 				     (> (mus-sound-chans (string-append sf-dir file)) 0)
-				     (>= (mus-sound-data-format (string-append sf-dir file)) 0)
+				     (>= (mus-sound-sample-type (string-append sf-dir file)) 0)
 				     (> (mus-sound-srate (string-append sf-dir file)) 0)
 				     (>= (mus-sound-framples (string-append sf-dir file)) 0))
 				(set! good-files (cons file good-files))))
@@ -24928,7 +24928,7 @@ EDITS: 2
 		    (let* ((choice (floor (random sf-dir-len)))
 			   (name (string-append sf-dir (sf-dir-files choice)))
 			   (ht (catch #t (lambda () (mus-sound-header-type name)) (lambda args 0)))
-			   (df (catch #t (lambda () (mus-sound-data-format name)) (lambda args 0)))
+			   (df (catch #t (lambda () (mus-sound-sample-type name)) (lambda args 0)))
 			   (fd (if (or (= ht mus-raw)
 				       (= ht mus-unsupported)
 				       (= df mus-unknown))
@@ -24952,8 +24952,8 @@ EDITS: 2
 	    (set! open-files ())
 	    
 	    (if (not (= (length (sounds)) 0)) (snd-display #__line__ ";active-sounds: ~A ~A?" (sounds) (map short-file-name (sounds))))
-	    (let ((fd (open-raw-sound :file (string-append sf-dir "addf8.nh") :channels 1 :srate 8012 :data-format mus-mulaw)))
-	      (if (not (= (data-format fd) mus-mulaw)) (snd-display #__line__ ";open-raw-sound: ~A?" (mus-data-format-name (data-format fd))))
+	    (let ((fd (open-raw-sound :file (string-append sf-dir "addf8.nh") :channels 1 :srate 8012 :sample-type mus-mulaw)))
+	      (if (not (= (sample-type fd) mus-mulaw)) (snd-display #__line__ ";open-raw-sound: ~A?" (mus-sample-type-name (sample-type fd))))
 	      (close-sound fd))
 	    
 	    (set! (hook-functions bad-header-hook) ())
@@ -25636,10 +25636,10 @@ EDITS: 2
       (set! (hook-functions open-raw-sound-hook) ())
       (if (or (not (= (chans ind) 1))
 	      (not (= (srate ind) 22050))
-	      (not (= (data-format ind) mus-bshort))
+	      (not (= (sample-type ind) mus-bshort))
 	      (not (= (framples ind) 23808)))
 	  (snd-display #__line__ ";open-raw: ~A ~A ~A ~A" 
-		       (chans ind) (srate ind) (data-format ind) (framples ind)))
+		       (chans ind) (srate ind) (sample-type ind) (framples ind)))
       (set! (search-procedure) (lambda (n) (> n .2)))
       (close-sound ind))
     
@@ -25676,12 +25676,12 @@ EDITS: 2
 		       (set! (hook 'result) (list 2 44100 mus-mulaw)))))
 	(set! ind (open-sound "test.snd"))
 	(if (or (not (= (header-type ind) mus-raw))
-		(not (= (data-format ind) mus-mulaw))
+		(not (= (sample-type ind) mus-mulaw))
 		(not (= (chans ind) 2))
 		(not (= (srate ind) 44100))
 		(not (= (framples ind) 50828)))
 	    (snd-display #__line__ ";open-raw-sound-hook 1: ~A ~A ~A ~A ~A" 
-			 (header-type ind) (data-format ind) (chans ind) (srate ind) (framples ind)))
+			 (header-type ind) (sample-type ind) (chans ind) (srate ind) (framples ind)))
 	(close-sound ind)
 	(hook-append open-raw-sound-hook
 		     (lambda (hook)
@@ -25691,12 +25691,12 @@ EDITS: 2
 	
 	(set! ind (open-sound "test.snd"))
 	(if (or (not (= (header-type ind) mus-raw))
-		(not (= (data-format ind) mus-lint))
+		(not (= (sample-type ind) mus-lint))
 		(not (= (chans ind) 1))
 		(not (= (srate ind) 22050))
 		(not (= (framples ind) (/ 50828 2))))
 	    (snd-display #__line__ ";open-raw-sound-hook 3: ~A ~A ~A ~A ~A" 
-			 (header-type ind) (data-format ind) (chans ind) (srate ind) (framples ind)))
+			 (header-type ind) (sample-type ind) (chans ind) (srate ind) (framples ind)))
 	(close-sound ind)
 	(set! (hook-functions open-raw-sound-hook) ())
 	(hook-push open-raw-sound-hook 
@@ -25704,11 +25704,11 @@ EDITS: 2
 		     (set! (hook 'result) (list 2))))
 	(set! ind (open-sound "test.snd"))
 	(if (or (not (= (header-type ind) mus-raw))
-		(not (= (data-format ind) mus-lint))
+		(not (= (sample-type ind) mus-lint))
 		(not (= (chans ind) 2))
 		(not (= (srate ind) 22050)))
 	    (snd-display #__line__ ";open-raw-sound-hook 4: ~A ~A ~A ~A"
-			 (header-type ind) (data-format ind) (chans ind) (srate ind)))
+			 (header-type ind) (sample-type ind) (chans ind) (srate ind)))
 	(close-sound ind)
 	(set! (hook-functions open-raw-sound-hook) ())
 	(hook-push open-raw-sound-hook 
@@ -25716,14 +25716,14 @@ EDITS: 2
 		     (set! (hook 'result) (list 1 22050 mus-bshort 120 320))))
 	(set! ind (open-sound "test.snd"))
 	(if (or (not (= (header-type ind) mus-raw))
-		(not (= (data-format ind) mus-bshort))
+		(not (= (sample-type ind) mus-bshort))
 		(not (= (chans ind) 1))
 		(not (= (srate ind) 22050))
 		(not (= (data-location ind) 120))
 		(not (= (data-size ind) 320))
 		(not (= (framples ind) 160)))
 	    (snd-display #__line__ ";open-raw-sound-hook 5: ~A ~A ~A ~A ~A ~A ~A" 
-			 (header-type ind) (data-format ind) (chans ind) (srate ind)
+			 (header-type ind) (sample-type ind) (chans ind) (srate ind)
 			 (data-location ind) (data-size ind) (/ (framples ind) 2)))
 	(close-sound ind)
 	(set! (hook-functions open-raw-sound-hook) ())))
@@ -26338,14 +26338,14 @@ EDITS: 2
 			 (filename (hook 'name))
 			 (sr (hook 'sampling-rate))
 			 (type (hook 'header-type))
-			 (dformat (hook 'data-format))
+			 (dformat (hook 'sample-type))
 			 (comment (hook 'comment)))
 		     (if (not (= sr (srate index)))
 			 (let ((chns (chans index)))
 			   (do ((i 0 (+ i 1)))
 			       ((= i chns))
 			     (src-channel (exact->inexact (/ (srate index) sr)) 0 #f index i))
-			   (save-sound-as filename index :header-type type :data-format dformat :srate sr :comment comment) 
+			   (save-sound-as filename index :header-type type :sample-type dformat :srate sr :comment comment) 
 			   ;; hook won't be invoked recursively
 			   (do ((i 0 (+ i 1)))
 			       ((= i chns))
@@ -26370,7 +26370,7 @@ EDITS: 2
 			 (selection (hook 'selection))
 			 (sr (hook 'sampling-rate))
 			 (type (hook 'header-type))
-			 (dformat (hook 'data-format))
+			 (dformat (hook 'sample-type))
 			 (comment (hook 'comment)))
 		     (set! need-save-as-undo #f)
 		     (if (not (= sr (srate index)))
@@ -26525,7 +26525,7 @@ EDITS: 2
 	((= i cur-dir-len))
       (let* ((name (cur-dir-files i))
 	     (ht (mus-sound-header-type name))
-	     (df (mus-sound-data-format name))
+	     (df (mus-sound-sample-type name))
 	     (len (mus-sound-framples name))
 	     (chans (mus-sound-chans name)))
 	(if (and (not (= ht mus-raw))
@@ -26587,7 +26587,7 @@ EDITS: 2
 	(let* ((choice (random cur-dir-len))
 	       (name (cur-dir-files choice))
 	       (ht (mus-sound-header-type name))
-	       (df (mus-sound-data-format name))
+	       (df (mus-sound-sample-type name))
 	       (fd (if (or (= ht mus-raw) (= df -1)) -1 (view-sound name))))
 	  (if (and (number? fd)
 		   (not (= fd -1)))
@@ -27183,7 +27183,7 @@ EDITS: 2
 	      (list 'tracking-cursor-style tracking-cursor-style #f cursor-line cursor-cross)
 	      (list 'clipping clipping #f #f #t)
 					;(list 'default-output-chans default-output-chans #f 1 8)
-					;(list 'default-output-data-format default-output-data-format #f 1 12)
+					;(list 'default-output-sample-type default-output-sample-type #f 1 12)
 					;(list 'default-output-srate default-output-srate #f 22050 44100)
 					;(list 'default-output-header-type default-output-header-type #f 0 2)
 	      (list 'dot-size dot-size #f 1 10)
@@ -28636,7 +28636,7 @@ EDITS: 2
 		   (sr (srate oboe))
 		   ;(fr (framples oboe 0))
 		   ;(typ (header-type oboe))
-		   ;(frm (data-format oboe))
+		   ;(frm (sample-type oboe))
 		   ;(loc (data-location oboe))
 		   ;(com (comment oboe))
 		   )
@@ -28649,8 +28649,8 @@ EDITS: 2
 		(if (not (= (header-type oboe-aif) mus-next)) (snd-display #__line__ ";set! header: ~A?" (mus-header-type-name (header-type oboe-aif))))
 		(set! (data-location oboe-aif) 28)
 		(if (not (= (data-location oboe-aif) 28)) (snd-display #__line__ ";set! data-location: ~A?" (data-location oboe-aif)))
-		(set! (data-format oboe-aif) mus-mulaw)
-		(if (not (= (data-format oboe-aif) mus-mulaw)) (snd-display #__line__ ";set! format: ~A?" (mus-data-format-name (data-format oboe-aif))))
+		(set! (sample-type oboe-aif) mus-mulaw)
+		(if (not (= (sample-type oboe-aif) mus-mulaw)) (snd-display #__line__ ";set! format: ~A?" (mus-sample-type-name (sample-type oboe-aif))))
 		(save-sound-as "test.aif" oboe-aif mus-aifc mus-bshort 22050 0)
 		(close-sound oboe-aif)
 		(delete-file "test.aif")
@@ -37163,12 +37163,12 @@ EDITS: 1
 	     (apply test-sound-func data))
 	   (list
 	    (list srate 'srate ind-1 ind-2 48000 = equal? #t)
-	    (list data-format 'data-format ind-1 ind-2 mus-byte = equal? #t)
+	    (list sample-type 'sample-type ind-1 ind-2 mus-byte = equal? #t)
 	    (list data-location 'data-location ind-1 ind-2 123 = equal? #t)
 	    (list data-size 'data-size ind-1 ind-2 12348 = equal? #t)
 	    (list framples 'framples ind-1 ind-2 12348 = equal? #t)
 	    (list sync 'sync ind-1 ind-2 2 = equal? #t)
-	    (list data-format 'data-format ind-1 ind-2 mus-byte = equal? #t)
+	    (list sample-type 'sample-type ind-1 ind-2 mus-byte = equal? #t)
 	    (list channels 'channels ind-1 ind-2 0 = equal? #f)
 	    (list chans 'chans ind-1 ind-2 0 = equal? #f)
 	    (list header-type 'header-type ind-1 ind-2 0 = equal? #f)
@@ -38707,14 +38707,14 @@ EDITS: 1
     (for-each
      (lambda (type)
        (let ((ind (find-sound 
-		   (with-sound (:data-format type :srate 22050)
+		   (with-sound (:sample-type type :srate 22050)
 			       (fm-violin 0 .1 440 .1)
 			       (fm-violin 10 .1 440 .1)
 			       (fm-violin 100 .1 440 .1)
 			       (fm-violin 250 .1 440 .1)))))
 	 (let ((mx (maxamp ind)))
 	   (if (ffneq mx .1) ; mus-byte -> 0.093
-	       (snd-display #__line__ ";max: ~A, format: ~A" mx (mus-data-format->string type))))))
+	       (snd-display #__line__ ";max: ~A, format: ~A" mx (mus-sample-type->string type))))))
      (list mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
 	   mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
 	   mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
@@ -38744,7 +38744,7 @@ EDITS: 1
       (close-sound ind)
       (delete-file "test1.snd"))
     
-    (with-sound (:srate 48000 :channels 2 :header-type mus-riff :data-format mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
+    (with-sound (:srate 48000 :channels 2 :header-type mus-riff :sample-type mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test1.snd")))
       (if (or (not (= (srate ind) 48000))
 	      (not (= (mus-sound-srate "test1.snd") 48000)))
@@ -38754,7 +38754,7 @@ EDITS: 1
       (close-sound ind)
       (delete-file "test1.snd"))
     
-    (with-sound (:srate 48000 :channels 2 :header-type mus-rf64 :data-format mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
+    (with-sound (:srate 48000 :channels 2 :header-type mus-rf64 :sample-type mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test1.snd")))
       (if (or (not (= (srate ind) 48000))
 	      (not (= (mus-sound-srate "test1.snd") 48000)))
@@ -38764,7 +38764,7 @@ EDITS: 1
       (close-sound ind)
       (delete-file "test1.snd"))
     
-    (with-sound (:srate 48000 :channels 2 :header-type mus-caff :data-format mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
+    (with-sound (:srate 48000 :channels 2 :header-type mus-caff :sample-type mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test1.snd")))
       (if (or (not (= (srate ind) 48000))
 	      (not (= (mus-sound-srate "test1.snd") 48000)))
@@ -38820,13 +38820,13 @@ EDITS: 1
 	(if (not (string=? (comment ind) "Snd+Run!")) (snd-display #__line__ ";with-sound comment: ~A (~A)" (comment ind) (mus-sound-comment "test.snd"))))
       (close-sound ind))
     
-    (with-sound (:srate 22050 :scaled-by .5 :header-type mus-aifc :data-format mus-bfloat) (fm-violin 0 .1 440 .1))
+    (with-sound (:srate 22050 :scaled-by .5 :header-type mus-aifc :sample-type mus-bfloat) (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test.snd")))
       (if (not ind) (snd-display #__line__ ";with-sound: ~A" (map file-name (sounds))))
       (let ((mx (maxamp)))
 	(if (fneq mx .05) (snd-display #__line__ ";with-sound scaled-by: ~A" (maxamp)))
 	(if (not (= (header-type ind) mus-aifc)) (snd-display #__line__ ";with-sound type: ~A (~A)" (header-type ind) (mus-header-type-name (header-type ind))))
-	(if (not (= (data-format ind) mus-bfloat)) (snd-display #__line__ ";with-sound format: ~A (~A)" (data-format ind) (mus-data-format-name (data-format ind)))))
+	(if (not (= (sample-type ind) mus-bfloat)) (snd-display #__line__ ";with-sound format: ~A (~A)" (sample-type ind) (mus-sample-type-name (sample-type ind)))))
       (close-sound ind))
     
     (hook-push open-raw-sound-hook (lambda (hook) (set! (hook 'result) (list 1 22050 mus-bshort))))
@@ -38836,10 +38836,10 @@ EDITS: 1
       (if (not ind) (snd-display #__line__ ";with-sound (raw out): ~A" (map file-name (sounds))))
       (if (not (= (header-type ind) mus-raw)) 
 	  (snd-display #__line__ ";with-sound type raw: ~A (~A)" (header-type ind) (mus-header-type-name (header-type ind))))
-      (if (and (not (= (data-format ind) mus-bshort)) 
-	       (not (= (data-format ind) mus-bfloat))
-	       (not (= (data-format ind) mus-lfloat)))
-	  (snd-display #__line__ ";with-sound format raw: ~A (~A)" (data-format ind) (mus-data-format-name (data-format ind))))
+      (if (and (not (= (sample-type ind) mus-bshort)) 
+	       (not (= (sample-type ind) mus-bfloat))
+	       (not (= (sample-type ind) mus-lfloat)))
+	  (snd-display #__line__ ";with-sound format raw: ~A (~A)" (sample-type ind) (mus-sample-type-name (sample-type ind))))
       (close-sound ind))
     
     (with-sound (:srate 44100 :statistics #t) (ws-sine 1000))
@@ -39475,7 +39475,7 @@ EDITS: 1
   (if (not (= *clm-srate* *default-output-srate*)) (snd-display #__line__ ";*clm-srate*: ~A ~A" *clm-srate* *default-output-srate*))
   (if (not (= *clm-channels* *default-output-chans*)) (snd-display #__line__ ";*clm-channels*: ~A ~A" *clm-channels* *default-output-chans*))
   (if (not (= *clm-header-type* *default-output-header-type*)) (snd-display #__line__ ";*clm-header-type*: ~A ~A" *clm-header-type* *default-output-header-type*))
-					;	(if (not (= *clm-data-format* *default-output-data-format*)) (snd-display #__line__ ";*clm-data-format*: ~A ~A" *clm-data-format* *default-output-data-format*))
+					;	(if (not (= *clm-sample-type* *default-output-sample-type*)) (snd-display #__line__ ";*clm-sample-type*: ~A ~A" *clm-sample-type* *default-output-sample-type*))
   (if (not (= *clm-reverb-channels* 1)) (snd-display #__line__ ";*clm-reverb-channels*: ~A" *clm-reverb-channels*))
   (if (not (string=? *clm-file-name* "test.snd")) (snd-display #__line__ ";*clm-file-name*: ~A" *clm-file-name*))
   (if *clm-play* (snd-display #__line__ ";*clm-play*: ~A" *clm-play*))
@@ -39492,7 +39492,7 @@ EDITS: 1
     (set! *clm-verbose* #t)
     (set! *clm-statistics* #t)
     (set! *clm-play* #t)
-    (set! *clm-data-format* mus-mulaw)
+    (set! *clm-sample-type* mus-mulaw)
     (set! *clm-header-type* mus-riff)
     (set! *clm-delete-reverb* #t)
     (set! *clm-reverb* jc-reverb)
@@ -39506,7 +39506,7 @@ EDITS: 1
 	  (begin
 	    (if (not (= (srate ind) 44100)) (snd-display #__line__ ";default srate in ws: ~A ~A" (srate ind) *clm-srate*))
 	    (if (not (= (channels ind) 2)) (snd-display #__line__ ";default chans in ws: ~A ~A" (channels ind) *clm-channels*))
-	    (if (not (= (data-format ind) mus-mulaw)) (snd-display #__line__ ";default format in ws: ~A ~A" (data-format ind) *clm-data-format*))
+	    (if (not (= (sample-type ind) mus-mulaw)) (snd-display #__line__ ";default format in ws: ~A ~A" (sample-type ind) *clm-sample-type*))
 	    (if (not (= (header-type ind) mus-riff)) (snd-display #__line__ ";default type in ws: ~A ~A" (header-type ind) *clm-header-type*))
 	    (if (> (abs (- (framples ind) 88200)) 1) (snd-display #__line__ ";reverb+1 sec out in ws: ~A" (framples ind)))
 	    (if (file-exists? "test.rev") (snd-display #__line__ ";perhaps reverb not deleted in ws?"))
@@ -39529,7 +39529,7 @@ EDITS: 1
     (set! *clm-verbose* #f)
     (set! *clm-statistics* old-stats)
     (set! *clm-play* #f)
-    (set! *clm-data-format* mus-ldouble)
+    (set! *clm-sample-type* mus-ldouble)
     (set! *clm-header-type* mus-next)
     (set! *clm-delete-reverb* #f)
     (set! *clm-reverb* #f)
@@ -39674,27 +39674,27 @@ EDITS: 1
 	      (sample-pvoc5 7.25 .2 .1 256 "oboe.snd" 440.0)
 	      )
   
-  (let* ((file (with-sound (:clipped #f :data-format mus-lfloat :header-type mus-next)
+  (let* ((file (with-sound (:clipped #f :sample-type mus-lfloat :header-type mus-next)
 			   (fm-violin 0 .1 440 pi)))
 	 (ind (find-sound file))
 	 (mx (maxamp ind)))
     (if (fneq mx pi) (snd-display #__line__ ";clipped #f: ~A" mx))
     (close-sound ind)
-    (set! file (with-sound (:clipped #t :data-format mus-lfloat :header-type mus-next)
+    (set! file (with-sound (:clipped #t :sample-type mus-lfloat :header-type mus-next)
 			   (fm-violin 0 .1 440 pi)))
     (set! ind (find-sound file))
     (set! mx (maxamp ind))
     (if (fneq mx 1.0) (snd-display #__line__ ";clipped #t: ~A" mx))
     
     (close-sound ind)
-    (set! file (with-sound (:data-format mus-lfloat :header-type mus-next :scaled-by .1 :clipped #f)
+    (set! file (with-sound (:sample-type mus-lfloat :header-type mus-next :scaled-by .1 :clipped #f)
 			   (fm-violin 0 .1 440 pi)))
     (set! ind (find-sound file))
     (set! mx (maxamp ind))
     (if (fneq mx .314159) (snd-display #__line__ ";scaled-by ~A" mx))
     
     (close-sound ind)
-    (set! file (with-sound (:data-format mus-lfloat :header-type mus-next :scaled-to .1 :clipped #f)
+    (set! file (with-sound (:sample-type mus-lfloat :header-type mus-next :scaled-to .1 :clipped #f)
 			   (fm-violin 0 .1 440 pi)))
     (set! ind (find-sound file))
     (set! mx (maxamp ind))
@@ -39709,7 +39709,7 @@ EDITS: 1
       (set! *clm-array-print-length* 123)
       (let ((tsize 0)
 	    (arrp 0))
-	(set! file (with-sound (:data-format mus-lfloat :header-type mus-next)
+	(set! file (with-sound (:sample-type mus-lfloat :header-type mus-next)
 			       (set! mx *clm-file-buffer-size*)
 			       (set! tsize *clm-table-size*)
 			       (set! arrp *mus-array-print-length*)
@@ -45262,8 +45262,8 @@ EDITS: 1
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 		     auto-update-interval current-font cursor cursor-color with-tracking-cursor cursor-size
-		     cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color data-format data-location data-size
-		     default-output-chans default-output-data-format default-output-srate default-output-header-type define-envelope
+		     cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color sample-type data-location data-size
+		     default-output-chans default-output-sample-type default-output-srate default-output-header-type define-envelope
 		     delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-and-smooth
 		     delete-selection delete-selection-and-smooth dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
 		     draw-lines draw-string edit-header-dialog edit-fragment edit-list->function edit-position edit-tree edits env-selection
@@ -45322,11 +45322,11 @@ EDITS: 1
 		     with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl x-axis-style beats-per-measure
-		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
+		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-sample-type->string
 		     y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style sync-style mus-set-formant-radius-and-frequency
 		     mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
-		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
-		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
+		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type mus-sound-length
+		     mus-sound-type-specifier mus-header-type-name mus-sample-type-name mus-sound-comment mus-sound-write-date
 		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info 
 					;mus-alsa-buffers mus-alsa-buffer-size mus-apply
 		     mus-alsa-squelch-warning
@@ -45399,7 +45399,7 @@ EDITS: 1
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties channel-property 
 			 with-tracking-cursor cursor-size cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color
-			 default-output-chans default-output-data-format default-output-srate default-output-header-type dot-size
+			 default-output-chans default-output-sample-type default-output-srate default-output-header-type dot-size
 			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			 expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
@@ -45426,7 +45426,7 @@ EDITS: 1
 			 with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style sync-style
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
-			 channels chans colormap comment data-format data-location data-size edit-position framples header-type maxamp
+			 channels chans colormap comment sample-type data-location data-size edit-position framples header-type maxamp
 			 read-only right-sample sample samples selected-channel colormap-size colormap?
 			 selected-sound selection-position selection-framples selection-member? sound-loop-info
 			 srate time-graph-type x-position-slider x-zoom-slider
@@ -45533,7 +45533,7 @@ EDITS: 1
 		    (list amp-control apply-controls channels chans comment contrast-control 
 			  amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			  reverb-control-length-bounds reverb-control-scale-bounds
-			  contrast-control-amp contrast-control? data-format data-location data-size 
+			  contrast-control-amp contrast-control? sample-type data-location data-size 
 			  expand-control expand-control-hop expand-control-jitter
 			  expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB filter-control-in-hz
 			  filter-control-envelope filter-control-order filter-control?  finish-progress-report framples header-type
@@ -45555,7 +45555,7 @@ EDITS: 1
 				(list amp-control apply-controls close-sound comment contrast-control 
 				      amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 				      reverb-control-length-bounds reverb-control-scale-bounds
-				      contrast-control-amp contrast-control? data-format data-location data-size expand-control
+				      contrast-control-amp contrast-control? sample-type data-location data-size expand-control
 				      expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
 				      filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
 				      finish-progress-report header-type read-only reset-controls restore-controls
@@ -45579,7 +45579,7 @@ EDITS: 1
 				(list amp-control channels chans comment contrast-control contrast-control-amp 
 				      amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 				      reverb-control-length-bounds reverb-control-scale-bounds
-				      contrast-control? data-format data-location data-size expand-control expand-control-hop expand-control-jitter
+				      contrast-control? sample-type data-location data-size expand-control expand-control-hop expand-control-jitter
 				      expand-control-length expand-control-ramp expand-control? filter-control-in-dB filter-control-in-hz
 				      filter-control-envelope filter-control-order filter-control? framples header-type read-only
 				      reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
@@ -45801,10 +45801,10 @@ EDITS: 1
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display #__line__ ";mus-sound ~A: ~A" n tag))))
 		    (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
-			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
-			  mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
+			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
+			  mus-sound-length mus-sound-type-specifier mus-header-type-name mus-sample-type-name mus-sound-comment
 			  mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-sound-maxamp
-			  mus-sound-maxamp-exists? mus-header-type->string mus-data-format->string))
+			  mus-sound-maxamp-exists? mus-header-type->string mus-sample-type->string))
 	  
 	  (for-each (lambda (n)
 		      (let ((tag
@@ -45816,10 +45816,10 @@ EDITS: 1
 				 (not (eq? tag 'error)))
 			    (snd-display #__line__ ";no arg mus-sound ~A: ~A" n tag))))
 		    (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
-			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
-			  mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
+			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
+			  mus-sound-length mus-sound-type-specifier mus-header-type-name mus-sample-type-name mus-sound-comment
 			  mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-sound-maxamp
-			  mus-sound-maxamp-exists? mus-header-type->string mus-data-format->string))
+			  mus-sound-maxamp-exists? mus-header-type->string mus-sample-type->string))
 	  
 	  (for-each (lambda (n)
 		      (let ((tag
@@ -45830,7 +45830,7 @@ EDITS: 1
 			(if (not (eq? tag 'mus-error))
 			    (snd-display #__line__ ";bad file mus-sound ~A: ~A" n tag))))
 		    (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
-			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
+			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
 			  mus-sound-length mus-sound-type-specifier mus-sound-comment mus-sound-write-date mus-sound-maxamp
 			  mus-sound-maxamp-exists?))
 	  (mus-sound-forget "/bad/baddy") ; for possible second time around
@@ -46135,7 +46135,7 @@ EDITS: 1
 			  auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key show-full-duration show-full-range initial-beg initial-dur
 			  channel-style color-cutoff color-orientation-dialog color-inverted color-scale
 			  cursor-color dac-combines-channels dac-size clipping data-color default-output-chans 
-			  default-output-data-format default-output-srate default-output-header-type enved-envelope enved-base
+			  default-output-sample-type default-output-srate default-output-header-type enved-envelope enved-base
 			  enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-target
 			  enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			  foreground-color graph-color graph-cursor highlight-color just-sounds key-binding
@@ -46194,7 +46194,7 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" -1)))
 		(check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" 0)))
 		(check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" -1)))
-		(check-error-tag 'out-of-range (lambda () (set! *default-output-data-format* -1)))
+		(check-error-tag 'out-of-range (lambda () (set! *default-output-sample-type* -1)))
 		(check-error-tag 'out-of-range (lambda () (set! *default-output-header-type* mus-soundfont)))
 		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
 		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
@@ -46233,7 +46233,7 @@ EDITS: 1
 		  (check-error-tag 'out-of-range (lambda () (set! (channels ind) 0)))
 		  (check-error-tag 'wrong-type-arg (lambda () (set! (channels ind) -1)))
 		  (check-error-tag 'out-of-range (lambda () (set! (channels ind) 12340)))
-		  (check-error-tag 'out-of-range (lambda () (set! (data-format ind) 12340)))
+		  (check-error-tag 'out-of-range (lambda () (set! (sample-type ind) 12340)))
 		  (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 12340)))
 		  (check-error-tag 'out-of-range (lambda () (set! (srate ind) 0)))
 		  (check-error-tag 'wrong-type-arg (lambda () (set! (data-location ind) -1)))
@@ -46288,7 +46288,7 @@ EDITS: 1
 		  (check-error-tag 'no-such-file (lambda () (insert-sound "/baddy/hiho.snd")))
 		  (check-error-tag 'no-such-file (lambda () (insert-samples 0 10 "/baddy/hiho.snd")))
 		  (check-error-tag 'no-data (lambda () (set! (filter-control-envelope ind) ())))
-		  (check-error-tag 'out-of-range (lambda () (set! (data-format ind) 123)))
+		  (check-error-tag 'out-of-range (lambda () (set! (sample-type ind) 123)))
 		  (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 123)))
 		  (check-error-tag 'no-such-channel (lambda () (set! (selected-channel ind) 123)))
 		  (check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) #t))))

@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 2
-#define MUS_DATE "9-May-14"
+#define MUS_REVISION 3
+#define MUS_DATE "10-Aug-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -64,7 +64,7 @@ typedef struct {
   mus_float_t *obuf0, *obuf1;
   mus_long_t data_start, data_end;
   mus_long_t out_end;
-  int output_data_format;
+  int output_sample_type;
   int output_header_type;
 } rdout;
 /* end internal stuff */
@@ -139,7 +139,10 @@ MUS_EXPORT mus_float_t mus_interpolate(mus_interp_t type, mus_float_t x, mus_flo
 MUS_EXPORT bool mus_is_interp_type(int val);
 MUS_EXPORT bool mus_is_fft_window(int val);
 
-MUS_EXPORT int mus_data_format_zero(int format);
+MUS_EXPORT int mus_sample_type_zero(int format);
+#if (!DISABLE_DEPRECATED)
+#define mus_data_format_zero mus_sample_type_zero;
+#endif
 MUS_EXPORT mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
 
 
@@ -598,6 +601,7 @@ MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 
 /* Change log.
  *
+ * 10-Aug:     data-format -> sample-type.
  * 17-Apr:     moving_norm generator.
  * 14-Apr:     mus_frame and mus_mixer removed, "frame" replaced by "frample" in IO functions.
  * 11-Apr:     mus_even|odd_weight|multiple.

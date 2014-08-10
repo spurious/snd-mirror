@@ -1336,7 +1336,7 @@ static void post_sound_info(Widget info1, Widget info2, const char *filename, bo
   XmStringFree(label);
   snprintf(buf, LABEL_BUFFER_SIZE, "%s, %s%s",
 	       mus_header_type_name(mus_sound_header_type(filename)),
-	       short_data_format_name(mus_sound_data_format(filename), filename),
+	       short_sample_type_name(mus_sound_sample_type(filename), filename),
 	       snd_strftime(", %d-%b-%Y", mus_sound_write_date(filename)));
   label = XmStringCreateLocalized(buf);
   XtVaSetValues(info2, XmNlabelString, label, NULL);
@@ -2455,7 +2455,7 @@ static void file_data_type_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void file_data_format_callback(Widget w, XtPointer context, XtPointer info) 
+static void file_sample_type_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
@@ -2492,7 +2492,7 @@ static void file_data_auto_comment_callback(Widget w, XtPointer context, XtPoint
 
 static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, int in_n, 
 				       dialog_channels_t with_chan, 
-				       int header_type, int data_format,
+				       int header_type, int sample_type,
 				       dialog_data_location_t with_loc, 
 				       dialog_samples_t with_samples,
 				       dialog_header_type_t with_header_type,
@@ -2521,8 +2521,8 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   fdat->auto_comment = save_as_dialog_auto_comment(ss);
   fdat->saved_comment = NULL;
   fdat->current_type = header_type;
-  fdat->current_format = data_format;
-  formats = type_and_format_to_position(fdat, header_type, data_format);
+  fdat->current_format = sample_type;
+  formats = type_and_format_to_position(fdat, header_type, sample_type);
   nformats = fdat->formats;
 
   /* pick up all args from caller -- args here are attachment points */
@@ -2618,7 +2618,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
     }
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNuserData, (XtPointer)fdat); n++;
-  fdat->format_list = XmCreateScrolledList(form, (char *)"data-format", args, n);
+  fdat->format_list = XmCreateScrolledList(form, (char *)"sample-type", args, n);
 
   strs = (XmString *)calloc(nformats, sizeof(XmString)); 
   for (i = 0; i < nformats; i++) 
@@ -2633,7 +2633,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 
   XmListSelectPos(fdat->format_list, fdat->format_pos + 1, false);
   XtManageChild(fdat->format_list);
-  XtAddCallback(fdat->format_list, XmNbrowseSelectionCallback, file_data_format_callback, NULL);
+  XtAddCallback(fdat->format_list, XmNbrowseSelectionCallback, file_sample_type_callback, NULL);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -3160,7 +3160,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type = MUS_NEXT, format = DEFAULT_OUTPUT_DATA_FORMAT, srate = DEFAULT_OUTPUT_SRATE;
+  int type = MUS_NEXT, format = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE;
   int output_type, chan = 0, extractable_chans = 0;
   bool file_exists = false;
   io_error_t io_err = IO_NO_ERROR;
@@ -3810,7 +3810,7 @@ static save_as_dialog_info *make_sound_save_as_dialog_1(bool managed, int chan)
   make_save_as_dialog(sd,
 		      (char *)((sp) ? sp->short_filename : ""),
 		      default_output_header_type(ss),
-		      default_output_data_format(ss));
+		      default_output_sample_type(ss));
 
   set_file_dialog_sound_attributes(sd->panel_data,
 				   sd->panel_data->current_type,
@@ -3868,7 +3868,7 @@ widget_t make_selection_save_as_dialog(bool managed)
   make_save_as_dialog(sd,
 		      (char *)"current selection",
 		      default_output_header_type(ss),
-		      default_output_data_format(ss));
+		      default_output_sample_type(ss));
   set_file_dialog_sound_attributes(sd->panel_data,
 				   sd->panel_data->current_type,
 				   sd->panel_data->current_format,
@@ -3898,7 +3898,7 @@ widget_t make_region_save_as_dialog(bool managed)
   make_save_as_dialog(sd,
 		      (char *)"selected region",
 		      default_output_header_type(ss),
-		      default_output_data_format(ss));
+		      default_output_sample_type(ss));
   comment = region_description(region_dialog_region());
   set_file_dialog_sound_attributes(sd->panel_data,
 				   sd->panel_data->current_type,
@@ -4044,7 +4044,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
   mus_long_t loc;
   char *comment = NULL, *newer_name = NULL, *msg;
-  int header_type, data_format, srate, chans;
+  int header_type, sample_type, srate, chans;
   newer_name = XmTextGetString(new_file_text);
   if ((!newer_name) || (!(*newer_name)))
     {
@@ -4055,7 +4055,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
   else
     {
       redirect_snd_error_to(post_file_panel_error, (void *)ndat);
-      comment = get_file_dialog_sound_attributes(ndat, &srate, &chans, &header_type, &data_format, &loc, &initial_samples, 1);
+      comment = get_file_dialog_sound_attributes(ndat, &srate, &chans, &header_type, &sample_type, &loc, &initial_samples, 1);
       redirect_snd_error_to(NULL, NULL);
       if (ndat->error_widget != NOT_A_SCANF_WIDGET)
 	{
@@ -4090,7 +4090,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 
 	      ss->local_errno = 0;
 	      redirect_snd_error_to(redirect_post_file_dialog_error, (void *)ndat);
-	      sp = snd_new_file(new_file_filename, header_type, data_format, srate, chans, comment, initial_samples);
+	      sp = snd_new_file(new_file_filename, header_type, sample_type, srate, chans, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
 		{
@@ -4131,11 +4131,11 @@ static char *new_file_dialog_filename(int header_type)
 static void load_new_file_defaults(char *newname)
 {
   char *filename = NULL, *new_comment = NULL;
-  int header_type, data_format, chans, srate;
+  int header_type, sample_type, chans, srate;
 
   header_type = default_output_header_type(ss);
   chans =       default_output_chans(ss);
-  data_format = default_output_data_format(ss);
+  sample_type = default_output_sample_type(ss);
   srate =       default_output_srate(ss);
   new_comment = output_comment(NULL);
 
@@ -4146,7 +4146,7 @@ static void load_new_file_defaults(char *newname)
   XmTextSetString(new_file_text, filename);  
   mus_sound_forget(filename);
 
-  set_file_dialog_sound_attributes(ndat, header_type, data_format, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
+  set_file_dialog_sound_attributes(ndat, header_type, sample_type, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
 
   if (new_comment) free(new_comment);
   if (filename) free(filename);
@@ -4258,7 +4258,7 @@ widget_t make_new_file_dialog(bool managed)
       ndat = make_file_data_panel(form, "data-form", args, n, 
 				  WITH_CHANNELS_FIELD, 
 				  default_output_header_type(ss), 
-				  default_output_data_format(ss), 
+				  default_output_sample_type(ss), 
 				  WITHOUT_DATA_LOCATION_FIELD, 
 				  WITH_SAMPLES_FIELD,
 				  WITH_HEADER_TYPE_FIELD, 
@@ -4721,10 +4721,10 @@ static raw_info *new_raw_dialog(void)
 static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   raw_info *rp = (raw_info *)context;
-  int raw_srate = 0, raw_chans = 0, raw_data_format = 0;
+  int raw_srate = 0, raw_chans = 0, raw_sample_type = 0;
 
   redirect_snd_error_to(post_file_panel_error, (void *)(rp->rdat));
-  get_file_dialog_sound_attributes(rp->rdat, &raw_srate, &raw_chans, NULL, &raw_data_format, &(rp->location), NULL, 1);
+  get_file_dialog_sound_attributes(rp->rdat, &raw_srate, &raw_chans, NULL, &raw_sample_type, &(rp->location), NULL, 1);
   redirect_snd_error_to(NULL, NULL);
 
   if (rp->rdat->error_widget != NOT_A_SCANF_WIDGET)
@@ -4733,10 +4733,10 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
     }
   else
     {
-      mus_header_set_raw_defaults(raw_srate, raw_chans, raw_data_format);
+      mus_header_set_raw_defaults(raw_srate, raw_chans, raw_sample_type);
       mus_sound_override_header(rp->filename, raw_srate, raw_chans, 
-				raw_data_format, MUS_RAW, rp->location,
-				mus_bytes_to_samples(raw_data_format, 
+				raw_sample_type, MUS_RAW, rp->location,
+				mus_bytes_to_samples(raw_sample_type, 
 						     mus_sound_length(rp->filename) - rp->location));
       /* choose action based on how we got here */
       if ((rp->requestor_dialog) &&
@@ -4796,8 +4796,8 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
 	  hdr->chans = raw_chans;
-	  hdr->format = raw_data_format;
-	  hdr->samples = mus_bytes_to_samples(raw_data_format, 
+	  hdr->format = raw_sample_type;
+	  hdr->samples = mus_bytes_to_samples(raw_sample_type, 
 					      mus_sound_length(rp->filename) - rp->location);
 	  hdr->data_location = rp->location;
 	  hdr->comment = NULL;
@@ -4827,12 +4827,12 @@ static void raw_data_cancel_callback(Widget w, XtPointer context, XtPointer info
 static void raw_data_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
   raw_info *rp = (raw_info *)context;
-  int raw_srate, raw_chans, raw_data_format;
+  int raw_srate, raw_chans, raw_sample_type;
   rp->location = 0;
-  mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */  
+  mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_sample_type); /* pick up defaults */  
   set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
-				   raw_data_format, raw_srate, raw_chans, rp->location, 
+				   raw_sample_type, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
   if (XtIsManaged(rp->rdat->error_text))
     XtUnmanageChild(rp->rdat->error_text);
@@ -4850,7 +4850,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 {
   XmString go_away, xhelp, xok, xtitle, titlestr;
   int n;
-  int raw_srate, raw_chans, raw_data_format;
+  int raw_srate, raw_chans, raw_sample_type;
   Arg args[20];
   Widget reset_button, main_w;
 
@@ -4891,7 +4891,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   reset_button = XtCreateManagedWidget("Reset", xmPushButtonGadgetClass, rp->dialog, args, n);
   XtAddCallback(reset_button, XmNactivateCallback, raw_data_reset_callback, (XtPointer)rp);
 
-  mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
+  mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_sample_type); /* pick up defaults */
 
   n = 0;
   XtSetArg(args[n], XmNallowResize, true); n++;
@@ -4905,7 +4905,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   rp->rdat = make_file_data_panel(main_w, "data-form", args, n, 
 				  WITH_CHANNELS_FIELD, 
-				  MUS_RAW, raw_data_format, 
+				  MUS_RAW, raw_sample_type, 
 				  WITH_DATA_LOCATION_FIELD, 
 				  WITHOUT_SAMPLES_FIELD,
 				  WITHOUT_HEADER_TYPE_FIELD, 
@@ -4917,7 +4917,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 
   set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
-				   raw_data_format, raw_srate, raw_chans, rp->location, 
+				   raw_sample_type, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
 
   map_over_children(rp->dialog, set_main_color_of_widget);

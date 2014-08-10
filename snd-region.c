@@ -1299,7 +1299,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 
 	      snd_file_open_descriptors(ifd,
 					r->filename,
-					mus_sound_data_format(r->filename),
+					mus_sound_sample_type(r->filename),
 					iloc,
 					chans,
 					mus_sound_header_type(r->filename));
@@ -1892,12 +1892,12 @@ selection is used."
 }
 
 
-static Xen kw_header_type, kw_data_format, kw_comment, kw_file;
+static Xen kw_header_type, kw_comment, kw_file, kw_sample_type;
 
 static void init_region_keywords(void)
 {
   kw_header_type = Xen_make_keyword("header-type");
-  kw_data_format = Xen_make_keyword("data-format");
+  kw_sample_type = Xen_make_keyword("sample-type");
   kw_comment = Xen_make_keyword("comment");
   kw_file = Xen_make_keyword("file");
 }
@@ -1914,12 +1914,12 @@ static void save_region_to_xen_error(const char *msg, void *data)
 
 static Xen g_save_region(Xen n, Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
-  #define H_save_region "(" S_save_region " region file header-type data-format comment): save region in file \
+  #define H_save_region "(" S_save_region " region file header-type sample-type comment): save region in file \
 using data format (default depends on machine byte order), header type (" S_mus_next "), and comment"
 
   char *name = NULL;
     const char *file = NULL, *com = NULL;
-  int rg, data_format = MUS_OUT_FORMAT, header_type = MUS_NEXT;
+  int rg, sample_type = MUS_OUT_FORMAT, header_type = MUS_NEXT;
   Xen args[8]; 
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
@@ -1927,7 +1927,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
 
   keys[0] = kw_file;
   keys[1] = kw_header_type;
-  keys[2] = kw_data_format;
+  keys[2] = kw_sample_type;
   keys[3] = kw_comment;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
 
@@ -1942,7 +1942,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
     {
       file = mus_optkey_to_string(keys[0], S_save_region, orig_arg[0], NULL);
       header_type = mus_optkey_to_int(keys[1], S_save_region, orig_arg[1], header_type);
-      data_format = mus_optkey_to_int(keys[2], S_save_region, orig_arg[2], data_format);
+      sample_type = mus_optkey_to_int(keys[2], S_save_region, orig_arg[2], sample_type);
       com = mus_optkey_to_string(keys[3], S_save_region, orig_arg[3], NULL);
     }
 
@@ -1952,20 +1952,20 @@ using data format (default depends on machine byte order), header type (" S_mus_
 
   name = mus_expand_filename(file);
 
-  if (!(mus_header_writable(header_type, data_format))) 
+  if (!(mus_header_writable(header_type, sample_type))) 
     {
-      if (mus_header_writable(MUS_NEXT, data_format))
+      if (mus_header_writable(MUS_NEXT, sample_type))
 	header_type = MUS_NEXT;
       else
 	{
-	  if (mus_header_writable(MUS_RIFF, data_format))
+	  if (mus_header_writable(MUS_RIFF, sample_type))
 	    header_type = MUS_RIFF;
 	  else header_type = MUS_RAW;
 	}
     }
 
   redirect_snd_error_to(save_region_to_xen_error, NULL); /* could perhaps pass name here for free in case of error */
-  save_region(rg, name, header_type, data_format, com);
+  save_region(rg, name, header_type, sample_type, com);
   redirect_snd_error_to(NULL, NULL);
 
   if (name) free(name);

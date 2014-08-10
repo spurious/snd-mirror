@@ -3329,7 +3329,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
    * mix in-object out-object :start :end :channel :edit-position :out-channel :with-tag :auto-delete :origin ?
    *   from
    * play object :start :end :channel :edit-position :out-channel :with-sync :wait :stop): 
-   * save_sound_as :file :sound :header-type :data-format :srate :channel :edit-position :comment): 
+   * save_sound_as :file :sound :header-type :sample-type :srate :channel :edit-position :comment): 
    */
 
   Xen_check_type(Xen_is_string(file), file, 1, S_mix, "a string");

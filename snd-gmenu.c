@@ -928,7 +928,7 @@ static void popup_cut_to_new_callback_1(bool cut)
   io_error_t io_err = IO_NO_ERROR;
 
   temp_file = snd_tempnam();
-  io_err = save_selection(temp_file, default_output_header_type(ss), default_output_data_format(ss), selection_srate(), NULL, SAVE_ALL_CHANS);
+  io_err = save_selection(temp_file, default_output_header_type(ss), default_output_sample_type(ss), selection_srate(), NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
       if (cut) delete_selection(UPDATE_DISPLAY);

@@ -270,7 +270,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
   /* if impulse response is stereo, we need to use both its channels */
 
   dataloc = mus_sound_data_location(filename);
-  dataformat = mus_sound_data_format(filename);
+  dataformat = mus_sound_sample_type(filename);
 
   sc = get_sync_state_without_snd_fds(sp, ncp, 0, (cp == NULL));
   if (sc == NULL) return(NULL);
@@ -1521,7 +1521,7 @@ void src_file(const char *file, double ratio)
   mus_any **rds, **srcs;
   char *temp_out;
   const char *comment;
-  int k, chan, chans, width, out_fd, data_format, header_type, buffer_size;
+  int k, chan, chans, width, out_fd, sample_type, header_type, buffer_size;
   mus_long_t samp, old_samps, new_samps;
   mus_float_t old_srate, new_srate;
   mus_float_t **obufs;
@@ -1531,7 +1531,7 @@ void src_file(const char *file, double ratio)
   mus_set_srate(new_srate);
 
   chans = mus_sound_chans(file);
-  data_format = mus_sound_data_format(file);
+  sample_type = mus_sound_sample_type(file);
   header_type = mus_sound_header_type(file);
   comment = mus_sound_comment(file);
   buffer_size = mus_file_buffer_size();
@@ -1542,7 +1542,7 @@ void src_file(const char *file, double ratio)
   if (width < 32) width = 32;
 
   temp_out = snd_tempnam();
-  out_fd = mus_sound_open_output(temp_out, new_srate, chans, data_format, header_type, comment);
+  out_fd = mus_sound_open_output(temp_out, new_srate, chans, sample_type, header_type, comment);
 
   srcs = (mus_any **)malloc(chans * sizeof(mus_any *));
   rds = (mus_any **)malloc(chans * sizeof(mus_any *));
@@ -1569,7 +1569,7 @@ void src_file(const char *file, double ratio)
   if (k > 0) 
     mus_sound_write(out_fd, 0, k - 1, chans, obufs);
 
-  mus_sound_close_output(out_fd, new_samps * chans * mus_bytes_per_sample(data_format));
+  mus_sound_close_output(out_fd, new_samps * chans * mus_bytes_per_sample(sample_type));
   mus_sound_forget(file);
 
   for (chan = 0; chan < chans; chan++)

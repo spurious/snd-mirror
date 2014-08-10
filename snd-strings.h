@@ -116,10 +116,14 @@
 #define S_dac_size                      "dac-size"
 #define S_data_color                    "data-color"
 #define S_data_format                   "data-format"
+#define S_sample_type                   "sample-type"
 #define S_data_location                 "data-location"
 #define S_data_size                     "data-size"
 #define S_default_output_chans          "default-output-chans"
+#if (!DISABLE_DEPRECATED)
 #define S_default_output_data_format    "default-output-data-format"
+#endif
+#define S_default_output_sample_type    "default-output-sample-type"
 #define S_default_output_srate          "default-output-srate"
 #define S_default_output_header_type    "default-output-header-type"
 #define S_define_envelope               "define-envelope"

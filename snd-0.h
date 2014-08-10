@@ -67,9 +67,9 @@
  */
 
 #if MUS_LITTLE_ENDIAN
-  #define DEFAULT_OUTPUT_DATA_FORMAT MUS_LFLOAT
+  #define DEFAULT_OUTPUT_SAMPLE_TYPE MUS_LFLOAT
 #else
-  #define DEFAULT_OUTPUT_DATA_FORMAT MUS_BFLOAT
+  #define DEFAULT_OUTPUT_SAMPLE_TYPE MUS_BFLOAT
 #endif
 
 #define NO_COMPLETER -1
@@ -128,7 +128,7 @@ typedef enum {COLOR_ORIENTATION_DIALOG, ENVED_DIALOG, TRANSFORM_DIALOG,
               FILE_INSERT_DIALOG, REGION_SAVE_AS_DIALOG, PREFERENCES_DIALOG, NUM_DIALOGS} snd_dialog_t;
 typedef enum {SOUND_IDLE, SOUND_NORMAL, SOUND_WRAPPER, SOUND_REGION, SOUND_READER} sound_inuse_t;
 typedef enum {IO_NO_ERROR, IO_SAVE_HOOK_CANCELLATION, IO_BAD_CHANNEL, IO_CANT_REOPEN_FILE, IO_TOO_MANY_OPEN_FILES, 
-	      IO_UNKNOWN_SNDLIB_ERROR, IO_NO_MEMORY, IO_CANT_OPEN_FILE, IO_NO_FILENAME, IO_BAD_DATA_FORMAT, IO_BAD_HEADER_TYPE,
+	      IO_UNKNOWN_SNDLIB_ERROR, IO_NO_MEMORY, IO_CANT_OPEN_FILE, IO_NO_FILENAME, IO_BAD_SAMPLE_TYPE, IO_BAD_HEADER_TYPE,
 	      IO_SNDLIB_UNINITIALIZED, IO_NOT_A_SOUND_FILE, IO_FILE_CLOSED, IO_WRITE_ERROR, IO_INTERRUPTED, IO_CANT_CLOSE_FILE, 
 	      IO_BAD_HEADER, IO_DISK_FULL, IO_WRITE_PROTECTED, IO_CANT_READ_SELECTION_FILE, IO_NEED_WRITE_CONFIRMATION, 
 	      IO_NO_CHANGES, IO_EDIT_HOOK_CANCELLATION, IO_CANT_CREATE_FILE, IO_ERROR_NUM} io_error_t;
@@ -476,11 +476,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
   #define set_default_output_srate(a) ss->Default_Output_Srate = a
 #endif
 
-#define default_output_data_format(ss) ss->Default_Output_Data_Format
+#define default_output_sample_type(ss) ss->Default_Output_Sample_Type
 #if HAVE_SCHEME
-  #define set_default_output_data_format(a) {ss->Default_Output_Data_Format = a; s7_symbol_set_value(s7, ss->default_output_data_format_symbol, s7_make_integer(s7, a));}
+  #define set_default_output_sample_type(a) {ss->Default_Output_Sample_Type = a; s7_symbol_set_value(s7, ss->default_output_sample_type_symbol, s7_make_integer(s7, a));}
 #else
-  #define set_default_output_data_format(a) ss->Default_Output_Data_Format = a
+  #define set_default_output_sample_type(a) ss->Default_Output_Sample_Type = a
 #endif
 
 #define dac_size(ss) ss->Dac_Size

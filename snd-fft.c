@@ -17,7 +17,7 @@ static void wavelet_transform(mus_float_t *data, mus_long_t num, mus_float_t *cc
   mus_float_t *data1 = NULL;
   mus_float_t sig = -1.0;
   mus_float_t *cr = NULL;
-  mus_long_t i, j, n, n1, nmod, nh, joff, ii, ni, k, jf;
+  mus_long_t i, j, n, ii, ni, k, jf;
 
   cr = (mus_float_t *)malloc(cc_size * sizeof(mus_float_t));
 
@@ -29,6 +29,7 @@ static void wavelet_transform(mus_float_t *data, mus_long_t num, mus_float_t *cc
 
   for (n = num; n >= 4; n /= 2)
     {
+      mus_long_t n1, nh, nmod, joff;
       if (data1) free(data1);
       data1 = (mus_float_t *)calloc(n, sizeof(mus_float_t));
       n1 = n - 1;
@@ -154,7 +155,7 @@ const char **wavelet_names(void) {return(wavelet_names_1);}
 
 static void haar_transform(mus_float_t *f, mus_long_t n)
 {
-  mus_long_t m, mh, i, j, k;
+  mus_long_t m, i, j, k;
   mus_float_t s2;
   mus_float_t v = 1.0;
   mus_float_t x, y;
@@ -165,6 +166,7 @@ static void haar_transform(mus_float_t *f, mus_long_t n)
 
   for (m = n; m > 1; m >>= 1)
     {
+      mus_long_t mh;
       v *= s2;
       mh = (m >> 1);
       for (j = 0, k = 0; j < m; j += 2, k++)
@@ -192,20 +194,20 @@ static void haar_transform(mus_float_t *f, mus_long_t n)
 
 static void walsh_transform(mus_float_t *data, mus_long_t n)
 {
-  mus_long_t i, j, m, r, t1, t2, mh;
-  int ipow;
-  mus_float_t u, v;
-
+  int i, ipow;
   ipow = (int)((log(n) / log(2)) + .0001); /* added fudge factor 21-Sep-01 -- (int)3.0000 = 2 on PC */
 
   for (i = ipow; i >= 1; --i)
     {
+      mus_long_t r, m, mh, t1, t2;
       m = (1 << i);
       mh = (m >> 1);
       for (r = 0; r < n; r += m)
         {
+	  int j;
 	  for (j = 0, t1 = r, t2 = r + mh; j < mh; ++j, ++t1, ++t2)
             {
+	      mus_float_t u, v;
 	      u = data[t1];
 	      v = data[t2];
 	      data[t1] = u + v;
@@ -296,7 +298,7 @@ int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_pea
 				  mus_long_t losamp, mus_long_t hisamp, mus_float_t samps_per_pixel, mus_float_t fft_scale)
 {
   /* we want to reflect the graph as displayed, so each "bin" is samps_per_pixel wide */
-  mus_long_t i, j, k, hop, pkj, oldpkj;
+  mus_long_t i, j, k, hop, pkj;
   int pks, minpk;
   mus_float_t minval, la, ra, ca, logca, logra, logla, offset, fscl, ascl, bscl, fftsize2;
   mus_float_t *peaks;
@@ -320,6 +322,7 @@ int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_pea
 
   for (i = losamp; i < hisamp - hop; i += hop)
     {
+      mus_long_t oldpkj;
       la = ca;
       ca = ra;
       oldpkj = pkj;
@@ -641,7 +644,6 @@ static void make_sonogram_axes(chan_info *cp)
     {
       axis_info *ap;
       mus_float_t max_freq, min_freq, yang;
-      const char *xlabel;
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
@@ -667,6 +669,7 @@ static void make_sonogram_axes(chan_info *cp)
       if (yang < 0.0) yang += 360.0;
       if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
 	{
+	  const char *xlabel;
 	  if (cp->transform_type == FOURIER)
 	    {
 	      if (yang < 45.0) xlabel = "frequency";
@@ -783,9 +786,9 @@ static void apply_fft(fft_state *fs)
     }
   else 
     {
-      Xen res;
       if (Xen_hook_has_list(before_transform_hook))
 	{
+	  Xen res;
 	  res = run_progn_hook(before_transform_hook, 
 			       Xen_list_2(C_int_to_Xen_sound(cp->sound->index), 
 					  C_int_to_Xen_integer(cp->chan)),
@@ -846,9 +849,7 @@ static void apply_fft(fft_state *fs)
     default:
       {
 	Xen res, sfd;
-	vct *v;
 	int gc_loc, sf_loc;
-	mus_long_t len;
 	sfd = g_c_make_sampler(sf);
 	sf_loc = snd_protect(sfd);
 	res = Xen_call_with_2_args(added_transform_proc(cp->transform_type), 
@@ -858,6 +859,8 @@ static void apply_fft(fft_state *fs)
 	gc_loc = snd_protect(res);
 	if (mus_is_vct(res))
 	  {
+	    vct *v;
+	    mus_long_t len;
 	    v = Xen_to_vct(res);
 	    len = mus_vct_length(v);
 	    memcpy((void *)fft_data, (void *)(mus_vct_data(v)), len * sizeof(mus_float_t));
@@ -884,7 +887,7 @@ static void display_fft(fft_state *fs)
   mus_float_t *data, *tdata;
   chan_info *ncp;
   snd_info *sp;
-  mus_long_t i, j, lo, hi;
+  mus_long_t i, lo, hi;
 
   cp = fs->cp;
   if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES)) return;
@@ -952,6 +955,7 @@ static void display_fft(fft_state *fs)
        (sp->nchans > 1) && 
        (sp->channel_style == CHANNELS_SUPERIMPOSED)))
     {
+      int j;
       for (j = 0; j < sp->nchans; j++)
 	{
 	  ncp = sp->chans[j];
@@ -1592,8 +1596,6 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
   sono_info *si;
   chan_info *cp;
   axis_info *ap;
-  mus_float_t val;
-  int i;
   /* check for losamp/hisamp change? */
 
   one_fft((fft_state *)(sg->fs));
@@ -1617,6 +1619,8 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
 
   if (si->active_slices < si->total_slices)
     {
+      int i;
+      mus_float_t val;
       if (cp->transform_type == FOURIER)
 	{
 	  for (i = 0; i < sg->spectrum_size; i++) 
@@ -1796,7 +1800,6 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	{
 	  mus_float_t *pbuf = NULL;
 	  mus_long_t i;
-	  mus_float_t scl;
 	  int tempfile;
 	  chan_info *gcp;
 	  gcp = gsp->chans[0];
@@ -1827,6 +1830,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 
 	  if (amp != 0.0)
 	    {
+	      mus_float_t scl;
 	      /* normalize the results */
 	      scl = 0.0;
 	      for (i = 0; i < data_size; i++) 

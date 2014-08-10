@@ -1636,12 +1636,12 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
 }
 
 
-static Xen kw_header_type, kw_data_format, kw_comment, kw_file, kw_srate, kw_channel;
+static Xen kw_header_type, kw_comment, kw_file, kw_srate, kw_channel, kw_sample_type;
 
 static void init_selection_keywords(void)
 {
   kw_header_type = Xen_make_keyword("header-type");
-  kw_data_format = Xen_make_keyword("data-format");
+  kw_sample_type = Xen_make_keyword("sample-type");
   kw_comment = Xen_make_keyword("comment");
   kw_file = Xen_make_keyword("file");
   kw_srate = Xen_make_keyword("srate");
@@ -1651,7 +1651,7 @@ static void init_selection_keywords(void)
 
 static Xen g_save_selection(Xen arglist)
 {
-  #define H_save_selection "(" S_save_selection " file header-type data-format srate comment channel): \
+  #define H_save_selection "(" S_save_selection " file header-type sample-type srate comment channel): \
 save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
 
   int type = -1, format = -1, sr = -1, chn = 0;
@@ -1672,7 +1672,7 @@ save the current selection in file using the indicated file attributes.  If chan
 
   keys[0] = kw_file;
   keys[1] = kw_header_type;
-  keys[2] = kw_data_format;
+  keys[2] = kw_sample_type;
   keys[3] = kw_srate;
   keys[4] = kw_comment;
   keys[5] = kw_channel;
@@ -1704,7 +1704,7 @@ save the current selection in file using the indicated file attributes.  If chan
   if ((type != -1) && (format != -1) && (!(mus_header_writable(type, format))))
     Xen_error(CANNOT_SAVE,
 	      Xen_list_3(C_string_to_Xen_string(S_save_selection ": can't write ~A data to a ~A header"),
-			 C_string_to_Xen_string(mus_data_format_name(format)),
+			 C_string_to_Xen_string(mus_sample_type_name(format)),
 			 C_string_to_Xen_string(mus_header_type_name(type))));
 
   if ((sr != -1) && (sr <= 0))

@@ -245,14 +245,14 @@
 	    (error 'bad-header "~A is not an au file: ~A" file)
 	    (let ((data-location (read-bint32))
 		  (data-size (read-bint32))
-		  (data-format (read-bint32))
+		  (sample-type (read-bint32))
 		  (srate (read-bint32))
 		  (chns (read-bint32))
 		  (comment (io-read-string)))
-	      (list magic data-location data-size data-format srate chns comment)))))))
+	      (list magic data-location data-size sample-type srate chns comment)))))))
 
-(define (write-au-header file chns srate data-size data-format comment) ; data-size in bytes
-  ;; common data-formats: 1 mulaw, 2 linear_8, 3 linear_16, 4 linear_24, 5 linear_32, 6 float, 5 double, 27 alaw
+(define (write-au-header file chns srate data-size sample-type comment) ; data-size in bytes
+  ;; common sample-types: 1 mulaw, 2 linear_8, 3 linear_16, 4 linear_24, 5 linear_32, 6 float, 5 double, 27 alaw
   (with-output-to-file file
     (lambda ()
       (let* ((comlen (length comment))
@@ -261,7 +261,7 @@
 	(write-chars ".snd")
 	(write-bint32 data-location)
 	(write-bint32 data-size)
-	(write-bint32 data-format)
+	(write-bint32 sample-type)
 	(write-bint32 srate)
 	(write-bint32 chns)
 	(if (> comlen 0)
@@ -276,7 +276,7 @@
 (define (read-aif-header file)
   (let ((data-location 0)
 	(data-size 0)
-	(data-format 0)
+	(sample-type 0)
 	(srate 0)
 	(chns 0)
 	(current-location 0))
@@ -302,16 +302,16 @@
 			       (begin
 				 (set! data-location (+ 16 current-location (read-bint32)))
 				 (if (> srate 0)
-				     (return (list magic data-location data-size data-format srate chns))))
+				     (return (list magic data-location data-size sample-type srate chns))))
 			       (if (string=? chunk "COMM")
 				   (let ((len 0))
 				     (set! chns (read-bint16))
 				     (set! len (read-bint32))
-				     (set! data-format (read-bint16))
+				     (set! sample-type (read-bint16))
 				     (set! srate (read-bfloat80->int))
-				     (set! data-size (* len chns data-format 1/8))
+				     (set! data-size (* len chns sample-type 1/8))
 				     (if (> data-location 0)
-					 (return (list magic data-location data-size data-format srate chns))))
+					 (return (list magic data-location data-size sample-type srate chns))))
 				   (do ((i 0 (+ i 1))) ; here we really need built-in file IO stuff!
 				       ((= i chunk-size))
 				     (if (eof-object? (read-byte))

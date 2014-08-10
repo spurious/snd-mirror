@@ -6,7 +6,7 @@
 
 (define *clm-file-name* "test.snd")
 (define *clm-channels* 1)
-(define *clm-data-format* mus-lfloat)
+(define *clm-sample-type* mus-lfloat)
 (define *clm-header-type* mus-next)
 (define *clm-verbose* #f)
 (define *clm-play* #f)
@@ -65,7 +65,8 @@
 			    (output *clm-file-name*) 
 			    (channels *clm-channels*)
 			    (header-type *clm-header-type*)
-			    (data-format *clm-data-format*)
+			    data-format
+			    (sample-type *clm-sample-type*)
 			    (comment #f)
 			    (verbose *clm-verbose*)
 			    (reverb *clm-reverb*)
@@ -108,7 +109,7 @@
        (set! (mus-array-print-length) *clm-array-print-length*)
        (if (equal? clipped 'unset)
 	   (if (and (or scaled-by scaled-to)
-		    (member data-format (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
+		    (member (or data-format sample-type) (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
 	       (set! (mus-clipping) #f)
 	       (set! (mus-clipping) *clm-clipped*))
 	   (set! (mus-clipping) clipped))
@@ -124,7 +125,7 @@
 		 (begin
 		   (if (file-exists? output-1) 
 		       (delete-file output-1))
-		   (set! *output* (make-sample->file output-1 channels data-format header-type comment)))))
+		   (set! *output* (make-sample->file output-1 channels (or data-format sample-type) header-type comment)))))
 	   (begin
 	     (if (and (not continue-old-file)
 		      (vector? output-1))
@@ -139,7 +140,7 @@
 		     (begin
 		       (if (file-exists? reverb-1) 
 			   (delete-file reverb-1))
-		       (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type)))))
+		       (set! *reverb* (make-sample->file reverb-1 reverb-channels (or data-format sample-type) header-type)))))
 	       (begin
 		 (if (and (not continue-old-file)
 			  (vector? reverb-1))
@@ -211,7 +212,7 @@
 				  ((>= i (length mx-lst)) (/ scaled-to mx))
 				(set! mx (max mx (list-ref mx-lst i)))))))
 		       (out-file (substring output-1 0 (- (string-length output-1) 5))))
-		   (let ((g (make-sample->file out-file channels data-format header-type #f)))
+		   (let ((g (make-sample->file out-file channels (or data-format sample-type) header-type #f)))
 		     (mus-close g))
 		   (mus-file-mix out-file output-1 0 (mus-sound-framples output-1) 0 
 				 (let ((mx (make-float-vector (list channels channels) 0.0)))
@@ -304,7 +305,8 @@
 	  (output *clm-file-name*) 
 	  (channels *clm-channels*)
 	  (header-type *clm-header-type*)
-	  (data-format *clm-data-format*)
+	  data-format
+	  (sample-type *clm-sample-type*)
 	  (comment #f)
 	  ;(verbose *clm-verbose*) ; why is this commented out?
 	  (reverb *clm-reverb*)
@@ -331,7 +333,7 @@ finish-with-sound to complete the process."
 	    (begin
 	      (if (file-exists? output) 
 		  (delete-file output))
-	      (set! *output* (make-sample->file output channels data-format header-type comment))))
+	      (set! *output* (make-sample->file output channels (or data-format sample-type) header-type comment))))
 	(begin
 	  (if (and (not continue-old-file)
 		   (vector output))
@@ -345,7 +347,7 @@ finish-with-sound to complete the process."
 		(begin
 		  (if (file-exists? revfile) 
 		      (delete-file revfile))
-		  (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type))))
+		  (set! *reverb* (make-sample->file revfile reverb-channels (or data-format sample-type) header-type))))
 	    (begin
 	      (if (and (not continue-old-file)
 		       (vector? revfile))

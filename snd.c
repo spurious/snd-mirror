@@ -174,7 +174,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Default_Output_Chans =        DEFAULT_OUTPUT_CHANS;
   ss->Default_Output_Srate =        DEFAULT_OUTPUT_SRATE;
   ss->Default_Output_Header_Type =  DEFAULT_OUTPUT_HEADER_TYPE;
-  ss->Default_Output_Data_Format =  DEFAULT_OUTPUT_DATA_FORMAT;
+  ss->Default_Output_Sample_Type =  DEFAULT_OUTPUT_SAMPLE_TYPE;
   ss->Audio_Input_Device =          DEFAULT_AUDIO_INPUT_DEVICE;
   ss->Audio_Output_Device =         DEFAULT_AUDIO_OUTPUT_DEVICE;
   ss->Dac_Size =                    DEFAULT_DAC_SIZE;
@@ -495,9 +495,9 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_header_type "*) (lambda (s v) (set! (" S_default_output_header_type ") v)))");
   s7_symbol_set_documentation(s7, ss->default_output_header_type_symbol, "*default-output-header-type*: header type when a new file is created (mus-next etc)");
 
-  ss->default_output_data_format_symbol = s7_define_variable(s7, "*" S_default_output_data_format "*", s7_make_integer(s7, DEFAULT_OUTPUT_DATA_FORMAT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_data_format "*) (lambda (s v) (set! (" S_default_output_data_format ") v)))");
-  s7_symbol_set_documentation(s7, ss->default_output_data_format_symbol, "*default-output-data-format*: data format when a new file is created (mus-ldouble etc)");
+  ss->default_output_sample_type_symbol = s7_define_variable(s7, "*" S_default_output_sample_type "*", s7_make_integer(s7, DEFAULT_OUTPUT_SAMPLE_TYPE));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_sample_type "*) (lambda (s v) (set! (" S_default_output_sample_type ") v)))");
+  s7_symbol_set_documentation(s7, ss->default_output_sample_type_symbol, "*default-output-sample-type*: sample type when a new file is created (mus-ldouble etc)");
 
   ss->default_output_chans_symbol = s7_define_variable(s7, "*" S_default_output_chans "*", s7_make_integer(s7, DEFAULT_OUTPUT_CHANS));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_chans "*) (lambda (s v) (set! (" S_default_output_chans ") v)))");

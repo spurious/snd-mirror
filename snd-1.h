@@ -459,7 +459,7 @@ typedef struct snd_state {
   mus_float_t Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, Log_Freq_Start;
   mus_float_t Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle;
   mus_float_t Spectrum_End, Spectrum_Start;
-  int Default_Output_Header_Type, Default_Output_Data_Format, Default_Output_Chans, Default_Output_Srate;
+  int Default_Output_Header_Type, Default_Output_Sample_Type, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Color_Map_Size, Wavelet_Type, Transform_Type;
   int Dot_Size;
   int Zero_Pad, Wavo_Hop, Wavo_Trace;
@@ -522,7 +522,7 @@ typedef struct snd_state {
     eps_left_margin_symbol, eps_bottom_margin_symbol, eps_size_symbol, log_freq_start_symbol,
     spectro_x_scale_symbol, spectro_y_scale_symbol, spectro_z_scale_symbol, spectro_z_angle_symbol, spectro_x_angle_symbol, spectro_y_angle_symbol,
     spectrum_end_symbol, spectrum_start_symbol,
-    default_output_header_type_symbol, default_output_data_format_symbol, default_output_chans_symbol, default_output_srate_symbol,
+    default_output_header_type_symbol, default_output_sample_type_symbol, default_output_chans_symbol, default_output_srate_symbol,
     spectro_hop_symbol, color_map_symbol, color_map_size_symbol, wavelet_type_symbol, transform_type_symbol,
     dot_size_symbol,
     zero_pad_symbol, wavo_hop_symbol, wavo_trace_symbol,

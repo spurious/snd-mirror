@@ -7119,9 +7119,9 @@ static Xen g_make_sample_to_file(Xen name, Xen chans, Xen out_format, Xen out_ty
     #define make_sample_to_file_example "\"test.snd\" 2 mus-lshort mus-riff make-sample->file"
   #endif
 
-  #define H_make_sample_to_file "(" S_make_sample_to_file " filename chans data-format header-type comment): \
+  #define H_make_sample_to_file "(" S_make_sample_to_file " filename chans sample-type header-type comment): \
 return an output generator writing the sound file 'filename' which is set up to have \
-'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
+'chans' channels of 'sample-type' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n  " make_sample_to_file_example
 
   int df = (int)MUS_OUT_FORMAT;
@@ -7132,7 +7132,7 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
   Xen_check_type(Xen_is_integer_or_unbound(out_type), out_type, 4, S_make_sample_to_file, "an integer (header type id)");
 
   if (Xen_is_integer(out_format)) df = Xen_integer_to_C_int(out_format);
-  if (mus_is_data_format(df))
+  if (mus_is_sample_type(df))
     {
       int ht = (int)MUS_NEXT;
       if (Xen_is_integer(out_type)) ht = Xen_integer_to_C_int(out_type);
@@ -7261,9 +7261,9 @@ static Xen g_make_frample_to_file(Xen name, Xen chans, Xen out_format, Xen out_t
     #define make_frample_to_file_example "\"test.snd\" 2 mus-lshort mus-riff make-frample->file"
   #endif
 
-  #define H_make_frample_to_file "(" S_make_frample_to_file " filename chans data-format header-type comment): \
+  #define H_make_frample_to_file "(" S_make_frample_to_file " filename chans sample-type header-type comment): \
 return an output generator writing the sound file 'filename' which is set up to have \
-'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
+'chans' channels of 'sample-type' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n  " make_frample_to_file_example
 
   mus_any *fgen = NULL;

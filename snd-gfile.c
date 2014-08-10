@@ -300,7 +300,7 @@ static bool post_sound_info(file_dialog_info *fd, const char *filename, bool wit
 		   mus_sound_srate(filename),
 		   lenstr,
 		   mus_header_type_name(mus_sound_header_type(filename)),
-		   short_data_format_name(mus_sound_data_format(filename), filename),
+		   short_sample_type_name(mus_sound_sample_type(filename), filename),
 		   snd_strftime(", %d-%b-%Y", mus_sound_write_date(filename)),
 		   mx);
 
@@ -1508,7 +1508,7 @@ static void update_header_type_list(const char *name, int row, void *data)
 }
 
 
-static void update_data_format_list(const char *name, int row, void *data)
+static void update_sample_type_list(const char *name, int row, void *data)
 {
   file_data *fdat = (file_data *)data;
   fdat->current_format = position_to_format(fdat->current_type, row);
@@ -1528,7 +1528,7 @@ static void file_data_src_callback(GtkWidget *w, gpointer context)
 
 static file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				       dialog_channels_t with_chan, 
-				       int header_type, int data_format,
+				       int header_type, int sample_type,
 				       dialog_data_location_t with_loc, 
 				       dialog_samples_t with_samples,
 				       dialog_header_type_t with_header_type,
@@ -1554,8 +1554,8 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   fdat->auto_comment = save_as_dialog_auto_comment(ss);
   fdat->saved_comment = NULL;
   fdat->current_type = header_type;
-  fdat->current_format = data_format;
-  formats = type_and_format_to_position(fdat, header_type, data_format);
+  fdat->current_format = sample_type;
+  formats = type_and_format_to_position(fdat, header_type, sample_type);
   nformats = fdat->formats;
 
   frame = gtk_frame_new(NULL);
@@ -1585,7 +1585,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 #else
   fdat->format_list = slist_new_with_title("data type", form, (const char **)formats, nformats, BOX_PACK);
 #endif
-  fdat->format_list->select_callback = update_data_format_list;
+  fdat->format_list->select_callback = update_sample_type_list;
   fdat->format_list->select_callback_data = (void *)fdat;
   slist_select(fdat->format_list, fdat->format_pos);
 
@@ -1981,7 +1981,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type = MUS_NEXT, format = DEFAULT_OUTPUT_DATA_FORMAT, srate = DEFAULT_OUTPUT_SRATE, chans = DEFAULT_OUTPUT_CHANS;
+  int type = MUS_NEXT, format = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE, chans = DEFAULT_OUTPUT_CHANS;
   int output_type, chan = 0, extractable_chans = 0;
   bool file_exists = false;
   mus_long_t location = 28, samples = 0;
@@ -2362,7 +2362,7 @@ static file_dialog_info *make_sound_save_as_dialog_1(bool managed, int chan)
   file_string = mus_format("save %s", (char *)((sp) ? sp->short_filename : ""));
 
   if (!save_sound_as)
-    save_sound_as = make_save_as_dialog(file_string, default_output_header_type(ss), default_output_data_format(ss), SOUND_SAVE_AS);
+    save_sound_as = make_save_as_dialog(file_string, default_output_header_type(ss), default_output_sample_type(ss), SOUND_SAVE_AS);
   else gtk_window_set_title(GTK_WINDOW(save_sound_as->dialog), file_string); 
   free(file_string);
 
@@ -2407,7 +2407,7 @@ widget_t make_selection_save_as_dialog(bool managed)
   file_dialog_info *fd;
 
   if (!save_selection_as)
-    save_selection_as = make_save_as_dialog("save current selection", default_output_header_type(ss), default_output_data_format(ss), SELECTION_SAVE_AS);
+    save_selection_as = make_save_as_dialog("save current selection", default_output_header_type(ss), default_output_sample_type(ss), SELECTION_SAVE_AS);
   else gtk_window_set_title(GTK_WINDOW(save_selection_as->dialog), "save current selection");
 
   fd = save_selection_as;
@@ -2429,7 +2429,7 @@ widget_t make_region_save_as_dialog(bool managed)
   char *comment = NULL;
 
   if (!save_region_as)
-    save_region_as = make_save_as_dialog("save current region", default_output_header_type(ss), default_output_data_format(ss), REGION_SAVE_AS);
+    save_region_as = make_save_as_dialog("save current region", default_output_header_type(ss), default_output_sample_type(ss), REGION_SAVE_AS);
   else gtk_window_set_title(GTK_WINDOW(save_region_as->dialog), "save current region");
 
   fd = save_region_as;
@@ -2585,9 +2585,9 @@ static raw_info *new_raw_dialog(void)
 static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 {
   raw_info *rp = (raw_info *)context;
-  int raw_srate = 0, raw_chans = 0, raw_data_format = 0;
+  int raw_srate = 0, raw_chans = 0, raw_sample_type = 0;
   redirect_snd_error_to(redirect_post_file_panel_error, (void *)(rp->rdat));
-  get_file_dialog_sound_attributes(rp->rdat, &raw_srate, &raw_chans, NULL, &raw_data_format, &(rp->location), NULL, 1);
+  get_file_dialog_sound_attributes(rp->rdat, &raw_srate, &raw_chans, NULL, &raw_sample_type, &(rp->location), NULL, 1);
   redirect_snd_error_to(NULL, NULL);
   if (rp->rdat->error_widget != NOT_A_SCANF_WIDGET)
     {
@@ -2595,10 +2595,10 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
     }
   else
     {
-      mus_header_set_raw_defaults(raw_srate, raw_chans, raw_data_format);
+      mus_header_set_raw_defaults(raw_srate, raw_chans, raw_sample_type);
       mus_sound_override_header(rp->filename, raw_srate, raw_chans, 
-				raw_data_format, MUS_RAW, rp->location,
-				mus_bytes_to_samples(raw_data_format, 
+				raw_sample_type, MUS_RAW, rp->location,
+				mus_bytes_to_samples(raw_sample_type, 
 						     mus_sound_length(rp->filename) - rp->location));
       /* choose action based on how we got here */
       if ((rp->requestor_dialog) &&
@@ -2634,8 +2634,8 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
 	  hdr->chans = raw_chans;
-	  hdr->format = raw_data_format;
-	  hdr->samples = mus_bytes_to_samples(raw_data_format, 
+	  hdr->format = raw_sample_type;
+	  hdr->samples = mus_bytes_to_samples(raw_sample_type, 
 					      mus_sound_length(rp->filename) - rp->location);
 	  hdr->data_location = rp->location;
 	  hdr->comment = NULL;
@@ -2676,12 +2676,12 @@ static gint raw_data_delete_callback(GtkWidget *w, GdkEvent *event, gpointer con
 static void raw_data_reset_callback(GtkWidget *w, gpointer context) 
 {
   raw_info *rp = (raw_info *)context;
-  int raw_srate, raw_chans, raw_data_format;
+  int raw_srate, raw_chans, raw_sample_type;
   rp->location = 0;
-  mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */  
+  mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_sample_type); /* pick up defaults */  
   set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
-				   raw_data_format, raw_srate, raw_chans, rp->location, 
+				   raw_sample_type, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
   clear_dialog_error(rp->rdat);
 }
@@ -2697,7 +2697,7 @@ static void raw_data_help_callback(GtkWidget *w, gpointer context)
 static void make_raw_data_dialog(raw_info *rp, const char *filename, const char *title)
 {
   GtkWidget *reset_button, *help_button, *cancel_button, *ok_button;
-  int raw_srate, raw_chans, raw_data_format;
+  int raw_srate, raw_chans, raw_sample_type;
  
   rp->dialog = snd_gtk_dialog_new();
   if (!title)
@@ -2725,11 +2725,11 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   add_highlight_button_style(ok_button);
 #endif
 
-  mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
+  mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_sample_type); /* pick up defaults */
 
   rp->rdat = make_file_data_panel(DIALOG_CONTENT_AREA(rp->dialog), "data-form", 
 				  WITH_CHANNELS_FIELD, 
-				  MUS_RAW, raw_data_format, 
+				  MUS_RAW, raw_sample_type, 
 				  WITH_DATA_LOCATION_FIELD, 
 				  WITHOUT_SAMPLES_FIELD,
 				  WITHOUT_HEADER_TYPE_FIELD, 
@@ -2740,7 +2740,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   rp->rdat->dialog = rp->dialog;
   set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
-				   raw_data_format, raw_srate, raw_chans, rp->location, 
+				   raw_sample_type, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
 
   SG_SIGNAL_CONNECT(rp->dialog, "delete_event", raw_data_delete_callback, rp);
@@ -2867,7 +2867,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 {
   mus_long_t loc;
   char *newer_name = NULL, *msg;
-  int header_type, data_format, srate, chans;
+  int header_type, sample_type, srate, chans;
   newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
   if ((!newer_name) || (!(*newer_name)))
     {
@@ -2879,7 +2879,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
     {
       char *comment;
       redirect_snd_error_to(redirect_post_file_panel_error, (void *)ndat);
-      comment = get_file_dialog_sound_attributes(ndat, &srate, &chans, &header_type, &data_format, &loc, &initial_samples, 1);
+      comment = get_file_dialog_sound_attributes(ndat, &srate, &chans, &header_type, &sample_type, &loc, &initial_samples, 1);
       redirect_snd_error_to(NULL, NULL);
       if (ndat->error_widget != NOT_A_SCANF_WIDGET)
 	{
@@ -2920,7 +2920,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 
 	      ss->local_errno = 0;
 	      redirect_snd_error_to(redirect_post_file_dialog_error, (void *)ndat);
-	      sp = snd_new_file(newer_name, header_type, data_format, srate, chans, comment, initial_samples);
+	      sp = snd_new_file(newer_name, header_type, sample_type, srate, chans, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
 		{
@@ -2977,11 +2977,11 @@ static char *new_file_dialog_filename(int header_type)
 static void load_new_file_defaults(char *newname)
 {
   char *filename = NULL, *new_comment = NULL;
-  int header_type, data_format, chans, srate;
+  int header_type, sample_type, chans, srate;
 
   header_type = default_output_header_type(ss);
   chans =       default_output_chans(ss);
-  data_format = default_output_data_format(ss);
+  sample_type = default_output_sample_type(ss);
   srate =       default_output_srate(ss);
   new_comment = output_comment(NULL);
 
@@ -2992,7 +2992,7 @@ static void load_new_file_defaults(char *newname)
   gtk_entry_set_text(GTK_ENTRY(new_file_text), filename);  
   mus_sound_forget(filename);
 
-  set_file_dialog_sound_attributes(ndat, header_type, data_format, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
+  set_file_dialog_sound_attributes(ndat, header_type, sample_type, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
 
   if (new_comment) free(new_comment);
   if (filename) free(filename);
@@ -3075,7 +3075,7 @@ widget_t make_new_file_dialog(bool managed)
       ndat = make_file_data_panel(DIALOG_CONTENT_AREA(new_file_dialog), "data-form", 
 				  WITH_CHANNELS_FIELD, 
 				  default_output_header_type(ss), 
-				  default_output_data_format(ss), 
+				  default_output_sample_type(ss), 
 				  WITHOUT_DATA_LOCATION_FIELD, 
 				  WITH_SAMPLES_FIELD,
 				  WITH_HEADER_TYPE_FIELD, 

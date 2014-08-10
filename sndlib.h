@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 24
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "14-Apr-14"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "10-Aug-14"
 
 #include <stdio.h>
 /* need FILE */
@@ -99,7 +99,7 @@ enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_BICSF, MUS_NI
 enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_UBYTE, MUS_B24INT,
       MUS_BDOUBLE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT,
       MUS_BINTN, MUS_LINTN, MUS_BFLOAT_UNSCALED, MUS_LFLOAT_UNSCALED, MUS_BDOUBLE_UNSCALED, MUS_LDOUBLE_UNSCALED,
-      MUS_NUM_DATA_FORMATS};
+      MUS_NUM_SAMPLE_TYPES};
 
 /* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of "fraction" -- the data is "left justified" */
 /* "unscaled" means the float value is used directly (i.e. not as -1.0 to 1.0, but (probably) -32768.0 to 32768.0) */
@@ -121,7 +121,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_MEMORY_ALLOCATION_FAILED, 
       MUS_CANT_OPEN_FILE, MUS_NO_SAMPLE_INPUT, MUS_NO_SAMPLE_OUTPUT,
       MUS_NO_SUCH_CHANNEL, MUS_NO_FILE_NAME_PROVIDED, MUS_NO_LOCATION, MUS_NO_CHANNEL,
-      MUS_NO_SUCH_FFT_WINDOW, MUS_UNSUPPORTED_DATA_FORMAT, MUS_HEADER_READ_FAILED,
+      MUS_NO_SUCH_FFT_WINDOW, MUS_UNSUPPORTED_SAMPLE_TYPE, MUS_HEADER_READ_FAILED,
       MUS_UNSUPPORTED_HEADER_TYPE,
       MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, MUS_NOT_A_SOUND_FILE, MUS_FILE_CLOSED, MUS_WRITE_ERROR,
       MUS_HEADER_WRITE_FAILED, MUS_CANT_OPEN_TEMP_FILE, MUS_INTERRUPTED, MUS_BAD_ENVELOPE,
@@ -179,7 +179,7 @@ MUS_EXPORT mus_long_t mus_sound_data_location(const char *arg);
 MUS_EXPORT int mus_sound_chans(const char *arg);
 MUS_EXPORT int mus_sound_srate(const char *arg);
 MUS_EXPORT int mus_sound_header_type(const char *arg);
-MUS_EXPORT int mus_sound_data_format(const char *arg);
+MUS_EXPORT int mus_sound_sample_type(const char *arg);
 MUS_EXPORT int mus_sound_original_format(const char *arg);
 MUS_EXPORT mus_long_t mus_sound_comment_start(const char *arg);
 MUS_EXPORT mus_long_t mus_sound_comment_end(const char *arg);
@@ -193,15 +193,24 @@ MUS_EXPORT int mus_sound_bits_per_sample(const char *arg);
 MUS_EXPORT int mus_sound_set_chans(const char *arg, int val);
 MUS_EXPORT int mus_sound_set_srate(const char *arg, int val);
 MUS_EXPORT int mus_sound_set_header_type(const char *arg, int val);
-MUS_EXPORT int mus_sound_set_data_format(const char *arg, int val);
+MUS_EXPORT int mus_sound_set_sample_type(const char *arg, int val);
 MUS_EXPORT int mus_sound_set_data_location(const char *arg, mus_long_t val);
 MUS_EXPORT int mus_sound_set_samples(const char *arg, mus_long_t val);
 
 MUS_EXPORT const char *mus_header_type_name(int type);
-MUS_EXPORT const char *mus_data_format_name(int format);
 MUS_EXPORT const char *mus_header_type_to_string(int type);
-MUS_EXPORT const char *mus_data_format_to_string(int format);
-MUS_EXPORT const char *mus_data_format_short_name(int format);
+MUS_EXPORT const char *mus_sample_type_name(int format);
+MUS_EXPORT const char *mus_sample_type_to_string(int format);
+MUS_EXPORT const char *mus_sample_type_short_name(int format);
+
+#if (!DISABLE_DEPRECATED)
+#define mus_sound_data_format mus_sound_sample_type
+#define mus_data_format_name mus_sample_type_name
+#define mus_data_format_to_string mus_sample_type_to_string
+#define mus_data_format_short_name mus_sample_type_short_name
+#define mus_sound_set_data_formatmus_sound_set_sample_type
+#endif
+
 MUS_EXPORT char *mus_sound_comment(const char *name);
 MUS_EXPORT int mus_bytes_per_sample(int format);
 MUS_EXPORT float mus_sound_duration(const char *arg);
@@ -215,7 +224,7 @@ MUS_EXPORT void mus_sound_set_loop_info(const char *arg, int *loop);
 MUS_EXPORT int mus_sound_mark_info(const char *arg, int **mark_ids, int **mark_positions);
 
 MUS_EXPORT int mus_sound_open_input(const char *arg);
-MUS_EXPORT int mus_sound_open_output(const char *arg, int srate, int chans, int data_format, int header_type, const char *comment);
+MUS_EXPORT int mus_sound_open_output(const char *arg, int srate, int chans, int sample_type, int header_type, const char *comment);
 MUS_EXPORT int mus_sound_reopen_output(const char *arg, int chans, int format, int type, mus_long_t data_loc);
 MUS_EXPORT int mus_sound_close_input(int fd);
 MUS_EXPORT int mus_sound_close_output(int fd, mus_long_t bytes_of_data);
@@ -294,9 +303,9 @@ MUS_EXPORT mus_long_t mus_file_read_chans(int fd, mus_long_t beg, mus_long_t end
 MUS_EXPORT int mus_file_write(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs);
 MUS_EXPORT mus_long_t mus_file_read_any(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, mus_float_t **cm);
 MUS_EXPORT mus_long_t mus_file_read_file(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs);
-MUS_EXPORT mus_long_t mus_file_read_buffer(int charbuf_data_format, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, char *charbuf);
+MUS_EXPORT mus_long_t mus_file_read_buffer(int charbuf_sample_type, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, char *charbuf);
 MUS_EXPORT int mus_file_write_file(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs);
-MUS_EXPORT int mus_file_write_buffer(int charbuf_data_format, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, char *charbuf, bool clipped);
+MUS_EXPORT int mus_file_write_buffer(int charbuf_sample_type, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, char *charbuf, bool clipped);
 MUS_EXPORT char *mus_expand_filename(const char *name);
 MUS_EXPORT char *mus_getcwd(void);
 
@@ -336,7 +345,10 @@ MUS_EXPORT char *mus_strcat(char *errmsg, const char *str, int *err_size);
 
 /* -------- headers.c -------- */
 
-MUS_EXPORT bool mus_is_data_format(int n);
+MUS_EXPORT bool mus_is_sample_type(int n);
+#if (!DISABLE_DEPRECATED)
+#define mus_is_data_format mus_is_sample_type
+#endif
 MUS_EXPORT bool mus_is_header_type(int n);
 
 MUS_EXPORT mus_long_t mus_header_samples(void);

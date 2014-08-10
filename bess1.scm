@@ -21,13 +21,13 @@
 ;;
 ;; (rt-motif :srate       *clm-srate*        ;; 22050
 ;;           :bufsize     *clm-rt-bufsize*   ;; 128
-;;           :data-format *clm-data-format*) ;; mus-lshort
+;;           :sample-type *clm-sample-type*) ;; mus-lshort
 
 ;;; Code:
 
 (set! *clm-srate* 22050)
 
-(define *clm-data-format* mus-lfloat)
+(define *clm-sample-type* mus-lfloat)
 (define *clm-rt-bufsize* 1024)
 (define *output* #f)			;holds fd from (mus-audio-open-output)
 
@@ -89,7 +89,7 @@
 ;; from clm-2/rt.lisp
 (define* (make-float-vector-test (srate *clm-srate*)
 			(bufsize *clm-rt-bufsize*)
-			(data-format *clm-data-format*))
+			(sample-type *clm-sample-type*))
   (let ((vmode (vector 0 12 2 4 14 4 5 5 0 7 7 11 11))
 	(vpits (make-vector (+ 1 lim) 0))
 	(vbegs (make-vector (+ 1 lim) 0))
@@ -105,7 +105,7 @@
       (set! (vbegs i) (+ 1 (floor (random 3.0)))))
     (set! *clm-srate* srate)
     (set! *clm-rt-bufsize* bufsize)
-    (set! *output* (mus-audio-open-output mus-audio-default srate 1 data-format (* bufsize 2)))
+    (set! *output* (mus-audio-open-output mus-audio-default srate 1 sample-type (* bufsize 2)))
     (lambda ()
       (if (> len 1)
 	  (set! len (- len 1))
@@ -163,7 +163,7 @@
 
 (define* (make-agn (srate *clm-srate*)
 		   (bufsize *clm-rt-bufsize*)
-		   (data-format *clm-data-format*))
+		   (sample-type *clm-sample-type*))
   (let ((wins (vector '(0 0 40 0.1 60 0.2 75 0.4 82 1 90 1 100 0)
 		      '(0 0 60 0.1 80 0.2 90 0.4 95 1 100 0)
 		      '(0 0 10 1 16 0 32 0.1 50 1 56 0 60 0 90 0.3 100 0)
@@ -197,7 +197,7 @@
       (set! (amps i) (floor (+ 1 (* 8 (rbell (random 1.0)))))))
     (set! *clm-srate* srate)
     (set! *clm-rt-bufsize* bufsize)
-    (set! *output* (mus-audio-open-output mus-audio-default srate 1 data-format (* bufsize 2)))
+    (set! *output* (mus-audio-open-output mus-audio-default srate 1 sample-type (* bufsize 2)))
     (lambda ()
       (if (> len 1)
 	  (set! len (- len 1))

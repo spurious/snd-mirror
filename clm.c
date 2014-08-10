@@ -10712,11 +10712,11 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
 };
 
 
-static int *data_format_zero = NULL;
+static int *sample_type_zero = NULL;
 
-int mus_data_format_zero(int format)
+int mus_sample_type_zero(int format)
 {
-  return(data_format_zero[format]);
+  return(sample_type_zero[format]);
 }
 
 
@@ -10736,7 +10736,7 @@ static void flush_buffers(rdout *gen)
       fd = mus_sound_open_output(gen->file_name, 
 				 (int)sampling_rate, 
 				 gen->chans, 
-				 gen->output_data_format,
+				 gen->output_sample_type,
 				 gen->output_header_type, 
 				 NULL);
       if (fd == -1)
@@ -10746,17 +10746,17 @@ static void flush_buffers(rdout *gen)
       else
 	{
 	  mus_file_write(fd, 0, gen->out_end, gen->chans, gen->obufs);
-	  mus_sound_close_output(fd, (gen->out_end + 1) * gen->chans * mus_bytes_per_sample(mus_sound_data_format(gen->file_name))); 
+	  mus_sound_close_output(fd, (gen->out_end + 1) * gen->chans * mus_bytes_per_sample(mus_sound_sample_type(gen->file_name))); 
 	}
     }
   else
     {
       /* get existing samples, add new output, write back to output */
       mus_float_t **addbufs = NULL;
-      int i, data_format;
+      int i, sample_type;
       mus_long_t current_file_framples, framples_to_add;
       
-      data_format = mus_sound_data_format(gen->file_name);
+      sample_type = mus_sound_sample_type(gen->file_name);
       current_file_framples = mus_sound_framples(gen->file_name);
       /* this is often 0 (brand-new file) */
       
@@ -10835,12 +10835,12 @@ static void flush_buffers(rdout *gen)
 	}
       mus_sound_close_input(fd); /* close previous mus_sound_open_input */
 
-      fd = mus_sound_reopen_output(gen->file_name, gen->chans, data_format,
+      fd = mus_sound_reopen_output(gen->file_name, gen->chans, sample_type,
 				   mus_sound_header_type(gen->file_name),
 				   mus_sound_data_location(gen->file_name));
       
       if ((current_file_framples < gen->data_start) &&
-	  (data_format_zero[data_format] != 0))
+	  (sample_type_zero[sample_type] != 0))
 	{
 	  /* we're about to create a gap in the output file.  mus_file_seek_frample calls lseek which (man lseek):
 	   *
@@ -10852,10 +10852,10 @@ static void flush_buffers(rdout *gen)
 	   *
            * but 0 bytes in a file are not interpreted as sound samples of 0 in several data formats.
 	   *  for example, mus-mulaw 0 => -.98, whereas sound sample 0 is a byte of 255.
-	   *  see the table at the end of this file (data_format_zero) for the other cases.
+	   *  see the table at the end of this file (sample_type_zero) for the other cases.
 	   *
-	   * So, we need to write explicit data-format 0 values in those cases where machine 0's
-	   *  won't be data format 0.  data_format_zero[format] != 0 signals we have such a
+	   * So, we need to write explicit sample-type 0 values in those cases where machine 0's
+	   *  won't be data format 0.  sample_type_zero[format] != 0 signals we have such a
 	   *  case, and returns the nominal zero value.  For unsigned shorts, we also need to
 	   *  take endianess into account.
 	   */
@@ -10864,7 +10864,7 @@ static void flush_buffers(rdout *gen)
 	  unsigned char *zeros;
 	  #define MAX_ZERO_SAMPLES 65536
 
-	  bps = mus_bytes_per_sample(data_format);
+	  bps = mus_bytes_per_sample(sample_type);
 	  filler = gen->data_start - current_file_framples; 
 	  mus_file_seek_frample(fd, current_file_framples);
 
@@ -10874,11 +10874,11 @@ static void flush_buffers(rdout *gen)
 
 	  zeros = (unsigned char *)malloc(bytes);
 	  if (bps == 1)
-	    memset((void *)zeros, data_format_zero[data_format], bytes);
+	    memset((void *)zeros, sample_type_zero[sample_type], bytes);
 	  else /* it has to be a short */
 	    {
 	      int df, i, b1, b2;
-	      df = data_format_zero[data_format];
+	      df = sample_type_zero[sample_type];
 	      b1 = df >> 8;
 	      b2 = df & 0xff;
 	      for (i = 0; i < bytes; i += 2)
@@ -10887,7 +10887,7 @@ static void flush_buffers(rdout *gen)
 		  zeros[i + 1] = b1;
 		}
 	    }
-	  /* (with-sound (:data-format mus-ulshort) (fm-violin 10 1 440 .1)) */
+	  /* (with-sound (:sample-type mus-ulshort) (fm-violin 10 1 440 .1)) */
 	  while (filler > 0)
 	    {
 	      ssize_t wbytes;
@@ -10947,7 +10947,7 @@ static void flush_buffers(rdout *gen)
       
       if (current_file_framples <= gen->out_end) 
 	current_file_framples = gen->out_end + 1;
-      mus_sound_close_output(fd, current_file_framples * gen->chans * mus_bytes_per_sample(data_format));
+      mus_sound_close_output(fd, current_file_framples * gen->chans * mus_bytes_per_sample(sample_type));
     }
 }
 
@@ -11162,7 +11162,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 	  gen->data_end = clm_file_buffer_size - 1;
 	  gen->out_end = 0;
 	  gen->chans = out_chans;
-	  gen->output_data_format = out_format;
+	  gen->output_sample_type = out_format;
 	  gen->output_header_type = out_type;
 	  gen->obufs = (mus_float_t **)malloc(gen->chans * sizeof(mus_float_t *));
 	  for (i = 0; i < gen->chans; i++) 
@@ -11189,7 +11189,7 @@ mus_any *mus_continue_sample_to_file(const char *filename)
 {
   return(mus_make_sample_to_file_with_comment_1(filename,
 						mus_sound_chans(filename),
-						mus_sound_data_format(filename),
+						mus_sound_sample_type(filename),
 						mus_sound_header_type(filename),
 						NULL,
 						true));
@@ -16146,7 +16146,7 @@ void mus_file_mix(const char *outfile, const char *infile,
       mus_file_read(ifd, in_start, clm_file_buffer_size, in_chans, ibufs);
       ofd = mus_sound_reopen_output(outfile, 
 				    out_chans, 
-				    mus_sound_data_format(outfile), 
+				    mus_sound_sample_type(outfile), 
 				    mus_sound_header_type(outfile), 
 				    mus_sound_data_location(outfile));
       curoutframples = mus_sound_framples(outfile);
@@ -16266,7 +16266,7 @@ void mus_file_mix(const char *outfile, const char *infile,
 	mus_file_write(ofd, 0, j - 1, out_chans, obufs);
       if (curoutframples < (out_framples + out_start)) 
 	curoutframples = out_framples + out_start;
-      mus_sound_close_output(ofd, curoutframples * out_chans * mus_bytes_per_sample(mus_sound_data_format(outfile)));
+      mus_sound_close_output(ofd, curoutframples * out_chans * mus_bytes_per_sample(mus_sound_sample_type(outfile)));
       mus_sound_close_input(ifd);
       for (i = 0; i < in_chans; i++) free(ibufs[i]);
       free(ibufs);
@@ -16301,15 +16301,15 @@ void mus_initialize(void)
   sincs = 0;
   locsig_warned = NULL;
 
-  data_format_zero = (int *)calloc(MUS_NUM_DATA_FORMATS, sizeof(int));
-  data_format_zero[MUS_MULAW] = MULAW_ZERO;
-  data_format_zero[MUS_ALAW] = ALAW_ZERO;
-  data_format_zero[MUS_UBYTE] = UBYTE_ZERO;
+  sample_type_zero = (int *)calloc(MUS_NUM_SAMPLE_TYPES, sizeof(int));
+  sample_type_zero[MUS_MULAW] = MULAW_ZERO;
+  sample_type_zero[MUS_ALAW] = ALAW_ZERO;
+  sample_type_zero[MUS_UBYTE] = UBYTE_ZERO;
 #if MUS_LITTLE_ENDIAN
-  data_format_zero[MUS_UBSHORT] = 0x80;
-  data_format_zero[MUS_ULSHORT] = 0x8000;
+  sample_type_zero[MUS_UBSHORT] = 0x80;
+  sample_type_zero[MUS_ULSHORT] = 0x8000;
 #else
-  data_format_zero[MUS_UBSHORT] = 0x8000;
-  data_format_zero[MUS_ULSHORT] = 0x80;
+  sample_type_zero[MUS_UBSHORT] = 0x8000;
+  sample_type_zero[MUS_ULSHORT] = 0x80;
 #endif 
 }

@@ -427,8 +427,8 @@ static void save_options(FILE *fd)
   if (default_output_srate(ss) != DEFAULT_OUTPUT_SRATE) pss_sd(fd, S_default_output_srate, default_output_srate(ss));
   if (default_output_header_type(ss) != DEFAULT_OUTPUT_HEADER_TYPE) 
     pss_ss(fd, S_default_output_header_type, mus_header_type_to_string(default_output_header_type(ss)));
-  if (default_output_data_format(ss) != DEFAULT_OUTPUT_DATA_FORMAT) 
-    pss_ss(fd, S_default_output_data_format, mus_data_format_to_string(default_output_data_format(ss)));
+  if (default_output_sample_type(ss) != DEFAULT_OUTPUT_SAMPLE_TYPE) 
+    pss_ss(fd, S_default_output_sample_type, mus_sample_type_to_string(default_output_sample_type(ss)));
   if (auto_resize(ss) != DEFAULT_AUTO_RESIZE) pss_ss(fd, S_auto_resize, b2s(auto_resize(ss)));
   if (graphs_horizontal(ss) != DEFAULT_GRAPHS_HORIZONTAL) pss_ss(fd, S_graphs_horizontal, b2s(graphs_horizontal(ss)));
   if (auto_update(ss) != DEFAULT_AUTO_UPDATE) pss_ss(fd, S_auto_update, b2s(auto_update(ss)));
@@ -604,19 +604,19 @@ static void save_options(FILE *fd)
 	fprintf(fd, "(set! (mus-header-raw-defaults) (list %d %d %s))\n",
 		srate,
 		chans,
-		mus_data_format_to_string(format));
+		mus_sample_type_to_string(format));
 #endif
 #if HAVE_RUBY
 	fprintf(fd, "set_mus_header_raw_defaults([%d, %d, %s])\n",
 		srate,
 		chans,
-		mus_data_format_to_string(format));
+		mus_sample_type_to_string(format));
 #endif
 #if HAVE_FORTH
 	fprintf(fd, "'( %d %d %s ) set-mus-header-raw-defaults drop\n",
 		srate,
 		chans,
-		mus_data_format_to_string(format));
+		mus_sample_type_to_string(format));
 #endif
       }
   }

@@ -2707,10 +2707,10 @@ static void save_speed_control(prefs_info *prf, FILE *ignore)
 
 static int rts_default_output_chans = DEFAULT_OUTPUT_CHANS;
 static int rts_default_output_srate = DEFAULT_OUTPUT_SRATE;
-static int rts_default_output_data_format = DEFAULT_OUTPUT_DATA_FORMAT;
+static int rts_default_output_sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE;
 static int rts_default_output_header_type = DEFAULT_OUTPUT_HEADER_TYPE;
 
-static prefs_info *output_data_format_prf = NULL, *output_header_type_prf = NULL;
+static prefs_info *output_sample_type_prf = NULL, *output_header_type_prf = NULL;
 
 #define NUM_OUTPUT_CHAN_CHOICES 4
 static const char *output_chan_choices[NUM_OUTPUT_CHAN_CHOICES] = {"1 ", "2 ", "4 ", "8"};
@@ -2862,10 +2862,10 @@ static void save_default_output_header_type(prefs_info *prf, FILE *ignore)
 }
 
 
-static void reflect_default_output_data_format(prefs_info *prf)
+static void reflect_default_output_sample_type(prefs_info *prf)
 {
   int which = -1;
-  switch (default_output_data_format(ss))
+  switch (default_output_sample_type(ss))
     {
     case MUS_LINT: case MUS_BINT:       which = 1; break;
     case MUS_LSHORT: case MUS_BSHORT:   which = 0; break;
@@ -2881,38 +2881,38 @@ static void default_output_header_type_choice(prefs_info *prf)
   if (GET_TOGGLE(prf->radio_button))
     {
       set_default_output_header_type(output_types[which_radio_button(prf)]);
-      set_default_output_data_format(header_to_data(default_output_header_type(ss), default_output_data_format(ss)));
-      reflect_default_output_data_format(output_data_format_prf);
+      set_default_output_sample_type(header_to_data(default_output_header_type(ss), default_output_sample_type(ss)));
+      reflect_default_output_sample_type(output_sample_type_prf);
     }
 }
 
-static void revert_default_output_data_format(prefs_info *prf) 
+static void revert_default_output_sample_type(prefs_info *prf) 
 {
-  set_default_output_data_format(rts_default_output_data_format);
+  set_default_output_sample_type(rts_default_output_sample_type);
 }
 
 
-static void save_default_output_data_format(prefs_info *prf, FILE *ignore) 
+static void save_default_output_sample_type(prefs_info *prf, FILE *ignore) 
 {
-  rts_default_output_data_format = default_output_data_format(ss);
+  rts_default_output_sample_type = default_output_sample_type(ss);
 }
 
 
-static void default_output_data_format_choice(prefs_info *prf)
+static void default_output_sample_type_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
     {
       int which;
       which = which_radio_button(prf);
-      set_default_output_data_format(output_formats[which]);
+      set_default_output_sample_type(output_formats[which]);
 
-      switch (default_output_data_format(ss))
+      switch (default_output_sample_type(ss))
 	{
 	case MUS_LSHORT:
 	  switch (default_output_header_type(ss))
 	    {
 	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	      set_default_output_data_format(MUS_BSHORT); 
+	      set_default_output_sample_type(MUS_BSHORT); 
 	      break;
 	    }
 	  break;
@@ -2921,7 +2921,7 @@ static void default_output_data_format_choice(prefs_info *prf)
 	  switch (default_output_header_type(ss))
 	    {
 	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	      set_default_output_data_format(MUS_BINT); 
+	      set_default_output_sample_type(MUS_BINT); 
 	      break;
 	    }
 	  break;
@@ -2930,11 +2930,11 @@ static void default_output_data_format_choice(prefs_info *prf)
 	  switch (default_output_header_type(ss))
 	    {
 	    case MUS_AIFC: case MUS_NEXT: 
-	      set_default_output_data_format(MUS_BFLOAT); 
+	      set_default_output_sample_type(MUS_BFLOAT); 
 	      break;
 	    case MUS_AIFF:
 	      set_default_output_header_type(MUS_AIFC);
-	      set_default_output_data_format(MUS_BFLOAT); 
+	      set_default_output_sample_type(MUS_BFLOAT); 
 	      break;
 	    case MUS_NIST: 
 	      set_default_output_header_type(MUS_RIFF); 
@@ -2946,11 +2946,11 @@ static void default_output_data_format_choice(prefs_info *prf)
 	  switch (default_output_header_type(ss))
 	    {
 	    case MUS_AIFC: case MUS_NEXT: 
-	      set_default_output_data_format(MUS_BDOUBLE); 
+	      set_default_output_sample_type(MUS_BDOUBLE); 
 	      break;
 	    case MUS_AIFF:
 	      set_default_output_header_type(MUS_AIFC);
-	      set_default_output_data_format(MUS_BDOUBLE); 
+	      set_default_output_sample_type(MUS_BDOUBLE); 
 	      break;
 	    case MUS_NIST: 
 	      set_default_output_header_type(MUS_RIFF); 
@@ -2967,7 +2967,7 @@ static void default_output_data_format_choice(prefs_info *prf)
 
 static int rts_raw_chans = DEFAULT_OUTPUT_CHANS;
 static int rts_raw_srate = DEFAULT_OUTPUT_SRATE;
-static int rts_raw_data_format = DEFAULT_OUTPUT_DATA_FORMAT;
+static int rts_raw_sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE;
 
 static void revert_raw_chans(prefs_info *prf)
 {
@@ -3055,11 +3055,11 @@ static void raw_srate_choice(prefs_info *prf)
 }
 
 
-static char *raw_data_format_to_string(int format)
+static char *raw_sample_type_to_string(int format)
 {
   /* the "mus-" prefix carries no information in this context, so strip it off */
   const char *name;
-  name = mus_data_format_to_string(format);
+  name = mus_sample_type_to_string(format);
   if (name)
     {
       char *rtn;
@@ -3081,37 +3081,37 @@ static char *raw_data_format_to_string(int format)
 }
 
 
-static void revert_raw_data_format(prefs_info *prf)
+static void revert_raw_sample_type(prefs_info *prf)
 {
   int srate = 0, chans = 0, format = 0;
   mus_header_raw_defaults(&srate, &chans, &format);
-  format = rts_raw_data_format;
+  format = rts_raw_sample_type;
   mus_header_set_raw_defaults(srate, chans, format);
 }
 
 
-static void save_raw_data_format(prefs_info *prf, FILE *ignore)
+static void save_raw_sample_type(prefs_info *prf, FILE *ignore)
 {
   int srate = 0, chans = 0, format = 0;
   mus_header_raw_defaults(&srate, &chans, &format);
-  rts_raw_data_format = format;
+  rts_raw_sample_type = format;
 }
 
 
-static void reflect_raw_data_format(prefs_info *prf)
+static void reflect_raw_sample_type(prefs_info *prf)
 {
   int srate = 0, chans = 0, format = 0;
   char *str;
   mus_header_raw_defaults(&srate, &chans, &format);
-  str = raw_data_format_to_string(format);
+  str = raw_sample_type_to_string(format);
   SET_TEXT(prf->text, str);
   free(str);
 }
 
 
-static char **raw_data_format_choices = NULL;
+static char **raw_sample_type_choices = NULL;
 
-static void raw_data_format_from_text(prefs_info *prf)
+static void raw_sample_type_from_text(prefs_info *prf)
 {
   char *str;
   str = GET_TEXT(prf->text);
@@ -3119,11 +3119,11 @@ static void raw_data_format_from_text(prefs_info *prf)
     {
       int i, srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
-      for (i = 0; i < MUS_NUM_DATA_FORMATS - 1; i++)
-	if (STRCMP(raw_data_format_choices[i], str) == 0)
+      for (i = 0; i < MUS_NUM_SAMPLE_TYPES - 1; i++)
+	if (STRCMP(raw_sample_type_choices[i], str) == 0)
 	  {
 	    mus_header_set_raw_defaults(srate, chans, i + 1); /* skipping MUS_UNKNOWN = 0 */
-	    reflect_raw_data_format(prf);
+	    reflect_raw_sample_type(prf);
 	    free_TEXT(str);
 	    return;
 	  }
@@ -3132,15 +3132,15 @@ static void raw_data_format_from_text(prefs_info *prf)
 
 
 #if USE_MOTIF
-static void raw_data_format_from_menu(prefs_info *prf, char *value)
+static void raw_sample_type_from_menu(prefs_info *prf, char *value)
 {
   int i, srate = 0, chans = 0, format = 0;
   mus_header_raw_defaults(&srate, &chans, &format);
-  for (i = 0; i < MUS_NUM_DATA_FORMATS - 1; i++)
-    if (STRCMP(raw_data_format_choices[i], value) == 0)
+  for (i = 0; i < MUS_NUM_SAMPLE_TYPES - 1; i++)
+    if (STRCMP(raw_sample_type_choices[i], value) == 0)
       {
 	mus_header_set_raw_defaults(srate, chans, i + 1);
-	SET_TEXT(prf->text, raw_data_format_choices[i]);
+	SET_TEXT(prf->text, raw_sample_type_choices[i]);
 	return;
       }
 }
@@ -4470,10 +4470,10 @@ static const char *help_default_output_header_type(prefs_info *prf)
   when a new sound is opened.  ");
 }
 
-static const char *help_default_output_data_format(prefs_info *prf) 
+static const char *help_default_output_sample_type(prefs_info *prf) 
 {
   return("\
-  This sets the default data format (big-endian float, etc)  \n\
+  This sets the default sample type (big-endian float, etc)  \n\
   when a new sound is opened.  ");
 }
 
@@ -4767,11 +4767,11 @@ static const char *help_raw_srate(prefs_info *prf)
   default sampling rate.  ");
 }
 
-static const char *help_raw_data_format(prefs_info *prf) 
+static const char *help_raw_sample_type(prefs_info *prf) 
 {
   return("\
   When a raw (no header) sound is opened, this sets the \n\
-  default data format.  ");
+  default sample type.  ");
 }
 
 static const char *help_tiny_font(prefs_info *prf) 

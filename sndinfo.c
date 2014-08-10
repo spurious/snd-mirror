@@ -70,9 +70,9 @@ int main(int argc, char *argv[])
 	  loops = mus_sound_loop_info(argv[ctr]);
 	  type = mus_sound_header_type(argv[ctr]);
 	  header_name = (char *)mus_header_type_name(type);
-	  format = mus_sound_data_format(argv[ctr]);
+	  format = mus_sound_sample_type(argv[ctr]);
 	  if (format != MUS_UNKNOWN)
-	    format_info = (char *)mus_data_format_name(format);
+	    format_info = (char *)mus_sample_type_name(format);
 	  else
 	    {
 	      if (format_info == NULL) format_info = (char *)calloc(64, sizeof(char));

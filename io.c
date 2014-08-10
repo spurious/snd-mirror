@@ -559,7 +559,7 @@ bool mus_set_clipping(bool new_value) {clipping_default = new_value; return(new_
 
 typedef struct {
   char *name;
-  int data_format, bytes_per_sample, chans, header_type;
+  int sample_type, bytes_per_sample, chans, header_type;
   bool clipping;
   mus_long_t data_location;
   bool saved;
@@ -621,7 +621,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	  io_fd *fd;
 	  fd = io_fds[tfd];
 	  fd->framples = 0;
-	  fd->data_format = format;
+	  fd->sample_type = format;
 	  fd->bytes_per_sample = size;
 	  fd->data_location = location;
 	  fd->clipping = clipping_default;
@@ -854,7 +854,7 @@ mus_long_t mus_file_seek_frample(int tfd, mus_long_t frample)
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frample: file descriptor = %d?", tfd));
 
   fd = io_fds[tfd];
-  if (fd->data_format == MUS_UNKNOWN) 
+  if (fd->sample_type == MUS_UNKNOWN) 
     return(mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek_frample: invalid data format for %s", fd->name));
 
   return(lseek(tfd, fd->data_location + (fd->chans * frample * fd->bytes_per_sample), SEEK_SET));
@@ -1069,10 +1069,10 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_read: no file descriptors!"));
 
       fd = io_fds[tfd];
-      if (fd->data_format == MUS_UNKNOWN) 
+      if (fd->sample_type == MUS_UNKNOWN) 
 	return(mus_error(MUS_FILE_CLOSED, "mus_read: invalid data format for %s", fd->name));
 
-      format = fd->data_format;
+      format = fd->sample_type;
       siz = fd->bytes_per_sample;
       if ((format == MUS_OUT_FORMAT) && 
 	  (chans == 1))
@@ -1702,9 +1702,9 @@ mus_long_t mus_file_read_file(int tfd, mus_long_t beg, int chans, mus_long_t nin
 }
 
 
-mus_long_t mus_file_read_buffer(int charbuf_data_format, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, char *charbuf)
+mus_long_t mus_file_read_buffer(int charbuf_sample_type, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, char *charbuf)
 {
-  return(mus_read_any_1(charbuf_data_format, beg, chans, nints, bufs, NULL, charbuf)); 
+  return(mus_read_any_1(charbuf_sample_type, beg, chans, nints, bufs, NULL, charbuf)); 
 }
 
 
@@ -1769,7 +1769,7 @@ static int checked_write(int tfd, char *buf, mus_long_t chars)
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
       fd = io_fds[tfd];
-      if (fd->data_format == MUS_UNKNOWN) 
+      if (fd->sample_type == MUS_UNKNOWN) 
 	return(mus_error(MUS_FILE_CLOSED,
 			 "attempt to write closed file %s",
 			 fd->name));
@@ -1806,7 +1806,7 @@ mus_clip_handler_t *mus_clip_set_handler_and_checker(mus_clip_handler_t *new_cli
 
 static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, char *inbuf, bool clipped)
 {
-  int err, siz, siz_chans, data_format, val;
+  int err, siz, siz_chans, sample_type, val;
   mus_long_t bytes, k, lim, leftover, loc, buflim;
   bool clipping = false;
   unsigned char *jchar;
@@ -1826,14 +1826,14 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
 
       fd = io_fds[tfd];
-      if (fd->data_format == MUS_UNKNOWN) 
+      if (fd->sample_type == MUS_UNKNOWN) 
 	return(mus_error(MUS_FILE_CLOSED, "mus_write: invalid data format for %s", fd->name));
 
       siz = fd->bytes_per_sample;
-      data_format = fd->data_format;
+      sample_type = fd->sample_type;
       clipping = fd->clipping;
 
-      if ((data_format == MUS_OUT_FORMAT) && 
+      if ((sample_type == MUS_OUT_FORMAT) && 
 	  (chans == 1) && 
 	  (!clipping) && 
 	  (beg == 0))
@@ -1845,7 +1845,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
   else
     {
       siz = mus_bytes_per_sample(tfd);
-      data_format = tfd; /* in this case, tfd is the data format (see mus_file_write_buffer below) -- this should be changed! */
+      sample_type = tfd; /* in this case, tfd is the data format (see mus_file_write_buffer below) -- this should be changed! */
       clipping = clipped;
     }
 
@@ -1930,7 +1930,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 		}
 	    }
 
-	  if ((data_format == MUS_OUT_FORMAT) && 
+	  if ((sample_type == MUS_OUT_FORMAT) && 
 	      (chans == 1) && 
 	      (beg == 0) &&
 	      (!inbuf)) /* "tfd" can be data format */
@@ -1957,7 +1957,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 
 	  jchar = (unsigned char *)charbuf; /* if to_buffer we should add the loop offset here, or never loop */
 	  jchar += (k * siz); 
-	  switch (data_format)
+	  switch (sample_type)
 	    {
 	    case MUS_BSHORT: 
 	      while (bufnow <= bufend4)
@@ -2149,9 +2149,9 @@ int mus_file_write_file(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_
 }
 
 
-int mus_file_write_buffer(int charbuf_data_format, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, char *charbuf, bool clipped)
+int mus_file_write_buffer(int charbuf_sample_type, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, char *charbuf, bool clipped)
 {
-  return(mus_write_1(charbuf_data_format, beg, end, chans, bufs, charbuf, clipped));
+  return(mus_write_1(charbuf_sample_type, beg, end, chans, bufs, charbuf, clipped));
 }
 
 
@@ -2657,7 +2657,7 @@ static void min_max_ints(unsigned char *data, int bytes, int chan, int chans, mu
     }
 }
 
-/* (with-sound (:data-format mus-lintn :statistics #t) (fm-violin 0 1 440 .1)) */
+/* (with-sound (:sample-type mus-lintn :statistics #t) (fm-violin 0 1 440 .1)) */
 
 
 static void min_max_switch_ints(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool standard)

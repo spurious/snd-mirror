@@ -244,16 +244,16 @@ static Xen g_mus_sound_set_header_type(Xen filename, Xen val)
 }
 
 
-static Xen g_mus_sound_data_format(Xen filename) 
+static Xen g_mus_sound_sample_type(Xen filename) 
 {
-  #define H_mus_sound_data_format "(" S_mus_sound_data_format " filename): data format (e.g. " S_mus_bshort ") of data in sound file"
-  return(gmus_sound(S_mus_sound_data_format, mus_sound_data_format, filename));
+  #define H_mus_sound_sample_type "(" S_mus_sound_sample_type " filename): data format (e.g. " S_mus_bshort ") of data in sound file"
+  return(gmus_sound(S_mus_sound_sample_type, mus_sound_sample_type, filename));
 }
 
 
-static Xen g_mus_sound_set_data_format(Xen filename, Xen val) 
+static Xen g_mus_sound_set_sample_type(Xen filename, Xen val) 
 {
-  return(gmus_sound_set(S_setB S_mus_sound_data_format, mus_sound_set_data_format, filename, val));
+  return(gmus_sound_set(S_setB S_mus_sound_sample_type, mus_sound_set_sample_type, filename, val));
 }
 
 
@@ -318,7 +318,7 @@ static Xen g_mus_sound_write_date(Xen filename)
 
 static Xen g_mus_header_writable(Xen head, Xen data)
 {
-  #define H_mus_header_writable "(" S_mus_header_writable " header-type data-format) returns " PROC_TRUE " if the header can handle the data format"
+  #define H_mus_header_writable "(" S_mus_header_writable " header-type sample-type) returns " PROC_TRUE " if the header can handle the data format"
   Xen_check_type(Xen_is_integer(head), head, 1, S_mus_header_writable, "a header type");
   Xen_check_type(Xen_is_integer(data), data, 2, S_mus_header_writable, "a data format");
   return(C_bool_to_Xen_boolean(mus_header_writable(Xen_integer_to_C_int(head), Xen_integer_to_C_int(data))));
@@ -327,20 +327,20 @@ static Xen g_mus_header_writable(Xen head, Xen data)
 static Xen g_mus_header_raw_defaults(void)
 {
   #define H_mus_header_raw_defaults "(" S_mus_header_raw_defaults "): returns list '(srate chans format) of current raw sound default attributes"
-  int srate, chans, data_format;
-  mus_header_raw_defaults(&srate, &chans, &data_format);
+  int srate, chans, sample_type;
+  mus_header_raw_defaults(&srate, &chans, &sample_type);
   return(Xen_list_3(C_int_to_Xen_integer(srate),
 		    C_int_to_Xen_integer(chans),
-		    C_int_to_Xen_integer(data_format)));
+		    C_int_to_Xen_integer(sample_type)));
 }
 
 
 static Xen g_mus_header_set_raw_defaults(Xen lst)
 {
-  Xen_check_type((Xen_is_list(lst)) && (Xen_list_length(lst) == 3), lst, 1, S_mus_header_raw_defaults, "a list: '(srate chans data-format)");
+  Xen_check_type((Xen_is_list(lst)) && (Xen_list_length(lst) == 3), lst, 1, S_mus_header_raw_defaults, "a list: '(srate chans sample-type)");
   Xen_check_type(Xen_is_integer(Xen_car(lst)), Xen_car(lst), 1, S_mus_header_raw_defaults, "an integer = srate");
   Xen_check_type(Xen_is_integer(Xen_cadr(lst)), Xen_cadr(lst), 2, S_mus_header_raw_defaults, "an integer = chans");
-  Xen_check_type(Xen_is_integer(Xen_caddr(lst)), Xen_caddr(lst), 3, S_mus_header_raw_defaults, "an integer = data-format");
+  Xen_check_type(Xen_is_integer(Xen_caddr(lst)), Xen_caddr(lst), 3, S_mus_header_raw_defaults, "an integer = sample-type");
   mus_header_set_raw_defaults(Xen_integer_to_C_int(Xen_car(lst)),
 			      Xen_integer_to_C_int(Xen_cadr(lst)),
 			      Xen_integer_to_C_int(Xen_caddr(lst)));
@@ -364,19 +364,19 @@ static Xen g_mus_header_type_to_string(Xen type)
 }
 
 
-static Xen g_mus_data_format_name(Xen format) 
+static Xen g_mus_sample_type_name(Xen format) 
 {
-  #define H_mus_data_format_name "(" S_mus_data_format_name " format): data format (e.g. " S_mus_bshort ") as a string"
-  Xen_check_type(Xen_is_integer(format), format, 1, S_mus_data_format_name, "an integer (data-format id)"); 
-  return(C_string_to_Xen_string(mus_data_format_name(Xen_integer_to_C_int(format))));
+  #define H_mus_sample_type_name "(" S_mus_sample_type_name " format): data format (e.g. " S_mus_bshort ") as a string"
+  Xen_check_type(Xen_is_integer(format), format, 1, S_mus_sample_type_name, "an integer (sample-type id)"); 
+  return(C_string_to_Xen_string(mus_sample_type_name(Xen_integer_to_C_int(format))));
 }
 
 
-static Xen g_mus_data_format_to_string(Xen format) 
+static Xen g_mus_sample_type_to_string(Xen format) 
 {
-  #define H_mus_data_format_to_string "(" S_mus_data_format_to_string " format): data format (e.g. " S_mus_bshort ") as a string"
-  Xen_check_type(Xen_is_integer(format), format, 1, S_mus_data_format_to_string, "an integer (data-format id)"); 
-  return(C_string_to_Xen_string(mus_data_format_to_string(Xen_integer_to_C_int(format))));
+  #define H_mus_sample_type_to_string "(" S_mus_sample_type_to_string " format): data format (e.g. " S_mus_bshort ") as a string"
+  Xen_check_type(Xen_is_integer(format), format, 1, S_mus_sample_type_to_string, "an integer (sample-type id)"); 
+  return(C_string_to_Xen_string(mus_sample_type_to_string(Xen_integer_to_C_int(format))));
 }
 
 
@@ -384,7 +384,7 @@ static Xen g_mus_bytes_per_sample(Xen format)
 {
   #define H_mus_bytes_per_sample "(" S_mus_bytes_per_sample " format): number of bytes per sample in \
 format (e.g. " S_mus_bshort " = 2)"
-  Xen_check_type(Xen_is_integer(format), format, 1, S_mus_bytes_per_sample, "an integer (data-format id)"); 
+  Xen_check_type(Xen_is_integer(format), format, 1, S_mus_bytes_per_sample, "an integer (sample-type id)"); 
   return(C_int_to_Xen_integer(mus_bytes_per_sample(Xen_integer_to_C_int(format))));
 }
 
@@ -773,7 +773,7 @@ return the audio line number:\n  " audio_open_example
   ifmt = Xen_integer_to_C_int(format);
   isize = Xen_integer_to_C_int(size);
 
-  if (!(mus_is_data_format(ifmt)))
+  if (!(mus_is_sample_type(ifmt)))
     Xen_out_of_range_error(S_mus_audio_open_output, 4, format, "invalid data format");
   if (isize < 0)
     Xen_out_of_range_error(S_mus_audio_open_output, 5, size, "size < 0?");
@@ -807,7 +807,7 @@ open the audio device ready for input with the indicated attributes; return the 
   ifmt = Xen_integer_to_C_int(format);
   isize = Xen_integer_to_C_int(size);
 
-  if (!(mus_is_data_format(ifmt)))
+  if (!(mus_is_sample_type(ifmt)))
     Xen_out_of_range_error(S_mus_audio_open_input, 4, format, "invalid data format");
   if (isize < 0)
     Xen_out_of_range_error(S_mus_audio_open_input, 5, size, "size < 0?");
@@ -1247,14 +1247,14 @@ Xen_wrap_1_arg(g_mus_sound_srate_w, g_mus_sound_srate)
 Xen_wrap_2_args(g_mus_sound_set_srate_w, g_mus_sound_set_srate)
 Xen_wrap_1_arg(g_mus_sound_header_type_w, g_mus_sound_header_type)
 Xen_wrap_2_args(g_mus_sound_set_header_type_w, g_mus_sound_set_header_type)
-Xen_wrap_1_arg(g_mus_sound_data_format_w, g_mus_sound_data_format)
-Xen_wrap_2_args(g_mus_sound_set_data_format_w, g_mus_sound_set_data_format)
+Xen_wrap_1_arg(g_mus_sound_sample_type_w, g_mus_sound_sample_type)
+Xen_wrap_2_args(g_mus_sound_set_sample_type_w, g_mus_sound_set_sample_type)
 Xen_wrap_1_arg(g_mus_sound_length_w, g_mus_sound_length)
 Xen_wrap_1_arg(g_mus_sound_type_specifier_w, g_mus_sound_type_specifier)
 Xen_wrap_1_arg(g_mus_header_type_name_w, g_mus_header_type_name)
 Xen_wrap_1_arg(g_mus_header_type_to_string_w, g_mus_header_type_to_string)
-Xen_wrap_1_arg(g_mus_data_format_name_w, g_mus_data_format_name)
-Xen_wrap_1_arg(g_mus_data_format_to_string_w, g_mus_data_format_to_string)
+Xen_wrap_1_arg(g_mus_sample_type_name_w, g_mus_sample_type_name)
+Xen_wrap_1_arg(g_mus_sample_type_to_string_w, g_mus_sample_type_to_string)
 Xen_wrap_1_arg(g_mus_sound_comment_w, g_mus_sound_comment)
 Xen_wrap_1_arg(g_mus_sound_write_date_w, g_mus_sound_write_date)
 Xen_wrap_1_arg(g_mus_bytes_per_sample_w, g_mus_bytes_per_sample)
@@ -1378,8 +1378,8 @@ void mus_sndlib_xen_initialize(void)
 				   S_setB S_mus_sound_srate, g_mus_sound_set_srate_w, 1, 0, 2, 0);
   Xen_define_procedure_with_setter(S_mus_sound_header_type, g_mus_sound_header_type_w, H_mus_sound_header_type,
 				   S_setB S_mus_sound_header_type, g_mus_sound_set_header_type_w, 1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mus_sound_data_format, g_mus_sound_data_format_w, H_mus_sound_data_format,
-				   S_setB S_mus_sound_data_format, g_mus_sound_set_data_format_w, 1, 0, 2, 0);
+  Xen_define_procedure_with_setter(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
+				   S_setB S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
 
 
   /* -------------------------------------------------------------------------------- */
@@ -1393,8 +1393,22 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_safe_procedure(S_mus_header_type_name,     g_mus_header_type_name_w,       1, 0, 0, H_mus_header_type_name);
   Xen_define_safe_procedure(S_mus_header_type_to_string,g_mus_header_type_to_string_w,  1, 0, 0, H_mus_header_type_to_string);
   Xen_define_safe_procedure(S_mus_header_writable,      g_mus_header_writable_w,        2, 0, 0, H_mus_header_writable);
-  Xen_define_safe_procedure(S_mus_data_format_name,     g_mus_data_format_name_w,       1, 0, 0, H_mus_data_format_name);
-  Xen_define_safe_procedure(S_mus_data_format_to_string,g_mus_data_format_to_string_w,  1, 0, 0, H_mus_data_format_to_string);
+  Xen_define_safe_procedure(S_mus_sample_type_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name);
+  Xen_define_safe_procedure(S_mus_sample_type_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string);
+#if (!DISABLE_DEPRECATED)
+  Xen_define_safe_procedure(S_mus_data_format_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name);
+  Xen_define_safe_procedure(S_mus_data_format_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string);
+#endif
+#if HAVE_SCHEME
+  Xen_define_safe_procedure(S_mus_sample_type_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name);
+  Xen_define_safe_procedure(S_mus_sample_type_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string);
+  Xen_define_procedure_with_setter(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
+				   S_setB S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
+#if (!DISABLE_DEPRECATED)
+  Xen_define_procedure_with_setter(S_mus_sound_data_format, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
+				   S_setB S_mus_sound_data_format, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
+#endif
+#endif
   Xen_define_safe_procedure(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment);
   Xen_define_safe_procedure(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date);
   Xen_define_safe_procedure(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample);

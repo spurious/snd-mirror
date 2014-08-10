@@ -315,7 +315,7 @@
 ;;; write out each section of a file between marks as a separate file
 
 (define* (mark-explode (htype mus-next) (dformat mus-bfloat))
-  "(mark-explode header-type data-format) splits a sound into a bunch of sounds based on mark placements"
+  "(mark-explode header-type sample-type) splits a sound into a bunch of sounds based on mark placements"
   (let ((start 0)
 	(file-ctr 0)
 	(snd (or (selected-sound) (car (sounds)))))
@@ -330,7 +330,7 @@
 		 (set! (selection-member? snd i) #t)
 		 (set! (selection-position snd i) start)
 		 (set! (selection-framples snd i) (- end start)))
-	       (save-selection filename :header-type htype :data-format dformat :srate (srate snd))
+	       (save-selection filename :header-type htype :sample-type dformat :srate (srate snd))
 	       (do ((i 0 (+ 1 i)))
 		   ((= i (channels snd)))
 		 (set! (selection-member? snd i) #f))))

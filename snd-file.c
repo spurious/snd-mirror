@@ -77,10 +77,10 @@ time_t file_write_date(const char *filename)
 }
 
 
-const char *short_data_format_name(int sndlib_format, const char *filename)
+const char *short_sample_type_name(int sndlib_format, const char *filename)
 {
-  if (mus_is_data_format(sndlib_format))
-    return(mus_data_format_short_name(sndlib_format));
+  if (mus_is_sample_type(sndlib_format))
+    return(mus_sample_type_short_name(sndlib_format));
   else return(mus_header_original_format_name(mus_sound_original_format(filename),
 					      mus_sound_header_type(filename)));
 }
@@ -703,10 +703,10 @@ static file_info *make_file_info_1(const char *fullname)
       original_srate = hdr->srate;
       hdr->chans = mus_sound_chans(fullname);
       original_chans = hdr->chans;
-      hdr->format = mus_sound_data_format(fullname);
+      hdr->format = mus_sound_sample_type(fullname);
       original_format = hdr->format;
     }
-  if (!(mus_is_data_format(hdr->format))) hdr->format = fallback_format;
+  if (!(mus_is_sample_type(hdr->format))) hdr->format = fallback_format;
   if (hdr->srate <= 0) {if (fallback_srate > 0) hdr->srate = fallback_srate; else hdr->srate = 1;}
   if (hdr->chans <= 0) {if (fallback_chans > 0) hdr->chans = fallback_chans; else hdr->chans = 1;}
   hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
@@ -814,7 +814,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 {
   Xen res = Xen_false;
   int res_loc = NOT_A_GC_LOC;
-  int len, srate, chans, data_format;
+  int len, srate, chans, sample_type;
   mus_long_t data_location, bytes;
 
   if (ss->reloading_updated_file != 0)
@@ -848,23 +848,23 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       file_info *hdr;
 
       len = Xen_list_length(res);
-      mus_header_raw_defaults(&srate, &chans, &data_format);
+      mus_header_raw_defaults(&srate, &chans, &sample_type);
       if (len > 0) chans = Xen_integer_to_C_int(Xen_car(res));
       if (len > 1) srate = Xen_integer_to_C_int(Xen_cadr(res));
       if (len > 2) 
 	{
 	  Xen df;
 	  df = Xen_list_ref(res, 2);
-	  data_format = Xen_integer_to_C_int(df);
+	  sample_type = Xen_integer_to_C_int(df);
 	}
       if (len > 3) data_location = Xen_llong_to_C_llong(Xen_list_ref(res, 3)); else data_location = 0;
       if (len > 4) bytes = Xen_llong_to_C_llong(Xen_list_ref(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
 
-      mus_header_set_raw_defaults(srate, chans, data_format);
+      mus_header_set_raw_defaults(srate, chans, sample_type);
       mus_sound_override_header(fullname, 
-				srate, chans, data_format, 
+				srate, chans, sample_type, 
 				MUS_RAW, data_location,
-				mus_bytes_to_samples(data_format, bytes));
+				mus_bytes_to_samples(sample_type, bytes));
 
       if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);	      
       hdr = (file_info *)calloc(1, sizeof(file_info));
@@ -872,7 +872,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       hdr->type = MUS_RAW;
       hdr->srate = mus_sound_srate(fullname);
       hdr->chans = mus_sound_chans(fullname);
-      hdr->format = mus_sound_data_format(fullname);
+      hdr->format = mus_sound_sample_type(fullname);
       hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
       if ((hdr->samples == 0) &&
 	  (hdr->chans > 8))
@@ -1006,8 +1006,8 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	    return(open_raw_sound(fullname, read_only, selected));
 	  else
 	    {
-	      format = mus_sound_data_format(fullname);
-	      if (mus_is_data_format(format))
+	      format = mus_sound_sample_type(fullname);
+	      if (mus_is_sample_type(format))
 		return(make_file_info_1(fullname));
 	      return(translate_file(fullname, type));
 	    }
@@ -1847,7 +1847,7 @@ snd_info *snd_update(snd_info *sp)
 
   snd_close_file(sp);
 
-  /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */
+  /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (sample-type) ...) etc */
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
 
 #if USE_MOTIF
@@ -2049,7 +2049,7 @@ static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
 static int h_type_to_h[MUS_NUM_HEADER_TYPES];
 
 
-static const char *data_format_name(int format)
+static const char *sample_type_name(int format)
 {
   switch (format)
     {
@@ -2085,7 +2085,7 @@ void initialize_format_lists(void)
 
   for (h = 0; h < H_SIZE; h++)
     for (i = 0; i < h_num_formats[h]; i++)
-      h_df_names[h][i] = data_format_name(h_dfs[h][i]);
+      h_df_names[h][i] = sample_type_name(h_dfs[h][i]);
   
   for (i = 0; i < MUS_NUM_HEADER_TYPES; i++)
     {
@@ -2738,16 +2738,16 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
   /* data format */
-  if (!(mus_is_data_format(original_format)))
+  if (!(mus_is_sample_type(original_format)))
     {
       char *format_info;
       if (original_format != MUS_UNKNOWN)
-	format_info = (char *)mus_data_format_name(original_format);
+	format_info = (char *)mus_sample_type_name(original_format);
       else format_info = (char *)mus_header_original_format_name(mus_sound_original_format(filename), 
 								 hdr->type);
       snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat looks bogus: %s", format_info);
     }
-  else snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s", (char *)mus_data_format_name(original_format));
+  else snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s", (char *)mus_sample_type_name(original_format));
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
   /* samples */
@@ -2911,7 +2911,7 @@ void display_info(snd_info *sp)
 
       snprintf(buffer, INFO_BUFFER_SIZE, "\n    type: %s\n    format: %s\n    written: %s\n",
 		   mus_header_type_name(hdr->type),
-		   mus_data_format_name(hdr->format),
+		   mus_sample_type_name(hdr->format),
 		   snd_strftime(STRFTIME_FORMAT, sp->write_date));
       post_it_append(buffer);
 
@@ -3474,22 +3474,22 @@ Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", 
 }
 
 
-static Xen g_default_output_data_format(void) {return(C_int_to_Xen_integer(default_output_data_format(ss)));}
+static Xen g_default_output_sample_type(void) {return(C_int_to_Xen_integer(default_output_sample_type(ss)));}
 
-static Xen g_set_default_output_data_format(Xen val) 
+static Xen g_set_default_output_sample_type(Xen val) 
 {
   int format;
-  #define H_default_output_data_format "(" S_default_output_data_format "): default data format when a new or temporary file is created, \
+  #define H_default_output_sample_type "(" S_default_output_sample_type "): default data format when a new or temporary file is created, \
 normally " S_mus_ldouble "; -1 here means try to use the current sound's data format; many other formats \
 are available, but not all are compatible with all header types"
 
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_data_format, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_sample_type, "an integer"); 
 
   format = Xen_integer_to_C_int(val);
-  if (mus_is_data_format(format))
-    {set_default_output_data_format(format);}
-  else Xen_out_of_range_error(S_setB S_default_output_data_format, 1, val, "unknown data format");
-  return(C_int_to_Xen_integer(default_output_data_format(ss)));
+  if (mus_is_sample_type(format))
+    {set_default_output_sample_type(format);}
+  else Xen_out_of_range_error(S_setB S_default_output_sample_type, 1, val, "unknown data format");
+  return(C_int_to_Xen_integer(default_output_sample_type(ss)));
 }
 
 
@@ -3773,8 +3773,8 @@ Xen_wrap_no_args(g_default_output_srate_w, g_default_output_srate)
 Xen_wrap_1_arg(g_set_default_output_srate_w, g_set_default_output_srate)
 Xen_wrap_no_args(g_default_output_header_type_w, g_default_output_header_type)
 Xen_wrap_1_arg(g_set_default_output_header_type_w, g_set_default_output_header_type)
-Xen_wrap_no_args(g_default_output_data_format_w, g_default_output_data_format)
-Xen_wrap_1_arg(g_set_default_output_data_format_w, g_set_default_output_data_format)
+Xen_wrap_no_args(g_default_output_sample_type_w, g_default_output_sample_type)
+Xen_wrap_1_arg(g_set_default_output_sample_type_w, g_set_default_output_sample_type)
 Xen_wrap_no_args(g_ask_before_overwrite_w, g_ask_before_overwrite)
 Xen_wrap_1_arg(g_set_ask_before_overwrite_w, g_set_ask_before_overwrite)
 Xen_wrap_no_args(g_with_toolbar_w, g_with_toolbar)
@@ -3846,7 +3846,7 @@ Return " PROC_TRUE " to give up on that file."
   #define H_after_save_as_hook S_after_save_as_hook " (snd name dialog): called \
 upon File:Save as or " S_save_sound_as " completion."
 
-  #define H_before_save_as_hook S_before_save_as_hook " (snd name selection sampling-rate header-type data-format comment): called \
+  #define H_before_save_as_hook S_before_save_as_hook " (snd name selection sampling-rate header-type sample-type comment): called \
 before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just before it is saved."
 
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, but before data has been read."
@@ -3890,14 +3890,14 @@ that name is presented in the New File dialog."
   close_hook =          Xen_define_hook(S_close_hook,          "(make-hook 'snd)",                 1, H_close_hook);
   bad_header_hook =     Xen_define_hook(S_bad_header_hook,     "(make-hook 'name)",                1, H_bad_header_hook);
   after_save_as_hook =  Xen_define_hook(S_after_save_as_hook,  "(make-hook 'snd 'name 'dialog)",   3, H_after_save_as_hook);
-  before_save_as_hook = Xen_define_hook(S_before_save_as_hook, "(make-hook 'snd 'name 'selection 'sampling-rate 'header-type 'data-format 'comment)", 7, H_before_save_as_hook); 
+  before_save_as_hook = Xen_define_hook(S_before_save_as_hook, "(make-hook 'snd 'name 'selection 'sampling-rate 'header-type 'sample-type 'comment)", 7, H_before_save_as_hook); 
   during_open_hook =    Xen_define_hook(S_during_open_hook,    "(make-hook 'fd 'name 'reason)",    3, H_during_open_hook);
   after_open_hook =     Xen_define_hook(S_after_open_hook,     "(make-hook 'snd)",                 1, H_after_open_hook);
   output_name_hook =    Xen_define_hook(S_output_name_hook,    "(make-hook 'name)",                1, H_output_name_hook);
 
   #define H_open_raw_sound_hook S_open_raw_sound_hook " (name state): called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
-The list is interpreted as (list chans srate data-format data-location data-length) where trailing elements can \
+The list is interpreted as (list chans srate sample-type data-location data-length) where trailing elements can \
 be omitted (location defaults to 0, and length defaults to the file length in bytes)."
 
   open_raw_sound_hook = Xen_define_hook(S_open_raw_sound_hook, "(make-hook 'name 'state)", 2, H_open_raw_sound_hook);
@@ -3970,9 +3970,12 @@ the newly updated sound may have a different index."
   Xen_define_procedure_with_setter(S_default_output_header_type, g_default_output_header_type_w, H_default_output_header_type,
 				   S_setB S_default_output_header_type, g_set_default_output_header_type_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_default_output_data_format, g_default_output_data_format_w, H_default_output_data_format,
-				   S_setB S_default_output_data_format, g_set_default_output_data_format_w,  0, 0, 1, 0);
-
+  Xen_define_procedure_with_setter(S_default_output_sample_type, g_default_output_sample_type_w, H_default_output_sample_type,
+				   S_setB S_default_output_sample_type, g_set_default_output_sample_type_w,  0, 0, 1, 0);
+#if (!DISABLE_DEPRECATED)
+  Xen_define_procedure_with_setter(S_default_output_data_format, g_default_output_sample_type_w, H_default_output_sample_type,
+				   S_setB S_default_output_data_format, g_set_default_output_sample_type_w,  0, 0, 1, 0);
+#endif
   Xen_define_procedure_with_setter(S_clipping, g_clipping_w, H_clipping,
 				   S_setB S_clipping, g_set_clipping_w,  0, 0, 1, 0);
 

@@ -1250,8 +1250,8 @@ and amplitude envelope applied to the mix. \
 /* ---------------- Headers etc ---------------- */
 
 static const char *header_and_data_xrefs[10] = {
-  "data format discussion: {" S_data_format "}",
-  "data format constants: {" S_mus_data_format_name "}",
+  "data format discussion: {" S_sample_type "}",
+  "data format constants: {" S_mus_sample_type_name "}",
   "header type discussion: {" S_header_type "}",
   "header type constants: {" S_mus_header_type_name "}",
   "MPEG support: mpg in examp." Xen_file_extension,
@@ -1308,7 +1308,7 @@ decoded upon being opened, translated to some format Snd can read and write, \
 and rewritten as a new file with an added (possibly redundant) extension .snd, \
 and that file is the one the editor sees from then on.\
 \n\n\
-" S_data_format " returns the current sound's data format, and " S_header_type " returns \
+" S_sample_type " returns the current sound's data format, and " S_header_type " returns \
 its header type.",
 
 		      WITH_WORD_WRAP,
@@ -1914,7 +1914,7 @@ The main region-related functions are:\n\
   " S_mix_region " (:optional samp reg snd chn reg-chan)\n\
     mix in region 'reg' at sample 'samp' (defaults to the cursor sample)\n\
 \n\
-  " S_save_region " (reg :file :header-type :data-format :comment)\n\
+  " S_save_region " (reg :file :header-type :sample-type :comment)\n\
     save region 'reg' in 'file' in data format (default is mus-bshort),\n\
     header type (default is mus-next), and comment. Return the output\n\
     filename.\n\
@@ -2021,7 +2021,7 @@ The primary selection-related functions are:\n\
   " S_reverse_selection "(): reverse selected portion\n\
 \n\
   " S_save_selection " (:file (:header-type mus-next)\n\
-                           :data-format :srate :comment :channel)\n\
+                           :sample-type :srate :comment :channel)\n\
     save the selection in file. If channel is given, save\n\
     only that channel.\n\
 \n\
@@ -2316,7 +2316,7 @@ static const char *raw_xrefs[7] = {
   "specialize handing of raw sounds: {" S_open_raw_sound_hook "}",
   "open a headerless sound: {" S_open_raw_sound "}",
   "header type constants: {" S_mus_header_type_name "}",
-  "data format constants: {" S_mus_data_format_name "}",
+  "data format constants: {" S_mus_sample_type_name "}",
   "what are these data formats?",
   "what are these headers?",
   NULL};
@@ -2526,7 +2526,7 @@ static const char *new_file_xrefs[5] = {
   "open a new sound: {" S_new_sound "}",
   "specialize making a new sound: {" S_new_sound_hook "}",
   "header type constants: {" S_mus_header_type_name "}",
-  "data format constants: {" S_mus_data_format_name "}",
+  "data format constants: {" S_mus_sample_type_name "}",
   NULL};
 
 void new_file_dialog_help(void)
@@ -2537,7 +2537,7 @@ void new_file_dialog_help(void)
 "This dialog sets the new file's output header type, data format, srate, chans, and comment. \
 The 'srate:' and 'channels:' labels are actually drop-down menus providing quick access to common choices. \
 The default values for the fields can be set by clicking 'Reset'.  These values \
-are " S_default_output_chans ", " S_default_output_data_format ", " S_default_output_srate ", and " S_default_output_header_type ".  \
+are " S_default_output_chans ", " S_default_output_sample_type ", " S_default_output_srate ", and " S_default_output_header_type ".  \
 The notation \"(be)\" in the data format lists stands for big endian; similarly, \"(le)\" is little endian.\
 The file name field can be set upon each invocation through " S_output_name_hook ", and the \
 comment field via " S_output_comment_hook ".  Click 'Ok' to open the new sound. The actual new file representing the new sound is not written \
@@ -2560,7 +2560,7 @@ until you save the new sound.",
 static const char *edit_header_xrefs[11] = {
   "change srate: {" S_src_channel "}",
   "convert data to a new format: {" S_save_sound_as "}",
-  "interpret current data in new data format: {" S_data_format "}",
+  "interpret current data in new data format: {" S_sample_type "}",
   "convert header to a new type: {" S_save_sound_as "}",
   "interpret current header differently: {" S_header_type "}",
   "extract or combine chans: {mono->stereo}",

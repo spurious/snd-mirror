@@ -433,7 +433,7 @@ static int read_mus10(const char *oldname, const char *newname, char *hdr)
   if ((mode != 4) && (mode != 0)) 
     {
       CLEANUP(oldname, newname);
-      return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+      return(mus_error(MUS_UNSUPPORTED_SAMPLE_TYPE,
 		       "read_mus10: can't translate Mus10 file %s:\n  mode = %d\n",
 		       oldname, mode));
     }
@@ -893,7 +893,7 @@ static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, i
   blksiz = mus_sound_block_align(oldname);
   samps = mus_sound_fact_samples(oldname);
   if ((chans != 1) || (mus_sound_bits_per_sample(oldname) != 4))
-    return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+    return(mus_error(MUS_UNSUPPORTED_SAMPLE_TYPE,
 		     "read_dvi_adpcm: can't translate DVI ADPCM file %s: chans: %d and bits: %d\n",
 		     oldname, chans, mus_sound_bits_per_sample(oldname)));
   srate = mus_sound_srate(oldname);
@@ -974,7 +974,7 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
   struct oki_adpcm_status stat;
   chans = mus_sound_chans(oldname);
   if (chans != 1)
-    return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+    return(mus_error(MUS_UNSUPPORTED_SAMPLE_TYPE,
 		     "read_oki_adpcm: can't translate Oki ADPCM file %s: chans: %d\n",
 		     oldname, chans));
   loc = mus_sound_data_location(oldname);
@@ -1409,7 +1409,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
   g72x_init_state(&state);
   chans = mus_sound_chans(oldname);
   if (chans != 1)
-    return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+    return(mus_error(MUS_UNSUPPORTED_SAMPLE_TYPE,
 		     "read_g72x_adpcm: can't translate G72x file %s: chans: %d\n",
 		     oldname, chans));
   fs = CREAT(newname, 0666);
@@ -1507,9 +1507,9 @@ static int MUS_CANT_TRANSLATE = 0;
 static const char *any_format_name(const char *name)
 {
   int format;
-  format = mus_sound_data_format(name);
+  format = mus_sound_sample_type(name);
   if (format != MUS_UNKNOWN)
-    return(mus_data_format_name(format));
+    return(mus_sample_type_name(format));
   else return(mus_header_original_format_name(mus_sound_original_format(name),
 					      mus_sound_header_type(name)));
 }

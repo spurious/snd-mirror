@@ -438,7 +438,7 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
       case MUS_CANT_OPEN_FILE:           return(IO_CANT_OPEN_FILE);
       case MUS_NO_SUCH_CHANNEL:          return(IO_BAD_CHANNEL);
       case MUS_NO_FILE_NAME_PROVIDED:    return(IO_NO_FILENAME);
-      case MUS_UNSUPPORTED_DATA_FORMAT:  return(IO_BAD_DATA_FORMAT);
+      case MUS_UNSUPPORTED_SAMPLE_TYPE:  return(IO_BAD_SAMPLE_TYPE);
       case MUS_HEADER_READ_FAILED:       return(IO_BAD_HEADER);
       case MUS_UNSUPPORTED_HEADER_TYPE:  return(IO_BAD_HEADER_TYPE);
       case MUS_FILE_DESCRIPTORS_NOT_INITIALIZED: return(IO_SNDLIB_UNINITIALIZED);
@@ -763,8 +763,8 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err
   if (!(mus_header_writable(hdr->type, hdr->format)))
     {
       hdr->type = default_output_header_type(ss);
-      if (mus_header_writable(hdr->type, default_output_data_format(ss)))
-	hdr->format = default_output_data_format(ss);
+      if (mus_header_writable(hdr->type, default_output_sample_type(ss)))
+	hdr->format = default_output_sample_type(ss);
       else
 	{
 	  /* was default_output_* here, but that's for the user's output, not ours */

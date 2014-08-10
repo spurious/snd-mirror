@@ -158,7 +158,7 @@
 	  (channels file)
 	  (srate file)
 	  (mus-header-type-name (mus-sound-header-type file))
-	  (mus-data-format-name (mus-sound-data-format file))
+	  (mus-sample-type-name (mus-sound-sample-type file))
 	  (/ (mus-sound-samples file)
 	     (* 1.0 (channels file) (srate file)))))
 

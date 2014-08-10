@@ -579,7 +579,7 @@
     (list '*clm-srate* "ws.scm")
     (list '*clm-file-name* "ws.scm")
     (list '*clm-channels* "ws.scm")
-    (list '*clm-data-format* "ws.scm")
+    (list '*clm-sample-type* "ws.scm")
     (list '*clm-header-type* "ws.scm")
     (list '*clm-verbose* "ws.scm")
     (list '*clm-play* "ws.scm")

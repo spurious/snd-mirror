@@ -73,7 +73,7 @@ It causes a description of the file to popup when the mouse crosses the filename
 		      (format #f "~1,3F" (exact->inexact (/ (mus-sound-samples file) den)))
 		      "unknown"))
 		(mus-header-type-name (mus-sound-header-type file))
-		(mus-data-format-name (mus-sound-data-format file))
+		(mus-sample-type-name (mus-sound-sample-type file))
 		(if (mus-sound-maxamp-exists? file)
 		    (format #f "~%  maxamp: ~A" (mus-sound-maxamp file))
 		    "")
