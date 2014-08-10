@@ -46,7 +46,7 @@
       (XtVaSetValues label (list XmNlabelString s1))
       (XmStringFree s1)))
 
-  (let* ((light-blue (position-color))
+  (let* ((light-blue *position-color*)
 	 (form (XtCreateManagedWidget "form" xmFormWidgetClass shell 
 		 (list XmNbackground white
 		       XmNforeground black

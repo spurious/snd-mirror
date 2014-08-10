@@ -170,7 +170,7 @@
 (bind-key #\p 0
   (lambda ()
 	"Play from cursor"
-    (set! (with-tracking-cursor) #t)
+    (set! *with-tracking-cursor* #t)
     (if (playing)
         (stop-playing)
         (play (selected-sound) (cursor)))
@@ -179,7 +179,7 @@
 (bind-key #\l 0
   (lambda ()
 	"Listen to a preview before commiting delete or listen from cursor"
-    (set! (with-tracking-cursor) #f)
+    (set! *with-tracking-cursor* #f)
     (if (playing)
         (stop-playing)
         (play-preview))

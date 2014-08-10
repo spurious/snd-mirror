@@ -196,7 +196,7 @@
 	((= chan chans))
       (let ((player (make-player sound chan))
 	    (e (make-env (channel-envelope sound chan) 
-			 :length (floor (/ (framples sound chan) (dac-size))))))
+			 :length (floor (/ (framples sound chan) *dac-size*)))))
 	(add-player player 0 -1 -1 (lambda (reason) (set! (hook-functions play-hook) ())))
 	(hook-push play-hook (lambda (hook)
 			       ;; if dac buffer size in framples is not dac-size, we should do something debonair

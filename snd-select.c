@@ -427,7 +427,7 @@ void add_selection_or_region(int reg, chan_info *cp)
 
 static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t beg)
 {
-  char *tempfile = NULL, *origin = NULL;
+  char *tempfile = NULL;
   int i, out_format = MUS_OUT_FORMAT;
   io_error_t io_err = IO_NO_ERROR;
 
@@ -446,6 +446,7 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t 
 	    remember_temp(tempfile, si_in->chans);
 	  for (i = 0; ((i < si_in->chans) && (i < si_out->chans)); i++)
 	    {
+	      char *origin;
 	      chan_info *cp_in, *cp_out;
 	      mus_long_t len;
 	      cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
@@ -473,9 +474,9 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t 
 
 static void insert_selection_or_region(int reg, chan_info *cp)
 {
-  io_error_t err = IO_NO_ERROR;
   if (cp) 
     {
+      io_error_t err = IO_NO_ERROR;
       bool got_selection;
       got_selection = ((reg == 0) && (selection_is_active()));
       if (got_selection)
@@ -1060,7 +1061,7 @@ static void init_xen_selection(void)
 io_error_t save_selection(const char *ofile, int type, int format, int srate, const char *comment, int chan)
 {
   /* type and format have already been checked */
-  int ofd, bps;
+  int ofd;
   io_error_t io_err = IO_NO_ERROR;
   mus_long_t oloc, alloc_len;
   sync_info *si = NULL;
@@ -1111,6 +1112,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 
   if (sp)
     {
+      int bps;
       mus_long_t num;
       disk_space_t no_space;
       bool copy_ok = false;
@@ -1157,7 +1159,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	  /* snd_error("can't read selection's original sound? %s: %s", sp->filename, snd_io_strerror()); */
 	  else
 	    {
-	      mus_long_t bytes, iloc;
+	      mus_long_t iloc;
 	      char *buffer;
 	  
 	      iloc = mus_sound_data_location(sp->filename);
@@ -1166,6 +1168,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	      for (j = 0; j < num; j += MAX_BUFFER_SIZE)
 		{
 		  ssize_t n;
+		  mus_long_t bytes;
 		  bytes = num - j;
 		  if (bytes > MAX_BUFFER_SIZE) bytes = MAX_BUFFER_SIZE;
 		  n = read(fdi, buffer, bytes);

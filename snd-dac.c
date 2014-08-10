@@ -393,7 +393,7 @@ mus_float_t *sample_linear_env(env *e, int order)
   mus_any *ge;
   int ordp;
   mus_float_t *data = NULL;
-  mus_float_t last_x, step, x;
+  mus_float_t last_x, step;
 
   last_x = e->data[(e->pts - 1) * 2];
   step = 2 * last_x / ((mus_float_t)order - 1);
@@ -408,6 +408,7 @@ mus_float_t *sample_linear_env(env *e, int order)
   if (!got_local_error)
     {
       int i, j;
+      mus_float_t x;
       data = (mus_float_t *)malloc(order * sizeof(mus_float_t));
       for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
 	data[i] = mus_env_interp(x, ge);
@@ -1343,7 +1344,7 @@ static dac_info *play_sound_1(snd_info *sp, mus_long_t start, mus_long_t end, pl
 			      Xen edpos, Xen stop_proc, const char *caller, int arg_pos)
 {
   /* just plays one sound (ignores possible sync) */
-  int i, pos;
+  int i;
   dac_info *dp = NULL, *rtn_dp = NULL;
 
   if ((background == NOT_IN_BACKGROUND) && 
@@ -1353,6 +1354,7 @@ static dac_info *play_sound_1(snd_info *sp, mus_long_t start, mus_long_t end, pl
   if (call_start_playing_hook(sp)) return(NULL);
   for (i = 0; i < sp->nchans; i++)
     {
+      int pos;
       pos  = to_c_edit_position(sp->chans[i], edpos, caller, arg_pos);
       dp = add_channel_to_play_list(sp->chans[i], sp, start, end, pos, i); /* i = out chan */
       if ((dp) && (rtn_dp == NULL)) rtn_dp = dp;
@@ -1379,7 +1381,7 @@ static dac_info *play_channels_1(chan_info **cps, int chans, mus_long_t *starts,
 				 Xen edpos, bool selection, Xen stop_proc, const char *caller, int arg_pos)
 {
   /* ends can be NULL */
-  int i, pos;
+  int i;
   snd_info *sp = NULL;
   dac_info *dp = NULL, *rtn_dp = NULL;
   mus_long_t *ends;
@@ -1410,6 +1412,7 @@ static dac_info *play_channels_1(chan_info **cps, int chans, mus_long_t *starts,
   sp = cps[0]->sound;
   for (i = 0; i < chans; i++) 
     {
+      int pos;
       pos  = to_c_edit_position(cps[i], edpos, caller, arg_pos);
       dp = add_channel_to_play_list(cps[i], sp, starts[i], ends[i], pos, i);
       if (dp) 
@@ -1557,11 +1560,10 @@ static mus_float_t **rev_ins;
 static int fill_dac_buffers(int write_ok)
 {
   /* return value used only by Apply */
-  int i, j;
+  int i;
   bool cursor_change = false;
-  int bytes, framples;
+  int framples;
   mus_float_t *revin;
-  mus_float_t amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
   dac_info *dp;
   snd_info *sp;
   mus_float_t *buf;
@@ -1606,7 +1608,8 @@ static int fill_dac_buffers(int write_ok)
 	  dp = play_list[i];
 	  if (dp)
 	    {
-	      
+	      int j;
+	      mus_float_t amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
 	      if (dp->audio_chan >= snd_dacp->channels) /* this can happen if we're playing 1 chan, try to add 2 chans */
 		{
 		  if (dac_combines_channels(ss))
@@ -1871,6 +1874,7 @@ static int fill_dac_buffers(int write_ok)
 
   if (snd_dacp)
     {
+      int bytes;
 #if (HAVE_OSS || HAVE_ALSA)
       if (write_ok == WRITE_TO_DAC) 
 	{
@@ -2111,7 +2115,6 @@ int mus_audio_alsa_samples_per_channel(int dev);
 static bool start_audio_output_1(void)
 {
   int i, d;
-  int samples_per_channel = 256;
   static int out_dev[ALSA_MAX_DEVICES];
   int alloc_devs = 0;
   int alloc_chans = 0;
@@ -2137,10 +2140,10 @@ static bool start_audio_output_1(void)
 	  if (alloc_devs == 0) 
 	    {
 	      /* try to use several devices */
-	      int this_format = -1;
 	      int prev_format = -1;
 	      for (d = 0; d < alsa_devices_available; d++) 
 		{
+		  int this_format;
 		  this_format = mus_audio_compatible_format(alsa_devices[d]);
 		  if (prev_format == -1) 
 		    {
@@ -2197,12 +2200,14 @@ static bool start_audio_output_1(void)
 	  snd_dacp->channels = alloc_chans;
 	}
 
-      /* read the number of samples per channel the device wants buffered */
-      samples_per_channel = mus_audio_alsa_samples_per_channel(alsa_devices[out_dev[0]]);
-      snd_dacp->framples = samples_per_channel;
-      /* set_dac_size(snd_dacp->framples * mus_bytes_per_sample(snd_dacp->out_format)); */
-      set_dac_size(samples_per_channel); /* bil 24-Mar-13 */
-
+      {
+	int samples_per_channel;
+        /* read the number of samples per channel the device wants buffered */
+	samples_per_channel = mus_audio_alsa_samples_per_channel(alsa_devices[out_dev[0]]);
+	snd_dacp->framples = samples_per_channel;
+	/* set_dac_size(snd_dacp->framples * mus_bytes_per_sample(snd_dacp->out_format)); */
+	set_dac_size(samples_per_channel); /* bil 24-Mar-13 */
+      }
       /* open all allocated devices */
       for (d = 0; d < alloc_devs; d++) 
 	{
@@ -2347,10 +2352,10 @@ static bool start_audio_output(void)
 {
   /* at this point the desired output srate and chans are set in dacp (via start_dac) */
   dac_info *dp;
-  int i;
   cursor_time = 0;
   if (start_audio_output_1()) /* number of channels may be less than requested initially */
     {
+      int i;
       for (i = 0; i <= max_active_slot; i++)
 	{
 	  dp = play_list[i];
@@ -3236,10 +3241,9 @@ static Xen g_free_player(Xen player)
 static Xen g_is_player(Xen obj)
 {
   #define H_is_player "(" S_is_player " obj): is 'obj' an active player"
-  int index;
-
   if (xen_is_player(obj))
     {
+      int index;
       index = Xen_player_to_C_int(obj);
       return(C_bool_to_Xen_boolean((index > 0) && 
 			      (index < players_size) && 

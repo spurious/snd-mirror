@@ -405,7 +405,7 @@
 	    (let* ((s1 (XmStringCreateLocalized "Omit silence"))
 		   (toggle
 		    (XtCreateManagedWidget "Omit silence" xmToggleButtonWidgetClass (XtParent (car sliders))
-					   (list XmNselectColor  (selection-color)
+					   (list XmNselectColor  *selection-color*
 						 XmNbackground   *basic-color*
 						 XmNvalue        (if omit-silence 1 0)
 						 XmNlabelString  s1))))

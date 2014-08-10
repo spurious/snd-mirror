@@ -1313,8 +1313,8 @@
   (let*  ((gv (XGCValues))
 	  (shell ((main-widgets) 1))
 	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) 
-					     (if (> (length (listener-font)) 0) 
-						 (listener-font) 
+					     (if (> (length *listener-font*) 0) 
+						 *listener-font* 
 						 "9x15"))))
     (set! (.foreground gv) *data-color*)
     (set! (.background gv) *basic-color*)
@@ -1454,7 +1454,7 @@
 
 (define draw-smpte-label
   (let* ((dpy (XtDisplay (cadr (main-widgets))))
-	 (fs (XLoadQueryFont dpy (axis-numbers-font)))
+	 (fs (XLoadQueryFont dpy *axis-numbers-font*))
 	 (width (+ 8 (XTextWidth fs "00:00:00:00" 11)))
 	 (height (+ 8 (caddr (XTextExtents fs "0" 1)))))
 
@@ -2178,9 +2178,9 @@
   (let ((mark-gc ((snd-gcs) 9))
 	(selected-mark-gc ((snd-gcs) 10))
 	(dpy (XtDisplay (cadr (main-widgets))))
-	(original-mark-color (list 'Pixel (logxor (cadr (mark-color)) 
+	(original-mark-color (list 'Pixel (logxor (cadr *mark-color*) 
 						  (cadr *graph-color*))))
-	(original-selected-mark-color (list 'Pixel (logxor (cadr (mark-color)) 
+	(original-selected-mark-color (list 'Pixel (logxor (cadr *mark-color*) 
 							   (cadr *selected-graph-color*))))
 	(new-mark-color (list 'Pixel (logxor (cadr *graph-color*) 
 					     (cadr (get-color new-color)))))
@@ -2229,7 +2229,7 @@
 	  (XtUnmanageChild tooltip-shell)))
 
     (define (start-tooltip ev)
-      (if (and (with-tooltips)
+      (if (and *with-tooltips*
 	       (not tool-proc))
 	  (set! tool-proc (XtAppAddTimeOut 
 			    (car (main-widgets))
@@ -2480,7 +2480,7 @@
 				       XmNbottomAttachment    XmATTACH_WIDGET
 				       XmNbottomWidget        (XmMessageBoxGetChild variables-dialog XmDIALOG_SEPARATOR)
 				       XmNbackground          *basic-color*
-				       XmNframeBackground     (zoom-color)
+				       XmNframeBackground     *zoom-color*
 				       XmNbindingWidth        14)))
     (XtManageChild variables-dialog)
     variables-dialog))

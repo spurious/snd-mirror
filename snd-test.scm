@@ -172,8 +172,8 @@
       (if (not with-big-file) (snd-display #__line__ ";no big file"))))
 (define big-file-framples 0)
 
-(define original-save-dir (or (save-dir) "~/zap/snd"))
-(define original-temp-dir (or (temp-dir) "~/zap/tmp"))
+(define original-save-dir (or *save-dir* "~/zap/snd"))
+(define original-temp-dir (or *temp-dir* "~/zap/tmp"))
 (define original-sound-file-extensions (sound-file-extensions))
 
 (unbind-key #\c 4 #t)
@@ -234,7 +234,7 @@
 
 
 ;;(setlocale LC_ALL "de_DE")
-(set! (with-background-processes) #f)
+(set! *with-background-processes* #f)
 
 ;; try to get a different random number sequence on each run
 (set! (mus-rand-seed) (current-time))
@@ -266,7 +266,7 @@
      (let ((val (hundred (- (real-time) start))))
        (set! times (cons (list ',a val) times)))))
 
-(define original-prompt (listener-prompt))
+(define original-prompt *listener-prompt*)
 (set! (show-listener) #t)
 (set! (window-x) 600)
 (set! (window-y) 10)
@@ -411,7 +411,7 @@
 			      (let ((n (hook 'n)))
 				(set! *clm-srate* default-srate)
 				(dismiss-all-dialogs)
-				(set! (clipping) #f)
+				(set! *clipping* #f)
 				(set! (mus-clipping) #f) ; this cost me a morning of confusion!
 				(set! test-number n)
 				(set! (timings n) (real-time))
@@ -421,7 +421,7 @@
 
 (define (clear-save-state-files)
   (for-each forget-region (regions))
-  (system (format #f "rm -f ~A/snd_*" (or (save-dir) original-save-dir)))
+  (system (format #f "rm -f ~A/snd_*" (or *save-dir* original-save-dir)))
   (if (file-exists? "/var/tmp") 
       (system "rm -f /var/tmp/snd_save_*"))
   (if (file-exists? "/tmp") 
@@ -434,7 +434,7 @@
 	     (let ((n (hook 'n)))
 	       (clear-save-state-files)
 	       (clear-listener)
-	       (set! (ask-about-unsaved-edits) #f)
+	       (set! *ask-about-unsaved-edits* #f)
 	       (if (pair? (sounds))
 		   (begin
 		     (snd-display #__line__ ";end test ~D: open sounds: ~A" n (map short-file-name (sounds)))
@@ -706,272 +706,272 @@
       'mus-ldouble-unscaled mus-ldouble-unscaled 22
       ))
     
-    (if (not (equal? (region-graph-style) graph-lines))
-	(snd-display #__line__ ";region-graph-style set default: ~A" (region-graph-style)))
-    (if (not (equal? (ask-about-unsaved-edits) #f)) 
-	(snd-display #__line__ ";ask-about-unsaved-edits set default: ~A" (ask-about-unsaved-edits)))
-    (if (not (boolean? (show-full-duration)))
-	(snd-display #__line__ ";show-full-duration set default: ~A" (show-full-duration)))
-    (if (not (equal? (show-full-range) #f)) 
-	(snd-display #__line__ ";show-full-range set default: ~A" (show-full-range)))
-    (if (fneq (initial-beg) 0.0)
-	(snd-display #__line__ ";initial-beg set default: ~A" (initial-beg)))
-    (if (fneq (initial-dur) 0.1)
-	(snd-display #__line__ ";initial-dur set default: ~A" (initial-dur)))
-    (if (not (equal? (ask-before-overwrite) #f)) 
-	(snd-display #__line__ ";ask-before-overwrite set default: ~A" (ask-before-overwrite)))
-    (if (not (equal? (audio-output-device)  0)) 
-	(snd-display #__line__ ";audio-output-device set default: ~A" (audio-output-device)))
-    (if (not (equal? (auto-resize)  #t )) 
-	(snd-display #__line__ ";auto-resize set default: ~A" (auto-resize)))
-    (if (not (equal? (auto-update)  #f)) 
-	(snd-display #__line__ ";auto-update set default: ~A" (auto-update)))
-    (if (not (equal? (channel-style)  1 )) 
-	(snd-display #__line__ ";channel-style set default: ~A" (channel-style)))
-    (if (and (fneq (color-cutoff)  0.003 ) (fneq (color-cutoff)  0.001))
-	(snd-display #__line__ ";color-cutoff set default: ~A" (color-cutoff)))
-    (if (not (equal? (color-inverted)  #t)) 
-	(snd-display #__line__ ";color-inverted set default: ~A" (color-inverted)))
-    (if (fneq (color-scale)  1.0 )
-	(snd-display #__line__ ";color-scale set default: ~A" (color-scale)))
-    (if (fneq (auto-update-interval)  60.0 )
-	(snd-display #__line__ ";auto-update-interval set default: ~A" (auto-update-interval)))
-    (if (fneq (cursor-update-interval)  0.05 )
-	(snd-display #__line__ ";cursor-update-interval set default: ~A" (cursor-update-interval)))
-    (if (not (= (cursor-location-offset)  0))
-	(snd-display #__line__ ";cursor-location-offset set default: ~A" (cursor-location-offset)))
-    (if (not (equal? (dac-combines-channels)  #t)) 
-	(snd-display #__line__ ";dac-combines-channels set default: ~A" (dac-combines-channels)))
-    (if (not (equal? (dac-size)  256 )) 
-	(snd-display #__line__ ";dac-size set default: ~A" (dac-size)))
-    (if (not (equal? (clipping)  #f )) 
-	(snd-display #__line__ ";clipping set default: ~A" (clipping)))
-    (if (not (equal? (default-output-chans)  1 )) 
-	(snd-display #__line__ ";default-output-chans set default: ~A" (default-output-chans)))
-    (if (and (not (equal? (default-output-data-format) mus-bdouble))
-	     (not (equal? (default-output-data-format) mus-ldouble)))
-	(snd-display #__line__ ";default-output-data-format set default: ~A" (default-output-data-format)))
-    (if (not (equal? (default-output-srate)  44100 )) 
-	(snd-display #__line__ ";default-output-srate set default: ~A" (default-output-srate)))
-    (if (not (equal? (default-output-header-type)  mus-next)) 
-	(snd-display #__line__ ";default-output-header-type set default: ~A" (default-output-header-type)))
-    (if (not (equal? (dot-size)  1 )) 
-	(snd-display #__line__ ";dot-size set default: ~A" (dot-size)))
-    (if (not (equal? (cursor-size)  15 )) 
-	(snd-display #__line__ ";cursor-size set default: ~A" (cursor-size)))
-    (if (not (equal? (cursor-style)  cursor-cross )) 
-	(snd-display #__line__ ";cursor-style set default: ~A" (cursor-style)))
-    (if (not (equal? (tracking-cursor-style)  cursor-line )) 
-	(snd-display #__line__ ";tracking-cursor-style set default: ~A" (tracking-cursor-style)))
-    (if (fneq (enved-base)  1.0 )
-	(snd-display #__line__ ";enved-base set default: ~A" (enved-base)))
+    (if (not (equal? *region-graph-style* graph-lines))
+	(snd-display #__line__ ";region-graph-style set default: ~A" *region-graph-style*))
+    (if (not (equal? *ask-about-unsaved-edits* #f)) 
+	(snd-display #__line__ ";ask-about-unsaved-edits set default: ~A" *ask-about-unsaved-edits*))
+    (if (not (boolean? *show-full-duration*))
+	(snd-display #__line__ ";show-full-duration set default: ~A" *show-full-duration*))
+    (if (not (equal? *show-full-range* #f)) 
+	(snd-display #__line__ ";show-full-range set default: ~A" *show-full-range*))
+    (if (fneq *initial-beg* 0.0)
+	(snd-display #__line__ ";initial-beg set default: ~A" *initial-beg*))
+    (if (fneq *initial-dur* 0.1)
+	(snd-display #__line__ ";initial-dur set default: ~A" *initial-dur*))
+    (if (not (equal? *ask-before-overwrite* #f)) 
+	(snd-display #__line__ ";ask-before-overwrite set default: ~A" *ask-before-overwrite*))
+    (if (not (equal? *audio-output-device*  0)) 
+	(snd-display #__line__ ";audio-output-device set default: ~A" *audio-output-device*))
+    (if (not (equal? *auto-resize*  #t )) 
+	(snd-display #__line__ ";auto-resize set default: ~A" *auto-resize*))
+    (if (not (equal? *auto-update*  #f)) 
+	(snd-display #__line__ ";auto-update set default: ~A" *auto-update*))
+    (if (not (equal? *channel-style*  1 )) 
+	(snd-display #__line__ ";channel-style set default: ~A" *channel-style*))
+    (if (and (fneq *color-cutoff*  0.003 ) (fneq *color-cutoff*  0.001))
+	(snd-display #__line__ ";color-cutoff set default: ~A" *color-cutoff*))
+    (if (not (equal? *color-inverted*  #t)) 
+	(snd-display #__line__ ";color-inverted set default: ~A" *color-inverted*))
+    (if (fneq *color-scale*  1.0 )
+	(snd-display #__line__ ";color-scale set default: ~A" *color-scale*))
+    (if (fneq *auto-update-interval*  60.0 )
+	(snd-display #__line__ ";auto-update-interval set default: ~A" *auto-update-interval*))
+    (if (fneq *cursor-update-interval*  0.05 )
+	(snd-display #__line__ ";cursor-update-interval set default: ~A" *cursor-update-interval*))
+    (if (not (= *cursor-location-offset*  0))
+	(snd-display #__line__ ";cursor-location-offset set default: ~A" *cursor-location-offset*))
+    (if (not (equal? *dac-combines-channels*  #t)) 
+	(snd-display #__line__ ";dac-combines-channels set default: ~A" *dac-combines-channels*))
+    (if (not (equal? *dac-size*  256 )) 
+	(snd-display #__line__ ";dac-size set default: ~A" *dac-size*))
+    (if (not (equal? *clipping*  #f )) 
+	(snd-display #__line__ ";clipping set default: ~A" *clipping*))
+    (if (not (equal? *default-output-chans*  1 )) 
+	(snd-display #__line__ ";default-output-chans set default: ~A" *default-output-chans*))
+    (if (and (not (equal? *default-output-data-format* mus-bdouble))
+	     (not (equal? *default-output-data-format* mus-ldouble)))
+	(snd-display #__line__ ";default-output-data-format set default: ~A" *default-output-data-format*))
+    (if (not (equal? *default-output-srate*  44100 )) 
+	(snd-display #__line__ ";default-output-srate set default: ~A" *default-output-srate*))
+    (if (not (equal? *default-output-header-type*  mus-next)) 
+	(snd-display #__line__ ";default-output-header-type set default: ~A" *default-output-header-type*))
+    (if (not (equal? *dot-size*  1 )) 
+	(snd-display #__line__ ";dot-size set default: ~A" *dot-size*))
+    (if (not (equal? *cursor-size*  15 )) 
+	(snd-display #__line__ ";cursor-size set default: ~A" *cursor-size*))
+    (if (not (equal? *cursor-style*  cursor-cross )) 
+	(snd-display #__line__ ";cursor-style set default: ~A" *cursor-style*))
+    (if (not (equal? *tracking-cursor-style*  cursor-line )) 
+	(snd-display #__line__ ";tracking-cursor-style set default: ~A" *tracking-cursor-style*))
+    (if (fneq *enved-base*  1.0 )
+	(snd-display #__line__ ";enved-base set default: ~A" *enved-base*))
     (if (not (equal? (enved-clip?)  #t )) 
 	(snd-display #__line__ ";enved-clip? set default: ~A" (enved-clip?)))
     (if (not (equal? (enved-filter) #t)) 
 	(snd-display #__line__ ";enved-filter set default: ~A" (enved-filter)))
-    (if (not (equal? (enved-filter-order)  40)) 
-	(snd-display #__line__ ";enved-filter-order set default: ~A" (enved-filter-order)))
+    (if (not (equal? *enved-filter-order*  40)) 
+	(snd-display #__line__ ";enved-filter-order set default: ~A" *enved-filter-order*))
     (if (not (equal? (enved-in-dB)  #f )) 
 	(snd-display #__line__ ";enved-in-dB set default: ~A" (enved-in-dB)))
-    (if (not (equal? (enved-style)  envelope-linear )) 
-	(snd-display #__line__ ";enved-style set default: ~A" (enved-style)))
-    (if (fneq (enved-power)  3.0)
-	(snd-display #__line__ ";enved-power set default: ~A" (enved-power)))
-    (if (not (equal? (enved-target)  0 )) 
-	(snd-display #__line__ ";enved-target set default: ~A" (enved-target)))
-    (if (not (equal? (enved-wave?)  #f )) 
-	(snd-display #__line__ ";enved-wave? set default: ~A" (enved-wave?)))
+    (if (not (equal? *enved-style*  envelope-linear )) 
+	(snd-display #__line__ ";enved-style set default: ~A" *enved-style*))
+    (if (fneq *enved-power*  3.0)
+	(snd-display #__line__ ";enved-power set default: ~A" *enved-power*))
+    (if (not (equal? *enved-target*  0 )) 
+	(snd-display #__line__ ";enved-target set default: ~A" *enved-target*))
+    (if (not (equal? *enved-wave?*  #f )) 
+	(snd-display #__line__ ";enved-wave? set default: ~A" *enved-wave?*))
     (if (and with-gui
 	     (pair? (enved-envelope)))
 	(snd-display #__line__ ";enved-envelope set default: ~A" (enved-envelope)))
-    (if (not (equal? (eps-file)  "snd.eps" )) 
-	(snd-display #__line__ ";eps-file set default: ~A" (eps-file)))
-    (if (fneq (eps-bottom-margin)  0.0)
-	(snd-display #__line__ ";eps-bottom-margin set default: ~A" (eps-bottom-margin)))
-    (if (fneq (eps-left-margin)  0.0)
-	(snd-display #__line__ ";eps-left-margin set default: ~A" (eps-left-margin)))
-    (if (fneq (eps-size)  1.0)
-	(snd-display #__line__ ";eps-size set default: ~A" (eps-size)))
-    (if (fneq (fft-window-alpha)  0.0 )
-	(snd-display #__line__ ";fft-window-alpha set default: ~A" (fft-window-alpha)))
-    (if (fneq (fft-window-beta)  0.0 )
-	(snd-display #__line__ ";fft-window-beta set default: ~A" (fft-window-beta)))
-    (if (not (equal? (fft-log-frequency)  #f )) 
-	(snd-display #__line__ ";fft-log-frequency set default: ~A" (fft-log-frequency)))
-    (if (not (equal? (fft-log-magnitude)  #f )) 
-	(snd-display #__line__ ";fft-log-magnitude set default: ~A" (fft-log-magnitude)))
-    (if (not (equal? (fft-with-phases)  #f )) 
-	(snd-display #__line__ ";fft-with-phases set default: ~A" (fft-with-phases)))
-    (if (not (member (transform-size) (list 1024 4096)))
-	(snd-display #__line__ ";transform-size set default: ~A" (transform-size)))
-    (if (not (equal? (transform-graph-type) graph-once))
-	(snd-display #__line__ ";transform-graph-type set default: ~A" (transform-graph-type)))
-    (if (not (equal? (fft-window)  6 )) 
-	(snd-display #__line__ ";fft-window set default: ~A" (fft-window)))
-    (if (not (equal? (graph-cursor)  34)) 
-	(snd-display #__line__ ";graph-cursor set default: ~A" (graph-cursor)))
-    (if (not (equal? (graph-style)  graph-lines )) 
-	(snd-display #__line__ ";graph-style set default: ~A" (graph-style)))
-    (if (not (equal? (graphs-horizontal)  #t)) 
-	(snd-display #__line__ ";graphs-horizontal set default: ~A" (graphs-horizontal)))
-    (if (not (equal? (html-dir)  ".")) 
-	(snd-display #__line__ ";html-dir set default: ~A" (html-dir)))
-    (if (not (equal? (html-program)  "firefox")) 
-	(snd-display #__line__ ";html-program set default: ~A" (html-program)))
-    (if (not (equal? (just-sounds)  #t)) 
-	(snd-display #__line__ ";just-sounds set default: ~A" (just-sounds)))
-    (if (not (string? (listener-prompt))) 
-	(snd-display #__line__ ";listener-prompt set default: ~A" (listener-prompt)))
-    (if (not (equal? (max-transform-peaks)  100)) 
-	(snd-display #__line__ ";max-transform-peaks set default: ~A" (max-transform-peaks)))
-    (if (not (equal? (max-transform-peaks) 100)) 
-	(snd-display #__line__ ";max-transform-peaks set -123: ~A" (max-transform-peaks)))
-    (if (not (equal? (max-regions)  16 )) 
-	(snd-display #__line__ ";max-regions set default: ~A" (max-regions)))
-    (if (fneq (min-dB)  -60.0 )
-	(snd-display #__line__ ";min-dB set default: ~A" (min-dB)))
-    (if (fneq (log-freq-start)  32.0 )
-	(snd-display #__line__ ";log-freq-start set default: ~A" (log-freq-start)))
-    (if (not (equal? (selection-creates-region)  #t )) 
-	(snd-display #__line__ ";selection-creates-region set default: ~A" (selection-creates-region)))
-    (if (not (equal? (transform-normalization)  normalize-by-channel)) 
-	(snd-display #__line__ ";transform-normalization set default: ~A" (transform-normalization)))
+    (if (not (equal? *eps-file*  "snd.eps" )) 
+	(snd-display #__line__ ";eps-file set default: ~A" *eps-file*))
+    (if (fneq *eps-bottom-margin*  0.0)
+	(snd-display #__line__ ";eps-bottom-margin set default: ~A" *eps-bottom-margin*))
+    (if (fneq *eps-left-margin*  0.0)
+	(snd-display #__line__ ";eps-left-margin set default: ~A" *eps-left-margin*))
+    (if (fneq *eps-size*  1.0)
+	(snd-display #__line__ ";eps-size set default: ~A" *eps-size*))
+    (if (fneq *fft-window-alpha*  0.0 )
+	(snd-display #__line__ ";fft-window-alpha set default: ~A" *fft-window-alpha*))
+    (if (fneq *fft-window-beta*  0.0 )
+	(snd-display #__line__ ";fft-window-beta set default: ~A" *fft-window-beta*))
+    (if (not (equal? *fft-log-frequency*  #f )) 
+	(snd-display #__line__ ";fft-log-frequency set default: ~A" *fft-log-frequency*))
+    (if (not (equal? *fft-log-magnitude*  #f )) 
+	(snd-display #__line__ ";fft-log-magnitude set default: ~A" *fft-log-magnitude*))
+    (if (not (equal? *fft-with-phases*  #f )) 
+	(snd-display #__line__ ";fft-with-phases set default: ~A" *fft-with-phases*))
+    (if (not (member *transform-size* (list 1024 4096)))
+	(snd-display #__line__ ";transform-size set default: ~A" *transform-size*))
+    (if (not (equal? *transform-graph-type* graph-once))
+	(snd-display #__line__ ";transform-graph-type set default: ~A" *transform-graph-type*))
+    (if (not (equal? *fft-window*  6 )) 
+	(snd-display #__line__ ";fft-window set default: ~A" *fft-window*))
+    (if (not (equal? *graph-cursor*  34)) 
+	(snd-display #__line__ ";graph-cursor set default: ~A" *graph-cursor*))
+    (if (not (equal? *graph-style*  graph-lines )) 
+	(snd-display #__line__ ";graph-style set default: ~A" *graph-style*))
+    (if (not (equal? *graphs-horizontal*  #t)) 
+	(snd-display #__line__ ";graphs-horizontal set default: ~A" *graphs-horizontal*))
+    (if (not (equal? *html-dir*  ".")) 
+	(snd-display #__line__ ";html-dir set default: ~A" *html-dir*))
+    (if (not (equal? *html-program*  "firefox")) 
+	(snd-display #__line__ ";html-program set default: ~A" *html-program*))
+    (if (not (equal? *just-sounds*  #t)) 
+	(snd-display #__line__ ";just-sounds set default: ~A" *just-sounds*))
+    (if (not (string? *listener-prompt*)) 
+	(snd-display #__line__ ";listener-prompt set default: ~A" *listener-prompt*))
+    (if (not (equal? *max-transform-peaks*  100)) 
+	(snd-display #__line__ ";max-transform-peaks set default: ~A" *max-transform-peaks*))
+    (if (not (equal? *max-transform-peaks* 100)) 
+	(snd-display #__line__ ";max-transform-peaks set -123: ~A" *max-transform-peaks*))
+    (if (not (equal? *max-regions*  16 )) 
+	(snd-display #__line__ ";max-regions set default: ~A" *max-regions*))
+    (if (fneq *min-dB*  -60.0 )
+	(snd-display #__line__ ";min-dB set default: ~A" *min-dB*))
+    (if (fneq *log-freq-start*  32.0 )
+	(snd-display #__line__ ";log-freq-start set default: ~A" *log-freq-start*))
+    (if (not (equal? *selection-creates-region*  #t )) 
+	(snd-display #__line__ ";selection-creates-region set default: ~A" *selection-creates-region*))
+    (if (not (equal? *transform-normalization*  normalize-by-channel)) 
+	(snd-display #__line__ ";transform-normalization set default: ~A" *transform-normalization*))
 
     (if (and with-motif 
 	     (not (equal? (view-files-sort)  0 ))) 
 	(snd-display #__line__ ";view-files-sort set default: ~A" (view-files-sort)))
 
-    (if (not (member (print-length)  '(12 32) ))
-	(snd-display #__line__ ";print-length set default: ~A" (print-length)))
-    (if (not (equal? (play-arrow-size)  10 )) 
-	(snd-display #__line__ ";play-arrow-size set default: ~A" (play-arrow-size)))
-    (if (not (equal? (save-state-file)  "saved-snd.scm" )) 
-	(snd-display #__line__ ";save-state-file set default: ~A" (save-state-file)))
-    (if (not (equal? (show-axes)  1)) 
-	(snd-display #__line__ ";show-axes set default: ~A" (show-axes)))
-    (if (not (boolean? (show-transform-peaks))) 
-	(snd-display #__line__ ";show-transform-peaks set default: ~A" (show-transform-peaks)))
-    (if (not (boolean? (show-indices))) 
-	(snd-display #__line__ ";show-indices set default: ~A" (show-indices)))
-    (if (not (equal? (show-marks)  #t )) 
-	(snd-display #__line__ ";show-marks set default: ~A" (show-marks)))
-    (if (not (equal? (show-mix-waveforms)  #t)) 
-	(snd-display #__line__ ";show-mix-waveforms set default: ~A" (show-mix-waveforms)))
-    (if (not (equal? (show-selection-transform)  #f )) 
-	(snd-display #__line__ ";show-selection-transform set default: ~A" (show-selection-transform)))
-    (if (not (equal? (show-y-zero)  #f )) 
-	(snd-display #__line__ ";show-y-zero set default: ~A" (show-y-zero)))
-    (if (not (equal? (show-grid)  #f )) 
-	(snd-display #__line__ ";show-grid set default: ~A" (show-grid)))
-    (if (fneq (grid-density) 1.0)
-	(snd-display #__line__ ";grid-density set default: ~A" (grid-density)))
-    (if (not (equal? (show-sonogram-cursor)  #f )) 
-	(snd-display #__line__ ";show-sonogram-cursor set default: ~A" (show-sonogram-cursor)))
-    (if (not (equal? (sinc-width)  10 )) 
-	(snd-display #__line__ ";sinc-width set default: ~A" (sinc-width)))
-    (if (fneq (spectrum-end)  1.0)
-	(snd-display #__line__ ";spectrum-end set default: ~A" (spectrum-end)))
-    (if (not (equal? (spectro-hop)  4 )) 
-	(snd-display #__line__ ";spectro-hop set default: ~A" (spectro-hop)))
-    (if (fneq (spectrum-start)  0.0 )
-	(snd-display #__line__ ";spectrum-start set default: ~A" (spectrum-start)))
-    (if (fneq (spectro-x-angle)  (if (provided? 'gl) 300.0 90.0))
-	(snd-display #__line__ ";spectro-x-angle set default: ~A" (spectro-x-angle)))
-    (if (fneq (spectro-x-scale) (if (provided? 'gl) 1.5 1.0))
-	(snd-display #__line__ ";spectro-x-scale set default: ~A" (spectro-x-scale)))
-    (if (fneq (spectro-y-angle) (if (provided? 'gl) 320.0 0.0))
-	(snd-display #__line__ ";spectro-y-angle set default: ~A" (spectro-y-angle)))
-    (if (fneq (spectro-y-scale)  1.0 )
-	(snd-display #__line__ ";spectro-y-scale set default: ~A" (spectro-y-scale)))
-    (if (fneq (spectro-z-angle) (if (provided? 'gl) 0.0 358.0))
-	(snd-display #__line__ ";spectro-z-angle set default: ~A" (spectro-z-angle)))
-    (if (fneq (spectro-z-scale) (if (provided? 'gl) 1.0 0.1))
-	(snd-display #__line__ ";spectro-z-scale set default: ~A" (spectro-z-scale)))
-    (if (and (not (equal? (temp-dir)  #f )) (not (equal? (temp-dir) "/home/bil/zap/tmp")))
-	(snd-display #__line__ ";temp-dir set default: ~A" (temp-dir)))
-    (if (not (equal? (ladspa-dir)  "" )) 
-	(snd-display #__line__ ";ladspa-dir set default: ~A" (ladspa-dir)))
-    (if (and (not (equal? (peak-env-dir)  #f )) (not (equal? (peak-env-dir) "/home/bil/peaks")))
-	(snd-display #__line__ ";peak-env-dir set default: ~A" (peak-env-dir)))
-    (if (and (not (equal? (tiny-font) "6x12"))
-	     (not (equal? (tiny-font) "Sans 8")))
-	(snd-display #__line__ ";tiny-font set default: ~A" (tiny-font)))
-    (if (not (equal? (transform-type)  fourier-transform )) 
-	(snd-display #__line__ ";transform-type set default: ~A" (transform-type)))
-    (if (not (equal? (with-file-monitor)  #t)) 
-	(snd-display #__line__ ";with-file-monitor set default: ~A" (with-file-monitor)))
-    (if (not (equal? (clm-table-size) 512)) 
-	(snd-display #__line__ ";clm-table-size set default: ~A" (clm-table-size)))
+    (if (not (member *print-length*  '(12 32) ))
+	(snd-display #__line__ ";print-length set default: ~A" *print-length*))
+    (if (not (equal? *play-arrow-size*  10 )) 
+	(snd-display #__line__ ";play-arrow-size set default: ~A" *play-arrow-size*))
+    (if (not (equal? *save-state-file*  "saved-snd.scm" )) 
+	(snd-display #__line__ ";save-state-file set default: ~A" *save-state-file*))
+    (if (not (equal? *show-axes*  1)) 
+	(snd-display #__line__ ";show-axes set default: ~A" *show-axes*))
+    (if (not (boolean? *show-transform-peaks*)) 
+	(snd-display #__line__ ";show-transform-peaks set default: ~A" *show-transform-peaks*))
+    (if (not (boolean? *show-indices*)) 
+	(snd-display #__line__ ";show-indices set default: ~A" *show-indices*))
+    (if (not (equal? *show-marks*  #t )) 
+	(snd-display #__line__ ";show-marks set default: ~A" *show-marks*))
+    (if (not (equal? *show-mix-waveforms*  #t)) 
+	(snd-display #__line__ ";show-mix-waveforms set default: ~A" *show-mix-waveforms*))
+    (if (not (equal? *show-selection-transform*  #f )) 
+	(snd-display #__line__ ";show-selection-transform set default: ~A" *show-selection-transform*))
+    (if (not (equal? *show-y-zero*  #f )) 
+	(snd-display #__line__ ";show-y-zero set default: ~A" *show-y-zero*))
+    (if (not (equal? *show-grid*  #f )) 
+	(snd-display #__line__ ";show-grid set default: ~A" *show-grid*))
+    (if (fneq *grid-density* 1.0)
+	(snd-display #__line__ ";grid-density set default: ~A" *grid-density*))
+    (if (not (equal? *show-sonogram-cursor*  #f )) 
+	(snd-display #__line__ ";show-sonogram-cursor set default: ~A" *show-sonogram-cursor*))
+    (if (not (equal? *sinc-width*  10 )) 
+	(snd-display #__line__ ";sinc-width set default: ~A" *sinc-width*))
+    (if (fneq *spectrum-end*  1.0)
+	(snd-display #__line__ ";spectrum-end set default: ~A" *spectrum-end*))
+    (if (not (equal? *spectro-hop*  4 )) 
+	(snd-display #__line__ ";spectro-hop set default: ~A" *spectro-hop*))
+    (if (fneq *spectrum-start*  0.0 )
+	(snd-display #__line__ ";spectrum-start set default: ~A" *spectrum-start*))
+    (if (fneq *spectro-x-angle*  (if (provided? 'gl) 300.0 90.0))
+	(snd-display #__line__ ";spectro-x-angle set default: ~A" *spectro-x-angle*))
+    (if (fneq *spectro-x-scale* (if (provided? 'gl) 1.5 1.0))
+	(snd-display #__line__ ";spectro-x-scale set default: ~A" *spectro-x-scale*))
+    (if (fneq *spectro-y-angle* (if (provided? 'gl) 320.0 0.0))
+	(snd-display #__line__ ";spectro-y-angle set default: ~A" *spectro-y-angle*))
+    (if (fneq *spectro-y-scale*  1.0 )
+	(snd-display #__line__ ";spectro-y-scale set default: ~A" *spectro-y-scale*))
+    (if (fneq *spectro-z-angle* (if (provided? 'gl) 0.0 358.0))
+	(snd-display #__line__ ";spectro-z-angle set default: ~A" *spectro-z-angle*))
+    (if (fneq *spectro-z-scale* (if (provided? 'gl) 1.0 0.1))
+	(snd-display #__line__ ";spectro-z-scale set default: ~A" *spectro-z-scale*))
+    (if (and (not (equal? *temp-dir*  #f )) (not (equal? *temp-dir* "/home/bil/zap/tmp")))
+	(snd-display #__line__ ";temp-dir set default: ~A" *temp-dir*))
+    (if (not (equal? *ladspa-dir*  "" )) 
+	(snd-display #__line__ ";ladspa-dir set default: ~A" *ladspa-dir*))
+    (if (and (not (equal? *peak-env-dir*  #f )) (not (equal? *peak-env-dir* "/home/bil/peaks")))
+	(snd-display #__line__ ";peak-env-dir set default: ~A" *peak-env-dir*))
+    (if (and (not (equal? *tiny-font* "6x12"))
+	     (not (equal? *tiny-font* "Sans 8")))
+	(snd-display #__line__ ";tiny-font set default: ~A" *tiny-font*))
+    (if (not (equal? *transform-type*  fourier-transform )) 
+	(snd-display #__line__ ";transform-type set default: ~A" *transform-type*))
+    (if (not (equal? *with-file-monitor*  #t)) 
+	(snd-display #__line__ ";with-file-monitor set default: ~A" *with-file-monitor*))
+    (if (not (equal? *clm-table-size* 512)) 
+	(snd-display #__line__ ";clm-table-size set default: ~A" *clm-table-size*))
     (if (not (equal? *clm-table-size* 512)) 
 	(snd-display #__line__ ";*clm-table-size*: ~A" *clm-table-size*))
-    (if (fneq (clm-default-frequency) 0.0)
-	(snd-display #__line__ ";clm-default-frequency set default: ~A" (clm-default-frequency)))
+    (if (fneq *clm-default-frequency* 0.0)
+	(snd-display #__line__ ";clm-default-frequency set default: ~A" *clm-default-frequency*))
     (if (fneq *clm-default-frequency* 0.0)
 	(snd-display #__line__ ";*clm-default-frequency*: ~A" *clm-default-frequency*))
-    (if (not (boolean? (with-verbose-cursor))) 
-	(snd-display #__line__ ";with-verbose-cursor set default: ~A" (with-verbose-cursor)))
-    (if (not (boolean? (with-inset-graph)))
-	(snd-display #__line__ ";with-inset-graph set default: ~A" (with-inset-graph)))
-    (if (not (equal? (with-interrupts)  #t))
-	(snd-display #__line__ ";with-interrupts set default: ~A" (with-interrupts)))
-    (if (not (equal? (remember-sound-state)  #f))
-	(snd-display #__line__ ";remember-sound-state set default: ~A" (remember-sound-state)))
-    (if (not (equal? (with-smpte-label)  #f)) 
-	(snd-display #__line__ ";with-smpte-label set default: ~A" (with-smpte-label)))
-    (if (not (equal? (with-toolbar) (provided? 'snd-gtk)))
-	(snd-display #__line__ ";with-toolbar set default: ~A" (with-toolbar)))
-    (if (not (equal? (with-tooltips) #t))
-	(snd-display #__line__ ";with-tooltips set default: ~A" (with-tooltips)))
-    (if (not (boolean? (with-menu-icons)))
-	(snd-display #__line__ ";with-menu-icons set default: ~A" (with-menu-icons)))
-    (if (not (equal? (save-as-dialog-src) #f))
-	(snd-display #__line__ ";save-as-dialog-src set default: ~A" (save-as-dialog-src)))
-    (if (not (equal? (save-as-dialog-auto-comment) #f))
-	(snd-display #__line__ ";save-as-dialog-auto-comment set default: ~A" (save-as-dialog-auto-comment)))
-    (if (not (boolean? (with-pointer-focus))) 
-	(snd-display #__line__ ";with-pointer-focus set default: ~A" (with-pointer-focus)))
-    (if (not (equal? (wavelet-type)  0 )) 
-	(snd-display #__line__ ";wavelet-type set default: ~A" (wavelet-type)))
-    (if (not (equal? (time-graph-type)  graph-once)) 
-	(snd-display #__line__ ";time-graph-type set default: ~A" (time-graph-type)))
-    (if (not (equal? (wavo-hop)  3 )) 
-	(snd-display #__line__ ";wavo-hop set default: ~A" (wavo-hop)))
-    (if (not (equal? (wavo-trace)  64 )) 
-	(snd-display #__line__ ";wavo-trace set default: ~A" (wavo-trace)))
-    (if (not (equal? (x-axis-style)  0 )) 
-	(snd-display #__line__ ";x-axis-style set default: ~A" (x-axis-style)))
-    (if (fneq (beats-per-minute)  60.0 )
-	(snd-display #__line__ ";beats-per-minute set default: ~A" (beats-per-minute)))
-    (if (not (= (beats-per-measure)  4))
-	(snd-display #__line__ ";beats-per-measure set default: ~A" (beats-per-measure)))
-    (if (not (equal? (zero-pad)  0)) 
-	(snd-display #__line__ ";zero-pad set default: ~A" (zero-pad)))
-    (if (not (equal? (zero-pad)  0)) 
-	(snd-display #__line__ ";zero-pad set -123: ~A" (zero-pad)))
+    (if (not (boolean? *with-verbose-cursor*)) 
+	(snd-display #__line__ ";with-verbose-cursor set default: ~A" *with-verbose-cursor*))
+    (if (not (boolean? *with-inset-graph*))
+	(snd-display #__line__ ";with-inset-graph set default: ~A" *with-inset-graph*))
+    (if (not (equal? *with-interrupts*  #t))
+	(snd-display #__line__ ";with-interrupts set default: ~A" *with-interrupts*))
+    (if (not (equal? *remember-sound-state*  #f))
+	(snd-display #__line__ ";remember-sound-state set default: ~A" *remember-sound-state*))
+    (if (not (equal? *with-smpte-label*  #f)) 
+	(snd-display #__line__ ";with-smpte-label set default: ~A" *with-smpte-label*))
+    (if (not (equal? *with-toolbar* (provided? 'snd-gtk)))
+	(snd-display #__line__ ";with-toolbar set default: ~A" *with-toolbar*))
+    (if (not (equal? *with-tooltips* #t))
+	(snd-display #__line__ ";with-tooltips set default: ~A" *with-tooltips*))
+    (if (not (boolean? *with-menu-icons*))
+	(snd-display #__line__ ";with-menu-icons set default: ~A" *with-menu-icons*))
+    (if (not (equal? *save-as-dialog-src* #f))
+	(snd-display #__line__ ";save-as-dialog-src set default: ~A" *save-as-dialog-src*))
+    (if (not (equal? *save-as-dialog-auto-comment* #f))
+	(snd-display #__line__ ";save-as-dialog-auto-comment set default: ~A" *save-as-dialog-auto-comment*))
+    (if (not (boolean? *with-pointer-focus*)) 
+	(snd-display #__line__ ";with-pointer-focus set default: ~A" *with-pointer-focus*))
+    (if (not (equal? *wavelet-type*  0 )) 
+	(snd-display #__line__ ";wavelet-type set default: ~A" *wavelet-type*))
+    (if (not (equal? *time-graph-type*  graph-once)) 
+	(snd-display #__line__ ";time-graph-type set default: ~A" *time-graph-type*))
+    (if (not (equal? *wavo-hop*  3 )) 
+	(snd-display #__line__ ";wavo-hop set default: ~A" *wavo-hop*))
+    (if (not (equal? *wavo-trace*  64 )) 
+	(snd-display #__line__ ";wavo-trace set default: ~A" *wavo-trace*))
+    (if (not (equal? *x-axis-style*  0 )) 
+	(snd-display #__line__ ";x-axis-style set default: ~A" *x-axis-style*))
+    (if (fneq *beats-per-minute*  60.0 )
+	(snd-display #__line__ ";beats-per-minute set default: ~A" *beats-per-minute*))
+    (if (not (= *beats-per-measure*  4))
+	(snd-display #__line__ ";beats-per-measure set default: ~A" *beats-per-measure*))
+    (if (not (equal? *zero-pad*  0)) 
+	(snd-display #__line__ ";zero-pad set default: ~A" *zero-pad*))
+    (if (not (equal? *zero-pad*  0)) 
+	(snd-display #__line__ ";zero-pad set -123: ~A" *zero-pad*))
     (if (not (equal? (zero-pad #t #t) ()))
 	(snd-display #__line__ ";zero-pad #t: ~A" (zero-pad #t #t)))
-    (if (not (equal? (zoom-focus-style)  2 )) 
-	(snd-display #__line__ ";zoom-focus-style set default: ~A" (zoom-focus-style)))
-    (if (not (equal? (sync-style)  sync-by-sound )) 
-	(snd-display #__line__ ";sync-style set default: ~A" (sync-style)))    
-    (if (not (equal? (mix-waveform-height)  20 )) 
-	(snd-display #__line__ ";mix-waveform-height set default: ~A" (mix-waveform-height)))
-    (if (not (equal? (mix-tag-width)  6)) 
-	(snd-display #__line__ ";mix-tag-width set default: ~A" (mix-tag-width)))
-    (if (not (equal? (mix-tag-height)  14)) 
-	(snd-display #__line__ ";mix-tag-height set default: ~A" (mix-tag-height)))
-    (if (not (equal? (mark-tag-width)  10)) 
-	(snd-display #__line__ ";mark-tag-width set default: ~A" (mark-tag-width)))
-    (if (not (equal? (mark-tag-height)  4)) 
-	(snd-display #__line__ ";mark-tag-height set default: ~A" (mark-tag-height)))
-    (if (not (equal? (audio-output-device)  0 )) 
-	(snd-display #__line__ ";audio-output-device set default: ~A" (audio-output-device)))
+    (if (not (equal? *zoom-focus-style*  2 )) 
+	(snd-display #__line__ ";zoom-focus-style set default: ~A" *zoom-focus-style*))
+    (if (not (equal? *sync-style*  sync-by-sound )) 
+	(snd-display #__line__ ";sync-style set default: ~A" *sync-style*))    
+    (if (not (equal? *mix-waveform-height*  20 )) 
+	(snd-display #__line__ ";mix-waveform-height set default: ~A" *mix-waveform-height*))
+    (if (not (equal? *mix-tag-width*  6)) 
+	(snd-display #__line__ ";mix-tag-width set default: ~A" *mix-tag-width*))
+    (if (not (equal? *mix-tag-height*  14)) 
+	(snd-display #__line__ ";mix-tag-height set default: ~A" *mix-tag-height*))
+    (if (not (equal? *mark-tag-width*  10)) 
+	(snd-display #__line__ ";mark-tag-width set default: ~A" *mark-tag-width*))
+    (if (not (equal? *mark-tag-height*  4)) 
+	(snd-display #__line__ ";mark-tag-height set default: ~A" *mark-tag-height*))
+    (if (not (equal? *audio-output-device*  0 )) 
+	(snd-display #__line__ ";audio-output-device set default: ~A" *audio-output-device*))
 
     (if (not (equal? *region-graph-style* graph-lines))
 	(snd-display #__line__ ";* region-graph-style set default: ~A" *region-graph-style*))
     (if (not (equal? *ask-about-unsaved-edits* #f)) 
 	(snd-display #__line__ ";* ask-about-unsaved-edits set default: ~A" *ask-about-unsaved-edits*))
-    (if (not (equal? *show-full-duration* (show-full-duration))) 
+    (if (not (equal? *show-full-duration* *show-full-duration*)) 
 	(snd-display #__line__ ";* show-full-duration set default: ~A" *show-full-duration*))
     (if (not (equal? *show-full-range* #f)) 
 	(snd-display #__line__ ";* show-full-range set default: ~A" *show-full-range*))
@@ -999,7 +999,7 @@
 	(snd-display #__line__ ";* auto-update-interval set default: ~A" *auto-update-interval*))
     (if (fneq *cursor-update-interval*  0.05 )
 	(snd-display #__line__ ";* cursor-update-interval set default: ~A" *cursor-update-interval*))
-    (if (not (= (cursor-location-offset)  0))
+    (if (not (= *cursor-location-offset*  0))
 	(snd-display #__line__ ";* cursor-location-offset set default: ~A" *cursor-location-offset*))
     (if (not (equal? *dac-combines-channels*  #t)) 
 	(snd-display #__line__ ";* dac-combines-channels set default: ~A" *dac-combines-channels*))
@@ -1072,7 +1072,7 @@
 	(snd-display #__line__ ";* html-program set default: ~A" *html-program*))
     (if (not (equal? *just-sounds*  #t)) 
 	(snd-display #__line__ ";* just-sounds set default: ~A" *just-sounds*))
-    (if (not (equal? *listener-prompt*  (listener-prompt)))
+    (if (not (equal? *listener-prompt*  *listener-prompt*))
 	(snd-display #__line__ ";* listener-prompt set default: ~A" *listener-prompt*))
     (if (not (equal? *max-transform-peaks*  100)) 
 	(snd-display #__line__ ";* max-transform-peaks set default: ~A" *max-transform-peaks*))
@@ -1093,7 +1093,7 @@
 	     (not (equal? *view-files-sort*  0 )) )
 	(snd-display #__line__ ";* view-files-sort set default: ~A" *view-files-sort*))
 
-    (if (not (equal? *print-length*  (print-length) )) 
+    (if (not (equal? *print-length*  *print-length* )) 
 	(snd-display #__line__ ";* print-length set default: ~A" *print-length*))
     (if (not (equal? *play-arrow-size*  10 )) 
 	(snd-display #__line__ ";* play-arrow-size set default: ~A" *play-arrow-size*))
@@ -1101,9 +1101,9 @@
 	(snd-display #__line__ ";* save-state-file set default: ~A" *save-state-file*))
     (if (not (equal? *show-axes*  1)) 
 	(snd-display #__line__ ";* show-axes set default: ~A" *show-axes*))
-    (if (not (equal? *show-transform-peaks*  (show-transform-peaks) )) 
+    (if (not (equal? *show-transform-peaks*  *show-transform-peaks* )) 
 	(snd-display #__line__ ";* show-transform-peaks set default: ~A" *show-transform-peaks*))
-    (if (not (equal? *show-indices*  (show-indices))) 
+    (if (not (equal? *show-indices*  *show-indices*)) 
 	(snd-display #__line__ ";* show-indices set default: ~A" *show-indices*))
     (if (not (equal? *show-marks*  #t )) 
 	(snd-display #__line__ ";* show-marks set default: ~A" *show-marks*))
@@ -1139,22 +1139,22 @@
 	(snd-display #__line__ ";* spectro-z-angle set default: ~A" *spectro-z-angle*))
     (if (fneq *spectro-z-scale* (if (provided? 'gl) 1.0 0.1))
 	(snd-display #__line__ ";* spectro-z-scale set default: ~A" *spectro-z-scale*))
-    (if (not (equal? *temp-dir*  (temp-dir) )) 
+    (if (not (equal? *temp-dir*  *temp-dir* )) 
 	(snd-display #__line__ ";* temp-dir set default: ~A" *temp-dir*))
-    (if (not (equal? *ladspa-dir*  (ladspa-dir) )) 
+    (if (not (equal? *ladspa-dir*  *ladspa-dir* )) 
 	(snd-display #__line__ ";* ladspa-dir set default: ~A" *ladspa-dir*))
-    (if (not (equal? *peak-env-dir*  (peak-env-dir) )) 
+    (if (not (equal? *peak-env-dir*  *peak-env-dir* )) 
 	(snd-display #__line__ ";* peak-env-dir set default: ~A" *peak-env-dir*))
     (if (and (not (equal? *tiny-font* "6x12"))
-	     (not (equal? (tiny-font) "Sans 8")))
+	     (not (equal? *tiny-font* "Sans 8")))
 	(snd-display #__line__ ";* tiny-font set default: ~A" *tiny-font*))
-    (if (not (equal? *transform-type*  (transform-type) )) 
+    (if (not (equal? *transform-type*  *transform-type* )) 
 	(snd-display #__line__ ";* transform-type set default: ~A" *transform-type*))
     (if (not (equal? *with-file-monitor*  #t)) 
 	(snd-display #__line__ ";* with-file-monitor set default: ~A" *with-file-monitor*))
-    (if (not (equal? *with-verbose-cursor*  (with-verbose-cursor))) 
+    (if (not (equal? *with-verbose-cursor*  *with-verbose-cursor*)) 
 	(snd-display #__line__ ";* with-verbose-cursor set default: ~A" *with-verbose-cursor*))
-    (if (not (equal? *with-inset-graph*  (with-inset-graph)))
+    (if (not (equal? *with-inset-graph*  *with-inset-graph*))
 	(snd-display #__line__ ";* with-inset-graph set default: ~A" *with-inset-graph*))
     (if (not (equal? *with-interrupts*  #t))
 	(snd-display #__line__ ";* with-interrupts set default: ~A" *with-interrupts*))
@@ -1166,13 +1166,13 @@
 	(snd-display #__line__ ";* with-toolbar set default: ~A" *with-toolbar*))
     (if (not (equal? *with-tooltips* #t))
 	(snd-display #__line__ ";* with-tooltips set default: ~A" *with-tooltips*))
-    (if (not (equal? *with-menu-icons* (with-menu-icons)))
+    (if (not (equal? *with-menu-icons* *with-menu-icons*))
 	(snd-display #__line__ ";* with-menu-icons set default: ~A" *with-menu-icons*))
     (if (not (equal? *save-as-dialog-src* #f))
 	(snd-display #__line__ ";* save-as-dialog-src set default: ~A" *save-as-dialog-src*))
     (if (not (equal? *save-as-dialog-auto-comment* #f))
 	(snd-display #__line__ ";* save-as-dialog-auto-comment set default: ~A" *save-as-dialog-auto-comment*))
-    (if (not (equal? *with-pointer-focus*  (with-pointer-focus))) 
+    (if (not (equal? *with-pointer-focus*  *with-pointer-focus*)) 
 	(snd-display #__line__ ";* with-pointer-focus set default: ~A" *with-pointer-focus*))
     (if (not (equal? *wavelet-type*  0 )) 
 	(snd-display #__line__ ";* wavelet-type set default: ~A" *wavelet-type*))
@@ -1186,7 +1186,7 @@
 	(snd-display #__line__ ";* x-axis-style set default: ~A" *x-axis-style*))
     (if (fneq *beats-per-minute*  60.0 )
 	(snd-display #__line__ ";* beats-per-minute set default: ~A" *beats-per-minute*))
-    (if (not (= (beats-per-measure)  4))
+    (if (not (= *beats-per-measure*  4))
 	(snd-display #__line__ ";* beats-per-measure set default: ~A" *beats-per-measure*))
     (if (not (equal? *zero-pad*  0)) 
 	(snd-display #__line__ ";* zero-pad set default: ~A" *zero-pad*))
@@ -1215,13 +1215,13 @@
 	(begin
 	  (let ((old-max-malloc *mus-max-malloc*))
 	    (set! *mus-max-malloc* (expt 2 36))
-	    (if (not (= (mus-max-malloc) (expt 2 36)))
+	    (if (not (= *mus-max-malloc* (expt 2 36)))
 		(snd-display #__line__ ";mus-max-malloc as bignum: ~A" *mus-max-malloc*))
 	    (set! *mus-max-malloc* old-max-malloc))
 	  
 	  (let ((old-max-table-size *mus-max-table-size*))
 	    (set! *mus-max-table-size* (expt 2 36))
-	    (if (not (= (mus-max-table-size) (expt 2 36)))
+	    (if (not (= *mus-max-table-size* (expt 2 36)))
 		(snd-display #__line__ ";mus-max-table-size as bignum: ~A" *mus-max-table-size*))
 	    (set! *mus-max-table-size* old-max-table-size))))
     
@@ -1236,8 +1236,8 @@
 	 (list axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)
 	 (list 'axis-label-font 'axis-numbers-font 'tiny-font 'peaks-font 'bold-peaks-font)))
 
-    (set! (ask-about-unsaved-edits) #f)
-    (set! (remember-sound-state) #f)
+    (set! *ask-about-unsaved-edits* #f)
+    (set! *remember-sound-state* #f)
     ))
 
 
@@ -1285,165 +1285,165 @@
      (list
       'amp-control (without-errors (amp-control)) 'no-such-sound
       'amp-control-bounds (cadr (amp-control-bounds)) 8.0
-      'ask-about-unsaved-edits (ask-about-unsaved-edits) #f 
-      'ask-before-overwrite (ask-before-overwrite) #f 
-      'audio-output-device (audio-output-device) 0
-      'audio-output-device (audio-output-device) 0 
-      'auto-resize (auto-resize) #t 
-      'auto-update (auto-update) #f
-      'auto-update-interval (auto-update-interval) 60.0 
-      'beats-per-measure (beats-per-measure) 4
-      'beats-per-minute (beats-per-minute) 60.0
-      'channel-style (channel-style) 1
-      'clipping (clipping) #f 
+      'ask-about-unsaved-edits *ask-about-unsaved-edits* #f 
+      'ask-before-overwrite *ask-before-overwrite* #f 
+      'audio-output-device *audio-output-device* 0
+      'audio-output-device *audio-output-device* 0 
+      'auto-resize *auto-resize* #t 
+      'auto-update *auto-update* #f
+      'auto-update-interval *auto-update-interval* 60.0 
+      'beats-per-measure *beats-per-measure* 4
+      'beats-per-minute *beats-per-minute* 60.0
+      'channel-style *channel-style* 1
+      'clipping *clipping* #f 
       'clm-table-size *clm-table-size* 512
-      'clm-default-frequency (clm-default-frequency) 0.0
-      'color-cutoff (color-cutoff) '(0.003 0.001)
-      'color-inverted (color-inverted) #t
-      'color-scale (color-scale) 1.0 
-      'colormap (colormap) (list hot-colormap jet-colormap)
+      'clm-default-frequency *clm-default-frequency* 0.0
+      'color-cutoff *color-cutoff* '(0.003 0.001)
+      'color-inverted *color-inverted* #t
+      'color-scale *color-scale* 1.0 
+      'colormap *colormap* (list hot-colormap jet-colormap)
       'contrast-control (without-errors (contrast-control)) 'no-such-sound
-      'contrast-control-amp (contrast-control-amp) 1.0
+      'contrast-control-amp *contrast-control-amp* 1.0
       'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
       'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
-      'cursor-location-offset (cursor-location-offset) 0
-      'cursor-size (cursor-size) 15
-      'cursor-style (cursor-style) cursor-cross
-      'cursor-update-interval (cursor-update-interval) 0.05
-      'dac-combines-channels (dac-combines-channels) #t
-      'dac-size (dac-size) 256 
-      'default-output-chans (default-output-chans) 1 
-      'default-output-data-format (default-output-data-format) mus-ldouble
-      'default-output-header-type (default-output-header-type) mus-next
-      'default-output-srate (default-output-srate) 44100
-      'dot-size (dot-size) 1 
-      'enved-base (enved-base) 1.0 
+      'cursor-location-offset *cursor-location-offset* 0
+      'cursor-size *cursor-size* 15
+      'cursor-style *cursor-style* cursor-cross
+      'cursor-update-interval *cursor-update-interval* 0.05
+      'dac-combines-channels *dac-combines-channels* #t
+      'dac-size *dac-size* 256 
+      'default-output-chans *default-output-chans* 1 
+      'default-output-data-format *default-output-data-format* mus-ldouble
+      'default-output-header-type *default-output-header-type* mus-next
+      'default-output-srate *default-output-srate* 44100
+      'dot-size *dot-size* 1 
+      'enved-base *enved-base* 1.0 
       'enved-clip? (enved-clip?) #t
       'enved-envelope (enved-envelope) ()
       'enved-filter (enved-filter) #t
-      'enved-filter-order (enved-filter-order) 40
+      'enved-filter-order *enved-filter-order* 40
       'enved-in-dB (enved-in-dB) #f 
-      'enved-power (enved-power) 3.0
-      'enved-style (enved-style) envelope-linear
-      'enved-target (enved-target) 0 
-      'enved-wave? (enved-wave?) #f 
-      'eps-bottom-margin (eps-bottom-margin) 0.0
-      'eps-file (eps-file) "snd.eps" 
-      'eps-left-margin (eps-left-margin) 0.0
-      'eps-size (eps-size) 1.0
+      'enved-power *enved-power* 3.0
+      'enved-style *enved-style* envelope-linear
+      'enved-target *enved-target* 0 
+      'enved-wave? *enved-wave?* #f 
+      'eps-bottom-margin *eps-bottom-margin* 0.0
+      'eps-file *eps-file* "snd.eps" 
+      'eps-left-margin *eps-left-margin* 0.0
+      'eps-size *eps-size* 1.0
       'expand-control (without-errors (expand-control)) 'no-such-sound
       'expand-control-bounds (cadr (expand-control-bounds)) 20.0
-      'expand-control-hop (expand-control-hop) 0.05
-      'expand-control-jitter (expand-control-jitter) 0.1
-      'expand-control-length (expand-control-length) 0.15
-      'expand-control-ramp (expand-control-ramp) 0.4
+      'expand-control-hop *expand-control-hop* 0.05
+      'expand-control-jitter *expand-control-jitter* 0.1
+      'expand-control-length *expand-control-length* 0.15
+      'expand-control-ramp *expand-control-ramp* 0.4
       'expand-control? (without-errors (expand-control?)) 'no-such-sound
-      'fft-log-frequency (fft-log-frequency) #f 
-      'fft-log-magnitude (fft-log-magnitude) #f 
-      'fft-with-phases (fft-with-phases) #f 
-      'fft-window (fft-window) 6 
-      'fft-window-alpha (fft-window-alpha) 0.0 
-      'fft-window-beta (fft-window-beta) 0.0 
+      'fft-log-frequency *fft-log-frequency* #f 
+      'fft-log-magnitude *fft-log-magnitude* #f 
+      'fft-with-phases *fft-with-phases* #f 
+      'fft-window *fft-window* 6 
+      'fft-window-alpha *fft-window-alpha* 0.0 
+      'fft-window-beta *fft-window-beta* 0.0 
       'filter-control-coeffs (without-errors (filter-control-coeffs)) 'no-such-sound
       'filter-control-envelope (without-errors (filter-control-envelope)) 'no-such-sound
-      'filter-control-in-dB (filter-control-in-dB) #f
-      'filter-control-in-hz (filter-control-in-hz) #f
-      'filter-control-order (filter-control-order) 20
+      'filter-control-in-dB *filter-control-in-dB* #f
+      'filter-control-in-hz *filter-control-in-hz* #f
+      'filter-control-order *filter-control-order* 20
       'filter-control? (without-errors (filter-control?)) 'no-such-sound
-      'graph-cursor (graph-cursor) 34
-      'graph-style (graph-style) graph-lines
-      'graphs-horizontal (graphs-horizontal) #t
-      'grid-density (grid-density) 1.0
-      'html-dir (html-dir) "."
-      'html-program (html-program) "firefox"
-      'initial-beg (initial-beg) 0.0
-      'initial-dur (initial-dur) 0.1
-      'just-sounds (just-sounds) #t
-      'ladspa-dir (ladspa-dir) ""
-      'peak-env-dir (peak-env-dir) (list "" "/home/bil/peaks")
+      'graph-cursor *graph-cursor* 34
+      'graph-style *graph-style* graph-lines
+      'graphs-horizontal *graphs-horizontal* #t
+      'grid-density *grid-density* 1.0
+      'html-dir *html-dir* "."
+      'html-program *html-program* "firefox"
+      'initial-beg *initial-beg* 0.0
+      'initial-dur *initial-dur* 0.1
+      'just-sounds *just-sounds* #t
+      'ladspa-dir *ladspa-dir* ""
+      'peak-env-dir *peak-env-dir* (list "" "/home/bil/peaks")
       'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
-;      'listener-prompt (listener-prompt) ">" 
-      'log-freq-start (log-freq-start) 32.0	
-      'mark-tag-height (mark-tag-height) 4
-      'mark-tag-width (mark-tag-width) 10
-      'max-regions (max-regions) 16 
-      'max-transform-peaks (max-transform-peaks) 100
-      'min-dB (min-dB) -60.0 
-      'mix-tag-height (mix-tag-height) 14
-      'mix-tag-width (mix-tag-width) 6
-      'mix-waveform-height (mix-waveform-height) 20 
+;      'listener-prompt *listener-prompt* ">" 
+      'log-freq-start *log-freq-start* 32.0	
+      'mark-tag-height *mark-tag-height* 4
+      'mark-tag-width *mark-tag-width* 10
+      'max-regions *max-regions* 16 
+      'max-transform-peaks *max-transform-peaks* 100
+      'min-dB *min-dB* -60.0 
+      'mix-tag-height *mix-tag-height* 14
+      'mix-tag-width *mix-tag-width* 6
+      'mix-waveform-height *mix-waveform-height* 20 
       'mus-array-print-length *mus-array-print-length* 8
       'mus-clipping (mus-clipping) #f
       'mus-float-equal-fudge-factor *mus-float-equal-fudge-factor* .0000001
-      'play-arrow-size (play-arrow-size) 10
-      'print-length (print-length) '(12 32)
+      'play-arrow-size *play-arrow-size* 10
+      'print-length *print-length* '(12 32)
       'read-only (without-errors (read-only)) 'no-such-sound
-      'region-graph-style (region-graph-style) graph-lines
-      'remember-sound-state (remember-sound-state) #f
-      'reverb-control-feedback (reverb-control-feedback) 1.09
+      'region-graph-style *region-graph-style* graph-lines
+      'remember-sound-state *remember-sound-state* #f
+      'reverb-control-feedback *reverb-control-feedback* 1.09
       'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
       'reverb-control-length-bounds (cadr (reverb-control-length-bounds)) 5.0
-      'reverb-control-lowpass (reverb-control-lowpass) 0.7
+      'reverb-control-lowpass *reverb-control-lowpass* 0.7
       'reverb-control-scale (without-errors (reverb-control-scale)) 'no-such-sound
       'reverb-control-scale-bounds (cadr (reverb-control-scale-bounds)) 4.0
       'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
-      'save-as-dialog-auto-comment (save-as-dialog-auto-comment) #f
-      'save-as-dialog-src (save-as-dialog-src) #f
-      'save-state-file (save-state-file) "saved-snd.scm" 
-      'selection-creates-region (selection-creates-region) #t 
-      'show-axes (show-axes) 1
-      'show-controls (show-controls) #f
-      'show-full-duration (show-full-duration) '(#f #t)
-      'show-full-range (show-full-range) #f 
-      'show-grid (show-grid) #f 
-      'show-indices (show-indices) '(#f #t)
-      'show-marks (show-marks) #t 
-      'show-mix-waveforms (show-mix-waveforms) #t
-      'show-selection-transform (show-selection-transform) #f 
-      'show-sonogram-cursor (show-sonogram-cursor) #f 
-      'show-transform-peaks (show-transform-peaks) '(#f #t)
-      'show-y-zero (show-y-zero) #f 
-      'sinc-width (sinc-width) 10 
-      'spectrum-end (spectrum-end) 1.0
-      'spectro-hop (spectro-hop) 4 
-      'spectrum-start (spectrum-start) 0.0 
-      'spectro-x-angle (spectro-x-angle) (if (provided? 'gl) 300.0 90.0)
-      'spectro-x-scale (spectro-x-scale) (if (provided? 'gl) 1.5 1.0)
-      'spectro-y-angle (spectro-y-angle) (if (provided? 'gl) 320.0 0.0)
-      'spectro-y-scale (spectro-y-scale) 1.0 
-      'spectro-z-angle (spectro-z-angle) (if (provided? 'gl) 0.0 358.0)
-      'spectro-z-scale (spectro-z-scale) (if (provided? 'gl) 1.0 0.1)
+      'save-as-dialog-auto-comment *save-as-dialog-auto-comment* #f
+      'save-as-dialog-src *save-as-dialog-src* #f
+      'save-state-file *save-state-file* "saved-snd.scm" 
+      'selection-creates-region *selection-creates-region* #t 
+      'show-axes *show-axes* 1
+      'show-controls *show-controls* #f
+      'show-full-duration *show-full-duration* '(#f #t)
+      'show-full-range *show-full-range* #f 
+      'show-grid *show-grid* #f 
+      'show-indices *show-indices* '(#f #t)
+      'show-marks *show-marks* #t 
+      'show-mix-waveforms *show-mix-waveforms* #t
+      'show-selection-transform *show-selection-transform* #f 
+      'show-sonogram-cursor *show-sonogram-cursor* #f 
+      'show-transform-peaks *show-transform-peaks* '(#f #t)
+      'show-y-zero *show-y-zero* #f 
+      'sinc-width *sinc-width* 10 
+      'spectrum-end *spectrum-end* 1.0
+      'spectro-hop *spectro-hop* 4 
+      'spectrum-start *spectrum-start* 0.0 
+      'spectro-x-angle *spectro-x-angle* (if (provided? 'gl) 300.0 90.0)
+      'spectro-x-scale *spectro-x-scale* (if (provided? 'gl) 1.5 1.0)
+      'spectro-y-angle *spectro-y-angle* (if (provided? 'gl) 320.0 0.0)
+      'spectro-y-scale *spectro-y-scale* 1.0 
+      'spectro-z-angle *spectro-z-angle* (if (provided? 'gl) 0.0 358.0)
+      'spectro-z-scale *spectro-z-scale* (if (provided? 'gl) 1.0 0.1)
       'speed-control (without-errors (speed-control)) 'no-such-sound
       'speed-control-bounds (cadr (speed-control-bounds)) 20.0
       'sync (without-errors (sync)) 'no-such-sound
-      'sync-style (sync-style) sync-by-sound
-      'temp-dir (temp-dir) (list "" "/home/bil/zap/tmp")
-      'time-graph-type (time-graph-type) graph-once
+      'sync-style *sync-style* sync-by-sound
+      'temp-dir *temp-dir* (list "" "/home/bil/zap/tmp")
+      'time-graph-type *time-graph-type* graph-once
       'time-graph? (without-errors (time-graph?)) 'no-such-sound
-      'tiny-font (tiny-font) (if (provided? 'snd-motif) "6x12" "Sans 8")
-      'tracking-cursor-style (tracking-cursor-style) cursor-line
-      'transform-graph-type (transform-graph-type) graph-once
+      'tiny-font *tiny-font* (if (provided? 'snd-motif) "6x12" "Sans 8")
+      'tracking-cursor-style *tracking-cursor-style* cursor-line
+      'transform-graph-type *transform-graph-type* graph-once
       'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
-      'transform-normalization (transform-normalization) normalize-by-channel
-      'transform-size (transform-size) (transform-size)
-      'transform-type (transform-type) fourier-transform
-      'wavelet-type (wavelet-type) 0 
-      'wavo-hop (wavo-hop) 3 
-      'wavo-trace (wavo-trace) 64 
-      'with-mix-tags (with-mix-tags) #t
-      'with-relative-panes (with-relative-panes) #t
-      'with-tracking-cursor (with-tracking-cursor) '(#f 1)
-      'with-verbose-cursor (with-verbose-cursor) '(#f #t)
-      'with-inset-graph (with-inset-graph) '(#f #t)
-      'with-interrupts (with-interrupts) #t
-      'with-smpte-label (with-smpte-label) #f
-      'with-toolbar (with-toolbar) '(#f #t)
-      'with-tooltips (with-tooltips) #t
-      'with-menu-icons (with-menu-icons) '(#f #t)
-      'with-pointer-focus (with-pointer-focus) '(#f #t)
-      'x-axis-style (x-axis-style) 0 
-      'zero-pad (zero-pad) 0
-      'zoom-focus-style (zoom-focus-style) 2 
+      'transform-normalization *transform-normalization* normalize-by-channel
+      'transform-size *transform-size* *transform-size*
+      'transform-type *transform-type* fourier-transform
+      'wavelet-type *wavelet-type* 0 
+      'wavo-hop *wavo-hop* 3 
+      'wavo-trace *wavo-trace* 64 
+      'with-mix-tags *with-mix-tags* #t
+      'with-relative-panes *with-relative-panes* #t
+;      'with-tracking-cursor *with-tracking-cursor* '(#f 1)
+      'with-verbose-cursor *with-verbose-cursor* '(#f #t)
+      'with-inset-graph *with-inset-graph* '(#f #t)
+      'with-interrupts *with-interrupts* #t
+      'with-smpte-label *with-smpte-label* #f
+      'with-toolbar *with-toolbar* '(#f #t)
+      'with-tooltips *with-tooltips* #t
+      'with-menu-icons *with-menu-icons* '(#f #t)
+      'with-pointer-focus *with-pointer-focus* '(#f #t)
+      'x-axis-style *x-axis-style* 0 
+      'zero-pad *zero-pad* 0
+      'zoom-focus-style *zoom-focus-style* 2 
       ))
     (if *snd-opened-sound* (snd-display #__line__ ";*snd-opened-sound*: ~A" *snd-opened-sound*))
 
@@ -1598,12 +1598,12 @@
 	(list 'zoom-focus-style zoom-focus-style 2 1 '*zoom-focus-style*))))
     (close-sound s))
 
-    (set! (ask-about-unsaved-edits) #f)
-    (set! (remember-sound-state) #f)
+    (set! *ask-about-unsaved-edits* #f)
+    (set! *remember-sound-state* #f)
     ))
 
 
-(set! (default-output-data-format) mus-ldouble)
+(set! *default-output-data-format* mus-ldouble)
 
 
 ;;; ---------------- test 2: headers ----------------
@@ -1930,19 +1930,19 @@
     (if (and (file-exists? "funcs.scm") 
 	     (not (defined? 'swellf)))
 	(load "funcs.scm"))
-    (let ((td (temp-dir)))
+    (let ((td *temp-dir*))
       (catch #t
 	     (lambda ()
-	       (set! (temp-dir) (string-append home-dir "/test"))
-	       (if (not (string=? (temp-dir) (string-append home-dir "/test")))
-		   (snd-display #__line__ ";set temp-dir: ~A?" (temp-dir))))
+	       (set! *temp-dir* (string-append home-dir "/test"))
+	       (if (not (string=? *temp-dir* (string-append home-dir "/test")))
+		   (snd-display #__line__ ";set temp-dir: ~A?" *temp-dir*)))
 	     (lambda args args))
       (if td 
-	  (set! (temp-dir) td)
-	  (set! (temp-dir) "")))
+	  (set! *temp-dir* td)
+	  (set! *temp-dir* "")))
     (if (fneq (sample 1000) 0.0328) (snd-display #__line__ ";sample: ~A?" (sample 1000)))
     
-    (set! (show-controls) #t)
+    (set! *show-controls* #t)
     (if with-gui
 	(begin
 	  (let ((wid (enved-dialog) ))
@@ -2125,7 +2125,7 @@
 	(list 'zero-pad zero-pad 0 1)
 	(list 'zoom-focus-style zoom-focus-style 2 1))))
 
-    (set! (ask-about-unsaved-edits) #f)    
+    (set! *ask-about-unsaved-edits* #f)    
     (letrec ((test-bad-args
 	      (lambda (lst)
 		(if (pair? lst)
@@ -2196,7 +2196,7 @@
 	(list 'x-axis-style x-axis-style 0 '(-1 123))
 	(list 'zoom-focus-style zoom-focus-style 2 '(-1 123)))))
     
-    (set! (sync-style) sync-none)
+    (set! *sync-style* sync-none)
 
     (set! (window-width) 300)
     (set! (window-height) 300)
@@ -2211,8 +2211,8 @@
 ;    (if (not (equal? (window-y) 321))
 ;	(snd-display #__line__ ";window y: ~A is not 321?" (window-y)))
 ;    (set! (window-y) 10) ; get it back out of harm's way
-    (set! (color-scale) 100.0)
-    (if (fneq (color-scale) 100.0) (snd-display #__line__ ";color-scale to 100: ~A" (color-scale)))
+    (set! *color-scale* 100.0)
+    (if (fneq *color-scale* 100.0) (snd-display #__line__ ";color-scale to 100: ~A" *color-scale*))
     
     (if (procedure? (search-procedure))
 	(snd-display #__line__ ";global search procedure: ~A?" (search-procedure)))
@@ -2233,8 +2233,8 @@
     (if (not (procedure? (search-procedure)))
 	(snd-display #__line__ ";set global search procedure: ~A?" (search-procedure)))
     
-    (set! (enved-filter-order) 5)
-    (if (not (= (enved-filter-order) 6)) (snd-display #__line__ ";set enved-filter-order 5: ~A" (enved-filter-order)))
+    (set! *enved-filter-order* 5)
+    (if (not (= *enved-filter-order* 6)) (snd-display #__line__ ";set enved-filter-order 5: ~A" *enved-filter-order*))
     (if with-gui
 	(begin
 	  (set! (enved-envelope) 'zero_to_one) ; funcs.scm above
@@ -2633,7 +2633,7 @@
 	  (mus-sound-forget long-file-name)
 	  (delete-file long-file-name))
 
-	(let ((old-sound-path (mus-sound-path)))
+	(let ((old-sound-path *mus-sound-path*))
 	  (set! *mus-sound-path* (list "/home/bil/sf1"))
 	  (let ((ind (open-sound "o2.bicsf")))
 	    (if (not (sound? ind))
@@ -2645,7 +2645,7 @@
 		  (if (not (sound? ind))
 		      (snd-display #__line__ ";mus-sound-path/: ~A~%" ind)
 		      (close-sound ind)))))
-	  (set! (mus-sound-path) old-sound-path))
+	  (set! *mus-sound-path* old-sound-path))
 	
 	(let ((fsnd (string-append sf-dir "forest.aiff")))
 	  (if (file-exists? fsnd)
@@ -2817,15 +2817,15 @@
 			 ((string-=? (mus-data-format-name i) "unknown") i))))
 	  (if (< lasth 10) (snd-display #__line__ ";data-format[~A] = ~A" lasth (mus-data-format-name lasth))))
 	
-	(set! (transform-normalization) dont-normalize)
-	(if (not (= (transform-normalization) dont-normalize))
-	    (snd-display #__line__ ";set-transform-normalization none -> ~A" (transform-normalization)))
-	(set! (transform-normalization) normalize-globally)
-	(if (not (= (transform-normalization) normalize-globally))
-	    (snd-display #__line__ ";set-transform-normalization globally -> ~A" (transform-normalization)))
-	(set! (transform-normalization) normalize-by-channel)
-	(if (not (= (transform-normalization) normalize-by-channel))
-	    (snd-display #__line__ ";set-transform-normalization channel -> ~A" (transform-normalization)))
+	(set! *transform-normalization* dont-normalize)
+	(if (not (= *transform-normalization* dont-normalize))
+	    (snd-display #__line__ ";set-transform-normalization none -> ~A" *transform-normalization*))
+	(set! *transform-normalization* normalize-globally)
+	(if (not (= *transform-normalization* normalize-globally))
+	    (snd-display #__line__ ";set-transform-normalization globally -> ~A" *transform-normalization*))
+	(set! *transform-normalization* normalize-by-channel)
+	(if (not (= *transform-normalization* normalize-by-channel))
+	    (snd-display #__line__ ";set-transform-normalization channel -> ~A" *transform-normalization*))
 	
 	(let ((ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 1 "set-samples test" 100)))
 	  (set! (samples 10 3) (make-float-vector 3 .1))
@@ -2959,7 +2959,7 @@
 			      (save-sound-as "test.snd" ob mus-aifc mus-bdouble))
 			    (lambda args (car args)))))
 	    (if (eq? tag 'cannot-save) (snd-display #__line__ ";save-sound-as test.snd write trouble")))
-	  (set! (filter-control-in-hz) #t)
+	  (set! *filter-control-in-hz* #t)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-aifc)) 
 		(snd-display #__line__ ";save-as aifc -> ~A?" (mus-header-type-name (header-type ab))))
@@ -2975,7 +2975,7 @@
 	    (close-sound ab))
 	  (if (not (equal? old-comment (mus-sound-comment "oboe.snd")))
 	      (snd-display #__line__ ";set-comment overwrote current ~A ~A" old-comment (mus-sound-comment "oboe.snd")))
-	  (set! (filter-control-in-hz) #f)
+	  (set! *filter-control-in-hz* #f)
 	  (save-sound-as "test.snd" ob mus-raw)
 	  (let ((ab (open-raw-sound "test.snd" 1 22050 mus-bshort)))
 	    (if (not (= (header-type ab) mus-raw)) 
@@ -3283,7 +3283,7 @@
 		    (close-sound fil)))))
 	
 	(if (file-exists? "fmv5.snd") (delete-file "fmv5.snd"))
-	(set! (print-length) 12)
+	(set! *print-length* 12)
 
 	(for-each
 	 (lambda (file)
@@ -3327,7 +3327,7 @@
 	
 	;; check clipping choices
 	(let ((ind (view-sound "oboe.snd")))
-	  (set! (clipping) #f)
+	  (set! *clipping* #f)
 	  (scale-channel 10.0)
 	  (save-sound-as "test.snd" ind mus-next mus-ldouble)
 	  (undo 1 ind 0)
@@ -3336,7 +3336,7 @@
 		(snd-display #__line__ ";clipping 0: ~A ~A" (maxamp ind1 0) (maxamp ind 0)))
 	    (close-sound ind1))
 	  (delete-file "test.snd")
-	  (set! (clipping) #t)
+	  (set! *clipping* #t)
 	  (map-channel (lambda (y) (* y 10.0)) 0 (framples) ind 0)
 	  (save-sound-as "test.snd" ind mus-next mus-lshort)
 	  (undo 1 ind 0)
@@ -3345,7 +3345,7 @@
 		(snd-display #__line__ ";clipping 1: ~A ~A" (maxamp ind1 0) (maxamp ind 0)))
 	    (close-sound ind1))
 	  (delete-file "test.snd")
-	  (set! (clipping) #f)
+	  (set! *clipping* #f)
 	  (let* ((mx (maxamp ind))
 		 (sub (- 1.001 mx)))
 	    (map-channel (lambda (y) (+ y sub)) 0 (framples) ind 0)
@@ -3356,7 +3356,7 @@
 		  (snd-display #__line__ ";clipping 2: ~A" baddy))
 	      (close-sound ind1))
 	    (delete-file "test.snd")
-	    (set! (clipping) #t)
+	    (set! *clipping* #t)
 	    (save-sound-as "test.snd" ind mus-next mus-ldouble)
 	    (let ((ind1 (open-sound "test.snd"))
 		  (baddy (scan-channel (lambda (y) (< y 0.0)))))
@@ -3364,11 +3364,11 @@
 		  (snd-display #__line__ ";clipping 3: ~A ~A" baddy (sample baddy)))
 	      (close-sound ind1))
 	    (delete-file "test.snd")
-	    (set! (clipping) #f))
+	    (set! *clipping* #f))
 	  (close-sound ind))
 	(delete-file "fmv.snd")
 	
-	(set! (clipping) #f)
+	(set! *clipping* #f)
 	(let ((snd (new-sound "test.snd" :data-format mus-lshort)))
 	  (pad-channel 0 10)
 	  (set! (sample 1) 1.0)
@@ -3389,7 +3389,7 @@
 	  (close-sound snd))
 	(mus-sound-forget "test.snd")
 	
-	(set! (clipping) #t)
+	(set! *clipping* #t)
 	(let ((snd (new-sound "test.snd" :data-format mus-lshort)))
 	  (pad-channel 0 10)
 	  (set! (sample 1) 1.0)
@@ -3408,7 +3408,7 @@
 	    (if (not (vequal data (float-vector 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000)))
 		(snd-display #__line__ ";clipped: ~A" data)))
 	  (close-sound snd))
-	(set! (clipping) #f)
+	(set! *clipping* #f)
 	
 	(let ((test-data (lambda (file beg dur data)
 			   (catch #t
@@ -3643,8 +3643,8 @@
 		  (if (or (not res)
 			  (> (cadr res) 100))
 		      (snd-display #__line__ ";bigger find not 0.0: ~A" res)))
-		(let ((old-select (selection-creates-region)))
-		  (set! (selection-creates-region) #f)
+		(let ((old-select *selection-creates-region*))
+		  (set! *selection-creates-region* #f)
 		  (select-all ind)
 		  (if (not (= (selection-framples) (framples ind))) (snd-display #__line__ ";bigger select all: ~A ~A" (selection-framples) (framples)))
 		  (set! (selection-position) (* (floor *clm-srate*) 50000))
@@ -3652,7 +3652,7 @@
 		  (set! (selection-position) 0)
 		  (set! (selection-framples) (* (floor *clm-srate*) 65000))
 		  (if (not (= (selection-framples) (* (floor *clm-srate*) 65000))) (snd-display #__line__ ";bigger select len: ~A" (selection-framples)))
-		  (set! (selection-creates-region) old-select))
+		  (set! *selection-creates-region* old-select))
 		(set! (cursor ind) (* (floor *clm-srate*) 50000))
 		(if (not (= (cursor ind) (* (floor *clm-srate*) 50000))) (snd-display #__line__ ";bigger cursor: ~A" (cursor ind)))
 		(let ((m1 (add-mark (* 44123 51234) ind)))
@@ -3667,8 +3667,8 @@
 		(close-sound ind))))
 	
 	(let ((ind (new-sound "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000))
-	      (old-selection-creates-region (selection-creates-region)))
-	  (set! (selection-creates-region) #t)
+	      (old-selection-creates-region *selection-creates-region*))
+	  (set! *selection-creates-region* #t)
 	  (let ((incr (/ 1.0 (framples)))
 		(len (framples))
 		(data (make-float-vector (framples))))
@@ -3722,7 +3722,7 @@
 	    (delete-file "tmp1.snd")
 	    (close-sound ind)
 	    (delete-file "tmp.snd"))
-	  (set! (selection-creates-region) old-selection-creates-region))
+	  (set! *selection-creates-region* old-selection-creates-region))
 	
 	(let ((ind (new-sound "tmp.snd" mus-next mus-ldouble 22050 1 :size 10 :comment #f)))
 	  (map-channel (lambda (y) 1.0))
@@ -5689,17 +5689,17 @@ EDITS: 5
 	(play "oboe.snd" :start 12000 :end 15000 :wait #t)
 	(play :edit-position (- (edit-position) 1) :wait #t)
 	(let ((old-speed (speed-control index))
-	      (old-style (speed-control-style))
+	      (old-style *speed-control-style*)
 	      (old-open (show-controls index)))
 	  (set! (show-controls index) #t)
 	  (set! (speed-control index) -2.0)
 	  (play index :start 12345 :wait #t)
-	  (set! (speed-control-style) speed-control-as-semitone)
+	  (set! *speed-control-style* speed-control-as-semitone)
 	  (set! (speed-control index) 0.5)
-	  (set! (speed-control-style) speed-control-as-ratio)
+	  (set! *speed-control-style* speed-control-as-ratio)
 	  (set! (speed-control index) 0.25)
 	  (set! (speed-control index) old-speed)
-	  (set! (speed-control-style) old-style)
+	  (set! *speed-control-style* old-style)
 	  (set! (show-controls index) old-open))
 	(let ((k (disk-kspace "oboe.snd")))
 	  (if (or (not (number? k))
@@ -5709,7 +5709,7 @@ EDITS: 5
 	  (if (not (= k -1))
 	      (snd-display #__line__ ";disk-kspace of bogus file = ~A" (disk-kspace "/baddy/hiho"))))
 	(if (not (= (transform-framples) 0)) (snd-display #__line__ ";transform-framples ~A?" (transform-framples)))
-	(set! (transform-size) 512)
+	(set! *transform-size* 512)
 	
 	(set! (transform-graph?) #t)
 	(set! (time-graph?) #t)
@@ -5838,14 +5838,14 @@ EDITS: 5
 	  (set! (transform-size index 0) 64)
 	  (do ((i 0 (+ i 1)))
 	      ((= i num-transforms))
-	    (set! (transform-type) (integer->transform i))
+	    (set! *transform-type* (integer->transform i))
 	    (if (not (transform? (integer->transform i))) (snd-display #__line__ ";transform? ~A?" i))
 	    (do ((j 0 (+ j 1)))
 		((= j num-transform-graph-types))
 	      (set! (transform-graph-type index 0) j)
 	      (update-transform-graph index 0))))
-	(set! (transform-type) fourier-transform)
-	(if (not (transform? (transform-type))) (snd-display #__line__ ";transform? ~A ~A?" (transform-type) fourier-transform))
+	(set! *transform-type* fourier-transform)
+	(if (not (transform? *transform-type*)) (snd-display #__line__ ";transform? ~A ~A?" *transform-type* fourier-transform))
 	(if (not (transform? autocorrelation)) (snd-display #__line__ ";transform? autocorrelation"))
 	
 	(if (read-only index) (snd-display #__line__ ";read-only open-sound: ~A?" (read-only index)))
@@ -5862,11 +5862,11 @@ EDITS: 5
 	(key (char->integer #\a) 0) 
 	(do ((i 0 (+ i 1)))
 	    ((= i 5))
-	  (let ((psf (eps-file)))
+	  (let ((psf *eps-file*))
 	    (if (and psf (string? psf))
 		(begin
 		  (if (file-exists? psf) (delete-file psf))
-		  (set! (graph-style) i)
+		  (set! *graph-style* i)
 		  (graph->ps)
 		  (if (not (file-exists? psf)) 
 		      (snd-display #__line__ ";graph->ps: ~A?" psf)
@@ -5938,7 +5938,7 @@ EDITS: 5
 	      (snd-display #__line__ ";edit-position: ~A ~A?" (edit-position) eds)))
 	(play index :channel 0 :wait #t)
 	
-	(if (not (selection-creates-region)) (set! (selection-creates-region) #t))
+	(if (not *selection-creates-region*) (set! *selection-creates-region* #t))
 	(select-all index 0) 
 	(let ((r0 (car (regions)))
 	      (sel (selection)))
@@ -6169,17 +6169,17 @@ EDITS: 5
 	      (s40 (sample 40))
 	      (len (framples))
 	      (addlen (mus-sound-framples "fyow.snd")))
-	  (set! (cursor-style) cursor-line)
-	  (set! (cursor-size) 25)
+	  (set! *cursor-style* cursor-line)
+	  (set! *cursor-size* 25)
 	  (set! (cursor index) 50) 
-	  (if (not (= (cursor-style) cursor-line))
-	      (snd-display #__line__ ";cursor-style: ~A? " (cursor-style)))
-	  (if (not (= (cursor-size) 25))
-	      (snd-display #__line__ ";cursor-size: ~A? " (cursor-size)))
-	  (set! (cursor-style) cursor-cross)
-	  (set! (cursor-size) 15)
+	  (if (not (= *cursor-style* cursor-line))
+	      (snd-display #__line__ ";cursor-style: ~A? " *cursor-style*))
+	  (if (not (= *cursor-size* 25))
+	      (snd-display #__line__ ";cursor-size: ~A? " *cursor-size*))
+	  (set! *cursor-style* cursor-cross)
+	  (set! *cursor-size* 15)
 	  (set! (cursor index 0) 30) 
-	  (set! (cursor-style) cursor-line)
+	  (set! *cursor-style* cursor-line)
 	  (set! (cursor index 0) 20) 
 	  (if with-gui
 	      (begin
@@ -6188,7 +6188,7 @@ EDITS: 5
 			(let* ((point (cursor-position))
 			       (x (car point))
 			       (y (cadr point))
-			       (size (floor (/ (cursor-size) 2)))
+			       (size (floor (/ *cursor-size* 2)))
 			       (cr (make-cairo (car (channel-widgets snd chn)))))
 			  (draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context cr)    
 			  (draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context cr)
@@ -6333,10 +6333,10 @@ EDITS: 5
 
 	  (float-vector->channel v0)
 	  (select-all) 
-	  (let ((old-wid (sinc-width)))
-	    (set! (sinc-width) 40)
+	  (let ((old-wid *sinc-width*))
+	    (set! *sinc-width* 40)
 	    (src-selection 0.5) 
-	    (set! (sinc-width) old-wid))
+	    (set! *sinc-width* old-wid))
 	  (set! v0 (channel->float-vector 0 128 index 0))
 	  (if (or (fneq (sample 20) .5) (fneq (sample 30) 0.0) (fneq (sample 17) -.1057) )
 	      (snd-display #__line__ ";src-selection: ~A?" v0))
@@ -6435,7 +6435,7 @@ EDITS: 5
 	    (float-vector->channel v1 0 128 index 0))
 	  (select-all)
 	  (if (mus-clipping) (set! (mus-clipping) #f))
-	  (if (clipping) (set! (clipping) #f))
+	  (if *clipping* (set! *clipping* #f))
 	  (convolve-selection-with "fmv5.snd" .5) 
 	  (set! v0 (channel->float-vector 0 128 index 0))
 	  (if (fneq (sample 66) -.5) (snd-display #__line__ ";convolve-selection-with: ~A ~A ~A?" (v0 66) (sample 66) v0))
@@ -6491,7 +6491,7 @@ EDITS: 5
 		  (if (ffneq revamp .214) 
 		      (snd-display #__line__ ";apply reverb scale: ~A at ~A, scale: ~A previous max: ~A?" 
 				   revamp (maxamp-position obind) (reverb-control-scale obind) nowamp))
-		  (if (>= (- revdur (+ 50828 (round (* (reverb-control-decay) 22050)))) 256) 
+		  (if (>= (- revdur (+ 50828 (round (* *reverb-control-decay* 22050)))) 256) 
 		      (snd-display #__line__ ";apply reverb length: ~A?" revdur))))
 	      (undo 1 obind)
 	      (set! (expand-control? obind) #t)
@@ -7039,11 +7039,11 @@ EDITS: 5
 	    (delete-file "fmv5.snd"))
 	  
 	  (revert-sound ind1)
-	  (let ((old-val (selection-creates-region))
+	  (let ((old-val *selection-creates-region*)
 		(old-regions (regions)))
-	    (set! (selection-creates-region) #f)
+	    (set! *selection-creates-region* #f)
 	    (select-all ind1)
-	    (set! (selection-creates-region) old-val)
+	    (set! *selection-creates-region* old-val)
 	    (if (not (equal? old-regions (regions)))
 		(snd-display #__line__ ";selection-create-region: ~A -> ~A?" old-regions (regions))))
 	  (convolve-selection-with "pistol.snd" (maxamp))
@@ -7274,11 +7274,11 @@ EDITS: 5
 	    (filter-sound '(0 0 .29 0 .3 1 .31 0 1 0) 1024)  
 	    (if (> (maxamp) .02) (snd-display #__line__ ";filter-sound maxamp 3: ~A" (maxamp)))
 	    
-	    (set! (show-sonogram-cursor) #t) 
-	    (set! (with-tracking-cursor) #t) 
-	    (if (not (with-tracking-cursor)) (snd-display #__line__ ";with-tracking-cursor set to #t: ~A" (with-tracking-cursor)))
+	    (set! *show-sonogram-cursor* #t) 
+	    (set! *with-tracking-cursor* #t) 
+	    (if (not *with-tracking-cursor*) (snd-display #__line__ ";with-tracking-cursor set to #t: ~A" *with-tracking-cursor*))
 	    
-	    (set! (transform-graph-type) graph-as-sonogram) 
+	    (set! *transform-graph-type* graph-as-sonogram) 
 	    (play :wait #t)
 	    (set! (transform-graph?) #t) 
 	    
@@ -7735,8 +7735,8 @@ EDITS: 5
 	
 	(let ((index (new-sound "fmv.snd" mus-next mus-ldouble 22050 2 "channel tests"))
 	      (v (make-float-vector 10))
-	      (sw (sinc-width)))
-	  (set! (sinc-width) 10)
+	      (sw *sinc-width*))
+	  (set! *sinc-width* 10)
 	  (set! (v 0) 1.0)
 	  (float-vector->channel v 0 10 index 0)
 	  (src-channel 0.5 0 10 index 0)
@@ -7775,7 +7775,7 @@ EDITS: 5
 	      (snd-display #__line__ ";src-channel lst: ~A" (channel->float-vector 0 10 index 1)))
 	  (if (not (vequal (make-float-vector 10) (channel->float-vector 0 10 index 0)))
 	      (snd-display #__line__ ";src-channel lst leaks: ~A" (channel->float-vector 0 10 index 0)))
-	  (set! (sinc-width) sw)
+	  (set! *sinc-width* sw)
 	  (close-sound index))
 	
 	(let ((ind (new-sound :size 100)))
@@ -7805,7 +7805,7 @@ EDITS: 5
 	   (list 0.5 0.75 1.0 1.5 2.0))
 	  (close-sound ind))
 
-	(if (< (max-regions) 8) (set! (max-regions) 8))
+	(if (< *max-regions* 8) (set! *max-regions* 8))
 	(let* ((ind (open-sound "oboe.snd"))
 	       (rid0 (make-region 2000 2020 ind 0))
 	       (rid0-data (region2float-vector rid0 0 20)))
@@ -7970,12 +7970,12 @@ EDITS: 5
 		(snd-display #__line__ ";delete-samples-and-smooth max diff: ~A" maxdiff)))
 	  (close-sound ns))
 
-	(let ((old-beg (initial-beg))
-	      (old-dur (initial-dur))
-	      (old-show (show-full-duration))
+	(let ((old-beg *initial-beg*)
+	      (old-dur *initial-dur*)
+	      (old-show *show-full-duration*)
 	      (old-hook (hook-functions initial-graph-hook)))
 	  (set! (hook-functions initial-graph-hook) ())
-	  (set! (show-full-duration) #t)
+	  (set! *show-full-duration* #t)
 	  (let ((ns (open-sound "1.snd")))
 	    (let ((ls (left-sample ns 0))
 		  (rs (right-sample ns 0))
@@ -7983,9 +7983,9 @@ EDITS: 5
 	      (if (not (equal? (list fr ls rs) '(220501 0 220501)))
 		  (snd-display #__line__ ";show-full-duration 1: ~A" (list fr ls rs)))
 	      (close-sound ns)))
-	  (set! (show-full-duration) #t)
-	  (set! (initial-beg) 0.0)
-	  (set! (initial-dur) 0.2)
+	  (set! *show-full-duration* #t)
+	  (set! *initial-beg* 0.0)
+	  (set! *initial-dur* 0.2)
 	  (let ((ns (open-sound "1.snd")))
 	    (let ((ls (left-sample ns 0))
 		  (rs (right-sample ns 0))
@@ -7993,9 +7993,9 @@ EDITS: 5
 	      (if (not (equal? (list fr ls rs) '(220501 0 220501)))
 		  (snd-display #__line__ ";show-full-duration 2: ~A" (list fr ls rs)))
 	      (close-sound ns)))
-	  (set! (show-full-duration) #f)
-	  (set! (initial-beg) 0.0)
-	  (set! (initial-dur) 0.2)
+	  (set! *show-full-duration* #f)
+	  (set! *initial-beg* 0.0)
+	  (set! *initial-dur* 0.2)
 	  (let ((ns (open-sound "1.snd")))
 	    (let ((ls (left-sample ns 0))
 		  (rs (right-sample ns 0))
@@ -8003,8 +8003,8 @@ EDITS: 5
 	      (if (not (equal? (list fr ls rs) '(220501 0 4410)))
 		  (snd-display #__line__ ";show-full-duration 3: ~A" (list fr ls rs)))
 	      (close-sound ns)))
-	  (set! (initial-beg) 2.0)
-	  (set! (initial-dur) 1.0)
+	  (set! *initial-beg* 2.0)
+	  (set! *initial-dur* 1.0)
 	  (let ((ns (open-sound "1.snd")))
 	    (let ((ls (left-sample ns 0))
 		  (rs (right-sample ns 0))
@@ -8012,12 +8012,12 @@ EDITS: 5
 	      (if (not (equal? (list fr ls rs) '(220501 44100 66150)))
 		  (snd-display #__line__ ";show-full-duration 4: ~A" (list fr ls rs)))	  
 	      (close-sound ns)))
-	  (set! (initial-beg) old-beg)
-	  (set! (initial-dur) old-dur)
-	  (set! (show-full-duration) old-show)
+	  (set! *initial-beg* old-beg)
+	  (set! *initial-dur* old-dur)
+	  (set! *show-full-duration* old-show)
 	  (set! (hook-functions initial-graph-hook) old-hook))
 
-	(set! (show-full-range) #t)
+	(set! *show-full-range* #t)
 	(let ((ns (open-sound "1a.snd")))
 	  (if (or (fneq (car (y-bounds ns 0)) -1.0)
 		  (fneq (cadr (y-bounds ns 0)) 1.0))
@@ -8036,15 +8036,15 @@ EDITS: 5
 		  (fneq (cadr (y-bounds ns 0)) 1.5))
 	      (snd-display #__line__ ";show-full-range 1.5 test: ~A" (y-bounds ns 0)))
 	  (close-sound ns))
-	(set! (show-full-range) #f)
+	(set! *show-full-range* #f)
 
-	(let ((old-sync (sync-style)))
-	  (set! (sync-style) sync-none)
+	(let ((old-sync *sync-style*))
+	  (set! *sync-style* sync-none)
 	  (let ((ns (open-sound "2.snd")))
 	    (if (not (= (sync ns) 0))
 		(snd-display #__line__ ";sync-none open: ~A" (sync ns)))
 	    (set! (sync ns) 1)
-	    (set! (sync-style) sync-by-sound)
+	    (set! *sync-style* sync-by-sound)
 	    (let ((ns1 (open-sound "1a.snd")))
 	      (if (or ;(= (sync ns1) 0) ; this default changed 12.9
 		      (= (sync ns1) 1)
@@ -8052,7 +8052,7 @@ EDITS: 5
 		  (snd-display #__line__ ";sync-by-sound open: ~A" (list (sync ns) (sync ns1))))
 	      (close-sound ns1))
 	    (close-sound ns))
-	  (set! (sync-style) old-sync))
+	  (set! *sync-style* old-sync))
 
   	(let ((ind (view-sound "obtest.snd")))
 	  (delete-samples 0 1000 ind 0)
@@ -8068,10 +8068,10 @@ EDITS: 5
 	  (map-channel (lambda (y) 0.5))
 	  (env-sound '(0 0 1 1 2 0))
 	  (fp 1.0 0.3 20)
-	  (let ((old-curse (with-tracking-cursor)))
-	    (set! (with-tracking-cursor) #t)
+	  (let ((old-curse *with-tracking-cursor*))
+	    (set! *with-tracking-cursor* #t)
 	    (play :wait #t)
-	    (set! (with-tracking-cursor) old-curse))
+	    (set! *with-tracking-cursor* old-curse))
 	  (close-sound ind))
 	(let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1)))
 	  (for-each
@@ -9489,7 +9489,7 @@ EDITS: 2
 (define (snd_test_7)
   (define colormap-error-max 0.0)
   (define cfneq (lambda (a b) (> (abs (- a b)) colormap-error-max)))
-  (define old-colormap-size (colormap-size))
+  (define old-colormap-size *colormap-size*)
   
   (if (or (provided? 'snd-gtk)
 	  (provided? 'snd-motif))
@@ -9578,7 +9578,7 @@ EDITS: 2
 		   ))
 		 
 		 (let ((ind (open-sound "oboe.snd")))
-		   (set! (selected-data-color) light-green)
+		   (set! *selected-data-color* light-green)
 		   (set! *data-color* blue)
 		   (set! *selected-graph-color* black)
 		   (let ((red (make-color-with-catch 1.0 0.0 0.0)))
@@ -9600,17 +9600,17 @@ EDITS: 2
 			   (snd-display #__line__ ";set foreground-color with ind (black): ~A ~A" (color->list col) (color->list black)))))
 		   (set! *selected-graph-color* (make-color-with-catch 0.96 0.96 0.86))
 		   (set! *data-color* black)
-		   (set! (selected-data-color) blue)
+		   (set! *selected-data-color* blue)
 		   (set! *graph-color* white)
 		   (close-sound ind)))
 	       (lambda args args))
 	
-	(if (not (= (length jet-colormap) (colormap-size)))
-	    (snd-display #__line__ ";jet-colormap length: ~A ~A" (length jet-colormap) (colormap-size)))
+	(if (not (= (length jet-colormap) *colormap-size*))
+	    (snd-display #__line__ ";jet-colormap length: ~A ~A" (length jet-colormap) *colormap-size*))
 	
 	(for-each 
 	 (lambda (n err)
-	   (set! (colormap-size) n)
+	   (set! *colormap-size* n)
 	   (set! colormap-error-max err)
 	   
 	   (do ((i 0 (+ i 1))) ((= i 10))
@@ -9885,11 +9885,11 @@ EDITS: 2
 	      (snd-display #__line__ ";add-colormap ~A: ~A" ind (colormap? ind)))
 	  (if (not (feql (colormap-ref ind 0.5) '(1.0 1.0 1.0)))
 	      (snd-display #__line__ ";white colormap: ~A" (colormap-ref ind 0.5)))
-	  (let ((tag (catch #t (lambda () (set! (colormap) ind)) (lambda args args))))
+	  (let ((tag (catch #t (lambda () (set! *colormap* ind)) (lambda args args))))
 	    (if (or (eq? tag 'no-such-colormap)
-		    (not (equal? (colormap) ind))
-		    (not (= (colormap->integer (colormap)) (colormap->integer ind))))
-		(snd-display #__line__ ";colormap white: ~A ~A ~A" tag ind (colormap))))
+		    (not (equal? *colormap* ind))
+		    (not (= (colormap->integer *colormap*) (colormap->integer ind))))
+		(snd-display #__line__ ";colormap white: ~A ~A ~A" tag ind *colormap*)))
 	  (if (not (string=? (colormap-name ind) "white"))
 	      (snd-display #__line__ ";white colormap name: ~A" (colormap-name ind))))
 	
@@ -9903,10 +9903,10 @@ EDITS: 2
 	  (if (and (not (eq? tag 'no-such-colormap))
 		   (not (eq? tag 'wrong-type-arg)))
 	      (snd-display #__line__ ";colormap-ref -1: ~A" tag)))
-	(let ((tag (catch #t (lambda () (set! (colormap) (integer->colormap 1234))) (lambda args (car args)))))
+	(let ((tag (catch #t (lambda () (set! *colormap* (integer->colormap 1234))) (lambda args (car args)))))
 	  (if (not (eq? tag 'no-such-colormap))
 	      (snd-display #__line__ "; set colormap 1234: ~A" tag)))
-	(let ((tag (catch #t (lambda () (set! (colormap) (integer->colormap -1))) (lambda args (car args)))))
+	(let ((tag (catch #t (lambda () (set! *colormap* (integer->colormap -1))) (lambda args (car args)))))
 	  (if (and (not (eq? tag 'no-such-colormap))
 		   (not (eq? tag 'wrong-type-arg)))
 	      (snd-display #__line__ "; set colormap -1: ~A" tag)))
@@ -9914,9 +9914,9 @@ EDITS: 2
 	  (if (not (eq? tag 'out-of-range))
 	      (snd-display #__line__ ";colormap-ref 2.0: ~A" tag)))
 	
-	(set! (colormap-size) old-colormap-size)
-	(if (not (= (colormap-size) old-colormap-size))
-	    (snd-display #__line__ ";set colormap-size: ~A ~A" (colormap-size) old-colormap-size))
+	(set! *colormap-size* old-colormap-size)
+	(if (not (= *colormap-size* old-colormap-size))
+	    (snd-display #__line__ ";set colormap-size: ~A ~A" *colormap-size* old-colormap-size))
 	
 	(if (not (string=? (colormap-name black-and-white-colormap) "black-and-white"))
 	    (snd-display #__line__ ";black-and-white: ~A" (colormap-name black-and-white-colormap)))
@@ -9972,14 +9972,14 @@ EDITS: 2
 	  (delete-colormap pink-colormap)
 	  (if (colormap? pink-colormap)
 	      (snd-display #__line__ ";delete-colormap ~A: ~A" pink-colormap (colormap? pink-colormap)))
-	  (let ((tag (catch #t (lambda () (set! (colormap) pink-colormap)) (lambda args args))))
+	  (let ((tag (catch #t (lambda () (set! *colormap* pink-colormap)) (lambda args args))))
 	    (if (or (not (eq? (car tag) 'no-such-colormap))
-		    (equal? (colormap) pink-colormap))
-		(snd-display #__line__ ";delete pink colormap: ~A ~A ~A" tag pink-colormap (colormap))))
+		    (equal? *colormap* pink-colormap))
+		(snd-display #__line__ ";delete pink colormap: ~A ~A ~A" tag pink-colormap *colormap*)))
 	  
 	  (for-each
 	   (lambda (n)
-	     (set! (colormap-size) n)
+	     (set! *colormap-size* n)
 	     (do ((i 0 (+ i 1))) 
 		 ((= i 10))
 	       (let* ((x (random 1.0))
@@ -9994,7 +9994,7 @@ EDITS: 2
 		     (snd-display #__line__ ";copper size reset ~A: ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
 				  n x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
 	   (list 1024 256 2 512))
-	  (set! (colormap-size) 512))
+	  (set! *colormap-size* 512))
 	
 	(set! (hook-functions graph-hook) ())
 	)))
@@ -12794,7 +12794,7 @@ EDITS: 2
       (fill-float-vector v (let ((res (delay dly (+ inval (tap dly -2.0)))))
 		    (set! inval 0.0)
 		    res))
-      (set! (print-length) (max 20 (print-length)))
+      (set! *print-length* (max 20 *print-length*))
       (if (not (vequal v (float-vector 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0)))
 	  (snd-display #__line__ ";tap back 2: ~A" v)))
     
@@ -12879,7 +12879,7 @@ EDITS: 2
 	(set! (v5 i) (tap d5 j))
 	(set! (v6 i) (tap d6 j))
 	(set! (v7 i) (tap d7 j)))
-      (set! (print-length) (max 20 (print-length)))
+      (set! *print-length* (max 20 *print-length*))
       (if (and (not (vequal v1 (float-vector 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0)))
 	       (not (vequal v1 (float-vector 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0))))
 	  (snd-display #__line__ ";delay interp none (1): ~A" v1))
@@ -16476,8 +16476,8 @@ EDITS: 2
       (let ((vals (channel->float-vector)))
 	(if (not (vequal vals (float-vector 0.000 0.001 0.105 0.467 0.846 1.000 0.846 0.467 0.105 0.001)))
 	    (snd-display #__line__ ";linear-src-channel: ~A" vals)))
-      (let ((old-clip (clipping)))
-	(set! (clipping) #t)
+      (let ((old-clip *clipping*))
+	(set! *clipping* #t)
 	(save-sound-as "tst.snd")
 	(let ((fvals (file->floats "tst.snd")) 
 	      (vals (channel->float-vector)))
@@ -16485,7 +16485,7 @@ EDITS: 2
 	      (snd-display #__line__ ";file->floats: ~A ~A" vals fvals)))
 	(mus-sound-forget "tst.snd")
 	(delete-file "tst.snd")
-	(set! (clipping) old-clip))
+	(set! *clipping* old-clip))
       (let ((hp (make-differentiator)))
 	(map-channel (lambda (y)
 		       (differentiator hp y))))
@@ -17319,10 +17319,10 @@ EDITS: 2
 	(if (not (vequal (channel->float-vector 0 30) 
 			 (float-vector 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 
 			      0.000 0.000 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000)))
-	    (let ((op (print-length)))
-	      (set! (print-length) 32)
+	    (let ((op *print-length*))
+	      (set! *print-length* 32)
 	      (snd-display #__line__ ";wt 1 data: ~A" (channel->float-vector 0 30))
-	      (set! (print-length) op)))
+	      (set! *print-length* op)))
 	(undo))
       
       (let* ((table (make-float-vector 10 .1))
@@ -19997,18 +19997,18 @@ EDITS: 2
     (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
     
     (let ((nind (new-sound "fmv.snd")))
-      (if (not (= (header-type nind) (default-output-header-type)))
+      (if (not (= (header-type nind) *default-output-header-type*))
 	  (snd-display #__line__ ";new-sound default header-type: ~A ~A?"
 		       (mus-header-type-name (header-type nind))
-		       (mus-header-type-name (default-output-header-type))))
-      (if (not (= (data-format nind) (default-output-data-format)))
+		       (mus-header-type-name *default-output-header-type*)))
+      (if (not (= (data-format nind) *default-output-data-format*))
 	  (snd-display #__line__ ";new-sound default data-format: ~A ~A?"
 		       (mus-data-format-name (data-format nind))
-		       (mus-data-format-name (default-output-data-format))))
-      (if (not (= (chans nind) (default-output-chans)))
-	  (snd-display #__line__ ";new-sound default chans: ~A ~A?" (chans nind) (default-output-chans)))
-      (if (not (= (srate nind) (default-output-srate)))
-	  (snd-display #__line__ ";new-sound default srate: ~A ~A?" (srate nind) (default-output-srate)))
+		       (mus-data-format-name *default-output-data-format*)))
+      (if (not (= (chans nind) *default-output-chans*))
+	  (snd-display #__line__ ";new-sound default chans: ~A ~A?" (chans nind) *default-output-chans*))
+      (if (not (= (srate nind) *default-output-srate*))
+	  (snd-display #__line__ ";new-sound default srate: ~A ~A?" (srate nind) *default-output-srate*))
       (close-sound nind)
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd")))
     (let ((nind (new-sound "fmv.snd" mus-nist mus-bshort 22050 1 "this is a comment")))
@@ -20028,12 +20028,12 @@ EDITS: 2
       (if (or (fneq (sample 50) .5) (fneq (sample 30) 0.20608) (fneq (sample 90) 0.9755))
 	  (snd-display #__line__ ";smooth: ~A ~A ~A?" (sample 50) (sample 30) (sample 90)))
       (undo) 
-      (let ((old-wid (sinc-width)))
-	(set! (sinc-width) 40) 
+      (let ((old-wid *sinc-width*))
+	(set! *sinc-width* 40) 
 	(set! (sample 100) 0.5) 
 	(if (fneq (sample 100) 0.5) (snd-display #__line__ ";set-sample 100: ~A?" (sample 100)))
 	(src-sound .1) 
-	(set! (sinc-width) old-wid))
+	(set! *sinc-width* old-wid))
       (if (or (fneq (sample 1000) 0.5) (fneq (sample 1024) 0.0625) (fneq (sample 1010) 0.0))
 	  (snd-display #__line__ ";src-sound: ~A ~A ~A?" (sample 1000) (sample 1024) (sample 1010)))
       (revert-sound)
@@ -22433,7 +22433,7 @@ EDITS: 2
 	      (scale-by .5)
 	      (undo)
 	      (close-sound id)))
-	  (set! (print-length) 30)
+	  (set! *print-length* 30)
 	  
 	  (let* ((ind (open-sound "2.snd"))
 		 (md (car (mix "1a.snd" 1000 0 ind 1 #t))))
@@ -23043,7 +23043,7 @@ EDITS: 2
 		  (if (not (vequal vals (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.100 0.200 0.300 0.400 0.500 0.400 0.300 0.200 0.100)))
 		      (snd-display #__line__ ";scale-tempo -1 vals: ~A" vals)))
 		(undo 3)
-		(set! (sinc-width) 10)
+		(set! *sinc-width* 10)
 		(src-mixes ids 0.5)
 		(if (fneq (mix-speed (car ids)) 0.5)
 		    (snd-display #__line__ ";src-mixes speed: ~A" (mix-speed (car ids))))
@@ -23117,7 +23117,7 @@ EDITS: 2
 	      ((= i 2))
 	    
 	    (let ((ind (new-sound "test.snd" :size 100))
-		  (tag (with-mix-tags)))
+		  (tag *with-mix-tags*))
 	      
 	      ;; check various mix ops briefly
 	      (map-channel (lambda (y) 1.0))
@@ -23349,7 +23349,7 @@ EDITS: 2
 		  (if (not (vequal data (reverse! (float-vector 0.022 0.020 0.118 0.216 0.314 0.013 0.012 0.010 0.009 0.008))))
 		      (snd-display #__line__ ";read mix on xramp_ramp3 reversed: ~A" data))))
 	      
-	      (set! (with-mix-tags) #t)
+	      (set! *with-mix-tags* #t)
 	      (revert-sound)
 	      (mix-float-vector (float-vector .1 .2 .3) 50)
 	      (reverse-sound)
@@ -23358,8 +23358,8 @@ EDITS: 2
 		    (snd-display #__line__ ";reversed mix vals: ~A" vals)))
 	      (close-sound ind))
 	    
-	    (set! (with-mix-tags) #f))
-	  (set! (with-mix-tags) #t)
+	    (set! *with-mix-tags* #f))
+	  (set! *with-mix-tags* #t)
 
 	  (let ((ind (open-sound "oboe.snd")))
 	    (mix-float-vector (make-float-vector 100 .1) 1000)
@@ -23566,12 +23566,12 @@ EDITS: 2
 		      (not (= (mix-position nid) 200)))
 		  (snd-display #__line__ ";find-mix(200): ~A ~A?" nid (and (mix? nid) (mix-position nid)))))
 	    (let ((mix-id (car (mix "oboe.snd" 100))))
-	      (set! (mix-waveform-height) 40)
+	      (set! *mix-waveform-height* 40)
 	      (set! (mix-property :hiho mix-id) 123)
 	      (if (not (= (mix-property :hiho mix-id) 123)) (snd-display #__line__ ";mix-property: ~A" (mix-property :hiho mix-id)))
 	      (if (mix-property :not-there mix-id) (snd-display #__line__ ";mix-not-property: ~A" (mix-property :not-there mix-id)))
 	      (update-time-graph)
-	      (set! (mix-waveform-height) 20))
+	      (set! *mix-waveform-height* 20))
 	    (close-sound new-index))
 	  )
 	(dismiss-all-dialogs)
@@ -24061,14 +24061,14 @@ EDITS: 2
 		      (s2 (open-sound "oboe.snd")))
 		  (add-mark 123 s1 0)
 		  (add-mark 321 s2 0)
-		  (set! (with-verbose-cursor) #t)
+		  (set! *with-verbose-cursor* #t)
 		  (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 		  (save-state "s61.scm")
-		  (set! (with-verbose-cursor) #f)
+		  (set! *with-verbose-cursor* #f)
 		  (close-sound s1)
 		  (close-sound s2))
 		(load (string-append cwd "s61.scm"))
-		(if (not (with-verbose-cursor)) (snd-display #__line__ ";save-state with-verbose-cursor?"))
+		(if (not *with-verbose-cursor*) (snd-display #__line__ ";save-state with-verbose-cursor?"))
 		(let ((s1 (find-sound "oboe.snd" 0))
 		      (s2 (find-sound "oboe.snd" 1)))
 		  (if (or (not (sound? s1)) (not (sound? s2)))
@@ -24761,14 +24761,14 @@ EDITS: 2
 	    (if (defined? (string->symbol (car (vals i))))
 		(snd-help (car (vals i)) #f))))
 	
-	(set! (show-indices) #t)
+	(set! *show-indices* #t)
 	(let ((ind (open-sound "oboe.snd")))
 	  (if (< (length (sound-widgets ind)) 4)
 	      (snd-display #__line__ ";sound-widgets: ~A?" (sound-widgets ind)))
 	  (status-report "hi there" ind)
 	  (status-report "")
 	  (close-sound ind))
-	(set! (show-indices) #f)
+	(set! *show-indices* #f)
 	
 	(define-envelope test-ramp '(0 0 1 1))
 	(if (not (equal? test-ramp '(0 0 1 1))) (snd-display #__line__ ";define-envelope test-ramp: ~A" test-ramp))
@@ -24792,8 +24792,8 @@ EDITS: 2
 		(if (not (feql vfe (list 0.0 1.0 1.0 1.0))) (snd-display #__line__ ";vf amp env: ~A" vfe))
 		(if (not (list? vffiles)) (snd-display #__line__ ";vf files: ~A" vffiles))
 		(if (not (list? vfsel)) (snd-display #__line__ ";vf selected files: ~A" vfsel))
-		(if (not (= (view-files-speed-style dialog) (speed-control-style)))
-		    (snd-display #__line__ ";vf speed-style def: ~A ~A" (view-files-speed-style dialog) (speed-control-style)))
+		(if (not (= (view-files-speed-style dialog) *speed-control-style*))
+		    (snd-display #__line__ ";vf speed-style def: ~A ~A" (view-files-speed-style dialog) *speed-control-style*))
 		(set! (view-files-amp dialog) 0.5)
 		(if (fneq (view-files-amp dialog) 0.5) (snd-display #__line__ ";set vf amp: ~A" (view-files-amp dialog)))
 		(set! (view-files-speed dialog) 0.5)
@@ -25282,7 +25282,7 @@ EDITS: 2
 		(snd-display #__line__ ";add-to-menu non-thunk: ~A" tag)))
 	  
 	  (set! (cursor fd) 2000)
-	  (set! (transform-graph-type) graph-once)
+	  (set! *transform-graph-type* graph-once)
 	  (set! (transform-graph? fd) #t)
 	  (if (not clm_buffer_added)
 	      (begin
@@ -25337,7 +25337,7 @@ EDITS: 2
       (if (not (eq? tag 'no-such-sample))
 	  (snd-display #__line__ ";access invalid (bin) transform sample: ~A" tag)))
     (close-sound fd)
-    (set! (transform-type) fourier-transform)
+    (set! *transform-type* fourier-transform)
     
     (hook-push after-open-hook
 	       (lambda (hook)
@@ -25397,7 +25397,7 @@ EDITS: 2
     (let ()
       (let ((added 0))
 	(set! (hook-functions close-hook) ())
-	(set! (with-background-processes) #t)
+	(set! *with-background-processes* #t)
 	(hook-push new-widget-hook
 		   (lambda (hook)
 		     (set! added (+ added 1))))
@@ -25412,7 +25412,7 @@ EDITS: 2
 	      (snd-display #__line__ ";close all didn't? ~A ~A ~A ~A ~A" fd (sound? fd) (short-file-name fd) (hook-functions close-hook) (sounds))
 	      (close-sound fd)))
 	(set! fd (open-sound "obtest.snd"))	  
-	(set! (with-background-processes) #f)
+	(set! *with-background-processes* #f)
 	(set! (hook-functions new-widget-hook) ()))
       
       (if (and (not ladspa_inited)
@@ -25420,7 +25420,7 @@ EDITS: 2
 	       (file-exists? "/home/bil/test/ladspa/ladspa_sdk/plugins"))
 	  (begin
 	    (set! ladspa_inited #t)
-	    (set! (ladspa-dir) "/home/bil/test/ladspa/ladspa_sdk/plugins")
+	    (set! *ladspa-dir* "/home/bil/test/ladspa/ladspa_sdk/plugins")
 	    (init-ladspa)
 	    (let* ((ptr (ladspa-descriptor "delay" "delay_5s"))
 		   (label (.Label ptr))
@@ -25500,7 +25500,7 @@ EDITS: 2
 			 (lambda args (car args)))))
 	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";apply-ladspa tag: ~A" tag)))
 	    
-	    (set! (ladspa-dir) "/home/bil/test/ladspa/vocoder-0.3")
+	    (set! *ladspa-dir* "/home/bil/test/ladspa/vocoder-0.3")
 	    (init-ladspa)
 	    (if (not (equal? (list-ladspa) (list (list "vocoder" "vocoder"))))
 		(snd-display #__line__ ";list-ladspa vocoder: ~A" (list-ladspa)))
@@ -25516,7 +25516,7 @@ EDITS: 2
 			    (framples) "vocoder")
 	      (undo)
 	      
-	      (set! (ladspa-dir) "/home/bil/test/ladspa/lib/ladspa")
+	      (set! *ladspa-dir* "/home/bil/test/ladspa/lib/ladspa")
 	      (init-ladspa)
 	      (for-each (lambda (plug) (apply analyse-ladspa plug)) (list-ladspa))
 	      
@@ -25913,12 +25913,12 @@ EDITS: 2
 	
 	(hook-push play-hook
 		   (lambda (hook)
-		     (set! (expand-control-hop) .02)
-		     (set! (expand-control-length) .02)
-		     (set! (expand-control-ramp) .2)
-		     (set! (contrast-control-amp) 0.5)
-		     (set! (reverb-control-lowpass) .02)
-		     (set! (reverb-control-feedback) .02)))
+		     (set! *expand-control-hop* .02)
+		     (set! *expand-control-length* .02)
+		     (set! *expand-control-ramp* .2)
+		     (set! *contrast-control-amp* 0.5)
+		     (set! *reverb-control-lowpass* .02)
+		     (set! *reverb-control-feedback* .02)))
 	
 	(play ind :wait #t :end 1000)
 	(set! (hook-functions play-hook) ())
@@ -25928,15 +25928,15 @@ EDITS: 2
 	(set! (hook-functions start-playing-hook) ())
 	
 	(let ((ss #f)
-	      (old-reg (selection-creates-region)))
-	  (set! (selection-creates-region) #t)
+	      (old-reg *selection-creates-region*))
+	  (set! *selection-creates-region* #t)
 	  (hook-push stop-playing-selection-hook (lambda (hook) (set! ss #t)))
 	  (let ((reg (select-all)))
 	    (play (selection) :wait #t)
 	    (if (region? reg) (play reg :wait #t))
 	    (if (not ss) (snd-display #__line__ ";stop-playing-selection-hook: ~A" ss)))
 	  (set! (hook-functions stop-playing-selection-hook) ())
-	  (set! (selection-creates-region) old-reg))
+	  (set! *selection-creates-region* old-reg))
 	
 	(let ((pl (make-player ind 0)))
 	  (free-player pl)
@@ -26390,9 +26390,9 @@ EDITS: 2
       (set! (hook-functions before-save-as-hook) ())
       (set! (hook-functions after-save-as-hook) ()))
     
-    (let ((old-clip (clipping))
+    (let ((old-clip *clipping*)
 	  (old-mus-clip (mus-clipping)))
-      (set! (clipping) #t)
+      (set! *clipping* #t)
       (set! (mus-clipping) #t)
       (set! (hook-functions clip-hook) ())
       
@@ -26425,7 +26425,7 @@ EDITS: 2
 	    (if (not (vequal fixed-vals new-vals))
 		(snd-display #__line__ ";clip-hook results:~%    ~A~%    ~A~%    ~A" new-vals fixed-vals vals)))
 	  (close-sound index)))
-      (set! (clipping) old-clip)
+      (set! *clipping* old-clip)
       (set! (mus-clipping) old-mus-clip))
     ))
 
@@ -26438,15 +26438,15 @@ EDITS: 2
 (define (safe-make-selection beg end snd) ; used in test_15 also
   "make-region with error checks"
   (let ((len (framples snd))
-	(old-choice (selection-creates-region)))
-    (set! (selection-creates-region) #t)
+	(old-choice *selection-creates-region*))
+    (set! *selection-creates-region* #t)
     (if (> len 1)
 	(if (< end len)
 	    (make-selection beg end snd)
 	    (if (< beg len)
 		(make-selection beg (- len 1) snd)
 		(make-selection 0 (- len 1) snd))))
-    (set! (selection-creates-region) old-choice)))
+    (set! *selection-creates-region* old-choice)))
 
 (define (flatten lst)
   (cond ((null? lst) ())
@@ -26510,7 +26510,7 @@ EDITS: 2
       (let* ((tmpf (snd-tempnam))
 	     (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
 	     (oldsnd (or snd (selected-sound))))
-	(if (not (string? (save-dir))) (set! (save-dir) "/tmp"))
+	(if (not (string? *save-dir*)) (set! *save-dir* "/tmp"))
 	(save-edit-history scm oldsnd)
 	(copy-file (file-name oldsnd) new-name)
 	(set! sfile (open-sound new-name))
@@ -26661,8 +26661,8 @@ EDITS: 2
 	      ))
 	  
 	  (revert-sound)
-	  (let ((old-setting (selection-creates-region)))
-	    (set! (selection-creates-region) #t)
+	  (let ((old-setting *selection-creates-region*))
+	    (set! *selection-creates-region* #t)
 	    (let ((reg (select-all)))
 	      (without-errors
 	       (if (and (region? reg) 
@@ -26671,7 +26671,7 @@ EDITS: 2
 			 (r2 (selection-rms)))
 		     (if (fneq r1 r2)
 			 (snd-display #__line__ ";region rms: ~A?" r1))))))
-	    (set! (selection-creates-region) old-setting))
+	    (set! *selection-creates-region* old-setting))
 	  
 	  (without-errors (if (region? (cadr (regions))) (play (cadr (regions)) :wait #t)))
 	  (without-errors (mix-region (car (regions))))
@@ -26862,8 +26862,8 @@ EDITS: 2
 	    (revert-sound zz)
 	    
 	    (let ((editctr (edit-position zz))
-		  (old-selection-choice (selection-creates-region)))
-	      (set! (selection-creates-region) #t)
+		  (old-selection-choice *selection-creates-region*))
+	      (set! *selection-creates-region* #t)
 	      (if (not (= (edit-position) 0)) (snd-display #__line__ ";revert-sound edit-position: ~A" (edit-position)))
 	      (as-one-edit 
 	       (lambda ()
@@ -26875,7 +26875,7 @@ EDITS: 2
 			 (delete-selection)
 			 (mix-region reg))))))
 	      (if (not (= (edit-position) 1)) (snd-display #__line__ ";as-one-edit mix zz: ~A -> ~A" editctr (edit-position)))
-	      (set! (selection-creates-region) old-selection-choice))
+	      (set! *selection-creates-region* old-selection-choice))
 	    (close-sound zz))
 	  (let ((s8 (view-sound s8-snd)))
 	    (select-sound s8)
@@ -26936,8 +26936,8 @@ EDITS: 2
 	      (apply-controls) 
 	      (if (< (framples) 100000) (play :wait #t))
 	      
-	      (if (fneq (reverb-control-decay cfd) (reverb-control-decay))
-		  (snd-display #__line__ ";reverb-control-decay local: ~A, global: ~A" (reverb-control-decay cfd) (reverb-control-decay)))
+	      (if (fneq (reverb-control-decay cfd) *reverb-control-decay*)
+		  (snd-display #__line__ ";reverb-control-decay local: ~A, global: ~A" (reverb-control-decay cfd) *reverb-control-decay*))
 	      (set! (reverb-control?) #t)
 	      (set! (reverb-control-scale) .2) 
 	      (test-panel reverb-control-scale 'reverb-control-scale)
@@ -26961,7 +26961,7 @@ EDITS: 2
 	      (apply-controls) 
 ;	      (if (< (framples) 100000) (play :wait #t))
 	      (set! (filter-control?) #t)
-	      (set! (filter-control-order) 40) 
+	      (set! *filter-control-order* 40) 
 	      (test-panel filter-control-order 'filter-control-order)
 	      (set! (filter-control-envelope) '(0 0 .1 1 .2 0 1 0)) 
 	      (filter-control-envelope) 
@@ -27048,7 +27048,7 @@ EDITS: 2
 	  (test-channel after-edit-hook 'after-edit-hook)
 	  (test-channel undo-hook 'undo-hook)
 	  (if (<= tests 2)
-	      (set! (transform-type)
+	      (set! *transform-type*
 		    (add-transform "histogram" "bins" 0.0 1.0 
 				   (lambda (len fd)
 				     (let ((v (make-float-vector len))
@@ -27061,7 +27061,7 @@ EDITS: 2
 					   (if (< bin steps)
 					       (float-vector-offset! (make-shared-vector v (list steps) bin) step)))))))))
 	  (set! (x-bounds) '(.1 .2))
-	  (set! (transform-type) fourier-transform)
+	  (set! *transform-type* fourier-transform)
 	  (set! (x-bounds) '(.1 .2))
 	  (hook-push lisp-graph-hook display-energy)
 	  (set! (hook-functions graph-hook) ())
@@ -27267,14 +27267,14 @@ EDITS: 2
 	      (list 'zero-pad zero-pad #f 0 2)
 	      (list 'zoom-focus-style zoom-focus-style #f 0 3))))
 	  
-	  (if (not (equal? (transform-type) fourier-transform))
+	  (if (not (equal? *transform-type* fourier-transform))
 	      (begin
 		(set! (transform-graph? #t #t) #f)
-		(set! (transform-size) (min (transform-size) 128))))
+		(set! *transform-size* (min *transform-size* 128))))
 	  )))
-    (set! (sinc-width) 10)
+    (set! *sinc-width* 10)
     (if open-files (for-each close-sound open-files))
-    (set! (sync-style) sync-none)
+    (set! *sync-style* sync-none)
     (set! open-files ())
     (set! (mus-rand-seed) 1234)
     (if (not (= (mus-rand-seed) 1234)) (snd-display #__line__ ";mus-rand-seed: ~A (1234)!" (mus-rand-seed)))
@@ -27294,7 +27294,7 @@ EDITS: 2
     (set! (hook-functions close-hook) ())
     (set! (hook-functions open-hook) ())
     
-    (set! (clipping) #f)
+    (set! *clipping* #f)
     (for-each close-sound (sounds))
     )
   )
@@ -27495,7 +27495,7 @@ EDITS: 2
       (map-channel (lambda (val) 
 		     (sound-interp intrp (floor (* len 0.5 (+ 1.0 (* mx (read-sample rd))))))))))
   
-  (set! (transform-type) fourier-transform)
+  (set! *transform-type* fourier-transform)
   
   (if with-gui
       (begin
@@ -27693,7 +27693,7 @@ EDITS: 2
 	    (let ((old-srate *clm-srate*))
 	      (set! *clm-srate* 22050)
 	      (let ((ind (new-sound "test.snd" :size 20)))
-		(if (< (print-length) 20) (set! (print-length) 20))
+		(if (< *print-length* 20) (set! *print-length* 20))
 		(offset-channel 1.0)
 		(env-sound '(0 0 1 1))
 		(let ((osc (make-oscil :frequency 1000.0 :initial-phase (+ pi (/ pi 2))))
@@ -28030,7 +28030,7 @@ EDITS: 2
 	      (do ((i 0 (+ i 1))) ((= i 4)) 
 		(if (not (= (time-graph-style snd3 i) graph-dots)) 
 		    (snd-display #__line__ ";set time-graph-style (all): ~A" (time-graph-style snd3 i))))
-	      (set! (graph-style) graph-dots-and-lines)
+	      (set! *graph-style* graph-dots-and-lines)
 	      (do ((i 0 (+ i 1))) ((= i 4)) 
 		(if (not (= (time-graph-style snd3 i) graph-dots-and-lines)) 
 		    (snd-display #__line__ ";set time-graph-style (dal): ~A" (time-graph-style snd3 i))))
@@ -28076,12 +28076,12 @@ EDITS: 2
 		  (play-with-amps snd2 0.2 0.1))
 	      (close-sound snd2))
 	    
-	    (let ((old-bp (with-background-processes)))
-	      (set! (with-background-processes) #f)
+	    (let ((old-bp *with-background-processes*))
+	      (set! *with-background-processes* #f)
 	      (let* ((ind (open-sound "1a.snd"))
 		     (player (make-player ind 0))
 		     (len (framples ind 0))
-		     (incr (dac-size))
+		     (incr *dac-size*)
 		     (e (make-env '(0 0 1 1) :length (+ 1 (floor (exact->inexact (/ len incr))))))
 		     (samp 0))
 		(add-player player 0 -1 -1 
@@ -28097,7 +28097,7 @@ EDITS: 2
 			     (set! samp (+ samp incr))))
 		(start-playing 1 (srate ind)))
 	      (if (find-sound "1a.snd") (snd-display #__line__ ";stop proc didn't close?"))
-	      (set! (with-background-processes) old-bp))
+	      (set! *with-background-processes* old-bp))
 	    
 	    (let ((ind (open-sound "pistol.snd")))
 	      (if (selection-member? ind 0) 
@@ -28384,7 +28384,7 @@ EDITS: 2
 	      (close-sound ind)
 	      )
 	    
-	    (if (< (print-length) 12) (set! (print-length) 12))
+	    (if (< *print-length* 12) (set! *print-length* 12))
 	    (let ((ind (new-sound "hi.snd")))
 	      (do ((i 0 (+ i 1)))
 		  ((= i 10)) 
@@ -28611,7 +28611,7 @@ EDITS: 2
 	    
 	    (if (file-exists? "storm.snd")
 		(let ((ind (open-sound "storm.snd")))
-		  (set! (sinc-width) 10)
+		  (set! *sinc-width* 10)
 		  (time (src-sound 1.3))
 		  (time (env-sound '(0 0 1 1 2 0)))
 		  (time (filter-sound '(0 1 .2 0 .5 1 1 0) 20))      ; FIR direct form
@@ -28825,21 +28825,21 @@ EDITS: 2
 	    
 	    (let ((ind (new-sound "fmv.snd"))
 		  (v (make-float-vector 2000))
-		  (old-size (transform-size))
-		  (old-type (transform-type))
-		  (old-norm (transform-normalization))
-		  (old-grf (transform-graph-type))
+		  (old-size *transform-size*)
+		  (old-type *transform-type*)
+		  (old-norm *transform-normalization*)
+		  (old-grf *transform-graph-type*)
 		  (e (make-env (list 0.0 0.0 1.0 (* 2000 0.2 pi)) :length 2001)))
 	      (fill-float-vector v (sin (env e)))
 	      (float-vector->channel v 0 2000 ind 0)
-	      (set! (transform-size) 256)
-	      (set! (transform-type) fourier-transform)
-	      (set! (transform-normalization) normalize-by-channel)
-	      (set! (transform-graph-type) graph-once)
-	      (set! (zero-pad) 0)
+	      (set! *transform-size* 256)
+	      (set! *transform-type* fourier-transform)
+	      (set! *transform-normalization* normalize-by-channel)
+	      (set! *transform-graph-type* graph-once)
+	      (set! *zero-pad* 0)
 	      (set! (transform-graph?) #t)
 	      (make-selection 0 200)
-	      (set! (show-selection-transform) #t)
+	      (set! *show-selection-transform* #t)
 	      (set! (selection-framples) 300)
 	      (update-transform-graph)
 	      (let* ((data (transform->float-vector))
@@ -28852,7 +28852,7 @@ EDITS: 2
 		    (snd-display #__line__ ";transform selection at 51: ~A, peak: ~A" (data 51) peak)))
 	      (for-each
 	       (lambda (pad)
-		 (set! (zero-pad) pad)
+		 (set! *zero-pad* pad)
 		 (update-transform-graph)
 		 (let* ((data (transform->float-vector))
 			(peak (float-vector-peak data))
@@ -28860,14 +28860,14 @@ EDITS: 2
 		   (if (> (* .5 peak) pval)
 		       (snd-display #__line__ ";transform selection padded ~D: ~A, peak: ~A" pad pval peak))))
 	       (list 1 0 3 31))
-	      (set! (zero-pad) 100000)
-	      (if (> (zero-pad) 1000)
-		  (snd-display #__line__ ";zero-pad: ~A" (zero-pad)))
-	      (set! (zero-pad) 0)
-	      (set! (transform-size) old-size)
-	      (set! (transform-type) old-type)
-	      (set! (transform-normalization) old-norm)
-	      (set! (transform-graph-type) old-grf)
+	      (set! *zero-pad* 100000)
+	      (if (> *zero-pad* 1000)
+		  (snd-display #__line__ ";zero-pad: ~A" *zero-pad*))
+	      (set! *zero-pad* 0)
+	      (set! *transform-size* old-size)
+	      (set! *transform-type* (if (integer? old-type) (integer->transform old-type) old-type))
+	      (set! *transform-normalization* old-norm)
+	      (set! *transform-graph-type* old-grf)
 	      (close-sound ind))
 	    
 	    (let ((ind (open-sound "storm.snd"))
@@ -29786,7 +29786,7 @@ EDITS: 2
 	  (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
 	  (close-sound ind))
 	
-	(if (not (= (default-output-chans) 1)) (set! (default-output-chans) 1))
+	(if (not (= *default-output-chans* 1)) (set! *default-output-chans* 1))
 	(let ((ind (new-sound "fmv.snd"))
 	      (v0 (make-float-vector 20 1.0)))
 	  (float-vector->channel v0)
@@ -29833,7 +29833,7 @@ EDITS: 2
 		(snd-display #__line__ ";env-channel step 1 (.5): ~A" v1)))
 	  (close-sound ind))
 	
-	(set! (x-axis-style) x-axis-as-percentage)
+	(set! *x-axis-style* x-axis-as-percentage)
 	(let* ((ind (open-sound "2.snd"))
 	       (fr (framples))
 	       (m0 (maxamp ind 0))
@@ -29847,7 +29847,7 @@ EDITS: 2
 	  (if (or (fneq m0 (maxamp ind 1)) (fneq m1 (maxamp ind 0)))
 	      (snd-display #__line__ ";swapped: ~A ~A -> ~A ~A" m0 m1 (maxamp ind 0) (maxamp ind 1)))
 	  (close-sound ind))
-	(set! (x-axis-style) x-axis-in-seconds)
+	(set! *x-axis-style* x-axis-in-seconds)
 	(let ((new-snd (mono-files->stereo "test.snd" "oboe.snd" "pistol.snd")))
 	  (if (not (= (channels new-snd) 2)) (snd-display #__line__ ";mono-files->stereo not stereo? ~A" (channels new-snd)))
 	  (if (not (string=? (short-file-name new-snd) "test.snd")) (snd-display #__line__ ";mono-files->stereo filename: ~A" (short-file-name new-snd)))
@@ -29928,8 +29928,8 @@ EDITS: 2
 	
 	(let ((ind (open-sound "oboe.snd"))
 	      (ind1 (new-sound "test.snd"))
-	      (old-save-dir (save-dir)))
-	  (set! (save-dir) #f)
+	      (old-save-dir *save-dir*))
+	  (set! *save-dir* #f)
 	  (map-channel (lambda (y) 0.5) 0 100 ind1 0)
 	  (save-sound ind1)
 	  (close-sound ind1)
@@ -29947,7 +29947,7 @@ EDITS: 2
 		  (if (not (vequal vals new-vals))
 		      (snd-display #__line__ ";save state hiho vals: ~A ~A" vals new-vals))))
 	    (close-sound ind))
-	  (set! (save-dir) old-save-dir))
+	  (set! *save-dir* old-save-dir))
 	
 	(let ((ind (new-sound "test.snd")))
 	  (map-channel (lambda (y) (random 1.0)) 0 10)
@@ -29957,14 +29957,14 @@ EDITS: 2
 	  (revert-sound ind)
 	  (close-sound ind))
 	
-	(set! (x-axis-style) x-axis-in-beats)
+	(set! *x-axis-style* x-axis-in-beats)
 	(let ((ind (open-sound "storm.snd")))
 	  (reverse-channel 500000 1000000)
 	  (set! (sample 0 ind 0 current-edit-position) .1)
 	  (if (fneq (sample 0 ind 0 current-edit-position) .1) 
 	      (snd-display #__line__ ";set sample + edpos: ~A" (sample 0 ind 0 current-edit-position)))
 	  (close-sound ind))
-	(set! (x-axis-style) x-axis-in-seconds)
+	(set! *x-axis-style* x-axis-in-seconds)
 	
 	(for-each 
 	 (lambda (out-chans)
@@ -30141,7 +30141,7 @@ EDITS: 2
 	  (close-sound ind))
 	
 	(if (mus-clipping) (set! (mus-clipping) #f))
-	(if (clipping) (set! (clipping) #f))
+	(if *clipping* (set! *clipping* #f))
 	(let ((ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 1 "edit trees"))
 	      (vals (make-float-vector 100)))
 	  (select-sound ind)
@@ -30957,7 +30957,7 @@ EDITS: 2
 	      (catch #t
 		     (lambda ()
 		       (set! (squelch-update ind) #t)
-		       (set! (selection-creates-region) #f)
+		       (set! *selection-creates-region* #f)
 		       (let ((times (map
 				     (lambda (function)
 				       (let ((start (real-time)))
@@ -31160,7 +31160,7 @@ EDITS: 2
 		(close-sound ind))))
 	
 	(let ((ind (new-sound "fmv.snd" mus-next mus-ldouble)))
-	  (set! (sinc-width) 10)
+	  (set! *sinc-width* 10)
 	  (pad-channel 0 1000 ind)
 	  (set! (sample 100) 0.5)
 	  (if (fneq (sample 100 ind 0 2) 0.5) (snd-display #__line__ ";sample 100 (2): ~A" (sample 100 ind 0 2)))
@@ -32085,7 +32085,7 @@ EDITS: 1
 		))))
 	
 	(let ((ind (new-sound "fmv.snd" :size 50)))
-	  (set! (sinc-width) 10)
+	  (set! *sinc-width* 10)
 	  (set! (sample 20 ind 0) 0.5)
 	  (let ((edpos (edit-position ind 0)))
 	    
@@ -32520,8 +32520,8 @@ EDITS: 1
 		  (snd-display #__line__ ";env-sound sync'd maxes buf: ~A -> ~A" mxs mxs1)))
 	    (undo 1))
 	  (let ((name (file-name ind)))
-	    (if (not (= (srate ind) (default-output-srate)))
-		(snd-display #__line__ ";new-sound default srate: ~A ~A" (srate ind) (default-output-srate)))
+	    (if (not (= (srate ind) *default-output-srate*))
+		(snd-display #__line__ ";new-sound default srate: ~A ~A" (srate ind) *default-output-srate*))
 	    (close-sound ind)
 	    (if (not (file-exists? name))
 		(snd-display #__line__ ";new-sound temp? ~A" name)
@@ -32544,8 +32544,8 @@ EDITS: 1
 	    (close-sound ind)
 	    (close-sound ind1)))
 	
-	(let ((old-width (sinc-width)))
-	  (set! (sinc-width) 10)
+	(let ((old-width *sinc-width*))
+	  (set! *sinc-width* 10)
 	  
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 3) .5)
@@ -32611,7 +32611,7 @@ EDITS: 1
 		  (format *stderr* "src 2, 40 0 10: ~A~%" v)))
 	    (close-sound res))
 	  
-	  (set! (sinc-width) 11)
+	  (set! *sinc-width* 11)
 	  
 	  (let ((res (new-sound :size 15)))
 	    (set! (sample 3) .5)
@@ -32630,11 +32630,11 @@ EDITS: 1
 		  (snd-display #__line__ ";src 2, 15 0 11: ~A" v)))
 	    (close-sound res))
 	  
-	  (set! (sinc-width) old-width))
+	  (set! *sinc-width* old-width))
 
 
-	(let ((old-width (sinc-width)))
-	  (set! (sinc-width) 10)
+	(let ((old-width *sinc-width*))
+	  (set! *sinc-width* 10)
 	  
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 3) .5)
@@ -32720,7 +32720,7 @@ EDITS: 1
 		  (format *stderr* "src 1/2, 40 0 10: ~A~%" v)))
 	    (close-sound res))
 	  
-	  (set! (sinc-width) 11)
+	  (set! *sinc-width* 11)
 	  
 	  (let ((res (new-sound :size 15)))
 	    (set! (sample 3) .5)
@@ -32743,7 +32743,7 @@ EDITS: 1
 		  (format *stderr* "src 1/2, 15 0 11: ~A~%" v)))
 	    (close-sound res))
 	  
-	  (set! (sinc-width) 10)
+	  (set! *sinc-width* 10)
 
 	  (let ((res (new-sound :size 10)))
 	    (set! (sample 2) .5)
@@ -32781,7 +32781,7 @@ EDITS: 1
 		  (format *stderr* "src e, 10 0 10: ~A~%" v)))
 	    (close-sound res))
 	  
-	  (set! (sinc-width) old-width))
+	  (set! *sinc-width* old-width))
 	
 	
 	(let ((ind (new-sound "test.snd" :size 40000)))
@@ -32881,7 +32881,7 @@ EDITS: 1
 	    (graph (list (float-vector 0 1 2) (float-vector 3 2 1) (float-vector 1 2 3) (float-vector 1 1 1) (float-vector 0 1 0) (float-vector 3 1 2)))
 	    (update-lisp-graph)
 	    (hook-push lisp-graph-hook (lambda (hook)
-					 (set! (hook 'result) (list *basic-color* (zoom-color) *data-color* (selected-data-color) *mix-color*))))
+					 (set! (hook 'result) (list *basic-color* *zoom-color* *data-color* *selected-data-color* *mix-color*))))
 	    (graph (list (float-vector 0 1 2) (float-vector 3 2 1) (float-vector 1 2 3) (float-vector 1 1 1) (float-vector 0 1 0) (float-vector 3 1 2)))
 	    (update-lisp-graph)
 	    (set! (hook-functions lisp-graph-hook) ())
@@ -33049,11 +33049,11 @@ EDITS: 1
     (delete-sample 12)
     (set! (x-bounds) (list .2 .4))
     (let ((old-bounds (x-bounds)))
-      (set! (show-axes) show-all-axes)
-      (set! (transform-graph-type) graph-as-sonogram)
-      (set! (speed-control-style) speed-control-as-ratio)
-      (set! (channel-style) channels-superimposed)
-      (set! (enved-target) enved-srate)
+      (set! *show-axes* show-all-axes)
+      (set! *transform-graph-type* graph-as-sonogram)
+      (set! *speed-control-style* speed-control-as-ratio)
+      (set! *channel-style* channels-superimposed)
+      (set! *enved-target* enved-srate)
       (set! (sound-property :hi nind) "hi")
       (set! (sound-property 'ho nind) 1234)
       (set! (channel-property :ha nind 0) 3.14)
@@ -33064,20 +33064,20 @@ EDITS: 1
 		     (lambda ()
 		       (format #t ";this comment will be at the top of the saved state file.~%~%")
 		       (set! (hook 'result) #t)))))
-      (if (file-exists? (save-state-file)) (delete-file (save-state-file)))
-      (save-state (save-state-file))
+      (if (file-exists? *save-state-file*) (delete-file *save-state-file*))
+      (save-state *save-state-file*)
       (close-sound nind)
       (for-each forget-region (regions))
-      (load (string-append cwd (save-state-file)))
+      (load (string-append cwd *save-state-file*))
       (let ((ind (find-sound "oboe.snd")))
 	(if (not (sound? ind))
-	    (snd-display #__line__ ";can't restore oboe.snd from ~A?" (save-state-file))
+	    (snd-display #__line__ ";can't restore oboe.snd from ~A?" *save-state-file*)
 	    (begin
 	      (if (or (> (abs (- (car old-bounds) (car (x-bounds ind 0)))) .05)
 		      (> (abs (- (cadr old-bounds) (cadr (x-bounds ind 0)))) .05))
 		  (snd-display #__line__ ";save bounds: ~A" (x-bounds ind 0)))
 	      (if (not (= (length (marks ind 0)) 1))
-		  (snd-display #__line__ ";save marks: ~A (~A)?" (marks ind 0) (save-state-file))
+		  (snd-display #__line__ ";save marks: ~A (~A)?" (marks ind 0) *save-state-file*)
 		  (begin
 		    (if (not (= (mark-sample (car (marks ind 0))) 122))
 			(snd-display #__line__ ";save mark: ~A?" (mark-sample (car (marks ind 0)))))
@@ -33245,14 +33245,14 @@ EDITS: 1
       (delete-file "t1.scm"))
     
     (let ((ind (open-sound "oboe.snd"))
-	  (old-save-dir (save-dir))
-	  (old-eps-file (eps-file)))
-      (set! (save-dir) #f)
+	  (old-save-dir *save-dir*)
+	  (old-eps-file *eps-file*))
+      (set! *save-dir* #f)
       (let ((v (make-float-vector 32 1.0)))
 	(set! (samples 100 32) v))
       (map-channel (lambda (y) (+ y .1)) 1000 10000)
       (set! (show-axes ind 0) show-no-axes)
-      (set! (zoom-focus-style) zoom-focus-middle)
+      (set! *zoom-focus-style* zoom-focus-middle)
       (set! (transform-normalization ind 0) dont-normalize)
       (set! (graph-style ind 0) graph-filled)
       (set! (transform-graph-type ind 0) graph-as-spectrogram)
@@ -33260,7 +33260,7 @@ EDITS: 1
       (set! (x-axis-style ind 0) x-axis-as-percentage)
       (set! (speed-control-style ind) speed-control-as-semitone)
       (set! (cursor ind 0) 1234)
-      (set! (eps-file) "hiho.eps")
+      (set! *eps-file* "hiho.eps")
       (set! (amp-control-bounds ind) (list 0.0 2.5))
       (set! (speed-control-bounds ind) (list 1.0 2.5))
       (set! (reverb-control-scale-bounds ind) (list 0.0 2.5))
@@ -33289,10 +33289,10 @@ EDITS: 1
 	(set! *mus-array-print-length* old-array-print-length)
 	(set! *clm-file-buffer-size* old-file-buffer-size)
 	(set! *clm-table-size* old-clm-table-size))
-      (set! (save-dir) old-save-dir)
+      (set! *save-dir* old-save-dir)
       (set! ind (find-sound "oboe.snd"))
       (if (not (= (show-axes ind 0) show-no-axes)) (snd-display #__line__ ";save show-no-axes: ~A" (show-axes ind 0)))
-      (if (not (= (zoom-focus-style) zoom-focus-middle)) (snd-display #__line__ ";save zoom-focus-middle: ~A" (zoom-focus-style)))
+      (if (not (= *zoom-focus-style* zoom-focus-middle)) (snd-display #__line__ ";save zoom-focus-middle: ~A" *zoom-focus-style*))
       (if (not (= (transform-normalization ind 0) dont-normalize)) (snd-display #__line__ ";save dont-normalize: ~A" (transform-normalization ind 0)))
       (if (not (= (graph-style ind 0) graph-filled)) (snd-display #__line__ ";save graph-filled: ~A" (graph-style ind 0)))
       (if (not (= (transform-graph-type ind 0) graph-as-spectrogram)) (snd-display #__line__ ";save graph-as-spectrogram: ~A" (transform-graph-type ind 0)))
@@ -33300,7 +33300,7 @@ EDITS: 1
       (if (not (= (x-axis-style ind 0) x-axis-as-percentage)) (snd-display #__line__ ";save x-axis-as-percentage: ~A" (x-axis-style ind 0)))
       (if (not (= (speed-control-style ind) speed-control-as-semitone)) (snd-display #__line__ ";save speed-control-style: ~A" (speed-control-style ind)))
       (if (not (= (cursor ind 0) 1234)) (snd-display #__line__ ";save cursor 1234: ~A" (cursor ind 0)))
-      (if (not (string=? (eps-file) "hiho.eps")) (snd-display #__line__ ";save eps-file: ~A" (eps-file)))
+      (if (not (string=? *eps-file* "hiho.eps")) (snd-display #__line__ ";save eps-file: ~A" *eps-file*))
       (if (not (string=? (x-axis-label ind 0 time-graph) "time-x"))
 	  (snd-display #__line__ ";save x-axis-label: ~A" (x-axis-label ind 0 time-graph)))
       (if (not (string=? (y-axis-label ind 0 time-graph) "amp-y"))
@@ -33315,22 +33315,22 @@ EDITS: 1
 	  (snd-display #__line__ ";save reverb-control-scale-bounds: ~A" (reverb-control-scale-bounds ind)))
       (if (not (feql (reverb-control-length-bounds ind) (list 0 2.5))) 
 	  (snd-display #__line__ ";save reverb-control-length-bounds: ~A" (reverb-control-length-bounds ind)))
-      (set! (eps-file) old-eps-file)
+      (set! *eps-file* old-eps-file)
       (delete-file "s61.scm")
       (close-sound ind))
     
     (let ((ind (open-sound "oboe.snd"))
-	  (old-tiny-font (tiny-font))
-	  (old-peaks-font (peaks-font))
-	  (old-bold-peaks-font (bold-peaks-font))
+	  (old-tiny-font *tiny-font*)
+	  (old-peaks-font *peaks-font*)
+	  (old-bold-peaks-font *bold-peaks-font*)
 	  (old-amp (amp-control-bounds))
 	  (old-speed (speed-control-bounds))
 	  (old-contrast (contrast-control-bounds))
 	  (old-revlen (reverb-control-length-bounds))
 	  (old-revscl (reverb-control-scale-bounds)))
-      (set! (tiny-font) "8x13")
-      (set! (peaks-font) "8x13")
-      (set! (bold-peaks-font) "8x13")
+      (set! *tiny-font* "8x13")
+      (set! *peaks-font* "8x13")
+      (set! *bold-peaks-font* "8x13")
       (set! (amp-control-bounds) (list 0.0 2.5))
       (set! (speed-control-bounds) (list 1.0 2.5))
       (set! (reverb-control-scale-bounds) (list 0.0 2.5))
@@ -33340,9 +33340,9 @@ EDITS: 1
       (close-sound ind)
       (for-each forget-region (regions))
       (load (string-append cwd "s61.scm"))
-      (if (not (string=? (tiny-font) "8x13")) (snd-display #__line__ ";save tiny-font: ~A" (tiny-font)))
-      (if (not (string=? (peaks-font) "8x13")) (snd-display #__line__ ";save peaks-font: ~A" (peaks-font)))
-      (if (not (string=? (bold-peaks-font) "8x13")) (snd-display #__line__ ";save bold-peaks-font: ~A" (bold-peaks-font)))
+      (if (not (string=? *tiny-font* "8x13")) (snd-display #__line__ ";save tiny-font: ~A" *tiny-font*))
+      (if (not (string=? *peaks-font* "8x13")) (snd-display #__line__ ";save peaks-font: ~A" *peaks-font*))
+      (if (not (string=? *bold-peaks-font* "8x13")) (snd-display #__line__ ";save bold-peaks-font: ~A" *bold-peaks-font*))
       (if (not (feql (amp-control-bounds) (list 0 2.5))) 
 	  (snd-display #__line__ ";save amp-control-bounds: ~A" (amp-control-bounds)))
       (if (not (feql (speed-control-bounds) (list 1.0 2.5))) 
@@ -33353,9 +33353,9 @@ EDITS: 1
 	  (snd-display #__line__ ";save reverb-control-scale-bounds: ~A" (reverb-control-scale-bounds)))
       (if (not (feql (reverb-control-length-bounds) (list 0 2.5))) 
 	  (snd-display #__line__ ";save reverb-control-length-bounds: ~A" (reverb-control-length-bounds)))
-      (set! (tiny-font) old-tiny-font)
-      (set! (peaks-font) old-peaks-font)
-      (set! (bold-peaks-font) old-bold-peaks-font)
+      (set! *tiny-font* old-tiny-font)
+      (set! *peaks-font* old-peaks-font)
+      (set! *bold-peaks-font* old-bold-peaks-font)
       (set! (amp-control-bounds) old-amp)
       (set! (speed-control-bounds) old-speed)
       (set! (contrast-control-bounds) old-contrast)
@@ -33384,8 +33384,8 @@ EDITS: 1
 		  (set! (func) global)
 		  (set! (func ind 0) local))
 		funcs func-names new-globals new-locals)
-      (set! (zoom-focus-style) zoom-focus-right)
-      (set! (channel-style) channels-combined)
+      (set! *zoom-focus-style* zoom-focus-right)
+      (set! *channel-style* channels-combined)
       (set! (channel-style ind) channels-separate)
       (if (file-exists? "s61.scm") (delete-file "s61.scm"))
       (save-state "s61.scm")
@@ -33400,11 +33400,11 @@ EDITS: 1
 				   func-name (func) global (func ind 0) local)))
 		funcs func-names new-globals new-locals)
       (if (not (= (channel-style ind) channels-separate))
-	  (snd-display #__line__ ";save channel-style reversed: ~A ~A" (channel-style) (channel-style ind)))
+	  (snd-display #__line__ ";save channel-style reversed: ~A ~A" *channel-style* (channel-style ind)))
       (for-each (lambda (func val) (set! (func) val)) funcs old-globals)
       (close-sound ind)
-      (set! (zoom-focus-style) zoom-focus-active)
-      (set! (channel-style) channels-separate)
+      (set! *zoom-focus-style* zoom-focus-active)
+      (set! *channel-style* channels-separate)
       (delete-file "s61.scm"))
     
     (let ((ind0 (open-sound "oboe.snd"))
@@ -34216,7 +34216,7 @@ EDITS: 1
 	(let ((ind (open-sound "pistol.snd")))
 	  (transposed-echo 1.1 .95 .25)
 	  (play :wait #t)
-	  (set! (channel-property 'colored-samples ind 0) (list (list (cursor-color) 0 100)))
+	  (set! (channel-property 'colored-samples ind 0) (list (list *cursor-color* 0 100)))
 	  (hook-push after-graph-hook display-samples-in-color)
 	  (update-time-graph)
 	  (repitch-sound 220.0 440.0)
@@ -35347,12 +35347,12 @@ EDITS: 1
 	  (set! (transform-graph?) #t)
 	  (for-each 
 	   (lambda (transform)
-	     (set! (transform-type) transform)
+	     (set! *transform-type* transform)
 	     (for-each
 	      (lambda (size)
 		(catch #t
 		       (lambda ()
-			 (set! (transform-size) size)
+			 (set! *transform-size* size)
 			 (update-transform-graph))
 		       (lambda args args)))
 	      (list 8 7 -7 4 3 2 1 0)))
@@ -36053,7 +36053,7 @@ EDITS: 1
 		   (snd-display #__line__ ";random wavelet ~D: ~A ~A" i d1 d2)))))
 	 (list 16 64))
 	
-	(set! (max-transform-peaks) 100)
+	(set! *max-transform-peaks* 100)
 	(let ((ind (open-sound "oboe.snd"))
 	      (ftype (add-transform "low-pass" "filtered" 0.0 1.0
 				    (lambda (len fd)
@@ -36064,7 +36064,7 @@ EDITS: 1
 					    (v (make-float-vector len)))
 					(fill-float-vector v (fir-filter flt (read-sample fd))))))))
 	  (if (not (transform? ftype)) (snd-display #__line__ ";transform added: ~A?" ftype))
-	  (set! (transform-normalization) dont-normalize)
+	  (set! *transform-normalization* dont-normalize)
 	  (set! (transform-type ind 0) ftype)
 	  (set! (transform-size ind 0) 16)
 	  (set! (transform-graph-type ind 0) graph-once)
@@ -36080,7 +36080,7 @@ EDITS: 1
 				    (lambda (len fd)
 				      (let ((v (make-float-vector len)))
 					(fill-float-vector v (read-sample fd)))))))
-	  (set! (transform-normalization) dont-normalize)
+	  (set! *transform-normalization* dont-normalize)
 	  (set! (transform-type ind 0) ftype)
 	  (set! (transform-size ind 0) 256)
 	  (set! (transform-graph-type ind 0) graph-once)
@@ -36259,20 +36259,20 @@ EDITS: 1
 	  (graph->ps "aaa.eps")
 	  (set! (transform-graph? ind1 0) #t)
 	  (set! (transform-graph-type ind1 0) graph-as-sonogram)
-	  (set! (transform-size) 256)
+	  (set! *transform-size* 256)
 	  (update-transform-graph)
 	  (let ((size (transform-framples ind1 0)))
 	    (if (or (number? size)
 		    (not (= (length size) 3)))
 		(snd-display #__line__ ";transform-framples of sonogram: ~A" size)))
 	  (graph->ps "aaa.eps")
-	  (let ((old-colormap (colormap)))
-	    (set! (colormap) black-and-white-colormap)
+	  (let ((old-colormap *colormap*))
+	    (set! *colormap* black-and-white-colormap)
 	    (update-transform-graph)
 	    (set! (transform-graph-type ind1 0) graph-as-spectrogram)
 	    (update-transform-graph)
 	    (graph->ps "aaa.eps")
-	    (set! (colormap) old-colormap))
+	    (set! *colormap* old-colormap))
 	  (close-sound ind1))
 	
 	(let ((ind (new-sound "test.snd" mus-next mus-ldouble)))
@@ -36313,7 +36313,7 @@ EDITS: 1
 	  (set! (fft-log-magnitude ind 0) #f)
 	  (update-transform-graph)
 	  (graph->ps "aaa.eps")
-	  (set! (with-gl) #f)
+	  (set! *with-gl* #f)
 	  (set! (spectrum-end ind 0) .2)
 	  (set! (transform-graph-type ind 0) graph-as-spectrogram)
 	  (update-transform-graph)
@@ -36881,7 +36881,7 @@ EDITS: 1
 	)
       
       (let ((old-srate *clm-srate*))
-	(set! (print-length) (max (print-length) 48))
+	(set! *print-length* (max *print-length* 48))
 	(set! *clm-srate* 22050)
 	(let ((ind (new-sound :size 33 :srate 22050)))
 	  (map-channel (lambda (y) 1.0))
@@ -37081,25 +37081,25 @@ EDITS: 1
 	(if (fneq (sample 20) -.992) (snd-display #__line__ ";scale-to 1.0 byte (20): ~A" (sample 10)))
 	(close-sound ind))
       
-      (set! (transform-graph-type) graph-once)
-      (set! (fft-window) 6)
-      (set! (show-y-zero) #f)
-      (set! (show-transform-peaks) #f)
-      (set! (fft-log-frequency) #f)
-      (set! (fft-log-magnitude) #f)
-      (set! (with-verbose-cursor) #f)
-      (set! (show-grid) #f)
-      (set! (show-sonogram-cursor) #f)
-      (set! (with-tracking-cursor) #f)
-      (set! (show-controls) #f)
-      (set! (speed-control-tones) 12)
-      (set! (wavelet-type) 0)
-      (set! (spectrum-start) 0.0)
-      (set! (spectro-hop) 4)
-      (set! (fft-window-alpha) 0.0)
-      (set! (fft-window-beta) 0.0)
-      (set! (min-dB) -60.0)
-      (set! (reverb-control-decay) 1.0)
+      (set! *transform-graph-type* graph-once)
+      (set! *fft-window* 6)
+      (set! *show-y-zero* #f)
+      (set! *show-transform-peaks* #f)
+      (set! *fft-log-frequency* #f)
+      (set! *fft-log-magnitude* #f)
+      (set! *with-verbose-cursor* #f)
+      (set! *show-grid* #f)
+      (set! *show-sonogram-cursor* #f)
+      (set! *with-tracking-cursor* #f)
+      (set! *show-controls* #f)
+      (set! *speed-control-tones* 12)
+      (set! *wavelet-type* 0)
+      (set! *spectrum-start* 0.0)
+      (set! *spectro-hop* 4)
+      (set! *fft-window-alpha* 0.0)
+      (set! *fft-window-beta* 0.0)
+      (set! *min-dB* -60.0)
+      (set! *reverb-control-decay* 1.0)
       
       (letrec ((test-sound-func-1
 		(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable channel global)
@@ -37395,7 +37395,7 @@ EDITS: 1
 	  (close-sound ind-1)
 	  (close-sound ind-2)))
       
-      (set! (remember-sound-state) #t)
+      (set! *remember-sound-state* #t)
       (let ((ind (open-sound "oboe.snd")))
 	(set! (transform-graph? ind 0) #t)
 	(set! (show-transform-peaks ind 0) #t)
@@ -37408,7 +37408,7 @@ EDITS: 1
 	    (snd-display #__line__ ";remember-sound-state: ~A ~A ~A" (transform-graph? ind 0) (show-transform-peaks ind 0) (show-y-zero ind 0)))
 	(close-sound ind))
       (reset-all-hooks)
-      (set! (remember-sound-state) #f)
+      (set! *remember-sound-state* #f)
       (if (file-exists? "remembered-oboe.snd.scm")
 	  (delete-file "remembered-oboe.snd.scm"))
       
@@ -37566,7 +37566,7 @@ EDITS: 1
 	      (if (fneq diff 0.0) (snd-display #__line__ ";arr->file->array overall max diff: ~A" diff)))))
 	
 	;; now clear sono bins if possible 
-	(set! (colormap-size) 16)
+	(set! *colormap-size* 16)
 	(set! (transform-size ind 0) 8)
 	(set! (transform-graph-type ind 0) graph-as-sonogram)
 	(set! (transform-graph? ind 0) #t)
@@ -37574,13 +37574,13 @@ EDITS: 1
 	(set! (x-bounds) (list 0.0 .04))
 	(update-time-graph)
 	(update-transform-graph)
-	(set! (zoom-focus-style) (lambda (s c z x0 x1 range)
+	(set! *zoom-focus-style* (lambda (s c z x0 x1 range)
 				   0))
-	(if (not (procedure? (zoom-focus-style)))
-	    (snd-display #__line__ ";zoom-focus-style as func: ~A" (zoom-focus-style)))
-	(set! (zoom-focus-style) zoom-focus-right)
-	(if (not (= (zoom-focus-style) zoom-focus-right))
-	    (snd-display #__line__ ";unset zoom-focus-style as func: ~A" (zoom-focus-style)))
+	(if (not (procedure? *zoom-focus-style*))
+	    (snd-display #__line__ ";zoom-focus-style as func: ~A" *zoom-focus-style*))
+	(set! *zoom-focus-style* zoom-focus-right)
+	(if (not (= *zoom-focus-style* zoom-focus-right))
+	    (snd-display #__line__ ";unset zoom-focus-style as func: ~A" *zoom-focus-style*))
 	(close-sound ind))
       
       (if (file-exists? "test.snd") (delete-file "test.snd"))
@@ -37880,7 +37880,7 @@ EDITS: 1
   (if all-args
       (let ((old-size *clm-file-buffer-size*))
 	(set! *clm-file-buffer-size* 100)
-	(set! (mus-float-equal-fudge-factor) 1e-4)
+	(set! *mus-float-equal-fudge-factor* 1e-4)
 	(define v-1 (make-float-vector 100 .25)) 
 	(do ((i 0 (+ i 1)) (x 0.0 (+ x .01))) ((= i 100)) (float-vector-set! v-1 i x))
 	(define v0 (make-float-vector 10))
@@ -38568,7 +38568,7 @@ EDITS: 1
 					    (do ((i beg (+ i 1)))
 						((= i end))
 					      (dlocsig dloc i (read-sample rd)))))))
-      (mix tmp-sound start #t #f #f (with-mix-tags) #t)))
+      (mix tmp-sound start #t #f #f *with-mix-tags* #t)))
   
   (definstrument (defopt-simp beg dur (frequency 440.0) (amplitude 0.1))
     (let ((os (make-oscil frequency))
@@ -38951,7 +38951,7 @@ EDITS: 1
 
     (if (file-exists? "test.snd") (delete-file "test.snd"))
     (set! *clm-srate* 22050)
-    (set! (default-output-srate) 22050)
+    (set! *default-output-srate* 22050)
     (let ((outer (with-sound () 
 			     (sound-let ((a () (fm-violin 0 .1 440 .1))) 
 					(mus-file-mix *output* a)))))
@@ -39023,7 +39023,7 @@ EDITS: 1
       (delete-file "test1.snd"))
 
     (set! *clm-srate* 22050)
-    (set! (default-output-srate) 22050)
+    (set! *default-output-srate* 22050)
     
     (let ((fmt1 '(0 1200 100 1000))
 	  (fmt2 '(0 2250 100 1800))
@@ -39472,10 +39472,10 @@ EDITS: 1
 	(close-sound (car wid4))
 	))
   
-  (if (not (= *clm-srate* (default-output-srate))) (snd-display #__line__ ";*clm-srate*: ~A ~A" *clm-srate* (default-output-srate)))
-  (if (not (= *clm-channels* (default-output-chans))) (snd-display #__line__ ";*clm-channels*: ~A ~A" *clm-channels* (default-output-chans)))
-  (if (not (= *clm-header-type* (default-output-header-type))) (snd-display #__line__ ";*clm-header-type*: ~A ~A" *clm-header-type* (default-output-header-type)))
-					;	(if (not (= *clm-data-format* (default-output-data-format))) (snd-display #__line__ ";*clm-data-format*: ~A ~A" *clm-data-format* (default-output-data-format)))
+  (if (not (= *clm-srate* *default-output-srate*)) (snd-display #__line__ ";*clm-srate*: ~A ~A" *clm-srate* *default-output-srate*))
+  (if (not (= *clm-channels* *default-output-chans*)) (snd-display #__line__ ";*clm-channels*: ~A ~A" *clm-channels* *default-output-chans*))
+  (if (not (= *clm-header-type* *default-output-header-type*)) (snd-display #__line__ ";*clm-header-type*: ~A ~A" *clm-header-type* *default-output-header-type*))
+					;	(if (not (= *clm-data-format* *default-output-data-format*)) (snd-display #__line__ ";*clm-data-format*: ~A ~A" *clm-data-format* *default-output-data-format*))
   (if (not (= *clm-reverb-channels* 1)) (snd-display #__line__ ";*clm-reverb-channels*: ~A" *clm-reverb-channels*))
   (if (not (string=? *clm-file-name* "test.snd")) (snd-display #__line__ ";*clm-file-name*: ~A" *clm-file-name*))
   (if *clm-play* (snd-display #__line__ ";*clm-play*: ~A" *clm-play*))
@@ -42096,7 +42096,7 @@ EDITS: 1
 			(XSetTile dpy sgc pix)
 			(XSetStipple dpy sgc (XCreateBitmapFromData dpy wn right-arrow 16 12))
 			(XSetClipMask dpy sgc None)
-			(XSetState dpy sgc *basic-color* (mark-color) GXcopy 0)
+			(XSetState dpy sgc *basic-color* *mark-color* GXcopy 0)
 			(XSetPlaneMask dpy sgc 0)
 			(XSetDashes dpy sgc 0 '(3 4 3 1))
 			(XSetClipRectangles dpy sgc 0 0 (list (XRectangle 0 0 10 10) (XRectangle 10 10 100 100)) 2 Unsorted)
@@ -45234,8 +45234,8 @@ EDITS: 1
 	  (snd-display #__line__ ";check-error-tag ~A from ~A: ~A" 
 		       expected-tag (procedure-source thunk) tag))))
   
-  (set! (with-background-processes) #t)
-  (set! (remember-sound-state) #f)
+  (set! *with-background-processes* #t)
+  (set! *remember-sound-state* #f)
 
   (if with-gui
       (let* ((delay-32 (make-delay 32))
@@ -46154,8 +46154,8 @@ EDITS: 1
 			  ))
 	  
 	  
-	  (set! (ask-about-unsaved-edits) #f)
-	  (set! (remember-sound-state) #f)
+	  (set! *ask-about-unsaved-edits* #f)
+	  (set! *remember-sound-state* #f)
 	  (if (= test-28 0) 
 	      (begin
 		(check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
@@ -46166,15 +46166,15 @@ EDITS: 1
 		(check-error-tag 'no-such-channel (lambda () (make-sampler 0 "oboe.snd" 1)))
 		(check-error-tag 'no-such-channel (lambda () (make-sampler 0 "oboe.snd" -1)))
 		(check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
-		(check-error-tag 'bad-arity (lambda () (set! (zoom-focus-style) (lambda (a) 0))))
+		(check-error-tag 'bad-arity (lambda () (set! *zoom-focus-style* (lambda (a) 0))))
 		(check-error-tag 'bad-header (lambda () (mus-file-mix "oboe.snd" (string-append sf-dir "bad_chans.aifc"))))
 		(check-error-tag 'mus-error (lambda () (mus-file-mix "oboe.snd" (string-append sf-dir "bad_length.aifc"))))
 		(check-error-tag 'bad-header (lambda () (mus-file-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
 		(check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
 		(check-error-tag 'bad-header (lambda () (new-sound "fmv.snd" mus-nist mus-bfloat 22050 2 "this is a comment")))
 		(check-error-tag 'wrong-type-arg (lambda () (player-home 123)))
-		(check-error-tag 'no-such-file (lambda () (set! (temp-dir) "/hiho")))
-		(check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
+		(check-error-tag 'no-such-file (lambda () (set! *temp-dir* "/hiho")))
+		(check-error-tag 'no-such-file (lambda () (set! *save-dir* "/hiho")))
 		(check-error-tag 'out-of-range (lambda () (snd-transform (integer->transform 20) (make-float-vector 4))))
 		(check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
 		(check-error-tag 'mus-error (lambda () (make-iir-filter :order 32 :ycoeffs (make-float-vector 4))))
@@ -46194,8 +46194,8 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" -1)))
 		(check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" 0)))
 		(check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" -1)))
-		(check-error-tag 'out-of-range (lambda () (set! (default-output-data-format) -1)))
-		(check-error-tag 'out-of-range (lambda () (set! (default-output-header-type) mus-soundfont)))
+		(check-error-tag 'out-of-range (lambda () (set! *default-output-data-format* -1)))
+		(check-error-tag 'out-of-range (lambda () (set! *default-output-header-type* mus-soundfont)))
 		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
 		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
 		(check-error-tag 'mus-error (lambda () (make-locsig 1/0 :channels 2)))
@@ -46214,15 +46214,15 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" mus-nist 123)))
 		(check-error-tag 'bad-header (lambda () (new-sound "hiho" mus-nist mus-bfloat)))
 		(check-error-tag 'out-of-range (lambda () (set! *mus-array-print-length* -1)))
-		(check-error-tag 'out-of-range (lambda () (set! (print-length) -1)))
-		(check-error-tag 'out-of-range (lambda () (set! (play-arrow-size) -1)))
-		(check-error-tag 'out-of-range (lambda () (set! (enved-style) 12)))
+		(check-error-tag 'out-of-range (lambda () (set! *print-length* -1)))
+		(check-error-tag 'out-of-range (lambda () (set! *play-arrow-size* -1)))
+		(check-error-tag 'out-of-range (lambda () (set! *enved-style* 12)))
 		(check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))
 		(check-error-tag 'out-of-range (lambda () (make-color -0.5 0.0 0.0)))
 		(check-error-tag 'wrong-type-arg (lambda () (make-variable-graph #f)))
 		(check-error-tag 'cannot-print (lambda () (graph->ps)))
 		(let ((ind (open-sound "oboe.snd"))) 
-		  (set! (selection-creates-region) #t)
+		  (set! *selection-creates-region* #t)
 		  (select-all)
 		  (check-error-tag 'mus-error (lambda () (save-selection "sel0.snd" :not-a-key 3)))
 		  (check-error-tag 'wrong-type-arg (lambda () (read-only (list ind))))
@@ -46241,7 +46241,7 @@ EDITS: 1
 		  (check-error-tag 'no-such-sample (lambda () (set! (sample -1) -1)))
 		  (check-error-tag 'no-such-sample (lambda () (sample -1)))
 		  (check-error-tag 'out-of-range (lambda () (set! (framples) -10)))
-		  (check-error-tag 'out-of-range (lambda () (set! (min-dB) 0.0)))
+		  (check-error-tag 'out-of-range (lambda () (set! *min-dB* 0.0)))
 		  (check-error-tag 'out-of-range (lambda () (set! (min-dB ind 0) 0.0)))
 		  (check-error-tag 'out-of-range (lambda () (start-playing 1 -22)))
 		  (check-error-tag 'out-of-range (lambda () (start-playing 1 0)))
@@ -46308,7 +46308,7 @@ EDITS: 1
 		  (check-error-tag 'out-of-range (lambda () (draw-axes (car (channel-widgets)) (car (snd-gcs)) "hiho" 0.0 1.0 -1.0 1.0 1234)))
 		  (check-error-tag 'no-such-channel (lambda () (axis-info ind 1234)))
 		  (check-error-tag 'no-such-sound (lambda () (axis-info 1234)))
-		  (set! (time-graph-type) graph-once)
+		  (set! *time-graph-type* graph-once)
 					;		  (check-error-tag 'out-of-range (lambda () (set! (x-bounds) (list 0 0))))
 		  (check-error-tag 'out-of-range (lambda () (set! (x-bounds) (list .1 -.1))))
 					;		  (check-error-tag 'out-of-range (lambda () (set! (y-bounds) (list .2 .1))))
@@ -46392,8 +46392,8 @@ EDITS: 1
 		(check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
 		(check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
 		(check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
-		(check-error-tag 'wrong-type-arg (lambda () (set! (transform-type) (integer->transform -1))))
-		(check-error-tag 'out-of-range (lambda () (set! (transform-type) (integer->transform 123))))
+		(check-error-tag 'wrong-type-arg (lambda () (set! *transform-type* (integer->transform -1))))
+		(check-error-tag 'out-of-range (lambda () (set! *transform-type* (integer->transform 123))))
 		(check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
 		(check-error-tag 'wrong-type-arg (lambda () (info-dialog (list 0 1) "hiho")))
 		(check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
@@ -46461,13 +46461,13 @@ EDITS: 1
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) 1234)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) (list 44100 2.123 "hi"))))
 		
-		(check-error-tag 'wrong-type-arg (lambda () (set! (with-toolbar) 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! (with-tooltips) 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! (with-menu-icons) 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! (save-as-dialog-src) 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! (save-as-dialog-auto-comment) 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! (with-smpte-label) 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! (ask-about-unsaved-edits) 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! *with-toolbar* 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! *with-tooltips* 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! *with-menu-icons* 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! *save-as-dialog-src* 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! *save-as-dialog-auto-comment* 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! *with-smpte-label* 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! *ask-about-unsaved-edits* 123)))
 		
 		(check-error-tag 'no-such-mix (lambda () (mix-properties (integer->mix (+ 1 (mix-sync-max))))))
 		(check-error-tag 'no-such-mix (lambda () (set! (mix-properties (integer->mix (+ 1 (mix-sync-max)))) 1)))
@@ -46676,7 +46676,7 @@ EDITS: 1
 	    (set! vector-0 #f)
 	    (set! float-vector-3 #f)
 	    (set! *clm-srate* 22050)
-	    (set! (print-length) 12)
+	    (set! *print-length* 12)
 	    (set! *mus-array-print-length* 12)
 	    (set! (sound-file-extensions) exts)
 	    (set! car-main #f)
@@ -46760,17 +46760,17 @@ EDITS: 1
 (mus-oss-set-buffers 4 12)
 
 (reset-all-hooks)
-(set! (ask-about-unsaved-edits) #f)
-(set! (remember-sound-state) #f)
+(set! *ask-about-unsaved-edits* #f)
+(set! *remember-sound-state* #f)
 
 (save-listener "test.output")
-(set! (listener-prompt) original-prompt)
+(set! *listener-prompt* original-prompt)
 (clear-listener)
 (set! (show-listener) #t)
 
 (format #t "~%;all done!~%~A" original-prompt)
 
-(set! (print-length) 64)
+(set! *print-length* 64)
 (format #t "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time)))
 
 
@@ -46802,7 +46802,7 @@ EDITS: 1
 ;;; -------- cleanup temp files
 
 (if (provided? 'snd-nogui)
-    (set! (max-regions) 0))
+    (set! *max-regions* 0))
 
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (if (file-exists? original-save-dir)

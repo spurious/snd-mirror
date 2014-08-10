@@ -3772,8 +3772,6 @@
 ;;;   no built-in data here (fill hash-tables via local loads)
 ;;;   '(func 'type-predicate arg1-pred...) or (f t . arg) if all args have same etc
 ;;;   '(+ number? . number?), '(abs real? real?) etc
-;;;
-;;; tests in t935.scm
 
 
 

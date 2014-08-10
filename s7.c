@@ -4099,9 +4099,9 @@ static int gc(s7_scheme *sc)
       double secs;
       gettimeofday(&t0, &z0);
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
-      fprintf(stdout, "freed %d/%d, time: %f\n", (int)(sc->free_heap_top - old_free_heap_top), sc->heap_size, secs);
+      fprintf(stdout, "freed %d/%u, time: %f\n", (int)(sc->free_heap_top - old_free_heap_top), sc->heap_size, secs);
 #else
-      fprintf(stdout, "freed %d/%d\n", sc->gc_freed, sc->heap_size);
+      fprintf(stdout, "freed %d/%u\n", sc->gc_freed, sc->heap_size);
 #endif
     }
 
@@ -8913,10 +8913,11 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 	}
       else
 	{
-	  s7_Double rl, im;
+	  s7_Double rl;
 	  rl = fabs(s7_real_part(x));
 	  if ((rl < (S7_LONG_MAX / 4)) && (rl > 1.0e-6))
 	    {
+	      s7_Double im;
 	      im = fabs(s7_imag_part(x));
 	      if ((im < (S7_LONG_MAX / 4)) && (im > 1.0e-6))
 		size = WRITE_REAL_PRECISION;
@@ -23104,20 +23105,22 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
 
 static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol, bool *already_loaded, bool loading)
 {
-  int l = 0, u, pos = -1, comp, lib, libs;
+  int l = 0, pos = -1, lib, libs;
   const char *name, *this_name;
-  const char **names;
 
   name = symbol_name(symbol);
   libs = sc->autoload_names_loc;
 
   for (lib = 0; lib < libs; lib++)
     {
+      const char **names;
+      int u;
       u = sc->autoload_names_sizes[lib] - 1;
       names = sc->autoload_names[lib];
       
       while (true)
 	{
+	  int comp;
 	  if (u < l) break;
 	  pos = (l + u) / 2;
 	  this_name = names[pos * 2];
@@ -44416,21 +44419,6 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	  if ((func_is_closure) &&
 	      (symbols >= 1))
 	    {
-#if 0
-	      s7_pointer body;
-	      body = closure_body(func);
-	      if ((is_pair(body)) &&
-		  (is_null(cdr(body))) &&
-		  (is_pair(car(body))) &&
-		  /* (car(closure_args(func)) == cadar(body)) && (cadr(closure_args(func)) == caddar(body)) && */
-		  (is_optimized(car(body))))
-		{
-		  fprintf(stderr, "%s -> %s %s\n", DISPLAY(car_x), opt_name(car(body)), DISPLAY(car(body)));
-		  /* if (op_no_hop(car(body)) == OP_SAFE_C_SS)):
-		   *   (vref v 1) -> (vector-ref v i), (bad-increment x b) -> (cons a b)
-		   */
-		}
-#endif
 	      set_unsafely_optimized(car_x);
 	      if (symbols == 2)
 		{
@@ -46791,18 +46779,6 @@ static s7_pointer check_case(s7_scheme *sc)
 	    return(eval_error(sc, "case: '=>' has too many targets: ~A", y));
 	}
     }
-
-#if 0
-  if ((!has_feed_to) &&
-      (bodies_simple))
-    {
-      bool happy = true;
-      for (x = cdr(sc->code); (happy) && is_not_null(x); x = cdr(x))
-	happy = is_all_x_safe(sc, cadar(x));
-      if (happy)
-	fprintf(stderr, "case_direct: %s\n", DISPLAY_80(sc->code));
-    }
-#endif
 
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
@@ -49393,7 +49369,6 @@ enum {DOX_STEP_DEFAULT, DOX_STEP_SS, DOX_STEP_S, DOX_STEP_ADD, DOX_STEP_SUBTRACT
 static s7_pointer check_do(s7_scheme *sc)
 {
   s7_pointer x;
-  /* fprintf(stderr, "check do: %s\n", DISPLAY(sc->code)); */
   
   if ((!is_pair(sc->code)) ||                             /* (do . 1) */
       ((!is_pair(car(sc->code))) &&                       /* (do 123) */
@@ -49467,8 +49442,6 @@ static s7_pointer check_do(s7_scheme *sc)
       set_syntax_op(sc->code, sc->DO_UNCHECKED);
 
       /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
-      
-      /* fprintf(stderr, "do %s %s\n", DISPLAY(body), opt_name(car(body))); */
       
       /* (define (hi) (do ((i 1.5 (+ i 1))) ((= i 2.5)) (display i) (newline)))
        *   in OP_SAFE_DOTIMES, for example, if init value is not an integer, it goes to OP_SIMPLE_DO
@@ -50404,7 +50377,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_SORT:
       /* coming in sc->args is sort args (data less?), sc->code = '(n k 0)
-       *
        * here we call the inner loop until k <= 0 [the local k! -- this is tricky because scheme passes args by value]
        */
       {
@@ -51585,23 +51557,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    else fprintf(stderr, "unk: %s\n", DISPLAY(body));
 	    */
 	  }
-	/*  OP_INCREMENT_SA, code: (set! x (+ x (* i 2.0)))
-	 *                   code: (set! sum (+ sum (expt (abs (next-sample reader)) p))) [channel-lp]
-	 *                   code: (set! name (string-append name "-test"))
-	 *                   code: (set! sum (+ sum (float-vector-ref ndat i)))
-	 *                   code: (set! diff (+ diff (abs (float-vector-ref diffs i))))
-	 *  OP_INCREMENT_SS, code: (set! x (+ x i)) 
-	 *                   code: (set! com (string-append com com))
-	 *  OP_INCREMENT_1, code: (set! sum (+ sum 1))
-	 *  OP_INCREMENT_C_TEMP, code: (set! sum (+ sum (next-sample reader))) [channel-mean]: is direct call of top like symbol_a
-	 *  OP_SET_SYMBOL_A, code: (set! val (moving-average gen 0.0))
-	 *  OP_SET_PAIR_A, code: (set! (sample i) (* 2 (sample i)))
-	 * also many let_all_x and let_star_all_x
-
-	 * (let () (define (hi) (let ((x 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! x (+ x (* i .1)))) x)) (hi))
-	 * (let () (define (hi) (let ((x 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! x (+ x 1))) x)) (hi))
-	 *  h_safe_c_aaaa, code: (vector-set! sdata i 1 0.1)
-	 */
 	/* here we know we can goto EVAL */
       }
 
@@ -52818,11 +52773,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->args is not used here */
       if ((sc->begin_hook) && (call_begin_hook(sc))) return(sc->F);
 
-      /* in gcc we can use computed gotos, setting begin_label to this position if
-       *   begin_hook is not in use, thereby avoiding that check above.  This saves
-       *   about 4 in lg -- sort of a toss-up given the added complexity.
-       */
-
       /* check end + bad for immediate dot case */
       if (!is_pair(sc->code))                   /* (begin) -> () */
 	{
@@ -52866,7 +52816,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
       if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	{
-	  /* fprintf(stderr, "    lift: %s\n", DISPLAY_80(sc->code)); */
 	  sc->cur_code = sc->code;                /* in case an error occurs, this helps tell us where we are */
 	  /* sc->op = (opcode_t)syntax_opcode(car(sc->code)); */
 	  sc->op = (opcode_t)lifted_op(sc->code);
@@ -57930,9 +57879,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  /* see sss_apply_s7 for code to catch (f x y) here and set up optimizer code for it --
 	   *   this cuts the trailer traffic in half in snd-test, but the savings is minimal (40).
-	   *
-	   * if (is_tail_call(sc->code)) 
-	   *   fprintf(stderr, "trailer: %s %s\n", (is_optimized(sc->code)) ? opt_names[optimize_data(sc->code)] : "unopt", DISPLAY(sc->code));
 	   */
 	  clear_optimized(code);
 	  clear_optimize_data(code);
@@ -58820,32 +58766,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	BACRO:
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 	  
-	  /* (define-macro (hi a b) `(+ ,a ,b)) */
-	  /*   -> code: #<macro>, args: ((hi 2 3)), closure args: (defmac-9) */
-	  /*   then back again: code: #<closure>, args: (2 3), closure args: (a b) */
-	  
-	  /* (define (hi a b) (+ a b))
-	   * (hi 1 2)
-	   * sc->args: (1 2)
-	   */
-	  
-	  /* it is possible to apply a macro:
+	  /* (define-macro (hi a b) `(+ ,a ,b))
+	   *   -> code: #<macro>, args: ((hi 2 3)), closure args: (defmac-9)
+	   *   then back again: code: #<closure>, args: (2 3), closure args: (a b)
 	   *
-	   * (define-macro (hi a) `(+ ,a 1))
-	   * (apply hi '(4))
-	   * 5
-	   *
-	   * (let ((x 32)) (define-macro* (mac (a (let () (display x) 3))) `(+ 1 ,a)) (let ((x 4)) (mac x)))
-	   * displays 32, returns 5, so the evaluation of the default value happens in the definition environment
-	   * (let ((x 32)) (define* (mac (a (let () (display x) 3))) (+ 1 a)) (let ((x 4)) (mac x)))
-	   * is the same
-	   * (let ((x 32)) (define-bacro* (mac (a (let () (display x) 3))) `(+ 1 ,a)) (let ((x 4)) (mac x)))
-	   * displays 4 and returns 5
-	   *
-	   * so... we need a way to get the call environment from within either a macro or a function
-	   */
-	  
-	  /* (let* ((mac (let () (define-macro (mac1 a) `(+ ,a 1)) mac1)) (lst (list 1))) (set-cdr! lst lst) (apply mac lst ()))
+	   * (let* ((mac (let () (define-macro (mac1 a) `(+ ,a 1)) mac1)) (lst (list 1))) (set-cdr! lst lst) (apply mac lst ()))
 	   * hangs -- this is equivalent to (eval <circular-list>) which also hangs.
 	   */
 	  
@@ -59194,6 +59119,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	/* fcdr can be nil if we have a function, call it (so check_define+opt), then 
 	 *   walk the procedure source while redefining the function, then call it again.
 	 *   To be safe, we should actually call check_define, but how to force that?
+	 *
+	 * later: I think this is fixed now.
 	 */
 	closure_arity(new_func) = integer(fcdr(sc->code));
 	set_type(new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
@@ -61702,13 +61629,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_C:
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        */
-      if ((sc->code == NULL) ||
-	  (fcdr(sc->code) == NULL) ||
-	  (gcdr(sc->code) == NULL))
-	{
-	  fprintf(stderr, "%d: %p %p %p\n", __LINE__, sc->code, fcdr(sc->code), gcdr(sc->code));
-	  abort();
-	}
       NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), fcdr(sc->code));
       sc->code = cdr(sc->code);
       if (is_pair(cdr(sc->code)))
@@ -70077,10 +69997,19 @@ int main(int argc, char **argv)
  *   maybe gunichar->bytevector?
  *   but need glib.scm, or unicode.scm to load the stuff
  *
+ * Snd status-report (et al) should accept format-style args at least in s7 (s7_format is exported) (snd-snd.c)
+ * why not just header, not header-type, then data-type (deprecating data-format), or sample-type?
+ *
  * finish Display!
  * doc cyclic-seq+stuff under circular lists
  * lint: assignment, then no use, then assignment
  *       or assignment of local, then no use 
  *       variable scope reduction: no macros, no shadow of cadr(if let), no side-effects of cadr
+ *
+ * for gmp library connection, see snd-xen current code (uses *s7_big_real(x), x an s7_pointer) -- cload??
+ *
+ * the xm/xg names should be in their own library *xg* *xm* 
+ *   none of these is currently in autoload
+ *   but this would require special handling in the Xen stuff.
  */
 

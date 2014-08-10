@@ -5224,8 +5224,8 @@
 (CFNC "void gtk_about_dialog_set_copyright GtkAboutDialog* about gchar* copyright")
 (CFNC "gchar* gtk_about_dialog_get_comments GtkAboutDialog* about")
 (CFNC "void gtk_about_dialog_set_comments GtkAboutDialog* about gchar* comments")
-(CFNC "gchar* gtk_about_dialog_get_license GtkAboutDialog* about")
-(CFNC "void gtk_about_dialog_set_license GtkAboutDialog* about gchar* license")
+;(CFNC "gchar* gtk_about_dialog_get_license GtkAboutDialog* about")
+;(CFNC "void gtk_about_dialog_set_license GtkAboutDialog* about gchar* license")
 (CFNC "gchar* gtk_about_dialog_get_website GtkAboutDialog* about")
 (CFNC "void gtk_about_dialog_set_website GtkAboutDialog* about gchar* website")
 (CFNC "gchar* gtk_about_dialog_get_website_label GtkAboutDialog* about")
@@ -5658,8 +5658,8 @@
 
 ;;; gtk 2.7.2
 
-(CFNC "gboolean gtk_about_dialog_get_wrap_license GtkAboutDialog* about")
-(CFNC "void gtk_about_dialog_set_wrap_license GtkAboutDialog* about gboolean wrap_license")
+;(CFNC "gboolean gtk_about_dialog_get_wrap_license GtkAboutDialog* about")
+;(CFNC "void gtk_about_dialog_set_wrap_license GtkAboutDialog* about gboolean wrap_license")
 
 
 ;;; 2.7.3
@@ -7980,18 +7980,18 @@
 (CINT-3.0 "GTK_FILE_CHOOSER_ERROR_INCOMPLETE_HOSTNAME" "GtkFileChooserError")
 ;gtkfilechooser: gtk_file_chooser_error_quark
 
-(CFNC-3.0 "void gtk_about_dialog_set_license_type GtkAboutDialog* about GtkLicense license_type")
-(CFNC-3.0 "GtkLicense gtk_about_dialog_get_license_type GtkAboutDialog* about")
-;void gtk_show_about_dialog GtkWindow* parent gchar* first_property_name ...)
-(CINT-3.0 "GTK_LICENSE_UNKNOWN" "GtkLicense")
-(CINT-3.0 "GTK_LICENSE_CUSTOM" "GtkLicense")
-(CINT-3.0 "GTK_LICENSE_GPL_2_0" "GtkLicense")
-(CINT-3.0 "GTK_LICENSE_GPL_3_0" "GtkLicense")
-(CINT-3.0 "GTK_LICENSE_LGPL_2_1" "GtkLicense")
-(CINT-3.0 "GTK_LICENSE_LGPL_3_0" "GtkLicense")
-(CINT-3.0 "GTK_LICENSE_BSD" "GtkLicense")
-(CINT-3.0 "GTK_LICENSE_MIT_X11" "GtkLicense")
-(CINT-3.0 "GTK_LICENSE_ARTISTIC" "GtkLicense")
+;(CFNC-3.0 "void gtk_about_dialog_set_license_type GtkAboutDialog* about GtkLicense license_type")
+;(CFNC-3.0 "GtkLicense gtk_about_dialog_get_license_type GtkAboutDialog* about")
+;;void gtk_show_about_dialog GtkWindow* parent gchar* first_property_name ...)
+;(CINT-3.0 "GTK_LICENSE_UNKNOWN" "GtkLicense")
+;(CINT-3.0 "GTK_LICENSE_CUSTOM" "GtkLicense")
+;(CINT-3.0 "GTK_LICENSE_GPL_2_0" "GtkLicense")
+;(CINT-3.0 "GTK_LICENSE_GPL_3_0" "GtkLicense")
+;(CINT-3.0 "GTK_LICENSE_LGPL_2_1" "GtkLicense")
+;(CINT-3.0 "GTK_LICENSE_LGPL_3_0" "GtkLicense")
+;(CINT-3.0 "GTK_LICENSE_BSD" "GtkLicense")
+;(CINT-3.0 "GTK_LICENSE_MIT_X11" "GtkLicense")
+;(CINT-3.0 "GTK_LICENSE_ARTISTIC" "GtkLicense")
 
 (CFNC-3.0 "void gtk_window_set_skip_taskbar_hint GtkWindow* window gboolean setting")
 (CFNC-3.0 "gboolean gtk_window_get_skip_taskbar_hint GtkWindow* window")

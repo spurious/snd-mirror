@@ -120,12 +120,12 @@ static void listener_help_at_cursor(char *buf, int name_curpos, int len, int pro
 
       if (new_text)
 	{
-	  Xen help;
 	  int matches;
 	  matches = get_possible_completions_size();
 
 	  if (matches == 1)
 	    {
+	      Xen help;
 	      help = g_snd_help(C_string_to_Xen_string(new_text), 0);
 	      if (Xen_is_string(help))
 		snd_help((char *)(buf + name_start), Xen_string_to_C_string(help), WITH_WORD_WRAP);

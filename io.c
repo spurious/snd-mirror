@@ -1053,7 +1053,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
    *   mus_read_any_1(f, frample, ...)
    */
   int format, siz, siz_chans;
-  mus_long_t bytes, lim, leftover, total_read, k, loc, oldloc, buflim;
+  mus_long_t bytes, lim, leftover, total_read, k, loc, buflim;
   unsigned char *jchar;
   static char *ur_charbuf = NULL;
   char *charbuf = NULL;
@@ -1164,7 +1164,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 
   while (leftover > 0)
     {
-      mus_long_t loclim;
+      mus_long_t oldloc, loclim;
       mus_float_t *bufnow, *bufend, *bufend4;
 	      
       bytes = leftover;

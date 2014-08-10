@@ -2544,20 +2544,7 @@ ignoring the outer (enclosing) environment. Or better,
 sublet adds bindings (symbols with associated values) to an environment.
 It does not change the environment passed to it, but
 just prepends the new bindings, shadowing any old ones,
-as if you had called "let":
-</p>
-
-<pre class="indented">
-(define-bacro (let/ e . body)
-  `(with-let (<em class=red>sublet</em> (curlet) ,e)
-     ,@body))
-
-(let ((a 1))
-  (let/ (inlet 'b 2)
-    (+ a b)))
-</pre>
-
-<p>
+as if you had called "let".
 To add the bindings directly to the environment,
 use varlet.  Both of these functions accept nil as the
 'env' argument as shorthand for <code>(rootlet)</code>.
@@ -2809,9 +2796,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 </p>
 
 <pre>
-(define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
-  ;; a bacro is needed so that the calling environment is accessible via outlet
-  ;;   we could also use the begin/let shuffle, but it's too embarrassing
+(define-macro* (define-class class-name inherited-classes (slots ()) (methods ()))
   `(let ((outer-env (outlet (curlet)))
 	 (new-methods ())
 	 (new-slots ()))
@@ -2932,7 +2917,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 		   (lambda (obj val) (set! (obj ',slot) val)))))
 
 
-(define-bacro (define-method name-and-args . body)
+(define-macro (define-method name-and-args . body)
   `(let* ((outer-env (outlet (curlet)))
 	  (method-name (car ',name-and-args))
 	  (method-args (cdr ',name-and-args))
@@ -3087,18 +3072,19 @@ abs
 
 <div class="indented">
 <pre>
-(define-bacro (value-&gt;symbol val)
-   ;; (outlet (curlet)) is the calling environment
-  `(call-with-exit
-    (lambda (return)
-      (do ((e (curlet) (outlet e))) ()
-	(for-each 
-	 (lambda (slot)
-	   (if (equal? ,val (cdr slot))
-	       (return (car slot))))
-	 e)
-	(if (eq? e (rootlet))
-	    (return #f))))))
+(define-macro (value-&gt;symbol expr)
+  `(let ((val ,expr)
+	 (e1 (curlet)))
+     (call-with-exit
+      (lambda (return)
+	(do ((e e1 (outlet e))) ()
+	  (for-each 
+	   (lambda (slot)
+	     (if (equal? val (cdr slot))
+		 (return (car slot))))
+	   e)
+	  (if (eq? e (rootlet))
+	      (return #f)))))))
 
 &gt; (let ((a 1) (b "hi")) 
     (value-&gt;symbol "hi"))

@@ -288,8 +288,8 @@ but not anymore.
 ;;; --------------------------------------------------------------------------------
 
 
-(define (focus-follows-mouse) (set! (with-pointer-focus) #t))
-(define (make-current-window-display) (set! (with-inset-graph) #t))
+(define (focus-follows-mouse) (set! *with-pointer-focus* #t))
+(define (make-current-window-display) (set! *with-inset-graph* #t))
 (define load-from-path load)
 ;(define def-optkey-fun define*)
 ;(define def-optkey-instrument definstrument)

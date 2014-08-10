@@ -506,9 +506,9 @@ in terms of srate = 1.0 (for convenience):
   (filter-sweep (make-inverse-chebyshev-bandstop 8 low-cut high-cut) 3)
   (filter-sweep (make-elliptic-bandstop 8 low-cut high-cut) 4))
 
-(set! (selected-graph-color) (make-color 1 1 1))
-(set! (selected-data-color) (make-color 0 0 0))
-(set! (axis-label-font) "9x15")
+(set! *selected-graph-color* (make-color 1 1 1))
+(set! *selected-data-color* (make-color 0 0 0))
+(set! *axis-label-font* "9x15")
 
 (do ((i 0 (+ i 1)))
     ((= i 4))
@@ -1645,7 +1645,7 @@ dis pcrev deg vibscl pcran skewscl ranpower glissfun glissamt
 <pre class="indented">
 (let ((ampf '(0 0 1 1 2 1 3 0))) 
   (with-sound (:play #t) 
-    (fm-voice 0 1 300 .8 3 1 ampf ampf ampf ampf ampf ampf ampf 1 0 0 .25 1 .01 0 ampf .01)))
+    (fm-voice 0 1 300 .8 3 1 ampf ampf ampf ampf ampf ampf ampf 1 0 0 .25 .01 0 ampf .01)))
 </pre>
 <div class="separator"></div>
 
@@ -7790,16 +7790,16 @@ or:
   (do ((i 0 (+ i 1)))
       ((= i 8))
     (map-channel (lambda (y) (/ (- (abs y) 2) 2)) 0 (framples) 0 i))
-  (set! (selected-graph-color) (make-color 1 1 1))
-  (set! (wavo-trace) 200)
-  (set! (wavo-hop) 1)
-  (set! (spectro-x-angle) 0)
-  (set! (spectro-y-angle) 0)
-  (set! (spectro-z-angle) 0)
-  (set! (spectro-x-scale) 0.9)
-  (set! (spectro-y-scale) 0.9)
-  (set! (spectro-z-scale) 1.0)
-  (set! (time-graph-type) graph-as-wavogram))
+  (set! *selected-graph-color* (make-color 1 1 1))
+  (set! *wavo-trace* 200)
+  (set! *wavo-hop* 1)
+  (set! *spectro-x-angle* 0)
+  (set! *spectro-y-angle* 0)
+  (set! *spectro-z-angle* 0)
+  (set! *spectro-x-scale* 0.9)
+  (set! *spectro-y-scale* 0.9)
+  (set! *spectro-z-scale* 1.0)
+  (set! *time-graph-type* graph-as-wavogram))
 -->
 
 
@@ -7846,7 +7846,7 @@ sinusoids hand us the other three for free. See find-other-mins in peak-phases.s
 
 <!--
 (set! (srate 2) (round (/ 1000000 (* 2 pi))))
-(set! (axis-label-font) "9x15")
+(set! *axis-label-font* "9x15")
 (define (window-bounds losamp hisamp snd chn)
   (set! (left-sample snd chn) losamp)
   (set! (x-zoom-slider snd chn) (exact->inexact (/ (- hisamp losamp) (framples snd chn)))))
@@ -7944,14 +7944,14 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 
 (define (gad5)
   (do ((i 0 (+ i 1))) ((= i 64)) (map-channel (lambda (y) (/ (- (abs y) 2.3) (- 5.0 2.3))) 0 (framples) 0 i))
-  (set! (wavo-trace) 400)
-  (set! (wavo-hop) 1)
-  (set! (spectro-x-angle) 10)
-  (set! (spectro-y-angle) 0)
-  (set! (spectro-x-scale) 0.75)
-  (set! (spectro-y-scale) 0.9)
-  (set! (spectro-z-scale) 0.9)
-  (set! (time-graph-type) graph-as-wavogram))
+  (set! *wavo-trace* 400)
+  (set! *wavo-hop* 1)
+  (set! *spectro-x-angle* 10)
+  (set! *spectro-y-angle* 0)
+  (set! *spectro-x-scale* 0.75)
+  (set! *spectro-y-scale* 0.9)
+  (set! *spectro-z-scale* 0.9)
+  (set! *time-graph-type* graph-as-wavogram))
 
 (do ((snd 0 (+ snd 1)))
     ((= snd 8))
@@ -7991,18 +7991,18 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 
 (define (gad6)
   (do ((i 0 (+ i 1))) ((= i 8)) (map-channel (lambda (y) (/ (- (abs y) 2.5) (- 6.0 2.5))) 0 (framples) 0 i))
-  (set! (selected-graph-color) (make-color 1 1 1))
-  (set! (wavo-trace) 100)
-  (set! (wavo-hop) 1)
-  (set! (spectro-x-angle) 15) ; was 10
-  (set! (spectro-y-angle) 0)
-  (set! (spectro-x-scale) 0.9) ; was .75
-  (set! (spectro-y-scale) 0.9)
-  (set! (spectro-z-scale) 1.0) ; was .9
-  (set! (colormap) jet-colormap)
-  (set! (color-cutoff) 0.001)
-  (set! (color-scale) 1.0) ; 50%
-  (set! (time-graph-type) graph-as-wavogram))
+  (set! *selected-graph-color* (make-color 1 1 1))
+  (set! *wavo-trace* 100)
+  (set! *wavo-hop* 1)
+  (set! *spectro-x-angle* 15) ; was 10
+  (set! *spectro-y-angle* 0)
+  (set! *spectro-x-scale* 0.9) ; was .75
+  (set! *spectro-y-scale* 0.9)
+  (set! *spectro-z-scale* 1.0) ; was .9
+  (set! *colormap* jet-colormap)
+  (set! *color-cutoff* 0.001)
+  (set! *color-scale* 1.0) ; 50%
+  (set! *time-graph-type* graph-as-wavogram))
 
 -->
 
@@ -8014,9 +8014,9 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 ;;; use mix and with-temp-sound to create a draggable mix object for each component.
 
 (load "peak-phases.scm")
-(set! (with-mix-tags) #t)     ; drag the tag to change the harmonic's initial phase
-(set! (show-mix-waveforms) #f)
-(set! (with-inset-graph) #f)
+(set! *with-mix-tags* #t)     ; drag the tag to change the harmonic's initial phase
+(set! *show-mix-waveforms* #f)
+(set! *with-inset-graph* #f)
 
 (define (show choice n)                           ; (show :all 14) for example
   (definstrument (sine-wave start dur freq phase) ; make one harmonic
@@ -8301,8 +8301,8 @@ to a good candidate, but that seems like asking for trouble.
 	  (set! (data i) val)))
       (float-vector->channel data 0 dur ns 4))
 
-    (set! (selected-graph-color) (make-color 1 1 1))
-    (set! (selected-data-color) (make-color 0 0 0))
+    (set! *selected-graph-color* (make-color 1 1 1))
+    (set! *selected-data-color* (make-color 0 0 0))
 
     (set! (x-axis-label ns 0) "fft size: 32")
     (set! (x-axis-label ns 1) "fft size: 128")
@@ -8344,7 +8344,7 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 <!--
 (define pi2 (/ pi 2))
 (define data-file "test.data")
-(set! (print-length) 1000000)
+(set! *print-length* 1000000)
 
 (define (get-fft-size choice n1 mult)
   (let ((n (if (eq? choice :all) n1
@@ -8420,7 +8420,7 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 ;;; turn off clipping 
 (set! (mus-clipping) #f)
 (set! *clm-clipped* #f)
-(set! (with-inset-graph) #f)
+(set! *with-inset-graph* #f)
 
 ;;; these hooks may be drawing the graph in the upper right corner, which we don't want for now
 (set! (hook-functions after-graph-hook) ())
@@ -8446,8 +8446,8 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 				      (loop (read file))))))))))))
   
   (set! (channel-style ind) channels-superimposed)
-  (set! (selected-graph-color) white)
-  (set! (graph-color) white)
+  (set! *selected-graph-color* white)
+  (set! *graph-color* white)
 
   (do ((chan 0 (+ 1 chan)))
       ((= chan 3))
@@ -8653,7 +8653,7 @@ Here is the GA code used to find the initial-phase polynomials mentioned above:
 
 
 (define* (make-sqrt-png (xp 0.59))
-  (set! (with-inset-graph) #f)
+  (set! *with-inset-graph* #f)
   ;; see tmp26...
   (with-sound (:channels 5 :clipped #f)
 
@@ -8723,14 +8723,14 @@ Here is the GA code used to find the initial-phase polynomials mentioned above:
 	      ))))))
 
   (set! (y-bounds) (list 0 21))
-  (set! (channel-style) channels-superimposed)
-  (set! (axis-color) (make-color 0 0 0))
-  (set! (x-axis-style) x-axis-in-samples)
+  (set! *channel-style* channels-superimposed)
+  (set! *axis-color* (make-color 0 0 0))
+  (set! *x-axis-style* x-axis-in-samples)
   (do ((i 0 (1+ i))) 
       ((= i 5)) 
     (set! (x-axis-label 0 i) "n"))
-  (set! (selected-graph-color) (make-color 1 1 1))
-  (set! (axis-label-font) "9x15")
+  (set! *selected-graph-color* (make-color 1 1 1))
+  (set! *axis-label-font* "9x15")
   )
 
 -->
@@ -8943,7 +8943,7 @@ case where all the initial phases are 0.0 in black:
 (define phases #(0.000000 0.402544 0.873914 0.824224 1.710182 0.183023 0.378574 0.128782 1.816255 1.249608 1.030253 1.030831 0.184699 0.677473 1.528003 1.262679 1.840809 0.082787 1.487290 1.579585 0.150833 0.308197 0.183834 1.435443 0.452047 0.800416 1.697556 1.103318 1.169502 1.438166 1.765331 0.875181 1.049248 1.321068 0.824424 0.599899 1.694664 0.504547 1.583285 1.657047 0.940116 1.788668 1.529808 0.367904 1.371253 0.572088 1.370961 1.371348 0.244247 1.592370 0.135712 0.911345 0.228778 1.543468 1.190091 1.504171 1.491159))
 
 (define (make-all-57)
-  (set! (with-inset-graph) #f)
+  (set! *with-inset-graph* #f)
   (let* ((samples 1000)
 	 (incr (/ (* 2 pi) samples)))
     (with-sound (:channels 1 :clipped #f)
@@ -8958,19 +8958,19 @@ case where all the initial phases are 0.0 in black:
 	  (outa i sum)))))
 
   (set! (y-bounds) (list -8.0 8.0))
-  (set! (channel-style) channels-superimposed)
-  (set! (axis-color) (make-color 0 0 0))
-  (set! (x-axis-style) x-axis-in-samples)
-  (set! (selected-graph-color) (make-color 1 1 1))
-  (set! (selected-data-color) (make-color 0 0 0))
-  (set! (axis-label-font) "9x15")
+  (set! *channel-style* channels-superimposed)
+  (set! *axis-color* (make-color 0 0 0))
+  (set! *x-axis-style* x-axis-in-samples)
+  (set! *selected-graph-color* (make-color 1 1 1))
+  (set! *selected-data-color* (make-color 0 0 0))
+  (set! *axis-label-font* "9x15")
   (set! (x-axis-label) "57 harmonics with peak at 7.546")
   )
 
 (define odd-phases #(0.000000 -0.095905 1.360419 0.638244 0.752436 0.060307 1.680434 0.892474 1.556627 1.342822 1.202039 0.989766 0.747386 1.502768 1.484789 1.280575 -0.299617 0.648918 1.386594 0.570314 0.971680 0.602106 1.411224 0.349887 1.776881 0.686211 -0.138570 0.102115 0.187653 1.480790 0.475407 0.080540 0.078971 0.288194 0.529704 0.929207 1.248880 1.402125 0.332857 1.263541 0.757496 0.254501 0.084949 1.308375 0.041441 0.288389 1.222780 0.362725 1.537117 1.518618 0.267187 0.845609 0.722902 0.451852 0.582589 0.839423 1.817054))
 
 (define (make-odd-57)
-  (set! (with-inset-graph) #f)
+  (set! *with-inset-graph* #f)
   (let* ((samples 1000)
 	 (incr (/ (* 2 pi) samples)))
     (with-sound (:channels 1 :clipped #f)
@@ -8986,19 +8986,19 @@ case where all the initial phases are 0.0 in black:
 	  (outa i sum)))))
 
   (set! (y-bounds) (list -8.0 8.0))
-  (set! (channel-style) channels-superimposed)
-  (set! (axis-color) (make-color 0 0 0))
-  (set! (x-axis-style) x-axis-in-samples)
-  (set! (selected-graph-color) (make-color 1 1 1))
-  (set! (selected-data-color) (make-color 0 0 0))
-  (set! (axis-label-font) "9x15")
+  (set! *channel-style* channels-superimposed)
+  (set! *axis-color* (make-color 0 0 0))
+  (set! *x-axis-style* x-axis-in-samples)
+  (set! *selected-graph-color* (make-color 1 1 1))
+  (set! *selected-data-color* (make-color 0 0 0))
+  (set! *axis-label-font* "9x15")
   (set! (x-axis-label) "57 odd harmonics with peak at 7.564")
   )
 
 (define all-99 #(0.000000 0.597494 1.146001 -0.056648 1.705293 0.247794 1.067079 1.589758 1.638162 1.207186 0.711609 0.710553 -0.195687 0.350442 0.679684 1.653746 -0.460484 -0.156879 1.629420 1.730071 1.077540 0.075860 0.435827 1.574017 0.450715 1.581154 -0.027175 1.502323 1.501097 0.855975 1.269118 1.563924 1.244477 0.428054 1.250656 0.668151 0.672807 0.481658 1.215020 0.229865 0.052263 -0.265466 0.722697 0.484686 1.525745 -0.088395 1.682325 1.764438 0.384531 0.550629 -0.009864 1.443840 0.844832 1.132436 -0.107693 0.137994 0.009887 1.832991 0.076907 0.020473 0.102198 0.283702 1.246352 0.965046 0.026752 1.471014 0.126851 0.144964 0.731028 -0.335345 0.712331 0.471273 1.705158 0.467571 1.388009 0.875431 0.986268 1.669037 0.667955 0.887678 1.688981 -0.459336 1.461469 1.135012 0.449583 0.176052 1.407825 1.801166 0.208742 1.880027 0.895566 1.761286 1.021896 0.520239 1.466186 0.733284 1.188215 1.584263 1.296521))
 
 (define (make-all-99)
-  (set! (with-inset-graph) #f)
+  (set! *with-inset-graph* #f)
   (let* ((samples 1200)
 	 (incr (/ (* 2 pi) samples)))
     (with-sound (:channels 1 :clipped #f)
@@ -9013,12 +9013,12 @@ case where all the initial phases are 0.0 in black:
 	  (outa i sum)))))
 
   (set! (y-bounds) (list -10.0 10.0))
-  (set! (channel-style) channels-superimposed)
-  (set! (axis-color) (make-color 0 0 0))
-  (set! (x-axis-style) x-axis-in-samples)
-  (set! (selected-graph-color) (make-color 1 1 1))
-  (set! (selected-data-color) (make-color 0 0 0))
-  (set! (axis-label-font) "9x15")
+  (set! *channel-style* channels-superimposed)
+  (set! *axis-color* (make-color 0 0 0))
+  (set! *x-axis-style* x-axis-in-samples)
+  (set! *selected-graph-color* (make-color 1 1 1))
+  (set! *selected-data-color* (make-color 0 0 0))
+  (set! *axis-label-font* "9x15")
   (set! (x-axis-label) "99 harmonics with peak at 9.9431")
   )
 -->
@@ -9955,7 +9955,7 @@ Here's a picture (it also shows <a href="extsnd.html#withsmptelabel">with-smpte-
   <area shape=rect coords="240,33,245,120" alt="SMPTE label" href="extsnd.html#addmark" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 8001: (add-mark 8001)')">
   <area shape=rect coords="337,33,343,120" alt="SMPTE label" href="extsnd.html#addmark" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 9400: (add-mark 9400)')">
   <area shape=rect coords="539,33,545,120" alt="SMPTE label" href="extsnd.html#addmark" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 12345: (add-mark 12345)')">
-  <area shape=rect coords="570,25,710,45" alt="SMPTE label" href="extsnd.html#withinsetgraph" onmouseout="UnTip()" onmouseover="Tip('this is the graph produced by (set! (with-inset-graph) #t)')">
+  <area shape=rect coords="570,25,710,45" alt="SMPTE label" href="extsnd.html#withinsetgraph" onmouseout="UnTip()" onmouseover="Tip('this is the graph produced by (set! *with-inset-graph* #t)')">
   <area shape=rect coords="725,25,800,155" alt="SMPTE label" href="#addmarkpane" onmouseout="UnTip()" onmouseover="Tip('this is the mark pane from (add-mark-pane)')">
   <area shape=rect coords="590,155,700,170" alt="SMPTE label" href="#showdiskspace" onmouseout="UnTip()" onmouseover="Tip('this is the amount of free disk space I have.In the bad old days, disk space was a constant problem.')">
 </map>
@@ -10419,7 +10419,7 @@ mouse location in that channel.
 		((<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 3)
 		(lambda (file) 
                   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> file))
-		(peak-env-dir)
+		*peak-env-dir*
 		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 		())
 </pre>
@@ -11683,10 +11683,10 @@ snd&gt; 0.0 1.0 330.0 0.5 ' simp :play #f :channels 2 with-sound
 
 <pre class="indented">
 (define *clm-file-name*          "test.snd")
-(define *clm-srate*              (default-output-srate))       ; 44100
-(define *clm-channels*           (default-output-chans))       ; 1
-(define *clm-data-format*        (default-output-data-format)) ; mus-lfloat
-(define *clm-header-type*        (default-output-header-type)) ; mus-next
+(define *clm-srate*              *default-output-srate*)       ; 44100
+(define *clm-channels*           *default-output-chans*)       ; 1
+(define *clm-data-format*        *default-output-data-format*) ; mus-lfloat
+(define *clm-header-type*        *default-output-header-type*) ; mus-next
 (define *clm-verbose*            #f)
 (define *clm-play*               #f)
 (define *clm-statistics*         #f)
@@ -11699,7 +11699,7 @@ snd&gt; 0.0 1.0 330.0 0.5 ' simp :play #f :channels 2 with-sound
 (define *clm-file-buffer-size*   65536)
 (define *clm-locsig-type*        mus-interp-linear)
 (define *clm-clipped*            #t)
-(define *clm-array-print-length* (print-length))  ; 12
+(define *clm-array-print-length* *print-length*)  ; 12
 (define *clm-player*             #f)
 (define *clm-notehook*           #f)
 (define *to-snd*                 #t)

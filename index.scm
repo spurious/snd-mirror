@@ -4,7 +4,7 @@
 
 (define (html obj)
   "(html arg) where arg can be a string, symbol, or procedure looks for a corresponding url 
-and if one is found, and the Snd documentation can be found, calls (html-program) with that url"
+and if one is found, and the Snd documentation can be found, calls *html-program* with that url"
   (letrec ((find-close-paren
 	    (lambda (str)
 	      (let loop ((pos 0)) ;from slib/strsrch.scm
@@ -20,9 +20,9 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 	      ;; snd.html is what we'll search for
 	      (let ((dir (if (file-exists? "snd.html") 
 			     (getcwd)
-			     (if (and (string? (html-dir))
-				      (file-exists? (string-append (html-dir) "/snd.html")))
-				 (html-dir)
+			     (if (and (string? *html-dir*)
+				      (file-exists? (string-append *html-dir* "/snd.html")))
+				 *html-dir*
 				 (if (file-exists? "/usr/share/doc/snd-14/snd.html")
 				     "/usr/share/doc/snd-14"
 				     (if (file-exists? "/usr/local/share/doc/snd-14/snd.html")
@@ -37,7 +37,7 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 							 "/usr/doc/snd-13"
 							 #f))))))))))
 		(if dir
-		    (system (string-append (html-program) " file:" dir "/" n)))))))
+		    (system (string-append *html-program* " file:" dir "/" n)))))))
     
     (let ((name (if (string? obj) 
 		    obj

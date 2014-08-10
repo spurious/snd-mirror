@@ -4,13 +4,13 @@
 
 ;;; -------- with-sound defaults --------
 
-(set! *clm-srate* (default-output-srate))
+(set! *clm-srate* *default-output-srate*)
 
 (define *clm-file-name*         "test.snd")
 (define *clm-reverb-file-name*  "test.rev")
-(define *clm-channels*          (default-output-chans))
-(define *clm-data-format*       (default-output-data-format))
-(define *clm-header-type*       (default-output-header-type))
+(define *clm-channels*          *default-output-chans*)
+(define *clm-data-format*       *default-output-data-format*)
+(define *clm-header-type*       *default-output-header-type*)
 (define *clm-verbose*           #f)
 (define *clm-play*              #f)
 (define *clm-statistics*        #f)
@@ -19,7 +19,7 @@
 (define *clm-reverb-data*       ())
 (define *clm-locsig-type*       mus-interp-linear)
 (define *clm-clipped*           #t)
-(define *clm-array-print-length* (print-length))
+(define *clm-array-print-length* *print-length*)
 (define *clm-player*            #f)
 (define *clm-notehook*          #f)
 (define *clm-with-sound-depth*  0)           ; for CM, not otherwise used
@@ -103,7 +103,7 @@
 	(old-*reverb* *reverb*)
 	(old-notehook *clm-notehook*)
 	(old-verbose *clm-verbose*)
-	(old-auto-update-interval (auto-update-interval))
+	(old-auto-update-interval *auto-update-interval*)
 	(output-1 output)                    ; protect during nesting
 	(output-to-file (string? output))
 	(reverb-1 revfile)
@@ -120,8 +120,8 @@
        (set! *clm-verbose* verbose)
        (set! *clm-notehook* notehook)
        (set! (locsig-type) *clm-locsig-type*)
-       (set! (mus-array-print-length) *clm-array-print-length*)
-       (set! (auto-update-interval) 0.0) 
+       (set! *mus-array-print-length* *clm-array-print-length*)
+       (set! *auto-update-interval* 0.0) 
        (if (equal? clipped 'unset)
 	   (if (and (or scaled-by scaled-to)
 		    (member data-format (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
@@ -307,7 +307,7 @@
      (lambda () 
        (set! *clm-verbose* old-verbose)
        (set! *clm-notehook* old-notehook)
-       (set! (auto-update-interval) old-auto-update-interval)
+       (set! *auto-update-interval* old-auto-update-interval)
        (if *reverb*
 	   (begin
 	     (mus-close *reverb*)
@@ -840,16 +840,16 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
   (format #f ";CLM globals:~%;  *clm-srate*: ~A (default: ~A)~%;  *clm-file-name*: ~A~%;  *clm-channels: ~A (default: ~A)~%;  *clm-data-format*: ~A (default: ~A)~%;  *clm-header-type*: ~A (default: ~A)~%;  *clm-reverb-channels*: ~A, *clm-reverb-data*: ~A~%;  *clm-table-size*: ~A~%;  *clm-file-buffer-size*: ~A~%;  *clm-locsig-type*: ~A~%;  *clm-array-print-length*: ~A (~A)~%;  *clm-notehook*: ~A~%;  *clm-default-frequency*: ~A~%;  *clm-clipped*: ~A, mus-clipping: ~A~%~%"
 
-	  *clm-srate* (default-output-srate)
+	  *clm-srate* *default-output-srate*
 	  *clm-file-name*
-	  *clm-channels* (default-output-chans)
-	  (mus-data-format->string *clm-data-format*) (mus-data-format->string (default-output-data-format))
-	  (mus-header-type->string *clm-header-type*) (mus-header-type->string (default-output-header-type))
+	  *clm-channels* *default-output-chans*
+	  (mus-data-format->string *clm-data-format*) (mus-data-format->string *default-output-data-format*)
+	  (mus-header-type->string *clm-header-type*) (mus-header-type->string *default-output-header-type*)
 	  *clm-reverb-channels* *clm-reverb-data*
 	  *clm-table-size*
 	  *clm-file-buffer-size*
 	  *clm-locsig-type*
-	  *clm-array-print-length* (print-length)
+	  *clm-array-print-length* *print-length*
 	  *clm-notehook*
 	  *clm-default-frequency*
 	  *clm-clipped* (mus-clipping)))

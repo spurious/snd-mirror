@@ -727,8 +727,6 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
 {
   int snd, chn, data;
   snd_info *sp;
-  chan_info *cp;
-  float seconds;
 
   data = get_user_int_data(G_OBJECT(w));
   chn = unpack_channel(data);
@@ -737,6 +735,8 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
 
   if (snd_ok(sp))
     {
+      chan_info *cp;
+      float seconds;
       switch (dtype)
 	{
 	case DRAG_ENTER:
@@ -1166,7 +1166,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	    {
 	      if (new_style == CHANNELS_SEPARATE)
 		{
-		  GtkWidget **cw;
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
 
@@ -1175,6 +1174,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
 		  for (i = 1; i < sp->nchans; i++)
 		    {
+		      GtkWidget **cw;
 		      chan_info *cp;
 		      cp = sp->chans[i];
 		      cp->ax->w = channel_to_widget(cp);

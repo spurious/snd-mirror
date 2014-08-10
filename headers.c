@@ -1293,7 +1293,6 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
   /* INST and MARK chunks added Jul-95 for various programs that expect them (MixView).        */
   /* set aifc_header to false to get old-style AIFF header */
   int i, j, lenhdr = 0, lenloop, curend = 0, extra = 0;         
-  char *str;
 
   lenloop = 38;
   if ((loop_modes[0] != 0) || (loop_modes[1] != 0)) lenloop = 42 + 28;
@@ -1340,6 +1339,7 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, int format,
 
   if (aifc_header)
     {
+      char *str;
       str = (char *)sndlib_format_to_aifc_name(format);
       write_four_chars((unsigned char *)(hdrbuf + 38), (const unsigned char *)str);
       (*(unsigned char *)(hdrbuf + 42)) = 4; /* final pad null not accounted-for */
@@ -1476,12 +1476,13 @@ char *mus_header_aiff_aux_comment(const char *name, mus_long_t *starts, mus_long
 	  sc_len = 0;
 	  for (i = 0; i < AUX_COMMENTS; i++) 
 	    {
-	      mus_long_t start, end, len;
+	      mus_long_t start, end;
 	      start = starts[i];
 	      end = ends[i];
 	      if ((start > 0) && (start < end))
 		{
 		  int j;
+		  mus_long_t len;
 		  len = end - start + 1;
 		  lseek(fd, start, SEEK_SET);
 		  header_read(fd, (unsigned char *)(sc + sc_len), len);
@@ -1971,7 +1972,7 @@ static const unsigned char I_JUNK[4] = {'J','U','N','K'};
 static int read_riff_header(const char *filename, int fd)
 {
   /* we know we have checked for RIFF xxxx WAVE when we arrive here */
-  int chunksize, chunkloc = 12, i;
+  int chunkloc = 12, i;
   bool little = true, got_fmt = false;
   mus_long_t offset = 0;
 
@@ -1989,6 +1990,7 @@ static int read_riff_header(const char *filename, int fd)
 
   while (true)
     {
+      int chunksize;
       offset += chunkloc;
       if (offset >= true_file_length) break;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
@@ -2198,7 +2200,7 @@ static int read_soundforge_header(const char *filename, int fd)
 {
   /* like RIFF but lowercase and 64-bit vals */
   int i, off;
-  mus_long_t offset, chunksize, chunkloc;
+  mus_long_t offset, chunkloc;
   chunkloc = 12 * 2 + 16;
   offset = 0;
   data_format = MUS_UNKNOWN;
@@ -2211,6 +2213,7 @@ static int read_soundforge_header(const char *filename, int fd)
   update_form_size = mus_char_to_llong((unsigned char *)(hdrbuf + 4 * 2));
   while (true)
     {
+      int chunksize;
       offset += chunkloc;
       if (offset >= true_file_length) break;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
@@ -2292,7 +2295,7 @@ static int read_rf64_header(const char *filename, int fd)
   /* we've checked RF64 xxxx WAVE before getting here */
   /* this is very similar (identical) to RIFF for the most part, but I decided it was cleanest to copy the code */
 
-  mus_long_t chunksize, chunkloc;
+  mus_long_t chunkloc;
   bool got_fmt = false, got_ds64 = false;
   mus_long_t offset;
   little_endian = true;
@@ -2313,6 +2316,7 @@ static int read_rf64_header(const char *filename, int fd)
 
   while (true)
     {
+      mus_long_t chunksize;
       offset += chunkloc;
       if (offset >= true_file_length) break;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
@@ -2545,11 +2549,12 @@ static int read_avi_header(const char *filename, int fd)
 		  cktotal += (8 + cksize);
 		  if (match_four_chars((unsigned char *)hdrbuf, I_LIST))
 		    {
-		      mus_long_t cksizer, ckoffr, cktotalr, rdsize;
+		      mus_long_t ckoffr, cktotalr, rdsize;
 		      ckoffr = ckoff + 12;
 		      cktotalr = 12;
 		      while (cktotalr < cksize)
 			{
+			  mus_long_t cksizer;
 			  lseek(fd, ckoffr, SEEK_SET);
 			  header_read(fd, hdrbuf, 8);
 			  cksizer = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
@@ -2660,7 +2665,7 @@ static int read_soundfont_header(const char *filename, int fd)
   const unsigned char I_pdta[4] = {'p','d','t','a'};
 
   /* we know we have checked for RIFF xxxx sfbk when we arrive here */
-  int chunksize, chunkloc, type, cksize, i, this_end, last_end;
+  int chunkloc, type, cksize, i, this_end, last_end;
   mus_long_t ckoff, offset;
   bool happy = true;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
@@ -2674,6 +2679,7 @@ static int read_soundfont_header(const char *filename, int fd)
   true_file_length = SEEK_FILE_LENGTH(fd);
   while (happy)
     {
+      int chunksize;
       offset += chunkloc;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "%s soundfont header: chunks confused at %lld", filename, offset));
@@ -3089,7 +3095,7 @@ static int read_bicsf_header(const char *filename, int fd)
 
 static int read_ircam_header(const char *filename, int fd)
 {
-  short bcode, bloc, bsize;
+  short bloc;
   int offset;
   bool little, happy = true;
 
@@ -3147,6 +3153,7 @@ static int read_ircam_header(const char *filename, int fd)
 
   while (happy)
     {
+      short bcode, bsize;
       offset += bloc;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "%s ircam header: chunks confused at %d", filename, offset));
@@ -3241,7 +3248,7 @@ static int read_8svx_header(const char *filename, int fd, bool bytewise)
   const unsigned char I_BODY[4] = {'B','O','D','Y'};
   const unsigned char I_CHAN[4] = {'C','H','A','N'};
   const unsigned char I_VHDR[4] = {'V','H','D','R'};
-  int chunksize, offset, chunkloc;
+  int offset, chunkloc;
   bool happy = true;
 
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
@@ -3255,6 +3262,7 @@ static int read_8svx_header(const char *filename, int fd, bool bytewise)
 
   while (happy)
     {
+      int chunksize;
       offset += chunkloc;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "%s 8svx header: chunks confused at %d", filename, offset));
@@ -3496,11 +3504,12 @@ static int read_sdif_header(const char *filename, int fd)
   const unsigned char I_1TDS[4] = {'1','T','D','S'};  /* samples -- all others are useless */
   const char *sdif_names[7] = {"fundamental frequency", "FFT", "spectral peak", "sinusoidal track", "harmonic track", "resonance", "unknown"};
 
-  int offset, size;
+  int offset;
   bool happy = false;
   offset = 16;
   while (!happy)
     {
+      int size;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "%s, sdif header: chunks confused at %d", filename, offset));
       size = mus_char_to_bint((unsigned char *)(hdrbuf + 4)) + 8; 
@@ -3809,7 +3818,7 @@ static int read_smp_header(const char *filename, int fd)
 
 static int read_sppack_header(const char *filename, int fd)
 {
-  int typ, bits;
+  int typ;
   data_location = 512;
   chans = 1;
   lseek(fd, 240, SEEK_SET);
@@ -3820,6 +3829,7 @@ static int read_sppack_header(const char *filename, int fd)
     {
       if (((hdrbuf[254]) == 252) && ((hdrbuf[255]) == 14)) /* #xfc and #x0e */
 	{
+	  int bits;
 	  float sr;
 	  typ = mus_char_to_bshort((unsigned char *)(hdrbuf + 18));
 	  bits = mus_char_to_bshort((unsigned char *)(hdrbuf + 16));
@@ -4033,7 +4043,7 @@ static int read_maud_header(const char *filename, int fd)
   const unsigned char I_MHDR[4] = {'M','H','D','R'};
   const unsigned char I_MDAT[4] = {'M','D','A','T'};
 
-  int chunksize, offset, chunkloc;
+  int offset, chunkloc;
   bool happy = true;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
   chunkloc = 12;
@@ -4044,6 +4054,7 @@ static int read_maud_header(const char *filename, int fd)
   update_form_size = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
   while (happy)
     {
+      int chunksize;
       offset += chunkloc;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "%s maud header: chunks confused at %d", filename, offset));
@@ -4135,7 +4146,7 @@ static int read_csl_header(const char *filename, int fd)
   const unsigned char I_SD_B[4] = {'S','D','_','B'};  
   const unsigned char I_NOTE[4] = {'N','O','T','E'};  
 
-  int chunksize, offset, chunkloc;
+  int offset, chunkloc;
   bool happy = true;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
   chunkloc = 12;
@@ -4146,6 +4157,7 @@ static int read_csl_header(const char *filename, int fd)
   update_form_size = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
   while (happy)
     {
+      int chunksize;
       offset += chunkloc;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "%s csl header: chunks confused at %d", filename, offset));
@@ -6519,7 +6531,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	{
 	  int ofd, ifd;
 	  long long int nbytes;
-	  mus_long_t loc, len = 0;
+	  mus_long_t loc;
 	  unsigned char *buf = NULL;
 	  char *new_file, *comment = NULL;
 
@@ -6534,6 +6546,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	    {
 	      if (comment_end > comment_start)
 		{
+		  mus_long_t len;
 		  len = comment_end - comment_start + 1;
 		  comment = (char *)calloc(len + 1, sizeof(char));
 		  ifd = mus_file_open_read(filename);
@@ -6682,10 +6695,11 @@ int mus_header_change_location(const char *filename, int type, mus_long_t new_lo
 
 int mus_header_change_comment(const char *filename, int type, const char *new_comment)
 {
-  int err = MUS_NO_ERROR, fd, len = 0;
+  int err = MUS_NO_ERROR;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
     {
+      int fd, len = 0;
       bool need_ripple = false;
       switch (type)	  
 	{

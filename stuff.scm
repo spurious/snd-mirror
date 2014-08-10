@@ -643,9 +643,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 
 ;;; ----------------
-(define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
-  ;; a bacro is needed so that the calling environment is accessible via outlet
-  ;;   we could also use the begin/let shuffle, but it's too embarrassing
+(define-macro* (define-class class-name inherited-classes (slots ()) (methods ()))
   `(let ((outer-env (outlet (curlet)))
 	 (new-methods ())
 	 (new-slots ()))
@@ -763,7 +761,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		  (lambda (obj) (obj ',slot)) 
 		  (lambda (obj val) (set! (obj ',slot) val)))))
 
-(define-bacro (define-method name-and-args . body)
+(define-macro (define-method name-and-args . body)
   `(let* ((outer-env (outlet (curlet)))
 	  (method-name (car ',name-and-args))
 	  (method-args (cdr ',name-and-args))

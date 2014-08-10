@@ -1189,13 +1189,13 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 
 
 <!--
-(set! (selected-graph-color) (make-color 1 1 1))
-(set! (selected-data-color) (make-color 0 0 0))
-(set! (axis-numbers-font) (tiny-font))
+(set! *selected-graph-color* (make-color 1 1 1))
+(set! *selected-data-color* (make-color 0 0 0))
+(set! *axis-numbers-font* *tiny-font*)
 (set! (x-axis-label 0 0 0) "srate: 1000")
 (set! (x-axis-label 1 0 0) "srate: 4000")
 (set! (x-axis-label 2 0 0) "srate: 16000")
-(set! (axis-label-font) "12x24")
+(set! *axis-label-font* "12x24")
 
 (with-sound (:srate 1000) ; 4000 16000
    (let ((gen (make-oscil 440.0)))
@@ -1375,8 +1375,8 @@ instrument that maps the line segments into sin x^3:
 
 <!--
 (define (fixup-axes)
-  (set! (selected-data-color) (make-color 0 0 0))(set! (selected-data-color) (make-color 0 0 0))
-  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! *selected-data-color* (make-color 0 0 0))(set! *selected-data-color* (make-color 0 0 0))
+  (set! *selected-graph-color* (make-color 1 1 1))
   (set! (x-axis-label 0 0) "sin^3 of '(0 0  50 1  75 0  86 .5  100 0)"))
 -->
 
@@ -1426,9 +1426,9 @@ For example, say we want to square each envelope value:
 
 <!--
 (define (fixup-axes)
-  (set! (selected-data-color) (make-color 0 0 0))(set! (selected-data-color) (make-color 0 0 0))
-  (set! (selected-graph-color) (make-color 1 1 1))
-  (set! (axis-numbers-font) (tiny-font))
+  (set! *selected-data-color* (make-color 0 0 0))(set! *selected-data-color* (make-color 0 0 0))
+  (set! *selected-graph-color* (make-color 1 1 1))
+  (set! *axis-numbers-font* *tiny-font*)
   (set! (x-axis-label 0 0) "(env-any e (lambda (y) (* y y)))")
   (set! (x-axis-label 0 1) "(sine-env)"))
 -->
@@ -1547,8 +1547,8 @@ ampenvspectrum.png:
 ;;; GL/ data cutoff .015 dark 78 jet invert blackman10 65536 db-100
 ;;; x 299 1.84 y 281 .082 z 342 1.25
 ;;; hop 3
-(set! (spectrum-end) .02)
-(set! (selected-graph-color) (make-color 1 1 1))
+(set! *spectrum-end* .02)
+(set! *selected-graph-color* (make-color 1 1 1))
 
 frqenvspectrum.png:
 (with-sound (:srate 10000)
@@ -1812,15 +1812,15 @@ the table-relative phase, returning a squared-off sine-wave:
 	   (outa i qsine)
 	   (outb i (- tsine qsine))))))
 
-(set! (selected-graph-color) (make-color 1 1 1))
-(set! (selected-data-color) (make-color 0 0 0))
+(set! *selected-graph-color* (make-color 1 1 1))
+(set! *selected-data-color* (make-color 0 0 0))
 (set! (x-axis-label 0 0 0) "no interpolation, table size=100, sine at 100 Hz")
 (set! (x-axis-label 0 1 0) "difference between sine and squared-off sine")
 (set! (x-axis-label 0 0 1) "squared-off sine spectrum: srate=1000000")
 (set! (x-axis-label 0 1 1) "spectrum of the error")
-(set! (axis-label-font) (axis-numbers-font))
-(set! (transform-normalization) normalize-by-sound)
-(set! (graphs-horizontal) #f)
+(set! *axis-label-font* *axis-numbers-font*)
+(set! *transform-normalization* normalize-by-sound)
+(set! *graphs-horizontal* #f)
 -->
 
 <!-- 
@@ -3188,8 +3188,8 @@ on both the frequency and the "B" factor (which sets how close we get to a trian
 
 
 <!--
-(set! (selected-graph-color) (make-color 1 1 1))
-(set! (selected-data-color) (make-color 0 0 0))
+(set! *selected-graph-color* (make-color 1 1 1))
+(set! *selected-data-color* (make-color 0 0 0))
 (set! (x-axis-label 0 0 0) "derivative of tanh(B*sin), B from .1 to 5")
 (set! (x-axis-label 0 0 0) "integration of tanh(B*sin), B from .1 to 10")
 -->
@@ -3392,11 +3392,11 @@ pulsefm.png:
 	(outa i fm)
 	(outb i (* amp (oscil car1 fm)))))))
 
-(set! (selected-graph-color) (make-color 1 1 1))
-(set! (selected-data-color) (make-color 0 0 0))
+(set! *selected-graph-color* (make-color 1 1 1))
+(set! *selected-data-color* (make-color 0 0 0))
 (set! (show-transform-peaks 0 0) #f)
 cursor 10584
-(set! (axis-label-font) (axis-numbers-font))
+(set! *axis-label-font* *axis-numbers-font*)
 (set! (x-axis-label 0 0 0) "pulse train modulating signal, FM index: 3.0")
 (set! (x-axis-label 0 1 0) "modulated signal")
 -->
@@ -3446,7 +3446,7 @@ for J1(B/(n*k))) approach 0.
 
 (set! (x-axis-label 0 0) "J0 and J1")
 (set! (x-axis-label 0 1) "")
-(set! (axis-label-font)"9x15")
+(set! *axis-label-font*"9x15")
 -->
 
 
@@ -3656,8 +3656,8 @@ surprise: the modulation obscures the underlying square-wave!
 	(outb i (* amp (rand car2)))
 	(outc i (* amp (rand car1 fm)))))))
 
-(set! (selected-graph-color) (make-color 1 1 1))
-(set! (selected-data-color) (make-color 0 0 0))
+(set! *selected-graph-color* (make-color 1 1 1))
+(set! *selected-data-color* (make-color 0 0 0))
 (set! (x-axis-label 0 0 1) "100Hz rand modulating signal spectrum")
 (set! (x-axis-label 0 1 1) "1000Hz rand, no modulation")
 (set! (x-axis-label 0 2 1) "1000Hz rand, 100Hz modulation (from chan 0), index: 3")
@@ -5364,8 +5364,8 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
   (test-filter (make-two-zero 0.5 0.2 0.3) 3))
 
 (define (fixup-axes)
-  (set! (selected-data-color) (make-color 0 0 0))
-  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! *selected-data-color* (make-color 0 0 0))
+  (set! *selected-graph-color* (make-color 1 1 1))
   (set! (x-axis-label 0 0) "(make-one-zero 0.5 0.5)")
   (set! (x-axis-label 0 1) "(make-one-pole 0.1 -0.9)")
   (set! (x-axis-label 0 2) "(make-two-pole 0.1 0.1 0.9)")
@@ -5522,8 +5522,8 @@ as we sweep either the frequency or the radius:
 	   ))))
 
 (define (fixup-axes)
-  (set! (selected-data-color) (make-color 0 0 0))
-  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! *selected-data-color* (make-color 0 0 0))
+  (set! *selected-graph-color* (make-color 1 1 1))
   (set! (x-axis-label 0 0 0) "formant: sweep frequency from 100 to 10000")
   (set! (x-axis-label 0 1 0) "firmant: sweep frequency from 100 to 10000")
   (set! (x-axis-label 0 0 1) "formant radius: .999")
@@ -8613,14 +8613,14 @@ Use mus-scaler to set the duty-factor at run-time.
 	))
     ))
 
-(set! (selected-graph-color) (make-color 1 1 1))
-(set! (selected-data-color) (make-color 0 0 0))
+(set! *selected-graph-color* (make-color 1 1 1))
+(set! *selected-data-color* (make-color 0 0 0))
 (set! (x-axis-label 0 0) "adjustable-square-wave, duty-factor from .01 to .99")
 (set! (x-axis-label 0 1) "adjustable-sawtooth-wave")
 (set! (x-axis-label 0 2) "adjustable-triangle-wave")
 (set! (x-axis-label 0 3) "adjustable-oscil")
-(set! (axis-numbers-font) (tiny-font))
-(set! (axis-label-font) "10x20")
+(set! *axis-numbers-font* *tiny-font*)
+(set! *axis-label-font* "10x20")
 -->
 
 <p>A similar trick can make, for example, a squared-off triangle-wave:
@@ -8666,7 +8666,7 @@ the higher "n", the more low-passed the output.
 (set! (x-axis-label 0 2) "round-interp, n=100")
 (set! (x-axis-label 0 3) "round-interp, n=1000")
 (set! (x-axis-label 0 4) "round-interp, n=10000")
-(set! (axis-label-font) "-*-times-medium-r-normal-*-20-*-*-*-*-*-*-*")
+(set! *axis-label-font* "-*-times-medium-r-normal-*-20-*-*-*-*-*-*-*")
 -->
 
 <div class="separator"></div>
@@ -8820,7 +8820,7 @@ z 0 1.9
 4 0.24
 blackman6 2048
 
-(set! (selected-graph-color) (make-color 1 1 1))
+(set! *selected-graph-color* (make-color 1 1 1))
 -->
 <div class="separator"></div>
 
@@ -9244,7 +9244,7 @@ are the same, but there's an overall phase difference of pi.
 <!--
 (set! (x-axis-label 0 0 0) "rcos freq=1050 r=.99")
 (set! (x-axis-label 0 1 0) "rcos freq=1048 r=.99")
-(set! (axis-label-font) "9x15")
+(set! *axis-label-font* "9x15")
 -->
 
 <div class="separator"></div>
@@ -9382,12 +9382,12 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 
 
 <!--
-(set! (selected-graph-color) (make-color 1 1 1))
-(set! (selected-data-color) (make-color 0 0 0))
+(set! *selected-graph-color* (make-color 1 1 1))
+(set! *selected-data-color* (make-color 0 0 0))
 
 (set! (x-axis-label 0 0) "rkcos, r=.9")
 (set! (x-axis-label 0 1) "rksin, r=.9")
-(set! (axis-label-font) "9x15")
+(set! *axis-label-font* "9x15")
 
 (set! (x-axis-label 0 0) "rms: .21, peak amp: .25")
 (set! (x-axis-label 0 1) "rms: .21, peak amp: .75")

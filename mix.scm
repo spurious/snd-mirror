@@ -450,7 +450,7 @@ panning operation."
 	     (if (= receiving-chans 1)
 
 		 ;; mono to mono = just scale or envelope
-		 (let ((idx (mix name beg 0 index 0 (with-mix-tags) auto-delete))) ; file start in-chan snd chn ...
+		 (let ((idx (mix name beg 0 index 0 *with-mix-tags* auto-delete))) ; file start in-chan snd chn ...
 		   (if (and idx (mix? (car idx)))
 		       (let ((id (car idx)))
 			 (set! (mix-amp-env id) (invert-envelope pan))
@@ -458,8 +458,8 @@ panning operation."
 		       #f))
 
 		 ;; mono to stereo
-		 (let ((idx0 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
-		       (idx1 (mix name beg 0 index 1 (with-mix-tags) end-deletion-choice)))
+		 (let ((idx0 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))
+		       (idx1 (mix name beg 0 index 1 *with-mix-tags* end-deletion-choice)))
 		   (if (and idx0 (mix? (car idx0))
 			    idx1 (mix? (car idx1)))
 		       (let ((id0 (car idx0))
@@ -474,8 +474,8 @@ panning operation."
 	     (if (= receiving-chans 1)
 
 		 ;; stereo -> mono => scale or envelope both input chans into the output
-		 (let ((idx0 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
-		       (idx1 (mix name beg 1 index 0 (with-mix-tags) end-deletion-choice)))
+		 (let ((idx0 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))
+		       (idx1 (mix name beg 1 index 0 *with-mix-tags* end-deletion-choice)))
 		   (if (and idx0 (mix? (car idx0))
 			    idx1 (mix? (car idx1)))
 		       (let ((id0 (car idx0))
@@ -486,10 +486,10 @@ panning operation."
 		       #f))
 
 		 ;; stereo -> stereo => incoming chans are treated equally, each panned into outputs
-		 (let ((idx00 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
-		       (idx01 (mix name beg 0 index 1 (with-mix-tags) deletion-choice))
-		       (idx10 (mix name beg 1 index 0 (with-mix-tags) deletion-choice))
-		       (idx11 (mix name beg 1 index 1 (with-mix-tags) end-deletion-choice)))
+		 (let ((idx00 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))
+		       (idx01 (mix name beg 0 index 1 *with-mix-tags* deletion-choice))
+		       (idx10 (mix name beg 1 index 0 *with-mix-tags* deletion-choice))
+		       (idx11 (mix name beg 1 index 1 *with-mix-tags* end-deletion-choice)))
 
 		   (if (and idx00 (mix? (car idx00))
 			    idx01 (mix? (car idx01))

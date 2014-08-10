@@ -1194,7 +1194,6 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 {
   char *str;
   int res;
-  char *comment = NULL;
   fdat->error_widget = NOT_A_SCANF_WIDGET;
   fdat->scanf_widget = NOT_A_SCANF_WIDGET;
 
@@ -1265,6 +1264,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 
   if (fdat->comment_text) 
     {
+      char *comment = NULL;
       if (GTK_IS_TEXT_VIEW(fdat->comment_text))
 	comment = sg_get_text(fdat->comment_text, 0, -1);
       else comment = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->comment_text)); 
@@ -1287,7 +1287,6 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
 
   int i;
   const char **fl = NULL;
-  const char *str;
   if (!(fdat->format_list)) return;
 
   if (type != IGNORE_HEADER_TYPE)
@@ -1306,10 +1305,8 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
 
   slist_clear(fdat->format_list);
   for (i = 0; i < fdat->formats; i++) 
-    {
-      str = fl[i];
-      slist_append(fdat->format_list, str);
-    }
+    slist_append(fdat->format_list, (const char *)fl[i]);
+
   slist_select(fdat->format_list, fdat->format_pos);
   slist_moveto(fdat->format_list, fdat->format_pos);
 
@@ -2195,9 +2192,9 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
 
     case REGION_SAVE_AS:
       {
-	char *ofile;
 	if (region_ok(region_dialog_region()))
 	  {
+	    char *ofile;
 	    if (file_exists)
 	      ofile = snd_tempnam();
 	    else ofile = mus_strdup(tmpfile);
@@ -2869,7 +2866,7 @@ static void watch_new_file(GFileMonitor *mon, GFile *file, GFile *other, GFileMo
 static void new_file_ok_callback(GtkWidget *w, gpointer context) 
 {
   mus_long_t loc;
-  char *comment = NULL, *newer_name = NULL, *msg;
+  char *newer_name = NULL, *msg;
   int header_type, data_format, srate, chans;
   newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
   if ((!newer_name) || (!(*newer_name)))
@@ -2880,6 +2877,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
     }
   else
     {
+      char *comment;
       redirect_snd_error_to(redirect_post_file_panel_error, (void *)ndat);
       comment = get_file_dialog_sound_attributes(ndat, &srate, &chans, &header_type, &data_format, &loc, &initial_samples, 1);
       redirect_snd_error_to(NULL, NULL);
@@ -2889,7 +2887,6 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	}
       else
 	{
-	  snd_info *sp;
 	  /* handle the overwrite hook directly */
 	  if (new_file_filename) free(new_file_filename);
 	  new_file_filename = mus_expand_filename(newer_name); /* need full filename for fam */
@@ -2917,6 +2914,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	    }
 	  else
 	    {
+	      snd_info *sp;
 	      if (new_file_watcher)
 		new_file_undoit();
 
@@ -3032,9 +3030,9 @@ static void new_file_help_callback(GtkWidget *w, gpointer context)
 
 widget_t make_new_file_dialog(bool managed)
 {
-  char *newname;
   if (!new_file_dialog)
     {
+      char *newname;
       GtkWidget *name_label, *hform, *help_button, *cancel_button, *reset_button;
       new_file_dialog = snd_gtk_dialog_new();
       gtk_window_set_title(GTK_WINDOW(new_file_dialog), "New file");
@@ -3275,10 +3273,10 @@ static void watch_file_read_only(GFileMonitor *mon, GFile *file, GFile *other, G
     case G_FILE_MONITOR_EVENT_CHANGED:
 #ifndef _MSC_VER
       {
-	int err;
-	char *title;
 	if (mus_file_probe(sp->filename))
 	  {
+	    char *title;
+	    int err;
 	    err = access(sp->filename, W_OK);
 	    sp->file_read_only = ((err < 0) ? FILE_READ_ONLY : FILE_READ_WRITE);
 	    if ((sp->file_read_only == FILE_READ_WRITE) && 
@@ -3345,13 +3343,13 @@ GtkWidget *edit_header(snd_info *sp)
 {
   char *str;
   file_info *hdr;
-  int i;
   edhead_info *ep = NULL;
 
   if (!sp) return(NULL);
   /* look for a dialog already editing this sound, raise if found, else make a new one */
   if (edhead_info_size > 0)
     {
+      int i;
       for (i = 0; i < edhead_info_size; i++)
 	if ((edhead_infos[i]) &&
 	    ((edhead_infos[i]->sp == sp) ||

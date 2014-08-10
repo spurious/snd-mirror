@@ -7,7 +7,7 @@
 (require snd-new-effects.scm snd-special-menu.scm snd-new-backgrounds.scm snd-marks-menu.scm snd-fft-menu.scm snd-effects-utils.scm)
 
 (keep-file-dialog-open-upon-ok)
-(set! (ask-about-unsaved-edits) #t)
+(set! *ask-about-unsaved-edits* #t)
 (if (not (hook-member show-disk-space after-open-hook))
     (hook-push after-open-hook show-disk-space))
 
@@ -50,7 +50,7 @@
 (if (not (hook-member hook-paint-all new-widget-hook))
     (hook-push new-widget-hook hook-paint-all))
 
-(set! (mix-waveform-height) 32)
+(set! *mix-waveform-height* 32)
 
 ;;; (with-level-meters 2)
 
@@ -136,7 +136,7 @@
 	       (lambda (button color)
 		 (XtVaSetValues
 		   (XmMessageBoxGetChild new-dialog button)
-		   (list XmNarmColor   (selection-color)
+		   (list XmNarmColor   *selection-color*
 			 XmNbackground color)))
 	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
 	       (list *highlight-color* *highlight-color* *highlight-color*))

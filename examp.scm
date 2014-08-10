@@ -140,10 +140,10 @@
   (let ((snd (hook 'snd))
 	(chn (hook 'chn)))
     (if (and (transform-graph?) 
-	     (= (transform-graph-type) graph-once))
+	     (= *transform-graph-type* graph-once))
 	(status-report 
 	 (number->string (/ (* 2.0 (float-vector-peak (transform->float-vector snd chn))) 
-			    (transform-size)))
+			    *transform-size*))
 	 snd))))
 
 ;(hook-push after-transform-hook fft-peak)
@@ -1612,22 +1612,22 @@ In most cases, this will be slightly offset from the true beginning of the note"
       (/ (* 0.5 (- logla logra))
 	 (+ logla logra))))
 
-  (let ((data (make-float-vector (transform-size)))
+  (let ((data (make-float-vector *transform-size*))
 	(data-loc 0))
     (lambda (n)
       (set! (data data-loc) n)
       (set! data-loc (+ data-loc 1))
       (let ((rtn #f))
-	(if (= data-loc (transform-size))
+	(if (= data-loc *transform-size*)
 	    (begin
 	      (set! data-loc 0)
 	      (if (> (float-vector-peak data) .001) ;ignore noise sections??
-		  (let ((spectr (snd-spectrum data rectangular-window (transform-size)))
+		  (let ((spectr (snd-spectrum data rectangular-window *transform-size*))
 			(pk 0.0)
 			(pkloc 0))
 		    (let ((pit 
 			   (do ((i 0 (+ i 1)))
-			       ((= i (/ (transform-size) 2)) 
+			       ((= i (/ *transform-size* 2)) 
 				(if (or (= pk 0.0)
 					(= pkloc 0))
 				    0.0
@@ -1636,12 +1636,12 @@ In most cases, this will be slightly offset from the true beginning of the note"
 								       pk
 								       (spectr (+ 1 pkloc))))
 					  (srate))
-				       (transform-size))))
+				       *transform-size*)))
 			     (if (> (spectr i) pk)
 				 (begin
 				   (set! pk (spectr i))
 				   (set! pkloc i))))))
-		      (if (< (abs (- pitch pit)) (/ (srate) (* 2 (transform-size)))) ; uh... why not do it direct?
+		      (if (< (abs (- pitch pit)) (/ (srate) (* 2 *transform-size*))) ; uh... why not do it direct?
 			  (set! rtn #t)))))
 	       (fill! data 0.0)))
 	 rtn))))
@@ -1918,12 +1918,12 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	(silence (/ silence-1 128))
 	(edges ())
 	(in-silence #t)
-	(old-max (max-regions))
-	(old-tags (with-mix-tags)))
+	(old-max *max-regions*)
+	(old-tags *with-mix-tags*))
     (dynamic-wind
      (lambda ()
-       (set! (max-regions) 1024)
-       (set! (with-mix-tags) #f))
+       (set! *max-regions* 1024)
+       (set! *with-mix-tags* #f))
      (lambda ()
        (let ((len (framples))
 	     (reader (make-sampler)))
@@ -1972,8 +1972,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		(set! start (+ start (framples reg)))
 		(forget-region reg)))))))
      (lambda ()
-       (set! (with-mix-tags) old-tags)
-       (set! (max-regions) old-max)))))
+       (set! *with-mix-tags* old-tags)
+       (set! *max-regions* old-max)))))
     
     
 ;; -------- reorder blocks within channel

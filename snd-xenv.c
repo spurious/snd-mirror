@@ -174,19 +174,21 @@ static bool within_selection_src = false;
 
 static void apply_enved(void)
 {
-  char *origin = NULL, *estr = NULL;
   if (active_env)
     {
-      int i, j;
-      env *max_env = NULL;
       active_channel = current_channel();
       if (active_channel)
 	{
+	  int i, j;
+	  char *origin = NULL, *estr = NULL;
+	  env *max_env = NULL;
+
 	  set_sensitive(apply_button, false);
 	  set_sensitive(apply2_button, false);
 	  set_button_label(cancel_button, I_STOP);
 	  cancelling = false;
 	  check_for_event();
+
 	  switch (enved_target(ss))
 	    {
 	    case ENVED_AMPLITUDE:
@@ -387,10 +389,11 @@ static void order_field_activated(void)
 
 static void text_field_activated(void)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
-  char *name = NULL, *str;
+  char *name = NULL;
   name = XmTextGetString(textL);
   if ((name) && (*name))
     {
+      char *str;
       env *e = NULL;
       str = name;
       while (isspace((int)(*str))) str++;
@@ -553,7 +556,6 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
 static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  int pos;
 #ifdef __APPLE__
   press_x = ev->x;
   press_y = ev->y;
@@ -562,6 +564,7 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
   ss->enved->env_dragged = false;
   if (showing_all_envs)
     {
+      int pos;
       pos = hit_env(ev->x, ev->y, env_window_width, env_window_height);
       XmListSelectPos(screnvlst, pos + 1, false);
       if ((pos >= 0) && 

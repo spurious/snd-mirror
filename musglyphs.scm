@@ -239,7 +239,7 @@
 
 
 (define treble-tag-y 30)
-(define bass-tag-y (+ treble-tag-y (* 4 (mix-waveform-height))))
+(define bass-tag-y (+ treble-tag-y (* 4 *mix-waveform-height*)))
 
 
 (define (draw-a-note freq dur x0 ty0 size with-clef treble)
@@ -327,8 +327,8 @@
 ;; this is the example in the documentation
 
 (define (draw-mix-tag id ox oy x y)
-  (let ((width (mix-tag-width))
-	(height (mix-tag-height))
+  (let ((width *mix-tag-width*)
+	(height *mix-tag-height*)
 	(home (mix-home id)))
     (if (not (= oy -1)) ; already erased?
 	(fill-rectangle	(- ox 1 (/ width 2)) (- oy 1 height) (+ width 2) (+ height 2) (car home) (cadr home) time-graph #t))
@@ -345,20 +345,20 @@
 	       (draw-a-note (or (mix-property 'frequency id) 440.0)
 			    (/ (length id) (srate))
 			    x y
-			    (* 2 (mix-waveform-height))
+			    (* 2 *mix-waveform-height*)
 			    #f
 			    (eq? (mix-property 'instrument id) 'violin)))
 	     (set! (hook 'result) #t)))
 
 (hook-push after-graph-hook
 	   (lambda (hook)
-	     (let ((size (* 2 (mix-waveform-height))))
+	     (let ((size (* 2 *mix-waveform-height*)))
 	       (draw-staff 0 treble-tag-y (* 1.0 size) (* .25 size))
 	       (draw-staff 0 bass-tag-y (* 1.0 size) (* .25 size))
 	       (draw-treble-clef 0 (+ treble-tag-y (* size .76)) size)
 	       (draw-bass-clef (* size .075) (+ bass-tag-y (* size .26)) size))))
 
-(set! (mix-waveform-height) 20)
+(set! *mix-waveform-height* 20)
 
 (let ((oldie (find-sound "test.snd")))
   (if (sound? oldie)
@@ -413,7 +413,7 @@
 ;;; here is the same example, but with vertical drag interpreted as pitch change, and the
 ;;;   note head itself is the mix tag:
 
-(set! (show-mix-waveforms) #f)
+(set! *show-mix-waveforms* #f)
 
 (hook-push draw-mix-hook
 	   (lambda (hook)
@@ -423,11 +423,11 @@
 		    (xy (draw-a-note (or (mix-property 'frequency id) 440.0)
 				     (/ (length id) (srate))
 				     x y
-				     (* 2 (mix-waveform-height))
+				     (* 2 *mix-waveform-height*)
 				     #f
 				     (eq? (mix-property 'instrument id) 'violin)))
 		    (note-x (round (car xy)))
-		    (note-y (round (- (cadr xy) (mix-tag-height)))))
+		    (note-y (round (- (cadr xy) *mix-tag-height*))))
 	       (if (not (mix-property 'original-tag-y id))
 		   (begin
 		     (set! (mix-property 'original-frequency id) (mix-property 'frequency id))
@@ -437,7 +437,7 @@
 
 (hook-push after-graph-hook
 	   (lambda (hook)
-	     (let ((size (* 2 (mix-waveform-height))))
+	     (let ((size (* 2 *mix-waveform-height*)))
 	       (draw-staff 0 treble-tag-y (* 1.0 size) (* .25 size))
 	       (draw-staff 0 bass-tag-y (* 1.0 size) (* .25 size))
 	       (draw-treble-clef 0 (+ treble-tag-y (* size .76)) size)
@@ -450,8 +450,8 @@
 		    (y (hook 'y))
 		    (orig-y (mix-property 'original-tag-y n)))
 	       (if orig-y
-		   (let ((interval (round (/ (* 12 (- (+ (mix-tag-height) orig-y) y))
-					     (* 2 (mix-waveform-height)))))
+		   (let ((interval (round (/ (* 12 (- (+ *mix-tag-height* orig-y) y))
+					     (* 2 *mix-waveform-height*))))
 			 (current-interval (mix-property 'interval n)))
 		     ;; this gives the number of semitones we have drifted
 		     (if (not (= current-interval interval))
@@ -476,7 +476,7 @@
 		    (set! (mix-property 'last-interval id) interval))))
 	       (set! (hook 'result) #t))))
 
-(set! (mix-waveform-height) 20)
+(set! *mix-waveform-height* 20)
 
 (let ((oldie (find-sound "test.snd")))
   (if (sound? oldie)

@@ -51,86 +51,86 @@
  *  14-Mar:    removed XEN_LOCAL_GC_PROTECT and XEN_LOCAL_GC_UNPROTECT.
  *  14-Jan-09: s7_xen_initialize.
  *  --------
- *  17-Nov-08: use s7_define_constant in XEN_DEFINE_CONSTANT.
- *  1-Nov-08:  changed s7 and Guile C_TO_XEN_STRING slightly.
- *  16-Oct-08: removed Gauche support.
- *  10-Aug-08: S7, a TinyScheme derivative.
+ *  17-Nov:    use s7_define_constant in XEN_DEFINE_CONSTANT.
+ *  1-Nov:     changed s7 and Guile C_TO_XEN_STRING slightly.
+ *  16-Oct:    removed Gauche support.
+ *  10-Aug:    S7, a TinyScheme derivative.
  *             changed XEN_NUMERATOR and XEN_DENOMINATOR to return off_t not XEN.
- *  23-Jul-08: be more careful about wrapping POINTERs (they say 64-bit MS C void* == unsigned long long, but not unsigned long).
- *  30-Jun-08: XEN_OFF_T_IF_BOUND_P.
- *  19-May-08: more const char* arg declarations.
- *  14-May-08: changed XEN_ARITY in Guile to use scm_procedure_property.
- *  1-May-08:  XEN_NAN_P and XEN_INF_P (Guile).
- *  23-Apr-08: try to get old Gauche (8.7) to work again.
+ *  23-Jul:    be more careful about wrapping POINTERs (they say 64-bit MS C void* == unsigned long long, but not unsigned long).
+ *  30-Jun:    XEN_OFF_T_IF_BOUND_P.
+ *  19-May:    more const char* arg declarations.
+ *  14-May:    changed XEN_ARITY in Guile to use scm_procedure_property.
+ *  1-May:     XEN_NAN_P and XEN_INF_P (Guile).
+ *  23-Apr:    try to get old Gauche (8.7) to work again.
  *  1-Mar-08:  no ext case now checks arg consistency.
  *  --------
- *  12-Dec-07: Gauche uses COMPNUM, not COMPLEX (after 0.8.7?), NUMBERP for complex?
- *  21-Nov-07: XEN_HAVE_COMPLEX_NUMBERS.
- *  18-Jul-07: Gauche error handling changes.
- *  28-Apr-07: Gauche API changes in versions 0.8.8, 0.8.10, and 0.9.
- *  14-Feb-07: XEN_PUTS and friends for fth (Mike).
+ *  12-Dec:    Gauche uses COMPNUM, not COMPLEX (after 0.8.7?), NUMBERP for complex?
+ *  21-Nov:    XEN_HAVE_COMPLEX_NUMBERS.
+ *  18-Jul:    Gauche error handling changes.
+ *  28-Apr:    Gauche API changes in versions 0.8.8, 0.8.10, and 0.9.
+ *  14-Feb:    XEN_PUTS and friends for fth (Mike).
  *  17-Jan-07: rb_errinfo changes (Mike Scholz).
  *  --------
- *  14-Nov-06: check for Scm_EvalRec (Gauche 0.8.8).
- *  9-Sep-06:  XEN_LOAD_PATH and XEN_ADD_TO_LOAD_PATH
- *  1-Sep-06:  string and array changes for Ruby (from Mike).
- *  7-Aug-06:  more careful list length handling in Ruby (from Mike).
- *  23-May-06: added xen_rb_repl_set_prompt to set (no-gui) Ruby repl prompt.
- *  12-May-06: changed HAVE_RATIOS to XEN_HAVE_RATIOS.
- *  17-Apr-06: removed XEN_MAKE_OBJECT.
- *  15-Apr-06: Gauche support.
+ *  14-Nov:    check for Scm_EvalRec (Gauche 0.8.8).
+ *  9-Sep:     XEN_LOAD_PATH and XEN_ADD_TO_LOAD_PATH
+ *  1-Sep:     string and array changes for Ruby (from Mike).
+ *  7-Aug:     more careful list length handling in Ruby (from Mike).
+ *  23-May:    added xen_rb_repl_set_prompt to set (no-gui) Ruby repl prompt.
+ *  12-May:    changed HAVE_RATIOS to XEN_HAVE_RATIOS.
+ *  17-Apr:    removed XEN_MAKE_OBJECT.
+ *  15-Apr:    Gauche support.
  *  28-Mar-06: Forth support thanks to Mike Scholz.
  *  --------
- *  7-Nov-05:  xen_rb_defined_p (Mike Scholz).
- *  16-Sep-05: removed some debugging extras that caused confusion on 64-bit machines.
- *  12-Aug-05: include guile setter procedure names for better error reporting.
- *  14-Jun-05: XEN_DEFINE (XEN value, not assumed to be int as in XEN_DEFINE_CONSTANT).
+ *  7-Nov:     xen_rb_defined_p (Mike Scholz).
+ *  16-Sep:    removed some debugging extras that caused confusion on 64-bit machines.
+ *  12-Aug:    include guile setter procedure names for better error reporting.
+ *  14-Jun:    XEN_DEFINE (XEN value, not assumed to be int as in XEN_DEFINE_CONSTANT).
  *             XEN_ASSOC, XEN_MEMBER, and XEN_PROCEDURE_NAME for Scheme side.
  *             XEN_DEFINE_HOOK and XEN_DEFINE_SIMPLE_HOOK no longer take the "Var" arg.
- *  18-May-05: deprecate XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P and XEN_NUMBER_OR_BOOLEAN_P.
- *  29-Mar-05: C_TO_XEN_STRINGN changes.
- *  24-Mar-05: Ruby properties (Mike Scholz).
- *  8-Mar-05:  Ruby improvements in keywords and hooks (Mike Scholz).
- *  7-Mar-05:  C99 complex number changes (creal, _Complex_I) (Steve Bankowitz).
- *  2-Mar-05:  Ruby support for off_t (Mike Scholz).
+ *  18-May:    deprecate XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P and XEN_NUMBER_OR_BOOLEAN_P.
+ *  29-Mar:    C_TO_XEN_STRINGN changes.
+ *  24-Mar:    Ruby properties (Mike Scholz).
+ *  8-Mar:     Ruby improvements in keywords and hooks (Mike Scholz).
+ *  7-Mar:     C99 complex number changes (creal, _Complex_I) (Steve Bankowitz).
+ *  2-Mar:     Ruby support for off_t (Mike Scholz).
  *  4-Jan-05:  more guile changes.
  *  --------
- *  31-Dec-04: removed "caller" arg from *_NO_CATCH.
- *  10-Nov-04: scm_c_vector* (new Guile functions)
- *  21-Oct-04: XEN_LIST_REVERSE, (using rb_ary_dup available in 1.8)
- *  7-Oct-04:  keyword changes for new Guile.
- *  28-Sep-04: deprecated *_WITH_CALLER -- these no longer do anything useful in Guile.
+ *  31-Dec:    removed "caller" arg from *_NO_CATCH.
+ *  10-Nov:    scm_c_vector* (new Guile functions)
+ *  21-Oct:    XEN_LIST_REVERSE, (using rb_ary_dup available in 1.8)
+ *  7-Oct:     keyword changes for new Guile.
+ *  28-Sep:    deprecated *_WITH_CALLER -- these no longer do anything useful in Guile.
  *             NaNs and Infs -> 0 or 0.0 in XEN_TO_C_INT|DOUBLE -- perhaps I should add another set of macros?
- *  23-Aug-04: more Guile name changes.
- *  12-Aug-04: more Guile name changes, C_TO_XEN_STRINGN (Guile)
- *  3-Aug-04:  xen_to_c_int bugfix thanks to Kjetil S. Matheussen.
- *  29-Jul-04: deprecated XEN_TO_C_BOOLEAN_OR_TRUE.
- *  21-Jul-04: deprecated XEN_TO_SMALL_C_INT and C_TO_SMALL_XEN_INT.
+ *  23-Aug:    more Guile name changes.
+ *  12-Aug:    more Guile name changes, C_TO_XEN_STRINGN (Guile)
+ *  3-Aug:     xen_to_c_int bugfix thanks to Kjetil S. Matheussen.
+ *  29-Jul:    deprecated XEN_TO_C_BOOLEAN_OR_TRUE.
+ *  21-Jul:    deprecated XEN_TO_SMALL_C_INT and C_TO_SMALL_XEN_INT.
  *             use new Guile 1.7 numerical function names (under flag HAVE_SCM_TO_SIGNED_INTEGER).
- *  28-Jun-04: XEN_REQUIRED_ARGS_OK to make it easier to turn off this check.
- *  9-June-04: complex number conversions (Guile) -- Ruby complex numbers are an optional module?
- *  21-May-04: plug some memory leaks in Ruby cases.
- *  23-Feb-04: changed DEBUGGING to XEN_DEBUGGING, added redefinition checks under that switch.
- *  2-Feb-04:  C_TO_XEN_CHAR, ratio support (Guile), XEN_CONS_P, XEN_PAIR_P, etc
- *  6-Jan-04:  XEN_VARIABLE_REF in Guile changed to support 1.4 and older versions.
+ *  28-Jun:    XEN_REQUIRED_ARGS_OK to make it easier to turn off this check.
+ *  9-June:    complex number conversions (Guile) -- Ruby complex numbers are an optional module?
+ *  21-May:    plug some memory leaks in Ruby cases.
+ *  23-Feb:    changed DEBUGGING to XEN_DEBUGGING, added redefinition checks under that switch.
+ *  2-Feb:     C_TO_XEN_CHAR, ratio support (Guile), XEN_CONS_P, XEN_PAIR_P, etc
+ *  6-Jan:     XEN_VARIABLE_REF in Guile changed to support 1.4 and older versions.
  *  5-Jan-04:  hook support in Ruby thanks to Michael Scholz.
  *  --------
- *  1-Nov-03:  protect several macros from hidden double evaluations.
- *  29-Sep-03: fixed incorrect assumption in xen_rb_cons (xen.c) that arg2 was list.
- *  8-Sep-03:  removed xen_malloc -- can't remember now why this existed.
- *  19-Aug-03: xen_rb_str_new2 to avoid unwanted side-effects.
- *  12-Aug-03: various changes for ISO C99.
- *  30-Jul-03: use new SCM_VECTOR_REF/SET macros if they're defined.
- *  7-Apr-03:  changes to error handlers for more perspicuous error messages
+ *  1-Nov:     protect several macros from hidden double evaluations.
+ *  29-Sep:    fixed incorrect assumption in xen_rb_cons (xen.c) that arg2 was list.
+ *  8-Sep:     removed xen_malloc -- can't remember now why this existed.
+ *  19-Aug:    xen_rb_str_new2 to avoid unwanted side-effects.
+ *  12-Aug:    various changes for ISO C99.
+ *  30-Jul:    use new SCM_VECTOR_REF/SET macros if they're defined.
+ *  7-Apr:     changes to error handlers for more perspicuous error messages
  *             changed XEN_PROTECT_FROM_GC in Ruby to use rb_gc_register_address, added XEN_UNPROTECT_FROM_GC (rb_gc_unregister_address)
- *  10-Mar-03: XEN_OUT_OF_RANGE_ERROR, XEN_BAD_ARITY_ERROR
- *  17-Feb-03: XEN_HOOK_P
+ *  10-Mar:    XEN_OUT_OF_RANGE_ERROR, XEN_BAD_ARITY_ERROR
+ *  17-Feb:    XEN_HOOK_P
  *  20-Jan-03: added Windows case for auto-import loader bugfix.
  *  --------
- *  19-Dec-02: proc arg checks for Ruby (to make sure XEN_[N|V]ARGIFY|DEFINE_PROCEDURE[etc] agree)
- *  29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
- *  28-May-02: off_t equivalents in Ruby 1.7
- *  6-May-02:  off_t (long long) macros.
+ *  19-Dec:    proc arg checks for Ruby (to make sure XEN_[N|V]ARGIFY|DEFINE_PROCEDURE[etc] agree)
+ *  29-Jul:    SCM_WRITABLE_VELTS for current CVS Guile
+ *  28-May:    off_t equivalents in Ruby 1.7
+ *  6-May:     off_t (long long) macros.
  *  2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
  *  --------
  *  22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead

@@ -13,9 +13,9 @@
   "(auto-save) starts watching files, automatically saving backup copies as edits accumulate"
 
   (define (auto-save-temp-name snd)
-    (string-append (if (and (string? (temp-dir))
-			    (> (string-length (temp-dir)) 0))
-		       (string-append (temp-dir) "/")
+    (string-append (if (and (string? *temp-dir*)
+			    (> (string-length *temp-dir*) 0))
+		       (string-append *temp-dir* "/")
 		       "")
 		   "#" (short-file-name snd) "#"))
   

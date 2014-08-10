@@ -2895,7 +2895,7 @@ converts from a string representation to a render table"
   Xen_check_type(Xen_is_ulong(arg3), arg3, 3, "XmRenderTableCvtFromProp", "unsigned int");
   str = (char *)Xen_string_to_C_string(arg2);
   len = Xen_ulong_to_C_ulong(arg3);
-  if ((str) || ((int)strlen(str) == len))
+  if ((str) && ((int)strlen(str) == len))
     return(C_to_Xen_XmRenderTable(XmRenderTableCvtFromProp(Xen_to_C_Widget(arg1), str, len)));
   return(Xen_false);
 }
