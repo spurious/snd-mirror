@@ -119,7 +119,7 @@ var extsnd_dacsize_tip = "<code>(dac-size)</code>: the current DAC buffer size i
 
 var extsnd_datacolor_tip = "<code>(data-color)</code>: color used to draw unselected data";
 
-var extsnd_dataformat_tip = "<code>(data-format snd)</code>: snd's data format (e.g. mus-bshort)";
+var extsnd_sampletype_tip = "<code>(data-format snd)</code>: snd's data format (e.g. mus-bshort)";
 
 var extsnd_datalocation_tip = "<code>(data-location snd)</code>: snd's data location (bytes)";
 
@@ -336,7 +336,7 @@ var extsnd_musbfloat_tip = "<code>mus-bfloat</code> data is big-endian float";
 
 var extsnd_musbshort_tip = "<code>mus-bshort</code> data is big-endian signed 16-bit integer";
 
-var extsnd_musdataformatname_tip = "<code>(mus-data-format-name format)</code>: data format (e.g. mus-bshort) as a string";
+var extsnd_mussampletypename_tip = "<code>(mus-data-format-name format)</code>: data format (e.g. mus-bshort) as a string";
 
 var extsnd_musheadertypename_tip = "<code>(mus-header-type-name type)</code>: header type (e.g. mus-aiff) as a string";
 
@@ -353,7 +353,7 @@ var extsnd_mussoundchans_tip = "<code>(mus-sound-chans filename)</code>: channel
 
 var extsnd_mussoundcomment_tip = "<code>(mus-sound-comment filename)</code>: comment (a string) found in sound file's header";
 
-var extsnd_mussounddataformat_tip = "<code>(mus-sound-data-format filename)</code>: data format (e.g. mus-bshort) of data in sound file";
+var extsnd_mussoundsampletype_tip = "<code>(mus-sound-data-format filename)</code>: data format (e.g. mus-bshort) of data in sound file";
 
 var extsnd_mussoundduration_tip = "<code>(mus-sound-duration filename)</code>: duration (in seconds) of sound file";
 

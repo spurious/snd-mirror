@@ -324,11 +324,8 @@ static void local_mus_error(int type, char *msg)
 void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const char *name, 
 			    int x0, int y0, int width, int height, printing_t printing)
 {
-  int i, j, k;
-  mus_float_t ex0, ey0, ex1, ey1, val;
-  int ix0, ix1, iy0, iy1, lx0, lx1, ly0, ly1, index = 0;
-  mus_float_t env_val, curx, xincr;
-  int dur;
+  int i;
+  mus_float_t ex0, ey0, ex1, ey1;
   axis_info *ap;
   if (e)
     {
@@ -338,6 +335,7 @@ void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const
       ey1 = ey0;
       for (i = 3; i < e->pts * 2; i += 2)
 	{
+	  mus_float_t val;
 	  val = e->data[i];
 	  if (ey0 > val) ey0 = val;
 	  if (ey1 < val) ey1 = val;
@@ -376,6 +374,9 @@ void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const
 
   if (e)
     {
+      int j, dur;
+      mus_float_t curx, xincr;
+      int ix0, ix1, iy0, iy1;
       ix1 = grf_x(e->data[0], ap);
       iy1 = env_editor_grf_y_dB(edp, e->data[1]);
       if (edp->with_dots)
@@ -416,6 +417,7 @@ void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const
 		    {
 		      /* interpolate so the display looks closer to dB */
 		      mus_float_t yval, yincr;
+		      int lx0, lx1, ly0, ly1, k;
 		      dur = (ix1 - ix0) / EXP_SEGLEN;
 		      xincr = (e->data[i] - e->data[i - 2]) / (mus_float_t)dur;
 		      curx = e->data[i - 2] + xincr;
@@ -480,6 +482,8 @@ void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const
 	    }
 	  else
 	    {
+	      int index = 0;
+	      mus_float_t env_val;
 	      mus_any *ce;
 	      if (edp->with_dots)
 		for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
@@ -986,9 +990,9 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
   if (ef)
     {
       mus_float_t incr, x = 0.0;
-      int i = 0, j = 0;
+      int i = 0;
       mus_long_t hisamp;
-      mus_float_t samples_per_pixel, xf = 0.0, ina, ymax;
+      mus_float_t samples_per_pixel;
       ap->losamp = 0;
       ap->hisamp = ef->size - 1;
       ap->y0 = 0.0;
@@ -1008,9 +1012,12 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
 	}
       else
 	{
+	  int j = 0;
+	  mus_float_t xf = 0.0, ymax;
 	  ymax = -1.0;
 	  while (i < hisamp)
 	    {
+	      mus_float_t ina;
 	      ina = ef->data[i++];
 	      if (ina > ymax) ymax = ina;
 	      xf += 1.0;
@@ -1030,9 +1037,6 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
 
 void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, printing_t printing)
 {
-  int srate, pts = 0;
-  graph_type_t old_time_graph_type = GRAPH_ONCE;
-  mus_long_t samps;
   printing_t old_printing;
   bool two_sided = false;
   axis_info *active_ap = NULL;
@@ -1149,6 +1153,9 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
     }
   else
     {
+      mus_long_t samps;
+      graph_type_t old_time_graph_type = GRAPH_ONCE;
+      int srate, pts = 0;
       active_ap = active_channel->axis;
       if (apply_to_selection)
 	{
@@ -1363,10 +1370,10 @@ env *string_to_env(const char *str)
 {
 #if HAVE_EXTENSION_LANGUAGE
   Xen res;
-  int len = 0;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->env");
   if (Xen_is_list(res))
     {
+      int len;
       len = Xen_list_length(res);
       if ((len % 2) == 0)
 	{
@@ -1591,7 +1598,6 @@ static Xen g_save_envelopes(Xen filename)
 {
   #define H_save_envelopes "(" S_save_envelopes " :optional filename): save the envelopes known to the envelope editor in filename"
   char *name = NULL;
-  FILE *fd;
 
   Xen_check_type((Xen_is_string(filename) || (Xen_is_false(filename)) || (!Xen_is_bound(filename))), 
 		  filename, 1, S_save_envelopes, "a string or " PROC_FALSE);
@@ -1601,6 +1607,7 @@ static Xen g_save_envelopes(Xen filename)
   
   if (name)
     {
+      FILE *fd;
       fd = FOPEN(name, "w");
       if (fd) 
 	{
@@ -1627,7 +1634,6 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 {
   if (Xen_hook_has_list(enved_hook))
     {
-      int len = 0;
       Xen result = Xen_false;
       /* if hook procedure returns a list, that is the new contents of the
        * envelope -- if its length doesn't match current, we need to remake
@@ -1667,7 +1673,7 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 #endif
       if (Xen_is_list(result))
 	{
-	  int i;
+	  int i, len;
 	  Xen lst;
 	  len = Xen_list_length(result);
 	  if (len > e->data_size)
@@ -1745,7 +1751,6 @@ static Xen g_enved_target(void) {return(C_int_to_Xen_integer((int)enved_target(s
 
 static Xen g_set_enved_target(Xen val) 
 {
-  enved_target_t n;
   int in_n;
 
   #define H_enved_target "(" S_enved_target "): determines how the envelope edit envelope is applied; \
@@ -1758,6 +1763,7 @@ choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_en
     Xen_out_of_range_error(S_setB S_enved_target, 1, val, S_enved_target " should be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
   else
     {
+      enved_target_t n;
       n = (enved_target_t)in_n;
       /* there is a huge bug in some versions of g++ that make it necessary to: */
       if (in_n < 0) n = ENVED_AMPLITUDE;

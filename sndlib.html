@@ -171,8 +171,8 @@ name of the sound file.
   int mus_sound_srate (const char *arg)            /* sampling rate */
 
   int mus_sound_header_type (const char *arg)      /* header type (aiff etc) */
-  int mus_sound_data_format (const char *arg)      /* data format (alaw etc) */
-  int mus_sound_original_format (const char *arg)  /* unmodified data format specifier */
+  int mus_sound_data_format (const char *arg)      /* sample type (alaw etc) */
+  int mus_sound_original_format (const char *arg)  /* unmodified sample type specifier */
   int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
 
   char *mus_sound_comment (const char *arg)        /* comment if any */
@@ -186,7 +186,7 @@ name of the sound file.
 </pre>
 
 <p>The following can be used to provide user-understandable descriptions
-of the header type and the data format:</p>
+of the header type and the sample type:</p>
 <pre>
   char *mus_header_type_name(int type)             /* "AIFF" etc */
   char *mus_data_format_name(int format)           /* "16-bit big endian linear" etc */
@@ -246,7 +246,7 @@ file number, or -1 upon failure. </p>
 the integer returned by mus_sound_open_input.</p>
 
 <p>mus_sound_open_output opens (creates) the file arg, setting its sampling rate
-to be srate, number of channels to chans, data format
+to be srate, number of channels to chans, sample type
 to data_format (see sndlib.h for these types: MUS_BSHORT,
 means 16-bit 2's complement big endian fractions),
 header type to header_type (AIFF for example; the available
@@ -298,7 +298,7 @@ error occurs, they return -1 (MUS_ERROR). </p>
 The input device is dev (see sndlib.h for details; when in doubt, use MUS_AUDIO_DEFAULT).
 The input sampling rate is srate or as close as we
 can get to it.  The number of input channels (if available) is chans.
-The input data format is format (when in doubt, use the macro MUS_AUDIO_COMPATIBLE_FORMAT).
+The input sample type is format (when in doubt, use the macro MUS_AUDIO_COMPATIBLE_FORMAT).
 And the input buffer size (if settable at all) is size (bytes).  This
 function returns an integer to distinguish its port from others that might be
 in use.
@@ -306,7 +306,7 @@ in use.
 
 <p>mus_audio_open_output opens an audio port to write data (i.e. speakers, line out, etc).
 The output device is dev (see sndlib.h).  Its sampling rate is srate, number
-of channels chans, data format format, and buffer size size.  This
+of channels chans, sample type format, and buffer size size.  This
 function returns the associated line number of the output port.</p>
 
 <p>mus_audio_close closes the port (input or output) associated with line.</p>
@@ -866,7 +866,7 @@ or, at run time, use s7's loader and s7_init_sndlib:
   mus-sound-chans (filename)               number of channels (samples are interleaved)
   mus-sound-srate (filename)               sampling rate
   mus-sound-header-type (filename)         header type (e.g. mus-aiff)
-  mus-sound-data-format (filename)         data format (e.g. mus-bshort)
+  mus-sound-sample-type (filename)         sample type (e.g. mus-bshort)
   mus-sound-length (filename)              true file length (bytes)
   mus-sound-type-specifier (filename)      original header type identifier
   mus-sound-maxamp(filename)               returns a list of max amps and locations thereof
@@ -874,17 +874,17 @@ or, at run time, use s7's loader and s7_init_sndlib:
                                            the so-called id's), then base-note and base-detune
   
   mus-header-type-name (type)              e.g. "AIFF"
-  mus-data-format-name (format)            e.g. "16-bit big endian linear"
+  mus-sample-type-name (format)            e.g. "16-bit big endian linear"
   mus-sound-comment (filename)             header comment, if any
   mus-sound-write-date (filename)          sound write date
-  data-format-bytes-per-sample (format)    bytes per sample
+  sample-type-bytes-per-sample (format)    bytes per sample
 
   mus-audio-reinitialize                   force re-check of available audio devices
 
   mus-sound-open-input (filename)          open filename (a sound file) returning an integer ("fd" below)
-  mus-sound-open-output (filename srate chans data-format header-type comment)
+  mus-sound-open-output (filename srate chans sample-type header-type comment)
                                            create a new sound file with the indicated attributes, return "fd"
-  mus-sound-reopen-output (filename chans data-format header-type data-location)
+  mus-sound-reopen-output (filename chans sample-type header-type data-location)
                                            reopen (without disturbing) filename, ready to be written
   mus-sound-close-input (fd)               close sound file
   mus-sound-close-output (fd bytes)        close sound file and update its length indication, if any
@@ -913,7 +913,7 @@ or, at run time, use s7's loader and s7_init_sndlib:
      ": chans: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file))
      ", srate: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file))
      ", " (<a class=quiet href="extsnd.html#musheadertypename" onmouseout="UnTip()" onmouseover="Tip(extsnd_musheadertypename_tip)">mus-header-type-name</a> (<a class=quiet href="extsnd.html#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> file))
-     ", " (<a class=quiet href="extsnd.html#musdataformatname" onmouseout="UnTip()" onmouseover="Tip(extsnd_musdataformatname_tip)">mus-data-format-name</a> (<a class=quiet href="extsnd.html#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> file))
+     ", " (<a class=quiet href="extsnd.html#mussampletypename" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussampletypename_tip)">mus-sample-type-name</a> (<a class=quiet href="extsnd.html#mussoundsampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsampletype_tip)">mus-sound-sample-type</a> file))
      ", len: " (number-&gt;string
                 (/ (<a class=quiet href="extsnd.html#mussoundsamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsamples_tip)">mus-sound-samples</a> file)
                    (* (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file) (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file)))))))

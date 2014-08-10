@@ -218,7 +218,7 @@ class NB
     cs = mus_sound_chans(@name)
     sr = mus_sound_srate(@name)
     len = format("%1.3f", mus_sound_samples(@name).to_f / (cs * sr.to_f))
-    d_format = mus_data_format_name(mus_sound_data_format(@name))
+    d_format = mus_sample_type_name(mus_sound_sample_type(@name))
     h_type = mus_header_type_name(mus_sound_header_type(@name))
     frms = mus_sound_frames(@name)
     max_amp = ""

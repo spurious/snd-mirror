@@ -978,7 +978,7 @@ SIGINT lambda: { sig -- }
      #( <'> dac-size 256 )
      #( <'> clipping #f )
      #( <'> default-output-chans 1 )
-     #( <'> default-output-data-format mus-lfloat )
+     #( <'> default-output-sample-type mus-lfloat )
      #( <'> default-output-srate 44100 )
      #( <'> default-output-header-type mus-next )
      #( <'> dot-size 1 )
@@ -1164,7 +1164,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> dac-combines-channels #t )
      #( <'> dac-size 256 )
      #( <'> default-output-chans 1 )
-     #( <'> default-output-data-format mus-lfloat )
+     #( <'> default-output-sample-type mus-lfloat )
      #( <'> default-output-header-type mus-next )
      #( <'> default-output-srate 44100 )
      #( <'> dot-size 1 )
@@ -1339,7 +1339,7 @@ black-and-white-colormap constant *better-colormap*
     file mus-sound-chans       { fchns }
     file mus-sound-srate       { fsr }
     file mus-sound-duration    { fdur }
-    file mus-sound-data-format { ffrm }
+    file mus-sound-sample-type { ffrm }
     file mus-sound-header-type { ftyp }
     file mus-sound-framples      { fframes }
     file mus-sound-samples     { fsamps }
@@ -1360,7 +1360,7 @@ black-and-white-colormap constant *better-colormap*
       res 1 lno name "samples" test-header-check
     then
     ftyp mus-header-type-name typ lno name "type"   test-header-check
-    ffrm mus-data-format-name frm lno name "format" test-header-check
+    ffrm mus-sample-type-name frm lno name "format" test-header-check
     file mus-sound-loop-info { lst }
     loop-start if
       lst nil? if
@@ -1889,7 +1889,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> dac-size 256 512 )
      #( <'> clipping #f #t )
      #( <'> default-output-chans 1 2 )
-     #( <'> default-output-data-format 1 1 )
+     #( <'> default-output-sample-type 1 1 )
      #( <'> default-output-srate 22050 44100 )
      #( <'> default-output-header-type mus-next mus-aifc )
      #( <'> dot-size 1 4 )
@@ -2165,9 +2165,9 @@ black-and-white-colormap constant *better-colormap*
      'cursor-context 'cursor-cross 'cursor-in-middle 'cursor-in-view
      'cursor-line 'cursor-location-offset 'cursor-on-left 'cursor-on-right
      'cursor-position 'cursor-size 'cursor-style 'cursor-update-interval
-     'dac-combines-channels 'dac-size 'data-color 'data-format
+     'dac-combines-channels 'dac-size 'data-color 'sample-type
      'data-location 'data-size 'db->linear 'default-output-chans 
-     'default-output-data-format 'default-output-header-type
+     'default-output-sample-type 'default-output-header-type
      'default-output-srate 'define-envelope 'degrees->radians 'delay
      'delay-tick 'delay? 'delete-colormap
      'delete-mark 'delete-marks 'delete-sample 
@@ -2271,8 +2271,8 @@ black-and-white-colormap constant *better-colormap*
      'mus-bicsf 'mus-bint 'mus-bintn 'mus-bshort 'mus-byte
      'mus-bytes-per-sample 'mus-caff 'mus-channel 'mus-channels
      'mus-chebyshev-first-kind 'mus-chebyshev-second-kind
-     'mus-clipping 'mus-close 'mus-data 'mus-data-format->string
-     'mus-data-format-name 'mus-describe 'mus-error-hook
+     'mus-clipping 'mus-close 'mus-data 'mus-sample-type->string
+     'mus-sample-type-name 'mus-describe 'mus-error-hook
      'mus-error-type->string 'mus-expand-filename 'mus-feedback
      'mus-feedforward 'mus-fft 'mus-file-buffer-size 'mus-file-clipping
      'mus-file-name 'mus-frequency 'mus-generator?
@@ -2290,7 +2290,7 @@ black-and-white-colormap constant *better-colormap*
      'mus-raw 'mus-reset 'mus-riff 'mus-run 'mus-scaler
      'mus-set-formant-radius-and-frequency 'mus-sound-chans
      'mus-sound-comment 
-     'mus-sound-data-format 'mus-sound-data-location
+     'mus-sound-sample-type 'mus-sound-data-location
      'mus-sound-datum-size 'mus-sound-duration 'mus-sound-forget 
      'mus-sound-framples 'mus-sound-header-type 'mus-sound-length 
      'mus-sound-loop-info 'mus-sound-mark-info 'mus-sound-maxamp 
@@ -2458,13 +2458,13 @@ black-and-white-colormap constant *better-colormap*
   "save-as %s -> %s"
   #( typ  mus-header-type-name
      ntyp mus-header-type-name ) snd-test-neq
-  snd data-format fmt "save-as %s" #( fmt mus-data-format-name ) snd-test-neq
-  "test.snd" mus-sound-data-format { nfmt }
+  snd sample-type fmt "save-as %s" #( fmt mus-sample-type-name ) snd-test-neq
+  "test.snd" mus-sound-sample-type { nfmt }
   nfmt
   fmt
   "save-as %s -> %s"
-  #( fmt  mus-data-format-name
-     nfmt mus-data-format-name ) snd-test-neq
+  #( fmt  mus-sample-type-name
+     nfmt mus-sample-type-name ) snd-test-neq
   1000 snd sample samp "%s[1000]" #( typ mus-header-type-name ) snd-test-neq
 ;
 
@@ -2540,7 +2540,7 @@ black-and-white-colormap constant *better-colormap*
   oboe-snd mus-sound-maxamp-exists? { m1 }
   oboe-snd mus-sound-maxamp { mal }
   "z.snd" mus-sound-maxamp { mz }
-  oboe-snd mus-sound-data-format mus-bytes-per-sample { bytes }
+  oboe-snd mus-sound-sample-type mus-bytes-per-sample { bytes }
   mz car  0   "mus-sound-maxamp z.snd" #() snd-test-neq
   mz cadr 0.0 "mus-sound-maxamp z.snd" #() snd-test-neq
   \ 
@@ -2572,8 +2572,8 @@ black-and-white-colormap constant *better-colormap*
     vals 1 array-ref to siz
     frm mus-bytes-per-sample siz "mus-bytes-per-sample" #() snd-test-neq
   end-each
-  mus-bshort mus-data-format->string "mus-bshort"
-    "mus-data-format->string" #() snd-test-neq
+  mus-bshort mus-sample-type->string "mus-bshort"
+    "mus-sample-type->string" #() snd-test-neq
   mus-aifc mus-header-type->string "mus-aifc"
     "mus-header-type->string" #() snd-test-neq
   \ 
@@ -2774,10 +2774,10 @@ black-and-white-colormap constant *better-colormap*
   0 to lasth
   begin
     lasth 1+ to lasth
-    lasth mus-data-format-name "unknown" string=
+    lasth mus-sample-type-name "unknown" string=
   until
   lasth 10 < if
-    "data-format[%d] = %s?" #( lasth dup mus-data-format-name ) snd-display
+    "sample-type[%d] = %s?" #( lasth dup mus-sample-type-name ) snd-display
   then
   nil { name }
   #( 'dont-normalize
@@ -2903,7 +2903,7 @@ black-and-white-colormap constant *better-colormap*
       v i 1.0 val f- vct-set! drop
     loop
     v 0 len ind 0 vct->channel drop
-    "test1.snd" ind mus-next :data-format typ save-sound-as drop
+    "test1.snd" ind mus-next :sample-type typ save-sound-as drop
     ind close-sound drop
     "test1.snd" open-sound to ind
     0 len ind 0 channel->vct to v1
@@ -2916,7 +2916,7 @@ black-and-white-colormap constant *better-colormap*
     loop
     maxdiff allowed-diff f> if
       "%s: %s at %d (%s %s)?"
-        #( typ mus-data-format-name
+        #( typ mus-sample-type-name
            maxdiff
            maxpos
            v maxpos vct-ref
@@ -2955,7 +2955,7 @@ black-and-white-colormap constant *better-colormap*
   \ 
   output-comment-hook reset-hook!
   output-comment-hook <'> sndlib-check-string add-hook!
-  :file "test.snd" :sound ob :header-type mus-riff :data-format mus-lfloat
+  :file "test.snd" :sound ob :header-type mus-riff :sample-type mus-lfloat
     save-sound-as drop
   output-comment-hook reset-hook!
   "test.snd" open-sound to ab
@@ -2980,11 +2980,11 @@ black-and-white-colormap constant *better-colormap*
   ab mus-next mus-bshort samp sndlib-check-it
   update-hook reset-hook!
   '( -3.0 3.0 ) ab 0 set-y-bounds drop
-  ab mus-lshort set-data-format drop
+  ab mus-lshort set-sample-type drop
   \ ; these set!'s can change the index via update-sound
   "test.snd" find-sound to ab
-  ab data-format to fmt
-  fmt mus-lshort "set-data-format %s" #( fmt mus-data-format-name ) snd-test-neq
+  ab sample-type to fmt
+  fmt mus-lshort "set-sample-type %s" #( fmt mus-sample-type-name ) snd-test-neq
   ab 0 y-bounds '( -3.0 3.0 ) "set data format y-bounds" #() snd-test-neq
   '( 2.0 ) ab 0 set-y-bounds drop
   ab 0 y-bounds '( -2.0 2.0 ) "set data format y-bounds 1" #() snd-test-neq
@@ -3017,9 +3017,9 @@ black-and-white-colormap constant *better-colormap*
   "test.snd" ob mus-next mus-bshort save-sound-as drop
   ob close-sound drop
   "test.snd" open-sound to ab
-  mus-lshort set-data-format drop
+  mus-lshort set-sample-type drop
   "test.snd" find-sound to ab
-  data-format mus-lshort "set-data-format" #() snd-test-neq
+  sample-type mus-lshort "set-sample-type" #() snd-test-neq
   mus-aifc set-header-type drop
   "test.snd" find-sound to ab
   header-type mus-aifc "set-header-type" #() snd-test-neq
@@ -3035,11 +3035,11 @@ black-and-white-colormap constant *better-colormap*
   ab close-sound drop
   \ 
   "2a.snd" open-sound to ind
-  "test.snd" :data-format mus-l24int :header-type mus-riff :channel 0
+  "test.snd" :sample-type mus-l24int :header-type mus-riff :channel 0
     save-sound-as drop
   "test.snd" open-sound { ind0 }
   ind0 channels 1 "save-sound-as :channel 0 chans" #() snd-test-neq
-  ind0 data-format mus-l24int "save-sound-as :channel 0 data-format" #()
+  ind0 sample-type mus-l24int "save-sound-as :channel 0 sample-type" #()
     snd-test-neq
   ind0 header-type mus-riff "save-sound-as :channel 0 header-type" #()
     snd-test-neq
@@ -3050,11 +3050,11 @@ black-and-white-colormap constant *better-colormap*
     snd-test-neq
   ind0 close-sound drop
   \ 
-  "test.snd" :data-format mus-bfloat :header-type mus-aifc :channel 1
+  "test.snd" :sample-type mus-bfloat :header-type mus-aifc :channel 1
     :srate 12345 save-sound-as drop
   "test.snd" open-sound to ind0
   ind0 channels 1 "save-sound-as :channel 1 chans" #() snd-test-neq
-  ind0 data-format mus-bfloat "save-sound-as :channel 1 data-format" #()
+  ind0 sample-type mus-bfloat "save-sound-as :channel 1 sample-type" #()
     snd-test-neq
   ind0 header-type mus-aifc "save-sound-as :channel 1 header-type" #()
     snd-test-neq
@@ -3068,8 +3068,8 @@ black-and-white-colormap constant *better-colormap*
   "test.snd" :channel 1 :comment "this is a test" save-sound-as drop
   "test.snd" open-sound to ind0
   ind0 channels 1 "save-sound-as :channel 1 (1) chans" #() snd-test-neq
-  ind0 data-format ind data-format
-    "save-sound-as :channel 1 (1) data-format" #() snd-test-neq
+  ind0 sample-type ind sample-type
+    "save-sound-as :channel 1 (1) sample-type" #() snd-test-neq
   ind0 header-type ind header-type 
     "save-sound-as :channel 1 (1) header-type" #() snd-test-neq
   ind0 srate ind srate "save-sound-as :channel 1 (1) srates" #() snd-test-neq
@@ -3355,7 +3355,7 @@ black-and-white-colormap constant *better-colormap*
   "empty.snd" check-file-name to fsnd
   fsnd file-exists? if
     fsnd open-sound to ind
-    ind data-format   mus-bshort "open raw data-format" #() snd-test-neq
+    ind sample-type   mus-bshort "open raw sample-type" #() snd-test-neq
     ind chans         1          "open raw chans" #() snd-test-neq
     ind srate         22050      "open raw srate" #() snd-test-neq
     ind data-location 0          "open raw data-location" #() snd-test-neq
@@ -3440,7 +3440,7 @@ black-and-white-colormap constant *better-colormap*
         sdata i ( chn ) undef sound-data->vct
           ndata i ( chn ) undef sound-data->vct
           "read-write trouble: format %s header %s "
-          #( df mus-data-format-name
+          #( df mus-sample-type-name
              ht mus-header-type-name ) snd-test-neq
         loop
     end-each
@@ -3517,7 +3517,7 @@ black-and-white-colormap constant *better-colormap*
   "fmv.snd" file-delete
   \ 
   #f set-clipping drop
-  "test.snd" :data-format mus-lshort new-sound { snd }
+  "test.snd" :sample-type mus-lshort new-sound { snd }
   0 10 pad-channel drop
   1  1.0000 set-sample drop
   2 -1.0000 set-sample drop
@@ -3538,7 +3538,7 @@ black-and-white-colormap constant *better-colormap*
   "test.snd" mus-sound-forget drop
   \ 
   #t set-clipping drop
-  "test.snd" :data-format mus-lshort new-sound to snd
+  "test.snd" :sample-type mus-lshort new-sound to snd
   0 10 pad-channel drop
   1  1.0000 set-sample drop
   2 -1.0000 set-sample drop
@@ -3850,7 +3850,7 @@ black-and-white-colormap constant *better-colormap*
   \ 
   "oboe.snd" mus-sound-srate { cur-srate }
   "oboe.snd" mus-sound-chans { cur-chans }
-  "oboe.snd" mus-sound-data-format { cur-format }
+  "oboe.snd" mus-sound-sample-type { cur-format }
   "oboe.snd" mus-sound-header-type { cur-type }
   "oboe.snd" mus-sound-data-location { cur-loc }
   "oboe.snd" mus-sound-samples { cur-samps }
@@ -3869,15 +3869,15 @@ black-and-white-colormap constant *better-colormap*
   "oboe.snd" mus-nist set-mus-sound-header-type drop
   "oboe.snd" mus-sound-header-type mus-nist "set-mus-sound-header-type" #()
     snd-test-neq
-  "oboe.snd" mus-lintn set-mus-sound-data-format drop
-  "oboe.snd" mus-sound-data-format mus-lintn "set-mus-sound-data-format" #()
+  "oboe.snd" mus-lintn set-mus-sound-sample-type drop
+  "oboe.snd" mus-sound-sample-type mus-lintn "set-mus-sound-sample-type" #()
     snd-test-neq
   "oboe.snd" cur-srate  set-mus-sound-srate drop
   "oboe.snd" cur-samps  set-mus-sound-samples drop
   "oboe.snd" cur-chans  set-mus-sound-chans drop
   "oboe.snd" cur-loc    set-mus-sound-data-location drop
   "oboe.snd" cur-type   set-mus-sound-header-type drop
-  "oboe.snd" cur-format set-mus-sound-data-format drop
+  "oboe.snd" cur-format set-mus-sound-sample-type drop
   \ 
   "oboe.snd" open-sound to ind
   "test.wave" ind mus-riff save-sound-as drop
@@ -3888,7 +3888,7 @@ black-and-white-colormap constant *better-colormap*
   #( "test.wave" "test.rf64" "test.aifc" ) each to file
     file mus-sound-srate to cur-srate
     file mus-sound-chans to cur-chans
-    file mus-sound-data-format to cur-format
+    file mus-sound-sample-type to cur-format
     file mus-sound-header-type to cur-type
     file mus-sound-data-location to cur-loc
     file mus-sound-samples to cur-samps
@@ -3907,21 +3907,21 @@ black-and-white-colormap constant *better-colormap*
     file mus-nist set-mus-sound-header-type drop
     file mus-sound-header-type mus-nist
       "%s set-mus-sound-header-type" #( file ) snd-test-neq
-    file mus-lintn set-mus-sound-data-format drop
-    file mus-sound-data-format mus-lintn 
-      "%s set-mus-sound-data-format" #( file ) snd-test-neq
+    file mus-lintn set-mus-sound-sample-type drop
+    file mus-sound-sample-type mus-lintn 
+      "%s set-mus-sound-sample-type" #( file ) snd-test-neq
     file cur-srate  set-mus-sound-srate drop
     file cur-samps  set-mus-sound-samples drop
     file cur-chans  set-mus-sound-chans drop
     file cur-loc    set-mus-sound-data-location drop
     file cur-type   set-mus-sound-header-type drop
-    file cur-format set-mus-sound-data-format drop
+    file cur-format set-mus-sound-sample-type drop
   end-each
   #( "test.wave" "test.rf64" "test.aifc" ) each to file
     file open-sound to ind
     ind srate to cur-srate
     ind chans to cur-chans
-    ind data-format to cur-format
+    ind sample-type to cur-format
     ind header-type to cur-type
     ind data-location to cur-loc
     ind frames to cur-samps
@@ -3938,15 +3938,15 @@ black-and-white-colormap constant *better-colormap*
     ind mus-nist set-header-type drop
     ind header-type mus-nist "%s set-header-type" #( ind file-name )
       snd-test-neq
-    ind mus-lintn set-data-format drop
-    ind data-format mus-lintn "%s set-data-format" #( ind file-name )
+    ind mus-lintn set-sample-type drop
+    ind sample-type mus-lintn "%s set-sample-type" #( ind file-name )
       snd-test-neq
     ind cur-srate  set-srate drop
     cur-samps ind  set-frames drop
     ind cur-chans  set-chans drop
     ind cur-loc    set-data-location drop
     ind cur-type   set-header-type drop
-    ind cur-format set-data-format drop
+    ind cur-format set-sample-type drop
     ind close-sound drop
     file file-delete
   end-each
@@ -4204,7 +4204,7 @@ black-and-white-colormap constant *better-colormap*
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ comment
   io 0o000 port-putc  io 0o001 port-putc \ samp 1
   io port-close
-  "test.snd" mus-sound-data-format mus-bshort "next 18" #() snd-test-neq
+  "test.snd" mus-sound-sample-type mus-bshort "next 18" #() snd-test-neq
   "test.snd" file-delete
   "test.snd" mus-sound-forget drop
   \ 
@@ -4248,7 +4248,7 @@ black-and-white-colormap constant *better-colormap*
   else
     to res
     res sound? if
-      "open-sound next bad format %s: %s" #( res data-format res ) snd-display
+      "open-sound next bad format %s: %s" #( res sample-type res ) snd-display
       res close-sound drop
     then
   then
@@ -4298,7 +4298,7 @@ black-and-white-colormap constant *better-colormap*
   else
     to res
     res sound? if
-      "open-sound bits 80 %s: %s" #( res data-format res ) snd-display
+      "open-sound bits 80 %s: %s" #( res sample-type res ) snd-display
       res close-sound drop
     then
   then
@@ -6789,8 +6789,8 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> auto-update-interval <'> cursor 
    <'> with-tracking-cursor <'> cursor-size <'> cursor-style
    <'> tracking-cursor-style <'> dac-combines-channels <'> dac-size
-   <'> clipping <'> data-format <'> data-location <'> data-size
-   <'> default-output-chans <'> default-output-data-format
+   <'> clipping <'> sample-type <'> data-location <'> data-size
+   <'> default-output-chans <'> default-output-sample-type
    <'> default-output-srate <'> default-output-header-type
    <'> define-envelope <'> delete-mark <'> delete-marks
    <'> forget-region <'> delete-sample <'> delete-samples 
@@ -6884,14 +6884,14 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> with-relative-panes <'> with-gl <'> x-axis-style
    <'> beats-per-measure <'> beats-per-minute <'> x-bounds
    <'> x-position-slider <'> x-zoom-slider <'> mus-header-type->string 
-   <'> mus-data-format->string <'> y-bounds <'> y-position-slider
+   <'> mus-sample-type->string <'> y-bounds <'> y-position-slider
    <'> y-zoom-slider <'> zero-pad <'> zoom-focus-style <'> sync-style
    <'> mus-sound-samples <'> mus-sound-framples <'> mus-sound-duration
    <'> mus-sound-datum-size <'> mus-sound-data-location <'> data-size
    <'> mus-sound-chans <'> mus-sound-srate <'> mus-sound-header-type
-   <'> mus-sound-data-format <'> mus-sound-length
+   <'> mus-sound-sample-type <'> mus-sound-length
    <'> mus-sound-type-specifier <'> mus-header-type-name
-   <'> mus-data-format-name <'> mus-sound-comment
+   <'> mus-sample-type-name <'> mus-sound-comment
    <'> mus-sound-write-date <'> mus-bytes-per-sample 
    <'> mus-sound-loop-info <'> mus-alsa-squelch-warning 
    <'> mus-sound-maxamp <'> mus-sound-maxamp-exists?
@@ -6987,7 +6987,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> channel-property <'> with-tracking-cursor <'> cursor-size
    <'> cursor-style <'> tracking-cursor-style <'> dac-combines-channels
    <'> dac-size <'> clipping <'> default-output-chans
-   <'> default-output-data-format <'> default-output-srate
+   <'> default-output-sample-type <'> default-output-srate
    <'> default-output-header-type <'> dot-size <'> enved-envelope 
    <'> enved-base <'> enved-clip? <'> enved-in-dB <'> enved-style
    <'> enved-power <'> enved-target <'> enved-wave? <'> eps-file
@@ -7030,7 +7030,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> x-axis-style <'> beats-per-minute <'> zero-pad <'> zoom-focus-style
    <'> sync-style <'> with-relative-panes <'>  window-x <'> window-y
    <'> window-width <'> window-height <'> beats-per-measure <'> channels
-   <'> chans <'> comment <'> data-format <'> data-location <'> data-size
+   <'> chans <'> comment <'> sample-type <'> data-location <'> data-size
    <'> edit-position <'> frames <'> header-type <'> maxamp <'> read-only
    <'> right-sample <'> sample <'> samples <'> selected-channel
    <'> selected-sound <'> selection-position <'> selection-framples 
@@ -7161,7 +7161,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> contrast-control <'> amp-control-bounds <'> speed-control-bounds
      <'> expand-control-bounds <'> contrast-control-bounds
      <'> reverb-control-length-bounds <'> reverb-control-scale-bounds
-     <'> contrast-control-amp <'> contrast-control? <'> data-format
+     <'> contrast-control-amp <'> contrast-control? <'> sample-type
      <'> data-location <'> data-size <'> expand-control
      <'> expand-control-hop <'> expand-control-jitter
      <'> expand-control-length <'> expand-control-ramp 
@@ -7212,7 +7212,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       \ g_set_amp_control(val, snd, chn)   0 arg
       prc <'> channels      =
       prc <'> chans         = ||
-      prc <'> data-format   = ||
+      prc <'> sample-type   = ||
       prc <'> data-location = ||
       prc <'> data-size     = ||
       prc <'> header-type   = ||
@@ -7448,14 +7448,14 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   #( <'> mus-sound-samples <'> mus-sound-framples <'> mus-sound-duration 
      <'> mus-sound-datum-size <'> mus-sound-data-location <'> mus-sound-chans
-     <'> mus-sound-srate <'> mus-sound-header-type <'> mus-sound-data-format
+     <'> mus-sound-srate <'> mus-sound-header-type <'> mus-sound-sample-type
      <'> mus-sound-length <'> mus-sound-type-specifier
-     <'> mus-header-type-name <'> mus-data-format-name <'> mus-sound-comment
+     <'> mus-header-type-name <'> mus-sample-type-name <'> mus-sound-comment
      <'> mus-sound-write-date <'> mus-bytes-per-sample
      <'> mus-sound-loop-info <'> mus-sound-mark-info
      <'> mus-sound-maxamp <'> mus-sound-maxamp-exists?
      <'> mus-header-type->string
-     <'> mus-data-format->string ) { mus-snd-prcs-1 }
+     <'> mus-sample-type->string ) { mus-snd-prcs-1 }
   mus-snd-prcs-1 each to prc
     vct-5 prc snd-test-catch to tag
     tag if
@@ -7476,7 +7476,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #( <'> mus-sound-samples <'> mus-sound-framples <'> mus-sound-duration
      <'> mus-sound-datum-size <'> mus-sound-data-location
      <'> mus-sound-chans <'> mus-sound-srate <'> mus-sound-header-type
-     <'> mus-sound-data-format <'> mus-sound-length
+     <'> mus-sound-sample-type <'> mus-sound-length
      <'> mus-sound-type-specifier <'> mus-sound-comment 
      <'> mus-sound-write-date <'> mus-sound-maxamp 
      <'> mus-sound-maxamp-exists? ) each to prc
@@ -7776,7 +7776,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> channel-style <'> color-cutoff <'> color-orientation-dialog
      <'> color-inverted <'> color-scale <'> cursor-color
      <'> dac-combines-channels <'> dac-size <'> clipping <'> data-color
-     <'> default-output-chans <'> default-output-data-format 
+     <'> default-output-chans <'> default-output-sample-type 
      <'> default-output-srate <'> default-output-header-type
      <'> enved-envelope <'> enved-base <'> enved-clip? <'> enved-in-dB
      <'> enved-dialog <'> enved-style <'> enved-power <'> enved-target
@@ -7883,7 +7883,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "oboe.snd" -1 <'> make-file->sample 'out-of-range check-error-tag
   "oboe.snd" 0 <'> make-file->frame 'out-of-range check-error-tag
   "oboe.snd" -1 <'> make-file->frame 'out-of-range check-error-tag
-  -1 <'> set-default-output-data-format 'out-of-range check-error-tag
+  -1 <'> set-default-output-sample-type 'out-of-range check-error-tag
   mus-soundfont <'> set-default-output-header-type 'out-of-range check-error-tag
   sf-dir "bad_location.nist" $+ <'> mus-sound-chans 'mus-error check-error-tag
   sf-dir "bad_field.nist" $+ <'> mus-sound-chans 'mus-error check-error-tag
@@ -7913,7 +7913,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   ind 0 <'> set-channels 'out-of-range check-error-tag
   ind -1 <'> set-channels 'out-of-range check-error-tag
   ind 12340 <'> set-channels 'out-of-range check-error-tag
-  ind 12340 <'> set-data-format 'out-of-range check-error-tag
+  ind 12340 <'> set-sample-type 'out-of-range check-error-tag
   ind 12340 <'> set-header-type 'out-of-range check-error-tag
   ind 0 <'> set-srate 'out-of-range check-error-tag
   ind -1 <'> set-data-location 'out-of-range check-error-tag
@@ -7975,7 +7975,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "/baddy/hiho.snd" <'> insert-sound 'no-such-file check-error-tag
   0 10 "/baddy/hiho.snd" <'> insert-samples 'no-such-file check-error-tag
   '() ind <'> set-filter-control-envelope 'no-data check-error-tag
-  ind 123 <'> set-data-format 'out-of-range check-error-tag
+  ind 123 <'> set-sample-type 'out-of-range check-error-tag
   ind 123 <'> set-header-type 'out-of-range check-error-tag
   ind 123 <'> set-selected-channel 'no-such-channel check-error-tag
   <'> noop 3 make-proc <'> set-search-procedure 'bad-arity check-error-tag
@@ -8835,7 +8835,7 @@ let: ( -- )
   start-snd-test
   <'> 00-constants       run-fth-test
   <'> 01-defaults        run-fth-test
-  mus-ldouble set-default-output-data-format drop
+  mus-ldouble set-default-output-sample-type drop
   <'> 02-headers         run-fth-test
   <'> 03-variables       run-fth-test
   <'> 04-sndlib          run-fth-test

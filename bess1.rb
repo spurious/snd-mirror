@@ -33,7 +33,7 @@
 #
 # Bess.new.start(:srate,       $clm_srate       # 22050
 #                :bufsize,     $clm_rt_bufsize  # 128
-#                :data_format, $clm_data_format # Mus_lshort
+#                :sample_type, $clm_sample_type # Mus_lshort
 #                :which,       :agn             # :agn or :vct_test
 #                :play,        false)
 
@@ -61,7 +61,7 @@ end
 rbm_require "sndlib"
 $output      = nil         # holds fd from mus_audio_open_output()
 $clm_srate       = 22050
-$clm_data_format = Mus_lshort
+$clm_sample_type = Mus_lshort
 $clm_rt_bufsize  = 128
 
 module Bess_utils
@@ -185,10 +185,10 @@ class Agn
   def make_vct_test(*args)
     srate       = get_args(args, :srate, $clm_srate)
     bufsize     = get_args(args, :bufsize, $clm_rt_bufsize)
-    data_format = get_args(args, :data_format, $clm_data_format)
+    sample_type = get_args(args, :sample_type, $clm_sample_type)
     $clm_srate = set_mus_srate(srate).to_i
     $clm_rt_bufsize = bufsize
-    $output = mus_audio_open_output(Mus_audio_default, srate, 1, data_format, bufsize * 2)
+    $output = mus_audio_open_output(Mus_audio_default, srate, 1, sample_type, bufsize * 2)
     mode = [0, 12, 2, 4, 14, 4, 5, 5, 0, 7, 7, 11, 11]
     pits = Array.new(@lim + 1) do rbm_random(12.0).floor end
     begs = Array.new(@lim + 1) do 1 + rbm_random(3.0).floor end
@@ -228,10 +228,10 @@ class Agn
   def make_agn(*args)
     srate       = get_args(args, :srate, $clm_srate)
     bufsize     = get_args(args, :bufsize, $clm_rt_bufsize)
-    data_format = get_args(args, :data_format, $clm_data_format)
+    sample_type = get_args(args, :sample_type, $clm_sample_type)
     $clm_srate = set_mus_srate(srate).to_i
     $clm_rt_bufsize = bufsize
-    $output = mus_audio_open_output(Mus_audio_default, srate, 1, data_format, bufsize * 2)
+    $output = mus_audio_open_output(Mus_audio_default, srate, 1, sample_type, bufsize * 2)
     die("can't open DAC (%s)", $output.inspect) if $output < 0
     wins = [[0, 0, 40, 0.1, 60, 0.2, 75, 0.4, 82, 1, 90, 1, 100, 0],
             [0, 0, 60, 0.1, 80, 0.2, 90, 0.4, 95, 1, 100, 0],
@@ -518,7 +518,7 @@ end
 begin
   # Bess.new.start(:srate, $clm_srate,
   #                :bufsize, $clm_rt_bufsize,
-  #                :data_format, $clm_data_format,
+  #                :sample_type, $clm_sample_type,
   #                :which, :agn,
   #                :play, false)
   Bess.new.start

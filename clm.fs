@@ -324,7 +324,7 @@ Instruments using RUN or RUN-INSTRUMENT add entries to the list." help-set!
 	1          constant default-output-chans
 	44100      constant default-output-srate
 	mus-next   constant default-output-header-type
-	mus-lfloat constant default-output-data-format
+	mus-lfloat constant default-output-sample-type
 	mus-audio-default constant audio-output-device
 	512        constant dac-size
 [then]
@@ -333,7 +333,7 @@ default-output-chans       value *clm-channels*
 default-output-srate       value *clm-srate*
 locsig-type                value *clm-locsig-type*
 default-output-header-type value *clm-header-type*
-default-output-data-format value *clm-data-format*
+default-output-sample-type value *clm-sample-type*
 audio-output-device        value *clm-output-device*
 dac-size                   value *clm-rt-bufsize*
 mus-file-buffer-size       value *clm-file-buffer-size*
@@ -626,7 +626,7 @@ set-current
 	"filename: %S" #( output ) clm-message
 	"   chans: %d, srate: %d" #( channels srate f>s ) clm-message
 	"  format: %s [%s]"
-	    #( output mus-sound-data-format mus-data-format-name
+	    #( output mus-sound-sample-type mus-sample-type-name
 	       output mus-sound-header-type mus-header-type-name ) clm-message
 	"  length: %.3f  (%d frames)" #( dur frms ) clm-message
 	timer timer? if
@@ -668,7 +668,7 @@ previous
     srate         *clm-srate*
     channels      *clm-channels*
     audio-format  *clm-audio-format*
-    data-format   *clm-data-format*
+    sample-type   *clm-sample-type*
     header-type   *clm-header-type*
     comment       *clm-comment* -- }>
 	"%s removed" #( get-func-name ) fth-warning
@@ -734,7 +734,7 @@ previous
     srate         *clm-srate*
     channels      *clm-channels*
     audio-format  *clm-audio-format*
-    data-format   *clm-data-format*
+    sample-type   *clm-sample-type*
     header-type   *clm-header-type*
     comment       *clm-comment* -- }>
 	doc" Record from dac output device to the specified OUTPUT file."
@@ -749,7 +749,7 @@ previous
 		    string-format to comment
 	then
 	chans bufsize make-sound-data { data }
-	output srate chans data-format header-type comment
+	output srate chans sample-type header-type comment
 	    mus-sound-open-output { snd-fd }
 	snd-fd 0< if
 		'forth-error
@@ -765,9 +765,9 @@ previous
 		"  device: %d" #( output-device ) clm-message
 		"   chans: %d, srate: %d" #( chans srate ) clm-message
 		"r format: %s [Dac]"
-		    #( audio-format mus-data-format-name ) clm-message
+		    #( audio-format mus-sample-type-name ) clm-message
 		"w format: %s [%s]"
-		    #( data-format mus-data-format-name
+		    #( sample-type mus-sample-type-name
 		       header-type mus-header-type-name ) clm-message
 		"  length: %.3f  (%d frames)" #( duration frms ) clm-message
 		" comment: %S" #( comment ) clm-message
@@ -780,7 +780,7 @@ previous
 		snd-fd 0 bufsize 1- chans data mus-sound-write drop
 	bufsize +loop
 	dac-fd mus-audio-close drop
-	snd-fd frms chans * data-format mus-bytes-per-sample *
+	snd-fd frms chans * sample-type mus-bytes-per-sample *
 	mus-sound-close-output drop
 	old-srate set-mus-srate drop
 ;
@@ -927,7 +927,7 @@ hide
 		#( mus-bfloat
 		   mus-lfloat
 		   mus-bdouble
-		   mus-ldouble ) ws :data-format ws-ref array-member? if
+		   mus-ldouble ) ws :sample-type ws-ref array-member? if
 			#f set-mus-clipping
 		else
 			*clm-clipped* set-mus-clipping
@@ -1019,7 +1019,7 @@ set-current
 	:clipped           *clm-clipped*          ws set-args
 	:comment           *clm-comment*          ws set-args
 	:continue-old-file #f                     ws set-args
-	:data-format       *clm-data-format*      ws set-args
+	:sample-type       *clm-sample-type*      ws set-args
 	:debug             *clm-debug*            ws set-args
 	:decay-time        *clm-decay-time*       ws set-args
 	:delete-reverb     *clm-delete-reverb*    ws set-args
@@ -1056,7 +1056,7 @@ set-current
 	:srate             ws1 :srate       	 ws-ref ws set-args
 	:locsig-type       ws1 :locsig-type 	 ws-ref ws set-args
 	:header-type       ws1 :header-type 	 ws-ref ws set-args
-	:data-format       ws1 :data-format 	 ws-ref ws set-args
+	:sample-type       ws1 :sample-type 	 ws-ref ws set-args
 	:comment "with-sound level %d"
 	    #( *ws-args* length ) string-format ws set-args
 	:notehook          ws1 :notehook         ws-ref ws set-args
@@ -1092,7 +1092,7 @@ set-current
 		output file-delete
 		output
 		ws :channels    ws-ref
-		ws :data-format ws-ref
+		ws :sample-type ws-ref
 		ws :header-type ws-ref
 		ws :comment ws-ref dup empty? if
 			drop make-default-comment
@@ -1117,7 +1117,7 @@ set-current
 			revput file-delete
 			revput
 			ws :reverb-channels ws-ref
-			ws :data-format     ws-ref
+			ws :sample-type     ws-ref
 			ws :header-type     ws-ref
 			"with-sound temporary reverb file" make-sample->file
 		then to *reverb*
@@ -1205,7 +1205,7 @@ previous
 :srate             *clm-srate*            (44100)\n\
 :locsig-type       *clm-locsig-type*      (mus-interp-linear)\n\
 :header-type       *clm-header-type*      (mus-next)\n\
-:data-format       *clm-data-format*      (mus-lfloat)\n\
+:sample-type       *clm-sample-type*      (mus-lfloat)\n\
 :clipped           *clm-clipped*          (#t)\n\
 :comment           *clm-comment*          (#f)\n\
 :notehook          *clm-notehook*         (#f)\n\
@@ -1585,7 +1585,7 @@ event: inst-test ( -- )
 		48000 set-mus-srate drop
 		:file "arpeggio.snd"
 		    :header-type mus-next
-		    :data-format mus-bdouble
+		    :sample-type mus-bdouble
 		    :channels 2
 		    :srate mus-srate f>s
 		    :comment make-default-comment new-sound { snd }

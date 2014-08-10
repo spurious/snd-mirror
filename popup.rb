@@ -653,7 +653,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
  format: %s [%s]
  maxamp: %s
 written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
-                           frames(snd), mus_data_format_name(data_format(snd)),
+                           frames(snd), mus_sample_type_name(sample_type(snd)),
                            mus_header_type_name(header_type(snd)),
                            maxamp(snd, true).to_string, date)
       if $info_comment_hook.empty?

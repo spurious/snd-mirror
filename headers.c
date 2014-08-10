@@ -2149,7 +2149,7 @@ char *mus_header_riff_aux_comment(const char *name, mus_long_t *starts, mus_long
   char *sc = NULL, *auxcom;
   if ((starts) && (starts[0] != 0))
     {
-      int len, j, fd, k, m;
+      int j, fd, k, m;
       mus_long_t i, end;
       /* found a LIST+INFO chunk (and no other comment) */
       fd = mus_file_open_read(name);
@@ -2166,6 +2166,7 @@ char *mus_header_riff_aux_comment(const char *name, mus_long_t *starts, mus_long
       i += 4;
       while (i < end)
 	{
+	  int len;
 	  for (m = 0; m < 4; m++) sc[j++] = auxcom[k++];
 	  len = mus_char_to_lint((unsigned char *)(auxcom + k));
 	  if ((len <= 0) || (len > end)) break;
@@ -2496,7 +2497,7 @@ static int read_avi_header(const char *filename, int fd)
   const unsigned char I_movi[4] = {'m','o','v','i'};  
 
   /* we know we have checked for RIFF xxxx AVI  when we arrive here */
-  int chunksize, chunkloc, cksize, bits;
+  int chunkloc, cksize, bits;
   bool happy = true;
   mus_long_t ckoff, cktotal, offset;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
@@ -2508,6 +2509,7 @@ static int read_avi_header(const char *filename, int fd)
   true_file_length = SEEK_FILE_LENGTH(fd);
   while (happy)
     {
+      int chunksize;
       offset += chunkloc;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "%s avi header: chunks confused at %lld", filename, offset));
@@ -3349,7 +3351,7 @@ static int read_8svx_header(const char *filename, int fd, bool bytewise)
 static int read_voc_header(const char *filename, int fd)
 {
   mus_long_t curbase;
-  int type, len, voc_extended, bits, code;
+  int voc_extended, bits, code;
   bool happy = true;
 
   sample_type = MUS_UBYTE;
@@ -3365,6 +3367,7 @@ static int read_voc_header(const char *filename, int fd)
 
   while (happy)
     {
+      int type, len;
       type = (int)(hdrbuf[0]);
       len = (((int)hdrbuf[3]) << 16) + (((int)hdrbuf[2]) << 8) + (((int)hdrbuf[1]));
       if (type == 1) /* voc_data */

@@ -246,7 +246,7 @@ end")
     format("%s: chans: %d, srate: %d, %s, %s, len: %1.3f",
            file, chans, sr,
            mus_header_type_name(mus_sound_header_type(file)),
-           mus_data_format_name(mus_sound_data_format(file)),
+           mus_sample_type_name(mus_sound_sample_type(file)),
            mus_sound_samples(file).to_f / (chans * sr.to_f))
   end
 

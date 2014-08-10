@@ -823,7 +823,7 @@ see also: &nbsp; <a href="fm.html#fmintro" onmouseout="UnTip()" onmouseover="Tip
 </pre>
 
 <p>This file has functions to read and write numbers and strings to and from binary files.
-The function names are similar to those used for data-format names, so for example,
+The function names are similar to those used for sample-type names, so for example,
 read-bint32 reads the next 4 bytes from the current input port,
 interpreting them as a big-endian 32-bit integer.
 </p>
@@ -8431,7 +8431,7 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 (set! (script-arg) (+ 1 (script-arg)))
 
 (let ((ind (find-sound
-	    (with-sound (:channels 3 :data-format mus-lfloat)
+	    (with-sound (:channels 3 :sample-type mus-lfloat)
 			(let ((samp 0))	    
 			  (call-with-input-file 
 			      (list-ref (script-args) 1) ; invocation arg = text file of data ("snd graph-averages.scm peaks.data")
@@ -9266,7 +9266,7 @@ The marks can be moved as the sound is played; C-g stops loop-between-marks.
 </pre>
 
 <p>open-play-output opens an output audio port.  It
-takes the desired number of channels, sampling rate, data format, and DAC buffer size (in samples),
+takes the desired number of channels, sampling rate, sample type, and DAC buffer size (in samples),
 and returns a list containing the audio port (-1 on failure), the opened output channels,
 and the actual DAC buffer size (these can differ from the requested amounts in various hardware
 situations).
@@ -11578,7 +11578,7 @@ with-sound returns its :output argument.
           (output *clm-file-name*)               ; output file name ("test.snd")
 	  (channels *clm-channels*)              ; channels in output (1)
 	  (header-type *clm-header-type*)        ; output header type (mus-next or mus-aifc)
-	  (data-format *clm-data-format*)        ; output sample data type (mus-bfloat or mus-lshort)
+	  (sample-type *clm-sample-type*)        ; output sample data type (mus-bfloat or mus-lshort)
 	  (comment #f)                           ; any comment to store in the header (a string)
 	  (verbose *clm-verbose*)                ; if #t, print out some info
 	  (reverb *clm-reverb*)                  ; reverb instrument (jc-reverb)
@@ -11685,7 +11685,7 @@ snd&gt; 0.0 1.0 330.0 0.5 ' simp :play #f :channels 2 with-sound
 (define *clm-file-name*          "test.snd")
 (define *clm-srate*              *default-output-srate*)       ; 44100
 (define *clm-channels*           *default-output-chans*)       ; 1
-(define *clm-data-format*        *default-output-data-format*) ; mus-lfloat
+(define *clm-sample-type*        *default-output-sample-type*) ; mus-lfloat
 (define *clm-header-type*        *default-output-header-type*) ; mus-next
 (define *clm-verbose*            #f)
 (define *clm-play*               #f)
@@ -11722,7 +11722,7 @@ snd&gt; 0.0 1.0 330.0 0.5 ' simp :play #f :channels 2 with-sound
 #&lt;unspecified&gt;
 &gt; (set! *clm-header-type* mus-aifc)
 #&lt;unspecified&gt;
-&gt; (set! *clm-data-format* mus-bfloat)
+&gt; (set! *clm-sample-type* mus-bfloat)
 #&lt;unspecified&gt;
 &gt; (with-sound ()  (fm-violin 0 1 440 .1))test.aif:
 "test.aif"

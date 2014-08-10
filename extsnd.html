@@ -827,28 +827,6 @@ or a save dialog is opened.
 <div class="spacer"></div>
 
 
-<!-- default-output-data-format -->
-<pre class="indented">
-<em class=def id="defaultoutputdataformat">default-output-data-format</em> (default: mus-bfloat)
-</pre>
-
-<p>default-output-data-format is the default data format when a new or temporary file is created, 
-or a save dialog is opened. (The default, mus-bfloat, is from sndlib, standing for 32-bit big-endian floating point data).  
-Use <a href="#musoutformat">mus-out-format</a> for fastest IO.
-The available output data formats are (b=big-endian, l=little, u=unsigned, short=16 bits, byte=8 bits, int = 32 bits):
-</p>
-
-<pre onmouseout="UnTip()" onmouseover="Tip('mus-bshort: big-endian (au-style) 16-bit ints, doubles are 64-bit floats,<br>alaw and mulaw are compression schemes, mus-b24int is a 3-byte (24-bit) format;<br>each header type has restrictions on the kinds of data it can accommodate.')">
-    mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
-    mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
-    mus-ubshort mus-ulshort
-</pre>
-
-<p>There are also "unscaled" versions of the floating point types, and "normalized" versions of the integers.
-</p>
-<div class="spacer"></div>
-
-
 <!-- default-output-header-type -->
 <pre class="indented">
 <em class=def id="defaultoutputheadertype">default-output-header-type</em> (default: mus-next)
@@ -864,6 +842,28 @@ The available output header-types are:
     mus-soundfont mus-bicsf mus-voc mus-svx mus-caff
 </pre>
 
+<div class="spacer"></div>
+
+
+<!-- default-output-sample-type -->
+<pre class="indented">
+<em class=def id="defaultoutputsampletype">default-output-sample-type</em> (default: mus-bfloat)
+</pre>
+
+<p>default-output-sample-type is the default sample type when a new or temporary file is created, 
+or a save dialog is opened. (The default, mus-bfloat, is from sndlib, standing for 32-bit big-endian floating point data).  
+Use <a href="#musoutformat">mus-out-format</a> for fastest IO.
+The available output sample types are (b=big-endian, l=little, u=unsigned, short=16 bits, byte=8 bits, int = 32 bits):
+</p>
+
+<pre onmouseout="UnTip()" onmouseover="Tip('mus-bshort: big-endian (au-style) 16-bit ints, doubles are 64-bit floats,<br>alaw and mulaw are compression schemes, mus-b24int is a 3-byte (24-bit) format;<br>each header type has restrictions on the kinds of data it can accommodate.')">
+    mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
+    mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
+    mus-ubshort mus-ulshort
+</pre>
+
+<p>There are also "unscaled" versions of the floating point types, and "normalized" versions of the integers.
+</p>
 <div class="spacer"></div>
 
 
@@ -2045,7 +2045,7 @@ If the hook returns #t, Snd does not exit.
 
 <!-- before-save-as-hook -->
 <pre class="indented">
-<em class=def id="beforesaveashook">before-save-as-hook</em> (snd name selection sampling-rate header-type data-format comment)
+<em class=def id="beforesaveashook">before-save-as-hook</em> (snd name selection sampling-rate header-type sample-type comment)
 </pre>
 
 <p>This hook is called before <a href="#savesoundas">save-sound-as</a> or File:Save as.  
@@ -2065,12 +2065,12 @@ we're saving the selection.
 	    (do ((i 0 (+ i 1)))
 	        ((= i chns))
 	      (<a class=quiet href="#srcchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_srcchannel_tip)">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index) sr)) 0 #f index i))
-	    (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> filename index :header-type htype :data-format dformat :srate sr :comment comment) 
+	    (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> filename index :header-type htype :sample-type dformat :srate sr :comment comment) 
 	    (do ((i 0 (+ i 1)))
 	        ((= i chns))
 	      (<a class=quiet href="#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> 1 index i))
 	    (set! (hook 'result) #t)))) ; tell Snd that the sound is already saved
-     (hook 'snd) (hook 'name) (hook 'sampling-rate) (hook 'header-type) (hook 'data-format) (hook 'comment))))
+     (hook 'snd) (hook 'name) (hook 'sampling-rate) (hook 'header-type) (hook 'sample-type) (hook 'comment))))
 
 </pre>
 <div class="spacer"></div>
@@ -2964,7 +2964,7 @@ If it returns a string (a filename), that file is opened instead of the original
 
 <p>This hook is called each time <a href="#opensound">open-sound</a> encounters a headerless file.
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on):
-(list chans srate data-format data-location data-length) where trailing elements can 
+(list chans srate sample-type data-location data-length) where trailing elements can 
 be omitted ('data-location' defaults to 0, and 'data-length' defaults to the file length in bytes).
 In Ruby and Forth, if there is more than one function on the hook list, functions after the first get the
 on-going list result as the 'state (the empty list is the default).
@@ -2973,7 +2973,7 @@ on-going list result as the 'state (the empty list is the default).
 <pre class="indented">
 (hook-push <em class=red>open-raw-sound-hook</em> 
   (lambda (hook) 
-    (set! (hook 'result) (list 1 44100 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-lshort</a>))))
+    (set! (hook 'result) (list 1 44100 <a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampletype_tip)">mus-lshort</a>))))
 </pre>
 
 <p>Return () to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
@@ -4240,10 +4240,10 @@ If 'start' is given, it sets where to start reading in the float-vector buffers.
 
 <!-- mus-bytes-per-sample -->
 <pre class="indented">
-<em class=def id="musbytespersample">mus-bytes-per-sample</em> data-format
+<em class=def id="musbytespersample">mus-bytes-per-sample</em> sample-type
 </pre>
 
-<p>mus-bytes-per-sample returns the number of bytes that 'data-format' uses to encode one sample of sound.
+<p>mus-bytes-per-sample returns the number of bytes that 'sample-type' uses to encode one sample of sound.
 </p>
 
 <pre class="indented">
@@ -4265,41 +4265,6 @@ This function refers to <a href="#mussoundopenoutput">mus-sound-open-output</a> 
 is <a href="#musfileclipping">mus-file-clipping</a> &mdash; surely we could make this more confusing!
 See also <a href="#cliphook">clip-hook</a>.
 </p>
-<div class="spacer"></div>
-
-
-<!-- mus-data-format-name -->
-<pre class="indented">
-<em class=def id="musdataformatname">mus-data-format-name</em> format
-</pre>
-
-<p>mus-data-format-name converts 'format' from an integer to an explanatory string, e.g. "16-bit big endian linear".  
-</p>
-
-<pre class="indented">
-mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
-mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
-mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
-mus-ldouble  mus-unknown
-</pre>
-
-<p>There are also "unscaled" versions of the floating point types, and "normalized" versions of the integers.
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-data-format->string -->
-<pre class="indented">
-<em class=def id="musdataformattostring">mus-data-format-&gt;string</em> format
-</pre>
-
-<p>mus-data-format-&gt;string converts 'format' from an integer to a string, e.g. "mus-mulaw".
-</p>
-
-<pre class="indented">
-&gt; (mus-data-format-&gt;string mus-bdouble)
-"mus-bdouble"
-</pre>
 <div class="spacer"></div>
 
 
@@ -4349,7 +4314,7 @@ See also <a href="#cliphook">clip-hook</a>.
 <em class=def id="musheaderrawdefaults">mus-header-raw-defaults</em>
 </pre>
 
-<p>mus-header-raw-defaults returns a list: '(srate chans data-format), the current raw header defaults.  These can be
+<p>mus-header-raw-defaults returns a list: '(srate chans sample-type), the current raw header defaults.  These can be
 set: 
 </p>
 
@@ -4412,6 +4377,41 @@ My initialization file includes (mus-oss-set-buffers 2 12).
 <div class="spacer"></div>
 
 
+<!-- mus-sample-type-name -->
+<pre class="indented">
+<em class=def id="mussampletypename">mus-sample-type-name</em> format
+</pre>
+
+<p>mus-sample-type-name converts 'format' from an integer to an explanatory string, e.g. "16-bit big endian linear".  
+</p>
+
+<pre class="indented">
+mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
+mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
+mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
+mus-ldouble  mus-unknown
+</pre>
+
+<p>There are also "unscaled" versions of the floating point types, and "normalized" versions of the integers.
+</p>
+<div class="spacer"></div>
+
+
+<!-- mus-sample-type->string -->
+<pre class="indented">
+<em class=def id="mussampletypetostring">mus-sample-type-&gt;string</em> format
+</pre>
+
+<p>mus-sample-type-&gt;string converts 'format' from an integer to a string, e.g. "mus-mulaw".
+</p>
+
+<pre class="indented">
+&gt; (mus-sample-type-&gt;string mus-bdouble)
+"mus-bdouble"
+</pre>
+<div class="spacer"></div>
+
+
 <!-- mus-sound-chans -->
 <pre class="indented">
 <em class=def id="mussoundchans">mus-sound-chans</em> filename
@@ -4450,7 +4450,7 @@ notice, so to speak, of Snd.
 </pre>
 
 <p>This function closes the sound file 'fd', and updates its length indication, if any to be 'bytes' bytes.
-If you didn't specify a data-format to <a href="#mussoundopenoutput">mus-sound-open-output</a>,
+If you didn't specify a sample-type to <a href="#mussoundopenoutput">mus-sound-open-output</a>,
 it defaulted to mus-out-format.
 mus-out-format can
 currently be either ints, floats, or doubles, depending on how you've configured Snd, so it's safest
@@ -4477,21 +4477,6 @@ for the number of bytes per sample.
 <div class="spacer"></div>
 
 
-<!-- mus-sound-data-format -->
-<pre class="indented">
-<em class=def id="mussounddataformat">mus-sound-data-format</em> filename
-</pre>
-
-<p>mus-sound-data-format returns the data format (e.g. mus-bshort) of the file 'filename'.
-</p>
-
-<pre class="indented">
-&gt; (mus-data-format-&gt;string (mus-sound-data-format "oboe.snd"))
-"mus-bshort"
-</pre>
-<div class="spacer"></div>
-
-
 <!-- mus-sound-data-location -->
 <pre class="indented">
 <em class=def id="mussounddatalocation">mus-sound-data-location</em> filename
@@ -4508,7 +4493,7 @@ for the number of bytes per sample.
 </pre>
 
 <p>This returns the size in bytes of each sample in 'filename'.  
-It is equivalent to (mus-bytes-per-sample (mus-sound-data-format filename)).
+It is equivalent to (mus-bytes-per-sample (mus-sound-sample-type filename)).
 </p>
 <div class="spacer"></div>
 
@@ -4673,7 +4658,7 @@ in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read
 
 <!-- mus-sound-open-output -->
 <pre class="indented">
-<em class=def id="mussoundopenoutput">mus-sound-open-output</em> filename (srate 44100) (chans 1) data-format header-type comment
+<em class=def id="mussoundopenoutput">mus-sound-open-output</em> filename (srate 44100) (chans 1) sample-type header-type comment
 </pre>
 
 <p>mus-sound-open-output creates a new sound file with the indicated attributes, and returns an integer 
@@ -4716,7 +4701,7 @@ loading num-to-read samples into the float-vector 'sd' starting from 0 in that v
 
 <!-- mus-sound-reopen-output -->
 <pre class="indented">
-<em class=def id="mussoundreopenoutput">mus-sound-reopen-output</em> filename (chans 1) data-format header-type data-location
+<em class=def id="mussoundreopenoutput">mus-sound-reopen-output</em> filename (chans 1) sample-type header-type data-location
 </pre>
 
 <p>mus-sound-reopen-output reopens the sound file 'filename', ready to continue writing output.
@@ -4745,6 +4730,21 @@ loading num-to-read samples into the float-vector 'sd' starting from 0 in that v
 <pre class="indented">
 &gt; (mus-sound-samples "oboe.snd")
 50828
+</pre>
+<div class="spacer"></div>
+
+
+<!-- mus-sound-sample-type -->
+<pre class="indented">
+<em class=def id="mussoundsampletype">mus-sound-sample-type</em> filename
+</pre>
+
+<p>mus-sound-sample-type returns the sample type (e.g. mus-bshort) of the file 'filename'.
+</p>
+
+<pre class="indented">
+&gt; (mus-sample-type-&gt;string (mus-sound-sample-type "oboe.snd"))
+"mus-bshort"
 </pre>
 <div class="spacer"></div>
 
@@ -4820,7 +4820,7 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
      ": chans: " (number-&gt;string (channels file))
      ", srate: " (number-&gt;string (srate file))
      ", " (<a class=quiet href="#musheadertypename" onmouseout="UnTip()" onmouseover="Tip(extsnd_musheadertypename_tip)">mus-header-type-name</a> (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> file))
-     ", " (<a class=quiet href="#musdataformatname" onmouseout="UnTip()" onmouseover="Tip(extsnd_musdataformatname_tip)">mus-data-format-name</a> (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> file))
+     ", " (<a class=quiet href="#mussampletypename" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussampletypename_tip)">mus-sample-type-name</a> (<a class=quiet href="#mussoundsampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsampletype_tip)">mus-sound-sample-type</a> file))
      ", len: " (number-&gt;string 
                 (/ (<a class=quiet href="#mussoundsamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsamples_tip)">mus-sound-samples</a> file) 
                    (* (channels file) (srate file)))))))
@@ -5566,8 +5566,8 @@ to use multiple output files, collecting related notes in one file, then mixing 
 ;; open two output files, one for the violin notes, the other for the cellos
 ;;   then mix them into "test.snd"
 
-(let ((violins (<a class=quiet href="sndclm.html#make-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_sampletofile_tip)">make-sample-&gt;file</a> "violins.snd" 1 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslfloat_tip)">mus-lfloat</a> mus-next))
-      (cellos (<a class=quiet href="sndclm.html#make-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_sampletofile_tip)">make-sample-&gt;file</a> "cellos.snd" 1 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslfloat_tip)">mus-lfloat</a> mus-next)))
+(let ((violins (<a class=quiet href="sndclm.html#make-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_sampletofile_tip)">make-sample-&gt;file</a> "violins.snd" 1 <a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslfloat_tip)">mus-lfloat</a> mus-next))
+      (cellos (<a class=quiet href="sndclm.html#make-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_sampletofile_tip)">make-sample-&gt;file</a> "cellos.snd" 1 <a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslfloat_tip)">mus-lfloat</a> mus-next)))
 
   (define (violin beg dur freq amp)
     (<a class=quiet href="sndscm.html#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> (:continue-old-file #t :output "violins.snd") 
@@ -6086,10 +6086,10 @@ deleted.
 
 <!-- save-region -->
 <pre class="indented">
-<em class=def id="saveregion">save-region</em> reg :file :header-type :data-format :comment
+<em class=def id="saveregion">save-region</em> reg :file :header-type :sample-type :comment
 </pre>
 
-<p>save-region saves the region 'reg' in 'file' in the given data format and header type.
+<p>save-region saves the region 'reg' in 'file' in the given sample type and header type.
 It returns the output filename.  
 The following calls are equivalent:
 </p>
@@ -6097,8 +6097,8 @@ The following calls are equivalent:
 <pre class="indented">
 (save-region reg "reg0.snd")
 (save-region reg :file "reg0.snd" :header-type mus-next)
-(save-region reg "reg0.snd" mus-next <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a> "a comment")
-(save-region reg :file "reg0.snd" :comment "a comment" :data-format <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a>)
+(save-region reg "reg0.snd" mus-next <a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a> "a comment")
+(save-region reg :file "reg0.snd" :comment "a comment" :sample-type <a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a>)
 </pre>
 
 
@@ -6222,7 +6222,7 @@ The Edit:Mix selection menu choice is (mix-selection (cursor)).
 
 <!-- save-selection -->
 <pre class="indented">
-<em class=def id="saveselection">save-selection</em> :file (:header-type mus-next) :data-format :srate :comment :channel
+<em class=def id="saveselection">save-selection</em> :file (:header-type mus-next) :sample-type :srate :comment :channel
 </pre>
 
 <p id="extractchannels">save-selection saves the selection in 'file'.  If 'channel' is given, it saves only that channel.
@@ -7139,90 +7139,6 @@ replaces the normal "+" cursor with an "x":
 <div class="separator"></div>
 
 
-<!-- data-format -->
-<pre class="indented">
-<em class=def id="dataformat">data-format</em> snd
-</pre>
-
-<p>This returns the sound's data format &mdash; the encoding used for the sound samples (e.g. mus-bshort).
-</p>
-
-<p>The standard formats nowadays are mus-bshort (big-endian 16-bit integers), mus-bfloat
-(32-bit big-endian floats), and mus-bint (32-bit big-endian integers), and the
-corresponding little-endian versions: mus-lshort, mus-lfloat, and mus-lint.
-If you're using an Intel-style PC, you're using a little-endian machine;
-Old macs (PowerPC Macs) and Suns use big-endian (NeXT, SGI, and Atari also used it in the good old days).  If you
-write a Next file and use little-endian data, some programs other than Snd
-may complain; similarly, RIFF wants little-endian and AIFC wants big-endian
-data (both can handle the other kind, but most sound-related programs don't know
-that).  In the old days, when disk space was at a premium, 8-bit formats
-were used a lot: mus-mulaw and mus-alaw (kludges for a kind of 8-bit float),
-mus-byte and mus-ubyte (8-bit ints, unsigned in the latter case).  A few
-DACs want a particular kind of data, but Snd handles that conversion internally.
-Anything less than 12 bits will sound bad &mdash; Perry Cook's book "Real Sound Synthesis"
-has examples.  
-</p>
-
-<p>If you encounter a file
-with an unknown format, or a header that has the wrong format, 
-you can set this field to force Snd to interpret the data in any 
-way you like.  Similar remarks apply to the <a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>, <a class=quiet href="#datalocation" onmouseout="UnTip()" onmouseover="Tip(extsnd_datalocation_tip)">data-location</a>,
-<a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">header-type</a>, and <a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> fields.  There are ambiguities in some header
-specifications, usually involving big/little endian or signed/unsigned data confusion.
-If you encounter a sound that is clipping crazily or is just a burst of noise, try changing these settings.
-Some NeXT/Sun (au) header files using byte-wide data
-assume the byte is unsigned, whereas most others assume it is signed.  Sndlib
-treats it as signed by default, so to make one of the unsigned-byte files playable,
-</p>
-
-<pre class="indented">
-(set! (data-format) <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-ubyte</a>)
-</pre>
-
-<p>mus_float_t data is another source of confusion;
-there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
-In this case, Snd assumes -1.0 to 1.0 (except in one special case involving IRCAM headers), and you may have to 
-set <a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> to see the actual data.
-Yet another gotcha: files with 32-bit integers.  Some programs (Glame, apparently, and perhaps Ardour) assume the fraction is
-31 bits wide, others (Snd) use whatever its sample width is configured to be; there is no correct or standard
-placement of the fixed point, but not to worry!  Your data is ok:
-<code>(set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a>) (list -256.0 256.0))</code>. 
-There are several ways you can handle
-these files automatically in Snd.  Perhaps the simplest is to use one of the open hooks:
-</p>
-
-<pre class="indented">
-(hook-push <a class=quiet href="#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> 
-  (lambda (hook) 
-    ;; this could also (alternatively) set the y-bounds as above
-    (if (= (<em class=red>data-format</em> (hook 'snd)) mus-lint)
-        (set! (<em class=red>data-format</em> (hook 'snd)) mus-lintn))))
-</pre>
-
-<p>or (an alternative that sets the underlying database entry, rather than the current in-Snd choice):
-</p>
-
-<pre class="indented">
-(hook-push <a class=quiet href="#openhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_openhook_tip)">open-hook</a> 
-  (lambda (hook)
-    (if (= (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> (hook 'name)) mus-lint)
-        (set! (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> (hook 'name)) mus-lintn))))
-</pre>
-
-<p>If you set any of these fields, the sound's index may change (there can be an embedded <a class=quiet href="#updatesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatesound_tip)">update-sound</a>).
-To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#mpg" onmouseout="UnTip()" onmouseover="Tip(sndscm_mpg_tip)">mpg</a>) or misc.scm (mpg123 and ogg123).
-Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
-</p>
-
-<p>To turn a data-format number into a string, use <a href="#musdataformatname">mus-data-format-name</a>. To get
-the data format of some sound file, use <a href="#mussounddataformat">mus-sound-data-format</a>.
-The default output (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a>, and
-<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a>) data-format is <a href="#defaultoutputdataformat">default-output-data-format</a>.
-To change a sound file's data-format, use <a href="#savesoundas">save-sound-as</a>.
-</p>
-<div class="separator"></div>
-
-
 <!-- data-location -->
 <pre class="indented">
 <em class=def id="datalocation">data-location</em> snd
@@ -7803,7 +7719,7 @@ and "raw"
 means the sound file has no header.  If you change the header type to "raw",
 any existing header is removed.
 Each header type has its own peculiarities; if in doubt, use mus-next because it is simple,
-and can handle any data format that Snd can write (whereas each of the others is restricted in this regard).
+and can handle any sample type that Snd can write (whereas each of the others is restricted in this regard).
 The writable header types are mus-next, mus-nist, 
 mus-aiff (obsolete, rarely needed), mus-aifc, mus-riff, mus-rf64, mus-caff,
 mus-ircam, and mus-raw (no header).  For technical descriptions of the headers,
@@ -8276,7 +8192,7 @@ actual dB value calculated to -140.0 or -180.0 (depending on which function is c
 
 <!-- new-sound -->
 <pre class="indented">
-<em class=def id="newsound">new-sound</em> :file :header-type :data-format :srate :channels :comment :size
+<em class=def id="newsound">new-sound</em> :file :header-type :sample-type :srate :channels :comment :size
 </pre>
 
 <p>new-sound creates a new sound named 'file'.  The following function opens a new sound named "test.snd",
@@ -8293,7 +8209,7 @@ extends it to 'dur' samples, and initializes all samples to 'val':
 <p>If the 'header-type' and other 
 arguments are not specified, they
 default to the current <a href="#defaultoutputheadertype">default-output-header-type</a> and 
-related settings. Data formats are (b=big-endian, l=little, u=unsigned):
+related settings. sample types are (b=big-endian, l=little, u=unsigned):
 </p>
 
 <pre class="indented">
@@ -8330,11 +8246,11 @@ The multichannel version is <a href="sndscm.html#normalizesound">normalize-sound
 
 <!-- open-raw-sound -->
 <pre class="indented">
-<em class=def id="openrawsound">open-raw-sound</em> :file :channels :srate :data-format
+<em class=def id="openrawsound">open-raw-sound</em> :file :channels :srate :sample-type
 </pre>
 
 <p>This opens 'file' as a raw (no header) sound in the layout specified.
-If the file has a header, it is not ignored (use (set! (<a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">data-format</a> ...))
+If the file has a header, it is not ignored (use (set! (<a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampletype_tip)">sample-type</a> ...))
 and friends to get around this).  If the header is messed up, you can override its settings by
 giving the correct values in the call to open-raw-sound.
 </p>
@@ -8344,7 +8260,7 @@ giving the correct values in the call to open-raw-sound.
   (lambda (mpgfile rawfile chans)
     "(<a class=quiet href="sndscm.html#mpg" onmouseout="UnTip()" onmouseover="Tip(sndscm_mpg_tip)">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     (system (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
-    (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (<a class=quiet onmouseout="UnTip()" onmouseover="Tip('little-endian? returns #t if the host uses that byte order')">little-endian?</a>) <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a>))))
+    (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (<a class=quiet onmouseout="UnTip()" onmouseover="Tip('little-endian? returns #t if the host uses that byte order')">little-endian?</a>) <a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> <a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a>))))
 </pre>
 
 <p>There's a more elaborate version of this function in examp.scm.  See also <a href="#openrawsoundhook">open-raw-sound-hook</a>.
@@ -8922,6 +8838,90 @@ This is settable (as is <a href="#sample">sample</a>):
 <div class="separator"></div>
 
 
+<!-- sample-type -->
+<pre class="indented">
+<em class=def id="sampletype">sample-type</em> snd
+</pre>
+
+<p>This returns the sound's sample type &mdash; the encoding used for the sound samples (e.g. mus-bshort).
+</p>
+
+<p>The standard formats nowadays are mus-bshort (big-endian 16-bit integers), mus-bfloat
+(32-bit big-endian floats), and mus-bint (32-bit big-endian integers), and the
+corresponding little-endian versions: mus-lshort, mus-lfloat, and mus-lint.
+If you're using an Intel-style PC, you're using a little-endian machine;
+Old macs (PowerPC Macs) and Suns use big-endian (NeXT, SGI, and Atari also used it in the good old days).  If you
+write a Next file and use little-endian data, some programs other than Snd
+may complain; similarly, RIFF wants little-endian and AIFC wants big-endian
+data (both can handle the other kind, but most sound-related programs don't know
+that).  In the old days, when disk space was at a premium, 8-bit formats
+were used a lot: mus-mulaw and mus-alaw (kludges for a kind of 8-bit float),
+mus-byte and mus-ubyte (8-bit ints, unsigned in the latter case).  A few
+DACs want a particular kind of data, but Snd handles that conversion internally.
+Anything less than 12 bits will sound bad &mdash; Perry Cook's book "Real Sound Synthesis"
+has examples.  
+</p>
+
+<p>If you encounter a file
+with an unknown format, or a header that has the wrong format, 
+you can set this field to force Snd to interpret the data in any 
+way you like.  Similar remarks apply to the <a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>, <a class=quiet href="#datalocation" onmouseout="UnTip()" onmouseover="Tip(extsnd_datalocation_tip)">data-location</a>,
+<a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">header-type</a>, and <a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> fields.  There are ambiguities in some header
+specifications, usually involving big/little endian or signed/unsigned data confusion.
+If you encounter a sound that is clipping crazily or is just a burst of noise, try changing these settings.
+Some NeXT/Sun (au) header files using byte-wide data
+assume the byte is unsigned, whereas most others assume it is signed.  Sndlib
+treats it as signed by default, so to make one of the unsigned-byte files playable,
+</p>
+
+<pre class="indented">
+(set! (sample-type) <a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampletype_tip)">mus-ubyte</a>)
+</pre>
+
+<p>mus_float_t data is another source of confusion;
+there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
+In this case, Snd assumes -1.0 to 1.0 (except in one special case involving IRCAM headers), and you may have to 
+set <a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> to see the actual data.
+Yet another gotcha: files with 32-bit integers.  Some programs (Glame, apparently, and perhaps Ardour) assume the fraction is
+31 bits wide, others (Snd) use whatever its sample width is configured to be; there is no correct or standard
+placement of the fixed point, but not to worry!  Your data is ok:
+<code>(set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a>) (list -256.0 256.0))</code>. 
+There are several ways you can handle
+these files automatically in Snd.  Perhaps the simplest is to use one of the open hooks:
+</p>
+
+<pre class="indented">
+(hook-push <a class=quiet href="#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> 
+  (lambda (hook) 
+    ;; this could also (alternatively) set the y-bounds as above
+    (if (= (<em class=red>sample-type</em> (hook 'snd)) mus-lint)
+        (set! (<em class=red>sample-type</em> (hook 'snd)) mus-lintn))))
+</pre>
+
+<p>or (an alternative that sets the underlying database entry, rather than the current in-Snd choice):
+</p>
+
+<pre class="indented">
+(hook-push <a class=quiet href="#openhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_openhook_tip)">open-hook</a> 
+  (lambda (hook)
+    (if (= (<a class=quiet href="#mussoundsampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsampletype_tip)">mus-sound-sample-type</a> (hook 'name)) mus-lint)
+        (set! (<a class=quiet href="#mussoundsampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsampletype_tip)">mus-sound-sample-type</a> (hook 'name)) mus-lintn))))
+</pre>
+
+<p>If you set any of these fields, the sound's index may change (there can be an embedded <a class=quiet href="#updatesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatesound_tip)">update-sound</a>).
+To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#mpg" onmouseout="UnTip()" onmouseover="Tip(sndscm_mpg_tip)">mpg</a>) or misc.scm (mpg123 and ogg123).
+Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
+</p>
+
+<p>To turn a sample-type number into a string, use <a href="#mussampletypename">mus-sample-type-name</a>. To get
+the sample type of some sound file, use <a href="#mussoundsampletype">mus-sound-sample-type</a>.
+The default output (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a>, and
+<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a>) sample-type is <a href="#defaultoutputsampletype">default-output-sample-type</a>.
+To change a sound file's sample-type, use <a href="#savesoundas">save-sound-as</a>.
+</p>
+<div class="separator"></div>
+
+
 <!-- save-sound -->
 <pre class="indented">
 <em class=def id="savesound">save-sound</em> snd
@@ -8968,7 +8968,7 @@ save the current fft peak info: <a href="extsnd.html#peaks">peaks</a><br>
 
 <!-- save-sound-as -->
 <pre class="indented">
-<em class=def id="savesoundas">save-sound-as</em> :file :sound :header-type :data-format :srate :channel :edit-position :comment
+<em class=def id="savesoundas">save-sound-as</em> :file :sound :header-type :sample-type :srate :channel :edit-position :comment
 </pre>
 
 <p>This saves 'sound' as 'file' (like the 'File:Save as' menu option).  If 'channel' is specified,
@@ -8976,14 +8976,14 @@ only that channel is saved (it is extracted if necessary from the multichannel o
 'edit-position', if given, specifies which edit history position to save.
 The :srate argument refers only to the new sound file's header's srate field;
 the data is not resampled.  If you want to resample the data as it is saved, see
-the example under <a href="#beforesaveashook">before-save-as-hook</a>.  If :data-format
-is given, the sound file is written using that data format.
+the example under <a href="#beforesaveashook">before-save-as-hook</a>.  If :sample-type
+is given, the sound file is written using that sample type.
 Any omitted argument's value
 is taken from the sound being saved. save-sound-as returns the new file name.
 </p>
 
 <pre class="indented">
-(save-sound-as "test.snd" :data-format mus-bdouble :header-type mus-aifc)
+(save-sound-as "test.snd" :sample-type mus-bdouble :header-type mus-aifc)
 </pre>
 
 <p>saves the currently selected sound as an AIFC file using big-endian doubles for the samples.
@@ -9697,7 +9697,7 @@ states aren't of great interest, you can save time by turning off redisplays.
 
 <p>This is the sound's sampling rate.  If you set this to a new value, update-sound is called to
 reflect the new srate, but any current edits are flushed.  This is consistent
-with the other header fields (data-format, etc), but it can be annoying.
+with the other header fields (sample-type, etc), but it can be annoying.
 </p>
 
 <p>There are several srates floating around in Snd.  
@@ -11361,7 +11361,7 @@ put in it something like:
 </p>
 
 <pre class="indented">
-(let ((myfile (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "mysound.snd" mus-aifc <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a> 44100 2 "this is my sound")))
+(let ((myfile (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "mysound.snd" mus-aifc <a class=quiet href="#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a> 44100 2 "this is my sound")))
 	;; this is equivalent to the New file menu option
   (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "oboe.snd" 0 0 myfile 0)
   ;; this mixes in the mono file oboe.snd at sample 0 in channel 0

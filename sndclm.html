@@ -6946,7 +6946,7 @@ handier.  If you're particular about the format of the convolved data:
 (define* (convolve-files-&gt;aifc file1 file2 (maxamp 1.0) (output-file "test.snd"))
   (let ((outname (string-append "temp-" output-file)))
     (<em class=red>convolve-files</em> file1 file2 maxamp outname)
-    (with-sound (:header-type mus-aifc :data-format mus-bfloat)
+    (with-sound (:header-type mus-aifc :sample-type mus-bfloat)
       (let ((len (seconds-&gt;samples (mus-sound-duration outname)))
 	    (reader (make-readin outname)))
         (do ((i 0 (+ i 1)))

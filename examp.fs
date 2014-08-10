@@ -385,7 +385,7 @@ It is intended for use with after-transform-hook."
 	       file mus-sound-chans
 	       file mus-sound-srate
 	       file mus-sound-header-type mus-header-type-name
-	       file mus-sound-data-format mus-data-format-name
+	       file mus-sound-sample-type mus-sample-type-name
 	       file mus-sound-samples
 	       file mus-sound-chans
 	       file mus-sound-srate f* f/ ) string-format

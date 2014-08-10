@@ -1767,7 +1767,7 @@ into a bunch of mono files:
 	    (<a class=quiet href="extsnd.html#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A.~D" name i)
 			   ind
 			   (<a class=quiet href="extsnd.html#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">header-type</a> ind)
-			   (<a class=quiet href="extsnd.html#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">data-format</a> ind)
+			   (<a class=quiet href="extsnd.html#sampletype" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampletype_tip)">sample-type</a> ind)
 			   (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> ind)
 			   i))
 	  (<a class=quiet href="extsnd.html#closesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_closesound_tip)">close-sound</a> ind)))))
@@ -2141,7 +2141,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <p>
 (This section is a lightly edited copy of some notes Fernando sent me).
 The default ALSA device in Snd is "default".  This virtual device tries to play sounds at any sampling rate,
-provide any number of input channels, handle data format conversions, and so on.  Experts will probably
+provide any number of input channels, handle sample type conversions, and so on.  Experts will probably
 want to use the "hw:0" device instead (this is the first hardware device; "hw:1" is the second, and so on),
 but in that case, ALSA provides only whatever sampling rates the hardware provides. 
 To change the device, or the internal buffering amounts, you can either set up environment

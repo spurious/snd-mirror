@@ -69997,16 +69997,11 @@ int main(int argc, char **argv)
  *   maybe gunichar->bytevector?
  *   but need glib.scm, or unicode.scm to load the stuff
  *
- * Snd status-report (et al) should accept format-style args at least in s7 (s7_format is exported) (snd-snd.c)
- * why not just header, not header-type, then data-type (deprecating data-format), or sample-type?
- *
  * finish Display!
  * doc cyclic-seq+stuff under circular lists
  * lint: assignment, then no use, then assignment
  *       or assignment of local, then no use 
  *       variable scope reduction: no macros, no shadow of cadr(if let), no side-effects of cadr
- *
- * for gmp library connection, see snd-xen current code (uses *s7_big_real(x), x an s7_pointer) -- cload??
  *
  * the xm/xg names should be in their own library *xg* *xm* 
  *   none of these is currently in autoload

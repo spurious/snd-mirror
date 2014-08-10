@@ -617,7 +617,7 @@ let: ( -- menu )
 	snd srate { sr }
 	"   chans: %d, srate: %d\n" #( snd channels sr ) string-format ( str )
 	"  format: %s [%s]\n"
-	    #( snd data-format mus-data-format-name
+	    #( snd sample-type mus-sample-type-name
 	       snd header-type mus-header-type-name ) string-format $+
 	"  length: %.3f  (%d frames)\n" #( frms sr f/ frms ) string-format $+
 	snd #t #f maxamp each { mx }

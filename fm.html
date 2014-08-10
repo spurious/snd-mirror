@@ -2152,7 +2152,7 @@ The take-home message is: "keep the index below 1.0!".
          (out-any i md 3)                 ;3: output (* amp (sin y))
          (out-any i y 4)))))              ;4: new y
 
-(with-sound (:srate 44100 :data-format mus-ldouble :channels 5 :statistics #t :clipped #f) (feedbk 0 2 100.0 1.0 1.22))
+(with-sound (:srate 44100 :sample-type mus-ldouble :channels 5 :statistics #t :clipped #f) (feedbk 0 2 100.0 1.0 1.22))
  channel 2 (outc) is our actual per-sample phase increment; notice that at the trouble spot it
  is zigzagging itself, and after interspersed 0's, finally dips negative, then the bounces start
  (at the bad spot y goes from -.57 to -.59 but the phase incr is .014, we back up).

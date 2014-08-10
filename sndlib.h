@@ -208,7 +208,7 @@ MUS_EXPORT const char *mus_sample_type_short_name(int format);
 #define mus_data_format_name mus_sample_type_name
 #define mus_data_format_to_string mus_sample_type_to_string
 #define mus_data_format_short_name mus_sample_type_short_name
-#define mus_sound_set_data_formatmus_sound_set_sample_type
+#define mus_sound_set_data_format mus_sound_set_sample_type
 #endif
 
 MUS_EXPORT char *mus_sound_comment(const char *name);

@@ -420,7 +420,7 @@ ensures that when a mark is dragged, its released position is always on a beat")
   # write out each section of a file between marks as a separate file
 
   add_help(:mark_explode,
-           "mark_explode([header_type=Mus_next, [data_format=Mus_bfloat]]) \
+           "mark_explode([header_type=Mus_next, [sample_type=Mus_bfloat]]) \
 splits a sound into a bunch of sounds based on mark placements")
   def mark_explode(htype = Mus_next, dformat = Mus_bfloat)
     start = 0
@@ -437,7 +437,7 @@ splits a sound into a bunch of sounds based on mark placements")
             set_selection_position(start, snd, chn)
             set_selection_frames(last - start, snd, chn)
           end
-          save_selection(filename, :header_type, htype, :data_format, dformat, :srate, srate(snd))
+          save_selection(filename, :header_type, htype, :sample_type, dformat, :srate, srate(snd))
           channels(snd).times do |chn|
             set_selection_member?(false, snd, chn)
           end

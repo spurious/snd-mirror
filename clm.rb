@@ -496,7 +496,7 @@ if provided? :snd
   alias save_options                    save_state
   alias delete_samples_with_origin      delete_samples
   alias default_output_type             default_output_header_type
-  alias default_output_format           default_output_data_format
+  alias default_output_format           default_output_sample_type
   alias mus_audio_set_oss_buffers       mus_oss_set_buffers
   unless defined? mus_file_data_clipped
     alias mus_file_data_clipped         mus_clipping

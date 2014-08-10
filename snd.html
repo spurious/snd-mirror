@@ -615,12 +615,12 @@ watches as you type a new name, reflecting that partial name by moving the file 
 display possible matches.
 </p>
 
-<!-- INDEX formats:Headers and Data formats -->
+<!-- INDEX formats:Headers and sample types -->
 
 <p id="formats">Snd can handle the following file and data types:</p>
 
 <pre class="indented">
-read/write (many data formats):
+read/write (many sample types):
 
     NeXT/Sun/DEC/AFsp
     AIFF/AIFC
@@ -632,7 +632,7 @@ read/write (many data formats):
     no header ("raw")
 
 
-read-only (in selected data formats):
+read-only (in selected sample types):
 
     8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, PVF,
     Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION, MAUD, Kurzweil 2000,
@@ -659,7 +659,7 @@ the default output variables such as <a href="extsnd.html#defaultoutputheadertyp
 or from a dialog that pops up when some field has not been set
 in advance.
 Similary, a raw data file gets its srate, chans,
-and data format information either from the open-raw-sound-hook
+and sample type information either from the open-raw-sound-hook
 or from a dialog window that pops up when such a file
 is opened. The file types listed above as "automatically translated" are
 decoded upon being opened, translated to some format Snd can read and write,
@@ -701,7 +701,7 @@ current (edited) state of the file.
 
 <p id="newfile">To open a new, empty file, use the File:New option.
 The default values for the fields can be set by clicking "Reset".  These values are <a href="extsnd.html#defaultoutputchans">default-output-chans</a>,
-<a href="extsnd.html#defaultoutputdataformat">default-output-data-format</a>,
+<a href="extsnd.html#defaultoutputsampletype">default-output-sample-type</a>,
 <a href="extsnd.html#defaultoutputsrate">default-output-srate</a>, and
 <a href="extsnd.html#defaultoutputheadertype">default-output-header-type</a>.  The name
 field can be set upon each invocation through
@@ -1643,9 +1643,9 @@ are edited in parallel with the current one.
 
 <div class="innerheader" id="changeformat">Change file format</div>
 
-<p>To change the sound file's header or data format, use the File or Edit menu Save as option.
-Choose the header type you want, then the data format,
-(the data format list will change depending on the header
+<p>To change the sound file's header or sample type, use the File or Edit menu Save as option.
+Choose the header type you want, then the sample type,
+(the sample type list will change depending on the header
 choice).  The File:Save dialog saves the currently selected sound.
 The Edit:Save dialog saves the selection in a new file.
 </p>
