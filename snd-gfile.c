@@ -1537,7 +1537,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 				       bool with_src, 
 				       bool with_auto_comment)
 {
-  GtkWidget *form, *scbox, *combox = NULL, *frame_box, *frame;
+  GtkWidget *form, *scbox, *frame_box, *frame;
   file_data *fdat;
   int nformats = 0, nheaders = 0;
   const char **formats = NULL, **headers = NULL;
@@ -1581,9 +1581,9 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 
   /* data format */ 
 #if HAVE_GTK_3
-  fdat->format_list = slist_new_with_title("     data type     ", form, (const char **)formats, nformats, BOX_PACK);
+  fdat->format_list = slist_new_with_title("    sample type    ", form, (const char **)formats, nformats, BOX_PACK);
 #else
-  fdat->format_list = slist_new_with_title("data type", form, (const char **)formats, nformats, BOX_PACK);
+  fdat->format_list = slist_new_with_title("sample type", form, (const char **)formats, nformats, BOX_PACK);
 #endif
   fdat->format_list->select_callback = update_sample_type_list;
   fdat->format_list->select_callback_data = (void *)fdat;
@@ -1676,7 +1676,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   if (with_comment != WITHOUT_COMMENT_FIELD)
     {
       GtkWidget *frame, *comment_label;
-      GtkWidget *w1;
+      GtkWidget *w1, *combox;
 
       w1 = gtk_vseparator_new();
       gtk_box_pack_start(GTK_BOX(frame_box), w1, false, false, 4);

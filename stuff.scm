@@ -945,7 +945,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	      e)))
 |#
 ;; ideally this would simply vanish, and make no change in the run-time state, but (values) here returns #<unspecified>
-;;   (let ((a 1) (b 2)) (list (set! a 3) (probe) b)) -> '(3 2) not '(3 #<unspecified> 2)
+;;   (let ((a 1) (b 2)) (list (set! a 3) (reflective-probe) b)) -> '(3 2) not '(3 #<unspecified> 2)
 ;;   I was too timid when I started s7 and thought (then) that (abs -1 (values)) should be an error
 ;; perhaps if we want it to disappear:
 
@@ -957,8 +957,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	      e)
     `(begin ,@body)))
 
-;; now (let ((a 1) (b 2)) (list (set! a 3) (probe b))) -> '(3 2)
-;; and (let ((a 1) (b 2)) (list (set! a 3) (probe) b)) -> '(3 () 2)
+;; now (let ((a 1) (b 2)) (list (set! a 3) (reflective-probe b))) -> '(3 2)
+;; and (let ((a 1) (b 2)) (list (set! a 3) (reflective-probe) b)) -> '(3 () 2)
+;; or use it to print function args: (define (f a b) (reflective-probe) (+ a b))
 
 ;; could this use reactive-lambda* to show changes as well?
 

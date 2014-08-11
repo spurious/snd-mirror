@@ -806,6 +806,8 @@ if any arguments before :optional are omitted.
 </div>
 
 
+<details>
+<summary class="indented">rest arg nits</summary>
 <div class="indented">
 
 <p>s7's lambda* arglist handling is not the same as CL's lambda-list.  First,
@@ -850,6 +852,7 @@ f
 (:a 1)
 </pre>
 </div>
+</details>
 
 </blockquote>
 
@@ -3052,6 +3055,8 @@ at class definition time:
 </details>
 
 
+<details>
+<summary class="indented">more examples</summary>
 <div class="indented">
 <p>Implicit indexing of a local environment
 does not search the global environment.  Since unlet extends the
@@ -3134,8 +3139,6 @@ fv
 </div>
 
 
-<details>
-<summary class="indented">quaternions</summary>
 <div class="indented">
 
 <p>I can't resist adding at least some of a quaternion implementation
@@ -4082,6 +4085,9 @@ add-2
 
 <blockquote>
 
+
+<details>
+<summary class="indented">examples</summary>
 <div class="indented">
 
 <p>procedure-source returns the actual function source.  If you
@@ -4214,7 +4220,7 @@ what actual arguments you pass.  In these cases, aritable? returns <code>#f</cod
 </p>
 
 </div>
-
+</details>
 
 <div class="indented">
 
@@ -5112,9 +5118,9 @@ at startup *features* is:
 
 <pre class="indented">
 &gt; *features*
-(snd-14.1 snd13 snd audio snd-s7 snd-motif gsl alsa xm snd-ladspa clm5 clm 
- sndlib dlopen complex-numbers system-extras @-exponent dfls-exponents s7)
-&gt; (provided? 'gmp)
+(snd-14.9 snd14 snd audio snd-s7 snd-gtk gsl alsa gtk2 xg clm6 clm sndlib linux 
+ dlopen complex-numbers system-extras @-exponent dfls-exponents ratio s7-3.12 s7)
+&gt; (provided? 'gsl)
 #t
 </pre>
 
@@ -6399,7 +6405,8 @@ strings, and so on.
 
 
 
-
+<details>
+<summary class="indented">threads</summary>
 <div class="indented">
 
 <p>s7 originally had multithreading support, but I removed it in August, 2011.
@@ -6467,7 +6474,7 @@ int main(int argc, char **argv)
 </pre>
 
 </div>
-
+</details>
 
 <div class="indented">
 
@@ -6484,6 +6491,7 @@ int main(int argc, char **argv)
 </pre>
 
 </div>
+
 </blockquote>
 <br><br>
 

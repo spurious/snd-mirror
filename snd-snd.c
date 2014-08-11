@@ -203,7 +203,7 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 	  if ((old_ep) && 
 	      (old_ep->completed))
 	    {
-	      mus_long_t start, end, old_samples;
+	      mus_long_t old_samples;
 
 	      /* here in many cases, the underlying edit's amp env has most of the data we need.
 	       * cp->edits[cp->edit_ctr] describes the current edit, with beg and end, so in the
@@ -216,12 +216,13 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 	      old_samples = cp->edits[orig_pos]->samples;
 	      if (snd_abs_mus_long_t(samples - old_samples) < (samples / 2))
 		{
+		  mus_long_t start, end;
 		  start = edit_changes_begin_at(cp, cp->edit_ctr);
 		  end = edit_changes_end_at(cp, cp->edit_ctr);
 
 		  if (snd_abs_mus_long_t(end - start) < (samples / 2))
 		    {
-		      int i, j, start_bin, end_bin, old_end_bin;
+		      int i, start_bin;
 
 		      /* here we'll try to take advantage of an existing envelope */
 		      old_ep = cp->edits[orig_pos]->peak_env;
@@ -242,6 +243,7 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 		      ep->bin = start_bin;
 		      if (end != 0)
 			{
+			  int j, end_bin, old_end_bin;
 			  old_end_bin = (int)(end / old_ep->samps_per_bin);
 			  end += (samples - old_samples);
 			  end_bin = (int)(end / ep->samps_per_bin);
@@ -308,7 +310,6 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
     {
       int n, sb, lm;
       mus_long_t samps_to_read;
-      snd_fd *sfd;
 
       if (ep->top_bin != 0)
 	lm = (ep->top_bin - ep->bin + 1);
@@ -368,6 +369,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
       
       if (es->direct_data == NULL)
 	{
+	  snd_fd *sfd;
 	  sfd = es->sf;
 	  if (sfd == NULL) return(false);
 
@@ -915,8 +917,6 @@ peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
   if ((old_ep) && 
       (old_ep->completed))
     {
-      int i, j;
-
       new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
       new_ep->data_max = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
       new_ep->data_min = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
@@ -927,6 +927,7 @@ peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
 
       if (reversed)
 	{
+	  int i, j;
 	  for (i = 0, j = new_ep->peak_env_size - 1; i < new_ep->peak_env_size; i++, j--) 
 	    {
 	      new_ep->data_min[j] = old_ep->data_min[i];
@@ -961,7 +962,7 @@ void amp_env_env(chan_info *cp, mus_float_t *brkpts, int npts, int pos, mus_floa
     {
       int i;
       mus_any *e;
-      mus_float_t val, fmin, fmax;
+      mus_float_t fmin, fmax;
       peak_env_info *new_ep;
 
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
@@ -986,6 +987,7 @@ void amp_env_env(chan_info *cp, mus_float_t *brkpts, int npts, int pos, mus_floa
 
       for (i = 0; i < new_ep->peak_env_size; i++) 
 	{
+	  mus_float_t val;
 	  val = mus_env(e);
 	  if (val >= 0.0)
 	    {
@@ -1608,7 +1610,7 @@ static bool apply_controls(apply_state *ap)
   chan_info *cp = NULL;
   sync_info *si;
   mus_float_t mult_dur;
-  int i, curchan = 0, added_dur = 0;
+  int i, added_dur = 0;
 
   if (ap == NULL) return(false);
   sp = ap->sp;
@@ -1675,6 +1677,7 @@ static bool apply_controls(apply_state *ap)
     {
       mus_long_t orig_apply_dur;
       io_error_t io_err = IO_NO_ERROR;
+      int curchan = 0;
 
       orig_apply_dur = apply_dur;
 
@@ -2444,11 +2447,11 @@ typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP
 static Xen sound_get(Xen snd, sp_field_t fld, const char *caller)
 {
   snd_info *sp;
-  int i;
   Xen res = Xen_empty_list;
 
   if (Xen_is_true(snd))
     {
+      int i;
       for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
@@ -2803,7 +2806,6 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 	  ival = Xen_integer_to_C_int(val);
 	  if (mus_is_sample_type(ival))
 	    {
-	      chan_info *cp;
 	      int old_format;
 	      old_format = sp->hdr->format;
 	      mus_sound_set_sample_type(sp->filename, ival);
@@ -2816,6 +2818,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 	      /* clear peak amp envs, if any -- is this right?  (snd-update below...) */
 	      for (i = 0; i < sp->nchans; i++)
 		{
+		  chan_info *cp;
 		  cp = sp->chans[i];
 		  if ((cp) && (cp->edits[cp->edit_ctr]->peak_env))
 		    cp->edits[cp->edit_ctr]->peak_env = free_peak_env(cp, cp->edit_ctr);
@@ -4878,7 +4881,6 @@ where each inner list entry can also be " PROC_FALSE "."
   sp = get_sp(snd); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
     {
-      Xen lst;
       apply_state *ap;
       int old_selected_channel;
       ctrl_state *saved_settings;
@@ -4898,6 +4900,7 @@ where each inner list entry can also be " PROC_FALSE "."
       if ((Xen_is_list(settings)) && (!Xen_is_null(settings)))
 	{
 	  int i, len, elen;
+	  Xen lst;
 	  /* settings: 
 	     (list amp speed
 	       (list contrast contrast_amp)
@@ -5292,7 +5295,7 @@ static Xen g_peak_env_info_to_vcts(peak_env_info *ep, int len)
   /* changed 5-Jan-03 to return vcts */
   /* in snd-test this causes unfreed memory because the sound-icon-box saves all the data for each icon (vcts unfreed) */
   Xen res;
-  int i, j, lim;
+  int i, lim;
   vct *vmax, *vmin;
   mus_float_t *maxdata, *mindata;
   int loc;
@@ -5322,6 +5325,7 @@ static Xen g_peak_env_info_to_vcts(peak_env_info *ep, int len)
   else
     {
       mus_float_t cmax, cmin, incr, x;
+      int j;
       incr = (mus_float_t)(ep->peak_env_size - 1) / (mus_float_t)lim; /* make extra room on left */
       cmax = ep->fmin;
       cmin = ep->fmax;

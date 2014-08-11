@@ -50,7 +50,7 @@ dir_info *find_files_in_dir(const char *name);
 dir_info *find_filtered_files_in_dir(const char *name, int filter_choice);
 dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_choice, const char *pattern);
 
-const char *short_data_format_name(int sndlib_format, const char *filename);
+const char *short_sample_type_name(int sndlib_format, const char *filename);
 
 #define FILENAME_LIST_SIZE 16
 

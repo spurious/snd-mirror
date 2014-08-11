@@ -443,7 +443,6 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 {
   static oclock_t last_expose_event_time = 0;
   static chan_info *last_cp = NULL;
-  snd_info *sp;
   chan_info *cp = (chan_info *)context;
   XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)info;
   XExposeEvent *ev;
@@ -465,6 +464,7 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
       (last_expose_event_time != curtime) ||
       (cp != last_cp))
     {
+      snd_info *sp;
       sp = cp->sound;
       if (sp->channel_style != CHANNELS_SEPARATE)
 	{
@@ -862,8 +862,6 @@ static void channel_drag_watcher(Widget w, const char *str, Position x, Position
   int snd, chn;
   pointer_or_int_t data;
   snd_info *sp;
-  chan_info *cp;
-  float seconds;
   XtVaGetValues(w, XmNuserData, &data, NULL);
   chn = unpack_channel(data);
   snd = unpack_sound(data);
@@ -871,6 +869,8 @@ static void channel_drag_watcher(Widget w, const char *str, Position x, Position
   sp = ss->sounds[snd];
   if (snd_ok(sp))
     {
+      float seconds;
+      chan_info *cp;
       switch (dtype)
 	{
 	case DRAG_ENTER:
@@ -895,7 +895,6 @@ static void channel_drag_watcher(Widget w, const char *str, Position x, Position
 
 int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Widget main, fw_button_t button_style, bool with_events)
 {
-  int i;
   bool need_extra_scrollbars;
   Widget *cw;
   chan_info *cp;
@@ -1238,8 +1237,8 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
     } /* end alloc new chan */
 
   else
-
     { 
+      int i;
       /* re-manage currently inactive chan */
       XtVaSetValues(cw[W_main_window], XmNpaneMinimum, chan_y, NULL);
       if (cw[W_edhist]) 
@@ -1396,7 +1395,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
   if ((sp) && 
       (sp->nchans > 1))
     {
-      int i;
       channel_style_t old_style;
       chan_info *selected_cp;
 
@@ -1406,7 +1404,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
       if (new_style != old_style)
 	{
-	  int height;
+	  int i, height;
 
 #if WITH_RELATIVE_PANES
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))

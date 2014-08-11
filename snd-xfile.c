@@ -690,7 +690,7 @@ static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
   if (e->type == ButtonPress)
     {
       char *current_filename = NULL;
-      int i, dirs_to_display = 0, len = 0;
+      int i, dirs_to_display = 0;
 
       if (fd->file_dir_items == NULL)
 	{
@@ -721,6 +721,7 @@ static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
 
       if (current_filename)
 	{
+	  int len;
 	  len = strlen(current_filename);
 	  for (i = 0; i < len; i++)
 	    if (current_filename[i] == '/')
@@ -834,7 +835,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
   e = cb->event;
   if (e->type == ButtonPress)
     {
-      int i, items_len;
+      int i;
       if (fd->file_list_items == NULL)
 	{
 	  /* set up the default menu items */
@@ -853,7 +854,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 
       /* check for added sort and filter functions (allocate more items if needed) */
       {
-	int extra_sorters = 0, extra_filters = 0;
+	int extra_sorters = 0, extra_filters = 0, items_len;
 	for (i = 0; i < ss->file_sorters_size; i++)
 	  if (!(Xen_is_false(Xen_vector_ref(ss->file_sorters, i))))
 	    extra_sorters++;
@@ -1017,13 +1018,13 @@ static void file_change_directory_callback(Widget w, XtPointer context, XtPointe
     /* save current directory list position */
     position_t position = 0;
     XmString *strs;
-    char *filename = NULL;
     XtVaGetValues(w, 
 		  XmNtopItemPosition, &position,
 		  XmNselectedItems, &strs, 
 		  NULL);
     if (position > 1) /* 1 = .. */
       {
+	char *filename = NULL;
 	filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 	dirpos_update(fp->dir_list, filename, position);
 	XtFree(filename);
@@ -1457,8 +1458,7 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
     {
       XmStringTable files;
       Widget file_list;
-      int num_files = 0, i, pos = -1, l, u;
-      char *file_list_file = NULL;
+      int num_files = 0, pos = -1, l, u;
 
       file_list = FSB_BOX(fd->dialog, XmDIALOG_LIST);
       XtVaGetValues(fd->dialog,
@@ -1469,7 +1469,9 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
       u = num_files - 1;
       while (true)
 	{
-	  int comp;
+	  int i, comp;
+	  char *file_list_file = NULL;
+
 	  if (u < l) break;
 	  i = (l + u) / 2;
 	  file_list_file = (char *)XmStringUnparse(files[i], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL); /* p453 */
@@ -2152,7 +2154,6 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
   int n;
   int res;
   int *ns = NULL;
-  char *comment = NULL;
   fdat->error_widget = NOT_A_SCANF_WIDGET;
   fdat->scanf_widget = NOT_A_SCANF_WIDGET;
 
@@ -2235,6 +2236,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
 
   if (fdat->comment_text) 
     {
+      char *comment = NULL;
       comment = XmTextGetString(fdat->comment_text);
       if (comment)
 	{
@@ -3371,9 +3373,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 
     case REGION_SAVE_AS:
       {
-	char *ofile;
 	if (region_ok(region_dialog_region()))
 	  {
+	    char *ofile;
 	    if (file_exists)
 	      ofile = snd_tempnam();
 	    else ofile = mus_strdup(tmpfile);
@@ -4043,7 +4045,7 @@ static void clear_error_if_new_filename_changes(Widget dialog)
 static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   mus_long_t loc;
-  char *comment = NULL, *newer_name = NULL, *msg;
+  char *newer_name = NULL, *msg;
   int header_type, sample_type, srate, chans;
   newer_name = XmTextGetString(new_file_text);
   if ((!newer_name) || (!(*newer_name)))
@@ -4054,6 +4056,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
     }
   else
     {
+      char *comment;
       redirect_snd_error_to(post_file_panel_error, (void *)ndat);
       comment = get_file_dialog_sound_attributes(ndat, &srate, &chans, &header_type, &sample_type, &loc, &initial_samples, 1);
       redirect_snd_error_to(NULL, NULL);
@@ -4063,7 +4066,6 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	}
       else
 	{
-	  snd_info *sp;
 	  /* handle the overwrite hook directly */
 	  if (new_file_filename) free(new_file_filename);
 	  new_file_filename = mus_expand_filename(newer_name); 
@@ -4085,6 +4087,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    }
 	  else
 	    {
+	      snd_info *sp;
 	      if (new_file_watcher)
 		new_file_undoit();
 
@@ -4489,7 +4492,6 @@ Widget edit_header(snd_info *sp)
   file_info *hdr;
   XmString xstr4;
   Widget main_w;
-  int i;
   edhead_info *ep = NULL;
 
   if (!sp) return(NULL);
@@ -4497,6 +4499,7 @@ Widget edit_header(snd_info *sp)
   /* look for a dialog already editing this sound, raise if found, else make a new one */
   if (edhead_info_size > 0)
     {
+      int i;
       for (i = 0; i < edhead_info_size; i++)
 	if ((edhead_infos[i]) &&
 	    ((edhead_infos[i]->sp == sp) ||
@@ -5621,11 +5624,11 @@ static char **view_files_set_files(widget_t dialog, char **files, int len)
   vdat = vf_dialog_to_info(dialog);
   if (vdat)
     {
-      int i;
       view_files_clear_selected_files(vdat);
       view_files_clear_list(vdat);
       if (len > 0)
 	{
+	  int i;
 	  for (i = 0; i < len; i++)
 	    if (files[i])
 	      view_files_add_file_or_directory(vdat, (const char *)(files[i]));
@@ -5974,10 +5977,10 @@ static void add_file_to_view_files_list(view_files_info *vdat, const char *filen
   errno = 0;
   if (!(mus_file_probe(fullname)))
     {
-      char *msg;
       if ((vdat->dialog) &&
 	  (widget_is_active(vdat->dialog)))
 	{
+	  char *msg;
 	  if (errno != 0)
 	    msg = mus_format("%s: %s", filename, strerror(errno));
 	  else msg = mus_format("%s does not exist", filename);
@@ -5999,7 +6002,6 @@ static void add_file_to_view_files_list(view_files_info *vdat, const char *filen
 static void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
 {
   /* I think all directory additions come through here */
-  dir_info *sound_files = NULL;
 
   if ((dirname) && (dirname[strlen(dirname) - 1] != '/'))
     {
@@ -6010,6 +6012,7 @@ static void add_directory_to_view_files_list(view_files_info *vdat, const char *
     }
   else
     {
+      dir_info *sound_files = NULL;
 #if (!USE_NO_GUI)
       view_files_monitor_directory(vdat, dirname);
 #endif
@@ -6087,7 +6090,6 @@ static void view_files_sort_list(view_files_info *vdat)
 static void view_files_display_list(view_files_info *vdat)
 {
   int i;
-  widget_t last_row = NULL_WIDGET; /* ignored in gtk version */
   vf_row *r;
 
   if (!vdat) return;
@@ -6097,6 +6099,7 @@ static void view_files_display_list(view_files_info *vdat)
     {
       int i, old_len;
       char **old_names = NULL;
+      widget_t last_row = NULL_WIDGET; /* ignored in gtk version */
 
       old_len = vdat->currently_selected_files;
       if (old_len > 0)
@@ -6145,12 +6148,12 @@ static void view_files_display_list(view_files_info *vdat)
 
 static void view_files_clear_list(view_files_info *vdat)
 {
-  int i;
 #if (!USE_NO_GUI)
   view_files_unmonitor_directories(vdat);
 #endif
   if (vdat->names)
     {
+      int i;
       for (i = 0; i < vdat->size; i++)
 	if (vdat->names[i]) 
 	  {
@@ -6544,7 +6547,6 @@ void save_view_files_dialogs(FILE *fd)
 	(view_files_infos[i]->dialog) &&
 	(widget_is_active(view_files_infos[i]->dialog)))
       {
-	int k;
 	vdat = view_files_infos[i];
 
 #if HAVE_SCHEME
@@ -6552,6 +6554,7 @@ void save_view_files_dialogs(FILE *fd)
 
 	if (vdat->full_names)
 	  {
+	    int k;
 	    fprintf(fd, "  (set! (" S_view_files_files " vf) (list");
 	    for (k = 0; k <= vdat->end; k++)
 	      fprintf(fd, " \"%s\"", vdat->full_names[k]);
@@ -6583,6 +6586,7 @@ void save_view_files_dialogs(FILE *fd)
 
 	if (vdat->full_names)
 	  {
+	    int k;
 	    fprintf(fd, "  set_view_files_files(vf, [");
 	    for (k = 0; k < vdat->end; k++)
 	      fprintf(fd, "\"%s\", ", vdat->full_names[k]);
@@ -6614,6 +6618,7 @@ void save_view_files_dialogs(FILE *fd)
 
 	if (vdat->full_names)
 	  {
+	    int k;
 	    fprintf(fd, "  vf '(");
 	    for (k = 0; k <= vdat->end; k++)
 	      fprintf(fd, " \"%s\"", vdat->full_names[k]);
@@ -6646,7 +6651,6 @@ void save_view_files_dialogs(FILE *fd)
 void view_files_add_directory(widget_t dialog, const char *dirname) 
 {
   view_files_info *vdat = NULL;
-  char *full_filename;
 
   if (dialog)
     vdat = view_files_find_dialog(dialog);
@@ -6663,13 +6667,14 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
 
   if (vdat)
     {
+      char *full_filename;
       full_filename = mus_expand_filename((const char *)dirname);
       if (!(mus_file_probe(full_filename)))
 	{
-	  char *msg;
 	  if ((vdat->dialog) &&
 	      (widget_is_active(vdat->dialog)))
 	    {
+	      char *msg;
 	      if (errno != 0)
 		msg = mus_format("%s: %s", full_filename, strerror(errno));
 	      else msg = mus_format("%s does not exist", full_filename);
@@ -6689,7 +6694,6 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
 static void view_files_add_file(widget_t dialog, const char *filename)
 {
   view_files_info *vdat = NULL;
-  char *full_filename;
 
   if (dialog)
     vdat = view_files_find_dialog(dialog);
@@ -6706,6 +6710,7 @@ static void view_files_add_file(widget_t dialog, const char *filename)
 
   if (vdat)
     {
+      char *full_filename;
       full_filename = mus_expand_filename((const char *)filename);
       add_file_to_view_files_list(vdat, filename, full_filename);
       free(full_filename);
@@ -6715,12 +6720,12 @@ static void view_files_add_file(widget_t dialog, const char *filename)
 
 static void view_files_open_selected_files(view_files_info *vdat)
 {
-  snd_info *sp = NULL;
   ss->open_requestor = FROM_VIEW_FILES;
 
   if (vdat->currently_selected_files > 0)
     {
       int i;
+      snd_info *sp = NULL;
       for (i = 0; i < vdat->currently_selected_files; i++)
 	sp = snd_open_file(vdat->full_names[vdat->selected_files[i]], FILE_READ_WRITE);
       if (sp) select_channel(sp, 0); 
@@ -8599,13 +8604,14 @@ static Xen g_view_files_selected_files(Xen dialog)
   #define H_view_files_selected_files "(" S_view_files_selected_files " dialog): list of files currently selected in the given View:Files dialog"
   Xen result = Xen_empty_list;
   char **selected_files;
-  int i, len = 0;
+  int len = 0;
 
   Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_view_files_selected_files, "a view-files dialog widget"); 
 
   selected_files = view_files_selected_files((widget_t)(Xen_unwrap_widget(dialog)), &len);
   if ((selected_files) && (len > 0))
     {
+      int i;
       for (i = 0; i < len; i++)
 	{
 	  result = Xen_cons(C_string_to_Xen_string(selected_files[i]), result);
@@ -8619,8 +8625,7 @@ static Xen g_view_files_selected_files(Xen dialog)
 
 static Xen g_view_files_set_selected_files(Xen dialog, Xen files)
 {
-  int i, len;
-  char **cfiles = NULL;
+  int len;
 
   Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_setB S_view_files_selected_files, "a view-files dialog widget");   
   Xen_check_type(Xen_is_list(files), files, 2, S_setB S_view_files_selected_files, "a list of files or directories");
@@ -8628,6 +8633,8 @@ static Xen g_view_files_set_selected_files(Xen dialog, Xen files)
   len = Xen_list_length(files);
   if (len > 0)
     {
+      char **cfiles = NULL;
+      int i;
       for (i = 0; i < len; i++)
 	if (!(Xen_is_string(Xen_list_ref(files, i))))
 	  {
@@ -8663,7 +8670,7 @@ static Xen g_view_files_files(Xen dialog)
 
 static Xen g_view_files_set_files(Xen dialog, Xen files)
 {
-  int i, len = 0;
+  int len = 0;
   char **cfiles = NULL;
 
   Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_setB S_view_files_files, "a view-files dialog widget");   
@@ -8672,6 +8679,7 @@ static Xen g_view_files_set_files(Xen dialog, Xen files)
   len = Xen_list_length(files);
   if (len > 0)
     {
+      int i;
       for (i = 0; i < len; i++)
 	if (!(Xen_is_string(Xen_list_ref(files, i))))
 	  {
@@ -8706,12 +8714,12 @@ static void view_files_run_select_hook(widget_t dialog, const char *selected_fil
 static bool file_sorter_ok(Xen name, Xen proc, const char *caller)
 {
   char *errmsg;
-  Xen errstr;
   Xen_check_type(Xen_is_string(name), name, 1, caller, "a string");   
   Xen_check_type(Xen_is_procedure(proc), proc, 2, caller, "a procedure of 2 args (file1 and file2)");
   errmsg = procedure_ok(proc, 2, caller, "function", 2);
   if (errmsg)
     {
+      Xen errstr;
       errstr = C_string_to_Xen_string(errmsg);
       free(errmsg);
       snd_bad_arity_error(caller, errstr, proc);
@@ -8724,11 +8732,12 @@ static bool file_sorter_ok(Xen name, Xen proc, const char *caller)
 static Xen g_add_file_sorter(Xen name, Xen proc)
 {
   #define H_add_file_sorter "(" S_add_file_sorter " name proc) -- add proc with identifier name to file sorter list, returns its index"
-  int i, len, choice = -1;
+  int choice = -1;
   /* type checks are redundant here */
 
   if (file_sorter_ok(name, proc, S_add_file_sorter))
     {
+      int i, len;
       len = ss->file_sorters_size;
       for (i = 0; i < len; i++)
 	{
@@ -8876,10 +8885,10 @@ static Xen drop_hook;
 
 static char *atom_to_string(Atom type, XtPointer value, unsigned long length)
 {
-  unsigned long i;
   char *str = NULL;
   if ((type == XA_STRING) || (type == FILE_NAME) || (type == text_plain) || (type == uri_list) || (type == TEXT))
     {
+      unsigned long i;
       str = (char *)calloc(length + 1, sizeof(char));
       for (i = 0; i < length; i++)
 	str[i] = ((char *)value)[i];
