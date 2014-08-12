@@ -241,10 +241,9 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
   /* amp == 0.0 means unnormalized, cp == NULL means current selection */
   sync_state *sc;
   sync_info *si;
-  snd_info *sp = NULL, *gsp = NULL;
-  int ip, stop_point = 0, impulse_chan = 0, filter_chans, dataformat;
-  bool ok = false;
-  mus_long_t filtersize = 0, filesize = 0, dataloc, fftsize;
+  snd_info *sp = NULL;
+  int ip, stop_point = 0, filter_chans, dataformat, impulse_chan = 0;
+  mus_long_t filtersize = 0, dataloc;
   chan_info *ncp, *ucp;
   char *origin;
 
@@ -288,10 +287,12 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
     {
       for (ip = 0; ip < si->chans; ip++)
 	{
+	  snd_info *gsp;
 	  char *ofile, *saved_chan_file;
 	  io_error_t io_err;
+	  bool ok = false;
+	  mus_long_t filesize;
 
-	  ok = false;
       	  ucp = si->cps[ip];
 	  if (!(is_editable(ucp))) continue;
 	  sp = ucp->sound;
@@ -356,6 +357,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 		      if (filesize > 0)
 			{
 			  int ipow;
+			  mus_long_t fftsize;
 			  ipow = (int)(ceil(log(filtersize + filesize) / log(2.0))) + 1;
 			  fftsize = snd_mus_long_t_pow2(ipow);
 			  ok = true;
@@ -479,12 +481,10 @@ bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *ur_scalers, int len, boo
   /*   if more than one, get successive maxamps */
   bool scaled = false;
   int i, chans, nlen, datum_size;
-  mus_long_t beg, framples;
   sync_info *si = NULL;
   chan_info *ncp;
-  mus_float_t maxamp = -1.0, val, norm = 1.0;
+  mus_float_t maxamp = -1.0, val;
   mus_float_t *scalers;
-  char *origin = NULL;
 
   if ((!over_selection) && (cp == NULL)) return(false);
   if (over_selection) 
@@ -570,6 +570,9 @@ bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *ur_scalers, int len, boo
     {
       for (i = 0; i < si->chans; i++)
 	{
+	  mus_long_t beg, framples;
+	  char *origin = NULL;
+	  mus_float_t norm = 1.0;
 	  ncp = si->cps[i];
 	  if (nlen > i) norm = ur_scalers[i]; else norm = ur_scalers[0];
 	  if (over_selection)
@@ -610,9 +613,9 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
   snd_fd *c0, *c1;
   snd_info *sp0;
   file_info *hdr0 = NULL, *hdr1 = NULL;
-  int j, ofd0 = 0, ofd1 = 0, datumb = 0;
+  int ofd0 = 0, ofd1 = 0, datumb = 0;
   bool temp_file;
-  mus_long_t k, alloc_len;
+  mus_long_t alloc_len;
   mus_float_t **data0, **data1;
   mus_float_t *idata0, *idata1;
   bool reporting = false;
@@ -675,13 +678,13 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 
   if (temp_file)
     {
-      int err;
+      mus_long_t k;
       ss->stopped_explicitly = false;
       sampler_set_safe(c0, dur);
       sampler_set_safe(c1, dur);
       for (k = 0; k < dur; k += alloc_len)
 	{
-	  int n;
+	  int j, n, err;
 	  j = dur - k;
 	  if (j > alloc_len) j = alloc_len;
 
@@ -757,7 +760,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
   snd_info *sp;
   peak_env_info *ep = NULL;
   file_info *hdr = NULL;
-  int i, ofd = 0, datumb = 0, err = 0, edpos = 0;
+  int ofd = 0, datumb = 0, edpos = 0;
   bool section = false, temp_file;
   mus_long_t k, alloc_len;
   char *origin = NULL;
@@ -804,17 +807,17 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
     ep = peak_env_copy(cp, true, edpos); /* true -> reversed */
   else 
     {
-      int j, sbin, ebin;
-      mus_float_t min1, max1;
       ep = peak_env_copy(cp, false, edpos);
       if (ep) 
 	{
+	  int i, j, sbin, ebin;
 	  /* now reverse the selection */
 	  sbin = (int)ceil(beg / ep->samps_per_bin);
 	  ebin = (int)floor((beg + dur) / ep->samps_per_bin);
 	  if (ebin > ep->peak_env_size) ebin = ep->peak_env_size;
 	  for (i = sbin, j = ebin - 1; i < j; i++, j--)
 	    {
+	      mus_float_t min1, max1;
 	      min1 = ep->data_min[i];
 	      max1 = ep->data_max[i];
 	      ep->data_min[i] = ep->data_min[j];
@@ -846,7 +849,8 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
   if (temp_file)
     {
       for (k = 0; k < dur; k += alloc_len)
-	{
+	{ 
+	  int err;
 	  mus_long_t kp, kdur;
 	  kdur = dur - k;
 	  if (kdur > alloc_len) kdur = alloc_len;
@@ -1080,7 +1084,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
   file_info *hdr = NULL;
   int j, ofd = 0, datumb = 0, err = 0;
   mus_long_t *old_marks = NULL, *new_marks = NULL;
-  int cur_marks = 0, m;
+  int cur_marks = 0;
   mus_long_t k;
   char *ofile = NULL;
   mus_float_t *idata;
@@ -1169,7 +1173,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	    }
 	  else
 	    {
-	      mus_long_t out_dur, kdur;
+	      mus_long_t out_dur;
 
 	      data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
 	      idata = data[0];
@@ -1177,6 +1181,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 
 	      for (k = 0; k < out_dur; k += MAX_BUFFER_SIZE)
 		{
+		  mus_long_t kdur;
 		  kdur = out_dur - k;
 		  if (kdur > MAX_BUFFER_SIZE) kdur = MAX_BUFFER_SIZE;
 		  mus_src_to_buffer(sr->gen, &read_sample_input, idata, kdur);
@@ -1216,6 +1221,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
       if ((cp->edits[cp->edit_ctr]->marks) && 
 	  (cp->edits[cp->edit_ctr]->mark_ctr >= 0))
 	{
+	  int m;
 	  mark **mps;
 	  mps = cp->edits[cp->edit_ctr]->marks;
 	  cur_marks = cp->edits[cp->edit_ctr]->mark_ctr + 1;
@@ -1672,7 +1678,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   /* calls gen over cp[beg for dur] data, replacing. */
   snd_info *sp;
   file_info *hdr = NULL;
-  int j, ofd = 0, datumb = 0, err = 0;
+  int j, ofd = 0, datumb = 0;
   bool temp_file;
   mus_long_t k, alloc_len;
   mus_float_t **data;
@@ -1723,7 +1729,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
       sampler_set_safe(sf, dur);
       for (k = 0; k < dur; k += alloc_len)
 	{
-	  int n;
+	  int n, err;
 	  j = dur - k;
 	  if (j > alloc_len) j = alloc_len;
 
@@ -1793,7 +1799,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 {
   snd_info *sp;
   file_info *hdr = NULL;
-  int j, ofd = 0, datumb = 0;
+  int ofd = 0, datumb = 0;
   char *ofile = NULL;
   int fsize;
   mus_float_t *fltdat = NULL;
@@ -1836,7 +1842,8 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
       mus_any *gen;
       mus_float_t **data;
       mus_float_t *idata;
-      mus_long_t offk, alloc_len;
+      mus_long_t alloc_len;
+      int j;
 
       reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
       if (order == 0) order = 65536; /* presumably fsize is enormous here, so no MIN needed */
@@ -1868,6 +1875,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	}
       else
 	{
+	  mus_long_t offk;
 	  for (offk = 0; offk < dur; offk += alloc_len)
 	    {
 	      mus_long_t kdur;
@@ -2163,7 +2171,6 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   mus_float_t *a = NULL;
   snd_info *sp;
   bool reporting = false;
-  int m;
   mus_long_t offk;
   file_info *hdr = NULL;
   int j = 0, ofd = 0, datumb = 0, err = 0;
@@ -2225,6 +2232,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       g = mus_make_fir_filter(order, a, NULL);
       if (over_selection)
 	{
+	  int m;
 	  mus_long_t prebeg = 0;
 	  /* see if there's data to pre-load the filter */
 	  if (beg >= order)
@@ -2393,7 +2401,6 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e,
 {
   /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
-  mus_float_t *a = NULL;
   sync_state *sc;
   sync_info *si;
   snd_info *sp;
@@ -2460,6 +2467,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e,
   else
     {
       /* use FIR filter */
+      mus_float_t *a = NULL;
       if (order == 0) order = enved_filter_order(ss);
       if (!gen)
 	{
@@ -2589,15 +2597,14 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
   snd_info *sp;
   sync_info *si;
   sync_state *sc = NULL;
-  int i, j, err = 0, k, len;
+  int i, j, k, len;
   bool scalable = true, rampable = true, is_xramp = false;
   mus_float_t val[1];
   mus_any *egen;
   mus_long_t *passes;
   double *rates;
-  mus_float_t egen_val, base;
+  mus_float_t base;
   double scaler, offset;
-  char *new_origin;
 
   if ((!e) && (!gen)) return;
   if (over_selection) dur = selection_len();
@@ -2741,7 +2748,6 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
       file_info *hdr = NULL;
       char *ofile = NULL;
       snd_fd **sfs;
-      snd_fd *sf = NULL;
 
       /* run env over samples */
       sc = get_sync_state(sp, cp, beg, over_selection, READ_FORWARD, edpos, origin, arg_pos);
@@ -2797,12 +2803,14 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	    {
 	      for (ioff = 0; ioff < dur; ioff++)
 		{
+		  mus_float_t egen_val;
 		  egen_val = mus_env(egen);
 		  for (k = 0; k < si->chans; k++)
 		    data[k][j] = (read_sample(sfs[k]) * egen_val);
 		  j++;
 		  if (j == alloc_len)
 		    {
+		      int err;
 		      if (reporting)
 			{
 			  progress_report(cp, (mus_float_t)((double)ioff / ((double)dur)));
@@ -2825,6 +2833,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 		samples_to_vct_with_reader(dur, data[k], sfs[k]); 
 	      for (j = 0; j < dur; j++)
 		{
+		  mus_float_t egen_val;
 		  egen_val = mus_env(egen);
 		  for (k = 0; k < si->chans; k++)
 		    data[k][j] *= egen_val;
@@ -2833,6 +2842,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	}
       else
 	{
+	  snd_fd *sf = NULL;
 	  sf = sfs[0];
 	  idata = data[0];
 	  if (temp_file)
@@ -2844,6 +2854,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 		  j++;
 		  if (j == alloc_len)
 		    {
+		      int err;
 		      if (reporting)
 			{
 			  progress_report(cp, (mus_float_t)((double)ioff / ((double)dur)));
@@ -2889,6 +2900,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	    remember_temp(ofile, si->chans);
 	  for (i = 0; i < si->chans; i++)
 	    {
+	      char *new_origin;
 	      int pos;
 	      pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
 	      new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, current_samples(si->cps[i]), base);
@@ -3209,7 +3221,7 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
   mus_float_t *data = NULL;
   mus_long_t k;
   char *origin = NULL;
-  mus_float_t y0, y1, angle, incr, off, scale;
+  mus_float_t y0, y1;
 
   if ((beg < 0) || (dur <= 0)) return;
   if (!(is_editable(cp))) return;
@@ -3236,6 +3248,7 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
     }
   else
     {
+      mus_float_t angle, incr, off, scale;
       if (y1 > y0) angle = M_PI; else angle = 0.0;
       incr = M_PI / (double)dur;
       off = 0.5 * (y1 + y0);
@@ -3484,7 +3497,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
 {
   snd_info *sp;
-  int i, rpt = 0, rpt4, ofd, datumb;
+  int rpt4, ofd, datumb;
   char *filename;
   file_info *hdr;
   mus_long_t kp, samps = 0;
@@ -3512,7 +3525,7 @@ static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_lon
 	      snd_open_strerror());
   else
     {
-      int err = MUS_NO_ERROR;
+      int err = MUS_NO_ERROR, i, rpt = 0;
       mus_float_t **data = NULL;
       
       data = (mus_float_t **)malloc(1 * sizeof(mus_float_t *));

@@ -46930,13 +46930,13 @@ static s7_pointer check_let(s7_scheme *sc)
       
       carx = car(x);
       
-      if (!is_pair(carx))                /* (let ((x)) ...) or (let ((x 1) . (y 2)) ...) */
+      if ((!is_pair(carx)) || (is_null(cdr(carx))))  /* (let ((x)) ...) or (let ((x 1) . (y 2)) ...) */
 	return(eval_error(sc, "let variable declaration, but no value?: ~A", x));
       
-      if (!(is_pair(cdr(carx))))         /* (let ((x . 1))...) */
+      if (!(is_pair(cdr(carx))))                     /* (let ((x . 1))...) */
 	return(eval_error(sc, "let variable declaration is not a proper list?: ~A", x));
       
-      if (is_not_null(cddr(carx)))       /* (let ((x 1 2 3)) ...) */
+      if (is_not_null(cddr(carx)))                   /* (let ((x 1 2 3)) ...) */
 	return(eval_error(sc, "let variable declaration has more than one value?: ~A", x));
       
       /* currently if the extra value involves a read error, we get a kind of panicky-looking message:
@@ -69970,7 +69970,7 @@ int main(int argc, char **argv)
  * t455|6     265 |   89 |   9    8.5  5.5  5.5  5.4  5.9 |
  * t502        90 |   43 |  14.5 14.4 13.6 12.8 12.7 12.7 |
  * t816           |   71 |  70.6                44.5 45.6 |
- * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.4 |
+ * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.3 |
  *            153 with run macro (eval_ptree)
  *
  * ------------------------------------------------------------------------------------------------
@@ -69999,10 +69999,6 @@ int main(int argc, char **argv)
  *
  * finish Display!
  * doc cyclic-seq+stuff under circular lists
- * lint: assignment, then no use, then assignment
- *       or assignment of local, then no use 
- *       variable scope reduction: no macros, no shadow of cadr(if let), no side-effects of cadr
- *
  * the xm/xg names should be in their own library *xg* *xm* 
  *   none of these is currently in autoload
  *   but this would require special handling in the Xen stuff.

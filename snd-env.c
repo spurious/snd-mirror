@@ -417,7 +417,7 @@ void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const
 		    {
 		      /* interpolate so the display looks closer to dB */
 		      mus_float_t yval, yincr;
-		      int lx0, lx1, ly0, ly1, k;
+		      int lx1, ly1, k;
 		      dur = (ix1 - ix0) / EXP_SEGLEN;
 		      xincr = (e->data[i] - e->data[i - 2]) / (mus_float_t)dur;
 		      curx = e->data[i - 2] + xincr;
@@ -428,6 +428,7 @@ void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const
 		      yval += yincr;
 		      for (k = 1; k < dur; k++, curx += xincr, yval += yincr)
 			{
+			  int lx0, ly0;
 			  lx0 = lx1;
 			  ly0 = ly1;
 			  lx1 = grf_x(curx, ap);

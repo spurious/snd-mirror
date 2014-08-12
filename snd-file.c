@@ -187,12 +187,12 @@ Xen g_expand_vector(Xen vector, int new_size)
 static bool file_filter_ok(Xen name, Xen proc, const char *caller)
 {
   char *errmsg;
-  Xen errstr;
   Xen_check_type(Xen_is_string(name), name, 1, caller, "a string");   
   Xen_check_type(Xen_is_procedure(proc), proc, 2, caller, "a procedure of 1 arg (filename)");
   errmsg = procedure_ok(proc, 1, caller, "function", 2);
   if (errmsg)
     {
+      Xen errstr;
       errstr = C_string_to_Xen_string(errmsg);
       free(errmsg);
       snd_bad_arity_error(caller, errstr, proc);
@@ -210,9 +210,9 @@ static Xen g_add_file_filter(Xen name, Xen proc)
       (string=? \".snd\" (substring name (- (length name) 4)))))\n\
   restricts the displayed files to .snd files."
 
-  int i, len;
   if (file_filter_ok(name, proc, S_add_file_filter))
     {
+      int i, len;
       len = ss->file_filters_size;
       for (i = 0; i < len; i++)
 	{
@@ -390,7 +390,6 @@ static bool filter_xen(const char *name)
 
 dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
 {
-  bool (*filter)(const char *filename);
 #ifdef _MSC_VER
   return(NULL);
 #else
@@ -398,6 +397,7 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
   dir_info *dp = NULL;
   if ((dpos = opendir(name)) != NULL)
     {
+      bool (*filter)(const char *filename);
       if (filter_choice == JUST_SOUNDS_FILTER)
 	filter = is_sound_file;
       else
@@ -726,7 +726,6 @@ static file_info *make_file_info_1(const char *fullname)
 file_info *copy_header(const char *fullname, file_info *ohdr)
 {
   file_info *hdr;
-  int i;
   hdr = (file_info *)calloc(1, sizeof(file_info));
   hdr->name = mus_strdup(fullname);
   hdr->comment = NULL;
@@ -740,6 +739,7 @@ file_info *copy_header(const char *fullname, file_info *ohdr)
       hdr->type = ohdr->type;
       if (ohdr->loops)
 	{
+	  int i;
 	  hdr->loops = (int *)calloc(MUS_LOOP_INFO_SIZE, sizeof(int));
 	  for (i = 0; i < MUS_LOOP_INFO_SIZE; i++) 
 	    hdr->loops[i] = ohdr->loops[i];
@@ -814,8 +814,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 {
   Xen res = Xen_false;
   int res_loc = NOT_A_GC_LOC;
-  int len, srate, chans, sample_type;
-  mus_long_t data_location, bytes;
+  int srate, chans, sample_type;
 
   if (ss->reloading_updated_file != 0)
     {
@@ -846,6 +845,8 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
   if (Xen_is_list(res)) /* empty list ok here -> accept all current defaults */
     {
       file_info *hdr;
+      mus_long_t data_location, bytes;
+      int len;
 
       len = Xen_list_length(res);
       mus_header_raw_defaults(&srate, &chans, &sample_type);
@@ -969,7 +970,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
   file_info *hdr = NULL;
   if (mus_file_probe(fullname))
     {
-      int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN;
+      int type = MUS_UNSUPPORTED;
 
       /* open-raw-sound will force it to viewed as a raw sound */
       if (ss->open_requestor == FROM_OPEN_RAW_SOUND)
@@ -1006,6 +1007,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	    return(open_raw_sound(fullname, read_only, selected));
 	  else
 	    {
+	      int format;
 	      format = mus_sound_sample_type(fullname);
 	      if (mus_is_sample_type(format))
 		return(make_file_info_1(fullname));
@@ -1440,7 +1442,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   snd_info *sp;
   chan_info *cp;
   file_info *hdr = NULL;
-  int i, fd;
+  int i;
   mus_long_t len;
   /* we've already checked that filename exists */
 
@@ -1455,6 +1457,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
 
   for (i = 0; i < sp->nchans; i++)
     {
+      int fd;
       cp = make_chan_info(NULL, i, sp);
       cp->editable = false;
       free(cp->ax);
@@ -2177,9 +2180,9 @@ const char **short_builtin_headers(int *len)
 const char **short_writable_headers(int *len)
 {
   /* these are headers that we either write ourself, or have external programs to write (oggenc etc) */
-  int i;
   if (!writable_headers)
     {
+      int i;
       writable_headers = (const char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
       for (i = 0; i < NUM_BUILTIN_HEADERS; i++)
 	writable_headers[i] = h_names[i];
@@ -2221,9 +2224,9 @@ const char **short_writable_headers(int *len)
 
 const char **short_readable_headers(int *len)
 {
-  int i;
   if (!readable_headers)
     {
+      int i;
       readable_headers = (const char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
       for (i = 0; i < NUM_BUILTIN_HEADERS; i++)
 	readable_headers[i] = h_names[i];
@@ -2868,7 +2871,6 @@ void display_info(snd_info *sp)
   if (sp)
     {
       file_info *hdr;
-      int i;
       char *comment = NULL, *ampstr = NULL, *buffer = NULL;
 
       hdr = sp->hdr;
@@ -2942,6 +2944,7 @@ void display_info(snd_info *sp)
 
       if (mus_sound_maxamp_exists(sp->filename))
 	{
+	  int i;
 	  bool edits = false;
 	  for (i = 0; i < sp->nchans; i++)
 	    if (sp->chans[i]->edit_ctr > 0)
@@ -3407,7 +3410,7 @@ static Xen g_auto_update_interval(void) {return(C_double_to_Xen_real(auto_update
 
 static Xen g_set_auto_update_interval(Xen val) 
 {
-  mus_float_t ctime, old_time;
+  mus_float_t ctime;
   #define H_auto_update_interval "(" S_auto_update_interval "): time (seconds) between background checks for changed file on disk (default: 60). \
 This value only matters if " S_auto_update " is " PROC_TRUE
 
@@ -3415,6 +3418,7 @@ This value only matters if " S_auto_update " is " PROC_TRUE
   ctime = Xen_real_to_C_double(val);
   if (ctime != auto_update_interval(ss))
     {
+      mus_float_t old_time;
       if ((ctime < 0.0) || (ctime > (24 * 3600)))
 	Xen_out_of_range_error(S_setB S_auto_update_interval, 1, val, "invalid time");
 

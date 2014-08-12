@@ -11569,22 +11569,6 @@ gboolean setting)"
   return(Xen_false);
 }
 
-static Xen gxg_gtk_tree_view_set_rules_hint(Xen tree_view, Xen setting)
-{
-  #define H_gtk_tree_view_set_rules_hint "void gtk_tree_view_set_rules_hint(GtkTreeView* tree_view, gboolean setting)"
-  Xen_check_type(Xen_is_GtkTreeView_(tree_view), tree_view, 1, "gtk_tree_view_set_rules_hint", "GtkTreeView*");
-  Xen_check_type(Xen_is_gboolean(setting), setting, 2, "gtk_tree_view_set_rules_hint", "gboolean");
-  gtk_tree_view_set_rules_hint(Xen_to_C_GtkTreeView_(tree_view), Xen_to_C_gboolean(setting));
-  return(Xen_false);
-}
-
-static Xen gxg_gtk_tree_view_get_rules_hint(Xen tree_view)
-{
-  #define H_gtk_tree_view_get_rules_hint "gboolean gtk_tree_view_get_rules_hint(GtkTreeView* tree_view)"
-  Xen_check_type(Xen_is_GtkTreeView_(tree_view), tree_view, 1, "gtk_tree_view_get_rules_hint", "GtkTreeView*");
-  return(C_to_Xen_gboolean(gtk_tree_view_get_rules_hint(Xen_to_C_GtkTreeView_(tree_view))));
-}
-
 static Xen gxg_gtk_tree_view_append_column(Xen tree_view, Xen column)
 {
   #define H_gtk_tree_view_append_column "gint gtk_tree_view_append_column(GtkTreeView* tree_view, GtkTreeViewColumn* column)"
@@ -35683,8 +35667,6 @@ Xen_wrap_1_arg(gxg_gtk_tree_view_get_headers_visible_w, gxg_gtk_tree_view_get_he
 Xen_wrap_2_args(gxg_gtk_tree_view_set_headers_visible_w, gxg_gtk_tree_view_set_headers_visible)
 Xen_wrap_1_arg(gxg_gtk_tree_view_columns_autosize_w, gxg_gtk_tree_view_columns_autosize)
 Xen_wrap_2_args(gxg_gtk_tree_view_set_headers_clickable_w, gxg_gtk_tree_view_set_headers_clickable)
-Xen_wrap_2_args(gxg_gtk_tree_view_set_rules_hint_w, gxg_gtk_tree_view_set_rules_hint)
-Xen_wrap_1_arg(gxg_gtk_tree_view_get_rules_hint_w, gxg_gtk_tree_view_get_rules_hint)
 Xen_wrap_2_args(gxg_gtk_tree_view_append_column_w, gxg_gtk_tree_view_append_column)
 Xen_wrap_2_args(gxg_gtk_tree_view_remove_column_w, gxg_gtk_tree_view_remove_column)
 Xen_wrap_3_args(gxg_gtk_tree_view_insert_column_w, gxg_gtk_tree_view_insert_column)
@@ -39702,8 +39684,6 @@ static void define_functions(void)
   Xg_define_procedure(gtk_tree_view_set_headers_visible, gxg_gtk_tree_view_set_headers_visible_w, 2, 0, 0, H_gtk_tree_view_set_headers_visible);
   Xg_define_procedure(gtk_tree_view_columns_autosize, gxg_gtk_tree_view_columns_autosize_w, 1, 0, 0, H_gtk_tree_view_columns_autosize);
   Xg_define_procedure(gtk_tree_view_set_headers_clickable, gxg_gtk_tree_view_set_headers_clickable_w, 2, 0, 0, H_gtk_tree_view_set_headers_clickable);
-  Xg_define_procedure(gtk_tree_view_set_rules_hint, gxg_gtk_tree_view_set_rules_hint_w, 2, 0, 0, H_gtk_tree_view_set_rules_hint);
-  Xg_define_procedure(gtk_tree_view_get_rules_hint, gxg_gtk_tree_view_get_rules_hint_w, 1, 0, 0, H_gtk_tree_view_get_rules_hint);
   Xg_define_procedure(gtk_tree_view_append_column, gxg_gtk_tree_view_append_column_w, 2, 0, 0, H_gtk_tree_view_append_column);
   Xg_define_procedure(gtk_tree_view_remove_column, gxg_gtk_tree_view_remove_column_w, 2, 0, 0, H_gtk_tree_view_remove_column);
   Xg_define_procedure(gtk_tree_view_insert_column, gxg_gtk_tree_view_insert_column_w, 3, 0, 0, H_gtk_tree_view_insert_column);
@@ -43808,6 +43788,11 @@ static void define_integers(void)
   define_integer(GTK_STACK_TRANSITION_TYPE_OVER_UP_DOWN);
 #endif
 
+#if GTK_CHECK_VERSION(3, 14, 0)
+  define_integer(GTK_TEXT_VIEW_LAYER_BELOW);
+  define_integer(GTK_TEXT_VIEW_LAYER_ABOVE);
+#endif
+
   define_integer(CAIRO_STATUS_SUCCESS);
   define_integer(CAIRO_STATUS_NO_MEMORY);
   define_integer(CAIRO_STATUS_INVALID_RESTORE);
@@ -44591,7 +44576,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("09-Aug-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("11-Aug-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

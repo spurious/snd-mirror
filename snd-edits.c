@@ -1438,7 +1438,7 @@ static const char *edit_names[NUM_EDIT_TYPES] = {"insert", "delete", "set", "ini
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 {
-  int len, j, index;
+  int len, j;
   snd_data *sd;
   if (ed == NULL)
     {
@@ -1469,12 +1469,13 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
   fprintf(outp, "[%d:%d]:", i, len);
   for (j = 0; j < len; j++)
     {
+      int index;
       index = FRAGMENT_SOUND(ed, j);
       if (index == EDIT_LIST_END_MARK)
 	fprintf(outp, "\n   (at %lld, end_mark)", FRAGMENT_GLOBAL_POSITION(ed, j));
       else
 	{
-	  int k, typ;
+	  int typ;
 	  typ = FRAGMENT_TYPE(ed, j);
 	  fprintf(outp, "\n   (at %lld, cp->sounds[%d][%lld:%lld, %.3f",
 		  FRAGMENT_GLOBAL_POSITION(ed, j),
@@ -1485,6 +1486,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 
 	  if (ramp_op(typ))
 	    {
+	      int k;
 	      for (k = 0; k < FRAGMENT_RAMP_LIST_SIZE(ed, j); k++)  /* step envs become successive scalings */
 		fprintf(outp, ", [%d]%.3f -> %.3f", k + 1, 
 			FRAGMENT_RAMP_START(ed, j, k), 
@@ -1929,7 +1931,6 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
   /* write edit list as a scheme|ruby|forth program to fd (open for writing) for subsequent load */
   /*   the entire current list is written, then the edit_ctr is fixed up to reflect its current state */
   int i, edits;
-  ed_list *ed;
 #if HAVE_FORTH
   char *forth_func = NULL;
   bool mix_ed = false;
@@ -1941,6 +1942,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
   /* 0 case = open-sound */
   for (i = 1; i <= edits; i++)
     {
+      ed_list *ed;
       ed = cp->edits[i];
       if (ed)
 	{
@@ -1951,11 +1953,12 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 	       * The backed_up flag is set in the backed-up entry, and for save/restore, we
 	       * override the entire current sound with a saved file.
 	       */
-	      char *nfile = NULL, *ofile = NULL;
+	      char *nfile = NULL;
 	      mus_long_t len;
 	      io_error_t io_err;
 	      if (with_save_state_hook)
 		{
+		  char *ofile;
 		  ofile = shorter_tempnam(save_dir(ss), "snd_");
 		  nfile = run_save_state_hook(ofile);
 		  free(ofile);
@@ -2241,7 +2244,6 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   char *function = NULL, *old_function = NULL;
   bool close_mix_let = false;
   int i, edits;
-  ed_list *ed;
 
   edits = cp->edit_ctr;
   while ((edits < (cp->edit_size - 1)) && 
@@ -2272,6 +2274,7 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   
   for (i = start_pos; i <= edits; i++)
     {
+      ed_list *ed;
       ed = cp->edits[i];
       if (ed)
 	{
@@ -2953,9 +2956,9 @@ void free_edit_list(chan_info *cp)
 {
   if (cp)
     {
-      int i;
       if (cp->edits)
 	{
+	  int i;
 	  for (i = 0; i < cp->edit_size; i++)
 	    if (cp->edits[i]) 
 	      cp->edits[i] = free_ed_list(cp->edits[i], cp);
@@ -3002,9 +3005,9 @@ ed_list *initial_ed_list(mus_long_t beg, mus_long_t end)
 
 snd_info *sound_is_silence(snd_info *sp)
 {
-  int i;
   if (sp)
     {
+      int i;
       for (i = 0; i < sp->nchans; i++)
 	{
 	  chan_info *cp;
@@ -3141,7 +3144,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, mus_long_t beg, mus_lo
   ed_list *ed;
   int i;
   bool changed = false;
-  mus_long_t change_beg = -1, change_end = -1, possible_beg = -1, fragment_beg, fragment_end;
+  mus_long_t change_beg = -1, change_end = -1, possible_beg = -1, fragment_end;
 
   ed = cp->edits[edpos];
 
@@ -3150,6 +3153,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, mus_long_t beg, mus_lo
    */
   for (i = 0; i < ed->size; i++)
     {
+      mus_long_t fragment_beg;
       fragment_beg = FRAGMENT_GLOBAL_POSITION(ed, i);
       if (is_mix_op(FRAGMENT_TYPE(ed, i)))
 	{
@@ -3240,13 +3244,14 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, mus_long_t beg, mus_lo
 static ed_list *insert_section_into_list(mus_long_t samp, mus_long_t num, ed_list *current_state, ed_fragment **rtn, const char *origin, mus_float_t scaler)
 {
   int cur_len, cur_i, new_i;
-  ed_fragment *cur_f, *new_f, *inserted_f = NULL;
+  ed_fragment *new_f, *inserted_f = NULL;
   ed_list *new_state;
   if (num <= 0) return(NULL);
   cur_len = current_state->size;
   new_state = make_ed_list(cur_len + 3); /* leave room for possible split */
   for (cur_i = 0, new_i = 0; cur_i < cur_len; cur_i++, new_i++)
     {
+      ed_fragment *cur_f;
       cur_f = FRAGMENT(current_state, cur_i);
       new_f = FRAGMENT(new_state, new_i);
       if (ED_GLOBAL_POSITION(cur_f) > samp)
@@ -3586,11 +3591,12 @@ bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
   if ((old_ed->maxamp_position != -1) &&
       (num < MAXAMP_CHECK_SIZE))
     {
-      mus_float_t mx, temp;
+      mus_float_t mx;
       int i, pos = 0;
       mx = fabs(vals[0]);
       for (i = 1; i < num; i++)
 	{
+	  mus_float_t temp;
 	  temp = fabs(vals[i]);
 	  if (temp > mx)
 	    {
@@ -3645,7 +3651,6 @@ bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, fi
       else
 	{
 	  int i, j, first_chan = 0;
-	  char *origin;
 	  chan_info *ncp;
 	  if (sp->sync != 0)
 	    ncp = sp->chans[0];
@@ -3653,6 +3658,7 @@ bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, fi
 	  first_chan = ncp->chan;
 	  for (i = first_chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
 	    {
+	      char *origin;
 	      ncp = sp->chans[i];
 #if HAVE_FORTH
 	      origin = mus_format("\"%s\" %lld %d %s drop", 
@@ -3688,7 +3694,7 @@ bool insert_complete_file_at_cursor(snd_info *sp, const char *filename)
 static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list *current_state)
 {
   int cur_len, cur_i, new_i;
-  ed_fragment *cur_f, *new_f;
+  ed_fragment *new_f;
   mus_long_t end, next_pos;
   ed_list *new_state;
   if (num <= 0) return(NULL);
@@ -3697,6 +3703,7 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
   new_state = make_ed_list(cur_len + 3); /* leave room for possible splits */
   for (cur_i = 0, new_i = 0; cur_i < cur_len; cur_i++)
     {
+      ed_fragment *cur_f;
       cur_f = FRAGMENT(current_state, cur_i);
       new_f = FRAGMENT(new_state, new_i);
       if (ED_GLOBAL_POSITION(cur_f) >= end)
@@ -3773,7 +3780,6 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
 bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 {
   mus_long_t len;
-  bool read_max = false;
   
   if (num <= 0) return(true);
   len = cp->edits[edpos]->samples;
@@ -3781,7 +3787,7 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
   if ((beg < len) && (beg >= 0))
     {
       ed_list *ed;
-      bool backup = false;
+      bool backup = false, read_max = false;
 
       if ((beg + num) > len) num = len - beg;
       if (!(prepare_edit_list(cp, edpos, S_delete_samples))) 
@@ -3837,7 +3843,7 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
       if (read_max)
 	{
 	  mus_long_t new_len;
-	  mus_float_t mx, temp;
+	  mus_float_t mx;
 	  int i, loc = 0;
 	  snd_fd *sf;
 	  new_len = ed->samples;
@@ -3847,6 +3853,7 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 	  mx = fabs(read_sample(sf));
 	  for (i = 1; i < new_len; i++)
 	    {
+	      mus_float_t temp;
 	      temp = fabs(read_sample(sf));
 	      if (temp > mx)
 		{
@@ -3878,7 +3885,6 @@ static ed_list *change_samples_in_list(mus_long_t beg, mus_long_t num, int pos, 
 {
   /* delete + insert -- already checked that beg < cur end */
   ed_list *new_state;
-  ed_list *del_state;
   mus_long_t del_num, cur_end;
   ed_fragment *changed_f;
 
@@ -3888,7 +3894,8 @@ static ed_list *change_samples_in_list(mus_long_t beg, mus_long_t num, int pos, 
   del_num = cur_end - beg;
   if (num < del_num) del_num = num;
   if (del_num > 0)
-    {
+    { 
+      ed_list *del_state;
       del_state = delete_section_from_list(beg, del_num, cp->edits[pos]);
       new_state = insert_section_into_list(beg, num, del_state, &changed_f, origin, 1.0);
       del_state = free_ed_list(del_state, cp);
@@ -4126,11 +4133,12 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
       if ((mx < 0.0) &&
 	  (num < MAXAMP_CHECK_SIZE))
 	{
-	  mus_float_t nmx, temp;
+	  mus_float_t nmx;
 	  int i;
 	  nmx = fabs(vals[0]);
 	  for (i = 1; i < num; i++)
 	    {
+	      mus_float_t temp;
 	      temp = fabs(vals[i]);
 	      if (temp > nmx)
 		{
@@ -4316,13 +4324,14 @@ static ed_list *copy_and_split_list(mus_long_t beg, mus_long_t num, ed_list *cur
   mus_long_t end, next_pos;
   int cur_len, cur_i, new_i;
   ed_list *new_state;
-  ed_fragment *new_f, *cur_f, *mid_f = NULL;
+  ed_fragment *new_f, *mid_f = NULL;
   if (num <= 0) return(NULL);
   cur_len = current_state->size;
   end = beg + num;
   new_state = make_ed_list(cur_len + 2); /* leave room for possible split */
   for (cur_i = 0, new_i = 0; cur_i < cur_len; cur_i++, new_i++)
     {
+      ed_fragment *cur_f;
       cur_f = FRAGMENT(current_state, cur_i);
       new_f = FRAGMENT(new_state, new_i);
       if (ED_GLOBAL_POSITION(cur_f) >= end)
@@ -4529,7 +4538,7 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 		  /* perhaps this costs more than it saves */
 		  if (num < MAXAMP_CHECK_SIZE)
 		    {
-		      mus_float_t mx, temp;
+		      mus_float_t mx;
 		      int i, loc = 0;
 		      snd_fd *sf;
 		      sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, old_pos, num + 1);
@@ -4537,6 +4546,7 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 		      mx = fabs(read_sample(sf));
 		      for (i = 1; i < num; i++)
 			{
+			  mus_float_t temp;
 			  temp = fabs(read_sample(sf));
 			  if (temp > mx)
 			    {
@@ -4785,7 +4795,7 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 	      if ((num < MAXAMP_CHECK_SIZE) &&
 		  (!is_xramp))
 		{
-		  mus_float_t mx, temp, x;
+		  mus_float_t mx, x;
 		  int i, loc = 0;
 		  snd_fd *sf;
 		  x = rstart;
@@ -4794,6 +4804,7 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 		  mx = fabs(x * read_sample(sf));
 		  for (i = 1; i < num; i++)
 		    {
+		      mus_float_t temp;
 		      x += incr;
 		      temp = fabs(x * read_sample(sf));
 		      if (temp > mx)
@@ -5207,7 +5218,7 @@ mus_float_t chn_sample(mus_long_t samp, chan_info *cp, int pos)
 
 static void previous_sound_1(snd_fd *sf) 
 {
-  mus_long_t ind0, ind1, indx;
+  mus_long_t ind0, ind1;
   bool at_start;
   if ((sf->cp) && 
       (sf->cp->active < CHANNEL_HAS_EDIT_LIST))
@@ -5280,6 +5291,7 @@ static void previous_sound_1(snd_fd *sf)
     }
   else
     {
+      mus_long_t indx;
       /* back up in current file */
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
@@ -5298,7 +5310,7 @@ static mus_float_t previous_sound(snd_fd *sf)
 
 static void next_sound_1(snd_fd *sf)
 {
-  mus_long_t ind0, ind1, indx;
+  mus_long_t ind0, ind1;
   bool at_end = false;
 
   if ((sf->cp) && 
@@ -5377,6 +5389,7 @@ static void next_sound_1(snd_fd *sf)
     }
   else
     { 
+      mus_long_t indx;
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
       indx = io_end(sf->current_sound->io) + 1;
@@ -5505,7 +5518,6 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   int i;
   mus_long_t samples = 0;
   mus_long_t *old_cursors = NULL;
-  chan_info *cp;
   void *ms;
   axes_data *sa;
   file_info *sphdr = NULL;
@@ -5532,11 +5544,11 @@ io_error_t save_edits_and_update_display(snd_info *sp)
     }
   if (have_maxamps)
     {
-      chan_info *ncp;
       vals = (mus_float_t *)calloc(sp->nchans, sizeof(mus_float_t));
       times = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
       for (i = 0; i < sp->nchans; i++)
 	{
+	  chan_info *ncp;
 	  ncp = sp->chans[i];
 	  vals[i] = ed_maxamp(ncp, ncp->edit_ctr);
 	  times[i] = ed_maxamp_position(ncp, ncp->edit_ctr);
@@ -5583,6 +5595,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   old_cursors = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
   for (i = 0; i < sp->nchans; i++)
     {
+      chan_info *cp;
       cp = sp->chans[i];
       old_cursors[i] = cursor_sample(cp);        /* depends on edit_ctr -- set to -1 by free_edit_list below */
       if (ss->deferred_regions > 0)
@@ -5690,11 +5703,11 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
     }
   if (have_maxamps)
     {
-      chan_info *ncp;
       vals = (mus_float_t *)calloc(sp->nchans, sizeof(mus_float_t));
       times = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
       for (i = 0; i < sp->nchans; i++)
 	{
+	  chan_info *ncp;
 	  ncp = sp->chans[i];
 	  vals[i] = ed_maxamp(ncp, ncp->edit_ctr);
 	  times[i] = ed_maxamp_position(ncp, ncp->edit_ctr);
@@ -6812,10 +6825,10 @@ Xen_wrap_print(snd_fd, print_sf, sampler_to_string)
 static void list_reader(snd_fd *fd)
 {
   ed_list *ed;
-  int loc = -1;
   ed = fd->current_state;
   if (ed)
     {
+      int loc = -1;
       sf_info *lst = NULL;
       if (ed->readers == NULL)
 	{
@@ -7062,7 +7075,7 @@ forward, -1 = backward), reading the version of the data indicated by edpos whic
 snd can be a filename, a mix, a region, or a sound index number."
 
   snd_fd *fd = NULL;
-  int chan = 0, edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
+  int edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
   chan_info *cp;
   const char *filename;
   snd_info *loc_sp = NULL;
@@ -7079,6 +7092,7 @@ snd can be a filename, a mix, a region, or a sound index number."
 
   if (Xen_is_string(snd))
     {
+      int chan = 0;
       Xen_check_type(Xen_is_integer_boolean_or_unbound(chn), chn, 3, S_make_sampler, "an integer or boolean");
       filename = Xen_string_to_C_string(snd);
       if (mus_file_probe(filename))
@@ -7321,17 +7335,17 @@ static Xen g_save_edit_history(Xen filename, Xen snd, Xen chn)
 
   if (fd)
     {
-      chan_info *cp;
       if ((Xen_is_integer(chn)) && 
 	  (Xen_is_integer(snd) || xen_is_sound(snd)))
 	{
+	  chan_info *cp;
 	  cp = get_cp(snd, chn, S_save_edit_history);
 	  if (!cp) return(Xen_false);
 	  edit_history_to_file(fd, cp, false);
 	}
       else
 	{
-	  int i, j;
+	  int i;
 	  snd_info *sp;
 	  if (Xen_is_integer(snd) || xen_is_sound(snd))
 	    {
@@ -7345,6 +7359,7 @@ static Xen g_save_edit_history(Xen filename, Xen snd, Xen chn)
 	      
 	      for (i = 0; i < ss->max_sounds; i++)
 		{
+		  int j;
 		  sp = ss->sounds[i];
 		  if ((sp) && (sp->inuse == SOUND_NORMAL))
 		    for (j = 0; j < sp->nchans; j++)
@@ -7369,13 +7384,13 @@ static Xen g_undo(Xen ed_n, Xen snd, Xen chn_n) /* opt ed_n */
 {
   #define H_undo "(" S_undo " :optional (count 1) snd chn): undo 'count' edits in snd's channel chn"
   chan_info *cp;
-  int num;
   Xen_check_type(Xen_is_integer_or_unbound(ed_n), ed_n, 1, S_undo, "an integer");
   Snd_assert_channel(S_undo, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_undo);
   if (!cp) return(Xen_false);
   if (Xen_is_integer(ed_n))
     {
+      int num;
       num = Xen_integer_to_C_int(ed_n);
       if ((num != 0) && (num < 1000000000) && (num > -1000000000))
 	{
@@ -7394,13 +7409,13 @@ static Xen g_redo(Xen ed_n, Xen snd, Xen chn_n) /* opt ed_n */
 {
   #define H_redo "(" S_redo " :optional (count 1) snd chn): redo 'count' edits in snd's channel chn"
   chan_info *cp;
-  int num;
   Xen_check_type(Xen_is_integer_or_unbound(ed_n), ed_n, 1, S_redo, "an integer");
   Snd_assert_channel(S_redo, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_redo);
   if (!cp) return(Xen_false);
   if (Xen_is_integer(ed_n))
     {
+      int num;
       num = Xen_integer_to_C_int(ed_n);
       if ((num != 0) && (num < 1000000000) && (num > -1000000000))
 	{
@@ -7504,7 +7519,6 @@ static Xen g_as_one_edit(Xen proc, Xen origin)
   #define H_as_one_edit "(" S_as_one_edit " thunk :optional origin): evaluate thunk, collecting all edits into one from the edit history's point of view"
   Xen result = Xen_false;
   char *errmsg, *as_one_edit_origin = NULL;
-  Xen errstr;
 #if HAVE_SCHEME
   int loc = -1;
 #endif
@@ -7514,6 +7528,7 @@ static Xen g_as_one_edit(Xen proc, Xen origin)
   errmsg = procedure_ok(proc, 0, S_as_one_edit, "edit", 1);
   if (errmsg)
     {
+      Xen errstr;
       errstr = C_string_to_Xen_string(errmsg);
       free(errmsg);
       return(snd_bad_arity_error(S_as_one_edit, errstr, proc));
@@ -8182,13 +8197,13 @@ void check_saved_temp_file(const char *type, Xen filename, Xen date_and_length)
 {
   const char *file;
   time_t old_time, new_time;
-  mus_long_t old_bytes, new_bytes;
 
   if (!Xen_is_list(date_and_length)) return; /* can this happen? */
 
   file = Xen_string_to_C_string(filename);
   if (mus_file_probe(file))
     {
+      mus_long_t old_bytes, new_bytes;
       old_time = (time_t)Xen_ulong_to_C_ulong(Xen_car(date_and_length));
       old_bytes = Xen_llong_to_C_llong(Xen_cadr(date_and_length));
       new_time = mus_sound_write_date(file);
@@ -8254,7 +8269,6 @@ vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_
   snd_fd *sf;
   vct *v = NULL;
   mus_float_t **d;
-  mus_long_t i;
   mus_float_t *fvals;
 
   if (!buf)
@@ -8284,6 +8298,7 @@ vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_
 
   if (sf)
     {
+      mus_long_t i;
       i = 0;
       while (true)
 	{
@@ -8577,7 +8592,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 
   chan_info *cp;
   static char *filename = NULL;
-  int nc, i;
+  int nc;
   char *origin;
   file_delete_t delete_file = DONT_DELETE_ME;
   mus_long_t beg = 0, len;
@@ -8638,6 +8653,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
     }
   else
     {
+      int i;
       snd_info *sp;
       sp = cp->sound;
       if (sp->nchans < nc) nc = sp->nchans;

@@ -3601,8 +3601,8 @@
 (CFNC "void gtk_tree_view_set_headers_visible GtkTreeView* tree_view gboolean headers_visible")
 (CFNC "void gtk_tree_view_columns_autosize GtkTreeView* tree_view")
 (CFNC "void gtk_tree_view_set_headers_clickable GtkTreeView* tree_view gboolean setting")
-(CFNC "void gtk_tree_view_set_rules_hint GtkTreeView* tree_view gboolean setting")
-(CFNC "gboolean gtk_tree_view_get_rules_hint GtkTreeView* tree_view")
+;;; 3.13.6 (CFNC "void gtk_tree_view_set_rules_hint GtkTreeView* tree_view gboolean setting")
+;;; 3.13.6 (CFNC "gboolean gtk_tree_view_get_rules_hint GtkTreeView* tree_view")
 (CFNC "gint gtk_tree_view_append_column GtkTreeView* tree_view GtkTreeViewColumn* column")
 (CFNC "gint gtk_tree_view_remove_column GtkTreeView* tree_view GtkTreeViewColumn* column")
 (CFNC "gint gtk_tree_view_insert_column GtkTreeView* tree_view GtkTreeViewColumn* column gint position")
@@ -8969,8 +8969,13 @@
 (CFNC-3.14 "void gtk_list_box_row_set_activatable GtkListBoxRow* row gboolean activatable")
 (CFNC-3.14 "gboolean gtk_list_box_row_get_activatable GtkListBoxRow* row")
 
-;;; 3.14.5:
+;;; 3.13.5:
 (CFNC-3.14 "void gtk_list_box_row_set_selectable GtkListBoxRow* row gboolean selectable")
 (CFNC-3.14 "gboolean gtk_list_box_row_get_selectable GtkListBoxRow* row")
 (CFNC-3.14 "GtkStateFlags gtk_widget_path_iter_get_state GtkWidgetPath* path gint pos" 'const)
 (CFNC-3.14 "void gtk_widget_path_iter_set_state GtkWidgetPath* path gint pos GtkStateFlags state")
+
+;;; 3.13.6:
+(CINT-3.14 "GTK_TEXT_VIEW_LAYER_BELOW" "GtkTextViewLayer")
+(CINT-3.14 "GTK_TEXT_VIEW_LAYER_ABOVE" "GtkTextViewLayer")
+

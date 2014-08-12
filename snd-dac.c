@@ -1609,7 +1609,7 @@ static int fill_dac_buffers(int write_ok)
 	  if (dp)
 	    {
 	      int j;
-	      mus_float_t amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
+	      mus_float_t amp, incr, sr, sincr, ind, indincr, rev, revincr, fval;
 	      if (dp->audio_chan >= snd_dacp->channels) /* this can happen if we're playing 1 chan, try to add 2 chans */
 		{
 		  if (dac_combines_channels(ss))
@@ -1740,6 +1740,7 @@ static int fill_dac_buffers(int write_ok)
 		    }
 		  if (dp->expanding)
 		    {
+		      mus_float_t ex, exincr;
 		      ex = dp->cur_exp;
 		      exincr = (sp->expand_control - ex) / (mus_float_t)(framples);
 		      for (j = 0; j < framples; j++, amp += incr, sr += sincr, ind += indincr, ex += exincr, rev += revincr) 
