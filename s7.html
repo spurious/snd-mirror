@@ -4921,8 +4921,10 @@ returns the value that is actually set.  For example, the function can ensure th
 
 &gt; e
 #&lt;let 'x 3 'y 3 'z 3.3&gt;
+
 &gt;(begin (set! (e 'x) 123) (set! (e 'y) #()) (set! (e 'z) #f))
 ;; prints "z 3.3 -&gt; #f"
+
 &gt; e
 #&lt;let 'x 123 'y 3 'z #f&gt;
 
@@ -4936,6 +4938,7 @@ returns the value that is actually set.  For example, the function can ensure th
 	      vars)
        ,@body))
 #&lt;macro&gt;
+
 &gt; (reflective-let ((a 1)) (set! a 2))
 2     ; prints "a -&gt; 2"
 
@@ -4973,7 +4976,7 @@ returns the value that is actually set.  For example, the function can ensure th
 <summary class="indented">reactive-let</summary>
 <div class="indented">
 
-<p>stuff.scm has reactive-set!, reactive-let, reactive-let*, and reactive-lambda*:
+<p>stuff.scm has reactive-set!, reactive-vector, reactive-let, reactive-let*, and reactive-lambda*:
 </p>
 <pre class="indented">
 &gt; (let ((-a- 1)
@@ -4982,17 +4985,23 @@ returns the value that is actually set.  For example, the function can ensure th
     (set! b 3)
     -a-)
 6
+
+&gt; (let ((a 1)) (let ((v (reactive-vector a (+ a 1) 2))) (set! a 4) v))
+#(4 5 2)
+
 &gt; (let ((a 1)) 
     (<em class=red>reactive-let</em> ((-b- (+ a 1))) ; if 'a changes, 'b does too
     (set! a 3)                  ;   so 'b is now 4
     -b-))
 4
+
 &gt; (let ((a 1))
     (<em class=red>reactive-lambda*</em> (s v)
       (format *stderr* "~S -&gt; ~S~%" s v))
     (set! a 3))
 "a -&gt; 3"
 </pre>
+
 <p>In the reactive-let example, the macro notices that '-b- depends on 'a, so it sets up a symbol-access on 'a
 so that <code>(set! a 3)</code> triggers <code>(set! -b- (+ a 1))</code>.  I'm using -name- to distinguish
 the variables that can change value at any time; in the Lisp community, +name+ is often used to mark a constant,
@@ -5474,9 +5483,9 @@ The function takes one argument, the environment in which loads and evals should
 </pre>
 </div>
 
-<details>
+<details id="weaselwords">
 <summary class="indented">more on dynamic values</summary>
-<div class="indented" id="weaselwords">
+<div class="indented">
 <p>So why, you are asking, the useless 'values' in our dynamic binding example?  The short answer: tail calls.
 The long winded one goes something like this.  symbol-&gt;dynamic-value searches the stack to find
 the latest binding of its argument.  But because we want to support tail calls, "let" does not

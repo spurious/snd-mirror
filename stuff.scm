@@ -992,12 +992,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			   (symbol? (cadr expr)))
 		      (gather-symbols (cddr expr) ce lst (append ignore (list (cadr expr))))
 		      (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore)))
-	      (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore))
+	      (if (eq? (car expr) '_)
+		  (cons expr lst)
+		  (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore)))
 	  lst)))
 
-
-(define-bacro (reactive-set! symbol value)
-  (with-let (inlet 'symbol symbol                    ; with-let here gives us control over the names
+(define-bacro (reactive-set! place value)
+  (with-let (inlet 'place place                      ; with-let here gives us control over the names
 		   'value value 
 		   'e (outlet (outlet (curlet))))    ; the run-time (calling) environment
     (let ((nv (gensym))
@@ -1005,19 +1006,30 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
       `(begin
 	 (define ,ne ,e)
 	 ,@(map (lambda (sym)
-		  `(set! (symbol-access ',sym)
-			 (lambda (s v)  
-			   (let ((,nv ,(if (with-let (sublet e 'sym sym) 
-					     (symbol-access sym))
-					   `(begin (,(procedure-source (with-let (sublet e 'sym sym) 
-									 (symbol-access sym))) 
-						    s v))
-					   'v)))
-			     (with-let (sublet ,ne ',sym ,nv)
-			       (set! ,symbol ,value))
-			     ,nv))))
+		  (if (symbol? sym)
+		      `(set! (symbol-access ',sym)
+			     (lambda (s v)  
+			       (let ((,nv ,(if (with-let (sublet e 'sym sym) 
+						 (symbol-access sym))
+					       `(begin (,(procedure-source (with-let (sublet e 'sym sym) 
+									     (symbol-access sym))) 
+							s v))
+					       'v)))
+				 (with-let (sublet ,ne ',sym ,nv)
+				   (set! ,place ,value))
+				 ,nv)))
+		      (if (or (not (eq? (car sym) '_))
+			      (not (pair? (cdr sym)))
+			      (not (integer? (cadr sym)))
+			      (not (null? (cddr sym))))
+			  (error 'wrong-type-arg "reactive-vector can't handle: ~S~%" sym)
+			  (let ((index (cadr sym)))
+			    `(set! (_ 'local-set!)
+				   (apply lambda '(obj i val)
+					  (append (cddr (procedure-source (_ 'local-set!)))
+						  `((if (= i ,,index) (set! ,',place ,',value))))))))))
 		(gather-symbols value e () ()))
-	 (set! ,symbol ,value)))))
+	 (set! ,place ,value)))))
 
 #|
 (let ((a 1)
@@ -1027,7 +1039,66 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (reactive-set! a (+ b c))
   (set! c 5)
   a)
+
+(let ((a 1) (v (vector 1 2 3))) (reactive-set! (v 1) (* a 3)) (set! a 4) v)
 |#
+
+;; just a first stab at this:
+
+(define reactive-vector
+  (let ((mock-vector-class
+	 (openlet  ; this holds the mock-vector methods
+	  (inlet 'local-set!         (lambda (obj i val) (#_vector-set! (obj 'v) i val))
+		 'vector?            (lambda (obj) #t)
+		 'vector-ref         (lambda (obj i) (#_vector-ref (obj 'v) i))
+		 'vector-set!        (lambda (obj i val) ((obj 'local-set!) obj i val) val)
+		 'let-ref            (lambda (obj i) (#_vector-ref (obj 'v) i))           ; these are the implicit cases
+		 'let-set!           (lambda (obj i val) ((obj 'local-set!) obj i val) val)
+		 'length             (lambda (obj) (#_vector-length (obj 'v)))
+		 'vector-length      (lambda (obj) (#_vector-length (obj 'v)))
+		 'map                (lambda (f obj) (map f (obj 'v)))
+		 'for-each           (lambda (f obj) (for-each f (obj 'v)))
+		 'vector->list       (lambda (obj) (#_vector->list (obj 'v)))
+		 'make-shared-vector (lambda* (obj dim (off 0)) (#_make-shared-vector (obj 'v) dim off))
+		 'vector-append      (lambda (obj . vs) (apply #_vector-append (obj 'v) vs))
+		 'vector-fill!       (lambda* (obj val (start 0) end) (#_vector-fill! (obj 'v) val start (or end (#_vector-length (obj 'v)))))
+		 'fill!              (lambda (obj val) (#_fill! (obj 'v) val))
+		 'reverse            (lambda (obj) (#_reverse (obj 'v)))
+		 'sort!              (lambda (obj f) (#_sort! (obj 'v) f))
+		 'object->string     (lambda* (obj (w #t)) (#_object->string (obj 'v) w))
+		 'vector-dimensions  (lambda (obj) (#_vector-dimensions (obj 'v)))))))
+
+    (define* (make-mock-vector len (init #<unspecified>))
+      (openlet (sublet mock-vector-class 'v (make-vector len init))))
+    
+    (define (reactive-vector-1 e . args)
+      ;; set up accessors for any element that has an expression as its initial value
+      ;; if any element depends on some other element, return a mock-vector with setter fixed up
+
+      (let ((code `(let ((_ (,(if (any? (lambda (a) 
+					  (tree-member '_ a)) 
+					args)
+				  '((funclet 'reactive-vector) 'make-mock-vector)
+				  'make-vector)
+			     ,(length args)))))))
+	(let ((ctr 0))
+	  (for-each
+	   (lambda (arg)
+	     (set! code (append code `((reactive-set! (_ ,ctr) ,arg))))
+	     (set! ctr (+ ctr 1)))
+	   args))
+	(append code `(_))))
+    
+    (define-bacro (reactive-vector . args)
+      (apply ((funclet 'reactive-vector) 'reactive-vector-1) (outlet (outlet (curlet))) args))))
+
+
+#|
+(let ((a 1)) (let ((v (reactive-vector a (+ a 1) 2))) (set! a 4) v)) -> #(4 5 2)
+(let* ((a 1) (v (reactive-vector a (+ a 1) 2))) (set! a 4) v) -> #(4 5 2)
+(let* ((a 1) (v (reactive-vector a (+ a 1) (* 2 (_ 0))))) (set! a 4) v) -> #(4 5 8)
+|#
+
 
 ;;; this is not pretty
 ;;; part of the complexity comes from the hope to be tail-callable, but even a version

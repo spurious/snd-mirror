@@ -285,9 +285,9 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 #endif
   if (!(ss->stopped_explicitly))
     {
+      snd_info *gsp = NULL;
       for (ip = 0; ip < si->chans; ip++)
 	{
-	  snd_info *gsp;
 	  char *ofile, *saved_chan_file;
 	  io_error_t io_err;
 	  bool ok = false;
