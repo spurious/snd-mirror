@@ -4986,7 +4986,10 @@ returns the value that is actually set.  For example, the function can ensure th
     -a-)
 6
 
-&gt; (let ((a 1)) (let ((v (reactive-vector a (+ a 1) 2))) (set! a 4) v))
+&gt; (let ((a 1)) 
+    (let ((v (<em class=red>reactive-vector</em> a (+ a 1) 2))) 
+      (set! a 4) 
+      v))
 #(4 5 2)
 
 &gt; (let ((a 1)) 

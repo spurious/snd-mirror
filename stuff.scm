@@ -1066,7 +1066,15 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		 'reverse            (lambda (obj) (#_reverse (obj 'v)))
 		 'sort!              (lambda (obj f) (#_sort! (obj 'v) f))
 		 'object->string     (lambda* (obj (w #t)) (#_object->string (obj 'v) w))
-		 'vector-dimensions  (lambda (obj) (#_vector-dimensions (obj 'v)))))))
+		 'vector-dimensions  (lambda (obj) (#_vector-dimensions (obj 'v)))
+		 'copy               (lambda* (src dest . args)
+				       ;; copy by itself does not make a new vector
+				       ;; s7 closes obj during copy evaluation to avoid an infinite recursion
+				       (if dest
+					   (apply copy (obj 'v) dest args) ; should this check dest to decide what to copy?
+					   (let ((nobj (copy src)))
+					     (set! (nobj 'v) (copy (src 'v)))
+					     nobj)))))))
 
     (define* (make-mock-vector len (init #<unspecified>))
       (openlet (sublet mock-vector-class 'v (make-vector len init))))
@@ -1099,6 +1107,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 (let* ((a 1) (v (reactive-vector a (+ a 1) (* 2 (_ 0))))) (set! a 4) v) -> #(4 5 8)
 |#
 
+;;; mock-vector could also be used for constant or reflective vectors, etc -- just like symbol-access but element-wise
 
 ;;; this is not pretty
 ;;; part of the complexity comes from the hope to be tail-callable, but even a version

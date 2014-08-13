@@ -2877,6 +2877,13 @@ s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method)
       return(s7_apply_function(Sc, func, Args));        \
   }
 
+#define check_method_no_recursion(Sc, Obj, Method, Args)   \
+  {                                           \
+    s7_pointer func;                          \
+    if ((has_methods(Obj)) && ((func = find_method(Sc, find_environment(Sc, Obj), Method)) != Sc->UNDEFINED)) \
+      {clear_has_methods(car(Args)); func = s7_apply_function(Sc, func, Args); set_has_methods(car(Args)); return(func);} \
+  }
+
 /* unfortunately, in the simplest cases, where a function (like number?) accepts any argument,
  *   this costs about a factor of 1.5 in speed (we're doing the normal check like s7_is_number,
  *   but then have to check has_methods before returning #f).  We can't use the old form until
@@ -35758,13 +35765,15 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       }
 
     case T_C_OBJECT:
+      check_method(sc, obj, sc->COPY, list_1(sc, obj));
       return(object_copy(sc, obj));
 
     case T_HASH_TABLE:              /* this has to copy nearly everything */
       return(hash_table_copy(sc, obj));
       
-    case T_ENVIRONMENT:             /* this copies only the local env and points to outer envs */
-      return(environment_copy(sc, obj));
+    case T_ENVIRONMENT:             
+      check_method_no_recursion(sc, obj, sc->COPY, list_1(sc, obj)); /* the cons happens only if we have a copy method, but it's still wasteful */
+      return(environment_copy(sc, obj));   /* this copies only the local env and points to outer envs */
 
     case T_CLOSURE:
     case T_CLOSURE_STAR:
@@ -35944,7 +35953,11 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_ENVIRONMENT:  
-      check_method(sc, source, sc->COPY, args);
+      /* there's currently no underlying (non-generic) copy-let function on the scheme side,
+       *   so the copy method almost certainly uses copy itself, which causes an infinite recursion here.
+       *   The "no_recursion" check method closes the let during the copy method invocation.
+       */
+      check_method_no_recursion(sc, source, sc->COPY, args);
       if (source == sc->rootlet)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_protected_string(sc, "a sequence other than the global environment")));
       get = env_getter;            
@@ -70002,5 +70015,26 @@ int main(int argc, char **argv)
  * the xm/xg names should be in their own library *xg* *xm* 
  *   none of these is currently in autoload
  *   but this would require special handling in the Xen stuff.
+ *
+ * perhaps make a set of mock-* envs like mock-vector
+ *   mock-#<unspecified>? -- this is a legal name, so is -#<...>- or -#(...) -> reactive vector constant!
+ *   or mock-vector without a given size, mock-file
+ *   mock-continuation? could at least be reflective (all the mock* can be) -- could burrow past a baffle?
+ *   mock-let? procedure? mock-lambda(*)? 
+ *   mock-oscil?  also make tests in CLM of complex cases
+ *   mock-eval -- every datum is a mock-*, then Display is internalized, tracing/stepping 
+ *     need to shadow eq? and friends
+ *   mock-string could handle translations (set *language* and all automatically conform)
+ * copy mvects is still not right if dest is another mvect
+ *
+ * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
+ *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
+ *   we can distinguish because this is happening at run-time where (v 0) has an ascertainable meaning
+ *
+ * how would reactive-hash-table work? (hash 'a (+ b 1)) and update 'a's value whenever b changes?
+ *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
+ *
+ * number+uncertainty as env [papyrology or philology have string/char+uncertainty, dynamics has vector uncertainty]
+ *   check out interval arithmetic for analogs
  */
 
