@@ -2877,13 +2877,6 @@ s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method)
       return(s7_apply_function(Sc, func, Args));        \
   }
 
-#define check_method_no_recursion(Sc, Obj, Method, Args)   \
-  {                                           \
-    s7_pointer func;                          \
-    if ((has_methods(Obj)) && ((func = find_method(Sc, find_environment(Sc, Obj), Method)) != Sc->UNDEFINED)) \
-      {clear_has_methods(car(Args)); func = s7_apply_function(Sc, func, Args); set_has_methods(car(Args)); return(func);} \
-  }
-
 /* unfortunately, in the simplest cases, where a function (like number?) accepts any argument,
  *   this costs about a factor of 1.5 in speed (we're doing the normal check like s7_is_number,
  *   but then have to check has_methods before returning #f).  We can't use the old form until
@@ -5866,7 +5859,10 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
   if (!is_let(e))
     return(simple_wrong_type_argument_with_type(sc, sc->LET_REF, e, AN_ENVIRONMENT));
 
-  s = cadr(args);
+  if (is_pair(cdr(args)))
+    s = cadr(args);
+  else s = sc->F;
+
   if (!is_symbol(s))
     {
       check_method(sc, e, sc->LET_REF, args);
@@ -35772,7 +35768,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       return(hash_table_copy(sc, obj));
       
     case T_ENVIRONMENT:             
-      check_method_no_recursion(sc, obj, sc->COPY, list_1(sc, obj)); /* the cons happens only if we have a copy method, but it's still wasteful */
+      check_method(sc, obj, sc->COPY, list_1(sc, obj)); /* the cons happens only if we have a copy method, but it's still wasteful */
       return(environment_copy(sc, obj));   /* this copies only the local env and points to outer envs */
 
     case T_CLOSURE:
@@ -35953,11 +35949,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_ENVIRONMENT:  
-      /* there's currently no underlying (non-generic) copy-let function on the scheme side,
-       *   so the copy method almost certainly uses copy itself, which causes an infinite recursion here.
-       *   The "no_recursion" check method closes the let during the copy method invocation.
-       */
-      check_method_no_recursion(sc, source, sc->COPY, args);
+      check_method(sc, source, sc->COPY, args);
       if (source == sc->rootlet)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_protected_string(sc, "a sequence other than the global environment")));
       get = env_getter;            
@@ -59046,8 +59038,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case T_ENVIRONMENT:                       /* -------- environment as applicable object -------- */
 	  if (is_null(sc->args))
-	    return(s7_wrong_number_of_args_error(sc, "environment as applicable object takes one argument: ~A", sc->args));
-	  sc->value = s7_let_ref(sc, sc->code, car(sc->args));
+	    sc->value = s7_let_ref(sc, sc->code, sc->F);
+	  else sc->value = s7_let_ref(sc, sc->code, car(sc->args));
 
 	  if (is_pair(cdr(sc->args)))
 	    sc->value = implicit_index(sc, sc->value, cdr(sc->args));
@@ -68991,7 +68983,7 @@ s7_scheme *s7_init(void)
   sc->COVERLET =              s7_define_safe_function(sc, "coverlet",                g_coverlet,               1, 0, false, H_coverlet);
   sc->OPENLET =               s7_define_safe_function(sc, "openlet",                 g_openlet,                1, 0, false, H_openlet);
   sc->IS_OPENLET =            s7_define_safe_function(sc, "openlet?",                g_is_openlet,             1, 0, false, H_is_openlet);
-  sc->LET_REF =               s7_define_safe_function(sc, "let-ref",                 g_let_ref,                2, 0, false, H_let_ref);
+  sc->LET_REF =               s7_define_safe_function(sc, "let-ref",                 g_let_ref,                1, 1, false, H_let_ref);
   sc->LET_SET =               s7_define_safe_function(sc, "let-set!",                g_let_set,                3, 0, false, H_let_set);
   /* the 2 and 3 arg choice here might not be optimal:
    *   (define e1 (openlet (inlet 'x 32 'let-ref (lambda (obj) (obj 'x)) 'let-set! (lambda (obj val) (set! (obj 'x) val)))))
@@ -69440,11 +69432,12 @@ s7_scheme *s7_init(void)
   sym = s7_define_variable(sc, "*libraries*", sc->NIL);
   sc->libraries = global_slot(sym);
 
-  s7_autoload(sc, make_symbol(sc, "cload.scm"), s7_make_permanent_string("cload.scm"));
-  s7_autoload(sc, make_symbol(sc, "lint.scm"),  s7_make_permanent_string("lint.scm"));
-  s7_autoload(sc, make_symbol(sc, "stuff.scm"), s7_make_permanent_string("stuff.scm"));
-  s7_autoload(sc, make_symbol(sc, "write.scm"), s7_make_permanent_string("write.scm"));
-  s7_autoload(sc, make_symbol(sc, "r7rs.scm"),  s7_make_permanent_string("r7rs.scm"));
+  s7_autoload(sc, make_symbol(sc, "cload.scm"),    s7_make_permanent_string("cload.scm"));
+  s7_autoload(sc, make_symbol(sc, "lint.scm"),     s7_make_permanent_string("lint.scm"));
+  s7_autoload(sc, make_symbol(sc, "stuff.scm"),    s7_make_permanent_string("stuff.scm"));
+  s7_autoload(sc, make_symbol(sc, "mockery.scm"),  s7_make_permanent_string("mockery.scm"));
+  s7_autoload(sc, make_symbol(sc, "write.scm"),    s7_make_permanent_string("write.scm"));
+  s7_autoload(sc, make_symbol(sc, "r7rs.scm"),     s7_make_permanent_string("r7rs.scm"));
 
   s7_autoload(sc, make_symbol(sc, "libc.scm"),     s7_make_permanent_string("libc.scm"));
   s7_autoload(sc, make_symbol(sc, "libm.scm"),     s7_make_permanent_string("libm.scm"));
@@ -70016,16 +70009,20 @@ int main(int argc, char **argv)
  *   none of these is currently in autoload
  *   but this would require special handling in the Xen stuff.
  *
+ * what if "method" is a macro?
+ *    (define e (openlet (inlet 'abs (define-macro (x) 43))))
+ *    (abs e)
+ *    ;cdr argument, #<let 'abs #<macro>>, is an environment but should be a pair
  * perhaps make a set of mock-* envs like mock-vector
  *   mock-#<unspecified>? -- this is a legal name, so is -#<...>- or -#(...) -> reactive vector constant!
- *   or mock-vector without a given size, mock-file
- *   mock-continuation? could at least be reflective (all the mock* can be) -- could burrow past a baffle?
- *   mock-let? procedure? mock-lambda(*)? 
+ *   mock-file, mock-let? procedure? mock-lambda(*)?  [list/string will require a zillion methods]
  *   mock-oscil?  also make tests in CLM of complex cases
  *   mock-eval -- every datum is a mock-*, then Display is internalized, tracing/stepping 
  *     need to shadow eq? and friends
  *   mock-string could handle translations (set *language* and all automatically conform)
- * copy mvects is still not right if dest is another mvect
+ * copy mvects is still not right if start/end + mvect dest
+ *   c-strings? min/max? saved+reset?
+ *   does mock vector-append need 2nd arg make-method support?
  *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
@@ -70034,7 +70031,14 @@ int main(int argc, char **argv)
  * how would reactive-hash-table work? (hash 'a (+ b 1)) and update 'a's value whenever b changes?
  *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
  *
- * number+uncertainty as env [papyrology or philology have string/char+uncertainty, dynamics has vector uncertainty]
+ * number+uncertainty as env [papyrology or paleology have string/char+uncertainty, dynamics has vector uncertainty]
  *   check out interval arithmetic for analogs
+ *   so mock-real etc: a ton of methods!
+ *
+ * for reasonable mock-* handling in s7 code, we need something like (obj 'value)
+ *   as a fallback for a second try.  (if (defined? (obj 'value)) (subsequence (obj 'value)...)
+ *
+ * to protect res if necessary in snd-sig, protect a cons, then set-car of it with res
+ *   or just use the car as res
  */
 

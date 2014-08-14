@@ -5804,11 +5804,6 @@ of library version symbols when all we actually want is <code>(&gt; version 23.1
 In this case, the read-time decision involves normal evaluation, not something specific to *features*.
 </p>
 
-<p>Should environments be open by default, or always open?  The three functions openlet, openlet?,
-and coverlet were originally intended for c-object use.  Then I started worrying about inadvertent
-method calls.
-</p>
-
 <p>
 Better ideas are always welcome!
 </p>
@@ -8585,7 +8580,7 @@ end
 <div class="topheader" id="s7examples">s7 examples</div>
 
 <p>The s7 tarball includes several scheme files including s7test.scm,
-lint.scm, cload.scm, write.scm, and stuff.scm.  
+lint.scm, cload.scm, write.scm, mockery.scm, and stuff.scm.  
 s7test.scm is a regression test for s7, 
 lint.scm is the s7 equivalent of the ancient C program named lint (modern equivalent: cppcheck), 
 write.scm has a pretty printer, 

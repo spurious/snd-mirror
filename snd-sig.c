@@ -3671,7 +3671,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 
 #if HAVE_SCHEME
   mus_float_t *in_data;
-  int gc_loc;
+  int gc_loc, proc_loc;
   bool use_apply;
   s7_pointer arg_list, source, arg, body, e, slot;
   s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
@@ -3824,6 +3824,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
       gc_loc = s7_gc_protect(s7, arg_list);
       use_apply = true;
     }
+  proc_loc = s7_gc_protect(s7, proc);
 #endif
   
   data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
@@ -3900,6 +3901,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		      sf = free_snd_fd(sf);
 #if HAVE_SCHEME
 		      s7_gc_unprotect_at(s7, gc_loc);
+		      s7_gc_unprotect_at(s7, proc_loc);
 #endif
 		      Xen_error(BAD_TYPE,
 				Xen_list_3(C_string_to_Xen_string("~A: result of procedure must be a number, boolean, or vct: ~A"),
@@ -3914,6 +3916,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 #if HAVE_SCHEME
   free(in_data);
   s7_gc_unprotect_at(s7, gc_loc);
+  s7_gc_unprotect_at(s7, proc_loc);
 #endif
 
   if (cp->active < CHANNEL_HAS_EDIT_LIST)

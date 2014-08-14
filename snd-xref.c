@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11324] = {
+static const char *snd_names[11330] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -1777,6 +1777,7 @@ static const char *snd_names[11324] = {
     "*libgdbm*", "libgdbm.scm",
     "*libgsl*", "libgsl.scm",
     "*libm*", "libm.scm",
+    "*mock-vector*", "mockery.scm",
     "*to-snd*", "ws.scm",
     "->frequency", "ws.scm",
     "->predicate", "stuff.scm",
@@ -6472,6 +6473,7 @@ static const char *snd_names[11324] = {
     "mktemp", "libc.scm",
     "mktime", "libc.scm",
     "mock-list", "stuff.scm",
+    "mockery.scm", "mockery.scm",
     "modf", "libm.scm",
     "mono->stereo", "extensions.scm",
     "mono-files->stereo", "extensions.scm",
@@ -6615,6 +6617,7 @@ static const char *snd_names[11324] = {
     "os-type", "r7rs.scm",
     "os-version", "r7rs.scm",
     "osc-formants", "examp.scm",
+    "outlet-member", "mockery.scm",
     "output-port-open?", "r7rs.scm",
     "output-type", "musglyphs.scm",
     "overlay-rms-env", "draw.scm",
@@ -7414,7 +7417,7 @@ static const char *snd_names[11324] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5662);
+  s7_autoload_set_names(sc, snd_names, 5665);
 }
 #endif
 

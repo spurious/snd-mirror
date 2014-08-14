@@ -505,6 +505,7 @@
 (load "r7rs.scm")
 (load "cload.scm")
 (load "stuff.scm")
+(load "mockery.scm")
 
 
 (let ((names (make-hash-table)))
@@ -818,11 +819,13 @@
     (list 'define-class "stuff.scm")
     (list 'elambda "stuff.scm")
     (list 'reflective-let "stuff.scm")
+    (list 'reflective-probe "stuff.scm")
     (list 'reactive-let "stuff.scm")
     (list 'reactive-let* "stuff.scm")
     (list 'reactive-lambda* "stuff.scm")
     (list 'pretty-print "write.scm")
     (list 'fully-macroexpand "write.scm")
+    (list '*mock-vector* "mockery.scm")
 
     (list 'lint "lint.scm")
     (list 'html-lint "lint.scm")
