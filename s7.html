@@ -4808,54 +4808,6 @@ tied into s7 via autoload, so if you call, for example, frexp, libm.scm
 is loaded, and frexp is exported from the *libm* environment, then the
 evaluator soldiers on, as if frexp had always been defined in s7).
 </p>
-<br>
-
-<details>
-<summary class="indented">symbol macro?</summary>
-<blockquote>
-<div class="indented">
-<p>There are a lot of thoroughly disreputable ways to take advantage of *unbound-variable-hook*.
-Here are two.  In the first, we can't ever remember how to get the error environment information
-when we're in the REPL, so we tie that action to the question-mark key.  Whenever '?' is typed
-in the listener, the error info is typed out.  That first moment of weakness leads inexorably to the second, 
-dalliance with symbol-macros!
-</p>
-
-<pre class="indented">
-&gt; (set! (hook-functions *unbound-variable-hook*)
-      (append (hook-functions *unbound-variable-hook*) ; keep existing funcs like autoload
-	      (list 
-	       (lambda (hook) 
-                 (if (memq (hook 'result) '(#&lt;unspecified&gt; #&lt;undefined&gt;))
-	             (let ((sym (hook 'variable)))
-		       (if (eq? sym '?)                       ; here '?' is the thing typed
-		           (do ((e (outlet (owlet)) (outlet e))) 
-			       ((eq? e (rootlet)) 
-                                (set! (hook 'result) #f))
-		             (status-report (format #f "~%~{~A~^ ~}" e) -1))
-                             ;; status-report is a Snd function that (in this case)
-		             ;;   sends the data to the Snd listener.	       
-                             )))))))
-(#&lt;lambda (hook)&gt;)
-&gt; (let ((a "hi") (b 2)) (+ a b)) ; hit an error on purpose
-;+ argument 1, "hi", is a string but should be a number
-;    (+ a b)
-&gt; ?
-((a . "hi") (b . 2))   ; ? prints the local variable info at the point of the error
-
-&gt; (set! (hook-functions *unbound-variable-hook*)
-    (list (lambda (hook)
-            (if (eq? (hook 'variable) 'hiho)
-                (set! (hook 'result) (sin (random 1.0))))))) ; hiho -&gt; sins of some number
-(&lt;lambda (hook)&gt;)
-&gt; hiho
-0.46727567824396
-&gt; hiho
-0.64985453979392
-</pre>
-</div>
-</blockquote>
-</details>
 
 
 <div class="header" id="constants"><h4>define-constant, constant?, symbol-access</h4></div>

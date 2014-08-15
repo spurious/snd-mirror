@@ -1252,7 +1252,7 @@ struct s7_scheme {
   s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, IS_CHAR_ALPHABETIC, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
   s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, IS_CHAR_LOWER_CASE, IS_CHAR_NUMERIC, IS_CHAR_READY, CHAR_UPCASE, IS_CHAR_UPPER_CASE;
   s7_pointer IS_CHAR_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, IS_COMPLEX, CONS, IS_CONSTANT, IS_CONTINUATION, COPY, COS, COSH, C_POINTER, IS_C_POINTER;
-  s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_LET, INLET, LET_REF, LET_SET, LET_TO_LIST;
+  s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_LET, INLET, LET_REF, LET_REF_FALLBACK, LET_SET, LET_SET_FALLBACK, LET_TO_LIST;
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
@@ -1852,6 +1852,16 @@ static void init_types(void)
 #define set_has_methods(p)            typeflag(p) |= T_HAS_METHODS
 #define clear_has_methods(p)          typeflag(p) &= (~T_HAS_METHODS)
 /* this marks an environment or closure that is "opened" up to generic functions etc 
+ */
+
+#define T_HAS_REF_FALLBACK            T_MUTABLE
+#define T_HAS_SET_FALLBACK            T_PRINT_NAME
+#define has_ref_fallback(p)           ((typeflag(p) & T_HAS_REF_FALLBACK) != 0)
+#define has_set_fallback(p)           ((typeflag(p) & T_HAS_SET_FALLBACK) != 0)
+#define set_has_ref_fallback(p)       typeflag(p) |= T_HAS_REF_FALLBACK
+#define set_has_set_fallback(p)       typeflag(p) |= T_HAS_SET_FALLBACK
+#define set_all_methods(p, e)         typeflag(p) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
+/* an experiment for open lets that want to pass symbol implicit indices to interior objects
  */
 
 #define T_HAS_ACCESSOR                T_HAS_METHODS
@@ -5673,7 +5683,8 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
   if (e == sc->rootlet)
     new_e = new_frame_in_env(sc, sc->NIL);
   else new_e = new_frame_in_env(sc, e);
-  if (has_methods(e)) set_has_methods(new_e);
+  /* if (has_methods(e)) set_has_methods(new_e); */
+  set_all_methods(new_e, e);
 
   if (!is_null(bindings))
     {
@@ -5718,7 +5729,16 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	    return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), p, A_SYMBOL));
 	  if (is_immutable(sym))
 	    return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+
 	  s7_make_slot(sc, new_e, sym, val);
+
+	  if (sym == sc->LET_REF_FALLBACK) 
+	    set_has_ref_fallback(new_e);
+	  else 
+	    {
+	      if (sym == sc->LET_SET_FALLBACK) 
+		set_has_set_fallback(new_e);
+	    }
 	}
     }
   return(new_e);
@@ -5835,6 +5855,15 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
       if (slot_symbol(y) == symbol)
 	return(slot_value(y));
 
+  /* now for a horrible kludge.  If a let is a mock-hash-table (for example), implicit
+   *   indexing of the hash-table collides with the same thing for the let (field names
+   *   versus keys), and we can't just try again here because that makes it too easy to
+   *   get into infinite recursion.  So, for an experiment, 'let-ref-fallback...
+   */
+  
+  if (has_ref_fallback(env))
+    check_method(sc, env, sc->LET_REF_FALLBACK, sc->w = list_2(sc, env, symbol));
+
   return(sc->UNDEFINED);
 }
 
@@ -5947,6 +5976,9 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 	  else slot_set_value(y, value);
 	  return(slot_value(y));
 	}
+
+  if (has_set_fallback(env))
+    check_method(sc, env, sc->LET_SET_FALLBACK, sc->w = list_3(sc, env, symbol, value));
   return(sc->UNDEFINED);
 }
 
@@ -6021,8 +6053,8 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
        *   So if it is present, we get it here, and then there's almost surely trouble.
        */
       new_e = new_frame_in_env(sc, next_environment(env));
-      if (has_methods(env))          /* mark the new env as open and check for {else} */
-	set_has_methods(new_e);
+      /* if (has_methods(env)) set_has_methods(new_e); */ /* mark the new env as open and check for {else} */
+      set_all_methods(new_e, env);
 
       sc->temp3 = new_e;
       add_slot_in_reverse(sc, new_e, environment_slots(env));
@@ -20568,10 +20600,15 @@ static s7_pointer g_is_bytevector(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_to_bytevector(s7_scheme *sc, s7_pointer args)
 {
   #define H_to_bytevector "(->bytevector obj) turns a string into a bytevector."
-  if (!is_string(car(args)))
-    return(wrong_type_argument(sc, sc->TO_BYTEVECTOR, small_int(1), car(args), T_STRING));
-  set_bytevector(car(args));
-  return(car(args));
+  s7_pointer str;
+  str = car(args);
+  if (!is_string(str))
+    {
+      check_method(sc, str, sc->TO_BYTEVECTOR, args);
+      return(wrong_type_argument(sc, sc->TO_BYTEVECTOR, small_int(1), str, T_STRING));
+    }
+  set_bytevector(str);
+  return(str);
 }
 
 
@@ -68991,6 +69028,8 @@ s7_scheme *s7_init(void)
    *   (e1 2) -> (e1 2): too many arguments: (e1 2)
    * and similarly for the set case.  We can add an ignored 2nd arg, but it's not pretty.
    */
+  sc->LET_REF_FALLBACK = make_symbol(sc, "let-ref-fallback");
+  sc->LET_SET_FALLBACK = make_symbol(sc, "let-set!-fallback");
 
   sc->IS_PROVIDED =           s7_define_safe_function(sc, "provided?",               g_is_provided,            1, 0, false, H_is_provided);
   sc->PROVIDE =               s7_define_safe_function(sc, "provide",                 g_provide,                1, 0, false, H_provide);
@@ -69976,7 +70015,7 @@ int main(int argc, char **argv)
  * t455|6     265 |   89 |   9    8.5  5.5  5.5  5.4  5.9 |
  * t502        90 |   43 |  14.5 14.4 13.6 12.8 12.7 12.7 |
  * t816           |   71 |  70.6                44.5 45.6 |
- * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.3 |
+ * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.1 |
  *            153 with run macro (eval_ptree)
  *
  * ------------------------------------------------------------------------------------------------
@@ -70013,16 +70052,20 @@ int main(int argc, char **argv)
  *    (define e (openlet (inlet 'abs (define-macro (x) 43))))
  *    (abs e)
  *    ;cdr argument, #<let 'abs #<macro>>, is an environment but should be a pair
- * perhaps make a set of mock-* envs like mock-vector
+ * mockery.scm:
  *   mock-#<unspecified>? -- this is a legal name, so is -#<...>- or -#(...) -> reactive vector constant!
- *   mock-file, mock-let? procedure? mock-lambda(*)?  [list/string will require a zillion methods]
- *   mock-oscil?  also make tests in CLM of complex cases
+ *   mock-file, mock-let? procedure? mock-lambda(*)?  [list will require a zillion methods]
+ *   mock-oscil?  also make tests in CLM of complex cases, mock-port/symbol?
  *   mock-eval -- every datum is a mock-*, then Display is internalized, tracing/stepping 
  *     need to shadow eq? and friends
  *   mock-string could handle translations (set *language* and all automatically conform)
  * copy mvects is still not right if start/end + mvect dest
- *   c-strings? min/max? saved+reset?
+ *   also multidim mvects
  *   does mock vector-append need 2nd arg make-method support?
+ * mchar string can't handle more than 2 args -- what is actually coming into make-method here? (and what about mock-string's string-append?)
+ *   does this affect all the current make-method cases?
+ * s7.html for symbol-macro via openlet
+ *   (define ? (openlet (inlet 'object->string (lambda (obj . args) (apply #_object->string (owlet) args)))))
  *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)

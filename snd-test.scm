@@ -47040,6 +47040,29 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   372,681,428  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+
+14-Aug-14:
+35,133,061,231
+5,365,681,646  s7.c:eval [/home/bil/gtk-snd/snd]
+2,256,581,832  ???:sin [/lib64/libm-2.12.so]
+2,050,537,059  ???:cos [/lib64/libm-2.12.so]
+1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
+1,095,141,759  clm.c:mus_src [/home/bil/gtk-snd/snd]
+  901,140,028  ???:t2_32 [/home/bil/gtk-snd/snd]
+  795,199,572  s7.c:gc [/home/bil/gtk-snd/snd]
+  720,395,914  ???:t2_64 [/home/bil/gtk-snd/snd]
+  648,414,838  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+  573,460,056  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  557,892,664  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  452,423,080  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+  435,066,604  ???:n1_64 [/home/bil/gtk-snd/snd]
+  414,027,948  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+  405,194,494  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
+  379,588,776  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
+  338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
+  327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
+
 |#
 
 
