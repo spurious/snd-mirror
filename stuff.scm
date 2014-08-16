@@ -846,8 +846,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 
 
-
-
 ;;; ----------------
 (define (clamp minimum x maximum)
   (min maximum (max x minimum)))
@@ -1046,39 +1044,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 ;; just a first stab at this:
 
 (define reactive-vector
-  (let ((mock-vector-class
-	 (openlet  ; this holds the mock-vector methods
-	  (inlet 'local-set!         (lambda (obj i val) (#_vector-set! (obj 'v) i val))
-		 'vector?            (lambda (obj) #t)
-		 'vector-ref         (lambda (obj i) (#_vector-ref (obj 'v) i))
-		 'vector-set!        (lambda (obj i val) ((obj 'local-set!) obj i val) val)
-		 'let-ref            (lambda (obj i) (#_vector-ref (obj 'v) i))           ; these are the implicit cases
-		 'let-set!           (lambda (obj i val) ((obj 'local-set!) obj i val) val)
-		 'length             (lambda (obj) (#_vector-length (obj 'v)))
-		 'vector-length      (lambda (obj) (#_vector-length (obj 'v)))
-		 'map                (lambda (f obj) (map f (obj 'v)))
-		 'for-each           (lambda (f obj) (for-each f (obj 'v)))
-		 'vector->list       (lambda (obj) (#_vector->list (obj 'v)))
-		 'make-shared-vector (lambda* (obj dim (off 0)) (#_make-shared-vector (obj 'v) dim off))
-		 'vector-append      (lambda (obj . vs) (apply #_vector-append (obj 'v) vs))
-		 'vector-fill!       (lambda* (obj val (start 0) end) (#_vector-fill! (obj 'v) val start (or end (#_vector-length (obj 'v)))))
-		 'fill!              (lambda (obj val) (#_fill! (obj 'v) val))
-		 'reverse            (lambda (obj) (#_reverse (obj 'v)))
-		 'sort!              (lambda (obj f) (#_sort! (obj 'v) f))
-		 'object->string     (lambda* (obj (w #t)) (#_object->string (obj 'v) w))
-		 'vector-dimensions  (lambda (obj) (#_vector-dimensions (obj 'v)))
-		 'copy               (lambda* (src dest . args)
-				       ;; copy by itself does not make a new vector
-				       ;; s7 closes obj during copy evaluation to avoid an infinite recursion
-				       (if dest
-					   (apply copy (obj 'v) dest args) ; should this check dest to decide what to copy?
-					   (let ((nobj (copy src)))
-					     (set! (nobj 'v) (copy (src 'v)))
-					     nobj)))))))
+  (let ()
+    (require mockery.scm)
+    (define make-mock-vector (*mock-vector* 'make-mock-vector))
 
-    (define* (make-mock-vector len (init #<unspecified>))
-      (openlet (sublet mock-vector-class 'v (make-vector len init))))
-    
     (define (reactive-vector-1 e . args)
       ;; set up accessors for any element that has an expression as its initial value
       ;; if any element depends on some other element, return a mock-vector with setter fixed up
@@ -1398,32 +1367,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	     (format #f (if (bytevector? val) "#u8(~{~D~| ~})" "\"~{~A~|~}\"") val))
 	    (else                
 	     (format #f "(~{~A~| ~})" val)))))
-
-(define (mock-list seq)
-  (openlet
-   (inlet
-    'pair? (lambda (obj) #t)
-    'value seq
-    'member (lambda* (a b (c equal?))
-	      (let* ((v (b 'value))
-		     (len (length v)))
-		(call-with-exit
-		 (lambda (return)
-		   (do ((i 0 (+ i 1)))
-		       ((= i len) #f)
-		     (if (c a (v i))
-			 (return (subsequence v i)))))))))))
-
-
-(define (make-method f accessor)
-  (lambda args
-    (if (let? (car args)) 
-	(apply f (accessor (car args)) (cdr args))
-	(apply f (car args) (accessor (cadr args)) (cddr args)))))
-
-(define (make-object . args)
-  (openlet
-   (apply inlet args)))
 
 
 ;;; ----------------

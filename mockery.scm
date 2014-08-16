@@ -11,6 +11,10 @@
 	(apply f (accessor (car args)) (cdr args))
 	(apply f (car args) (accessor (cadr args)) (cddr args)))))
 
+(define (make-object . args)
+  (openlet
+   (apply inlet args)))
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -34,6 +38,7 @@
 		 'fill!              (lambda (obj val) (#_fill! (obj 'v) val))
 		 'reverse            (lambda (obj) (#_reverse (obj 'v)))
 		 'sort!              (lambda (obj f) (#_sort! (obj 'v) f))
+		 'arity              (lambda (obj) (#_arity (obj 'v)))
 		 'object->string     (lambda* (obj (w #t)) "#<mock-vector-class>")
 		 'vector-dimensions  (lambda (obj) (#_vector-dimensions (obj 'v)))
 		 'copy               (lambda* (src dest . args)
@@ -113,6 +118,7 @@
 		 'fill!              (lambda (obj val)      (#_fill! (obj 'mock-hash-table-table) val))
 		 'reverse            (lambda (obj)          (#_reverse (obj 'mock-hash-table-table)))
 		 'object->string     (lambda* (obj (w #t))  "#<mock-hash-table-class>")
+		 'arity              (lambda (obj)          (#_arity (obj 'mock-hash-table-table)))
 		 'copy               (lambda* (src dest . args)
 				       (if (and dest (not (let? dest)))
 					   (apply copy (obj 'mock-hash-table-table) dest args)
@@ -192,6 +198,7 @@
 		 'fill!                  (lambda (obj val) (#_fill! (obj 's) val))
 		 'reverse                (lambda (obj) (#_reverse (obj 's)))
 		 'object->string         (lambda* (obj (w #t)) "#<mock-string-class>")
+		 'arity                  (lambda (obj) (#_arity (obj 's)))
 		 'copy                   (lambda* (obj . args) (apply #_copy (obj 's) args))
 		 'string-copy            (lambda* (obj) (#_string-copy (obj 's)))
 		 'string=?               (make-method #_string=? (lambda (obj) (obj 's)))
@@ -294,7 +301,8 @@
 		 'char-position      (lambda (obj str) (#_char-position (obj 'c) str))
 		 'write-char         (lambda (obj . args) (apply #_write-char (obj 'c) args))
 		 'string             (make-method #_string (lambda (obj) (obj 'c)))
-		 'object->string     (lambda (obj) "#<mock-character-class>")
+		 'object->string     (lambda (obj . args) "#<mock-character-class>")
+		 'arity              (lambda (obj) (#_arity (obj 'c)))
 		 'copy               (lambda (obj . args) (obj 'c))))))
 
     (define (mock-char c) 
@@ -322,7 +330,8 @@
 		 ;;   this also affects others above -- char case of string-set! for example
 		 ;; these are (nearly) all fake -- need actual code and tests and examples ...
 
-		 'object->string   (lambda (obj . args) (apply #_object->string (obj 'x) args))
+		 'object->string   (lambda (obj . args) "#<mock-number-class>")
+		 'arity            (lambda (obj) (#_arity (obj 'x)))
 		 'copy             (lambda (obj) (obj 'x))
 		 'real-part        (lambda (obj) (#_real-part (obj 'x)))
 		 'imag-part        (lambda (obj) (#_imag-part (obj 'x)))
@@ -409,12 +418,119 @@
 	   (outlet-member obj mock-number-class)))
 
     (curlet)))
-      
+
 
 
 ;;; --------------------------------------------------------------------------------
-;;; mock-list
-;;; mock-symbol mock-keyword
-;;; mock-port
-;;; mock-boolean? 
-;;; mock-lambda mock-macro mock-continuation
+
+(define *mock-pair*
+  (let ((mock-pair-class
+	 (openlet
+	  (inlet 'pair?            (lambda (obj) #t)
+		 'pair-line-number (lambda (obj) (#_pair-line-number (obj 'p)))
+		 'list->string     (lambda (obj) (#_list->string (obj 'p)))
+		 'object->string   (lambda (obj . arg) "#<mock-pair-class>")
+		 'list?            (lambda (obj) (#_list? (obj 'p)))
+		 'car              (lambda (obj) (#_car (obj 'p)))
+		 'cdr              (lambda (obj) (#_cdr (obj 'p)))
+		 'set-car!         (lambda (obj val) (#_set-car! (obj 'p) val))
+		 'set-cdr!         (lambda (obj val) (#_set-cdr! (obj 'p) val))
+		 'caar             (lambda (obj) (#_caar (obj 'p)))
+		 'cadr             (lambda (obj) (#_cadr (obj 'p)))
+		 'cdar             (lambda (obj) (#_cdar (obj 'p)))
+		 'cddr             (lambda (obj) (#_cddr (obj 'p)))
+		 'caaar            (lambda (obj) (#_caaar (obj 'p)))
+		 'caadr            (lambda (obj) (#_caadr (obj 'p)))
+		 'cadar            (lambda (obj) (#_cadar (obj 'p)))
+		 'cdaar            (lambda (obj) (#_cdaar (obj 'p)))
+		 'caddr            (lambda (obj) (#_caddr (obj 'p)))
+		 'cdddr            (lambda (obj) (#_cdddr (obj 'p)))
+		 'cdadr            (lambda (obj) (#_cdadr (obj 'p)))
+		 'cddar            (lambda (obj) (#_cddar (obj 'p)))
+		 'caaaar           (lambda (obj) (#_caaaar (obj 'p)))
+		 'caaadr           (lambda (obj) (#_caaadr (obj 'p)))
+		 'caadar           (lambda (obj) (#_caadar (obj 'p)))
+		 'cadaar           (lambda (obj) (#_cadaar (obj 'p)))
+		 'caaddr           (lambda (obj) (#_caaddr (obj 'p)))
+		 'cadddr           (lambda (obj) (#_cadddr (obj 'p)))
+		 'cadadr           (lambda (obj) (#_cadadr (obj 'p)))
+		 'caddar           (lambda (obj) (#_caddar (obj 'p)))
+		 'cdaaar           (lambda (obj) (#_cdaaar (obj 'p)))
+		 'cdaadr           (lambda (obj) (#_cdaadr (obj 'p)))
+		 'cdadar           (lambda (obj) (#_cdadar (obj 'p)))
+		 'cddaar           (lambda (obj) (#_cddaar (obj 'p)))
+		 'cdaddr           (lambda (obj) (#_cdaddr (obj 'p)))
+		 'cddddr           (lambda (obj) (#_cddddr (obj 'p)))
+		 'cddadr           (lambda (obj) (#_cddadr (obj 'p)))
+		 'cdddar           (lambda (obj) (#_cdddar (obj 'p)))
+		 'assq             (lambda (val obj) (#_assq val (obj 'p)))
+		 'assv             (lambda (val obj) (#_assv val (obj 'p)))
+		 'assoc            (lambda (val obj . args) (apply #_assoc val (obj 'p) args))
+		 'memq             (lambda (val obj) (#_memq val (obj 'p)))
+		 'memv             (lambda (val obj) (#_memv val (obj 'p)))
+		 'member           (lambda (val obj . args) (apply #_member val (obj 'p) args))
+		 'append           (make-method #_append (lambda (obj) (obj 'p)))
+		 'list-ref         (lambda (obj ind) (#_list-ref (obj 'p) ind))
+		 'list-set!        (lambda (obj ind) (#_list-set! (obj 'p) ind val))
+		 'list-tail        (lambda (obj . args) (apply #_list-tail (obj 'p) args))
+		 'length           (lambda (obj) (#_length (obj 'p)))
+		 'arity            (lambda (obj) (#_arity (obj 'p)))
+		 'copy             (lambda (obj . args) (apply #_copy (obj 'p) args))
+		 'fill!            (lambda (obj val) (#_fill! (obj 'p) val))
+		 'reverse          (lambda (obj) (#_reverse (obj 'p)))
+		 'reverse!         (lambda (obj) (#_reverse! (obj 'p)))
+		 'sort!            (lambda (obj f) (#_sort! (obj 'p) f))
+		 'list->vector     (lambda (obj) (#_list->vector (obj 'p)))
+		 'eval             (lambda (obj) (#_eval (obj 'p)))
+		 'for-each         (lambda (f obj) (#_for-each f (obj 'p)))
+		 'map              (lambda (f obj) (#_map f (obj 'p)))
+		 ))))
+
+    (define (mock-pair p)
+      (openlet
+       (sublet (*mock-pair* 'mock-pair-class)
+	 'p p
+	 'object->string (lambda (obj . args) (apply #_object->string (obj 'p) args)))))
+    
+    (define (mock-pair? obj)
+      (and (openlet? obj)
+	   (outlet-member obj mock-pair-class)))
+
+    (curlet)))
+
+
+;;; --------------------------------------------------------------------------------
+
+(define *mock-symbol*
+  (let ((mock-symbol-class
+	 (openlet
+	  (inlet 'symbol?               (lambda (obj) #t)
+		 'gensym?               (lambda (obj) (#_gensym? (obj 's)))
+		 'symbol->string        (lambda (obj) (#_symbol->string (obj 's)))
+		 'symbol->value         (lambda (obj) (#_symbol->value (obj 's)))
+		 'symbol->dynamic-value (lambda (obj) (#_symbol->dynamic-value (obj 's)))
+		 'symbol-access         (lambda (obj) (#_symbol-access (obj 's)))
+		 'provided?             (lambda (obj) (#_provided? (obj 's)))
+		 'provide               (lambda (obj) (#_provide (obj 's)))
+		 'defined?              (lambda (obj) (#_defined? (obj 's)))
+		 'symbol->keyword       (lambda (obj) (#_symbol->keyword (obj 's)))
+		 'keyword?              (lambda (obj) (#_keyword? (obj 's)))
+		 'keyword->symbol       (lambda (obj) (#_keyword->symbol (obj 's)))
+		 ))))
+
+    (define (mock-symbol s)
+      (openlet
+       (sublet (*mock-symbol* 'mock-symbol-class)
+	 's s
+	 'object->string (lambda (obj . args) (apply #_object->string (obj 's) args)))))
+    
+    (define (mock-symbol? obj)
+      (and (openlet? obj)
+	   (outlet-member obj mock-symbol-class)))
+
+    (curlet)))
+
+
+;;; --------------------------------------------------------------------------------
+;;; mock-port mock-lambda
+

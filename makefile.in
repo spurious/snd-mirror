@@ -144,19 +144,19 @@ allclean:
 	rm -f snd sndplay sndinfo
 
 sndplay: $(SNDLIB_HEADERS) $(S7_HEADERS)
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 headers.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 io.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 audio.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sound.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sndplay.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 headers.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 io.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 audio.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 sound.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 sndplay.c
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndplay.o -o sndplay $(JACK_LIBS) $(AUDIO_LIB) $(LIBS)
 
 sndinfo: $(SNDLIB_HEADERS) $(S7_HEADERS)
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 headers.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 io.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 audio.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sound.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sndinfo.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 headers.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 io.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 audio.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 sound.c
+	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 -DHAVE_EXTENSION_LANGUAGE=0 sndinfo.c
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(JACK_LIBS) $(AUDIO_LIB) $(LIBS)
 
 install: snd
