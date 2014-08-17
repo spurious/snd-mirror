@@ -1438,7 +1438,7 @@ void xen_repl(int argc, char **argv)
 	{
 	  char *str;
 	  str = line_read;
-	  while ((str) && (isspace(str[0]))) str++;
+	  while ((str) && (isspace((int)(str[0])))) str++;
 	  if (*str)
 	    {
 	      s7_pointer result;

@@ -69,7 +69,7 @@
     (curlet)))
 
 #|
-;; vector that grows to accomodate vector-set!
+;; vector that grows to accommodate vector-set!
 
 (define stretchable-vector-class
   (let ((local-ref (lambda (obj index)

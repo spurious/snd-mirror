@@ -1750,6 +1750,14 @@
 }
 
 {
+   s71a1
+   Memcheck:Leak
+   fun:malloc
+   fun:s7_init
+   fun:*
+}
+
+{
    s71ab
    Memcheck:Leak
    fun:calloc
@@ -1778,6 +1786,22 @@
    Memcheck:Leak
    fun:calloc
    fun:make_permanent_string
+   fun:*
+}
+
+{
+   s71abcde
+   Memcheck:Leak
+   fun:malloc
+   fun:make_permanent_string
+   fun:*
+}
+
+{
+   s71abcde1
+   Memcheck:Leak
+   fun:malloc
+   fun:s7_make_permanent_string
    fun:*
 }
 
@@ -1894,7 +1918,7 @@
    fun:malloc
    fun:copy_string_with_len
    fun:copy_string
-   fun:s7_make_procedure_with_setter
+   fun:s7_dilambda
    fun:*
 }
 
@@ -1902,7 +1926,7 @@
    pws-2
    Memcheck:Leak
    fun:calloc
-   fun:s7_make_procedure_with_setter
+   fun:s7_dilambda
    fun:*
 }
 

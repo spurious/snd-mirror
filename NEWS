@@ -1,20 +1,49 @@
-Snd 14.8:
+Snd 14.9:
 
-s7: symbol-table function now returns a list of all known symbols.
-    require added
-    removed unoptimize and reader-expand
-    Display macro in stuff.scm
-    added ~< expr ~> in format as a sort of "here-string" escape -- any s7 code in
-      the brackets is evaluated in the current environment, and the result
-      is inserted at that point in the output string (using object->string if
-      the result is not a string). This is similar to {var} or $var in various
-      shell languages. 
-    also added ~| as a smarter ~^
-    for all output functions, #f as port means no output (/dev/null in effect)
+s7: symbol-access is now just the set accessor function (not a list), and it is
+      local to an environment.  See reactive-let et al in stuff.scm.
 
-Snd: the numbering for dialog-widgets has changed -- the unused entries were removed.
+    define and friends now return the value, not the symbol (like set!).
 
-checked: sbcl 1.2.1, gtk 3.13.3
+    added mockery.scm.
 
-Thanks!: Greg Santucci
+    added hash-table* (unconsed args): 
+        (hash-table '(a . 1) '(b . 2)) 
+        (hash-table* 'a 1 'b 2)
 
+    "let" replaces the "environment" terms
+    make-procedure-with-setter is now dilambda
+
+        new name       old name
+
+        let?         environment?
+        rootlet      global-environment
+        unlet        initial-environment
+        with-let     with-environment
+        outlet       outer-environment
+        sublet       augment-environment
+        varlet       augment-environment!
+        curlet       current-environment
+        owlet        error-environment
+        funclet      procedure-environment
+        let->list    environment->list
+        openlet      open-environment
+        openlet?     open-environment?
+        coverlet     close-environment
+        let-ref      environment-ref
+        let-set!     environment-set!
+        inlet        environment and environment*
+
+        dilambda     make-procedure-with-setter
+        dilambda?    procedure-with-setter?
+
+
+Snd: edit-position can't be a function
+     mus-sound-path and *mus-sound-path*
+     *default-output-data-format* is now *default-output-sample-type*
+     default-output-data-format is replaced by default-output-sample-type
+     similarly, data-format, mus-sound-data-format, mus-data-format->string and mus-data-format-name
+
+checked: gtk 3.13.4|5|6, FreeBSD 10, sbcl 1.2.2.
+
+Thanks!: Francis Derive, Anders Vinjar

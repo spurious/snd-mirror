@@ -63,17 +63,20 @@
 #endif
 
 #ifndef S_setB
+  #if (!HAVE_EXTENSION_LANGUAGE)
+    #define S_setB "set-"
+  #else
   #if HAVE_RUBY
     #define S_setB "set_"
-  #endif
+  #else
   #if HAVE_SCHEME
     #define S_setB "set! "
-  #endif
+  #else
   #if HAVE_FORTH
     #define S_setB "set-"
   #endif
-  #if (!HAVE_EXTENSION_LANGUAGE)
-    #define S_setB "set-"
+  #endif
+  #endif
   #endif
 #endif
 

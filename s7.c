@@ -10372,6 +10372,21 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
 }
 
 
+static bool is_rational_via_method(s7_scheme *sc, s7_pointer p)
+{
+  if (s7_is_rational(p))
+    return(true);
+  if (has_methods(p))
+    {
+      s7_pointer f;
+      f = find_method(sc, find_environment(sc, p), sc->IS_RATIONAL);
+      if (f != sc->UNDEFINED)
+	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
+    }
+  return(false);
+}
+
+
 #if (!WITH_GMP)
 static s7_pointer abs_direct;
 static s7_pointer g_abs_direct(s7_scheme *sc, s7_pointer args)
@@ -11765,21 +11780,6 @@ static s7_Int c_lcm(s7_Int a, s7_Int b)
   if (a < 0) a = -a;
   if (b < 0) b = -b;
   return((a / c_gcd(a, b)) * b);
-}
-
-
-static bool is_rational_via_method(s7_scheme *sc, s7_pointer p)
-{
-  if (is_rational(p))
-    return(true);
-  if (has_methods(p))
-    {
-      s7_pointer f;
-      f = find_method(sc, find_environment(sc, p), sc->IS_RATIONAL);
-      if (f != sc->UNDEFINED)
-	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
-    }
-  return(false);
 }
 
 
@@ -15204,7 +15204,7 @@ static s7_pointer g_divide_s_temp(s7_scheme *sc, s7_pointer args)
 
 static bool is_real_via_method(s7_scheme *sc, s7_pointer p)
 {
-  if (is_real(p))
+  if (s7_is_real(p))
     return(true);
   if (has_methods(p))
     {
@@ -15646,7 +15646,7 @@ static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
 
 static bool is_number_via_method(s7_scheme *sc, s7_pointer p)
 {
-  if (is_number(p))
+  if (s7_is_number(p))
     return(true);
   if (has_methods(p))
     {
@@ -18478,6 +18478,14 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 
     case T_COMPLEX:
       return(s7_make_complex(sc, real_part(num) * next_random(r), imag_part(num) * next_random(r)));
+
+#if WITH_GMP
+    case T_BIG_INTEGER:
+    case T_BIG_RATIO:
+    case T_BIG_REAL:
+    case T_BIG_COMPLEX:
+      return(big_random(sc, args));
+#endif
 
     default:
       check_method(sc, num, sc->RANDOM, args);
@@ -65081,6 +65089,52 @@ static s7_pointer g_is_bignum(s7_scheme *sc, s7_pointer args)
 }
 
 
+static int result_type_via_method(s7_scheme *sc, int result_type, s7_pointer p)
+{
+  switch (type(p))
+    {
+    case T_INTEGER:
+    case T_RATIO:
+    case T_REAL:
+    case T_COMPLEX:
+      return(normal_type_to_result_type(result_type, type(p)));
+
+    case T_BIG_INTEGER:
+    case T_BIG_RATIO:
+    case T_BIG_REAL:
+    case T_BIG_COMPLEX:
+      return(big_type_to_result_type(result_type, type(p)));
+
+    default:
+      {
+	s7_pointer f;
+	f = find_method(sc, find_environment(sc, p), sc->IS_INTEGER);
+	if ((f != sc->UNDEFINED) &&
+	    (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
+	  return(big_type_to_result_type(result_type, T_BIG_INTEGER));
+
+	f = find_method(sc, find_environment(sc, p), sc->IS_RATIONAL);
+	if ((f != sc->UNDEFINED) &&
+	    (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
+	  return(big_type_to_result_type(result_type, T_BIG_RATIO));
+
+	f = find_method(sc, find_environment(sc, p), sc->IS_REAL);
+	if ((f != sc->UNDEFINED) &&
+	    (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
+	  return(big_type_to_result_type(result_type, T_BIG_REAL));
+	
+	/* might be a number, but not complex (quaternion) */
+	f = find_method(sc, find_environment(sc, p), sc->IS_COMPLEX);
+	if ((f != sc->UNDEFINED) &&
+	    (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
+	  return(big_type_to_result_type(result_type, T_BIG_COMPLEX));
+      }
+      break;
+    }
+  return(-1);
+}
+      
+
 static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
 {
   int result_type = T_INTEGER;
@@ -65096,26 +65150,27 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
-      if (!is_number(p))
-	{
-	  if (!is_big_number(p))
-	    {
-	      check_method(sc, p, sc->ADD, args);
-	      return(wrong_type_argument_n_with_type(sc, sc->ADD, position_of(x, args), p, A_NUMBER));
-	    }
-	  else result_type = big_type_to_result_type(result_type, type(p));
-	}
-      else result_type = normal_type_to_result_type(result_type, type(p));
+      if (!is_number_via_method(sc, p))
+	return(wrong_type_argument_n_with_type(sc, sc->ADD, position_of(x, args), p, A_NUMBER));
+      result_type = result_type_via_method(sc, result_type, p);
+      if (result_type < 0)
+	return(g_add(sc, args));
     }
 
   if (result_type < T_BIG_INTEGER)
     return(g_add(sc, args));
+
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->ADD, args);
 
   result = copy_and_promote_number(sc, result_type, car(args));
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
       s7_pointer arg;
+      if (!s7_is_number(car(x)))
+	check_method(sc, car(x), sc->ADD, cons(sc, result, x));
+
       arg = promote_number(sc, result_type, car(x));
 
       switch (result_type)
@@ -65216,26 +65271,27 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
-      if (!is_number(p))
-	{
-	  if (!is_big_number(p))
-	    {
-	      check_method(sc, p, sc->MINUS, args);
-	      return(wrong_type_argument_n_with_type(sc, sc->MINUS, position_of(x, args), p, A_NUMBER));
-	    }
-	  else result_type = big_type_to_result_type(result_type, type(p));
-	}
-      else result_type = normal_type_to_result_type(result_type, type(p));
+      if (!is_number_via_method(sc, p))
+	return(wrong_type_argument_n_with_type(sc, sc->MINUS, position_of(x, args), p, A_NUMBER));
+      result_type = result_type_via_method(sc, result_type, p);
+      if (result_type < 0)
+	return(g_subtract(sc, args));
     }
 
   if (result_type < T_BIG_INTEGER)
     return(g_subtract(sc, args));
+
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->MINUS, args);
 
   result = copy_and_promote_number(sc, result_type, car(args));
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
       s7_pointer arg;
+      if (!s7_is_number(car(x)))
+	check_method(sc, car(x), sc->MINUS, cons(sc, result, x));
+
       arg = promote_number(sc, result_type, car(x));
 
       switch (result_type)
@@ -65285,26 +65341,27 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
-      if (!is_number(p))
-	{
-	  if (!is_big_number(p))
-	    {
-	      check_method(sc, p, sc->MULTIPLY, args);
-	      return(wrong_type_argument_n_with_type(sc, sc->MULTIPLY, position_of(x, args), p, A_NUMBER));
-	    }
-	  else result_type = big_type_to_result_type(result_type, type(p));
-	}
-      else result_type = normal_type_to_result_type(result_type, type(p));
+      if (!is_number_via_method(sc, p))
+	return(wrong_type_argument_n_with_type(sc, sc->MULTIPLY, position_of(x, args), p, A_NUMBER));
+      result_type = result_type_via_method(sc, result_type, p);
+      if (result_type < 0)
+	return(g_multiply(sc, args));
     }
 
   if (result_type < T_BIG_INTEGER)
     return(g_multiply(sc, args));
+
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->MULTIPLY, args);
 
   result = copy_and_promote_number(sc, result_type, car(args));
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
       s7_pointer arg;
+      if (!s7_is_number(car(x)))
+	check_method(sc, car(x), sc->MULTIPLY, cons(sc, result, x));
+
       arg = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
@@ -65481,16 +65538,12 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
       /* if divisor is 0, gmp throws an exception and halts s7!
        *   I don't think we can trap gmp errors, and the abort is built into the library code.
        */
-      if (!is_number(p))
-	{
-	  if (!is_big_number(p))
-	    {
-	      check_method(sc, p, sc->DIVIDE, args);
-	      return(wrong_type_argument_n_with_type(sc, sc->DIVIDE, position_of(x, args), p, A_NUMBER));
-	    }
-	  else result_type = big_type_to_result_type(result_type, type(p));
-	}
-      else result_type = normal_type_to_result_type(result_type, type(p));
+      if (!is_number_via_method(sc, p))
+	return(wrong_type_argument_n_with_type(sc, sc->DIVIDE, position_of(x, args), p, A_NUMBER));
+      result_type = result_type_via_method(sc, result_type, p);
+      if (result_type < 0)
+	return(g_divide(sc, args));
+
       if ((x != args) &&
 	  (s7_is_zero(p)))
 	return(division_by_zero_error(sc, sc->DIVIDE, args));
@@ -65499,11 +65552,27 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
   if (result_type < T_BIG_INTEGER)
     return(g_divide(sc, args));
 
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->DIVIDE, args);
+
+  if (!s7_is_number(cadr(args)))
+    check_method(sc, cadr(args), sc->DIVIDE, args);
+
   divisor = copy_and_promote_number(sc, result_type, cadr(args));
 
   for (x = cddr(args); is_not_null(x); x = cdr(x)) 
     {
       s7_pointer arg;
+      if (!s7_is_number(car(x)))
+	{
+	  s7_pointer func;
+	  if ((has_methods(car(x))) && ((func = find_method(sc, find_environment(sc, car(x)), sc->MULTIPLY)) != sc->UNDEFINED))
+	    {
+	      divisor = s7_apply_function(sc, func, cons(sc, divisor, x));
+	      break;
+	    }
+	}
+
       arg = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
@@ -66868,20 +66937,30 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 }
 
 
+static bool is_integer_via_method(s7_scheme *sc, s7_pointer p)
+{
+  if (s7_is_integer(p))
+    return(true);
+  if (has_methods(p))
+    {
+      s7_pointer f;
+      f = find_method(sc, find_environment(sc, p), sc->IS_INTEGER);
+      if (f != sc->UNDEFINED)
+	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
+    }
+  return(false);
+}
+
 static s7_pointer big_bits(s7_scheme *sc, s7_pointer args, s7_pointer sym, int start, s7_function g_bits, 
 			   void (*mpz_bits)(mpz_ptr, mpz_srcptr, mpz_srcptr))
 {
-  s7_pointer x;
+  s7_pointer x, lst;
   bool use_bigs = false;
   for (x = args; is_not_null(x); x = cdr(x))
     {
-      if (!s7_is_integer(car(x)))
-	{
-	  check_method(sc, car(x), sym, args);
-	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_INTEGER));  
-	}
-      if (type(car(x)) == T_BIG_INTEGER)
-	use_bigs = true;
+      if (!is_integer_via_method(sc, car(x)))
+	return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_INTEGER));  
+      if (!use_bigs) use_bigs = (type(car(x)) != T_INTEGER);
     }
   if (use_bigs)
     {
@@ -66890,7 +66969,28 @@ static s7_pointer big_bits(s7_scheme *sc, s7_pointer args, s7_pointer sym, int s
       if (start == -1)
 	mpz_sub_ui(n, n, 1);
       for (x = args; is_not_null(x); x = cdr(x))
-	mpz_bits(n, n, big_integer(promote_number(sc, T_BIG_INTEGER, car(x))));
+	{
+	  s7_pointer i;
+	  i = car(x);
+	  switch (type(i))
+	    {
+	    case T_BIG_INTEGER:
+	      mpz_bits(n, n, big_integer(i));
+	      break;
+
+	    case T_INTEGER:
+	      mpz_bits(n, n, big_integer(s7_Int_to_big_integer(sc, integer(i))));
+	      break;
+
+	    default:
+	      /* we know it's an integer of some sort, but what about the method */
+	      lst = cons(sc, mpz_to_big_integer(sc, n), x);
+	      mpz_clear(n);
+	      check_method(sc, i, sym, lst);
+	      return(wrong_type_argument_n(sc, sym, position_of(x, args), i, T_INTEGER));  
+	      break;
+	    }
+	}
       x = mpz_to_big_integer(sc, n);
       mpz_clear(n);
       return(x);
@@ -67510,11 +67610,9 @@ static int big_real_scan_args(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(arg);
-      if (!s7_is_real(p))
+      if (!is_real_via_method(sc, p))
 	return(-i);
-      if (is_big_number(p))
-	result_type = big_type_to_result_type(result_type, type(p));
-      else result_type = normal_type_to_result_type(result_type, type(p));
+      result_type = result_type_via_method(sc, result_type, p);
     }
   return(result_type);
 }
@@ -67527,17 +67625,21 @@ static s7_pointer big_max(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    {
-      check_method(sc, car(args), sc->MAX, args);
-      return(wrong_type_argument_n(sc, sc->MAX, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
-    }
+    return(wrong_type_argument_n(sc, sc->MAX, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
+
   if (result_type < T_BIG_INTEGER)
     return(g_max(sc, args));
+
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->MAX, args);
 
   result = promote_number(sc, result_type, car(args));
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
+      if (!s7_is_number(car(x)))
+	check_method(sc, car(x), sc->MAX, cons(sc, result, x));
+
       arg = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
@@ -67580,17 +67682,21 @@ static s7_pointer big_min(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    {
-      check_method(sc, car(args), sc->MIN, args);
-      return(wrong_type_argument_n(sc, sc->MIN, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
-    }
+    return(wrong_type_argument_n(sc, sc->MIN, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
+
   if (result_type < T_BIG_INTEGER)
     return(g_min(sc, args));
+
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->MIN, args);
 
   result = promote_number(sc, result_type, car(args));
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
+      if (!s7_is_number(car(x)))
+	check_method(sc, car(x), sc->MIN, cons(sc, result, x));
+
       arg = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
@@ -67634,17 +67740,22 @@ static s7_pointer big_less(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    {
-      check_method(sc, car(args), sc->LT, args);
-      return(wrong_type_argument_n(sc, sc->LT, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
-    }
+    return(wrong_type_argument_n(sc, sc->LT, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
+
   /* don't try to use g_less here */
   if (result_type < T_BIG_INTEGER)
     result_type += 4;
+
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->LT, args);
+
   previous = promote_number(sc, result_type, car(args));
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
+      if (!s7_is_number(car(x)))
+	check_method(sc, car(x), sc->LT, cons(sc, previous, x));
+
       current = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
@@ -67674,16 +67785,21 @@ static s7_pointer big_less_or_equal(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    {
-      check_method(sc, car(args), sc->LEQ, args);
-      return(wrong_type_argument_n(sc, sc->LEQ, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
-    }
+    return(wrong_type_argument_n(sc, sc->LEQ, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
+
   if (result_type < T_BIG_INTEGER)
     result_type += 4;
+
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->LEQ, args);
+
   previous = promote_number(sc, result_type, car(args));
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
+      if (!s7_is_number(car(x)))
+	check_method(sc, car(x), sc->LEQ, cons(sc, previous, x));
+
       current = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
@@ -67713,16 +67829,20 @@ static s7_pointer big_greater(s7_scheme *sc, s7_pointer args)
 
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    {
-      check_method(sc, car(args), sc->GT, args);
-      return(wrong_type_argument_n(sc, sc->GT, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
-    }
+    return(wrong_type_argument_n(sc, sc->GT, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
+
   if (result_type < T_BIG_INTEGER)
     result_type += 4;
+
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->GT, args);
+
   previous = promote_number(sc, result_type, car(args));
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
+      if (!s7_is_number(car(x)))
+	check_method(sc, car(x), sc->GT, cons(sc, previous, x));
       current = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
@@ -67752,16 +67872,19 @@ static s7_pointer big_greater_or_equal(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    {
-      check_method(sc, car(args), sc->GEQ, args);
-      return(wrong_type_argument_n(sc, sc->GEQ, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
-    }
+    return(wrong_type_argument_n(sc, sc->GEQ, -result_type, s7_list_ref(sc, args, -1 - result_type), T_REAL));
+
   if (result_type < T_BIG_INTEGER)
     result_type += 4;
+
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->GEQ, args);
   previous = promote_number(sc, result_type, car(args));
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
+      if (!s7_is_number(car(x)))
+	check_method(sc, car(x), sc->GEQ, cons(sc, previous, x));
       current = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
@@ -67792,44 +67915,40 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
-      if (!is_number(p))
-	{
-	  if (!is_big_number(p))
-	    {
-	      check_method(sc, p, sc->EQ, args);
-	      return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(x, args), p, A_NUMBER));
-	    }
-	  else result_type = big_type_to_result_type(result_type, type(p));
-	}
-      else 
-	{
-	  switch (type(p))
-	    {
-	    case T_INTEGER:
-	    case T_RATIO:
-	      break;
+      if (!is_number_via_method(sc, p))
+	return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(x, args), p, A_NUMBER));
 
-	    case T_REAL:
-	      if (is_NaN(real(p)))  /* (= (bignum "3") 1/0) */
-		return(sc->F);
+      result_type = result_type_via_method(sc, result_type, p);
+      if (result_type < 0)
+	return(g_add(sc, args));
 
-	    default:
+      switch (type(p))
+	{
+	case T_REAL:
+	  if (is_NaN(real(p)))  /* (= (bignum "3") 1/0) */
+	    return(sc->F);
+
+	case T_COMPLEX:
 	      if ((is_NaN(real_part(p))) ||
 		  (is_NaN(imag_part(p))))
 		return(sc->F);
-	    }
-	  result_type = normal_type_to_result_type(result_type, type(p));
 	}
     }
 
   if (result_type < T_BIG_INTEGER)
     return(g_equal(sc, args));
 
+  if (!s7_is_number(car(args)))
+    check_method(sc, car(args), sc->EQ, args);
+
   result = promote_number(sc, result_type, car(args));
 
   for (y = cdr(args); is_not_null(y); y = cdr(y)) 
     {
       s7_pointer arg;
+      if (!s7_is_number(car(y)))
+	check_method(sc, car(y), sc->EQ, cons(sc, result, y));
+
       arg = promote_number(sc, result_type, car(y));
       switch (result_type)
 	{
@@ -67858,15 +67977,15 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 {
   #define H_gcd "(gcd ...) returns the greatest common divisor of its rational arguments"
   bool rats = false;
-  s7_pointer x;
+  s7_pointer x, lst;
 
   for (x = args; is_not_null(x); x = cdr(x)) 
-    if (!s7_is_rational(car(x)))
-      {
-	check_method(sc, car(x), sc->GCD, args);
+    {
+      if (!is_rational_via_method(sc, car(x)))
 	return(wrong_type_argument_n_with_type(sc, sc->GCD, position_of(x, args), car(x), A_RATIONAL));
-      }
-    else rats = ((rats) || (!s7_is_integer(car(x))));
+      if (!rats)
+	rats = (!is_integer_via_method(sc, car(x)));
+    }
 
   if (is_null(cdr(args)))    /* (gcd -2305843009213693951/4611686018427387903) */
     return(big_abs(sc, args)); 
@@ -67877,6 +67996,13 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
       mpz_init(n);
       for (x = args; is_not_null(x); x = cdr(x)) 
 	{
+	  if (!s7_is_number(car(x)))
+	    {
+	      lst = cons(sc, mpz_to_big_integer(sc, n), x);
+	      mpz_clear(n);
+	      check_method(sc, car(x), sc->GCD, lst);
+	      return(wrong_type_argument_n(sc, sc->GCD, position_of(x, args), car(x), T_INTEGER));  
+	    }
 	  mpz_gcd(n, n, big_integer(promote_number(sc, T_BIG_INTEGER, car(x))));
 	  if (mpz_cmp_ui(n, 1) == 0)
 	    {
@@ -67893,12 +68019,27 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
     s7_pointer rat;
     mpq_t q;
     mpz_t n, d;
+
+    if (!s7_is_number(car(args)))
+      check_method(sc, car(args), sc->GCD, args);
     
     rat = promote_number(sc, T_BIG_RATIO, car(args));
     mpz_init_set(n, mpq_numref(big_ratio(rat)));
     mpz_init_set(d, mpq_denref(big_ratio(rat)));
     for (x = cdr(args); is_not_null(x); x = cdr(x))
       {
+	if (!s7_is_number(car(x)))
+	  {
+	    mpq_init(q);
+	    mpq_set_num(q, n);
+	    mpq_set_den(q, d);
+	    lst = cons(sc, mpq_to_big_ratio(sc, q), x);
+	    mpz_clear(n);
+	    mpz_clear(d);
+	    mpq_clear(q);
+	    check_method(sc, car(x), sc->GCD, lst);
+	    return(wrong_type_argument_n_with_type(sc, sc->GCD, position_of(x, args), car(x), A_RATIONAL));  
+	  }
 	rat = promote_number(sc, T_BIG_RATIO, car(x));
 	mpz_gcd(n, n, mpq_numref(big_ratio(rat)));
 	mpz_lcm(d, d, mpq_denref(big_ratio(rat)));
@@ -67927,16 +68068,16 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 {
   #define H_lcm "(lcm ...) returns the least common multiple of its rational arguments"
-  s7_pointer x;
+  s7_pointer x, lst;
   bool rats = false;
 
   for (x = args; is_not_null(x); x = cdr(x)) 
-    if (!s7_is_rational(car(x)))
-      {
-	check_method(sc, car(x), sc->LCM, args);
+    {
+      if (!is_rational_via_method(sc, car(x)))
 	return(wrong_type_argument_n_with_type(sc, sc->LCM, position_of(x, args), car(x), A_RATIONAL));
-      }
-    else rats = ((rats) || (!s7_is_integer(car(x))));
+      if (!rats)
+	rats = (!is_integer_via_method(sc, car(x)));
+    }
   
    if (is_null(cdr(args)))    /* (lcm -2305843009213693951/4611686018427387903) */
       return(big_abs(sc, args)); 
@@ -67948,6 +68089,13 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
       mpz_set_ui(n, 1);
       for (x = args; is_not_null(x); x = cdr(x)) 
 	{
+	  if (!s7_is_number(car(x)))
+	    {
+	      lst = cons(sc, mpz_to_big_integer(sc, n), x);
+	      mpz_clear(n);
+	      check_method(sc, car(x), sc->LCM, lst);
+	      return(wrong_type_argument_n(sc, sc->LCM, position_of(x, args), car(x), T_INTEGER));  
+	    }
 	  mpz_lcm(n, n, big_integer(promote_number(sc, T_BIG_INTEGER, car(x))));
 	  if (mpz_cmp_ui(n, 0) == 0)
 	    {
@@ -67965,6 +68113,9 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
     mpq_t q;
     mpz_t n, d;
     
+    if (!s7_is_number(car(args)))
+      check_method(sc, car(args), sc->LCM, args);
+
     rat = promote_number(sc, T_BIG_RATIO, car(args));
     mpz_init_set(n, mpq_numref(big_ratio(rat)));
     if (mpz_cmp_ui(n, 0) == 0)
@@ -67976,6 +68127,19 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
     mpz_init_set(d, mpq_denref(big_ratio(rat)));
     for (x = cdr(args); is_not_null(x); x = cdr(x))
       {
+	if (!s7_is_number(car(x)))
+	  {
+	    mpq_init(q);
+	    mpq_set_num(q, n);
+	    mpq_set_den(q, d);
+	    lst = cons(sc, mpq_to_big_ratio(sc, q), x);
+	    mpz_clear(n);
+	    mpz_clear(d);
+	    mpq_clear(q);
+	    check_method(sc, car(x), sc->LCM, lst);
+	    return(wrong_type_argument_n_with_type(sc, sc->GCD, position_of(x, args), car(x), A_RATIONAL));  
+	  }
+
 	rat = promote_number(sc, T_BIG_RATIO, car(x));
 	mpz_lcm(n, n, mpq_numref(big_ratio(rat)));
 	if (mpz_cmp_ui(n, 0) == 0)
@@ -70079,8 +70243,7 @@ int main(int argc, char **argv)
  *    ;cdr argument, #<let 'abs #<macro>>, is an environment but should be a pair
  *
  * mockery.scm:
- *   mock-#<unspecified>? -- this is a legal name, so is -#<...>- or -#(...) -> reactive vector constant!
- *   mock-file, mock-let? procedure? mock-lambda(*)?
+ *   mock-port|lambda
  *   mock-oscil?  also make tests in CLM of complex cases, mock-port/symbol?
  *   mock-eval -- every datum is a mock-*, then Display is internalized, tracing/stepping 
  *     need to shadow eq? and friends
@@ -70089,7 +70252,6 @@ int main(int argc, char **argv)
  *   also multidim mvects
  *   does mock vector-append need 2nd arg make-method support?
  * mchar string can't handle more than 2 args -- what is actually coming into make-method here? (and what about mock-string's string-append?)
- *   does this affect all the current make-method cases?
  *   string is expecting the method to handle all args: pass current str+args, and method string-append+c+apply args
  *   check string-append for multiple mcases
  * mhash gloomy case: is each copy independent (in not-exist-sym etc)?
@@ -70098,7 +70260,7 @@ int main(int argc, char **argv)
  * s7.html for symbol-macro via openlet
  *   (define ? (openlet (inlet 'object->string (lambda (obj . args) (apply #_object->string (owlet) args)))))
  * mlist: append is too weird (whether it is checked depends on whether it is last in the arg list)
- * and all mcases+gmp
+ * possible mocks: immutable-list, vector+member/magnitude/max/ *, gensym that prints [name] or whatever
  *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)

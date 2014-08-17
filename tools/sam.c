@@ -24,7 +24,7 @@
 			      :srate (srate snd) 
 			      :size (frames snd) 
 			      :header-type (header-type snd) 
-			      :data-format (data-format snd))))
+			      :sample-type (sample-type snd))))
       (map-channel (lambda (y) 
                      (+ (next-sample r0) (next-sample r3))) 
                    0 (frames snd) new-snd 0)
