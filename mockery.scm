@@ -420,6 +420,19 @@
     (curlet)))
 
 
+#|
+(define fuzzy-number
+  (let ((fuzz (lambda (fx)
+		(#_* fx (#_- 1.05 (#_random .1))))))
+    (lambda (fx)
+      (openlet 
+       (sublet 
+	   (*mock-number* 'mock-number-class)
+	 'let-ref-fallback (lambda (obj sym) (fuzz fx))
+	 'object->string (lambda (obj . args) (#_number->string (fuzz fx))))))))
+|#
+
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -469,19 +482,17 @@
 		 'memq             (lambda (val obj) (#_memq val (obj 'p)))
 		 'memv             (lambda (val obj) (#_memv val (obj 'p)))
 		 'member           (lambda (val obj . args) (apply #_member val (obj 'p) args))
-		 'append           (make-method #_append (lambda (obj) (obj 'p)))
 		 'list-ref         (lambda (obj ind) (#_list-ref (obj 'p) ind))
-		 'list-set!        (lambda (obj ind) (#_list-set! (obj 'p) ind val))
+		 'list-set!        (lambda (obj ind val) (#_list-set! (obj 'p) ind val))
 		 'list-tail        (lambda (obj . args) (apply #_list-tail (obj 'p) args))
 		 'length           (lambda (obj) (#_length (obj 'p)))
 		 'arity            (lambda (obj) (#_arity (obj 'p)))
 		 'copy             (lambda (obj . args) (apply #_copy (obj 'p) args))
 		 'fill!            (lambda (obj val) (#_fill! (obj 'p) val))
 		 'reverse          (lambda (obj) (#_reverse (obj 'p)))
-		 'reverse!         (lambda (obj) (#_reverse! (obj 'p)))
+		 'reverse!         (lambda (obj) (set! (obj 'p) (#_reverse (obj 'p))))
 		 'sort!            (lambda (obj f) (#_sort! (obj 'p) f))
 		 'list->vector     (lambda (obj) (#_list->vector (obj 'p)))
-		 'eval             (lambda (obj) (#_eval (obj 'p)))
 		 'for-each         (lambda (f obj) (#_for-each f (obj 'p)))
 		 'map              (lambda (f obj) (#_map f (obj 'p)))
 		 ))))
@@ -507,9 +518,9 @@
 	  (inlet 'symbol?               (lambda (obj) #t)
 		 'gensym?               (lambda (obj) (#_gensym? (obj 's)))
 		 'symbol->string        (lambda (obj) (#_symbol->string (obj 's)))
-		 'symbol->value         (lambda (obj) (#_symbol->value (obj 's)))
+		 'symbol->value         (lambda (obj . args) (apply #_symbol->value (obj 's) args))
 		 'symbol->dynamic-value (lambda (obj) (#_symbol->dynamic-value (obj 's)))
-		 'symbol-access         (lambda (obj) (#_symbol-access (obj 's)))
+		 'symbol-access         (lambda (obj . args) (apply #_symbol-access (obj 's) args))
 		 'provided?             (lambda (obj) (#_provided? (obj 's)))
 		 'provide               (lambda (obj) (#_provide (obj 's)))
 		 'defined?              (lambda (obj) (#_defined? (obj 's)))

@@ -1133,6 +1133,11 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
       (let ((bsyms (gather-symbols body e () ()))
 	    (nsyms ()))
+	
+	;; we have a GC problem here: apparently the old e-chain accessors are unprotected 
+	;;   and if the gc is called either here or at the end of this form, an accessor is lost
+	;;   giving the free cell error -- why?  Is this true of bacros or macros in general?
+
 	(for-each (lambda (s)
 		    (if (and (with-let (sublet e (quote gs) s) 
 			       (symbol-access gs))

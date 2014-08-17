@@ -3596,6 +3596,22 @@ static void mark_vector_1(s7_pointer p, s7_Int top)
     S7_MARK(*tp++);
 }
 
+static void mark_slot(s7_pointer p)
+{
+  if (!is_marked(p)) 
+    {
+      set_mark(p);
+      S7_MARK(slot_value(p));
+      if (slot_has_accessor(p))
+	S7_MARK(slot_accessor(p));
+
+      /* should this also mark any pending_value? -- currently we don't initialize it.
+       *   perhaps a bit if pending_value is in use checked here.  This procedure is not
+       *   called very often, but the pending value set happens a lot.
+       *   slot_set_pending_value and slot_transfer_pending_value.
+       */
+    }
+}
 
 static void mark_environment(s7_pointer env)
 {
@@ -3604,11 +3620,7 @@ static void mark_environment(s7_pointer env)
     { 
       s7_pointer y;
       for (y = environment_slots(x); is_slot(y); y = next_slot(y))
-	if (!is_marked(y))
-	  {
-	    set_mark(y);
-	    S7_MARK(slot_value(y));
-	  }
+	mark_slot(y);
       set_mark(x);
     }
 }
@@ -3659,23 +3671,6 @@ static void mark_pair(s7_pointer p)
 	  S7_MARK(car(p));
 	}
       if (!is_marked(p)) S7_MARK(p);                              /* checked is much faster */
-    }
-}
-
-static void mark_slot(s7_pointer p)
-{
-  if (!is_marked(p)) 
-    {
-      set_mark(p);
-      S7_MARK(slot_value(p));
-      if (slot_has_accessor(p))
-	S7_MARK(slot_accessor(p));
-
-      /* should this also mark any pending_value? -- currently we don't initialize it.
-       *   perhaps a bit if pending_value is in use checked here.  This procedure is not
-       *   called very often, but the pending value set happens a lot.
-       *   slot_set_pending_value and slot_transfer_pending_value.
-       */
     }
 }
 
@@ -3933,11 +3928,24 @@ static int gc(s7_scheme *sc)
 {
   s7_cell **old_free_heap_top;
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
-  #define GC_CALL(P, Tp) p = (*tp++); if (is_marked(p)) clear_mark(p); else {if (typeflag(p) != 0) {typeflag(p) = 0; (*fp++) = p;}}
-
 #if DEBUGGING
+  #define GC_CALL(P, Tp) \
+    p = (*tp++); \
+    if (is_marked(p)) \
+       clear_mark(p); \
+    else \
+      { \
+        if (typeflag(p) != 0) \
+          {\
+	    p->debugger_bits = 0;\
+            clear_type(p);	\
+            (*fp++) = p;\
+          }}
+
   gc_last_line = line;
   gc_last_func = func;
+#else
+  #define GC_CALL(P, Tp) p = (*tp++); if (is_marked(p)) clear_mark(p); else {if (typeflag(p) != 0) {clear_type(p); (*fp++) = p;}}
 #endif
 
   if (sc->gc_stats)
@@ -3995,7 +4003,6 @@ static int gc(s7_scheme *sc)
       for (p = sc->safe_lists[i]; is_pair(p); p = cdr(p))
 	S7_MARK(car(p));
   }
-	
 
   S7_MARK(sc->protected_objects);
   
@@ -4204,7 +4211,6 @@ static void expand_heap(s7_scheme *sc)
     }
   sc->previous_free_heap_top = sc->free_heap_top;
 }
-
 
 static void try_to_call_gc(s7_scheme *sc)
 {
@@ -11762,12 +11768,26 @@ static s7_Int c_lcm(s7_Int a, s7_Int b)
 }
 
 
+static bool is_rational_via_method(s7_scheme *sc, s7_pointer p)
+{
+  if (is_rational(p))
+    return(true);
+  if (has_methods(p))
+    {
+      s7_pointer f;
+      f = find_method(sc, find_environment(sc, p), sc->IS_RATIONAL);
+      if (f != sc->UNDEFINED)
+	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
+    }
+  return(false);
+}
+
+
 static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 {
   #define H_lcm "(lcm ...) returns the least common multiple of its rational arguments"
   s7_Int n = 1, d = 0;
-  bool rats = false;
-  s7_pointer x;
+  s7_pointer x, p;
 
   if (!is_pair(args))
     return(small_int(1));
@@ -11782,35 +11802,43 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
       return(g_abs(sc, args));
     }
 
-  for (x = args; is_not_null(x); x = cdr(x)) 
-    if (!is_rational(car(x)))
-      {
-	check_method(sc, car(x), sc->LCM, args);
-	return(wrong_type_argument_n_with_type(sc, sc->LCM, position_of(x, args), car(x), A_RATIONAL));
-      }
-    else rats = ((rats) || (type(car(x)) == T_RATIO));
-
-  if (!rats)
+  for (p = args; is_pair(p); p = cdr(p))
     {
-      for (x = args; is_not_null(x); x = cdr(x)) 
+      x = car(p);
+      switch (type(x))
 	{
-	  n = c_lcm(n, integer(car(x)));
-	  if (n < 0) return(simple_out_of_range(sc, sc->LCM, args, "result is too large"));
-	  if (n == 0)
-	    return(small_int(0));
-	}
-      return(make_integer(sc, n));
-    }
+	case T_INTEGER:
+	  n = c_lcm(n, integer(x));
+	  if (d != 0) d = 1;
+	  break;
 
-  /* from A Jaffer */
-  for (x = args; is_not_null(x); x = cdr(x)) 
-    {
-      n = c_lcm(n, s7_numerator(car(x)));
+	case T_RATIO:
+	  n = c_lcm(n, s7_numerator(x));
+	  if (d == 0)
+	    {
+	      if (p == args)
+		d = s7_denominator(x); 
+	      else d = 1;
+	    }
+	  else d = c_gcd(d, s7_denominator(x));
+	  break;
+
+	default:
+	  check_method(sc, x, sc->LCM, cons(sc, (d <= 1) ? make_integer(sc, n) : s7_make_ratio(sc, n, d), p));
+	  return(wrong_type_argument_n_with_type(sc, sc->LCM, position_of(p, args), x, A_RATIONAL));
+	}
       if (n < 0) return(simple_out_of_range(sc, sc->LCM, args, "result is too large"));
       if (n == 0)
-	return(small_int(0));
-      d = c_gcd(d, s7_denominator(car(x)));
+	{
+	  for (p = cdr(p); is_pair(p); p = cdr(p))
+	    if (!is_rational_via_method(sc, car(p)))
+	      return(wrong_type_argument_n_with_type(sc, sc->LCM, position_of(p, args), x, A_RATIONAL));
+	  return(small_int(0));
+	}
     }
+
+  if (d <= 1)
+    return(make_integer(sc, n));
   return(s7_make_ratio(sc, n, d));
 }
 
@@ -11818,9 +11846,8 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 {
   #define H_gcd "(gcd ...) returns the greatest common divisor of its rational arguments"
-  bool rats = false;
   s7_Int n = 0, d = 1;
-  s7_pointer x;
+  s7_pointer x, p;
 
   if (!is_pair(args))
     return(small_int(0));
@@ -11835,33 +11862,30 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
       return(g_abs(sc, args));
     }
 
-  for (x = args; is_not_null(x); x = cdr(x)) 
-    if (!is_rational(car(x)))
-      {
-	check_method(sc, car(x), sc->GCD, args);
-	return(wrong_type_argument_n_with_type(sc, sc->GCD, position_of(x, args), car(x), A_RATIONAL));
-      }
-    else rats = ((rats) || (type(car(x)) == T_RATIO));
-  
-  if (!rats)
+  for (p = args; is_pair(p); p = cdr(p))
     {
-      for (x = args; is_not_null(x); x = cdr(x)) 
+      x = car(p);
+      switch (type(x))
 	{
-	  n = c_gcd(n, integer(car(x)));
-	  if (n < 0) return(simple_out_of_range(sc, sc->GCD, args, "intermediate result is too large"));
-	  if (n == 1) return(small_int(1));
+	case T_INTEGER:
+	  n = c_gcd(n, integer(x));
+	  break;
+
+	case T_RATIO:
+	  n = c_gcd(n, s7_numerator(x));
+	  d = c_lcm(d, s7_denominator(x));
+	  if (d < 0) return(simple_out_of_range(sc, sc->GCD, args, "result is too large"));
+	  break;
+
+	default:
+	  check_method(sc, x, sc->GCD, cons(sc, (d <= 1) ? make_integer(sc, n) : s7_make_ratio(sc, n, d), p));
+	  return(wrong_type_argument_n_with_type(sc, sc->GCD, position_of(p, args), x, A_RATIONAL));
 	}
-      return(make_integer(sc, n));
+      if (n < 0) return(simple_out_of_range(sc, sc->GCD, args, "result is too large"));
     }
 
-  /* from A Jaffer */
-  for (x = args; is_not_null(x); x = cdr(x)) 
-    {
-      n = c_gcd(n, s7_numerator(car(x)));
-      if (n < 0) return(simple_out_of_range(sc, sc->GCD, args, "intermediate result is too large"));
-      d = c_lcm(d, s7_denominator(car(x)));
-      if (d < 0) return(simple_out_of_range(sc, sc->GCD, args, "intermediate result is too large"));
-    }
+  if (d <= 1)
+    return(make_integer(sc, n));
   return(s7_make_ratio(sc, n, d));
 }
 
@@ -15620,6 +15644,21 @@ static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
 
 /* ---------------------------------------- = > < >= <= ---------------------------------------- */
 
+static bool is_number_via_method(s7_scheme *sc, s7_pointer p)
+{
+  if (is_number(p))
+    return(true);
+  if (has_methods(p))
+    {
+      s7_pointer f;
+      f = find_method(sc, find_environment(sc, p), sc->IS_NUMBER);
+      if (f != sc->UNDEFINED)
+	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
+    }
+  return(false);
+}
+
+
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_equal "(= z1 ...) returns #t if all its arguments are equal"
@@ -15654,7 +15693,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:
-	      check_method(sc, x, sc->EQ, args);
+	      check_method(sc, x, sc->EQ, cons(sc, make_integer(sc, num_a), cons(sc, x, p)));
 	      return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(p, args) - 1, x, A_NUMBER));	      
 	    }
 	  if (is_null(p))
@@ -15687,7 +15726,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:        
-	      check_method(sc, x, sc->EQ, args);
+	      check_method(sc, x, sc->EQ, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)));
 	      return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(p, args) - 1, x, A_NUMBER));	      
 	    }
 	  if (is_null(p))
@@ -15719,7 +15758,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:
-	      check_method(sc, x, sc->EQ, args);
+	      check_method(sc, x, sc->EQ, cons(sc, make_real(sc, rl_a), cons(sc, x, p)));
 	      return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(p, args) - 1, x, A_NUMBER));	      
 	    }
 	  if (is_null(p))
@@ -15747,7 +15786,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:
-	      check_method(sc, x, sc->EQ, args);
+	      check_method(sc, x, sc->EQ, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)));
 	      return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(p, args) - 1, x, A_NUMBER));	      
 	    }
 	  if (is_null(p))
@@ -15761,11 +15800,9 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 
  NOT_EQUAL:
   for (; is_pair(p); p = cdr(p))
-    if (!s7_is_number(car(p)))
-      {
-	check_method(sc, car(p), sc->EQ, args);
-	return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(p, args), car(p), A_NUMBER));
-      }
+    if (!is_number_via_method(sc, car(p)))
+      return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(p, args), car(p), A_NUMBER));
+
   return(sc->F);
 }
 
@@ -16001,9 +16038,8 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_LESS;
 
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->LT, args);  
+	  check_method(sc, y, sc->LT, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->LT, position_of(p, args) - 1, y, T_REAL));
 	}
 
@@ -16096,9 +16132,8 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_LESS;
 	  
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->LT, args);  
+	  check_method(sc, y, sc->LT, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->LT, position_of(p, args) - 1, y, T_REAL));
 	}
 
@@ -16130,26 +16165,21 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_LESS;
 
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->LT, args);  
+	  check_method(sc, y, sc->LT, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->LT, position_of(p, args) - 1, y, T_REAL));
 	}
 
-
-    case T_COMPLEX:
     default:
-      check_method(sc, x, sc->LT, args);  
+      check_method(sc, x, sc->LT, args);
       return(wrong_type_argument(sc, sc->LT, small_int(1), x, T_REAL));
     }
 
  NOT_LESS:
   for (; is_pair(p); p = cdr(p))
-    if (!is_real(car(p)))
-      {
-	check_method(sc, car(p), sc->LT, args);  
-	return(wrong_type_argument_n(sc, sc->LT, position_of(p, args), car(p), T_REAL));
-      }
+    if (!is_real_via_method(sc, car(p)))
+      return(wrong_type_argument_n(sc, sc->LT, position_of(p, args), car(p), T_REAL));
+
   return(sc->F);
 }
 
@@ -16207,9 +16237,8 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_LEQ;
 
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->LEQ, args);  
+	  check_method(sc, y, sc->LEQ, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->LEQ, position_of(p, args) - 1, y, T_REAL));
 	}
 
@@ -16290,9 +16319,8 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_LEQ;
 	  
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->LEQ, args);  
+	  check_method(sc, y, sc->LEQ, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->LEQ, position_of(p, args) - 1, y, T_REAL));
 	}
 
@@ -16324,26 +16352,21 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_LEQ;
 
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->LEQ, args);  
+	  check_method(sc, y, sc->LEQ, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->LEQ, position_of(p, args) - 1, y, T_REAL));
 	}
 
-
-    case T_COMPLEX:
     default:
-      check_method(sc, x, sc->LEQ, args);  
+      check_method(sc, x, sc->LEQ, args);
       return(wrong_type_argument(sc, sc->LEQ, small_int(1), x, T_REAL));
     }
 
  NOT_LEQ:
   for (; is_pair(p); p = cdr(p))
-    if (!is_real(car(p)))
-      {
-	check_method(sc, car(p), sc->LEQ, args);  
-	return(wrong_type_argument_n(sc, sc->LEQ, position_of(p, args), car(p), T_REAL));
-      }
+    if (!is_real_via_method(sc, car(p)))
+      return(wrong_type_argument_n(sc, sc->LEQ, position_of(p, args), car(p), T_REAL));
+
   return(sc->F);
 }
 
@@ -16401,9 +16424,8 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_GREATER;
 
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->GT, args);  
+	  check_method(sc, y, sc->GT, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->GT, position_of(p, args) - 1, y, T_REAL));
 	}
 
@@ -16495,9 +16517,8 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_GREATER;
 	  
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->GT, args);  
+	  check_method(sc, y, sc->GT, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->GT, position_of(p, args) - 1, y, T_REAL));
 	}
 
@@ -16529,26 +16550,21 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_GREATER;
 
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->GT, args);  
+	  check_method(sc, y, sc->GT, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->GT, position_of(p, args) - 1, y, T_REAL));
 	}
 
-
-    case T_COMPLEX:
     default:
-      check_method(sc, x, sc->GT, args);  
+      check_method(sc, x, sc->GT, args);
       return(wrong_type_argument(sc, sc->GT, small_int(1), x, T_REAL));
     }
 
  NOT_GREATER:
   for (; is_pair(p); p = cdr(p))
-    if (!is_real(car(p)))
-      {
-	check_method(sc, car(p), sc->GT, args);  
-	return(wrong_type_argument_n(sc, sc->GT, position_of(p, args), car(p), T_REAL));
-      }
+    if (!is_real_via_method(sc, car(p)))
+      return(wrong_type_argument_n(sc, sc->GT, position_of(p, args), car(p), T_REAL));
+
   return(sc->F);
 }
 
@@ -16608,9 +16624,8 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_GEQ;
 
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->GEQ, args);  
+	  check_method(sc, y, sc->GEQ, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->GEQ, position_of(p, args) - 1, y, T_REAL));
 	}
 
@@ -16691,9 +16706,8 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_GEQ;
 	  
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->GEQ, args);  
+	  check_method(sc, y, sc->GEQ, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->GEQ, position_of(p, args) - 1, y, T_REAL));
 	}
 
@@ -16725,26 +16739,21 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 	  x = y;
 	  goto REAL_GEQ;
 
-	case T_COMPLEX:
 	default:
-	  check_method(sc, y, sc->GEQ, args);  
+	  check_method(sc, y, sc->GEQ, cons(sc, x, cons(sc, y, p)));
 	  return(wrong_type_argument_n(sc, sc->GEQ, position_of(p, args) - 1, y, T_REAL));
 	}
 
-
-    case T_COMPLEX:
     default:
-      check_method(sc, x, sc->GEQ, args);  
+      check_method(sc, x, sc->GEQ, args);
       return(wrong_type_argument(sc, sc->GEQ, small_int(1), x, T_REAL));
     }
 
  NOT_GEQ:
   for (; is_pair(p); p = cdr(p))
-    if (!is_real(car(p)))
-      {
-	check_method(sc, car(p), sc->GEQ, args);  
-	return(wrong_type_argument_n(sc, sc->GEQ, position_of(p, args), car(p), T_REAL));
-      }
+    if (!is_real_via_method(sc, car(p)))
+      return(wrong_type_argument_n(sc, sc->GEQ, position_of(p, args), car(p), T_REAL));
+
   return(sc->F);
 
 }
@@ -21060,14 +21069,15 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
       (p == sc->F))
     return;
   
-  if (port_filename(p))
-    {
-      free(port_filename(p));
-      port_filename(p) = NULL;
-    }
-  
   if (is_file_port(p))
     {
+      if (port_filename(p)) /* only a file port has a filename */
+	{
+	  free(port_filename(p));
+	  port_filename(p) = NULL;
+	  port_filename_length(p) = 0;
+	}
+  
       if (port_file(p))
 	{
 	  if (port_position(p) > 0)
@@ -27869,7 +27879,7 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
 
   if (!is_pair(lst))
     {
-      check_method(sc, lst, sc->LIST_SET, args);
+      check_method(sc, lst, sc->LIST_SET, cons(sc, lst, args));
       return(wrong_type_argument(sc, sc->LIST_SET, small_int(1), lst, T_PAIR));
     }
   ind = car(args);
@@ -29539,10 +29549,11 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
     {
       /* the original version used s7_append but that copies the arguments too many times if there are 3 or more lists */
       s7_pointer p;
-      if (is_null(cdr(y)))
-	return(reverse_in_place_unchecked(sc, car(y), x)); /* i.e. tack car(y) onto end of x copied and reversed */
-
       p = car(y);
+
+      if (is_null(cdr(y)))
+	return(reverse_in_place_unchecked(sc, p, x)); /* i.e. tack car(y) onto end of x copied and reversed */
+
       if (!is_proper_list(sc, p))
 	return(wrong_type_argument_n_with_type(sc, sc->APPEND, position_of(y, args), p, A_PROPER_LIST));
       /* is this error correct?
@@ -29552,6 +29563,7 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
        *   (append '(1 . 2) '(3))
        *   gives this error
        */
+
       while (is_not_null(p))
 	{
 	  x = cons(sc, car(p), x);
@@ -33166,6 +33178,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 
   if (!is_procedure(p))
     return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_SOURCE, p, make_protected_string(sc, "a procedure or a macro")));
+
   return(sc->NIL);
 }
 
@@ -33411,8 +33424,6 @@ s7_pointer set_c_function_call_args(s7_scheme *sc)
 		car(par) = s7_eval_form(sc, car(par), sc->NIL);
 	    }
 	}
-
-  /* fprintf(stderr, "return %s\n", DISPLAY(call_args)); */
   return(call_args);
 }
 
@@ -34741,7 +34752,7 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer sym, func, e, p;
   /* perhaps: check func */
-  
+
   sym = car(args);
   if (!is_symbol(sym))
     return(s7_wrong_type_arg_error(sc, "set! symbol-access", 1, sym, "a symbol"));
@@ -58037,6 +58048,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_any_macro(sc->value))
 	    {    
 	      /* macro expansion */
+	      /* fprintf(stderr, "eval %s at %s\n", DISPLAY(sc->value), DISPLAY(sc->code)); */
+
 	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->code); /* sc->code is here for (vital) GC protection */
 	      /* 
 	       * pass a list (mac . args) to the macro expander
@@ -62729,7 +62742,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * (hi 2)
        * here with value: (+ 2 1)
        */
-      /* fprintf(stderr, "eval_macro: %s %d\n", DISPLAY(sc->value), sc->value == sc->NO_VALUE); */
+      /* fprintf(stderr, "eval_macro: %s %s\n", DISPLAY(sc->value), DISPLAY(sc->code)); */
 
       if (is_multiple_value(sc->value))
 	{
@@ -70081,13 +70094,11 @@ int main(int argc, char **argv)
  *   check string-append for multiple mcases
  * mhash gloomy case: is each copy independent (in not-exist-sym etc)?
  *   should there be a separate gloomy-hash-class for the 2 added methods?
+ * (apply < nums): < argument 4, 1+1i, is an environment but should be a real -- "env..." here is not ideal
  * s7.html for symbol-macro via openlet
  *   (define ? (openlet (inlet 'object->string (lambda (obj . args) (apply #_object->string (owlet) args)))))
- * t456+mock*
+ * mlist: append is too weird (whether it is checked depends on whether it is last in the arg list)
  * and all mcases+gmp
- * could fuzzy-num be 'let-ref-fallback: (lambda (obj) (* mock-number-x (- 1.05 (random .1))))
- *   where mock-number-x is in the closure as in time-string, so (obj 'x) fails and drops into let-ref-fallback
- *   also need obj->str here
  *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
