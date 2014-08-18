@@ -101,8 +101,8 @@
 		 'hash-table-ref     (lambda (obj key)      (#_hash-table-ref (obj 'mock-hash-table-table) key))
 		 'hash-table-set!    (lambda (obj key val)  (#_hash-table-set! (obj 'mock-hash-table-table) key val))
 		 'hash-table-size    (lambda (obj)          (#_hash-table-size (obj 'mock-hash-table-table)))
-		 'hash-table-entries (lambda (obj)       (#_hash-table-entries (obj 'mock-hash-table-table)))
-		 'make-hash-table-iterator (lambda (obj) (#_make-hash-table-iterator (obj 'mock-hash-table-table)))
+		 'hash-table-entries (lambda (obj)          (#_hash-table-entries (obj 'mock-hash-table-table)))
+		 'make-hash-table-iterator (lambda (obj)    (#_make-hash-table-iterator (obj 'mock-hash-table-table)))
 		 'let-ref-fallback   (lambda (obj key)      (#_hash-table-ref (obj 'mock-hash-table-table) key))
 		 'let-set!-fallback  (lambda (obj key val)  (#_hash-table-set! (obj 'mock-hash-table-table) key val))
 
@@ -329,7 +329,8 @@
 		 ;;   if all are, make-method needs indefinite extension
 		 ;;   this also affects others above -- char case of string-set! for example
 		 ;; these are (nearly) all fake -- need actual code and tests and examples ...
-
+		 
+		 'class-name       'mock-number
 		 'object->string   (lambda (obj . args) "#<mock-number-class>")
 		 'arity            (lambda (obj) (#_arity (obj 'x)))
 		 'copy             (lambda (obj) (obj 'x))

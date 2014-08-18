@@ -70241,9 +70241,10 @@ int main(int argc, char **argv)
  *    (define e (openlet (inlet 'abs (define-macro (x) 43))))
  *    (abs e)
  *    ;cdr argument, #<let 'abs #<macro>>, is an environment but should be a pair
+ *  but the args are already evaluated because the original was a function
  *
  * mockery.scm:
- *   mock-port|lambda
+ *   mock-port
  *   mock-oscil?  also make tests in CLM of complex cases, mock-port/symbol?
  *   mock-eval -- every datum is a mock-*, then Display is internalized, tracing/stepping 
  *     need to shadow eq? and friends
@@ -70257,6 +70258,7 @@ int main(int argc, char **argv)
  * mhash gloomy case: is each copy independent (in not-exist-sym etc)?
  *   should there be a separate gloomy-hash-class for the 2 added methods?
  * (apply < nums): < argument 4, 1+1i, is an environment but should be a real -- "env..." here is not ideal
+ *   this is a side effect of an earlier environment bugfix -- prepackaged_type_name should start with has_methods etc
  * s7.html for symbol-macro via openlet
  *   (define ? (openlet (inlet 'object->string (lambda (obj . args) (apply #_object->string (owlet) args)))))
  * mlist: append is too weird (whether it is checked depends on whether it is last in the arg list)
@@ -70278,5 +70280,7 @@ int main(int argc, char **argv)
  *
  * to protect res if necessary in snd-sig, protect a cons, then set-car of it with res
  *   or just use the car as res
+ *
+ * in new g++ -Wall xg.c has an error about ref arg handling: 3249 constrain_size GdkWindowHints
  */
 
