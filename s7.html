@@ -200,12 +200,13 @@ indented and on a sort of brownish background.
 </blockquote>
 <br>
 
-
+<!--
 <div class="orange">
 <p>Danger!</p>
 <p>Men Working</p>
 <p>in Trees</p>
 </div>
+-->
 
 <ul>
   <li><a href="#multiprecision">arbitrary precision arithmetic</a>
@@ -3222,6 +3223,7 @@ know the field names in advance,
 </pre>
 <p>(There are still at least two ways to tell that something is fishy).
 </p>
+<!-- add a field and it disappears, or sublet and read back -->
 </div>
 </blockquote>
 
@@ -4945,8 +4947,8 @@ returns the value that is actually set.  For example, the function can ensure th
 #(4 5 2)
 
 &gt; (let ((a 1)) 
-    (<em class=red>reactive-let</em> ((-b- (+ a 1))) ; if 'a changes, 'b does too
-    (set! a 3)                  ;   so 'b is now 4
+    (<em class=red>reactive-let</em> ((-b- (+ a 1))) ; if 'a changes, '-b- does too
+    (set! a 3)                  ;   so '-b- is now 4
     -b-))
 4
 
@@ -5082,7 +5084,7 @@ at startup *features* is:
 
 <pre class="indented">
 &gt; *features*
-(snd-14.9 snd14 snd audio snd-s7 snd-gtk gsl alsa gtk2 xg clm6 clm sndlib linux 
+(snd-15.9 snd15 snd audio snd-s7 snd-gtk gsl alsa gtk2 xg clm6 clm sndlib linux 
  dlopen complex-numbers system-extras @-exponent dfls-exponents ratio s7-3.12 s7)
 &gt; (provided? 'gsl)
 #t
@@ -8145,7 +8147,7 @@ int main(int argc, char **argv)
  *
  * and run it:
  *   ex3
- *   &gt; (cload "/home/bil/snd-14/ex3a.so" "init_ex")
+ *   &gt; (cload "/home/bil/snd-15/ex3a.so" "init_ex")
  *   #t
  *   &gt; (add-1 2)
  *   3

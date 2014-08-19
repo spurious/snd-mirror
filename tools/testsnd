@@ -96,8 +96,8 @@ echo ' -------------------------------- that was valgrind --with-gmp -----------
 echo ' '
 echo ' '
 
-gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -ldl -lm -lgmp -lmpfr -lmpc
-./repl tools/t456.scm
+# gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -ldl -lm -lgmp -lmpfr -lmpc
+# ./repl tools/t456.scm
 
 echo ' -------------------------------- motif -------------------------------- '
 make allclean

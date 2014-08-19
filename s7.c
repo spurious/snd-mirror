@@ -37048,6 +37048,13 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
   const char *name;
   s7_pointer p;
 
+  if (has_methods(x))
+    {
+      p = find_method(sc, find_environment(sc, x), sc->CLASS_NAME);
+      if (is_symbol(p))
+	return(make_protected_string(sc, make_type_name(symbol_name(p), INDEFINITE_ARTICLE)));
+    }
+
   p = prepackaged_type_names[type(x)];
   if (is_string(p))
     return(p);
@@ -70237,32 +70244,19 @@ int main(int argc, char **argv)
  *   none of these is currently in autoload
  *   but this would require special handling in the Xen stuff.
  *
- * what if "method" is a macro?
- *    (define e (openlet (inlet 'abs (define-macro (x) 43))))
- *    (abs e)
- *    ;cdr argument, #<let 'abs #<macro>>, is an environment but should be a pair
- *  but the args are already evaluated because the original was a function
- *
- * mockery.scm:
- *   mock-port
- *   mock-oscil?  also make tests in CLM of complex cases, mock-port/symbol?
+ * mockery.scm: (needs documentation)
+ *   mock-oscil? also make tests in CLM of complex cases
  *   mock-eval -- every datum is a mock-*, then Display is internalized, tracing/stepping 
  *     need to shadow eq? and friends
- *   mock-string could handle translations (set *language* and all automatically conform)
  * copy mvects is still not right if start/end + mvect dest
  *   also multidim mvects
  *   does mock vector-append need 2nd arg make-method support?
  * mchar string can't handle more than 2 args -- what is actually coming into make-method here? (and what about mock-string's string-append?)
  *   string is expecting the method to handle all args: pass current str+args, and method string-append+c+apply args
- *   check string-append for multiple mcases
- * mhash gloomy case: is each copy independent (in not-exist-sym etc)?
- *   should there be a separate gloomy-hash-class for the 2 added methods?
- * (apply < nums): < argument 4, 1+1i, is an environment but should be a real -- "env..." here is not ideal
- *   this is a side effect of an earlier environment bugfix -- prepackaged_type_name should start with has_methods etc
- * s7.html for symbol-macro via openlet
- *   (define ? (openlet (inlet 'object->string (lambda (obj . args) (apply #_object->string (owlet) args)))))
- * mlist: append is too weird (whether it is checked depends on whether it is last in the arg list)
- * possible mocks: immutable-list, vector+member/magnitude/max/ *, gensym that prints [name] or whatever
+ *   list->string has the same troubles but is in mock-pair
+ *   check string-append for multiple mcases: split from copy case, needs intermediate string-creation step
+ * untested: immutable-list
+ * unexampled: port/char/symbol
  *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
@@ -70270,17 +70264,19 @@ int main(int argc, char **argv)
  *
  * how would reactive-hash-table work? (hash 'a (+ b 1)) and update 'a's value whenever b changes?
  *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
+ * (reactive-format port ...) if args change, write: how general is this? (combine with day-time)
+ *   see stuff.scm for first try
+ *   reactive-eval, reactive-load(if file changes -- how to tell when its ready?), reactive-if(expr changes)--reactive-assert for example
  *
- * number+uncertainty as env [papyrology or paleology have string/char+uncertainty, dynamics has vector uncertainty]
- *   check out interval arithmetic for analogs
- *   so mock-real etc: a ton of methods!
+ * number+uncertainty, check out interval arithmetic for analogs
  *
  * for reasonable mock-* handling in s7 code, we need something like (obj 'value)
- *   as a fallback for a second try.  (if (defined? (obj 'value)) (subsequence (obj 'value)...)
+ *   as a fallback for a second try.  (if (defined? (obj 'value)) (subsequence (obj 'value)...) -- 'let-ref perhaps? (needs to know internal field name)
  *
- * to protect res if necessary in snd-sig, protect a cons, then set-car of it with res
- *   or just use the car as res
- *
- * in new g++ -Wall xg.c has an error about ref arg handling: 3249 constrain_size GdkWindowHints
+ * in (define (f..) (define (g..) ...) ...) can't g be created once like f? 
+ *   how does this interact with check_define?  Perhaps first pass over closure_body can mark it and save
+ *   the completed closure somewhere?  (It needs to be under 'g in the closure internal env)
+ *   currently these go to op_define_funchecked: if safe/non-recursive why can't we save/reuse the arg-env there?
+ *   also these could be reduced to safe_c_sc and so on.
  */
 

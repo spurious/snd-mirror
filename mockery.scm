@@ -22,6 +22,7 @@
   (let ((mock-vector-class
 	 (openlet  ; this holds the mock-vector methods
 	  (inlet 'local-set!         (lambda (obj i val) (#_vector-set! (obj 'v) i val))
+		 'class-name         'mock-vector
 		 'vector?            (lambda (obj) #t)
 		 'vector-ref         (lambda (obj i) (#_vector-ref (obj 'v) i))
 		 'vector-set!        (lambda (obj i val) ((obj 'local-set!) obj i val) val)
@@ -98,6 +99,7 @@
   (let ((mock-hash-table-class
 	 (openlet
 	  (inlet 'hash-table?        (lambda (obj) #t)
+		 'class-name         'mock-hash-table
 		 'hash-table-ref     (lambda (obj key)      (#_hash-table-ref (obj 'mock-hash-table-table) key))
 		 'hash-table-set!    (lambda (obj key val)  (#_hash-table-set! (obj 'mock-hash-table-table) key val))
 		 'hash-table-size    (lambda (obj)          (#_hash-table-size (obj 'mock-hash-table-table)))
@@ -154,7 +156,7 @@
 
 (define gloomy-hash-table
   (openlet
-   (sublet (*mock-hash-table* 'mock-hash-table-class)
+   (sublet (*mock-hash-table* 'mock-hash-table-class) ; ideally this would be a separate (not copied) gloomy-hash-table-class 
      'mock-hash-table-table #f
      'false (gensym)
      'not-a-key #f
@@ -184,6 +186,7 @@
   (let ((mock-string-class
 	 (openlet
 	  (inlet 'string?                (lambda (obj) #t)
+		 'class-name             'mock-string
 		 'string-ref             (lambda (obj i) (#_string-ref (obj 's) i))
 		 'string-set!            (lambda (obj i val) (#_string-set! (obj 's) i val))
 		 'let-ref                (lambda (obj i) (#_string-ref (obj 's) i))           ; these are the implicit cases
@@ -280,6 +283,7 @@
   (let ((mock-character-class
 	 (openlet
 	  (inlet 'char?              (lambda (obj) #t)
+		 'class-name         'mock-character
 		 'char-upcase        (lambda (obj) (#_char-upcase (obj 'c)))
 		 'char-downcase      (lambda (obj) (#_char-downcase (obj 'c)))
 		 'char->integer      (lambda (obj) (#_char->integer (obj 'c)))
@@ -441,6 +445,7 @@
   (let ((mock-pair-class
 	 (openlet
 	  (inlet 'pair?            (lambda (obj) #t)
+		 'class-name       'mock-pair
 		 'pair-line-number (lambda (obj) (#_pair-line-number (obj 'p)))
 		 'list->string     (lambda (obj) (#_list->string (obj 'p)))
 		 'object->string   (lambda (obj . arg) "#<mock-pair-class>")
@@ -510,6 +515,36 @@
 
     (curlet)))
 
+;; append is very strange -- not sure how to handle it
+
+#|
+(let ((immutable-list-class 
+       (sublet (*mock-pair* 'mock-pair-class)
+	 'object->string   (lambda (obj . args) 
+			     (apply #_object->string (obj 'p) args))
+	 'let-set          (lambda (obj i val) 
+			     (set! (obj 'p) (append (copy (obj 'p) (make-list (+ i 1))) (list-tail (obj 'p) (+ i 1))))
+			     (list-set! (obj 'p) i val))
+	 'list-set!        (lambda (obj i val) 
+			     (set! (obj 'p) (append (copy (obj 'p) (make-list (+ i 1))) (list-tail (obj 'p) (+ i 1))))
+			     (list-set! (obj 'p) i val))
+	 'set-car!         (lambda (obj val) 
+			     (set! (obj 'p) (cons val (cdr (obj 'p)))))
+	 'set-cdr!         (lambda (obj val) 
+			     (set! (obj 'p) (cons (car (obj 'p)) val)))
+	 'fill!            (lambda (obj val) 
+			     (set! (obj 'p) (fill! (copy (obj 'p)) val)))
+	 'reverse!         (lambda (obj) 
+			     (set! (obj 'p) (reverse (obj 'p))))
+	 'sort!            (lambda (obj func) 
+			     (set! (obj 'p) (sort! (copy (obj 'p)) func))))))
+
+    (define (immutable-list lst)
+      (openlet 
+       (sublet immutable-list-class
+	 'p lst)))
+|#
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -517,6 +552,7 @@
   (let ((mock-symbol-class
 	 (openlet
 	  (inlet 'symbol?               (lambda (obj) #t)
+		 'class-name            'mock-symbol
 		 'gensym?               (lambda (obj) (#_gensym? (obj 's)))
 		 'symbol->string        (lambda (obj) (#_symbol->string (obj 's)))
 		 'symbol->value         (lambda (obj . args) (apply #_symbol->value (obj 's) args))
@@ -544,5 +580,51 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; mock-port mock-lambda
 
+(define *mock-port*
+  (let ((mock-port-class
+	 (openlet
+	  (inlet 'port?               (lambda (obj) #t)
+		 'class-name          'mock-port
+		 'format              (lambda (obj . args) (apply #_format (obj 'p) args))
+		 'object->string      (lambda (obj . args) (apply #_object->string (obj 'p) args))
+		 'close-input-port    (lambda (obj) (#_close-input-port (obj 'p)))
+		 'close-output-port   (lambda (obj) (#_close-output-port (obj 'p)))
+		 'flush-output-port   (lambda (obj) (#_flush-output-port (obj 'p)))
+		 'get-output-string   (lambda (obj) (#_get-output-string (obj 'p)))
+		 'newline             (lambda (obj) (#_newline (obj 'p)))
+		 'write               (lambda (x obj) (#_write x (obj 'p)))
+		 'display             (lambda (x obj) (#_display x (obj 'p)))
+		 'read-char           (lambda (obj) (#_read-char (obj 'p)))
+		 'peek-char           (lambda (obj) (#_peek-char (obj 'p)))
+		 'write-char          (lambda (c obj) (#_write-char c (obj 'p)))
+		 'write-string        (lambda (s obj . args) (apply #_write-string s (obj 'p) args))
+		 'read-byte           (lambda (obj) (#_read-byte (obj 'p)))
+		 'write-byte          (lambda (b obj) (#_write-byte b (obj 'p)))
+		 'read-line           (lambda (obj . args) (apply #_read-line (obj 'p) args))
+		 'read-string         (lambda (k obj) (#_read-string k (obj 'p)))
+		 'read                (lambda (obj) (#_read (obj 'p)))
+		 'input-port?         (lambda (obj) (#_input-port? (obj 'p)))
+		 'output-port?        (lambda (obj) (#_output-port? (obj 'p)))
+		 'port-closed?        (lambda (obj) (#_port-closed? (obj 'p)))
+		 'char-ready?         (lambda (obj) (#_char-ready? (obj 'p)))
+		 'port-line-number    (lambda (obj) (#_port-line-number (obj 'p)))
+		 'port-filename       (lambda (obj) (#_port-filename (obj 'p)))
+		 ))))
+
+    (define (mock-port port)
+      (openlet
+       (sublet (*mock-port* 'mock-port-class)
+	 'p port
+	 'object->string (lambda (obj . args) (apply #_object->string (obj 'p) args)))))
+    
+    (define (mock-port? obj)
+      (and (openlet? obj)
+	   (outlet-member obj mock-port-class)))
+
+    (curlet)))
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; mock-lambda?

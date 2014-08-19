@@ -1076,6 +1076,26 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 (let* ((a 1) (v (reactive-vector a (+ a 1) (* 2 (_ 0))))) (set! a 4) v) -> #(4 5 8)
 |#
 
+;; another experiment:
+
+(define-bacro (reactive-format port ctrl . args)
+  (with-let (inlet 'e (outlet (outlet (curlet)))
+		   'args args
+		   'port port
+		   'ctrl ctrl)
+    (let* ((syms (gather-symbols args e () ()))
+	   (sa's (map symbol-access syms)))
+      `(begin
+	 ,@(map (lambda (sym sa)
+		  `(set! (symbol-access ',sym) 
+			 (lambda (s v)
+			   (let ((result (if ,sa (apply ,sa s v ()) v)))
+			     (with-let (sublet ,e ',sym result)
+			       (format ,port ,ctrl ,@args))
+			     result))))
+		syms sa's)
+	 (format ,port ,ctrl ,@args)))))
+
 ;;; mock-vector could also be used for constant or reflective vectors, etc -- just like symbol-access but element-wise
 
 ;;; this is not pretty
@@ -1133,11 +1153,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
       (let ((bsyms (gather-symbols body e () ()))
 	    (nsyms ()))
-	
-	;; we have a GC problem here: apparently the old e-chain accessors are unprotected 
-	;;   and if the gc is called either here or at the end of this form, an accessor is lost
-	;;   giving the free cell error -- why?  Is this true of bacros or macros in general?
-
 	(for-each (lambda (s)
 		    (if (and (with-let (sublet e (quote gs) s) 
 			       (symbol-access gs))
