@@ -1,6 +1,4 @@
 ;;; r7rs compatibility
-;;;
-;;; records are built on the class mechanism
 
 (require cload.scm libc.scm stuff.scm)
 (provide 'r7rs.scm)

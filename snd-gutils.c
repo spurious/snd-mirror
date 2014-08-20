@@ -934,31 +934,6 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
     ADJUSTMENT_SET_VALUE(v, new_value);
 }
 
-
-GtkWidget *sg_button_new_with_label_and_icon(const char *text, const gchar *stock_id)
-{
-#if GTK_CHECK_VERSION(3, 10, 0)
-  /* borrowed from gtk/gtkbutton.c */
-  GtkWidget *button, *image, *label, *hbox, *align;
-
-  button = gtk_button_new();
-  label = gtk_label_new(text);
-  image = (GtkWidget *)g_object_ref(image_new_with_icon(stock_id, GTK_ICON_SIZE_BUTTON));
-  hbox = gtk_hbox_new(false, 2);
-  align = gtk_alignment_new (0.5, 0.5, 0.0, 0.0);
-
-  gtk_box_pack_start(GTK_BOX(hbox), image, false, false, 0);
-  gtk_box_pack_end(GTK_BOX(hbox), label, false, false, 0);
-  gtk_container_add(GTK_CONTAINER(button), align);
-  gtk_container_add(GTK_CONTAINER(align), hbox);
-  gtk_widget_show_all(align);
-
-  g_object_unref(image);
-  return(button);
-#else
-  return(gtk_button_new_with_label(text));
-#endif
-}
   
 
 

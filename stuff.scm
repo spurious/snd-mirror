@@ -1074,6 +1074,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 (let ((a 1)) (let ((v (reactive-vector a (+ a 1) 2))) (set! a 4) v)) -> #(4 5 2)
 (let* ((a 1) (v (reactive-vector a (+ a 1) 2))) (set! a 4) v) -> #(4 5 2)
 (let* ((a 1) (v (reactive-vector a (+ a 1) (* 2 (_ 0))))) (set! a 4) v) -> #(4 5 8)
+;;; mock-vector could also be used for constant or reflective vectors, etc -- just like symbol-access but element-wise
 |#
 
 ;; another experiment:
@@ -1091,12 +1092,11 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			 (lambda (s v)
 			   (let ((result (if ,sa (apply ,sa s v ()) v)))
 			     (with-let (sublet ,e ',sym result)
-			       (format ,port ,ctrl ,@args))
+			       (format ,port ,ctrl ,@args)) ; is this equivalent to an exported closure in the GC?
 			     result))))
 		syms sa's)
 	 (format ,port ,ctrl ,@args)))))
 
-;;; mock-vector could also be used for constant or reflective vectors, etc -- just like symbol-access but element-wise
 
 ;;; this is not pretty
 ;;; part of the complexity comes from the hope to be tail-callable, but even a version
@@ -1344,6 +1344,14 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 
 ;;; ----------------
 
+(define-macro (catch* clauses . error) 
+  (define (builder lst)
+    (if (null? lst)
+	(apply values error)
+	`(catch #t (lambda () ,(car lst)) (lambda args ,(builder (cdr lst))))))
+  (builder clauses))
+
+
 (define* (subsequence obj (start 0) end)
   (let* ((len (length obj))
 	 (new-len (- (min len (or end len)) start)))
@@ -1367,11 +1375,17 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 		   (set! (lst i) (obj (+ i start)))))))
 	  
 	  (else             ; (subsequence (inlet 'subsequence (lambda* (obj start end) "subseq")))
-	   (catch #t        ; perhaps we should use (openlet? obj) instead?
-	     (lambda ()
-	       ((obj 'subsequence) obj start end))
-	     (lambda args
-	       #f))))))
+	   (catch* 
+	    (((obj 'subsequence) obj start end)
+	     (subsequence (obj 'value) start end))
+	    #f)))))
+
+#|
+(pitch* ((tag1 ...)
+	 (tag2 ...))
+	...)
+|#
+
 
 (define (sequence->string val)
   (if (or (not (sequence? val))

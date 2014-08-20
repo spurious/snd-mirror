@@ -3116,7 +3116,7 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 }
 
 #define gc_protected_at(Sc, Loc) vector_element(Sc->protected_objects, Loc)
-#define gc_reprotect(Sc, Loc, Val) vector_element(Sc->protected_objects, Loc) = Val
+/* #define gc_reprotect(Sc, Loc, Val) vector_element(Sc->protected_objects, Loc) = Val */
 
 
 static void (*mark_function[NUM_TYPES])(s7_pointer p);
@@ -5880,7 +5880,7 @@ s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   if (!is_symbol(symbol))
     {
       check_method(sc, env, sc->LET_REF, sc->w = list_2(sc, env, symbol));
-      return(simple_wrong_type_argument_with_type(sc, sc->LET_REF, symbol, A_SYMBOL));
+      return(wrong_type_argument_with_type(sc, sc->LET_REF, small_int(2), symbol, A_SYMBOL));
     }
   return(let_ref_1(sc, env, symbol));
 }
@@ -5893,7 +5893,7 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 
   e = car(args);
   if (!is_let(e))
-    return(simple_wrong_type_argument_with_type(sc, sc->LET_REF, e, AN_ENVIRONMENT));
+    return(wrong_type_argument_with_type(sc, sc->LET_REF, small_int(1), e, AN_ENVIRONMENT));
 
   if (is_pair(cdr(args)))
     s = cadr(args);
@@ -5902,7 +5902,7 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
   if (!is_symbol(s))
     {
       check_method(sc, e, sc->LET_REF, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->LET_REF, s, A_SYMBOL));
+      return(wrong_type_argument_with_type(sc, sc->LET_REF, small_int(2), s, A_SYMBOL));
     }
 
   return(let_ref_1(sc, e, s));
@@ -5961,7 +5961,7 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
   if (env == sc->rootlet)
     {
       if (is_immutable(symbol))  /* (let-set! (rootlet) :key #f) */
-	return(simple_wrong_type_argument_with_type(sc, sc->LET_SET, symbol, A_NON_CONSTANT_SYMBOL));	
+	return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(2), symbol, A_NON_CONSTANT_SYMBOL));	
       y = global_slot(symbol);
       if (is_slot(y))
 	{	
@@ -5995,7 +5995,7 @@ s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_point
   if (!is_symbol(symbol))
     {
       check_method(sc, env, sc->LET_SET, sc->w = list_3(sc, env, symbol, value));
-      return(simple_wrong_type_argument_with_type(sc, sc->LET_SET, symbol, A_SYMBOL));
+      return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(2), symbol, A_SYMBOL));
     }
   return(let_set_1(sc, env, symbol, value));
 }
@@ -6009,15 +6009,14 @@ static s7_pointer g_let_set(s7_scheme *sc, s7_pointer args)
 
   e = car(args);
   if (!is_let(e))
-    return(simple_wrong_type_argument_with_type(sc, sc->LET_SET, e, AN_ENVIRONMENT));
+    return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(1), e, AN_ENVIRONMENT));
 
   s = cadr(args);
   if (!is_symbol(s))
     {
       check_method(sc, e, sc->LET_SET, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->LET_SET, s, A_SYMBOL));
+      return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(2), s, A_SYMBOL));
     }
-  
   return(let_set_1(sc, e, s, caddr(args)));
 }
 
@@ -19567,7 +19566,10 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
   s7_Int ind;
 
   if (!s7_is_integer(index))
-    return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
+    {
+      check_method(sc, index, sc->STRING_REF, list_2(sc, strng, index));
+      return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
+    }
   ind = s7_integer(index);
   if (ind < 0)
     return(wrong_type_argument_with_type(sc, sc->STRING_REF, small_int(2), index, A_NON_NEGATIVE_INTEGER));
@@ -19597,7 +19599,7 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
   index = cadr(args);
   if (!s7_is_integer(index))
     {
-      check_method(sc, cadr(args), sc->STRING_REF, args);
+      check_method(sc, index, sc->STRING_REF, args);
       return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
     }
   ind = s7_integer(index);
@@ -19629,7 +19631,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   index = cadr(args);
   if (!s7_is_integer(index))
     {
-      check_method(sc, cadr(args), sc->STRING_SET, args);
+      check_method(sc, index, sc->STRING_SET, args);
       return(wrong_type_argument(sc, sc->STRING_SET, small_int(2), index, T_INTEGER));
     }
   ind = s7_integer(index);
@@ -19660,8 +19662,9 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
+static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args)
 {
+  #define H_string_append "(string-append str1 ...) appends all its string arguments into one string"
   int len = 0;
   s7_pointer x, newstr;
   char *pos;
@@ -19672,12 +19675,30 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, s7_pointer s
   /* get length for new string */
   for (x = args; is_not_null(x); x = cdr(x)) 
     {
-      if (!is_string(car(x)))
+      s7_pointer p;
+      p = car(x);
+      if (!is_string(p))
 	{
-	  check_method(sc, car(x), sym, args);
-	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_STRING));
+	  /* look for string-append and if found, cobble up a plausible intermediate call */
+	  if (has_methods(p))
+	    {
+	      s7_pointer func;
+	      func = find_method(sc, find_environment(sc, p), sc->STRING_APPEND);
+	      if (func != sc->UNDEFINED)
+		{
+		  s7_pointer y;
+		  if (len == 0)
+		    return(s7_apply_function(sc, func, args));
+		  newstr = make_empty_string(sc, len + 1, 0); 
+		  string_length(newstr) = len;
+		  for (pos = string_value(newstr), y = args; y != x; pos += string_length(car(y)), y = cdr(y)) 
+		    memcpy(pos, string_value(car(y)), string_length(car(y)));
+		  return(s7_apply_function(sc, func, cons(sc, newstr, x)));
+		}
+	    }
+	  return(wrong_type_argument_n(sc, sc->STRING_APPEND, position_of(x, args), p, T_STRING));
 	}
-      len += string_length(car(x));
+      len += string_length(p);
     }
   
   /* store the contents of the argument strings into the new string */
@@ -19690,17 +19711,17 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, s7_pointer s
 }
 
 
-static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args)
-{
-  #define H_string_append "(string-append str1 ...) appends all its string arguments into one string"
-  return(g_string_append_1(sc, args, sc->STRING_APPEND));
-}
-
-
 static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_copy "(string-copy str) returns a copy of its string argument"
-  return(g_string_append_1(sc, args, sc->STRING_COPY));
+  s7_pointer p;
+  p = car(args);
+  if (!is_string(p))
+    {
+      check_method(sc, p, sc->STRING_COPY, args);
+      return(wrong_type_argument(sc, sc->STRING_COPY, small_int(1), p, T_STRING));
+    }
+  return(s7_make_terminated_string_with_length(sc, string_value(p), string_length(p)));
 }
 
 
@@ -20490,11 +20511,29 @@ static s7_pointer g_string_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
   
   /* get length for new string and check arg types */
   for (len = 0, x = args; is_not_null(x); len++, x = cdr(x)) 
-    if (!s7_is_character(car(x)))
-      {
-	check_method(sc, car(x), sym, args);
-	return(wrong_type_argument_n(sc, sym, len + 1, car(x), T_CHARACTER));
-      }
+    {
+      s7_pointer p;
+      p = car(x);
+      if (!s7_is_character(p))
+	{
+	  if (has_methods(p))
+	    {
+	      s7_pointer func;
+	      func = find_method(sc, find_environment(sc, p), sym);
+	      if (func != sc->UNDEFINED)
+		{
+		  s7_pointer y;
+		  if (len == 0)
+		    return(s7_apply_function(sc, func, args));
+		  newstr = make_empty_string(sc, len, 0); 
+		  for (i = 0, y = args; y != x; i++, y = cdr(y)) 
+		    string_value(newstr)[i] = character(car(y));
+		  return(g_string_append(sc, list_2(sc, newstr, s7_apply_function(sc, func, x))));
+		}
+	    }
+	  return(wrong_type_argument_n(sc, sym, len + 1, car(x), T_CHARACTER));
+	}
+    }
   newstr = make_empty_string(sc, len, 0);
   for (i = 0, x = args; is_not_null(x); i++, x = cdr(x)) 
     string_value(newstr)[i] = character(car(x));
@@ -30111,7 +30150,22 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
       x = car(p);
       if (!s7_is_vector(x))
 	{
-	  check_method(sc, x, sc->VECTOR_APPEND, args);
+	  if (has_methods(x))
+	    {
+	      s7_pointer func;
+	      func = find_method(sc, find_environment(sc, x), sc->VECTOR_APPEND);
+	      if (func != sc->UNDEFINED)
+		{
+		  s7_pointer y;
+		  if (len == 0)
+		    return(s7_apply_function(sc, func, args));
+		  for (y = args; cdr(y) != p; y = cdr(y));
+		  cdr(y) = sc->NIL;
+		  v = g_vector_append(sc, args);
+		  cdr(y) = p;
+		  return(s7_apply_function(sc, func, cons(sc, v, p)));
+		}
+	    }
 	  return(wrong_type_argument_n(sc, sc->VECTOR_APPEND, position_of(p, args), x, T_VECTOR));
 	}
       len += vector_length(x);
@@ -30611,7 +30665,6 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_ref "(vector-ref v ... i) returns the i-th element of vector v."
-
   s7_pointer vec;
 
   vec = car(args);
@@ -30620,7 +30673,6 @@ static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
       check_method(sc, vec, sc->VECTOR_REF, args);
       return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec, T_VECTOR));
     }
-
   return(vector_ref_1(sc, vec, cdr(args)));
 }
 
@@ -70225,8 +70277,15 @@ int main(int argc, char **argv)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * for clm methods, xen_to_c_generator could fallback on method check -- t932.scm -- can't decide about this
- * gmp method problems: should we insist on a 'bignum method?
+ *
  * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
+ *   string-ref checks the index, so it's a bit inconsistent as it is now.
+ *   try a normal string|vector with a mock-index -- none of these work
+ *   they need make-method in mockery, and explicit support here.
+ *   but string-ref method is in mock-string, and we're looking at mock-number which has no string-ref!
+ *   so these indices can't be handled currently unless mock-number is greatly extended (about a dozen cases)
+ *   but how are implicit cases handled -- mock-number cadr case gets very complicated! -- multidimensional indices
+ * mock-symbol :readable as arg to object->string, or as default lambda* arg name!
  *
  * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (inlet 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
@@ -70244,19 +70303,10 @@ int main(int argc, char **argv)
  *   none of these is currently in autoload
  *   but this would require special handling in the Xen stuff.
  *
- * mockery.scm: (needs documentation)
- *   mock-oscil? also make tests in CLM of complex cases
- *   mock-eval -- every datum is a mock-*, then Display is internalized, tracing/stepping 
- *     need to shadow eq? and friends
- * copy mvects is still not right if start/end + mvect dest
- *   also multidim mvects
- *   does mock vector-append need 2nd arg make-method support?
- * mchar string can't handle more than 2 args -- what is actually coming into make-method here? (and what about mock-string's string-append?)
- *   string is expecting the method to handle all args: pass current str+args, and method string-append+c+apply args
- *   list->string has the same troubles but is in mock-pair
- *   check string-append for multiple mcases: split from copy case, needs intermediate string-creation step
- * untested: immutable-list
+ * mockery.scm needs documentation (and stuff.scm)
  * unexampled: port/char/symbol
+ * mock-nits: eq? cons etc do not notice envs (so 'value is needed at odd times, and mock-hash can't use 'value)
+ *   some multi-method cases don't work (indices noted above, mock-symbols-as-keywords)
  *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
@@ -70264,14 +70314,9 @@ int main(int argc, char **argv)
  *
  * how would reactive-hash-table work? (hash 'a (+ b 1)) and update 'a's value whenever b changes?
  *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
- * (reactive-format port ...) if args change, write: how general is this? (combine with day-time)
- *   see stuff.scm for first try
  *   reactive-eval, reactive-load(if file changes -- how to tell when its ready?), reactive-if(expr changes)--reactive-assert for example
  *
  * number+uncertainty, check out interval arithmetic for analogs
- *
- * for reasonable mock-* handling in s7 code, we need something like (obj 'value)
- *   as a fallback for a second try.  (if (defined? (obj 'value)) (subsequence (obj 'value)...) -- 'let-ref perhaps? (needs to know internal field name)
  *
  * in (define (f..) (define (g..) ...) ...) can't g be created once like f? 
  *   how does this interact with check_define?  Perhaps first pass over closure_body can mark it and save
