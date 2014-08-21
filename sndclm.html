@@ -3407,32 +3407,6 @@ large component for the carrier, and all the others are very small.
 
 <img class="indented" src="pix/pulsefm.png" alt="pulse-train as FM" onmouseout="UnTip()" onmouseover="Tip('<pre>(with-sound (:channels 2)<br>  (let ((car1 (make-oscil 1000))<br>	 (mod1 (<em class=red>make-pulse-train</em> 100))<br>	 (samps (seconds-&gt;samples 1.0))<br>	 (ampf (make-env \'(0 0 1 1 20 1 21 0)<br>                 :duration 1.0 :scaler .8))<br>	 (index (hz-&gt;radians (* 100 3.0))))<br>    (do ((i 0 (+ i 1)))<br>	((= i samps))<br>      (let ((amp (env ampf))<br>	    (fm (* index (<em class=red>pulse-train</em> mod1))))<br>	(outa i fm)<br>	(outb i (* amp (oscil car1 fm)))))))</pre>')">
 
-
-<p>One very sketchy explanation is that since a pulse is close to zero most of the time,
-the modulation is also close to zero; when the pulse is suddenly high, the effective
-phase change is that number modulo 2*pi, so no matter how high the "index", the total change
-is bounded.
-I believe this is the basis of FM radio's
-noise reduction: we can filter out the high stuff which is weak anyway, and otherwise
-the spike has little effect on our carrier.
-Another handwaving approach is:
-let "n" be the number of components ncos creates, "B" the amplitude of the modulating signal,
-and "k" be the component number.
-Since each component produced by ncos has the same
-amplitude (B/n), if it is treated as an FM component its FM index is B/(k*n); B/n because 
-that's the amplitude of each component, and 1/k since we have to cancel the factor of the
-modulating frequency in its index calculation.
-As more
-components are produced (as n increases), 
-the higher ones only matter when all the Ji(B/(k * n))'s are not negligible (since
-it's a huge product of J's, <img src="pix/jprod.png" alt="product of Js"> &mdash; see <a href="fm.html">fm.html</a>).  
-B/(k * n) is heading for 0, so the product of J's is non-negligible
-only when all the J's are J0 except the solitary J1 that hits that component directly (i.e. the kth).
-J0(0) is 1, and J1(0) is 0, and the factor of n is scrunching all our components closer
-and closer to 0, so the carrier (all J0's) approaches 1, whereas the others (J0's except
-for J1(B/(n*k))) approach 0.
-</p>
-
 <!-- LATEX jprod.png \prod_{i=1}^{k}J_{k_{i}}(B_{i}) -->
 
 <!-- j0j1.png:

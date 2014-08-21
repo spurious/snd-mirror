@@ -51,6 +51,13 @@
 	    ((< k start) dest)
 	  (set! (dest i) (src k))))))
 
+(define (r7rs-make-hash-table . args)
+  (if (null? args)
+      (#_make-hash-table)
+      (if (procedure? (car args))
+	  (#_make-hash-table (if (null (cdr args)) 511 (cadr args)) (car args))
+	  (apply #_make-hash-table args))))
+
 (define bytevector-copy! vector-copy!)
 (define string-copy! vector-copy!)
 (define (bytevector->list bv) (map values bv))

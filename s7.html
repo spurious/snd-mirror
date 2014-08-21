@@ -2334,7 +2334,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 
 
 <ul>
-<li>(<em class=def id="makehashtable">make-hash-table</em> (size 512) eq-func) or (make-hash-table eq-func size)
+<li>(<em class=def id="makehashtable">make-hash-table</em> (size 512) eq-func)
 <li>(<em class=def id="hashtable">hash-table</em> ...)
 <li>(<em class=def id="hashtablestar">hash-table*</em> ...)
 <li>(<em class=def id="hashtableref">hash-table-ref</em> ht key)
@@ -2350,7 +2350,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 Any s7 object can be the key or the key's value.
 Each hash-table keeps track of the keys it contains, optimizing the search wherever possible.
 If you know what equality function you want, you can override this optimization by passing that function
-as the second or third argument to make-hash-table (the odd way of handling arguments here is r7rs's fault).
+as the third argument to make-hash-table (see also r7rs.scm for a version with a different argument order).
 If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
 </p>
 
@@ -3190,17 +3190,14 @@ as "complex?"!):
 </details>
 
 <div class="indented">
-<p>Currently some s7 functions ignore methods: cons, vector, list, and others of that ilk.
-Also, since outlet is settable, there are two ways an environment can
-become circular.  One is to include the current environment as the value of one of its variables.
-The other is:
+<p>If an s7 function ignores the type of an argument, as in cons or vector for example,
+then that argument won't be treated as having any methods.
 </p>
-<pre class="indented">
-(define e (let ((a 1))
-            (set! (outlet (curlet)) (curlet))))
-</pre>
-<p>Now "e" looks like a normal environment, and <code>(e 'a)</code> returns 1,
-but <code>(e anything-else)</code> hangs in an infinite loop.
+
+<p>
+Since outlet is settable, there are two ways an environment can
+become circular.  One is to include the current environment as the value of one of its variables.
+The other is: <code>(let () (set! (outlet (curlet)) (curlet)))</code>.
 </p>
 
 <p>If you want to hide an environment's fields from any part of s7 that does not
@@ -5624,8 +5621,10 @@ some other thing, they satisfy the function morally-equal?.
 
 <p>I'd be happy to add *float-epsilon* or some such variable, if anyone needs 
 it.  
-Also, I can't decide how bignums should interact with morally-equal?.  Currently,
+I can't decide how bignums should interact with morally-equal?.  Currently,
 if a bignum is involved, either here or in a hash-table, s7 uses equal?.
+Finally, if either argument is an environment with a 'morally-equal? method,
+that method is invoked.
 </p>
 
 
@@ -8831,7 +8830,7 @@ c-define-1
 
 
 
-<!- ================================================================================ -->
+<!-- ================================================================================ -->
 
 <script language=JavaScript>
 

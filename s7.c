@@ -2146,14 +2146,14 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #endif
 
 #define environment_id(p)             (p)->object.envr.id
-#define is_let(p)             (type(p) == T_ENVIRONMENT)
+#define is_let(p)                     (type(p) == T_ENVIRONMENT)
 #define environment_slots(p)          (p)->object.envr.slots
 #define next_environment(p)           (p)->object.envr.nxt
 #define environment_function(p)       (p)->object.envr.edat.efnc.function
 #define environment_line(p)           (p)->object.envr.edat.efnc.line
 #define environment_file(p)           (p)->object.envr.edat.efnc.file
-#define dox_slot1(p)           (p)->object.envr.edat.dox.dox1
-#define dox_slot2(p)           (p)->object.envr.edat.dox.dox2
+#define dox_slot1(p)                  (p)->object.envr.edat.dox.dox1
+#define dox_slot2(p)                  (p)->object.envr.edat.dox.dox2
 
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
@@ -2315,7 +2315,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
 #define c_object_value(p)             (p)->object.c_obj.value
 #define c_object_type(p)              (p)->object.c_obj.type
-#define c_object_let(p)       (p)->object.c_obj.e
+#define c_object_let(p)               (p)->object.c_obj.e
 
 static c_object_t **object_types = NULL;
 static int object_types_size = 0;
@@ -19654,6 +19654,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 	  str[ind] = (char)ic;
 	  return(c);
 	}
+      check_method(sc, c, sc->STRING_SET, args);
       return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), c, T_CHARACTER));
     }
 
@@ -19725,7 +19726,7 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 }
 
 
-static bool start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer start_and_end_args, int position, s7_Int *start, s7_Int *end)
+static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer start_and_end_args, s7_pointer args, int position, s7_Int *start, s7_Int *end)
 {
   /* we assume that *start=0 and *end=length, that end is "exclusive"
    *   return true if the start/end points are not changed.
@@ -19734,46 +19735,37 @@ static bool start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer start_and
   s7_Int index;
 
   if (is_null(start_and_end_args))
-    return(true);
+    return(sc->GC_NIL);
 
   pstart = car(start_and_end_args);
   if (!s7_is_integer(pstart))
     {
-      wrong_type_argument_n(sc, caller, position, pstart, T_INTEGER);
-      return(true);
+      check_method(sc, pstart, caller, args);
+      return(wrong_type_argument_n(sc, caller, position, pstart, T_INTEGER));
     }
       
   index = s7_integer(pstart);
   if ((index < 0) ||
       (index > *end)) /* *end == length here */
-    {
-      out_of_range(sc, caller, small_int(position), pstart, "should be between 0 and length");
-      return(true);
-    }
+    return(out_of_range(sc, caller, small_int(position), pstart, "should be between 0 and length"));
   *start = index;
 
   if (is_null(cdr(start_and_end_args)))
-    return(index == 0);
+    return(sc->GC_NIL);
 
   pend = cadr(start_and_end_args);
   if (!s7_is_integer(pend))
     {
-      wrong_type_argument_n(sc, caller, position + 1, pend, T_INTEGER);
-      return(true);
+      check_method(sc, pend, caller, args);
+      return(wrong_type_argument_n(sc, caller, position + 1, pend, T_INTEGER));
     }
   index = s7_integer(pend);
   if ((index < *start) ||
       (index > *end))
-    {
-      out_of_range(sc, caller, small_int(position + 1), pend, "should be between the start index and the length");
-      return(true);
-    }
-  
-  if (index == *end)
-    return(*start == 0);
+    return(out_of_range(sc, caller, small_int(position + 1), pend, "should be between the start index and the length"));
   *end = index;
   
-  return(false);
+  return(sc->GC_NIL);
 }
 
 
@@ -19795,7 +19787,9 @@ end: (substring \"01234\" 1 2) -> \"1\""
     }
 
   end = string_length(str);
-  start_and_end(sc, sc->SUBSTRING, cdr(args), 2, &start, &end);
+  x = start_and_end(sc, sc->SUBSTRING, cdr(args), args, 2, &start, &end);
+  if (x != sc->GC_NIL) return(x);
+
   s = string_value(str);
   len = (int)(end - start);
   x = s7_make_string_with_length(sc, (char *)(s + start), len);
@@ -19807,7 +19801,7 @@ end: (substring \"01234\" 1 2) -> \"1\""
 static s7_pointer substring_to_temp;
 static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer str;
+  s7_pointer x, str;
   s7_Int start = 0, end;
   
   str = car(args);
@@ -19816,9 +19810,9 @@ static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
       check_method(sc, str, sc->SUBSTRING, args);
       return(wrong_type_argument(sc, sc->SUBSTRING, small_int(1), str, T_STRING));
     }
-
   end = string_length(str);
-  start_and_end(sc, sc->SUBSTRING, cdr(args), 2, &start, &end);
+  x = start_and_end(sc, sc->SUBSTRING, cdr(args), args, 2, &start, &end);
+  if (x != sc->GC_NIL) return(x);
 
   return(make_temporary_string(sc, (const char *)(string_value(str) + start), (int)(end - start)));
 }
@@ -20496,7 +20490,9 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 
   if (!is_null(cddr(args)))
     {
-      start_and_end(sc, sc->STRING_FILL, cddr(args), 3, &start, &end);
+      s7_pointer p;
+      p = start_and_end(sc, sc->STRING_FILL, cddr(args), args, 3, &start, &end);
+      if (p != sc->GC_NIL) return(p);
       if (start == end) return(chr);
     }
   memset((void *)(string_value(x) + start), (int)character(chr), end - start);
@@ -20606,10 +20602,10 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
     }
 
   end = string_length(str);
-
   if (!is_null(cdr(args)))
     {
-      start_and_end(sc, sc->STRING_TO_LIST, cdr(args), 2, &start, &end);
+      p = start_and_end(sc, sc->STRING_TO_LIST, cdr(args), args, 2, &start, &end);
+      if (p != sc->GC_NIL) return(p);
       if (start == end) return(sc->NIL);
     }
   else
@@ -20674,7 +20670,10 @@ static s7_pointer g_make_bytevector(s7_scheme *sc, s7_pointer args)
       s7_Int b;
       byte = cadr(args);
       if (!s7_is_integer(byte))
-	return(wrong_type_argument(sc, sc->MAKE_BYTEVECTOR, small_int(2), byte, T_INTEGER));
+	{
+	  check_method(sc, byte, sc->MAKE_BYTEVECTOR, args);
+	  return(wrong_type_argument(sc, sc->MAKE_BYTEVECTOR, small_int(2), byte, T_INTEGER));
+	}
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
 	return(simple_wrong_type_argument_with_type(sc, sc->MAKE_BYTEVECTOR, byte, AN_UNSIGNED_BYTE));
@@ -20700,7 +20699,23 @@ static s7_pointer g_bytevector(s7_scheme *sc, s7_pointer args)
       s7_Int b;
       byte = car(x);
       if (!s7_is_integer(byte))
-	return(wrong_type_argument(sc, sc->BYTEVECTOR, make_integer(sc, i), byte, T_INTEGER));
+	{
+	  if (has_methods(byte))
+	    {
+	      s7_pointer func;
+	      func = find_method(sc, find_environment(sc, byte), sc->BYTEVECTOR);
+	      if (func != sc->UNDEFINED)
+		{
+		  if (i == 0)
+		    return(s7_apply_function(sc, func, args));
+		  string_length(vec) = i;
+		  vec = g_string_append(sc, list_2(sc, vec, s7_apply_function(sc, func, x)));
+		  set_bytevector(vec);
+		  return(vec);
+		}
+	    }
+	  return(wrong_type_argument(sc, sc->BYTEVECTOR, make_integer(sc, i), byte, T_INTEGER));
+	}
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
 	return(simple_wrong_type_argument_with_type(sc, sc->BYTEVECTOR, byte, AN_UNSIGNED_BYTE));
@@ -21439,7 +21454,6 @@ static void string_write_string(s7_scheme *sc, const char *str, int len, s7_poin
 
   /* if (len != safe_strlen(str)) fprintf(stderr, "%d %d in %s\n", len, safe_strlen(str), str);
    */
-
   new_len = port_position(pt) + len;
   if (new_len >= (int)port_data_size(pt))
     {
@@ -21543,8 +21557,10 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
   end = string_length(str);
   if (!is_null(cdr(args)))
     {
+      s7_pointer p;
       port = cadr(args);
-      start_and_end(sc, sc->WRITE_STRING, cddr(args), 3, &start, &end);
+      p = start_and_end(sc, sc->WRITE_STRING, cddr(args), args, 3, &start, &end);
+      if (p != sc->GC_NIL) return(p);
     }
   else port = sc->output_port;
   if (!is_output_port(port))
@@ -27860,8 +27876,10 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
   s7_pointer p;
 
   if (!s7_is_integer(ind))
-    return(wrong_type_argument(sc, sc->LIST_REF, small_int(2), ind, T_INTEGER));
-  
+    {
+      check_method(sc, ind, sc->LIST_REF, list_2(sc, lst, ind));
+      return(wrong_type_argument(sc, sc->LIST_REF, small_int(2), ind, T_INTEGER));
+    }
   index = s7_integer(ind);
   if (index < 0)
     return(out_of_range(sc, sc->LIST_REF, small_int(2), ind, "should be non-negative"));
@@ -27931,8 +27949,10 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
     }
   ind = car(args);
   if (!s7_is_integer(ind))
-    return(wrong_type_argument(sc, sc->LIST_SET, small_int(arg_num), ind, T_INTEGER));
-  
+    {
+      check_method(sc, ind, sc->LIST_SET, args);
+      return(wrong_type_argument(sc, sc->LIST_SET, small_int(arg_num), ind, T_INTEGER));
+    }
   index = s7_integer(ind);
   if (index < 0)
     return(out_of_range(sc, sc->LIST_SET, small_int(arg_num), ind, "index should be non-negative"));
@@ -27998,19 +28018,23 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   s7_Int index;
   s7_pointer p;
 
-  if (!s7_is_list(sc, car(args)))
+  p = car(args);
+  if (!s7_is_list(sc, p))
     {
-      check_method(sc, car(args), sc->LIST_TAIL, args);
-      return(wrong_type_argument_with_type(sc, sc->LIST_TAIL, small_int(1), car(args), A_LIST));
+      check_method(sc, p, sc->LIST_TAIL, args);
+      return(wrong_type_argument_with_type(sc, sc->LIST_TAIL, small_int(1), p, A_LIST));
     }
-  if (!s7_is_integer(cadr(args)))
-    return(wrong_type_argument(sc, sc->LIST_TAIL, small_int(2), cadr(args), T_INTEGER));
-  
-  index = s7_integer(cadr(args));
+  p = cadr(args);
+  if (!s7_is_integer(p))
+    {
+      check_method(sc, p, sc->LIST_TAIL, args);
+      return(wrong_type_argument(sc, sc->LIST_TAIL, small_int(2), p, T_INTEGER));
+    }
+  index = s7_integer(p);
   if (index < 0)
-    return(out_of_range(sc, sc->LIST_TAIL, small_int(2), cadr(args), "should be non-negative"));
+    return(out_of_range(sc, sc->LIST_TAIL, small_int(2), p, "should be non-negative"));
   if (index > MAX_LIST_LENGTH)
-    return(out_of_range(sc, sc->LIST_TAIL, small_int(2), cadr(args), "should be a reasonable integer"));
+    return(out_of_range(sc, sc->LIST_TAIL, small_int(2), p, "should be a reasonable integer"));
   
   for (i = 0, p = car(args); (i < index) && (is_pair(p)); i++, p = cdr(p)) {}
   
@@ -30000,7 +30024,9 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 
   if (!is_null(cddr(args)))
     {
-      start_and_end(sc, sc->VECTOR_FILL, cddr(args), 3, &start, &end);
+      s7_pointer p;
+      p = start_and_end(sc, sc->VECTOR_FILL, cddr(args), args, 3, &start, &end);
+      if (p != sc->GC_NIL) return(p);
       if (start == end) return(fill);
     }
 
@@ -30368,7 +30394,8 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
   end = vector_length(vec);
   if (!is_null(cdr(args)))
     {
-      start_and_end(sc, sc->VECTOR_TO_LIST, cdr(args), 2, &start, &end);
+      p = start_and_end(sc, sc->VECTOR_TO_LIST, cdr(args), args, 2, &start, &end);
+      if (p != sc->GC_NIL) return(p);
       if (start == end) return(sc->NIL);
     }
   if ((start == 0) && (end == vector_length(vec)))
@@ -30545,13 +30572,20 @@ a vector that points to the same elements as the original-vector but with differ
 	  if (offset >= orig_len)  /* we need this if, for example, offset == 9223372036854775807 */
 	    return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, "greater than the original vector length"));
 	}
-      else return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, T_INTEGER));
+      else 
+	{
+	  check_method(sc, off, sc->MAKE_SHARED_VECTOR, args);
+	  return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, T_INTEGER));
+	}
     }
 
   dims = cadr(args);
   if ((is_null(dims)) ||
       (!is_proper_list(sc, dims)))
-    return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(2), dims, T_PAIR));
+    {
+      check_method(sc, dims, sc->MAKE_SHARED_VECTOR, args);
+      return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(2), dims, T_PAIR));
+    }
   for (y = dims; is_pair(y); y = cdr(y))
     if ((!s7_is_integer(car(y)))        ||       /* (make-shared-vector v '((1 2) (3 4))) */
 	(s7_integer(car(y)) > orig_len) ||
@@ -30618,8 +30652,10 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	{
 	  s7_Int n;
 	  if (!s7_is_integer(car(x)))
-	    return(wrong_type_argument_n(sc, sc->VECTOR_REF, i + 2, car(x), T_INTEGER));
-
+	    {
+	      check_method(sc, car(x), sc->VECTOR_REF, cons(sc, vect, indices));
+	      return(wrong_type_argument_n(sc, sc->VECTOR_REF, i + 2, car(x), T_INTEGER));
+	    }
 	  n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vect, i)))
@@ -30640,15 +30676,19 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
     }
   else 
     {
+      s7_pointer p;
       /* (let ((hi (make-vector 3 0.0)) (sum 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! sum (+ sum (hi i)))) sum) */
+      p = car(indices);
 
-      if (!s7_is_integer(car(indices)))
-	return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), car(indices), T_INTEGER));
-
-      index = s7_integer(car(indices));
+      if (!s7_is_integer(p))
+	{
+	  check_method(sc, p, sc->VECTOR_REF, cons(sc, vect, indices));
+	  return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), p, T_INTEGER));
+	}
+      index = s7_integer(p);
       if ((index < 0) ||
 	  (index >= vector_length(vect)))
-	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), car(indices), "should be between 0 and the vector length"));
+	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), p, "should be between 0 and the vector length"));
       
       if (is_not_null(cdr(indices)))                /* (let ((L #(#(1 2 3) #(4 5 6)))) (vector-ref L 1 2)) */
 	{
@@ -30710,15 +30750,19 @@ static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
   s7_Int index;
 
   vec = SYMBOL_TO_VALUE(sc, car(args));
+  x = find_symbol_checked(sc, cadr(args));
+
   if (!s7_is_vector(vec))
     {
-      check_method(sc, vec, sc->VECTOR_REF, args);
+      check_method(sc, vec, sc->VECTOR_REF, list_2(sc, vec, x));
       return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec, T_VECTOR));
     }
-
-  x = find_symbol_checked(sc, cadr(args));
   if (!s7_is_integer(x))
-    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
+    {
+      check_method(sc, x, sc->VECTOR_REF, list_2(sc, vec, x));
+      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
+    }
+
   index = s7_integer(x);
   if ((index < 0) ||
       (index >= vector_length(vec)))
@@ -30730,79 +30774,35 @@ static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
   return(vector_getter(vec)(sc, vec, index));
 }
 
-/* this is marginal */
-static s7_pointer vector_ref_ggs;
-static s7_pointer g_vector_ref_ggs(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer x, vec1, vec2;
-  s7_Int index;
-
-  vec1 = SYMBOL_TO_VALUE(sc, car(args));
-  if (!s7_is_vector(vec1))
-    {
-      check_method(sc, vec1, sc->VECTOR_REF, args);
-      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec1, T_VECTOR));
-    }
-
-  vec2 = SYMBOL_TO_VALUE(sc, cadr(cadr(args)));
-  if (!s7_is_vector(vec2))
-    {
-      check_method(sc, vec2, sc->VECTOR_REF, args);
-      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec2, T_VECTOR));
-    }
-
-  if (vector_rank(vec2) > 1)
-    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec2, T_VECTOR));
-
-  x = find_symbol_checked(sc, caddr(cadr(args)));
-  if (!s7_is_integer(x))
-    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
-  index = s7_integer(x);
-  if ((index < 0) ||
-      (index >= vector_length(vec2)))
-    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
-
-  x = vector_getter(vec2)(sc, vec2, index);
-  if (!s7_is_integer(x))
-    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
-  index = s7_integer(x);
-  if ((index < 0) ||
-      (index >= vector_length(vec1)))
-    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
-
-  if (vector_rank(vec1) > 1)
-    return(make_shared_vector(sc, vec1, 1, index));
-
-  return(vector_getter(vec1)(sc, vec1, index));
-}
-
 static s7_pointer vector_ref_add1;
 static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer vec, x, func = sc->UNDEFINED;
+  /* (vector-ref v (+ s 1)) I think */
+  s7_pointer vec, x;
   s7_Int index;
 
   vec = find_symbol_checked(sc, car(args));
+  x = find_symbol_checked(sc, cadr(cadr(args)));
+
+  if (!s7_is_integer(x))
+    {
+      check_method(sc, x, sc->VECTOR_REF, list_2(sc, vec, x));
+      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
+    }
+  index = s7_integer(x) + 1;
+
   if (!s7_is_vector(vec))
     {
-      if ((!has_methods(vec)) ||
-	  ((func = find_method(sc, find_environment(sc, vec), sc->VECTOR_REF)) == sc->UNDEFINED))
-	return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec, T_VECTOR));
+      check_method(sc, vec, sc->VECTOR_REF, list_2(sc, vec, s7_make_integer(sc, index)));
+      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec, T_VECTOR));
     }
-  x = find_symbol_checked(sc, cadr(cadr(args)));
-  if (!s7_is_integer(x))
-    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
 
-  index = s7_integer(x) + 1;
   if ((index < 0) ||
       (index >= vector_length(vec)))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
 
   if (vector_rank(vec) > 1)
     return(make_shared_vector(sc, vec, 1, index));
-
-  if (func != sc->UNDEFINED)
-    return(s7_apply_function(sc, func, list_2(sc, vec, s7_make_integer(sc, index))));
   return(vector_getter(vec)(sc, vec, index));
 }
 
@@ -30823,7 +30823,10 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
   
   ind = cadr(args);
   if (!s7_is_integer(ind))
-    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), ind, T_INTEGER));
+    {
+      check_method(sc, ind, sc->VECTOR_REF, args);
+      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), ind, T_INTEGER));
+    }
   index = s7_integer(ind);
   if ((index < 0) ||
       (index >= vector_length(vec)))
@@ -30858,8 +30861,10 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 	{
 	  s7_Int n;
 	  if (!s7_is_integer(car(x)))
-	    return(wrong_type_argument_n(sc, sc->VECTOR_SET, i + 2, car(x), T_INTEGER));
-
+	    {
+	      check_method(sc, car(x), sc->VECTOR_SET, args);
+	      return(wrong_type_argument_n(sc, sc->VECTOR_SET, i + 2, car(x), T_INTEGER));
+	    }
 	  n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vec, i)))
@@ -30877,13 +30882,17 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
     }
   else
     {
-      if (!s7_is_integer(cadr(args)))
-	return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(2), cadr(args), T_INTEGER));
-
-      index = s7_integer(cadr(args));
+      s7_pointer p;
+      p = cadr(args);
+      if (!s7_is_integer(p))
+	{
+	  check_method(sc, p, sc->VECTOR_SET, args);
+	  return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(2), p, T_INTEGER));
+	}
+      index = s7_integer(p);
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
-	return(out_of_range(sc, sc->VECTOR_SET, small_int(2), cadr(args), "should be between 0 and the vector length"));
+	return(out_of_range(sc, sc->VECTOR_SET, small_int(2), p, "should be between 0 and the vector length"));
 
       if (is_not_null(cdddr(args)))
 	{
@@ -32293,64 +32302,46 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_hash_table "(make-hash-table (size 511) eq-func) or (make-hash-table eq-func (size 511)) returns a new hash table"
+  #define H_make_hash_table "(make-hash-table (size 511) eq-func) returns a new hash table"
   s7_Int size = DEFAULT_HASH_TABLE_SIZE;
 
   if (is_not_null(args))
     {
-      s7_pointer size_arg, eq_arg;
-      if (s7_is_integer(car(args)))
+      s7_pointer p;
+      p = car(args);
+      if (!s7_is_integer(p))
 	{
-	  size_arg = car(args);
-	  if (is_not_null(cdr(args)))
-	    eq_arg = cadr(args);
-	  else eq_arg = sc->GC_NIL;
+	  check_method(sc, p, sc->MAKE_HASH_TABLE, args);
+	  return(wrong_type_argument(sc, sc->MAKE_HASH_TABLE, small_int(1), p, T_INTEGER));
 	}
-      else
-	{
-	  eq_arg = car(args);
-	  if (is_not_null(cdr(args)))
-	    {
-	      size_arg = cadr(args);
-	      if (!s7_is_integer(size_arg))
-		return(simple_wrong_type_argument(sc, sc->MAKE_HASH_TABLE, size_arg, T_INTEGER));
-	    }
-	  else size_arg = sc->GC_NIL;
-	}
+      size = s7_integer(p);
+      if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
+	return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, p, "should be a positive integer"));
+      if (size > MAX_LIST_LENGTH)
+	return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, p, "should be a reasonable integer"));
 
-      if (size_arg != sc->GC_NIL)
-	{
-	  size = s7_integer(size_arg);
-	  if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
-	    return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, size_arg, "should be a positive integer"));
-	  if (size > MAX_LIST_LENGTH)
-	    return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, size_arg, "should be a reasonable integer"));
-	}
-
-      if (eq_arg != sc->GC_NIL)
+      if (is_not_null(cdr(args)))
 	{
 	  int typ;
-	  typ = type(eq_arg);
+	  p = cadr(args);
+	  typ = type(p);
 	  /* true procedure needed here else (make-hash-table ()) will work
 	   */
 	  if ((typ < T_C_FUNCTION) && (typ != T_CLOSURE) && (typ != T_CLOSURE_STAR)) 
-	    {
-	      check_method(sc, eq_arg, sc->MAKE_HASH_TABLE, args);
-	      return(simple_wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, eq_arg, A_PROCEDURE));
-	    }
-	  /* now try to deal with eq_arg -> hash_table_eq_func[tion]
-	   */
-	  if (is_c_function(eq_arg)) /* we need to restrict this function so that hash-table-ref|set! remain safe functions */
+	    return(simple_wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, p, A_PROCEDURE));
+
+	  if (is_c_function(p)) /* we need to restrict this function so that hash-table-ref|set! remain safe functions */
 	    {
 	      s7_pointer ht;
 	      ht = s7_make_hash_table(sc, size);
 	      hash_table_function(ht) = hash_eq_func;
-	      hash_table_eq_function(ht) = eq_arg;
+	      hash_table_eq_function(ht) = p;
 	      return(ht);
 	    }
+
+	  /* and if it isn't?? */
 	}
     }
-  
   return(s7_make_hash_table(sc, size));
 }
 
@@ -35489,6 +35480,14 @@ static bool unmatched_vectors_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_
   return(false);
 }
 
+static bool let_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
+{
+  s7_pointer equal_func;
+  equal_func = find_method(sc, x, sc->IS_MORALLY_EQUAL);
+  if (equal_func != sc->UNDEFINED)
+    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
+  return(false);
+}
 
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
@@ -35497,6 +35496,11 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 
   if (type(x) != type(y))
     {
+      if ((is_let(x)) && (has_methods(x)))
+	return(let_equal(sc, x, y));
+      if ((is_let(y)) && (has_methods(y)))
+	return(let_equal(sc, y, x));
+
       if ((s7_is_vector(x)) &&
 	  (s7_is_vector(y)))
 	return(unmatched_vectors_are_morally_equal(sc, x, y));
@@ -35535,16 +35539,10 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 
     case T_ENVIRONMENT:
       if (has_methods(x))
-	{
-	  if (has_methods(y))
-	    {
-	      s7_pointer equal_func;
-	      equal_func = find_method(sc, x, sc->IS_MORALLY_EQUAL);
-	      if (equal_func != sc->UNDEFINED)
-		return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
-	    }
-	  else return(false);
-	}
+	return(let_equal(sc, x, y));
+      if (has_methods(y))
+	return(let_equal(sc, y, x));
+
       /* if the environment contains a function whose environment is the current environment, infinite loop?
        *    so we pass the ci arg in the macro/function cases below
        */
@@ -36072,8 +36070,11 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 
   start = 0;
   if (have_indices)
-    start_and_end(sc, sc->COPY, cddr(args), 3, &start, &end);
-
+    {
+      s7_pointer p;
+      p = start_and_end(sc, sc->COPY, cddr(args), args, 3, &start, &end);
+      if (p != sc->GC_NIL) return(p);
+    }
   if ((start == 0) && (source == dest))
     return(dest);
   source_len = end - start;
@@ -41451,13 +41452,6 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 		   * (define (hi i) (vector-ref global_vector i))
 		   */
 		}
-	      if ((is_pair(caddr(expr))) &&
-		  (is_safely_optimized(caddr(expr))) &&
-		  (c_call(caddr(expr)) == g_vector_ref_gs))
-		{
-		  set_optimize_data(expr, HOP_SAFE_C_C);
-		  return(vector_ref_ggs);
-		}
 	    }
 
 	  if ((is_pair(caddr(expr))) &&
@@ -43081,7 +43075,6 @@ static void init_choosers(s7_scheme *sc)
   vector_ref_add1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_add1, 2, 0, false, "vector-ref opt");
   vector_ref_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref opt");
   vector_ref_gs = make_function_with_class(sc, f, "vector-ref", g_vector_ref_gs, 2, 0, false, "vector-ref opt");
-  vector_ref_ggs = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ggs, 2, 0, false, "vector-ref opt");
 
 
   /* vector-set! */
@@ -70278,16 +70271,7 @@ int main(int argc, char **argv)
  * cyclic-seq in rest of full-* 
  * for clm methods, xen_to_c_generator could fallback on method check -- t932.scm -- can't decide about this
  *
- * should string-set! et all add method checks for 3rd arg?  if so, make-method needs to take that into account.
- *   string-ref checks the index, so it's a bit inconsistent as it is now.
- *   try a normal string|vector with a mock-index -- none of these work
- *   they need make-method in mockery, and explicit support here.
- *   but string-ref method is in mock-string, and we're looking at mock-number which has no string-ref!
- *   so these indices can't be handled currently unless mock-number is greatly extended (about a dozen cases)
- *   but how are implicit cases handled -- mock-number cadr case gets very complicated! -- multidimensional indices
- * mock-symbol :readable as arg to object->string, or as default lambda* arg name!
- *
- * can methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
+ * can mock-string|char + methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
  *   (inlet 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
  *   an example of using the glib unicode stuff? The data is in xgdata.scm.
  *   (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
@@ -70304,9 +70288,9 @@ int main(int argc, char **argv)
  *   but this would require special handling in the Xen stuff.
  *
  * mockery.scm needs documentation (and stuff.scm)
- * unexampled: port/char/symbol
- * mock-nits: eq? cons etc do not notice envs (so 'value is needed at odd times, and mock-hash can't use 'value)
- *   some multi-method cases don't work (indices noted above, mock-symbols-as-keywords)
+ * example: port/char/symbol
+ * many vector cases remain, need multi-index and opt func tests here and implicit index cases
+ *   also let-set/ref with obj type check
  *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
@@ -70316,12 +70300,13 @@ int main(int argc, char **argv)
  *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
  *   reactive-eval, reactive-load(if file changes -- how to tell when its ready?), reactive-if(expr changes)--reactive-assert for example
  *
- * number+uncertainty, check out interval arithmetic for analogs
+ * number+uncertainty, check out interval arithmetic
  *
  * in (define (f..) (define (g..) ...) ...) can't g be created once like f? 
  *   how does this interact with check_define?  Perhaps first pass over closure_body can mark it and save
  *   the completed closure somewhere?  (It needs to be under 'g in the closure internal env)
  *   currently these go to op_define_funchecked: if safe/non-recursive why can't we save/reuse the arg-env there?
  *   also these could be reduced to safe_c_sc and so on.
+ * get stats on current main cases: start, eval (could apply be undercut?)
  */
 

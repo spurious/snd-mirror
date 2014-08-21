@@ -9,11 +9,20 @@
 
 ;(load "stuff.scm")
 ;(load "r7rs.scm")
+(require mockery.scm)
 
 (define data-file #f) ;(open-output-file "output-of-t455"))
 (define max-args 3)
 
 (define-constant one 1)
+
+(define mock-number (*mock-number* 'mock-number))
+(define mock-pair (*mock-pair* 'mock-pair))
+(define mock-string (*mock-string* 'mock-string))
+(define mock-char (*mock-character* 'mock-char))
+(define mock-vector (*mock-vector* 'mock-vector))
+(define mock-symbol (*mock-symbol* 'mock-symbol))
+(define mock-hash-table* (*mock-hash-table* 'mock-hash-table*))
 
 (define constants (list #f #t () #\a (/ most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 			"hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) (list (list 1 2)) (list (list 1)) (list ()) #() 
@@ -38,6 +47,14 @@
 			(lambda (dir) 1.0) (float-vector) (make-float-vector '(2 32)) 
 			;(openlet (inlet 'value 1 '+ (lambda args 1)))
 			;all-env
+
+			(mock-number 0) (mock-number 2) (mock-number 1-i) (mock-number 4/3) (mock-number 2.0)
+			(mock-string #\h #\o #\h #\o)
+			(mock-pair '(2 3 4))
+			(mock-char #\b)
+			(mock-symbol 'c)
+			(mock-vector 1 2 3 4)
+			(mock-hash-table* 'b 2)
 			))
 
 (define low 0)
@@ -118,14 +135,19 @@
 		(if (not (or (memq (strname 0) '(#\{ #\[ #\())
 			     (member strname '("exit" "emergency-exit" "abort" "autotest" 
 					       "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
-					       "varlet" "dilambda" "gc"
-					       "openlet" "eval" "vector" "list" "cons" "m"
+					       "varlet" "dilambda" "gc" "cond-expand" "reader-cond"
+					       "openlet" "eval" "vector" "list" "cons" "m" "hash-table*" "hash-table" "values"
+					       "object->string"
 
 					       "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
 					       "boolean=?" "symbol=?" 
 
 ;					       "do*" "define-slot-accessor" "power-set"
 ;					       "define-library" "define-record-type"
+
+					       "mock-number" "mock-pair" "mock-string" "mock-char" "mock-vector" 
+					       "mock-symbol" "mock-port" "mock-hash-table"
+					       "outlet-member" "make-method" "make-object"
 					       ))))
 		    (begin
 		      (if (< top bottom)
